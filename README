@@ -1,4 +1,6 @@
-This is a fork of viking (http://viking.sf.net/).
+This is a fork of viking (http://viking.sf.net/). See README.viking
+for details about viking software. I am in no way affiliated with
+viking project.
 
 The plan for this project is following:
 1. Convert the project from C to C++
@@ -14,8 +16,9 @@ will be just in C++/Qt.
 
 After completing step 4, I plan to develop this project further to
 meet my other goals: I want to have an application that I can use in
-some other project. This may mean that I will neglect or remove some
-features of this application that users of viking like or need.
+some other project. This may mean that from day one I will
+purposefully neglect, and after step 4 maybe even remove some features
+of this application that users of viking like or need.
 
 Please notice that this is my personal project, which means that at
 some point my goals and your goals will be totally different and you
