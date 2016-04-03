@@ -1,0 +1,37 @@
+This is a fork of viking (http://viking.sf.net/).
+
+The plan for this project is following:
+1. Convert the project from C to C++
+2. Convert the project from GTK to QT
+3. ???
+4. Profit
+
+I have created this project because of point 4: I hope to know C++ and
+QT by the time the conversion from points 1 and 2 is completed.
+
+Hopefully at step 4 this application will still resemble viking, it
+will be just in C++/Qt.
+
+After completing step 4, I plan to develop this project further to
+meet my other goals: I want to have an application that I can use in
+some other project. This may mean that I will neglect or remove some
+features of this application that users of viking like or need.
+
+Please notice that this is my personal project, which means that at
+some point my goals and your goals will be totally different and you
+will become disappointed with this application.
+
+Don't rely on this application. It won't be doing what you want it to
+do.
+
+Don't rely on me. I won't implement features that you would like to
+see in this application.
+
+Patches are not welcome.
+
+Small, well commented and documented patches that I can understand and
+that I need are welcome.
+
+This program is created, developed and put in public place WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.
