@@ -35,9 +35,9 @@ struct _VikFileEntry {
   GtkWidget *entry, *button;
   GtkWidget *file_selector;
   GtkFileChooserAction action;
-  gint filter_type;
+  int filter_type;
   VikFileEntryFunc on_finish;
-  gpointer user_data;
+  void * user_data;
 };
 
 GType vik_file_entry_get_type (void)
@@ -67,7 +67,7 @@ GType vik_file_entry_get_type (void)
 /**
  * Create a file entry with an optional file filter and an optional callback on completion
  */
-GtkWidget *vik_file_entry_new (GtkFileChooserAction action, vf_filter_type filter_type, VikFileEntryFunc cb, gpointer user_data )
+GtkWidget *vik_file_entry_new (GtkFileChooserAction action, vf_filter_type filter_type, VikFileEntryFunc cb, void * user_data )
 {
   VikFileEntry *vfe = VIK_FILE_ENTRY ( g_object_new ( VIK_FILE_ENTRY_TYPE, NULL ) );
   vfe->entry = gtk_entry_new ();
@@ -77,8 +77,8 @@ GtkWidget *vik_file_entry_new (GtkFileChooserAction action, vf_filter_type filte
   vfe->user_data = user_data;
   g_signal_connect_swapped ( G_OBJECT(vfe->button), "clicked", G_CALLBACK(choose_file), vfe );
 
-  gtk_box_pack_start ( GTK_BOX(vfe), vfe->entry, TRUE, TRUE, 3 );
-  gtk_box_pack_start ( GTK_BOX(vfe), vfe->button, FALSE, FALSE, 3 );
+  gtk_box_pack_start ( GTK_BOX(vfe), vfe->entry, true, true, 3 );
+  gtk_box_pack_start ( GTK_BOX(vfe), vfe->button, false, false, 3 );
 
   vfe->file_selector = NULL;
   vfe->filter_type = filter_type;
@@ -86,12 +86,12 @@ GtkWidget *vik_file_entry_new (GtkFileChooserAction action, vf_filter_type filte
   return GTK_WIDGET(vfe);
 }
 
-const gchar *vik_file_entry_get_filename ( VikFileEntry *vfe )
+const char *vik_file_entry_get_filename ( VikFileEntry *vfe )
 {
   return gtk_entry_get_text ( GTK_ENTRY(vfe->entry) );
 }
 
-void vik_file_entry_set_filename ( VikFileEntry *vfe, const gchar *filename )
+void vik_file_entry_set_filename ( VikFileEntry *vfe, const char *filename )
 {
   gtk_entry_set_text ( GTK_ENTRY(vfe->entry), filename );
 }
@@ -109,7 +109,7 @@ static void choose_file ( VikFileEntry *vfe )
 				      GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
 				      NULL);
     gtk_window_set_transient_for ( GTK_WINDOW(vfe->file_selector), GTK_WINDOW(win) );
-    gtk_window_set_destroy_with_parent ( GTK_WINDOW(vfe->file_selector), TRUE );
+    gtk_window_set_destroy_with_parent ( GTK_WINDOW(vfe->file_selector), true );
 
     switch ( vfe->filter_type ) {
       case VF_FILTER_IMAGE: {

@@ -25,6 +25,9 @@
 #include <time.h>
 #include <glib.h>
 #include <gtk/gtk.h>
+#include <stdbool.h>
+#include <stdint.h>
+
 
 #include "vikcoord.h"
 #include "bbox.h"
@@ -38,25 +41,25 @@ G_BEGIN_DECLS
 
 typedef struct _VikTrackpoint VikTrackpoint;
 struct _VikTrackpoint {
-  gchar* name;
+  char* name;
   VikCoord coord;
-  gboolean newsegment;
-  gboolean has_timestamp;
+  bool newsegment;
+  bool has_timestamp;
   time_t timestamp;
-  gdouble altitude;	/* VIK_DEFAULT_ALTITUDE if data unavailable */
-  gdouble speed;  	/* NAN if data unavailable */
-  gdouble course;   /* NAN if data unavailable */
-  guint nsats;      /* number of satellites used. 0 if data unavailable */
+  double altitude;	/* VIK_DEFAULT_ALTITUDE if data unavailable */
+  double speed;  	/* NAN if data unavailable */
+  double course;   /* NAN if data unavailable */
+  unsigned int nsats;      /* number of satellites used. 0 if data unavailable */
 #define VIK_GPS_MODE_NOT_SEEN	0	/* mode update not seen yet */
 #define VIK_GPS_MODE_NO_FIX	1	/* none */
 #define VIK_GPS_MODE_2D  	2	/* good for latitude/longitude */
 #define VIK_GPS_MODE_3D  	3	/* good for altitude/climb too */
 #define VIK_GPS_MODE_DGPS	4
 #define VIK_GPS_MODE_PPS 	5	/* military signal used */
-  gint fix_mode;    /* VIK_GPS_MODE_NOT_SEEN if data unavailable */
-  gdouble hdop;     /* VIK_DEFAULT_DOP if data unavailable */
-  gdouble vdop;     /* VIK_DEFAULT_DOP if data unavailable */
-  gdouble pdop;     /* VIK_DEFAULT_DOP if data unavailable */
+  int fix_mode;    /* VIK_GPS_MODE_NOT_SEEN if data unavailable */
+  double hdop;     /* VIK_DEFAULT_DOP if data unavailable */
+  double vdop;     /* VIK_DEFAULT_DOP if data unavailable */
+  double pdop;     /* VIK_DEFAULT_DOP if data unavailable */
 };
 
 typedef enum {
@@ -78,88 +81,88 @@ typedef enum {
 typedef struct _VikTrack VikTrack;
 struct _VikTrack {
   GList *trackpoints;
-  gboolean visible;
-  gboolean is_route;
+  bool visible;
+  bool is_route;
   VikTrackDrawnameType draw_name_mode;
-  guint8 max_number_dist_labels;
-  gchar *comment;
-  gchar *description;
-  gchar *source;
-  gchar *type;
-  guint8 ref_count;
-  gchar *name;
+  uint8_t max_number_dist_labels;
+  char *comment;
+  char *description;
+  char *source;
+  char *type;
+  uint8_t ref_count;
+  char *name;
   GtkWidget *property_dialog;
-  gboolean has_color;
+  bool has_color;
   GdkColor color;
   LatLonBBox bbox;
 };
 
 VikTrack *vik_track_new();
 void vik_track_set_defaults(VikTrack *tr);
-void vik_track_set_name(VikTrack *tr, const gchar *name);
-void vik_track_set_comment(VikTrack *tr, const gchar *comment);
-void vik_track_set_description(VikTrack *tr, const gchar *description);
-void vik_track_set_source(VikTrack *tr, const gchar *source);
-void vik_track_set_type(VikTrack *tr, const gchar *type);
+void vik_track_set_name(VikTrack *tr, const char *name);
+void vik_track_set_comment(VikTrack *tr, const char *comment);
+void vik_track_set_description(VikTrack *tr, const char *description);
+void vik_track_set_source(VikTrack *tr, const char *source);
+void vik_track_set_type(VikTrack *tr, const char *type);
 void vik_track_ref(VikTrack *tr);
 void vik_track_free(VikTrack *tr);
-VikTrack *vik_track_copy ( const VikTrack *tr, gboolean copy_points );
-void vik_track_set_comment_no_copy(VikTrack *tr, gchar *comment);
+VikTrack *vik_track_copy ( const VikTrack *tr, bool copy_points );
+void vik_track_set_comment_no_copy(VikTrack *tr, char *comment);
 VikTrackpoint *vik_trackpoint_new();
 void vik_trackpoint_free(VikTrackpoint *tp);
 VikTrackpoint *vik_trackpoint_copy(VikTrackpoint *tp);
-void vik_trackpoint_set_name(VikTrackpoint *tp, const gchar *name);
+void vik_trackpoint_set_name(VikTrackpoint *tp, const char *name);
 
-void vik_track_add_trackpoint(VikTrack *tr, VikTrackpoint *tp, gboolean recalculate);
-gdouble vik_track_get_length_to_trackpoint (const VikTrack *tr, const VikTrackpoint *tp);
-gdouble vik_track_get_length(const VikTrack *tr);
-gdouble vik_track_get_length_including_gaps(const VikTrack *tr);
-gulong vik_track_get_tp_count(const VikTrack *tr);
-guint vik_track_get_segment_count(const VikTrack *tr);
-VikTrack **vik_track_split_into_segments(VikTrack *tr, guint *ret_len);
-guint vik_track_merge_segments(VikTrack *tr);
+void vik_track_add_trackpoint(VikTrack *tr, VikTrackpoint *tp, bool recalculate);
+double vik_track_get_length_to_trackpoint (const VikTrack *tr, const VikTrackpoint *tp);
+double vik_track_get_length(const VikTrack *tr);
+double vik_track_get_length_including_gaps(const VikTrack *tr);
+unsigned long vik_track_get_tp_count(const VikTrack *tr);
+unsigned int vik_track_get_segment_count(const VikTrack *tr);
+VikTrack **vik_track_split_into_segments(VikTrack *tr, unsigned int *ret_len);
+unsigned int vik_track_merge_segments(VikTrack *tr);
 void vik_track_reverse(VikTrack *tr);
-time_t vik_track_get_duration(const VikTrack *trk, gboolean include_segments);
+time_t vik_track_get_duration(const VikTrack *trk, bool include_segments);
 
-gulong vik_track_get_dup_point_count ( const VikTrack *vt );
-gulong vik_track_remove_dup_points ( VikTrack *vt );
-gulong vik_track_get_same_time_point_count ( const VikTrack *vt );
-gulong vik_track_remove_same_time_points ( VikTrack *vt );
+unsigned long vik_track_get_dup_point_count ( const VikTrack *vt );
+unsigned long vik_track_remove_dup_points ( VikTrack *vt );
+unsigned long vik_track_get_same_time_point_count ( const VikTrack *vt );
+unsigned long vik_track_remove_same_time_points ( VikTrack *vt );
 
 void vik_track_to_routepoints ( VikTrack *tr );
 
-gdouble vik_track_get_max_speed(const VikTrack *tr);
-gdouble vik_track_get_average_speed(const VikTrack *tr);
-gdouble vik_track_get_average_speed_moving ( const VikTrack *tr, int stop_length_seconds );
+double vik_track_get_max_speed(const VikTrack *tr);
+double vik_track_get_average_speed(const VikTrack *tr);
+double vik_track_get_average_speed_moving ( const VikTrack *tr, int stop_length_seconds );
 
 void vik_track_convert ( VikTrack *tr, VikCoordMode dest_mode );
-gdouble *vik_track_make_elevation_map ( const VikTrack *tr, guint16 num_chunks );
-void vik_track_get_total_elevation_gain(const VikTrack *tr, gdouble *up, gdouble *down);
-VikTrackpoint *vik_track_get_tp_by_dist ( VikTrack *trk, gdouble meters_from_start, gboolean get_next_point, gdouble *tp_metres_from_start );
-VikTrackpoint *vik_track_get_closest_tp_by_percentage_dist ( VikTrack *tr, gdouble reldist, gdouble *meters_from_start );
-VikTrackpoint *vik_track_get_closest_tp_by_percentage_time ( VikTrack *tr, gdouble reldist, time_t *seconds_from_start );
+double *vik_track_make_elevation_map ( const VikTrack *tr, uint16_t num_chunks );
+void vik_track_get_total_elevation_gain(const VikTrack *tr, double *up, double *down);
+VikTrackpoint *vik_track_get_tp_by_dist ( VikTrack *trk, double meters_from_start, bool get_next_point, double *tp_metres_from_start );
+VikTrackpoint *vik_track_get_closest_tp_by_percentage_dist ( VikTrack *tr, double reldist, double *meters_from_start );
+VikTrackpoint *vik_track_get_closest_tp_by_percentage_time ( VikTrack *tr, double reldist, time_t *seconds_from_start );
 VikTrackpoint *vik_track_get_tp_by_max_speed ( const VikTrack *tr );
 VikTrackpoint *vik_track_get_tp_by_max_alt ( const VikTrack *tr );
 VikTrackpoint *vik_track_get_tp_by_min_alt ( const VikTrack *tr );
 VikTrackpoint *vik_track_get_tp_first ( const VikTrack *tr );
 VikTrackpoint *vik_track_get_tp_last ( const VikTrack *tr );
 VikTrackpoint *vik_track_get_tp_prev ( const VikTrack *tr, VikTrackpoint *tp );
-gdouble *vik_track_make_gradient_map ( const VikTrack *tr, guint16 num_chunks );
-gdouble *vik_track_make_speed_map ( const VikTrack *tr, guint16 num_chunks );
-gdouble *vik_track_make_distance_map ( const VikTrack *tr, guint16 num_chunks );
-gdouble *vik_track_make_elevation_time_map ( const VikTrack *tr, guint16 num_chunks );
-gdouble *vik_track_make_speed_dist_map ( const VikTrack *tr, guint16 num_chunks );
-gboolean vik_track_get_minmax_alt ( const VikTrack *tr, gdouble *min_alt, gdouble *max_alt );
-void vik_track_marshall ( VikTrack *tr, guint8 **data, guint *len);
-VikTrack *vik_track_unmarshall (guint8 *data, guint datalen);
+double *vik_track_make_gradient_map ( const VikTrack *tr, uint16_t num_chunks );
+double *vik_track_make_speed_map ( const VikTrack *tr, uint16_t num_chunks );
+double *vik_track_make_distance_map ( const VikTrack *tr, uint16_t num_chunks );
+double *vik_track_make_elevation_time_map ( const VikTrack *tr, uint16_t num_chunks );
+double *vik_track_make_speed_dist_map ( const VikTrack *tr, uint16_t num_chunks );
+bool vik_track_get_minmax_alt ( const VikTrack *tr, double *min_alt, double *max_alt );
+void vik_track_marshall ( VikTrack *tr, uint8_t **data, unsigned int *len);
+VikTrack *vik_track_unmarshall (uint8_t *data, unsigned int datalen);
 
 void vik_track_calculate_bounds ( VikTrack *trk );
 
 void vik_track_anonymize_times ( VikTrack *tr );
 void vik_track_interpolate_times ( VikTrack *tr );
-gulong vik_track_apply_dem_data ( VikTrack *tr, gboolean skip_existing );
+unsigned long vik_track_apply_dem_data ( VikTrack *tr, bool skip_existing );
 void vik_track_apply_dem_data_last_trackpoint ( VikTrack *tr );
-gulong vik_track_smooth_missing_elevation_data ( VikTrack *tr, gboolean flat );
+unsigned long vik_track_smooth_missing_elevation_data ( VikTrack *tr, bool flat );
 
 void vik_track_steal_and_append_trackpoints ( VikTrack *t1, VikTrack *t2 );
 

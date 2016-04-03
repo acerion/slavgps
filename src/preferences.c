@@ -36,12 +36,12 @@
 
 static GPtrArray *params;
 static GHashTable *values;
-gboolean loaded;
+bool loaded;
 
 /************ groups *********/
 
 static GPtrArray *groups_names;
-static GHashTable *groups_keys_to_indices; // contains gint, NULL (0) is not found, instead 1 is used for 0, 2 for 1, etc.
+static GHashTable *groups_keys_to_indices; // contains int, NULL (0) is not found, instead 1 is used for 0, 2 for 1, etc.
 
 static void preferences_groups_init()
 {
@@ -52,41 +52,41 @@ static void preferences_groups_init()
 static void preferences_groups_uninit()
 {
   g_ptr_array_foreach ( groups_names, (GFunc)g_free, NULL );
-  g_ptr_array_free ( groups_names, TRUE );
+  g_ptr_array_free ( groups_names, true );
   g_hash_table_destroy ( groups_keys_to_indices );
 }
 
-void a_preferences_register_group ( const gchar *key, const gchar *name )
+void a_preferences_register_group ( const char *key, const char *name )
 {
   if ( g_hash_table_lookup ( groups_keys_to_indices, key ) )
     g_critical("Duplicate preferences group keys");
   else {
     g_ptr_array_add ( groups_names, g_strdup(name) );
-    g_hash_table_insert ( groups_keys_to_indices, g_strdup(key), GINT_TO_POINTER ( (gint) groups_names->len ) ); /* index + 1 */
+    g_hash_table_insert ( groups_keys_to_indices, g_strdup(key), GINT_TO_POINTER ( (int) groups_names->len ) ); /* index + 1 */
   }
 }
 
 /* returns -1 if not found. */
-static gint16 preferences_groups_key_to_index( const gchar *key )
+static int16_t preferences_groups_key_to_index( const char *key )
 {
-  gint index = GPOINTER_TO_INT ( g_hash_table_lookup ( groups_keys_to_indices, key ) );
+  int index = GPOINTER_TO_INT ( g_hash_table_lookup ( groups_keys_to_indices, key ) );
   if ( ! index )
     return VIK_LAYER_GROUP_NONE; /* which should be -1 anyway */
-  return (gint16) (index - 1);
+  return (int16_t) (index - 1);
 }
 
 /*****************************/
 
-static gboolean preferences_load_from_file()
+static bool preferences_load_from_file()
 {
-  gchar *fn = g_build_filename(a_get_viking_dir(), VIKING_PREFS_FILE, NULL);
+  char *fn = g_build_filename(a_get_viking_dir(), VIKING_PREFS_FILE, NULL);
   FILE *f = g_fopen(fn, "r");
   g_free ( fn );
 
   if ( f ) {
-    gchar buf[4096];
-    gchar *key = NULL;
-    gchar *val = NULL;
+    char buf[4096];
+    char *key = NULL;
+    char *val = NULL;
     VikLayerTypedParamData *oldval, *newval;
     while ( ! feof (f) ) {
       if (fgets(buf,sizeof(buf),f) == NULL)
@@ -115,19 +115,19 @@ static gboolean preferences_load_from_file()
     }
     fclose(f);
     f = NULL;
-    return TRUE;
+    return true;
   }
-  return FALSE;
+  return false;
 }
 
-static void preferences_run_setparam ( gpointer notused, guint16 i, VikLayerParamData data, VikLayerParam *vlparams )
+static void preferences_run_setparam ( void * notused, uint16_t i, VikLayerParamData data, VikLayerParam *vlparams )
 {
   // Don't change stored pointer values
   if ( vlparams[i].type == VIK_LAYER_PARAM_PTR )
     return;
   if ( vlparams[i].type == VIK_LAYER_PARAM_STRING_LIST )
     g_critical ( "Param strings not implemented in preferences"); //fake it
-  g_hash_table_insert ( values, (gchar *)(vlparams[i].name), vik_layer_typed_param_data_copy_from_data(vlparams[i].type, data) );
+  g_hash_table_insert ( values, (char *)(vlparams[i].name), vik_layer_typed_param_data_copy_from_data(vlparams[i].type, data) );
 }
 
 /* Allow preferences to be manipulated externally */
@@ -136,7 +136,7 @@ void a_preferences_run_setparam ( VikLayerParamData data, VikLayerParam *vlparam
   preferences_run_setparam (NULL, 0, data, vlparams);
 }
 
-static VikLayerParamData preferences_run_getparam ( gpointer notused, guint16 i, gboolean notused2 )
+static VikLayerParamData preferences_run_getparam ( void * notused, uint16_t i, bool notused2 )
 {
   VikLayerTypedParamData *val = (VikLayerTypedParamData *) g_hash_table_lookup ( values, ((VikLayerParam *)g_ptr_array_index(params,i))->name );
   g_assert ( val != NULL );
@@ -148,11 +148,11 @@ static VikLayerParamData preferences_run_getparam ( gpointer notused, guint16 i,
 /**
  * a_preferences_save_to_file:
  * 
- * Returns: TRUE on success
+ * Returns: true on success
  */
-gboolean a_preferences_save_to_file()
+bool a_preferences_save_to_file()
 {
-  gchar *fn = g_build_filename(a_get_viking_dir(), VIKING_PREFS_FILE, NULL);
+  char *fn = g_build_filename(a_get_viking_dir(), VIKING_PREFS_FILE, NULL);
 
   FILE *f = g_fopen(fn, "w");
   /* Since preferences files saves OSM login credentials,
@@ -175,27 +175,27 @@ gboolean a_preferences_save_to_file()
     }
     fclose(f);
     f = NULL;
-    return TRUE;
+    return true;
   }
 
-  return FALSE;
+  return false;
 }
 
 
 void a_preferences_show_window(GtkWindow *parent) {
-    //VikLayerParamData *a_uibuilder_run_dialog ( GtkWindow *parent, VikLayerParam \*params, // guint16 params_count, gchar **groups, guint8 groups_count, // VikLayerParamData *params_defaults )
+    //VikLayerParamData *a_uibuilder_run_dialog ( GtkWindow *parent, VikLayerParam \*params, // uint16_t params_count, char **groups, uint8_t groups_count, // VikLayerParamData *params_defaults )
     // TODO: THIS IS A MAJOR HACKAROUND, but ok when we have only a couple preferences.
-    gint params_count = params->len;
+    int params_count = params->len;
     VikLayerParam *contiguous_params = g_new(VikLayerParam,params_count);
     int i;
     for ( i = 0; i < params->len; i++ ) {
       contiguous_params[i] = *((VikLayerParam*)(g_ptr_array_index(params,i)));
     }
-    loaded = TRUE;
+    loaded = true;
     preferences_load_from_file();
     if ( a_uibuilder_properties_factory ( _("Preferences"), parent, contiguous_params, params_count,
-				(gchar **) groups_names->pdata, groups_names->len, // groups, groups_count, // groups? what groups?!
-				(gboolean (*) (gpointer,guint16,VikLayerParamData,gpointer,gboolean)) preferences_run_setparam,
+				(char **) groups_names->pdata, groups_names->len, // groups, groups_count, // groups? what groups?!
+				(bool (*) (void *,uint16_t,VikLayerParamData,void *,bool)) preferences_run_setparam,
 				NULL /* not used */, contiguous_params,
                                 preferences_run_getparam, NULL, NULL /* not used */ ) ) {
       a_preferences_save_to_file();
@@ -203,7 +203,7 @@ void a_preferences_show_window(GtkWindow *parent) {
     g_free ( contiguous_params );
 }
 
-void a_preferences_register(VikLayerParam *pref, VikLayerParamData defaultval, const gchar *group_key )
+void a_preferences_register(VikLayerParam *pref, VikLayerParamData defaultval, const char *group_key )
 {
   // All preferences should be registered before loading
   if ( loaded )
@@ -216,7 +216,7 @@ void a_preferences_register(VikLayerParam *pref, VikLayerParamData defaultval, c
     newpref->group = preferences_groups_key_to_index ( group_key );
 
   g_ptr_array_add ( params, newpref );
-  g_hash_table_insert ( values, (gchar *)pref->name, newval );
+  g_hash_table_insert ( values, (char *)pref->name, newval );
 }
 
 void a_preferences_init()
@@ -229,7 +229,7 @@ void a_preferences_init()
   /* key not copied (same ptr as in pref), actual param data yes */
   values = g_hash_table_new_full ( g_str_hash, g_str_equal, NULL, vik_layer_typed_param_data_free);
 
-  loaded = FALSE;
+  loaded = false;
 }
 
 void a_preferences_uninit()
@@ -237,20 +237,20 @@ void a_preferences_uninit()
   preferences_groups_uninit();
 
   g_ptr_array_foreach ( params, (GFunc)g_free, NULL );
-  g_ptr_array_free ( params, TRUE );
+  g_ptr_array_free ( params, true );
   g_hash_table_destroy ( values );
 }
 
 
 
-VikLayerParamData *a_preferences_get(const gchar *key)
+VikLayerParamData *a_preferences_get(const char *key)
 {
   if ( ! loaded ) {
     g_debug ( "%s: First time: %s\n", __FUNCTION__, key );
     /* since we can't load the file in a_preferences_init (no params registered yet),
      * do it once before we get the first key. */
     preferences_load_from_file();
-    loaded = TRUE;
+    loaded = true;
   }
   return g_hash_table_lookup ( values, key );
 }

@@ -22,6 +22,9 @@
 #ifndef _VIKING_MAPSLAYER_H
 #define _VIKING_MAPSLAYER_H
 
+#include <stdbool.h>
+#include <stdint.h>
+
 #include "vikcoord.h"
 #include "viklayer.h"
 #include "vikviewport.h"
@@ -59,16 +62,16 @@ typedef enum {
 //  http://wiki.osgeo.org/wiki/Tile_Map_Service_Specification
 
 void maps_layer_init ();
-void maps_layer_set_autodownload_default ( gboolean autodownload );
+void maps_layer_set_autodownload_default ( bool autodownload );
 void maps_layer_set_cache_default ( VikMapsCacheLayout layout );
-guint vik_maps_layer_get_default_map_type ();
+unsigned int vik_maps_layer_get_default_map_type ();
 void maps_layer_register_map_source ( VikMapSource *map );
-void vik_maps_layer_download_section ( VikMapsLayer *vml, VikViewport *vvp, VikCoord *ul, VikCoord *br, gdouble zoom );
-guint vik_maps_layer_get_map_type(VikMapsLayer *vml);
-void vik_maps_layer_set_map_type(VikMapsLayer *vml, guint map_type);
-gchar *vik_maps_layer_get_map_label(VikMapsLayer *vml);
-gchar *maps_layer_default_dir ();
-void vik_maps_layer_download ( VikMapsLayer *vml, VikViewport *vvp, gboolean only_new );
+void vik_maps_layer_download_section ( VikMapsLayer *vml, VikViewport *vvp, VikCoord *ul, VikCoord *br, double zoom );
+unsigned int vik_maps_layer_get_map_type(VikMapsLayer *vml);
+void vik_maps_layer_set_map_type(VikMapsLayer *vml, unsigned int map_type);
+char *vik_maps_layer_get_map_label(VikMapsLayer *vml);
+char *maps_layer_default_dir ();
+void vik_maps_layer_download ( VikMapsLayer *vml, VikViewport *vvp, bool only_new );
 
 G_END_DECLS
 

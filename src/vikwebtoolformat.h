@@ -23,6 +23,9 @@
 #define _VIKING_WEBTOOL_FORMAT_H
 
 #include <glib.h>
+#include <stdbool.h>
+#include <stdint.h>
+
 
 #include "vikwebtool.h"
 
@@ -41,7 +44,7 @@ typedef struct _VikWebtoolFormatClass VikWebtoolFormatClass;
 struct _VikWebtoolFormatClass
 {
 	VikWebtoolClass object_class;
-	guint8 (* mpp_to_zoom) (VikWebtool *self, gdouble mpp);
+	uint8_t (* mpp_to_zoom) (VikWebtool *self, double mpp);
 };
 
 GType vik_webtool_format_get_type ();
@@ -50,12 +53,12 @@ struct _VikWebtoolFormat {
 	VikWebtool obj;
 };
 
-guint8 vik_webtool_format_mpp_to_zoom (VikWebtool *self, gdouble mpp);
+uint8_t vik_webtool_format_mpp_to_zoom (VikWebtool *self, double mpp);
 
 VikWebtoolFormat* vik_webtool_format_new ( );
-VikWebtoolFormat* vik_webtool_format_new_with_members ( const gchar *label,
-                                                        const gchar *url,
-                                                        const gchar *url_format_code );
+VikWebtoolFormat* vik_webtool_format_new_with_members ( const char *label,
+                                                        const char *url,
+                                                        const char *url_format_code );
 
 G_END_DECLS
 

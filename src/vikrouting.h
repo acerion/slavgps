@@ -22,23 +22,26 @@
 #define _VIKING_ROUTING_H
 
 #include <glib.h>
+#include <stdbool.h>
+#include <stdint.h>
+
 
 #include "vikroutingengine.h"
 
 G_BEGIN_DECLS
 
 /* Default */
-gboolean vik_routing_default_find ( VikTrwLayer *vt, struct LatLon start, struct LatLon end );
+bool vik_routing_default_find ( VikTrwLayer *vt, struct LatLon start, struct LatLon end );
 
 /* Routing engines management */
 void vik_routing_prefs_init();
 void vik_routing_register( VikRoutingEngine *engine );
 void vik_routing_unregister_all ();
-void vik_routing_foreach_engine ( GFunc func, gpointer user_data );
+void vik_routing_foreach_engine ( GFunc func, void * user_data );
 
 /* UI */
-typedef gboolean (*Predicate)( gpointer data, gpointer user_data );
-GtkWidget *vik_routing_ui_selector_new ( Predicate func, gpointer user_data );
+typedef bool (*Predicate)( void * data, void * user_data );
+GtkWidget *vik_routing_ui_selector_new ( Predicate func, void * user_data );
 VikRoutingEngine *vik_routing_ui_selector_get_nth ( GtkWidget *combo, int pos );
 
 /* Needs to be visible to display info about which routing engine is getting the route in viktrwlayer.c  */

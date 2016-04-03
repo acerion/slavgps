@@ -25,6 +25,9 @@
 #include <glib.h>
 #include <glib-object.h>
 #include <gtk/gtk.h>
+#include <stdbool.h>
+#include <stdint.h>
+
 
 G_BEGIN_DECLS
 
@@ -57,8 +60,8 @@ GType vik_trw_layer_tpwin_get_type ();
 VikTrwLayerTpwin *vik_trw_layer_tpwin_new ( GtkWindow *parent );
 void vik_trw_layer_tpwin_set_empty ( VikTrwLayerTpwin *tpwin );
 void vik_trw_layer_tpwin_disable_join ( VikTrwLayerTpwin *tpwin );
-void vik_trw_layer_tpwin_set_tp ( VikTrwLayerTpwin *tpwin, GList *tpl, const gchar *track_name, gboolean is_route );
-void vik_trw_layer_tpwin_set_track_name ( VikTrwLayerTpwin *tpwin, const gchar *track_name );
+void vik_trw_layer_tpwin_set_tp ( VikTrwLayerTpwin *tpwin, GList *tpl, const char *track_name, bool is_route );
+void vik_trw_layer_tpwin_set_track_name ( VikTrwLayerTpwin *tpwin, const char *track_name );
 
 G_END_DECLS
 

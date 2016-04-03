@@ -41,13 +41,13 @@
 
 #include "expedia.h"
 
-static gboolean expedia_coord_to_mapcoord ( const VikCoord *src, gdouble xzoom, gdouble yzoom, MapCoord *dest );
+static bool expedia_coord_to_mapcoord ( const VikCoord *src, double xzoom, double yzoom, MapCoord *dest );
 static void expedia_mapcoord_to_center_coord ( MapCoord *src, VikCoord *dest );
-static int expedia_download ( MapCoord *src, const gchar *dest_fn, void *handle );
+static int expedia_download ( MapCoord *src, const char *dest_fn, void *handle );
 static void * expedia_handle_init ( );
 static void expedia_handle_cleanup ( void *handle );
 
-static DownloadFileOptions expedia_options = { FALSE, FALSE, NULL, 2, a_check_map_file, NULL };
+static DownloadFileOptions expedia_options = { false, false, NULL, 2, a_check_map_file, NULL };
 
 void expedia_init() {
   VikMapsLayer_MapType map_type = { MAP_ID_EXPEDIA, 0, 0, VIK_VIEWPORT_DRAWMODE_EXPEDIA, expedia_coord_to_mapcoord, expedia_mapcoord_to_center_coord, expedia_download, expedia_handle_init, expedia_handle_cleanup };
@@ -67,14 +67,14 @@ void expedia_init() {
 /* first buffer is to cut off the expedia/microsoft logo. Annoying little buggers ;) */
 /* second is to allow for a 1-pixel overlap on each side. this is a good thing (tm) */
 
-static const guint expedia_altis[]              = { 1, 2, 4, 8, 16, 32, 64, 128, 256, 512 };
+static const unsigned int expedia_altis[]              = { 1, 2, 4, 8, 16, 32, 64, 128, 256, 512 };
 /* square this number to find out how many per square degree. */
-static const gdouble expedia_altis_degree_freq[]  = { 120, 60, 30, 15, 8, 4, 2, 1, 1, 1 };
-static const guint expedia_altis_count = sizeof(expedia_altis) / sizeof(expedia_altis[0]);
+static const double expedia_altis_degree_freq[]  = { 120, 60, 30, 15, 8, 4, 2, 1, 1, 1 };
+static const unsigned int expedia_altis_count = sizeof(expedia_altis) / sizeof(expedia_altis[0]);
 
-gdouble expedia_altis_freq ( gint alti )
+double expedia_altis_freq ( int alti )
 {
-  static gint i;
+  static int i;
   for ( i = 0; i < expedia_altis_count; i++ )
     if ( expedia_altis[i] == alti )
       return expedia_altis_degree_freq [ i ];
@@ -84,9 +84,9 @@ gdouble expedia_altis_freq ( gint alti )
 }
 
 /* returns -1 if none of the above. */
-gint expedia_zoom_to_alti ( gdouble zoom )
+int expedia_zoom_to_alti ( double zoom )
 {
-  guint i;
+  unsigned int i;
   for ( i = 0; i < expedia_altis_count; i++ )
     if ( fabs(expedia_altis[i] - zoom) / zoom < MPP_MARGIN_OF_ERROR )
       return expedia_altis[i];
@@ -94,18 +94,18 @@ gint expedia_zoom_to_alti ( gdouble zoom )
 }
 
 /*
-gint expedia_pseudo_zone ( gint alti, gint x, gint y )
+int expedia_pseudo_zone ( int alti, int x, int y )
 {
   return (int) (x/expedia_altis_freq(alti)*180) + (int) (y/expedia_altis_freq(alti)*90);
 }
 */
 
-void expedia_snip ( const gchar *file )
+void expedia_snip ( const char *file )
 {
   /* Load the pixbuf */
   GError *gx = NULL;
   GdkPixbuf *old, *cropped;
-  gint width, height;
+  int width, height;
 
   old = gdk_pixbuf_new_from_file ( file, &gx );
   if (gx)
@@ -133,14 +133,14 @@ void expedia_snip ( const gchar *file )
 
 /* if degree_freeq = 60 -> nearest minute (in middle) */
 /* everything starts at -90,-180 -> 0,0. then increments by (1/degree_freq) */
-static gboolean expedia_coord_to_mapcoord ( const VikCoord *src, gdouble xzoom, gdouble yzoom, MapCoord *dest )
+static bool expedia_coord_to_mapcoord ( const VikCoord *src, double xzoom, double yzoom, MapCoord *dest )
 {
-  gint alti;
+  int alti;
 
   g_assert ( src->mode == VIK_COORD_LATLON );
 
   if ( xzoom != yzoom )
-    return FALSE;
+    return false;
 
   alti = expedia_zoom_to_alti ( xzoom );
   if ( alti != -1 )
@@ -152,29 +152,29 @@ static gboolean expedia_coord_to_mapcoord ( const VikCoord *src, gdouble xzoom, 
 
     /* just to space out tiles on the filesystem */
     dest->z = 0;
-    return TRUE;
+    return true;
   }
-  return FALSE;
+  return false;
 }
 
-void expedia_xy_to_latlon_middle ( gint alti, gint x, gint y, struct LatLon *ll )
+void expedia_xy_to_latlon_middle ( int alti, int x, int y, struct LatLon *ll )
 {
-  ll->lon = (((gdouble)x) / expedia_altis_freq(alti)) - 180;
-  ll->lat = (((gdouble)y) / expedia_altis_freq(alti)) - 90;
+  ll->lon = (((double)x) / expedia_altis_freq(alti)) - 180;
+  ll->lat = (((double)y) / expedia_altis_freq(alti)) - 90;
 }
 
 static void expedia_mapcoord_to_center_coord ( MapCoord *src, VikCoord *dest )
 {
   dest->mode = VIK_COORD_LATLON;
-  dest->east_west = (((gdouble)src->x) / expedia_altis_freq(src->scale)) - 180;
-  dest->north_south = (((gdouble)src->y) / expedia_altis_freq(src->scale)) - 90;
+  dest->east_west = (((double)src->x) / expedia_altis_freq(src->scale)) - 180;
+  dest->north_south = (((double)src->y) / expedia_altis_freq(src->scale)) - 90;
 }
 
-static DownloadResult_t expedia_download ( MapCoord *src, const gchar *dest_fn, void *handle )
+static DownloadResult_t expedia_download ( MapCoord *src, const char *dest_fn, void *handle )
 {
-  gint height, width;
+  int height, width;
   struct LatLon ll;
-  gchar *uri;
+  char *uri;
 
   expedia_xy_to_latlon_middle ( src->scale, src->x, src->y, &ll );
 

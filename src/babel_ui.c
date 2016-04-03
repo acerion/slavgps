@@ -26,7 +26,7 @@
 #include "babel_ui.h"
 
 
-static void babel_ui_selector_add_entry_cb ( gpointer data, gpointer user_data )
+static void babel_ui_selector_add_entry_cb ( void * data, void * user_data )
 {
   BabelFile *file = (BabelFile*)data;
   GtkWidget *combo = GTK_WIDGET(user_data);
@@ -35,11 +35,11 @@ static void babel_ui_selector_add_entry_cb ( gpointer data, gpointer user_data )
   formats = g_list_append ( formats, file );
   g_object_set_data ( G_OBJECT(combo), "formats", formats );
 
-  const gchar *label = file->label;
+  const char *label = file->label;
   vik_combo_box_text_append ( combo, label );
 }
 
-void a_babel_ui_type_selector_dialog_sensitivity_cb ( GtkComboBox *widget, gpointer user_data )
+void a_babel_ui_type_selector_dialog_sensitivity_cb ( GtkComboBox *widget, void * user_data )
 {
   /* user_data is the GtkDialog */
   GtkDialog *dialog = GTK_DIALOG(user_data);
@@ -49,10 +49,10 @@ void a_babel_ui_type_selector_dialog_sensitivity_cb ( GtkComboBox *widget, gpoin
 
   if ( file )
     /* Not NULL => valid selection */
-    gtk_dialog_set_response_sensitive ( dialog, GTK_RESPONSE_ACCEPT, TRUE );
+    gtk_dialog_set_response_sensitive ( dialog, GTK_RESPONSE_ACCEPT, true );
   else
     /* NULL => invalid selection */
-    gtk_dialog_set_response_sensitive ( dialog, GTK_RESPONSE_ACCEPT, FALSE );
+    gtk_dialog_set_response_sensitive ( dialog, GTK_RESPONSE_ACCEPT, false );
 }
 
 /**
@@ -116,7 +116,7 @@ void a_babel_ui_file_type_selector_destroy ( GtkWidget *selector )
  */
 BabelFile *a_babel_ui_file_type_selector_get ( GtkWidget *selector )
 {
-  gint active = gtk_combo_box_get_active ( GTK_COMBO_BOX(selector) );
+  int active = gtk_combo_box_get_active ( GTK_COMBO_BOX(selector) );
   if (active >= 0) {
     GList *formats = g_object_get_data ( G_OBJECT(selector), "formats" );
     return (BabelFile*)g_list_nth_data ( formats, active );
@@ -136,24 +136,24 @@ BabelFile *a_babel_ui_file_type_selector_get ( GtkWidget *selector )
  *
  * Returns: a GtkWidget packing all checkboxes.
  */
-GtkWidget *a_babel_ui_modes_new ( gboolean tracks, gboolean routes, gboolean waypoints )
+GtkWidget *a_babel_ui_modes_new ( bool tracks, bool routes, bool waypoints )
 {
-  GtkWidget *hbox = gtk_hbox_new( FALSE, 0 );
+  GtkWidget *hbox = gtk_hbox_new( false, 0 );
   GtkWidget *button = NULL;
 
   button = gtk_check_button_new_with_label ( _("Tracks") );
   gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(button), tracks );
-  gtk_box_pack_start ( GTK_BOX(hbox), button, TRUE, TRUE, 0 );
+  gtk_box_pack_start ( GTK_BOX(hbox), button, true, true, 0 );
   gtk_widget_show ( button );
 
   button = gtk_check_button_new_with_label ( _("Routes") );
   gtk_toggle_button_set_active ( GTK_TOGGLE_BUTTON(button), routes );
-  gtk_box_pack_start ( GTK_BOX(hbox), button, TRUE, TRUE, 0 );
+  gtk_box_pack_start ( GTK_BOX(hbox), button, true, true, 0 );
   gtk_widget_show ( button );
 
   button = gtk_check_button_new_with_label ( _("Waypoints") );
   gtk_toggle_button_set_active ( GTK_TOGGLE_BUTTON(button), waypoints );
-  gtk_box_pack_start ( GTK_BOX(hbox), button, TRUE, TRUE, 0 );
+  gtk_box_pack_start ( GTK_BOX(hbox), button, true, true, 0 );
   gtk_widget_show ( button );
 
   return hbox;
@@ -168,7 +168,7 @@ GtkWidget *a_babel_ui_modes_new ( gboolean tracks, gboolean routes, gboolean way
  *
  * Retrieve state of checkboxes.
  */
-void a_babel_ui_modes_get ( GtkWidget *container, gboolean *tracks, gboolean *routes, gboolean *waypoints )
+void a_babel_ui_modes_get ( GtkWidget *container, bool *tracks, bool *routes, bool *waypoints )
 {
   GList* children = gtk_container_get_children ( GTK_CONTAINER(container) );
   GtkWidget *child = NULL;

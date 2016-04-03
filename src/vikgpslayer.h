@@ -23,6 +23,9 @@
 #ifndef _VIKING_GPSLAYER_H
 #define _VIKING_GPSLAYER_H
 
+#include <stdbool.h>
+#include <stdint.h>
+
 #include "viklayer.h"
 #include "viktrack.h"
 
@@ -55,23 +58,23 @@ typedef enum {
 
 typedef struct _VikGpsLayer VikGpsLayer;
 
-gboolean vik_gps_layer_is_empty ( VikGpsLayer *vgl );
+bool vik_gps_layer_is_empty ( VikGpsLayer *vgl );
 const GList *vik_gps_layer_get_children ( VikGpsLayer *vgl );
 VikTrwLayer * vik_gps_layer_get_a_child(VikGpsLayer *vgl);
 
 // Non layer specific but expose communal method
-gint vik_gps_comm ( VikTrwLayer *vtl,
+int vik_gps_comm ( VikTrwLayer *vtl,
                     VikTrack *track,
                     vik_gps_dir dir,
-                    gchar *protocol,
-                    gchar *port,
-                    gboolean tracking,
+                    char *protocol,
+                    char *port,
+                    bool tracking,
                     VikViewport *vvp,
                     VikLayersPanel *vlp,
-                    gboolean do_tracks,
-                    gboolean do_routes,
-                    gboolean do_waypoints,
-		    gboolean turn_off);
+                    bool do_tracks,
+                    bool do_routes,
+                    bool do_waypoints,
+		    bool turn_off);
 
 G_END_DECLS
 

@@ -35,15 +35,15 @@
 static GObjectClass *parent_class;
 
 static void goto_tool_finalize ( GObject *gob );
-static gchar *goto_tool_get_label ( VikGotoTool *vw );
+static char *goto_tool_get_label ( VikGotoTool *vw );
 static DownloadFileOptions *goto_tool_get_download_options ( VikGotoTool *self );
 
 typedef struct _VikGotoToolPrivate VikGotoToolPrivate;
 
 struct _VikGotoToolPrivate
 {
-  gint   id;
-  gchar *label;
+  int   id;
+  char *label;
 };
 
 #define GOTO_TOOL_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), \
@@ -62,7 +62,7 @@ enum
 
 static void
 goto_tool_set_property (GObject      *object,
-                          guint         property_id,
+                          unsigned int         property_id,
                           const GValue *value,
                           GParamSpec   *pspec)
 {
@@ -91,7 +91,7 @@ goto_tool_set_property (GObject      *object,
 
 static void
 goto_tool_get_property (GObject    *object,
-                          guint       property_id,
+                          unsigned int       property_id,
                           GValue     *value,
                           GParamSpec *pspec)
 {
@@ -171,7 +171,7 @@ static void goto_tool_finalize ( GObject *gob )
   G_OBJECT_CLASS(parent_class)->finalize(gob);
 }
 
-static gchar *goto_tool_get_label ( VikGotoTool *self )
+static char *goto_tool_get_label ( VikGotoTool *self )
 {
   VikGotoToolPrivate *priv = NULL;
   priv = GOTO_TOOL_GET_PRIVATE (self);
@@ -184,12 +184,12 @@ static DownloadFileOptions *goto_tool_get_download_options ( VikGotoTool *self )
   return NULL;
 }
 
-gchar *vik_goto_tool_get_label ( VikGotoTool *self )
+char *vik_goto_tool_get_label ( VikGotoTool *self )
 {
   return VIK_GOTO_TOOL_GET_CLASS( self )->get_label( self );
 }
 
-gchar *vik_goto_tool_get_url_format ( VikGotoTool *self )
+char *vik_goto_tool_get_url_format ( VikGotoTool *self )
 {
   return VIK_GOTO_TOOL_GET_CLASS( self )->get_url_format( self );
 }
@@ -199,7 +199,7 @@ DownloadFileOptions *vik_goto_tool_get_download_options ( VikGotoTool *self )
   return VIK_GOTO_TOOL_GET_CLASS( self )->get_download_options( self );
 }
 
-gboolean vik_goto_tool_parse_file_for_latlon (VikGotoTool *self, gchar *filename, struct LatLon *ll)
+bool vik_goto_tool_parse_file_for_latlon (VikGotoTool *self, char *filename, struct LatLon *ll)
 {
   return VIK_GOTO_TOOL_GET_CLASS( self )->parse_file_for_latlon( self, filename, ll );
 }
@@ -218,11 +218,11 @@ gboolean vik_goto_tool_parse_file_for_latlon (VikGotoTool *self, gchar *filename
  *  1  = search unavailable in the #VikGotoTool due to communication issue
  *
  */
-int vik_goto_tool_get_coord ( VikGotoTool *self, VikWindow *vw, VikViewport *vvp, gchar *srch_str, VikCoord *coord )
+int vik_goto_tool_get_coord ( VikGotoTool *self, VikWindow *vw, VikViewport *vvp, char *srch_str, VikCoord *coord )
 {
-  gchar *tmpname;
-  gchar *uri;
-  gchar *escaped_srch_str;
+  char *tmpname;
+  char *uri;
+  char *escaped_srch_str;
   int ret = 0;  /* OK */
   struct LatLon ll;
 

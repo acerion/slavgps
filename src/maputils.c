@@ -28,14 +28,14 @@
 // Submeter scale: 1/VIK_GZ(5)
 // No map provider is going to have tiles at the highest zoom in level - but we can interpolate to that.
 
-static const gdouble scale_mpps[] = { VIK_GZ(0), VIK_GZ(1), VIK_GZ(2), VIK_GZ(3), VIK_GZ(4), VIK_GZ(5),
+static const double scale_mpps[] = { VIK_GZ(0), VIK_GZ(1), VIK_GZ(2), VIK_GZ(3), VIK_GZ(4), VIK_GZ(5),
                                       VIK_GZ(6), VIK_GZ(7), VIK_GZ(8), VIK_GZ(9), VIK_GZ(10), VIK_GZ(11),
                                       VIK_GZ(12), VIK_GZ(13), VIK_GZ(14), VIK_GZ(15), VIK_GZ(16), VIK_GZ(17) };
-static const gint num_scales = (sizeof(scale_mpps) / sizeof(scale_mpps[0]));
+static const int num_scales = (sizeof(scale_mpps) / sizeof(scale_mpps[0]));
 
-static const gdouble scale_neg_mpps[] = { 1.0/VIK_GZ(0), 1.0/VIK_GZ(1), 1.0/VIK_GZ(2),
+static const double scale_neg_mpps[] = { 1.0/VIK_GZ(0), 1.0/VIK_GZ(1), 1.0/VIK_GZ(2),
                                           1.0/VIK_GZ(3), 1.0/VIK_GZ(4), 1.0/VIK_GZ(5) };
-static const gint num_scales_neg = (sizeof(scale_neg_mpps) / sizeof(scale_neg_mpps[0]));
+static const int num_scales_neg = (sizeof(scale_neg_mpps) / sizeof(scale_neg_mpps[0]));
 
 #define ERROR_MARGIN 0.01
 /**
@@ -44,8 +44,8 @@ static const gint num_scales_neg = (sizeof(scale_neg_mpps) / sizeof(scale_neg_mp
  *
  * Returns: the zoom scale value which may be negative.
  */
-gint map_utils_mpp_to_scale ( gdouble mpp ) {
-	gint i;
+int map_utils_mpp_to_scale ( double mpp ) {
+	int i;
 	for ( i = 0; i < num_scales; i++ ) {
 		if ( ABS(scale_mpps[i] - mpp) < ERROR_MARGIN ) {
 			return i;
@@ -67,9 +67,9 @@ gint map_utils_mpp_to_scale ( gdouble mpp ) {
  * Returns: a Zoom Level
  *  See: http://wiki.openstreetmap.org/wiki/Zoom_levels
  */
-guint8 map_utils_mpp_to_zoom_level ( gdouble mpp )
+uint8_t map_utils_mpp_to_zoom_level ( double mpp )
 {
-	gint answer = 17 - map_utils_mpp_to_scale ( mpp );
+	int answer = 17 - map_utils_mpp_to_scale ( mpp );
 	if ( answer < 0 )
 		answer = 17;
 	return answer;
@@ -98,29 +98,29 @@ guint8 map_utils_mpp_to_zoom_level ( gdouble mpp )
  *
  * Returns: whether the conversion was performed
  */
-gboolean map_utils_vikcoord_to_iTMS ( const VikCoord *src, gdouble xzoom, gdouble yzoom, MapCoord *dest )
+bool map_utils_vikcoord_to_iTMS ( const VikCoord *src, double xzoom, double yzoom, MapCoord *dest )
 {
   if ( src->mode != VIK_COORD_LATLON )
-    return FALSE;
+    return false;
 
   if ( xzoom != yzoom )
-    return FALSE;
+    return false;
 
   dest->scale = map_utils_mpp_to_scale ( xzoom );
   if ( dest->scale == 255 )
-    return FALSE;
+    return false;
 
   dest->x = (src->east_west + 180) / 360 * VIK_GZ(17) / xzoom;
   dest->y = (180 - MERCLAT(src->north_south)) / 360 * VIK_GZ(17) / xzoom;
   dest->z = 0;
 
-  return TRUE;
+  return true;
 }
 
 // Internal convenience function
-static void _to_vikcoord_with_offset ( const MapCoord *src, VikCoord *dest, gdouble offset )
+static void _to_vikcoord_with_offset ( const MapCoord *src, VikCoord *dest, double offset )
 {
-  gdouble socalled_mpp;
+  double socalled_mpp;
   if (src->scale >= 0)
     socalled_mpp = VIK_GZ(src->scale);
   else

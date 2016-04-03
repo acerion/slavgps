@@ -37,7 +37,7 @@ enum {
   VLP_LAST_SIGNAL
 };
 
-static guint layers_panel_signals[VLP_LAST_SIGNAL] = { 0 };
+static unsigned int layers_panel_signals[VLP_LAST_SIGNAL] = { 0 };
 
 static GObjectClass *parent_class;
 
@@ -59,13 +59,13 @@ static GtkActionEntry entries[] = {
 };
 
 static void layers_item_toggled (VikLayersPanel *vlp, GtkTreeIter *iter);
-static void layers_item_edited (VikLayersPanel *vlp, GtkTreeIter *iter, const gchar *new_text);
+static void layers_item_edited (VikLayersPanel *vlp, GtkTreeIter *iter, const char *new_text);
 static void menu_popup_cb (VikLayersPanel *vlp);
 static void layers_popup_cb (VikLayersPanel *vlp);
-static void layers_popup ( VikLayersPanel *vlp, GtkTreeIter *iter, gint mouse_button );
-static gboolean layers_button_press_cb (VikLayersPanel *vlp, GdkEventButton *event);
-static gboolean layers_key_press_cb (VikLayersPanel *vlp, GdkEventKey *event);
-static void layers_move_item ( VikLayersPanel *vlp, gboolean up );
+static void layers_popup ( VikLayersPanel *vlp, GtkTreeIter *iter, int mouse_button );
+static bool layers_button_press_cb (VikLayersPanel *vlp, GdkEventButton *event);
+static bool layers_key_press_cb (VikLayersPanel *vlp, GdkEventKey *event);
+static void layers_move_item ( VikLayersPanel *vlp, bool up );
 static void layers_move_item_up ( VikLayersPanel *vlp );
 static void layers_move_item_down ( VikLayersPanel *vlp );
 static void layers_panel_finalize ( GObject *gob );
@@ -102,7 +102,7 @@ VikViewport *vik_layers_panel_get_viewport ( VikLayersPanel *vlp )
   return vlp->vvp;
 }
 
-static gboolean layers_panel_new_layer ( gpointer lpnl[2] )
+static bool layers_panel_new_layer ( void * lpnl[2] )
 {
   return vik_layers_panel_new_layer ( lpnl[0], GPOINTER_TO_INT(lpnl[1]) );
 }
@@ -111,11 +111,11 @@ static gboolean layers_panel_new_layer ( gpointer lpnl[2] )
  * Create menu popup on demand
  * @full: offer cut/copy options as well - not just the new layer options
  */
-static GtkWidget* layers_panel_create_popup ( VikLayersPanel *vlp, gboolean full )
+static GtkWidget* layers_panel_create_popup ( VikLayersPanel *vlp, bool full )
 {
   GtkWidget *menu = gtk_menu_new ();
   GtkWidget *menuitem;
-  guint ii;
+  unsigned int ii;
 
   if ( full ) {
     for ( ii = 0; ii < G_N_ELEMENTS(entries); ii++ ) {
@@ -139,7 +139,7 @@ static GtkWidget* layers_panel_create_popup ( VikLayersPanel *vlp, gboolean full
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (menuitem), submenu );
 
   // Static: so memory accessible yet not continually allocated
-  static gpointer lpnl[VIK_LAYER_NUM_TYPES][2];
+  static void * lpnl[VIK_LAYER_NUM_TYPES][2];
 
   for ( ii = 0; ii < VIK_LAYER_NUM_TYPES; ii++ ) {
     if ( vik_layer_get_interface(ii)->icon ) {
@@ -174,14 +174,14 @@ static void vik_layers_panel_init ( VikLayersPanel *vlp )
 
   vlp->vvp = NULL;
 
-  hbox = gtk_hbox_new ( TRUE, 2 );
+  hbox = gtk_hbox_new ( true, 2 );
   vlp->vt = vik_treeview_new ( );
 
   vlp->toplayer = vik_aggregate_layer_new ();
   vik_layer_rename ( VIK_LAYER(vlp->toplayer), _("Top Layer"));
   g_signal_connect_swapped ( G_OBJECT(vlp->toplayer), "update", G_CALLBACK(vik_layers_panel_emit_update), vlp );
 
-  vik_treeview_add_layer ( vlp->vt, NULL, &(vlp->toplayer_iter), VIK_LAYER(vlp->toplayer)->name, NULL, TRUE, vlp->toplayer, VIK_LAYER_AGGREGATE, VIK_LAYER_AGGREGATE, 0 );
+  vik_treeview_add_layer ( vlp->vt, NULL, &(vlp->toplayer_iter), VIK_LAYER(vlp->toplayer)->name, NULL, true, vlp->toplayer, VIK_LAYER_AGGREGATE, VIK_LAYER_AGGREGATE, 0 );
   vik_layer_realize ( VIK_LAYER(vlp->toplayer), vlp->vt, &(vlp->toplayer_iter) );
 
   g_signal_connect_swapped ( vlp->vt, "popup_menu", G_CALLBACK(menu_popup_cb), vlp);
@@ -195,66 +195,66 @@ static void vik_layers_panel_init ( VikLayersPanel *vlp )
   addbutton = gtk_button_new ( );
   gtk_container_add ( GTK_CONTAINER(addbutton), addimage );
   gtk_widget_set_tooltip_text ( GTK_WIDGET(addbutton), _("Add new layer"));
-  gtk_box_pack_start ( GTK_BOX(hbox), addbutton, TRUE, TRUE, 0 );
+  gtk_box_pack_start ( GTK_BOX(hbox), addbutton, true, true, 0 );
   g_signal_connect_swapped ( G_OBJECT(addbutton), "clicked", G_CALLBACK(layers_popup_cb), vlp );
   /* Remove button */
   removeimage = gtk_image_new_from_stock ( GTK_STOCK_REMOVE, GTK_ICON_SIZE_SMALL_TOOLBAR );
   removebutton = gtk_button_new ( );
   gtk_container_add ( GTK_CONTAINER(removebutton), removeimage );
   gtk_widget_set_tooltip_text ( GTK_WIDGET(removebutton), _("Remove selected layer"));
-  gtk_box_pack_start ( GTK_BOX(hbox), removebutton, TRUE, TRUE, 0 );
+  gtk_box_pack_start ( GTK_BOX(hbox), removebutton, true, true, 0 );
   g_signal_connect_swapped ( G_OBJECT(removebutton), "clicked", G_CALLBACK(vik_layers_panel_delete_selected), vlp );
   /* Up button */
   upimage = gtk_image_new_from_stock ( GTK_STOCK_GO_UP, GTK_ICON_SIZE_SMALL_TOOLBAR );
   upbutton = gtk_button_new ( );
   gtk_container_add ( GTK_CONTAINER(upbutton), upimage );
   gtk_widget_set_tooltip_text ( GTK_WIDGET(upbutton), _("Move selected layer up"));
-  gtk_box_pack_start ( GTK_BOX(hbox), upbutton, TRUE, TRUE, 0 );
+  gtk_box_pack_start ( GTK_BOX(hbox), upbutton, true, true, 0 );
   g_signal_connect_swapped ( G_OBJECT(upbutton), "clicked", G_CALLBACK(layers_move_item_up), vlp );
   /* Down button */
   downimage = gtk_image_new_from_stock ( GTK_STOCK_GO_DOWN, GTK_ICON_SIZE_SMALL_TOOLBAR );
   downbutton = gtk_button_new ( );
   gtk_container_add ( GTK_CONTAINER(downbutton), downimage );
   gtk_widget_set_tooltip_text ( GTK_WIDGET(downbutton), _("Move selected layer down"));
-  gtk_box_pack_start ( GTK_BOX(hbox), downbutton, TRUE, TRUE, 0 );
+  gtk_box_pack_start ( GTK_BOX(hbox), downbutton, true, true, 0 );
   g_signal_connect_swapped ( G_OBJECT(downbutton), "clicked", G_CALLBACK(layers_move_item_down), vlp );
   /* Cut button */
   cutimage = gtk_image_new_from_stock ( GTK_STOCK_CUT, GTK_ICON_SIZE_SMALL_TOOLBAR );
   cutbutton = gtk_button_new ( );
   gtk_container_add ( GTK_CONTAINER(cutbutton), cutimage );
   gtk_widget_set_tooltip_text ( GTK_WIDGET(cutbutton), _("Cut selected layer"));
-  gtk_box_pack_start ( GTK_BOX(hbox), cutbutton, TRUE, TRUE, 0 );
+  gtk_box_pack_start ( GTK_BOX(hbox), cutbutton, true, true, 0 );
   g_signal_connect_swapped ( G_OBJECT(cutbutton), "clicked", G_CALLBACK(vik_layers_panel_cut_selected), vlp );
   /* Copy button */
   copyimage = gtk_image_new_from_stock ( GTK_STOCK_COPY, GTK_ICON_SIZE_SMALL_TOOLBAR );
   copybutton = gtk_button_new ( );
   gtk_container_add ( GTK_CONTAINER(copybutton), copyimage );
   gtk_widget_set_tooltip_text ( GTK_WIDGET(copybutton), _("Copy selected layer"));
-  gtk_box_pack_start ( GTK_BOX(hbox), copybutton, TRUE, TRUE, 0 );
+  gtk_box_pack_start ( GTK_BOX(hbox), copybutton, true, true, 0 );
   g_signal_connect_swapped ( G_OBJECT(copybutton), "clicked", G_CALLBACK(vik_layers_panel_copy_selected), vlp );
   /* Paste button */
   pasteimage = gtk_image_new_from_stock ( GTK_STOCK_PASTE, GTK_ICON_SIZE_SMALL_TOOLBAR );
   pastebutton = gtk_button_new ( );
   gtk_container_add ( GTK_CONTAINER(pastebutton),pasteimage );
   gtk_widget_set_tooltip_text ( GTK_WIDGET(pastebutton), _("Paste layer into selected container layer or otherwise above selected layer"));
-  gtk_box_pack_start ( GTK_BOX(hbox), pastebutton, TRUE, TRUE, 0 );
+  gtk_box_pack_start ( GTK_BOX(hbox), pastebutton, true, true, 0 );
   g_signal_connect_swapped ( G_OBJECT(pastebutton), "clicked", G_CALLBACK(vik_layers_panel_paste_selected), vlp );
 
   scrolledwindow = gtk_scrolled_window_new ( NULL, NULL );
   gtk_scrolled_window_set_policy ( GTK_SCROLLED_WINDOW(scrolledwindow), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC );
   gtk_container_add ( GTK_CONTAINER(scrolledwindow), GTK_WIDGET(vlp->vt) );
   
-  gtk_box_pack_start ( GTK_BOX(vlp), scrolledwindow, TRUE, TRUE, 0 );
-  gtk_box_pack_start ( GTK_BOX(vlp), hbox, FALSE, FALSE, 0 );
+  gtk_box_pack_start ( GTK_BOX(vlp), scrolledwindow, true, true, 0 );
+  gtk_box_pack_start ( GTK_BOX(vlp), hbox, false, false, 0 );
 }
 
 /**
  * Invoke the actual drawing via signal method
  */
-static gboolean idle_draw_panel ( VikLayersPanel *vlp )
+static bool idle_draw_panel ( VikLayersPanel *vlp )
 {
   g_signal_emit ( G_OBJECT(vlp), layers_panel_signals[VLP_UPDATE_SIGNAL], 0 );
-  return FALSE; // Nothing else to do
+  return false; // Nothing else to do
 }
 
 void vik_layers_panel_emit_update ( VikLayersPanel *vlp )
@@ -274,9 +274,9 @@ void vik_layers_panel_emit_update ( VikLayersPanel *vlp )
 
 static void layers_item_toggled (VikLayersPanel *vlp, GtkTreeIter *iter)
 {
-  gboolean visible;
-  gpointer p;
-  gint type;
+  bool visible;
+  void * p;
+  int type;
 
   /* get type and data */
   type = vik_treeview_item_get_type ( vlp->vt, iter );
@@ -299,7 +299,7 @@ static void layers_item_toggled (VikLayersPanel *vlp, GtkTreeIter *iter)
   vik_treeview_item_set_visible ( vlp->vt, iter, visible );
 }
 
-static void layers_item_edited (VikLayersPanel *vlp, GtkTreeIter *iter, const gchar *new_text)
+static void layers_item_edited (VikLayersPanel *vlp, GtkTreeIter *iter, const char *new_text)
 {
   if ( !new_text )
     return;
@@ -324,13 +324,13 @@ static void layers_item_edited (VikLayersPanel *vlp, GtkTreeIter *iter, const gc
   }
   else
   {
-    const gchar *name = vik_layer_sublayer_rename_request ( vik_treeview_item_get_parent ( vlp->vt, iter ), new_text, vlp, vik_treeview_item_get_data ( vlp->vt, iter ), vik_treeview_item_get_pointer ( vlp->vt, iter ), iter );
+    const char *name = vik_layer_sublayer_rename_request ( vik_treeview_item_get_parent ( vlp->vt, iter ), new_text, vlp, vik_treeview_item_get_data ( vlp->vt, iter ), vik_treeview_item_get_pointer ( vlp->vt, iter ), iter );
     if ( name )
       vik_treeview_item_set_name ( vlp->vt, iter, name);
   }
 }
 
-static gboolean layers_button_press_cb ( VikLayersPanel *vlp, GdkEventButton *event )
+static bool layers_button_press_cb ( VikLayersPanel *vlp, GdkEventButton *event )
 {
   if (event->button == 3)
   {
@@ -342,22 +342,22 @@ static gboolean layers_button_press_cb ( VikLayersPanel *vlp, GdkEventButton *ev
     }
     else
       layers_popup ( vlp, NULL, 3 );
-    return TRUE;
+    return true;
   }
-  return FALSE;
+  return false;
 }
 
-static gboolean layers_key_press_cb ( VikLayersPanel *vlp, GdkEventKey *event )
+static bool layers_key_press_cb ( VikLayersPanel *vlp, GdkEventKey *event )
 {
   // Accept all forms of delete keys
   if (event->keyval == GDK_Delete || event->keyval == GDK_KP_Delete || event->keyval == GDK_BackSpace) {
     vik_layers_panel_delete_selected (vlp);
-    return TRUE;
+    return true;
  }
- return FALSE;
+ return false;
 }
 
-static void layers_popup ( VikLayersPanel *vlp, GtkTreeIter *iter, gint mouse_button )
+static void layers_popup ( VikLayersPanel *vlp, GtkTreeIter *iter, int mouse_button )
 {
   GtkMenu *menu = NULL;
 
@@ -369,7 +369,7 @@ static void layers_popup ( VikLayersPanel *vlp, GtkTreeIter *iter, gint mouse_bu
       VikLayer *layer = VIK_LAYER(vik_treeview_item_get_pointer ( vlp->vt, iter ));
 
       if ( layer->type == VIK_LAYER_AGGREGATE )
-        menu = GTK_MENU ( layers_panel_create_popup ( vlp, TRUE ) );
+        menu = GTK_MENU ( layers_panel_create_popup ( vlp, true ) );
       else
       {
         GtkWidget *del, *prop;
@@ -427,7 +427,7 @@ static void layers_popup ( VikLayersPanel *vlp, GtkTreeIter *iter, gint mouse_bu
   }
   else
   {
-    menu = GTK_MENU ( layers_panel_create_popup ( vlp, FALSE ) );
+    menu = GTK_MENU ( layers_panel_create_popup ( vlp, false ) );
   }
   gtk_menu_popup ( menu, NULL, NULL, NULL, NULL, mouse_button, gtk_get_current_event_time() );
 }
@@ -450,11 +450,11 @@ static void layers_popup_cb ( VikLayersPanel *vlp )
  * 
  * Create a new layer and add to panel.
  */
-gboolean vik_layers_panel_new_layer ( VikLayersPanel *vlp, VikLayerTypeEnum type )
+bool vik_layers_panel_new_layer ( VikLayersPanel *vlp, VikLayerTypeEnum type )
 {
   VikLayer *l;
   g_assert ( vlp->vvp );
-  gboolean ask_user = FALSE;
+  bool ask_user = false;
   if ( type == VIK_LAYER_TRW )
     (void)a_settings_get_boolean ( VIK_SETTINGS_LAYERS_TRW_CREATE_DEFAULT, &ask_user );
   ask_user = !ask_user;
@@ -462,9 +462,9 @@ gboolean vik_layers_panel_new_layer ( VikLayersPanel *vlp, VikLayerTypeEnum type
   if ( l )
   {
     vik_layers_panel_add_layer ( vlp, l );
-    return TRUE;
+    return true;
   }
-  return FALSE;
+  return false;
 }
 
 /**
@@ -482,7 +482,7 @@ void vik_layers_panel_add_layer ( VikLayersPanel *vlp, VikLayer *l )
   vik_layer_change_coord_mode ( l, vik_viewport_get_coord_mode(vlp->vvp) );
 
   if ( ! vik_treeview_get_selected_iter ( vlp->vt, &iter ) )
-    vik_aggregate_layer_add_layer ( vlp->toplayer, l, TRUE );
+    vik_aggregate_layer_add_layer ( vlp->toplayer, l, true );
   else
   {
     VikAggregateLayer *addtoagg;
@@ -518,13 +518,13 @@ void vik_layers_panel_add_layer ( VikLayersPanel *vlp, VikLayer *l )
     if ( replace_iter )
       vik_aggregate_layer_insert_layer ( addtoagg, l, replace_iter );
     else
-      vik_aggregate_layer_add_layer ( addtoagg, l, TRUE );
+      vik_aggregate_layer_add_layer ( addtoagg, l, true );
   }
 
   vik_layers_panel_emit_update ( vlp );
 }
 
-static void layers_move_item ( VikLayersPanel *vlp, gboolean up )
+static void layers_move_item ( VikLayersPanel *vlp, bool up )
 {
   GtkTreeIter iter;
   VikAggregateLayer *parent;
@@ -533,7 +533,7 @@ static void layers_move_item ( VikLayersPanel *vlp, gboolean up )
   if ( ! vik_treeview_get_selected_iter ( vlp->vt, &iter ) )
     return;
 
-  vik_treeview_select_iter ( vlp->vt, &iter, FALSE ); /* cancel any layer-name editing going on... */
+  vik_treeview_select_iter ( vlp->vt, &iter, false ); /* cancel any layer-name editing going on... */
 
   if ( vik_treeview_item_get_type ( vlp->vt, &iter ) == VIK_TREEVIEW_TYPE_LAYER )
   {
@@ -546,7 +546,7 @@ static void layers_move_item ( VikLayersPanel *vlp, gboolean up )
   }
 }
 
-gboolean vik_layers_panel_properties ( VikLayersPanel *vlp )
+bool vik_layers_panel_properties ( VikLayersPanel *vlp )
 {
   GtkTreeIter iter;
   g_assert ( vlp->vvp );
@@ -558,10 +558,10 @@ gboolean vik_layers_panel_properties ( VikLayersPanel *vlp )
     VikLayer *layer = VIK_LAYER( vik_treeview_item_get_pointer ( vlp->vt, &iter ) );
     if (vik_layer_properties ( layer, vlp->vvp ))
       vik_layer_emit_update ( layer );
-    return TRUE;
+    return true;
   }
   else
-    return FALSE;
+    return false;
 }
 
 void vik_layers_panel_draw_all ( VikLayersPanel *vlp )
@@ -572,7 +572,7 @@ void vik_layers_panel_draw_all ( VikLayersPanel *vlp )
 
 void vik_layers_panel_cut_selected ( VikLayersPanel *vlp )
 {
-  gint type;
+  int type;
   GtkTreeIter iter;
   
   if ( ! vik_treeview_get_selected_iter ( vlp->vt, &iter ) )
@@ -606,7 +606,7 @@ void vik_layers_panel_cut_selected ( VikLayersPanel *vlp )
   else if (type == VIK_TREEVIEW_TYPE_SUBLAYER) {
     VikLayer *sel = vik_layers_panel_get_selected ( vlp );
     if ( vik_layer_get_interface(sel->type)->cut_item ) {
-      gint subtype = vik_treeview_item_get_data( vlp->vt, &iter);
+      int subtype = vik_treeview_item_get_data( vlp->vt, &iter);
       vik_layer_get_interface(sel->type)->cut_item ( sel, subtype, vik_treeview_item_get_pointer(sel->vt, &iter) );
     }
   }
@@ -622,18 +622,18 @@ void vik_layers_panel_copy_selected ( VikLayersPanel *vlp )
   a_clipboard_copy_selected ( vlp );
 }
 
-gboolean vik_layers_panel_paste_selected ( VikLayersPanel *vlp )
+bool vik_layers_panel_paste_selected ( VikLayersPanel *vlp )
 {
   GtkTreeIter iter;
   if ( ! vik_treeview_get_selected_iter ( vlp->vt, &iter ) )
     /* Nothing to do */
-    return FALSE;
+    return false;
   return a_clipboard_paste ( vlp );
 }
 
 void vik_layers_panel_delete_selected ( VikLayersPanel *vlp )
 {
-  gint type;
+  int type;
   GtkTreeIter iter;
   
   if ( ! vik_treeview_get_selected_iter ( vlp->vt, &iter ) )
@@ -671,7 +671,7 @@ void vik_layers_panel_delete_selected ( VikLayersPanel *vlp )
   else if (type == VIK_TREEVIEW_TYPE_SUBLAYER) {
     VikLayer *sel = vik_layers_panel_get_selected ( vlp );
     if ( vik_layer_get_interface(sel->type)->delete_item ) {
-      gint subtype = vik_treeview_item_get_data( vlp->vt, &iter);
+      int subtype = vik_treeview_item_get_data( vlp->vt, &iter);
       vik_layer_get_interface(sel->type)->delete_item ( sel, subtype, vik_treeview_item_get_pointer(sel->vt, &iter) );
     }
   }
@@ -680,7 +680,7 @@ void vik_layers_panel_delete_selected ( VikLayersPanel *vlp )
 VikLayer *vik_layers_panel_get_selected ( VikLayersPanel *vlp )
 {
   GtkTreeIter iter, parent;
-  gint type;
+  int type;
 
   if ( ! vik_treeview_get_selected_iter ( vlp->vt, &iter ) )
     return NULL;
@@ -700,27 +700,27 @@ VikLayer *vik_layers_panel_get_selected ( VikLayersPanel *vlp )
 
 static void layers_move_item_up ( VikLayersPanel *vlp )
 {
-  layers_move_item ( vlp, TRUE );
+  layers_move_item ( vlp, true );
 }
 
 static void layers_move_item_down ( VikLayersPanel *vlp )
 {
-  layers_move_item ( vlp, FALSE );
+  layers_move_item ( vlp, false );
 }
 
 #if 0
-gboolean vik_layers_panel_tool ( VikLayersPanel *vlp, guint16 layer_type, VikToolInterfaceFunc tool_func, GdkEventButton *event, VikViewport *vvp )
+bool vik_layers_panel_tool ( VikLayersPanel *vlp, uint16_t layer_type, VikToolInterfaceFunc tool_func, GdkEventButton *event, VikViewport *vvp )
 {
   VikLayer *vl = vik_layers_panel_get_selected ( vlp );
   if ( vl && vl->type == layer_type )
   {
     tool_func ( vl, event, vvp );
-    return TRUE;
+    return true;
   }
   else if ( VIK_LAYER(vlp->toplayer)->visible &&
       vik_aggregate_layer_tool ( vlp->toplayer, layer_type, tool_func, event, vvp ) != 1 ) /* either accepted or rejected, but a layer was found */
-    return TRUE;
-  return FALSE;
+    return true;
+  return false;
 }
 #endif
 
@@ -736,7 +736,7 @@ VikLayer *vik_layers_panel_get_layer_of_type ( VikLayersPanel *vlp, VikLayerType
     return rv;
 }
 
-GList *vik_layers_panel_get_all_layers_of_type(VikLayersPanel *vlp, gint type, gboolean include_invisible)
+GList *vik_layers_panel_get_all_layers_of_type(VikLayersPanel *vlp, int type, bool include_invisible)
 {
   GList *layers = NULL;
 

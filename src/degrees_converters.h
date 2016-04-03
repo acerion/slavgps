@@ -26,16 +26,16 @@
 
 G_BEGIN_DECLS
 
-gchar *convert_lat_dec_to_ddd(gdouble lat);
-gchar *convert_lon_dec_to_ddd(gdouble lon);
+char *convert_lat_dec_to_ddd(double lat);
+char *convert_lon_dec_to_ddd(double lon);
 
-gchar *convert_lat_dec_to_dmm(gdouble lat);
-gchar *convert_lon_dec_to_dmm(gdouble lon);
+char *convert_lat_dec_to_dmm(double lat);
+char *convert_lon_dec_to_dmm(double lon);
 
-gchar *convert_lat_dec_to_dms(gdouble lat);
-gchar *convert_lon_dec_to_dms(gdouble lon);
+char *convert_lat_dec_to_dms(double lat);
+char *convert_lon_dec_to_dms(double lon);
 
-gdouble convert_dms_to_dec(const gchar *dms);
+double convert_dms_to_dec(const char *dms);
 
 G_END_DECLS
 

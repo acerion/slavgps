@@ -25,6 +25,9 @@
 #define _VIKING_BABEL_H
 
 #include <glib.h>
+#include <stdbool.h>
+#include <stdint.h>
+
 
 #include "viktrwlayer.h"
 #include "download.h"
@@ -49,7 +52,7 @@ typedef enum {
  *
  * Callback function.
  */
-typedef void (*BabelStatusFunc)(BabelProgressCode, gpointer, gpointer);
+typedef void (*BabelStatusFunc)(BabelProgressCode, void *, void *);
 
 /**
  * ProcessOptions:
@@ -59,12 +62,12 @@ typedef void (*BabelStatusFunc)(BabelProgressCode, gpointer, gpointer);
  * Need to specify at least one of babelargs, URL or shell_command
  */
 typedef struct {
-  gchar* babelargs; // The standard initial arguments to gpsbabel (if gpsbabel is to be used) - normally should include the input file type (-i) option.
-  gchar* filename; // Input filename (or device port e.g. /dev/ttyS0)
-  gchar* input_file_type; // If NULL then uses internal file format handler (GPX only ATM), otherwise specify gpsbabel input type like "kml","tcx", etc...
-  gchar* url; // URL input rather than a filename
-  gchar* babel_filters; // Optional filter arguments to gpsbabel
-  gchar* shell_command; // Optional shell command to run instead of gpsbabel - but will be (Unix) platform specific
+  char* babelargs; // The standard initial arguments to gpsbabel (if gpsbabel is to be used) - normally should include the input file type (-i) option.
+  char* filename; // Input filename (or device port e.g. /dev/ttyS0)
+  char* input_file_type; // If NULL then uses internal file format handler (GPX only ATM), otherwise specify gpsbabel input type like "kml","tcx", etc...
+  char* url; // URL input rather than a filename
+  char* babel_filters; // Optional filter arguments to gpsbabel
+  char* shell_command; // Optional shell command to run instead of gpsbabel - but will be (Unix) platform specific
 } ProcessOptions;
 
 /**
@@ -90,8 +93,8 @@ typedef struct {
  */
 typedef struct {
     BabelMode mode;
-    gchar *name;
-    gchar *label;
+    char *name;
+    char *label;
 } BabelDevice;
 
 /**
@@ -104,27 +107,27 @@ typedef struct {
  */
 typedef struct {
     BabelMode mode;
-    gchar *name;
-    gchar *ext;
-    gchar *label;
+    char *name;
+    char *ext;
+    char *label;
 } BabelFile;
 
 GList *a_babel_file_list;
 GList *a_babel_device_list;
 
-void a_babel_foreach_file_with_mode (BabelMode mode, GFunc func, gpointer user_data);
-void a_babel_foreach_file_read_any (GFunc func, gpointer user_data);
+void a_babel_foreach_file_with_mode (BabelMode mode, GFunc func, void * user_data);
+void a_babel_foreach_file_read_any (GFunc func, void * user_data);
 
 // NB needs to match typedef VikDataSourceProcessFunc in acquire.h
-gboolean a_babel_convert_from ( VikTrwLayer *vt, ProcessOptions *process_options, BabelStatusFunc cb, gpointer user_data, DownloadFileOptions *download_options );
+bool a_babel_convert_from ( VikTrwLayer *vt, ProcessOptions *process_options, BabelStatusFunc cb, void * user_data, DownloadFileOptions *download_options );
 
-gboolean a_babel_convert_to( VikTrwLayer *vt, VikTrack *track, const char *babelargs, const char *file, BabelStatusFunc cb, gpointer user_data );
+bool a_babel_convert_to( VikTrwLayer *vt, VikTrack *track, const char *babelargs, const char *file, BabelStatusFunc cb, void * user_data );
 
 void a_babel_init ();
 void a_babel_post_init ();
 void a_babel_uninit ();
 
-gboolean a_babel_available ();
+bool a_babel_available ();
 
 G_END_DECLS
 

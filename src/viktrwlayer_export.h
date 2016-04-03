@@ -23,15 +23,18 @@
 #ifndef _VIKING_TRWLAYER_EXPORT_H
 #define _VIKING_TRWLAYER_EXPORT_H
 
+#include <stdbool.h>
+#include <stdint.h>
+
 #include "viktrwlayer.h"
 
 G_BEGIN_DECLS
 
-void vik_trw_layer_export ( VikTrwLayer *vtl, const gchar *title, const gchar* default_name, VikTrack* trk, VikFileType_t file_type );
+void vik_trw_layer_export ( VikTrwLayer *vtl, const char *title, const char* default_name, VikTrack* trk, VikFileType_t file_type );
 
-void vik_trw_layer_export_external_gpx ( VikTrwLayer *vtl, const gchar* external_program );
+void vik_trw_layer_export_external_gpx ( VikTrwLayer *vtl, const char* external_program );
 
-void vik_trw_layer_export_gpsbabel ( VikTrwLayer *vtl, const gchar *title, const gchar* default_name );
+void vik_trw_layer_export_gpsbabel ( VikTrwLayer *vtl, const char *title, const char* default_name );
 
 G_END_DECLS
 

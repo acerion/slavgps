@@ -23,20 +23,23 @@
 #ifndef _VIKING_GEOTAG_EXIF_H
 #define _VIKING_GEOTAG_EXIF_H
 
+#include <stdbool.h>
+#include <stdint.h>
+
 #include "vikwaypoint.h"
 #include "vikcoord.h"
 
 G_BEGIN_DECLS
 
-VikWaypoint* a_geotag_create_waypoint_from_file ( const gchar *filename, VikCoordMode vcmode, gchar **name );
+VikWaypoint* a_geotag_create_waypoint_from_file ( const char *filename, VikCoordMode vcmode, char **name );
 
-VikWaypoint* a_geotag_waypoint_positioned ( const gchar *filename, VikCoord coord, gdouble alt, gchar **name, VikWaypoint *wp );
+VikWaypoint* a_geotag_waypoint_positioned ( const char *filename, VikCoord coord, double alt, char **name, VikWaypoint *wp );
 
-gchar* a_geotag_get_exif_date_from_file ( const gchar *filename, gboolean *has_GPS_info );
+char* a_geotag_get_exif_date_from_file ( const char *filename, bool *has_GPS_info );
 
-struct LatLon a_geotag_get_position ( const gchar *filename );
+struct LatLon a_geotag_get_position ( const char *filename );
 
-gint a_geotag_write_exif_gps ( const gchar *filename, VikCoord coord, gdouble alt, gboolean no_change_mtime );
+int a_geotag_write_exif_gps ( const char *filename, VikCoord coord, double alt, bool no_change_mtime );
 
 G_END_DECLS
 

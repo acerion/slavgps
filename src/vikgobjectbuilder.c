@@ -35,9 +35,9 @@
 
 /* FIXME use private fields */
 GType gtype = 0;
-gchar *property_name = NULL;
+char *property_name = NULL;
 GParameter *parameters = NULL;
-gint nb_parameters = 0;
+int nb_parameters = 0;
 
 /* signals */
 enum
@@ -48,7 +48,7 @@ enum
 };
 
 
-static guint gobject_builder_signals[LAST_SIGNAL] = { 0 };
+static unsigned int gobject_builder_signals[LAST_SIGNAL] = { 0 };
 
 G_DEFINE_TYPE (VikGobjectBuilder, vik_gobject_builder, G_TYPE_OBJECT);
 
@@ -95,15 +95,15 @@ vik_gobject_builder_class_init (VikGobjectBuilderClass *klass)
 /* Called for open tags <foo bar="baz"> */
 static void
 _start_element (GMarkupParseContext *context,
-                const gchar         *element_name,
-                const gchar        **attribute_names,
-                const gchar        **attribute_values,
-                gpointer             user_data,
+                const char         *element_name,
+                const char        **attribute_names,
+                const char        **attribute_values,
+                void *             user_data,
                 GError             **error)
 {
 	if (strcmp(element_name, "object") == 0)
 	{
-		gchar *class_name = g_strdup(attribute_values[0]);
+		char *class_name = g_strdup(attribute_values[0]);
 		gtype = g_type_from_name (class_name);
 		if (gtype == 0)
 		{
@@ -130,12 +130,12 @@ _start_element (GMarkupParseContext *context,
 /* Called for close tags </foo> */
 static void
 _end_element (GMarkupParseContext *context,
-              const gchar         *element_name,
-              gpointer             user_data,
+              const char         *element_name,
+              void *             user_data,
               GError             **error)
 {
 	VikGobjectBuilder *self = VIK_GOBJECT_BUILDER (user_data);
-	gpointer object = NULL;
+	void * object = NULL;
 	if (strcmp(element_name, "object") == 0 && gtype != 0)
 	{
 		object = g_object_newv(gtype, nb_parameters, parameters);
@@ -149,7 +149,7 @@ _end_element (GMarkupParseContext *context,
 		int i = 0;
 		for (i = 0 ; i < nb_parameters ; i++)
 		{
-			g_free ((gchar *)parameters[i].name);
+			g_free ((char *)parameters[i].name);
 			g_value_unset (&(parameters[i].value));
 		}
 		g_free (parameters);
@@ -168,15 +168,15 @@ _end_element (GMarkupParseContext *context,
 /* text is not nul-terminated */
 static void
 _text (GMarkupParseContext *context,
-       const gchar         *text,
-       gsize                text_len,  
-       gpointer             user_data,
+       const char         *text,
+       size_t                text_len,  
+       void *             user_data,
        GError             **error)
 {
 	if (strcmp (g_markup_parse_context_get_element (context), "property") == 0)
 	{
 		GValue gvalue = {0};
-		gboolean found = FALSE;
+		bool found = false;
 		if (gtype != 0 && property_name != NULL)
 		{
 			/* parameter value */
@@ -192,15 +192,15 @@ _text (GMarkupParseContext *context,
 				g_warning ("Unknown property: %s.%s", g_type_name (gtype), property_name);
 				return;
 			}
-			gchar *value = g_strndup (text, text_len);
+			char *value = g_strndup (text, text_len);
 			found = gtk_builder_value_from_string_type(NULL, pspec->value_type, value, &gvalue, NULL);
 			g_free (value);
 		}
-		if (G_IS_VALUE (&gvalue) && found == TRUE)
+		if (G_IS_VALUE (&gvalue) && found == true)
 		{
 			/* store new parameter */
 			g_debug("VikGobjectBuilder: store new GParameter for %s: (%s)%s=%*s",
-			        g_type_name(gtype), g_type_name(G_VALUE_TYPE(&gvalue)), property_name, (gint)text_len, text);
+			        g_type_name(gtype), g_type_name(G_VALUE_TYPE(&gvalue)), property_name, (int)text_len, text);
 			nb_parameters++;
 			parameters = g_realloc(parameters, sizeof(GParameter)*nb_parameters);
 			/* parameter name */
@@ -218,7 +218,7 @@ vik_gobject_builder_new (void)
 }
 
 void
-vik_gobject_builder_parse (VikGobjectBuilder *self, const gchar *filename)
+vik_gobject_builder_parse (VikGobjectBuilder *self, const char *filename)
 {
 	GMarkupParser xml_parser;
 	GMarkupParseContext *xml_context;
@@ -238,9 +238,9 @@ vik_gobject_builder_parse (VikGobjectBuilder *self, const gchar *filename)
 	
 	xml_context = g_markup_parse_context_new(&xml_parser, 0, self, NULL);
 	
-	gchar buff[BUFSIZ];
+	char buff[BUFSIZ];
 	size_t nb;
-	while ((nb = fread (buff, sizeof(gchar), BUFSIZ, file)) > 0)
+	while ((nb = fread (buff, sizeof(char), BUFSIZ, file)) > 0)
 	{
 		if (!g_markup_parse_context_parse(xml_context, buff, nb, &error))
 			g_warning("%s: parsing error: %s", __FUNCTION__,

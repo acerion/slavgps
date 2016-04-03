@@ -20,6 +20,9 @@
 #ifndef _BING_MAP_SOURCE_H
 #define _BING_MAP_SOURCE_H
 
+#include <stdbool.h>
+#include <stdint.h>
+
 #include "vikcoord.h"
 #include "mapcoord.h"
 #include "vikslippymapsource.h"
@@ -48,7 +51,7 @@ struct _BingMapSource
 
 GType bing_map_source_get_type (void) G_GNUC_CONST;
 
-BingMapSource * bing_map_source_new_with_id (guint16 id, const gchar *label, const gchar *key);
+BingMapSource * bing_map_source_new_with_id (uint16_t id, const char *label, const char *key);
 
 G_END_DECLS
 

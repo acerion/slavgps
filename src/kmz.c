@@ -46,14 +46,14 @@
  * Probably for normal use case of not too large an area coverage (on a Garmin device) the projection is near enough...
  */
 // Hopefully image_filename will not break the XML file tag structure
-static gchar* doc_kml_str ( const gchar *name, const gchar *image_filename, gdouble north, gdouble south, gdouble east, gdouble west )
+static char* doc_kml_str ( const char *name, const char *image_filename, double north, double south, double east, double west )
 {
-	gchar *tmp_n = a_coords_dtostr ( north );
-	gchar *tmp_s = a_coords_dtostr ( south );
-	gchar *tmp_e = a_coords_dtostr ( east );
-	gchar *tmp_w = a_coords_dtostr ( west );
+	char *tmp_n = a_coords_dtostr ( north );
+	char *tmp_s = a_coords_dtostr ( south );
+	char *tmp_e = a_coords_dtostr ( east );
+	char *tmp_w = a_coords_dtostr ( west );
 
-	gchar *doc_kml = g_strdup_printf (
+	char *doc_kml = g_strdup_printf (
 		"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
 		"<kml xmlns=\"http://www.opengis.net/kml/2.2\" xmlns:gx=\"http://www.google.com/kml/ext/2.2\" xmlns:kml=\"http://www.opengis.net/kml/2.2\" xmlns:atom=\"http://www.w3.org/2005/Atom\">\n"
 		"<GroundOverlay>\n"
@@ -102,7 +102,7 @@ static gchar* doc_kml_str ( const gchar *name, const gchar *image_filename, gdou
  *
  * The KMZ is a zipped file containing a KML file with the associated image
  */
-int kmz_save_file ( GdkPixbuf *pixbuf, const gchar* filename, gdouble north, gdouble east, gdouble south, gdouble west )
+int kmz_save_file ( GdkPixbuf *pixbuf, const char* filename, double north, double east, double south, double west )
 {
 #ifdef HAVE_ZIP_H
 // Older libzip compatibility:
@@ -111,7 +111,7 @@ typedef struct zip_source zip_source_t;
 #endif
 
 	int ans = ZIP_ER_OK;
-	gchar *image_filename = "image.jpg";
+	char *image_filename = "image.jpg";
 
 	// Generate KMZ file (a zip file)
 	struct zip* archive = zip_open ( filename, ZIP_CREATE | ZIP_TRUNCATE, &ans );
@@ -121,7 +121,7 @@ typedef struct zip_source zip_source_t;
 	}
 
 	// Generate KML file
-	gchar *dk = doc_kml_str ( a_file_basename(filename), image_filename, north, south, east, west );
+	char *dk = doc_kml_str ( a_file_basename(filename), image_filename, north, south, east, west );
 	int dkl = strlen ( dk );
 
 	// KML must be named doc.kml in the kmz file
@@ -129,8 +129,8 @@ typedef struct zip_source zip_source_t;
 	zip_file_add ( archive, "doc.kml", src_kml, ZIP_FL_OVERWRITE );
 
 	GError *error = NULL;
-	gchar *buffer;
-	gsize blen;
+	char *buffer;
+	size_t blen;
 	gdk_pixbuf_save_to_buffer ( pixbuf, &buffer, &blen, "jpeg", &error, "x-dpi", "72", "y-dpi", "72", NULL );
 	if ( error ) {
 		g_warning ( "Save to buffer error: %s", error->message );
@@ -180,12 +180,12 @@ typedef struct {
 	GString *xpath;
 	GString *c_cdata;
 	xtag_type current_tag;
-	gchar *name;
-	gchar *image; // AKA icon
-	gdouble north;
-	gdouble east;
-	gdouble south;
-	gdouble west;
+	char *name;
+	char *image; // AKA icon
+	double north;
+	double east;
+	double south;
+	double west;
 } xml_data;
 
 #ifdef HAVE_ZIP_H
@@ -287,7 +287,7 @@ static void kml_cdata ( xml_data *xd, const XML_Char *s, int len )
 /**
  *
  */
-static gboolean parse_kml ( const char* buffer, int len, gchar **name, gchar **image, gdouble *north, gdouble *south, gdouble *east, gdouble *west )
+static bool parse_kml ( const char* buffer, int len, char **name, char **image, double *north, double *south, double *east, double *west )
 {
 #ifdef HAVE_EXPAT_H
 	XML_Parser parser = XML_ParserCreate(NULL);
@@ -309,7 +309,7 @@ static gboolean parse_kml ( const char* buffer, int len, gchar **name, gchar **i
 	XML_SetUserData(parser, xd);
 	XML_SetCharacterDataHandler(parser, (XML_CharacterDataHandler) kml_cdata);
 
-	status = XML_Parse(parser, buffer, len, TRUE);
+	status = XML_Parse(parser, buffer, len, true);
 
 	XML_ParserFree (parser);
 
@@ -320,13 +320,13 @@ static gboolean parse_kml ( const char* buffer, int len, gchar **name, gchar **i
 	*name = xd->name; // NB don't free xd->name
 	*image = xd->image; // NB don't free xd->image
 
-	g_string_free ( xd->xpath, TRUE );
-	g_string_free ( xd->c_cdata, TRUE );
+	g_string_free ( xd->xpath, true );
+	g_string_free ( xd->c_cdata, true );
 	g_free ( xd );
 
 	return status != XML_STATUS_ERROR;
 #else
-	return FALSE;
+	return false;
 #endif
 }
 #endif
@@ -348,7 +348,7 @@ static gboolean parse_kml ( const char* buffer, int len, gchar **name, gchar **i
  *  132 - Couldn't get image from KML
  *  133 - Image file problem
  */
-int kmz_open_file ( const gchar* filename, VikViewport *vvp, VikLayersPanel *vlp )
+int kmz_open_file ( const char* filename, VikViewport *vvp, VikLayersPanel *vlp )
 {
 	// Unzip
 #ifdef HAVE_ZIP_H
@@ -368,7 +368,7 @@ typedef struct zip_file zip_file_t;
 		goto cleanup;
 	}
 
-	zip_int64_t zindex = zip_name_locate ( archive, "doc.kml", ZIP_FL_NOCASE | ZIP_FL_ENC_GUESS );
+	zip_int64_t_t zindex = zip_name_locate ( archive, "doc.kml", ZIP_FL_NOCASE | ZIP_FL_ENC_GUESS );
 	if ( zindex == -1 ) {
 		g_warning ( "Unable to find doc.kml" );
 		goto kmz_cleanup;
@@ -386,10 +386,10 @@ typedef struct zip_file zip_file_t;
 			goto kmz_cleanup;
 		}
 
-		gdouble north, south, east, west;
-		gchar *name = NULL;
-		gchar *image = NULL;
-		gboolean parsed = parse_kml ( buffer, len, &name, &image, &north, &south, &east, &west );
+		double north, south, east, west;
+		char *name = NULL;
+		char *image = NULL;
+		bool parsed = parse_kml ( buffer, len, &name, &image, &north, &south, &east, &west );
 		g_free ( buffer );
 
 		GdkPixbuf *pixbuf = NULL;
@@ -409,7 +409,7 @@ typedef struct zip_file zip_file_t;
 						g_warning ( "Unable to read %s from zip file", image );
 					}
 					else {
-						gchar *image_file = util_write_tmp_file_from_bytes ( ibuffer, ilen );
+						char *image_file = util_write_tmp_file_from_bytes ( ibuffer, ilen );
 						GError *error = NULL;
 						pixbuf = gdk_pixbuf_new_from_file ( image_file, &error );
 						if ( error ) {
@@ -450,7 +450,7 @@ typedef struct zip_file zip_file_t;
 			VikGeorefLayer *vgl = vik_georef_layer_create ( vvp, vlp, name, pixbuf, &vc_tl, &vc_br );
 			if ( vgl ) {
 				VikAggregateLayer *top = vik_layers_panel_get_top_layer ( vlp );
-				vik_aggregate_layer_add_layer ( top, VIK_LAYER(vgl), FALSE );
+				vik_aggregate_layer_add_layer ( top, VIK_LAYER(vgl), false );
 			}
 		}
 	}

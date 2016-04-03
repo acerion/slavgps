@@ -27,22 +27,22 @@
 #include "globals.h"
 #include "terraservermapsource.h"
 
-static gboolean _coord_to_mapcoord ( VikMapSource *self, const VikCoord *src, gdouble xzoom, gdouble yzoom, MapCoord *dest );
+static bool _coord_to_mapcoord ( VikMapSource *self, const VikCoord *src, double xzoom, double yzoom, MapCoord *dest );
 static void _mapcoord_to_center_coord ( VikMapSource *self, MapCoord *src, VikCoord *dest );
-static gboolean _is_direct_file_access ( VikMapSource *self );
-static gboolean _is_mbtiles ( VikMapSource *self );
+static bool _is_direct_file_access ( VikMapSource *self );
+static bool _is_mbtiles ( VikMapSource *self );
 
-static gchar *_get_uri( VikMapSourceDefault *self, MapCoord *src );
-static gchar *_get_hostname( VikMapSourceDefault *self );
+static char *_get_uri( VikMapSourceDefault *self, MapCoord *src );
+static char *_get_hostname( VikMapSourceDefault *self );
 static DownloadFileOptions *_get_download_options( VikMapSourceDefault *self );
 
 /* FIXME Huge gruik */
-static DownloadFileOptions terraserver_options = { FALSE, FALSE, NULL, 0, a_check_map_file, NULL, NULL };
+static DownloadFileOptions terraserver_options = { false, false, NULL, 0, a_check_map_file, NULL, NULL };
 
 typedef struct _TerraserverMapSourcePrivate TerraserverMapSourcePrivate;
 struct _TerraserverMapSourcePrivate
 {
-  guint8 type;
+  uint8_t type;
 };
 
 #define TERRASERVER_MAP_SOURCE_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), TERRASERVER_TYPE_MAP_SOURCE, TerraserverMapSourcePrivate))
@@ -78,7 +78,7 @@ terraserver_map_source_finalize (GObject *object)
 
 static void
 terraserver_map_source_set_property (GObject      *object,
-                                     guint         property_id,
+                                     unsigned int         property_id,
                                      const GValue *value,
                                      GParamSpec   *pspec)
 {
@@ -100,7 +100,7 @@ terraserver_map_source_set_property (GObject      *object,
 
 static void
 terraserver_map_source_get_property (GObject    *object,
-                                     guint       property_id,
+                                     unsigned int       property_id,
                                      GValue     *value,
                                      GParamSpec *pspec)
 {
@@ -158,12 +158,12 @@ terraserver_map_source_class_init (TerraserverMapSourceClass *klass)
 #define TERRASERVER_SITE "msrmaps.com"
 #define MARGIN_OF_ERROR 0.001
 
-static int mpp_to_scale ( gdouble mpp, guint8 type )
+static int mpp_to_scale ( double mpp, uint8_t type )
 {
   mpp *= 4;
-  gint t = (gint) mpp;
+  int t = (int) mpp;
   if ( ABS(mpp - t) > MARGIN_OF_ERROR )
-    return FALSE;
+    return false;
 
   switch ( t ) {
     case 1: return (type == 4) ? 8 : 0;
@@ -182,70 +182,70 @@ static int mpp_to_scale ( gdouble mpp, guint8 type )
   }
 }
 
-static gdouble scale_to_mpp ( gint scale )
+static double scale_to_mpp ( int scale )
 {
   return pow(2,scale - 10);
 }
 
-static gboolean
-_coord_to_mapcoord ( VikMapSource *self, const VikCoord *src, gdouble xmpp, gdouble ympp, MapCoord *dest )
+static bool
+_coord_to_mapcoord ( VikMapSource *self, const VikCoord *src, double xmpp, double ympp, MapCoord *dest )
 {
-	g_return_val_if_fail(TERRASERVER_IS_MAP_SOURCE(self), FALSE);
+	g_return_val_if_fail(TERRASERVER_IS_MAP_SOURCE(self), false);
 	
 	TerraserverMapSourcePrivate *priv = TERRASERVER_MAP_SOURCE_PRIVATE(self);
 	int type = priv->type;
 	if ( src->mode != VIK_COORD_UTM )
-		return FALSE;
+		return false;
 
 	if ( xmpp != ympp )
-		return FALSE;
+		return false;
 
 	dest->scale = mpp_to_scale ( xmpp, type );
 	if ( ! dest->scale )
-		return FALSE;
+		return false;
 
-	dest->x = (gint)(((gint)(src->east_west))/(200*xmpp));
-	dest->y = (gint)(((gint)(src->north_south))/(200*xmpp));
+	dest->x = (int)(((int)(src->east_west))/(200*xmpp));
+	dest->y = (int)(((int)(src->north_south))/(200*xmpp));
 	dest->z = src->utm_zone;
-	return TRUE;
+	return true;
 }
 
-static gboolean
+static bool
 _is_direct_file_access ( VikMapSource *self )
 {
-	return FALSE;
+	return false;
 }
 
-static gboolean
+static bool
 _is_mbtiles ( VikMapSource *self )
 {
-	return FALSE;
+	return false;
 }
 
 static void
 _mapcoord_to_center_coord ( VikMapSource *self, MapCoord *src, VikCoord *dest )
 {
 	// FIXME: slowdown here!
-	gdouble mpp = scale_to_mpp ( src->scale );
+	double mpp = scale_to_mpp ( src->scale );
 	dest->mode = VIK_COORD_UTM;
 	dest->utm_zone = src->z;
 	dest->east_west = ((src->x * 200) + 100) * mpp;
 	dest->north_south = ((src->y * 200) + 100) * mpp;
 }
 
-static gchar *
+static char *
 _get_uri( VikMapSourceDefault *self, MapCoord *src )
 {
 	g_return_val_if_fail (TERRASERVER_IS_MAP_SOURCE(self), NULL);
 	
 	TerraserverMapSourcePrivate *priv = TERRASERVER_MAP_SOURCE_PRIVATE(self);
 	int type = priv->type;
-	gchar *uri = g_strdup_printf ( "/tile.ashx?T=%d&S=%d&X=%d&Y=%d&Z=%d", type,
+	char *uri = g_strdup_printf ( "/tile.ashx?T=%d&S=%d&X=%d&Y=%d&Z=%d", type,
                                   src->scale, src->x, src->y, src->z );
 	return uri;
 } 
 
-static gchar *
+static char *
 _get_hostname( VikMapSourceDefault *self )
 {
 	g_return_val_if_fail (TERRASERVER_IS_MAP_SOURCE(self), NULL);
@@ -262,7 +262,7 @@ _get_download_options( VikMapSourceDefault *self )
 }
 
 TerraserverMapSource *
-terraserver_map_source_new_with_id (guint16 id, const char *label, int type)
+terraserver_map_source_new_with_id (uint16_t id, const char *label, int type)
 {
 	char *copyright = NULL;
 	switch (type)

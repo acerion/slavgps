@@ -51,8 +51,8 @@ void osm_init () {
                                 "name", "OSM-Mapnik",
                                 "hostname", "tile.openstreetmap.org",
                                 "url", "/%d/%d/%d.png",
-                                "check-file-server-time", FALSE,
-                                "use-etag", TRUE,
+                                "check-file-server-time", false,
+                                "use-etag", true,
                                 "zoom-min", 0,
                                 "zoom-max", 19,
                                 "copyright", "© OpenStreetMap contributors",
@@ -66,8 +66,8 @@ void osm_init () {
                                 "name", "OSM-Cycle",
                                 "hostname", "tile.opencyclemap.org",
                                 "url", "/cycle/%d/%d/%d.png",
-                                "check-file-server-time", TRUE,
-                                "use-etag", FALSE,
+                                "check-file-server-time", true,
+                                "use-etag", false,
                                 "zoom-min", 0,
                                 "zoom-max", 18,
                                 "copyright", "Tiles courtesy of Andy Allan © OpenStreetMap contributors",
@@ -81,8 +81,8 @@ void osm_init () {
                                 "name", "OSM-Transport",
                                 "hostname", "tile2.opencyclemap.org",
                                 "url", "/transport/%d/%d/%d.png",
-                                "check-file-server-time", TRUE,
-                                "use-etag", FALSE,
+                                "check-file-server-time", true,
+                                "use-etag", false,
                                 "zoom-min", 0,
                                 "zoom-max", 18,
                                 "copyright", "Tiles courtesy of Andy Allan © OpenStreetMap contributors",
@@ -96,8 +96,8 @@ void osm_init () {
                                 "label", "OpenStreetMap (MapQuest)",
                                 "hostname", "otile1.mqcdn.com",
                                 "url", "/tiles/1.0.0/osm/%d/%d/%d.png",
-                                "check-file-server-time", TRUE,
-                                "use-etag", FALSE,
+                                "check-file-server-time", true,
+                                "use-etag", false,
                                 "zoom-min", 0,
                                 "zoom-max", 19,
                                 "copyright", "Tiles Courtesy of MapQuest © OpenStreetMap contributors",
@@ -111,8 +111,8 @@ void osm_init () {
                                 "label", "OpenStreetMap (Humanitarian)",
                                 "hostname", "c.tile.openstreetmap.fr",
                                 "url", "/hot/%d/%d/%d.png",
-                                "check-file-server-time", TRUE,
-                                "use-etag", FALSE,
+                                "check-file-server-time", true,
+                                "use-etag", false,
                                 "zoom-min", 0,
                                 "zoom-max", 20, // Super detail!!
                                 "copyright", "© OpenStreetMap contributors. Tiles courtesy of Humanitarian OpenStreetMap Team",
@@ -127,7 +127,7 @@ void osm_init () {
                                 "label", _("On Disk OSM Tile Format"),
                                 // For using your own generated data assumed you know the license already!
                                 "copyright", "© OpenStreetMap contributors", // probably
-                                "use-direct-file-access", TRUE,
+                                "use-direct-file-access", true,
                                 NULL));
 
   // NB no cache needed for this type!!
@@ -137,8 +137,8 @@ void osm_init () {
                                 "label", _("MBTiles File"),
                                 // For using your own generated data assumed you know the license already!
                                 "copyright", "© OpenStreetMap contributors", // probably
-                                "use-direct-file-access", TRUE,
-                                "is-mbtiles", TRUE,
+                                "use-direct-file-access", true,
+                                "is-mbtiles", true,
                                 NULL));
 
   // NB no cache needed for this type!!
@@ -148,8 +148,8 @@ void osm_init () {
                                 "label", _("OSM Metatiles"),
                                 // For using your own generated data assumed you know the license already!
                                 "copyright", "© OpenStreetMap contributors", // probably
-                                "use-direct-file-access", TRUE,
-                                "is-osm-meta-tiles", TRUE,
+                                "use-direct-file-access", true,
+                                "is-osm-meta-tiles", true,
                                 NULL));
 
   maps_layer_register_map_source (mapquest_type);

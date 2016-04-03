@@ -22,6 +22,9 @@
 #ifndef _VIKING_CLIPBOARD_H
 #define _VIKING_CLIPBOARD_H
 
+#include <stdbool.h>
+#include <stdint.h>
+
 #include "viklayerspanel.h"
 
 G_BEGIN_DECLS
@@ -33,9 +36,9 @@ typedef enum {
   VIK_CLIPBOARD_DATA_TEXT,
 } VikClipboardDataType;
 
-void a_clipboard_copy(VikClipboardDataType  type, guint16 layer_type, gint subtype, guint len, const gchar* text, guint8 * data);
+void a_clipboard_copy(VikClipboardDataType  type, uint16_t layer_type, int subtype, unsigned int len, const char* text, uint8_t * data);
 void a_clipboard_copy_selected ( VikLayersPanel *vlp );
-gboolean a_clipboard_paste ( VikLayersPanel *vlp );
+bool a_clipboard_paste ( VikLayersPanel *vlp );
 VikClipboardDataType a_clipboard_type ( );
 
 G_END_DECLS

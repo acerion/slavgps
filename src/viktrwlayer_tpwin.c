@@ -55,7 +55,7 @@ struct _VikTrwLayerTpwin {
   GtkWidget *button_back;
   GtkWidget *button_forward;
   VikTrackpoint *cur_tp;
-  gboolean sync_to_tp_block;
+  bool sync_to_tp_block;
 };
 
 GType vik_trw_layer_tpwin_get_type (void)
@@ -89,7 +89,7 @@ static void tpwin_update_times ( VikTrwLayerTpwin *tpwin, VikTrackpoint *tp )
 {
   if ( tp->has_timestamp ) {
     gtk_spin_button_set_value ( tpwin->ts, tp->timestamp );
-    gchar *msg = vu_get_time_string ( &(tp->timestamp), "%c", &(tp->coord), NULL );
+    char *msg = vu_get_time_string ( &(tp->timestamp), "%c", &(tp->coord), NULL );
     gtk_button_set_label ( GTK_BUTTON(tpwin->time), msg );
     g_free ( msg );
   }
@@ -192,7 +192,7 @@ static void tpwin_sync_time_to_tp ( GtkWidget* widget, GdkEventButton *event, Vi
 
   // Otherwise use the new value
   tpwin->cur_tp->timestamp = mytime;
-  tpwin->cur_tp->has_timestamp = TRUE;
+  tpwin->cur_tp->has_timestamp = true;
   // TODO: consider warning about unsorted times?
 
   // Clear the previous 'Add' image as now a time is set
@@ -202,24 +202,24 @@ static void tpwin_sync_time_to_tp ( GtkWidget* widget, GdkEventButton *event, Vi
   tpwin_update_times ( tpwin, tpwin->cur_tp );
 }
 
-static gboolean tpwin_set_name ( VikTrwLayerTpwin *tpwin )
+static bool tpwin_set_name ( VikTrwLayerTpwin *tpwin )
 {
   if ( tpwin->cur_tp && (!tpwin->sync_to_tp_block) ) {
     vik_trackpoint_set_name ( tpwin->cur_tp, gtk_entry_get_text(GTK_ENTRY(tpwin->trkpt_name)) );
   }
-  return FALSE;
+  return false;
 }
 
 VikTrwLayerTpwin *vik_trw_layer_tpwin_new ( GtkWindow *parent )
 {
-  static gchar *left_label_texts[] = { N_("<b>Name:</b>"),
+  static char *left_label_texts[] = { N_("<b>Name:</b>"),
                                        N_("<b>Latitude:</b>"),
                                        N_("<b>Longitude:</b>"),
                                        N_("<b>Altitude:</b>"),
                                        N_("<b>Course:</b>"),
                                        N_("<b>Timestamp:</b>"),
                                        N_("<b>Time:</b>") };
-  static gchar *right_label_texts[] = { N_("<b>Distance Difference:</b>"),
+  static char *right_label_texts[] = { N_("<b>Distance Difference:</b>"),
                                         N_("<b>Time Difference:</b>"),
                                         N_("<b>\"Speed\" Between:</b>"),
                                         N_("<b>Speed:</b>"),
@@ -282,14 +282,14 @@ VikTrwLayerTpwin *vik_trw_layer_tpwin_new ( GtkWindow *parent )
   g_signal_connect_swapped ( G_OBJECT(tpwin->ts), "value-changed", G_CALLBACK(tpwin_sync_ts_to_tp), tpwin );
   gtk_spin_button_set_digits ( tpwin->ts, 0 );
 
-  right_vbox = gtk_vbox_new ( TRUE, 1 );
-  gtk_box_pack_start ( GTK_BOX(right_vbox), GTK_WIDGET(tpwin->trkpt_name), FALSE, FALSE, 3 );
-  gtk_box_pack_start ( GTK_BOX(right_vbox), GTK_WIDGET(tpwin->lat), FALSE, FALSE, 3 );
-  gtk_box_pack_start ( GTK_BOX(right_vbox), GTK_WIDGET(tpwin->lon), FALSE, FALSE, 3 );
-  gtk_box_pack_start ( GTK_BOX(right_vbox), GTK_WIDGET(tpwin->alt), FALSE, FALSE, 3 );
-  gtk_box_pack_start ( GTK_BOX(right_vbox), GTK_WIDGET(tpwin->course), FALSE, FALSE, 3 );
-  gtk_box_pack_start ( GTK_BOX(right_vbox), GTK_WIDGET(tpwin->ts), FALSE, FALSE, 3 );
-  gtk_box_pack_start ( GTK_BOX(right_vbox), GTK_WIDGET(tpwin->time), FALSE, FALSE, 3 );
+  right_vbox = gtk_vbox_new ( true, 1 );
+  gtk_box_pack_start ( GTK_BOX(right_vbox), GTK_WIDGET(tpwin->trkpt_name), false, false, 3 );
+  gtk_box_pack_start ( GTK_BOX(right_vbox), GTK_WIDGET(tpwin->lat), false, false, 3 );
+  gtk_box_pack_start ( GTK_BOX(right_vbox), GTK_WIDGET(tpwin->lon), false, false, 3 );
+  gtk_box_pack_start ( GTK_BOX(right_vbox), GTK_WIDGET(tpwin->alt), false, false, 3 );
+  gtk_box_pack_start ( GTK_BOX(right_vbox), GTK_WIDGET(tpwin->course), false, false, 3 );
+  gtk_box_pack_start ( GTK_BOX(right_vbox), GTK_WIDGET(tpwin->ts), false, false, 3 );
+  gtk_box_pack_start ( GTK_BOX(right_vbox), GTK_WIDGET(tpwin->time), false, false, 3 );
 
   /* diff info */
   diff_left_vbox = a_dialog_create_label_vbox ( right_label_texts, G_N_ELEMENTS(right_label_texts), 1, 3 );
@@ -304,24 +304,24 @@ VikTrwLayerTpwin *vik_trw_layer_tpwin_new ( GtkWindow *parent )
   tpwin->pdop = GTK_LABEL(ui_label_new_selectable(NULL));
   tpwin->sat = GTK_LABEL(ui_label_new_selectable(NULL));
 
-  diff_right_vbox = gtk_vbox_new ( TRUE, 1 );
-  gtk_box_pack_start ( GTK_BOX(diff_right_vbox), GTK_WIDGET(tpwin->diff_dist), FALSE, FALSE, 3 );
-  gtk_box_pack_start ( GTK_BOX(diff_right_vbox), GTK_WIDGET(tpwin->diff_time), FALSE, FALSE, 3 );
-  gtk_box_pack_start ( GTK_BOX(diff_right_vbox), GTK_WIDGET(tpwin->diff_speed), FALSE, FALSE, 3 );
-  gtk_box_pack_start ( GTK_BOX(diff_right_vbox), GTK_WIDGET(tpwin->speed), FALSE, FALSE, 3 );
+  diff_right_vbox = gtk_vbox_new ( true, 1 );
+  gtk_box_pack_start ( GTK_BOX(diff_right_vbox), GTK_WIDGET(tpwin->diff_dist), false, false, 3 );
+  gtk_box_pack_start ( GTK_BOX(diff_right_vbox), GTK_WIDGET(tpwin->diff_time), false, false, 3 );
+  gtk_box_pack_start ( GTK_BOX(diff_right_vbox), GTK_WIDGET(tpwin->diff_speed), false, false, 3 );
+  gtk_box_pack_start ( GTK_BOX(diff_right_vbox), GTK_WIDGET(tpwin->speed), false, false, 3 );
 
-  gtk_box_pack_start ( GTK_BOX(diff_right_vbox), GTK_WIDGET(tpwin->vdop), FALSE, FALSE, 3 );
-  gtk_box_pack_start ( GTK_BOX(diff_right_vbox), GTK_WIDGET(tpwin->hdop), FALSE, FALSE, 3 );
-  gtk_box_pack_start ( GTK_BOX(diff_right_vbox), GTK_WIDGET(tpwin->pdop), FALSE, FALSE, 3 );
-  gtk_box_pack_start ( GTK_BOX(diff_right_vbox), GTK_WIDGET(tpwin->sat), FALSE, FALSE, 3 );
+  gtk_box_pack_start ( GTK_BOX(diff_right_vbox), GTK_WIDGET(tpwin->vdop), false, false, 3 );
+  gtk_box_pack_start ( GTK_BOX(diff_right_vbox), GTK_WIDGET(tpwin->hdop), false, false, 3 );
+  gtk_box_pack_start ( GTK_BOX(diff_right_vbox), GTK_WIDGET(tpwin->pdop), false, false, 3 );
+  gtk_box_pack_start ( GTK_BOX(diff_right_vbox), GTK_WIDGET(tpwin->sat), false, false, 3 );
 
-  main_hbox = gtk_hbox_new( FALSE, 0 );
-  gtk_box_pack_start ( GTK_BOX(main_hbox), left_vbox, TRUE, TRUE, 3 );
-  gtk_box_pack_start ( GTK_BOX(main_hbox), right_vbox, TRUE, TRUE, 0 );
-  gtk_box_pack_start ( GTK_BOX(main_hbox), diff_left_vbox, TRUE, TRUE, 0 );
-  gtk_box_pack_start ( GTK_BOX(main_hbox), diff_right_vbox, TRUE, TRUE, 0 );
+  main_hbox = gtk_hbox_new( false, 0 );
+  gtk_box_pack_start ( GTK_BOX(main_hbox), left_vbox, true, true, 3 );
+  gtk_box_pack_start ( GTK_BOX(main_hbox), right_vbox, true, true, 0 );
+  gtk_box_pack_start ( GTK_BOX(main_hbox), diff_left_vbox, true, true, 0 );
+  gtk_box_pack_start ( GTK_BOX(main_hbox), diff_right_vbox, true, true, 0 );
 
-  gtk_box_pack_start ( GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(tpwin))), main_hbox, FALSE, FALSE, 0 );
+  gtk_box_pack_start ( GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(tpwin))), main_hbox, false, false, 0 );
 
   tpwin->cur_tp = NULL;
 
@@ -338,23 +338,23 @@ VikTrwLayerTpwin *vik_trw_layer_tpwin_new ( GtkWindow *parent )
 void vik_trw_layer_tpwin_set_empty ( VikTrwLayerTpwin *tpwin )
 {
   gtk_editable_delete_text ( GTK_EDITABLE(tpwin->trkpt_name), 0, -1 );
-  gtk_widget_set_sensitive ( tpwin->trkpt_name, FALSE );
+  gtk_widget_set_sensitive ( tpwin->trkpt_name, false );
 
   gtk_button_set_label ( GTK_BUTTON(tpwin->time), "" );
   gtk_label_set_text ( tpwin->course, NULL );
 
-  gtk_widget_set_sensitive ( GTK_WIDGET(tpwin->lat), FALSE );
-  gtk_widget_set_sensitive ( GTK_WIDGET(tpwin->lon), FALSE );
-  gtk_widget_set_sensitive ( GTK_WIDGET(tpwin->alt), FALSE );
-  gtk_widget_set_sensitive ( GTK_WIDGET(tpwin->ts), FALSE );
-  gtk_widget_set_sensitive ( GTK_WIDGET(tpwin->time), FALSE );
+  gtk_widget_set_sensitive ( GTK_WIDGET(tpwin->lat), false );
+  gtk_widget_set_sensitive ( GTK_WIDGET(tpwin->lon), false );
+  gtk_widget_set_sensitive ( GTK_WIDGET(tpwin->alt), false );
+  gtk_widget_set_sensitive ( GTK_WIDGET(tpwin->ts), false );
+  gtk_widget_set_sensitive ( GTK_WIDGET(tpwin->time), false );
 
   // Only keep close button enabled
-  gtk_widget_set_sensitive ( tpwin->button_insert, FALSE );
-  gtk_widget_set_sensitive ( tpwin->button_split, FALSE );
-  gtk_widget_set_sensitive ( tpwin->button_delete, FALSE );
-  gtk_widget_set_sensitive ( tpwin->button_back, FALSE );
-  gtk_widget_set_sensitive ( tpwin->button_forward, FALSE );
+  gtk_widget_set_sensitive ( tpwin->button_insert, false );
+  gtk_widget_set_sensitive ( tpwin->button_split, false );
+  gtk_widget_set_sensitive ( tpwin->button_delete, false );
+  gtk_widget_set_sensitive ( tpwin->button_back, false );
+  gtk_widget_set_sensitive ( tpwin->button_forward, false );
 
   gtk_label_set_text ( tpwin->diff_dist, NULL );
   gtk_label_set_text ( tpwin->diff_time, NULL );
@@ -378,7 +378,7 @@ void vik_trw_layer_tpwin_set_empty ( VikTrwLayerTpwin *tpwin )
  * Sets the Trackpoint Edit Window to the values of the current trackpoint given in @tpl.
  *
  */
-void vik_trw_layer_tpwin_set_tp ( VikTrwLayerTpwin *tpwin, GList *tpl, const gchar *track_name, gboolean is_route )
+void vik_trw_layer_tpwin_set_tp ( VikTrwLayerTpwin *tpwin, GList *tpl, const char *track_name, bool is_route )
 {
   static char tmp_str[64];
   static struct LatLon ll;
@@ -388,26 +388,26 @@ void vik_trw_layer_tpwin_set_tp ( VikTrwLayerTpwin *tpwin, GList *tpl, const gch
     gtk_entry_set_text ( GTK_ENTRY(tpwin->trkpt_name), tp->name );
   else
     gtk_editable_delete_text ( GTK_EDITABLE(tpwin->trkpt_name), 0, -1 );
-  gtk_widget_set_sensitive ( tpwin->trkpt_name, TRUE );
+  gtk_widget_set_sensitive ( tpwin->trkpt_name, true );
 
   /* Only can insert if not at the end (otherwise use extend track) */
-  gtk_widget_set_sensitive ( tpwin->button_insert, (gboolean) GPOINTER_TO_INT (tpl->next) );
-  gtk_widget_set_sensitive ( tpwin->button_delete, TRUE );
+  gtk_widget_set_sensitive ( tpwin->button_insert, (bool) GPOINTER_TO_INT (tpl->next) );
+  gtk_widget_set_sensitive ( tpwin->button_delete, true );
 
   /* We can only split up a track if it's not an endpoint. Makes sense to me. */
   gtk_widget_set_sensitive ( tpwin->button_split, tpl->next && tpl->prev );
 
-  gtk_widget_set_sensitive ( tpwin->button_forward, (gboolean) GPOINTER_TO_INT (tpl->next) );
-  gtk_widget_set_sensitive ( tpwin->button_back, (gboolean) GPOINTER_TO_INT (tpl->prev) );
+  gtk_widget_set_sensitive ( tpwin->button_forward, (bool) GPOINTER_TO_INT (tpl->next) );
+  gtk_widget_set_sensitive ( tpwin->button_back, (bool) GPOINTER_TO_INT (tpl->prev) );
 
-  gtk_widget_set_sensitive ( GTK_WIDGET(tpwin->lat), TRUE );
-  gtk_widget_set_sensitive ( GTK_WIDGET(tpwin->lon), TRUE );
-  gtk_widget_set_sensitive ( GTK_WIDGET(tpwin->alt), TRUE );
+  gtk_widget_set_sensitive ( GTK_WIDGET(tpwin->lat), true );
+  gtk_widget_set_sensitive ( GTK_WIDGET(tpwin->lon), true );
+  gtk_widget_set_sensitive ( GTK_WIDGET(tpwin->alt), true );
   gtk_widget_set_sensitive ( GTK_WIDGET(tpwin->ts), tp->has_timestamp );
   gtk_widget_set_sensitive ( GTK_WIDGET(tpwin->time), tp->has_timestamp );
   // Enable adding timestamps - but not on routepoints
   if ( !tp->has_timestamp && !is_route ) {
-    gtk_widget_set_sensitive ( GTK_WIDGET(tpwin->time), TRUE );
+    gtk_widget_set_sensitive ( GTK_WIDGET(tpwin->time), true );
     GtkWidget *img = gtk_image_new_from_stock ( GTK_STOCK_ADD, GTK_ICON_SIZE_MENU );
     gtk_button_set_image ( GTK_BUTTON(tpwin->time), img );
   }
@@ -415,7 +415,7 @@ void vik_trw_layer_tpwin_set_tp ( VikTrwLayerTpwin *tpwin, GList *tpl, const gch
 
   vik_trw_layer_tpwin_set_track_name ( tpwin, track_name );
 
-  tpwin->sync_to_tp_block = TRUE; /* don't update while setting data. */
+  tpwin->sync_to_tp_block = true; /* don't update while setting data. */
 
   vik_coord_to_latlon ( &(tp->coord), &ll );
   gtk_spin_button_set_value ( tpwin->lat, ll.lat );
@@ -435,7 +435,7 @@ void vik_trw_layer_tpwin_set_tp ( VikTrwLayerTpwin *tpwin, GList *tpl, const gch
 
   tpwin_update_times ( tpwin, tp );
 
-  tpwin->sync_to_tp_block = FALSE; // don't update while setting data.
+  tpwin->sync_to_tp_block = false; // don't update while setting data.
 
   vik_units_speed_t speed_units = a_vik_get_units_speed ();
   vik_units_distance_t dist_units = a_vik_get_units_distance ();
@@ -552,9 +552,9 @@ void vik_trw_layer_tpwin_set_tp ( VikTrwLayerTpwin *tpwin, GList *tpl, const gch
   tpwin->cur_tp = tp;
 }
 
-void vik_trw_layer_tpwin_set_track_name ( VikTrwLayerTpwin *tpwin, const gchar *track_name )
+void vik_trw_layer_tpwin_set_track_name ( VikTrwLayerTpwin *tpwin, const char *track_name )
 {
-  gchar *tmp_name = g_strdup_printf ( "%s: %s", track_name, _("Trackpoint") );
+  char *tmp_name = g_strdup_printf ( "%s: %s", track_name, _("Trackpoint") );
   gtk_window_set_title ( GTK_WINDOW(tpwin), tmp_name );
   g_free ( tmp_name );
   //gtk_label_set_text ( tpwin->track_name, track_name );

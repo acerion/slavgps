@@ -33,8 +33,8 @@ void osm_traces_init();
 void osm_traces_uninit();
 void osm_traces_upload_viktrwlayer ( VikTrwLayer *vtl, VikTrack *trk );
 
-void osm_set_login (const gchar *user, const gchar *password);
-gchar *osm_get_login();
+void osm_set_login (const char *user, const char *password);
+char *osm_get_login();
 void osm_login_widgets (GtkWidget *user_entry, GtkWidget *password_entry);
 
 G_END_DECLS

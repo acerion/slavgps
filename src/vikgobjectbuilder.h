@@ -21,6 +21,9 @@
 #define _VIK_GOBJECT_BUILDER_H_
 
 #include <glib-object.h>
+#include <stdbool.h>
+#include <stdint.h>
+
 
 G_BEGIN_DECLS
 
@@ -50,7 +53,7 @@ struct _VikGobjectBuilder
 GType vik_gobject_builder_get_type (void) G_GNUC_CONST;
 VikGobjectBuilder *vik_gobject_builder_new (void);
 
-void vik_gobject_builder_parse (VikGobjectBuilder *self, const gchar *filename);
+void vik_gobject_builder_parse (VikGobjectBuilder *self, const char *filename);
 
 G_END_DECLS
 

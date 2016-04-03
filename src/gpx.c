@@ -202,18 +202,18 @@ VikWaypoint *c_wp = NULL;
 VikTrack *c_tr = NULL;
 VikTRWMetadata *c_md = NULL;
 
-gchar *c_wp_name = NULL;
-gchar *c_tr_name = NULL;
+char *c_wp_name = NULL;
+char *c_tr_name = NULL;
 
 /* temporary things so we don't have to create them lots of times */
-const gchar *c_slat, *c_slon;
+const char *c_slat, *c_slon;
 struct LatLon c_ll;
 
 /* specialty flags / etc */
-gboolean f_tr_newseg;
-guint unnamed_waypoints = 0;
-guint unnamed_tracks = 0;
-guint unnamed_routes = 0;
+bool f_tr_newseg;
+unsigned int unnamed_waypoints = 0;
+unsigned int unnamed_tracks = 0;
+unsigned int unnamed_routes = 0;
 
 static const char *get_attr ( const char **attr, const char *key )
 {
@@ -225,19 +225,19 @@ static const char *get_attr ( const char **attr, const char *key )
   return NULL;
 }
 
-static gboolean set_c_ll ( const char **attr )
+static bool set_c_ll ( const char **attr )
 {
   if ( (c_slat = get_attr ( attr, "lat" )) && (c_slon = get_attr ( attr, "lon" )) ) {
     c_ll.lat = g_ascii_strtod(c_slat, NULL);
     c_ll.lon = g_ascii_strtod(c_slon, NULL);
-    return TRUE;
+    return true;
   }
-  return FALSE;
+  return false;
 }
 
 static void gpx_start(VikTrwLayer *vtl, const char *el, const char **attr)
 {
-  static const gchar *tmp;
+  static const char *tmp;
 
   g_string_append_c ( xpath, '/' );
   g_string_append ( xpath, el );
@@ -252,9 +252,9 @@ static void gpx_start(VikTrwLayer *vtl, const char *el, const char **attr)
      case tt_wpt:
        if ( set_c_ll( attr ) ) {
          c_wp = vik_waypoint_new ();
-         c_wp->visible = TRUE;
+         c_wp->visible = true;
          if ( get_attr ( attr, "hidden" ) )
-           c_wp->visible = FALSE;
+           c_wp->visible = false;
 
          vik_coord_load_from_latlon ( &(c_wp->coord), vik_trw_layer_get_coord_mode ( vtl ), &c_ll );
        }
@@ -264,14 +264,14 @@ static void gpx_start(VikTrwLayer *vtl, const char *el, const char **attr)
      case tt_rte:
        c_tr = vik_track_new ();
        vik_track_set_defaults ( c_tr );
-       c_tr->is_route = (current_tag == tt_rte) ? TRUE : FALSE;
-       c_tr->visible = TRUE;
+       c_tr->is_route = (current_tag == tt_rte) ? true : false;
+       c_tr->visible = true;
        if ( get_attr ( attr, "hidden" ) )
-         c_tr->visible = FALSE;
+         c_tr->visible = false;
        break;
 
      case tt_trk_trkseg:
-       f_tr_newseg = TRUE;
+       f_tr_newseg = true;
        break;
 
      case tt_trk_trkseg_trkpt:
@@ -279,8 +279,8 @@ static void gpx_start(VikTrwLayer *vtl, const char *el, const char **attr)
          c_tp = vik_trackpoint_new ();
          vik_coord_load_from_latlon ( &(c_tp->coord), vik_trw_layer_get_coord_mode ( vtl ), &c_ll );
          if ( f_tr_newseg ) {
-           c_tp->newsegment = TRUE;
-           f_tr_newseg = FALSE;
+           c_tp->newsegment = true;
+           f_tr_newseg = false;
          }
          c_tr->trackpoints = g_list_append ( c_tr->trackpoints, c_tp );
        }
@@ -313,7 +313,7 @@ static void gpx_start(VikTrwLayer *vtl, const char *el, const char **attr)
 
      case tt_waypoint:
        c_wp = vik_waypoint_new ();
-       c_wp->visible = TRUE;
+       c_wp->visible = true;
        break;
 
      case tt_waypoint_coord:
@@ -488,7 +488,7 @@ static void gpx_end(VikTrwLayer *vtl, const char *el)
      case tt_wpt_time:
        if ( g_time_val_from_iso8601(c_cdata->str, &wp_time) ) {
          c_wp->timestamp = wp_time.tv_sec;
-         c_wp->has_timestamp = TRUE;
+         c_wp->has_timestamp = true;
        }
        g_string_erase ( c_cdata, 0, -1 );
        break;
@@ -501,7 +501,7 @@ static void gpx_end(VikTrwLayer *vtl, const char *el)
      case tt_trk_trkseg_trkpt_time:
        if ( g_time_val_from_iso8601(c_cdata->str, &tp_time) ) {
          c_tp->timestamp = tp_time.tv_sec;
-         c_tp->has_timestamp = TRUE;
+         c_tp->has_timestamp = true;
        }
        g_string_erase ( c_cdata, 0, -1 );
        break;
@@ -600,7 +600,7 @@ static void gpx_cdata(void *dta, const XML_Char *s, int len)
 // make like a "stack" of tag names
 // like gpspoint's separated like /gpx/wpt/whatever
 
-gboolean a_gpx_read_file( VikTrwLayer *vtl, FILE *f ) {
+bool a_gpx_read_file( VikTrwLayer *vtl, FILE *f ) {
   XML_Parser parser = XML_ParserCreate(NULL);
   int done=0, len;
   enum XML_Status status = XML_STATUS_ERROR;
@@ -609,7 +609,7 @@ gboolean a_gpx_read_file( VikTrwLayer *vtl, FILE *f ) {
   XML_SetUserData(parser, vtl); /* in the future we could remove all global variables */
   XML_SetCharacterDataHandler(parser, (XML_CharacterDataHandler) gpx_cdata);
 
-  gchar buf[4096];
+  char buf[4096];
 
   g_assert ( f != NULL && vtl != NULL );
 
@@ -627,8 +627,8 @@ gboolean a_gpx_read_file( VikTrwLayer *vtl, FILE *f ) {
   }
  
   XML_ParserFree (parser);
-  g_string_free ( xpath, TRUE );
-  g_string_free ( c_cdata, TRUE );
+  g_string_free ( xpath, true );
+  g_string_free ( c_cdata, true );
 
   return status != XML_STATUS_ERROR;
 }
@@ -810,8 +810,8 @@ static void gpx_write_waypoint ( VikWaypoint *wp, GpxWritingContext *context )
 
   FILE *f = context->file;
   static struct LatLon ll;
-  gchar *s_lat,*s_lon;
-  gchar *tmp;
+  char *s_lat,*s_lon;
+  char *tmp;
   vik_coord_to_latlon ( &(wp->coord), &ll );
   s_lat = a_coords_dtostr( ll.lat );
   s_lon = a_coords_dtostr( ll.lon );
@@ -843,7 +843,7 @@ static void gpx_write_waypoint ( VikWaypoint *wp, GpxWritingContext *context )
     timestamp.tv_sec = wp->timestamp;
     timestamp.tv_usec = 0;
 
-    gchar *time_iso8601 = g_time_val_to_iso8601 ( &timestamp );
+    char *time_iso8601 = g_time_val_to_iso8601 ( &timestamp );
     if ( time_iso8601 != NULL )
       fprintf ( f, "  <time>%s</time>\n", time_iso8601 );
     g_free ( time_iso8601 );
@@ -890,7 +890,7 @@ static void gpx_write_waypoint ( VikWaypoint *wp, GpxWritingContext *context )
     tmp = entitize(wp->symbol);
     if ( a_vik_gpx_export_wpt_sym_name ( ) ) {
        // Lowercase the symbol name
-       gchar *tmp2 = g_utf8_strdown ( tmp, -1 );
+       char *tmp2 = g_utf8_strdown ( tmp, -1 );
        fprintf ( f, "  <sym>%s</sym>\n",  tmp2 );
        g_free ( tmp2 );
     }
@@ -906,8 +906,8 @@ static void gpx_write_trackpoint ( VikTrackpoint *tp, GpxWritingContext *context
 {
   FILE *f = context->file;
   static struct LatLon ll;
-  gchar *s_lat,*s_lon, *s_alt, *s_dop;
-  gchar *time_iso8601;
+  char *s_lat,*s_lon, *s_alt, *s_dop;
+  char *time_iso8601;
   vik_coord_to_latlon ( &(tp->coord), &ll );
 
   // No such thing as a rteseg! So make sure we don't put them in
@@ -921,7 +921,7 @@ static void gpx_write_trackpoint ( VikTrackpoint *tp, GpxWritingContext *context
   g_free ( s_lon ); s_lon = NULL;
 
   if (tp->name) {
-    gchar *s_name = entitize(tp->name);
+    char *s_name = entitize(tp->name);
     fprintf ( f, "    <name>%s</name>\n", s_name );
     g_free(s_name);
   }
@@ -960,12 +960,12 @@ static void gpx_write_trackpoint ( VikTrackpoint *tp, GpxWritingContext *context
   time_iso8601 = NULL;
   
   if (!isnan(tp->course)) {
-    gchar *s_course = a_coords_dtostr(tp->course);
+    char *s_course = a_coords_dtostr(tp->course);
     fprintf ( f, "    <course>%s</course>\n", s_course );
     g_free(s_course);
   }
   if (!isnan(tp->speed)) {
-    gchar *s_speed = a_coords_dtostr(tp->speed);
+    char *s_speed = a_coords_dtostr(tp->speed);
     fprintf ( f, "    <speed>%s</speed>\n", s_speed );
     g_free(s_speed);
   }
@@ -1016,8 +1016,8 @@ static void gpx_write_track ( VikTrack *t, GpxWritingContext *context )
     return;
 
   FILE *f = context->file;
-  gchar *tmp;
-  gboolean first_tp_is_newsegment = FALSE; /* must temporarily make it not so, but we want to restore state. not that it matters. */
+  char *tmp;
+  bool first_tp_is_newsegment = false; /* must temporarily make it not so, but we want to restore state. not that it matters. */
 
   // Sanity clause
   if ( t->name )
@@ -1067,7 +1067,7 @@ static void gpx_write_track ( VikTrack *t, GpxWritingContext *context )
 
   if ( t->trackpoints && t->trackpoints->data ) {
     first_tp_is_newsegment = VIK_TRACKPOINT(t->trackpoints->data)->newsegment;
-    VIK_TRACKPOINT(t->trackpoints->data)->newsegment = FALSE; /* so we won't write </trkseg><trkseg> already */
+    VIK_TRACKPOINT(t->trackpoints->data)->newsegment = false; /* so we won't write </trkseg><trkseg> already */
     g_list_foreach ( t->trackpoints, (GFunc) gpx_write_trackpoint, context );
     VIK_TRACKPOINT(t->trackpoints->data)->newsegment = first_tp_is_newsegment; /* restore state */
   }
@@ -1113,8 +1113,8 @@ void a_gpx_write_file ( VikTrwLayer *vtl, FILE *f, GpxWritingOptions *options )
 
   gpx_write_header ( f );
 
-  gchar *tmp;
-  const gchar *name = vik_layer_get_name(VIK_LAYER(vtl));
+  char *tmp;
+  const char *name = vik_layer_get_name(VIK_LAYER(vtl));
   if ( name ) {
     tmp = entitize ( name );
     fprintf ( f, "  <name>%s</name>\n", tmp );
@@ -1160,7 +1160,7 @@ void a_gpx_write_file ( VikTrwLayer *vtl, FILE *f, GpxWritingOptions *options )
   if ( vik_trw_layer_get_tracks_visibility(vtl) || (options && options->hidden) ) {
     //gl = g_hash_table_get_values ( vik_trw_layer_get_tracks ( vtl ) );
     // Forming the list manually seems to produce one that is more likely to be nearer to the creation order
-    gpointer key, value;
+    void * key, *value;
     GHashTableIter ght_iter;
     g_hash_table_iter_init ( &ght_iter, vik_trw_layer_get_tracks ( vtl ) );
     while ( g_hash_table_iter_next (&ght_iter, &key, &value) ) {
@@ -1186,11 +1186,11 @@ void a_gpx_write_file ( VikTrwLayer *vtl, FILE *f, GpxWritingOptions *options )
   // so process each list separately
 
   GpxWritingContext context_tmp = context;
-  GpxWritingOptions opt_tmp = { FALSE, FALSE, FALSE, FALSE };
+  GpxWritingOptions opt_tmp = { false, false, false, false };
   // Force trackpoints on tracks
   if ( !context.options )
     context_tmp.options = &opt_tmp;
-  context_tmp.options->is_route = FALSE;
+  context_tmp.options->is_route = false;
 
   // Loop around each list and write each one
   for (GList *iter = g_list_first (gl); iter != NULL; iter = g_list_next (iter)) {
@@ -1198,7 +1198,7 @@ void a_gpx_write_file ( VikTrwLayer *vtl, FILE *f, GpxWritingOptions *options )
   }
 
   // Routes (to get routepoints)
-  context_tmp.options->is_route = TRUE;
+  context_tmp.options->is_route = true;
   for (GList *iter = g_list_first (glrte); iter != NULL; iter = g_list_next (iter)) {
     gpx_write_track ( (VikTrack*)iter->data, &context_tmp );
   }
@@ -1220,9 +1220,9 @@ void a_gpx_write_track_file ( VikTrack *trk, FILE *f, GpxWritingOptions *options
 /**
  * Common write of a temporary GPX file
  */
-static gchar* write_tmp_file ( VikTrwLayer *vtl, VikTrack *trk, GpxWritingOptions *options )
+static char* write_tmp_file ( VikTrwLayer *vtl, VikTrack *trk, GpxWritingOptions *options )
 {
-	gchar *tmp_filename = NULL;
+	char *tmp_filename = NULL;
 	GError *error = NULL;
 	// Opening temporary file
 	int fd = g_file_open_tmp("viking_XXXXXX.gpx", &tmp_filename, &error);
@@ -1254,7 +1254,7 @@ static gchar* write_tmp_file ( VikTrwLayer *vtl, VikTrack *trk, GpxWritingOption
  *          This file should be removed once used and the string freed.
  *          If NULL then the process failed.
  */
-gchar* a_gpx_write_tmp_file ( VikTrwLayer *vtl, GpxWritingOptions *options )
+char* a_gpx_write_tmp_file ( VikTrwLayer *vtl, GpxWritingOptions *options )
 {
 	return write_tmp_file ( vtl, NULL, options );
 }
@@ -1268,7 +1268,7 @@ gchar* a_gpx_write_tmp_file ( VikTrwLayer *vtl, GpxWritingOptions *options )
  *          This file should be removed once used and the string freed.
  *          If NULL then the process failed.
  */
-gchar* a_gpx_write_track_tmp_file ( VikTrack *trk, GpxWritingOptions *options )
+char* a_gpx_write_track_tmp_file ( VikTrack *trk, GpxWritingOptions *options )
 {
 	return write_tmp_file ( NULL, trk, options );
 }

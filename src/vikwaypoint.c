@@ -38,7 +38,7 @@ VikWaypoint *vik_waypoint_new()
 }
 
 // Hmmm tempted to put in new constructor
-void vik_waypoint_set_name(VikWaypoint *wp, const gchar *name)
+void vik_waypoint_set_name(VikWaypoint *wp, const char *name)
 {
   if ( wp->name )
     g_free ( wp->name );
@@ -46,14 +46,14 @@ void vik_waypoint_set_name(VikWaypoint *wp, const gchar *name)
   wp->name = g_strdup(name);
 }
 
-void vik_waypoint_set_comment_no_copy(VikWaypoint *wp, gchar *comment)
+void vik_waypoint_set_comment_no_copy(VikWaypoint *wp, char *comment)
 {
   if ( wp->comment )
     g_free ( wp->comment );
   wp->comment = comment;
 }
 
-void vik_waypoint_set_comment(VikWaypoint *wp, const gchar *comment)
+void vik_waypoint_set_comment(VikWaypoint *wp, const char *comment)
 {
   if ( wp->comment )
     g_free ( wp->comment );
@@ -64,7 +64,7 @@ void vik_waypoint_set_comment(VikWaypoint *wp, const gchar *comment)
     wp->comment = NULL;
 }
 
-void vik_waypoint_set_description(VikWaypoint *wp, const gchar *description)
+void vik_waypoint_set_description(VikWaypoint *wp, const char *description)
 {
   if ( wp->description )
     g_free ( wp->description );
@@ -75,7 +75,7 @@ void vik_waypoint_set_description(VikWaypoint *wp, const gchar *description)
     wp->description = NULL;
 }
 
-void vik_waypoint_set_source(VikWaypoint *wp, const gchar *source)
+void vik_waypoint_set_source(VikWaypoint *wp, const char *source)
 {
   if ( wp->source )
     g_free ( wp->source );
@@ -86,7 +86,7 @@ void vik_waypoint_set_source(VikWaypoint *wp, const gchar *source)
     wp->source = NULL;
 }
 
-void vik_waypoint_set_type(VikWaypoint *wp, const gchar *type)
+void vik_waypoint_set_type(VikWaypoint *wp, const char *type)
 {
   if ( wp->type )
     g_free ( wp->type );
@@ -97,7 +97,7 @@ void vik_waypoint_set_type(VikWaypoint *wp, const gchar *type)
     wp->type = NULL;
 }
 
-void vik_waypoint_set_url(VikWaypoint *wp, const gchar *url)
+void vik_waypoint_set_url(VikWaypoint *wp, const char *url)
 {
   if ( wp->url )
     g_free ( wp->url );
@@ -108,7 +108,7 @@ void vik_waypoint_set_url(VikWaypoint *wp, const gchar *url)
     wp->url = NULL;
 }
 
-void vik_waypoint_set_image(VikWaypoint *wp, const gchar *image)
+void vik_waypoint_set_image(VikWaypoint *wp, const char *image)
 {
   if ( wp->image )
     g_free ( wp->image );
@@ -120,9 +120,9 @@ void vik_waypoint_set_image(VikWaypoint *wp, const gchar *image)
   // NOTE - ATM the image (thumbnail) size is calculated on demand when needed to be first drawn
 }
 
-void vik_waypoint_set_symbol(VikWaypoint *wp, const gchar *symname)
+void vik_waypoint_set_symbol(VikWaypoint *wp, const char *symname)
 {
-  const gchar *hashed_symname;
+  const char *hashed_symname;
 
   if ( wp->symbol )
     g_free ( wp->symbol );
@@ -183,20 +183,20 @@ VikWaypoint *vik_waypoint_copy(const VikWaypoint *wp)
 /**
  * vik_waypoint_apply_dem_data:
  * @wp:            The Waypoint to operate on
- * @skip_existing: When TRUE, don't change the elevation if the waypoint already has a value
+ * @skip_existing: When true, don't change the elevation if the waypoint already has a value
  *
  * Set elevation data for a waypoint using available DEM information
  *
- * Returns: TRUE if the waypoint was updated
+ * Returns: true if the waypoint was updated
  */
-gboolean vik_waypoint_apply_dem_data ( VikWaypoint *wp, gboolean skip_existing )
+bool vik_waypoint_apply_dem_data ( VikWaypoint *wp, bool skip_existing )
 {
-  gboolean updated = FALSE;
+  bool updated = false;
   if ( !(skip_existing && wp->altitude != VIK_DEFAULT_ALTITUDE) ) {
-    gint16 elev = a_dems_get_elev_by_coord ( &(wp->coord), VIK_DEM_INTERPOL_BEST );
+    int16_t elev = a_dems_get_elev_by_coord ( &(wp->coord), VIK_DEM_INTERPOL_BEST );
     if ( elev != VIK_DEM_INVALID_ELEVATION ) {
-      wp->altitude = (gdouble)elev;
-      updated = TRUE;
+      wp->altitude = (double)elev;
+      updated = true;
     }
   }
   return updated;
@@ -205,21 +205,21 @@ gboolean vik_waypoint_apply_dem_data ( VikWaypoint *wp, gboolean skip_existing )
 /*
  * Take a Waypoint and convert it into a byte array
  */
-void vik_waypoint_marshall ( VikWaypoint *wp, guint8 **data, guint *datalen)
+void vik_waypoint_marshall ( VikWaypoint *wp, uint8_t **data, unsigned int *datalen)
 {
   GByteArray *b = g_byte_array_new();
-  guint len;
+  unsigned int len;
 
-  // This creates space for fixed sized members like gints and whatnot
+  // This creates space for fixed sized members like ints and whatnot
   //  and copies that amount of data from the waypoint to byte array
-  g_byte_array_append(b, (guint8 *)wp, sizeof(*wp));
+  g_byte_array_append(b, (uint8_t *)wp, sizeof(*wp));
 
   // This allocates space for variant sized strings
   //  and copies that amount of data from the waypoint to byte array
 #define vwm_append(s) \
   len = (s) ? strlen(s)+1 : 0; \
-  g_byte_array_append(b, (guint8 *)&len, sizeof(len)); \
-  if (s) g_byte_array_append(b, (guint8 *)s, len);
+  g_byte_array_append(b, (uint8_t *)&len, sizeof(len)); \
+  if (s) g_byte_array_append(b, (uint8_t *)s, len);
 
   vwm_append(wp->name);
   vwm_append(wp->comment);
@@ -232,16 +232,16 @@ void vik_waypoint_marshall ( VikWaypoint *wp, guint8 **data, guint *datalen)
 
   *data = b->data;
   *datalen = b->len;
-  g_byte_array_free(b, FALSE);
+  g_byte_array_free(b, false);
 #undef vwm_append
 }
 
 /*
  * Take a byte array and convert it into a Waypoint
  */
-VikWaypoint *vik_waypoint_unmarshall (guint8 *data, guint datalen)
+VikWaypoint *vik_waypoint_unmarshall (uint8_t *data, unsigned int datalen)
 {
-  guint len;
+  unsigned int len;
   VikWaypoint *new_wp = vik_waypoint_new();
   // This copies the fixed sized elements (i.e. visibility, altitude, image_width, etc...)
   memcpy(new_wp, data, sizeof(*new_wp));
@@ -249,10 +249,10 @@ VikWaypoint *vik_waypoint_unmarshall (guint8 *data, guint datalen)
 
   // Now the variant sized strings...
 #define vwu_get(s) \
-  len = *(guint *)data; \
+  len = *(unsigned int *)data; \
   data += sizeof(len); \
   if (len) { \
-    (s) = g_strdup((gchar *)data); \
+    (s) = g_strdup((char *)data); \
   } else { \
     (s) = NULL; \
   } \

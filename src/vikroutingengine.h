@@ -22,6 +22,9 @@
 #define _VIKING_ROUTING_ENGINE_H
 
 #include <glib.h>
+#include <stdbool.h>
+#include <stdint.h>
+
 
 #include "viktrwlayer.h"
 #include "coords.h"
@@ -45,11 +48,11 @@ typedef struct _VikRoutingEngineClass VikRoutingEngineClass;
 struct _VikRoutingEngineClass
 {
   GObjectClass object_class;
-  gboolean (*find)(VikRoutingEngine *self, VikTrwLayer *vtl, struct LatLon start, struct LatLon end);
-  gchar *(*get_url_from_directions)(VikRoutingEngine *self, const gchar *start, const gchar *end);
-  gboolean (*supports_direction)(VikRoutingEngine *self);
-  gboolean (*refine)(VikRoutingEngine *self, VikTrwLayer *vtl, VikTrack *vt);
-  gboolean (*supports_refine)(VikRoutingEngine *self);
+  bool (*find)(VikRoutingEngine *self, VikTrwLayer *vtl, struct LatLon start, struct LatLon end);
+  char *(*get_url_from_directions)(VikRoutingEngine *self, const char *start, const char *end);
+  bool (*supports_direction)(VikRoutingEngine *self);
+  bool (*refine)(VikRoutingEngine *self, VikTrwLayer *vtl, VikTrack *vt);
+  bool (*supports_refine)(VikRoutingEngine *self);
 };
 
 GType vik_routing_engine_get_type ();
@@ -58,17 +61,17 @@ struct _VikRoutingEngine {
   GObject obj;
 };
 
-gboolean vik_routing_engine_find ( VikRoutingEngine *self, VikTrwLayer *vtl, struct LatLon start, struct LatLon end );
-gboolean vik_routing_engine_refine ( VikRoutingEngine *self, VikTrwLayer *vtl, VikTrack *vt );
-gchar *vik_routing_engine_get_url_from_directions ( VikRoutingEngine *self, const gchar *start, const gchar *end );
+bool vik_routing_engine_find ( VikRoutingEngine *self, VikTrwLayer *vtl, struct LatLon start, struct LatLon end );
+bool vik_routing_engine_refine ( VikRoutingEngine *self, VikTrwLayer *vtl, VikTrack *vt );
+char *vik_routing_engine_get_url_from_directions ( VikRoutingEngine *self, const char *start, const char *end );
 
 /* Acessors */
-gchar *vik_routing_engine_get_id ( VikRoutingEngine *self );
-gchar *vik_routing_engine_get_label ( VikRoutingEngine *self );
-gchar *vik_routing_engine_get_format ( VikRoutingEngine *self );
+char *vik_routing_engine_get_id ( VikRoutingEngine *self );
+char *vik_routing_engine_get_label ( VikRoutingEngine *self );
+char *vik_routing_engine_get_format ( VikRoutingEngine *self );
 
-gboolean vik_routing_engine_supports_direction ( VikRoutingEngine *self );
-gboolean vik_routing_engine_supports_refine ( VikRoutingEngine *self );
+bool vik_routing_engine_supports_direction ( VikRoutingEngine *self );
+bool vik_routing_engine_supports_refine ( VikRoutingEngine *self );
 
 G_END_DECLS
 

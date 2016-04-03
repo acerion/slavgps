@@ -53,7 +53,7 @@ void vik_coord_copy_convert(const VikCoord *coord, VikCoordMode dest_mode, VikCo
   }
 }
 
-static gdouble vik_coord_diff_safe(const VikCoord *c1, const VikCoord *c2)
+static double vik_coord_diff_safe(const VikCoord *c1, const VikCoord *c2)
 {
   struct LatLon a, b;
   vik_coord_to_latlon ( c1, &a );
@@ -61,7 +61,7 @@ static gdouble vik_coord_diff_safe(const VikCoord *c1, const VikCoord *c2)
   return a_coords_latlon_diff ( &a, &b );
 }
 
-gdouble vik_coord_diff(const VikCoord *c1, const VikCoord *c2)
+double vik_coord_diff(const VikCoord *c1, const VikCoord *c2)
 {
   if ( c1->mode == c2->mode )
     return vik_coord_diff_safe ( c1, c2 );
@@ -105,10 +105,10 @@ void vik_coord_to_utm ( const VikCoord *coord, struct UTM *dest )
     a_coords_latlon_to_utm ( (const struct LatLon *) coord, dest );
 }
 
-gboolean vik_coord_equals ( const VikCoord *coord1, const VikCoord *coord2 )
+bool vik_coord_equals ( const VikCoord *coord1, const VikCoord *coord2 )
 {
   if ( coord1->mode != coord2->mode )
-    return FALSE;
+    return false;
   if ( coord1->mode == VIK_COORD_LATLON )
     return coord1->north_south == coord2->north_south && coord1->east_west == coord2->east_west;
   else /* VIK_COORD_UTM */
@@ -156,7 +156,7 @@ void vik_coord_set_area(const VikCoord *coord, const struct LatLon *wh, VikCoord
   tl->mode = br->mode = VIK_COORD_LATLON;
 }
 
-gboolean vik_coord_inside(const VikCoord *coord, const VikCoord *tl, const VikCoord *br)
+bool vik_coord_inside(const VikCoord *coord, const VikCoord *tl, const VikCoord *br)
 {
   struct LatLon ll, tl_ll, br_ll;
 
@@ -165,8 +165,8 @@ gboolean vik_coord_inside(const VikCoord *coord, const VikCoord *tl, const VikCo
   vik_coord_to_latlon(br, &br_ll);
 
   if ((ll.lat > tl_ll.lat) || (ll.lon < tl_ll.lon))
-    return FALSE;
+    return false;
   if ((ll.lat  < br_ll.lat) || (ll.lon > br_ll.lon))
-    return FALSE;
-  return TRUE;
+    return false;
+  return true;
 }

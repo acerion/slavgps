@@ -25,6 +25,9 @@
 #include <glib.h>
 #include <glib-object.h>
 #include <gtk/gtk.h>
+#include <stdbool.h>
+#include <stdint.h>
+
 
 G_BEGIN_DECLS
 
@@ -45,9 +48,9 @@ struct _VikRadioGroupClass
 GType vik_radio_group_get_type ();
 
 GtkWidget *vik_radio_group_new ( GList *options );
-void vik_radio_group_set_selected ( VikRadioGroup *vrg, guint8 i );
-guint8 vik_radio_group_get_selected ( VikRadioGroup *vrg );
-GtkWidget *vik_radio_group_new_static ( const gchar **options );
+void vik_radio_group_set_selected ( VikRadioGroup *vrg, uint8_t i );
+uint8_t vik_radio_group_get_selected ( VikRadioGroup *vrg );
+GtkWidget *vik_radio_group_new_static ( const char **options );
 
 G_END_DECLS
 

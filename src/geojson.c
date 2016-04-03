@@ -35,8 +35,8 @@
  * Perform any cleanup actions once program has completed running
  */
 static void my_watch ( GPid pid,
-                       gint status,
-                       gpointer user_data )
+                       int status,
+                       void * user_data )
 {
 	g_spawn_close_pid ( pid );
 }
@@ -44,22 +44,22 @@ static void my_watch ( GPid pid,
 /**
  * a_geojson_write_file:
  *
- * Returns TRUE if successfully written
+ * Returns true if successfully written
  */
-gboolean a_geojson_write_file ( VikTrwLayer *vtl, FILE *ff )
+bool a_geojson_write_file ( VikTrwLayer *vtl, FILE *ff )
 {
-	gboolean result = FALSE;
+	bool result = false;
 
-	gchar *tmp_filename = a_gpx_write_tmp_file ( vtl, NULL );
+	char *tmp_filename = a_gpx_write_tmp_file ( vtl, NULL );
 	if ( !tmp_filename )
 		return result;
 
 	GPid pid;
-	gint mystdout;
+	int mystdout;
 
 	// geojson program should be on the $PATH
-	gchar **argv;
-	argv = g_new (gchar*, 5);
+	char **argv;
+	argv = g_new (char*, 5);
 	argv[0] = g_strdup (a_geojson_program_export());
 	argv[1] = g_strdup ("-f");
 	argv[2] = g_strdup ("gpx");
@@ -71,7 +71,7 @@ gboolean a_geojson_write_file ( VikTrwLayer *vtl, FILE *ff )
 	if (!g_spawn_async_with_pipes (NULL, argv, NULL, (GSpawnFlags) G_SPAWN_SEARCH_PATH | G_SPAWN_DO_NOT_REAP_CHILD, NULL, NULL, &pid, NULL, &mystdout, NULL, &error)) {
 
 		if ( IS_VIK_WINDOW ((VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(vtl)) ) {
-			gchar* msg = g_strdup_printf ( _("%s command failed: %s"), argv[0], error->message );
+			char* msg = g_strdup_printf ( _("%s command failed: %s"), argv[0], error->message );
 			vik_window_statusbar_update ( (VikWindow*)VIK_GTK_WINDOW_FROM_LAYER(vtl), msg, VIK_STATUSBAR_INFO );
 			g_free (msg);
 		}
@@ -82,7 +82,7 @@ gboolean a_geojson_write_file ( VikTrwLayer *vtl, FILE *ff )
 	}
 	else {
 		// Probably should use GIOChannels...
-		gchar line[512];
+		char line[512];
 		FILE *fout = fdopen(mystdout, "r");
 		setvbuf(fout, NULL, _IONBF, 0);
 
@@ -93,7 +93,7 @@ gboolean a_geojson_write_file ( VikTrwLayer *vtl, FILE *ff )
 		fclose(fout);
 
 		g_child_watch_add ( pid, (GChildWatchFunc) my_watch, NULL );
-		result = TRUE;
+		result = true;
 	}
 
 	g_strfreev (argv);
@@ -111,7 +111,7 @@ gboolean a_geojson_write_file ( VikTrwLayer *vtl, FILE *ff )
 // https://www.npmjs.org/package/togeojson
 //
 // Tested with version 0.7.0
-const gchar* a_geojson_program_export ( void )
+const char* a_geojson_program_export ( void )
 {
 	return "togeojson";
 }
@@ -122,7 +122,7 @@ const gchar* a_geojson_program_export ( void )
 // https://www.npmjs.org/package/togpx
 //
 // Tested with version 0.3.1
-const gchar* a_geojson_program_import ( void )
+const char* a_geojson_program_import ( void )
 {
 	return "togpx";
 }
@@ -136,9 +136,9 @@ const gchar* a_geojson_program_import ( void )
  *          This file should be removed once used and the string freed.
  *          If NULL then the process failed.
  */
-gchar* a_geojson_import_to_gpx ( const gchar *filename )
+char* a_geojson_import_to_gpx ( const char *filename )
 {
-	gchar *gpx_filename = NULL;
+	char *gpx_filename = NULL;
 	GError *error = NULL;
 	// Opening temporary file
 	int fd = g_file_open_tmp("vik_geojson_XXXXXX.gpx", &gpx_filename, &error);
@@ -150,11 +150,11 @@ gchar* a_geojson_import_to_gpx ( const gchar *filename )
 	g_debug ( "%s: temporary file = %s", __FUNCTION__, gpx_filename );
 
 	GPid pid;
-	gint mystdout;
+	int mystdout;
 
 	// geojson program should be on the $PATH
-	gchar **argv;
-	argv = g_new (gchar*, 3);
+	char **argv;
+	argv = g_new (char*, 3);
 	argv[0] = g_strdup (a_geojson_program_import());
 	argv[1] = g_strdup (filename);
 	argv[2] = NULL;
@@ -168,7 +168,7 @@ gchar* a_geojson_import_to_gpx ( const gchar *filename )
 	}
 	else {
 		// Probably should use GIOChannels...
-		gchar line[512];
+		char line[512];
 		FILE *fout = fdopen(mystdout, "r");
 		setvbuf(fout, NULL, _IONBF, 0);
 

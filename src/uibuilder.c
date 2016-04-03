@@ -29,8 +29,8 @@
 #include "vikfileentry.h"
 #include "vikfilelist.h"
 
-VikLayerParamData vik_lpd_true_default ( void ) { return VIK_LPD_BOOLEAN ( TRUE ); }
-VikLayerParamData vik_lpd_false_default ( void ) { return VIK_LPD_BOOLEAN ( FALSE ); }
+VikLayerParamData vik_lpd_true_default ( void ) { return VIK_LPD_BOOLEAN ( true ); }
+VikLayerParamData vik_lpd_false_default ( void ) { return VIK_LPD_BOOLEAN ( false ); }
 
 GtkWidget *a_uibuilder_new_widget ( VikLayerParam *param, VikLayerParamData data )
 {
@@ -52,14 +52,14 @@ GtkWidget *a_uibuilder_new_widget ( VikLayerParam *param, VikLayerParamData data
         //rv = gtk_check_button_new_with_label ( //param->title );
         rv = gtk_check_button_new ();
         if ( vlpd.b )
-          gtk_toggle_button_set_active ( GTK_TOGGLE_BUTTON(rv), TRUE );
+          gtk_toggle_button_set_active ( GTK_TOGGLE_BUTTON(rv), true );
       }
       break;
     case VIK_LAYER_WIDGET_COMBOBOX:
       if ( param->type == VIK_LAYER_PARAM_UINT && param->widget_data )
       {
         /* Build a simple combobox */
-        gchar **pstr = param->widget_data;
+        char **pstr = param->widget_data;
         rv = vik_combo_box_text_new ();
         while ( *pstr )
           vik_combo_box_text_append ( rv, *(pstr++) );
@@ -68,7 +68,7 @@ GtkWidget *a_uibuilder_new_widget ( VikLayerParam *param, VikLayerParamData data
           /* Set the effective default value */
           int i;
           for ( i = 0; ((const char **)param->widget_data)[i]; i++ )
-            if ( ((guint *)param->extra_widget_data)[i] == vlpd.u )
+            if ( ((unsigned int *)param->extra_widget_data)[i] == vlpd.u )
             {
               /* Match default value */
               gtk_combo_box_set_active ( GTK_COMBO_BOX(rv), i );
@@ -81,7 +81,7 @@ GtkWidget *a_uibuilder_new_widget ( VikLayerParam *param, VikLayerParamData data
       else if ( param->type == VIK_LAYER_PARAM_STRING && param->widget_data && !param->extra_widget_data )
       {
         /* Build a combobox with editable text */
-        gchar **pstr = param->widget_data;
+        char **pstr = param->widget_data;
 #if GTK_CHECK_VERSION (2, 24, 0)
         rv = gtk_combo_box_text_new_with_entry ();
 #else
@@ -97,7 +97,7 @@ GtkWidget *a_uibuilder_new_widget ( VikLayerParam *param, VikLayerParamData data
       else if ( param->type == VIK_LAYER_PARAM_STRING && param->widget_data && param->extra_widget_data)
       {
         /* Build a combobox with fixed selections without editable text */
-        gchar **pstr = param->widget_data;
+        char **pstr = param->widget_data;
         rv = GTK_WIDGET ( vik_combo_box_text_new () );
         while ( *pstr )
           vik_combo_box_text_append ( rv, *(pstr++) );
@@ -142,12 +142,12 @@ GtkWidget *a_uibuilder_new_widget ( VikLayerParam *param, VikLayerParamData data
     case VIK_LAYER_WIDGET_RADIOGROUP_STATIC:
       if ( param->type == VIK_LAYER_PARAM_UINT && param->widget_data )
       {
-        rv = vik_radio_group_new_static ( (const gchar **) param->widget_data );
+        rv = vik_radio_group_new_static ( (const char **) param->widget_data );
         if ( param->extra_widget_data ) /* map of alternate uint values for options */
         {
           int i;
           for ( i = 0; ((const char **)param->widget_data)[i]; i++ )
-            if ( ((guint *)param->extra_widget_data)[i] == vlpd.u )
+            if ( ((unsigned int *)param->extra_widget_data)[i] == vlpd.u )
             {
               vik_radio_group_set_selected ( VIK_RADIO_GROUP(rv), i );
               break;
@@ -161,7 +161,7 @@ GtkWidget *a_uibuilder_new_widget ( VikLayerParam *param, VikLayerParamData data
       if ( (param->type == VIK_LAYER_PARAM_DOUBLE || param->type == VIK_LAYER_PARAM_UINT
            || param->type == VIK_LAYER_PARAM_INT)  && param->widget_data )
       {
-        gdouble init_val = (param->type == VIK_LAYER_PARAM_DOUBLE) ? vlpd.d : (param->type == VIK_LAYER_PARAM_UINT ? vlpd.u : vlpd.i);
+        double init_val = (param->type == VIK_LAYER_PARAM_DOUBLE) ? vlpd.d : (param->type == VIK_LAYER_PARAM_UINT ? vlpd.u : vlpd.i);
         VikLayerParamScale *scale = (VikLayerParamScale *) param->widget_data;
         rv = gtk_spin_button_new ( GTK_ADJUSTMENT(gtk_adjustment_new( init_val, scale->min, scale->max, scale->step, scale->step, 0 )), scale->step, scale->digits );
       }
@@ -178,7 +178,7 @@ GtkWidget *a_uibuilder_new_widget ( VikLayerParam *param, VikLayerParamData data
       if ( param->type == VIK_LAYER_PARAM_STRING )
       {
         rv = gtk_entry_new ();
-        gtk_entry_set_visibility ( GTK_ENTRY(rv), FALSE );
+        gtk_entry_set_visibility ( GTK_ENTRY(rv), false );
         if ( vlpd.s )
           gtk_entry_set_text ( GTK_ENTRY(rv), vlpd.s );
         gtk_widget_set_tooltip_text ( GTK_WIDGET(rv),
@@ -213,7 +213,7 @@ GtkWidget *a_uibuilder_new_widget ( VikLayerParam *param, VikLayerParamData data
       if ( (param->type == VIK_LAYER_PARAM_DOUBLE || param->type == VIK_LAYER_PARAM_UINT
            || param->type == VIK_LAYER_PARAM_INT)  && param->widget_data )
       {
-        gdouble init_val = (param->type == VIK_LAYER_PARAM_DOUBLE) ? vlpd.d : (param->type == VIK_LAYER_PARAM_UINT ? vlpd.u : vlpd.i);
+        double init_val = (param->type == VIK_LAYER_PARAM_DOUBLE) ? vlpd.d : (param->type == VIK_LAYER_PARAM_UINT ? vlpd.u : vlpd.i);
         VikLayerParamScale *scale = (VikLayerParamScale *) param->widget_data;
         rv = gtk_hscale_new_with_range ( scale->min, scale->max, scale->step );
         gtk_scale_set_digits ( GTK_SCALE(rv), scale->digits );
@@ -255,7 +255,7 @@ VikLayerParamData a_uibuilder_widget_get_value ( GtkWidget *widget, VikLayerPara
         if ( rv.i == -1 ) rv.i = 0;
         rv.u = rv.i;
         if ( param->extra_widget_data )
-          rv.u = ((guint *)param->extra_widget_data)[rv.u];
+          rv.u = ((unsigned int *)param->extra_widget_data)[rv.u];
       }
       if ( param->type == VIK_LAYER_PARAM_STRING)
       {
@@ -304,9 +304,9 @@ VikLayerParamData a_uibuilder_widget_get_value ( GtkWidget *widget, VikLayerPara
       break;
     case VIK_LAYER_WIDGET_HSCALE:
       if ( param->type == VIK_LAYER_PARAM_UINT )
-        rv.u = (guint32) gtk_range_get_value ( GTK_RANGE(widget) );
+        rv.u = (uint32_t) gtk_range_get_value ( GTK_RANGE(widget) );
       else if ( param->type == VIK_LAYER_PARAM_INT )
-        rv.i = (gint32) gtk_range_get_value ( GTK_RANGE(widget) );
+        rv.i = (int32_t) gtk_range_get_value ( GTK_RANGE(widget) );
       else
         rv.d = gtk_range_get_value ( GTK_RANGE(widget) );
       break;
@@ -320,23 +320,23 @@ VikLayerParamData a_uibuilder_widget_get_value ( GtkWidget *widget, VikLayerPara
   return rv;
 }
 
-//static void draw_to_image_file_total_area_cb (GtkSpinButton *spinbutton, gpointer *pass_along)
-gint a_uibuilder_properties_factory ( const gchar *dialog_name,
+//static void draw_to_image_file_total_area_cb (GtkSpinButton *spinbutton, void * *pass_along)
+int a_uibuilder_properties_factory ( const char *dialog_name,
                                       GtkWindow *parent,
                                       VikLayerParam *params,
-                                      guint16 params_count,
-                                      gchar **groups,
-                                      guint8 groups_count,
-                                      gboolean (*setparam) (gpointer,guint16,VikLayerParamData,gpointer,gboolean),
-                                      gpointer pass_along1,
-                                      gpointer pass_along2,
-                                      VikLayerParamData (*getparam) (gpointer,guint16,gboolean),
-                                      gpointer pass_along_getparam,
+                                      uint16_t params_count,
+                                      char **groups,
+                                      uint8_t groups_count,
+                                      bool (*setparam) (void *,uint16_t,VikLayerParamData,void *,bool),
+                                      void * pass_along1,
+                                      void * pass_along2,
+                                      VikLayerParamData (*getparam) (void *,uint16_t,bool),
+                                      void * pass_along_getparam,
                                       void (*changeparam) (GtkWidget*, ui_change_values) )
                                       /* pass_along1 and pass_along2 are for set_param first and last params */
 {
-  guint16 i, j, widget_count = 0;
-  gboolean must_redraw = FALSE;
+  uint16_t i, j, widget_count = 0;
+  bool must_redraw = false;
 
   if ( ! params )
     return 1; /* no params == no options, so all is good */
@@ -360,7 +360,7 @@ gint a_uibuilder_properties_factory ( const gchar *dialog_name,
 #if GTK_CHECK_VERSION (2, 20, 0)
     response_w = gtk_dialog_get_widget_for_response ( GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT );
 #endif
-    gint resp;
+    int resp;
 
     GtkWidget *table = NULL;
     GtkWidget **tables = NULL; /* for more than one group */
@@ -372,13 +372,13 @@ gint a_uibuilder_properties_factory ( const gchar *dialog_name,
 
     if ( groups && groups_count > 1 )
     {
-      guint8 current_group;
-      guint16 tab_widget_count;
+      uint8_t current_group;
+      uint16_t tab_widget_count;
       notebook = gtk_notebook_new ();
       // Switch to vertical notebook mode when many groups
       if ( groups_count > 4 )
         gtk_notebook_set_tab_pos ( GTK_NOTEBOOK(notebook), GTK_POS_LEFT );
-      gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), notebook, FALSE, FALSE, 0);
+      gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), notebook, false, false, 0);
       tables = g_malloc ( sizeof(GtkWidget *) * groups_count );
       for ( current_group = 0; current_group < groups_count; current_group++ )
       {
@@ -389,15 +389,15 @@ gint a_uibuilder_properties_factory ( const gchar *dialog_name,
 
         if ( tab_widget_count )
         {
-          tables[current_group] = gtk_table_new ( tab_widget_count, 1, FALSE );
+          tables[current_group] = gtk_table_new ( tab_widget_count, 1, false );
           gtk_notebook_append_page ( GTK_NOTEBOOK(notebook), tables[current_group], gtk_label_new(groups[current_group]) );
         }
       }
     }
     else
     {
-      table = gtk_table_new( widget_count, 1, FALSE );
-      gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), table, FALSE, FALSE, 0);
+      table = gtk_table_new( widget_count, 1, false );
+      gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), table, false, false, 0);
     }
 
     for ( i = 0, j = 0; i < params_count; i++ )
@@ -407,7 +407,7 @@ gint a_uibuilder_properties_factory ( const gchar *dialog_name,
         if ( tables )
           table = tables[MAX(0, params[i].group)]; /* round up NOT_IN_GROUP, that's not reasonable here */
 
-        widgets[j] = a_uibuilder_new_widget ( &(params[i]), getparam ( pass_along_getparam, i, FALSE ) );
+        widgets[j] = a_uibuilder_new_widget ( &(params[i]), getparam ( pass_along_getparam, i, false ) );
 
         if ( widgets[j] ) {
           labels[j] = gtk_label_new(_(params[i].title));
@@ -418,7 +418,7 @@ gint a_uibuilder_properties_factory ( const gchar *dialog_name,
           {
             change_values[j][UI_CHG_LAYER] = pass_along1;
             change_values[j][UI_CHG_PARAM] = &params[i];
-            change_values[j][UI_CHG_PARAM_ID] = GINT_TO_POINTER((gint)i);
+            change_values[j][UI_CHG_PARAM_ID] = GINT_TO_POINTER((int)i);
             change_values[j][UI_CHG_WIDGETS] = widgets;
             change_values[j][UI_CHG_LABELS] = labels;
 
@@ -468,8 +468,8 @@ gint a_uibuilder_properties_factory ( const gchar *dialog_name,
 			  i,
 			  a_uibuilder_widget_get_value ( widgets[j], &(params[i]) ),
 			  pass_along2,
-			  FALSE ) )
-            must_redraw = TRUE;
+			  false ) )
+            must_redraw = true;
           j++;
         }
       }
@@ -496,7 +496,7 @@ gint a_uibuilder_properties_factory ( const gchar *dialog_name,
 }
 
 
-static void uibuilder_run_setparam ( VikLayerParamData *paramdatas, guint16 i, VikLayerParamData data, VikLayerParam *params )
+static void uibuilder_run_setparam ( VikLayerParamData *paramdatas, uint16_t i, VikLayerParamData data, VikLayerParam *params )
 {
   /* could have to copy it if it's a string! */
   switch ( params[i].type ) {
@@ -508,14 +508,14 @@ static void uibuilder_run_setparam ( VikLayerParamData *paramdatas, guint16 i, V
   }
 }
 
-static VikLayerParamData uibuilder_run_getparam ( VikLayerParamData *params_defaults, guint16 i )
+static VikLayerParamData uibuilder_run_getparam ( VikLayerParamData *params_defaults, uint16_t i )
 {
   return params_defaults[i];
 }
 
 
-VikLayerParamData *a_uibuilder_run_dialog (  const gchar *dialog_name, GtkWindow *parent, VikLayerParam *params,
-                        guint16 params_count, gchar **groups, guint8 groups_count,
+VikLayerParamData *a_uibuilder_run_dialog (  const char *dialog_name, GtkWindow *parent, VikLayerParam *params,
+                        uint16_t params_count, char **groups, uint8_t groups_count,
                         VikLayerParamData *params_defaults )
 {
     VikLayerParamData *paramdatas = g_new(VikLayerParamData, params_count);
@@ -525,10 +525,10 @@ VikLayerParamData *a_uibuilder_run_dialog (  const gchar *dialog_name, GtkWindow
 					  params_count, 
 					  groups, 
 					  groups_count,
-					  (gpointer) uibuilder_run_setparam, 
+					  (void *) uibuilder_run_setparam, 
 					  paramdatas, 
 					  params,
-					  (gpointer) uibuilder_run_getparam, 
+					  (void *) uibuilder_run_getparam, 
 					  params_defaults,
 					  NULL ) > 0 ) {
 
@@ -539,14 +539,14 @@ VikLayerParamData *a_uibuilder_run_dialog (  const gchar *dialog_name, GtkWindow
 }
 
 /* frees data from last (if ness) */
-void a_uibuilder_free_paramdatas ( VikLayerParamData *paramdatas, VikLayerParam *params, guint16 params_count )
+void a_uibuilder_free_paramdatas ( VikLayerParamData *paramdatas, VikLayerParam *params, uint16_t params_count )
 {
   int i;
   /* may have to free strings, etc. */
   for ( i = 0; i < params_count; i++ ) {
     switch ( params[i].type ) {
       case VIK_LAYER_PARAM_STRING:
-        g_free ( (gchar *) paramdatas[i].s );
+        g_free ( (char *) paramdatas[i].s );
         break;
       case VIK_LAYER_PARAM_STRING_LIST: {
         /* should make a util function out of this */

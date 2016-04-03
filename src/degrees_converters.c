@@ -26,6 +26,7 @@
 #include <math.h>
 #endif
 #include <string.h>
+#include <stdbool.h>
 #include "degrees_converters.h"
 
 #define DEGREE_SYMBOL "\302\260"
@@ -34,11 +35,11 @@
  * @param pos_c char for positive value
  * @param neg_c char for negative value
  */
-static gchar *convert_dec_to_ddd(gdouble dec, gchar pos_c, gchar neg_c)
+static char *convert_dec_to_ddd(double dec, char pos_c, char neg_c)
 {
-  gchar sign_c = ' ';
-  gdouble val_d;
-  gchar *result = NULL;
+  char sign_c = ' ';
+  double val_d;
+  char *result = NULL;
 
   if ( dec > 0 )
     sign_c = pos_c;
@@ -55,12 +56,12 @@ static gchar *convert_dec_to_ddd(gdouble dec, gchar pos_c, gchar neg_c)
   return result;
 }
 
-gchar *convert_lat_dec_to_ddd(gdouble lat)
+char *convert_lat_dec_to_ddd(double lat)
 {
   return convert_dec_to_ddd(lat, 'N', 'S');
 }
 
-gchar *convert_lon_dec_to_ddd(gdouble lon)
+char *convert_lon_dec_to_ddd(double lon)
 {
   return convert_dec_to_ddd(lon, 'E', 'W');
 }
@@ -69,13 +70,13 @@ gchar *convert_lon_dec_to_ddd(gdouble lon)
  * @param pos_c char for positive value
  * @param neg_c char for negative value
  */
-static gchar *convert_dec_to_dmm(gdouble dec, gchar pos_c, gchar neg_c)
+static char *convert_dec_to_dmm(double dec, char pos_c, char neg_c)
 {
-  gdouble tmp;
-  gchar sign_c = ' ';
-  gint val_d;
-  gdouble val_m;
-  gchar *result = NULL;
+  double tmp;
+  char sign_c = ' ';
+  int val_d;
+  double val_m;
+  char *result = NULL;
 
   if ( dec > 0 )
     sign_c = pos_c;
@@ -86,7 +87,7 @@ static gchar *convert_dec_to_dmm(gdouble dec, gchar pos_c, gchar neg_c)
 
   /* Degree */
   tmp = fabs(dec);
-  val_d = (gint)tmp;
+  val_d = (int)tmp;
 
   /* Minutes */
   val_m = (tmp - val_d) * 60;
@@ -97,12 +98,12 @@ static gchar *convert_dec_to_dmm(gdouble dec, gchar pos_c, gchar neg_c)
   return result;
 }
 
-gchar *convert_lat_dec_to_dmm(gdouble lat)
+char *convert_lat_dec_to_dmm(double lat)
 {
   return convert_dec_to_dmm(lat, 'N', 'S');
 }
 
-gchar *convert_lon_dec_to_dmm(gdouble lon)
+char *convert_lon_dec_to_dmm(double lon)
 {
   return convert_dec_to_dmm(lon, 'E', 'W');
 }
@@ -111,13 +112,13 @@ gchar *convert_lon_dec_to_dmm(gdouble lon)
  * @param pos_c char for positive value
  * @param neg_c char for negative value
  */
-static gchar *convert_dec_to_dms(gdouble dec, gchar pos_c, gchar neg_c)
+static char *convert_dec_to_dms(double dec, char pos_c, char neg_c)
 {
-  gdouble tmp;
-  gchar sign_c = ' ';
-  gint val_d, val_m;
-  gdouble val_s;
-  gchar *result = NULL;
+  double tmp;
+  char sign_c = ' ';
+  int val_d, val_m;
+  double val_s;
+  char *result = NULL;
 
   if ( dec > 0 )
     sign_c = pos_c;
@@ -128,11 +129,11 @@ static gchar *convert_dec_to_dms(gdouble dec, gchar pos_c, gchar neg_c)
 
   /* Degree */
   tmp = fabs(dec);
-  val_d = (gint)tmp;
+  val_d = (int)tmp;
 
   /* Minutes */
   tmp = (tmp - val_d) * 60;
-  val_m = (gint)tmp;
+  val_m = (int)tmp;
 
   /* Seconds */
   val_s = (tmp - val_m) * 60;
@@ -143,43 +144,43 @@ static gchar *convert_dec_to_dms(gdouble dec, gchar pos_c, gchar neg_c)
   return result;
 }
 
-gchar *convert_lat_dec_to_dms(gdouble lat)
+char *convert_lat_dec_to_dms(double lat)
 {
   return convert_dec_to_dms(lat, 'N', 'S');
 }
 
-gchar *convert_lon_dec_to_dms(gdouble lon)
+char *convert_lon_dec_to_dms(double lon)
 {
   return convert_dec_to_dms(lon, 'E', 'W');
 }
 
-gdouble convert_dms_to_dec(const gchar *dms)
+double convert_dms_to_dec(const char *dms)
 {
-	gdouble d = 0.0; /* Degree */
-	gdouble m = 0.0; /* Minutes */
-	gdouble s = 0.0; /* Seconds */
-	gint neg = FALSE;
-	gdouble result;
+	double d = 0.0; /* Degree */
+	double m = 0.0; /* Minutes */
+	double s = 0.0; /* Seconds */
+	int neg = false;
+	double result;
 	
 	if (dms != NULL) {
 		int nbFloat = 0;
-		const gchar *ptr, *endptr;
+		const char *ptr, *endptr;
 
 		// Compute the sign
 		// It is negative if:
 		// - the '-' sign occurs
 		// - it is a west longitude or south latitude
 		if (strpbrk (dms, "-wWsS") != NULL)
-		    neg = TRUE;
+		    neg = true;
 
 		// Peek the différent components
 		endptr = dms;
 		do {
-			gdouble value;
+			double value;
 			ptr = strpbrk (endptr, "0123456789,.");
 			if (ptr != NULL) {
-				const gchar *tmpptr = endptr;
-				value = g_strtod((const gchar *)ptr, (gchar **)&endptr);
+				const char *tmpptr = endptr;
+				value = g_strtod((const char *)ptr, (char **)&endptr);
 				// Detect when endptr hasn't changed (which may occur if no conversion took place)
 				//  particularly if the last character is a ',' or there are multiple '.'s like '5.5.'
 				if ( endptr == tmpptr )

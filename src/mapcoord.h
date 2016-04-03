@@ -23,6 +23,9 @@
 #define __MAP_COORD_H
 
 #include <glib.h>
+#include <stdbool.h>
+#include <stdint.h>
+
 
 G_BEGIN_DECLS
 
@@ -30,9 +33,9 @@ G_BEGIN_DECLS
  * particular tile */
 
 typedef struct {
-  gint x, y;
-  gint z; /* zone or anything else */
-  gint scale;
+  int x, y;
+  int z; /* zone or anything else */
+  int scale;
 } MapCoord;
 
 G_END_DECLS

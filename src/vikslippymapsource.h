@@ -21,6 +21,9 @@
 #define _VIK_SLIPPY_MAP_SOURCE_H
 
 #include <glib.h>
+#include <stdbool.h>
+#include <stdint.h>
+
 
 #include "vikcoord.h"
 #include "mapcoord.h"
@@ -50,7 +53,7 @@ struct _VikSlippyMapSource
 
 GType vik_slippy_map_source_get_type (void) G_GNUC_CONST;
 
-VikSlippyMapSource * vik_slippy_map_source_new_with_id (guint16 id, const gchar *label, const gchar *hostname, const gchar *url);
+VikSlippyMapSource * vik_slippy_map_source_new_with_id (uint16_t id, const char *label, const char *hostname, const char *url);
 
 G_END_DECLS
 

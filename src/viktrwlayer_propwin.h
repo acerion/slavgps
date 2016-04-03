@@ -24,6 +24,9 @@
 
 #include <glib.h>
 #include <gtk/gtk.h>
+#include <stdbool.h>
+#include <stdint.h>
+
 #include "viktrack.h"
 
 G_BEGIN_DECLS
@@ -36,9 +39,9 @@ G_BEGIN_DECLS
 void vik_trw_layer_propwin_run ( GtkWindow *parent,
 								 VikTrwLayer *vtl,
 								 VikTrack *tr,
-								 gpointer vlp,
+								 void * vlp,
 								 VikViewport *vvp,
-								 gboolean start_on_stats );
+								 bool start_on_stats );
 
 /**
  * Update this property dialog

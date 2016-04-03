@@ -37,14 +37,14 @@
 #include <string.h>
 #include <ctype.h>
 
-void a_dialog_msg ( GtkWindow *parent, gint type, const gchar *info, const gchar *extra )
+void a_dialog_msg ( GtkWindow *parent, int type, const char *info, const char *extra )
 {
   GtkWidget *msgbox = gtk_message_dialog_new ( parent, GTK_DIALOG_DESTROY_WITH_PARENT, type, GTK_BUTTONS_OK, info, extra );
   gtk_dialog_run ( GTK_DIALOG(msgbox) );
   gtk_widget_destroy ( msgbox );
 }
 
-gboolean a_dialog_goto_latlon ( GtkWindow *parent, struct LatLon *ll, const struct LatLon *old )
+bool a_dialog_goto_latlon ( GtkWindow *parent, struct LatLon *ll, const struct LatLon *old )
 {
   GtkWidget *dialog = gtk_dialog_new_with_buttons (_("Go to Lat/Lon"),
                                                   parent,
@@ -56,7 +56,7 @@ gboolean a_dialog_goto_latlon ( GtkWindow *parent, struct LatLon *ll, const stru
                                                   NULL);
   GtkWidget *latlabel, *lonlabel;
   GtkWidget *lat, *lon;
-  gchar *tmp_lat, *tmp_lon;
+  char *tmp_lat, *tmp_lon;
 
   latlabel = gtk_label_new (_("Latitude:"));
   lat = gtk_entry_new ();
@@ -75,10 +75,10 @@ gboolean a_dialog_goto_latlon ( GtkWindow *parent, struct LatLon *ll, const stru
   gtk_widget_show ( lat );
   gtk_widget_show ( lon );
 
-  gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), latlabel,  FALSE, FALSE, 0);
-  gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), lat, FALSE, FALSE, 0);
-  gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), lonlabel,  FALSE, FALSE, 0);
-  gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), lon,  FALSE, FALSE, 0);
+  gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), latlabel,  false, false, 0);
+  gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), lat, false, false, 0);
+  gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), lonlabel,  false, false, 0);
+  gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), lon,  false, false, 0);
 
   // 'ok' when press return in the entry
   g_signal_connect_swapped (lat, "activate", G_CALLBACK(a_dialog_response_accept), dialog);
@@ -91,14 +91,14 @@ gboolean a_dialog_goto_latlon ( GtkWindow *parent, struct LatLon *ll, const stru
     ll->lat = convert_dms_to_dec ( gtk_entry_get_text ( GTK_ENTRY(lat) ) );
     ll->lon = convert_dms_to_dec ( gtk_entry_get_text ( GTK_ENTRY(lon) ) );
     gtk_widget_destroy ( dialog );
-    return TRUE;
+    return true;
   }
 
   gtk_widget_destroy ( dialog );
-  return FALSE;
+  return false;
 }
 
-gboolean a_dialog_goto_utm ( GtkWindow *parent, struct UTM *utm, const struct UTM *old )
+bool a_dialog_goto_utm ( GtkWindow *parent, struct UTM *utm, const struct UTM *old )
 {
   GtkWidget *dialog = gtk_dialog_new_with_buttons (_("Go to UTM"),
                                                   parent,
@@ -110,8 +110,8 @@ gboolean a_dialog_goto_utm ( GtkWindow *parent, struct UTM *utm, const struct UT
                                                   NULL);
   GtkWidget *norlabel, *easlabel, *nor, *eas;
   GtkWidget *zonehbox, *zonespin, *letterentry;
-  gchar *tmp_eas, *tmp_nor;
-  gchar tmp_letter[2];
+  char *tmp_eas, *tmp_nor;
+  char tmp_letter[2];
 
   norlabel = gtk_label_new (_("Northing:"));
   nor = gtk_entry_new ();
@@ -125,18 +125,18 @@ gboolean a_dialog_goto_utm ( GtkWindow *parent, struct UTM *utm, const struct UT
   gtk_entry_set_text ( GTK_ENTRY(eas), tmp_eas );
   g_free ( tmp_eas );
 
-  zonehbox = gtk_hbox_new ( FALSE, 0 );
-  gtk_box_pack_start ( GTK_BOX(zonehbox), gtk_label_new ( _("Zone:") ), FALSE, FALSE, 5 );
+  zonehbox = gtk_hbox_new ( false, 0 );
+  gtk_box_pack_start ( GTK_BOX(zonehbox), gtk_label_new ( _("Zone:") ), false, false, 5 );
   zonespin = gtk_spin_button_new ( (GtkAdjustment *) gtk_adjustment_new ( old->zone, 1, 60, 1, 5, 0 ), 1, 0 );
-  gtk_box_pack_start ( GTK_BOX(zonehbox), zonespin, TRUE, TRUE, 5 );
-  gtk_box_pack_start ( GTK_BOX(zonehbox), gtk_label_new ( _("Letter:") ), FALSE, FALSE, 5 );
+  gtk_box_pack_start ( GTK_BOX(zonehbox), zonespin, true, true, 5 );
+  gtk_box_pack_start ( GTK_BOX(zonehbox), gtk_label_new ( _("Letter:") ), false, false, 5 );
   letterentry = gtk_entry_new ();
   gtk_entry_set_max_length ( GTK_ENTRY(letterentry), 1 );
   gtk_entry_set_width_chars ( GTK_ENTRY(letterentry), 2 );
   tmp_letter[0] = old->letter;
   tmp_letter[1] = '\0';
   gtk_entry_set_text ( GTK_ENTRY(letterentry), tmp_letter );
-  gtk_box_pack_start ( GTK_BOX(zonehbox), letterentry, FALSE, FALSE, 5 );
+  gtk_box_pack_start ( GTK_BOX(zonehbox), letterentry, false, false, 5 );
 
   gtk_widget_show ( norlabel );
   gtk_widget_show ( easlabel );
@@ -145,17 +145,17 @@ gboolean a_dialog_goto_utm ( GtkWindow *parent, struct UTM *utm, const struct UT
 
   gtk_widget_show_all ( zonehbox );
 
-  gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), norlabel, FALSE, FALSE, 0);
-  gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), nor, FALSE, FALSE, 0);
-  gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), easlabel,  FALSE, FALSE, 0);
-  gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), eas,  FALSE, FALSE, 0);
-  gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), zonehbox,  FALSE, FALSE, 0);
+  gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), norlabel, false, false, 0);
+  gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), nor, false, false, 0);
+  gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), easlabel,  false, false, 0);
+  gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), eas,  false, false, 0);
+  gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), zonehbox,  false, false, 0);
 
   gtk_dialog_set_default_response ( GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT );
 
   if ( gtk_dialog_run ( GTK_DIALOG(dialog) ) == GTK_RESPONSE_ACCEPT )
   {
-    const gchar *letter;
+    const char *letter;
     utm->northing = atof ( gtk_entry_get_text ( GTK_ENTRY(nor) ) );
     utm->easting = atof ( gtk_entry_get_text ( GTK_ENTRY(eas) ) );
     utm->zone = gtk_spin_button_get_value_as_int ( GTK_SPIN_BUTTON(zonespin) );
@@ -163,11 +163,11 @@ gboolean a_dialog_goto_utm ( GtkWindow *parent, struct UTM *utm, const struct UT
     if (*letter)
        utm->letter = toupper(*letter);
     gtk_widget_destroy ( dialog );
-    return TRUE;
+    return true;
   }
 
   gtk_widget_destroy ( dialog );
-  return FALSE;
+  return false;
 }
 
 void a_dialog_response_accept ( GtkDialog *dialog )
@@ -178,15 +178,15 @@ void a_dialog_response_accept ( GtkDialog *dialog )
 static void get_selected_foreach_func(GtkTreeModel *model,
                                       GtkTreePath *path,
                                       GtkTreeIter *iter,
-                                      gpointer data)
+                                      void * data)
 {
   GList **list = data;
-  gchar *name;
+  char *name;
   gtk_tree_model_get (model, iter, 0, &name, -1);
   *list = g_list_prepend(*list, name);
 }
 
-GList *a_dialog_select_from_list ( GtkWindow *parent, GList *names, gboolean multiple_selection_allowed, const gchar *title, const gchar *msg )
+GList *a_dialog_select_from_list ( GtkWindow *parent, GList *names, bool multiple_selection_allowed, const char *title, const char *msg )
 {
   GtkTreeIter iter;
   GtkCellRenderer *renderer;
@@ -237,7 +237,7 @@ GList *a_dialog_select_from_list ( GtkWindow *parent, GList *names, gboolean mul
   gtk_scrolled_window_set_policy ( GTK_SCROLLED_WINDOW(scrolledwindow), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC );
   gtk_container_add ( GTK_CONTAINER(scrolledwindow), view );
 
-  gtk_box_pack_start ( GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), scrolledwindow, TRUE, TRUE, 0 );
+  gtk_box_pack_start ( GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), scrolledwindow, true, true, 0 );
   // Ensure a reasonable number of items are shown, but let the width be automatically sized
   gtk_widget_set_size_request ( dialog, -1, 400) ;
 
@@ -262,7 +262,7 @@ GList *a_dialog_select_from_list ( GtkWindow *parent, GList *names, gboolean mul
   return NULL;
 }
 
-gchar *a_dialog_new_track ( GtkWindow *parent, gchar *default_name, gboolean is_route )
+char *a_dialog_new_track ( GtkWindow *parent, char *default_name, bool is_route )
 {
   GtkWidget *dialog = gtk_dialog_new_with_buttons ( is_route ? _("Add Route") : _("Add Track"),
                                                   parent,
@@ -278,8 +278,8 @@ gchar *a_dialog_new_track ( GtkWindow *parent, gchar *default_name, gboolean is_
   if (default_name)
     gtk_entry_set_text ( GTK_ENTRY(entry), default_name );
 
-  gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), label, FALSE, FALSE, 0);
-  gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), entry, FALSE, FALSE, 0);
+  gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), label, false, false, 0);
+  gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), entry, false, false, 0);
 
   g_signal_connect_swapped ( entry, "activate", G_CALLBACK(a_dialog_response_accept), GTK_DIALOG(dialog) );
 
@@ -290,11 +290,11 @@ gchar *a_dialog_new_track ( GtkWindow *parent, gchar *default_name, gboolean is_
 
   while ( gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT )
   {
-    const gchar *constname = gtk_entry_get_text ( GTK_ENTRY(entry) );
+    const char *constname = gtk_entry_get_text ( GTK_ENTRY(entry) );
     if ( *constname == '\0' )
       a_dialog_info_msg ( parent, _("Please enter a name for the track.") );
     else {
-      gchar *name = g_strdup ( constname );
+      char *name = g_strdup ( constname );
       gtk_widget_destroy ( dialog );
       return name;
     }
@@ -318,7 +318,7 @@ static void today_clicked (GtkWidget *cal)
  *  This string can be NULL (especially when the dialog is cancelled)
  *  Free the string after use
  */
-gchar *a_dialog_get_date ( GtkWindow *parent, const gchar *title )
+char *a_dialog_get_date ( GtkWindow *parent, const char *title )
 {
   GtkWidget *dialog = gtk_dialog_new_with_buttons ( title,
                                                     parent,
@@ -331,9 +331,9 @@ gchar *a_dialog_get_date ( GtkWindow *parent, const gchar *title )
   GtkWidget *cal = gtk_calendar_new ();
   GtkWidget *today = gtk_button_new_with_label ( _("Today") );
 
-  static guint year = 0;
-  static guint month = 0;
-  static guint day = 0;
+  static unsigned int year = 0;
+  static unsigned int month = 0;
+  static unsigned int day = 0;
 
   if ( year != 0 ) {
     // restore the last selected date
@@ -341,8 +341,8 @@ gchar *a_dialog_get_date ( GtkWindow *parent, const gchar *title )
     gtk_calendar_select_day ( GTK_CALENDAR(cal), day );
   }
 
-  gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), today, FALSE, FALSE, 0);
-  gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), cal, FALSE, FALSE, 0);
+  gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), today, false, false, 0);
+  gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), cal, false, false, 0);
 
   g_signal_connect_swapped ( G_OBJECT(today), "clicked", G_CALLBACK(today_clicked), cal );
 
@@ -350,7 +350,7 @@ gchar *a_dialog_get_date ( GtkWindow *parent, const gchar *title )
 
   gtk_dialog_set_default_response ( GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT );
 
-  gchar *date_str = NULL;
+  char *date_str = NULL;
   if ( gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT )
   {
     gtk_calendar_get_date ( GTK_CALENDAR(cal), &year, &month, &day );
@@ -361,11 +361,11 @@ gchar *a_dialog_get_date ( GtkWindow *parent, const gchar *title )
 }
 
 /* creates a vbox full of labels */
-GtkWidget *a_dialog_create_label_vbox ( gchar **texts, int label_count, gint spacing, gint padding )
+GtkWidget *a_dialog_create_label_vbox ( char **texts, int label_count, int spacing, int padding )
 {
   GtkWidget *vbox, *label;
   int i;
-  vbox = gtk_vbox_new( TRUE, spacing );
+  vbox = gtk_vbox_new( true, spacing );
 
   for ( i = 0; i < label_count; i++ )
   {
@@ -375,12 +375,12 @@ GtkWidget *a_dialog_create_label_vbox ( gchar **texts, int label_count, gint spa
       // Align label to the right
       gtk_misc_set_alignment ( GTK_MISC(label), 1.0, 0.5 );
     }
-    gtk_box_pack_start ( GTK_BOX(vbox), label, FALSE, TRUE, padding );
+    gtk_box_pack_start ( GTK_BOX(vbox), label, false, true, padding );
   }
   return vbox;
 }
 
-gboolean a_dialog_yes_or_no ( GtkWindow *parent, const gchar *message, const gchar *extra )
+bool a_dialog_yes_or_no ( GtkWindow *parent, const char *message, const char *extra )
 {
   GtkWidget *dia;
   dia = gtk_message_dialog_new ( parent,
@@ -392,12 +392,12 @@ gboolean a_dialog_yes_or_no ( GtkWindow *parent, const gchar *message, const gch
   if ( gtk_dialog_run ( GTK_DIALOG(dia) ) == GTK_RESPONSE_YES )
   {
     gtk_widget_destroy ( dia );
-    return TRUE;
+    return true;
   }
   else
   {
     gtk_widget_destroy ( dia );
-    return FALSE;
+    return false;
   }
 }
 
@@ -409,7 +409,7 @@ static void zoom_spin_changed ( GtkSpinButton *spin, GtkWidget *pass_along[3] )
         gtk_spin_button_get_value ( spin ) );
 }
 
-gboolean a_dialog_custom_zoom ( GtkWindow *parent, gdouble *xmpp, gdouble *ympp )
+bool a_dialog_custom_zoom ( GtkWindow *parent, double *xmpp, double *ympp )
 {
   GtkWidget *dialog = gtk_dialog_new_with_buttons (_("Zoom Factors..."),
                                                   parent,
@@ -422,8 +422,8 @@ gboolean a_dialog_custom_zoom ( GtkWindow *parent, gdouble *xmpp, gdouble *ympp 
   GtkWidget *table, *label, *xlabel, *xspin, *ylabel, *yspin, *samecheck;
   GtkWidget *pass_along[3];
 
-  table = gtk_table_new ( 4, 2, FALSE );
-  gtk_box_pack_start ( GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), table, TRUE, TRUE, 0 );
+  table = gtk_table_new ( 4, 2, false );
+  gtk_box_pack_start ( GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), table, true, true, 0 );
 
   label = gtk_label_new ( _("Zoom factor (in meters per pixel):") );
   xlabel = gtk_label_new ( _("X (easting): "));
@@ -437,7 +437,7 @@ gboolean a_dialog_custom_zoom ( GtkWindow *parent, gdouble *xmpp, gdouble *ympp 
   /*  samecheck = gtk_check_button_new_with_label ( "Same x/y zoom factor" ); */
 
   if ( *xmpp == *ympp )
-    gtk_toggle_button_set_active ( GTK_TOGGLE_BUTTON(samecheck), TRUE );
+    gtk_toggle_button_set_active ( GTK_TOGGLE_BUTTON(samecheck), true );
 
   gtk_table_attach_defaults ( GTK_TABLE(table), label, 0, 2, 0, 1 );
   gtk_table_attach_defaults ( GTK_TABLE(table), xlabel, 0, 1, 1, 2 );
@@ -458,10 +458,10 @@ gboolean a_dialog_custom_zoom ( GtkWindow *parent, gdouble *xmpp, gdouble *ympp 
     *xmpp = gtk_spin_button_get_value ( GTK_SPIN_BUTTON(xspin) );
     *ympp = gtk_spin_button_get_value ( GTK_SPIN_BUTTON(yspin) );
     gtk_widget_destroy ( dialog );
-    return TRUE;
+    return true;
   }
   gtk_widget_destroy ( dialog );
-  return FALSE;
+  return false;
 }
 
 static void split_spin_focused ( GtkSpinButton *spin, GtkWidget *pass_along[1] )
@@ -469,7 +469,7 @@ static void split_spin_focused ( GtkSpinButton *spin, GtkWidget *pass_along[1] )
   gtk_toggle_button_set_active    (GTK_TOGGLE_BUTTON(pass_along[0]), 1);
 }
 
-gboolean a_dialog_time_threshold ( GtkWindow *parent, gchar *title_text, gchar *label_text, guint *thr )
+bool a_dialog_time_threshold ( GtkWindow *parent, char *title_text, char *label_text, unsigned int *thr )
 {
   GtkWidget *dialog = gtk_dialog_new_with_buttons (title_text, 
                                                   parent,
@@ -482,8 +482,8 @@ gboolean a_dialog_time_threshold ( GtkWindow *parent, gchar *title_text, gchar *
   GtkWidget *table, *t1, *t2, *t3, *t4, *spin, *label;
   GtkWidget *pass_along[1];
 
-  table = gtk_table_new ( 4, 2, FALSE );
-  gtk_box_pack_start ( GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), table, TRUE, TRUE, 0 );
+  table = gtk_table_new ( 4, 2, false );
+  gtk_box_pack_start ( GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), table, true, true, 0 );
 
   label = gtk_label_new (label_text);
 
@@ -521,10 +521,10 @@ gboolean a_dialog_time_threshold ( GtkWindow *parent, gchar *title_text, gchar *
       *thr = gtk_spin_button_get_value ( GTK_SPIN_BUTTON(spin) );
     }
     gtk_widget_destroy ( dialog );
-    return TRUE;
+    return true;
   }
   gtk_widget_destroy ( dialog );
-  return FALSE;
+  return false;
 }
 
 /**
@@ -534,7 +534,7 @@ gboolean a_dialog_time_threshold ( GtkWindow *parent, gchar *title_text, gchar *
  * 
  * Returns: A value of zero indicates the dialog was cancelled
  */
-guint a_dialog_get_positive_number ( GtkWindow *parent, gchar *title_text, gchar *label_text, guint default_num, guint min, guint max, guint step )
+unsigned int a_dialog_get_positive_number ( GtkWindow *parent, char *title_text, char *label_text, unsigned int default_num, unsigned int min, unsigned int max, unsigned int step )
 {
   GtkWidget *dialog = gtk_dialog_new_with_buttons (title_text,
 						   parent,
@@ -551,10 +551,10 @@ guint a_dialog_get_positive_number ( GtkWindow *parent, gchar *title_text, gchar
 #endif
 
   GtkWidget *table, *spin, *label;
-  guint result = default_num;
+  unsigned int result = default_num;
 
-  table = gtk_table_new ( 2, 1, FALSE );
-  gtk_box_pack_start ( GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), table, TRUE, TRUE, 0 );
+  table = gtk_table_new ( 2, 1, false );
+  gtk_box_pack_start ( GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), table, true, true, 0 );
 
   label = gtk_label_new (label_text);
   spin = gtk_spin_button_new ( (GtkAdjustment *) gtk_adjustment_new ( default_num, min, max, step, 5, 0 ), 1, 0 );
@@ -581,15 +581,15 @@ guint a_dialog_get_positive_number ( GtkWindow *parent, gchar *title_text, gchar
 
 #if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 24)
 static void about_url_hook (GtkAboutDialog *about,
-                            const gchar    *link,
-                            gpointer        data)
+                            const char    *link,
+                            void *        data)
 {
   open_url (GTK_WINDOW(about), link);
 }
 
 static void about_email_hook (GtkAboutDialog *about,
-                              const gchar    *email,
-                              gpointer        data)
+                              const char    *email,
+                              void *        data)
 {
   new_email (GTK_WINDOW(about), email);
 }
@@ -599,7 +599,7 @@ static void about_email_hook (GtkAboutDialog *about,
  *  Creates a dialog with list of text
  *  Mostly useful for longer messages that have several lines of information.
  */
-void a_dialog_list ( GtkWindow *parent, const gchar *title, GArray *array, gint padding )
+void a_dialog_list ( GtkWindow *parent, const char *title, GArray *array, int padding )
 {
   GtkWidget *dialog = gtk_dialog_new_with_buttons ( title,
                                                     parent,
@@ -613,8 +613,8 @@ void a_dialog_list ( GtkWindow *parent, const gchar *title, GArray *array, gint 
 
   for ( int i = 0; i < array->len; i++ ) {
     label = ui_label_new_selectable (NULL);
-    gtk_label_set_markup ( GTK_LABEL(label), g_array_index(array,gchar*,i) );
-    gtk_box_pack_start ( GTK_BOX(vbox), label, FALSE, TRUE, padding );
+    gtk_label_set_markup ( GTK_LABEL(label), g_array_index(array,char*,i) );
+    gtk_box_pack_start ( GTK_BOX(vbox), label, false, true, padding );
   }
 
   gtk_widget_show_all ( dialog );
@@ -624,12 +624,12 @@ void a_dialog_list ( GtkWindow *parent, const gchar *title, GArray *array, gint 
 
 void a_dialog_about ( GtkWindow *parent )
 {
-  const gchar *program_name = PACKAGE_NAME;
-  const gchar *version = VIKING_VERSION;
-  const gchar *website = VIKING_URL;
-  const gchar *copyright = "2003-2008, Evan Battaglia\n2008-"THEYEAR", Viking's contributors";
-  const gchar *comments = _("GPS Data and Topo Analyzer, Explorer, and Manager.");
-  const gchar *license = _("This program is free software; you can redistribute it and/or modify "
+  const char *program_name = PACKAGE_NAME;
+  const char *version = VIKING_VERSION;
+  const char *website = VIKING_URL;
+  const char *copyright = "2003-2008, Evan Battaglia\n2008-"THEYEAR", Viking's contributors";
+  const char *comments = _("GPS Data and Topo Analyzer, Explorer, and Manager.");
+  const char *license = _("This program is free software; you can redistribute it and/or modify "
 			"it under the terms of the GNU General Public License as published by "
 			"the Free Software Foundation; either version 2 of the License, or "
 			"(at your option) any later version."
@@ -646,7 +646,7 @@ void a_dialog_about ( GtkWindow *parent )
   // Would be nice to use gtk_about_dialog_add_credit_section (), but that requires gtk 3.4
   // For now shove it in the 'artists' section so at least the information is easily visible
   // Something more advanced might have proper version information too...
-  const gchar *libs[] = {
+  const char *libs[] = {
     "Compiled in libraries:",
     // Default libs
     "libglib-2.0",
@@ -711,7 +711,7 @@ void a_dialog_about ( GtkWindow *parent )
 	"comments", comments,
 	"copyright", copyright,
 	"license", license,
-	"wrap-license", TRUE,
+	"wrap-license", true,
 	/* logo automatically retrieved via gtk_window_get_default_icon_list */
 	"authors", AUTHORS,
 	"documenters", DOCUMENTERS,
@@ -720,9 +720,9 @@ void a_dialog_about ( GtkWindow *parent )
 	NULL);
 }
 
-gboolean a_dialog_map_n_zoom(GtkWindow *parent, gchar *mapnames[], gint default_map, gchar *zoom_list[], gint default_zoom, gint *selected_map, gint *selected_zoom)
+bool a_dialog_map_n_zoom(GtkWindow *parent, char *mapnames[], int default_map, char *zoom_list[], int default_zoom, int *selected_map, int *selected_zoom)
 {
-  gchar **s;
+  char **s;
 
   GtkWidget *dialog = gtk_dialog_new_with_buttons ( _("Download along track"), parent, 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL );
   gtk_dialog_set_default_response ( GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT );
@@ -743,13 +743,13 @@ gboolean a_dialog_map_n_zoom(GtkWindow *parent, gchar *mapnames[], gint default_
     vik_combo_box_text_append (GTK_COMBO_BOX(zoom_combo), *s);
   gtk_combo_box_set_active (GTK_COMBO_BOX(zoom_combo), default_zoom);
 
-  GtkTable *box = GTK_TABLE(gtk_table_new(2, 2, FALSE));
+  GtkTable *box = GTK_TABLE(gtk_table_new(2, 2, false));
   gtk_table_attach_defaults(box, map_label, 0, 1, 0, 1);
   gtk_table_attach_defaults(box, map_combo, 1, 2, 0, 1);
   gtk_table_attach_defaults(box, zoom_label, 0, 1, 1, 2);
   gtk_table_attach_defaults(box, zoom_combo, 1, 2, 1, 2);
 
-  gtk_box_pack_start ( GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), GTK_WIDGET(box), FALSE, FALSE, 5 );
+  gtk_box_pack_start ( GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), GTK_WIDGET(box), false, false, 5 );
 
   if ( response_w )
     gtk_widget_grab_focus ( response_w );
@@ -757,21 +757,21 @@ gboolean a_dialog_map_n_zoom(GtkWindow *parent, gchar *mapnames[], gint default_
   gtk_widget_show_all ( dialog );
   if ( gtk_dialog_run ( GTK_DIALOG(dialog) ) != GTK_RESPONSE_ACCEPT ) {
     gtk_widget_destroy(dialog);
-    return FALSE;
+    return false;
   }
 
   *selected_map = gtk_combo_box_get_active(GTK_COMBO_BOX(map_combo));
   *selected_zoom = gtk_combo_box_get_active(GTK_COMBO_BOX(zoom_combo));
 
   gtk_widget_destroy(dialog);
-  return TRUE;
+  return true;
 }
 
 /**
  * Display a dialog presenting the license of a map.
  * Allow to read the license by launching a web browser.
  */
-void a_dialog_license ( GtkWindow *parent, const gchar *map, const gchar *license, const gchar *url)
+void a_dialog_license ( GtkWindow *parent, const char *map, const char *license, const char *url)
 {
   GtkWidget *dialog = gtk_message_dialog_new (parent,
                                  GTK_DIALOG_DESTROY_WITH_PARENT,
@@ -786,7 +786,7 @@ void a_dialog_license ( GtkWindow *parent, const gchar *map, const gchar *licens
   if (url != NULL) {
     gtk_dialog_add_button (GTK_DIALOG (dialog), _("Open license"), RESPONSE_OPEN_LICENSE);
   }
-  gint response;
+  int response;
   do {
     response = gtk_dialog_run (GTK_DIALOG (dialog));
     if (response == RESPONSE_OPEN_LICENSE) {

@@ -19,6 +19,10 @@
 #ifndef __VIK_PRINT_PREVIEW_H__
 #define __VIK_PRINT_PREVIEW_H__
 
+#include <stdbool.h>
+#include <stdint.h>
+
+
 G_BEGIN_DECLS
 
 
@@ -39,18 +43,18 @@ struct _VikPrintPreview
   GtkWidget      *area;
   GtkPageSetup   *page;
   GdkPixbuf      *pixbuf;
-  gboolean        dragging;
+  bool        dragging;
 
   GdkDrawable    *drawable;
 
-  gdouble         image_offset_x;
-  gdouble         image_offset_y;
-  gdouble         image_offset_x_max;
-  gdouble         image_offset_y_max;
-  gdouble         image_xres;
-  gdouble         image_yres;
+  double         image_offset_x;
+  double         image_offset_y;
+  double         image_offset_x_max;
+  double         image_offset_y_max;
+  double         image_xres;
+  double         image_yres;
 
-  gboolean        use_full_page;
+  bool        use_full_page;
 };
 
 struct _VikPrintPreviewClass
@@ -58,8 +62,8 @@ struct _VikPrintPreviewClass
   GtkAspectFrameClass  parent_class;
 
   void (* offsets_changed)  (VikPrintPreview *print_preview,
-                             gint              offset_x,
-                             gint              offset_y);
+                             int              offset_x,
+                             int              offset_y);
 };
 
 
@@ -69,22 +73,22 @@ GtkWidget * vik_print_preview_new               (GtkPageSetup     *page,
                                                   GdkDrawable     *drawable);
 
 void        vik_print_preview_set_image_dpi     (VikPrintPreview *preview,
-                                                  gdouble           xres,
-                                                  gdouble           yres);
+                                                  double           xres,
+                                                  double           yres);
 
 void        vik_print_preview_set_page_setup    (VikPrintPreview *preview,
                                                   GtkPageSetup     *page);
 
 void        vik_print_preview_set_image_offsets (VikPrintPreview *preview,
-                                                  gdouble           offset_x,
-                                                  gdouble           offset_y);
+                                                  double           offset_x,
+                                                  double           offset_y);
 
 void        vik_print_preview_set_image_offsets_max (VikPrintPreview *preview,
-                                                      gdouble           offset_x_max,
-                                                      gdouble           offset_y_max);
+                                                      double           offset_x_max,
+                                                      double           offset_y_max);
 
 void        vik_print_preview_set_use_full_page (VikPrintPreview *preview,
-                                                  gboolean          full_page);
+                                                  bool          full_page);
 
 G_END_DECLS
 

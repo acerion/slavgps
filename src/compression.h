@@ -24,12 +24,15 @@
 #define _VIKING_COMPRESSION_H
 
 #include <glib.h>
+#include <stdbool.h>
+#include <stdint.h>
+
 
 G_BEGIN_DECLS
 
-void *unzip_file(gchar *zip_file, gulong *unzip_size);
+void *unzip_file(char *zip_file, unsigned long *unzip_size);
 
-gchar* uncompress_bzip2 ( gchar *name );
+char* uncompress_bzip2 ( char *name );
 
 G_END_DECLS
 

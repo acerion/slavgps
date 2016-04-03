@@ -24,6 +24,9 @@
 
 #include <glib.h>
 #include <gtk/gtk.h>
+#include <stdbool.h>
+#include <stdint.h>
+
 
 #include "coords.h"
 
@@ -38,36 +41,36 @@ G_BEGIN_DECLS
 #define a_dialog_info_msg_extra(win,info,extra) a_dialog_msg(win,GTK_MESSAGE_INFO,info,extra)
 #define a_dialog_error_msg_extra(win,info,extra) a_dialog_msg(win,GTK_MESSAGE_ERROR,info,extra)
 
-GtkWidget *a_dialog_create_label_vbox ( gchar **texts, int label_count, gint spacing, gint padding );
+GtkWidget *a_dialog_create_label_vbox ( char **texts, int label_count, int spacing, int padding );
 
-void a_dialog_msg ( GtkWindow *parent, gint type, const gchar *info, const gchar *extra );
+void a_dialog_msg ( GtkWindow *parent, int type, const char *info, const char *extra );
 
 void a_dialog_response_accept ( GtkDialog *dialog );
 
-void a_dialog_list ( GtkWindow *parent, const gchar *title, GArray *array, gint padding );
+void a_dialog_list ( GtkWindow *parent, const char *title, GArray *array, int padding );
 
 void a_dialog_about ( GtkWindow *parent );
 
 /* okay, everthing below here is an architechtural flaw. */
-gboolean a_dialog_goto_latlon ( GtkWindow *parent, struct LatLon *ll, const struct LatLon *old );
-gboolean a_dialog_goto_utm ( GtkWindow *parent, struct UTM *utm, const struct UTM *old );
+bool a_dialog_goto_latlon ( GtkWindow *parent, struct LatLon *ll, const struct LatLon *old );
+bool a_dialog_goto_utm ( GtkWindow *parent, struct UTM *utm, const struct UTM *old );
 
-gchar *a_dialog_new_track ( GtkWindow *parent, gchar *default_name, gboolean is_route );
+char *a_dialog_new_track ( GtkWindow *parent, char *default_name, bool is_route );
 
-gchar *a_dialog_get_date ( GtkWindow *parent, const gchar *title );
-gboolean a_dialog_yes_or_no ( GtkWindow *parent, const gchar *message, const gchar *extra );
-gboolean a_dialog_custom_zoom ( GtkWindow *parent, gdouble *xmpp, gdouble *ympp );
-gboolean a_dialog_time_threshold ( GtkWindow *parent, gchar *title_text, gchar *label_text, guint *thr );
+char *a_dialog_get_date ( GtkWindow *parent, const char *title );
+bool a_dialog_yes_or_no ( GtkWindow *parent, const char *message, const char *extra );
+bool a_dialog_custom_zoom ( GtkWindow *parent, double *xmpp, double *ympp );
+bool a_dialog_time_threshold ( GtkWindow *parent, char *title_text, char *label_text, unsigned int *thr );
 
-guint a_dialog_get_positive_number ( GtkWindow *parent, gchar *title_text, gchar *label_text, guint default_num, guint min, guint max, guint step );
+unsigned int a_dialog_get_positive_number ( GtkWindow *parent, char *title_text, char *label_text, unsigned int default_num, unsigned int min, unsigned int max, unsigned int step );
 
 void a_dialog_choose_dir ( GtkWidget *entry );
 
-gboolean a_dialog_map_n_zoom(GtkWindow *parent, gchar *mapnames[], gint default_map, gchar *zoom_list[], gint default_zoom, gint *selected_map, gint *selected_zoom);
+bool a_dialog_map_n_zoom(GtkWindow *parent, char *mapnames[], int default_map, char *zoom_list[], int default_zoom, int *selected_map, int *selected_zoom);
 
-GList *a_dialog_select_from_list ( GtkWindow *parent, GList *names, gboolean multiple_selection_allowed, const gchar *title, const gchar *msg );
+GList *a_dialog_select_from_list ( GtkWindow *parent, GList *names, bool multiple_selection_allowed, const char *title, const char *msg );
 
-void a_dialog_license ( GtkWindow *parent, const gchar *map, const gchar *license, const gchar *url);
+void a_dialog_license ( GtkWindow *parent, const char *map, const char *license, const char *url);
 
 G_END_DECLS
 

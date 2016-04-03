@@ -42,21 +42,21 @@ typedef struct {
   VikViewport *vvp;
 } datasource_osm_widgets_t;
 
-static gdouble last_page_number = 0;
+static double last_page_number = 0;
 
-static gpointer datasource_osm_init ( acq_vik_t *avt );
-static void datasource_osm_add_setup_widgets ( GtkWidget *dialog, VikViewport *vvp, gpointer user_data );
-static void datasource_osm_get_process_options ( datasource_osm_widgets_t *widgets, ProcessOptions *po, DownloadFileOptions *options, const gchar *notused1, const gchar *notused2);
-static void datasource_osm_cleanup ( gpointer data );
+static void * datasource_osm_init ( acq_vik_t *avt );
+static void datasource_osm_add_setup_widgets ( GtkWidget *dialog, VikViewport *vvp, void * user_data );
+static void datasource_osm_get_process_options ( datasource_osm_widgets_t *widgets, ProcessOptions *po, DownloadFileOptions *options, const char *notused1, const char *notused2);
+static void datasource_osm_cleanup ( void * data );
 
 VikDataSourceInterface vik_datasource_osm_interface = {
   N_("OSM traces"),
   N_("OSM traces"),
   VIK_DATASOURCE_AUTO_LAYER_MANAGEMENT,
   VIK_DATASOURCE_INPUTTYPE_NONE,
-  TRUE,
-  TRUE,
-  TRUE,
+  true,
+  true,
+  true,
   (VikDataSourceInitFunc)		datasource_osm_init,
   (VikDataSourceCheckExistenceFunc)	NULL,
   (VikDataSourceAddSetupWidgetsFunc)	datasource_osm_add_setup_widgets,
@@ -74,7 +74,7 @@ VikDataSourceInterface vik_datasource_osm_interface = {
   0
 };
 
-static gpointer datasource_osm_init ( acq_vik_t *avt )
+static void * datasource_osm_init ( acq_vik_t *avt )
 {
   datasource_osm_widgets_t *widgets = g_malloc(sizeof(*widgets));
   /* Keep reference to viewport */
@@ -82,7 +82,7 @@ static gpointer datasource_osm_init ( acq_vik_t *avt )
   return widgets;
 }
 
-static void datasource_osm_add_setup_widgets ( GtkWidget *dialog, VikViewport *vvp, gpointer user_data )
+static void datasource_osm_add_setup_widgets ( GtkWidget *dialog, VikViewport *vvp, void * user_data )
 {
   datasource_osm_widgets_t *widgets = (datasource_osm_widgets_t *)user_data;
   GtkWidget *page_number_label;
@@ -92,19 +92,19 @@ static void datasource_osm_add_setup_widgets ( GtkWidget *dialog, VikViewport *v
   
   /* Packing all widgets */
   GtkBox *box = GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog)));
-  gtk_box_pack_start ( box, page_number_label, FALSE, FALSE, 5 );
-  gtk_box_pack_start ( box, widgets->page_number, FALSE, FALSE, 5 );
+  gtk_box_pack_start ( box, page_number_label, false, false, 5 );
+  gtk_box_pack_start ( box, widgets->page_number, false, false, 5 );
   gtk_widget_show_all(dialog);
 }
 
-static void datasource_osm_get_process_options ( datasource_osm_widgets_t *widgets, ProcessOptions *po, DownloadFileOptions *options, const gchar *notused1, const gchar *notused2)
+static void datasource_osm_get_process_options ( datasource_osm_widgets_t *widgets, ProcessOptions *po, DownloadFileOptions *options, const char *notused1, const char *notused2)
 {
   int page = 0;
-  gdouble min_lat, max_lat, min_lon, max_lon;
-  gchar sminlon[G_ASCII_DTOSTR_BUF_SIZE];
-  gchar smaxlon[G_ASCII_DTOSTR_BUF_SIZE];
-  gchar sminlat[G_ASCII_DTOSTR_BUF_SIZE];
-  gchar smaxlat[G_ASCII_DTOSTR_BUF_SIZE];
+  double min_lat, max_lat, min_lon, max_lon;
+  char sminlon[G_ASCII_DTOSTR_BUF_SIZE];
+  char smaxlon[G_ASCII_DTOSTR_BUF_SIZE];
+  char sminlat[G_ASCII_DTOSTR_BUF_SIZE];
+  char smaxlat[G_ASCII_DTOSTR_BUF_SIZE];
 
   /* get Viewport bounding box */
   vik_viewport_get_min_max_lat_lon ( widgets->vvp, &min_lat, &max_lat, &min_lon, &max_lon );
@@ -124,7 +124,7 @@ static void datasource_osm_get_process_options ( datasource_osm_widgets_t *widge
   options = NULL; // i.e. use the default download settings
 }
 
-static void datasource_osm_cleanup ( gpointer data )
+static void datasource_osm_cleanup ( void * data )
 {
   g_free ( data );
 }

@@ -22,6 +22,9 @@
 #define _VIKING_UIBUILDER_H
 
 #include <gtk/gtk.h>
+#include <stdbool.h>
+#include <stdint.h>
+
 #include "vik_compat.h"
 #include "config.h"
 
@@ -30,14 +33,14 @@ G_BEGIN_DECLS
 /* Parameters (for I/O and Properties) */
 
 typedef union {
-  gdouble d;
-  guint32 u;
-  gint32 i;
-  gboolean b;
-  const gchar *s;
+  double d;
+  uint32_t u;
+  int32_t i;
+  bool b;
+  const char *s;
   GdkColor c;
   GList *sl;
-  gpointer ptr; // For internal usage - don't save this value in a file!
+  void * ptr; // For internal usage - don't save this value in a file!
 } VikLayerParamData;
 
 typedef enum {
@@ -104,14 +107,14 @@ typedef VikLayerParamData (*VikLayerConvertFunc) ( VikLayerParamData );
 
 typedef struct {
   VikLayerTypeEnum layer;
-  const gchar *name;
+  const char *name;
   VikLayerParamType type;
-  gint16 group;
-  const gchar *title;
+  int16_t group;
+  const char *title;
   VikLayerWidgetType widget_type;
-  gpointer widget_data;
-  gpointer extra_widget_data;
-  const gchar *tooltip;
+  void * widget_data;
+  void * extra_widget_data;
+  const char *tooltip;
   VikLayerDefaultFunc default_value;
   VikLayerConvertFunc convert_to_display;
   VikLayerConvertFunc convert_to_internal;
@@ -123,10 +126,10 @@ VIK_LAYER_GROUP_NONE=-1
 };
 
 typedef struct {
-  gdouble min;
-  gdouble max;
-  gdouble step;
-  guint8 digits;
+  double min;
+  double max;
+  double step;
+  uint8_t digits;
 } VikLayerParamScale;
 
 
@@ -158,30 +161,30 @@ typedef enum {
   UI_CHG_LAST
 } ui_change_index;
 
-typedef gpointer ui_change_values[UI_CHG_LAST];
+typedef void * ui_change_values[UI_CHG_LAST];
 
 GtkWidget *a_uibuilder_new_widget ( VikLayerParam *param, VikLayerParamData data );
 VikLayerParamData a_uibuilder_widget_get_value ( GtkWidget *widget, VikLayerParam *param );
-gint a_uibuilder_properties_factory ( const gchar *dialog_name,
+int a_uibuilder_properties_factory ( const char *dialog_name,
                                       GtkWindow *parent,
                                       VikLayerParam *params,
-                                      guint16 params_count,
-                                      gchar **groups,
-                                      guint8 groups_count,
-                                      gboolean (*setparam) (gpointer,guint16,VikLayerParamData,gpointer,gboolean), // AKA VikLayerFuncSetParam in viklayer.h
-                                      gpointer pass_along1,
-                                      gpointer pass_along2,
-                                      VikLayerParamData (*getparam) (gpointer,guint16,gboolean),  // AKA VikLayerFuncGetParam in viklayer.h
-                                      gpointer pass_along_getparam,
+                                      uint16_t params_count,
+                                      char **groups,
+                                      uint8_t groups_count,
+                                      bool (*setparam) (void *,uint16_t,VikLayerParamData,void *,bool), // AKA VikLayerFuncSetParam in viklayer.h
+                                      void * pass_along1,
+                                      void * pass_along2,
+                                      VikLayerParamData (*getparam) (void *,uint16_t,bool),  // AKA VikLayerFuncGetParam in viklayer.h
+                                      void * pass_along_getparam,
                                       void (*changeparam) (GtkWidget*, ui_change_values) ); // AKA VikLayerFuncChangeParam in viklayer.h
                                       /* pass_along1 and pass_along2 are for set_param first and last params */
 
-VikLayerParamData *a_uibuilder_run_dialog ( const gchar *dialog_name, GtkWindow *parent, VikLayerParam *params,
-                        guint16 params_count, gchar **groups, guint8 groups_count,
+VikLayerParamData *a_uibuilder_run_dialog ( const char *dialog_name, GtkWindow *parent, VikLayerParam *params,
+                        uint16_t params_count, char **groups, uint8_t groups_count,
 			VikLayerParamData *params_defaults );
 
 /* frees data from last (if ness) */
-void a_uibuilder_free_paramdatas ( VikLayerParamData *paramdatas, VikLayerParam *params, guint16 params_count );
+void a_uibuilder_free_paramdatas ( VikLayerParamData *paramdatas, VikLayerParam *params, uint16_t params_count );
 
 typedef enum {
   VL_SO_NONE = 0,

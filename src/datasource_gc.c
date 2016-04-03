@@ -50,16 +50,16 @@ typedef struct {
 
   GdkGC *circle_gc;
   VikViewport *vvp;
-  gboolean circle_onscreen;
-  gint circle_x, circle_y, circle_width;
+  bool circle_onscreen;
+  int circle_x, circle_y, circle_width;
 } datasource_gc_widgets_t;
 
 
-static gpointer datasource_gc_init ( acq_vik_t *avt );
-static void datasource_gc_add_setup_widgets ( GtkWidget *dialog, VikViewport *vvp, gpointer user_data );
-static void datasource_gc_get_process_options ( datasource_gc_widgets_t *widgets, ProcessOptions *po, gpointer not_used, const gchar *not_used2, const gchar *not_used3 );
+static void * datasource_gc_init ( acq_vik_t *avt );
+static void datasource_gc_add_setup_widgets ( GtkWidget *dialog, VikViewport *vvp, void * user_data );
+static void datasource_gc_get_process_options ( datasource_gc_widgets_t *widgets, ProcessOptions *po, void * not_used, const char *not_used2, const char *not_used3 );
 static void datasource_gc_cleanup ( datasource_gc_widgets_t *widgets );
-static gchar *datasource_gc_check_existence ();
+static char *datasource_gc_check_existence ();
 
 #define METERSPERMILE 1609.344
 
@@ -68,9 +68,9 @@ VikDataSourceInterface vik_datasource_gc_interface = {
   N_("Geocaching.com Caches"),
   VIK_DATASOURCE_AUTO_LAYER_MANAGEMENT,
   VIK_DATASOURCE_INPUTTYPE_NONE,
-  TRUE, // Yes automatically update the display - otherwise we won't see the geocache waypoints!
-  TRUE,
-  TRUE,
+  true, // Yes automatically update the display - otherwise we won't see the geocache waypoints!
+  true,
+  true,
   (VikDataSourceInitFunc)		datasource_gc_init,
   (VikDataSourceCheckExistenceFunc)	datasource_gc_check_existence,
   (VikDataSourceAddSetupWidgetsFunc)	datasource_gc_add_setup_widgets,
@@ -99,27 +99,27 @@ void a_datasource_gc_init()
 }
 
 
-static gpointer datasource_gc_init ( acq_vik_t *avt )
+static void * datasource_gc_init ( acq_vik_t *avt )
 {
   datasource_gc_widgets_t *widgets = g_malloc(sizeof(*widgets));
   return widgets;
 }
 
-static gchar *datasource_gc_check_existence ()
+static char *datasource_gc_check_existence ()
 {
-  gboolean OK1 = FALSE;
-  gboolean OK2 = FALSE;
+  bool OK1 = false;
+  bool OK2 = false;
 
-  gchar *location1 = g_find_program_in_path(GC_PROGRAM1);
+  char *location1 = g_find_program_in_path(GC_PROGRAM1);
   if ( location1 ) {
     g_free(location1);
-    OK1 = TRUE;
+    OK1 = true;
   }
 
-  gchar *location2 = g_find_program_in_path(GC_PROGRAM2);
+  char *location2 = g_find_program_in_path(GC_PROGRAM2);
   if ( location2 ) {
     g_free(location2);
-    OK2 = TRUE;
+    OK2 = true;
   }
 
   if ( OK1 && OK2 )
@@ -130,9 +130,9 @@ static gchar *datasource_gc_check_existence ()
 
 static void datasource_gc_draw_circle ( datasource_gc_widgets_t *widgets )
 {
-  gdouble lat, lon;
+  double lat, lon;
   if ( widgets->circle_onscreen ) {
-    vik_viewport_draw_arc ( widgets->vvp, widgets->circle_gc, FALSE,
+    vik_viewport_draw_arc ( widgets->vvp, widgets->circle_gc, false,
 		widgets->circle_x - widgets->circle_width/2,
 		widgets->circle_y - widgets->circle_width/2,
 		widgets->circle_width, widgets->circle_width, 0, 360*64 );
@@ -142,7 +142,7 @@ static void datasource_gc_draw_circle ( datasource_gc_widgets_t *widgets )
   if ( 2 == sscanf ( gtk_entry_get_text ( GTK_ENTRY(widgets->center_entry) ), "%lf,%lf", &lat, &lon ) ) {
     struct LatLon ll;
     VikCoord c;
-    gint x, y;
+    int x, y;
 
     ll.lat = lat; ll.lon = lon;
     vik_coord_load_from_latlon ( &c, vik_viewport_get_coord_mode ( widgets->vvp ), &ll );
@@ -151,7 +151,7 @@ static void datasource_gc_draw_circle ( datasource_gc_widgets_t *widgets )
     if ( x > -1000 && y > -1000 && x < (vik_viewport_get_width(widgets->vvp) + 1000) &&
 	y < (vik_viewport_get_width(widgets->vvp) + 1000) ) {
       VikCoord c1, c2;
-      gdouble pixels_per_meter;
+      double pixels_per_meter;
 
       widgets->circle_x = x;
       widgets->circle_y = y;
@@ -159,20 +159,20 @@ static void datasource_gc_draw_circle ( datasource_gc_widgets_t *widgets )
       /* determine miles per pixel */
       vik_viewport_screen_to_coord ( widgets->vvp, 0, vik_viewport_get_height(widgets->vvp)/2, &c1 );
       vik_viewport_screen_to_coord ( widgets->vvp, vik_viewport_get_width(widgets->vvp), vik_viewport_get_height(widgets->vvp)/2, &c2 );
-      pixels_per_meter = ((gdouble)vik_viewport_get_width(widgets->vvp)) / vik_coord_diff(&c1, &c2);
+      pixels_per_meter = ((double)vik_viewport_get_width(widgets->vvp)) / vik_coord_diff(&c1, &c2);
 
       /* this is approximate */
       widgets->circle_width = gtk_spin_button_get_value_as_float ( GTK_SPIN_BUTTON(widgets->miles_radius_spin) )
 		* METERSPERMILE * pixels_per_meter * 2;
 
-      vik_viewport_draw_arc ( widgets->vvp, widgets->circle_gc, FALSE,
+      vik_viewport_draw_arc ( widgets->vvp, widgets->circle_gc, false,
 		widgets->circle_x - widgets->circle_width/2,
 		widgets->circle_y - widgets->circle_width/2,
 		widgets->circle_width, widgets->circle_width, 0, 360*64 );
 
-      widgets->circle_onscreen = TRUE;
+      widgets->circle_onscreen = true;
     } else
-      widgets->circle_onscreen = FALSE;
+      widgets->circle_onscreen = false;
   }
 
   /* see if onscreen */
@@ -180,12 +180,12 @@ static void datasource_gc_draw_circle ( datasource_gc_widgets_t *widgets )
   vik_viewport_sync ( widgets->vvp );
 }
 
-static void datasource_gc_add_setup_widgets ( GtkWidget *dialog, VikViewport *vvp, gpointer user_data )
+static void datasource_gc_add_setup_widgets ( GtkWidget *dialog, VikViewport *vvp, void * user_data )
 {
   datasource_gc_widgets_t *widgets = (datasource_gc_widgets_t *)user_data;
   GtkWidget *num_label, *center_label, *miles_radius_label;
   struct LatLon ll;
-  gchar *s_ll;
+  char *s_ll;
 
   num_label = gtk_label_new (_("Number geocaches:"));
   widgets->num_spin = gtk_spin_button_new ( GTK_ADJUSTMENT(gtk_adjustment_new( 20, 1, 1000, 10, 20, 0 )), 10, 0 );
@@ -203,7 +203,7 @@ static void datasource_gc_add_setup_widgets ( GtkWidget *dialog, VikViewport *vv
   widgets->vvp = vvp;
   widgets->circle_gc = vik_viewport_new_gc ( vvp, "#000000", 3 );
   gdk_gc_set_function ( widgets->circle_gc, GDK_INVERT );
-  widgets->circle_onscreen = TRUE;
+  widgets->circle_onscreen = true;
   datasource_gc_draw_circle ( widgets );
 
   g_signal_connect_swapped ( G_OBJECT(widgets->center_entry), "changed", G_CALLBACK(datasource_gc_draw_circle), widgets );
@@ -211,22 +211,22 @@ static void datasource_gc_add_setup_widgets ( GtkWidget *dialog, VikViewport *vv
 
   /* Packing all these widgets */
   GtkBox *box = GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog)));
-  gtk_box_pack_start ( box, num_label, FALSE, FALSE, 5 );
-  gtk_box_pack_start ( box, widgets->num_spin, FALSE, FALSE, 5 );
-  gtk_box_pack_start ( box, center_label, FALSE, FALSE, 5 );
-  gtk_box_pack_start ( box, widgets->center_entry, FALSE, FALSE, 5 );
-  gtk_box_pack_start ( box, miles_radius_label, FALSE, FALSE, 5 );
-  gtk_box_pack_start ( box, widgets->miles_radius_spin, FALSE, FALSE, 5 );
+  gtk_box_pack_start ( box, num_label, false, false, 5 );
+  gtk_box_pack_start ( box, widgets->num_spin, false, false, 5 );
+  gtk_box_pack_start ( box, center_label, false, false, 5 );
+  gtk_box_pack_start ( box, widgets->center_entry, false, false, 5 );
+  gtk_box_pack_start ( box, miles_radius_label, false, false, 5 );
+  gtk_box_pack_start ( box, widgets->miles_radius_spin, false, false, 5 );
   gtk_widget_show_all(dialog);
 }
 
-static void datasource_gc_get_process_options ( datasource_gc_widgets_t *widgets, ProcessOptions *po, gpointer not_used, const gchar *not_used2, const gchar *not_used3 )
+static void datasource_gc_get_process_options ( datasource_gc_widgets_t *widgets, ProcessOptions *po, void * not_used, const char *not_used2, const char *not_used3 )
 {
-  //gchar *safe_string = g_shell_quote ( gtk_entry_get_text ( GTK_ENTRY(widgets->center_entry) ) );
-  gchar *safe_user = g_shell_quote ( a_preferences_get ( VIKING_GC_PARAMS_NAMESPACE "username")->s );
-  gchar *safe_pass = g_shell_quote ( a_preferences_get ( VIKING_GC_PARAMS_NAMESPACE "password")->s );
-  gchar *slat, *slon;
-  gdouble lat, lon;
+  //char *safe_string = g_shell_quote ( gtk_entry_get_text ( GTK_ENTRY(widgets->center_entry) ) );
+  char *safe_user = g_shell_quote ( a_preferences_get ( VIKING_GC_PARAMS_NAMESPACE "username")->s );
+  char *safe_pass = g_shell_quote ( a_preferences_get ( VIKING_GC_PARAMS_NAMESPACE "password")->s );
+  char *slat, *slon;
+  double lat, lon;
   if ( 2 != sscanf ( gtk_entry_get_text ( GTK_ENTRY(widgets->center_entry) ), "%lf,%lf", &lat, &lon ) ) {
     g_warning (_("Broken input - using some defaults"));
     lat = a_vik_get_default_lat();
@@ -260,7 +260,7 @@ static void datasource_gc_get_process_options ( datasource_gc_widgets_t *widgets
 static void datasource_gc_cleanup ( datasource_gc_widgets_t *widgets )
 {
   if ( widgets->circle_onscreen ) {
-    vik_viewport_draw_arc ( widgets->vvp, widgets->circle_gc, FALSE,
+    vik_viewport_draw_arc ( widgets->vvp, widgets->circle_gc, false,
 		widgets->circle_x - widgets->circle_width/2,
 		widgets->circle_y - widgets->circle_width/2,
 		widgets->circle_width, widgets->circle_width, 0, 360*64 );

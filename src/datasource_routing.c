@@ -41,23 +41,23 @@ typedef struct {
 } datasource_routing_widgets_t;
 
 /* Memory of previous selection */
-static gint last_engine = 0;
-static gchar *last_from_str = NULL;
-static gchar *last_to_str = NULL;
+static int last_engine = 0;
+static char *last_from_str = NULL;
+static char *last_to_str = NULL;
 
-static gpointer datasource_routing_init ( acq_vik_t *avt );
-static void datasource_routing_add_setup_widgets ( GtkWidget *dialog, VikViewport *vvp, gpointer user_data );
-static void datasource_routing_get_process_options ( datasource_routing_widgets_t *widgets, ProcessOptions *po, DownloadFileOptions *options, const gchar *not_used2, const gchar *not_used3 );
-static void datasource_routing_cleanup ( gpointer data );
+static void * datasource_routing_init ( acq_vik_t *avt );
+static void datasource_routing_add_setup_widgets ( GtkWidget *dialog, VikViewport *vvp, void * user_data );
+static void datasource_routing_get_process_options ( datasource_routing_widgets_t *widgets, ProcessOptions *po, DownloadFileOptions *options, const char *not_used2, const char *not_used3 );
+static void datasource_routing_cleanup ( void * data );
 
 VikDataSourceInterface vik_datasource_routing_interface = {
   N_("Directions"),
   N_("Directions"),
   VIK_DATASOURCE_AUTO_LAYER_MANAGEMENT,
   VIK_DATASOURCE_INPUTTYPE_NONE,
-  TRUE,
-  TRUE,
-  TRUE,
+  true,
+  true,
+  true,
   (VikDataSourceInitFunc)		datasource_routing_init,
   (VikDataSourceCheckExistenceFunc)	NULL,
   (VikDataSourceAddSetupWidgetsFunc)	datasource_routing_add_setup_widgets,
@@ -75,13 +75,13 @@ VikDataSourceInterface vik_datasource_routing_interface = {
   0
 };
 
-static gpointer datasource_routing_init ( acq_vik_t *avt )
+static void * datasource_routing_init ( acq_vik_t *avt )
 {
   datasource_routing_widgets_t *widgets = g_malloc(sizeof(*widgets));
   return widgets;
 }
 
-static void datasource_routing_add_setup_widgets ( GtkWidget *dialog, VikViewport *vvp, gpointer user_data )
+static void datasource_routing_add_setup_widgets ( GtkWidget *dialog, VikViewport *vvp, void * user_data )
 {
   datasource_routing_widgets_t *widgets = (datasource_routing_widgets_t *)user_data;
   GtkWidget *engine_label, *from_label, *to_label;
@@ -103,18 +103,18 @@ static void datasource_routing_add_setup_widgets ( GtkWidget *dialog, VikViewpor
   
   /* Packing all these widgets */
   GtkBox *box = GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog)));
-  gtk_box_pack_start ( box, engine_label, FALSE, FALSE, 5 );
-  gtk_box_pack_start ( box, widgets->engines_combo, FALSE, FALSE, 5 );
-  gtk_box_pack_start ( box, from_label, FALSE, FALSE, 5 );
-  gtk_box_pack_start ( box, widgets->from_entry, FALSE, FALSE, 5 );
-  gtk_box_pack_start ( box, to_label, FALSE, FALSE, 5 );
-  gtk_box_pack_start ( box, widgets->to_entry, FALSE, FALSE, 5 );
+  gtk_box_pack_start ( box, engine_label, false, false, 5 );
+  gtk_box_pack_start ( box, widgets->engines_combo, false, false, 5 );
+  gtk_box_pack_start ( box, from_label, false, false, 5 );
+  gtk_box_pack_start ( box, widgets->from_entry, false, false, 5 );
+  gtk_box_pack_start ( box, to_label, false, false, 5 );
+  gtk_box_pack_start ( box, widgets->to_entry, false, false, 5 );
   gtk_widget_show_all(dialog);
 }
 
-static void datasource_routing_get_process_options ( datasource_routing_widgets_t *widgets, ProcessOptions *po, DownloadFileOptions *options, const gchar *not_used2, const gchar *not_used3 )
+static void datasource_routing_get_process_options ( datasource_routing_widgets_t *widgets, ProcessOptions *po, DownloadFileOptions *options, const char *not_used2, const char *not_used3 )
 {
-  const gchar *from, *to;
+  const char *from, *to;
   
   /* Retrieve directions */
   from = gtk_entry_get_text ( GTK_ENTRY(widgets->from_entry) );
@@ -137,7 +137,7 @@ static void datasource_routing_get_process_options ( datasource_routing_widgets_
   last_to_str = g_strdup( to );
 }
 
-static void datasource_routing_cleanup ( gpointer data )
+static void datasource_routing_cleanup ( void * data )
 {
   g_free ( data );
 }

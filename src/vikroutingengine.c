@@ -44,9 +44,9 @@ static GObjectClass *parent_class;
 typedef struct _VikRoutingPrivate VikRoutingPrivate;
 struct _VikRoutingPrivate
 {
-	gchar *id;
-	gchar *label;
-	gchar *format;
+	char *id;
+	char *label;
+	char *format;
 };
 
 #define VIK_ROUTING_ENGINE_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), VIK_ROUTING_ENGINE_TYPE, VikRoutingPrivate))
@@ -65,7 +65,7 @@ G_DEFINE_ABSTRACT_TYPE (VikRoutingEngine, vik_routing_engine, G_TYPE_OBJECT)
 
 static void
 vik_routing_engine_set_property (GObject      *object,
-                          guint         property_id,
+                          unsigned int         property_id,
                           const GValue *value,
                           GParamSpec   *pspec)
 {
@@ -97,7 +97,7 @@ vik_routing_engine_set_property (GObject      *object,
 
 static void
 vik_routing_engine_get_property (GObject    *object,
-                          guint       property_id,
+                          unsigned int       property_id,
                           GValue     *value,
                           GParamSpec *pspec)
 {
@@ -210,7 +210,7 @@ vik_routing_engine_finalize ( GObject *self )
  * 
  * Returns: indicates success or not.
  */
-gboolean
+bool
 vik_routing_engine_find ( VikRoutingEngine *self, VikTrwLayer *vtl, struct LatLon start, struct LatLon end )
 {
 	VikRoutingEngineClass *klass;
@@ -227,7 +227,7 @@ vik_routing_engine_find ( VikRoutingEngine *self, VikTrwLayer *vtl, struct LatLo
  * 
  * Returns: the id of self
  */
-gchar *
+char *
 vik_routing_engine_get_id ( VikRoutingEngine *self )
 {
   VikRoutingPrivate *priv = VIK_ROUTING_ENGINE_PRIVATE (self);
@@ -240,7 +240,7 @@ vik_routing_engine_get_id ( VikRoutingEngine *self )
  * 
  * Returns: the label of self
  */
-gchar *
+char *
 vik_routing_engine_get_label ( VikRoutingEngine *self )
 {
   VikRoutingPrivate *priv = VIK_ROUTING_ENGINE_PRIVATE (self);
@@ -255,7 +255,7 @@ vik_routing_engine_get_label ( VikRoutingEngine *self )
  *
  * Returns: the format of self
  */
-gchar *
+char *
 vik_routing_engine_get_format ( VikRoutingEngine *self )
 {
   VikRoutingPrivate *priv = VIK_ROUTING_ENGINE_PRIVATE (self);
@@ -266,16 +266,16 @@ vik_routing_engine_get_format ( VikRoutingEngine *self )
 /**
  * vik_routing_engine_supports_direction:
  * 
- * Returns: %TRUE if this engine supports the route finding based on directions
+ * Returns: %true if this engine supports the route finding based on directions
  */
-gboolean
+bool
 vik_routing_engine_supports_direction ( VikRoutingEngine *self )
 {
   VikRoutingEngineClass *klass;
 
-  g_return_val_if_fail ( VIK_IS_ROUTING_ENGINE (self), FALSE );
+  g_return_val_if_fail ( VIK_IS_ROUTING_ENGINE (self), false );
   klass = VIK_ROUTING_ENGINE_GET_CLASS( self );
-  g_return_val_if_fail ( klass->supports_direction != NULL, FALSE );
+  g_return_val_if_fail ( klass->supports_direction != NULL, false );
 
   return klass->supports_direction( self );
 }
@@ -290,8 +290,8 @@ vik_routing_engine_supports_direction ( VikRoutingEngine *self )
  *
  * Returns: the computed URL
  */
-gchar *
-vik_routing_engine_get_url_from_directions ( VikRoutingEngine *self, const gchar *start, const gchar *end )
+char *
+vik_routing_engine_get_url_from_directions ( VikRoutingEngine *self, const char *start, const char *end )
 {
   VikRoutingEngineClass *klass;
 
@@ -316,7 +316,7 @@ vik_routing_engine_get_url_from_directions ( VikRoutingEngine *self, const gchar
  *
  * Returns: indicates success or not.
  */
-gboolean
+bool
 vik_routing_engine_refine ( VikRoutingEngine *self, VikTrwLayer *vtl, VikTrack *vt )
 {
   VikRoutingEngineClass *klass;
@@ -332,16 +332,16 @@ vik_routing_engine_refine ( VikRoutingEngine *self, VikTrwLayer *vtl, VikTrack *
  * vik_routing_engine_supports_refine:
  * @self: routing engine
  *
- * Returns: %TRUE if this engine supports the refine of track
+ * Returns: %true if this engine supports the refine of track
  */
-gboolean
+bool
 vik_routing_engine_supports_refine ( VikRoutingEngine *self )
 {
   VikRoutingEngineClass *klass;
 
-  g_return_val_if_fail ( VIK_IS_ROUTING_ENGINE (self), FALSE );
+  g_return_val_if_fail ( VIK_IS_ROUTING_ENGINE (self), false );
   klass = VIK_ROUTING_ENGINE_GET_CLASS ( self );
-  g_return_val_if_fail ( klass->supports_refine != NULL, FALSE );
+  g_return_val_if_fail ( klass->supports_refine != NULL, false );
 
   return klass->supports_refine ( self );
 }

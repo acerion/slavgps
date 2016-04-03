@@ -53,12 +53,12 @@
 /**
  * Path to gpsbabel
  */
-static gchar *gpsbabel_loc = NULL;
+static char *gpsbabel_loc = NULL;
 
 /**
  * Path to unbuffer
  */
-static gchar *unbuffer_loc = NULL;
+static char *unbuffer_loc = NULL;
 
 /**
  * List of file formats supported by gpsbabel.
@@ -73,7 +73,7 @@ GList *a_babel_device_list;
 /**
  * Run a function on all file formats supporting a given mode.
  */
-void a_babel_foreach_file_with_mode (BabelMode mode, GFunc func, gpointer user_data)
+void a_babel_foreach_file_with_mode (BabelMode mode, GFunc func, void * user_data)
 {
   GList *current;
   for ( current = g_list_first (a_babel_file_list) ;
@@ -82,13 +82,13 @@ void a_babel_foreach_file_with_mode (BabelMode mode, GFunc func, gpointer user_d
   {
     BabelFile *currentFile = current->data;
     /* Check compatibility of modes */
-    gboolean compat = TRUE;
-    if (mode.waypointsRead  && ! currentFile->mode.waypointsRead)  compat = FALSE;
-    if (mode.waypointsWrite && ! currentFile->mode.waypointsWrite) compat = FALSE;
-    if (mode.tracksRead     && ! currentFile->mode.tracksRead)     compat = FALSE;
-    if (mode.tracksWrite    && ! currentFile->mode.tracksWrite)    compat = FALSE;
-    if (mode.routesRead     && ! currentFile->mode.routesRead)     compat = FALSE;
-    if (mode.routesWrite    && ! currentFile->mode.routesWrite)    compat = FALSE;
+    bool compat = true;
+    if (mode.waypointsRead  && ! currentFile->mode.waypointsRead)  compat = false;
+    if (mode.waypointsWrite && ! currentFile->mode.waypointsWrite) compat = false;
+    if (mode.tracksRead     && ! currentFile->mode.tracksRead)     compat = false;
+    if (mode.tracksWrite    && ! currentFile->mode.tracksWrite)    compat = false;
+    if (mode.routesRead     && ! currentFile->mode.routesRead)     compat = false;
+    if (mode.routesWrite    && ! currentFile->mode.routesWrite)    compat = false;
     /* Do call */
     if (compat)
       func (currentFile, user_data);
@@ -103,7 +103,7 @@ void a_babel_foreach_file_with_mode (BabelMode mode, GFunc func, gpointer user_d
  * Run a function on all file formats with any kind of read method
  *  (which is almost all but not quite - e.g. with GPSBabel v1.4.4 - PalmDoc is write only waypoints)
  */
-void a_babel_foreach_file_read_any (GFunc func, gpointer user_data)
+void a_babel_foreach_file_read_any (GFunc func, void * user_data)
 {
   GList *current;
   for ( current = g_list_first (a_babel_file_list) ;
@@ -132,13 +132,13 @@ void a_babel_foreach_file_read_any (GFunc func, gpointer user_data)
  * that is, it will block the calling program until the conversion is done. To avoid blocking, call
  * this routine from a worker thread.
  *
- * Returns: %TRUE on success
+ * Returns: %true on success
  */
-gboolean a_babel_convert( VikTrwLayer *vt, const char *babelargs, BabelStatusFunc cb, gpointer user_data, gpointer not_used )
+bool a_babel_convert( VikTrwLayer *vt, const char *babelargs, BabelStatusFunc cb, void * user_data, void * not_used )
 {
-  gboolean ret = FALSE;
-  gchar *bargs = g_strconcat(babelargs, " -i gpx", NULL);
-  gchar *name_src = a_gpx_write_tmp_file ( vt, NULL );
+  bool ret = false;
+  char *bargs = g_strconcat(babelargs, " -i gpx", NULL);
+  char *name_src = a_gpx_write_tmp_file ( vt, NULL );
 
   if ( name_src ) {
     ProcessOptions po = { bargs, name_src, NULL, NULL, NULL };
@@ -155,8 +155,8 @@ gboolean a_babel_convert( VikTrwLayer *vt, const char *babelargs, BabelStatusFun
  * Perform any cleanup actions once GPSBabel has completed running
  */
 static void babel_watch ( GPid pid,
-                          gint status,
-                          gpointer user_data )
+                          int status,
+                          void * user_data )
 {
   g_spawn_close_pid ( pid );
 }
@@ -170,27 +170,27 @@ static void babel_watch ( GPid pid,
  *
  * The function to actually invoke the GPSBabel external command
  *
- * Returns: %TRUE on successful invocation of GPSBabel command
+ * Returns: %true on successful invocation of GPSBabel command
  */
-static gboolean babel_general_convert( BabelStatusFunc cb, gchar **args, gpointer user_data )
+static bool babel_general_convert( BabelStatusFunc cb, char **args, void * user_data )
 {
-  gboolean ret = FALSE;
+  bool ret = false;
   GPid pid;
   GError *error = NULL;
-  gint babel_stdout;
+  int babel_stdout;
 
   if ( vik_debug ) {
-    for ( guint i=0; args[i]; i++ )
+    for ( unsigned int i=0; args[i]; i++ )
       g_debug ("%s: %s", __FUNCTION__, args[i] );
   }
 
   if (!g_spawn_async_with_pipes (NULL, args, NULL, G_SPAWN_DO_NOT_REAP_CHILD, NULL, NULL, &pid, NULL, &babel_stdout, NULL, &error)) {
     g_warning ("Async command failed: %s", error->message);
     g_error_free(error);
-    ret = FALSE;
+    ret = false;
   } else {
 
-    gchar line[512];
+    char line[512];
     FILE *diag;
     diag = fdopen(babel_stdout, "r");
     setvbuf(diag, NULL, _IONBF, 0);
@@ -206,7 +206,7 @@ static gboolean babel_general_convert( BabelStatusFunc cb, gchar **args, gpointe
 
     g_child_watch_add ( pid, (GChildWatchFunc) babel_watch, NULL );
 
-    ret = TRUE;
+    ret = true;
   }
     
   return ret;
@@ -227,11 +227,11 @@ static gboolean babel_general_convert( BabelStatusFunc cb, gchar **args, gpointe
  * running the command, the data will appear in the (usually
  * temporary) file name_dst.
  *
- * Returns: %TRUE on success
+ * Returns: %true on success
  */
-static gboolean babel_general_convert_from( VikTrwLayer *vt, BabelStatusFunc cb, gchar **args, const gchar *name_dst, gpointer user_data )
+static bool babel_general_convert_from( VikTrwLayer *vt, BabelStatusFunc cb, char **args, const char *name_dst, void * user_data )
 {
-  gboolean ret = FALSE;
+  bool ret = false;
   FILE *f = NULL;
     
   if (babel_general_convert(cb, args, user_data)) {
@@ -239,7 +239,7 @@ static gboolean babel_general_convert_from( VikTrwLayer *vt, BabelStatusFunc cb,
     /* No data actually required but still need to have run gpsbabel anyway
        - eg using the device power command_off */
     if ( vt == NULL )
-      return TRUE;
+      return true;
 
     f = g_fopen(name_dst, "r");
     if (f) {
@@ -267,23 +267,23 @@ static gboolean babel_general_convert_from( VikTrwLayer *vt, BabelStatusFunc cb,
  * that is, it will block the calling program until the conversion is done. To avoid blocking, call
  * this routine from a worker thread.
  *
- * Returns: %TRUE on success
+ * Returns: %true on success
  */
-gboolean a_babel_convert_from_filter( VikTrwLayer *vt, const char *babelargs, const char *from, const char *babelfilters, BabelStatusFunc cb, gpointer user_data, gpointer not_used )
+bool a_babel_convert_from_filter( VikTrwLayer *vt, const char *babelargs, const char *from, const char *babelfilters, BabelStatusFunc cb, void * user_data, void * not_used )
 {
   int i,j;
   int fd_dst;
-  gchar *name_dst = NULL;
-  gboolean ret = FALSE;
-  gchar *args[64];
+  char *name_dst = NULL;
+  bool ret = false;
+  char *args[64];
 
   if ((fd_dst = g_file_open_tmp("tmp-viking.XXXXXX", &name_dst, NULL)) >= 0) {
     g_debug ("%s: temporary file: %s", __FUNCTION__, name_dst);
     close(fd_dst);
 
     if (gpsbabel_loc ) {
-      gchar **sub_args = g_strsplit(babelargs, " ", 0);
-      gchar **sub_filters = NULL;
+      char **sub_args = g_strsplit(babelargs, " ", 0);
+      char **sub_filters = NULL;
 
       i = 0;
       if (unbuffer_loc)
@@ -339,16 +339,16 @@ gboolean a_babel_convert_from_filter( VikTrwLayer *vt, const char *babelargs, co
  * Uses babel_general_convert_from() to actually run the command. This function
  * prepares the command and temporary file, and sets up the arguments for bash.
  */
-gboolean a_babel_convert_from_shellcommand ( VikTrwLayer *vt, const char *input_cmd, const char *input_file_type, BabelStatusFunc cb, gpointer user_data, gpointer not_used )
+bool a_babel_convert_from_shellcommand ( VikTrwLayer *vt, const char *input_cmd, const char *input_file_type, BabelStatusFunc cb, void * user_data, void * not_used )
 {
   int fd_dst;
-  gchar *name_dst = NULL;
-  gboolean ret = FALSE;
-  gchar **args;  
+  char *name_dst = NULL;
+  bool ret = false;
+  char **args;  
 
   if ((fd_dst = g_file_open_tmp("tmp-viking.XXXXXX", &name_dst, NULL)) >= 0) {
     g_debug ("%s: temporary file: %s", __FUNCTION__, name_dst);
-    gchar *shell_command;
+    char *shell_command;
     if ( input_file_type )
       shell_command = g_strdup_printf("%s | %s -i %s -f - -o gpx -F %s",
         input_cmd, gpsbabel_loc, input_file_type, name_dst);
@@ -358,7 +358,7 @@ gboolean a_babel_convert_from_shellcommand ( VikTrwLayer *vt, const char *input_
     g_debug("%s: %s", __FUNCTION__, shell_command);
     close(fd_dst);
 
-    args = g_malloc(sizeof(gchar *)*4);
+    args = g_malloc(sizeof(char *)*4);
     args[0] = BASH_LOCATION;
     args[1] = "-c";
     args[2] = shell_command;
@@ -387,20 +387,20 @@ gboolean a_babel_convert_from_shellcommand ( VikTrwLayer *vt, const char *input_
  * Download the file pointed by the URL and optionally uses GPSBabel to convert from input_type.
  * If input_type and babelfilters are %NULL, gpsbabel is not used.
  *
- * Returns: %TRUE on successful invocation of GPSBabel or read of the GPX
+ * Returns: %true on successful invocation of GPSBabel or read of the GPX
  *
  */
-gboolean a_babel_convert_from_url_filter ( VikTrwLayer *vt, const char *url, const char *input_type, const char *babelfilters, BabelStatusFunc cb, gpointer user_data, DownloadFileOptions *options )
+bool a_babel_convert_from_url_filter ( VikTrwLayer *vt, const char *url, const char *input_type, const char *babelfilters, BabelStatusFunc cb, void * user_data, DownloadFileOptions *options )
 {
   // If no download options specified, use defaults:
-  DownloadFileOptions myoptions = { FALSE, FALSE, NULL, 2, NULL, NULL, NULL };
+  DownloadFileOptions myoptions = { false, false, NULL, 2, NULL, NULL, NULL };
   if ( options )
     myoptions = *options;
-  gint fd_src;
+  int fd_src;
   int fetch_ret;
-  gboolean ret = FALSE;
-  gchar *name_src = NULL;
-  gchar *babelargs = NULL;
+  bool ret = false;
+  char *name_src = NULL;
+  char *babelargs = NULL;
 
   g_debug("%s: input_type=%s url=%s", __FUNCTION__, input_type, url);
 
@@ -445,26 +445,26 @@ gboolean a_babel_convert_from_url_filter ( VikTrwLayer *vt, const char *url, con
  * that is, it will block the calling program until the conversion is done. To avoid blocking, call
  * this routine from a worker thread.
  *
- * Returns: %TRUE on success
+ * Returns: %true on success
  */
-gboolean a_babel_convert_from ( VikTrwLayer *vt, ProcessOptions *process_options, BabelStatusFunc cb, gpointer user_data, DownloadFileOptions *download_options )
+bool a_babel_convert_from ( VikTrwLayer *vt, ProcessOptions *process_options, BabelStatusFunc cb, void * user_data, DownloadFileOptions *download_options )
 {
-  if ( !process_options ) return FALSE;
+  if ( !process_options ) return false;
   if ( process_options->url )
     return a_babel_convert_from_url_filter ( vt, process_options->url, process_options->input_file_type, process_options->babel_filters, cb, user_data, download_options );
   if ( process_options->babelargs )
     return a_babel_convert_from_filter ( vt, process_options->babelargs, process_options->filename, process_options->babel_filters, cb, user_data, download_options );
   if ( process_options->shell_command )
     return a_babel_convert_from_shellcommand ( vt, process_options->shell_command, process_options->filename, cb, user_data, download_options );
-  return FALSE;
+  return false;
 }
 
-static gboolean babel_general_convert_to( VikTrwLayer *vt, VikTrack *trk, BabelStatusFunc cb, gchar **args, const gchar *name_src, gpointer user_data )
+static bool babel_general_convert_to( VikTrwLayer *vt, VikTrack *trk, BabelStatusFunc cb, char **args, const char *name_src, void * user_data )
 {
   // Now strips out invisible tracks and waypoints
-  if (!a_file_export(vt, name_src, FILE_TYPE_GPX, trk, FALSE)) {
+  if (!a_file_export(vt, name_src, FILE_TYPE_GPX, trk, false)) {
     g_critical("Error exporting to %s", name_src);
-    return FALSE;
+    return false;
   }
        
   return babel_general_convert (cb, args, user_data);
@@ -484,22 +484,22 @@ static gboolean babel_general_convert_to( VikTrwLayer *vt, VikTrack *trk, BabelS
  * that is, it will block the calling program until the conversion is done. To avoid blocking, call
  * this routine from a worker thread.
  *
- * Returns: %TRUE on successful invocation of GPSBabel command
+ * Returns: %true on successful invocation of GPSBabel command
  */
-gboolean a_babel_convert_to( VikTrwLayer *vt, VikTrack *track, const char *babelargs, const char *to, BabelStatusFunc cb, gpointer user_data )
+bool a_babel_convert_to( VikTrwLayer *vt, VikTrack *track, const char *babelargs, const char *to, BabelStatusFunc cb, void * user_data )
 {
   int i,j;
   int fd_src;
-  gchar *name_src = NULL;
-  gboolean ret = FALSE;
-  gchar *args[64];  
+  char *name_src = NULL;
+  bool ret = false;
+  char *args[64];  
 
   if ((fd_src = g_file_open_tmp("tmp-viking.XXXXXX", &name_src, NULL)) >= 0) {
     g_debug ("%s: temporary file: %s", __FUNCTION__, name_src);
     close(fd_src);
 
     if (gpsbabel_loc ) {
-      gchar **sub_args = g_strsplit(babelargs, " ", 0);
+      char **sub_args = g_strsplit(babelargs, " ", 0);
 
       i = 0;
       if (unbuffer_loc)
@@ -529,7 +529,7 @@ gboolean a_babel_convert_to( VikTrwLayer *vt, VikTrack *track, const char *babel
   return ret;
 }
 
-static void set_mode(BabelMode *mode, gchar *smode)
+static void set_mode(BabelMode *mode, char *smode)
 {
   mode->waypointsRead  = smode[0] == 'r';
   mode->waypointsWrite = smode[1] == 'w';
@@ -544,9 +544,9 @@ static void set_mode(BabelMode *mode, gchar *smode)
  * 
  * Load a single feature stored in the given line.
  */
-static void load_feature_parse_line (gchar *line)
+static void load_feature_parse_line (char *line)
 {
-  gchar **tokens = g_strsplit ( line, "\t", 0 );
+  char **tokens = g_strsplit ( line, "\t", 0 );
   if ( tokens != NULL
        && tokens[0] != NULL ) {
     if ( strcmp("serial", tokens[0]) == 0 ) {
@@ -595,17 +595,17 @@ static void load_feature_parse_line (gchar *line)
   g_strfreev ( tokens );
 }
 
-static void load_feature_cb (BabelProgressCode code, gpointer line, gpointer user_data)
+static void load_feature_cb (BabelProgressCode code, void * line, void * user_data)
 {
   if (line != NULL)
     load_feature_parse_line (line);
 }
 
-static gboolean load_feature ()
+static bool load_feature ()
 {
   int i;
-  gboolean ret = FALSE;
-  gchar *args[4];  
+  bool ret = false;
+  char *args[4];  
 
   if ( gpsbabel_loc ) {
     i = 0;
@@ -659,7 +659,7 @@ void a_babel_init ()
 void a_babel_post_init ()
 {
   // Read the current preference
-  const gchar *gpsbabel = a_preferences_get(VIKING_PREFERENCES_IO_NAMESPACE "gpsbabel")->s;
+  const char *gpsbabel = a_preferences_get(VIKING_PREFERENCES_IO_NAMESPACE "gpsbabel")->s;
   // If setting is still the UNIX default then lookup in the path - otherwise attempt to use the specified value directly.
   if ( g_strcmp0 ( gpsbabel, "gpsbabel" ) == 0 ) {
     gpsbabel_loc = g_find_program_in_path( "gpsbabel" );
@@ -667,7 +667,7 @@ void a_babel_post_init ()
       g_critical( "gpsbabel not found in PATH" );
   }
   else
-    gpsbabel_loc = (gchar*)gpsbabel;
+    gpsbabel_loc = (char*)gpsbabel;
 
   // Unlikely to package unbuffer on Windows so ATM don't even bother trying
   // Highly unlikely unbuffer is available on a Windows system otherwise
@@ -722,7 +722,7 @@ void a_babel_uninit ()
  *
  * Returns: true if babel available
  */
-gboolean a_babel_available ()
+bool a_babel_available ()
 {
   return a_babel_device_list != NULL;
 }

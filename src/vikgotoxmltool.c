@@ -39,18 +39,18 @@
 
 static void vik_goto_xml_tool_finalize ( GObject *gob );
 
-static gchar *vik_goto_xml_tool_get_url_format ( VikGotoTool *self );
-static gboolean vik_goto_xml_tool_parse_file_for_latlon(VikGotoTool *self, gchar *filename, struct LatLon *ll);
+static char *vik_goto_xml_tool_get_url_format ( VikGotoTool *self );
+static bool vik_goto_xml_tool_parse_file_for_latlon(VikGotoTool *self, char *filename, struct LatLon *ll);
 
 typedef struct _VikGotoXmlToolPrivate VikGotoXmlToolPrivate;
 
 struct _VikGotoXmlToolPrivate
 {
-  gchar *url_format;
-  gchar *lat_path;
-  gchar *lat_attr;
-  gchar *lon_path;
-  gchar *lon_attr;
+  char *url_format;
+  char *lat_path;
+  char *lat_attr;
+  char *lon_path;
+  char *lon_attr;
   
   struct LatLon ll;
 };
@@ -74,13 +74,13 @@ enum
 
 static void
 vik_goto_xml_tool_set_property (GObject      *object,
-                                guint         property_id,
+                                unsigned int         property_id,
                                 const GValue *value,
                                 GParamSpec   *pspec)
 {
   VikGotoXmlTool *self = VIK_GOTO_XML_TOOL (object);
   VikGotoXmlToolPrivate *priv = GOTO_XML_TOOL_GET_PRIVATE (self);
-  gchar **splitted = NULL;
+  char **splitted = NULL;
 
   switch (property_id)
     {
@@ -148,7 +148,7 @@ vik_goto_xml_tool_set_property (GObject      *object,
 
 static void
 vik_goto_xml_tool_get_property (GObject    *object,
-                                guint       property_id,
+                                unsigned int       property_id,
                                 GValue     *value,
                                 GParamSpec *pspec)
 {
@@ -277,24 +277,24 @@ vik_goto_xml_tool_finalize ( GObject *gob )
   G_OBJECT_GET_CLASS(gob)->finalize(gob);
 }
 
-static gboolean
+static bool
 stack_is_path (const GSList *stack,
-               const gchar  *path)
+               const char  *path)
 {
-  gboolean equal = TRUE;
+  bool equal = true;
   int stack_len = g_list_length((GList *)stack);
   int i = 0;
   i = stack_len - 1;
-  while (equal == TRUE && i >= 0)
+  while (equal == true && i >= 0)
   {
     if (*path != '/')
-      equal = FALSE;
+      equal = false;
     else
       path++;
-    const gchar *current = g_list_nth_data((GList *)stack, i);
+    const char *current = g_list_nth_data((GList *)stack, i);
     size_t len = strlen(current);
     if (strncmp(path, current, len) != 0 )
-      equal = FALSE;
+      equal = false;
     else
     {
       path += len;
@@ -302,17 +302,17 @@ stack_is_path (const GSList *stack,
     i--;
   }
   if (*path != '\0')
-    equal = FALSE;
+    equal = false;
   return equal;
 }
 
 /* Called for open tags <foo bar="baz"> */
 static void
 _start_element (GMarkupParseContext *context,
-                const gchar         *element_name,
-                const gchar        **attribute_names,
-                const gchar        **attribute_values,
-                gpointer             user_data,
+                const char         *element_name,
+                const char        **attribute_names,
+                const char        **attribute_values,
+                void *             user_data,
                 GError             **error)
 {
   VikGotoXmlTool *self = VIK_GOTO_XML_TOOL (user_data);
@@ -350,15 +350,15 @@ _start_element (GMarkupParseContext *context,
 /* text is not nul-terminated */
 static void
 _text (GMarkupParseContext *context,
-       const gchar         *text,
-       gsize                text_len,  
-       gpointer             user_data,
+       const char         *text,
+       size_t                text_len,  
+       void *             user_data,
        GError             **error)
 {
   VikGotoXmlTool *self = VIK_GOTO_XML_TOOL (user_data);
   VikGotoXmlToolPrivate *priv = GOTO_XML_TOOL_GET_PRIVATE (self);
   const GSList *stack = g_markup_parse_context_get_element_stack (context);
-  gchar *textl = g_strndup(text, text_len);
+  char *textl = g_strndup(text, text_len);
   /* Store only first result */
 	if (priv->lat_attr == NULL && isnan(priv->ll.lat) && stack_is_path (stack, priv->lat_path))
 	{
@@ -371,14 +371,14 @@ _text (GMarkupParseContext *context,
   g_free(textl);
 }
 
-static gboolean
-vik_goto_xml_tool_parse_file_for_latlon(VikGotoTool *self, gchar *filename, struct LatLon *ll)
+static bool
+vik_goto_xml_tool_parse_file_for_latlon(VikGotoTool *self, char *filename, struct LatLon *ll)
 {
 	GMarkupParser xml_parser;
 	GMarkupParseContext *xml_context = NULL;
 	GError *error = NULL;
 	VikGotoXmlToolPrivate *priv = GOTO_XML_TOOL_GET_PRIVATE (self);
-  g_return_val_if_fail(priv != NULL, FALSE);
+  g_return_val_if_fail(priv != NULL, false);
 
   g_debug ("%s: %s@%s, %s@%s",
            __FUNCTION__,
@@ -388,7 +388,7 @@ vik_goto_xml_tool_parse_file_for_latlon(VikGotoTool *self, gchar *filename, stru
 	FILE *file = g_fopen (filename, "r");
 	if (file == NULL)
 		/* TODO emit warning */
-		return FALSE;
+		return false;
 	
 	/* setup context parse (ie callbacks) */
 	if (priv->lat_attr != NULL || priv->lon_attr != NULL)
@@ -411,10 +411,10 @@ vik_goto_xml_tool_parse_file_for_latlon(VikGotoTool *self, gchar *filename, stru
 	priv->ll.lat = NAN;
 	priv->ll.lon = NAN;
 	
-	gchar buff[BUFSIZ];
+	char buff[BUFSIZ];
 	size_t nb;
 	while (xml_context &&
-	       (nb = fread (buff, sizeof(gchar), BUFSIZ, file)) > 0)
+	       (nb = fread (buff, sizeof(char), BUFSIZ, file)) > 0)
 	{
 		if (!g_markup_parse_context_parse(xml_context, buff, nb, &error))
 		{
@@ -444,12 +444,12 @@ vik_goto_xml_tool_parse_file_for_latlon(VikGotoTool *self, gchar *filename, stru
   
   if (isnan(priv->ll.lat) || isnan(priv->ll.lat))
 		/* At least one coordinate not found */
-		return FALSE;
+		return false;
 	else
-		return TRUE;
+		return true;
 }
 
-static gchar *
+static char *
 vik_goto_xml_tool_get_url_format ( VikGotoTool *self )
 {
   VikGotoXmlToolPrivate *priv = GOTO_XML_TOOL_GET_PRIVATE (self);

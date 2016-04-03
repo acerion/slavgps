@@ -24,35 +24,38 @@
 #define _VIKING_DOWNLOAD_H
 
 #include <stdio.h>
+#include <stdbool.h>
+#include <stdint.h>
+
 
 G_BEGIN_DECLS
 
 /* File content check */
-typedef gboolean (*VikFileContentCheckerFunc) (FILE*);
-gboolean a_check_map_file(FILE*);
-gboolean a_check_html_file(FILE*);
-gboolean a_check_kml_file(FILE*);
+typedef bool (*VikFileContentCheckerFunc) (FILE*);
+bool a_check_map_file(FILE*);
+bool a_check_html_file(FILE*);
+bool a_check_kml_file(FILE*);
 // Convert
-void a_try_decompress_file (gchar *name);
-typedef void (*VikFileContentConvertFunc) (gchar*); // filename (temporary)
+void a_try_decompress_file (char *name);
+typedef void (*VikFileContentConvertFunc) (char*); // filename (temporary)
 
 typedef struct {
   /**
    * Check if the server has a more recent file than the one we have before downloading it
    * This uses http header If-Modified-Since
    */
-  gboolean check_file_server_time;
+  bool check_file_server_time;
 
   /**
    * Set if the server handle ETag
    */
-  gboolean use_etag;
+  bool use_etag;
 
   /**
    * The REFERER string to use.
    * Could be NULL.
    */
-  gchar *referer;
+  char *referer;
 
   /**
    * follow_location specifies the number of retries
@@ -69,7 +72,7 @@ typedef struct {
    * If need to authenticate on download
    *  format: 'username:password'
    */
-  gchar *user_pass;
+  char *user_pass;
 
   /**
    * File manipulation if necessary such as uncompressing the downloaded file.
@@ -95,7 +98,7 @@ DownloadResult_t a_ftp_download_get_url ( const char *hostname, const char *uri,
 void *a_download_handle_init ();
 void a_download_handle_cleanup ( void *handle );
 
-gchar *a_download_uri_to_tmp_file ( const gchar *uri, DownloadFileOptions *options );
+char *a_download_uri_to_tmp_file ( const char *uri, DownloadFileOptions *options );
 
 G_END_DECLS
 

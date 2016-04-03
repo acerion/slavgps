@@ -22,6 +22,9 @@
 #ifndef __VIK_SEARCH_H
 #define __VIK_SEARCH_H
 
+#include <stdbool.h>
+#include <stdint.h>
+
 #include "vikwindow.h"
 #include "vikviewport.h"
 #include "vikgototool.h"
@@ -31,9 +34,9 @@ G_BEGIN_DECLS
 void vik_goto_register (VikGotoTool *tool);
 void vik_goto_unregister_all (void);
 
-gint a_vik_goto_where_am_i ( VikViewport *vvp, struct LatLon *ll, gchar **name );
+int a_vik_goto_where_am_i ( VikViewport *vvp, struct LatLon *ll, char **name );
 void a_vik_goto(VikWindow *vw, VikViewport *vvp);
-gchar * a_vik_goto_get_search_string_for_this_place(VikWindow *vw);
+char * a_vik_goto_get_search_string_for_this_place(VikWindow *vw);
 
 G_END_DECLS
 

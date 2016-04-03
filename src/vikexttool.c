@@ -32,14 +32,14 @@
 static GObjectClass *parent_class;
 
 static void ext_tool_finalize ( GObject *gob );
-static gchar *ext_tool_get_label ( VikExtTool *vw );
+static char *ext_tool_get_label ( VikExtTool *vw );
 
 typedef struct _VikExtToolPrivate VikExtToolPrivate;
 
 struct _VikExtToolPrivate
 {
-  gint   id;
-  gchar *label;
+  int   id;
+  char *label;
 };
 
 #define EXT_TOOL_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), \
@@ -58,7 +58,7 @@ enum
 
 static void
 ext_tool_set_property (GObject      *object,
-                      guint         property_id,
+                      unsigned int         property_id,
                       const GValue *value,
                       GParamSpec   *pspec)
 {
@@ -87,7 +87,7 @@ ext_tool_set_property (GObject      *object,
 
 static void
 ext_tool_get_property (GObject    *object,
-                      guint       property_id,
+                      unsigned int       property_id,
                       GValue     *value,
                       GParamSpec *pspec)
 {
@@ -161,14 +161,14 @@ static void ext_tool_finalize ( GObject *gob )
   G_OBJECT_CLASS(parent_class)->finalize(gob);
 }
 
-static gchar *ext_tool_get_label ( VikExtTool *self )
+static char *ext_tool_get_label ( VikExtTool *self )
 {
   VikExtToolPrivate *priv = NULL;
   priv = EXT_TOOL_GET_PRIVATE (self);
   return g_strdup ( priv->label );
 }
 
-gchar *vik_ext_tool_get_label ( VikExtTool *w )
+char *vik_ext_tool_get_label ( VikExtTool *w )
 {
   return VIK_EXT_TOOL_GET_CLASS( w )->get_label( w );
 }

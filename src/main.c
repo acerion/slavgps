@@ -66,19 +66,19 @@
 
 #if GLIB_CHECK_VERSION (2, 32, 0)
 /* Callback to log message */
-static void log_debug(const gchar *log_domain,
+static void log_debug(const char *log_domain,
                       GLogLevelFlags log_level,
-                      const gchar *message,
-                      gpointer user_data)
+                      const char *message,
+                      void * user_data)
 {
   g_print("** (viking): DEBUG: %s\n", message);
 }
 #else
 /* Callback to mute log message */
-static void mute_log(const gchar *log_domain,
+static void mute_log(const char *log_domain,
                      GLogLevelFlags log_level,
-                     const gchar *message,
-                     gpointer user_data)
+                     const char *message,
+                     void * user_data)
 {
   /* Nothing to do, we just want to mute */
 }
@@ -99,10 +99,10 @@ static int myXErrorHandler(Display *display, XErrorEvent *theEvent)
 #endif
 
 // Default values that won't actually get applied unless changed by command line parameter values
-static gdouble latitude = 0.0;
-static gdouble longitude = 0.0;
-static gint zoom_level_osm = -1;
-static gint map_id = -1;
+static double latitude = 0.0;
+static double longitude = 0.0;
+static int zoom_level_osm = -1;
+static int map_id = -1;
 
 /* Options */
 static GOptionEntry entries[] = 
@@ -121,10 +121,10 @@ int main( int argc, char *argv[] )
 {
   VikWindow *first_window;
   GdkPixbuf *main_icon;
-  gboolean dashdash_already = FALSE;
+  bool dashdash_already = false;
   int i = 0;
   GError *error = NULL;
-  gboolean gui_initialized;
+  bool gui_initialized;
 	
   bindtextdomain (GETTEXT_PACKAGE, LOCALEDIR);  
   bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
@@ -142,7 +142,7 @@ int main( int argc, char *argv[] )
     if (error == NULL)
     {
       /* no error message, the GUI initialization failed */
-      const gchar *display_name = gdk_get_display_arg_name ();
+      const char *display_name = gdk_get_display_arg_name ();
       g_fprintf (stderr, "Failed to open display: %s\n", (display_name != NULL) ? display_name : " ");
     }
     else
@@ -222,7 +222,7 @@ int main( int argc, char *argv[] )
     vu_setup_lat_lon_tz_lookup();
 
   /* Set the icon */
-  main_icon = gdk_pixbuf_from_pixdata(&viking_pixbuf, FALSE, NULL);
+  main_icon = gdk_pixbuf_from_pixdata(&viking_pixbuf, false, NULL);
   gtk_window_set_default_icon(main_icon);
 
   gdk_threads_enter ();
@@ -237,15 +237,15 @@ int main( int argc, char *argv[] )
 
   while ( ++i < argc ) {
     if ( strcmp(argv[i],"--") == 0 && !dashdash_already )
-      dashdash_already = TRUE; /* hack to open '-' */
+      dashdash_already = true; /* hack to open '-' */
     else {
       VikWindow *newvw = first_window;
-      gboolean change_filename = (i == 1);
+      bool change_filename = (i == 1);
 
       // Open any subsequent .vik files in their own window
       if ( i > 1 && check_file_magic_vik ( argv[i] ) ) {
         newvw = vik_window_new_window ();
-        change_filename = TRUE;
+        change_filename = true;
       }
 
       vik_window_open_file ( newvw, argv[i], change_filename );

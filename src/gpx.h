@@ -22,6 +22,9 @@
 #ifndef _VIKING_GPX_H
 #define _VIKING_GPX_H
 
+#include <stdbool.h>
+#include <stdint.h>
+
 #include "viktrwlayer.h"
 
 G_BEGIN_DECLS
@@ -31,18 +34,18 @@ G_BEGIN_DECLS
  */
 typedef struct {
 	// NB force options only apply to trackpoints
-	gboolean force_ele; /// Force ele field
-	gboolean force_time; /// Force time field
-	gboolean hidden; /// Write invisible tracks/waypoints (default is yes)
-	gboolean is_route; /// For internal convience
+	bool force_ele; /// Force ele field
+	bool force_time; /// Force time field
+	bool hidden; /// Write invisible tracks/waypoints (default is yes)
+	bool is_route; /// For internal convience
 } GpxWritingOptions;
 
-gboolean a_gpx_read_file ( VikTrwLayer *trw, FILE *f );
+bool a_gpx_read_file ( VikTrwLayer *trw, FILE *f );
 void a_gpx_write_file ( VikTrwLayer *trw, FILE *f, GpxWritingOptions *options );
 void a_gpx_write_track_file ( VikTrack *trk, FILE *f, GpxWritingOptions *options );
 
-gchar* a_gpx_write_tmp_file ( VikTrwLayer *vtl, GpxWritingOptions *options );
-gchar* a_gpx_write_track_tmp_file ( VikTrack *trk, GpxWritingOptions *options );
+char* a_gpx_write_tmp_file ( VikTrwLayer *vtl, GpxWritingOptions *options );
+char* a_gpx_write_track_tmp_file ( VikTrack *trk, GpxWritingOptions *options );
 
 G_END_DECLS
 

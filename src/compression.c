@@ -41,7 +41,7 @@
 
 #ifdef HAVE_LIBZ
 /* return size of unzip data or 0 if failed */
-static guint uncompress_data(void *uncompressed_buffer, guint uncompressed_size, void *compressed_data, guint compressed_size)
+static unsigned int uncompress_data(void *uncompressed_buffer, unsigned int uncompressed_size, void *compressed_data, unsigned int compressed_size)
 {
 	z_stream stream;
 	int err;
@@ -79,26 +79,26 @@ static guint uncompress_data(void *uncompressed_buffer, guint uncompressed_size,
  *
  * Returns a pointer to uncompressed data (maybe NULL)
  */
-void *unzip_file(gchar *zip_file, gulong *unzip_size)
+void *unzip_file(char *zip_file, unsigned long *unzip_size)
 {
 	void *unzip_data = NULL;
 #ifndef HAVE_LIBZ
 	goto end;
 #else
-	gchar *zip_data;
+	char *zip_data;
 	// See http://en.wikipedia.org/wiki/Zip_(file_format)
 	struct _lfh {
-		guint32 sig;
-		guint16 extract_version;
-		guint16 flags;
-		guint16 comp_method;
-		guint16 time;
-		guint16 date;
-		guint32 crc_32;
-		guint32 compressed_size;
-		guint32 uncompressed_size;
-		guint16 filename_len;
-		guint16 extra_field_len;
+		uint32_t sig;
+		uint16_t extract_version;
+		uint16_t flags;
+		uint16_t comp_method;
+		uint16_t time;
+		uint16_t date;
+		uint32_t crc_32;
+		uint32_t compressed_size;
+		uint32_t uncompressed_size;
+		uint16_t filename_len;
+		uint16_t extra_field_len;
 	}  __attribute__ ((gcc_struct,__packed__)) *local_file_header = NULL;
 
 	if ( sizeof(struct _lfh) != 30 ) {
@@ -116,7 +116,7 @@ void *unzip_file(gchar *zip_file, gulong *unzip_size)
 	zip_data = zip_file + sizeof(struct _lfh)
 		+ GUINT16_FROM_LE(local_file_header->filename_len)
 		+ GUINT16_FROM_LE(local_file_header->extra_field_len);
-	gulong uncompressed_size = GUINT32_FROM_LE(local_file_header->uncompressed_size);
+	unsigned long uncompressed_size = GUINT32_FROM_LE(local_file_header->uncompressed_size);
 	unzip_data = g_malloc(uncompressed_size);
 
 	// Protection against malloc failures
@@ -156,7 +156,7 @@ end:
  *
  * Also see: http://www.bzip.org/1.0.5/bzip2-manual-1.0.5.html
  */
-gchar* uncompress_bzip2 ( gchar *name )
+char* uncompress_bzip2 ( char *name )
 {
 #ifdef HAVE_BZLIB_H
 	g_debug ( "%s: bzip2 %s", __FUNCTION__, BZ2_bzlibVersion() );
@@ -176,12 +176,12 @@ gchar* uncompress_bzip2 ( gchar *name )
 
 	GFileIOStream *gios;
 	GError *error = NULL;
-	gchar *tmpname = NULL;
+	char *tmpname = NULL;
 #if GLIB_CHECK_VERSION(2,32,0)
 	GFile *gf = g_file_new_tmp ( "vik-bz2-tmp.XXXXXX", &gios, &error );
 	tmpname = g_file_get_path (gf);
 #else
-	gint fd = g_file_open_tmp ( "vik-bz2-tmp.XXXXXX", &tmpname, &error );
+	int fd = g_file_open_tmp ( "vik-bz2-tmp.XXXXXX", &tmpname, &error );
 	if ( error ) {
 		g_warning ( error->message );
 		g_error_free ( error );

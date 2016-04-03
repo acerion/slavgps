@@ -22,6 +22,10 @@
 #ifndef _VIKING_MAPSLAYER_COMPAT_H
 #define _VIKING_MAPSLAYER_COMPAT_H
 
+#include <stdbool.h>
+#include <stdint.h>
+
+
 #include "vikcoord.h"
 #include "vikviewport.h"
 #include "mapcoord.h"
@@ -29,19 +33,19 @@
 G_BEGIN_DECLS
 
 typedef struct {
-  guint16 uniq_id;
-  guint16 tilesize_x;
-  guint16 tilesize_y;
-  guint drawmode;
-  gboolean (*coord_to_mapcoord) ( const VikCoord *src, gdouble xzoom, gdouble yzoom, MapCoord *dest );
+  uint16_t uniq_id;
+  uint16_t tilesize_x;
+  uint16_t tilesize_y;
+  unsigned int drawmode;
+  bool (*coord_to_mapcoord) ( const VikCoord *src, double xzoom, double yzoom, MapCoord *dest );
   void (*mapcoord_to_center_coord) ( MapCoord *src, VikCoord *dest );
-  int (*download) ( MapCoord *src, const gchar *dest_fn, void *handle );
+  int (*download) ( MapCoord *src, const char *dest_fn, void *handle );
   void *(*download_handle_init) ( );
   void (*download_handle_cleanup) ( void *handle );
   /* TODO: constant size (yay!) */
 } VikMapsLayer_MapType;
 
-void maps_layer_register_type ( const char *label, guint id, VikMapsLayer_MapType *map_type );
+void maps_layer_register_type ( const char *label, unsigned int id, VikMapsLayer_MapType *map_type );
 
 G_END_DECLS
 

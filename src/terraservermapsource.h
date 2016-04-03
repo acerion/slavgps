@@ -20,6 +20,9 @@
 #ifndef _TERRASERVER_MAP_SOURCE_H
 #define _TERRASERVER_MAP_SOURCE_H
 
+#include <stdbool.h>
+#include <stdint.h>
+
 #include "vikcoord.h"
 #include "mapcoord.h"
 #include "vikmapsourcedefault.h"
@@ -48,7 +51,7 @@ struct _TerraserverMapSource
 
 GType terraserver_map_source_get_type (void) G_GNUC_CONST;
 
-TerraserverMapSource * terraserver_map_source_new_with_id (guint16 id, const char *label, int type);
+TerraserverMapSource * terraserver_map_source_new_with_id (uint16_t id, const char *label, int type);
 
 G_END_DECLS
 

@@ -35,19 +35,19 @@
 // Units of each item are in SI Units
 // (as returned by the appropriate internal viking track functions)
 typedef struct {
-	gdouble  min_alt;
-	gdouble  max_alt;
-	gdouble  elev_gain;
-	gdouble  elev_loss;
-	gdouble  length;
-	gdouble  length_gaps;
-	gdouble  max_speed;
-	gulong   trackpoints;
-	guint    segments;
-	gint     duration;
+	double  min_alt;
+	double  max_alt;
+	double  elev_gain;
+	double  elev_loss;
+	double  length;
+	double  length_gaps;
+	double  max_speed;
+	unsigned long   trackpoints;
+	unsigned int    segments;
+	int     duration;
 	time_t   start_time;
 	time_t   end_time;
-	gint     count;
+	int     count;
 } track_stats;
 
 // Early incarnations of the code had facilities to print output for multiple files
@@ -93,16 +93,16 @@ static void val_reset ( track_stat_block block )
 static void val_analyse_track ( VikTrack *trk )
 {
 	//val_reset ( TS_TRACK );
-	gdouble min_alt;
-	gdouble max_alt;
-	gdouble up;
-	gdouble down;
+	double min_alt;
+	double max_alt;
+	double up;
+	double down;
 
-	gdouble  length      = 0.0;
-	gdouble  length_gaps = 0.0;
-	gdouble  max_speed   = 0.0;
-	gulong   trackpoints = 0;
-	guint    segments    = 0;
+	double  length      = 0.0;
+	double  length_gaps = 0.0;
+	double  max_speed   = 0.0;
+	unsigned long   trackpoints = 0;
+	unsigned int    segments    = 0;
 
 	tracks_stats[TS_TRACKS].count++;
 
@@ -171,7 +171,7 @@ static GtkWidget *create_table (int cnt, char *labels[], GtkWidget *contents[])
 	GtkTable *table;
 	int i;
 
-	table = GTK_TABLE(gtk_table_new (cnt, 2, FALSE));
+	table = GTK_TABLE(gtk_table_new (cnt, 2, false));
 	gtk_table_set_col_spacing (table, 0, 10);
 	for (i=0; i<cnt; i++) {
 		GtkWidget *label;
@@ -190,7 +190,7 @@ static GtkWidget *create_table (int cnt, char *labels[], GtkWidget *contents[])
 	return GTK_WIDGET (table);
 }
 
-static gchar *label_texts[] = {
+static char *label_texts[] = {
 	N_("Number of Tracks"),
 	N_("Date Range"),
 	N_("Total Length"),
@@ -228,7 +228,7 @@ static void table_output ( track_stats ts, GtkWidget *content[] )
 {
 	int cnt = 0;
 
-	gchar tmp_buf[64];
+	char tmp_buf[64];
 	g_snprintf ( tmp_buf, sizeof(tmp_buf), "%d", ts.count );
 	gtk_label_set_text ( GTK_LABEL(content[cnt++]), tmp_buf );
 
@@ -244,13 +244,13 @@ static void table_output ( track_stats ts, GtkWidget *content[] )
 	// Test if the same day by comparing the date string of the timestamp
 	GDate* gdate_start = g_date_new ();
 	g_date_set_time_t ( gdate_start, ts.start_time );
-	gchar time_start[32];
+	char time_start[32];
 	g_date_strftime ( time_start, sizeof(time_start), "%x", gdate_start );
 	g_date_free ( gdate_start );
 
 	GDate* gdate_end = g_date_new ();
 	g_date_set_time_t ( gdate_end, ts.end_time );
-	gchar time_end[32];
+	char time_end[32];
 	g_date_strftime ( time_end, sizeof(time_end), "%x", gdate_end );
 	g_date_free ( gdate_end );
 
@@ -364,20 +364,20 @@ static void table_output ( track_stats ts, GtkWidget *content[] )
 	}
 	gtk_label_set_text ( GTK_LABEL(content[cnt++]), tmp_buf );
 
-	gint hours;
-	gint minutes;
-	gint days;
+	int hours;
+	int minutes;
+	int days;
 	// Total Duration
-	days    = (gint)(ts.duration / (60*60*24));
-	hours   = (gint)floor((ts.duration - (days*60*60*24)) / (60*60));
-	minutes = (gint)((ts.duration - (days*60*60*24) - (hours*60*60)) / 60);
+	days    = (int)(ts.duration / (60*60*24));
+	hours   = (int)floor((ts.duration - (days*60*60*24)) / (60*60));
+	minutes = (int)((ts.duration - (days*60*60*24) - (hours*60*60)) / 60);
 	g_snprintf ( tmp_buf, sizeof(tmp_buf), _("%d:%02d:%02d days:hrs:mins"), days, hours, minutes );
 	gtk_label_set_text ( GTK_LABEL(content[cnt++]), tmp_buf );
 
 	// Average Duration
-	gint avg_dur = ts.duration / ts.count;
-	hours   = (gint)floor(avg_dur / (60*60));
-	minutes = (gint)((avg_dur - (hours*60*60)) / 60);
+	int avg_dur = ts.duration / ts.count;
+	hours   = (int)floor(avg_dur / (60*60));
+	minutes = (int)((avg_dur - (hours*60*60)) / 60);
 	g_snprintf ( tmp_buf, sizeof(tmp_buf), _("%d:%02d hrs:mins"), hours, minutes );
 	gtk_label_set_text ( GTK_LABEL(content[cnt++]), tmp_buf );
 }
@@ -390,9 +390,9 @@ static void table_output ( track_stats ts, GtkWidget *content[] )
  * Analyse this particular track
  *  considering whether it should be included depending on it's visibility
  */
-static void val_analyse_item_maybe ( vik_trw_track_list_t *vtlist, const gpointer data )
+static void val_analyse_item_maybe ( vik_trw_track_list_t *vtlist, const void * data )
 {
-	gboolean include_invisible = GPOINTER_TO_INT(data);
+	bool include_invisible = GPOINTER_TO_INT(data);
 	VikTrack *trk = vtlist->trk;
 	VikTrwLayer *vtl = vtlist->vtl;
 
@@ -424,7 +424,7 @@ static void val_analyse_item_maybe ( vik_trw_track_list_t *vtlist, const gpointe
  * Analyse each item in the @tracks_and_layers list
  *
  */
-void val_analyse ( GtkWidget *widgets[], GList *tracks_and_layers, gboolean include_invisible )
+void val_analyse ( GtkWidget *widgets[], GList *tracks_and_layers, bool include_invisible )
 {
 	val_reset ( TS_TRACKS );
 
@@ -442,16 +442,16 @@ typedef struct {
 	GtkWidget *check_button;
 	GList *tracks_and_layers;
 	VikLayer *vl;
-	gpointer user_data;
+	void * user_data;
 	VikTrwlayerGetTracksAndLayersFunc get_tracks_and_layers_cb;
 	VikTrwlayerAnalyseCloseFunc on_close_cb;
 } analyse_cb_t;
 
 static void include_invisible_toggled_cb ( GtkToggleButton *togglebutton, analyse_cb_t *acb )
 {
-	gboolean value = FALSE;
+	bool value = false;
 	if ( gtk_toggle_button_get_active ( togglebutton ) )
-		value = TRUE;
+		value = true;
 
 	// Delete old list of items
 	if ( acb->tracks_and_layers ) {
@@ -474,10 +474,10 @@ static void include_invisible_toggled_cb ( GtkToggleButton *togglebutton, analys
  * Multi stage closure - as we need to clear allocations made here
  *  before passing on to the callee so they know then the dialog is closed too
  */
-static void analyse_close ( GtkWidget *dialog, gint resp, analyse_cb_t *data )
+static void analyse_close ( GtkWidget *dialog, int resp, analyse_cb_t *data )
 {
 	// Save current invisible value for next time
-	gboolean do_invisible = gtk_toggle_button_get_active ( GTK_TOGGLE_BUTTON(data->check_button) );
+	bool do_invisible = gtk_toggle_button_get_active ( GTK_TOGGLE_BUTTON(data->check_button) );
 	a_settings_set_boolean ( VIK_SETTINGS_ANALYSIS_DO_INVISIBLE, do_invisible );
 
 	//g_free ( data->layout );
@@ -504,9 +504,9 @@ static void analyse_close ( GtkWidget *dialog, gint resp, analyse_cb_t *data )
  * Returns: The dialog that is created to display the analyse information
  */
 GtkWidget* vik_trw_layer_analyse_this ( GtkWindow *window,
-                                        const gchar *name,
+                                        const char *name,
                                         VikLayer *vl,
-                                        gpointer user_data,
+                                        void * user_data,
                                         VikTrwlayerGetTracksAndLayersFunc get_tracks_and_layers_cb,
                                         VikTrwlayerAnalyseCloseFunc on_close_cb )
 {
@@ -520,17 +520,17 @@ GtkWidget* vik_trw_layer_analyse_this ( GtkWindow *window,
 	                                       NULL );
 
 	GtkWidget *name_l = gtk_label_new ( NULL );
-	gchar *myname = g_markup_printf_escaped ( "<b>%s</b>", name );
+	char *myname = g_markup_printf_escaped ( "<b>%s</b>", name );
 	gtk_label_set_markup ( GTK_LABEL(name_l), myname );
 	g_free ( myname );
 
 	GtkWidget *content = gtk_dialog_get_content_area ( GTK_DIALOG(dialog) );
-	gtk_box_pack_start ( GTK_BOX(content), name_l, FALSE, FALSE, 10);
+	gtk_box_pack_start ( GTK_BOX(content), name_l, false, false, 10);
 
 	// Get previous value (if any) from the settings
-	gboolean include_invisible;
+	bool include_invisible;
 	if ( ! a_settings_get_boolean ( VIK_SETTINGS_ANALYSIS_DO_INVISIBLE, &include_invisible ) )
-		include_invisible = TRUE;
+		include_invisible = true;
 
 	analyse_cb_t *acb = g_malloc (sizeof(analyse_cb_t));
 	acb->vl = vl;
@@ -541,7 +541,7 @@ GtkWidget* vik_trw_layer_analyse_this ( GtkWindow *window,
 	acb->widgets = g_malloc ( sizeof(GtkWidget*) * G_N_ELEMENTS(label_texts) );
 	acb->layout = create_layout ( acb->widgets );
 
-	gtk_box_pack_start ( GTK_BOX(content), acb->layout, FALSE, FALSE, 0 );
+	gtk_box_pack_start ( GTK_BOX(content), acb->layout, false, false, 0 );
 
 	// Analysis seems reasonably quick
 	//  unless you have really large numbers of tracks (i.e. many many thousands or a really slow computer)
@@ -550,7 +550,7 @@ GtkWidget* vik_trw_layer_analyse_this ( GtkWindow *window,
 	
 	GtkWidget *cb = gtk_check_button_new_with_label ( _("Include Invisible Items") );
 	gtk_toggle_button_set_active ( GTK_TOGGLE_BUTTON(cb), include_invisible );
-	gtk_box_pack_start ( GTK_BOX(content), cb, FALSE, FALSE, 10);
+	gtk_box_pack_start ( GTK_BOX(content), cb, false, false, 10);
 	acb->check_button = cb;
 	
 	gtk_widget_show_all ( dialog );

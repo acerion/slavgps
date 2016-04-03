@@ -28,9 +28,9 @@
 
 G_BEGIN_DECLS
 
-int kmz_save_file ( GdkPixbuf *pixbuf, const gchar* filename, gdouble north, gdouble east, gdouble south, gdouble west );
+int kmz_save_file ( GdkPixbuf *pixbuf, const char* filename, double north, double east, double south, double west );
 
-int kmz_open_file ( const gchar* filename, VikViewport *vvp, VikLayersPanel *vlp );
+int kmz_open_file ( const char* filename, VikViewport *vvp, VikLayersPanel *vlp );
 
 G_END_DECLS
 

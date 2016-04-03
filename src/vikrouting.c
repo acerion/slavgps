@@ -54,8 +54,8 @@ static VikLayerParam prefs[] = {
   { VIK_LAYER_NUM_TYPES, VIKING_ROUTING_PARAMS_NAMESPACE "default", VIK_LAYER_PARAM_STRING, VIK_LAYER_GROUP_NONE, N_("Default engine:"), VIK_LAYER_WIDGET_COMBOBOX, NULL, NULL, NULL, NULL, NULL, NULL },
 };
 
-gchar **routing_engine_labels = NULL;
-gchar **routing_engine_ids = NULL;
+char **routing_engine_labels = NULL;
+char **routing_engine_ids = NULL;
 
 /**
  * vik_routing_prefs_init:
@@ -73,13 +73,13 @@ vik_routing_prefs_init()
 }
 
 /* @see g_list_find_custom */
-static gint
+static int
 search_by_id (gconstpointer a,
               gconstpointer b)
 {
-	const gchar *id = b;
+	const char *id = b;
 	VikRoutingEngine *engine = (VikRoutingEngine *)a;
-	gchar *engineId = vik_routing_engine_get_id (engine);
+	char *engineId = vik_routing_engine_get_id (engine);
 	if (id && engine)
 		return strcmp(id, engineId);
 	else
@@ -93,7 +93,7 @@ search_by_id (gconstpointer a,
  * Returns: the found engine or %NULL
  */
 VikRoutingEngine *
-vik_routing_find_engine ( const gchar *id )
+vik_routing_find_engine ( const char *id )
 {
 	VikRoutingEngine *engine = NULL;
 	GList *elem = g_list_find_custom (routing_engine_list, id, search_by_id);
@@ -112,7 +112,7 @@ vik_routing_find_engine ( const gchar *id )
 VikRoutingEngine *
 vik_routing_default_engine ( void )
 {
-  const gchar *id = a_preferences_get ( VIKING_ROUTING_PARAMS_NAMESPACE "default")->s;
+  const char *id = a_preferences_get ( VIKING_ROUTING_PARAMS_NAMESPACE "default")->s;
   VikRoutingEngine *engine = vik_routing_find_engine(id);
   if (engine == NULL && routing_engine_list != NULL && g_list_first (routing_engine_list) != NULL)
     /* Fallback to first element */
@@ -128,7 +128,7 @@ vik_routing_default_engine ( void )
  *
  * Return indicates success or not
  */
-gboolean
+bool
 vik_routing_default_find(VikTrwLayer *vt, struct LatLon start, struct LatLon end)
 {
   /* The engine */
@@ -146,9 +146,9 @@ vik_routing_default_find(VikTrwLayer *vt, struct LatLon start, struct LatLon end
 void
 vik_routing_register( VikRoutingEngine *engine )
 {
-  gchar *label = vik_routing_engine_get_label ( engine );
-  gchar *id = vik_routing_engine_get_id ( engine );
-  gsize len = 0;
+  char *label = vik_routing_engine_get_label ( engine );
+  char *id = vik_routing_engine_get_id ( engine );
+  size_t len = 0;
 
   /* check if id already exists in list */
   GList *elem = g_list_find_custom (routing_engine_list, id, search_by_id);
@@ -177,12 +177,12 @@ vik_routing_register( VikRoutingEngine *engine )
       len = g_strv_length (routing_engine_labels);
   
     /* Add the label */
-    routing_engine_labels = g_realloc (routing_engine_labels, (len+2)*sizeof(gchar*));
+    routing_engine_labels = g_realloc (routing_engine_labels, (len+2)*sizeof(char*));
     routing_engine_labels[len] = g_strdup (label);
     routing_engine_labels[len+1] = NULL;
 
     /* Add the id */
-    routing_engine_ids = g_realloc (routing_engine_ids, (len+2)*sizeof(gchar*));
+    routing_engine_ids = g_realloc (routing_engine_ids, (len+2)*sizeof(char*));
     routing_engine_ids[len] = g_strdup (id);
     routing_engine_ids[len+1] = NULL;
   
@@ -191,8 +191,8 @@ vik_routing_register( VikRoutingEngine *engine )
        GLists.
     */
     /*
-    memcpy(&maps_layer_params[0].widget_data, &params_maptypes, sizeof(gpointer));
-    memcpy(&maps_layer_params[0].extra_widget_data, &params_maptypes_ids, sizeof(gpointer));
+    memcpy(&maps_layer_params[0].widget_data, &params_maptypes, sizeof(void *));
+    memcpy(&maps_layer_params[0].extra_widget_data, &params_maptypes_ids, sizeof(void *));
     */
     prefs[0].widget_data = routing_engine_labels;
     prefs[0].extra_widget_data = routing_engine_ids;
@@ -220,7 +220,7 @@ vik_routing_unregister_all ()
  * Loop over all registered routing engines.
  */
 void
-vik_routing_foreach_engine (GFunc func, gpointer user_data)
+vik_routing_foreach_engine (GFunc func, void * user_data)
 {
   g_list_foreach ( routing_engine_list, func, user_data );
 }
@@ -234,7 +234,7 @@ vik_routing_foreach_engine (GFunc func, gpointer user_data)
  * @see g_list_foreach()
  */
 static void
-fill_engine_box (gpointer data, gpointer user_data)
+fill_engine_box (void * data, void * user_data)
 {
   VikRoutingEngine *engine = (VikRoutingEngine*) data;
   /* Retrieve combo */
@@ -242,14 +242,14 @@ fill_engine_box (gpointer data, gpointer user_data)
 
   /* Only register engine fulliling expected behavior */
   Predicate predicate = g_object_get_data ( G_OBJECT ( widget ), "func" );
-  gpointer predicate_data = g_object_get_data ( G_OBJECT ( widget ), "user_data" );
+  void * predicate_data = g_object_get_data ( G_OBJECT ( widget ), "user_data" );
   /* No predicate means to register all engines */
-  gboolean ok = predicate == NULL || predicate (engine, predicate_data);
+  bool ok = predicate == NULL || predicate (engine, predicate_data);
 
   if (ok)
   {
     /* Add item in widget */
-    const gchar *label = vik_routing_engine_get_label (engine);
+    const char *label = vik_routing_engine_get_label (engine);
     vik_combo_box_text_append (widget, label);
     /* Save engine in internal list */
     GList *engines = (GList*) g_object_get_data ( G_OBJECT ( widget ) , "engines" );
@@ -271,7 +271,7 @@ fill_engine_box (gpointer data, gpointer user_data)
  * Returns: the combo box
  */
 GtkWidget *
-vik_routing_ui_selector_new (Predicate func, gpointer user_data)
+vik_routing_ui_selector_new (Predicate func, void * user_data)
 {
   /* Create the combo */
   GtkWidget * combo = vik_combo_box_text_new ();

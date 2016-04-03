@@ -26,6 +26,10 @@
 #include <glib-object.h>
 #include <gtk/gtk.h>
 
+#include <stdbool.h>
+#include <stdint.h>
+
+
 #include "viklayer.h"
 #include "vikaggregatelayer.h"
 
@@ -56,19 +60,19 @@ void vik_layers_panel_draw_all ( VikLayersPanel *vlp );
 VikLayer *vik_layers_panel_get_selected ( VikLayersPanel *vlp );
 void vik_layers_panel_cut_selected ( VikLayersPanel *vlp );
 void vik_layers_panel_copy_selected ( VikLayersPanel *vlp );
-gboolean vik_layers_panel_paste_selected ( VikLayersPanel *vlp );
+bool vik_layers_panel_paste_selected ( VikLayersPanel *vlp );
 void vik_layers_panel_delete_selected ( VikLayersPanel *vlp );
 VikLayer *vik_layers_panel_get_layer_of_type ( VikLayersPanel *vlp, VikLayerTypeEnum type );
 void vik_layers_panel_set_viewport ( VikLayersPanel *vlp, VikViewport *vvp );
-//gboolean vik_layers_panel_tool ( VikLayersPanel *vlp, guint16 layer_type, VikToolInterfaceFunc tool_func, GdkEventButton *event, VikViewport *vvp );
+//bool vik_layers_panel_tool ( VikLayersPanel *vlp, uint16_t layer_type, VikToolInterfaceFunc tool_func, GdkEventButton *event, VikViewport *vvp );
 VikViewport *vik_layers_panel_get_viewport ( VikLayersPanel *vlp );
 void vik_layers_panel_emit_update ( VikLayersPanel *vlp );
-gboolean vik_layers_panel_properties ( VikLayersPanel *vlp );
-gboolean vik_layers_panel_new_layer ( VikLayersPanel *vlp, VikLayerTypeEnum type );
+bool vik_layers_panel_properties ( VikLayersPanel *vlp );
+bool vik_layers_panel_new_layer ( VikLayersPanel *vlp, VikLayerTypeEnum type );
 void vik_layers_panel_clear ( VikLayersPanel *vlp );
 VikAggregateLayer *vik_layers_panel_get_top_layer ( VikLayersPanel *vlp );
 void vik_layers_panel_change_coord_mode ( VikLayersPanel *vlp, VikCoordMode mode );
-GList *vik_layers_panel_get_all_layers_of_type(VikLayersPanel *vlp, gint type, gboolean include_invisible);
+GList *vik_layers_panel_get_all_layers_of_type(VikLayersPanel *vlp, int type, bool include_invisible);
 VikTreeview *vik_layers_panel_get_treeview ( VikLayersPanel *vlp );
 
 G_END_DECLS

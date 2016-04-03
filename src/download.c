@@ -52,37 +52,37 @@
 #include "globals.h"
 #include "vik_compat.h"
 
-static gboolean check_file_first_line(FILE* f, gchar *patterns[])
+static bool check_file_first_line(FILE* f, char *patterns[])
 {
-  gchar **s;
-  gchar *bp;
+  char **s;
+  char *bp;
   fpos_t pos;
-  gchar buf[33];
+  char buf[33];
   size_t nr;
 
   memset(buf, 0, sizeof(buf));
   if ( !fgetpos(f, &pos) )
-    return FALSE;
+    return false;
   rewind(f);
   nr = fread(buf, 1, sizeof(buf) - 1, f);
   if ( !fgetpos(f, &pos) )
-    return FALSE;
+    return false;
   for (bp = buf; (bp < (buf + sizeof(buf) - 1)) && (nr > (bp - buf)); bp++) {
     if (!(isspace(*bp)))
       break;
   }
   if ((bp >= (buf + sizeof(buf) -1)) || ((bp - buf) >= nr))
-    return FALSE;
+    return false;
   for (s = patterns; *s; s++) {
     if (strncasecmp(*s, bp, strlen(*s)) == 0)
-      return TRUE;
+      return true;
   }
-  return FALSE;
+  return false;
 }
 
-gboolean a_check_html_file(FILE* f)
+bool a_check_html_file(FILE* f)
 {
-  gchar * html_str[] = {
+  char * html_str[] = {
     "<html",
     "<!DOCTYPE html",
     "<head",
@@ -93,15 +93,15 @@ gboolean a_check_html_file(FILE* f)
   return check_file_first_line(f, html_str);
 }
 
-gboolean a_check_map_file(FILE* f)
+bool a_check_map_file(FILE* f)
 {
   /* FIXME no more true since a_check_kml_file */
   return !a_check_html_file(f);
 }
 
-gboolean a_check_kml_file(FILE* f)
+bool a_check_kml_file(FILE* f)
 {
-  gchar * kml_str[] = {
+  char * kml_str[] = {
     "<?xml",
     NULL
   };
@@ -146,15 +146,15 @@ void a_download_uninit (void)
 	vik_mutex_free(file_list_mutex);
 }
 
-static gboolean lock_file(const char *fn)
+static bool lock_file(const char *fn)
 {
-	gboolean locked = FALSE;
+	bool locked = false;
 	g_mutex_lock(file_list_mutex);
 	if (g_list_find_custom(file_list, fn, (GCompareFunc)g_strcmp0) == NULL)
 	{
 		// The filename is not yet locked
-		file_list = g_list_append(file_list, (gpointer)fn),
-		locked = TRUE;
+		file_list = g_list_append(file_list, (void *)fn),
+		locked = true;
 	}
 	g_mutex_unlock(file_list_mutex);
 	return locked;
@@ -170,20 +170,20 @@ static void unlock_file(const char *fn)
 /**
  * Unzip a file - replacing the file with the unzipped contents of the self
  */
-static void uncompress_zip ( gchar *name )
+static void uncompress_zip ( char *name )
 {
 	GError *error = NULL;
 	GMappedFile *mf;
 
-	if ((mf = g_mapped_file_new ( name, FALSE, &error )) == NULL) {
+	if ((mf = g_mapped_file_new ( name, false, &error )) == NULL) {
 		g_critical(_("Couldn't map file %s: %s"), name, error->message);
 		g_error_free(error);
 		return;
 	}
-	gchar *file_contents = g_mapped_file_get_contents ( mf );
+	char *file_contents = g_mapped_file_get_contents ( mf );
 
 	void *unzip_mem = NULL;
-	gulong ucsize;
+	unsigned long ucsize;
 
 	if ((unzip_mem = unzip_file (file_contents, &ucsize)) == NULL) {
 		g_mapped_file_unref ( mf );
@@ -203,7 +203,7 @@ static void uncompress_zip ( gchar *name )
  *
  * Perform magic to decide how which type of decompression to attempt
  */
-void a_try_decompress_file (gchar *name)
+void a_try_decompress_file (char *name)
 {
 #ifdef HAVE_MAGIC_H
 #ifdef MAGIC_VERSION
@@ -212,8 +212,8 @@ void a_try_decompress_file (gchar *name)
 	g_debug ("%s: magic version: %d", __FUNCTION__, MAGIC_VERSION );
 #endif
 	magic_t myt = magic_open ( MAGIC_CONTINUE|MAGIC_ERROR|MAGIC_MIME );
-	gboolean zip = FALSE;
-	gboolean bzip2 = FALSE;
+	bool zip = false;
+	bool bzip2 = false;
 	if ( myt ) {
 #ifdef WINDOWS
 		// We have to 'package' the magic database ourselves :(
@@ -228,10 +228,10 @@ void a_try_decompress_file (gchar *name)
 			g_debug ("%s: magic output: %s", __FUNCTION__, magic );
 
 			if ( g_ascii_strncasecmp(magic, "application/zip", 15) == 0 )
-				zip = TRUE;
+				zip = true;
 
 			if ( g_ascii_strncasecmp(magic, "application/x-bzip2", 19) == 0 )
-				bzip2 = TRUE;
+				bzip2 = true;
 		}
 		else {
 			g_critical ("%s: magic load database failure", __FUNCTION__ );
@@ -247,7 +247,7 @@ void a_try_decompress_file (gchar *name)
 		uncompress_zip ( name );
 	}
 	else if ( bzip2 ) {
-		gchar* bz2_name = uncompress_bzip2 ( name );
+		char* bz2_name = uncompress_bzip2 ( name );
 		if ( bz2_name ) {
 			if ( g_remove ( name ) )
 				g_critical ("%s: remove file failed [%s]", __FUNCTION__, name );
@@ -262,9 +262,9 @@ void a_try_decompress_file (gchar *name)
 
 #define VIKING_ETAG_XATTR "xattr::viking.etag"
 
-static gboolean get_etag_xattr(const char *fn, CurlDownloadOptions *cdo)
+static bool get_etag_xattr(const char *fn, CurlDownloadOptions *cdo)
 {
-  gboolean result = FALSE;
+  bool result = false;
   GFileInfo *fileinfo;
   GFile *file;
 
@@ -286,10 +286,10 @@ static gboolean get_etag_xattr(const char *fn, CurlDownloadOptions *cdo)
   return result;
 }
 
-static gboolean get_etag_file(const char *fn, CurlDownloadOptions *cdo)
+static bool get_etag_file(const char *fn, CurlDownloadOptions *cdo)
 {
-  gboolean result = FALSE;
-  gchar *etag_filename;
+  bool result = false;
+  char *etag_filename;
 
   etag_filename = g_strdup_printf("%s.etag", fn);
   if (etag_filename) {
@@ -320,9 +320,9 @@ static void get_etag(const char *fn, CurlDownloadOptions *cdo)
   /* TODO: should check that etag is a valid string */
 }
 
-static gboolean set_etag_xattr(const char *fn, CurlDownloadOptions *cdo)
+static bool set_etag_xattr(const char *fn, CurlDownloadOptions *cdo)
 {
-  gboolean result = FALSE;
+  bool result = false;
   GFile *file;
 
   file = g_file_new_for_path(fn);
@@ -335,10 +335,10 @@ static gboolean set_etag_xattr(const char *fn, CurlDownloadOptions *cdo)
   return result;
 }
 
-static gboolean set_etag_file(const char *fn, CurlDownloadOptions *cdo)
+static bool set_etag_file(const char *fn, CurlDownloadOptions *cdo)
 {
-  gboolean result = FALSE;
-  gchar *etag_filename;
+  bool result = false;
+  char *etag_filename;
 
   etag_filename = g_strdup_printf("%s.etag", fn);
   if (etag_filename) {
@@ -360,16 +360,16 @@ static void set_etag(const char *fn, const char *fntmp, CurlDownloadOptions *cdo
   }
 }
 
-static DownloadResult_t download( const char *hostname, const char *uri, const char *fn, DownloadFileOptions *options, gboolean ftp, void *handle)
+static DownloadResult_t download( const char *hostname, const char *uri, const char *fn, DownloadFileOptions *options, bool ftp, void *handle)
 {
   FILE *f;
   int ret;
-  gchar *tmpfilename;
-  gboolean failure = FALSE;
+  char *tmpfilename;
+  bool failure = false;
   CurlDownloadOptions cdo = {0, NULL, NULL};
 
   /* Check file */
-  if ( g_file_test ( fn, G_FILE_TEST_EXISTS ) == TRUE )
+  if ( g_file_test ( fn, G_FILE_TEST_EXISTS ) == true )
   {
     if (options == NULL || (!options->check_file_server_time &&
                             !options->use_etag)) {
@@ -395,7 +395,7 @@ static DownloadResult_t download( const char *hostname, const char *uri, const c
     }
 
   } else {
-    gchar *dir = g_path_get_dirname ( fn );
+    char *dir = g_path_get_dirname ( fn );
     if ( g_mkdir_with_parents ( dir , 0777 ) != 0)
       g_warning ("%s: Failed to mkdir %s", __FUNCTION__, dir );
     g_free ( dir );
@@ -426,13 +426,13 @@ static DownloadResult_t download( const char *hostname, const char *uri, const c
 
   if (ret != CURL_DOWNLOAD_NO_ERROR && ret != CURL_DOWNLOAD_NO_NEWER_FILE) {
     g_debug("%s: download failed: curl_download_get_url=%d", __FUNCTION__, ret);
-    failure = TRUE;
+    failure = true;
     result = DOWNLOAD_HTTP_ERROR;
   }
 
   if (!failure && options != NULL && options->check_file != NULL && ! options->check_file(f)) {
     g_debug("%s: file content checking failed", __FUNCTION__);
-    failure = TRUE;
+    failure = true;
     result = DOWNLOAD_CONTENT_ERROR;
   }
 
@@ -491,12 +491,12 @@ static DownloadResult_t download( const char *hostname, const char *uri, const c
  */
 DownloadResult_t a_http_download_get_url ( const char *hostname, const char *uri, const char *fn, DownloadFileOptions *opt, void *handle )
 {
-  return download ( hostname, uri, fn, opt, FALSE, handle );
+  return download ( hostname, uri, fn, opt, false, handle );
 }
 
 DownloadResult_t a_ftp_download_get_url ( const char *hostname, const char *uri, const char *fn, DownloadFileOptions *opt, void *handle )
 {
-  return download ( hostname, uri, fn, opt, TRUE, handle );
+  return download ( hostname, uri, fn, opt, true, handle );
 }
 
 void * a_download_handle_init ()
@@ -518,11 +518,11 @@ void a_download_handle_cleanup ( void *handle )
  *  this string needs to be freed once used
  *  the file needs to be removed once used
  */
-gchar *a_download_uri_to_tmp_file ( const gchar *uri, DownloadFileOptions *options )
+char *a_download_uri_to_tmp_file ( const char *uri, DownloadFileOptions *options )
 {
   FILE *tmp_file;
   int tmp_fd;
-  gchar *tmpname;
+  char *tmpname;
 
   if ( (tmp_fd = g_file_open_tmp ("viking-download.XXXXXX", &tmpname, NULL)) == -1 ) {
     g_critical (_("couldn't open temp file"));

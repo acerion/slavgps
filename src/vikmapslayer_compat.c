@@ -31,7 +31,7 @@
 #include "vikmapslayer_compat.h"
 #include "vikmaptype.h"
 
-void maps_layer_register_type ( const char *label, guint id, VikMapsLayer_MapType *map_type )
+void maps_layer_register_type ( const char *label, unsigned int id, VikMapsLayer_MapType *map_type )
 {
     g_assert(id == map_type->uniq_id);
     VikMapType *object = vik_map_type_new_with_id (*map_type, label);

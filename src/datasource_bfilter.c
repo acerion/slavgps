@@ -53,7 +53,7 @@ VikLayerParamData bfilter_simplify_params_defaults[] = {
 #endif
 };
 
-static void datasource_bfilter_simplify_get_process_options ( VikLayerParamData *paramdatas, ProcessOptions *po, gpointer not_used, const gchar *input_filename, const gchar *not_used3 )
+static void datasource_bfilter_simplify_get_process_options ( VikLayerParamData *paramdatas, ProcessOptions *po, void * not_used, const char *input_filename, const char *not_used3 )
 {
   po->babelargs = g_strdup ( "-i gpx" );
   po->filename = g_strdup ( input_filename );
@@ -64,17 +64,17 @@ static void datasource_bfilter_simplify_get_process_options ( VikLayerParamData 
 }
 
 #define VIK_SETTINGS_BFILTER_SIMPLIFY "bfilter_simplify"
-static gboolean bfilter_simplify_default_set = FALSE;
+static bool bfilter_simplify_default_set = false;
 
-static gpointer datasource_bfilter_simplify_init ( acq_vik_t *not_used )
+static void * datasource_bfilter_simplify_init ( acq_vik_t *not_used )
 {
   if ( !bfilter_simplify_default_set ) {
-    gint tmp;
+    int tmp;
     if ( !a_settings_get_integer ( VIK_SETTINGS_BFILTER_SIMPLIFY, &tmp ) )
       tmp = 100;
 
     bfilter_simplify_params_defaults[0].u = tmp;
-    bfilter_simplify_default_set = TRUE;
+    bfilter_simplify_default_set = true;
   }
 
   return NULL;
@@ -85,9 +85,9 @@ VikDataSourceInterface vik_datasource_bfilter_simplify_interface = {
   N_("Simplified Tracks"),
   VIK_DATASOURCE_CREATENEWLAYER,
   VIK_DATASOURCE_INPUTTYPE_TRWLAYER,
-  TRUE,
-  FALSE, /* keep dialog open after success */
-  TRUE,
+  true,
+  false, /* keep dialog open after success */
+  true,
   (VikDataSourceInitFunc)              datasource_bfilter_simplify_init,
   NULL, NULL,
   (VikDataSourceGetProcessOptionsFunc) datasource_bfilter_simplify_get_process_options,
@@ -125,9 +125,9 @@ VikLayerParamData bfilter_compress_params_defaults[] = {
 /**
  * http://www.gpsbabel.org/htmldoc-development/filter_simplify.html
  */
-static void datasource_bfilter_compress_get_process_options ( VikLayerParamData *paramdatas, ProcessOptions *po, gpointer not_used, const gchar *input_filename, const gchar *not_used3 )
+static void datasource_bfilter_compress_get_process_options ( VikLayerParamData *paramdatas, ProcessOptions *po, void * not_used, const char *input_filename, const char *not_used3 )
 {
-  gchar units = a_vik_get_units_distance() == VIK_UNITS_DISTANCE_KILOMETRES ? 'k' : ' ';
+  char units = a_vik_get_units_distance() == VIK_UNITS_DISTANCE_KILOMETRES ? 'k' : ' ';
   // I toyed with making the length,crosstrack or relative methods selectable
   // However several things:
   // - mainly that typical values to use for the error relate to method being used - so hard to explain and then give a default sensible value in the UI
@@ -143,17 +143,17 @@ static void datasource_bfilter_compress_get_process_options ( VikLayerParamData 
 }
 
 #define VIK_SETTINGS_BFILTER_COMPRESS "bfilter_compress"
-static gboolean bfilter_compress_default_set = FALSE;
+static bool bfilter_compress_default_set = false;
 
-static gpointer datasource_bfilter_compress_init ( acq_vik_t *not_used )
+static void * datasource_bfilter_compress_init ( acq_vik_t *not_used )
 {
   if ( !bfilter_compress_default_set ) {
-    gdouble tmp;
+    double tmp;
     if ( !a_settings_get_double ( VIK_SETTINGS_BFILTER_COMPRESS, &tmp ) )
       tmp = 0.001;
 
     bfilter_compress_params_defaults[0].d = tmp;
-    bfilter_compress_default_set = TRUE;
+    bfilter_compress_default_set = true;
   }
 
   return NULL;
@@ -167,9 +167,9 @@ VikDataSourceInterface vik_datasource_bfilter_compress_interface = {
   N_("Compressed Tracks"),
   VIK_DATASOURCE_CREATENEWLAYER,
   VIK_DATASOURCE_INPUTTYPE_TRWLAYER,
-  TRUE,
-  FALSE, // Close the dialog after successful operation
-  TRUE,
+  true,
+  false, // Close the dialog after successful operation
+  true,
   (VikDataSourceInitFunc)              datasource_bfilter_compress_init,
   NULL, NULL,
   (VikDataSourceGetProcessOptionsFunc) datasource_bfilter_compress_get_process_options,
@@ -186,7 +186,7 @@ VikDataSourceInterface vik_datasource_bfilter_compress_interface = {
 
 /************************************ Duplicate Location ***********************************/
 
-static void datasource_bfilter_dup_get_process_options ( VikLayerParamData *paramdatas, ProcessOptions *po, gpointer not_used, const gchar *input_filename, const gchar *not_used3 )
+static void datasource_bfilter_dup_get_process_options ( VikLayerParamData *paramdatas, ProcessOptions *po, void * not_used, const char *input_filename, const char *not_used3 )
 {
   po->babelargs = g_strdup ( "-i gpx" );
   po->filename = g_strdup ( input_filename );
@@ -198,9 +198,9 @@ VikDataSourceInterface vik_datasource_bfilter_dup_interface = {
   N_("Remove Duplicate Waypoints"),
   VIK_DATASOURCE_CREATENEWLAYER,
   VIK_DATASOURCE_INPUTTYPE_TRWLAYER,
-  TRUE,
-  FALSE, /* keep dialog open after success */
-  TRUE,
+  true,
+  false, /* keep dialog open after success */
+  true,
   NULL, NULL, NULL,
   (VikDataSourceGetProcessOptionsFunc) datasource_bfilter_dup_get_process_options,
   (VikDataSourceProcessFunc)           a_babel_convert_from,
@@ -222,7 +222,7 @@ VikLayerParam bfilter_manual_params[] = {
       N_("Manual filter command: e.g. 'swap'."), NULL, NULL, NULL },
 };
 
-static void datasource_bfilter_manual_get_process_options ( VikLayerParamData *paramdatas, ProcessOptions *po, gpointer not_used, const gchar *input_filename, const gchar *not_used3 )
+static void datasource_bfilter_manual_get_process_options ( VikLayerParamData *paramdatas, ProcessOptions *po, void * not_used, const char *input_filename, const char *not_used3 )
 {
   po->babelargs = g_strdup ( "-i gpx" );
   po->filename = g_strdup ( input_filename );
@@ -234,9 +234,9 @@ VikDataSourceInterface vik_datasource_bfilter_manual_interface = {
   N_("Manual filter"),
   VIK_DATASOURCE_CREATENEWLAYER,
   VIK_DATASOURCE_INPUTTYPE_TRWLAYER,
-  TRUE,
-  FALSE, /* keep dialog open after success */
-  TRUE,
+  true,
+  false, /* keep dialog open after success */
+  true,
   NULL, NULL, NULL,
   (VikDataSourceGetProcessOptionsFunc) datasource_bfilter_manual_get_process_options,
   (VikDataSourceProcessFunc)           a_babel_convert_from,
@@ -252,7 +252,7 @@ VikDataSourceInterface vik_datasource_bfilter_manual_interface = {
 
 /************************************ Polygon ***********************************/
 
-static void datasource_bfilter_polygon_get_process_options ( VikLayerParamData *paramdatas, ProcessOptions *po, gpointer not_used, const gchar *input_filename, const gchar *input_track_filename )
+static void datasource_bfilter_polygon_get_process_options ( VikLayerParamData *paramdatas, ProcessOptions *po, void * not_used, const char *input_filename, const char *input_track_filename )
 {
   po->shell_command = g_strdup_printf ( "gpsbabel -i gpx -f %s -o arc -F - | gpsbabel -i gpx -f %s -x polygon,file=- -o gpx -F -", input_track_filename, input_filename );
 }
@@ -263,9 +263,9 @@ VikDataSourceInterface vik_datasource_bfilter_polygon_interface = {
   N_("Polygonized Layer"),
   VIK_DATASOURCE_CREATENEWLAYER,
   VIK_DATASOURCE_INPUTTYPE_TRWLAYER_TRACK,
-  TRUE,
-  FALSE, /* keep dialog open after success */
-  TRUE,
+  true,
+  false, /* keep dialog open after success */
+  true,
   NULL, NULL, NULL,
   (VikDataSourceGetProcessOptionsFunc) datasource_bfilter_polygon_get_process_options,
   (VikDataSourceProcessFunc)           a_babel_convert_from,
@@ -281,7 +281,7 @@ VikDataSourceInterface vik_datasource_bfilter_polygon_interface = {
 
 /************************************ Exclude Polygon ***********************************/
 
-static void datasource_bfilter_exclude_polygon_get_process_options ( VikLayerParamData *paramdatas, ProcessOptions *po, gpointer not_used, const gchar *input_filename, const gchar *input_track_filename )
+static void datasource_bfilter_exclude_polygon_get_process_options ( VikLayerParamData *paramdatas, ProcessOptions *po, void * not_used, const char *input_filename, const char *input_track_filename )
 {
   po->shell_command = g_strdup_printf ( "gpsbabel -i gpx -f %s -o arc -F - | gpsbabel -i gpx -f %s -x polygon,exclude,file=- -o gpx -F -", input_track_filename, input_filename );
 }
@@ -292,9 +292,9 @@ VikDataSourceInterface vik_datasource_bfilter_exclude_polygon_interface = {
   N_("Polygonzied Layer"),
   VIK_DATASOURCE_CREATENEWLAYER,
   VIK_DATASOURCE_INPUTTYPE_TRWLAYER_TRACK,
-  TRUE,
-  FALSE, /* keep dialog open after success */
-  TRUE,
+  true,
+  false, /* keep dialog open after success */
+  true,
   NULL, NULL, NULL,
   (VikDataSourceGetProcessOptionsFunc) datasource_bfilter_exclude_polygon_get_process_options,
   (VikDataSourceProcessFunc)           a_babel_convert_from,

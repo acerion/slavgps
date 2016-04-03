@@ -39,9 +39,9 @@
  *  Uses Magic library if available to determine the jpgness.
  *  Otherwise uses a rudimentary extension name check.
  */
-gboolean a_jpg_magic_check ( const gchar *filename )
+bool a_jpg_magic_check ( const char *filename )
 {
-	gboolean is_jpg = FALSE;
+	bool is_jpg = false;
 #ifdef HAVE_MAGIC_H
 	magic_t myt = magic_open ( MAGIC_CONTINUE|MAGIC_ERROR|MAGIC_MIME );
 	if ( myt ) {
@@ -56,7 +56,7 @@ gboolean a_jpg_magic_check ( const gchar *filename )
 		const char* magic = magic_file (myt, filename);
 		g_debug ( "%s:%s", __FUNCTION__, magic );
 		if ( g_ascii_strncasecmp (magic, "image/jpeg", 10) == 0 )
-			is_jpg = TRUE;
+			is_jpg = true;
 
 		magic_close ( myt );
 	}
@@ -80,23 +80,23 @@ gboolean a_jpg_magic_check ( const gchar *filename )
  *  Otherwise the waypoint will be positioned at the current screen center.
  * If a TRW layer is already selected the waypoint will be created in that layer.
  */
-gboolean a_jpg_load_file ( VikAggregateLayer *top, const gchar *filename, VikViewport *vvp )
+bool a_jpg_load_file ( VikAggregateLayer *top, const char *filename, VikViewport *vvp )
 {
-	gboolean auto_zoom = TRUE;
+	bool auto_zoom = true;
 	VikWindow *vw = (VikWindow *)(VIK_GTK_WINDOW_FROM_LAYER(VIK_LAYER(top)));
 	VikLayersPanel *vlp = vik_window_layers_panel ( vw );
 	// Auto load into TrackWaypoint layer if one is selected
 	VikLayer *vtl = vik_layers_panel_get_selected ( vlp );
 
-	gboolean create_layer = FALSE;
+	bool create_layer = false;
 	if ( vtl == NULL || vtl->type != VIK_LAYER_TRW ) {
 		// Create layer if necessary
-		vtl = vik_layer_create ( VIK_LAYER_TRW, vvp, FALSE );
+		vtl = vik_layer_create ( VIK_LAYER_TRW, vvp, false );
 		vik_layer_rename ( vtl, a_file_basename ( filename ) );
-		create_layer = TRUE;
+		create_layer = true;
 	}
 
-	gchar *name = NULL;
+	char *name = NULL;
 	VikWaypoint *wp = NULL;
 #ifdef VIK_CONFIG_GEOTAG
 	wp = a_geotag_create_waypoint_from_file ( filename, vik_viewport_get_coord_mode (vvp), &name );
@@ -110,21 +110,21 @@ gboolean a_jpg_load_file ( VikAggregateLayer *top, const gchar *filename, VikVie
 	}
 	else {
 		wp = vik_waypoint_new ();
-		wp->visible = TRUE;
-		vik_trw_layer_filein_add_waypoint ( VIK_TRW_LAYER(vtl), (gchar*) a_file_basename(filename), wp );
+		wp->visible = true;
+		vik_trw_layer_filein_add_waypoint ( VIK_TRW_LAYER(vtl), (char*) a_file_basename(filename), wp );
 		vik_waypoint_set_image ( wp, filename );
 		// Simply set position to the current center
 		wp->coord = *( vik_viewport_get_center ( vvp ) );
-		auto_zoom = FALSE;
+		auto_zoom = false;
 	}
 
 	// Complete the setup
-	vik_layer_post_read ( vtl, vvp, TRUE );
+	vik_layer_post_read ( vtl, vvp, true );
 	if ( create_layer )
-		vik_aggregate_layer_add_layer ( top, vtl, FALSE );
+		vik_aggregate_layer_add_layer ( top, vtl, false );
 	if ( auto_zoom )
 		vik_trw_layer_auto_set_view ( VIK_TRW_LAYER(vtl), vvp );
 
 	// ATM This routine can't fail
-	return TRUE;
+	return true;
 }

@@ -22,6 +22,9 @@
 #define _WEB_ROUTING_H
 
 #include <glib.h>
+#include <stdbool.h>
+#include <stdint.h>
+
 
 #include "vikroutingengine.h"
 

@@ -39,22 +39,22 @@ typedef struct {
 } datasource_geotag_user_data_t;
 
 /* The last used directory */
-static gchar *last_folder_uri = NULL;
+static char *last_folder_uri = NULL;
 
-static gpointer datasource_geotag_init ( acq_vik_t *avt );
-static void datasource_geotag_add_setup_widgets ( GtkWidget *dialog, VikViewport *vvp, gpointer user_data );
-static void datasource_geotag_get_process_options ( gpointer user_data, ProcessOptions *po, gpointer not_used, const gchar *not_used2, const gchar *not_used3 );
-static gboolean datasource_geotag_process ( VikTrwLayer *vtl, ProcessOptions *po, BabelStatusFunc status_cb, acq_dialog_widgets_t *adw, gpointer not_used );
-static void datasource_geotag_cleanup ( gpointer user_data );
+static void * datasource_geotag_init ( acq_vik_t *avt );
+static void datasource_geotag_add_setup_widgets ( GtkWidget *dialog, VikViewport *vvp, void * user_data );
+static void datasource_geotag_get_process_options ( void * user_data, ProcessOptions *po, void * not_used, const char *not_used2, const char *not_used3 );
+static bool datasource_geotag_process ( VikTrwLayer *vtl, ProcessOptions *po, BabelStatusFunc status_cb, acq_dialog_widgets_t *adw, void * not_used );
+static void datasource_geotag_cleanup ( void * user_data );
 
 VikDataSourceInterface vik_datasource_geotag_interface = {
   N_("Create Waypoints from Geotagged Images"),
   N_("Geotagged Images"),
   VIK_DATASOURCE_AUTO_LAYER_MANAGEMENT,
   VIK_DATASOURCE_INPUTTYPE_NONE,
-  TRUE,
-  FALSE, // We should be able to see the data on the screen so no point in keeping the dialog open
-  TRUE,
+  true,
+  false, // We should be able to see the data on the screen so no point in keeping the dialog open
+  true,
   (VikDataSourceInitFunc)		        datasource_geotag_init,
   (VikDataSourceCheckExistenceFunc)	    NULL,
   (VikDataSourceAddSetupWidgetsFunc)    datasource_geotag_add_setup_widgets,
@@ -73,7 +73,7 @@ VikDataSourceInterface vik_datasource_geotag_interface = {
 };
 
 /* See VikDataSourceInterface */
-static gpointer datasource_geotag_init ( acq_vik_t *avt )
+static void * datasource_geotag_init ( acq_vik_t *avt )
 {
 	datasource_geotag_user_data_t *user_data = g_malloc(sizeof(datasource_geotag_user_data_t));
 	user_data->filelist = NULL;
@@ -81,7 +81,7 @@ static gpointer datasource_geotag_init ( acq_vik_t *avt )
 }
 
 /* See VikDataSourceInterface */
-static void datasource_geotag_add_setup_widgets ( GtkWidget *dialog, VikViewport *vvp, gpointer user_data )
+static void datasource_geotag_add_setup_widgets ( GtkWidget *dialog, VikViewport *vvp, void * user_data )
 {
 	datasource_geotag_user_data_t *userdata = (datasource_geotag_user_data_t *)user_data;
 
@@ -112,7 +112,7 @@ static void datasource_geotag_add_setup_widgets ( GtkWidget *dialog, VikViewport
 	gtk_file_chooser_set_filter ( chooser, filter );
 
 	// Allow selecting more than one
-	gtk_file_chooser_set_select_multiple ( chooser, TRUE );
+	gtk_file_chooser_set_select_multiple ( chooser, true );
 
 	// Could add code to setup a default symbol (see dialog.c for symbol usage)
 	//  Store in user_data type and then apply when creating the waypoints
@@ -120,12 +120,12 @@ static void datasource_geotag_add_setup_widgets ( GtkWidget *dialog, VikViewport
 
 	/* Packing all widgets */
 	GtkBox *box = GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog)));
-	gtk_box_pack_start ( box, userdata->files, TRUE, TRUE, 0 );
+	gtk_box_pack_start ( box, userdata->files, true, true, 0 );
 
 	gtk_widget_show_all ( dialog );
 }
 
-static void datasource_geotag_get_process_options ( gpointer user_data, ProcessOptions *po, gpointer not_used, const gchar *not_used2, const gchar *not_used3 )
+static void datasource_geotag_get_process_options ( void * user_data, ProcessOptions *po, void * not_used, const char *not_used2, const char *not_used3 )
 {
 	datasource_geotag_user_data_t *userdata = (datasource_geotag_user_data_t *)user_data;
 	/* Retrieve the files selected */
@@ -146,7 +146,7 @@ static void datasource_geotag_get_process_options ( gpointer user_data, ProcessO
 /**
  * Process selected files and try to generate waypoints storing them in the given vtl
  */
-static gboolean datasource_geotag_process ( VikTrwLayer *vtl, ProcessOptions *po, BabelStatusFunc status_cb, acq_dialog_widgets_t *adw, gpointer not_used )
+static bool datasource_geotag_process ( VikTrwLayer *vtl, ProcessOptions *po, BabelStatusFunc status_cb, acq_dialog_widgets_t *adw, void * not_used )
 {
 	datasource_geotag_user_data_t *user_data = (datasource_geotag_user_data_t *)adw->user_data;
 
@@ -154,8 +154,8 @@ static gboolean datasource_geotag_process ( VikTrwLayer *vtl, ProcessOptions *po
 	// In prinicple this loading should be quite fast and so don't need to have any progress monitoring
 	GSList *cur_file = user_data->filelist;
 	while ( cur_file ) {
-		gchar *filename = cur_file->data;
-		gchar *name;
+		char *filename = cur_file->data;
+		char *name;
 		VikWaypoint *wp = a_geotag_create_waypoint_from_file ( filename, vik_viewport_get_coord_mode ( adw->vvp ), &name );
 		if ( wp ) {
 			// Create name if geotag method didn't return one
@@ -165,7 +165,7 @@ static gboolean datasource_geotag_process ( VikTrwLayer *vtl, ProcessOptions *po
 			g_free ( name );
 		}
 		else {
-			gchar* msg = g_strdup_printf ( _("Unable to create waypoint from %s"), filename );
+			char* msg = g_strdup_printf ( _("Unable to create waypoint from %s"), filename );
 			vik_window_statusbar_update ( adw->vw, msg, VIK_STATUSBAR_INFO );
 			g_free (msg);
 		}
@@ -177,11 +177,11 @@ static gboolean datasource_geotag_process ( VikTrwLayer *vtl, ProcessOptions *po
 	g_slist_free ( user_data->filelist );
 
 	// No failure
-	return TRUE;
+	return true;
 }
 
 /* See VikDataSourceInterface */
-static void datasource_geotag_cleanup ( gpointer user_data )
+static void datasource_geotag_cleanup ( void * user_data )
 {
 	g_free ( user_data );
 }

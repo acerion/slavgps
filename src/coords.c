@@ -69,8 +69,8 @@ renaming functions and defining LatLon and UTM structs.
  */
 char *a_coords_dtostr ( double d )
 {
-  gchar *buffer = g_malloc(G_ASCII_DTOSTR_BUF_SIZE*sizeof(gchar));
-  g_ascii_dtostr (buffer, G_ASCII_DTOSTR_BUF_SIZE, (gdouble) d);
+  char *buffer = g_malloc(G_ASCII_DTOSTR_BUF_SIZE*sizeof(char));
+  g_ascii_dtostr (buffer, G_ASCII_DTOSTR_BUF_SIZE, (double) d);
   return buffer;
 }
 
@@ -104,7 +104,7 @@ double a_coords_utm_diff( const struct UTM *utm1, const struct UTM *utm2 )
 double a_coords_latlon_diff ( const struct LatLon *ll1, const struct LatLon *ll2 )
 {
   static struct LatLon tmp1, tmp2;
-  gdouble tmp3;
+  double tmp3;
   tmp1.lat = ll1->lat * PIOVER180;
   tmp1.lon = ll1->lon * PIOVER180;
   tmp2.lat = ll2->lat * PIOVER180;
@@ -254,8 +254,8 @@ void a_coords_utm_to_latlon( const struct UTM *utm, struct LatLon *latlon )
     }
 
 void a_coords_latlon_to_string ( const struct LatLon *latlon,
-				 gchar **lat,
-				 gchar **lon )
+				 char **lat,
+				 char **lon )
 {
   g_return_if_fail ( latlon != NULL );
 #ifdef HAVE_VIKING

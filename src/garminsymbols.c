@@ -29,10 +29,10 @@
 #include <stdlib.h>
 
 static struct {
-  gchar *sym;     /* icon names used by gpsbabel, garmin */
-  gchar *old_sym; /* keep backward compatible */
-  gint num;
-  gchar *desc;
+  char *sym;     /* icon names used by gpsbabel, garmin */
+  char *old_sym; /* keep backward compatible */
+  int num;
+  char *desc;
   const GdkPixdata *data;
   const GdkPixdata *data_large;
   GdkPixbuf *icon;
@@ -319,18 +319,18 @@ static struct {
 static GHashTable *icons = NULL;
 static GHashTable *old_icons = NULL;
 
-static gboolean str_equal_casefold ( gconstpointer v1, gconstpointer v2 ) {
-  gboolean equal;
-  gchar *v1_lower;
-  gchar *v2_lower;
+static bool str_equal_casefold ( gconstpointer v1, gconstpointer v2 ) {
+  bool equal;
+  char *v1_lower;
+  char *v2_lower;
 
   v1_lower = g_utf8_casefold ( v1, -1 );
   if (!v1_lower)
-    return FALSE;
+    return false;
   v2_lower = g_utf8_casefold ( v2, -1 );
   if (!v2_lower) {
     g_free ( v1_lower );
-    return FALSE;
+    return false;
   }
 
   equal = g_str_equal( v1_lower, v2_lower );
@@ -341,9 +341,9 @@ static gboolean str_equal_casefold ( gconstpointer v1, gconstpointer v2 ) {
   return equal;
 }
 
-static guint str_hash_casefold ( gconstpointer key ) {
-  guint h;
-  gchar *key_lower;
+static unsigned int str_hash_casefold ( gconstpointer key ) {
+  unsigned int h;
+  char *key_lower;
 
   key_lower = g_utf8_casefold ( key, -1 );
   if (!key_lower)
@@ -359,39 +359,39 @@ static guint str_hash_casefold ( gconstpointer key ) {
 static void init_icons() {
   icons = g_hash_table_new_full ( str_hash_casefold, str_equal_casefold, NULL, NULL);
   old_icons = g_hash_table_new_full ( str_hash_casefold, str_equal_casefold, NULL, NULL);
-  gint i;
+  int i;
   for (i=0; i<G_N_ELEMENTS(garmin_syms); i++) {
     g_hash_table_insert(icons, garmin_syms[i].sym, GINT_TO_POINTER (i));
     g_hash_table_insert(old_icons, garmin_syms[i].old_sym, GINT_TO_POINTER (i));
   }
 }
 
-static GdkPixbuf *get_wp_sym_from_index ( gint i ) {
+static GdkPixbuf *get_wp_sym_from_index ( int i ) {
   // Ensure data exists to either directly load icon or scale from the other set
   if ( !garmin_syms[i].icon && ( garmin_syms[i].data || garmin_syms[i].data_large) ) {
     if ( a_vik_get_use_large_waypoint_icons() ) {
       if ( garmin_syms[i].data_large )
 	// Directly load icon
-	garmin_syms[i].icon = gdk_pixbuf_from_pixdata ( garmin_syms[i].data_large, FALSE, NULL );
+	garmin_syms[i].icon = gdk_pixbuf_from_pixdata ( garmin_syms[i].data_large, false, NULL );
       else
 	// Up sample from small image
-	garmin_syms[i].icon = gdk_pixbuf_scale_simple ( gdk_pixbuf_from_pixdata ( garmin_syms[i].data, FALSE, NULL ), 30, 30, GDK_INTERP_BILINEAR );
+	garmin_syms[i].icon = gdk_pixbuf_scale_simple ( gdk_pixbuf_from_pixdata ( garmin_syms[i].data, false, NULL ), 30, 30, GDK_INTERP_BILINEAR );
     }
     else {
       if ( garmin_syms[i].data )
 	// Directly use small symbol
-	garmin_syms[i].icon = gdk_pixbuf_from_pixdata ( garmin_syms[i].data, FALSE, NULL );
+	garmin_syms[i].icon = gdk_pixbuf_from_pixdata ( garmin_syms[i].data, false, NULL );
       else
 	// Down size large image
-	garmin_syms[i].icon = gdk_pixbuf_scale_simple ( gdk_pixbuf_from_pixdata ( garmin_syms[i].data_large, FALSE, NULL ), 18, 18, GDK_INTERP_BILINEAR );
+	garmin_syms[i].icon = gdk_pixbuf_scale_simple ( gdk_pixbuf_from_pixdata ( garmin_syms[i].data_large, false, NULL ), 18, 18, GDK_INTERP_BILINEAR );
     }
   }
   return garmin_syms[i].icon;
 }
 
-GdkPixbuf *a_get_wp_sym ( const gchar *sym ) {
-  gpointer gp;
-  gpointer x;
+GdkPixbuf *a_get_wp_sym ( const char *sym ) {
+  void * gp;
+  void * x;
 
   if (!sym) {
     return NULL;
@@ -407,9 +407,9 @@ GdkPixbuf *a_get_wp_sym ( const gchar *sym ) {
     return NULL;
 }
 
-const gchar *a_get_hashed_sym ( const gchar *sym ) {
-  gpointer gp;
-  gpointer x;
+const char *a_get_hashed_sym ( const char *sym ) {
+  void * gp;
+  void * x;
 
   if (!sym) {
     return NULL;
@@ -426,7 +426,7 @@ const gchar *a_get_hashed_sym ( const gchar *sym ) {
 }
 
 void a_populate_sym_list ( GtkListStore *list ) {
-  gint i;
+  int i;
   for (i=0; i<G_N_ELEMENTS(garmin_syms); i++) {
     // Ensure at least one symbol available - the other can be auto generated
     if ( garmin_syms[i].data || garmin_syms[i].data_large ) {
@@ -441,7 +441,7 @@ void a_populate_sym_list ( GtkListStore *list ) {
 /* Use when preferences have changed to reset icons*/
 void clear_garmin_icon_syms () {
   g_debug("garminsymbols: clear_garmin_icon_syms");
-  gint i;
+  int i;
   for (i=0; i<G_N_ELEMENTS(garmin_syms); i++) {
     if (garmin_syms[i].icon) {
       g_object_unref (garmin_syms[i].icon);

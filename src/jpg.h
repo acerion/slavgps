@@ -23,12 +23,15 @@
 #ifndef _VIKING_JPG_H
 #define _VIKING_JPG_H
 
+#include <stdbool.h>
+#include <stdint.h>
+
 #include "viking.h"
 
 G_BEGIN_DECLS
 
-gboolean a_jpg_magic_check ( const gchar *filename );
-gboolean a_jpg_load_file ( VikAggregateLayer *top, const gchar *filename, VikViewport *vvp );
+bool a_jpg_magic_check ( const char *filename );
+bool a_jpg_load_file ( VikAggregateLayer *top, const char *filename, VikViewport *vvp );
 
 G_END_DECLS
 

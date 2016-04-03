@@ -25,6 +25,9 @@
 #include <glib.h>
 #include <glib-object.h>
 #include <gtk/gtk.h>
+#include <stdbool.h>
+#include <stdint.h>
+
 
 G_BEGIN_DECLS
 
@@ -42,7 +45,7 @@ struct _VikStatusbarClass
   GtkStatusbarClass statusbar_class;
 
   void (* clicked)  (VikStatusbar *vs,
-                     gint          item);
+                     int          item);
 };
 
 GType vik_statusbar_get_type ();
@@ -58,7 +61,7 @@ typedef enum {
 } vik_statusbar_type_t;
 
 VikStatusbar *vik_statusbar_new ();
-void vik_statusbar_set_message ( VikStatusbar *vs, vik_statusbar_type_t field, const gchar *message );
+void vik_statusbar_set_message ( VikStatusbar *vs, vik_statusbar_type_t field, const char *message );
 
 G_END_DECLS
 

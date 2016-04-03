@@ -42,25 +42,25 @@
 
 static void vik_routing_web_engine_finalize ( GObject *gob );
 
-static gboolean vik_routing_web_engine_find ( VikRoutingEngine *self, VikTrwLayer *vtl, struct LatLon start, struct LatLon end );
-static gchar *vik_routing_web_engine_get_url_from_directions(VikRoutingEngine *self, const gchar *start, const gchar *end);
-static gboolean vik_routing_web_engine_supports_direction(VikRoutingEngine *self);
-static gboolean vik_routing_web_engine_refine ( VikRoutingEngine *self, VikTrwLayer *vtl, VikTrack *vt );
-static gboolean vik_routing_web_engine_supports_refine ( VikRoutingEngine *self );
+static bool vik_routing_web_engine_find ( VikRoutingEngine *self, VikTrwLayer *vtl, struct LatLon start, struct LatLon end );
+static char *vik_routing_web_engine_get_url_from_directions(VikRoutingEngine *self, const char *start, const char *end);
+static bool vik_routing_web_engine_supports_direction(VikRoutingEngine *self);
+static bool vik_routing_web_engine_refine ( VikRoutingEngine *self, VikTrwLayer *vtl, VikTrack *vt );
+static bool vik_routing_web_engine_supports_refine ( VikRoutingEngine *self );
 
 typedef struct _VikRoutingWebEnginePrivate VikRoutingWebEnginePrivate;
 struct _VikRoutingWebEnginePrivate
 {
-	gchar *url_base;
+	char *url_base;
 	
 	/* LatLon */
-	gchar *url_start_ll_fmt;
-	gchar *url_stop_ll_fmt;
-	gchar *url_via_ll_fmt;
+	char *url_start_ll_fmt;
+	char *url_stop_ll_fmt;
+	char *url_via_ll_fmt;
 
 	/* Directions */
-	gchar *url_start_dir_fmt;
-	gchar *url_stop_dir_fmt;
+	char *url_start_dir_fmt;
+	char *url_stop_dir_fmt;
 
 	DownloadFileOptions options;
 };
@@ -91,7 +91,7 @@ G_DEFINE_TYPE (VikRoutingWebEngine, vik_routing_web_engine, VIK_ROUTING_ENGINE_T
 
 static void
 vik_routing_web_engine_set_property (GObject      *object,
-                          guint         property_id,
+                          unsigned int         property_id,
                           const GValue *value,
                           GParamSpec   *pspec)
 {
@@ -147,7 +147,7 @@ vik_routing_web_engine_set_property (GObject      *object,
 
 static void
 vik_routing_web_engine_get_property (GObject    *object,
-                          guint       property_id,
+                          unsigned int       property_id,
                           GValue     *value,
                           GParamSpec *pspec)
 {
@@ -340,8 +340,8 @@ static void vik_routing_web_engine_init ( VikRoutingWebEngine *self )
   priv->options.referer = NULL;
   priv->options.follow_location = 0;
   priv->options.check_file = NULL;
-  priv->options.check_file_server_time = FALSE;
-  priv->options.use_etag = FALSE;
+  priv->options.check_file_server_time = false;
+  priv->options.use_etag = false;
 }
 
 static void vik_routing_web_engine_finalize ( GObject *gob )
@@ -381,22 +381,22 @@ vik_routing_web_engine_get_download_options ( VikRoutingEngine *self )
 	return &(priv->options);
 }
 
-static gchar *
-substitute_latlon ( const gchar *fmt, struct LatLon ll )
+static char *
+substitute_latlon ( const char *fmt, struct LatLon ll )
 {
-	gchar lat[G_ASCII_DTOSTR_BUF_SIZE], lon[G_ASCII_DTOSTR_BUF_SIZE];
-	gchar *substituted = g_strdup_printf(fmt,
-                          g_ascii_dtostr (lat, G_ASCII_DTOSTR_BUF_SIZE, (gdouble) ll.lat),
-                          g_ascii_dtostr (lon, G_ASCII_DTOSTR_BUF_SIZE, (gdouble) ll.lon));
+	char lat[G_ASCII_DTOSTR_BUF_SIZE], lon[G_ASCII_DTOSTR_BUF_SIZE];
+	char *substituted = g_strdup_printf(fmt,
+                          g_ascii_dtostr (lat, G_ASCII_DTOSTR_BUF_SIZE, (double) ll.lat),
+                          g_ascii_dtostr (lon, G_ASCII_DTOSTR_BUF_SIZE, (double) ll.lon));
 	return substituted;
 }
 
-static gchar *
+static char *
 vik_routing_web_engine_get_url_for_coords ( VikRoutingEngine *self, struct LatLon start, struct LatLon end )
 {
-	gchar *startURL;
-	gchar *endURL;
-	gchar *url;
+	char *startURL;
+	char *endURL;
+	char *url;
 	
 	g_return_val_if_fail ( VIK_IS_ROUTING_WEB_ENGINE (self), NULL);
 
@@ -417,24 +417,24 @@ vik_routing_web_engine_get_url_for_coords ( VikRoutingEngine *self, struct LatLo
 	return url;
 }
 
-static gboolean
+static bool
 vik_routing_web_engine_find ( VikRoutingEngine *self, VikTrwLayer *vtl, struct LatLon start, struct LatLon end )
 {
-  gchar *uri = vik_routing_web_engine_get_url_for_coords(self, start, end);
+  char *uri = vik_routing_web_engine_get_url_for_coords(self, start, end);
 
   DownloadFileOptions *options = vik_routing_web_engine_get_download_options(self);
   
-  gchar *format = vik_routing_engine_get_format ( self );
+  char *format = vik_routing_engine_get_format ( self );
   ProcessOptions po = { NULL, NULL, format, uri, NULL, NULL };
-  gboolean ret = a_babel_convert_from ( vtl, &po, NULL, NULL, options );
+  bool ret = a_babel_convert_from ( vtl, &po, NULL, NULL, options );
 
   g_free(uri);
 
   return ret;
 }
 
-static gchar *
-vik_routing_web_engine_get_url_from_directions ( VikRoutingEngine *self, const gchar *start, const gchar *end )
+static char *
+vik_routing_web_engine_get_url_from_directions ( VikRoutingEngine *self, const char *start, const char *end )
 {
   g_return_val_if_fail ( VIK_IS_ROUTING_WEB_ENGINE (self), NULL);
 
@@ -444,8 +444,8 @@ vik_routing_web_engine_get_url_from_directions ( VikRoutingEngine *self, const g
   g_return_val_if_fail ( priv->url_start_dir_fmt != NULL, NULL);
   g_return_val_if_fail ( priv->url_stop_dir_fmt != NULL, NULL);
 
-  gchar *from_quoted, *to_quoted;
-  gchar **from_split, **to_split;
+  char *from_quoted, *to_quoted;
+  char **from_split, **to_split;
   from_quoted = g_shell_quote ( start );
   to_quoted = g_shell_quote ( end );
 
@@ -455,8 +455,8 @@ vik_routing_web_engine_get_url_from_directions ( VikRoutingEngine *self, const g
   from_quoted = g_strjoinv( "%20", from_split);
   to_quoted = g_strjoinv( "%20", to_split);
 
-  gchar *url_fmt = g_strconcat ( priv->url_base, priv->url_start_dir_fmt, priv->url_stop_dir_fmt, NULL );
-  gchar *url = g_strdup_printf ( url_fmt, from_quoted, to_quoted );
+  char *url_fmt = g_strconcat ( priv->url_base, priv->url_start_dir_fmt, priv->url_stop_dir_fmt, NULL );
+  char *url = g_strdup_printf ( url_fmt, from_quoted, to_quoted );
 
   g_free ( url_fmt );
 
@@ -468,10 +468,10 @@ vik_routing_web_engine_get_url_from_directions ( VikRoutingEngine *self, const g
   return url;
 }
 
-static gboolean
+static bool
 vik_routing_web_engine_supports_direction ( VikRoutingEngine *self )
 {
-  g_return_val_if_fail ( VIK_IS_ROUTING_WEB_ENGINE (self), FALSE);
+  g_return_val_if_fail ( VIK_IS_ROUTING_WEB_ENGINE (self), false);
 
   VikRoutingWebEnginePrivate *priv = VIK_ROUTING_WEB_ENGINE_PRIVATE ( self );
 
@@ -480,12 +480,12 @@ vik_routing_web_engine_supports_direction ( VikRoutingEngine *self )
 
 struct _append_ctx {
   VikRoutingWebEnginePrivate *priv;
-  gchar **urlParts;
+  char **urlParts;
   int nb;
 };
 
 static void
-_append_stringified_coords ( gpointer data, gpointer user_data )
+_append_stringified_coords ( void * data, void * user_data )
 {
   VikTrackpoint *vtp = (VikTrackpoint*)data;
   struct _append_ctx *ctx = (struct _append_ctx*)user_data;
@@ -493,18 +493,18 @@ _append_stringified_coords ( gpointer data, gpointer user_data )
   /* Stringify coordinate */
   struct LatLon position;
   vik_coord_to_latlon ( &(vtp->coord), &position );
-  gchar *string = substitute_latlon ( ctx->priv->url_via_ll_fmt, position );
+  char *string = substitute_latlon ( ctx->priv->url_via_ll_fmt, position );
   
   /* Append */
   ctx->urlParts[ctx->nb] = string;
   ctx->nb++;
 }
 
-static gchar *
+static char *
 vik_routing_web_engine_get_url_for_track ( VikRoutingEngine *self, VikTrack *vt )
 {
-  gchar **urlParts;
-  gchar *url;
+  char **urlParts;
+  char *url;
 
   VikRoutingWebEnginePrivate *priv = VIK_ROUTING_WEB_ENGINE_PRIVATE ( self );
 
@@ -514,8 +514,8 @@ vik_routing_web_engine_get_url_for_track ( VikRoutingEngine *self, VikTrack *vt 
   g_return_val_if_fail ( priv->url_via_ll_fmt != NULL, NULL );
 
   /* Init temporary storage */
-  gsize len = 1 + g_list_length ( vt->trackpoints ) + 1; /* base + trackpoints + NULL */
-  urlParts = g_malloc ( sizeof(gchar*)*len );
+  size_t len = 1 + g_list_length ( vt->trackpoints ) + 1; /* base + trackpoints + NULL */
+  urlParts = g_malloc ( sizeof(char*)*len );
   urlParts[0] = g_strdup ( priv->url_base );
   urlParts[len-1] = NULL;
 
@@ -549,29 +549,29 @@ vik_routing_web_engine_get_url_for_track ( VikRoutingEngine *self, VikTrack *vt 
   return url;
 }
 
-static gboolean
+static bool
 vik_routing_web_engine_refine ( VikRoutingEngine *self, VikTrwLayer *vtl, VikTrack *vt )
 {
   /* Compute URL */
-  gchar *uri = vik_routing_web_engine_get_url_for_track ( self, vt );
+  char *uri = vik_routing_web_engine_get_url_for_track ( self, vt );
 
   /* Download data */
   DownloadFileOptions *options = vik_routing_web_engine_get_download_options ( self );
 
   /* Convert and insert data in model */
-  gchar *format = vik_routing_engine_get_format ( self );
+  char *format = vik_routing_engine_get_format ( self );
   ProcessOptions po = { NULL, NULL, format, uri, NULL, NULL };
-  gboolean ret = a_babel_convert_from ( vtl, &po, NULL, NULL, options );
+  bool ret = a_babel_convert_from ( vtl, &po, NULL, NULL, options );
 
   g_free(uri);
 
   return ret;
 }
 
-static gboolean
+static bool
 vik_routing_web_engine_supports_refine ( VikRoutingEngine *self )
 {
-  g_return_val_if_fail ( VIK_IS_ROUTING_WEB_ENGINE (self), FALSE);
+  g_return_val_if_fail ( VIK_IS_ROUTING_WEB_ENGINE (self), false);
 
   VikRoutingWebEnginePrivate *priv = VIK_ROUTING_WEB_ENGINE_PRIVATE ( self );
 

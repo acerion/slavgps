@@ -34,7 +34,7 @@
 
 typedef struct _List {
   struct _List *next;
-  gchar *key;
+  char *key;
 } List;
 
 /* a circular linked list, a pointer to the tail, and the tail points to the head */
@@ -42,8 +42,8 @@ typedef struct _List {
 static List *queue_tail = NULL;
 static int queue_count = 0;
 
-static guint32 cache_size = 0;
-static guint32 max_cache_size = VIK_CONFIG_MAPCACHE_SIZE * 1024 * 1024;
+static uint32_t cache_size = 0;
+static uint32_t max_cache_size = VIK_CONFIG_MAPCACHE_SIZE * 1024 * 1024;
 
 static GHashTable *cache = NULL;
 
@@ -83,7 +83,7 @@ void a_mapcache_init ()
   cache = g_hash_table_new_full ( g_str_hash, g_str_equal, g_free, (GDestroyNotify) cache_item_free );
 }
 
-static void cache_add(gchar *key, GdkPixbuf *pixbuf, mapcache_extra_t extra)
+static void cache_add(char *key, GdkPixbuf *pixbuf, mapcache_extra_t extra)
 {
   cache_item_t *ci = g_malloc ( sizeof(cache_item_t) );
   ci->pixbuf = pixbuf;
@@ -103,7 +103,7 @@ static void cache_add(gchar *key, GdkPixbuf *pixbuf, mapcache_extra_t extra)
   }
 }
 
-static void cache_remove(const gchar *key)
+static void cache_remove(const char *key)
 {
   cache_item_t *ci = g_hash_table_lookup ( cache, key );
   if (ci && ci->pixbuf) {
@@ -114,17 +114,17 @@ static void cache_remove(const gchar *key)
 }
 
 /* returns key from head, adds on newtailkey to tail. */
-static gchar *list_shift_add_entry ( gchar *newtailkey )
+static char *list_shift_add_entry ( char *newtailkey )
 {
-  gchar *oldheadkey = queue_tail->next->key;
+  char *oldheadkey = queue_tail->next->key;
   queue_tail->next->key = newtailkey;
   queue_tail = queue_tail->next;
   return oldheadkey;
 }
 
-static gchar *list_shift ()
+static char *list_shift ()
 {
-  gchar *oldheadkey = queue_tail->next->key;
+  char *oldheadkey = queue_tail->next->key;
   List *oldhead = queue_tail->next;
   queue_tail->next = queue_tail->next->next;
   g_free ( oldhead );
@@ -133,7 +133,7 @@ static gchar *list_shift ()
 }
 
 /* adds key to tail */
-static void list_add_entry ( gchar *key )
+static void list_add_entry ( char *key )
 {
   List *newlist = g_malloc ( sizeof ( List ) );
   newlist->key = key;
@@ -152,15 +152,15 @@ static void list_add_entry ( gchar *key )
  * Function increments reference counter of pixbuf.
  * Caller may (and should) decrease it's reference.
  */
-void a_mapcache_add ( GdkPixbuf *pixbuf, mapcache_extra_t extra, gint x, gint y, gint z, guint16 type, gint zoom, guint8 alpha, gdouble xshrinkfactor, gdouble yshrinkfactor, const gchar* name )
+void a_mapcache_add ( GdkPixbuf *pixbuf, mapcache_extra_t extra, int x, int y, int z, uint16_t type, int zoom, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const char* name )
 {
   if ( ! GDK_IS_PIXBUF(pixbuf) ) {
     g_debug ( "Not caching corrupt pixbuf for maptype %d at %d %d %d %d", type, x, y, z, zoom );
     return;
   }
 
-  guint nn = name ? g_str_hash ( name ) : 0;
-  gchar *key = g_strdup_printf ( HASHKEY_FORMAT_STRING, type, x, y, z, zoom, nn, alpha, xshrinkfactor, yshrinkfactor );
+  unsigned int nn = name ? g_str_hash ( name ) : 0;
+  char *key = g_strdup_printf ( HASHKEY_FORMAT_STRING, type, x, y, z, zoom, nn, alpha, xshrinkfactor, yshrinkfactor );
 
   g_mutex_lock(mc_mutex);
   g_object_ref(pixbuf);
@@ -171,7 +171,7 @@ void a_mapcache_add ( GdkPixbuf *pixbuf, mapcache_extra_t extra, gint x, gint y,
 
   if ( cache_size > max_cache_size ) {
     if ( queue_tail ) {
-      gchar *oldkey = list_shift_add_entry ( key );
+      char *oldkey = list_shift_add_entry ( key );
       cache_remove(oldkey);
 
       while ( cache_size > max_cache_size &&
@@ -195,10 +195,10 @@ void a_mapcache_add ( GdkPixbuf *pixbuf, mapcache_extra_t extra, gint x, gint y,
  * Function increases reference counter of pixels buffer in behalf of caller.
  * Caller have to decrease references counter, when buffer is no longer needed.
  */
-GdkPixbuf *a_mapcache_get ( gint x, gint y, gint z, guint16 type, gint zoom, guint8 alpha, gdouble xshrinkfactor, gdouble yshrinkfactor, const gchar* name )
+GdkPixbuf *a_mapcache_get ( int x, int y, int z, uint16_t type, int zoom, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const char* name )
 {
   static char key[MC_KEY_SIZE];
-  guint nn = name ? g_str_hash ( name ) : 0;
+  unsigned int nn = name ? g_str_hash ( name ) : 0;
   g_snprintf ( key, sizeof(key), HASHKEY_FORMAT_STRING, type, x, y, z, zoom, nn, alpha, xshrinkfactor, yshrinkfactor );
   g_mutex_lock(mc_mutex); /* prevent returning pixbuf when cache is being cleared */
   cache_item_t *ci = g_hash_table_lookup ( cache, key );
@@ -212,10 +212,10 @@ GdkPixbuf *a_mapcache_get ( gint x, gint y, gint z, guint16 type, gint zoom, gui
   }
 }
 
-mapcache_extra_t a_mapcache_get_extra ( gint x, gint y, gint z, guint16 type, gint zoom, guint8 alpha, gdouble xshrinkfactor, gdouble yshrinkfactor, const gchar* name )
+mapcache_extra_t a_mapcache_get_extra ( int x, int y, int z, uint16_t type, int zoom, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const char* name )
 {
   static char key[MC_KEY_SIZE];
-  guint nn = name ? g_str_hash ( name ) : 0;
+  unsigned int nn = name ? g_str_hash ( name ) : 0;
   g_snprintf ( key, sizeof(key), HASHKEY_FORMAT_STRING, type, x, y, z, zoom, nn, alpha, xshrinkfactor, yshrinkfactor );
   cache_item_t *ci = g_hash_table_lookup ( cache, key );
   if ( ci )
@@ -227,7 +227,7 @@ mapcache_extra_t a_mapcache_get_extra ( gint x, gint y, gint z, guint16 type, gi
 /**
  * Common function to remove cache items for keys starting with the specified string
  */
-static void flush_matching ( gchar *str )
+static void flush_matching ( char *str )
 {
   g_mutex_lock(mc_mutex);
 
@@ -240,7 +240,7 @@ static void flush_matching ( gchar *str )
   //  otherwise where it points to might not be valid anymore when the actual processing occurs
   List *loop = queue_tail;
   List *tmp;
-  gint len = strlen(str);
+  int len = strlen(str);
 
   do {
     tmp = loop->next;
@@ -273,10 +273,10 @@ static void flush_matching ( gchar *str )
 /**
  * Appears this is only used when redownloading tiles (i.e. to invalidate old images)
  */
-void a_mapcache_remove_all_shrinkfactors ( gint x, gint y, gint z, guint16 type, gint zoom, const gchar* name )
+void a_mapcache_remove_all_shrinkfactors ( int x, int y, int z, uint16_t type, int zoom, const char* name )
 {
   char key[MC_KEY_SIZE];
-  guint nn = name ? g_str_hash ( name ) : 0;
+  unsigned int nn = name ? g_str_hash ( name ) : 0;
   g_snprintf ( key, sizeof(key), HASHKEY_FORMAT_STRING_NOSHRINK_NOR_ALPHA, type, x, y, z, zoom, nn );
   flush_matching ( key );
 }
@@ -310,7 +310,7 @@ void a_mapcache_flush ()
  * Just remove cache items for the specified map type
  *  i.e. all related xyz+zoom+alpha+etc...
  */
-void a_mapcache_flush_type ( guint16 type )
+void a_mapcache_flush_type ( uint16_t type )
 {
   char key[MC_KEY_SIZE];
   g_snprintf ( key, sizeof(key), HASHKEY_FORMAT_STRING_TYPE, type );
@@ -326,13 +326,13 @@ void a_mapcache_uninit ()
 }
 
 // Size of mapcache in memory
-gint a_mapcache_get_size ()
+int a_mapcache_get_size ()
 {
   return cache_size;
 }
 
 // Count of items in the mapcache
-gint a_mapcache_get_count ()
+int a_mapcache_get_count ()
 {
   return g_hash_table_size ( cache );
 }

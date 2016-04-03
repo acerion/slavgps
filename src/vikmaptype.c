@@ -33,23 +33,23 @@
 #include "vikmapslayer_compat.h"
 #include "download.h"
 
-static const gchar *map_type_get_name (VikMapSource *self);
-static guint16 map_type_get_uniq_id (VikMapSource *self);
-static const gchar *map_type_get_label (VikMapSource *self);
-static guint16 map_type_get_tilesize_x (VikMapSource *self);
-static guint16 map_type_get_tilesize_y (VikMapSource *self);
+static const char *map_type_get_name (VikMapSource *self);
+static uint16_t map_type_get_uniq_id (VikMapSource *self);
+static const char *map_type_get_label (VikMapSource *self);
+static uint16_t map_type_get_tilesize_x (VikMapSource *self);
+static uint16_t map_type_get_tilesize_y (VikMapSource *self);
 static VikViewportDrawMode map_type_get_drawmode (VikMapSource *self);
-static gboolean map_type_coord_to_mapcoord (VikMapSource *self, const VikCoord *src, gdouble xzoom, gdouble yzoom, MapCoord *dest );
+static bool map_type_coord_to_mapcoord (VikMapSource *self, const VikCoord *src, double xzoom, double yzoom, MapCoord *dest );
 static void map_type_mapcoord_to_center_coord (VikMapSource *self, MapCoord *src, VikCoord *dest);
-static DownloadResult_t map_type_download (VikMapSource * self, MapCoord * src, const gchar * dest_fn, void * handle);
+static DownloadResult_t map_type_download (VikMapSource * self, MapCoord * src, const char * dest_fn, void * handle);
 static void * map_type_download_handle_init (VikMapSource * self);
 static void map_type_download_handle_cleanup (VikMapSource * self, void * handle);
 
 typedef struct _VikMapTypePrivate VikMapTypePrivate;
 struct _VikMapTypePrivate
 {
-	gchar *label;
-	gchar *name;
+	char *label;
+	char *name;
 	VikMapsLayer_MapType map_type;
 };
 
@@ -110,7 +110,7 @@ vik_map_type_class_init (VikMapTypeClass *klass)
 	object_class->finalize = vik_map_type_finalize;
 }
 
-static const gchar *
+static const char *
 map_type_get_name (VikMapSource *self)
 {
 	VikMapTypePrivate *priv = VIK_MAP_TYPE_PRIVATE(self);
@@ -119,38 +119,38 @@ map_type_get_name (VikMapSource *self)
 	return priv->name;
 }
 
-static guint16
+static uint16_t
 map_type_get_uniq_id (VikMapSource *self)
 {
     VikMapTypePrivate *priv = VIK_MAP_TYPE_PRIVATE(self);
-	g_return_val_if_fail (priv != NULL, (guint16)0);
+	g_return_val_if_fail (priv != NULL, (uint16_t)0);
 
 	return priv->map_type.uniq_id;
 }
 
-static const gchar *
+static const char *
 map_type_get_label (VikMapSource *self)
 {
     VikMapTypePrivate *priv = VIK_MAP_TYPE_PRIVATE(self);
-	g_return_val_if_fail (priv != NULL, FALSE);
+	g_return_val_if_fail (priv != NULL, false);
 
 	return priv->label;
 }
 
-static guint16
+static uint16_t
 map_type_get_tilesize_x (VikMapSource *self)
 {
     VikMapTypePrivate *priv = VIK_MAP_TYPE_PRIVATE(self);
-	g_return_val_if_fail (priv != NULL, (guint16)0);
+	g_return_val_if_fail (priv != NULL, (uint16_t)0);
 
 	return priv->map_type.tilesize_x;
 }
 
-static guint16
+static uint16_t
 map_type_get_tilesize_y (VikMapSource *self)
 {
     VikMapTypePrivate *priv = VIK_MAP_TYPE_PRIVATE(self);
-	g_return_val_if_fail (priv != NULL, (guint16)0);
+	g_return_val_if_fail (priv != NULL, (uint16_t)0);
 
 	return priv->map_type.tilesize_y;
 }
@@ -164,11 +164,11 @@ map_type_get_drawmode (VikMapSource *self)
 	return priv->map_type.drawmode;
 }
 
-static gboolean
-map_type_coord_to_mapcoord (VikMapSource *self, const VikCoord *src, gdouble xzoom, gdouble yzoom, MapCoord *dest )
+static bool
+map_type_coord_to_mapcoord (VikMapSource *self, const VikCoord *src, double xzoom, double yzoom, MapCoord *dest )
 {
     VikMapTypePrivate *priv = VIK_MAP_TYPE_PRIVATE(self);
-	g_return_val_if_fail (priv != NULL, FALSE);
+	g_return_val_if_fail (priv != NULL, false);
 
 	return (priv->map_type.coord_to_mapcoord)(src, xzoom, yzoom, dest);
 }
@@ -183,7 +183,7 @@ map_type_mapcoord_to_center_coord (VikMapSource *self, MapCoord *src, VikCoord *
 }
 
 static DownloadResult_t
-map_type_download (VikMapSource * self, MapCoord * src, const gchar * dest_fn, void * handle)
+map_type_download (VikMapSource * self, MapCoord * src, const char * dest_fn, void * handle)
 {
     VikMapTypePrivate *priv = VIK_MAP_TYPE_PRIVATE(self);
 	g_return_val_if_fail (priv != NULL, 0);

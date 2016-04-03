@@ -25,6 +25,9 @@
 #define VIKING_TOOLBAR_H 1
 
 #include <gtk/gtk.h>
+#include <stdbool.h>
+#include <stdint.h>
+
 
 G_BEGIN_DECLS
 
@@ -43,18 +46,18 @@ GType vik_toolbar_get_type ();
 VikToolbar *vik_toolbar_new (void);
 void vik_toolbar_finalize ( VikToolbar *vtb );
 
-GtkWidget *toolbar_get_widget_by_name(VikToolbar *vtb, const gchar *name);
-GtkAction *toolbar_get_action_by_name(VikToolbar *vtb, const gchar *name);
+GtkWidget *toolbar_get_widget_by_name(VikToolbar *vtb, const char *name);
+GtkAction *toolbar_get_action_by_name(VikToolbar *vtb, const char *name);
 
 void toolbar_action_tool_entry_register(VikToolbar *vtb, GtkRadioActionEntry *action);
 void toolbar_action_mode_entry_register(VikToolbar *vtb, GtkRadioActionEntry *action);
-void toolbar_action_toggle_entry_register(VikToolbar *vtb, GtkToggleActionEntry *action, gpointer callback);
+void toolbar_action_toggle_entry_register(VikToolbar *vtb, GtkToggleActionEntry *action, void * callback);
 void toolbar_action_entry_register(VikToolbar *vtb, GtkActionEntry *action);
 
-void toolbar_action_set_sensitive (VikToolbar *vtb, const gchar *name, gboolean sensitive);
+void toolbar_action_set_sensitive (VikToolbar *vtb, const char *name, bool sensitive);
 
-typedef void (ToolCB) (GtkAction *, GtkAction *, gpointer); // gpointer is actually a VikWindow
-typedef void (ReloadCB) (GtkActionGroup *, gpointer); // gpointer is actually a VikWindow
+typedef void (ToolCB) (GtkAction *, GtkAction *, void *); // void * is actually a VikWindow
+typedef void (ReloadCB) (GtkActionGroup *, void *); // void * is actually a VikWindow
 
 void toolbar_init(VikToolbar *vtb,
                   GtkWindow *parent,
@@ -62,12 +65,12 @@ void toolbar_init(VikToolbar *vtb,
                   GtkWidget *hbox,
                   ToolCB tool_cb,
                   ReloadCB reload_cb,
-                  gpointer user_data);
+                  void * user_data);
 
 void toolbar_apply_settings(VikToolbar *vtb,
                             GtkWidget *vbox,
                             GtkWidget *hbox,
-                            gboolean reset);
+                            bool reset);
 
 GtkWidget* toolbar_get_widget(VikToolbar *vtb);
 

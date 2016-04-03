@@ -49,20 +49,20 @@ typedef struct {
 	VikViewport *vvp;
 } datasource_osm_my_traces_t;
 
-static gpointer datasource_osm_my_traces_init ( acq_vik_t *avt );
-static void datasource_osm_my_traces_add_setup_widgets ( GtkWidget *dialog, VikViewport *vvp, gpointer user_data );
-static void datasource_osm_my_traces_get_process_options ( gpointer user_data, ProcessOptions *po, DownloadFileOptions *options, const gchar *notused1, const gchar *notused2 );
-static gboolean datasource_osm_my_traces_process ( VikTrwLayer *vtl, ProcessOptions *process_options, BabelStatusFunc status_cb, acq_dialog_widgets_t *adw, DownloadFileOptions *options_unused );
-static void datasource_osm_my_traces_cleanup ( gpointer data );
+static void * datasource_osm_my_traces_init ( acq_vik_t *avt );
+static void datasource_osm_my_traces_add_setup_widgets ( GtkWidget *dialog, VikViewport *vvp, void * user_data );
+static void datasource_osm_my_traces_get_process_options ( void * user_data, ProcessOptions *po, DownloadFileOptions *options, const char *notused1, const char *notused2 );
+static bool datasource_osm_my_traces_process ( VikTrwLayer *vtl, ProcessOptions *process_options, BabelStatusFunc status_cb, acq_dialog_widgets_t *adw, DownloadFileOptions *options_unused );
+static void datasource_osm_my_traces_cleanup ( void * data );
 
 VikDataSourceInterface vik_datasource_osm_my_traces_interface = {
   N_("OSM My Traces"),
   N_("OSM My Traces"),
   VIK_DATASOURCE_MANUAL_LAYER_MANAGEMENT, // we'll do this ourselves
   VIK_DATASOURCE_INPUTTYPE_NONE,
-  TRUE,
-  TRUE,
-  FALSE, // Don't use thread method
+  true,
+  true,
+  false, // Don't use thread method
   (VikDataSourceInitFunc)		    datasource_osm_my_traces_init,
   (VikDataSourceCheckExistenceFunc)	NULL,
   (VikDataSourceAddSetupWidgetsFunc)datasource_osm_my_traces_add_setup_widgets,
@@ -80,7 +80,7 @@ VikDataSourceInterface vik_datasource_osm_my_traces_interface = {
   0
 };
 
-static gpointer datasource_osm_my_traces_init ( acq_vik_t *avt )
+static void * datasource_osm_my_traces_init ( acq_vik_t *avt )
 {
   datasource_osm_my_traces_t *data = g_malloc(sizeof(*data));
   // Reuse GPS functions
@@ -95,7 +95,7 @@ static gpointer datasource_osm_my_traces_init ( acq_vik_t *avt )
   return data;
 }
 
-static void datasource_osm_my_traces_add_setup_widgets ( GtkWidget *dialog, VikViewport *vvp, gpointer user_data )
+static void datasource_osm_my_traces_add_setup_widgets ( GtkWidget *dialog, VikViewport *vvp, void * user_data )
 {
 	datasource_osm_my_traces_t *data = (datasource_osm_my_traces_t *)user_data;
 
@@ -104,8 +104,8 @@ static void datasource_osm_my_traces_add_setup_widgets ( GtkWidget *dialog, VikV
 	user_label = gtk_label_new(_("Username:"));
 	data->user_entry = gtk_entry_new();
 
-	gtk_box_pack_start ( GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), user_label, FALSE, FALSE, 0 );
-	gtk_box_pack_start ( GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), data->user_entry, FALSE, FALSE, 0 );
+	gtk_box_pack_start ( GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), user_label, false, false, 0 );
+	gtk_box_pack_start ( GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), data->user_entry, false, false, 0 );
 	gtk_widget_set_tooltip_markup ( GTK_WIDGET(data->user_entry), _("The email or username used to login to OSM") );
 
 	password_label = gtk_label_new ( _("Password:") );
@@ -117,15 +117,15 @@ static void datasource_osm_my_traces_add_setup_widgets ( GtkWidget *dialog, VikV
 
 	/* Packing all widgets */
 	GtkBox *box = GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog)));
-	gtk_box_pack_start ( box, password_label, FALSE, FALSE, 0 );
-	gtk_box_pack_start ( box, data->password_entry, FALSE, FALSE, 0 );
+	gtk_box_pack_start ( box, password_label, false, false, 0 );
+	gtk_box_pack_start ( box, data->password_entry, false, false, 0 );
 	gtk_widget_show_all ( dialog );
 
 	/* Keep reference to viewport */
 	data->vvp = vvp;
 }
 
-static void datasource_osm_my_traces_get_process_options ( gpointer user_data, ProcessOptions *po, DownloadFileOptions *options, const gchar *notused1, const gchar *notused2 )
+static void datasource_osm_my_traces_get_process_options ( void * user_data, ProcessOptions *po, DownloadFileOptions *options, const char *notused1, const char *notused2 )
 {
 	datasource_osm_my_traces_t *data = (datasource_osm_my_traces_t*) user_data;
 
@@ -152,15 +152,15 @@ typedef struct {
 } xtag_mapping;
 
 typedef struct {
-	guint id;
-	gchar *name;
-	gchar *vis;
-	gchar *desc;
+	unsigned int id;
+	char *name;
+	char *vis;
+	char *desc;
 	struct LatLon ll;
-	gboolean in_current_view; // Is the track LatLon start within the current viewport
+	bool in_current_view; // Is the track LatLon start within the current viewport
                               // This is useful in deciding whether to download a track or not
 	// ATM Only used for display - may want to convert to a time_t for other usage
-	gchar *timestamp;
+	char *timestamp;
 	// user made up tags - not being used yet - would be nice to sort/select on these but display will get complicated
 	// GList *tag_list;
 } gpx_meta_data_t;
@@ -176,13 +176,13 @@ static gpx_meta_data_t *new_gpx_meta_data_t()
 	ret->desc = NULL;
 	ret->ll.lat = 0.0;
 	ret->ll.lon = 0.0;
-	ret->in_current_view = FALSE;
+	ret->in_current_view = false;
 	ret->timestamp = NULL;
 
 	return ret;
 }
 
-static void free_gpx_meta_data ( gpx_meta_data_t *data, gpointer userdata )
+static void free_gpx_meta_data ( gpx_meta_data_t *data, void * userdata )
 {
 	g_free(data->name);
 	g_free(data->vis);
@@ -250,8 +250,8 @@ static xtag_type get_tag ( const char *t )
 
 static void gpx_meta_data_start ( xml_data *xd, const char *el, const char **attr )
 {
-	const gchar *tmp;
-	gchar buf[G_ASCII_DTOSTR_BUF_SIZE];
+	const char *tmp;
+	char buf[G_ASCII_DTOSTR_BUF_SIZE];
 	buf[0] = '\0';
 
 	// Don't need to build a path - we can use the tag directly
@@ -342,11 +342,11 @@ static void gpx_meta_data_cdata ( xml_data *xd, const XML_Char *s, int len )
 	}
 }
 
-static gboolean read_gpx_files_metadata_xml ( gchar *tmpname, xml_data *xd )
+static bool read_gpx_files_metadata_xml ( char *tmpname, xml_data *xd )
 {
 	FILE *ff = g_fopen (tmpname, "r");
 	if ( !ff )
-		return FALSE;
+		return false;
 
 	XML_Parser parser = XML_ParserCreate(NULL);
 	enum XML_Status status = XML_STATUS_ERROR;
@@ -355,7 +355,7 @@ static gboolean read_gpx_files_metadata_xml ( gchar *tmpname, xml_data *xd )
 	XML_SetUserData(parser, xd);
 	XML_SetCharacterDataHandler(parser, (XML_CharacterDataHandler) gpx_meta_data_cdata);
 
-	gchar buf[4096];
+	char buf[4096];
 
 	int done=0, len;
 	while (!done) {
@@ -371,12 +371,12 @@ static gboolean read_gpx_files_metadata_xml ( gchar *tmpname, xml_data *xd )
 	return status != XML_STATUS_ERROR;
 }
 
-static GList *select_from_list (GtkWindow *parent, GList *list, const gchar *title, const gchar *msg )
+static GList *select_from_list (GtkWindow *parent, GList *list, const char *title, const char *msg )
 {
 	GtkTreeIter iter;
 	GtkCellRenderer *renderer;
 	GtkWidget *view;
-	gchar *latlon_string;
+	char *latlon_string;
 	int column_runner;
 
 	GtkWidget *dialog = gtk_dialog_new_with_buttons (title,
@@ -444,7 +444,7 @@ static GList *select_from_list (GtkWindow *parent, GList *list, const gchar *tit
 	gtk_tree_view_append_column (GTK_TREE_VIEW (view), column);
 
 	GtkCellRenderer *renderer_toggle = gtk_cell_renderer_toggle_new ();
-	g_object_set (G_OBJECT (renderer_toggle), "activatable", FALSE, NULL); // No user action - value is just for display
+	g_object_set (G_OBJECT (renderer_toggle), "activatable", false, NULL); // No user action - value is just for display
 	column_runner++;
 	column = gtk_tree_view_column_new_with_attributes ( _("Within Current View"), renderer_toggle, "active", column_runner, NULL);
 	gtk_tree_view_column_set_sort_column_id (column, column_runner);
@@ -458,8 +458,8 @@ static GList *select_from_list (GtkWindow *parent, GList *list, const gchar *tit
 	gtk_scrolled_window_set_policy ( GTK_SCROLLED_WINDOW(scrolledwindow), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC );
 	gtk_container_add ( GTK_CONTAINER(scrolledwindow), view );
 
-	gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), label, FALSE, FALSE, 0);
-	gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), scrolledwindow, TRUE, TRUE, 0);
+	gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), label, false, false, 0);
+	gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), scrolledwindow, true, true, 0);
 
 	// Ensure a reasonable number of items are shown, but let the width be automatically sized
 	gtk_widget_set_size_request ( dialog, -1, 400) ;
@@ -480,7 +480,7 @@ static GList *select_from_list (GtkWindow *parent, GList *list, const gchar *tit
 				if ( gtk_tree_selection_iter_is_selected ( selection, &iter ) ) {
 					// For every selected item,
 					// compare the name from the displayed view to every gpx entry to find the gpx this selection represents
-					gchar* name;
+					char* name;
 					gtk_tree_model_get (GTK_TREE_MODEL(store), &iter, 0, &name, -1 );
 					// I believe the name of these items to be always unique
 					list_runner = list;
@@ -516,7 +516,7 @@ static void none_found ( GtkWindow *gw )
 	gtk_window_set_title(GTK_WINDOW(dialog), _("GPS Traces"));
 
 	GtkWidget *search_label = gtk_label_new(_("None found!"));
-	gtk_box_pack_start ( GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), search_label, FALSE, FALSE, 5 );
+	gtk_box_pack_start ( GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), search_label, false, false, 5 );
 	gtk_dialog_set_default_response ( GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT );
 	gtk_widget_show_all(dialog);
 
@@ -529,7 +529,7 @@ static void none_found ( GtkWindow *gw )
  */
 static void set_in_current_view_property ( VikTrwLayer *vtl, datasource_osm_my_traces_t *data, GList *gl )
 {
-	gdouble min_lat, max_lat, min_lon, max_lon;
+	double min_lat, max_lat, min_lon, max_lon;
 	/* get Viewport bounding box */
 	vik_viewport_get_min_max_lat_lon ( data->vvp, &min_lat, &max_lat, &min_lon, &max_lon );
 
@@ -552,26 +552,26 @@ static void set_in_current_view_property ( VikTrwLayer *vtl, datasource_osm_my_t
 		gmd_bbox.west = gmd->ll.lon;
 
 		if ( BBOX_INTERSECT ( bbox, gmd_bbox ) )
-			gmd->in_current_view = TRUE;
+			gmd->in_current_view = true;
 
 		iterator = g_list_next ( iterator );
 	}
 }
 
-static gboolean datasource_osm_my_traces_process ( VikTrwLayer *vtl, ProcessOptions *process_options, BabelStatusFunc status_cb, acq_dialog_widgets_t *adw, DownloadFileOptions *options_unused )
+static bool datasource_osm_my_traces_process ( VikTrwLayer *vtl, ProcessOptions *process_options, BabelStatusFunc status_cb, acq_dialog_widgets_t *adw, DownloadFileOptions *options_unused )
 {
 	//datasource_osm_my_traces_t *data = (datasource_osm_my_traces_t *)adw->user_data;
 
-	gboolean result;
+	bool result;
 
-	gchar *user_pass = osm_get_login();
+	char *user_pass = osm_get_login();
 
 	// Support .zip + bzip2 files directly
-	DownloadFileOptions options = { FALSE, FALSE, NULL, 2, NULL, user_pass, a_try_decompress_file }; // Allow a couple of redirects
+	DownloadFileOptions options = { false, false, NULL, 2, NULL, user_pass, a_try_decompress_file }; // Allow a couple of redirects
 
-	gchar *tmpname = a_download_uri_to_tmp_file ( DS_OSM_TRACES_GPX_FILES, &options );
+	char *tmpname = a_download_uri_to_tmp_file ( DS_OSM_TRACES_GPX_FILES, &options );
 	if ( !tmpname )
-		return FALSE;
+		return false;
 
 	xml_data *xd = g_malloc ( sizeof (xml_data) );
 	//xd->xpath = g_string_new ( "" );
@@ -591,14 +591,14 @@ static gboolean datasource_osm_my_traces_process ( VikTrwLayer *vtl, ProcessOpti
 
 	if ( ! result ) {
 		g_free ( xd );
-		return FALSE;
+		return false;
 	}
 
 	if ( g_list_length ( xd->list_of_gpx_meta_data ) == 0 ) {
 		if (!vik_datasource_osm_my_traces_interface.is_thread)
 			none_found ( GTK_WINDOW(adw->vw) );
 		g_free ( xd );
-		return FALSE;
+		return false;
 	}
 
 	xd->list_of_gpx_meta_data = g_list_reverse ( xd->list_of_gpx_meta_data );
@@ -618,11 +618,11 @@ static gboolean datasource_osm_my_traces_process ( VikTrwLayer *vtl, ProcessOpti
 	// Hence the preference is to create multiple layers
 	//  and so this creation of the layers must be managed here
 
-	gboolean create_new_layer = ( !vtl );
+	bool create_new_layer = ( !vtl );
 
 	// Only update the screen on the last layer acquired
 	VikTrwLayer *vtl_last = vtl;
-	gboolean got_something = FALSE;
+	bool got_something = false;
 
 	GList *selected_iterator = selected;
 	while ( selected_iterator ) {
@@ -631,17 +631,17 @@ static gboolean datasource_osm_my_traces_process ( VikTrwLayer *vtl, ProcessOpti
 
 		if ( create_new_layer ) {
 			// Have data but no layer - so create one
-			vtlX = VIK_TRW_LAYER ( vik_layer_create ( VIK_LAYER_TRW, adw->vvp, FALSE ) );
+			vtlX = VIK_TRW_LAYER ( vik_layer_create ( VIK_LAYER_TRW, adw->vvp, false ) );
 			if ( ((gpx_meta_data_t*)selected_iterator->data)->name )
 				vik_layer_rename ( VIK_LAYER ( vtlX ), ((gpx_meta_data_t*)selected_iterator->data)->name );
 			else
 				vik_layer_rename ( VIK_LAYER ( vtlX ), _("My OSM Traces") );
 		}
 
-		result = FALSE;
-		gint gpx_id = ((gpx_meta_data_t*)selected_iterator->data)->id;
+		result = false;
+		int gpx_id = ((gpx_meta_data_t*)selected_iterator->data)->id;
 		if ( gpx_id ) {
-			gchar *url = g_strdup_printf ( DS_OSM_TRACES_GPX_URL_FMT, gpx_id );
+			char *url = g_strdup_printf ( DS_OSM_TRACES_GPX_URL_FMT, gpx_id );
 
 			// NB download type is GPX (or a compressed version)
 			ProcessOptions my_po = *process_options;
@@ -653,7 +653,7 @@ static gboolean datasource_osm_my_traces_process ( VikTrwLayer *vtl, ProcessOpti
 			got_something = got_something || result;
 			if ( !result ) {
 				// Report errors to the status bar
-				gchar* msg = g_strdup_printf ( _("Unable to get trace: %s"), url );
+				char* msg = g_strdup_printf ( _("Unable to get trace: %s"), url );
 				vik_window_statusbar_update ( adw->vw, msg, VIK_STATUSBAR_INFO );
 				g_free (msg);
 			}
@@ -662,9 +662,9 @@ static gboolean datasource_osm_my_traces_process ( VikTrwLayer *vtl, ProcessOpti
 
 		if ( result ) {
 			// Can use the layer
-			vik_aggregate_layer_add_layer ( vik_layers_panel_get_top_layer (adw->vlp), VIK_LAYER(vtlX), TRUE );
+			vik_aggregate_layer_add_layer ( vik_layers_panel_get_top_layer (adw->vlp), VIK_LAYER(vtlX), true );
 			// Move to area of the track
-			vik_layer_post_read ( VIK_LAYER(vtlX), vik_window_viewport(adw->vw), TRUE );
+			vik_layer_post_read ( VIK_LAYER(vtlX), vik_window_viewport(adw->vw), true );
 			vik_trw_layer_auto_set_view ( vtlX, vik_window_viewport(adw->vw) );
 			vtl_last = vtlX;
 		}
@@ -695,7 +695,7 @@ static gboolean datasource_osm_my_traces_process ( VikTrwLayer *vtl, ProcessOpti
 		result = got_something;
 	else
 		// Process was cancelled but need to return that it proceeded as expected
-		result = TRUE;
+		result = true;
 
 	if ( !vik_datasource_osm_my_traces_interface.is_thread )
 		vik_window_clear_busy_cursor ( adw->vw );
@@ -703,7 +703,7 @@ static gboolean datasource_osm_my_traces_process ( VikTrwLayer *vtl, ProcessOpti
 	return result;
 }
 
-static void datasource_osm_my_traces_cleanup ( gpointer data )
+static void datasource_osm_my_traces_cleanup ( void * data )
 {
 	g_free ( data );
 }

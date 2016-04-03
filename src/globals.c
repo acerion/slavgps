@@ -34,9 +34,9 @@
 #include "math.h"
 #include "dir.h"
 
-gboolean vik_debug = FALSE;
-gboolean vik_verbose = FALSE;
-gboolean vik_version = FALSE;
+bool vik_debug = false;
+bool vik_verbose = false;
+bool vik_version = false;
 
 /**
  * viking_version_to_number:
@@ -46,13 +46,13 @@ gboolean vik_version = FALSE;
  *
  * Returns: a single number useful for comparison
  */
-gint viking_version_to_number ( gchar *version )
+int viking_version_to_number ( char *version )
 {
   // Basic method, probably can be improved
-  gint version_number = 0;
-  gchar** parts = g_strsplit ( version, ".", 0 );
-  gint part_num = 0;
-  gchar *part = parts[part_num];
+  int version_number = 0;
+  char** parts = g_strsplit ( version, ".", 0 );
+  int part_num = 0;
+  char *part = parts[part_num];
   // Allow upto 4 parts to the version number
   while ( part && part_num < 4 ) {
     // Allow each part to have upto 100
@@ -64,13 +64,13 @@ gint viking_version_to_number ( gchar *version )
   return version_number;
 }
 
-static gchar * params_degree_formats[] = {"DDD", "DMM", "DMS", N_("Raw"), NULL};
-static gchar * params_units_distance[] = {N_("Kilometres"), N_("Miles"), N_("Nautical Miles"), NULL};
-static gchar * params_units_speed[] = {"km/h", "mph", "m/s", "knots", NULL};
-static gchar * params_units_height[] = {"Metres", "Feet", NULL};
+static char * params_degree_formats[] = {"DDD", "DMM", "DMS", N_("Raw"), NULL};
+static char * params_units_distance[] = {N_("Kilometres"), N_("Miles"), N_("Nautical Miles"), NULL};
+static char * params_units_speed[] = {"km/h", "mph", "m/s", "knots", NULL};
+static char * params_units_height[] = {"Metres", "Feet", NULL};
 static VikLayerParamScale params_scales_lat[] = { {-90.0, 90.0, 0.05, 2} };
 static VikLayerParamScale params_scales_long[] = { {-180.0, 180.0, 0.05, 2} };
-static gchar * params_time_ref_frame[] = {N_("Locale"), N_("World"), N_("UTC"), NULL};
+static char * params_time_ref_frame[] = {N_("Locale"), N_("World"), N_("UTC"), NULL};
 
 static VikLayerParam general_prefs[] = {
   { VIK_LAYER_NUM_TYPES, VIKING_PREFERENCES_NAMESPACE "degree_format", VIK_LAYER_PARAM_UINT, VIK_LAYER_GROUP_NONE, N_("Degree format:"), VIK_LAYER_WIDGET_COMBOBOX, params_degree_formats, NULL, NULL, NULL, NULL, NULL },
@@ -86,9 +86,9 @@ static VikLayerParam general_prefs[] = {
 
 /* External/Export Options */
 
-static gchar * params_kml_export_units[] = {"Metric", "Statute", "Nautical", NULL};
-static gchar * params_gpx_export_trk_sort[] = {N_("Alphabetical"), N_("Time"), N_("Creation"), NULL };
-static gchar * params_gpx_export_wpt_symbols[] = {N_("Title Case"), N_("Lowercase"), NULL};
+static char * params_kml_export_units[] = {"Metric", "Statute", "Nautical", NULL};
+static char * params_gpx_export_trk_sort[] = {N_("Alphabetical"), N_("Time"), N_("Creation"), NULL };
+static char * params_gpx_export_wpt_symbols[] = {N_("Title Case"), N_("Lowercase"), NULL};
 
 static VikLayerParam io_prefs[] = {
   { VIK_LAYER_NUM_TYPES, VIKING_PREFERENCES_IO_NAMESPACE "kml_export_units", VIK_LAYER_PARAM_UINT, VIK_LAYER_GROUP_NONE, N_("KML File Export Units:"), VIK_LAYER_WIDGET_COMBOBOX, params_kml_export_units, NULL, NULL, NULL, NULL, NULL },
@@ -108,7 +108,7 @@ static VikLayerParam io_prefs_external_gpx[] = {
   { VIK_LAYER_NUM_TYPES, VIKING_PREFERENCES_IO_NAMESPACE "external_gpx_2", VIK_LAYER_PARAM_STRING, VIK_LAYER_GROUP_NONE, N_("External GPX Program 2:"), VIK_LAYER_WIDGET_FILEENTRY, NULL, NULL, NULL, NULL, NULL, NULL },
 };
 
-static gchar * params_vik_fileref[] = {N_("Absolute"), N_("Relative"), NULL};
+static char * params_vik_fileref[] = {N_("Absolute"), N_("Relative"), NULL};
 static VikLayerParamScale params_recent_files[] = { {-1, 25, 1, 0} };
 
 static VikLayerParam prefs_advanced[] = {
@@ -120,7 +120,7 @@ static VikLayerParam prefs_advanced[] = {
     N_("Only applies to new windows or on application restart. -1 means all available files."), NULL, NULL, NULL },
 };
 
-static gchar * params_startup_methods[] = {N_("Home Location"), N_("Last Location"), N_("Specified File"), N_("Auto Location"), NULL};
+static char * params_startup_methods[] = {N_("Home Location"), N_("Last Location"), N_("Specified File"), N_("Auto Location"), NULL};
 
 static VikLayerParam startup_prefs[] = {
   { VIK_LAYER_NUM_TYPES, VIKING_PREFERENCES_STARTUP_NAMESPACE "restore_window_state", VIK_LAYER_PARAM_BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Restore Window Setup:"), VIK_LAYER_WIDGET_CHECKBUTTON, NULL, NULL,
@@ -140,16 +140,16 @@ static VikLayerParam startup_prefs[] = {
  * Call this very early in the startup sequence to ensure subsequent correct results
  * The return value is cached, since later on the test will no longer be true
  */
-gboolean a_vik_very_first_run ()
+bool a_vik_very_first_run ()
 {
-  static gboolean vik_very_first_run_known = FALSE;
-  static gboolean vik_very_first_run = FALSE;
+  static bool vik_very_first_run_known = false;
+  static bool vik_very_first_run = false;
 
   // use cached result if available
   if ( vik_very_first_run_known )
     return vik_very_first_run;
 
-  gchar *dir = a_get_viking_dir_no_create();
+  char *dir = a_get_viking_dir_no_create();
   // NB: will need extra logic if default dir gets changed e.g. from ~/.viking to ~/.config/viking
   if ( dir ) {
     // If directory exists - Viking has been run before
@@ -157,8 +157,8 @@ gboolean a_vik_very_first_run ()
     g_free ( dir );
   }
   else
-    vik_very_first_run = TRUE;
-  vik_very_first_run_known = TRUE;
+    vik_very_first_run = true;
+  vik_very_first_run_known = true;
 
   return vik_very_first_run;
 }
@@ -183,7 +183,7 @@ void a_vik_preferences_init ()
   tmp.u = VIK_UNITS_HEIGHT_METRES;
   a_preferences_register(&general_prefs[3], tmp, VIKING_PREFERENCES_GROUP_KEY);
 
-  tmp.b = TRUE;
+  tmp.b = true;
   a_preferences_register(&general_prefs[4], tmp, VIKING_PREFERENCES_GROUP_KEY);
 
   /* Maintain the default location to New York */
@@ -198,10 +198,10 @@ void a_vik_preferences_init ()
   // New Tab
   a_preferences_register_group ( VIKING_PREFERENCES_STARTUP_GROUP_KEY, _("Startup") );
 
-  tmp.b = FALSE;
+  tmp.b = false;
   a_preferences_register(&startup_prefs[0], tmp, VIKING_PREFERENCES_STARTUP_GROUP_KEY);
 
-  tmp.b = FALSE;
+  tmp.b = false;
   a_preferences_register(&startup_prefs[1], tmp, VIKING_PREFERENCES_STARTUP_GROUP_KEY);
 
   tmp.u = VIK_STARTUP_METHOD_HOME_LOCATION;
@@ -210,7 +210,7 @@ void a_vik_preferences_init ()
   tmp.s = "";
   a_preferences_register(&startup_prefs[3], tmp, VIKING_PREFERENCES_STARTUP_GROUP_KEY);
 
-  tmp.b = FALSE;
+  tmp.b = false;
   a_preferences_register(&startup_prefs[4], tmp, VIKING_PREFERENCES_STARTUP_GROUP_KEY);
 
   // New Tab
@@ -243,10 +243,10 @@ void a_vik_preferences_init ()
   tmp.u = VIK_FILE_REF_FORMAT_ABSOLUTE;
   a_preferences_register(&prefs_advanced[0], tmp, VIKING_PREFERENCES_ADVANCED_GROUP_KEY);
 
-  tmp.b = TRUE;
+  tmp.b = true;
   a_preferences_register(&prefs_advanced[1], tmp, VIKING_PREFERENCES_ADVANCED_GROUP_KEY);
 
-  tmp.b = TRUE;
+  tmp.b = true;
   a_preferences_register(&prefs_advanced[2], tmp, VIKING_PREFERENCES_ADVANCED_GROUP_KEY);
 
   tmp.i = 10; // Seemingly GTK's default for the number of recent files
@@ -281,23 +281,23 @@ vik_units_height_t a_vik_get_units_height ( )
   return units;
 }
 
-gboolean a_vik_get_use_large_waypoint_icons ( )
+bool a_vik_get_use_large_waypoint_icons ( )
 {
-  gboolean use_large_waypoint_icons;
+  bool use_large_waypoint_icons;
   use_large_waypoint_icons = a_preferences_get(VIKING_PREFERENCES_NAMESPACE "use_large_waypoint_icons")->b;
   return use_large_waypoint_icons;
 }
 
-gdouble a_vik_get_default_lat ( )
+double a_vik_get_default_lat ( )
 {
-  gdouble data;
+  double data;
   data = a_preferences_get(VIKING_PREFERENCES_NAMESPACE "default_latitude")->d;
   return data;
 }
 
-gdouble a_vik_get_default_long ( )
+double a_vik_get_default_long ( )
 {
-  gdouble data;
+  double data;
   data = a_preferences_get(VIKING_PREFERENCES_NAMESPACE "default_longitude")->d;
   return data;
 }
@@ -325,24 +325,24 @@ vik_gpx_export_trk_sort_t a_vik_get_gpx_export_trk_sort ( )
 
 vik_gpx_export_wpt_sym_name_t a_vik_gpx_export_wpt_sym_name ( )
 {
-  gboolean val;
+  bool val;
   val = a_preferences_get(VIKING_PREFERENCES_IO_NAMESPACE "gpx_export_wpt_sym_names")->b;
   return val;
 }
 
 #ifndef WINDOWS
-const gchar* a_vik_get_image_viewer ( )
+const char* a_vik_get_image_viewer ( )
 {
   return a_preferences_get(VIKING_PREFERENCES_IO_NAMESPACE "image_viewer")->s;
 }
 #endif
 
-const gchar* a_vik_get_external_gpx_program_1 ( )
+const char* a_vik_get_external_gpx_program_1 ( )
 {
   return a_preferences_get(VIKING_PREFERENCES_IO_NAMESPACE "external_gpx_1")->s;
 }
 
-const gchar* a_vik_get_external_gpx_program_2 ( )
+const char* a_vik_get_external_gpx_program_2 ( )
 {
   return a_preferences_get(VIKING_PREFERENCES_IO_NAMESPACE "external_gpx_2")->s;
 }
@@ -355,32 +355,32 @@ vik_file_ref_format_t a_vik_get_file_ref_format ( )
   return format;
 }
 
-gboolean a_vik_get_ask_for_create_track_name ( )
+bool a_vik_get_ask_for_create_track_name ( )
 {
   return a_preferences_get(VIKING_PREFERENCES_ADVANCED_NAMESPACE "ask_for_create_track_name")->b;
 }
 
-gboolean a_vik_get_create_track_tooltip ( )
+bool a_vik_get_create_track_tooltip ( )
 {
   return a_preferences_get(VIKING_PREFERENCES_ADVANCED_NAMESPACE "create_track_tooltip")->b;
 }
 
-gint a_vik_get_recent_number_files ( )
+int a_vik_get_recent_number_files ( )
 {
   return a_preferences_get(VIKING_PREFERENCES_ADVANCED_NAMESPACE "number_recent_files")->i;
 }
 
 // Startup Options
-gboolean a_vik_get_restore_window_state ( )
+bool a_vik_get_restore_window_state ( )
 {
-  gboolean data;
+  bool data;
   data = a_preferences_get(VIKING_PREFERENCES_STARTUP_NAMESPACE "restore_window_state")->b;
   return data;
 }
 
-gboolean a_vik_get_add_default_map_layer ( )
+bool a_vik_get_add_default_map_layer ( )
 {
-  gboolean data;
+  bool data;
   data = a_preferences_get(VIKING_PREFERENCES_STARTUP_NAMESPACE "add_default_map_layer")->b;
   return data;
 }
@@ -392,12 +392,12 @@ vik_startup_method_t a_vik_get_startup_method ( )
   return data;
 }
 
-const gchar *a_vik_get_startup_file ( )
+const char *a_vik_get_startup_file ( )
 {
   return a_preferences_get(VIKING_PREFERENCES_STARTUP_NAMESPACE "startup_file")->s;
 }
 
-gboolean a_vik_get_check_version ( )
+bool a_vik_get_check_version ( )
 {
   return a_preferences_get(VIKING_PREFERENCES_STARTUP_NAMESPACE "check_version")->b;
 }

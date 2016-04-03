@@ -36,17 +36,17 @@
  * For external use, free the result
  * Made externally available primarily to detect when Viking is first run
  */
-gchar *a_get_viking_dir_no_create()
+char *a_get_viking_dir_no_create()
 {
   // TODO: use g_get_user_config_dir ?
 
-  const gchar *home = g_getenv("HOME");
+  const char *home = g_getenv("HOME");
   if (!home || g_access(home, W_OK))
     home = g_get_home_dir ();
 #ifdef HAVE_MKDTEMP
   if (!home || g_access(home, W_OK))
     {
-      static gchar temp[] = {"/tmp/vikXXXXXX"};
+      static char temp[] = {"/tmp/vikXXXXXX"};
       home = mkdtemp(temp);
     }
 #endif
@@ -62,13 +62,13 @@ gchar *a_get_viking_dir_no_create()
 #endif
 }
 
-static gchar *viking_dir = NULL;
+static char *viking_dir = NULL;
 
-const gchar *a_get_viking_dir()
+const char *a_get_viking_dir()
 {
   if (!viking_dir) {
     viking_dir = a_get_viking_dir_no_create ();
-    if (g_file_test(viking_dir, G_FILE_TEST_EXISTS) == FALSE)
+    if (g_file_test(viking_dir, G_FILE_TEST_EXISTS) == false)
       if ( g_mkdir(viking_dir, 0755) != 0 )
         g_warning ( "%s: Failed to create directory %s", __FUNCTION__, viking_dir );
   }
@@ -82,10 +82,10 @@ const gchar *a_get_viking_dir()
  * 
  * Retuns: the directory (can be NULL). Should be freed with g_free.
  */
-gchar *
+char *
 a_get_viking_data_home()
 {
-	const gchar *xdg_data_home = g_getenv("XDG_DATA_HOME");
+	const char *xdg_data_home = g_getenv("XDG_DATA_HOME");
 	if (xdg_data_home)
 	{
 		return g_build_filename(xdg_data_home, PACKAGE, NULL);
@@ -103,15 +103,15 @@ a_get_viking_data_home()
  *
  * Returns: list of directories to scan for data. Should be freed with g_strfreev.
  */
-gchar **
+char **
 a_get_viking_data_path()
 {
 #ifdef WINDOWS
   // Try to use from the install directory - normally the working directory of Viking is where ever it's install location is
-  const gchar *xdg_data_dirs = "./data";
-  //const gchar *xdg_data_dirs = g_strdup ( "%s/%s/data", g_getenv("ProgramFiles"), PACKAGE );
+  const char *xdg_data_dirs = "./data";
+  //const char *xdg_data_dirs = g_strdup ( "%s/%s/data", g_getenv("ProgramFiles"), PACKAGE );
 #else
-  const gchar *xdg_data_dirs = g_getenv("XDG_DATA_DIRS");
+  const char *xdg_data_dirs = g_getenv("XDG_DATA_DIRS");
 #endif
   if (xdg_data_dirs == NULL)
   {
@@ -121,14 +121,14 @@ a_get_viking_data_path()
     xdg_data_dirs = "/usr/local/share/:/usr/share/";
   }
 
-  gchar **data_path = g_strsplit(xdg_data_dirs, G_SEARCHPATH_SEPARATOR_S, 0);
+  char **data_path = g_strsplit(xdg_data_dirs, G_SEARCHPATH_SEPARATOR_S, 0);
 
 #ifndef WINDOWS
   /* Append the viking dir */
-  gchar **path;
+  char **path;
   for (path = data_path ; *path != NULL ; path++)
   {
-    gchar *dir = *path;
+    char *dir = *path;
     *path = g_build_filename(dir, PACKAGE, NULL);
     g_free(dir);
   }

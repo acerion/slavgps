@@ -36,14 +36,14 @@
 static GObjectClass *parent_class;
 
 static void webtool_bounds_finalize ( GObject *gob );
-static gchar *webtool_bounds_get_url ( VikWebtool *vw, VikWindow *vwindow );
-static gchar *webtool_bounds_get_url_at_position ( VikWebtool *vw, VikWindow *vwindow, VikCoord *vc );
+static char *webtool_bounds_get_url ( VikWebtool *vw, VikWindow *vwindow );
+static char *webtool_bounds_get_url_at_position ( VikWebtool *vw, VikWindow *vwindow, VikCoord *vc );
 
 typedef struct _VikWebtoolBoundsPrivate VikWebtoolBoundsPrivate;
 
 struct _VikWebtoolBoundsPrivate
 {
-  gchar *url;
+  char *url;
 };
 
 #define WEBTOOL_BOUNDS_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), \
@@ -61,7 +61,7 @@ enum
 
 static void
 webtool_bounds_set_property (GObject      *object,
-                             guint         property_id,
+                             unsigned int         property_id,
                              const GValue *value,
                              GParamSpec   *pspec)
 {
@@ -85,7 +85,7 @@ webtool_bounds_set_property (GObject      *object,
 
 static void
 webtool_bounds_get_property (GObject    *object,
-                             guint       property_id,
+                             unsigned int       property_id,
                              GValue     *value,
                              GParamSpec *pspec)
 {
@@ -141,7 +141,7 @@ VikWebtoolBounds *vik_webtool_bounds_new ()
   return VIK_WEBTOOL_BOUNDS ( g_object_new ( VIK_WEBTOOL_BOUNDS_TYPE, NULL ) );
 }
 
-VikWebtoolBounds *vik_webtool_bounds_new_with_members ( const gchar *label, const gchar *url )
+VikWebtoolBounds *vik_webtool_bounds_new_with_members ( const char *label, const char *url )
 {
   VikWebtoolBounds *result = VIK_WEBTOOL_BOUNDS ( g_object_new ( VIK_WEBTOOL_BOUNDS_TYPE,
                                                                  "label", label,
@@ -165,7 +165,7 @@ static void webtool_bounds_finalize ( GObject *gob )
   G_OBJECT_CLASS(parent_class)->finalize(gob);
 }
 
-static gchar *webtool_bounds_get_url ( VikWebtool *self, VikWindow *vwindow )
+static char *webtool_bounds_get_url ( VikWebtool *self, VikWindow *vwindow )
 {
   VikWebtoolBoundsPrivate *priv = NULL;
   VikViewport *viewport = NULL;
@@ -174,14 +174,14 @@ static gchar *webtool_bounds_get_url ( VikWebtool *self, VikWindow *vwindow )
   viewport = vik_window_viewport ( vwindow );
 
   // Get top left and bottom right lat/lon pairs from the viewport
-  gdouble min_lat, max_lat, min_lon, max_lon;
-  gchar sminlon[G_ASCII_DTOSTR_BUF_SIZE];
-  gchar smaxlon[G_ASCII_DTOSTR_BUF_SIZE];
-  gchar sminlat[G_ASCII_DTOSTR_BUF_SIZE];
-  gchar smaxlat[G_ASCII_DTOSTR_BUF_SIZE];
+  double min_lat, max_lat, min_lon, max_lon;
+  char sminlon[G_ASCII_DTOSTR_BUF_SIZE];
+  char smaxlon[G_ASCII_DTOSTR_BUF_SIZE];
+  char sminlat[G_ASCII_DTOSTR_BUF_SIZE];
+  char smaxlat[G_ASCII_DTOSTR_BUF_SIZE];
   vik_viewport_get_min_max_lat_lon ( viewport, &min_lat, &max_lat, &min_lon, &max_lon );
 
-  // Cannot simply use g_strdup_printf and gdouble due to locale.
+  // Cannot simply use g_strdup_printf and double due to locale.
   // As we compute an URL, we have to think in C locale.
   g_ascii_dtostr (sminlon, G_ASCII_DTOSTR_BUF_SIZE, min_lon);
   g_ascii_dtostr (smaxlon, G_ASCII_DTOSTR_BUF_SIZE, max_lon);
@@ -191,7 +191,7 @@ static gchar *webtool_bounds_get_url ( VikWebtool *self, VikWindow *vwindow )
   return g_strdup_printf ( priv->url, sminlon, smaxlon, sminlat, smaxlat );
 }
 
-static gchar *webtool_bounds_get_url_at_position ( VikWebtool *self, VikWindow *vwindow, VikCoord *vc )
+static char *webtool_bounds_get_url_at_position ( VikWebtool *self, VikWindow *vwindow, VikCoord *vc )
 {
   // TODO: could use zoom level to generate an offset from center lat/lon to get the bounds
   // For now simply use the existing function to use bounds from the viewport

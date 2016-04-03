@@ -55,16 +55,16 @@
 /* Format for URL */
 #define URL_ATTR_FMT "http://dev.virtualearth.net/REST/v1/Imagery/Metadata/Aerial/0,0?zl=1&mapVersion=v1&key=%s&include=ImageryProviders&output=xml"
 
-static gchar *bget_uri ( VikMapSourceDefault *self, MapCoord *src );
-static gchar *bget_hostname ( VikMapSourceDefault *self );
-static void _get_copyright (VikMapSource * self, LatLonBBox bbox, gdouble zoom, void (*fct)(VikViewport*,const gchar*), void *data);
+static char *bget_uri ( VikMapSourceDefault *self, MapCoord *src );
+static char *bget_hostname ( VikMapSourceDefault *self );
+static void _get_copyright (VikMapSource * self, LatLonBBox bbox, double zoom, void (*fct)(VikViewport*,const char*), void *data);
 static const GdkPixbuf *_get_logo ( VikMapSource *self );
 static int _load_attributions ( BingMapSource *self );
 static void _async_load_attributions ( BingMapSource *self );
 
 struct _Attribution
 {
-	gchar *attribution;
+	char *attribution;
 	int minZoom;
 	int maxZoom;
 	LatLonBBox bounds;
@@ -73,13 +73,13 @@ struct _Attribution
 typedef struct _BingMapSourcePrivate BingMapSourcePrivate;
 struct _BingMapSourcePrivate
 {
-	gchar *hostname;
-	gchar *url;
-	gchar *api_key;
+	char *hostname;
+	char *url;
+	char *api_key;
 	GList *attributions;
 	/* Current attribution, when parsing */
-	gchar *attribution;
-	gboolean loading_attributions;
+	char *attribution;
+	bool loading_attributions;
 };
 
 /* The pixbuf to store the logo */
@@ -110,7 +110,7 @@ bing_map_source_init (BingMapSource *self)
 	priv->api_key = NULL;
 	priv->attributions = NULL;
 	priv->attribution = NULL;
-	priv->loading_attributions = FALSE;
+	priv->loading_attributions = false;
 }
 
 static void
@@ -131,7 +131,7 @@ bing_map_source_finalize (GObject *object)
 
 static void
 _set_property (GObject      *object,
-               guint         property_id,
+               unsigned int         property_id,
                const GValue *value,
                GParamSpec   *pspec)
 {
@@ -163,7 +163,7 @@ _set_property (GObject      *object,
 
 static void
 _get_property (GObject    *object,
-               guint       property_id,
+               unsigned int       property_id,
                GValue     *value,
                GParamSpec *pspec)
 {
@@ -233,14 +233,14 @@ bing_map_source_class_init (BingMapSourceClass *klass)
 	
 	object_class->finalize = bing_map_source_finalize;
 
-	pixbuf = gdk_pixbuf_from_pixdata ( &bing_maps_pixbuf, TRUE, NULL );
+	pixbuf = gdk_pixbuf_from_pixdata ( &bing_maps_pixbuf, true, NULL );
 }
 
-static gchar *
+static char *
 compute_quad_tree(int zoom, int tilex, int tiley)
 {
 	/* Picked from http://trac.openstreetmap.org/browser/applications/editors/josm/plugins/slippymap/src/org/openstreetmap/josm/plugins/slippymap/SlippyMapPreferences.java?rev=24486 */
-	gchar k[20];
+	char k[20];
 	int ik = 0;
 	int i = 0;
 	for(i = zoom; i > 0; i--)
@@ -259,19 +259,19 @@ compute_quad_tree(int zoom, int tilex, int tiley)
 	return g_strdup(k);
 }
 
-static gchar *
+static char *
 bget_uri( VikMapSourceDefault *self, MapCoord *src )
 {
 	g_return_val_if_fail (BING_IS_MAP_SOURCE(self), NULL);
 
 	BingMapSourcePrivate *priv = BING_MAP_SOURCE_GET_PRIVATE(self);
-	gchar *quadtree = compute_quad_tree (17 - src->scale, src->x, src->y);
-	gchar *uri = g_strdup_printf ( priv->url, quadtree );
+	char *quadtree = compute_quad_tree (17 - src->scale, src->x, src->y);
+	char *uri = g_strdup_printf ( priv->url, quadtree );
 	g_free (quadtree);
 	return uri;
 } 
 
-static gchar *
+static char *
 bget_hostname( VikMapSourceDefault *self )
 {
 	g_return_val_if_fail (BING_IS_MAP_SOURCE(self), NULL);
@@ -287,7 +287,7 @@ _get_logo( VikMapSource *self )
 }
 
 static void
-_get_copyright(VikMapSource * self, LatLonBBox bbox, gdouble zoom, void (*fct)(VikViewport*,const gchar*), void *data)
+_get_copyright(VikMapSource * self, LatLonBBox bbox, double zoom, void (*fct)(VikViewport*,const char*), void *data)
 {
 	g_return_if_fail (BING_IS_MAP_SOURCE(self));
 	g_debug("%s: looking for %g %g %g %g at %g", __FUNCTION__, bbox.south, bbox.north, bbox.east, bbox.west, zoom);
@@ -321,15 +321,15 @@ _get_copyright(VikMapSource * self, LatLonBBox bbox, gdouble zoom, void (*fct)(V
 /* Called for open tags <foo bar="baz"> */
 static void
 bstart_element (GMarkupParseContext *context,
-                const gchar         *element_name,
-                const gchar        **attribute_names,
-                const gchar        **attribute_values,
-                gpointer             user_data,
+                const char         *element_name,
+                const char        **attribute_names,
+                const char        **attribute_values,
+                void *             user_data,
                 GError             **error)
 {
 	BingMapSource *self = BING_MAP_SOURCE (user_data);
 	BingMapSourcePrivate *priv = BING_MAP_SOURCE_GET_PRIVATE (self);
-	const gchar *element = g_markup_parse_context_get_element (context);
+	const char *element = g_markup_parse_context_get_element (context);
 	if (strcmp (element, "CoverageArea") == 0) {
 		/* New Attribution */
 		struct _Attribution *attribution = g_malloc0 (sizeof(struct _Attribution));
@@ -342,21 +342,21 @@ bstart_element (GMarkupParseContext *context,
 /* text is not nul-terminated */
 static void
 btext (GMarkupParseContext *context,
-       const gchar         *text,
-       gsize                text_len,  
-       gpointer             user_data,
+       const char         *text,
+       size_t                text_len,  
+       void *             user_data,
        GError             **error)
 {
 	BingMapSource *self = BING_MAP_SOURCE (user_data);
 	BingMapSourcePrivate *priv = BING_MAP_SOURCE_GET_PRIVATE (self);
 
 	struct _Attribution *attribution = priv->attributions == NULL ? NULL : g_list_last (priv->attributions)->data;
-	const gchar *element = g_markup_parse_context_get_element (context);
-	gchar *textl = g_strndup (text, text_len);
+	const char *element = g_markup_parse_context_get_element (context);
+	char *textl = g_strndup (text, text_len);
 	const GSList *stack = g_markup_parse_context_get_element_stack (context);
 	int len = g_slist_length ((GSList *)stack);
 
-	const gchar *parent = len > 1 ? g_slist_nth_data ((GSList *)stack, 1) : NULL;
+	const char *parent = len > 1 ? g_slist_nth_data ((GSList *)stack, 1) : NULL;
 	if (strcmp (element, "Attribution") == 0) {
 		g_free (priv->attribution);
 		priv->attribution = g_strdup (textl);
@@ -385,19 +385,19 @@ btext (GMarkupParseContext *context,
 	g_free(textl);
 }
 
-static gboolean
-_parse_file_for_attributions(BingMapSource *self, gchar *filename)
+static bool
+_parse_file_for_attributions(BingMapSource *self, char *filename)
 {
 	GMarkupParser xml_parser;
 	GMarkupParseContext *xml_context = NULL;
 	GError *error = NULL;
 	BingMapSourcePrivate *priv = BING_MAP_SOURCE_GET_PRIVATE (self);
-	g_return_val_if_fail(priv != NULL, FALSE);
+	g_return_val_if_fail(priv != NULL, false);
 
 	FILE *file = g_fopen (filename, "r");
 	if (file == NULL)
 		/* TODO emit warning */
-		return FALSE;
+		return false;
 	
 	/* setup context parse (ie callbacks) */
 	xml_parser.start_element = &bstart_element;
@@ -408,11 +408,11 @@ _parse_file_for_attributions(BingMapSource *self, gchar *filename)
 	
 	xml_context = g_markup_parse_context_new(&xml_parser, 0, self, NULL);
 
-	gchar buff[BUFSIZ];
+	char buff[BUFSIZ];
 	size_t nb;
 	size_t offset = -1;
 	while (xml_context &&
-	       (nb = fread (buff, sizeof(gchar), BUFSIZ, file)) > 0)
+	       (nb = fread (buff, sizeof(char), BUFSIZ, file)) > 0)
 	{
 		if (offset == -1)
 			/* first run */
@@ -451,7 +451,7 @@ _parse_file_for_attributions(BingMapSource *self, gchar *filename)
 		}
 	}
 
-	return TRUE;
+	return true;
 }
 
 static int
@@ -460,10 +460,10 @@ _load_attributions ( BingMapSource *self )
 	int ret = 0;  /* OK */
 
 	BingMapSourcePrivate *priv = BING_MAP_SOURCE_GET_PRIVATE (self);
-	priv->loading_attributions = TRUE;
-	gchar *uri = g_strdup_printf(URL_ATTR_FMT, priv->api_key);
+	priv->loading_attributions = true;
+	char *uri = g_strdup_printf(URL_ATTR_FMT, priv->api_key);
 
-	gchar *tmpname = a_download_uri_to_tmp_file ( uri, vik_map_source_default_get_download_options(VIK_MAP_SOURCE_DEFAULT(self)) );
+	char *tmpname = a_download_uri_to_tmp_file ( uri, vik_map_source_default_get_download_options(VIK_MAP_SOURCE_DEFAULT(self)) );
 	if ( !tmpname ) {
 		ret = -1;
 		goto done;
@@ -477,13 +477,13 @@ _load_attributions ( BingMapSource *self )
 	(void)g_remove(tmpname);
 	g_free(tmpname);
 done:
-	priv->loading_attributions = FALSE;
+	priv->loading_attributions = false;
 	g_free(uri);
 	return ret;
 }
 
 static int
-_emit_update ( gpointer data )
+_emit_update ( void * data )
 {
 	gdk_threads_enter();
 	/* TODO
@@ -494,7 +494,7 @@ _emit_update ( gpointer data )
 }
 
 static int
-_load_attributions_thread ( BingMapSource *self, gpointer threaddata )
+_load_attributions_thread ( BingMapSource *self, void * threaddata )
 {
 	_load_attributions ( self );
 	int result = a_background_thread_progress ( threaddata, 1.0 );
@@ -535,7 +535,7 @@ _async_load_attributions ( BingMapSource *self )
  * Returns: a newly allocated BingMapSource GObject.
  */
 BingMapSource *
-bing_map_source_new_with_id (guint16 id, const gchar *label, const gchar *key)
+bing_map_source_new_with_id (uint16_t id, const char *label, const char *key)
 {
 	/* initialize settings here */
 	return g_object_new(BING_TYPE_MAP_SOURCE,
@@ -545,7 +545,7 @@ bing_map_source_new_with_id (guint16 id, const gchar *label, const gchar *key)
 						"hostname", "ecn.t2.tiles.virtualearth.net",
 						"url", "/tiles/a%s.jpeg?g=587",
 						"api-key", key,
-						"check-file-server-time", TRUE,
+						"check-file-server-time", true,
 						"zoom-min", 0,
 						"zoom-max", 19, // NB: Might be regionally different rather than the same across the world
 						"copyright", "© 2011 Microsoft Corporation and/or its suppliers",

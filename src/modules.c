@@ -111,12 +111,12 @@ modules_register_routing_engine(VikGobjectBuilder *self, GObject *object)
 }
 
 static void
-modules_load_config_dir(const gchar *dir)
+modules_load_config_dir(const char *dir)
 {
   g_debug("Loading configurations from directory %s", dir);
 
   /* Maps sources */
-  gchar *maps = g_build_filename(dir, VIKING_MAPS_FILE, NULL);
+  char *maps = g_build_filename(dir, VIKING_MAPS_FILE, NULL);
   if (g_access (maps, R_OK) == 0)
   {
 	VikGobjectBuilder *builder = vik_gobject_builder_new ();
@@ -127,7 +127,7 @@ modules_load_config_dir(const gchar *dir)
   g_free ( maps );
 
   /* External tools */
-  gchar *tools = g_build_filename(dir, VIKING_EXTTOOLS_FILE, NULL);
+  char *tools = g_build_filename(dir, VIKING_EXTTOOLS_FILE, NULL);
   if (g_access (tools, R_OK) == 0)
   {
 	VikGobjectBuilder *builder = vik_gobject_builder_new ();
@@ -137,7 +137,7 @@ modules_load_config_dir(const gchar *dir)
   }
   g_free ( tools );
 
-  gchar *datasources = g_build_filename(dir, VIKING_DATASOURCES_FILE, NULL);
+  char *datasources = g_build_filename(dir, VIKING_DATASOURCES_FILE, NULL);
   if (g_access (datasources, R_OK) == 0)
   {
 	VikGobjectBuilder *builder = vik_gobject_builder_new ();
@@ -148,7 +148,7 @@ modules_load_config_dir(const gchar *dir)
   g_free ( datasources );
 
   /* Go-to search engines */
-  gchar *go_to = g_build_filename(dir, VIKING_GOTOTOOLS_FILE, NULL);
+  char *go_to = g_build_filename(dir, VIKING_GOTOTOOLS_FILE, NULL);
   if (g_access (go_to, R_OK) == 0)
   {
 	VikGobjectBuilder *builder = vik_gobject_builder_new ();
@@ -159,7 +159,7 @@ modules_load_config_dir(const gchar *dir)
   g_free ( go_to );
 
   /* Routing engines */
-  gchar *routing = g_build_filename(dir, VIKING_ROUTING_FILE, NULL);
+  char *routing = g_build_filename(dir, VIKING_ROUTING_FILE, NULL);
   if (g_access (routing, R_OK) == 0)
   {
 	VikGobjectBuilder *builder = vik_gobject_builder_new ();
@@ -174,7 +174,7 @@ static void
 modules_load_config(void)
 {
   /* Look in the directories of data path */
-  gchar * * data_dirs = a_get_viking_data_path();
+  char * * data_dirs = a_get_viking_data_path();
   /* Priority is standard one:
      left element is more important than right one.
      But our logic is to load all existing files and overwrite
@@ -190,7 +190,7 @@ modules_load_config(void)
   /* Check if system config is set */
   modules_load_config_dir(VIKING_SYSCONFDIR);
 
-  const gchar *data_home = a_get_viking_data_home ();
+  const char *data_home = a_get_viking_data_home ();
   if (data_home)
   {
     modules_load_config_dir(data_home);

@@ -30,20 +30,20 @@
 #include "vikenumtypes.h"
 #include "download.h"
 
-static void map_source_get_copyright (VikMapSource *self, LatLonBBox bbox, gdouble zoom, void (*fct)(VikViewport*,const gchar*), void *data);
-static const gchar *map_source_get_license (VikMapSource *self);
-static const gchar *map_source_get_license_url (VikMapSource *self);
+static void map_source_get_copyright (VikMapSource *self, LatLonBBox bbox, double zoom, void (*fct)(VikViewport*,const char*), void *data);
+static const char *map_source_get_license (VikMapSource *self);
+static const char *map_source_get_license_url (VikMapSource *self);
 static const GdkPixbuf *map_source_get_logo (VikMapSource *self);
 
-static const gchar *map_source_get_name (VikMapSource *self);
-static guint16 map_source_get_uniq_id (VikMapSource *self);
-static const gchar *map_source_get_label (VikMapSource *self);
-static guint16 map_source_get_tilesize_x (VikMapSource *self);
-static guint16 map_source_get_tilesize_y (VikMapSource *self);
+static const char *map_source_get_name (VikMapSource *self);
+static uint16_t map_source_get_uniq_id (VikMapSource *self);
+static const char *map_source_get_label (VikMapSource *self);
+static uint16_t map_source_get_tilesize_x (VikMapSource *self);
+static uint16_t map_source_get_tilesize_y (VikMapSource *self);
 static VikViewportDrawMode map_source_get_drawmode (VikMapSource *self);
-static const gchar *map_source_get_file_extension (VikMapSource *self);
+static const char *map_source_get_file_extension (VikMapSource *self);
 
-static DownloadResult_t _download ( VikMapSource *self, MapCoord *src, const gchar *dest_fn, void *handle );
+static DownloadResult_t _download ( VikMapSource *self, MapCoord *src, const char *dest_fn, void *handle );
 static void * _download_handle_init ( VikMapSource *self );
 static void _download_handle_cleanup ( VikMapSource *self, void *handle );
 
@@ -51,18 +51,18 @@ typedef struct _VikMapSourceDefaultPrivate VikMapSourceDefaultPrivate;
 struct _VikMapSourceDefaultPrivate
 {
 	/* legal stuff */
-	gchar *copyright;
-	gchar *license;
-	gchar *license_url;
+	char *copyright;
+	char *license;
+	char *license_url;
 	GdkPixbuf *logo;
 
-	gchar *name;
-	guint16 uniq_id;
-	gchar *label;
-	guint16 tilesize_x;
-	guint16 tilesize_y;
+	char *name;
+	uint16_t uniq_id;
+	char *label;
+	uint16_t tilesize_x;
+	uint16_t tilesize_y;
 	VikViewportDrawMode drawmode;
-	gchar *file_extension;
+	char *file_extension;
 };
 
 #define VIK_MAP_SOURCE_DEFAULT_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), VIK_TYPE_MAP_SOURCE_DEFAULT, VikMapSourceDefaultPrivate))
@@ -127,7 +127,7 @@ vik_map_source_default_finalize (GObject *object)
 
 static void
 vik_map_source_default_set_property (GObject      *object,
-                                     guint         property_id,
+                                     unsigned int         property_id,
                                      const GValue *value,
                                      GParamSpec   *pspec)
 {
@@ -194,7 +194,7 @@ vik_map_source_default_set_property (GObject      *object,
 
 static void
 vik_map_source_default_get_property (GObject    *object,
-                                     guint       property_id,
+                                     unsigned int       property_id,
                                      GValue     *value,
                                      GParamSpec *pspec)
 {
@@ -364,7 +364,7 @@ vik_map_source_default_class_init (VikMapSourceDefaultClass *klass)
 }
 
 static void
-map_source_get_copyright (VikMapSource *self, LatLonBBox bbox, gdouble zoom, void (*fct)(VikViewport*,const gchar*), void *data)
+map_source_get_copyright (VikMapSource *self, LatLonBBox bbox, double zoom, void (*fct)(VikViewport*,const char*), void *data)
 {
 	/* Just ignore bbox and zoom level */
 	g_return_if_fail (VIK_IS_MAP_SOURCE_DEFAULT(self));
@@ -374,7 +374,7 @@ map_source_get_copyright (VikMapSource *self, LatLonBBox bbox, gdouble zoom, voi
 	(*fct) (data, priv->copyright);
 }
 
-static const gchar *
+static const char *
 map_source_get_license (VikMapSource *self)
 {
 	g_return_val_if_fail (VIK_IS_MAP_SOURCE_DEFAULT(self), NULL);
@@ -384,7 +384,7 @@ map_source_get_license (VikMapSource *self)
 	return priv->license;
 }
 
-static const gchar *
+static const char *
 map_source_get_license_url (VikMapSource *self)
 {
 	g_return_val_if_fail (VIK_IS_MAP_SOURCE_DEFAULT(self), NULL);
@@ -404,7 +404,7 @@ map_source_get_logo (VikMapSource *self)
 	return priv->logo;
 }
 
-static const gchar *
+static const char *
 map_source_get_name (VikMapSource *self)
 {
 	g_return_val_if_fail (VIK_IS_MAP_SOURCE_DEFAULT(self), NULL);
@@ -412,17 +412,17 @@ map_source_get_name (VikMapSource *self)
 	return priv->name;
 }
 
-static guint16
+static uint16_t
 map_source_get_uniq_id (VikMapSource *self)
 {
-	g_return_val_if_fail (VIK_IS_MAP_SOURCE_DEFAULT(self), (guint16)0);
+	g_return_val_if_fail (VIK_IS_MAP_SOURCE_DEFAULT(self), (uint16_t)0);
 	
 	VikMapSourceDefaultPrivate *priv = VIK_MAP_SOURCE_DEFAULT_PRIVATE(self);
 
 	return priv->uniq_id;
 }
 
-static const gchar *
+static const char *
 map_source_get_label (VikMapSource *self)
 {
 	g_return_val_if_fail (VIK_IS_MAP_SOURCE_DEFAULT(self), NULL);
@@ -432,20 +432,20 @@ map_source_get_label (VikMapSource *self)
 	return priv->label;
 }
 
-static guint16
+static uint16_t
 map_source_get_tilesize_x (VikMapSource *self)
 {
-	g_return_val_if_fail (VIK_IS_MAP_SOURCE_DEFAULT(self), (guint16)0);
+	g_return_val_if_fail (VIK_IS_MAP_SOURCE_DEFAULT(self), (uint16_t)0);
 
     VikMapSourceDefaultPrivate *priv = VIK_MAP_SOURCE_DEFAULT_PRIVATE(self);
 
 	return priv->tilesize_x;
 }
 
-static guint16
+static uint16_t
 map_source_get_tilesize_y (VikMapSource *self)
 {
-	g_return_val_if_fail (VIK_IS_MAP_SOURCE_DEFAULT(self), (guint16)0);
+	g_return_val_if_fail (VIK_IS_MAP_SOURCE_DEFAULT(self), (uint16_t)0);
 
     VikMapSourceDefaultPrivate *priv = VIK_MAP_SOURCE_DEFAULT_PRIVATE(self);
 
@@ -463,10 +463,10 @@ map_source_get_drawmode (VikMapSource *self)
 }
 
 static DownloadResult_t
-_download ( VikMapSource *self, MapCoord *src, const gchar *dest_fn, void *handle )
+_download ( VikMapSource *self, MapCoord *src, const char *dest_fn, void *handle )
 {
-   gchar *uri = vik_map_source_default_get_uri(VIK_MAP_SOURCE_DEFAULT(self), src);
-   gchar *host = vik_map_source_default_get_hostname(VIK_MAP_SOURCE_DEFAULT(self));
+   char *uri = vik_map_source_default_get_uri(VIK_MAP_SOURCE_DEFAULT(self), src);
+   char *host = vik_map_source_default_get_hostname(VIK_MAP_SOURCE_DEFAULT(self));
    DownloadFileOptions *options = vik_map_source_default_get_download_options(VIK_MAP_SOURCE_DEFAULT(self));
    DownloadResult_t res = a_http_download_get_url ( host, uri, dest_fn, options, handle );
    g_free ( uri );
@@ -474,7 +474,7 @@ _download ( VikMapSource *self, MapCoord *src, const gchar *dest_fn, void *handl
    return res;
 }
 
-static const gchar *
+static const char *
 map_source_get_file_extension (VikMapSource *self)
 {
     g_return_val_if_fail (VIK_IS_MAP_SOURCE_DEFAULT(self), NULL);
@@ -495,7 +495,7 @@ _download_handle_cleanup ( VikMapSource *self, void *handle )
    a_download_handle_cleanup ( handle );
 }
 
-gchar *
+char *
 vik_map_source_default_get_uri( VikMapSourceDefault *self, MapCoord *src )
 {
 	VikMapSourceDefaultClass *klass;
@@ -508,7 +508,7 @@ vik_map_source_default_get_uri( VikMapSourceDefault *self, MapCoord *src )
 	return (*klass->get_uri)(self, src);
 }
 
-gchar *
+char *
 vik_map_source_default_get_hostname( VikMapSourceDefault *self )
 {
 	VikMapSourceDefaultClass *klass;

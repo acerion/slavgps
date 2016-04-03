@@ -26,7 +26,7 @@
 
 typedef struct {
   VikDEM *dem;
-  guint ref_count;
+  unsigned int ref_count;
 } LoadedDEM;
 
 GHashTable *loaded_dems = NULL;
@@ -47,7 +47,7 @@ void a_dems_uninit ()
 /* To load a dem. if it was already loaded, will simply
  * reference the one already loaded and return it.
  */
-VikDEM *a_dems_load(const gchar *filename)
+VikDEM *a_dems_load(const char *filename)
 {
   LoadedDEM *ldem;
 
@@ -71,7 +71,7 @@ VikDEM *a_dems_load(const gchar *filename)
   }
 }
 
-void a_dems_unref(const gchar *filename)
+void a_dems_unref(const char *filename)
 {
   LoadedDEM *ldem = (LoadedDEM *) g_hash_table_lookup ( loaded_dems, filename );
   if ( !ldem ) {
@@ -87,7 +87,7 @@ void a_dems_unref(const gchar *filename)
  * assumes that its in there already,
  * although it could not be if earlier load failed.
  */
-VikDEM *a_dems_get(const gchar *filename)
+VikDEM *a_dems_get(const char *filename)
 {
   LoadedDEM *ldem = g_hash_table_lookup ( loaded_dems, filename );
   if ( ldem )
@@ -107,13 +107,13 @@ VikDEM *a_dems_get(const gchar *filename)
  * we need to know that they weren't referenced though when we
  * do the a_dems_list_free().
  */
-int a_dems_load_list ( GList **dems, gpointer threaddata )
+int a_dems_load_list ( GList **dems, void * threaddata )
 {
   GList *iter = *dems;
-  guint dem_count = 0;
-  const guint dem_total = g_list_length ( *dems );
+  unsigned int dem_count = 0;
+  const unsigned int dem_total = g_list_length ( *dems );
   while ( iter ) {
-    if ( ! a_dems_load((const gchar *) (iter->data)) ) {
+    if ( ! a_dems_load((const char *) (iter->data)) ) {
       GList *iter_temp = iter->next;
       g_free ( iter->data );
       (*dems) = g_list_remove_link ( (*dems), iter );
@@ -125,7 +125,7 @@ int a_dems_load_list ( GList **dems, gpointer threaddata )
     if ( threaddata ) {
       dem_count++;
       /* NB Progress also detects abort request via the returned value */
-      int result = a_background_thread_progress ( threaddata, ((gdouble)dem_count) / dem_total );
+      int result = a_background_thread_progress ( threaddata, ((double)dem_count) / dem_total );
       if ( result != 0 )
 	return -1; /* Abort thread */
     }
@@ -141,7 +141,7 @@ void a_dems_list_free ( GList *dems )
 {
   GList *iter = dems;
   while ( iter ) {
-    a_dems_unref ((const gchar *)iter->data);
+    a_dems_unref ((const char *)iter->data);
     g_free ( iter->data );
     iter = iter->next;
   }
@@ -153,28 +153,28 @@ GList *a_dems_list_copy ( GList *dems )
   GList *rv = g_list_copy ( dems );
   GList *iter = rv;
   while ( iter ) {
-    if ( ! a_dems_load((const gchar *) (iter->data)) ) {
+    if ( ! a_dems_load((const char *) (iter->data)) ) {
       GList *iter_temp = iter->next; /* delete link, don't bother strdup'ing and free'ing string */
       rv = g_list_remove_link ( rv, iter );
       iter = iter_temp;
     } else {
-      iter->data = g_strdup((gchar *)iter->data); /* copy the string too. */
+      iter->data = g_strdup((char *)iter->data); /* copy the string too. */
       iter = iter->next;
     }
   }
   return rv;
 }
 
-gint16 a_dems_list_get_elev_by_coord ( GList *dems, const VikCoord *coord )
+int16_t a_dems_list_get_elev_by_coord ( GList *dems, const VikCoord *coord )
 {
   static struct UTM utm_tmp;
   static struct LatLon ll_tmp;
   GList *iter = dems;
   VikDEM *dem;
-  gint elev;
+  int elev;
 
   while ( iter ) {
-    dem = a_dems_get ( (gchar *) iter->data );
+    dem = a_dems_get ( (char *) iter->data );
     if ( dem ) {
       if ( dem->horiz_units == VIK_DEM_HORIZ_LL_ARCSECONDS ) {
         vik_coord_to_latlon ( coord, &ll_tmp );
@@ -198,13 +198,13 @@ gint16 a_dems_list_get_elev_by_coord ( GList *dems, const VikCoord *coord )
 typedef struct {
   const VikCoord *coord;
   VikDemInterpol method;
-  gint elev;
+  int elev;
 } CoordElev;
 
-static gboolean get_elev_by_coord(gpointer key, LoadedDEM *ldem, CoordElev *ce)
+static bool get_elev_by_coord(void * key, LoadedDEM *ldem, CoordElev *ce)
 {
   VikDEM *dem = ldem->dem;
-  gdouble lat, lon;
+  double lat, lon;
 
   if ( dem->horiz_units == VIK_DEM_HORIZ_LL_ARCSECONDS ) {
     struct LatLon ll_tmp;
@@ -214,12 +214,12 @@ static gboolean get_elev_by_coord(gpointer key, LoadedDEM *ldem, CoordElev *ce)
   } else if (dem->horiz_units == VIK_DEM_HORIZ_UTM_METERS) {
     static struct UTM utm_tmp;
     if (utm_tmp.zone != dem->utm_zone)
-      return FALSE;
+      return false;
     vik_coord_to_utm (ce->coord, &utm_tmp);
     lat = utm_tmp.northing;
     lon = utm_tmp.easting;
   } else
-    return FALSE;
+    return false;
 
   switch (ce->method) {
     case VIK_DEM_INTERPOL_NONE:
@@ -237,7 +237,7 @@ static gboolean get_elev_by_coord(gpointer key, LoadedDEM *ldem, CoordElev *ce)
 }
 
 /* TODO: keep a (sorted) linked list of DEMs and select the best resolution one */
-gint16 a_dems_get_elev_by_coord ( const VikCoord *coord, VikDemInterpol method )
+int16_t a_dems_get_elev_by_coord ( const VikCoord *coord, VikDemInterpol method )
 {
   CoordElev ce;
 

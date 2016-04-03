@@ -22,6 +22,9 @@
 #define _VIKING_WEBTOOL_H
 
 #include <glib.h>
+#include <stdbool.h>
+#include <stdint.h>
+
 
 #include "vikwindow.h"
 
@@ -43,8 +46,8 @@ typedef struct _VikWebtoolClass VikWebtoolClass;
 struct _VikWebtoolClass
 {
   VikExtToolClass object_class;
-  gchar *(* get_url) (VikWebtool *self, VikWindow *vwindow);
-  gchar *(* get_url_at_position) (VikWebtool *self, VikWindow *vwindow, VikCoord *vc);
+  char *(* get_url) (VikWebtool *self, VikWindow *vwindow);
+  char *(* get_url_at_position) (VikWebtool *self, VikWindow *vwindow, VikCoord *vc);
 };
 
 GType vik_webtool_get_type ();
@@ -53,8 +56,8 @@ struct _VikWebtool {
   VikExtTool obj;
 };
 
-gchar *vik_webtool_get_url ( VikWebtool *self, VikWindow *vwindow );
-gchar *vik_webtool_get_url_at_position ( VikWebtool *self, VikWindow *vwindow, VikCoord *vc );
+char *vik_webtool_get_url ( VikWebtool *self, VikWindow *vwindow );
+char *vik_webtool_get_url_at_position ( VikWebtool *self, VikWindow *vwindow, VikCoord *vc );
 
 G_END_DECLS
 

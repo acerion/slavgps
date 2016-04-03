@@ -34,22 +34,22 @@ typedef struct {
 } datasource_geojson_user_data_t;
 
 // The last used directory
-static gchar *last_folder_uri = NULL;
+static char *last_folder_uri = NULL;
 
-static gpointer datasource_geojson_init ( acq_vik_t *avt );
-static void datasource_geojson_add_setup_widgets ( GtkWidget *dialog, VikViewport *vvp, gpointer user_data );
-static void datasource_geojson_get_process_options ( datasource_geojson_user_data_t *user_data, ProcessOptions *po, gpointer not_used, const gchar *not_used2, const gchar *not_used3 );
-static gboolean datasource_geojson_process ( VikTrwLayer *vtl, ProcessOptions *process_options, BabelStatusFunc status_cb, acq_dialog_widgets_t *adw, DownloadFileOptions *options_unused );
-static void datasource_geojson_cleanup ( gpointer data );
+static void * datasource_geojson_init ( acq_vik_t *avt );
+static void datasource_geojson_add_setup_widgets ( GtkWidget *dialog, VikViewport *vvp, void * user_data );
+static void datasource_geojson_get_process_options ( datasource_geojson_user_data_t *user_data, ProcessOptions *po, void * not_used, const char *not_used2, const char *not_used3 );
+static bool datasource_geojson_process ( VikTrwLayer *vtl, ProcessOptions *process_options, BabelStatusFunc status_cb, acq_dialog_widgets_t *adw, DownloadFileOptions *options_unused );
+static void datasource_geojson_cleanup ( void * data );
 
 VikDataSourceInterface vik_datasource_geojson_interface = {
 	N_("Acquire from GeoJSON"),
 	N_("GeoJSON"),
 	VIK_DATASOURCE_AUTO_LAYER_MANAGEMENT,
 	VIK_DATASOURCE_INPUTTYPE_NONE,
-	TRUE,
-	FALSE, // We should be able to see the data on the screen so no point in keeping the dialog open
-	FALSE, // Not thread method - open each file in the main loop
+	true,
+	false, // We should be able to see the data on the screen so no point in keeping the dialog open
+	false, // Not thread method - open each file in the main loop
 	(VikDataSourceInitFunc)               datasource_geojson_init,
 	(VikDataSourceCheckExistenceFunc)     NULL,
 	(VikDataSourceAddSetupWidgetsFunc)    datasource_geojson_add_setup_widgets,
@@ -66,14 +66,14 @@ VikDataSourceInterface vik_datasource_geojson_interface = {
 	0
 };
 
-static gpointer datasource_geojson_init ( acq_vik_t *avt )
+static void * datasource_geojson_init ( acq_vik_t *avt )
 {
 	datasource_geojson_user_data_t *user_data = g_malloc(sizeof(datasource_geojson_user_data_t));
 	user_data->filelist = NULL;
 	return user_data;
 }
 
-static void datasource_geojson_add_setup_widgets ( GtkWidget *dialog, VikViewport *vvp, gpointer user_data )
+static void datasource_geojson_add_setup_widgets ( GtkWidget *dialog, VikViewport *vvp, void * user_data )
 {
 	datasource_geojson_user_data_t *ud = (datasource_geojson_user_data_t *)user_data;
 
@@ -103,16 +103,16 @@ static void datasource_geojson_add_setup_widgets ( GtkWidget *dialog, VikViewpor
 	gtk_file_chooser_set_filter ( chooser, filter );
 
 	// Allow selecting more than one
-	gtk_file_chooser_set_select_multiple ( chooser, TRUE );
+	gtk_file_chooser_set_select_multiple ( chooser, true );
 
 	// Packing all widgets
 	GtkBox *box = GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog)));
-	gtk_box_pack_start ( box, ud->files, TRUE, TRUE, 0 );
+	gtk_box_pack_start ( box, ud->files, true, true, 0 );
 
 	gtk_widget_show_all ( dialog );
 }
 
-static void datasource_geojson_get_process_options ( datasource_geojson_user_data_t *userdata, ProcessOptions *po, gpointer not_used, const gchar *not_used2, const gchar *not_used3 )
+static void datasource_geojson_get_process_options ( datasource_geojson_user_data_t *userdata, ProcessOptions *po, void * not_used, const char *not_used2, const char *not_used3 )
 {
 	// Retrieve the files selected
 	userdata->filelist = gtk_file_chooser_get_filenames ( GTK_FILE_CHOOSER(userdata->files) ); // Not reusable !!
@@ -131,25 +131,25 @@ static void datasource_geojson_get_process_options ( datasource_geojson_user_dat
 /**
  * Process selected files and try to generate waypoints storing them in the given vtl
  */
-static gboolean datasource_geojson_process ( VikTrwLayer *vtl, ProcessOptions *process_options, BabelStatusFunc status_cb, acq_dialog_widgets_t *adw, DownloadFileOptions *options_unused )
+static bool datasource_geojson_process ( VikTrwLayer *vtl, ProcessOptions *process_options, BabelStatusFunc status_cb, acq_dialog_widgets_t *adw, DownloadFileOptions *options_unused )
 {
 	datasource_geojson_user_data_t *user_data = (datasource_geojson_user_data_t *)adw->user_data;
 
 	// Process selected files
 	GSList *cur_file = user_data->filelist;
 	while ( cur_file ) {
-		gchar *filename = cur_file->data;
+		char *filename = cur_file->data;
 
-		gchar *gpx_filename = a_geojson_import_to_gpx ( filename );
+		char *gpx_filename = a_geojson_import_to_gpx ( filename );
 		if ( gpx_filename ) {
 			// Important that this process is run in the main thread
-			vik_window_open_file ( adw->vw, gpx_filename, FALSE );
+			vik_window_open_file ( adw->vw, gpx_filename, false );
 			// Delete the temporary file
 			(void)g_remove (gpx_filename);
 			g_free (gpx_filename);
 		}
 		else {
-			gchar* msg = g_strdup_printf ( _("Unable to import from: %s"), filename );
+			char* msg = g_strdup_printf ( _("Unable to import from: %s"), filename );
 			vik_window_statusbar_update ( adw->vw, msg, VIK_STATUSBAR_INFO );
 			g_free (msg);
 		}
@@ -162,10 +162,10 @@ static gboolean datasource_geojson_process ( VikTrwLayer *vtl, ProcessOptions *p
 	g_slist_free ( user_data->filelist );
 
 	// No failure
-	return TRUE;
+	return true;
 }
 
-static void datasource_geojson_cleanup ( gpointer data )
+static void datasource_geojson_cleanup ( void * data )
 {
 	g_free ( data );
 }

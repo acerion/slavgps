@@ -41,20 +41,20 @@ static GHashTable *last_user_strings = NULL;
 
 static void webtool_datasource_finalize ( GObject *gob );
 
-static gchar *webtool_datasource_get_url ( VikWebtool *self, VikWindow *vw );
+static char *webtool_datasource_get_url ( VikWebtool *self, VikWindow *vw );
 
-static gboolean webtool_needs_user_string ( VikWebtool *self );
+static bool webtool_needs_user_string ( VikWebtool *self );
 
 typedef struct _VikWebtoolDatasourcePrivate VikWebtoolDatasourcePrivate;
 
 struct _VikWebtoolDatasourcePrivate
 {
-	gchar *url;
-	gchar *url_format_code;
-	gchar *file_type;
-	gchar *babel_filter_args;
-    gchar *input_label;
-	gchar *user_string;
+	char *url;
+	char *url_format_code;
+	char *file_type;
+	char *babel_filter_args;
+    char *input_label;
+	char *user_string;
 };
 
 #define WEBTOOL_DATASOURCE_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), \
@@ -74,7 +74,7 @@ enum
 };
 
 static void webtool_datasource_set_property (GObject      *object,
-                                             guint         property_id,
+                                             unsigned int         property_id,
                                              const GValue *value,
                                              GParamSpec   *pspec)
 {
@@ -121,7 +121,7 @@ static void webtool_datasource_set_property (GObject      *object,
 }
 
 static void webtool_datasource_get_property (GObject    *object,
-                                             guint       property_id,
+                                             unsigned int       property_id,
                                              GValue     *value,
                                              GParamSpec *pspec)
 {
@@ -161,23 +161,23 @@ static void ensure_last_user_strings_hash() {
 }
 
 
-static gchar *get_last_user_string ( const datasource_t *source ) {
+static char *get_last_user_string ( const datasource_t *source ) {
     ensure_last_user_strings_hash();
-    gchar *label = vik_ext_tool_get_label ( source->self );
-    gchar *last_str = g_hash_table_lookup ( last_user_strings, label );
+    char *label = vik_ext_tool_get_label ( source->self );
+    char *last_str = g_hash_table_lookup ( last_user_strings, label );
     g_free( label );
     return last_str;
 }
 
 
-static void set_last_user_string ( const datasource_t *source, const gchar *s ) {
+static void set_last_user_string ( const datasource_t *source, const char *s ) {
     ensure_last_user_strings_hash();
     g_hash_table_insert ( last_user_strings, 
                           vik_ext_tool_get_label ( source->self ), 
                           g_strdup ( s ) );
 }
 
-static gpointer datasource_init ( acq_vik_t *avt )
+static void * datasource_init ( acq_vik_t *avt )
 {
 	datasource_t *data = g_malloc(sizeof(*data));
 	data->self = avt->userdata;
@@ -187,16 +187,16 @@ static gpointer datasource_init ( acq_vik_t *avt )
 	return data;
 }
 
-static void datasource_add_setup_widgets ( GtkWidget *dialog, VikViewport *vvp, gpointer user_data )
+static void datasource_add_setup_widgets ( GtkWidget *dialog, VikViewport *vvp, void * user_data )
 {
 	datasource_t *widgets = (datasource_t *)user_data;
 	VikWebtoolDatasourcePrivate *priv = WEBTOOL_DATASOURCE_GET_PRIVATE ( widgets->self );
 	GtkWidget *user_string_label;
-    gchar *label = g_strdup_printf( "%s:", priv->input_label );
+    char *label = g_strdup_printf( "%s:", priv->input_label );
 	user_string_label = gtk_label_new ( label );
 	widgets->user_string = gtk_entry_new ( );
 
-    gchar *last_str = get_last_user_string ( widgets );
+    char *last_str = get_last_user_string ( widgets );
     if ( last_str )
         gtk_entry_set_text( GTK_ENTRY( widgets->user_string ), last_str );
 
@@ -205,8 +205,8 @@ static void datasource_add_setup_widgets ( GtkWidget *dialog, VikViewport *vvp, 
 
 	/* Packing all widgets */
 	GtkBox *box = GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog)));
-	gtk_box_pack_start ( box, user_string_label, FALSE, FALSE, 5 );
-	gtk_box_pack_start ( box, widgets->user_string, FALSE, FALSE, 5 );
+	gtk_box_pack_start ( box, user_string_label, false, false, 5 );
+	gtk_box_pack_start ( box, widgets->user_string, false, false, 5 );
 	gtk_widget_show_all ( dialog );
 	gtk_dialog_set_default_response ( GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT );
 	// NB presently the focus is overridden later on by the acquire.c code.
@@ -217,7 +217,7 @@ static void datasource_add_setup_widgets ( GtkWidget *dialog, VikViewport *vvp, 
 
 
 
-static void datasource_get_process_options ( gpointer user_data, ProcessOptions *po, DownloadFileOptions *options, const gchar *notused1, const gchar *notused2 )
+static void datasource_get_process_options ( void * user_data, ProcessOptions *po, DownloadFileOptions *options, const char *notused1, const char *notused2 )
 {
 	datasource_t *data = (datasource_t*) user_data;
 
@@ -232,7 +232,7 @@ static void datasource_get_process_options ( gpointer user_data, ProcessOptions 
         }
     }
 
-	gchar *url = vik_webtool_get_url ( vwd, data->vw );
+	char *url = vik_webtool_get_url ( vwd, data->vw );
 	g_debug ("%s: %s", __FUNCTION__, url );
 
 	po->url = g_strdup ( url );
@@ -241,7 +241,7 @@ static void datasource_get_process_options ( gpointer user_data, ProcessOptions 
 	// One can't use values like 'kml -x transform,rte=wpt' in order to do fancy things
 	//  since it won't be in the right order for the overall GPSBabel command
 	// So prevent any potentially dangerous behaviour
-	gchar **parts = NULL;
+	char **parts = NULL;
 	if ( priv->file_type )
 		parts = g_strsplit ( priv->file_type, " ", 0);
 	if ( parts )
@@ -254,14 +254,14 @@ static void datasource_get_process_options ( gpointer user_data, ProcessOptions 
 	po->babel_filters = priv->babel_filter_args;
 }
 
-static void cleanup ( gpointer data )
+static void cleanup ( void * data )
 {
 	g_free ( data );
 }
 
 static void webtool_datasource_open ( VikExtTool *self, VikWindow *vw )
 {
-	gboolean search = webtool_needs_user_string ( VIK_WEBTOOL ( self ) );
+	bool search = webtool_needs_user_string ( VIK_WEBTOOL ( self ) );
 
 	// Use VikDataSourceInterface to give thready goodness controls of downloading stuff (i.e. can cancel the request)
 
@@ -274,9 +274,9 @@ static void webtool_datasource_open ( VikExtTool *self, VikWindow *vw )
 		vik_ext_tool_get_label (self),
 		VIK_DATASOURCE_ADDTOLAYER,
 		VIK_DATASOURCE_INPUTTYPE_NONE,
-		FALSE, // Maintain current view - rather than setting it to the acquired points
-		TRUE,
-		TRUE,
+		false, // Maintain current view - rather than setting it to the acquired points
+		true,
+		true,
 		(VikDataSourceInitFunc)               datasource_init,
 		(VikDataSourceCheckExistenceFunc)     NULL,
 		(VikDataSourceAddSetupWidgetsFunc)    (search ? datasource_add_setup_widgets : NULL),
@@ -371,12 +371,12 @@ VikWebtoolDatasource *vik_webtool_datasource_new ()
 	return VIK_WEBTOOL_DATASOURCE ( g_object_new ( VIK_WEBTOOL_DATASOURCE_TYPE, NULL ) );
 }
 
-VikWebtoolDatasource *vik_webtool_datasource_new_with_members ( const gchar *label,
-                                                                const gchar *url,
-                                                                const gchar *url_format_code,
-                                                                const gchar *file_type,
-                                                                const gchar *babel_filter_args,
-                                                                const gchar *input_label )
+VikWebtoolDatasource *vik_webtool_datasource_new_with_members ( const char *label,
+                                                                const char *url,
+                                                                const char *url_format_code,
+                                                                const char *file_type,
+                                                                const char *babel_filter_args,
+                                                                const char *input_label )
 {
 	VikWebtoolDatasource *result = VIK_WEBTOOL_DATASOURCE ( g_object_new ( VIK_WEBTOOL_DATASOURCE_TYPE,
 	                                                        "label", label,
@@ -419,20 +419,20 @@ static void webtool_datasource_finalize ( GObject *gob )
  * Calculate individual elements (similarly to the VikWebtool Bounds & Center) for *all* potential values
  * Then only values specified by the URL format are used in parameterizing the URL
  */
-static gchar *webtool_datasource_get_url ( VikWebtool *self, VikWindow *vw )
+static char *webtool_datasource_get_url ( VikWebtool *self, VikWindow *vw )
 {
 	VikWebtoolDatasourcePrivate *priv = WEBTOOL_DATASOURCE_GET_PRIVATE ( self );
 	VikViewport *viewport = vik_window_viewport ( vw );
 
 	// Get top left and bottom right lat/lon pairs from the viewport
-	gdouble min_lat, max_lat, min_lon, max_lon;
-	gchar sminlon[G_ASCII_DTOSTR_BUF_SIZE];
-	gchar smaxlon[G_ASCII_DTOSTR_BUF_SIZE];
-	gchar sminlat[G_ASCII_DTOSTR_BUF_SIZE];
-	gchar smaxlat[G_ASCII_DTOSTR_BUF_SIZE];
+	double min_lat, max_lat, min_lon, max_lon;
+	char sminlon[G_ASCII_DTOSTR_BUF_SIZE];
+	char smaxlon[G_ASCII_DTOSTR_BUF_SIZE];
+	char sminlat[G_ASCII_DTOSTR_BUF_SIZE];
+	char smaxlat[G_ASCII_DTOSTR_BUF_SIZE];
 	vik_viewport_get_min_max_lat_lon ( viewport, &min_lat, &max_lat, &min_lon, &max_lon );
 
-	// Cannot simply use g_strdup_printf and gdouble due to locale.
+	// Cannot simply use g_strdup_printf and double due to locale.
 	// As we compute an URL, we have to think in C locale.
 	g_ascii_dtostr (sminlon, G_ASCII_DTOSTR_BUF_SIZE, min_lon);
 	g_ascii_dtostr (smaxlon, G_ASCII_DTOSTR_BUF_SIZE, max_lon);
@@ -444,26 +444,26 @@ static gchar *webtool_datasource_get_url ( VikWebtool *self, VikWindow *vw )
 	struct LatLon ll;
 	vik_coord_to_latlon ( coord, &ll );
 
-	gchar scenterlat[G_ASCII_DTOSTR_BUF_SIZE];
-	gchar scenterlon[G_ASCII_DTOSTR_BUF_SIZE];
+	char scenterlat[G_ASCII_DTOSTR_BUF_SIZE];
+	char scenterlon[G_ASCII_DTOSTR_BUF_SIZE];
 	g_ascii_dtostr (scenterlat, G_ASCII_DTOSTR_BUF_SIZE, ll.lat);
 	g_ascii_dtostr (scenterlon, G_ASCII_DTOSTR_BUF_SIZE, ll.lon);
 
-	guint8 zoom = 17; // A zoomed in default
+	uint8_t zoom = 17; // A zoomed in default
 	// zoom - ideally x & y factors need to be the same otherwise use the default
 	if ( vik_viewport_get_xmpp ( viewport ) == vik_viewport_get_ympp ( viewport ) )
 		zoom = map_utils_mpp_to_zoom_level ( vik_viewport_get_zoom ( viewport ) );
 
-	gchar szoom[G_ASCII_DTOSTR_BUF_SIZE];
+	char szoom[G_ASCII_DTOSTR_BUF_SIZE];
 	g_snprintf ( szoom, G_ASCII_DTOSTR_BUF_SIZE, "%d", zoom );
 
-	gint len = 0;
+	int len = 0;
 	if ( priv->url_format_code )
 		len = strlen ( priv->url_format_code );
 	if ( len > MAX_NUMBER_CODES )
 		len = MAX_NUMBER_CODES;
 
-	gchar* values[MAX_NUMBER_CODES];
+	char* values[MAX_NUMBER_CODES];
 	int i;
 	for ( i = 0; i < MAX_NUMBER_CODES; i++ ) {
 		values[i] = '\0';
@@ -483,7 +483,7 @@ static gchar *webtool_datasource_get_url ( VikWebtool *self, VikWindow *vw )
 		}
 	}
 
-	gchar *url = g_strdup_printf ( priv->url, values[0], values[1], values[2], values[3], values[4], values[5], values[6] );
+	char *url = g_strdup_printf ( priv->url, values[0], values[1], values[2], values[3], values[4], values[5], values[6] );
 
 	for ( i = 0; i < MAX_NUMBER_CODES; i++ ) {
 		if ( values[i] != '\0' )
@@ -517,7 +517,7 @@ char* strcasestr2(const char *dst, const char *src)
  * Returns true if the URL format contains 'S' -- that is, a search term entry
  * box needs to be displayed
  */
-static gboolean webtool_needs_user_string ( VikWebtool *self )
+static bool webtool_needs_user_string ( VikWebtool *self )
 {
 	VikWebtoolDatasourcePrivate *priv = WEBTOOL_DATASOURCE_GET_PRIVATE ( self );
 	// For some reason (my) Windows build gets built with -D_GNU_SOURCE

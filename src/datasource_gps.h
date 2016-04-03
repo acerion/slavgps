@@ -23,22 +23,25 @@
 #ifndef _DATASOURCE_GPS_H
 #define _DATASOURCE_GPS_H
 
+#include <stdbool.h>
+#include <stdint.h>
+
 #include "viking.h"
 #include "gtk/gtk.h"
 
 G_BEGIN_DECLS
 
-gpointer datasource_gps_setup ( GtkWidget *dialog, vik_gps_xfer_type xfer, gboolean xfer_all );
-void datasource_gps_clean_up ( gpointer user_data );
+void * datasource_gps_setup ( GtkWidget *dialog, vik_gps_xfer_type xfer, bool xfer_all );
+void datasource_gps_clean_up ( void * user_data );
 
-gchar* datasource_gps_get_protocol ( gpointer user_data );
-gchar* datasource_gps_get_descriptor ( gpointer user_data );
+char* datasource_gps_get_protocol ( void * user_data );
+char* datasource_gps_get_descriptor ( void * user_data );
 
-gboolean datasource_gps_get_do_tracks ( gpointer user_data );
-gboolean datasource_gps_get_do_routes ( gpointer user_data );
-gboolean datasource_gps_get_do_waypoints ( gpointer user_data );
+bool datasource_gps_get_do_tracks ( void * user_data );
+bool datasource_gps_get_do_routes ( void * user_data );
+bool datasource_gps_get_do_waypoints ( void * user_data );
 
-gboolean datasource_gps_get_off ( gpointer user_data );
+bool datasource_gps_get_off ( void * user_data );
 
 G_END_DECLS
 

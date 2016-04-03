@@ -22,6 +22,9 @@
 #ifndef _VIKING_GEOREFLAYER_H
 #define _VIKING_GEOREFLAYER_H
 
+#include <stdbool.h>
+#include <stdint.h>
+
 #include "viklayer.h"
 
 G_BEGIN_DECLS
@@ -46,7 +49,7 @@ void vik_georef_layer_init (void);
 
 VikGeorefLayer *vik_georef_layer_create ( VikViewport *vp,
                                           VikLayersPanel *vlp,
-                                          const gchar *name,
+                                          const char *name,
                                           GdkPixbuf *pibxbuf,
                                           VikCoord *coord_tr,
                                           VikCoord *coord_br );

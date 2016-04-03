@@ -22,6 +22,9 @@
 #ifndef _VIKING_VIKCOORD_H
 #define _VIKING_VIKCOORD_H
 
+#include <stdbool.h>
+#include <stdint.h>
+
 #include "coords.h"
 
 G_BEGIN_DECLS
@@ -34,10 +37,10 @@ typedef gshort VikCoordMode;
 #define VIK_LATLON(x) ((struct LatLon *)(x))
 
 typedef struct {
-  gdouble north_south; /* northing or lat */
-  gdouble east_west;   /* easting or lon */
-  gchar utm_zone;
-  gchar utm_letter;
+  double north_south; /* northing or lat */
+  double east_west;   /* easting or lon */
+  char utm_zone;
+  char utm_letter;
 
   VikCoordMode mode;
 } VikCoord;
@@ -46,7 +49,7 @@ typedef struct {
 
 void vik_coord_convert(VikCoord *coord, VikCoordMode dest_mode);
 void vik_coord_copy_convert(const VikCoord *coord, VikCoordMode dest_mode, VikCoord *dest);
-gdouble vik_coord_diff(const VikCoord *c1, const VikCoord *c2);
+double vik_coord_diff(const VikCoord *c1, const VikCoord *c2);
 
 void vik_coord_load_from_latlon ( VikCoord *coord, VikCoordMode mode, const struct LatLon *ll );
 void vik_coord_load_from_utm ( VikCoord *coord, VikCoordMode mode, const struct UTM *utm );
@@ -54,10 +57,10 @@ void vik_coord_load_from_utm ( VikCoord *coord, VikCoordMode mode, const struct 
 void vik_coord_to_latlon ( const VikCoord *coord, struct LatLon *dest );
 void vik_coord_to_utm ( const VikCoord *coord, struct UTM *dest );
 
-gboolean vik_coord_equals ( const VikCoord *coord1, const VikCoord *coord2 );
+bool vik_coord_equals ( const VikCoord *coord1, const VikCoord *coord2 );
 
 void vik_coord_set_area(const VikCoord *coord, const struct LatLon *wh, VikCoord *tl, VikCoord *br);
-gboolean vik_coord_inside(const VikCoord *coord, const VikCoord *tl, const VikCoord *br);
+bool vik_coord_inside(const VikCoord *coord, const VikCoord *tl, const VikCoord *br);
 /* all coord operations MUST BE ABSTRACTED!!! */
 
 G_END_DECLS

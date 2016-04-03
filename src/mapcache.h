@@ -24,24 +24,27 @@
 
 #include <glib.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
+#include <stdbool.h>
+#include <stdint.h>
+
 
 G_BEGIN_DECLS
 
 typedef struct {
-  gdouble duration; // Mostly for Mapnik Rendering duration - negative values indicate not rendered (i.e. read from disk)
+  double duration; // Mostly for Mapnik Rendering duration - negative values indicate not rendered (i.e. read from disk)
 } mapcache_extra_t;
 
 void a_mapcache_init ();
-void a_mapcache_add ( GdkPixbuf *pixbuf, mapcache_extra_t extra, gint x, gint y, gint z, guint16 type, gint zoom, guint8 alpha, gdouble xshrinkfactor, gdouble yshrinkfactor, const gchar *name );
-GdkPixbuf *a_mapcache_get ( gint x, gint y, gint z, guint16 type, gint zoom, guint8 alpha, gdouble xshrinkfactor, gdouble yshrinkfactor, const gchar *name );
-mapcache_extra_t a_mapcache_get_extra ( gint x, gint y, gint z, guint16 type, gint zoom, guint8 alpha, gdouble xshrinkfactor, gdouble yshrinkfactor, const gchar* name );
-void a_mapcache_remove_all_shrinkfactors ( gint x, gint y, gint z, guint16 type, gint zoom, const gchar* name );
+void a_mapcache_add ( GdkPixbuf *pixbuf, mapcache_extra_t extra, int x, int y, int z, uint16_t type, int zoom, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const char *name );
+GdkPixbuf *a_mapcache_get ( int x, int y, int z, uint16_t type, int zoom, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const char *name );
+mapcache_extra_t a_mapcache_get_extra ( int x, int y, int z, uint16_t type, int zoom, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const char* name );
+void a_mapcache_remove_all_shrinkfactors ( int x, int y, int z, uint16_t type, int zoom, const char* name );
 void a_mapcache_flush ();
-void a_mapcache_flush_type ( guint16 type );
+void a_mapcache_flush_type ( uint16_t type );
 void a_mapcache_uninit ();
 
-gint a_mapcache_get_size ();
-gint a_mapcache_get_count ();
+int a_mapcache_get_size ();
+int a_mapcache_get_count ();
 
 G_END_DECLS
 

@@ -26,16 +26,16 @@
 #include "acquire.h"
 #include "geonamessearch.h"
 
-static gboolean datasource_wikipedia_process ( VikTrwLayer *vtl, ProcessOptions *po, BabelStatusFunc status_cb, acq_dialog_widgets_t *adw );
+static bool datasource_wikipedia_process ( VikTrwLayer *vtl, ProcessOptions *po, BabelStatusFunc status_cb, acq_dialog_widgets_t *adw );
 
 VikDataSourceInterface vik_datasource_wikipedia_interface = {
   N_("Create Waypoints from Wikipedia Articles"),
   N_("Wikipedia Waypoints"),
   VIK_DATASOURCE_AUTO_LAYER_MANAGEMENT,
   VIK_DATASOURCE_INPUTTYPE_NONE,
-  FALSE,
-  FALSE, // Not even using the dialog
-  FALSE, // Own method for getting data - does not fit encapsulation with current thread logic
+  false,
+  false, // Not even using the dialog
+  false, // Own method for getting data - does not fit encapsulation with current thread logic
   (VikDataSourceInitFunc)               NULL,
   (VikDataSourceCheckExistenceFunc)	    NULL,
   (VikDataSourceAddSetupWidgetsFunc)    NULL,
@@ -56,7 +56,7 @@ VikDataSourceInterface vik_datasource_wikipedia_interface = {
 /**
  * Process selected files and try to generate waypoints storing them in the given vtl
  */
-static gboolean datasource_wikipedia_process ( VikTrwLayer *vtl, ProcessOptions *po, BabelStatusFunc status_cb, acq_dialog_widgets_t *adw )
+static bool datasource_wikipedia_process ( VikTrwLayer *vtl, ProcessOptions *po, BabelStatusFunc status_cb, acq_dialog_widgets_t *adw )
 {
 	struct LatLon maxmin[2] = { {0.0,0.0}, {0.0,0.0} };
 
@@ -65,8 +65,8 @@ static gboolean datasource_wikipedia_process ( VikTrwLayer *vtl, ProcessOptions 
 
 	if ( vtl ) {
 		a_geonames_wikipedia_box ( adw->vw, vtl, maxmin );
-		return TRUE;
+		return true;
 	}
 	else
-		return FALSE;
+		return false;
 }

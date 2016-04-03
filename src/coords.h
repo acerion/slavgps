@@ -36,19 +36,22 @@ renaming functions and defining LatLon and UTM structs.
 #define _VIKING_COORDS_H
 
 #include <glib.h>
+#include <stdbool.h>
+#include <stdint.h>
+
 
 G_BEGIN_DECLS
 
 struct UTM {
-  gdouble northing;
-  gdouble easting;
-  gchar zone;
-  gchar letter;
+  double northing;
+  double easting;
+  char zone;
+  char letter;
 };
 
 struct LatLon {
-  gdouble lat;
-  gdouble lon;
+  double lat;
+  double lon;
 };
 
 int a_coords_utm_equal( const struct UTM *utm1, const struct UTM *utm2 );
@@ -72,7 +75,7 @@ char *a_coords_dtostr ( double d );
  *
  * Use the prefered representation.
  */
-void a_coords_latlon_to_string ( const struct LatLon *latlon, gchar **lat, gchar **lon );
+void a_coords_latlon_to_string ( const struct LatLon *latlon, char **lat, char **lon );
 
 G_END_DECLS
 

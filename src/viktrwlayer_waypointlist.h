@@ -22,16 +22,19 @@
 #ifndef _VIKING_TRWLAYER_WAYPOINTLIST_H
 #define _VIKING_TRWLAYER_WAYPOINTLIST_H
 
+#include <stdbool.h>
+#include <stdint.h>
+
 #include "vikwaypoint.h"
 #include "viktrwlayer.h"
 
 G_BEGIN_DECLS
 
-void vik_trw_layer_waypoint_list_show_dialog ( gchar *title,
+void vik_trw_layer_waypoint_list_show_dialog ( char *title,
                                                VikLayer *vl,
-                                               gpointer user_data,
+                                               void * user_data,
                                                VikTrwlayerGetWaypointsAndLayersFunc get_waypoints_and_layers_cb,
-                                               gboolean is_aggregate );
+                                               bool is_aggregate );
 
 G_END_DECLS
 

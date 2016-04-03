@@ -23,6 +23,9 @@
 #define __VIK_GOTO_XML_TOOL_H
 
 #include <glib.h>
+#include <stdbool.h>
+#include <stdint.h>
+
 
 #include "vikwindow.h"
 

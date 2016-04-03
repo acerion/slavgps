@@ -23,28 +23,31 @@
 #define __VIKING_UTILS_H
 
 #include <glib.h>
+#include <stdbool.h>
+#include <stdint.h>
+
 #include "viktrwlayer.h"
 
 G_BEGIN_DECLS
 
-gchar* vu_trackpoint_formatted_message ( gchar *format_code, VikTrackpoint *trkpt, VikTrackpoint *trkpt_prev, VikTrack *trk, gdouble climb );
+char* vu_trackpoint_formatted_message ( char *format_code, VikTrackpoint *trkpt, VikTrackpoint *trkpt_prev, VikTrack *trk, double climb );
 
 void vu_check_latest_version ( GtkWindow *window );
 
 void vu_set_auto_features_on_first_run ( void );
 
-gchar *vu_get_canonical_filename ( VikLayer *vl, const gchar *filename );
+char *vu_get_canonical_filename ( VikLayer *vl, const char *filename );
 
-gchar* vu_get_time_string ( time_t *time, const gchar *format, const VikCoord *vc, const gchar *gtz );
+char* vu_get_time_string ( time_t *time, const char *format, const VikCoord *vc, const char *gtz );
 
-gchar* vu_get_tz_at_location ( const VikCoord* vc );
+char* vu_get_tz_at_location ( const VikCoord* vc );
 
 void vu_setup_lat_lon_tz_lookup ();
 void vu_finalize_lat_lon_tz_lookup ();
 
-void vu_command_line ( VikWindow *vw, gdouble latitude, gdouble longitude, gint zoom_osm_level, gint map_id );
+void vu_command_line ( VikWindow *vw, double latitude, double longitude, int zoom_osm_level, int map_id );
 
-void vu_copy_label_menu ( GtkWidget *widget, guint button );
+void vu_copy_label_menu ( GtkWidget *widget, unsigned int button );
 
 void vu_zoom_to_show_latlons ( VikCoordMode mode, VikViewport *vvp, struct LatLon maxmin[2] );
 

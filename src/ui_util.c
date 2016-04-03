@@ -39,11 +39,11 @@
 
 /*
 #ifndef WINDOWS
-static gboolean spawn_command_line_async(const gchar * cmd,
-                                         const gchar * arg)
+static bool spawn_command_line_async(const char * cmd,
+                                         const char * arg)
 {
-  gchar *cmdline = NULL;
-  gboolean status;
+  char *cmdline = NULL;
+  bool status;
 
   cmdline = g_strdup_printf("%s '%s'", cmd, arg);
   g_debug("Running: %s", cmdline);
@@ -60,7 +60,7 @@ static gboolean spawn_command_line_async(const gchar * cmd,
 // Annoyingly gtk_show_uri() doesn't work so resort to ShellExecute method
 //   (non working at least in our Windows build with GTK+2.24.10 on Windows 7)
 
-void open_url(GtkWindow *parent, const gchar * url)
+void open_url(GtkWindow *parent, const char * url)
 {
 #ifdef WINDOWS
   ShellExecute(NULL, NULL, (char *) url, NULL, ".\\", 0);
@@ -74,9 +74,9 @@ void open_url(GtkWindow *parent, const gchar * url)
 #endif
 }
 
-void new_email(GtkWindow *parent, const gchar * address)
+void new_email(GtkWindow *parent, const char * address)
 {
-  gchar *uri = g_strdup_printf("mailto:%s", address);
+  char *uri = g_strdup_printf("mailto:%s", address);
   GError *error = NULL;
   gtk_show_uri ( gtk_widget_get_screen (GTK_WIDGET(parent)), uri, GDK_CURRENT_TIME, &error );
   if ( error ) {
@@ -101,7 +101,7 @@ void new_email(GtkWindow *parent, const gchar * address)
  * @param text Button label text, can include mnemonics.
  * @return The new @c GtkButton.
  */
-GtkWidget *ui_button_new_with_image(const gchar *stock_id, const gchar *text)
+GtkWidget *ui_button_new_with_image(const char *stock_id, const char *text)
 {
 	GtkWidget *image, *button;
 
@@ -119,12 +119,12 @@ GtkWidget *ui_button_new_with_image(const gchar *stock_id, const gchar *text)
  * @param default_value The default value in case the value could not be read.
  * @return The value for the property if it exists, otherwise the @a default_value.
  */
-gint ui_get_gtk_settings_integer(const gchar *property_name, gint default_value)
+int ui_get_gtk_settings_integer(const char *property_name, int default_value)
 {
 	if (g_object_class_find_property(G_OBJECT_GET_CLASS(G_OBJECT(
 		gtk_settings_get_default())), property_name))
 	{
-		gint value;
+		int value;
 		g_object_get(G_OBJECT(gtk_settings_get_default()), property_name, &value, NULL);
 		return value;
 	}
@@ -143,7 +143,7 @@ gint ui_get_gtk_settings_integer(const gchar *property_name, gint default_value)
  * @see ui_hookup_widget().
  *
  */
-GtkWidget *ui_lookup_widget(GtkWidget *widget, const gchar *widget_name)
+GtkWidget *ui_lookup_widget(GtkWidget *widget, const char *widget_name)
 {
 	GtkWidget *parent, *found_widget;
 
@@ -174,24 +174,24 @@ GtkWidget *ui_lookup_widget(GtkWidget *widget, const gchar *widget_name)
  * @param text String to display - maybe NULL
  * @return The label widget
  */
-GtkWidget* ui_label_new_selectable ( const gchar* text )
+GtkWidget* ui_label_new_selectable ( const char* text )
 {
 	GtkWidget *widget = gtk_label_new ( text );
-	gtk_label_set_selectable ( GTK_LABEL(widget), TRUE );
+	gtk_label_set_selectable ( GTK_LABEL(widget), true );
 	return widget;
 }
 
 /**
  * Apply the alpha value to the specified pixbuf
  */
-GdkPixbuf *ui_pixbuf_set_alpha ( GdkPixbuf *pixbuf, guint8 alpha )
+GdkPixbuf *ui_pixbuf_set_alpha ( GdkPixbuf *pixbuf, uint8_t alpha )
 {
-  guchar *pixels;
-  gint width, height, iii, jjj;
+  unsigned char *pixels;
+  int width, height, iii, jjj;
 
   if ( ! gdk_pixbuf_get_has_alpha ( pixbuf ) )
   {
-    GdkPixbuf *tmp = gdk_pixbuf_add_alpha(pixbuf,FALSE,0,0,0);
+    GdkPixbuf *tmp = gdk_pixbuf_add_alpha(pixbuf,false,0,0,0);
     g_object_unref(G_OBJECT(pixbuf));
     pixbuf = tmp;
     if ( !pixbuf )
@@ -217,14 +217,14 @@ GdkPixbuf *ui_pixbuf_set_alpha ( GdkPixbuf *pixbuf, guint8 alpha )
 /**
  * Reduce the alpha value of the specified pixbuf by alpha / 255
  */
-GdkPixbuf *ui_pixbuf_scale_alpha ( GdkPixbuf *pixbuf, guint8 alpha )
+GdkPixbuf *ui_pixbuf_scale_alpha ( GdkPixbuf *pixbuf, uint8_t alpha )
 {
-  guchar *pixels;
-  gint width, height, iii, jjj;
+  unsigned char *pixels;
+  int width, height, iii, jjj;
 
   if ( ! gdk_pixbuf_get_has_alpha ( pixbuf ) )
   {
-    GdkPixbuf *tmp = gdk_pixbuf_add_alpha(pixbuf,FALSE,0,0,0);
+    GdkPixbuf *tmp = gdk_pixbuf_add_alpha(pixbuf,false,0,0,0);
     g_object_unref(G_OBJECT(pixbuf));
     pixbuf = tmp;
     if ( !pixbuf )
@@ -240,7 +240,7 @@ GdkPixbuf *ui_pixbuf_scale_alpha ( GdkPixbuf *pixbuf, guint8 alpha )
   {
     pixels += 3;
     if ( *pixels != 0 )
-      *pixels = (guint8)(((guint16)*pixels * (guint16)alpha) / 255);
+      *pixels = (uint8_t)(((uint16_t)*pixels * (uint16_t)alpha) / 255);
     pixels++;
   }
   return pixbuf;
@@ -251,12 +251,12 @@ GdkPixbuf *ui_pixbuf_scale_alpha ( GdkPixbuf *pixbuf, guint8 alpha )
 /**
  *
  */
-void ui_add_recent_file ( const gchar *filename )
+void ui_add_recent_file ( const char *filename )
 {
 	if ( filename ) {
 		GtkRecentManager *manager = gtk_recent_manager_get_default();
 		GFile *file = g_file_new_for_commandline_arg ( filename );
-		gchar *uri = g_file_get_uri ( file );
+		char *uri = g_file_get_uri ( file );
 		if ( uri && manager )
 			gtk_recent_manager_add_item ( manager, uri );
 		g_object_unref( file );

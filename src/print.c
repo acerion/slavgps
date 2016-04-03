@@ -43,7 +43,7 @@ typedef enum
 } PrintCenterMode;
 
 typedef struct {
-  gchar *name;
+  char *name;
   PrintCenterMode mode;
 } PrintCenterName;
 
@@ -56,25 +56,25 @@ static const PrintCenterName center_modes[] = {
 };
 
 typedef struct {
-  gint                num_pages;
-  gboolean            show_info_header;
+  int                num_pages;
+  bool            show_info_header;
   VikWindow           *vw;
   VikViewport         *vvp;
-  gdouble             xmpp, ympp;  /* zoom level (meters/pixel) */
-  gdouble             xres;
-  gdouble             yres;
-  gint                width;
-  gint                height;
-  gdouble             offset_x;
-  gdouble             offset_y;
+  double             xmpp, ympp;  /* zoom level (meters/pixel) */
+  double             xres;
+  double             yres;
+  int                width;
+  int                height;
+  double             offset_x;
+  double             offset_y;
   PrintCenterMode     center;
-  gboolean            use_full_page;
+  bool            use_full_page;
   GtkPrintOperation  *operation;
 } PrintData;
 
 static GtkWidget *create_custom_widget_cb(GtkPrintOperation *operation, PrintData *data);
 static void begin_print(GtkPrintOperation *operation, GtkPrintContext *context, PrintData *data);
-static void draw_page(GtkPrintOperation *print, GtkPrintContext *context, gint page_nr, PrintData *data);
+static void draw_page(GtkPrintOperation *print, GtkPrintContext *context, int page_nr, PrintData *data);
 static void end_print(GtkPrintOperation *operation, GtkPrintContext *context,  PrintData *data);
 
 void a_print(VikWindow *vw, VikViewport *vvp)
@@ -97,7 +97,7 @@ void a_print(VikWindow *vw, VikViewport *vvp)
   data.offset_x      = 0;
   data.offset_y      = 0;
   data.center        = VIK_PRINT_CENTER_BOTH;
-  data.use_full_page = FALSE;
+  data.use_full_page = false;
   data.operation     = print_oper;
 
   data.xmpp          = vik_viewport_get_xmpp(vvp);
@@ -148,36 +148,36 @@ static void end_print(GtkPrintOperation *operation,
 
 }
 
-static void copy_row_from_rgb(guchar *surface_pixels, guchar *pixbuf_pixels, gint width)
+static void copy_row_from_rgb(unsigned char *surface_pixels, unsigned char *pixbuf_pixels, int width)
 {
-  guint32 *cairo_data = (guint32 *) surface_pixels;
-  guchar  *p;
-  gint     i;
+  uint32_t *cairo_data = (uint32_t *) surface_pixels;
+  unsigned char  *p;
+  int     i;
 
   for (i = 0, p = pixbuf_pixels; i < width; i++) {
-    guint32 r = *p++;
-    guint32 g = *p++;
-    guint32 b = *p++;
+    uint32_t r = *p++;
+    uint32_t g = *p++;
+    uint32_t b = *p++;
     cairo_data[i] = 0xFF000000 | (r << 16) | (g << 8) | b;
   }
 }
 
 #define INT_MULT(a,b,t)  ((t) = (a) * (b) + 0x80, ((((t) >> 8) + (t)) >> 8))
 #define INT_BLEND(a,b,alpha,tmp)  (INT_MULT((a) - (b), alpha, tmp) + (b))
-static void copy_row_from_rgba(guchar *surface_pixels, guchar *pixbuf_pixels, gint width)
+static void copy_row_from_rgba(unsigned char *surface_pixels, unsigned char *pixbuf_pixels, int width)
 {
-  guint32 *cairo_data = (guint32 *) surface_pixels;
-  guchar  *p;
-  gint     i;
+  uint32_t *cairo_data = (uint32_t *) surface_pixels;
+  unsigned char  *p;
+  int     i;
 
   for (i = 0, p = pixbuf_pixels; i < width; i++) {
-    guint32 r = *p++;
-    guint32 g = *p++;
-    guint32 b = *p++;
-    guint32 a = *p++;
+    uint32_t r = *p++;
+    uint32_t g = *p++;
+    uint32_t b = *p++;
+    uint32_t a = *p++;
 
     if (a != 255) {
-      guint32 tmp;
+      uint32_t tmp;
       /* composite on a white background */
       r = INT_BLEND (r, 255, a, tmp);
       g = INT_BLEND (g, 255, a, tmp);
@@ -192,16 +192,16 @@ static void draw_page_cairo(GtkPrintContext *context, PrintData *data)
   cairo_t         *cr;
   GdkPixbuf       *pixbuf_to_draw; 
   cairo_surface_t *surface;
-  guchar          *surface_pixels;
-  guchar          *pixbuf_pixels;
-  gint             stride;
-  gint             pixbuf_stride;
-  gint             pixbuf_n_channels;
-  gdouble          cr_dpi_x;
-  gdouble          cr_dpi_y;
-  gdouble          scale_x;
-  gdouble          scale_y;
-  gint             y;
+  unsigned char          *surface_pixels;
+  unsigned char          *pixbuf_pixels;
+  int             stride;
+  int             pixbuf_stride;
+  int             pixbuf_n_channels;
+  double          cr_dpi_x;
+  double          cr_dpi_y;
+  double          scale_x;
+  double          scale_y;
+  int             y;
 
   cr = gtk_print_context_get_cairo_context(context);
   pixbuf_to_draw = gdk_pixbuf_get_from_drawable(NULL,
@@ -252,7 +252,7 @@ static void draw_page_cairo(GtkPrintContext *context, PrintData *data)
 
 static void draw_page(GtkPrintOperation *print,
                       GtkPrintContext   *context,
-                      gint               page_nr,
+                      int               page_nr,
                       PrintData         *data)
 {
   // fprintf(stderr, "DEBUG: draw_page() page_nr=%d\n", page_nr);
@@ -280,16 +280,16 @@ enum
   HEIGHT
 };
 
-static gboolean scale_change_value_cb(GtkRange *range, GtkScrollType scroll, gdouble value, CustomWidgetInfo *pinfo);
-static void get_page_dimensions (CustomWidgetInfo *info, gdouble *page_width, gdouble *page_height, GtkUnit unit);
+static bool scale_change_value_cb(GtkRange *range, GtkScrollType scroll, double value, CustomWidgetInfo *pinfo);
+static void get_page_dimensions (CustomWidgetInfo *info, double *page_width, double *page_height, GtkUnit unit);
 static void center_changed_cb (GtkWidget *combo, CustomWidgetInfo *info);
-static void get_max_offsets (CustomWidgetInfo *info, gdouble *offset_x_max, gdouble *offset_y_max);
+static void get_max_offsets (CustomWidgetInfo *info, double *offset_x_max, double *offset_y_max);
 static void update_offsets (CustomWidgetInfo *info);
 
-static void set_scale_label(CustomWidgetInfo *pinfo, gdouble scale_val)
+static void set_scale_label(CustomWidgetInfo *pinfo, double scale_val)
 {
-  static const gdouble inch_to_mm = 25.4;
-  gchar label_text[64];
+  static const double inch_to_mm = 25.4;
+  char label_text[64];
 
   g_snprintf(label_text, sizeof(label_text), "<i>%.0fx%0.f mm (%.0f%%)</i>",
       inch_to_mm * pinfo->data->width / pinfo->data->xres,
@@ -300,9 +300,9 @@ static void set_scale_label(CustomWidgetInfo *pinfo, gdouble scale_val)
 
 static void set_scale_value(CustomWidgetInfo *pinfo)
 {
-  gdouble width;
-  gdouble height;
-  gdouble ratio, ratio_w, ratio_h;
+  double width;
+  double height;
+  double ratio, ratio_w, ratio_h;
 
 
   get_page_dimensions (pinfo, &width, &height, GTK_UNIT_INCH);
@@ -318,17 +318,17 @@ static void set_scale_value(CustomWidgetInfo *pinfo)
 
 static void update_page_setup (CustomWidgetInfo *pinfo)
 {
-  gdouble paper_width;
-  gdouble paper_height;
-  gdouble offset_x_max, offset_y_max;
+  double paper_width;
+  double paper_height;
+  double offset_x_max, offset_y_max;
   PrintData    *data = pinfo->data;
 
   get_page_dimensions (pinfo, &paper_width, &paper_height, GTK_UNIT_INCH);
   if ((paper_width < (pinfo->data->width / data->xres)) ||
       (paper_height < (pinfo->data->height / data->yres))) {
-    gdouble xres, yres;
-    xres = (gdouble) pinfo->data->width / paper_width;
-    yres = (gdouble) pinfo->data->height / paper_height;
+    double xres, yres;
+    xres = (double) pinfo->data->width / paper_width;
+    yres = (double) pinfo->data->height / paper_height;
     data->xres = data->yres = MAX(xres, yres);
     vik_print_preview_set_image_dpi (VIK_PRINT_PREVIEW (pinfo->preview),
                                   data->xres, data->yres);
@@ -380,7 +380,7 @@ static void page_setup_cb (GtkWidget *widget, CustomWidgetInfo *info)
 
 static void full_page_toggled_cb (GtkWidget *widget, CustomWidgetInfo *pinfo)
 {
-  gboolean active = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+  bool active = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 
   pinfo->data->use_full_page = active;
   update_page_setup (pinfo);
@@ -404,7 +404,7 @@ static void set_center_none (CustomWidgetInfo *info)
 }
 
 static void preview_offsets_changed_cb (GtkWidget *widget,
-                                        gdouble    offset_x, gdouble    offset_y,
+                                        double    offset_x, double    offset_y,
                                         CustomWidgetInfo *info)
 {
   set_center_none (info);
@@ -417,8 +417,8 @@ static void preview_offsets_changed_cb (GtkWidget *widget,
 }
 
 static void get_page_dimensions (CustomWidgetInfo *info,
-                                     gdouble       *page_width,
-                                     gdouble       *page_height,
+                                     double       *page_width,
+                                     double       *page_height,
                                      GtkUnit        unit)
 {
   GtkPageSetup *setup;
@@ -429,10 +429,10 @@ static void get_page_dimensions (CustomWidgetInfo *info,
   *page_height = gtk_page_setup_get_paper_height (setup, unit);
 
   if (!info->data->use_full_page) {
-    gdouble left_margin = gtk_page_setup_get_left_margin (setup, unit);
-    gdouble right_margin = gtk_page_setup_get_right_margin (setup, unit);
-    gdouble top_margin = gtk_page_setup_get_top_margin (setup, unit);
-    gdouble bottom_margin = gtk_page_setup_get_bottom_margin (setup, unit);
+    double left_margin = gtk_page_setup_get_left_margin (setup, unit);
+    double right_margin = gtk_page_setup_get_right_margin (setup, unit);
+    double top_margin = gtk_page_setup_get_top_margin (setup, unit);
+    double bottom_margin = gtk_page_setup_get_bottom_margin (setup, unit);
 
     *page_width -= left_margin + right_margin;
     *page_height -= top_margin + bottom_margin;
@@ -441,11 +441,11 @@ static void get_page_dimensions (CustomWidgetInfo *info,
 }
 
 static void get_max_offsets (CustomWidgetInfo *info,
-                                       gdouble *offset_x_max,
-                                       gdouble *offset_y_max)
+                                       double *offset_x_max,
+                                       double *offset_y_max)
 {
-  gdouble width;
-  gdouble height;
+  double width;
+  double height;
 
   get_page_dimensions (info, &width, &height, GTK_UNIT_POINTS);
 
@@ -459,8 +459,8 @@ static void get_max_offsets (CustomWidgetInfo *info,
 static void update_offsets (CustomWidgetInfo *info)
 {
   PrintData *data = info->data;
-  gdouble    offset_x_max;
-  gdouble    offset_y_max;
+  double    offset_x_max;
+  double    offset_y_max;
 
   get_max_offsets (info, &offset_x_max, &offset_y_max);
 
@@ -499,16 +499,16 @@ static void center_changed_cb (GtkWidget *combo, CustomWidgetInfo *info)
                                      info->data->offset_x, info->data->offset_y);
 }
 
-static gboolean scale_change_value_cb(GtkRange     *range,
+static bool scale_change_value_cb(GtkRange     *range,
                                  GtkScrollType scroll,
-                                 gdouble       value,
+                                 double       value,
                                  CustomWidgetInfo  *pinfo)
 {
-  gdouble paper_width;
-  gdouble paper_height;
-  gdouble xres, yres, res;
-  gdouble offset_x_max, offset_y_max;
-  gdouble scale = CLAMP(value, 1, 100);
+  double paper_width;
+  double paper_height;
+  double xres, yres, res;
+  double offset_x_max, offset_y_max;
+  double scale = CLAMP(value, 1, 100);
 
   get_page_dimensions (pinfo, &paper_width, &paper_height, GTK_UNIT_INCH);
   xres = pinfo->data->width * 100 / paper_width / scale;
@@ -528,7 +528,7 @@ static gboolean scale_change_value_cb(GtkRange     *range,
 
   set_scale_label(pinfo, scale);
 
-  return FALSE;
+  return false;
 }
 
 static void custom_widgets_cleanup(CustomWidgetInfo *info)
@@ -559,27 +559,27 @@ static GtkWidget *create_custom_widget_cb(GtkPrintOperation *operation, PrintDat
     gtk_print_operation_set_default_page_setup (data->operation, setup);
   }
 
-  layout = gtk_vbox_new (FALSE, 6);
+  layout = gtk_vbox_new (false, 6);
   gtk_container_set_border_width (GTK_CONTAINER (layout), 12);
 
   /*  main hbox  */
-  main_hbox = gtk_hbox_new (FALSE, 12);
-  gtk_box_pack_start (GTK_BOX (layout), main_hbox, TRUE, TRUE, 0);
+  main_hbox = gtk_hbox_new (false, 12);
+  gtk_box_pack_start (GTK_BOX (layout), main_hbox, true, true, 0);
   gtk_widget_show (main_hbox);
 
   /*  main vbox  */
-  main_vbox = gtk_vbox_new (FALSE, 12);
-  gtk_box_pack_start (GTK_BOX (main_hbox), main_vbox, FALSE, FALSE, 0);
+  main_vbox = gtk_vbox_new (false, 12);
+  gtk_box_pack_start (GTK_BOX (main_hbox), main_vbox, false, false, 0);
   gtk_widget_show (main_vbox);
 
-  vbox = gtk_vbox_new (FALSE, 6);
-  gtk_box_pack_start (GTK_BOX (main_vbox), vbox, FALSE, FALSE, 0);
+  vbox = gtk_vbox_new (false, 6);
+  gtk_box_pack_start (GTK_BOX (main_vbox), vbox, false, false, 0);
   gtk_widget_show (vbox);
 
   /* Page Size */
   button = gtk_button_new_with_mnemonic (_("_Adjust Page Size "
                                            "and Orientation"));
-  gtk_box_pack_start (GTK_BOX (main_vbox), button, FALSE, FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (main_vbox), button, false, false, 0);
   g_signal_connect (G_OBJECT (button), "clicked",
                     G_CALLBACK (page_setup_cb),
                     info);
@@ -589,13 +589,13 @@ static GtkWidget *create_custom_widget_cb(GtkPrintOperation *operation, PrintDat
   GtkWidget *combo;
   const PrintCenterName *center;
 
-  hbox = gtk_hbox_new (FALSE, 6);
-  gtk_box_pack_start (GTK_BOX (main_vbox), hbox, FALSE, FALSE, 0);
+  hbox = gtk_hbox_new (false, 6);
+  gtk_box_pack_start (GTK_BOX (main_vbox), hbox, false, false, 0);
   gtk_widget_show (hbox);
 
   label = gtk_label_new_with_mnemonic (_("C_enter:"));
   gtk_misc_set_alignment (GTK_MISC (label), 0.0, 0.5);
-  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), label, false, false, 0);
   gtk_widget_show (label);
 
   combo = vik_combo_box_text_new ();
@@ -603,7 +603,7 @@ static GtkWidget *create_custom_widget_cb(GtkPrintOperation *operation, PrintDat
     vik_combo_box_text_append (combo, _(center->name));
   }
   gtk_combo_box_set_active(GTK_COMBO_BOX(combo), VIK_PRINT_CENTER_BOTH);
-  gtk_box_pack_start (GTK_BOX (hbox), combo, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), combo, true, true, 0);
   gtk_widget_show (combo);
   gtk_label_set_mnemonic_widget (GTK_LABEL (label), combo);
   g_signal_connect(combo, "changed",
@@ -615,35 +615,35 @@ static GtkWidget *create_custom_widget_cb(GtkPrintOperation *operation, PrintDat
 
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button),
                                 data->use_full_page);
-  gtk_box_pack_start (GTK_BOX (main_vbox), button, FALSE, FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (main_vbox), button, false, false, 0);
   g_signal_connect (button, "toggled",
                     G_CALLBACK (full_page_toggled_cb),
                     info);
   gtk_widget_show (button);
 
   /* scale */
-  vbox = gtk_vbox_new (FALSE, 1);
-  gtk_box_pack_start (GTK_BOX (main_vbox), vbox, FALSE, FALSE, 0);
+  vbox = gtk_vbox_new (false, 1);
+  gtk_box_pack_start (GTK_BOX (main_vbox), vbox, false, false, 0);
   gtk_widget_show (vbox);
 
-  hbox = gtk_hbox_new (FALSE, 6);
-  gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 0);
+  hbox = gtk_hbox_new (false, 6);
+  gtk_box_pack_start (GTK_BOX (vbox), hbox, false, false, 0);
   gtk_widget_show (hbox);
 
   label = gtk_label_new_with_mnemonic (_("Image S_ize:"));
   gtk_misc_set_alignment (GTK_MISC (label), 0.0, 0.5);
-  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), label, false, false, 0);
   gtk_widget_show (label);
 
   label = gtk_label_new (NULL);
   gtk_misc_set_alignment (GTK_MISC (label), 0.0, 0.5);
   info->scale_label = label;
-  gtk_box_pack_start (GTK_BOX (hbox), info->scale_label, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), info->scale_label, true, true, 0);
   gtk_widget_show (info->scale_label);
 
   info->scale = gtk_hscale_new_with_range(1, 100, 1);
-  gtk_box_pack_start (GTK_BOX (vbox), info->scale, TRUE, TRUE, 0);
-  gtk_scale_set_draw_value(GTK_SCALE(info->scale), FALSE);
+  gtk_box_pack_start (GTK_BOX (vbox), info->scale, true, true, 0);
+  gtk_scale_set_draw_value(GTK_SCALE(info->scale), false);
   gtk_widget_show (info->scale);
   gtk_label_set_mnemonic_widget (GTK_LABEL (label), info->scale);
 
@@ -654,7 +654,7 @@ static GtkWidget *create_custom_widget_cb(GtkPrintOperation *operation, PrintDat
   info->preview = vik_print_preview_new (setup, GDK_DRAWABLE(vik_viewport_get_pixmap(data->vvp)));
   vik_print_preview_set_use_full_page (VIK_PRINT_PREVIEW(info->preview),
                                         data->use_full_page);
-  gtk_box_pack_start (GTK_BOX (main_hbox), info->preview, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (main_hbox), info->preview, true, true, 0);
   gtk_widget_show (info->preview);
 
   g_signal_connect (info->preview, "offsets-changed",
@@ -663,7 +663,7 @@ static GtkWidget *create_custom_widget_cb(GtkPrintOperation *operation, PrintDat
 
   update_page_setup (info);
 
-  gdouble offset_x_max, offset_y_max;
+  double offset_x_max, offset_y_max;
   get_max_offsets (info, &offset_x_max, &offset_y_max);
   vik_print_preview_set_image_offsets_max (VIK_PRINT_PREVIEW (info->preview),
                                             offset_x_max, offset_y_max);

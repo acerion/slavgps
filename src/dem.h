@@ -23,6 +23,9 @@
 #define __VIKING_DEM_H
 
 #include <glib.h>
+#include <stdbool.h>
+#include <stdint.h>
+
 
 G_BEGIN_DECLS
 
@@ -38,43 +41,43 @@ G_BEGIN_DECLS
 
 
 typedef struct {
-  guint n_columns;
+  unsigned int n_columns;
   GPtrArray *columns;
 
-  guint8 horiz_units;
-  guint8 orig_vert_units; /* original, always converted to meters when loading. */
-  gdouble east_scale; /* gap between samples */
-  gdouble north_scale;
+  uint8_t horiz_units;
+  uint8_t orig_vert_units; /* original, always converted to meters when loading. */
+  double east_scale; /* gap between samples */
+  double north_scale;
 
-  gdouble min_east, min_north, max_east, max_north;
+  double min_east, min_north, max_east, max_north;
 
-  guint8 utm_zone;
-  gchar utm_letter;
+  uint8_t utm_zone;
+  char utm_letter;
 } VikDEM;
 
 typedef struct {
   /* east-west coordinate for ALL items in the column */
-  gdouble east_west;
+  double east_west;
 
   /* coordinate of northern and southern boundaries */
-  gdouble south;
-//  gdouble north;
+  double south;
+//  double north;
 
-  guint n_points;
-  gint16 *points;
+  unsigned int n_points;
+  int16_t *points;
 } VikDEMColumn;
 
 
-VikDEM *vik_dem_new_from_file(const gchar *file);
+VikDEM *vik_dem_new_from_file(const char *file);
 void vik_dem_free ( VikDEM *dem );
-gint16 vik_dem_get_xy ( VikDEM *dem, guint x, guint y );
+int16_t vik_dem_get_xy ( VikDEM *dem, unsigned int x, unsigned int y );
 
-gint16 vik_dem_get_east_north ( VikDEM *dem, gdouble east, gdouble north );
-gint16 vik_dem_get_simple_interpol ( VikDEM *dem, gdouble east, gdouble north );
-gint16 vik_dem_get_shepard_interpol ( VikDEM *dem, gdouble east, gdouble north );
-gint16 vik_dem_get_best_interpol ( VikDEM *dem, gdouble east, gdouble north );
+int16_t vik_dem_get_east_north ( VikDEM *dem, double east, double north );
+int16_t vik_dem_get_simple_interpol ( VikDEM *dem, double east, double north );
+int16_t vik_dem_get_shepard_interpol ( VikDEM *dem, double east, double north );
+int16_t vik_dem_get_best_interpol ( VikDEM *dem, double east, double north );
 
-void vik_dem_east_north_to_xy ( VikDEM *dem, gdouble east, gdouble north, guint *col, guint *row );
+void vik_dem_east_north_to_xy ( VikDEM *dem, double east, double north, unsigned int *col, unsigned int *row );
 
 G_END_DECLS
 

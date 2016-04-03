@@ -38,15 +38,15 @@ static GObjectClass *parent_class;
 
 static void webtool_center_finalize ( GObject *gob );
 
-static guint8 webtool_center_mpp_to_zoom ( VikWebtool *self, gdouble mpp );
-static gchar *webtool_center_get_url ( VikWebtool *vw, VikWindow *vwindow );
-static gchar *webtool_center_get_url_at_position ( VikWebtool *vw, VikWindow *vwindow, VikCoord *vc );
+static uint8_t webtool_center_mpp_to_zoom ( VikWebtool *self, double mpp );
+static char *webtool_center_get_url ( VikWebtool *vw, VikWindow *vwindow );
+static char *webtool_center_get_url_at_position ( VikWebtool *vw, VikWindow *vwindow, VikCoord *vc );
 
 typedef struct _VikWebtoolCenterPrivate VikWebtoolCenterPrivate;
 
 struct _VikWebtoolCenterPrivate
 {
-  gchar *url;
+  char *url;
 };
 
 #define WEBTOOL_CENTER_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), \
@@ -64,7 +64,7 @@ enum
 
 static void
 webtool_center_set_property (GObject      *object,
-                             guint         property_id,
+                             unsigned int         property_id,
                              const GValue *value,
                              GParamSpec   *pspec)
 {
@@ -88,7 +88,7 @@ webtool_center_set_property (GObject      *object,
 
 static void
 webtool_center_get_property (GObject    *object,
-                             guint       property_id,
+                             unsigned int       property_id,
                              GValue     *value,
                              GParamSpec *pspec)
 {
@@ -146,7 +146,7 @@ VikWebtoolCenter *vik_webtool_center_new ()
   return VIK_WEBTOOL_CENTER ( g_object_new ( VIK_WEBTOOL_CENTER_TYPE, NULL ) );
 }
 
-VikWebtoolCenter *vik_webtool_center_new_with_members ( const gchar *label, const gchar *url )
+VikWebtoolCenter *vik_webtool_center_new_with_members ( const char *label, const char *url )
 {
   VikWebtoolCenter *result = VIK_WEBTOOL_CENTER ( g_object_new ( VIK_WEBTOOL_CENTER_TYPE,
                                                                  "label", label,
@@ -170,17 +170,17 @@ static void webtool_center_finalize ( GObject *gob )
   G_OBJECT_CLASS(parent_class)->finalize(gob);
 }
 
-static guint8 webtool_center_mpp_to_zoom ( VikWebtool *self, gdouble mpp ) {
+static uint8_t webtool_center_mpp_to_zoom ( VikWebtool *self, double mpp ) {
   return map_utils_mpp_to_zoom_level ( mpp );
 }
 
-static gchar *webtool_center_get_url_at_position ( VikWebtool *self, VikWindow *vwindow, VikCoord *vc )
+static char *webtool_center_get_url_at_position ( VikWebtool *self, VikWindow *vwindow, VikCoord *vc )
 {
   VikWebtoolCenterPrivate *priv = NULL;
   VikViewport *viewport = NULL;
-  guint8 zoom = 17;
+  uint8_t zoom = 17;
   struct LatLon ll;
-  gchar strlat[G_ASCII_DTOSTR_BUF_SIZE], strlon[G_ASCII_DTOSTR_BUF_SIZE];
+  char strlat[G_ASCII_DTOSTR_BUF_SIZE], strlon[G_ASCII_DTOSTR_BUF_SIZE];
 
   priv = WEBTOOL_CENTER_GET_PRIVATE (self);
   viewport = vik_window_viewport ( vwindow );
@@ -198,7 +198,7 @@ static gchar *webtool_center_get_url_at_position ( VikWebtool *self, VikWindow *
   if ( vik_viewport_get_xmpp ( viewport ) == vik_viewport_get_ympp ( viewport ) )
     zoom = vik_webtool_center_mpp_to_zoom ( self, vik_viewport_get_zoom ( viewport ) );
 
-  // Cannot simply use g_strdup_printf and gdouble due to locale.
+  // Cannot simply use g_strdup_printf and double due to locale.
   // As we compute an URL, we have to think in C locale.
   g_ascii_dtostr (strlat, G_ASCII_DTOSTR_BUF_SIZE, ll.lat);
   g_ascii_dtostr (strlon, G_ASCII_DTOSTR_BUF_SIZE, ll.lon);
@@ -206,12 +206,12 @@ static gchar *webtool_center_get_url_at_position ( VikWebtool *self, VikWindow *
   return g_strdup_printf ( priv->url, strlat, strlon, zoom );
 }
 
-static gchar *webtool_center_get_url ( VikWebtool *self, VikWindow *vwindow )
+static char *webtool_center_get_url ( VikWebtool *self, VikWindow *vwindow )
 {
   return webtool_center_get_url_at_position ( self, vwindow, NULL );
 }
 
-guint8 vik_webtool_center_mpp_to_zoom (VikWebtool *self, gdouble mpp)
+uint8_t vik_webtool_center_mpp_to_zoom (VikWebtool *self, double mpp)
 {
   return VIK_WEBTOOL_CENTER_GET_CLASS( self )->mpp_to_zoom( self, mpp );
 }

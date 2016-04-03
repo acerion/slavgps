@@ -24,6 +24,9 @@
 #define _VIKING_ACQUIRE_H
 
 #include <gtk/gtk.h>
+#include <stdbool.h>
+#include <stdint.h>
+
 
 #include "vikwindow.h"
 #include "viklayerspanel.h"
@@ -38,7 +41,7 @@ typedef struct {
   VikWindow *vw;
   VikLayersPanel *vlp;
   VikViewport *vvp;
-  gpointer userdata;
+  void * userdata;
 } acq_vik_t;
 
 /**
@@ -52,9 +55,9 @@ typedef struct {
   VikLayersPanel *vlp;
   VikViewport *vvp;
   GtkWidget *dialog;
-  gboolean running;
+  bool running;
   VikDataSourceInterface *source_interface;
-  gpointer user_data;
+  void * user_data;
 } acq_dialog_widgets_t;
 
 typedef enum {
@@ -77,21 +80,21 @@ typedef enum {
  * 
  * Returns: pointer to state if OK, otherwise %NULL
  */
-typedef gpointer (*VikDataSourceInitFunc) ( acq_vik_t *avt );
+typedef void * (*VikDataSourceInitFunc) ( acq_vik_t *avt );
 
 /**
  * VikDataSourceCheckExistenceFunc:
  * 
  * Returns: %NULL if OK, otherwise returns an error message.
  */
-typedef gchar *(*VikDataSourceCheckExistenceFunc) ();
+typedef char *(*VikDataSourceCheckExistenceFunc) ();
 
 /**
  * VikDataSourceAddSetupWidgetsFunc:
  * 
  * Create widgets to show in a setup dialog, set up state via user_data.
  */
-typedef void (*VikDataSourceAddSetupWidgetsFunc) ( GtkWidget *dialog, VikViewport *vvp, gpointer user_data );
+typedef void (*VikDataSourceAddSetupWidgetsFunc) ( GtkWidget *dialog, VikViewport *vvp, void * user_data );
 
 /**
  * VikDataSourceGetProcessOptionsFunc:
@@ -103,7 +106,7 @@ typedef void (*VikDataSourceAddSetupWidgetsFunc) ( GtkWidget *dialog, VikViewpor
  * 
  * set both to %NULL to signal refusal (ie already downloading).
  */
-typedef void (*VikDataSourceGetProcessOptionsFunc) ( gpointer user_data, ProcessOptions *process_options, gpointer download_options, const gchar *input_file_name, const gchar *input_track_file_name );
+typedef void (*VikDataSourceGetProcessOptionsFunc) ( void * user_data, ProcessOptions *process_options, void * download_options, const char *input_file_name, const char *input_track_file_name );
 
 /**
  * VikDataSourceProcessFunc:
@@ -115,26 +118,26 @@ typedef void (*VikDataSourceGetProcessOptionsFunc) ( gpointer user_data, Process
  * 
  * The actual function to do stuff - must report success/failure.
  */
-typedef gboolean (*VikDataSourceProcessFunc) ( gpointer vtl, ProcessOptions *process_options, BabelStatusFunc, acq_dialog_widgets_t *adw, gpointer download_options );
+typedef bool (*VikDataSourceProcessFunc) ( void * vtl, ProcessOptions *process_options, BabelStatusFunc, acq_dialog_widgets_t *adw, void * download_options );
 
 /* NB Same as BabelStatusFunc */
-typedef void  (*VikDataSourceProgressFunc)  ( BabelProgressCode c, gpointer data, acq_dialog_widgets_t *w );
+typedef void  (*VikDataSourceProgressFunc)  ( BabelProgressCode c, void * data, acq_dialog_widgets_t *w );
 
 /**
  * VikDataSourceAddProgressWidgetsFunc:
  * 
  * Creates widgets to show in a progress dialog, may set up state via user_data.
  */
-typedef void  (*VikDataSourceAddProgressWidgetsFunc) ( GtkWidget *dialog, gpointer user_data );
+typedef void  (*VikDataSourceAddProgressWidgetsFunc) ( GtkWidget *dialog, void * user_data );
 
 /**
  * VikDataSourceCleanupFunc:
  * 
  * Frees any widgets created for the setup or progress dialogs, any allocated state, etc.
  */
-typedef void (*VikDataSourceCleanupFunc) ( gpointer user_data );
+typedef void (*VikDataSourceCleanupFunc) ( void * user_data );
 
-typedef void (*VikDataSourceOffFunc) ( gpointer user_data, gchar **babelargs, gchar **file_descriptor );
+typedef void (*VikDataSourceOffFunc) ( void * user_data, char **babelargs, char **file_descriptor );
 
 /**
  * VikDataSourceInterface:
@@ -142,14 +145,14 @@ typedef void (*VikDataSourceOffFunc) ( gpointer user_data, gchar **babelargs, gc
  * Main interface.
  */
 struct _VikDataSourceInterface {
-  const gchar *window_title;
-  const gchar *layer_title;
+  const char *window_title;
+  const char *layer_title;
   vik_datasource_mode_t mode;
   vik_datasource_inputtype_t inputtype;
-  gboolean autoview;
-  gboolean keep_dialog_open; /* when done */
+  bool autoview;
+  bool keep_dialog_open; /* when done */
 
-  gboolean is_thread;
+  bool is_thread;
 
   /*** Manual UI Building ***/
   VikDataSourceInitFunc init_func;
@@ -168,10 +171,10 @@ struct _VikDataSourceInterface {
 
   /*** UI Building        ***/
   VikLayerParam *                   params;
-  guint16                           params_count;
+  uint16_t                           params_count;
   VikLayerParamData *               params_defaults;
-  gchar **                          params_groups;
-  guint8                            params_groups_count;
+  char **                          params_groups;
+  uint8_t                            params_groups_count;
 
 };
 
@@ -182,7 +185,7 @@ void a_acquire ( VikWindow *vw,
                  VikViewport *vvp,
                  vik_datasource_mode_t mode,
                  VikDataSourceInterface *source_interface,
-                 gpointer userdata,
+                 void * userdata,
                  VikDataSourceCleanupFunc cleanup_function );
 
 GtkWidget *a_acquire_trwlayer_menu (VikWindow *vw, VikLayersPanel *vlp, VikViewport *vvp, VikTrwLayer *vtl);

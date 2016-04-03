@@ -25,7 +25,7 @@
 
 G_BEGIN_DECLS
 
-const gchar *a_file_basename ( const gchar *filename );
+const char *a_file_basename ( const char *filename );
 
 G_END_DECLS
 

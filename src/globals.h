@@ -24,6 +24,9 @@
 #define __VIKING_GLOBALS_H
 
 #include <glib.h>
+#include <stdbool.h>
+#include <stdint.h>
+
 
 G_BEGIN_DECLS
 
@@ -76,15 +79,15 @@ G_BEGIN_DECLS
 #define DEMERCLAT(x) (RAD2DEG(atan(sinh(DEG2RAD(x)))))
 
 /* Some command line options */
-extern gboolean vik_debug;
-extern gboolean vik_verbose;
-extern gboolean vik_version;
+extern bool vik_debug;
+extern bool vik_verbose;
+extern bool vik_version;
 
 /* Allow comparing versions */
-gint viking_version_to_number ( gchar *version );
+int viking_version_to_number ( char *version );
 
 /* Very first run */
-gboolean a_vik_very_first_run ();
+bool a_vik_very_first_run ();
 
 /* Global preferences */
 void a_vik_preferences_init ();
@@ -126,7 +129,7 @@ typedef enum {
 
 vik_units_height_t a_vik_get_units_height ( );
 
-gboolean a_vik_get_use_large_waypoint_icons ( );
+bool a_vik_get_use_large_waypoint_icons ( );
 
 /* Location preferences */
 typedef enum {
@@ -134,8 +137,8 @@ typedef enum {
   VIK_LOCATION_LONG,
 } vik_location_t;
 
-gdouble a_vik_get_default_lat ( );
-gdouble a_vik_get_default_long ( );
+double a_vik_get_default_lat ( );
+double a_vik_get_default_long ( );
 
 // Time display format
 typedef enum {
@@ -173,12 +176,12 @@ vik_gpx_export_wpt_sym_name_t a_vik_gpx_export_wpt_sym_name ( );
 #ifndef WINDOWS
 /* Windows automatically uses the system defined viewer
    ATM for other systems need to specify the program to use */
-const gchar* a_vik_get_image_viewer ( );
+const char* a_vik_get_image_viewer ( );
 #endif
 
-const gchar* a_vik_get_external_gpx_program_1 ( );
+const char* a_vik_get_external_gpx_program_1 ( );
 
-const gchar* a_vik_get_external_gpx_program_2 ( );
+const char* a_vik_get_external_gpx_program_2 ( );
 
 /* File reference preferences - mainly in saving of a viking file */
 typedef enum {
@@ -188,13 +191,13 @@ typedef enum {
 
 vik_file_ref_format_t a_vik_get_file_ref_format ( );
 
-gboolean a_vik_get_ask_for_create_track_name ( );
+bool a_vik_get_ask_for_create_track_name ( );
 
-gboolean a_vik_get_create_track_tooltip ( );
+bool a_vik_get_create_track_tooltip ( );
 
-gboolean a_vik_get_restore_window_state ( );
+bool a_vik_get_restore_window_state ( );
 
-gboolean a_vik_get_add_default_map_layer ( );
+bool a_vik_get_add_default_map_layer ( );
 
 typedef enum {
   VIK_STARTUP_METHOD_HOME_LOCATION,
@@ -205,11 +208,11 @@ typedef enum {
 
 vik_startup_method_t a_vik_get_startup_method ( );
 
-const gchar *a_vik_get_startup_file ( );
+const char *a_vik_get_startup_file ( );
 
-gboolean a_vik_get_check_version ( );
+bool a_vik_get_check_version ( );
 
-gint a_vik_get_recent_number_files ( );
+int a_vik_get_recent_number_files ( );
 
 /* Group for global preferences */
 #define VIKING_PREFERENCES_GROUP_KEY "viking.globals"

@@ -22,6 +22,9 @@
 #ifndef _VIKING_WAYPOINT_H
 #define _VIKING_WAYPOINT_H
 
+#include <stdbool.h>
+#include <stdint.h>
+
 #include "vikcoord.h"
 
 #include <gdk-pixbuf/gdk-pixdata.h>
@@ -35,42 +38,42 @@ typedef struct _VikWaypoint VikWaypoint;
 
 struct _VikWaypoint {
   VikCoord coord;
-  gboolean visible;
-  gboolean has_timestamp;
+  bool visible;
+  bool has_timestamp;
   time_t timestamp;
-  gdouble altitude;
-  gchar *name;
-  gchar *comment;
-  gchar *description;
-  gchar *source;
-  gchar *type;
-  gchar *url;
-  gchar *image;
+  double altitude;
+  char *name;
+  char *comment;
+  char *description;
+  char *source;
+  char *type;
+  char *url;
+  char *image;
   /* a rather misleading, ugly hack needed for trwlayer's click image.
    * these are the height at which the thumbnail is being drawn, not the 
    * dimensions of the original image. */
-  guint8 image_width;
-  guint8 image_height;
-  gchar *symbol;
+  uint8_t image_width;
+  uint8_t image_height;
+  char *symbol;
   // Only for GUI display
   GdkPixbuf *symbol_pixbuf;
 };
 
 VikWaypoint *vik_waypoint_new();
-void vik_waypoint_set_name(VikWaypoint *wp, const gchar *name);
-void vik_waypoint_set_comment(VikWaypoint *wp, const gchar *comment);
-void vik_waypoint_set_description(VikWaypoint *wp, const gchar *description);
-void vik_waypoint_set_source(VikWaypoint *wp, const gchar *source);
-void vik_waypoint_set_type(VikWaypoint *wp, const gchar *type);
-void vik_waypoint_set_url(VikWaypoint *wp, const gchar *url);
-void vik_waypoint_set_image(VikWaypoint *wp, const gchar *image);
-void vik_waypoint_set_symbol(VikWaypoint *wp, const gchar *symname);
+void vik_waypoint_set_name(VikWaypoint *wp, const char *name);
+void vik_waypoint_set_comment(VikWaypoint *wp, const char *comment);
+void vik_waypoint_set_description(VikWaypoint *wp, const char *description);
+void vik_waypoint_set_source(VikWaypoint *wp, const char *source);
+void vik_waypoint_set_type(VikWaypoint *wp, const char *type);
+void vik_waypoint_set_url(VikWaypoint *wp, const char *url);
+void vik_waypoint_set_image(VikWaypoint *wp, const char *image);
+void vik_waypoint_set_symbol(VikWaypoint *wp, const char *symname);
 void vik_waypoint_free(VikWaypoint * wp);
 VikWaypoint *vik_waypoint_copy(const VikWaypoint *wp);
-void vik_waypoint_set_comment_no_copy(VikWaypoint *wp, gchar *comment);
-gboolean vik_waypoint_apply_dem_data ( VikWaypoint *wp, gboolean skip_existing );
-void vik_waypoint_marshall ( VikWaypoint *wp, guint8 **data, guint *len);
-VikWaypoint *vik_waypoint_unmarshall (guint8 *data, guint datalen);
+void vik_waypoint_set_comment_no_copy(VikWaypoint *wp, char *comment);
+bool vik_waypoint_apply_dem_data ( VikWaypoint *wp, bool skip_existing );
+void vik_waypoint_marshall ( VikWaypoint *wp, uint8_t **data, unsigned int *len);
+VikWaypoint *vik_waypoint_unmarshall (uint8_t *data, unsigned int datalen);
 
 G_END_DECLS
 

@@ -22,6 +22,9 @@
 #ifndef _VIKING_MAPNIKLAYER_H
 #define _VIKING_MAPNIKLAYER_H
 
+#include <stdbool.h>
+#include <stdint.h>
+
 #include "viklayer.h"
 
 G_BEGIN_DECLS

@@ -33,13 +33,13 @@
 #include "viktrwlayer_export.h"
 #include "gpx.h"
 
-static gchar *last_folder_uri = NULL;
+static char *last_folder_uri = NULL;
 
-void vik_trw_layer_export ( VikTrwLayer *vtl, const gchar *title, const gchar* default_name, VikTrack* trk, VikFileType_t file_type )
+void vik_trw_layer_export ( VikTrwLayer *vtl, const char *title, const char* default_name, VikTrack* trk, VikFileType_t file_type )
 {
   GtkWidget *file_selector;
-  const gchar *fn;
-  gboolean failed = FALSE;
+  const char *fn;
+  bool failed = false;
   file_selector = gtk_file_chooser_dialog_new (title,
                                                NULL,
                                                GTK_FILE_CHOOSER_ACTION_SAVE,
@@ -54,7 +54,7 @@ void vik_trw_layer_export ( VikTrwLayer *vtl, const gchar *title, const gchar* d
   while ( gtk_dialog_run ( GTK_DIALOG(file_selector) ) == GTK_RESPONSE_ACCEPT )
   {
     fn = gtk_file_chooser_get_filename ( GTK_FILE_CHOOSER(file_selector) );
-    if ( g_file_test ( fn, G_FILE_TEST_EXISTS ) == FALSE ||
+    if ( g_file_test ( fn, G_FILE_TEST_EXISTS ) == false ||
          a_dialog_yes_or_no ( GTK_WINDOW(file_selector), _("The file \"%s\" exists, do you wish to overwrite it?"), a_file_basename ( fn ) ) )
     {
       g_free ( last_folder_uri );
@@ -63,7 +63,7 @@ void vik_trw_layer_export ( VikTrwLayer *vtl, const gchar *title, const gchar* d
       gtk_widget_hide ( file_selector );
       vik_window_set_busy_cursor ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(vtl)) );
       // Don't Export invisible items - unless requested on this specific track
-      failed = ! a_file_export ( vtl, fn, file_type, trk, trk ? TRUE : FALSE );
+      failed = ! a_file_export ( vtl, fn, file_type, trk, trk ? true : false );
       vik_window_clear_busy_cursor ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(vtl)) );
       break;
     }
@@ -78,16 +78,16 @@ void vik_trw_layer_export ( VikTrwLayer *vtl, const gchar *title, const gchar* d
  * Convert the given TRW layer into a temporary GPX file and open it with the specified program
  *
  */
-void vik_trw_layer_export_external_gpx ( VikTrwLayer *vtl, const gchar* external_program )
+void vik_trw_layer_export_external_gpx ( VikTrwLayer *vtl, const char* external_program )
 {
   // Don't Export invisible items
-  static GpxWritingOptions options = { TRUE, TRUE, FALSE, FALSE };
-  gchar *name_used = a_gpx_write_tmp_file ( vtl, &options );
+  static GpxWritingOptions options = { true, true, false, false };
+  char *name_used = a_gpx_write_tmp_file ( vtl, &options );
 
   if ( name_used ) {
     GError *err = NULL;
-    gchar *quoted_file = g_shell_quote ( name_used );
-    gchar *cmd = g_strdup_printf ( "%s %s", external_program, quoted_file );
+    char *quoted_file = g_shell_quote ( name_used );
+    char *cmd = g_strdup_printf ( "%s %s", external_program, quoted_file );
     g_free ( quoted_file );
     if ( ! g_spawn_command_line_async ( cmd, &err ) ) {
       a_dialog_error_msg_extra ( VIK_GTK_WINDOW_FROM_LAYER( vtl), _("Could not launch %s."), external_program );
@@ -102,7 +102,7 @@ void vik_trw_layer_export_external_gpx ( VikTrwLayer *vtl, const gchar* external
 }
 
 
-void vik_trw_layer_export_gpsbabel ( VikTrwLayer *vtl, const gchar *title, const gchar* default_name )
+void vik_trw_layer_export_gpsbabel ( VikTrwLayer *vtl, const char *title, const char* default_name )
 {
   BabelMode mode = { 0, 0, 0, 0, 0, 0 };
   if ( g_hash_table_size (vik_trw_layer_get_routes(vtl)) ) {
@@ -116,15 +116,15 @@ void vik_trw_layer_export_gpsbabel ( VikTrwLayer *vtl, const gchar *title, const
   }
 
   GtkWidget *file_selector;
-  const gchar *fn;
-  gboolean failed = FALSE;
+  const char *fn;
+  bool failed = false;
   file_selector = gtk_file_chooser_dialog_new (title,
                                                NULL,
                                                GTK_FILE_CHOOSER_ACTION_SAVE,
                                                GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
                                                GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
                                                NULL);
-  gchar *cwd = g_get_current_dir();
+  char *cwd = g_get_current_dir();
   if ( cwd ) {
     gtk_file_chooser_set_current_folder ( GTK_FILE_CHOOSER(file_selector), cwd );
     g_free ( cwd );
@@ -133,9 +133,9 @@ void vik_trw_layer_export_gpsbabel ( VikTrwLayer *vtl, const gchar *title, const
   /* Build the extra part of the widget */
   GtkWidget *babel_selector = a_babel_ui_file_type_selector_new ( mode );
   GtkWidget *label = gtk_label_new(_("File format:"));
-  GtkWidget *hbox = gtk_hbox_new(FALSE, 0);
-  gtk_box_pack_start ( GTK_BOX(hbox), label, TRUE, TRUE, 0 );
-  gtk_box_pack_start ( GTK_BOX(hbox), babel_selector, TRUE, TRUE, 0 );
+  GtkWidget *hbox = gtk_hbox_new(false, 0);
+  gtk_box_pack_start ( GTK_BOX(hbox), label, true, true, 0 );
+  gtk_box_pack_start ( GTK_BOX(hbox), babel_selector, true, true, 0 );
   gtk_widget_show (babel_selector);
   gtk_widget_show (label);
   gtk_widget_show_all (hbox);
@@ -149,9 +149,9 @@ void vik_trw_layer_export_gpsbabel ( VikTrwLayer *vtl, const gchar *title, const
       "Warning: the behavior of these switches is highly dependent of the file format selected.\n"
       "Please, refer to GPSbabel if unsure.") );
 
-  GtkWidget *vbox = gtk_vbox_new(FALSE, 0);
-  gtk_box_pack_start ( GTK_BOX(vbox), hbox, TRUE, TRUE, 0 );
-  gtk_box_pack_start ( GTK_BOX(vbox), babel_modes, TRUE, TRUE, 0 );
+  GtkWidget *vbox = gtk_vbox_new(false, 0);
+  gtk_box_pack_start ( GTK_BOX(vbox), hbox, true, true, 0 );
+  gtk_box_pack_start ( GTK_BOX(vbox), babel_modes, true, true, 0 );
   gtk_widget_show_all (vbox);
 
   gtk_file_chooser_set_extra_widget (GTK_FILE_CHOOSER(file_selector), vbox);
@@ -167,7 +167,7 @@ void vik_trw_layer_export_gpsbabel ( VikTrwLayer *vtl, const gchar *title, const
   while ( gtk_dialog_run ( GTK_DIALOG(file_selector) ) == GTK_RESPONSE_ACCEPT )
   {
     fn = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER(file_selector) );
-    if ( g_file_test ( fn, G_FILE_TEST_EXISTS ) == FALSE ||
+    if ( g_file_test ( fn, G_FILE_TEST_EXISTS ) == false ||
          a_dialog_yes_or_no ( GTK_WINDOW(file_selector), _("The file \"%s\" exists, do you wish to overwrite it?"), a_file_basename ( fn ) ) )
     {
       BabelFile *active = a_babel_ui_file_type_selector_get(babel_selector);
@@ -176,7 +176,7 @@ void vik_trw_layer_export_gpsbabel ( VikTrwLayer *vtl, const gchar *title, const
       } else {
         gtk_widget_hide ( file_selector );
         vik_window_set_busy_cursor ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(vtl)) );
-        gboolean tracks, routes, waypoints;
+        bool tracks, routes, waypoints;
         a_babel_ui_modes_get( babel_modes, &tracks, &routes, &waypoints );
         failed = ! a_file_export_babel ( vtl, fn, active->name, tracks, routes, waypoints );
         vik_window_clear_busy_cursor ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(vtl)) );

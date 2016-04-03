@@ -55,7 +55,7 @@
 /**
  * Attempt to get a single comment from the various exif fields
  */
-static gchar* geotag_get_exif_comment ( GExiv2Metadata *gemd )
+static char* geotag_get_exif_comment ( GExiv2Metadata *gemd )
 {
 	//
 	// Try various options to create a comment
@@ -81,9 +81,9 @@ static gchar* geotag_get_exif_comment ( GExiv2Metadata *gemd )
 /**
  * Attempt to get a single comment from the various exif fields
  */
-static gchar* geotag_get_exif_comment ( ExifData *ed )
+static char* geotag_get_exif_comment ( ExifData *ed )
 {
-	gchar str[128];
+	char str[128];
 	ExifEntry *ee;
 	//
 	// Try various options to create a comment
@@ -123,7 +123,7 @@ static gchar* geotag_get_exif_comment ( ExifData *ed )
  * Handles 3 part location Rationals
  * Handles 1 part rational (must specify 0 for the offset)
  */
-static gdouble Rational2Double ( unsigned char *data, int offset, ExifByteOrder order )
+static double Rational2Double ( unsigned char *data, int offset, ExifByteOrder order )
 {
 	// Explaination from GPS Correlate 'exif-gps.cpp' v 1.6.1
 	// What we are trying to do here is convert the three rationals:
@@ -140,17 +140,17 @@ static gdouble Rational2Double ( unsigned char *data, int offset, ExifByteOrder 
 	//     -- / 3600 = result
 	//      v
 	// Each part is added to the final number.
-	gdouble ans;
+	double ans;
 	ExifRational er;
 	er = exif_get_rational (data, order);
-	ans = (gdouble)er.numerator / (gdouble)er.denominator;
+	ans = (double)er.numerator / (double)er.denominator;
 	if (offset <= 0)
 		return ans;
 
 	er = exif_get_rational (data+(1*offset), order);
-	ans = ans + ( ( (gdouble)er.numerator / (gdouble)er.denominator ) / 60.0 );
+	ans = ans + ( ( (double)er.numerator / (double)er.denominator ) / 60.0 );
 	er = exif_get_rational (data+(2*offset), order);
-	ans = ans + ( ( (gdouble)er.numerator / (gdouble)er.denominator ) / 3600.0 );
+	ans = ans + ( ( (double)er.numerator / (double)er.denominator ) / 3600.0 );
 
 	return ans;
 }
@@ -160,7 +160,7 @@ static struct LatLon get_latlon ( ExifData *ed )
 	struct LatLon ll = { 0.0, 0.0 };
 	const struct LatLon ll0 = { 0.0, 0.0 };
 
-	gchar str[128];
+	char str[128];
 	ExifEntry *ee;
 	//
 	// Lat & Long is necessary to form a waypoint.
@@ -207,16 +207,16 @@ static struct LatLon get_latlon ( ExifData *ed )
  * Returns: The position in LatLon format.
  *  It will be 0,0 if some kind of failure occurs.
  */
-struct LatLon a_geotag_get_position ( const gchar *filename )
+struct LatLon a_geotag_get_position ( const char *filename )
 {
 	struct LatLon ll = { 0.0, 0.0 };
 
 #ifdef HAVE_LIBGEXIV2
 	GExiv2Metadata *gemd = gexiv2_metadata_new ();
 	if ( gexiv2_metadata_open_path ( gemd, filename, NULL ) ) {
-		gdouble lat;
-		gdouble lon;
-		gdouble alt;
+		double lat;
+		double lon;
+		double alt;
 		if ( gexiv2_metadata_get_gps_info ( gemd, &lon, &lat, &alt ) ) {
 			ll.lat = lat;
 			ll.lon = lon;
@@ -257,7 +257,7 @@ MyReturn0:
  * Returns: An allocated Waypoint or NULL if Waypoint could not be generated (e.g. no EXIF info)
  *
  */
-VikWaypoint* a_geotag_create_waypoint_from_file ( const gchar *filename, VikCoordMode vcmode, gchar **name )
+VikWaypoint* a_geotag_create_waypoint_from_file ( const char *filename, VikCoordMode vcmode, char **name )
 {
 	// Default return values (for failures)
 	*name = NULL;
@@ -266,9 +266,9 @@ VikWaypoint* a_geotag_create_waypoint_from_file ( const gchar *filename, VikCoor
 #ifdef HAVE_LIBGEXIV2
 	GExiv2Metadata *gemd = gexiv2_metadata_new ();
 	if ( gexiv2_metadata_open_path ( gemd, filename, NULL ) ) {
-		gdouble lat;
-		gdouble lon;
-		gdouble alt;
+		double lat;
+		double lon;
+		double alt;
 		if ( gexiv2_metadata_get_gps_info ( gemd, &lon, &lat, &alt ) ) {
 			struct LatLon ll;
 			ll.lat = lat;
@@ -278,7 +278,7 @@ VikWaypoint* a_geotag_create_waypoint_from_file ( const gchar *filename, VikCoor
 			// Now create Waypoint with acquired information
 			//
 			wp = vik_waypoint_new();
-			wp->visible = TRUE;
+			wp->visible = true;
 			// Set info from exif values
 			// Location
 			vik_coord_load_from_latlon ( &(wp->coord), vcmode, &ll );
@@ -308,7 +308,7 @@ VikWaypoint* a_geotag_create_waypoint_from_file ( const gchar *filename, VikCoor
 
 	struct LatLon ll;
 
-	gchar str[128];
+	char str[128];
 	ExifEntry *ee;
 
 	ee = exif_content_get_entry (ed->ifd[EXIF_IFD_GPS], EXIF_TAG_GPS_VERSION_ID);
@@ -329,7 +329,7 @@ VikWaypoint* a_geotag_create_waypoint_from_file ( const gchar *filename, VikCoor
 	// Not worried if none of the other fields exist, as can default the values to something
 	//
 
-	gdouble alt = VIK_DEFAULT_ALTITUDE;
+	double alt = VIK_DEFAULT_ALTITUDE;
 	ee = exif_content_get_entry (ed->ifd[EXIF_IFD_GPS], EXIF_TAG_GPS_ALTITUDE);
 	if ( ee && ee->components == 1 && ee->format == EXIF_FORMAT_RATIONAL ) {
 		alt = Rational2Double ( ee->data,
@@ -352,7 +352,7 @@ VikWaypoint* a_geotag_create_waypoint_from_file ( const gchar *filename, VikCoor
 	// Now create Waypoint with acquired information
 	//
 	wp = vik_waypoint_new();
-	wp->visible = TRUE;
+	wp->visible = true;
 	// Set info from exif values
 	// Location
 	vik_coord_load_from_latlon ( &(wp->coord), vcmode, &ll );
@@ -385,13 +385,13 @@ MyReturn:
  *  Here EXIF processing is used to get non position related information (i.e. just the comment)
  *
  */
-VikWaypoint* a_geotag_waypoint_positioned ( const gchar *filename, VikCoord coord, gdouble alt, gchar **name, VikWaypoint *wp )
+VikWaypoint* a_geotag_waypoint_positioned ( const char *filename, VikCoord coord, double alt, char **name, VikWaypoint *wp )
 {
 	*name = NULL;
 	if ( wp == NULL ) {
 		// Need to create waypoint
 		wp = vik_waypoint_new();
-		wp->visible = TRUE;
+		wp->visible = true;
 	}
 	wp->coord = coord;
 	wp->altitude = alt;
@@ -412,7 +412,7 @@ VikWaypoint* a_geotag_waypoint_positioned ( const gchar *filename, VikCoord coor
 	if ( ed ) {
 		wp->comment = geotag_get_exif_comment ( ed );
 
-		gchar str[128];
+		char str[128];
 		ExifEntry *ee;
 		// Name
 		ee = exif_content_get_entry (ed->ifd[EXIF_IFD_0], EXIF_TAG_XP_TITLE);
@@ -442,15 +442,15 @@ VikWaypoint* a_geotag_waypoint_positioned ( const gchar *filename, VikCoord coor
  *  Here EXIF processing is used to get time information
  *
  */
-gchar* a_geotag_get_exif_date_from_file ( const gchar *filename, gboolean *has_GPS_info )
+char* a_geotag_get_exif_date_from_file ( const char *filename, bool *has_GPS_info )
 {
-	gchar* datetime = NULL;
-	*has_GPS_info = FALSE;
+	char* datetime = NULL;
+	*has_GPS_info = false;
 
 #ifdef HAVE_LIBGEXIV2
 	GExiv2Metadata *gemd = gexiv2_metadata_new ();
 	if ( gexiv2_metadata_open_path ( gemd, filename, NULL ) ) {
-		gdouble lat, lon;
+		double lat, lon;
 		*has_GPS_info = ( gexiv2_metadata_get_gps_longitude(gemd,&lon) && gexiv2_metadata_get_gps_latitude(gemd,&lat) );
 
 		// Prefer 'Photo' version over 'Image'
@@ -468,7 +468,7 @@ gchar* a_geotag_get_exif_date_from_file ( const gchar *filename, gboolean *has_G
 	if ( !ed )
 		return datetime;
 
-	gchar str[128];
+	char str[128];
 	ExifEntry *ee;
 
 	ee = exif_content_get_entry (ed->ifd[EXIF_IFD_EXIF], EXIF_TAG_DATE_TIME_ORIGINAL);
@@ -482,17 +482,17 @@ gchar* a_geotag_get_exif_date_from_file ( const gchar *filename, gboolean *has_G
 	ee = exif_content_get_entry (ed->ifd[EXIF_IFD_GPS], EXIF_TAG_GPS_VERSION_ID);
 	// Confirm this has a GPS Id - normally "2.0.0.0" or "2.2.0.0"
 	if ( ee && ee->components == 4 )
-		*has_GPS_info = TRUE;
+		*has_GPS_info = true;
 
 	// Check other basic GPS fields exist too
 	// I have encountered some images which have just the EXIF_TAG_GPS_VERSION_ID but nothing else
 	// So to confirm check more EXIF GPS TAGS:
 	ee = exif_content_get_entry (ed->ifd[EXIF_IFD_GPS], EXIF_TAG_GPS_LATITUDE);
 	if ( !ee )
-		*has_GPS_info = FALSE;
+		*has_GPS_info = false;
 	ee = exif_content_get_entry (ed->ifd[EXIF_IFD_GPS], EXIF_TAG_GPS_LONGITUDE);
 	if ( !ee )
-		*has_GPS_info = FALSE;
+		*has_GPS_info = false;
 
 	exif_data_free ( ed );
 #endif
@@ -565,9 +565,9 @@ static ExifEntry* my_exif_create_value (ExifData *ed, ExifTag tag, ExifIfd ifd)
 
 /** Heavily based on convert_arg_to_entry from exif command line tool.
  *  But without ExifLog, exitting, use of g_* io functions
- *   and can take a gdouble value instead of a string
+ *   and can take a double value instead of a string
  */
-static void convert_to_entry (const char *set_value, gdouble gdvalue, ExifEntry *e, ExifByteOrder o)
+static void convert_to_entry (const char *set_value, double gdvalue, ExifEntry *e, ExifByteOrder o)
 {
 	unsigned int i, numcomponents;
 	char *value_p = NULL;
@@ -607,7 +607,7 @@ static void convert_to_entry (const char *set_value, gdouble gdvalue, ExifEntry 
 		return;
 	}
 
-	gboolean use_string = (set_value != NULL);
+	bool use_string = (set_value != NULL);
 	if ( use_string ) {
 		/* Copy the string so we can modify it */
 		buf = g_strdup (set_value);
@@ -730,9 +730,9 @@ static void convert_to_entry (const char *set_value, gdouble gdvalue, ExifEntry 
  * Returns: A value indicating success: 0, or some other value for failure
  *
  */
-gint a_geotag_write_exif_gps ( const gchar *filename, VikCoord coord, gdouble alt, gboolean no_change_mtime )
+int a_geotag_write_exif_gps ( const char *filename, VikCoord coord, double alt, bool no_change_mtime )
 {
-	gint result = 0; // OK so far...
+	int result = 0; // OK so far...
 
 	// Save mtime for later use
 	struct stat stat_save;

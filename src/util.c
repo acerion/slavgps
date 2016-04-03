@@ -41,7 +41,7 @@
 #include <unistd.h>
 #endif
 
-guint util_get_number_of_cpus ()
+unsigned int util_get_number_of_cpus ()
 {
 #if GLIB_CHECK_VERSION (2, 36, 0)
   return g_get_num_processors();
@@ -62,11 +62,11 @@ guint util_get_number_of_cpus ()
 #endif
 }
 
-gchar *uri_escape(gchar *str)
+char *uri_escape(char *str)
 {
-  gchar *esc_str = g_malloc(3*strlen(str));
-  gchar *dst = esc_str;
-  gchar *src;
+  char *esc_str = g_malloc(3*strlen(str));
+  char *dst = esc_str;
+  char *src;
 
   for (src = str; *src; src++) {
     if (*src == ' ')
@@ -84,11 +84,11 @@ gchar *uri_escape(gchar *str)
 }
 
 
-GList * str_array_to_glist(gchar* data[])
+GList * str_array_to_glist(char* data[])
 {
   GList *gl = NULL;
-  gpointer * p;
-  for (p = (gpointer)data; *p; p++)
+  void * * p;
+  for (p = (void *)data; *p; p++)
     gl = g_list_prepend(gl, *p);
   return g_list_reverse(gl);
 }
@@ -108,19 +108,19 @@ GList * str_array_to_glist(gchar* data[])
  *   key = "GPS.parameter"
  *   val = "42"
  */
-gboolean split_string_from_file_on_equals ( const gchar *buf, gchar **key, gchar **val )
+bool split_string_from_file_on_equals ( const char *buf, char **key, char **val )
 {
   // comments, special characters in viking file format
   if ( buf == NULL || buf[0] == '\0' || buf[0] == '~' || buf[0] == '=' || buf[0] == '#' )
-    return FALSE;
+    return false;
 
   if ( ! strchr ( buf, '=' ) )
-    return FALSE;
+    return false;
 
-  gchar **strv = g_strsplit ( buf, "=", 2 );
+  char **strv = g_strsplit ( buf, "=", 2 );
 
-  gint gi = 0;
-  gchar *str = strv[gi];
+  int gi = 0;
+  char *str = strv[gi];
   while ( str ) {
 	if ( gi == 0 )
 	  *key = g_strdup ( str );
@@ -135,7 +135,7 @@ gboolean split_string_from_file_on_equals ( const gchar *buf, gchar **key, gchar
   // Remove newline from val and also any other whitespace
   *key = g_strstrip ( *key );
   *val = g_strstrip ( *val );
-  return TRUE;
+  return true;
 }
 
 static GSList* deletion_list = NULL;
@@ -147,7 +147,7 @@ static GSList* deletion_list = NULL;
  * Normally this is for files that get used asynchronously,
  *  so we don't know when it's time to delete them - other than at this program's end
  */
-void util_add_to_deletion_list ( const gchar* filename )
+void util_add_to_deletion_list ( const char* filename )
 {
 	deletion_list = g_slist_append ( deletion_list, g_strdup (filename) );
 }
@@ -180,10 +180,10 @@ void util_remove_all_in_deletion_list ( void )
  *
  *  @see @c g_strdelimit.
  **/
-gchar *util_str_remove_chars(gchar *string, const gchar *chars)
+char *util_str_remove_chars(char *string, const char *chars)
 {
-	const gchar *r;
-	gchar *w = string;
+	const char *r;
+	char *w = string;
 
 	g_return_val_if_fail(string, NULL);
 	if (G_UNLIKELY(EMPTY(chars)))
@@ -205,7 +205,7 @@ gchar *util_str_remove_chars(gchar *string, const gchar *chars)
  * Only use this for 'occasional' downloaded temporary files that need interpretation,
  *  rather than large volume items such as Bing attributions.
  */
-int util_remove ( const gchar *filename )
+int util_remove ( const char *filename )
 {
 	if ( vik_debug && vik_verbose ) {
 		g_warning ( "Not removing file: %s", filename );
@@ -223,17 +223,17 @@ int util_remove ( const gchar *filename )
  *
  * @return the filename of the buffer that was written
  */
-gchar* util_write_tmp_file_from_bytes ( const void *buffer, gsize count )
+char* util_write_tmp_file_from_bytes ( const void *buffer, size_t count )
 {
 	GFileIOStream *gios;
 	GError *error = NULL;
-	gchar *tmpname = NULL;
+	char *tmpname = NULL;
 
 #if GLIB_CHECK_VERSION(2,32,0)
 	GFile *gf = g_file_new_tmp ( "vik-tmp.XXXXXX", &gios, &error );
 	tmpname = g_file_get_path (gf);
 #else
-	gint fd = g_file_open_tmp ( "vik-tmp.XXXXXX", &tmpname, &error );
+	int fd = g_file_open_tmp ( "vik-tmp.XXXXXX", &tmpname, &error );
 	if ( error ) {
 		g_warning ( "%s", error->message );
 		g_error_free ( error );

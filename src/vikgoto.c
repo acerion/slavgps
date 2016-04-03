@@ -39,9 +39,9 @@
 #define g_mapped_file_unref g_mapped_file_free
 #endif
 
-static gchar *last_goto_str = NULL;
+static char *last_goto_str = NULL;
 static VikCoord *last_coord = NULL;
-static gchar *last_successful_goto_str = NULL;
+static char *last_successful_goto_str = NULL;
 
 static GList *goto_tools_list = NULL;
 
@@ -59,7 +59,7 @@ void vik_goto_unregister_all ()
   g_list_foreach ( goto_tools_list, (GFunc) g_object_unref, NULL );
 }
 
-gchar * a_vik_goto_get_search_string_for_this_place(VikWindow *vw)
+char * a_vik_goto_get_search_string_for_this_place(VikWindow *vw)
 {
   if (!last_coord)
     return NULL;
@@ -84,33 +84,33 @@ static void display_no_tool(VikWindow *vw)
   gtk_widget_destroy(dialog);
 }
 
-static gboolean prompt_try_again(VikWindow *vw, const gchar *msg)
+static bool prompt_try_again(VikWindow *vw, const char *msg)
 {
   GtkWidget *dialog = NULL;
-  gboolean ret = TRUE;
+  bool ret = true;
 
   dialog = gtk_dialog_new_with_buttons ( "", GTK_WINDOW(vw), 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL );
   gtk_window_set_title(GTK_WINDOW(dialog), _("goto"));
 
   GtkWidget *goto_label = gtk_label_new(msg);
-  gtk_box_pack_start ( GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), goto_label, FALSE, FALSE, 5 );
+  gtk_box_pack_start ( GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), goto_label, false, false, 5 );
   gtk_dialog_set_default_response ( GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT );
   gtk_widget_show_all(dialog);
 
   if ( gtk_dialog_run ( GTK_DIALOG(dialog) ) != GTK_RESPONSE_ACCEPT )
-    ret = FALSE;
+    ret = false;
 
   gtk_widget_destroy(dialog);
   return ret;
 }
 
-static gint find_entry = -1;
-static gint wanted_entry = -1;
+static int find_entry = -1;
+static int wanted_entry = -1;
 
-static void find_provider (gpointer elem, gpointer user_data)
+static void find_provider (void * elem, void * user_data)
 {
-  const gchar *name = vik_goto_tool_get_label (elem);
-  const gchar *provider = user_data;
+  const char *name = vik_goto_tool_get_label (elem);
+  const char *provider = user_data;
   find_entry++;
   if (!strcmp(name, provider)) {
     wanted_entry = find_entry;
@@ -126,7 +126,7 @@ static void get_provider ()
   if ( last_goto_tool < 0 ) {
     find_entry = -1;
     wanted_entry = -1;
-    gchar *provider = NULL;
+    char *provider = NULL;
     if ( a_settings_get_string ( VIK_SETTINGS_GOTO_PROVIDER, &provider ) ) {
       // Use setting
       if ( provider )
@@ -144,12 +144,12 @@ text_changed_cb (GtkEntry   *entry,
                  GParamSpec *pspec,
                  GtkWidget  *button)
 {
-  gboolean has_text = gtk_entry_get_text_length(entry) > 0;
+  bool has_text = gtk_entry_get_text_length(entry) > 0;
   gtk_entry_set_icon_sensitive ( entry, GTK_ENTRY_ICON_SECONDARY, has_text );
   gtk_widget_set_sensitive ( button, has_text );
 }
 
-static gchar *a_prompt_for_goto_string(VikWindow *vw)
+static char *a_prompt_for_goto_string(VikWindow *vw)
 {
   GtkWidget *dialog = NULL;
 
@@ -184,10 +184,10 @@ static gchar *a_prompt_for_goto_string(VikWindow *vw)
   text_changed_cb ( GTK_ENTRY(goto_entry), NULL, ok_button );
   g_signal_connect ( goto_entry, "notify::text", G_CALLBACK (text_changed_cb), ok_button );
 #endif
-  gtk_box_pack_start ( GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), tool_label, FALSE, FALSE, 5 );
-  gtk_box_pack_start ( GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), tool_list, FALSE, FALSE, 5 );
-  gtk_box_pack_start ( GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), goto_label, FALSE, FALSE, 5 );
-  gtk_box_pack_start ( GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), goto_entry, FALSE, FALSE, 5 );
+  gtk_box_pack_start ( GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), tool_label, false, false, 5 );
+  gtk_box_pack_start ( GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), tool_list, false, false, 5 );
+  gtk_box_pack_start ( GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), goto_label, false, false, 5 );
+  gtk_box_pack_start ( GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), goto_entry, false, false, 5 );
   gtk_dialog_set_default_response ( GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT );
   gtk_widget_show_all(dialog);
 
@@ -201,10 +201,10 @@ static gchar *a_prompt_for_goto_string(VikWindow *vw)
   
   // TODO check if list is empty
   last_goto_tool = gtk_combo_box_get_active ( GTK_COMBO_BOX(tool_list) );
-  gchar *provider = vik_goto_tool_get_label ( g_list_nth_data (goto_tools_list, last_goto_tool) );
+  char *provider = vik_goto_tool_get_label ( g_list_nth_data (goto_tools_list, last_goto_tool) );
   a_settings_set_string ( VIK_SETTINGS_GOTO_PROVIDER, provider );
 
-  gchar *goto_str = g_strdup ( gtk_entry_get_text ( GTK_ENTRY(goto_entry) ) );
+  char *goto_str = g_strdup ( gtk_entry_get_text ( GTK_ENTRY(goto_entry) ) );
 
   gtk_widget_destroy(dialog);
 
@@ -220,9 +220,9 @@ static gchar *a_prompt_for_goto_string(VikWindow *vw)
 /**
  * Goto a place when we already have a string to search on
  *
- * Returns: %TRUE if a successful lookup
+ * Returns: %true if a successful lookup
  */
-static gboolean vik_goto_place ( VikWindow *vw, VikViewport *vvp, gchar* name, VikCoord *vcoord )
+static bool vik_goto_place ( VikWindow *vw, VikViewport *vvp, char* name, VikCoord *vcoord )
 {
   // Ensure last_goto_tool is given a value
   get_provider ();
@@ -231,17 +231,17 @@ static gboolean vik_goto_place ( VikWindow *vw, VikViewport *vvp, gchar* name, V
     VikGotoTool *gototool = g_list_nth_data ( goto_tools_list, last_goto_tool );
     if ( gototool ) {
       if ( vik_goto_tool_get_coord ( gototool, vw, vvp, name, vcoord ) == 0 )
-        return TRUE;
+        return true;
     }
   }
-  return FALSE;
+  return false;
 }
 
 void a_vik_goto(VikWindow *vw, VikViewport *vvp)
 {
   VikCoord new_center;
-  gchar *s_str;
-  gboolean more = TRUE;
+  char *s_str;
+  bool more = true;
 
   if (goto_tools_list == NULL)
   {
@@ -253,7 +253,7 @@ void a_vik_goto(VikWindow *vw, VikViewport *vvp)
   do {
     s_str = a_prompt_for_goto_string(vw);
     if ((!s_str) || (s_str[0] == 0)) {
-      more = FALSE;
+      more = false;
     }
     else {
       int ans = vik_goto_tool_get_coord(g_list_nth_data (goto_tools_list, last_goto_tool), vw, vvp, s_str, &new_center);
@@ -265,15 +265,15 @@ void a_vik_goto(VikWindow *vw, VikViewport *vvp)
         if (last_successful_goto_str)
           g_free(last_successful_goto_str);
         last_successful_goto_str = g_strdup(last_goto_str);
-        vik_viewport_set_center_coord(vvp, &new_center, TRUE);
-        more = FALSE;
+        vik_viewport_set_center_coord(vvp, &new_center, true);
+        more = false;
       }
       else if ( ans == -1 ) {
         if (!prompt_try_again(vw, _("I don't know that place. Do you want another goto?")))
-          more = FALSE;
+          more = false;
       }
       else if (!prompt_try_again(vw, _("Service request failure. Do you want another goto?")))
-        more = FALSE;
+        more = false;
     }
     g_free(s_str);
   } while (more);
@@ -298,13 +298,13 @@ void a_vik_goto(VikWindow *vw, VikViewport *vvp)
  *   3 if position only as precise as a country
  * @name: Contains the name of place found. Free this string after use.
  */
-gint a_vik_goto_where_am_i ( VikViewport *vvp, struct LatLon *ll, gchar **name )
+int a_vik_goto_where_am_i ( VikViewport *vvp, struct LatLon *ll, char **name )
 {
-  gint result = 0;
+  int result = 0;
   *name = NULL;
 
-  gchar *tmpname = a_download_uri_to_tmp_file ( "http://api.hostip.info/get_json.php?position=true", NULL );
-  //gchar *tmpname = g_strdup ("../test/hostip2.json");
+  char *tmpname = a_download_uri_to_tmp_file ( "http://api.hostip.info/get_json.php?position=true", NULL );
+  //char *tmpname = g_strdup ("../test/hostip2.json");
   if (!tmpname) {
     return result;
   }
@@ -312,23 +312,23 @@ gint a_vik_goto_where_am_i ( VikViewport *vvp, struct LatLon *ll, gchar **name )
   ll->lat = 0.0;
   ll->lon = 0.0;
 
-  gchar *pat;
+  char *pat;
   GMappedFile *mf;
-  gchar *ss;
-  gint fragment_len;
+  char *ss;
+  int fragment_len;
 
-  gchar lat_buf[32], lon_buf[32];
+  char lat_buf[32], lon_buf[32];
   lat_buf[0] = lon_buf[0] = '\0';
-  gchar *country = NULL;
-  gchar *city = NULL;
+  char *country = NULL;
+  char *city = NULL;
 
-  if ((mf = g_mapped_file_new(tmpname, FALSE, NULL)) == NULL) {
+  if ((mf = g_mapped_file_new(tmpname, false, NULL)) == NULL) {
     g_critical(_("couldn't map temp file"));
     goto tidy;
   }
 
-  gsize len = g_mapped_file_get_length(mf);
-  gchar *text = g_mapped_file_get_contents(mf);
+  size_t len = g_mapped_file_get_length(mf);
+  char *text = g_mapped_file_get_contents(mf);
 
   if ((pat = g_strstr_len(text, len, HOSTIP_COUNTRY_PATTERN))) {
     pat += strlen(HOSTIP_COUNTRY_PATTERN);

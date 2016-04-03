@@ -25,6 +25,9 @@
 #include <glib.h>
 #include <glib-object.h>
 #include <gtk/gtk.h>
+#include <stdbool.h>
+#include <stdint.h>
+
 
 G_BEGIN_DECLS
 
@@ -53,11 +56,11 @@ typedef enum {
   VF_FILTER_LAST
 } vf_filter_type;
 
-typedef void (*VikFileEntryFunc) (VikFileEntry *, gpointer);
+typedef void (*VikFileEntryFunc) (VikFileEntry *, void *);
 
-GtkWidget *vik_file_entry_new (GtkFileChooserAction action, vf_filter_type filter_type, VikFileEntryFunc cb, gpointer user_data);
-const gchar *vik_file_entry_get_filename ( VikFileEntry *vfe );
-void vik_file_entry_set_filename ( VikFileEntry *vfe, const gchar *filename );
+GtkWidget *vik_file_entry_new (GtkFileChooserAction action, vf_filter_type filter_type, VikFileEntryFunc cb, void * user_data);
+const char *vik_file_entry_get_filename ( VikFileEntry *vfe );
+void vik_file_entry_set_filename ( VikFileEntry *vfe, const char *filename );
 
 G_END_DECLS
 

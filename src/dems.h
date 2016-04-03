@@ -33,14 +33,14 @@ typedef enum {
 } VikDemInterpol;
 
 void a_dems_uninit ();
-VikDEM *a_dems_load(const gchar *filename);
-void a_dems_unref(const gchar *filename);
-VikDEM *a_dems_get(const gchar *filename);
-int a_dems_load_list ( GList **dems, gpointer threaddata );
+VikDEM *a_dems_load(const char *filename);
+void a_dems_unref(const char *filename);
+VikDEM *a_dems_get(const char *filename);
+int a_dems_load_list ( GList **dems, void * threaddata );
 void a_dems_list_free ( GList *dems );
 GList *a_dems_list_copy ( GList *dems );
-gint16 a_dems_list_get_elev_by_coord ( GList *dems, const VikCoord *coord );
-gint16 a_dems_get_elev_by_coord ( const VikCoord *coord, VikDemInterpol method);
+int16_t a_dems_list_get_elev_by_coord ( GList *dems, const VikCoord *coord );
+int16_t a_dems_get_elev_by_coord ( const VikCoord *coord, VikDemInterpol method);
 
 G_END_DECLS
 

@@ -52,9 +52,9 @@ static void file_list_add ( VikFileList *vfl )
 				      GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
 				      GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
 				      NULL);
-    gtk_file_chooser_set_select_multiple ( GTK_FILE_CHOOSER(vfl->file_selector), TRUE );
+    gtk_file_chooser_set_select_multiple ( GTK_FILE_CHOOSER(vfl->file_selector), true );
     gtk_window_set_transient_for ( GTK_WINDOW(vfl->file_selector), GTK_WINDOW(win) );
-    gtk_window_set_destroy_with_parent ( GTK_WINDOW(vfl->file_selector), TRUE );
+    gtk_window_set_destroy_with_parent ( GTK_WINDOW(vfl->file_selector), true );
 
     if ( vfl->filter )
       gtk_file_chooser_add_filter ( GTK_FILE_CHOOSER(vfl->file_selector), vfl->filter );
@@ -65,7 +65,7 @@ static void file_list_add ( VikFileList *vfl )
     fiter = files;
     GtkTreeIter iter;
     while ( fiter ) {
-      gchar *file_name = fiter->data;
+      char *file_name = fiter->data;
       
       gtk_list_store_append ( GTK_LIST_STORE(vfl->model), &iter );
       gtk_list_store_set ( GTK_LIST_STORE(vfl->model), &iter, 0, file_name, -1 );
@@ -88,7 +88,7 @@ static GtkTreeRowReference** file_list_get_selected_refs (GtkTreeModel *model,
     
   arr = g_new (GtkTreeRowReference *, g_list_length (list) + 1);
     
-  gint pos = 0;
+  int pos = 0;
   for (iter = g_list_first (list); iter != NULL; iter = g_list_next (iter)) {
     GtkTreePath *path = (GtkTreePath *)(iter->data);
     arr[pos] = gtk_tree_row_reference_new (model, path);
@@ -105,7 +105,7 @@ static void file_list_store_delete_refs (GtkTreeModel *model,
     GtkTreePath *path;
     GtkTreeIter iter;
 
-    gint rr;
+    int rr;
     for ( rr = 0; rrefs[rr] != NULL; rr++ ) {
       path = gtk_tree_row_reference_get_path (rrefs[rr]);
       gtk_tree_model_get_iter (model, &iter, path);
@@ -158,7 +158,7 @@ GType vik_file_list_get_type (void)
  * Support just one filter, as that's all that's needed ATM
  * Probably need to use a GList of them if more than one is required
  */
-GtkWidget *vik_file_list_new ( const gchar *title, GtkFileFilter *filter )
+GtkWidget *vik_file_list_new ( const char *title, GtkFileFilter *filter )
 {
   GtkWidget *add_btn, *del_btn;
   GtkWidget *hbox, *scrolledwindow;
@@ -185,18 +185,18 @@ GtkWidget *vik_file_list_new ( const gchar *title, GtkFileFilter *filter )
   g_signal_connect_swapped ( G_OBJECT(add_btn), "clicked", G_CALLBACK(file_list_add), vfl );
   g_signal_connect_swapped ( G_OBJECT(del_btn), "clicked", G_CALLBACK(file_list_del), vfl );
 
-  hbox = gtk_hbox_new(FALSE, 2);
+  hbox = gtk_hbox_new(false, 2);
 
   scrolledwindow = gtk_scrolled_window_new ( NULL, NULL );
   gtk_scrolled_window_set_policy ( GTK_SCROLLED_WINDOW(scrolledwindow), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC );
   gtk_container_add ( GTK_CONTAINER(scrolledwindow), GTK_WIDGET(vfl->treeview) );
 
-  gtk_box_pack_start ( GTK_BOX(vfl), scrolledwindow, TRUE, TRUE, 3 );
+  gtk_box_pack_start ( GTK_BOX(vfl), scrolledwindow, true, true, 3 );
 
 
-  gtk_box_pack_start ( GTK_BOX(hbox), add_btn, TRUE, TRUE, 3 );
-  gtk_box_pack_start ( GTK_BOX(hbox), del_btn, TRUE, TRUE, 3 );
-  gtk_box_pack_start ( GTK_BOX(vfl), hbox, FALSE, FALSE, 3 );
+  gtk_box_pack_start ( GTK_BOX(hbox), add_btn, true, true, 3 );
+  gtk_box_pack_start ( GTK_BOX(hbox), del_btn, true, true, 3 );
+  gtk_box_pack_start ( GTK_BOX(vfl), hbox, false, false, 3 );
   gtk_widget_show_all(GTK_WIDGET(vfl));
 
   vfl->file_selector = NULL;
@@ -204,13 +204,13 @@ GtkWidget *vik_file_list_new ( const gchar *title, GtkFileFilter *filter )
   return GTK_WIDGET(vfl);
 }
 
-static gboolean get_file_name(GtkTreeModel *model, GtkTreePath *path, GtkTreeIter *iter, GList **list)
+static bool get_file_name(GtkTreeModel *model, GtkTreePath *path, GtkTreeIter *iter, GList **list)
 {
-  gchar *str;
+  char *str;
   gtk_tree_model_get ( model, iter, 0, &str, -1 );
   g_debug ("%s: %s", __FUNCTION__, str);
   (*list) = g_list_append((*list), str); // NB str is already a copy
-  return FALSE;
+  return false;
 }
 
 GList *vik_file_list_get_files ( VikFileList *vfl )

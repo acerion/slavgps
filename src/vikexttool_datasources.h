@@ -23,6 +23,9 @@
 #define _VIKING_EXT_TOOL_DATASOURCES_H
 
 #include <gtk/gtk.h>
+#include <stdbool.h>
+#include <stdint.h>
+
 
 #include "vikwindow.h"
 

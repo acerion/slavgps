@@ -47,7 +47,7 @@ void vik_ext_tool_datasources_unregister_all ()
 
 static void ext_tool_datasources_open_cb ( GtkWidget *widget, VikWindow *vw )
 {
-	gpointer ptr = g_object_get_data ( G_OBJECT(widget), VIK_TOOL_DATASOURCE_KEY );
+	void * ptr = g_object_get_data ( G_OBJECT(widget), VIK_TOOL_DATASOURCE_KEY );
 	VikExtTool *ext_tool = VIK_EXT_TOOL ( ptr );
 	vik_ext_tool_open ( ext_tool, vw );
 }
@@ -61,7 +61,7 @@ void vik_ext_tool_datasources_add_menu_items_to_menu ( VikWindow *vw, GtkMenu *m
 	GList *iter;
 	for (iter = ext_tool_datasources_list; iter; iter = iter->next) {
 		VikExtTool *ext_tool = NULL;
-		gchar *label = NULL;
+		char *label = NULL;
 		ext_tool = VIK_EXT_TOOL ( iter->data );
 		label = vik_ext_tool_get_label ( ext_tool );
 		if ( label ) {

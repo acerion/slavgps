@@ -41,7 +41,7 @@ typedef struct {
 } datasource_file_widgets_t;
 
 /* The last used directory */
-static gchar *last_folder_uri = NULL;
+static char *last_folder_uri = NULL;
 
 /* The last used file filter */
 /* Nb: we use a complex strategy for this because the UI is rebuild each
@@ -52,19 +52,19 @@ static BabelFile *last_file_filter = NULL;
 /* The last file format selected */
 static int last_type = 0;
 
-static gpointer datasource_file_init ( acq_vik_t *avt );
-static void datasource_file_add_setup_widgets ( GtkWidget *dialog, VikViewport *vvp, gpointer user_data );
-static void datasource_file_get_process_options ( datasource_file_widgets_t *widgets, ProcessOptions *po, gpointer not_used, const gchar *not_used2, const gchar *not_used3 );
-static void datasource_file_cleanup ( gpointer data );
+static void * datasource_file_init ( acq_vik_t *avt );
+static void datasource_file_add_setup_widgets ( GtkWidget *dialog, VikViewport *vvp, void * user_data );
+static void datasource_file_get_process_options ( datasource_file_widgets_t *widgets, ProcessOptions *po, void * not_used, const char *not_used2, const char *not_used3 );
+static void datasource_file_cleanup ( void * data );
 
 VikDataSourceInterface vik_datasource_file_interface = {
   N_("Import file with GPSBabel"),
   N_("Imported file"),
   VIK_DATASOURCE_AUTO_LAYER_MANAGEMENT,
   VIK_DATASOURCE_INPUTTYPE_NONE,
-  TRUE,
-  TRUE,
-  TRUE,
+  true,
+  true,
+  true,
   (VikDataSourceInitFunc)		datasource_file_init,
   (VikDataSourceCheckExistenceFunc)	NULL,
   (VikDataSourceAddSetupWidgetsFunc)	datasource_file_add_setup_widgets,
@@ -83,21 +83,21 @@ VikDataSourceInterface vik_datasource_file_interface = {
 };
 
 /* See VikDataSourceInterface */
-static gpointer datasource_file_init ( acq_vik_t *avt )
+static void * datasource_file_init ( acq_vik_t *avt )
 {
   datasource_file_widgets_t *widgets = g_malloc(sizeof(*widgets));
   return widgets;
 }
 
-static void add_file_filter (gpointer data, gpointer user_data)
+static void add_file_filter (void * data, void * user_data)
 {
   GtkFileChooser *chooser = GTK_FILE_CHOOSER ( user_data );
-  const gchar *label = ((BabelFile*) data)->label;
-  const gchar *ext = ((BabelFile*) data)->ext;
+  const char *label = ((BabelFile*) data)->label;
+  const char *ext = ((BabelFile*) data)->ext;
   if ( ext == NULL || ext[0] == '\0' )
     /* No file extension => no filter */
 	return;
-  gchar *pattern = g_strdup_printf ( "*.%s", ext );
+  char *pattern = g_strdup_printf ( "*.%s", ext );
 
   GtkFileFilter *filter = gtk_file_filter_new ();
   gtk_file_filter_add_pattern ( filter, pattern );
@@ -106,7 +106,7 @@ static void add_file_filter (gpointer data, gpointer user_data)
   } else {
     /* Ensure displayed label contains file pattern */
 	/* NB: we skip the '*' in the pattern */
-	gchar *name = g_strdup_printf ( "%s (%s)", label, pattern+1 );
+	char *name = g_strdup_printf ( "%s (%s)", label, pattern+1 );
     gtk_file_filter_set_name ( filter, name );
 	g_free ( name );
   }
@@ -120,7 +120,7 @@ static void add_file_filter (gpointer data, gpointer user_data)
 }
 
 /* See VikDataSourceInterface */
-static void datasource_file_add_setup_widgets ( GtkWidget *dialog, VikViewport *vvp, gpointer user_data )
+static void datasource_file_add_setup_widgets ( GtkWidget *dialog, VikViewport *vvp, void * user_data )
 {
   datasource_file_widgets_t *widgets = (datasource_file_widgets_t *)user_data;
   GtkWidget *filename_label, *type_label;
@@ -153,18 +153,18 @@ static void datasource_file_add_setup_widgets ( GtkWidget *dialog, VikViewport *
 
   /* Packing all these widgets */
   GtkBox *box = GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog)));
-  gtk_box_pack_start ( box, filename_label, FALSE, FALSE, 5 );
-  gtk_box_pack_start ( box, widgets->file, FALSE, FALSE, 5 );
-  gtk_box_pack_start ( box, type_label, FALSE, FALSE, 5 );
-  gtk_box_pack_start ( box, widgets->type, FALSE, FALSE, 5 );
+  gtk_box_pack_start ( box, filename_label, false, false, 5 );
+  gtk_box_pack_start ( box, widgets->file, false, false, 5 );
+  gtk_box_pack_start ( box, type_label, false, false, 5 );
+  gtk_box_pack_start ( box, widgets->type, false, false, 5 );
   gtk_widget_show_all(dialog);
 }
 
 /* See VikDataSourceInterface */
-static void datasource_file_get_process_options ( datasource_file_widgets_t *widgets, ProcessOptions *po, gpointer not_used, const gchar *not_used2, const gchar *not_used3 )
+static void datasource_file_get_process_options ( datasource_file_widgets_t *widgets, ProcessOptions *po, void * not_used, const char *not_used2, const char *not_used3 )
 {
   /* Retrieve the file selected */
-  gchar *filename = gtk_file_chooser_get_filename ( GTK_FILE_CHOOSER(widgets->file) );
+  char *filename = gtk_file_chooser_get_filename ( GTK_FILE_CHOOSER(widgets->file) );
 
   /* Memorize the directory for later use */
   g_free (last_folder_uri);
@@ -175,7 +175,7 @@ static void datasource_file_get_process_options ( datasource_file_widgets_t *wid
   last_file_filter = g_object_get_data ( G_OBJECT(filter), "Babel" );
 
   /* Retrieve and memorize file format selected */
-  gchar *type = NULL;
+  char *type = NULL;
   last_type = gtk_combo_box_get_active ( GTK_COMBO_BOX (widgets->type) );
   type = (a_babel_ui_file_type_selector_get ( widgets->type ))->name;
 
@@ -190,7 +190,7 @@ static void datasource_file_get_process_options ( datasource_file_widgets_t *wid
 }
 
 /* See VikDataSourceInterface */
-static void datasource_file_cleanup ( gpointer data )
+static void datasource_file_cleanup ( void * data )
 {
   g_free ( data );
 }

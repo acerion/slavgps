@@ -38,35 +38,35 @@
 #include "vikwmscmapsource.h"
 #include "maputils.h"
 
-static gboolean _coord_to_mapcoord ( VikMapSource *self, const VikCoord *src, gdouble xzoom, gdouble yzoom, MapCoord *dest );
+static bool _coord_to_mapcoord ( VikMapSource *self, const VikCoord *src, double xzoom, double yzoom, MapCoord *dest );
 static void _mapcoord_to_center_coord ( VikMapSource *self, MapCoord *src, VikCoord *dest );
-static gboolean _supports_download_only_new ( VikMapSource *self );
-static gboolean _is_direct_file_access ( VikMapSource *self );
-static gboolean _is_mbtiles ( VikMapSource *self );
-static gboolean _is_osm_meta_tiles (VikMapSource *self );
-static guint8 _get_zoom_min(VikMapSource *self );
-static guint8 _get_zoom_max(VikMapSource *self );
-static gdouble _get_lat_min(VikMapSource *self );
-static gdouble _get_lat_max(VikMapSource *self );
-static gdouble _get_lon_min(VikMapSource *self );
-static gdouble _get_lon_max(VikMapSource *self );
+static bool _supports_download_only_new ( VikMapSource *self );
+static bool _is_direct_file_access ( VikMapSource *self );
+static bool _is_mbtiles ( VikMapSource *self );
+static bool _is_osm_meta_tiles (VikMapSource *self );
+static uint8_t _get_zoom_min(VikMapSource *self );
+static uint8_t _get_zoom_max(VikMapSource *self );
+static double _get_lat_min(VikMapSource *self );
+static double _get_lat_max(VikMapSource *self );
+static double _get_lon_min(VikMapSource *self );
+static double _get_lon_max(VikMapSource *self );
 
-static gchar *_get_uri( VikMapSourceDefault *self, MapCoord *src );
-static gchar *_get_hostname( VikMapSourceDefault *self );
+static char *_get_uri( VikMapSourceDefault *self, MapCoord *src );
+static char *_get_hostname( VikMapSourceDefault *self );
 static DownloadFileOptions *_get_download_options( VikMapSourceDefault *self );
 
 typedef struct _VikWmscMapSourcePrivate VikWmscMapSourcePrivate;
 struct _VikWmscMapSourcePrivate
 {
-  gchar *hostname;
-  gchar *url;
+  char *hostname;
+  char *url;
   DownloadFileOptions options;
-  guint zoom_min; // TMS Zoom level: 0 = Whole World // http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
-  guint zoom_max; // TMS Zoom level: Often 18 for zoomed in.
-  gdouble lat_min; // Degrees
-  gdouble lat_max; // Degrees
-  gdouble lon_min; // Degrees
-  gdouble lon_max; // Degrees
+  unsigned int zoom_min; // TMS Zoom level: 0 = Whole World // http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
+  unsigned int zoom_max; // TMS Zoom level: Often 18 for zoomed in.
+  double lat_min; // Degrees
+  double lat_max; // Degrees
+  double lon_min; // Degrees
+  double lon_max; // Degrees
 };
 
 #define VIK_WMSC_MAP_SOURCE_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), VIK_TYPE_WMSC_MAP_SOURCE, VikWmscMapSourcePrivate))
@@ -102,7 +102,7 @@ vik_wmsc_map_source_init (VikWmscMapSource *self)
   priv->options.referer = NULL;
   priv->options.follow_location = 0;
   priv->options.check_file = a_check_map_file;
-  priv->options.check_file_server_time = FALSE;
+  priv->options.check_file_server_time = false;
   priv->zoom_min = 0;
   priv->zoom_max = 18;
   priv->lat_min = -90.0;
@@ -135,7 +135,7 @@ vik_wmsc_map_source_finalize (GObject *object)
 
 static void
 vik_wmsc_map_source_set_property (GObject      *object,
-                                    guint         property_id,
+                                    unsigned int         property_id,
                                     const GValue *value,
                                     GParamSpec   *pspec)
 {
@@ -200,7 +200,7 @@ vik_wmsc_map_source_set_property (GObject      *object,
 
 static void
 vik_wmsc_map_source_get_property (GObject    *object,
-                                    guint       property_id,
+                                    unsigned int       property_id,
                                     GValue     *value,
                                     GParamSpec *pspec)
 {
@@ -322,7 +322,7 @@ vik_wmsc_map_source_class_init (VikWmscMapSourceClass *klass)
 	pspec = g_param_spec_boolean ("check-file-server-time",
 	                              "Check file server time",
                                   "Age of current cache before redownloading tile",
-                                  FALSE  /* default value */,
+                                  false  /* default value */,
                                   G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
 	g_object_class_install_property (object_class, PROP_CHECK_FILE_SERVER_TIME, pspec);
 
@@ -385,45 +385,45 @@ vik_wmsc_map_source_class_init (VikWmscMapSourceClass *klass)
 	object_class->finalize = vik_wmsc_map_source_finalize;
 }
 
-static gboolean
+static bool
 _supports_download_only_new ( VikMapSource *self )
 {
-	g_return_val_if_fail (VIK_IS_WMSC_MAP_SOURCE(self), FALSE);
+	g_return_val_if_fail (VIK_IS_WMSC_MAP_SOURCE(self), false);
 	
     VikWmscMapSourcePrivate *priv = VIK_WMSC_MAP_SOURCE_PRIVATE(self);
 	
 	return priv->options.check_file_server_time;
 }
 
-static gboolean
+static bool
 _is_direct_file_access ( VikMapSource *self )
 {
-	return FALSE;
+	return false;
 }
 
-static gboolean
+static bool
 _is_mbtiles ( VikMapSource *self )
 {
-	return FALSE;
+	return false;
 }
 
-static gboolean
+static bool
 _is_osm_meta_tiles ( VikMapSource *self )
 {
-	return FALSE;
+	return false;
 }
 
-static gboolean
-_coord_to_mapcoord ( VikMapSource *self, const VikCoord *src, gdouble xzoom, gdouble yzoom, MapCoord *dest )
+static bool
+_coord_to_mapcoord ( VikMapSource *self, const VikCoord *src, double xzoom, double yzoom, MapCoord *dest )
 {
   g_assert ( src->mode == VIK_COORD_LATLON );
 
   if ( xzoom != yzoom )
-    return FALSE;
+    return false;
 
   dest->scale = map_utils_mpp_to_scale ( xzoom );
   if ( dest->scale == 255 )
-    return FALSE;
+    return false;
 
   /* Note : VIK_GZ(17) / xzoom / 2 = number of tile on Y axis */
   g_debug("%s: xzoom=%f yzoom=%f -> %f", __FUNCTION__,
@@ -436,13 +436,13 @@ _coord_to_mapcoord ( VikMapSource *self, const VikCoord *src, gdouble xzoom, gdo
   dest->z = 0;
   g_debug("%s: %f,%f -> %d,%d", __FUNCTION__,
           src->east_west, src->north_south, dest->x, dest->y);
-  return TRUE;
+  return true;
 }
 
 static void
 _mapcoord_to_center_coord ( VikMapSource *self, MapCoord *src, VikCoord *dest )
 {
-  gdouble socalled_mpp;
+  double socalled_mpp;
   if (src->scale >= 0)
     socalled_mpp = VIK_GZ(src->scale);
   else
@@ -457,41 +457,41 @@ _mapcoord_to_center_coord ( VikMapSource *self, MapCoord *src, VikCoord *dest )
           src->x, src->y, dest->east_west, dest->north_south);
 }
 
-static gchar *
+static char *
 _get_uri( VikMapSourceDefault *self, MapCoord *src )
 {
 	g_return_val_if_fail (VIK_IS_WMSC_MAP_SOURCE(self), NULL);
 	
     VikWmscMapSourcePrivate *priv = VIK_WMSC_MAP_SOURCE_PRIVATE(self);
-	gdouble socalled_mpp;
+	double socalled_mpp;
 	if (src->scale >= 0)
 		socalled_mpp = VIK_GZ(src->scale);
 	else
 		socalled_mpp = 1.0/VIK_GZ(-src->scale);
-	gdouble minx = (gdouble)src->x * 180 / VIK_GZ(17) * socalled_mpp * 2 - 180;
-	gdouble maxx = (gdouble)(src->x + 1) * 180 / VIK_GZ(17) * socalled_mpp * 2 - 180;
+	double minx = (double)src->x * 180 / VIK_GZ(17) * socalled_mpp * 2 - 180;
+	double maxx = (double)(src->x + 1) * 180 / VIK_GZ(17) * socalled_mpp * 2 - 180;
 	/* We should restore logic of viking:
      * tile index on Y axis follow a screen logic (top -> down)
      */
-	gdouble miny = -((gdouble)(src->y + 1) * 180 / VIK_GZ(17) * socalled_mpp * 2 - 90);
-	gdouble maxy = -((gdouble)(src->y) * 180 / VIK_GZ(17) * socalled_mpp * 2 - 90);
+	double miny = -((double)(src->y + 1) * 180 / VIK_GZ(17) * socalled_mpp * 2 - 90);
+	double maxy = -((double)(src->y) * 180 / VIK_GZ(17) * socalled_mpp * 2 - 90);
 	
-	gchar sminx[G_ASCII_DTOSTR_BUF_SIZE];
-	gchar smaxx[G_ASCII_DTOSTR_BUF_SIZE];
-	gchar sminy[G_ASCII_DTOSTR_BUF_SIZE];
-	gchar smaxy[G_ASCII_DTOSTR_BUF_SIZE];
+	char sminx[G_ASCII_DTOSTR_BUF_SIZE];
+	char smaxx[G_ASCII_DTOSTR_BUF_SIZE];
+	char sminy[G_ASCII_DTOSTR_BUF_SIZE];
+	char smaxy[G_ASCII_DTOSTR_BUF_SIZE];
 
 	g_ascii_dtostr (sminx, G_ASCII_DTOSTR_BUF_SIZE, minx);
 	g_ascii_dtostr (smaxx, G_ASCII_DTOSTR_BUF_SIZE, maxx);
 	g_ascii_dtostr (sminy, G_ASCII_DTOSTR_BUF_SIZE, miny);
 	g_ascii_dtostr (smaxy, G_ASCII_DTOSTR_BUF_SIZE, maxy);
 
-	gchar *uri = g_strdup_printf (priv->url, sminx, sminy, smaxx, smaxy);
+	char *uri = g_strdup_printf (priv->url, sminx, sminy, smaxx, smaxy);
 	
 	return uri;
 } 
 
-static gchar *
+static char *
 _get_hostname( VikMapSourceDefault *self )
 {
 	g_return_val_if_fail (VIK_IS_WMSC_MAP_SOURCE(self), NULL);
@@ -511,10 +511,10 @@ _get_download_options( VikMapSourceDefault *self )
 /**
  *
  */
-static guint8
+static uint8_t
 _get_zoom_min (VikMapSource *self)
 {
-	g_return_val_if_fail (VIK_IS_WMSC_MAP_SOURCE(self), FALSE);
+	g_return_val_if_fail (VIK_IS_WMSC_MAP_SOURCE(self), false);
 	VikWmscMapSourcePrivate *priv = VIK_WMSC_MAP_SOURCE_PRIVATE(self);
 	return priv->zoom_min;
 }
@@ -522,10 +522,10 @@ _get_zoom_min (VikMapSource *self)
 /**
  *
  */
-static guint8
+static uint8_t
 _get_zoom_max (VikMapSource *self)
 {
-	g_return_val_if_fail (VIK_IS_WMSC_MAP_SOURCE(self), FALSE);
+	g_return_val_if_fail (VIK_IS_WMSC_MAP_SOURCE(self), false);
 	VikWmscMapSourcePrivate *priv = VIK_WMSC_MAP_SOURCE_PRIVATE(self);
 	return priv->zoom_max;
 }
@@ -533,10 +533,10 @@ _get_zoom_max (VikMapSource *self)
 /**
  *
  */
-static gdouble
+static double
 _get_lat_min (VikMapSource *self)
 {
-	g_return_val_if_fail (VIK_IS_WMSC_MAP_SOURCE(self), FALSE);
+	g_return_val_if_fail (VIK_IS_WMSC_MAP_SOURCE(self), false);
 	VikWmscMapSourcePrivate *priv = VIK_WMSC_MAP_SOURCE_PRIVATE(self);
 	return priv->lat_min;
 }
@@ -544,10 +544,10 @@ _get_lat_min (VikMapSource *self)
 /**
  *
  */
-static gdouble
+static double
 _get_lat_max (VikMapSource *self)
 {
-	g_return_val_if_fail (VIK_IS_WMSC_MAP_SOURCE(self), FALSE);
+	g_return_val_if_fail (VIK_IS_WMSC_MAP_SOURCE(self), false);
 	VikWmscMapSourcePrivate *priv = VIK_WMSC_MAP_SOURCE_PRIVATE(self);
 	return priv->lat_max;
 }
@@ -555,10 +555,10 @@ _get_lat_max (VikMapSource *self)
 /**
  *
  */
-static gdouble
+static double
 _get_lon_min (VikMapSource *self)
 {
-	g_return_val_if_fail (VIK_IS_WMSC_MAP_SOURCE(self), FALSE);
+	g_return_val_if_fail (VIK_IS_WMSC_MAP_SOURCE(self), false);
 	VikWmscMapSourcePrivate *priv = VIK_WMSC_MAP_SOURCE_PRIVATE(self);
 	return priv->lon_min;
 }
@@ -566,16 +566,16 @@ _get_lon_min (VikMapSource *self)
 /**
  *
  */
-static gdouble
+static double
 _get_lon_max (VikMapSource *self)
 {
-	g_return_val_if_fail (VIK_IS_WMSC_MAP_SOURCE(self), FALSE);
+	g_return_val_if_fail (VIK_IS_WMSC_MAP_SOURCE(self), false);
 	VikWmscMapSourcePrivate *priv = VIK_WMSC_MAP_SOURCE_PRIVATE(self);
 	return priv->lon_max;
 }
 
 VikWmscMapSource *
-vik_wmsc_map_source_new_with_id (guint16 id, const gchar *label, const gchar *hostname, const gchar *url)
+vik_wmsc_map_source_new_with_id (uint16_t id, const char *label, const char *hostname, const char *url)
 {
 	return g_object_new(VIK_TYPE_WMSC_MAP_SOURCE,
 	                    "id", id, "label", label, "hostname", hostname, "url", url, NULL);

@@ -26,12 +26,12 @@
 
 G_BEGIN_DECLS
 
-gboolean a_geojson_write_file ( VikTrwLayer *vtl, FILE *ff );
+bool a_geojson_write_file ( VikTrwLayer *vtl, FILE *ff );
 
-const gchar* a_geojson_program_export ( void );
-const gchar* a_geojson_program_import ( void );
+const char* a_geojson_program_export ( void );
+const char* a_geojson_program_import ( void );
 
-gchar* a_geojson_import_to_gpx ( const gchar *filename );
+char* a_geojson_import_to_gpx ( const char *filename );
 
 G_END_DECLS
 

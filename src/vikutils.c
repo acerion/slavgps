@@ -53,24 +53,24 @@
  *    thus would make it more user friendly and maybe even GUI controlable.
  * However for now at least there is some semblance of user control
  */
-gchar* vu_trackpoint_formatted_message ( gchar *format_code, VikTrackpoint *trkpt, VikTrackpoint *trkpt_prev, VikTrack *trk, gdouble climb )
+char* vu_trackpoint_formatted_message ( char *format_code, VikTrackpoint *trkpt, VikTrackpoint *trkpt_prev, VikTrack *trk, double climb )
 {
 	if ( !trkpt )
 		return NULL;
 
-	gint len = 0;
+	int len = 0;
 	if ( format_code )
 		len = strlen ( format_code );
 	if ( len > FMT_MAX_NUMBER_CODES )
 		len = FMT_MAX_NUMBER_CODES;
 
-	gchar* values[FMT_MAX_NUMBER_CODES];
+	char* values[FMT_MAX_NUMBER_CODES];
 	int i;
 	for ( i = 0; i < FMT_MAX_NUMBER_CODES; i++ ) {
 		values[i] = '\0';
 	}
 
-	gchar *speed_units_str = NULL;
+	char *speed_units_str = NULL;
 	vik_units_speed_t speed_units = a_vik_get_units_speed ();
 	switch (speed_units) {
 	case VIK_UNITS_SPEED_MILES_PER_HOUR:
@@ -88,7 +88,7 @@ gchar* vu_trackpoint_formatted_message ( gchar *format_code, VikTrackpoint *trkp
 		break;
 	}
 
-	gchar *separator = g_strdup ( " | " );
+	char *separator = g_strdup ( " | " );
 
 	for ( i = 0; i < len; i++ ) {
 		switch ( g_ascii_toupper ( format_code[i] ) ) {
@@ -96,8 +96,8 @@ gchar* vu_trackpoint_formatted_message ( gchar *format_code, VikTrackpoint *trkp
 		case 'K': values[i] = g_strdup ( _("Trkpt") ); break; // Trkpt Preamble
 
 		case 'S': {
-			gdouble speed = 0.0;
-			gchar *speedtype = NULL;
+			double speed = 0.0;
+			char *speedtype = NULL;
 			if ( isnan(trkpt->speed) && trkpt_prev ) {
 				if ( trkpt->has_timestamp && trkpt_prev->has_timestamp ) {
 					if ( trkpt->timestamp != trkpt_prev->timestamp ) {
@@ -138,8 +138,8 @@ gchar* vu_trackpoint_formatted_message ( gchar *format_code, VikTrackpoint *trkp
 		}
 
 		case 'B': {
-			gdouble speed = 0.0;
-			gchar *speedtype = NULL;
+			double speed = 0.0;
+			char *speedtype = NULL;
 			if ( isnan(climb) && trkpt_prev ) {
 				if ( trkpt->has_timestamp && trkpt_prev->has_timestamp ) {
 					if ( trkpt->timestamp != trkpt_prev->timestamp ) {
@@ -194,16 +194,16 @@ gchar* vu_trackpoint_formatted_message ( gchar *format_code, VikTrackpoint *trkp
 		}
 
 		case 'C': {
-			gint heading = isnan(trkpt->course) ? 0 : (gint)round(trkpt->course);
+			int heading = isnan(trkpt->course) ? 0 : (int)round(trkpt->course);
 			values[i] = g_strdup_printf ( _("%sCourse %03d\302\260" ), separator, heading );
 			break;
 		}
 
 		case 'P': {
 			if ( trkpt_prev ) {
-				gint diff = (gint) round ( vik_coord_diff ( &(trkpt->coord), &(trkpt_prev->coord) ) );
+				int diff = (int) round ( vik_coord_diff ( &(trkpt->coord), &(trkpt_prev->coord) ) );
 
-				gchar *dist_units_str = NULL;
+				char *dist_units_str = NULL;
 				vik_units_distance_t dist_units = a_vik_get_units_distance ();
 				// expect the difference between track points to be small hence use metres or yards
 				switch (dist_units) {
@@ -225,7 +225,7 @@ gchar* vu_trackpoint_formatted_message ( gchar *format_code, VikTrackpoint *trkp
 		}
 
 		case 'T': {
-			gchar *msg;
+			char *msg;
 			if ( trkpt->has_timestamp ) {
 				// Compact date time format
 				msg = vu_get_time_string ( &(trkpt->timestamp), "%x %X", &(trkpt->coord), NULL );
@@ -252,10 +252,10 @@ gchar* vu_trackpoint_formatted_message ( gchar *format_code, VikTrackpoint *trkp
 		case 'F': {
 			if ( trk ) {
 				// Distance to the end 'Finish' (along the track)
-				gdouble distd =	vik_track_get_length_to_trackpoint (trk, trkpt);
-				gdouble diste =	vik_track_get_length_including_gaps ( trk );
-				gdouble dist = diste - distd;
-				gchar *dist_units_str = NULL;
+				double distd =	vik_track_get_length_to_trackpoint (trk, trkpt);
+				double diste =	vik_track_get_length_including_gaps ( trk );
+				double dist = diste - distd;
+				char *dist_units_str = NULL;
 				vik_units_distance_t dist_units = a_vik_get_units_distance ();
 				switch (dist_units) {
 				case VIK_UNITS_DISTANCE_MILES:
@@ -281,8 +281,8 @@ gchar* vu_trackpoint_formatted_message ( gchar *format_code, VikTrackpoint *trkp
 		case 'D': {
 			if ( trk ) {
 				// Distance from start (along the track)
-				gdouble distd =	vik_track_get_length_to_trackpoint (trk, trkpt);
-				gchar *dist_units_str = NULL;
+				double distd =	vik_track_get_length_to_trackpoint (trk, trkpt);
+				char *dist_units_str = NULL;
 				vik_units_distance_t dist_units = a_vik_get_units_distance ();
 				switch (dist_units) {
 				case VIK_UNITS_DISTANCE_MILES:
@@ -307,7 +307,7 @@ gchar* vu_trackpoint_formatted_message ( gchar *format_code, VikTrackpoint *trkp
 
 		case 'L': {
 			// Location (Lat/Long)
-			gchar *lat = NULL, *lon = NULL;
+			char *lat = NULL, *lon = NULL;
 			struct LatLon ll;
 			vik_coord_to_latlon (&(trkpt->coord), &ll);
 			a_coords_latlon_to_string ( &ll, &lat, &lon );
@@ -337,7 +337,7 @@ gchar* vu_trackpoint_formatted_message ( gchar *format_code, VikTrackpoint *trkp
 	g_free ( separator );
 	g_free ( speed_units_str );
 
-	gchar *msg = g_strconcat ( values[0], values[1], values[2], values[3], values[4], values[5], values[6], values[7], values[8], NULL );
+	char *msg = g_strconcat ( values[0], values[1], values[2], values[3], values[4], values[5], values[6], values[7], values[8], NULL );
 
 	for ( i = 0; i < FMT_MAX_NUMBER_CODES; i++ ) {
 		if ( values[i] != '\0' )
@@ -349,10 +349,10 @@ gchar* vu_trackpoint_formatted_message ( gchar *format_code, VikTrackpoint *trkp
 
 typedef struct {
 	GtkWindow *window; // Layer needed for redrawing
-	gchar *version;    // Image list
+	char *version;    // Image list
 } new_version_thread_data;
 
-static gboolean new_version_available_message ( new_version_thread_data *nvtd )
+static bool new_version_available_message ( new_version_thread_data *nvtd )
 {
 	// Only a simple goto website option is offered
 	// Trying to do an installation update is platform specific
@@ -363,7 +363,7 @@ static gboolean new_version_available_message ( new_version_thread_data *nvtd )
 
 	g_free ( nvtd->version );
 	g_free ( nvtd );
-	return FALSE;
+	return false;
 }
 
 #define VIK_SETTINGS_VERSION_CHECKED_DATE "version_checked_date"
@@ -371,21 +371,21 @@ static gboolean new_version_available_message ( new_version_thread_data *nvtd )
 static void latest_version_thread ( GtkWindow *window )
 {
 	// Need to allow a few redirects, as SF file is often served from different server
-	DownloadFileOptions options = { FALSE, FALSE, NULL, 5, NULL, NULL, NULL };
-	gchar *filename = a_download_uri_to_tmp_file ( "http://sourceforge.net/projects/viking/files/VERSION", &options );
-	//gchar *filename = g_strdup ( "VERSION" );
+	DownloadFileOptions options = { false, false, NULL, 5, NULL, NULL, NULL };
+	char *filename = a_download_uri_to_tmp_file ( "http://sourceforge.net/projects/viking/files/VERSION", &options );
+	//char *filename = g_strdup ( "VERSION" );
 	if ( !filename ) {
 		return;
 	}
 
-	GMappedFile *mf = g_mapped_file_new ( filename, FALSE, NULL );
+	GMappedFile *mf = g_mapped_file_new ( filename, false, NULL );
 	if ( !mf )
 		return;
 
-	gchar *text = g_mapped_file_get_contents ( mf );
+	char *text = g_mapped_file_get_contents ( mf );
 
-	gint latest_version = viking_version_to_number ( text );
-	gint my_version = viking_version_to_number ( VIKING_VERSION );
+	int latest_version = viking_version_to_number ( text );
+	int my_version = viking_version_to_number ( VIKING_VERSION );
 
 	g_debug ( "The lastest version is: %s", text );
 
@@ -424,9 +424,9 @@ void vu_check_latest_version ( GtkWindow *window )
 	if ( ! a_vik_get_check_version () )
 		return;
 
-	gboolean do_check = FALSE;
+	bool do_check = false;
 
-	gint check_period;
+	int check_period;
 	if ( ! a_settings_get_integer ( VIK_SETTINGS_VERSION_CHECK_PERIOD, &check_period ) ) {
 		check_period = 14;
 	}
@@ -435,7 +435,7 @@ void vu_check_latest_version ( GtkWindow *window )
 	GDate *gdate_last = g_date_new();
 	GDate *gdate_now = g_date_new();
 	GTimeVal time_last;
-	gchar *last_checked_date = NULL;
+	char *last_checked_date = NULL;
 
 	// When no previous date available - set to do the version check
 	if ( a_settings_get_string ( VIK_SETTINGS_VERSION_CHECKED_DATE, &last_checked_date) ) {
@@ -443,10 +443,10 @@ void vu_check_latest_version ( GtkWindow *window )
 			g_date_set_time_val ( gdate_last, &time_last );
 		}
 		else
-			do_check = TRUE;
+			do_check = true;
 	}
 	else
-		do_check = TRUE;
+		do_check = true;
 
 	GTimeVal time_now;
 	g_get_current_time ( &time_now );
@@ -456,7 +456,7 @@ void vu_check_latest_version ( GtkWindow *window )
 		// Dates available so do the comparison
 		g_date_add_days ( gdate_last, check_period );
 		if ( g_date_compare ( gdate_last, gdate_now ) < 0 )
-			do_check = TRUE;
+			do_check = true;
 	}
 
 	g_date_free ( gdate_last );
@@ -466,7 +466,7 @@ void vu_check_latest_version ( GtkWindow *window )
 #if GLIB_CHECK_VERSION (2, 32, 0)
 		g_thread_try_new ( "latest_version_thread", (GThreadFunc)latest_version_thread, window, NULL );
 #else
-		g_thread_create ( (GThreadFunc)latest_version_thread, window, FALSE, NULL );
+		g_thread_create ( (GThreadFunc)latest_version_thread, window, false, NULL );
 #endif
 	}
 }
@@ -478,8 +478,8 @@ void vu_check_latest_version ( GtkWindow *window )
  */
 void vu_set_auto_features_on_first_run ( void )
 {
-	gboolean auto_features = FALSE;
-	gboolean set_defaults = FALSE;
+	bool auto_features = false;
+	bool set_defaults = false;
 
 	if ( a_vik_very_first_run () ) {
 
@@ -487,18 +487,18 @@ void vu_set_auto_features_on_first_run ( void )
 
 		if ( a_dialog_yes_or_no ( GTK_WINDOW(win),
 		                          _("This appears to be Viking's very first run.\n\nDo you wish to enable automatic internet features?\n\nIndividual settings can be controlled in the Preferences."), NULL ) )
-			auto_features = TRUE;
+			auto_features = true;
 
 		// Default to more standard cache layout for new users (well new installs at least)
 		maps_layer_set_cache_default ( VIK_MAPS_CACHE_LAYOUT_OSM );
-		set_defaults = TRUE;
+		set_defaults = true;
 	}
 
 	if ( auto_features ) {
 		// Set Maps to autodownload
 		// Ensure the default is true
-		maps_layer_set_autodownload_default ( TRUE );
-		set_defaults = TRUE;
+		maps_layer_set_autodownload_default ( true );
+		set_defaults = true;
 
 		// Simplistic repeat of preference settings
 		//  Only the name & type are important for setting a preference via this 'external' way
@@ -509,7 +509,7 @@ void vu_set_auto_features_on_first_run ( void )
 		VikLayerParam pref_startup_method[] = { { VIK_LAYER_NUM_TYPES, VIKING_PREFERENCES_STARTUP_NAMESPACE "startup_method", VIK_LAYER_PARAM_UINT, VIK_LAYER_GROUP_NONE, NULL, VIK_LAYER_WIDGET_COMBOBOX, NULL, NULL, NULL, NULL, NULL, NULL}, };
 
 		VikLayerParamData vlp_data;
-		vlp_data.b = TRUE;
+		vlp_data.b = true;
 		a_preferences_run_setparam ( vlp_data, pref_add_map );
 
 		vlp_data.u = VIK_STARTUP_METHOD_AUTO_LOCATION;
@@ -519,7 +519,7 @@ void vu_set_auto_features_on_first_run ( void )
 		// For other systems it's expected a Package manager or similar controls the installation, so leave it off
 #ifdef WINDOWS
 		VikLayerParam pref_startup_version_check[] = { { VIK_LAYER_NUM_TYPES, VIKING_PREFERENCES_STARTUP_NAMESPACE "check_version", VIK_LAYER_PARAM_BOOLEAN, VIK_LAYER_GROUP_NONE, NULL, VIK_LAYER_WIDGET_CHECKBUTTON, NULL, NULL, NULL, NULL, }, };
-		vlp_data.b = TRUE;
+		vlp_data.b = true;
 		a_preferences_run_setparam ( vlp_data, pref_startup_version_check );
 #endif
 
@@ -540,23 +540,23 @@ void vu_set_auto_features_on_first_run ( void )
  * Any time a path may contain a relative component, so need to prepend that directory it is relative to
  * Then resolve the full path to get the normal canonical filename
  */
-gchar *vu_get_canonical_filename ( VikLayer *vl, const gchar *filename )
+char *vu_get_canonical_filename ( VikLayer *vl, const char *filename )
 {
-  gchar *canonical = NULL;
+  char *canonical = NULL;
   if ( !filename )
     return NULL;
 
   if ( g_path_is_absolute ( filename ) )
     canonical = g_strdup ( filename );
   else {
-    const gchar *vw_filename = vik_window_get_filename ( VIK_WINDOW_FROM_WIDGET (vl->vvp) );
-    gchar *dirpath = NULL;
+    const char *vw_filename = vik_window_get_filename ( VIK_WINDOW_FROM_WIDGET (vl->vvp) );
+    char *dirpath = NULL;
     if ( vw_filename )
       dirpath = g_path_get_dirname ( vw_filename );
     else
       dirpath = g_get_current_dir(); // Fallback - if here then probably can't create the correct path
 
-    gchar *full = NULL;
+    char *full = NULL;
     if ( g_path_is_absolute ( dirpath ) )
       full = g_strconcat ( dirpath, G_DIR_SEPARATOR_S, filename, NULL );
     else
@@ -578,22 +578,22 @@ static struct kdtree *kd = NULL;
  *
  * Returns: The number of elements within the latlontz.txt loaded
  */
-static gint load_ll_tz_dir ( const gchar *dir )
+static int load_ll_tz_dir ( const char *dir )
 {
-	gint inserted = 0;
-	gchar *lltz = g_build_filename ( dir, "latlontz.txt", NULL );
+	int inserted = 0;
+	char *lltz = g_build_filename ( dir, "latlontz.txt", NULL );
 	if ( g_access(lltz, R_OK) == 0 ) {
-		gchar buffer[4096];
+		char buffer[4096];
 		long line_num = 0;
 		FILE *ff = g_fopen ( lltz, "r" );
 		if ( ff ) {
 			while ( fgets ( buffer, 4096, ff ) ) {
 				line_num++;
-				gchar **components = g_strsplit (buffer, " ", 3);
-				guint nn = g_strv_length ( components );
+				char **components = g_strsplit (buffer, " ", 3);
+				unsigned int nn = g_strv_length ( components );
 				if ( nn == 3 ) {
 					double pt[2] = { g_ascii_strtod (components[0], NULL), g_ascii_strtod (components[1], NULL) };
-					gchar *timezone = g_strchomp ( components[2] );
+					char *timezone = g_strchomp ( components[2] );
 					if ( kd_insert ( kd, pt, timezone ) )
 						g_critical ( "Insertion problem of %s for line %ld of latlontz.txt", timezone, line_num );
 					else
@@ -631,10 +631,10 @@ void vu_setup_lat_lon_tz_lookup ()
 	kd = kd_create(2);
 
 	// Look in the directories of data path
-	gchar **data_dirs = a_get_viking_data_path();
-	guint loaded = 0;
+	char **data_dirs = a_get_viking_data_path();
+	unsigned int loaded = 0;
 	// Process directories in reverse order for priority
-	guint n_data_dirs = g_strv_length ( data_dirs );
+	unsigned int n_data_dirs = g_strv_length ( data_dirs );
 	for (; n_data_dirs > 0; n_data_dirs--) {
 		loaded += load_ll_tz_dir(data_dirs[n_data_dirs-1]);
 	}
@@ -668,17 +668,17 @@ static double dist_sq( double *a1, double *a2, int dims ) {
   return dist_sq;
 }
 
-static gchar* time_string_adjusted ( time_t *time, gint offset_s )
+static char* time_string_adjusted ( time_t *time, int offset_s )
 {
 	time_t *mytime = time;
 	*mytime = *mytime + offset_s;
-	gchar *str = g_malloc ( 64 );
+	char *str = g_malloc ( 64 );
 	// Append asterisks to indicate use of simplistic model (i.e. no TZ)
 	strftime ( str, 64, "%a %X %x **", gmtime(mytime) );
 	return str;
 }
 
-static gchar* time_string_tz ( time_t *time, const gchar *format, GTimeZone *tz )
+static char* time_string_tz ( time_t *time, const char *format, GTimeZone *tz )
 {
 	GDateTime *utc = g_date_time_new_from_unix_utc (*time);
 	if ( !utc ) {
@@ -691,7 +691,7 @@ static gchar* time_string_tz ( time_t *time, const gchar *format, GTimeZone *tz 
 		g_warning ( "%s: result from g_date_time_to_timezone() is NULL", __FUNCTION__ );
 		return NULL;
 	}
-	gchar *str = g_date_time_format ( local, format );
+	char *str = g_date_time_format ( local, format );
 
 	g_date_time_unref ( local );
 	g_date_time_unref ( utc );
@@ -709,9 +709,9 @@ static gchar* time_string_tz ( time_t *time, const gchar *format, GTimeZone *tz 
  * Use the k-d tree method (http://en.wikipedia.org/wiki/Kd-tree) to quickly retreive
  *  the nearest location to the given position.
  */
-gchar* vu_get_tz_at_location ( const VikCoord* vc )
+char* vu_get_tz_at_location ( const VikCoord* vc )
 {
-	gchar *tz = NULL;
+	char *tz = NULL;
 	if ( !vc || !kd )
 		return tz;
 
@@ -719,14 +719,14 @@ gchar* vu_get_tz_at_location ( const VikCoord* vc )
 	vik_coord_to_latlon ( vc, &ll );
 	double pt[2] = { ll.lat, ll.lon };
 
-	gdouble nearest;
+	double nearest;
 	if ( !a_settings_get_double(VIK_SETTINGS_NEAREST_TZ_FACTOR, &nearest) )
 		nearest = 1.0;
 
 	struct kdres *presults = kd_nearest_range ( kd, pt, nearest );
 	while( !kd_res_end( presults ) ) {
 		double pos[2];
-		gchar *ans = (gchar*)kd_res_item ( presults, pos );
+		char *ans = (char*)kd_res_item ( presults, pos );
 		// compute the distance of the current result from the pt
 		double dist = sqrt( dist_sq( pt, pos, 2 ) );
 		if ( dist < nearest ) {
@@ -755,10 +755,10 @@ gchar* vu_get_tz_at_location ( const VikCoord* vc )
  *
  * Returns: A string of the time according to the time display property
  */
-gchar* vu_get_time_string ( time_t *time, const gchar *format, const VikCoord* vc, const gchar *tz )
+char* vu_get_time_string ( time_t *time, const char *format, const VikCoord* vc, const char *tz )
 {
 	if ( !format ) return NULL;
-	gchar *str = NULL;
+	char *str = NULL;
 	switch ( a_vik_get_time_ref_frame() ) {
 		case VIK_TIME_REF_UTC:
 			str = g_malloc ( 64 );
@@ -767,7 +767,7 @@ gchar* vu_get_time_string ( time_t *time, const gchar *format, const VikCoord* v
 		case VIK_TIME_REF_WORLD:
 			if ( vc && !tz ) {
 				// No timezone specified so work it out
-				gchar *mytz = vu_get_tz_at_location ( vc );
+				char *mytz = vu_get_tz_at_location ( vc );
 				if ( mytz ) {
 					GTimeZone *gtz = g_time_zone_new ( mytz );
 					str = time_string_tz ( time, format, gtz );
@@ -803,7 +803,7 @@ gchar* vu_get_time_string ( time_t *time, const gchar *format, const VikCoord* v
  * Values are defaulted in such a manner not to be applied when they haven't been specified
  *
  */
-void vu_command_line ( VikWindow *vw, gdouble latitude, gdouble longitude, gint zoom_osm_level, gint map_id )
+void vu_command_line ( VikWindow *vw, double latitude, double longitude, int zoom_osm_level, int map_id )
 {
 	if ( !vw )
 		return;
@@ -814,42 +814,42 @@ void vu_command_line ( VikWindow *vw, gdouble latitude, gdouble longitude, gint 
 		struct LatLon ll;
 		ll.lat = latitude;
 		ll.lon = longitude;
-		vik_viewport_set_center_latlon ( vvp, &ll, TRUE );
+		vik_viewport_set_center_latlon ( vvp, &ll, true );
 	}
 
 	if ( zoom_osm_level >= 0 ) {
 		// Convert OSM zoom level into Viking zoom level
-		gdouble mpp = exp ( (17-zoom_osm_level) * log(2) );
+		double mpp = exp ( (17-zoom_osm_level) * log(2) );
 		if ( mpp > 1.0 )
 			mpp = round (mpp);
 		vik_viewport_set_zoom ( vvp, mpp );
 	}
 
 	if ( map_id >= 0 ) {
-		guint my_map_id = map_id;
+		unsigned int my_map_id = map_id;
 		if ( my_map_id == 0 )
 			my_map_id = vik_maps_layer_get_default_map_type ();
 
 		// Don't add map layer if one already exists
-		GList *vmls = vik_layers_panel_get_all_layers_of_type(vik_window_layers_panel(vw), VIK_LAYER_MAPS, TRUE);
+		GList *vmls = vik_layers_panel_get_all_layers_of_type(vik_window_layers_panel(vw), VIK_LAYER_MAPS, true);
 		int num_maps = g_list_length(vmls);
-		gboolean add_map = TRUE;
+		bool add_map = true;
 
 		for (int i = 0; i < num_maps; i++) {
 			VikMapsLayer *vml = (VikMapsLayer*)(vmls->data);
-			gint id = vik_maps_layer_get_map_type(vml);
+			int id = vik_maps_layer_get_map_type(vml);
 			if ( my_map_id == id ) {
-				add_map = FALSE;
+				add_map = false;
 				break;
 			}
 			vmls = vmls->next;
 		}
 
 		if ( add_map ) {
-			VikMapsLayer *vml = VIK_MAPS_LAYER ( vik_layer_create(VIK_LAYER_MAPS, vvp, FALSE) );
+			VikMapsLayer *vml = VIK_MAPS_LAYER ( vik_layer_create(VIK_LAYER_MAPS, vvp, false) );
 			vik_maps_layer_set_map_type ( vml, my_map_id );
 			vik_layer_rename ( VIK_LAYER(vml), _("Map") );
-			vik_aggregate_layer_add_layer ( vik_layers_panel_get_top_layer(vik_window_layers_panel(vw)), VIK_LAYER(vml), TRUE );
+			vik_aggregate_layer_add_layer ( vik_layers_panel_get_top_layer(vik_window_layers_panel(vw)), VIK_LAYER(vml), true );
 			vik_layer_emit_update ( VIK_LAYER(vml) );
 		}
 	}
@@ -866,7 +866,7 @@ static void vu_copy_label ( GtkWidget *widget )
 /**
  * Generate a single entry menu to allow copying the displayed text of a widget (should be a GtkButton ATM)
  */
-void vu_copy_label_menu ( GtkWidget *widget, guint button )
+void vu_copy_label_menu ( GtkWidget *widget, unsigned int button )
 {
 	GtkWidget *menu = gtk_menu_new();
 	GtkWidget *item = gtk_image_menu_item_new_from_stock ( GTK_STOCK_COPY, NULL );
@@ -887,7 +887,7 @@ void vu_zoom_to_show_latlons ( VikCoordMode mode, VikViewport *vvp, struct LatLo
 	struct LatLon average = { (maxmin[0].lat+maxmin[1].lat)/2, (maxmin[0].lon+maxmin[1].lon)/2 };
 	VikCoord coord;
 	vik_coord_load_from_latlon ( &coord, mode, &average );
-	vik_viewport_set_center_coord ( vvp, &coord, TRUE );
+	vik_viewport_set_center_coord ( vvp, &coord, true );
 
 	/* Convert into definite 'smallest' and 'largest' positions */
 	struct LatLon minmin;
@@ -904,10 +904,10 @@ void vu_zoom_to_show_latlons ( VikCoordMode mode, VikViewport *vvp, struct LatLo
 
 	/* Never zoom in too far - generally not that useful, as too close ! */
 	/* Always recalculate the 'best' zoom level */
-	gdouble zoom = 1.0;
+	double zoom = 1.0;
 	vik_viewport_set_zoom ( vvp, zoom );
 
-	gdouble min_lat, max_lat, min_lon, max_lon;
+	double min_lat, max_lat, min_lon, max_lon;
 	/* Should only be a maximum of about 18 iterations from min to max zoom levels */
 	while ( zoom <= VIK_VIEWPORT_MAX_ZOOM ) {
 		vik_viewport_get_min_max_lat_lon ( vvp, &min_lat, &max_lat, &min_lon, &max_lon );

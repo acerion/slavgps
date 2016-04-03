@@ -23,6 +23,9 @@
 #define _VIKING_WEBTOOL_BOUNDS_H
 
 #include <glib.h>
+#include <stdbool.h>
+#include <stdint.h>
+
 
 #include "vikwebtool.h"
 
@@ -51,7 +54,7 @@ struct _VikWebtoolBounds {
 };
 
 VikWebtoolBounds* vik_webtool_bounds_new ( );
-VikWebtoolBounds* vik_webtool_bounds_new_with_members ( const gchar *label, const gchar *url );
+VikWebtoolBounds* vik_webtool_bounds_new_with_members ( const char *label, const char *url );
 
 G_END_DECLS
 

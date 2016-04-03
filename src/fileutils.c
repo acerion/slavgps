@@ -34,9 +34,9 @@
 #define FILE_SEP '/'
 #endif
 
-const gchar *a_file_basename ( const gchar *filename )
+const char *a_file_basename ( const char *filename )
 {
-  const gchar *t = filename + strlen(filename) - 1;
+  const char *t = filename + strlen(filename) - 1;
   while ( --t > filename )
     if ( *(t-1) == FILE_SEP )
       break;

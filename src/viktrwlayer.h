@@ -23,6 +23,9 @@
 #ifndef _VIKING_TRWLAYER_H
 #define _VIKING_TRWLAYER_H
 
+#include <stdbool.h>
+#include <stdint.h>
+
 #include "viklayer.h"
 #include "vikviewport.h"
 #include "vikwaypoint.h"
@@ -58,11 +61,11 @@ GType vik_trw_layer_get_type ();
 typedef struct _VikTrwLayer VikTrwLayer;
 
 typedef struct {
-  gchar *description;
-  gchar *author;
-  //gboolean has_time;
-  gchar *timestamp; // TODO: Consider storing as proper time_t.
-  gchar *keywords; // TODO: handling/storing a GList of individual tags?
+  char *description;
+  char *author;
+  //bool has_time;
+  char *timestamp; // TODO: Consider storing as proper time_t.
+  char *keywords; // TODO: handling/storing a GList of individual tags?
 } VikTRWMetadata;
 
 VikTRWMetadata *vik_trw_metadata_new();
@@ -70,39 +73,39 @@ void vik_trw_metadata_free ( VikTRWMetadata *metadata);
 VikTRWMetadata *vik_trw_layer_get_metadata ( VikTrwLayer *vtl );
 void vik_trw_layer_set_metadata ( VikTrwLayer *vtl, VikTRWMetadata *metadata);
 
-gboolean vik_trw_layer_find_date ( VikTrwLayer *vtl, const gchar *date_str, VikCoord *position, VikViewport *vvp, gboolean do_tracks, gboolean select );
+bool vik_trw_layer_find_date ( VikTrwLayer *vtl, const char *date_str, VikCoord *position, VikViewport *vvp, bool do_tracks, bool select );
 
 /* These are meant for use in file loaders (gpspoint.c, gpx.c, etc).
  * These copy the name, so you should free it if necessary. */
-void vik_trw_layer_filein_add_waypoint ( VikTrwLayer *vtl, gchar *name, VikWaypoint *wp );
-void vik_trw_layer_filein_add_track ( VikTrwLayer *vtl, gchar *name, VikTrack *tr );
+void vik_trw_layer_filein_add_waypoint ( VikTrwLayer *vtl, char *name, VikWaypoint *wp );
+void vik_trw_layer_filein_add_track ( VikTrwLayer *vtl, char *name, VikTrack *tr );
 
-gint vik_trw_layer_get_property_tracks_line_thickness ( VikTrwLayer *vtl );
+int vik_trw_layer_get_property_tracks_line_thickness ( VikTrwLayer *vtl );
 
-void vik_trw_layer_add_waypoint ( VikTrwLayer *vtl, gchar *name, VikWaypoint *wp );
-void vik_trw_layer_add_track ( VikTrwLayer *vtl, gchar *name, VikTrack *t );
-void vik_trw_layer_add_route ( VikTrwLayer *vtl, gchar *name, VikTrack *t );
+void vik_trw_layer_add_waypoint ( VikTrwLayer *vtl, char *name, VikWaypoint *wp );
+void vik_trw_layer_add_track ( VikTrwLayer *vtl, char *name, VikTrack *t );
+void vik_trw_layer_add_route ( VikTrwLayer *vtl, char *name, VikTrack *t );
 
 // Waypoint returned is the first one
-VikWaypoint *vik_trw_layer_get_waypoint ( VikTrwLayer *vtl, const gchar *name );
+VikWaypoint *vik_trw_layer_get_waypoint ( VikTrwLayer *vtl, const char *name );
 
 // Track returned is the first one
-VikTrack *vik_trw_layer_get_track ( VikTrwLayer *vtl, const gchar *name );
-gboolean vik_trw_layer_delete_track ( VikTrwLayer *vtl, VikTrack *trk );
-gboolean vik_trw_layer_delete_route ( VikTrwLayer *vtl, VikTrack *trk );
+VikTrack *vik_trw_layer_get_track ( VikTrwLayer *vtl, const char *name );
+bool vik_trw_layer_delete_track ( VikTrwLayer *vtl, VikTrack *trk );
+bool vik_trw_layer_delete_route ( VikTrwLayer *vtl, VikTrack *trk );
 
-gboolean vik_trw_layer_auto_set_view ( VikTrwLayer *vtl, VikViewport *vvp );
-gboolean vik_trw_layer_find_center ( VikTrwLayer *vtl, VikCoord *dest );
+bool vik_trw_layer_auto_set_view ( VikTrwLayer *vtl, VikViewport *vvp );
+bool vik_trw_layer_find_center ( VikTrwLayer *vtl, VikCoord *dest );
 GHashTable *vik_trw_layer_get_tracks ( VikTrwLayer *l );
 GHashTable *vik_trw_layer_get_routes ( VikTrwLayer *l );
 GHashTable *vik_trw_layer_get_waypoints ( VikTrwLayer *l );
-gboolean vik_trw_layer_is_empty ( VikTrwLayer *vtl );
+bool vik_trw_layer_is_empty ( VikTrwLayer *vtl );
 
-gboolean vik_trw_layer_new_waypoint ( VikTrwLayer *vtl, GtkWindow *w, const VikCoord *def_coord );
+bool vik_trw_layer_new_waypoint ( VikTrwLayer *vtl, GtkWindow *w, const VikCoord *def_coord );
 
 VikCoordMode vik_trw_layer_get_coord_mode ( VikTrwLayer *vtl );
 
-gboolean vik_trw_layer_uniquify ( VikTrwLayer *vtl, VikLayersPanel *vlp );
+bool vik_trw_layer_uniquify ( VikTrwLayer *vtl, VikLayersPanel *vlp );
 
 void vik_trw_layer_delete_all_waypoints ( VikTrwLayer *vtl );
 void vik_trw_layer_delete_all_tracks ( VikTrwLayer *vtl );
@@ -122,7 +125,7 @@ typedef struct {
   VikTrwLayer *vtl;
 } vik_trw_track_list_t;
 
-typedef GList* (*VikTrwlayerGetTracksAndLayersFunc) (VikLayer*, gpointer);
+typedef GList* (*VikTrwlayerGetTracksAndLayersFunc) (VikLayer*, void *);
 GList *vik_trw_layer_build_track_list_t ( VikTrwLayer *vtl, GList *tracks );
 
 // For creating a list of waypoints with the corresponding layer it is in
@@ -132,39 +135,39 @@ typedef struct {
   VikTrwLayer *vtl;
 } vik_trw_waypoint_list_t;
 
-typedef GList* (*VikTrwlayerGetWaypointsAndLayersFunc) (VikLayer*, gpointer);
+typedef GList* (*VikTrwlayerGetWaypointsAndLayersFunc) (VikLayer*, void *);
 GList *vik_trw_layer_build_waypoint_list_t ( VikTrwLayer *vtl, GList *waypoints );
 
-GdkPixbuf* get_wp_sym_small ( gchar *symbol );
+GdkPixbuf* get_wp_sym_small ( char *symbol );
 
 /* Exposed Layer Interface function definitions */
 // Intended only for use by other trw_layer subwindows
 void trw_layer_verify_thumbnails ( VikTrwLayer *vtl, GtkWidget *vp );
 // Other functions only for use by other trw_layer subwindows
-gchar *trw_layer_new_unique_sublayer_name ( VikTrwLayer *vtl, gint sublayer_type, const gchar *name );
-void trw_layer_waypoint_rename ( VikTrwLayer *vtl, VikWaypoint *wp, const gchar *new_name );
+char *trw_layer_new_unique_sublayer_name ( VikTrwLayer *vtl, int sublayer_type, const char *name );
+void trw_layer_waypoint_rename ( VikTrwLayer *vtl, VikWaypoint *wp, const char *new_name );
 void trw_layer_waypoint_reset_icon ( VikTrwLayer *vtl, VikWaypoint *wp );
 void trw_layer_calculate_bounds_waypoints ( VikTrwLayer *vtl );
 
-gboolean vik_trw_layer_get_tracks_visibility ( VikTrwLayer *vtl );
-gboolean vik_trw_layer_get_routes_visibility ( VikTrwLayer *vtl );
-gboolean vik_trw_layer_get_waypoints_visibility ( VikTrwLayer *vtl );
+bool vik_trw_layer_get_tracks_visibility ( VikTrwLayer *vtl );
+bool vik_trw_layer_get_routes_visibility ( VikTrwLayer *vtl );
+bool vik_trw_layer_get_waypoints_visibility ( VikTrwLayer *vtl );
 
 void trw_layer_update_treeview ( VikTrwLayer *vtl, VikTrack *trk );
 
-void trw_layer_dialog_shift ( VikTrwLayer *vtl, GtkWindow *dialog, VikCoord *coord, gboolean vertical );
+void trw_layer_dialog_shift ( VikTrwLayer *vtl, GtkWindow *dialog, VikCoord *coord, bool vertical );
 
 typedef struct {
   VikTrack *trk; // input
-  gpointer uuid; // output
+  void * uuid; // output
 } trku_udata;
-gboolean trw_layer_track_find_uuid ( const gpointer id, const VikTrack *trk, gpointer udata );
+bool trw_layer_track_find_uuid ( const void * id, const VikTrack *trk, void * udata );
 
 typedef struct {
   VikWaypoint *wp; // input
-  gpointer uuid;   // output
+  void * uuid;   // output
 } wpu_udata;
-gboolean trw_layer_waypoint_find_uuid ( const gpointer id, const VikWaypoint *wp, gpointer udata );
+bool trw_layer_waypoint_find_uuid ( const void * id, const VikWaypoint *wp, void * udata );
 
 void trw_layer_zoom_to_show_latlons ( VikTrwLayer *vtl, VikViewport *vvp, struct LatLon maxmin[2] );
 

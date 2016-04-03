@@ -23,6 +23,9 @@
 #define _VIKING_CURL_DOWNLOAD_H
 
 #include <stdio.h>
+#include <stdbool.h>
+#include <stdint.h>
+
 
 #include "download.h"
 
@@ -51,7 +54,7 @@ typedef struct {
 
 void curl_download_init ();
 void curl_download_uninit ();
-int curl_download_get_url ( const char *hostname, const char *uri, FILE *f, DownloadFileOptions *options, gboolean ftp, CurlDownloadOptions *curl_options, void *handle );
+int curl_download_get_url ( const char *hostname, const char *uri, FILE *f, DownloadFileOptions *options, bool ftp, CurlDownloadOptions *curl_options, void *handle );
 int curl_download_uri ( const char *uri, FILE *f, DownloadFileOptions *options, CurlDownloadOptions *curl_options, void *handle );
 void * curl_download_handle_init ();
 void curl_download_handle_cleanup ( void * handle );

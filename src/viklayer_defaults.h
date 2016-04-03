@@ -22,6 +22,9 @@
 #ifndef __VIKING_LAYER_DEFAULTS_H
 #define __VIKING_LAYER_DEFAULTS_H
 
+#include <stdbool.h>
+#include <stdint.h>
+
 #include "uibuilder.h"
 
 G_BEGIN_DECLS
@@ -29,13 +32,13 @@ G_BEGIN_DECLS
 void a_layer_defaults_init();
 void a_layer_defaults_uninit();
 
-void a_layer_defaults_register ( VikLayerParam *vlp, VikLayerParamData defaultval, const gchar *layername );
+void a_layer_defaults_register ( VikLayerParam *vlp, VikLayerParamData defaultval, const char *layername );
 
-gboolean a_layer_defaults_show_window ( GtkWindow *parent, const gchar *layername );
+bool a_layer_defaults_show_window ( GtkWindow *parent, const char *layername );
 
-VikLayerParamData a_layer_defaults_get ( const gchar *layername, const gchar *param_name, VikLayerParamType param_type );
+VikLayerParamData a_layer_defaults_get ( const char *layername, const char *param_name, VikLayerParamType param_type );
 
-gboolean a_layer_defaults_save ();
+bool a_layer_defaults_save ();
 
 G_END_DECLS
 

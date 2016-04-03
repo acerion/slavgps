@@ -24,6 +24,9 @@
 
 #include <glib.h>
 #include <gtk/gtk.h>
+#include <stdbool.h>
+#include <stdint.h>
+
 #include "viktrwlayer.h"
 
 G_BEGIN_DECLS
@@ -33,7 +36,7 @@ G_BEGIN_DECLS
     The name to use is returned
    When an existing waypoint the name is shown but is not allowed to be changed and NULL is returned
  */
-gchar *a_dialog_waypoint ( GtkWindow *parent, gchar *default_name, VikTrwLayer *vtl, VikWaypoint *wp, VikCoordMode coord_mode, gboolean is_new, gboolean *updated );
+char *a_dialog_waypoint ( GtkWindow *parent, char *default_name, VikTrwLayer *vtl, VikWaypoint *wp, VikCoordMode coord_mode, bool is_new, bool *updated );
 
 G_END_DECLS
 

@@ -96,23 +96,23 @@ enum {
   PARAM_FILE_CACHE_DIR,
   NUM_PARAMS };
 
-static const gchar* mapnik_layer_tooltip ( VikMapnikLayer *vml );
-static void mapnik_layer_marshall( VikMapnikLayer *vml, guint8 **data, gint *len );
-static VikMapnikLayer *mapnik_layer_unmarshall( guint8 *data, gint len, VikViewport *vvp );
-static gboolean mapnik_layer_set_param ( VikMapnikLayer *vml, guint16 id, VikLayerParamData data, VikViewport *vp, gboolean is_file_operation );
-static VikLayerParamData mapnik_layer_get_param ( VikMapnikLayer *vml, guint16 id, gboolean is_file_operation );
+static const char* mapnik_layer_tooltip ( VikMapnikLayer *vml );
+static void mapnik_layer_marshall( VikMapnikLayer *vml, uint8_t **data, int *len );
+static VikMapnikLayer *mapnik_layer_unmarshall( uint8_t *data, int len, VikViewport *vvp );
+static bool mapnik_layer_set_param ( VikMapnikLayer *vml, uint16_t id, VikLayerParamData data, VikViewport *vp, bool is_file_operation );
+static VikLayerParamData mapnik_layer_get_param ( VikMapnikLayer *vml, uint16_t id, bool is_file_operation );
 static VikMapnikLayer *mapnik_layer_new ( VikViewport *vvp );
 static VikMapnikLayer *mapnik_layer_create ( VikViewport *vp );
 static void mapnik_layer_free ( VikMapnikLayer *vml );
 static void mapnik_layer_draw ( VikMapnikLayer *vml, VikViewport *vp );
-static void mapnik_layer_add_menu_items ( VikMapnikLayer *vml, GtkMenu *menu, gpointer vlp );
+static void mapnik_layer_add_menu_items ( VikMapnikLayer *vml, GtkMenu *menu, void * vlp );
 
-static gpointer mapnik_feature_create ( VikWindow *vw, VikViewport *vvp)
+static void * mapnik_feature_create ( VikWindow *vw, VikViewport *vvp)
 {
   return vvp;
 }
 
-static gboolean mapnik_feature_release ( VikMapnikLayer *vml, GdkEventButton *event, VikViewport *vvp );
+static bool mapnik_feature_release ( VikMapnikLayer *vml, GdkEventButton *event, VikViewport *vvp );
 
 // See comment in viktrwlayer.c for advice on values used
 // FUTURE:
@@ -128,11 +128,11 @@ static VikToolInterface mapnik_tools[] = {
     NULL,
     (VikToolMouseFunc) mapnik_feature_release,
     NULL,
-    FALSE,
+    false,
     GDK_LEFT_PTR, NULL, NULL },
 };
 
-static void mapnik_layer_post_read (VikLayer *vl, VikViewport *vvp, gboolean from_file);
+static void mapnik_layer_post_read (VikLayer *vl, VikViewport *vvp, bool from_file);
 
 VikLayerInterface vik_mapnik_layer_interface = {
 	"Mapnik Rendering",
@@ -198,21 +198,21 @@ VikLayerInterface vik_mapnik_layer_interface = {
 
 struct _VikMapnikLayer {
 	VikLayer vl;
-	gchar *filename_css; // CartoCSS MML File - use 'carto' to convert into xml
-	gchar *filename_xml;
-	guint8 alpha;
+	char *filename_css; // CartoCSS MML File - use 'carto' to convert into xml
+	char *filename_xml;
+	uint8_t alpha;
 
-	guint tile_size_x; // Y is the same as X ATM
-	gboolean loaded;
+	unsigned int tile_size_x; // Y is the same as X ATM
+	bool loaded;
 	MapnikInterface* mi;
-	guint rerender_timeout;
+	unsigned int rerender_timeout;
 
-	gboolean use_file_cache;
-	gchar *file_cache_dir;
+	bool use_file_cache;
+	char *file_cache_dir;
 
 	VikCoord rerender_ul;
 	VikCoord rerender_br;
-	gdouble rerender_zoom;
+	double rerender_zoom;
 	GtkWidget *right_click_menu;
 };
 
@@ -276,14 +276,14 @@ void vik_mapnik_layer_init (void)
 {
 	a_preferences_register_group ( MAPNIK_PREFS_GROUP_KEY, "Mapnik" );
 
-	guint i = 0;
+	unsigned int i = 0;
 	VikLayerParamData tmp = plugins_default();
 	a_preferences_register(&prefs[i++], tmp, MAPNIK_PREFS_GROUP_KEY);
 
 	tmp = fonts_default();
 	a_preferences_register(&prefs[i++], tmp, MAPNIK_PREFS_GROUP_KEY);
 
-	tmp.b = TRUE;
+	tmp.b = true;
 	a_preferences_register(&prefs[i++], tmp, MAPNIK_PREFS_GROUP_KEY);
 
 	tmp.u = 168; // One week
@@ -305,7 +305,7 @@ void vik_mapnik_layer_post_init (void)
 	// Just storing keys only
 	requests = g_hash_table_new_full ( g_str_hash, g_str_equal, g_free, NULL );
 
-	guint hours = a_preferences_get (MAPNIK_PREFS_NAMESPACE"rerender_after")->u;
+	unsigned int hours = a_preferences_get (MAPNIK_PREFS_NAMESPACE"rerender_after")->u;
 	GDateTime *now = g_date_time_new_now_local ();
 	GDateTime *then = g_date_time_add_hours (now, -hours);
 	planet_import_time = g_date_time_to_unix (then);
@@ -314,7 +314,7 @@ void vik_mapnik_layer_post_init (void)
 
 	GStatBuf gsb;
 	// Similar to mod_tile method to mark DB has been imported/significantly changed to cause a rerendering of all tiles
-	gchar *import_time_file = g_strconcat ( a_get_viking_dir(), G_DIR_SEPARATOR_S, "planet-import-complete", NULL );
+	char *import_time_file = g_strconcat ( a_get_viking_dir(), G_DIR_SEPARATOR_S, "planet-import-complete", NULL );
 	if ( g_stat ( import_time_file, &gsb ) == 0 ) {
 		// Only update if newer
 		if ( planet_import_time > gsb.st_mtime )
@@ -363,12 +363,12 @@ GType vik_mapnik_layer_get_type ()
 	return vml_type;
 }
 
-static const gchar* mapnik_layer_tooltip ( VikMapnikLayer *vml )
+static const char* mapnik_layer_tooltip ( VikMapnikLayer *vml )
 {
 	return vml->filename_xml;
 }
 
-static void mapnik_layer_set_file_xml ( VikMapnikLayer *vml, const gchar *name )
+static void mapnik_layer_set_file_xml ( VikMapnikLayer *vml, const char *name )
 {
 	if ( vml->filename_xml )
 		g_free (vml->filename_xml);
@@ -379,33 +379,33 @@ static void mapnik_layer_set_file_xml ( VikMapnikLayer *vml, const gchar *name )
 		vml->filename_xml = g_strdup (name);
 }
 
-static void mapnik_layer_set_file_css ( VikMapnikLayer *vml, const gchar *name )
+static void mapnik_layer_set_file_css ( VikMapnikLayer *vml, const char *name )
 {
 	if ( vml->filename_css )
 		g_free (vml->filename_css);
 	vml->filename_css = g_strdup (name);
 }
 
-static void mapnik_layer_set_cache_dir ( VikMapnikLayer *vml, const gchar *name )
+static void mapnik_layer_set_cache_dir ( VikMapnikLayer *vml, const char *name )
 {
 	if ( vml->file_cache_dir )
 		g_free (vml->file_cache_dir);
 	vml->file_cache_dir = g_strdup (name);
 }
 
-static void mapnik_layer_marshall( VikMapnikLayer *vml, guint8 **data, gint *len )
+static void mapnik_layer_marshall( VikMapnikLayer *vml, uint8_t **data, int *len )
 {
 	vik_layer_marshall_params ( VIK_LAYER(vml), data, len );
 }
 
-static VikMapnikLayer *mapnik_layer_unmarshall( guint8 *data, gint len, VikViewport *vvp )
+static VikMapnikLayer *mapnik_layer_unmarshall( uint8_t *data, int len, VikViewport *vvp )
 {
 	VikMapnikLayer *rv = mapnik_layer_new ( vvp );
 	vik_layer_unmarshall_params ( VIK_LAYER(rv), data, len, vvp );
 	return rv;
 }
 
-static gboolean mapnik_layer_set_param ( VikMapnikLayer *vml, guint16 id, VikLayerParamData data, VikViewport *vp, gboolean is_file_operation )
+static bool mapnik_layer_set_param ( VikMapnikLayer *vml, uint16_t id, VikLayerParamData data, VikViewport *vp, bool is_file_operation )
 {
 	switch ( id ) {
 		case PARAM_CONFIG_CSS: mapnik_layer_set_file_css (vml, data.s); break;
@@ -415,23 +415,23 @@ static gboolean mapnik_layer_set_param ( VikMapnikLayer *vml, guint16 id, VikLay
 		case PARAM_FILE_CACHE_DIR: mapnik_layer_set_cache_dir (vml, data.s); break;
 		default: break;
 	}
-	return TRUE;
+	return true;
 }
 
-static VikLayerParamData mapnik_layer_get_param ( VikMapnikLayer *vml, guint16 id, gboolean is_file_operation )
+static VikLayerParamData mapnik_layer_get_param ( VikMapnikLayer *vml, uint16_t id, bool is_file_operation )
 {
 	VikLayerParamData data;
 	switch ( id ) {
 		case PARAM_CONFIG_CSS: {
 			data.s = vml->filename_css;
-			gboolean set = FALSE;
+			bool set = false;
 			if ( is_file_operation ) {
 				if ( a_vik_get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE ) {
-					gchar *cwd = g_get_current_dir();
+					char *cwd = g_get_current_dir();
 					if ( cwd ) {
 						data.s = file_GetRelativeFilename ( cwd, vml->filename_css );
 						if ( !data.s ) data.s = "";
-						set = TRUE;
+						set = true;
 					}
 				}
 			}
@@ -441,14 +441,14 @@ static VikLayerParamData mapnik_layer_get_param ( VikMapnikLayer *vml, guint16 i
 		}
 		case PARAM_CONFIG_XML: {
 			data.s = vml->filename_xml;
-			gboolean set = FALSE;
+			bool set = false;
 			if ( is_file_operation ) {
 				if ( a_vik_get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE ) {
-					gchar *cwd = g_get_current_dir();
+					char *cwd = g_get_current_dir();
 					if ( cwd ) {
 						data.s = file_GetRelativeFilename ( cwd, vml->filename_xml );
 						if ( !data.s ) data.s = "";
-						set = TRUE;
+						set = true;
 					}
 				}
 			}
@@ -473,7 +473,7 @@ static VikMapnikLayer *mapnik_layer_new ( VikViewport *vvp )
 	vik_layer_set_type ( VIK_LAYER(vml), VIK_LAYER_MAPNIK );
 	vik_layer_set_defaults ( VIK_LAYER(vml), vvp );
 	vml->tile_size_x = size_default().u; // FUTURE: Is there any use in this being configurable?
-	vml->loaded = FALSE;
+	vml->loaded = false;
 	vml->mi = mapnik_interface_new();
 	return vml;
 }
@@ -483,17 +483,17 @@ static VikMapnikLayer *mapnik_layer_new ( VikViewport *vvp )
  * ATM don't have any version issues AFAIK
  * Tested with carto 0.14.0
  */
-gboolean carto_load ( VikMapnikLayer *vml, VikViewport *vvp )
+bool carto_load ( VikMapnikLayer *vml, VikViewport *vvp )
 {
-	gchar *mystdout = NULL;
-	gchar *mystderr = NULL;
+	char *mystdout = NULL;
+	char *mystderr = NULL;
 	GError *error = NULL;
 
 	VikLayerParamData *vlpd = a_preferences_get(MAPNIK_PREFS_NAMESPACE"carto");
-	gchar *command = g_strdup_printf ( "%s %s", vlpd->s, vml->filename_css );
+	char *command = g_strdup_printf ( "%s %s", vlpd->s, vml->filename_css );
 
-	gboolean answer = TRUE;
-	//gchar *args[2]; args[0] = vlpd->s; args[1] = vml->filename_css;
+	bool answer = true;
+	//char *args[2]; args[0] = vlpd->s; args[1] = vml->filename_css;
 	//GPid pid;
 	//if ( g_spawn_async_with_pipes ( NULL, args, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, &pid, NULL, &carto_stdout, &carto_error, &error ) ) {
 	// cf code in babel.c to handle stdout
@@ -502,13 +502,13 @@ gboolean carto_load ( VikMapnikLayer *vml, VikViewport *vvp )
 	//  especially for large style sheets like the default OSM Mapnik style (~6 seconds on my system)
 	VikWindow *vw = VIK_WINDOW(VIK_GTK_WINDOW_FROM_WIDGET(vvp));
 	if ( vw ) {
-		gchar *msg = g_strdup_printf ( "%s: %s", _("Running"), command );
+		char *msg = g_strdup_printf ( "%s: %s", _("Running"), command );
 		vik_window_statusbar_update ( vw, msg, VIK_STATUSBAR_INFO );
 		vik_window_set_busy_cursor ( vw );
 	}
 
-	gint64 tt1 = 0;
-	gint64 tt2 = 0;
+	int64_t tt1 = 0;
+	int64_t tt2 = 0;
 	// You won't get a sensible timing measurement if running too old a GLIB
 #if GLIB_CHECK_VERSION (2, 28, 0)
 	tt1 = g_get_real_time ();
@@ -521,7 +521,7 @@ gboolean carto_load ( VikMapnikLayer *vml, VikViewport *vvp )
 		if ( mystderr )
 			if ( strlen(mystderr) > 1 ) {
 				a_dialog_error_msg_extra ( VIK_GTK_WINDOW_FROM_WIDGET(vvp), _("Error running carto command:\n%s"), mystderr );
-				answer = FALSE;
+				answer = false;
 			}
 		if ( mystdout ) {
 			// NB This will overwrite the specified XML file
@@ -555,7 +555,7 @@ gboolean carto_load ( VikMapnikLayer *vml, VikViewport *vvp )
 	g_free ( command );
 
 	if ( vw ) {
-		gchar *msg = g_strdup_printf ( "%s %s %.1f %s",  vlpd->s, _(" completed in "), (gdouble)(tt2-tt1)/G_USEC_PER_SEC, _("seconds") );
+		char *msg = g_strdup_printf ( "%s %s %.1f %s",  vlpd->s, _(" completed in "), (double)(tt2-tt1)/G_USEC_PER_SEC, _("seconds") );
 		vik_window_statusbar_update ( vw, msg, VIK_STATUSBAR_INFO );
 		g_free ( msg );
 		vik_window_clear_busy_cursor ( vw );
@@ -566,12 +566,12 @@ gboolean carto_load ( VikMapnikLayer *vml, VikViewport *vvp )
 /**
  *
  */
-static void mapnik_layer_post_read (VikLayer *vl, VikViewport *vvp, gboolean from_file)
+static void mapnik_layer_post_read (VikLayer *vl, VikViewport *vvp, bool from_file)
 {
 	VikMapnikLayer *vml = VIK_MAPNIK_LAYER(vl);
 
 	// Determine if carto needs to be run
-	gboolean do_carto = FALSE;
+	bool do_carto = false;
 	if ( vml->filename_css && strlen(vml->filename_css) > 1 ) {
 		if ( vml->filename_xml && strlen(vml->filename_xml) > 1) {
 			// Compare timestamps
@@ -581,19 +581,19 @@ static void mapnik_layer_post_read (VikLayer *vl, VikViewport *vvp, gboolean fro
 				if ( g_stat ( vml->filename_css, &gsb2 ) == 0 ) {
 					// Is CSS file newer than the XML file
 					if ( gsb2.st_mtime > gsb1.st_mtime )
-						do_carto = TRUE;
+						do_carto = true;
 					else
 						g_debug ( "No need to run carto" );
 				}
 			}
 			else {
 				// XML file doesn't exist
-				do_carto = TRUE;
+				do_carto = true;
 			}
 		}
 		else {
 			// No XML specified thus need to generate
-			do_carto = TRUE;
+			do_carto = true;
 		}
 	}
 
@@ -602,7 +602,7 @@ static void mapnik_layer_post_read (VikLayer *vl, VikViewport *vvp, gboolean fro
 		if ( !carto_load ( vml, vvp ) )
 			return;
 
-	gchar* ans = mapnik_interface_load_map_file ( vml->mi, vml->filename_xml, vml->tile_size_x, vml->tile_size_x );
+	char* ans = mapnik_interface_load_map_file ( vml->mi, vml->filename_xml, vml->tile_size_x, vml->tile_size_x );
 	if ( ans ) {
 		a_dialog_error_msg_extra ( VIK_GTK_WINDOW_FROM_WIDGET(vvp),
 		                           _("Mapnik error loading configuration file:\n%s"),
@@ -610,7 +610,7 @@ static void mapnik_layer_post_read (VikLayer *vl, VikViewport *vvp, gboolean fro
 		g_free ( ans );
 	}
 	else {
-		vml->loaded = TRUE;
+		vml->loaded = true;
 		if ( !from_file )
 			ui_add_recent_file ( vml->filename_xml );
 	}
@@ -619,7 +619,7 @@ static void mapnik_layer_post_read (VikLayer *vl, VikViewport *vvp, gboolean fro
 #define MAPNIK_LAYER_FILE_CACHE_LAYOUT "%s"G_DIR_SEPARATOR_S"%d"G_DIR_SEPARATOR_S"%d"G_DIR_SEPARATOR_S"%d.png"
 
 // Free returned string after use
-static gchar *get_filename ( gchar *dir, guint x, guint y, guint z)
+static char *get_filename ( char *dir, unsigned int x, unsigned int y, unsigned int z)
 {
 	return g_strdup_printf ( MAPNIK_LAYER_FILE_CACHE_LAYOUT, dir, (17-z), x, y );
 }
@@ -629,9 +629,9 @@ static void possibly_save_pixbuf ( VikMapnikLayer *vml, GdkPixbuf *pixbuf, MapCo
 	if ( vml->use_file_cache ) {
 		if ( vml->file_cache_dir ) {
 			GError *error = NULL;
-			gchar *filename = get_filename ( vml->file_cache_dir, ulm->x, ulm->y, ulm->scale );
+			char *filename = get_filename ( vml->file_cache_dir, ulm->x, ulm->y, ulm->scale );
 
-			gchar *dir = g_path_get_dirname ( filename );
+			char *dir = g_path_get_dirname ( filename );
 			if ( !g_file_test ( filename, G_FILE_TEST_EXISTS ) )
 				if ( g_mkdir_with_parents ( dir , 0777 ) != 0 )
 					g_warning ("%s: Failed to mkdir %s", __FUNCTION__, dir );
@@ -652,7 +652,7 @@ typedef struct
 	VikCoord *ul;
 	VikCoord *br;
 	MapCoord *ulmc;
-	const gchar* request;
+	const char* request;
 } RenderInfo;
 
 /**
@@ -662,14 +662,14 @@ typedef struct
  */
 static void render ( VikMapnikLayer *vml, VikCoord *ul, VikCoord *br, MapCoord *ulm )
 {
-	gint64 tt1 = g_get_real_time ();
+	int64_t tt1 = g_get_real_time ();
 	GdkPixbuf *pixbuf = mapnik_interface_render ( vml->mi, ul->north_south, ul->east_west, br->north_south, br->east_west );
-	gint64 tt2 = g_get_real_time ();
-	gdouble tt = (gdouble)(tt2-tt1)/1000000;
+	int64_t tt2 = g_get_real_time ();
+	double tt = (double)(tt2-tt1)/1000000;
 	g_debug ( "Mapnik rendering completed in %.3f seconds", tt );
 	if ( !pixbuf ) {
 		// A pixbuf to stick into cache incase of an unrenderable area - otherwise will get continually re-requested
-		pixbuf = gdk_pixbuf_scale_simple ( gdk_pixbuf_from_pixdata(&vikmapniklayer_pixbuf, FALSE, NULL), vml->tile_size_x, vml->tile_size_x, GDK_INTERP_BILINEAR );
+		pixbuf = gdk_pixbuf_scale_simple ( gdk_pixbuf_from_pixdata(&vikmapniklayer_pixbuf, false, NULL), vml->tile_size_x, vml->tile_size_x, GDK_INTERP_BILINEAR );
 	}
 	possibly_save_pixbuf ( vml, pixbuf, ulm );
 
@@ -689,7 +689,7 @@ static void render_info_free ( RenderInfo *data )
 	g_free ( data );
 }
 
-static void background ( RenderInfo *data, gpointer threaddata )
+static void background ( RenderInfo *data, void * threaddata )
 {
 	int res = a_background_thread_progress ( threaddata, 0 );
 	if (res == 0) {
@@ -714,11 +714,11 @@ static void render_cancel_cleanup (RenderInfo *data)
 /**
  * Thread
  */
-static void thread_add (VikMapnikLayer *vml, MapCoord *mul, VikCoord *ul, VikCoord *br, gint x, gint y, gint z, gint zoom, const gchar* name )
+static void thread_add (VikMapnikLayer *vml, MapCoord *mul, VikCoord *ul, VikCoord *br, int x, int y, int z, int zoom, const char* name )
 {
 	// Create request
-	guint nn = name ? g_str_hash ( name ) : 0;
-	gchar *request = g_strdup_printf ( REQUEST_HASHKEY_FORMAT, x, y, z, zoom, nn );
+	unsigned int nn = name ? g_str_hash ( name ) : 0;
+	char *request = g_strdup_printf ( REQUEST_HASHKEY_FORMAT, x, y, z, zoom, nn );
 
 	g_mutex_lock(tp_mutex);
 
@@ -742,8 +742,8 @@ static void thread_add (VikMapnikLayer *vml, MapCoord *mul, VikCoord *ul, VikCoo
 
 	g_mutex_unlock (tp_mutex);
 
-	gchar *basename = g_path_get_basename (name);
-	gchar *description = g_strdup_printf ( _("Mapnik Render %d:%d:%d %s"), zoom, x, y, basename );
+	char *basename = g_path_get_basename (name);
+	char *description = g_strdup_printf ( _("Mapnik Render %d:%d:%d %s"), zoom, x, y, basename );
 	g_free ( basename );
 	a_background_thread ( BACKGROUND_POOL_LOCAL_MAPNIK,
 	                      VIK_GTK_WINDOW_FROM_LAYER(vml),
@@ -762,11 +762,11 @@ static void thread_add (VikMapnikLayer *vml, MapCoord *mul, VikCoord *ul, VikCoo
  * If function returns GdkPixbuf properly, reference counter to this
  * buffer has to be decreased, when buffer is no longer needed.
  */
-static GdkPixbuf *load_pixbuf ( VikMapnikLayer *vml, MapCoord *ulm, MapCoord *brm, gboolean *rerender )
+static GdkPixbuf *load_pixbuf ( VikMapnikLayer *vml, MapCoord *ulm, MapCoord *brm, bool *rerender )
 {
-	*rerender = FALSE;
+	*rerender = false;
 	GdkPixbuf *pixbuf = NULL;
-	gchar *filename = get_filename ( vml->file_cache_dir, ulm->x, ulm->y, ulm->scale );
+	char *filename = get_filename ( vml->file_cache_dir, ulm->x, ulm->y, ulm->scale );
 
 	GStatBuf gsb;
 	if ( g_stat ( filename, &gsb ) == 0 ) {
@@ -784,7 +784,7 @@ static GdkPixbuf *load_pixbuf ( VikMapnikLayer *vml, MapCoord *ulm, MapCoord *br
 		}
 		// If file is too old mark for rerendering
 		if ( planet_import_time < gsb.st_mtime ) {
-			*rerender = TRUE;
+			*rerender = true;
 		}
 	}
 	g_free ( filename );
@@ -807,11 +807,11 @@ static GdkPixbuf *get_pixbuf ( VikMapnikLayer *vml, MapCoord *ulm, MapCoord *brm
 	pixbuf = a_mapcache_get ( ulm->x, ulm->y, ulm->z, MAP_ID_MAPNIK_RENDER, ulm->scale, vml->alpha, 0.0, 0.0, vml->filename_xml );
 
 	if ( ! pixbuf ) {
-		gboolean rerender = FALSE;
+		bool rerender = false;
 		if ( vml->use_file_cache && vml->file_cache_dir )
 			pixbuf = load_pixbuf ( vml, ulm, brm, &rerender );
 		if ( ! pixbuf || rerender ) {
-			if ( TRUE )
+			if ( true )
 				thread_add (vml, ulm, &ul, &br, ulm->x, ulm->y, ulm->z, ulm->scale, vml->filename_xml );
 			else {
 				// Run in the foreground
@@ -839,7 +839,7 @@ static void mapnik_layer_draw ( VikMapnikLayer *vml, VikViewport *vvp )
 	}
 
 	if ( vml->mi ) {
-		gchar *copyright = mapnik_interface_get_copyright ( vml->mi );
+		char *copyright = mapnik_interface_get_copyright ( vml->mi );
 		if ( copyright ) {
 			vik_viewport_add_copyright ( vvp, copyright );
 		}
@@ -851,8 +851,8 @@ static void mapnik_layer_draw ( VikMapnikLayer *vml, VikViewport *vvp )
 	vik_viewport_screen_to_coord ( vvp, 0, 0, &ul );
 	vik_viewport_screen_to_coord ( vvp, vik_viewport_get_width(vvp), vik_viewport_get_height(vvp), &br );
 
-	gdouble xzoom = vik_viewport_get_xmpp ( vvp );
-	gdouble yzoom = vik_viewport_get_ympp ( vvp );
+	double xzoom = vik_viewport_get_xmpp ( vvp );
+	double yzoom = vik_viewport_get_ympp ( vvp );
 
 	MapCoord ulm, brm;
 
@@ -861,15 +861,15 @@ static void mapnik_layer_draw ( VikMapnikLayer *vml, VikViewport *vvp )
 		// TODO: Understand if tilesize != 256 does this need to use shrinkfactors??
 		GdkPixbuf *pixbuf;
 		VikCoord coord;
-		gint xx, yy;
+		int xx, yy;
 
-		gint xmin = MIN(ulm.x, brm.x), xmax = MAX(ulm.x, brm.x);
-		gint ymin = MIN(ulm.y, brm.y), ymax = MAX(ulm.y, brm.y);
+		int xmin = MIN(ulm.x, brm.x), xmax = MAX(ulm.x, brm.x);
+		int ymin = MIN(ulm.y, brm.y), ymax = MAX(ulm.y, brm.y);
 
 		// Split rendering into a grid for the current viewport
 		//  thus each individual 'tile' can then be stored in the map cache
-		for (gint x = xmin; x <= xmax; x++ ) {
-			for (gint y = ymin; y <= ymax; y++ ) {
+		for (int x = xmin; x <= xmax; x++ ) {
+			for (int y = ymin; y <= ymax; y++ ) {
 				ulm.x = x;
 				ulm.y = y;
 				brm.x = x+1;
@@ -890,19 +890,19 @@ static void mapnik_layer_draw ( VikMapnikLayer *vml, VikViewport *vvp )
 		// Just a handy guide to tile blocks.
 		if ( vik_debug && vik_verbose ) {
 			GdkGC *black_gc = GTK_WIDGET(vvp)->style->black_gc;
-			gint width = vik_viewport_get_width(vvp);
-			gint height = vik_viewport_get_height(vvp);
-			gint xx, yy;
+			int width = vik_viewport_get_width(vvp);
+			int height = vik_viewport_get_height(vvp);
+			int xx, yy;
 			ulm.x = xmin; ulm.y = ymin;
 			map_utils_iTMS_to_center_vikcoord ( &ulm, &coord );
 			vik_viewport_coord_to_screen ( vvp, &coord, &xx, &yy );
 			xx = xx - (vml->tile_size_x/2);
 			yy = yy - (vml->tile_size_x/2); // Yes use X ATM
-			for (gint x = xmin; x <= xmax; x++ ) {
+			for (int x = xmin; x <= xmax; x++ ) {
 				vik_viewport_draw_line ( vvp, black_gc, xx, 0, xx, height );
 				xx += vml->tile_size_x;
 			}
-			for (gint y = ymin; y <= ymax; y++ ) {
+			for (int y = ymin; y <= ymax; y++ ) {
 				vik_viewport_draw_line ( vvp, black_gc, 0, yy, width, yy );
 				yy += vml->tile_size_x; // Yes use X ATM
 			}
@@ -933,7 +933,7 @@ typedef enum {
 	MA_LAST
 } menu_array_index;
 
-typedef gpointer menu_array_values[MA_LAST];
+typedef void * menu_array_values[MA_LAST];
 
 /**
  *
@@ -950,7 +950,7 @@ static void mapnik_layer_reload ( menu_array_values values )
 {
 	VikMapnikLayer *vml = values[MA_VML];
 	VikViewport *vvp = values[MA_VVP];
-	mapnik_layer_post_read (VIK_LAYER(vml), vvp, FALSE);
+	mapnik_layer_post_read (VIK_LAYER(vml), vvp, false);
 	mapnik_layer_draw ( vml, vvp );
 }
 
@@ -970,7 +970,7 @@ static void mapnik_layer_carto ( menu_array_values values )
 	if ( !carto_load ( vml, vvp ) )
 		return;
 
-	gchar* ans = mapnik_interface_load_map_file ( vml->mi, vml->filename_xml, vml->tile_size_x, vml->tile_size_x );
+	char* ans = mapnik_interface_load_map_file ( vml->mi, vml->filename_xml, vml->tile_size_x, vml->tile_size_x );
 	if ( ans ) {
 		a_dialog_error_msg_extra ( VIK_GTK_WINDOW_FROM_WIDGET(vvp),
 		                           _("Mapnik error loading configuration file:\n%s"),
@@ -994,9 +994,9 @@ static void mapnik_layer_information ( menu_array_values values )
 		a_dialog_list (  VIK_GTK_WINDOW_FROM_LAYER(vml), _("Mapnik Information"), array, 1 );
 		// Free the copied strings
 		for ( int i = 0; i < array->len; i++ )
-			g_free ( g_array_index(array,gchar*,i) );
+			g_free ( g_array_index(array,char*,i) );
 	}
-	g_array_free ( array, FALSE );
+	g_array_free ( array, false );
 }
 
 /**
@@ -1005,7 +1005,7 @@ static void mapnik_layer_information ( menu_array_values values )
 static void mapnik_layer_about ( menu_array_values values )
 {
 	VikMapnikLayer *vml = values[MA_VML];
-	gchar *msg = mapnik_interface_about();
+	char *msg = mapnik_interface_about();
 	a_dialog_info_msg ( VIK_GTK_WINDOW_FROM_LAYER(vml),  msg );
 	g_free ( msg );
 }
@@ -1013,7 +1013,7 @@ static void mapnik_layer_about ( menu_array_values values )
 /**
  *
  */
-static void mapnik_layer_add_menu_items ( VikMapnikLayer *vml, GtkMenu *menu, gpointer vlp )
+static void mapnik_layer_add_menu_items ( VikMapnikLayer *vml, GtkMenu *menu, void * vlp )
 {
 	static menu_array_values values;
 	values[MA_VML] = vml;
@@ -1085,16 +1085,16 @@ static void mapnik_layer_tile_info ( VikMapnikLayer *vml )
 
 	mapcache_extra_t extra = a_mapcache_get_extra ( ulm.x, ulm.y, ulm.z, MAP_ID_MAPNIK_RENDER, ulm.scale, vml->alpha, 0.0, 0.0, vml->filename_xml );
 
-	gchar *filename = get_filename ( vml->file_cache_dir, ulm.x, ulm.y, ulm.scale );
-	gchar *filemsg = NULL;
-	gchar *timemsg = NULL;
+	char *filename = get_filename ( vml->file_cache_dir, ulm.x, ulm.y, ulm.scale );
+	char *filemsg = NULL;
+	char *timemsg = NULL;
 
 	if ( g_file_test ( filename, G_FILE_TEST_EXISTS ) ) {
 		filemsg = g_strconcat ( "Tile File: ", filename, NULL );
 		// Get some timestamp information of the tile
 		GStatBuf stat_buf;
 		if ( g_stat ( filename, &stat_buf ) == 0 ) {
-			gchar time_buf[64];
+			char time_buf[64];
 			strftime ( time_buf, sizeof(time_buf), "%c", gmtime((const time_t *)&stat_buf.st_mtime) );
 			timemsg = g_strdup_printf ( _("Tile File Timestamp: %s"), time_buf );
 		}
@@ -1107,11 +1107,11 @@ static void mapnik_layer_tile_info ( VikMapnikLayer *vml )
 		timemsg = g_strdup("");
 	}
 
-	GArray *array = g_array_new (FALSE, TRUE, sizeof(gchar*));
+	GArray *array = g_array_new (false, true, sizeof(char*));
 	g_array_append_val ( array, filemsg );
 	g_array_append_val ( array, timemsg );
 
-	gchar *rendmsg = NULL;
+	char *rendmsg = NULL;
 	// Show the info
 	if ( extra.duration > 0.0 ) {
 		rendmsg = g_strdup_printf ( _("Rendering time %.2f seconds"), extra.duration );
@@ -1119,7 +1119,7 @@ static void mapnik_layer_tile_info ( VikMapnikLayer *vml )
 	}
 
 	a_dialog_list (  VIK_GTK_WINDOW_FROM_LAYER(vml), _("Tile Information"), array, 5 );
-	g_array_free ( array, FALSE );
+	g_array_free ( array, false );
 
 	g_free ( rendmsg );
 	g_free ( timemsg );
@@ -1127,10 +1127,10 @@ static void mapnik_layer_tile_info ( VikMapnikLayer *vml )
 	g_free ( filename );
 }
 
-static gboolean mapnik_feature_release ( VikMapnikLayer *vml, GdkEventButton *event, VikViewport *vvp )
+static bool mapnik_feature_release ( VikMapnikLayer *vml, GdkEventButton *event, VikViewport *vvp )
 {
 	if ( !vml )
-		return FALSE;
+		return false;
 	if ( event->button == 3 ) {
 		vik_viewport_screen_to_coord ( vvp, MAX(0, event->x), MAX(0, event->y), &vml->rerender_ul );
 		vml->rerender_zoom = vik_viewport_get_zoom ( vvp );
@@ -1154,5 +1154,5 @@ static gboolean mapnik_feature_release ( VikMapnikLayer *vml, GdkEventButton *ev
 		gtk_widget_show_all ( GTK_WIDGET(vml->right_click_menu) );
 	}
 
-	return FALSE;
+	return false;
 }

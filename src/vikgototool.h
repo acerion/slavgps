@@ -22,6 +22,9 @@
 #define _VIKING_GOTO_TOOL_H
 
 #include <glib.h>
+#include <stdbool.h>
+#include <stdint.h>
+
 
 #include "vikwindow.h"
 #include "download.h"
@@ -42,10 +45,10 @@ typedef struct _VikGotoToolClass VikGotoToolClass;
 struct _VikGotoToolClass
 {
   GObjectClass object_class;
-  gchar *(* get_label) (VikGotoTool *self);
-  gchar *(* get_url_format) (VikGotoTool *self);
+  char *(* get_label) (VikGotoTool *self);
+  char *(* get_url_format) (VikGotoTool *self);
   DownloadFileOptions *(* get_download_options) (VikGotoTool *self);
-  gboolean (* parse_file_for_latlon) (VikGotoTool *self, gchar *filename, struct LatLon *ll);
+  bool (* parse_file_for_latlon) (VikGotoTool *self, char *filename, struct LatLon *ll);
 };
 
 GType vik_goto_tool_get_type ();
@@ -54,11 +57,11 @@ struct _VikGotoTool {
   GObject obj;
 };
 
-gchar *vik_goto_tool_get_label ( VikGotoTool *self );
-gchar *vik_goto_tool_get_url_format ( VikGotoTool *self );
+char *vik_goto_tool_get_label ( VikGotoTool *self );
+char *vik_goto_tool_get_url_format ( VikGotoTool *self );
 DownloadFileOptions *vik_goto_tool_get_download_options ( VikGotoTool *self );
-gboolean vik_goto_tool_parse_file_for_latlon ( VikGotoTool *self, gchar *filename, struct LatLon *ll );
-int vik_goto_tool_get_coord ( VikGotoTool *self, VikWindow *vw, VikViewport *vvp, gchar *srch_str, VikCoord *coord );
+bool vik_goto_tool_parse_file_for_latlon ( VikGotoTool *self, char *filename, struct LatLon *ll );
+int vik_goto_tool_get_coord ( VikGotoTool *self, VikWindow *vw, VikViewport *vvp, char *srch_str, VikCoord *coord );
 
 G_END_DECLS
 

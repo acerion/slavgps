@@ -23,8 +23,8 @@
 #define __BOUNDING_BOX_H
 
 typedef struct {
-  gdouble south, north;
-  gdouble east, west;
+  double south, north;
+  double east, west;
 } LatLonBBox;
 
 /**

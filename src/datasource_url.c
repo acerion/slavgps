@@ -38,19 +38,19 @@ typedef struct {
 /* The last file format selected */
 static int last_type = -1;
 
-static gpointer datasource_url_init ( acq_vik_t *avt );
-static void datasource_url_add_setup_widgets ( GtkWidget *dialog, VikViewport *vvp, gpointer user_data );
-static void datasource_url_get_process_options ( datasource_url_widgets_t *widgets, ProcessOptions *po, DownloadFileOptions *download_options, const gchar *not_used2, const gchar *not_used3 );
-static void datasource_url_cleanup ( gpointer data );
+static void * datasource_url_init ( acq_vik_t *avt );
+static void datasource_url_add_setup_widgets ( GtkWidget *dialog, VikViewport *vvp, void * user_data );
+static void datasource_url_get_process_options ( datasource_url_widgets_t *widgets, ProcessOptions *po, DownloadFileOptions *download_options, const char *not_used2, const char *not_used3 );
+static void datasource_url_cleanup ( void * data );
 
 VikDataSourceInterface vik_datasource_url_interface = {
 	N_("Acquire from URL"),
 	N_("URL"),
 	VIK_DATASOURCE_AUTO_LAYER_MANAGEMENT,
 	VIK_DATASOURCE_INPUTTYPE_NONE,
-	TRUE,
-	TRUE,
-	TRUE,
+	true,
+	true,
+	true,
 	(VikDataSourceInitFunc)               datasource_url_init,
 	(VikDataSourceCheckExistenceFunc)     NULL,
 	(VikDataSourceAddSetupWidgetsFunc)    datasource_url_add_setup_widgets,
@@ -67,25 +67,25 @@ VikDataSourceInterface vik_datasource_url_interface = {
 	0
 };
 
-static gpointer datasource_url_init ( acq_vik_t *avt )
+static void * datasource_url_init ( acq_vik_t *avt )
 {
 	datasource_url_widgets_t *widgets = g_malloc(sizeof(*widgets));
 	return widgets;
 }
 
-static void fill_combo_box (gpointer data, gpointer user_data)
+static void fill_combo_box (void * data, void * user_data)
 {
-	const gchar *label = ((BabelFile*) data)->label;
+	const char *label = ((BabelFile*) data)->label;
 	vik_combo_box_text_append (GTK_WIDGET(user_data), label);
 }
 
-static gint find_entry = -1;
-static gint wanted_entry = -1;
+static int find_entry = -1;
+static int wanted_entry = -1;
 
-static void find_type (gpointer elem, gpointer user_data)
+static void find_type (void * elem, void * user_data)
 {
-	const gchar *name = ((BabelFile*)elem)->name;
-	const gchar *type_name = user_data;
+	const char *name = ((BabelFile*)elem)->name;
+	const char *type_name = user_data;
 	find_entry++;
 	if (!g_strcmp0(name, type_name)) {
 		wanted_entry = find_entry;
@@ -94,7 +94,7 @@ static void find_type (gpointer elem, gpointer user_data)
 
 #define VIK_SETTINGS_URL_FILE_DL_TYPE "url_file_download_type"
 
-static void datasource_url_add_setup_widgets ( GtkWidget *dialog, VikViewport *vvp, gpointer user_data )
+static void datasource_url_add_setup_widgets ( GtkWidget *dialog, VikViewport *vvp, void * user_data )
 {
 	datasource_url_widgets_t *widgets = (datasource_url_widgets_t *)user_data;
 	GtkWidget *label = gtk_label_new (_("URL:"));
@@ -105,7 +105,7 @@ static void datasource_url_add_setup_widgets ( GtkWidget *dialog, VikViewport *v
 	if ( last_type < 0 ) {
 		find_entry = -1;
 		wanted_entry = -1;
-		gchar *type = NULL;
+		char *type = NULL;
 		if ( a_settings_get_string ( VIK_SETTINGS_URL_FILE_DL_TYPE, &type ) ) {
 			// Use setting
 			if ( type )
@@ -131,18 +131,18 @@ static void datasource_url_add_setup_widgets ( GtkWidget *dialog, VikViewport *v
 
 	/* Packing all widgets */
 	GtkBox *box = GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog)));
-	gtk_box_pack_start ( box, label, FALSE, FALSE, 5 );
-	gtk_box_pack_start ( box, widgets->url, FALSE, FALSE, 5 );
-	gtk_box_pack_start ( box, type_label, FALSE, FALSE, 5 );
-	gtk_box_pack_start ( box, widgets->type, FALSE, FALSE, 5 );
+	gtk_box_pack_start ( box, label, false, false, 5 );
+	gtk_box_pack_start ( box, widgets->url, false, false, 5 );
+	gtk_box_pack_start ( box, type_label, false, false, 5 );
+	gtk_box_pack_start ( box, widgets->type, false, false, 5 );
 
 	gtk_widget_show_all(dialog);
 }
 
-static void datasource_url_get_process_options ( datasource_url_widgets_t *widgets, ProcessOptions *po, DownloadFileOptions *download_options, const gchar *not_used2, const gchar *not_used3 )
+static void datasource_url_get_process_options ( datasource_url_widgets_t *widgets, ProcessOptions *po, DownloadFileOptions *download_options, const char *not_used2, const char *not_used3 )
 {
 	// Retrieve the user entered value
-	const gchar *value = gtk_entry_get_text ( GTK_ENTRY(widgets->url) );
+	const char *value = gtk_entry_get_text ( GTK_ENTRY(widgets->url) );
 
 	if (GTK_IS_COMBO_BOX (widgets->type) )
 		last_type = gtk_combo_box_get_active ( GTK_COMBO_BOX (widgets->type) );
@@ -158,7 +158,7 @@ static void datasource_url_get_process_options ( datasource_url_widgets_t *widge
 	download_options->follow_location = 5;
 }
 
-static void datasource_url_cleanup ( gpointer data )
+static void datasource_url_cleanup ( void * data )
 {
 	g_free ( data );
 }

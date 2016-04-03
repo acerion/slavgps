@@ -74,27 +74,27 @@
 
 static char *md5_hash(const char *message);
 static GdkPixbuf *save_thumbnail(const char *pathname, GdkPixbuf *full);
-static GdkPixbuf *child_create_thumbnail(const gchar *path);
+static GdkPixbuf *child_create_thumbnail(const char *path);
 
-gboolean a_thumbnails_exists ( const gchar *filename )
+bool a_thumbnails_exists ( const char *filename )
 {
   GdkPixbuf *pixbuf = a_thumbnails_get(filename);
   if ( pixbuf )
   {
     g_object_unref ( G_OBJECT ( pixbuf ) );
-    return TRUE;
+    return true;
   }
-  return FALSE;
+  return false;
 }
 
 GdkPixbuf *a_thumbnails_get_default ()
 {
-  return gdk_pixbuf_from_pixdata ( &thumbnails_pixbuf, FALSE, NULL );
+  return gdk_pixbuf_from_pixdata ( &thumbnails_pixbuf, false, NULL );
 }
 
 /* filename must be absolute. you could have a function to make sure it exists and absolutize it */
 
-void a_thumbnails_create(const gchar *filename)
+void a_thumbnails_create(const char *filename)
 {
   GdkPixbuf *pixbuf = a_thumbnails_get(filename);
 
@@ -132,7 +132,7 @@ GdkPixbuf *a_thumbnails_scale_pixbuf(GdkPixbuf *src, int max_w, int max_h)
 	}
 }
 
-static GdkPixbuf *child_create_thumbnail(const gchar *path)
+static GdkPixbuf *child_create_thumbnail(const char *path)
 {
 	GdkPixbuf *image, *tmpbuf;
 
@@ -157,9 +157,9 @@ static GdkPixbuf *child_create_thumbnail(const gchar *path)
 static GdkPixbuf *save_thumbnail(const char *pathname, GdkPixbuf *full)
 {
 	struct stat info;
-	gchar *path;
+	char *path;
 	int original_width, original_height;
-	const gchar* orientation;
+	const char* orientation;
 	GString *to;
 	char *md5, *swidth, *sheight, *ssize, *smtime, *uri;
 	mode_t old_mask;
@@ -238,7 +238,7 @@ static GdkPixbuf *save_thumbnail(const char *pathname, GdkPixbuf *full)
 	 * once.
 	 */
 	{
-		gchar *final;
+		char *final;
 
 		final = g_strndup(to->str, name_len);
 		if (rename(to->str, final))
@@ -252,7 +252,7 @@ static GdkPixbuf *save_thumbnail(const char *pathname, GdkPixbuf *full)
 		g_free(final);
 	}
 
-	g_string_free(to, TRUE);
+	g_string_free(to, true);
 	g_free(swidth);
 	g_free(sheight);
 	g_free(ssize);
@@ -263,7 +263,7 @@ static GdkPixbuf *save_thumbnail(const char *pathname, GdkPixbuf *full)
 }
 
 
-GdkPixbuf *a_thumbnails_get(const gchar *pathname)
+GdkPixbuf *a_thumbnails_get(const char *pathname)
 {
 	GdkPixbuf *thumb = NULL;
 	char *thumb_path, *md5, *uri, *path;
@@ -324,23 +324,23 @@ out:
 typedef struct _MD5Context MD5Context;
 
 struct _MD5Context {
-	guint32 buf[4];
-	guint32 bytes[2];
-	guint32 in[16];
+	uint32_t buf[4];
+	uint32_t bytes[2];
+	uint32_t in[16];
 };
 
 static void MD5Init(MD5Context *ctx);
 static void MD5Update(MD5Context *ctx, md5byte const *buf, unsigned len);
 static char *MD5Final(MD5Context *ctx);
-static void MD5Transform(guint32 buf[4], guint32 const in[16]);
+static void MD5Transform(uint32_t buf[4], uint32_t const in[16]);
 
 #if G_BYTE_ORDER == G_BIG_ENDIAN
-static void byteSwap(guint32 *buf, unsigned words)
+static void byteSwap(uint32_t *buf, unsigned words)
 {
 	md5byte *p = (md5byte *)buf;
 
 	do {
-		*buf++ = (guint32)((unsigned)p[3] << 8 | p[2]) << 16 |
+		*buf++ = (uint32_t)((unsigned)p[3] << 8 | p[2]) << 16 |
 			((unsigned)p[1] << 8 | p[0]);
 		p += 4;
 	} while (--words);
@@ -370,7 +370,7 @@ static void MD5Init(MD5Context *ctx)
  */
 static void MD5Update(MD5Context *ctx, md5byte const *buf, unsigned len)
 {
-	guint32 t;
+	uint32_t t;
 
 	/* Update byte count */
 
@@ -414,7 +414,7 @@ static char *MD5Final(MD5Context *ctx)
 	int i;
 	int count = ctx->bytes[0] & 0x3f;	/* Number of bytes in ctx->in */
 	md5byte *p = (md5byte *)ctx->in + count;
-	guint8	*bytes;
+	uint8_t	*bytes;
 
 	/* Set the first char of padding to 0x80.  There is always room. */
 	*p++ = 0x80;
@@ -440,7 +440,7 @@ static char *MD5Final(MD5Context *ctx)
 	byteSwap(ctx->buf, 4);
 
 	retval = g_malloc(33);
-	bytes = (guint8 *) ctx->buf;
+	bytes = (uint8_t *) ctx->buf;
 	for (i = 0; i < 16; i++)
 		sprintf(retval + (i * 2), "%02x", bytes[i]);
 	retval[32] = '\0';
@@ -467,9 +467,9 @@ static char *MD5Final(MD5Context *ctx)
  * reflect the addition of 16 longwords of new data.  MD5Update blocks
  * the data and converts bytes into longwords for this routine.
  */
-static void MD5Transform(guint32 buf[4], guint32 const in[16])
+static void MD5Transform(uint32_t buf[4], uint32_t const in[16])
 {
-	register guint32 a, b, c, d;
+	register uint32_t a, b, c, d;
 
 	a = buf[0];
 	b = buf[1];

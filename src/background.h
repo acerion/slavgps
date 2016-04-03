@@ -24,14 +24,17 @@
 
 #include <glib.h>
 #include <gtk/gtk.h>
+#include <stdbool.h>
+#include <stdint.h>
+
 
 #include "vikwindow.h"
 #include "config.h"
 
 G_BEGIN_DECLS
 
-typedef void(*vik_thr_free_func)(gpointer);
-typedef void(*vik_thr_func)(gpointer,gpointer);
+typedef void(*vik_thr_free_func)(void *);
+typedef void(*vik_thr_func)(void *,void *);
 
 typedef enum {
   BACKGROUND_POOL_REMOTE, // i.e. Network requests - can have an arbitary large pool
@@ -41,9 +44,9 @@ typedef enum {
 #endif
 } Background_Pool_Type;
 
-void a_background_thread ( Background_Pool_Type bp, GtkWindow *parent, const gchar *message, vik_thr_func func, gpointer userdata, vik_thr_free_func userdata_free_func, vik_thr_free_func userdata_cancel_cleanup_func, gint number_items );
-int a_background_thread_progress ( gpointer callbackdata, gdouble fraction );
-int a_background_testcancel ( gpointer callbackdata );
+void a_background_thread ( Background_Pool_Type bp, GtkWindow *parent, const char *message, vik_thr_func func, void * userdata, vik_thr_free_func userdata_free_func, vik_thr_free_func userdata_cancel_cleanup_func, int number_items );
+int a_background_thread_progress ( void * callbackdata, double fraction );
+int a_background_testcancel ( void * callbackdata );
 void a_background_show_window ();
 void a_background_init ();
 void a_background_post_init ();

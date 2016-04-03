@@ -20,6 +20,9 @@
 #ifndef _VIK_WMSC_MAP_SOURCE_H
 #define _VIK_WMSC_MAP_SOURCE_H
 
+#include <stdbool.h>
+#include <stdint.h>
+
 #include "vikcoord.h"
 #include "mapcoord.h"
 #include "vikmapsourcedefault.h"
@@ -48,7 +51,7 @@ struct _VikWmscMapSource
 
 GType vik_wmsc_map_source_get_type (void) G_GNUC_CONST;
 
-VikWmscMapSource * vik_wmsc_map_source_new_with_id (guint16 id, const gchar *label, const gchar *hostname, const gchar *url);
+VikWmscMapSource * vik_wmsc_map_source_new_with_id (uint16_t id, const char *label, const char *hostname, const char *url);
 
 G_END_DECLS
 

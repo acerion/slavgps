@@ -44,13 +44,13 @@
 #define GOOGLE_GOTO_PATTERN_2 ",lng:"
 #define GOOGLE_GOTO_NOT_FOUND "not understand the location"
 
-static DownloadFileOptions googlesearch_options = { FALSE, FALSE, "http://maps.google.com/", 2, a_check_map_file, NULL, NULL };
+static DownloadFileOptions googlesearch_options = { false, false, "http://maps.google.com/", 2, a_check_map_file, NULL, NULL };
 
 static void google_goto_tool_finalize ( GObject *gob );
 
-static gchar *google_goto_tool_get_url_format ( VikGotoTool *self );
+static char *google_goto_tool_get_url_format ( VikGotoTool *self );
 static DownloadFileOptions *google_goto_tool_get_download_options ( VikGotoTool *self );
-static gboolean google_goto_tool_parse_file_for_latlon(VikGotoTool *self, gchar *filename, struct LatLon *ll);
+static bool google_goto_tool_parse_file_for_latlon(VikGotoTool *self, char *filename, struct LatLon *ll);
 
 G_DEFINE_TYPE (GoogleGotoTool, google_goto_tool, VIK_GOTO_TOOL_TYPE)
 
@@ -84,31 +84,31 @@ static void google_goto_tool_finalize ( GObject *gob )
   G_OBJECT_GET_CLASS(gob)->finalize(gob);
 }
 
-static gboolean google_goto_tool_parse_file_for_latlon(VikGotoTool *self, gchar *file_name, struct LatLon *ll)
+static bool google_goto_tool_parse_file_for_latlon(VikGotoTool *self, char *file_name, struct LatLon *ll)
 {
-  gchar *text, *pat;
+  char *text, *pat;
   GMappedFile *mf;
-  gsize len;
-  gboolean found = TRUE;
-  gchar lat_buf[32], lon_buf[32];
-  gchar *s;
+  size_t len;
+  bool found = true;
+  char lat_buf[32], lon_buf[32];
+  char *s;
 
   lat_buf[0] = lon_buf[0] = '\0';
 
-  if ((mf = g_mapped_file_new(file_name, FALSE, NULL)) == NULL) {
+  if ((mf = g_mapped_file_new(file_name, false, NULL)) == NULL) {
     g_critical(_("couldn't map temp file"));
-    return FALSE;
+    return false;
   }
   len = g_mapped_file_get_length(mf);
   text = g_mapped_file_get_contents(mf);
 
   if (g_strstr_len(text, len, GOOGLE_GOTO_NOT_FOUND) != NULL) {
-    found = FALSE;
+    found = false;
     goto done;
   }
 
   if ((pat = g_strstr_len(text, len, GOOGLE_GOTO_PATTERN_1)) == NULL) {
-    found = FALSE;
+    found = false;
     goto done;
   }
   pat += strlen(GOOGLE_GOTO_PATTERN_1);
@@ -120,12 +120,12 @@ static gboolean google_goto_tool_parse_file_for_latlon(VikGotoTool *self, gchar 
     *s++ = *pat++;
   *s = '\0';
   if ((pat >= (text + len)) || (lat_buf[0] == '\0')) {
-    found = FALSE;
+    found = false;
     goto done;
   }
 
   if (strncmp(pat, GOOGLE_GOTO_PATTERN_2, strlen(GOOGLE_GOTO_PATTERN_2))) {
-      found = FALSE;
+      found = false;
       goto done;
   }
 
@@ -139,7 +139,7 @@ static gboolean google_goto_tool_parse_file_for_latlon(VikGotoTool *self, gchar 
     *s++ = *pat++;
   *s = '\0';
   if ((pat >= (text + len)) || (lon_buf[0] == '\0')) {
-    found = FALSE;
+    found = false;
     goto done;
   }
 
@@ -152,7 +152,7 @@ done:
 
 }
 
-static gchar *google_goto_tool_get_url_format ( VikGotoTool *self )
+static char *google_goto_tool_get_url_format ( VikGotoTool *self )
 {
   return GOOGLE_GOTO_URL_FMT;
 }

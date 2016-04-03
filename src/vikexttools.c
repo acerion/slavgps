@@ -47,18 +47,18 @@ void vik_ext_tools_unregister_all ()
 
 static void ext_tools_open_cb ( GtkWidget *widget, VikWindow *vwindow )
 {
-  gpointer ptr = g_object_get_data ( G_OBJECT(widget), VIK_TOOL_DATA_KEY );
+  void * ptr = g_object_get_data ( G_OBJECT(widget), VIK_TOOL_DATA_KEY );
   VikExtTool *ext_tool = VIK_EXT_TOOL ( ptr );
   vik_ext_tool_open ( ext_tool, vwindow );
 }
 
-void vik_ext_tools_add_action_items ( VikWindow *vwindow, GtkUIManager *uim, GtkActionGroup *action_group, guint mid )
+void vik_ext_tools_add_action_items ( VikWindow *vwindow, GtkUIManager *uim, GtkActionGroup *action_group, unsigned int mid )
 {
   GList *iter;
   for (iter = ext_tools_list; iter; iter = iter->next)
   {
     VikExtTool *ext_tool = NULL;
-    gchar *label = NULL;
+    char *label = NULL;
     ext_tool = VIK_EXT_TOOL ( iter->data );
     label = vik_ext_tool_get_label ( ext_tool );
     if ( label )
@@ -66,7 +66,7 @@ void vik_ext_tools_add_action_items ( VikWindow *vwindow, GtkUIManager *uim, Gtk
       gtk_ui_manager_add_ui ( uim, mid, "/ui/MainMenu/Tools/Exttools",
                               _(label),
                               label,
-                              GTK_UI_MANAGER_MENUITEM, FALSE );
+                              GTK_UI_MANAGER_MENUITEM, false );
 
       GtkAction *action = gtk_action_new ( label, label, NULL, NULL );
       g_object_set_data ( G_OBJECT(action), VIK_TOOL_DATA_KEY, ext_tool );
@@ -83,9 +83,9 @@ void vik_ext_tools_add_action_items ( VikWindow *vwindow, GtkUIManager *uim, Gtk
 
 static void ext_tool_open_at_position_cb ( GtkWidget *widget, VikCoord *vc )
 {
-  gpointer ptr = g_object_get_data ( G_OBJECT(widget), VIK_TOOL_DATA_KEY );
+  void * ptr = g_object_get_data ( G_OBJECT(widget), VIK_TOOL_DATA_KEY );
   VikExtTool *ext_tool = VIK_EXT_TOOL ( ptr );
-  gpointer wptr = g_object_get_data ( G_OBJECT(widget), VIK_TOOL_WIN_KEY );
+  void * wptr = g_object_get_data ( G_OBJECT(widget), VIK_TOOL_WIN_KEY );
   VikWindow *vw = VIK_WINDOW ( wptr );
   vik_ext_tool_open_at_position ( ext_tool, vw, vc );
 }
@@ -98,7 +98,7 @@ void vik_ext_tools_add_menu_items_to_menu ( VikWindow *vw, GtkMenu *menu, VikCoo
 {
   for (GList *iter = ext_tools_list; iter; iter = iter->next)  {
     VikExtTool *ext_tool = NULL;
-    gchar *label = NULL;
+    char *label = NULL;
     ext_tool = VIK_EXT_TOOL ( iter->data );
     label = vik_ext_tool_get_label ( ext_tool );
     if ( label ) {

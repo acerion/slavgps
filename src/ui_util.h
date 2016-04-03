@@ -26,20 +26,23 @@
 
 #include <glib.h>
 #include <gtk/gtk.h>
+#include <stdbool.h>
+#include <stdint.h>
+
 
 G_BEGIN_DECLS
 
-void open_url(GtkWindow *parent, const gchar * url);
-void new_email(GtkWindow *parent, const gchar * address);
+void open_url(GtkWindow *parent, const char * url);
+void new_email(GtkWindow *parent, const char * address);
 
-GtkWidget *ui_button_new_with_image(const gchar *stock_id, const gchar *text);
-gint ui_get_gtk_settings_integer(const gchar *property_name, gint default_value);
-GtkWidget *ui_lookup_widget(GtkWidget *widget, const gchar *widget_name);
-GtkWidget* ui_label_new_selectable ( const gchar* text );
+GtkWidget *ui_button_new_with_image(const char *stock_id, const char *text);
+int ui_get_gtk_settings_integer(const char *property_name, int default_value);
+GtkWidget *ui_lookup_widget(GtkWidget *widget, const char *widget_name);
+GtkWidget* ui_label_new_selectable ( const char* text );
 
-GdkPixbuf *ui_pixbuf_set_alpha ( GdkPixbuf *pixbuf, guint8 alpha );
-GdkPixbuf *ui_pixbuf_scale_alpha ( GdkPixbuf *pixbuf, guint8 alpha );
-void ui_add_recent_file ( const gchar *filename );
+GdkPixbuf *ui_pixbuf_set_alpha ( GdkPixbuf *pixbuf, uint8_t alpha );
+GdkPixbuf *ui_pixbuf_scale_alpha ( GdkPixbuf *pixbuf, uint8_t alpha );
+void ui_add_recent_file ( const char *filename );
 
 G_END_DECLS
 

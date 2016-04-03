@@ -22,11 +22,14 @@
 #ifndef _VIKING_GPSPOINT_H
 #define _VIKING_GPSPOINT_H
 
+#include <stdbool.h>
+#include <stdint.h>
+
 #include "viktrwlayer.h"
 
 G_BEGIN_DECLS
 
-gboolean a_gpspoint_read_file ( VikTrwLayer *trw, FILE *f, const gchar *dirpath );
+bool a_gpspoint_read_file ( VikTrwLayer *trw, FILE *f, const char *dirpath );
 void a_gpspoint_write_file ( VikTrwLayer *trw, FILE *f );
 
 G_END_DECLS

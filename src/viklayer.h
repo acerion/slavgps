@@ -25,6 +25,9 @@
 #include <glib.h>
 #include <gtk/gtk.h>
 #include <gdk-pixbuf/gdk-pixdata.h>
+#include <stdbool.h>
+#include <stdint.h>
+
 
 #include "uibuilder.h"
 #include "vikwindow.h"
@@ -52,10 +55,10 @@ GType vik_layer_get_type ();
 
 struct _VikLayer {
   GObject obj;
-  gchar *name;
-  gboolean visible;
+  char *name;
+  bool visible;
 
-  gboolean realized;
+  bool realized;
   VikViewport *vvp;/* simply a reference */
   VikTreeview *vt; /* simply a reference */
   GtkTreeIter iter;
@@ -81,13 +84,13 @@ typedef enum {
   VIK_LAYER_TOOL_ACK_GRAB_FOCUS, /* only for move */
 } VikLayerToolFuncStatus;
 
-/* gpointer is tool-specific state created in the constructor */
-typedef gpointer (*VikToolConstructorFunc) (VikWindow *, VikViewport *);
-typedef void (*VikToolDestructorFunc) (gpointer);
-typedef VikLayerToolFuncStatus (*VikToolMouseFunc) (VikLayer *, GdkEventButton *, gpointer);
-typedef VikLayerToolFuncStatus (*VikToolMouseMoveFunc) (VikLayer *, GdkEventMotion *, gpointer);
-typedef void (*VikToolActivationFunc) (VikLayer *, gpointer);
-typedef gboolean (*VikToolKeyFunc) (VikLayer *, GdkEventKey *, gpointer);
+/* void * is tool-specific state created in the constructor */
+typedef void * (*VikToolConstructorFunc) (VikWindow *, VikViewport *);
+typedef void (*VikToolDestructorFunc) (void *);
+typedef VikLayerToolFuncStatus (*VikToolMouseFunc) (VikLayer *, GdkEventButton *, void *);
+typedef VikLayerToolFuncStatus (*VikToolMouseMoveFunc) (VikLayer *, GdkEventMotion *, void *);
+typedef void (*VikToolActivationFunc) (VikLayer *, void *);
+typedef bool (*VikToolKeyFunc) (VikLayer *, GdkEventKey *, void *);
 
 typedef struct _VikToolInterface VikToolInterface;
 struct _VikToolInterface {
@@ -99,8 +102,8 @@ struct _VikToolInterface {
   VikToolMouseFunc click;
   VikToolMouseMoveFunc move;
   VikToolMouseFunc release;
-  VikToolKeyFunc key_press; /* return FALSE if we don't use the key press -- should return FALSE most of the time if we want any shortcuts / UI keybindings to work! use sparingly. */
-  gboolean pan_handler; // Call click & release funtions even when 'Pan Mode' is on
+  VikToolKeyFunc key_press; /* return false if we don't use the key press -- should return false most of the time if we want any shortcuts / UI keybindings to work! use sparingly. */
+  bool pan_handler; // Call click & release funtions even when 'Pan Mode' is on
   GdkCursorType cursor_type;
   const GdkPixdata *cursor_data;
   const GdkCursor *cursor;
@@ -122,64 +125,64 @@ typedef void          (*VikLayerFuncRealize)               (VikLayer *,VikTreevi
 /* rarely used, this is called after a read operation or properties box is run.
  * usually used to create GC's that depend on params,
  * but GC's can also be created from create() or set_param() */
-typedef void          (*VikLayerFuncPostRead)              (VikLayer *,VikViewport *vp,gboolean from_file);
+typedef void          (*VikLayerFuncPostRead)              (VikLayer *,VikViewport *vp,bool from_file);
 
 typedef void          (*VikLayerFuncFree)                  (VikLayer *);
 
 /* do _not_ use this unless absolutely neccesary. Use the dynamic properties (see coordlayer for example)
-  * returns TRUE if OK was pressed */
-typedef gboolean      (*VikLayerFuncProperties)            (VikLayer *,VikViewport *);
+  * returns true if OK was pressed */
+typedef bool      (*VikLayerFuncProperties)            (VikLayer *,VikViewport *);
 
 typedef void          (*VikLayerFuncDraw)                  (VikLayer *,VikViewport *);
 typedef void          (*VikLayerFuncChangeCoordMode)       (VikLayer *,VikCoordMode);
 
-typedef void          (*VikLayerFuncSetMenuItemsSelection)          (VikLayer *,guint16);
-typedef guint16          (*VikLayerFuncGetMenuItemsSelection)          (VikLayer *);
+typedef void          (*VikLayerFuncSetMenuItemsSelection)          (VikLayer *,uint16_t);
+typedef uint16_t          (*VikLayerFuncGetMenuItemsSelection)          (VikLayer *);
 
-typedef void          (*VikLayerFuncAddMenuItems)          (VikLayer *,GtkMenu *,gpointer); /* gpointer is a VikLayersPanel */
-typedef gboolean      (*VikLayerFuncSublayerAddMenuItems)  (VikLayer *,GtkMenu *,gpointer, /* first gpointer is a VikLayersPanel */
-                                                            gint,gpointer,GtkTreeIter *,VikViewport *);
-typedef const gchar * (*VikLayerFuncSublayerRenameRequest) (VikLayer *,const gchar *,gpointer,
-                                                            gint,VikViewport *,GtkTreeIter *); /* first gpointer is a VikLayersPanel */
-typedef gboolean      (*VikLayerFuncSublayerToggleVisible) (VikLayer *,gint,gpointer);
-typedef const gchar * (*VikLayerFuncSublayerTooltip)       (VikLayer *,gint,gpointer);
-typedef const gchar * (*VikLayerFuncLayerTooltip)          (VikLayer *);
-typedef gboolean      (*VikLayerFuncLayerSelected)         (VikLayer *,gint,gpointer,gint,gpointer); /* 2nd gpointer is a VikLayersPanel */
+typedef void          (*VikLayerFuncAddMenuItems)          (VikLayer *,GtkMenu *,void *); /* void * is a VikLayersPanel */
+typedef bool      (*VikLayerFuncSublayerAddMenuItems)  (VikLayer *,GtkMenu *,void *, /* first void * is a VikLayersPanel */
+                                                            int,void *,GtkTreeIter *,VikViewport *);
+typedef const char * (*VikLayerFuncSublayerRenameRequest) (VikLayer *,const char *,void *,
+                                                            int,VikViewport *,GtkTreeIter *); /* first void * is a VikLayersPanel */
+typedef bool      (*VikLayerFuncSublayerToggleVisible) (VikLayer *,int,void *);
+typedef const char * (*VikLayerFuncSublayerTooltip)       (VikLayer *,int,void *);
+typedef const char * (*VikLayerFuncLayerTooltip)          (VikLayer *);
+typedef bool      (*VikLayerFuncLayerSelected)         (VikLayer *,int,void *,int,void *); /* 2nd void * is a VikLayersPanel */
 
-typedef void          (*VikLayerFuncMarshall)              (VikLayer *, guint8 **, gint *);
-typedef VikLayer *    (*VikLayerFuncUnmarshall)            (guint8 *, gint, VikViewport *);
+typedef void          (*VikLayerFuncMarshall)              (VikLayer *, uint8_t **, int *);
+typedef VikLayer *    (*VikLayerFuncUnmarshall)            (uint8_t *, int, VikViewport *);
 
-/* returns TRUE if needs to redraw due to changed param */
-/* in parameter gboolean denotes if for file I/O, as opposed to display/cut/copy etc... operations */
-typedef gboolean      (*VikLayerFuncSetParam)              (VikLayer *, guint16, VikLayerParamData, VikViewport *, gboolean);
+/* returns true if needs to redraw due to changed param */
+/* in parameter bool denotes if for file I/O, as opposed to display/cut/copy etc... operations */
+typedef bool      (*VikLayerFuncSetParam)              (VikLayer *, uint16_t, VikLayerParamData, VikViewport *, bool);
 
-/* in parameter gboolean denotes if for file I/O, as opposed to display/cut/copy etc... operations */
+/* in parameter bool denotes if for file I/O, as opposed to display/cut/copy etc... operations */
 typedef VikLayerParamData
-                      (*VikLayerFuncGetParam)              (VikLayer *, guint16, gboolean);
+                      (*VikLayerFuncGetParam)              (VikLayer *, uint16_t, bool);
 
 typedef void          (*VikLayerFuncChangeParam)           (GtkWidget *, ui_change_values );
 
-typedef gboolean      (*VikLayerFuncReadFileData)          (VikLayer *, FILE *, const gchar *); // gchar* is the directory path. Function should report success or failure
+typedef bool      (*VikLayerFuncReadFileData)          (VikLayer *, FILE *, const char *); // char* is the directory path. Function should report success or failure
 typedef void          (*VikLayerFuncWriteFileData)         (VikLayer *, FILE *);
 
 /* item manipulation */
-typedef void          (*VikLayerFuncDeleteItem)            (VikLayer *, gint, gpointer);
+typedef void          (*VikLayerFuncDeleteItem)            (VikLayer *, int, void *);
                                                          /*      layer, subtype, pointer to sub-item */
-typedef void          (*VikLayerFuncCutItem)               (VikLayer *, gint, gpointer);
-typedef void          (*VikLayerFuncCopyItem)              (VikLayer *, gint, gpointer, guint8 **, guint *);
+typedef void          (*VikLayerFuncCutItem)               (VikLayer *, int, void *);
+typedef void          (*VikLayerFuncCopyItem)              (VikLayer *, int, void *, uint8_t **, unsigned int *);
                                                          /*      layer, subtype, pointer to sub-item, return pointer, return len */
-typedef gboolean      (*VikLayerFuncPasteItem)             (VikLayer *, gint, guint8 *, guint);
-typedef void          (*VikLayerFuncFreeCopiedItem)        (gint, gpointer);
+typedef bool      (*VikLayerFuncPasteItem)             (VikLayer *, int, uint8_t *, unsigned int);
+typedef void          (*VikLayerFuncFreeCopiedItem)        (int, void *);
 
 /* treeview drag and drop method. called on the destination layer. it is given a source and destination layer, 
  * and the source and destination iters in the treeview. 
  */
 typedef void 	      (*VikLayerFuncDragDropRequest)       (VikLayer *, VikLayer *, GtkTreeIter *, GtkTreePath *);
 
-typedef gboolean      (*VikLayerFuncSelectClick)           (VikLayer *, GdkEventButton *, VikViewport *, tool_ed_t*);
-typedef gboolean      (*VikLayerFuncSelectMove)            (VikLayer *, GdkEventMotion *, VikViewport *, tool_ed_t*);
-typedef gboolean      (*VikLayerFuncSelectRelease)         (VikLayer *, GdkEventButton *, VikViewport *, tool_ed_t*);
-typedef gboolean      (*VikLayerFuncSelectedViewportMenu)  (VikLayer *, GdkEventButton *, VikViewport *);
+typedef bool      (*VikLayerFuncSelectClick)           (VikLayer *, GdkEventButton *, VikViewport *, tool_ed_t*);
+typedef bool      (*VikLayerFuncSelectMove)            (VikLayer *, GdkEventMotion *, VikViewport *, tool_ed_t*);
+typedef bool      (*VikLayerFuncSelectRelease)         (VikLayer *, GdkEventButton *, VikViewport *, tool_ed_t*);
+typedef bool      (*VikLayerFuncSelectedViewportMenu)  (VikLayer *, GdkEventButton *, VikViewport *);
 
 typedef time_t        (*VikLayerFuncGetTimestamp)          (VikLayer *);
 
@@ -196,19 +199,19 @@ typedef struct _VikLayerInterface VikLayerInterface;
 
 /* See vik_layer_* for function parameter names */
 struct _VikLayerInterface {
-  const gchar *                     fixed_layer_name; // Used in .vik files - this should never change to maintain file compatibility
-  const gchar *                     name;             // Translate-able name used for display purposes
-  const gchar *                     accelerator;
+  const char *                     fixed_layer_name; // Used in .vik files - this should never change to maintain file compatibility
+  const char *                     name;             // Translate-able name used for display purposes
+  const char *                     accelerator;
   const GdkPixdata *                icon;
 
   VikToolInterface *                tools;
-  guint16                           tools_count;
+  uint16_t                           tools_count;
 
   /* for I/O reading to and from .vik files -- params like coordline width, color, etc. */
   VikLayerParam *                   params;
-  guint16                           params_count;
-  gchar **                          params_groups;
-  guint8                            params_groups_count;
+  uint16_t                           params_count;
+  char **                          params_groups;
+  uint8_t                            params_groups_count;
 
   /* menu items to be created */
   VikStdLayerMenuItem               menu_items_selection;
@@ -267,45 +270,45 @@ VikLayerInterface *vik_layer_get_interface ( VikLayerTypeEnum type );
 void vik_layer_set_type ( VikLayer *vl, VikLayerTypeEnum type );
 void vik_layer_draw ( VikLayer *l, VikViewport *vp );
 void vik_layer_change_coord_mode ( VikLayer *l, VikCoordMode mode );
-void vik_layer_rename ( VikLayer *l, const gchar *new_name );
-void vik_layer_rename_no_copy ( VikLayer *l, gchar *new_name );
-const gchar *vik_layer_get_name ( VikLayer *l );
+void vik_layer_rename ( VikLayer *l, const char *new_name );
+void vik_layer_rename_no_copy ( VikLayer *l, char *new_name );
+const char *vik_layer_get_name ( VikLayer *l );
 
 time_t vik_layer_get_timestamp ( VikLayer *vl );
 
-gboolean vik_layer_set_param (VikLayer *layer, guint16 id, VikLayerParamData data, gpointer vp, gboolean is_file_operation);
+bool vik_layer_set_param (VikLayer *layer, uint16_t id, VikLayerParamData data, void * vp, bool is_file_operation);
 
 void vik_layer_set_defaults ( VikLayer *vl, VikViewport *vvp );
 
 void vik_layer_emit_update ( VikLayer *vl );
 
 /* GUI */
-void vik_layer_set_menu_items_selection(VikLayer *l, guint16 selection);
-guint16 vik_layer_get_menu_items_selection(VikLayer *l);
-void vik_layer_add_menu_items ( VikLayer *l, GtkMenu *menu, gpointer vlp );
-VikLayer *vik_layer_create ( VikLayerTypeEnum type, VikViewport *vp, gboolean interactive );
-gboolean vik_layer_properties ( VikLayer *layer, VikViewport *vp );
+void vik_layer_set_menu_items_selection(VikLayer *l, uint16_t selection);
+uint16_t vik_layer_get_menu_items_selection(VikLayer *l);
+void vik_layer_add_menu_items ( VikLayer *l, GtkMenu *menu, void * vlp );
+VikLayer *vik_layer_create ( VikLayerTypeEnum type, VikViewport *vp, bool interactive );
+bool vik_layer_properties ( VikLayer *layer, VikViewport *vp );
 
 void vik_layer_realize ( VikLayer *l, VikTreeview *vt, GtkTreeIter * layer_iter );
-void vik_layer_post_read ( VikLayer *layer, VikViewport *vp, gboolean from_file );
+void vik_layer_post_read ( VikLayer *layer, VikViewport *vp, bool from_file );
 
-gboolean vik_layer_sublayer_add_menu_items ( VikLayer *l, GtkMenu *menu, gpointer vlp, gint subtype, gpointer sublayer, GtkTreeIter *iter, VikViewport *vvp );
+bool vik_layer_sublayer_add_menu_items ( VikLayer *l, GtkMenu *menu, void * vlp, int subtype, void * sublayer, GtkTreeIter *iter, VikViewport *vvp );
 
-VikLayer *vik_layer_copy ( VikLayer *vl, gpointer vp );
-void      vik_layer_marshall ( VikLayer *vl, guint8 **data, gint *len );
-VikLayer *vik_layer_unmarshall ( guint8 *data, gint len, VikViewport *vvp );
-void      vik_layer_marshall_params ( VikLayer *vl, guint8 **data, gint *len );
-void      vik_layer_unmarshall_params ( VikLayer *vl, guint8 *data, gint len, VikViewport *vvp );
+VikLayer *vik_layer_copy ( VikLayer *vl, void * vp );
+void      vik_layer_marshall ( VikLayer *vl, uint8_t **data, int *len );
+VikLayer *vik_layer_unmarshall ( uint8_t *data, int len, VikViewport *vvp );
+void      vik_layer_marshall_params ( VikLayer *vl, uint8_t **data, int *len );
+void      vik_layer_unmarshall_params ( VikLayer *vl, uint8_t *data, int len, VikViewport *vvp );
 
-const gchar *vik_layer_sublayer_rename_request ( VikLayer *l, const gchar *newname, gpointer vlp, gint subtype, gpointer sublayer, GtkTreeIter *iter );
+const char *vik_layer_sublayer_rename_request ( VikLayer *l, const char *newname, void * vlp, int subtype, void * sublayer, GtkTreeIter *iter );
 
-gboolean vik_layer_sublayer_toggle_visible ( VikLayer *l, gint subtype, gpointer sublayer );
+bool vik_layer_sublayer_toggle_visible ( VikLayer *l, int subtype, void * sublayer );
 
-const gchar* vik_layer_sublayer_tooltip ( VikLayer *l, gint subtype, gpointer sublayer );
+const char* vik_layer_sublayer_tooltip ( VikLayer *l, int subtype, void * sublayer );
 
-const gchar* vik_layer_layer_tooltip ( VikLayer *l );
+const char* vik_layer_layer_tooltip ( VikLayer *l );
 
-gboolean vik_layer_selected ( VikLayer *l, gint subtype, gpointer sublayer, gint type, gpointer vlp );
+bool vik_layer_selected ( VikLayer *l, int subtype, void * sublayer, int type, void * vlp );
 
 /* TODO: put in layerspanel */
 GdkPixbuf *vik_layer_load_icon ( VikLayerTypeEnum type );
@@ -314,16 +317,16 @@ VikLayer *vik_layer_get_and_reset_trigger();
 void vik_layer_emit_update_secondary ( VikLayer *vl ); /* to be called by aggregate layer only. doesn't set the trigger */
 void vik_layer_emit_update_although_invisible ( VikLayer *vl );
 
-VikLayerTypeEnum vik_layer_type_from_string ( const gchar *str );
+VikLayerTypeEnum vik_layer_type_from_string ( const char *str );
 
 typedef struct {
   VikLayerParamData data;
   VikLayerParamType type;
 } VikLayerTypedParamData;
 
-void vik_layer_typed_param_data_free ( gpointer gp );
+void vik_layer_typed_param_data_free ( void * gp );
 VikLayerTypedParamData *vik_layer_typed_param_data_copy_from_data ( VikLayerParamType type, VikLayerParamData val );
-VikLayerTypedParamData *vik_layer_data_typed_param_copy_from_string ( VikLayerParamType type, const gchar *str );
+VikLayerTypedParamData *vik_layer_data_typed_param_copy_from_string ( VikLayerParamType type, const char *str );
 
 G_END_DECLS
 

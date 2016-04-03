@@ -39,14 +39,14 @@
 
 
 typedef struct {
-  gpointer clipboard;
-  gint pid;
+  void * clipboard;
+  int pid;
   VikClipboardDataType type;
-  gint subtype;
-  guint16 layer_type;
-  guint len;
-  gchar *text;
-  guint8 data[0];
+  int subtype;
+  uint16_t layer_type;
+  unsigned int len;
+  char *text;
+  uint8_t data[0];
 } vik_clipboard_t;
 
 static GtkTargetEntry target_table[] = {
@@ -58,7 +58,7 @@ static GtkTargetEntry target_table[] = {
  ** functions which send to the clipboard client (we are owner) **
  *****************************************************************/
 
-static void clip_get ( GtkClipboard *c, GtkSelectionData *selection_data, guint info, gpointer p ) 
+static void clip_get ( GtkClipboard *c, GtkSelectionData *selection_data, unsigned int info, void * p ) 
 {
   vik_clipboard_t *vc = p;
   if ( info == 0 ) {
@@ -74,7 +74,7 @@ static void clip_get ( GtkClipboard *c, GtkSelectionData *selection_data, guint 
 
 }
 
-static void clip_clear ( GtkClipboard *c, gpointer p )
+static void clip_clear ( GtkClipboard *c, void * p )
 {
   vik_clipboard_t* vc = (vik_clipboard_t*)p;
   g_free(vc->text);
@@ -87,7 +87,7 @@ static void clip_clear ( GtkClipboard *c, gpointer p )
  **************************************************************************/
 
 /* our own data type */
-static void clip_receive_viking ( GtkClipboard *c, GtkSelectionData *sd, gpointer p ) 
+static void clip_receive_viking ( GtkClipboard *c, GtkSelectionData *sd, void * p ) 
 {
   VikLayersPanel *vlp = p;
   vik_clipboard_t *vc;
@@ -137,17 +137,17 @@ static void clip_receive_viking ( GtkClipboard *c, GtkSelectionData *sd, gpointe
  * Utility func to handle pasted text:
  * search for N dd.dddddd W dd.dddddd, N dd° dd.dddd W dd° dd.ddddd and so forth.
  *
- * Returns: TRUE if coordinates are set.
+ * Returns: true if coordinates are set.
  */
-static gboolean clip_parse_latlon ( const gchar *text, struct LatLon *coord ) 
+static bool clip_parse_latlon ( const char *text, struct LatLon *coord ) 
 {
-  gint latdeg, londeg, latmi, lonmi;
-  gdouble lats, lons;
-  gdouble latm, lonm;
-  gdouble lat, lon;
-  gchar *cand;
-  gint len, i;
-  gchar *s = g_strdup(text);
+  int latdeg, londeg, latmi, lonmi;
+  double lats, lons;
+  double latm, lonm;
+  double lat, lon;
+  char *cand;
+  int len, i;
+  char *s = g_strdup(text);
 
   //  g_print("parsing %s\n", s);
 
@@ -168,22 +168,22 @@ static gboolean clip_parse_latlon ( const gchar *text, struct LatLon *coord )
   /* now try reading coordinates */
   for (i=0; i<len; i++) {
     if (s[i] == 'N' || s[i] == 'S' || g_ascii_isdigit (s[i])) {
-      gchar latc[2] = "SN";
-      gchar lonc[2] = "WE";
-      gint j, k;
+      char latc[2] = "SN";
+      char lonc[2] = "WE";
+      int j, k;
       cand = s+i;
 
       // First try matching strings containing the cardinal directions
       for (j=0; j<2; j++) {
         for (k=0; k<2; k++) {
           // DMM
-          gchar fmt1[] = "N %d%*[ ]%lf W %d%*[ ]%lf";
-          gchar fmt2[] = "%d%*[ ]%lf N %d%*[ ]%lf W";
+          char fmt1[] = "N %d%*[ ]%lf W %d%*[ ]%lf";
+          char fmt2[] = "%d%*[ ]%lf N %d%*[ ]%lf W";
           // DDD
-          gchar fmt3[] = "N %lf W %lf";
-          gchar fmt4[] = "%lf N %lf W";
+          char fmt3[] = "N %lf W %lf";
+          char fmt4[] = "%lf N %lf W";
           // DMS
-          gchar fmt5[] = "N%d%*[ ]%d%*[ ]%lf%*[ ]W%d%*[ ]%d%*[ ]%lf";
+          char fmt5[] = "N%d%*[ ]%d%*[ ]%lf%*[ ]W%d%*[ ]%d%*[ ]%lf";
 
           // Substitute in 'N','E','S' or 'W' values for each attempt
           fmt1[0]  = latc[j];	  fmt1[13] = lonc[k];
@@ -204,7 +204,7 @@ static gboolean clip_parse_latlon ( const gchar *text, struct LatLon *coord )
             lon *= (k*2-1);
             break;
           }
-          gint am = sscanf(cand, fmt5, &latdeg, &latmi, &lats, &londeg, &lonmi, &lons);
+          int am = sscanf(cand, fmt5, &latdeg, &latmi, &lats, &londeg, &lonmi, &lons);
           if ( am == 6 ) {
             lat = (j*2-1) * (latdeg + latmi / 60.0 + lats / 3600.0);
             lon = (k*2-1) * (londeg + lonmi / 60.0 + lons / 3600.0);
@@ -239,9 +239,9 @@ static gboolean clip_parse_latlon ( const gchar *text, struct LatLon *coord )
   if (i<len && lat >= -90.0 && lat <= 90.0 && lon >= -180.0 && lon <= 180.0) {
     coord->lat = lat;
     coord->lon = lon;
-    return TRUE;
+    return true;
   }
-  return FALSE;
+  return false;
 }
 
 static void clip_add_wp(VikLayersPanel *vlp, struct LatLon *coord) 
@@ -261,7 +261,7 @@ static void clip_add_wp(VikLayersPanel *vlp, struct LatLon *coord)
   }
 }
 
-static void clip_receive_text (GtkClipboard *c, const gchar *text, gpointer p)
+static void clip_receive_text (GtkClipboard *c, const char *text, void * p)
 {
   VikLayersPanel *vlp = p;
 
@@ -272,7 +272,7 @@ static void clip_receive_text (GtkClipboard *c, const gchar *text, gpointer p)
     GtkTreeIter iter;
     if ( vik_treeview_get_selected_iter ( sel->vt, &iter ) ) {
       // Try to sanitize input:
-      gchar *name = g_strescape ( text, NULL );
+      char *name = g_strescape ( text, NULL );
       vik_layer_rename ( sel, name );
       vik_treeview_item_set_name ( sel->vt, &iter, name );
       g_free ( name );
@@ -286,13 +286,13 @@ static void clip_receive_text (GtkClipboard *c, const gchar *text, gpointer p)
   }
 }
 
-static void clip_receive_html ( GtkClipboard *c, GtkSelectionData *sd, gpointer p ) 
+static void clip_receive_html ( GtkClipboard *c, GtkSelectionData *sd, void * p ) 
 {
   VikLayersPanel *vlp = p;
-  gsize r, w;
+  size_t r, w;
   GError *err = NULL;
-  gchar *s, *span;
-  gint tag = 0, i;
+  char *s, *span;
+  int tag = 0, i;
   struct LatLon coord;
 
   if (gtk_selection_data_get_length(sd) == -1) {
@@ -300,7 +300,7 @@ static void clip_receive_html ( GtkClipboard *c, GtkSelectionData *sd, gpointer 
   } 
 
   /* - copying from Mozilla seems to give html in UTF-16. */
-  if (!(s =  g_convert ( (gchar *)gtk_selection_data_get_data(sd), gtk_selection_data_get_length(sd), "UTF-8", "UTF-16", &r, &w, &err))) {
+  if (!(s =  g_convert ( (char *)gtk_selection_data_get_data(sd), gtk_selection_data_get_length(sd), "UTF-8", "UTF-16", &r, &w, &err))) {
     return;
   }
   //  g_print("html is %d bytes long: %s\n", gtk_selection_data_get_length(sd), s);
@@ -312,7 +312,7 @@ static void clip_receive_html ( GtkClipboard *c, GtkSelectionData *sd, gpointer 
     span = s;
   }
   for (i=0; i<strlen(span); i++) {
-    gchar ch = span[i];
+    char ch = span[i];
     if (ch == '<') {
       tag++;
     }
@@ -335,26 +335,26 @@ static void clip_receive_html ( GtkClipboard *c, GtkSelectionData *sd, gpointer 
  *
  * Deal with various data types a clipboard may hold.
  */
-void clip_receive_targets ( GtkClipboard *c, GdkAtom *a, gint n, gpointer p )
+void clip_receive_targets ( GtkClipboard *c, GdkAtom *a, int n, void * p )
 {
   VikLayersPanel *vlp = p;
-  gint i;
+  int i;
 
   for (i=0; i<n; i++) {
-    gchar* name = gdk_atom_name(a[i]);
+    char* name = gdk_atom_name(a[i]);
     //g_print("  ""%s""\n", name);
-    gboolean breaktime = FALSE;
+    bool breaktime = false;
     if (!g_strcmp0(name, "text/html")) {
-      gtk_clipboard_request_contents ( c, gdk_atom_intern("text/html", TRUE), clip_receive_html, vlp );
-      breaktime = TRUE;
+      gtk_clipboard_request_contents ( c, gdk_atom_intern("text/html", true), clip_receive_html, vlp );
+      breaktime = true;
     }
     if (a[i] == GDK_TARGET_STRING) {
       gtk_clipboard_request_text ( c, clip_receive_text, vlp );
-      breaktime = TRUE;
+      breaktime = true;
     }
     if (!g_strcmp0(name, "application/viking")) {
-      gtk_clipboard_request_contents ( c, gdk_atom_intern("application/viking", TRUE), clip_receive_viking, vlp );
-      breaktime = TRUE;
+      gtk_clipboard_request_contents ( c, gdk_atom_intern("application/viking", true), clip_receive_viking, vlp );
+      breaktime = true;
     }
 
     g_free ( name );
@@ -378,11 +378,11 @@ void a_clipboard_copy_selected ( VikLayersPanel *vlp )
   VikLayer *sel = vik_layers_panel_get_selected ( vlp );
   GtkTreeIter iter;
   VikClipboardDataType type = VIK_CLIPBOARD_DATA_NONE;
-  guint16 layer_type = 0;
-  gint subtype = 0;
-  guint8 *data = NULL;
-  guint len = 0;
-  const gchar *name = NULL;
+  uint16_t layer_type = 0;
+  int subtype = 0;
+  uint8_t *data = NULL;
+  unsigned int len = 0;
+  const char *name = NULL;
 
   if ( ! sel )
     return;
@@ -410,7 +410,7 @@ void a_clipboard_copy_selected ( VikLayersPanel *vlp )
       }
     }
     else {
-      gint ilen;
+      int ilen;
       type = VIK_CLIPBOARD_DATA_LAYER;
       vik_layer_marshall ( sel, &data, &ilen );
       len = ilen;
@@ -420,7 +420,7 @@ void a_clipboard_copy_selected ( VikLayersPanel *vlp )
   a_clipboard_copy ( type, layer_type, subtype, len, name, data );
 }
 
-void a_clipboard_copy( VikClipboardDataType type, guint16 layer_type, gint subtype, guint len, const gchar* text, guint8 * data)
+void a_clipboard_copy( VikClipboardDataType type, uint16_t layer_type, int subtype, unsigned int len, const char* text, uint8_t * data)
 {
   vik_clipboard_t * vc = g_malloc(sizeof(*vc) + len);
   GtkClipboard *c = gtk_clipboard_get ( GDK_SELECTION_CLIPBOARD );
@@ -449,18 +449,18 @@ void a_clipboard_copy( VikClipboardDataType type, guint16 layer_type, gint subty
  * To deal with multiple data types, we first request the type of data on the clipboard,
  * and handle them in the callback.
  */
-gboolean a_clipboard_paste ( VikLayersPanel *vlp )
+bool a_clipboard_paste ( VikLayersPanel *vlp )
 {
   GtkClipboard *c = gtk_clipboard_get ( GDK_SELECTION_CLIPBOARD );
   gtk_clipboard_request_targets ( c, clip_receive_targets, vlp );
-  return TRUE;
+  return true;
 }
 
 /**
  *
  * Detect our own data types
  */
-static void clip_determine_viking_type ( GtkClipboard *c, GtkSelectionData *sd, gpointer p )
+static void clip_determine_viking_type ( GtkClipboard *c, GtkSelectionData *sd, void * p )
 {
   VikClipboardDataType *vdct = p;
   // Default value
@@ -487,16 +487,16 @@ static void clip_determine_viking_type ( GtkClipboard *c, GtkSelectionData *sd, 
   }
 }
 
-static void clip_determine_type ( GtkClipboard *c, GdkAtom *a, gint n, gpointer p )
+static void clip_determine_type ( GtkClipboard *c, GdkAtom *a, int n, void * p )
 {
-  gint i;
+  int i;
   for (i=0; i<n; i++) {
-    gchar *name = gdk_atom_name(a[i]);
+    char *name = gdk_atom_name(a[i]);
     // g_print("  ""%s""\n", name);
-    gboolean breaktime = FALSE;
+    bool breaktime = false;
     if (!g_strcmp0(name, "application/viking")) {
-      gtk_clipboard_request_contents ( c, gdk_atom_intern("application/viking", TRUE), clip_determine_viking_type, p );
-      breaktime = TRUE;
+      gtk_clipboard_request_contents ( c, gdk_atom_intern("application/viking", true), clip_determine_viking_type, p );
+      breaktime = true;
     }
 
     g_free ( name );
@@ -517,7 +517,7 @@ VikClipboardDataType a_clipboard_type ( )
   VikClipboardDataType *vcdt = g_malloc ( sizeof (VikClipboardDataType) );
 
   gtk_clipboard_request_targets ( c, clip_determine_type, vcdt );
-  gint answer = *vcdt;
+  int answer = *vcdt;
   g_free ( vcdt );
   return answer;
 }

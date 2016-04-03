@@ -22,36 +22,40 @@
 #ifndef __SETTINGS_H
 #define __SETTINGS_H
 
+#include <stdbool.h>
+#include <stdint.h>
+
+
 G_BEGIN_DECLS
 
 void a_settings_init();
 
 void a_settings_uninit();
 
-gboolean a_settings_get_boolean ( const gchar *name, gboolean *val );
+bool a_settings_get_boolean ( const char *name, bool *val );
 
-void a_settings_set_boolean ( const gchar *name, gboolean val );
+void a_settings_set_boolean ( const char *name, bool val );
 
-gboolean a_settings_get_string ( const gchar *name, gchar **val );
+bool a_settings_get_string ( const char *name, char **val );
 
-void a_settings_set_string ( const gchar *name, const gchar *val );
+void a_settings_set_string ( const char *name, const char *val );
 
-gboolean a_settings_get_integer ( const gchar *name, gint *val );
+bool a_settings_get_integer ( const char *name, int *val );
 
-void a_settings_set_integer ( const gchar *name, gint val );
+void a_settings_set_integer ( const char *name, int val );
 
-gboolean a_settings_get_double ( const gchar *name, gdouble *val );
+bool a_settings_get_double ( const char *name, double *val );
 
-void a_settings_set_double ( const gchar *name, gdouble val );
+void a_settings_set_double ( const char *name, double val );
 
 /*
-gboolean a_settings_get_integer_list ( const gchar *name, gint *vals, gsize* length );
+bool a_settings_get_integer_list ( const char *name, int *vals, size_t* length );
 
-void a_settings_set_integer_list ( const gchar *name, gint vals[], gsize length );
+void a_settings_set_integer_list ( const char *name, int vals[], size_t length );
 */
-gboolean a_settings_get_integer_list_contains ( const gchar *name, gint val );
+bool a_settings_get_integer_list_contains ( const char *name, int val );
 
-void a_settings_set_integer_list_containing ( const gchar *name, gint val );
+void a_settings_set_integer_list_containing ( const char *name, int val );
 
 G_END_DECLS
 
