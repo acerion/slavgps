@@ -32,7 +32,10 @@
 #include "viktrack.h"
 #include "viklayerspanel.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #define VIK_TRW_LAYER_TYPE            (vik_trw_layer_get_type ())
 #define VIK_TRW_LAYER(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_TRW_LAYER_TYPE, VikTrwLayer))
@@ -177,6 +180,8 @@ GHashTable *vik_trw_layer_get_waypoints_iters ( VikTrwLayer *vtl );
 
 #define VIK_SETTINGS_LIST_DATE_FORMAT "list_date_format"
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

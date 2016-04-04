@@ -30,7 +30,10 @@
 
 #include "coords.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 /* most of this file is an architechtural flaw. */
 
@@ -72,6 +75,8 @@ GList *a_dialog_select_from_list ( GtkWindow *parent, GList *names, bool multipl
 
 void a_dialog_license ( GtkWindow *parent, const char *map, const char *license, const char *url);
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

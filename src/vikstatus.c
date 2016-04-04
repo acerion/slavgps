@@ -28,7 +28,9 @@
 #include <glib/gi18n.h>
 
 #include <math.h>
+#include <stdlib.h>
 
+#include "viking.h"
 #include "vikstatus.h"
 #include "background.h"
 
@@ -51,7 +53,7 @@ static unsigned int vik_statusbar_signals[LAST_SIGNAL] = { 0 };
 static int
 forward_signal (GObject *object, void * user_data)
 {
-    int item = GPOINTER_TO_INT (g_object_get_data ( object, "type" ));
+    int item = KPOINTER_TO_INT (g_object_get_data ( object, "type" ));
     VikStatusbar *vs = VIK_STATUSBAR (user_data);
 
     // Clicking on the items field will bring up the background jobs window
@@ -87,7 +89,7 @@ vik_statusbar_class_init (VikStatusbarClass *klass)
 static bool button_release_event (GtkWidget* widget, GdkEvent *event, void * *user_data)
 {
   if ( ((GdkEventButton*)event)->button == 3 ) {
-    int type = GPOINTER_TO_INT (g_object_get_data ( G_OBJECT(widget), "type" ));
+    int type = KPOINTER_TO_INT (g_object_get_data ( G_OBJECT(widget), "type" ));
     VikStatusbar *vs = VIK_STATUSBAR (user_data);
     // Right Click: so copy the text in the INFO buffer only ATM
     if ( type == VIK_STATUSBAR_INFO ) {
@@ -119,7 +121,7 @@ vik_statusbar_init (VikStatusbar *vs)
       vs->status[i] = gtk_statusbar_new();
       gtk_statusbar_set_has_resize_grip ( GTK_STATUSBAR(vs->status[i]), false );
     }
-    g_object_set_data (G_OBJECT (vs->status[i]), "type", GINT_TO_POINTER(i));
+    g_object_set_data (G_OBJECT (vs->status[i]), "type", KINT_TO_POINTER(i));
   }
 
   gtk_box_pack_start ( GTK_BOX(vs), vs->status[VIK_STATUSBAR_TOOL], false, false, 1);

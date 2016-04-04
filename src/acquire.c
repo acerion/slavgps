@@ -25,6 +25,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <glib/gprintf.h>
 #include <glib/gi18n.h>
 
@@ -139,13 +140,13 @@ static void on_complete_process (w_and_interface_t *wi)
 static void free_process_options ( ProcessOptions *po )
 {
   if ( po ) {
-    g_free ( po->babelargs );
-    g_free ( po->filename );
-    g_free ( po->input_file_type );
-    g_free ( po->babel_filters );
-    g_free ( po->url );
-    g_free ( po->shell_command );
-    g_free ( po );
+    free( po->babelargs );
+    free( po->filename );
+    free( po->input_file_type );
+    free( po->babel_filters );
+    free( po->url );
+    free( po->shell_command );
+    free( po );
   }
 }
 
@@ -160,7 +161,7 @@ static void get_from_anything ( w_and_interface_t *wi )
     result = source_interface->process_func ( wi->vtl, wi->po, (BabelStatusFunc)progress_func, wi->w, wi->options );
   }
   free_process_options ( wi->po );
-  g_free ( wi->options );
+  free( wi->options );
 
   if (wi->w->running && !result) {
     gdk_threads_enter();
@@ -182,8 +183,8 @@ static void get_from_anything ( w_and_interface_t *wi )
     wi->w->running = false;
   }
   else {
-    g_free ( wi->w );
-    g_free ( wi );
+    free( wi->w );
+    free( wi );
     wi = NULL;
   }
 
@@ -235,7 +236,7 @@ static void acquire ( VikWindow *vw,
     char *error_str = source_interface->check_existence_func();
     if ( error_str ) {
       a_dialog_error_msg ( GTK_WINDOW(vw), error_str );
-      g_free ( error_str );
+      free( error_str );
       return;
     }
   }    
@@ -287,7 +288,7 @@ static void acquire ( VikWindow *vw,
 
     util_add_to_deletion_list ( name_src );
 
-    g_free ( name_src );
+    free( name_src );
   } else if ( source_interface->inputtype == VIK_DATASOURCE_INPUTTYPE_TRWLAYER_TRACK ) {
     char *name_src = a_gpx_write_tmp_file ( vtl, NULL );
     char *name_src_track = a_gpx_write_track_tmp_file ( track, NULL );
@@ -297,14 +298,14 @@ static void acquire ( VikWindow *vw,
     util_add_to_deletion_list ( name_src );
     util_add_to_deletion_list ( name_src_track );
 
-    g_free ( name_src );
-    g_free ( name_src_track );
+    free( name_src );
+    free( name_src_track );
   } else if ( source_interface->inputtype == VIK_DATASOURCE_INPUTTYPE_TRACK ) {
     char *name_src_track = a_gpx_write_track_tmp_file ( track, NULL );
 
     source_interface->get_process_options_func ( pass_along_data, po, NULL, NULL, name_src_track );
 
-    g_free ( name_src_track );
+    free( name_src_track );
   } else if ( source_interface->get_process_options_func )
     source_interface->get_process_options_func ( pass_along_data, po, options, NULL, NULL );
 
@@ -321,8 +322,8 @@ static void acquire ( VikWindow *vw,
     a_uibuilder_free_paramdatas ( paramdatas, source_interface->params, source_interface->params_count );
   }
 
-  w = g_malloc(sizeof(*w));
-  wi = g_malloc(sizeof(*wi));
+  w = malloc(sizeof(*w));
+  wi = malloc(sizeof(*wi));
   wi->w = w;
   wi->w->source_interface = source_interface;
   wi->po = po;
@@ -391,14 +392,14 @@ static void acquire ( VikWindow *vw,
           /* Turn off */
           ProcessOptions off_po = { args_off, fd_off, NULL, NULL, NULL };
           a_babel_convert_from (NULL, &off_po, NULL, NULL, NULL);
-          g_free ( args_off );
+          free( args_off );
         }
         if ( fd_off )
-          g_free ( fd_off );
+          free( fd_off );
 
         // Thread finished by normal completion - free memory
-        g_free ( w );
-        g_free ( wi );
+        free( w );
+        free( wi );
       }
     }
     else {
@@ -415,15 +416,15 @@ static void acquire ( VikWindow *vw,
         a_dialog_msg ( GTK_WINDOW(vw), GTK_MESSAGE_ERROR, _("Error: acquisition failed."), NULL );
     }
     free_process_options ( po );
-    g_free ( options );
+    free( options );
 
     on_complete_process ( wi );
     // Actually show it if necessary
     if ( wi->w->source_interface->keep_dialog_open )
       gtk_dialog_run ( GTK_DIALOG(dialog) );
 
-    g_free ( w );
-    g_free ( wi );
+    free( w );
+    free( wi );
   }
 
   gtk_widget_destroy ( dialog );
@@ -528,7 +529,7 @@ GtkWidget *a_acquire_trwlayer_track_menu (VikWindow *vw, VikLayersPanel *vlp, Vi
     char *menu_title = g_strdup_printf ( _("Filter with %s"), filter_track->name );
     GtkWidget *rv = acquire_build_menu ( vw, vlp, vvp, vtl, filter_track,
 			menu_title, VIK_DATASOURCE_INPUTTYPE_TRWLAYER_TRACK );
-    g_free ( menu_title );
+    free( menu_title );
     return rv;
   }
 }

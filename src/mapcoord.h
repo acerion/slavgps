@@ -27,7 +27,10 @@
 #include <stdint.h>
 
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 /* common struct to all map types and map layer, to hold info about a
  * particular tile */
@@ -38,6 +41,8 @@ typedef struct {
   int scale;
 } MapCoord;
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

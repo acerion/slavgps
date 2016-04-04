@@ -27,6 +27,8 @@
 #include "icons/icons.h"
 
 #include <string.h>
+#include <stdlib.h>
+#include <assert.h>
 #include <glib/gi18n.h>
 
 static void aggregate_layer_marshall( VikAggregateLayer *val, uint8_t **data, int *len );
@@ -152,14 +154,14 @@ static void aggregate_layer_marshall( VikAggregateLayer *val, uint8_t **data, in
 
   vik_layer_marshall_params(VIK_LAYER(val), &ld, &ll);
   alm_append(ld, ll);
-  g_free(ld);
+  free(ld);
 
   while (child) {
     child_layer = VIK_LAYER(child->data);
     vik_layer_marshall ( child_layer, &ld, &ll );
     if (ld) {
       alm_append(ld, ll);
-      g_free(ld);
+      free(ld);
     }
     child = child->next;
   }
@@ -190,7 +192,7 @@ static VikAggregateLayer *aggregate_layer_unmarshall( uint8_t *data, int len, Vi
     }
     alm_next;
   }
-  //  g_print("aggregate_layer_unmarshall ended with len=%d\n", len);
+  //  fprintf(stdout, "aggregate_layer_unmarshall ended with len=%d\n", len);
   return rv;
 #undef alm_size
 #undef alm_next
@@ -291,7 +293,7 @@ void vik_aggregate_layer_move_layer ( VikAggregateLayer *val, GtkTreeIter *child
 
   theone = g_list_find ( val->children, vik_treeview_item_get_pointer ( vl->vt, child_iter ) );
 
-  g_assert ( theone != NULL );
+  assert ( theone != NULL );
 
   /* the old switcheroo */
   if ( up && theone->next )
@@ -435,7 +437,7 @@ static int sort_layer_compare ( gconstpointer a, gconstpointer b, void * order )
   // Default ascending order
   int answer = g_strcmp0 ( sa->name, sb->name );
 
-  if ( GPOINTER_TO_INT(order) ) {
+  if ( KPOINTER_TO_INT(order) ) {
     // Invert sort order for ascending order
     answer = -answer;
   }
@@ -447,14 +449,14 @@ static void aggregate_layer_sort_a2z ( menu_array_values values )
 {
   VikAggregateLayer *val = VIK_AGGREGATE_LAYER ( values[MA_VAL] );
   vik_treeview_sort_children ( VIK_LAYER(val)->vt, &(VIK_LAYER(val)->iter), VL_SO_ALPHABETICAL_ASCENDING );
-  val->children = g_list_sort_with_data ( val->children, sort_layer_compare, GINT_TO_POINTER(true) );
+  val->children = g_list_sort_with_data ( val->children, sort_layer_compare, KINT_TO_POINTER(true) );
 }
 
 static void aggregate_layer_sort_z2a ( menu_array_values values )
 {
   VikAggregateLayer *val = VIK_AGGREGATE_LAYER ( values[MA_VAL] );
   vik_treeview_sort_children ( VIK_LAYER(val)->vt, &(VIK_LAYER(val)->iter), VL_SO_ALPHABETICAL_DESCENDING );
-  val->children = g_list_sort_with_data ( val->children, sort_layer_compare, GINT_TO_POINTER(false) );
+  val->children = g_list_sort_with_data ( val->children, sort_layer_compare, KINT_TO_POINTER(false) );
 }
 
 /**
@@ -469,7 +471,7 @@ static int sort_layer_compare_timestamp ( gconstpointer a, gconstpointer b, void
   // NB This might be relatively slow...
   int answer = ( vik_layer_get_timestamp(sa) > vik_layer_get_timestamp(sb) );
 
-  if ( GPOINTER_TO_INT(order) ) {
+  if ( KPOINTER_TO_INT(order) ) {
     // Invert sort order for ascending order
     answer = !answer;
   }
@@ -481,14 +483,14 @@ static void aggregate_layer_sort_timestamp_ascend ( menu_array_values values )
 {
   VikAggregateLayer *val = VIK_AGGREGATE_LAYER ( values[MA_VAL] );
   vik_treeview_sort_children ( VIK_LAYER(val)->vt, &(VIK_LAYER(val)->iter), VL_SO_DATE_ASCENDING );
-  val->children = g_list_sort_with_data ( val->children, sort_layer_compare_timestamp, GINT_TO_POINTER(true) );
+  val->children = g_list_sort_with_data ( val->children, sort_layer_compare_timestamp, KINT_TO_POINTER(true) );
 }
 
 static void aggregate_layer_sort_timestamp_descend ( menu_array_values values )
 {
   VikAggregateLayer *val = VIK_AGGREGATE_LAYER ( values[MA_VAL] );
   vik_treeview_sort_children ( VIK_LAYER(val)->vt, &(VIK_LAYER(val)->iter), VL_SO_DATE_DESCENDING );
-  val->children = g_list_sort_with_data ( val->children, sort_layer_compare_timestamp, GINT_TO_POINTER(false) );
+  val->children = g_list_sort_with_data ( val->children, sort_layer_compare_timestamp, KINT_TO_POINTER(false) );
 }
 
 /**
@@ -527,7 +529,7 @@ static void aggregate_layer_waypoint_list_dialog ( menu_array_values values )
   VikAggregateLayer *val = VIK_AGGREGATE_LAYER ( values[MA_VAL] );
   char *title = g_strdup_printf ( _("%s: Waypoint List"), VIK_LAYER(val)->name );
   vik_trw_layer_waypoint_list_show_dialog ( title, VIK_LAYER(val), NULL, aggregate_layer_waypoint_create_list, true );
-  g_free ( title );
+  free( title );
 }
 
 /**
@@ -568,7 +570,7 @@ static void aggregate_layer_search_date ( menu_array_values values )
 
   if ( !found )
     a_dialog_info_msg ( VIK_GTK_WINDOW_FROM_LAYER(val), _("No items found with the requested date.") );
-  g_free ( date_str );
+  free( date_str );
 }
 
 /**
@@ -608,7 +610,7 @@ static void aggregate_layer_track_list_dialog ( menu_array_values values )
   VikAggregateLayer *val = VIK_AGGREGATE_LAYER ( values[MA_VAL] );
   char *title = g_strdup_printf ( _("%s: Track and Route List"), VIK_LAYER(val)->name );
   vik_trw_layer_track_list_show_dialog ( title, VIK_LAYER(val), NULL, aggregate_layer_track_create_list, true );
-  g_free ( title );
+  free( title );
 }
 
 /**
@@ -740,7 +742,7 @@ static void disconnect_layer_signal ( VikLayer *vl, VikAggregateLayer *val )
 {
   unsigned int number_handlers = g_signal_handlers_disconnect_matched(vl, G_SIGNAL_MATCH_DATA, 0, 0, 0, 0, val);
   if ( number_handlers != 1 )
-    g_critical ("%s: Unexpected number of disconnect handlers: %d", __FUNCTION__, number_handlers);
+    fprintf(stderr, "CRITICAL: %s: Unexpected number of disconnect handlers: %d\n", __FUNCTION__, number_handlers);
 }
 
 void vik_aggregate_layer_free ( VikAggregateLayer *val )
@@ -940,7 +942,7 @@ static void aggregate_layer_drag_drop_request ( VikAggregateLayer *val_src, VikA
   } else {
     vik_aggregate_layer_insert_layer(val_dest, vl, NULL); /* append */
   }
-  g_free(dp);
+  free(dp);
 }
 
 /**
@@ -956,7 +958,7 @@ static const char* aggregate_layer_tooltip ( VikAggregateLayer *val )
     int nn = g_list_length (children);
     // Could have a more complicated tooltip that numbers each type of layers,
     //  but for now a simple overall count
-    g_snprintf (tmp_buf, sizeof(tmp_buf), ngettext("One layer", "%d layers", nn), nn );
+    snprintf(tmp_buf, sizeof(tmp_buf), ngettext("One layer", "%d layers", nn), nn );
   }
   return tmp_buf;
 }

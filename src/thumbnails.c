@@ -36,6 +36,7 @@
 #endif
 #include <errno.h>
 #include <string.h>
+#include <stdlib.h>
 #include <glib.h>
 #include <glib/gstdio.h>
 #include "viking.h"
@@ -185,13 +186,13 @@ static GdkPixbuf *save_thumbnail(const char *pathname, GdkPixbuf *full)
 	path = file_realpath_dup(pathname);
 	uri = g_strconcat("file://", path, NULL);
 	md5 = md5_hash(uri);
-	g_free(path);
+	free(path);
 
 	to = g_string_new(HOME_DIR);
 	g_string_append(to, THUMB_DIR);
 	g_string_append(to, THUMB_SUB_DIR);
 	if ( g_mkdir_with_parents(to->str, 0700) != 0 )
-		g_warning ("%s: Failed to mkdir %s", __FUNCTION__, to->str );
+		fprintf(stderr, "WARNING: %s: Failed to mkdir %s\n", __FUNCTION__, to->str );
 	g_string_append(to, md5);
 	name_len = to->len + 4; /* Truncate to this length when renaming */
 #ifdef WINDOWS
@@ -200,7 +201,7 @@ static GdkPixbuf *save_thumbnail(const char *pathname, GdkPixbuf *full)
 	g_string_append_printf(to, ".png.Viking-%ld", (long) getpid());
 #endif
 
-	g_free(md5);
+	free(md5);
 
 	// Thumb::URI must be in ISO-8859-1 encoding otherwise gdk_pixbuf_save() will fail
 	// - e.g. if characters such as 'ě' are encountered
@@ -210,7 +211,7 @@ static GdkPixbuf *save_thumbnail(const char *pathname, GdkPixbuf *full)
 #if GLIB_CHECK_VERSION(2,40,0)
 	char *thumb_uri = g_str_to_ascii ( uri, NULL );
 #else
-	char *thumb_uri = g_strdup ( uri );
+	char *thumb_uri = g_strdup( uri );
 #endif
 	old_mask = umask(0077);
 	GError *error = NULL;
@@ -224,10 +225,10 @@ static GdkPixbuf *save_thumbnail(const char *pathname, GdkPixbuf *full)
 	                "tEXt::Software::Orientation", orientation ? orientation : "0",
 	                NULL);
 	umask(old_mask);
-	g_free(thumb_uri);
+	free(thumb_uri);
 
 	if (error) {
-		g_warning ( "%s::%s", __FUNCTION__, error->message );
+		fprintf(stderr, "WARNING: %s::%s\n", __FUNCTION__, error->message );
 		g_error_free ( error );
 		g_object_unref ( G_OBJECT(thumb) );
 		thumb = NULL; /* return NULL */
@@ -243,21 +244,21 @@ static GdkPixbuf *save_thumbnail(const char *pathname, GdkPixbuf *full)
 		final = g_strndup(to->str, name_len);
 		if (rename(to->str, final))
 		{
-			g_warning("Failed to rename '%s' to '%s': %s",
+			fprintf(stderr, "WARNING: Failed to rename '%s' to '%s': %s\n",
 				  to->str, final, g_strerror(errno));
 			g_object_unref ( G_OBJECT(thumb) );
 			thumb = NULL; /* return NULL */
 		}
 
-		g_free(final);
+		free(final);
 	}
 
 	g_string_free(to, true);
-	g_free(swidth);
-	g_free(sheight);
-	g_free(ssize);
-	g_free(smtime);
-	g_free(uri);
+	free(swidth);
+	free(sheight);
+	free(ssize);
+	free(smtime);
+	free(uri);
 
 	return thumb;
 }
@@ -273,11 +274,11 @@ GdkPixbuf *a_thumbnails_get(const char *pathname)
 	path = file_realpath_dup(pathname);
 	uri = g_strconcat("file://", path, NULL);
 	md5 = md5_hash(uri);
-	g_free(uri);
+	free(uri);
 
 	thumb_path = g_strdup_printf("%s%s%s%s.png", HOME_DIR, THUMB_DIR, THUMB_SUB_DIR, md5);
 
-	g_free(md5);
+	free(md5);
 
 	thumb = gdk_pixbuf_new_from_file(thumb_path, NULL);
 	if (!thumb)
@@ -304,8 +305,8 @@ err:
 		g_object_unref ( G_OBJECT ( thumb ) );
 	thumb = NULL;
 out:
-	g_free(path);
-	g_free(thumb_path);
+	free(path);
+	free(thumb_path);
 	return thumb;
 }
 
@@ -439,7 +440,7 @@ static char *MD5Final(MD5Context *ctx)
 
 	byteSwap(ctx->buf, 4);
 
-	retval = g_malloc(33);
+	retval = malloc(33);
 	bytes = (uint8_t *) ctx->buf;
 	for (i = 0; i < 16; i++)
 		sprintf(retval + (i * 2), "%02x", bytes[i]);

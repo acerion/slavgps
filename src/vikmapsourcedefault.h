@@ -25,7 +25,10 @@
 #include "vikmapsource.h"
 #include "download.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #define VIK_TYPE_MAP_SOURCE_DEFAULT             (vik_map_source_default_get_type ())
 #define VIK_MAP_SOURCE_DEFAULT(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_TYPE_MAP_SOURCE_DEFAULT, VikMapSourceDefault))
@@ -56,6 +59,8 @@ char * vik_map_source_default_get_uri( VikMapSourceDefault *self, MapCoord *src 
 char * vik_map_source_default_get_hostname( VikMapSourceDefault *self );
 DownloadFileOptions * vik_map_source_default_get_download_options( VikMapSourceDefault *self );
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _VIK_MAP_SOURCE_DEFAULT_H_ */

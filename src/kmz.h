@@ -26,12 +26,17 @@
 #include "vikviewport.h"
 #include "viklayerspanel.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 int kmz_save_file ( GdkPixbuf *pixbuf, const char* filename, double north, double east, double south, double west );
 
 int kmz_open_file ( const char* filename, VikViewport *vvp, VikLayersPanel *vlp );
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

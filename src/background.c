@@ -22,6 +22,7 @@
 
 #include <gtk/gtk.h>
 #include <glib/gi18n.h>
+#include <stdlib.h>
 
 #include "background.h"
 #include "settings.h"
@@ -30,6 +31,7 @@
 #include "uibuilder.h"
 #include "globals.h"
 #include "preferences.h"
+#include "viking.h"
 
 static GThreadPool *thread_pool_remote = NULL;
 static GThreadPool *thread_pool_local = NULL;
@@ -60,7 +62,7 @@ enum
 void a_background_update_status ( VikWindow *vw, void * data )
 {
   static char buf[20];
-  g_snprintf(buf, sizeof(buf), _("%d items"), bgitemcount);
+  snprintf(buf, sizeof(buf), _("%d items"), bgitemcount);
   vik_window_statusbar_update ( vw, buf, VIK_STATUSBAR_ITEMS );
 }
 
@@ -87,7 +89,7 @@ int a_background_thread_progress ( void * callbackdata, double fraction )
     gdk_threads_leave();
   }
 
-  args[6] = GINT_TO_POINTER(GPOINTER_TO_INT(args[6])-1);
+  args[6] = KINT_TO_POINTER(KPOINTER_TO_INT(args[6])-1);
   bgitemcount--;
   background_thread_update();
   return res;
@@ -100,14 +102,14 @@ static void thread_die ( void * args[VIK_BG_NUM_ARGS] )
   if ( userdata_free_func != NULL )
     userdata_free_func ( args[2] );
 
-  if ( GPOINTER_TO_INT(args[6]) )
+  if ( KPOINTER_TO_INT(args[6]) )
   {
-    bgitemcount -= GPOINTER_TO_INT(args[6]);
+    bgitemcount -= KPOINTER_TO_INT(args[6]);
     background_thread_update ();
   }
 
-  g_free ( args[5] ); /* free iter */
-  g_free ( args );
+  free( args[5] ); /* free iter */
+  free( args );
 }
 
 int a_background_testcancel ( void * callbackdata )
@@ -131,7 +133,7 @@ static void thread_helper ( void * args[VIK_BG_NUM_ARGS], void * user_data )
   vik_thr_func func = args[1];
   void * userdata = args[2];
 
-  g_debug(__FUNCTION__);
+  fprintf(stderr, "DEBUG: %s\n", __FUNCTION__);
 
   func ( userdata, args );
 
@@ -158,18 +160,18 @@ static void thread_helper ( void * args[VIK_BG_NUM_ARGS], void * user_data )
  */
 void a_background_thread ( Background_Pool_Type bp, GtkWindow *parent, const char *message, vik_thr_func func, void * userdata, vik_thr_free_func userdata_free_func, vik_thr_free_func userdata_cancel_cleanup_func, int number_items )
 {
-  GtkTreeIter *piter = g_malloc ( sizeof ( GtkTreeIter ) );
-  void * *args = g_malloc ( sizeof(void *) * VIK_BG_NUM_ARGS );
+  GtkTreeIter *piter = malloc( sizeof ( GtkTreeIter ) );
+  void * *args = malloc( sizeof(void *) * VIK_BG_NUM_ARGS );
 
-  g_debug(__FUNCTION__);
+  fprintf(stderr, "DEBUG: %s\n", __FUNCTION__);
 
-  args[0] = GINT_TO_POINTER(0);
+  args[0] = KINT_TO_POINTER(0);
   args[1] = func;
   args[2] = userdata;
   args[3] = userdata_free_func;
   args[4] = userdata_cancel_cleanup_func;
   args[5] = piter;
-  args[6] = GINT_TO_POINTER(number_items);
+  args[6] = KINT_TO_POINTER(number_items);
 
   bgitemcount += number_items;
 
@@ -205,13 +207,13 @@ static void cancel_job_with_iter ( GtkTreeIter *piter )
 {
     void * *args;
 
-    g_debug(__FUNCTION__);
+    fprintf(stderr, "DEBUG: %s\n", __FUNCTION__);
 
     gtk_tree_model_get( GTK_TREE_MODEL(bgstore), piter, DATA_COLUMN, &args, -1 );
 
     /* we know args still exists because it is free _after_ the list item is destroyed */
     /* need MUTEX ? */
-    args[0] = GINT_TO_POINTER(1); /* set killswitch */
+    args[0] = KINT_TO_POINTER(1); /* set killswitch */
 
     gtk_list_store_remove ( bgstore, piter );
     args[5] = NULL;
@@ -306,7 +308,7 @@ void a_background_post_init()
   GtkTreeViewColumn *column;
   GtkWidget *scrolled_window;
 
-  g_debug(__FUNCTION__);
+  fprintf(stderr, "DEBUG: %s\n", __FUNCTION__);
 
   /* store & treeview */
   bgstore = gtk_list_store_new ( N_COLUMNS, G_TYPE_STRING, G_TYPE_DOUBLE, G_TYPE_POINTER );

@@ -26,7 +26,9 @@
 #include <stdint.h>
 
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void a_settings_init();
 
@@ -57,6 +59,8 @@ bool a_settings_get_integer_list_contains ( const char *name, int val );
 
 void a_settings_set_integer_list_containing ( const char *name, int val );
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

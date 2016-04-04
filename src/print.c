@@ -26,6 +26,7 @@
 #endif
 
 #include <string.h>
+#include <stdlib.h>
 #include <glib/gprintf.h>
 #include <glib/gi18n.h>
 #include <gtk/gtk.h>
@@ -291,7 +292,7 @@ static void set_scale_label(CustomWidgetInfo *pinfo, double scale_val)
   static const double inch_to_mm = 25.4;
   char label_text[64];
 
-  g_snprintf(label_text, sizeof(label_text), "<i>%.0fx%0.f mm (%.0f%%)</i>",
+  snprintf(label_text, sizeof(label_text), "<i>%.0fx%0.f mm (%.0f%%)</i>",
       inch_to_mm * pinfo->data->width / pinfo->data->xres,
       inch_to_mm * pinfo->data->height / pinfo->data->yres,
       scale_val);
@@ -533,7 +534,7 @@ static bool scale_change_value_cb(GtkRange     *range,
 
 static void custom_widgets_cleanup(CustomWidgetInfo *info)
 {
-  g_free(info);
+  free(info);
 }
 
 static GtkWidget *create_custom_widget_cb(GtkPrintOperation *operation, PrintData *data)

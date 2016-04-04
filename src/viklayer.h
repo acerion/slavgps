@@ -34,7 +34,10 @@
 #include "viktreeview.h"
 #include "vikviewport.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #define VIK_LAYER_TYPE            (vik_layer_get_type ())
 #define VIK_LAYER(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_LAYER_TYPE, VikLayer))
@@ -328,6 +331,8 @@ void vik_layer_typed_param_data_free ( void * gp );
 VikLayerTypedParamData *vik_layer_typed_param_data_copy_from_data ( VikLayerParamType type, VikLayerParamData val );
 VikLayerTypedParamData *vik_layer_data_typed_param_copy_from_string ( VikLayerParamType type, const char *str );
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

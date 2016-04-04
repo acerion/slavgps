@@ -30,6 +30,7 @@
 #include "viking.h"
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <glib/gstdio.h>
 #ifdef HAVE_EXPAT_H
 #include <expat.h>
@@ -72,10 +73,10 @@ static char* doc_kml_str ( const char *name, const char *image_filename, double 
 		"</kml>\n",
 		name, image_filename, tmp_n, tmp_s, tmp_e, tmp_w );
 
-	g_free ( tmp_n );
-	g_free ( tmp_s );
-	g_free ( tmp_e );
-	g_free ( tmp_w );
+	free( tmp_n );
+	free( tmp_s );
+	free( tmp_e );
+	free( tmp_w );
 
 	return doc_kml;
 }
@@ -116,7 +117,7 @@ typedef struct zip_source zip_source_t;
 	// Generate KMZ file (a zip file)
 	struct zip* archive = zip_open ( filename, ZIP_CREATE | ZIP_TRUNCATE, &ans );
 	if ( !archive ) {
-		g_warning ( "Unable to create archive: '%s' Error code %d", filename, ans );
+		fprintf(stderr, "WARNING: Unable to create archive: '%s' Error code %d\n", filename, ans );
 		goto finish;
 	}
 
@@ -133,7 +134,7 @@ typedef struct zip_source zip_source_t;
 	size_t blen;
 	gdk_pixbuf_save_to_buffer ( pixbuf, &buffer, &blen, "jpeg", &error, "x-dpi", "72", "y-dpi", "72", NULL );
 	if ( error ) {
-		g_warning ( "Save to buffer error: %s", error->message );
+		fprintf(stderr, "WARNING: Save to buffer error: %s\n", error->message );
 		g_error_free (error);
 		zip_discard ( archive );
 		ans = 130;
@@ -147,10 +148,10 @@ typedef struct zip_source zip_source_t;
 
 	ans = zip_close ( archive );
 
-	g_free ( buffer );
+	free( buffer );
 
  kml_cleanup:
-	g_free ( dk );
+	free( dk );
  finish:
 	return ans;
 #else
@@ -238,11 +239,11 @@ static void kml_end ( xml_data *xd, const char *el )
 
 	switch ( xd->current_tag ) {
 	case tt_kml_go_name:
-		xd->name = g_strdup ( xd->c_cdata->str );
+		xd->name = g_strdup( xd->c_cdata->str );
 		g_string_erase ( xd->c_cdata, 0, -1 );
 		break;
 	case tt_kml_go_image:
-		xd->image = g_strdup ( xd->c_cdata->str );
+		xd->image = g_strdup( xd->c_cdata->str );
 		g_string_erase ( xd->c_cdata, 0, -1 );
 		break;
 	case tt_kml_go_latlonbox_n:
@@ -293,7 +294,7 @@ static bool parse_kml ( const char* buffer, int len, char **name, char **image, 
 	XML_Parser parser = XML_ParserCreate(NULL);
 	enum XML_Status status = XML_STATUS_ERROR;
 
-	xml_data *xd = g_malloc ( sizeof (xml_data) );
+	xml_data *xd = malloc( sizeof (xml_data) );
 	// Set default (invalid) values;
 	xd->xpath = g_string_new ( "" );
 	xd->c_cdata = g_string_new ( "" );
@@ -320,9 +321,9 @@ static bool parse_kml ( const char* buffer, int len, char **name, char **image, 
 	*name = xd->name; // NB don't free xd->name
 	*image = xd->image; // NB don't free xd->image
 
-	g_string_free ( xd->xpath, true );
-	g_string_free ( xd->c_cdata, true );
-	g_free ( xd );
+	g_strinfree( xd->xpath, true );
+	g_strinfree( xd->c_cdata, true );
+	free( xd );
 
 	return status != XML_STATUS_ERROR;
 #else
@@ -364,25 +365,25 @@ typedef struct zip_file zip_file_t;
 	int ans = ZIP_ER_OK;
 	zip_t *archive = zip_open ( filename, ZIP_RDONLY, &ans );
 	if ( !archive ) {
-		g_warning ( "Unable to open archive: '%s' Error code %d", filename, ans );
+		fprintf(stderr, "WARNING: Unable to open archive: '%s' Error code %d\n", filename, ans );
 		goto cleanup;
 	}
 
 	zip_int64_t_t zindex = zip_name_locate ( archive, "doc.kml", ZIP_FL_NOCASE | ZIP_FL_ENC_GUESS );
 	if ( zindex == -1 ) {
-		g_warning ( "Unable to find doc.kml" );
+		fprintf(stderr, "WARNING: Unable to find doc.kml\n" );
 		goto kmz_cleanup;
 	}
 
 	struct zip_stat zs;
 	if ( zip_stat_index( archive, zindex, 0, &zs ) == 0) {
 		zip_file_t *zf = zip_fopen_index ( archive, zindex, 0 );
-		char *buffer = g_malloc(zs.size);
+		char *buffer = malloc(zs.size);
 		int len = zip_fread ( zf, buffer, zs.size );
 		if ( len != zs.size ) {
 			ans = 128;
-			g_free ( buffer );
-			g_warning ( "Unable to read doc.kml from zip file" );
+			free( buffer );
+			fprintf(stderr, "WARNING: Unable to read doc.kml from zip file\n" );
 			goto kmz_cleanup;
 		}
 
@@ -390,7 +391,7 @@ typedef struct zip_file zip_file_t;
 		char *name = NULL;
 		char *image = NULL;
 		bool parsed = parse_kml ( buffer, len, &name, &image, &north, &south, &east, &west );
-		g_free ( buffer );
+		free( buffer );
 
 		GdkPixbuf *pixbuf = NULL;
 
@@ -402,29 +403,29 @@ typedef struct zip_file zip_file_t;
 					// Don't know a way to create a pixbuf using streams.
 					// Thus write out to file
 					// Could read in chunks rather than one big buffer, but don't expect images to be that big
-					char *ibuffer = g_malloc(zs.size);
+					char *ibuffer = malloc(zs.size);
 					int ilen = zip_fread ( zfi, ibuffer, zs.size );
 					if ( ilen != zs.size ) {
 						ans = 131;
-						g_warning ( "Unable to read %s from zip file", image );
+						fprintf(stderr, "WARNING: Unable to read %s from zip file\n", image );
 					}
 					else {
 						char *image_file = util_write_tmp_file_from_bytes ( ibuffer, ilen );
 						GError *error = NULL;
 						pixbuf = gdk_pixbuf_new_from_file ( image_file, &error );
 						if ( error ) {
-							g_warning ("%s: %s", __FUNCTION__, error->message );
+							fprintf(stderr, "WARNING: %s: %s\n", __FUNCTION__, error->message );
 							g_error_free ( error );
 							ans = 133;
 						}
 						else {
 							util_remove ( image_file );
 						}
-						g_free ( image_file );
+						free( image_file );
 					}
-					g_free ( ibuffer );
+					free( ibuffer );
 				}
-				g_free ( image );
+				free( image );
 			}
 			else {
 				ans = 132;

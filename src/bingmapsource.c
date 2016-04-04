@@ -119,11 +119,11 @@ bing_map_source_finalize (GObject *object)
 	BingMapSource *self = BING_MAP_SOURCE (object);
 	BingMapSourcePrivate *priv = BING_MAP_SOURCE_GET_PRIVATE (self);
 
-	g_free (priv->hostname);
+	free(priv->hostname);
 	priv->hostname = NULL;
-	g_free (priv->url);
+	free(priv->url);
 	priv->url = NULL;
-	g_free (priv->api_key);
+	free(priv->api_key);
 	priv->api_key = NULL;
 
 	G_OBJECT_CLASS (bing_map_source_parent_class)->finalize (object);
@@ -141,17 +141,17 @@ _set_property (GObject      *object,
 	switch (property_id)
 	{
 	case PROP_HOSTNAME:
-		g_free (priv->hostname);
+		free(priv->hostname);
 		priv->hostname = g_value_dup_string (value);
 		break;
 
 	case PROP_URL:
-		g_free (priv->url);
+		free(priv->url);
 		priv->url = g_value_dup_string (value);
 		break;
 
 	case PROP_API_KEY:
-		priv->api_key = g_strdup (g_value_get_string (value));
+		priv->api_key = g_strdup(g_value_get_string (value));
 		break;
 
 	default:
@@ -267,7 +267,7 @@ bget_uri( VikMapSourceDefault *self, MapCoord *src )
 	BingMapSourcePrivate *priv = BING_MAP_SOURCE_GET_PRIVATE(self);
 	char *quadtree = compute_quad_tree (17 - src->scale, src->x, src->y);
 	char *uri = g_strdup_printf ( priv->url, quadtree );
-	g_free (quadtree);
+	free(quadtree);
 	return uri;
 } 
 
@@ -290,7 +290,7 @@ static void
 _get_copyright(VikMapSource * self, LatLonBBox bbox, double zoom, void (*fct)(VikViewport*,const char*), void *data)
 {
 	g_return_if_fail (BING_IS_MAP_SOURCE(self));
-	g_debug("%s: looking for %g %g %g %g at %g", __FUNCTION__, bbox.south, bbox.north, bbox.east, bbox.west, zoom);
+	fprintf(stderr, "DEBUG: %s: looking for %g %g %g %g at %g\n", __FUNCTION__, bbox.south, bbox.north, bbox.east, bbox.west, zoom);
 
 	BingMapSourcePrivate *priv = BING_MAP_SOURCE_GET_PRIVATE(self);
 
@@ -307,12 +307,12 @@ _get_copyright(VikMapSource * self, LatLonBBox bbox, double zoom, void (*fct)(Vi
 	}
 	while (attribution != NULL) {
 		struct _Attribution *current = (struct _Attribution*)attribution->data;
-		/* g_debug("%s %g %g %g %g %d %d", __FUNCTION__, current->bounds.south, current->bounds.north, current->bounds.east, current->bounds.west, current->minZoom, current->maxZoom); */
+		/* fprintf(stderr, "DEBUG: %s %g %g %g %g %d %d\n", __FUNCTION__, current->bounds.south, current->bounds.north, current->bounds.east, current->bounds.west, current->minZoom, current->maxZoom); */
 		if (BBOX_INTERSECT(bbox, current->bounds) &&
 		    (17 - level) > current->minZoom &&
 		    (17 - level) < current->maxZoom) {
 			(*fct)(data, current->attribution);
-			g_debug("%s: found match %s", __FUNCTION__, current->attribution);
+			fprintf(stderr, "DEBUG: %s: found match %s\n", __FUNCTION__, current->attribution);
 		}
 		attribution = attribution->next;
 	}
@@ -334,7 +334,7 @@ bstart_element (GMarkupParseContext *context,
 		/* New Attribution */
 		struct _Attribution *attribution = g_malloc0 (sizeof(struct _Attribution));
 		priv->attributions = g_list_append (priv->attributions, attribution);
-		attribution->attribution = g_strdup (priv->attribution);
+		attribution->attribution = g_strdup(priv->attribution);
 	}
 }
 
@@ -358,8 +358,8 @@ btext (GMarkupParseContext *context,
 
 	const char *parent = len > 1 ? g_slist_nth_data ((GSList *)stack, 1) : NULL;
 	if (strcmp (element, "Attribution") == 0) {
-		g_free (priv->attribution);
-		priv->attribution = g_strdup (textl);
+		free(priv->attribution);
+		priv->attribution = g_strdup(textl);
 	}
 	else {
 		if ( attribution ) {
@@ -382,7 +382,7 @@ btext (GMarkupParseContext *context,
 			}
 		}
 	}
-	g_free(textl);
+	free(textl);
 }
 
 static bool
@@ -446,7 +446,7 @@ _parse_file_for_attributions(BingMapSource *self, char *filename)
 		GList *attribution = priv->attributions;
 		while (attribution != NULL) {
 			struct _Attribution *aa = (struct _Attribution*)attribution->data;
-			g_debug ("Bing Attribution: %s from %d to %d %g %g %g %g", aa->attribution, aa->minZoom, aa->maxZoom, aa->bounds.south, aa->bounds.north, aa->bounds.east, aa->bounds.west);
+			fprintf(stderr, "DEBUG: Bing Attribution: %s from %d to %d %g %g %g %g\n", aa->attribution, aa->minZoom, aa->maxZoom, aa->bounds.south, aa->bounds.north, aa->bounds.east, aa->bounds.west);
 			attribution = attribution->next;
 		}
 	}
@@ -469,16 +469,16 @@ _load_attributions ( BingMapSource *self )
 		goto done;
 	}
 
-	g_debug("%s: %s", __FUNCTION__, tmpname);
+	fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, tmpname);
 	if (!_parse_file_for_attributions(self, tmpname)) {
 		ret = -1;
 	}
 
 	(void)g_remove(tmpname);
-	g_free(tmpname);
+	free(tmpname);
 done:
 	priv->loading_attributions = false;
-	g_free(uri);
+	free(uri);
 	return ret;
 }
 

@@ -29,7 +29,10 @@
 #include <stdint.h>
 
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #define VIK_RADIO_GROUP_TYPE            (vik_radio_group_get_type ())
 #define VIK_RADIO_GROUP(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_RADIO_GROUP_TYPE, VikRadioGroup))
@@ -52,6 +55,8 @@ void vik_radio_group_set_selected ( VikRadioGroup *vrg, uint8_t i );
 uint8_t vik_radio_group_get_selected ( VikRadioGroup *vrg );
 GtkWidget *vik_radio_group_new_static ( const char **options );
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

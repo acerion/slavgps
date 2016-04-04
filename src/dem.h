@@ -27,7 +27,10 @@
 #include <stdint.h>
 
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #define VIK_DEM_INVALID_ELEVATION -32768
 
@@ -79,6 +82,8 @@ int16_t vik_dem_get_best_interpol ( VikDEM *dem, double east, double north );
 
 void vik_dem_east_north_to_xy ( VikDEM *dem, double east, double north, unsigned int *col, unsigned int *row );
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -30,6 +30,7 @@
 #include "viking.h"
 #include <string.h>
 #include <stdlib.h>
+#include <assert.h>
 #include "viklayer_defaults.h"
 
 /* functions common to all layers. */
@@ -146,7 +147,7 @@ static VikLayerInterface *vik_layer_interfaces[VIK_LAYER_NUM_TYPES] = {
 
 VikLayerInterface *vik_layer_get_interface ( VikLayerTypeEnum type )
 {
-  g_assert ( type < VIK_LAYER_NUM_TYPES );
+  assert ( type < VIK_LAYER_NUM_TYPES );
   return vik_layer_interfaces[type];
 }
 
@@ -194,23 +195,23 @@ void vik_layer_set_type ( VikLayer *vl, VikLayerTypeEnum type )
 /* frees old name */
 void vik_layer_rename ( VikLayer *l, const char *new_name )
 {
-  g_assert ( l != NULL );
-  g_assert ( new_name != NULL );
-  g_free ( l->name );
-  l->name = g_strdup ( new_name );
+  assert ( l != NULL );
+  assert ( new_name != NULL );
+  free( l->name );
+  l->name = g_strdup( new_name );
 }
 
 void vik_layer_rename_no_copy ( VikLayer *l, char *new_name )
 {
-  g_assert ( l != NULL );
-  g_assert ( new_name != NULL );
-  g_free ( l->name );
+  assert ( l != NULL );
+  assert ( new_name != NULL );
+  free( l->name );
   l->name = new_name;
 }
 
 const char *vik_layer_get_name ( VikLayer *l )
 {
-  g_assert ( l != NULL);
+  assert ( l != NULL);
   return l->name;
 }
 
@@ -224,11 +225,11 @@ time_t vik_layer_get_timestamp ( VikLayer *vl )
 VikLayer *vik_layer_create ( VikLayerTypeEnum type, VikViewport *vp, bool interactive )
 {
   VikLayer *new_layer = NULL;
-  g_assert ( type < VIK_LAYER_NUM_TYPES );
+  assert ( type < VIK_LAYER_NUM_TYPES );
 
   new_layer = vik_layer_interfaces[type]->create ( vp );
 
-  g_assert ( new_layer != NULL );
+  assert ( new_layer != NULL );
 
   if ( interactive )
   {
@@ -278,11 +279,11 @@ void vik_layer_marshall ( VikLayer *vl, uint8_t **data, int *len )
   if ( vl && vik_layer_interfaces[vl->type]->marshall ) {
     vik_layer_interfaces[vl->type]->marshall ( vl, data, len );
     if (*data) {
-      header = g_malloc(*len + sizeof(*header));
+      header = malloc(*len + sizeof(*header));
       header->layer_type = vl->type;
       header->len = *len;
       memcpy(header->data, *data, *len);
-      g_free(*data);
+      free(*data);
       *data = (uint8_t *)header;
       *len = *len + sizeof(*header);
     }
@@ -314,7 +315,7 @@ void vik_layer_marshall_params ( VikLayer *vl, uint8_t **data, int *datalen )
     uint16_t i, params_count = vik_layer_get_interface(vl->type)->params_count;
     for ( i = 0; i < params_count; i++ )
     {
-      g_debug("%s: %s", __FUNCTION__, params[i].name);
+      fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, params[i].name);
       d = get_param(vl, i, false);
       switch ( params[i].type )
       {
@@ -373,11 +374,11 @@ void vik_layer_unmarshall_params ( VikLayer *vl, uint8_t *data, int datalen, Vik
 
   vlm_read(&vl->visible);
 
-  s = g_malloc(vlm_size + 1);
+  s = malloc(vlm_size + 1);
   s[vlm_size]=0;
   vlm_read(s);
   vik_layer_rename(vl, s);
-  g_free(s);
+  free(s);
 
   if ( params && set_param )
   {
@@ -385,16 +386,16 @@ void vik_layer_unmarshall_params ( VikLayer *vl, uint8_t *data, int datalen, Vik
     uint16_t i, params_count = vik_layer_get_interface(vl->type)->params_count;
     for ( i = 0; i < params_count; i++ )
     {
-      g_debug("%s: %s", __FUNCTION__, params[i].name);
+      fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, params[i].name);
       switch ( params[i].type )
       {
       case VIK_LAYER_PARAM_STRING: 
-	s = g_malloc(vlm_size + 1);
+	s = malloc(vlm_size + 1);
 	s[vlm_size]=0;
 	vlm_read(s);
 	d.s = s;
 	set_param(vl, i, d, vvp, false);
-	g_free(s);
+	free(s);
 	break;
       case VIK_LAYER_PARAM_STRING_LIST:  {
         int listlen = vlm_size, j;
@@ -403,7 +404,7 @@ void vik_layer_unmarshall_params ( VikLayer *vl, uint8_t *data, int datalen, Vik
 
         for ( j = 0; j < listlen; j++ ) {
           /* get a string */
-          s = g_malloc(vlm_size + 1);
+          s = malloc(vlm_size + 1);
 	  s[vlm_size]=0;
 	  vlm_read(s);
           list = g_list_append ( list, s );
@@ -438,11 +439,11 @@ VikLayer *vik_layer_unmarshall ( uint8_t *data, int len, VikViewport *vvp )
 
 static void vik_layer_finalize ( VikLayer *vl )
 {
-  g_assert ( vl != NULL );
+  assert ( vl != NULL );
   if ( vik_layer_interfaces[vl->type]->free )
     vik_layer_interfaces[vl->type]->free ( vl );
   if ( vl->name )
-    g_free ( vl->name );
+    free( vl->name );
   G_OBJECT_CLASS(parent_class)->finalize(G_OBJECT(vl));
 }
 
@@ -522,7 +523,7 @@ const char* vik_layer_layer_tooltip ( VikLayer *l )
 
 GdkPixbuf *vik_layer_load_icon ( VikLayerTypeEnum type )
 {
-  g_assert ( type < VIK_LAYER_NUM_TYPES );
+  assert ( type < VIK_LAYER_NUM_TYPES );
   if ( vik_layer_interfaces[type]->icon )
     return gdk_pixbuf_from_pixdata ( vik_layer_interfaces[type]->icon, false, NULL );
   return NULL;
@@ -581,7 +582,7 @@ void vik_layer_typed_param_data_free ( void * gp )
   switch ( val->type ) {
     case VIK_LAYER_PARAM_STRING:
       if ( val->data.s )
-        g_free ( (void *)val->data.s );
+        free( (void *)val->data.s );
       break;
     /* TODO: APPLICABLE TO US? NOTE: string layer works auniquely: data.sl should NOT be free'd when
      * the internals call get_param -- i.e. it should be managed w/in the layer.
@@ -589,16 +590,16 @@ void vik_layer_typed_param_data_free ( void * gp )
      * by the layer -- i.e. free'd by the layer.
      */
     case VIK_LAYER_PARAM_STRING_LIST:
-      g_warning ("Param strings not implemented"); //fake it
+      fprintf(stderr, "WARNING: Param strings not implemented\n"); //fake it
       break;
     default:
       break;
   }
-  g_free ( val );
+  free( val );
 }
 
 VikLayerTypedParamData *vik_layer_typed_param_data_copy_from_data (VikLayerParamType type, VikLayerParamData val) {
-  VikLayerTypedParamData *newval = g_new(VikLayerTypedParamData,1);
+  VikLayerTypedParamData *newval = (VikLayerTypedParamData *) malloc(1 * sizeof (VikLayerTypedParamData));
   newval->data = val;
   newval->type = type;
   switch ( newval->type ) {
@@ -613,7 +614,7 @@ VikLayerTypedParamData *vik_layer_typed_param_data_copy_from_data (VikLayerParam
      * by the layer -- i.e. free'd by the layer.
      */
     case VIK_LAYER_PARAM_STRING_LIST:
-      g_critical ( "Param strings not implemented"); //fake it
+      fprintf(stderr, "CRITICAL: Param strings not implemented\n"); //fake it
       break;
     default:
       break;
@@ -625,7 +626,7 @@ VikLayerTypedParamData *vik_layer_typed_param_data_copy_from_data (VikLayerParam
 
 VikLayerTypedParamData *vik_layer_data_typed_param_copy_from_string ( VikLayerParamType type, const char *str )
 {
-  VikLayerTypedParamData *rv = g_new(VikLayerTypedParamData,1);
+  VikLayerTypedParamData *rv = (VikLayerTypedParamData *) malloc(1 * sizeof (VikLayerTypedParamData));
   rv->type = type;
   switch ( type )
   {

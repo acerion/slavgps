@@ -69,7 +69,7 @@ renaming functions and defining LatLon and UTM structs.
  */
 char *a_coords_dtostr ( double d )
 {
-  char *buffer = g_malloc(G_ASCII_DTOSTR_BUF_SIZE*sizeof(char));
+  char *buffer = malloc(G_ASCII_DTOSTR_BUF_SIZE*sizeof(char));
   g_ascii_dtostr (buffer, G_ASCII_DTOSTR_BUF_SIZE, (double) d);
   return buffer;
 }
@@ -279,7 +279,7 @@ void a_coords_latlon_to_string ( const struct LatLon *latlon,
     *lon = g_strdup_printf ( "%.6f", latlon->lon );
     break;
   default:
-    g_critical("Houston, we've had a problem. format=%d", format);
+    fprintf(stderr, "CRITICAL: Houston, we've had a problem. format=%d\n", format);
   }
 #else
   *lat = convert_lat_dec_to_ddd ( latlon->lat );

@@ -27,6 +27,7 @@
 #endif
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <ctype.h>
 #include <errno.h>
 #include <string.h>
@@ -176,7 +177,7 @@ static void uncompress_zip ( char *name )
 	GMappedFile *mf;
 
 	if ((mf = g_mapped_file_new ( name, false, &error )) == NULL) {
-		g_critical(_("Couldn't map file %s: %s"), name, error->message);
+		fprintf(stderr, _("CRITICAL: Couldn't map file %s: %s\n"), name, error->message);
 		g_error_free(error);
 		return;
 	}
@@ -192,7 +193,7 @@ static void uncompress_zip ( char *name )
 
 	// This overwrites any previous file contents
 	if ( ! g_file_set_contents ( name, unzip_mem, ucsize, &error ) ) {
-		g_critical ( "Couldn't write file '%s', because of %s", name, error->message );
+		fprintf(stderr, "CRITICAL: Couldn't write file '%s', because of %s\n", name, error->message );
 		g_error_free ( error );
 	}
 }
@@ -209,7 +210,7 @@ void a_try_decompress_file (char *name)
 #ifdef MAGIC_VERSION
 	// Or magic_version() if available - probably need libmagic 5.18 or so
 	//  (can't determine exactly which version the versioning became available)
-	g_debug ("%s: magic version: %d", __FUNCTION__, MAGIC_VERSION );
+	fprintf(stderr, "DEBUG: %s: magic version: %d\n", __FUNCTION__, MAGIC_VERSION );
 #endif
 	magic_t myt = magic_open ( MAGIC_CONTINUE|MAGIC_ERROR|MAGIC_MIME );
 	bool zip = false;
@@ -225,7 +226,7 @@ void a_try_decompress_file (char *name)
 #endif
 		if ( ml == 0 ) {
 			const char* magic = magic_file (myt, name);
-			g_debug ("%s: magic output: %s", __FUNCTION__, magic );
+			fprintf(stderr, "DEBUG: %s: magic output: %s\n", __FUNCTION__, magic );
 
 			if ( g_ascii_strncasecmp(magic, "application/zip", 15) == 0 )
 				zip = true;
@@ -234,7 +235,7 @@ void a_try_decompress_file (char *name)
 				bzip2 = true;
 		}
 		else {
-			g_critical ("%s: magic load database failure", __FUNCTION__ );
+			fprintf(stderr, "CRITICAL: %s: magic load database failure\n", __FUNCTION__ );
 		}
 
 		magic_close ( myt );
@@ -250,9 +251,9 @@ void a_try_decompress_file (char *name)
 		char* bz2_name = uncompress_bzip2 ( name );
 		if ( bz2_name ) {
 			if ( g_remove ( name ) )
-				g_critical ("%s: remove file failed [%s]", __FUNCTION__, name );
+				fprintf(stderr, "CRITICAL: %s: remove file failed [%s]\n", __FUNCTION__, name );
 			if ( g_rename (bz2_name, name) )
-				g_critical ("%s: file rename failed [%s] to [%s]", __FUNCTION__, bz2_name, name );
+				fprintf(stderr, "CRITICAL: %s: file rename failed [%s] to [%s]\n", __FUNCTION__, bz2_name, name );
 		}
 	}
 
@@ -281,7 +282,7 @@ static bool get_etag_xattr(const char *fn, CurlDownloadOptions *cdo)
   g_object_unref(file);
 
   if (result)
-    g_debug("%s: Get etag (xattr) from %s: %s", __FUNCTION__, fn, cdo->etag);
+    fprintf(stderr, "DEBUG: %s: Get etag (xattr) from %s: %s\n", __FUNCTION__, fn, cdo->etag);
 
   return result;
 }
@@ -294,11 +295,11 @@ static bool get_etag_file(const char *fn, CurlDownloadOptions *cdo)
   etag_filename = g_strdup_printf("%s.etag", fn);
   if (etag_filename) {
     result = g_file_get_contents(etag_filename, &cdo->etag, NULL, NULL);
-    g_free(etag_filename);
+    free(etag_filename);
   }
 
   if (result)
-    g_debug("%s: Get etag (file) from %s: %s", __FUNCTION__, fn, cdo->etag);
+    fprintf(stderr, "DEBUG: %s: Get etag (file) from %s: %s\n", __FUNCTION__, fn, cdo->etag);
 
   return result;
 }
@@ -307,13 +308,13 @@ static void get_etag(const char *fn, CurlDownloadOptions *cdo)
 {
   /* first try to get etag from xattr, then fall back to plain file  */
   if (!get_etag_xattr(fn, cdo) && !get_etag_file(fn, cdo)) {
-    g_debug("%s: Failed to get etag from %s", __FUNCTION__, fn);
+    fprintf(stderr, "DEBUG: %s: Failed to get etag from %s\n", __FUNCTION__, fn);
     return;
   }
 
   /* check if etag is short enough */
   if (strlen(cdo->etag) > 100) {
-    g_free(cdo->etag);
+    free(cdo->etag);
     cdo->etag = NULL;
   }
 
@@ -330,7 +331,7 @@ static bool set_etag_xattr(const char *fn, CurlDownloadOptions *cdo)
   g_object_unref(file);
 
   if (result)
-    g_debug("%s: Set etag (xattr) on %s: %s", __FUNCTION__, fn, cdo->new_etag);
+    fprintf(stderr, "DEBUG: %s: Set etag (xattr) on %s: %s\n", __FUNCTION__, fn, cdo->new_etag);
 
   return result;
 }
@@ -343,11 +344,11 @@ static bool set_etag_file(const char *fn, CurlDownloadOptions *cdo)
   etag_filename = g_strdup_printf("%s.etag", fn);
   if (etag_filename) {
     result = g_file_set_contents(etag_filename, cdo->new_etag, -1, NULL);
-    g_free(etag_filename);
+    free(etag_filename);
   }
 
   if (result)
-    g_debug("%s: Set etag (file) on %s: %s", __FUNCTION__, fn, cdo->new_etag);
+    fprintf(stderr, "DEBUG: %s: Set etag (file) on %s: %s\n", __FUNCTION__, fn, cdo->new_etag);
 
   return result;
 }
@@ -356,7 +357,7 @@ static void set_etag(const char *fn, const char *fntmp, CurlDownloadOptions *cdo
 {
   /* first try to store etag in extended attribute, then fall back to plain file */
   if (!set_etag_xattr(fntmp, cdo) && !set_etag_file(fn, cdo)) {
-    g_debug("%s: Failed to set etag on %s", __FUNCTION__, fn);
+    fprintf(stderr, "DEBUG: %s: Failed to set etag on %s\n", __FUNCTION__, fn);
   }
 }
 
@@ -397,25 +398,25 @@ static DownloadResult_t download( const char *hostname, const char *uri, const c
   } else {
     char *dir = g_path_get_dirname ( fn );
     if ( g_mkdir_with_parents ( dir , 0777 ) != 0)
-      g_warning ("%s: Failed to mkdir %s", __FUNCTION__, dir );
-    g_free ( dir );
+      fprintf(stderr, "WARNING: %s: Failed to mkdir %s\n", __FUNCTION__, dir );
+    free( dir );
   }
 
   tmpfilename = g_strdup_printf("%s.tmp", fn);
   if (!lock_file ( tmpfilename ) )
   {
-    g_debug("%s: Couldn't take lock on temporary file \"%s\"\n", __FUNCTION__, tmpfilename);
-    g_free ( tmpfilename );
+    fprintf(stderr, "DEBUG: %s: Couldn't take lock on temporary file \"%s\"\n", __FUNCTION__, tmpfilename);
+    free( tmpfilename );
     if (options->use_etag)
-      g_free ( cdo.etag );
+      free( cdo.etag );
     return DOWNLOAD_FILE_WRITE_ERROR;
   }
   f = g_fopen ( tmpfilename, "w+b" );  /* truncate file and open it */
   if ( ! f ) {
-    g_warning("Couldn't open temporary file \"%s\": %s", tmpfilename, g_strerror(errno));
-    g_free ( tmpfilename );
+    fprintf(stderr, "WARNING: Couldn't open temporary file \"%s\": %s\n", tmpfilename, g_strerror(errno));
+    free( tmpfilename );
     if (options->use_etag)
-      g_free ( cdo.etag );
+      free( cdo.etag );
     return DOWNLOAD_FILE_WRITE_ERROR;
   }
 
@@ -425,13 +426,13 @@ static DownloadResult_t download( const char *hostname, const char *uri, const c
   DownloadResult_t result = DOWNLOAD_SUCCESS;
 
   if (ret != CURL_DOWNLOAD_NO_ERROR && ret != CURL_DOWNLOAD_NO_NEWER_FILE) {
-    g_debug("%s: download failed: curl_download_get_url=%d", __FUNCTION__, ret);
+    fprintf(stderr, "DEBUG: %s: download failed: curl_download_get_url=%d\n", __FUNCTION__, ret);
     failure = true;
     result = DOWNLOAD_HTTP_ERROR;
   }
 
   if (!failure && options != NULL && options->check_file != NULL && ! options->check_file(f)) {
-    g_debug("%s: file content checking failed", __FUNCTION__);
+    fprintf(stderr, "DEBUG: %s: file content checking failed\n", __FUNCTION__);
     failure = true;
     result = DOWNLOAD_CONTENT_ERROR;
   }
@@ -441,14 +442,14 @@ static DownloadResult_t download( const char *hostname, const char *uri, const c
 
   if (failure)
   {
-    g_warning(_("Download error: %s"), fn);
+	  fprintf(stderr, _("WARNING: Download error: %s\n"), fn);
     if ( g_remove ( tmpfilename ) != 0 )
-      g_warning( ("Failed to remove: %s"), tmpfilename);
+		fprintf(stderr, _("WARNING: Failed to remove: %s\n"), tmpfilename);
     unlock_file ( tmpfilename );
-    g_free ( tmpfilename );
+    free( tmpfilename );
     if ( options != NULL && options->use_etag ) {
-      g_free ( cdo.etag );
-      g_free ( cdo.new_etag );
+      free( cdo.etag );
+      free( cdo.new_etag );
     }
     return result;
   }
@@ -459,7 +460,7 @@ static DownloadResult_t download( const char *hostname, const char *uri, const c
      // Not security critical, thus potential Time of Check Time of Use race condition is not bad
      // coverity[toctou]
      if ( g_utime ( fn, NULL ) != 0 )
-       g_warning ( "%s couldn't set time on: %s", __FUNCTION__, fn );
+       fprintf(stderr, "WARNING: %s couldn't set time on: %s\n", __FUNCTION__, fn );
   } else {
     if ( options != NULL && options->convert_file )
       options->convert_file ( tmpfilename );
@@ -473,14 +474,14 @@ static DownloadResult_t download( const char *hostname, const char *uri, const c
 
      /* move completely-downloaded file to permanent location */
      if ( g_rename ( tmpfilename, fn ) )
-        g_warning ("%s: file rename failed [%s] to [%s]", __FUNCTION__, tmpfilename, fn );
+        fprintf(stderr, "WARNING: %s: file rename failed [%s] to [%s]\n", __FUNCTION__, tmpfilename, fn );
   }
   unlock_file ( tmpfilename );
-  g_free ( tmpfilename );
+  free( tmpfilename );
 
   if ( options != NULL && options->use_etag ) {
-    g_free ( cdo.etag );
-    g_free ( cdo.new_etag );
+    free( cdo.etag );
+    free( cdo.new_etag );
   }
   return DOWNLOAD_SUCCESS;
 }
@@ -525,7 +526,7 @@ char *a_download_uri_to_tmp_file ( const char *uri, DownloadFileOptions *options
   char *tmpname;
 
   if ( (tmp_fd = g_file_open_tmp ("viking-download.XXXXXX", &tmpname, NULL)) == -1 ) {
-    g_critical (_("couldn't open temp file"));
+	  fprintf(stderr, _("CRITICAL: couldn't open temp file\n"));
     return NULL;
   }
 
@@ -537,7 +538,7 @@ char *a_download_uri_to_tmp_file ( const char *uri, DownloadFileOptions *options
     // error
     fclose ( tmp_file );
     (void)g_remove ( tmpname );
-    g_free ( tmpname );
+    free( tmpname );
     return NULL;
   }
   fclose ( tmp_file );

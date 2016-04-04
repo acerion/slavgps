@@ -50,6 +50,8 @@
 #include <glib/gprintf.h>
 #include <glib/gi18n.h>
 
+#include <stdlib.h>
+
 #include "modules.h"
 
 /* FIXME LOCALEDIR must be configured by ./configure --localedir */
@@ -71,7 +73,7 @@ static void log_debug(const char *log_domain,
                       const char *message,
                       void * user_data)
 {
-  g_print("** (viking): DEBUG: %s\n", message);
+  fprintf(stdout, "** (viking): DEBUG: %s\n", message);
 }
 #else
 /* Callback to mute log message */
@@ -87,7 +89,7 @@ static void mute_log(const char *log_domain,
 #if HAVE_X11_XLIB_H
 static int myXErrorHandler(Display *display, XErrorEvent *theEvent)
 {
-  g_fprintf (stderr,
+  fprintf(stderr,
              _("Ignoring Xlib error: error code %d request code %d\n"),
              theEvent->error_code,
              theEvent->request_code);
@@ -143,14 +145,14 @@ int main( int argc, char *argv[] )
     {
       /* no error message, the GUI initialization failed */
       const char *display_name = gdk_get_display_arg_name ();
-      g_fprintf (stderr, "Failed to open display: %s\n", (display_name != NULL) ? display_name : " ");
+      fprintf(stderr, "Failed to open display: %s\n", (display_name != NULL) ? display_name : " ");
     }
     else
     {
       /* yep, there's an error, so print it */
-      g_fprintf (stderr, "Parsing command line options failed: %s\n", error->message);
+      fprintf(stderr, "Parsing command line options failed: %s\n", error->message);
       g_error_free (error);
-      g_fprintf (stderr, "Run \"%s --help\" to see the list of recognized options.\n",argv[0]);
+      fprintf(stderr, "Run \"%s --help\" to see the list of recognized options.\n",argv[0]);
     }
     return EXIT_FAILURE;
   }

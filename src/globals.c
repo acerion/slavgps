@@ -154,7 +154,7 @@ bool a_vik_very_first_run ()
   if ( dir ) {
     // If directory exists - Viking has been run before
     vik_very_first_run = ! g_file_test ( dir, G_FILE_TEST_EXISTS );
-    g_free ( dir );
+    free( dir );
   }
   else
     vik_very_first_run = true;
@@ -165,7 +165,7 @@ bool a_vik_very_first_run ()
 
 void a_vik_preferences_init ()
 {
-  g_debug ( "VIKING VERSION as number: %d", viking_version_to_number (VIKING_VERSION) );
+  fprintf(stderr, "DEBUG: VIKING VERSION as number: %d\n", viking_version_to_number (VIKING_VERSION) );
 
   // Defaults for the options are setup here
   a_preferences_register_group ( VIKING_PREFERENCES_GROUP_KEY, _("General") );

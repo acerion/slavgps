@@ -28,7 +28,10 @@
 #include <stdint.h>
 
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #if !GLIB_CHECK_VERSION(2,26,0)
 typedef struct stat GStatBuf;
@@ -51,6 +54,8 @@ void vik_mutex_free (GMutex *mutex);
 #define vik_combo_box_text_append(X,Y) gtk_combo_box_append_text(GTK_COMBO_BOX(X),Y)
 #endif
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

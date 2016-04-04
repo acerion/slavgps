@@ -29,7 +29,10 @@
 #include "vikwaypoint.h"
 #include "vikcoord.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 VikWaypoint* a_geotag_create_waypoint_from_file ( const char *filename, VikCoordMode vcmode, char **name );
 
@@ -41,6 +44,8 @@ struct LatLon a_geotag_get_position ( const char *filename );
 
 int a_geotag_write_exif_gps ( const char *filename, VikCoord coord, double alt, bool no_change_mtime );
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif // _VIKING_GEOTAG_EXIF_H

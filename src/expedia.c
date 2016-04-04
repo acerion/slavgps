@@ -31,6 +31,8 @@
 #include <math.h>
 #endif
 
+#include <stdlib.h>
+
 #include "map_ids.h"
 #include "globals.h"
 #include "coords.h"
@@ -79,7 +81,7 @@ double expedia_altis_freq ( int alti )
     if ( expedia_altis[i] == alti )
       return expedia_altis_degree_freq [ i ];
 
-  g_error ( _("Invalid expedia altitude") );
+  fprintf(stderr, _("ERROR: Invalid expedia altitude\n") );
   return 0;
 }
 
@@ -110,7 +112,7 @@ void expedia_snip ( const char *file )
   old = gdk_pixbuf_new_from_file ( file, &gx );
   if (gx)
   {
-    g_warning ( _("Couldn't open EXPEDIA image file (right after successful download! Please report and delete image file!): %s"), gx->message );
+    fprintf(stderr, _("WARNING: Couldn't open EXPEDIA image file (right after successful download! Please report and delete image file!): %s\n"), gx->message );
     g_error_free ( gx );
     return;
   }
@@ -123,7 +125,7 @@ void expedia_snip ( const char *file )
 
   gdk_pixbuf_save ( cropped, file, "png", &gx, NULL );
   if ( gx ) {
-    g_warning ( _("Couldn't save EXPEDIA image file (right after successful download! Please report and delete image file!): %s"), gx->message );
+    fprintf(stderr, _("WARNING: Couldn't save EXPEDIA image file (right after successful download! Please report and delete image file!): %s\n"), gx->message );
     g_error_free ( gx );
   }
 
@@ -137,7 +139,7 @@ static bool expedia_coord_to_mapcoord ( const VikCoord *src, double xzoom, doubl
 {
   int alti;
 
-  g_assert ( src->mode == VIK_COORD_LATLON );
+  assert ( src->mode == VIK_COORD_LATLON );
 
   if ( xzoom != yzoom )
     return false;
@@ -190,7 +192,7 @@ static DownloadResult_t expedia_download ( MapCoord *src, const char *dest_fn, v
   DownloadResult_t res = a_http_download_get_url ( EXPEDIA_SITE, uri, dest_fn, &expedia_options, NULL );
   if (res == DOWNLOAD_SUCCESS)
   	expedia_snip ( dest_fn );
-  g_free(uri);
+  free(uri);
   return(res);
 }
 

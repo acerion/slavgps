@@ -29,7 +29,10 @@
 #include "mapcoord.h"
 #include "vikcoord.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 /* 1 << (x) is like a 2**(x) */
 #define VIK_GZ(x) ((1<<(x)))
@@ -45,6 +48,9 @@ void map_utils_iTMS_to_center_vikcoord ( const MapCoord *src, VikCoord *dest );
 
 void map_utils_iTMS_to_vikcoord ( const MapCoord *src, VikCoord *dest );
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #endif

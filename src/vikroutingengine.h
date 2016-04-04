@@ -32,7 +32,10 @@
 
 #include "vikwindow.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #define VIK_ROUTING_ENGINE_TYPE            (vik_routing_engine_get_type ())
 #define VIK_ROUTING_ENGINE(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_ROUTING_ENGINE_TYPE, VikRoutingEngine))
@@ -73,6 +76,8 @@ char *vik_routing_engine_get_format ( VikRoutingEngine *self );
 bool vik_routing_engine_supports_direction ( VikRoutingEngine *self );
 bool vik_routing_engine_supports_refine ( VikRoutingEngine *self );
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

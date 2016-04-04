@@ -28,7 +28,9 @@
 #include <glib/gi18n.h>
 #include <time.h>
 #include <math.h>
+#include <stdlib.h>
 
+#include "viking.h"
 #include "coords.h"
 #include "vikcoord.h"
 #include "viktrack.h"
@@ -91,7 +93,7 @@ static void tpwin_update_times ( VikTrwLayerTpwin *tpwin, VikTrackpoint *tp )
     gtk_spin_button_set_value ( tpwin->ts, tp->timestamp );
     char *msg = vu_get_time_string ( &(tp->timestamp), "%c", &(tp->coord), NULL );
     gtk_button_set_label ( GTK_BUTTON(tpwin->time), msg );
-    g_free ( msg );
+    free( msg );
   }
   else {
     gtk_spin_button_set_value ( tpwin->ts, 0 );
@@ -132,7 +134,7 @@ static void tpwin_sync_alt_to_tp ( VikTrwLayerTpwin *tpwin )
       break;
     default:
       tpwin->cur_tp->altitude = gtk_spin_button_get_value ( tpwin->alt );
-      g_critical("Houston, we've had a problem. height=%d", height_units);
+      fprintf(stderr, "CRITICAL: Houston, we've had a problem. height=%d\n", height_units);
     }
   }
 }
@@ -391,14 +393,14 @@ void vik_trw_layer_tpwin_set_tp ( VikTrwLayerTpwin *tpwin, GList *tpl, const cha
   gtk_widget_set_sensitive ( tpwin->trkpt_name, true );
 
   /* Only can insert if not at the end (otherwise use extend track) */
-  gtk_widget_set_sensitive ( tpwin->button_insert, (bool) GPOINTER_TO_INT (tpl->next) );
+  gtk_widget_set_sensitive ( tpwin->button_insert, (bool) KPOINTER_TO_INT (tpl->next) );
   gtk_widget_set_sensitive ( tpwin->button_delete, true );
 
   /* We can only split up a track if it's not an endpoint. Makes sense to me. */
   gtk_widget_set_sensitive ( tpwin->button_split, tpl->next && tpl->prev );
 
-  gtk_widget_set_sensitive ( tpwin->button_forward, (bool) GPOINTER_TO_INT (tpl->next) );
-  gtk_widget_set_sensitive ( tpwin->button_back, (bool) GPOINTER_TO_INT (tpl->prev) );
+  gtk_widget_set_sensitive ( tpwin->button_forward, (bool) KPOINTER_TO_INT (tpl->next) );
+  gtk_widget_set_sensitive ( tpwin->button_back, (bool) KPOINTER_TO_INT (tpl->prev) );
 
   gtk_widget_set_sensitive ( GTK_WIDGET(tpwin->lat), true );
   gtk_widget_set_sensitive ( GTK_WIDGET(tpwin->lon), true );
@@ -430,7 +432,7 @@ void vik_trw_layer_tpwin_set_tp ( VikTrwLayerTpwin *tpwin, GList *tpl, const cha
     break;
   default:
     gtk_spin_button_set_value ( tpwin->alt, tp->altitude );
-    g_critical("Houston, we've had a problem. height=%d", height_units);
+    fprintf(stderr, "CRITICAL: Houston, we've had a problem. height=%d\n", height_units);
   }
 
   tpwin_update_times ( tpwin, tp );
@@ -443,20 +445,20 @@ void vik_trw_layer_tpwin_set_tp ( VikTrwLayerTpwin *tpwin, GList *tpl, const cha
   {
     switch (dist_units) {
     case VIK_UNITS_DISTANCE_KILOMETRES:
-      g_snprintf ( tmp_str, sizeof(tmp_str), "%.2f m", vik_coord_diff(&(tp->coord), &(tpwin->cur_tp->coord)));
+      snprintf( tmp_str, sizeof(tmp_str), "%.2f m", vik_coord_diff(&(tp->coord), &(tpwin->cur_tp->coord)));
       break;
     case VIK_UNITS_DISTANCE_MILES:
     case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
-      g_snprintf ( tmp_str, sizeof(tmp_str), "%.2f yards", vik_coord_diff(&(tp->coord), &(tpwin->cur_tp->coord))*1.0936133);
+      snprintf( tmp_str, sizeof(tmp_str), "%.2f yards", vik_coord_diff(&(tp->coord), &(tpwin->cur_tp->coord))*1.0936133);
       break;
     default:
-      g_critical("Houston, we've had a problem. distance=%d", dist_units);
+      fprintf(stderr, "CRITICAL: Houston, we've had a problem. distance=%d\n", dist_units);
     }
 
     gtk_label_set_text ( tpwin->diff_dist, tmp_str );
     if ( tp->has_timestamp && tpwin->cur_tp->has_timestamp )
     {
-      g_snprintf ( tmp_str, sizeof(tmp_str), "%ld s", tp->timestamp - tpwin->cur_tp->timestamp);
+      snprintf( tmp_str, sizeof(tmp_str), "%ld s", tp->timestamp - tpwin->cur_tp->timestamp);
       gtk_label_set_text ( tpwin->diff_time, tmp_str );
       if ( tp->timestamp == tpwin->cur_tp->timestamp )
         gtk_label_set_text ( tpwin->diff_speed, "--" );
@@ -464,20 +466,20 @@ void vik_trw_layer_tpwin_set_tp ( VikTrwLayerTpwin *tpwin, GList *tpl, const cha
       {
 	switch (speed_units) {
 	case VIK_UNITS_SPEED_KILOMETRES_PER_HOUR:
-	  g_snprintf ( tmp_str, sizeof(tmp_str), "%.2f km/h", VIK_MPS_TO_KPH(vik_coord_diff(&(tp->coord), &(tpwin->cur_tp->coord)) / (ABS(tp->timestamp - tpwin->cur_tp->timestamp))) );
+	  snprintf( tmp_str, sizeof(tmp_str), "%.2f km/h", VIK_MPS_TO_KPH(vik_coord_diff(&(tp->coord), &(tpwin->cur_tp->coord)) / (ABS(tp->timestamp - tpwin->cur_tp->timestamp))) );
 	  break;
 	case VIK_UNITS_SPEED_MILES_PER_HOUR:
-	  g_snprintf ( tmp_str, sizeof(tmp_str), "%.2f mph", VIK_MPS_TO_MPH(vik_coord_diff(&(tp->coord), &(tpwin->cur_tp->coord)) / (ABS(tp->timestamp - tpwin->cur_tp->timestamp))) );
+	  snprintf( tmp_str, sizeof(tmp_str), "%.2f mph", VIK_MPS_TO_MPH(vik_coord_diff(&(tp->coord), &(tpwin->cur_tp->coord)) / (ABS(tp->timestamp - tpwin->cur_tp->timestamp))) );
 	  break;
 	case VIK_UNITS_SPEED_METRES_PER_SECOND:
-	  g_snprintf ( tmp_str, sizeof(tmp_str), "%.2f m/s", vik_coord_diff(&(tp->coord), &(tpwin->cur_tp->coord)) / ABS(tp->timestamp - tpwin->cur_tp->timestamp) );
+	  snprintf( tmp_str, sizeof(tmp_str), "%.2f m/s", vik_coord_diff(&(tp->coord), &(tpwin->cur_tp->coord)) / ABS(tp->timestamp - tpwin->cur_tp->timestamp) );
 	  break;
 	case VIK_UNITS_SPEED_KNOTS:
-	  g_snprintf ( tmp_str, sizeof(tmp_str), "%.2f knots", VIK_MPS_TO_KNOTS(vik_coord_diff(&(tp->coord), &(tpwin->cur_tp->coord)) / (ABS(tp->timestamp - tpwin->cur_tp->timestamp))) );
+	  snprintf( tmp_str, sizeof(tmp_str), "%.2f knots", VIK_MPS_TO_KNOTS(vik_coord_diff(&(tp->coord), &(tpwin->cur_tp->coord)) / (ABS(tp->timestamp - tpwin->cur_tp->timestamp))) );
 	  break;
 	default:
-	  g_snprintf ( tmp_str, sizeof(tmp_str), "--" );
-	  g_critical("Houston, we've had a problem. speed=%d", speed_units);
+	  snprintf( tmp_str, sizeof(tmp_str), "--" );
+	  fprintf(stderr, "CRITICAL: Houston, we've had a problem. speed=%d\n", speed_units);
 	}
         gtk_label_set_text ( tpwin->diff_speed, tmp_str );
       }
@@ -490,27 +492,27 @@ void vik_trw_layer_tpwin_set_tp ( VikTrwLayerTpwin *tpwin, GList *tpl, const cha
   }
 
   if ( isnan(tp->course) )
-    g_snprintf ( tmp_str, sizeof(tmp_str), "--" );
+    snprintf( tmp_str, sizeof(tmp_str), "--" );
   else
-    g_snprintf ( tmp_str, sizeof(tmp_str), "%05.1f\302\260", tp->course );
+    snprintf( tmp_str, sizeof(tmp_str), "%05.1f\302\260", tp->course );
   gtk_label_set_text ( tpwin->course, tmp_str );
 
   if ( isnan(tp->speed) )
-    g_snprintf ( tmp_str, sizeof(tmp_str), "--" );
+    snprintf( tmp_str, sizeof(tmp_str), "--" );
   else {
     switch (speed_units) {
     case VIK_UNITS_SPEED_MILES_PER_HOUR:
-      g_snprintf ( tmp_str, sizeof(tmp_str), "%.2f mph", VIK_MPS_TO_MPH(tp->speed) );
+      snprintf( tmp_str, sizeof(tmp_str), "%.2f mph", VIK_MPS_TO_MPH(tp->speed) );
       break;
     case VIK_UNITS_SPEED_METRES_PER_SECOND:
-      g_snprintf ( tmp_str, sizeof(tmp_str), "%.2f m/s", tp->speed );
+      snprintf( tmp_str, sizeof(tmp_str), "%.2f m/s", tp->speed );
       break;
     case VIK_UNITS_SPEED_KNOTS:
-      g_snprintf ( tmp_str, sizeof(tmp_str), "%.2f knots", VIK_MPS_TO_KNOTS(tp->speed) );
+      snprintf( tmp_str, sizeof(tmp_str), "%.2f knots", VIK_MPS_TO_KNOTS(tp->speed) );
       break;
     default:
       // VIK_UNITS_SPEED_KILOMETRES_PER_HOUR:
-      g_snprintf ( tmp_str, sizeof(tmp_str), "%.2f km/h", VIK_MPS_TO_KPH(tp->speed) );
+      snprintf( tmp_str, sizeof(tmp_str), "%.2f km/h", VIK_MPS_TO_KPH(tp->speed) );
       break;
     }
   }
@@ -518,35 +520,35 @@ void vik_trw_layer_tpwin_set_tp ( VikTrwLayerTpwin *tpwin, GList *tpl, const cha
 
   switch (dist_units) {
   case VIK_UNITS_DISTANCE_KILOMETRES:
-    g_snprintf ( tmp_str, sizeof(tmp_str), "%.5f m", tp->hdop );
+    snprintf( tmp_str, sizeof(tmp_str), "%.5f m", tp->hdop );
     gtk_label_set_text ( tpwin->hdop, tmp_str );
-    g_snprintf ( tmp_str, sizeof(tmp_str), "%.5f m", tp->pdop );
+    snprintf( tmp_str, sizeof(tmp_str), "%.5f m", tp->pdop );
     gtk_label_set_text ( tpwin->pdop, tmp_str );
     break;
   case VIK_UNITS_DISTANCE_MILES:
-    g_snprintf ( tmp_str, sizeof(tmp_str), "%.5f yards", tp->hdop*1.0936133 );
+    snprintf( tmp_str, sizeof(tmp_str), "%.5f yards", tp->hdop*1.0936133 );
     gtk_label_set_text ( tpwin->hdop, tmp_str );
-    g_snprintf ( tmp_str, sizeof(tmp_str), "%.5f yards", tp->pdop*1.0936133 );
+    snprintf( tmp_str, sizeof(tmp_str), "%.5f yards", tp->pdop*1.0936133 );
     gtk_label_set_text ( tpwin->pdop, tmp_str );
     break;
   default:
-    g_critical("Houston, we've had a problem. distance=%d", dist_units);
+    fprintf(stderr, "CRITICAL: Houston, we've had a problem. distance=%d\n", dist_units);
   }
 
   switch (height_units) {
   case VIK_UNITS_HEIGHT_METRES:
-    g_snprintf ( tmp_str, sizeof(tmp_str), "%.5f m", tp->vdop );
+    snprintf( tmp_str, sizeof(tmp_str), "%.5f m", tp->vdop );
     break;
   case VIK_UNITS_HEIGHT_FEET:
-    g_snprintf ( tmp_str, sizeof(tmp_str), "%.5f feet", VIK_METERS_TO_FEET(tp->vdop) );
+    snprintf( tmp_str, sizeof(tmp_str), "%.5f feet", VIK_METERS_TO_FEET(tp->vdop) );
     break;
   default:
-    g_snprintf ( tmp_str, sizeof(tmp_str), "--" );
-    g_critical("Houston, we've had a problem. height=%d", height_units);
+    snprintf( tmp_str, sizeof(tmp_str), "--" );
+    fprintf(stderr, "CRITICAL: Houston, we've had a problem. height=%d\n", height_units);
   }
   gtk_label_set_text ( tpwin->vdop, tmp_str );
 
-  g_snprintf ( tmp_str, sizeof(tmp_str), "%d / %d", tp->nsats, tp->fix_mode );
+  snprintf( tmp_str, sizeof(tmp_str), "%d / %d", tp->nsats, tp->fix_mode );
   gtk_label_set_text ( tpwin->sat, tmp_str );
 
   tpwin->cur_tp = tp;
@@ -556,6 +558,6 @@ void vik_trw_layer_tpwin_set_track_name ( VikTrwLayerTpwin *tpwin, const char *t
 {
   char *tmp_name = g_strdup_printf ( "%s: %s", track_name, _("Trackpoint") );
   gtk_window_set_title ( GTK_WINDOW(tpwin), tmp_name );
-  g_free ( tmp_name );
+  free( tmp_name );
   //gtk_label_set_text ( tpwin->track_name, track_name );
 }

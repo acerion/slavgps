@@ -29,7 +29,10 @@
 #include "mapcoord.h"
 #include "vikmapsourcedefault.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #define VIK_TYPE_SLIPPY_MAP_SOURCE             (vik_slippy_map_source_get_type ())
 #define VIK_SLIPPY_MAP_SOURCE(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_TYPE_SLIPPY_MAP_SOURCE, VikSlippyMapSource))
@@ -55,6 +58,8 @@ GType vik_slippy_map_source_get_type (void) G_GNUC_CONST;
 
 VikSlippyMapSource * vik_slippy_map_source_new_with_id (uint16_t id, const char *label, const char *hostname, const char *url);
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _VIK_SLIPPY_MAP_SOURCE_H_ */

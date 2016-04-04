@@ -22,6 +22,7 @@
 #include "maputils.h"
 #include "globals.h"
 #include <math.h>
+#include <stdlib.h>
 
 // World Scale: VIK_GZ(17)
 //  down to

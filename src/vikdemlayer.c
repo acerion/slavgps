@@ -287,7 +287,7 @@ GType vik_dem_layer_get_type ()
 static const char* dem_layer_tooltip( VikDEMLayer *vdl )
 {
   static char tmp_buf[100];
-  g_snprintf (tmp_buf, sizeof(tmp_buf), _("Number of files: %d"), g_list_length (vdl->files));
+  snprintf(tmp_buf, sizeof(tmp_buf), _("Number of files: %d"), g_list_length (vdl->files));
   return tmp_buf;
 }
 
@@ -346,7 +346,7 @@ static int dem_layer_load_list_thread ( dem_load_thread_data *dltd, void * threa
 static void dem_layer_thread_data_free ( dem_load_thread_data *data )
 {
   // Simple release
-  g_free ( data );
+  free( data );
 }
 
 static void dem_layer_thread_cancel ( dem_load_thread_data *data )
@@ -368,18 +368,18 @@ static GList *dem_layer_convert_to_relative_filenaming ( GList *files )
   GList *relfiles = NULL;
 
   while ( files ) {
-    char *file = g_strdup ( file_GetRelativeFilename ( cwd, files->data ) );
+    char *file = g_strdup( file_GetRelativeFilename ( cwd, files->data ) );
     relfiles = g_list_prepend ( relfiles, file );
     files = files->next;
   }
 
-  g_free ( cwd );
+  free( cwd );
 
   if ( relfiles ) {
     // Replacing current list, so delete old values first.
     GList *iter = files;
     while ( iter ) {
-      g_free ( iter->data );
+      free( iter->data );
       iter = iter->next;
     }
     g_list_free ( files );
@@ -422,7 +422,7 @@ bool dem_layer_set_param ( VikDEMLayer *vdl, uint16_t id, VikLayerParamData data
       // No need for thread if no files
       if ( vdl->files ) {
         // Thread Load
-        dem_load_thread_data *dltd = g_malloc ( sizeof(dem_load_thread_data) );
+        dem_load_thread_data *dltd = malloc( sizeof(dem_load_thread_data) );
         dltd->vdl = vdl;
         dltd->vdl->files = data.sl;
 
@@ -491,8 +491,8 @@ static VikDEMLayer *dem_layer_new ( VikViewport *vvp )
 
   vdl->files = NULL;
 
-  vdl->gcs = g_malloc(sizeof(GdkGC *)*DEM_N_HEIGHT_COLORS);
-  vdl->gcsgradient = g_malloc(sizeof(GdkGC *)*DEM_N_GRADIENT_COLORS);
+  vdl->gcs = malloc(sizeof(GdkGC *)*DEM_N_HEIGHT_COLORS);
+  vdl->gcsgradient = malloc(sizeof(GdkGC *)*DEM_N_GRADIENT_COLORS);
   /* make new gcs only if we need it (copy layer -> use old) */
 
   // Ensure the base GC is available so the default colour can be applied
@@ -852,7 +852,7 @@ static const char *srtm_continent_dir ( int lat, int lon )
       s++;
     }
   }
-  g_snprintf(name, sizeof(name), "%c%02d%c%03d",
+  snprintf(name, sizeof(name), "%c%02d%c%03d",
                   (lat >= 0) ? 'N' : 'S', ABS(lat),
 		  (lon >= 0) ? 'E' : 'W', ABS(lon));
 
@@ -888,12 +888,12 @@ static void dem_layer_free ( VikDEMLayer *vdl )
   if ( vdl->gcs )
     for ( i = 0; i < DEM_N_HEIGHT_COLORS; i++ )
       g_object_unref ( vdl->gcs[i] );
-  g_free ( vdl->gcs );
+  free( vdl->gcs );
 
   if ( vdl->gcsgradient )
     for ( i = 0; i < DEM_N_GRADIENT_COLORS; i++ )
       g_object_unref ( vdl->gcsgradient[i] );
-  g_free ( vdl->gcsgradient );
+  free( vdl->gcsgradient );
 
   a_dems_list_free ( vdl->files );
 }
@@ -944,7 +944,7 @@ static void srtm_dem_download_thread ( DEMDownloadParams *p, void * threaddata )
     if ( p->vdl ) {
       char *msg = g_strdup_printf ( _("No SRTM data available for %f, %f"), p->lat, p->lon );
       vik_window_statusbar_update ( (VikWindow*)VIK_GTK_WINDOW_FROM_LAYER(p->vdl), msg, VIK_STATUSBAR_INFO );
-      g_free ( msg );
+      free( msg );
     }
     return;
   }
@@ -964,13 +964,13 @@ static void srtm_dem_download_thread ( DEMDownloadParams *p, void * threaddata )
     case DOWNLOAD_HTTP_ERROR: {
       char *msg = g_strdup_printf ( _("DEM download failure for %f, %f"), p->lat, p->lon );
       vik_window_statusbar_update ( (VikWindow*)VIK_GTK_WINDOW_FROM_LAYER(p->vdl), msg, VIK_STATUSBAR_INFO );
-      g_free ( msg );
+      free( msg );
       break;
     }
     case DOWNLOAD_FILE_WRITE_ERROR: {
       char *msg = g_strdup_printf ( _("DEM write failure for %s"), p->dest );
       vik_window_statusbar_update ( (VikWindow*)VIK_GTK_WINDOW_FROM_LAYER(p->vdl), msg, VIK_STATUSBAR_INFO );
-      g_free ( msg );
+      free( msg );
       break;
     }
     case DOWNLOAD_SUCCESS:
@@ -978,7 +978,7 @@ static void srtm_dem_download_thread ( DEMDownloadParams *p, void * threaddata )
     default:
       break;
   }
-  g_free ( src_fn );
+  free( src_fn );
 }
 
 static char *srtm_lat_lon_to_dest_fn ( double lat, double lon )
@@ -1017,7 +1017,7 @@ static void srtm_draw_existence ( VikViewport *vp )
       const char *continent_dir;
       if ((continent_dir = srtm_continent_dir(i, j)) == NULL)
         continue;
-      g_snprintf(buf, sizeof(buf), SRTM_CACHE_TEMPLATE,
+      snprintf(buf, sizeof(buf), SRTM_CACHE_TEMPLATE,
                 MAPS_CACHE_DIR,
                 continent_dir,
                 G_DIR_SEPARATOR_S,
@@ -1061,7 +1061,7 @@ static void dem24k_dem_download_thread ( DEMDownloadParams *p, void * threaddata
 	ceil(p->lon*8)/8 );
   /* FIX: don't use system, use execv or something. check for existence */
   system(cmdline);
-  g_free ( cmdline );
+  free( cmdline );
 }
 
 static char *dem24k_lat_lon_to_dest_fn ( double lat, double lon )
@@ -1084,20 +1084,20 @@ static void dem24k_draw_existence ( VikViewport *vp )
 
   for (i = floor(min_lat*8)/8; i <= floor(max_lat*8)/8; i+=0.125) {
     /* check lat dir first -- faster */
-    g_snprintf(buf, sizeof(buf), "%sdem24k/%d/",
+    snprintf(buf, sizeof(buf), "%sdem24k/%d/",
         MAPS_CACHE_DIR,
 	(int) i );
     if ( g_file_test(buf, G_FILE_TEST_EXISTS) == false )
       continue;
     for (j = floor(min_lon*8)/8; j <= floor(max_lon*8)/8; j+=0.125) {
       /* check lon dir first -- faster */
-      g_snprintf(buf, sizeof(buf), "%sdem24k/%d/%d/",
+      snprintf(buf, sizeof(buf), "%sdem24k/%d/%d/",
         MAPS_CACHE_DIR,
 	(int) i,
         (int) j );
       if ( g_file_test(buf, G_FILE_TEST_EXISTS) == false )
         continue;
-      g_snprintf(buf, sizeof(buf), "%sdem24k/%d/%d/%.03f,%.03f.dem",
+      snprintf(buf, sizeof(buf), "%sdem24k/%d/%d/%.03f,%.03f.dem",
 	        MAPS_CACHE_DIR,
 		(int) i,
 		(int) j,
@@ -1151,7 +1151,7 @@ static bool dem_layer_add_file ( VikDEMLayer *vdl, const char *filename )
       char *duped_path = g_strdup(filename);
       vdl->files = g_list_prepend ( vdl->files, duped_path );
       a_dems_load ( duped_path );
-      g_debug("%s: %s", __FUNCTION__, duped_path);
+      fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, duped_path);
     }
     return true;
   } else
@@ -1185,8 +1185,8 @@ static void dem_download_thread ( DEMDownloadParams *p, void * threaddata )
 static void free_dem_download_params ( DEMDownloadParams *p )
 {
   vik_mutex_free ( p->mutex );
-  g_free ( p->dest );
-  g_free ( p );
+  free( p->dest );
+  free( p );
 }
 
 static void * dem_layer_download_create ( VikWindow *vw, VikViewport *vvp)
@@ -1218,7 +1218,7 @@ static void dem_layer_file_info ( GtkWidget *widget, struct LatLon *ll )
                                ABS(intlon) );
   else
     // Probably not over any land...
-    source = g_strdup ( _("No DEM File Available") );
+    source = g_strdup( _("No DEM File Available") );
 
   char *filename = NULL;
   char *dem_file = NULL;
@@ -1246,10 +1246,10 @@ static void dem_layer_file_info ( GtkWidget *widget, struct LatLon *ll )
   // Show the info
   a_dialog_info_msg ( GTK_WINDOW(gtk_widget_get_toplevel(widget)), message );
 
-  g_free ( message );
-  g_free ( source );
-  g_free ( dem_file );
-  g_free ( filename );
+  free( message );
+  free( source );
+  free( dem_file );
+  free( filename );
 }
 
 static bool dem_layer_download_release ( VikDEMLayer *vdl, GdkEventButton *event, VikViewport *vvp )
@@ -1276,13 +1276,13 @@ static bool dem_layer_download_release ( VikDEMLayer *vdl, GdkEventButton *event
 
   full_path = g_strdup_printf("%s%s", MAPS_CACHE_DIR, dem_file );
 
-  g_debug("%s: %s", __FUNCTION__, full_path);
+  fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, full_path);
 
   if ( event->button == 1 ) {
     // TODO: check if already in filelist
     if ( ! dem_layer_add_file(vdl, full_path) ) {
       char *tmp = g_strdup_printf ( _("Downloading DEM %s"), dem_file );
-      DEMDownloadParams *p = g_malloc(sizeof(DEMDownloadParams));
+      DEMDownloadParams *p = malloc(sizeof(DEMDownloadParams));
       p->dest = g_strdup(full_path);
       p->lat = ll.lat;
       p->lon = ll.lon;
@@ -1296,7 +1296,7 @@ static bool dem_layer_download_release ( VikDEMLayer *vdl, GdkEventButton *event
                             (vik_thr_func) dem_download_thread, p,
                             (vik_thr_free_func) free_dem_download_params, NULL, 1 );
 
-      g_free ( tmp );
+      free( tmp );
     }
     else
       vik_layer_emit_update ( VIK_LAYER(vdl) );
@@ -1316,8 +1316,8 @@ static bool dem_layer_download_release ( VikDEMLayer *vdl, GdkEventButton *event
     gtk_widget_show_all ( GTK_WIDGET(vdl->right_click_menu) );
   }
 
-  g_free ( dem_file );
-  g_free ( full_path );
+  free( dem_file );
+  free( full_path );
 
   return true;
 }

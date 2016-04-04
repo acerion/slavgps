@@ -26,6 +26,7 @@
 #include "vikexttool.h"
 
 #include <string.h>
+#include <stdlib.h>
 
 #include <glib/gi18n.h>
 
@@ -69,13 +70,13 @@ ext_tool_set_property (GObject      *object,
     {
     case PROP_ID:
       priv->id = g_value_get_uint (value);
-      g_debug ("VikExtTool.id: %d", priv->id);
+      fprintf(stderr, "DEBUG: VikExtTool.id: %d\n", priv->id);
       break;
 
     case PROP_LABEL:
-      g_free (priv->label);
+      free(priv->label);
       priv->label = g_value_dup_string (value);
-      g_debug ("VikExtTool.label: %s", priv->label);
+      fprintf(stderr, "DEBUG: VikExtTool.label: %s\n", priv->label);
       break;
 
     default:
@@ -157,7 +158,7 @@ static void vik_ext_tool_init ( VikExtTool *self )
 static void ext_tool_finalize ( GObject *gob )
 {
   VikExtToolPrivate *priv = EXT_TOOL_GET_PRIVATE ( gob );
-  g_free ( priv->label ); priv->label = NULL;
+  free( priv->label ); priv->label = NULL;
   G_OBJECT_CLASS(parent_class)->finalize(gob);
 }
 
@@ -165,7 +166,7 @@ static char *ext_tool_get_label ( VikExtTool *self )
 {
   VikExtToolPrivate *priv = NULL;
   priv = EXT_TOOL_GET_PRIVATE (self);
-  return g_strdup ( priv->label );
+  return g_strdup( priv->label );
 }
 
 char *vik_ext_tool_get_label ( VikExtTool *w )

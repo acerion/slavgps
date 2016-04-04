@@ -29,7 +29,10 @@
 
 #include "viktrwlayer.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 /* Specify if a new waypoint or not */
 /* If a new waypoint then it uses the default_name for the suggested name allowing the user to change it.
@@ -38,6 +41,8 @@ G_BEGIN_DECLS
  */
 char *a_dialog_waypoint ( GtkWindow *parent, char *default_name, VikTrwLayer *vtl, VikWaypoint *wp, VikCoordMode coord_mode, bool is_new, bool *updated );
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

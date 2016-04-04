@@ -27,7 +27,10 @@
 
 #include "viklayerspanel.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 typedef enum {
   VIK_CLIPBOARD_DATA_NONE = 0,
@@ -41,6 +44,8 @@ void a_clipboard_copy_selected ( VikLayersPanel *vlp );
 bool a_clipboard_paste ( VikLayersPanel *vlp );
 VikClipboardDataType a_clipboard_type ( );
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

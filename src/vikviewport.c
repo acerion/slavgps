@@ -40,6 +40,9 @@
 #include <string.h>
 #endif
 
+#include <stdlib.h>
+#include <assert.h>
+
 #include "coords.h"
 #include "vikcoord.h"
 #include "vikwindow.h"
@@ -244,7 +247,7 @@ vik_viewport_init ( VikViewport *vvp )
 
 GdkColor *vik_viewport_get_background_gdkcolor ( VikViewport *vvp )
 {
-  GdkColor *rv = g_malloc ( sizeof ( GdkColor ) );
+  GdkColor *rv = malloc( sizeof ( GdkColor ) );
   *rv = vvp->background_color;
   return rv;
 }
@@ -253,29 +256,29 @@ GdkColor *vik_viewport_get_background_gdkcolor ( VikViewport *vvp )
 const char *vik_viewport_get_background_color ( VikViewport *vvp )
 {
   static char color[8];
-  g_snprintf(color, sizeof(color), "#%.2x%.2x%.2x", (int)(vvp->background_color.red/256),(int)(vvp->background_color.green/256),(int)(vvp->background_color.blue/256));
+  snprintf(color, sizeof(color), "#%.2x%.2x%.2x", (int)(vvp->background_color.red/256),(int)(vvp->background_color.green/256),(int)(vvp->background_color.blue/256));
   return color;
 }
 
 void vik_viewport_set_background_color ( VikViewport *vvp, const char *colorname )
 {
-  g_assert ( vvp && vvp->background_gc );
+  assert ( vvp && vvp->background_gc );
   if ( gdk_color_parse ( colorname, &(vvp->background_color) ) )
     gdk_gc_set_rgb_fg_color ( vvp->background_gc, &(vvp->background_color) );
   else
-    g_warning("%s: Failed to parse color '%s'", __FUNCTION__, colorname);
+    fprintf(stderr, "WARNING: %s: Failed to parse color '%s'\n", __FUNCTION__, colorname);
 }
 
 void vik_viewport_set_background_gdkcolor ( VikViewport *vvp, GdkColor *color )
 {
-  g_assert ( vvp && vvp->background_gc );
+  assert ( vvp && vvp->background_gc );
   vvp->background_color = *color;
   gdk_gc_set_rgb_fg_color ( vvp->background_gc, color );
 }
 
 GdkColor *vik_viewport_get_highlight_gdkcolor ( VikViewport *vvp )
 {
-  GdkColor *rv = g_malloc ( sizeof ( GdkColor ) );
+  GdkColor *rv = malloc( sizeof ( GdkColor ) );
   *rv = vvp->highlight_color;
   return rv;
 }
@@ -284,20 +287,20 @@ GdkColor *vik_viewport_get_highlight_gdkcolor ( VikViewport *vvp )
 const char *vik_viewport_get_highlight_color ( VikViewport *vvp )
 {
   static char color[8];
-  g_snprintf(color, sizeof(color), "#%.2x%.2x%.2x", (int)(vvp->highlight_color.red/256),(int)(vvp->highlight_color.green/256),(int)(vvp->highlight_color.blue/256));
+  snprintf(color, sizeof(color), "#%.2x%.2x%.2x", (int)(vvp->highlight_color.red/256),(int)(vvp->highlight_color.green/256),(int)(vvp->highlight_color.blue/256));
   return color;
 }
 
 void vik_viewport_set_highlight_color ( VikViewport *vvp, const char *colorname )
 {
-  g_assert ( vvp->highlight_gc );
+  assert ( vvp->highlight_gc );
   gdk_color_parse ( colorname, &(vvp->highlight_color) );
   gdk_gc_set_rgb_fg_color ( vvp->highlight_gc, &(vvp->highlight_color) );
 }
 
 void vik_viewport_set_highlight_gdkcolor ( VikViewport *vvp, GdkColor *color )
 {
-  g_assert ( vvp->highlight_gc );
+  assert ( vvp->highlight_gc );
   vvp->highlight_color = *color;
   gdk_gc_set_rgb_fg_color ( vvp->highlight_gc, color );
 }
@@ -322,7 +325,7 @@ GdkGC *vik_viewport_new_gc ( VikViewport *vvp, const char *colorname, int thickn
   if ( gdk_color_parse ( colorname, &color ) )
     gdk_gc_set_rgb_fg_color ( rv, &color );
   else
-    g_warning("%s: Failed to parse color '%s'", __FUNCTION__, colorname);
+    fprintf(stderr, "WARNING: %s: Failed to parse color '%s'\n", __FUNCTION__, colorname);
   gdk_gc_set_line_attributes ( rv, thickness, GDK_LINE_SOLID, GDK_CAP_ROUND, GDK_JOIN_ROUND );
   return rv;
 }
@@ -501,7 +504,7 @@ void vik_viewport_draw_scale ( VikViewport *vvp )
       break;
     default:
       base = 1; // Keep the compiler happy
-      g_critical("Houston, we've had a problem. distance=%d", dist_units);
+      fprintf(stderr, "CRITICAL: Houston, we've had a problem. distance=%d\n", dist_units);
     }
     ratio = (vvp->width/SCSIZE)/base;
 
@@ -587,7 +590,7 @@ void vik_viewport_draw_scale ( VikViewport *vvp )
       }
       break;
     default:
-      g_critical("Houston, we've had a problem. distance=%d", dist_units);
+      fprintf(stderr, "CRITICAL: Houston, we've had a problem. distance=%d\n", dist_units);
     }
     pango_layout_set_text(pl, s, -1);
     vik_viewport_draw_layout(vvp, gtk_widget_get_style(GTK_WIDGET(&vvp->drawing_area))->black_gc,
@@ -863,7 +866,7 @@ static void free_center ( VikViewport *vvp, unsigned int index )
 {
   VikCoord *coord = g_list_nth_data ( vvp->centers, index );
   if ( coord )
-    g_free ( coord );
+    free( coord );
   GList *gl = g_list_nth ( vvp->centers, index );
   if ( gl )
     vvp->centers = g_list_delete_link ( vvp->centers, gl );
@@ -887,7 +890,7 @@ static void free_centers ( VikViewport *vvp, unsigned int start )
  */
 static void update_centers ( VikViewport *vvp )
 {
-  VikCoord *new_center = g_malloc(sizeof (VikCoord));
+  VikCoord *new_center = malloc(sizeof (VikCoord));
   *new_center = vvp->center;
 
   if ( vvp->centers_index ) {
@@ -932,15 +935,15 @@ void vik_viewport_show_centers ( VikViewport *vvp, GtkWindow *parent )
     a_coords_latlon_to_string ( &ll, &lat, &lon );
     char *extra = NULL;
     if ( index == vvp->centers_index-1 )
-      extra = g_strdup ( " [Back]" );
+      extra = g_strdup( " [Back]" );
     else if ( index == vvp->centers_index+1 )
-      extra = g_strdup ( " [Forward]" );
+      extra = g_strdup( " [Forward]" );
     else
-      extra = g_strdup ( "" );
+      extra = g_strdup( "" );
     texts = g_list_prepend ( texts , g_strdup_printf ( "%s %s%s", lat, lon, extra ) );
-    g_free ( lat );
-    g_free ( lon );
-    g_free ( extra );
+    free( lat );
+    free( lon );
+    free( extra );
     index++;
   }
 
@@ -953,10 +956,10 @@ void vik_viewport_show_centers ( VikViewport *vvp, GtkWindow *parent )
                                          "Back/Forward Locations",
                                          "Back/Forward Locations");
   for (node = ans; node != NULL; node = g_list_next(node))
-    g_free(node->data);
+    free(node->data);
   g_list_free(ans);
   for (node = texts; node != NULL; node = g_list_next(node))
-    g_free(node->data);
+    free(node->data);
   g_list_free(texts);
 }
 
@@ -1123,7 +1126,7 @@ char vik_viewport_leftmost_zone ( VikViewport *vvp )
 {
   if ( vvp->coord_mode == VIK_COORD_UTM ) {
     VikCoord coord;
-    g_assert ( vvp != NULL );
+    assert ( vvp != NULL );
     vik_viewport_screen_to_coord ( vvp, 0, 0, &coord );
     return coord.utm_zone;
   }
@@ -1134,7 +1137,7 @@ char vik_viewport_rightmost_zone ( VikViewport *vvp )
 {
   if ( vvp->coord_mode == VIK_COORD_UTM ) {
     VikCoord coord;
-    g_assert ( vvp != NULL );
+    assert ( vvp != NULL );
     vik_viewport_screen_to_coord ( vvp, vvp->width, 0, &coord );
     return coord.utm_zone;
   }
@@ -1213,7 +1216,7 @@ void vik_viewport_coord_to_screen ( VikViewport *vvp, const VikCoord *coord, int
 
   if ( coord->mode != vvp->coord_mode )
   {
-    g_warning ( "Have to convert in vik_viewport_coord_to_screen! This should never happen!");
+    fprintf(stderr, "WARNING: Have to convert in vik_viewport_coord_to_screen! This should never happen!\n");
     vik_coord_copy_convert ( coord, vvp->coord_mode, &tmp );
     coord = &tmp;
   }
@@ -1343,7 +1346,7 @@ void vik_viewport_draw_polygon ( VikViewport *vvp, GdkGC *gc, bool filled, GdkPo
 
 VikCoordMode vik_viewport_get_coord_mode ( const VikViewport *vvp )
 {
-  g_assert ( vvp );
+  assert ( vvp );
   return vvp->coord_mode;
 }
 
@@ -1390,7 +1393,7 @@ static bool calcxy(double *x, double *y, double lg, double lt, double zero_long,
     int mapSizeX = 2 * mapSizeX2;
     int mapSizeY = 2 * mapSizeY2;
 
-    g_assert ( lt >= -90.0 && lt <= 90.0 );
+    assert ( lt >= -90.0 && lt <= 90.0 );
 //    lg *= rad2deg; // FIXME, optimize equations
 //    lt *= rad2deg;
     Ra = Radius[90+(int)lt];
@@ -1581,7 +1584,7 @@ void vik_viewport_add_copyright ( VikViewport *vp, const char *copyright )
     GSList *found = g_slist_find_custom ( vp->copyrights, copyright, (GCompareFunc)strcmp );
     if ( found == NULL )
     {
-      char *duple = g_strdup ( copyright );
+      char *duple = g_strdup( copyright );
       vp->copyrights = g_slist_prepend ( vp->copyrights, duple );
     }
   }

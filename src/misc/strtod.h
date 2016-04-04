@@ -7,7 +7,10 @@
 #define __STRTOD_H
 
 #ifdef  __cplusplus
+#ifdef __cplusplus
 extern "C" {
+#endif
+
 #endif
 
 double strtod_i8n(const char *str, char **endptr);

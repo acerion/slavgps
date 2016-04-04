@@ -26,6 +26,7 @@
 #include <glib/gprintf.h>
 #include <glib/gi18n.h>
 #include <glib/gstdio.h>
+#include <stdlib.h>
 
 #include <expat.h>
 
@@ -82,7 +83,7 @@ VikDataSourceInterface vik_datasource_osm_my_traces_interface = {
 
 static void * datasource_osm_my_traces_init ( acq_vik_t *avt )
 {
-  datasource_osm_my_traces_t *data = g_malloc(sizeof(*data));
+  datasource_osm_my_traces_t *data = malloc(sizeof(*data));
   // Reuse GPS functions
   // Haven't been able to get the thread method to work reliably (or get progress feedback)
   // So thread version is disabled ATM
@@ -169,7 +170,7 @@ static gpx_meta_data_t *new_gpx_meta_data_t()
 {
 	gpx_meta_data_t *ret;
 
-	ret = (gpx_meta_data_t *)g_malloc(sizeof(gpx_meta_data_t));
+	ret = (gpx_meta_data_t *)malloc(sizeof(gpx_meta_data_t));
 	ret->id = 0;
 	ret->name = NULL;
 	ret->vis  = NULL;
@@ -184,10 +185,10 @@ static gpx_meta_data_t *new_gpx_meta_data_t()
 
 static void free_gpx_meta_data ( gpx_meta_data_t *data, void * userdata )
 {
-	g_free(data->name);
-	g_free(data->vis);
-	g_free(data->desc);
-	g_free(data->timestamp);
+	free(data->name);
+	free(data->vis);
+	free(data->desc);
+	free(data->timestamp);
 }
 
 static void free_gpx_meta_data_list (GList *list)
@@ -269,7 +270,7 @@ static void gpx_meta_data_start ( xml_data *xd, const char *el, const char **att
 			xd->current_gpx_meta_data->id = atoi ( tmp );
 
 		if ( ( tmp = get_attr ( attr, "name" ) ) )
-			xd->current_gpx_meta_data->name = g_strdup ( tmp );
+			xd->current_gpx_meta_data->name = g_strdup( tmp );
 
 		if ( ( tmp = get_attr ( attr, "lat" ) ) ) {
 			g_strlcpy ( buf, tmp, sizeof (buf) );
@@ -282,10 +283,10 @@ static void gpx_meta_data_start ( xml_data *xd, const char *el, const char **att
 		}
 
 		if ( ( tmp = get_attr ( attr, "visibility" ) ) )
-			xd->current_gpx_meta_data->vis = g_strdup ( tmp );
+			xd->current_gpx_meta_data->vis = g_strdup( tmp );
 
 		if ( ( tmp = get_attr ( attr, "timestamp" ) ) )
-			xd->current_gpx_meta_data->timestamp = g_strdup ( tmp );
+			xd->current_gpx_meta_data->timestamp = g_strdup( tmp );
 
 		g_string_erase ( xd->c_cdata, 0, -1 ); // clear the cdata buffer
 		break;
@@ -411,7 +412,7 @@ static GList *select_from_list (GtkWindow *parent, GList *list, const char *titl
 		                     5, gpx_meta_data->in_current_view,
 		                     -1 );
 		list_runner = g_list_next ( list_runner );
-		g_free ( latlon_string );
+		free( latlon_string );
 	}
 
 	view = gtk_tree_view_new();
@@ -492,7 +493,7 @@ static GList *select_from_list (GtkWindow *parent, GList *list, const char *titl
 						}
 						list_runner = g_list_next ( list_runner );
 					}
-					g_free ( name );
+					free( name );
 				}
 			}
 			while ( gtk_tree_model_iter_next ( GTK_TREE_MODEL(store), &iter ) );
@@ -573,7 +574,7 @@ static bool datasource_osm_my_traces_process ( VikTrwLayer *vtl, ProcessOptions 
 	if ( !tmpname )
 		return false;
 
-	xml_data *xd = g_malloc ( sizeof (xml_data) );
+	xml_data *xd = malloc( sizeof (xml_data) );
 	//xd->xpath = g_string_new ( "" );
 	xd->c_cdata = g_string_new ( "" );
 	xd->current_tag = tt_unknown;
@@ -586,18 +587,18 @@ static bool datasource_osm_my_traces_process ( VikTrwLayer *vtl, ProcessOptions 
 
 	if ( tmpname ) {
 		(void)util_remove ( tmpname );
-		g_free ( tmpname );
+		free( tmpname );
 	}
 
 	if ( ! result ) {
-		g_free ( xd );
+		free( xd );
 		return false;
 	}
 
 	if ( g_list_length ( xd->list_of_gpx_meta_data ) == 0 ) {
 		if (!vik_datasource_osm_my_traces_interface.is_thread)
 			none_found ( GTK_WINDOW(adw->vw) );
-		g_free ( xd );
+		free( xd );
 		return false;
 	}
 
@@ -655,9 +656,9 @@ static bool datasource_osm_my_traces_process ( VikTrwLayer *vtl, ProcessOptions 
 				// Report errors to the status bar
 				char* msg = g_strdup_printf ( _("Unable to get trace: %s"), url );
 				vik_window_statusbar_update ( adw->vw, msg, VIK_STATUSBAR_INFO );
-				g_free (msg);
+				free(msg);
 			}
-			g_free ( url );
+			free( url );
 		}
 
 		if ( result ) {
@@ -679,11 +680,11 @@ static bool datasource_osm_my_traces_process ( VikTrwLayer *vtl, ProcessOptions 
 	// Free memory
 	if ( xd->current_gpx_meta_data )
 		free_gpx_meta_data ( xd->current_gpx_meta_data, NULL );
-	g_free ( xd->current_gpx_meta_data );
+	free( xd->current_gpx_meta_data );
 	free_gpx_meta_data_list ( xd->list_of_gpx_meta_data );
 	free_gpx_meta_data_list ( selected );
-	g_free ( xd );
-	g_free ( user_pass );
+	free( xd );
+	free( user_pass );
 
 	// Would prefer to keep the update in acquire.c,
 	//  however since we may create the layer - need to do the update here
@@ -705,5 +706,5 @@ static bool datasource_osm_my_traces_process ( VikTrwLayer *vtl, ProcessOptions 
 
 static void datasource_osm_my_traces_cleanup ( void * data )
 {
-	g_free ( data );
+	free( data );
 }

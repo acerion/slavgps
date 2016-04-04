@@ -27,7 +27,10 @@
 
 #include "coords.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 typedef gshort VikCoordMode;
 #define VIK_COORD_UTM 0
@@ -63,6 +66,8 @@ void vik_coord_set_area(const VikCoord *coord, const struct LatLon *wh, VikCoord
 bool vik_coord_inside(const VikCoord *coord, const VikCoord *tl, const VikCoord *br);
 /* all coord operations MUST BE ABSTRACTED!!! */
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -28,13 +28,18 @@
 #include <stdint.h>
 
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 void *unzip_file(char *zip_file, unsigned long *unzip_size);
 
 char* uncompress_bzip2 ( char *name );
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

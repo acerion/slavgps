@@ -32,7 +32,10 @@
 #include "viktrwlayer.h"
 #include "vikviewport.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 typedef enum {
 FILE_TYPE_GPSPOINT=1,
@@ -76,6 +79,8 @@ char *file_realpath_dup ( const char *path );
 
 const char *file_GetRelativeFilename ( char *currentDirectory, char *absoluteFilename );
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

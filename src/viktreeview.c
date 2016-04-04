@@ -28,6 +28,8 @@
 #include <glib/gi18n.h>
 
 #include <string.h>
+#include <stdlib.h>
+#include <assert.h>
 
 #include "viking.h"
 #include "config.h"
@@ -215,12 +217,12 @@ vik_treeview_tooltip_cb (GtkWidget  *widget,
     void * parent;
     gtk_tree_model_get (model, &iter, ITEM_PARENT_COLUMN, &parent, -1);
 
-    g_snprintf (buffer, sizeof(buffer), "%s", vik_layer_sublayer_tooltip (VIK_LAYER(parent), rv, sublayer));
+    snprintf(buffer, sizeof(buffer), "%s", vik_layer_sublayer_tooltip (VIK_LAYER(parent), rv, sublayer));
   }
   else if ( rv == VIK_TREEVIEW_TYPE_LAYER ) {
     void * layer;
     gtk_tree_model_get (model, &iter, ITEM_POINTER_COLUMN, &layer, -1);
-    g_snprintf (buffer, sizeof(buffer), "%s", vik_layer_layer_tooltip (VIK_LAYER(layer)));
+    snprintf(buffer, sizeof(buffer), "%s", vik_layer_layer_tooltip (VIK_LAYER(layer)));
   }
   else {
     gtk_tree_path_free (path);
@@ -601,7 +603,7 @@ bool vik_treeview_get_selected_iter ( VikTreeview *vt, GtkTreeIter *iter )
 bool vik_treeview_get_editing ( VikTreeview *vt )
 {
   // Don't know how to get cell for the selected item
-  //return GPOINTER_TO_INT(g_object_get_data ( G_OBJECT(cell), "editing" ));
+  //return KPOINTER_TO_INT(g_object_get_data ( G_OBJECT(cell), "editing" ));
   // Instead maintain our own value applying to the whole tree
   return vt->editing;
 }
@@ -661,7 +663,7 @@ void vik_treeview_item_unselect ( VikTreeview *vt, GtkTreeIter *iter )
 void vik_treeview_add_layer ( VikTreeview *vt, GtkTreeIter *parent_iter, GtkTreeIter *iter, const char *name, void * parent, bool above,
                               void * item, int data, VikLayerTypeEnum layer_type, time_t timestamp )
 {
-  g_assert ( iter != NULL );
+  assert ( iter != NULL );
   if ( above )
     gtk_tree_store_prepend ( GTK_TREE_STORE(vt->model), iter, parent_iter );
   else
@@ -682,7 +684,7 @@ void vik_treeview_add_layer ( VikTreeview *vt, GtkTreeIter *parent_iter, GtkTree
 void vik_treeview_insert_layer ( VikTreeview *vt, GtkTreeIter *parent_iter, GtkTreeIter *iter, const char *name, void * parent, bool above,
                               void * item, int data, VikLayerTypeEnum layer_type, GtkTreeIter *sibling, time_t timestamp )
 {
-  g_assert ( iter != NULL );
+  assert ( iter != NULL );
   if (sibling) {
     if (above)
       gtk_tree_store_insert_before ( GTK_TREE_STORE(vt->model), iter, parent_iter, sibling );
@@ -711,7 +713,7 @@ void vik_treeview_insert_layer ( VikTreeview *vt, GtkTreeIter *parent_iter, GtkT
 void vik_treeview_add_sublayer ( VikTreeview *vt, GtkTreeIter *parent_iter, GtkTreeIter *iter, const char *name, void * parent, void * item,
                                  int data, GdkPixbuf *icon, bool editable, time_t timestamp )
 {
-  g_assert ( iter != NULL );
+  assert ( iter != NULL );
 
   gtk_tree_store_append ( GTK_TREE_STORE(vt->model), iter, parent_iter );
   gtk_tree_store_set ( GTK_TREE_STORE(vt->model), iter,
@@ -744,12 +746,12 @@ static int sort_tuple_compare ( gconstpointer a, gconstpointer b, void * order )
   SortTuple *sb = (SortTuple *)b;
 
   int answer = -1;
-  if ( GPOINTER_TO_INT(order) < VL_SO_DATE_ASCENDING ) {
+  if ( KPOINTER_TO_INT(order) < VL_SO_DATE_ASCENDING ) {
     // Alphabetical comparison
     // Default ascending order
     answer = g_strcmp0 ( sa->name, sb->name );
     // Invert sort order for descending order
-    if ( GPOINTER_TO_INT(order) == VL_SO_ALPHABETICAL_DESCENDING )
+    if ( KPOINTER_TO_INT(order) == VL_SO_ALPHABETICAL_DESCENDING )
       answer = -answer;
   }
   else {
@@ -758,7 +760,7 @@ static int sort_tuple_compare ( gconstpointer a, gconstpointer b, void * order )
     if ( ans )
       answer = 1;
     // Invert sort order for descending order
-    if ( GPOINTER_TO_INT(order) == VL_SO_DATE_DESCENDING )
+    if ( KPOINTER_TO_INT(order) == VL_SO_DATE_DESCENDING )
       answer = -answer;
   }
   return answer;
@@ -799,7 +801,7 @@ void vik_treeview_sort_children ( VikTreeview *vt, GtkTreeIter *parent, vik_laye
 
   // Create an array to store the position offsets
   SortTuple *sort_array;
-  sort_array = g_new ( SortTuple, length );
+  sort_array = (SortTuple *) malloc(length * sizeof (SortTuple));
 
   unsigned int ii = 0;
   do {
@@ -814,19 +816,19 @@ void vik_treeview_sort_children ( VikTreeview *vt, GtkTreeIter *parent, vik_laye
                      length,
                      sizeof (SortTuple),
                      sort_tuple_compare,
-                     GINT_TO_POINTER(order));
+                     KINT_TO_POINTER(order));
 
   // As the sorted list contains the reordered position offsets, extract this and then apply to the treeview
-  int *positions = g_malloc ( sizeof(int) * length );
+  int *positions = malloc( sizeof(int) * length );
   for ( ii = 0; ii < length; ii++ ) {
     positions[ii] = sort_array[ii].offset;
-    g_free ( sort_array[ii].name );
+    free( sort_array[ii].name );
   }
-  g_free ( sort_array );
+  free( sort_array );
 
   // This is extremely fast compared to the old alphabetical insertion
   gtk_tree_store_reorder ( GTK_TREE_STORE(model), parent, positions );
-  g_free ( positions );
+  free( positions );
 }
 
 static void vik_treeview_finalize ( GObject *gob )
@@ -895,12 +897,12 @@ static bool vik_treeview_drag_data_received (GtkTreeDragDest *drag_dest, GtkTree
 
       
       vl_src = vik_treeview_item_get_parent(vt, &src_iter);
-      g_assert ( vl_src );
+      assert ( vl_src );
       vl_dest = vik_treeview_item_get_pointer(vt, &dest_parent);
 
       /* TODO: might want to allow different types, and let the clients handle how they want */
       if (vl_src->type == vl_dest->type && vik_layer_get_interface(vl_dest->type)->drag_drop_request) {
-	//	g_print("moving an item from layer '%s' into layer '%s'\n", vl_src->name, vl_dest->name);
+	//	fprintf(stdout, "moving an item from layer '%s' into layer '%s'\n", vl_src->name, vl_dest->name);
 	vik_layer_get_interface(vl_dest->type)->drag_drop_request(vl_src, vl_dest, &src_iter, dest);
       }    
     }
@@ -921,7 +923,7 @@ static bool vik_treeview_drag_data_received (GtkTreeDragDest *drag_dest, GtkTree
 static bool vik_treeview_drag_data_delete ( GtkTreeDragSource *drag_source, GtkTreePath *path )
 {
   char *s_dest = gtk_tree_path_to_string(path);
-  g_print(_("delete data from %s\n"), s_dest);
-  g_free(s_dest);
+  fprintf(stdout, _("delete data from %s\n"), s_dest);
+  free(s_dest);
   return false;
 }

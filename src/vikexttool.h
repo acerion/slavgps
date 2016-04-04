@@ -29,7 +29,10 @@
 #include "vikwindow.h"
 #include "vikcoord.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #define VIK_EXT_TOOL_TYPE            (vik_ext_tool_get_type ())
 #define VIK_EXT_TOOL(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_EXT_TOOL_TYPE, VikExtTool))
@@ -60,6 +63,8 @@ char *vik_ext_tool_get_label ( VikExtTool *self );
 void vik_ext_tool_open ( VikExtTool *self, VikWindow *vwindow );
 void vik_ext_tool_open_at_position ( VikExtTool *self, VikWindow *vwindow, VikCoord *vc );
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

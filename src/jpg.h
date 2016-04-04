@@ -28,11 +28,16 @@
 
 #include "viking.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 bool a_jpg_magic_check ( const char *filename );
 bool a_jpg_load_file ( VikAggregateLayer *top, const char *filename, VikViewport *vvp );
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

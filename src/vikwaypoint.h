@@ -29,7 +29,10 @@
 
 #include <gdk-pixbuf/gdk-pixdata.h>
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* todo important: put these in their own header file, maybe.probably also rename */
 
 #define VIK_WAYPOINT(x) ((VikWaypoint *)(x))
@@ -75,6 +78,8 @@ bool vik_waypoint_apply_dem_data ( VikWaypoint *wp, bool skip_existing );
 void vik_waypoint_marshall ( VikWaypoint *wp, uint8_t **data, unsigned int *len);
 VikWaypoint *vik_waypoint_unmarshall (uint8_t *data, unsigned int datalen);
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -26,6 +26,7 @@
 #include <string.h>
 #include <errno.h>
 #include <time.h>
+#include <stdlib.h>
 
 #include <curl/curl.h>
 #include <curl/easy.h>
@@ -105,14 +106,14 @@ static void oti_free(OsmTracesInfo *oti)
 {
   if (oti) {
     /* Fields have been g_strdup'ed */
-    g_free(oti->name); oti->name = NULL;
-    g_free(oti->description); oti->description = NULL;
-    g_free(oti->tags); oti->tags = NULL;
+    free(oti->name); oti->name = NULL;
+    free(oti->description); oti->description = NULL;
+    free(oti->tags); oti->tags = NULL;
     
     g_object_unref(oti->vtl); oti->vtl = NULL;
   }
   /* Main struct has been g_malloc'ed */
-  g_free(oti);
+  free(oti);
 }
 
 static const char *get_default_user()
@@ -128,8 +129,8 @@ static const char *get_default_user()
 void osm_set_login(const char *user, const char *password)
 {
   g_mutex_lock(login_mutex);
-  g_free(osm_user); osm_user = NULL;
-  g_free(osm_password); osm_password = NULL;
+  free(osm_user); osm_user = NULL;
+  free(osm_password); osm_password = NULL;
   osm_user        = g_strdup(user);
   osm_password    = g_strdup(password);
   g_mutex_unlock(login_mutex);
@@ -191,7 +192,7 @@ static int osm_traces_upload_file(const char *user,
 
   int result = 0; // Default to it worked!
 
-  g_debug("%s: %s %s %s %s %s %s", __FUNCTION__,
+  fprintf(stderr, "DEBUG: %s: %s %s %s %s %s %s\n", __FUNCTION__,
   	  user, password, file, filename, description, tags);
 
   /* Init CURL */
@@ -234,24 +235,24 @@ static int osm_traces_upload_file(const char *user,
     res = curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
     if (res == CURLE_OK)
     {
-      g_debug("received valid curl response: %ld", code);
+      fprintf(stderr, "DEBUG: received valid curl response: %ld\n", code);
       if (code != 200) {
-        g_warning(_("failed to upload data: HTTP response is %ld"), code);
+        fprintf(stderr, _("WARNING: failed to upload data: HTTP response is %ld\n"), code);
 	result = code;
       }
     }
     else {
-      g_critical(_("curl_easy_getinfo failed: %d"), res);
+      fprintf(stderr, _("CRITICAL: curl_easy_getinfo failed: %d\n"), res);
       result = -1;
     }
   }
   else {
-    g_warning(_("curl request failed: %s"), curl_error_buffer);
+    fprintf(stderr, _("WARNING: curl request failed: %s\n"), curl_error_buffer);
     result = -2;
   }
 
   /* Memory */
-  g_free(user_pass); user_pass = NULL;
+  free(user_pass); user_pass = NULL;
   
   curl_formfree(post);
   curl_easy_cleanup(curl);
@@ -332,12 +333,12 @@ static void osm_traces_upload_thread ( OsmTracesInfo *oti, void * threaddata )
       msg = g_strdup_printf ( "%s : %s %d (@%s)", _("FAILED TO UPLOAD DATA TO OSM"), _("HTTP response code"), ans, timestr );
     }
     vik_window_statusbar_update ( (VikWindow*)VIK_GTK_WINDOW_FROM_LAYER(oti->vtl), msg, VIK_STATUSBAR_INFO );
-    g_free (msg);
+    free(msg);
   }
   /* Removing temporary file */
   int ret = g_unlink(filename);
   if (ret != 0) {
-    g_critical(_("failed to unlink temporary file: %s"), strerror(errno));
+    fprintf(stderr, _("CRITICAL: failed to unlink temporary file: %s\n"), strerror(errno));
   }
 }
 
@@ -506,7 +507,7 @@ void osm_traces_upload_viktrwlayer ( VikTrwLayer *vtl, VikTrack *trk )
                   gtk_entry_get_text(GTK_ENTRY(password_entry)));
 
     /* Storing data for the future thread */
-    OsmTracesInfo *info = g_malloc(sizeof(OsmTracesInfo));
+    OsmTracesInfo *info = malloc(sizeof(OsmTracesInfo));
     info->name        = g_strdup(gtk_entry_get_text(GTK_ENTRY(name_entry)));
     info->description = g_strdup(gtk_entry_get_text(GTK_ENTRY(description_entry)));
     /* TODO Normalize tags: they will be used as URL part */
@@ -534,7 +535,7 @@ void osm_traces_upload_viktrwlayer ( VikTrwLayer *vtl, VikTrack *trk )
                          (vik_thr_free_func) oti_free,            /* function to free pass along data */
                          (vik_thr_free_func) NULL,
                          1 );
-    g_free ( title ); title = NULL;
+    free( title ); title = NULL;
   }
   gtk_widget_destroy ( dia );
 }

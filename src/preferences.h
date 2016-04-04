@@ -26,7 +26,10 @@
 
 #include "uibuilder.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 // TODO IMPORTANT!!!! add REGISTER_GROUP !!! OR SOMETHING!!! CURRENTLY GROUPLESS!!!
 
@@ -55,6 +58,8 @@ void a_preferences_run_setparam ( VikLayerParamData data, VikLayerParam *vlparam
 bool a_preferences_save_to_file();
 
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

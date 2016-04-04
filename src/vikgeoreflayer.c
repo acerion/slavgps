@@ -43,7 +43,7 @@
 static VikLayerParamData image_default ( void )
 {
   VikLayerParamData data;
-  data.s = g_strdup ("");
+  data.s = g_strdup("");
   return data;
 }
 */
@@ -287,13 +287,13 @@ static void create_image_file ( VikGeorefLayer *vgl )
   GError *error = NULL;
   gdk_pixbuf_save ( vgl->pixbuf, filename, "jpeg", &error, NULL );
   if ( error ) {
-    g_warning ( "%s", error->message );
+    fprintf(stderr, "WARNING: %s\n", error->message );
     g_error_free ( error );
   }
   else
-    vgl->image = g_strdup ( filename );
+    vgl->image = g_strdup( filename );
 
-  g_free ( filename );
+  free( filename );
 }
 
 static VikLayerParamData georef_layer_get_param ( VikGeorefLayer *vgl, uint16_t id, bool is_file_operation )
@@ -450,7 +450,7 @@ static void georef_layer_draw ( VikGeorefLayer *vgl, VikViewport *vp )
 static void georef_layer_free ( VikGeorefLayer *vgl )
 {
   if ( vgl->image != NULL )
-    g_free ( vgl->image );
+    free( vgl->image );
   if ( vgl->scaled != NULL )
     g_object_unref ( vgl->scaled );
 }
@@ -501,7 +501,7 @@ static void georef_layer_load_image ( VikGeorefLayer *vgl, VikViewport *vp, bool
 static void georef_layer_set_image ( VikGeorefLayer *vgl, const char *image )
 {
   if ( vgl->image )
-    g_free ( vgl->image );
+    free( vgl->image );
   if ( vgl->scaled )
   {
     g_object_unref ( vgl->scaled );
@@ -513,7 +513,7 @@ static void georef_layer_set_image ( VikGeorefLayer *vgl, const char *image )
   if ( g_strcmp0 (image, "") != 0 )
     vgl->image = vu_get_canonical_filename ( VIK_LAYER(vgl), image );
   else
-    vgl->image = g_strdup (image);
+    vgl->image = g_strdup(image);
 }
 
 // Only positive values allowed here
@@ -553,7 +553,7 @@ static bool world_file_read_line ( FILE *ff, double *value, bool use_value )
  */
 static int world_file_read_file ( const char* filename, double values[4] )
 {
-  g_debug ("%s - trying world file %s", __FUNCTION__, filename);
+  fprintf(stderr, "DEBUG: %s - trying world file %s\n", __FUNCTION__, filename);
 
   FILE *f = g_fopen ( filename, "r" );
   if ( !f )
@@ -570,7 +570,7 @@ static int world_file_read_file ( const char* filename, double values[4] )
        )
     {
        // Success
-       g_debug ("%s - %s - world file read success", __FUNCTION__, filename);
+       fprintf(stderr, "DEBUG: %s - %s - world file read success\n", __FUNCTION__, filename);
        answer = 0;
     }
     fclose ( f );
@@ -660,11 +660,11 @@ static void maybe_read_world_file ( VikFileEntry *vfe, void * user_data )
           if ( world_file_read_file ( file1, values ) == 0 ) {
             set_widget_values ( cw, values );
           }
-          g_free ( file1 );
-          g_free ( file0 );
+          free( file1 );
+          free( file0 );
         }
       }
-      g_free ( filew );
+      free( filew );
     }
   }
 }

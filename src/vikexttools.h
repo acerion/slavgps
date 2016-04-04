@@ -30,13 +30,18 @@
 
 #include "vikexttool.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 void vik_ext_tools_register ( VikExtTool *tool );
 void vik_ext_tools_unregister_all ();
 void vik_ext_tools_add_action_items ( VikWindow *vwindow, GtkUIManager *uim, GtkActionGroup *action_group, unsigned int mid );
 void vik_ext_tools_add_menu_items_to_menu ( VikWindow *vw, GtkMenu *menu, VikCoord *vc );
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

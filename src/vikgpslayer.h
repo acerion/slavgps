@@ -29,7 +29,10 @@
 #include "viklayer.h"
 #include "viktrack.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #define VIK_GPS_LAYER_TYPE            (vik_gps_layer_get_type ())
 #define VIK_GPS_LAYER(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_GPS_LAYER_TYPE, VikGpsLayer))
@@ -76,6 +79,8 @@ int vik_gps_comm ( VikTrwLayer *vtl,
                     bool do_waypoints,
 		    bool turn_off);
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

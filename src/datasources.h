@@ -23,7 +23,10 @@
 
 #include "acquire.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 extern VikDataSourceInterface vik_datasource_gps_interface;
 extern VikDataSourceInterface vik_datasource_file_interface;
@@ -45,6 +48,8 @@ extern VikDataSourceInterface vik_datasource_wikipedia_interface;
 extern VikDataSourceInterface vik_datasource_url_interface;
 extern VikDataSourceInterface vik_datasource_geojson_interface;
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

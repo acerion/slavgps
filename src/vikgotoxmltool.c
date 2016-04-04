@@ -85,21 +85,21 @@ vik_goto_xml_tool_set_property (GObject      *object,
   switch (property_id)
     {
     case PROP_URL_FORMAT:
-      g_free (priv->url_format);
+      free(priv->url_format);
       priv->url_format = g_value_dup_string (value);
       break;
 
     case PROP_LAT_PATH:
       splitted = g_strsplit (g_value_get_string (value), "@", 2);
-      g_free (priv->lat_path);
+      free(priv->lat_path);
       priv->lat_path = splitted[0];
       if (splitted[1])
       {
         g_object_set (object, "lat-attr", splitted[1], NULL);
-        g_free (splitted[1]);
+        free(splitted[1]);
       }
       /* only free the tab, not the strings */
-      g_free (splitted);
+      free(splitted);
       splitted = NULL;
       break;
 
@@ -109,22 +109,22 @@ vik_goto_xml_tool_set_property (GObject      *object,
          but as property is CONSTRUCT_ONLY there is no matter */
       if (!priv->lat_attr || g_value_get_string (value))
       {
-        g_free (priv->lat_attr);
+        free(priv->lat_attr);
         priv->lat_attr = g_value_dup_string (value);
       }
       break;
 
     case PROP_LON_PATH:
       splitted = g_strsplit (g_value_get_string (value), "@", 2);
-      g_free (priv->lon_path);
+      free(priv->lon_path);
       priv->lon_path = splitted[0];
       if (splitted[1])
       {
         g_object_set (object, "lon-attr", splitted[1], NULL);
-        g_free (splitted[1]);
+        free(splitted[1]);
       }
       /* only free the tab, not the strings */
-      g_free (splitted);
+      free(splitted);
       splitted = NULL;
       break;
 
@@ -134,7 +134,7 @@ vik_goto_xml_tool_set_property (GObject      *object,
          but as property is CONSTRUCT_ONLY there is no matter */
       if (!priv->lon_attr || g_value_get_string (value))
       {
-        g_free (priv->lon_attr);
+        free(priv->lon_attr);
         priv->lon_attr = g_value_dup_string (value);
       }
       break;
@@ -368,7 +368,7 @@ _text (GMarkupParseContext *context,
 	{
     priv->ll.lon = g_ascii_strtod(textl, NULL);
 	}
-  g_free(textl);
+  free(textl);
 }
 
 static bool
@@ -380,7 +380,7 @@ vik_goto_xml_tool_parse_file_for_latlon(VikGotoTool *self, char *filename, struc
 	VikGotoXmlToolPrivate *priv = GOTO_XML_TOOL_GET_PRIVATE (self);
   g_return_val_if_fail(priv != NULL, false);
 
-  g_debug ("%s: %s@%s, %s@%s",
+  fprintf(stderr, "DEBUG: %s: %s@%s, %s@%s\n",
            __FUNCTION__,
            priv->lat_path, priv->lat_attr,
            priv->lon_path, priv->lon_attr);

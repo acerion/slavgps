@@ -33,6 +33,8 @@
   */
 #include <glib.h>
 #include <stdbool.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include "dir.h"
 
 static GKeyFile *keyfile;
@@ -48,13 +50,13 @@ static bool settings_load_from_file()
 	char *fn = g_build_filename ( a_get_viking_dir(), VIKING_INI_FILE, NULL );
 
 	if ( !g_key_file_load_from_file ( keyfile, fn, flags, &error ) ) {
-		g_warning ( "%s: %s", error->message, fn );
-		g_free ( fn );
+		fprintf(stderr, "WARNING: %s: %s\n", error->message, fn );
+		free( fn );
 		g_error_free ( error );
 		return false;
 	}
 
-	g_free ( fn );
+	free( fn );
 
 	return true;
 }
@@ -80,21 +82,21 @@ void a_settings_uninit()
 	char *keyfilestr = g_key_file_to_data ( keyfile, &size, &error );
 
 	if ( error ) {
-		g_warning ( "%s", error->message );
+		fprintf(stderr, "WARNING: %s\n", error->message );
 		g_error_free ( error );
 		goto tidy;
 	}
 
 	g_file_set_contents ( fn, keyfilestr, size, &error );
 	if ( error ) {
-		g_warning ( "%s: %s", error->message, fn );
+		fprintf(stderr, "WARNING: %s: %s\n", error->message, fn );
 		g_error_free ( error );
 	}
 
 	g_key_file_free ( keyfile );
  tidy:
-	g_free ( keyfilestr );
-	g_free ( fn );
+	free( keyfilestr );
+	free( fn );
 }
 
 // ATM, can't see a point in having any more than one group for various settings
@@ -107,7 +109,7 @@ static bool settings_get_boolean ( const char *group, const char *name, bool *va
 	bool bb = g_key_file_get_boolean ( keyfile, group, name, &error );
 	if ( error ) {
 		// Only print on debug - as often may have requests for keys not in the file
-		g_debug ( "%s", error->message );
+		fprintf(stderr, "DEBUG: %s\n", error->message );
 		g_error_free ( error );
 		success = false;
 	}
@@ -132,7 +134,7 @@ static bool settings_get_string ( const char *group, const char *name, char **va
 	char *str = g_key_file_get_string ( keyfile, group, name, &error );
 	if ( error ) {
 		// Only print on debug - as often may have requests for keys not in the file
-		g_debug ( "%s", error->message );
+		fprintf(stderr, "DEBUG: %s\n", error->message );
 		g_error_free ( error );
 		success = false;
 	}
@@ -157,7 +159,7 @@ static bool settings_get_integer ( const char *group, const char *name, int *val
 	int ii = g_key_file_get_integer ( keyfile, group, name, &error );
 	if ( error ) {
 		// Only print on debug - as often may have requests for keys not in the file
-		g_debug ( "%s", error->message );
+		fprintf(stderr, "DEBUG: %s\n", error->message );
 		g_error_free ( error );
 		success = false;
 	}
@@ -182,7 +184,7 @@ static bool settings_get_double ( const char *group, const char *name, double *v
 	double dd = g_key_file_get_double ( keyfile, group, name, &error );
 	if ( error ) {
 		// Only print on debug - as often may have requests for keys not in the file
-		g_debug ( "%s", error->message );
+		fprintf(stderr, "DEBUG: %s\n", error->message );
 		g_error_free ( error );
 		success = false;
 	}
@@ -207,7 +209,7 @@ static bool settings_get_integer_list ( const char *group, const char *name, int
 	int *ints = g_key_file_get_integer_list ( keyfile, group, name, length, &error );
 	if ( error ) {
 		// Only print on debug - as often may have requests for keys not in the file
-		g_debug ( "%s", error->message );
+		fprintf(stderr, "DEBUG: %s\n", error->message );
 		g_error_free ( error );
 		success = false;
 	}
@@ -247,7 +249,7 @@ bool a_settings_get_integer_list_contains ( const char *name, int val )
 				ii++;
 			}
 			// Free old array
-			g_free (vals);
+			free(vals);
 		}
 	}
 	return contains;
@@ -285,6 +287,6 @@ void a_settings_set_integer_list_containing ( const char *name, int val )
 		// Apply
 		a_settings_set_integer_list ( name, new_vals, new_length );
 		// Free old array
-		g_free (vals);
+		free(vals);
 	}
 }

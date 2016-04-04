@@ -27,6 +27,7 @@
 #include "vikexttools.h"
 
 #include <string.h>
+#include <stdlib.h>
 
 #include <glib/gi18n.h>
 
@@ -67,7 +68,7 @@ void vik_ext_tool_datasources_add_menu_items_to_menu ( VikWindow *vw, GtkMenu *m
 		if ( label ) {
 			GtkWidget *item = NULL;
 			item = gtk_menu_item_new_with_label ( _(label) );
-			g_free ( label ); label = NULL;
+			free( label ); label = NULL;
 			// Store tool's ref into the menu entry
 			g_object_set_data ( G_OBJECT(item), VIK_TOOL_DATASOURCE_KEY, ext_tool );
 			g_signal_connect ( G_OBJECT(item), "activate", G_CALLBACK(ext_tool_datasources_open_cb), vw );

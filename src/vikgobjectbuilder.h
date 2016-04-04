@@ -25,7 +25,10 @@
 #include <stdint.h>
 
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #define VIK_TYPE_GOBJECT_BUILDER             (vik_gobject_builder_get_type ())
 #define VIK_GOBJECT_BUILDER(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_TYPE_GOBJECT_BUILDER, VikGobjectBuilder))
@@ -55,6 +58,8 @@ VikGobjectBuilder *vik_gobject_builder_new (void);
 
 void vik_gobject_builder_parse (VikGobjectBuilder *self, const char *filename);
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _VIK_GOBJECT_BUILDER_H_ */

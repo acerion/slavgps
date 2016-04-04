@@ -26,6 +26,7 @@
 #include "vikexttools.h"
 
 #include <string.h>
+#include <stdlib.h>
 
 #include <glib/gi18n.h>
 
@@ -76,7 +77,7 @@ void vik_ext_tools_add_action_items ( VikWindow *vwindow, GtkUIManager *uim, Gtk
 
       g_object_unref ( action );
 
-      g_free ( label ); label = NULL;
+      free( label ); label = NULL;
     }
   }
 }
@@ -104,7 +105,7 @@ void vik_ext_tools_add_menu_items_to_menu ( VikWindow *vw, GtkMenu *menu, VikCoo
     if ( label ) {
       GtkWidget *item = NULL;
       item = gtk_menu_item_new_with_label ( _(label) );
-      g_free ( label ); label = NULL;
+      free( label ); label = NULL;
       // Store some data into the menu entry
       g_object_set_data ( G_OBJECT(item), VIK_TOOL_DATA_KEY, ext_tool );
       g_object_set_data ( G_OBJECT(item), VIK_TOOL_WIN_KEY, vw );

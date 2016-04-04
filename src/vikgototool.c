@@ -27,6 +27,7 @@
 #include "util.h"
 
 #include <string.h>
+#include <stdlib.h>
 
 #include <glib.h>
 #include <glib/gi18n.h>
@@ -73,13 +74,13 @@ goto_tool_set_property (GObject      *object,
     {
     case PROP_ID:
       priv->id = g_value_get_uint (value);
-      g_debug ("VikGotoTool.id: %d", priv->id);
+      fprintf(stderr, "DEBUG: VikGotoTool.id: %d\n", priv->id);
       break;
 
     case PROP_LABEL:
-      g_free (priv->label);
+      free(priv->label);
       priv->label = g_value_dup_string (value);
-      g_debug ("VikGotoTool.label: %s", priv->label);
+      fprintf(stderr, "DEBUG: VikGotoTool.label: %s\n", priv->label);
       break;
 
     default:
@@ -167,7 +168,7 @@ static void vik_goto_tool_init ( VikGotoTool *self )
 static void goto_tool_finalize ( GObject *gob )
 {
   VikGotoToolPrivate *priv = GOTO_TOOL_GET_PRIVATE ( gob );
-  g_free ( priv->label ); priv->label = NULL;
+  free( priv->label ); priv->label = NULL;
   G_OBJECT_CLASS(parent_class)->finalize(gob);
 }
 
@@ -175,7 +176,7 @@ static char *goto_tool_get_label ( VikGotoTool *self )
 {
   VikGotoToolPrivate *priv = NULL;
   priv = GOTO_TOOL_GET_PRIVATE (self);
-  return g_strdup ( priv->label );
+  return g_strdup( priv->label );
 }
 
 static DownloadFileOptions *goto_tool_get_download_options ( VikGotoTool *self )
@@ -226,11 +227,11 @@ int vik_goto_tool_get_coord ( VikGotoTool *self, VikWindow *vw, VikViewport *vvp
   int ret = 0;  /* OK */
   struct LatLon ll;
 
-  g_debug("%s: raw goto: %s", __FUNCTION__, srch_str);
+  fprintf(stderr, "DEBUG: %s: raw goto: %s\n", __FUNCTION__, srch_str);
 
   escaped_srch_str = uri_escape(srch_str);
 
-  g_debug("%s: escaped goto: %s", __FUNCTION__, escaped_srch_str);
+  fprintf(stderr, "DEBUG: %s: escaped goto: %s\n", __FUNCTION__, escaped_srch_str);
 
   uri = g_strdup_printf(vik_goto_tool_get_url_format(self), escaped_srch_str);
 
@@ -242,7 +243,7 @@ int vik_goto_tool_get_coord ( VikGotoTool *self, VikWindow *vw, VikViewport *vvp
     goto done_no_file;
   }
 
-  g_debug("%s: %s", __FILE__, tmpname);
+  fprintf(stderr, "DEBUG: %s: %s\n", __FILE__, tmpname);
   if (!vik_goto_tool_parse_file_for_latlon(self, tmpname, &ll)) {
     ret = -1;
     goto done;
@@ -252,8 +253,8 @@ int vik_goto_tool_get_coord ( VikGotoTool *self, VikWindow *vw, VikViewport *vvp
 done:
   (void)util_remove(tmpname);
 done_no_file:
-  g_free(tmpname);
-  g_free(escaped_srch_str);
-  g_free(uri);
+  free(tmpname);
+  free(escaped_srch_str);
+  free(uri);
   return ret;
 }

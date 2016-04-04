@@ -24,10 +24,15 @@
 
 #include "viktrwlayer.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 void a_gpsmapper_write_file ( VikTrwLayer *trw, FILE *f );
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

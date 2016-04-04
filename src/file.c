@@ -64,13 +64,13 @@ struct _Stack {
 
 static void pop(Stack **stack) {
   Stack *tmp = (*stack)->under;
-  g_free ( *stack );
+  free( *stack );
   *stack = tmp;
 }
 
 static void push(Stack **stack)
 {
-  Stack *tmp = g_malloc ( sizeof ( Stack ) );
+  Stack *tmp = malloc( sizeof ( Stack ) );
   tmp->under = *stack;
   *stack = tmp;
 }
@@ -184,7 +184,7 @@ static void file_write ( VikAggregateLayer *top, FILE *f, void * vp )
     case VIK_VIEWPORT_DRAWMODE_MERCATOR: modestring = "mercator"; break;
     case VIK_VIEWPORT_DRAWMODE_LATLON: modestring = "latlon"; break;
     default:
-      g_critical("Houston, we've had a problem. mode=%d", mode);
+      fprintf(stderr, "CRITICAL: Houston, we've had a problem. mode=%d\n", mode);
   }
 
   fprintf ( f, "#VIKING GPS Data file " VIKING_URL "\n" );
@@ -248,7 +248,7 @@ static void string_list_delete ( void * key, void * l, void * user_data )
   /* 20071021 bugfix */
   GList *iter = (GList *) l;
   while ( iter ) {
-    g_free ( iter->data );
+    free( iter->data );
     iter = iter->next;
   }
   g_list_free ( (GList *) l );
@@ -322,7 +322,7 @@ static bool file_read ( VikAggregateLayer *top, FILE *f, const char *dirpath, Vi
         if ( ( ! stack->data ) || ((parent_type != VIK_LAYER_AGGREGATE) && (parent_type != VIK_LAYER_GPS)) )
         {
           successful_read = false;
-          g_warning ( "Line %ld: Layer command inside non-Aggregate Layer (type %d)", line_num, parent_type );
+          fprintf(stderr, "WARNING: Line %ld: Layer command inside non-Aggregate Layer (type %d)\n", line_num, parent_type );
           push(&stack); /* inside INVALID layer */
           stack->data = NULL;
           continue;
@@ -334,7 +334,7 @@ static bool file_read ( VikAggregateLayer *top, FILE *f, const char *dirpath, Vi
           if ( type == VIK_LAYER_NUM_TYPES )
           {
             successful_read = false;
-            g_warning ( "Line %ld: Unknown type %s", line_num, line+6 );
+            fprintf(stderr, "WARNING: Line %ld: Unknown type %s\n", line_num, line+6 );
             stack->data = NULL;
           }
           else if (parent_type == VIK_LAYER_GPS)
@@ -355,7 +355,7 @@ static bool file_read ( VikAggregateLayer *top, FILE *f, const char *dirpath, Vi
       {
         if ( stack->under == NULL ) {
           successful_read = false;
-          g_warning ( "Line %ld: Mismatched ~EndLayer command", line_num );
+          fprintf(stderr, "WARNING: Line %ld: Mismatched ~EndLayer command\n", line_num );
         }
         else
         {
@@ -377,7 +377,7 @@ static bool file_read ( VikAggregateLayer *top, FILE *f, const char *dirpath, Vi
             }
             else {
               successful_read = false;
-              g_warning ( "Line %ld: EndLayer command inside non-Aggregate Layer (type %d)", line_num, VIK_LAYER(stack->data)->type );
+              fprintf(stderr, "WARNING: Line %ld: EndLayer command inside non-Aggregate Layer (type %d)\n", line_num, VIK_LAYER(stack->data)->type );
             }
           }
           pop(&stack);
@@ -413,7 +413,7 @@ static bool file_read ( VikAggregateLayer *top, FILE *f, const char *dirpath, Vi
       else
       {
         successful_read = false;
-        g_warning ( "Line %ld: Unknown tilde command", line_num );
+        fprintf(stderr, "WARNING: Line %ld: Unknown tilde command\n", line_num );
       }
     }
     else
@@ -429,7 +429,7 @@ static bool file_read ( VikAggregateLayer *top, FILE *f, const char *dirpath, Vi
 
       if ( stack->under == NULL && eq_pos == 12 && strncasecmp ( line, "FILE_VERSION", eq_pos ) == 0) {
         int version = strtol(line+13, NULL, 10);
-        g_debug ( "%s: reading file version %d", __FUNCTION__, version );
+        fprintf(stderr, "DEBUG: %s: reading file version %d\n", __FUNCTION__, version );
         if ( version > VIKING_FILE_VERSION )
           successful_read = false;
         // However we'll still carry and attempt to read whatever we can
@@ -449,12 +449,12 @@ static bool file_read ( VikAggregateLayer *top, FILE *f, const char *dirpath, Vi
       else if ( stack->under == NULL && eq_pos == 4 && strncasecmp ( line, "mode", eq_pos ) == 0 && strcasecmp ( line+5, "google" ) == 0)
       {
         successful_read = false;
-        g_warning ( _("Draw mode '%s' no more supported"), "google" );
+        fprintf(stderr, _("WARNING: Draw mode '%s' no more supported\n"), "google" );
       }
       else if ( stack->under == NULL && eq_pos == 4 && strncasecmp ( line, "mode", eq_pos ) == 0 && strcasecmp ( line+5, "kh" ) == 0)
       {
         successful_read = false;
-        g_warning ( _("Draw mode '%s' no more supported"), "kh" );
+        fprintf(stderr, _("WARNING: Draw mode '%s' no more supported\n"), "kh" );
       }
       else if ( stack->under == NULL && eq_pos == 4 && strncasecmp ( line, "mode", eq_pos ) == 0 && strcasecmp ( line+5, "mercator" ) == 0)
         vik_viewport_set_drawmode ( VIK_VIEWPORT(vp), VIK_VIEWPORT_DRAWMODE_MERCATOR );
@@ -484,7 +484,7 @@ static bool file_read ( VikAggregateLayer *top, FILE *f, const char *dirpath, Vi
         if ( ! params )
         {
           successful_read = false;
-          g_warning ( "Line %ld: No options for this kind of layer", line_num );
+          fprintf(stderr, "WARNING: Line %ld: No options for this kind of layer\n", line_num );
           continue;
         }
 
@@ -494,9 +494,9 @@ static bool file_read ( VikAggregateLayer *top, FILE *f, const char *dirpath, Vi
             VikLayerParamData x;
             line += eq_pos+1;
             if ( params[i].type == VIK_LAYER_PARAM_STRING_LIST ) {
-              GList *l = g_list_append ( g_hash_table_lookup ( string_lists, GINT_TO_POINTER ((int) i) ), 
+              GList *l = g_list_append ( g_hash_table_lookup ( string_lists, KINT_TO_POINTER ((int) i) ), 
 					 g_strdup(line) );
-              g_hash_table_replace ( string_lists, GINT_TO_POINTER ((int)i), l );
+              g_hash_table_replace ( string_lists, KINT_TO_POINTER ((int)i), l );
               /* add the value to a list, possibly making a new list.
                * this will be passed to the layer when we read an ~EndLayer */
             } else {
@@ -522,12 +522,12 @@ static bool file_read ( VikAggregateLayer *top, FILE *f, const char *dirpath, Vi
           // TODO Maybe hold old values here - compare the line value against them and if a match
           //       generate a different style of message in the GUI...
           // successful_read = false;
-          g_warning ( "Line %ld: Unknown parameter. Line:\n%s", line_num, line );
+          fprintf(stderr, "WARNING: Line %ld: Unknown parameter. Line:\n%s\n", line_num, line );
 	}
       }
       else {
         successful_read = false;
-        g_warning ( "Line %ld: Invalid parameter or parameter outside of layer.", line_num );
+        fprintf(stderr, "WARNING: Line %ld: Invalid parameter or parameter outside of layer.\n", line_num );
       }
     }
 /* could be:
@@ -644,7 +644,7 @@ char *append_file_ext ( const char *filename, VikFileType_t type )
     new_name = g_strconcat ( filename, ext, NULL );
   else
     /* Simply duplicate */
-    new_name = g_strdup ( filename );
+    new_name = g_strdup( filename );
 
   return new_name;
 }
@@ -659,7 +659,7 @@ VikLoadType_t a_file_load ( VikAggregateLayer *top, VikViewport *vp, const char 
     // filename = g_filename_from_uri ( entry, NULL, NULL );
     // Since this doesn't support URIs properly (i.e. will failure if is it has %20 characters in it)
     filename = filename + 7;
-    g_debug ( "Loading file %s from URI %s", filename, filename_or_uri );
+    fprintf(stderr, "DEBUG: Loading file %s from URI %s\n", filename, filename_or_uri );
   }
   FILE *f = xfopen ( filename );
 
@@ -712,7 +712,7 @@ VikLoadType_t a_file_load ( VikAggregateLayer *top, VikViewport *vp, const char 
         load_answer = LOAD_TYPE_UNSUPPORTED_FAILURE;
       }
     }
-    g_free ( dirpath );
+    free( dirpath );
 
     // Clean up when we can't handle the file
     if ( ! success ) {
@@ -747,9 +747,9 @@ bool a_file_save ( VikAggregateLayer *top, void * vp, const char *filename )
   char *dir = g_path_get_dirname ( filename );
   if ( dir ) {
     if ( g_chdir ( dir ) ) {
-      g_warning ( "Could not change directory to %s", dir );
+      fprintf(stderr, "WARNING: Could not change directory to %s\n", dir );
     }
-    g_free (dir);
+    free(dir);
   }
 
   file_write ( top, f, vp );
@@ -757,9 +757,9 @@ bool a_file_save ( VikAggregateLayer *top, void * vp, const char *filename )
   // Restore previous working directory
   if ( cwd ) {
     if ( g_chdir ( cwd ) ) {
-      g_warning ( "Could not return to directory %s", cwd );
+      fprintf(stderr, "WARNING: Could not return to directory %s\n", cwd );
     }
-    g_free (cwd);
+    free(cwd);
   }
 
   fclose(f);
@@ -814,7 +814,7 @@ bool a_file_export ( VikTrwLayer *vtl, const char *filename, VikFileType_t file_
           a_gpx_write_track_file ( trk, f, &options );
           break;
         default:
-          g_critical("Houston, we've had a problem. file_type=%d", file_type);
+          fprintf(stderr, "CRITICAL: Houston, we've had a problem. file_type=%d\n", file_type);
       }
     } else {
       switch ( file_type ) {
@@ -846,7 +846,7 @@ bool a_file_export ( VikTrwLayer *vtl, const char *filename, VikFileType_t file_
 	  }
 	  break;
         default:
-          g_critical("Houston, we've had a problem. file_type=%d", file_type);
+          fprintf(stderr, "CRITICAL: Houston, we've had a problem. file_type=%d\n", file_type);
       }
     }
     fclose ( f );
@@ -867,7 +867,7 @@ bool a_file_export_babel ( VikTrwLayer *vtl, const char *filename, const char *f
                                 waypoints ? "-w" : "",
                                 format);
   bool result = a_babel_convert_to ( vtl, NULL, args, filename, NULL, NULL );
-  g_free(args);
+  free(args);
   return result;
 }
 

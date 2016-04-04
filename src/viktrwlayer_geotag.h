@@ -29,7 +29,10 @@
 
 #include "viktrwlayer.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 // To be only called from within viktrwlayer
 void trw_layer_geotag_dialog ( GtkWindow *parent,
@@ -37,6 +40,8 @@ void trw_layer_geotag_dialog ( GtkWindow *parent,
                                VikWaypoint *wpt,
                                VikTrack *track );
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

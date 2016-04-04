@@ -32,6 +32,7 @@
 #endif
 
 #include <string.h>
+#include <stdlib.h>
 
 #include <glib.h>
 #include <glib/gstdio.h>
@@ -100,37 +101,37 @@ vik_routing_web_engine_set_property (GObject      *object,
   switch (property_id)
     {
     case PROP_URL_BASE:
-      g_free (priv->url_base);
+      free(priv->url_base);
       priv->url_base = g_strdup(g_value_get_string (value));
       break;
 
     case PROP_URL_START_LL:
-      g_free (priv->url_start_ll_fmt);
+      free(priv->url_start_ll_fmt);
       priv->url_start_ll_fmt = g_strdup(g_value_get_string (value));
       break;
 
     case PROP_URL_STOP_LL:
-      g_free (priv->url_stop_ll_fmt);
+      free(priv->url_stop_ll_fmt);
       priv->url_stop_ll_fmt = g_strdup(g_value_get_string (value));
       break;
 
     case PROP_URL_VIA_LL:
-      g_free (priv->url_via_ll_fmt);
+      free(priv->url_via_ll_fmt);
       priv->url_via_ll_fmt = g_strdup(g_value_get_string (value));
       break;
 
     case PROP_URL_START_DIR:
-      g_free (priv->url_start_dir_fmt);
+      free(priv->url_start_dir_fmt);
       priv->url_start_dir_fmt = g_strdup(g_value_get_string (value));
       break;
 
     case PROP_URL_STOP_DIR:
-      g_free (priv->url_stop_dir_fmt);
+      free(priv->url_stop_dir_fmt);
       priv->url_stop_dir_fmt = g_strdup(g_value_get_string (value));
       break;
 
     case PROP_REFERER:
-      g_free (priv->options.referer);
+      free(priv->options.referer);
       priv->options.referer = g_value_dup_string (value);
       break;
 
@@ -348,24 +349,24 @@ static void vik_routing_web_engine_finalize ( GObject *gob )
 {
   VikRoutingWebEnginePrivate *priv = VIK_ROUTING_WEB_ENGINE_PRIVATE ( gob );
 
-  g_free (priv->url_base);
+  free(priv->url_base);
   priv->url_base = NULL;
   
   /* LatLon */
-  g_free (priv->url_start_ll_fmt);
+  free(priv->url_start_ll_fmt);
   priv->url_start_ll_fmt = NULL;
-  g_free (priv->url_stop_ll_fmt);
+  free(priv->url_stop_ll_fmt);
   priv->url_stop_ll_fmt = NULL;
-  g_free (priv->url_via_ll_fmt);
+  free(priv->url_via_ll_fmt);
   priv->url_via_ll_fmt = NULL;
 
   /* Directions */
-  g_free (priv->url_start_dir_fmt);
+  free(priv->url_start_dir_fmt);
   priv->url_start_dir_fmt = NULL;
-  g_free (priv->url_stop_dir_fmt);
+  free(priv->url_stop_dir_fmt);
   priv->url_stop_dir_fmt = NULL;
 
-  g_free (priv->options.referer);
+  free(priv->options.referer);
   priv->options.referer = NULL;
 
   G_OBJECT_CLASS (vik_routing_web_engine_parent_class)->finalize(gob);
@@ -411,8 +412,8 @@ vik_routing_web_engine_get_url_for_coords ( VikRoutingEngine *self, struct LatLo
 	url = g_strconcat ( priv->url_base, startURL, endURL, NULL );
 
 	/* Free memory */
-	g_free ( startURL );
-	g_free ( endURL );
+	free( startURL );
+	free( endURL );
 
 	return url;
 }
@@ -428,7 +429,7 @@ vik_routing_web_engine_find ( VikRoutingEngine *self, VikTrwLayer *vtl, struct L
   ProcessOptions po = { NULL, NULL, format, uri, NULL, NULL };
   bool ret = a_babel_convert_from ( vtl, &po, NULL, NULL, options );
 
-  g_free(uri);
+  free(uri);
 
   return ret;
 }
@@ -458,10 +459,10 @@ vik_routing_web_engine_get_url_from_directions ( VikRoutingEngine *self, const c
   char *url_fmt = g_strconcat ( priv->url_base, priv->url_start_dir_fmt, priv->url_stop_dir_fmt, NULL );
   char *url = g_strdup_printf ( url_fmt, from_quoted, to_quoted );
 
-  g_free ( url_fmt );
+  free( url_fmt );
 
-  g_free(from_quoted);
-  g_free(to_quoted);
+  free(from_quoted);
+  free(to_quoted);
   g_strfreev(from_split);
   g_strfreev(to_split);
 
@@ -515,8 +516,8 @@ vik_routing_web_engine_get_url_for_track ( VikRoutingEngine *self, VikTrack *vt 
 
   /* Init temporary storage */
   size_t len = 1 + g_list_length ( vt->trackpoints ) + 1; /* base + trackpoints + NULL */
-  urlParts = g_malloc ( sizeof(char*)*len );
-  urlParts[0] = g_strdup ( priv->url_base );
+  urlParts = malloc( sizeof(char*)*len );
+  urlParts[0] = g_strdup( priv->url_base );
   urlParts[len-1] = NULL;
 
   struct _append_ctx ctx;
@@ -530,18 +531,18 @@ vik_routing_web_engine_get_url_for_track ( VikRoutingEngine *self, VikTrack *vt 
   /* Override first and last positions with associated formats */
   struct LatLon position;
   VikTrackpoint *vtp;
-  g_free ( urlParts[1] );
+  free( urlParts[1] );
   vtp = g_list_first ( vt->trackpoints )->data;
   vik_coord_to_latlon ( &(vtp->coord ), &position );
   urlParts[1] = substitute_latlon ( priv->url_start_ll_fmt, position );
-  g_free ( urlParts[len-2] );
+  free( urlParts[len-2] );
   vtp = g_list_last ( vt->trackpoints )->data;
   vik_coord_to_latlon ( &(vtp->coord), &position );
   urlParts[len-2] = substitute_latlon ( priv->url_stop_ll_fmt, position );
 
   /* Concat */
   url = g_strjoinv ( NULL, urlParts );
-  g_debug ( "%s: %s", __FUNCTION__, url );
+  fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, url );
 
   /* Free */
   g_strfreev ( urlParts );
@@ -563,7 +564,7 @@ vik_routing_web_engine_refine ( VikRoutingEngine *self, VikTrwLayer *vtl, VikTra
   ProcessOptions po = { NULL, NULL, format, uri, NULL, NULL };
   bool ret = a_babel_convert_from ( vtl, &po, NULL, NULL, options );
 
-  g_free(uri);
+  free(uri);
 
   return ret;
 }

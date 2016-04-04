@@ -22,6 +22,8 @@
 #include <glib/gi18n.h>
 #include <gtk/gtk.h>
 
+#include <stdlib.h>
+
 #include "viking.h"
 #include "acquire.h"
 #include "babel.h"
@@ -69,7 +71,7 @@ VikDataSourceInterface vik_datasource_url_interface = {
 
 static void * datasource_url_init ( acq_vik_t *avt )
 {
-	datasource_url_widgets_t *widgets = g_malloc(sizeof(*widgets));
+	datasource_url_widgets_t *widgets = malloc(sizeof(*widgets));
 	return widgets;
 }
 
@@ -149,9 +151,9 @@ static void datasource_url_get_process_options ( datasource_url_widgets_t *widge
 
 	po->input_file_type = NULL; // Default to gpx
 	if ( a_babel_file_list )
-		po->input_file_type = g_strdup ( ((BabelFile*)g_list_nth_data (a_babel_file_list, last_type))->name );
+		po->input_file_type = g_strdup( ((BabelFile*)g_list_nth_data (a_babel_file_list, last_type))->name );
 
-	po->url = g_strdup ( value );
+	po->url = g_strdup( value );
 
 	// Support .zip + bzip2 files directly
 	download_options->convert_file = a_try_decompress_file;
@@ -160,5 +162,5 @@ static void datasource_url_get_process_options ( datasource_url_widgets_t *widge
 
 static void datasource_url_cleanup ( void * data )
 {
-	g_free ( data );
+	free( data );
 }

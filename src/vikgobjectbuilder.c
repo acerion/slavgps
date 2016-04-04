@@ -28,6 +28,8 @@
 
 #include <glib.h>
 #include <glib/gstdio.h>
+#include <stdlib.h>
+#include <assert.h>
 
 #include <gtk/gtk.h>
 
@@ -107,10 +109,10 @@ _start_element (GMarkupParseContext *context,
 		gtype = g_type_from_name (class_name);
 		if (gtype == 0)
 		{
-			g_warning("Unknown GObject type '%s'", class_name);
+			fprintf(stderr, "WARNING: Unknown GObject type '%s'\n", class_name);
 			return;
 		}
-		g_free (class_name);
+		free(class_name);
 	}
 	if (strcmp(element_name, "property") == 0 && gtype != 0)
 	{
@@ -119,8 +121,8 @@ _start_element (GMarkupParseContext *context,
 		{
 			if (strcmp (attribute_names[i], "name") == 0)
 			{
-				g_free (property_name);
-				property_name = g_strdup (attribute_values[i]);
+				free(property_name);
+				property_name = g_strdup(attribute_values[i]);
 			}
 			i++;
 		}
@@ -141,7 +143,7 @@ _end_element (GMarkupParseContext *context,
 		object = g_object_newv(gtype, nb_parameters, parameters);
 		if (object != NULL)
 		{
-			g_debug("VikGobjectBuilder: new GObject of type %s", g_type_name(gtype));
+			fprintf(stderr, "DEBUG: VikGobjectBuilder: new GObject of type %s\n", g_type_name(gtype));
 			g_signal_emit ( G_OBJECT(self), gobject_builder_signals[NEW_OBJECT], 0, object );
 			g_object_unref (object);
 		}
@@ -149,17 +151,17 @@ _end_element (GMarkupParseContext *context,
 		int i = 0;
 		for (i = 0 ; i < nb_parameters ; i++)
 		{
-			g_free ((char *)parameters[i].name);
+			free((char *)parameters[i].name);
 			g_value_unset (&(parameters[i].value));
 		}
-		g_free (parameters);
+		free(parameters);
 		parameters = NULL;
 		nb_parameters = 0;
 		gtype = 0;
 	}
 	if (strcmp(element_name, "property") == 0)
 	{
-		g_free (property_name);
+		free(property_name);
 		property_name = NULL;
 	}
 }
@@ -184,22 +186,22 @@ _text (GMarkupParseContext *context,
 			 * in order to do the correct transformation */
 			GObjectClass *oclass;
 			oclass = g_type_class_ref (gtype);
-			g_assert (oclass != NULL);
+			assert (oclass != NULL);
 			GParamSpec *pspec;
 			pspec = g_object_class_find_property (G_OBJECT_CLASS (oclass), property_name);
 			if (!pspec)
 			{
-				g_warning ("Unknown property: %s.%s", g_type_name (gtype), property_name);
+				fprintf(stderr, "WARNING: Unknown property: %s.%s\n", g_type_name (gtype), property_name);
 				return;
 			}
 			char *value = g_strndup (text, text_len);
 			found = gtk_builder_value_from_string_type(NULL, pspec->value_type, value, &gvalue, NULL);
-			g_free (value);
+			free(value);
 		}
 		if (G_IS_VALUE (&gvalue) && found == true)
 		{
 			/* store new parameter */
-			g_debug("VikGobjectBuilder: store new GParameter for %s: (%s)%s=%*s",
+			fprintf(stderr, "DEBUG: VikGobjectBuilder: store new GParameter for %s: (%s)%s=%*s\n",
 			        g_type_name(gtype), g_type_name(G_VALUE_TYPE(&gvalue)), property_name, (int)text_len, text);
 			nb_parameters++;
 			parameters = g_realloc(parameters, sizeof(GParameter)*nb_parameters);
@@ -243,12 +245,12 @@ vik_gobject_builder_parse (VikGobjectBuilder *self, const char *filename)
 	while ((nb = fread (buff, sizeof(char), BUFSIZ, file)) > 0)
 	{
 		if (!g_markup_parse_context_parse(xml_context, buff, nb, &error))
-			g_warning("%s: parsing error: %s", __FUNCTION__,
+			fprintf(stderr, "WARNING: %s: parsing error: %s\n", __FUNCTION__,
 			          error != NULL ? error->message : "???");
 	}
 	/* cleanup */
 	if (!g_markup_parse_context_end_parse(xml_context, &error))
-		g_warning("%s: errors occurred reading file '%s': %s", __FUNCTION__, filename,
+		fprintf(stderr, "WARNING: %s: errors occurred reading file '%s': %s\n", __FUNCTION__, filename,
 		          error != NULL ? error->message : "???");
 	
 	g_markup_parse_context_free(xml_context);

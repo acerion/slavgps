@@ -24,6 +24,7 @@
 #endif
 #ifdef VIK_CONFIG_GEOCACHES
 #include <string.h>
+#include <stdlib.h>
 
 #include <glib/gi18n.h>
 
@@ -101,7 +102,7 @@ void a_datasource_gc_init()
 
 static void * datasource_gc_init ( acq_vik_t *avt )
 {
-  datasource_gc_widgets_t *widgets = g_malloc(sizeof(*widgets));
+  datasource_gc_widgets_t *widgets = malloc(sizeof(*widgets));
   return widgets;
 }
 
@@ -112,13 +113,13 @@ static char *datasource_gc_check_existence ()
 
   char *location1 = g_find_program_in_path(GC_PROGRAM1);
   if ( location1 ) {
-    g_free(location1);
+    free(location1);
     OK1 = true;
   }
 
   char *location2 = g_find_program_in_path(GC_PROGRAM2);
   if ( location2 ) {
-    g_free(location2);
+    free(location2);
     OK2 = true;
   }
 
@@ -197,7 +198,7 @@ static void datasource_gc_add_setup_widgets ( GtkWidget *dialog, VikViewport *vv
   vik_coord_to_latlon ( vik_viewport_get_center(vvp), &ll );
   s_ll = g_strdup_printf("%f,%f", ll.lat, ll.lon );
   gtk_entry_set_text ( GTK_ENTRY(widgets->center_entry), s_ll );
-  g_free ( s_ll );
+  free( s_ll );
 
 
   widgets->vvp = vvp;
@@ -228,7 +229,7 @@ static void datasource_gc_get_process_options ( datasource_gc_widgets_t *widgets
   char *slat, *slon;
   double lat, lon;
   if ( 2 != sscanf ( gtk_entry_get_text ( GTK_ENTRY(widgets->center_entry) ), "%lf,%lf", &lat, &lon ) ) {
-    g_warning (_("Broken input - using some defaults"));
+    fprintf(stderr, _("WARNING: Broken input - using some defaults\n"));
     lat = a_vik_get_default_lat();
     lon = a_vik_get_default_long();
   }
@@ -250,11 +251,11 @@ static void datasource_gc_get_process_options ( datasource_gc_widgets_t *widgets
 			  safe_pass,
 			  slat, slon,
 			  GC_PROGRAM2 );
-  //g_free ( safe_string );
-  g_free ( safe_user );
-  g_free ( safe_pass );
-  g_free ( slat );
-  g_free ( slon );
+  //free( safe_string );
+  free( safe_user );
+  free( safe_pass );
+  free( slat );
+  free( slon );
 }
 
 static void datasource_gc_cleanup ( datasource_gc_widgets_t *widgets )
@@ -266,6 +267,6 @@ static void datasource_gc_cleanup ( datasource_gc_widgets_t *widgets )
 		widgets->circle_width, widgets->circle_width, 0, 360*64 );
     vik_viewport_sync( widgets->vvp );
   }
-  g_free ( widgets );
+  free( widgets );
 }
 #endif /* VIK_CONFIG_GEOCACHES */

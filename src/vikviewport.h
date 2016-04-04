@@ -33,7 +33,10 @@
 #include "vikcoord.h"
 
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 
 #define VIK_VIEWPORT_TYPE            (vik_viewport_get_type ())
@@ -189,6 +192,8 @@ void vik_viewport_draw_layout ( VikViewport *vvp, GdkGC *gc, int x, int y, Pango
 /* Utilities */
 void vik_viewport_compute_bearing ( VikViewport *vp, int x1, int y1, int x2, int y2, double *angle, double *baseangle );
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

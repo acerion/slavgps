@@ -25,6 +25,7 @@
 #include <glib.h>
 #include <glib/gi18n.h>
 #include <string.h>
+#include <stdlib.h>
 #include "globals.h"
 #include "mapcache.h"
 #include "preferences.h"
@@ -70,7 +71,7 @@ static VikLayerParam prefs[] = {
 static void cache_item_free (cache_item_t *ci)
 {
   g_object_unref ( ci->pixbuf );
-  g_free ( ci );
+  free( ci );
 }
 
 void a_mapcache_init ()
@@ -85,7 +86,7 @@ void a_mapcache_init ()
 
 static void cache_add(char *key, GdkPixbuf *pixbuf, mapcache_extra_t extra)
 {
-  cache_item_t *ci = g_malloc ( sizeof(cache_item_t) );
+  cache_item_t *ci = malloc( sizeof(cache_item_t) );
   ci->pixbuf = pixbuf;
   ci->extra = extra;
 #if !GLIB_CHECK_VERSION(2,26,0)
@@ -127,7 +128,7 @@ static char *list_shift ()
   char *oldheadkey = queue_tail->next->key;
   List *oldhead = queue_tail->next;
   queue_tail->next = queue_tail->next->next;
-  g_free ( oldhead );
+  free( oldhead );
   queue_count--;
   return oldheadkey;
 }
@@ -135,7 +136,7 @@ static char *list_shift ()
 /* adds key to tail */
 static void list_add_entry ( char *key )
 {
-  List *newlist = g_malloc ( sizeof ( List ) );
+  List *newlist = malloc( sizeof ( List ) );
   newlist->key = key;
   if ( queue_tail ) {
     newlist->next = queue_tail->next;
@@ -155,7 +156,7 @@ static void list_add_entry ( char *key )
 void a_mapcache_add ( GdkPixbuf *pixbuf, mapcache_extra_t extra, int x, int y, int z, uint16_t type, int zoom, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const char* name )
 {
   if ( ! GDK_IS_PIXBUF(pixbuf) ) {
-    g_debug ( "Not caching corrupt pixbuf for maptype %d at %d %d %d %d", type, x, y, z, zoom );
+    fprintf(stderr, "DEBUG: Not caching corrupt pixbuf for maptype %d at %d %d %d %d\n", type, x, y, z, zoom );
     return;
   }
 
@@ -188,7 +189,7 @@ void a_mapcache_add ( GdkPixbuf *pixbuf, mapcache_extra_t extra, int x, int y, i
   g_mutex_unlock(mc_mutex);
 
   static int tmp = 0;
-  if ( (++tmp == 100 )) { g_debug("DEBUG: cache count=%d size=%u list count=%d\n", g_hash_table_size(cache), cache_size, queue_count ); tmp=0; }
+  if ( (++tmp == 100 )) { fprintf(stderr, "DEBUG: DEBUG: cache count=%d size=%u list count=%d\n", g_hash_table_size(cache), cache_size, queue_count ); tmp=0; }
 }
 
 /**
@@ -199,7 +200,7 @@ GdkPixbuf *a_mapcache_get ( int x, int y, int z, uint16_t type, int zoom, uint8_
 {
   static char key[MC_KEY_SIZE];
   unsigned int nn = name ? g_str_hash ( name ) : 0;
-  g_snprintf ( key, sizeof(key), HASHKEY_FORMAT_STRING, type, x, y, z, zoom, nn, alpha, xshrinkfactor, yshrinkfactor );
+  snprintf( key, sizeof(key), HASHKEY_FORMAT_STRING, type, x, y, z, zoom, nn, alpha, xshrinkfactor, yshrinkfactor );
   g_mutex_lock(mc_mutex); /* prevent returning pixbuf when cache is being cleared */
   cache_item_t *ci = g_hash_table_lookup ( cache, key );
   if ( ci ) {
@@ -216,7 +217,7 @@ mapcache_extra_t a_mapcache_get_extra ( int x, int y, int z, uint16_t type, int 
 {
   static char key[MC_KEY_SIZE];
   unsigned int nn = name ? g_str_hash ( name ) : 0;
-  g_snprintf ( key, sizeof(key), HASHKEY_FORMAT_STRING, type, x, y, z, zoom, nn, alpha, xshrinkfactor, yshrinkfactor );
+  snprintf( key, sizeof(key), HASHKEY_FORMAT_STRING, type, x, y, z, zoom, nn, alpha, xshrinkfactor, yshrinkfactor );
   cache_item_t *ci = g_hash_table_lookup ( cache, key );
   if ( ci )
     return ci->extra;
@@ -255,7 +256,7 @@ static void flush_matching ( char *str )
         if ( tmp == queue_tail )
           queue_tail = tmp->next;
       }
-      g_free ( tmp );
+      free( tmp );
       tmp = NULL;
       queue_count--;
     }
@@ -277,7 +278,7 @@ void a_mapcache_remove_all_shrinkfactors ( int x, int y, int z, uint16_t type, i
 {
   char key[MC_KEY_SIZE];
   unsigned int nn = name ? g_str_hash ( name ) : 0;
-  g_snprintf ( key, sizeof(key), HASHKEY_FORMAT_STRING_NOSHRINK_NOR_ALPHA, type, x, y, z, zoom, nn );
+  snprintf( key, sizeof(key), HASHKEY_FORMAT_STRING_NOSHRINK_NOR_ALPHA, type, x, y, z, zoom, nn );
   flush_matching ( key );
 }
 
@@ -296,7 +297,7 @@ void a_mapcache_flush ()
       loop = queue_tail = NULL;
     else
       loop->next = tmp->next;
-    g_free ( tmp );
+    free( tmp );
     tmp = NULL;
   }
 
@@ -313,7 +314,7 @@ void a_mapcache_flush ()
 void a_mapcache_flush_type ( uint16_t type )
 {
   char key[MC_KEY_SIZE];
-  g_snprintf ( key, sizeof(key), HASHKEY_FORMAT_STRING_TYPE, type );
+  snprintf( key, sizeof(key), HASHKEY_FORMAT_STRING_TYPE, type );
   flush_matching ( key );
 }
 

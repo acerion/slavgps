@@ -31,6 +31,7 @@
 #include <glib/gi18n.h>
 #include <glib/gprintf.h>
 #include <gio/gio.h>
+#include <stdlib.h>
 
 #include "util.h"
 #include "globals.h"
@@ -64,7 +65,7 @@ unsigned int util_get_number_of_cpus ()
 
 char *uri_escape(char *str)
 {
-  char *esc_str = g_malloc(3*strlen(str));
+  char *esc_str = malloc(3*strlen(str));
   char *dst = esc_str;
   char *src;
 
@@ -123,9 +124,9 @@ bool split_string_from_file_on_equals ( const char *buf, char **key, char **val 
   char *str = strv[gi];
   while ( str ) {
 	if ( gi == 0 )
-	  *key = g_strdup ( str );
+	  *key = g_strdup( str );
 	else
-	  *val = g_strdup ( str );
+	  *val = g_strdup( str );
     gi++;
     str = strv[gi];
   }
@@ -149,7 +150,7 @@ static GSList* deletion_list = NULL;
  */
 void util_add_to_deletion_list ( const char* filename )
 {
-	deletion_list = g_slist_append ( deletion_list, g_strdup (filename) );
+	deletion_list = g_slist_append ( deletion_list, g_strdup(filename) );
 }
 
 /**
@@ -163,8 +164,8 @@ void util_remove_all_in_deletion_list ( void )
 	while ( deletion_list )
 	{
 		if ( g_remove ( (const char*)deletion_list->data ) )
-			g_warning ( "%s: Failed to remove %s", __FUNCTION__, (char*)deletion_list->data );
-		g_free ( deletion_list->data );
+			fprintf(stderr, "WARNING: %s: Failed to remove %s\n", __FUNCTION__, (char*)deletion_list->data );
+		free( deletion_list->data );
 		deletion_list = g_slist_delete_link ( deletion_list, deletion_list );
 	}
 }
@@ -176,7 +177,7 @@ void util_remove_all_in_deletion_list ( void )
  *  @param chars Characters to remove.
  *
  *  @return @a string - return value is only useful when nesting function calls, e.g.:
- *  @code str = utils_str_remove_chars(g_strdup("f_o_o"), "_"); @endcode
+ *  @code str = utils_str_remove_chars(strdup("f_o_o"), "_"); @endcode
  *
  *  @see @c g_strdelimit.
  **/
@@ -208,7 +209,7 @@ char *util_str_remove_chars(char *string, const char *chars)
 int util_remove ( const char *filename )
 {
 	if ( vik_debug && vik_verbose ) {
-		g_warning ( "Not removing file: %s", filename );
+		fprintf(stderr, "WARNING: Not removing file: %s\n", filename );
 		return 0;
 	}
 	else
@@ -235,13 +236,13 @@ char* util_write_tmp_file_from_bytes ( const void *buffer, size_t count )
 #else
 	int fd = g_file_open_tmp ( "vik-tmp.XXXXXX", &tmpname, &error );
 	if ( error ) {
-		g_warning ( "%s", error->message );
+		fprintf(stderr, "WARNING: %s\n", error->message );
 		g_error_free ( error );
 		return NULL;
 	}
 	gios = g_file_open_readwrite ( g_file_new_for_path (tmpname), NULL, &error );
 	if ( error ) {
-		g_warning ( "%s", error->message );
+		fprintf(stderr, "WARNING: %s\n", error->message );
 		g_error_free ( error );
 		return NULL;
 	}
@@ -249,15 +250,15 @@ char* util_write_tmp_file_from_bytes ( const void *buffer, size_t count )
 
 	gios = g_file_open_readwrite ( g_file_new_for_path (tmpname), NULL, &error );
 	if ( error ) {
-		g_warning ( "%s", error->message );
+		fprintf(stderr, "WARNING: %s\n", error->message );
 		g_error_free ( error );
 		return NULL;
 	}
 
 	GOutputStream *gos = g_io_stream_get_output_stream ( G_IO_STREAM(gios) );
 	if ( g_output_stream_write ( gos, buffer, count, NULL, &error ) < 0 ) {
-		g_critical ( "Couldn't write tmp %s file due to %s", tmpname, error->message );
-		g_free (tmpname);
+		fprintf(stderr, "CRITICAL: Couldn't write tmp %s file due to %s\n", tmpname, error->message );
+		free(tmpname);
 		tmpname = NULL;
 	}
 

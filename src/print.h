@@ -26,10 +26,15 @@
 
 #include "vikwindow.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 void a_print(VikWindow *vw, VikViewport *vvp);
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif /*__VIKING_PRINT_H*/

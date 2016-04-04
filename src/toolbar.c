@@ -36,6 +36,7 @@
 #include "ui_util.h"
 #include "util.h"
 #include <string.h>
+#include <stdlib.h>
 #include <glib/gi18n.h>
 #include <glib/gstdio.h>
 #include <gdk/gdkkeysyms.h>
@@ -205,7 +206,7 @@ GtkWidget *toolbar_get_widget_by_name(VikToolbar *vtb, const char *name)
 	path = g_strconcat("/ui/MainToolbar/", name, NULL);
 	widget = gtk_ui_manager_get_widget(vtb->uim, path);
 
-	g_free(path);
+	free(path);
 	return widget;
 }
 
@@ -275,7 +276,7 @@ void toolbar_action_toggle_entry_register(VikToolbar *vtb, GtkToggleActionEntry 
 	g_return_if_fail(VIK_IS_TOOLBAR(vtb));
 	g_return_if_fail(action != NULL);
 
-	GtkToggleActionEntry *myaction = g_malloc (sizeof (GtkToggleActionEntry) );
+	GtkToggleActionEntry *myaction = malloc(sizeof (GtkToggleActionEntry) );
 	memcpy ( myaction, action, sizeof (GtkToggleActionEntry) );
 	// Overwrite with specific callback
 	myaction->callback = callback;
@@ -421,7 +422,7 @@ static void toolbar_reload ( VikToolbar *vtb,
                              void * user_data )
 {
 	GError *error = NULL;
-	g_debug ( "%s: %d", __FUNCTION__, g_hash_table_size(signal_data) );
+	fprintf(stderr, "DEBUG: %s: %d\n", __FUNCTION__, g_hash_table_size(signal_data) );
 
 	/* Cleanup old toolbar */
 	if (vtb->merge_id > 0)
@@ -446,11 +447,11 @@ static void toolbar_reload ( VikToolbar *vtb,
 		// Consider using a_get_viking_data_path() first
 		filename = g_build_filename (a_get_viking_dir(), "ui_toolbar.xml", NULL);
 		vtb->merge_id = gtk_ui_manager_add_ui_from_file(vtb->uim, filename, &error);
-		g_free(filename);
+		free(filename);
 	}
 	if (error != NULL)
 	{
-		g_debug("UI creation failed, using internal fallback definition. Error message: %s", error->message);
+		fprintf(stderr, "DEBUG: UI creation failed, using internal fallback definition. Error message: %s\n", error->message);
 		g_error_free(error);
 		error = NULL;
 
@@ -458,7 +459,7 @@ static void toolbar_reload ( VikToolbar *vtb,
 		vtb->merge_id = gtk_ui_manager_add_ui_from_string(vtb->uim, toolbar_xml, -1, &error);
 		if (error) {
 			// Abort - this should only happen if you're missing around with the code
-			g_error("Internal UI creation failed. Error message: %s", error->message);
+			fprintf(stderr, "ERROR: Internal UI creation failed. Error message: %s\n", error->message);
 		}
 
 	}
@@ -472,7 +473,7 @@ static void toolbar_reload ( VikToolbar *vtb,
 	gtk_widget_show(vtb->widget);
 
 	/* Signals */
-	config_t *data = g_malloc(sizeof(config_t));
+	config_t *data = malloc(sizeof(config_t));
 	data->vtb = vtb;
 	data->parent = parent;
 	data->vbox = vbox;
@@ -735,7 +736,7 @@ static void tb_editor_set_item_values(VikToolbar *vtb, const char *name, GtkList
 
 		g_object_get(action, "label", &label, NULL);
 		if (label != NULL)
-			label_clean = util_str_remove_chars(g_strdup(label), "_");
+			label_clean = util_str_remove_chars(strdup(label), "_");
 	}
 
 	gtk_list_store_set(store, iter,
@@ -744,9 +745,9 @@ static void tb_editor_set_item_values(VikToolbar *vtb, const char *name, GtkList
 		TB_EDITOR_COL_ICON, icon,
 		-1);
 
-	g_free(icon);
-	g_free(label);
-	g_free(label_clean);
+	free(icon);
+	free(label);
+	free(label_clean);
 }
 
 
@@ -789,7 +790,7 @@ static void tb_editor_btn_remove_clicked_cb(GtkWidget *button, TBEditorWidget *t
 			tb_editor_scroll_to_iter(tbw->tree_available, &iter_new);
 		}
 
-		g_free(action_name);
+		free(action_name);
 	}
 }
 
@@ -821,7 +822,7 @@ static void tb_editor_btn_add_clicked_cb(GtkWidget *button, TBEditorWidget *tbw)
 		tb_editor_set_item_values(tbw->config.vtb, action_name, tbw->store_used, &iter_new);
 		tb_editor_scroll_to_iter(tbw->tree_used, &iter_new);
 
-		g_free(action_name);
+		free(action_name);
 	}
 }
 
@@ -855,14 +856,14 @@ static void tb_editor_drag_data_get_cb(GtkWidget *widget, GdkDragContext *contex
 	gtk_tree_model_get(model, &iter, TB_EDITOR_COL_ACTION, &name, -1);
 	if (G_UNLIKELY(EMPTY(name)))
 	{
-		g_free(name);
+		free(name);
 		return;
 	}
 
 	atom = gdk_atom_intern(tb_editor_dnd_targets[0].target, false);
 	gtk_selection_data_set(data, atom, 8, (unsigned char*) name, strlen(name));
 
-	g_free(name);
+	free(name);
 
 	tbw->drag_source = widget;
 }
@@ -935,7 +936,7 @@ static bool tb_editor_foreach_used(GtkTreeModel *model, GtkTreePath *path,
 	else if (G_LIKELY(!EMPTY(action_name)))
 		g_string_append_printf(data, "\t\t<toolitem action='%s' />\n", action_name);
 
-	g_free(action_name);
+	free(action_name);
 	return false;
 }
 
@@ -967,10 +968,10 @@ For manual changes to this file to take effect, you need to restart Viking.\n-->
 	char *filename = g_build_filename(a_get_viking_dir (), "ui_toolbar.xml", NULL);
 	GError *error = NULL;
 	if (! g_file_set_contents(filename, str->str, -1, &error)) {
-		g_warning ("%s: could not write to file %s (%s)", __FUNCTION__, filename, error->message);
+		fprintf(stderr, "WARNING: %s: could not write to file %s (%s)\n", __FUNCTION__, filename, error->message);
 		g_error_free(error);
 	}
-	g_free(filename);
+	free(filename);
 
 	g_string_free(str, true);
 }
@@ -998,11 +999,11 @@ static TBEditorWidget *tb_editor_create_dialog(VikToolbar *vtb, GtkWindow *paren
 	GtkTreeViewColumn *column;
 
 	if (parent == NULL) {
-		g_warning ( "No parent" );
+		fprintf(stderr, "WARNING: No parent\n" );
 		return NULL;
 	}
 
-	TBEditorWidget *tbw = g_new(TBEditorWidget, 1);
+	TBEditorWidget *tbw = (TBEditorWidget *) malloc(1 * sizeof (TBEditorWidget));
 
 	dialog = gtk_dialog_new_with_buttons(_("Customize Toolbar"),
 	                                     GTK_WINDOW(parent),
@@ -1146,7 +1147,7 @@ void toolbar_configure (VikToolbar *vtb, GtkWidget *toolbar, GtkWindow *parent, 
 	/* read the current active toolbar items */
 	markup = gtk_ui_manager_get_ui(vtb->uim);
 	used_items = tb_editor_parse_ui(markup, -1, NULL);
-	g_free(markup);
+	free(markup);
 
 	/* get all available actions */
 	all_items = gtk_action_group_list_actions(vtb->group_actions);
@@ -1196,5 +1197,5 @@ void toolbar_configure (VikToolbar *vtb, GtkWidget *toolbar, GtkWindow *parent, 
 	g_slist_free(used_items);
 	g_list_free(all_items);
 	tb_editor_free_path(tbw);
-	g_free(tbw);
+	free(tbw);
 }

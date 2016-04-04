@@ -20,6 +20,7 @@
  *
  */
 #include <stdlib.h>
+#include <stdlib.h>
 #include <glib/gi18n.h>
 
 #include "viktrwlayer_wpwin.h"
@@ -38,7 +39,7 @@ static void update_time ( GtkWidget *widget, VikWaypoint *wp )
 {
   char *msg = vu_get_time_string ( &(wp->timestamp), "%c", &(wp->coord), NULL );
   gtk_button_set_label ( GTK_BUTTON(widget), msg );
-  g_free ( msg );
+  free( msg );
 }
 
 static VikWaypoint *edit_wp;
@@ -91,7 +92,7 @@ static void symbol_entry_changed_cb(GtkWidget *combo, GtkListStore *store)
   gtk_tree_model_get(GTK_TREE_MODEL(store), &iter, 0, (void *)&sym, -1 );
   /* Note: symm is NULL when "(none)" is select (first cell is empty) */
   gtk_widget_set_tooltip_text(combo, sym);
-  g_free(sym);
+  free(sym);
 }
 
 /* Specify if a new waypoint or not */
@@ -136,7 +137,7 @@ char *a_dialog_waypoint ( GtkWindow *parent, char *default_name, VikTrwLayer *vt
     break;
   default:
     alt = g_strdup_printf ( "%f", wp->altitude );
-    g_critical("Houston, we've had a problem. height=%d", height_units);
+    fprintf(stderr, "CRITICAL: Houston, we've had a problem. height=%d\n", height_units);
   }
 
   *updated = false;
@@ -153,17 +154,17 @@ char *a_dialog_waypoint ( GtkWindow *parent, char *default_name, VikTrwLayer *vt
   latlabel = gtk_label_new (_("Latitude:"));
   latentry = gtk_entry_new ();
   gtk_entry_set_text ( GTK_ENTRY(latentry), lat );
-  g_free ( lat );
+  free( lat );
 
   lonlabel = gtk_label_new (_("Longitude:"));
   lonentry = gtk_entry_new ();
   gtk_entry_set_text ( GTK_ENTRY(lonentry), lon );
-  g_free ( lon );
+  free( lon );
 
   altlabel = gtk_label_new (_("Altitude:"));
   altentry = gtk_entry_new ();
   gtk_entry_set_text ( GTK_ENTRY(altentry), alt );
-  g_free ( alt );
+  free( alt );
 
   if ( wp->comment && !strncmp(wp->comment, "http", 4) )
     commentlabel = gtk_link_button_new_with_label (wp->comment, _("Comment:") );
@@ -225,10 +226,10 @@ char *a_dialog_waypoint ( GtkWindow *parent, char *default_name, VikTrwLayer *vt
       for (ok = gtk_tree_model_get_iter_first ( GTK_TREE_MODEL(store), &iter ); ok; ok = gtk_tree_model_iter_next ( GTK_TREE_MODEL(store), &iter)) {
 	gtk_tree_model_get ( GTK_TREE_MODEL(store), &iter, 0, (void *)&sym, -1 );
 	if (sym && !strcmp(sym, wp->symbol)) {
-	  g_free(sym);
+	  free(sym);
 	  break;
 	} else {
-	  g_free(sym);
+	  free(sym);
 	}
       }
       // Ensure is it a valid symbol in the given symbol set (large vs small)
@@ -254,7 +255,7 @@ char *a_dialog_waypoint ( GtkWindow *parent, char *default_name, VikTrwLayer *vt
     gtk_widget_set_sensitive ( hasGeotagCB, false );
     bool hasGeotag;
     char *ignore = a_geotag_get_exif_date_from_file ( wp->image, &hasGeotag );
-    g_free ( ignore );
+    free( ignore );
     gtk_toggle_button_set_active ( GTK_TOGGLE_BUTTON(hasGeotagCB), hasGeotag );
 
     consistentGeotagCB = gtk_check_button_new_with_label ( _("Consistent Position") );
@@ -337,7 +338,7 @@ char *a_dialog_waypoint ( GtkWindow *parent, char *default_name, VikTrwLayer *vt
       a_dialog_info_msg ( parent, _("Please enter a name for the waypoint.") );
     else {
       // NB: No check for unique names - this allows generation of same named entries.
-      char *entered_name = g_strdup ( (char*)gtk_entry_get_text ( GTK_ENTRY(nameentry) ) );
+      char *entered_name = g_strdup( (char*)gtk_entry_get_text ( GTK_ENTRY(nameentry) ) );
 
       /* Do It */
       ll.lat = convert_dms_to_dec ( gtk_entry_get_text ( GTK_ENTRY(latentry) ) );
@@ -353,7 +354,7 @@ char *a_dialog_waypoint ( GtkWindow *parent, char *default_name, VikTrwLayer *vt
         break;
       default:
         wp->altitude = atof ( gtk_entry_get_text ( GTK_ENTRY(altentry) ) );
-        g_critical("Houston, we've had a problem. height=%d", height_units);
+        fprintf(stderr, "CRITICAL: Houston, we've had a problem. height=%d\n", height_units);
       }
       if ( g_strcmp0 ( wp->comment, gtk_entry_get_text ( GTK_ENTRY(commententry) ) ) )
         vik_waypoint_set_comment ( wp, gtk_entry_get_text ( GTK_ENTRY(commententry) ) );
@@ -380,7 +381,7 @@ char *a_dialog_waypoint ( GtkWindow *parent, char *default_name, VikTrwLayer *vt
         char *sym;
         gtk_tree_model_get ( GTK_TREE_MODEL(store), &iter, 0, (void *)&sym, -1 );
         vik_waypoint_set_symbol ( wp, sym );
-        g_free(sym);
+        free(sym);
       }
 
       gtk_widget_destroy ( dialog );

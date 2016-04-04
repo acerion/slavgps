@@ -329,14 +329,14 @@ static bool str_equal_casefold ( gconstpointer v1, gconstpointer v2 ) {
     return false;
   v2_lower = g_utf8_casefold ( v2, -1 );
   if (!v2_lower) {
-    g_free ( v1_lower );
+    free( v1_lower );
     return false;
   }
 
   equal = g_str_equal( v1_lower, v2_lower );
 
-  g_free ( v1_lower );
-  g_free ( v2_lower );
+  free( v1_lower );
+  free( v2_lower );
 
   return equal;
 }
@@ -351,7 +351,7 @@ static unsigned int str_hash_casefold ( gconstpointer key ) {
 
   h = g_str_hash ( key_lower );
 
-  g_free ( key_lower );
+  free( key_lower );
 
   return h;
 }
@@ -361,8 +361,8 @@ static void init_icons() {
   old_icons = g_hash_table_new_full ( str_hash_casefold, str_equal_casefold, NULL, NULL);
   int i;
   for (i=0; i<G_N_ELEMENTS(garmin_syms); i++) {
-    g_hash_table_insert(icons, garmin_syms[i].sym, GINT_TO_POINTER (i));
-    g_hash_table_insert(old_icons, garmin_syms[i].old_sym, GINT_TO_POINTER (i));
+    g_hash_table_insert(icons, garmin_syms[i].sym, KINT_TO_POINTER (i));
+    g_hash_table_insert(old_icons, garmin_syms[i].old_sym, KINT_TO_POINTER (i));
   }
 }
 
@@ -400,9 +400,9 @@ GdkPixbuf *a_get_wp_sym ( const char *sym ) {
     init_icons();
   }
   if (g_hash_table_lookup_extended(icons, sym, &x, &gp))
-    return get_wp_sym_from_index(GPOINTER_TO_INT(gp));
+    return get_wp_sym_from_index(KPOINTER_TO_INT(gp));
   else if (g_hash_table_lookup_extended(old_icons, sym, &x, &gp))
-    return get_wp_sym_from_index(GPOINTER_TO_INT(gp));
+    return get_wp_sym_from_index(KPOINTER_TO_INT(gp));
   else
     return NULL;
 }
@@ -418,9 +418,9 @@ const char *a_get_hashed_sym ( const char *sym ) {
     init_icons();
   }
   if (g_hash_table_lookup_extended(icons, sym, &x, &gp))
-    return garmin_syms[GPOINTER_TO_INT(gp)].sym;
+    return garmin_syms[KPOINTER_TO_INT(gp)].sym;
   else if (g_hash_table_lookup_extended(old_icons, sym, &x, &gp))
-    return garmin_syms[GPOINTER_TO_INT(gp)].sym;
+    return garmin_syms[KPOINTER_TO_INT(gp)].sym;
   else
     return NULL;
 }
@@ -440,7 +440,7 @@ void a_populate_sym_list ( GtkListStore *list ) {
 
 /* Use when preferences have changed to reset icons*/
 void clear_garmin_icon_syms () {
-  g_debug("garminsymbols: clear_garmin_icon_syms");
+  fprintf(stderr, "DEBUG: garminsymbols: clear_garmin_icon_syms\n");
   int i;
   for (i=0; i<G_N_ELEMENTS(garmin_syms); i++) {
     if (garmin_syms[i].icon) {

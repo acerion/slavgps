@@ -24,7 +24,10 @@
 
 #include "viklayer.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #define VIK_DEM_LAYER_TYPE            (vik_dem_layer_get_type ())
 #define VIK_DEM_LAYER(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_DEM_LAYER_TYPE, VikDEMLayer))
@@ -42,6 +45,8 @@ GType vik_dem_layer_get_type ();
 
 typedef struct _VikDEMLayer VikDEMLayer;
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

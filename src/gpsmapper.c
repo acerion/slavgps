@@ -21,6 +21,7 @@
 #include "viking.h"
 
 #include <string.h>
+#include <stdlib.h>
 
 /* Name of layer -> RGN type and Type
    format: Name RGN40 0x40
@@ -36,7 +37,7 @@ static unsigned int print_rgn_stuff ( const char *nm, FILE *f )
   if (!nm)
     return 0;
 
-  name = g_strdup ( nm );
+  name = g_strdup( nm );
 
   len = strlen(name);
   
@@ -71,7 +72,7 @@ strncasecmp(name+len-4,"0x",2) == 0 )
 /* added by oddgeir@oddgeirkvien.com, 2005.02.02 */
     if (layers) fprintf( f, "%s\n",layers);  
 
-    g_free ( name );
+    free( name );
 
     return len - 11;
   }
@@ -85,12 +86,12 @@ strncasecmp(name+len-6,"0x",2) == 0 )
 /* added by oddgeir@oddgeirkvien.com, 2005.02.02 */
     if (layers) fprintf( f, "%s\n",layers);  
 
-    g_free ( name );
+    free( name );
 
     return len - 13;
   }
   else {
-    g_free ( name );
+    free( name );
     return 0;
   }
 }
@@ -106,8 +107,8 @@ static void write_waypoint ( const char *name, VikWaypoint *wp, FILE *f )
     s_lat = a_coords_dtostr(ll.lat);
     s_lon = a_coords_dtostr(ll.lon);
     fprintf ( f, "Data0=(%s,%s)\n", s_lat, s_lon );
-    g_free ( s_lat );
-    g_free ( s_lon );
+    free( s_lat );
+    free( s_lon );
     fprintf ( f, "[END-%.5s]\n\n", wp->comment+len+1 );
   }
 }
@@ -120,8 +121,8 @@ static void write_trackpoint ( VikTrackpoint *tp, FILE *f )
   s_lat = a_coords_dtostr(ll.lat);
   s_lon = a_coords_dtostr(ll.lon);
   fprintf ( f, "(%s,%s),", s_lat, s_lon );
-  g_free ( s_lat );
-  g_free ( s_lon );
+  free( s_lat );
+  free( s_lon );
 }
 
 static void write_track ( const char *name, VikTrack *t, FILE *f )

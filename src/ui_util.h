@@ -30,7 +30,10 @@
 #include <stdint.h>
 
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 void open_url(GtkWindow *parent, const char * url);
 void new_email(GtkWindow *parent, const char * address);
@@ -44,6 +47,8 @@ GdkPixbuf *ui_pixbuf_set_alpha ( GdkPixbuf *pixbuf, uint8_t alpha );
 GdkPixbuf *ui_pixbuf_scale_alpha ( GdkPixbuf *pixbuf, uint8_t alpha );
 void ui_add_recent_file ( const char *filename );
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

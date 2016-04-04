@@ -31,7 +31,10 @@
 
 #include "vikgototool.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #define VIK_GOTO_XML_TOOL_TYPE            (vik_goto_xml_tool_get_type ())
 #define VIK_GOTO_XML_TOOL(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_GOTO_XML_TOOL_TYPE, VikGotoXmlTool))
@@ -57,6 +60,8 @@ struct _VikGotoXmlTool {
 
 VikGotoXmlTool *vik_goto_xml_tool_new ();
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

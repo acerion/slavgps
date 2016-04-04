@@ -33,6 +33,7 @@
 #include <gtk/gtk.h>
 #include <glib/gi18n.h>
 #include <time.h>
+#include <stdlib.h>
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif
@@ -241,18 +242,18 @@ static void prop_widgets_free(PropWidgets *widgets)
   if (widgets->speed_dist_graph_saved_img.img)
     g_object_unref(widgets->speed_dist_graph_saved_img.img);
   if (widgets->altitudes)
-    g_free(widgets->altitudes);
+    free(widgets->altitudes);
   if (widgets->gradients)
-    g_free(widgets->gradients);
+    free(widgets->gradients);
   if (widgets->speeds)
-    g_free(widgets->speeds);
+    free(widgets->speeds);
   if (widgets->distances)
-    g_free(widgets->distances);
+    free(widgets->distances);
   if (widgets->ats)
-    g_free(widgets->ats);
+    free(widgets->ats);
   if (widgets->speeds_dist)
-    g_free(widgets->speeds_dist);
-  g_free(widgets);
+    free(widgets->speeds_dist);
+  free(widgets);
 }
 
 static void minmax_array(const double *array, double *min, double *max, bool NO_ALT_TEST, int PROFILE_WIDTH)
@@ -746,16 +747,16 @@ void track_profile_move( GtkWidget *event_box, GdkEventMotion *event, PropWidget
     vik_units_distance_t dist_units = a_vik_get_units_distance ();
     switch (dist_units) {
     case VIK_UNITS_DISTANCE_KILOMETRES:
-      g_snprintf(tmp_buf, sizeof(tmp_buf), "%.2f km", meters_from_start/1000.0);
+      snprintf(tmp_buf, sizeof(tmp_buf), "%.2f km", meters_from_start/1000.0);
       break;
     case VIK_UNITS_DISTANCE_MILES:
-      g_snprintf(tmp_buf, sizeof(tmp_buf), "%.2f miles", VIK_METERS_TO_MILES(meters_from_start) );
+      snprintf(tmp_buf, sizeof(tmp_buf), "%.2f miles", VIK_METERS_TO_MILES(meters_from_start) );
       break;
     case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
-      g_snprintf(tmp_buf, sizeof(tmp_buf), "%.2f NM", VIK_METERS_TO_NAUTICAL_MILES(meters_from_start) );
+      snprintf(tmp_buf, sizeof(tmp_buf), "%.2f NM", VIK_METERS_TO_NAUTICAL_MILES(meters_from_start) );
       break;
     default:
-      g_critical("Houston, we've had a problem. distance=%d", dist_units);
+      fprintf(stderr, "CRITICAL: Houston, we've had a problem. distance=%d\n", dist_units);
     }
     gtk_label_set_text(GTK_LABEL(widgets->w_cur_dist), tmp_buf);
   }
@@ -764,9 +765,9 @@ void track_profile_move( GtkWidget *event_box, GdkEventMotion *event, PropWidget
   if (trackpoint && widgets->w_cur_elevation) {
     static char tmp_buf[20];
     if (a_vik_get_units_height () == VIK_UNITS_HEIGHT_FEET)
-      g_snprintf(tmp_buf, sizeof(tmp_buf), "%d ft", (int)VIK_METERS_TO_FEET(trackpoint->altitude));
+      snprintf(tmp_buf, sizeof(tmp_buf), "%d ft", (int)VIK_METERS_TO_FEET(trackpoint->altitude));
     else
-      g_snprintf(tmp_buf, sizeof(tmp_buf), "%d m", (int)trackpoint->altitude);
+      snprintf(tmp_buf, sizeof(tmp_buf), "%d m", (int)trackpoint->altitude);
     gtk_label_set_text(GTK_LABEL(widgets->w_cur_elevation), tmp_buf);
   }
 
@@ -829,16 +830,16 @@ void track_gradient_move( GtkWidget *event_box, GdkEventMotion *event, PropWidge
     vik_units_distance_t dist_units = a_vik_get_units_distance ();
     switch (dist_units) {
     case VIK_UNITS_DISTANCE_KILOMETRES:
-      g_snprintf(tmp_buf, sizeof(tmp_buf), "%.2f km", meters_from_start/1000.0);
+      snprintf(tmp_buf, sizeof(tmp_buf), "%.2f km", meters_from_start/1000.0);
       break;
     case VIK_UNITS_DISTANCE_MILES:
-      g_snprintf(tmp_buf, sizeof(tmp_buf), "%.2f miles", VIK_METERS_TO_MILES(meters_from_start) );
+      snprintf(tmp_buf, sizeof(tmp_buf), "%.2f miles", VIK_METERS_TO_MILES(meters_from_start) );
       break;
     case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
-      g_snprintf(tmp_buf, sizeof(tmp_buf), "%.2f NM", VIK_METERS_TO_NAUTICAL_MILES(meters_from_start) );
+      snprintf(tmp_buf, sizeof(tmp_buf), "%.2f NM", VIK_METERS_TO_NAUTICAL_MILES(meters_from_start) );
       break;
     default:
-      g_critical("Houston, we've had a problem. distance=%d", dist_units);
+      fprintf(stderr, "CRITICAL: Houston, we've had a problem. distance=%d\n", dist_units);
     }
     gtk_label_set_text(GTK_LABEL(widgets->w_cur_gradient_dist), tmp_buf);
   }
@@ -849,7 +850,7 @@ void track_gradient_move( GtkWidget *event_box, GdkEventMotion *event, PropWidge
     
     double gradient = widgets->gradients[(int) x];
 
-    g_snprintf(tmp_buf, sizeof(tmp_buf), "%d%%", (int)gradient);
+    snprintf(tmp_buf, sizeof(tmp_buf), "%d%%", (int)gradient);
     gtk_label_set_text(GTK_LABEL(widgets->w_cur_gradient_gradient), tmp_buf);
   }
 
@@ -893,7 +894,7 @@ static void time_label_update (GtkWidget *widget, time_t seconds_from_start)
   unsigned int h = seconds_from_start/3600;
   unsigned int m = (seconds_from_start - h*3600)/60;
   unsigned int s = seconds_from_start - (3600*h) - (60*m);
-  g_snprintf(tmp_buf, sizeof(tmp_buf), "%02d:%02d:%02d", h, m, s);
+  snprintf(tmp_buf, sizeof(tmp_buf), "%02d:%02d:%02d", h, m, s);
   gtk_label_set_text(GTK_LABEL(widget), tmp_buf);
 }
 
@@ -907,7 +908,7 @@ static void real_time_label_update ( PropWidgets *widgets, GtkWidget *widget, Vi
     strftime (tmp_buf, sizeof(tmp_buf), "%X %x %Z", localtime(&(trackpoint->timestamp)));
   }
   else
-    g_snprintf (tmp_buf, sizeof(tmp_buf), _("No Data"));
+    snprintf(tmp_buf, sizeof(tmp_buf), _("No Data"));
   gtk_label_set_text(GTK_LABEL(widget), tmp_buf);
 }
 
@@ -952,17 +953,17 @@ void track_vt_move( GtkWidget *event_box, GdkEventMotion *event, PropWidgets *wi
     vik_units_speed_t speed_units = a_vik_get_units_speed ();
     switch (speed_units) {
     case VIK_UNITS_SPEED_KILOMETRES_PER_HOUR:
-      g_snprintf(tmp_buf, sizeof(tmp_buf), _("%.1f kph"), widgets->speeds[ix]);
+      snprintf(tmp_buf, sizeof(tmp_buf), _("%.1f kph"), widgets->speeds[ix]);
       break;
     case VIK_UNITS_SPEED_MILES_PER_HOUR:
-      g_snprintf(tmp_buf, sizeof(tmp_buf), _("%.1f mph"), widgets->speeds[ix]);
+      snprintf(tmp_buf, sizeof(tmp_buf), _("%.1f mph"), widgets->speeds[ix]);
       break;
     case VIK_UNITS_SPEED_KNOTS:
-      g_snprintf(tmp_buf, sizeof(tmp_buf), _("%.1f knots"), widgets->speeds[ix]);
+      snprintf(tmp_buf, sizeof(tmp_buf), _("%.1f knots"), widgets->speeds[ix]);
       break;
     default:
       // VIK_UNITS_SPEED_METRES_PER_SECOND:
-      g_snprintf(tmp_buf, sizeof(tmp_buf), _("%.1f m/s"), widgets->speeds[ix]);
+      snprintf(tmp_buf, sizeof(tmp_buf), _("%.1f m/s"), widgets->speeds[ix]);
       break;
     }
     gtk_label_set_text(GTK_LABEL(widgets->w_cur_speed), tmp_buf);
@@ -1042,13 +1043,13 @@ void track_dt_move( GtkWidget *event_box, GdkEventMotion *event, PropWidgets *wi
     static char tmp_buf[20];
     switch ( a_vik_get_units_distance () ) {
     case VIK_UNITS_DISTANCE_MILES:
-      g_snprintf(tmp_buf, sizeof(tmp_buf), "%.2f miles", widgets->distances[ix]);
+      snprintf(tmp_buf, sizeof(tmp_buf), "%.2f miles", widgets->distances[ix]);
       break;
     case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
-      g_snprintf(tmp_buf, sizeof(tmp_buf), "%.2f NM", widgets->distances[ix]);
+      snprintf(tmp_buf, sizeof(tmp_buf), "%.2f NM", widgets->distances[ix]);
       break;
     default:
-      g_snprintf(tmp_buf, sizeof(tmp_buf), "%.2f km", widgets->distances[ix]);
+      snprintf(tmp_buf, sizeof(tmp_buf), "%.2f km", widgets->distances[ix]);
       break;
     }
     gtk_label_set_text(GTK_LABEL(widgets->w_cur_dist_dist), tmp_buf);
@@ -1127,9 +1128,9 @@ void track_et_move( GtkWidget *event_box, GdkEventMotion *event, PropWidgets *wi
   if (trackpoint && widgets->w_cur_elev_elev) {
     static char tmp_buf[20];
     if (a_vik_get_units_height () == VIK_UNITS_HEIGHT_FEET)
-      g_snprintf(tmp_buf, sizeof(tmp_buf), "%d ft", (int)VIK_METERS_TO_FEET(trackpoint->altitude));
+      snprintf(tmp_buf, sizeof(tmp_buf), "%d ft", (int)VIK_METERS_TO_FEET(trackpoint->altitude));
     else
-      g_snprintf(tmp_buf, sizeof(tmp_buf), "%d m", (int)trackpoint->altitude);
+      snprintf(tmp_buf, sizeof(tmp_buf), "%d m", (int)trackpoint->altitude);
     gtk_label_set_text(GTK_LABEL(widgets->w_cur_elev_elev), tmp_buf);
   }
 
@@ -1192,16 +1193,16 @@ void track_sd_move( GtkWidget *event_box, GdkEventMotion *event, PropWidgets *wi
     vik_units_distance_t dist_units = a_vik_get_units_distance ();
     switch (dist_units) {
     case VIK_UNITS_DISTANCE_KILOMETRES:
-      g_snprintf(tmp_buf, sizeof(tmp_buf), "%.2f km", meters_from_start/1000.0);
+      snprintf(tmp_buf, sizeof(tmp_buf), "%.2f km", meters_from_start/1000.0);
       break;
     case VIK_UNITS_DISTANCE_MILES:
-      g_snprintf(tmp_buf, sizeof(tmp_buf), "%.2f miles", VIK_METERS_TO_MILES(meters_from_start) );
+      snprintf(tmp_buf, sizeof(tmp_buf), "%.2f miles", VIK_METERS_TO_MILES(meters_from_start) );
       break;
     case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
-      g_snprintf(tmp_buf, sizeof(tmp_buf), "%.2f NM", VIK_METERS_TO_NAUTICAL_MILES(meters_from_start) );
+      snprintf(tmp_buf, sizeof(tmp_buf), "%.2f NM", VIK_METERS_TO_NAUTICAL_MILES(meters_from_start) );
       break;
     default:
-      g_critical("Houston, we've had a problem. distance=%d", dist_units);
+      fprintf(stderr, "CRITICAL: Houston, we've had a problem. distance=%d\n", dist_units);
     }
     gtk_label_set_text(GTK_LABEL(widgets->w_cur_speed_dist), tmp_buf);
   }
@@ -1222,17 +1223,17 @@ void track_sd_move( GtkWidget *event_box, GdkEventMotion *event, PropWidgets *wi
     vik_units_speed_t speed_units = a_vik_get_units_speed ();
     switch (speed_units) {
     case VIK_UNITS_SPEED_KILOMETRES_PER_HOUR:
-      g_snprintf(tmp_buf, sizeof(tmp_buf), _("%.1f kph"), widgets->speeds_dist[ix]);
+      snprintf(tmp_buf, sizeof(tmp_buf), _("%.1f kph"), widgets->speeds_dist[ix]);
       break;
     case VIK_UNITS_SPEED_MILES_PER_HOUR:
-      g_snprintf(tmp_buf, sizeof(tmp_buf), _("%.1f mph"), widgets->speeds_dist[ix]);
+      snprintf(tmp_buf, sizeof(tmp_buf), _("%.1f mph"), widgets->speeds_dist[ix]);
       break;
     case VIK_UNITS_SPEED_KNOTS:
-      g_snprintf(tmp_buf, sizeof(tmp_buf), _("%.1f knots"), widgets->speeds_dist[ix]);
+      snprintf(tmp_buf, sizeof(tmp_buf), _("%.1f knots"), widgets->speeds_dist[ix]);
       break;
     default:
       // VIK_UNITS_SPEED_METRES_PER_SECOND:
-      g_snprintf(tmp_buf, sizeof(tmp_buf), _("%.1f m/s"), widgets->speeds_dist[ix]);
+      snprintf(tmp_buf, sizeof(tmp_buf), _("%.1f m/s"), widgets->speeds_dist[ix]);
       break;
     }
     gtk_label_set_text(GTK_LABEL(widgets->w_cur_speed_speed), tmp_buf);
@@ -1344,7 +1345,7 @@ static void draw_grid_y ( GtkWidget *window, GtkWidget *image, PropWidgets *widg
 
   char *label_markup = g_strdup_printf ( "<span size=\"small\">%s</span>", ss );
   pango_layout_set_markup ( pl, label_markup, -1 );
-  g_free ( label_markup );
+  free( label_markup );
 
   int w, h;
   pango_layout_get_pixel_size ( pl, &w, &h );
@@ -1408,7 +1409,7 @@ static void draw_grid_x_time ( GtkWidget *window, GtkWidget *image, PropWidgets 
     pango_layout_set_font_description (pl, gtk_widget_get_style(window)->font_desc);
 
     pango_layout_set_markup ( pl, label_markup, -1 );
-    g_free ( label_markup );
+    free( label_markup );
     int ww, hh;
     pango_layout_get_pixel_size ( pl, &ww, &hh );
 
@@ -1457,7 +1458,7 @@ static void draw_grid_x_distance ( GtkWidget *window, GtkWidget *image, PropWidg
     pango_layout_set_font_description (pl, gtk_widget_get_style(window)->font_desc);
 
     pango_layout_set_markup ( pl, label_markup, -1 );
-    g_free ( label_markup );
+    free( label_markup );
     int ww, hh;
     pango_layout_get_pixel_size ( pl, &ww, &hh );
 
@@ -1520,7 +1521,7 @@ static void draw_elevations (GtkWidget *image, VikTrack *tr, PropWidgets *widget
 
   // Free previous allocation
   if ( widgets->altitudes )
-    g_free ( widgets->altitudes );
+    free( widgets->altitudes );
 
   widgets->altitudes = vik_track_make_elevation_map ( tr, widgets->profile_width );
 
@@ -1570,7 +1571,7 @@ static void draw_elevations (GtkWidget *image, VikTrack *tr, PropWidgets *widget
       break;
     default:
       sprintf(s, "--");
-      g_critical("Houston, we've had a problem. height=%d", height_units);
+      fprintf(stderr, "CRITICAL: Houston, we've had a problem. height=%d\n", height_units);
     }
 
     draw_grid_y ( window, image, widgets, pix, s, i );
@@ -1675,7 +1676,7 @@ static void draw_gradients (GtkWidget *image, VikTrack *tr, PropWidgets *widgets
 
   // Free previous allocation
   if ( widgets->gradients )
-    g_free ( widgets->gradients );
+    free( widgets->gradients );
 
   widgets->gradients = vik_track_make_gradient_map ( tr, widgets->profile_width );
 
@@ -1766,7 +1767,7 @@ static void draw_vt ( GtkWidget *image, VikTrack *tr, PropWidgets *widgets)
 
   // Free previous allocation
   if ( widgets->speeds )
-    g_free ( widgets->speeds );
+    free( widgets->speeds );
 
   widgets->speeds = vik_track_make_speed_map ( tr, widgets->profile_width );
   if ( widgets->speeds == NULL )
@@ -1839,7 +1840,7 @@ static void draw_vt ( GtkWidget *image, VikTrack *tr, PropWidgets *widgets)
       break;
     default:
       sprintf(s, "--");
-      g_critical("Houston, we've had a problem. speed=%d", speed_units);
+      fprintf(stderr, "CRITICAL: Houston, we've had a problem. speed=%d\n", speed_units);
     }
 
     draw_grid_y ( window, image, widgets, pix, s, i );
@@ -1905,7 +1906,7 @@ static void draw_dt ( GtkWidget *image, VikTrack *tr, PropWidgets *widgets )
 
   // Free previous allocation
   if ( widgets->distances )
-    g_free ( widgets->distances );
+    free( widgets->distances );
 
   widgets->distances = vik_track_make_distance_map ( tr, widgets->profile_width );
   if ( widgets->distances == NULL )
@@ -2026,7 +2027,7 @@ static void draw_et ( GtkWidget *image, VikTrack *tr, PropWidgets *widgets )
 
   // Free previous allocation
   if ( widgets->ats )
-    g_free ( widgets->ats );
+    free( widgets->ats );
 
   widgets->ats = vik_track_make_elevation_time_map ( tr, widgets->profile_width );
 
@@ -2077,7 +2078,7 @@ static void draw_et ( GtkWidget *image, VikTrack *tr, PropWidgets *widgets )
       break;
     default:
       sprintf(s, "--");
-      g_critical("Houston, we've had a problem. height=%d", height_units);
+      fprintf(stderr, "CRITICAL: Houston, we've had a problem. height=%d\n", height_units);
     }
 
     draw_grid_y ( window, image, widgets, pix, s, i );
@@ -2158,7 +2159,7 @@ static void draw_sd ( GtkWidget *image, VikTrack *tr, PropWidgets *widgets)
 
   // Free previous allocation
   if ( widgets->speeds_dist )
-    g_free ( widgets->speeds_dist );
+    free( widgets->speeds_dist );
 
   widgets->speeds_dist = vik_track_make_speed_dist_map ( tr, widgets->profile_width );
   if ( widgets->speeds_dist == NULL )
@@ -2227,7 +2228,7 @@ static void draw_sd ( GtkWidget *image, VikTrack *tr, PropWidgets *widgets)
       break;
     default:
       sprintf(s, "--");
-      g_critical("Houston, we've had a problem. speed=%d", speed_units);
+      fprintf(stderr, "CRITICAL: Houston, we've had a problem. speed=%d\n", speed_units);
     }
 
     draw_grid_y ( window, image, widgets, pix, s, i );
@@ -2924,12 +2925,12 @@ static void propwin_response_cb( GtkDialog *dialog, int resp, PropWidgets *widge
               vik_trw_layer_add_track ( vtl, new_tr_name, tracks[i] );
             vik_track_calculate_bounds ( tracks[i] );
 
-            g_free ( new_tr_name );
+            free( new_tr_name );
 	  }
         }
         if ( tracks )
         {
-          g_free ( tracks );
+          free( tracks );
           /* Don't let track destroy this dialog */
           vik_track_clear_property_dialog(tr);
           if ( widgets->tr->is_route )
@@ -2973,7 +2974,7 @@ static void propwin_response_cb( GtkDialog *dialog, int resp, PropWidgets *widge
         vik_track_calculate_bounds ( tr );
         vik_track_calculate_bounds ( tr_right );
 
-        g_free ( r_name );
+        free( r_name );
 
         vik_layer_emit_update ( VIK_LAYER(vtl) );
       }
@@ -3114,7 +3115,7 @@ void vik_trw_layer_propwin_run ( GtkWindow *parent,
   widgets->dialog = dialog;
   g_signal_connect( G_OBJECT(dialog), "response", G_CALLBACK(propwin_response_cb), widgets);
 
-  g_free(title);
+  free(title);
   GtkWidget *table;
   double tr_len;
   unsigned long tp_count;
@@ -3218,75 +3219,75 @@ void vik_trw_layer_propwin_run ( GtkWindow *parent,
   tr_len = widgets->track_length = vik_track_get_length(tr);
   switch (dist_units) {
   case VIK_UNITS_DISTANCE_KILOMETRES:
-    g_snprintf(tmp_buf, sizeof(tmp_buf), "%.2f km", tr_len/1000.0 );
+    snprintf(tmp_buf, sizeof(tmp_buf), "%.2f km", tr_len/1000.0 );
     break;
   case VIK_UNITS_DISTANCE_MILES:
-    g_snprintf(tmp_buf, sizeof(tmp_buf), "%.2f miles", VIK_METERS_TO_MILES(tr_len) );
+    snprintf(tmp_buf, sizeof(tmp_buf), "%.2f miles", VIK_METERS_TO_MILES(tr_len) );
     break;
   case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
-    g_snprintf(tmp_buf, sizeof(tmp_buf), "%.2f NM", VIK_METERS_TO_NAUTICAL_MILES(tr_len) );
+    snprintf(tmp_buf, sizeof(tmp_buf), "%.2f NM", VIK_METERS_TO_NAUTICAL_MILES(tr_len) );
     break;
   default:
-    g_critical("Houston, we've had a problem. distance=%d", dist_units);
+    fprintf(stderr, "CRITICAL: Houston, we've had a problem. distance=%d\n", dist_units);
   }
   widgets->w_track_length = content[cnt++] = ui_label_new_selectable ( tmp_buf );
 
   tp_count = vik_track_get_tp_count(tr);
-  g_snprintf(tmp_buf, sizeof(tmp_buf), "%lu", tp_count );
+  snprintf(tmp_buf, sizeof(tmp_buf), "%lu", tp_count );
   widgets->w_tp_count = content[cnt++] = ui_label_new_selectable ( tmp_buf );
 
   seg_count = vik_track_get_segment_count(tr) ;
-  g_snprintf(tmp_buf, sizeof(tmp_buf), "%u", seg_count );
+  snprintf(tmp_buf, sizeof(tmp_buf), "%u", seg_count );
   widgets->w_segment_count = content[cnt++] = ui_label_new_selectable ( tmp_buf );
 
-  g_snprintf(tmp_buf, sizeof(tmp_buf), "%lu", vik_track_get_dup_point_count(tr) );
+  snprintf(tmp_buf, sizeof(tmp_buf), "%lu", vik_track_get_dup_point_count(tr) );
   widgets->w_duptp_count = content[cnt++] = ui_label_new_selectable ( tmp_buf );
 
   vik_units_speed_t speed_units = a_vik_get_units_speed ();
   tmp_speed = vik_track_get_max_speed(tr);
   if ( tmp_speed == 0 )
-    g_snprintf(tmp_buf, sizeof(tmp_buf), _("No Data"));
+    snprintf(tmp_buf, sizeof(tmp_buf), _("No Data"));
   else {
     switch (speed_units) {
     case VIK_UNITS_SPEED_KILOMETRES_PER_HOUR:
-      g_snprintf(tmp_buf, sizeof(tmp_buf), "%.2f km/h", VIK_MPS_TO_KPH(tmp_speed));
+      snprintf(tmp_buf, sizeof(tmp_buf), "%.2f km/h", VIK_MPS_TO_KPH(tmp_speed));
       break;
     case VIK_UNITS_SPEED_MILES_PER_HOUR:
-      g_snprintf(tmp_buf, sizeof(tmp_buf), "%.2f mph", VIK_MPS_TO_MPH(tmp_speed));
+      snprintf(tmp_buf, sizeof(tmp_buf), "%.2f mph", VIK_MPS_TO_MPH(tmp_speed));
       break;
     case VIK_UNITS_SPEED_METRES_PER_SECOND:
-      g_snprintf(tmp_buf, sizeof(tmp_buf), "%.2f m/s", tmp_speed );
+      snprintf(tmp_buf, sizeof(tmp_buf), "%.2f m/s", tmp_speed );
       break;
     case VIK_UNITS_SPEED_KNOTS:
-      g_snprintf(tmp_buf, sizeof(tmp_buf), "%.2f knots", VIK_MPS_TO_KNOTS(tmp_speed));
+      snprintf(tmp_buf, sizeof(tmp_buf), "%.2f knots", VIK_MPS_TO_KNOTS(tmp_speed));
       break;
     default:
-      g_snprintf (tmp_buf, sizeof(tmp_buf), "--" );
-      g_critical("Houston, we've had a problem. speed=%d", speed_units);
+      snprintf(tmp_buf, sizeof(tmp_buf), "--" );
+      fprintf(stderr, "CRITICAL: Houston, we've had a problem. speed=%d\n", speed_units);
     }
   }
   widgets->w_max_speed = content[cnt++] = ui_label_new_selectable ( tmp_buf );
 
   tmp_speed = vik_track_get_average_speed(tr);
   if ( tmp_speed == 0 )
-    g_snprintf(tmp_buf, sizeof(tmp_buf), _("No Data"));
+    snprintf(tmp_buf, sizeof(tmp_buf), _("No Data"));
   else {
     switch (speed_units) {
     case VIK_UNITS_SPEED_KILOMETRES_PER_HOUR:
-      g_snprintf(tmp_buf, sizeof(tmp_buf), "%.2f km/h", VIK_MPS_TO_KPH(tmp_speed));
+      snprintf(tmp_buf, sizeof(tmp_buf), "%.2f km/h", VIK_MPS_TO_KPH(tmp_speed));
       break;
     case VIK_UNITS_SPEED_MILES_PER_HOUR:
-      g_snprintf(tmp_buf, sizeof(tmp_buf), "%.2f mph", VIK_MPS_TO_MPH(tmp_speed));
+      snprintf(tmp_buf, sizeof(tmp_buf), "%.2f mph", VIK_MPS_TO_MPH(tmp_speed));
       break;
     case VIK_UNITS_SPEED_METRES_PER_SECOND:
-      g_snprintf(tmp_buf, sizeof(tmp_buf), "%.2f m/s", tmp_speed );
+      snprintf(tmp_buf, sizeof(tmp_buf), "%.2f m/s", tmp_speed );
       break;
     case VIK_UNITS_SPEED_KNOTS:
-      g_snprintf(tmp_buf, sizeof(tmp_buf), "%.2f knots", VIK_MPS_TO_KNOTS(tmp_speed));
+      snprintf(tmp_buf, sizeof(tmp_buf), "%.2f knots", VIK_MPS_TO_KNOTS(tmp_speed));
       break;
     default:
-      g_snprintf (tmp_buf, sizeof(tmp_buf), "--" );
-      g_critical("Houston, we've had a problem. speed=%d", speed_units);
+      snprintf(tmp_buf, sizeof(tmp_buf), "--" );
+      fprintf(stderr, "CRITICAL: Houston, we've had a problem. speed=%d\n", speed_units);
     }
   }
   widgets->w_avg_speed = content[cnt++] = ui_label_new_selectable ( tmp_buf );
@@ -3297,24 +3298,24 @@ void vik_trw_layer_propwin_run ( GtkWindow *parent,
   //  so ATM just put in the number
   tmp_speed = vik_track_get_average_speed_moving(tr, 60);
   if ( tmp_speed == 0 )
-    g_snprintf(tmp_buf, sizeof(tmp_buf), _("No Data"));
+    snprintf(tmp_buf, sizeof(tmp_buf), _("No Data"));
   else {
     switch (speed_units) {
     case VIK_UNITS_SPEED_KILOMETRES_PER_HOUR:
-      g_snprintf(tmp_buf, sizeof(tmp_buf), "%.2f km/h", VIK_MPS_TO_KPH(tmp_speed));
+      snprintf(tmp_buf, sizeof(tmp_buf), "%.2f km/h", VIK_MPS_TO_KPH(tmp_speed));
       break;
     case VIK_UNITS_SPEED_MILES_PER_HOUR:
-      g_snprintf(tmp_buf, sizeof(tmp_buf), "%.2f mph", VIK_MPS_TO_MPH(tmp_speed));
+      snprintf(tmp_buf, sizeof(tmp_buf), "%.2f mph", VIK_MPS_TO_MPH(tmp_speed));
       break;
     case VIK_UNITS_SPEED_METRES_PER_SECOND:
-      g_snprintf(tmp_buf, sizeof(tmp_buf), "%.2f m/s", tmp_speed );
+      snprintf(tmp_buf, sizeof(tmp_buf), "%.2f m/s", tmp_speed );
       break;
     case VIK_UNITS_SPEED_KNOTS:
-      g_snprintf(tmp_buf, sizeof(tmp_buf), "%.2f knots", VIK_MPS_TO_KNOTS(tmp_speed));
+      snprintf(tmp_buf, sizeof(tmp_buf), "%.2f knots", VIK_MPS_TO_KNOTS(tmp_speed));
       break;
     default:
-      g_snprintf (tmp_buf, sizeof(tmp_buf), "--" );
-      g_critical("Houston, we've had a problem. speed=%d", speed_units);
+      snprintf(tmp_buf, sizeof(tmp_buf), "--" );
+      fprintf(stderr, "CRITICAL: Houston, we've had a problem. speed=%d\n", speed_units);
     }
   }
   widgets->w_mvg_speed = content[cnt++] = ui_label_new_selectable ( tmp_buf );
@@ -3322,51 +3323,51 @@ void vik_trw_layer_propwin_run ( GtkWindow *parent,
   switch (dist_units) {
   case VIK_UNITS_DISTANCE_KILOMETRES:
     // Even though kilometres, the average distance between points is going to be quite small so keep in metres
-    g_snprintf(tmp_buf, sizeof(tmp_buf), "%.2f m", (tp_count - seg_count) == 0 ? 0 : tr_len / ( tp_count - seg_count ) );
+    snprintf(tmp_buf, sizeof(tmp_buf), "%.2f m", (tp_count - seg_count) == 0 ? 0 : tr_len / ( tp_count - seg_count ) );
     break;
   case VIK_UNITS_DISTANCE_MILES:
-    g_snprintf(tmp_buf, sizeof(tmp_buf), "%.3f miles", (tp_count - seg_count) == 0 ? 0 : VIK_METERS_TO_MILES(tr_len / ( tp_count - seg_count )) );
+    snprintf(tmp_buf, sizeof(tmp_buf), "%.3f miles", (tp_count - seg_count) == 0 ? 0 : VIK_METERS_TO_MILES(tr_len / ( tp_count - seg_count )) );
     break;
   case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
-    g_snprintf(tmp_buf, sizeof(tmp_buf), "%.3f NM", (tp_count - seg_count) == 0 ? 0 : VIK_METERS_TO_NAUTICAL_MILES(tr_len / ( tp_count - seg_count )) );
+    snprintf(tmp_buf, sizeof(tmp_buf), "%.3f NM", (tp_count - seg_count) == 0 ? 0 : VIK_METERS_TO_NAUTICAL_MILES(tr_len / ( tp_count - seg_count )) );
     break;
   default:
-    g_critical("Houston, we've had a problem. distance=%d", dist_units);
+    fprintf(stderr, "CRITICAL: Houston, we've had a problem. distance=%d\n", dist_units);
   }
   widgets->w_avg_dist = content[cnt++] = ui_label_new_selectable ( tmp_buf );
 
   vik_units_height_t height_units = a_vik_get_units_height ();
   if ( min_alt == VIK_DEFAULT_ALTITUDE )
-    g_snprintf(tmp_buf, sizeof(tmp_buf), _("No Data"));
+    snprintf(tmp_buf, sizeof(tmp_buf), _("No Data"));
   else {
     switch (height_units) {
     case VIK_UNITS_HEIGHT_METRES:
-      g_snprintf(tmp_buf, sizeof(tmp_buf), "%.0f m - %.0f m", min_alt, max_alt );
+      snprintf(tmp_buf, sizeof(tmp_buf), "%.0f m - %.0f m", min_alt, max_alt );
       break;
     case VIK_UNITS_HEIGHT_FEET:
-      g_snprintf(tmp_buf, sizeof(tmp_buf), "%.0f feet - %.0f feet", VIK_METERS_TO_FEET(min_alt), VIK_METERS_TO_FEET(max_alt) );
+      snprintf(tmp_buf, sizeof(tmp_buf), "%.0f feet - %.0f feet", VIK_METERS_TO_FEET(min_alt), VIK_METERS_TO_FEET(max_alt) );
       break;
     default:
-      g_snprintf(tmp_buf, sizeof(tmp_buf), "--" );
-      g_critical("Houston, we've had a problem. height=%d", height_units);
+      snprintf(tmp_buf, sizeof(tmp_buf), "--" );
+      fprintf(stderr, "CRITICAL: Houston, we've had a problem. height=%d\n", height_units);
     }
   }
   widgets->w_elev_range = content[cnt++] = ui_label_new_selectable ( tmp_buf );
 
   vik_track_get_total_elevation_gain(tr, &max_alt, &min_alt );
   if ( min_alt == VIK_DEFAULT_ALTITUDE )
-    g_snprintf(tmp_buf, sizeof(tmp_buf), _("No Data"));
+    snprintf(tmp_buf, sizeof(tmp_buf), _("No Data"));
   else {
     switch (height_units) {
     case VIK_UNITS_HEIGHT_METRES:
-      g_snprintf(tmp_buf, sizeof(tmp_buf), "%.0f m / %.0f m", max_alt, min_alt );
+      snprintf(tmp_buf, sizeof(tmp_buf), "%.0f m / %.0f m", max_alt, min_alt );
       break;
     case VIK_UNITS_HEIGHT_FEET:
-      g_snprintf(tmp_buf, sizeof(tmp_buf), "%.0f feet / %.0f feet", VIK_METERS_TO_FEET(max_alt), VIK_METERS_TO_FEET(min_alt) );
+      snprintf(tmp_buf, sizeof(tmp_buf), "%.0f feet / %.0f feet", VIK_METERS_TO_FEET(max_alt), VIK_METERS_TO_FEET(min_alt) );
       break;
     default:
-      g_snprintf(tmp_buf, sizeof(tmp_buf), "--" );
-      g_critical("Houston, we've had a problem. height=%d", height_units);
+      snprintf(tmp_buf, sizeof(tmp_buf), "--" );
+      fprintf(stderr, "CRITICAL: Houston, we've had a problem. height=%d\n", height_units);
     }
   }
   widgets->w_elev_gain = content[cnt++] = ui_label_new_selectable ( tmp_buf );
@@ -3402,31 +3403,31 @@ void vik_trw_layer_propwin_run ( GtkWindow *parent,
     char *msg;
     msg = vu_get_time_string ( &t1, "%c", &vc, widgets->tz );
     widgets->w_time_start = content[cnt++] = ui_label_new_selectable(msg);
-    g_free ( msg );
+    free( msg );
 
     msg = vu_get_time_string ( &t2, "%c", &vc, widgets->tz );
     widgets->w_time_end = content[cnt++] = ui_label_new_selectable(msg);
-    g_free ( msg );
+    free( msg );
 
     int total_duration_s = (int)(t2-t1);
     int segments_duration_s = (int)vik_track_get_duration(tr,false);
     int total_duration_m = total_duration_s/60;
     int segments_duration_m = segments_duration_s/60;
-    g_snprintf(tmp_buf, sizeof(tmp_buf), _("%d minutes - %d minutes moving"), total_duration_m, segments_duration_m);
+    snprintf(tmp_buf, sizeof(tmp_buf), _("%d minutes - %d minutes moving"), total_duration_m, segments_duration_m);
     widgets->w_time_dur = content[cnt++] = ui_label_new_selectable(tmp_buf);
 
     // A tooltip to show in more readable hours:minutes
     char tip_buf_total[20];
     unsigned int h_tot = total_duration_s/3600;
     unsigned int m_tot = (total_duration_s - h_tot*3600)/60;
-    g_snprintf(tip_buf_total, sizeof(tip_buf_total), "%d:%02d", h_tot, m_tot);
+    snprintf(tip_buf_total, sizeof(tip_buf_total), "%d:%02d", h_tot, m_tot);
     char tip_buf_segments[20];
     unsigned int h_seg = segments_duration_s/3600;
     unsigned int m_seg = (segments_duration_s - h_seg*3600)/60;
-    g_snprintf(tip_buf_segments, sizeof(tip_buf_segments), "%d:%02d", h_seg, m_seg);
+    snprintf(tip_buf_segments, sizeof(tip_buf_segments), "%d:%02d", h_seg, m_seg);
     char *tip = g_strdup_printf (_("%s total - %s in segments"), tip_buf_total, tip_buf_segments);
     gtk_widget_set_tooltip_text ( GTK_WIDGET(widgets->w_time_dur), tip );
-    g_free (tip);
+    free(tip);
   } else {
     widgets->w_time_start = content[cnt++] = gtk_label_new(_("No Data"));
     widgets->w_time_end = content[cnt++] = gtk_label_new(_("No Data"));
@@ -3572,7 +3573,7 @@ void vik_trw_layer_propwin_update ( VikTrack *trk )
   if ( trk->name ) {
     char *title = g_strdup_printf ( _("%s - Track Properties"), trk->name );
     gtk_window_set_title ( GTK_WINDOW(trk->property_dialog), title );
-    g_free(title);
+    free(title);
   }
 
 }

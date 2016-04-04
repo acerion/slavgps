@@ -30,6 +30,8 @@
 #include "vikenumtypes.h"
 #include "download.h"
 
+#include <stdlib.h>
+
 static void map_source_get_copyright (VikMapSource *self, LatLonBBox bbox, double zoom, void (*fct)(VikViewport*,const char*), void *data);
 static const char *map_source_get_license (VikMapSource *self);
 static const char *map_source_get_license_url (VikMapSource *self);
@@ -107,19 +109,19 @@ vik_map_source_default_finalize (GObject *object)
   VikMapSourceDefault *self = VIK_MAP_SOURCE_DEFAULT (object);
   VikMapSourceDefaultPrivate *priv = VIK_MAP_SOURCE_DEFAULT_PRIVATE (self);
 
-  g_free (priv->label);
+  free(priv->label);
   priv->label = NULL;
-  g_free (priv->copyright);
+  free(priv->copyright);
   priv->copyright = NULL;
-  g_free (priv->license);
+  free(priv->license);
   priv->license = NULL;
-  g_free (priv->license_url);
+  free(priv->license_url);
   priv->license_url = NULL;
-  g_free (priv->logo);
+  free(priv->logo);
   priv->license_url = NULL;
-  g_free (priv->name);
+  free(priv->name);
   priv->name = NULL;
-  g_free (priv->file_extension);
+  free(priv->file_extension);
   priv->file_extension = NULL;
 
   G_OBJECT_CLASS (vik_map_source_default_parent_class)->finalize (object);
@@ -139,7 +141,7 @@ vik_map_source_default_set_property (GObject      *object,
     case PROP_NAME:
       // Sanitize the name here for file usage
       // A simple check just to prevent containing slashes ATM
-      g_free (priv->name);
+      free(priv->name);
       priv->name = g_strdup(g_value_get_string (value));
       g_strdelimit (priv->name, "\\/", 'x' );
       break;
@@ -149,7 +151,7 @@ vik_map_source_default_set_property (GObject      *object,
       break;
 
     case PROP_LABEL:
-      g_free (priv->label);
+      free(priv->label);
       priv->label = g_strdup(g_value_get_string (value));
       break;
 
@@ -166,22 +168,22 @@ vik_map_source_default_set_property (GObject      *object,
       break;
 
     case PROP_COPYRIGHT:
-      g_free (priv->copyright);
+      free(priv->copyright);
       priv->copyright = g_strdup(g_value_get_string (value));
       break;
 
     case PROP_LICENSE:
-      g_free (priv->license);
+      free(priv->license);
       priv->license = g_strdup(g_value_get_string (value));
       break;
 
     case PROP_LICENSE_URL:
-      g_free (priv->license_url);
+      free(priv->license_url);
       priv->license_url = g_strdup(g_value_get_string (value));
       break;
 
     case PROP_FILE_EXTENSION:
-      g_free (priv->file_extension);
+      free(priv->file_extension);
       priv->file_extension = g_strdup(g_value_get_string(value));
       break;
 
@@ -469,8 +471,8 @@ _download ( VikMapSource *self, MapCoord *src, const char *dest_fn, void *handle
    char *host = vik_map_source_default_get_hostname(VIK_MAP_SOURCE_DEFAULT(self));
    DownloadFileOptions *options = vik_map_source_default_get_download_options(VIK_MAP_SOURCE_DEFAULT(self));
    DownloadResult_t res = a_http_download_get_url ( host, uri, dest_fn, options, handle );
-   g_free ( uri );
-   g_free ( host );
+   free( uri );
+   free( host );
    return res;
 }
 

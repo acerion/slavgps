@@ -30,7 +30,10 @@
 
 #include "vikexttool.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #define VIK_WEBTOOL_TYPE            (vik_webtool_get_type ())
 #define VIK_WEBTOOL(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_WEBTOOL_TYPE, VikWebtool))
@@ -59,6 +62,8 @@ struct _VikWebtool {
 char *vik_webtool_get_url ( VikWebtool *self, VikWindow *vwindow );
 char *vik_webtool_get_url_at_position ( VikWebtool *self, VikWindow *vwindow, VikCoord *vc );
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

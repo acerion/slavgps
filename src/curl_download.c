@@ -28,6 +28,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -72,7 +73,7 @@ static size_t curl_get_etag_func(void *ptr, size_t size, size_t nmemb, void *str
     char *end_str = g_strstr_len(etag_str, len - ETAG_LEN, "\r\n");
     if (etag_str && end_str) {
       cdo->new_etag = g_strndup(etag_str, end_str - etag_str);
-      g_debug("%s: ETAG found: %s", __FUNCTION__, cdo->new_etag);
+      fprintf(stderr, "DEBUG: %s: ETAG found: %s\n", __FUNCTION__, cdo->new_etag);
     }
   }
   return nmemb;
@@ -102,7 +103,7 @@ int curl_download_uri ( const char *uri, FILE *f, DownloadFileOptions *options, 
   struct curl_slist *curl_send_headers = NULL;
   CURLcode res = CURLE_FAILED_INIT;
 
-  g_debug("%s: uri=%s", __PRETTY_FUNCTION__, uri);
+  fprintf(stderr, "DEBUG: %s: uri=%s\n", __PRETTY_FUNCTION__, uri);
 
   curl = handle ? handle : curl_easy_init ();
   if ( !curl ) {
@@ -138,7 +139,7 @@ int curl_download_uri ( const char *uri, FILE *f, DownloadFileOptions *options, 
         if (cdo->etag != NULL) {
           /* add an header on the HTTP request */
           char str[60];
-          g_snprintf(str, 60, "If-None-Match: %s", cdo->etag);
+          snprintf(str, 60, "If-None-Match: %s", cdo->etag);
           curl_send_headers = curl_slist_append(curl_send_headers, str);
           curl_easy_setopt ( curl, CURLOPT_HTTPHEADER , curl_send_headers);
         }
@@ -167,7 +168,7 @@ int curl_download_uri ( const char *uri, FILE *f, DownloadFileOptions *options, 
       else
         res = CURL_DOWNLOAD_NO_ERROR;
     } else {
-      g_warning("%s: http response: %ld for uri %s\n", __FUNCTION__, response, uri);
+      fprintf(stderr, "WARNING: %s: http response: %ld for uri %s\n", __FUNCTION__, response, uri);
       res = CURL_DOWNLOAD_ERROR;
     }
   } else {
@@ -200,7 +201,7 @@ int curl_download_get_url ( const char *hostname, const char *uri, FILE *f, Down
   ret = curl_download_uri ( full, f, options, cdo, handle );
   /* Free newly allocated memory, but do not free uri */
   if ( hostname != full && uri != full )
-    g_free ( full );
+    free( full );
   full = NULL;
 
   return ret;

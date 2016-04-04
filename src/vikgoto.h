@@ -29,7 +29,10 @@
 #include "vikviewport.h"
 #include "vikgototool.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 void vik_goto_register (VikGotoTool *tool);
 void vik_goto_unregister_all (void);
@@ -38,6 +41,8 @@ int a_vik_goto_where_am_i ( VikViewport *vvp, struct LatLon *ll, char **name );
 void a_vik_goto(VikWindow *vw, VikViewport *vvp);
 char * a_vik_goto_get_search_string_for_this_place(VikWindow *vw);
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

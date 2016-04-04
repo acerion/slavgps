@@ -29,7 +29,10 @@
 
 #include "viktrack.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #define VIK_TRW_LAYER_PROPWIN_SPLIT 1
 #define VIK_TRW_LAYER_PROPWIN_REVERSE 2
@@ -49,6 +52,8 @@ void vik_trw_layer_propwin_run ( GtkWindow *parent,
  */
 void vik_trw_layer_propwin_update ( VikTrack *trk );
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

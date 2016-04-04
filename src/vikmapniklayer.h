@@ -27,7 +27,10 @@
 
 #include "viklayer.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #define VIK_MAPNIK_LAYER_TYPE            (vik_mapnik_layer_get_type ())
 #define VIK_MAPNIK_LAYER(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_MAPNIK_LAYER_TYPE, VikMapnikLayer))
@@ -45,6 +48,8 @@ void vik_mapnik_layer_init (void);
 void vik_mapnik_layer_post_init (void);
 void vik_mapnik_layer_uninit (void);
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

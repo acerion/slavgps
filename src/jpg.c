@@ -31,6 +31,8 @@
 #include <magic.h>
 #endif
 
+#include <stdlib.h>
+
 /**
  * a_jpg_magic_check:
  * @filename: The file
@@ -54,7 +56,7 @@ bool a_jpg_magic_check ( const char *filename )
 		magic_load ( myt, NULL );
 #endif
 		const char* magic = magic_file (myt, filename);
-		g_debug ( "%s:%s", __FUNCTION__, magic );
+		fprintf(stderr, "DEBUG: %s:%s\n", __FUNCTION__, magic );
 		if ( g_ascii_strncasecmp (magic, "image/jpeg", 10) == 0 )
 			is_jpg = true;
 
@@ -104,9 +106,9 @@ bool a_jpg_load_file ( VikAggregateLayer *top, const char *filename, VikViewport
 	if ( wp ) {
 		// Create name if geotag method didn't return one
 		if ( !name )
-			name = g_strdup ( a_file_basename ( filename ) );
+			name = g_strdup( a_file_basename ( filename ) );
 		vik_trw_layer_filein_add_waypoint ( VIK_TRW_LAYER(vtl), name, wp );
-		g_free ( name );
+		free( name );
 	}
 	else {
 		wp = vik_waypoint_new ();

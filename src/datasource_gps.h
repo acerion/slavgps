@@ -29,7 +29,10 @@
 #include "viking.h"
 #include "gtk/gtk.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 void * datasource_gps_setup ( GtkWidget *dialog, vik_gps_xfer_type xfer, bool xfer_all );
 void datasource_gps_clean_up ( void * user_data );
@@ -43,6 +46,8 @@ bool datasource_gps_get_do_waypoints ( void * user_data );
 
 bool datasource_gps_get_off ( void * user_data );
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

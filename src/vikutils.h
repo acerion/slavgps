@@ -28,7 +28,10 @@
 
 #include "viktrwlayer.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 char* vu_trackpoint_formatted_message ( char *format_code, VikTrackpoint *trkpt, VikTrackpoint *trkpt_prev, VikTrack *trk, double climb );
 
@@ -51,7 +54,9 @@ void vu_copy_label_menu ( GtkWidget *widget, unsigned int button );
 
 void vu_zoom_to_show_latlons ( VikCoordMode mode, VikViewport *vvp, struct LatLon maxmin[2] );
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

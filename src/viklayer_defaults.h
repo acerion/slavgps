@@ -27,7 +27,10 @@
 
 #include "uibuilder.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 void a_layer_defaults_init();
 void a_layer_defaults_uninit();
@@ -40,6 +43,8 @@ VikLayerParamData a_layer_defaults_get ( const char *layername, const char *para
 
 bool a_layer_defaults_save ();
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

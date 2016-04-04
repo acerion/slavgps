@@ -29,7 +29,10 @@
 #include <stdint.h>
 
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #define VIK_TOOLBAR_TYPE             (vik_toolbar_get_type ())
 #define VIK_TOOLBAR(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_TOOLBAR_TYPE, VikToolbar))
@@ -78,6 +81,8 @@ void a_toolbar_init (void);
 
 void a_toolbar_uninit (void);
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

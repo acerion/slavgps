@@ -28,7 +28,10 @@
 #include "vik_compat.h"
 #include "config.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 /* Parameters (for I/O and Properties) */
 
@@ -195,6 +198,8 @@ typedef enum {
   VL_SO_LAST
 } vik_layer_sort_order_t;
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

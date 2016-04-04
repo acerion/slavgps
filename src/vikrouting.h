@@ -28,7 +28,10 @@
 
 #include "vikroutingengine.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 /* Default */
 bool vik_routing_default_find ( VikTrwLayer *vt, struct LatLon start, struct LatLon end );
@@ -48,6 +51,8 @@ VikRoutingEngine *vik_routing_ui_selector_get_nth ( GtkWidget *combo, int pos );
 VikRoutingEngine * vik_routing_default_engine ( void );
 
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

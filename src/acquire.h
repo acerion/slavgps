@@ -33,7 +33,10 @@
 #include "vikviewport.h"
 #include "babel.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 typedef struct _VikDataSourceInterface VikDataSourceInterface;
 
@@ -196,6 +199,8 @@ GtkWidget *a_acquire_track_menu (VikWindow *vw, VikLayersPanel *vlp, VikViewport
 
 void a_acquire_set_filter_track ( VikTrack *tr );
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

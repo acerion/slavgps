@@ -33,7 +33,10 @@
 #include <glib-object.h>
 #include <gtk/gtk.h>
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #define VIK_TREEVIEW_TYPE            (vik_treeview_get_type ())
 #define VIK_TREEVIEW(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_TREEVIEW_TYPE, VikTreeview))
@@ -105,6 +108,8 @@ bool vik_treeview_get_iter_with_name ( VikTreeview *vt, GtkTreeIter *iter, GtkTr
 
 void vik_treeview_sort_children ( VikTreeview *vt, GtkTreeIter *parent, vik_layer_sort_order_t order );
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

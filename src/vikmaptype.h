@@ -25,7 +25,10 @@
 #include "vikmapsource.h"
 #include "vikmapslayer_compat.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #define VIK_TYPE_MAP_TYPE             (vik_map_type_get_type ())
 #define VIK_MAP_TYPE(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_TYPE_MAP_TYPE, VikMapType))
@@ -50,6 +53,8 @@ struct _VikMapType
 GType vik_map_type_get_type (void) G_GNUC_CONST;
 VikMapType *vik_map_type_new_with_id (VikMapsLayer_MapType map_type, const char *label);
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _VIK_MAP_TYPE_H_ */

@@ -57,7 +57,7 @@ void vik_trw_layer_export ( VikTrwLayer *vtl, const char *title, const char* def
     if ( g_file_test ( fn, G_FILE_TEST_EXISTS ) == false ||
          a_dialog_yes_or_no ( GTK_WINDOW(file_selector), _("The file \"%s\" exists, do you wish to overwrite it?"), a_file_basename ( fn ) ) )
     {
-      g_free ( last_folder_uri );
+      free( last_folder_uri );
       last_folder_uri = gtk_file_chooser_get_current_folder_uri ( GTK_FILE_CHOOSER(file_selector) );
 
       gtk_widget_hide ( file_selector );
@@ -88,14 +88,14 @@ void vik_trw_layer_export_external_gpx ( VikTrwLayer *vtl, const char* external_
     GError *err = NULL;
     char *quoted_file = g_shell_quote ( name_used );
     char *cmd = g_strdup_printf ( "%s %s", external_program, quoted_file );
-    g_free ( quoted_file );
+    free( quoted_file );
     if ( ! g_spawn_command_line_async ( cmd, &err ) ) {
       a_dialog_error_msg_extra ( VIK_GTK_WINDOW_FROM_LAYER( vtl), _("Could not launch %s."), external_program );
       g_error_free ( err );
     }
-    g_free ( cmd );
+    free( cmd );
     util_add_to_deletion_list ( name_used );
-    g_free ( name_used );
+    free( name_used );
   }
   else
     a_dialog_error_msg (VIK_GTK_WINDOW_FROM_LAYER(vtl), _("Could not create temporary file for export.") );
@@ -127,7 +127,7 @@ void vik_trw_layer_export_gpsbabel ( VikTrwLayer *vtl, const char *title, const 
   char *cwd = g_get_current_dir();
   if ( cwd ) {
     gtk_file_chooser_set_current_folder ( GTK_FILE_CHOOSER(file_selector), cwd );
-    g_free ( cwd );
+    free( cwd );
   }
 
   /* Build the extra part of the widget */

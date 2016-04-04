@@ -28,7 +28,10 @@
 #include "viktrack.h"
 #include "viktrwlayer.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 void vik_trw_layer_track_list_show_dialog ( char *title,
                                             VikLayer *vl,
@@ -36,6 +39,8 @@ void vik_trw_layer_track_list_show_dialog ( char *title,
                                             VikTrwlayerGetTracksAndLayersFunc get_tracks_and_layers_cb,
                                             bool is_aggregate );
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

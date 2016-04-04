@@ -28,7 +28,10 @@
 #include <stdint.h>
 
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 /* File content check */
 typedef bool (*VikFileContentCheckerFunc) (FILE*);
@@ -100,6 +103,8 @@ void a_download_handle_cleanup ( void *handle );
 
 char *a_download_uri_to_tmp_file ( const char *uri, DownloadFileOptions *options );
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

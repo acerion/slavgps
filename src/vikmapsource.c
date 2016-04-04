@@ -24,6 +24,9 @@
   * The #VikMapSource class is both the interface and the base class
   * for the hierarchie of map source.
   */
+
+#include <stdlib.h>
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif

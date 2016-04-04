@@ -27,7 +27,10 @@
 
 #include "viktrwlayer.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 void osm_traces_init();
 void osm_traces_uninit();
@@ -37,6 +40,8 @@ void osm_set_login (const char *user, const char *password);
 char *osm_get_login();
 void osm_login_widgets (GtkWidget *user_entry, GtkWidget *password_entry);
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

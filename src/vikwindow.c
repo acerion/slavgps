@@ -57,6 +57,7 @@
 #include <string.h>
 #endif
 #include <ctype.h>
+#include <assert.h>
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <glib/gprintf.h>
@@ -289,8 +290,8 @@ typedef struct {
 static bool statusbar_idle_update ( statusbar_idle_data *sid )
 {
   vik_statusbar_set_message ( sid->vs, sid->vs_type, sid->message );
-  g_free ( sid->message );
-  g_free ( sid );
+  free( sid->message );
+  free( sid );
   return false;
 }
 
@@ -312,10 +313,10 @@ void vik_window_statusbar_update ( VikWindow *vw, const char* message, vik_statu
     // Do nothing
     return;
 
-  statusbar_idle_data *sid = g_malloc ( sizeof (statusbar_idle_data) );
+  statusbar_idle_data *sid = malloc( sizeof (statusbar_idle_data) );
   sid->vs = vw->viking_vs;
   sid->vs_type = vs_type;
-  sid->message = g_strdup ( message );
+  sid->message = g_strdup( message );
 
   if ( g_thread_self() == thread ) {
     g_idle_add ( (GSourceFunc) statusbar_idle_update, sid );
@@ -331,8 +332,8 @@ static void destroy_window ( GtkWidget *widget,
                              void *   data )
 {
     if ( ! --window_count ) {
-      g_free ( last_folder_files_uri );
-      g_free ( last_folder_images_uri );
+      free( last_folder_files_uri );
+      free( last_folder_images_uri );
       gtk_main_quit ();
     }
 }
@@ -442,8 +443,8 @@ static int determine_location_thread ( VikWindow *vw, void * threaddata )
 
     char *message = g_strdup_printf ( _("Location found: %s"), name );
     vik_window_statusbar_update ( vw, message, VIK_STATUSBAR_INFO );
-    g_free ( name );
-    g_free ( message );
+    free( name );
+    free( message );
 
     // Signal to redraw from the background
     vik_layers_panel_emit_update ( vw->viking_vlp );
@@ -513,7 +514,7 @@ static void open_window ( VikWindow *vw, GSList *files )
     else {
       vik_window_open_file ( vw, file_name, change_fn );
     }
-    g_free (file_name);
+    free(file_name);
     cur_file = g_slist_next (cur_file);
   }
   g_slist_free (files);
@@ -555,8 +556,8 @@ static void window_finalize ( GObject *gob )
   for (tt = 0; tt < vw->vt->n_tools; tt++ )
     if ( vw->vt->tools[tt].ti.destroy )
       vw->vt->tools[tt].ti.destroy ( vw->vt->tools[tt].state );
-  g_free ( vw->vt->tools );
-  g_free ( vw->vt );
+  free( vw->vt->tools );
+  free( vw->vt );
 
   vik_toolbar_finalize ( vw->viking_vtb );
 
@@ -586,7 +587,7 @@ static void zoom_changed (GtkMenuShell *menushell,
   VikWindow *vw = VIK_WINDOW (user_data);
 
   GtkWidget *aw = gtk_menu_get_active ( GTK_MENU (menushell) );
-  int active = GPOINTER_TO_INT(g_object_get_data ( G_OBJECT (aw), "position" ));
+  int active = KPOINTER_TO_INT(g_object_get_data ( G_OBJECT (aw), "position" ));
 
   double zoom_request = pow (2, active-5 );
 
@@ -613,7 +614,7 @@ static GtkWidget *create_zoom_menu_all_levels ( double mpp )
       GtkWidget *item = gtk_menu_item_new_with_label (itemLabels[i]);
       gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
       gtk_widget_show (item);
-      g_object_set_data (G_OBJECT (item), "position", GINT_TO_POINTER(i));
+      g_object_set_data (G_OBJECT (item), "position", KINT_TO_POINTER(i));
     }
 
   int active = 5 + round ( log (mpp) / log (2) );
@@ -689,7 +690,7 @@ static void drag_data_received_cb ( GtkWidget *widget,
     switch (target_type) {
     case TARGET_URIS: {
       char *str = (char*)gtk_selection_data_get_data(selection_data);
-      g_debug ("drag received string:%s \n", str);
+      fprintf(stderr, "DEBUG: drag received string:%s \n", str);
 
       // Convert string into GSList of individual entries for use with our open signal
       char **entries = g_strsplit(str, "\r\n", 0);
@@ -923,7 +924,7 @@ static void vik_window_init ( VikWindow *vw )
 
   char *accel_file_name = g_build_filename ( a_get_viking_dir(), VIKING_ACCELERATOR_KEY_FILE, NULL );
   gtk_accel_map_load ( accel_file_name );
-  g_free ( accel_file_name );
+  free( accel_file_name );
 }
 
 static VikWindow *window_new ()
@@ -1082,7 +1083,7 @@ static bool delete_event( VikWindow *vw )
 
     char *accel_file_name = g_build_filename ( a_get_viking_dir(), VIKING_ACCELERATOR_KEY_FILE, NULL );
     gtk_accel_map_save ( accel_file_name );
-    g_free ( accel_file_name );
+    free( accel_file_name );
   }
 
   return false;
@@ -1126,13 +1127,13 @@ static void draw_status ( VikWindow *vw )
   double ympp = vik_viewport_get_ympp(vw->viking_vvp);
   char *unit = vik_viewport_get_coord_mode(vw->viking_vvp) == VIK_COORD_UTM ? _("mpp") : _("pixelfact");
   if (xmpp != ympp)
-    g_snprintf ( zoom_level, 22, "%.3f/%.3f %s", xmpp, ympp, unit );
+    snprintf( zoom_level, 22, "%.3f/%.3f %s", xmpp, ympp, unit );
   else
     if ( (int)xmpp - xmpp < 0.0 )
-      g_snprintf ( zoom_level, 22, "%.3f %s", xmpp, unit );
+      snprintf( zoom_level, 22, "%.3f %s", xmpp, unit );
     else
       /* xmpp should be a whole number so don't show useless .000 bit */
-      g_snprintf ( zoom_level, 22, "%d %s", (int)xmpp, unit );
+      snprintf( zoom_level, 22, "%d %s", (int)xmpp, unit );
 
   vik_statusbar_set_message ( vw->viking_vs, VIK_STATUSBAR_ZOOM, zoom_level );
 
@@ -1265,11 +1266,11 @@ static void get_location_strings ( VikWindow *vw, struct UTM utm, char **lat, ch
   if ( vik_viewport_get_drawmode ( vw->viking_vvp ) == VIK_VIEWPORT_DRAWMODE_UTM ) {
     // Reuse lat for the first part (Zone + N or S, and lon for the second part (easting and northing) of a UTM format:
     //  ZONE[N|S] EASTING NORTHING
-    *lat = g_malloc(4*sizeof(char));
+    *lat = malloc(4*sizeof(char));
     // NB zone is stored in a char but is an actual number
-    g_snprintf (*lat, 4, "%d%c", utm.zone, utm.letter);
-    *lon = g_malloc(16*sizeof(char));
-    g_snprintf (*lon, 16, "%d %d", (int)utm.easting, (int)utm.northing);
+    snprintf(*lat, 4, "%d%c", utm.zone, utm.letter);
+    *lon = malloc(16*sizeof(char));
+    snprintf(*lon, 16, "%d %d", (int)utm.easting, (int)utm.northing);
   }
   else {
     struct LatLon ll;
@@ -1313,15 +1314,15 @@ static void draw_mouse_motion (VikWindow *vw, GdkEventMotion *event)
     interpol_method = VIK_DEM_INTERPOL_BEST;
   if ((alt = a_dems_get_elev_by_coord(&coord, interpol_method)) != VIK_DEM_INVALID_ELEVATION) {
     if ( a_vik_get_units_height () == VIK_UNITS_HEIGHT_METRES )
-      g_snprintf ( pointer_buf, BUFFER_SIZE, _("%s %s %dm"), lat, lon, alt );
+      snprintf( pointer_buf, BUFFER_SIZE, _("%s %s %dm"), lat, lon, alt );
     else
-      g_snprintf ( pointer_buf, BUFFER_SIZE, _("%s %s %dft"), lat, lon, (int)VIK_METERS_TO_FEET(alt) );
+      snprintf( pointer_buf, BUFFER_SIZE, _("%s %s %dft"), lat, lon, (int)VIK_METERS_TO_FEET(alt) );
   }
   else
-    g_snprintf ( pointer_buf, BUFFER_SIZE, _("%s %s"), lat, lon );
-  g_free (lat);
+    snprintf( pointer_buf, BUFFER_SIZE, _("%s %s"), lat, lon );
+  free(lat);
   lat = NULL;
-  g_free (lon);
+  free(lon);
   lon = NULL;
   vik_statusbar_set_message ( vw->viking_vs, VIK_STATUSBAR_POSITION, pointer_buf );
 
@@ -1568,7 +1569,7 @@ static void draw_ruler(VikViewport *vvp, GdkDrawable *d, GdkGC *gc, int x1, int 
       }
       break;
     default:
-      g_critical("Houston, we've had a problem. distance=%d", dist_units);
+      fprintf(stderr, "CRITICAL: Houston, we've had a problem. distance=%d\n", dist_units);
     }
 
     pango_layout_set_text(pl, str, -1);
@@ -1625,7 +1626,7 @@ typedef struct {
 
 static void * ruler_create (VikWindow *vw, VikViewport *vvp) 
 {
-  ruler_tool_state_t *s = g_new(ruler_tool_state_t, 1);
+  ruler_tool_state_t *s = (ruler_tool_state_t *) malloc(1 * sizeof (ruler_tool_state_t));
   s->vw = vw;
   s->vvp = vvp;
   s->has_oldcoord = false;
@@ -1634,7 +1635,7 @@ static void * ruler_create (VikWindow *vw, VikViewport *vvp)
 
 static void ruler_destroy (ruler_tool_state_t *s)
 {
-  g_free(s);
+  free(s);
 }
 
 static VikLayerToolFuncStatus ruler_click (VikLayer *vl, GdkEventButton *event, ruler_tool_state_t *s)
@@ -1661,7 +1662,7 @@ static VikLayerToolFuncStatus ruler_click (VikLayer *vl, GdkEventButton *event, 
         break;
       default:
         temp = g_strdup_printf ("Just to keep the compiler happy");
-        g_critical("Houston, we've had a problem. distance=%d", dist_units);
+        fprintf(stderr, "CRITICAL: Houston, we've had a problem. distance=%d\n", dist_units);
       }
 
       s->has_oldcoord = false;
@@ -1672,7 +1673,7 @@ static VikLayerToolFuncStatus ruler_click (VikLayer *vl, GdkEventButton *event, 
     }
 
     vik_statusbar_set_message ( s->vw->viking_vs, VIK_STATUSBAR_INFO, temp );
-    g_free ( temp );
+    free( temp );
 
     s->oldcoord = coord;
   }
@@ -1736,10 +1737,10 @@ static VikLayerToolFuncStatus ruler_move (VikLayer *vl, GdkEventMotion *event, r
       break;
     default:
       temp = g_strdup_printf ("Just to keep the compiler happy");
-      g_critical("Houston, we've had a problem. distance=%d", dist_units);
+      fprintf(stderr, "CRITICAL: Houston, we've had a problem. distance=%d\n", dist_units);
     }
     vik_statusbar_set_message ( vw->viking_vs, VIK_STATUSBAR_INFO, temp );
-    g_free ( temp );
+    free( temp );
   }
   return VIK_LAYER_TOOL_ACK;
 }
@@ -1824,7 +1825,7 @@ static void zoomtool_resize_pixmap (zoom_tool_state_t *zts)
 
 static void * zoomtool_create (VikWindow *vw, VikViewport *vvp)
 {
-  zoom_tool_state_t *zts = g_new(zoom_tool_state_t, 1);
+  zoom_tool_state_t *zts = (zoom_tool_state_t *) malloc(1 * sizeof (zoom_tool_state_t));
   zts->vw = vw;
   zts->pixmap = NULL;
   zts->start_x = 0;
@@ -1837,7 +1838,7 @@ static void zoomtool_destroy ( zoom_tool_state_t *zts)
 {
   if ( zts->pixmap )
     g_object_unref ( G_OBJECT ( zts->pixmap ) );
-  g_free(zts);
+  free(zts);
 }
 
 static VikLayerToolFuncStatus zoomtool_click (VikLayer *vl, GdkEventButton *event, zoom_tool_state_t *zts)
@@ -2125,7 +2126,7 @@ static VikToolInterface pan_tool =
  ********************************************************************************/
 static void * selecttool_create (VikWindow *vw, VikViewport *vvp)
 {
-  tool_ed_t *t = g_new(tool_ed_t, 1);
+  tool_ed_t *t = (tool_ed_t *) malloc(1 * sizeof (tool_ed_t));
   t->vw = vw;
   t->vvp = vvp;
   t->vtl = NULL;
@@ -2135,7 +2136,7 @@ static void * selecttool_create (VikWindow *vw, VikViewport *vvp)
 
 static void selecttool_destroy (tool_ed_t *t)
 {
-  g_free(t);
+  free(t);
 }
 
 typedef struct {
@@ -2345,7 +2346,7 @@ static void draw_goto_cb ( GtkAction *a, VikWindow *vw )
      return;
   }
   else {
-    g_critical("Houston, we've had a problem.");
+    fprintf(stderr, "CRITICAL: Houston, we've had a problem.\n");
     return;
   }
 
@@ -2461,7 +2462,7 @@ static void help_help_cb ( GtkAction *a, VikWindow *vw )
     a_dialog_error_msg_extra ( GTK_WINDOW(vw), _("Help is not available because: %s.\nEnsure a Mime Type ghelp handler program is installed (e.g. yelp)."), error->message );
     g_error_free ( error );
   }
-  g_free(uri);
+  free(uri);
 #endif /* WINDOWS */
 }
 
@@ -2523,7 +2524,7 @@ GtkWidget *get_show_widget_by_name(VikWindow *vw, const char *name)
     path = g_strconcat("/ui/MainMenu/View/", name, NULL);
 
   GtkWidget *widget = gtk_ui_manager_get_widget(vw->uim, path);
-  g_free(path);
+  free(path);
 
   return widget;
 }
@@ -2640,8 +2641,8 @@ static void help_cache_info_cb ( GtkAction *a, VikWindow *vw )
 #endif
   msg = g_strdup_printf ( "Map Cache size is %s with %d items", msg_sz, a_mapcache_get_count());
   a_dialog_info_msg_extra ( GTK_WINDOW(vw), "%s", msg );
-  g_free ( msg_sz );
-  g_free ( msg );
+  free( msg_sz );
+  free( msg );
 }
 
 static void back_forward_info_cb ( GtkAction *a, VikWindow *vw )
@@ -2742,7 +2743,7 @@ static void view_main_menu_cb ( GtkAction *a, VikWindow *vw )
 
 static toolbox_tools_t* toolbox_create(VikWindow *vw)
 {
-  toolbox_tools_t *vt = g_new(toolbox_tools_t, 1);
+  toolbox_tools_t *vt = (toolbox_tools_t *) malloc(1 * sizeof (toolbox_tools_t));
   vt->tools = NULL;
   vt->n_tools = 0;
   vt->active_tool = -1;
@@ -2782,7 +2783,7 @@ static void toolbox_activate(toolbox_tools_t *vt, const char *tool_name)
   VikLayer *vl = vik_layers_panel_get_selected ( vt->vw->viking_vlp );
 
   if (tool == vt->n_tools) {
-    g_critical("trying to activate a non-existent tool...");
+    fprintf(stderr, "CRITICAL: trying to activate a non-existent tool...\n");
     return;
   }
   /* is the tool already active? */
@@ -2916,7 +2917,7 @@ static void window_set_filename ( VikWindow *vw, const char *filename )
   char *title;
   const char *file;
   if ( vw->filename )
-    g_free ( vw->filename );
+    free( vw->filename );
   if ( filename == NULL )
   {
     vw->filename = NULL;
@@ -2930,7 +2931,7 @@ static void window_set_filename ( VikWindow *vw, const char *filename )
   file = window_get_filename ( vw );
   title = g_strdup_printf( "%s - Viking", file );
   gtk_window_set_title ( GTK_WINDOW(vw), title );
-  g_free ( title );
+  free( title );
 }
 
 static const char *window_get_filename ( VikWindow *vw )
@@ -2951,7 +2952,7 @@ GtkWidget *vik_window_get_drawmode_button ( VikWindow *vw, VikViewportDrawMode m
     default: buttonname = "/ui/MainMenu/View/ModeUTM";
   }
   mode_button = gtk_ui_manager_get_widget ( vw->uim, buttonname );
-  g_assert ( mode_button );
+  assert ( mode_button );
   return mode_button;
 }
 
@@ -2992,11 +2993,11 @@ static void on_activate_recent_item (GtkRecentChooser *chooser,
     }
     else {
       vik_window_open_file ( self, path, true );
-      g_free ( path );
+      free( path );
     }
   }
 
-  g_free (filename);
+  free(filename);
 }
 
 static void setup_recent_files (VikWindow *self)
@@ -3048,12 +3049,12 @@ static void update_recently_used_document (VikWindow *vw, const char *filename)
   {
     char *msg = g_strdup_printf (_("Unable to add '%s' to the list of recently used documents"), uri);
     vik_statusbar_set_message ( vw->viking_vs, VIK_STATUSBAR_INFO, msg );
-    g_free ( msg );
+    free( msg );
   }
 
-  g_free (uri);
-  g_free (basename);
-  g_free (recent_data->app_exec);
+  free(uri);
+  free(basename);
+  free(recent_data->app_exec);
   g_slice_free (GtkRecentData, recent_data);
 }
 
@@ -3083,9 +3084,9 @@ void vik_window_open_file ( VikWindow *vw, const char *filename, bool change_fil
   vik_window_set_busy_cursor ( vw );
 
   // Enable the *new* filename to be accessible by the Layers codez
-  char *original_filename = g_strdup ( vw->filename );
-  g_free ( vw->filename );
-  vw->filename = g_strdup ( filename );
+  char *original_filename = g_strdup( vw->filename );
+  free( vw->filename );
+  vw->filename = g_strdup( filename );
   bool success = false;
   bool restore_original_filename = false;
 
@@ -3110,7 +3111,7 @@ void vik_window_open_file ( VikWindow *vw, const char *filename, bool change_fil
       // Not that a user can do much about it... or tells them what this issue is yet...
       char *msg = g_strdup_printf (_("WARNING: issues encountered loading %s"), a_file_basename (filename) );
       vik_statusbar_set_message ( vw->viking_vs, VIK_STATUSBAR_INFO, msg );
-      g_free ( msg );
+      free( msg );
     }
       // No break, carry on to show any data
     case LOAD_TYPE_VIK_SUCCESS:
@@ -3165,7 +3166,7 @@ void vik_window_open_file ( VikWindow *vw, const char *filename, bool change_fil
   if ( ! success || restore_original_filename )
     // Load didn't work or want to keep as the existing Viking project, keep using the original name
     window_set_filename ( vw, original_filename );
-  g_free ( original_filename );
+  free( original_filename );
 
   vik_window_clear_busy_cursor ( vw );
 }
@@ -3182,7 +3183,7 @@ static void load_file ( GtkAction *a, VikWindow *vw )
     newwindow = false;
   } 
   else {
-    g_critical("Houston, we've had a problem.");
+    fprintf(stderr, "CRITICAL: Houston, we've had a problem.\n");
     return;
   }
 
@@ -3242,7 +3243,7 @@ static void load_file ( GtkAction *a, VikWindow *vw )
 
   if ( gtk_dialog_run ( GTK_DIALOG(dialog) ) == GTK_RESPONSE_ACCEPT )
   {
-    g_free ( last_folder_files_uri );
+    free( last_folder_files_uri );
     last_folder_files_uri = gtk_file_chooser_get_current_folder_uri ( GTK_FILE_CHOOSER(dialog) );
 
 #ifdef VIKING_PROMPT_IF_MODIFIED
@@ -3277,7 +3278,7 @@ static void load_file ( GtkAction *a, VikWindow *vw )
           // Other file types
           vik_window_open_file ( vw, file_name, change_fn );
 
-        g_free (file_name);
+        free(file_name);
         cur_file = g_slist_next (cur_file);
       }
       g_slist_free (files);
@@ -3318,7 +3319,7 @@ static bool save_file_as ( GtkAction *a, VikWindow *vw )
   gtk_window_set_destroy_with_parent ( GTK_WINDOW(dialog), true );
 
   // Auto append / replace extension with '.vik' to the suggested file name as it's going to be a Viking File
-  char* auto_save_name = g_strdup ( window_get_filename ( vw ) );
+  char* auto_save_name = g_strdup( window_get_filename ( vw ) );
   if ( ! a_file_check_ext ( auto_save_name, ".vik" ) )
     auto_save_name = g_strconcat ( auto_save_name, ".vik", NULL );
 
@@ -3333,13 +3334,13 @@ static bool save_file_as ( GtkAction *a, VikWindow *vw )
       rv = window_save ( vw );
       if ( rv ) {
         vw->modified = false;
-        g_free ( last_folder_files_uri );
+        free( last_folder_files_uri );
         last_folder_files_uri = gtk_file_chooser_get_current_folder_uri ( GTK_FILE_CHOOSER(dialog) );
       }
       break;
     }
   }
-  g_free ( auto_save_name );
+  free( auto_save_name );
   gtk_widget_destroy ( dialog );
   return rv;
 }
@@ -3399,7 +3400,7 @@ static bool export_to ( VikWindow *vw, GList *gl, VikFileType_t vft, const char 
     while ( ii < 5000 ) {
       if ( g_file_test ( fn, G_FILE_TEST_EXISTS ) ) {
         // Try rename
-        g_free ( fn );
+        free( fn );
         fn = g_strdup_printf ( "%s%s%s#%03d%s", dir, G_DIR_SEPARATOR_S, VIK_LAYER(gl->data)->name, ii, extension );
 	  }
 	  else {
@@ -3422,13 +3423,13 @@ static bool export_to ( VikWindow *vw, GList *gl, VikFileType_t vft, const char 
         vik_statusbar_set_message ( vw->viking_vs, VIK_STATUSBAR_INFO, message );
         while ( gtk_events_pending() )
           gtk_main_iteration ();
-        g_free ( message );
+        free( message );
       }
       
       success = success && this_success;
     }
 
-    g_free ( fn );
+    free( fn );
     gl = g_list_next ( gl );
   }
 
@@ -3437,7 +3438,7 @@ static bool export_to ( VikWindow *vw, GList *gl, VikFileType_t vft, const char 
   // Confirm what happened.
   char *message = g_strdup_printf ( _("Exported files: %d"), export_count );
   vik_statusbar_set_message ( vw->viking_vs, VIK_STATUSBAR_INFO, message );
-  g_free ( message );
+  free( message );
 
   return success;
 }
@@ -3471,7 +3472,7 @@ static void export_to_common ( VikWindow *vw, VikFileType_t vft, const char *ext
     if ( dir ) {
       if ( !export_to ( vw, gl, vft, dir, extension ) )
         a_dialog_error_msg ( GTK_WINDOW(vw),_("Could not convert all files") );
-      g_free ( dir );
+      free( dir );
     }
   }
   else
@@ -3508,18 +3509,18 @@ static void file_properties_cb ( GtkAction *a, VikWindow *vw )
         size = g_format_size_for_display ( byte_size );
 #endif
         message = g_strdup_printf ( "%s\n\n%s\n\n%s", vw->filename, time_buf, size );
-        g_free (size);
+        free(size);
       }
     }
     else
-      message = g_strdup ( _("File not accessible") );
+      message = g_strdup( _("File not accessible") );
   }
   else
-    message = g_strdup ( _("No Viking File") );
+    message = g_strdup( _("No Viking File") );
 
   // Show the info
   a_dialog_info_msg ( GTK_WINDOW(vw), message );
-  g_free ( message );
+  free( message );
 }
 
 static void my_acquire ( VikWindow *vw, VikDataSourceInterface *datasource )
@@ -3633,12 +3634,12 @@ static void menu_copy_centre_cb ( GtkAction *a, VikWindow *vw )
   }
 
   char *msg = g_strdup_printf ( "%s %s", lat, lon );
-  g_free (lat);
-  g_free (lon);
+  free(lat);
+  free(lon);
 
   a_clipboard_copy ( VIK_CLIPBOARD_DATA_TEXT, 0, 0, 0, msg, NULL );
 
-  g_free ( msg );
+  free( msg );
 }
 
 static void layer_defaults_cb ( GtkAction *a, VikWindow *vw )
@@ -3827,7 +3828,7 @@ static void save_image_file ( VikWindow *vw, const char *fn, unsigned int w, uns
   /* save buffer as file. */
   pixbuf_to_save = gdk_pixbuf_get_from_drawable ( NULL, GDK_DRAWABLE(vik_viewport_get_pixmap ( vw->viking_vvp )), NULL, 0, 0, 0, 0, w, h);
   if ( !pixbuf_to_save ) {
-    g_warning("Failed to generate internal pixmap size: %d x %d", w, h);
+    fprintf(stderr, "WARNING: Failed to generate internal pixmap size: %d x %d\n", w, h);
     gtk_message_dialog_set_markup ( GTK_MESSAGE_DIALOG(msgbox), _("Failed to generate internal image.\n\nTry creating a smaller image.") );
     goto cleanup;
   }
@@ -3842,7 +3843,7 @@ static void save_image_file ( VikWindow *vw, const char *fn, unsigned int w, uns
   else {
     gdk_pixbuf_save ( pixbuf_to_save, fn, save_as_png ? "png" : "jpeg", &error, NULL );
     if (error) {
-      g_warning("Unable to write to file %s: %s", fn, error->message );
+      fprintf(stderr, "WARNING: Unable to write to file %s: %s\n", fn, error->message );
       g_error_free (error);
       ans = 42;
     }
@@ -3870,7 +3871,7 @@ static void save_image_file ( VikWindow *vw, const char *fn, unsigned int w, uns
 static void save_image_dir ( VikWindow *vw, const char *fn, unsigned int w, unsigned int h, double zoom, bool save_as_png, unsigned int tiles_w, unsigned int tiles_h )
 {
   unsigned long size = sizeof(char) * (strlen(fn) + 15);
-  char *name_of_file = g_malloc ( size );
+  char *name_of_file = malloc( size );
   unsigned int x = 1, y = 1;
   struct UTM utm_orig, utm;
 
@@ -3888,10 +3889,10 @@ static void save_image_dir ( VikWindow *vw, const char *fn, unsigned int w, unsi
   vik_viewport_configure_manually ( vw->viking_vvp, w, h );
   /* *** end copy from above *** */
 
-  g_assert ( vik_viewport_get_coord_mode ( vw->viking_vvp ) == VIK_COORD_UTM );
+  assert ( vik_viewport_get_coord_mode ( vw->viking_vvp ) == VIK_COORD_UTM );
 
   if ( g_mkdir(fn,0777) != 0 )
-    g_warning ( "%s: Failed to create directory %s", __FUNCTION__, fn );
+    fprintf(stderr, "WARNING: %s: Failed to create directory %s\n", __FUNCTION__, fn );
 
   utm_orig = *((const struct UTM *)vik_viewport_get_center ( vw->viking_vvp ));
 
@@ -3899,7 +3900,7 @@ static void save_image_dir ( VikWindow *vw, const char *fn, unsigned int w, unsi
   {
     for ( x = 1; x <= tiles_w; x++ )
     {
-      g_snprintf ( name_of_file, size, "%s%cy%d-x%d.%s", fn, G_DIR_SEPARATOR, y, x, save_as_png ? "png" : "jpg" );
+      snprintf( name_of_file, size, "%s%cy%d-x%d.%s", fn, G_DIR_SEPARATOR, y, x, save_as_png ? "png" : "jpg" );
       utm = utm_orig;
       if ( tiles_w & 0x1 )
         utm.easting += ((double)x - ceil(((double)tiles_w)/2)) * (w*zoom);
@@ -3922,7 +3923,7 @@ static void save_image_dir ( VikWindow *vw, const char *fn, unsigned int w, unsi
       {
         char *msg = g_strdup_printf (_("Unable to write to file %s: %s"), name_of_file, error->message );
         vik_statusbar_set_message ( vw->viking_vs, VIK_STATUSBAR_INFO, msg );
-        g_free ( msg );
+        free( msg );
         g_error_free (error);
       }
 
@@ -3936,7 +3937,7 @@ static void save_image_dir ( VikWindow *vw, const char *fn, unsigned int w, unsi
   vik_viewport_configure ( vw->viking_vvp );
   draw_update ( vw );
 
-  g_free ( name_of_file );
+  free( name_of_file );
 }
 
 static void draw_to_image_file_current_window_cb(GtkWidget* widget,GdkEventButton *event,void * *pass_along)
@@ -3993,11 +3994,11 @@ static void draw_to_image_file_total_area_cb (GtkSpinButton *spinbutton, void * 
     break;
   default:
     label_text = g_strdup_printf ("Just to keep the compiler happy");
-    g_critical("Houston, we've had a problem. distance=%d", dist_units);
+    fprintf(stderr, "CRITICAL: Houston, we've had a problem. distance=%d\n", dist_units);
   }
 
   gtk_label_set_text(GTK_LABEL(pass_along[6]), label_text);
-  g_free ( label_text );
+  free( label_text );
 }
 
 typedef enum {
@@ -4062,7 +4063,7 @@ static char* draw_image_filename ( VikWindow *vw, img_generation_t img_gen )
     gtk_window_set_destroy_with_parent ( GTK_WINDOW(dialog), true );
 
     if ( gtk_dialog_run ( GTK_DIALOG(dialog) ) == GTK_RESPONSE_ACCEPT ) {
-      g_free ( last_folder_images_uri );
+      free( last_folder_images_uri );
       last_folder_images_uri = gtk_file_chooser_get_current_folder_uri ( GTK_FILE_CHOOSER(dialog) );
 
       fn = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER(dialog) );
@@ -4257,7 +4258,7 @@ static void draw_to_image_file ( VikWindow *vw, img_generation_t img_gen )
                        gtk_spin_button_get_value ( GTK_SPIN_BUTTON(tiles_height_spin) ) );
     }
 
-    g_free ( fn );
+    free( fn );
   }
   gtk_widget_destroy ( GTK_WIDGET(dialog) );
 }
@@ -4349,7 +4350,7 @@ static void window_change_coord_mode_cb ( GtkAction *old_a, GtkAction *a, VikWin
     drawmode = VIK_VIEWPORT_DRAWMODE_MERCATOR;
   }
   else {
-    g_critical("Houston, we've had a problem.");
+    fprintf(stderr, "CRITICAL: Houston, we've had a problem.\n");
     return;
   }
 
@@ -4415,7 +4416,7 @@ static void set_bg_color ( GtkAction *a, VikWindow *vw )
     vik_viewport_set_background_gdkcolor ( vw->viking_vvp, color );
     draw_update ( vw );
   }
-  g_free ( color );
+  free( color );
   gtk_widget_destroy ( colorsd );
 }
 
@@ -4431,7 +4432,7 @@ static void set_highlight_color ( GtkAction *a, VikWindow *vw )
     vik_viewport_set_highlight_gdkcolor ( vw->viking_vvp, color );
     draw_update ( vw );
   }
-  g_free ( color );
+  free( color );
   gtk_widget_destroy ( colorsd );
 }
 
@@ -4621,7 +4622,7 @@ static void window_create_ui( VikWindow *window )
   }
 
   if ( G_N_ELEMENTS (toggle_entries) !=  G_N_ELEMENTS (toggle_entries_toolbar_cb) ) {
-    g_print ( "Broken entries definitions\n" );
+    fprintf(stdout,  "Broken entries definitions\n" );
     exit (1);
   }
   for ( i=0; i < G_N_ELEMENTS (toggle_entries); i++ ) {
@@ -4685,7 +4686,7 @@ static void window_create_ui( VikWindow *window )
     action.callback = (GCallback)menu_addlayer_cb;
     gtk_action_group_add_actions(action_group, &action, 1, window);
 
-    g_free ( (char*)action.label );
+    free( (char*)action.label );
 
     if ( vik_layer_get_interface(i)->tools_count ) {
       gtk_ui_manager_add_ui(uim, mid,  "/ui/MainMenu/Tools/", vik_layer_get_interface(i)->name, NULL, GTK_UI_MANAGER_SEPARATOR, false);
@@ -4716,7 +4717,7 @@ static void window_create_ui( VikWindow *window )
 			  vik_layer_get_interface(i)->name,
 			  layername,
 			  GTK_UI_MANAGER_MENUITEM, false);
-    g_free (layername);
+    free(layername);
 
     // For default layers use action names of the form 'Layer<LayerName>'
     // This is to avoid clashing with just the layer name used above for the tool actions
@@ -4727,13 +4728,13 @@ static void window_create_ui( VikWindow *window )
     action_dl.tooltip = NULL;
     action_dl.callback = (GCallback)layer_defaults_cb;
     gtk_action_group_add_actions(action_group, &action_dl, 1, window);
-    g_free ( (char*)action_dl.name );
-    g_free ( (char*)action_dl.label );
+    free( (char*)action_dl.name );
+    free( (char*)action_dl.label );
   }
   g_object_unref (icon_factory);
 
   gtk_action_group_add_radio_actions(action_group, tools, ntools, 0, (GCallback)menu_cb, window);
-  g_free(tools);
+  free(tools);
 
   gtk_ui_manager_insert_action_group (uim, action_group, 0);
 

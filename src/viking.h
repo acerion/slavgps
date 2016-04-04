@@ -68,4 +68,14 @@
 #include "settings.h"
 #include "util.h"
 
+/* Stuff added during migrantion from glib to something else. */
+/* GINT_TO_POINTER */
+#define KINT_TO_POINTER(i) ((void *) (long) (i))
+/* GPOINTER_TO_INT */
+#define KPOINTER_TO_INT(p) ((int) (long) (p))
+/* GPOINTER_TO_UINT */
+#define KPOINTER_TO_UINT(p) ((unsigned int) (unsigned long) (p))
+/* GUINT_TO_POINTER */
+#define KUINT_TO_POINTER(u) ((void *) (unsigned long) (u))
+
 #endif

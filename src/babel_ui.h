@@ -29,7 +29,10 @@
 
 #include "babel.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 GtkWidget *a_babel_ui_file_type_selector_new ( BabelMode mode );
 void a_babel_ui_file_type_selector_destroy ( GtkWidget *selector );
@@ -39,6 +42,8 @@ void a_babel_ui_type_selector_dialog_sensitivity_cb ( GtkComboBox *widget, void 
 GtkWidget *a_babel_ui_modes_new ( bool tracks, bool routes, bool waypoints );
 void a_babel_ui_modes_get ( GtkWidget *container, bool *tracks, bool *routes, bool *waypoints );
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -28,6 +28,8 @@
 #include <unistd.h>
 #endif
 
+#include <stdlib.h>
+
 #include <glib/gstdio.h>
 #include <glib/gprintf.h>
 #include <glib/gi18n.h>
@@ -123,7 +125,7 @@ typedef struct {
 
 static void * datasource_gps_init_func ( acq_vik_t *avt )
 {
-  gps_user_data_t *gps_ud = g_malloc (sizeof(gps_user_data_t));
+  gps_user_data_t *gps_ud = malloc(sizeof(gps_user_data_t));
   gps_ud->direction = GPS_DOWN;
   return gps_ud;
 }
@@ -248,7 +250,7 @@ static void datasource_gps_get_process_options ( void * user_data, ProcessOption
 
   po->filename = g_strdup(datasource_gps_get_descriptor(user_data));
 
-  g_debug(_("using cmd '%s' and file '%s'\n"), po->babelargs, po->filename);
+  fprintf(stderr, _("DEBUG: using cmd '%s' and file '%s'\n"), po->babelargs, po->filename);
 }
 
 /**
@@ -308,7 +310,7 @@ static void datasource_gps_off ( void * user_data, char **babelargs, char **file
 
 static void datasource_gps_cleanup ( void * user_data )
 {
-  g_free ( user_data );
+  free( user_data );
   gps_acquire_in_progress = false;
 }
 
@@ -345,7 +347,7 @@ static void set_total_count(int cnt, acq_dialog_widgets_t *w)
     gtk_label_set_text ( GTK_LABEL(gps_data->progress_label), s );
     gtk_widget_show ( gps_data->progress_label );
   }
-  g_free(s); s = NULL;
+  free(s); s = NULL;
   gdk_threads_leave();
 }
 
@@ -371,7 +373,7 @@ static void set_current_count(int cnt, acq_dialog_widgets_t *w)
     }
     gtk_label_set_text ( GTK_LABEL(gps_data->progress_label), s );
   }
-  g_free(s); s = NULL;
+  free(s); s = NULL;
   gdk_threads_leave();
 }
 
@@ -383,7 +385,7 @@ static void set_gps_info(const char *info, acq_dialog_widgets_t *w)
     s = g_strdup_printf(_("GPS Device: %s"), info);
     gtk_label_set_text ( GTK_LABEL(((gps_user_data_t *)w->user_data)->gps_label), s );
   }
-  g_free(s); s = NULL;
+  free(s); s = NULL;
   gdk_threads_leave();
 }
 

@@ -39,6 +39,8 @@
 #include <gio/gio.h>
 #include <glib/gstdio.h>
 
+#include <stdlib.h>
+
 #ifdef HAVE_LIBZ
 /* return size of unzip data or 0 if failed */
 static unsigned int uncompress_data(void *uncompressed_buffer, unsigned int uncompressed_size, void *compressed_data, unsigned int compressed_size)
@@ -56,13 +58,13 @@ static unsigned int uncompress_data(void *uncompressed_buffer, unsigned int unco
 
 	/* negative windowBits to inflateInit2 means "no header" */
 	if ((err = inflateInit2(&stream, -MAX_WBITS)) != Z_OK) {
-		g_warning("%s(): inflateInit2 failed", __PRETTY_FUNCTION__);
+		fprintf(stderr, "WARNING: %s(): inflateInit2 failed\n", __PRETTY_FUNCTION__);
 		return 0;
 	}
 
 	err = inflate(&stream, Z_FINISH);
 	if ((err != Z_OK) && (err != Z_STREAM_END) && stream.msg) {
-		g_warning("%s() inflate failed err=%d \"%s\"", __PRETTY_FUNCTION__, err, stream.msg == NULL ? "unknown" : stream.msg);
+		fprintf(stderr, "WARNING: %s() inflate failed err=%d \"%s\"\n", __PRETTY_FUNCTION__, err, stream.msg == NULL ? "unknown" : stream.msg);
 		inflateEnd(&stream);
 		return 0;
 	}
@@ -102,14 +104,14 @@ void *unzip_file(char *zip_file, unsigned long *unzip_size)
 	}  __attribute__ ((gcc_struct,__packed__)) *local_file_header = NULL;
 
 	if ( sizeof(struct _lfh) != 30 ) {
-		g_critical ("Incorrect internal zip header size, should be 30 but is %zd", sizeof(struct _lfh) );
+		fprintf(stderr, "CRITICAL: Incorrect internal zip header size, should be 30 but is %zd\n", sizeof(struct _lfh) );
 		goto end;
 	}
 
 	local_file_header = (struct _lfh *) zip_file;
 	if (GUINT32_FROM_LE(local_file_header->sig) != 0x04034b50) {
-		g_warning("%s(): wrong format (%d)", __PRETTY_FUNCTION__, GUINT32_FROM_LE(local_file_header->sig));
-		g_free(unzip_data);
+		fprintf(stderr, "WARNING: %s(): wrong format (%d)\n", __PRETTY_FUNCTION__, GUINT32_FROM_LE(local_file_header->sig));
+		free(unzip_data);
 		goto end;
 	}
 
@@ -117,7 +119,7 @@ void *unzip_file(char *zip_file, unsigned long *unzip_size)
 		+ GUINT16_FROM_LE(local_file_header->filename_len)
 		+ GUINT16_FROM_LE(local_file_header->extra_field_len);
 	unsigned long uncompressed_size = GUINT32_FROM_LE(local_file_header->uncompressed_size);
-	unzip_data = g_malloc(uncompressed_size);
+	unzip_data = malloc(uncompressed_size);
 
 	// Protection against malloc failures
 	// ATM not normally been checking malloc failures in Viking but sometimes using zip files can be quite large
@@ -125,7 +127,7 @@ void *unzip_file(char *zip_file, unsigned long *unzip_size)
 	if ( !unzip_data )
 		goto end;
 
-	g_debug ("%s: method %d: from size %d to %ld", __FUNCTION__, GUINT16_FROM_LE(local_file_header->comp_method), GUINT32_FROM_LE(local_file_header->compressed_size), uncompressed_size);
+	fprintf(stderr, "DEBUG: %s: method %d: from size %d to %ld\n", __FUNCTION__, GUINT16_FROM_LE(local_file_header->comp_method), GUINT32_FROM_LE(local_file_header->compressed_size), uncompressed_size);
 
 	if ( GUINT16_FROM_LE(local_file_header->comp_method) == 0 &&
 		(uncompressed_size == GUINT32_FROM_LE(local_file_header->compressed_size)) ) {
@@ -137,7 +139,7 @@ void *unzip_file(char *zip_file, unsigned long *unzip_size)
 	}
 
 	if (!(*unzip_size = uncompress_data(unzip_data, uncompressed_size, zip_data, GUINT32_FROM_LE(local_file_header->compressed_size)))) {
-		g_free(unzip_data);
+		free(unzip_data);
 		unzip_data = NULL;
 		goto end;
 	}
@@ -159,7 +161,7 @@ end:
 char* uncompress_bzip2 ( char *name )
 {
 #ifdef HAVE_BZLIB_H
-	g_debug ( "%s: bzip2 %s", __FUNCTION__, BZ2_bzlibVersion() );
+	fprintf(stderr, "DEBUG: %s: bzip2 %s\n", __FUNCTION__, BZ2_bzlibVersion() );
 
 	FILE *ff = g_fopen ( name, "rb" );
 	if ( !ff )
@@ -170,7 +172,7 @@ char* uncompress_bzip2 ( char *name )
 	if ( bzerror != BZ_OK ) {
 		BZ2_bzReadClose ( &bzerror, bf );
 		// handle error
-		g_warning ( "%s: BZ ReadOpen error on %s", __FUNCTION__, name );
+		fprintf(stderr, "WARNING: %s: BZ ReadOpen error on %s\n", __FUNCTION__, name );
 		return NULL;
 	}
 
@@ -183,13 +185,13 @@ char* uncompress_bzip2 ( char *name )
 #else
 	int fd = g_file_open_tmp ( "vik-bz2-tmp.XXXXXX", &tmpname, &error );
 	if ( error ) {
-		g_warning ( error->message );
+		fprintf(stderr, "WARNING: %s\n", error->message );
 		g_error_free ( error );
 		return NULL;
 	}
 	gios = g_file_open_readwrite ( g_file_new_for_path (tmpname), NULL, &error );
 	if ( error ) {
-		g_warning ( error->message );
+		fprintf(stderr, "WARNING: %s\n", error->message );
 		g_error_free ( error );
 		return NULL;
 	}
@@ -207,7 +209,7 @@ char* uncompress_bzip2 ( char *name )
 		if ( bzerror == BZ_OK || bzerror == BZ_STREAM_END) {
 			// do something with buf[0 .. nBuf-1]
 			if ( g_output_stream_write ( gos, buf, nBuf, NULL, &error ) < 0 ) {
-				g_critical ( "Couldn't write bz2 tmp %s file due to %s", tmpname, error->message );
+				fprintf(stderr, "CRITICAL: Couldn't write bz2 tmp %s file due to %s\n", tmpname, error->message );
 				g_error_free (error);
 				BZ2_bzReadClose ( &bzerror, bf );
 				goto end;
@@ -216,7 +218,7 @@ char* uncompress_bzip2 ( char *name )
 	}
 	if ( bzerror != BZ_STREAM_END ) {
 		// handle error...
-		g_warning ( "%s: BZ error :( %d. read %d", __FUNCTION__, bzerror, nBuf );
+		fprintf(stderr, "WARNING: %s: BZ error :( %d. read %d\n", __FUNCTION__, bzerror, nBuf );
 	}
 	BZ2_bzReadClose ( &bzerror, bf );
 	g_output_stream_close ( gos, NULL, &error );

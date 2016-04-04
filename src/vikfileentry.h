@@ -29,7 +29,10 @@
 #include <stdint.h>
 
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #define VIK_FILE_ENTRY_TYPE            (vik_file_entry_get_type ())
 #define VIK_FILE_ENTRY(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_FILE_ENTRY_TYPE, VikFileEntry))
@@ -62,6 +65,8 @@ GtkWidget *vik_file_entry_new (GtkFileChooserAction action, vf_filter_type filte
 const char *vik_file_entry_get_filename ( VikFileEntry *vfe );
 void vik_file_entry_set_filename ( VikFileEntry *vfe, const char *filename );
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -32,7 +32,10 @@
 #include "viktrwlayer.h"
 #include "download.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 /**
  * BabelProgressCode:
@@ -129,6 +132,8 @@ void a_babel_uninit ();
 
 bool a_babel_available ();
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

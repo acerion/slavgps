@@ -32,7 +32,10 @@
 #include "mapcoord.h"
 #include "vikmapslayer_compat.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #define VIK_MAPS_LAYER_TYPE            (vik_maps_layer_get_type ())
 #define VIK_MAPS_LAYER(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_MAPS_LAYER_TYPE, VikMapsLayer))
@@ -73,6 +76,8 @@ char *vik_maps_layer_get_map_label(VikMapsLayer *vml);
 char *maps_layer_default_dir ();
 void vik_maps_layer_download ( VikMapsLayer *vml, VikViewport *vvp, bool only_new );
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

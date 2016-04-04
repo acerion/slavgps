@@ -27,6 +27,7 @@
 #include "vikwebtoolbounds.h"
 
 #include <string.h>
+#include <stdlib.h>
 
 #include <glib.h>
 #include <glib/gi18n.h>
@@ -71,9 +72,9 @@ webtool_bounds_set_property (GObject      *object,
   switch (property_id)
     {
     case PROP_URL:
-      g_free (priv->url);
+      free(priv->url);
       priv->url = g_value_dup_string (value);
-      g_debug ("VikWebtoolBounds.url: %s", priv->url);
+      fprintf(stderr, "DEBUG: VikWebtoolBounds.url: %s\n", priv->url);
       break;
 
     default:
@@ -161,7 +162,7 @@ vik_webtool_bounds_init ( VikWebtoolBounds *self )
 static void webtool_bounds_finalize ( GObject *gob )
 {
   VikWebtoolBoundsPrivate *priv = WEBTOOL_BOUNDS_GET_PRIVATE ( gob );
-  g_free ( priv->url ); priv->url = NULL;
+  free( priv->url ); priv->url = NULL;
   G_OBJECT_CLASS(parent_class)->finalize(gob);
 }
 

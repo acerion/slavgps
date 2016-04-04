@@ -23,6 +23,7 @@
 #include "config.h"
 #endif
 #include <string.h>
+#include <stdlib.h>
 
 #include <glib/gprintf.h>
 #include <glib/gi18n.h>
@@ -85,7 +86,7 @@ VikDataSourceInterface vik_datasource_file_interface = {
 /* See VikDataSourceInterface */
 static void * datasource_file_init ( acq_vik_t *avt )
 {
-  datasource_file_widgets_t *widgets = g_malloc(sizeof(*widgets));
+  datasource_file_widgets_t *widgets = malloc(sizeof(*widgets));
   return widgets;
 }
 
@@ -108,7 +109,7 @@ static void add_file_filter (void * data, void * user_data)
 	/* NB: we skip the '*' in the pattern */
 	char *name = g_strdup_printf ( "%s (%s)", label, pattern+1 );
     gtk_file_filter_set_name ( filter, name );
-	g_free ( name );
+	free( name );
   }
   g_object_set_data ( G_OBJECT(filter), "Babel", data );
   gtk_file_chooser_add_filter ( chooser, filter );
@@ -116,7 +117,7 @@ static void add_file_filter (void * data, void * user_data)
     /* Previous selection used this filter */
     gtk_file_chooser_set_filter ( chooser, filter );
 
-  g_free ( pattern );
+  free( pattern );
 }
 
 /* See VikDataSourceInterface */
@@ -167,7 +168,7 @@ static void datasource_file_get_process_options ( datasource_file_widgets_t *wid
   char *filename = gtk_file_chooser_get_filename ( GTK_FILE_CHOOSER(widgets->file) );
 
   /* Memorize the directory for later use */
-  g_free (last_folder_uri);
+  free(last_folder_uri);
   last_folder_uri = gtk_file_chooser_get_current_folder_uri ( GTK_FILE_CHOOSER(widgets->file) );
 
   /* Memorize the file filter for later use */
@@ -184,14 +185,14 @@ static void datasource_file_get_process_options ( datasource_file_widgets_t *wid
   po->filename = g_strdup(filename);
 
   /* Free memory */
-  g_free (filename);
+  free(filename);
 
-  g_debug(_("using babel args '%s' and file '%s'"), po->babelargs, po->filename);
+  fprintf(stderr, _("DEBUG: using babel args '%s' and file '%s'\n"), po->babelargs, po->filename);
 }
 
 /* See VikDataSourceInterface */
 static void datasource_file_cleanup ( void * data )
 {
-  g_free ( data );
+  free( data );
 }
 

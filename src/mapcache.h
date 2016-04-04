@@ -28,7 +28,10 @@
 #include <stdint.h>
 
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 typedef struct {
   double duration; // Mostly for Mapnik Rendering duration - negative values indicate not rendered (i.e. read from disk)
@@ -46,6 +49,8 @@ void a_mapcache_uninit ();
 int a_mapcache_get_size ();
 int a_mapcache_get_count ();
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

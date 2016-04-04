@@ -24,7 +24,10 @@
 
 #include "viktrwlayer.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 bool a_geojson_write_file ( VikTrwLayer *vtl, FILE *ff );
 
@@ -33,6 +36,8 @@ const char* a_geojson_program_import ( void );
 
 char* a_geojson_import_to_gpx ( const char *filename );
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

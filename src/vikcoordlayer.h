@@ -24,7 +24,10 @@
 
 #include "viklayer.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #define VIK_COORD_LAYER_TYPE            (vik_coord_layer_get_type ())
 #define VIK_COORD_LAYER(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_COORD_LAYER_TYPE, VikCoordLayer))
@@ -42,6 +45,8 @@ GType vik_coord_layer_get_type ();
 
 typedef struct _VikCoordLayer VikCoordLayer;
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

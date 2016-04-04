@@ -20,6 +20,7 @@
  *
  */
 #include <stdbool.h>
+#include <stdlib.h>
 #include "vikdatetime_edit_dialog.h"
 
 // Show leading zeros
@@ -29,7 +30,7 @@ static bool on_output ( GtkSpinButton *spin, void * data )
 	int value = (int)gtk_adjustment_get_value ( adjustment );
 	char *text = g_strdup_printf ( "%02d", value );
 	gtk_entry_set_text ( GTK_ENTRY (spin), text );
-	g_free ( text );
+	free( text );
 
 	return true;
 }

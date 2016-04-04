@@ -33,7 +33,10 @@
 #include "viklayer.h"
 #include "vikaggregatelayer.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #define VIK_LAYERS_PANEL_TYPE            (vik_layers_panel_get_type ())
 #define VIK_LAYERS_PANEL(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_LAYERS_PANEL_TYPE, VikLayersPanel))
@@ -75,6 +78,8 @@ void vik_layers_panel_change_coord_mode ( VikLayersPanel *vlp, VikCoordMode mode
 GList *vik_layers_panel_get_all_layers_of_type(VikLayersPanel *vlp, int type, bool include_invisible);
 VikTreeview *vik_layers_panel_get_treeview ( VikLayersPanel *vlp );
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

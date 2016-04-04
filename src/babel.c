@@ -43,6 +43,7 @@
 #include <unistd.h>
 #endif
 #include <string.h>
+#include <stdlib.h>
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <glib/gi18n.h>
@@ -144,10 +145,10 @@ bool a_babel_convert( VikTrwLayer *vt, const char *babelargs, BabelStatusFunc cb
     ProcessOptions po = { bargs, name_src, NULL, NULL, NULL };
     ret = a_babel_convert_from ( vt, &po, cb, user_data, not_used );
     (void)g_remove(name_src);
-    g_free(name_src);
+    free(name_src);
   }
 
-  g_free(bargs);
+  free(bargs);
   return ret;
 }
 
@@ -181,11 +182,11 @@ static bool babel_general_convert( BabelStatusFunc cb, char **args, void * user_
 
   if ( vik_debug ) {
     for ( unsigned int i=0; args[i]; i++ )
-      g_debug ("%s: %s", __FUNCTION__, args[i] );
+      fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, args[i] );
   }
 
   if (!g_spawn_async_with_pipes (NULL, args, NULL, G_SPAWN_DO_NOT_REAP_CHILD, NULL, NULL, &pid, NULL, &babel_stdout, NULL, &error)) {
-    g_warning ("Async command failed: %s", error->message);
+    fprintf(stderr, "WARNING: Async command failed: %s\n", error->message);
     g_error_free(error);
     ret = false;
   } else {
@@ -278,7 +279,7 @@ bool a_babel_convert_from_filter( VikTrwLayer *vt, const char *babelargs, const 
   char *args[64];
 
   if ((fd_dst = g_file_open_tmp("tmp-viking.XXXXXX", &name_dst, NULL)) >= 0) {
-    g_debug ("%s: temporary file: %s", __FUNCTION__, name_dst);
+    fprintf(stderr, "DEBUG: %s: temporary file: %s\n", __FUNCTION__, name_dst);
     close(fd_dst);
 
     if (gpsbabel_loc ) {
@@ -316,9 +317,9 @@ bool a_babel_convert_from_filter( VikTrwLayer *vt, const char *babelargs, const 
       if (sub_filters)
           g_strfreev(sub_filters);
     } else
-      g_critical("gpsbabel not found in PATH");
+      fprintf(stderr, "CRITICAL: gpsbabel not found in PATH\n");
     (void)g_remove(name_dst);
-    g_free(name_dst);
+    free(name_dst);
   }
 
   return ret;
@@ -347,7 +348,7 @@ bool a_babel_convert_from_shellcommand ( VikTrwLayer *vt, const char *input_cmd,
   char **args;  
 
   if ((fd_dst = g_file_open_tmp("tmp-viking.XXXXXX", &name_dst, NULL)) >= 0) {
-    g_debug ("%s: temporary file: %s", __FUNCTION__, name_dst);
+    fprintf(stderr, "DEBUG: %s: temporary file: %s\n", __FUNCTION__, name_dst);
     char *shell_command;
     if ( input_file_type )
       shell_command = g_strdup_printf("%s | %s -i %s -f - -o gpx -F %s",
@@ -355,20 +356,20 @@ bool a_babel_convert_from_shellcommand ( VikTrwLayer *vt, const char *input_cmd,
     else
       shell_command = g_strdup_printf("%s > %s", input_cmd, name_dst);
 
-    g_debug("%s: %s", __FUNCTION__, shell_command);
+    fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, shell_command);
     close(fd_dst);
 
-    args = g_malloc(sizeof(char *)*4);
+    args = malloc(sizeof(char *)*4);
     args[0] = BASH_LOCATION;
     args[1] = "-c";
     args[2] = shell_command;
     args[3] = NULL;
 
     ret = babel_general_convert_from ( vt, cb, args, name_dst, user_data );
-    g_free ( args );
-    g_free ( shell_command );
+    free( args );
+    free( shell_command );
     (void)g_remove(name_dst);
-    g_free(name_dst);
+    free(name_dst);
   }
 
   return ret;
@@ -402,10 +403,10 @@ bool a_babel_convert_from_url_filter ( VikTrwLayer *vt, const char *url, const c
   char *name_src = NULL;
   char *babelargs = NULL;
 
-  g_debug("%s: input_type=%s url=%s", __FUNCTION__, input_type, url);
+  fprintf(stderr, "DEBUG: %s: input_type=%s url=%s\n", __FUNCTION__, input_type, url);
 
   if ((fd_src = g_file_open_tmp("tmp-viking.XXXXXX", &name_src, NULL)) >= 0) {
-    g_debug ("%s: temporary file: %s", __FUNCTION__, name_src);
+    fprintf(stderr, "DEBUG: %s: temporary file: %s\n", __FUNCTION__, name_src);
     close(fd_src);
     (void)g_remove(name_src);
 
@@ -416,7 +417,7 @@ bool a_babel_convert_from_url_filter ( VikTrwLayer *vt, const char *url, const c
         ret = a_babel_convert_from_filter( vt, babelargs, name_src, babelfilters, NULL, NULL, NULL );
       } else {
         /* Process directly the retrieved file */
-        g_debug("%s: directly read GPX file %s", __FUNCTION__, name_src);
+        fprintf(stderr, "DEBUG: %s: directly read GPX file %s\n", __FUNCTION__, name_src);
         FILE *f = g_fopen(name_src, "r");
         if (f) {
           ret = a_gpx_read_file ( vt, f );
@@ -426,8 +427,8 @@ bool a_babel_convert_from_url_filter ( VikTrwLayer *vt, const char *url, const c
       }
     }
     (void)util_remove(name_src);
-    g_free(babelargs);
-    g_free(name_src);
+    free(babelargs);
+    free(name_src);
   }
 
   return ret;
@@ -463,7 +464,7 @@ static bool babel_general_convert_to( VikTrwLayer *vt, VikTrack *trk, BabelStatu
 {
   // Now strips out invisible tracks and waypoints
   if (!a_file_export(vt, name_src, FILE_TYPE_GPX, trk, false)) {
-    g_critical("Error exporting to %s", name_src);
+    fprintf(stderr, "CRITICAL: Error exporting to %s\n", name_src);
     return false;
   }
        
@@ -495,7 +496,7 @@ bool a_babel_convert_to( VikTrwLayer *vt, VikTrack *track, const char *babelargs
   char *args[64];  
 
   if ((fd_src = g_file_open_tmp("tmp-viking.XXXXXX", &name_src, NULL)) >= 0) {
-    g_debug ("%s: temporary file: %s", __FUNCTION__, name_src);
+    fprintf(stderr, "DEBUG: %s: temporary file: %s\n", __FUNCTION__, name_src);
     close(fd_src);
 
     if (gpsbabel_loc ) {
@@ -521,9 +522,9 @@ bool a_babel_convert_to( VikTrwLayer *vt, VikTrack *track, const char *babelargs
 
       g_strfreev(sub_args);
     } else
-      g_critical("gpsbabel not found in PATH");
+      fprintf(stderr, "CRITICAL: gpsbabel not found in PATH\n");
     (void)g_remove(name_src);
-    g_free(name_src);
+    free(name_src);
   }
 
   return ret;
@@ -554,43 +555,43 @@ static void load_feature_parse_line (char *line)
            && tokens[2] != NULL
            && tokens[3] != NULL
            && tokens[4] != NULL ) {
-        BabelDevice *device = g_malloc ( sizeof (BabelDevice) );
+        BabelDevice *device = malloc( sizeof (BabelDevice) );
         set_mode (&(device->mode), tokens[1]);
-        device->name = g_strdup (tokens[2]);
+        device->name = g_strdup(tokens[2]);
         device->label = g_strndup (tokens[4], 50); // Limit really long label text
         a_babel_device_list = g_list_append (a_babel_device_list, device);
-        g_debug ("New gpsbabel device: %s, %d%d%d%d%d%d(%s)",
+        fprintf(stderr, "DEBUG: New gpsbabel device: %s, %d%d%d%d%d%d(%s)\n",
         		device->name,
         		device->mode.waypointsRead, device->mode.waypointsWrite,
         		device->mode.tracksRead, device->mode.tracksWrite,
         		device->mode.routesRead, device->mode.routesWrite,
         			tokens[1]);
       } else {
-        g_warning ( "Unexpected gpsbabel format string: %s", line);
+        fprintf(stderr, "WARNING: Unexpected gpsbabel format string: %s\n", line);
       }
     } else if ( strcmp("file", tokens[0]) == 0 ) {
       if ( tokens[1] != NULL
            && tokens[2] != NULL
            && tokens[3] != NULL
            && tokens[4] != NULL ) {
-        BabelFile *file = g_malloc ( sizeof (BabelFile) );
+        BabelFile *file = malloc( sizeof (BabelFile) );
         set_mode (&(file->mode), tokens[1]);
-        file->name = g_strdup (tokens[2]);
-        file->ext = g_strdup (tokens[3]);
-        file->label = g_strdup (tokens[4]);
+        file->name = g_strdup(tokens[2]);
+        file->ext = g_strdup(tokens[3]);
+        file->label = g_strdup(tokens[4]);
         a_babel_file_list = g_list_append (a_babel_file_list, file);
-        g_debug ("New gpsbabel file: %s, %d%d%d%d%d%d(%s)",
+        fprintf(stderr, "DEBUG: New gpsbabel file: %s, %d%d%d%d%d%d(%s)\n",
 			file->name,
 			file->mode.waypointsRead, file->mode.waypointsWrite,
 			file->mode.tracksRead, file->mode.tracksWrite,
 			file->mode.routesRead, file->mode.routesWrite,
 			tokens[1]);
       } else {
-        g_warning ( "Unexpected gpsbabel format string: %s", line);
+        fprintf(stderr, "WARNING: Unexpected gpsbabel format string: %s\n", line);
       }
     } /* else: ignore */
   } else {
-    g_warning ( "Unexpected gpsbabel format string: %s", line);
+    fprintf(stderr, "WARNING: Unexpected gpsbabel format string: %s\n", line);
   }
   g_strfreev ( tokens );
 }
@@ -617,7 +618,7 @@ static bool load_feature ()
 
     ret = babel_general_convert (load_feature_cb, args, NULL);
   } else
-    g_critical("gpsbabel not found in PATH");
+    fprintf(stderr, "CRITICAL: gpsbabel not found in PATH\n");
 
   return ret;
 }
@@ -664,7 +665,7 @@ void a_babel_post_init ()
   if ( g_strcmp0 ( gpsbabel, "gpsbabel" ) == 0 ) {
     gpsbabel_loc = g_find_program_in_path( "gpsbabel" );
     if ( !gpsbabel_loc )
-      g_critical( "gpsbabel not found in PATH" );
+      fprintf(stderr, "CRITICAL: gpsbabel not found in PATH\n" );
   }
   else
     gpsbabel_loc = (char*)gpsbabel;
@@ -674,7 +675,7 @@ void a_babel_post_init ()
 #ifndef WINDOWS
   unbuffer_loc = g_find_program_in_path( "unbuffer" );
   if ( !unbuffer_loc )
-    g_warning( "unbuffer not found in PATH" );
+    fprintf(stderr, "WARNING: unbuffer not found in PATH\n" );
 #endif
 
   load_feature ();
@@ -687,17 +688,17 @@ void a_babel_post_init ()
  */
 void a_babel_uninit ()
 {
-  g_free ( gpsbabel_loc );
-  g_free ( unbuffer_loc );
+  free( gpsbabel_loc );
+  free( unbuffer_loc );
 
   if ( a_babel_file_list ) {
     GList *gl;
     for (gl = a_babel_file_list; gl != NULL; gl = g_list_next(gl)) {
       BabelFile *file = gl->data;
-      g_free ( file->name );
-      g_free ( file->ext );
-      g_free ( file->label );
-      g_free ( gl->data );
+      free( file->name );
+      free( file->ext );
+      free( file->label );
+      free( gl->data );
     }
     g_list_free ( a_babel_file_list );
   }
@@ -706,9 +707,9 @@ void a_babel_uninit ()
     GList *gl;
     for (gl = a_babel_device_list; gl != NULL; gl = g_list_next(gl)) {
       BabelDevice *device = gl->data;
-      g_free ( device->name );
-      g_free ( device->label );
-      g_free ( gl->data );
+      free( device->name );
+      free( device->label );
+      free( gl->data );
     }
     g_list_free ( a_babel_device_list );
   }

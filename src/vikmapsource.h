@@ -30,7 +30,10 @@
 #include "mapcoord.h"
 #include "bbox.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #define VIK_TYPE_MAP_SOURCE             (vik_map_source_get_type ())
 #define VIK_MAP_SOURCE(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_TYPE_MAP_SOURCE, VikMapSource))
@@ -111,6 +114,8 @@ int vik_map_source_download (VikMapSource * self, MapCoord * src, const char * d
 void * vik_map_source_download_handle_init (VikMapSource * self);
 void vik_map_source_download_handle_cleanup (VikMapSource * self, void * handle);
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _VIK_MAP_SOURCE_H_ */

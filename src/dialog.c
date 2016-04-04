@@ -62,13 +62,13 @@ bool a_dialog_goto_latlon ( GtkWindow *parent, struct LatLon *ll, const struct L
   lat = gtk_entry_new ();
   tmp_lat = g_strdup_printf ( "%f", old->lat );
   gtk_entry_set_text ( GTK_ENTRY(lat), tmp_lat );
-  g_free ( tmp_lat );
+  free( tmp_lat );
 
   lonlabel = gtk_label_new (_("Longitude:"));
   lon = gtk_entry_new ();
   tmp_lon = g_strdup_printf ( "%f", old->lon );
   gtk_entry_set_text ( GTK_ENTRY(lon), tmp_lon );
-  g_free ( tmp_lon );
+  free( tmp_lon );
 
   gtk_widget_show ( latlabel );
   gtk_widget_show ( lonlabel );
@@ -117,13 +117,13 @@ bool a_dialog_goto_utm ( GtkWindow *parent, struct UTM *utm, const struct UTM *o
   nor = gtk_entry_new ();
   tmp_nor = g_strdup_printf("%ld", (long) old->northing );
   gtk_entry_set_text ( GTK_ENTRY(nor), tmp_nor );
-  g_free ( tmp_nor );
+  free( tmp_nor );
 
   easlabel = gtk_label_new (_("Easting:"));
   eas = gtk_entry_new ();
   tmp_eas = g_strdup_printf("%ld", (long) old->easting );
   gtk_entry_set_text ( GTK_ENTRY(eas), tmp_eas );
-  g_free ( tmp_eas );
+  free( tmp_eas );
 
   zonehbox = gtk_hbox_new ( false, 0 );
   gtk_box_pack_start ( GTK_BOX(zonehbox), gtk_label_new ( _("Zone:") ), false, false, 5 );
@@ -294,7 +294,7 @@ char *a_dialog_new_track ( GtkWindow *parent, char *default_name, bool is_route 
     if ( *constname == '\0' )
       a_dialog_info_msg ( parent, _("Please enter a name for the track.") );
     else {
-      char *name = g_strdup ( constname );
+      char *name = g_strdup( constname );
       gtk_widget_destroy ( dialog );
       return name;
     }

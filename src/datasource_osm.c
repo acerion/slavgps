@@ -23,6 +23,7 @@
 #include "config.h"
 #endif
 #include <string.h>
+#include <stdlib.h>
 
 #include <glib/gprintf.h>
 #include <glib/gi18n.h>
@@ -76,7 +77,7 @@ VikDataSourceInterface vik_datasource_osm_interface = {
 
 static void * datasource_osm_init ( acq_vik_t *avt )
 {
-  datasource_osm_widgets_t *widgets = g_malloc(sizeof(*widgets));
+  datasource_osm_widgets_t *widgets = malloc(sizeof(*widgets));
   /* Keep reference to viewport */
   widgets->vvp = avt->vvp;
   return widgets;
@@ -126,6 +127,6 @@ static void datasource_osm_get_process_options ( datasource_osm_widgets_t *widge
 
 static void datasource_osm_cleanup ( void * data )
 {
-  g_free ( data );
+  free( data );
 }
 

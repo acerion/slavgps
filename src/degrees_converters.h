@@ -24,7 +24,10 @@
 
 #include <glib.h>
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 char *convert_lat_dec_to_ddd(double lat);
 char *convert_lon_dec_to_ddd(double lon);
@@ -37,6 +40,8 @@ char *convert_lon_dec_to_dms(double lon);
 
 double convert_dms_to_dec(const char *dms);
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -21,11 +21,12 @@
  */
 
 #include "vik_compat.h"
+#include <stdlib.h>
 
 GMutex * vik_mutex_new ()
 {
 #if GLIB_CHECK_VERSION (2, 32, 0)
-	GMutex *mutex = g_new (GMutex, 1);
+	GMutex *mutex = (GMutex *) malloc(1 * sizeof (GMutex));
 	g_mutex_init(mutex);
 #else
 	GMutex *mutex = g_mutex_new();
@@ -37,7 +38,7 @@ void vik_mutex_free (GMutex *mutex)
 {
 #if GLIB_CHECK_VERSION (2, 32, 0)
   g_mutex_clear (mutex);
-  g_free (mutex);
+  free(mutex);
 #else
   g_mutex_free (mutex);
 #endif

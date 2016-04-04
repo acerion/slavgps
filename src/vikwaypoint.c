@@ -21,6 +21,7 @@
 
 #include <glib.h>
 #include <string.h>
+#include <stdlib.h>
 #include "coords.h"
 #include "vikcoord.h"
 #include "vikwaypoint.h"
@@ -41,7 +42,7 @@ VikWaypoint *vik_waypoint_new()
 void vik_waypoint_set_name(VikWaypoint *wp, const char *name)
 {
   if ( wp->name )
-    g_free ( wp->name );
+    free( wp->name );
 
   wp->name = g_strdup(name);
 }
@@ -49,14 +50,14 @@ void vik_waypoint_set_name(VikWaypoint *wp, const char *name)
 void vik_waypoint_set_comment_no_copy(VikWaypoint *wp, char *comment)
 {
   if ( wp->comment )
-    g_free ( wp->comment );
+    free( wp->comment );
   wp->comment = comment;
 }
 
 void vik_waypoint_set_comment(VikWaypoint *wp, const char *comment)
 {
   if ( wp->comment )
-    g_free ( wp->comment );
+    free( wp->comment );
 
   if ( comment && comment[0] != '\0' )
     wp->comment = g_strdup(comment);
@@ -67,7 +68,7 @@ void vik_waypoint_set_comment(VikWaypoint *wp, const char *comment)
 void vik_waypoint_set_description(VikWaypoint *wp, const char *description)
 {
   if ( wp->description )
-    g_free ( wp->description );
+    free( wp->description );
 
   if ( description && description[0] != '\0' )
     wp->description = g_strdup(description);
@@ -78,7 +79,7 @@ void vik_waypoint_set_description(VikWaypoint *wp, const char *description)
 void vik_waypoint_set_source(VikWaypoint *wp, const char *source)
 {
   if ( wp->source )
-    g_free ( wp->source );
+    free( wp->source );
 
   if ( source && source[0] != '\0' )
     wp->source = g_strdup(source);
@@ -89,7 +90,7 @@ void vik_waypoint_set_source(VikWaypoint *wp, const char *source)
 void vik_waypoint_set_type(VikWaypoint *wp, const char *type)
 {
   if ( wp->type )
-    g_free ( wp->type );
+    free( wp->type );
 
   if ( type && type[0] != '\0' )
     wp->type = g_strdup(type);
@@ -100,7 +101,7 @@ void vik_waypoint_set_type(VikWaypoint *wp, const char *type)
 void vik_waypoint_set_url(VikWaypoint *wp, const char *url)
 {
   if ( wp->url )
-    g_free ( wp->url );
+    free( wp->url );
 
   if ( url && url[0] != '\0' )
     wp->url = g_strdup(url);
@@ -111,7 +112,7 @@ void vik_waypoint_set_url(VikWaypoint *wp, const char *url)
 void vik_waypoint_set_image(VikWaypoint *wp, const char *image)
 {
   if ( wp->image )
-    g_free ( wp->image );
+    free( wp->image );
 
   if ( image && image[0] != '\0' )
     wp->image = g_strdup(image);
@@ -125,7 +126,7 @@ void vik_waypoint_set_symbol(VikWaypoint *wp, const char *symname)
   const char *hashed_symname;
 
   if ( wp->symbol )
-    g_free ( wp->symbol );
+    free( wp->symbol );
 
   // NB symbol_pixbuf is just a reference, so no need to free it
 
@@ -133,7 +134,7 @@ void vik_waypoint_set_symbol(VikWaypoint *wp, const char *symname)
     hashed_symname = a_get_hashed_sym ( symname );
     if ( hashed_symname )
       symname = hashed_symname;
-    wp->symbol = g_strdup ( symname );
+    wp->symbol = g_strdup( symname );
     wp->symbol_pixbuf = a_get_wp_sym ( wp->symbol );
   }
   else {
@@ -145,20 +146,20 @@ void vik_waypoint_set_symbol(VikWaypoint *wp, const char *symname)
 void vik_waypoint_free(VikWaypoint *wp)
 {
   if ( wp->comment )
-    g_free ( wp->comment );
+    free( wp->comment );
   if ( wp->description )
-    g_free ( wp->description );
+    free( wp->description );
   if ( wp->source )
-    g_free ( wp->source );
+    free( wp->source );
   if ( wp->type )
-    g_free ( wp->type );
+    free( wp->type );
   if ( wp->url )
-    g_free ( wp->url );
+    free( wp->url );
   if ( wp->image )
-    g_free ( wp->image );
+    free( wp->image );
   if ( wp->symbol )
-    g_free ( wp->symbol );
-  g_free ( wp );
+    free( wp->symbol );
+  free( wp );
 }
 
 VikWaypoint *vik_waypoint_copy(const VikWaypoint *wp)

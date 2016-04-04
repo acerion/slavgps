@@ -30,7 +30,10 @@
 
 #include "vikgototool.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #define GOOGLE_GOTO_TOOL_TYPE            (google_goto_tool_get_type ())
 #define GOOGLE_GOTO_TOOL(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GOOGLE_GOTO_TOOL_TYPE, GoogleGotoTool))
@@ -56,6 +59,8 @@ struct _GoogleGotoTool {
 
 GoogleGotoTool *google_goto_tool_new ();
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

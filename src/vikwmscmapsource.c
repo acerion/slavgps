@@ -34,6 +34,9 @@
 #include <math.h>
 #endif
 
+#include <stdlib.h>
+#include <assert.h>
+
 #include "globals.h"
 #include "vikwmscmapsource.h"
 #include "maputils.h"
@@ -123,11 +126,11 @@ vik_wmsc_map_source_finalize (GObject *object)
   VikWmscMapSource *self = VIK_WMSC_MAP_SOURCE (object);
   VikWmscMapSourcePrivate *priv = VIK_WMSC_MAP_SOURCE_PRIVATE (self);
 
-  g_free (priv->hostname);
+  free(priv->hostname);
   priv->hostname = NULL;
-  g_free (priv->url);
+  free(priv->url);
   priv->url = NULL;
-  g_free (priv->options.referer);
+  free(priv->options.referer);
   priv->options.referer = NULL;
 
   G_OBJECT_CLASS (vik_wmsc_map_source_parent_class)->finalize (object);
@@ -145,17 +148,17 @@ vik_wmsc_map_source_set_property (GObject      *object,
   switch (property_id)
     {
     case PROP_HOSTNAME:
-      g_free (priv->hostname);
+      free(priv->hostname);
       priv->hostname = g_value_dup_string (value);
       break;
 
     case PROP_URL:
-      g_free (priv->url);
+      free(priv->url);
       priv->url = g_value_dup_string (value);
       break;
 
     case PROP_REFERER:
-      g_free (priv->options.referer);
+      free(priv->options.referer);
       priv->options.referer = g_value_dup_string (value);
       break;
 
@@ -416,7 +419,7 @@ _is_osm_meta_tiles ( VikMapSource *self )
 static bool
 _coord_to_mapcoord ( VikMapSource *self, const VikCoord *src, double xzoom, double yzoom, MapCoord *dest )
 {
-  g_assert ( src->mode == VIK_COORD_LATLON );
+  assert ( src->mode == VIK_COORD_LATLON );
 
   if ( xzoom != yzoom )
     return false;
@@ -426,7 +429,7 @@ _coord_to_mapcoord ( VikMapSource *self, const VikCoord *src, double xzoom, doub
     return false;
 
   /* Note : VIK_GZ(17) / xzoom / 2 = number of tile on Y axis */
-  g_debug("%s: xzoom=%f yzoom=%f -> %f", __FUNCTION__,
+  fprintf(stderr, "DEBUG: %s: xzoom=%f yzoom=%f -> %f\n", __FUNCTION__,
           xzoom, yzoom, VIK_GZ(17) / xzoom / 2);
   dest->x = floor((src->east_west + 180) / 180 * VIK_GZ(17) / xzoom / 2);
   /* We should restore logic of viking:
@@ -434,7 +437,7 @@ _coord_to_mapcoord ( VikMapSource *self, const VikCoord *src, double xzoom, doub
    */
   dest->y = floor((180 - (src->north_south + 90)) / 180 * VIK_GZ(17) / xzoom / 2);
   dest->z = 0;
-  g_debug("%s: %f,%f -> %d,%d", __FUNCTION__,
+  fprintf(stderr, "DEBUG: %s: %f,%f -> %d,%d\n", __FUNCTION__,
           src->east_west, src->north_south, dest->x, dest->y);
   return true;
 }
@@ -453,7 +456,7 @@ _mapcoord_to_center_coord ( VikMapSource *self, MapCoord *src, VikCoord *dest )
    * tile index on Y axis follow a screen logic (top -> down)
    */
   dest->north_south = -((src->y+0.5) * 180 / VIK_GZ(17) * socalled_mpp * 2 - 90);
-  g_debug("%s: %d,%d -> %f,%f", __FUNCTION__,
+  fprintf(stderr, "DEBUG: %s: %d,%d -> %f,%f\n", __FUNCTION__,
           src->x, src->y, dest->east_west, dest->north_south);
 }
 

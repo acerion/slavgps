@@ -33,7 +33,10 @@
 #include "vikviewport.h"
 #include "vikstatus.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #define VIK_WINDOW_TYPE            (vik_window_get_type ())
 #define VIK_WINDOW(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_WINDOW_TYPE, VikWindow))
@@ -105,7 +108,9 @@ typedef struct {
   int oldx, oldy;
 } tool_ed_t;
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #define VIK_WINDOW_FROM_WIDGET(x) VIK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(x)))
 

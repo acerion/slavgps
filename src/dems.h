@@ -24,7 +24,10 @@
 #include "dem.h"
 #include "vikcoord.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 typedef enum {
   VIK_DEM_INTERPOL_NONE = 0,
@@ -42,7 +45,9 @@ GList *a_dems_list_copy ( GList *dems );
 int16_t a_dems_list_get_elev_by_coord ( GList *dems, const VikCoord *coord );
 int16_t a_dems_get_elev_by_coord ( const VikCoord *coord, VikDemInterpol method);
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

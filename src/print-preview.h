@@ -23,7 +23,10 @@
 #include <stdint.h>
 
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 
 #define VIK_TYPE_PRINT_PREVIEW            (vik_print_preview_get_type ())
@@ -90,6 +93,8 @@ void        vik_print_preview_set_image_offsets_max (VikPrintPreview *preview,
 void        vik_print_preview_set_use_full_page (VikPrintPreview *preview,
                                                   bool          full_page);
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __VIK_PRINT_PREVIEW_H__ */

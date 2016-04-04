@@ -29,7 +29,10 @@
 #include <stdint.h>
 
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 /* response codes */
 #define VIK_TRW_LAYER_TPWIN_CLOSE    6
@@ -63,6 +66,8 @@ void vik_trw_layer_tpwin_disable_join ( VikTrwLayerTpwin *tpwin );
 void vik_trw_layer_tpwin_set_tp ( VikTrwLayerTpwin *tpwin, GList *tpl, const char *track_name, bool is_route );
 void vik_trw_layer_tpwin_set_track_name ( VikTrwLayerTpwin *tpwin, const char *track_name );
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

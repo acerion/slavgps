@@ -27,7 +27,10 @@
 
 #include "viktrwlayer.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 /**
  * Options adapting GPX writing.
@@ -47,6 +50,8 @@ void a_gpx_write_track_file ( VikTrack *trk, FILE *f, GpxWritingOptions *options
 char* a_gpx_write_tmp_file ( VikTrwLayer *vtl, GpxWritingOptions *options );
 char* a_gpx_write_track_tmp_file ( VikTrack *trk, GpxWritingOptions *options );
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

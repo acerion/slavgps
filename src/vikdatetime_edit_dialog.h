@@ -26,10 +26,15 @@
 #include <glib.h>
 #include <gtk/gtk.h>
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 time_t vik_datetime_edit_dialog ( GtkWindow *parent, const char *title, time_t initial_time, GTimeZone *tz );
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

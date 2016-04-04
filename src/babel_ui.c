@@ -22,6 +22,8 @@
  */
 #include <glib/gi18n.h>
 
+#include <stdlib.h>
+
 #include "babel.h"
 #include "babel_ui.h"
 
@@ -103,7 +105,7 @@ GtkWidget *a_babel_ui_file_type_selector_new ( BabelMode mode )
 void a_babel_ui_file_type_selector_destroy ( GtkWidget *selector )
 {
   GList *formats = g_object_get_data ( G_OBJECT(selector), "formats" );
-  g_free ( formats );
+  free( formats );
 }
 
 /**

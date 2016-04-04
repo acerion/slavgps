@@ -29,7 +29,10 @@
 
 #include "download.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 /* Error messages returned by download functions */
 enum { CURL_DOWNLOAD_NO_ERROR = 0,
@@ -59,6 +62,8 @@ int curl_download_uri ( const char *uri, FILE *f, DownloadFileOptions *options, 
 void * curl_download_handle_init ();
 void curl_download_handle_cleanup ( void * handle );
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -25,6 +25,8 @@
   * old map source (see #VikMapsLayer_MapType).
   */
 
+#include <stdlib.h>
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -72,7 +74,7 @@ vik_map_type_new_with_id (VikMapsLayer_MapType map_type, const char *label)
 	VikMapType *ret = (VikMapType *)g_object_new(vik_map_type_get_type(), NULL);
 	VikMapTypePrivate *priv = VIK_MAP_TYPE_PRIVATE(ret);
 	priv->map_type = map_type;
-	priv->label = g_strdup (label);
+	priv->label = g_strdup(label);
 	return ret;
 }
 
@@ -80,7 +82,7 @@ static void
 vik_map_type_finalize (GObject *object)
 {
 	VikMapTypePrivate *priv = VIK_MAP_TYPE_PRIVATE(object);
-	g_free (priv->label);
+	free(priv->label);
 	priv->label = NULL;
 
 	G_OBJECT_CLASS (vik_map_type_parent_class)->finalize (object);

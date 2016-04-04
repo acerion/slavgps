@@ -21,7 +21,10 @@
 #define __JPEG_MARKER_H__
 
 #ifdef __cplusplus
+#ifdef __cplusplus
 extern "C" {
+#endif
+
 #endif /* __cplusplus */
 
 typedef enum {

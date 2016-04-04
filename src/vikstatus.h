@@ -29,7 +29,10 @@
 #include <stdint.h>
 
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #define VIK_STATUSBAR_TYPE            (vik_statusbar_get_type ())
 #define VIK_STATUSBAR(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_STATUSBAR_TYPE, VikStatusbar))
@@ -63,6 +66,8 @@ typedef enum {
 VikStatusbar *vik_statusbar_new ();
 void vik_statusbar_set_message ( VikStatusbar *vs, vik_statusbar_type_t field, const char *message );
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

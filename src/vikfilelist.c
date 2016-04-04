@@ -26,6 +26,8 @@
 
 #include <gtk/gtk.h>
 #include <glib/gi18n.h>
+#include <stdlib.h>
+#include <assert.h>
 
 #include "vikfilelist.h"
 
@@ -45,7 +47,7 @@ static void file_list_add ( VikFileList *vfl )
   if ( ! vfl->file_selector )
   {
     GtkWidget *win = gtk_widget_get_toplevel(GTK_WIDGET(vfl));
-    g_assert ( win );
+    assert ( win );
     vfl->file_selector = gtk_file_chooser_dialog_new (_("Choose file(s)"),
 				      GTK_WINDOW(win),
 				      GTK_FILE_CHOOSER_ACTION_OPEN,
@@ -70,7 +72,7 @@ static void file_list_add ( VikFileList *vfl )
       gtk_list_store_append ( GTK_LIST_STORE(vfl->model), &iter );
       gtk_list_store_set ( GTK_LIST_STORE(vfl->model), &iter, 0, file_name, -1 );
       
-      g_free (file_name);
+      free(file_name);
       
       fiter = g_slist_next (fiter);
     }
@@ -86,7 +88,7 @@ static GtkTreeRowReference** file_list_get_selected_refs (GtkTreeModel *model,
   GtkTreeRowReference **arr;
   GList *iter;
     
-  arr = g_new (GtkTreeRowReference *, g_list_length (list) + 1);
+  arr = (GtkTreeRowReference **) malloc((g_list_length (list) + 1) * sizeof (GtkTreeRowReference *));
     
   int pos = 0;
   for (iter = g_list_first (list); iter != NULL; iter = g_list_next (iter)) {
@@ -127,7 +129,7 @@ static void file_list_del ( VikFileList *vfl )
   // Cleanup
   g_list_foreach ( list, (GFunc) gtk_tree_path_free, NULL );
   g_list_free ( list );
-  g_free (rrefs);
+  free(rrefs);
 }
 
 GType vik_file_list_get_type (void)
@@ -208,7 +210,7 @@ static bool get_file_name(GtkTreeModel *model, GtkTreePath *path, GtkTreeIter *i
 {
   char *str;
   gtk_tree_model_get ( model, iter, 0, &str, -1 );
-  g_debug ("%s: %s", __FUNCTION__, str);
+  fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, str);
   (*list) = g_list_append((*list), str); // NB str is already a copy
   return false;
 }

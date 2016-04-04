@@ -30,7 +30,10 @@
 #include "vikviewport.h"
 #include "mapcoord.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 typedef struct {
   uint16_t uniq_id;
@@ -47,6 +50,8 @@ typedef struct {
 
 void maps_layer_register_type ( const char *label, unsigned int id, VikMapsLayer_MapType *map_type );
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

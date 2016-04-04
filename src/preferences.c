@@ -22,11 +22,14 @@
 #include <glib/gi18n.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <assert.h>
 #include <glib/gstdio.h>
 #include "preferences.h"
 #include "dir.h"
 #include "file.h"
 #include "util.h"
+#include "viking.h"
 
 // TODO: STRING_LIST
 // TODO: share code in file reading
@@ -59,17 +62,17 @@ static void preferences_groups_uninit()
 void a_preferences_register_group ( const char *key, const char *name )
 {
   if ( g_hash_table_lookup ( groups_keys_to_indices, key ) )
-    g_critical("Duplicate preferences group keys");
+    fprintf(stderr, "CRITICAL: Duplicate preferences group keys\n");
   else {
     g_ptr_array_add ( groups_names, g_strdup(name) );
-    g_hash_table_insert ( groups_keys_to_indices, g_strdup(key), GINT_TO_POINTER ( (int) groups_names->len ) ); /* index + 1 */
+    g_hash_table_insert ( groups_keys_to_indices, g_strdup(key), KINT_TO_POINTER ( (int) groups_names->len ) ); /* index + 1 */
   }
 }
 
 /* returns -1 if not found. */
 static int16_t preferences_groups_key_to_index( const char *key )
 {
-  int index = GPOINTER_TO_INT ( g_hash_table_lookup ( groups_keys_to_indices, key ) );
+  int index = KPOINTER_TO_INT ( g_hash_table_lookup ( groups_keys_to_indices, key ) );
   if ( ! index )
     return VIK_LAYER_GROUP_NONE; /* which should be -1 anyway */
   return (int16_t) (index - 1);
@@ -81,7 +84,7 @@ static bool preferences_load_from_file()
 {
   char *fn = g_build_filename(a_get_viking_dir(), VIKING_PREFS_FILE, NULL);
   FILE *f = g_fopen(fn, "r");
-  g_free ( fn );
+  free( fn );
 
   if ( f ) {
     char buf[4096];
@@ -95,21 +98,21 @@ static bool preferences_load_from_file()
         // if it's not in there, ignore it
         oldval = g_hash_table_lookup ( values, key );
         if ( ! oldval ) {
-          g_free(key);
-          g_free(val);
+          free(key);
+          free(val);
           continue;
         }
 
         // otherwise change it (you know the type!)
         // if it's a string list do some funky stuff ... yuck... not yet.
         if ( oldval->type == VIK_LAYER_PARAM_STRING_LIST )
-          g_critical ( "Param strings not implemented in preferences"); // fake it
+          fprintf(stderr, "CRITICAL: Param strings not implemented in preferences\n"); // fake it
 
         newval = vik_layer_data_typed_param_copy_from_string ( oldval->type, val );
         g_hash_table_insert ( values, key, newval );
 
-        g_free(key);
-        g_free(val);
+        free(key);
+        free(val);
         // change value
       }
     }
@@ -126,7 +129,7 @@ static void preferences_run_setparam ( void * notused, uint16_t i, VikLayerParam
   if ( vlparams[i].type == VIK_LAYER_PARAM_PTR )
     return;
   if ( vlparams[i].type == VIK_LAYER_PARAM_STRING_LIST )
-    g_critical ( "Param strings not implemented in preferences"); //fake it
+    fprintf(stderr, "CRITICAL: Param strings not implemented in preferences\n"); //fake it
   g_hash_table_insert ( values, (char *)(vlparams[i].name), vik_layer_typed_param_data_copy_from_data(vlparams[i].type, data) );
 }
 
@@ -139,9 +142,9 @@ void a_preferences_run_setparam ( VikLayerParamData data, VikLayerParam *vlparam
 static VikLayerParamData preferences_run_getparam ( void * notused, uint16_t i, bool notused2 )
 {
   VikLayerTypedParamData *val = (VikLayerTypedParamData *) g_hash_table_lookup ( values, ((VikLayerParam *)g_ptr_array_index(params,i))->name );
-  g_assert ( val != NULL );
+  assert ( val != NULL );
   if ( val->type == VIK_LAYER_PARAM_STRING_LIST )
-    g_critical ( "Param strings not implemented in preferences"); //fake it
+    fprintf(stderr, "CRITICAL: Param strings not implemented in preferences\n"); //fake it
   return val->data;
 }
 
@@ -159,8 +162,8 @@ bool a_preferences_save_to_file()
    * it'll be better to store it in secret.
    */
   if ( g_chmod(fn, 0600) != 0 )
-    g_warning ( "%s: Failed to set permissions on %s", __FUNCTION__, fn );
-  g_free ( fn );
+    fprintf(stderr, "WARNING: %s: Failed to set permissions on %s\n", __FUNCTION__, fn );
+  free( fn );
 
   if ( f ) {
     VikLayerParam *param;
@@ -186,7 +189,7 @@ void a_preferences_show_window(GtkWindow *parent) {
     //VikLayerParamData *a_uibuilder_run_dialog ( GtkWindow *parent, VikLayerParam \*params, // uint16_t params_count, char **groups, uint8_t groups_count, // VikLayerParamData *params_defaults )
     // TODO: THIS IS A MAJOR HACKAROUND, but ok when we have only a couple preferences.
     int params_count = params->len;
-    VikLayerParam *contiguous_params = g_new(VikLayerParam,params_count);
+    VikLayerParam *contiguous_params = (VikLayerParam *) malloc(params_count * sizeof (VikLayerParam));
     int i;
     for ( i = 0; i < params->len; i++ ) {
       contiguous_params[i] = *((VikLayerParam*)(g_ptr_array_index(params,i)));
@@ -200,16 +203,16 @@ void a_preferences_show_window(GtkWindow *parent) {
                                 preferences_run_getparam, NULL, NULL /* not used */ ) ) {
       a_preferences_save_to_file();
     }
-    g_free ( contiguous_params );
+    free( contiguous_params );
 }
 
 void a_preferences_register(VikLayerParam *pref, VikLayerParamData defaultval, const char *group_key )
 {
   // All preferences should be registered before loading
   if ( loaded )
-    g_critical ( "REGISTERING preference %s after LOADING from " VIKING_PREFS_FILE, pref->name );
+    fprintf(stderr, "CRITICAL: REGISTERING preference %s after LOADING from \n" VIKING_PREFS_FILE, pref->name );
   /* copy value */
-  VikLayerParam *newpref = g_new(VikLayerParam,1);
+  VikLayerParam *newpref = (VikLayerParam *) malloc(1 * sizeof (VikLayerParam));
   *newpref = *pref;
   VikLayerTypedParamData *newval = vik_layer_typed_param_data_copy_from_data(pref->type, defaultval);
   if ( group_key )
@@ -246,7 +249,7 @@ void a_preferences_uninit()
 VikLayerParamData *a_preferences_get(const char *key)
 {
   if ( ! loaded ) {
-    g_debug ( "%s: First time: %s\n", __FUNCTION__, key );
+    fprintf(stderr, "DEBUG: %s: First time: %s\n", __FUNCTION__, key );
     /* since we can't load the file in a_preferences_init (no params registered yet),
      * do it once before we get the first key. */
     preferences_load_from_file();

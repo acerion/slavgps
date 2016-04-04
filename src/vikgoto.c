@@ -204,13 +204,13 @@ static char *a_prompt_for_goto_string(VikWindow *vw)
   char *provider = vik_goto_tool_get_label ( g_list_nth_data (goto_tools_list, last_goto_tool) );
   a_settings_set_string ( VIK_SETTINGS_GOTO_PROVIDER, provider );
 
-  char *goto_str = g_strdup ( gtk_entry_get_text ( GTK_ENTRY(goto_entry) ) );
+  char *goto_str = g_strdup( gtk_entry_get_text ( GTK_ENTRY(goto_entry) ) );
 
   gtk_widget_destroy(dialog);
 
   if (goto_str[0] != '\0') {
     if (last_goto_str)
-      g_free(last_goto_str);
+      free(last_goto_str);
     last_goto_str = g_strdup(goto_str);
   }
 
@@ -259,11 +259,11 @@ void a_vik_goto(VikWindow *vw, VikViewport *vvp)
       int ans = vik_goto_tool_get_coord(g_list_nth_data (goto_tools_list, last_goto_tool), vw, vvp, s_str, &new_center);
       if ( ans == 0 ) {
         if (last_coord)
-          g_free(last_coord);
-        last_coord = g_malloc(sizeof(VikCoord));
+          free(last_coord);
+        last_coord = malloc(sizeof(VikCoord));
         *last_coord = new_center;
         if (last_successful_goto_str)
-          g_free(last_successful_goto_str);
+          free(last_successful_goto_str);
         last_successful_goto_str = g_strdup(last_goto_str);
         vik_viewport_set_center_coord(vvp, &new_center, true);
         more = false;
@@ -275,7 +275,7 @@ void a_vik_goto(VikWindow *vw, VikViewport *vvp)
       else if (!prompt_try_again(vw, _("Service request failure. Do you want another goto?")))
         more = false;
     }
-    g_free(s_str);
+    free(s_str);
   } while (more);
 }
 
@@ -304,7 +304,7 @@ int a_vik_goto_where_am_i ( VikViewport *vvp, struct LatLon *ll, char **name )
   *name = NULL;
 
   char *tmpname = a_download_uri_to_tmp_file ( "http://api.hostip.info/get_json.php?position=true", NULL );
-  //char *tmpname = g_strdup ("../test/hostip2.json");
+  //char *tmpname = g_strdup("../test/hostip2.json");
   if (!tmpname) {
     return result;
   }
@@ -323,7 +323,7 @@ int a_vik_goto_where_am_i ( VikViewport *vvp, struct LatLon *ll, char **name )
   char *city = NULL;
 
   if ((mf = g_mapped_file_new(tmpname, false, NULL)) == NULL) {
-    g_critical(_("couldn't map temp file"));
+    fprintf(stderr, _("CRITICAL: couldn't map temp file\n"));
     goto tidy;
   }
 
@@ -380,7 +380,7 @@ int a_vik_goto_where_am_i ( VikViewport *vvp, struct LatLon *ll, char **name )
     if ( ll->lat > -90.0 && ll->lat < 90.0 && ll->lon > -180.0 && ll->lon < 180.0 ) {
       // Found a 'sensible' & 'precise' location
       result = 1;
-      *name = g_strdup ( _("Locality") ); //Albeit maybe not known by an actual name!
+      *name = g_strdup( _("Locality") ); //Albeit maybe not known by an actual name!
     }
   }
   else {
@@ -393,7 +393,7 @@ int a_vik_goto_where_am_i ( VikViewport *vvp, struct LatLon *ll, char **name )
 
     // Try city name lookup
     if ( city ) {
-      g_debug ( "%s: found city %s", __FUNCTION__, city );
+      fprintf(stderr, "DEBUG: %s: found city %s\n", __FUNCTION__, city );
       if ( strcmp ( city, "(Unknown city)" ) != 0 ) {
         VikCoord new_center;
         if ( vik_goto_place ( NULL, vvp, city, &new_center ) ) {
@@ -408,7 +408,7 @@ int a_vik_goto_where_am_i ( VikViewport *vvp, struct LatLon *ll, char **name )
 
     // Try country name lookup
     if ( country ) {
-      g_debug ( "%s: found country %s", __FUNCTION__, country );
+      fprintf(stderr, "DEBUG: %s: found country %s\n", __FUNCTION__, country );
       if ( strcmp ( country, "(Unknown Country)" ) != 0 ) {
         VikCoord new_center;
         if ( vik_goto_place ( NULL, vvp, country, &new_center ) ) {
@@ -425,6 +425,6 @@ int a_vik_goto_where_am_i ( VikViewport *vvp, struct LatLon *ll, char **name )
  tidy:
   g_mapped_file_unref ( mf );
   (void)g_remove ( tmpname );
-  g_free ( tmpname );
+  free( tmpname );
   return result;
 }

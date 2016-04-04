@@ -41,6 +41,8 @@
 #include <unistd.h>
 #endif
 
+#include <stdlib.h>
+
 #include <glib/gstdio.h>
 #include <glib/gi18n.h>
 
@@ -63,7 +65,7 @@ static bool get_double_and_continue ( char **buffer, double *tmp, bool warn )
   *tmp = g_strtod(*buffer, &endptr);
   if ( endptr == NULL|| endptr == *buffer ) {
     if ( warn )
-      g_warning(_("Invalid DEM"));
+      fprintf(stderr, _("WARNING: Invalid DEM\n"));
     return false;
   }
   *buffer=endptr;
@@ -77,7 +79,7 @@ static bool get_int_and_continue ( char **buffer, int *tmp, bool warn )
   *tmp = strtol(*buffer, &endptr, 10);
   if ( endptr == NULL|| endptr == *buffer ) {
     if ( warn )
-      g_warning(_("Invalid DEM"));
+      fprintf(stderr, _("WARNING: Invalid DEM\n"));
     return false;
   }
   *buffer=endptr;
@@ -119,7 +121,7 @@ static bool dem_parse_header ( char *buffer, VikDEM *dem )
   /* skip numbers 5-19  */
   for ( i = 0; i < 15; i++ ) {
     if ( ! get_double_and_continue(&buffer, &val, false) ) {
-      g_warning (_("Invalid DEM header"));
+      fprintf(stderr, _("WARNING: Invalid DEM header\n"));
       return false;
     }
   }
@@ -188,7 +190,7 @@ static void dem_parse_block_as_header ( char *buffer, VikDEM *dem, int *cur_colu
   /* 1 x n_rows 1 east_west south x x x DATA */
 
   if ( (!get_double_and_continue(&buffer, &tmp, true)) || tmp != 1 ) {
-    g_warning(_("Incorrect DEM Class B record: expected 1"));
+    fprintf(stderr, _("WARNING: Incorrect DEM Class B record: expected 1\n"));
     return;
   }
 
@@ -201,7 +203,7 @@ static void dem_parse_block_as_header ( char *buffer, VikDEM *dem, int *cur_colu
   n_rows = (unsigned int) tmp;
 
   if ( (!get_double_and_continue(&buffer, &tmp, true)) || tmp != 1 ) {
-    g_warning(_("Incorrect DEM Class B record: expected 1"));
+    fprintf(stderr, _("WARNING: Incorrect DEM Class B record: expected 1\n"));
     return;
   }
   
@@ -226,11 +228,11 @@ static void dem_parse_block_as_header ( char *buffer, VikDEM *dem, int *cur_colu
 
   n_rows += *cur_row;
 
-  g_ptr_array_add ( dem->columns, g_malloc(sizeof(VikDEMColumn)) );
+  g_ptr_array_add ( dem->columns, malloc(sizeof(VikDEMColumn)) );
   GET_COLUMN(dem,*cur_column)->east_west = east_west;
   GET_COLUMN(dem,*cur_column)->south = south;
   GET_COLUMN(dem,*cur_column)->n_points = n_rows;
-  GET_COLUMN(dem,*cur_column)->points = g_malloc(sizeof(int16_t)*n_rows);
+  GET_COLUMN(dem,*cur_column)->points = malloc(sizeof(int16_t)*n_rows);
 
   /* no information for things before that */
   for ( i = 0; i < (*cur_row); i++ )
@@ -266,7 +268,7 @@ static VikDEM *vik_dem_read_srtm_hgt(const char *file_name, const char *basename
   int arcsec;
   GError *error = NULL;
 
-  dem = g_malloc(sizeof(VikDEM));
+  dem = malloc(sizeof(VikDEM));
 
   dem->horiz_units = VIK_DEM_HORIZ_LL_ARCSECONDS;
   dem->orig_vert_units = VIK_DEM_VERT_DECIMETERS;
@@ -286,9 +288,9 @@ static VikDEM *vik_dem_read_srtm_hgt(const char *file_name, const char *basename
   dem->n_columns = 0;
 
   if ((mf = g_mapped_file_new(file_name, false, &error)) == NULL) {
-    g_critical(_("Couldn't map file %s: %s"), file_name, error->message);
+    fprintf(stderr, _("CRITICAL: Couldn't map file %s: %s\n"), file_name, error->message);
     g_error_free(error);
-    g_free(dem);
+    free(dem);
     return NULL;
   }
   file_size = g_mapped_file_get_length(mf);
@@ -302,7 +304,7 @@ static VikDEM *vik_dem_read_srtm_hgt(const char *file_name, const char *basename
       g_mapped_file_unref(mf);
       g_ptr_array_foreach ( dem->columns, (GFunc)g_free, NULL );
       g_ptr_array_free(dem->columns, true);
-      g_free(dem);
+      free(dem);
       return NULL;
     }
 
@@ -317,9 +319,9 @@ static VikDEM *vik_dem_read_srtm_hgt(const char *file_name, const char *basename
   else if (file_size == (num_rows_1sec * num_rows_1sec * sizeof(int16_t)))
     arcsec = 1;
   else {
-    g_warning("%s(): file %s does not have right size", __PRETTY_FUNCTION__, basename);
+    fprintf(stderr, "WARNING: %s(): file %s does not have right size\n", __PRETTY_FUNCTION__, basename);
     g_mapped_file_unref(mf);
-    g_free(dem);
+    free(dem);
     return NULL;
   }
 
@@ -328,11 +330,11 @@ static VikDEM *vik_dem_read_srtm_hgt(const char *file_name, const char *basename
 
   for ( i = 0; i < num_rows; i++ ) {
     dem->n_columns++;
-    g_ptr_array_add ( dem->columns, g_malloc(sizeof(VikDEMColumn)) );
+    g_ptr_array_add ( dem->columns, malloc(sizeof(VikDEMColumn)) );
     GET_COLUMN(dem,i)->east_west = dem->min_east + arcsec*i;
     GET_COLUMN(dem,i)->south = dem->min_north;
     GET_COLUMN(dem,i)->n_points = num_rows;
-    GET_COLUMN(dem,i)->points = g_malloc(sizeof(int16_t)*num_rows);
+    GET_COLUMN(dem,i)->points = malloc(sizeof(int16_t)*num_rows);
   }
 
   int ent = 0;
@@ -345,7 +347,7 @@ static VikDEM *vik_dem_read_srtm_hgt(const char *file_name, const char *basename
   }
 
   if (zip)
-    g_free(dem_mem);
+    free(dem_mem);
   g_mapped_file_unref(mf);
   return dem;
 }
@@ -375,17 +377,17 @@ VikDEM *vik_dem_new_from_file(const char *file)
   }
 
       /* Create Structure */
-  rv = g_malloc(sizeof(VikDEM));
+  rv = malloc(sizeof(VikDEM));
 
       /* Header */
   f = g_fopen(file, "r");
   if ( !f ) {
-    g_free ( rv );
+    free( rv );
     return NULL;
   }
   buffer[fread(buffer, 1, DEM_BLOCK_SIZE, f)] = '\0';
   if ( ! dem_parse_header ( buffer, rv ) ) {
-    g_free ( rv );
+    free( rv );
     fclose(f);
     return NULL;
   }
@@ -435,10 +437,10 @@ void vik_dem_free ( VikDEM *dem )
 {
   unsigned int i;
   for ( i = 0; i < dem->n_columns; i++)
-    g_free ( GET_COLUMN(dem, i)->points );
+    free( GET_COLUMN(dem, i)->points );
   g_ptr_array_foreach ( dem->columns, (GFunc)g_free, NULL );
   g_ptr_array_free ( dem->columns, true );
-  g_free ( dem );
+  free( dem );
 }
 
 int16_t vik_dem_get_xy ( VikDEM *dem, unsigned int col, unsigned int row )
@@ -509,7 +511,7 @@ static bool dem_get_ref_points_elev_dist(VikDEM *dem,
 
 #if 0  /* debug */
   for (i = 0; i < 4; i++)
-    fprintf(stderr, "%f:%f:%d:%d  ", ll[i].lat, ll[i].lon, dists[i], elevs[i]);
+    fprintf(stderr, "%f:%f:%d:%d  \n", ll[i].lat, ll[i].lon, dists[i], elevs[i]);
   fprintf(stderr, "   north_scale=%f\n", dem->north_scale);
 #endif
 

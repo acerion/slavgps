@@ -28,6 +28,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#include <stdlib.h>
 
 #include "modules.h"
 
@@ -72,7 +73,7 @@
 static void
 modules_register_map_source(VikGobjectBuilder *self, GObject *object)
 {
-  g_debug (__FUNCTION__);
+  fprintf(stderr, "DEBUG: %s\n", __FUNCTION__);
   VikMapSource *mapsource = VIK_MAP_SOURCE (object);
   /* FIXME label should be hosted by object */
   maps_layer_register_map_source (mapsource);
@@ -81,7 +82,7 @@ modules_register_map_source(VikGobjectBuilder *self, GObject *object)
 static void
 modules_register_exttools(VikGobjectBuilder *self, GObject *object)
 {
-  g_debug (__FUNCTION__);
+  fprintf(stderr, "DEBUG: %s\n", __FUNCTION__);
   VikExtTool *tool = VIK_EXT_TOOL (object);
   vik_ext_tools_register (tool);
 }
@@ -89,7 +90,7 @@ modules_register_exttools(VikGobjectBuilder *self, GObject *object)
 static void
 modules_register_datasources(VikGobjectBuilder *self, GObject *object)
 {
-  g_debug (__FUNCTION__);
+  fprintf(stderr, "DEBUG: %s\n", __FUNCTION__);
   VikExtTool *tool = VIK_EXT_TOOL (object);
   vik_ext_tool_datasources_register (tool);
 }
@@ -97,7 +98,7 @@ modules_register_datasources(VikGobjectBuilder *self, GObject *object)
 static void
 modules_register_gototools(VikGobjectBuilder *self, GObject *object)
 {
-  g_debug (__FUNCTION__);
+  fprintf(stderr, "DEBUG: %s\n", __FUNCTION__);
   VikGotoTool *tool = VIK_GOTO_TOOL (object);
   vik_goto_register (tool);
 }
@@ -105,7 +106,7 @@ modules_register_gototools(VikGobjectBuilder *self, GObject *object)
 static void
 modules_register_routing_engine(VikGobjectBuilder *self, GObject *object)
 {
-  g_debug (__FUNCTION__);
+  fprintf(stderr, "DEBUG: %s\n", __FUNCTION__);
   VikRoutingEngine *engine = VIK_ROUTING_ENGINE (object);
   vik_routing_register (engine);
 }
@@ -113,7 +114,7 @@ modules_register_routing_engine(VikGobjectBuilder *self, GObject *object)
 static void
 modules_load_config_dir(const char *dir)
 {
-  g_debug("Loading configurations from directory %s", dir);
+  fprintf(stderr, "DEBUG: Loading configurations from directory %s\n", dir);
 
   /* Maps sources */
   char *maps = g_build_filename(dir, VIKING_MAPS_FILE, NULL);
@@ -124,7 +125,7 @@ modules_load_config_dir(const char *dir)
 	vik_gobject_builder_parse (builder, maps);
 	g_object_unref (builder);
   }
-  g_free ( maps );
+  free( maps );
 
   /* External tools */
   char *tools = g_build_filename(dir, VIKING_EXTTOOLS_FILE, NULL);
@@ -135,7 +136,7 @@ modules_load_config_dir(const char *dir)
 	vik_gobject_builder_parse (builder, tools);
 	g_object_unref (builder);
   }
-  g_free ( tools );
+  free( tools );
 
   char *datasources = g_build_filename(dir, VIKING_DATASOURCES_FILE, NULL);
   if (g_access (datasources, R_OK) == 0)
@@ -145,7 +146,7 @@ modules_load_config_dir(const char *dir)
 	vik_gobject_builder_parse (builder, datasources);
 	g_object_unref (builder);
   }
-  g_free ( datasources );
+  free( datasources );
 
   /* Go-to search engines */
   char *go_to = g_build_filename(dir, VIKING_GOTOTOOLS_FILE, NULL);
@@ -156,7 +157,7 @@ modules_load_config_dir(const char *dir)
 	vik_gobject_builder_parse (builder, go_to);
 	g_object_unref (builder);
   }
-  g_free ( go_to );
+  free( go_to );
 
   /* Routing engines */
   char *routing = g_build_filename(dir, VIKING_ROUTING_FILE, NULL);
@@ -167,7 +168,7 @@ modules_load_config_dir(const char *dir)
 	vik_gobject_builder_parse (builder, routing);
 	g_object_unref (builder);
   }
-  g_free ( routing );
+  free( routing );
 }
 
 static void
@@ -225,7 +226,7 @@ register_loadable_types(void)
   };
 
   /* kill 'unused variable' + argument type warnings */
-  g_debug("%d types loaded", (int)sizeof(types)/(int)sizeof(GType));
+  fprintf(stderr, "DEBUG: %d types loaded\n", (int)sizeof(types)/(int)sizeof(GType));
 }
 
 /**

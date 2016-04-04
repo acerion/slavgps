@@ -24,6 +24,8 @@
 #include <math.h>
 #endif
 
+#include <stdlib.h>
+
 #include "globals.h"
 #include "terraservermapsource.h"
 
@@ -277,7 +279,7 @@ terraserver_map_source_new_with_id (uint16_t id, const char *label, int type)
 		copyright = "© DigitalGlobe";
 		break;
 	default:
-		g_critical("Houston, we've had a problem. type=%d", type);
+		fprintf(stderr, "CRITICAL: Houston, we've had a problem. type=%d\n", type);
 	}
 
 	return g_object_new(TERRASERVER_TYPE_MAP_SOURCE,

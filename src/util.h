@@ -30,7 +30,10 @@
 #include <stdint.h>
 
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 unsigned int util_get_number_of_cpus (void);
 
@@ -72,6 +75,8 @@ int util_remove ( const char *filename );
 
 char* util_write_tmp_file_from_bytes ( const void *buffer, size_t count );
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

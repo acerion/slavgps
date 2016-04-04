@@ -29,7 +29,10 @@
 #include "vikwindow.h"
 #include "download.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #define VIK_GOTO_TOOL_TYPE            (vik_goto_tool_get_type ())
 #define VIK_GOTO_TOOL(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_GOTO_TOOL_TYPE, VikGotoTool))
@@ -63,6 +66,8 @@ DownloadFileOptions *vik_goto_tool_get_download_options ( VikGotoTool *self );
 bool vik_goto_tool_parse_file_for_latlon ( VikGotoTool *self, char *filename, struct LatLon *ll );
 int vik_goto_tool_get_coord ( VikGotoTool *self, VikWindow *vw, VikViewport *vvp, char *srch_str, VikCoord *coord );
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

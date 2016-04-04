@@ -26,6 +26,7 @@
 #include "config.h"
 #endif
 
+#include <stdlib.h>
 #include <glib/gstdio.h>
 #include <glib/gi18n.h>
 #include <glib/gprintf.h>
@@ -46,11 +47,11 @@ static bool spawn_command_line_async(const char * cmd,
   bool status;
 
   cmdline = g_strdup_printf("%s '%s'", cmd, arg);
-  g_debug("Running: %s", cmdline);
+  fprintf(stderr, "DEBUG: Running: %s\n", cmdline);
     
   status = g_spawn_command_line_async(cmdline, NULL);
 
-  g_free(cmdline);
+  free(cmdline);
  
   return status;
 }
@@ -91,7 +92,7 @@ void new_email(GtkWindow *parent, const char * address)
     a_dialog_error_msg ( parent, _("Could not create new email.") );
 #endif
   */
-  g_free(uri);
+  free(uri);
   uri = NULL;
 }
 
@@ -165,7 +166,7 @@ GtkWidget *ui_lookup_widget(GtkWidget *widget, const char *widget_name)
 
 	found_widget = (GtkWidget*) g_object_get_data(G_OBJECT(widget), widget_name);
 	if (G_UNLIKELY(found_widget == NULL))
-		g_warning("Widget not found: %s", widget_name);
+		fprintf(stderr, "WARNING: Widget not found: %s\n", widget_name);
 	return found_widget;
 }
 
@@ -260,6 +261,6 @@ void ui_add_recent_file ( const char *filename )
 		if ( uri && manager )
 			gtk_recent_manager_add_item ( manager, uri );
 		g_object_unref( file );
-		g_free (uri);
+		free(uri);
 	}
 }

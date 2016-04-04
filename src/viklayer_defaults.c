@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <glib/gstdio.h>
+#include "viking.h"
 #include "viklayer_defaults.h"
 #include "dir.h"
 #include "file.h"
@@ -81,16 +82,16 @@ static VikLayerParamData get_default_data_answer ( const char *group, const char
 			memset(&(data.c), 0, sizeof(data.c));
 			gdk_color_parse ( str, &(data.c) );
 		}
-		g_free ( str );
+		free( str );
 		break;
 	}
 	default: break;
 	}
-	*success = GINT_TO_POINTER (true);
+	*success = KINT_TO_POINTER (true);
 	if ( error ) {
-		g_warning ( "%s", error->message );
+		fprintf(stderr, "WARNING: %s\n", error->message );
 		g_error_free ( error );
-		*success = GINT_TO_POINTER (false);
+		*success = KINT_TO_POINTER (false);
 	}
 
 	return data;
@@ -98,7 +99,7 @@ static VikLayerParamData get_default_data_answer ( const char *group, const char
 
 static VikLayerParamData get_default_data ( const char *group, const char *name, VikLayerParamType ptype )
 {
-	void * success = GINT_TO_POINTER (true);
+	void * success = KINT_TO_POINTER (true);
 	// NB This should always succeed - don't worry about 'success'
 	return get_default_data_answer ( group, name, ptype, &success );
 }
@@ -124,7 +125,7 @@ static void set_default_data ( VikLayerParamData data, const char *group, const 
 	case VIK_LAYER_PARAM_COLOR: {
 		char *str = g_strdup_printf ( "#%.2x%.2x%.2x", (int)(data.c.red/256),(int)(data.c.green/256),(int)(data.c.blue/256));
 		g_key_file_set_string ( keyfile, group, name, str );
-		g_free ( str );
+		free( str );
 		break;
 	}
 	default: break;
@@ -134,7 +135,7 @@ static void set_default_data ( VikLayerParamData data, const char *group, const 
 static void defaults_run_setparam ( void * index_ptr, uint16_t i, VikLayerParamData data, VikLayerParam *params )
 {
 	// Index is only an index into values from this layer
-	int index = GPOINTER_TO_INT ( index_ptr );
+	int index = KPOINTER_TO_INT ( index_ptr );
 	VikLayerParam *vlp = (VikLayerParam *)g_ptr_array_index(paramsVD,index+i);
 
 	set_default_data ( data, vik_layer_get_interface(vlp->layer)->fixed_layer_name, vlp->name, vlp->type );
@@ -143,7 +144,7 @@ static void defaults_run_setparam ( void * index_ptr, uint16_t i, VikLayerParamD
 static VikLayerParamData defaults_run_getparam ( gpointer index_ptr, uint16_t i, bool notused2 )
 {
 	// Index is only an index into values from this layer
-	int index = GPOINTER_TO_INT ( index_ptr );
+	int index = KPOINTER_TO_INT ( index_ptr );
 	VikLayerParam *vlp = (VikLayerParam *)g_ptr_array_index(paramsVD,index+i);
 
 	return get_default_data ( vik_layer_get_interface(vlp->layer)->fixed_layer_name, vlp->name, vlp->type );
@@ -160,11 +161,11 @@ static void use_internal_defaults_if_missing_default ( VikLayerTypeEnum type )
 	// Process each parameter
 	for ( i = 0; i < params_count; i++ ) {
 		if ( params[i].group != VIK_LAYER_NOT_IN_PROPERTIES ) {
-			void * success = GINT_TO_POINTER (false);
+			void * success = KINT_TO_POINTER (false);
 			// Check current default is available
 			get_default_data_answer ( vik_layer_get_interface(type)->fixed_layer_name, params[i].name, params[i].type, &success );
 			// If no longer have a viable default
-			if ( ! GPOINTER_TO_INT (success) ) {
+			if ( ! KPOINTER_TO_INT (success) ) {
 				// Reset value
 				if ( params[i].default_value ) {
 					VikLayerParamData paramd = params[i].default_value();
@@ -184,13 +185,13 @@ static bool defaults_load_from_file()
 	char *fn = g_build_filename ( a_get_viking_dir(), VIKING_LAYER_DEFAULTS_INI_FILE, NULL );
 
 	if ( !g_key_file_load_from_file ( keyfile, fn, flags, &error ) ) {
-		g_warning ( "%s: %s", error->message, fn );
-		g_free ( fn );
+		fprintf(stderr, "WARNING: %s: %s\n", error->message, fn );
+		free( fn );
 		g_error_free ( error );
 		return false;
 	}
 
-	g_free ( fn );
+	free( fn );
 
 	// Ensure if have a key file, then any missing values are set from the internal defaults
 	VikLayerTypeEnum layer;
@@ -212,7 +213,7 @@ static bool layer_defaults_save_to_file()
     char *keyfilestr = g_key_file_to_data ( keyfile, &size, &error );
 
     if ( error ) {
-		g_warning ( "%s", error->message );
+		fprintf(stderr, "WARNING: %s\n", error->message );
 		g_error_free ( error );
 		answer = false;
 		goto tidy;
@@ -221,7 +222,7 @@ static bool layer_defaults_save_to_file()
 	// optionally could do:
 	// g_file_set_contents ( fn, keyfilestr, size, &error );
     // if ( error ) {
-	//	g_warning ( "%s: %s", error->message, fn );
+	//	fprintf(stderr, "WARNING: %s: %s\n", error->message, fn );
 	//	 g_error_free ( error );
 	//  answer = false; 
 	//	goto tidy;
@@ -229,20 +230,20 @@ static bool layer_defaults_save_to_file()
 
 	FILE *ff;
 	if ( !(ff = g_fopen ( fn, "w")) ) {
-		g_warning ( _("Could not open file: %s"), fn );
+		fprintf(stderr, _("WARNING: Could not open file: %s\n"), fn );
 		answer = false;
 		goto tidy;
 	}
 	// Layer defaults not that secret, but just incase...
 	if ( g_chmod ( fn, 0600 ) != 0 )
-		g_warning ( "%s: Failed to set permissions on %s", __FUNCTION__, fn );
+		fprintf(stderr, "WARNING: %s: Failed to set permissions on %s\n", __FUNCTION__, fn );
 
 	fputs ( keyfilestr, ff );
 	fclose ( ff );
 
 tidy:
-	g_free ( keyfilestr );
-	g_free ( fn );
+	free( keyfilestr );
+	free( fn );
 
 	return answer;
 }
@@ -296,7 +297,7 @@ bool a_layer_defaults_show_window ( GtkWindow *parent, const char *layername )
     if ( !layer_params_count )
 		return false;
 
-    VikLayerParam *params = g_new(VikLayerParam,layer_params_count);
+    VikLayerParam *params = (VikLayerParam *) malloc(layer_params_count * sizeof (VikLayerParam));
     for ( i = 0; i < layer_params_count; i++ ) {
       params[i] = *((VikLayerParam*)(g_ptr_array_index(paramsVD,i+index)));
     }
@@ -310,17 +311,17 @@ bool a_layer_defaults_show_window ( GtkWindow *parent, const char *layername )
 	                                      vik_layer_get_interface(layer)->params_groups,
 	                                      vik_layer_get_interface(layer)->params_groups_count,
 	                                      (bool (*) (void *,uint16_t,VikLayerParamData,void *,bool)) defaults_run_setparam,
-	                                      GINT_TO_POINTER ( index ),
+	                                      KINT_TO_POINTER ( index ),
 	                                      params,
 	                                      defaults_run_getparam,
-	                                      GINT_TO_POINTER ( index ),
+	                                      KINT_TO_POINTER ( index ),
 	                                      NULL ) ) {
 		// Save
 		layer_defaults_save_to_file();
     }
     
-    g_free ( title );
-    g_free ( params );
+    free( title );
+    free( params );
     
     return true;
 }
@@ -336,7 +337,7 @@ bool a_layer_defaults_show_window ( GtkWindow *parent, const char *layername )
 void a_layer_defaults_register (VikLayerParam *vlp, VikLayerParamData defaultval, const char *layername )
 {
 	/* copy value */
-	VikLayerParam *newvlp = g_new(VikLayerParam,1);
+	VikLayerParam *newvlp = (VikLayerParam *) malloc(1 * sizeof (VikLayerParam));
 	*newvlp = *vlp;
 
 	g_ptr_array_add ( paramsVD, newvlp );

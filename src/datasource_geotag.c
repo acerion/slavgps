@@ -23,6 +23,7 @@
 #include "config.h"
 #endif
 #include <string.h>
+#include <stdlib.h>
 
 #include <glib/gprintf.h>
 #include <glib/gi18n.h>
@@ -75,7 +76,7 @@ VikDataSourceInterface vik_datasource_geotag_interface = {
 /* See VikDataSourceInterface */
 static void * datasource_geotag_init ( acq_vik_t *avt )
 {
-	datasource_geotag_user_data_t *user_data = g_malloc(sizeof(datasource_geotag_user_data_t));
+	datasource_geotag_user_data_t *user_data = malloc(sizeof(datasource_geotag_user_data_t));
 	user_data->filelist = NULL;
 	return user_data;
 }
@@ -132,15 +133,15 @@ static void datasource_geotag_get_process_options ( void * user_data, ProcessOpt
 	userdata->filelist = gtk_file_chooser_get_filenames ( GTK_FILE_CHOOSER(userdata->files) ); // Not reusable !!
 
 	/* Memorize the directory for later use */
-	g_free ( last_folder_uri );
+	free( last_folder_uri );
 	last_folder_uri = gtk_file_chooser_get_current_folder_uri ( GTK_FILE_CHOOSER(userdata->files) );
-	last_folder_uri = g_strdup ( last_folder_uri );
+	last_folder_uri = g_strdup( last_folder_uri );
 
 	/* TODO Memorize the file filter for later use... */
 	//GtkFileFilter *filter = gtk_file_chooser_get_filter ( GTK_FILE_CHOOSER(userdata->files) );
 
 	// return some value so *thread* processing will continue
-	po->babelargs = g_strdup ("fake command"); // Not really used, thus no translations
+	po->babelargs = g_strdup("fake command"); // Not really used, thus no translations
 }
 
 /**
@@ -160,16 +161,16 @@ static bool datasource_geotag_process ( VikTrwLayer *vtl, ProcessOptions *po, Ba
 		if ( wp ) {
 			// Create name if geotag method didn't return one
 			if ( !name )
-				name = g_strdup ( a_file_basename ( filename ) );
+				name = g_strdup( a_file_basename ( filename ) );
 			vik_trw_layer_filein_add_waypoint ( vtl, name, wp );
-			g_free ( name );
+			free( name );
 		}
 		else {
 			char* msg = g_strdup_printf ( _("Unable to create waypoint from %s"), filename );
 			vik_window_statusbar_update ( adw->vw, msg, VIK_STATUSBAR_INFO );
-			g_free (msg);
+			free(msg);
 		}
-		g_free ( filename );
+		free( filename );
 		cur_file = g_slist_next ( cur_file );
 	}
 
@@ -183,5 +184,5 @@ static bool datasource_geotag_process ( VikTrwLayer *vtl, ProcessOptions *po, Ba
 /* See VikDataSourceInterface */
 static void datasource_geotag_cleanup ( void * user_data )
 {
-	g_free ( user_data );
+	free( user_data );
 }

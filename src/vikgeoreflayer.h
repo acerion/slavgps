@@ -27,7 +27,10 @@
 
 #include "viklayer.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #define VIK_GEOREF_LAYER_TYPE            (vik_georef_layer_get_type ())
 #define VIK_GEOREF_LAYER(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_GEOREF_LAYER_TYPE, VikGeorefLayer))
@@ -54,6 +57,8 @@ VikGeorefLayer *vik_georef_layer_create ( VikViewport *vp,
                                           VikCoord *coord_tr,
                                           VikCoord *coord_br );
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -23,10 +23,15 @@
 
 #include <glib.h>
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 const char *a_file_basename ( const char *filename );
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

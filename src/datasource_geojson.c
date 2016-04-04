@@ -23,6 +23,8 @@
 #include <glib/gstdio.h>
 #include <gtk/gtk.h>
 
+#include <stdlib.h>
+
 #include "viking.h"
 #include "acquire.h"
 #include "babel.h"
@@ -68,7 +70,7 @@ VikDataSourceInterface vik_datasource_geojson_interface = {
 
 static void * datasource_geojson_init ( acq_vik_t *avt )
 {
-	datasource_geojson_user_data_t *user_data = g_malloc(sizeof(datasource_geojson_user_data_t));
+	datasource_geojson_user_data_t *user_data = malloc(sizeof(datasource_geojson_user_data_t));
 	user_data->filelist = NULL;
 	return user_data;
 }
@@ -118,14 +120,14 @@ static void datasource_geojson_get_process_options ( datasource_geojson_user_dat
 	userdata->filelist = gtk_file_chooser_get_filenames ( GTK_FILE_CHOOSER(userdata->files) ); // Not reusable !!
 
 	// Memorize the directory for later reuse
-	g_free ( last_folder_uri );
+	free( last_folder_uri );
 	last_folder_uri = gtk_file_chooser_get_current_folder_uri ( GTK_FILE_CHOOSER(userdata->files) );
 
 	// TODO Memorize the file filter for later reuse?
 	//GtkFileFilter *filter = gtk_file_chooser_get_filter ( GTK_FILE_CHOOSER(userdata->files) );
 
 	// return some value so *thread* processing will continue
-	po->babelargs = g_strdup ("fake command"); // Not really used, thus no translations
+	po->babelargs = g_strdup("fake command"); // Not really used, thus no translations
 }
 
 /**
@@ -146,15 +148,15 @@ static bool datasource_geojson_process ( VikTrwLayer *vtl, ProcessOptions *proce
 			vik_window_open_file ( adw->vw, gpx_filename, false );
 			// Delete the temporary file
 			(void)g_remove (gpx_filename);
-			g_free (gpx_filename);
+			free(gpx_filename);
 		}
 		else {
 			char* msg = g_strdup_printf ( _("Unable to import from: %s"), filename );
 			vik_window_statusbar_update ( adw->vw, msg, VIK_STATUSBAR_INFO );
-			g_free (msg);
+			free(msg);
 		}
 
-		g_free ( filename );
+		free( filename );
 		cur_file = g_slist_next ( cur_file );
 	}
 
@@ -167,5 +169,5 @@ static bool datasource_geojson_process ( VikTrwLayer *vtl, ProcessOptions *proce
 
 static void datasource_geojson_cleanup ( void * data )
 {
-	g_free ( data );
+	free( data );
 }

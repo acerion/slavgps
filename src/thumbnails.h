@@ -28,7 +28,10 @@
 #include <stdint.h>
 
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 bool a_thumbnails_exists ( const char *filename );
 void a_thumbnails_create ( const char *filename );
@@ -36,6 +39,8 @@ GdkPixbuf *a_thumbnails_get(const char *filename);
 GdkPixbuf *a_thumbnails_get_default ();
 GdkPixbuf *a_thumbnails_scale_pixbuf(GdkPixbuf *src, int max_w, int max_h);
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

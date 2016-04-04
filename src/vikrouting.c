@@ -31,6 +31,7 @@
 #endif
 
 #include <glib.h>
+#include <stdlib.h>
 #include <glib/gstdio.h>
 #include <glib/gi18n.h>
 
@@ -153,7 +154,7 @@ vik_routing_register( VikRoutingEngine *engine )
   /* check if id already exists in list */
   GList *elem = g_list_find_custom (routing_engine_list, id, search_by_id);
   if (elem != NULL) {
-    g_debug("%s: %s already exists: update", __FUNCTION__, id);
+    fprintf(stderr, "DEBUG: %s: %s already exists: update\n", __FUNCTION__, id);
 
     /* Update main list */
     g_object_unref (elem->data);
@@ -166,11 +167,11 @@ vik_routing_register( VikRoutingEngine *engine )
 			break;
 	}
     /* Update the label (possibly different */
-    g_free (routing_engine_labels[len-1]);
-    routing_engine_labels[len-1] = g_strdup (label);
+    free(routing_engine_labels[len-1]);
+    routing_engine_labels[len-1] = g_strdup(label);
     
   } else {
-    g_debug("%s: %s is new: append", __FUNCTION__, id);
+    fprintf(stderr, "DEBUG: %s: %s is new: append\n", __FUNCTION__, id);
     routing_engine_list = g_list_append ( routing_engine_list, g_object_ref ( engine ) );
 
     if (routing_engine_labels)
@@ -178,12 +179,12 @@ vik_routing_register( VikRoutingEngine *engine )
   
     /* Add the label */
     routing_engine_labels = g_realloc (routing_engine_labels, (len+2)*sizeof(char*));
-    routing_engine_labels[len] = g_strdup (label);
+    routing_engine_labels[len] = g_strdup(label);
     routing_engine_labels[len+1] = NULL;
 
     /* Add the id */
     routing_engine_ids = g_realloc (routing_engine_ids, (len+2)*sizeof(char*));
-    routing_engine_ids[len] = g_strdup (id);
+    routing_engine_ids[len] = g_strdup(id);
     routing_engine_ids[len+1] = NULL;
   
     /* Hack

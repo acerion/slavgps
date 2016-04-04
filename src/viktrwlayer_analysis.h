@@ -26,7 +26,10 @@
 
 #include "viktrwlayer.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef void (*VikTrwlayerAnalyseCloseFunc) (GtkWidget*, int, VikLayer*);
 
 GtkWidget* vik_trw_layer_analyse_this ( GtkWindow *window,
@@ -36,6 +39,8 @@ GtkWidget* vik_trw_layer_analyse_this ( GtkWindow *window,
                                         VikTrwlayerGetTracksAndLayersFunc get_tracks_and_layers_cb,
                                         VikTrwlayerAnalyseCloseFunc on_close_cb );
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

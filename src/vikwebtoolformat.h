@@ -29,7 +29,10 @@
 
 #include "vikwebtool.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #define VIK_WEBTOOL_FORMAT_TYPE            (vik_webtool_format_get_type ())
 #define VIK_WEBTOOL_FORMAT(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_WEBTOOL_FORMAT_TYPE, VikWebtoolFormat))
@@ -60,6 +63,8 @@ VikWebtoolFormat* vik_webtool_format_new_with_members ( const char *label,
                                                         const char *url,
                                                         const char *url_format_code );
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

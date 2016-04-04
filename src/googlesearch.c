@@ -96,7 +96,7 @@ static bool google_goto_tool_parse_file_for_latlon(VikGotoTool *self, char *file
   lat_buf[0] = lon_buf[0] = '\0';
 
   if ((mf = g_mapped_file_new(file_name, false, NULL)) == NULL) {
-    g_critical(_("couldn't map temp file"));
+    fprintf(stderr, _("CRITICAL: couldn't map temp file\n"));
     return false;
   }
   len = g_mapped_file_get_length(mf);

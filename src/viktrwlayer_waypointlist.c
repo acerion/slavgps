@@ -59,9 +59,9 @@ static void format_1f_cell_data_func ( GtkTreeViewColumn *col,
 {
 	double value;
 	char buf[20];
-	int column = GPOINTER_TO_INT (user_data);
+	int column = KPOINTER_TO_INT (user_data);
 	gtk_tree_model_get ( model, iter, column, &value, -1 );
-	g_snprintf ( buf, sizeof(buf), "%.1f", value );
+	snprintf( buf, sizeof(buf), "%.1f", value );
 	g_object_set ( renderer, "text", buf, NULL );
 }
  */
@@ -209,12 +209,12 @@ static void trw_layer_show_picture ( menu_array_values values )
 	GError *err = NULL;
 	char *quoted_file = g_shell_quote ( wpt->image );
 	char *cmd = g_strdup_printf ( "%s %s", a_vik_get_image_viewer(), quoted_file );
-	g_free ( quoted_file );
+	free( quoted_file );
 	if ( ! g_spawn_command_line_async ( cmd, &err ) ) {
 		a_dialog_error_msg_extra ( VIK_GTK_WINDOW_FROM_LAYER(vtl), _("Could not launch %s to open file."), a_vik_get_image_viewer() );
 		g_error_free ( err );
 	}
-	g_free ( cmd );
+	free( cmd );
 #endif
 }
 
@@ -243,7 +243,7 @@ static void copy_selection (GtkTreeModel *model,
 	char* date; gtk_tree_model_get ( model, iter, 2, &date, -1 );
 	char* comment; gtk_tree_model_get ( model, iter, 4, &comment, -1 );
 	if ( comment == NULL )
-		comment = g_strdup ( "" );
+		comment = g_strdup( "" );
 	int hh; gtk_tree_model_get ( model, iter, 5, &hh, -1 );
 
 	VikWaypoint *wpt; gtk_tree_model_get ( model, iter, WPT_COL_NUM, &wpt, -1 );
@@ -267,10 +267,10 @@ static void copy_selection (GtkTreeModel *model,
 		else
 			g_string_append_printf ( cd->str, "%s%c%s%c%s%c%d\n", name, sep, date, sep, comment, sep, hh );
 	}
-	g_free ( layername );
-	g_free ( name );
-	g_free ( date );
-	g_free ( comment );
+	free( layername );
+	free( name );
+	free( date );
+	free( comment );
 }
 
 static void trw_layer_copy_selected ( GtkWidget *tree_view, bool include_positions )
@@ -288,7 +288,7 @@ static void trw_layer_copy_selected ( GtkWidget *tree_view, bool include_positio
 
 	a_clipboard_copy ( VIK_CLIPBOARD_DATA_TEXT, 0, 0, 0, cd.str->str, NULL );
 
-	g_string_free ( cd.str, true );
+	g_string_free( cd.str, true );
 }
 
 static void trw_layer_copy_selected_only_visible_columns ( GtkWidget *tree_view )
@@ -354,7 +354,7 @@ static bool add_menu_items ( GtkMenu *menu, VikTrwLayer *vtl, VikWaypoint *wpt, 
 	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_show_picture), values );
 	gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
 	gtk_widget_show ( item );
-	gtk_widget_set_sensitive ( item, GPOINTER_TO_INT(wpt->image) );
+	gtk_widget_set_sensitive ( item, KPOINTER_TO_INT(wpt->image) );
 
 	add_copy_menu_items ( menu, tree_view );
 
@@ -485,7 +485,7 @@ static void trw_layer_waypoint_list_add ( vik_trw_waypoint_list_t *vtdl,
 		GDateTime* gdt = g_date_time_new_from_unix_utc ( wpt->timestamp );
 		char *time = g_date_time_format ( gdt, date_format );
 		g_strlcpy ( time_buf, time, sizeof(time_buf) );
-		g_free ( time );
+		free( time );
 		g_date_time_unref ( gdt);
 #else
 		GDate* gdate_start = g_date_new ();
@@ -588,14 +588,14 @@ static void vik_trw_layer_waypoint_list_internal ( GtkWidget *dialog,
 	//g_list_foreach ( waypoints_and_layers, (GFunc) trw_layer_waypoint_list_add, store );
 	char *date_format = NULL;
 	if ( !a_settings_get_string ( VIK_SETTINGS_LIST_DATE_FORMAT, &date_format ) )
-		date_format = g_strdup ( WAYPOINT_LIST_DATE_FORMAT );
+		date_format = g_strdup( WAYPOINT_LIST_DATE_FORMAT );
 
 	GList *gl = waypoints_and_layers;
 	while ( gl ) {
 		trw_layer_waypoint_list_add ( (vik_trw_waypoint_list_t*)gl->data, store, height_units, date_format );
 		gl = g_list_next ( gl );
 	}
-	g_free ( date_format );
+	free( date_format );
 
 	GtkWidget *view = gtk_tree_view_new();
 	GtkCellRenderer *renderer = gtk_cell_renderer_text_new();

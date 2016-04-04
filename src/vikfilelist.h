@@ -29,7 +29,10 @@
 #include <stdint.h>
 
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #define VIK_FILE_LIST_TYPE            (vik_file_list_get_type ())
 #define VIK_FILE_LIST(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_FILE_LIST_TYPE, VikFileList))
@@ -52,6 +55,8 @@ GtkWidget *vik_file_list_new ( const char *title, GtkFileFilter *filter );
 GList *vik_file_list_get_files ( VikFileList *vfl );
 void vik_file_list_set_files ( VikFileList *vfl, GList * );
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

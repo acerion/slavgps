@@ -25,13 +25,18 @@
 
 #include <glib.h>
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 const char *a_get_viking_dir();
 char *a_get_viking_dir_no_create();
 char ** a_get_viking_data_path();
 char *a_get_viking_data_home();
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

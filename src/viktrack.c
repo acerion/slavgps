@@ -26,6 +26,7 @@
 #include <glib.h>
 #include <time.h>
 #include <stdlib.h>
+#include <assert.h>
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif
@@ -70,7 +71,7 @@ void vik_track_set_defaults(VikTrack *tr)
 void vik_track_set_comment_no_copy(VikTrack *tr, char *comment)
 {
   if ( tr->comment )
-    g_free ( tr->comment );
+    free( tr->comment );
   tr->comment = comment;
 }
 
@@ -78,7 +79,7 @@ void vik_track_set_comment_no_copy(VikTrack *tr, char *comment)
 void vik_track_set_name(VikTrack *tr, const char *name)
 {
   if ( tr->name )
-    g_free ( tr->name );
+    free( tr->name );
 
   tr->name = g_strdup(name);
 }
@@ -86,7 +87,7 @@ void vik_track_set_name(VikTrack *tr, const char *name)
 void vik_track_set_comment(VikTrack *tr, const char *comment)
 {
   if ( tr->comment )
-    g_free ( tr->comment );
+    free( tr->comment );
 
   if ( comment && comment[0] != '\0' )
     tr->comment = g_strdup(comment);
@@ -97,7 +98,7 @@ void vik_track_set_comment(VikTrack *tr, const char *comment)
 void vik_track_set_description(VikTrack *tr, const char *description)
 {
   if ( tr->description )
-    g_free ( tr->description );
+    free( tr->description );
 
   if ( description && description[0] != '\0' )
     tr->description = g_strdup(description);
@@ -108,7 +109,7 @@ void vik_track_set_description(VikTrack *tr, const char *description)
 void vik_track_set_source(VikTrack *tr, const char *source)
 {
   if ( tr->source )
-    g_free ( tr->source );
+    free( tr->source );
 
   if ( source && source[0] != '\0' )
     tr->source = g_strdup(source);
@@ -119,7 +120,7 @@ void vik_track_set_source(VikTrack *tr, const char *source)
 void vik_track_set_type(VikTrack *tr, const char *type)
 {
   if ( tr->type )
-    g_free ( tr->type );
+    free( tr->type );
 
   if ( type && type[0] != '\0' )
     tr->type = g_strdup(type);
@@ -149,21 +150,21 @@ void vik_track_free(VikTrack *tr)
     return;
 
   if ( tr->name )
-    g_free ( tr->name );
+    free( tr->name );
   if ( tr->comment )
-    g_free ( tr->comment );
+    free( tr->comment );
   if ( tr->description )
-    g_free ( tr->description );
+    free( tr->description );
   if ( tr->source )
-    g_free ( tr->source );
+    free( tr->source );
   if ( tr->type )
-    g_free ( tr->type );
+    free( tr->type );
   g_list_foreach ( tr->trackpoints, (GFunc) vik_trackpoint_free, NULL );
   g_list_free( tr->trackpoints );
   if (tr->property_dialog)
     if ( GTK_IS_WIDGET(tr->property_dialog) )
       gtk_widget_destroy ( GTK_WIDGET(tr->property_dialog) );
-  g_free ( tr );
+  free( tr );
 }
 
 /**
@@ -221,14 +222,14 @@ VikTrackpoint *vik_trackpoint_new()
 
 void vik_trackpoint_free(VikTrackpoint *tp)
 {
-  g_free(tp->name);
-  g_free(tp);
+  free(tp->name);
+  free(tp);
 }
 
 void vik_trackpoint_set_name(VikTrackpoint *tp, const char *name)
 {
   if ( tp->name )
-    g_free ( tp->name );
+    free( tp->name );
 
   // If the name is blank then completely remove it
   if ( name && name[0] == '\0' )
@@ -244,7 +245,7 @@ VikTrackpoint *vik_trackpoint_copy(VikTrackpoint *tp)
   VikTrackpoint *new_tp = vik_trackpoint_new();
   memcpy ( new_tp, tp, sizeof(VikTrackpoint) );
   if ( tp->name )
-    new_tp->name = g_strdup (tp->name);
+    new_tp->name = g_strdup(tp->name);
   return new_tp;
 }
 
@@ -514,7 +515,7 @@ VikTrack **vik_track_split_into_segments(VikTrack *t, unsigned int *ret_len)
     return NULL;
   }
 
-  rv = g_malloc ( segs * sizeof(VikTrack *) );
+  rv = malloc( segs * sizeof(VikTrack *) );
   tr = vik_track_copy ( t, true );
   rv[0] = tr;
   iter = tr->trackpoints;
@@ -754,16 +755,16 @@ double *vik_track_make_elevation_map ( const VikTrack *tr, uint16_t num_chunks )
 
   iter = tr->trackpoints;
 
-  g_assert ( num_chunks < 16000 );
+  assert ( num_chunks < 16000 );
 
-  pts = g_malloc ( sizeof(double) * num_chunks );
+  pts = malloc( sizeof(double) * num_chunks );
 
   total_length = vik_track_get_length_including_gaps ( tr );
   chunk_length = total_length / num_chunks;
 
   /* Zero chunk_length (eg, track of 2 tp with the same loc) will cause crash */
   if (chunk_length <= 0) {
-    g_free(pts);
+    free(pts);
     return NULL;
   }
 
@@ -879,7 +880,7 @@ double *vik_track_make_gradient_map ( const VikTrack *tr, uint16_t num_chunks )
   double altitude1, altitude2;
   uint16_t current_chunk;
 
-  g_assert ( num_chunks < 16000 );
+  assert ( num_chunks < 16000 );
 
   total_length = vik_track_get_length_including_gaps ( tr );
   chunk_length = total_length / num_chunks;
@@ -895,7 +896,7 @@ double *vik_track_make_gradient_map ( const VikTrack *tr, uint16_t num_chunks )
   }
 
   current_gradient = 0.0;
-  pts = g_malloc ( sizeof(double) * num_chunks );
+  pts = malloc( sizeof(double) * num_chunks );
   for (current_chunk = 0; current_chunk < (num_chunks - 1); current_chunk++) {
     altitude1 = altitudes[current_chunk];
     altitude2 = altitudes[current_chunk + 1];
@@ -906,7 +907,7 @@ double *vik_track_make_gradient_map ( const VikTrack *tr, uint16_t num_chunks )
 
   pts[current_chunk] = current_gradient;
 
-  g_free ( altitudes );
+  free( altitudes );
 
   return pts;
 }
@@ -923,7 +924,7 @@ double *vik_track_make_speed_map ( const VikTrack *tr, uint16_t num_chunks )
   if ( ! tr->trackpoints )
     return NULL;
 
-  g_assert ( num_chunks < 16000 );
+  assert ( num_chunks < 16000 );
 
   t1 = VIK_TRACKPOINT(tr->trackpoints->data)->timestamp;
   t2 = VIK_TRACKPOINT(g_list_last(tr->trackpoints)->data)->timestamp;
@@ -933,16 +934,16 @@ double *vik_track_make_speed_map ( const VikTrack *tr, uint16_t num_chunks )
     return NULL;
 
   if (duration < 0) {
-    g_warning("negative duration: unsorted trackpoint timestamps?");
+    fprintf(stderr, "WARNING: negative duration: unsorted trackpoint timestamps?\n");
     return NULL;
   }
   pt_count = vik_track_get_tp_count(tr);
 
-  v = g_malloc ( sizeof(double) * num_chunks );
+  v = malloc( sizeof(double) * num_chunks );
   chunk_dur = duration / num_chunks;
 
-  s = g_malloc(sizeof(double) * pt_count);
-  t = g_malloc(sizeof(double) * pt_count);
+  s = malloc(sizeof(double) * pt_count);
+  t = malloc(sizeof(double) * pt_count);
 
   iter = tr->trackpoints->next;
   numpts = 0;
@@ -980,8 +981,8 @@ double *vik_track_make_speed_map ( const VikTrack *tr, uint16_t num_chunks )
       v[i] = 0;
     }
   }
-  g_free(s);
-  g_free(t);
+  free(s);
+  free(t);
   return v;
 }
 
@@ -1007,16 +1008,16 @@ double *vik_track_make_distance_map ( const VikTrack *tr, uint16_t num_chunks )
     return NULL;
 
   if (duration < 0) {
-    g_warning("negative duration: unsorted trackpoint timestamps?");
+    fprintf(stderr, "WARNING: negative duration: unsorted trackpoint timestamps?\n");
     return NULL;
   }
   pt_count = vik_track_get_tp_count(tr);
 
-  v = g_malloc ( sizeof(double) * num_chunks );
+  v = malloc( sizeof(double) * num_chunks );
   chunk_dur = duration / num_chunks;
 
-  s = g_malloc(sizeof(double) * pt_count);
-  t = g_malloc(sizeof(double) * pt_count);
+  s = malloc(sizeof(double) * pt_count);
+  t = malloc(sizeof(double) * pt_count);
 
   iter = tr->trackpoints->next;
   numpts = 0;
@@ -1054,8 +1055,8 @@ double *vik_track_make_distance_map ( const VikTrack *tr, uint16_t num_chunks )
       v[i] = 0;
     }
   }
-  g_free(s);
-  g_free(t);
+  free(s);
+  free(t);
   return v;
 }
 
@@ -1094,7 +1095,7 @@ double *vik_track_make_elevation_time_map ( const VikTrack *tr, uint16_t num_chu
     return NULL;
 
   if (duration < 0) {
-    g_warning("negative duration: unsorted trackpoint timestamps?");
+    fprintf(stderr, "WARNING: negative duration: unsorted trackpoint timestamps?\n");
     return NULL;
   }
   int pt_count = vik_track_get_tp_count(tr);
@@ -1102,9 +1103,9 @@ double *vik_track_make_elevation_time_map ( const VikTrack *tr, uint16_t num_chu
   // Reset iterator back to the beginning
   iter = tr->trackpoints;
 
-  double *pts = g_malloc ( sizeof(double) * num_chunks ); // The return altitude values
-  double *s = g_malloc(sizeof(double) * pt_count); // calculation altitudes
-  double *t = g_malloc(sizeof(double) * pt_count); // calculation times
+  double *pts = malloc( sizeof(double) * num_chunks ); // The return altitude values
+  double *s = malloc(sizeof(double) * pt_count); // calculation altitudes
+  double *t = malloc(sizeof(double) * pt_count); // calculation times
 
   chunk_dur = duration / num_chunks;
 
@@ -1143,8 +1144,8 @@ double *vik_track_make_elevation_time_map ( const VikTrack *tr, uint16_t num_chu
       pts[i] = 0;
     }
   }
-  g_free(s);
-  g_free(t);
+  free(s);
+  free(t);
 
   return pts;
 }
@@ -1171,7 +1172,7 @@ double *vik_track_make_speed_dist_map ( const VikTrack *tr, uint16_t num_chunks 
     return NULL;
 
   if (duration < 0) {
-    g_warning("negative duration: unsorted trackpoint timestamps?");
+    fprintf(stderr, "WARNING: negative duration: unsorted trackpoint timestamps?\n");
     return NULL;
   }
 
@@ -1183,9 +1184,9 @@ double *vik_track_make_speed_dist_map ( const VikTrack *tr, uint16_t num_chunks 
     return NULL;
   }
 
-  v = g_malloc ( sizeof(double) * num_chunks );
-  s = g_malloc ( sizeof(double) * pt_count );
-  t = g_malloc ( sizeof(double) * pt_count );
+  v = malloc( sizeof(double) * num_chunks );
+  s = malloc( sizeof(double) * pt_count );
+  t = malloc( sizeof(double) * pt_count );
 
   // No special handling of segments ATM...
   iter = tr->trackpoints->next;
@@ -1221,8 +1222,8 @@ double *vik_track_make_speed_dist_map ( const VikTrack *tr, uint16_t num_chunks 
       v[i] = 0;
     }
   }
-  g_free(s);
-  g_free(t);
+  free(s);
+  free(t);
   return v;
 }
 
@@ -1621,7 +1622,7 @@ void vik_track_calculate_bounds ( VikTrack *trk )
     tp_iter = tp_iter->next;
   }
  
-  g_debug ( "Bounds of track: '%s' is: %f,%f to: %f,%f", trk->name, topleft.lat, topleft.lon, bottomright.lat, bottomright.lon );
+  fprintf(stderr, "DEBUG: Bounds of track: '%s' is: %f,%f to: %f,%f\n", trk->name, topleft.lat, topleft.lon, bottomright.lat, bottomright.lon );
 
   trk->bbox.north = topleft.lat;
   trk->bbox.east = bottomright.lon;
@@ -1639,7 +1640,7 @@ void vik_track_anonymize_times ( VikTrack *tr )
   GTimeVal gtv;
   // Check result just to please Coverity - even though it shouldn't fail as it's a hard coded value here!
   if ( !g_time_val_from_iso8601 ( "1901-01-01T00:00:00Z", &gtv ) ) {
-    g_critical ( "Calendar time value failure" );
+    fprintf(stderr, "CRITICAL: Calendar time value failure\n" );
     return;
   }
 
@@ -1895,7 +1896,7 @@ VikCoord *vik_track_cut_back_to_double_point ( VikTrack *tr )
     if ( vik_coord_equals(cur_coord, prev_coord) ) {
       GList *prev = iter->prev;
 
-      rv = g_malloc(sizeof(VikCoord));
+      rv = malloc(sizeof(VikCoord));
       *rv = *cur_coord;
 
       /* truncate trackpoint list */
@@ -1911,7 +1912,7 @@ VikCoord *vik_track_cut_back_to_double_point ( VikTrack *tr )
   }
 
   /* no double point found! */
-  rv = g_malloc(sizeof(VikCoord));
+  rv = malloc(sizeof(VikCoord));
   *rv = ((VikTrackpoint*) tr->trackpoints->data)->coord;
   g_list_foreach ( tr->trackpoints, (GFunc) g_free, NULL );
   g_list_free( tr->trackpoints );

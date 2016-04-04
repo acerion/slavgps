@@ -29,7 +29,10 @@
 
 #include "vikwebtool.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #define VIK_WEBTOOL_DATASOURCE_TYPE            (vik_webtool_datasource_get_type ())
 #define VIK_WEBTOOL_DATASOURCE(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_WEBTOOL_DATASOURCE_TYPE, VikWebtoolDatasource))
@@ -61,6 +64,8 @@ VikWebtoolDatasource *vik_webtool_datasource_new_with_members ( const char *labe
                                                                 const char *babel_filter_args,
                                                                 const char *input_label);
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

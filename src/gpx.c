@@ -38,6 +38,8 @@
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif
+#include <stdlib.h>
+#include <assert.h>
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <glib/gi18n.h>
@@ -324,8 +326,8 @@ static void gpx_start(VikTrwLayer *vtl, const char *el, const char **attr)
      case tt_waypoint_name:
        if ( ( tmp = get_attr(attr, "id") ) ) {
          if ( c_wp_name )
-           g_free ( c_wp_name );
-         c_wp_name = g_strdup ( tmp );
+           free( c_wp_name );
+         c_wp_name = g_strdup( tmp );
        }
        g_string_erase ( c_cdata, 0, -1 ); /* clear the cdata buffer for description */
        break;
@@ -355,29 +357,29 @@ static void gpx_end(VikTrwLayer *vtl, const char *el)
 
      case tt_gpx_author:
        if ( c_md->author )
-         g_free ( c_md->author );
-       c_md->author = g_strdup ( c_cdata->str );
+         free( c_md->author );
+       c_md->author = g_strdup( c_cdata->str );
        g_string_erase ( c_cdata, 0, -1 );
        break;
 
      case tt_gpx_desc:
        if ( c_md->description )
-         g_free ( c_md->description );
-       c_md->description = g_strdup ( c_cdata->str );
+         free( c_md->description );
+       c_md->description = g_strdup( c_cdata->str );
        g_string_erase ( c_cdata, 0, -1 );
        break;
 
      case tt_gpx_keywords:
        if ( c_md->keywords )
-         g_free ( c_md->keywords );
-       c_md->keywords = g_strdup ( c_cdata->str );
+         free( c_md->keywords );
+       c_md->keywords = g_strdup( c_cdata->str );
        g_string_erase ( c_cdata, 0, -1 );
        break;
 
      case tt_gpx_time:
        if ( c_md->timestamp )
-         g_free ( c_md->timestamp );
-       c_md->timestamp = g_strdup ( c_cdata->str );
+         free( c_md->timestamp );
+       c_md->timestamp = g_strdup( c_cdata->str );
        g_string_erase ( c_cdata, 0, -1 );
        break;
 
@@ -386,7 +388,7 @@ static void gpx_end(VikTrwLayer *vtl, const char *el)
        if ( ! c_wp_name )
          c_wp_name = g_strdup_printf("VIKING_WP%04d", unnamed_waypoints++);
        vik_trw_layer_filein_add_waypoint ( vtl, c_wp_name, c_wp );
-       g_free ( c_wp_name );
+       free( c_wp_name );
        c_wp = NULL;
        c_wp_name = NULL;
        break;
@@ -399,22 +401,22 @@ static void gpx_end(VikTrwLayer *vtl, const char *el)
        if ( ! c_tr_name )
          c_tr_name = g_strdup_printf("VIKING_RT%03d", unnamed_routes++);
        vik_trw_layer_filein_add_track ( vtl, c_tr_name, c_tr );
-       g_free ( c_tr_name );
+       free( c_tr_name );
        c_tr = NULL;
        c_tr_name = NULL;
        break;
 
      case tt_wpt_name:
        if ( c_wp_name )
-         g_free ( c_wp_name );
-       c_wp_name = g_strdup ( c_cdata->str );
+         free( c_wp_name );
+       c_wp_name = g_strdup( c_cdata->str );
        g_string_erase ( c_cdata, 0, -1 );
        break;
 
      case tt_trk_name:
        if ( c_tr_name )
-         g_free ( c_tr_name );
-       c_tr_name = g_strdup ( c_cdata->str );
+         free( c_tr_name );
+       c_tr_name = g_strdup( c_cdata->str );
        g_string_erase ( c_cdata, 0, -1 );
        break;
 
@@ -611,7 +613,7 @@ bool a_gpx_read_file( VikTrwLayer *vtl, FILE *f ) {
 
   char buf[4096];
 
-  g_assert ( f != NULL && vtl != NULL );
+  assert ( f != NULL && vtl != NULL );
 
   xpath = g_string_new ( "" );
   c_cdata = g_string_new ( "" );
@@ -627,8 +629,8 @@ bool a_gpx_read_file( VikTrwLayer *vtl, FILE *f ) {
   }
  
   XML_ParserFree (parser);
-  g_string_free ( xpath, true );
-  g_string_free ( c_cdata, true );
+  g_string_free( xpath, true );
+  g_string_free( c_cdata, true );
 
   return status != XML_STATUS_ERROR;
 }
@@ -748,7 +750,7 @@ entitize(const char * str)
         }
 
         /* enough space for the whole string plus entity replacements, if any */
-        tmp = g_malloc((strlen(str) + elen + 1));
+        tmp = malloc((strlen(str) + elen + 1));
         strcpy(tmp, str);
 
         /* no entity replacements */
@@ -766,7 +768,7 @@ entitize(const char * str)
                                 strcpy(p, ep->entity);
                                 strcpy(p + elen, xstr);
 
-                                g_free(xstr);
+                                free(xstr);
 
                                 p += elen;
                         }
@@ -788,7 +790,7 @@ entitize(const char * str)
                                 p = p+strlen(p);
                                 if ( xstr ) {
                                         strcpy( p, xstr );
-                                        g_free(xstr);
+                                        free(xstr);
                                 }
                         }
                         else {
@@ -819,23 +821,23 @@ static void gpx_write_waypoint ( VikWaypoint *wp, GpxWritingContext *context )
   //  luckily most other GPX processing software ignores things they don't understand
   fprintf ( f, "<wpt lat=\"%s\" lon=\"%s\"%s>\n",
                s_lat, s_lon, wp->visible ? "" : " hidden=\"hidden\"" );
-  g_free ( s_lat );
-  g_free ( s_lon );
+  free( s_lat );
+  free( s_lon );
 
   // Sanity clause
   if ( wp->name )
     tmp = entitize ( wp->name );
   else
-    tmp = g_strdup ("waypoint");
+    tmp = g_strdup("waypoint");
 
   fprintf ( f, "  <name>%s</name>\n", tmp );
-  g_free ( tmp);
+  free( tmp);
 
   if ( wp->altitude != VIK_DEFAULT_ALTITUDE )
   {
     tmp = a_coords_dtostr ( wp->altitude );
     fprintf ( f, "  <ele>%s</ele>\n", tmp );
-    g_free ( tmp );
+    free( tmp );
   }
 
   if ( wp->has_timestamp ) {
@@ -846,44 +848,44 @@ static void gpx_write_waypoint ( VikWaypoint *wp, GpxWritingContext *context )
     char *time_iso8601 = g_time_val_to_iso8601 ( &timestamp );
     if ( time_iso8601 != NULL )
       fprintf ( f, "  <time>%s</time>\n", time_iso8601 );
-    g_free ( time_iso8601 );
+    free( time_iso8601 );
   }
 
   if ( wp->comment )
   {
     tmp = entitize(wp->comment);
     fprintf ( f, "  <cmt>%s</cmt>\n", tmp );
-    g_free ( tmp );
+    free( tmp );
   }
   if ( wp->description )
   {
     tmp = entitize(wp->description);
     fprintf ( f, "  <desc>%s</desc>\n", tmp );
-    g_free ( tmp );
+    free( tmp );
   }
   if ( wp->source )
   {
     tmp = entitize(wp->source);
     fprintf ( f, "  <src>%s</src>\n", tmp );
-    g_free ( tmp );
+    free( tmp );
   }
   if ( wp->type )
   {
     tmp = entitize(wp->type);
     fprintf ( f, "  <type>%s</type>\n", tmp );
-    g_free ( tmp );
+    free( tmp );
   }
   if ( wp->url )
   {
     tmp = entitize(wp->url);
     fprintf ( f, "  <url>%s</url>\n", tmp );
-    g_free ( tmp );
+    free( tmp );
   }
   if ( wp->image )
   {
     tmp = entitize(wp->image);
     fprintf ( f, "  <link>%s</link>\n", tmp );
-    g_free ( tmp );
+    free( tmp );
   }
   if ( wp->symbol ) 
   {
@@ -892,11 +894,11 @@ static void gpx_write_waypoint ( VikWaypoint *wp, GpxWritingContext *context )
        // Lowercase the symbol name
        char *tmp2 = g_utf8_strdown ( tmp, -1 );
        fprintf ( f, "  <sym>%s</sym>\n",  tmp2 );
-       g_free ( tmp2 );
+       free( tmp2 );
     }
     else
       fprintf ( f, "  <sym>%s</sym>\n", tmp);
-    g_free ( tmp );
+    free( tmp );
   }
 
   fprintf ( f, "</wpt>\n" );
@@ -917,13 +919,13 @@ static void gpx_write_trackpoint ( VikTrackpoint *tp, GpxWritingContext *context
   s_lat = a_coords_dtostr( ll.lat );
   s_lon = a_coords_dtostr( ll.lon );
   fprintf ( f, "  <%spt lat=\"%s\" lon=\"%s\">\n", (context->options && context->options->is_route) ? "rte" : "trk", s_lat, s_lon );
-  g_free ( s_lat ); s_lat = NULL;
-  g_free ( s_lon ); s_lon = NULL;
+  free( s_lat ); s_lat = NULL;
+  free( s_lon ); s_lon = NULL;
 
   if (tp->name) {
     char *s_name = entitize(tp->name);
     fprintf ( f, "    <name>%s</name>\n", s_name );
-    g_free(s_name);
+    free(s_name);
   }
 
   s_alt = NULL;
@@ -937,7 +939,7 @@ static void gpx_write_trackpoint ( VikTrackpoint *tp, GpxWritingContext *context
   }
   if (s_alt != NULL)
     fprintf ( f, "    <ele>%s</ele>\n", s_alt );
-  g_free ( s_alt ); s_alt = NULL;
+  free( s_alt ); s_alt = NULL;
   
   time_iso8601 = NULL;
   if ( tp->has_timestamp ) {
@@ -956,18 +958,18 @@ static void gpx_write_trackpoint ( VikTrackpoint *tp, GpxWritingContext *context
   }
   if ( time_iso8601 != NULL )
     fprintf ( f, "    <time>%s</time>\n", time_iso8601 );
-  g_free(time_iso8601);
+  free(time_iso8601);
   time_iso8601 = NULL;
   
   if (!isnan(tp->course)) {
     char *s_course = a_coords_dtostr(tp->course);
     fprintf ( f, "    <course>%s</course>\n", s_course );
-    g_free(s_course);
+    free(s_course);
   }
   if (!isnan(tp->speed)) {
     char *s_speed = a_coords_dtostr(tp->speed);
     fprintf ( f, "    <speed>%s</speed>\n", s_speed );
-    g_free(s_speed);
+    free(s_speed);
   }
   if (tp->fix_mode == VIK_GPS_MODE_2D)
     fprintf ( f, "    <fix>2d</fix>\n");
@@ -987,7 +989,7 @@ static void gpx_write_trackpoint ( VikTrackpoint *tp, GpxWritingContext *context
   }
   if (s_dop != NULL)
     fprintf ( f, "    <hdop>%s</hdop>\n", s_dop );
-  g_free ( s_dop ); s_dop = NULL;
+  free( s_dop ); s_dop = NULL;
 
   if ( tp->vdop != VIK_DEFAULT_DOP )
   {
@@ -995,7 +997,7 @@ static void gpx_write_trackpoint ( VikTrackpoint *tp, GpxWritingContext *context
   }
   if (s_dop != NULL)
     fprintf ( f, "    <vdop>%s</vdop>\n", s_dop );
-  g_free ( s_dop ); s_dop = NULL;
+  free( s_dop ); s_dop = NULL;
 
   if ( tp->pdop != VIK_DEFAULT_DOP )
   {
@@ -1003,7 +1005,7 @@ static void gpx_write_trackpoint ( VikTrackpoint *tp, GpxWritingContext *context
   }
   if (s_dop != NULL)
     fprintf ( f, "    <pdop>%s</pdop>\n", s_dop );
-  g_free ( s_dop ); s_dop = NULL;
+  free( s_dop ); s_dop = NULL;
 
   fprintf ( f, "  </%spt>\n", (context->options && context->options->is_route) ? "rte" : "trk" );
 }
@@ -1023,7 +1025,7 @@ static void gpx_write_track ( VikTrack *t, GpxWritingContext *context )
   if ( t->name )
     tmp = entitize ( t->name );
   else
-    tmp = g_strdup ("track");
+    tmp = g_strdup("track");
 
   // NB 'hidden' is not part of any GPX standard - this appears to be a made up Viking 'extension'
   //  luckily most other GPX processing software ignores things they don't understand
@@ -1031,34 +1033,34 @@ static void gpx_write_track ( VikTrack *t, GpxWritingContext *context )
 	    t->is_route ? "rte" : "trk",
 	    t->visible ? "" : " hidden=\"hidden\"",
 	    tmp );
-  g_free ( tmp );
+  free( tmp );
 
   if ( t->comment )
   {
     tmp = entitize ( t->comment );
     fprintf ( f, "  <cmt>%s</cmt>\n", tmp );
-    g_free ( tmp );
+    free( tmp );
   }
 
   if ( t->description )
   {
     tmp = entitize ( t->description );
     fprintf ( f, "  <desc>%s</desc>\n", tmp );
-    g_free ( tmp );
+    free( tmp );
   }
 
   if ( t->source )
   {
     tmp = entitize ( t->source );
     fprintf ( f, "  <src>%s</src>\n", tmp );
-    g_free ( tmp );
+    free( tmp );
   }
 
   if ( t->type )
   {
     tmp = entitize ( t->type );
     fprintf ( f, "  <type>%s</type>\n", tmp );
-    g_free ( tmp );
+    free( tmp );
   }
 
   /* No such thing as a rteseg! */
@@ -1118,7 +1120,7 @@ void a_gpx_write_file ( VikTrwLayer *vtl, FILE *f, GpxWritingOptions *options )
   if ( name ) {
     tmp = entitize ( name );
     fprintf ( f, "  <name>%s</name>\n", tmp );
-    g_free ( tmp );
+    free( tmp );
   }
 
   VikTRWMetadata *md = vik_trw_layer_get_metadata (vtl);
@@ -1126,22 +1128,22 @@ void a_gpx_write_file ( VikTrwLayer *vtl, FILE *f, GpxWritingOptions *options )
     if ( md->author ) {
       tmp = entitize ( md->author );
       fprintf ( f, "  <author>%s</author>\n", tmp );
-      g_free ( tmp );
+      free( tmp );
     }
     if ( md->description ) {
       tmp = entitize ( md->description );
       fprintf ( f, "  <desc>%s</desc>\n", tmp );
-      g_free ( tmp );
+      free( tmp );
     }
     if ( md->timestamp ) {
       tmp = entitize ( md->timestamp );
       fprintf ( f, "  <time>%s</time>\n", tmp );
-      g_free ( tmp );
+      free( tmp );
     }
     if ( md->keywords ) {
       tmp = entitize ( md->keywords );
       fprintf ( f, "  <keywords>%s</keywords>\n", tmp );
-      g_free ( tmp );
+      free( tmp );
     }
   }
 
@@ -1227,11 +1229,11 @@ static char* write_tmp_file ( VikTrwLayer *vtl, VikTrack *trk, GpxWritingOptions
 	// Opening temporary file
 	int fd = g_file_open_tmp("viking_XXXXXX.gpx", &tmp_filename, &error);
 	if (fd < 0) {
-		g_warning ( _("failed to open temporary file: %s"), error->message );
+	  fprintf(stderr, _("WARNING: failed to open temporary file: %s\n"), error->message );
 		g_clear_error ( &error );
 		return NULL;
 	}
-	g_debug ("%s: temporary file = %s", __FUNCTION__, tmp_filename);
+	fprintf(stderr, "DEBUG: %s: temporary file = %s\n", __FUNCTION__, tmp_filename);
 
 	FILE *ff = fdopen (fd, "w");
 

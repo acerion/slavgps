@@ -28,7 +28,10 @@
 
 #include "vikroutingengine.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #define VIK_ROUTING_WEB_ENGINE_TYPE            (vik_routing_web_engine_get_type ())
 #define VIK_ROUTING_WEB_ENGINE(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_ROUTING_WEB_ENGINE_TYPE, VikRoutingWebEngine))
@@ -52,6 +55,8 @@ struct _VikRoutingWebEngine {
   VikRoutingEngine obj;
 };
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

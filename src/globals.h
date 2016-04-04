@@ -28,7 +28,10 @@
 #include <stdint.h>
 
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #define PROJECT "Viking"
 #define VIKING_VERSION PACKAGE_VERSION
@@ -232,6 +235,8 @@ int a_vik_get_recent_number_files ( );
 #define VIKING_PREFERENCES_STARTUP_GROUP_KEY "viking.startup"
 #define VIKING_PREFERENCES_STARTUP_NAMESPACE "viking.startup."
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

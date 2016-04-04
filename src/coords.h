@@ -40,7 +40,10 @@ renaming functions and defining LatLon and UTM structs.
 #include <stdint.h>
 
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 struct UTM {
   double northing;
@@ -77,6 +80,8 @@ char *a_coords_dtostr ( double d );
  */
 void a_coords_latlon_to_string ( const struct LatLon *latlon, char **lat, char **lon );
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -27,7 +27,10 @@
 #include "mapcoord.h"
 #include "vikmapsourcedefault.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #define TERRASERVER_TYPE_MAP_SOURCE             (terraserver_map_source_get_type ())
 #define TERRASERVER_MAP_SOURCE(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), TERRASERVER_TYPE_MAP_SOURCE, TerraserverMapSource))
@@ -53,6 +56,8 @@ GType terraserver_map_source_get_type (void) G_GNUC_CONST;
 
 TerraserverMapSource * terraserver_map_source_new_with_id (uint16_t id, const char *label, int type);
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _TERRASERVER_MAP_SOURCE_H_ */

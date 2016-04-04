@@ -27,6 +27,7 @@
 #include <glib/gstdio.h>
 #include <glib/gi18n.h>
 #include <gtk/gtk.h>
+#include <stdlib.h>
 
 #include "viking.h"
 #include "vikutils.h"
@@ -74,26 +75,26 @@ char* vu_trackpoint_formatted_message ( char *format_code, VikTrackpoint *trkpt,
 	vik_units_speed_t speed_units = a_vik_get_units_speed ();
 	switch (speed_units) {
 	case VIK_UNITS_SPEED_MILES_PER_HOUR:
-		speed_units_str = g_strdup ( _("mph") );
+		speed_units_str = g_strdup( _("mph") );
 		break;
 	case VIK_UNITS_SPEED_METRES_PER_SECOND:
-		speed_units_str = g_strdup ( _("m/s") );
+		speed_units_str = g_strdup( _("m/s") );
 		break;
 	case VIK_UNITS_SPEED_KNOTS:
-		speed_units_str = g_strdup ( _("knots") );
+		speed_units_str = g_strdup( _("knots") );
 		break;
 	default:
 		// VIK_UNITS_SPEED_KILOMETRES_PER_HOUR:
-		speed_units_str = g_strdup ( _("km/h") );
+		speed_units_str = g_strdup( _("km/h") );
 		break;
 	}
 
-	char *separator = g_strdup ( " | " );
+	char *separator = g_strdup( " | " );
 
 	for ( i = 0; i < len; i++ ) {
 		switch ( g_ascii_toupper ( format_code[i] ) ) {
-		case 'G': values[i] = g_strdup ( _("GPSD") ); break; // GPS Preamble
-		case 'K': values[i] = g_strdup ( _("Trkpt") ); break; // Trkpt Preamble
+		case 'G': values[i] = g_strdup( _("GPSD") ); break; // GPS Preamble
+		case 'K': values[i] = g_strdup( _("Trkpt") ); break; // Trkpt Preamble
 
 		case 'S': {
 			double speed = 0.0;
@@ -104,17 +105,17 @@ char* vu_trackpoint_formatted_message ( char *format_code, VikTrackpoint *trkpt,
 
 						// Work out from previous trackpoint location and time difference
 						speed = vik_coord_diff(&(trkpt->coord), &(trkpt_prev->coord)) / ABS(trkpt->timestamp - trkpt_prev->timestamp);
-						speedtype = g_strdup ( "*" ); // Interpolated
+						speedtype = g_strdup( "*" ); // Interpolated
 					}
 					else
-						speedtype = g_strdup ( "**" );
+						speedtype = g_strdup( "**" );
 				}
 				else
-					speedtype = g_strdup ( "**" );
+					speedtype = g_strdup( "**" );
 			}
 			else {
 				speed = trkpt->speed;
-				speedtype = g_strdup ( "" );
+				speedtype = g_strdup( "" );
 			}
 			switch (speed_units) {
 			case VIK_UNITS_SPEED_KILOMETRES_PER_HOUR:
@@ -133,7 +134,7 @@ char* vu_trackpoint_formatted_message ( char *format_code, VikTrackpoint *trkpt,
 			}
 
 			values[i] = g_strdup_printf ( _("%sSpeed%s %.1f%s"), separator, speedtype, speed, speed_units_str );
-			g_free ( speedtype );
+			free( speedtype );
 			break;
 		}
 
@@ -146,17 +147,17 @@ char* vu_trackpoint_formatted_message ( char *format_code, VikTrackpoint *trkpt,
 						// Work out from previous trackpoint altitudes and time difference
 						// 'speed' can be negative if going downhill
 						speed = (trkpt->altitude - trkpt_prev->altitude) / ABS(trkpt->timestamp - trkpt_prev->timestamp);
-						speedtype = g_strdup ( "*" ); // Interpolated
+						speedtype = g_strdup( "*" ); // Interpolated
 					}
 					else
-						speedtype = g_strdup ( "**" ); // Unavailable
+						speedtype = g_strdup( "**" ); // Unavailable
 				}
 				else
-					speedtype = g_strdup ( "**" );
+					speedtype = g_strdup( "**" );
 			}
 			else {
 				speed = climb;
-				speedtype = g_strdup ( "" );
+				speedtype = g_strdup( "" );
 			}
 			switch (speed_units) {
 			case VIK_UNITS_SPEED_KILOMETRES_PER_HOUR:
@@ -175,7 +176,7 @@ char* vu_trackpoint_formatted_message ( char *format_code, VikTrackpoint *trkpt,
 			}
 			// Go for 2dp as expect low values for vertical speeds
 			values[i] = g_strdup_printf ( _("%sClimb%s %.2f%s"), separator, speedtype, speed, speed_units_str );
-			g_free ( speedtype );
+			free( speedtype );
 			break;
 		}
 
@@ -209,17 +210,17 @@ char* vu_trackpoint_formatted_message ( char *format_code, VikTrackpoint *trkpt,
 				switch (dist_units) {
 				case VIK_UNITS_DISTANCE_MILES:
 				case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
-					dist_units_str = g_strdup ( _("yards") );
+					dist_units_str = g_strdup( _("yards") );
 					break;
 				default:
 					// VIK_UNITS_DISTANCE_KILOMETRES:
-					dist_units_str = g_strdup ( _("m") );
+					dist_units_str = g_strdup( _("m") );
 					break;
 				}
 
 				values[i] = g_strdup_printf ( _("%sDistance diff %d%s"), separator, diff, dist_units_str );
 
-				g_free ( dist_units_str );
+				free( dist_units_str );
 			}
 			break;
 		}
@@ -231,9 +232,9 @@ char* vu_trackpoint_formatted_message ( char *format_code, VikTrackpoint *trkpt,
 				msg = vu_get_time_string ( &(trkpt->timestamp), "%x %X", &(trkpt->coord), NULL );
 			}
 			else
-				msg = g_strdup ("--");
+				msg = g_strdup("--");
 			values[i] = g_strdup_printf ( _("%sTime %s"), separator, msg );
-			g_free ( msg );
+			free( msg );
 			break;
 		}
 
@@ -259,21 +260,21 @@ char* vu_trackpoint_formatted_message ( char *format_code, VikTrackpoint *trkpt,
 				vik_units_distance_t dist_units = a_vik_get_units_distance ();
 				switch (dist_units) {
 				case VIK_UNITS_DISTANCE_MILES:
-					dist_units_str = g_strdup ( _("miles") );
+					dist_units_str = g_strdup( _("miles") );
 					dist = VIK_METERS_TO_MILES(dist);
 					break;
 				case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
-					dist_units_str = g_strdup ( _("NM") );
+					dist_units_str = g_strdup( _("NM") );
 					dist = VIK_METERS_TO_NAUTICAL_MILES(dist);
 					break;
 				default:
 					// VIK_UNITS_DISTANCE_KILOMETRES:
-					dist_units_str = g_strdup ( _("km") );
+					dist_units_str = g_strdup( _("km") );
 					dist = dist / 1000.0;
 					break;
 				}
 				values[i] = g_strdup_printf ( _("%sTo End %.2f%s"), separator, dist, dist_units_str );
-				g_free ( dist_units_str );
+				free( dist_units_str );
 			}
 			break;
 		}
@@ -286,21 +287,21 @@ char* vu_trackpoint_formatted_message ( char *format_code, VikTrackpoint *trkpt,
 				vik_units_distance_t dist_units = a_vik_get_units_distance ();
 				switch (dist_units) {
 				case VIK_UNITS_DISTANCE_MILES:
-					dist_units_str = g_strdup ( _("miles") );
+					dist_units_str = g_strdup( _("miles") );
 					distd = VIK_METERS_TO_MILES(distd);
 					break;
 				case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
-					dist_units_str = g_strdup ( _("NM") );
+					dist_units_str = g_strdup( _("NM") );
 					distd = VIK_METERS_TO_NAUTICAL_MILES(distd);
 					break;
 				default:
 					// VIK_UNITS_DISTANCE_KILOMETRES:
-					dist_units_str = g_strdup ( _("km") );
+					dist_units_str = g_strdup( _("km") );
 					distd = distd / 1000.0;
 					break;
 				}
 				values[i] = g_strdup_printf ( _("%sDistance along %.2f%s"), separator, distd, dist_units_str );
-				g_free ( dist_units_str );
+				free( dist_units_str );
 			}
 			break;
 		}
@@ -312,8 +313,8 @@ char* vu_trackpoint_formatted_message ( char *format_code, VikTrackpoint *trkpt,
 			vik_coord_to_latlon (&(trkpt->coord), &ll);
 			a_coords_latlon_to_string ( &ll, &lat, &lon );
 			values[i] = g_strdup_printf ( "%s%s %s", separator, lat, lon );
-			g_free ( lat );
-			g_free ( lon );
+			free( lat );
+			free( lon );
 			break;
 		}
 
@@ -326,7 +327,7 @@ char* vu_trackpoint_formatted_message ( char *format_code, VikTrackpoint *trkpt,
 			if ( trkpt->name )
 				values[i] = g_strdup_printf ( "%s%s", separator, trkpt->name );
 			else
-				values[i] = g_strdup ( "" );
+				values[i] = g_strdup( "" );
 			break;
 
 		default:
@@ -334,14 +335,14 @@ char* vu_trackpoint_formatted_message ( char *format_code, VikTrackpoint *trkpt,
 		}
 	}
 
-	g_free ( separator );
-	g_free ( speed_units_str );
+	free( separator );
+	free( speed_units_str );
 
 	char *msg = g_strconcat ( values[0], values[1], values[2], values[3], values[4], values[5], values[6], values[7], values[8], NULL );
 
 	for ( i = 0; i < FMT_MAX_NUMBER_CODES; i++ ) {
 		if ( values[i] != '\0' )
-			g_free ( values[i] );
+			free( values[i] );
 	}
 	
 	return msg;
@@ -361,8 +362,8 @@ static bool new_version_available_message ( new_version_thread_data *nvtd )
 		// NB 'VIKING_URL' redirects to the Wiki, here we want to go the main site.
 		open_url ( nvtd->window, "http://sourceforge.net/projects/viking/" );
 
-	g_free ( nvtd->version );
-	g_free ( nvtd );
+	free( nvtd->version );
+	free( nvtd );
 	return false;
 }
 
@@ -373,7 +374,7 @@ static void latest_version_thread ( GtkWindow *window )
 	// Need to allow a few redirects, as SF file is often served from different server
 	DownloadFileOptions options = { false, false, NULL, 5, NULL, NULL, NULL };
 	char *filename = a_download_uri_to_tmp_file ( "http://sourceforge.net/projects/viking/files/VERSION", &options );
-	//char *filename = g_strdup ( "VERSION" );
+	//char *filename = g_strdup( "VERSION" );
 	if ( !filename ) {
 		return;
 	}
@@ -387,21 +388,21 @@ static void latest_version_thread ( GtkWindow *window )
 	int latest_version = viking_version_to_number ( text );
 	int my_version = viking_version_to_number ( VIKING_VERSION );
 
-	g_debug ( "The lastest version is: %s", text );
+	fprintf(stderr, "DEBUG: The lastest version is: %s\n", text );
 
 	if ( my_version < latest_version ) {
-		new_version_thread_data *nvtd = g_malloc ( sizeof(new_version_thread_data) );
+		new_version_thread_data *nvtd = malloc( sizeof(new_version_thread_data) );
 		nvtd->window = window;
-		nvtd->version = g_strdup ( text );
+		nvtd->version = g_strdup( text );
 		gdk_threads_add_idle ( (GSourceFunc) new_version_available_message, nvtd );
 	}
 	else
-		g_debug ( "Running the lastest version: %s", VIKING_VERSION );
+		fprintf(stderr, "DEBUG: Running the lastest version: %s\n", VIKING_VERSION );
 
 	g_mapped_file_unref ( mf );
 	if ( filename ) {
 		g_remove ( filename );
-		g_free ( filename );
+		free( filename );
 	}
 
 	// Update last checked time
@@ -547,7 +548,7 @@ char *vu_get_canonical_filename ( VikLayer *vl, const char *filename )
     return NULL;
 
   if ( g_path_is_absolute ( filename ) )
-    canonical = g_strdup ( filename );
+    canonical = g_strdup( filename );
   else {
     const char *vw_filename = vik_window_get_filename ( VIK_WINDOW_FROM_WIDGET (vl->vvp) );
     char *dirpath = NULL;
@@ -563,8 +564,8 @@ char *vu_get_canonical_filename ( VikLayer *vl, const char *filename )
       full = g_strconcat ( g_get_current_dir(), G_DIR_SEPARATOR_S, dirpath, G_DIR_SEPARATOR_S, filename, NULL );
 
     canonical = file_realpath_dup ( full ); // resolved
-    g_free ( full );
-    g_free ( dirpath );
+    free( full );
+    free( dirpath );
   }
 
   return canonical;
@@ -595,24 +596,24 @@ static int load_ll_tz_dir ( const char *dir )
 					double pt[2] = { g_ascii_strtod (components[0], NULL), g_ascii_strtod (components[1], NULL) };
 					char *timezone = g_strchomp ( components[2] );
 					if ( kd_insert ( kd, pt, timezone ) )
-						g_critical ( "Insertion problem of %s for line %ld of latlontz.txt", timezone, line_num );
+						fprintf(stderr, "CRITICAL: Insertion problem of %s for line %ld of latlontz.txt\n", timezone, line_num );
 					else
 						inserted++;
 					// NB Don't free timezone as it's part of the kdtree data now
-					g_free ( components[0] );
-					g_free ( components[1] );
+					free( components[0] );
+					free( components[1] );
 				} else {
-					g_warning ( "Line %ld of latlontz.txt does not have 3 parts", line_num );
+					fprintf(stderr, "WARNING: Line %ld of latlontz.txt does not have 3 parts\n", line_num );
 				}
-				g_free ( components );
+				free( components );
 			}
 			fclose ( ff );
 		}
 		else {
-			g_warning ( "%s: Could not open %s", __FUNCTION__, lltz);
+			fprintf(stderr, "WARNING: %s: Could not open %s\n", __FUNCTION__, lltz);
 		}
 	}
-	g_free ( lltz );
+	free( lltz );
 
 	return inserted;
 }
@@ -640,9 +641,9 @@ void vu_setup_lat_lon_tz_lookup ()
 	}
 	g_strfreev ( data_dirs );
 
-	g_debug ( "%s: Loaded %d elements", __FUNCTION__, loaded );
+	fprintf(stderr, "DEBUG: %s: Loaded %d elements\n", __FUNCTION__, loaded );
 	if ( loaded == 0 )
-		g_critical ( "%s: No lat/lon/timezones loaded", __FUNCTION__ );
+		fprintf(stderr, "CRITICAL: %s: No lat/lon/timezones loaded\n", __FUNCTION__ );
 }
 
 /**
@@ -672,7 +673,7 @@ static char* time_string_adjusted ( time_t *time, int offset_s )
 {
 	time_t *mytime = time;
 	*mytime = *mytime + offset_s;
-	char *str = g_malloc ( 64 );
+	char *str = malloc( 64 );
 	// Append asterisks to indicate use of simplistic model (i.e. no TZ)
 	strftime ( str, 64, "%a %X %x **", gmtime(mytime) );
 	return str;
@@ -682,13 +683,13 @@ static char* time_string_tz ( time_t *time, const char *format, GTimeZone *tz )
 {
 	GDateTime *utc = g_date_time_new_from_unix_utc (*time);
 	if ( !utc ) {
-		g_warning ( "%s: result from g_date_time_new_from_unix_utc() is NULL", __FUNCTION__ );
+		fprintf(stderr, "WARNING: %s: result from g_date_time_new_from_unix_utc() is NULL\n", __FUNCTION__ );
 		return NULL;
 	}
 	GDateTime *local = g_date_time_to_timezone ( utc, tz );
 	if ( !local ) {
 		g_date_time_unref ( utc );
-		g_warning ( "%s: result from g_date_time_to_timezone() is NULL", __FUNCTION__ );
+		fprintf(stderr, "WARNING: %s: result from g_date_time_to_timezone() is NULL\n", __FUNCTION__ );
 		return NULL;
 	}
 	char *str = g_date_time_format ( local, format );
@@ -736,7 +737,7 @@ char* vu_get_tz_at_location ( const VikCoord* vc )
 		}
 		kd_res_next ( presults );
 	}
-	g_debug ( "TZ lookup found %d results - picked %s", kd_res_size(presults), tz );
+	fprintf(stderr, "DEBUG: TZ lookup found %d results - picked %s\n", kd_res_size(presults), tz );
 	kd_res_free ( presults );
 
 	return tz;
@@ -761,7 +762,7 @@ char* vu_get_time_string ( time_t *time, const char *format, const VikCoord* vc,
 	char *str = NULL;
 	switch ( a_vik_get_time_ref_frame() ) {
 		case VIK_TIME_REF_UTC:
-			str = g_malloc ( 64 );
+			str = malloc( 64 );
 			strftime ( str, 64, format, gmtime(time) ); // Always 'GMT'
 			break;
 		case VIK_TIME_REF_WORLD:
@@ -789,7 +790,7 @@ char* vu_get_time_string ( time_t *time, const char *format, const VikCoord* vc,
 			}
 			break;
 		default: // VIK_TIME_REF_LOCALE
-			str = g_malloc ( 64 );
+			str = malloc( 64 );
 			strftime ( str, 64, format, localtime(time) );
 			break;
 	}

@@ -52,7 +52,7 @@ char *a_get_viking_dir_no_create()
 #endif
   if (!home || g_access(home, W_OK))
     /* Fatal error */
-    g_critical("Unable to find a base directory");
+    fprintf(stderr, "CRITICAL: Unable to find a base directory\n");
 
     /* Build the name of the directory */
 #ifdef __APPLE__
@@ -70,7 +70,7 @@ const char *a_get_viking_dir()
     viking_dir = a_get_viking_dir_no_create ();
     if (g_file_test(viking_dir, G_FILE_TEST_EXISTS) == false)
       if ( g_mkdir(viking_dir, 0755) != 0 )
-        g_warning ( "%s: Failed to create directory %s", __FUNCTION__, viking_dir );
+        fprintf(stderr, "WARNING: %s: Failed to create directory %s\n", __FUNCTION__, viking_dir );
   }
   return viking_dir;
 }
@@ -109,7 +109,7 @@ a_get_viking_data_path()
 #ifdef WINDOWS
   // Try to use from the install directory - normally the working directory of Viking is where ever it's install location is
   const char *xdg_data_dirs = "./data";
-  //const char *xdg_data_dirs = g_strdup ( "%s/%s/data", g_getenv("ProgramFiles"), PACKAGE );
+  //const char *xdg_data_dirs = g_strdup( "%s/%s/data", g_getenv("ProgramFiles"), PACKAGE );
 #else
   const char *xdg_data_dirs = g_getenv("XDG_DATA_DIRS");
 #endif
@@ -130,7 +130,7 @@ a_get_viking_data_path()
   {
     char *dir = *path;
     *path = g_build_filename(dir, PACKAGE, NULL);
-    g_free(dir);
+    free(dir);
   }
 #endif
   return data_path;

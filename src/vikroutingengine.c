@@ -33,6 +33,7 @@
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <glib/gi18n.h>
+#include <stdlib.h>
 
 #include "babel.h"
 
@@ -74,17 +75,17 @@ vik_routing_engine_set_property (GObject      *object,
   switch (property_id)
     {
     case PROP_ID:
-      g_free (priv->id);
+      free(priv->id);
       priv->id = g_strdup(g_value_get_string (value));
       break;
 
     case PROP_LABEL:
-      g_free (priv->label);
+      free(priv->label);
       priv->label = g_strdup(g_value_get_string (value));
       break;
 
     case PROP_FORMAT:
-      g_free (priv->format);
+      free(priv->format);
       priv->format = g_strdup(g_value_get_string (value));
       break;
 
@@ -187,13 +188,13 @@ vik_routing_engine_finalize ( GObject *self )
 {
   VikRoutingPrivate *priv = VIK_ROUTING_ENGINE_PRIVATE (self);
 
-  g_free (priv->id);
+  free(priv->id);
   priv->id = NULL;
 
-  g_free (priv->label);
+  free(priv->label);
   priv->label = NULL;
 
-  g_free (priv->format);
+  free(priv->format);
   priv->format = NULL;
 
   G_OBJECT_CLASS(parent_class)->finalize(self);

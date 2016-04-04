@@ -60,9 +60,9 @@ static void format_1f_cell_data_func ( GtkTreeViewColumn *col,
 {
 	double value;
 	char buf[20];
-	int column = GPOINTER_TO_INT (user_data);
+	int column = KPOINTER_TO_INT (user_data);
 	gtk_tree_model_get ( model, iter, column, &value, -1 );
-	g_snprintf ( buf, sizeof(buf), "%.1f", value );
+	snprintf ( buf, sizeof(buf), "%.1f", value );
 	g_object_set ( renderer, "text", buf, NULL );
 }
 
@@ -234,9 +234,9 @@ static void copy_selection (GtkTreeModel *model,
 		g_string_append_printf ( cd->str, "%s%c%s%c%s%c%.1f%c%d%c%.1f%c%.1f%c%d\n", layername, sep, name, sep, date, sep, d1, sep, d2, sep, d3, sep, d4, sep, d5 );
 	else
 		g_string_append_printf ( cd->str, "%s%c%s%c%.1f%c%d%c%.1f%c%.1f%c%d\n", name, sep, date, sep, d1, sep, d2, sep, d3, sep, d4, sep, d5 );
-	g_free ( layername );
-	g_free ( name );
-	g_free ( date );
+	free( layername );
+	free( name );
+	free( date );
 }
 
 static void trw_layer_copy_selected ( GtkWidget *tree_view )
@@ -254,7 +254,7 @@ static void trw_layer_copy_selected ( GtkWidget *tree_view )
 
 	a_clipboard_copy ( VIK_CLIPBOARD_DATA_TEXT, 0, 0, 0, cd.str->str, NULL );
 
-	g_string_free ( cd.str, true );
+	g_string_free( cd.str, true );
 }
 
 static void add_copy_menu_item ( GtkMenu *menu, GtkWidget *tree_view )
@@ -443,7 +443,7 @@ static void trw_layer_track_list_add ( vik_trw_track_list_t *vtdl,
 		GDateTime* gdt = g_date_time_new_from_unix_utc ( VIK_TRACKPOINT(trk->trackpoints->data)->timestamp );
 		char *time = g_date_time_format ( gdt, date_format );
 		g_strlcpy ( time_buf, time, sizeof(time_buf) );
-		g_free ( time );
+		free( time );
 		g_date_time_unref ( gdt);
 #else
 		GDate* gdate_start = g_date_new ();
@@ -500,7 +500,7 @@ static void trw_layer_track_list_add ( vik_trw_track_list_t *vtdl,
 			}
 		}
 	}
-	g_free ( altitudes );
+	free( altitudes );
 
 	switch (height_units) {
 	case VIK_UNITS_HEIGHT_FEET: max_alt = VIK_METERS_TO_FEET(max_alt); break;
@@ -576,14 +576,14 @@ static void vik_trw_layer_track_list_internal ( GtkWidget *dialog,
 	//g_list_foreach ( tracks_and_layers, (GFunc) trw_layer_track_list_add, store );
 	char *date_format = NULL;
 	if ( !a_settings_get_string ( VIK_SETTINGS_LIST_DATE_FORMAT, &date_format ) )
-		date_format = g_strdup ( TRACK_LIST_DATE_FORMAT );
+		date_format = g_strdup( TRACK_LIST_DATE_FORMAT );
 
 	GList *gl = tracks_and_layers;
 	while ( gl ) {
 		trw_layer_track_list_add ( (vik_trw_track_list_t*)gl->data, store, dist_units, speed_units, height_units, date_format );
 		gl = g_list_next ( gl );
 	}
-	g_free ( date_format );
+	free( date_format );
 
 	GtkWidget *view = gtk_tree_view_new();
 	GtkCellRenderer *renderer = gtk_cell_renderer_text_new();
@@ -631,30 +631,30 @@ static void vik_trw_layer_track_list_internal ( GtkWidget *dialog,
 		break;
 	}
 	// Apply own formatting of the data
-	gtk_tree_view_column_set_cell_data_func ( column, renderer, format_1f_cell_data_func, GINT_TO_POINTER(column_runner-1), NULL);
+	gtk_tree_view_column_set_cell_data_func ( column, renderer, format_1f_cell_data_func, KINT_TO_POINTER(column_runner-1), NULL);
 
 	(void)my_new_column_text ( _("Length\n(minutes)"), renderer, view, column_runner++ );
 
 	char *spd_units = NULL;
 	switch (speed_units) {
-	case VIK_UNITS_SPEED_KILOMETRES_PER_HOUR: spd_units = g_strdup (_("km/h")); break;
-	case VIK_UNITS_SPEED_MILES_PER_HOUR:      spd_units = g_strdup (_("mph")); break;
-	case VIK_UNITS_SPEED_KNOTS:               spd_units = g_strdup (_("knots")); break;
+	case VIK_UNITS_SPEED_KILOMETRES_PER_HOUR: spd_units = g_strdup(_("km/h")); break;
+	case VIK_UNITS_SPEED_MILES_PER_HOUR:      spd_units = g_strdup(_("mph")); break;
+	case VIK_UNITS_SPEED_KNOTS:               spd_units = g_strdup(_("knots")); break;
 	// VIK_UNITS_SPEED_METRES_PER_SECOND:
-	default:                                  spd_units = g_strdup (_("m/s")); break;
+	default:                                  spd_units = g_strdup(_("m/s")); break;
 	}
 
 	char *title = g_strdup_printf ( _("Av. Speed\n(%s)"), spd_units );
 	column = my_new_column_text ( title, renderer, view, column_runner++ );
-	g_free ( title );
-	gtk_tree_view_column_set_cell_data_func ( column, renderer, format_1f_cell_data_func, GINT_TO_POINTER(column_runner-1), NULL); // Apply own formatting of the data
+	free( title );
+	gtk_tree_view_column_set_cell_data_func ( column, renderer, format_1f_cell_data_func, KINT_TO_POINTER(column_runner-1), NULL); // Apply own formatting of the data
 
 	title = g_strdup_printf ( _("Max Speed\n(%s)"), spd_units );
 	column = my_new_column_text ( title, renderer, view, column_runner++ );
-	gtk_tree_view_column_set_cell_data_func ( column, renderer, format_1f_cell_data_func, GINT_TO_POINTER(column_runner-1), NULL); // Apply own formatting of the data
+	gtk_tree_view_column_set_cell_data_func ( column, renderer, format_1f_cell_data_func, KINT_TO_POINTER(column_runner-1), NULL); // Apply own formatting of the data
 
-	g_free ( title );
-	g_free ( spd_units );
+	free( title );
+	free( spd_units );
 
 	if ( height_units == VIK_UNITS_HEIGHT_FEET )
 		(void)my_new_column_text ( _("Max Height\n(Feet)"), renderer, view, column_runner++ );

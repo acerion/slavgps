@@ -22,6 +22,8 @@
 #include <glib/gprintf.h>
 #include <glib/gi18n.h>
 
+#include <stdlib.h>
+
 #include "viking.h"
 #include "acquire.h"
 #include "geonamessearch.h"

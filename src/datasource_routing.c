@@ -25,6 +25,7 @@
 #endif
 
 #include <string.h>
+#include <stdlib.h>
 
 #include <glib/gprintf.h>
 #include <glib/gi18n.h>
@@ -77,7 +78,7 @@ VikDataSourceInterface vik_datasource_routing_interface = {
 
 static void * datasource_routing_init ( acq_vik_t *avt )
 {
-  datasource_routing_widgets_t *widgets = g_malloc(sizeof(*widgets));
+  datasource_routing_widgets_t *widgets = malloc(sizeof(*widgets));
   return widgets;
 }
 
@@ -126,12 +127,12 @@ static void datasource_routing_get_process_options ( datasource_routing_widgets_
   if ( !engine ) return;
 
   po->url = vik_routing_engine_get_url_from_directions ( engine, from, to );
-  po->input_file_type = g_strdup ( vik_routing_engine_get_format (engine) );
+  po->input_file_type = g_strdup( vik_routing_engine_get_format (engine) );
   options = NULL; // i.e. use the default download settings
 
   /* Save last selection */
-  g_free ( last_from_str );
-  g_free ( last_to_str );
+  free( last_from_str );
+  free( last_to_str );
 
   last_from_str = g_strdup( from );
   last_to_str = g_strdup( to );
@@ -139,5 +140,5 @@ static void datasource_routing_get_process_options ( datasource_routing_widgets_
 
 static void datasource_routing_cleanup ( void * data )
 {
-  g_free ( data );
+  free( data );
 }

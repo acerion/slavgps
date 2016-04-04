@@ -115,7 +115,7 @@ static GeoTagWidgets *geotag_widgets_new()
 static void geotag_widgets_free ( GeoTagWidgets *widgets )
 {
 	// Need to free VikFileList??
-	g_free(widgets);
+	free(widgets);
 }
 
 typedef struct {
@@ -285,10 +285,10 @@ static void trw_layer_geotag_waypoint ( geotag_options_t *options )
 			if ( ans != 0 ) {
 				char *message = g_strdup_printf ( _("Failed updating EXIF on %s"), options->image );
 				vik_window_statusbar_update ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(options->vtl)), message, VIK_STATUSBAR_INFO );
-				g_free ( message );
+				free( message );
 			}
 		}
-		g_free ( datetime );
+		free( datetime );
 	}
 }
 
@@ -321,11 +321,11 @@ static void trw_layer_geotag_process ( geotag_options_t *options )
 				VikWaypoint *wp = a_geotag_create_waypoint_from_file ( options->image, vik_trw_layer_get_coord_mode (options->vtl), &name );
 				if ( !wp ) {
 					// Couldn't create Waypoint
-					g_free ( datetime );
+					free( datetime );
 					return;
 				}
 				if ( !name )
-					name = g_strdup ( a_file_basename ( options->image ) );
+					name = g_strdup( a_file_basename ( options->image ) );
 
 				bool updated_waypoint = false;
 
@@ -342,17 +342,17 @@ static void trw_layer_geotag_process ( geotag_options_t *options )
 					vik_trw_layer_filein_add_waypoint ( options->vtl, name, wp );
 				}
 
-				g_free ( name );
+				free( name );
 				
 				// Mark for redraw
 				options->redraw = true;
 			}
-			g_free ( datetime );
+			free( datetime );
 			return;
 		}
 
 		options->PhotoTime = ConvertToUnixTime ( datetime, EXIF_DATE_FORMAT, options->ov.TimeZoneHours, options->ov.TimeZoneMins);
-		g_free ( datetime );
+		free( datetime );
 		
 		// Apply any offset
 		options->PhotoTime = options->PhotoTime + options->ov.time_offset;
@@ -384,14 +384,14 @@ static void trw_layer_geotag_process ( geotag_options_t *options )
 					// Update existing WP
 					// Find a WP with current name
 					char *name = NULL;
-					name = g_strdup ( a_file_basename ( options->image ) );
+					name = g_strdup( a_file_basename ( options->image ) );
 					VikWaypoint *wp = vik_trw_layer_get_waypoint ( options->vtl, name );
 					if ( wp ) {
 						// Found, so set new position, comment and image
 						(void)a_geotag_waypoint_positioned ( options->image, options->coord, options->altitude, &name, wp );
 						updated_waypoint = true;
 					}
-					g_free ( name );
+					free( name );
 				}
 
 				if ( !updated_waypoint ) {
@@ -399,9 +399,9 @@ static void trw_layer_geotag_process ( geotag_options_t *options )
 					char *name = NULL;
 					VikWaypoint *wp = a_geotag_waypoint_positioned ( options->image, options->coord, options->altitude, &name, NULL );
 					if ( !name )
-						name = g_strdup ( a_file_basename ( options->image ) );
+						name = g_strdup( a_file_basename ( options->image ) );
 					vik_trw_layer_filein_add_waypoint ( options->vtl, name, wp );
-					g_free ( name );
+					free( name );
 				}
 
 				// Mark for redraw
@@ -414,7 +414,7 @@ static void trw_layer_geotag_process ( geotag_options_t *options )
 				if ( ans != 0 ) {
 					char *message = g_strdup_printf ( _("Failed updating EXIF on %s"), options->image );
 					vik_window_statusbar_update ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(options->vtl)), message, VIK_STATUSBAR_INFO );
-					g_free ( message );
+					free( message );
 				}
 			}
 		}
@@ -428,7 +428,7 @@ static void trw_layer_geotag_thread_free ( geotag_options_t *gtd )
 {
 	if ( gtd->files )
 		g_list_free ( gtd->files );
-	g_free ( gtd );
+	free( gtd );
 }
 
 /**
@@ -477,7 +477,7 @@ static void trw_layer_geotag_response_cb ( GtkDialog *dialog, int resp, GeoTagWi
 	default: {
 		//GTK_RESPONSE_ACCEPT:
 		// Get options
-		geotag_options_t *options = g_malloc ( sizeof(geotag_options_t) );
+		geotag_options_t *options = malloc( sizeof(geotag_options_t) );
 		options->vtl = widgets->vtl;
 		options->wpt = widgets->wpt;
 		options->track = widgets->track;
@@ -525,7 +525,7 @@ static void trw_layer_geotag_response_cb ( GtkDialog *dialog, int resp, GeoTagWi
 		                      NULL,
 		                      len );
 
-		g_free ( tmp );
+		free( tmp );
 
 		break;
 	}
@@ -709,5 +709,5 @@ void trw_layer_geotag_dialog ( GtkWindow *parent,
 
 	gtk_widget_show_all ( widgets->dialog );
 
-	g_free ( track_string );
+	free( track_string );
 }

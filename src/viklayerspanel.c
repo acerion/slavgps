@@ -27,6 +27,8 @@
 #include "settings.h"
 
 #include <string.h>
+#include <stdlib.h>
+#include <assert.h>
 
 #include <glib/gi18n.h>
 #include <gdk/gdkkeysyms.h>
@@ -104,7 +106,7 @@ VikViewport *vik_layers_panel_get_viewport ( VikLayersPanel *vlp )
 
 static bool layers_panel_new_layer ( void * lpnl[2] )
 {
-  return vik_layers_panel_new_layer ( lpnl[0], GPOINTER_TO_INT(lpnl[1]) );
+  return vik_layers_panel_new_layer ( lpnl[0], KPOINTER_TO_INT(lpnl[1]) );
 }
 
 /**
@@ -150,7 +152,7 @@ static GtkWidget* layers_panel_create_popup ( VikLayersPanel *vlp, bool full )
       menuitem = gtk_menu_item_new_with_mnemonic ( vik_layer_get_interface(ii)->name );
 
     lpnl[ii][0] = vlp;
-    lpnl[ii][1] = GINT_TO_POINTER(ii);
+    lpnl[ii][1] = KINT_TO_POINTER(ii);
 
     g_signal_connect_swapped ( G_OBJECT(menuitem), "activate", G_CALLBACK(layers_panel_new_layer), lpnl[ii] );
     gtk_menu_shell_append (GTK_MENU_SHELL (submenu), menuitem);
@@ -453,7 +455,7 @@ static void layers_popup_cb ( VikLayersPanel *vlp )
 bool vik_layers_panel_new_layer ( VikLayersPanel *vlp, VikLayerTypeEnum type )
 {
   VikLayer *l;
-  g_assert ( vlp->vvp );
+  assert ( vlp->vvp );
   bool ask_user = false;
   if ( type == VIK_LAYER_TRW )
     (void)a_settings_get_boolean ( VIK_SETTINGS_LAYERS_TRW_CREATE_DEFAULT, &ask_user );
@@ -495,7 +497,7 @@ void vik_layers_panel_add_layer ( VikLayersPanel *vlp, VikLayer *l )
        while ( ! IS_VIK_AGGREGATE_LAYER(vl) ) {
          iter = vl->iter;
          vl = VIK_LAYER(vik_treeview_item_get_parent ( vlp->vt, &vl->iter ));
-         g_assert ( vl->realized );
+         assert ( vl->realized );
        }
        addtoagg = VIK_AGGREGATE_LAYER(vl);
        replace_iter = &iter;
@@ -506,7 +508,7 @@ void vik_layers_panel_add_layer ( VikLayersPanel *vlp, VikLayer *l )
       /* a sublayer is selected, first get its parent (layer), then find the layer's parent (aggr. layer) */
       VikLayer *vl = VIK_LAYER(vik_treeview_item_get_parent ( vlp->vt, &iter ));
       replace_iter = &(vl->iter);
-      g_assert ( vl->realized );
+      assert ( vl->realized );
       VikLayer *grandpa = (vik_treeview_item_get_parent ( vlp->vt, &(vl->iter) ) );
       if (IS_VIK_AGGREGATE_LAYER(grandpa))
         addtoagg = VIK_AGGREGATE_LAYER(grandpa);
@@ -549,7 +551,7 @@ static void layers_move_item ( VikLayersPanel *vlp, bool up )
 bool vik_layers_panel_properties ( VikLayersPanel *vlp )
 {
   GtkTreeIter iter;
-  g_assert ( vlp->vvp );
+  assert ( vlp->vvp );
 
   if ( vik_treeview_get_selected_iter ( vlp->vt, &iter ) && vik_treeview_item_get_type ( vlp->vt, &iter ) == VIK_TREEVIEW_TYPE_LAYER )
   {

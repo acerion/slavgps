@@ -32,7 +32,10 @@
 #include "vikcoord.h"
 #include "bbox.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 /* todo important: put these in their own header file, maybe.probably also rename */
 
@@ -173,6 +176,8 @@ int vik_track_compare_timestamp (const void *x, const void *y);
 void vik_track_set_property_dialog(VikTrack *tr, GtkWidget *dialog);
 void vik_track_clear_property_dialog(VikTrack *tr);
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

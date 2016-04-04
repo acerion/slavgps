@@ -28,7 +28,10 @@ OF SUCH DAMAGE.
 #define _KDTREE_H_
 
 #ifdef __cplusplus
+#ifdef __cplusplus
 extern "C" {
+#endif
+
 #endif
 
 struct kdtree;

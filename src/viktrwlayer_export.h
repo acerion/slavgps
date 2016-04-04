@@ -28,7 +28,10 @@
 
 #include "viktrwlayer.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 void vik_trw_layer_export ( VikTrwLayer *vtl, const char *title, const char* default_name, VikTrack* trk, VikFileType_t file_type );
 
@@ -36,6 +39,8 @@ void vik_trw_layer_export_external_gpx ( VikTrwLayer *vtl, const char* external_
 
 void vik_trw_layer_export_gpsbabel ( VikTrwLayer *vtl, const char *title, const char* default_name );
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

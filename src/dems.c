@@ -20,6 +20,7 @@
  *
  */
 #include <glib.h>
+#include <stdlib.h>
 
 #include "dems.h"
 #include "background.h"
@@ -35,7 +36,7 @@ GHashTable *loaded_dems = NULL;
 static void loaded_dem_free ( LoadedDEM *ldem )
 {
   vik_dem_free ( ldem->dem );
-  g_free ( ldem );
+  free( ldem );
 }
 
 void a_dems_uninit ()
@@ -63,7 +64,7 @@ VikDEM *a_dems_load(const char *filename)
     VikDEM *dem = vik_dem_new_from_file ( filename );
     if ( ! dem )
       return NULL;
-    ldem = g_malloc ( sizeof(LoadedDEM) );
+    ldem = malloc( sizeof(LoadedDEM) );
     ldem->ref_count = 1;
     ldem->dem = dem;
     g_hash_table_insert ( loaded_dems, g_strdup(filename), ldem );
@@ -115,7 +116,7 @@ int a_dems_load_list ( GList **dems, void * threaddata )
   while ( iter ) {
     if ( ! a_dems_load((const char *) (iter->data)) ) {
       GList *iter_temp = iter->next;
-      g_free ( iter->data );
+      free( iter->data );
       (*dems) = g_list_remove_link ( (*dems), iter );
       iter = iter_temp;
     } else {
@@ -142,7 +143,7 @@ void a_dems_list_free ( GList *dems )
   GList *iter = dems;
   while ( iter ) {
     a_dems_unref ((const char *)iter->data);
-    g_free ( iter->data );
+    free( iter->data );
     iter = iter->next;
   }
   g_list_free ( dems );

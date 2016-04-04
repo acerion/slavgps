@@ -31,7 +31,10 @@
 #include "vikwindow.h"
 #include "config.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 typedef void(*vik_thr_free_func)(void *);
 typedef void(*vik_thr_func)(void *,void *);
@@ -54,6 +57,8 @@ void a_background_uninit ();
 void a_background_add_window (VikWindow *vw);
 void a_background_remove_window (VikWindow *vw);
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

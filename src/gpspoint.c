@@ -35,6 +35,7 @@
 #endif
 
 #include <stdlib.h>
+#include <assert.h>
 /* strtod */
 
 typedef struct {
@@ -111,7 +112,7 @@ static char *slashdup(const char *str)
   for ( i = 0, need_bs_count = 0; i < len; i++ )
     if ( str[i] == '\\' || str[i] == '"' )
       need_bs_count++;
-  rv = g_malloc ( (len+need_bs_count+1) * sizeof(char) );
+  rv = malloc( (len+need_bs_count+1) * sizeof(char) );
   for ( i = 0, j = 0; i < len; i++, j++ )
   {
     if ( str[i] == '\\' || str[i] == '"' )
@@ -146,7 +147,7 @@ static char *deslashndup ( const char *str, uint16_t len )
     bs_count--;
 
   new_len = len - bs_count;
-  rv = g_malloc ( (new_len+1) * sizeof(char) );
+  rv = malloc( (new_len+1) * sizeof(char) );
   for ( i = 0, j = 0; i < len && j < new_len; i++ )
     if ( str[i] == '\\' && !backslash )
       backslash = true;
@@ -168,7 +169,7 @@ static char *deslashndup ( const char *str, uint16_t len )
 bool a_gpspoint_read_file(VikTrwLayer *trw, FILE *f, const char *dirpath ) {
   VikCoordMode coord_mode = vik_trw_layer_get_coord_mode ( trw );
   char *tag_start, *tag_end;
-  g_assert ( f != NULL && trw != NULL );
+  assert ( f != NULL && trw != NULL );
   line_type = 0;
   line_timestamp = 0;
   line_newsegment = false;
@@ -238,7 +239,7 @@ bool a_gpspoint_read_file(VikTrwLayer *trw, FILE *f, const char *dirpath ) {
       vik_coord_load_from_latlon ( &(wp->coord), coord_mode, &line_latlon );
 
       vik_trw_layer_filein_add_waypoint ( trw, line_name, wp );
-      g_free ( line_name );
+      free( line_name );
       line_name = NULL;
 
       if ( line_comment )
@@ -262,8 +263,8 @@ bool a_gpspoint_read_file(VikTrwLayer *trw, FILE *f, const char *dirpath ) {
           char *full = g_strconcat(dirpath, G_DIR_SEPARATOR_S, line_image, NULL);
           char *absolute = file_realpath_dup ( full ); // resolved into the canonical name
           vik_waypoint_set_image ( wp, absolute );
-          g_free ( absolute );
-          g_free ( full );
+          free( absolute );
+          free( full );
         }
       }
 
@@ -306,7 +307,7 @@ bool a_gpspoint_read_file(VikTrwLayer *trw, FILE *f, const char *dirpath ) {
 
       pl->trackpoints = NULL;
       vik_trw_layer_filein_add_track ( trw, line_name, pl );
-      g_free ( line_name );
+      free( line_name );
       line_name = NULL;
 
       current_track = pl;
@@ -334,22 +335,22 @@ bool a_gpspoint_read_file(VikTrwLayer *trw, FILE *f, const char *dirpath ) {
     }
 
     if (line_name) 
-      g_free ( line_name );
+      free( line_name );
     line_name = NULL;
     if (line_comment)
-      g_free ( line_comment );
+      free( line_comment );
     if (line_description)
-      g_free ( line_description );
+      free( line_description );
     if (line_source)
-      g_free ( line_source );
+      free( line_source );
     if (line_xtype)
-      g_free ( line_xtype );
+      free( line_xtype );
     if (line_color)
-      g_free ( line_color );
+      free( line_color );
     if (line_image)
-      g_free ( line_image );
+      free( line_image );
     if (line_symbol)
-      g_free ( line_symbol );
+      free( line_symbol );
     line_comment = NULL;
     line_description = NULL;
     line_source = NULL;
@@ -580,14 +581,14 @@ static void a_gpspoint_write_waypoint ( const void * id, const VikWaypoint *wp, 
   s_lon = a_coords_dtostr(ll.lon);
   char *tmp_name = slashdup(wp->name);
   fprintf ( f, "type=\"waypoint\" latitude=\"%s\" longitude=\"%s\" name=\"%s\"", s_lat, s_lon, tmp_name );
-  g_free ( tmp_name );
-  g_free ( s_lat ); 
-  g_free ( s_lon );
+  free( tmp_name );
+  free( s_lat ); 
+  free( s_lon );
 
   if ( wp->altitude != VIK_DEFAULT_ALTITUDE ) {
     char *s_alt = a_coords_dtostr(wp->altitude);
     fprintf ( f, " altitude=\"%s\"", s_alt );
-    g_free(s_alt);
+    free(s_alt);
   }
   if ( wp->has_timestamp )
     fprintf ( f, " unixtime=\"%ld\"", wp->timestamp );
@@ -595,25 +596,25 @@ static void a_gpspoint_write_waypoint ( const void * id, const VikWaypoint *wp, 
   {
     char *tmp_comment = slashdup(wp->comment);
     fprintf ( f, " comment=\"%s\"", tmp_comment );
-    g_free ( tmp_comment );
+    free( tmp_comment );
   }
   if ( wp->description )
   {
     char *tmp_description = slashdup(wp->description);
     fprintf ( f, " description=\"%s\"", tmp_description );
-    g_free ( tmp_description );
+    free( tmp_description );
   }
   if ( wp->source )
   {
     char *tmp_source = slashdup(wp->source);
     fprintf ( f, " source=\"%s\"", tmp_source );
-    g_free ( tmp_source );
+    free( tmp_source );
   }
   if ( wp->type )
   {
     char *tmp_type = slashdup(wp->type);
     fprintf ( f, " xtype=\"%s\"", tmp_type );
-    g_free ( tmp_type );
+    free( tmp_type );
   }
   if ( wp->image )
   {
@@ -622,7 +623,7 @@ static void a_gpspoint_write_waypoint ( const void * id, const VikWaypoint *wp, 
     if ( a_vik_get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE ) {
       cwd = g_get_current_dir();
       if ( cwd )
-        tmp_image = g_strdup ( file_GetRelativeFilename ( cwd, wp->image ) );
+        tmp_image = g_strdup( file_GetRelativeFilename ( cwd, wp->image ) );
     }
 
     // if cwd not available - use image filename as is
@@ -633,8 +634,8 @@ static void a_gpspoint_write_waypoint ( const void * id, const VikWaypoint *wp, 
     if ( tmp_image )
       fprintf ( f, " image=\"%s\"", tmp_image );
 
-    g_free ( cwd );
-    g_free ( tmp_image );
+    free( cwd );
+    free( tmp_image );
   }
   if ( wp->symbol )
   {
@@ -643,7 +644,7 @@ static void a_gpspoint_write_waypoint ( const void * id, const VikWaypoint *wp, 
     //   The symbol names will always be lowercase
     char *tmp_symbol = g_utf8_strdown(wp->symbol, -1);
     fprintf ( f, " symbol=\"%s\"", tmp_symbol );
-    g_free ( tmp_symbol );
+    free( tmp_symbol );
   }
   if ( ! wp->visible )
     fprintf ( f, " visible=\"n\"" );
@@ -663,19 +664,19 @@ static void a_gpspoint_write_trackpoint ( VikTrackpoint *tp, TP_write_info_type 
   s_lat = a_coords_dtostr(ll.lat);
   s_lon = a_coords_dtostr(ll.lon);
   fprintf ( f, "type=\"%spoint\" latitude=\"%s\" longitude=\"%s\"", write_info->is_route ? "route" : "track", s_lat, s_lon );
-  g_free ( s_lat ); 
-  g_free ( s_lon );
+  free( s_lat ); 
+  free( s_lon );
 
   if ( tp->name ) {
     char *name = slashdup(tp->name);
     fprintf ( f, " name=\"%s\"", name );
-    g_free(name);
+    free(name);
   }
 
   if ( tp->altitude != VIK_DEFAULT_ALTITUDE ) {
     char *s_alt = a_coords_dtostr(tp->altitude);
     fprintf ( f, " altitude=\"%s\"", s_alt );
-    g_free(s_alt);
+    free(s_alt);
   }
   if ( tp->has_timestamp )
     fprintf ( f, " unixtime=\"%ld\"", tp->timestamp );
@@ -687,12 +688,12 @@ static void a_gpspoint_write_trackpoint ( VikTrackpoint *tp, TP_write_info_type 
     if (!isnan(tp->speed)) {
       char *s_speed = a_coords_dtostr(tp->speed);
       fprintf ( f, " speed=\"%s\"", s_speed );
-      g_free(s_speed);
+      free(s_speed);
     }
     if (!isnan(tp->course)) {
       char *s_course = a_coords_dtostr(tp->course);
       fprintf ( f, " course=\"%s\"", s_course );
-      g_free(s_course);
+      free(s_course);
     }
     if (tp->nsats > 0)
       fprintf ( f, " sat=\"%d\"", tp->nsats );
@@ -702,17 +703,17 @@ static void a_gpspoint_write_trackpoint ( VikTrackpoint *tp, TP_write_info_type 
     if ( tp->hdop != VIK_DEFAULT_DOP ) {
       char *ss = a_coords_dtostr(tp->hdop);
       fprintf ( f, " hdop=\"%s\"", ss );
-      g_free(ss);
+      free(ss);
     }
     if ( tp->vdop != VIK_DEFAULT_DOP ) {
       char *ss = a_coords_dtostr(tp->vdop);
       fprintf ( f, " vdop=\"%s\"", ss );
-     g_free(ss);
+     free(ss);
     }
     if ( tp->pdop != VIK_DEFAULT_DOP ) {
       char *ss = a_coords_dtostr(tp->pdop);
       fprintf ( f, " pdop=\"%s\"", ss );
-      g_free(ss);
+      free(ss);
     }
   }
   fprintf ( f, "\n" );
@@ -729,30 +730,30 @@ static void a_gpspoint_write_track ( const void * id, const VikTrack *trk, FILE 
 
   char *tmp_name = slashdup(trk->name);
   fprintf ( f, "type=\"%s\" name=\"%s\"", trk->is_route ? "route" : "track", tmp_name );
-  g_free ( tmp_name );
+  free( tmp_name );
 
   if ( trk->comment ) {
     char *tmp = slashdup(trk->comment);
     fprintf ( f, " comment=\"%s\"", tmp );
-    g_free ( tmp );
+    free( tmp );
   }
 
   if ( trk->description ) {
     char *tmp = slashdup(trk->description);
     fprintf ( f, " description=\"%s\"", tmp );
-    g_free ( tmp );
+    free( tmp );
   }
 
   if ( trk->source ) {
     char *tmp = slashdup(trk->source);
     fprintf ( f, " source=\"%s\"", tmp );
-    g_free ( tmp );
+    free( tmp );
   }
 
   if ( trk->type ) {
     char *tmp = slashdup(trk->type);
     fprintf ( f, " xtype=\"%s\"", tmp );
-    g_free ( tmp );
+    free( tmp );
   }
 
   if ( trk->has_color ) {

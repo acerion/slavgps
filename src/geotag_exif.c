@@ -29,6 +29,7 @@
  * For the time being the libexif code + build is still made available.
  */
 #include <string.h>
+#include <stdlib.h>
 #include "geotag_exif.h"
 #include "config.h"
 #include "globals.h"
@@ -61,16 +62,16 @@ static char* geotag_get_exif_comment ( GExiv2Metadata *gemd )
 	// Try various options to create a comment
 	//
 	if ( gexiv2_metadata_has_tag ( gemd, "Exif.Image.ImageDescription" ) )
-		return g_strdup ( gexiv2_metadata_get_tag_interpreted_string ( gemd, "Exif.Image.ImageDescription" ) );
+		return g_strdup( gexiv2_metadata_get_tag_interpreted_string ( gemd, "Exif.Image.ImageDescription" ) );
 
 	if ( gexiv2_metadata_has_tag ( gemd, "Exif.Image.XPComment" ) )
-		return g_strdup ( gexiv2_metadata_get_tag_interpreted_string ( gemd, "Exif.Image.XPComment" ) );
+		return g_strdup( gexiv2_metadata_get_tag_interpreted_string ( gemd, "Exif.Image.XPComment" ) );
 
 	if ( gexiv2_metadata_has_tag ( gemd, "Exif.Image.XPSubject" ) )
-		return g_strdup ( gexiv2_metadata_get_tag_interpreted_string ( gemd, "Exif.Image.XPSubject" ) );
+		return g_strdup( gexiv2_metadata_get_tag_interpreted_string ( gemd, "Exif.Image.XPSubject" ) );
 
 	if ( gexiv2_metadata_has_tag ( gemd, "Exif.Image.DateTimeOriginal" ) )
-		return g_strdup ( gexiv2_metadata_get_tag_interpreted_string ( gemd, "Exif.Image.DateTimeOriginal" ) );
+		return g_strdup( gexiv2_metadata_get_tag_interpreted_string ( gemd, "Exif.Image.DateTimeOriginal" ) );
 
 	// Otherwise nothing found
 	return NULL;
@@ -91,19 +92,19 @@ static char* geotag_get_exif_comment ( ExifData *ed )
 	ee = exif_content_get_entry (ed->ifd[EXIF_IFD_0], EXIF_TAG_IMAGE_DESCRIPTION);
 	if ( ee ) {
 		exif_entry_get_value ( ee, str, 128 );
-		return g_strdup ( str );
+		return g_strdup( str );
 	}
 
 	ee = exif_content_get_entry (ed->ifd[EXIF_IFD_0], EXIF_TAG_XP_COMMENT);
 	if ( ee ) {
 		exif_entry_get_value ( ee, str, 128 );
-		return g_strdup ( str );
+		return g_strdup( str );
 	}
 
 	ee = exif_content_get_entry (ed->ifd[EXIF_IFD_0], EXIF_TAG_XP_SUBJECT);
 	if ( ee ) {
 		exif_entry_get_value ( ee, str, 128 );
-		return g_strdup ( str );
+		return g_strdup( str );
 	}
 
 	// Consider using these for existing GPS info??
@@ -112,7 +113,7 @@ static char* geotag_get_exif_comment ( ExifData *ed )
 	ee = exif_content_get_entry (ed->ifd[EXIF_IFD_EXIF], EXIF_TAG_DATE_TIME_ORIGINAL);
 	if ( ee ) {
 		exif_entry_get_value ( ee, str, 128 );
-		return g_strdup ( str );
+		return g_strdup( str );
 	}
 
 	// Otherwise nothing found
@@ -286,7 +287,7 @@ VikWaypoint* a_geotag_create_waypoint_from_file ( const char *filename, VikCoord
 			wp->altitude = alt;
 
 			if ( gexiv2_metadata_has_tag ( gemd, "Exif.Image.XPTitle" ) )
-				*name = g_strdup ( gexiv2_metadata_get_tag_interpreted_string ( gemd, "Exif.Image.XPTitle" ) );
+				*name = g_strdup( gexiv2_metadata_get_tag_interpreted_string ( gemd, "Exif.Image.XPTitle" ) );
 			wp->comment = geotag_get_exif_comment ( gemd );
 
 			vik_waypoint_set_image ( wp, filename );
@@ -345,7 +346,7 @@ VikWaypoint* a_geotag_create_waypoint_from_file ( const char *filename, VikCoord
 	ee = exif_content_get_entry (ed->ifd[EXIF_IFD_0], EXIF_TAG_XP_TITLE);
 	if ( ee ) {
 		exif_entry_get_value ( ee, str, 128 );
-		*name = g_strdup ( str );
+		*name = g_strdup( str );
 	}
 
 	//
@@ -401,7 +402,7 @@ VikWaypoint* a_geotag_waypoint_positioned ( const char *filename, VikCoord coord
 	if ( gexiv2_metadata_open_path ( gemd, filename, NULL ) ) {
 			wp->comment = geotag_get_exif_comment ( gemd );
 			if ( gexiv2_metadata_has_tag ( gemd, "Exif.Image.XPTitle" ) )
-				*name = g_strdup ( gexiv2_metadata_get_tag_interpreted_string ( gemd, "Exif.Image.XPTitle" ) );
+				*name = g_strdup( gexiv2_metadata_get_tag_interpreted_string ( gemd, "Exif.Image.XPTitle" ) );
 	}
 	gexiv2_metadata_free ( gemd );
 #else
@@ -418,7 +419,7 @@ VikWaypoint* a_geotag_waypoint_positioned ( const char *filename, VikCoord coord
 		ee = exif_content_get_entry (ed->ifd[EXIF_IFD_0], EXIF_TAG_XP_TITLE);
 		if ( ee ) {
 			exif_entry_get_value ( ee, str, 128 );
-			*name = g_strdup ( str );
+			*name = g_strdup( str );
 		}
 
 		// Finished with EXIF
@@ -455,9 +456,9 @@ char* a_geotag_get_exif_date_from_file ( const char *filename, bool *has_GPS_inf
 
 		// Prefer 'Photo' version over 'Image'
 		if ( gexiv2_metadata_has_tag ( gemd, "Exif.Photo.DateTimeOriginal" ) )
-			datetime = g_strdup ( gexiv2_metadata_get_tag_interpreted_string ( gemd, "Exif.Photo.DateTimeOriginal" ) );
+			datetime = g_strdup( gexiv2_metadata_get_tag_interpreted_string ( gemd, "Exif.Photo.DateTimeOriginal" ) );
 		else
-			datetime = g_strdup ( gexiv2_metadata_get_tag_interpreted_string ( gemd, "Exif.Image.DateTimeOriginal" ) );
+			datetime = g_strdup( gexiv2_metadata_get_tag_interpreted_string ( gemd, "Exif.Image.DateTimeOriginal" ) );
 	}
 	gexiv2_metadata_free ( gemd );
 #else
@@ -474,7 +475,7 @@ char* a_geotag_get_exif_date_from_file ( const char *filename, bool *has_GPS_inf
 	ee = exif_content_get_entry (ed->ifd[EXIF_IFD_EXIF], EXIF_TAG_DATE_TIME_ORIGINAL);
 	if ( ee ) {
 		exif_entry_get_value ( ee, str, 128 );
-		datetime = g_strdup ( str );
+		datetime = g_strdup( str );
 	}
 
 	// Check GPS Info
@@ -523,8 +524,8 @@ static ExifEntry* my_exif_create_value (ExifData *ed, ExifTag tag, ExifIfd ifd)
 			e->components = 4;
 			e->size = sizeof (char) * e->components;
 			if ( e->data )
-				g_free (e->data);
-			e->data = g_malloc (e->size);
+				free(e->data);
+			e->data = malloc(e->size);
 		}
 		if ( tag == EXIF_TAG_GPS_MAP_DATUM ||
 			 tag == EXIF_TAG_GPS_LATITUDE_REF || tag == EXIF_TAG_GPS_LONGITUDE_REF ||
@@ -537,23 +538,23 @@ static ExifEntry* my_exif_create_value (ExifData *ed, ExifTag tag, ExifIfd ifd)
 			e->components = 3;
 			e->size = sizeof (ExifRational) * e->components;
 			if ( e->data )
-				g_free (e->data);
-			e->data = g_malloc (e->size);
+				free(e->data);
+			e->data = malloc(e->size);
 		}
 		if ( tag == EXIF_TAG_GPS_ALTITUDE ) {
 			e->format = EXIF_FORMAT_RATIONAL;
 			e->components = 1;
 			e->size = sizeof (ExifRational) * e->components;
 			if ( e->data )
-				g_free (e->data);
-			e->data = g_malloc (e->size);
+				free(e->data);
+			e->data = malloc(e->size);
 		}
 		if ( tag == EXIF_TAG_GPS_ALTITUDE_REF ) {
 			e->components = 1;
 			e->size = sizeof (char) * e->components;
 			if ( e->data )
-				g_free (e->data);
-			e->data = g_malloc (e->size);
+				free(e->data);
+			e->data = malloc(e->size);
 		}
 	    /* The entry has been added to the IFD, so we can unref it */
 	    //exif_entry_unref(e);
@@ -578,14 +579,14 @@ static void convert_to_entry (const char *set_value, double gdvalue, ExifEntry *
 	 */
 	if (e->format == EXIF_FORMAT_ASCII ||
 	    e->tag == EXIF_TAG_USER_COMMENT) {
-		if (e->data) g_free (e->data);
+		if (e->data) free(e->data);
 		e->components = strlen (set_value) + 1;
 		if (e->tag == EXIF_TAG_USER_COMMENT)
 			e->components += 8 - 1;
 		e->size = sizeof (char) * e->components;
-		e->data = g_malloc (e->size);
+		e->data = malloc(e->size);
 		if (!e->data) {
-			g_warning (_("Not enough memory."));
+			fprintf(stderr, _("WARNING: Not enough memory.\n"));
 			return;
 		}
 		if (e->tag == EXIF_TAG_USER_COMMENT) {
@@ -603,14 +604,14 @@ static void convert_to_entry (const char *set_value, double gdvalue, ExifEntry *
 	 * Make sure we can handle this entry
 	 */
 	if ((e->components == 0) && *set_value) {
-		g_warning (_("Setting a value for this tag is unsupported!"));
+		fprintf(stderr, _("WARNING: Setting a value for this tag is unsupported!\n"));
 		return;
 	}
 
 	bool use_string = (set_value != NULL);
 	if ( use_string ) {
 		/* Copy the string so we can modify it */
-		buf = g_strdup (set_value);
+		buf = g_strdup(set_value);
 		if (!buf)
 			return;
 		value_p = strtok (buf, " ");
@@ -622,11 +623,11 @@ static void convert_to_entry (const char *set_value, double gdvalue, ExifEntry *
 
 		if ( use_string ) {
 			if (!value_p) {
-				g_warning (_("Too few components specified (need %d, found %d)\n"), numcomponents, i);
+				fprintf(stderr, _("WARNING: Too few components specified (need %d, found %d)\n"), numcomponents, i);
 				return;
 			}
 			if (!isdigit(*value_p) && (*value_p != '+') && (*value_p != '-')) {
-				g_warning (_("Numeric value expected\n"));
+				fprintf(stderr, _("WARNING: Numeric value expected\n"));
 				return;
 			}
 		}
@@ -634,7 +635,7 @@ static void convert_to_entry (const char *set_value, double gdvalue, ExifEntry *
 		s = exif_format_get_size (e->format);
 		switch (e->format) {
 		case EXIF_FORMAT_ASCII:
-			g_warning (_("This shouldn't happen!"));
+			fprintf(stderr, _("WARNING: This shouldn't happen!\n"));
 			return;
 			break;
 		case EXIF_FORMAT_SHORT:
@@ -704,7 +705,7 @@ static void convert_to_entry (const char *set_value, double gdvalue, ExifEntry *
 		case EXIF_FORMAT_DOUBLE:
 		case EXIF_FORMAT_SRATIONAL:
 		default:
-			g_warning (_("Not yet implemented!"));
+			fprintf(stderr, _("WARNING: Not yet implemented!\n"));
 			return;
 		}
 		
@@ -713,11 +714,11 @@ static void convert_to_entry (const char *set_value, double gdvalue, ExifEntry *
 
 	}
 
-	g_free (buf);
+	free(buf);
 
 	if ( use_string )
 		if ( value_p )
-			g_warning (_("Warning; Too many components specified!"));
+			fprintf(stderr, _("WARNING: Warning; Too many components specified!\n"));
 }
 #endif
 
@@ -738,7 +739,7 @@ int a_geotag_write_exif_gps ( const char *filename, VikCoord coord, double alt, 
 	struct stat stat_save;
 	if ( no_change_mtime )
 		if ( stat ( filename, &stat_save ) != 0 )
-			g_warning ( "%s couldn't read: %s", __FUNCTION__, filename );
+			fprintf(stderr, "WARNING: %s couldn't read: %s\n", __FUNCTION__, filename );
 
 #ifdef HAVE_LIBGEXIV2
 	GExiv2Metadata *gemd = gexiv2_metadata_new ();
@@ -752,7 +753,7 @@ int a_geotag_write_exif_gps ( const char *filename, VikCoord coord, double alt, 
 			GError *error = NULL;
 			if ( ! gexiv2_metadata_save_file ( gemd, filename, &error ) ) {
 				result = 2;
-				g_warning ( "Write EXIF failure:%s" , error->message );
+				fprintf(stderr, "WARNING: Write EXIF failure:%s\n" , error->message );
 				g_error_free ( error );
 			}
 		}
@@ -852,7 +853,7 @@ int a_geotag_write_exif_gps ( const char *filename, VikCoord coord, double alt, 
 		// Not security critical, thus potential Time of Check Time of Use race condition is not bad
 		// coverity[toctou]
 		if ( g_utime ( filename, &utb ) != 0 )
-			g_warning ( "%s couldn't set time on: %s", __FUNCTION__, filename );
+			fprintf(stderr, "WARNING: %s couldn't set time on: %s\n", __FUNCTION__, filename );
 	}
 
 	return result;

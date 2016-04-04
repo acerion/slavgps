@@ -45,6 +45,8 @@
 #include "config.h"
 #endif
 
+#include <stdlib.h>
+
 #include "vikslippymapsource.h"
 #include "maputils.h"
 
@@ -150,11 +152,11 @@ vik_slippy_map_source_finalize (GObject *object)
   VikSlippyMapSource *self = VIK_SLIPPY_MAP_SOURCE (object);
   VikSlippyMapSourcePrivate *priv = VIK_SLIPPY_MAP_SOURCE_PRIVATE (self);
 
-  g_free (priv->hostname);
+  free(priv->hostname);
   priv->hostname = NULL;
-  g_free (priv->url);
+  free(priv->url);
   priv->url = NULL;
-  g_free (priv->options.referer);
+  free(priv->options.referer);
   priv->options.referer = NULL;
 
   G_OBJECT_CLASS (vik_slippy_map_source_parent_class)->finalize (object);
@@ -172,12 +174,12 @@ vik_slippy_map_source_set_property (GObject      *object,
   switch (property_id)
     {
     case PROP_HOSTNAME:
-      g_free (priv->hostname);
+      free(priv->hostname);
       priv->hostname = g_value_dup_string (value);
       break;
 
     case PROP_URL:
-      g_free (priv->url);
+      free(priv->url);
       priv->url = g_value_dup_string (value);
       break;
 
@@ -206,7 +208,7 @@ vik_slippy_map_source_set_property (GObject      *object,
       break;
 
     case PROP_REFERER:
-      g_free (priv->options.referer);
+      free(priv->options.referer);
       priv->options.referer = g_value_dup_string (value);
       break;
 

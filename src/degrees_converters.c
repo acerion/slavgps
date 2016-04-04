@@ -27,6 +27,7 @@
 #endif
 #include <string.h>
 #include <stdbool.h>
+#include <stdlib.h>
 #include "degrees_converters.h"
 
 #define DEGREE_SYMBOL "\302\260"

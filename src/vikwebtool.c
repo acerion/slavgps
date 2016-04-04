@@ -26,6 +26,7 @@
 #include "vikwebtool.h"
 
 #include <string.h>
+#include <stdlib.h>
 
 #include <glib/gi18n.h>
 
@@ -77,7 +78,7 @@ static void webtool_open ( VikExtTool *self, VikWindow *vwindow )
   VikWebtool *vwd = VIK_WEBTOOL ( self );
   char *url = vik_webtool_get_url ( vwd, vwindow );
   open_url ( GTK_WINDOW(vwindow), url );
-  g_free ( url );
+  free( url );
 }
 
 static void webtool_open_at_position ( VikExtTool *self, VikWindow *vwindow, VikCoord *vc )
@@ -86,7 +87,7 @@ static void webtool_open_at_position ( VikExtTool *self, VikWindow *vwindow, Vik
   char *url = vik_webtool_get_url_at_position ( vwd, vwindow, vc );
   if ( url ) {
     open_url ( GTK_WINDOW(vwindow), url );
-    g_free ( url );
+    free( url );
   }
 }
 
