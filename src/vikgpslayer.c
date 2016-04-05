@@ -48,6 +48,8 @@
 #include "vikutils.h"
 #endif
 
+extern GList * a_babel_device_list;
+
 static VikGpsLayer *vik_gps_layer_create (VikViewport *vp);
 static void vik_gps_layer_realize ( VikGpsLayer *val, VikTreeview *vt, GtkTreeIter *layer_iter );
 static void vik_gps_layer_free ( VikGpsLayer *val );

@@ -37,6 +37,9 @@ typedef struct {
 	GtkWidget *type;
 } datasource_url_widgets_t;
 
+extern GList * a_babel_device_list;
+extern GList * a_babel_file_list;
+
 /* The last file format selected */
 static int last_type = -1;
 

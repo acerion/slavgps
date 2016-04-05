@@ -115,9 +115,6 @@ typedef struct {
     char *label;
 } BabelFile;
 
-GList *a_babel_file_list;
-GList *a_babel_device_list;
-
 void a_babel_foreach_file_with_mode (BabelMode mode, GFunc func, void * user_data);
 void a_babel_foreach_file_read_any (GFunc func, void * user_data);
 

@@ -41,6 +41,8 @@ typedef struct {
   GtkWidget *type;
 } datasource_file_widgets_t;
 
+extern GList * a_babel_file_list;
+
 /* The last used directory */
 static char *last_folder_uri = NULL;
 

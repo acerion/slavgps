@@ -40,6 +40,8 @@
 #include "gpx.h"
 #include "acquire.h"
 
+extern GList * a_babel_device_list;
+
 static bool gps_acquire_in_progress = false;
 
 static int last_active = -1;
