@@ -150,7 +150,7 @@ GType vik_coord_layer_get_type ()
       0,
       NULL /* instance init */
     };
-    vcl_type = g_type_register_static ( VIK_LAYER_TYPE, "VikCoordLayer", &vcl_info, 0 );
+    vcl_type = g_type_register_static ( VIK_LAYER_TYPE, "VikCoordLayer", &vcl_info, (GTypeFlags) 0 );
   }
 
   return vcl_type;
