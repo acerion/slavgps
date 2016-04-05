@@ -164,7 +164,7 @@ vik_map_source_default_set_property (GObject      *object,
       break;
 
     case PROP_DRAWMODE:
-      priv->drawmode = g_value_get_enum(value);
+      priv->drawmode = (VikViewportDrawMode) g_value_get_enum(value);
       break;
 
     case PROP_COPYRIGHT:
@@ -287,7 +287,7 @@ vik_map_source_default_class_init (VikMapSourceDefaultClass *klass)
 	                             "Name",
 	                             "The name of the map that may be used as the file cache directory",
 	                             "Unknown" /* default value */,
-	                             G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+	                             (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
 	g_object_class_install_property (object_class, PROP_NAME, pspec);
 
 	pspec = g_param_spec_uint ("id",
@@ -296,14 +296,14 @@ vik_map_source_default_class_init (VikMapSourceDefaultClass *klass)
                                0  /* minimum value */,
                                G_MAXUINT /* maximum value */,
                                0  /* default value */,
-                               G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+                               (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
 	g_object_class_install_property (object_class, PROP_ID, pspec);
 
 	pspec = g_param_spec_string ("label",
 	                             "Label",
 	                             "The label of the map source",
 	                             "<no-set>" /* default value */,
-	                             G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+	                             (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
 	g_object_class_install_property (object_class, PROP_LABEL, pspec);
 
 	pspec = g_param_spec_uint ("tilesize-x",
@@ -343,21 +343,21 @@ vik_map_source_default_class_init (VikMapSourceDefaultClass *klass)
 	                             "License",
 	                             "The license of the map source",
 	                             NULL,
-	                             G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+	                             (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
 	g_object_class_install_property (object_class, PROP_LICENSE, pspec);
 
 	pspec = g_param_spec_string ("license-url",
 	                             "License URL",
 	                             "The URL of the license of the map source",
 	                             NULL,
-	                             G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+	                             (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
 	g_object_class_install_property (object_class, PROP_LICENSE_URL, pspec);
 
 	pspec = g_param_spec_string ("file-extension",
 	                             "File Extension",
 	                             "The file extension of tile files on disk",
 	                             ".png" /* default value */,
-	                             G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+	                             (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
 	g_object_class_install_property (object_class, PROP_FILE_EXTENSION, pspec);
 
 	g_type_class_add_private (klass, sizeof (VikMapSourceDefaultPrivate));
@@ -373,7 +373,7 @@ map_source_get_copyright (VikMapSource *self, LatLonBBox bbox, double zoom, void
 
 	VikMapSourceDefaultPrivate *priv = VIK_MAP_SOURCE_DEFAULT_PRIVATE(self);
 
-	(*fct) (data, priv->copyright);
+	(*fct) ((VikViewport *) data, priv->copyright);
 }
 
 static const char *

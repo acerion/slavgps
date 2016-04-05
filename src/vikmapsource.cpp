@@ -456,13 +456,13 @@ DownloadResult_t
 vik_map_source_download (VikMapSource * self, MapCoord * src, const char * dest_fn, void *handle)
 {
 	VikMapSourceClass *klass;
-	g_return_val_if_fail (self != NULL, 0);
-	g_return_val_if_fail (VIK_IS_MAP_SOURCE (self), 0);
+	g_return_val_if_fail (self != NULL, (DownloadResult_t) 0);
+	g_return_val_if_fail (VIK_IS_MAP_SOURCE (self), (DownloadResult_t) 0);
 	klass = VIK_MAP_SOURCE_GET_CLASS(self);
 
-	g_return_val_if_fail (klass->download != NULL, 0);
+	g_return_val_if_fail (klass->download != NULL, (DownloadResult_t) 0);
 
-	return (*klass->download)(self, src, dest_fn, handle);
+	return (DownloadResult_t) (*klass->download)(self, src, dest_fn, handle);
 }
 
 void *

@@ -163,7 +163,7 @@ map_type_get_drawmode (VikMapSource *self)
     VikMapTypePrivate *priv = VIK_MAP_TYPE_PRIVATE(self);
 	g_return_val_if_fail (priv != NULL, (VikViewportDrawMode)0);
 
-	return priv->map_type.drawmode;
+	return (VikViewportDrawMode) priv->map_type.drawmode;
 }
 
 static bool
@@ -188,9 +188,9 @@ static DownloadResult_t
 map_type_download (VikMapSource * self, MapCoord * src, const char * dest_fn, void * handle)
 {
     VikMapTypePrivate *priv = VIK_MAP_TYPE_PRIVATE(self);
-	g_return_val_if_fail (priv != NULL, 0);
+	g_return_val_if_fail (priv != NULL, (DownloadResult_t) 0);
 
-	return (priv->map_type.download)(src, dest_fn, handle);
+	return (DownloadResult_t) (priv->map_type.download)(src, dest_fn, handle);
 }
 
 static void *

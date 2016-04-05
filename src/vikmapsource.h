@@ -29,6 +29,7 @@
 #include "vikcoord.h"
 #include "mapcoord.h"
 #include "bbox.h"
+#include "download.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -74,7 +75,7 @@ struct _VikMapSourceClass
 	const char * (* get_file_extension) (VikMapSource * self);
 	bool (* coord_to_mapcoord) (VikMapSource * self, const VikCoord * src, double xzoom, double yzoom, MapCoord * dest);
 	void (* mapcoord_to_center_coord) (VikMapSource * self, MapCoord * src, VikCoord * dest);
-	int (* download) (VikMapSource * self, MapCoord * src, const char * dest_fn, void * handle);
+	DownloadResult_t (* download) (VikMapSource * self, MapCoord * src, const char * dest_fn, void * handle);
 	void * (* download_handle_init) (VikMapSource * self);
 	void (* download_handle_cleanup) (VikMapSource * self, void * handle);
 };
@@ -110,7 +111,7 @@ double vik_map_source_get_lon_max (VikMapSource * self);
 const char * vik_map_source_get_file_extension (VikMapSource * self);
 bool vik_map_source_coord_to_mapcoord (VikMapSource * self, const VikCoord *src, double xzoom, double yzoom, MapCoord *dest );
 void vik_map_source_mapcoord_to_center_coord (VikMapSource * self, MapCoord *src, VikCoord *dest);
-int vik_map_source_download (VikMapSource * self, MapCoord * src, const char * dest_fn, void * handle);
+DownloadResult_t vik_map_source_download (VikMapSource * self, MapCoord * src, const char * dest_fn, void * handle);
 void * vik_map_source_download_handle_init (VikMapSource * self);
 void vik_map_source_download_handle_cleanup (VikMapSource * self, void * handle);
 
