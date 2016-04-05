@@ -78,7 +78,7 @@ libviking_a_SOURCES = \
 	viktrwlayer.c viktrwlayer.h \
 	viklayer.c viklayer.h \
 	viklayerspanel.c viklayerspanel.h \
-	vikcoordlayer.c vikcoordlayer.h \
+	vikcoordlayer.cpp vikcoordlayer.h \
 	vikstatus.c vikstatus.h \
 	vikwindow.c vikwindow.h \
 	vikviewport.c vikviewport.h \
@@ -105,7 +105,7 @@ libviking_a_SOURCES = \
 	thumbnails.c thumbnails.h \
 	background.c background.h \
 	vikradiogroup.c vikradiogroup.h \
-	vikcoord.c vikcoord.h \
+	vikcoord.cpp vikcoord.h \
 	mapcache.c mapcache.h \
 	maputils.c maputils.h \
 	vikmapsource.c vikmapsource.h \
