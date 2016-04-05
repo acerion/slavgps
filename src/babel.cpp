@@ -81,7 +81,7 @@ void a_babel_foreach_file_with_mode (BabelMode mode, GFunc func, void * user_dat
         current != NULL ;
         current = g_list_next (current) )
   {
-    BabelFile *currentFile = current->data;
+    BabelFile * currentFile = (BabelFile *) current->data;
     /* Check compatibility of modes */
     bool compat = true;
     if (mode.waypointsRead  && ! currentFile->mode.waypointsRead)  compat = false;
@@ -111,7 +111,7 @@ void a_babel_foreach_file_read_any (GFunc func, void * user_data)
         current != NULL ;
         current = g_list_next (current) )
   {
-    BabelFile *currentFile = current->data;
+    BabelFile *currentFile = (BabelFile *) current->data;
     // Call function when any read mode found
     if ( currentFile->mode.waypointsRead ||
          currentFile->mode.tracksRead ||
@@ -143,7 +143,7 @@ bool a_babel_convert( VikTrwLayer *vt, const char *babelargs, BabelStatusFunc cb
 
   if ( name_src ) {
     ProcessOptions po = { bargs, name_src, NULL, NULL, NULL };
-    ret = a_babel_convert_from ( vt, &po, cb, user_data, not_used );
+    ret = a_babel_convert_from ( vt, &po, cb, user_data, (DownloadFileOptions *) not_used );
     (void)g_remove(name_src);
     free(name_src);
   }
@@ -359,7 +359,7 @@ bool a_babel_convert_from_shellcommand ( VikTrwLayer *vt, const char *input_cmd,
     fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, shell_command);
     close(fd_dst);
 
-    args = malloc(sizeof(char *)*4);
+    args = (char **) malloc(4 * sizeof (char *));
     args[0] = BASH_LOCATION;
     args[1] = "-c";
     args[2] = shell_command;
@@ -555,7 +555,7 @@ static void load_feature_parse_line (char *line)
            && tokens[2] != NULL
            && tokens[3] != NULL
            && tokens[4] != NULL ) {
-        BabelDevice *device = malloc( sizeof (BabelDevice) );
+        BabelDevice * device = (BabelDevice *) malloc(sizeof (BabelDevice));
         set_mode (&(device->mode), tokens[1]);
         device->name = g_strdup(tokens[2]);
         device->label = g_strndup (tokens[4], 50); // Limit really long label text
@@ -574,7 +574,7 @@ static void load_feature_parse_line (char *line)
            && tokens[2] != NULL
            && tokens[3] != NULL
            && tokens[4] != NULL ) {
-        BabelFile *file = malloc( sizeof (BabelFile) );
+        BabelFile * file = (BabelFile *) malloc(sizeof (BabelFile));
         set_mode (&(file->mode), tokens[1]);
         file->name = g_strdup(tokens[2]);
         file->ext = g_strdup(tokens[3]);
@@ -599,7 +599,7 @@ static void load_feature_parse_line (char *line)
 static void load_feature_cb (BabelProgressCode code, void * line, void * user_data)
 {
   if (line != NULL)
-    load_feature_parse_line (line);
+    load_feature_parse_line ((char *) line);
 }
 
 static bool load_feature ()
@@ -694,7 +694,7 @@ void a_babel_uninit ()
   if ( a_babel_file_list ) {
     GList *gl;
     for (gl = a_babel_file_list; gl != NULL; gl = g_list_next(gl)) {
-      BabelFile *file = gl->data;
+      BabelFile * file = (BabelFile *) gl->data;
       free( file->name );
       free( file->ext );
       free( file->label );
@@ -706,7 +706,7 @@ void a_babel_uninit ()
   if ( a_babel_device_list ) {
     GList *gl;
     for (gl = a_babel_device_list; gl != NULL; gl = g_list_next(gl)) {
-      BabelDevice *device = gl->data;
+      BabelDevice *device = (BabelDevice *) gl->data;
       free( device->name );
       free( device->label );
       free( gl->data );

@@ -209,7 +209,6 @@ static void acquire ( VikWindow *vw,
   GtkWidget *status;
   char *args_off = NULL;
   char *fd_off = NULL;
-  acq_dialog_widgets_t *w;
   void * user_data;
   DownloadFileOptions * options = (DownloadFileOptions *) malloc(sizeof (DownloadFileOptions));
   memset(options, 0, sizeof (DownloadFileOptions));
@@ -224,9 +223,7 @@ static void acquire ( VikWindow *vw,
   void * pass_along_data;
   VikLayerParamData *paramdatas = NULL;
 
-  w_and_interface_t *wi;
-
-  /*** INIT AND CHECK EXISTENCE ***/
+    /*** INIT AND CHECK EXISTENCE ***/
   if ( source_interface->init_func )
     user_data = source_interface->init_func(&avt);
   else
@@ -247,7 +244,7 @@ static void acquire ( VikWindow *vw,
   /* POSSIBILITY 0: NO OPTIONS. DO NOTHING HERE. */
   /* POSSIBILITY 1: ADD_SETUP_WIDGETS_FUNC */
   if ( source_interface->add_setup_widgets_func ) {
-    dialog = gtk_dialog_new_with_buttons ( "", GTK_WINDOW(vw), 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL );
+    dialog = gtk_dialog_new_with_buttons ( "", GTK_WINDOW(vw), (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL );
 
     gtk_dialog_set_default_response ( GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT );
     GtkWidget *response_w = NULL;
@@ -324,8 +321,8 @@ static void acquire ( VikWindow *vw,
     a_uibuilder_free_paramdatas ( paramdatas, source_interface->params, source_interface->params_count );
   }
 
-  w = malloc(sizeof(*w));
-  wi = malloc(sizeof(*wi));
+  acq_dialog_widgets_t * w = (acq_dialog_widgets_t *) malloc(sizeof (acq_dialog_widgets_t));
+  w_and_interface_t *wi = (w_and_interface_t *) malloc(sizeof (w_and_interface_t));
   wi->w = w;
   wi->w->source_interface = source_interface;
   wi->po = po;
@@ -333,7 +330,7 @@ static void acquire ( VikWindow *vw,
   wi->vtl = vtl;
   wi->creating_new_layer = (!vtl); // Default if Auto Layer Management is passed in
 
-  dialog = gtk_dialog_new_with_buttons ( "", GTK_WINDOW(vw), 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL );
+  dialog = gtk_dialog_new_with_buttons ( "", GTK_WINDOW(vw), (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL );
   gtk_dialog_set_response_sensitive ( GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT, false );
   gtk_window_set_title ( GTK_WINDOW(dialog), _(source_interface->window_title) );
 
@@ -460,12 +457,12 @@ void a_acquire ( VikWindow *vw,
 
 static void acquire_trwlayer_callback ( GObject *menuitem, void * *pass_along )
 {
-  VikDataSourceInterface *iface = g_object_get_data ( menuitem, "vik_acq_iface" );
-  VikWindow *vw =	pass_along[0];
-  VikLayersPanel *vlp =	pass_along[1];
-  VikViewport *vvp =	pass_along[2];
-  VikTrwLayer *vtl =	pass_along[3];
-  VikTrack *tr =	pass_along[4];
+  VikDataSourceInterface * iface = (VikDataSourceInterface *) g_object_get_data ( menuitem, "vik_acq_iface" );
+  VikWindow *vw = (VikWindow *) pass_along[0];
+  VikLayersPanel *vlp =	(VikLayersPanel *) pass_along[1];
+  VikViewport *vvp = (VikViewport *) pass_along[2];
+  VikTrwLayer *vtl = (VikTrwLayer *) pass_along[3];
+  VikTrack *tr = (VikTrack *) pass_along[4];
 
   acquire ( vw, vlp, vvp, iface->mode, iface, vtl, tr, NULL, NULL );
 }
