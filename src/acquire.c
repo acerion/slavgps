@@ -211,7 +211,8 @@ static void acquire ( VikWindow *vw,
   char *fd_off = NULL;
   acq_dialog_widgets_t *w;
   void * user_data;
-  DownloadFileOptions *options = g_malloc0 ( sizeof(DownloadFileOptions) );
+  DownloadFileOptions * options = (DownloadFileOptions *) malloc(sizeof (DownloadFileOptions));
+  memset(options, 0, sizeof (DownloadFileOptions));
 
   acq_vik_t avt;
   avt.vlp = vlp;
@@ -279,7 +280,8 @@ static void acquire ( VikWindow *vw,
   }
 
   /* CREATE INPUT DATA & GET OPTIONS */
-  ProcessOptions *po = g_malloc0 ( sizeof(ProcessOptions) );
+  ProcessOptions *po = (ProcessOptions *) malloc(sizeof (ProcessOptions));
+  memset(po, 0, sizeof (ProcessOptions));
 
   if ( source_interface->inputtype == VIK_DATASOURCE_INPUTTYPE_TRWLAYER ) {
     char *name_src = a_gpx_write_tmp_file ( vtl, NULL );

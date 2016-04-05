@@ -548,7 +548,9 @@ static GtkWidget *create_custom_widget_cb(GtkPrintOperation *operation, PrintDat
   GtkWidget    *label;
   GtkPageSetup *setup;
 
-  CustomWidgetInfo  *info = g_malloc0(sizeof(CustomWidgetInfo));
+  CustomWidgetInfo * info = (CustomWidgetInfo *) malloc(sizeof (CustomWidgetInfo));
+  memset(info, 0, sizeof (CustomWidgetInfo));
+  
   g_signal_connect_swapped (data->operation, _("done"), G_CALLBACK (custom_widgets_cleanup), info);
 
 

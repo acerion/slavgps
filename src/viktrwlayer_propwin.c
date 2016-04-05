@@ -222,7 +222,8 @@ typedef struct _propwidgets {
 
 static PropWidgets *prop_widgets_new()
 {
-  PropWidgets *widgets = g_malloc0(sizeof(PropWidgets));
+  PropWidgets * widgets = (PropWidgets *) malloc(sizeof (PropWidgets));
+  memset(widgets, 0, sizeof (PropWidgets));
 
   return widgets;
 }

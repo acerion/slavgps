@@ -332,7 +332,9 @@ bstart_element (GMarkupParseContext *context,
 	const char *element = g_markup_parse_context_get_element (context);
 	if (strcmp (element, "CoverageArea") == 0) {
 		/* New Attribution */
-		struct _Attribution *attribution = g_malloc0 (sizeof(struct _Attribution));
+		struct _Attribution * attribution = (struct _Attribution *) malloc(sizeof (struct _Attribution));
+		memset(attribution, 0, sizeof (struct _Attribution));
+		
 		priv->attributions = g_list_append (priv->attributions, attribution);
 		attribution->attribution = g_strdup(priv->attribution);
 	}

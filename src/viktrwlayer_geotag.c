@@ -108,7 +108,9 @@ typedef struct {
 
 static GeoTagWidgets *geotag_widgets_new()
 {
-	GeoTagWidgets *widgets = g_malloc0(sizeof(GeoTagWidgets));
+	GeoTagWidgets * widgets = (GeoTagWidgets *) malloc(sizeof (GeoTagWidgets));
+	memset(widgets, 0, sizeof (GeoTagWidgets));
+	
 	return widgets;
 }
 

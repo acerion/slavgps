@@ -893,7 +893,10 @@ GType vik_trw_layer_get_type ()
 
 VikTRWMetadata *vik_trw_metadata_new()
 {
-  return (VikTRWMetadata*)g_malloc0(sizeof(VikTRWMetadata));
+  VikTRWMetadata * data = (VikTRWMetadata *) malloc(sizeof (VikTRWMetadata));
+  memset(data, 0, sizeof (VikTRWMetadata));
+  
+  return data;
 }
 
 void vik_trw_metadata_free ( VikTRWMetadata *metadata)
