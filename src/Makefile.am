@@ -119,8 +119,8 @@ libviking_a_SOURCES = \
 	metatile.c metatile.h \
 	gpx.c gpx.h \
 	garminsymbols.c garminsymbols.h \
-	acquire.c acquire.h \
-	babel.c babel.h \
+	acquire.cpp acquire.h \
+	babel.cpp babel.h \
 	babel_ui.c babel_ui.h \
 	datasource_file.c \
 	datasource_geojson.c \
