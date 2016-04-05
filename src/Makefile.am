@@ -56,10 +56,10 @@ libviking_a_SOURCES = \
 	globals.c globals.h \
 	viking.h mapcoord.h config.h \
 	vik_compat.c vik_compat.h \
-	viktrack.c viktrack.h \
-	vikwaypoint.c vikwaypoint.h \
+	viktrack.cpp viktrack.h \
+	vikwaypoint.cpp vikwaypoint.h \
 	clipboard.c clipboard.h \
-	coords.c coords.h \
+	coords.cpp coords.h \
 	gpsmapper.c gpsmapper.h \
 	gpspoint.c gpspoint.h \
 	geojson.c geojson.h \
