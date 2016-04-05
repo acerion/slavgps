@@ -69,7 +69,7 @@ renaming functions and defining LatLon and UTM structs.
  */
 char *a_coords_dtostr ( double d )
 {
-  char *buffer = malloc(G_ASCII_DTOSTR_BUF_SIZE*sizeof(char));
+  char *buffer = (char *) malloc(G_ASCII_DTOSTR_BUF_SIZE * sizeof (char));
   g_ascii_dtostr (buffer, G_ASCII_DTOSTR_BUF_SIZE, (double) d);
   return buffer;
 }

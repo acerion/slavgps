@@ -43,7 +43,9 @@
 
 VikTrack *vik_track_new()
 {
-  VikTrack *tr = g_malloc0 ( sizeof ( VikTrack ) );
+  VikTrack *tr = (VikTrack *) malloc(sizeof (VikTrack));
+  memset(tr, 0, sizeof (VikTrack));
+
   tr->ref_count = 1;
   return tr;
 }
@@ -62,10 +64,10 @@ void vik_track_set_defaults(VikTrack *tr)
 {
   int tmp;
   if ( a_settings_get_integer ( VIK_SETTINGS_TRACK_NAME_MODE, &tmp ) )
-    tr->draw_name_mode = tmp;
+    tr->draw_name_mode = (VikTrackDrawnameType) tmp;
 
   if ( a_settings_get_integer ( VIK_SETTINGS_TRACK_NUM_DIST_LABELS, &tmp ) )
-    tr->max_number_dist_labels = tmp;
+    tr->max_number_dist_labels = (VikTrackDrawnameType) tmp;
 }
 
 void vik_track_set_comment_no_copy(VikTrack *tr, char *comment)
@@ -210,7 +212,9 @@ VikTrack *vik_track_copy ( const VikTrack *tr, bool copy_points )
 
 VikTrackpoint *vik_trackpoint_new()
 {
-  VikTrackpoint *tp = g_malloc0(sizeof(VikTrackpoint));
+  VikTrackpoint * tp = (VikTrackpoint *) malloc(sizeof (VikTrackpoint));
+  memset(tp, 0, sizeof (VikTrackpoint));
+
   tp->speed = NAN;
   tp->course = NAN;
   tp->altitude = VIK_DEFAULT_ALTITUDE;
@@ -396,7 +400,7 @@ unsigned long vik_track_remove_dup_points ( VikTrack *tr )
       if ( VIK_TRACKPOINT(iter->next->data)->newsegment && (iter->next)->next )
         VIK_TRACKPOINT(((iter->next)->next)->data)->newsegment = true;
 
-      vik_trackpoint_free ( iter->next->data );
+      vik_trackpoint_free((VikTrackpoint *) iter->next->data);
       tr->trackpoints = g_list_delete_link ( tr->trackpoints, iter->next );
     }
     else
@@ -450,7 +454,7 @@ unsigned long vik_track_remove_same_time_points ( VikTrack *tr )
       if ( VIK_TRACKPOINT(iter->next->data)->newsegment && (iter->next)->next )
         VIK_TRACKPOINT(((iter->next)->next)->data)->newsegment = true;
 
-      vik_trackpoint_free ( iter->next->data );
+      vik_trackpoint_free((VikTrackpoint *) iter->next->data);
       tr->trackpoints = g_list_delete_link ( tr->trackpoints, iter->next );
     }
     else
@@ -503,7 +507,6 @@ unsigned int vik_track_get_segment_count(const VikTrack *tr)
 
 VikTrack **vik_track_split_into_segments(VikTrack *t, unsigned int *ret_len)
 {
-  VikTrack **rv;
   VikTrack *tr;
   unsigned int i;
   unsigned int segs = vik_track_get_segment_count(t);
@@ -515,7 +518,7 @@ VikTrack **vik_track_split_into_segments(VikTrack *t, unsigned int *ret_len)
     return NULL;
   }
 
-  rv = malloc( segs * sizeof(VikTrack *) );
+  VikTrack **rv = (VikTrack **) malloc(segs * sizeof (VikTrack *));
   tr = vik_track_copy ( t, true );
   rv[0] = tr;
   iter = tr->trackpoints;
@@ -724,7 +727,6 @@ void vik_track_convert ( VikTrack *tr, VikCoordMode dest_mode )
  * proper amounts of length on the track and averages elevation over that. */
 double *vik_track_make_elevation_map ( const VikTrack *tr, uint16_t num_chunks )
 {
-  double *pts;
   double total_length, chunk_length, current_dist, current_area_under_curve, current_seg_length, dist_along_seg = 0.0;
   double altitude1, altitude2;
   uint16_t current_chunk;
@@ -757,7 +759,7 @@ double *vik_track_make_elevation_map ( const VikTrack *tr, uint16_t num_chunks )
 
   assert ( num_chunks < 16000 );
 
-  pts = malloc( sizeof(double) * num_chunks );
+  double * pts = (double *) malloc(sizeof (double) * num_chunks);
 
   total_length = vik_track_get_length_including_gaps ( tr );
   chunk_length = total_length / num_chunks;
@@ -874,7 +876,6 @@ void vik_track_get_total_elevation_gain(const VikTrack *tr, double *up, double *
 
 double *vik_track_make_gradient_map ( const VikTrack *tr, uint16_t num_chunks )
 {
-  double *pts;
   double *altitudes;
   double total_length, chunk_length, current_gradient;
   double altitude1, altitude2;
@@ -896,7 +897,7 @@ double *vik_track_make_gradient_map ( const VikTrack *tr, uint16_t num_chunks )
   }
 
   current_gradient = 0.0;
-  pts = malloc( sizeof(double) * num_chunks );
+  double * pts = (double *) malloc(sizeof (double) * num_chunks);
   for (current_chunk = 0; current_chunk < (num_chunks - 1); current_chunk++) {
     altitude1 = altitudes[current_chunk];
     altitude2 = altitudes[current_chunk + 1];
@@ -915,7 +916,6 @@ double *vik_track_make_gradient_map ( const VikTrack *tr, uint16_t num_chunks )
 /* by Alex Foobarian */
 double *vik_track_make_speed_map ( const VikTrack *tr, uint16_t num_chunks )
 {
-  double *v, *s, *t;
   double duration, chunk_dur;
   time_t t1, t2;
   int i, pt_count, numpts, index;
@@ -939,11 +939,11 @@ double *vik_track_make_speed_map ( const VikTrack *tr, uint16_t num_chunks )
   }
   pt_count = vik_track_get_tp_count(tr);
 
-  v = malloc( sizeof(double) * num_chunks );
+  double * v = (double *) malloc(sizeof (double) * num_chunks);
   chunk_dur = duration / num_chunks;
 
-  s = malloc(sizeof(double) * pt_count);
-  t = malloc(sizeof(double) * pt_count);
+  double * s = (double *) malloc(sizeof (double) * pt_count);
+  double * t = (double *) malloc(sizeof (double) * pt_count);
 
   iter = tr->trackpoints->next;
   numpts = 0;
@@ -991,7 +991,6 @@ double *vik_track_make_speed_map ( const VikTrack *tr, uint16_t num_chunks )
  */
 double *vik_track_make_distance_map ( const VikTrack *tr, uint16_t num_chunks )
 {
-  double *v, *s, *t;
   double duration, chunk_dur;
   time_t t1, t2;
   int i, pt_count, numpts, index;
@@ -1013,11 +1012,11 @@ double *vik_track_make_distance_map ( const VikTrack *tr, uint16_t num_chunks )
   }
   pt_count = vik_track_get_tp_count(tr);
 
-  v = malloc( sizeof(double) * num_chunks );
+  double *v = (double *) malloc(sizeof (double) * num_chunks);
   chunk_dur = duration / num_chunks;
 
-  s = malloc(sizeof(double) * pt_count);
-  t = malloc(sizeof(double) * pt_count);
+  double *s = (double *) malloc(sizeof (double) * pt_count);
+  double *t = (double *) malloc(sizeof (double) * pt_count);
 
   iter = tr->trackpoints->next;
   numpts = 0;
@@ -1103,9 +1102,9 @@ double *vik_track_make_elevation_time_map ( const VikTrack *tr, uint16_t num_chu
   // Reset iterator back to the beginning
   iter = tr->trackpoints;
 
-  double *pts = malloc( sizeof(double) * num_chunks ); // The return altitude values
-  double *s = malloc(sizeof(double) * pt_count); // calculation altitudes
-  double *t = malloc(sizeof(double) * pt_count); // calculation times
+  double *pts = (double *) malloc(sizeof(double) * num_chunks); // The return altitude values
+  double *s = (double *) malloc(sizeof(double) * pt_count); // calculation altitudes
+  double *t = (double *) malloc(sizeof(double) * pt_count); // calculation times
 
   chunk_dur = duration / num_chunks;
 
@@ -1155,7 +1154,6 @@ double *vik_track_make_elevation_time_map ( const VikTrack *tr, uint16_t num_chu
  */
 double *vik_track_make_speed_dist_map ( const VikTrack *tr, uint16_t num_chunks )
 {
-  double *v, *s, *t;
   time_t t1, t2;
   int i, pt_count, numpts, index;
   GList *iter;
@@ -1184,9 +1182,9 @@ double *vik_track_make_speed_dist_map ( const VikTrack *tr, uint16_t num_chunks 
     return NULL;
   }
 
-  v = malloc( sizeof(double) * num_chunks );
-  s = malloc( sizeof(double) * pt_count );
-  t = malloc( sizeof(double) * pt_count );
+  double *v = (double *) malloc(sizeof (double) * num_chunks);
+  double *s = (double *) malloc(sizeof (double) * pt_count);
+  double *t = (double *) malloc(sizeof (double) * pt_count);
 
   // No special handling of segments ATM...
   iter = tr->trackpoints->next;
@@ -1896,7 +1894,7 @@ VikCoord *vik_track_cut_back_to_double_point ( VikTrack *tr )
     if ( vik_coord_equals(cur_coord, prev_coord) ) {
       GList *prev = iter->prev;
 
-      rv = malloc(sizeof(VikCoord));
+      rv = (VikCoord *) malloc(sizeof (VikCoord));
       *rv = *cur_coord;
 
       /* truncate trackpoint list */
@@ -1912,7 +1910,7 @@ VikCoord *vik_track_cut_back_to_double_point ( VikTrack *tr )
   }
 
   /* no double point found! */
-  rv = malloc(sizeof(VikCoord));
+  rv = (VikCoord *) malloc(sizeof (VikCoord));
   *rv = ((VikTrackpoint*) tr->trackpoints->data)->coord;
   g_list_foreach ( tr->trackpoints, (GFunc) g_free, NULL );
   g_list_free( tr->trackpoints );

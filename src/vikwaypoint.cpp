@@ -32,7 +32,9 @@
 
 VikWaypoint *vik_waypoint_new()
 {
-  VikWaypoint *wp = g_malloc0 ( sizeof ( VikWaypoint ) );
+  VikWaypoint *wp = (VikWaypoint *) malloc(sizeof (VikWaypoint));
+  memset(wp, 0, sizeof (VikWaypoint));
+
   wp->altitude = VIK_DEFAULT_ALTITUDE;
   wp->name = g_strdup(_("Waypoint"));
   return wp;
