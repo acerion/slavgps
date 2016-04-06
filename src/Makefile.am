@@ -158,32 +158,32 @@ libviking_a_SOURCES = \
 
 if BING
 libviking_a_SOURCES += \
-	bingmapsource.c bingmapsource.h \
-	bing.c bing.h
+	bingmapsource.cpp bingmapsource.h \
+	bing.cpp bing.h
 endif
 
 if GOOGLE
 libviking_a_SOURCES += \
-	google.c google.h
+	google.cpp google.h
 endif
 
 if TERRASERVER
 libviking_a_SOURCES += \
 	terraservermapsource.c terraservermapsource.h \
-	terraserver.c terraserver.h
+	terraserver.cpp terraserver.h
 endif
 
 if EXPEDIA
 libviking_a_SOURCES += \
-	expedia.c expedia.h
+	expedia.cpp expedia.h
 endif
 
 if OPENSTREETMAP
 libviking_a_SOURCES += \
-	osm.c osm.h \
-	osm-traces.c osm-traces.h \
-	datasource_osm_my_traces.c \
-	datasource_osm.c
+	osm.cpp osm.h \
+	osm-traces.cpp osm-traces.h \
+	datasource_osm_my_traces.cpp \
+	datasource_osm.cpp
 endif
 
 if BLUEMARBLE
