@@ -479,7 +479,7 @@ static void trw_layer_geotag_response_cb ( GtkDialog *dialog, int resp, GeoTagWi
 	default: {
 		//GTK_RESPONSE_ACCEPT:
 		// Get options
-		geotag_options_t *options = malloc( sizeof(geotag_options_t) );
+		geotag_options_t * options = (geotag_options_t *) malloc(sizeof (geotag_options_t));
 		options->vtl = widgets->vtl;
 		options->wpt = widgets->wpt;
 		options->track = widgets->track;

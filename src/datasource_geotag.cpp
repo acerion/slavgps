@@ -76,7 +76,7 @@ VikDataSourceInterface vik_datasource_geotag_interface = {
 /* See VikDataSourceInterface */
 static void * datasource_geotag_init ( acq_vik_t *avt )
 {
-	datasource_geotag_user_data_t *user_data = malloc(sizeof(datasource_geotag_user_data_t));
+	datasource_geotag_user_data_t * user_data = (datasource_geotag_user_data_t *) malloc(sizeof (datasource_geotag_user_data_t));
 	user_data->filelist = NULL;
 	return user_data;
 }
@@ -155,7 +155,7 @@ static bool datasource_geotag_process ( VikTrwLayer *vtl, ProcessOptions *po, Ba
 	// In prinicple this loading should be quite fast and so don't need to have any progress monitoring
 	GSList *cur_file = user_data->filelist;
 	while ( cur_file ) {
-		char *filename = cur_file->data;
+		char *filename = (char *) cur_file->data;
 		char *name;
 		VikWaypoint *wp = a_geotag_create_waypoint_from_file ( filename, vik_viewport_get_coord_mode ( adw->vvp ), &name );
 		if ( wp ) {

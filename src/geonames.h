@@ -22,6 +22,14 @@
 #ifndef __GEONAMES_H
 #define __GEONAMES_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void geonames_init ();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

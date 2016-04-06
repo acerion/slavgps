@@ -554,4 +554,4 @@ bing_map_source_new_with_id (uint16_t id, const char *label, const char *key)
 										  "license", "Microsoft Bing Maps Specific",
 										  "license-url", "http://www.microsoft.com/maps/assets/docs/terms.aspx",
 										  NULL);
-}}}
+}

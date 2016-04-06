@@ -23,6 +23,14 @@
 #ifndef __VIKING_BLUEMARBLE_H
 #define __VIKING_BLUEMARBLE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void bluemarble_init ();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

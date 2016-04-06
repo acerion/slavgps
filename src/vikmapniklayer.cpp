@@ -357,7 +357,7 @@ GType vik_mapnik_layer_get_type ()
 			0,
 			NULL /* instance init */
 		};
-		vml_type = g_type_register_static ( VIK_LAYER_TYPE, "VikMapnikLayer", &vml_info, 0 );
+		vml_type = g_type_register_static ( VIK_LAYER_TYPE, "VikMapnikLayer", &vml_info, (GTypeFlags) 0 );
 	}
 
 	return vml_type;
@@ -527,12 +527,12 @@ bool carto_load ( VikMapnikLayer *vml, VikViewport *vvp )
 			// NB This will overwrite the specified XML file
 			if ( ! ( vml->filename_xml && strlen (vml->filename_xml) > 1 ) ) {
 				// XML Not specified so try to create based on CSS file name
-				GRegex *regex = g_regex_new ( "\\.mml$|\\.mss|\\.css$", G_REGEX_CASELESS, 0, &error );
+			  GRegex *regex = g_regex_new ( "\\.mml$|\\.mss|\\.css$", G_REGEX_CASELESS, (GRegexMatchFlags) 0, &error );
 				if ( error )
 					fprintf(stderr, "CRITICAL: %s: %s\n", __FUNCTION__, error->message );
 				if ( vml->filename_xml )
 					free(vml->filename_xml);
-				vml->filename_xml = g_regex_replace_literal ( regex, vml->filename_css, -1, 0, ".xml", 0, &error );
+				vml->filename_xml = g_regex_replace_literal ( regex, vml->filename_css, -1, 0, ".xml", (GRegexMatchFlags) 0, &error );
 				if ( error )
 					fprintf(stderr, "WARNING: %s: %s\n", __FUNCTION__, error->message );
 				// Prevent overwriting self
@@ -616,7 +616,7 @@ static void mapnik_layer_post_read (VikLayer *vl, VikViewport *vvp, bool from_fi
 	}
 }
 
-#define MAPNIK_LAYER_FILE_CACHE_LAYOUT "%s"G_DIR_SEPARATOR_S"%d"G_DIR_SEPARATOR_S"%d"G_DIR_SEPARATOR_S"%d.png"
+#define MAPNIK_LAYER_FILE_CACHE_LAYOUT "%s" G_DIR_SEPARATOR_S"%d" G_DIR_SEPARATOR_S"%d" G_DIR_SEPARATOR_S"%d.png"
 
 // Free returned string after use
 static char *get_filename ( char *dir, unsigned int x, unsigned int y, unsigned int z)
@@ -728,11 +728,11 @@ static void thread_add (VikMapnikLayer *vml, MapCoord *mul, VikCoord *ul, VikCoo
 		return;
 	}
 
-	RenderInfo *ri = malloc( sizeof(RenderInfo) );
+	RenderInfo * ri = (RenderInfo *) malloc(sizeof (RenderInfo));
 	ri->vml = vml;
-	ri->ul = malloc( sizeof(VikCoord) );
-	ri->br = malloc( sizeof(VikCoord) );
-	ri->ulmc = malloc( sizeof(MapCoord) );
+	ri->ul = (VikCoord *) malloc(sizeof (VikCoord));
+	ri->br = (VikCoord *) malloc(sizeof (VikCoord));
+	ri->ulmc = (MapCoord *) malloc(sizeof (MapCoord));
 	memcpy(ri->ul, ul, sizeof(VikCoord));
 	memcpy(ri->br, br, sizeof(VikCoord));
 	memcpy(ri->ulmc, mul, sizeof(MapCoord));
@@ -948,8 +948,8 @@ static void mapnik_layer_flush_memory ( menu_array_values values )
  */
 static void mapnik_layer_reload ( menu_array_values values )
 {
-	VikMapnikLayer *vml = values[MA_VML];
-	VikViewport *vvp = values[MA_VVP];
+  VikMapnikLayer * vml = (VikMapnikLayer *) values[MA_VML];
+  VikViewport * vvp = (VikViewport *) values[MA_VVP];
 	mapnik_layer_post_read (VIK_LAYER(vml), vvp, false);
 	mapnik_layer_draw ( vml, vvp );
 }
@@ -963,8 +963,8 @@ static void mapnik_layer_reload ( menu_array_values values )
  */
 static void mapnik_layer_carto ( menu_array_values values )
 {
-	VikMapnikLayer *vml = values[MA_VML];
-	VikViewport *vvp = values[MA_VVP];
+  VikMapnikLayer * vml = (VikMapnikLayer *) values[MA_VML];
+  VikViewport * vvp = (VikViewport *) values[MA_VVP];
 
 	// Don't load the XML config if carto load fails
 	if ( !carto_load ( vml, vvp ) )
@@ -986,7 +986,7 @@ static void mapnik_layer_carto ( menu_array_values values )
  */
 static void mapnik_layer_information ( menu_array_values values )
 {
-	VikMapnikLayer *vml = values[MA_VML];
+  VikMapnikLayer * vml = (VikMapnikLayer *) values[MA_VML];
 	if ( !vml->mi )
 		return;
 	GArray *array = mapnik_interface_get_parameters( vml->mi );
@@ -1004,7 +1004,7 @@ static void mapnik_layer_information ( menu_array_values values )
  */
 static void mapnik_layer_about ( menu_array_values values )
 {
-	VikMapnikLayer *vml = values[MA_VML];
+  VikMapnikLayer * vml = (VikMapnikLayer *) values[MA_VML];
 	char *msg = mapnik_interface_about();
 	a_dialog_info_msg ( VIK_GTK_WINDOW_FROM_LAYER(vml),  msg );
 	free( msg );

@@ -116,7 +116,7 @@ static void none_found(VikWindow *vw)
 {
   GtkWidget *dialog = NULL;
 
-  dialog = gtk_dialog_new_with_buttons ( "", GTK_WINDOW(vw), 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, NULL );
+  dialog = gtk_dialog_new_with_buttons ( "", GTK_WINDOW(vw), (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, NULL );
   gtk_window_set_title(GTK_WINDOW(dialog), _("Search"));
 
   GtkWidget *search_label = gtk_label_new(_("No entries found!"));
@@ -139,7 +139,7 @@ static GList *a_select_geoname_from_list(GtkWindow *parent, GList *geonames, boo
 
   GtkWidget *dialog = gtk_dialog_new_with_buttons (title,
                                                   parent,
-                                                  GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+						   (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
                                                   GTK_STOCK_CANCEL,
                                                   GTK_RESPONSE_REJECT,
                                                   GTK_STOCK_OK,
@@ -223,7 +223,7 @@ static GList *a_select_geoname_from_list(GtkWindow *parent, GList *geonames, boo
           geoname_runner = geonames;
           while ( geoname_runner ) {
             if ( !strcmp ( ((found_geoname*)geoname_runner->data)->name, name ) ) {
-              found_geoname *copied = copy_found_geoname(geoname_runner->data);
+              found_geoname *copied = copy_found_geoname((found_geoname *) geoname_runner->data);
               selected_geonames = g_list_prepend(selected_geonames, copied);
               break;
             }
