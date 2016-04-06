@@ -122,14 +122,14 @@ libviking_a_SOURCES = \
 	acquire.cpp acquire.h \
 	babel.cpp babel.h \
 	babel_ui.c babel_ui.h \
-	datasource_file.c \
-	datasource_geojson.c \
-	datasource_gps.c datasource_gps.h \
-	datasource_routing.c \
-	datasource_gc.c \
-	datasource_bfilter.c \
-	datasource_wikipedia.c \
-	datasource_url.c \
+	datasource_file.cpp \
+	datasource_geojson.cpp \
+	datasource_gps.cpp datasource_gps.h \
+	datasource_routing.cpp \
+	datasource_gc.cpp \
+	datasource_bfilter.cpp \
+	datasource_wikipedia.cpp \
+	datasource_url.cpp \
 	datasources.h \
 	googlesearch.c googlesearch.h \
 	dem.c dem.h \
