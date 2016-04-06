@@ -49,7 +49,7 @@ void map_utils_iTMS_to_center_vikcoord ( const MapCoord *src, VikCoord *dest );
 void map_utils_iTMS_to_vikcoord ( const MapCoord *src, VikCoord *dest );
 
 #ifdef __cplusplus
-extern "C" {
+}
 #endif
 
 
