@@ -77,7 +77,7 @@ VikDataSourceInterface vik_datasource_osm_interface = {
 
 static void * datasource_osm_init ( acq_vik_t *avt )
 {
-  datasource_osm_widgets_t *widgets = malloc(sizeof(*widgets));
+  datasource_osm_widgets_t *widgets = (datasource_osm_widgets_t *) malloc(sizeof (datasource_osm_widgets_t));
   /* Keep reference to viewport */
   widgets->vvp = avt->vvp;
   return widgets;

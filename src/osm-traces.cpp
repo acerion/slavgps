@@ -379,7 +379,7 @@ void osm_traces_upload_viktrwlayer ( VikTrwLayer *vtl, VikTrack *trk )
 {
   GtkWidget *dia = gtk_dialog_new_with_buttons (_("OSM upload"),
                                                  VIK_GTK_WINDOW_FROM_LAYER(vtl),
-                                                 GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+						(GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
                                                  GTK_STOCK_CANCEL,
                                                  GTK_RESPONSE_REJECT,
                                                  GTK_STOCK_OK,
@@ -507,7 +507,7 @@ void osm_traces_upload_viktrwlayer ( VikTrwLayer *vtl, VikTrack *trk )
                   gtk_entry_get_text(GTK_ENTRY(password_entry)));
 
     /* Storing data for the future thread */
-    OsmTracesInfo *info = malloc(sizeof(OsmTracesInfo));
+    OsmTracesInfo *info = (OsmTracesInfo *) malloc(sizeof (OsmTracesInfo));
     info->name        = g_strdup(gtk_entry_get_text(GTK_ENTRY(name_entry)));
     info->description = g_strdup(gtk_entry_get_text(GTK_ENTRY(description_entry)));
     /* TODO Normalize tags: they will be used as URL part */

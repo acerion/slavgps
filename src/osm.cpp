@@ -44,7 +44,7 @@
 #include "vikroutingwebengine.h"
 
 /* initialisation */
-void osm_init () {
+void osm_init (void) {
   VikMapSource *mapnik_type =
     VIK_MAP_SOURCE(g_object_new(VIK_TYPE_SLIPPY_MAP_SOURCE,
                                 "id", MAP_ID_OSM_MAPNIK,
@@ -228,7 +228,7 @@ void osm_init () {
   g_object_unref ( webtool );
   
   /* See API references: https://github.com/DennisOSRM/Project-OSRM/wiki/Server-api */
-  VikRoutingEngine *osrm = g_object_new ( VIK_ROUTING_WEB_ENGINE_TYPE,
+  VikRoutingEngine *osrm = (VikRoutingEngine *) g_object_new ( VIK_ROUTING_WEB_ENGINE_TYPE,
     "id", "osrm",
     "label", "OSRM",
     "format", "gpx",

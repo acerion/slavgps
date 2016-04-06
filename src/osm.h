@@ -22,6 +22,15 @@
 #ifndef __VIKING_OSM_H
 #define __VIKING_OSM_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void osm_init ();
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif

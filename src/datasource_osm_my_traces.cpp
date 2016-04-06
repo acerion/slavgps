@@ -83,7 +83,7 @@ VikDataSourceInterface vik_datasource_osm_my_traces_interface = {
 
 static void * datasource_osm_my_traces_init ( acq_vik_t *avt )
 {
-  datasource_osm_my_traces_t *data = malloc(sizeof(*data));
+	datasource_osm_my_traces_t * data = (datasource_osm_my_traces_t *) malloc(sizeof (datasource_osm_my_traces_t));
   // Reuse GPS functions
   // Haven't been able to get the thread method to work reliably (or get progress feedback)
   // So thread version is disabled ATM
@@ -382,7 +382,7 @@ static GList *select_from_list (GtkWindow *parent, GList *list, const char *titl
 
 	GtkWidget *dialog = gtk_dialog_new_with_buttons (title,
 													 parent,
-													 GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+													 (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
 													 GTK_STOCK_CANCEL,
 													 GTK_RESPONSE_REJECT,
 													 GTK_STOCK_OK,
@@ -487,7 +487,7 @@ static GList *select_from_list (GtkWindow *parent, GList *list, const char *titl
 					list_runner = list;
 					while (list_runner) {
 						if ( !strcmp ( ((gpx_meta_data_t*)list_runner->data)->name, name ) ) {
-							gpx_meta_data_t *copied = copy_gpx_meta_data_t (list_runner->data);
+							gpx_meta_data_t *copied = copy_gpx_meta_data_t ((gpx_meta_data_t *) list_runner->data);
 							selected = g_list_prepend (selected, copied);
 							break;
 						}
@@ -513,7 +513,7 @@ static void none_found ( GtkWindow *gw )
 {
 	GtkWidget *dialog = NULL;
 
-	dialog = gtk_dialog_new_with_buttons ( "", gw, 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, NULL );
+	dialog = gtk_dialog_new_with_buttons ( "", gw, (GtkDialogFlags) 0, GTK_STOCK_OK, (GTK_RESPONSE_ACCEPT), NULL );
 	gtk_window_set_title(GTK_WINDOW(dialog), _("GPS Traces"));
 
 	GtkWidget *search_label = gtk_label_new(_("None found!"));
@@ -574,7 +574,7 @@ static bool datasource_osm_my_traces_process ( VikTrwLayer *vtl, ProcessOptions 
 	if ( !tmpname )
 		return false;
 
-	xml_data *xd = malloc( sizeof (xml_data) );
+	xml_data *xd = (xml_data *) malloc(sizeof (xml_data));
 	//xd->xpath = g_string_new ( "" );
 	xd->c_cdata = g_string_new ( "" );
 	xd->current_tag = tt_unknown;
@@ -604,7 +604,7 @@ static bool datasource_osm_my_traces_process ( VikTrwLayer *vtl, ProcessOptions 
 
 	xd->list_of_gpx_meta_data = g_list_reverse ( xd->list_of_gpx_meta_data );
 
-	set_in_current_view_property ( vtl, adw->user_data, xd->list_of_gpx_meta_data );
+	set_in_current_view_property ( vtl, (datasource_osm_my_traces_t *) adw->user_data, xd->list_of_gpx_meta_data );
 
     if (vik_datasource_osm_my_traces_interface.is_thread) gdk_threads_enter();
 	GList *selected = select_from_list ( GTK_WINDOW(adw->vw), xd->list_of_gpx_meta_data, "Select GPS Traces", "Select the GPS traces you want to add." );

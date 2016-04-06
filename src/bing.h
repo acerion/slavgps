@@ -23,6 +23,16 @@
 #ifndef __VIKING_BING_H
 #define __VIKING_BING_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 void bing_init ();
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif

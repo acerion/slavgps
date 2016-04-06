@@ -212,21 +212,21 @@ bing_map_source_class_init (BingMapSourceClass *klass)
 	                             "Hostname",
 	                             "The hostname of the map server",
 	                             "<no-set>" /* default value */,
-	                             G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+	                             (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
 	g_object_class_install_property (object_class, PROP_HOSTNAME, pspec);
 
 	pspec = g_param_spec_string ("url",
 	                             "URL",
 	                             "The template of the tiles' URL",
 	                             "<no-set>" /* default value */,
-	                             G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+	                             (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
 	g_object_class_install_property (object_class, PROP_URL, pspec);
 
 	pspec = g_param_spec_string ("api-key",
                                      "API key",
                                      "The API key to access Bing",
                                      "<no-set>" /* default value */,
-                                     G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+								 (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
 	g_object_class_install_property (object_class, PROP_API_KEY, pspec);
 
 	g_type_class_add_private (klass, sizeof (BingMapSourcePrivate));
@@ -311,7 +311,7 @@ _get_copyright(VikMapSource * self, LatLonBBox bbox, double zoom, void (*fct)(Vi
 		if (BBOX_INTERSECT(bbox, current->bounds) &&
 		    (17 - level) > current->minZoom &&
 		    (17 - level) < current->maxZoom) {
-			(*fct)(data, current->attribution);
+			(*fct)((VikViewport *) data, current->attribution);
 			fprintf(stderr, "DEBUG: %s: found match %s\n", __FUNCTION__, current->attribution);
 		}
 		attribution = attribution->next;
@@ -352,13 +352,13 @@ btext (GMarkupParseContext *context,
 	BingMapSource *self = BING_MAP_SOURCE (user_data);
 	BingMapSourcePrivate *priv = BING_MAP_SOURCE_GET_PRIVATE (self);
 
-	struct _Attribution *attribution = priv->attributions == NULL ? NULL : g_list_last (priv->attributions)->data;
+	struct _Attribution *attribution = (_Attribution *) (priv->attributions == NULL ? NULL : g_list_last (priv->attributions)->data);
 	const char *element = g_markup_parse_context_get_element (context);
 	char *textl = g_strndup (text, text_len);
 	const GSList *stack = g_markup_parse_context_get_element_stack (context);
 	int len = g_slist_length ((GSList *)stack);
 
-	const char *parent = len > 1 ? g_slist_nth_data ((GSList *)stack, 1) : NULL;
+	const char *parent = len > 1 ? (const char *) g_slist_nth_data ((GSList *)stack, 1) : (const char *) NULL;
 	if (strcmp (element, "Attribution") == 0) {
 		free(priv->attribution);
 		priv->attribution = g_strdup(textl);
@@ -408,7 +408,7 @@ _parse_file_for_attributions(BingMapSource *self, char *filename)
 	xml_parser.passthrough = NULL;
 	xml_parser.error = NULL;
 	
-	xml_context = g_markup_parse_context_new(&xml_parser, 0, self, NULL);
+	xml_context = g_markup_parse_context_new(&xml_parser, (GMarkupParseFlags) 0, self, NULL);
 
 	char buff[BUFSIZ];
 	size_t nb;
@@ -540,18 +540,18 @@ BingMapSource *
 bing_map_source_new_with_id (uint16_t id, const char *label, const char *key)
 {
 	/* initialize settings here */
-	return g_object_new(BING_TYPE_MAP_SOURCE,
-	                    "id", id,
-						"label", label,
-						"name", "Bing-Aerial",
-						"hostname", "ecn.t2.tiles.virtualearth.net",
-						"url", "/tiles/a%s.jpeg?g=587",
-						"api-key", key,
-						"check-file-server-time", true,
-						"zoom-min", 0,
-						"zoom-max", 19, // NB: Might be regionally different rather than the same across the world
-						"copyright", "© 2011 Microsoft Corporation and/or its suppliers",
-						"license", "Microsoft Bing Maps Specific",
-						"license-url", "http://www.microsoft.com/maps/assets/docs/terms.aspx",
-						NULL);
-}
+	return (BingMapSource *) g_object_new(BING_TYPE_MAP_SOURCE,
+										  "id", id,
+										  "label", label,
+										  "name", "Bing-Aerial",
+										  "hostname", "ecn.t2.tiles.virtualearth.net",
+										  "url", "/tiles/a%s.jpeg?g=587",
+										  "api-key", key,
+										  "check-file-server-time", true,
+										  "zoom-min", 0,
+										  "zoom-max", 19, // NB: Might be regionally different rather than the same across the world
+										  "copyright", "© 2011 Microsoft Corporation and/or its suppliers",
+										  "license", "Microsoft Bing Maps Specific",
+										  "license-url", "http://www.microsoft.com/maps/assets/docs/terms.aspx",
+										  NULL);
+}}}

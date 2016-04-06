@@ -22,7 +22,15 @@
 #ifndef __VIKING_GOOGLE_H
 #define __VIKING_GOOGLE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void google_init();
 void google_post_init();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
