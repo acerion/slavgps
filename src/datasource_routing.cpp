@@ -78,7 +78,7 @@ VikDataSourceInterface vik_datasource_routing_interface = {
 
 static void * datasource_routing_init ( acq_vik_t *avt )
 {
-  datasource_routing_widgets_t *widgets = malloc(sizeof(*widgets));
+  datasource_routing_widgets_t *widgets = (datasource_routing_widgets_t *) malloc(sizeof (datasource_routing_widgets_t));
   return widgets;
 }
 

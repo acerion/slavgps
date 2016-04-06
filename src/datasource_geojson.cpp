@@ -70,7 +70,7 @@ VikDataSourceInterface vik_datasource_geojson_interface = {
 
 static void * datasource_geojson_init ( acq_vik_t *avt )
 {
-	datasource_geojson_user_data_t *user_data = malloc(sizeof(datasource_geojson_user_data_t));
+	datasource_geojson_user_data_t *user_data = (datasource_geojson_user_data_t *) malloc(sizeof (datasource_geojson_user_data_t));
 	user_data->filelist = NULL;
 	return user_data;
 }
@@ -140,7 +140,7 @@ static bool datasource_geojson_process ( VikTrwLayer *vtl, ProcessOptions *proce
 	// Process selected files
 	GSList *cur_file = user_data->filelist;
 	while ( cur_file ) {
-		char *filename = cur_file->data;
+		char *filename = (char *) cur_file->data;
 
 		char *gpx_filename = a_geojson_import_to_gpx ( filename );
 		if ( gpx_filename ) {

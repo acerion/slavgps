@@ -88,7 +88,7 @@ VikDataSourceInterface vik_datasource_file_interface = {
 /* See VikDataSourceInterface */
 static void * datasource_file_init ( acq_vik_t *avt )
 {
-  datasource_file_widgets_t *widgets = malloc(sizeof(*widgets));
+  datasource_file_widgets_t *widgets = (datasource_file_widgets_t *) malloc(sizeof (datasource_file_widgets_t));
   return widgets;
 }
 
@@ -175,7 +175,7 @@ static void datasource_file_get_process_options ( datasource_file_widgets_t *wid
 
   /* Memorize the file filter for later use */
   GtkFileFilter *filter = gtk_file_chooser_get_filter ( GTK_FILE_CHOOSER(widgets->file) );
-  last_file_filter = g_object_get_data ( G_OBJECT(filter), "Babel" );
+  last_file_filter = (BabelFile * ) g_object_get_data ( G_OBJECT(filter), "Babel" );
 
   /* Retrieve and memorize file format selected */
   char *type = NULL;

@@ -74,7 +74,7 @@ VikDataSourceInterface vik_datasource_url_interface = {
 
 static void * datasource_url_init ( acq_vik_t *avt )
 {
-	datasource_url_widgets_t *widgets = malloc(sizeof(*widgets));
+	datasource_url_widgets_t *widgets = (datasource_url_widgets_t *) malloc(sizeof (datasource_url_widgets_t));
 	return widgets;
 }
 
@@ -90,7 +90,7 @@ static int wanted_entry = -1;
 static void find_type (void * elem, void * user_data)
 {
 	const char *name = ((BabelFile*)elem)->name;
-	const char *type_name = user_data;
+	const char *type_name = (const char *) user_data;
 	find_entry++;
 	if (!g_strcmp0(name, type_name)) {
 		wanted_entry = find_entry;
@@ -118,7 +118,7 @@ static void datasource_url_add_setup_widgets ( GtkWidget *dialog, VikViewport *v
 		}
 		else {
 			// Default to GPX if possible
-			g_list_foreach (a_babel_file_list, find_type, "gpx");
+			g_list_foreach (a_babel_file_list, find_type, (void *) "gpx");
 		}
 		// If not found set it to the first entry, otherwise use the entry
 		last_type = ( wanted_entry < 0 ) ? 0 : wanted_entry;

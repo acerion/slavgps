@@ -127,7 +127,7 @@ typedef struct {
 
 static void * datasource_gps_init_func ( acq_vik_t *avt )
 {
-  gps_user_data_t *gps_ud = malloc(sizeof(gps_user_data_t));
+  gps_user_data_t *gps_ud = (gps_user_data_t *) malloc(sizeof (gps_user_data_t));
   gps_ud->direction = GPS_DOWN;
   return gps_ud;
 }
@@ -494,7 +494,7 @@ static int wanted_entry = -1;
 static void find_protocol (void * elem, void * user_data)
 {
   const char *name = ((BabelDevice*)elem)->name;
-  const char *protocol = user_data;
+  const char *protocol = (const char *) user_data;
   find_entry++;
   if (!strcmp(name, protocol)) {
     wanted_entry = find_entry;
@@ -521,7 +521,7 @@ static void datasource_gps_add_setup_widgets ( GtkWidget *dialog, VikViewport *v
     }
     else {
       // Attempt to maintain default to Garmin devices (assumed most popular/numerous device)
-      g_list_foreach (a_babel_device_list, find_protocol, "garmin");
+      g_list_foreach (a_babel_device_list, find_protocol, (void *) "garmin");
     }
     // If not found set it to the first entry, otherwise use the entry
     last_active = ( wanted_entry < 0 ) ? 0 : wanted_entry;
