@@ -188,20 +188,20 @@ endif
 
 if BLUEMARBLE
 libviking_a_SOURCES += \
-	bluemarble.c bluemarble.h
+	bluemarble.cpp bluemarble.h
 endif
 
 if GEONAMES
 libviking_a_SOURCES += \
-	geonames.c geonames.h \
-	geonamessearch.c geonamessearch.h
+	geonames.cpp geonames.h \
+	geonamessearch.cpp geonamessearch.h
 endif
 
 if GEOTAG
 libviking_a_SOURCES += \
-	datasource_geotag.c \
-	geotag_exif.c geotag_exif.h \
-	viktrwlayer_geotag.c viktrwlayer_geotag.h
+	datasource_geotag.cpp \
+	geotag_exif.cpp geotag_exif.h \
+	viktrwlayer_geotag.cpp viktrwlayer_geotag.h
 endif
 
 # libexif doesn't have write support of EXIF info - so reused this code from command line exif tool
@@ -213,7 +213,7 @@ endif
 
 if MAPNIK
 libviking_a_SOURCES += \
-	vikmapniklayer.c vikmapniklayer.h \
+	vikmapniklayer.cpp vikmapniklayer.h \
 	mapnik_interface.cpp mapnik_interface.h
 endif
 
