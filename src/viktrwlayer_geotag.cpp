@@ -37,6 +37,7 @@
 #include "geotag_exif.h"
 #include "thumbnails.h"
 #include "background.h"
+#include "viktrwlayer_geotag.h"
 
 // Function taken from GPSCorrelate 1.6.1
 // ConvertToUnixTime Copyright 2005 Daniel Foote. GPL2+
