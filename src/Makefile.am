@@ -75,7 +75,7 @@ libviking_a_SOURCES = \
 	jpg.c jpg.h \
 	vikenumtypes.c vikenumtypes.h \
 	viktreeview.c viktreeview.h \
-	viktrwlayer.c viktrwlayer.h \
+	viktrwlayer.cpp viktrwlayer.h \
 	viklayer.c viklayer.h \
 	viklayerspanel.c viklayerspanel.h \
 	vikcoordlayer.cpp vikcoordlayer.h \
