@@ -48,20 +48,20 @@ ENUM_H_FILES = \
 libviking_a_SOURCES = \
 	bbox.h \
 	map_ids.h \
-	modules.h modules.c \
-	curl_download.c curl_download.h \
-	compression.c compression.h \
+	modules.h modules.cpp \
+	curl_download.cpp curl_download.h \
+	compression.cpp compression.h \
 	menu.xml.h \
-	degrees_converters.c degrees_converters.h \
+	degrees_converters.cpp degrees_converters.h \
 	globals.c globals.h \
 	viking.h mapcoord.h config.h \
-	vik_compat.c vik_compat.h \
+	vik_compat.cpp vik_compat.h \
 	viktrack.cpp viktrack.h \
 	vikwaypoint.cpp vikwaypoint.h \
-	clipboard.c clipboard.h \
+	clipboard.cpp clipboard.h \
 	coords.cpp coords.h \
-	gpsmapper.c gpsmapper.h \
-	gpspoint.c gpspoint.h \
+	gpsmapper.cpp gpsmapper.h \
+	gpspoint.cpp gpspoint.h \
 	geojson.c geojson.h \
 	dir.c dir.h \
 	file.c file.h \
