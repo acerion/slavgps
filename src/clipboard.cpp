@@ -60,11 +60,11 @@ static GtkTargetEntry target_table[] = {
 
 static void clip_get ( GtkClipboard *c, GtkSelectionData *selection_data, unsigned int info, void * p ) 
 {
-  vik_clipboard_t *vc = p;
+  vik_clipboard_t *vc = (vik_clipboard_t *) p;
   if ( info == 0 ) {
     // Viking Data Type
     //    fprintf(stdout, "clip_get: vc = %p, size = %d\n", vc, sizeof(*vc) + vc->len);
-    gtk_selection_data_set ( selection_data, gtk_selection_data_get_target(selection_data), 8, (void *)vc, sizeof(*vc) + vc->len );
+    gtk_selection_data_set ( selection_data, gtk_selection_data_get_target(selection_data), 8, (const unsigned char *) vc, sizeof(*vc) + vc->len );
   }
   if ( info == 1 ) {
     // Should be a string, but make sure it's something
@@ -89,7 +89,7 @@ static void clip_clear ( GtkClipboard *c, void * p )
 /* our own data type */
 static void clip_receive_viking ( GtkClipboard *c, GtkSelectionData *sd, void * p ) 
 {
-  VikLayersPanel *vlp = p;
+  VikLayersPanel *vlp = (VikLayersPanel *) p;
   vik_clipboard_t *vc;
   if (gtk_selection_data_get_length(sd) == -1) {
     fprintf(stderr, _("WARNING: paste failed\n") );
@@ -116,14 +116,14 @@ static void clip_receive_viking ( GtkClipboard *c, GtkSelectionData *sd, void * 
     VikLayer *sel = vik_layers_panel_get_selected ( vlp );
     if ( sel && sel->type == vc->layer_type)
     {
-      if ( vik_layer_get_interface(vc->layer_type)->paste_item )
-        vik_layer_get_interface(vc->layer_type)->paste_item ( sel, vc->subtype, vc->data, vc->len);
+      if ( vik_layer_get_interface((VikLayerTypeEnum) vc->layer_type)->paste_item )
+        vik_layer_get_interface((VikLayerTypeEnum) vc->layer_type)->paste_item ( sel, vc->subtype, vc->data, vc->len);
     }
     else
       a_dialog_error_msg_extra ( VIK_GTK_WINDOW_FROM_WIDGET(GTK_WIDGET(vlp)),
 				 _("The clipboard contains sublayer data for %s layers. "
 				   "You must select a layer of this type to paste the clipboard data."),
-				 vik_layer_get_interface(vc->layer_type)->name );
+				 vik_layer_get_interface((VikLayerTypeEnum) vc->layer_type)->name );
   }
 }
 
@@ -168,8 +168,8 @@ static bool clip_parse_latlon ( const char *text, struct LatLon *coord )
   /* now try reading coordinates */
   for (i=0; i<len; i++) {
     if (s[i] == 'N' || s[i] == 'S' || g_ascii_isdigit (s[i])) {
-      char latc[2] = "SN";
-      char lonc[2] = "WE";
+      char latc[3] = "SN";
+      char lonc[3] = "WE";
       int j, k;
       cand = s+i;
 
@@ -263,7 +263,7 @@ static void clip_add_wp(VikLayersPanel *vlp, struct LatLon *coord)
 
 static void clip_receive_text (GtkClipboard *c, const char *text, void * p)
 {
-  VikLayersPanel *vlp = p;
+  VikLayersPanel *vlp = (VikLayersPanel *) p;
 
   fprintf(stderr, "DEBUG: got text: %s\n", text );
 
@@ -288,7 +288,7 @@ static void clip_receive_text (GtkClipboard *c, const char *text, void * p)
 
 static void clip_receive_html ( GtkClipboard *c, GtkSelectionData *sd, void * p ) 
 {
-  VikLayersPanel *vlp = p;
+  VikLayersPanel *vlp = (VikLayersPanel *) p;
   size_t r, w;
   GError *err = NULL;
   char *s, *span;
@@ -337,7 +337,7 @@ static void clip_receive_html ( GtkClipboard *c, GtkSelectionData *sd, void * p 
  */
 void clip_receive_targets ( GtkClipboard *c, GdkAtom *a, int n, void * p )
 {
-  VikLayersPanel *vlp = p;
+  VikLayersPanel *vlp = (VikLayersPanel *) p;
   int i;
 
   for (i=0; i<n; i++) {
@@ -402,9 +402,9 @@ void a_clipboard_copy_selected ( VikLayersPanel *vlp )
   else {
     if ( vik_treeview_item_get_type ( sel->vt, &iter ) == VIK_TREEVIEW_TYPE_SUBLAYER ) {
       type = VIK_CLIPBOARD_DATA_SUBLAYER;
-      if ( vik_layer_get_interface(layer_type)->copy_item) {
+      if ( vik_layer_get_interface((VikLayerTypeEnum) layer_type)->copy_item) {
         subtype = vik_treeview_item_get_data(sel->vt, &iter);
-        vik_layer_get_interface(layer_type)->copy_item(sel, subtype, vik_treeview_item_get_pointer(sel->vt, &iter), &data, &len );
+        vik_layer_get_interface((VikLayerTypeEnum) layer_type)->copy_item(sel, subtype, vik_treeview_item_get_pointer(sel->vt, &iter), &data, &len );
         // This name is used in setting the text representation of the item on the clipboard.
         name = vik_treeview_item_get_name(sel->vt, &iter);
       }
@@ -414,7 +414,7 @@ void a_clipboard_copy_selected ( VikLayersPanel *vlp )
       type = VIK_CLIPBOARD_DATA_LAYER;
       vik_layer_marshall ( sel, &data, &ilen );
       len = ilen;
-      name = vik_layer_get_name ( vik_treeview_item_get_pointer(sel->vt, &iter) );
+      name = vik_layer_get_name ( (VikLayer *) vik_treeview_item_get_pointer(sel->vt, &iter) );
     }
   }
   a_clipboard_copy ( type, layer_type, subtype, len, name, data );
@@ -422,7 +422,7 @@ void a_clipboard_copy_selected ( VikLayersPanel *vlp )
 
 void a_clipboard_copy( VikClipboardDataType type, uint16_t layer_type, int subtype, unsigned int len, const char* text, uint8_t * data)
 {
-  vik_clipboard_t * vc = malloc(sizeof(*vc) + len);
+  vik_clipboard_t * vc = (vik_clipboard_t *) malloc(sizeof(*vc) + len); /* kamil: + len? */
   GtkClipboard *c = gtk_clipboard_get ( GDK_SELECTION_CLIPBOARD );
 
   vc->type = type;
@@ -462,7 +462,7 @@ bool a_clipboard_paste ( VikLayersPanel *vlp )
  */
 static void clip_determine_viking_type ( GtkClipboard *c, GtkSelectionData *sd, void * p )
 {
-  VikClipboardDataType *vdct = p;
+  VikClipboardDataType *vdct = (VikClipboardDataType *) p;
   // Default value
   *vdct = VIK_CLIPBOARD_DATA_NONE;
   vik_clipboard_t *vc;
@@ -514,10 +514,10 @@ static void clip_determine_type ( GtkClipboard *c, GdkAtom *a, int n, void * p )
 VikClipboardDataType a_clipboard_type ( )
 {
   GtkClipboard *c = gtk_clipboard_get ( GDK_SELECTION_CLIPBOARD );
-  VikClipboardDataType *vcdt = malloc( sizeof (VikClipboardDataType) );
+  VikClipboardDataType *vcdt = (VikClipboardDataType *) malloc( sizeof (VikClipboardDataType) );
 
   gtk_clipboard_request_targets ( c, clip_determine_type, vcdt );
-  int answer = *vcdt;
+  VikClipboardDataType answer = *vcdt;
   free( vcdt );
   return answer;
 }

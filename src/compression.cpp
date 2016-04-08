@@ -48,9 +48,9 @@ static unsigned int uncompress_data(void *uncompressed_buffer, unsigned int unco
 	z_stream stream;
 	int err;
 
-	stream.next_in = compressed_data;
+	stream.next_in = (Bytef *) compressed_data;
 	stream.avail_in = compressed_size;
-	stream.next_out = uncompressed_buffer;
+	stream.next_out = (Bytef *) uncompressed_buffer;
 	stream.avail_out = uncompressed_size;
 	stream.zalloc = (alloc_func)0;
 	stream.zfree = (free_func)0;
@@ -105,14 +105,14 @@ void *unzip_file(char *zip_file, unsigned long *unzip_size)
 
 	if ( sizeof(struct _lfh) != 30 ) {
 		fprintf(stderr, "CRITICAL: Incorrect internal zip header size, should be 30 but is %zd\n", sizeof(struct _lfh) );
-		goto end;
+		return(unzip_data);
 	}
 
 	local_file_header = (struct _lfh *) zip_file;
 	if (GUINT32_FROM_LE(local_file_header->sig) != 0x04034b50) {
 		fprintf(stderr, "WARNING: %s(): wrong format (%d)\n", __PRETTY_FUNCTION__, GUINT32_FROM_LE(local_file_header->sig));
 		free(unzip_data);
-		goto end;
+		return(unzip_data); // kamil: shouldn't we NULL it first?
 	}
 
 	zip_data = zip_file + sizeof(struct _lfh)

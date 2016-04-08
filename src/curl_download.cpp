@@ -156,7 +156,7 @@ int curl_download_uri ( const char *uri, FILE *f, DownloadFileOptions *options, 
     glong response;
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response);
     if (response == 304) {         // 304 = Not Modified
-      res = CURL_DOWNLOAD_NO_NEWER_FILE;
+      res = (CURLcode) CURL_DOWNLOAD_NO_NEWER_FILE;
     } else if (response == 200 ||  // http: 200 = Ok
                response == 226) {  // ftp:  226 = sucess
       double size;
@@ -164,15 +164,15 @@ int curl_download_uri ( const char *uri, FILE *f, DownloadFileOptions *options, 
          when the server has a (incorrect) time earlier than the time on the file we already have */
       curl_easy_getinfo(curl, CURLINFO_SIZE_DOWNLOAD, &size);
       if (size == 0)
-        res = CURL_DOWNLOAD_ERROR;
+        res = (CURLcode) CURL_DOWNLOAD_ERROR;
       else
-        res = CURL_DOWNLOAD_NO_ERROR;
+        res = (CURLcode) CURL_DOWNLOAD_NO_ERROR;
     } else {
       fprintf(stderr, "WARNING: %s: http response: %ld for uri %s\n", __FUNCTION__, response, uri);
-      res = CURL_DOWNLOAD_ERROR;
+      res = (CURLcode) CURL_DOWNLOAD_ERROR;
     }
   } else {
-    res = CURL_DOWNLOAD_ERROR;
+    res = (CURLcode) CURL_DOWNLOAD_ERROR;
   }
   if (!handle)
      curl_easy_cleanup ( curl );

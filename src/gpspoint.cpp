@@ -112,7 +112,7 @@ static char *slashdup(const char *str)
   for ( i = 0, need_bs_count = 0; i < len; i++ )
     if ( str[i] == '\\' || str[i] == '"' )
       need_bs_count++;
-  rv = malloc( (len+need_bs_count+1) * sizeof(char) );
+  rv = (char *) malloc( (len+need_bs_count+1) * sizeof(char) );
   for ( i = 0, j = 0; i < len; i++, j++ )
   {
     if ( str[i] == '\\' || str[i] == '"' )
@@ -147,7 +147,7 @@ static char *deslashndup ( const char *str, uint16_t len )
     bs_count--;
 
   new_len = len - bs_count;
-  rv = malloc( (new_len+1) * sizeof(char) );
+  rv = (char *) malloc( (new_len+1) * sizeof (char));
   for ( i = 0, j = 0; i < len && j < new_len; i++ )
     if ( str[i] == '\\' && !backslash )
       backslash = true;
@@ -302,7 +302,7 @@ bool a_gpspoint_read_file(VikTrwLayer *trw, FILE *f, const char *dirpath ) {
         pl->has_color = true;
       }
 
-      pl->draw_name_mode = line_name_label;
+      pl->draw_name_mode = (VikTrackDrawnameType) line_name_label;
       pl->max_number_dist_labels = line_dist_label;
 
       pl->trackpoints = NULL;

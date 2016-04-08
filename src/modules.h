@@ -22,8 +22,16 @@
 #ifndef __VIKING_MODULES_H
 #define __VIKING_MODULES_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void modules_init();
 void modules_post_init ();
 void modules_uninit();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
