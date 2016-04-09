@@ -33,6 +33,7 @@
 #include "gpx.h"
 #include "acquire.h"
 #include "preferences.h"
+#include "datasources.h"
 
 // Could have an array of programs instead...
 #define GC_PROGRAM1 "geo-nearest"
@@ -102,7 +103,7 @@ void a_datasource_gc_init()
 
 static void * datasource_gc_init ( acq_vik_t *avt )
 {
-  datasource_gc_widgets_t *widgets = malloc(sizeof(*widgets));
+  datasource_gc_widgets_t *widgets = (datasource_gc_widgets_t *) malloc(sizeof(*widgets));
   return widgets;
 }
 

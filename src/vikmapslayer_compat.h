@@ -42,7 +42,7 @@ typedef struct {
   unsigned int drawmode;
   bool (*coord_to_mapcoord) ( const VikCoord *src, double xzoom, double yzoom, MapCoord *dest );
   void (*mapcoord_to_center_coord) ( MapCoord *src, VikCoord *dest );
-  int (*download) ( MapCoord *src, const char *dest_fn, void *handle );
+  DownloadResult_t (*download) ( MapCoord *src, const char *dest_fn, void *handle );
   void *(*download_handle_init) ( );
   void (*download_handle_cleanup) ( void *handle );
   /* TODO: constant size (yay!) */

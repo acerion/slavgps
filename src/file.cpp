@@ -59,7 +59,7 @@ typedef struct _Stack Stack;
 
 struct _Stack {
   Stack *under;
-  void * *data;
+  void * data;
 };
 
 static void pop(Stack **stack) {
@@ -70,7 +70,7 @@ static void pop(Stack **stack) {
 
 static void push(Stack **stack)
 {
-  Stack *tmp = malloc( sizeof ( Stack ) );
+  Stack *tmp = (Stack *) malloc( sizeof ( Stack ) );
   tmp->under = *stack;
   *stack = tmp;
 }
@@ -494,7 +494,7 @@ static bool file_read ( VikAggregateLayer *top, FILE *f, const char *dirpath, Vi
             VikLayerParamData x;
             line += eq_pos+1;
             if ( params[i].type == VIK_LAYER_PARAM_STRING_LIST ) {
-              GList *l = g_list_append ( g_hash_table_lookup ( string_lists, KINT_TO_POINTER ((int) i) ), 
+		    GList *l = g_list_append ( (GList *) g_hash_table_lookup ( string_lists, KINT_TO_POINTER ((int) i) ), 
 					 g_strdup(line) );
               g_hash_table_replace ( string_lists, KINT_TO_POINTER ((int)i), l );
               /* add the value to a list, possibly making a new list.

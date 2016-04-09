@@ -118,7 +118,7 @@ typedef struct zip_source zip_source_t;
 	struct zip* archive = zip_open ( filename, ZIP_CREATE | ZIP_TRUNCATE, &ans );
 	if ( !archive ) {
 		fprintf(stderr, "WARNING: Unable to create archive: '%s' Error code %d\n", filename, ans );
-		goto finish;
+		return ans;
 	}
 
 	// Generate KML file
@@ -138,7 +138,9 @@ typedef struct zip_source zip_source_t;
 		g_error_free (error);
 		zip_discard ( archive );
 		ans = 130;
-		goto kml_cleanup;
+
+		free( dk );
+		return ans;
 	}
 
 	zip_source_t *src_img = zip_source_buffer ( archive, buffer, (int)blen, 0 );
@@ -294,7 +296,7 @@ static bool parse_kml ( const char* buffer, int len, char **name, char **image, 
 	XML_Parser parser = XML_ParserCreate(NULL);
 	enum XML_Status status = XML_STATUS_ERROR;
 
-	xml_data *xd = malloc( sizeof (xml_data) );
+	xml_data *xd = (xml_data *) malloc( sizeof (xml_data) );
 	// Set default (invalid) values;
 	xd->xpath = g_string_new ( "" );
 	xd->c_cdata = g_string_new ( "" );
@@ -321,8 +323,8 @@ static bool parse_kml ( const char* buffer, int len, char **name, char **image, 
 	*name = xd->name; // NB don't free xd->name
 	*image = xd->image; // NB don't free xd->image
 
-	g_strinfree( xd->xpath, true );
-	g_strinfree( xd->c_cdata, true );
+	g_string_free( xd->xpath, true );
+	g_string_free( xd->c_cdata, true );
 	free( xd );
 
 	return status != XML_STATUS_ERROR;
@@ -366,10 +368,10 @@ typedef struct zip_file zip_file_t;
 	zip_t *archive = zip_open ( filename, ZIP_RDONLY, &ans );
 	if ( !archive ) {
 		fprintf(stderr, "WARNING: Unable to open archive: '%s' Error code %d\n", filename, ans );
-		goto cleanup;
+		return ans;
 	}
 
-	zip_int64_t_t zindex = zip_name_locate ( archive, "doc.kml", ZIP_FL_NOCASE | ZIP_FL_ENC_GUESS );
+	zip_int64_t zindex = zip_name_locate ( archive, "doc.kml", ZIP_FL_NOCASE | ZIP_FL_ENC_GUESS );
 	if ( zindex == -1 ) {
 		fprintf(stderr, "WARNING: Unable to find doc.kml\n" );
 		goto kmz_cleanup;
@@ -378,7 +380,7 @@ typedef struct zip_file zip_file_t;
 	struct zip_stat zs;
 	if ( zip_stat_index( archive, zindex, 0, &zs ) == 0) {
 		zip_file_t *zf = zip_fopen_index ( archive, zindex, 0 );
-		char *buffer = malloc(zs.size);
+		char *buffer = (char *) malloc(zs.size);
 		int len = zip_fread ( zf, buffer, zs.size );
 		if ( len != zs.size ) {
 			ans = 128;
@@ -403,7 +405,7 @@ typedef struct zip_file zip_file_t;
 					// Don't know a way to create a pixbuf using streams.
 					// Thus write out to file
 					// Could read in chunks rather than one big buffer, but don't expect images to be that big
-					char *ibuffer = malloc(zs.size);
+					char *ibuffer = (char *) malloc(zs.size);
 					int ilen = zip_fread ( zfi, ibuffer, zs.size );
 					if ( ilen != zs.size ) {
 						ans = 131;

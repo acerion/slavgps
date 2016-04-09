@@ -313,7 +313,7 @@ void vik_window_statusbar_update ( VikWindow *vw, const char* message, vik_statu
     // Do nothing
     return;
 
-  statusbar_idle_data *sid = malloc( sizeof (statusbar_idle_data) );
+  statusbar_idle_data *sid = (statusbar_idle_data *) malloc( sizeof (statusbar_idle_data) );
   sid->vs = vw->viking_vs;
   sid->vs_type = vs_type;
   sid->message = g_strdup( message );
@@ -505,7 +505,7 @@ static void open_window ( VikWindow *vw, GSList *files )
   GSList *cur_file = files;
   while ( cur_file ) {
     // Only open a new window if a viking file
-    char *file_name = cur_file->data;
+    char *file_name = (char *) cur_file->data;
     if (vw->filename && check_file_magic_vik ( file_name ) ) {
       VikWindow *newvw = vik_window_new_window ();
       if (newvw)
@@ -530,14 +530,14 @@ void vik_window_selected_layer(VikWindow *vw, VikLayer *vl)
 
   for (i=0; i<VIK_LAYER_NUM_TYPES; i++) {
     GtkAction *action;
-    layer_interface = vik_layer_get_interface(i);
+    layer_interface = vik_layer_get_interface((VikLayerTypeEnum) i);
     tool_count = layer_interface->tools_count;
 
     for (j = 0; j < tool_count; j++) {
       action = gtk_action_group_get_action(vw->action_group,
                                            layer_interface->tools[j].radioActionEntry.name);
       g_object_set(action, "sensitive", i == vl->type, NULL);
-      toolbar_action_set_sensitive ( vw->viking_vtb, vik_layer_get_interface(i)->tools[j].radioActionEntry.name, i == vl->type );
+      toolbar_action_set_sensitive ( vw->viking_vtb, vik_layer_get_interface((VikLayerTypeEnum) i)->tools[j].radioActionEntry.name, i == vl->type );
     }
   }
 }
@@ -570,14 +570,14 @@ static void vik_window_class_init ( VikWindowClass *klass )
   /* destructor */
   GObjectClass *object_class;
 
-  window_signals[VW_NEWWINDOW_SIGNAL] = g_signal_new ( "newwindow", G_TYPE_FROM_CLASS (klass), G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION, G_STRUCT_OFFSET (VikWindowClass, newwindow), NULL, NULL, g_cclosure_marshal_VOID__VOID, G_TYPE_NONE, 0);
-  window_signals[VW_OPENWINDOW_SIGNAL] = g_signal_new ( "openwindow", G_TYPE_FROM_CLASS (klass), G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION, G_STRUCT_OFFSET (VikWindowClass, openwindow), NULL, NULL, g_cclosure_marshal_VOID__POINTER, G_TYPE_NONE, 1, G_TYPE_POINTER);
+  window_signals[VW_NEWWINDOW_SIGNAL] = g_signal_new ( "newwindow", G_TYPE_FROM_CLASS (klass), (GSignalFlags) (G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION), G_STRUCT_OFFSET (VikWindowClass, newwindow), NULL, NULL, g_cclosure_marshal_VOID__VOID, G_TYPE_NONE, 0);
+  window_signals[VW_OPENWINDOW_SIGNAL] = g_signal_new ( "openwindow", G_TYPE_FROM_CLASS (klass), (GSignalFlags) (G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION), G_STRUCT_OFFSET (VikWindowClass, openwindow), NULL, NULL, g_cclosure_marshal_VOID__POINTER, G_TYPE_NONE, 1, G_TYPE_POINTER);
 
   object_class = G_OBJECT_CLASS (klass);
 
   object_class->finalize = window_finalize;
 
-  parent_class = g_type_class_peek_parent (klass);
+  parent_class = (GObjectClass *) g_type_class_peek_parent (klass);
 
 }
 
@@ -808,8 +808,8 @@ static void vik_window_init ( VikWindow *vw )
   // Must be performed post toolbar init
   int i,j;
   for (i=0; i<VIK_LAYER_NUM_TYPES; i++) {
-    for ( j = 0; j < vik_layer_get_interface(i)->tools_count; j++ ) {
-      toolbar_action_set_sensitive ( vw->viking_vtb, vik_layer_get_interface(i)->tools[j].radioActionEntry.name, false );
+	  for ( j = 0; j < vik_layer_get_interface((VikLayerTypeEnum) i)->tools_count; j++ ) {
+		  toolbar_action_set_sensitive ( vw->viking_vtb, vik_layer_get_interface((VikLayerTypeEnum) i)->tools[j].radioActionEntry.name, false );
     }
   }
 
@@ -962,7 +962,7 @@ static bool key_press_event( VikWindow *vw, GdkEventKey *event, void * data )
   bool map_download = false;
   bool map_download_only_new = true; // Only new or reload
 
-  GdkModifierType modifiers = gtk_accelerator_get_default_mod_mask();
+  GdkModifierType modifiers = (GdkModifierType) gtk_accelerator_get_default_mod_mask();
 
   // Standard 'Refresh' keys: F5 or Ctrl+r
   // Note 'F5' is actually handled via draw_refresh_cb() later on
@@ -1115,7 +1115,7 @@ static void draw_status_tool ( VikWindow *vw )
 {
   if ( vw->current_tool == TOOL_LAYER )
     // Use tooltip rather than the internal name as the tooltip is i8n
-    vik_statusbar_set_message ( vw->viking_vs, VIK_STATUSBAR_TOOL, vik_layer_get_interface(vw->tool_layer_id)->tools[vw->tool_tool_id].radioActionEntry.tooltip );
+    vik_statusbar_set_message ( vw->viking_vs, VIK_STATUSBAR_TOOL, vik_layer_get_interface((VikLayerTypeEnum) vw->tool_layer_id)->tools[vw->tool_tool_id].radioActionEntry.tooltip );
   else
     vik_statusbar_set_message ( vw->viking_vs, VIK_STATUSBAR_TOOL, _(tool_names[vw->current_tool]) );
 }
@@ -1183,13 +1183,13 @@ static void draw_redraw ( VikWindow *vw )
   // Draw highlight (possibly again but ensures it is on top - especially for when tracks overlap)
   if ( vik_viewport_get_draw_highlight (vw->viking_vvp) ) {
     if ( vw->containing_vtl && (vw->selected_tracks || vw->selected_waypoints ) ) {
-      vik_trw_layer_draw_highlight_items ( vw->containing_vtl, vw->selected_tracks, vw->selected_waypoints, vw->viking_vvp );
+        vik_trw_layer_draw_highlight_items ( (VikTrwLayer *) vw->containing_vtl, vw->selected_tracks, vw->selected_waypoints, vw->viking_vvp );
     }
     else if ( vw->containing_vtl && (vw->selected_track || vw->selected_waypoint) ) {
-      vik_trw_layer_draw_highlight_item ( vw->containing_vtl, vw->selected_track, vw->selected_waypoint, vw->viking_vvp );
+        vik_trw_layer_draw_highlight_item ( (VikTrwLayer *) vw->containing_vtl, (VikTrack *) vw->selected_track, (VikWaypoint *) vw->selected_waypoint, vw->viking_vvp );
     }
     else if ( vw->selected_vtl ) {
-      vik_trw_layer_draw_highlight ( vw->selected_vtl, vw->viking_vvp );
+      vik_trw_layer_draw_highlight ( (VikTrwLayer *) vw->selected_vtl, vw->viking_vvp );
     }
   }
   // Other viewport decoration items on top if they are enabled/in use
@@ -1203,12 +1203,12 @@ static void draw_redraw ( VikWindow *vw )
 
 bool draw_buf_done = true;
 
-static bool draw_buf(void * data)
+static int draw_buf(void * data)
 {
-  void * *pass_along = data;
+  void * *pass_along = (void **) data;
   gdk_threads_enter();
-  gdk_draw_drawable (pass_along[0], pass_along[1],
-		     pass_along[2], 0, 0, 0, 0, -1, -1);
+  gdk_draw_drawable ((GdkDrawable *) pass_along[0], (GdkGC *) pass_along[1],
+		     (GdkDrawable *) pass_along[2], 0, 0, 0, 0, -1, -1);
   draw_buf_done = true;
   gdk_threads_leave();
   return false;
@@ -1266,10 +1266,10 @@ static void get_location_strings ( VikWindow *vw, struct UTM utm, char **lat, ch
   if ( vik_viewport_get_drawmode ( vw->viking_vvp ) == VIK_VIEWPORT_DRAWMODE_UTM ) {
     // Reuse lat for the first part (Zone + N or S, and lon for the second part (easting and northing) of a UTM format:
     //  ZONE[N|S] EASTING NORTHING
-    *lat = malloc(4*sizeof(char));
+    *lat = (char *) malloc(4*sizeof(char));
     // NB zone is stored in a char but is an actual number
     snprintf(*lat, 4, "%d%c", utm.zone, utm.letter);
-    *lon = malloc(16*sizeof(char));
+    *lon = (char *) malloc(16*sizeof(char));
     snprintf(*lon, 16, "%d %d", (int)utm.easting, (int)utm.northing);
   }
   else {
@@ -2409,10 +2409,10 @@ static void draw_refresh_cb ( GtkAction *a, VikWindow *vw )
 
 static void menu_addlayer_cb ( GtkAction *a, VikWindow *vw )
 {
- VikLayerTypeEnum type;
-  for ( type = 0; type < VIK_LAYER_NUM_TYPES; type++ ) {
-    if (!strcmp(vik_layer_get_interface(type)->name, gtk_action_get_name(a))) {
-      if ( vik_layers_panel_new_layer ( vw->viking_vlp, type ) ) {
+ int type;
+ for ( type = 0; ((VikLayerTypeEnum) type) < VIK_LAYER_NUM_TYPES; type++ ) {
+    if (!strcmp(vik_layer_get_interface((VikLayerTypeEnum) type)->name, gtk_action_get_name(a))) {
+      if ( vik_layers_panel_new_layer ( vw->viking_vlp, (VikLayerTypeEnum) type ) ) {
         draw_update ( vw );
         vw->modified = true;
       }
@@ -2853,7 +2853,7 @@ static void toolbox_release (toolbox_tools_t *vt, GdkEventButton *event)
 
 void vik_window_enable_layer_tool ( VikWindow *vw, int layer_id, int tool_id )
 {
-  gtk_action_activate ( gtk_action_group_get_action ( vw->action_group, vik_layer_get_interface(layer_id)->tools[tool_id].radioActionEntry.name ) );
+  gtk_action_activate ( gtk_action_group_get_action ( vw->action_group, vik_layer_get_interface((VikLayerTypeEnum) layer_id)->tools[tool_id].radioActionEntry.name ) );
 }
 
 // Be careful with usage - as it may trigger actions being continually alternately by the menu and toolbar items
@@ -2898,12 +2898,12 @@ static void menu_cb ( GtkAction *old, GtkAction *a, VikWindow *vw )
     vw->current_tool = TOOL_SELECT;
   }
   else {
-    VikLayerTypeEnum layer_id;
-    for (layer_id=0; layer_id<VIK_LAYER_NUM_TYPES; layer_id++) {
-      for ( tool_id = 0; tool_id < vik_layer_get_interface(layer_id)->tools_count; tool_id++ ) {
-        if (!g_strcmp0(vik_layer_get_interface(layer_id)->tools[tool_id].radioActionEntry.name, name)) {
+    int layer_id;
+    for (layer_id=0; ((VikLayerTypeEnum) layer_id) < VIK_LAYER_NUM_TYPES; layer_id++) {
+      for ( tool_id = 0; tool_id < vik_layer_get_interface((VikLayerTypeEnum) layer_id)->tools_count; tool_id++ ) {
+        if (!g_strcmp0(vik_layer_get_interface((VikLayerTypeEnum) layer_id)->tools[tool_id].radioActionEntry.name, name)) {
            vw->current_tool = TOOL_LAYER;
-           vw->tool_layer_id = layer_id;
+           vw->tool_layer_id = (VikLayerTypeEnum) layer_id;
            vw->tool_tool_id = tool_id;
         }
       }
@@ -3260,7 +3260,7 @@ static void load_file ( GtkAction *a, VikWindow *vw )
       cur_file = files;
       while ( cur_file ) {
 
-        char *file_name = cur_file->data;
+        char *file_name = (char *) cur_file->data;
         if ( newwindow && check_file_magic_vik ( file_name ) ) {
           // Load first of many .vik files in current window
           if ( first_vik_file ) {
@@ -3798,7 +3798,7 @@ static void save_image_file ( VikWindow *vw, const char *fn, unsigned int w, uns
   GError *error = NULL;
 
   GtkWidget *msgbox = gtk_message_dialog_new ( GTK_WINDOW(vw),
-                                               GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+                                               (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
                                                GTK_MESSAGE_INFO,
                                                GTK_BUTTONS_NONE,
 					       _("Generating image file...") );
@@ -3830,7 +3830,19 @@ static void save_image_file ( VikWindow *vw, const char *fn, unsigned int w, uns
   if ( !pixbuf_to_save ) {
     fprintf(stderr, "WARNING: Failed to generate internal pixmap size: %d x %d\n", w, h);
     gtk_message_dialog_set_markup ( GTK_MESSAGE_DIALOG(msgbox), _("Failed to generate internal image.\n\nTry creating a smaller image.") );
-    goto cleanup;
+
+    // goto cleanup;
+    vik_statusbar_set_message ( vw->viking_vs, VIK_STATUSBAR_INFO, "" );
+    gtk_dialog_add_button ( GTK_DIALOG(msgbox), GTK_STOCK_OK, GTK_RESPONSE_OK );
+    gtk_dialog_run ( GTK_DIALOG(msgbox) ); // Don't care about the result
+    
+    /* pretend like nothing happened ;) */
+    vik_viewport_set_xmpp ( vw->viking_vvp, old_xmpp );
+    vik_viewport_set_ympp ( vw->viking_vvp, old_ympp );
+    vik_viewport_configure ( vw->viking_vvp );
+    draw_update ( vw );
+
+    return;
   }
 
   int ans = 0; // Default to success
@@ -3871,7 +3883,7 @@ static void save_image_file ( VikWindow *vw, const char *fn, unsigned int w, uns
 static void save_image_dir ( VikWindow *vw, const char *fn, unsigned int w, unsigned int h, double zoom, bool save_as_png, unsigned int tiles_w, unsigned int tiles_h )
 {
   unsigned long size = sizeof(char) * (strlen(fn) + 15);
-  char *name_of_file = malloc( size );
+  char *name_of_file = (char *) malloc( size );
   unsigned int x = 1, y = 1;
   struct UTM utm_orig, utm;
 
@@ -4102,7 +4114,7 @@ static void draw_to_image_file ( VikWindow *vw, img_generation_t img_gen )
 {
   /* todo: default for answers inside VikWindow or static (thruout instance) */
   GtkWidget *dialog = gtk_dialog_new_with_buttons ( _("Save to Image File"), GTK_WINDOW(vw),
-                                                  GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+						    (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
                                                   GTK_STOCK_CANCEL,
                                                   GTK_RESPONSE_REJECT,
                                                   GTK_STOCK_OK,
@@ -4557,7 +4569,7 @@ static GtkToggleActionEntry toggle_entries[] = {
 };
 
 // This must match the toggle entries order above
-static void * toggle_entries_toolbar_cb[] = {
+static GCallback toggle_entries_toolbar_cb[] = {
   (GCallback)tb_set_draw_scale,
   (GCallback)tb_set_draw_centermark,
   (GCallback)tb_set_draw_highlight,
@@ -4627,7 +4639,7 @@ static void window_create_ui( VikWindow *window )
   }
   for ( i=0; i < G_N_ELEMENTS (toggle_entries); i++ ) {
     if ( toggle_entries_toolbar_cb[i] )
-      toolbar_action_toggle_entry_register ( window->viking_vtb, &toggle_entries[i], toggle_entries_toolbar_cb[i] );
+	    toolbar_action_toggle_entry_register ( window->viking_vtb, &toggle_entries[i], (void *) toggle_entries_toolbar_cb[i] );
   }
 
   for ( i=0; i < G_N_ELEMENTS (mode_entries); i++ ) {
@@ -4670,60 +4682,60 @@ static void window_create_ui( VikWindow *window )
   for (i=0; i<VIK_LAYER_NUM_TYPES; i++) {
     GtkActionEntry action;
     gtk_ui_manager_add_ui(uim, mid,  "/ui/MainMenu/Layers/", 
-			  vik_layer_get_interface(i)->name,
-			  vik_layer_get_interface(i)->name,
+			  vik_layer_get_interface((VikLayerTypeEnum) i)->name,
+			  vik_layer_get_interface((VikLayerTypeEnum) i)->name,
 			  GTK_UI_MANAGER_MENUITEM, false);
 
-    icon_set = gtk_icon_set_new_from_pixbuf (gdk_pixbuf_from_pixdata (vik_layer_get_interface(i)->icon, false, NULL ));
-    gtk_icon_factory_add (icon_factory, vik_layer_get_interface(i)->name, icon_set);
+    icon_set = gtk_icon_set_new_from_pixbuf (gdk_pixbuf_from_pixdata (vik_layer_get_interface((VikLayerTypeEnum) i)->icon, false, NULL ));
+    gtk_icon_factory_add (icon_factory, vik_layer_get_interface((VikLayerTypeEnum) i)->name, icon_set);
     gtk_icon_set_unref (icon_set);
 
-    action.name = vik_layer_get_interface(i)->name;
-    action.stock_id = vik_layer_get_interface(i)->name;
-    action.label = g_strdup_printf( _("New _%s Layer"), vik_layer_get_interface(i)->name);
-    action.accelerator = vik_layer_get_interface(i)->accelerator;
+    action.name = vik_layer_get_interface((VikLayerTypeEnum) i)->name;
+    action.stock_id = vik_layer_get_interface((VikLayerTypeEnum) i)->name;
+    action.label = g_strdup_printf( _("New _%s Layer"), vik_layer_get_interface((VikLayerTypeEnum) i)->name);
+    action.accelerator = vik_layer_get_interface((VikLayerTypeEnum) i)->accelerator;
     action.tooltip = NULL;
     action.callback = (GCallback)menu_addlayer_cb;
     gtk_action_group_add_actions(action_group, &action, 1, window);
 
     free( (char*)action.label );
 
-    if ( vik_layer_get_interface(i)->tools_count ) {
-      gtk_ui_manager_add_ui(uim, mid,  "/ui/MainMenu/Tools/", vik_layer_get_interface(i)->name, NULL, GTK_UI_MANAGER_SEPARATOR, false);
+    if ( vik_layer_get_interface((VikLayerTypeEnum) i)->tools_count ) {
+      gtk_ui_manager_add_ui(uim, mid,  "/ui/MainMenu/Tools/", vik_layer_get_interface((VikLayerTypeEnum) i)->name, NULL, GTK_UI_MANAGER_SEPARATOR, false);
     }
 
     // Further tool copying for to apply to the UI, also apply menu UI setup
-    for ( j = 0; j < vik_layer_get_interface(i)->tools_count; j++ ) {
+    for ( j = 0; j < vik_layer_get_interface((VikLayerTypeEnum) i)->tools_count; j++ ) {
       tools = g_renew(GtkRadioActionEntry, tools, ntools+1);
       radio = &tools[ntools];
       ntools++;
       
       gtk_ui_manager_add_ui(uim, mid,  "/ui/MainMenu/Tools", 
-			    vik_layer_get_interface(i)->tools[j].radioActionEntry.label,
-			    vik_layer_get_interface(i)->tools[j].radioActionEntry.name,
+			    vik_layer_get_interface((VikLayerTypeEnum) i)->tools[j].radioActionEntry.label,
+			    vik_layer_get_interface((VikLayerTypeEnum) i)->tools[j].radioActionEntry.name,
 			    GTK_UI_MANAGER_MENUITEM, false);
 
-      toolbox_add_tool(window->vt, &(vik_layer_get_interface(i)->tools[j]), i);
-      toolbar_action_tool_entry_register ( window->viking_vtb, &(vik_layer_get_interface(i)->tools[j].radioActionEntry) );
+      toolbox_add_tool(window->vt, &(vik_layer_get_interface((VikLayerTypeEnum) i)->tools[j]), i);
+      toolbar_action_tool_entry_register ( window->viking_vtb, &(vik_layer_get_interface((VikLayerTypeEnum) i)->tools[j].radioActionEntry) );
 
-      *radio = vik_layer_get_interface(i)->tools[j].radioActionEntry;
+      *radio = vik_layer_get_interface((VikLayerTypeEnum) i)->tools[j].radioActionEntry;
       // Overwrite with actual number to use
       radio->value = ntools;
     }
 
     GtkActionEntry action_dl;
-    char *layername = g_strdup_printf ( "Layer%s", vik_layer_get_interface(i)->fixed_layer_name );
+    char *layername = g_strdup_printf ( "Layer%s", vik_layer_get_interface((VikLayerTypeEnum) i)->fixed_layer_name );
     gtk_ui_manager_add_ui(uim, mid,  "/ui/MainMenu/Edit/LayerDefaults",
-			  vik_layer_get_interface(i)->name,
+			  vik_layer_get_interface((VikLayerTypeEnum) i)->name,
 			  layername,
 			  GTK_UI_MANAGER_MENUITEM, false);
     free(layername);
 
     // For default layers use action names of the form 'Layer<LayerName>'
     // This is to avoid clashing with just the layer name used above for the tool actions
-    action_dl.name = g_strconcat("Layer", vik_layer_get_interface(i)->fixed_layer_name, NULL);
+    action_dl.name = g_strconcat("Layer", vik_layer_get_interface((VikLayerTypeEnum) i)->fixed_layer_name, NULL);
     action_dl.stock_id = NULL;
-    action_dl.label = g_strconcat("_", vik_layer_get_interface(i)->name, "...", NULL); // Prepend marker for keyboard accelerator
+    action_dl.label = g_strconcat("_", vik_layer_get_interface((VikLayerTypeEnum) i)->name, "...", NULL); // Prepend marker for keyboard accelerator
     action_dl.accelerator = NULL;
     action_dl.tooltip = NULL;
     action_dl.callback = (GCallback)layer_defaults_cb;
@@ -4739,9 +4751,9 @@ static void window_create_ui( VikWindow *window )
   gtk_ui_manager_insert_action_group (uim, action_group, 0);
 
   for (i=0; i<VIK_LAYER_NUM_TYPES; i++) {
-    for ( j = 0; j < vik_layer_get_interface(i)->tools_count; j++ ) {
+    for ( j = 0; j < vik_layer_get_interface((VikLayerTypeEnum) i)->tools_count; j++ ) {
       GtkAction *action = gtk_action_group_get_action(action_group,
-			    vik_layer_get_interface(i)->tools[j].radioActionEntry.name);
+			    vik_layer_get_interface((VikLayerTypeEnum) i)->tools[j].radioActionEntry.name);
       g_object_set(action, "sensitive", false, NULL);
     }
   }
@@ -4813,7 +4825,7 @@ void vik_window_set_selected_trw_layer ( VikWindow *vw, void * vtl )
   vw->selected_waypoint  = NULL;
   vw->selected_waypoints = NULL;
   // Set highlight thickness
-  vik_viewport_set_highlight_thickness ( vw->viking_vvp, vik_trw_layer_get_property_tracks_line_thickness (vw->containing_vtl) );
+  vik_viewport_set_highlight_thickness ( vw->viking_vvp, vik_trw_layer_get_property_tracks_line_thickness ((VikTrwLayer *) vw->containing_vtl) );
 }
 
 GHashTable *vik_window_get_selected_tracks ( VikWindow *vw )
@@ -4831,7 +4843,7 @@ void vik_window_set_selected_tracks ( VikWindow *vw, GHashTable *ght, void * vtl
   vw->selected_waypoint  = NULL;
   vw->selected_waypoints = NULL;
   // Set highlight thickness
-  vik_viewport_set_highlight_thickness ( vw->viking_vvp, vik_trw_layer_get_property_tracks_line_thickness (vw->containing_vtl) );
+  vik_viewport_set_highlight_thickness ( vw->viking_vvp, vik_trw_layer_get_property_tracks_line_thickness ((VikTrwLayer *) vw->containing_vtl) );
 }
 
 void * vik_window_get_selected_track ( VikWindow *vw )
@@ -4849,7 +4861,7 @@ void vik_window_set_selected_track ( VikWindow *vw, void * vt, void * vtl )
   vw->selected_waypoint  = NULL;
   vw->selected_waypoints = NULL;
   // Set highlight thickness
-  vik_viewport_set_highlight_thickness ( vw->viking_vvp, vik_trw_layer_get_property_tracks_line_thickness (vw->containing_vtl) );
+  vik_viewport_set_highlight_thickness ( vw->viking_vvp, vik_trw_layer_get_property_tracks_line_thickness ((VikTrwLayer *) vw->containing_vtl) );
 }
 
 GHashTable *vik_window_get_selected_waypoints ( VikWindow *vw )

@@ -97,10 +97,10 @@ typedef enum {
         tt_waypoint,
         tt_waypoint_coord,
         tt_waypoint_name,
-} tag_type;
+} tag_type_t;
 
 typedef struct tag_mapping {
-        tag_type tag_type;              /* enum from above for this tag */
+        tag_type_t tag_type;              /* enum from above for this tag */
         const char *tag_name;           /* xpath-ish tag name */
 } tag_mapping;
 
@@ -180,10 +180,10 @@ tag_mapping tag_path_map[] = {
         { tt_trk_trkseg_trkpt_name, "/gpx/rte/rtept/name" },
         { tt_trk_trkseg_trkpt_ele, "/gpx/rte/rtept/ele" },
 
-        {0}
+        {(tag_type_t) 0}
 };
 
-static tag_type get_tag(const char *t)
+static tag_type_t get_tag(const char *t)
 {
         tag_mapping *tm;
         for (tm = tag_path_map; tm->tag_type != 0; tm++)
@@ -194,7 +194,7 @@ static tag_type get_tag(const char *t)
 
 /******************************************/
 
-tag_type current_tag = tt_unknown;
+tag_type_t current_tag = tt_unknown;
 GString *xpath = NULL;
 GString *c_cdata = NULL;
 
@@ -750,7 +750,7 @@ entitize(const char * str)
         }
 
         /* enough space for the whole string plus entity replacements, if any */
-        tmp = malloc((strlen(str) + elen + 1));
+        tmp = (char *) malloc((strlen(str) + elen + 1));
         strcpy(tmp, str);
 
         /* no entity replacements */

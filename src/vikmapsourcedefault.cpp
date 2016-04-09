@@ -312,7 +312,7 @@ vik_map_source_default_class_init (VikMapSourceDefaultClass *klass)
                                0  /* minimum value */,
                                G_MAXUINT16 /* maximum value */,
                                0  /* default value */,
-                               G_PARAM_READWRITE);
+                               (GParamFlags) G_PARAM_READWRITE);
 	g_object_class_install_property (object_class, PROP_TILESIZE_X, pspec);
 
 	pspec = g_param_spec_uint ("tilesize-y",
@@ -321,7 +321,7 @@ vik_map_source_default_class_init (VikMapSourceDefaultClass *klass)
                                0  /* minimum value */,
                                G_MAXUINT16 /* maximum value */,
                                0  /* default value */,
-                               G_PARAM_READWRITE);
+                               (GParamFlags) G_PARAM_READWRITE);
 	g_object_class_install_property (object_class, PROP_TILESIZE_Y, pspec);
 
 	pspec = g_param_spec_enum("drawmode",
@@ -329,14 +329,14 @@ vik_map_source_default_class_init (VikMapSourceDefaultClass *klass)
                               "The mode used to draw map",
                               VIK_TYPE_VIEWPORT_DRAW_MODE,
                               VIK_VIEWPORT_DRAWMODE_UTM,
-                              G_PARAM_READWRITE);
+                              (GParamFlags) G_PARAM_READWRITE);
     g_object_class_install_property(object_class, PROP_DRAWMODE, pspec);                                    
 
 	pspec = g_param_spec_string ("copyright",
 	                             "Copyright",
 	                             "The copyright of the map source",
 	                             NULL,
-	                             G_PARAM_READWRITE);
+	                             (GParamFlags) G_PARAM_READWRITE);
 	g_object_class_install_property (object_class, PROP_COPYRIGHT, pspec);
 
 	pspec = g_param_spec_string ("license",

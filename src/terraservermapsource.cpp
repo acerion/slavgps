@@ -149,7 +149,7 @@ terraserver_map_source_class_init (TerraserverMapSourceClass *klass)
                                0  /* minimum value */,
                                G_MAXUINT8 /* maximum value */,
                                0  /* default value */,
-                               G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+                               (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
 	g_object_class_install_property (object_class, PROP_TYPE, pspec);
 
 	g_type_class_add_private (klass, sizeof (TerraserverMapSourcePrivate));
@@ -282,7 +282,7 @@ terraserver_map_source_new_with_id (uint16_t id, const char *label, int type)
 		fprintf(stderr, "CRITICAL: Houston, we've had a problem. type=%d\n", type);
 	}
 
-	return g_object_new(TERRASERVER_TYPE_MAP_SOURCE,
+	return (TerraserverMapSource *) g_object_new(TERRASERVER_TYPE_MAP_SOURCE,
 	                    "id", id, "label", label, "type", type,
 	                    "copyright", copyright,
 	                    NULL);

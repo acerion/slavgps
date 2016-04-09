@@ -32,6 +32,7 @@
 #endif
 
 #include <stdlib.h>
+#include <assert.h>
 
 #include "map_ids.h"
 #include "globals.h"
@@ -45,7 +46,7 @@
 
 static bool expedia_coord_to_mapcoord ( const VikCoord *src, double xzoom, double yzoom, MapCoord *dest );
 static void expedia_mapcoord_to_center_coord ( MapCoord *src, VikCoord *dest );
-static int expedia_download ( MapCoord *src, const char *dest_fn, void *handle );
+static DownloadResult_t expedia_download ( MapCoord *src, const char *dest_fn, void *handle );
 static void * expedia_handle_init ( );
 static void expedia_handle_cleanup ( void *handle );
 
