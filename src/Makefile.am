@@ -69,12 +69,12 @@ libviking_a_SOURCES = \
 	authors.h \
 	documenters.h \
 	dialog.cpp dialog.h \
-	util.c util.h \
+	util.cpp util.h \
 	ui_util.cpp ui_util.h \
 	download.cpp download.h \
 	jpg.cpp jpg.h \
 	vikenumtypes.cpp vikenumtypes.h \
-	viktreeview.c viktreeview.h \
+	viktreeview.cpp viktreeview.h \
 	viktrwlayer.cpp viktrwlayer.h \
 	viklayer.cpp viklayer.h \
 	viklayerspanel.cpp viklayerspanel.h \
@@ -90,20 +90,20 @@ libviking_a_SOURCES = \
 	vikgototool.cpp vikgototool.h \
 	vikgotoxmltool.cpp vikgotoxmltool.h \
 	vikgoto.cpp vikgoto.h \
-	viktrwlayer_export.c viktrwlayer_export.h \
-	viktrwlayer_tpwin.c viktrwlayer_tpwin.h \
-	viktrwlayer_wpwin.c viktrwlayer_wpwin.h \
-	viktrwlayer_propwin.c viktrwlayer_propwin.h \
-	viktrwlayer_analysis.c viktrwlayer_analysis.h \
-	viktrwlayer_tracklist.c viktrwlayer_tracklist.h \
-	viktrwlayer_waypointlist.c viktrwlayer_waypointlist.h \
+	viktrwlayer_export.cpp viktrwlayer_export.h \
+	viktrwlayer_tpwin.cpp viktrwlayer_tpwin.h \
+	viktrwlayer_wpwin.cpp viktrwlayer_wpwin.h \
+	viktrwlayer_propwin.cpp viktrwlayer_propwin.h \
+	viktrwlayer_analysis.cpp viktrwlayer_analysis.h \
+	viktrwlayer_tracklist.cpp viktrwlayer_tracklist.h \
+	viktrwlayer_waypointlist.cpp viktrwlayer_waypointlist.h \
 	vikrouting.cpp vikrouting.h \
 	vikroutingengine.cpp vikroutingengine.h \
 	vikroutingwebengine.cpp vikroutingwebengine.h \
 	vikutils.cpp vikutils.h \
-	toolbar.c toolbar.h toolbar.xml.h \
+	toolbar.cpp toolbar.h toolbar.xml.h \
 	thumbnails.cpp thumbnails.h \
-	background.c background.h \
+	background.cpp background.h \
 	vikradiogroup.cpp vikradiogroup.h \
 	vikcoord.cpp vikcoord.h \
 	mapcache.cpp mapcache.h \
@@ -137,22 +137,22 @@ libviking_a_SOURCES = \
 	vikdatetime_edit_dialog.cpp vikdatetime_edit_dialog.h \
 	vikfilelist.cpp vikfilelist.h \
 	vikexttool.cpp vikexttool.h \
-	vikexttools.c vikexttools.h \
-	vikwebtool.c vikwebtool.h \
-	vikwebtoolcenter.c vikwebtoolcenter.h \
-	vikwebtoolbounds.c vikwebtoolbounds.h \
-	vikwebtoolformat.c vikwebtoolformat.h \
-	vikexttool_datasources.c vikexttool_datasources.h \
-	vikwebtool_datasource.c vikwebtool_datasource.h \
-	dems.c dems.h \
-	srtm_continent.c \
+	vikexttools.cpp vikexttools.h \
+	vikwebtool.cpp vikwebtool.h \
+	vikwebtoolcenter.cpp vikwebtoolcenter.h \
+	vikwebtoolbounds.cpp vikwebtoolbounds.h \
+	vikwebtoolformat.cpp vikwebtoolformat.h \
+	vikexttool_datasources.cpp vikexttool_datasources.h \
+	vikwebtool_datasource.cpp vikwebtool_datasource.h \
+	dems.cpp dems.h \
+	srtm_continent.cpp \
 	uibuilder.c uibuilder.h \
-	print-preview.c print-preview.h \
-	print.c print.h \
-	kmz.c kmz.h \
-	viklayer_defaults.c viklayer_defaults.h \
-	settings.c settings.h \
-	preferences.c preferences.h \
+	print-preview.cpp print-preview.h \
+	print.cpp print.h \
+	kmz.cpp kmz.h \
+	viklayer_defaults.cpp viklayer_defaults.h \
+	settings.cpp settings.h \
+	preferences.cpp preferences.h \
 	misc/strtod.c misc/strtod.h \
 	misc/kdtree.c misc/kdtree.h
 
@@ -169,7 +169,7 @@ endif
 
 if TERRASERVER
 libviking_a_SOURCES += \
-	terraservermapsource.c terraservermapsource.h \
+	terraservermapsource.cpp terraservermapsource.h \
 	terraserver.cpp terraserver.h
 endif
 
