@@ -1,3 +1,11 @@
+2016.04.09
+Since today every source code file in src/ directory (with exception
+of files in src/libjpeg and src/misc) has extension .cpp (or .h, of
+course) and is compiled with C++ compiler. The compilation of whole
+application is successful, and resulting executable doesn't crash too
+often. I can even open a gpx file and do few other operations.
+This small milestone has been achieved with commit b07dc5bb6e958739c9fd28d247002b2d64895b27
+
 2016.04.05
 I'm starting to convert files to cpp. For now it's just change of file
 name extension + changes necessary to compile a file with g++.
