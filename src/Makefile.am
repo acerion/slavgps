@@ -30,15 +30,15 @@ BUILT_SOURCES = authors.h documenters.h
 vikenumtypes.h: vikenumtypes.h.template $(ENUM_H_FILES) $(GLIB_MKENUMS)
 	(cd $(srcdir) && $(GLIB_MKENUMS) --template vikenumtypes.h.template $(ENUM_H_FILES)) > $@
 
-vikenumtypes.c: vikenumtypes.c.template $(ENUM_H_FILES) $(GLIB_MKENUMS)
-	(cd $(srcdir) && $(GLIB_MKENUMS) --template vikenumtypes.c.template $(ENUM_H_FILES)) > $@
+vikenumtypes.cpp: vikenumtypes.cpp.template $(ENUM_H_FILES) $(GLIB_MKENUMS)
+	(cd $(srcdir) && $(GLIB_MKENUMS) --template vikenumtypes.cpp.template $(ENUM_H_FILES)) > $@
 
 EXTRA_DIST = \
 	docbook2documenters.xsl \
 	vikenumtypes.h.template \
-	vikenumtypes.c.template
+	vikenumtypes.cpp.template
 
-BUILT_SOURCES += vikenumtypes.h vikenumtypes.c
+BUILT_SOURCES += vikenumtypes.h vikenumtypes.cpp
 
 $(BUILT_SOURCES): $(srcdir)/Makefile.am
 
@@ -217,7 +217,7 @@ libviking_a_SOURCES += \
 	mapnik_interface.cpp mapnik_interface.h
 endif
 
-viking_SOURCES = main.c
+viking_SOURCES = main.cpp
 
 LDADD           = libviking.a $(PACKAGE_LIBS) @EXPAT_LIBS@ @LIBCURL@ icons/libicons.a
 if WINDOWS
