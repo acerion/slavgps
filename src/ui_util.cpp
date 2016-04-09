@@ -32,6 +32,7 @@
 #include <glib/gprintf.h>
 
 #include "util.h"
+#include "ui_util.h"
 #include "dialog.h"
 
 #ifdef WINDOWS
@@ -48,11 +49,11 @@ static bool spawn_command_line_async(const char * cmd,
 
   cmdline = g_strdup_printf("%s '%s'", cmd, arg);
   fprintf(stderr, "DEBUG: Running: %s\n", cmdline);
-    
+
   status = g_spawn_command_line_async(cmdline, NULL);
 
   free(cmdline);
- 
+
   return status;
 }
 #endif

@@ -32,6 +32,8 @@
 #include <glib.h>
 #include <glib/gstdio.h>
 
+#include "dir.h"
+
 /**
  * For external use, free the result
  * Made externally available primarily to detect when Viking is first run
@@ -77,9 +79,9 @@ const char *a_get_viking_dir()
 
 /**
  * a_get_viking_data_home:
- * 
+ *
  * Retrieves the XDG compliant user's data directory.
- * 
+ *
  * Retuns: the directory (can be NULL). Should be freed with g_free.
  */
 char *
@@ -98,7 +100,7 @@ a_get_viking_data_home()
 
 /**
  * a_get_viking_data_path:
- * 
+ *
  * Retrieves the configuration path.
  *
  * Returns: list of directories to scan for data. Should be freed with g_strfreev.
@@ -115,7 +117,7 @@ a_get_viking_data_path()
 #endif
   if (xdg_data_dirs == NULL)
   {
-    /* Default value specified in 
+    /* Default value specified in
      http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html
      */
     xdg_data_dirs = "/usr/local/share/:/usr/share/";
