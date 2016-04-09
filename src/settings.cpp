@@ -37,6 +37,8 @@
 #include <stdio.h>
 #include "dir.h"
 
+#include "settings.h"
+
 static GKeyFile *keyfile;
 
 #define VIKING_INI_FILE "viking.ini"

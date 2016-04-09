@@ -25,6 +25,7 @@
 #endif
 
 #include "vikexttools.h"
+#include "vikexttool_datasources.h"
 
 #include <string.h>
 #include <stdlib.h>
