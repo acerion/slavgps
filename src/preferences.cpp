@@ -96,7 +96,7 @@ static bool preferences_load_from_file()
         break;
       if ( split_string_from_file_on_equals ( buf, &key, &val ) ) {
         // if it's not in there, ignore it
-        oldval = g_hash_table_lookup ( values, key );
+	      oldval = (VikLayerTypedParamData *) g_hash_table_lookup ( values, key );
         if ( ! oldval ) {
           free(key);
           free(val);
@@ -255,5 +255,5 @@ VikLayerParamData *a_preferences_get(const char *key)
     preferences_load_from_file();
     loaded = true;
   }
-  return g_hash_table_lookup ( values, key );
+  return (VikLayerParamData *) g_hash_table_lookup ( values, key );
 }

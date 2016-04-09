@@ -194,9 +194,9 @@ static bool defaults_load_from_file()
 	free( fn );
 
 	// Ensure if have a key file, then any missing values are set from the internal defaults
-	VikLayerTypeEnum layer;
-	for ( layer = 0; layer < VIK_LAYER_NUM_TYPES; layer++ ) {
-		use_internal_defaults_if_missing_default ( layer );
+	int layer;
+	for ( layer = 0; ((VikLayerTypeEnum) layer) < VIK_LAYER_NUM_TYPES; layer++ ) {
+		use_internal_defaults_if_missing_default ( (VikLayerTypeEnum) layer );
 	}
 
 	return true;
@@ -406,9 +406,9 @@ VikLayerParamData a_layer_defaults_get ( const char *layername, const char *para
 bool a_layer_defaults_save ()
 {
 	// Generate defaults
-	VikLayerTypeEnum layer;
-	for ( layer = 0; layer < VIK_LAYER_NUM_TYPES; layer++ ) {
-		use_internal_defaults_if_missing_default ( layer );
+	int layer;
+	for ( layer = 0; (VikLayerTypeEnum) layer < VIK_LAYER_NUM_TYPES; layer++ ) {
+		use_internal_defaults_if_missing_default ( (VikLayerTypeEnum) layer );
 	}
 
 	return layer_defaults_save_to_file();

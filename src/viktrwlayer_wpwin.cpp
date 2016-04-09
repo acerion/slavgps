@@ -104,7 +104,7 @@ char *a_dialog_waypoint ( GtkWindow *parent, char *default_name, VikTrwLayer *vt
 {
   GtkWidget *dialog = gtk_dialog_new_with_buttons (_("Waypoint Properties"),
                                                    parent,
-                                                   GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+                                                   (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
                                                    GTK_STOCK_CANCEL,
                                                    GTK_RESPONSE_REJECT,
                                                    GTK_STOCK_OK,

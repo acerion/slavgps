@@ -155,7 +155,7 @@ static void trw_layer_waypoint_select ( menu_array_values values )
 
 	if ( values[MA_WPT_UUID] ) {
 		GtkTreeIter *iter = NULL;
-		iter = g_hash_table_lookup ( vik_trw_layer_get_waypoints_iters(vtl), values[MA_WPT_UUID] );
+		iter = (GtkTreeIter *) g_hash_table_lookup ( vik_trw_layer_get_waypoints_iters(vtl), values[MA_WPT_UUID] );
 
 		if ( iter )
 			vik_treeview_select_iter ( VIK_LAYER(vtl)->vt, iter, true );
@@ -170,8 +170,8 @@ static void trw_layer_waypoint_properties ( menu_array_values values )
 	if ( wpt && wpt->name ) {
 		// Kill off this dialog to allow interaction with properties window
 		//  since the properties also allows waypoint manipulations it won't cause conflicts here.
-		GtkWidget *gw = gtk_widget_get_toplevel ( values[MA_TREEVIEW] );
-		waypoint_close_cb ( gw, 0, values[MA_WPTS_LIST] );
+		GtkWidget *gw = gtk_widget_get_toplevel ((GtkWidget *) values[MA_TREEVIEW] );
+		waypoint_close_cb ( gw, 0, (GList *) values[MA_WPTS_LIST] );
 
 		bool updated = false;
 		char *new_name = a_dialog_waypoint ( VIK_GTK_WINDOW_FROM_LAYER(vtl), wpt->name, vtl, wpt, vik_trw_layer_get_coord_mode(vtl), false, &updated );
@@ -412,7 +412,7 @@ static bool trw_layer_waypoint_menu_popup ( GtkWidget *tree_view,
 	udataU.wp   = wpt;
 	udataU.uuid = NULL;
 
-	void * *wptf;
+	void * wptf;
 	wptf = g_hash_table_find ( vik_trw_layer_get_waypoints(vtl), (GHRFunc) trw_layer_waypoint_find_uuid, &udataU );
 
 	if ( wptf && udataU.uuid ) {

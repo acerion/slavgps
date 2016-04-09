@@ -76,8 +76,8 @@ struct _VikTreeview {
 static void vik_treeview_finalize ( GObject *gob );
 static void vik_treeview_add_columns ( VikTreeview *vt );
 
-static bool vik_treeview_drag_data_received ( GtkTreeDragDest *drag_dest, GtkTreePath *dest, GtkSelectionData *selection_data );
-static bool vik_treeview_drag_data_delete ( GtkTreeDragSource *drag_source, GtkTreePath *path );
+static int vik_treeview_drag_data_received ( GtkTreeDragDest *drag_dest, GtkTreePath *dest, GtkSelectionData *selection_data );
+static int vik_treeview_drag_data_delete ( GtkTreeDragSource *drag_source, GtkTreePath *path );
 
 G_DEFINE_TYPE (VikTreeview, vik_treeview, GTK_TYPE_TREE_VIEW)
 
@@ -123,12 +123,12 @@ static void vik_treeview_class_init ( VikTreeviewClass *klass )
                                                                                                                                  
   object_class->finalize = vik_treeview_finalize;
                                                                                                                                  
-  parent_class = g_type_class_peek_parent (klass);
+  parent_class = (GObjectClass *) g_type_class_peek_parent (klass);
 
-  treeview_signals[VT_ITEM_EDITED_SIGNAL] = g_signal_new ( "item_edited", G_TYPE_FROM_CLASS (klass), G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION, G_STRUCT_OFFSET (VikTreeviewClass, item_edited), NULL, NULL, 
+  treeview_signals[VT_ITEM_EDITED_SIGNAL] = g_signal_new ( "item_edited", G_TYPE_FROM_CLASS (klass), (GSignalFlags) (G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION), G_STRUCT_OFFSET (VikTreeviewClass, item_edited), NULL, NULL, 
     vik_cclosure_marshal_VOID__POINTER_POINTER, G_TYPE_NONE, 2, G_TYPE_POINTER, G_TYPE_POINTER);
 
-  treeview_signals[VT_ITEM_TOGGLED_SIGNAL] = g_signal_new ( "item_toggled", G_TYPE_FROM_CLASS (klass), G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION, G_STRUCT_OFFSET (VikTreeviewClass, item_toggled), NULL, NULL,
+  treeview_signals[VT_ITEM_TOGGLED_SIGNAL] = g_signal_new ( "item_toggled", G_TYPE_FROM_CLASS (klass), (GSignalFlags) (G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION), G_STRUCT_OFFSET (VikTreeviewClass, item_toggled), NULL, NULL,
     g_cclosure_marshal_VOID__POINTER, G_TYPE_NONE, 1, G_TYPE_POINTER );
 }
 
@@ -398,7 +398,7 @@ static void vik_treeview_add_columns ( VikTreeview *vt )
 
 static void select_cb(GtkTreeSelection *selection, void * data)
 {
-  VikTreeview *vt = data;
+	VikTreeview *vt = (VikTreeview *) data;
   int type;
   GtkTreeIter iter, parent;
   VikLayer *vl;
@@ -453,9 +453,9 @@ static void select_cb(GtkTreeSelection *selection, void * data)
 
 }
 
-static bool vik_treeview_selection_filter(GtkTreeSelection *selection, GtkTreeModel *model, GtkTreePath *path, bool path_currently_selected, void * data)
+static int vik_treeview_selection_filter(GtkTreeSelection *selection, GtkTreeModel *model, GtkTreePath *path, int path_currently_selected, void * data)
 {
-  VikTreeview *vt = data;
+  VikTreeview *vt = (VikTreeview *) data;
 
   if (vt->was_a_toggle) {
     vt->was_a_toggle = false;
@@ -508,16 +508,16 @@ void vik_treeview_init ( VikTreeview *vt )
     GtkTreeDragSourceIface *isrc;
     GtkTreeDragDestIface *idest;
 
-    isrc = g_type_interface_peek (g_type_class_peek(G_OBJECT_TYPE(vt->model)), GTK_TYPE_TREE_DRAG_SOURCE);
+    isrc = (GtkTreeDragSourceIface *) g_type_interface_peek (g_type_class_peek(G_OBJECT_TYPE((GtkTreeDragSourceIface *)vt->model)), GTK_TYPE_TREE_DRAG_SOURCE);
     isrc->drag_data_delete = vik_treeview_drag_data_delete;
 
-    idest = g_type_interface_peek (g_type_class_peek(G_OBJECT_TYPE(vt->model)), GTK_TYPE_TREE_DRAG_DEST);
+    idest = (GtkTreeDragDestIface *) g_type_interface_peek (g_type_class_peek(G_OBJECT_TYPE(vt->model)), GTK_TYPE_TREE_DRAG_DEST);
     idest->drag_data_received = vik_treeview_drag_data_received;
   }      
 
-  VikLayerTypeEnum i;
-  for ( i = 0; i < VIK_LAYER_NUM_TYPES; i++ )
-    vt->layer_type_icons[i] = vik_layer_load_icon ( i ); /* if icon can't be loaded, it will be null and simply not be shown. */
+  int i;
+  for ( i = 0; ((VikLayerTypeEnum) i) < VIK_LAYER_NUM_TYPES; i++ )
+    vt->layer_type_icons[i] = vik_layer_load_icon ((VikLayerTypeEnum) i); /* if icon can't be loaded, it will be null and simply not be shown. */
 
   gtk_tree_view_set_reorderable (GTK_TREE_VIEW(vt), true);
   g_signal_connect(gtk_tree_view_get_selection (GTK_TREE_VIEW (vt)), "changed",
@@ -819,7 +819,7 @@ void vik_treeview_sort_children ( VikTreeview *vt, GtkTreeIter *parent, vik_laye
                      KINT_TO_POINTER(order));
 
   // As the sorted list contains the reordered position offsets, extract this and then apply to the treeview
-  int *positions = malloc( sizeof(int) * length );
+  int *positions = (int *) malloc( sizeof(int) * length );
   for ( ii = 0; ii < length; ii++ ) {
     positions[ii] = sort_array[ii].offset;
     free( sort_array[ii].name );
@@ -834,15 +834,15 @@ void vik_treeview_sort_children ( VikTreeview *vt, GtkTreeIter *parent, vik_laye
 static void vik_treeview_finalize ( GObject *gob )
 {
   VikTreeview *vt = VIK_TREEVIEW ( gob );
-  VikLayerTypeEnum i;
-  for ( i = 0; i < VIK_LAYER_NUM_TYPES; i++ )
+  int i;
+  for ( i = 0; ((VikLayerTypeEnum) i) < VIK_LAYER_NUM_TYPES; i++ )
     if ( vt->layer_type_icons[i] != NULL )
       g_object_unref ( G_OBJECT(vt->layer_type_icons[i]) );
 
   G_OBJECT_CLASS(parent_class)->finalize(gob);
 }
 
-static bool vik_treeview_drag_data_received (GtkTreeDragDest *drag_dest, GtkTreePath *dest, GtkSelectionData *selection_data)
+static int vik_treeview_drag_data_received (GtkTreeDragDest *drag_dest, GtkTreePath *dest, GtkSelectionData *selection_data)
 {
   GtkTreeModel *tree_model;
   GtkTreeModel *src_model = NULL;
@@ -896,9 +896,9 @@ static bool vik_treeview_drag_data_received (GtkTreeDragDest *drag_dest, GtkTree
 	       vik_treeview_item_get_type(vt, &dest_parent) != VIK_TREEVIEW_TYPE_LAYER);
 
       
-      vl_src = vik_treeview_item_get_parent(vt, &src_iter);
+      vl_src = (VikLayer *) vik_treeview_item_get_parent(vt, &src_iter);
       assert ( vl_src );
-      vl_dest = vik_treeview_item_get_pointer(vt, &dest_parent);
+      vl_dest = (VikLayer *) vik_treeview_item_get_pointer(vt, &dest_parent);
 
       /* TODO: might want to allow different types, and let the clients handle how they want */
       if (vl_src->type == vl_dest->type && vik_layer_get_interface(vl_dest->type)->drag_drop_request) {
@@ -920,7 +920,7 @@ static bool vik_treeview_drag_data_received (GtkTreeDragDest *drag_dest, GtkTree
 /* 
  * This may not be necessary.
  */
-static bool vik_treeview_drag_data_delete ( GtkTreeDragSource *drag_source, GtkTreePath *path )
+static int vik_treeview_drag_data_delete ( GtkTreeDragSource *drag_source, GtkTreePath *path )
 {
   char *s_dest = gtk_tree_path_to_string(path);
   fprintf(stdout, _("delete data from %s\n"), s_dest);

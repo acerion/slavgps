@@ -104,14 +104,10 @@ typedef struct {
 static config_t extra_widget_data;
 
 static VikLayerParam prefs[] = {
-	{ VIK_LAYER_NUM_TYPES, TOOLBAR_PARAMS_NAMESPACE "append_to_menu", VIK_LAYER_PARAM_BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Append to Menu:"), VIK_LAYER_WIDGET_CHECKBUTTON, NULL, NULL,
-	  N_("Pack the toolbar to the main menu to save vertical space"), NULL, NULL, NULL },
-	{ VIK_LAYER_NUM_TYPES, TOOLBAR_PARAMS_NAMESPACE "icon_size", VIK_LAYER_PARAM_UINT, VIK_LAYER_GROUP_NONE, N_("Icon Size:"), VIK_LAYER_WIDGET_COMBOBOX, params_icon_size, NULL,
-	  NULL, NULL, NULL, NULL },
-	{ VIK_LAYER_NUM_TYPES, TOOLBAR_PARAMS_NAMESPACE "icon_style", VIK_LAYER_PARAM_UINT, VIK_LAYER_GROUP_NONE, N_("Icon Style:"), VIK_LAYER_WIDGET_COMBOBOX, params_icon_style, NULL,
-	  NULL, NULL, NULL, NULL },
-	{ VIK_LAYER_NUM_TYPES, TOOLBAR_PARAMS_NAMESPACE "NOTSAVED1", VIK_LAYER_PARAM_PTR, VIK_LAYER_GROUP_NONE, N_("Customize:"), VIK_LAYER_WIDGET_BUTTON, N_("Customize Buttons"), NULL,
-	  NULL, NULL, NULL, NULL },
+	{ VIK_LAYER_NUM_TYPES, TOOLBAR_PARAMS_NAMESPACE "append_to_menu", VIK_LAYER_PARAM_BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Append to Menu:"), VIK_LAYER_WIDGET_CHECKBUTTON, NULL,                    NULL, N_("Pack the toolbar to the main menu to save vertical space"), NULL, NULL, NULL },
+	{ VIK_LAYER_NUM_TYPES, TOOLBAR_PARAMS_NAMESPACE "icon_size",      VIK_LAYER_PARAM_UINT,    VIK_LAYER_GROUP_NONE, N_("Icon Size:"),      VIK_LAYER_WIDGET_COMBOBOX,    params_icon_size,        NULL, NULL, NULL, NULL, NULL },
+	{ VIK_LAYER_NUM_TYPES, TOOLBAR_PARAMS_NAMESPACE "icon_style",     VIK_LAYER_PARAM_UINT,    VIK_LAYER_GROUP_NONE, N_("Icon Style:"),     VIK_LAYER_WIDGET_COMBOBOX,    params_icon_style,       NULL, NULL, NULL, NULL, NULL },
+	{ VIK_LAYER_NUM_TYPES, TOOLBAR_PARAMS_NAMESPACE "NOTSAVED1",      VIK_LAYER_PARAM_PTR,     VIK_LAYER_GROUP_NONE, N_("Customize:"),      VIK_LAYER_WIDGET_BUTTON,      (void *) N_("Customize Buttons"), NULL, NULL, NULL, NULL, NULL },
 };
 
 // Global storage to enable freeing upon closure
@@ -157,7 +153,7 @@ void a_toolbar_init (void)
 	tmp.u = 0;
 #endif
 	a_preferences_register (&prefs[i++], tmp, TOOLBAR_PARAMS_GROUP_KEY);
-	tmp.ptr = toolbar_configure_cb;
+	tmp.ptr = (void *) toolbar_configure_cb;
 	a_preferences_register (&prefs[i++], tmp, TOOLBAR_PARAMS_GROUP_KEY);
 
 	// Signal data hash
@@ -276,10 +272,10 @@ void toolbar_action_toggle_entry_register(VikToolbar *vtb, GtkToggleActionEntry 
 	g_return_if_fail(VIK_IS_TOOLBAR(vtb));
 	g_return_if_fail(action != NULL);
 
-	GtkToggleActionEntry *myaction = malloc(sizeof (GtkToggleActionEntry) );
+	GtkToggleActionEntry *myaction = (GtkToggleActionEntry *) malloc(sizeof (GtkToggleActionEntry) );
 	memcpy ( myaction, action, sizeof (GtkToggleActionEntry) );
 	// Overwrite with specific callback
-	myaction->callback = callback;
+	myaction->callback = (void (*)()) callback;
 	vtb->list_of_toggles = g_slist_append(vtb->list_of_toggles, myaction);
 
 	// Store override so it can be freed upon toolbar destruction
@@ -332,7 +328,7 @@ static void toolbar_set_icon_style (GtkWidget *toolbar)
 		// Adjust to enum GtkToolbarStyle
 		icon_style--;
 
-	gtk_toolbar_set_style(GTK_TOOLBAR(toolbar), icon_style);
+	gtk_toolbar_set_style(GTK_TOOLBAR(toolbar), (GtkToolbarStyle) icon_style);
 }
 
 
@@ -353,7 +349,7 @@ static void toolbar_set_icon_size (GtkWidget *toolbar)
 			icon_size = GTK_ICON_SIZE_DND;
 	}
 
-	gtk_toolbar_set_icon_size(GTK_TOOLBAR(toolbar), icon_size);
+	gtk_toolbar_set_icon_size(GTK_TOOLBAR(toolbar), (GtkIconSize) icon_size);
 }
 
 /**
@@ -473,7 +469,7 @@ static void toolbar_reload ( VikToolbar *vtb,
 	gtk_widget_show(vtb->widget);
 
 	/* Signals */
-	config_t *data = malloc(sizeof(config_t));
+	config_t *data = (config_t *) malloc(sizeof(config_t));
 	data->vtb = vtb;
 	data->parent = parent;
 	data->vbox = vbox;
@@ -499,13 +495,13 @@ static void toolbar_notify_style_cb(GObject *object, GParamSpec *arg1, void * da
 	{
 		value = ui_get_gtk_settings_integer(arg_name, GTK_TOOLBAR_ICONS);
 		if ( GTK_IS_TOOLBAR (data) )
-			gtk_toolbar_set_style(GTK_TOOLBAR(data), value);
+			gtk_toolbar_set_style(GTK_TOOLBAR(data), (GtkToolbarStyle) value);
 	}
 	else if (prefs_get_icon_size() == 0 && !g_strcmp0(arg_name, "gtk-toolbar-size"))
 	{
 		value = ui_get_gtk_settings_integer(arg_name, GTK_ICON_SIZE_SMALL_TOOLBAR);
 		if ( GTK_IS_TOOLBAR (data) )
-			gtk_toolbar_set_icon_size(GTK_TOOLBAR(data), value);
+			gtk_toolbar_set_icon_size(GTK_TOOLBAR(data), (GtkIconSize) value);
 	}
 }
 
@@ -530,7 +526,7 @@ void toolbar_init (VikToolbar *vtb,
 	GSList *gl;
 	int nn = 0;
 	foreach_slist(gl, vtb->list_of_actions) {
-		GtkActionEntry *action = gl->data;
+		GtkActionEntry *action = (GtkActionEntry *) gl->data;
 		actions = g_renew(GtkActionEntry, actions, nn+1);
 		actions[nn] = *action;
 		nn++;
@@ -543,7 +539,7 @@ void toolbar_init (VikToolbar *vtb,
 	GtkToggleActionEntry *toggle_actions = NULL;
 	nn = 0;
 	foreach_slist(gl, vtb->list_of_toggles) {
-		GtkToggleActionEntry *action = gl->data;
+		GtkToggleActionEntry *action = (GtkToggleActionEntry *) gl->data;
 		toggle_actions = g_renew(GtkToggleActionEntry, toggle_actions, nn+1);
 		toggle_actions[nn] = *action;
 		nn++;
@@ -557,7 +553,7 @@ void toolbar_init (VikToolbar *vtb,
 	GtkRadioActionEntry *tool_actions = NULL;
 	nn = 0;
 	foreach_slist(gl, vtb->list_of_tools) {
-		GtkRadioActionEntry *action = gl->data;
+		GtkRadioActionEntry *action = (GtkRadioActionEntry *) gl->data;
 		tool_actions = g_renew(GtkRadioActionEntry, tool_actions, nn+1);
 		tool_actions[nn] = *action;
 		tool_actions[nn].value = nn;
@@ -572,7 +568,7 @@ void toolbar_init (VikToolbar *vtb,
 	GtkRadioActionEntry *mode_actions = NULL;
 	nn = 0;
 	foreach_slist(gl, vtb->list_of_modes) {
-		GtkRadioActionEntry *action = gl->data;
+		GtkRadioActionEntry *action = (GtkRadioActionEntry *) gl->data;
 		mode_actions = g_renew(GtkRadioActionEntry, mode_actions, nn+1);
 		mode_actions[nn] = *action;
 		mode_actions[nn].value = nn;
@@ -679,7 +675,7 @@ static void tb_editor_handler_start_element(GMarkupParseContext *context, const 
 											GError **error)
 {
 	int i;
-	GSList **actions = data;
+	GSList **actions = (GSList **) data;
 
 	/* This is very basic parsing, stripped down any error checking, requires a valid UI markup. */
 	if (!g_strcmp0(element_name, "separator"))
@@ -706,7 +702,7 @@ static GSList *tb_editor_parse_ui(const char *buffer, gssize length, GError **er
 	GMarkupParseContext *context;
 	GSList *list = NULL;
 
-	context = g_markup_parse_context_new(&tb_editor_xml_parser, 0, &list, NULL);
+	context = g_markup_parse_context_new(&tb_editor_xml_parser, (GMarkupParseFlags) 0, &list, NULL);
 	g_markup_parse_context_parse(context, buffer, length, error);
 	g_markup_parse_context_free(context);
 
@@ -924,7 +920,7 @@ static void tb_editor_drag_data_rcvd_cb(GtkWidget *widget, GdkDragContext *conte
 }
 
 
-static bool tb_editor_foreach_used(GtkTreeModel *model, GtkTreePath *path,
+static int tb_editor_foreach_used(GtkTreeModel *model, GtkTreePath *path,
                                        GtkTreeIter *iter, void * data)
 {
 	char *action_name;
@@ -932,9 +928,9 @@ static bool tb_editor_foreach_used(GtkTreeModel *model, GtkTreePath *path,
 	gtk_tree_model_get(model, iter, TB_EDITOR_COL_ACTION, &action_name, -1);
 
 	if (!g_strcmp0(action_name, TB_EDITOR_SEPARATOR))
-		g_string_append_printf(data, "\t\t<separator/>\n");
+		g_string_append_printf((GString *) data, "\t\t<separator/>\n");
 	else if (G_LIKELY(!EMPTY(action_name)))
-		g_string_append_printf(data, "\t\t<toolitem action='%s' />\n", action_name);
+		g_string_append_printf((GString *) data, "\t\t<toolitem action='%s' />\n", action_name);
 
 	free(action_name);
 	return false;
@@ -944,13 +940,13 @@ static bool tb_editor_foreach_used(GtkTreeModel *model, GtkTreePath *path,
 static void tb_editor_write_markup(TBEditorWidget *tbw)
 {
 	/* <ui> must be the first tag, otherwise gtk_ui_manager_add_ui_from_string() will fail. */
-	const char *template = "<ui>\n<!--\n\
+	const char *template_ = "<ui>\n<!--\n\
 This is Viking's toolbar UI definition.\nThe DTD can be found at \n\
 http://library.gnome.org/devel/gtk/stable/GtkUIManager.html#GtkUIManager.description.\n\n\
 Generally one should use the toolbar editor in Viking rather than editing this file.\n\n\
 For manual changes to this file to take effect, you need to restart Viking.\n-->\n\
 \t<toolbar name='MainToolbar'>\n";
-	GString *str = g_string_new(template);
+	GString *str = g_string_new(template_);
 
 	gtk_tree_model_foreach(GTK_TREE_MODEL(tbw->store_used), tb_editor_foreach_used, str);
 
@@ -1165,7 +1161,7 @@ void toolbar_configure (VikToolbar *vtb, GtkWidget *toolbar, GtkWindow *parent, 
 		-1);
 	foreach_list(l, all_items)
 	{
-		name = gtk_action_get_name(l->data);
+		name = gtk_action_get_name((GtkAction *) l->data);
 		if (g_slist_find_custom(used_items, name, (GCompareFunc) strcmp) == NULL)
 		{
 			gtk_list_store_append(tbw->store_available, &iter);
@@ -1175,7 +1171,7 @@ void toolbar_configure (VikToolbar *vtb, GtkWidget *toolbar, GtkWindow *parent, 
 	foreach_slist(sl, used_items)
 	{
 		gtk_list_store_append(tbw->store_used, &iter);
-		tb_editor_set_item_values(vtb, sl->data, tbw->store_used, &iter);
+		tb_editor_set_item_values(vtb, (const char *) sl->data, tbw->store_used, &iter);
 	}
 	/* select first item */
 	path = gtk_tree_path_new_from_string("0");

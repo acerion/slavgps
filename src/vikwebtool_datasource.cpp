@@ -165,7 +165,7 @@ static void ensure_last_user_strings_hash() {
 static char *get_last_user_string ( const datasource_t *source ) {
     ensure_last_user_strings_hash();
     char *label = vik_ext_tool_get_label ( source->self );
-    char *last_str = g_hash_table_lookup ( last_user_strings, label );
+    char *last_str = (char *) g_hash_table_lookup ( last_user_strings, label );
     free( label );
     return last_str;
 }
@@ -180,8 +180,8 @@ static void set_last_user_string ( const datasource_t *source, const char *s ) {
 
 static void * datasource_init ( acq_vik_t *avt )
 {
-	datasource_t *data = malloc(sizeof(*data));
-	data->self = avt->userdata;
+	datasource_t *data = (datasource_t *) malloc(sizeof(*data));
+	data->self = (VikExtTool *) avt->userdata;
 	data->vw = avt->vw;
 	data->vvp = avt->vvp;
 	data->user_string = NULL;
@@ -267,7 +267,7 @@ static void webtool_datasource_open ( VikExtTool *self, VikWindow *vw )
 	// Use VikDataSourceInterface to give thready goodness controls of downloading stuff (i.e. can cancel the request)
 
 	// Can now create a 'VikDataSourceInterface' on the fly...
-	VikDataSourceInterface *vik_datasource_interface = malloc(sizeof(VikDataSourceInterface));
+	VikDataSourceInterface *vik_datasource_interface = (VikDataSourceInterface *) malloc(sizeof(VikDataSourceInterface));
 
 	// An 'easy' way of assigning values
 	VikDataSourceInterface data = {
@@ -314,7 +314,7 @@ static void vik_webtool_datasource_class_init ( VikWebtoolDatasourceClass *klass
 	                             "Template URL",
 	                             "Set the template URL",
 	                             VIKING_URL /* default value */,
-	                             G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+	                             (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
 	g_object_class_install_property (gobject_class,
 	                                 PROP_URL,
 	                                 pspec);
@@ -323,7 +323,7 @@ static void vik_webtool_datasource_class_init ( VikWebtoolDatasourceClass *klass
 	                             "Template URL Format Code",
 	                             "Set the template URL format code",
 	                             "LRBT", // default value
-	                             G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+	                             (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
 	g_object_class_install_property (gobject_class,
 	                                 PROP_URL_FORMAT_CODE,
 	                                 pspec);
@@ -332,7 +332,7 @@ static void vik_webtool_datasource_class_init ( VikWebtoolDatasourceClass *klass
 	                             "The file type expected",
 	                             "Set the file type",
 	                             NULL, // default value ~ equates to internal GPX reading
-	                             G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+	                             (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
 	g_object_class_install_property (gobject_class,
 	                                 PROP_FILE_TYPE,
 	                                 pspec);
@@ -341,7 +341,7 @@ static void vik_webtool_datasource_class_init ( VikWebtoolDatasourceClass *klass
 	                             "The command line filter options to pass to gpsbabel",
 	                             "Set the command line filter options for gpsbabel",
 	                             NULL, // default value 
-	                             G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+	                             (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
 	g_object_class_install_property (gobject_class,
 	                                 PROP_BABEL_FILTER_ARGS,
 	                                 pspec);
@@ -350,12 +350,12 @@ static void vik_webtool_datasource_class_init ( VikWebtoolDatasourceClass *klass
 	                             "The label for the user input box if input is required.",
 	                             "Set the label to be shown next to the user input box if an input term is required",
 	                             _("Search Term"),
-	                             G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+	                             (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
 	g_object_class_install_property (gobject_class,
 	                                 PROP_INPUT_LABEL,
 	                                 pspec);
 
-	parent_class = g_type_class_peek_parent (klass);
+	parent_class = (GObjectClass *) g_type_class_peek_parent (klass);
 
 	base_class = VIK_WEBTOOL_CLASS ( klass );
 	base_class->get_url = webtool_datasource_get_url;

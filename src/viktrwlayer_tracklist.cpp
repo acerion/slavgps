@@ -159,9 +159,9 @@ static void trw_layer_track_select ( menu_array_values values )
 	if ( values[MA_TRK_UUID] ) {
 		GtkTreeIter *iter = NULL;
 		if ( trk->is_route )
-			iter = g_hash_table_lookup ( vik_trw_layer_get_routes_iters(vtl), values[MA_TRK_UUID] );
+			iter = (GtkTreeIter *) g_hash_table_lookup ( vik_trw_layer_get_routes_iters(vtl), values[MA_TRK_UUID] );
 		else
-			iter = g_hash_table_lookup ( vik_trw_layer_get_tracks_iters(vtl), values[MA_TRK_UUID] );
+			iter = (GtkTreeIter *) g_hash_table_lookup ( vik_trw_layer_get_tracks_iters(vtl), values[MA_TRK_UUID] );
 
 		if ( iter )
 			vik_treeview_select_iter ( VIK_LAYER(vtl)->vt, iter, true );
@@ -177,8 +177,8 @@ static void trw_layer_track_stats ( menu_array_values values )
 	if ( trk && trk->name ) {
 		// Kill off this dialog to allow interaction with properties window
 		//  since the properties also allows track manipulations it won't cause conflicts here.
-		GtkWidget *gw = gtk_widget_get_toplevel ( values[MA_TREEVIEW] );
-		track_close_cb ( gw, 0, values[MA_TRKS_LIST] );
+		GtkWidget *gw = gtk_widget_get_toplevel ( (GtkWidget *) values[MA_TREEVIEW] );
+		track_close_cb ( gw, 0, (GList *) values[MA_TRKS_LIST] );
 
 		vik_trw_layer_propwin_run ( VIK_GTK_WINDOW_FROM_LAYER(vtl),
 		                            vtl,
@@ -354,7 +354,7 @@ static bool trw_layer_track_menu_popup ( GtkWidget *tree_view,
 	udataU.trk  = trk;
 	udataU.uuid = NULL;
 
-	void * *trkf;
+	void * trkf;
 	if ( trk->is_route )
 		trkf = g_hash_table_find ( vik_trw_layer_get_routes(vtl), (GHRFunc) trw_layer_track_find_uuid, &udataU );
 	else

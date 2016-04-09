@@ -597,37 +597,37 @@ static void track_graph_click( GtkWidget *event_box, GdkEventButton *event, Prop
 
 static bool track_profile_click( GtkWidget *event_box, GdkEventButton *event, void * ptr )
 {
-  track_graph_click(event_box, event, ptr, PROPWIN_GRAPH_TYPE_ELEVATION_DISTANCE);
+  track_graph_click(event_box, event, (PropWidgets *) ptr, PROPWIN_GRAPH_TYPE_ELEVATION_DISTANCE);
   return true;  /* don't call other (further) callbacks */
 }
 
 static bool track_gradient_click( GtkWidget *event_box, GdkEventButton *event, void * ptr )
 {
-  track_graph_click(event_box, event, ptr, PROPWIN_GRAPH_TYPE_GRADIENT_DISTANCE);
+  track_graph_click(event_box, event, (PropWidgets *) ptr, PROPWIN_GRAPH_TYPE_GRADIENT_DISTANCE);
   return true;  /* don't call other (further) callbacks */
 }
 
 static bool track_vt_click( GtkWidget *event_box, GdkEventButton *event, void * ptr )
 {
-  track_graph_click(event_box, event, ptr, PROPWIN_GRAPH_TYPE_SPEED_TIME);
+  track_graph_click(event_box, event, (PropWidgets *) ptr, PROPWIN_GRAPH_TYPE_SPEED_TIME);
   return true;  /* don't call other (further) callbacks */
 }
 
 static bool track_dt_click( GtkWidget *event_box, GdkEventButton *event, void * ptr )
 {
-  track_graph_click(event_box, event, ptr, PROPWIN_GRAPH_TYPE_DISTANCE_TIME);
+  track_graph_click(event_box, event, (PropWidgets *) ptr, PROPWIN_GRAPH_TYPE_DISTANCE_TIME);
   return true;  /* don't call other (further) callbacks */
 }
 
 static bool track_et_click( GtkWidget *event_box, GdkEventButton *event, void * ptr )
 {
-  track_graph_click(event_box, event, ptr, PROPWIN_GRAPH_TYPE_ELEVATION_TIME);
+  track_graph_click(event_box, event, (PropWidgets *) ptr, PROPWIN_GRAPH_TYPE_ELEVATION_TIME);
   return true;  /* don't call other (further) callbacks */
 }
 
 static bool track_sd_click( GtkWidget *event_box, GdkEventButton *event, void * ptr )
 {
-  track_graph_click(event_box, event, ptr, PROPWIN_GRAPH_TYPE_SPEED_DISTANCE);
+  track_graph_click(event_box, event, (PropWidgets *) ptr, PROPWIN_GRAPH_TYPE_SPEED_DISTANCE);
   return true;  /* don't call other (further) callbacks */
 }
 
@@ -2888,7 +2888,7 @@ static void propwin_response_cb( GtkDialog *dialog, int resp, PropWidgets *widge
       vik_track_set_source(tr, gtk_entry_get_text(GTK_ENTRY(widgets->w_source)));
       vik_track_set_type(tr, gtk_entry_get_text(GTK_ENTRY(widgets->w_type)));
       gtk_color_button_get_color ( GTK_COLOR_BUTTON(widgets->w_color), &(tr->color) );
-      tr->draw_name_mode = gtk_combo_box_get_active ( GTK_COMBO_BOX(widgets->w_namelabel) );
+      tr->draw_name_mode = (VikTrackDrawnameType) gtk_combo_box_get_active ( GTK_COMBO_BOX(widgets->w_namelabel) );
       tr->max_number_dist_labels = gtk_spin_button_get_value_as_int ( GTK_SPIN_BUTTON(widgets->w_number_distlabels) );
       trw_layer_update_treeview ( widgets->vtl, widgets->tr );
       vik_layer_emit_update ( VIK_LAYER(vtl) );
@@ -3087,7 +3087,7 @@ void vik_trw_layer_propwin_run ( GtkWindow *parent,
   PropWidgets *widgets = prop_widgets_new();
   widgets->vtl = vtl;
   widgets->vvp = vvp;
-  widgets->vlp = vlp;
+  widgets->vlp = (VikLayersPanel *) vlp;
   widgets->tr = tr;
 
   int profile_size_value;
@@ -3105,7 +3105,7 @@ void vik_trw_layer_propwin_run ( GtkWindow *parent,
   char *title = g_strdup_printf(_("%s - Track Properties"), tr->name);
   GtkWidget *dialog = gtk_dialog_new_with_buttons (title,
                          parent,
-                         GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_NO_SEPARATOR,
+                         (GtkDialogFlags) (GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_NO_SEPARATOR),
                          GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT,
                          _("Split at _Marker"), VIK_TRW_LAYER_PROPWIN_SPLIT_MARKER,
                          _("Split _Segments"), VIK_TRW_LAYER_PROPWIN_SPLIT,

@@ -126,12 +126,12 @@ vik_webtool_center_class_init ( VikWebtoolCenterClass *klass )
                                "Template Url",
                                "Set the template url",
                                VIKING_URL /* default value */,
-                               G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+                               (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
   g_object_class_install_property (gobject_class,
                                    PROP_URL,
                                    pspec);
 
-  parent_class = g_type_class_peek_parent (klass);
+  parent_class = (GObjectClass *) g_type_class_peek_parent (klass);
 
   base_class = VIK_WEBTOOL_CLASS ( klass );
   base_class->get_url = webtool_center_get_url;

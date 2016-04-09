@@ -49,11 +49,11 @@ typedef struct {
 } PrintCenterName;
 
 static const PrintCenterName center_modes[] = {
-  {N_("None"),          VIK_PRINT_CENTER_NONE},
-  {N_("Horizontally"),  VIK_PRINT_CENTER_HORIZONTALLY},
-  {N_("Vertically"),    VIK_PRINT_CENTER_VERTICALLY},
-  {N_("Both"),          VIK_PRINT_CENTER_BOTH},
-  {NULL,            -1}
+  {N_("None"),          (PrintCenterMode) VIK_PRINT_CENTER_NONE},
+  {N_("Horizontally"),  (PrintCenterMode) VIK_PRINT_CENTER_HORIZONTALLY},
+  {N_("Vertically"),    (PrintCenterMode) VIK_PRINT_CENTER_VERTICALLY},
+  {N_("Both"),          (PrintCenterMode) VIK_PRINT_CENTER_BOTH},
+  {NULL,            (PrintCenterMode) -1}
 };
 
 typedef struct {
@@ -108,7 +108,7 @@ void a_print(VikWindow *vw, VikViewport *vvp)
 
   data.xres = data.yres = 1; // This forces it to default to a 100% page size
 
-  if (print_settings != NULL) 
+  if (print_settings != NULL)
     gtk_print_operation_set_print_settings (print_oper, print_settings);
 
   g_signal_connect (print_oper, "begin_print", G_CALLBACK (begin_print), &data);
@@ -125,7 +125,7 @@ void a_print(VikWindow *vw, VikViewport *vvp)
   if (res == GTK_PRINT_OPERATION_RESULT_APPLY) {
     if (print_settings != NULL)
       g_object_unref (print_settings);
-    print_settings = g_object_ref (gtk_print_operation_get_print_settings (print_oper));
+    print_settings = (GtkPrintSettings*) g_object_ref (gtk_print_operation_get_print_settings (print_oper));
   }
 
   g_object_unref (print_oper);
@@ -191,7 +191,7 @@ static void copy_row_from_rgba(unsigned char *surface_pixels, unsigned char *pix
 static void draw_page_cairo(GtkPrintContext *context, PrintData *data)
 {
   cairo_t         *cr;
-  GdkPixbuf       *pixbuf_to_draw; 
+  GdkPixbuf       *pixbuf_to_draw;
   cairo_surface_t *surface;
   unsigned char          *surface_pixels;
   unsigned char          *pixbuf_pixels;
@@ -210,7 +210,7 @@ static void draw_page_cairo(GtkPrintContext *context, PrintData *data)
                                NULL, 0, 0, 0, 0, data->width, data->height);
   surface = cairo_image_surface_create(CAIRO_FORMAT_RGB24,
                                        data->width, data->height);
-  
+
   cr_dpi_x  = gtk_print_context_get_dpi_x  (context);
   cr_dpi_y  = gtk_print_context_get_dpi_y  (context);
 
@@ -311,9 +311,9 @@ static void set_scale_value(CustomWidgetInfo *pinfo)
   ratio_h = 100 * pinfo->data->height / pinfo->data->yres / height;
 
   ratio = MAX(ratio_w, ratio_h);
-  g_signal_handlers_block_by_func(GTK_RANGE(pinfo->scale), scale_change_value_cb, pinfo);
+  g_signal_handlers_block_by_func(GTK_RANGE(pinfo->scale), (void *) scale_change_value_cb, pinfo);
   gtk_range_set_value(GTK_RANGE(pinfo->scale), ratio);
-  g_signal_handlers_unblock_by_func(GTK_RANGE(pinfo->scale), scale_change_value_cb, pinfo);
+  g_signal_handlers_unblock_by_func(GTK_RANGE(pinfo->scale), (void *) scale_change_value_cb, pinfo);
   set_scale_label(pinfo, ratio);
 }
 
@@ -395,12 +395,12 @@ static void set_center_none (CustomWidgetInfo *info)
 
   if (info->center_combo) {
     g_signal_handlers_block_by_func (info->center_combo,
-                                       center_changed_cb, info);
+				     (void *) center_changed_cb, info);
 
     info->data->center = VIK_PRINT_CENTER_NONE;
     gtk_combo_box_set_active(GTK_COMBO_BOX(info->center_combo), info->data->center);
     g_signal_handlers_unblock_by_func (info->center_combo,
-                                         center_changed_cb, info);
+				       (void *) center_changed_cb, info);
   }
 }
 
@@ -492,7 +492,7 @@ static void update_offsets (CustomWidgetInfo *info)
 
 static void center_changed_cb (GtkWidget *combo, CustomWidgetInfo *info)
 {
-  info->data->center = gtk_combo_box_get_active(GTK_COMBO_BOX(combo));
+	info->data->center = (PrintCenterMode) gtk_combo_box_get_active(GTK_COMBO_BOX(combo));
   update_offsets (info);
 
   if (info->preview)
@@ -550,7 +550,7 @@ static GtkWidget *create_custom_widget_cb(GtkPrintOperation *operation, PrintDat
 
   CustomWidgetInfo * info = (CustomWidgetInfo *) malloc(sizeof (CustomWidgetInfo));
   memset(info, 0, sizeof (CustomWidgetInfo));
-  
+
   g_signal_connect_swapped (data->operation, _("done"), G_CALLBACK (custom_widgets_cleanup), info);
 
 
@@ -672,6 +672,6 @@ static GtkWidget *create_custom_widget_cb(GtkPrintOperation *operation, PrintDat
                                             offset_x_max, offset_y_max);
 
   set_scale_value(info);
-  
+
   return layout;
 }

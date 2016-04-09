@@ -533,13 +533,13 @@ GtkWidget* vik_trw_layer_analyse_this ( GtkWindow *window,
 	if ( ! a_settings_get_boolean ( VIK_SETTINGS_ANALYSIS_DO_INVISIBLE, &include_invisible ) )
 		include_invisible = true;
 
-	analyse_cb_t *acb = malloc(sizeof(analyse_cb_t));
+	analyse_cb_t *acb = (analyse_cb_t *) malloc(sizeof(analyse_cb_t));
 	acb->vl = vl;
 	acb->user_data = user_data;
 	acb->get_tracks_and_layers_cb = get_tracks_and_layers_cb;
 	acb->on_close_cb = on_close_cb;
 	acb->tracks_and_layers = get_tracks_and_layers_cb ( vl, user_data );
-	acb->widgets = malloc( sizeof(GtkWidget*) * G_N_ELEMENTS(label_texts) );
+	acb->widgets = (GtkWidget **) malloc( sizeof(GtkWidget*) * G_N_ELEMENTS(label_texts) );
 	acb->layout = create_layout ( acb->widgets );
 
 	gtk_box_pack_start ( GTK_BOX(content), acb->layout, false, false, 0 );

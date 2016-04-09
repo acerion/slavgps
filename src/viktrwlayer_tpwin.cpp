@@ -78,7 +78,7 @@ GType vik_trw_layer_tpwin_get_type (void)
       0,
       NULL /* instance init */
     };
-    tpwin_type = g_type_register_static ( GTK_TYPE_DIALOG, "VikTrwLayerTpwin", &tpwin_info, 0 );
+    tpwin_type = g_type_register_static ( GTK_TYPE_DIALOG, "VikTrwLayerTpwin", &tpwin_info, (GTypeFlags) 0 );
   }
 
   return tpwin_type;

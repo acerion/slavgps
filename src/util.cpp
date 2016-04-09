@@ -65,7 +65,7 @@ unsigned int util_get_number_of_cpus ()
 
 char *uri_escape(char *str)
 {
-  char *esc_str = malloc(3*strlen(str));
+	char *esc_str = (char *) malloc(3*strlen(str));
   char *dst = esc_str;
   char *src;
 
@@ -84,7 +84,7 @@ char *uri_escape(char *str)
   return(esc_str);
 }
 
-
+#if 0
 GList * str_array_to_glist(char* data[])
 {
   GList *gl = NULL;
@@ -93,6 +93,7 @@ GList * str_array_to_glist(char* data[])
     gl = g_list_prepend(gl, *p);
   return g_list_reverse(gl);
 }
+#endif
 
 /**
  * split_string_from_file_on_equals:

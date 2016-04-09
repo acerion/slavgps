@@ -97,7 +97,7 @@ int a_background_thread_progress ( void * callbackdata, double fraction )
 
 static void thread_die ( void * args[VIK_BG_NUM_ARGS] )
 {
-  vik_thr_free_func userdata_free_func = args[3];
+  vik_thr_free_func userdata_free_func = (void (*)(void*)) args[3];
 
   if ( userdata_free_func != NULL )
     userdata_free_func ( args[2] );
@@ -115,11 +115,11 @@ static void thread_die ( void * args[VIK_BG_NUM_ARGS] )
 int a_background_testcancel ( void * callbackdata )
 {
   void * *args = (void * *) callbackdata;
-  if ( stop_all_threads ) 
+  if ( stop_all_threads )
     return -1;
   if ( args && args[0] )
   {
-    vik_thr_free_func cleanup = args[4];
+    vik_thr_free_func cleanup = (void (*)(void*)) args[4];
     if ( cleanup )
       cleanup ( args[2] );
     return -1;
@@ -130,8 +130,8 @@ int a_background_testcancel ( void * callbackdata )
 static void thread_helper ( void * args[VIK_BG_NUM_ARGS], void * user_data )
 {
   /* unpack args */
-  vik_thr_func func = args[1];
-  void * userdata = args[2];
+  vik_thr_func func = (vik_thr_func) args[1];
+  void * userdata = (void *) args[2];
 
   fprintf(stderr, "DEBUG: %s\n", __FUNCTION__);
 
@@ -160,16 +160,16 @@ static void thread_helper ( void * args[VIK_BG_NUM_ARGS], void * user_data )
  */
 void a_background_thread ( Background_Pool_Type bp, GtkWindow *parent, const char *message, vik_thr_func func, void * userdata, vik_thr_free_func userdata_free_func, vik_thr_free_func userdata_cancel_cleanup_func, int number_items )
 {
-  GtkTreeIter *piter = malloc( sizeof ( GtkTreeIter ) );
-  void * *args = malloc( sizeof(void *) * VIK_BG_NUM_ARGS );
+  GtkTreeIter *piter = (GtkTreeIter *) malloc( sizeof ( GtkTreeIter ) );
+  void * *args = (void **) malloc( sizeof(void *) * VIK_BG_NUM_ARGS );
 
   fprintf(stderr, "DEBUG: %s\n", __FUNCTION__);
 
   args[0] = KINT_TO_POINTER(0);
-  args[1] = func;
+  args[1] = (void *) func;
   args[2] = userdata;
-  args[3] = userdata_free_func;
-  args[4] = userdata_cancel_cleanup_func;
+  args[3] = (void *) userdata_free_func;
+  args[4] = (void *) userdata_cancel_cleanup_func;
   args[5] = piter;
   args[6] = KINT_TO_POINTER(number_items);
 
@@ -221,8 +221,8 @@ static void cancel_job_with_iter ( GtkTreeIter *piter )
 
 static void bgwindow_response (GtkDialog *dialog, int arg1 )
 {
-  /* note this function is a signal handler called back from the GTK main loop, 
-   * so GDK is already locked.  We need to release the lock before calling 
+  /* note this function is a signal handler called back from the GTK main loop,
+   * so GDK is already locked.  We need to release the lock before calling
    * thread-safe routines
    */
   if ( arg1 == 1 ) /* cancel */
@@ -331,7 +331,7 @@ void a_background_post_init()
   gtk_container_add ( GTK_CONTAINER(scrolled_window), bgtreeview );
   gtk_scrolled_window_set_policy ( GTK_SCROLLED_WINDOW(scrolled_window), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC );
 
-  bgwindow = gtk_dialog_new_with_buttons ( "", NULL, 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_DELETE, 1, GTK_STOCK_CLEAR, 2, NULL );
+  bgwindow = gtk_dialog_new_with_buttons ( "", NULL, (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_DELETE, 1, GTK_STOCK_CLEAR, 2, NULL );
   gtk_dialog_set_default_response ( GTK_DIALOG(bgwindow), GTK_RESPONSE_ACCEPT );
   GtkWidget *response_w = NULL;
 #if GTK_CHECK_VERSION (2, 20, 0)

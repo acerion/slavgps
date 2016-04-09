@@ -203,7 +203,7 @@ vik_print_preview_new (GtkPageSetup *page,
   VikPrintPreview *preview;
   float            ratio;
 
-  preview = g_object_new (VIK_TYPE_PRINT_PREVIEW, NULL);
+  preview = (VikPrintPreview *) g_object_new (VIK_TYPE_PRINT_PREVIEW, NULL);
 
   preview->drawable = drawable;
 
@@ -366,7 +366,7 @@ vik_print_preview_event (GtkWidget        *widget,
     {
     case GDK_BUTTON_PRESS:
       gdk_pointer_grab (gtk_widget_get_window(widget), false,
-                        (GDK_BUTTON1_MOTION_MASK |
+                        (GdkEventMask) (GDK_BUTTON1_MOTION_MASK |
                          GDK_BUTTON_RELEASE_MASK),
                         NULL, NULL, event->button.time);
 

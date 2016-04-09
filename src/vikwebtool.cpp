@@ -50,7 +50,7 @@ static void vik_webtool_class_init ( VikWebtoolClass *klass )
 
   object_class->finalize = webtool_finalize;
 
-  parent_class = g_type_class_peek_parent (klass);
+  parent_class = (GObjectClass *) g_type_class_peek_parent (klass);
 
   ext_tool_class = VIK_EXT_TOOL_CLASS ( klass );
   ext_tool_class->open = webtool_open;

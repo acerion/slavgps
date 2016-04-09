@@ -64,7 +64,7 @@ VikDEM *a_dems_load(const char *filename)
     VikDEM *dem = vik_dem_new_from_file ( filename );
     if ( ! dem )
       return NULL;
-    ldem = malloc( sizeof(LoadedDEM) );
+    ldem = (LoadedDEM *) malloc(sizeof (LoadedDEM));
     ldem->ref_count = 1;
     ldem->dem = dem;
     g_hash_table_insert ( loaded_dems, g_strdup(filename), ldem );
@@ -90,7 +90,7 @@ void a_dems_unref(const char *filename)
  */
 VikDEM *a_dems_get(const char *filename)
 {
-  LoadedDEM *ldem = g_hash_table_lookup ( loaded_dems, filename );
+  LoadedDEM *ldem = (LoadedDEM *) g_hash_table_lookup ( loaded_dems, filename );
   if ( ldem )
     return ldem->dem;
   return NULL;
