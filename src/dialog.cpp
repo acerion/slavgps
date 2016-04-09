@@ -39,7 +39,7 @@
 
 void a_dialog_msg ( GtkWindow *parent, int type, const char *info, const char *extra )
 {
-  GtkWidget *msgbox = gtk_message_dialog_new ( parent, GTK_DIALOG_DESTROY_WITH_PARENT, type, GTK_BUTTONS_OK, info, extra );
+  GtkWidget *msgbox = gtk_message_dialog_new ( parent, GTK_DIALOG_DESTROY_WITH_PARENT, (GtkMessageType) type, GTK_BUTTONS_OK, info, extra );
   gtk_dialog_run ( GTK_DIALOG(msgbox) );
   gtk_widget_destroy ( msgbox );
 }
@@ -48,7 +48,7 @@ bool a_dialog_goto_latlon ( GtkWindow *parent, struct LatLon *ll, const struct L
 {
   GtkWidget *dialog = gtk_dialog_new_with_buttons (_("Go to Lat/Lon"),
                                                   parent,
-                                                  GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+						   (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
                                                   GTK_STOCK_CANCEL,
                                                   GTK_RESPONSE_REJECT,
                                                   GTK_STOCK_OK,
@@ -102,7 +102,7 @@ bool a_dialog_goto_utm ( GtkWindow *parent, struct UTM *utm, const struct UTM *o
 {
   GtkWidget *dialog = gtk_dialog_new_with_buttons (_("Go to UTM"),
                                                   parent,
-                                                  GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+						   (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
                                                   GTK_STOCK_CANCEL,
                                                   GTK_RESPONSE_REJECT,
                                                   GTK_STOCK_OK,
@@ -180,7 +180,7 @@ static void get_selected_foreach_func(GtkTreeModel *model,
                                       GtkTreeIter *iter,
                                       void * data)
 {
-  GList **list = data;
+  GList **list = (GList **) data;
   char *name;
   gtk_tree_model_get (model, iter, 0, &name, -1);
   *list = g_list_prepend(*list, name);
@@ -194,7 +194,7 @@ GList *a_dialog_select_from_list ( GtkWindow *parent, GList *names, bool multipl
 
   GtkWidget *dialog = gtk_dialog_new_with_buttons (title,
                                                   parent,
-                                                  GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+						   (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
                                                   GTK_STOCK_CANCEL,
                                                   GTK_RESPONSE_REJECT,
                                                   GTK_STOCK_OK,
@@ -266,7 +266,7 @@ char *a_dialog_new_track ( GtkWindow *parent, char *default_name, bool is_route 
 {
   GtkWidget *dialog = gtk_dialog_new_with_buttons ( is_route ? _("Add Route") : _("Add Track"),
                                                   parent,
-                                                  GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+						    (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
                                                   GTK_STOCK_CANCEL,
                                                   GTK_RESPONSE_REJECT,
                                                   GTK_STOCK_OK,
@@ -322,7 +322,7 @@ char *a_dialog_get_date ( GtkWindow *parent, const char *title )
 {
   GtkWidget *dialog = gtk_dialog_new_with_buttons ( title,
                                                     parent,
-                                                    GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+                                                    (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
                                                     GTK_STOCK_CANCEL,
                                                     GTK_RESPONSE_REJECT,
                                                     GTK_STOCK_OK,
@@ -413,7 +413,7 @@ bool a_dialog_custom_zoom ( GtkWindow *parent, double *xmpp, double *ympp )
 {
   GtkWidget *dialog = gtk_dialog_new_with_buttons (_("Zoom Factors..."),
                                                   parent,
-                                                  GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+						   (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
                                                   GTK_STOCK_CANCEL,
                                                   GTK_RESPONSE_REJECT,
                                                   GTK_STOCK_OK,
@@ -473,7 +473,7 @@ bool a_dialog_time_threshold ( GtkWindow *parent, char *title_text, char *label_
 {
   GtkWidget *dialog = gtk_dialog_new_with_buttons (title_text, 
                                                   parent,
-                                                  GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+						   (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
                                                   GTK_STOCK_CANCEL,
                                                   GTK_RESPONSE_REJECT,
                                                   GTK_STOCK_OK,
@@ -538,7 +538,7 @@ unsigned int a_dialog_get_positive_number ( GtkWindow *parent, char *title_text,
 {
   GtkWidget *dialog = gtk_dialog_new_with_buttons (title_text,
 						   parent,
-						   GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+						   (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
 						   GTK_STOCK_CANCEL,
 						   GTK_RESPONSE_REJECT,
 						   GTK_STOCK_OK,
@@ -603,7 +603,7 @@ void a_dialog_list ( GtkWindow *parent, const char *title, GArray *array, int pa
 {
   GtkWidget *dialog = gtk_dialog_new_with_buttons ( title,
                                                     parent,
-                                                    GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+                                                    (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
                                                     GTK_STOCK_CLOSE,
                                                     GTK_RESPONSE_CLOSE,
                                                     NULL);
@@ -724,7 +724,7 @@ bool a_dialog_map_n_zoom(GtkWindow *parent, char *mapnames[], int default_map, c
 {
   char **s;
 
-  GtkWidget *dialog = gtk_dialog_new_with_buttons ( _("Download along track"), parent, 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL );
+  GtkWidget *dialog = gtk_dialog_new_with_buttons ( _("Download along track"), parent, (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL );
   gtk_dialog_set_default_response ( GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT );
   GtkWidget *response_w = NULL;
 #if GTK_CHECK_VERSION (2, 20, 0)

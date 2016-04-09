@@ -256,28 +256,28 @@ void a_vik_preferences_init ()
 vik_degree_format_t a_vik_get_degree_format ( )
 {
   vik_degree_format_t format;
-  format = a_preferences_get(VIKING_PREFERENCES_NAMESPACE "degree_format")->u;
+  format = (vik_degree_format_t) a_preferences_get(VIKING_PREFERENCES_NAMESPACE "degree_format")->u;
   return format;
 }
 
 vik_units_distance_t a_vik_get_units_distance ( )
 {
   vik_units_distance_t units;
-  units = a_preferences_get(VIKING_PREFERENCES_NAMESPACE "units_distance")->u;
+  units = (vik_units_distance_t) a_preferences_get(VIKING_PREFERENCES_NAMESPACE "units_distance")->u;
   return units;
 }
 
 vik_units_speed_t a_vik_get_units_speed ( )
 {
   vik_units_speed_t units;
-  units = a_preferences_get(VIKING_PREFERENCES_NAMESPACE "units_speed")->u;
+  units = (vik_units_speed_t) a_preferences_get(VIKING_PREFERENCES_NAMESPACE "units_speed")->u;
   return units;
 }
 
 vik_units_height_t a_vik_get_units_height ( )
 {
   vik_units_height_t units;
-  units = a_preferences_get(VIKING_PREFERENCES_NAMESPACE "units_height")->u;
+  units = (vik_units_height_t) a_preferences_get(VIKING_PREFERENCES_NAMESPACE "units_height")->u;
   return units;
 }
 
@@ -304,7 +304,7 @@ double a_vik_get_default_long ( )
 
 vik_time_ref_frame_t a_vik_get_time_ref_frame ( )
 {
-  return a_preferences_get(VIKING_PREFERENCES_NAMESPACE "time_reference_frame")->u;
+	return (vik_time_ref_frame_t) a_preferences_get(VIKING_PREFERENCES_NAMESPACE "time_reference_frame")->u;
 }
 
 /* External/Export Options */
@@ -312,21 +312,21 @@ vik_time_ref_frame_t a_vik_get_time_ref_frame ( )
 vik_kml_export_units_t a_vik_get_kml_export_units ( )
 {
   vik_kml_export_units_t units;
-  units = a_preferences_get(VIKING_PREFERENCES_IO_NAMESPACE "kml_export_units")->u;
+  units = (vik_kml_export_units_t) a_preferences_get(VIKING_PREFERENCES_IO_NAMESPACE "kml_export_units")->u;
   return units;
 }
 
 vik_gpx_export_trk_sort_t a_vik_get_gpx_export_trk_sort ( )
 {
   vik_gpx_export_trk_sort_t sort;
-  sort = a_preferences_get(VIKING_PREFERENCES_IO_NAMESPACE "gpx_export_track_sort")->u;
+  sort = (vik_gpx_export_trk_sort_t) a_preferences_get(VIKING_PREFERENCES_IO_NAMESPACE "gpx_export_track_sort")->u;
   return sort;
 }
 
 vik_gpx_export_wpt_sym_name_t a_vik_gpx_export_wpt_sym_name ( )
 {
-  bool val;
-  val = a_preferences_get(VIKING_PREFERENCES_IO_NAMESPACE "gpx_export_wpt_sym_names")->b;
+  vik_gpx_export_wpt_sym_name_t val;
+  val = (vik_gpx_export_wpt_sym_name_t) a_preferences_get(VIKING_PREFERENCES_IO_NAMESPACE "gpx_export_wpt_sym_names")->b;
   return val;
 }
 
@@ -351,7 +351,7 @@ const char* a_vik_get_external_gpx_program_2 ( )
 vik_file_ref_format_t a_vik_get_file_ref_format ( )
 {
   vik_file_ref_format_t format;
-  format = a_preferences_get(VIKING_PREFERENCES_ADVANCED_NAMESPACE "save_file_reference_mode")->u;
+  format = (vik_file_ref_format_t) a_preferences_get(VIKING_PREFERENCES_ADVANCED_NAMESPACE "save_file_reference_mode")->u;
   return format;
 }
 
@@ -388,7 +388,7 @@ bool a_vik_get_add_default_map_layer ( )
 vik_startup_method_t a_vik_get_startup_method ( )
 {
   vik_startup_method_t data;
-  data = a_preferences_get(VIKING_PREFERENCES_STARTUP_NAMESPACE "startup_method")->u;
+  data = (vik_startup_method_t) a_preferences_get(VIKING_PREFERENCES_STARTUP_NAMESPACE "startup_method")->u;
   return data;
 }
 

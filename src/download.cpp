@@ -192,7 +192,7 @@ static void uncompress_zip ( char *name )
 	}
 
 	// This overwrites any previous file contents
-	if ( ! g_file_set_contents ( name, unzip_mem, ucsize, &error ) ) {
+	if ( ! g_file_set_contents ( name, (const char *) unzip_mem, ucsize, &error ) ) {
 		fprintf(stderr, "CRITICAL: Couldn't write file '%s', because of %s\n", name, error->message );
 		g_error_free ( error );
 	}

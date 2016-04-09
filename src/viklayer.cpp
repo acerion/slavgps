@@ -69,17 +69,17 @@ static void vik_layer_class_init (VikLayerClass *klass)
 
   object_class->finalize = (GObjectFinalizeFunc) vik_layer_finalize;
 
-  parent_class = g_type_class_peek_parent (klass);
+  parent_class = (GObjectClass *) g_type_class_peek_parent (klass);
 
   layer_signals[VL_UPDATE_SIGNAL] = g_signal_new ( "update", G_TYPE_FROM_CLASS (klass),
-      G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION, G_STRUCT_OFFSET (VikLayerClass, update), NULL, NULL, 
+   (GSignalFlags) (G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION), G_STRUCT_OFFSET (VikLayerClass, update), NULL, NULL, 
       g_cclosure_marshal_VOID__VOID, G_TYPE_NONE, 0);
 
   // Register all parameter defaults, early in the start up sequence
-  VikLayerTypeEnum layer;
-  for ( layer = 0; layer < VIK_LAYER_NUM_TYPES; layer++ )
+  int layer;
+  for ( layer = 0; ((VikLayerTypeEnum) layer) < VIK_LAYER_NUM_TYPES; layer++ )
     // ATM ignore the returned value
-    layer_defaults_register ( layer );
+    layer_defaults_register((VikLayerTypeEnum) layer);
 }
 
 /**
@@ -279,7 +279,7 @@ void vik_layer_marshall ( VikLayer *vl, uint8_t **data, int *len )
   if ( vl && vik_layer_interfaces[vl->type]->marshall ) {
     vik_layer_interfaces[vl->type]->marshall ( vl, data, len );
     if (*data) {
-      header = malloc(*len + sizeof(*header));
+      header = (header_t *) malloc(*len + sizeof(*header));
       header->layer_type = vl->type;
       header->len = *len;
       memcpy(header->data, *data, *len);
@@ -374,7 +374,7 @@ void vik_layer_unmarshall_params ( VikLayer *vl, uint8_t *data, int datalen, Vik
 
   vlm_read(&vl->visible);
 
-  s = malloc(vlm_size + 1);
+  s = (char *) malloc(vlm_size + 1);
   s[vlm_size]=0;
   vlm_read(s);
   vik_layer_rename(vl, s);
@@ -390,7 +390,7 @@ void vik_layer_unmarshall_params ( VikLayer *vl, uint8_t *data, int datalen, Vik
       switch ( params[i].type )
       {
       case VIK_LAYER_PARAM_STRING: 
-	s = malloc(vlm_size + 1);
+	s = (char *) malloc(vlm_size + 1);
 	s[vlm_size]=0;
 	vlm_read(s);
 	d.s = s;
@@ -404,7 +404,7 @@ void vik_layer_unmarshall_params ( VikLayer *vl, uint8_t *data, int datalen, Vik
 
         for ( j = 0; j < listlen; j++ ) {
           /* get a string */
-          s = malloc(vlm_size + 1);
+          s = (char *) malloc(vlm_size + 1);
 	  s[vlm_size]=0;
 	  vlm_read(s);
           list = g_list_append ( list, s );
@@ -503,7 +503,7 @@ bool vik_layer_sublayer_add_menu_items ( VikLayer *l, GtkMenu *menu, void * vlp,
 const char *vik_layer_sublayer_rename_request ( VikLayer *l, const char *newname, void * vlp, int subtype, void * sublayer, GtkTreeIter *iter )
 {
   if ( vik_layer_interfaces[l->type]->sublayer_rename_request )
-    return vik_layer_interfaces[l->type]->sublayer_rename_request ( l, newname, vlp, subtype, sublayer, iter );
+    return vik_layer_interfaces[l->type]->sublayer_rename_request ( l, newname, vlp, subtype, (VikViewport *) sublayer, iter );
   return NULL;
 }
 
@@ -532,7 +532,7 @@ GdkPixbuf *vik_layer_load_icon ( VikLayerTypeEnum type )
 bool vik_layer_set_param ( VikLayer *layer, uint16_t id, VikLayerParamData data, void * vp, bool is_file_operation )
 {
   if ( vik_layer_interfaces[layer->type]->set_param )
-    return vik_layer_interfaces[layer->type]->set_param ( layer, id, data, vp, is_file_operation );
+    return vik_layer_interfaces[layer->type]->set_param ( layer, id, data, (VikViewport *) vp, is_file_operation );
   return false;
 }
 
@@ -550,12 +550,12 @@ static bool vik_layer_properties_factory ( VikLayer *vl, VikViewport *vp )
 					    vik_layer_interfaces[vl->type]->params_count,
 					    vik_layer_interfaces[vl->type]->params_groups,
 					    vik_layer_interfaces[vl->type]->params_groups_count,
-					    (void *) vik_layer_interfaces[vl->type]->set_param, 
+					    (bool (*)(void*, uint16_t, VikLayerParamData, void*, bool)) vik_layer_interfaces[vl->type]->set_param, 
 					    vl, 
 					    vp,
-					    (void *) vik_layer_interfaces[vl->type]->get_param, 
+					    (VikLayerParamData (*)(void*, uint16_t, bool)) vik_layer_interfaces[vl->type]->get_param, 
 					    vl,
-					    (void *) vik_layer_interfaces[vl->type]->change_param ) ) {
+					    (void (*)(GtkWidget*, void**)) vik_layer_interfaces[vl->type]->change_param ) ) {
     case 0:
     case 3:
       return false;
@@ -569,10 +569,10 @@ static bool vik_layer_properties_factory ( VikLayer *vl, VikViewport *vp )
 
 VikLayerTypeEnum vik_layer_type_from_string ( const char *str )
 {
-  VikLayerTypeEnum i;
-  for ( i = 0; i < VIK_LAYER_NUM_TYPES; i++ )
-    if ( strcasecmp ( str, vik_layer_get_interface(i)->fixed_layer_name ) == 0 )
-      return i;
+  int i;
+  for ( i = 0; ((VikLayerTypeEnum) i) < VIK_LAYER_NUM_TYPES; i++ )
+    if ( strcasecmp ( str, vik_layer_get_interface((VikLayerTypeEnum) i)->fixed_layer_name ) == 0 )
+      return (VikLayerTypeEnum) i;
   return VIK_LAYER_NUM_TYPES;
 }
 

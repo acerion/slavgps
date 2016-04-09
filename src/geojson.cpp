@@ -69,7 +69,7 @@ bool a_geojson_write_file ( VikTrwLayer *vtl, FILE *ff )
 
 	GError *error = NULL;
 	// TODO: monitor stderr?
-	if (!g_spawn_async_with_pipes (NULL, argv, NULL, (GSpawnFlags) G_SPAWN_SEARCH_PATH | G_SPAWN_DO_NOT_REAP_CHILD, NULL, NULL, &pid, NULL, &mystdout, NULL, &error)) {
+	if (!g_spawn_async_with_pipes (NULL, argv, NULL, (GSpawnFlags) (G_SPAWN_SEARCH_PATH | G_SPAWN_DO_NOT_REAP_CHILD), NULL, NULL, &pid, NULL, &mystdout, NULL, &error)) {
 
 		if ( IS_VIK_WINDOW ((VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(vtl)) ) {
 			char* msg = g_strdup_printf ( _("%s command failed: %s"), argv[0], error->message );
@@ -163,7 +163,7 @@ char* a_geojson_import_to_gpx ( const char *filename )
 	FILE *gpxfile = fdopen (fd, "w");
 
 	// TODO: monitor stderr?
-	if (!g_spawn_async_with_pipes (NULL, argv, NULL, (GSpawnFlags) G_SPAWN_SEARCH_PATH | G_SPAWN_DO_NOT_REAP_CHILD, NULL, NULL, &pid, NULL, &mystdout, NULL, &error)) {
+	if (!g_spawn_async_with_pipes (NULL, argv, NULL, (GSpawnFlags) (G_SPAWN_SEARCH_PATH | G_SPAWN_DO_NOT_REAP_CHILD), NULL, NULL, &pid, NULL, &mystdout, NULL, &error)) {
 		fprintf(stderr, "WARNING: Async command failed: %s\n", error->message);
 		g_error_free(error);
 	}

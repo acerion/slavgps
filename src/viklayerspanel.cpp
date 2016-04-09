@@ -82,10 +82,10 @@ static void vik_layers_panel_class_init ( VikLayersPanelClass *klass )
 
   object_class->finalize = layers_panel_finalize;
 
-  parent_class = g_type_class_peek_parent (klass);
+  parent_class = (GObjectClass *) g_type_class_peek_parent (klass);
 
-  layers_panel_signals[VLP_UPDATE_SIGNAL] = g_signal_new ( "update", G_TYPE_FROM_CLASS (klass), G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION, G_STRUCT_OFFSET (VikLayersPanelClass, update), NULL, NULL, g_cclosure_marshal_VOID__VOID, G_TYPE_NONE, 0);
-  layers_panel_signals[VLP_DELETE_LAYER_SIGNAL] = g_signal_new ( "delete_layer", G_TYPE_FROM_CLASS (klass), G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION, G_STRUCT_OFFSET (VikLayersPanelClass, update), NULL, NULL, g_cclosure_marshal_VOID__VOID, G_TYPE_NONE, 0);
+  layers_panel_signals[VLP_UPDATE_SIGNAL] = g_signal_new ( "update", G_TYPE_FROM_CLASS (klass), (GSignalFlags) (G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION), G_STRUCT_OFFSET (VikLayersPanelClass, update), NULL, NULL, g_cclosure_marshal_VOID__VOID, G_TYPE_NONE, 0);
+  layers_panel_signals[VLP_DELETE_LAYER_SIGNAL] = g_signal_new ( "delete_layer", G_TYPE_FROM_CLASS (klass), (GSignalFlags) (G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION), G_STRUCT_OFFSET (VikLayersPanelClass, update), NULL, NULL, g_cclosure_marshal_VOID__VOID, G_TYPE_NONE, 0);
 }
 
 VikLayersPanel *vik_layers_panel_new ()
@@ -106,7 +106,7 @@ VikViewport *vik_layers_panel_get_viewport ( VikLayersPanel *vlp )
 
 static bool layers_panel_new_layer ( void * lpnl[2] )
 {
-  return vik_layers_panel_new_layer ( lpnl[0], KPOINTER_TO_INT(lpnl[1]) );
+  return vik_layers_panel_new_layer ( (VikLayersPanel *) lpnl[0], (VikLayerTypeEnum) KPOINTER_TO_INT(lpnl[1]) );
 }
 
 /**
@@ -144,12 +144,12 @@ static GtkWidget* layers_panel_create_popup ( VikLayersPanel *vlp, bool full )
   static void * lpnl[VIK_LAYER_NUM_TYPES][2];
 
   for ( ii = 0; ii < VIK_LAYER_NUM_TYPES; ii++ ) {
-    if ( vik_layer_get_interface(ii)->icon ) {
-      menuitem = gtk_image_menu_item_new_with_mnemonic ( vik_layer_get_interface(ii)->name );
-      gtk_image_menu_item_set_image ( (GtkImageMenuItem*)menuitem, gtk_image_new_from_pixbuf ( vik_layer_load_icon (ii) ) );
+    if ( vik_layer_get_interface((VikLayerTypeEnum) ii)->icon ) {
+	    menuitem = gtk_image_menu_item_new_with_mnemonic ( vik_layer_get_interface((VikLayerTypeEnum) ii)->name );
+      gtk_image_menu_item_set_image ( (GtkImageMenuItem*)menuitem, gtk_image_new_from_pixbuf ( vik_layer_load_icon ((VikLayerTypeEnum) ii) ) );
     }
     else
-      menuitem = gtk_menu_item_new_with_mnemonic ( vik_layer_get_interface(ii)->name );
+      menuitem = gtk_menu_item_new_with_mnemonic ( vik_layer_get_interface((VikLayerTypeEnum) ii)->name );
 
     lpnl[ii][0] = vlp;
     lpnl[ii][1] = KINT_TO_POINTER(ii);
@@ -326,7 +326,7 @@ static void layers_item_edited (VikLayersPanel *vlp, GtkTreeIter *iter, const ch
   }
   else
   {
-    const char *name = vik_layer_sublayer_rename_request ( vik_treeview_item_get_parent ( vlp->vt, iter ), new_text, vlp, vik_treeview_item_get_data ( vlp->vt, iter ), vik_treeview_item_get_pointer ( vlp->vt, iter ), iter );
+    const char *name = vik_layer_sublayer_rename_request ( (VikLayer *) vik_treeview_item_get_parent ( vlp->vt, iter ), new_text, vlp, vik_treeview_item_get_data ( vlp->vt, iter ), vik_treeview_item_get_pointer ( vlp->vt, iter ), iter );
     if ( name )
       vik_treeview_item_set_name ( vlp->vt, iter, name);
   }
@@ -375,7 +375,7 @@ static void layers_popup ( VikLayersPanel *vlp, GtkTreeIter *iter, int mouse_but
       else
       {
         GtkWidget *del, *prop;
-	VikStdLayerMenuItem menu_selection = vik_layer_get_menu_items_selection(layer);
+	VikStdLayerMenuItem menu_selection = (VikStdLayerMenuItem) vik_layer_get_menu_items_selection(layer);
 
         menu = GTK_MENU ( gtk_menu_new () );
 
@@ -419,7 +419,7 @@ static void layers_popup ( VikLayersPanel *vlp, GtkTreeIter *iter, int mouse_but
     else
     {
       menu = GTK_MENU ( gtk_menu_new () );
-      if ( ! vik_layer_sublayer_add_menu_items ( vik_treeview_item_get_parent ( vlp->vt, iter ), menu, vlp, vik_treeview_item_get_data ( vlp->vt, iter ), vik_treeview_item_get_pointer ( vlp->vt, iter ), iter, vlp->vvp ) )
+      if ( ! vik_layer_sublayer_add_menu_items ( (VikLayer *) vik_treeview_item_get_parent ( vlp->vt, iter ), menu, vlp, vik_treeview_item_get_data ( vlp->vt, iter ), vik_treeview_item_get_pointer ( vlp->vt, iter ), iter, vlp->vvp ) )
       {
         gtk_widget_destroy ( GTK_WIDGET(menu) );
         return;
@@ -509,7 +509,7 @@ void vik_layers_panel_add_layer ( VikLayersPanel *vlp, VikLayer *l )
       VikLayer *vl = VIK_LAYER(vik_treeview_item_get_parent ( vlp->vt, &iter ));
       replace_iter = &(vl->iter);
       assert ( vl->realized );
-      VikLayer *grandpa = (vik_treeview_item_get_parent ( vlp->vt, &(vl->iter) ) );
+      VikLayer *grandpa = (VikLayer *) (vik_treeview_item_get_parent ( vlp->vt, &(vl->iter) ) );
       if (IS_VIK_AGGREGATE_LAYER(grandpa))
         addtoagg = VIK_AGGREGATE_LAYER(grandpa);
       else {
@@ -585,7 +585,7 @@ void vik_layers_panel_cut_selected ( VikLayersPanel *vlp )
 
   if ( type == VIK_TREEVIEW_TYPE_LAYER )
   {
-    VikAggregateLayer *parent = vik_treeview_item_get_parent ( vlp->vt, &iter );
+	  VikAggregateLayer *parent = (VikAggregateLayer *) vik_treeview_item_get_parent ( vlp->vt, &iter );
     if ( parent )
     {
       /* reset trigger if trigger deleted */
@@ -652,7 +652,7 @@ void vik_layers_panel_delete_selected ( VikLayersPanel *vlp )
 				vik_layer_get_name ( VIK_LAYER(vik_treeview_item_get_pointer ( vlp->vt, &iter )) ) ) )
       return;
 
-    VikAggregateLayer *parent = vik_treeview_item_get_parent ( vlp->vt, &iter );
+    VikAggregateLayer *parent = (VikAggregateLayer *) vik_treeview_item_get_parent ( vlp->vt, &iter );
     if ( parent )
     {
       /* reset trigger if trigger deleted */
@@ -742,7 +742,7 @@ GList *vik_layers_panel_get_all_layers_of_type(VikLayersPanel *vlp, int type, bo
 {
   GList *layers = NULL;
 
-  return (vik_aggregate_layer_get_all_layers_of_type ( vlp->toplayer, layers, type, include_invisible));
+  return (vik_aggregate_layer_get_all_layers_of_type ( vlp->toplayer, layers, (VikLayerTypeEnum) type, include_invisible));
 }
 
 VikAggregateLayer *vik_layers_panel_get_top_layer ( VikLayersPanel *vlp )
