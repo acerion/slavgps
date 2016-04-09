@@ -79,7 +79,7 @@ libviking_a_SOURCES = \
 	viklayer.cpp viklayer.h \
 	viklayerspanel.cpp viklayerspanel.h \
 	vikcoordlayer.cpp vikcoordlayer.h \
-	vikstatus.c vikstatus.h \
+	vikstatus.cpp vikstatus.h \
 	vikwindow.c vikwindow.h \
 	vikviewport.c vikviewport.h \
 	vikaggregatelayer.c vikaggregatelayer.h \
@@ -87,9 +87,9 @@ libviking_a_SOURCES = \
 	vikgpslayer.c vikgpslayer.h \
 	vikgeoreflayer.c vikgeoreflayer.h \
 	vikfileentry.c vikfileentry.h \
-	vikgototool.c vikgototool.h \
-	vikgotoxmltool.c vikgotoxmltool.h \
-	vikgoto.c vikgoto.h \
+	vikgototool.cpp vikgototool.h \
+	vikgotoxmltool.cpp vikgotoxmltool.h \
+	vikgoto.cpp vikgoto.h \
 	viktrwlayer_export.c viktrwlayer_export.h \
 	viktrwlayer_tpwin.c viktrwlayer_tpwin.h \
 	viktrwlayer_wpwin.c viktrwlayer_wpwin.h \
@@ -106,22 +106,22 @@ libviking_a_SOURCES = \
 	background.c background.h \
 	vikradiogroup.c vikradiogroup.h \
 	vikcoord.cpp vikcoord.h \
-	mapcache.c mapcache.h \
-	maputils.c maputils.h \
+	mapcache.cpp mapcache.h \
+	maputils.cpp maputils.h \
 	vikmapsource.cpp vikmapsource.h \
 	vikmapsourcedefault.cpp vikmapsourcedefault.h \
 	vikmapslayer.c vikmapslayer.h \
 	vikmapslayer_compat.c vikmapslayer_compat.h \
 	vikmaptype.cpp vikmaptype.h \
-	vikslippymapsource.c vikslippymapsource.h \
-	vikwmscmapsource.c vikwmscmapsource.h \
-	viktmsmapsource.c viktmsmapsource.h \
-	metatile.c metatile.h \
+	vikslippymapsource.cpp vikslippymapsource.h \
+	vikwmscmapsource.cpp vikwmscmapsource.h \
+	viktmsmapsource.cpp viktmsmapsource.h \
+	metatile.cpp metatile.h \
 	gpx.c gpx.h \
-	garminsymbols.c garminsymbols.h \
+	garminsymbols.cpp garminsymbols.h \
 	acquire.cpp acquire.h \
 	babel.cpp babel.h \
-	babel_ui.c babel_ui.h \
+	babel_ui.cpp babel_ui.h \
 	datasource_file.cpp \
 	datasource_geojson.cpp \
 	datasource_gps.cpp datasource_gps.h \
@@ -131,11 +131,11 @@ libviking_a_SOURCES = \
 	datasource_wikipedia.cpp \
 	datasource_url.cpp \
 	datasources.h \
-	googlesearch.c googlesearch.h \
-	dem.c dem.h \
-	vikdemlayer.h vikdemlayer.c \
-	vikdatetime_edit_dialog.c vikdatetime_edit_dialog.h \
-	vikfilelist.c vikfilelist.h \
+	googlesearch.cpp googlesearch.h \
+	dem.cpp dem.h \
+	vikdemlayer.h vikdemlayer.cpp \
+	vikdatetime_edit_dialog.cpp vikdatetime_edit_dialog.h \
+	vikfilelist.cpp vikfilelist.h \
 	vikexttool.c vikexttool.h \
 	vikexttools.c vikexttools.h \
 	vikwebtool.c vikwebtool.h \
