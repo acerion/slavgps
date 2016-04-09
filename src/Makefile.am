@@ -64,7 +64,7 @@ libviking_a_SOURCES = \
 	gpspoint.cpp gpspoint.h \
 	geojson.cpp geojson.h \
 	dir.cpp dir.h \
-	file.c file.h \
+	file.cpp file.h \
 	fileutils.cpp fileutils.h \
 	authors.h \
 	documenters.h \
@@ -80,7 +80,7 @@ libviking_a_SOURCES = \
 	viklayerspanel.cpp viklayerspanel.h \
 	vikcoordlayer.cpp vikcoordlayer.h \
 	vikstatus.cpp vikstatus.h \
-	vikwindow.c vikwindow.h \
+	vikwindow.cpp vikwindow.h \
 	vikviewport.cpp vikviewport.h \
 	vikaggregatelayer.cpp vikaggregatelayer.h \
 	vikgobjectbuilder.cpp vikgobjectbuilder.h \
@@ -110,14 +110,14 @@ libviking_a_SOURCES = \
 	maputils.cpp maputils.h \
 	vikmapsource.cpp vikmapsource.h \
 	vikmapsourcedefault.cpp vikmapsourcedefault.h \
-	vikmapslayer.c vikmapslayer.h \
+	vikmapslayer.cpp vikmapslayer.h \
 	vikmapslayer_compat.cpp vikmapslayer_compat.h \
 	vikmaptype.cpp vikmaptype.h \
 	vikslippymapsource.cpp vikslippymapsource.h \
 	vikwmscmapsource.cpp vikwmscmapsource.h \
 	viktmsmapsource.cpp viktmsmapsource.h \
 	metatile.cpp metatile.h \
-	gpx.c gpx.h \
+	gpx.cpp gpx.h \
 	garminsymbols.cpp garminsymbols.h \
 	acquire.cpp acquire.h \
 	babel.cpp babel.h \
@@ -146,15 +146,15 @@ libviking_a_SOURCES = \
 	vikwebtool_datasource.cpp vikwebtool_datasource.h \
 	dems.cpp dems.h \
 	srtm_continent.cpp \
-	uibuilder.c uibuilder.h \
+	uibuilder.cpp uibuilder.h \
 	print-preview.cpp print-preview.h \
 	print.cpp print.h \
 	kmz.cpp kmz.h \
 	viklayer_defaults.cpp viklayer_defaults.h \
 	settings.cpp settings.h \
 	preferences.cpp preferences.h \
-	misc/strtod.c misc/strtod.h \
-	misc/kdtree.c misc/kdtree.h
+	misc/strtod.cpp misc/strtod.h \
+	misc/kdtree.cpp misc/kdtree.h
 
 if BING
 libviking_a_SOURCES += \
