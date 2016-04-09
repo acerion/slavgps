@@ -52,7 +52,7 @@ time_t vik_datetime_edit_dialog ( GtkWindow *parent, const char *title, time_t i
 
 	GtkWidget *dialog = gtk_dialog_new_with_buttons ( title,
 	                                                  parent,
-	                                                  GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+	                                                  (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
 	                                                  GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT,
 	                                                  GTK_STOCK_OK,     GTK_RESPONSE_ACCEPT,
 	                                                  NULL );

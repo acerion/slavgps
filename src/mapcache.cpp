@@ -86,7 +86,7 @@ void a_mapcache_init ()
 
 static void cache_add(char *key, GdkPixbuf *pixbuf, mapcache_extra_t extra)
 {
-  cache_item_t *ci = malloc( sizeof(cache_item_t) );
+  cache_item_t *ci = (cache_item_t *) malloc( sizeof(cache_item_t) );
   ci->pixbuf = pixbuf;
   ci->extra = extra;
 #if !GLIB_CHECK_VERSION(2,26,0)
@@ -106,7 +106,7 @@ static void cache_add(char *key, GdkPixbuf *pixbuf, mapcache_extra_t extra)
 
 static void cache_remove(const char *key)
 {
-  cache_item_t *ci = g_hash_table_lookup ( cache, key );
+  cache_item_t *ci = (cache_item_t *) g_hash_table_lookup ( cache, key );
   if (ci && ci->pixbuf) {
     cache_size -= gdk_pixbuf_get_rowstride(ci->pixbuf) * gdk_pixbuf_get_height(ci->pixbuf);
     cache_size -= 100;
@@ -136,7 +136,7 @@ static char *list_shift ()
 /* adds key to tail */
 static void list_add_entry ( char *key )
 {
-  List *newlist = malloc( sizeof ( List ) );
+	List *newlist = (List *) malloc( sizeof ( List ) );
   newlist->key = key;
   if ( queue_tail ) {
     newlist->next = queue_tail->next;
@@ -202,7 +202,7 @@ GdkPixbuf *a_mapcache_get ( int x, int y, int z, uint16_t type, int zoom, uint8_
   unsigned int nn = name ? g_str_hash ( name ) : 0;
   snprintf( key, sizeof(key), HASHKEY_FORMAT_STRING, type, x, y, z, zoom, nn, alpha, xshrinkfactor, yshrinkfactor );
   g_mutex_lock(mc_mutex); /* prevent returning pixbuf when cache is being cleared */
-  cache_item_t *ci = g_hash_table_lookup ( cache, key );
+  cache_item_t *ci = (cache_item_t *) g_hash_table_lookup ( cache, key );
   if ( ci ) {
     g_object_ref(ci->pixbuf);
     g_mutex_unlock(mc_mutex);
@@ -218,7 +218,7 @@ mapcache_extra_t a_mapcache_get_extra ( int x, int y, int z, uint16_t type, int 
   static char key[MC_KEY_SIZE];
   unsigned int nn = name ? g_str_hash ( name ) : 0;
   snprintf( key, sizeof(key), HASHKEY_FORMAT_STRING, type, x, y, z, zoom, nn, alpha, xshrinkfactor, yshrinkfactor );
-  cache_item_t *ci = g_hash_table_lookup ( cache, key );
+  cache_item_t *ci = (cache_item_t *) g_hash_table_lookup ( cache, key );
   if ( ci )
     return ci->extra;
   else

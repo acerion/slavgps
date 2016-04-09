@@ -278,7 +278,7 @@ GType vik_dem_layer_get_type ()
       0,
       NULL /* instance init */
     };
-    vdl_type = g_type_register_static ( VIK_LAYER_TYPE, "VikDEMLayer", &vdl_info, 0 );
+    vdl_type = g_type_register_static ( VIK_LAYER_TYPE, "VikDEMLayer", &vdl_info, (GTypeFlags) 0);
   }
 
   return vdl_type;
@@ -368,7 +368,7 @@ static GList *dem_layer_convert_to_relative_filenaming ( GList *files )
   GList *relfiles = NULL;
 
   while ( files ) {
-    char *file = g_strdup( file_GetRelativeFilename ( cwd, files->data ) );
+	  char *file = (char *) g_strdup( file_GetRelativeFilename ( cwd, (char *) files->data ) );
     relfiles = g_list_prepend ( relfiles, file );
     files = files->next;
   }
@@ -422,7 +422,7 @@ bool dem_layer_set_param ( VikDEMLayer *vdl, uint16_t id, VikLayerParamData data
       // No need for thread if no files
       if ( vdl->files ) {
         // Thread Load
-        dem_load_thread_data *dltd = malloc( sizeof(dem_load_thread_data) );
+	      dem_load_thread_data *dltd = (dem_load_thread_data *) malloc( sizeof(dem_load_thread_data) );
         dltd->vdl = vdl;
         dltd->vdl->files = data.sl;
 
@@ -491,8 +491,8 @@ static VikDEMLayer *dem_layer_new ( VikViewport *vvp )
 
   vdl->files = NULL;
 
-  vdl->gcs = malloc(sizeof(GdkGC *)*DEM_N_HEIGHT_COLORS);
-  vdl->gcsgradient = malloc(sizeof(GdkGC *)*DEM_N_GRADIENT_COLORS);
+  vdl->gcs = (GdkGC **) malloc(sizeof(GdkGC *)*DEM_N_HEIGHT_COLORS);
+  vdl->gcsgradient = (GdkGC **) malloc(sizeof(GdkGC *)*DEM_N_GRADIENT_COLORS);
   /* make new gcs only if we need it (copy layer -> use old) */
 
   // Ensure the base GC is available so the default colour can be applied
@@ -632,20 +632,20 @@ static void vik_dem_layer_draw_dem ( VikDEMLayer *vdl, VikViewport *vp, VikDEM *
       // NOTE: ( counter.lon <= end_lon + ESCALE_DEG*SKIP_FACTOR ) is neccessary so in high zoom modes,
       // the leftmost column does also get drawn, if the center point is out of viewport.
       if ( x < dem->n_columns ) {
-        column = g_ptr_array_index ( dem->columns, x );
+	      column = (VikDEMColumn *) g_ptr_array_index ( dem->columns, x );
         // get previous and next column. catch out-of-bound.
 	int32_t new_x = x;
 	new_x -= gradient_skip_factor;
         if(new_x < 1)
-          prevcolumn = g_ptr_array_index ( dem->columns, x+1);
+          prevcolumn = (VikDEMColumn *) g_ptr_array_index ( dem->columns, x+1);
         else
-          prevcolumn = g_ptr_array_index ( dem->columns, new_x);
+          prevcolumn = (VikDEMColumn *) g_ptr_array_index ( dem->columns, new_x);
 	new_x = x;
 	new_x += gradient_skip_factor;
         if(new_x >= dem->n_columns)
-          nextcolumn = g_ptr_array_index ( dem->columns, x-1);
+          nextcolumn = (VikDEMColumn *) g_ptr_array_index ( dem->columns, x-1);
         else
-          nextcolumn = g_ptr_array_index ( dem->columns, new_x);
+          nextcolumn = (VikDEMColumn *) g_ptr_array_index ( dem->columns, new_x);
 
         for ( y=start_y, counter.lat = start_lat; counter.lat <= end_lat; counter.lat += nscale_deg * skip_factor, y += skip_factor ) {
           if ( y > column->n_points )
@@ -802,7 +802,7 @@ static void vik_dem_layer_draw_dem ( VikDEMLayer *vdl, VikViewport *vp, VikDEM *
 
     for ( x=start_x, counter.easting = start_eas; counter.easting <= end_eas; counter.easting += dem->east_scale * skip_factor, x += skip_factor ) {
       if ( x > 0 && x < dem->n_columns ) {
-        column = g_ptr_array_index ( dem->columns, x );
+        column = (VikDEMColumn *) g_ptr_array_index ( dem->columns, x );
         for ( y=start_y, counter.northing = start_nor; counter.northing <= end_nor; counter.northing += dem->north_scale * skip_factor, y += skip_factor ) {
           if ( y > column->n_points )
             continue;
@@ -856,7 +856,7 @@ static const char *srtm_continent_dir ( int lat, int lon )
                   (lat >= 0) ? 'N' : 'S', ABS(lat),
 		  (lon >= 0) ? 'E' : 'W', ABS(lon));
 
-  return(g_hash_table_lookup(srtm_continent, name));
+  return((const char *) g_hash_table_lookup(srtm_continent, name));
 }
 
 static void dem_layer_draw ( VikDEMLayer *vdl, VikViewport *vp )
@@ -1131,7 +1131,7 @@ static void dem24k_draw_existence ( VikViewport *vp )
 
 static void weak_ref_cb ( void * ptr, GObject * dead_vdl )
 {
-  DEMDownloadParams *p = ptr;
+	DEMDownloadParams *p = (DEMDownloadParams *) ptr;
   g_mutex_lock ( p->mutex );
   p->vdl = NULL;
   g_mutex_unlock ( p->mutex );
@@ -1282,7 +1282,7 @@ static bool dem_layer_download_release ( VikDEMLayer *vdl, GdkEventButton *event
     // TODO: check if already in filelist
     if ( ! dem_layer_add_file(vdl, full_path) ) {
       char *tmp = g_strdup_printf ( _("Downloading DEM %s"), dem_file );
-      DEMDownloadParams *p = malloc(sizeof(DEMDownloadParams));
+      DEMDownloadParams *p = (DEMDownloadParams *) malloc(sizeof(DEMDownloadParams));
       p->dest = g_strdup(full_path);
       p->lat = ll.lat;
       p->lon = ll.lon;

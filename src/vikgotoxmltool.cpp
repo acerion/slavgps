@@ -202,7 +202,7 @@ vik_goto_xml_tool_class_init ( VikGotoXmlToolClass *klass )
                                "URL format",
                                "The format of the URL",
                                "<no-set>" /* default value */,
-                               G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+                               (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
   g_object_class_install_property (object_class,
                                    PROP_URL_FORMAT,
                                    pspec);
@@ -211,7 +211,7 @@ vik_goto_xml_tool_class_init ( VikGotoXmlToolClass *klass )
                                "Latitude path",
                                "XPath of the latitude",
                                "<no-set>" /* default value */,
-                               G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+                               (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
   g_object_class_install_property (object_class,
                                    PROP_LAT_PATH,
                                    pspec);
@@ -220,7 +220,7 @@ vik_goto_xml_tool_class_init ( VikGotoXmlToolClass *klass )
                                "Latitude attribute",
                                "XML attribute of the latitude",
                                NULL /* default value */,
-                               G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+                               (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
   g_object_class_install_property (object_class,
                                    PROP_LAT_ATTR,
                                    pspec);
@@ -229,7 +229,7 @@ vik_goto_xml_tool_class_init ( VikGotoXmlToolClass *klass )
                                "Longitude path",
                                "XPath of the longitude",
                                "<no-set>" /* default value */,
-                               G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+                               (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
   g_object_class_install_property (object_class,
                                    PROP_LON_PATH,
                                    pspec);
@@ -238,7 +238,7 @@ vik_goto_xml_tool_class_init ( VikGotoXmlToolClass *klass )
                                "Longitude attribute",
                                "XML attribute of the longitude",
                                NULL /* default value */,
-                               G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+                               (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
   g_object_class_install_property (object_class,
                                    PROP_LON_ATTR,
                                    pspec);
@@ -291,7 +291,7 @@ stack_is_path (const GSList *stack,
       equal = false;
     else
       path++;
-    const char *current = g_list_nth_data((GList *)stack, i);
+    const char *current = (const char *) g_list_nth_data((GList *)stack, i);
     size_t len = strlen(current);
     if (strncmp(path, current, len) != 0 )
       equal = false;
@@ -405,7 +405,7 @@ vik_goto_xml_tool_parse_file_for_latlon(VikGotoTool *self, char *filename, struc
 	xml_parser.passthrough = NULL;
 	xml_parser.error = NULL;
 	
-	xml_context = g_markup_parse_context_new(&xml_parser, 0, self, NULL);
+	xml_context = g_markup_parse_context_new(&xml_parser, (GMarkupParseFlags) 0, self, NULL);
 
 	/* setup result */
 	priv->ll.lat = NAN;

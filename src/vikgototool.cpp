@@ -130,7 +130,7 @@ static void vik_goto_tool_class_init ( VikGotoToolClass *klass )
                                "Label",
                                "Set the label",
                                "<no-set>" /* default value */,
-                               G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+                               (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
   g_object_class_install_property (gobject_class,
                                    PROP_LABEL,
                                    pspec);
@@ -141,7 +141,7 @@ static void vik_goto_tool_class_init ( VikGotoToolClass *klass )
                              0  /* minimum value */,
                              G_MAXUINT16 /* maximum value */,
                              0  /* default value */,
-                             G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+                             (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
   g_object_class_install_property (gobject_class,
                                    PROP_ID,
                                    pspec);
@@ -149,7 +149,7 @@ static void vik_goto_tool_class_init ( VikGotoToolClass *klass )
   klass->get_label = goto_tool_get_label;
   klass->get_download_options = goto_tool_get_download_options;
 
-  parent_class = g_type_class_peek_parent (klass);
+  parent_class = (GObjectClass *) g_type_class_peek_parent (klass);
 
   g_type_class_add_private (klass, sizeof (VikGotoToolPrivate));
 }

@@ -303,21 +303,21 @@ vik_tms_map_source_class_init (VikTmsMapSourceClass *klass)
 	                             "Hostname",
 	                             "The hostname of the map server",
 	                             "<no-set>" /* default value */,
-	                             G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+	                             (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
 	g_object_class_install_property (object_class, PROP_HOSTNAME, pspec);
 
 	pspec = g_param_spec_string ("url",
 	                             "URL",
 	                             "The template of the tiles' URL",
 	                             "<no-set>" /* default value */,
-	                             G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+	                             (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
 	g_object_class_install_property (object_class, PROP_URL, pspec);
 
 	pspec = g_param_spec_string ("referer",
 	                             "Referer",
 	                             "The REFERER string to use in HTTP request",
 	                             NULL /* default value */,
-	                             G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+	                             (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
 	g_object_class_install_property (object_class, PROP_REFERER, pspec);
 	
 	pspec = g_param_spec_long ("follow-location",
@@ -326,14 +326,14 @@ vik_tms_map_source_class_init (VikTmsMapSourceClass *klass)
                                0  /* minimum value */,
                                G_MAXLONG /* maximum value */,
                                0  /* default value */,
-                               G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+                               (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
 	g_object_class_install_property (object_class, PROP_FOLLOW_LOCATION, pspec);
 	
 	pspec = g_param_spec_boolean ("check-file-server-time",
 	                              "Check file server time",
                                   "Age of current cache before redownloading tile",
                                   false  /* default value */,
-                                  G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+                                  (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
 	g_object_class_install_property (object_class, PROP_CHECK_FILE_SERVER_TIME, pspec);
 
 	pspec = g_param_spec_uint ("zoom-min",
@@ -342,7 +342,7 @@ vik_tms_map_source_class_init (VikTmsMapSourceClass *klass)
 	                           0,  // minimum value,
 	                           22, // maximum value
 	                           0, // default value
-	                           G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+	                           (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
 	g_object_class_install_property (object_class, PROP_ZOOM_MIN, pspec);
 
 	pspec = g_param_spec_uint ("zoom-max",
@@ -351,7 +351,7 @@ vik_tms_map_source_class_init (VikTmsMapSourceClass *klass)
 	                           0,  // minimum value,
 	                           22, // maximum value
 	                           18, // default value
-	                           G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+	                           (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
 	g_object_class_install_property (object_class, PROP_ZOOM_MAX, pspec);
 
 	pspec = g_param_spec_double ("lat-min",
@@ -360,7 +360,7 @@ vik_tms_map_source_class_init (VikTmsMapSourceClass *klass)
 	                             -90.0,  // minimum value
 	                             90.0, // maximum value
 	                             -90.0, // default value
-	                             G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+	                             (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
 	g_object_class_install_property (object_class, PROP_LAT_MIN, pspec);
 
 	pspec = g_param_spec_double ("lat-max",
@@ -369,7 +369,7 @@ vik_tms_map_source_class_init (VikTmsMapSourceClass *klass)
 	                             -90.0,  // minimum value
 	                             90.0, // maximum value
 	                             90.0, // default value
-	                             G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+	                             (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
 	g_object_class_install_property (object_class, PROP_LAT_MAX, pspec);
 
 	pspec = g_param_spec_double ("lon-min",
@@ -378,7 +378,7 @@ vik_tms_map_source_class_init (VikTmsMapSourceClass *klass)
 	                             -180.0,  // minimum value
 	                             180.0, // maximum value
 	                             -180.0, // default value
-	                             G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+	                             (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
 	g_object_class_install_property (object_class, PROP_LON_MIN, pspec);
 
 	pspec = g_param_spec_double ("lon-max",
@@ -387,7 +387,7 @@ vik_tms_map_source_class_init (VikTmsMapSourceClass *klass)
 	                             -180.0,  // minimum value
 	                             180.0, // maximum value
 	                             180.0, // default value
-	                             G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+	                             (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
 	g_object_class_install_property (object_class, PROP_LON_MAX, pspec);
 
 	g_type_class_add_private (klass, sizeof (VikTmsMapSourcePrivate));
@@ -572,6 +572,6 @@ _get_lon_max (VikMapSource *self)
 VikTmsMapSource *
 vik_tms_map_source_new_with_id (uint16_t id, const char *label, const char *hostname, const char *url)
 {
-	return g_object_new(VIK_TYPE_TMS_MAP_SOURCE,
+	return (VikTmsMapSource *) g_object_new(VIK_TYPE_TMS_MAP_SOURCE,
 	                    "id", id, "label", label, "hostname", hostname, "url", url, NULL);
 }

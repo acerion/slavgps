@@ -20,9 +20,22 @@
  *
  */
 
+#ifndef _VIKING_METATILE_H
+#define _VIKING_METATILE_H
+
 // MAX_SIZE is the biggest file which we will return to the user
 #define METATILE_MAX_SIZE (1 * 1024 * 1024)
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 int xyz_to_meta(char *path, size_t len, const char *dir, int x, int y, int z);
 
 int metatile_read(const char *dir, int x, int y, int z, char *buf, size_t sz, int * compressed, char * log_msg);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif // #ifndef _VIKING_METATILE_H

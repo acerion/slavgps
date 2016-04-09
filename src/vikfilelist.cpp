@@ -67,7 +67,7 @@ static void file_list_add ( VikFileList *vfl )
     fiter = files;
     GtkTreeIter iter;
     while ( fiter ) {
-      char *file_name = fiter->data;
+      char *file_name = (char *) fiter->data;
       
       gtk_list_store_append ( GTK_LIST_STORE(vfl->model), &iter );
       gtk_list_store_set ( GTK_LIST_STORE(vfl->model), &iter, 0, file_name, -1 );
@@ -150,7 +150,7 @@ GType vik_file_list_get_type (void)
       0,
       NULL /* instance init */
     };
-    vs_type = g_type_register_static ( GTK_TYPE_VBOX, "VikFileList", &vs_info, 0 );
+    vs_type = g_type_register_static ( GTK_TYPE_VBOX, "VikFileList", &vs_info, (GTypeFlags) 0 );
   }
 
   return vs_type;

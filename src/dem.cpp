@@ -232,7 +232,7 @@ static void dem_parse_block_as_header ( char *buffer, VikDEM *dem, int *cur_colu
   GET_COLUMN(dem,*cur_column)->east_west = east_west;
   GET_COLUMN(dem,*cur_column)->south = south;
   GET_COLUMN(dem,*cur_column)->n_points = n_rows;
-  GET_COLUMN(dem,*cur_column)->points = malloc(sizeof(int16_t)*n_rows);
+  GET_COLUMN(dem,*cur_column)->points = (int16_t *) malloc(sizeof(int16_t)*n_rows);
 
   /* no information for things before that */
   for ( i = 0; i < (*cur_row); i++ )
@@ -268,7 +268,7 @@ static VikDEM *vik_dem_read_srtm_hgt(const char *file_name, const char *basename
   int arcsec;
   GError *error = NULL;
 
-  dem = malloc(sizeof(VikDEM));
+  dem = (VikDEM *) malloc(sizeof(VikDEM));
 
   dem->horiz_units = VIK_DEM_HORIZ_LL_ARCSECONDS;
   dem->orig_vert_units = VIK_DEM_VERT_DECIMETERS;
@@ -308,7 +308,7 @@ static VikDEM *vik_dem_read_srtm_hgt(const char *file_name, const char *basename
       return NULL;
     }
 
-    dem_mem = unzip_mem;
+    dem_mem = (int16_t *) unzip_mem;
     file_size = ucsize;
   }
   else
@@ -334,7 +334,7 @@ static VikDEM *vik_dem_read_srtm_hgt(const char *file_name, const char *basename
     GET_COLUMN(dem,i)->east_west = dem->min_east + arcsec*i;
     GET_COLUMN(dem,i)->south = dem->min_north;
     GET_COLUMN(dem,i)->n_points = num_rows;
-    GET_COLUMN(dem,i)->points = malloc(sizeof(int16_t)*num_rows);
+    GET_COLUMN(dem,i)->points = (int16_t *) malloc(sizeof(int16_t)*num_rows);
   }
 
   int ent = 0;
@@ -377,7 +377,7 @@ VikDEM *vik_dem_new_from_file(const char *file)
   }
 
       /* Create Structure */
-  rv = malloc(sizeof(VikDEM));
+  rv = (VikDEM *) malloc(sizeof(VikDEM));
 
       /* Header */
   f = g_fopen(file, "r");

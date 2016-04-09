@@ -89,7 +89,7 @@ static bool prompt_try_again(VikWindow *vw, const char *msg)
   GtkWidget *dialog = NULL;
   bool ret = true;
 
-  dialog = gtk_dialog_new_with_buttons ( "", GTK_WINDOW(vw), 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL );
+  dialog = gtk_dialog_new_with_buttons ( "", GTK_WINDOW(vw), (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL );
   gtk_window_set_title(GTK_WINDOW(dialog), _("goto"));
 
   GtkWidget *goto_label = gtk_label_new(msg);
@@ -109,8 +109,8 @@ static int wanted_entry = -1;
 
 static void find_provider (void * elem, void * user_data)
 {
-  const char *name = vik_goto_tool_get_label (elem);
-  const char *provider = user_data;
+	const char *name = vik_goto_tool_get_label ((VikGotoTool *) elem);
+  const char *provider = (const char *) user_data;
   find_entry++;
   if (!strcmp(name, provider)) {
     wanted_entry = find_entry;
@@ -153,7 +153,7 @@ static char *a_prompt_for_goto_string(VikWindow *vw)
 {
   GtkWidget *dialog = NULL;
 
-  dialog = gtk_dialog_new_with_buttons ( "", GTK_WINDOW(vw), 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL );
+  dialog = gtk_dialog_new_with_buttons ( "", GTK_WINDOW(vw), (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL );
   gtk_window_set_title(GTK_WINDOW(dialog), _("goto"));
 
   GtkWidget *tool_label = gtk_label_new(_("goto provider:"));
@@ -162,7 +162,7 @@ static char *a_prompt_for_goto_string(VikWindow *vw)
   while (current != NULL)
   {
     char *label = NULL;
-    VikGotoTool *tool = current->data;
+    VikGotoTool *tool = (VikGotoTool *) current->data;
     label = vik_goto_tool_get_label (tool);
     vik_combo_box_text_append ( tool_list, label );
     current = g_list_next (current);
@@ -201,7 +201,7 @@ static char *a_prompt_for_goto_string(VikWindow *vw)
   
   // TODO check if list is empty
   last_goto_tool = gtk_combo_box_get_active ( GTK_COMBO_BOX(tool_list) );
-  char *provider = vik_goto_tool_get_label ( g_list_nth_data (goto_tools_list, last_goto_tool) );
+  char *provider = vik_goto_tool_get_label ( (VikGotoTool *) g_list_nth_data (goto_tools_list, last_goto_tool) );
   a_settings_set_string ( VIK_SETTINGS_GOTO_PROVIDER, provider );
 
   char *goto_str = g_strdup( gtk_entry_get_text ( GTK_ENTRY(goto_entry) ) );
@@ -228,7 +228,7 @@ static bool vik_goto_place ( VikWindow *vw, VikViewport *vvp, char* name, VikCoo
   get_provider ();
 
   if ( goto_tools_list ) {
-    VikGotoTool *gototool = g_list_nth_data ( goto_tools_list, last_goto_tool );
+    VikGotoTool *gototool = (VikGotoTool *) g_list_nth_data ( goto_tools_list, last_goto_tool );
     if ( gototool ) {
       if ( vik_goto_tool_get_coord ( gototool, vw, vvp, name, vcoord ) == 0 )
         return true;
@@ -256,11 +256,11 @@ void a_vik_goto(VikWindow *vw, VikViewport *vvp)
       more = false;
     }
     else {
-      int ans = vik_goto_tool_get_coord(g_list_nth_data (goto_tools_list, last_goto_tool), vw, vvp, s_str, &new_center);
+      int ans = vik_goto_tool_get_coord((VikGotoTool *) g_list_nth_data (goto_tools_list, last_goto_tool), vw, vvp, s_str, &new_center);
       if ( ans == 0 ) {
         if (last_coord)
           free(last_coord);
-        last_coord = malloc(sizeof(VikCoord));
+        last_coord = (VikCoord *) malloc(sizeof(VikCoord));
         *last_coord = new_center;
         if (last_successful_goto_str)
           free(last_successful_goto_str);
@@ -324,7 +324,11 @@ int a_vik_goto_where_am_i ( VikViewport *vvp, struct LatLon *ll, char **name )
 
   if ((mf = g_mapped_file_new(tmpname, false, NULL)) == NULL) {
     fprintf(stderr, _("CRITICAL: couldn't map temp file\n"));
-    goto tidy;
+
+    g_mapped_file_unref ( mf );
+    (void)g_remove ( tmpname );
+    free( tmpname );
+    return result;
   }
 
   size_t len = g_mapped_file_get_length(mf);

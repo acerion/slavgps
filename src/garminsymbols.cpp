@@ -319,15 +319,15 @@ static struct {
 static GHashTable *icons = NULL;
 static GHashTable *old_icons = NULL;
 
-static bool str_equal_casefold ( gconstpointer v1, gconstpointer v2 ) {
+static int str_equal_casefold ( gconstpointer v1, gconstpointer v2 ) {
   bool equal;
   char *v1_lower;
   char *v2_lower;
 
-  v1_lower = g_utf8_casefold ( v1, -1 );
+  v1_lower = g_utf8_casefold((const char *) v1, -1);
   if (!v1_lower)
     return false;
-  v2_lower = g_utf8_casefold ( v2, -1 );
+  v2_lower = g_utf8_casefold((const char *) v2, -1);
   if (!v2_lower) {
     free( v1_lower );
     return false;
@@ -345,7 +345,7 @@ static unsigned int str_hash_casefold ( gconstpointer key ) {
   unsigned int h;
   char *key_lower;
 
-  key_lower = g_utf8_casefold ( key, -1 );
+  key_lower = g_utf8_casefold((const char *) key, -1);
   if (!key_lower)
     return 0;
 

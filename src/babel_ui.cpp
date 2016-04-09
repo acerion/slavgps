@@ -33,7 +33,7 @@ static void babel_ui_selector_add_entry_cb ( void * data, void * user_data )
   BabelFile *file = (BabelFile*)data;
   GtkWidget *combo = GTK_WIDGET(user_data);
 
-  GList *formats = g_object_get_data ( G_OBJECT(combo), "formats" );
+  GList *formats = (GList *) g_object_get_data ( G_OBJECT(combo), "formats" );
   formats = g_list_append ( formats, file );
   g_object_set_data ( G_OBJECT(combo), "formats", formats );
 
@@ -104,7 +104,7 @@ GtkWidget *a_babel_ui_file_type_selector_new ( BabelMode mode )
  */
 void a_babel_ui_file_type_selector_destroy ( GtkWidget *selector )
 {
-  GList *formats = g_object_get_data ( G_OBJECT(selector), "formats" );
+  GList *formats = (GList *) g_object_get_data ( G_OBJECT(selector), "formats" );
   free( formats );
 }
 
@@ -120,7 +120,7 @@ BabelFile *a_babel_ui_file_type_selector_get ( GtkWidget *selector )
 {
   int active = gtk_combo_box_get_active ( GTK_COMBO_BOX(selector) );
   if (active >= 0) {
-    GList *formats = g_object_get_data ( G_OBJECT(selector), "formats" );
+    GList *formats = (GList *) g_object_get_data ( G_OBJECT(selector), "formats" );
     return (BabelFile*)g_list_nth_data ( formats, active );
   } else {
     return NULL;
@@ -175,13 +175,13 @@ void a_babel_ui_modes_get ( GtkWidget *container, bool *tracks, bool *routes, bo
   GList* children = gtk_container_get_children ( GTK_CONTAINER(container) );
   GtkWidget *child = NULL;
 
-  child = g_list_nth_data ( children, 0 );
+  child = (GtkWidget *) g_list_nth_data ( children, 0 );
   *tracks = gtk_toggle_button_get_active ( GTK_TOGGLE_BUTTON(child) );
 
-  child = g_list_nth_data ( children, 1 );
+  child = (GtkWidget *) g_list_nth_data ( children, 1 );
   *routes = gtk_toggle_button_get_active ( GTK_TOGGLE_BUTTON(child) );
 
-  child = g_list_nth_data ( children, 2 );
+  child = (GtkWidget *) g_list_nth_data ( children, 2 );
   *waypoints = gtk_toggle_button_get_active ( GTK_TOGGLE_BUTTON(child) );
 }
 
