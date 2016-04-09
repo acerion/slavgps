@@ -53,7 +53,7 @@ libviking_a_SOURCES = \
 	compression.cpp compression.h \
 	menu.xml.h \
 	degrees_converters.cpp degrees_converters.h \
-	globals.c globals.h \
+	globals.cpp globals.h \
 	viking.h mapcoord.h config.h \
 	vik_compat.cpp vik_compat.h \
 	viktrack.cpp viktrack.h \
@@ -62,22 +62,22 @@ libviking_a_SOURCES = \
 	coords.cpp coords.h \
 	gpsmapper.cpp gpsmapper.h \
 	gpspoint.cpp gpspoint.h \
-	geojson.c geojson.h \
-	dir.c dir.h \
+	geojson.cpp geojson.h \
+	dir.cpp dir.h \
 	file.c file.h \
-	fileutils.c fileutils.h \
+	fileutils.cpp fileutils.h \
 	authors.h \
 	documenters.h \
-	dialog.c dialog.h \
+	dialog.cpp dialog.h \
 	util.c util.h \
-	ui_util.c ui_util.h \
-	download.c download.h \
-	jpg.c jpg.h \
+	ui_util.cpp ui_util.h \
+	download.cpp download.h \
+	jpg.cpp jpg.h \
 	vikenumtypes.c vikenumtypes.h \
 	viktreeview.c viktreeview.h \
 	viktrwlayer.cpp viktrwlayer.h \
-	viklayer.c viklayer.h \
-	viklayerspanel.c viklayerspanel.h \
+	viklayer.cpp viklayer.h \
+	viklayerspanel.cpp viklayerspanel.h \
 	vikcoordlayer.cpp vikcoordlayer.h \
 	vikstatus.c vikstatus.h \
 	vikwindow.c vikwindow.h \
