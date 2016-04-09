@@ -60,7 +60,7 @@ GType vik_file_entry_get_type (void)
       0,
       NULL /* instance init */
     };
-    vs_type = g_type_register_static ( GTK_TYPE_HBOX, "VikFileEntry", &vs_info, 0 );
+    vs_type = g_type_register_static ( GTK_TYPE_HBOX, "VikFileEntry", &vs_info, (GTypeFlags) 0 );
   }
 
   return vs_type;

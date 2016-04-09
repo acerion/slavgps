@@ -86,7 +86,7 @@ vik_gobject_builder_class_init (VikGobjectBuilderClass *klass)
 	gobject_builder_signals[NEW_OBJECT] =
 		g_signal_new ("new-object",
 		              G_OBJECT_CLASS_TYPE (klass),
-		              0,
+		              (GSignalFlags) 0,
 		              G_STRUCT_OFFSET (VikGobjectBuilderClass, new_object),
 		              NULL, NULL,
 		              g_cclosure_marshal_VOID__OBJECT,
@@ -185,7 +185,7 @@ _text (GMarkupParseContext *context,
 			/* We have to retrieve the expected type of the value 
 			 * in order to do the correct transformation */
 			GObjectClass *oclass;
-			oclass = g_type_class_ref (gtype);
+			oclass = (GObjectClass *) g_type_class_ref (gtype);
 			assert (oclass != NULL);
 			GParamSpec *pspec;
 			pspec = g_object_class_find_property (G_OBJECT_CLASS (oclass), property_name);
@@ -204,7 +204,7 @@ _text (GMarkupParseContext *context,
 			fprintf(stderr, "DEBUG: VikGobjectBuilder: store new GParameter for %s: (%s)%s=%*s\n",
 			        g_type_name(gtype), g_type_name(G_VALUE_TYPE(&gvalue)), property_name, (int)text_len, text);
 			nb_parameters++;
-			parameters = g_realloc(parameters, sizeof(GParameter)*nb_parameters);
+			parameters = (GParameter *) g_realloc(parameters, sizeof(GParameter)*nb_parameters);
 			/* parameter name */
 			parameters[nb_parameters-1].name = g_strdup(property_name);
 			/* parameter value */
@@ -216,7 +216,7 @@ _text (GMarkupParseContext *context,
 VikGobjectBuilder *
 vik_gobject_builder_new (void)
 {
-	return g_object_new (VIK_TYPE_GOBJECT_BUILDER, NULL);
+	return (VikGobjectBuilder *) g_object_new (VIK_TYPE_GOBJECT_BUILDER, NULL);
 }
 
 void
@@ -238,7 +238,7 @@ vik_gobject_builder_parse (VikGobjectBuilder *self, const char *filename)
 	xml_parser.passthrough = NULL;
 	xml_parser.error = NULL;
 	
-	xml_context = g_markup_parse_context_new(&xml_parser, 0, self, NULL);
+	xml_context = g_markup_parse_context_new(&xml_parser, (GMarkupParseFlags) 0, self, NULL);
 	
 	char buff[BUFSIZ];
 	size_t nb;

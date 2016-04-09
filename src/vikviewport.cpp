@@ -151,10 +151,10 @@ vik_viewport_class_init ( VikViewportClass *klass )
 
   object_class->finalize = viewport_finalize;
 
-  parent_class = g_type_class_peek_parent (klass);
+  parent_class = (GObjectClass *) g_type_class_peek_parent (klass);
 
   viewport_signals[VW_UPDATED_CENTER_SIGNAL] = g_signal_new ( "updated_center", G_TYPE_FROM_CLASS (klass),
-      G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION, G_STRUCT_OFFSET (VikViewportClass, updated_center), NULL, NULL,
+      (GSignalFlags) (G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION), G_STRUCT_OFFSET (VikViewportClass, updated_center), NULL, NULL,
       g_cclosure_marshal_VOID__VOID, G_TYPE_NONE, 0);
 }
 
@@ -247,7 +247,7 @@ vik_viewport_init ( VikViewport *vvp )
 
 GdkColor *vik_viewport_get_background_gdkcolor ( VikViewport *vvp )
 {
-  GdkColor *rv = malloc( sizeof ( GdkColor ) );
+  GdkColor *rv = (GdkColor *) malloc( sizeof ( GdkColor ) );
   *rv = vvp->background_color;
   return rv;
 }
@@ -278,7 +278,7 @@ void vik_viewport_set_background_gdkcolor ( VikViewport *vvp, GdkColor *color )
 
 GdkColor *vik_viewport_get_highlight_gdkcolor ( VikViewport *vvp )
 {
-  GdkColor *rv = malloc( sizeof ( GdkColor ) );
+  GdkColor *rv = (GdkColor *) malloc( sizeof ( GdkColor ) );
   *rv = vvp->highlight_color;
   return rv;
 }
@@ -619,7 +619,7 @@ void vik_viewport_draw_copyright ( VikViewport *vvp )
     if ( slen >= 127 )
       break;
 
-    char *copyright = g_slist_nth_data ( vvp->copyrights, i );
+    char *copyright = (char *) g_slist_nth_data ( vvp->copyrights, i );
 
     // Only use part of this copyright that fits in the available space left
     //  remembering 1 character is left available for the appended space
@@ -704,7 +704,7 @@ void vik_viewport_draw_logo ( VikViewport *vvp )
   int i;
   for (i = 0 ; i < len ; i++)
   {
-    GdkPixbuf *logo = g_slist_nth_data ( vvp->logos, i );
+    GdkPixbuf *logo = (GdkPixbuf *) g_slist_nth_data ( vvp->logos, i );
     int width = gdk_pixbuf_get_width ( logo );
     int height = gdk_pixbuf_get_height ( logo );
     vik_viewport_draw_pixbuf ( vvp, logo, 0, 0, x - width, y, width, height );
@@ -864,7 +864,7 @@ static void viewport_utm_zone_check ( VikViewport *vvp )
  */
 static void free_center ( VikViewport *vvp, unsigned int index )
 {
-  VikCoord *coord = g_list_nth_data ( vvp->centers, index );
+  VikCoord *coord = (VikCoord *) g_list_nth_data ( vvp->centers, index );
   if ( coord )
     free( coord );
   GList *gl = g_list_nth ( vvp->centers, index );
@@ -890,7 +890,7 @@ static void free_centers ( VikViewport *vvp, unsigned int start )
  */
 static void update_centers ( VikViewport *vvp )
 {
-  VikCoord *new_center = malloc(sizeof (VikCoord));
+  VikCoord *new_center = (VikCoord *) malloc(sizeof (VikCoord));
   *new_center = vvp->center;
 
   if ( vvp->centers_index ) {
@@ -931,7 +931,7 @@ void vik_viewport_show_centers ( VikViewport *vvp, GtkWindow *parent )
   for (node = vvp->centers; node != NULL; node = g_list_next(node)) {
     char *lat = NULL, *lon = NULL;
     struct LatLon ll;
-    vik_coord_to_latlon (node->data, &ll);
+    vik_coord_to_latlon ((const VikCoord *) node->data, &ll);
     a_coords_latlon_to_string ( &ll, &lat, &lon );
     char *extra = NULL;
     if ( index == vvp->centers_index-1 )
@@ -973,7 +973,7 @@ void vik_viewport_show_centers ( VikViewport *vvp, GtkWindow *parent )
 bool vik_viewport_go_back ( VikViewport *vvp )
 {
   // see if the current position is different from the last saved center position within a certain radius
-  VikCoord *center = g_list_nth_data ( vvp->centers, vvp->centers_index );
+  VikCoord *center = (VikCoord *) g_list_nth_data ( vvp->centers, vvp->centers_index );
   if ( center ) {
     // Consider an exclusion size (should it zoom level dependent, rather than a fixed value?)
     // When still near to the last saved position we'll jump over it to the one before
@@ -997,7 +997,7 @@ bool vik_viewport_go_back ( VikViewport *vvp )
     return false;
   }
 
-  VikCoord *new_center = g_list_nth_data ( vvp->centers, vvp->centers_index );
+  VikCoord *new_center = (VikCoord *) g_list_nth_data ( vvp->centers, vvp->centers_index );
   if ( new_center ) {
     vik_viewport_set_center_coord ( vvp, new_center, false );
     return true;
@@ -1018,7 +1018,7 @@ bool vik_viewport_go_forward ( VikViewport *vvp )
     return false;
 
   vvp->centers_index++;
-  VikCoord *new_center = g_list_nth_data ( vvp->centers, vvp->centers_index );
+  VikCoord *new_center = (VikCoord *) g_list_nth_data ( vvp->centers, vvp->centers_index );
   if ( new_center ) {
     vik_viewport_set_center_coord ( vvp, new_center, false );
     return true;

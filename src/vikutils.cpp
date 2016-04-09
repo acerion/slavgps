@@ -391,7 +391,7 @@ static void latest_version_thread ( GtkWindow *window )
 	fprintf(stderr, "DEBUG: The lastest version is: %s\n", text );
 
 	if ( my_version < latest_version ) {
-		new_version_thread_data *nvtd = malloc( sizeof(new_version_thread_data) );
+		new_version_thread_data *nvtd = (new_version_thread_data *) malloc( sizeof(new_version_thread_data) );
 		nvtd->window = window;
 		nvtd->version = g_strdup( text );
 		gdk_threads_add_idle ( (GSourceFunc) new_version_available_message, nvtd );
@@ -673,7 +673,7 @@ static char* time_string_adjusted ( time_t *time, int offset_s )
 {
 	time_t *mytime = time;
 	*mytime = *mytime + offset_s;
-	char *str = malloc( 64 );
+	char *str = (char *) malloc( 64 );
 	// Append asterisks to indicate use of simplistic model (i.e. no TZ)
 	strftime ( str, 64, "%a %X %x **", gmtime(mytime) );
 	return str;
@@ -762,7 +762,7 @@ char* vu_get_time_string ( time_t *time, const char *format, const VikCoord* vc,
 	char *str = NULL;
 	switch ( a_vik_get_time_ref_frame() ) {
 		case VIK_TIME_REF_UTC:
-			str = malloc( 64 );
+			str = (char *) malloc( 64 );
 			strftime ( str, 64, format, gmtime(time) ); // Always 'GMT'
 			break;
 		case VIK_TIME_REF_WORLD:
@@ -790,7 +790,7 @@ char* vu_get_time_string ( time_t *time, const char *format, const VikCoord* vc,
 			}
 			break;
 		default: // VIK_TIME_REF_LOCALE
-			str = malloc( 64 );
+			str = (char *) malloc( 64 );
 			strftime ( str, 64, format, localtime(time) );
 			break;
 	}

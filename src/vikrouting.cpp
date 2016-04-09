@@ -78,7 +78,7 @@ static int
 search_by_id (gconstpointer a,
               gconstpointer b)
 {
-	const char *id = b;
+	const char *id = (const char *) b;
 	VikRoutingEngine *engine = (VikRoutingEngine *)a;
 	char *engineId = vik_routing_engine_get_id (engine);
 	if (id && engine)
@@ -99,7 +99,7 @@ vik_routing_find_engine ( const char *id )
 	VikRoutingEngine *engine = NULL;
 	GList *elem = g_list_find_custom (routing_engine_list, id, search_by_id);
 	if (elem)
-		engine = elem->data;
+		engine = (VikRoutingEngine *) elem->data;
 	return engine;
 }
 
@@ -117,7 +117,7 @@ vik_routing_default_engine ( void )
   VikRoutingEngine *engine = vik_routing_find_engine(id);
   if (engine == NULL && routing_engine_list != NULL && g_list_first (routing_engine_list) != NULL)
     /* Fallback to first element */
-    engine = g_list_first (routing_engine_list)->data;
+    engine = (VikRoutingEngine *) g_list_first (routing_engine_list)->data;
 
   return engine;
 }
@@ -178,12 +178,12 @@ vik_routing_register( VikRoutingEngine *engine )
       len = g_strv_length (routing_engine_labels);
   
     /* Add the label */
-    routing_engine_labels = g_realloc (routing_engine_labels, (len+2)*sizeof(char*));
+    routing_engine_labels = (char **) g_realloc (routing_engine_labels, (len+2)*sizeof(char*));
     routing_engine_labels[len] = g_strdup(label);
     routing_engine_labels[len+1] = NULL;
 
     /* Add the id */
-    routing_engine_ids = g_realloc (routing_engine_ids, (len+2)*sizeof(char*));
+    routing_engine_ids = (char **) g_realloc (routing_engine_ids, (len+2)*sizeof(char*));
     routing_engine_ids[len] = g_strdup(id);
     routing_engine_ids[len+1] = NULL;
   
@@ -242,7 +242,7 @@ fill_engine_box (void * data, void * user_data)
   GtkWidget *widget = (GtkWidget*) user_data;
 
   /* Only register engine fulliling expected behavior */
-  Predicate predicate = g_object_get_data ( G_OBJECT ( widget ), "func" );
+  Predicate predicate = (Predicate) g_object_get_data ( G_OBJECT ( widget ), "func" );
   void * predicate_data = g_object_get_data ( G_OBJECT ( widget ), "user_data" );
   /* No predicate means to register all engines */
   bool ok = predicate == NULL || predicate (engine, predicate_data);
@@ -278,7 +278,7 @@ vik_routing_ui_selector_new (Predicate func, void * user_data)
   GtkWidget * combo = vik_combo_box_text_new ();
 
   /* Save data for foreach function */
-  g_object_set_data ( G_OBJECT ( combo ), "func", func );
+  g_object_set_data ( G_OBJECT ( combo ), "func", (void *) func );
   g_object_set_data ( G_OBJECT ( combo ), "user_data", user_data );
 
   /* Filter all engines with given user function */
@@ -302,7 +302,7 @@ vik_routing_ui_selector_get_nth (GtkWidget *combo, int pos)
 {
   /* Retrieve engine */
   GList *engines = (GList*) g_object_get_data ( G_OBJECT ( combo ) , "engines" );
-  VikRoutingEngine *engine = g_list_nth_data ( engines, pos );
+  VikRoutingEngine *engine = (VikRoutingEngine *) g_list_nth_data ( engines, pos );
 
   return engine;
 }

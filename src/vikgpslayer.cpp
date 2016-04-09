@@ -378,7 +378,7 @@ static void gps_layer_inst_init ( VikGpsLayer *self )
 {
   int new_proto = 0;
   // +1 for luck (i.e the NULL terminator)
-  char **new_protocols = g_malloc_n(1 + g_list_length(a_babel_device_list), sizeof(void *));
+  char **new_protocols = (char **) g_malloc_n(1 + g_list_length(a_babel_device_list), sizeof(void *));
 
   GList *gl = g_list_first ( a_babel_device_list );
   while ( gl ) {
@@ -410,7 +410,7 @@ GType vik_gps_layer_get_type ()
       0,
       (GInstanceInitFunc) gps_layer_inst_init,
     };
-    val_type = g_type_register_static ( VIK_LAYER_TYPE, "VikGpsLayer", &val_info, 0 );
+    val_type = g_type_register_static ( VIK_LAYER_TYPE, "VikGpsLayer", &val_info, (GTypeFlags) 0 );
   }
 
   return val_type;
@@ -1262,7 +1262,7 @@ int vik_gps_comm ( VikTrwLayer *vtl,
                     bool do_waypoints,
 		    bool turn_off )
 {
-  GpsSession *sess = malloc(sizeof(GpsSession));
+  GpsSession *sess = (GpsSession *) malloc(sizeof(GpsSession));
   char *tracks = NULL;
   char *routes = NULL;
   char *waypoints = NULL;
@@ -1311,7 +1311,7 @@ int vik_gps_comm ( VikTrwLayer *vtl,
 
   // Only create dialog if we're going to do some transferring
   if ( do_tracks || do_waypoints || do_routes ) {
-    sess->dialog = gtk_dialog_new_with_buttons ( "", VIK_GTK_WINDOW_FROM_LAYER(vtl), 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL );
+    sess->dialog = gtk_dialog_new_with_buttons ( "", VIK_GTK_WINDOW_FROM_LAYER(vtl), (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL );
     gtk_dialog_set_response_sensitive ( GTK_DIALOG(sess->dialog),
                                         GTK_RESPONSE_ACCEPT, false );
     gtk_window_set_title ( GTK_WINDOW(sess->dialog), sess->window_title );
@@ -1675,9 +1675,9 @@ static void gpsd_raw_hook(VglGpsd *vgpsd, char *data)
   }
 }
 
-static bool gpsd_data_available(GIOChannel *source, GIOCondition condition, void * data)
+static int gpsd_data_available(GIOChannel *source, GIOCondition condition, void * data)
 {
-  VikGpsLayer *vgl = data;
+  VikGpsLayer *vgl = (VikGpsLayer *) data;
   if (condition == G_IO_IN) {
 #if GPSD_API_MAJOR_VERSION == 3 || GPSD_API_MAJOR_VERSION == 4
     if (!gps_poll(&vgl->vgpsd->gpsd)) {
@@ -1703,7 +1703,7 @@ static char *make_track_name(VikTrwLayer *vtl)
 {
   const char basename[] = "REALTIME";
   const int bufsize = sizeof(basename) + 5;
-  char *name = malloc(bufsize);
+  char *name = (char *) malloc(bufsize);
   strcpy(name, basename);
   int i = 2;
 
@@ -1727,7 +1727,7 @@ static bool rt_gpsd_try_connect(void * *data)
 
   if (gps_open_r(vgl->gpsd_host, vgl->gpsd_port, /*(struct gps_data_t *)*/vgl->vgpsd) != 0) {
 #elif GPSD_API_MAJOR_VERSION == 5 || GPSD_API_MAJOR_VERSION == 6
-  vgl->vgpsd = malloc(sizeof(VglGpsd));
+  vgl->vgpsd = (VglGpsd *) malloc(sizeof(VglGpsd));
   if (gps_open(vgl->gpsd_host, vgl->gpsd_port, &vgl->vgpsd->gpsd) != 0) {
 #else
 // Delibrately break compilation...
@@ -1760,7 +1760,7 @@ static bool rt_gpsd_try_connect(void * *data)
 
   vgl->realtime_io_channel = g_io_channel_unix_new(vgl->vgpsd->gpsd.gps_fd);
   vgl->realtime_io_watch_id = g_io_add_watch( vgl->realtime_io_channel,
-                    G_IO_IN | G_IO_ERR | G_IO_HUP, gpsd_data_available, vgl);
+                    (GIOCondition) (G_IO_IN | G_IO_ERR | G_IO_HUP), gpsd_data_available, vgl);
 
 #if GPSD_API_MAJOR_VERSION == 3
   gps_query(&vgl->vgpsd->gpsd, "w+x");

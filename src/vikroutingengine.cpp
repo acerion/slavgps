@@ -138,7 +138,7 @@ vik_routing_engine_class_init ( VikRoutingEngineClass *klass )
   object_class->get_property = vik_routing_engine_get_property;
   object_class->finalize = vik_routing_engine_finalize;
 
-  parent_class = g_type_class_peek_parent (klass);
+  parent_class = (GObjectClass *) g_type_class_peek_parent (klass);
 
   routing_class = VIK_ROUTING_ENGINE_CLASS ( klass );
   routing_class->find = NULL;
@@ -153,21 +153,21 @@ vik_routing_engine_class_init ( VikRoutingEngineClass *klass )
                                "Identifier",
                                "The identifier of the routing engine",
                                "<no-set>" /* default value */,
-                               G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+                               (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
   g_object_class_install_property (object_class, PROP_ID, pspec);
   
   pspec = g_param_spec_string ("label",
                                "Label",
                                "The label of the routing engine",
                                "<no-set>" /* default value */,
-                               G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+                               (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
   g_object_class_install_property (object_class, PROP_LABEL, pspec);
     
   pspec = g_param_spec_string ("format",
                                "Format",
                                "The format of the output (see gpsbabel)",
                                "<no-set>" /* default value */,
-                               G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+                               (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
   g_object_class_install_property (object_class, PROP_FORMAT, pspec);
 
   g_type_class_add_private (klass, sizeof (VikRoutingPrivate));

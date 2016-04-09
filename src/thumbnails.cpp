@@ -440,7 +440,7 @@ static char *MD5Final(MD5Context *ctx)
 
 	byteSwap(ctx->buf, 4);
 
-	retval = malloc(33);
+	retval = (char *) malloc(33);
 	bytes = (uint8_t *) ctx->buf;
 	for (i = 0; i < 16; i++)
 		sprintf(retval + (i * 2), "%02x", bytes[i]);

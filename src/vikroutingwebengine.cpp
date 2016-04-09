@@ -224,7 +224,7 @@ static void vik_routing_web_engine_class_init ( VikRoutingWebEngineClass *klass 
                                "URL's base",
                                "The base URL of the routing engine",
                                "<no-set>" /* default value */,
-                               G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+                               (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
   g_object_class_install_property (object_class, PROP_URL_BASE, pspec);
   
 
@@ -237,7 +237,7 @@ static void vik_routing_web_engine_class_init ( VikRoutingWebEngineClass *klass 
                                "Start part of the URL",
                                "The part of the request hosting the start point",
                                "<no-set>" /* default value */,
-                               G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+                               (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
   g_object_class_install_property (object_class, PROP_URL_START_LL, pspec);
     
 
@@ -250,7 +250,7 @@ static void vik_routing_web_engine_class_init ( VikRoutingWebEngineClass *klass 
                                "Stop part of the URL",
                                "The part of the request hosting the end point",
                                "<no-set>" /* default value */,
-                               G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+                               (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
   g_object_class_install_property (object_class, PROP_URL_STOP_LL, pspec);
 
 
@@ -263,7 +263,7 @@ static void vik_routing_web_engine_class_init ( VikRoutingWebEngineClass *klass 
                                "Via part of the URL",
                                "The param of the request for setting a via point",
                                NULL /* default value */,
-                               G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+                               (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
   g_object_class_install_property (object_class, PROP_URL_VIA_LL, pspec);
 
 
@@ -276,7 +276,7 @@ static void vik_routing_web_engine_class_init ( VikRoutingWebEngineClass *klass 
                                "Start part of the URL",
                                "The part of the request hosting the start point",
                                NULL /* default value */,
-                               G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+                               (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
   g_object_class_install_property (object_class, PROP_URL_START_DIR, pspec);
     
 
@@ -289,7 +289,7 @@ static void vik_routing_web_engine_class_init ( VikRoutingWebEngineClass *klass 
                                "Stop part of the URL",
                                "The part of the request hosting the end point",
                                NULL /* default value */,
-                               G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+                               (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
   g_object_class_install_property (object_class, PROP_URL_STOP_DIR, pspec);
 
 
@@ -302,7 +302,7 @@ static void vik_routing_web_engine_class_init ( VikRoutingWebEngineClass *klass 
                                "Referer",
                                "The REFERER string to use in HTTP request",
                                NULL /* default value */,
-                               G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+                               (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
   g_object_class_install_property (object_class, PROP_REFERER, pspec);
 
 
@@ -317,7 +317,7 @@ static void vik_routing_web_engine_class_init ( VikRoutingWebEngineClass *klass 
                              0  /* minimum value */,
                              G_MAXLONG /* maximum value */,
                              2  /* default value */,
-                             G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+                             (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
   g_object_class_install_property (object_class, PROP_FOLLOW_LOCATION, pspec);
 
   g_type_class_add_private (klass, sizeof (VikRoutingWebEnginePrivate));
@@ -516,7 +516,7 @@ vik_routing_web_engine_get_url_for_track ( VikRoutingEngine *self, VikTrack *vt 
 
   /* Init temporary storage */
   size_t len = 1 + g_list_length ( vt->trackpoints ) + 1; /* base + trackpoints + NULL */
-  urlParts = malloc( sizeof(char*)*len );
+  urlParts = (char **) malloc( sizeof(char*)*len );
   urlParts[0] = g_strdup( priv->url_base );
   urlParts[len-1] = NULL;
 
@@ -532,11 +532,11 @@ vik_routing_web_engine_get_url_for_track ( VikRoutingEngine *self, VikTrack *vt 
   struct LatLon position;
   VikTrackpoint *vtp;
   free( urlParts[1] );
-  vtp = g_list_first ( vt->trackpoints )->data;
+  vtp = (VikTrackpoint *) g_list_first ( vt->trackpoints )->data;
   vik_coord_to_latlon ( &(vtp->coord ), &position );
   urlParts[1] = substitute_latlon ( priv->url_start_ll_fmt, position );
   free( urlParts[len-2] );
-  vtp = g_list_last ( vt->trackpoints )->data;
+  vtp = (VikTrackpoint *) g_list_last ( vt->trackpoints )->data;
   vik_coord_to_latlon ( &(vtp->coord), &position );
   urlParts[len-2] = substitute_latlon ( priv->url_stop_ll_fmt, position );
 

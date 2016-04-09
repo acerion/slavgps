@@ -125,7 +125,7 @@ GType vik_aggregate_layer_get_type ()
       0,
       NULL /* instance init */
     };
-    val_type = g_type_register_static ( VIK_LAYER_TYPE, "VikAggregateLayer", &val_info, 0 );
+    val_type = g_type_register_static ( VIK_LAYER_TYPE, "VikAggregateLayer", &val_info, (GTypeFlags) 0 );
   }
 
   return val_type;
@@ -924,7 +924,7 @@ bool vik_aggregate_layer_is_empty ( VikAggregateLayer *val )
 static void aggregate_layer_drag_drop_request ( VikAggregateLayer *val_src, VikAggregateLayer *val_dest, GtkTreeIter *src_item_iter, GtkTreePath *dest_path )
 {
   VikTreeview *vt = VIK_LAYER(val_src)->vt;
-  VikLayer *vl = vik_treeview_item_get_pointer(vt, src_item_iter);
+  VikLayer *vl = (VikLayer *) vik_treeview_item_get_pointer(vt, src_item_iter);
   GtkTreeIter dest_iter;
   char *dp;
   bool target_exists;
