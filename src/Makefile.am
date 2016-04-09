@@ -64,60 +64,60 @@ libviking_a_SOURCES = \
 	gpspoint.cpp gpspoint.h \
 	geojson.cpp geojson.h \
 	dir.cpp dir.h \
-	file.c file.h \
+	file.cpp file.h \
 	fileutils.cpp fileutils.h \
 	authors.h \
 	documenters.h \
 	dialog.cpp dialog.h \
-	util.c util.h \
+	util.cpp util.h \
 	ui_util.cpp ui_util.h \
 	download.cpp download.h \
 	jpg.cpp jpg.h \
-	vikenumtypes.c vikenumtypes.h \
-	viktreeview.c viktreeview.h \
+	vikenumtypes.cpp vikenumtypes.h \
+	viktreeview.cpp viktreeview.h \
 	viktrwlayer.cpp viktrwlayer.h \
 	viklayer.cpp viklayer.h \
 	viklayerspanel.cpp viklayerspanel.h \
 	vikcoordlayer.cpp vikcoordlayer.h \
 	vikstatus.cpp vikstatus.h \
-	vikwindow.c vikwindow.h \
-	vikviewport.c vikviewport.h \
-	vikaggregatelayer.c vikaggregatelayer.h \
-	vikgobjectbuilder.c vikgobjectbuilder.h \
-	vikgpslayer.c vikgpslayer.h \
-	vikgeoreflayer.c vikgeoreflayer.h \
-	vikfileentry.c vikfileentry.h \
+	vikwindow.cpp vikwindow.h \
+	vikviewport.cpp vikviewport.h \
+	vikaggregatelayer.cpp vikaggregatelayer.h \
+	vikgobjectbuilder.cpp vikgobjectbuilder.h \
+	vikgpslayer.cpp vikgpslayer.h \
+	vikgeoreflayer.cpp vikgeoreflayer.h \
+	vikfileentry.cpp vikfileentry.h \
 	vikgototool.cpp vikgototool.h \
 	vikgotoxmltool.cpp vikgotoxmltool.h \
 	vikgoto.cpp vikgoto.h \
-	viktrwlayer_export.c viktrwlayer_export.h \
-	viktrwlayer_tpwin.c viktrwlayer_tpwin.h \
-	viktrwlayer_wpwin.c viktrwlayer_wpwin.h \
-	viktrwlayer_propwin.c viktrwlayer_propwin.h \
-	viktrwlayer_analysis.c viktrwlayer_analysis.h \
-	viktrwlayer_tracklist.c viktrwlayer_tracklist.h \
-	viktrwlayer_waypointlist.c viktrwlayer_waypointlist.h \
-	vikrouting.c vikrouting.h \
-	vikroutingengine.c vikroutingengine.h \
-	vikroutingwebengine.c vikroutingwebengine.h \
-	vikutils.c vikutils.h \
-	toolbar.c toolbar.h toolbar.xml.h \
-	thumbnails.c thumbnails.h \
-	background.c background.h \
-	vikradiogroup.c vikradiogroup.h \
+	viktrwlayer_export.cpp viktrwlayer_export.h \
+	viktrwlayer_tpwin.cpp viktrwlayer_tpwin.h \
+	viktrwlayer_wpwin.cpp viktrwlayer_wpwin.h \
+	viktrwlayer_propwin.cpp viktrwlayer_propwin.h \
+	viktrwlayer_analysis.cpp viktrwlayer_analysis.h \
+	viktrwlayer_tracklist.cpp viktrwlayer_tracklist.h \
+	viktrwlayer_waypointlist.cpp viktrwlayer_waypointlist.h \
+	vikrouting.cpp vikrouting.h \
+	vikroutingengine.cpp vikroutingengine.h \
+	vikroutingwebengine.cpp vikroutingwebengine.h \
+	vikutils.cpp vikutils.h \
+	toolbar.cpp toolbar.h toolbar.xml.h \
+	thumbnails.cpp thumbnails.h \
+	background.cpp background.h \
+	vikradiogroup.cpp vikradiogroup.h \
 	vikcoord.cpp vikcoord.h \
 	mapcache.cpp mapcache.h \
 	maputils.cpp maputils.h \
 	vikmapsource.cpp vikmapsource.h \
 	vikmapsourcedefault.cpp vikmapsourcedefault.h \
-	vikmapslayer.c vikmapslayer.h \
-	vikmapslayer_compat.c vikmapslayer_compat.h \
+	vikmapslayer.cpp vikmapslayer.h \
+	vikmapslayer_compat.cpp vikmapslayer_compat.h \
 	vikmaptype.cpp vikmaptype.h \
 	vikslippymapsource.cpp vikslippymapsource.h \
 	vikwmscmapsource.cpp vikwmscmapsource.h \
 	viktmsmapsource.cpp viktmsmapsource.h \
 	metatile.cpp metatile.h \
-	gpx.c gpx.h \
+	gpx.cpp gpx.h \
 	garminsymbols.cpp garminsymbols.h \
 	acquire.cpp acquire.h \
 	babel.cpp babel.h \
@@ -136,7 +136,7 @@ libviking_a_SOURCES = \
 	vikdemlayer.h vikdemlayer.cpp \
 	vikdatetime_edit_dialog.cpp vikdatetime_edit_dialog.h \
 	vikfilelist.cpp vikfilelist.h \
-	vikexttool.c vikexttool.h \
+	vikexttool.cpp vikexttool.h \
 	vikexttools.c vikexttools.h \
 	vikwebtool.c vikwebtool.h \
 	vikwebtoolcenter.c vikwebtoolcenter.h \
