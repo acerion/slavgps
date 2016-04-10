@@ -201,7 +201,7 @@ GString *xpath = NULL;
 GString *c_cdata = NULL;
 
 /* current ("c_") objects */
-VikTrackpoint *c_tp = NULL;
+Trackpoint * c_tp = NULL;
 Waypoint * c_wp = NULL;
 VikTrack *c_tr = NULL;
 VikTRWMetadata *c_md = NULL;
@@ -280,7 +280,7 @@ static void gpx_start(VikTrwLayer *vtl, const char *el, const char **attr)
 
      case tt_trk_trkseg_trkpt:
        if ( set_c_ll( attr ) ) {
-         c_tp = vik_trackpoint_new ();
+         c_tp = new Trackpoint();
          vik_coord_load_from_latlon ( &(c_tp->coord), vik_trw_layer_get_coord_mode ( vtl ), &c_ll );
          if ( f_tr_newseg ) {
            c_tp->newsegment = true;
@@ -333,7 +333,7 @@ static void gpx_start(VikTrwLayer *vtl, const char *el, const char **attr)
        }
        g_string_erase ( c_cdata, 0, -1 ); /* clear the cdata buffer for description */
        break;
-        
+
      default: break;
   }
 }
@@ -498,7 +498,7 @@ static void gpx_end(VikTrwLayer *vtl, const char *el)
        break;
 
      case tt_trk_trkseg_trkpt_name:
-       vik_trackpoint_set_name ( c_tp, c_cdata->str );
+       c_tp->set_name(c_cdata->str);
        g_string_erase ( c_cdata, 0, -1 );
        break;
 
@@ -629,7 +629,7 @@ bool a_gpx_read_file( VikTrwLayer *vtl, FILE *f ) {
     done = feof(f) || !len;
     status = XML_Parse(parser, buf, len, done);
   }
- 
+
   XML_ParserFree (parser);
   g_string_free( xpath, true );
   g_string_free( c_cdata, true );
@@ -889,7 +889,7 @@ static void gpx_write_waypoint(Waypoint * wp, GpxWritingContext *context )
     fprintf ( f, "  <link>%s</link>\n", tmp );
     free( tmp );
   }
-  if ( wp->symbol ) 
+  if ( wp->symbol )
   {
     tmp = entitize(wp->symbol);
     if ( a_vik_gpx_export_wpt_sym_name ( ) ) {
@@ -906,7 +906,7 @@ static void gpx_write_waypoint(Waypoint * wp, GpxWritingContext *context )
   fprintf ( f, "</wpt>\n" );
 }
 
-static void gpx_write_trackpoint ( VikTrackpoint *tp, GpxWritingContext *context )
+static void gpx_write_trackpoint(Trackpoint * tp, GpxWritingContext *context )
 {
   FILE *f = context->file;
   static struct LatLon ll;
@@ -942,27 +942,27 @@ static void gpx_write_trackpoint ( VikTrackpoint *tp, GpxWritingContext *context
   if (s_alt != NULL)
     fprintf ( f, "    <ele>%s</ele>\n", s_alt );
   free( s_alt ); s_alt = NULL;
-  
+
   time_iso8601 = NULL;
   if ( tp->has_timestamp ) {
     GTimeVal timestamp;
     timestamp.tv_sec = tp->timestamp;
     timestamp.tv_usec = 0;
-  
+
     time_iso8601 = g_time_val_to_iso8601 ( &timestamp );
   }
   else if ( context->options != NULL && context->options->force_time )
   {
     GTimeVal current;
     g_get_current_time ( &current );
-  
+
     time_iso8601 = g_time_val_to_iso8601 ( &current );
   }
   if ( time_iso8601 != NULL )
     fprintf ( f, "    <time>%s</time>\n", time_iso8601 );
   free(time_iso8601);
   time_iso8601 = NULL;
-  
+
   if (!isnan(tp->course)) {
     char *s_course = a_coords_dtostr(tp->course);
     fprintf ( f, "    <course>%s</course>\n", s_course );
@@ -1070,10 +1070,10 @@ static void gpx_write_track ( VikTrack *t, GpxWritingContext *context )
     fprintf ( f, "  <trkseg>\n" );
 
   if ( t->trackpoints && t->trackpoints->data ) {
-    first_tp_is_newsegment = VIK_TRACKPOINT(t->trackpoints->data)->newsegment;
-    VIK_TRACKPOINT(t->trackpoints->data)->newsegment = false; /* so we won't write </trkseg><trkseg> already */
+    first_tp_is_newsegment = ((Trackpoint *) t->trackpoints->data)->newsegment;
+    ((Trackpoint *) t->trackpoints->data)->newsegment = false; /* so we won't write </trkseg><trkseg> already */
     g_list_foreach ( t->trackpoints, (GFunc) gpx_write_trackpoint, context );
-    VIK_TRACKPOINT(t->trackpoints->data)->newsegment = first_tp_is_newsegment; /* restore state */
+    ((Trackpoint *) t->trackpoints->data)->newsegment = first_tp_is_newsegment; /* restore state */
   }
 
   /* NB apparently no such thing as a rteseg! */

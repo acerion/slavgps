@@ -45,8 +45,8 @@
 /**
  * vu_trackpoint_formatted_message:
  * @format_code:  String describing the message to generate
- * @trkpt:        The trackpoint for which the message is generated about
- * @trkpt_prev:   A trackpoint (presumed previous) for interpolating values with the other trackpoint (such as speed)
+ * @tp:        The trackpoint for which the message is generated about
+ * @tp_prev:   A trackpoint (presumed previous) for interpolating values with the other trackpoint (such as speed)
  * @trk:          The track in which the trackpoints reside
  * @climb:        Vertical speed (Out of band (i.e. not in a trackpoint) value for display currently only for GPSD usage)
  *
@@ -54,9 +54,9 @@
  *    thus would make it more user friendly and maybe even GUI controlable.
  * However for now at least there is some semblance of user control
  */
-char* vu_trackpoint_formatted_message ( char *format_code, VikTrackpoint *trkpt, VikTrackpoint *trkpt_prev, VikTrack *trk, double climb )
+char* vu_trackpoint_formatted_message ( char *format_code, Trackpoint *tp, Trackpoint *tp_prev, VikTrack *trk, double climb )
 {
-	if ( !trkpt )
+	if ( !tp )
 		return NULL;
 
 	int len = 0;
@@ -99,12 +99,12 @@ char* vu_trackpoint_formatted_message ( char *format_code, VikTrackpoint *trkpt,
 		case 'S': {
 			double speed = 0.0;
 			char *speedtype = NULL;
-			if ( isnan(trkpt->speed) && trkpt_prev ) {
-				if ( trkpt->has_timestamp && trkpt_prev->has_timestamp ) {
-					if ( trkpt->timestamp != trkpt_prev->timestamp ) {
+			if ( isnan(tp->speed) && tp_prev ) {
+				if ( tp->has_timestamp && tp_prev->has_timestamp ) {
+					if ( tp->timestamp != tp_prev->timestamp ) {
 
 						// Work out from previous trackpoint location and time difference
-						speed = vik_coord_diff(&(trkpt->coord), &(trkpt_prev->coord)) / ABS(trkpt->timestamp - trkpt_prev->timestamp);
+						speed = vik_coord_diff(&(tp->coord), &(tp_prev->coord)) / ABS(tp->timestamp - tp_prev->timestamp);
 						speedtype = g_strdup( "*" ); // Interpolated
 					}
 					else
@@ -114,7 +114,7 @@ char* vu_trackpoint_formatted_message ( char *format_code, VikTrackpoint *trkpt,
 					speedtype = g_strdup( "**" );
 			}
 			else {
-				speed = trkpt->speed;
+				speed = tp->speed;
 				speedtype = g_strdup( "" );
 			}
 			switch (speed_units) {
@@ -141,12 +141,12 @@ char* vu_trackpoint_formatted_message ( char *format_code, VikTrackpoint *trkpt,
 		case 'B': {
 			double speed = 0.0;
 			char *speedtype = NULL;
-			if ( isnan(climb) && trkpt_prev ) {
-				if ( trkpt->has_timestamp && trkpt_prev->has_timestamp ) {
-					if ( trkpt->timestamp != trkpt_prev->timestamp ) {
+			if ( isnan(climb) && tp_prev ) {
+				if ( tp->has_timestamp && tp_prev->has_timestamp ) {
+					if ( tp->timestamp != tp_prev->timestamp ) {
 						// Work out from previous trackpoint altitudes and time difference
 						// 'speed' can be negative if going downhill
-						speed = (trkpt->altitude - trkpt_prev->altitude) / ABS(trkpt->timestamp - trkpt_prev->timestamp);
+						speed = (tp->altitude - tp_prev->altitude) / ABS(tp->timestamp - tp_prev->timestamp);
 						speedtype = g_strdup( "*" ); // Interpolated
 					}
 					else
@@ -184,25 +184,25 @@ char* vu_trackpoint_formatted_message ( char *format_code, VikTrackpoint *trkpt,
 			vik_units_height_t height_units = a_vik_get_units_height ();
 			switch (height_units) {
 			case VIK_UNITS_HEIGHT_FEET:
-				values[i] = g_strdup_printf ( _("%sAlt %dfeet"), separator, (int)round(VIK_METERS_TO_FEET(trkpt->altitude)) );
+				values[i] = g_strdup_printf ( _("%sAlt %dfeet"), separator, (int)round(VIK_METERS_TO_FEET(tp->altitude)) );
 				break;
 			default:
 				//VIK_UNITS_HEIGHT_METRES:
-				values[i] = g_strdup_printf ( _("%sAlt %dm"), separator, (int)round(trkpt->altitude) );
+				values[i] = g_strdup_printf ( _("%sAlt %dm"), separator, (int)round(tp->altitude) );
 				break;
 			}
 			break;
 		}
 
 		case 'C': {
-			int heading = isnan(trkpt->course) ? 0 : (int)round(trkpt->course);
+			int heading = isnan(tp->course) ? 0 : (int)round(tp->course);
 			values[i] = g_strdup_printf ( _("%sCourse %03d\302\260" ), separator, heading );
 			break;
 		}
 
 		case 'P': {
-			if ( trkpt_prev ) {
-				int diff = (int) round ( vik_coord_diff ( &(trkpt->coord), &(trkpt_prev->coord) ) );
+			if ( tp_prev ) {
+				int diff = (int) round ( vik_coord_diff ( &(tp->coord), &(tp_prev->coord) ) );
 
 				char *dist_units_str = NULL;
 				vik_units_distance_t dist_units = a_vik_get_units_distance ();
@@ -227,9 +227,9 @@ char* vu_trackpoint_formatted_message ( char *format_code, VikTrackpoint *trkpt,
 
 		case 'T': {
 			char *msg;
-			if ( trkpt->has_timestamp ) {
+			if ( tp->has_timestamp ) {
 				// Compact date time format
-				msg = vu_get_time_string ( &(trkpt->timestamp), "%x %X", &(trkpt->coord), NULL );
+				msg = vu_get_time_string ( &(tp->timestamp), "%x %X", &(tp->coord), NULL );
 			}
 			else
 				msg = g_strdup("--");
@@ -239,21 +239,21 @@ char* vu_trackpoint_formatted_message ( char *format_code, VikTrackpoint *trkpt,
 		}
 
 		case 'M': {
-			if ( trkpt_prev ) {
-				if ( trkpt->has_timestamp && trkpt_prev->has_timestamp ) {
-					time_t t_diff = trkpt->timestamp - trkpt_prev->timestamp;
+			if ( tp_prev ) {
+				if ( tp->has_timestamp && tp_prev->has_timestamp ) {
+					time_t t_diff = tp->timestamp - tp_prev->timestamp;
 					values[i] = g_strdup_printf ( _("%sTime diff %lds"), separator, t_diff );
 				}
 			}
 			break;
 		}
 
-		case 'X': values[i] = g_strdup_printf ( _("%sNo. of Sats %d"), separator, trkpt->nsats ); break;
+		case 'X': values[i] = g_strdup_printf ( _("%sNo. of Sats %d"), separator, tp->nsats ); break;
 
 		case 'F': {
 			if ( trk ) {
 				// Distance to the end 'Finish' (along the track)
-				double distd =	vik_track_get_length_to_trackpoint (trk, trkpt);
+				double distd =	vik_track_get_length_to_trackpoint (trk, tp);
 				double diste =	vik_track_get_length_including_gaps ( trk );
 				double dist = diste - distd;
 				char *dist_units_str = NULL;
@@ -282,7 +282,7 @@ char* vu_trackpoint_formatted_message ( char *format_code, VikTrackpoint *trkpt,
 		case 'D': {
 			if ( trk ) {
 				// Distance from start (along the track)
-				double distd =	vik_track_get_length_to_trackpoint (trk, trkpt);
+				double distd =	vik_track_get_length_to_trackpoint (trk, tp);
 				char *dist_units_str = NULL;
 				vik_units_distance_t dist_units = a_vik_get_units_distance ();
 				switch (dist_units) {
@@ -310,7 +310,7 @@ char* vu_trackpoint_formatted_message ( char *format_code, VikTrackpoint *trkpt,
 			// Location (Lat/Long)
 			char *lat = NULL, *lon = NULL;
 			struct LatLon ll;
-			vik_coord_to_latlon (&(trkpt->coord), &ll);
+			vik_coord_to_latlon (&(tp->coord), &ll);
 			a_coords_latlon_to_string ( &ll, &lat, &lon );
 			values[i] = g_strdup_printf ( "%s%s %s", separator, lat, lon );
 			free( lat );
@@ -324,8 +324,8 @@ char* vu_trackpoint_formatted_message ( char *format_code, VikTrackpoint *trkpt,
 			break;
 
 		case 'E': // Name of trackpoint if available
-			if ( trkpt->name )
-				values[i] = g_strdup_printf ( "%s%s", separator, trkpt->name );
+			if ( tp->name )
+				values[i] = g_strdup_printf ( "%s%s", separator, tp->name );
 			else
 				values[i] = g_strdup( "" );
 			break;
@@ -344,7 +344,7 @@ char* vu_trackpoint_formatted_message ( char *format_code, VikTrackpoint *trkpt,
 		if ( values[i] != '\0' )
 			free( values[i] );
 	}
-	
+
 	return msg;
 }
 

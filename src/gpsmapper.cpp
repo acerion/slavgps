@@ -42,12 +42,12 @@ static unsigned int print_rgn_stuff ( const char *nm, FILE *f )
   len = strlen(name);
   
 
-  
+
   /* --------------------------------------------- */
   /* added by oddgeir@oddgeirkvien.com, 2005.02.02 */
   /* Format may also be: Name RGN40 0x40 Layers=1  */
   /* or: Name RGN10 0x2f06 Layers=1                */
-  
+
   if ( len > 20 && strncasecmp(name+len-8,"LAYERS=",7) == 0 ) /* Layers is added to the description */
   {
     layers=name+len-8;
@@ -57,11 +57,11 @@ static unsigned int print_rgn_stuff ( const char *nm, FILE *f )
   else
   {
     layers=0;
-  } 
+  }
   /* --------------------------------------------- */
 
 
-  
+
   if ( len > 11 && strncasecmp(name+len-10,"RGN",3) == 0 &&
 strncasecmp(name+len-4,"0x",2) == 0 )
   {
@@ -70,7 +70,7 @@ strncasecmp(name+len-4,"0x",2) == 0 )
     fprintf ( f, "\n" );
 
 /* added by oddgeir@oddgeirkvien.com, 2005.02.02 */
-    if (layers) fprintf( f, "%s\n",layers);  
+    if (layers) fprintf( f, "%s\n",layers);
 
     free( name );
 
@@ -84,7 +84,7 @@ strncasecmp(name+len-6,"0x",2) == 0 )
     fprintf ( f, "\n" );
 
 /* added by oddgeir@oddgeirkvien.com, 2005.02.02 */
-    if (layers) fprintf( f, "%s\n",layers);  
+    if (layers) fprintf( f, "%s\n",layers);
 
     free( name );
 
@@ -113,11 +113,11 @@ static void write_waypoint ( const char *name, Waypoint * wp, FILE *f )
   }
 }
 
-static void write_trackpoint ( VikTrackpoint *tp, FILE *f )
+static void write_trackpoint ( Trackpoint * tp, FILE *f )
 {
   static struct LatLon ll;
   char *s_lat, *s_lon;
-  vik_coord_to_latlon ( &(tp->coord), &ll ); 
+  vik_coord_to_latlon ( &(tp->coord), &ll );
   s_lat = a_coords_dtostr(ll.lat);
   s_lon = a_coords_dtostr(ll.lon);
   fprintf ( f, "(%s,%s),", s_lat, s_lon );
@@ -147,5 +147,3 @@ void a_gpsmapper_write_file ( VikTrwLayer *trw, FILE *f )
   g_hash_table_foreach ( waypoints, (GHFunc) write_waypoint, f );
   g_hash_table_foreach ( tracks, (GHFunc) write_track, f );
 }
-
-

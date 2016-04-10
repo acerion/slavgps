@@ -358,8 +358,8 @@ struct _VikGpsLayer {
   bool realtime_jump_to_start;
   unsigned int vehicle_position;
   bool realtime_update_statusbar;
-  VikTrackpoint *trkpt;
-  VikTrackpoint *trkpt_prev;
+  Trackpoint * tp;
+  Trackpoint * tp_prev;
 #endif /* VIK_CONFIG_REALTIME_GPS_TRACKING */
   char *protocol;
   char *serial_port;
@@ -439,7 +439,7 @@ static const char* gps_layer_tooltip ( VikGpsLayer *vgl )
 static void gps_layer_marshall( VikGpsLayer *vgl, uint8_t **data, int *datalen )
 {
   VikLayer *child_layer;
-  uint8_t *ld; 
+  uint8_t *ld;
   int ll;
   GByteArray* b = g_byte_array_new ();
   int len;
@@ -475,7 +475,7 @@ static VikGpsLayer *gps_layer_unmarshall( uint8_t *data, int len, VikViewport *v
 #define alm_next \
   len -= sizeof(int) + alm_size; \
   data += sizeof(int) + alm_size;
-  
+
   VikGpsLayer *rv = vik_gps_layer_new(vvp);
   VikLayer *child_layer;
   int i;
@@ -670,8 +670,8 @@ VikGpsLayer *vik_gps_layer_new (VikViewport *vp)
 
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
   vgl->first_realtime_trackpoint = false;
-  vgl->trkpt = NULL;
-  vgl->trkpt_prev = NULL;
+  vgl->tp = NULL;
+  vgl->tp_prev = NULL;
   vgl->vgpsd = NULL;
   vgl->realtime_io_channel = NULL;
   vgl->realtime_io_watch_id = 0;
@@ -968,7 +968,7 @@ static void set_current_count(int cnt, GpsSession *sess)
 	}
       }
       snprintf(s, 128, tmp_str, cnt);
-    }	  
+    }
     gtk_label_set_text ( GTK_LABEL(sess->progress_label), s );
   }
   g_mutex_unlock(sess->mutex);
@@ -1080,7 +1080,7 @@ static void gps_download_progress_func(BabelProgressCode c, void * data, GpsSess
       int lsb, msb, cnt;
 
       if (strlen(line) > 20) {
-        sscanf(line+17, "%x", &lsb); 
+        sscanf(line+17, "%x", &lsb);
         sscanf(line+20, "%x", &msb);
         cnt = lsb + msb * 256;
         set_total_count(cnt, sess);
@@ -1130,11 +1130,11 @@ static void gps_upload_progress_func(BabelProgressCode c, void * data, GpsSessio
 
     process_line_for_gps_info ( line, sess );
 
-    if (strstr(line, "RECORD")) { 
+    if (strstr(line, "RECORD")) {
       int lsb, msb;
 
       if (strlen(line) > 20) {
-        sscanf(line+17, "%x", &lsb); 
+        sscanf(line+17, "%x", &lsb);
         sscanf(line+20, "%x", &msb);
         cnt = lsb + msb * 256;
         /* set_total_count(cnt, sess); */
@@ -1195,7 +1195,7 @@ static void gps_comm_thread(GpsSession *sess)
 
   if (!result) {
     gtk_label_set_text ( GTK_LABEL(sess->status_label), _("Error: couldn't find gpsbabel.") );
-  } 
+  }
   else {
     g_mutex_lock(sess->mutex);
     if (sess->ok) {
@@ -1524,7 +1524,7 @@ static void realtime_tracking_draw(VikGpsLayer *vgl, VikViewport *vp)
   }
 }
 
-static VikTrackpoint* create_realtime_trackpoint(VikGpsLayer *vgl, bool forced)
+static Trackpoint * create_realtime_trackpoint(VikGpsLayer *vgl, bool forced)
 {
     struct LatLon ll;
     GList *last_tp;
@@ -1554,21 +1554,21 @@ static VikTrackpoint* create_realtime_trackpoint(VikGpsLayer *vgl, bool forced)
       }
       if (replace ||
           ((cur_timestamp != last_timestamp) &&
-          ((forced || 
-            ((heading < last_heading) && (heading < (last_heading - 3))) || 
+          ((forced ||
+            ((heading < last_heading) && (heading < (last_heading - 3))) ||
             ((heading > last_heading) && (heading > (last_heading + 3))) ||
             ((alt != VIK_DEFAULT_ALTITUDE) && (alt != last_alt)))))) {
         /* TODO: check for new segments */
-        VikTrackpoint *tp = vik_trackpoint_new();
+        Trackpoint * tp = new Trackpoint();
         tp->newsegment = false;
         tp->has_timestamp = true;
         tp->timestamp = vgl->realtime_fix.fix.time;
         tp->altitude = alt;
         /* speed only available for 3D fix. Check for NAN when use this speed */
-        tp->speed = vgl->realtime_fix.fix.speed;  
+        tp->speed = vgl->realtime_fix.fix.speed;
         tp->course = vgl->realtime_fix.fix.track;
         tp->nsats = vgl->realtime_fix.satellites_used;
-        tp->fix_mode = vgl->realtime_fix.fix.mode;
+        tp->fix_mode = (FixMode) vgl->realtime_fix.fix.mode;
 
         ll.lat = vgl->realtime_fix.fix.latitude;
         ll.lon = vgl->realtime_fix.fix.longitude;
@@ -1597,7 +1597,7 @@ static void update_statusbar ( VikGpsLayer *vgl, VikWindow *vw )
     need2free = true;
   }
 
-  char *msg = vu_trackpoint_formatted_message ( statusbar_format_code, vgl->trkpt, vgl->trkpt_prev, vgl->realtime_track, vgl->last_fix.fix.climb );
+  char *msg = vu_trackpoint_formatted_message ( statusbar_format_code, vgl->tp, vgl->tp_prev, vgl->realtime_track, vgl->last_fix.fix.climb );
   vik_statusbar_set_message ( vik_window_get_statusbar (vw), VIK_STATUSBAR_INFO, msg );
   free( msg );
 
@@ -1663,12 +1663,12 @@ static void gpsd_raw_hook(VglGpsd *vgpsd, char *data)
 
     vgl->first_realtime_trackpoint = false;
 
-    vgl->trkpt = create_realtime_trackpoint ( vgl, false );
+    vgl->tp = create_realtime_trackpoint ( vgl, false );
 
-    if ( vgl->trkpt ) {
+    if ( vgl->tp ) {
       if ( vgl->realtime_update_statusbar )
 	update_statusbar ( vgl, vw );
-      vgl->trkpt_prev = vgl->trkpt;
+      vgl->tp_prev = vgl->tp;
     }
 
     vik_layer_emit_update ( update_all ? VIK_LAYER(vgl) : VIK_LAYER(vgl->trw_children[TRW_REALTIME]) ); // NB update from background thread
@@ -1853,12 +1853,12 @@ static void gps_start_stop_tracking_cb( void * layer_and_vlp[2])
     if (!rt_gpsd_connect(vgl, true)) {
       vgl->first_realtime_trackpoint = false;
       vgl->realtime_tracking = false;
-      vgl->trkpt = NULL;
+      vgl->tp = NULL;
     }
   }
   else {  /* stop realtime tracking */
     vgl->first_realtime_trackpoint = false;
-    vgl->trkpt = NULL;
+    vgl->tp = NULL;
     rt_gpsd_disconnect(vgl);
   }
 }

@@ -139,10 +139,10 @@ static void val_analyse_track ( VikTrack *trk )
 		tracks_stats[ii].elev_loss += down;
 	}
 
-	if ( trk->trackpoints && VIK_TRACKPOINT(trk->trackpoints->data)->timestamp ) {
+	if ( trk->trackpoints && ((Trackpoint *) trk->trackpoints->data)->timestamp ) {
 		time_t t1, t2;
-		t1 = VIK_TRACKPOINT(g_list_first(trk->trackpoints)->data)->timestamp;
-		t2 = VIK_TRACKPOINT(g_list_last(trk->trackpoints)->data)->timestamp;
+		t1 = ((Trackpoint *) g_list_first(trk->trackpoints)->data)->timestamp;
+		t2 = ((Trackpoint *) g_list_last(trk->trackpoints)->data)->timestamp;
 
 		// Assume never actually have a track with a time of 0 (1st Jan 1970)
 		for (ii = 0; ii < G_N_ELEMENTS(tracks_stats); ii++) {
@@ -548,12 +548,12 @@ GtkWidget* vik_trw_layer_analyse_this ( GtkWindow *window,
 	//  unless you have really large numbers of tracks (i.e. many many thousands or a really slow computer)
 	// One day might store stats in the track itself....
 	val_analyse ( acb->widgets, acb->tracks_and_layers, include_invisible );
-	
+
 	GtkWidget *cb = gtk_check_button_new_with_label ( _("Include Invisible Items") );
 	gtk_toggle_button_set_active ( GTK_TOGGLE_BUTTON(cb), include_invisible );
 	gtk_box_pack_start ( GTK_BOX(content), cb, false, false, 10);
 	acb->check_button = cb;
-	
+
 	gtk_widget_show_all ( dialog );
 
 	g_signal_connect ( G_OBJECT(cb), "toggled", G_CALLBACK(include_invisible_toggled_cb), acb );

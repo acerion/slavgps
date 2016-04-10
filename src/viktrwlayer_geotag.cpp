@@ -208,57 +208,57 @@ static void trw_layer_geotag_track ( const void * id, VikTrack *track, geotag_op
 	if ( options->found_match )
 		return;
 
-	VikTrackpoint *trkpt;
-	VikTrackpoint *trkpt_next;
+	Trackpoint * tp;
+	Trackpoint * tp_next;
 
-	GList *mytrkpt;
-	for ( mytrkpt = track->trackpoints; mytrkpt; mytrkpt = mytrkpt->next ) {
+	GList *mytp;
+	for ( mytp = track->trackpoints; mytp; mytp = mytp->next ) {
 
 		// Do something for this trackpoint...
 
-		trkpt = VIK_TRACKPOINT(mytrkpt->data);
+		tp = ((Trackpoint *) mytp->data);
 
 		// is it exactly this point?
-		if ( options->PhotoTime == trkpt->timestamp ) {
-			options->coord = trkpt->coord;
-			options->altitude = trkpt->altitude;
+		if ( options->PhotoTime == tp->timestamp ) {
+			options->coord = tp->coord;
+			options->altitude = tp->altitude;
 			options->found_match = true;
 			break;
 		}
 
 		// Now need two trackpoints, hence check next is available
-		if ( !mytrkpt->next ) break;
-		trkpt_next = VIK_TRACKPOINT(mytrkpt->next->data);
+		if ( !mytp->next ) break;
+		tp_next = ((Trackpoint *) mytp->next->data);
 
 		// TODO need to use 'has_timestamp' property
-		if ( trkpt->timestamp == trkpt_next->timestamp ) continue;
-		if ( trkpt->timestamp > trkpt_next->timestamp ) continue;
+		if ( tp->timestamp == tp_next->timestamp ) continue;
+		if ( tp->timestamp > tp_next->timestamp ) continue;
 
 		// When interpolating between segments, no need for any special segment handling
 		if ( !options->ov.interpolate_segments )
 			// Don't check between segments
-			if ( trkpt_next->newsegment )
+			if ( tp_next->newsegment )
 				// Simply move on to consider next point
 				continue;
 
 		// Too far
-		if ( trkpt->timestamp > options->PhotoTime ) break;
+		if ( tp->timestamp > options->PhotoTime ) break;
 
 		// Is is between this and the next point?
-		if ( (options->PhotoTime > trkpt->timestamp) && (options->PhotoTime < trkpt_next->timestamp) ) {
+		if ( (options->PhotoTime > tp->timestamp) && (options->PhotoTime < tp_next->timestamp) ) {
 			options->found_match = true;
 			// Interpolate
 			/* Calculate the "scale": a decimal giving the relative distance
 			 * in time between the two points. Ie, a number between 0 and 1 -
 			 * 0 is the first point, 1 is the next point, and 0.5 would be
 			 * half way. */
-			double scale = (double)trkpt_next->timestamp - (double)trkpt->timestamp;
-			scale = ((double)options->PhotoTime - (double)trkpt->timestamp) / scale;
+			double scale = (double)tp_next->timestamp - (double)tp->timestamp;
+			scale = ((double)options->PhotoTime - (double)tp->timestamp) / scale;
 
 			struct LatLon ll_result, ll1, ll2;
 
-			vik_coord_to_latlon ( &(trkpt->coord), &ll1 );
-			vik_coord_to_latlon ( &(trkpt_next->coord), &ll2 );
+			vik_coord_to_latlon ( &(tp->coord), &ll1 );
+			vik_coord_to_latlon ( &(tp_next->coord), &ll2 );
 
 			ll_result.lat = ll1.lat + ((ll2.lat - ll1.lat) * scale);
 
@@ -269,7 +269,7 @@ static void trw_layer_geotag_track ( const void * id, VikTrack *track, geotag_op
 			vik_coord_load_from_latlon ( &(options->coord), VIK_COORD_LATLON, &ll_result );
 
 			// Interpolate elevation
-			options->altitude = trkpt->altitude + ((trkpt_next->altitude - trkpt->altitude) * scale);
+			options->altitude = tp->altitude + ((tp_next->altitude - tp->altitude) * scale);
 			break;
 		}
 	}

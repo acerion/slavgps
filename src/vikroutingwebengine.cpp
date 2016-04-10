@@ -22,7 +22,7 @@
 /**
  * SECTION:vikroutingwebengine
  * @short_description: A generic class for WEB based routing engine
- * 
+ *
  * The #VikRoutingWebEngine class handles WEB based
  * routing engine.
  */
@@ -53,7 +53,7 @@ typedef struct _VikRoutingWebEnginePrivate VikRoutingWebEnginePrivate;
 struct _VikRoutingWebEnginePrivate
 {
 	char *url_base;
-	
+
 	/* LatLon */
 	char *url_start_ll_fmt;
 	char *url_stop_ll_fmt;
@@ -74,7 +74,7 @@ enum
   PROP_0,
 
   PROP_URL_BASE,
-  
+
   /* LatLon */
   PROP_URL_START_LL,
   PROP_URL_STOP_LL,
@@ -226,7 +226,7 @@ static void vik_routing_web_engine_class_init ( VikRoutingWebEngineClass *klass 
                                "<no-set>" /* default value */,
                                (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
   g_object_class_install_property (object_class, PROP_URL_BASE, pspec);
-  
+
 
   /**
    * VikRoutingWebEngine:url-start-ll:
@@ -239,7 +239,7 @@ static void vik_routing_web_engine_class_init ( VikRoutingWebEngineClass *klass 
                                "<no-set>" /* default value */,
                                (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
   g_object_class_install_property (object_class, PROP_URL_START_LL, pspec);
-    
+
 
   /**
    * VikRoutingWebEngine:url-stop-ll:
@@ -278,7 +278,7 @@ static void vik_routing_web_engine_class_init ( VikRoutingWebEngineClass *klass 
                                NULL /* default value */,
                                (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
   g_object_class_install_property (object_class, PROP_URL_START_DIR, pspec);
-    
+
 
   /**
    * VikRoutingWebEngine:url-stop-dir:
@@ -328,7 +328,7 @@ static void vik_routing_web_engine_init ( VikRoutingWebEngine *self )
   VikRoutingWebEnginePrivate *priv = VIK_ROUTING_WEB_ENGINE_PRIVATE ( self );
 
   priv->url_base = NULL;
-  
+
   /* LatLon */
   priv->url_start_ll_fmt = NULL;
   priv->url_stop_ll_fmt = NULL;
@@ -351,7 +351,7 @@ static void vik_routing_web_engine_finalize ( GObject *gob )
 
   free(priv->url_base);
   priv->url_base = NULL;
-  
+
   /* LatLon */
   free(priv->url_start_ll_fmt);
   priv->url_start_ll_fmt = NULL;
@@ -376,9 +376,9 @@ static DownloadFileOptions *
 vik_routing_web_engine_get_download_options ( VikRoutingEngine *self )
 {
 	g_return_val_if_fail (VIK_IS_ROUTING_WEB_ENGINE(self), NULL);
-	
+
 	VikRoutingWebEnginePrivate *priv = VIK_ROUTING_WEB_ENGINE_PRIVATE(self);
-	
+
 	return &(priv->options);
 }
 
@@ -398,7 +398,7 @@ vik_routing_web_engine_get_url_for_coords ( VikRoutingEngine *self, struct LatLo
 	char *startURL;
 	char *endURL;
 	char *url;
-	
+
 	g_return_val_if_fail ( VIK_IS_ROUTING_WEB_ENGINE (self), NULL);
 
 	VikRoutingWebEnginePrivate *priv = VIK_ROUTING_WEB_ENGINE_PRIVATE ( self );
@@ -424,7 +424,7 @@ vik_routing_web_engine_find ( VikRoutingEngine *self, VikTrwLayer *vtl, struct L
   char *uri = vik_routing_web_engine_get_url_for_coords(self, start, end);
 
   DownloadFileOptions *options = vik_routing_web_engine_get_download_options(self);
-  
+
   char *format = vik_routing_engine_get_format ( self );
   ProcessOptions po = { NULL, NULL, format, uri, NULL, NULL };
   bool ret = a_babel_convert_from ( vtl, &po, NULL, NULL, options );
@@ -488,14 +488,14 @@ struct _append_ctx {
 static void
 _append_stringified_coords ( void * data, void * user_data )
 {
-  VikTrackpoint *vtp = (VikTrackpoint*)data;
+  Trackpoint * tp = (Trackpoint *) data;
   struct _append_ctx *ctx = (struct _append_ctx*)user_data;
-  
+
   /* Stringify coordinate */
   struct LatLon position;
-  vik_coord_to_latlon ( &(vtp->coord), &position );
+  vik_coord_to_latlon ( &(tp->coord), &position );
   char *string = substitute_latlon ( ctx->priv->url_via_ll_fmt, position );
-  
+
   /* Append */
   ctx->urlParts[ctx->nb] = string;
   ctx->nb++;
@@ -530,14 +530,13 @@ vik_routing_web_engine_get_url_for_track ( VikRoutingEngine *self, VikTrack *vt 
 
   /* Override first and last positions with associated formats */
   struct LatLon position;
-  VikTrackpoint *vtp;
   free( urlParts[1] );
-  vtp = (VikTrackpoint *) g_list_first ( vt->trackpoints )->data;
-  vik_coord_to_latlon ( &(vtp->coord ), &position );
+  Trackpoint * tp = (Trackpoint *) g_list_first ( vt->trackpoints )->data;
+  vik_coord_to_latlon ( &(tp->coord ), &position );
   urlParts[1] = substitute_latlon ( priv->url_start_ll_fmt, position );
   free( urlParts[len-2] );
-  vtp = (VikTrackpoint *) g_list_last ( vt->trackpoints )->data;
-  vik_coord_to_latlon ( &(vtp->coord), &position );
+  tp = (Trackpoint *) g_list_last ( vt->trackpoints )->data;
+  vik_coord_to_latlon ( &(tp->coord), &position );
   urlParts[len-2] = substitute_latlon ( priv->url_stop_ll_fmt, position );
 
   /* Concat */

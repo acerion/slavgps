@@ -56,7 +56,7 @@ struct _VikTrwLayerTpwin {
   GtkWidget *button_split;
   GtkWidget *button_back;
   GtkWidget *button_forward;
-  VikTrackpoint *cur_tp;
+  Trackpoint * cur_tp;
   bool sync_to_tp_block;
 };
 
@@ -66,7 +66,7 @@ GType vik_trw_layer_tpwin_get_type (void)
 
   if (!tpwin_type)
   {
-    static const GTypeInfo tpwin_info = 
+    static const GTypeInfo tpwin_info =
     {
       sizeof (VikTrwLayerTpwinClass),
       NULL, /* base_init */
@@ -87,7 +87,7 @@ GType vik_trw_layer_tpwin_get_type (void)
 /**
  *  Just update the display for the time fields
  */
-static void tpwin_update_times ( VikTrwLayerTpwin *tpwin, VikTrackpoint *tp )
+static void tpwin_update_times ( VikTrwLayerTpwin *tpwin, Trackpoint * tp)
 {
   if ( tp->has_timestamp ) {
     gtk_spin_button_set_value ( tpwin->ts, tp->timestamp );
@@ -207,7 +207,7 @@ static void tpwin_sync_time_to_tp ( GtkWidget* widget, GdkEventButton *event, Vi
 static bool tpwin_set_name ( VikTrwLayerTpwin *tpwin )
 {
   if ( tpwin->cur_tp && (!tpwin->sync_to_tp_block) ) {
-    vik_trackpoint_set_name ( tpwin->cur_tp, gtk_entry_get_text(GTK_ENTRY(tpwin->trkpt_name)) );
+    tpwin->cur_tp->set_name(gtk_entry_get_text(GTK_ENTRY(tpwin->trkpt_name)) );
   }
   return false;
 }
@@ -384,7 +384,7 @@ void vik_trw_layer_tpwin_set_tp ( VikTrwLayerTpwin *tpwin, GList *tpl, const cha
 {
   static char tmp_str[64];
   static struct LatLon ll;
-  VikTrackpoint *tp = VIK_TRACKPOINT(tpl->data);
+  Trackpoint * tp = (Trackpoint *) tpl->data;
 
   if ( tp->name )
     gtk_entry_set_text ( GTK_ENTRY(tpwin->trkpt_name), tp->name );

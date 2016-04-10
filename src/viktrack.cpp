@@ -40,6 +40,9 @@
 #include "globals.h"
 #include "dems.h"
 #include "settings.h"
+#include "util.h"
+
+using namespace SlavGPS;
 
 VikTrack *vik_track_new()
 {
@@ -161,7 +164,7 @@ void vik_track_free(VikTrack *tr)
     free( tr->source );
   if ( tr->type )
     free( tr->type );
-  g_list_foreach ( tr->trackpoints, (GFunc) vik_trackpoint_free, NULL );
+  g_list_foreach ( tr->trackpoints, (GFunc) (Trackpoint::vik_trackpoint_free), NULL );
   g_list_free( tr->trackpoints );
   if (tr->property_dialog)
     if ( GTK_IS_WIDGET(tr->property_dialog) )
@@ -196,7 +199,8 @@ VikTrack *vik_track_copy ( const VikTrack *tr, bool copy_points )
     GList *tp_iter = tr->trackpoints;
     while ( tp_iter )
     {
-      VikTrackpoint *new_tp = vik_trackpoint_copy ( (VikTrackpoint*)(tp_iter->data) );
+      Trackpoint * tp = (Trackpoint *) tp_iter->data;
+      Trackpoint * new_tp = new Trackpoint(*tp);
       new_tr->trackpoints = g_list_prepend ( new_tr->trackpoints, new_tp );
       tp_iter = tp_iter->next;
     }
@@ -210,48 +214,82 @@ VikTrack *vik_track_copy ( const VikTrack *tr, bool copy_points )
   return new_tr;
 }
 
-VikTrackpoint *vik_trackpoint_new()
+Trackpoint::Trackpoint()
 {
-  VikTrackpoint * tp = (VikTrackpoint *) malloc(sizeof (VikTrackpoint));
-  memset(tp, 0, sizeof (VikTrackpoint));
+	name = NULL;
 
-  tp->speed = NAN;
-  tp->course = NAN;
-  tp->altitude = VIK_DEFAULT_ALTITUDE;
-  tp->hdop = VIK_DEFAULT_DOP;
-  tp->vdop = VIK_DEFAULT_DOP;
-  tp->pdop = VIK_DEFAULT_DOP;
-  return tp;
+	memset(&coord, 0, sizeof (VikCoord));
+	newsegment = false;
+	has_timestamp = false;
+	timestamp = 0;
+
+	altitude = VIK_DEFAULT_ALTITUDE;
+	speed = NAN;
+	course = NAN;
+
+	nsats = 0;
+
+	fix_mode = VIK_GPS_MODE_NOT_SEEN;
+	hdop = VIK_DEFAULT_DOP;
+	vdop = VIK_DEFAULT_DOP;
+	pdop = VIK_DEFAULT_DOP;
+
+
 }
 
-void vik_trackpoint_free(VikTrackpoint *tp)
+Trackpoint::~Trackpoint()
 {
-  free(tp->name);
-  free(tp);
+	free_string(&name);
 }
 
-void vik_trackpoint_set_name(VikTrackpoint *tp, const char *name)
+void Trackpoint::set_name(char const * name_)
 {
-  if ( tp->name )
-    free( tp->name );
+	free_string(&name);
 
-  // If the name is blank then completely remove it
-  if ( name && name[0] == '\0' )
-    tp->name = NULL;
-  else if ( name )
-    tp->name = g_strdup(name);
-  else
-    tp->name = NULL;
+	// If the name is blank then completely remove it
+	if (name_ && name_[0] == '\0') {
+		name = NULL;
+	} else if (name_) {
+		name = strdup(name_);
+	} else {
+		name = NULL;
+	}
 }
 
-VikTrackpoint *vik_trackpoint_copy(VikTrackpoint *tp)
+Trackpoint::Trackpoint(const Trackpoint & tp)
 {
-  VikTrackpoint *new_tp = vik_trackpoint_new();
-  memcpy ( new_tp, tp, sizeof(VikTrackpoint) );
-  if ( tp->name )
-    new_tp->name = g_strdup(tp->name);
-  return new_tp;
+	if (this->name) {
+		this->name = strdup(tp.name);
+	}
+
+	memcpy((void *) &(this->coord), (void *) &(tp.coord), sizeof (VikCoord));
+	this->newsegment = tp.newsegment;
+	this->has_timestamp = tp.has_timestamp;
+	this->timestamp = tp.timestamp;
+	this->altitude = tp.altitude;
+	this->speed = tp.speed;
+	this->course = tp.course;
+	this->nsats = tp.nsats;
+
+	this->fix_mode = tp.fix_mode;
+	this->hdop = tp.hdop;
+	this->vdop = tp.vdop;
+	this->pdop = tp.pdop;
+
 }
+
+
+
+
+
+void Trackpoint::vik_trackpoint_free(Trackpoint *tp)
+{
+	delete tp;
+}
+
+
+
+
 
 /**
  * track_recalculate_bounds_last_tp:
@@ -266,7 +304,7 @@ static void track_recalculate_bounds_last_tp ( VikTrack *trk )
   if ( tpl ) {
     struct LatLon ll;
     // See if this trackpoint increases the track bounds and update if so
-    vik_coord_to_latlon ( &(VIK_TRACKPOINT(tpl->data)->coord), &ll );
+    vik_coord_to_latlon ( &(((Trackpoint *) tpl->data)->coord), &ll );
     if ( ll.lat > trk->bbox.north )
       trk->bbox.north = ll.lat;
     if ( ll.lon < trk->bbox.west )
@@ -288,7 +326,7 @@ static void track_recalculate_bounds_last_tp ( VikTrack *trk )
  *
  * The trackpoint is added to the end of the existing trackpoint list
  */
-void vik_track_add_trackpoint ( VikTrack *tr, VikTrackpoint *tp, bool recalculate )
+void vik_track_add_trackpoint ( VikTrack *tr, Trackpoint * tp, bool recalculate )
 {
   // When it's the first trackpoint need to ensure the bounding box is initialized correctly
   bool adding_first_point = tr->trackpoints ? false : true;
@@ -303,22 +341,22 @@ void vik_track_add_trackpoint ( VikTrack *tr, VikTrackpoint *tp, bool recalculat
  * vik_track_get_length_to_trackpoint:
  *
  */
-double vik_track_get_length_to_trackpoint (const VikTrack *tr, const VikTrackpoint *tp)
+double vik_track_get_length_to_trackpoint (const VikTrack *tr, const Trackpoint * tp)
 {
   double len = 0.0;
   if ( tr->trackpoints )
   {
     // Is it the very first track point?
-    if ( VIK_TRACKPOINT(tr->trackpoints->data) == tp )
+    if (((Trackpoint *) tr->trackpoints->data) == tp )
       return len;
 
     GList *iter = tr->trackpoints->next;
     while (iter)
     {
-      VikTrackpoint *tp1 = VIK_TRACKPOINT(iter->data);
+      Trackpoint * tp1 = ((Trackpoint *) iter->data);
       if ( ! tp1->newsegment )
         len += vik_coord_diff ( &(tp1->coord),
-                                &(VIK_TRACKPOINT(iter->prev->data)->coord) );
+                                &(((Trackpoint *) iter->prev->data)->coord) );
 
       // Exit when we reach the desired point
       if ( tp1 == tp )
@@ -338,9 +376,9 @@ double vik_track_get_length(const VikTrack *tr)
     GList *iter = tr->trackpoints->next;
     while (iter)
     {
-      if ( ! VIK_TRACKPOINT(iter->data)->newsegment )
-        len += vik_coord_diff ( &(VIK_TRACKPOINT(iter->data)->coord),
-                                &(VIK_TRACKPOINT(iter->prev->data)->coord) );
+      if ( ! ((Trackpoint *) iter->data)->newsegment )
+        len += vik_coord_diff ( &(((Trackpoint *) iter->data)->coord),
+                                &(((Trackpoint *) iter->prev->data)->coord) );
       iter = iter->next;
     }
   }
@@ -355,8 +393,8 @@ double vik_track_get_length_including_gaps(const VikTrack *tr)
     GList *iter = tr->trackpoints->next;
     while (iter)
     {
-      len += vik_coord_diff ( &(VIK_TRACKPOINT(iter->data)->coord),
-                              &(VIK_TRACKPOINT(iter->prev->data)->coord) );
+      len += vik_coord_diff ( &(((Trackpoint *) iter->data)->coord),
+                              &(((Trackpoint *) iter->prev->data)->coord) );
       iter = iter->next;
     }
   }
@@ -374,8 +412,8 @@ unsigned long vik_track_get_dup_point_count ( const VikTrack *tr )
   GList *iter = tr->trackpoints;
   while ( iter )
   {
-    if ( iter->next && vik_coord_equals ( &(VIK_TRACKPOINT(iter->data)->coord),
-                       &(VIK_TRACKPOINT(iter->next->data)->coord) ) )
+    if ( iter->next && vik_coord_equals ( &(((Trackpoint *) iter->data)->coord),
+					  &(((Trackpoint *) iter->next->data)->coord) ) )
       num++;
     iter = iter->next;
   }
@@ -392,15 +430,15 @@ unsigned long vik_track_remove_dup_points ( VikTrack *tr )
   GList *iter = tr->trackpoints;
   while ( iter )
   {
-    if ( iter->next && vik_coord_equals ( &(VIK_TRACKPOINT(iter->data)->coord),
-                       &(VIK_TRACKPOINT(iter->next->data)->coord) ) )
+    if ( iter->next && vik_coord_equals ( &(((Trackpoint *) iter->data)->coord),
+                       &(((Trackpoint *) iter->next->data)->coord) ) )
     {
       num++;
       // Maintain track segments
-      if ( VIK_TRACKPOINT(iter->next->data)->newsegment && (iter->next)->next )
-        VIK_TRACKPOINT(((iter->next)->next)->data)->newsegment = true;
+      if ( ((Trackpoint *) iter->next->data)->newsegment && (iter->next)->next )
+	      ((Trackpoint *) ((iter->next)->next)->data)->newsegment = true;
 
-      vik_trackpoint_free((VikTrackpoint *) iter->next->data);
+      delete ((Trackpoint *) iter->next->data);
       tr->trackpoints = g_list_delete_link ( tr->trackpoints, iter->next );
     }
     else
@@ -423,10 +461,10 @@ unsigned long vik_track_get_same_time_point_count ( const VikTrack *tr )
   GList *iter = tr->trackpoints;
   while ( iter ) {
     if ( iter->next &&
-	 ( VIK_TRACKPOINT(iter->data)->has_timestamp &&
-           VIK_TRACKPOINT(iter->next->data)->has_timestamp ) &&
-         ( VIK_TRACKPOINT(iter->data)->timestamp ==
-           VIK_TRACKPOINT(iter->next->data)->timestamp) )
+	 ( ((Trackpoint *) iter->data)->has_timestamp &&
+           ((Trackpoint *) iter->next->data)->has_timestamp ) &&
+         ( ((Trackpoint *) iter->data)->timestamp ==
+           ((Trackpoint *) iter->next->data)->timestamp) )
       num++;
     iter = iter->next;
   }
@@ -443,18 +481,18 @@ unsigned long vik_track_remove_same_time_points ( VikTrack *tr )
   GList *iter = tr->trackpoints;
   while ( iter ) {
     if ( iter->next &&
-	 ( VIK_TRACKPOINT(iter->data)->has_timestamp &&
-           VIK_TRACKPOINT(iter->next->data)->has_timestamp ) &&
-         ( VIK_TRACKPOINT(iter->data)->timestamp ==
-           VIK_TRACKPOINT(iter->next->data)->timestamp) ) {
+	 ( ((Trackpoint *) iter->data)->has_timestamp &&
+           ((Trackpoint *) iter->next->data)->has_timestamp ) &&
+         ( ((Trackpoint *) iter->data)->timestamp ==
+           ((Trackpoint *) iter->next->data)->timestamp) ) {
 
       num++;
-      
-      // Maintain track segments
-      if ( VIK_TRACKPOINT(iter->next->data)->newsegment && (iter->next)->next )
-        VIK_TRACKPOINT(((iter->next)->next)->data)->newsegment = true;
 
-      vik_trackpoint_free((VikTrackpoint *) iter->next->data);
+      // Maintain track segments
+      if ( ((Trackpoint *) iter->next->data)->newsegment && (iter->next)->next )
+	      ((Trackpoint *) ((iter->next)->next)->data)->newsegment = true;
+
+      delete ((Trackpoint *) iter->next->data);
       tr->trackpoints = g_list_delete_link ( tr->trackpoints, iter->next );
     }
     else
@@ -477,15 +515,15 @@ void vik_track_to_routepoints ( VikTrack *tr )
 
     // c.f. with vik_trackpoint_new()
 
-    VIK_TRACKPOINT(iter->data)->has_timestamp = false;
-    VIK_TRACKPOINT(iter->data)->timestamp = 0;
-    VIK_TRACKPOINT(iter->data)->speed = NAN;
-    VIK_TRACKPOINT(iter->data)->course = NAN;
-    VIK_TRACKPOINT(iter->data)->hdop = VIK_DEFAULT_DOP;
-    VIK_TRACKPOINT(iter->data)->vdop = VIK_DEFAULT_DOP;
-    VIK_TRACKPOINT(iter->data)->pdop = VIK_DEFAULT_DOP;
-    VIK_TRACKPOINT(iter->data)->nsats = 0;
-    VIK_TRACKPOINT(iter->data)->fix_mode = VIK_GPS_MODE_NOT_SEEN;
+    ((Trackpoint *) iter->data)->has_timestamp = false;
+    ((Trackpoint *) iter->data)->timestamp = 0;
+    ((Trackpoint *) iter->data)->speed = NAN;
+    ((Trackpoint *) iter->data)->course = NAN;
+    ((Trackpoint *) iter->data)->hdop = VIK_DEFAULT_DOP;
+    ((Trackpoint *) iter->data)->vdop = VIK_DEFAULT_DOP;
+    ((Trackpoint *) iter->data)->pdop = VIK_DEFAULT_DOP;
+    ((Trackpoint *) iter->data)->nsats = 0;
+    ((Trackpoint *) iter->data)->fix_mode = VIK_GPS_MODE_NOT_SEEN;
 
     iter = iter->next;
   }
@@ -499,7 +537,7 @@ unsigned int vik_track_get_segment_count(const VikTrack *tr)
     return 0;
   while ( (iter = iter->next) )
   {
-    if ( VIK_TRACKPOINT(iter->data)->newsegment )
+    if (((Trackpoint *) iter->data)->newsegment )
       num++;
   }
   return num;
@@ -526,7 +564,7 @@ VikTrack **vik_track_split_into_segments(VikTrack *t, unsigned int *ret_len)
   i = 1;
   while ( (iter = iter->next) )
   {
-    if ( VIK_TRACKPOINT(iter->data)->newsegment )
+	  if (((Trackpoint *) iter->data)->newsegment )
     {
       iter->prev->next = NULL;
       iter->prev = NULL;
@@ -558,8 +596,8 @@ unsigned int vik_track_merge_segments(VikTrack *tr)
 
   while ( (iter = iter->next) )
   {
-    if ( VIK_TRACKPOINT(iter->data)->newsegment ) {
-      VIK_TRACKPOINT(iter->data)->newsegment = false;
+    if ( ((Trackpoint *) iter->data)->newsegment ) {
+      ((Trackpoint *) iter->data)->newsegment = false;
       num++;
     }
   }
@@ -578,13 +616,13 @@ void vik_track_reverse ( VikTrack *tr )
   while ( iter )
   {
     if ( ! iter->next ) /* last segment, was first, cancel newsegment. */
-      VIK_TRACKPOINT(iter->data)->newsegment = false;
+      ((Trackpoint *) iter->data)->newsegment = false;
     if ( ! iter->prev ) /* first segment by convention has newsegment flag. */
-      VIK_TRACKPOINT(iter->data)->newsegment = true;
-    else if ( VIK_TRACKPOINT(iter->data)->newsegment && iter->next )
+      ((Trackpoint *) iter->data)->newsegment = true;
+    else if ( ((Trackpoint *) iter->data)->newsegment && iter->next )
     {
-      VIK_TRACKPOINT(iter->next->data)->newsegment = true;
-      VIK_TRACKPOINT(iter->data)->newsegment = false;
+      ((Trackpoint *) iter->next->data)->newsegment = true;
+      ((Trackpoint *) iter->data)->newsegment = false;
     }
     iter = iter->prev;
   }
@@ -607,7 +645,7 @@ time_t vik_track_get_duration(const VikTrack *trk, bool segment_gaps)
       // Get trkpt only once - as using vik_track_get_tp_last() iterates whole track each time
       if (segment_gaps) {
         // Simple duration
-        VikTrackpoint *trkpt_last = vik_track_get_tp_last(trk);
+        Trackpoint * trkpt_last = vik_track_get_tp_last(trk);
         if ( trkpt_last->has_timestamp ) {
           time_t t1 = vik_track_get_tp_first(trk)->timestamp;
           time_t t2 = trkpt_last->timestamp;
@@ -618,10 +656,10 @@ time_t vik_track_get_duration(const VikTrack *trk, bool segment_gaps)
         // Total within segments
         GList *iter = trk->trackpoints->next;
         while (iter) {
-          if ( VIK_TRACKPOINT(iter->data)->has_timestamp &&
-               VIK_TRACKPOINT(iter->prev->data)->has_timestamp &&
-              (!VIK_TRACKPOINT(iter->data)->newsegment) ) {
-            duration += ABS(VIK_TRACKPOINT(iter->data)->timestamp - VIK_TRACKPOINT(iter->prev->data)->timestamp);
+          if ( ((Trackpoint *) iter->data)->has_timestamp &&
+               ((Trackpoint *) iter->prev->data)->has_timestamp &&
+              (!((Trackpoint *) (Trackpoint *) iter->data)->newsegment) ) {
+            duration += ABS(((Trackpoint *) iter->data)->timestamp - ((Trackpoint *) iter->prev->data)->timestamp);
           }
           iter = iter->next;
         }
@@ -640,13 +678,13 @@ double vik_track_get_average_speed(const VikTrack *tr)
     GList *iter = tr->trackpoints->next;
     while (iter)
     {
-      if ( VIK_TRACKPOINT(iter->data)->has_timestamp && 
-          VIK_TRACKPOINT(iter->prev->data)->has_timestamp &&
-          (! VIK_TRACKPOINT(iter->data)->newsegment) )
+      if ( ((Trackpoint *) iter->data)->has_timestamp &&
+          ((Trackpoint *) iter->prev->data)->has_timestamp &&
+          (! ((Trackpoint *) iter->data)->newsegment) )
       {
-        len += vik_coord_diff ( &(VIK_TRACKPOINT(iter->data)->coord),
-                                &(VIK_TRACKPOINT(iter->prev->data)->coord) );
-        time += ABS(VIK_TRACKPOINT(iter->data)->timestamp - VIK_TRACKPOINT(iter->prev->data)->timestamp);
+        len += vik_coord_diff ( &(((Trackpoint *) iter->data)->coord),
+                                &(((Trackpoint *) iter->prev->data)->coord) );
+        time += ABS(((Trackpoint *) iter->data)->timestamp - ((Trackpoint *) iter->prev->data)->timestamp);
       }
       iter = iter->next;
     }
@@ -673,15 +711,15 @@ double vik_track_get_average_speed_moving (const VikTrack *tr, int stop_length_s
     GList *iter = tr->trackpoints->next;
     while (iter)
     {
-      if ( VIK_TRACKPOINT(iter->data)->has_timestamp &&
-          VIK_TRACKPOINT(iter->prev->data)->has_timestamp &&
-          (! VIK_TRACKPOINT(iter->data)->newsegment) )
+      if ( ((Trackpoint *) iter->data)->has_timestamp &&
+          ((Trackpoint *) iter->prev->data)->has_timestamp &&
+          (! ((Trackpoint *) iter->data)->newsegment) )
       {
-	if ( ( VIK_TRACKPOINT(iter->data)->timestamp - VIK_TRACKPOINT(iter->prev->data)->timestamp ) < stop_length_seconds ) {
-	  len += vik_coord_diff ( &(VIK_TRACKPOINT(iter->data)->coord),
-				  &(VIK_TRACKPOINT(iter->prev->data)->coord) );
-	
-	  time += ABS(VIK_TRACKPOINT(iter->data)->timestamp - VIK_TRACKPOINT(iter->prev->data)->timestamp);
+	if ( ( ((Trackpoint *) iter->data)->timestamp - ((Trackpoint *) iter->prev->data)->timestamp ) < stop_length_seconds ) {
+	  len += vik_coord_diff ( &(((Trackpoint *) iter->data)->coord),
+				  &(((Trackpoint *) iter->prev->data)->coord) );
+
+	  time += ABS(((Trackpoint *) iter->data)->timestamp - ((Trackpoint *) iter->prev->data)->timestamp);
 	}
       }
       iter = iter->next;
@@ -698,12 +736,12 @@ double vik_track_get_max_speed(const VikTrack *tr)
     GList *iter = tr->trackpoints->next;
     while (iter)
     {
-      if ( VIK_TRACKPOINT(iter->data)->has_timestamp && 
-          VIK_TRACKPOINT(iter->prev->data)->has_timestamp &&
-          (! VIK_TRACKPOINT(iter->data)->newsegment) )
+      if ( ((Trackpoint *) iter->data)->has_timestamp &&
+          ((Trackpoint *) iter->prev->data)->has_timestamp &&
+          (! ((Trackpoint *) iter->data)->newsegment) )
       {
-        speed =  vik_coord_diff ( &(VIK_TRACKPOINT(iter->data)->coord), &(VIK_TRACKPOINT(iter->prev->data)->coord) )
-                 / ABS(VIK_TRACKPOINT(iter->data)->timestamp - VIK_TRACKPOINT(iter->prev->data)->timestamp);
+        speed =  vik_coord_diff ( &(((Trackpoint *) iter->data)->coord), &(((Trackpoint *) iter->prev->data)->coord) )
+                 / ABS(((Trackpoint *) iter->data)->timestamp - ((Trackpoint *) iter->prev->data)->timestamp);
         if ( speed > maxspeed )
           maxspeed = speed;
       }
@@ -718,7 +756,7 @@ void vik_track_convert ( VikTrack *tr, VikCoordMode dest_mode )
   GList *iter = tr->trackpoints;
   while (iter)
   {
-    vik_coord_convert ( &(VIK_TRACKPOINT(iter->data)->coord), dest_mode );
+    vik_coord_convert ( &(((Trackpoint *) iter->data)->coord), dest_mode );
     iter = iter->next;
   }
 }
@@ -745,8 +783,8 @@ double *vik_track_make_elevation_map ( const VikTrack *tr, uint16_t num_chunks )
       // Since when is 9.9999e+24 a valid elevation!!
       // This can happen when a track (with no elevations) is uploaded to a GPS device and then redownloaded (e.g. using a Garmin Legend EtrexHCx)
       // Some protection against trying to work with crazily massive numbers (otherwise get SIGFPE, Arithmetic exception)
-      if ( VIK_TRACKPOINT(iter->data)->altitude != VIK_DEFAULT_ALTITUDE &&
-	   VIK_TRACKPOINT(iter->data)->altitude < 1E9 ) {
+      if ( ((Trackpoint *) iter->data)->altitude != VIK_DEFAULT_ALTITUDE &&
+	   ((Trackpoint *) iter->data)->altitude < 1E9 ) {
         okay = true; break;
       }
       iter = iter->next;
@@ -775,10 +813,10 @@ double *vik_track_make_elevation_map ( const VikTrack *tr, uint16_t num_chunks )
   current_chunk = 0;
   current_seg_length = 0;
 
-  current_seg_length = vik_coord_diff ( &(VIK_TRACKPOINT(iter->data)->coord),
-      &(VIK_TRACKPOINT(iter->next->data)->coord) );
-  altitude1 = VIK_TRACKPOINT(iter->data)->altitude;
-  altitude2 = VIK_TRACKPOINT(iter->next->data)->altitude;
+  current_seg_length = vik_coord_diff ( &(((Trackpoint *) iter->data)->coord),
+      &(((Trackpoint *) iter->next->data)->coord) );
+  altitude1 = ((Trackpoint *) iter->data)->altitude;
+  altitude2 = ((Trackpoint *) iter->next->data)->altitude;
   dist_along_seg = 0;
 
   while ( current_chunk < num_chunks ) {
@@ -814,11 +852,11 @@ double *vik_track_make_elevation_map ( const VikTrack *tr, uint16_t num_chunks )
       /* get intervening segs */
       iter = iter->next;
       while ( iter && iter->next ) {
-        current_seg_length = vik_coord_diff ( &(VIK_TRACKPOINT(iter->data)->coord),
-            &(VIK_TRACKPOINT(iter->next->data)->coord) );
-        altitude1 = VIK_TRACKPOINT(iter->data)->altitude;
-        altitude2 = VIK_TRACKPOINT(iter->next->data)->altitude;
-        ignore_it = VIK_TRACKPOINT(iter->next->data)->newsegment;
+        current_seg_length = vik_coord_diff ( &(((Trackpoint *) iter->data)->coord),
+            &(((Trackpoint *) iter->next->data)->coord) );
+        altitude1 = ((Trackpoint *) iter->data)->altitude;
+        altitude2 = ((Trackpoint *) iter->next->data)->altitude;
+        ignore_it = ((Trackpoint *) iter->next->data)->newsegment;
 
         if ( chunk_length - current_dist >= current_seg_length ) {
           current_dist += current_seg_length;
@@ -839,7 +877,7 @@ double *vik_track_make_elevation_map ( const VikTrack *tr, uint16_t num_chunks )
             pts[i] = pts[current_chunk];
           break;
         }
-      } 
+      }
       else {
         current_area_under_curve += dist_along_seg * (altitude1 + (altitude2 - altitude1)*dist_along_seg/current_seg_length);
         pts[current_chunk] = current_area_under_curve / chunk_length;
@@ -858,12 +896,12 @@ void vik_track_get_total_elevation_gain(const VikTrack *tr, double *up, double *
 {
   double diff;
   *up = *down = 0;
-  if ( tr->trackpoints && VIK_TRACKPOINT(tr->trackpoints->data)->altitude != VIK_DEFAULT_ALTITUDE )
+  if ( tr->trackpoints && ((Trackpoint *) tr->trackpoints->data)->altitude != VIK_DEFAULT_ALTITUDE )
   {
     GList *iter = tr->trackpoints->next;
     while (iter)
     {
-      diff = VIK_TRACKPOINT(iter->data)->altitude - VIK_TRACKPOINT(iter->prev->data)->altitude;
+      diff = ((Trackpoint *) iter->data)->altitude - ((Trackpoint *) iter->prev->data)->altitude;
       if ( diff > 0 )
         *up += diff;
       else
@@ -926,8 +964,8 @@ double *vik_track_make_speed_map ( const VikTrack *tr, uint16_t num_chunks )
 
   assert ( num_chunks < 16000 );
 
-  t1 = VIK_TRACKPOINT(tr->trackpoints->data)->timestamp;
-  t2 = VIK_TRACKPOINT(g_list_last(tr->trackpoints)->data)->timestamp;
+  t1 = ((Trackpoint *) tr->trackpoints->data)->timestamp;
+  t2 = ((Trackpoint *) g_list_last(tr->trackpoints)->data)->timestamp;
   duration = t2 - t1;
 
   if ( !t1 || !t2 || !duration )
@@ -948,11 +986,11 @@ double *vik_track_make_speed_map ( const VikTrack *tr, uint16_t num_chunks )
   iter = tr->trackpoints->next;
   numpts = 0;
   s[0] = 0;
-  t[0] = VIK_TRACKPOINT(tr->trackpoints->data)->timestamp;
+  t[0] = ((Trackpoint *) tr->trackpoints->data)->timestamp;
   numpts++;
   while (iter) {
-    s[numpts] = s[numpts-1] + vik_coord_diff ( &(VIK_TRACKPOINT(iter->prev->data)->coord), &(VIK_TRACKPOINT(iter->data)->coord) );
-    t[numpts] = VIK_TRACKPOINT(iter->data)->timestamp;
+    s[numpts] = s[numpts-1] + vik_coord_diff ( &(((Trackpoint *) iter->prev->data)->coord), &(((Trackpoint *) iter->data)->coord) );
+    t[numpts] = ((Trackpoint *) iter->data)->timestamp;
     numpts++;
     iter = iter->next;
   }
@@ -973,7 +1011,7 @@ double *vik_track_make_speed_map ( const VikTrack *tr, uint16_t num_chunks )
 	index++;
       }
       v[i] = acc_s/acc_t;
-    } 
+    }
     else if (i) {
       v[i] = v[i-1];
     }
@@ -999,8 +1037,8 @@ double *vik_track_make_distance_map ( const VikTrack *tr, uint16_t num_chunks )
   if ( ! tr->trackpoints )
     return NULL;
 
-  t1 = VIK_TRACKPOINT(tr->trackpoints->data)->timestamp;
-  t2 = VIK_TRACKPOINT(g_list_last(tr->trackpoints)->data)->timestamp;
+  t1 = ((Trackpoint *) tr->trackpoints->data)->timestamp;
+  t2 = ((Trackpoint *) g_list_last(tr->trackpoints)->data)->timestamp;
   duration = t2 - t1;
 
   if ( !t1 || !t2 || !duration )
@@ -1021,11 +1059,11 @@ double *vik_track_make_distance_map ( const VikTrack *tr, uint16_t num_chunks )
   iter = tr->trackpoints->next;
   numpts = 0;
   s[0] = 0;
-  t[0] = VIK_TRACKPOINT(tr->trackpoints->data)->timestamp;
+  t[0] = ((Trackpoint *) tr->trackpoints->data)->timestamp;
   numpts++;
   while (iter) {
-    s[numpts] = s[numpts-1] + vik_coord_diff ( &(VIK_TRACKPOINT(iter->prev->data)->coord), &(VIK_TRACKPOINT(iter->data)->coord) );
-    t[numpts] = VIK_TRACKPOINT(iter->data)->timestamp;
+    s[numpts] = s[numpts-1] + vik_coord_diff ( &(((Trackpoint *) iter->prev->data)->coord), &(((Trackpoint *) iter->data)->coord) );
+    t[numpts] = ((Trackpoint *) iter->data)->timestamp;
     numpts++;
     iter = iter->next;
   }
@@ -1077,7 +1115,7 @@ double *vik_track_make_elevation_time_map ( const VikTrack *tr, uint16_t num_chu
   /* test if there's anything worth calculating */
   bool okay = false;
   while ( iter ) {
-    if ( VIK_TRACKPOINT(iter->data)->altitude != VIK_DEFAULT_ALTITUDE ) {
+    if ( ((Trackpoint *) iter->data)->altitude != VIK_DEFAULT_ALTITUDE ) {
       okay = true;
       break;
     }
@@ -1086,8 +1124,8 @@ double *vik_track_make_elevation_time_map ( const VikTrack *tr, uint16_t num_chu
   if ( ! okay )
     return NULL;
 
-  t1 = VIK_TRACKPOINT(tr->trackpoints->data)->timestamp;
-  t2 = VIK_TRACKPOINT(g_list_last(tr->trackpoints)->data)->timestamp;
+  t1 = ((Trackpoint *) tr->trackpoints->data)->timestamp;
+  t2 = ((Trackpoint *) g_list_last(tr->trackpoints)->data)->timestamp;
   duration = t2 - t1;
 
   if ( !t1 || !t2 || !duration )
@@ -1108,13 +1146,13 @@ double *vik_track_make_elevation_time_map ( const VikTrack *tr, uint16_t num_chu
 
   chunk_dur = duration / num_chunks;
 
-  s[0] = VIK_TRACKPOINT(iter->data)->altitude;
-  t[0] = VIK_TRACKPOINT(iter->data)->timestamp;
+  s[0] = ((Trackpoint *) iter->data)->altitude;
+  t[0] = ((Trackpoint *) iter->data)->timestamp;
   iter = tr->trackpoints->next;
   int numpts = 1;
   while (iter) {
-    s[numpts] = VIK_TRACKPOINT(iter->data)->altitude;
-    t[numpts] = VIK_TRACKPOINT(iter->data)->timestamp;
+    s[numpts] = ((Trackpoint *) iter->data)->altitude;
+    t[numpts] = ((Trackpoint *) iter->data)->timestamp;
     numpts++;
     iter = iter->next;
   }
@@ -1162,8 +1200,8 @@ double *vik_track_make_speed_dist_map ( const VikTrack *tr, uint16_t num_chunks 
   if ( ! tr->trackpoints )
     return NULL;
 
-  t1 = VIK_TRACKPOINT(tr->trackpoints->data)->timestamp;
-  t2 = VIK_TRACKPOINT(g_list_last(tr->trackpoints)->data)->timestamp;
+  t1 = ((Trackpoint *) tr->trackpoints->data)->timestamp;
+  t2 = ((Trackpoint *) g_list_last(tr->trackpoints)->data)->timestamp;
   duration = t2 - t1;
 
   if ( !t1 || !t2 || !duration )
@@ -1190,11 +1228,11 @@ double *vik_track_make_speed_dist_map ( const VikTrack *tr, uint16_t num_chunks 
   iter = tr->trackpoints->next;
   numpts = 0;
   s[0] = 0;
-  t[0] = VIK_TRACKPOINT(tr->trackpoints->data)->timestamp;
+  t[0] = ((Trackpoint *) tr->trackpoints->data)->timestamp;
   numpts++;
   while (iter) {
-    s[numpts] = s[numpts-1] + vik_coord_diff ( &(VIK_TRACKPOINT(iter->prev->data)->coord), &(VIK_TRACKPOINT(iter->data)->coord) );
-    t[numpts] = VIK_TRACKPOINT(iter->data)->timestamp;
+    s[numpts] = s[numpts-1] + vik_coord_diff ( &(((Trackpoint *) iter->prev->data)->coord), &(((Trackpoint *) iter->data)->coord) );
+    t[numpts] = ((Trackpoint *) iter->data)->timestamp;
     numpts++;
     iter = iter->next;
   }
@@ -1234,9 +1272,9 @@ double *vik_track_make_speed_dist_map ( const VikTrack *tr, uint16_t num_chunks 
  *
  * TODO: Consider changing the boolean get_next_point into an enum with these options PREVIOUS, NEXT, NEAREST
  *
- * Returns: The #VikTrackpoint fitting the criteria or NULL
+ * Returns: The #Trackpoint fitting the criteria or NULL
  */
-VikTrackpoint *vik_track_get_tp_by_dist ( VikTrack *trk, double meters_from_start, bool get_next_point, double *tp_metres_from_start )
+Trackpoint * vik_track_get_tp_by_dist ( VikTrack *trk, double meters_from_start, bool get_next_point, double *tp_metres_from_start )
 {
   double current_dist = 0.0;
   double current_inc = 0.0;
@@ -1246,8 +1284,8 @@ VikTrackpoint *vik_track_get_tp_by_dist ( VikTrack *trk, double meters_from_star
   if ( trk->trackpoints ) {
     GList *iter = g_list_next ( g_list_first ( trk->trackpoints ) );
     while (iter) {
-      current_inc = vik_coord_diff ( &(VIK_TRACKPOINT(iter->data)->coord),
-                                     &(VIK_TRACKPOINT(iter->prev->data)->coord) );
+      current_inc = vik_coord_diff ( &(((Trackpoint *) iter->data)->coord),
+                                     &(((Trackpoint *) iter->prev->data)->coord) );
       current_dist += current_inc;
       if ( current_dist >= meters_from_start )
         break;
@@ -1265,17 +1303,17 @@ VikTrackpoint *vik_track_get_tp_by_dist ( VikTrack *trk, double meters_from_star
       if ( iter->prev ) {
         if ( tp_metres_from_start )
           *tp_metres_from_start = current_dist-current_inc;
-        return VIK_TRACKPOINT(iter->prev->data);
+        return ((Trackpoint *) iter->prev->data);
       }
     }
-    return VIK_TRACKPOINT(iter->data);
+    return ((Trackpoint *) iter->data);
   }
 
   return NULL;
 }
 
 /* by Alex Foobarian */
-VikTrackpoint *vik_track_get_closest_tp_by_percentage_dist ( VikTrack *tr, double reldist, double *meters_from_start )
+Trackpoint * vik_track_get_closest_tp_by_percentage_dist ( VikTrack *tr, double reldist, double *meters_from_start )
 {
   double dist = vik_track_get_length_including_gaps(tr) * reldist;
   double current_dist = 0.0;
@@ -1287,8 +1325,8 @@ VikTrackpoint *vik_track_get_closest_tp_by_percentage_dist ( VikTrack *tr, doubl
     double last_dist = 0.0;
     while (iter)
     {
-      current_inc = vik_coord_diff ( &(VIK_TRACKPOINT(iter->data)->coord),
-                                     &(VIK_TRACKPOINT(iter->prev->data)->coord) );
+      current_inc = vik_coord_diff ( &(((Trackpoint *) iter->data)->coord),
+                                     &(((Trackpoint *) iter->prev->data)->coord) );
       last_dist = current_dist;
       current_dist += current_inc;
       if ( current_dist >= dist )
@@ -1300,7 +1338,7 @@ VikTrackpoint *vik_track_get_closest_tp_by_percentage_dist ( VikTrack *tr, doubl
       if (last_iter) {
         if (meters_from_start)
           *meters_from_start = last_dist;
-        return(VIK_TRACKPOINT(last_iter->data));
+        return(((Trackpoint *) last_iter->data));
       }
       else
         return NULL;
@@ -1316,20 +1354,20 @@ VikTrackpoint *vik_track_get_closest_tp_by_percentage_dist ( VikTrack *tr, doubl
       if (meters_from_start)
         *meters_from_start = current_dist;
 
-    return VIK_TRACKPOINT(iter->data);
+    return ((Trackpoint *) iter->data);
 
   }
   return NULL;
 }
 
-VikTrackpoint *vik_track_get_closest_tp_by_percentage_time ( VikTrack *tr, double reltime, time_t *seconds_from_start )
+Trackpoint * vik_track_get_closest_tp_by_percentage_time ( VikTrack *tr, double reltime, time_t *seconds_from_start )
 {
   if ( !tr->trackpoints )
     return NULL;
 
   time_t t_pos, t_start, t_end, t_total;
-  t_start = VIK_TRACKPOINT(tr->trackpoints->data)->timestamp;
-  t_end = VIK_TRACKPOINT(g_list_last(tr->trackpoints)->data)->timestamp;
+  t_start = ((Trackpoint *) tr->trackpoints->data)->timestamp;
+  t_end = ((Trackpoint *) g_list_last(tr->trackpoints)->data)->timestamp;
   t_total = t_end - t_start;
 
   t_pos = t_start + t_total * reltime;
@@ -1337,18 +1375,18 @@ VikTrackpoint *vik_track_get_closest_tp_by_percentage_time ( VikTrack *tr, doubl
   GList *iter = tr->trackpoints;
 
   while (iter) {
-    if (VIK_TRACKPOINT(iter->data)->timestamp == t_pos)
+    if (((Trackpoint *) iter->data)->timestamp == t_pos)
       break;
-    if (VIK_TRACKPOINT(iter->data)->timestamp > t_pos) {
+    if (((Trackpoint *) iter->data)->timestamp > t_pos) {
       if (iter->prev == NULL)  /* first trackpoint */
         break;
-      time_t t_before = t_pos - VIK_TRACKPOINT(iter->prev->data)->timestamp;
-      time_t t_after = VIK_TRACKPOINT(iter->data)->timestamp - t_pos;
+      time_t t_before = t_pos - ((Trackpoint *) iter->prev->data)->timestamp;
+      time_t t_after = ((Trackpoint *) iter->data)->timestamp - t_pos;
       if (t_before <= t_after)
         iter = iter->prev;
       break;
     }
-    else if ((iter->next == NULL) && (t_pos < (VIK_TRACKPOINT(iter->data)->timestamp + 3))) /* last trackpoint: accommodate for round-off */
+    else if ((iter->next == NULL) && (t_pos < (((Trackpoint *) iter->data)->timestamp + 3))) /* last trackpoint: accommodate for round-off */
       break;
     iter = iter->next;
   }
@@ -1356,11 +1394,11 @@ VikTrackpoint *vik_track_get_closest_tp_by_percentage_time ( VikTrack *tr, doubl
   if (!iter)
     return NULL;
   if (seconds_from_start)
-    *seconds_from_start = VIK_TRACKPOINT(iter->data)->timestamp - VIK_TRACKPOINT(tr->trackpoints->data)->timestamp;
-  return VIK_TRACKPOINT(iter->data);
+    *seconds_from_start = ((Trackpoint *) iter->data)->timestamp - ((Trackpoint *) tr->trackpoints->data)->timestamp;
+  return ((Trackpoint *) iter->data);
 }
 
-VikTrackpoint* vik_track_get_tp_by_max_speed ( const VikTrack *tr )
+Trackpoint * vik_track_get_tp_by_max_speed ( const VikTrack *tr )
 {
   double maxspeed = 0.0, speed = 0.0;
 
@@ -1368,43 +1406,43 @@ VikTrackpoint* vik_track_get_tp_by_max_speed ( const VikTrack *tr )
     return NULL;
 
   GList *iter = tr->trackpoints;
-  VikTrackpoint *max_speed_tp = NULL;
+  Trackpoint * max_speed_tp = NULL;
 
   while (iter) {
     if (iter->prev) {
-      if ( VIK_TRACKPOINT(iter->data)->has_timestamp &&
-	   VIK_TRACKPOINT(iter->prev->data)->has_timestamp &&
-	   (! VIK_TRACKPOINT(iter->data)->newsegment) ) {
-	speed =  vik_coord_diff ( &(VIK_TRACKPOINT(iter->data)->coord), &(VIK_TRACKPOINT(iter->prev->data)->coord) )
-	  / ABS(VIK_TRACKPOINT(iter->data)->timestamp - VIK_TRACKPOINT(iter->prev->data)->timestamp);
+      if ( ((Trackpoint *) iter->data)->has_timestamp &&
+	   ((Trackpoint *) iter->prev->data)->has_timestamp &&
+	   (! ((Trackpoint *) iter->data)->newsegment) ) {
+	speed =  vik_coord_diff ( &(((Trackpoint *) iter->data)->coord), &(((Trackpoint *) iter->prev->data)->coord) )
+	  / ABS(((Trackpoint *) iter->data)->timestamp - ((Trackpoint *) iter->prev->data)->timestamp);
 	if ( speed > maxspeed ) {
 	  maxspeed = speed;
-	  max_speed_tp = VIK_TRACKPOINT(iter->data);
+	  max_speed_tp = ((Trackpoint *) iter->data);
 	}
       }
     }
     iter = iter->next;
   }
-  
+
   if (!max_speed_tp)
     return NULL;
 
   return max_speed_tp;
 }
 
-VikTrackpoint* vik_track_get_tp_by_max_alt ( const VikTrack *tr )
+Trackpoint * vik_track_get_tp_by_max_alt ( const VikTrack *tr )
 {
   double maxalt = -5000.0;
   if ( !tr->trackpoints )
     return NULL;
 
   GList *iter = tr->trackpoints;
-  VikTrackpoint *max_alt_tp = NULL;
+  Trackpoint * max_alt_tp = NULL;
 
   while (iter) {
-    if ( VIK_TRACKPOINT(iter->data)->altitude > maxalt ) {
-      maxalt = VIK_TRACKPOINT(iter->data)->altitude;
-      max_alt_tp = VIK_TRACKPOINT(iter->data);
+    if ( ((Trackpoint *) iter->data)->altitude > maxalt ) {
+      maxalt = ((Trackpoint *) iter->data)->altitude;
+      max_alt_tp = ((Trackpoint *) iter->data);
     }
     iter = iter->next;
   }
@@ -1415,19 +1453,19 @@ VikTrackpoint* vik_track_get_tp_by_max_alt ( const VikTrack *tr )
   return max_alt_tp;
 }
 
-VikTrackpoint* vik_track_get_tp_by_min_alt ( const VikTrack *tr )
+Trackpoint * vik_track_get_tp_by_min_alt ( const VikTrack *tr )
 {
   double minalt = 25000.0;
   if ( !tr->trackpoints )
     return NULL;
 
   GList *iter = tr->trackpoints;
-  VikTrackpoint *min_alt_tp = NULL;
+  Trackpoint * min_alt_tp = NULL;
 
   while (iter) {
-    if ( VIK_TRACKPOINT(iter->data)->altitude < minalt ) {
-      minalt = VIK_TRACKPOINT(iter->data)->altitude;
-      min_alt_tp = VIK_TRACKPOINT(iter->data);
+    if ( ((Trackpoint *) iter->data)->altitude < minalt ) {
+      minalt = ((Trackpoint *) iter->data)->altitude;
+      min_alt_tp = ((Trackpoint *) iter->data);
     }
     iter = iter->next;
   }
@@ -1438,34 +1476,34 @@ VikTrackpoint* vik_track_get_tp_by_min_alt ( const VikTrack *tr )
   return min_alt_tp;
 }
 
-VikTrackpoint *vik_track_get_tp_first( const VikTrack *tr )
+Trackpoint * vik_track_get_tp_first( const VikTrack *tr )
 {
   if ( !tr->trackpoints )
     return NULL;
 
-  return (VikTrackpoint*)g_list_first(tr->trackpoints)->data;
+  return (Trackpoint *) g_list_first(tr->trackpoints)->data;
 }
 
-VikTrackpoint *vik_track_get_tp_last ( const VikTrack *tr )
+Trackpoint * vik_track_get_tp_last ( const VikTrack *tr )
 {
   if ( !tr->trackpoints )
     return NULL;
 
-  return (VikTrackpoint*)g_list_last(tr->trackpoints)->data;
+  return (Trackpoint*)g_list_last(tr->trackpoints)->data;
 }
 
-VikTrackpoint *vik_track_get_tp_prev ( const VikTrack *tr, VikTrackpoint *tp )
+Trackpoint * vik_track_get_tp_prev ( const VikTrack *tr, Trackpoint * tp )
 {
   if ( !tr->trackpoints )
     return NULL;
 
   GList *iter = tr->trackpoints;
-  VikTrackpoint *tp_prev = NULL;
+  Trackpoint * tp_prev = NULL;
 
   while (iter) {
     if (iter->prev) {
-      if ( VIK_TRACKPOINT(iter->data) == tp ) {
-        tp_prev = VIK_TRACKPOINT(iter->prev->data);
+      if ( ((Trackpoint *) iter->data) == tp ) {
+        tp_prev = ((Trackpoint *) iter->prev->data);
         break;
       }
     }
@@ -1479,12 +1517,12 @@ bool vik_track_get_minmax_alt ( const VikTrack *tr, double *min_alt, double *max
 {
   *min_alt = 25000;
   *max_alt = -5000;
-  if ( tr && tr->trackpoints && tr->trackpoints->data && (VIK_TRACKPOINT(tr->trackpoints->data)->altitude != VIK_DEFAULT_ALTITUDE) ) {
+  if ( tr && tr->trackpoints && tr->trackpoints->data && (((Trackpoint *) tr->trackpoints->data)->altitude != VIK_DEFAULT_ALTITUDE) ) {
     GList *iter = tr->trackpoints->next;
     double tmp_alt;
     while (iter)
     {
-      tmp_alt = VIK_TRACKPOINT(iter->data)->altitude;
+      tmp_alt = ((Trackpoint *) iter->data)->altitude;
       if ( tmp_alt > *max_alt )
         *max_alt = tmp_alt;
       if ( tmp_alt < *min_alt )
@@ -1519,8 +1557,8 @@ void vik_track_marshall ( VikTrack *tr, uint8_t **data, size_t *datalen)
   tps = tr->trackpoints;
   ntp = 0;
   while (tps) {
-    g_byte_array_append(b, (uint8_t *)tps->data, sizeof(VikTrackpoint));
-    vtm_append(VIK_TRACKPOINT(tps->data)->name);
+    g_byte_array_append(b, (uint8_t *)tps->data, sizeof(Trackpoint));
+    vtm_append(((Trackpoint *) tps->data)->name);
     tps = tps->next;
     ntp++;
   }
@@ -1543,7 +1581,7 @@ VikTrack *vik_track_unmarshall (uint8_t *data, size_t datalen)
 {
   unsigned int len;
   VikTrack *new_tr = vik_track_new();
-  VikTrackpoint *new_tp;
+  Trackpoint * new_tp;
   unsigned int ntp;
   int i;
 
@@ -1572,7 +1610,7 @@ VikTrack *vik_track_unmarshall (uint8_t *data, size_t datalen)
   data += len;
 
   for (i=0; i<ntp; i++) {
-    new_tp = vik_trackpoint_new();
+    new_tp = new Trackpoint();
     memcpy(new_tp, data, sizeof(*new_tp));
     data += sizeof(*new_tp);
     vtu_get(new_tp->name);
@@ -1598,28 +1636,28 @@ void vik_track_calculate_bounds ( VikTrack *trk )
 {
   GList *tp_iter;
   tp_iter = trk->trackpoints;
-  
+
   struct LatLon topleft, bottomright, ll;
-  
+
   // Set bounds to first point
   if ( tp_iter ) {
-    vik_coord_to_latlon ( &(VIK_TRACKPOINT(tp_iter->data)->coord), &topleft );
-    vik_coord_to_latlon ( &(VIK_TRACKPOINT(tp_iter->data)->coord), &bottomright );
+    vik_coord_to_latlon ( &(((Trackpoint *) tp_iter->data)->coord), &topleft );
+    vik_coord_to_latlon ( &(((Trackpoint *) tp_iter->data)->coord), &bottomright );
   }
   while ( tp_iter ) {
 
     // See if this trackpoint increases the track bounds.
-   
-    vik_coord_to_latlon ( &(VIK_TRACKPOINT(tp_iter->data)->coord), &ll );
-  
+
+    vik_coord_to_latlon ( &(((Trackpoint *) tp_iter->data)->coord), &ll );
+
     if ( ll.lat > topleft.lat) topleft.lat = ll.lat;
     if ( ll.lon < topleft.lon) topleft.lon = ll.lon;
     if ( ll.lat < bottomright.lat) bottomright.lat = ll.lat;
     if ( ll.lon > bottomright.lon) bottomright.lon = ll.lon;
-    
+
     tp_iter = tp_iter->next;
   }
- 
+
   fprintf(stderr, "DEBUG: Bounds of track: '%s' is: %f,%f to: %f,%f\n", trk->name, topleft.lat, topleft.lon, bottomright.lat, bottomright.lon );
 
   trk->bbox.north = topleft.lat;
@@ -1648,7 +1686,7 @@ void vik_track_anonymize_times ( VikTrack *tr )
   GList *tp_iter;
   tp_iter = tr->trackpoints;
   while ( tp_iter ) {
-    VikTrackpoint *tp = VIK_TRACKPOINT(tp_iter->data);
+	  Trackpoint * tp = (Trackpoint *) (tp_iter->data);
     if ( tp->has_timestamp ) {
       // Calculate an offset in time using the first available timestamp
       if ( offset == 0 )
@@ -1679,7 +1717,7 @@ void vik_track_interpolate_times ( VikTrack *tr )
   GList *iter;
   iter = tr->trackpoints;
 
-  VikTrackpoint *tp = VIK_TRACKPOINT(iter->data);
+  Trackpoint *tp = (Trackpoint *) (iter->data);
   if ( tp->has_timestamp ) {
     tsfirst = tp->timestamp;
 
@@ -1687,7 +1725,7 @@ void vik_track_interpolate_times ( VikTrack *tr )
     while ( iter->next ) {
       iter = iter->next;
     }
-    tp = VIK_TRACKPOINT(iter->data);
+    tp = ((Trackpoint *) iter->data);
     if ( tp->has_timestamp ) {
       tsdiff = tp->timestamp - tsfirst;
 
@@ -1699,8 +1737,8 @@ void vik_track_interpolate_times ( VikTrack *tr )
         // Apply the calculated timestamp to all trackpoints except the first and last ones
         while ( iter->next && iter->next->next ) {
           iter = iter->next;
-          tp = VIK_TRACKPOINT(iter->data);
-          cur_dist += vik_coord_diff ( &(tp->coord), &(VIK_TRACKPOINT(iter->prev->data)->coord) );
+          tp = ((Trackpoint *) iter->data);
+          cur_dist += vik_coord_diff ( &(tp->coord), &(((Trackpoint *) iter->prev->data)->coord) );
 
           tp->timestamp = (cur_dist / tr_dist) * tsdiff + tsfirst;
           tp->has_timestamp = true;
@@ -1726,14 +1764,14 @@ unsigned long vik_track_apply_dem_data ( VikTrack *tr, bool skip_existing )
   tp_iter = tr->trackpoints;
   while ( tp_iter ) {
     // Don't apply if the point already has a value and the overwrite is off
-    if ( !(skip_existing && VIK_TRACKPOINT(tp_iter->data)->altitude != VIK_DEFAULT_ALTITUDE) ) {
+    if ( !(skip_existing && ((Trackpoint *) tp_iter->data)->altitude != VIK_DEFAULT_ALTITUDE) ) {
       /* TODO: of the 4 possible choices we have for choosing an elevation
        * (trackpoint in between samples), choose the one with the least elevation change
        * as the last */
-      elev = a_dems_get_elev_by_coord ( &(VIK_TRACKPOINT(tp_iter->data)->coord), VIK_DEM_INTERPOL_BEST );
+      elev = a_dems_get_elev_by_coord ( &(((Trackpoint *) tp_iter->data)->coord), VIK_DEM_INTERPOL_BEST );
 
       if ( elev != VIK_DEM_INVALID_ELEVATION ) {
-        VIK_TRACKPOINT(tp_iter->data)->altitude = elev;
+        ((Trackpoint *) tp_iter->data)->altitude = elev;
 	num++;
       }
     }
@@ -1751,9 +1789,9 @@ void vik_track_apply_dem_data_last_trackpoint ( VikTrack *tr )
   int16_t elev;
   if ( tr->trackpoints ) {
     /* As in vik_track_apply_dem_data above - use 'best' interpolation method */
-    elev = a_dems_get_elev_by_coord ( &(VIK_TRACKPOINT(g_list_last(tr->trackpoints)->data)->coord), VIK_DEM_INTERPOL_BEST );
+    elev = a_dems_get_elev_by_coord ( &(((Trackpoint *) g_list_last(tr->trackpoints)->data)->coord), VIK_DEM_INTERPOL_BEST );
     if ( elev != VIK_DEM_INVALID_ELEVATION )
-      VIK_TRACKPOINT(g_list_last(tr->trackpoints)->data)->altitude = elev;
+      ((Trackpoint *) g_list_last(tr->trackpoints)->data)->altitude = elev;
   }
 }
 
@@ -1771,7 +1809,7 @@ static void smoothie ( GList *tp1, GList *tp2, double elev1, double elev2, unsig
   int count = 1;
   GList *tp_iter = tp1;
   while ( tp_iter != tp2 && tp_iter ) {
-    VikTrackpoint *tp = VIK_TRACKPOINT(tp_iter->data);
+    Trackpoint * tp = (Trackpoint *) (tp_iter->data);
 
     tp->altitude = elev1 + (change*count);
 
@@ -1799,13 +1837,13 @@ unsigned long vik_track_smooth_missing_elevation_data ( VikTrack *tr, bool flat 
   GList *tp_iter;
   double elev = VIK_DEFAULT_ALTITUDE;
 
-  VikTrackpoint *tp_missing = NULL;
+  Trackpoint * tp_missing = NULL;
   GList *iter_first = NULL;
   unsigned int points = 0;
 
   tp_iter = tr->trackpoints;
   while ( tp_iter ) {
-    VikTrackpoint *tp = VIK_TRACKPOINT(tp_iter->data);
+    Trackpoint * tp = (Trackpoint *) (tp_iter->data);
 
     if ( VIK_DEFAULT_ALTITUDE == tp->altitude ) {
       if ( flat ) {
@@ -1854,7 +1892,7 @@ unsigned long vik_track_smooth_missing_elevation_data ( VikTrack *tr, bool flat 
 
 /**
  * vik_track_steal_and_append_trackpoints:
- * 
+ *
  * appends t2 to t1, leaving t2 with no trackpoints
  */
 void vik_track_steal_and_append_trackpoints ( VikTrack *t1, VikTrack *t2 )
@@ -1871,10 +1909,10 @@ void vik_track_steal_and_append_trackpoints ( VikTrack *t1, VikTrack *t2 )
 
 /**
  * vik_track_cut_back_to_double_point:
- * 
+ *
  * starting at the end, looks backwards for the last "double point", a duplicate trackpoint.
  * If there is no double point, deletes all the trackpoints.
- * 
+ *
  * Returns: the new end of the track (or the start if there are no double points)
  */
 VikCoord *vik_track_cut_back_to_double_point ( VikTrack *tr )
@@ -1889,8 +1927,8 @@ VikCoord *vik_track_cut_back_to_double_point ( VikTrack *tr )
 
 
   while ( iter->prev ) {
-    VikCoord *cur_coord = &((VikTrackpoint*)iter->data)->coord;
-    VikCoord *prev_coord = &((VikTrackpoint*)iter->prev->data)->coord;
+    VikCoord *cur_coord = &((Trackpoint*)iter->data)->coord;
+    VikCoord *prev_coord = &((Trackpoint*)iter->prev->data)->coord;
     if ( vik_coord_equals(cur_coord, prev_coord) ) {
       GList *prev = iter->prev;
 
@@ -1911,7 +1949,7 @@ VikCoord *vik_track_cut_back_to_double_point ( VikTrack *tr )
 
   /* no double point found! */
   rv = (VikCoord *) malloc(sizeof (VikCoord));
-  *rv = ((VikTrackpoint*) tr->trackpoints->data)->coord;
+  *rv = ((Trackpoint*) tr->trackpoints->data)->coord;
   g_list_foreach ( tr->trackpoints, (GFunc) g_free, NULL );
   g_list_free( tr->trackpoints );
   tr->trackpoints = NULL;
@@ -1926,14 +1964,14 @@ int vik_track_compare_timestamp (const void *x, const void *y)
   VikTrack *a = (VikTrack *)x;
   VikTrack *b = (VikTrack *)y;
 
-  VikTrackpoint *tpa = NULL;
-  VikTrackpoint *tpb = NULL;
+  Trackpoint * tpa = NULL;
+  Trackpoint * tpb = NULL;
 
   if ( a->trackpoints )
-    tpa = VIK_TRACKPOINT(g_list_first(a->trackpoints)->data);
+    tpa = ((Trackpoint *) g_list_first(a->trackpoints)->data);
 
   if ( b->trackpoints )
-    tpb = VIK_TRACKPOINT(g_list_first(b->trackpoints)->data);
+    tpb = ((Trackpoint *) g_list_first(b->trackpoints)->data);
 
   if ( tpa && tpb ) {
     if ( tpa->timestamp < tpb->timestamp )

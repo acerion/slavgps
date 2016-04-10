@@ -33,7 +33,7 @@ extern "C" {
 #endif
 
 
-char* vu_trackpoint_formatted_message ( char *format_code, VikTrackpoint *trkpt, VikTrackpoint *trkpt_prev, VikTrack *trk, double climb );
+char* vu_trackpoint_formatted_message ( char *format_code, Trackpoint * tp, Trackpoint * tp_prev, VikTrack *trk, double climb );
 
 void vu_check_latest_version ( GtkWindow *window );
 
@@ -59,4 +59,3 @@ void vu_zoom_to_show_latlons ( VikCoordMode mode, VikViewport *vvp, struct LatLo
 #endif
 
 #endif
-

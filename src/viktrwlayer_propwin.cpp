@@ -212,9 +212,9 @@ typedef struct _propwidgets {
   int      cisd; // Chunk size Index into Speed/Distance
   double   *distances;
   int      cid; // Chunk size Index into Distance
-  VikTrackpoint *marker_tp;
+  Trackpoint * marker_tp;
   bool  is_marker_drawn;
-  VikTrackpoint *blob_tp;
+  Trackpoint * blob_tp;
   bool  is_blob_drawn;
   time_t    duration;
   char     *tz; // TimeZone at track's location
@@ -371,7 +371,7 @@ static unsigned int get_distance_chunk_index (double length)
   return ci;
 }
 
-static VikTrackpoint *set_center_at_graph_position(double event_x,
+static Trackpoint * set_center_at_graph_position(double event_x,
 						   int img_width,
 						   VikTrwLayer *vtl,
 						   VikLayersPanel *vlp,
@@ -380,7 +380,7 @@ static VikTrackpoint *set_center_at_graph_position(double event_x,
 						   bool time_base,
 						   int PROFILE_WIDTH)
 {
-  VikTrackpoint *trackpoint;
+  Trackpoint * tp;
   double x = event_x - img_width / 2 + PROFILE_WIDTH / 2 - MARGIN_X / 2;
   if (x < 0)
     x = 0;
@@ -388,12 +388,12 @@ static VikTrackpoint *set_center_at_graph_position(double event_x,
     x = PROFILE_WIDTH;
 
   if (time_base)
-    trackpoint = vik_track_get_closest_tp_by_percentage_time ( tr, (double) x / PROFILE_WIDTH, NULL );
+    tp = vik_track_get_closest_tp_by_percentage_time ( tr, (double) x / PROFILE_WIDTH, NULL );
   else
-    trackpoint = vik_track_get_closest_tp_by_percentage_dist ( tr, (double) x / PROFILE_WIDTH, NULL );
+    tp = vik_track_get_closest_tp_by_percentage_dist ( tr, (double) x / PROFILE_WIDTH, NULL );
 
-  if ( trackpoint ) {
-    VikCoord coord = trackpoint->coord;
+  if (tp) {
+    VikCoord coord = tp->coord;
     if ( vlp ) {
       vik_viewport_set_center_coord ( vik_layers_panel_get_viewport(vlp), &coord, true );
       vik_layers_panel_emit_update ( vlp );
@@ -405,7 +405,7 @@ static VikTrackpoint *set_center_at_graph_position(double event_x,
       vik_layer_emit_update ( VIK_LAYER(vtl) );
     }
   }
-  return trackpoint;
+  return tp;
 }
 
 /**
@@ -453,7 +453,7 @@ static void save_image_and_draw_graph_marks (GtkWidget *image,
   }
   else
     *blob_drawn = false;
-  
+
   // Anywhere on image could have changed
   if (*marker_drawn || *blob_drawn)
     gtk_widget_queue_draw(image);
@@ -462,34 +462,34 @@ static void save_image_and_draw_graph_marks (GtkWidget *image,
 /**
  * Return the percentage of how far a trackpoint is a long a track via the time method
  */
-static double tp_percentage_by_time ( VikTrack *tr, VikTrackpoint *trackpoint )
+static double tp_percentage_by_time ( VikTrack *tr, Trackpoint * tp)
 {
   double pc = NAN;
-  if (trackpoint == NULL)
+  if (tp == NULL)
     return pc;
   time_t t_start, t_end, t_total;
-  t_start = VIK_TRACKPOINT(tr->trackpoints->data)->timestamp;
-  t_end = VIK_TRACKPOINT(g_list_last(tr->trackpoints)->data)->timestamp;
+  t_start = ((Trackpoint *) tr->trackpoints->data)->timestamp;
+  t_end = ((Trackpoint *) g_list_last(tr->trackpoints)->data)->timestamp;
   t_total = t_end - t_start;
-  pc = (double)(trackpoint->timestamp - t_start)/t_total;
+  pc = (double)(tp->timestamp - t_start)/t_total;
   return pc;
 }
 
 /**
  * Return the percentage of how far a trackpoint is a long a track via the distance method
  */
-static double tp_percentage_by_distance ( VikTrack *tr, VikTrackpoint *trackpoint, double track_length )
+static double tp_percentage_by_distance ( VikTrack *tr, Trackpoint * tp, double track_length )
 {
   double pc = NAN;
-  if (trackpoint == NULL)
+  if (tp == NULL)
     return pc;
   double dist = 0.0;
   GList *iter;
   for (iter = tr->trackpoints->next; iter != NULL; iter = iter->next) {
-    dist += vik_coord_diff(&(VIK_TRACKPOINT(iter->data)->coord),
-			   &(VIK_TRACKPOINT(iter->prev->data)->coord));
+    dist += vik_coord_diff(&(((Trackpoint *) iter->data)->coord),
+			   &(((Trackpoint *) iter->prev->data)->coord));
     /* Assuming trackpoint is not a copy */
-    if (trackpoint == VIK_TRACKPOINT(iter->data))
+    if (tp == ((Trackpoint *) iter->data))
       break;
   }
   if (iter != NULL)
@@ -507,14 +507,14 @@ static void track_graph_click( GtkWidget *event_box, GdkEventButton *event, Prop
   GtkAllocation allocation;
   gtk_widget_get_allocation ( event_box, &allocation );
 
-  VikTrackpoint *trackpoint = set_center_at_graph_position(event->x, allocation.width, widgets->vtl, widgets->vlp, widgets->vvp, widgets->tr, is_time_graph, widgets->profile_width);
+  Trackpoint * tp = set_center_at_graph_position(event->x, allocation.width, widgets->vtl, widgets->vlp, widgets->vvp, widgets->tr, is_time_graph, widgets->profile_width);
   // Unable to get the point so give up
-  if ( trackpoint == NULL ) {
+  if (tp == NULL) {
     gtk_dialog_set_response_sensitive(GTK_DIALOG(widgets->dialog), VIK_TRW_LAYER_PROPWIN_SPLIT_MARKER, false);
     return;
   }
 
-  widgets->marker_tp = trackpoint;
+  widgets->marker_tp = tp;
 
   GList *child;
   GtkWidget *image;
@@ -571,9 +571,9 @@ static void track_graph_click( GtkWidget *event_box, GdkEventButton *event, Prop
       image = GTK_WIDGET(child->data);
 
       if (is_time_graph)
-	pc = tp_percentage_by_time ( widgets->tr, trackpoint );
+	pc = tp_percentage_by_time ( widgets->tr, tp);
       else
-	pc = tp_percentage_by_distance ( widgets->tr, trackpoint, widgets->track_length_inc_gaps );
+	pc = tp_percentage_by_distance ( widgets->tr, tp, widgets->track_length_inc_gaps );
 
       if (!isnan(pc)) {
         double marker_x = (pc * widgets->profile_width) + MARGIN_X;
@@ -742,8 +742,8 @@ void track_profile_move( GtkWidget *event_box, GdkEventMotion *event, PropWidget
     x = widgets->profile_width;
 
   double meters_from_start;
-  VikTrackpoint *trackpoint = vik_track_get_closest_tp_by_percentage_dist ( widgets->tr, (double) x / widgets->profile_width, &meters_from_start );
-  if (trackpoint && widgets->w_cur_dist) {
+  Trackpoint *tp = vik_track_get_closest_tp_by_percentage_dist ( widgets->tr, (double) x / widgets->profile_width, &meters_from_start );
+  if (tp && widgets->w_cur_dist) {
     static char tmp_buf[20];
     vik_units_distance_t dist_units = a_vik_get_units_distance ();
     switch (dist_units) {
@@ -763,16 +763,16 @@ void track_profile_move( GtkWidget *event_box, GdkEventMotion *event, PropWidget
   }
 
   // Show track elevation for this position - to the nearest whole number
-  if (trackpoint && widgets->w_cur_elevation) {
+  if (tp && widgets->w_cur_elevation) {
     static char tmp_buf[20];
     if (a_vik_get_units_height () == VIK_UNITS_HEIGHT_FEET)
-      snprintf(tmp_buf, sizeof(tmp_buf), "%d ft", (int)VIK_METERS_TO_FEET(trackpoint->altitude));
+      snprintf(tmp_buf, sizeof(tmp_buf), "%d ft", (int)VIK_METERS_TO_FEET(tp->altitude));
     else
-      snprintf(tmp_buf, sizeof(tmp_buf), "%d m", (int)trackpoint->altitude);
+      snprintf(tmp_buf, sizeof(tmp_buf), "%d m", (int) tp->altitude);
     gtk_label_set_text(GTK_LABEL(widgets->w_cur_elevation), tmp_buf);
   }
 
-  widgets->blob_tp = trackpoint;
+  widgets->blob_tp = tp;
 
   if ( widgets->altitudes == NULL )
     return;
@@ -825,8 +825,8 @@ void track_gradient_move( GtkWidget *event_box, GdkEventMotion *event, PropWidge
     x = widgets->profile_width;
 
   double meters_from_start;
-  VikTrackpoint *trackpoint = vik_track_get_closest_tp_by_percentage_dist ( widgets->tr, (double) x / widgets->profile_width, &meters_from_start );
-  if (trackpoint && widgets->w_cur_gradient_dist) {
+  Trackpoint * tp = vik_track_get_closest_tp_by_percentage_dist ( widgets->tr, (double) x / widgets->profile_width, &meters_from_start );
+  if (tp && widgets->w_cur_gradient_dist) {
     static char tmp_buf[20];
     vik_units_distance_t dist_units = a_vik_get_units_distance ();
     switch (dist_units) {
@@ -846,16 +846,16 @@ void track_gradient_move( GtkWidget *event_box, GdkEventMotion *event, PropWidge
   }
 
   // Show track gradient for this position - to the nearest whole number
-  if (trackpoint && widgets->w_cur_gradient_gradient) {
+  if (tp && widgets->w_cur_gradient_gradient) {
     static char tmp_buf[20];
-    
+
     double gradient = widgets->gradients[(int) x];
 
     snprintf(tmp_buf, sizeof(tmp_buf), "%d%%", (int)gradient);
     gtk_label_set_text(GTK_LABEL(widgets->w_cur_gradient_gradient), tmp_buf);
   }
 
-  widgets->blob_tp = trackpoint;
+  widgets->blob_tp = tp;
 
   if ( widgets->gradients == NULL )
     return;
@@ -900,13 +900,13 @@ static void time_label_update (GtkWidget *widget, time_t seconds_from_start)
 }
 
 //
-static void real_time_label_update ( PropWidgets *widgets, GtkWidget *widget, VikTrackpoint *trackpoint)
+static void real_time_label_update ( PropWidgets *widgets, GtkWidget *widget, Trackpoint * tp)
 {
   static char tmp_buf[64];
-  if ( trackpoint->has_timestamp ) {
+  if (tp->has_timestamp) {
     // Alternatively could use %c format but I prefer a slightly more compact form here
     //  The full date can of course be seen on the Statistics tab
-    strftime (tmp_buf, sizeof(tmp_buf), "%X %x %Z", localtime(&(trackpoint->timestamp)));
+    strftime (tmp_buf, sizeof(tmp_buf), "%X %x %Z", localtime(&(tp->timestamp)));
   }
   else
     snprintf(tmp_buf, sizeof(tmp_buf), _("No Data"));
@@ -932,13 +932,13 @@ void track_vt_move( GtkWidget *event_box, GdkEventMotion *event, PropWidgets *wi
     x = widgets->profile_width;
 
   time_t seconds_from_start;
-  VikTrackpoint *trackpoint = vik_track_get_closest_tp_by_percentage_time ( widgets->tr, (double) x / widgets->profile_width, &seconds_from_start );
-  if (trackpoint && widgets->w_cur_time) {
+  Trackpoint *tp = vik_track_get_closest_tp_by_percentage_time ( widgets->tr, (double) x / widgets->profile_width, &seconds_from_start );
+  if (tp && widgets->w_cur_time) {
     time_label_update ( widgets->w_cur_time, seconds_from_start );
   }
 
-  if (trackpoint && widgets->w_cur_time_real) {
-    real_time_label_update ( widgets, widgets->w_cur_time_real, trackpoint );
+  if (tp && widgets->w_cur_time_real) {
+    real_time_label_update ( widgets, widgets->w_cur_time_real, tp );
   }
 
   int ix = (int)x;
@@ -947,9 +947,9 @@ void track_vt_move( GtkWidget *event_box, GdkEventMotion *event, PropWidgets *wi
     ix--;
 
   // Show track speed for this position
-  if (trackpoint && widgets->w_cur_speed) {
+  if (tp && widgets->w_cur_speed) {
     static char tmp_buf[20];
-    // Even if GPS speed available (trackpoint->speed), the text will correspond to the speed map shown
+    // Even if GPS speed available (tp->speed), the text will correspond to the speed map shown
     // No conversions needed as already in appropriate units
     vik_units_speed_t speed_units = a_vik_get_units_speed ();
     switch (speed_units) {
@@ -970,7 +970,7 @@ void track_vt_move( GtkWidget *event_box, GdkEventMotion *event, PropWidgets *wi
     gtk_label_set_text(GTK_LABEL(widgets->w_cur_speed), tmp_buf);
   }
 
-  widgets->blob_tp = trackpoint;
+  widgets->blob_tp = tp;
 
   if ( widgets->speeds == NULL )
     return;
@@ -1026,13 +1026,13 @@ void track_dt_move( GtkWidget *event_box, GdkEventMotion *event, PropWidgets *wi
     x = widgets->profile_width;
 
   time_t seconds_from_start;
-  VikTrackpoint *trackpoint = vik_track_get_closest_tp_by_percentage_time ( widgets->tr, (double) x / widgets->profile_width, &seconds_from_start );
-  if (trackpoint && widgets->w_cur_dist_time) {
+  Trackpoint * tp = vik_track_get_closest_tp_by_percentage_time ( widgets->tr, (double) x / widgets->profile_width, &seconds_from_start );
+  if (tp && widgets->w_cur_dist_time) {
     time_label_update ( widgets->w_cur_dist_time, seconds_from_start );
   }
 
-  if (trackpoint && widgets->w_cur_dist_time_real) {
-    real_time_label_update ( widgets, widgets->w_cur_dist_time_real, trackpoint );
+  if (tp && widgets->w_cur_dist_time_real) {
+    real_time_label_update ( widgets, widgets->w_cur_dist_time_real, tp);
   }
 
   int ix = (int)x;
@@ -1040,7 +1040,7 @@ void track_dt_move( GtkWidget *event_box, GdkEventMotion *event, PropWidgets *wi
   if (ix == widgets->profile_width)
     ix--;
 
-  if (trackpoint && widgets->w_cur_dist_dist) {
+  if (tp && widgets->w_cur_dist_dist) {
     static char tmp_buf[20];
     switch ( a_vik_get_units_distance () ) {
     case VIK_UNITS_DISTANCE_MILES:
@@ -1056,7 +1056,7 @@ void track_dt_move( GtkWidget *event_box, GdkEventMotion *event, PropWidgets *wi
     gtk_label_set_text(GTK_LABEL(widgets->w_cur_dist_dist), tmp_buf);
   }
 
-  widgets->blob_tp = trackpoint;
+  widgets->blob_tp = tp;
 
   if ( widgets->distances == NULL )
     return;
@@ -1112,13 +1112,13 @@ void track_et_move( GtkWidget *event_box, GdkEventMotion *event, PropWidgets *wi
     x = widgets->profile_width;
 
   time_t seconds_from_start;
-  VikTrackpoint *trackpoint = vik_track_get_closest_tp_by_percentage_time ( widgets->tr, (double) x / widgets->profile_width, &seconds_from_start );
-  if (trackpoint && widgets->w_cur_elev_time) {
+  Trackpoint * tp = vik_track_get_closest_tp_by_percentage_time ( widgets->tr, (double) x / widgets->profile_width, &seconds_from_start );
+  if (tp && widgets->w_cur_elev_time) {
     time_label_update ( widgets->w_cur_elev_time, seconds_from_start );
   }
 
-  if (trackpoint && widgets->w_cur_elev_time_real) {
-    real_time_label_update ( widgets, widgets->w_cur_elev_time_real, trackpoint );
+  if (tp && widgets->w_cur_elev_time_real) {
+    real_time_label_update ( widgets, widgets->w_cur_elev_time_real, tp);
   }
 
   int ix = (int)x;
@@ -1126,16 +1126,16 @@ void track_et_move( GtkWidget *event_box, GdkEventMotion *event, PropWidgets *wi
   if (ix == widgets->profile_width)
     ix--;
 
-  if (trackpoint && widgets->w_cur_elev_elev) {
+  if (tp && widgets->w_cur_elev_elev) {
     static char tmp_buf[20];
     if (a_vik_get_units_height () == VIK_UNITS_HEIGHT_FEET)
-      snprintf(tmp_buf, sizeof(tmp_buf), "%d ft", (int)VIK_METERS_TO_FEET(trackpoint->altitude));
+      snprintf(tmp_buf, sizeof(tmp_buf), "%d ft", (int)VIK_METERS_TO_FEET(tp->altitude));
     else
-      snprintf(tmp_buf, sizeof(tmp_buf), "%d m", (int)trackpoint->altitude);
+      snprintf(tmp_buf, sizeof(tmp_buf), "%d m", (int) tp->altitude);
     gtk_label_set_text(GTK_LABEL(widgets->w_cur_elev_elev), tmp_buf);
   }
 
-  widgets->blob_tp = trackpoint;
+  widgets->blob_tp = tp;
 
   if ( widgets->ats == NULL )
     return;
@@ -1188,8 +1188,8 @@ void track_sd_move( GtkWidget *event_box, GdkEventMotion *event, PropWidgets *wi
     x = widgets->profile_width;
 
   double meters_from_start;
-  VikTrackpoint *trackpoint = vik_track_get_closest_tp_by_percentage_dist ( widgets->tr, (double) x / widgets->profile_width, &meters_from_start );
-  if (trackpoint && widgets->w_cur_speed_dist) {
+  Trackpoint * tp = vik_track_get_closest_tp_by_percentage_dist ( widgets->tr, (double) x / widgets->profile_width, &meters_from_start );
+  if (tp && widgets->w_cur_speed_dist) {
     static char tmp_buf[20];
     vik_units_distance_t dist_units = a_vik_get_units_distance ();
     switch (dist_units) {
@@ -1219,7 +1219,7 @@ void track_sd_move( GtkWidget *event_box, GdkEventMotion *event, PropWidgets *wi
   // Show track speed for this position
   if (widgets->w_cur_speed_speed) {
     static char tmp_buf[20];
-    // Even if GPS speed available (trackpoint->speed), the text will correspond to the speed map shown
+    // Even if GPS speed available (tp->speed), the text will correspond to the speed map shown
     // No conversions needed as already in appropriate units
     vik_units_speed_t speed_units = a_vik_get_units_speed ();
     switch (speed_units) {
@@ -1240,7 +1240,7 @@ void track_sd_move( GtkWidget *event_box, GdkEventMotion *event, PropWidgets *wi
     gtk_label_set_text(GTK_LABEL(widgets->w_cur_speed_speed), tmp_buf);
   }
 
-  widgets->blob_tp = trackpoint;
+  widgets->blob_tp = tp;
 
   GtkWidget *window = gtk_widget_get_toplevel (event_box);
   GList *child = gtk_container_get_children(GTK_CONTAINER(event_box));
@@ -1302,11 +1302,11 @@ static void draw_dem_alt_speed_dist(VikTrack *tr,
 
   for (iter = tr->trackpoints->next; iter; iter = iter->next) {
     int x;
-    dist += vik_coord_diff ( &(VIK_TRACKPOINT(iter->data)->coord),
-			     &(VIK_TRACKPOINT(iter->prev->data)->coord) );
+    dist += vik_coord_diff ( &(((Trackpoint *) iter->data)->coord),
+			     &(((Trackpoint *) iter->prev->data)->coord) );
     x = (width * dist)/total_length + margin;
     if (do_dem) {
-      int16_t elev = a_dems_get_elev_by_coord(&(VIK_TRACKPOINT(iter->data)->coord), VIK_DEM_INTERPOL_BEST);
+      int16_t elev = a_dems_get_elev_by_coord(&(((Trackpoint *) iter->data)->coord), VIK_DEM_INTERPOL_BEST);
       if ( elev != VIK_DEM_INVALID_ELEVATION ) {
 	// Convert into height units
 	if (a_vik_get_units_height () == VIK_UNITS_HEIGHT_FEET)
@@ -1323,8 +1323,8 @@ static void draw_dem_alt_speed_dist(VikTrack *tr,
     }
     if (do_speed) {
       // This is just a speed indicator - no actual values can be inferred by user
-      if (!isnan(VIK_TRACKPOINT(iter->data)->speed)) {
-        int y_speed = h2 - (height * VIK_TRACKPOINT(iter->data)->speed)/max_speed;
+      if (!isnan(((Trackpoint *) iter->data)->speed)) {
+        int y_speed = h2 - (height * ((Trackpoint *) iter->data)->speed)/max_speed;
         gdk_draw_rectangle(GDK_DRAWABLE(pix), speed_gc, true, x-2, y_speed-2, 4, 4);
       }
     }
@@ -1584,9 +1584,9 @@ static void draw_elevations (GtkWidget *image, VikTrack *tr, PropWidgets *widget
   unsigned int height = MARGIN_Y+widgets->profile_height;
   for ( i = 0; i < widgets->profile_width; i++ )
     if ( widgets->altitudes[i] == VIK_DEFAULT_ALTITUDE )
-      gdk_draw_line ( GDK_DRAWABLE(pix), no_alt_info, 
+      gdk_draw_line ( GDK_DRAWABLE(pix), no_alt_info,
                       i + MARGIN_X, MARGIN_Y, i + MARGIN_X, height );
-    else 
+    else
       gdk_draw_line ( GDK_DRAWABLE(pix), gtk_widget_get_style(window)->dark_gc[3],
                       i + MARGIN_X, height, i + MARGIN_X, height-widgets->profile_height*(widgets->altitudes[i]-mina)/(chunksa[widgets->cia]*LINES) );
 
@@ -1619,7 +1619,7 @@ static void draw_elevations (GtkWidget *image, VikTrack *tr, PropWidgets *widget
 			    MARGIN_X,
 			    gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON(widgets->w_show_dem)),
 			    gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON(widgets->w_show_alt_gps_speed)));
-    
+
     g_object_unref ( G_OBJECT(dem_alt_gc) );
     g_object_unref ( G_OBJECT(gps_speed_gc) );
   }
@@ -1655,13 +1655,13 @@ static void draw_speed_dist(VikTrack *tr,
   double dist = 0;
   for (iter = tr->trackpoints->next; iter; iter = iter->next) {
     int x;
-    dist += vik_coord_diff ( &(VIK_TRACKPOINT(iter->data)->coord),
-			     &(VIK_TRACKPOINT(iter->prev->data)->coord) );
+    dist += vik_coord_diff ( &(((Trackpoint *) iter->data)->coord),
+			     &(((Trackpoint *) iter->prev->data)->coord) );
     x = (width * dist)/total_length + MARGIN_X;
     if (do_speed) {
       // This is just a speed indicator - no actual values can be inferred by user
-      if (!isnan(VIK_TRACKPOINT(iter->data)->speed)) {
-	int y_speed = height - (height * VIK_TRACKPOINT(iter->data)->speed)/max_speed;
+      if (!isnan(((Trackpoint *) iter->data)->speed)) {
+	int y_speed = height - (height * ((Trackpoint *) iter->data)->speed)/max_speed;
 	gdk_draw_rectangle(GDK_DRAWABLE(pix), speed_gc, true, x-2, y_speed-2, 4, 4);
       }
     }
@@ -1735,7 +1735,7 @@ static void draw_gradients (GtkWidget *image, VikTrack *tr, PropWidgets *widgets
 			    widgets->profile_height,
 			    MARGIN_X,
 			    gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON(widgets->w_show_alt_gps_speed)));
-    
+
     g_object_unref ( G_OBJECT(gps_speed_gc) );
   }
 
@@ -1862,12 +1862,12 @@ static void draw_vt ( GtkWidget *image, VikTrack *tr, PropWidgets *widgets)
     gdk_color_parse ( "red", &color );
     gdk_gc_set_rgb_fg_color ( gps_speed_gc, &color);
 
-    time_t beg_time = VIK_TRACKPOINT(tr->trackpoints->data)->timestamp;
-    time_t dur =  VIK_TRACKPOINT(g_list_last(tr->trackpoints)->data)->timestamp - beg_time;
+    time_t beg_time = ((Trackpoint *) tr->trackpoints->data)->timestamp;
+    time_t dur =  ((Trackpoint *) g_list_last(tr->trackpoints)->data)->timestamp - beg_time;
 
     GList *iter;
     for (iter = tr->trackpoints; iter; iter = iter->next) {
-      double gps_speed = VIK_TRACKPOINT(iter->data)->speed;
+      double gps_speed = ((Trackpoint *) iter->data)->speed;
       if (isnan(gps_speed))
         continue;
       switch (speed_units) {
@@ -1885,7 +1885,7 @@ static void draw_vt ( GtkWidget *image, VikTrack *tr, PropWidgets *widgets)
 	// No need to convert as already in m/s
 	break;
       }
-      int x = MARGIN_X + widgets->profile_width * (VIK_TRACKPOINT(iter->data)->timestamp - beg_time) / dur;
+      int x = MARGIN_X + widgets->profile_width * (((Trackpoint *) iter->data)->timestamp - beg_time) / dur;
       int y = height - widgets->profile_height*(gps_speed - mins)/(chunkss[widgets->cis]*LINES);
       gdk_draw_rectangle(GDK_DRAWABLE(pix), gps_speed_gc, true, x-2, y-2, 4, 4);
     }
@@ -1985,7 +1985,7 @@ static void draw_dt ( GtkWidget *image, VikTrack *tr, PropWidgets *widgets )
 
     draw_grid_y ( window, image, widgets, pix, s, i );
   }
-  
+
   draw_time_lines ( window, image, pix, widgets );
 
   /* draw distance */
@@ -2105,7 +2105,7 @@ static void draw_et ( GtkWidget *image, VikTrack *tr, PropWidgets *widgets )
 
     for ( i = 0; i < widgets->profile_width; i++ ) {
       // This could be slow doing this each time...
-      VikTrackpoint *tp = vik_track_get_closest_tp_by_percentage_time ( widgets->tr, ((double)i/(double)widgets->profile_width), NULL );
+      Trackpoint * tp = vik_track_get_closest_tp_by_percentage_time ( widgets->tr, ((double)i/(double)widgets->profile_width), NULL );
       if ( tp ) {
         int16_t elev = a_dems_get_elev_by_coord(&(tp->coord), VIK_DEM_INTERPOL_SIMPLE);
         if ( elev != VIK_DEM_INVALID_ELEVATION ) {
@@ -2205,7 +2205,7 @@ static void draw_sd ( GtkWidget *image, VikTrack *tr, PropWidgets *widgets)
 
   // Assign locally
   mins = widgets->draw_min_speed;
-  
+
   // Reset before redrawing
   clear_images (pix, window, widgets);
 
@@ -2256,7 +2256,7 @@ static void draw_sd ( GtkWidget *image, VikTrack *tr, PropWidgets *widgets)
 
     GList *iter = tr->trackpoints;
     for (iter = iter->next; iter; iter = iter->next) {
-      double gps_speed = VIK_TRACKPOINT(iter->data)->speed;
+      double gps_speed = ((Trackpoint *) iter->data)->speed;
       if (isnan(gps_speed))
         continue;
       switch (speed_units) {
@@ -2274,7 +2274,7 @@ static void draw_sd ( GtkWidget *image, VikTrack *tr, PropWidgets *widgets)
 	// No need to convert as already in m/s
 	break;
       }
-      dist_tp += vik_coord_diff ( &(VIK_TRACKPOINT(iter->data)->coord), &(VIK_TRACKPOINT(iter->prev->data)->coord) );
+      dist_tp += vik_coord_diff ( &(((Trackpoint *) iter->data)->coord), &(((Trackpoint *) iter->prev->data)->coord) );
       int x = MARGIN_X + (widgets->profile_width * dist_tp / dist);
       int y = height - widgets->profile_height*(gps_speed - mins)/(chunkss[widgets->cisd]*LINES);
       gdk_draw_rectangle(GDK_DRAWABLE(pix), gps_speed_gc, true, x-2, y-2, 4, 4);
@@ -2426,7 +2426,7 @@ static void draw_all_graphs ( GtkWidget *widget, PropWidgets *widgets, bool resi
 	if (!isnan(pc_blob)) {
 	  x_blob = (pc_blob * widgets->profile_width);
 	}
-	 
+
 	y_blob = blobby_speed (x_blob, widgets);
       }
 
@@ -2476,7 +2476,7 @@ static void draw_all_graphs ( GtkWidget *widget, PropWidgets *widgets, bool resi
 	if (!isnan(pc_blob)) {
 	  x_blob = (pc_blob * widgets->profile_width);
 	}
-	 
+
 	y_blob = blobby_distance (x_blob, widgets);
       }
 
@@ -2654,7 +2654,7 @@ GtkWidget *vik_trw_layer_create_profile ( GtkWidget *window, PropWidgets *widget
   }
 
   minmax_array(widgets->altitudes, min_alt, max_alt, true, widgets->profile_width);
-  
+
   pix = gdk_pixmap_new( gtk_widget_get_window(window), widgets->profile_width+MARGIN_X, widgets->profile_height+MARGIN_Y, -1 );
   image = gtk_image_new_from_pixmap ( pix, NULL );
 
@@ -2910,7 +2910,7 @@ static void propwin_response_cb( GtkDialog *dialog, int resp, PropWidgets *widge
       {
         /* get new tracks, add them and then the delete old one. old can still exist on clipboard. */
         unsigned int ntracks;
-	
+
         VikTrack **tracks = vik_track_split_into_segments(tr, &ntracks);
         char *new_tr_name;
         unsigned int i;
@@ -2946,7 +2946,7 @@ static void propwin_response_cb( GtkDialog *dialog, int resp, PropWidgets *widge
       {
         GList *iter = tr->trackpoints;
         while ((iter = iter->next)) {
-          if (widgets->marker_tp == VIK_TRACKPOINT(iter->data))
+          if (widgets->marker_tp == ((Trackpoint *) iter->data))
             break;
         }
         if (iter == NULL) {
@@ -3375,7 +3375,7 @@ void vik_trw_layer_propwin_run ( GtkWindow *parent,
 
 #if 0
 #define PACK(w) gtk_box_pack_start (GTK_BOX(right_vbox), w, false, false, 0);
-  gtk_box_pack_start (GTK_BOX(right_vbox), e_cmt, false, false, 0); 
+  gtk_box_pack_start (GTK_BOX(right_vbox), e_cmt, false, false, 0);
   PACK(l_len);
   PACK(l_tps);
   PACK(l_segs);
@@ -3388,11 +3388,11 @@ void vik_trw_layer_propwin_run ( GtkWindow *parent,
 #undef PACK;
 #endif
 
-  if ( tr->trackpoints && VIK_TRACKPOINT(tr->trackpoints->data)->timestamp )
+  if ( tr->trackpoints && ((Trackpoint *) tr->trackpoints->data)->timestamp )
   {
     time_t t1, t2;
-    t1 = VIK_TRACKPOINT(tr->trackpoints->data)->timestamp;
-    t2 = VIK_TRACKPOINT(g_list_last(tr->trackpoints)->data)->timestamp;
+    t1 = ((Trackpoint *) tr->trackpoints->data)->timestamp;
+    t2 = ((Trackpoint *) g_list_last(tr->trackpoints)->data)->timestamp;
 
     VikCoord vc;
     // Notional center of a track is simply an average of the bounding box extremities

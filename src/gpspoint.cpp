@@ -38,13 +38,15 @@
 #include <assert.h>
 /* strtod */
 
+using namespace SlavGPS;
+
 typedef struct {
   FILE *f;
   bool is_route;
 } TP_write_info_type;
 
 static void a_gpspoint_write_track ( const void * id, const VikTrack *t, FILE *f );
-static void a_gpspoint_write_trackpoint ( VikTrackpoint *tp, TP_write_info_type *write_info );
+static void a_gpspoint_write_trackpoint ( Trackpoint * tp, TP_write_info_type *write_info );
 static void a_gpspoint_write_waypoint ( const void * id, const Waypoint * wp, FILE *f );
 
 /* outline for file gpspoint.c
@@ -320,18 +322,18 @@ bool a_gpspoint_read_file(VikTrwLayer *trw, FILE *f, const char *dirpath ) {
     else if ((line_type == GPSPOINT_TYPE_TRACKPOINT || line_type == GPSPOINT_TYPE_ROUTEPOINT) && current_track)
     {
       have_read_something = true;
-      VikTrackpoint *tp = vik_trackpoint_new();
+      Trackpoint * tp = new Trackpoint();
       vik_coord_load_from_latlon ( &(tp->coord), coord_mode, &line_latlon );
       tp->newsegment = line_newsegment;
       tp->has_timestamp = line_has_timestamp;
       tp->timestamp = line_timestamp;
       tp->altitude = line_altitude;
-      vik_trackpoint_set_name ( tp, line_name );
+      tp->set_name(line_name);
       if (line_extended) {
         tp->speed = line_speed;
         tp->course = line_course;
         tp->nsats = line_sat;
-        tp->fix_mode = line_fix;
+        tp->fix_mode = (FixMode) line_fix;
         tp->hdop = line_hdop;
         tp->vdop = line_vdop;
         tp->pdop = line_pdop;
@@ -339,7 +341,7 @@ bool a_gpspoint_read_file(VikTrwLayer *trw, FILE *f, const char *dirpath ) {
       current_track->trackpoints = g_list_append ( current_track->trackpoints, tp );
     }
 
-    if (line_name) 
+    if (line_name)
       free( line_name );
     line_name = NULL;
     if (line_comment)
@@ -587,7 +589,7 @@ static void a_gpspoint_write_waypoint ( const void * id, const Waypoint * wp, FI
   char *tmp_name = slashdup(wp->name);
   fprintf ( f, "type=\"waypoint\" latitude=\"%s\" longitude=\"%s\" name=\"%s\"", s_lat, s_lon, tmp_name );
   free( tmp_name );
-  free( s_lat ); 
+  free( s_lat );
   free( s_lon );
 
   if ( wp->altitude != VIK_DEFAULT_ALTITUDE ) {
@@ -656,7 +658,7 @@ static void a_gpspoint_write_waypoint ( const void * id, const Waypoint * wp, FI
   fprintf ( f, "\n" );
 }
 
-static void a_gpspoint_write_trackpoint ( VikTrackpoint *tp, TP_write_info_type *write_info )
+static void a_gpspoint_write_trackpoint (Trackpoint * tp, TP_write_info_type *write_info )
 {
   static struct LatLon ll;
   char *s_lat, *s_lon;
@@ -669,7 +671,7 @@ static void a_gpspoint_write_trackpoint ( VikTrackpoint *tp, TP_write_info_type 
   s_lat = a_coords_dtostr(ll.lat);
   s_lon = a_coords_dtostr(ll.lon);
   fprintf ( f, "type=\"%spoint\" latitude=\"%s\" longitude=\"%s\"", write_info->is_route ? "route" : "track", s_lat, s_lon );
-  free( s_lat ); 
+  free( s_lat );
   free( s_lon );
 
   if ( tp->name ) {
