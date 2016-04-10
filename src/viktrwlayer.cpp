@@ -413,6 +413,8 @@ static void highest_wp_number_reset(VikTrwLayer *vtl);
 static void highest_wp_number_add_wp(VikTrwLayer *vtl, const char *new_wp_name);
 static void highest_wp_number_remove_wp(VikTrwLayer *vtl, const char *old_wp_name);
 
+static Track * trw_layer_get_track_helper(menu_array_sublayer values, VikTrwLayer * vtl);
+
 // Note for the following tool GtkRadioActionEntry texts:
 //  the very first text value is an internal name not displayed anywhere
 //  the first N_ text value is the name used for menu entries - hence has an underscore for the keyboard accelerator
@@ -3324,7 +3326,7 @@ GHashTable *vik_trw_layer_get_routes_iters ( VikTrwLayer *vtl )
 
 GHashTable *vik_trw_layer_get_waypoints_iters ( VikTrwLayer *vtl )
 {
-  return vtl->waypoints;
+  return vtl->waypoints; /* kamilTODO: waypoints or waypoints_iters? */
 }
 
 bool vik_trw_layer_is_empty ( VikTrwLayer *vtl )
@@ -3542,11 +3544,7 @@ static void trw_layer_export_external_gpx_2 ( menu_array_layer values )
 static void trw_layer_export_gpx_track ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
-  Track * trk;
-  if ( KPOINTER_TO_INT (values[MA_SUBTYPE]) == VIK_TRW_LAYER_SUBLAYER_ROUTE )
-    trk = (Track *) g_hash_table_lookup ( vtl->routes, values[MA_SUBLAYER_ID] );
-  else
-    trk = (Track *) g_hash_table_lookup ( vtl->tracks, values[MA_SUBLAYER_ID] );
+  Track * trk = trw_layer_get_track_helper(values, vtl);
 
   if ( !trk || !trk->name )
     return;
@@ -5183,11 +5181,7 @@ static void trw_layer_properties_item ( menu_array_sublayer values )
   }
   else
   {
-    Track * trk;
-    if ( KPOINTER_TO_INT (values[MA_SUBTYPE]) == VIK_TRW_LAYER_SUBLAYER_TRACK )
-      trk = (Track *) g_hash_table_lookup ( vtl->tracks, values[MA_SUBLAYER_ID] );
-    else
-      trk = (Track *) g_hash_table_lookup ( vtl->routes, values[MA_SUBLAYER_ID] );
+    Track * trk = trw_layer_get_track_helper(values, vtl);
 
     if ( trk && trk->name )
     {
@@ -5211,11 +5205,7 @@ static void trw_layer_properties_item ( menu_array_sublayer values )
 static void trw_layer_track_statistics ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
-  Track * trk;
-  if ( KPOINTER_TO_INT (values[MA_SUBTYPE]) == VIK_TRW_LAYER_SUBLAYER_TRACK )
-    trk = (Track *) g_hash_table_lookup ( vtl->tracks, values[MA_SUBLAYER_ID] );
-  else
-    trk = (Track *) g_hash_table_lookup ( vtl->routes, values[MA_SUBLAYER_ID] );
+  Track * trk = trw_layer_get_track_helper(values, vtl);
 
   if ( trk && trk->name ) {
     vik_trw_layer_propwin_run ( VIK_GTK_WINDOW_FROM_LAYER(vtl),
@@ -5287,11 +5277,7 @@ static void goto_coord ( void * vlp, void * vl, void * vvp, const VikCoord *coor
 static void trw_layer_goto_track_startpoint ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = (VikTrwLayer *)values[MA_VTL];
-  Track * trk;
-  if ( KPOINTER_TO_INT (values[MA_SUBTYPE]) == VIK_TRW_LAYER_SUBLAYER_ROUTE )
-    trk = (Track *) g_hash_table_lookup ( vtl->routes, values[MA_SUBLAYER_ID] );
-  else
-    trk = (Track *) g_hash_table_lookup ( vtl->tracks, values[MA_SUBLAYER_ID] );
+  Track * trk = trw_layer_get_track_helper(values, vtl);
 
   if ( trk && trk->trackpoints )
     goto_coord ( values[MA_VLP], vtl, values[MA_VVP], &(vik_track_get_tp_first(trk)->coord) );
@@ -5300,11 +5286,7 @@ static void trw_layer_goto_track_startpoint ( menu_array_sublayer values )
 static void trw_layer_goto_track_center ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = (VikTrwLayer *)values[MA_VTL];
-  Track * trk;
-  if ( KPOINTER_TO_INT (values[MA_SUBTYPE]) == VIK_TRW_LAYER_SUBLAYER_ROUTE )
-    trk = (Track *) g_hash_table_lookup ( vtl->routes, values[MA_SUBLAYER_ID] );
-  else
-    trk = (Track *) g_hash_table_lookup ( vtl->tracks, values[MA_SUBLAYER_ID] );
+  Track * trk = trw_layer_get_track_helper(values, vtl);
 
   if ( trk && trk->trackpoints )
   {
@@ -5321,11 +5303,7 @@ static void trw_layer_goto_track_center ( menu_array_sublayer values )
 static void trw_layer_convert_track_route ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = (VikTrwLayer *)values[MA_VTL];
-  Track * trk;
-  if ( KPOINTER_TO_INT (values[MA_SUBTYPE]) == VIK_TRW_LAYER_SUBLAYER_ROUTE )
-    trk = (Track *) g_hash_table_lookup ( vtl->routes, values[MA_SUBLAYER_ID] );
-  else
-    trk = (Track *) g_hash_table_lookup ( vtl->tracks, values[MA_SUBLAYER_ID] );
+  Track * trk = trw_layer_get_track_helper(values, vtl);
 
   if ( !trk )
     return;
@@ -5372,11 +5350,7 @@ static void trw_layer_convert_track_route ( menu_array_sublayer values )
 static void trw_layer_anonymize_times ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = (VikTrwLayer *)values[MA_VTL];
-  Track * trk;
-  if ( KPOINTER_TO_INT (values[MA_SUBTYPE]) == VIK_TRW_LAYER_SUBLAYER_ROUTE )
-    trk = (Track *) g_hash_table_lookup ( vtl->routes, values[MA_SUBLAYER_ID] );
-  else
-    trk = (Track *) g_hash_table_lookup ( vtl->tracks, values[MA_SUBLAYER_ID] );
+  Track * trk = trw_layer_get_track_helper(values, vtl);
 
   if (trk)
     vik_track_anonymize_times(trk);
@@ -5385,11 +5359,7 @@ static void trw_layer_anonymize_times ( menu_array_sublayer values )
 static void trw_layer_interpolate_times ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = (VikTrwLayer *)values[MA_VTL];
-  Track * trk;
-  if ( KPOINTER_TO_INT (values[MA_SUBTYPE]) == VIK_TRW_LAYER_SUBLAYER_ROUTE )
-    trk = (Track *) g_hash_table_lookup ( vtl->routes, values[MA_SUBLAYER_ID] );
-  else
-    trk = (Track *) g_hash_table_lookup ( vtl->tracks, values[MA_SUBLAYER_ID] );
+  Track * trk = trw_layer_get_track_helper(values, vtl);
 
   if (trk)
     vik_track_interpolate_times(trk);
@@ -5398,11 +5368,7 @@ static void trw_layer_interpolate_times ( menu_array_sublayer values )
 static void trw_layer_extend_track_end ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
-  Track * trk;
-  if ( KPOINTER_TO_INT (values[MA_SUBTYPE]) == VIK_TRW_LAYER_SUBLAYER_ROUTE )
-    trk = (Track *) g_hash_table_lookup ( vtl->routes, values[MA_SUBLAYER_ID] );
-  else
-    trk = (Track *) g_hash_table_lookup ( vtl->tracks, values[MA_SUBLAYER_ID] );
+  Track * trk = trw_layer_get_track_helper(values, vtl);
 
   if (!trk)
     return;
@@ -5470,11 +5436,7 @@ static void apply_dem_data_common ( VikTrwLayer *vtl, VikLayersPanel *vlp, Track
 static void trw_layer_apply_dem_data_all ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = (VikTrwLayer *)values[MA_VTL];
-  Track * trk;
-  if ( KPOINTER_TO_INT (values[MA_SUBTYPE]) == VIK_TRW_LAYER_SUBLAYER_ROUTE )
-    trk = (Track *) g_hash_table_lookup ( vtl->routes, values[MA_SUBLAYER_ID] );
-  else
-    trk = (Track *) g_hash_table_lookup ( vtl->tracks, values[MA_SUBLAYER_ID] );
+  Track * trk = trw_layer_get_track_helper(values, vtl);
 
   if ( trk )
     apply_dem_data_common ( vtl, (VikLayersPanel *) values[MA_VLP], trk, false );
@@ -5483,11 +5445,7 @@ static void trw_layer_apply_dem_data_all ( menu_array_sublayer values )
 static void trw_layer_apply_dem_data_only_missing ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = (VikTrwLayer *)values[MA_VTL];
-  Track * trk;
-  if ( KPOINTER_TO_INT (values[MA_SUBTYPE]) == VIK_TRW_LAYER_SUBLAYER_ROUTE )
-    trk = (Track *) g_hash_table_lookup ( vtl->routes, values[MA_SUBLAYER_ID] );
-  else
-    trk = (Track *) g_hash_table_lookup ( vtl->tracks, values[MA_SUBLAYER_ID] );
+  Track * trk = trw_layer_get_track_helper(values, vtl);
 
   if (trk)
     apply_dem_data_common ( vtl, (VikLayersPanel *) values[MA_VLP], trk, true );
@@ -5514,11 +5472,7 @@ static void smooth_it ( VikTrwLayer *vtl, Track * trk, bool flat )
 static void trw_layer_missing_elevation_data_interp ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = (VikTrwLayer *)values[MA_VTL];
-  Track * trk;
-  if ( KPOINTER_TO_INT (values[MA_SUBTYPE]) == VIK_TRW_LAYER_SUBLAYER_ROUTE )
-    trk = (Track *) g_hash_table_lookup ( vtl->routes, values[MA_SUBLAYER_ID] );
-  else
-    trk = (Track *) g_hash_table_lookup ( vtl->tracks, values[MA_SUBLAYER_ID] );
+  Track * trk = trw_layer_get_track_helper(values, vtl);
 
   if (!trk)
     return;
@@ -5529,11 +5483,7 @@ static void trw_layer_missing_elevation_data_interp ( menu_array_sublayer values
 static void trw_layer_missing_elevation_data_flat ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = (VikTrwLayer *)values[MA_VTL];
-  Track * trk;
-  if ( KPOINTER_TO_INT (values[MA_SUBTYPE]) == VIK_TRW_LAYER_SUBLAYER_ROUTE )
-    trk = (Track *) g_hash_table_lookup ( vtl->routes, values[MA_SUBLAYER_ID] );
-  else
-    trk = (Track *) g_hash_table_lookup ( vtl->tracks, values[MA_SUBLAYER_ID] );
+  Track * trk = trw_layer_get_track_helper(values, vtl);
 
   if (!trk)
     return;
@@ -5613,11 +5563,7 @@ static void trw_layer_apply_dem_data_wpt_only_missing ( menu_array_sublayer valu
 static void trw_layer_goto_track_endpoint ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = (VikTrwLayer *)values[MA_VTL];
-  Track *trk;
-  if ( KPOINTER_TO_INT (values[MA_SUBTYPE]) == VIK_TRW_LAYER_SUBLAYER_ROUTE )
-    trk = (Track *) g_hash_table_lookup ( vtl->routes, values[MA_SUBLAYER_ID] );
-  else
-    trk = (Track *) g_hash_table_lookup ( vtl->tracks, values[MA_SUBLAYER_ID] );
+  Track * trk = trw_layer_get_track_helper(values, vtl);
 
   if ( !trk )
     return;
@@ -5629,11 +5575,7 @@ static void trw_layer_goto_track_endpoint ( menu_array_sublayer values )
 static void trw_layer_goto_track_max_speed ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = (VikTrwLayer *)values[MA_VTL];
-  Track *trk;
-  if ( KPOINTER_TO_INT (values[MA_SUBTYPE]) == VIK_TRW_LAYER_SUBLAYER_ROUTE )
-    trk = (Track *) g_hash_table_lookup ( vtl->routes, values[MA_SUBLAYER_ID] );
-  else
-    trk = (Track *) g_hash_table_lookup ( vtl->tracks, values[MA_SUBLAYER_ID] );
+  Track * trk = trw_layer_get_track_helper(values, vtl);
 
   if ( !trk )
     return;
@@ -5647,11 +5589,7 @@ static void trw_layer_goto_track_max_speed ( menu_array_sublayer values )
 static void trw_layer_goto_track_max_alt ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = (VikTrwLayer *)values[MA_VTL];
-  Track *trk;
-  if ( KPOINTER_TO_INT (values[MA_SUBTYPE]) == VIK_TRW_LAYER_SUBLAYER_ROUTE )
-    trk = (Track *) g_hash_table_lookup ( vtl->routes, values[MA_SUBLAYER_ID] );
-  else
-    trk = (Track *) g_hash_table_lookup ( vtl->tracks, values[MA_SUBLAYER_ID] );
+  Track * trk = trw_layer_get_track_helper(values, vtl);
 
   if ( !trk )
     return;
@@ -5665,11 +5603,7 @@ static void trw_layer_goto_track_max_alt ( menu_array_sublayer values )
 static void trw_layer_goto_track_min_alt ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = (VikTrwLayer *)values[MA_VTL];
-  Track *trk;
-  if ( KPOINTER_TO_INT (values[MA_SUBTYPE]) == VIK_TRW_LAYER_SUBLAYER_ROUTE )
-    trk = (Track *) g_hash_table_lookup ( vtl->routes, values[MA_SUBLAYER_ID] );
-  else
-    trk = (Track *) g_hash_table_lookup ( vtl->tracks, values[MA_SUBLAYER_ID] );
+  Track * trk = trw_layer_get_track_helper(values, vtl);
 
   if ( !trk )
     return;
@@ -5686,11 +5620,7 @@ static void trw_layer_goto_track_min_alt ( menu_array_sublayer values )
 static void trw_layer_auto_track_view ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
-  Track *trk;
-  if ( KPOINTER_TO_INT (values[MA_SUBTYPE]) == VIK_TRW_LAYER_SUBLAYER_ROUTE )
-    trk = (Track *) g_hash_table_lookup ( vtl->routes, values[MA_SUBLAYER_ID] );
-  else
-    trk = (Track *) g_hash_table_lookup ( vtl->tracks, values[MA_SUBLAYER_ID] );
+  Track * trk = trw_layer_get_track_helper(values, vtl);
 
   if ( trk && trk->trackpoints )
   {
@@ -5712,11 +5642,7 @@ static void trw_layer_route_refine ( menu_array_sublayer values )
 {
   static int last_engine = 0;
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
-  Track *trk;
-  if ( KPOINTER_TO_INT (values[MA_SUBTYPE]) == VIK_TRW_LAYER_SUBLAYER_ROUTE )
-    trk = (Track *) g_hash_table_lookup ( vtl->routes, values[MA_SUBLAYER_ID] );
-  else
-    trk = (Track *) g_hash_table_lookup ( vtl->tracks, values[MA_SUBLAYER_ID] );
+  Track * trk = trw_layer_get_track_helper(values, vtl);
 
   if ( trk && trk->trackpoints )
   {
@@ -6443,11 +6369,7 @@ static void trw_layer_split_by_timestamp ( menu_array_sublayer values )
 static void trw_layer_split_by_n_points ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = (VikTrwLayer *)values[MA_VTL];
-  Track *trk;
-  if ( KPOINTER_TO_INT (values[MA_SUBTYPE]) == VIK_TRW_LAYER_SUBLAYER_ROUTE )
-    trk = (Track *) g_hash_table_lookup ( vtl->routes, values[MA_SUBLAYER_ID] );
-  else
-    trk = (Track *) g_hash_table_lookup ( vtl->tracks, values[MA_SUBLAYER_ID] );
+  Track * trk = trw_layer_get_track_helper(values, vtl);
 
   if ( !trk )
     return;
@@ -6606,11 +6528,7 @@ static void trw_layer_trackpoint_selected_delete ( VikTrwLayer *vtl, Track *trk 
 static void trw_layer_delete_point_selected ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = (VikTrwLayer *)values[MA_VTL];
-  Track *trk;
-  if ( KPOINTER_TO_INT (values[MA_SUBTYPE]) == VIK_TRW_LAYER_SUBLAYER_ROUTE )
-    trk = (Track *) g_hash_table_lookup ( vtl->routes, values[MA_SUBLAYER_ID] );
-  else
-    trk = (Track *) g_hash_table_lookup ( vtl->tracks, values[MA_SUBLAYER_ID] );
+  Track * trk = trw_layer_get_track_helper(values, vtl);
 
   if ( !trk )
     return;
@@ -6633,11 +6551,7 @@ static void trw_layer_delete_point_selected ( menu_array_sublayer values )
 static void trw_layer_delete_points_same_position ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = (VikTrwLayer *)values[MA_VTL];
-  Track *trk;
-  if ( KPOINTER_TO_INT (values[MA_SUBTYPE]) == VIK_TRW_LAYER_SUBLAYER_ROUTE )
-    trk = (Track *) g_hash_table_lookup ( vtl->routes, values[MA_SUBLAYER_ID] );
-  else
-    trk = (Track *) g_hash_table_lookup ( vtl->tracks, values[MA_SUBLAYER_ID] );
+  Track * trk = trw_layer_get_track_helper(values, vtl);
 
   if ( !trk )
     return;
@@ -6663,11 +6577,7 @@ static void trw_layer_delete_points_same_position ( menu_array_sublayer values )
 static void trw_layer_delete_points_same_time ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = (VikTrwLayer *)values[MA_VTL];
-  Track *trk;
-  if ( KPOINTER_TO_INT (values[MA_SUBTYPE]) == VIK_TRW_LAYER_SUBLAYER_ROUTE )
-    trk = (Track *) g_hash_table_lookup ( vtl->routes, values[MA_SUBLAYER_ID] );
-  else
-    trk = (Track *) g_hash_table_lookup ( vtl->tracks, values[MA_SUBLAYER_ID] );
+  Track * trk = trw_layer_get_track_helper(values, vtl);
 
   if ( !trk )
     return;
@@ -6692,11 +6602,7 @@ static void trw_layer_delete_points_same_time ( menu_array_sublayer values )
 static void trw_layer_insert_point_after ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = (VikTrwLayer *)values[MA_VTL];
-  Track *trk;
-  if ( KPOINTER_TO_INT (values[MA_SUBTYPE]) == VIK_TRW_LAYER_SUBLAYER_ROUTE )
-    trk = (Track *) g_hash_table_lookup ( vtl->routes, values[MA_SUBLAYER_ID] );
-  else
-    trk = (Track *) g_hash_table_lookup ( vtl->tracks, values[MA_SUBLAYER_ID] );
+  Track * trk = trw_layer_get_track_helper(values, vtl);
 
   if (!trk)
     return;
@@ -6709,11 +6615,7 @@ static void trw_layer_insert_point_after ( menu_array_sublayer values )
 static void trw_layer_insert_point_before ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = (VikTrwLayer *)values[MA_VTL];
-  Track *trk;
-  if ( KPOINTER_TO_INT (values[MA_SUBTYPE]) == VIK_TRW_LAYER_SUBLAYER_ROUTE )
-    trk = (Track *) g_hash_table_lookup ( vtl->routes, values[MA_SUBLAYER_ID] );
-  else
-    trk = (Track *) g_hash_table_lookup ( vtl->tracks, values[MA_SUBLAYER_ID] );
+  Track * trk = trw_layer_get_track_helper(values, vtl);
 
   if (!trk)
     return;
@@ -6729,11 +6631,7 @@ static void trw_layer_insert_point_before ( menu_array_sublayer values )
 static void trw_layer_reverse ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = (VikTrwLayer *)values[MA_VTL];
-  Track *trk;
-  if ( KPOINTER_TO_INT (values[MA_SUBTYPE]) == VIK_TRW_LAYER_SUBLAYER_ROUTE )
-    trk = (Track *) g_hash_table_lookup ( vtl->routes, values[MA_SUBLAYER_ID] );
-  else
-    trk = (Track *) g_hash_table_lookup ( vtl->tracks, values[MA_SUBLAYER_ID] );
+  Track * trk = trw_layer_get_track_helper(values, vtl);
 
   if (!trk)
     return;
@@ -11049,11 +10947,8 @@ static void trw_layer_download_map_along_track_cb ( menu_array_sublayer values )
 
   VikTrwLayer *vtl = (VikTrwLayer *) values[MA_VTL];
   VikLayersPanel *vlp = (VikLayersPanel *) values[MA_VLP];
-  Track *trk;
-  if ( KPOINTER_TO_INT (values[MA_SUBTYPE]) == VIK_TRW_LAYER_SUBLAYER_ROUTE )
-    trk = (Track *) g_hash_table_lookup ( vtl->routes, values[MA_SUBLAYER_ID] );
-  else
-    trk = (Track *) g_hash_table_lookup ( vtl->tracks, values[MA_SUBLAYER_ID] );
+  Track * trk = trw_layer_get_track_helper(values, vtl);
+
   if ( !trk )
     return;
 
@@ -11206,4 +11101,17 @@ static void trw_layer_waypoint_list_dialog ( menu_array_layer values )
   char *title = g_strdup_printf ( _("%s: Waypoint List"), VIK_LAYER(vtl)->name );
   vik_trw_layer_waypoint_list_show_dialog ( title, VIK_LAYER(vtl), NULL, trw_layer_create_waypoint_list, false );
   free( title );
+}
+
+
+
+
+
+Track * trw_layer_get_track_helper(menu_array_sublayer values, VikTrwLayer * vtl)
+{
+	if (KPOINTER_TO_INT (values[MA_SUBTYPE]) == VIK_TRW_LAYER_SUBLAYER_ROUTE) {
+		return (Track *) g_hash_table_lookup(vtl->routes, values[MA_SUBLAYER_ID]);
+	} else {
+		return (Track *) g_hash_table_lookup(vtl->tracks, values[MA_SUBLAYER_ID]);
+	}
 }
