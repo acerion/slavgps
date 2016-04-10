@@ -106,7 +106,7 @@ typedef struct {
   int total_count;
   int count;
   VikTrwLayer *vtl;
-  VikTrack *track;
+  Track * trk;
   char *babelargs;
   char *window_title;
   GtkWidget *dialog;
@@ -339,7 +339,7 @@ struct _VikGpsLayer {
   GpsFix realtime_fix;
   GpsFix last_fix;
 
-  VikTrack *realtime_track;
+  Track * realtime_track;
 
   GIOChannel *realtime_io_channel;
   unsigned int realtime_io_watch_id;
@@ -1189,7 +1189,7 @@ static void gps_comm_thread(GpsSession *sess)
     result = a_babel_convert_from (sess->vtl, &po, (BabelStatusFunc) gps_download_progress_func, sess, NULL);
   }
   else {
-    result = a_babel_convert_to (sess->vtl, sess->track, sess->babelargs, sess->port,
+    result = a_babel_convert_to (sess->vtl, sess->trk, sess->babelargs, sess->port,
         (BabelStatusFunc) gps_upload_progress_func, sess);
   }
 
@@ -1250,7 +1250,7 @@ static void gps_comm_thread(GpsSession *sess)
  * Talk to a GPS Device using a thread which updates a dialog with the progress
  */
 int vik_gps_comm ( VikTrwLayer *vtl,
-                    VikTrack *track,
+                    Track * trk,
                     vik_gps_dir dir,
                     char *protocol,
                     char *port,
@@ -1270,7 +1270,7 @@ int vik_gps_comm ( VikTrwLayer *vtl,
   sess->mutex = vik_mutex_new();
   sess->direction = dir;
   sess->vtl = vtl;
-  sess->track = track;
+  sess->trk = trk;
   sess->port = g_strdup(port);
   sess->ok = true;
   sess->window_title = (dir == GPS_DOWN) ? _("GPS Download") : _("GPS Upload");

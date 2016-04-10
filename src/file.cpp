@@ -299,7 +299,7 @@ static bool file_read ( VikAggregateLayer *top, FILE *f, const char *dirpath, Vi
 
     if ( line[0] == '#' )
       continue;
-    
+
 
     len = strlen(line);
     if ( len > 0 && line[len-1] == '\n' )
@@ -494,7 +494,7 @@ static bool file_read ( VikAggregateLayer *top, FILE *f, const char *dirpath, Vi
             VikLayerParamData x;
             line += eq_pos+1;
             if ( params[i].type == VIK_LAYER_PARAM_STRING_LIST ) {
-		    GList *l = g_list_append ( (GList *) g_hash_table_lookup ( string_lists, KINT_TO_POINTER ((int) i) ), 
+		    GList *l = g_list_append ( (GList *) g_hash_table_lookup ( string_lists, KINT_TO_POINTER ((int) i) ),
 					 g_strdup(line) );
               g_hash_table_replace ( string_lists, KINT_TO_POINTER ((int)i), l );
               /* add the value to a list, possibly making a new list.
@@ -553,7 +553,7 @@ name=this
     vik_viewport_set_center_latlon ( VIK_VIEWPORT(vp), &ll, true );
 
   if ( ( ! VIK_LAYER(top)->visible ) && VIK_LAYER(top)->realized )
-    vik_treeview_item_set_visible ( VIK_LAYER(top)->vt, &(VIK_LAYER(top)->iter), false ); 
+    vik_treeview_item_set_visible ( VIK_LAYER(top)->vt, &(VIK_LAYER(top)->iter), false );
 
   /* delete anything we've forgotten about -- should only happen when file ends before an EndLayer */
   g_hash_table_foreach ( string_lists, string_list_delete, NULL );
@@ -769,7 +769,7 @@ bool a_file_save ( VikAggregateLayer *top, void * vp, const char *filename )
 }
 
 
-/* example: 
+/* example:
      bool is_gpx = a_file_check_ext ( "a/b/c.gpx", ".gpx" );
 */
 bool a_file_check_ext ( const char *filename, const char *fileext )
@@ -798,7 +798,7 @@ bool a_file_check_ext ( const char *filename, const char *fileext )
  * A general export command to convert from Viking TRW layer data to an external supported format.
  * The write_hidden option is provided mainly to be able to transfer selected items when uploading to a GPS
  */
-bool a_file_export ( VikTrwLayer *vtl, const char *filename, VikFileType_t file_type, VikTrack *trk, bool write_hidden )
+bool a_file_export ( VikTrwLayer *vtl, const char *filename, VikFileType_t file_type, Track * trk, bool write_hidden )
 {
   GpxWritingOptions options = { false, false, write_hidden, false };
   FILE *f = g_fopen ( filename, "w" );

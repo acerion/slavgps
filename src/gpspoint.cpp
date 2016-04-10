@@ -45,7 +45,7 @@ typedef struct {
   bool is_route;
 } TP_write_info_type;
 
-static void a_gpspoint_write_track ( const void * id, const VikTrack *t, FILE *f );
+static void a_gpspoint_write_track ( const void * id, const Track * trk, FILE *f );
 static void a_gpspoint_write_trackpoint ( Trackpoint * tp, TP_write_info_type *write_info );
 static void a_gpspoint_write_waypoint ( const void * id, const Waypoint * wp, FILE *f );
 
@@ -72,7 +72,7 @@ static char line_buffer[VIKING_LINE_SIZE];
 #define GPSPOINT_TYPE_TRACK 4
 #define GPSPOINT_TYPE_ROUTE 5
 
-static VikTrack *current_track; /* pointer to pointer to first GList */
+static Track * current_track; /* pointer to pointer to first GList */
 
 static int line_type = GPSPOINT_TYPE_NONE;
 static struct LatLon line_latlon;
@@ -281,43 +281,43 @@ bool a_gpspoint_read_file(VikTrwLayer *trw, FILE *f, const char *dirpath ) {
     else if ((line_type == GPSPOINT_TYPE_TRACK || line_type == GPSPOINT_TYPE_ROUTE) && line_name)
     {
       have_read_something = true;
-      VikTrack *pl = vik_track_new();
+      Track *trk = vik_track_new();
       // NB don't set defaults here as all properties are stored in the GPS_POINT format
       //vik_track_set_defaults ( pl );
 
       /* Thanks to Peter Jones for this Fix */
       if (!line_name) line_name = g_strdup("UNK");
 
-      pl->visible = line_visible;
-      pl->is_route = (line_type == GPSPOINT_TYPE_ROUTE);
+      trk->visible = line_visible;
+      trk->is_route = (line_type == GPSPOINT_TYPE_ROUTE);
 
       if ( line_comment )
-        vik_track_set_comment ( pl, line_comment );
+        vik_track_set_comment (trk, line_comment );
 
       if ( line_description )
-        vik_track_set_description ( pl, line_description );
+        vik_track_set_description (trk, line_description );
 
       if ( line_source )
-        vik_track_set_source ( pl, line_source );
+        vik_track_set_source (trk, line_source );
 
       if ( line_xtype )
-        vik_track_set_type ( pl, line_xtype );
+        vik_track_set_type (trk, line_xtype );
 
       if ( line_color )
       {
-        if ( gdk_color_parse ( line_color, &(pl->color) ) )
-        pl->has_color = true;
+        if ( gdk_color_parse ( line_color, &(trk->color) ) )
+        trk->has_color = true;
       }
 
-      pl->draw_name_mode = (VikTrackDrawnameType) line_name_label;
-      pl->max_number_dist_labels = line_dist_label;
+      trk->draw_name_mode = (VikTrackDrawnameType) line_name_label;
+      trk->max_number_dist_labels = line_dist_label;
 
-      pl->trackpoints = NULL;
-      vik_trw_layer_filein_add_track ( trw, line_name, pl );
+      trk->trackpoints = NULL;
+      vik_trw_layer_filein_add_track ( trw, line_name, trk);
       free( line_name );
       line_name = NULL;
 
-      current_track = pl;
+      current_track = trk;
     }
     else if ((line_type == GPSPOINT_TYPE_TRACKPOINT || line_type == GPSPOINT_TYPE_ROUTEPOINT) && current_track)
     {
@@ -727,7 +727,7 @@ static void a_gpspoint_write_trackpoint (Trackpoint * tp, TP_write_info_type *wr
 }
 
 
-static void a_gpspoint_write_track ( const void * id, const VikTrack *trk, FILE *f )
+static void a_gpspoint_write_track ( const void * id, const Track * trk, FILE *f )
 {
   // Sanity clauses
   if ( !trk )

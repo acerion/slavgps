@@ -222,7 +222,7 @@ struct _VikWindow {
   /* Only one of these items can be selected at the same time */
   void * selected_vtl; /* notionally VikTrwLayer */
   GHashTable *selected_tracks;
-  void * selected_track; /* notionally VikTrack */
+  void * selected_track; /* notionally Track */
   GHashTable *selected_waypoints;
   void * selected_waypoint; /* notionally Waypoint */
   /* only use for individual track or waypoint */
@@ -771,7 +771,7 @@ static void vik_window_init ( VikWindow *vw )
   vw->only_updating_coord_mode_ui = false;
 
   vw->select_move = false;
-  vw->pan_move = false; 
+  vw->pan_move = false;
   vw->pan_x = vw->pan_y = -1;
   vw->single_click_pending = false;
 
@@ -1137,7 +1137,7 @@ static void draw_status ( VikWindow *vw )
 
   vik_statusbar_set_message ( vw->viking_vs, VIK_STATUSBAR_ZOOM, zoom_level );
 
-  draw_status_tool ( vw );  
+  draw_status_tool ( vw );
 }
 
 void vik_window_set_redraw_trigger(VikLayer *vl)
@@ -1186,7 +1186,7 @@ static void draw_redraw ( VikWindow *vw )
         vik_trw_layer_draw_highlight_items ( (VikTrwLayer *) vw->containing_vtl, vw->selected_tracks, vw->selected_waypoints, vw->viking_vvp );
     }
     else if ( vw->containing_vtl && (vw->selected_track || vw->selected_waypoint) ) {
-        vik_trw_layer_draw_highlight_item ( (VikTrwLayer *) vw->containing_vtl, (VikTrack *) vw->selected_track, (Waypoint *) vw->selected_waypoint, vw->viking_vvp );
+        vik_trw_layer_draw_highlight_item ( (VikTrwLayer *) vw->containing_vtl, (Track *) vw->selected_track, (Waypoint *) vw->selected_waypoint, vw->viking_vvp );
     }
     else if ( vw->selected_vtl ) {
       vik_trw_layer_draw_highlight ( (VikTrwLayer *) vw->selected_vtl, vw->viking_vvp );
@@ -1230,14 +1230,14 @@ static void draw_click (VikWindow *vw, GdkEventButton *event)
   gtk_widget_grab_focus ( GTK_WIDGET(vw->viking_vvp) );
 
   /* middle button pressed.  we reserve all middle button and scroll events
-   * for panning and zooming; tools only get left/right/movement 
+   * for panning and zooming; tools only get left/right/movement
    */
   if ( event->button == 2) {
     if ( vw->vt->tools[vw->vt->active_tool].ti.pan_handler )
       // Tool still may need to do something (such as disable something)
       toolbox_click(vw->vt, event);
     vik_window_pan_click ( vw, event );
-  } 
+  }
   else {
     toolbox_click(vw->vt, event);
   }
@@ -1459,9 +1459,9 @@ static void draw_ruler(VikViewport *vvp, GdkDrawable *d, GdkGC *gc, int x1, int 
   char str[128];
   GdkGC *labgc = vik_viewport_new_gc ( vvp, "#cccccc", 1);
   GdkGC *thickgc = gdk_gc_new(d);
-  
+
   double len = sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2));
-  double dx = (x2-x1)/len*10; 
+  double dx = (x2-x1)/len*10;
   double dy = (y2-y1)/len*10;
   double c = cos(DEG2RAD(15.0));
   double s = sin(DEG2RAD(15.0));
@@ -1528,7 +1528,7 @@ static void draw_ruler(VikViewport *vvp, GdkDrawable *d, GdkGC *gc, int x1, int 
 #define LABEL(x, y, w, h) { \
     gdk_draw_rectangle(d, labgc, true, (x)-2, (y)-1, (w)+4, (h)+1); \
     gdk_draw_rectangle(d, gc, false, (x)-2, (y)-1, (w)+4, (h)+1); \
-    gdk_draw_layout(d, gc, (x), (y), pl); } 
+    gdk_draw_layout(d, gc, (x), (y), pl); }
   {
     int wd, hd, xd, yd;
     int wb, hb, xb, yb;
@@ -1624,7 +1624,7 @@ typedef struct {
   VikCoord oldcoord;
 } ruler_tool_state_t;
 
-static void * ruler_create (VikWindow *vw, VikViewport *vvp) 
+static void * ruler_create (VikWindow *vw, VikViewport *vvp)
 {
   ruler_tool_state_t *s = (ruler_tool_state_t *) malloc(1 * sizeof (ruler_tool_state_t));
   s->vw = vw;
@@ -1697,7 +1697,7 @@ static VikLayerToolFuncStatus ruler_move (VikLayer *vl, GdkEventMotion *event, r
     int oldx, oldy, w1, h1, w2, h2;
     static GdkPixmap *buf = NULL;
     char *lat=NULL, *lon=NULL;
-    w1 = vik_viewport_get_width(vvp); 
+    w1 = vik_viewport_get_width(vvp);
     h1 = vik_viewport_get_height(vvp);
     if (!buf) {
       buf = gdk_pixmap_new ( gtk_widget_get_window(GTK_WIDGET(vvp)), w1, h1, -1 );
@@ -1772,9 +1772,9 @@ static VikToolInterface ruler_tool =
     (VikToolConstructorFunc) ruler_create,
     (VikToolDestructorFunc) ruler_destroy,
     (VikToolActivationFunc) NULL,
-    (VikToolActivationFunc) ruler_deactivate, 
-    (VikToolMouseFunc) ruler_click, 
-    (VikToolMouseMoveFunc) ruler_move, 
+    (VikToolActivationFunc) ruler_deactivate,
+    (VikToolMouseFunc) ruler_click,
+    (VikToolMouseMoveFunc) ruler_move,
     (VikToolMouseFunc) ruler_release,
     (VikToolKeyFunc) ruler_key_press,
     false,
@@ -2040,13 +2040,13 @@ static VikLayerToolFuncStatus zoomtool_release (VikLayer *vl, GdkEventButton *ev
   return VIK_LAYER_TOOL_ACK;
 }
 
-static VikToolInterface zoom_tool = 
+static VikToolInterface zoom_tool =
   { { "Zoom", "vik-icon-zoom", N_("_Zoom"), "<control><shift>Z", N_("Zoom Tool"), 1 },
     (VikToolConstructorFunc) zoomtool_create,
     (VikToolDestructorFunc) zoomtool_destroy,
     (VikToolActivationFunc) NULL,
     (VikToolActivationFunc) NULL,
-    (VikToolMouseFunc) zoomtool_click, 
+    (VikToolMouseFunc) zoomtool_click,
     (VikToolMouseMoveFunc) zoomtool_move,
     (VikToolMouseFunc) zoomtool_release,
     NULL,
@@ -2105,13 +2105,13 @@ static VikLayerToolFuncStatus pantool_release (VikLayer *vl, GdkEventButton *eve
   return VIK_LAYER_TOOL_ACK;
 }
 
-static VikToolInterface pan_tool = 
+static VikToolInterface pan_tool =
   { { "Pan", "vik-icon-pan", N_("_Pan"), "<control><shift>P", N_("Pan Tool"), 0 },
     (VikToolConstructorFunc) pantool_create,
     (VikToolDestructorFunc) NULL,
     (VikToolActivationFunc) NULL,
     (VikToolActivationFunc) NULL,
-    (VikToolMouseFunc) pantool_click, 
+    (VikToolMouseFunc) pantool_click,
     (VikToolMouseMoveFunc) pantool_move,
     (VikToolMouseFunc) pantool_release,
     NULL,
@@ -2195,7 +2195,7 @@ static VikLayerToolFuncStatus selecttool_click (VikLayer *vl, GdkEventButton *ev
           int type = vik_treeview_item_get_type ( vtv, &iter );
           if ( type == VIK_TREEVIEW_TYPE_SUBLAYER ||
             VIK_LAYER(vik_treeview_item_get_pointer ( vtv, &iter ))->type == VIK_LAYER_TRW ) {
-   
+
             vik_treeview_item_unselect ( vtv, &iter );
             if ( vik_window_clear_highlight ( t->vw ) )
               draw_update ( t->vw );
@@ -2299,7 +2299,7 @@ static void draw_zoom_cb ( GtkAction *a, VikWindow *vw )
 
   if (!strcmp(gtk_action_get_name(a), "ZoomIn")) {
     what = -3;
-  } 
+  }
   else if (!strcmp(gtk_action_get_name(a), "ZoomOut")) {
     what = -4;
   }
@@ -2758,7 +2758,7 @@ static void toolbox_add_tool(toolbox_tools_t *vt, VikToolInterface *vti, int lay
   vt->tools[vt->n_tools].layer_type = layer_type;
   if (vti->create) {
     vt->tools[vt->n_tools].state = vti->create(vt->vw, vt->vw->viking_vvp);
-  } 
+  }
   else {
     vt->tools[vt->n_tools].state = NULL;
   }
@@ -2887,10 +2887,10 @@ static void menu_cb ( GtkAction *old, GtkAction *a, VikWindow *vw )
 
   if (!g_strcmp0(name, "Pan")) {
     vw->current_tool = TOOL_PAN;
-  } 
+  }
   else if (!g_strcmp0(name, "Zoom")) {
     vw->current_tool = TOOL_ZOOM;
-  } 
+  }
   else if (!g_strcmp0(name, "Ruler")) {
     vw->current_tool = TOOL_RULER;
   }
@@ -3178,10 +3178,10 @@ static void load_file ( GtkAction *a, VikWindow *vw )
   bool newwindow;
   if (!strcmp(gtk_action_get_name(a), "Open")) {
     newwindow = true;
-  } 
+  }
   else if (!strcmp(gtk_action_get_name(a), "Append")) {
     newwindow = false;
-  } 
+  }
   else {
     fprintf(stderr, "CRITICAL: Houston, we've had a problem.\n");
     return;
@@ -3425,7 +3425,7 @@ static bool export_to ( VikWindow *vw, GList *gl, VikFileType_t vft, const char 
           gtk_main_iteration ();
         free( message );
       }
-      
+
       success = success && this_success;
     }
 
@@ -3835,7 +3835,7 @@ static void save_image_file ( VikWindow *vw, const char *fn, unsigned int w, uns
     vik_statusbar_set_message ( vw->viking_vs, VIK_STATUSBAR_INFO, "" );
     gtk_dialog_add_button ( GTK_DIALOG(msgbox), GTK_STOCK_OK, GTK_RESPONSE_OK );
     gtk_dialog_run ( GTK_DIALOG(msgbox) ); // Don't care about the result
-    
+
     /* pretend like nothing happened ;) */
     vik_viewport_set_xmpp ( vw->viking_vvp, old_xmpp );
     vik_viewport_set_ympp ( vw->viking_vvp, old_ympp );
@@ -4229,7 +4229,7 @@ static void draw_to_image_file ( VikWindow *vw, img_generation_t img_gen )
     double zoom = pow (2, active_z-2 );
 
     if ( img_gen == VW_GEN_SINGLE_IMAGE )
-      save_image_file ( vw, fn, 
+      save_image_file ( vw, fn,
                       vw->draw_image_width = gtk_spin_button_get_value_as_int ( GTK_SPIN_BUTTON(width_spin) ),
                       vw->draw_image_height = gtk_spin_button_get_value_as_int ( GTK_SPIN_BUTTON(height_spin) ),
                       zoom,
@@ -4589,10 +4589,10 @@ static void window_create_ui( VikWindow *window )
   GError *error;
   unsigned int i, j, mid;
   GtkIconFactory *icon_factory;
-  GtkIconSet *icon_set; 
+  GtkIconSet *icon_set;
   GtkRadioActionEntry *tools = NULL, *radio;
   unsigned int ntools;
-  
+
   uim = gtk_ui_manager_new ();
   window->uim = uim;
 
@@ -4664,7 +4664,7 @@ static void window_create_ui( VikWindow *window )
   }
 
   icon_factory = gtk_icon_factory_new ();
-  gtk_icon_factory_add_default (icon_factory); 
+  gtk_icon_factory_add_default (icon_factory);
 
   register_vik_icons(icon_factory);
 
@@ -4681,7 +4681,7 @@ static void window_create_ui( VikWindow *window )
 
   for (i=0; i<VIK_LAYER_NUM_TYPES; i++) {
     GtkActionEntry action;
-    gtk_ui_manager_add_ui(uim, mid,  "/ui/MainMenu/Layers/", 
+    gtk_ui_manager_add_ui(uim, mid,  "/ui/MainMenu/Layers/",
 			  vik_layer_get_interface((VikLayerTypeEnum) i)->name,
 			  vik_layer_get_interface((VikLayerTypeEnum) i)->name,
 			  GTK_UI_MANAGER_MENUITEM, false);
@@ -4709,8 +4709,8 @@ static void window_create_ui( VikWindow *window )
       tools = g_renew(GtkRadioActionEntry, tools, ntools+1);
       radio = &tools[ntools];
       ntools++;
-      
-      gtk_ui_manager_add_ui(uim, mid,  "/ui/MainMenu/Tools", 
+
+      gtk_ui_manager_add_ui(uim, mid,  "/ui/MainMenu/Tools",
 			    vik_layer_get_interface((VikLayerTypeEnum) i)->tools[j].radioActionEntry.label,
 			    vik_layer_get_interface((VikLayerTypeEnum) i)->tools[j].radioActionEntry.name,
 			    GTK_UI_MANAGER_MENUITEM, false);
@@ -4766,14 +4766,14 @@ static void window_create_ui( VikWindow *window )
   accel_group = gtk_ui_manager_get_accel_group (uim);
   gtk_window_add_accel_group (GTK_WINDOW (window), accel_group);
   gtk_ui_manager_ensure_update (uim);
-  
+
   setup_recent_files(window);
 }
 
 
 // TODO - add method to add tool icons defined from outside this file
 //  and remove the reverse dependency on icon definition from this file
-static struct { 
+static struct {
   const GdkPixdata *data;
   char *stock_id;
 } stock_icons[] = {
@@ -4793,13 +4793,13 @@ static struct {
   { &geomove_18_pixbuf,		"vik-icon-Georef Move Map"  },
   { &mapdl_18_pixbuf,		"vik-icon-Maps Download"    },
 };
- 
+
 static int n_stock_icons = G_N_ELEMENTS (stock_icons);
 
 static void
 register_vik_icons (GtkIconFactory *icon_factory)
 {
-  GtkIconSet *icon_set; 
+  GtkIconSet *icon_set;
   int i;
 
   for (i = 0; i < n_stock_icons; i++) {

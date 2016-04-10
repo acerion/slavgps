@@ -40,7 +40,7 @@ static unsigned int print_rgn_stuff ( const char *nm, FILE *f )
   name = g_strdup( nm );
 
   len = strlen(name);
-  
+
 
 
   /* --------------------------------------------- */
@@ -125,14 +125,14 @@ static void write_trackpoint ( Trackpoint * tp, FILE *f )
   free( s_lon );
 }
 
-static void write_track ( const char *name, VikTrack *t, FILE *f )
+static void write_track ( const char *name, Track * trk, FILE *f )
 {
-  unsigned int len = print_rgn_stuff ( t->comment, f );
+  unsigned int len = print_rgn_stuff ( trk->comment, f );
   if ( len )
   {
     fprintf ( f, "Data0=" );
-    g_list_foreach ( t->trackpoints, (GFunc) write_trackpoint, f );
-    fprintf ( f, "\n[END-%.5s]\n\n", t->comment+len+1 );
+    g_list_foreach ( trk->trackpoints, (GFunc) write_trackpoint, f );
+    fprintf ( f, "\n[END-%.5s]\n\n", trk->comment+len+1 );
   }
 }
 

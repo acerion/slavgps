@@ -203,7 +203,7 @@ GString *c_cdata = NULL;
 /* current ("c_") objects */
 Trackpoint * c_tp = NULL;
 Waypoint * c_wp = NULL;
-VikTrack *c_tr = NULL;
+Track * c_tr = NULL;
 VikTRWMetadata *c_md = NULL;
 
 char *c_wp_name = NULL;
@@ -1013,10 +1013,10 @@ static void gpx_write_trackpoint(Trackpoint * tp, GpxWritingContext *context )
 }
 
 
-static void gpx_write_track ( VikTrack *t, GpxWritingContext *context )
+static void gpx_write_track (Track * trk, GpxWritingContext *context )
 {
   // Don't write invisible tracks when specified
-  if (context->options && !context->options->hidden && !t->visible)
+  if (context->options && !context->options->hidden && !trk->visible)
     return;
 
   FILE *f = context->file;
@@ -1024,63 +1024,63 @@ static void gpx_write_track ( VikTrack *t, GpxWritingContext *context )
   bool first_tp_is_newsegment = false; /* must temporarily make it not so, but we want to restore state. not that it matters. */
 
   // Sanity clause
-  if ( t->name )
-    tmp = entitize ( t->name );
+  if ( trk->name )
+    tmp = entitize (trk->name );
   else
     tmp = g_strdup("track");
 
   // NB 'hidden' is not part of any GPX standard - this appears to be a made up Viking 'extension'
   //  luckily most other GPX processing software ignores things they don't understand
   fprintf ( f, "<%s%s>\n  <name>%s</name>\n",
-	    t->is_route ? "rte" : "trk",
-	    t->visible ? "" : " hidden=\"hidden\"",
+	    trk->is_route ? "rte" : "trk",
+	    trk->visible ? "" : " hidden=\"hidden\"",
 	    tmp );
   free( tmp );
 
-  if ( t->comment )
+  if ( trk->comment )
   {
-    tmp = entitize ( t->comment );
+    tmp = entitize ( trk->comment );
     fprintf ( f, "  <cmt>%s</cmt>\n", tmp );
     free( tmp );
   }
 
-  if ( t->description )
+  if ( trk->description )
   {
-    tmp = entitize ( t->description );
+    tmp = entitize ( trk->description );
     fprintf ( f, "  <desc>%s</desc>\n", tmp );
     free( tmp );
   }
 
-  if ( t->source )
+  if ( trk->source )
   {
-    tmp = entitize ( t->source );
+    tmp = entitize ( trk->source );
     fprintf ( f, "  <src>%s</src>\n", tmp );
     free( tmp );
   }
 
-  if ( t->type )
+  if ( trk->type )
   {
-    tmp = entitize ( t->type );
+    tmp = entitize ( trk->type );
     fprintf ( f, "  <type>%s</type>\n", tmp );
     free( tmp );
   }
 
   /* No such thing as a rteseg! */
-  if ( !t->is_route )
+  if ( !trk->is_route )
     fprintf ( f, "  <trkseg>\n" );
 
-  if ( t->trackpoints && t->trackpoints->data ) {
-    first_tp_is_newsegment = ((Trackpoint *) t->trackpoints->data)->newsegment;
-    ((Trackpoint *) t->trackpoints->data)->newsegment = false; /* so we won't write </trkseg><trkseg> already */
-    g_list_foreach ( t->trackpoints, (GFunc) gpx_write_trackpoint, context );
-    ((Trackpoint *) t->trackpoints->data)->newsegment = first_tp_is_newsegment; /* restore state */
+  if ( trk->trackpoints && trk->trackpoints->data ) {
+    first_tp_is_newsegment = ((Trackpoint *) trk->trackpoints->data)->newsegment;
+    ((Trackpoint *) trk->trackpoints->data)->newsegment = false; /* so we won't write </trkseg><trkseg> already */
+    g_list_foreach ( trk->trackpoints, (GFunc) gpx_write_trackpoint, context );
+    ((Trackpoint *) trk->trackpoints->data)->newsegment = first_tp_is_newsegment; /* restore state */
   }
 
   /* NB apparently no such thing as a rteseg! */
-  if (!t->is_route)
+  if (!trk->is_route)
     fprintf ( f, "  </trkseg>\n");
 
-  fprintf ( f, "</%s>\n", t->is_route ? "rte" : "trk" );
+  fprintf ( f, "</%s>\n", trk->is_route ? "rte" : "trk" );
 }
 
 static void gpx_write_header( FILE *f )
@@ -1106,8 +1106,8 @@ static int gpx_waypoint_compare(const void *x, const void *y)
 
 static int gpx_track_compare_name(const void *x, const void *y)
 {
-  VikTrack *a = (VikTrack *)x;
-  VikTrack *b = (VikTrack *)y;
+  Track * a = (Track *) x;
+  Track * b = (Track *) y;
   return strcmp(a->name,b->name);
 }
 
@@ -1198,13 +1198,13 @@ void a_gpx_write_file ( VikTrwLayer *vtl, FILE *f, GpxWritingOptions *options )
 
   // Loop around each list and write each one
   for (GList *iter = g_list_first (gl); iter != NULL; iter = g_list_next (iter)) {
-    gpx_write_track ( (VikTrack*)iter->data, &context_tmp );
+    gpx_write_track ( (Track *) iter->data, &context_tmp );
   }
 
   // Routes (to get routepoints)
   context_tmp.options->is_route = true;
   for (GList *iter = g_list_first (glrte); iter != NULL; iter = g_list_next (iter)) {
-    gpx_write_track ( (VikTrack*)iter->data, &context_tmp );
+    gpx_write_track ( (Track *) iter->data, &context_tmp );
   }
 
   g_list_free ( gl );
@@ -1213,7 +1213,7 @@ void a_gpx_write_file ( VikTrwLayer *vtl, FILE *f, GpxWritingOptions *options )
   gpx_write_footer ( f );
 }
 
-void a_gpx_write_track_file ( VikTrack *trk, FILE *f, GpxWritingOptions *options )
+void a_gpx_write_track_file (Track * trk, FILE *f, GpxWritingOptions *options )
 {
   GpxWritingContext context = {options, f};
   gpx_write_header ( f );
@@ -1224,7 +1224,7 @@ void a_gpx_write_track_file ( VikTrack *trk, FILE *f, GpxWritingOptions *options
 /**
  * Common write of a temporary GPX file
  */
-static char* write_tmp_file ( VikTrwLayer *vtl, VikTrack *trk, GpxWritingOptions *options )
+static char* write_tmp_file ( VikTrwLayer *vtl, Track * trk, GpxWritingOptions *options )
 {
 	char *tmp_filename = NULL;
 	GError *error = NULL;
@@ -1265,14 +1265,14 @@ char* a_gpx_write_tmp_file ( VikTrwLayer *vtl, GpxWritingOptions *options )
 
 /*
  * a_gpx_write_track_tmp_file:
- * @trk:     The #VikTrack to write
+ * @trk:     The #Track to write
  * @options: Possible ways of writing the file data (can be NULL)
  *
  * Returns: The name of newly created temporary GPX file
  *          This file should be removed once used and the string freed.
  *          If NULL then the process failed.
  */
-char* a_gpx_write_track_tmp_file ( VikTrack *trk, GpxWritingOptions *options )
+char* a_gpx_write_track_tmp_file (Track * trk, GpxWritingOptions *options )
 {
 	return write_tmp_file ( NULL, trk, options );
 }

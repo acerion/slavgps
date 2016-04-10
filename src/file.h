@@ -66,8 +66,8 @@ char *append_file_ext ( const char *filename, VikFileType_t type );
 
 VikLoadType_t a_file_load ( VikAggregateLayer *top, VikViewport *vp, const char *filename );
 bool a_file_save ( VikAggregateLayer *top, void * vp, const char *filename );
-/* Only need to define VikTrack if the file type is FILE_TYPE_GPX_TRACK */
-bool a_file_export ( VikTrwLayer *vtl, const char *filename, VikFileType_t file_type, VikTrack *trk, bool write_hidden );
+/* Only need to define Track if the file type is FILE_TYPE_GPX_TRACK */
+bool a_file_export ( VikTrwLayer *vtl, const char *filename, VikFileType_t file_type, Track * trk, bool write_hidden );
 bool a_file_export_babel ( VikTrwLayer *vtl, const char *filename, const char *format,
     bool tracks, bool routes, bool waypoints );
 

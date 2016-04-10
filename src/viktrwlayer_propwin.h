@@ -41,7 +41,7 @@ extern "C" {
 
 void vik_trw_layer_propwin_run ( GtkWindow *parent,
 								 VikTrwLayer *vtl,
-								 VikTrack *tr,
+								 Track * trk,
 								 void * vlp,
 								 VikViewport *vvp,
 								 bool start_on_stats );
@@ -50,7 +50,7 @@ void vik_trw_layer_propwin_run ( GtkWindow *parent,
  * Update this property dialog
  * e.g. if the track has been renamed
  */
-void vik_trw_layer_propwin_update ( VikTrack *trk );
+void vik_trw_layer_propwin_update(Track * trk);
 
 #ifdef __cplusplus
 }

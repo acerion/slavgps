@@ -34,7 +34,7 @@ extern "C" {
 
 void osm_traces_init();
 void osm_traces_uninit();
-void osm_traces_upload_viktrwlayer ( VikTrwLayer *vtl, VikTrack *trk );
+void osm_traces_upload_viktrwlayer ( VikTrwLayer *vtl, Track * trk);
 
 void osm_set_login (const char *user, const char *password);
 char *osm_get_login();

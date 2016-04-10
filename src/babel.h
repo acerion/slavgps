@@ -39,7 +39,7 @@ extern "C" {
 
 /**
  * BabelProgressCode:
- * @BABEL_DIAG_OUTPUT: a line of diagnostic output is available. The pointer is to a 
+ * @BABEL_DIAG_OUTPUT: a line of diagnostic output is available. The pointer is to a
  *                     NULL-terminated line of diagnostic output from gpsbabel.
  * @BABEL_DONE: gpsbabel finished, or %NULL if no callback is needed.
  *
@@ -75,7 +75,7 @@ typedef struct {
 
 /**
  * BabelMode:
- * 
+ *
  * Store the Read/Write support offered by gpsbabel for a given format.
  */
 typedef struct {
@@ -91,7 +91,7 @@ typedef struct {
  * BabelDevice:
  * @name: gpsbabel's identifier of the device
  * @label: human readable label
- * 
+ *
  * Representation of a supported device.
  */
 typedef struct {
@@ -105,7 +105,7 @@ typedef struct {
  * @name: gpsbabel's identifier of the format
  * @ext: file's extension for this format
  * @label: human readable label
- * 
+ *
  * Representation of a supported file format.
  */
 typedef struct {
@@ -121,7 +121,7 @@ void a_babel_foreach_file_read_any (GFunc func, void * user_data);
 // NB needs to match typedef VikDataSourceProcessFunc in acquire.h
 bool a_babel_convert_from ( VikTrwLayer *vt, ProcessOptions *process_options, BabelStatusFunc cb, void * user_data, DownloadFileOptions *download_options );
 
-bool a_babel_convert_to( VikTrwLayer *vt, VikTrack *track, const char *babelargs, const char *file, BabelStatusFunc cb, void * user_data );
+bool a_babel_convert_to( VikTrwLayer *vt, Track * trk, const char *babelargs, const char *file, BabelStatusFunc cb, void * user_data );
 
 void a_babel_init ();
 void a_babel_post_init ();

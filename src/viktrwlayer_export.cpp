@@ -35,7 +35,7 @@
 
 static char *last_folder_uri = NULL;
 
-void vik_trw_layer_export ( VikTrwLayer *vtl, const char *title, const char* default_name, VikTrack* trk, VikFileType_t file_type )
+void vik_trw_layer_export ( VikTrwLayer *vtl, const char *title, const char* default_name, Track * trk, VikFileType_t file_type )
 {
   GtkWidget *file_selector;
   const char *fn;

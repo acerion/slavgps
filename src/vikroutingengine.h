@@ -54,7 +54,7 @@ struct _VikRoutingEngineClass
   bool (*find)(VikRoutingEngine *self, VikTrwLayer *vtl, struct LatLon start, struct LatLon end);
   char *(*get_url_from_directions)(VikRoutingEngine *self, const char *start, const char *end);
   bool (*supports_direction)(VikRoutingEngine *self);
-  bool (*refine)(VikRoutingEngine *self, VikTrwLayer *vtl, VikTrack *vt);
+  bool (*refine)(VikRoutingEngine *self, VikTrwLayer *vtl, Track * trk);
   bool (*supports_refine)(VikRoutingEngine *self);
 };
 
@@ -65,7 +65,7 @@ struct _VikRoutingEngine {
 };
 
 bool vik_routing_engine_find ( VikRoutingEngine *self, VikTrwLayer *vtl, struct LatLon start, struct LatLon end );
-bool vik_routing_engine_refine ( VikRoutingEngine *self, VikTrwLayer *vtl, VikTrack *vt );
+bool vik_routing_engine_refine ( VikRoutingEngine *self, VikTrwLayer *vtl, Track * trk);
 char *vik_routing_engine_get_url_from_directions ( VikRoutingEngine *self, const char *start, const char *end );
 
 /* Acessors */

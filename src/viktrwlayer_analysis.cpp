@@ -91,7 +91,7 @@ static void val_reset ( track_stat_block block )
  *
  * Function to collect statistics, using the internal track functions
  */
-static void val_analyse_track ( VikTrack *trk )
+static void val_analyse_track(Track * trk)
 {
 	//val_reset ( TS_TRACK );
 	double min_alt;
@@ -394,7 +394,7 @@ static void table_output ( track_stats ts, GtkWidget *content[] )
 static void val_analyse_item_maybe ( vik_trw_track_list_t *vtlist, const void * data )
 {
 	bool include_invisible = KPOINTER_TO_INT(data);
-	VikTrack *trk = vtlist->trk;
+	Track * trk = vtlist->trk;
 	VikTrwLayer *vtl = vtlist->vtl;
 
 	// Safety first - items shouldn't be deleted...

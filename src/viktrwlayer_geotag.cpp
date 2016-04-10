@@ -95,7 +95,7 @@ typedef struct {
 	VikFileList *files;
 	VikTrwLayer *vtl;    // to pass on
 	Waypoint * wp;    // Use specified waypoint or otherwise the track(s) if NULL
-	VikTrack *track;     // Use specified track or all tracks if NULL
+	Track * trk;     // Use specified track or all tracks if NULL
 	GtkCheckButton *create_waypoints_b;
 	GtkLabel *overwrite_waypoints_l; // Referenced so the sensitivity can be changed
 	GtkCheckButton *overwrite_waypoints_b;
@@ -139,7 +139,7 @@ typedef struct {
 	VikTrwLayer *vtl;
 	char *image;
 	Waypoint * wp;    // Use specified waypoint or otherwise the track(s) if NULL
-	VikTrack *track;     // Use specified track or all tracks if NULL
+	Track * trk;     // Use specified track or all tracks if NULL
 	// User options...
 	option_values_t ov;
 	GList *files;
@@ -202,7 +202,7 @@ static option_values_t get_default_values ( )
 /**
  * Correlate the image against the specified track
  */
-static void trw_layer_geotag_track ( const void * id, VikTrack *track, geotag_options_t *options )
+static void trw_layer_geotag_track ( const void * id, Track * trk, geotag_options_t *options )
 {
 	// If already found match then don't need to check this track
 	if ( options->found_match )
@@ -212,7 +212,7 @@ static void trw_layer_geotag_track ( const void * id, VikTrack *track, geotag_op
 	Trackpoint * tp_next;
 
 	GList *mytp;
-	for ( mytp = track->trackpoints; mytp; mytp = mytp->next ) {
+	for ( mytp = trk->trackpoints; mytp; mytp = mytp->next ) {
 
 		// Do something for this trackpoint...
 
@@ -364,10 +364,10 @@ static void trw_layer_geotag_process ( geotag_options_t *options )
 
 		options->found_match = false;
 
-		if ( options->track ) {
+		if (options->trk) {
 			// Single specified track
 			// NB Doesn't care about track id
-			trw_layer_geotag_track ( NULL, options->track, options );
+			trw_layer_geotag_track ( NULL, options->trk, options );
 		}
 		else {
 			// Try all tracks
@@ -485,7 +485,7 @@ static void trw_layer_geotag_response_cb ( GtkDialog *dialog, int resp, GeoTagWi
 		geotag_options_t * options = (geotag_options_t *) malloc(sizeof (geotag_options_t));
 		options->vtl = widgets->vtl;
 		options->wp = widgets->wp;
-		options->track = widgets->track;
+		options->trk = widgets->trk;
 		// Values extracted from the widgets:
 		options->ov.create_waypoints = gtk_toggle_button_get_active ( GTK_TOGGLE_BUTTON(widgets->create_waypoints_b) );
 		options->ov.overwrite_waypoints = gtk_toggle_button_get_active ( GTK_TOGGLE_BUTTON(widgets->overwrite_waypoints_b) );
@@ -582,7 +582,7 @@ static void create_waypoints_b_cb ( GtkWidget *gw, GeoTagWidgets *gtw )
 void trw_layer_geotag_dialog ( GtkWindow *parent,
                                VikTrwLayer *vtl,
                                Waypoint * wp,
-                               VikTrack *track )
+                               Track * trk)
 {
 	GeoTagWidgets *widgets = geotag_widgets_new();
 
@@ -599,7 +599,7 @@ void trw_layer_geotag_dialog ( GtkWindow *parent,
 	widgets->files = VIK_FILE_LIST(vik_file_list_new ( _("Images"), filter ));
 	widgets->vtl = vtl;
 	widgets->wp = wp;
-	widgets->track = track;
+	widgets->trk = trk;
 	widgets->create_waypoints_b = GTK_CHECK_BUTTON ( gtk_check_button_new () );
 	widgets->overwrite_waypoints_l = GTK_LABEL ( gtk_label_new ( _("Overwrite Existing Waypoints:") ) );
 	widgets->overwrite_waypoints_b = GTK_CHECK_BUTTON ( gtk_check_button_new () );
@@ -690,8 +690,8 @@ void trw_layer_geotag_dialog ( GtkWindow *parent,
 		gtk_widget_set_sensitive ( GTK_WIDGET(widgets->time_zone_b), false );
 		gtk_widget_set_sensitive ( GTK_WIDGET(time_zone_l), false );
 	}
-	else if ( widgets->track )
-		track_string = g_strdup_printf ( _("Using track: %s"), track->name );
+	else if (widgets->trk)
+		track_string = g_strdup_printf ( _("Using track: %s"), trk->name );
 	else
 		track_string = g_strdup_printf ( _("Using all tracks in: %s"), VIK_LAYER(widgets->vtl)->name );
 

@@ -80,21 +80,21 @@ typedef enum {
 
 /**
  * VikDataSourceInitFunc:
- * 
+ *
  * Returns: pointer to state if OK, otherwise %NULL
  */
 typedef void * (*VikDataSourceInitFunc) ( acq_vik_t *avt );
 
 /**
  * VikDataSourceCheckExistenceFunc:
- * 
+ *
  * Returns: %NULL if OK, otherwise returns an error message.
  */
 typedef char *(*VikDataSourceCheckExistenceFunc) ();
 
 /**
  * VikDataSourceAddSetupWidgetsFunc:
- * 
+ *
  * Create widgets to show in a setup dialog, set up state via user_data.
  */
 typedef void (*VikDataSourceAddSetupWidgetsFunc) ( GtkWidget *dialog, VikViewport *vvp, void * user_data );
@@ -106,7 +106,7 @@ typedef void (*VikDataSourceAddSetupWidgetsFunc) ( GtkWidget *dialog, VikViewpor
  * @download_options: optional options for downloads from URLs for #VikDataSourceInterface.process_func
  * @input_file_name:
  * @input_track_file_name:
- * 
+ *
  * set both to %NULL to signal refusal (ie already downloading).
  */
 typedef void (*VikDataSourceGetProcessOptionsFunc) ( void * user_data, ProcessOptions *process_options, void * download_options, const char *input_file_name, const char *input_track_file_name );
@@ -118,7 +118,7 @@ typedef void (*VikDataSourceGetProcessOptionsFunc) ( void * user_data, ProcessOp
  * @status_cb: the #VikDataSourceInterface.progress_func
  * @adw: the widgets and data used by #VikDataSourceInterface.progress_func
  * @download_options: Optional options used if downloads from URLs is used.
- * 
+ *
  * The actual function to do stuff - must report success/failure.
  */
 typedef bool (*VikDataSourceProcessFunc) ( void * vtl, ProcessOptions *process_options, BabelStatusFunc, acq_dialog_widgets_t *adw, void * download_options );
@@ -128,14 +128,14 @@ typedef void  (*VikDataSourceProgressFunc)  ( BabelProgressCode c, void * data, 
 
 /**
  * VikDataSourceAddProgressWidgetsFunc:
- * 
+ *
  * Creates widgets to show in a progress dialog, may set up state via user_data.
  */
 typedef void  (*VikDataSourceAddProgressWidgetsFunc) ( GtkWidget *dialog, void * user_data );
 
 /**
  * VikDataSourceCleanupFunc:
- * 
+ *
  * Frees any widgets created for the setup or progress dialogs, any allocated state, etc.
  */
 typedef void (*VikDataSourceCleanupFunc) ( void * user_data );
@@ -144,7 +144,7 @@ typedef void (*VikDataSourceOffFunc) ( void * user_data, char **babelargs, char 
 
 /**
  * VikDataSourceInterface:
- * 
+ *
  * Main interface.
  */
 struct _VikDataSourceInterface {
@@ -160,7 +160,7 @@ struct _VikDataSourceInterface {
   /*** Manual UI Building ***/
   VikDataSourceInitFunc init_func;
   VikDataSourceCheckExistenceFunc check_existence_func;
-  VikDataSourceAddSetupWidgetsFunc add_setup_widgets_func;      
+  VikDataSourceAddSetupWidgetsFunc add_setup_widgets_func;
   /***                    ***/
 
   VikDataSourceGetProcessOptionsFunc get_process_options_func;
@@ -195,9 +195,9 @@ GtkWidget *a_acquire_trwlayer_menu (VikWindow *vw, VikLayersPanel *vlp, VikViewp
 
 GtkWidget *a_acquire_trwlayer_track_menu (VikWindow *vw, VikLayersPanel *vlp, VikViewport *vvp, VikTrwLayer *vtl);
 
-GtkWidget *a_acquire_track_menu (VikWindow *vw, VikLayersPanel *vlp, VikViewport *vvp, VikTrack *tr);
+GtkWidget *a_acquire_track_menu (VikWindow *vw, VikLayersPanel *vlp, VikViewport *vvp, Track * trk);
 
-void a_acquire_set_filter_track ( VikTrack *tr );
+void a_acquire_set_filter_track (Track * trk);
 
 #ifdef __cplusplus
 }

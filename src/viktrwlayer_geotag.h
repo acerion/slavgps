@@ -40,7 +40,7 @@ extern "C" {
 void trw_layer_geotag_dialog ( GtkWindow *parent,
                                VikTrwLayer *vtl,
                                Waypoint * wp,
-                               VikTrack *track );
+                               Track * trk);
 
 #ifdef __cplusplus
 }

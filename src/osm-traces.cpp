@@ -91,7 +91,7 @@ typedef struct _OsmTracesInfo {
   bool anonymize_times; // ATM only available on a single track.
   const OsmTraceVis_t *vistype;
   VikTrwLayer *vtl;
-  VikTrack *trk;
+  Track * trk;
 } OsmTracesInfo;
 
 static VikLayerParam prefs[] = {
@@ -109,7 +109,7 @@ static void oti_free(OsmTracesInfo *oti)
     free(oti->name); oti->name = NULL;
     free(oti->description); oti->description = NULL;
     free(oti->tags); oti->tags = NULL;
-    
+
     g_object_unref(oti->vtl); oti->vtl = NULL;
   }
   /* Main struct has been g_malloc'ed */
@@ -253,7 +253,7 @@ static int osm_traces_upload_file(const char *user,
 
   /* Memory */
   free(user_pass); user_pass = NULL;
-  
+
   curl_formfree(post);
   curl_easy_cleanup(curl);
   return result;
@@ -279,7 +279,7 @@ static void osm_traces_upload_thread ( OsmTracesInfo *oti, void * threaddata )
     /* Upload only the selected track */
     if ( oti->anonymize_times )
     {
-      VikTrack *trk = vik_track_copy(oti->trk, true);
+      Track * trk = vik_track_copy(oti->trk, true);
       vik_track_anonymize_times(trk);
       filename = a_gpx_write_track_tmp_file(trk, &options);
       vik_track_free(trk);
@@ -292,7 +292,7 @@ static void osm_traces_upload_thread ( OsmTracesInfo *oti, void * threaddata )
     /* Upload the whole VikTrwLayer */
     filename = a_gpx_write_tmp_file (oti->vtl, &options);
   }
-  
+
   if ( !filename )
     return;
 
@@ -375,7 +375,7 @@ void osm_login_widgets (GtkWidget *user_entry, GtkWidget *password_entry)
  * @param vtl VikTrwLayer
  * @param trk if not null, the track to upload
  */
-void osm_traces_upload_viktrwlayer ( VikTrwLayer *vtl, VikTrack *trk )
+void osm_traces_upload_viktrwlayer ( VikTrwLayer *vtl, Track * trk )
 {
   GtkWidget *dia = gtk_dialog_new_with_buttons (_("OSM upload"),
                                                  VIK_GTK_WINDOW_FROM_LAYER(vtl),

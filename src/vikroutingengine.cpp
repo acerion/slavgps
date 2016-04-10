@@ -21,7 +21,7 @@
 /**
  * SECTION:vikroutingengine
  * @short_description: the base class to describe routing engine
- * 
+ *
  * The #VikRoutingEngine class is both the interface and the base class
  * for the hierarchie of routing engines.
  */
@@ -155,14 +155,14 @@ vik_routing_engine_class_init ( VikRoutingEngineClass *klass )
                                "<no-set>" /* default value */,
                                (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
   g_object_class_install_property (object_class, PROP_ID, pspec);
-  
+
   pspec = g_param_spec_string ("label",
                                "Label",
                                "The label of the routing engine",
                                "<no-set>" /* default value */,
                                (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
   g_object_class_install_property (object_class, PROP_LABEL, pspec);
-    
+
   pspec = g_param_spec_string ("format",
                                "Format",
                                "The format of the output (see gpsbabel)",
@@ -208,14 +208,14 @@ vik_routing_engine_finalize ( GObject *self )
  * @end: ending point
  *
  * Retrieve a route between two coordinates.
- * 
+ *
  * Returns: indicates success or not.
  */
 bool
 vik_routing_engine_find ( VikRoutingEngine *self, VikTrwLayer *vtl, struct LatLon start, struct LatLon end )
 {
 	VikRoutingEngineClass *klass;
-	
+
 	g_return_val_if_fail ( VIK_IS_ROUTING_ENGINE (self), 0 );
 	klass = VIK_ROUTING_ENGINE_GET_CLASS( self );
 	g_return_val_if_fail ( klass->find != NULL, 0 );
@@ -225,7 +225,7 @@ vik_routing_engine_find ( VikRoutingEngine *self, VikTrwLayer *vtl, struct LatLo
 
 /**
  * vik_routing_engine_get_id:
- * 
+ *
  * Returns: the id of self
  */
 char *
@@ -238,7 +238,7 @@ vik_routing_engine_get_id ( VikRoutingEngine *self )
 
 /**
  * vik_routing_engine_get_label:
- * 
+ *
  * Returns: the label of self
  */
 char *
@@ -266,7 +266,7 @@ vik_routing_engine_get_format ( VikRoutingEngine *self )
 
 /**
  * vik_routing_engine_supports_direction:
- * 
+ *
  * Returns: %true if this engine supports the route finding based on directions
  */
 bool
@@ -318,7 +318,7 @@ vik_routing_engine_get_url_from_directions ( VikRoutingEngine *self, const char 
  * Returns: indicates success or not.
  */
 bool
-vik_routing_engine_refine ( VikRoutingEngine *self, VikTrwLayer *vtl, VikTrack *vt )
+vik_routing_engine_refine ( VikRoutingEngine *self, VikTrwLayer *vtl, Track * trk)
 {
   VikRoutingEngineClass *klass;
 
@@ -326,7 +326,7 @@ vik_routing_engine_refine ( VikRoutingEngine *self, VikTrwLayer *vtl, VikTrack *
   klass = VIK_ROUTING_ENGINE_GET_CLASS ( self );
   g_return_val_if_fail ( klass->refine != NULL, 0 );
 
-  return klass->refine ( self, vtl, vt );
+  return klass->refine ( self, vtl, trk);
 }
 
 /**

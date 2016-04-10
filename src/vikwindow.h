@@ -81,7 +81,7 @@ void * vik_window_get_selected_trw_layer ( VikWindow *vw ); /* return type VikTr
 void vik_window_set_selected_trw_layer ( VikWindow *vw, void * vtl ); /* input VikTrwLayer */
 GHashTable *vik_window_get_selected_tracks ( VikWindow *vw );
 void vik_window_set_selected_tracks ( VikWindow *vw, GHashTable *ght, void * vtl ); /* void * is a VikTrwLayer */
-void * vik_window_get_selected_track ( VikWindow *vw ); /* return type VikTrack */
+void * vik_window_get_selected_track ( VikWindow *vw ); /* return type Track */
 void vik_window_set_selected_track ( VikWindow *vw, void *vt, void * vtl ); /* void * is a VikTrwLayer */
 GHashTable *vik_window_get_selected_waypoints ( VikWindow *vw );
 void vik_window_set_selected_waypoints ( VikWindow *vw, GHashTable *ght, void * vtl ); /* void * is a VikTrwLayer */

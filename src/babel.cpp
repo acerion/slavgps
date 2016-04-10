@@ -209,7 +209,7 @@ static bool babel_general_convert( BabelStatusFunc cb, char **args, void * user_
 
     ret = true;
   }
-    
+
   return ret;
 }
 
@@ -234,7 +234,7 @@ static bool babel_general_convert_from( VikTrwLayer *vt, BabelStatusFunc cb, cha
 {
   bool ret = false;
   FILE *f = NULL;
-    
+
   if (babel_general_convert(cb, args, user_data)) {
 
     /* No data actually required but still need to have run gpsbabel anyway
@@ -249,7 +249,7 @@ static bool babel_general_convert_from( VikTrwLayer *vt, BabelStatusFunc cb, cha
       f = NULL;
     }
   }
-    
+
   return ret;
 }
 
@@ -259,7 +259,7 @@ static bool babel_general_convert_from( VikTrwLayer *vt, BabelStatusFunc cb, cha
  * @babelargs:    A string containing gpsbabel command line options. This string
  *                must include the input file type (-i) option.
  * @from          the file name to convert from
- * @babelfilters: A string containing gpsbabel filter command line options 
+ * @babelfilters: A string containing gpsbabel filter command line options
  * @cb:	          Optional callback function. Same usage as in a_babel_convert().
  * @user_data:    passed along to cb
  * @not_used:     Must use NULL
@@ -345,7 +345,7 @@ bool a_babel_convert_from_shellcommand ( VikTrwLayer *vt, const char *input_cmd,
   int fd_dst;
   char *name_dst = NULL;
   bool ret = false;
-  char **args;  
+  char **args;
 
   if ((fd_dst = g_file_open_tmp("tmp-viking.XXXXXX", &name_dst, NULL)) >= 0) {
     fprintf(stderr, "DEBUG: %s: temporary file: %s\n", __FUNCTION__, name_dst);
@@ -460,14 +460,14 @@ bool a_babel_convert_from ( VikTrwLayer *vt, ProcessOptions *process_options, Ba
   return false;
 }
 
-static bool babel_general_convert_to( VikTrwLayer *vt, VikTrack *trk, BabelStatusFunc cb, char **args, const char *name_src, void * user_data )
+static bool babel_general_convert_to( VikTrwLayer *vt, Track * trk, BabelStatusFunc cb, char **args, const char *name_src, void * user_data )
 {
   // Now strips out invisible tracks and waypoints
   if (!a_file_export(vt, name_src, FILE_TYPE_GPX, trk, false)) {
     fprintf(stderr, "CRITICAL: Error exporting to %s\n", name_src);
     return false;
   }
-       
+
   return babel_general_convert (cb, args, user_data);
 }
 
@@ -487,13 +487,13 @@ static bool babel_general_convert_to( VikTrwLayer *vt, VikTrack *trk, BabelStatu
  *
  * Returns: %true on successful invocation of GPSBabel command
  */
-bool a_babel_convert_to( VikTrwLayer *vt, VikTrack *track, const char *babelargs, const char *to, BabelStatusFunc cb, void * user_data )
+bool a_babel_convert_to( VikTrwLayer *vt, Track * trk, const char *babelargs, const char *to, BabelStatusFunc cb, void * user_data )
 {
   int i,j;
   int fd_src;
   char *name_src = NULL;
   bool ret = false;
-  char *args[64];  
+  char *args[64];
 
   if ((fd_src = g_file_open_tmp("tmp-viking.XXXXXX", &name_src, NULL)) >= 0) {
     fprintf(stderr, "DEBUG: %s: temporary file: %s\n", __FUNCTION__, name_src);
@@ -518,7 +518,7 @@ bool a_babel_convert_to( VikTrwLayer *vt, VikTrack *track, const char *babelargs
       args[i++] = (char *)to;
       args[i] = NULL;
 
-      ret = babel_general_convert_to ( vt, track, cb, args, name_src, user_data );
+      ret = babel_general_convert_to ( vt, trk, cb, args, name_src, user_data );
 
       g_strfreev(sub_args);
     } else
@@ -542,7 +542,7 @@ static void set_mode(BabelMode *mode, char *smode)
 
 /**
  * load_feature_parse_line:
- * 
+ *
  * Load a single feature stored in the given line.
  */
 static void load_feature_parse_line (char *line)
@@ -606,7 +606,7 @@ static bool load_feature ()
 {
   int i;
   bool ret = false;
-  char *args[4];  
+  char *args[4];
 
   if ( gpsbabel_loc ) {
     i = 0;
@@ -630,7 +630,7 @@ static VikLayerParam prefs[] = {
 
 /**
  * a_babel_init:
- * 
+ *
  * Just setup preferences first
  */
 void a_babel_init ()
@@ -683,7 +683,7 @@ void a_babel_post_init ()
 
 /**
  * a_babel_uninit:
- * 
+ *
  * Free resources acquired by a_babel_init.
  */
 void a_babel_uninit ()

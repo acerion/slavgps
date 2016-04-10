@@ -93,7 +93,7 @@ static bool trw_layer_track_tooltip_cb ( GtkWidget  *widget,
 	                                          &model, &path, &iter ) )
 		return false;
 
-	VikTrack *trk;
+	Track * trk;
 	gtk_tree_model_get ( model, &iter, TRK_COL_NUM, &trk, -1 );
 	if ( !trk ) return false;
 
@@ -123,7 +123,7 @@ static void trw_layer_track_select_cb ( GtkTreeSelection *selection, void * data
 	GtkTreeView *tree_view = GTK_TREE_VIEW ( data );
 	GtkTreeModel *model = gtk_tree_view_get_model (tree_view);
 
-	VikTrack *trk;
+	Track * trk;
 	gtk_tree_model_get ( model, &iter, TRK_COL_NUM, &trk, -1 );
 	if ( !trk ) return;
 
@@ -154,7 +154,7 @@ typedef void * menu_array_values[MA_LAST];
 static void trw_layer_track_select ( menu_array_values values )
 {
 	VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
-	VikTrack *trk = VIK_TRACK(values[MA_TRK]);
+	Track * trk = ((Track *) values[MA_TRK]);
 
 	if ( values[MA_TRK_UUID] ) {
 		GtkTreeIter *iter = NULL;
@@ -171,7 +171,7 @@ static void trw_layer_track_select ( menu_array_values values )
 static void trw_layer_track_stats ( menu_array_values values )
 {
 	VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
-	VikTrack *trk = VIK_TRACK(values[MA_TRK]);
+	Track * trk = ((Track *) values[MA_TRK]);
 	VikViewport *vvp = VIK_VIEWPORT(values[MA_VVP]);
 
 	if ( trk && trk->name ) {
@@ -192,7 +192,7 @@ static void trw_layer_track_stats ( menu_array_values values )
 static void trw_layer_track_view ( menu_array_values values )
 {
 	VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
-	VikTrack *trk = VIK_TRACK(values[MA_TRK]);
+	Track * trk = ((Track *) values[MA_TRK]);
 	VikViewport *vvp = VIK_VIEWPORT(values[MA_VVP]);
 
 	// TODO create common function to convert between LatLon[2] and LatLonBBox or even change LatLonBBox to be 2 LatLons!
@@ -266,7 +266,7 @@ static void add_copy_menu_item ( GtkMenu *menu, GtkWidget *tree_view )
 	gtk_widget_show ( item );
 }
 
-static bool add_menu_items ( GtkMenu *menu, VikTrwLayer *vtl, VikTrack *trk, void * trk_uuid, VikViewport *vvp, GtkWidget *tree_view, void * data )
+static bool add_menu_items ( GtkMenu *menu, VikTrwLayer *vtl, Track * trk, void * trk_uuid, VikViewport *vvp, GtkWidget *tree_view, void * data )
 {
 	static menu_array_values values;
 	GtkWidget *item;
@@ -342,7 +342,7 @@ static bool trw_layer_track_menu_popup ( GtkWidget *tree_view,
 	else
 		return false;
 
-	VikTrack *trk;
+	Track * trk;
 	gtk_tree_model_get ( model, &iter, TRK_COL_NUM, &trk, -1 );
 	if ( !trk ) return false;
 
@@ -420,7 +420,7 @@ static void trw_layer_track_list_add ( vik_trw_track_list_t *vtdl,
                                        const char* date_format )
 {
 	GtkTreeIter t_iter;
-	VikTrack *trk = vtdl->trk;
+	Track * trk = vtdl->trk;
 	VikTrwLayer *vtl = vtdl->vtl;
 
 	double trk_dist = vik_track_get_length ( trk );

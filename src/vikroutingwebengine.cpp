@@ -46,7 +46,7 @@ static void vik_routing_web_engine_finalize ( GObject *gob );
 static bool vik_routing_web_engine_find ( VikRoutingEngine *self, VikTrwLayer *vtl, struct LatLon start, struct LatLon end );
 static char *vik_routing_web_engine_get_url_from_directions(VikRoutingEngine *self, const char *start, const char *end);
 static bool vik_routing_web_engine_supports_direction(VikRoutingEngine *self);
-static bool vik_routing_web_engine_refine ( VikRoutingEngine *self, VikTrwLayer *vtl, VikTrack *vt );
+static bool vik_routing_web_engine_refine ( VikRoutingEngine *self, VikTrwLayer *vtl, Track * trk);
 static bool vik_routing_web_engine_supports_refine ( VikRoutingEngine *self );
 
 typedef struct _VikRoutingWebEnginePrivate VikRoutingWebEnginePrivate;
@@ -502,7 +502,7 @@ _append_stringified_coords ( void * data, void * user_data )
 }
 
 static char *
-vik_routing_web_engine_get_url_for_track ( VikRoutingEngine *self, VikTrack *vt )
+vik_routing_web_engine_get_url_for_track ( VikRoutingEngine *self, Track * trk)
 {
   char **urlParts;
   char *url;
@@ -515,7 +515,7 @@ vik_routing_web_engine_get_url_for_track ( VikRoutingEngine *self, VikTrack *vt 
   g_return_val_if_fail ( priv->url_via_ll_fmt != NULL, NULL );
 
   /* Init temporary storage */
-  size_t len = 1 + g_list_length ( vt->trackpoints ) + 1; /* base + trackpoints + NULL */
+  size_t len = 1 + g_list_length (trk->trackpoints ) + 1; /* base + trackpoints + NULL */
   urlParts = (char **) malloc( sizeof(char*)*len );
   urlParts[0] = g_strdup( priv->url_base );
   urlParts[len-1] = NULL;
@@ -526,16 +526,16 @@ vik_routing_web_engine_get_url_for_track ( VikRoutingEngine *self, VikTrack *vt 
   ctx.nb = 1; /* First cell available, previous used for base URL */
 
   /* Append all trackpoints to URL */
-  g_list_foreach ( vt->trackpoints, _append_stringified_coords, &ctx );
+  g_list_foreach (trk->trackpoints, _append_stringified_coords, &ctx );
 
   /* Override first and last positions with associated formats */
   struct LatLon position;
   free( urlParts[1] );
-  Trackpoint * tp = (Trackpoint *) g_list_first ( vt->trackpoints )->data;
+  Trackpoint * tp = (Trackpoint *) g_list_first (trk->trackpoints )->data;
   vik_coord_to_latlon ( &(tp->coord ), &position );
   urlParts[1] = substitute_latlon ( priv->url_start_ll_fmt, position );
   free( urlParts[len-2] );
-  tp = (Trackpoint *) g_list_last ( vt->trackpoints )->data;
+  tp = (Trackpoint *) g_list_last (trk->trackpoints )->data;
   vik_coord_to_latlon ( &(tp->coord), &position );
   urlParts[len-2] = substitute_latlon ( priv->url_stop_ll_fmt, position );
 
@@ -550,10 +550,10 @@ vik_routing_web_engine_get_url_for_track ( VikRoutingEngine *self, VikTrack *vt 
 }
 
 static bool
-vik_routing_web_engine_refine ( VikRoutingEngine *self, VikTrwLayer *vtl, VikTrack *vt )
+vik_routing_web_engine_refine ( VikRoutingEngine *self, VikTrwLayer *vtl, Track * trk)
 {
   /* Compute URL */
-  char *uri = vik_routing_web_engine_get_url_for_track ( self, vt );
+  char *uri = vik_routing_web_engine_get_url_for_track ( self, trk);
 
   /* Download data */
   DownloadFileOptions *options = vik_routing_web_engine_get_download_options ( self );

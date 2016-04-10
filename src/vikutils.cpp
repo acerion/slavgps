@@ -54,7 +54,7 @@
  *    thus would make it more user friendly and maybe even GUI controlable.
  * However for now at least there is some semblance of user control
  */
-char* vu_trackpoint_formatted_message ( char *format_code, Trackpoint *tp, Trackpoint *tp_prev, VikTrack *trk, double climb )
+char* vu_trackpoint_formatted_message ( char *format_code, Trackpoint *tp, Trackpoint *tp_prev, Track * trk, double climb )
 {
 	if ( !tp )
 		return NULL;

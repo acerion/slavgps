@@ -67,7 +67,7 @@ VikTrwLayer * vik_gps_layer_get_a_child(VikGpsLayer *vgl);
 
 // Non layer specific but expose communal method
 int vik_gps_comm ( VikTrwLayer *vtl,
-                    VikTrack *track,
+                    Track * trk,
                     vik_gps_dir dir,
                     char *protocol,
                     char *port,
