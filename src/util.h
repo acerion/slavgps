@@ -75,6 +75,8 @@ int util_remove ( const char *filename );
 
 char* util_write_tmp_file_from_bytes ( const void *buffer, size_t count );
 
+void free_string(char ** s);
+
 #ifdef __cplusplus
 }
 #endif

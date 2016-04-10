@@ -29,6 +29,7 @@
 #include "globals.h"
 #include "garminsymbols.h"
 #include "dems.h"
+#include "util.h"
 #include <glib/gi18n.h>
 
 
@@ -38,15 +39,6 @@
 using namespace SlavGPS;
 
 
-void free_string(char ** s)
-{
-	if (*s) {
-		free(*s);
-		*s = NULL;
-	}
-
-	return;
-}
 
 
 

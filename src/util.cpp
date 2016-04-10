@@ -268,3 +268,17 @@ char* util_write_tmp_file_from_bytes ( const void *buffer, size_t count )
 
 	return tmpname;
 }
+
+
+
+
+
+void free_string(char ** s)
+{
+	if (*s) {
+		free(*s);
+		*s = NULL;
+	}
+
+	return;
+}
