@@ -29,6 +29,8 @@
 
 #include "viktrwlayer.h"
 
+using namespace SlavGPS;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -39,7 +41,7 @@ extern "C" {
     The name to use is returned
    When an existing waypoint the name is shown but is not allowed to be changed and NULL is returned
  */
-char *a_dialog_waypoint ( GtkWindow *parent, char *default_name, VikTrwLayer *vtl, VikWaypoint *wp, VikCoordMode coord_mode, bool is_new, bool *updated );
+char *a_dialog_waypoint ( GtkWindow *parent, char *default_name, VikTrwLayer *vtl, Waypoint * wp, VikCoordMode coord_mode, bool is_new, bool *updated );
 
 #ifdef __cplusplus
 }

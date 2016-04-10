@@ -224,7 +224,7 @@ struct _VikWindow {
   GHashTable *selected_tracks;
   void * selected_track; /* notionally VikTrack */
   GHashTable *selected_waypoints;
-  void * selected_waypoint; /* notionally VikWaypoint */
+  void * selected_waypoint; /* notionally Waypoint */
   /* only use for individual track or waypoint */
   /* For track(s) & waypoint(s) it is the layer they are in - this helps refering to the individual item easier */
   void * containing_vtl; /* notionally VikTrwLayer */
@@ -1186,7 +1186,7 @@ static void draw_redraw ( VikWindow *vw )
         vik_trw_layer_draw_highlight_items ( (VikTrwLayer *) vw->containing_vtl, vw->selected_tracks, vw->selected_waypoints, vw->viking_vvp );
     }
     else if ( vw->containing_vtl && (vw->selected_track || vw->selected_waypoint) ) {
-        vik_trw_layer_draw_highlight_item ( (VikTrwLayer *) vw->containing_vtl, (VikTrack *) vw->selected_track, (VikWaypoint *) vw->selected_waypoint, vw->viking_vvp );
+        vik_trw_layer_draw_highlight_item ( (VikTrwLayer *) vw->containing_vtl, (VikTrack *) vw->selected_track, (Waypoint *) vw->selected_waypoint, vw->viking_vvp );
     }
     else if ( vw->selected_vtl ) {
       vik_trw_layer_draw_highlight ( (VikTrwLayer *) vw->selected_vtl, vw->viking_vvp );

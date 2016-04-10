@@ -1496,7 +1496,7 @@ bool vik_track_get_minmax_alt ( const VikTrack *tr, double *min_alt, double *max
   return false;
 }
 
-void vik_track_marshall ( VikTrack *tr, uint8_t **data, unsigned int *datalen)
+void vik_track_marshall ( VikTrack *tr, uint8_t **data, size_t *datalen)
 {
   GList *tps;
   GByteArray *b = g_byte_array_new();
@@ -1539,7 +1539,7 @@ void vik_track_marshall ( VikTrack *tr, uint8_t **data, unsigned int *datalen)
 /*
  * Take a byte array and convert it into a Track
  */
-VikTrack *vik_track_unmarshall (uint8_t *data, unsigned int datalen)
+VikTrack *vik_track_unmarshall (uint8_t *data, size_t datalen)
 {
   unsigned int len;
   VikTrack *new_tr = vik_track_new();

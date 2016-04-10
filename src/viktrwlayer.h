@@ -32,6 +32,9 @@
 #include "viktrack.h"
 #include "viklayerspanel.h"
 
+
+using namespace SlavGPS;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -80,17 +83,17 @@ bool vik_trw_layer_find_date ( VikTrwLayer *vtl, const char *date_str, VikCoord 
 
 /* These are meant for use in file loaders (gpspoint.c, gpx.c, etc).
  * These copy the name, so you should free it if necessary. */
-void vik_trw_layer_filein_add_waypoint ( VikTrwLayer *vtl, char *name, VikWaypoint *wp );
+void vik_trw_layer_filein_add_waypoint ( VikTrwLayer *vtl, char *name, Waypoint * wp);
 void vik_trw_layer_filein_add_track ( VikTrwLayer *vtl, char *name, VikTrack *tr );
 
 int vik_trw_layer_get_property_tracks_line_thickness ( VikTrwLayer *vtl );
 
-void vik_trw_layer_add_waypoint ( VikTrwLayer *vtl, char *name, VikWaypoint *wp );
+void vik_trw_layer_add_waypoint ( VikTrwLayer *vtl, char *name, Waypoint * wp);
 void vik_trw_layer_add_track ( VikTrwLayer *vtl, char *name, VikTrack *t );
 void vik_trw_layer_add_route ( VikTrwLayer *vtl, char *name, VikTrack *t );
 
 // Waypoint returned is the first one
-VikWaypoint *vik_trw_layer_get_waypoint ( VikTrwLayer *vtl, const char *name );
+Waypoint * vik_trw_layer_get_waypoint ( VikTrwLayer *vtl, const char *name );
 
 // Track returned is the first one
 VikTrack *vik_trw_layer_get_track ( VikTrwLayer *vtl, const char *name );
@@ -118,7 +121,7 @@ void trw_layer_cancel_tps_of_track ( VikTrwLayer *vtl, VikTrack *trk );
 void vik_trw_layer_reset_waypoints ( VikTrwLayer *vtl );
 
 void vik_trw_layer_draw_highlight ( VikTrwLayer *vtl, VikViewport *vvp );
-void vik_trw_layer_draw_highlight_item ( VikTrwLayer *vtl, VikTrack *trk, VikWaypoint *wpt, VikViewport *vvp );
+void vik_trw_layer_draw_highlight_item ( VikTrwLayer *vtl, VikTrack *trk, Waypoint * wp, VikViewport *vvp );
 void vik_trw_layer_draw_highlight_items ( VikTrwLayer *vtl, GHashTable *trks, GHashTable *wpts, VikViewport *vvp );
 
 // For creating a list of tracks with the corresponding layer it is in
@@ -134,7 +137,7 @@ GList *vik_trw_layer_build_track_list_t ( VikTrwLayer *vtl, GList *tracks );
 // For creating a list of waypoints with the corresponding layer it is in
 //  (thus a selection of waypoints may be from differing layers)
 typedef struct {
-  VikWaypoint *wpt;
+  Waypoint * wp;
   VikTrwLayer *vtl;
 } vik_trw_waypoint_list_t;
 
@@ -148,8 +151,8 @@ GdkPixbuf* get_wp_sym_small ( char *symbol );
 void trw_layer_verify_thumbnails ( VikTrwLayer *vtl, GtkWidget *vp );
 // Other functions only for use by other trw_layer subwindows
 char *trw_layer_new_unique_sublayer_name ( VikTrwLayer *vtl, int sublayer_type, const char *name );
-void trw_layer_waypoint_rename ( VikTrwLayer *vtl, VikWaypoint *wp, const char *new_name );
-void trw_layer_waypoint_reset_icon ( VikTrwLayer *vtl, VikWaypoint *wp );
+void trw_layer_waypoint_rename ( VikTrwLayer *vtl, Waypoint * wp, const char *new_name );
+void trw_layer_waypoint_reset_icon ( VikTrwLayer *vtl, Waypoint * wp);
 void trw_layer_calculate_bounds_waypoints ( VikTrwLayer *vtl );
 
 bool vik_trw_layer_get_tracks_visibility ( VikTrwLayer *vtl );
@@ -167,10 +170,10 @@ typedef struct {
 bool trw_layer_track_find_uuid ( const void * id, const VikTrack *trk, void * udata );
 
 typedef struct {
-  VikWaypoint *wp; // input
+  Waypoint * wp; // input
   void * uuid;   // output
 } wpu_udata;
-bool trw_layer_waypoint_find_uuid ( const void * id, const VikWaypoint *wp, void * udata );
+bool trw_layer_waypoint_find_uuid ( const void * id, const Waypoint * wp, void * udata );
 
 void trw_layer_zoom_to_show_latlons ( VikTrwLayer *vtl, VikViewport *vvp, struct LatLon maxmin[2] );
 

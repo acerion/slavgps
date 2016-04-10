@@ -39,6 +39,8 @@
 #include "background.h"
 #include "viktrwlayer_geotag.h"
 
+using namespace SlavGPS;
+
 // Function taken from GPSCorrelate 1.6.1
 // ConvertToUnixTime Copyright 2005 Daniel Foote. GPL2+
 
@@ -92,7 +94,7 @@ typedef struct {
 	GtkWidget *dialog;
 	VikFileList *files;
 	VikTrwLayer *vtl;    // to pass on
-	VikWaypoint *wpt;    // Use specified waypoint or otherwise the track(s) if NULL
+	Waypoint * wp;    // Use specified waypoint or otherwise the track(s) if NULL
 	VikTrack *track;     // Use specified track or all tracks if NULL
 	GtkCheckButton *create_waypoints_b;
 	GtkLabel *overwrite_waypoints_l; // Referenced so the sensitivity can be changed
@@ -111,7 +113,7 @@ static GeoTagWidgets *geotag_widgets_new()
 {
 	GeoTagWidgets * widgets = (GeoTagWidgets *) malloc(sizeof (GeoTagWidgets));
 	memset(widgets, 0, sizeof (GeoTagWidgets));
-	
+
 	return widgets;
 }
 
@@ -136,7 +138,7 @@ typedef struct {
 typedef struct {
 	VikTrwLayer *vtl;
 	char *image;
-	VikWaypoint *wpt;    // Use specified waypoint or otherwise the track(s) if NULL
+	Waypoint * wp;    // Use specified waypoint or otherwise the track(s) if NULL
 	VikTrack *track;     // Use specified track or all tracks if NULL
 	// User options...
 	option_values_t ov;
@@ -284,7 +286,7 @@ static void trw_layer_geotag_waypoint ( geotag_options_t *options )
 		char* datetime = a_geotag_get_exif_date_from_file ( options->image, &has_gps_exif );
 		// If image already has gps info - don't attempt to change it unless forced
 		if ( options->ov.overwrite_gps_exif || !has_gps_exif ) {
-			int ans = a_geotag_write_exif_gps ( options->image, options->wpt->coord, options->wpt->altitude, options->ov.no_change_mtime );
+			int ans = a_geotag_write_exif_gps ( options->image, options->wp->coord, options->wp->altitude, options->ov.no_change_mtime );
 			if ( ans != 0 ) {
 				char *message = g_strdup_printf ( _("Failed updating EXIF on %s"), options->image );
 				vik_window_statusbar_update ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(options->vtl)), message, VIK_STATUSBAR_INFO );
@@ -306,7 +308,7 @@ static void trw_layer_geotag_process ( geotag_options_t *options )
 	if ( !options->image )
 		return;
 
-	if ( options->wpt ) {
+	if (options->wp) {
 		trw_layer_geotag_waypoint ( options );
 		return;
 	}
@@ -315,13 +317,13 @@ static void trw_layer_geotag_process ( geotag_options_t *options )
 	char* datetime = a_geotag_get_exif_date_from_file ( options->image, &has_gps_exif );
 
 	if ( datetime ) {
-	
+
 		// If image already has gps info - don't attempt to change it.
 		if ( !options->ov.overwrite_gps_exif && has_gps_exif ) {
 			if ( options->ov.create_waypoints ) {
 				// Create waypoint with file information
 				char *name = NULL;
-				VikWaypoint *wp = a_geotag_create_waypoint_from_file ( options->image, vik_trw_layer_get_coord_mode (options->vtl), &name );
+				Waypoint * wp = a_geotag_create_waypoint_from_file ( options->image, vik_trw_layer_get_coord_mode (options->vtl), &name );
 				if ( !wp ) {
 					// Couldn't create Waypoint
 					free( datetime );
@@ -333,7 +335,7 @@ static void trw_layer_geotag_process ( geotag_options_t *options )
 				bool updated_waypoint = false;
 
 				if ( options->ov.overwrite_waypoints ) {
-					VikWaypoint *current_wp = vik_trw_layer_get_waypoint ( options->vtl, name );
+					Waypoint * current_wp = vik_trw_layer_get_waypoint ( options->vtl, name );
 					if ( current_wp ) {
 						// Existing wp found, so set new position, comment and image
 						(void)a_geotag_waypoint_positioned ( options->image, wp->coord, wp->altitude, &name, current_wp );
@@ -346,7 +348,7 @@ static void trw_layer_geotag_process ( geotag_options_t *options )
 				}
 
 				free( name );
-				
+
 				// Mark for redraw
 				options->redraw = true;
 			}
@@ -356,7 +358,7 @@ static void trw_layer_geotag_process ( geotag_options_t *options )
 
 		options->PhotoTime = ConvertToUnixTime ( datetime, EXIF_DATE_FORMAT, options->ov.TimeZoneHours, options->ov.TimeZoneMins);
 		free( datetime );
-		
+
 		// Apply any offset
 		options->PhotoTime = options->PhotoTime + options->ov.time_offset;
 
@@ -383,12 +385,12 @@ static void trw_layer_geotag_process ( geotag_options_t *options )
 				bool updated_waypoint = false;
 
 				if ( options->ov.overwrite_waypoints ) {
-				
+
 					// Update existing WP
 					// Find a WP with current name
 					char *name = NULL;
 					name = g_strdup( a_file_basename ( options->image ) );
-					VikWaypoint *wp = vik_trw_layer_get_waypoint ( options->vtl, name );
+					Waypoint * wp = vik_trw_layer_get_waypoint ( options->vtl, name );
 					if ( wp ) {
 						// Found, so set new position, comment and image
 						(void)a_geotag_waypoint_positioned ( options->image, options->coord, options->altitude, &name, wp );
@@ -400,7 +402,7 @@ static void trw_layer_geotag_process ( geotag_options_t *options )
 				if ( !updated_waypoint ) {
 					// Create waypoint with found position
 					char *name = NULL;
-					VikWaypoint *wp = a_geotag_waypoint_positioned ( options->image, options->coord, options->altitude, &name, NULL );
+					Waypoint * wp = a_geotag_waypoint_positioned ( options->image, options->coord, options->altitude, &name, NULL );
 					if ( !name )
 						name = g_strdup( a_file_basename ( options->image ) );
 					vik_trw_layer_filein_add_waypoint ( options->vtl, name, wp );
@@ -482,7 +484,7 @@ static void trw_layer_geotag_response_cb ( GtkDialog *dialog, int resp, GeoTagWi
 		// Get options
 		geotag_options_t * options = (geotag_options_t *) malloc(sizeof (geotag_options_t));
 		options->vtl = widgets->vtl;
-		options->wpt = widgets->wpt;
+		options->wp = widgets->wp;
 		options->track = widgets->track;
 		// Values extracted from the widgets:
 		options->ov.create_waypoints = gtk_toggle_button_get_active ( GTK_TOGGLE_BUTTON(widgets->create_waypoints_b) );
@@ -579,7 +581,7 @@ static void create_waypoints_b_cb ( GtkWidget *gw, GeoTagWidgets *gtw )
  */
 void trw_layer_geotag_dialog ( GtkWindow *parent,
                                VikTrwLayer *vtl,
-                               VikWaypoint *wpt,
+                               Waypoint * wp,
                                VikTrack *track )
 {
 	GeoTagWidgets *widgets = geotag_widgets_new();
@@ -596,7 +598,7 @@ void trw_layer_geotag_dialog ( GtkWindow *parent,
 
 	widgets->files = VIK_FILE_LIST(vik_file_list_new ( _("Images"), filter ));
 	widgets->vtl = vtl;
-	widgets->wpt = wpt;
+	widgets->wp = wp;
 	widgets->track = track;
 	widgets->create_waypoints_b = GTK_CHECK_BUTTON ( gtk_check_button_new () );
 	widgets->overwrite_waypoints_l = GTK_LABEL ( gtk_label_new ( _("Overwrite Existing Waypoints:") ) );
@@ -674,8 +676,8 @@ void trw_layer_geotag_dialog ( GtkWindow *parent,
 	gtk_widget_set_tooltip_text ( GTK_WIDGET(widgets->time_zone_b), _("The timezone that was used when the images were created. For example, if a camera is set to AWST or +8:00 hours. Enter +8:00 here so that the correct adjustment to the images' time can be made. GPS data is always in UTC.") );
 
 	char *track_string = NULL;
-	if ( widgets->wpt ) {
-		track_string = g_strdup_printf ( _("Using waypoint: %s"), wpt->name );
+	if (widgets->wp) {
+		track_string = g_strdup_printf ( _("Using waypoint: %s"), wp->name );
 		// Control sensitivities
 		gtk_widget_set_sensitive ( GTK_WIDGET(widgets->create_waypoints_b), false );
 		gtk_widget_set_sensitive ( GTK_WIDGET(create_waypoints_l), false );

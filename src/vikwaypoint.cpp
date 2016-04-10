@@ -22,6 +22,7 @@
 #include <glib.h>
 #include <string.h>
 #include <stdlib.h>
+
 #include "coords.h"
 #include "vikcoord.h"
 #include "vikwaypoint.h"
@@ -30,161 +31,191 @@
 #include "dems.h"
 #include <glib/gi18n.h>
 
-VikWaypoint *vik_waypoint_new()
-{
-  VikWaypoint *wp = (VikWaypoint *) malloc(sizeof (VikWaypoint));
-  memset(wp, 0, sizeof (VikWaypoint));
 
-  wp->altitude = VIK_DEFAULT_ALTITUDE;
-  wp->name = g_strdup(_("Waypoint"));
-  return wp;
+
+
+
+using namespace SlavGPS;
+
+
+void free_string(char ** s)
+{
+	if (*s) {
+		free(*s);
+		*s = NULL;
+	}
+
+	return;
 }
+
+
+
+Waypoint::Waypoint()
+{
+	altitude = VIK_DEFAULT_ALTITUDE;
+	name = strdup(_("Waypoint"));
+
+	comment = NULL;
+	description = NULL;
+	source = NULL;
+	type = NULL;
+	url = NULL;
+	image = NULL;
+	symbol = NULL;
+
+	symbol_pixbuf = NULL;
+}
+
+
+
+
 
 // Hmmm tempted to put in new constructor
-void vik_waypoint_set_name(VikWaypoint *wp, const char *name)
+void Waypoint::set_name(char const * name_)
 {
-  if ( wp->name )
-    free( wp->name );
+	free_string(&name);
 
-  wp->name = g_strdup(name);
+	if (name_) {
+		name = strdup(name_);
+	}
+
+	return;
 }
 
-void vik_waypoint_set_comment_no_copy(VikWaypoint *wp, char *comment)
+void Waypoint::set_comment_no_copy(char * comment_)
 {
-  if ( wp->comment )
-    free( wp->comment );
-  wp->comment = comment;
+	free_string(&comment); /* kamilTODO: should we free() string in _no_copy? */
+
+	if (comment_) {
+		comment = comment_;
+	}
 }
 
-void vik_waypoint_set_comment(VikWaypoint *wp, const char *comment)
+void Waypoint::set_comment(char const * comment_)
 {
-  if ( wp->comment )
-    free( wp->comment );
+	free_string(&comment);
 
-  if ( comment && comment[0] != '\0' )
-    wp->comment = g_strdup(comment);
-  else
-    wp->comment = NULL;
+	if (comment_ && comment_[0] != '\0') {
+		comment = strdup(comment_);
+	}
+
+	return;
 }
 
-void vik_waypoint_set_description(VikWaypoint *wp, const char *description)
+void Waypoint::set_description(char const * description_)
 {
-  if ( wp->description )
-    free( wp->description );
+	free_string(&description);
 
-  if ( description && description[0] != '\0' )
-    wp->description = g_strdup(description);
-  else
-    wp->description = NULL;
+	if (description_ && description_[0] != '\0') {
+		description = strdup(description_);
+	}
+
 }
 
-void vik_waypoint_set_source(VikWaypoint *wp, const char *source)
+void Waypoint::set_source(char const * source_)
 {
-  if ( wp->source )
-    free( wp->source );
+	free_string(&source);
 
-  if ( source && source[0] != '\0' )
-    wp->source = g_strdup(source);
-  else
-    wp->source = NULL;
+	if (source_ && source_[0] != '\0') {
+		source = strdup(source_);
+	}
+
 }
 
-void vik_waypoint_set_type(VikWaypoint *wp, const char *type)
+void Waypoint::set_type(char const * type_)
 {
-  if ( wp->type )
-    free( wp->type );
+	free_string(&type);
 
-  if ( type && type[0] != '\0' )
-    wp->type = g_strdup(type);
-  else
-    wp->type = NULL;
+	if (type_ && type_[0] != '\0') {
+		type = strdup(type_);
+	}
+
 }
 
-void vik_waypoint_set_url(VikWaypoint *wp, const char *url)
+void Waypoint::set_url(char const * url_)
 {
-  if ( wp->url )
-    free( wp->url );
+	free_string(&url);
 
-  if ( url && url[0] != '\0' )
-    wp->url = g_strdup(url);
-  else
-    wp->url = NULL;
+	if (url_ && url_[0] != '\0') {
+		url = strdup(url_);
+	}
+
 }
 
-void vik_waypoint_set_image(VikWaypoint *wp, const char *image)
+void Waypoint::set_image(char const * image_)
 {
-  if ( wp->image )
-    free( wp->image );
+	free_string(&image);
 
-  if ( image && image[0] != '\0' )
-    wp->image = g_strdup(image);
-  else
-    wp->image = NULL;
-  // NOTE - ATM the image (thumbnail) size is calculated on demand when needed to be first drawn
+	if (image_ && image_[0] != '\0') {
+		image = strdup(image_);
+	}
+
+	/* NOTE - ATM the image (thumbnail) size is calculated on demand when needed to be first drawn. */
 }
 
-void vik_waypoint_set_symbol(VikWaypoint *wp, const char *symname)
+void Waypoint::set_symbol(char const * symname_)
 {
-  const char *hashed_symname;
+	free_string(&symbol);
 
-  if ( wp->symbol )
-    free( wp->symbol );
+	/* NB symbol_pixbuf is just a reference, so no need to free it */
 
-  // NB symbol_pixbuf is just a reference, so no need to free it
-
-  if ( symname && symname[0] != '\0' ) {
-    hashed_symname = a_get_hashed_sym ( symname );
-    if ( hashed_symname )
-      symname = hashed_symname;
-    wp->symbol = g_strdup( symname );
-    wp->symbol_pixbuf = a_get_wp_sym ( wp->symbol );
-  }
-  else {
-    wp->symbol = NULL;
-    wp->symbol_pixbuf = NULL;
-  }
+	if (symname_ && symname_[0] != '\0') {
+		char const * hashed_symname = a_get_hashed_sym(symname_);
+		if (hashed_symname) {
+			symname_ = hashed_symname;
+		}
+		symbol = strdup(symname_);
+		symbol_pixbuf = a_get_wp_sym(symbol);
+	} else {
+		symbol = NULL;
+		symbol_pixbuf = NULL;
+	}
 }
 
-void vik_waypoint_free(VikWaypoint *wp)
+
+
+
+
+Waypoint::~Waypoint()
 {
-  if ( wp->comment )
-    free( wp->comment );
-  if ( wp->description )
-    free( wp->description );
-  if ( wp->source )
-    free( wp->source );
-  if ( wp->type )
-    free( wp->type );
-  if ( wp->url )
-    free( wp->url );
-  if ( wp->image )
-    free( wp->image );
-  if ( wp->symbol )
-    free( wp->symbol );
-  free( wp );
+	free_string(&name);  /* kamilFIXME: I had to add free()ing of name. */
+	free_string(&comment);
+	free_string(&description);
+	free_string(&source);
+	free_string(&type);
+	free_string(&url);
+	free_string(&image);
+	free_string(&symbol);
 }
 
-VikWaypoint *vik_waypoint_copy(const VikWaypoint *wp)
+
+
+
+
+/* Copy constructor. */
+Waypoint::Waypoint(const Waypoint & wp)
 {
-  VikWaypoint *new_wp = vik_waypoint_new();
-  new_wp->coord = wp->coord;
-  new_wp->visible = wp->visible;
-  new_wp->altitude = wp->altitude;
-  new_wp->has_timestamp = wp->has_timestamp;
-  new_wp->timestamp = wp->timestamp;
-  vik_waypoint_set_name(new_wp,wp->name);
-  vik_waypoint_set_comment(new_wp,wp->comment);
-  vik_waypoint_set_description(new_wp,wp->description);
-  vik_waypoint_set_source(new_wp,wp->source);
-  vik_waypoint_set_type(new_wp,wp->type);
-  vik_waypoint_set_url(new_wp,wp->url);
-  vik_waypoint_set_image(new_wp,wp->image);
-  vik_waypoint_set_symbol(new_wp,wp->symbol);
-  return new_wp;
+	this->coord = wp.coord;
+	this->visible = wp.visible;
+	this->altitude = wp.altitude;
+	this->has_timestamp = wp.has_timestamp;
+	this->timestamp = wp.timestamp;
+	this->set_name(wp.name);
+	this->set_comment(wp.comment);
+	this->set_description(wp.description);
+	this->set_source(wp.source);
+	this->set_type(wp.type);
+	this->set_url(wp.url);
+	this->set_image(wp.image);
+	this->set_symbol(wp.symbol);
 }
+
+
+
+
 
 /**
- * vik_waypoint_apply_dem_data:
+ * Waypoint::apply_dem_data:
  * @wp:            The Waypoint to operate on
  * @skip_existing: When true, don't change the elevation if the waypoint already has a value
  *
@@ -192,85 +223,106 @@ VikWaypoint *vik_waypoint_copy(const VikWaypoint *wp)
  *
  * Returns: true if the waypoint was updated
  */
-bool vik_waypoint_apply_dem_data ( VikWaypoint *wp, bool skip_existing )
+bool Waypoint::apply_dem_data(bool skip_existing)
 {
-  bool updated = false;
-  if ( !(skip_existing && wp->altitude != VIK_DEFAULT_ALTITUDE) ) {
-    int16_t elev = a_dems_get_elev_by_coord ( &(wp->coord), VIK_DEM_INTERPOL_BEST );
-    if ( elev != VIK_DEM_INVALID_ELEVATION ) {
-      wp->altitude = (double)elev;
-      updated = true;
-    }
-  }
-  return updated;
+	bool updated = false;
+	if (!(skip_existing && altitude != VIK_DEFAULT_ALTITUDE)) { /* kamilTODO: check this condition. */
+		int16_t elev = a_dems_get_elev_by_coord (&(coord), VIK_DEM_INTERPOL_BEST);
+		if (elev != VIK_DEM_INVALID_ELEVATION) {
+			altitude = (double) elev;
+			updated = true;
+		}
+	}
+	return updated;
 }
 
 /*
  * Take a Waypoint and convert it into a byte array
  */
-void vik_waypoint_marshall ( VikWaypoint *wp, uint8_t **data, unsigned int *datalen)
+void Waypoint::marshall(uint8_t **data, size_t * datalen)
 {
-  GByteArray *b = g_byte_array_new();
-  unsigned int len;
+	GByteArray *b = g_byte_array_new();
+	size_t len;
 
-  // This creates space for fixed sized members like ints and whatnot
-  //  and copies that amount of data from the waypoint to byte array
-  g_byte_array_append(b, (uint8_t *)wp, sizeof(*wp));
+	// This creates space for fixed sized members like ints and whatnot
+	//  and copies that amount of data from the waypoint to byte array
+	g_byte_array_append(b, (uint8_t *) this, sizeof(Waypoint));
 
-  // This allocates space for variant sized strings
-  //  and copies that amount of data from the waypoint to byte array
-#define vwm_append(s) \
-  len = (s) ? strlen(s)+1 : 0; \
-  g_byte_array_append(b, (uint8_t *)&len, sizeof(len)); \
-  if (s) g_byte_array_append(b, (uint8_t *)s, len);
+	// This allocates space for variant sized strings
+	//  and copies that amount of data from the waypoint to byte array
+#define vwm_append(s)						\
+	len = (s) ? strlen(s) + 1 : 0;				\
+	g_byte_array_append(b, (uint8_t *) &len, sizeof(len));	\
+	if (s) g_byte_array_append(b, (uint8_t *) s, len);
 
-  vwm_append(wp->name);
-  vwm_append(wp->comment);
-  vwm_append(wp->description);
-  vwm_append(wp->source);
-  vwm_append(wp->type);
-  vwm_append(wp->url);
-  vwm_append(wp->image);
-  vwm_append(wp->symbol);
+	vwm_append(name);
+	vwm_append(comment);
+	vwm_append(description);
+	vwm_append(source);
+	vwm_append(type);
+	vwm_append(url);
+	vwm_append(image);
+	vwm_append(symbol);
 
-  *data = b->data;
-  *datalen = b->len;
-  g_byte_array_free(b, false);
+	*data = b->data;
+	*datalen = b->len;
+	g_byte_array_free(b, false);
 #undef vwm_append
 }
+
+
+
+
 
 /*
  * Take a byte array and convert it into a Waypoint
  */
-VikWaypoint *vik_waypoint_unmarshall (uint8_t *data, unsigned int datalen)
+Waypoint *Waypoint::unmarshall(uint8_t * data, size_t datalen)
 {
-  unsigned int len;
-  VikWaypoint *new_wp = vik_waypoint_new();
-  // This copies the fixed sized elements (i.e. visibility, altitude, image_width, etc...)
-  memcpy(new_wp, data, sizeof(*new_wp));
-  data += sizeof(*new_wp);
+	size_t len;
+	Waypoint *wp = new Waypoint();
 
-  // Now the variant sized strings...
-#define vwu_get(s) \
-  len = *(unsigned int *)data; \
-  data += sizeof(len); \
-  if (len) { \
-    (s) = g_strdup((char *)data); \
-  } else { \
-    (s) = NULL; \
-  } \
-  data += len;
+	// This copies the fixed sized elements (i.e. visibility, altitude, image_width, etc...)
+	memcpy(wp, data, sizeof(Waypoint));
+	data += sizeof (Waypoint);
 
-  vwu_get(new_wp->name);
-  vwu_get(new_wp->comment);
-  vwu_get(new_wp->description);
-  vwu_get(new_wp->source);
-  vwu_get(new_wp->type);
-  vwu_get(new_wp->url);
-  vwu_get(new_wp->image); 
-  vwu_get(new_wp->symbol);
-  
-  return new_wp;
+	// Now the variant sized strings...
+#define vwu_get(s)				\
+	len = *(size_t *)data;			\
+	data += sizeof (len);			\
+	if (len) {				\
+		(s) = strdup((char *) data);	\
+	} else {				\
+		(s) = NULL;			\
+	}					\
+	data += len;
+
+	vwu_get(wp->name);
+	fprintf(stderr, "---- name = '%s'\n", wp->name);
+	vwu_get(wp->comment);
+	fprintf(stderr, "---- comment = '%s'\n", wp->comment);
+	vwu_get(wp->description);
+	fprintf(stderr, "---- description = '%s'\n", wp->description);
+	vwu_get(wp->source);
+	fprintf(stderr, "---- source = '%s'\n", wp->source);
+	vwu_get(wp->type);
+	fprintf(stderr, "---- type = '%s'\n", wp->type);
+	vwu_get(wp->url);
+	fprintf(stderr, "---- url = '%s'\n", wp->url);
+	vwu_get(wp->image);
+	fprintf(stderr, "---- image = '%s'\n", wp->image);
+	vwu_get(wp->symbol);
+	fprintf(stderr, "---- symbol = '%s'\n", wp->symbol);
+
+	return wp;
 #undef vwu_get
 }
 
+
+
+
+void Waypoint::delete_waypoint(Waypoint * wp)
+{
+	delete wp;
+	return;
+}

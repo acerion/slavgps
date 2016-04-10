@@ -31,6 +31,8 @@
 #include "viktrwlayer_waypointlist.h"
 #include "viktrwlayer_wpwin.h"
 
+using namespace SlavGPS;
+
 // Long formatted date+basic time - listing this way ensures the string comparison sort works - so no local type format %x or %c here!
 #define WAYPOINT_LIST_DATE_FORMAT "%Y-%m-%d %H:%M"
 
@@ -93,13 +95,13 @@ static bool trw_layer_waypoint_tooltip_cb ( GtkWidget  *widget,
 	                                          &model, &path, &iter ) )
 		return false;
 
-	VikWaypoint *wpt;
-	gtk_tree_model_get ( model, &iter, WPT_COL_NUM, &wpt, -1 );
-	if ( !wpt ) return false;
+	Waypoint * wp;
+	gtk_tree_model_get ( model, &iter, WPT_COL_NUM, &wp, -1 );
+	if (!wp) return false;
 
 	bool tooltip_set = true;
-	if ( wpt->description )
-		gtk_tooltip_set_text ( tooltip, wpt->description );
+	if (wp->description)
+		gtk_tooltip_set_text ( tooltip, wp->description );
 	else
 		tooltip_set = false;
 
@@ -121,9 +123,9 @@ static void trw_layer_waypoint_select_cb ( GtkTreeSelection *selection, void * d
 	GtkTreeView *tree_view = GTK_TREE_VIEW ( data );
 	GtkTreeModel *model = gtk_tree_view_get_model (tree_view);
 
-	VikWaypoint *wpt;
-	gtk_tree_model_get ( model, &iter, WPT_COL_NUM, &wpt, -1 );
-	if ( !wpt ) return;
+	Waypoint *wp;
+	gtk_tree_model_get ( model, &iter, WPT_COL_NUM, &wp, -1 );
+	if ( !wp ) return;
 
 	VikTrwLayer *vtl;
 	gtk_tree_model_get ( model, &iter, TRW_COL_NUM, &vtl, -1 );
@@ -165,21 +167,21 @@ static void trw_layer_waypoint_select ( menu_array_values values )
 static void trw_layer_waypoint_properties ( menu_array_values values )
 {
 	VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
-	VikWaypoint *wpt = VIK_WAYPOINT(values[MA_WPT]);
+	Waypoint * wp = (Waypoint *) (values[MA_WPT]);
 
-	if ( wpt && wpt->name ) {
+	if (wp && wp->name) {
 		// Kill off this dialog to allow interaction with properties window
 		//  since the properties also allows waypoint manipulations it won't cause conflicts here.
 		GtkWidget *gw = gtk_widget_get_toplevel ((GtkWidget *) values[MA_TREEVIEW] );
 		waypoint_close_cb ( gw, 0, (GList *) values[MA_WPTS_LIST] );
 
 		bool updated = false;
-		char *new_name = a_dialog_waypoint ( VIK_GTK_WINDOW_FROM_LAYER(vtl), wpt->name, vtl, wpt, vik_trw_layer_get_coord_mode(vtl), false, &updated );
+		char *new_name = a_dialog_waypoint ( VIK_GTK_WINDOW_FROM_LAYER(vtl), wp->name, vtl, wp, vik_trw_layer_get_coord_mode(vtl), false, &updated );
 		if ( new_name )
-			trw_layer_waypoint_rename ( vtl, wpt, new_name );
+			trw_layer_waypoint_rename ( vtl, wp, new_name );
 
 		if ( updated )
-			trw_layer_waypoint_reset_icon ( vtl, wpt );
+			trw_layer_waypoint_reset_icon ( vtl, wp);
 
 		if ( updated && VIK_LAYER(vtl)->visible )
 			vik_layer_emit_update ( VIK_LAYER(vtl) );
@@ -189,10 +191,10 @@ static void trw_layer_waypoint_properties ( menu_array_values values )
 static void trw_layer_waypoint_view ( menu_array_values values )
 {
 	VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
-	VikWaypoint *wpt = VIK_WAYPOINT(values[MA_WPT]);
+	Waypoint * wp = (Waypoint *) (values[MA_WPT]);
 	VikViewport *vvp = VIK_VIEWPORT(values[MA_VVP]);
 
-	vik_viewport_set_center_coord ( vvp, &(wpt->coord), true );
+	vik_viewport_set_center_coord ( vvp, &(wp->coord), true );
 
 	trw_layer_waypoint_select (values);
 
@@ -201,13 +203,13 @@ static void trw_layer_waypoint_view ( menu_array_values values )
 
 static void trw_layer_show_picture ( menu_array_values values )
 {
-	VikWaypoint *wpt = VIK_WAYPOINT(values[MA_WPT]);
+	Waypoint * wp = (Waypoint *) (values[MA_WPT]);
 #ifdef WINDOWS
-	ShellExecute(NULL, "open", wpt->image, NULL, NULL, SW_SHOWNORMAL);
+	ShellExecute(NULL, "open", wp->image, NULL, NULL, SW_SHOWNORMAL);
 #else
 	VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
 	GError *err = NULL;
-	char *quoted_file = g_shell_quote ( wpt->image );
+	char *quoted_file = g_shell_quote (wp->image);
 	char *cmd = g_strdup_printf ( "%s %s", a_vik_get_image_viewer(), quoted_file );
 	free( quoted_file );
 	if ( ! g_spawn_command_line_async ( cmd, &err ) ) {
@@ -246,10 +248,11 @@ static void copy_selection (GtkTreeModel *model,
 		comment = g_strdup( "" );
 	int hh; gtk_tree_model_get ( model, iter, 5, &hh, -1 );
 
-	VikWaypoint *wpt; gtk_tree_model_get ( model, iter, WPT_COL_NUM, &wpt, -1 );
+	Waypoint * wp;
+        gtk_tree_model_get ( model, iter, WPT_COL_NUM, &wp, -1 );
 	struct LatLon ll;
-	if ( wpt ) {
-		vik_coord_to_latlon ( &wpt->coord, &ll );
+	if (wp) {
+		vik_coord_to_latlon (&wp->coord, &ll );
 	}
 	char sep = '\t'; // Could make this configurable - but simply always make it a tab character for now
 	// NB Even if the columns have been reordered - this copies it out only in the original default order
@@ -316,14 +319,14 @@ static void add_copy_menu_items ( GtkMenu *menu, GtkWidget *tree_view )
 	gtk_widget_show ( item );
 }
 
-static bool add_menu_items ( GtkMenu *menu, VikTrwLayer *vtl, VikWaypoint *wpt, void * wpt_uuid, VikViewport *vvp, GtkWidget *tree_view, void * data )
+static bool add_menu_items ( GtkMenu *menu, VikTrwLayer *vtl, Waypoint * wp, void * wp_uuid, VikViewport *vvp, GtkWidget *tree_view, void * data )
 {
 	static menu_array_values values;
 	GtkWidget *item;
 
 	values[MA_VTL]       = vtl;
-	values[MA_WPT]       = wpt;
-	values[MA_WPT_UUID]  = wpt_uuid;
+	values[MA_WPT]       = wp;
+	values[MA_WPT_UUID]  = wp_uuid;
 	values[MA_VVP]       = vvp;
 	values[MA_TREEVIEW]  = tree_view;
 	values[MA_WPTS_LIST] = data;
@@ -354,7 +357,7 @@ static bool add_menu_items ( GtkMenu *menu, VikTrwLayer *vtl, VikWaypoint *wpt, 
 	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_show_picture), values );
 	gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
 	gtk_widget_show ( item );
-	gtk_widget_set_sensitive ( item, KPOINTER_TO_INT(wpt->image) );
+	gtk_widget_set_sensitive ( item, KPOINTER_TO_INT(wp->image) );
 
 	add_copy_menu_items ( menu, tree_view );
 
@@ -400,16 +403,16 @@ static bool trw_layer_waypoint_menu_popup ( GtkWidget *tree_view,
 	else
 		return false;
 
-	VikWaypoint *wpt;
-	gtk_tree_model_get ( model, &iter, WPT_COL_NUM, &wpt, -1 );
-	if ( !wpt ) return false;
+	Waypoint * wp;
+	gtk_tree_model_get ( model, &iter, WPT_COL_NUM, &wp, -1 );
+	if (!wp) return false;
 
 	VikTrwLayer *vtl;
 	gtk_tree_model_get ( model, &iter, TRW_COL_NUM, &vtl, -1 );
 	if ( !IS_VIK_TRW_LAYER(vtl) ) return false;
 
 	wpu_udata udataU;
-	udataU.wp   = wpt;
+	udataU.wp   = wp;
 	udataU.uuid = NULL;
 
 	void * wptf;
@@ -426,7 +429,7 @@ static bool trw_layer_waypoint_menu_popup ( GtkWidget *tree_view,
 		//  create a very minimal new set of operations
 		add_menu_items ( GTK_MENU(menu),
 		                 vtl,
-		                 wpt,
+		                 wp,
 		                 udataU.uuid,
 		                 vvp,
 		                 tree_view,
@@ -473,33 +476,33 @@ static void trw_layer_waypoint_list_add ( vik_trw_waypoint_list_t *vtdl,
                                           const char* date_format )
 {
 	GtkTreeIter t_iter;
-	VikWaypoint *wpt = vtdl->wpt;
+	Waypoint * wp = vtdl->wp;
 	VikTrwLayer *vtl = vtdl->vtl;
 
 	// Get start date
 	char time_buf[32];
 	time_buf[0] = '\0';
-	if ( wpt->has_timestamp ) {
+	if (wp->has_timestamp) {
 
 #if GLIB_CHECK_VERSION(2,26,0)
-		GDateTime* gdt = g_date_time_new_from_unix_utc ( wpt->timestamp );
+		GDateTime* gdt = g_date_time_new_from_unix_utc (wp->timestamp);
 		char *time = g_date_time_format ( gdt, date_format );
 		g_strlcpy ( time_buf, time, sizeof(time_buf) );
 		free( time );
 		g_date_time_unref ( gdt);
 #else
 		GDate* gdate_start = g_date_new ();
-		g_date_set_time_t ( gdate_start, wpt->timestamp );
+		g_date_set_time_t ( gdate_start, wp->timestamp );
 		g_date_strftime ( time_buf, sizeof(time_buf), date_format, gdate_start );
 		g_date_free ( gdate_start );
 #endif
 	}
 
 	// NB: doesn't include aggegrate visibility
-	bool visible = VIK_LAYER(vtl)->visible && wpt->visible;
+	bool visible = VIK_LAYER(vtl)->visible && wp->visible;
 	visible = visible && vik_trw_layer_get_waypoints_visibility(vtl);
 
-	double alt = wpt->altitude;
+	double alt = wp->altitude;
 	switch (height_units) {
 	case VIK_UNITS_HEIGHT_FEET: alt = VIK_METERS_TO_FEET(alt); break;
 	default:
@@ -510,14 +513,14 @@ static void trw_layer_waypoint_list_add ( vik_trw_waypoint_list_t *vtdl,
 	gtk_tree_store_append ( store, &t_iter, NULL );
 	gtk_tree_store_set ( store, &t_iter,
 	                     0, VIK_LAYER(vtl)->name,
-	                     1, wpt->name,
+	                     1, wp->name,
 	                     2, time_buf,
 	                     3, visible,
-	                     4, wpt->comment,
+	                     4, wp->comment,
 	                     5, (int)round(alt),
-	                     6, get_wp_sym_small (wpt->symbol),
+	                     6, get_wp_sym_small (wp->symbol),
 	                     TRW_COL_NUM, vtl,
-	                     WPT_COL_NUM, wpt,
+	                     WPT_COL_NUM, wp,
 	                     -1 );
 }
 
@@ -530,13 +533,13 @@ int sort_pixbuf_compare_func ( GtkTreeModel *model,
                                 GtkTreeIter  *b,
                                 void *      userdata )
 {
-	VikWaypoint *wpt1, *wpt2;
-	gtk_tree_model_get ( model, a, WPT_COL_NUM, &wpt1, -1 );
-	if ( !wpt1 ) return 0;
-	gtk_tree_model_get ( model, b, WPT_COL_NUM, &wpt2, -1 );
-	if ( !wpt2 ) return 0;
+	Waypoint * wp1, * wp2;
+	gtk_tree_model_get ( model, a, WPT_COL_NUM, &wp1, -1 );
+	if ( !wp1 ) return 0;
+	gtk_tree_model_get ( model, b, WPT_COL_NUM, &wp2, -1 );
+	if ( !wp2 ) return 0;
 
-	return g_strcmp0 ( wpt1->symbol, wpt2->symbol );
+	return g_strcmp0 ( wp1->symbol, wp2->symbol );
 }
 
 static GtkTreeViewColumn *my_new_column_text ( const char *title, GtkCellRenderer *renderer, GtkWidget *view, int column_runner )

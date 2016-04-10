@@ -96,7 +96,7 @@ strncasecmp(name+len-6,"0x",2) == 0 )
   }
 }
 
-static void write_waypoint ( const char *name, VikWaypoint *wp, FILE *f )
+static void write_waypoint ( const char *name, Waypoint * wp, FILE *f )
 {
   static struct LatLon ll;
   unsigned int len = print_rgn_stuff ( wp->comment, f );

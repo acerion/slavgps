@@ -35,19 +35,21 @@
 #include "vikgoto.h"
 #include "vikutils.h"
 
-static void update_time ( GtkWidget *widget, VikWaypoint *wp )
+using namespace SlavGPS;
+
+static void update_time ( GtkWidget *widget, Waypoint *wp )
 {
   char *msg = vu_get_time_string ( &(wp->timestamp), "%c", &(wp->coord), NULL );
   gtk_button_set_label ( GTK_BUTTON(widget), msg );
   free( msg );
 }
 
-static VikWaypoint *edit_wp;
+static Waypoint * edit_wp;
 
 /**
  * time_edit_click:
  */
-static void time_edit_click ( GtkWidget* widget, GdkEventButton *event, VikWaypoint *wp )
+static void time_edit_click ( GtkWidget* widget, GdkEventButton *event, Waypoint * wp)
 {
   if ( event->button == 3 ) {
     // On right click and when a time is available, allow a method to copy the displayed time as text
@@ -100,7 +102,7 @@ static void symbol_entry_changed_cb(GtkWidget *combo, GtkListStore *store)
     The name to use is returned
  */
 /* todo: less on this side, like add track */
-char *a_dialog_waypoint ( GtkWindow *parent, char *default_name, VikTrwLayer *vtl, VikWaypoint *wp, VikCoordMode coord_mode, bool is_new, bool *updated )
+char *a_dialog_waypoint ( GtkWindow *parent, char *default_name, VikTrwLayer *vtl, Waypoint * wp, VikCoordMode coord_mode, bool is_new, bool *updated )
 {
   GtkWidget *dialog = gtk_dialog_new_with_buttons (_("Waypoint Properties"),
                                                    parent,
@@ -273,9 +275,10 @@ char *a_dialog_waypoint ( GtkWindow *parent, char *default_name, VikTrwLayer *vt
   timevaluebutton = gtk_button_new();
   gtk_button_set_relief ( GTK_BUTTON(timevaluebutton), GTK_RELIEF_NONE );
 
+  /* kamilFIXME: are we overwriting wp here? */
   if ( !edit_wp )
-    edit_wp = vik_waypoint_new ();
-  edit_wp = vik_waypoint_copy ( wp );
+    edit_wp = new Waypoint();
+  edit_wp = new Waypoint(*wp);
 
   // TODO: Consider if there should be a remove time button...
 
@@ -357,15 +360,15 @@ char *a_dialog_waypoint ( GtkWindow *parent, char *default_name, VikTrwLayer *vt
         fprintf(stderr, "CRITICAL: Houston, we've had a problem. height=%d\n", height_units);
       }
       if ( g_strcmp0 ( wp->comment, gtk_entry_get_text ( GTK_ENTRY(commententry) ) ) )
-        vik_waypoint_set_comment ( wp, gtk_entry_get_text ( GTK_ENTRY(commententry) ) );
+        wp->set_comment(gtk_entry_get_text ( GTK_ENTRY(commententry) ) );
       if ( g_strcmp0 ( wp->description, gtk_entry_get_text ( GTK_ENTRY(descriptionentry) ) ) )
-        vik_waypoint_set_description ( wp, gtk_entry_get_text ( GTK_ENTRY(descriptionentry) ) );
+        wp->set_description(gtk_entry_get_text ( GTK_ENTRY(descriptionentry) ) );
       if ( g_strcmp0 ( wp->image, vik_file_entry_get_filename ( VIK_FILE_ENTRY(imageentry) ) ) )
-        vik_waypoint_set_image ( wp, vik_file_entry_get_filename ( VIK_FILE_ENTRY(imageentry) ) );
+        wp->set_image(vik_file_entry_get_filename ( VIK_FILE_ENTRY(imageentry) ) );
       if ( g_strcmp0 ( wp->source, gtk_entry_get_text ( GTK_ENTRY(sourceentry) ) ) )
-        vik_waypoint_set_source ( wp, gtk_entry_get_text ( GTK_ENTRY(sourceentry) ) );
+        wp->set_source(gtk_entry_get_text ( GTK_ENTRY(sourceentry) ) );
       if ( g_strcmp0 ( wp->type, gtk_entry_get_text ( GTK_ENTRY(typeentry) ) ) )
-        vik_waypoint_set_type ( wp, gtk_entry_get_text ( GTK_ENTRY(typeentry) ) );
+        wp->set_type(gtk_entry_get_text ( GTK_ENTRY(typeentry) ) );
       if ( wp->image && *(wp->image) && (!a_thumbnails_exists(wp->image)) )
         a_thumbnails_create ( wp->image );
       if ( edit_wp->timestamp ) {
@@ -376,11 +379,11 @@ char *a_dialog_waypoint ( GtkWindow *parent, char *default_name, VikTrwLayer *vt
       GtkTreeIter iter, first;
       gtk_tree_model_get_iter_first ( GTK_TREE_MODEL(store), &first );
       if ( !gtk_combo_box_get_active_iter ( GTK_COMBO_BOX(symbolentry), &iter ) || !memcmp(&iter, &first, sizeof(GtkTreeIter)) ) {
-        vik_waypoint_set_symbol ( wp, NULL );
+        wp->set_symbol(NULL);
       } else {
         char *sym;
         gtk_tree_model_get ( GTK_TREE_MODEL(store), &iter, 0, (void *)&sym, -1 );
-        vik_waypoint_set_symbol ( wp, sym );
+        wp->set_symbol(sym);
         free(sym);
       }
 

@@ -156,8 +156,8 @@ double *vik_track_make_distance_map ( const VikTrack *tr, uint16_t num_chunks );
 double *vik_track_make_elevation_time_map ( const VikTrack *tr, uint16_t num_chunks );
 double *vik_track_make_speed_dist_map ( const VikTrack *tr, uint16_t num_chunks );
 bool vik_track_get_minmax_alt ( const VikTrack *tr, double *min_alt, double *max_alt );
-void vik_track_marshall ( VikTrack *tr, uint8_t **data, unsigned int *len);
-VikTrack *vik_track_unmarshall (uint8_t *data, unsigned int datalen);
+void vik_track_marshall ( VikTrack *tr, uint8_t **data, size_t * len);
+VikTrack *vik_track_unmarshall (uint8_t *data, size_t datalen);
 
 void vik_track_calculate_bounds ( VikTrack *trk );
 

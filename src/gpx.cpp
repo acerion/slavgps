@@ -48,6 +48,8 @@
 #endif
 #include <time.h>
 
+using namespace SlavGPS;
+
 typedef enum {
         tt_unknown = 0,
 
@@ -200,7 +202,7 @@ GString *c_cdata = NULL;
 
 /* current ("c_") objects */
 VikTrackpoint *c_tp = NULL;
-VikWaypoint *c_wp = NULL;
+Waypoint * c_wp = NULL;
 VikTrack *c_tr = NULL;
 VikTRWMetadata *c_md = NULL;
 
@@ -253,7 +255,7 @@ static void gpx_start(VikTrwLayer *vtl, const char *el, const char **attr)
 
      case tt_wpt:
        if ( set_c_ll( attr ) ) {
-         c_wp = vik_waypoint_new ();
+         c_wp = new Waypoint();
          c_wp->visible = true;
          if ( get_attr ( attr, "hidden" ) )
            c_wp->visible = false;
@@ -314,7 +316,7 @@ static void gpx_start(VikTrwLayer *vtl, const char *el, const char **attr)
        break;
 
      case tt_waypoint:
-       c_wp = vik_waypoint_new ();
+       c_wp = new Waypoint();
        c_wp->visible = true;
        break;
 
@@ -432,37 +434,37 @@ static void gpx_end(VikTrwLayer *vtl, const char *el)
 
      case tt_waypoint_name: /* .loc name is really description. */
      case tt_wpt_desc:
-       vik_waypoint_set_description ( c_wp, c_cdata->str );
+       c_wp->set_description(c_cdata->str );
        g_string_erase ( c_cdata, 0, -1 );
        break;
 
      case tt_wpt_cmt:
-       vik_waypoint_set_comment ( c_wp, c_cdata->str );
+       c_wp->set_comment(c_cdata->str );
        g_string_erase ( c_cdata, 0, -1 );
        break;
 
      case tt_wpt_src:
-       vik_waypoint_set_source ( c_wp, c_cdata->str );
+       c_wp->set_source(c_cdata->str );
        g_string_erase ( c_cdata, 0, -1 );
        break;
 
      case tt_wpt_type:
-       vik_waypoint_set_type ( c_wp, c_cdata->str );
+       c_wp->set_type(c_cdata->str );
        g_string_erase ( c_cdata, 0, -1 );
        break;
 
      case tt_wpt_url:
-       vik_waypoint_set_url ( c_wp, c_cdata->str );
+       c_wp->set_url(c_cdata->str );
        g_string_erase ( c_cdata, 0, -1 );
        break;
 
      case tt_wpt_link:
-       vik_waypoint_set_image ( c_wp, c_cdata->str );
+       c_wp->set_image(c_cdata->str );
        g_string_erase ( c_cdata, 0, -1 );
        break;
 
      case tt_wpt_sym: {
-       vik_waypoint_set_symbol ( c_wp, c_cdata->str );
+       c_wp->set_symbol(c_cdata->str );
        g_string_erase ( c_cdata, 0, -1 );
        break;
        }
@@ -804,7 +806,7 @@ entitize(const char * str)
 
 /* export GPX */
 
-static void gpx_write_waypoint ( VikWaypoint *wp, GpxWritingContext *context )
+static void gpx_write_waypoint(Waypoint * wp, GpxWritingContext *context )
 {
   // Don't write invisible waypoints when specified
   if (context->options && !context->options->hidden && !wp->visible)
@@ -1097,8 +1099,8 @@ static void gpx_write_footer( FILE *f )
 
 static int gpx_waypoint_compare(const void *x, const void *y)
 {
-  VikWaypoint *a = (VikWaypoint *)x;
-  VikWaypoint *b = (VikWaypoint *)y;
+  Waypoint * a = (Waypoint *) x;
+  Waypoint * b = (Waypoint *) y;
   return strcmp(a->name,b->name);
 }
 
@@ -1153,7 +1155,7 @@ void a_gpx_write_file ( VikTrwLayer *vtl, FILE *f, GpxWritingOptions *options )
     gl = g_list_sort ( gl, gpx_waypoint_compare );
 
     for (GList *iter = g_list_first (gl); iter != NULL; iter = g_list_next (iter)) {
-      gpx_write_waypoint ( (VikWaypoint*)iter->data, &context );
+      gpx_write_waypoint ((Waypoint *) iter->data, &context );
     }
     g_list_free ( gl );
   }

@@ -1,4 +1,3 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
@@ -51,6 +50,8 @@
 #include <libexif/exif-data.h>
 #include "libjpeg/jpeg-data.h"
 #endif
+
+using namespace SlavGPS;
 
 #ifdef HAVE_LIBGEXIV2
 /**
@@ -258,11 +259,11 @@ MyReturn0:
  * Returns: An allocated Waypoint or NULL if Waypoint could not be generated (e.g. no EXIF info)
  *
  */
-VikWaypoint* a_geotag_create_waypoint_from_file ( const char *filename, VikCoordMode vcmode, char **name )
+Waypoint * a_geotag_create_waypoint_from_file ( const char *filename, VikCoordMode vcmode, char **name )
 {
 	// Default return values (for failures)
 	*name = NULL;
-	VikWaypoint *wp = NULL;
+	Waypoint * wp = NULL;
 
 #ifdef HAVE_LIBGEXIV2
 	GExiv2Metadata *gemd = gexiv2_metadata_new ();
@@ -278,7 +279,7 @@ VikWaypoint* a_geotag_create_waypoint_from_file ( const char *filename, VikCoord
 			//
 			// Now create Waypoint with acquired information
 			//
-			wp = vik_waypoint_new();
+			wp = new Waypoint();
 			wp->visible = true;
 			// Set info from exif values
 			// Location
@@ -290,7 +291,7 @@ VikWaypoint* a_geotag_create_waypoint_from_file ( const char *filename, VikCoord
 				*name = g_strdup( gexiv2_metadata_get_tag_interpreted_string ( gemd, "Exif.Image.XPTitle" ) );
 			wp->comment = geotag_get_exif_comment ( gemd );
 
-			vik_waypoint_set_image ( wp, filename );
+			wp->set_image(filename );
 		}
 	}
 	gexiv2_metadata_free ( gemd );
@@ -386,12 +387,12 @@ MyReturn:
  *  Here EXIF processing is used to get non position related information (i.e. just the comment)
  *
  */
-VikWaypoint* a_geotag_waypoint_positioned ( const char *filename, VikCoord coord, double alt, char **name, VikWaypoint *wp )
+Waypoint * a_geotag_waypoint_positioned ( const char *filename, VikCoord coord, double alt, char **name, Waypoint *wp )
 {
 	*name = NULL;
-	if ( wp == NULL ) {
+	if (wp == NULL) {
 		// Need to create waypoint
-		wp = vik_waypoint_new();
+		wp = new Waypoint();
 		wp->visible = true;
 	}
 	wp->coord = coord;
@@ -428,7 +429,7 @@ VikWaypoint* a_geotag_waypoint_positioned ( const char *filename, VikCoord coord
 #endif
 #endif
 
-	vik_waypoint_set_image ( wp, filename );
+	wp->set_image(filename);
 
 	return wp;
 }

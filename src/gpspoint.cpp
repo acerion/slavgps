@@ -45,7 +45,7 @@ typedef struct {
 
 static void a_gpspoint_write_track ( const void * id, const VikTrack *t, FILE *f );
 static void a_gpspoint_write_trackpoint ( VikTrackpoint *tp, TP_write_info_type *write_info );
-static void a_gpspoint_write_waypoint ( const void * id, const VikWaypoint *wp, FILE *f );
+static void a_gpspoint_write_waypoint ( const void * id, const Waypoint * wp, FILE *f );
 
 /* outline for file gpspoint.c
 
@@ -230,7 +230,7 @@ bool a_gpspoint_read_file(VikTrwLayer *trw, FILE *f, const char *dirpath ) {
     if (line_type == GPSPOINT_TYPE_WAYPOINT && line_name)
     {
       have_read_something = true;
-      VikWaypoint *wp = vik_waypoint_new();
+      Waypoint * wp = new Waypoint();
       wp->visible = line_visible;
       wp->altitude = line_altitude;
       wp->has_timestamp = line_has_timestamp;
@@ -242,34 +242,39 @@ bool a_gpspoint_read_file(VikTrwLayer *trw, FILE *f, const char *dirpath ) {
       free( line_name );
       line_name = NULL;
 
-      if ( line_comment )
-        vik_waypoint_set_comment ( wp, line_comment );
+      if (line_comment) {
+        wp->set_comment(line_comment);
+      }
 
-      if ( line_description )
-        vik_waypoint_set_description ( wp, line_description );
+      if (line_description) {
+        wp->set_description(line_description);
+      }
 
-      if ( line_source )
-        vik_waypoint_set_source ( wp, line_source );
+      if (line_source) {
+        wp->set_source(line_source);
+      }
 
-      if ( line_xtype )
-        vik_waypoint_set_type ( wp, line_xtype );
+      if (line_xtype) {
+        wp->set_type(line_xtype);
+      }
 
-      if ( line_image ) {
+      if (line_image) {
         // Ensure the filename is absolute
         if ( g_path_is_absolute ( line_image ) )
-          vik_waypoint_set_image ( wp, line_image );
+          wp->set_image(line_image);
         else {
           // Otherwise create the absolute filename from the directory of the .vik file & and the relative filename
           char *full = g_strconcat(dirpath, G_DIR_SEPARATOR_S, line_image, NULL);
           char *absolute = file_realpath_dup ( full ); // resolved into the canonical name
-          vik_waypoint_set_image ( wp, absolute );
+          wp->set_image(absolute);
           free( absolute );
           free( full );
         }
       }
 
-      if ( line_symbol )
-        vik_waypoint_set_symbol ( wp, line_symbol );
+      if (line_symbol) {
+        wp->set_symbol(line_symbol);
+      }
     }
     else if ((line_type == GPSPOINT_TYPE_TRACK || line_type == GPSPOINT_TYPE_ROUTE) && line_name)
     {
@@ -566,7 +571,7 @@ static void gpspoint_process_key_and_value ( const char *key, unsigned int key_l
   }
 }
 
-static void a_gpspoint_write_waypoint ( const void * id, const VikWaypoint *wp, FILE *f )
+static void a_gpspoint_write_waypoint ( const void * id, const Waypoint * wp, FILE *f )
 {
   static struct LatLon ll;
   char *s_lat, *s_lon;

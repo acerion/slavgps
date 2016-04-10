@@ -34,6 +34,8 @@
 #include "acquire.h"
 #include "geotag_exif.h"
 
+using namespace SlavGPS;
+
 typedef struct {
 	GtkWidget *files;
 	GSList *filelist;  // Files selected
@@ -157,8 +159,8 @@ static bool datasource_geotag_process ( VikTrwLayer *vtl, ProcessOptions *po, Ba
 	while ( cur_file ) {
 		char *filename = (char *) cur_file->data;
 		char *name;
-		VikWaypoint *wp = a_geotag_create_waypoint_from_file ( filename, vik_viewport_get_coord_mode ( adw->vvp ), &name );
-		if ( wp ) {
+		Waypoint * wp = a_geotag_create_waypoint_from_file(filename, vik_viewport_get_coord_mode(adw->vvp), &name);
+		if (wp) {
 			// Create name if geotag method didn't return one
 			if ( !name )
 				name = g_strdup( a_file_basename ( filename ) );

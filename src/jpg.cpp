@@ -33,6 +33,8 @@
 
 #include <stdlib.h>
 
+using namespace SlavGPS;
+
 /**
  * a_jpg_magic_check:
  * @filename: The file
@@ -99,7 +101,7 @@ bool a_jpg_load_file ( VikAggregateLayer *top, const char *filename, VikViewport
 	}
 
 	char *name = NULL;
-	VikWaypoint *wp = NULL;
+	Waypoint * wp = NULL;
 #ifdef VIK_CONFIG_GEOTAG
 	wp = a_geotag_create_waypoint_from_file ( filename, vik_viewport_get_coord_mode (vvp), &name );
 #endif
@@ -111,10 +113,10 @@ bool a_jpg_load_file ( VikAggregateLayer *top, const char *filename, VikViewport
 		free( name );
 	}
 	else {
-		wp = vik_waypoint_new ();
+		wp = new Waypoint();
 		wp->visible = true;
 		vik_trw_layer_filein_add_waypoint ( VIK_TRW_LAYER(vtl), (char*) a_file_basename(filename), wp );
-		vik_waypoint_set_image ( wp, filename );
+		wp->set_image(filename);
 		// Simply set position to the current center
 		wp->coord = *( vik_viewport_get_center ( vvp ) );
 		auto_zoom = false;

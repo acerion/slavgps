@@ -29,57 +29,69 @@
 
 #include <gdk-pixbuf/gdk-pixdata.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
-/* todo important: put these in their own header file, maybe.probably also rename */
 
-#define VIK_WAYPOINT(x) ((VikWaypoint *)(x))
 
-typedef struct _VikWaypoint VikWaypoint;
 
-struct _VikWaypoint {
-  VikCoord coord;
-  bool visible;
-  bool has_timestamp;
-  time_t timestamp;
-  double altitude;
-  char *name;
-  char *comment;
-  char *description;
-  char *source;
-  char *type;
-  char *url;
-  char *image;
-  /* a rather misleading, ugly hack needed for trwlayer's click image.
-   * these are the height at which the thumbnail is being drawn, not the 
-   * dimensions of the original image. */
-  uint8_t image_width;
-  uint8_t image_height;
-  char *symbol;
-  // Only for GUI display
-  GdkPixbuf *symbol_pixbuf;
-};
+namespace SlavGPS {
 
-VikWaypoint *vik_waypoint_new();
-void vik_waypoint_set_name(VikWaypoint *wp, const char *name);
-void vik_waypoint_set_comment(VikWaypoint *wp, const char *comment);
-void vik_waypoint_set_description(VikWaypoint *wp, const char *description);
-void vik_waypoint_set_source(VikWaypoint *wp, const char *source);
-void vik_waypoint_set_type(VikWaypoint *wp, const char *type);
-void vik_waypoint_set_url(VikWaypoint *wp, const char *url);
-void vik_waypoint_set_image(VikWaypoint *wp, const char *image);
-void vik_waypoint_set_symbol(VikWaypoint *wp, const char *symname);
-void vik_waypoint_free(VikWaypoint * wp);
-VikWaypoint *vik_waypoint_copy(const VikWaypoint *wp);
-void vik_waypoint_set_comment_no_copy(VikWaypoint *wp, char *comment);
-bool vik_waypoint_apply_dem_data ( VikWaypoint *wp, bool skip_existing );
-void vik_waypoint_marshall ( VikWaypoint *wp, uint8_t **data, unsigned int *len);
-VikWaypoint *vik_waypoint_unmarshall (uint8_t *data, unsigned int datalen);
+	class Waypoint {
 
-#ifdef __cplusplus
-}
-#endif
+	public:
+		Waypoint();
+		~Waypoint();
 
-#endif
+		Waypoint(const Waypoint& other);
+
+		void set_name(char const * name);
+		void set_comment(char const * comment);
+		void set_description(char const * description);
+		void set_source(char const * source);
+		void set_type(char const * type);
+		void set_url(char const * url);
+		void set_image(char const * image);
+		void set_symbol(char const * symname);
+
+		void set_comment_no_copy(char * comment);
+		bool apply_dem_data( bool skip_existing );
+
+
+		void marshall(uint8_t ** data, size_t * len);
+		static Waypoint * unmarshall(uint8_t * data, size_t datalen);
+
+		static void delete_waypoint(Waypoint *);
+
+
+		VikCoord coord;
+		bool visible;
+		bool has_timestamp;
+		time_t timestamp;
+		double altitude;
+		char * name;
+		char * comment;
+		char * description;
+		char * source;
+		char * type;
+		char * url;
+		char * image;
+		/* a rather misleading, ugly hack needed for trwlayer's click image.
+		 * these are the height at which the thumbnail is being drawn, not the
+		 * dimensions of the original image. */
+		uint8_t image_width;
+		uint8_t image_height;
+		char * symbol;
+		// Only for GUI display
+		GdkPixbuf * symbol_pixbuf;
+	};
+
+
+
+
+
+} /* namespace */
+
+
+
+
+
+#endif /* #ifndef _VIKING_WAYPOINT_H */

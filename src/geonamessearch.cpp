@@ -33,6 +33,8 @@
 #include "viking.h"
 #include "geonamessearch.h"
 
+using namespace SlavGPS;
+
 /* Compatibility */
 #if ! GLIB_CHECK_VERSION(2,22,0)
 #define g_mapped_file_unref g_mapped_file_free
@@ -420,7 +422,7 @@ void a_geonames_wikipedia_box ( VikWindow *vw, VikTrwLayer *vtl, struct LatLon m
   GList *wiki_places;
   GList *selected;
   GList *wp_runner;
-  VikWaypoint *wiki_wp;
+  Waypoint * wiki_wp;
   found_geoname *wiki_geoname;
 
   /* encode doubles in a C locale */
@@ -447,26 +449,26 @@ void a_geonames_wikipedia_box ( VikWindow *vw, VikTrwLayer *vtl, struct LatLon m
   wp_runner = selected;
   while (wp_runner) {
     wiki_geoname = (found_geoname *)wp_runner->data;
-    wiki_wp = vik_waypoint_new();
+    wiki_wp = new Waypoint();
     wiki_wp->visible = true;
     vik_coord_load_from_latlon(&(wiki_wp->coord), vik_trw_layer_get_coord_mode ( vtl ), &(wiki_geoname->ll));
     wiki_wp->altitude = wiki_geoname->elevation;
-    vik_waypoint_set_comment(wiki_wp, wiki_geoname->cmt);
-    vik_waypoint_set_description(wiki_wp, wiki_geoname->desc);
+    wiki_wp->set_comment(wiki_geoname->cmt);
+    wiki_wp->set_description(wiki_geoname->desc);
     // Use the featue type to generate a suitable waypoint icon
     //  http://www.geonames.org/wikipedia/wikipedia_features.html
     // Only a few values supported as only a few symbols make sense
     if ( wiki_geoname->feature ) {
       if ( !strcmp (wiki_geoname->feature, "city") )
-        vik_waypoint_set_symbol(wiki_wp, "city (medium)");
+        wiki_wp->set_symbol("city (medium)");
       if ( !strcmp (wiki_geoname->feature, "edu") )
-        vik_waypoint_set_symbol(wiki_wp, "school");
+        wiki_wp->set_symbol("school");
       if ( !strcmp (wiki_geoname->feature, "airport") )
-        vik_waypoint_set_symbol(wiki_wp, "airport");
+        wiki_wp->set_symbol("airport");
       if ( !strcmp (wiki_geoname->feature, "mountain") )
-        vik_waypoint_set_symbol(wiki_wp, "summit");
+	wiki_wp->set_symbol("summit");
       if ( !strcmp (wiki_geoname->feature, "forest") )
-        vik_waypoint_set_symbol(wiki_wp, "forest");
+        wiki_wp->set_symbol("forest");
     }
     vik_trw_layer_filein_add_waypoint ( vtl, wiki_geoname->name, wiki_wp );
     wp_runner = g_list_next(wp_runner);

@@ -29,14 +29,17 @@
 #include "vikwaypoint.h"
 #include "vikcoord.h"
 
+
+using namespace SlavGPS;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 
-VikWaypoint* a_geotag_create_waypoint_from_file ( const char *filename, VikCoordMode vcmode, char **name );
+Waypoint * a_geotag_create_waypoint_from_file ( const char *filename, VikCoordMode vcmode, char **name );
 
-VikWaypoint* a_geotag_waypoint_positioned ( const char *filename, VikCoord coord, double alt, char **name, VikWaypoint *wp );
+Waypoint * a_geotag_waypoint_positioned ( const char *filename, VikCoord coord, double alt, char **name, Waypoint *wp );
 
 char* a_geotag_get_exif_date_from_file ( const char *filename, bool *has_GPS_info );
 
