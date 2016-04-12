@@ -57,140 +57,139 @@ extern "C" {
 typedef struct _VikViewport VikViewport;
 typedef struct _VikViewportClass VikViewportClass;
 
-struct _VikViewportClass
-{
-  GtkDrawingAreaClass drawing_area_class;
-  void (*updated_center) (VikViewport *vw);
+struct _VikViewportClass {
+	GtkDrawingAreaClass drawing_area_class;
+	void (*updated_center) (VikViewport *vw);
 };
 GType vik_viewport_get_type ();
 
 
 /* Viking initialization */
 VikViewport *vik_viewport_new ();
-void vik_viewport_configure_manually ( VikViewport *vvp, int width, unsigned int height ); /* for off-screen viewports */
-bool vik_viewport_configure ( VikViewport *vp ); 
+void vik_viewport_configure_manually (VikViewport *vvp, int width, unsigned int height); /* for off-screen viewports */
+bool vik_viewport_configure (VikViewport *vp);
 
 
 /* coordinate transformations */
-void vik_viewport_screen_to_coord ( VikViewport *vvp, int x, int y, VikCoord *coord );
-void vik_viewport_coord_to_screen ( VikViewport *vvp, const VikCoord *coord, int *x, int *y );
+void vik_viewport_screen_to_coord (VikViewport *vvp, int x, int y, VikCoord *coord);
+void vik_viewport_coord_to_screen (VikViewport *vvp, const VikCoord *coord, int *x, int *y);
 
 
 /* viewport scale */
-void vik_viewport_set_ympp ( VikViewport *vvp, double ympp );
-void vik_viewport_set_xmpp ( VikViewport *vvp, double xmpp );
-double vik_viewport_get_ympp ( VikViewport *vvp );
-double vik_viewport_get_xmpp ( VikViewport *vvp );
-void vik_viewport_set_zoom ( VikViewport *vvp, double mpp );
-double vik_viewport_get_zoom ( VikViewport *vvp );
-void vik_viewport_zoom_in ( VikViewport *vvp );
-void vik_viewport_zoom_out ( VikViewport *vvp );
+void vik_viewport_set_ympp (VikViewport *vvp, double ympp);
+void vik_viewport_set_xmpp (VikViewport *vvp, double xmpp);
+double vik_viewport_get_ympp (VikViewport *vvp);
+double vik_viewport_get_xmpp (VikViewport *vvp);
+void vik_viewport_set_zoom (VikViewport *vvp, double mpp);
+double vik_viewport_get_zoom (VikViewport *vvp);
+void vik_viewport_zoom_in (VikViewport *vvp);
+void vik_viewport_zoom_out (VikViewport *vvp);
 
 
 /* viewport position */
-const VikCoord *vik_viewport_get_center ( VikViewport *vvp );
-void vik_viewport_set_center_coord ( VikViewport *vvp, const VikCoord *coord, bool save_position );
-void vik_viewport_set_center_screen ( VikViewport *vvp, int x, int y );
-void vik_viewport_center_for_zonen ( VikViewport *vvp, struct UTM *center, int zone);
-char vik_viewport_leftmost_zone ( VikViewport *vvp );
-char vik_viewport_rightmost_zone ( VikViewport *vvp );
-void vik_viewport_set_center_utm ( VikViewport *vvp, const struct UTM *utm, bool save_position );
-void vik_viewport_set_center_latlon ( VikViewport *vvp, const struct LatLon *ll, bool save_position );
-void vik_viewport_corners_for_zonen ( VikViewport *vvp, int zone, VikCoord *ul, VikCoord *br );
-void vik_viewport_get_min_max_lat_lon ( VikViewport *vp, double *min_lat, double *max_lat, double *min_lon, double *max_lon );
+const VikCoord *vik_viewport_get_center (VikViewport *vvp);
+void vik_viewport_set_center_coord (VikViewport *vvp, const VikCoord *coord, bool save_position);
+void vik_viewport_set_center_screen (VikViewport *vvp, int x, int y);
+void vik_viewport_center_for_zonen (VikViewport *vvp, struct UTM *center, int zone);
+char vik_viewport_leftmost_zone (VikViewport *vvp);
+char vik_viewport_rightmost_zone (VikViewport *vvp);
+void vik_viewport_set_center_utm (VikViewport *vvp, const struct UTM *utm, bool save_position);
+void vik_viewport_set_center_latlon (VikViewport *vvp, const struct LatLon *ll, bool save_position);
+void vik_viewport_corners_for_zonen (VikViewport *vvp, int zone, VikCoord *ul, VikCoord *br);
+void vik_viewport_get_min_max_lat_lon (VikViewport *vp, double *min_lat, double *max_lat, double *min_lon, double *max_lon);
 
-bool vik_viewport_go_back ( VikViewport *vvp );
-bool vik_viewport_go_forward ( VikViewport *vvp );
-bool vik_viewport_back_available ( const VikViewport *vvp );
-bool vik_viewport_forward_available ( const VikViewport *vvp );
-void vik_viewport_show_centers ( VikViewport *vvp, GtkWindow *parent );
+bool vik_viewport_go_back (VikViewport *vvp);
+bool vik_viewport_go_forward (VikViewport *vvp);
+bool vik_viewport_back_available (const VikViewport *vvp);
+bool vik_viewport_forward_available (const VikViewport *vvp);
+void vik_viewport_show_centers (VikViewport *vvp, GtkWindow *parent);
 
 /* drawmode management */
 typedef enum {
-  VIK_VIEWPORT_DRAWMODE_UTM=0,
-  VIK_VIEWPORT_DRAWMODE_EXPEDIA,
-  VIK_VIEWPORT_DRAWMODE_MERCATOR,
-  VIK_VIEWPORT_DRAWMODE_LATLON,
-  VIK_VIEWPORT_NUM_DRAWMODES      /*< skip >*/
+	VIK_VIEWPORT_DRAWMODE_UTM=0,
+	VIK_VIEWPORT_DRAWMODE_EXPEDIA,
+	VIK_VIEWPORT_DRAWMODE_MERCATOR,
+	VIK_VIEWPORT_DRAWMODE_LATLON,
+	VIK_VIEWPORT_NUM_DRAWMODES      /*< skip >*/
 } VikViewportDrawMode;
 
-VikCoordMode vik_viewport_get_coord_mode ( const VikViewport *vvp );
-bool vik_viewport_is_one_zone ( VikViewport *vvp );
+VikCoordMode vik_viewport_get_coord_mode (const VikViewport *vvp);
+bool vik_viewport_is_one_zone (VikViewport *vvp);
 const char *vik_viewport_get_drawmode_name(VikViewport *vv, VikViewportDrawMode mode);
-void vik_viewport_set_drawmode ( VikViewport *vvp, VikViewportDrawMode drawmode );
-VikViewportDrawMode vik_viewport_get_drawmode ( VikViewport *vvp );
+void vik_viewport_set_drawmode (VikViewport *vvp, VikViewportDrawMode drawmode);
+VikViewportDrawMode vik_viewport_get_drawmode (VikViewport *vvp);
    /* Do not forget to update vik_viewport_get_drawmode_name() if you modify VikViewportDrawMode */
 
 
 /* Triggers */
-void vik_viewport_set_trigger ( VikViewport *vp, void * trigger );
-void * vik_viewport_get_trigger ( VikViewport *vp );
-void vik_viewport_snapshot_save ( VikViewport *vp );
-void vik_viewport_snapshot_load ( VikViewport *vp );
+void vik_viewport_set_trigger (VikViewport *vp, void * trigger);
+void * vik_viewport_get_trigger (VikViewport *vp);
+void vik_viewport_snapshot_save (VikViewport *vp);
+void vik_viewport_snapshot_load (VikViewport *vp);
 void vik_viewport_set_half_drawn(VikViewport *vp, bool half_drawn);
-bool vik_viewport_get_half_drawn( VikViewport *vp );
+bool vik_viewport_get_half_drawn(VikViewport *vp);
 
 
 /***************************************************************************************************
- *  Drawing-related operations 
+ *  Drawing-related operations
  ***************************************************************************************************/
 
 /* Viewport buffer management/drawing to screen */
-GdkPixmap *vik_viewport_get_pixmap ( VikViewport *vvp ); /* get pointer to drawing buffer */
-void vik_viewport_sync ( VikViewport *vvp );             /* draw buffer to window */
-void vik_viewport_pan_sync ( VikViewport *vvp, int x_off, int y_off );
-void vik_viewport_clear ( VikViewport *vvp );
-void vik_viewport_draw_pixbuf ( VikViewport *vvp, GdkPixbuf *pixbuf, int src_x, int src_y,
-                              int dest_x, int dest_y, int w, int h );
-int vik_viewport_get_width ( VikViewport *vvp );
-int vik_viewport_get_height ( VikViewport *vvp );
+GdkPixmap *vik_viewport_get_pixmap (VikViewport *vvp); /* get pointer to drawing buffer */
+void vik_viewport_sync (VikViewport *vvp);             /* draw buffer to window */
+void vik_viewport_pan_sync (VikViewport *vvp, int x_off, int y_off);
+void vik_viewport_clear (VikViewport *vvp);
+void vik_viewport_draw_pixbuf (VikViewport *vvp, GdkPixbuf *pixbuf, int src_x, int src_y,
+                              int dest_x, int dest_y, int w, int h);
+int vik_viewport_get_width (VikViewport *vvp);
+int vik_viewport_get_height (VikViewport *vvp);
 
-void vik_viewport_reset_copyrights ( VikViewport *vp );
-void vik_viewport_add_copyright ( VikViewport *vp, const char *copyright );
+void vik_viewport_reset_copyrights (VikViewport *vp);
+void vik_viewport_add_copyright (VikViewport *vp, const char *copyright);
 
-void vik_viewport_reset_logos ( VikViewport *vp );
-void vik_viewport_add_logo ( VikViewport *vp, const GdkPixbuf *logo );
+void vik_viewport_reset_logos (VikViewport *vp);
+void vik_viewport_add_logo (VikViewport *vp, const GdkPixbuf *logo);
 
 /* Viewport features */
-void vik_viewport_draw_scale ( VikViewport *vvp );
-void vik_viewport_set_draw_scale ( VikViewport *vvp, bool draw_scale );
-bool vik_viewport_get_draw_scale ( VikViewport *vvp );
-void vik_viewport_draw_copyright ( VikViewport *vvp );
-void vik_viewport_draw_centermark ( VikViewport *vvp );
-void vik_viewport_set_draw_centermark ( VikViewport *vvp, bool draw_centermark );
-bool vik_viewport_get_draw_centermark ( VikViewport *vvp );
-void vik_viewport_draw_logo ( VikViewport *vvp );
-void vik_viewport_set_draw_highlight ( VikViewport *vvp, bool draw_highlight );
-bool vik_viewport_get_draw_highlight ( VikViewport *vvp );
+void vik_viewport_draw_scale (VikViewport *vvp);
+void vik_viewport_set_draw_scale (VikViewport *vvp, bool draw_scale);
+bool vik_viewport_get_draw_scale (VikViewport *vvp);
+void vik_viewport_draw_copyright (VikViewport *vvp);
+void vik_viewport_draw_centermark (VikViewport *vvp);
+void vik_viewport_set_draw_centermark (VikViewport *vvp, bool draw_centermark);
+bool vik_viewport_get_draw_centermark (VikViewport *vvp);
+void vik_viewport_draw_logo (VikViewport *vvp);
+void vik_viewport_set_draw_highlight (VikViewport *vvp, bool draw_highlight);
+bool vik_viewport_get_draw_highlight (VikViewport *vvp);
 
 /* Color/graphics context management */
-void vik_viewport_set_background_color ( VikViewport *vvp, const char *color );
-const char *vik_viewport_get_background_color ( VikViewport *vvp );
-GdkColor *vik_viewport_get_background_gdkcolor ( VikViewport *vvp );
-void vik_viewport_set_background_gdkcolor ( VikViewport *vvp, GdkColor * );
-void vik_gc_get_fg_color ( GdkGC *gc, GdkColor *dest ); /* warning: could be slow, don't use obsessively */
-GdkGC *vik_viewport_new_gc ( VikViewport *vvp, const char *colorname, int thickness );
-GdkGC *vik_viewport_new_gc_from_color ( VikViewport *vvp, GdkColor *color, int thickness );
-GdkFunction vik_gc_get_function ( GdkGC *gc );
+void vik_viewport_set_background_color (VikViewport *vvp, const char *color);
+const char *vik_viewport_get_background_color (VikViewport *vvp);
+GdkColor *vik_viewport_get_background_gdkcolor (VikViewport *vvp);
+void vik_viewport_set_background_gdkcolor (VikViewport *vvp, GdkColor *);
+void vik_gc_get_fg_color (GdkGC *gc, GdkColor *dest); /* warning: could be slow, don't use obsessively */
+GdkGC *vik_viewport_new_gc (VikViewport *vvp, const char *colorname, int thickness);
+GdkGC *vik_viewport_new_gc_from_color (VikViewport *vvp, GdkColor *color, int thickness);
+GdkFunction vik_gc_get_function (GdkGC *gc);
 
-void vik_viewport_set_highlight_color ( VikViewport *vvp, const char *color );
-const char *vik_viewport_get_highlight_color ( VikViewport *vvp );
-GdkColor *vik_viewport_get_highlight_gdkcolor ( VikViewport *vvp );
-void vik_viewport_set_highlight_gdkcolor ( VikViewport *vvp, GdkColor * );
-GdkGC* vik_viewport_get_gc_highlight ( VikViewport *vvp );
-void vik_viewport_set_highlight_thickness ( VikViewport *vvp, int thickness );
+void vik_viewport_set_highlight_color (VikViewport *vvp, const char *color);
+const char *vik_viewport_get_highlight_color (VikViewport *vvp);
+GdkColor *vik_viewport_get_highlight_gdkcolor (VikViewport *vvp);
+void vik_viewport_set_highlight_gdkcolor (VikViewport *vvp, GdkColor *);
+GdkGC* vik_viewport_get_gc_highlight (VikViewport *vvp);
+void vik_viewport_set_highlight_thickness (VikViewport *vvp, int thickness);
 
 /* Drawing primitives */
-void a_viewport_clip_line ( int *x1, int *y1, int *x2, int *y2 ); /* run this before drawing a line. vik_viewport_draw_line runs it for you */
-void vik_viewport_draw_line ( VikViewport *vvp, GdkGC *gc, int x1, int y1, int x2, int y2 );
-void vik_viewport_draw_rectangle ( VikViewport *vvp, GdkGC *gc, bool filled, int x1, int y1, int x2, int y2 );
-void vik_viewport_draw_string ( VikViewport *vvp, GdkFont *font, GdkGC *gc, int x1, int y1, const char *string );
-void vik_viewport_draw_arc ( VikViewport *vvp, GdkGC *gc, bool filled, int x, int y, int width, int height, int angle1, int angle2 );
-void vik_viewport_draw_polygon ( VikViewport *vvp, GdkGC *gc, bool filled, GdkPoint *points, int npoints );
-void vik_viewport_draw_layout ( VikViewport *vvp, GdkGC *gc, int x, int y, PangoLayout *layout );
+void a_viewport_clip_line (int *x1, int *y1, int *x2, int *y2); /* run this before drawing a line. vik_viewport_draw_line runs it for you */
+void vik_viewport_draw_line (VikViewport *vvp, GdkGC *gc, int x1, int y1, int x2, int y2);
+void vik_viewport_draw_rectangle (VikViewport *vvp, GdkGC *gc, bool filled, int x1, int y1, int x2, int y2);
+void vik_viewport_draw_string (VikViewport *vvp, GdkFont *font, GdkGC *gc, int x1, int y1, const char *string);
+void vik_viewport_draw_arc (VikViewport *vvp, GdkGC *gc, bool filled, int x, int y, int width, int height, int angle1, int angle2);
+void vik_viewport_draw_polygon (VikViewport *vvp, GdkGC *gc, bool filled, GdkPoint *points, int npoints);
+void vik_viewport_draw_layout (VikViewport *vvp, GdkGC *gc, int x, int y, PangoLayout *layout);
 
 /* Utilities */
-void vik_viewport_compute_bearing ( VikViewport *vp, int x1, int y1, int x2, int y2, double *angle, double *baseangle );
+void vik_viewport_compute_bearing (VikViewport *vp, int x1, int y1, int x2, int y2, double *angle, double *baseangle);
 
 #ifdef __cplusplus
 }
