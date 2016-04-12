@@ -253,8 +253,8 @@ char* vu_trackpoint_formatted_message ( char *format_code, Trackpoint *tp, Track
 		case 'F': {
 			if ( trk ) {
 				// Distance to the end 'Finish' (along the track)
-				double distd =	vik_track_get_length_to_trackpoint (trk, tp);
-				double diste =	vik_track_get_length_including_gaps ( trk );
+				double distd = trk->get_length_to_trackpoint(tp);
+				double diste = trk->get_length_including_gaps();
 				double dist = diste - distd;
 				char *dist_units_str = NULL;
 				vik_units_distance_t dist_units = a_vik_get_units_distance ();
@@ -282,7 +282,7 @@ char* vu_trackpoint_formatted_message ( char *format_code, Trackpoint *tp, Track
 		case 'D': {
 			if ( trk ) {
 				// Distance from start (along the track)
-				double distd =	vik_track_get_length_to_trackpoint (trk, tp);
+				double distd = trk->get_length_to_trackpoint(tp);
 				char *dist_units_str = NULL;
 				vik_units_distance_t dist_units = a_vik_get_units_distance ();
 				switch (dist_units) {

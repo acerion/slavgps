@@ -1575,7 +1575,7 @@ static Trackpoint * create_realtime_trackpoint(VikGpsLayer *vgl, bool forced)
         vik_coord_load_from_latlon(&tp->coord,
              vik_trw_layer_get_coord_mode(vgl->trw_children[TRW_REALTIME]), &ll);
 
-        vik_track_add_trackpoint ( vgl->realtime_track, tp, true ); // Ensure bounds is recalculated
+        vgl->realtime_track->add_trackpoint(tp, true); // Ensure bounds is recalculated
         vgl->realtime_fix.dirty = false;
         vgl->realtime_fix.satellites_used = 0;
         vgl->last_fix = vgl->realtime_fix;
@@ -1749,7 +1749,7 @@ static bool rt_gpsd_try_connect(void * *data)
 
   if (vgl->realtime_record) {
     VikTrwLayer *vtl = vgl->trw_children[TRW_REALTIME];
-    vgl->realtime_track = vik_track_new();
+    vgl->realtime_track = new Track();
     vgl->realtime_track->visible = true;
     vik_trw_layer_add_track(vtl, make_track_name(vtl), vgl->realtime_track);
   }

@@ -423,7 +423,7 @@ static void trw_layer_track_list_add ( vik_trw_track_list_t *vtdl,
 	Track * trk = vtdl->trk;
 	VikTrwLayer *vtl = vtdl->vtl;
 
-	double trk_dist = vik_track_get_length ( trk );
+	double trk_dist = trk->get_length();
 	// Store unit converted value
 	switch ( dist_units ) {
 	case VIK_UNITS_DISTANCE_MILES:
@@ -469,7 +469,7 @@ static void trw_layer_track_list_add ( vik_trw_track_list_t *vtdl,
 	double max_speed = 0.0;
 	double max_alt = 0.0;
 
-	av_speed = vik_track_get_average_speed ( trk );
+	av_speed = trk->get_average_speed();
 	switch (speed_units) {
 	case VIK_UNITS_SPEED_KILOMETRES_PER_HOUR: av_speed = VIK_MPS_TO_KPH(av_speed); break;
 	case VIK_UNITS_SPEED_MILES_PER_HOUR:      av_speed = VIK_MPS_TO_MPH(av_speed); break;
@@ -478,7 +478,7 @@ static void trw_layer_track_list_add ( vik_trw_track_list_t *vtdl,
 		break;
 	}
 
-	max_speed = vik_track_get_max_speed ( trk );
+	max_speed = trk->get_max_speed();
 	switch (speed_units) {
 	case VIK_UNITS_SPEED_KILOMETRES_PER_HOUR: max_speed = VIK_MPS_TO_KPH(max_speed); break;
 	case VIK_UNITS_SPEED_MILES_PER_HOUR:      max_speed = VIK_MPS_TO_MPH(max_speed); break;
@@ -489,7 +489,7 @@ static void trw_layer_track_list_add ( vik_trw_track_list_t *vtdl,
 
 	// TODO - make this a function to get min / max values?
 	double *altitudes = NULL;
-	altitudes = vik_track_make_elevation_map ( trk, 500 );
+	altitudes = trk->make_elevation_map(500);
 	if ( altitudes ) {
 		max_alt = -1000;
 		unsigned int i;

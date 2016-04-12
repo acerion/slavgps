@@ -388,9 +388,9 @@ static Trackpoint * set_center_at_graph_position(double event_x,
     x = PROFILE_WIDTH;
 
   if (time_base)
-    tp = vik_track_get_closest_tp_by_percentage_time (trk, (double) x / PROFILE_WIDTH, NULL );
+    tp = trk->get_closest_tp_by_percentage_time((double) x / PROFILE_WIDTH, NULL );
   else
-    tp = vik_track_get_closest_tp_by_percentage_dist (trk, (double) x / PROFILE_WIDTH, NULL );
+    tp = trk->get_closest_tp_by_percentage_dist((double) x / PROFILE_WIDTH, NULL );
 
   if (tp) {
     VikCoord coord = tp->coord;
@@ -742,7 +742,7 @@ void track_profile_move( GtkWidget *event_box, GdkEventMotion *event, PropWidget
     x = widgets->profile_width;
 
   double meters_from_start;
-  Trackpoint * tp = vik_track_get_closest_tp_by_percentage_dist ( widgets->trk, (double) x / widgets->profile_width, &meters_from_start );
+  Trackpoint * tp = widgets->trk->get_closest_tp_by_percentage_dist((double) x / widgets->profile_width, &meters_from_start );
   if (tp && widgets->w_cur_dist) {
     static char tmp_buf[20];
     vik_units_distance_t dist_units = a_vik_get_units_distance ();
@@ -825,7 +825,7 @@ void track_gradient_move( GtkWidget *event_box, GdkEventMotion *event, PropWidge
     x = widgets->profile_width;
 
   double meters_from_start;
-  Trackpoint * tp = vik_track_get_closest_tp_by_percentage_dist ( widgets->trk, (double) x / widgets->profile_width, &meters_from_start );
+  Trackpoint * tp = widgets->trk->get_closest_tp_by_percentage_dist((double) x / widgets->profile_width, &meters_from_start );
   if (tp && widgets->w_cur_gradient_dist) {
     static char tmp_buf[20];
     vik_units_distance_t dist_units = a_vik_get_units_distance ();
@@ -932,7 +932,7 @@ void track_vt_move( GtkWidget *event_box, GdkEventMotion *event, PropWidgets *wi
     x = widgets->profile_width;
 
   time_t seconds_from_start;
-  Trackpoint * tp = vik_track_get_closest_tp_by_percentage_time ( widgets->trk, (double) x / widgets->profile_width, &seconds_from_start );
+  Trackpoint * tp = widgets->trk->get_closest_tp_by_percentage_time((double) x / widgets->profile_width, &seconds_from_start );
   if (tp && widgets->w_cur_time) {
     time_label_update ( widgets->w_cur_time, seconds_from_start );
   }
@@ -1026,7 +1026,7 @@ void track_dt_move( GtkWidget *event_box, GdkEventMotion *event, PropWidgets *wi
     x = widgets->profile_width;
 
   time_t seconds_from_start;
-  Trackpoint * tp = vik_track_get_closest_tp_by_percentage_time ( widgets->trk, (double) x / widgets->profile_width, &seconds_from_start );
+  Trackpoint * tp = widgets->trk->get_closest_tp_by_percentage_time ((double) x / widgets->profile_width, &seconds_from_start );
   if (tp && widgets->w_cur_dist_time) {
     time_label_update ( widgets->w_cur_dist_time, seconds_from_start );
   }
@@ -1112,7 +1112,7 @@ void track_et_move( GtkWidget *event_box, GdkEventMotion *event, PropWidgets *wi
     x = widgets->profile_width;
 
   time_t seconds_from_start;
-  Trackpoint * tp = vik_track_get_closest_tp_by_percentage_time ( widgets->trk, (double) x / widgets->profile_width, &seconds_from_start );
+  Trackpoint * tp = widgets->trk->get_closest_tp_by_percentage_time((double) x / widgets->profile_width, &seconds_from_start );
   if (tp && widgets->w_cur_elev_time) {
     time_label_update ( widgets->w_cur_elev_time, seconds_from_start );
   }
@@ -1188,7 +1188,7 @@ void track_sd_move( GtkWidget *event_box, GdkEventMotion *event, PropWidgets *wi
     x = widgets->profile_width;
 
   double meters_from_start;
-  Trackpoint * tp = vik_track_get_closest_tp_by_percentage_dist ( widgets->trk, (double) x / widgets->profile_width, &meters_from_start );
+  Trackpoint * tp = widgets->trk->get_closest_tp_by_percentage_dist((double) x / widgets->profile_width, &meters_from_start );
   if (tp && widgets->w_cur_speed_dist) {
     static char tmp_buf[20];
     vik_units_distance_t dist_units = a_vik_get_units_distance ();
@@ -1290,7 +1290,7 @@ static void draw_dem_alt_speed_dist(Track * trk,
 {
   GList *iter;
   double max_speed = 0;
-  double total_length = vik_track_get_length_including_gaps(trk);
+  double total_length = trk->get_length_including_gaps();
 
   // Calculate the max speed factor
   if (do_speed)
@@ -1524,7 +1524,7 @@ static void draw_elevations (GtkWidget *image, Track * trk, PropWidgets *widgets
   if ( widgets->altitudes )
     free( widgets->altitudes );
 
-  widgets->altitudes = vik_track_make_elevation_map ( trk, widgets->profile_width );
+  widgets->altitudes = trk->make_elevation_map(widgets->profile_width );
 
   if ( widgets->altitudes == NULL )
     return;
@@ -1604,7 +1604,7 @@ static void draw_elevations (GtkWidget *image, Track * trk, PropWidgets *widgets
 
     // Ensure somekind of max speed when not set
     if ( widgets->max_speed < 0.01 )
-      widgets->max_speed = vik_track_get_max_speed(trk);
+      widgets->max_speed = trk->get_max_speed();
 
     draw_dem_alt_speed_dist(trk,
 			    GDK_DRAWABLE(pix),
@@ -1646,7 +1646,7 @@ static void draw_speed_dist(Track * trk,
 {
   GList *iter;
   double max_speed = 0;
-  double total_length = vik_track_get_length_including_gaps(trk);
+  double total_length = trk->get_length_including_gaps();
 
   // Calculate the max speed factor
   if (do_speed)
@@ -1679,7 +1679,7 @@ static void draw_gradients (GtkWidget *image, Track * trk, PropWidgets *widgets 
   if ( widgets->gradients )
     free( widgets->gradients );
 
-  widgets->gradients = vik_track_make_gradient_map ( trk, widgets->profile_width );
+  widgets->gradients = trk->make_gradient_map(widgets->profile_width );
 
   if ( widgets->gradients == NULL )
     return;
@@ -1725,7 +1725,7 @@ static void draw_gradients (GtkWidget *image, Track * trk, PropWidgets *widgets 
 
     // Ensure somekind of max speed when not set
     if ( widgets->max_speed < 0.01 )
-      widgets->max_speed = vik_track_get_max_speed(trk);
+      widgets->max_speed = trk->get_max_speed();
 
     draw_speed_dist(trk,
 			    GDK_DRAWABLE(pix),
@@ -1770,11 +1770,11 @@ static void draw_vt ( GtkWidget *image, Track * trk, PropWidgets *widgets)
   if ( widgets->speeds )
     free( widgets->speeds );
 
-  widgets->speeds = vik_track_make_speed_map ( trk, widgets->profile_width );
+  widgets->speeds = trk->make_speed_map(widgets->profile_width);
   if ( widgets->speeds == NULL )
     return;
 
-  widgets->duration = vik_track_get_duration ( trk, true );
+  widgets->duration = trk->get_duration(true);
   // Negative time or other problem
   if ( widgets->duration <= 0 )
     return;
@@ -1909,7 +1909,7 @@ static void draw_dt ( GtkWidget *image, Track * trk, PropWidgets *widgets )
   if ( widgets->distances )
     free( widgets->distances );
 
-  widgets->distances = vik_track_make_distance_map ( trk, widgets->profile_width );
+  widgets->distances = trk->make_distance_map(widgets->profile_width);
   if ( widgets->distances == NULL )
     return;
 
@@ -1934,7 +1934,7 @@ static void draw_dt ( GtkWidget *image, Track * trk, PropWidgets *widgets )
       break;
   }
 
-  widgets->duration = vik_track_get_duration ( widgets->trk, true );
+  widgets->duration = widgets->trk->get_duration(true);
   // Negative time or other problem
   if ( widgets->duration <= 0 )
     return;
@@ -1950,13 +1950,13 @@ static void draw_dt ( GtkWidget *image, Track * trk, PropWidgets *widgets )
   double maxd;
   switch ( dist_units ) {
   case VIK_UNITS_DISTANCE_MILES:
-    maxd = VIK_METERS_TO_MILES(vik_track_get_length_including_gaps (trk));
+    maxd = VIK_METERS_TO_MILES(trk->get_length_including_gaps());
     break;
   case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
-    maxd = VIK_METERS_TO_NAUTICAL_MILES(vik_track_get_length_including_gaps (trk));
+    maxd = VIK_METERS_TO_NAUTICAL_MILES(trk->get_length_including_gaps());
     break;
   default:
-    maxd = vik_track_get_length_including_gaps (trk) / 1000.0;
+    maxd = trk->get_length_including_gaps() / 1000.0;
     break;
   }
 
@@ -2030,7 +2030,7 @@ static void draw_et ( GtkWidget *image, Track * trk, PropWidgets *widgets )
   if ( widgets->ats )
     free( widgets->ats );
 
-  widgets->ats = vik_track_make_elevation_time_map ( trk, widgets->profile_width );
+  widgets->ats = trk->make_elevation_time_map(widgets->profile_width );
 
   if ( widgets->ats == NULL )
     return;
@@ -2052,7 +2052,7 @@ static void draw_et ( GtkWidget *image, Track * trk, PropWidgets *widgets )
   // Assign locally
   double mina = widgets->draw_min_altitude_time;
 
-  widgets->duration = vik_track_get_duration ( widgets->trk, true );
+  widgets->duration = widgets->trk->get_duration(true);
   // Negative time or other problem
   if ( widgets->duration <= 0 )
     return;
@@ -2105,7 +2105,7 @@ static void draw_et ( GtkWidget *image, Track * trk, PropWidgets *widgets )
 
     for ( i = 0; i < widgets->profile_width; i++ ) {
       // This could be slow doing this each time...
-      Trackpoint * tp = vik_track_get_closest_tp_by_percentage_time ( widgets->trk, ((double)i/(double)widgets->profile_width), NULL );
+      Trackpoint * tp = widgets->trk->get_closest_tp_by_percentage_time(((double)i/(double)widgets->profile_width), NULL );
       if ( tp ) {
         int16_t elev = a_dems_get_elev_by_coord(&(tp->coord), VIK_DEM_INTERPOL_SIMPLE);
         if ( elev != VIK_DEM_INVALID_ELEVATION ) {
@@ -2162,7 +2162,7 @@ static void draw_sd ( GtkWidget *image, Track * trk, PropWidgets *widgets)
   if ( widgets->speeds_dist )
     free( widgets->speeds_dist );
 
-  widgets->speeds_dist = vik_track_make_speed_dist_map(trk, widgets->profile_width );
+  widgets->speeds_dist = trk->make_speed_dist_map(widgets->profile_width);
   if ( widgets->speeds_dist == NULL )
     return;
 
@@ -2251,7 +2251,7 @@ static void draw_sd ( GtkWidget *image, Track * trk, PropWidgets *widgets)
     gdk_color_parse ( "red", &color );
     gdk_gc_set_rgb_fg_color ( gps_speed_gc, &color);
 
-    double dist = vik_track_get_length_including_gaps(trk);
+    double dist = trk->get_length_including_gaps();
     double dist_tp = 0.0;
 
     GList *iter = trk->trackpoints;
@@ -2646,7 +2646,7 @@ GtkWidget *vik_trw_layer_create_profile ( GtkWidget *window, PropWidgets *widget
   GtkWidget *eventbox;
 
   // First allocation
-  widgets->altitudes = vik_track_make_elevation_map ( widgets->trk, widgets->profile_width );
+  widgets->altitudes = widgets->trk->make_elevation_map(widgets->profile_width );
 
   if ( widgets->altitudes == NULL ) {
     *min_alt = *max_alt = VIK_DEFAULT_ALTITUDE;
@@ -2679,7 +2679,7 @@ GtkWidget *vik_trw_layer_create_gradient ( GtkWidget *window, PropWidgets *widge
   GtkWidget *eventbox;
 
   // First allocation
-  widgets->gradients = vik_track_make_gradient_map ( widgets->trk, widgets->profile_width );
+  widgets->gradients = widgets->trk->make_gradient_map(widgets->profile_width );
 
   if ( widgets->gradients == NULL ) {
     return NULL;
@@ -2709,7 +2709,7 @@ GtkWidget *vik_trw_layer_create_vtdiag ( GtkWidget *window, PropWidgets *widgets
   GtkWidget *eventbox;
 
   // First allocation
-  widgets->speeds = vik_track_make_speed_map ( widgets->trk, widgets->profile_width );
+  widgets->speeds = widgets->trk->make_speed_map(widgets->profile_width );
   if ( widgets->speeds == NULL )
     return NULL;
 
@@ -2760,7 +2760,7 @@ GtkWidget *vik_trw_layer_create_dtdiag ( GtkWidget *window, PropWidgets *widgets
   GtkWidget *eventbox;
 
   // First allocation
-  widgets->distances = vik_track_make_distance_map ( widgets->trk, widgets->profile_width );
+  widgets->distances = widgets->trk->make_distance_map(widgets->profile_width );
   if ( widgets->distances == NULL )
     return NULL;
 
@@ -2789,7 +2789,7 @@ GtkWidget *vik_trw_layer_create_etdiag ( GtkWidget *window, PropWidgets *widgets
   GtkWidget *eventbox;
 
   // First allocation
-  widgets->ats = vik_track_make_elevation_time_map ( widgets->trk, widgets->profile_width );
+  widgets->ats = widgets->trk->make_elevation_time_map(widgets->profile_width );
   if ( widgets->ats == NULL )
     return NULL;
 
@@ -2817,7 +2817,7 @@ GtkWidget *vik_trw_layer_create_sddiag ( GtkWidget *window, PropWidgets *widgets
   GtkWidget *eventbox;
 
   // First allocation
-  widgets->speeds_dist = vik_track_make_speed_dist_map ( widgets->trk, widgets->profile_width );
+  widgets->speeds_dist = widgets->trk->make_speed_dist_map(widgets->profile_width ); // kamilFIXME
   if ( widgets->speeds_dist == NULL )
     return NULL;
 
@@ -2883,22 +2883,22 @@ static void propwin_response_cb( GtkDialog *dialog, int resp, PropWidgets *widge
     case GTK_RESPONSE_REJECT:
       break;
     case GTK_RESPONSE_ACCEPT:
-      vik_track_set_comment(trk, gtk_entry_get_text(GTK_ENTRY(widgets->w_comment)));
-      vik_track_set_description(trk, gtk_entry_get_text(GTK_ENTRY(widgets->w_description)));
-      vik_track_set_source(trk, gtk_entry_get_text(GTK_ENTRY(widgets->w_source)));
-      vik_track_set_type(trk, gtk_entry_get_text(GTK_ENTRY(widgets->w_type)));
+      trk->set_comment(gtk_entry_get_text(GTK_ENTRY(widgets->w_comment)));
+      trk->set_description(gtk_entry_get_text(GTK_ENTRY(widgets->w_description)));
+      trk->set_source(gtk_entry_get_text(GTK_ENTRY(widgets->w_source)));
+      trk->set_type(gtk_entry_get_text(GTK_ENTRY(widgets->w_type)));
       gtk_color_button_get_color ( GTK_COLOR_BUTTON(widgets->w_color), &(trk->color) );
-      trk->draw_name_mode = (VikTrackDrawnameType) gtk_combo_box_get_active ( GTK_COMBO_BOX(widgets->w_namelabel) );
+      trk->draw_name_mode = (TrackDrawnameType) gtk_combo_box_get_active ( GTK_COMBO_BOX(widgets->w_namelabel) );
       trk->max_number_dist_labels = gtk_spin_button_get_value_as_int ( GTK_SPIN_BUTTON(widgets->w_number_distlabels) );
       trw_layer_update_treeview ( widgets->vtl, widgets->trk);
       vik_layer_emit_update ( VIK_LAYER(vtl) );
       break;
     case VIK_TRW_LAYER_PROPWIN_REVERSE:
-      vik_track_reverse(trk);
+      trk->reverse();
       vik_layer_emit_update ( VIK_LAYER(vtl) );
       break;
     case VIK_TRW_LAYER_PROPWIN_DEL_DUP:
-      vik_track_remove_dup_points(trk); // NB ignore the returned answer
+      trk->remove_dup_points(); // NB ignore the returned answer
       // As we could have seen the nuber of dulplicates that would be deleted in the properties statistics tab,
       //   choose not to inform the user unnecessarily
 
@@ -2911,7 +2911,7 @@ static void propwin_response_cb( GtkDialog *dialog, int resp, PropWidgets *widge
         /* get new tracks, add them and then the delete old one. old can still exist on clipboard. */
         unsigned int ntracks;
 
-        Track **tracks = vik_track_split_into_segments(trk, &ntracks);
+        Track **tracks = trk->split_into_segments(&ntracks);
         char *new_tr_name;
         unsigned int i;
         for ( i = 0; i < ntracks; i++ )
@@ -2924,7 +2924,7 @@ static void propwin_response_cb( GtkDialog *dialog, int resp, PropWidgets *widge
               vik_trw_layer_add_route ( vtl, new_tr_name, tracks[i] );
             else
               vik_trw_layer_add_track ( vtl, new_tr_name, tracks[i] );
-            vik_track_calculate_bounds ( tracks[i] );
+            tracks[i]->calculate_bounds();
 
             free( new_tr_name );
 	  }
@@ -2933,7 +2933,7 @@ static void propwin_response_cb( GtkDialog *dialog, int resp, PropWidgets *widge
         {
           free( tracks );
           /* Don't let track destroy this dialog */
-          vik_track_clear_property_dialog(trk);
+          trk->clear_property_dialog();
           if ( widgets->trk->is_route )
             vik_trw_layer_delete_route ( vtl, trk);
           else
@@ -2961,9 +2961,9 @@ static void propwin_response_cb( GtkDialog *dialog, int resp, PropWidgets *widge
                                                            widgets->trk->name);
         iter->prev->next = NULL;
         iter->prev = NULL;
-        Track * trk_right = vik_track_new();
+        Track * trk_right = new Track();
         if ( trk->comment )
-          vik_track_set_comment ( trk_right, trk->comment );
+          trk_right->set_comment(trk->comment );
         trk_right->visible = trk->visible;
         trk_right->is_route = trk->is_route;
         trk_right->trackpoints = iter;
@@ -2972,8 +2972,8 @@ static void propwin_response_cb( GtkDialog *dialog, int resp, PropWidgets *widge
           vik_trw_layer_add_route(vtl, r_name, trk_right);
         else
           vik_trw_layer_add_track(vtl, r_name, trk_right);
-        vik_track_calculate_bounds(trk);
-        vik_track_calculate_bounds(trk_right);
+        trk->calculate_bounds();
+        trk_right->calculate_bounds();
 
         free( r_name );
 
@@ -2987,7 +2987,7 @@ static void propwin_response_cb( GtkDialog *dialog, int resp, PropWidgets *widge
 
   /* Keep same behaviour for now: destroy dialog if click on any button */
   if (!keep_dialog) {
-    vik_track_clear_property_dialog(trk);
+    trk->clear_property_dialog();
     gtk_widget_destroy ( GTK_WIDGET(dialog) );
   }
 }
@@ -3215,9 +3215,9 @@ void vik_trw_layer_propwin_run ( GtkWindow *parent,
   vik_units_distance_t dist_units = a_vik_get_units_distance ();
 
   // NB This value not shown yet - but is used by internal calculations
-  widgets->track_length_inc_gaps = vik_track_get_length_including_gaps(trk);
+  widgets->track_length_inc_gaps = trk->get_length_including_gaps();
 
-  tr_len = widgets->track_length = vik_track_get_length(trk);
+  tr_len = widgets->track_length = trk->get_length();
   switch (dist_units) {
   case VIK_UNITS_DISTANCE_KILOMETRES:
     snprintf(tmp_buf, sizeof(tmp_buf), "%.2f km", tr_len/1000.0 );
@@ -3233,19 +3233,19 @@ void vik_trw_layer_propwin_run ( GtkWindow *parent,
   }
   widgets->w_track_length = content[cnt++] = ui_label_new_selectable ( tmp_buf );
 
-  tp_count = vik_track_get_tp_count(trk);
+  tp_count = trk->get_tp_count();
   snprintf(tmp_buf, sizeof(tmp_buf), "%lu", tp_count );
   widgets->w_tp_count = content[cnt++] = ui_label_new_selectable ( tmp_buf );
 
-  seg_count = vik_track_get_segment_count(trk) ;
+  seg_count = trk->get_segment_count() ;
   snprintf(tmp_buf, sizeof(tmp_buf), "%u", seg_count );
   widgets->w_segment_count = content[cnt++] = ui_label_new_selectable ( tmp_buf );
 
-  snprintf(tmp_buf, sizeof(tmp_buf), "%lu", vik_track_get_dup_point_count(trk) );
+  snprintf(tmp_buf, sizeof(tmp_buf), "%lu", trk->get_dup_point_count() );
   widgets->w_duptp_count = content[cnt++] = ui_label_new_selectable ( tmp_buf );
 
   vik_units_speed_t speed_units = a_vik_get_units_speed ();
-  tmp_speed = vik_track_get_max_speed(trk);
+  tmp_speed = trk->get_max_speed();
   if ( tmp_speed == 0 )
     snprintf(tmp_buf, sizeof(tmp_buf), _("No Data"));
   else {
@@ -3269,7 +3269,7 @@ void vik_trw_layer_propwin_run ( GtkWindow *parent,
   }
   widgets->w_max_speed = content[cnt++] = ui_label_new_selectable ( tmp_buf );
 
-  tmp_speed = vik_track_get_average_speed(trk);
+  tmp_speed = trk->get_average_speed();
   if ( tmp_speed == 0 )
     snprintf(tmp_buf, sizeof(tmp_buf), _("No Data"));
   else {
@@ -3297,7 +3297,7 @@ void vik_trw_layer_propwin_run ( GtkWindow *parent,
   //  this is the TrackWaypoint draw stops default value 'vtl->stop_length'
   //  however this variable is not directly accessible - and I don't expect it's often changed from the default
   //  so ATM just put in the number
-  tmp_speed = vik_track_get_average_speed_moving(trk, 60);
+  tmp_speed = trk->get_average_speed_moving(60);
   if ( tmp_speed == 0 )
     snprintf(tmp_buf, sizeof(tmp_buf), _("No Data"));
   else {
@@ -3355,7 +3355,7 @@ void vik_trw_layer_propwin_run ( GtkWindow *parent,
   }
   widgets->w_elev_range = content[cnt++] = ui_label_new_selectable ( tmp_buf );
 
-  vik_track_get_total_elevation_gain(trk, &max_alt, &min_alt );
+  trk->get_total_elevation_gain(&max_alt, &min_alt );
   if ( min_alt == VIK_DEFAULT_ALTITUDE )
     snprintf(tmp_buf, sizeof(tmp_buf), _("No Data"));
   else {
@@ -3411,7 +3411,7 @@ void vik_trw_layer_propwin_run ( GtkWindow *parent,
     free( msg );
 
     int total_duration_s = (int)(t2-t1);
-    int segments_duration_s = (int)vik_track_get_duration(trk, false);
+    int segments_duration_s = (int) trk->get_duration(false);
     int total_duration_m = total_duration_s/60;
     int segments_duration_m = segments_duration_s/60;
     snprintf(tmp_buf, sizeof(tmp_buf), _("%d minutes - %d minutes moving"), total_duration_m, segments_duration_m);
@@ -3541,7 +3541,7 @@ void vik_trw_layer_propwin_run ( GtkWindow *parent,
   gtk_dialog_set_response_sensitive(GTK_DIALOG(dialog), VIK_TRW_LAYER_PROPWIN_SPLIT_MARKER, false);
   if (seg_count <= 1)
     gtk_dialog_set_response_sensitive(GTK_DIALOG(dialog), VIK_TRW_LAYER_PROPWIN_SPLIT, false);
-  if (vik_track_get_dup_point_count(trk) <= 0)
+  if (trk->get_dup_point_count() <= 0)
     gtk_dialog_set_response_sensitive(GTK_DIALOG(dialog), VIK_TRW_LAYER_PROPWIN_DEL_DUP, false);
 
   // On dialog realization configure_event causes the graphs to be initially drawn
@@ -3550,7 +3550,7 @@ void vik_trw_layer_propwin_run ( GtkWindow *parent,
 
   g_signal_connect ( G_OBJECT(dialog), "destroy", G_CALLBACK (destroy_cb), widgets );
 
-  vik_track_set_property_dialog(trk, dialog);
+  trk->set_property_dialog(dialog);
   gtk_dialog_set_default_response ( GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT );
   gtk_widget_show_all ( dialog );
 

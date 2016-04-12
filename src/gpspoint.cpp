@@ -281,7 +281,7 @@ bool a_gpspoint_read_file(VikTrwLayer *trw, FILE *f, const char *dirpath ) {
     else if ((line_type == GPSPOINT_TYPE_TRACK || line_type == GPSPOINT_TYPE_ROUTE) && line_name)
     {
       have_read_something = true;
-      Track *trk = vik_track_new();
+      Track * trk = new Track();
       // NB don't set defaults here as all properties are stored in the GPS_POINT format
       //vik_track_set_defaults ( pl );
 
@@ -292,16 +292,16 @@ bool a_gpspoint_read_file(VikTrwLayer *trw, FILE *f, const char *dirpath ) {
       trk->is_route = (line_type == GPSPOINT_TYPE_ROUTE);
 
       if ( line_comment )
-        vik_track_set_comment (trk, line_comment );
+        trk->set_comment(line_comment);
 
       if ( line_description )
-        vik_track_set_description (trk, line_description );
+        trk->set_description(line_description);
 
       if ( line_source )
-        vik_track_set_source (trk, line_source );
+        trk->set_source(line_source);
 
       if ( line_xtype )
-        vik_track_set_type (trk, line_xtype );
+        trk->set_type(line_xtype);
 
       if ( line_color )
       {
@@ -309,7 +309,7 @@ bool a_gpspoint_read_file(VikTrwLayer *trw, FILE *f, const char *dirpath ) {
         trk->has_color = true;
       }
 
-      trk->draw_name_mode = (VikTrackDrawnameType) line_name_label;
+      trk->draw_name_mode = (TrackDrawnameType) line_name_label;
       trk->max_number_dist_labels = line_dist_label;
 
       trk->trackpoints = NULL;

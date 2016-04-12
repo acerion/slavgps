@@ -107,11 +107,11 @@ static void val_analyse_track(Track * trk)
 
 	tracks_stats[TS_TRACKS].count++;
 
-	trackpoints = vik_track_get_tp_count (trk);
-	segments    = vik_track_get_segment_count (trk);
-	length      = vik_track_get_length (trk);
-	length_gaps = vik_track_get_length_including_gaps (trk);
-	max_speed   = vik_track_get_max_speed (trk);
+	trackpoints = trk->get_tp_count();
+	segments    = trk->get_segment_count();
+	length      = trk->get_length();
+	length_gaps = trk->get_length_including_gaps();
+	max_speed   = trk->get_max_speed();
 
 	int ii;
 	for (ii = 0; ii < G_N_ELEMENTS(tracks_stats); ii++) {
@@ -123,7 +123,7 @@ static void val_analyse_track(Track * trk)
 			tracks_stats[ii].max_speed = max_speed;
 	}
 
-	if ( vik_track_get_minmax_alt (trk, &min_alt, &max_alt) ) {
+	if (trk->get_minmax_alt(&min_alt, &max_alt) ) {
 		for (ii = 0; ii < G_N_ELEMENTS(tracks_stats); ii++) {
 			if ( min_alt < tracks_stats[ii].min_alt )
 				tracks_stats[ii].min_alt = min_alt;
@@ -132,7 +132,7 @@ static void val_analyse_track(Track * trk)
 		}
 	}
 
-	vik_track_get_total_elevation_gain (trk, &up, &down );
+	trk->get_total_elevation_gain(&up, &down);
 
 	for (ii = 0; ii < G_N_ELEMENTS(tracks_stats); ii++) {
 		tracks_stats[ii].elev_gain += up;

@@ -279,10 +279,10 @@ static void osm_traces_upload_thread ( OsmTracesInfo *oti, void * threaddata )
     /* Upload only the selected track */
     if ( oti->anonymize_times )
     {
-      Track * trk = vik_track_copy(oti->trk, true);
-      vik_track_anonymize_times(trk);
+      Track * trk = new Track(*oti->trk, true);
+      trk->anonymize_times();
       filename = a_gpx_write_track_tmp_file(trk, &options);
-      vik_track_free(trk);
+      trk->free();
     }
     else
       filename = a_gpx_write_track_tmp_file (oti->trk, &options);

@@ -550,11 +550,12 @@ GtkWidget *a_acquire_track_menu (VikWindow *vw, VikLayersPanel *vlp, VikViewport
  *
  * Sets application-wide track to use with filter. references the track.
  */
-void a_acquire_set_filter_track (Track * trk)
+void a_acquire_set_filter_track(Track * trk)
 {
-  if ( filter_track )
-    vik_track_free ( filter_track );
+	if (filter_track) {
+		filter_track->free();
+	}
 
-  filter_track = trk;
-  vik_track_ref(trk);
+	filter_track = trk;
+	trk->ref();
 }

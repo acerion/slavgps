@@ -266,8 +266,8 @@ static void gpx_start(VikTrwLayer *vtl, const char *el, const char **attr)
 
      case tt_trk:
      case tt_rte:
-       c_tr = vik_track_new ();
-       vik_track_set_defaults ( c_tr );
+       c_tr = new Track();
+       c_tr->set_defaults();
        c_tr->is_route = (current_tag == tt_rte) ? true : false;
        c_tr->visible = true;
        if ( get_attr ( attr, "hidden" ) )
@@ -470,22 +470,22 @@ static void gpx_end(VikTrwLayer *vtl, const char *el)
        }
 
      case tt_trk_desc:
-       vik_track_set_description ( c_tr, c_cdata->str );
+       c_tr->set_description(c_cdata->str);
        g_string_erase ( c_cdata, 0, -1 );
        break;
 
      case tt_trk_src:
-       vik_track_set_source ( c_tr, c_cdata->str );
+       c_tr->set_source(c_cdata->str);
        g_string_erase ( c_cdata, 0, -1 );
        break;
 
      case tt_trk_type:
-       vik_track_set_type ( c_tr, c_cdata->str );
+       c_tr->set_type(c_cdata->str);
        g_string_erase ( c_cdata, 0, -1 );
        break;
 
      case tt_trk_cmt:
-       vik_track_set_comment ( c_tr, c_cdata->str );
+       c_tr->set_comment(c_cdata->str);
        g_string_erase ( c_cdata, 0, -1 );
        break;
 
@@ -1173,10 +1173,13 @@ void a_gpx_write_file ( VikTrwLayer *vtl, FILE *f, GpxWritingOptions *options )
     gl = g_list_reverse ( gl );
 
     // Sort method determined by preference
-    if ( a_vik_get_gpx_export_trk_sort() == VIK_GPX_EXPORT_TRK_SORT_TIME )
-      gl = g_list_sort ( gl, vik_track_compare_timestamp );
-    else if ( a_vik_get_gpx_export_trk_sort() == VIK_GPX_EXPORT_TRK_SORT_ALPHA )
-      gl = g_list_sort ( gl, gpx_track_compare_name );
+    if ( a_vik_get_gpx_export_trk_sort() == VIK_GPX_EXPORT_TRK_SORT_TIME ) {
+	    gl = g_list_sort ( gl, Track::compare_timestamp );
+    } else if ( a_vik_get_gpx_export_trk_sort() == VIK_GPX_EXPORT_TRK_SORT_ALPHA ) {
+	    gl = g_list_sort ( gl, gpx_track_compare_name );
+    } else {
+	    ;
+    }
   }
 
   GList *glrte = NULL;

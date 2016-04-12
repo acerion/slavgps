@@ -89,125 +89,128 @@ namespace SlavGPS {
 
 
 
+	enum TrackDrawnameType {
+		TRACK_DRAWNAME_NO=0,
+		TRACK_DRAWNAME_CENTRE,
+		TRACK_DRAWNAME_START,
+		TRACK_DRAWNAME_END,
+		TRACK_DRAWNAME_START_END,
+		TRACK_DRAWNAME_START_END_CENTRE,
+		NUM_TRACK_DRAWNAMES
+	};
+
+	// Instead of having a separate VikRoute type, routes are considered tracks
+	//  Thus all track operations must cope with a 'route' version
+	//  [track functions handle having no timestamps anyway - so there is no practical difference in most cases]
+	//  This is simpler than having to rewrite particularly every track function for route version
+	//   given that they do the same things
+	//  Mostly this matters in the display in deciding where and how they are shown
+	class Track {
+	public:
+
+		Track();
+		Track(const Track & trk, bool copy_points);
+
+		void set_defaults();
+		void set_name(const char *name);
+		void set_comment(const char *comment);
+		void set_description(const char *description);
+		void set_source(const char *source);
+		void set_type(const char *type);
+		void ref();
+		void free();
+
+		void set_comment_no_copy(char * comment);
+
+		void add_trackpoint(Trackpoint * tp, bool recalculate);
+		double get_length_to_trackpoint(const Trackpoint * tp); // const
+		double get_length();  // const
+		double get_length_including_gaps();  // const
+		unsigned long get_tp_count();  // const
+		unsigned int get_segment_count();  // const
+		Track ** split_into_segments(unsigned int *ret_len);
+
+		unsigned int merge_segments(void);
+		void reverse(void);
+		time_t get_duration(bool include_segments); // const
+
+		unsigned long get_dup_point_count();  // const
+		unsigned long remove_dup_points();
+		unsigned long get_same_time_point_count(); // const
+		unsigned long remove_same_time_points();
+
+		void to_routepoints();
+
+		double get_max_speed();  // const
+		double get_average_speed();  // const
+		double get_average_speed_moving(int stop_length_seconds);  // const
+
+		void convert(VikCoordMode dest_mode);
+		double * make_elevation_map(uint16_t num_chunks);  // const
+		void get_total_elevation_gain(double *up, double *down);  // const
+		Trackpoint * get_tp_by_dist(double meters_from_start, bool get_next_point, double *tp_metres_from_start);
+		Trackpoint * get_closest_tp_by_percentage_dist(double reldist, double *meters_from_start);
+		Trackpoint * get_closest_tp_by_percentage_time(double reldist, time_t *seconds_from_start);
+		Trackpoint * get_tp_by_max_speed();  // const
+		Trackpoint * get_tp_by_max_alt();  // const
+		Trackpoint * get_tp_by_min_alt();  // const
+		Trackpoint * get_tp_first();  // const
+		Trackpoint * get_tp_last();  // const
+		Trackpoint * get_tp_prev(Trackpoint * tp);  // const
+		double * make_gradient_map(uint16_t num_chunks);  // const
+		double * make_speed_map(uint16_t num_chunks);  // const
+		double * make_distance_map(uint16_t num_chunks);  // const
+		double * make_elevation_time_map(uint16_t num_chunks);  // const
+		double * make_speed_dist_map(uint16_t num_chunks);  // const
+		bool get_minmax_alt(double *min_alt, double *max_alt);  // const
+		void marshall(uint8_t **data, size_t * len);
+		static Track * unmarshall(uint8_t *data, size_t datalen);
+
+		void calculate_bounds();
+
+		void anonymize_times();
+		void interpolate_times();
+		unsigned long apply_dem_data(bool skip_existing);
+		void apply_dem_data_last_trackpoint();
+		unsigned long smooth_missing_elevation_data(bool flat);
+
+		void steal_and_append_trackpoints(Track * from);
+
+		VikCoord * cut_back_to_double_point();
+
+		static int compare_timestamp(const void * x, const void * y);
+
+		void set_property_dialog(GtkWidget *dialog);
+		void clear_property_dialog();
+
+		static void delete_track(Track *);
+
+
+		GList *trackpoints;
+		bool visible;
+		bool is_route;
+		TrackDrawnameType draw_name_mode;
+		uint8_t max_number_dist_labels;
+		char *comment;
+		char *description;
+		char *source;
+		char *type;
+		uint8_t ref_count;
+		char *name;
+		GtkWidget *property_dialog;
+		bool has_color;
+		GdkColor color;
+		LatLonBBox bbox;
+	private:
+		static void smoothie(GList *tp1, GList *tp2, double elev1, double elev2, unsigned int points);
+		void recalculate_bounds_last_tp();
+	};
+
+
+
+
+
 } /* namespace */
-
-
-
-
-
-/* todo important: put these in their own header file, maybe.probably also rename */
-
-
-using namespace SlavGPS;
-
-
-
-typedef enum {
-  TRACK_DRAWNAME_NO=0,
-  TRACK_DRAWNAME_CENTRE,
-  TRACK_DRAWNAME_START,
-  TRACK_DRAWNAME_END,
-  TRACK_DRAWNAME_START_END,
-  TRACK_DRAWNAME_START_END_CENTRE,
-  NUM_TRACK_DRAWNAMES
-} VikTrackDrawnameType;
-
-// Instead of having a separate VikRoute type, routes are considered tracks
-//  Thus all track operations must cope with a 'route' version
-//  [track functions handle having no timestamps anyway - so there is no practical difference in most cases]
-//  This is simpler than having to rewrite particularly every track function for route version
-//   given that they do the same things
-//  Mostly this matters in the display in deciding where and how they are shown
-typedef struct _Track Track;
-struct _Track {
-  GList *trackpoints;
-  bool visible;
-  bool is_route;
-  VikTrackDrawnameType draw_name_mode;
-  uint8_t max_number_dist_labels;
-  char *comment;
-  char *description;
-  char *source;
-  char *type;
-  uint8_t ref_count;
-  char *name;
-  GtkWidget *property_dialog;
-  bool has_color;
-  GdkColor color;
-  LatLonBBox bbox;
-};
-
-Track * vik_track_new();
-void vik_track_set_defaults(Track * trk);
-void vik_track_set_name(Track * trk, const char *name);
-void vik_track_set_comment(Track * trk, const char *comment);
-void vik_track_set_description(Track * trk, const char *description);
-void vik_track_set_source(Track * trk, const char *source);
-void vik_track_set_type(Track * trk, const char *type);
-void vik_track_ref(Track * trk);
-void vik_track_free(Track * trk);
-Track * vik_track_copy(const Track * trk, bool copy_points);
-void vik_track_set_comment_no_copy(Track * trk, char *comment);
-
-void vik_track_add_trackpoint(Track * trk, Trackpoint * tp, bool recalculate);
-double vik_track_get_length_to_trackpoint(const Track * trk, const Trackpoint * tp);
-double vik_track_get_length(const Track * trk);
-double vik_track_get_length_including_gaps(const Track * trk);
-unsigned long vik_track_get_tp_count(const Track * trk);
-unsigned int vik_track_get_segment_count(const Track * trk);
-Track **vik_track_split_into_segments(Track * trk, unsigned int *ret_len);
-unsigned int vik_track_merge_segments(Track * trk);
-void vik_track_reverse(Track * trk);
-time_t vik_track_get_duration(const Track * trk, bool include_segments);
-
-unsigned long vik_track_get_dup_point_count(const Track * trk);
-unsigned long vik_track_remove_dup_points(Track * trk);
-unsigned long vik_track_get_same_time_point_count(const Track * trk);
-unsigned long vik_track_remove_same_time_points(Track * trk);
-
-void vik_track_to_routepoints(Track * trk);
-
-double vik_track_get_max_speed(const Track * trk);
-double vik_track_get_average_speed(const Track * trk);
-double vik_track_get_average_speed_moving(const Track * trk, int stop_length_seconds);
-
-void vik_track_convert(Track * trk, VikCoordMode dest_mode);
-double *vik_track_make_elevation_map(const Track * trk, uint16_t num_chunks);
-void vik_track_get_total_elevation_gain(const Track * trk, double *up, double *down);
-Trackpoint * vik_track_get_tp_by_dist(Track *trk, double meters_from_start, bool get_next_point, double *tp_metres_from_start);
-Trackpoint * vik_track_get_closest_tp_by_percentage_dist(Track * trk, double reldist, double *meters_from_start);
-Trackpoint * vik_track_get_closest_tp_by_percentage_time(Track * trk, double reldist, time_t *seconds_from_start);
-Trackpoint * vik_track_get_tp_by_max_speed(const Track * trk);
-Trackpoint * vik_track_get_tp_by_max_alt(const Track * trk);
-Trackpoint * vik_track_get_tp_by_min_alt(const Track * trk);
-Trackpoint * vik_track_get_tp_first(const Track * trk);
-Trackpoint * vik_track_get_tp_last(const Track * trk);
-Trackpoint * vik_track_get_tp_prev(const Track * trk, Trackpoint * tp);
-double *vik_track_make_gradient_map(const Track * trk, uint16_t num_chunks);
-double *vik_track_make_speed_map(const Track * trk, uint16_t num_chunks);
-double *vik_track_make_distance_map(const Track * trk, uint16_t num_chunks);
-double *vik_track_make_elevation_time_map(const Track * trk, uint16_t num_chunks);
-double *vik_track_make_speed_dist_map(const Track * trk, uint16_t num_chunks);
-bool vik_track_get_minmax_alt(const Track * trk, double *min_alt, double *max_alt);
-void vik_track_marshall(Track * trk, uint8_t **data, size_t * len);
-Track *vik_track_unmarshall(uint8_t *data, size_t datalen);
-
-void vik_track_calculate_bounds(Track *trk);
-
-void vik_track_anonymize_times(Track * trk);
-void vik_track_interpolate_times(Track * trk);
-unsigned long vik_track_apply_dem_data(Track * trk, bool skip_existing);
-void vik_track_apply_dem_data_last_trackpoint(Track * trk);
-unsigned long vik_track_smooth_missing_elevation_data(Track * trk, bool flat);
-
-void vik_track_steal_and_append_trackpoints(Track *trk1, Track *trk2);
-
-VikCoord *vik_track_cut_back_to_double_point(Track * trk);
-
-int vik_track_compare_timestamp(const void *x, const void *y);
-
-void vik_track_set_property_dialog(Track * trk, GtkWidget *dialog);
-void vik_track_clear_property_dialog(Track * trk);
 
 
 
