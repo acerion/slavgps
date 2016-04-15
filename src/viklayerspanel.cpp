@@ -245,7 +245,7 @@ static void vik_layers_panel_init ( VikLayersPanel *vlp )
   scrolledwindow = gtk_scrolled_window_new ( NULL, NULL );
   gtk_scrolled_window_set_policy ( GTK_SCROLLED_WINDOW(scrolledwindow), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC );
   gtk_container_add ( GTK_CONTAINER(scrolledwindow), GTK_WIDGET(vlp->vt) );
-  
+
   gtk_box_pack_start ( GTK_BOX(vlp), scrolledwindow, true, true, 0 );
   gtk_box_pack_start ( GTK_BOX(vlp), hbox, false, false, 0 );
 }
@@ -449,7 +449,7 @@ static void layers_popup_cb ( VikLayersPanel *vlp )
 /**
  * vik_layers_panel_new_layer:
  * @type: type of the new layer
- * 
+ *
  * Create a new layer and add to panel.
  */
 bool vik_layers_panel_new_layer ( VikLayersPanel *vlp, VikLayerTypeEnum type )
@@ -472,7 +472,7 @@ bool vik_layers_panel_new_layer ( VikLayersPanel *vlp, VikLayerTypeEnum type )
 /**
  * vik_layers_panel_add_layer:
  * @l: existing layer
- * 
+ *
  * Add an existing layer to panel.
  */
 void vik_layers_panel_add_layer ( VikLayersPanel *vlp, VikLayer *l )
@@ -481,7 +481,7 @@ void vik_layers_panel_add_layer ( VikLayersPanel *vlp, VikLayer *l )
   GtkTreeIter *replace_iter = NULL;
 
   /* could be something different so we have to do this */
-  vik_layer_change_coord_mode ( l, vik_viewport_get_coord_mode(vlp->vvp) );
+  vik_layer_change_coord_mode ( l, vlp->vvp->port.get_coord_mode() );
 
   if ( ! vik_treeview_get_selected_iter ( vlp->vt, &iter ) )
     vik_aggregate_layer_add_layer ( vlp->toplayer, l, true );
@@ -576,7 +576,7 @@ void vik_layers_panel_cut_selected ( VikLayersPanel *vlp )
 {
   int type;
   GtkTreeIter iter;
-  
+
   if ( ! vik_treeview_get_selected_iter ( vlp->vt, &iter ) )
     /* Nothing to do */
     return;
@@ -637,7 +637,7 @@ void vik_layers_panel_delete_selected ( VikLayersPanel *vlp )
 {
   int type;
   GtkTreeIter iter;
-  
+
   if ( ! vik_treeview_get_selected_iter ( vlp->vt, &iter ) )
     /* Nothing to do */
     return;

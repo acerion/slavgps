@@ -987,7 +987,7 @@ bool vik_trw_layer_find_date ( VikTrwLayer *vtl, const char *date_str, VikCoord 
       vik_treeview_select_iter ( VIK_LAYER(vtl)->vt, (GtkTreeIter *) g_hash_table_lookup (vtl->tracks_iters, df.trk_id), true );
     }
     else if ( df.wp ) {
-      vik_viewport_set_center_coord ( vvp, &(df.wp->coord), true );
+      vvp->port.set_center_coord(&(df.wp->coord), true );
       vik_treeview_select_iter ( VIK_LAYER(vtl)->vt, (GtkTreeIter *) g_hash_table_lookup (vtl->waypoints_iters, df.wp_id), true );
     }
     vik_layer_emit_update ( VIK_LAYER(vtl) );
@@ -1694,16 +1694,16 @@ static void init_drawing_params ( struct DrawingParams *dp, VikTrwLayer *vtl, Vi
   dp->vp = vp;
   dp->highlight = highlight;
   dp->vw = (VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(dp->vtl);
-  dp->xmpp = vik_viewport_get_xmpp ( vp );
-  dp->ympp = vik_viewport_get_ympp ( vp );
-  dp->width = vik_viewport_get_width ( vp );
-  dp->height = vik_viewport_get_height ( vp );
+  dp->xmpp = vp->port.get_xmpp();
+  dp->ympp = vp->port.get_ympp();
+  dp->width = vp->port.get_width();
+  dp->height = vp->port.get_height();
   dp->cc = vtl->drawdirections_size*cos(DEG2RAD(45)); // Calculate once per vtl update - even if not used
   dp->ss = vtl->drawdirections_size*sin(DEG2RAD(45)); // Calculate once per vtl update - even if not used
 
-  dp->center = vik_viewport_get_center ( vp );
-  dp->one_zone = vik_viewport_is_one_zone ( vp ); /* false if some other projection besides UTM */
-  dp->lat_lon = vik_viewport_get_coord_mode ( vp ) == VIK_COORD_LATLON;
+  dp->center = vp->port.get_center();
+  dp->one_zone = vp->port.is_one_zone(); /* false if some other projection besides UTM */
+  dp->lat_lon = vp->port.get_coord_mode() == VIK_COORD_LATLON;
 
   if ( dp->one_zone )
   {
@@ -1720,15 +1720,15 @@ static void init_drawing_params ( struct DrawingParams *dp, VikTrwLayer *vtl, Vi
     VikCoord upperleft, bottomright;
     /* quick & dirty calculation; really want to check all corners due to lat/lon smaller at top in northern hemisphere */
     /* this also DOESN'T WORK if you are crossing 180/-180 lon. I don't plan to in the near future...  */
-    vik_viewport_screen_to_coord ( vp, -500, -500, &upperleft );
-    vik_viewport_screen_to_coord ( vp, dp->width+500, dp->height+500, &bottomright );
+    vp->port.screen_to_coord(-500, -500, &upperleft );
+    vp->port.screen_to_coord(dp->width+500, dp->height+500, &bottomright );
     dp->ce1 = upperleft.east_west;
     dp->ce2 = bottomright.east_west;
     dp->cn1 = bottomright.north_south;
     dp->cn2 = upperleft.north_south;
   }
 
-  vik_viewport_get_min_max_lat_lon ( vp, &(dp->bbox.south), &(dp->bbox.north), &(dp->bbox.west), &(dp->bbox.east) );
+  vp->port.get_min_max_lat_lon(&(dp->bbox.south), &(dp->bbox.north), &(dp->bbox.west), &(dp->bbox.east) );
 }
 
 /*
@@ -1757,10 +1757,10 @@ static int track_section_colour_by_speed ( VikTrwLayer *vtl, Trackpoint * tp1, T
 
 static void draw_utm_skip_insignia ( VikViewport *vvp, GdkGC *gc, int x, int y )
 {
-  vik_viewport_draw_line ( vvp, gc, x+5, y, x-5, y );
-  vik_viewport_draw_line ( vvp, gc, x, y+5, x, y-5 );
-  vik_viewport_draw_line ( vvp, gc, x+5, y+5, x-5, y-5 );
-  vik_viewport_draw_line ( vvp, gc, x+5, y-5, x-5, y+5 );
+	vvp->port.draw_line(gc, x+5, y, x-5, y);
+	vvp->port.draw_line(gc, x, y+5, x, y-5);
+	vvp->port.draw_line(gc, x+5, y+5, x-5, y-5);
+	vvp->port.draw_line(gc, x+5, y-5, x-5, y+5);
 }
 
 
@@ -1780,8 +1780,8 @@ static void trw_layer_draw_track_label ( char *name, char *fgcolour, char *bgcol
   int width, height;
   pango_layout_get_pixel_size ( dp->vtl->tracklabellayout, &width, &height );
 
-  vik_viewport_coord_to_screen ( dp->vp, coord, &label_x, &label_y );
-  vik_viewport_draw_layout ( dp->vp, dp->vtl->track_bg_gc, label_x-width/2, label_y-height/2, dp->vtl->tracklabellayout );
+  dp->vp->port.coord_to_screen(coord, &label_x, &label_y);
+  dp->vp->port.draw_layout(dp->vtl->track_bg_gc, label_x-width/2, label_y-height/2, dp->vtl->tracklabellayout);
 }
 
 /**
@@ -1922,7 +1922,7 @@ static void trw_layer_draw_dist_labels ( struct DrawingParams *dp, Track * trk, 
       // if highlight mode on, then colour the background in the highlight colour
       char *bgcolour;
       if ( drawing_highlight )
-	bgcolour = g_strdup( vik_viewport_get_highlight_color ( dp->vp ) );
+	bgcolour = g_strdup( dp->vp->port.get_highlight_color() );
       else
         bgcolour = gdk_color_to_string ( &(dp->vtl->track_bg_color) );
 
@@ -1951,7 +1951,7 @@ static void trw_layer_draw_track_name_labels ( struct DrawingParams *dp, Track *
   // if highlight mode on, then colour the background in the highlight colour
   char *bgcolour;
   if ( drawing_highlight )
-    bgcolour = g_strdup( vik_viewport_get_highlight_color ( dp->vp ) );
+    bgcolour = g_strdup( dp->vp->port.get_highlight_color() );
   else
     bgcolour = gdk_color_to_string ( &(dp->vtl->track_bg_color) );
 
@@ -1995,10 +1995,10 @@ static void trw_layer_draw_track_name_labels ( struct DrawingParams *dp, Track *
     if ( vik_coord_diff ( &begin_coord, &end_coord ) < distance_diff ) {
       // Start and end 'close' together so only draw one label at an average location
       int x1, x2, y1, y2;
-      vik_viewport_coord_to_screen ( dp->vp, &begin_coord, &x1, &y1);
-      vik_viewport_coord_to_screen ( dp->vp, &end_coord, &x2, &y2);
+      dp->vp->port.coord_to_screen(&begin_coord, &x1, &y1);
+      dp->vp->port.coord_to_screen(&end_coord, &x2, &y2);
       VikCoord av_coord;
-      vik_viewport_screen_to_coord ( dp->vp, (x1 + x2) / 2, (y1 + y2) / 2, &av_coord );
+      dp->vp->port.screen_to_coord((x1 + x2) / 2, (y1 + y2) / 2, &av_coord );
 
       char *name = g_strdup_printf ( "%s: %s", ename, _("start/end") );
       trw_layer_draw_track_label ( name, fgcolour, bgcolour, dp, &av_coord );
@@ -2052,7 +2052,7 @@ static void trw_layer_draw_point_names ( struct DrawingParams *dp, Track * trk, 
     fgcolour = gdk_color_to_string ( &(dp->vtl->track_color) );
   char *bgcolour;
   if ( drawing_highlight )
-    bgcolour = g_strdup( vik_viewport_get_highlight_color ( dp->vp ) );
+    bgcolour = g_strdup( dp->vp->port.get_highlight_color() );
   else
     bgcolour = gdk_color_to_string ( &(dp->vtl->track_bg_color) );
   if ( tp->name )
@@ -2112,7 +2112,7 @@ static void trw_layer_draw_track ( const void * id, Track * trk, struct DrawingP
     if ( dp->highlight ) {
       /* Draw all tracks of the layer in special colour
          NB this supercedes the drawmode */
-      main_gc = vik_viewport_get_gc_highlight (dp->vp);
+      main_gc = dp->vp->port.get_gc_highlight();
       drawing_highlight = true;
     }
     if ( !drawing_highlight ) {
@@ -2139,13 +2139,13 @@ static void trw_layer_draw_track ( const void * id, Track * trk, struct DrawingP
 
     tp_size = (list == dp->vtl->current_tpl) ? tp_size_cur : tp_size_reg;
 
-    vik_viewport_coord_to_screen ( dp->vp, &(tp->coord), &x, &y );
+    dp->vp->port.coord_to_screen(&(tp->coord), &x, &y);
 
     // Draw the first point as something a bit different from the normal points
     // ATM it's slightly bigger and a triangle
     if ( drawpoints ) {
       GdkPoint trian[3] = { { x, y-(3*tp_size) }, { x-(2*tp_size), y+(2*tp_size) }, {x+(2*tp_size), y+(2*tp_size)} };
-      vik_viewport_draw_polygon ( dp->vp, main_gc, true, trian, 3 );
+      dp->vp->port.draw_polygon(main_gc, true, trian, 3 );
     }
 
     oldx = x;
@@ -2183,7 +2183,7 @@ static void trw_layer_draw_track ( const void * id, Track * trk, struct DrawingP
              tp->coord.east_west < dp->ce2 && tp->coord.east_west > dp->ce1 &&  /* both UTM and lat lon */
              tp->coord.north_south > dp->cn1 && tp->coord.north_south < dp->cn2 ) )
       {
-        vik_viewport_coord_to_screen ( dp->vp, &(tp->coord), &x, &y );
+        dp->vp->port.coord_to_screen(&(tp->coord), &x, &y);
 
 	/*
 	 * If points are the same in display coordinates, don't draw.
@@ -2193,7 +2193,7 @@ static void trw_layer_draw_track ( const void * id, Track * trk, struct DrawingP
 	  // Still need to process points to ensure 'stops' are drawn if required
 	  if ( drawstops && drawpoints && ! draw_track_outline && list->next &&
 	       (((Trackpoint *) list->next->data)->timestamp - ((Trackpoint *) list->data)->timestamp > dp->vtl->stop_length) )
-	    vik_viewport_draw_arc ( dp->vp, g_array_index(dp->vtl->track_gc, GdkGC *, 11), true, x-(3*tp_size), y-(3*tp_size), 6*tp_size, 6*tp_size, 0, 360*64 );
+	    dp->vp->port.draw_arc(g_array_index(dp->vtl->track_gc, GdkGC *, 11), true, x-(3*tp_size), y-(3*tp_size), 6*tp_size, 6*tp_size, 0, 360*64 );
 
 	  goto skip;
 	}
@@ -2219,14 +2219,14 @@ static void trw_layer_draw_track ( const void * id, Track * trk, struct DrawingP
             /* stops */
             if ( drawstops && ((Trackpoint *) list->next->data)->timestamp - ((Trackpoint *) list->data)->timestamp > dp->vtl->stop_length )
 	      /* Stop point.  Draw 6x circle. Always in redish colour */
-              vik_viewport_draw_arc ( dp->vp, g_array_index(dp->vtl->track_gc, GdkGC *, VIK_TRW_LAYER_TRACK_GC_STOP), true, x-(3*tp_size), y-(3*tp_size), 6*tp_size, 6*tp_size, 0, 360*64 );
+              dp->vp->port.draw_arc(g_array_index(dp->vtl->track_gc, GdkGC *, VIK_TRW_LAYER_TRACK_GC_STOP), true, x-(3*tp_size), y-(3*tp_size), 6*tp_size, 6*tp_size, 0, 360*64 );
 
 	    /* Regular point - draw 2x square. */
-	    vik_viewport_draw_rectangle ( dp->vp, main_gc, true, x-tp_size, y-tp_size, 2*tp_size, 2*tp_size );
+	    dp->vp->port.draw_rectangle(main_gc, true, x-tp_size, y-tp_size, 2*tp_size, 2*tp_size );
           }
           else
 	    /* Final point - draw 4x circle. */
-            vik_viewport_draw_arc ( dp->vp, main_gc, true, x-(2*tp_size), y-(2*tp_size), 4*tp_size, 4*tp_size, 0, 360*64 );
+            dp->vp->port.draw_arc(main_gc, true, x-(2*tp_size), y-(2*tp_size), 4*tp_size, 4*tp_size, 0, 360*64 );
         }
 
         if ((!tp->newsegment) && (dp->vtl->drawlines))
@@ -2237,14 +2237,14 @@ static void trw_layer_draw_track ( const void * id, Track * trk, struct DrawingP
             draw_utm_skip_insignia (  dp->vp, main_gc, x, y);
 
           if (!useoldvals)
-            vik_viewport_coord_to_screen ( dp->vp, &(tp2->coord), &oldx, &oldy );
+            dp->vp->port.coord_to_screen(&(tp2->coord), &oldx, &oldy );
 
           if ( draw_track_outline ) {
-            vik_viewport_draw_line ( dp->vp, dp->vtl->track_bg_gc, oldx, oldy, x, y);
+            dp->vp->port.draw_line(dp->vtl->track_bg_gc, oldx, oldy, x, y);
           }
           else {
 
-            vik_viewport_draw_line ( dp->vp, main_gc, oldx, oldy, x, y);
+            dp->vp->port.draw_line(main_gc, oldx, oldy, x, y);
 
             if ( dp->vtl->drawelevation && list->next && ((Trackpoint *) list->next->data)->altitude != VIK_DEFAULT_ALTITUDE ) {
               GdkPoint tmp[4];
@@ -2264,9 +2264,9 @@ static void trw_layer_draw_track ( const void * id, Track * trk, struct DrawingP
 		tmp_gc = gtk_widget_get_style(GTK_WIDGET(dp->vp))->light_gc[3];
 	      else
 		tmp_gc = gtk_widget_get_style(GTK_WIDGET(dp->vp))->dark_gc[0];
-	      vik_viewport_draw_polygon ( dp->vp, tmp_gc, true, tmp, 4);
+	      dp->vp->port.draw_polygon(tmp_gc, true, tmp, 4);
 
-              vik_viewport_draw_line ( dp->vp, main_gc, oldx, oldy-FIXALTITUDE(list->data), x, y-FIXALTITUDE(list->next->data));
+              dp->vp->port.draw_line(main_gc, oldx, oldy-FIXALTITUDE(list->data), x, y-FIXALTITUDE(list->next->data));
             }
           }
         }
@@ -2282,8 +2282,8 @@ static void trw_layer_draw_track ( const void * id, Track * trk, struct DrawingP
           if ( len > 1 ) {
             double dx = (oldx - midx) / len;
             double dy = (oldy - midy) / len;
-            vik_viewport_draw_line ( dp->vp, main_gc, midx, midy, midx + (dx * dp->cc + dy * dp->ss), midy + (dy * dp->cc - dx * dp->ss) );
-            vik_viewport_draw_line ( dp->vp, main_gc, midx, midy, midx + (dx * dp->cc - dy * dp->ss), midy + (dy * dp->cc + dx * dp->ss) );
+            dp->vp->port.draw_line(main_gc, midx, midy, midx + (dx * dp->cc + dy * dp->ss), midy + (dy * dp->cc - dx * dp->ss) );
+            dp->vp->port.draw_line(main_gc, midx, midy, midx + (dx * dp->cc - dy * dp->ss), midy + (dy * dp->cc + dx * dp->ss) );
           }
         }
 
@@ -2297,7 +2297,7 @@ static void trw_layer_draw_track ( const void * id, Track * trk, struct DrawingP
         {
           if ( dp->vtl->coord_mode != VIK_COORD_UTM || tp->coord.utm_zone == dp->center->utm_zone )
           {
-            vik_viewport_coord_to_screen ( dp->vp, &(tp->coord), &x, &y );
+            dp->vp->port.coord_to_screen(&(tp->coord), &x, &y);
 
             if ( !drawing_highlight && (dp->vtl->drawmode == DRAWMODE_BY_SPEED) ) {
               main_gc = g_array_index(dp->vtl->track_gc, GdkGC *, track_section_colour_by_speed ( dp->vtl, tp, tp2, average_speed, low_speed, high_speed ));
@@ -2309,9 +2309,9 @@ static void trw_layer_draw_track ( const void * id, Track * trk, struct DrawingP
 	    if ( x != oldx || y != oldy )
 	      {
 		if ( draw_track_outline )
-		  vik_viewport_draw_line ( dp->vp, dp->vtl->track_bg_gc, oldx, oldy, x, y);
+		  dp->vp->port.draw_line(dp->vtl->track_bg_gc, oldx, oldy, x, y);
 		else
-		  vik_viewport_draw_line ( dp->vp, main_gc, oldx, oldy, x, y);
+		  dp->vp->port.draw_line(main_gc, oldx, oldy, x, y);
 	      }
           }
           else
@@ -2321,7 +2321,7 @@ static void trw_layer_draw_track ( const void * id, Track * trk, struct DrawingP
 	     */
 	    if ( x != oldx && y != oldy )
 	      {
-		vik_viewport_coord_to_screen ( dp->vp, &(tp2->coord), &x, &y );
+		dp->vp->port.coord_to_screen(&(tp2->coord), &x, &y );
 		draw_utm_skip_insignia ( dp->vp, main_gc, x, y );
 	      }
           }
@@ -2370,7 +2370,7 @@ static void trw_layer_draw_waypoint ( const void * id, Waypoint * wp, struct Dra
              wp->coord.north_south > dp->cn1 && wp->coord.north_south < dp->cn2 ) )
   {
     int x, y;
-    vik_viewport_coord_to_screen ( dp->vp, &(wp->coord), &x, &y );
+    dp->vp->port.coord_to_screen(&(wp->coord), &x, &y );
 
     /* if in shrunken_cache, get that. If not, get and add to shrunken_cache */
 
@@ -2439,13 +2439,13 @@ static void trw_layer_draw_waypoint ( const void * id, Waypoint * wp, struct Dra
           if ( dp->highlight ) {
             // Highlighted - so draw a little border around the chosen one
             // single line seems a little weak so draw 2 of them
-            vik_viewport_draw_rectangle (dp->vp, vik_viewport_get_gc_highlight (dp->vp), false,
+            dp->vp->port.draw_rectangle(dp->vp->port.get_gc_highlight(), false,
                                          x - (w/2) - 1, y - (h/2) - 1, w + 2, h + 2 );
-            vik_viewport_draw_rectangle (dp->vp, vik_viewport_get_gc_highlight (dp->vp), false,
+            dp->vp->port.draw_rectangle(dp->vp->port.get_gc_highlight(), false,
                                          x - (w/2) - 2, y - (h/2) - 2, w + 4, h + 4 );
           }
 
-          vik_viewport_draw_pixbuf ( dp->vp, pixbuf, 0, 0, x - (w/2), y - (h/2), w, h );
+          dp->vp->port.draw_pixbuf(pixbuf, 0, 0, x - (w/2), y - (h/2), w, h );
         }
         return; /* if failed to draw picture, default to drawing regular waypoint (below) */
       }
@@ -2453,26 +2453,42 @@ static void trw_layer_draw_waypoint ( const void * id, Waypoint * wp, struct Dra
 
     // Draw appropriate symbol - either symbol image or simple types
     if ( dp->vtl->wp_draw_symbols && wp->symbol && wp->symbol_pixbuf ) {
-      vik_viewport_draw_pixbuf ( dp->vp, wp->symbol_pixbuf, 0, 0, x - gdk_pixbuf_get_width(wp->symbol_pixbuf)/2, y - gdk_pixbuf_get_height(wp->symbol_pixbuf)/2, -1, -1 );
+      dp->vp->port.draw_pixbuf(wp->symbol_pixbuf, 0, 0, x - gdk_pixbuf_get_width(wp->symbol_pixbuf)/2, y - gdk_pixbuf_get_height(wp->symbol_pixbuf)/2, -1, -1 );
     }
     else if ( wp == dp->vtl->current_wp ) {
       switch ( dp->vtl->wp_symbol ) {
-        case WP_SYMBOL_FILLED_SQUARE: vik_viewport_draw_rectangle ( dp->vp, dp->vtl->waypoint_gc, true, x - (dp->vtl->wp_size), y - (dp->vtl->wp_size), dp->vtl->wp_size*2, dp->vtl->wp_size*2 ); break;
-        case WP_SYMBOL_SQUARE: vik_viewport_draw_rectangle ( dp->vp, dp->vtl->waypoint_gc, false, x - (dp->vtl->wp_size), y - (dp->vtl->wp_size), dp->vtl->wp_size*2, dp->vtl->wp_size*2 ); break;
-        case WP_SYMBOL_CIRCLE: vik_viewport_draw_arc ( dp->vp, dp->vtl->waypoint_gc, true, x - dp->vtl->wp_size, y - dp->vtl->wp_size, dp->vtl->wp_size, dp->vtl->wp_size, 0, 360*64 ); break;
-        case WP_SYMBOL_X: vik_viewport_draw_line ( dp->vp, dp->vtl->waypoint_gc, x - dp->vtl->wp_size*2, y - dp->vtl->wp_size*2, x + dp->vtl->wp_size*2, y + dp->vtl->wp_size*2 );
-                          vik_viewport_draw_line ( dp->vp, dp->vtl->waypoint_gc, x - dp->vtl->wp_size*2, y + dp->vtl->wp_size*2, x + dp->vtl->wp_size*2, y - dp->vtl->wp_size*2 );
+        case WP_SYMBOL_FILLED_SQUARE:
+		dp->vp->port.draw_rectangle(dp->vtl->waypoint_gc, true, x - (dp->vtl->wp_size), y - (dp->vtl->wp_size), dp->vtl->wp_size*2, dp->vtl->wp_size*2 );
+		break;
+        case WP_SYMBOL_SQUARE:
+		dp->vp->port.draw_rectangle(dp->vtl->waypoint_gc, false, x - (dp->vtl->wp_size), y - (dp->vtl->wp_size), dp->vtl->wp_size*2, dp->vtl->wp_size*2 );
+		break;
+        case WP_SYMBOL_CIRCLE:
+		dp->vp->port.draw_arc(dp->vtl->waypoint_gc, true, x - dp->vtl->wp_size, y - dp->vtl->wp_size, dp->vtl->wp_size, dp->vtl->wp_size, 0, 360*64 );
+		break;
+        case WP_SYMBOL_X:
+		dp->vp->port.draw_line(dp->vtl->waypoint_gc, x - dp->vtl->wp_size*2, y - dp->vtl->wp_size*2, x + dp->vtl->wp_size*2, y + dp->vtl->wp_size*2 );
+		dp->vp->port.draw_line(dp->vtl->waypoint_gc, x - dp->vtl->wp_size*2, y + dp->vtl->wp_size*2, x + dp->vtl->wp_size*2, y - dp->vtl->wp_size*2 );
         default: break;
       }
     }
     else {
       switch ( dp->vtl->wp_symbol ) {
-        case WP_SYMBOL_FILLED_SQUARE: vik_viewport_draw_rectangle ( dp->vp, dp->vtl->waypoint_gc, true, x - dp->vtl->wp_size/2, y - dp->vtl->wp_size/2, dp->vtl->wp_size, dp->vtl->wp_size ); break;
-        case WP_SYMBOL_SQUARE: vik_viewport_draw_rectangle ( dp->vp, dp->vtl->waypoint_gc, false, x - dp->vtl->wp_size/2, y - dp->vtl->wp_size/2, dp->vtl->wp_size, dp->vtl->wp_size ); break;
-        case WP_SYMBOL_CIRCLE: vik_viewport_draw_arc ( dp->vp, dp->vtl->waypoint_gc, true, x-dp->vtl->wp_size/2, y-dp->vtl->wp_size/2, dp->vtl->wp_size, dp->vtl->wp_size, 0, 360*64 ); break;
-        case WP_SYMBOL_X: vik_viewport_draw_line ( dp->vp, dp->vtl->waypoint_gc, x-dp->vtl->wp_size, y-dp->vtl->wp_size, x+dp->vtl->wp_size, y+dp->vtl->wp_size );
-                          vik_viewport_draw_line ( dp->vp, dp->vtl->waypoint_gc, x-dp->vtl->wp_size, y+dp->vtl->wp_size, x+dp->vtl->wp_size, y-dp->vtl->wp_size ); break;
-        default: break;
+        case WP_SYMBOL_FILLED_SQUARE:
+		dp->vp->port.draw_rectangle(dp->vtl->waypoint_gc, true, x - dp->vtl->wp_size/2, y - dp->vtl->wp_size/2, dp->vtl->wp_size, dp->vtl->wp_size );
+		break;
+        case WP_SYMBOL_SQUARE:
+		dp->vp->port.draw_rectangle(dp->vtl->waypoint_gc, false, x - dp->vtl->wp_size/2, y - dp->vtl->wp_size/2, dp->vtl->wp_size, dp->vtl->wp_size );
+		break;
+        case WP_SYMBOL_CIRCLE:
+		dp->vp->port.draw_arc(dp->vtl->waypoint_gc, true, x-dp->vtl->wp_size/2, y-dp->vtl->wp_size/2, dp->vtl->wp_size, dp->vtl->wp_size, 0, 360*64 );
+		break;
+        case WP_SYMBOL_X:
+		dp->vp->port.draw_line(dp->vtl->waypoint_gc, x-dp->vtl->wp_size, y-dp->vtl->wp_size, x+dp->vtl->wp_size, y+dp->vtl->wp_size );
+		dp->vp->port.draw_line(dp->vtl->waypoint_gc, x-dp->vtl->wp_size, y+dp->vtl->wp_size, x+dp->vtl->wp_size, y-dp->vtl->wp_size );
+		break;
+        default:
+		break;
       }
     }
 
@@ -2503,10 +2519,10 @@ static void trw_layer_draw_waypoint ( const void * id, Waypoint * wp, struct Dra
 
       /* if highlight mode on, then draw background text in highlight colour */
       if ( dp->highlight )
-        vik_viewport_draw_rectangle ( dp->vp, vik_viewport_get_gc_highlight (dp->vp), true, label_x - 1, label_y-1,width+2,height+2);
+        dp->vp->port.draw_rectangle(dp->vp->port.get_gc_highlight(), true, label_x - 1, label_y-1,width+2,height+2);
       else
-        vik_viewport_draw_rectangle ( dp->vp, dp->vtl->waypoint_bg_gc, true, label_x - 1, label_y-1,width+2,height+2);
-      vik_viewport_draw_layout ( dp->vp, dp->vtl->waypoint_text_gc, label_x, label_y, dp->vtl->wplabellayout );
+        dp->vp->port.draw_rectangle(dp->vtl->waypoint_bg_gc, true, label_x - 1, label_y-1,width+2,height+2);
+      dp->vp->port.draw_layout(dp->vtl->waypoint_text_gc, label_x, label_y, dp->vtl->wplabellayout );
     }
   }
 }
@@ -2540,7 +2556,7 @@ static void trw_layer_draw ( VikTrwLayer *l, void * data )
   // If this layer is to be highlighted - then don't draw now - as it will be drawn later on in the specific highlight draw stage
   // This may seem slightly inefficient to test each time for every layer
   //  but for a layer with *lots* of tracks & waypoints this can save some effort by not drawing the items twice
-  if ( vik_viewport_get_draw_highlight ( (VikViewport*)data ) &&
+  if (  ((VikViewport*)data)->port.get_draw_highlight() &&
        vik_window_get_selected_trw_layer ((VikWindow*)VIK_GTK_WINDOW_FROM_LAYER((VikLayer*)l)) == l )
     return;
   trw_layer_draw_with_highlight ( l, data, false );
@@ -2702,7 +2718,7 @@ static VikTrwLayer* trw_layer_create ( VikViewport *vp )
   rv->waypoint_bg_gc = vik_viewport_new_gc_from_color ( vp, &(rv->waypoint_bg_color), 1 );
   gdk_gc_set_function ( rv->waypoint_bg_gc, rv->wpbgand );
 
-  rv->coord_mode = vik_viewport_get_coord_mode ( vp );
+  rv->coord_mode = vp->port.get_coord_mode();
 
   rv->menu_selection = vik_layer_get_interface(VIK_LAYER(rv)->type)->menu_items_selection;
 
@@ -3605,7 +3621,7 @@ static void trw_layer_goto_wp ( menu_array_layer values )
       a_dialog_error_msg ( VIK_GTK_WINDOW_FROM_LAYER(vtl), _("Waypoint not found in this layer.") );
     else
     {
-      vik_viewport_set_center_coord ( vik_layers_panel_get_viewport(vlp), &(wp->coord), true );
+      vik_layers_panel_get_viewport(vlp)->port.set_center_coord(&(wp->coord), true );
       vik_layers_panel_emit_update ( vlp );
 
       // Find and select on the side panel
@@ -3665,7 +3681,7 @@ static void trw_layer_new_wikipedia_wp_viewport ( menu_array_layer values )
   VikViewport *vvp =  vik_window_viewport(vw);
 
   // Note the order is max part first then min part - thus reverse order of use in min_max function:
-  vik_viewport_get_min_max_lat_lon ( vvp, &maxmin[1].lat, &maxmin[0].lat, &maxmin[1].lon, &maxmin[0].lon );
+  vvp->port.get_min_max_lat_lon(&maxmin[1].lat, &maxmin[0].lat, &maxmin[1].lon, &maxmin[0].lon );
   a_geonames_wikipedia_box((VikWindow *)(VIK_GTK_WINDOW_FROM_LAYER(vtl)), vtl, maxmin);
   trw_layer_calculate_bounds_waypoints ( vtl );
   vik_layers_panel_emit_update ( vlp );
@@ -3944,7 +3960,7 @@ static void trw_layer_new_wp ( menu_array_layer values )
   VikLayersPanel *vlp = VIK_LAYERS_PANEL(values[MA_VLP]);
   /* TODO longone: okay, if layer above (aggregate) is invisible but vtl->visible is true, this redraws for no reason.
      instead return true if you want to update. */
-  if ( vik_trw_layer_new_waypoint ( vtl, VIK_GTK_WINDOW_FROM_LAYER(vtl), vik_viewport_get_center(vik_layers_panel_get_viewport(vlp))) ) {
+  if ( vik_trw_layer_new_waypoint ( vtl, VIK_GTK_WINDOW_FROM_LAYER(vtl), vik_layers_panel_get_viewport(vlp)->port.get_center()) ) {
     trw_layer_calculate_bounds_waypoints ( vtl );
     if ( VIK_LAYER(vtl)->visible )
       vik_layers_panel_emit_update ( vlp );
@@ -4040,7 +4056,7 @@ static void trw_layer_auto_tracks_view ( menu_array_layer values )
 static void trw_layer_single_waypoint_jump ( const void * id, const Waypoint * wp, void * vvp )
 {
   /* NB do not care if wp is visible or not */
-  vik_viewport_set_center_coord ( VIK_VIEWPORT(vvp), &(wp->coord), true );
+  VIK_VIEWPORT(vvp)->port.set_center_coord(&(wp->coord), true );
 }
 
 static void trw_layer_auto_waypoints_view ( menu_array_layer values )
@@ -5260,13 +5276,13 @@ void trw_layer_update_treeview ( VikTrwLayer *vtl, Track * trk)
 static void goto_coord ( void * vlp, void * vl, void * vvp, const VikCoord *coord )
 {
   if ( vlp ) {
-    vik_viewport_set_center_coord ( vik_layers_panel_get_viewport (VIK_LAYERS_PANEL(vlp)), coord, true );
+    vik_layers_panel_get_viewport (VIK_LAYERS_PANEL(vlp))->port.set_center_coord(coord, true );
     vik_layers_panel_emit_update ( VIK_LAYERS_PANEL(vlp) );
   }
   else {
     /* since vlp not set, vl & vvp should be valid instead! */
     if ( vl && vvp ) {
-      vik_viewport_set_center_coord ( VIK_VIEWPORT(vvp), coord, true );
+      VIK_VIEWPORT(vvp)->port.set_center_coord(coord, true );
       vik_layer_emit_update ( VIK_LAYER(vl) );
     }
   }
@@ -8847,7 +8863,7 @@ void trw_layer_dialog_shift ( VikTrwLayer *vtl, GtkWindow *dialog, VikCoord *coo
     VikViewport *vvp = vik_window_viewport ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(vtl)) );
 
     int vp_xx, vp_yy; // In viewport pixels
-    vik_viewport_coord_to_screen ( vvp, coord, &vp_xx, &vp_yy );
+    vvp->port.coord_to_screen(coord, &vp_xx, &vp_yy );
 
     // Work out the 'bounding box' in pixel terms of the dialog and only move it when over the position
 
@@ -8865,7 +8881,7 @@ void trw_layer_dialog_shift ( VikTrwLayer *vtl, GtkWindow *dialog, VikCoord *coo
 
         if ( vertical ) {
 	  // Shift up<->down
-          int hh = vik_viewport_get_height ( vvp );
+          int hh = vvp->port.get_height();
 
           // Consider the difference in viewport to the full window
           int offset_y = dest_y;
@@ -8883,7 +8899,7 @@ void trw_layer_dialog_shift ( VikTrwLayer *vtl, GtkWindow *dialog, VikCoord *coo
 	}
 	else {
 	  // Shift left<->right
-          int ww = vik_viewport_get_width ( vvp );
+          int ww = vvp->port.get_width();
 
           // Consider the difference in viewport to the full window
           int offset_x = dest_x;
@@ -8961,7 +8977,7 @@ static void waypoint_search_closest_tp ( void * id, Waypoint * wp, WPSearchParam
   if ( !wp->visible )
     return;
 
-  vik_viewport_coord_to_screen ( params->vvp, &(wp->coord), &x, &y );
+  params->vvp->port.coord_to_screen(&(wp->coord), &x, &y );
 
   // If waypoint has an image then use the image size to select
   if ( params->draw_images && wp->image ) {
@@ -9004,7 +9020,7 @@ static void track_search_closest_tp ( void * id, Track *t, TPSearchParams *param
     int x, y;
     tp = ((Trackpoint *) tpl->data);
 
-    vik_viewport_coord_to_screen ( params->vvp, &(tp->coord), &x, &y );
+    params->vvp->port.coord_to_screen(&(tp->coord), &x, &y );
 
     if ( abs (x - params->x) <= TRACKPOINT_SIZE_APPROX && abs (y - params->y) <= TRACKPOINT_SIZE_APPROX &&
         ((!params->closest_tp) ||        /* was the old trackpoint we already found closer than this one? */
@@ -9030,7 +9046,7 @@ static Trackpoint * closest_tp_in_five_pixel_interval ( VikTrwLayer *vtl, VikVie
   params.vvp = vvp;
   params.closest_track_id = NULL;
   params.closest_tp = NULL;
-  vik_viewport_get_min_max_lat_lon ( params.vvp, &(params.bbox.south), &(params.bbox.north), &(params.bbox.west), &(params.bbox.east) );
+  params.vvp->port.get_min_max_lat_lon(&(params.bbox.south), &(params.bbox.north), &(params.bbox.west), &(params.bbox.east) );
   g_hash_table_foreach ( vtl->tracks, (GHFunc) track_search_closest_tp, &params);
   return params.closest_tp;
 }
@@ -9059,7 +9075,7 @@ static bool trw_layer_select_move ( VikTrwLayer *vtl, GdkEventMotion *event, Vik
 {
   if ( t->holding ) {
     VikCoord new_coord;
-    vik_viewport_screen_to_coord ( vvp, event->x, event->y, &new_coord );
+    vvp->port.screen_to_coord(event->x, event->y, &new_coord);
 
     // Here always allow snapping back to the original location
     //  this is useful when one decides not to move the thing afterall
@@ -9082,7 +9098,7 @@ static bool trw_layer_select_move ( VikTrwLayer *vtl, GdkEventMotion *event, Vik
     }
 
     int x, y;
-    vik_viewport_coord_to_screen ( vvp, &new_coord, &x, &y );
+    vvp->port.coord_to_screen(&new_coord, &x, &y );
 
     marker_moveto ( t, x, y );
 
@@ -9101,7 +9117,7 @@ static bool trw_layer_select_release ( VikTrwLayer *vtl, GdkEventButton *event, 
       return false;
 
     VikCoord new_coord;
-    vik_viewport_screen_to_coord ( vvp, event->x, event->y, &new_coord );
+    vvp->port.screen_to_coord(event->x, event->y, &new_coord );
 
     // snap to TP
     if ( event->state & GDK_CONTROL_MASK )
@@ -9167,7 +9183,7 @@ static bool trw_layer_select_click ( VikTrwLayer *vtl, GdkEventButton *event, Vi
     return false;
 
   LatLonBBox bbox;
-  vik_viewport_get_min_max_lat_lon ( vvp, &(bbox.south), &(bbox.north), &(bbox.west), &(bbox.east) );
+  vvp->port.get_min_max_lat_lon(&(bbox.south), &(bbox.north), &(bbox.west), &(bbox.east) );
 
   // Go for waypoints first as these often will be near a track, but it's likely the wp is wanted rather then the track
 
@@ -9418,7 +9434,7 @@ static void marker_begin_move ( tool_ed_t *t, int x, int y )
   t->holding = true;
   t->gc = vik_viewport_new_gc (t->vvp, "black", 2);
   gdk_gc_set_function ( t->gc, GDK_INVERT );
-  vik_viewport_draw_rectangle ( t->vvp, t->gc, false, x-3, y-3, 6, 6 );
+  t->vvp->port.draw_rectangle(t->gc, false, x-3, y-3, 6, 6 );
   vik_viewport_sync(t->vvp);
   t->oldx = x;
   t->oldy = y;
@@ -9428,8 +9444,8 @@ static void marker_begin_move ( tool_ed_t *t, int x, int y )
 static void marker_moveto ( tool_ed_t *t, int x, int y )
 {
   VikViewport *vvp =  t->vvp;
-  vik_viewport_draw_rectangle ( vvp, t->gc, false, t->oldx-3, t->oldy-3, 6, 6 );
-  vik_viewport_draw_rectangle ( vvp, t->gc, false, x-3, y-3, 6, 6 );
+  vvp->port.draw_rectangle(t->gc, false, t->oldx-3, t->oldy-3, 6, 6 );
+  vvp->port.draw_rectangle(t->gc, false, x-3, y-3, 6, 6 );
   t->oldx = x;
   t->oldy = y;
   t->moving = true;
@@ -9442,7 +9458,7 @@ static void marker_moveto ( tool_ed_t *t, int x, int y )
 
 static void marker_end_move ( tool_ed_t *t )
 {
-  vik_viewport_draw_rectangle ( t->vvp, t->gc, false, t->oldx-3, t->oldy-3, 6, 6 );
+  t->vvp->port.draw_rectangle(t->gc, false, t->oldx-3, t->oldy-3, 6, 6 );
   g_object_unref ( t->gc );
   t->holding = false;
   t->moving = false;
@@ -9483,7 +9499,7 @@ static bool tool_edit_waypoint_click ( VikTrwLayer *vtl, GdkEventButton *event, 
   {
     /* first check if current WP is within area (other may be 'closer', but we want to move the current) */
     int x, y;
-    vik_viewport_coord_to_screen ( vvp, &(vtl->current_wp->coord), &x, &y );
+    vvp->port.coord_to_screen(&(vtl->current_wp->coord), &x, &y );
 
     if ( abs(x - (int)round(event->x)) <= WAYPOINT_SIZE_APPROX &&
          abs(y - (int)round(event->y)) <= WAYPOINT_SIZE_APPROX )
@@ -9546,7 +9562,7 @@ static bool tool_edit_waypoint_move ( VikTrwLayer *vtl, GdkEventMotion *event, v
 
   if ( t->holding ) {
     VikCoord new_coord;
-    vik_viewport_screen_to_coord ( vvp, event->x, event->y, &new_coord );
+    vvp->port.screen_to_coord(event->x, event->y, &new_coord );
 
     /* snap to TP */
     if ( event->state & GDK_CONTROL_MASK )
@@ -9566,7 +9582,7 @@ static bool tool_edit_waypoint_move ( VikTrwLayer *vtl, GdkEventMotion *event, v
 
     {
       int x, y;
-      vik_viewport_coord_to_screen ( vvp, &new_coord, &x, &y );
+      vvp->port.coord_to_screen(&new_coord, &x, &y );
 
       marker_moveto ( t, x, y );
     }
@@ -9586,7 +9602,7 @@ static bool tool_edit_waypoint_release ( VikTrwLayer *vtl, GdkEventButton *event
   if ( t->holding && event->button == 1 )
   {
     VikCoord new_coord;
-    vik_viewport_screen_to_coord ( vvp, event->x, event->y, &new_coord );
+    vvp->port.screen_to_coord(event->x, event->y, &new_coord );
 
     /* snap to TP */
     if ( event->state & GDK_CONTROL_MASK )
@@ -9761,8 +9777,8 @@ static VikLayerToolFuncStatus tool_new_track_move ( VikTrwLayer *vtl, GdkEventMo
     static GdkPixmap *pixmap = NULL;
     int w1, h1, w2, h2;
     // Need to check in case window has been resized
-    w1 = vik_viewport_get_width(vvp);
-    h1 = vik_viewport_get_height(vvp);
+    w1 = vvp->port.get_width();
+    h1 = vvp->port.get_height();
     if (!pixmap) {
       pixmap = gdk_pixmap_new ( gtk_widget_get_window(GTK_WIDGET(vvp)), w1, h1, -1 );
     }
@@ -9781,7 +9797,7 @@ static VikLayerToolFuncStatus tool_new_track_move ( VikTrwLayer *vtl, GdkEventMo
     draw_sync_t *passalong;
     int x1, y1;
 
-    vik_viewport_coord_to_screen ( vvp, &(last_tpt->coord), &x1, &y1 );
+    vvp->port.coord_to_screen(&(last_tpt->coord), &x1, &y1 );
 
     // FOR SCREEN OVERLAYS WE MUST DRAW INTO THIS PIXMAP (when using the reset method)
     //  otherwise using vik_viewport_draw_* functions puts the data into the base pixmap,
@@ -9797,7 +9813,7 @@ static VikLayerToolFuncStatus tool_new_track_move ( VikTrwLayer *vtl, GdkEventMo
     // Now add distance to where the pointer is //
     VikCoord coord;
     struct LatLon ll;
-    vik_viewport_screen_to_coord ( vvp, (int) event->x, (int) event->y, &coord );
+    vvp->port.screen_to_coord((int) event->x, (int) event->y, &coord );
     vik_coord_to_latlon ( &coord, &ll );
     double last_step = vik_coord_diff( &coord, &(last_tpt->coord));
     distance = distance + last_step;
@@ -9857,7 +9873,7 @@ static VikLayerToolFuncStatus tool_new_track_move ( VikTrwLayer *vtl, GdkEventMo
 
     double angle;
     double baseangle;
-    vik_viewport_compute_bearing ( vvp, x1, y1, event->x, event->y, &angle, &baseangle );
+    vvp->port.compute_bearing(x1, y1, event->x, event->y, &angle, &baseangle );
 
     // Update statusbar with full gain/loss information
     statusbar_write (distance, elev_gain, elev_loss, last_step, angle, vtl);
@@ -9951,7 +9967,7 @@ static bool tool_new_track_or_route_click ( VikTrwLayer *vtl, GdkEventButton *ev
   }
 
   tp = new Trackpoint();
-  vik_viewport_screen_to_coord ( vvp, event->x, event->y, &(tp->coord) );
+  vvp->port.screen_to_coord(event->x, event->y, &(tp->coord) );
 
   /* snap to other TP */
   if ( event->state & GDK_CONTROL_MASK )
@@ -10049,7 +10065,7 @@ static bool tool_new_waypoint_click ( VikTrwLayer *vtl, GdkEventButton *event, V
   VikCoord coord;
   if (!vtl || vtl->vl.type != VIK_LAYER_TRW)
     return false;
-  vik_viewport_screen_to_coord ( vvp, event->x, event->y, &coord );
+  vvp->port.screen_to_coord(event->x, event->y, &coord );
   if ( vik_trw_layer_new_waypoint (vtl, VIK_GTK_WINDOW_FROM_LAYER(vtl), &coord) ) {
     trw_layer_calculate_bounds_waypoints ( vtl );
     if ( VIK_LAYER(vtl)->visible )
@@ -10094,7 +10110,7 @@ static bool tool_edit_trackpoint_click ( VikTrwLayer *vtl, GdkEventButton *event
   params.closest_track_id = NULL;
   params.closest_tp = NULL;
   params.closest_tpl = NULL;
-  vik_viewport_get_min_max_lat_lon ( vvp, &(params.bbox.south), &(params.bbox.north), &(params.bbox.west), &(params.bbox.east) );
+  vvp->port.get_min_max_lat_lon(&(params.bbox.south), &(params.bbox.north), &(params.bbox.west), &(params.bbox.east) );
 
   if ( event->button != 1 )
     return false;
@@ -10116,7 +10132,7 @@ static bool tool_edit_trackpoint_click ( VikTrwLayer *vtl, GdkEventButton *event
       return false;
 
     int x, y;
-    vik_viewport_coord_to_screen ( vvp, &(tp->coord), &x, &y );
+    vvp->port.coord_to_screen(&(tp->coord), &x, &y );
 
     if ( current_tr->visible &&
          abs(x - (int)round(event->x)) < TRACKPOINT_SIZE_APPROX &&
@@ -10172,7 +10188,7 @@ static bool tool_edit_trackpoint_move ( VikTrwLayer *vtl, GdkEventMotion *event,
   if ( t->holding )
   {
     VikCoord new_coord;
-    vik_viewport_screen_to_coord ( vvp, event->x, event->y, &new_coord );
+    vvp->port.screen_to_coord(event->x, event->y, &new_coord);
 
     /* snap to TP */
     if ( event->state & GDK_CONTROL_MASK )
@@ -10184,7 +10200,7 @@ static bool tool_edit_trackpoint_move ( VikTrwLayer *vtl, GdkEventMotion *event,
     //    ((Trackpoint *) vtl->current_tpl->data)->coord = new_coord;
     {
       int x, y;
-      vik_viewport_coord_to_screen ( vvp, &new_coord, &x, &y );
+      vvp->port.coord_to_screen(&new_coord, &x, &y );
       marker_moveto ( t, x, y );
     }
 
@@ -10205,7 +10221,7 @@ static bool tool_edit_trackpoint_release ( VikTrwLayer *vtl, GdkEventButton *eve
 
   if ( t->holding ) {
     VikCoord new_coord;
-    vik_viewport_screen_to_coord ( vvp, event->x, event->y, &new_coord );
+    vvp->port.screen_to_coord(event->x, event->y, &new_coord );
 
     /* snap to TP */
     if ( event->state & GDK_CONTROL_MASK )
@@ -10265,7 +10281,7 @@ static bool tool_extended_route_finder_click ( VikTrwLayer *vtl, GdkEventButton 
 {
   VikCoord tmp;
   if ( !vtl ) return false;
-  vik_viewport_screen_to_coord ( vvp, event->x, event->y, &tmp );
+  vvp->port.screen_to_coord(event->x, event->y, &tmp);
   if ( event->button == 3 && vtl->current_track ) {
     tool_extended_route_finder_undo ( vtl );
   }
@@ -10363,7 +10379,7 @@ static void tool_show_picture_wp ( const void * id, Waypoint * wp, void * params
     int x, y, slackx, slacky;
     GdkEventButton *event = (GdkEventButton *) params[1];
 
-    vik_viewport_coord_to_screen ( VIK_VIEWPORT(params[0]), &(wp->coord), &x, &y );
+    VIK_VIEWPORT(params[0])->port.coord_to_screen(&(wp->coord), &x, &y);
     slackx = wp->image_width / 2;
     slacky = wp->image_height / 2;
     if (    x <= event->x + slackx && x >= event->x - slackx
@@ -10977,7 +10993,7 @@ static void trw_layer_download_map_along_track_cb ( menu_array_sublayer values )
   *lp = NULL;
   *np = NULL;
 
-  double cur_zoom = vik_viewport_get_zoom(vvp);
+  double cur_zoom = vvp->port.get_zoom();
   for (default_zoom = 0; default_zoom < G_N_ELEMENTS(zoom_vals); default_zoom++) {
     if (cur_zoom == zoom_vals[default_zoom])
       break;

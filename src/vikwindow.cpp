@@ -438,8 +438,8 @@ static int determine_location_thread ( VikWindow *vw, void * threaddata )
       zoom = 2048.0;
     }
 
-    vik_viewport_set_zoom ( vw->viking_vvp, zoom );
-    vik_viewport_set_center_latlon ( vw->viking_vvp, &ll, false );
+    vw->viking_vvp->port.set_zoom(zoom);
+    vw->viking_vvp->port.set_center_latlon(&ll, false );
 
     char *message = g_strdup_printf ( _("Location found: %s"), name );
     vik_window_statusbar_update ( vw, message, VIK_STATUSBAR_INFO );
@@ -592,9 +592,9 @@ static void zoom_changed (GtkMenuShell *menushell,
   double zoom_request = pow (2, active-5 );
 
   // But has it really changed?
-  double current_zoom = vik_viewport_get_zoom ( vw->viking_vvp );
+  double current_zoom = vw->viking_vvp->port.get_zoom();
   if ( current_zoom != 0.0 && zoom_request != current_zoom ) {
-    vik_viewport_set_zoom ( vw->viking_vvp, zoom_request );
+    vw->viking_vvp->port.set_zoom(zoom_request);
     // Force drawing update
     draw_update ( vw );
   }
@@ -816,7 +816,7 @@ static void vik_window_init ( VikWindow *vw )
   vik_ext_tool_datasources_add_menu_items ( vw, vw->uim );
 
   GtkWidget * zoom_levels = gtk_ui_manager_get_widget (vw->uim, "/MainMenu/View/SetZoom");
-  GtkWidget * zoom_levels_menu = create_zoom_menu_all_levels ( vik_viewport_get_zoom(vw->viking_vvp) );
+  GtkWidget * zoom_levels_menu = create_zoom_menu_all_levels ( vw->viking_vvp->port.get_zoom() );
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (zoom_levels), zoom_levels_menu);
   g_signal_connect ( G_OBJECT(zoom_levels_menu), "selection-done", G_CALLBACK(zoom_changed), vw);
   g_signal_connect_swapped ( G_OBJECT(vw->viking_vs), "clicked", G_CALLBACK(zoom_popup_handler), zoom_levels_menu );
@@ -980,12 +980,12 @@ static bool key_press_event( VikWindow *vw, GdkEventKey *event, void * data )
   }
   // Standard Ctrl+KP+ / Ctrl+KP- to zoom in/out respectively
   else if ( event->keyval == GDK_KEY_KP_Add && (event->state & modifiers) == GDK_CONTROL_MASK ) {
-    vik_viewport_zoom_in ( vw->viking_vvp );
+    vw->viking_vvp->port.zoom_in();
     draw_update(vw);
     return true; // handled keypress
   }
   else if ( event->keyval == GDK_KEY_KP_Subtract && (event->state & modifiers) == GDK_CONTROL_MASK ) {
-    vik_viewport_zoom_out ( vw->viking_vvp );
+    vw->viking_vvp->port.zoom_out();
     draw_update(vw);
     return true; // handled keypress
   }
@@ -1123,9 +1123,9 @@ static void draw_status_tool ( VikWindow *vw )
 static void draw_status ( VikWindow *vw )
 {
   static char zoom_level[22];
-  double xmpp = vik_viewport_get_xmpp (vw->viking_vvp);
-  double ympp = vik_viewport_get_ympp(vw->viking_vvp);
-  char *unit = vik_viewport_get_coord_mode(vw->viking_vvp) == VIK_COORD_UTM ? _("mpp") : _("pixelfact");
+  double xmpp = vw->viking_vvp->port.get_xmpp();
+  double ympp = vw->viking_vvp->port.get_ympp();
+  char *unit = vw->viking_vvp->port.get_coord_mode() == VIK_COORD_UTM ? _("mpp") : _("pixelfact");
   if (xmpp != ympp)
     snprintf( zoom_level, 22, "%.3f/%.3f %s", xmpp, ympp, unit );
   else
@@ -1164,7 +1164,7 @@ static void window_configure_event ( VikWindow *vw )
 static void draw_redraw ( VikWindow *vw )
 {
   VikCoord old_center = vw->trigger_center;
-  vw->trigger_center = *(vik_viewport_get_center(vw->viking_vvp));
+  vw->trigger_center = *(vw->viking_vvp->port.get_center());
   VikLayer *new_trigger = vw->trigger;
   vw->trigger = NULL;
   VikLayer *old_trigger = VIK_LAYER(vik_viewport_get_trigger(vw->viking_vvp));
@@ -1181,7 +1181,7 @@ static void draw_redraw ( VikWindow *vw )
   // Main layer drawing
   vik_layers_panel_draw_all ( vw->viking_vlp );
   // Draw highlight (possibly again but ensures it is on top - especially for when tracks overlap)
-  if ( vik_viewport_get_draw_highlight (vw->viking_vvp) ) {
+  if ( vw->viking_vvp->port.get_draw_highlight() ) {
     if ( vw->containing_vtl && (vw->selected_tracks || vw->selected_waypoints ) ) {
         vik_trw_layer_draw_highlight_items ( (VikTrwLayer *) vw->containing_vtl, vw->selected_tracks, vw->selected_waypoints, vw->viking_vvp );
     }
@@ -1193,10 +1193,10 @@ static void draw_redraw ( VikWindow *vw )
     }
   }
   // Other viewport decoration items on top if they are enabled/in use
-  vik_viewport_draw_scale ( vw->viking_vvp );
-  vik_viewport_draw_copyright ( vw->viking_vvp );
-  vik_viewport_draw_centermark ( vw->viking_vvp );
-  vik_viewport_draw_logo ( vw->viking_vvp );
+  vw->viking_vvp->port.draw_scale();
+  vw->viking_vvp->port.draw_copyright();
+  vw->viking_vvp->port.draw_centermark();
+  vw->viking_vvp->port.draw_logo();
 
   vik_viewport_set_half_drawn ( vw->viking_vvp, false ); /* just in case. */
 }
@@ -1246,8 +1246,8 @@ static void draw_click (VikWindow *vw, GdkEventButton *event)
 static void vik_window_pan_move (VikWindow *vw, GdkEventMotion *event)
 {
   if ( vw->pan_x != -1 ) {
-    vik_viewport_set_center_screen ( vw->viking_vvp, vik_viewport_get_width(vw->viking_vvp)/2 - event->x + vw->pan_x,
-                                     vik_viewport_get_height(vw->viking_vvp)/2 - event->y + vw->pan_y );
+    vw->viking_vvp->port.set_center_screen(vw->viking_vvp->port.get_width()/2 - event->x + vw->pan_x,
+					   vw->viking_vvp->port.get_height()/2 - event->y + vw->pan_y );
     vw->pan_move = true;
     vw->pan_x = event->x;
     vw->pan_y = event->y;
@@ -1263,7 +1263,7 @@ static void vik_window_pan_move (VikWindow *vw, GdkEventMotion *event)
  */
 static void get_location_strings ( VikWindow *vw, struct UTM utm, char **lat, char **lon )
 {
-  if ( vik_viewport_get_drawmode ( vw->viking_vvp ) == VIK_VIEWPORT_DRAWMODE_UTM ) {
+  if ( vw->viking_vvp->port.get_drawmode() == VIK_VIEWPORT_DRAWMODE_UTM ) {
     // Reuse lat for the first part (Zone + N or S, and lon for the second part (easting and northing) of a UTM format:
     //  ZONE[N|S] EASTING NORTHING
     *lat = (char *) malloc(4*sizeof(char));
@@ -1299,13 +1299,13 @@ static void draw_mouse_motion (VikWindow *vw, GdkEventMotion *event)
 
   toolbox_move(vw->vt, event);
 
-  vik_viewport_screen_to_coord ( vw->viking_vvp, event->x, event->y, &coord );
+  vw->viking_vvp->port.screen_to_coord(event->x, event->y, &coord );
   vik_coord_to_utm ( &coord, &utm );
 
   get_location_strings ( vw, utm, &lat, &lon );
 
   /* Change interpolate method according to scale */
-  zoom = vik_viewport_get_zoom(vw->viking_vvp);
+  zoom = vw->viking_vvp->port.get_zoom();
   if (zoom > 2.0)
     interpol_method = VIK_DEM_INTERPOL_NONE;
   else if (zoom >= 1.0)
@@ -1349,7 +1349,7 @@ static bool vik_window_pan_timeout (VikWindow *vw)
   /* set panning origin */
   vw->pan_move = false;
   vw->single_click_pending = false;
-  vik_viewport_set_center_screen ( vw->viking_vvp, vw->delayed_pan_x, vw->delayed_pan_y );
+  vw->viking_vvp->port.set_center_screen(vw->delayed_pan_x, vw->delayed_pan_y );
   draw_update ( vw );
 
   // Really turn off the pan moving!!
@@ -1379,12 +1379,12 @@ static void vik_window_pan_release ( VikWindow *vw, GdkEventButton *event )
       do_draw = false;
     }
     else {
-      vik_viewport_set_center_screen ( vw->viking_vvp, vw->pan_x, vw->pan_y );
+      vw->viking_vvp->port.set_center_screen(vw->pan_x, vw->pan_y );
     }
   }
   else {
-     vik_viewport_set_center_screen ( vw->viking_vvp, vik_viewport_get_width(vw->viking_vvp)/2 - event->x + vw->pan_x,
-                                      vik_viewport_get_height(vw->viking_vvp)/2 - event->y + vw->pan_y );
+     vw->viking_vvp->port.set_center_screen(vw->viking_vvp->port.get_width()/2 - event->x + vw->pan_x,
+					    vw->viking_vvp->port.get_height()/2 - event->y + vw->pan_y );
   }
 
   vw->pan_move = false;
@@ -1411,38 +1411,42 @@ static void draw_release ( VikWindow *vw, GdkEventButton *event )
 static void draw_scroll (VikWindow *vw, GdkEventScroll *event)
 {
   unsigned int modifiers = event->state & (GDK_SHIFT_MASK | GDK_CONTROL_MASK);
+
+  int width = vw->viking_vvp->port.get_width();
+  int height = vw->viking_vvp->port.get_height();
+
   if ( modifiers == GDK_CONTROL_MASK ) {
     /* control == pan up & down */
     if ( event->direction == GDK_SCROLL_UP )
-      vik_viewport_set_center_screen ( vw->viking_vvp, vik_viewport_get_width(vw->viking_vvp)/2, vik_viewport_get_height(vw->viking_vvp)/3 );
+      vw->viking_vvp->port.set_center_screen(width/2, height/3 );
     else
-      vik_viewport_set_center_screen ( vw->viking_vvp, vik_viewport_get_width(vw->viking_vvp)/2, vik_viewport_get_height(vw->viking_vvp)*2/3 );
+      vw->viking_vvp->port.set_center_screen(width/2, height*2/3 );
   } else if ( modifiers == GDK_SHIFT_MASK ) {
     /* shift == pan left & right */
     if ( event->direction == GDK_SCROLL_UP )
-      vik_viewport_set_center_screen ( vw->viking_vvp, vik_viewport_get_width(vw->viking_vvp)/3, vik_viewport_get_height(vw->viking_vvp)/2 );
+      vw->viking_vvp->port.set_center_screen(width/3, height/2 );
     else
-      vik_viewport_set_center_screen ( vw->viking_vvp, vik_viewport_get_width(vw->viking_vvp)*2/3, vik_viewport_get_height(vw->viking_vvp)/2 );
+      vw->viking_vvp->port.set_center_screen(width*2/3, height/2 );
   } else if ( modifiers == (GDK_CONTROL_MASK | GDK_SHIFT_MASK) ) {
     // This zoom is on the center position
     if ( event->direction == GDK_SCROLL_UP )
-      vik_viewport_zoom_in (vw->viking_vvp);
+      vw->viking_vvp->port.zoom_in();
     else
-      vik_viewport_zoom_out (vw->viking_vvp);
+      vw->viking_vvp->port.zoom_out();
   } else {
     /* make sure mouse is still over the same point on the map when we zoom */
     VikCoord coord;
     int x, y;
-    int center_x = vik_viewport_get_width ( vw->viking_vvp ) / 2;
-    int center_y = vik_viewport_get_height ( vw->viking_vvp ) / 2;
-    vik_viewport_screen_to_coord ( vw->viking_vvp, event->x, event->y, &coord );
+    int center_x = width / 2;
+    int center_y = height / 2;
+    vw->viking_vvp->port.screen_to_coord(event->x, event->y, &coord );
     if ( event->direction == GDK_SCROLL_UP )
-      vik_viewport_zoom_in (vw->viking_vvp);
+      vw->viking_vvp->port.zoom_in();
     else
-      vik_viewport_zoom_out(vw->viking_vvp);
-    vik_viewport_coord_to_screen ( vw->viking_vvp, &coord, &x, &y );
-    vik_viewport_set_center_screen ( vw->viking_vvp, center_x + (x - event->x),
-                                     center_y + (y - event->y) );
+      vw->viking_vvp->port.zoom_out();
+    vw->viking_vvp->port.coord_to_screen(&coord, &x, &y);
+    vw->viking_vvp->port.set_center_screen(center_x + (x - event->x),
+					   center_y + (y - event->y) );
   }
 
   draw_update(vw);
@@ -1472,11 +1476,11 @@ static void draw_ruler(VikViewport *vvp, GdkDrawable *d, GdkGC *gc, int x1, int 
   /* draw line with arrow ends */
   {
     int tmp_x1=x1, tmp_y1=y1, tmp_x2=x2, tmp_y2=y2;
-    a_viewport_clip_line(&tmp_x1, &tmp_y1, &tmp_x2, &tmp_y2);
+    Viewport::clip_line(&tmp_x1, &tmp_y1, &tmp_x2, &tmp_y2);
     gdk_draw_line(d, gc, tmp_x1, tmp_y1, tmp_x2, tmp_y2);
   }
 
-  a_viewport_clip_line(&x1, &y1, &x2, &y2);
+  Viewport::clip_line(&x1, &y1, &x2, &y2);
   gdk_draw_line(d, gc, x1, y1, x2, y2);
 
   gdk_draw_line(d, gc, x1 - dy, y1 + dx, x1 + dy, y1 - dx);
@@ -1490,7 +1494,7 @@ static void draw_ruler(VikViewport *vvp, GdkDrawable *d, GdkGC *gc, int x1, int 
 #define CR 80
 #define CW 4
 
-  vik_viewport_compute_bearing ( vvp, x1, y1, x2, y2, &angle, &baseangle );
+  vvp->port.compute_bearing(x1, y1, x2, y2, &angle, &baseangle );
 
   {
     GdkColor color;
@@ -1583,7 +1587,7 @@ static void draw_ruler(VikViewport *vvp, GdkDrawable *d, GdkGC *gc, int x1, int 
       yd = (y1+y2)/2 - hd/2 + dx;
     }
 
-    if ( xd < -5 || yd < -5 || xd > vik_viewport_get_width(vvp)+5 || yd > vik_viewport_get_height(vvp)+5 ) {
+    if ( xd < -5 || yd < -5 || xd > vvp->port.get_width() + 5 || yd > vvp->port.get_height() + 5 ) {
       xd = x2 + 10;
       yd = y2 - 5;
     }
@@ -1597,7 +1601,7 @@ static void draw_ruler(VikViewport *vvp, GdkDrawable *d, GdkGC *gc, int x1, int 
     xb = x1 + CR*cos(angle-M_PI_2);
     yb = y1 + CR*sin(angle-M_PI_2);
 
-    if ( xb < -5 || yb < -5 || xb > vik_viewport_get_width(vvp)+5 || yb > vik_viewport_get_height(vvp)+5 ) {
+    if ( xb < -5 || yb < -5 || xb > vvp->port.get_width() + 5 || yb > vvp->port.get_height() + 5 ) {
       xb = x2 + 10;
       yb = y2 + 10;
     }
@@ -1645,7 +1649,7 @@ static VikLayerToolFuncStatus ruler_click (VikLayer *vl, GdkEventButton *event, 
   char *temp;
   if ( event->button == 1 ) {
     char *lat=NULL, *lon=NULL;
-    vik_viewport_screen_to_coord ( s->vvp, (int) event->x, (int) event->y, &coord );
+    s->vvp->port.screen_to_coord((int) event->x, (int) event->y, &coord );
     vik_coord_to_latlon ( &coord, &ll );
     a_coords_latlon_to_string ( &ll, &lat, &lon );
     if ( s->has_oldcoord ) {
@@ -1678,7 +1682,7 @@ static VikLayerToolFuncStatus ruler_click (VikLayer *vl, GdkEventButton *event, 
     s->oldcoord = coord;
   }
   else {
-    vik_viewport_set_center_screen ( s->vvp, (int) event->x, (int) event->y );
+    s->vvp->port.set_center_screen((int) event->x, (int) event->y );
     draw_update ( s->vw );
   }
   return VIK_LAYER_TOOL_ACK;
@@ -1697,8 +1701,8 @@ static VikLayerToolFuncStatus ruler_move (VikLayer *vl, GdkEventMotion *event, r
     int oldx, oldy, w1, h1, w2, h2;
     static GdkPixmap *buf = NULL;
     char *lat=NULL, *lon=NULL;
-    w1 = vik_viewport_get_width(vvp);
-    h1 = vik_viewport_get_height(vvp);
+    w1 = vvp->port.get_width();
+    h1 = vvp->port.get_height();
     if (!buf) {
       buf = gdk_pixmap_new ( gtk_widget_get_window(GTK_WIDGET(vvp)), w1, h1, -1 );
     }
@@ -1708,9 +1712,9 @@ static VikLayerToolFuncStatus ruler_move (VikLayer *vl, GdkEventMotion *event, r
       buf = gdk_pixmap_new ( gtk_widget_get_window(GTK_WIDGET(vvp)), w1, h1, -1 );
     }
 
-    vik_viewport_screen_to_coord ( vvp, (int) event->x, (int) event->y, &coord );
+    vvp->port.screen_to_coord((int) event->x, (int) event->y, &coord );
     vik_coord_to_latlon ( &coord, &ll );
-    vik_viewport_coord_to_screen ( vvp, &s->oldcoord, &oldx, &oldy );
+    vvp->port.coord_to_screen(&s->oldcoord, &oldx, &oldy );
 
     gdk_draw_drawable (buf, gtk_widget_get_style(GTK_WIDGET(vvp))->black_gc,
 		       vik_viewport_get_pixmap(vvp), 0, 0, 0, 0, -1, -1);
@@ -1806,8 +1810,8 @@ static void zoomtool_resize_pixmap (zoom_tool_state_t *zts)
     int w1, h1, w2, h2;
 
     // Allocate a drawing area the size of the viewport
-    w1 = vik_viewport_get_width ( zts->vw->viking_vvp );
-    h1 = vik_viewport_get_height ( zts->vw->viking_vvp );
+    w1 = zts->vw->viking_vvp->port.get_width();
+    h1 = zts->vw->viking_vvp->port.get_height();
 
     if ( !zts->pixmap ) {
       // Totally new
@@ -1848,8 +1852,8 @@ static VikLayerToolFuncStatus zoomtool_click (VikLayer *vl, GdkEventButton *even
 
   VikCoord coord;
   int x, y;
-  int center_x = vik_viewport_get_width ( zts->vw->viking_vvp ) / 2;
-  int center_y = vik_viewport_get_height ( zts->vw->viking_vvp ) / 2;
+  int center_x = zts->vw->viking_vvp->port.get_width() / 2;
+  int center_y = zts->vw->viking_vvp->port.get_height() / 2;
 
   bool skip_update = false;
 
@@ -1857,19 +1861,19 @@ static VikLayerToolFuncStatus zoomtool_click (VikLayer *vl, GdkEventButton *even
 
   if ( modifiers == (GDK_CONTROL_MASK | GDK_SHIFT_MASK) ) {
     // This zoom is on the center position
-    vik_viewport_set_center_screen ( zts->vw->viking_vvp, center_x, center_y );
+    zts->vw->viking_vvp->port.set_center_screen(center_x, center_y );
     if ( event->button == 1 )
-      vik_viewport_zoom_in (zts->vw->viking_vvp);
+      zts->vw->viking_vvp->port.zoom_in();
     else if ( event->button == 3 )
-      vik_viewport_zoom_out (zts->vw->viking_vvp);
+      zts->vw->viking_vvp->port.zoom_out();
   }
   else if ( modifiers == GDK_CONTROL_MASK ) {
     // This zoom is to recenter on the mouse position
-    vik_viewport_set_center_screen ( zts->vw->viking_vvp, (int) event->x, (int) event->y );
+    zts->vw->viking_vvp->port.set_center_screen((int) event->x, (int) event->y );
     if ( event->button == 1 )
-      vik_viewport_zoom_in (zts->vw->viking_vvp);
+      zts->vw->viking_vvp->port.zoom_in();
     else if ( event->button == 3 )
-      vik_viewport_zoom_out (zts->vw->viking_vvp);
+      zts->vw->viking_vvp->port.zoom_out();
   }
   else if ( modifiers == GDK_SHIFT_MASK ) {
     // Get start of new zoom bounds
@@ -1882,15 +1886,14 @@ static VikLayerToolFuncStatus zoomtool_click (VikLayer *vl, GdkEventButton *even
   }
   else {
     /* make sure mouse is still over the same point on the map when we zoom */
-    vik_viewport_screen_to_coord ( zts->vw->viking_vvp, event->x, event->y, &coord );
+    zts->vw->viking_vvp->port.screen_to_coord(event->x, event->y, &coord );
     if ( event->button == 1 )
-      vik_viewport_zoom_in (zts->vw->viking_vvp);
+      zts->vw->viking_vvp->port.zoom_in();
     else if ( event->button == 3 )
-      vik_viewport_zoom_out(zts->vw->viking_vvp);
-    vik_viewport_coord_to_screen ( zts->vw->viking_vvp, &coord, &x, &y );
-    vik_viewport_set_center_screen ( zts->vw->viking_vvp,
-                                     center_x + (x - event->x),
-                                     center_y + (y - event->y) );
+      zts->vw->viking_vvp->port.zoom_out();
+    zts->vw->viking_vvp->port.coord_to_screen(&coord, &x, &y );
+    zts->vw->viking_vvp->port.set_center_screen(center_x + (x - event->x),
+						center_y + (y - event->y) );
   }
 
   if ( !skip_update )
@@ -1961,8 +1964,8 @@ static VikLayerToolFuncStatus zoomtool_release (VikLayer *vl, GdkEventButton *ev
      ( event->y < zts->start_y-5 || event->y > zts->start_y+5 ) ) {
 
     VikCoord coord1, coord2;
-    vik_viewport_screen_to_coord ( zts->vw->viking_vvp, zts->start_x, zts->start_y, &coord1);
-    vik_viewport_screen_to_coord ( zts->vw->viking_vvp, event->x, event->y, &coord2);
+    zts->vw->viking_vvp->port.screen_to_coord(zts->start_x, zts->start_y, &coord1);
+    zts->vw->viking_vvp->port.screen_to_coord(event->x, event->y, &coord2);
 
     // From the extend of the bounds pick the best zoom level
     // c.f. trw_layer_zoom_to_show_latlons()
@@ -1974,8 +1977,8 @@ static VikLayerToolFuncStatus zoomtool_release (VikLayer *vl, GdkEventButton *ev
 			      (ll1.lon+ll2.lon)/2 };
 
     VikCoord new_center;
-    vik_coord_load_from_latlon ( &new_center, vik_viewport_get_coord_mode ( zts->vw->viking_vvp ), &average );
-    vik_viewport_set_center_coord ( zts->vw->viking_vvp, &new_center, false );
+    vik_coord_load_from_latlon ( &new_center, zts->vw->viking_vvp->port.get_coord_mode(), &average );
+    zts->vw->viking_vvp->port.set_center_coord(&new_center, false );
 
     /* Convert into definite 'smallest' and 'largest' positions */
     struct LatLon minmin;
@@ -1992,12 +1995,12 @@ static VikLayerToolFuncStatus zoomtool_release (VikLayer *vl, GdkEventButton *ev
 
     /* Always recalculate the 'best' zoom level */
     double zoom = VIK_VIEWPORT_MIN_ZOOM;
-    vik_viewport_set_zoom ( zts->vw->viking_vvp, zoom );
+    zts->vw->viking_vvp->port.set_zoom(zoom);
 
     double min_lat, max_lat, min_lon, max_lon;
     /* Should only be a maximum of about 18 iterations from min to max zoom levels */
     while ( zoom <= VIK_VIEWPORT_MAX_ZOOM ) {
-      vik_viewport_get_min_max_lat_lon ( zts->vw->viking_vvp, &min_lat, &max_lat, &min_lon, &max_lon );
+      zts->vw->viking_vvp->port.get_min_max_lat_lon(&min_lat, &max_lat, &min_lon, &max_lon );
       /* NB I think the logic used in this test to determine if the bounds is within view
 	 fails if track goes across 180 degrees longitude.
 	 Hopefully that situation is not too common...
@@ -2011,23 +2014,23 @@ static VikLayerToolFuncStatus zoomtool_release (VikLayer *vl, GdkEventButton *ev
 
       /* Try next */
       zoom = zoom * 2;
-      vik_viewport_set_zoom ( zts->vw->viking_vvp, zoom );
+      zts->vw->viking_vvp->port.set_zoom(zoom);
     }
   }
   else {
      // When pressing shift and clicking for zoom, then jump three levels
      if ( modifiers == GDK_SHIFT_MASK ) {
        // Zoom in/out by three if possible
-       vik_viewport_set_center_screen ( zts->vw->viking_vvp, event->x, event->y );
+       zts->vw->viking_vvp->port.set_center_screen(event->x, event->y );
        if ( event->button == 1 ) {
-          vik_viewport_zoom_in ( zts->vw->viking_vvp );
-          vik_viewport_zoom_in ( zts->vw->viking_vvp );
-          vik_viewport_zoom_in ( zts->vw->viking_vvp );
+          zts->vw->viking_vvp->port.zoom_in();
+          zts->vw->viking_vvp->port.zoom_in();
+          zts->vw->viking_vvp->port.zoom_in();
        }
        else if ( event->button == 3 ) {
-          vik_viewport_zoom_out ( zts->vw->viking_vvp );
-          vik_viewport_zoom_out ( zts->vw->viking_vvp );
-          vik_viewport_zoom_out ( zts->vw->viking_vvp );
+          zts->vw->viking_vvp->port.zoom_out();
+          zts->vw->viking_vvp->port.zoom_out();
+          zts->vw->viking_vvp->port.zoom_out();
        }
      }
   }
@@ -2075,12 +2078,12 @@ static VikLayerToolFuncStatus pantool_click (VikLayer *vl, GdkEventButton *event
     if ( event->button == 1 ) {
       unsigned int modifier = event->state & GDK_SHIFT_MASK;
       if ( modifier )
-        vik_viewport_zoom_out ( vw->viking_vvp );
+        vw->viking_vvp->port.zoom_out();
       else
-        vik_viewport_zoom_in ( vw->viking_vvp );
+        vw->viking_vvp->port.zoom_in();
     }
     else if ( event->button == 3 )
-      vik_viewport_zoom_out ( vw->viking_vvp );
+      vw->viking_vvp->port.zoom_out();
 
     draw_update ( vw );
   }
@@ -2282,13 +2285,13 @@ static void draw_pan_cb ( GtkAction *a, VikWindow *vw )
     return;
 
   if (!strcmp(gtk_action_get_name(a), "PanNorth")) {
-    vik_viewport_set_center_screen ( vw->viking_vvp, vik_viewport_get_width(vw->viking_vvp)/2, 0 );
+    vw->viking_vvp->port.set_center_screen(vw->viking_vvp->port.get_width()/2, 0 );
   } else if (!strcmp(gtk_action_get_name(a), "PanEast")) {
-    vik_viewport_set_center_screen ( vw->viking_vvp, vik_viewport_get_width(vw->viking_vvp), vik_viewport_get_height(vw->viking_vvp)/2 );
+    vw->viking_vvp->port.set_center_screen(vw->viking_vvp->port.get_width(), vw->viking_vvp->port.get_height()/2 );
   } else if (!strcmp(gtk_action_get_name(a), "PanSouth")) {
-    vik_viewport_set_center_screen ( vw->viking_vvp, vik_viewport_get_width(vw->viking_vvp)/2, vik_viewport_get_height(vw->viking_vvp) );
+    vw->viking_vvp->port.set_center_screen(vw->viking_vvp->port.get_width()/2, vw->viking_vvp->port.get_height() );
   } else if (!strcmp(gtk_action_get_name(a), "PanWest")) {
-    vik_viewport_set_center_screen ( vw->viking_vvp, 0, vik_viewport_get_height(vw->viking_vvp)/2 );
+    vw->viking_vvp->port.set_center_screen(0, vw->viking_vvp->port.get_height()/2 );
   }
   draw_update ( vw );
 }
@@ -2316,11 +2319,11 @@ static void draw_zoom_cb ( GtkAction *a, VikWindow *vw )
 
   switch (what)
   {
-    case -3: vik_viewport_zoom_in ( vw->viking_vvp ); break;
-    case -4: vik_viewport_zoom_out ( vw->viking_vvp ); break;
-    case -1: vik_viewport_set_zoom ( vw->viking_vvp, 0.5 ); break;
-    case -2: vik_viewport_set_zoom ( vw->viking_vvp, 0.25 ); break;
-    default: vik_viewport_set_zoom ( vw->viking_vvp, what );
+    case -3: vw->viking_vvp->port.zoom_in(); break;
+    case -4: vw->viking_vvp->port.zoom_out(); break;
+    case -1: vw->viking_vvp->port.set_zoom(0.5); break;
+    case -2: vw->viking_vvp->port.set_zoom(0.25); break;
+    default: vw->viking_vvp->port.set_zoom(what);
   }
   draw_update ( vw );
 }
@@ -2331,17 +2334,17 @@ static void draw_goto_cb ( GtkAction *a, VikWindow *vw )
 
   if (!strcmp(gtk_action_get_name(a), "GotoLL")) {
     struct LatLon ll, llold;
-    vik_coord_to_latlon ( vik_viewport_get_center ( vw->viking_vvp ), &llold );
+    vik_coord_to_latlon ( vw->viking_vvp->port.get_center(), &llold );
     if ( a_dialog_goto_latlon ( GTK_WINDOW(vw), &ll, &llold ) )
-      vik_coord_load_from_latlon ( &new_center, vik_viewport_get_coord_mode(vw->viking_vvp), &ll );
+      vik_coord_load_from_latlon ( &new_center, vw->viking_vvp->port.get_coord_mode(), &ll );
     else
       return;
   }
   else if (!strcmp(gtk_action_get_name(a), "GotoUTM")) {
     struct UTM utm, utmold;
-    vik_coord_to_utm ( vik_viewport_get_center ( vw->viking_vvp ), &utmold );
+    vik_coord_to_utm ( vw->viking_vvp->port.get_center(), &utmold );
     if ( a_dialog_goto_utm ( GTK_WINDOW(vw), &utm, &utmold ) )
-      vik_coord_load_from_utm ( &new_center, vik_viewport_get_coord_mode(vw->viking_vvp), &utm );
+      vik_coord_load_from_utm ( &new_center, vw->viking_vvp->port.get_coord_mode(), &utm );
     else
      return;
   }
@@ -2350,7 +2353,7 @@ static void draw_goto_cb ( GtkAction *a, VikWindow *vw )
     return;
   }
 
-  vik_viewport_set_center_coord ( vw->viking_vvp, &new_center, true );
+  vw->viking_vvp->port.set_center_coord(&new_center, true );
   draw_update ( vw );
 }
 
@@ -2368,10 +2371,10 @@ static void center_changed_cb ( VikWindow *vw )
 */
   GtkAction* action_forward = gtk_action_group_get_action ( vw->action_group, "GoForward" );
   if ( action_forward ) {
-    gtk_action_set_sensitive ( action_forward, vik_viewport_forward_available(vw->viking_vvp) );
+    gtk_action_set_sensitive ( action_forward, vw->viking_vvp->port.forward_available());
   }
 
-  toolbar_action_set_sensitive ( vw->viking_vtb, "GoForward", vik_viewport_forward_available(vw->viking_vvp) );
+  toolbar_action_set_sensitive ( vw->viking_vtb, "GoForward", vw->viking_vvp->port.forward_available() );
 }
 
 /**
@@ -2381,10 +2384,10 @@ static void draw_goto_back_and_forth ( GtkAction *a, VikWindow *vw )
 {
   bool changed = false;
   if (!strcmp(gtk_action_get_name(a), "GoBack")) {
-    changed = vik_viewport_go_back ( vw->viking_vvp );
+    changed = vw->viking_vvp->port.go_back();
   }
   else if (!strcmp(gtk_action_get_name(a), "GoForward")) {
-    changed = vik_viewport_go_forward ( vw->viking_vvp );
+    changed = vw->viking_vvp->port.go_forward();
   }
   else {
     return;
@@ -2586,39 +2589,39 @@ static void tb_view_main_menu_cb ( GtkAction *a, VikWindow *vw )
 
 static void tb_set_draw_scale ( GtkAction *a, VikWindow *vw )
 {
-  bool next_state = !vik_viewport_get_draw_scale ( vw->viking_vvp );
+  bool next_state = !vw->viking_vvp->port.get_draw_scale();
   GtkWidget *check_box = get_show_widget_by_name ( vw, gtk_action_get_name(a) );
   bool menu_state = gtk_check_menu_item_get_active ( GTK_CHECK_MENU_ITEM(check_box) );
   if ( next_state != menu_state )
     gtk_check_menu_item_set_active ( GTK_CHECK_MENU_ITEM(check_box), next_state );
   else {
-    vik_viewport_set_draw_scale ( vw->viking_vvp, next_state );
+    vw->viking_vvp->port.set_draw_scale(next_state);
     draw_update ( vw );
   }
 }
 
 static void tb_set_draw_centermark ( GtkAction *a, VikWindow *vw )
 {
-  bool next_state = !vik_viewport_get_draw_centermark ( vw->viking_vvp );
+  bool next_state = !vw->viking_vvp->port.get_draw_centermark();
   GtkWidget *check_box = get_show_widget_by_name ( vw, gtk_action_get_name(a) );
   bool menu_state = gtk_check_menu_item_get_active ( GTK_CHECK_MENU_ITEM(check_box) );
   if ( next_state != menu_state )
     gtk_check_menu_item_set_active ( GTK_CHECK_MENU_ITEM(check_box), next_state );
   else {
-    vik_viewport_set_draw_centermark ( vw->viking_vvp, next_state );
+    vw->viking_vvp->port.set_draw_centermark(next_state);
     draw_update ( vw );
   }
 }
 
 static void tb_set_draw_highlight ( GtkAction *a, VikWindow *vw )
 {
-  bool next_state = !vik_viewport_get_draw_highlight ( vw->viking_vvp );
+  bool next_state = !vw->viking_vvp->port.get_draw_highlight();
   GtkWidget *check_box = get_show_widget_by_name ( vw, gtk_action_get_name(a) );
   bool menu_state = gtk_check_menu_item_get_active ( GTK_CHECK_MENU_ITEM(check_box) );
   if ( next_state != menu_state )
     gtk_check_menu_item_set_active ( GTK_CHECK_MENU_ITEM(check_box), next_state );
   else {
-    vik_viewport_set_draw_highlight ( vw->viking_vvp, next_state );
+    vw->viking_vvp->port.set_draw_highlight(next_state);
     draw_update ( vw );
   }
 }
@@ -2647,7 +2650,7 @@ static void help_cache_info_cb ( GtkAction *a, VikWindow *vw )
 
 static void back_forward_info_cb ( GtkAction *a, VikWindow *vw )
 {
-  vik_viewport_show_centers ( vw->viking_vvp, GTK_WINDOW(vw) );
+  vw->viking_vvp->port.show_centers(GTK_WINDOW(vw) );
 }
 
 static void menu_delete_layer_cb ( GtkAction *a, VikWindow *vw )
@@ -3121,34 +3124,34 @@ void vik_window_open_file ( VikWindow *vw, const char *filename, bool change_fil
       /* Update UI */
       if ( change_filename )
         window_set_filename ( vw, filename );
-      mode_button = vik_window_get_drawmode_button ( vw, vik_viewport_get_drawmode ( vw->viking_vvp ) );
+      mode_button = vik_window_get_drawmode_button ( vw, vw->viking_vvp->port.get_drawmode() );
       vw->only_updating_coord_mode_ui = true; /* if we don't set this, it will change the coord to UTM if we click Lat/Lon. I don't know why. */
       gtk_check_menu_item_set_active ( GTK_CHECK_MENU_ITEM(mode_button), true );
       vw->only_updating_coord_mode_ui = false;
 
-      vik_layers_panel_change_coord_mode ( vw->viking_vlp, vik_viewport_get_coord_mode ( vw->viking_vvp ) );
+      vik_layers_panel_change_coord_mode ( vw->viking_vlp, vw->viking_vvp->port.get_coord_mode() );
 
       // Slightly long winded methods to align loaded viewport settings with the UI
       //  Since the rewrite for toolbar + menu actions
       //  there no longer exists a simple way to directly change the UI to a value for toggle settings
       //  it only supports toggling the existing setting (otherwise get infinite loops in trying to align tb+menu elements)
       // Thus get state, compare them, if different then invert viewport setting and (re)sync the setting (via toggling)
-      bool vp_state_scale = vik_viewport_get_draw_scale ( vw->viking_vvp );
+      bool vp_state_scale = vw->viking_vvp->port.get_draw_scale();
       bool ui_state_scale = gtk_check_menu_item_get_active ( GTK_CHECK_MENU_ITEM(get_show_widget_by_name(vw, "ShowScale")) );
       if ( vp_state_scale != ui_state_scale ) {
-        vik_viewport_set_draw_scale ( vw->viking_vvp, !vp_state_scale );
+        vw->viking_vvp->port.set_draw_scale(!vp_state_scale );
         toggle_draw_scale ( NULL, vw );
       }
-      bool vp_state_centermark = vik_viewport_get_draw_centermark ( vw->viking_vvp );
+      bool vp_state_centermark = vw->viking_vvp->port.get_draw_centermark();
       bool ui_state_centermark = gtk_check_menu_item_get_active ( GTK_CHECK_MENU_ITEM(get_show_widget_by_name(vw, "ShowCenterMark")) );
       if ( vp_state_centermark != ui_state_centermark ) {
-        vik_viewport_set_draw_centermark ( vw->viking_vvp, !vp_state_centermark );
+        vw->viking_vvp->port.set_draw_centermark(!vp_state_centermark);
         toggle_draw_centermark ( NULL, vw );
       }
-      bool vp_state_highlight = vik_viewport_get_draw_highlight ( vw->viking_vvp );
+      bool vp_state_highlight = vw->viking_vvp->port.get_draw_highlight();
       bool ui_state_highlight = gtk_check_menu_item_get_active ( GTK_CHECK_MENU_ITEM(get_show_widget_by_name(vw, "ShowHighlight")) );
       if ( vp_state_highlight != ui_state_highlight ) {
-        vik_viewport_set_draw_highlight ( vw->viking_vvp, !vp_state_highlight );
+        vw->viking_vvp->port.set_draw_highlight(!vp_state_highlight );
         toggle_draw_highlight ( NULL, vw );
       }
     }
@@ -3594,7 +3597,7 @@ static void goto_default_location( GtkAction *a, VikWindow *vw)
   struct LatLon ll;
   ll.lat = a_vik_get_default_lat();
   ll.lon = a_vik_get_default_long();
-  vik_viewport_set_center_latlon(vw->viking_vvp, &ll, true);
+  vw->viking_vvp->port.set_center_latlon(&ll, true);
   vik_layers_panel_emit_update(vw->viking_vlp);
 }
 
@@ -3616,7 +3619,7 @@ static void menu_copy_centre_cb ( GtkAction *a, VikWindow *vw )
   struct UTM utm;
   char *lat = NULL, *lon = NULL;
 
-  coord = vik_viewport_get_center ( vw->viking_vvp );
+  coord = vw->viking_vvp->port.get_center();
   vik_coord_to_utm ( coord, &utm );
 
   bool full_format = false;
@@ -3735,7 +3738,7 @@ static void default_location_cb ( GtkAction *a, VikWindow *vw )
 
   /* Get current center */
   struct LatLon ll;
-  vik_coord_to_latlon ( vik_viewport_get_center ( vw->viking_vvp ), &ll );
+  vik_coord_to_latlon ( vw->viking_vvp->port.get_center(), &ll );
 
   /* Apply to preferences */
   VikLayerParamData vlp_data;
@@ -3781,11 +3784,11 @@ static bool save_file_and_exit ( GtkAction *a, VikWindow *vw )
 
 static void zoom_to_cb ( GtkAction *a, VikWindow *vw )
 {
-  double xmpp = vik_viewport_get_xmpp ( vw->viking_vvp ), ympp = vik_viewport_get_ympp ( vw->viking_vvp );
+  double xmpp = vw->viking_vvp->port.get_xmpp(), ympp = vw->viking_vvp->port.get_ympp();
   if ( a_dialog_custom_zoom ( GTK_WINDOW(vw), &xmpp, &ympp ) )
   {
-    vik_viewport_set_xmpp ( vw->viking_vvp, xmpp );
-    vik_viewport_set_ympp ( vw->viking_vvp, ympp );
+    vw->viking_vvp->port.set_xmpp(xmpp);
+    vw->viking_vvp->port.set_ympp(ympp);
     draw_update ( vw );
   }
 }
@@ -3815,9 +3818,9 @@ static void save_image_file ( VikWindow *vw, const char *fn, unsigned int w, uns
   // Windows version under Wine OK!
 
   /* backup old zoom & set new */
-  old_xmpp = vik_viewport_get_xmpp ( vw->viking_vvp );
-  old_ympp = vik_viewport_get_ympp ( vw->viking_vvp );
-  vik_viewport_set_zoom ( vw->viking_vvp, zoom );
+  old_xmpp = vw->viking_vvp->port.get_xmpp();
+  old_ympp = vw->viking_vvp->port.get_ympp();
+  vw->viking_vvp->port.set_zoom(zoom);
 
   /* reset width and height: */
   vik_viewport_configure_manually ( vw->viking_vvp, w, h );
@@ -3837,8 +3840,8 @@ static void save_image_file ( VikWindow *vw, const char *fn, unsigned int w, uns
     gtk_dialog_run ( GTK_DIALOG(msgbox) ); // Don't care about the result
 
     /* pretend like nothing happened ;) */
-    vik_viewport_set_xmpp ( vw->viking_vvp, old_xmpp );
-    vik_viewport_set_ympp ( vw->viking_vvp, old_ympp );
+    vw->viking_vvp->port.set_xmpp(old_xmpp);
+    vw->viking_vvp->port.set_ympp(old_ympp);
     vik_viewport_configure ( vw->viking_vvp );
     draw_update ( vw );
 
@@ -3849,7 +3852,7 @@ static void save_image_file ( VikWindow *vw, const char *fn, unsigned int w, uns
 
   if ( save_kmz ) {
     double north, east, south, west;
-    vik_viewport_get_min_max_lat_lon ( vw->viking_vvp, &south, &north, &west, &east );
+    vw->viking_vvp->port.get_min_max_lat_lon(&south, &north, &west, &east );
     ans = kmz_save_file ( pixbuf_to_save, fn, north, east, south, west );
   }
   else {
@@ -3874,8 +3877,8 @@ static void save_image_file ( VikWindow *vw, const char *fn, unsigned int w, uns
   gtk_dialog_run ( GTK_DIALOG(msgbox) ); // Don't care about the result
 
   /* pretend like nothing happened ;) */
-  vik_viewport_set_xmpp ( vw->viking_vvp, old_xmpp );
-  vik_viewport_set_ympp ( vw->viking_vvp, old_ympp );
+  vw->viking_vvp->port.set_xmpp(old_xmpp);
+  vw->viking_vvp->port.set_ympp(old_ympp);
   vik_viewport_configure ( vw->viking_vvp );
   draw_update ( vw );
 }
@@ -3893,20 +3896,20 @@ static void save_image_dir ( VikWindow *vw, const char *fn, unsigned int w, unsi
   GError *error = NULL;
 
   /* backup old zoom & set new */
-  old_xmpp = vik_viewport_get_xmpp ( vw->viking_vvp );
-  old_ympp = vik_viewport_get_ympp ( vw->viking_vvp );
-  vik_viewport_set_zoom ( vw->viking_vvp, zoom );
+  old_xmpp = vw->viking_vvp->port.get_xmpp();
+  old_ympp = vw->viking_vvp->port.get_ympp();
+  vw->viking_vvp->port.set_zoom(zoom);
 
   /* reset width and height: do this only once for all images (same size) */
   vik_viewport_configure_manually ( vw->viking_vvp, w, h );
   /* *** end copy from above *** */
 
-  assert ( vik_viewport_get_coord_mode ( vw->viking_vvp ) == VIK_COORD_UTM );
+  assert ( vw->viking_vvp->port.get_coord_mode() == VIK_COORD_UTM );
 
   if ( g_mkdir(fn,0777) != 0 )
     fprintf(stderr, "WARNING: %s: Failed to create directory %s\n", __FUNCTION__, fn );
 
-  utm_orig = *((const struct UTM *)vik_viewport_get_center ( vw->viking_vvp ));
+  utm_orig = *((const struct UTM *) vw->viking_vvp->port.get_center());
 
   for ( y = 1; y <= tiles_h; y++ )
   {
@@ -3924,7 +3927,7 @@ static void save_image_dir ( VikWindow *vw, const char *fn, unsigned int w, unsi
         utm.northing -= ((double)y - (((double)tiles_h)+1)/2) * (h*zoom);
 
       /* move to correct place. */
-      vik_viewport_set_center_utm ( vw->viking_vvp, &utm, false );
+      vw->viking_vvp->port.set_center_utm(&utm, false );
 
       draw_redraw ( vw );
 
@@ -3943,9 +3946,9 @@ static void save_image_dir ( VikWindow *vw, const char *fn, unsigned int w, unsi
     }
   }
 
-  vik_viewport_set_center_utm ( vw->viking_vvp, &utm_orig, false );
-  vik_viewport_set_xmpp ( vw->viking_vvp, old_xmpp );
-  vik_viewport_set_ympp ( vw->viking_vvp, old_ympp );
+  vw->viking_vvp->port.set_center_utm(&utm_orig, false );
+  vw->viking_vvp->port.set_xmpp(old_xmpp);
+  vw->viking_vvp->port.set_ympp(old_ympp);
   vik_viewport_configure ( vw->viking_vvp );
   draw_update ( vw );
 
@@ -3967,8 +3970,8 @@ static void draw_to_image_file_current_window_cb(GtkWidget* widget,GdkEventButto
   gtk_spin_button_get_range ( height_spin, &height_min, &height_max );
 
   /* TODO: support for xzoom and yzoom values */
-  width = vik_viewport_get_width ( vw->viking_vvp ) * vik_viewport_get_xmpp ( vw->viking_vvp ) / zoom;
-  height = vik_viewport_get_height ( vw->viking_vvp ) * vik_viewport_get_xmpp ( vw->viking_vvp ) / zoom;
+  width = vw->viking_vvp->port.get_width() * vw->viking_vvp->port.get_xmpp() / zoom;
+  height = vw->viking_vvp->port.get_height() * vw->viking_vvp->port.get_xmpp() / zoom;
 
   if ( width > width_max || width < width_min || height > height_max || height < height_min )
     a_dialog_info_msg ( GTK_WINDOW(vw), _("Viewable region outside allowable pixel size bounds for image. Clipping width/height values.") );
@@ -4088,7 +4091,7 @@ static char* draw_image_filename ( VikWindow *vw, img_generation_t img_gen )
   else {
     // A directory
     // For some reason this method is only written to work in UTM...
-    if ( vik_viewport_get_coord_mode(vw->viking_vvp) != VIK_COORD_UTM ) {
+    if ( vw->viking_vvp->port.get_coord_mode() != VIK_COORD_UTM ) {
       a_dialog_error_msg ( GTK_WINDOW(vw), _("You must be in UTM mode to use this feature") );
       return fn;
     }
@@ -4140,7 +4143,7 @@ static void draw_to_image_file ( VikWindow *vw, img_generation_t img_gen )
   /* TODO: separate xzoom and yzoom factors */
   zoom_combo = create_zoom_combo_all_levels();
 
-  double mpp = vik_viewport_get_xmpp(vw->viking_vvp);
+  double mpp = vw->viking_vvp->port.get_xmpp();
   int active = 2 + round ( log (mpp) / log (2) );
 
   // Can we not hard code size here?
@@ -4237,12 +4240,12 @@ static void draw_to_image_file ( VikWindow *vw, img_generation_t img_gen )
                       false );
     else if ( img_gen == VW_GEN_KMZ_FILE ) {
       // Remove some viewport overlays as these aren't useful in KMZ file.
-      bool restore_xhair = vik_viewport_get_draw_centermark ( vw->viking_vvp );
+      bool restore_xhair = vw->viking_vvp->port.get_draw_centermark();
       if ( restore_xhair )
-        vik_viewport_set_draw_centermark ( vw->viking_vvp, false );
-      bool restore_scale = vik_viewport_get_draw_scale ( vw->viking_vvp );
+        vw->viking_vvp->port.set_draw_centermark(false);
+      bool restore_scale = vw->viking_vvp->port.get_draw_scale();
       if ( restore_scale )
-        vik_viewport_set_draw_scale ( vw->viking_vvp, false );
+        vw->viking_vvp->port.set_draw_scale(false);
 
       save_image_file ( vw,
                         fn,
@@ -4253,9 +4256,9 @@ static void draw_to_image_file ( VikWindow *vw, img_generation_t img_gen )
                         true );
 
       if ( restore_xhair )
-        vik_viewport_set_draw_centermark ( vw->viking_vvp, true );
+        vw->viking_vvp->port.set_draw_centermark(true);
       if ( restore_scale )
-        vik_viewport_set_draw_scale ( vw->viking_vvp, true );
+        vw->viking_vvp->port.set_draw_scale(true);
       if ( restore_xhair || restore_scale )
         draw_update ( vw );
     }
@@ -4277,7 +4280,7 @@ static void draw_to_image_file ( VikWindow *vw, img_generation_t img_gen )
 
 static void draw_to_kmz_file_cb ( GtkAction *a, VikWindow *vw )
 {
-  if ( vik_viewport_get_coord_mode(vw->viking_vvp) == VIK_COORD_UTM ) {
+  if ( vw->viking_vvp->port.get_coord_mode() == VIK_COORD_UTM ) {
     a_dialog_error_msg ( GTK_WINDOW(vw), _("This feature is not available in UTM mode") );
     return;
   }
@@ -4368,11 +4371,11 @@ static void window_change_coord_mode_cb ( GtkAction *old_a, GtkAction *a, VikWin
 
   if ( !vw->only_updating_coord_mode_ui )
   {
-    VikViewportDrawMode olddrawmode = vik_viewport_get_drawmode ( vw->viking_vvp );
+    VikViewportDrawMode olddrawmode = vw->viking_vvp->port.get_drawmode();
     if ( olddrawmode != drawmode )
     {
       /* this takes care of coord mode too */
-      vik_viewport_set_drawmode ( vw->viking_vvp, drawmode );
+      vw->viking_vvp->port.set_drawmode(drawmode);
       if ( drawmode == VIK_VIEWPORT_DRAWMODE_UTM ) {
         vik_layers_panel_change_coord_mode ( vw->viking_vlp, VIK_COORD_UTM );
       } else if ( olddrawmode == VIK_VIEWPORT_DRAWMODE_UTM ) {
@@ -4385,47 +4388,47 @@ static void window_change_coord_mode_cb ( GtkAction *old_a, GtkAction *a, VikWin
 
 static void toggle_draw_scale ( GtkAction *a, VikWindow *vw )
 {
-  bool state = !vik_viewport_get_draw_scale ( vw->viking_vvp );
+  bool state = !vw->viking_vvp->port.get_draw_scale();
   GtkWidget *check_box = gtk_ui_manager_get_widget ( vw->uim, "/ui/MainMenu/View/SetShow/ShowScale" );
   if ( !check_box )
     return;
   gtk_check_menu_item_set_active ( GTK_CHECK_MENU_ITEM(check_box), state );
-  vik_viewport_set_draw_scale ( vw->viking_vvp, state );
+  vw->viking_vvp->port.set_draw_scale(state);
   draw_update ( vw );
 }
 
 static void toggle_draw_centermark ( GtkAction *a, VikWindow *vw )
 {
-  bool state = !vik_viewport_get_draw_centermark ( vw->viking_vvp );
+  bool state = !vw->viking_vvp->port.get_draw_centermark();
   GtkWidget *check_box = gtk_ui_manager_get_widget ( vw->uim, "/ui/MainMenu/View/SetShow/ShowCenterMark" );
   if ( !check_box )
     return;
   gtk_check_menu_item_set_active ( GTK_CHECK_MENU_ITEM(check_box), state );
-  vik_viewport_set_draw_centermark ( vw->viking_vvp, state );
+  vw->viking_vvp->port.set_draw_centermark(state);
   draw_update ( vw );
 }
 
 static void toggle_draw_highlight ( GtkAction *a, VikWindow *vw )
 {
-  bool state = !vik_viewport_get_draw_highlight ( vw->viking_vvp );
+  bool state = !vw->viking_vvp->port.get_draw_highlight();
   GtkWidget *check_box = gtk_ui_manager_get_widget ( vw->uim, "/ui/MainMenu/View/SetShow/ShowHighlight" );
   if ( !check_box )
     return;
   gtk_check_menu_item_set_active ( GTK_CHECK_MENU_ITEM(check_box), state );
-  vik_viewport_set_draw_highlight ( vw->viking_vvp, state );
+  vw->viking_vvp->port.set_draw_highlight(state);
   draw_update ( vw );
 }
 
 static void set_bg_color ( GtkAction *a, VikWindow *vw )
 {
   GtkWidget *colorsd = gtk_color_selection_dialog_new ( _("Choose a background color") );
-  GdkColor *color = vik_viewport_get_background_gdkcolor ( vw->viking_vvp );
+  GdkColor *color = vw->viking_vvp->port.get_background_gdkcolor();
   gtk_color_selection_set_previous_color ( GTK_COLOR_SELECTION(gtk_color_selection_dialog_get_color_selection(GTK_COLOR_SELECTION_DIALOG(colorsd))), color );
   gtk_color_selection_set_current_color ( GTK_COLOR_SELECTION(gtk_color_selection_dialog_get_color_selection(GTK_COLOR_SELECTION_DIALOG(colorsd))), color );
   if ( gtk_dialog_run ( GTK_DIALOG(colorsd) ) == GTK_RESPONSE_OK )
   {
     gtk_color_selection_get_current_color ( GTK_COLOR_SELECTION(gtk_color_selection_dialog_get_color_selection(GTK_COLOR_SELECTION_DIALOG(colorsd))), color );
-    vik_viewport_set_background_gdkcolor ( vw->viking_vvp, color );
+    vw->viking_vvp->port.set_background_gdkcolor(color);
     draw_update ( vw );
   }
   free( color );
@@ -4435,13 +4438,13 @@ static void set_bg_color ( GtkAction *a, VikWindow *vw )
 static void set_highlight_color ( GtkAction *a, VikWindow *vw )
 {
   GtkWidget *colorsd = gtk_color_selection_dialog_new ( _("Choose a track highlight color") );
-  GdkColor *color = vik_viewport_get_highlight_gdkcolor ( vw->viking_vvp );
+  GdkColor *color = vw->viking_vvp->port.get_highlight_gdkcolor();
   gtk_color_selection_set_previous_color ( GTK_COLOR_SELECTION(gtk_color_selection_dialog_get_color_selection(GTK_COLOR_SELECTION_DIALOG(colorsd))), color );
   gtk_color_selection_set_current_color ( GTK_COLOR_SELECTION(gtk_color_selection_dialog_get_color_selection(GTK_COLOR_SELECTION_DIALOG(colorsd))), color );
   if ( gtk_dialog_run ( GTK_DIALOG(colorsd) ) == GTK_RESPONSE_OK )
   {
     gtk_color_selection_get_current_color ( GTK_COLOR_SELECTION(gtk_color_selection_dialog_get_color_selection(GTK_COLOR_SELECTION_DIALOG(colorsd))), color );
-    vik_viewport_set_highlight_gdkcolor ( vw->viking_vvp, color );
+    vw->viking_vvp->port.set_highlight_gdkcolor(color);
     draw_update ( vw );
   }
   free( color );
@@ -4825,7 +4828,7 @@ void vik_window_set_selected_trw_layer ( VikWindow *vw, void * vtl )
   vw->selected_waypoint  = NULL;
   vw->selected_waypoints = NULL;
   // Set highlight thickness
-  vik_viewport_set_highlight_thickness ( vw->viking_vvp, vik_trw_layer_get_property_tracks_line_thickness ((VikTrwLayer *) vw->containing_vtl) );
+  vw->viking_vvp->port.set_highlight_thickness(vik_trw_layer_get_property_tracks_line_thickness ((VikTrwLayer *) vw->containing_vtl));
 }
 
 GHashTable *vik_window_get_selected_tracks ( VikWindow *vw )
@@ -4843,7 +4846,7 @@ void vik_window_set_selected_tracks ( VikWindow *vw, GHashTable *ght, void * vtl
   vw->selected_waypoint  = NULL;
   vw->selected_waypoints = NULL;
   // Set highlight thickness
-  vik_viewport_set_highlight_thickness ( vw->viking_vvp, vik_trw_layer_get_property_tracks_line_thickness ((VikTrwLayer *) vw->containing_vtl) );
+  vw->viking_vvp->port.set_highlight_thickness(vik_trw_layer_get_property_tracks_line_thickness ((VikTrwLayer *) vw->containing_vtl) );
 }
 
 void * vik_window_get_selected_track ( VikWindow *vw )
@@ -4861,7 +4864,7 @@ void vik_window_set_selected_track ( VikWindow *vw, void * vt, void * vtl )
   vw->selected_waypoint  = NULL;
   vw->selected_waypoints = NULL;
   // Set highlight thickness
-  vik_viewport_set_highlight_thickness ( vw->viking_vvp, vik_trw_layer_get_property_tracks_line_thickness ((VikTrwLayer *) vw->containing_vtl) );
+  vw->viking_vvp->port.set_highlight_thickness(vik_trw_layer_get_property_tracks_line_thickness ((VikTrwLayer *) vw->containing_vtl));
 }
 
 GHashTable *vik_window_get_selected_waypoints ( VikWindow *vw )

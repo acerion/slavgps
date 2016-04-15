@@ -65,7 +65,7 @@ char * a_vik_goto_get_search_string_for_this_place(VikWindow *vw)
     return NULL;
 
   VikViewport *vvp = vik_window_viewport(vw);
-  const VikCoord *cur_center = vik_viewport_get_center(vvp);
+  const VikCoord *cur_center = vvp->port.get_center();
   if (vik_coord_equals(cur_center, last_coord)) {
     return(last_successful_goto_str);
   }
@@ -198,7 +198,7 @@ static char *a_prompt_for_goto_string(VikWindow *vw)
     gtk_widget_destroy(dialog);
     return NULL;
   }
-  
+
   // TODO check if list is empty
   last_goto_tool = gtk_combo_box_get_active ( GTK_COMBO_BOX(tool_list) );
   char *provider = vik_goto_tool_get_label ( (VikGotoTool *) g_list_nth_data (goto_tools_list, last_goto_tool) );
@@ -265,7 +265,7 @@ void a_vik_goto(VikWindow *vw, VikViewport *vvp)
         if (last_successful_goto_str)
           free(last_successful_goto_str);
         last_successful_goto_str = g_strdup(last_goto_str);
-        vik_viewport_set_center_coord(vvp, &new_center, true);
+        vvp->port.set_center_coord(&new_center, true);
         more = false;
       }
       else if ( ans == -1 ) {
@@ -425,7 +425,7 @@ int a_vik_goto_where_am_i ( VikViewport *vvp, struct LatLon *ll, char **name )
       }
     }
   }
-  
+
  tidy:
   g_mapped_file_unref ( mf );
   (void)g_remove ( tmpname );

@@ -343,9 +343,9 @@ static VikGeorefLayer *georef_layer_new ( VikViewport *vvp )
   vik_layer_set_defaults ( VIK_LAYER(vgl), vvp );
 
   // Make these defaults based on the current view
-  vgl->mpp_northing = vik_viewport_get_ympp ( vvp );
-  vgl->mpp_easting = vik_viewport_get_xmpp ( vvp );
-  vik_coord_to_utm ( vik_viewport_get_center ( vvp ), &(vgl->corner) );
+  vgl->mpp_northing = vvp->port.get_ympp();
+  vgl->mpp_easting = vvp->port.get_xmpp();
+  vik_coord_to_utm ( vvp->port.get_center(), &(vgl->corner) );
 
   vgl->image = NULL;
   vgl->pixbuf = NULL;
@@ -397,16 +397,16 @@ static void georef_layer_draw ( VikGeorefLayer *vgl, VikViewport *vp )
 {
   if ( vgl->pixbuf )
   {
-    double xmpp = vik_viewport_get_xmpp(vp), ympp = vik_viewport_get_ympp(vp);
+    double xmpp = vp->port.get_xmpp(), ympp = vp->port.get_ympp();
     GdkPixbuf *pixbuf = vgl->pixbuf;
     unsigned int layer_width = vgl->width;
     unsigned int layer_height = vgl->height;
 
-    unsigned int width = vik_viewport_get_width(vp), height = vik_viewport_get_height(vp);
+    unsigned int width = vp->port.get_width(), height = vp->port.get_height();
     int32_t x, y;
     VikCoord corner_coord;
-    vik_coord_load_from_utm ( &corner_coord, vik_viewport_get_coord_mode(vp), &(vgl->corner) );
-    vik_viewport_coord_to_screen ( vp, &corner_coord, &x, &y );
+    vik_coord_load_from_utm ( &corner_coord, vp->port.get_coord_mode(), &(vgl->corner) );
+    vp->port.coord_to_screen(&corner_coord, &x, &y );
 
     /* mark to scale the pixbuf if it doesn't match our dimensions */
     bool scale = false;
@@ -442,7 +442,7 @@ static void georef_layer_draw ( VikGeorefLayer *vgl, VikViewport *vp )
           vgl->scaled_height = layer_height;
         }
       }
-      vik_viewport_draw_pixbuf ( vp, pixbuf, 0, 0, x, y, layer_width, layer_height ); /* todo: draw only what we need to. */
+      vp->port.draw_pixbuf(pixbuf, 0, 0, x, y, layer_width, layer_height ); /* todo: draw only what we need to. */
     }
   }
 }
@@ -615,8 +615,8 @@ static void georef_layer_export_params ( void * *pass_along[2] )
   if ( gtk_dialog_run ( GTK_DIALOG ( file_selector ) ) == GTK_RESPONSE_ACCEPT )
   {
     FILE *f = g_fopen ( gtk_file_chooser_get_filename ( GTK_FILE_CHOOSER(file_selector) ), "w" );
-    
-    gtk_widget_destroy ( file_selector ); 
+
+    gtk_widget_destroy ( file_selector );
     if ( !f )
     {
       a_dialog_error_msg ( VIK_GTK_WINDOW_FROM_WIDGET(pass_along[0]), _("The file you requested could not be opened for writing.") );
@@ -630,7 +630,7 @@ static void georef_layer_export_params ( void * *pass_along[2] )
     }
   }
   else
-   gtk_widget_destroy ( file_selector ); 
+   gtk_widget_destroy ( file_selector );
 }
 
 /**
@@ -994,8 +994,8 @@ static bool georef_layer_dialog ( VikGeorefLayer *vgl, void * vp, GtkWindow *w )
 
 static void georef_layer_zoom_to_fit ( void * vgl_vlp[2] )
 {
-  vik_viewport_set_xmpp ( vik_layers_panel_get_viewport(VIK_LAYERS_PANEL(vgl_vlp[1])), VIK_GEOREF_LAYER(vgl_vlp[0])->mpp_easting );
-  vik_viewport_set_ympp ( vik_layers_panel_get_viewport(VIK_LAYERS_PANEL(vgl_vlp[1])), VIK_GEOREF_LAYER(vgl_vlp[0])->mpp_northing );
+  vik_layers_panel_get_viewport(VIK_LAYERS_PANEL(vgl_vlp[1]))->port.set_xmpp(VIK_GEOREF_LAYER(vgl_vlp[0])->mpp_easting );
+  vik_layers_panel_get_viewport(VIK_LAYERS_PANEL(vgl_vlp[1]))->port.set_ympp(VIK_GEOREF_LAYER(vgl_vlp[0])->mpp_northing );
   vik_layers_panel_emit_update ( VIK_LAYERS_PANEL(vgl_vlp[1]) );
 }
 
@@ -1006,13 +1006,13 @@ static void georef_layer_goto_center ( void * vgl_vlp[2] )
   struct UTM utm;
   VikCoord coord;
 
-  vik_coord_to_utm ( vik_viewport_get_center ( vp ), &utm );
+  vik_coord_to_utm ( vp->port.get_center(), &utm );
 
   utm.easting = vgl->corner.easting + (vgl->width * vgl->mpp_easting / 2); /* only an approximation */
   utm.northing = vgl->corner.northing - (vgl->height * vgl->mpp_northing / 2);
 
-  vik_coord_load_from_utm ( &coord, vik_viewport_get_coord_mode ( vp ), &utm );
-  vik_viewport_set_center_coord ( vp, &coord, true );
+  vik_coord_load_from_utm ( &coord, vp->port.get_coord_mode(), &utm );
+  vp->port.set_center_coord(&coord, true );
 
   vik_layers_panel_emit_update ( VIK_LAYERS_PANEL(vgl_vlp[1]) );
 }
@@ -1061,8 +1061,8 @@ static bool georef_layer_move_release ( VikGeorefLayer *vgl, GdkEventButton *eve
 
   if ( vgl->click_x != -1 )
   {
-    vgl->corner.easting += (event->x - vgl->click_x) * vik_viewport_get_xmpp (vvp);
-    vgl->corner.northing -= (event->y - vgl->click_y) * vik_viewport_get_ympp (vvp);
+    vgl->corner.easting += (event->x - vgl->click_x) * vvp->port.get_xmpp();
+    vgl->corner.northing -= (event->y - vgl->click_y) * vvp->port.get_ympp();
     vik_layer_emit_update ( VIK_LAYER(vgl) );
     return true;
   }
@@ -1094,8 +1094,8 @@ static bool georef_layer_zoom_press ( VikGeorefLayer *vgl, GdkEventButton *event
       vgl->mpp_northing /= 1.01;
     }
   }
-  vik_viewport_set_xmpp ( vvp, vgl->mpp_easting );
-  vik_viewport_set_ympp ( vvp, vgl->mpp_northing );
+  vvp->port.set_xmpp(vgl->mpp_easting );
+  vvp->port.set_ympp(vgl->mpp_northing );
   vik_layer_emit_update ( VIK_LAYER(vgl) );
   return true;
 }
@@ -1119,8 +1119,8 @@ static void goto_center_ll ( VikViewport *vp,
   ll_center.lat = (ll_tl.lat + ll_br.lat) / 2.0;
   ll_center.lon = (ll_tl.lon + ll_br.lon) / 2.0;
 
-  vik_coord_load_from_latlon ( &vc_center, vik_viewport_get_coord_mode (vp), &ll_center );
-  vik_viewport_set_center_coord ( vp, &vc_center, true );
+  vik_coord_load_from_latlon ( &vc_center, vp->port.get_coord_mode(), &ll_center );
+  vp->port.set_center_coord(&vc_center, true );
 }
 
 /**
@@ -1152,7 +1152,7 @@ VikGeorefLayer *vik_georef_layer_create ( VikViewport *vp,
       struct LatLon ll_br;
       vik_coord_to_latlon ( coord_br, &ll_br);
 
-      VikCoordMode mode = vik_viewport_get_coord_mode (vp);
+      VikCoordMode mode = vp->port.get_coord_mode();
 
       double xmpp, ympp;
       georef_layer_mpp_from_coords ( mode, ll_tl, ll_br, vgl->width, vgl->height, &xmpp, &ympp );
@@ -1162,7 +1162,7 @@ VikGeorefLayer *vik_georef_layer_create ( VikViewport *vp,
       goto_center_ll ( vp, ll_tl, ll_br);
       // Set best zoom level
       struct LatLon maxmin[2] = { ll_tl, ll_br };
-      vu_zoom_to_show_latlons ( vik_viewport_get_coord_mode(vp), vp, maxmin );
+      vu_zoom_to_show_latlons ( vp->port.get_coord_mode(), vp, maxmin );
 
       return vgl;
     }

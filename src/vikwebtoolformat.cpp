@@ -212,7 +212,7 @@ static char *webtool_format_get_url_at_position ( VikWebtool *self, VikWindow *v
 	char smaxlon[G_ASCII_DTOSTR_BUF_SIZE];
 	char sminlat[G_ASCII_DTOSTR_BUF_SIZE];
 	char smaxlat[G_ASCII_DTOSTR_BUF_SIZE];
-	vik_viewport_get_min_max_lat_lon ( viewport, &min_lat, &max_lat, &min_lon, &max_lon );
+	viewport->port.get_min_max_lat_lon(&min_lat, &max_lat, &min_lon, &max_lon );
 
 	// Cannot simply use g_strdup_printf and double due to locale.
 	// As we compute an URL, we have to think in C locale.
@@ -222,7 +222,7 @@ static char *webtool_format_get_url_at_position ( VikWebtool *self, VikWindow *v
 	g_ascii_dtostr (smaxlat, G_ASCII_DTOSTR_BUF_SIZE, max_lat);
 
 	// Center values
-	const VikCoord *coord = vik_viewport_get_center ( viewport );
+	const VikCoord *coord = viewport->port.get_center();
 	struct LatLon ll;
 	vik_coord_to_latlon ( coord, &ll );
 
@@ -243,8 +243,8 @@ static char *webtool_format_get_url_at_position ( VikWebtool *self, VikWindow *v
 
 	uint8_t zoom = 17; // A zoomed in default
 	// zoom - ideally x & y factors need to be the same otherwise use the default
-	if ( vik_viewport_get_xmpp ( viewport ) == vik_viewport_get_ympp ( viewport ) )
-		zoom = map_utils_mpp_to_zoom_level ( vik_viewport_get_zoom ( viewport ) );
+	if ( viewport->port.get_xmpp() == viewport->port.get_ympp() )
+		zoom = map_utils_mpp_to_zoom_level ( viewport->port.get_zoom() );
 
 	char szoom[G_ASCII_DTOSTR_BUF_SIZE];
 	snprintf( szoom, G_ASCII_DTOSTR_BUF_SIZE, "%d", zoom );

@@ -63,7 +63,7 @@ static bool datasource_wikipedia_process ( VikTrwLayer *vtl, ProcessOptions *po,
 	struct LatLon maxmin[2] = { {0.0,0.0}, {0.0,0.0} };
 
 	// Note the order is max part first then min part - thus reverse order of use in min_max function:
-	vik_viewport_get_min_max_lat_lon ( adw->vvp, &maxmin[1].lat, &maxmin[0].lat, &maxmin[1].lon, &maxmin[0].lon );
+	adw->vvp->port.get_min_max_lat_lon(&maxmin[1].lat, &maxmin[0].lat, &maxmin[1].lon, &maxmin[0].lon );
 
 	if ( vtl ) {
 		a_geonames_wikipedia_box ( adw->vw, vtl, maxmin );

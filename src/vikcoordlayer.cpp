@@ -222,7 +222,7 @@ static void coord_layer_draw ( VikCoordLayer *vcl, VikViewport *vp )
     return;
   }
 
-  if ( vik_viewport_get_coord_mode(vp) != VIK_COORD_UTM ) 
+  if ( vp->port.get_coord_mode() != VIK_COORD_UTM )
   {
     VikCoord left, right, left2, right2;
     double l, r, i, j;
@@ -232,15 +232,15 @@ static void coord_layer_draw ( VikCoordLayer *vcl, VikViewport *vp )
     GdkGC *mgc = vik_viewport_new_gc_from_color(vp, &(vcl->color), MAX(vcl->line_thickness/2, 1));
     GdkGC *sgc = vik_viewport_new_gc_from_color(vp, &(vcl->color), MAX(vcl->line_thickness/5, 1));
 
-    vik_viewport_screen_to_coord ( vp, 0, 0, &left );
-    vik_viewport_screen_to_coord ( vp, vik_viewport_get_width(vp), 0, &right );
-    vik_viewport_screen_to_coord ( vp, 0, vik_viewport_get_height(vp), &left2 );
-    vik_viewport_screen_to_coord ( vp, vik_viewport_get_width(vp), vik_viewport_get_height(vp), &right2 );
+    vp->port.screen_to_coord(0, 0, &left );
+    vp->port.screen_to_coord(vp->port.get_width(), 0, &right );
+    vp->port.screen_to_coord(0, vp->port.get_height(), &left2 );
+    vp->port.screen_to_coord(vp->port.get_width(), vp->port.get_height(), &right2 );
 
 #define CLINE(gc, c1, c2) { \
-	  vik_viewport_coord_to_screen(vp, (c1), &x1, &y1);  \
-	  vik_viewport_coord_to_screen(vp, (c2), &x2, &y2);  \
-	  vik_viewport_draw_line (vp, (gc), x1, y1, x2, y2); \
+	  vp->port.coord_to_screen((c1), &x1, &y1);  \
+	  vp->port.coord_to_screen((c2), &x2, &y2);  \
+	  vp->port.draw_line((gc), x1, y1, x2, y2); \
 	}
 
     l = left.east_west;
@@ -273,7 +273,7 @@ static void coord_layer_draw ( VikCoordLayer *vcl, VikViewport *vp )
       }
     }
 
-    vik_viewport_screen_to_coord ( vp, 0, 0, &left );
+    vp->port.screen_to_coord(0, 0, &left );
     l = left2.north_south;
     r = left.north_south;
     for (i=floor(l*60); i<ceil(r*60); i+=1.0) {
@@ -302,11 +302,11 @@ static void coord_layer_draw ( VikCoordLayer *vcl, VikViewport *vp )
     return;
   }
 
-  if ( vik_viewport_get_coord_mode(vp) == VIK_COORD_UTM ) 
+  if ( vp->port.get_coord_mode() == VIK_COORD_UTM )
   {
-    const struct UTM *center = (const struct UTM *)vik_viewport_get_center ( vp );
-    double xmpp = vik_viewport_get_xmpp ( vp ), ympp = vik_viewport_get_ympp ( vp );
-    uint16_t width = vik_viewport_get_width ( vp ), height = vik_viewport_get_height ( vp );
+    const struct UTM *center = (const struct UTM *) vp->port.get_center();
+    double xmpp = vp->port.get_xmpp(), ympp = vp->port.get_ympp();
+    uint16_t width = vp->port.get_width(), height = vp->port.get_height();
     struct LatLon ll, ll2, min, max;
     double lon;
     int x1, x2;
@@ -363,7 +363,7 @@ static void coord_layer_draw ( VikCoordLayer *vcl, VikViewport *vp )
       x1 = ( (utm.easting - center->easting) / xmpp ) + (width / 2);
       a_coords_latlon_to_utm ( &ll2, &utm );
       x2 = ( (utm.easting - center->easting) / xmpp ) + (width / 2);
-      vik_viewport_draw_line (vp, vcl->gc, x1, height, x2, 0);
+      vp->port.draw_line(vcl->gc, x1, height, x2, 0);
     }
 
     utm = *center;
@@ -385,7 +385,7 @@ static void coord_layer_draw ( VikCoordLayer *vcl, VikViewport *vp )
       x1 = (height / 2) - ( (utm.northing - center->northing) / ympp );
       a_coords_latlon_to_utm ( &ll2, &utm );
       x2 = (height / 2) - ( (utm.northing - center->northing) / ympp );
-      vik_viewport_draw_line (vp, vcl->gc, width, x2, 0, x1);
+      vp->port.draw_line(vcl->gc, width, x2, 0, x1);
     }
   }
 }

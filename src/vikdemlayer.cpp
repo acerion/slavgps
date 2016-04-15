@@ -523,7 +523,7 @@ static void vik_dem_layer_draw_dem ( VikDEMLayer *vdl, VikViewport *vp, VikDEM *
   /**** Check if viewport and DEM data overlap ****/
 
   /* get min, max lat/lon of viewport */
-  vik_viewport_get_min_max_lat_lon ( vp, &min_lat, &max_lat, &min_lon, &max_lon );
+  vp->port.get_min_max_lat_lon(&min_lat, &max_lat, &min_lon, &max_lon );
 
   /* get min, max lat/lon of DEM data */
   if ( dem->horiz_units == VIK_DEM_HORIZ_LL_ARCSECONDS ) {
@@ -572,11 +572,11 @@ static void vik_dem_layer_draw_dem ( VikDEMLayer *vdl, VikViewport *vp, VikDEM *
     vik_coord_load_from_latlon(&demne, vik_viewport_get_coord_mode(vp), &dem_northeast);
     vik_coord_load_from_latlon(&demsw, vik_viewport_get_coord_mode(vp), &dem_southwest);
 
-    vik_viewport_coord_to_screen ( vp, &demne, &x1, &y1 );
-    vik_viewport_coord_to_screen ( vp, &demsw, &x2, &y2 );
+    vp->port.coord_to_screen(&demne, &x1, &y1);
+    vp->port.coord_to_screen(&demsw, &x2, &y2);
 
-    if ( x1 > vik_viewport_get_width(vp) ) x1=vik_viewport_get_width(vp);
-    if ( y2 > vik_viewport_get_height(vp) ) y2=vik_viewport_get_height(vp);
+    if ( x1 > vp->port.get_width() ) x1=vp->port.get_width();
+    if ( y2 > vp->port.get_height() ) y2=vp->port.get_height();
     if ( x2 < 0 ) x2 = 0;
     if ( y1 < 0 ) y1 = 0;
     vik_viewport_draw_rectangle ( vp, gtk_widget_get_style(GTK_WIDGET(vp))->black_gc,
@@ -588,7 +588,7 @@ static void vik_dem_layer_draw_dem ( VikDEMLayer *vdl, VikViewport *vp, VikDEM *
   if ( dem->horiz_units == VIK_DEM_HORIZ_LL_ARCSECONDS ) {
     VikCoord tmp; /* TODO: don't use coord_load_from_latlon, especially if in latlon drawing mode */
 
-    double max_lat_as, max_lon_as, min_lat_as, min_lon_as;  
+    double max_lat_as, max_lon_as, min_lat_as, min_lon_as;
     double start_lat_as, end_lat_as, start_lon_as, end_lon_as;
 
     double start_lat, end_lat, start_lon, end_lon;
@@ -599,7 +599,7 @@ static void vik_dem_layer_draw_dem ( VikDEMLayer *vdl, VikViewport *vp, VikDEM *
 
     int16_t elev;
 
-    unsigned int skip_factor = ceil ( vik_viewport_get_xmpp(vp) / 80 ); /* todo: smarter calculation. */
+    unsigned int skip_factor = ceil ( vp->port.get_xmpp() / 80 ); /* todo: smarter calculation. */
 
     double nscale_deg = dem->north_scale / ((double) 3600);
     double escale_deg = dem->east_scale / ((double) 3600);
@@ -659,8 +659,8 @@ static void vik_dem_layer_draw_dem ( VikDEMLayer *vdl, VikViewport *vp, VikDEM *
 	  box_c = counter;
 	  box_c.lat += (nscale_deg * skip_factor)/2;
           box_c.lon -= (escale_deg * skip_factor)/2;
-	  vik_coord_load_from_latlon(&tmp, vik_viewport_get_coord_mode(vp), &box_c);
-	  vik_viewport_coord_to_screen(vp, &tmp, &box_x, &box_y);
+	  vik_coord_load_from_latlon(&tmp, vp->port.get_coord_mode(), &box_c);
+	  vp->port.coord_to_screen(&tmp, &box_x, &box_y);
 	  // catch box at borders
 	  if(box_x < 0)
 	          box_x = 0;
@@ -668,8 +668,8 @@ static void vik_dem_layer_draw_dem ( VikDEMLayer *vdl, VikViewport *vp, VikDEM *
 	          box_y = 0;
           box_c.lat -= nscale_deg * skip_factor;
 	  box_c.lon += escale_deg * skip_factor;
-	  vik_coord_load_from_latlon(&tmp, vik_viewport_get_coord_mode(vp), &box_c);
-	  vik_viewport_coord_to_screen(vp, &tmp, &box_width, &box_height);
+	  vik_coord_load_from_latlon(&tmp, vp->port.get_coord_mode(), &box_c);
+	  vp->port.coord_to_screen(&tmp, &box_width, &box_height);
 	  box_width -= box_x;
 	  box_height -= box_y;
           // catch box at borders
@@ -725,7 +725,7 @@ static void vik_dem_layer_draw_dem ( VikDEMLayer *vdl, VikViewport *vp, VikDEM *
                   change = vdl->max_elev;
 
                 // void vik_viewport_draw_rectangle ( VikViewport *vvp, GdkGC *gc, bool filled, int x1, int y1, int x2, int y2 );
-                vik_viewport_draw_rectangle(vp, vdl->gcsgradient[(int)floor(((change - vdl->min_elev)/(vdl->max_elev - vdl->min_elev))*(DEM_N_GRADIENT_COLORS-2))+1], true, box_x, box_y, box_width, box_height);
+                vp->port.draw_rectangle(vdl->gcsgradient[(int)floor(((change - vdl->min_elev)/(vdl->max_elev - vdl->min_elev))*(DEM_N_GRADIENT_COLORS-2))+1], true, box_x, box_y, box_width, box_height);
               }
             } else {
               if(vdl->type == DEM_TYPE_HEIGHT) {
@@ -733,9 +733,9 @@ static void vik_dem_layer_draw_dem ( VikDEMLayer *vdl, VikViewport *vp, VikDEM *
                   ; /* don't draw it */
                 else if ( elev <= 0 || below_minimum )
 		  /* If 'sea' colour or below the defined mininum draw in the configurable colour */
-                  vik_viewport_draw_rectangle(vp, vdl->gcs[0], true, box_x, box_y, box_width, box_height);
+                  vp->port.draw_rectangle(vdl->gcs[0], true, box_x, box_y, box_width, box_height);
                 else
-                  vik_viewport_draw_rectangle(vp, vdl->gcs[(int)floor(((elev - vdl->min_elev)/(vdl->max_elev - vdl->min_elev))*(DEM_N_HEIGHT_COLORS-2))+1], true, box_x, box_y, box_width, box_height);
+                  vp->port.draw_rectangle(vdl->gcs[(int)floor(((elev - vdl->min_elev)/(vdl->max_elev - vdl->min_elev))*(DEM_N_HEIGHT_COLORS-2))+1], true, box_x, box_y, box_width, box_height);
               }
             }
           }
@@ -753,14 +753,14 @@ static void vik_dem_layer_draw_dem ( VikDEMLayer *vdl, VikViewport *vp, VikDEM *
     VikCoord tmp; /* TODO: don't use coord_load_from_latlon, especially if in latlon drawing mode */
     struct UTM counter;
 
-    unsigned int skip_factor = ceil ( vik_viewport_get_xmpp(vp) / 10 ); /* todo: smarter calculation. */
+    unsigned int skip_factor = ceil ( vp->port.get_xmpp() / 10 ); /* todo: smarter calculation. */
 
     VikCoord tleft, tright, bleft, bright;
 
-    vik_viewport_screen_to_coord ( vp, 0, 0, &tleft );
-    vik_viewport_screen_to_coord ( vp, vik_viewport_get_width(vp), 0, &tright );
-    vik_viewport_screen_to_coord ( vp, 0, vik_viewport_get_height(vp), &bleft );
-    vik_viewport_screen_to_coord ( vp, vik_viewport_get_width(vp), vik_viewport_get_height(vp), &bright );
+    vp->port.screen_to_coord(0, 0, &tleft );
+    vp->port.screen_to_coord(vp->port.get_width(), 0, &tright );
+    vp->port.screen_to_coord(0, vp->port.get_height(), &bleft );
+    vp->port.screen_to_coord(vp->port.get_width(), vp->port.get_height(), &bright );
 
 
     vik_coord_convert(&tleft, VIK_COORD_UTM);
@@ -814,14 +814,14 @@ static void vik_dem_layer_draw_dem ( VikDEMLayer *vdl, VikViewport *vp, VikDEM *
 
           {
             int a, b;
-            vik_coord_load_from_utm(&tmp, vik_viewport_get_coord_mode(vp), &counter);
-	            vik_viewport_coord_to_screen(vp, &tmp, &a, &b);
+            vik_coord_load_from_utm(&tmp, vp->port.get_coord_mode(), &counter);
+	            vp->port.coord_to_screen(&tmp, &a, &b);
             if ( elev == VIK_DEM_INVALID_ELEVATION )
               ; /* don't draw it */
             else if ( elev <= 0 )
-              vik_viewport_draw_rectangle(vp, vdl->gcs[0], true, a-1, b-1, 2, 2 );
+              vp->port.draw_rectangle(vdl->gcs[0], true, a-1, b-1, 2, 2 );
             else
-              vik_viewport_draw_rectangle(vp, vdl->gcs[(int)floor((elev - vdl->min_elev)/(vdl->max_elev - vdl->min_elev)*(DEM_N_HEIGHT_COLORS-2))+1], true, a-1, b-1, 2, 2 );
+              vp->port.draw_rectangle(vdl->gcs[(int)floor((elev - vdl->min_elev)/(vdl->max_elev - vdl->min_elev)*(DEM_N_HEIGHT_COLORS-2))+1], true, a-1, b-1, 2, 2 );
           }
         } /* for y= */
       }
@@ -1006,11 +1006,11 @@ static char *srtm_lat_lon_to_dest_fn ( double lat, double lon )
 /* TODO: generalize */
 static void srtm_draw_existence ( VikViewport *vp )
 {
-  double max_lat, max_lon, min_lat, min_lon;  
+  double max_lat, max_lon, min_lat, min_lon;
   char buf[strlen(MAPS_CACHE_DIR)+strlen(SRTM_CACHE_TEMPLATE)+30];
   int i, j;
 
-  vik_viewport_get_min_max_lat_lon ( vp, &min_lat, &max_lat, &min_lon, &max_lon );
+  vp->port.get_min_max_lat_lon(&min_lat, &max_lat, &min_lon, &max_lon );
 
   for (i = floor(min_lat); i <= floor(max_lat); i++) {
     for (j = floor(min_lon); j <= floor(max_lon); j++) {
@@ -1034,12 +1034,12 @@ static void srtm_draw_existence ( VikViewport *vp )
         ne.north_south = i+1;
         ne.east_west = j+1;
         ne.mode = VIK_COORD_LATLON;
-        vik_viewport_coord_to_screen ( vp, &sw, &x1, &y1 );
-        vik_viewport_coord_to_screen ( vp, &ne, &x2, &y2 );
+        vp->port.coord_to_screen(&sw, &x1, &y1 );
+        vp->port.coord_to_screen(&ne, &x2, &y2 );
         if ( x1 < 0 ) x1 = 0;
         if ( y2 < 0 ) y2 = 0;
-        vik_viewport_draw_rectangle ( vp, gtk_widget_get_style(GTK_WIDGET(vp))->black_gc,
-		false, x1, y2, x2-x1, y1-y2 );
+        vp->port.draw_rectangle(gtk_widget_get_style(GTK_WIDGET(vp))->black_gc,
+				false, x1, y2, x2-x1, y1-y2 );
       }
     }
   }
@@ -1076,11 +1076,11 @@ static char *dem24k_lat_lon_to_dest_fn ( double lat, double lon )
 /* TODO: generalize */
 static void dem24k_draw_existence ( VikViewport *vp )
 {
-  double max_lat, max_lon, min_lat, min_lon;  
+  double max_lat, max_lon, min_lat, min_lon;
   char buf[strlen(MAPS_CACHE_DIR)+40];
   double i, j;
 
-  vik_viewport_get_min_max_lat_lon ( vp, &min_lat, &max_lat, &min_lon, &max_lon );
+  vp->port.get_min_max_lat_lon(&min_lat, &max_lat, &min_lon, &max_lon );
 
   for (i = floor(min_lat*8)/8; i <= floor(max_lat*8)/8; i+=0.125) {
     /* check lat dir first -- faster */
@@ -1112,11 +1112,11 @@ static void dem24k_draw_existence ( VikViewport *vp )
         ne.north_south = i+0.125;
         ne.east_west = j;
         ne.mode = VIK_COORD_LATLON;
-        vik_viewport_coord_to_screen ( vp, &sw, &x1, &y1 );
-        vik_viewport_coord_to_screen ( vp, &ne, &x2, &y2 );
+        vp->port.coord_to_screen(&sw, &x1, &y1);
+        vp->port.coord_to_screen(&ne, &x2, &y2 );
         if ( x1 < 0 ) x1 = 0;
         if ( y2 < 0 ) y2 = 0;
-        vik_viewport_draw_rectangle ( vp, gtk_widget_get_style(GTK_WIDGET(vp))->black_gc,
+        vp->port.draw_rectangle(gtk_widget_get_style(GTK_WIDGET(vp))->black_gc,
 		false, x1, y2, x2-x1, y1-y2 );
       }
     }
@@ -1260,10 +1260,10 @@ static bool dem_layer_download_release ( VikDEMLayer *vdl, GdkEventButton *event
   char *full_path;
   char *dem_file = NULL;
 
-  vik_viewport_screen_to_coord ( vvp, event->x, event->y, &coord );
+  vvp->port.screen_to_coord(event->x, event->y, &coord);
   vik_coord_to_latlon ( &coord, &ll );
 
-  
+
   if ( vdl->source == DEM_SOURCE_SRTM )
     dem_file = srtm_lat_lon_to_dest_fn ( ll.lat, ll.lon );
 #ifdef VIK_CONFIG_DEM24K
@@ -1329,5 +1329,3 @@ static bool dem_layer_download_click ( VikDEMLayer *vdl, GdkEventButton *event, 
  * download over area */
   return true;
 }
-
-

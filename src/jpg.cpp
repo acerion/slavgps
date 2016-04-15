@@ -103,7 +103,7 @@ bool a_jpg_load_file ( VikAggregateLayer *top, const char *filename, VikViewport
 	char *name = NULL;
 	Waypoint * wp = NULL;
 #ifdef VIK_CONFIG_GEOTAG
-	wp = a_geotag_create_waypoint_from_file ( filename, vik_viewport_get_coord_mode (vvp), &name );
+	wp = a_geotag_create_waypoint_from_file ( filename, vvp->port.get_coord_mode(), &name );
 #endif
 	if ( wp ) {
 		// Create name if geotag method didn't return one
@@ -118,7 +118,7 @@ bool a_jpg_load_file ( VikAggregateLayer *top, const char *filename, VikViewport
 		vik_trw_layer_filein_add_waypoint ( VIK_TRW_LAYER(vtl), (char*) a_file_basename(filename), wp );
 		wp->set_image(filename);
 		// Simply set position to the current center
-		wp->coord = *( vik_viewport_get_center ( vvp ) );
+		wp->coord = *(vvp->port.get_center());
 		auto_zoom = false;
 	}
 

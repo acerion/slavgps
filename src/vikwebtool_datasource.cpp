@@ -83,7 +83,7 @@ static void webtool_datasource_set_property (GObject      *object,
 	VikWebtoolDatasourcePrivate *priv = WEBTOOL_DATASOURCE_GET_PRIVATE ( self );
 
 	switch ( property_id ) {
-	
+
     case PROP_URL:
 		free( priv->url );
 		priv->url = g_value_dup_string ( value );
@@ -154,10 +154,10 @@ typedef struct {
 
 static void ensure_last_user_strings_hash() {
     if ( last_user_strings == NULL ) {
-        last_user_strings = g_hash_table_new_full ( g_str_hash, 
+        last_user_strings = g_hash_table_new_full ( g_str_hash,
                                                     g_str_equal,
                                                     g_free,
-                                                    g_free ); 
+                                                    g_free );
     }
 }
 
@@ -173,8 +173,8 @@ static char *get_last_user_string ( const datasource_t *source ) {
 
 static void set_last_user_string ( const datasource_t *source, const char *s ) {
     ensure_last_user_strings_hash();
-    g_hash_table_insert ( last_user_strings, 
-                          vik_ext_tool_get_label ( source->self ), 
+    g_hash_table_insert ( last_user_strings,
+                          vik_ext_tool_get_label ( source->self ),
                           g_strdup( s ) );
 }
 
@@ -340,7 +340,7 @@ static void vik_webtool_datasource_class_init ( VikWebtoolDatasourceClass *klass
 	pspec = g_param_spec_string ("babel_filter_args",
 	                             "The command line filter options to pass to gpsbabel",
 	                             "Set the command line filter options for gpsbabel",
-	                             NULL, // default value 
+	                             NULL, // default value
 	                             (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
 	g_object_class_install_property (gobject_class,
 	                                 PROP_BABEL_FILTER_ARGS,
@@ -431,7 +431,7 @@ static char *webtool_datasource_get_url ( VikWebtool *self, VikWindow *vw )
 	char smaxlon[G_ASCII_DTOSTR_BUF_SIZE];
 	char sminlat[G_ASCII_DTOSTR_BUF_SIZE];
 	char smaxlat[G_ASCII_DTOSTR_BUF_SIZE];
-	vik_viewport_get_min_max_lat_lon ( viewport, &min_lat, &max_lat, &min_lon, &max_lon );
+	viewport->port.get_min_max_lat_lon(&min_lat, &max_lat, &min_lon, &max_lon );
 
 	// Cannot simply use g_strdup_printf and double due to locale.
 	// As we compute an URL, we have to think in C locale.
@@ -441,7 +441,7 @@ static char *webtool_datasource_get_url ( VikWebtool *self, VikWindow *vw )
 	g_ascii_dtostr (smaxlat, G_ASCII_DTOSTR_BUF_SIZE, max_lat);
 
 	// Center values
-	const VikCoord *coord = vik_viewport_get_center ( viewport );
+	const VikCoord *coord = viewport->port.get_center();
 	struct LatLon ll;
 	vik_coord_to_latlon ( coord, &ll );
 
@@ -452,8 +452,8 @@ static char *webtool_datasource_get_url ( VikWebtool *self, VikWindow *vw )
 
 	uint8_t zoom = 17; // A zoomed in default
 	// zoom - ideally x & y factors need to be the same otherwise use the default
-	if ( vik_viewport_get_xmpp ( viewport ) == vik_viewport_get_ympp ( viewport ) )
-		zoom = map_utils_mpp_to_zoom_level ( vik_viewport_get_zoom ( viewport ) );
+	if ( viewport->port.get_xmpp() == viewport->port.get_ympp())
+		zoom = map_utils_mpp_to_zoom_level(viewport->port.get_zoom());
 
 	char szoom[G_ASCII_DTOSTR_BUF_SIZE];
 	snprintf( szoom, G_ASCII_DTOSTR_BUF_SIZE, "%d", zoom );
@@ -490,7 +490,7 @@ static char *webtool_datasource_get_url ( VikWebtool *self, VikWindow *vw )
 		if ( values[i] != '\0' )
 			free( values[i] );
 	}
-	
+
 	return url;
 }
 

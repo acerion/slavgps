@@ -175,9 +175,9 @@ static void file_write ( VikAggregateLayer *top, FILE *f, void * vp )
   stack->under = NULL;
 
   /* crazhy CRAZHY */
-  vik_coord_to_latlon ( vik_viewport_get_center ( VIK_VIEWPORT(vp) ), &ll );
+  vik_coord_to_latlon ( (VIK_VIEWPORT(vp))->port.get_center(), &ll );
 
-  mode = vik_viewport_get_drawmode ( VIK_VIEWPORT(vp) );
+  mode = VIK_VIEWPORT(vp)->port.get_drawmode();
   switch ( mode ) {
     case VIK_VIEWPORT_DRAWMODE_UTM: modestring = "utm"; break;
     case VIK_VIEWPORT_DRAWMODE_EXPEDIA: modestring = "expedia"; break;
@@ -190,12 +190,12 @@ static void file_write ( VikAggregateLayer *top, FILE *f, void * vp )
   fprintf ( f, "#VIKING GPS Data file " VIKING_URL "\n" );
   fprintf ( f, "FILE_VERSION=%d\n", VIKING_FILE_VERSION );
   fprintf ( f, "\nxmpp=%f\nympp=%f\nlat=%f\nlon=%f\nmode=%s\ncolor=%s\nhighlightcolor=%s\ndrawscale=%s\ndrawcentermark=%s\ndrawhighlight=%s\n",
-      vik_viewport_get_xmpp ( VIK_VIEWPORT(vp) ), vik_viewport_get_ympp ( VIK_VIEWPORT(vp) ), ll.lat, ll.lon,
-      modestring, vik_viewport_get_background_color(VIK_VIEWPORT(vp)),
-      vik_viewport_get_highlight_color(VIK_VIEWPORT(vp)),
-      vik_viewport_get_draw_scale(VIK_VIEWPORT(vp)) ? "t" : "f",
-      vik_viewport_get_draw_centermark(VIK_VIEWPORT(vp)) ? "t" : "f",
-      vik_viewport_get_draw_highlight(VIK_VIEWPORT(vp)) ? "t" : "f" );
+      VIK_VIEWPORT(vp)->port.get_xmpp(), VIK_VIEWPORT(vp)->port.get_ympp(), ll.lat, ll.lon,
+      modestring, VIK_VIEWPORT(vp)->port.get_background_color(),
+      VIK_VIEWPORT(vp)->port.get_highlight_color(),
+      VIK_VIEWPORT(vp)->port.get_draw_scale() ? "t" : "f",
+      VIK_VIEWPORT(vp)->port.get_draw_centermark() ? "t" : "f",
+      VIK_VIEWPORT(vp)->port.get_draw_highlight() ? "t" : "f" );
 
   if ( ! VIK_LAYER(top)->visible )
     fprintf ( f, "visible=f\n" );
@@ -435,17 +435,17 @@ static bool file_read ( VikAggregateLayer *top, FILE *f, const char *dirpath, Vi
         // However we'll still carry and attempt to read whatever we can
       }
       else if ( stack->under == NULL && eq_pos == 4 && strncasecmp ( line, "xmpp", eq_pos ) == 0) /* "hard coded" params: global & for all layer-types */
-        vik_viewport_set_xmpp ( VIK_VIEWPORT(vp), strtod_i8n ( line+5, NULL ) );
+        VIK_VIEWPORT(vp)->port.set_xmpp(strtod_i8n ( line+5, NULL ) );
       else if ( stack->under == NULL && eq_pos == 4 && strncasecmp ( line, "ympp", eq_pos ) == 0)
-        vik_viewport_set_ympp ( VIK_VIEWPORT(vp), strtod_i8n ( line+5, NULL ) );
+        VIK_VIEWPORT(vp)->port.set_ympp(strtod_i8n ( line+5, NULL ) );
       else if ( stack->under == NULL && eq_pos == 3 && strncasecmp ( line, "lat", eq_pos ) == 0 )
         ll.lat = strtod_i8n ( line+4, NULL );
       else if ( stack->under == NULL && eq_pos == 3 && strncasecmp ( line, "lon", eq_pos ) == 0 )
         ll.lon = strtod_i8n ( line+4, NULL );
       else if ( stack->under == NULL && eq_pos == 4 && strncasecmp ( line, "mode", eq_pos ) == 0 && strcasecmp ( line+5, "utm" ) == 0)
-        vik_viewport_set_drawmode ( VIK_VIEWPORT(vp), VIK_VIEWPORT_DRAWMODE_UTM);
+        VIK_VIEWPORT(vp)->port.set_drawmode(VIK_VIEWPORT_DRAWMODE_UTM);
       else if ( stack->under == NULL && eq_pos == 4 && strncasecmp ( line, "mode", eq_pos ) == 0 && strcasecmp ( line+5, "expedia" ) == 0)
-        vik_viewport_set_drawmode ( VIK_VIEWPORT(vp), VIK_VIEWPORT_DRAWMODE_EXPEDIA );
+        VIK_VIEWPORT(vp)->port.set_drawmode(VIK_VIEWPORT_DRAWMODE_EXPEDIA );
       else if ( stack->under == NULL && eq_pos == 4 && strncasecmp ( line, "mode", eq_pos ) == 0 && strcasecmp ( line+5, "google" ) == 0)
       {
         successful_read = false;
@@ -457,19 +457,19 @@ static bool file_read ( VikAggregateLayer *top, FILE *f, const char *dirpath, Vi
         fprintf(stderr, _("WARNING: Draw mode '%s' no more supported\n"), "kh" );
       }
       else if ( stack->under == NULL && eq_pos == 4 && strncasecmp ( line, "mode", eq_pos ) == 0 && strcasecmp ( line+5, "mercator" ) == 0)
-        vik_viewport_set_drawmode ( VIK_VIEWPORT(vp), VIK_VIEWPORT_DRAWMODE_MERCATOR );
+        VIK_VIEWPORT(vp)->port.set_drawmode(VIK_VIEWPORT_DRAWMODE_MERCATOR );
       else if ( stack->under == NULL && eq_pos == 4 && strncasecmp ( line, "mode", eq_pos ) == 0 && strcasecmp ( line+5, "latlon" ) == 0)
-        vik_viewport_set_drawmode ( VIK_VIEWPORT(vp), VIK_VIEWPORT_DRAWMODE_LATLON );
+        VIK_VIEWPORT(vp)->port.set_drawmode(VIK_VIEWPORT_DRAWMODE_LATLON );
       else if ( stack->under == NULL && eq_pos == 5 && strncasecmp ( line, "color", eq_pos ) == 0 )
-        vik_viewport_set_background_color ( VIK_VIEWPORT(vp), line+6 );
+        VIK_VIEWPORT(vp)->port.set_background_color(line+6 );
       else if ( stack->under == NULL && eq_pos == 14 && strncasecmp ( line, "highlightcolor", eq_pos ) == 0 )
-        vik_viewport_set_highlight_color ( VIK_VIEWPORT(vp), line+15 );
+        VIK_VIEWPORT(vp)->port.set_highlight_color(line+15 );
       else if ( stack->under == NULL && eq_pos == 9 && strncasecmp ( line, "drawscale", eq_pos ) == 0 )
-        vik_viewport_set_draw_scale ( VIK_VIEWPORT(vp), TEST_BOOLEAN(line+10) );
+        VIK_VIEWPORT(vp)->port.set_draw_scale(TEST_BOOLEAN(line+10) );
       else if ( stack->under == NULL && eq_pos == 14 && strncasecmp ( line, "drawcentermark", eq_pos ) == 0 )
-        vik_viewport_set_draw_centermark ( VIK_VIEWPORT(vp), TEST_BOOLEAN(line+15) );
+        VIK_VIEWPORT(vp)->port.set_draw_centermark(TEST_BOOLEAN(line+15) );
       else if ( stack->under == NULL && eq_pos == 13 && strncasecmp ( line, "drawhighlight", eq_pos ) == 0 )
-        vik_viewport_set_draw_highlight ( VIK_VIEWPORT(vp), TEST_BOOLEAN(line+14) );
+        VIK_VIEWPORT(vp)->port.set_draw_highlight(TEST_BOOLEAN(line+14) );
       else if ( stack->under && eq_pos == 4 && strncasecmp ( line, "name", eq_pos ) == 0 )
         vik_layer_rename ( VIK_LAYER(stack->data), line+5 );
       else if ( eq_pos == 7 && strncasecmp ( line, "visible", eq_pos ) == 0 )
@@ -550,7 +550,7 @@ name=this
   }
 
   if ( ll.lat != 0.0 || ll.lon != 0.0 )
-    vik_viewport_set_center_latlon ( VIK_VIEWPORT(vp), &ll, true );
+    VIK_VIEWPORT(vp)->port.set_center_latlon(&ll, true );
 
   if ( ( ! VIK_LAYER(top)->visible ) && VIK_LAYER(top)->realized )
     vik_treeview_item_set_visible ( VIK_LAYER(top)->vt, &(VIK_LAYER(top)->iter), false );

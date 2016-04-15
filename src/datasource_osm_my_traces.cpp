@@ -532,7 +532,7 @@ static void set_in_current_view_property ( VikTrwLayer *vtl, datasource_osm_my_t
 {
 	double min_lat, max_lat, min_lon, max_lon;
 	/* get Viewport bounding box */
-	vik_viewport_get_min_max_lat_lon ( data->vvp, &min_lat, &max_lat, &min_lon, &max_lon );
+	data->vvp->port.get_min_max_lat_lon(&min_lat, &max_lat, &min_lon, &max_lon );
 
 	LatLonBBox bbox;
 	bbox.north = max_lat;

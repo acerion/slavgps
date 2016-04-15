@@ -191,13 +191,13 @@ static char *webtool_center_get_url_at_position ( VikWebtool *self, VikWindow *v
     vik_coord_to_latlon ( vc, &ll );
   else {
     const VikCoord *coord = NULL;
-    coord = vik_viewport_get_center ( viewport );
+    coord = viewport->port.get_center();
     vik_coord_to_latlon ( coord, &ll );
   }
 
   // zoom - ideally x & y factors need to be the same otherwise use the default
-  if ( vik_viewport_get_xmpp ( viewport ) == vik_viewport_get_ympp ( viewport ) )
-    zoom = vik_webtool_center_mpp_to_zoom ( self, vik_viewport_get_zoom ( viewport ) );
+  if ( viewport->port.get_xmpp() == viewport->port.get_ympp() )
+    zoom = vik_webtool_center_mpp_to_zoom ( self, viewport->port.get_zoom() );
 
   // Cannot simply use g_strdup_printf and double due to locale.
   // As we compute an URL, we have to think in C locale.

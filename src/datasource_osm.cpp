@@ -90,7 +90,7 @@ static void datasource_osm_add_setup_widgets ( GtkWidget *dialog, VikViewport *v
   page_number_label = gtk_label_new (_("Page number:"));
   widgets->page_number = gtk_spin_button_new_with_range(0, 100, 1);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(widgets->page_number), last_page_number);
-  
+
   /* Packing all widgets */
   GtkBox *box = GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog)));
   gtk_box_pack_start ( box, page_number_label, false, false, 5 );
@@ -108,7 +108,7 @@ static void datasource_osm_get_process_options ( datasource_osm_widgets_t *widge
   char smaxlat[G_ASCII_DTOSTR_BUF_SIZE];
 
   /* get Viewport bounding box */
-  vik_viewport_get_min_max_lat_lon ( widgets->vvp, &min_lat, &max_lat, &min_lon, &max_lon );
+  widgets->vvp->port.get_min_max_lat_lon(&min_lat, &max_lat, &min_lon, &max_lon );
 
   /* Convert as LANG=C double representation */
   g_ascii_dtostr (sminlon, G_ASCII_DTOSTR_BUF_SIZE, min_lon);
@@ -129,4 +129,3 @@ static void datasource_osm_cleanup ( void * data )
 {
   free( data );
 }
-

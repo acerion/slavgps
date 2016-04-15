@@ -395,13 +395,13 @@ static Trackpoint * set_center_at_graph_position(double event_x,
   if (tp) {
     VikCoord coord = tp->coord;
     if ( vlp ) {
-      vik_viewport_set_center_coord ( vik_layers_panel_get_viewport(vlp), &coord, true );
+      vik_layers_panel_get_viewport(vlp)->port.set_center_coord(&coord, true );
       vik_layers_panel_emit_update ( vlp );
     }
     else {
       /* since vlp not set, vvp should be valid instead! */
       if ( vvp )
-        vik_viewport_set_center_coord ( vvp, &coord, true );
+        vvp->port.set_center_coord(&coord, true );
       vik_layer_emit_update ( VIK_LAYER(vtl) );
     }
   }

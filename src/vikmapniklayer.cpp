@@ -832,7 +832,7 @@ static void mapnik_layer_draw ( VikMapnikLayer *vml, VikViewport *vvp )
 	if ( !vml->loaded )
 		return;
 
-	if ( vik_viewport_get_drawmode(vvp) != VIK_VIEWPORT_DRAWMODE_MERCATOR ) {
+	if ( vvp->port.get_drawmode() != VIK_VIEWPORT_DRAWMODE_MERCATOR ) {
 		vik_statusbar_set_message ( vik_window_get_statusbar (VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(vml))),
 		                            VIK_STATUSBAR_INFO, _("Mapnik Rendering must be in Mercator mode") );
 		return;
@@ -841,18 +841,18 @@ static void mapnik_layer_draw ( VikMapnikLayer *vml, VikViewport *vvp )
 	if ( vml->mi ) {
 		char *copyright = mapnik_interface_get_copyright ( vml->mi );
 		if ( copyright ) {
-			vik_viewport_add_copyright ( vvp, copyright );
+			vvp->port.add_copyright(copyright);
 		}
 	}
 
 	VikCoord ul, br;
 	ul.mode = VIK_COORD_LATLON;
 	br.mode = VIK_COORD_LATLON;
-	vik_viewport_screen_to_coord ( vvp, 0, 0, &ul );
-	vik_viewport_screen_to_coord ( vvp, vik_viewport_get_width(vvp), vik_viewport_get_height(vvp), &br );
+	vvp->port.screen_to_coord(0, 0, &ul);
+	vvp->port.screen_to_coord(vvp->port.get_width(), vvp->port.get_height(), &br );
 
-	double xzoom = vik_viewport_get_xmpp ( vvp );
-	double yzoom = vik_viewport_get_ympp ( vvp );
+	double xzoom = vvp->port.get_xmpp();
+	double yzoom = vvp->port.get_ympp();
 
 	MapCoord ulm, brm;
 
@@ -879,8 +879,8 @@ static void mapnik_layer_draw ( VikMapnikLayer *vml, VikViewport *vvp )
 
 				if ( pixbuf ) {
 					map_utils_iTMS_to_vikcoord ( &ulm, &coord );
-					vik_viewport_coord_to_screen ( vvp, &coord, &xx, &yy );
-					vik_viewport_draw_pixbuf ( vvp, pixbuf, 0, 0, xx, yy, vml->tile_size_x, vml->tile_size_x );
+					vvp->port.coord_to_screen(&coord, &xx, &yy );
+					vvp->port.draw_pixbuf(pixbuf, 0, 0, xx, yy, vml->tile_size_x, vml->tile_size_x );
 					g_object_unref(pixbuf);
 				}
 			}
@@ -890,20 +890,20 @@ static void mapnik_layer_draw ( VikMapnikLayer *vml, VikViewport *vvp )
 		// Just a handy guide to tile blocks.
 		if ( vik_debug && vik_verbose ) {
 			GdkGC *black_gc = GTK_WIDGET(vvp)->style->black_gc;
-			int width = vik_viewport_get_width(vvp);
-			int height = vik_viewport_get_height(vvp);
+			int width = vvp->port.get_width();
+			int height = vvp->port.get_height();
 			int xx, yy;
 			ulm.x = xmin; ulm.y = ymin;
 			map_utils_iTMS_to_center_vikcoord ( &ulm, &coord );
-			vik_viewport_coord_to_screen ( vvp, &coord, &xx, &yy );
+			vvp->port.coord_to_screen(&coord, &xx, &yy );
 			xx = xx - (vml->tile_size_x/2);
 			yy = yy - (vml->tile_size_x/2); // Yes use X ATM
 			for (int x = xmin; x <= xmax; x++ ) {
-				vik_viewport_draw_line ( vvp, black_gc, xx, 0, xx, height );
+				vvp->port.draw_line(black_gc, xx, 0, xx, height );
 				xx += vml->tile_size_x;
 			}
 			for (int y = ymin; y <= ymax; y++ ) {
-				vik_viewport_draw_line ( vvp, black_gc, 0, yy, width, yy );
+				vvp->port.draw_line(black_gc, 0, yy, width, yy );
 				yy += vml->tile_size_x; // Yes use X ATM
 			}
 		}
@@ -1132,8 +1132,8 @@ static bool mapnik_feature_release ( VikMapnikLayer *vml, GdkEventButton *event,
 	if ( !vml )
 		return false;
 	if ( event->button == 3 ) {
-		vik_viewport_screen_to_coord ( vvp, MAX(0, event->x), MAX(0, event->y), &vml->rerender_ul );
-		vml->rerender_zoom = vik_viewport_get_zoom ( vvp );
+		vvp->port.screen_to_coord(MAX(0, event->x), MAX(0, event->y), &vml->rerender_ul );
+		vml->rerender_zoom = vvp->port.get_zoom();
 
 		if ( ! vml->right_click_menu ) {
 			GtkWidget *item;

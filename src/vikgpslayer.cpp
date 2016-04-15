@@ -1466,8 +1466,8 @@ static void realtime_tracking_draw(VikGpsLayer *vgl, VikViewport *vp)
   struct LatLon ll;
   VikCoord nw, se;
   struct LatLon lnw, lse;
-  vik_viewport_screen_to_coord ( vp, -20, -20, &nw );
-  vik_viewport_screen_to_coord ( vp, vik_viewport_get_width(vp)+20, vik_viewport_get_width(vp)+20, &se );
+  vp->port.screen_to_coord(-20, -20, &nw );
+  vp->port.screen_to_coord(vp->port.get_width() + 20, vp->port.get_width() + 20, &se );
   vik_coord_to_latlon ( &nw, &lnw );
   vik_coord_to_latlon ( &se, &lse );
   if ( vgl->realtime_fix.fix.latitude > lse.lat &&
@@ -1486,8 +1486,8 @@ static void realtime_tracking_draw(VikGpsLayer *vgl, VikViewport *vp)
 
     ll.lat = vgl->realtime_fix.fix.latitude;
     ll.lon = vgl->realtime_fix.fix.longitude;
-    vik_coord_load_from_latlon ( &gps, vik_viewport_get_coord_mode(vp), &ll);
-    vik_viewport_coord_to_screen ( vp, &gps, &x, &y );
+    vik_coord_load_from_latlon ( &gps, vp->port.get_coord_mode(), &ll);
+    vp->port.coord_to_screen(&gps, &x, &y );
 
     double heading_cos = cos(DEG2RAD(vgl->realtime_fix.fix.track));
     double heading_sin = sin(DEG2RAD(vgl->realtime_fix.fix.track));
@@ -1515,10 +1515,9 @@ static void realtime_tracking_draw(VikGpsLayer *vgl, VikViewport *vp)
      GdkPoint trian[3] = { { pt_x, pt_y }, {side1_x, side1_y}, {side2_x, side2_y} };
      GdkPoint trian_bg[3] = { { ptbg_x, pt_y }, {side1bg_x, side1bg_y}, {side2bg_x, side2bg_y} };
 
-     vik_viewport_draw_polygon ( vp, vgl->realtime_track_bg_gc, true, trian_bg, 3 );
-     vik_viewport_draw_polygon ( vp, vgl->realtime_track_gc, true, trian, 3 );
-     vik_viewport_draw_rectangle ( vp,
-         (vgl->realtime_fix.fix.mode > MODE_2D) ? vgl->realtime_track_pt2_gc : vgl->realtime_track_pt1_gc,
+     vp->port.draw_polygon(vgl->realtime_track_bg_gc, true, trian_bg, 3 );
+     vp->port.draw_polygon(vgl->realtime_track_gc, true, trian, 3 );
+     vp->port.draw_rectangle((vgl->realtime_fix.fix.mode > MODE_2D) ? vgl->realtime_track_pt2_gc : vgl->realtime_track_pt1_gc,
          true, x-2, y-2, 4, 4 );
      //vgl->realtime_track_pt_gc = (vgl->realtime_track_pt_gc == vgl->realtime_track_pt1_gc) ? vgl->realtime_track_pt2_gc : vgl->realtime_track_pt1_gc;
   }
@@ -1636,27 +1635,27 @@ static void gpsd_raw_hook(VglGpsd *vgpsd, char *data)
 
     if ((vgl->vehicle_position == VEHICLE_POSITION_CENTERED) ||
         (vgl->realtime_jump_to_start && vgl->first_realtime_trackpoint)) {
-      vik_viewport_set_center_coord(vvp, &vehicle_coord, false);
+      vvp->port.set_center_coord(&vehicle_coord, false);
       update_all = true;
     }
     else if (vgl->vehicle_position == VEHICLE_POSITION_ON_SCREEN) {
       const int hdiv = 6;
       const int vdiv = 6;
       const int px = 20; /* adjust ment in pixels to make sure vehicle is inside the box */
-      int width = vik_viewport_get_width(vvp);
-      int height = vik_viewport_get_height(vvp);
+      int width = vvp->port.get_width();
+      int height = vvp->port.get_height();
       int vx, vy;
 
-      vik_viewport_coord_to_screen(vvp, &vehicle_coord, &vx, &vy);
+      vvp->port.coord_to_screen(&vehicle_coord, &vx, &vy);
       update_all = true;
       if (vx < (width/hdiv))
-        vik_viewport_set_center_screen(vvp, vx - width/2 + width/hdiv + px, vy);
+        vvp->port.set_center_screen(vx - width/2 + width/hdiv + px, vy);
       else if (vx > (width - width/hdiv))
-        vik_viewport_set_center_screen(vvp, vx + width/2 - width/hdiv - px, vy);
+        vvp->port.set_center_screen(vx + width/2 - width/hdiv - px, vy);
       else if (vy < (height/vdiv))
-        vik_viewport_set_center_screen(vvp, vx, vy - height/2 + height/vdiv + px);
+        vvp->port.set_center_screen(vx, vy - height/2 + height/vdiv + px);
       else if (vy > (height - height/vdiv))
-        vik_viewport_set_center_screen(vvp, vx, vy + height/2 - height/vdiv - px);
+	vvp->port.set_center_screen(vx, vy + height/2 - height/vdiv - px);
       else
         update_all = false;
     }

@@ -134,7 +134,7 @@ static void datasource_gc_draw_circle ( datasource_gc_widgets_t *widgets )
 {
   double lat, lon;
   if ( widgets->circle_onscreen ) {
-    vik_viewport_draw_arc ( widgets->vvp, widgets->circle_gc, false,
+    widgets->vvp->port.draw_arc(widgets->circle_gc, false,
 		widgets->circle_x - widgets->circle_width/2,
 		widgets->circle_y - widgets->circle_width/2,
 		widgets->circle_width, widgets->circle_width, 0, 360*64 );
@@ -147,11 +147,11 @@ static void datasource_gc_draw_circle ( datasource_gc_widgets_t *widgets )
     int x, y;
 
     ll.lat = lat; ll.lon = lon;
-    vik_coord_load_from_latlon ( &c, vik_viewport_get_coord_mode ( widgets->vvp ), &ll );
-    vik_viewport_coord_to_screen ( widgets->vvp, &c, &x, &y );
+    vik_coord_load_from_latlon ( &c, widgets->vvp->port.get_coord_mode(), &ll );
+    widgets->vvp->port.coord_to_screen(&c, &x, &y);
     /* TODO: real calculation */
-    if ( x > -1000 && y > -1000 && x < (vik_viewport_get_width(widgets->vvp) + 1000) &&
-	y < (vik_viewport_get_width(widgets->vvp) + 1000) ) {
+    if ( x > -1000 && y > -1000 && x < (widgets->vvp->port.get_width() + 1000) &&
+	y < (widgets->vvp->port.get_width() + 1000) ) {
       VikCoord c1, c2;
       double pixels_per_meter;
 
@@ -159,15 +159,15 @@ static void datasource_gc_draw_circle ( datasource_gc_widgets_t *widgets )
       widgets->circle_y = y;
 
       /* determine miles per pixel */
-      vik_viewport_screen_to_coord ( widgets->vvp, 0, vik_viewport_get_height(widgets->vvp)/2, &c1 );
-      vik_viewport_screen_to_coord ( widgets->vvp, vik_viewport_get_width(widgets->vvp), vik_viewport_get_height(widgets->vvp)/2, &c2 );
-      pixels_per_meter = ((double)vik_viewport_get_width(widgets->vvp)) / vik_coord_diff(&c1, &c2);
+      widgets->vvp->port.screen_to_coord(0, widgets->vvp->port.get_height()/2, &c1 );
+      widgets->vvp->port.screen_to_coord(widgets->vvp->port.get_width(), widgets->vvp->port.get_height()/2, &c2 );
+      pixels_per_meter = ((double)widgets->vvp->port.get_width()) / vik_coord_diff(&c1, &c2);
 
       /* this is approximate */
       widgets->circle_width = gtk_spin_button_get_value_as_float ( GTK_SPIN_BUTTON(widgets->miles_radius_spin) )
 		* METERSPERMILE * pixels_per_meter * 2;
 
-      vik_viewport_draw_arc ( widgets->vvp, widgets->circle_gc, false,
+      widgets->vvp->port.draw_arc(widgets->circle_gc, false,
 		widgets->circle_x - widgets->circle_width/2,
 		widgets->circle_y - widgets->circle_width/2,
 		widgets->circle_width, widgets->circle_width, 0, 360*64 );
@@ -196,7 +196,7 @@ static void datasource_gc_add_setup_widgets ( GtkWidget *dialog, VikViewport *vv
   miles_radius_label = gtk_label_new ("Miles Radius:");
   widgets->miles_radius_spin = gtk_spin_button_new ( GTK_ADJUSTMENT(gtk_adjustment_new( 5, 1, 1000, 1, 20, 0 )), 25, 1 );
 
-  vik_coord_to_latlon ( vik_viewport_get_center(vvp), &ll );
+  vik_coord_to_latlon ( vvp->port.get_center(), &ll );
   s_ll = g_strdup_printf("%f,%f", ll.lat, ll.lon );
   gtk_entry_set_text ( GTK_ENTRY(widgets->center_entry), s_ll );
   free( s_ll );
@@ -262,7 +262,7 @@ static void datasource_gc_get_process_options ( datasource_gc_widgets_t *widgets
 static void datasource_gc_cleanup ( datasource_gc_widgets_t *widgets )
 {
   if ( widgets->circle_onscreen ) {
-    vik_viewport_draw_arc ( widgets->vvp, widgets->circle_gc, false,
+    widgets->vvp->port.draw_arc(widgets->circle_gc, false,
 		widgets->circle_x - widgets->circle_width/2,
 		widgets->circle_y - widgets->circle_width/2,
 		widgets->circle_width, widgets->circle_width, 0, 360*64 );

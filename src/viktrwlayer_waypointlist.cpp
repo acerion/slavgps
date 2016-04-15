@@ -194,7 +194,7 @@ static void trw_layer_waypoint_view ( menu_array_values values )
 	Waypoint * wp = (Waypoint *) (values[MA_WPT]);
 	VikViewport *vvp = VIK_VIEWPORT(values[MA_VVP]);
 
-	vik_viewport_set_center_coord ( vvp, &(wp->coord), true );
+	vvp->port.set_center_coord(&(wp->coord), true );
 
 	trw_layer_waypoint_select (values);
 

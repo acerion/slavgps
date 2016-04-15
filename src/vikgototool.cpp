@@ -248,7 +248,7 @@ int vik_goto_tool_get_coord ( VikGotoTool *self, VikWindow *vw, VikViewport *vvp
     ret = -1;
     goto done;
   }
-  vik_coord_load_from_latlon ( coord, vik_viewport_get_coord_mode(vvp), &ll );
+  vik_coord_load_from_latlon ( coord, vvp->port.get_coord_mode(), &ll );
 
 done:
   (void)util_remove(tmpname);

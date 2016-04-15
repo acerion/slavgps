@@ -101,10 +101,10 @@ void a_print(VikWindow *vw, VikViewport *vvp)
   data.use_full_page = false;
   data.operation     = print_oper;
 
-  data.xmpp          = vik_viewport_get_xmpp(vvp);
-  data.ympp          = vik_viewport_get_ympp(vvp);
-  data.width         = vik_viewport_get_width(vvp);
-  data.height        = vik_viewport_get_height(vvp);
+  data.xmpp          = vvp->port.get_xmpp();
+  data.ympp          = vvp->port.get_ympp();
+  data.width         = vvp->port.get_width();
+  data.height        = vvp->port.get_height();
 
   data.xres = data.yres = 1; // This forces it to default to a 100% page size
 

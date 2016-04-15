@@ -815,7 +815,7 @@ void vu_command_line ( VikWindow *vw, double latitude, double longitude, int zoo
 		struct LatLon ll;
 		ll.lat = latitude;
 		ll.lon = longitude;
-		vik_viewport_set_center_latlon ( vvp, &ll, true );
+		vvp->port.set_center_latlon(&ll, true );
 	}
 
 	if ( zoom_osm_level >= 0 ) {
@@ -823,7 +823,7 @@ void vu_command_line ( VikWindow *vw, double latitude, double longitude, int zoo
 		double mpp = exp ( (17-zoom_osm_level) * log(2) );
 		if ( mpp > 1.0 )
 			mpp = round (mpp);
-		vik_viewport_set_zoom ( vvp, mpp );
+		vvp->port.set_zoom(mpp);
 	}
 
 	if ( map_id >= 0 ) {
@@ -888,7 +888,7 @@ void vu_zoom_to_show_latlons ( VikCoordMode mode, VikViewport *vvp, struct LatLo
 	struct LatLon average = { (maxmin[0].lat+maxmin[1].lat)/2, (maxmin[0].lon+maxmin[1].lon)/2 };
 	VikCoord coord;
 	vik_coord_load_from_latlon ( &coord, mode, &average );
-	vik_viewport_set_center_coord ( vvp, &coord, true );
+	vvp->port.set_center_coord(&coord, true );
 
 	/* Convert into definite 'smallest' and 'largest' positions */
 	struct LatLon minmin;
@@ -906,12 +906,12 @@ void vu_zoom_to_show_latlons ( VikCoordMode mode, VikViewport *vvp, struct LatLo
 	/* Never zoom in too far - generally not that useful, as too close ! */
 	/* Always recalculate the 'best' zoom level */
 	double zoom = 1.0;
-	vik_viewport_set_zoom ( vvp, zoom );
+	vvp->port.set_zoom(zoom);
 
 	double min_lat, max_lat, min_lon, max_lon;
 	/* Should only be a maximum of about 18 iterations from min to max zoom levels */
 	while ( zoom <= VIK_VIEWPORT_MAX_ZOOM ) {
-		vik_viewport_get_min_max_lat_lon ( vvp, &min_lat, &max_lat, &min_lon, &max_lon );
+		vvp->port.get_min_max_lat_lon(&min_lat, &max_lat, &min_lon, &max_lon );
 		/* NB I think the logic used in this test to determine if the bounds is within view
 		   fails if track goes across 180 degrees longitude.
 		   Hopefully that situation is not too common...
@@ -925,6 +925,6 @@ void vu_zoom_to_show_latlons ( VikCoordMode mode, VikViewport *vvp, struct LatLo
 
 		/* Try next */
 		zoom = zoom * 2;
-		vik_viewport_set_zoom ( vvp, zoom );
+		vvp->port.set_zoom(zoom);
 	}
 }
