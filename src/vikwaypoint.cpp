@@ -45,6 +45,16 @@ using namespace SlavGPS;
 Waypoint::Waypoint()
 {
 	altitude = VIK_DEFAULT_ALTITUDE;
+
+	this->name = NULL;
+	this->comment = NULL;
+	this->description = NULL;
+	this->source = NULL;
+	this->type = NULL;
+	this->url = NULL;
+	this->image = NULL;
+	this->symbol = NULL;
+
 	name = strdup(_("Waypoint"));
 
 	comment = NULL;
@@ -187,6 +197,15 @@ Waypoint::~Waypoint()
 /* Copy constructor. */
 Waypoint::Waypoint(const Waypoint & wp)
 {
+	this->name = NULL;
+	this->comment = NULL;
+	this->description = NULL;
+	this->source = NULL;
+	this->type = NULL;
+	this->url = NULL;
+	this->image = NULL;
+	this->symbol = NULL;
+
 	this->coord = wp.coord;
 	this->visible = wp.visible;
 	this->altitude = wp.altitude;
@@ -283,7 +302,7 @@ Waypoint *Waypoint::unmarshall(uint8_t * data, size_t datalen)
 	len = *(size_t *)data;			\
 	data += sizeof (len);			\
 	if (len) {				\
-		(s) = strdup((char *) data);	\
+		(s) = g_strdup((char *) data);	\
 	} else {				\
 		(s) = NULL;			\
 	}					\
