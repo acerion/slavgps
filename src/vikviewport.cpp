@@ -103,8 +103,7 @@ static unsigned int viewport_signals[VW_LAST_SIGNAL] = { 0 };
 
 G_DEFINE_TYPE (VikViewport, vik_viewport, GTK_TYPE_DRAWING_AREA)
 
-static void
-vik_viewport_class_init (VikViewportClass *klass)
+static void vik_viewport_class_init (VikViewportClass *klass)
 {
 	/* Destructor */
 	GObjectClass *object_class;
@@ -129,7 +128,7 @@ VikViewport *vik_viewport_new ()
 	vv->port.height = 0;
 	vv->port.width_2 = 0;
 	vv->port.height_2 = 0;
-	vv->port.my_parent_vikviewport = (void *) vv;
+	vv->port.vvp = (void *) vv;
 
 	return vv;
 }
@@ -141,85 +140,13 @@ VikViewport *vik_viewport_new ()
 #define VIK_SETTINGS_VIEW_HISTORY_SIZE "viewport_history_size"
 #define VIK_SETTINGS_VIEW_HISTORY_DIFF_DIST "viewport_history_diff_dist"
 
-static void
-vik_viewport_init (VikViewport *vvp)
+static void vik_viewport_init(VikViewport *vvp)
 {
 	viewport_init_ra();
-
-	struct UTM utm;
-	struct LatLon ll;
-	ll.lat = a_vik_get_default_lat();
-	ll.lon = a_vik_get_default_long();
-	double zoom_x = 4.0;
-	double zoom_y = 4.0;
-
-	if (a_vik_get_startup_method () == VIK_STARTUP_METHOD_LAST_LOCATION) {
-		double lat, lon, dzoom;
-		if (a_settings_get_double (VIK_SETTINGS_VIEW_LAST_LATITUDE, &lat)) {
-			ll.lat = lat;
-		}
-
-		if (a_settings_get_double (VIK_SETTINGS_VIEW_LAST_LONGITUDE, &lon)) {
-			ll.lon = lon;
-		}
-
-		if (a_settings_get_double (VIK_SETTINGS_VIEW_LAST_ZOOM_X, &dzoom)) {
-			zoom_x = dzoom;
-		}
-
-		if (a_settings_get_double (VIK_SETTINGS_VIEW_LAST_ZOOM_Y, &dzoom)) {
-			zoom_y = dzoom;
-		}
-	}
-
-	a_coords_latlon_to_utm (&ll, &utm);
-
-	vvp->port.xmpp = zoom_x;
-	vvp->port.ympp = zoom_y;
-	vvp->port.xmfactor = MERCATOR_FACTOR (vvp->port.xmpp);
-	vvp->port.ymfactor = MERCATOR_FACTOR (vvp->port.ympp);
-	vvp->port.coord_mode = VIK_COORD_LATLON;
-	vvp->port.drawmode = VIK_VIEWPORT_DRAWMODE_MERCATOR;
-	vvp->port.center.mode = VIK_COORD_LATLON;
-	vvp->port.center.north_south = ll.lat;
-	vvp->port.center.east_west = ll.lon;
-	vvp->port.center.utm_zone = (int)utm.zone;
-	vvp->port.center.utm_letter = utm.letter;
-	vvp->port.utm_zone_width = 0.0;
-	vvp->port.background_gc = NULL;
-	vvp->port.highlight_gc = NULL;
-	vvp->port.scale_bg_gc = NULL;
-
-	vvp->port.scr_buffer = NULL;
-	vvp->port.width = 0;
-	vvp->port.height = 0;
-	vvp->port.width_2 = 0;
-	vvp->port.height_2 = 0;
-
-	vvp->port.copyrights = NULL;
-	vvp->port.centers = NULL;
-	vvp->port.centers_index = 0;
-	vvp->port.centers_max = 20;
-	int tmp = vvp->port.centers_max;
-	if (a_settings_get_integer (VIK_SETTINGS_VIEW_HISTORY_SIZE, &tmp)) {
-		vvp->port.centers_max = tmp;
-	}
-
-	vvp->port.centers_radius = 500;
-	if (a_settings_get_integer (VIK_SETTINGS_VIEW_HISTORY_DIFF_DIST, &tmp)) {
-		vvp->port.centers_radius = tmp;
-	}
-
-	vvp->port.do_draw_scale = true;
-	vvp->port.do_draw_centermark = true;
-	vvp->port.do_draw_highlight = true;
 
 	vvp->trigger = NULL;
 	vvp->snapshot_buffer = NULL;
 	vvp->half_drawn = false;
-
-	// Initiate center history
-	vvp->port.update_centers();
 
 	g_signal_connect (G_OBJECT(vvp), "configure_event", G_CALLBACK(vik_viewport_configure), NULL);
 
@@ -235,6 +162,83 @@ GdkColor * Viewport::get_background_gdkcolor()
 	GdkColor *rv = (GdkColor *) malloc(sizeof (GdkColor));
 	*rv = background_color;  /* kamilTODO: what? */
 	return rv;
+}
+
+Viewport::Viewport()
+{
+	struct UTM utm;
+	struct LatLon ll;
+	ll.lat = a_vik_get_default_lat();
+	ll.lon = a_vik_get_default_long();
+	double zoom_x = 4.0;
+	double zoom_y = 4.0;
+
+	if (a_vik_get_startup_method() == VIK_STARTUP_METHOD_LAST_LOCATION) {
+		double lat, lon, dzoom;
+		if (a_settings_get_double(VIK_SETTINGS_VIEW_LAST_LATITUDE, &lat)) {
+			ll.lat = lat;
+		}
+
+		if (a_settings_get_double(VIK_SETTINGS_VIEW_LAST_LONGITUDE, &lon)) {
+			ll.lon = lon;
+		}
+
+		if (a_settings_get_double(VIK_SETTINGS_VIEW_LAST_ZOOM_X, &dzoom)) {
+			zoom_x = dzoom;
+		}
+
+		if (a_settings_get_double(VIK_SETTINGS_VIEW_LAST_ZOOM_Y, &dzoom)) {
+			zoom_y = dzoom;
+		}
+	}
+
+	a_coords_latlon_to_utm(&ll, &utm);
+
+	xmpp = zoom_x;
+	ympp = zoom_y;
+	xmfactor = MERCATOR_FACTOR(xmpp);
+	ymfactor = MERCATOR_FACTOR(ympp);
+	coord_mode = VIK_COORD_LATLON;
+	drawmode = VIK_VIEWPORT_DRAWMODE_MERCATOR;
+	center.mode = VIK_COORD_LATLON;
+	center.north_south = ll.lat;
+	center.east_west = ll.lon;
+	center.utm_zone = (int) utm.zone;
+	center.utm_letter = utm.letter;
+	utm_zone_width = 0.0;
+	background_gc = NULL;
+	highlight_gc = NULL;
+	scale_bg_gc = NULL;
+
+	scr_buffer = NULL;
+	width = 0;
+	height = 0;
+	width_2 = 0;
+	height_2 = 0;
+
+	copyrights = NULL;
+	logos = NULL;
+	scr_buffer = NULL;
+	centers = NULL;
+	centers_index = 0;
+	centers_max = 20;
+	int tmp = centers_max;
+	if (a_settings_get_integer(VIK_SETTINGS_VIEW_HISTORY_SIZE, &tmp)) {
+		centers_max = tmp;
+	}
+
+	centers_radius = 500;
+	if (a_settings_get_integer(VIK_SETTINGS_VIEW_HISTORY_DIFF_DIST, &tmp)) {
+		centers_radius = tmp;
+	}
+
+	do_draw_scale = true;
+	do_draw_centermark = true;
+	do_draw_highlight = true;
+
+
+	// Initiate center history
+	update_centers();
 }
 
 /* returns pointer to internal static storage, changes next time function called, use quickly */
@@ -310,26 +314,23 @@ void Viewport::set_highlight_thickness(int thickness)
 
 GdkGC *vik_viewport_new_gc (VikViewport *vvp, const char *colorname, int thickness)
 {
-	GdkGC *rv = NULL;
 	GdkColor color;
 
-	rv = gdk_gc_new (gtk_widget_get_window(GTK_WIDGET(vvp)));
-	if (gdk_color_parse (colorname, &color)) {
+	GdkGC * rv = gdk_gc_new(gtk_widget_get_window(GTK_WIDGET(vvp)));
+	if (gdk_color_parse(colorname, &color)) {
 		gdk_gc_set_rgb_fg_color (rv, &color);
 	} else {
 		fprintf(stderr, "WARNING: %s: Failed to parse color '%s'\n", __FUNCTION__, colorname);
 	}
-	gdk_gc_set_line_attributes (rv, thickness, GDK_LINE_SOLID, GDK_CAP_ROUND, GDK_JOIN_ROUND);
+	gdk_gc_set_line_attributes(rv, thickness, GDK_LINE_SOLID, GDK_CAP_ROUND, GDK_JOIN_ROUND);
 	return rv;
 }
 
 GdkGC *vik_viewport_new_gc_from_color (VikViewport *vvp, GdkColor *color, int thickness)
 {
-	GdkGC *rv;
-
-	rv = gdk_gc_new (gtk_widget_get_window(GTK_WIDGET(vvp)));
-	gdk_gc_set_rgb_fg_color (rv, color);
-	gdk_gc_set_line_attributes (rv, thickness, GDK_LINE_SOLID, GDK_CAP_ROUND, GDK_JOIN_ROUND);
+	GdkGC * rv = gdk_gc_new(gtk_widget_get_window(GTK_WIDGET(vvp)));
+	gdk_gc_set_rgb_fg_color(rv, color);
+	gdk_gc_set_line_attributes(rv, thickness, GDK_LINE_SOLID, GDK_CAP_ROUND, GDK_JOIN_ROUND);
 	return rv;
 }
 
@@ -363,39 +364,41 @@ bool vik_viewport_configure (VikViewport *vvp)
 {
 	g_return_val_if_fail (vvp != NULL, true);
 
+	Viewport * viewport = &vvp->port;
+
 	GtkAllocation allocation;
 	gtk_widget_get_allocation (GTK_WIDGET(vvp), &allocation);
-	vvp->port.width = allocation.width;
-	vvp->port.height = allocation.height;
+	viewport->width = allocation.width;
+	viewport->height = allocation.height;
 
-	vvp->port.width_2 = vvp->port.width/2;
-	vvp->port.height_2 = vvp->port.height/2;
+	viewport->width_2 = viewport->width / 2;
+	viewport->height_2 = viewport->height/2;
 
-	if (vvp->port.scr_buffer) {
-		g_object_unref (G_OBJECT (vvp->port.scr_buffer));
+	if (viewport->scr_buffer) {
+		g_object_unref (G_OBJECT (viewport->scr_buffer));
 	}
 
-	vvp->port.scr_buffer = gdk_pixmap_new (gtk_widget_get_window(GTK_WIDGET(vvp)), vvp->port.width, vvp->port.height, -1);
+	viewport->scr_buffer = gdk_pixmap_new (gtk_widget_get_window(GTK_WIDGET(vvp)), viewport->width, viewport->height, -1);
 
 	/* TODO trigger: only if enabled! */
 	if (vvp->snapshot_buffer) {
 		g_object_unref (G_OBJECT (vvp->snapshot_buffer));
 	}
 
-	vvp->snapshot_buffer = gdk_pixmap_new (gtk_widget_get_window(GTK_WIDGET(vvp)), vvp->port.width, vvp->port.height, -1);
+	vvp->snapshot_buffer = gdk_pixmap_new (gtk_widget_get_window(GTK_WIDGET(vvp)), viewport->width, viewport->height, -1);
 	/* TODO trigger */
 
 	/* this is down here so it can get a GC (necessary?) */
-	if (!vvp->port.background_gc) {
-		vvp->port.background_gc = vik_viewport_new_gc (vvp, DEFAULT_BACKGROUND_COLOR, 1);
-		vvp->port.set_background_color(DEFAULT_BACKGROUND_COLOR);
+	if (!viewport->background_gc) {
+		viewport->background_gc = vik_viewport_new_gc (vvp, DEFAULT_BACKGROUND_COLOR, 1);
+		viewport->set_background_color(DEFAULT_BACKGROUND_COLOR);
 	}
-	if (! vvp->port.highlight_gc) {
-		vvp->port.highlight_gc = vik_viewport_new_gc (vvp, DEFAULT_HIGHLIGHT_COLOR, 1);
-		vvp->port.set_highlight_color(DEFAULT_HIGHLIGHT_COLOR);
+	if (!viewport->highlight_gc) {
+		viewport->highlight_gc = vik_viewport_new_gc (vvp, DEFAULT_HIGHLIGHT_COLOR, 1);
+		viewport->set_highlight_color(DEFAULT_HIGHLIGHT_COLOR);
 	}
-	if (!vvp->port.scale_bg_gc) {
-		vvp->port.scale_bg_gc = vik_viewport_new_gc(vvp, "grey", 3);
+	if (!viewport->scale_bg_gc) {
+		viewport->scale_bg_gc = vik_viewport_new_gc(vvp, "grey", 3);
 	}
 
 	return false;
@@ -403,42 +406,43 @@ bool vik_viewport_configure (VikViewport *vvp)
 
 static void viewport_finalize (GObject *gob)
 {
-	VikViewport *vvp = VIK_VIEWPORT(gob);
+	VikViewport * vvp = VIK_VIEWPORT(gob);
+	Viewport * viewport = &vvp->port;
 
 	g_return_if_fail (vvp != NULL);
 
 	if (a_vik_get_startup_method () == VIK_STARTUP_METHOD_LAST_LOCATION) {
 		struct LatLon ll;
-		vik_coord_to_latlon (&(vvp->port.center), &ll);
+		vik_coord_to_latlon (&(viewport->center), &ll);
 		a_settings_set_double (VIK_SETTINGS_VIEW_LAST_LATITUDE, ll.lat);
 		a_settings_set_double (VIK_SETTINGS_VIEW_LAST_LONGITUDE, ll.lon);
-		a_settings_set_double (VIK_SETTINGS_VIEW_LAST_ZOOM_X, vvp->port.xmpp);
-		a_settings_set_double (VIK_SETTINGS_VIEW_LAST_ZOOM_Y, vvp->port.ympp);
+		a_settings_set_double (VIK_SETTINGS_VIEW_LAST_ZOOM_X, viewport->xmpp);
+		a_settings_set_double (VIK_SETTINGS_VIEW_LAST_ZOOM_Y, viewport->ympp);
 	}
 
-	if (vvp->port.centers) {
-		vvp->port.free_centers(0);
+	if (viewport->centers) {
+		viewport->free_centers(0);
 	}
 
-	if (vvp->port.scr_buffer) {
-		g_object_unref (G_OBJECT (vvp->port.scr_buffer));
+	if (viewport->scr_buffer) {
+		g_object_unref (G_OBJECT (viewport->scr_buffer));
 	}
 
 	if (vvp->snapshot_buffer) {
 		g_object_unref (G_OBJECT (vvp->snapshot_buffer));
 	}
 
-	if (vvp->port.background_gc) {
-		g_object_unref (G_OBJECT (vvp->port.background_gc));
+	if (viewport->background_gc) {
+		g_object_unref (G_OBJECT (viewport->background_gc));
 	}
 
-	if (vvp->port.highlight_gc) {
-		g_object_unref (G_OBJECT (vvp->port.highlight_gc));
+	if (viewport->highlight_gc) {
+		g_object_unref (G_OBJECT (viewport->highlight_gc));
 	}
 
-	if (vvp->port.scale_bg_gc) {
-		g_object_unref (G_OBJECT (vvp->port.scale_bg_gc));
-		vvp->port.scale_bg_gc = NULL;
+	if (viewport->scale_bg_gc) {
+		g_object_unref (G_OBJECT (viewport->scale_bg_gc));
+		viewport->scale_bg_gc = NULL;
 	}
 
 	G_OBJECT_CLASS(parent_class)->finalize(gob);
@@ -450,12 +454,12 @@ static void viewport_finalize (GObject *gob)
  *
  * Clear the whole viewport.
  */
-void vik_viewport_clear (VikViewport *vvp)
+void Viewport::clear()
 {
-	g_return_if_fail (vvp != NULL);
-	gdk_draw_rectangle(GDK_DRAWABLE(vvp->port.scr_buffer), vvp->port.background_gc, true, 0, 0, vvp->port.width, vvp->port.height);
-	vvp->port.reset_copyrights();
-	vvp->port.reset_logos();
+	//g_return_if_fail (vvp != NULL);
+	gdk_draw_rectangle(GDK_DRAWABLE(scr_buffer), background_gc, true, 0, 0, width, height);
+	this->reset_copyrights();
+	this->reset_logos();
 }
 
 /**
@@ -477,18 +481,18 @@ bool Viewport::get_draw_scale()
 
 void Viewport::draw_scale()
 {
-	VikViewport * vvp = (VikViewport *) this->my_parent_vikviewport;
+	VikViewport * vvp = (VikViewport *) this->vvp;
+	Viewport * viewport = &vvp->port;
 	//g_return_if_fail (vvp != NULL);
 
-	if (vvp->port.do_draw_scale) {
+	if (1) { // do_draw_scale) {
 		VikCoord left, right;
-		double unit, base, diff, old_unit, old_diff, ratio;
-		int odd, len, SCSIZE = 5, HEIGHT=10;
-		PangoLayout *pl;
-		char s[128];
+		double base;
+		int SCSIZE = 5, HEIGHT=10;
 
-		vvp->port.screen_to_coord(0, vvp->port.height/2, &left);
-		vvp->port.screen_to_coord(vvp->port.width/SCSIZE, vvp->port.height/2, &right);
+
+		this->screen_to_coord(0, height / 2, &left);
+		this->screen_to_coord(width / SCSIZE, height / 2, &right);
 
 		vik_units_distance_t dist_units = a_vik_get_units_distance ();
 		switch (dist_units) {
@@ -507,13 +511,13 @@ void Viewport::draw_scale()
 			base = 1; // Keep the compiler happy
 			fprintf(stderr, "CRITICAL: Houston, we've had a problem. distance=%d\n", dist_units);
 		}
-		ratio = (vvp->port.width/SCSIZE)/base;
+		double ratio = (width / SCSIZE) / base;
 
-		unit = 1;
-		diff = fabs(base-unit);
-		old_unit = unit;
-		old_diff = diff;
-		odd = 1;
+		double unit = 1;
+		double diff = fabs(base-unit);
+		double old_unit = unit;
+		double old_diff = diff;
+		int odd = 1;
 		while (diff <= old_diff) {
 			old_unit = unit;
 			old_diff = diff;
@@ -522,42 +526,43 @@ void Viewport::draw_scale()
 			odd++;
 		}
 		unit = old_unit;
-		len = unit * ratio;
+		int len = unit * ratio;
 
 		/* white background */
-		vvp->port.draw_line(vvp->port.scale_bg_gc,
-				       PAD, vvp->port.height-PAD, PAD + len, vvp->port.height-PAD);
-		vvp->port.draw_line(vvp->port.scale_bg_gc,
-				       PAD, vvp->port.height-PAD, PAD, vvp->port.height-PAD-HEIGHT);
-		vvp->port.draw_line(vvp->port.scale_bg_gc,
-				       PAD + len, vvp->port.height-PAD, PAD + len, vvp->port.height-PAD-HEIGHT);
+		this->draw_line(scale_bg_gc,
+				       PAD, height-PAD, PAD + len, height-PAD);
+		this->draw_line(scale_bg_gc,
+				       PAD, height-PAD, PAD, height-PAD-HEIGHT);
+		this->draw_line(scale_bg_gc,
+				       PAD + len, height-PAD, PAD + len, height-PAD-HEIGHT);
 		/* black scale */
-		vvp->port.draw_line(gtk_widget_get_style(GTK_WIDGET(&vvp->drawing_area))->black_gc,
-				       PAD, vvp->port.height-PAD, PAD + len, vvp->port.height-PAD);
-		vvp->port.draw_line(gtk_widget_get_style(GTK_WIDGET(&vvp->drawing_area))->black_gc,
-				       PAD, vvp->port.height-PAD, PAD, vvp->port.height-PAD-HEIGHT);
-		vvp->port.draw_line(gtk_widget_get_style(GTK_WIDGET(&vvp->drawing_area))->black_gc,
-				       PAD + len, vvp->port.height-PAD, PAD + len, vvp->port.height-PAD-HEIGHT);
+		this->draw_line(gtk_widget_get_style(GTK_WIDGET(&vvp->drawing_area))->black_gc,
+				       PAD, height-PAD, PAD + len, height-PAD);
+		this->draw_line(gtk_widget_get_style(GTK_WIDGET(&vvp->drawing_area))->black_gc,
+				       PAD, height-PAD, PAD, height-PAD-HEIGHT);
+		this->draw_line(gtk_widget_get_style(GTK_WIDGET(&vvp->drawing_area))->black_gc,
+				       PAD + len, height-PAD, PAD + len, height-PAD-HEIGHT);
 		if (odd%2) {
 			int i;
 			for (i=1; i<5; i++) {
-				vvp->port.draw_line(vvp->port.scale_bg_gc,
-						       PAD+i*len/5, vvp->port.height-PAD, PAD+i*len/5, vvp->port.height-PAD-(HEIGHT/2));
-				vvp->port.draw_line(gtk_widget_get_style(GTK_WIDGET(&vvp->drawing_area))->black_gc,
-						       PAD+i*len/5, vvp->port.height-PAD, PAD+i*len/5, vvp->port.height-PAD-(HEIGHT/2));
+				this->draw_line(scale_bg_gc,
+						       PAD+i*len/5, height-PAD, PAD+i*len/5, height-PAD-(HEIGHT/2));
+				this->draw_line(gtk_widget_get_style(GTK_WIDGET(&vvp->drawing_area))->black_gc,
+						       PAD+i*len/5, height-PAD, PAD+i*len/5, height-PAD-(HEIGHT/2));
 			}
 		} else {
 			int i;
 			for (i=1; i<10; i++) {
-				vvp->port.draw_line(vvp->port.scale_bg_gc,
-						       PAD+i*len/10, vvp->port.height-PAD, PAD+i*len/10, vvp->port.height-PAD-((i==5)?(2*HEIGHT/3):(HEIGHT/2)));
-				vvp->port.draw_line(gtk_widget_get_style(GTK_WIDGET(&vvp->drawing_area))->black_gc,
-						       PAD+i*len/10, vvp->port.height-PAD, PAD+i*len/10, vvp->port.height-PAD-((i==5)?(2*HEIGHT/3):(HEIGHT/2)));
+				this->draw_line(scale_bg_gc,
+						       PAD+i*len/10, height-PAD, PAD+i*len/10, height-PAD-((i==5)?(2*HEIGHT/3):(HEIGHT/2)));
+				this->draw_line(gtk_widget_get_style(GTK_WIDGET(&vvp->drawing_area))->black_gc,
+						       PAD+i*len/10, height-PAD, PAD+i*len/10, height-PAD-((i==5)?(2*HEIGHT/3):(HEIGHT/2)));
 			}
 		}
-		pl = gtk_widget_create_pango_layout (GTK_WIDGET(&vvp->drawing_area), NULL);
+		PangoLayout * pl = gtk_widget_create_pango_layout (GTK_WIDGET(&vvp->drawing_area), NULL);
 		pango_layout_set_font_description (pl, gtk_widget_get_style(GTK_WIDGET(&vvp->drawing_area))->font_desc);
 
+		char s[128];
 		switch (dist_units) {
 		case VIK_UNITS_DISTANCE_KILOMETRES:
 			if (unit >= 1000) {
@@ -590,8 +595,8 @@ void Viewport::draw_scale()
 			fprintf(stderr, "CRITICAL: Houston, we've had a problem. distance=%d\n", dist_units);
 		}
 		pango_layout_set_text(pl, s, -1);
-		vvp->port.draw_layout(gtk_widget_get_style(GTK_WIDGET(&vvp->drawing_area))->black_gc,
-					 PAD + len + PAD, vvp->port.height - PAD - 10, pl);
+		this->draw_layout(gtk_widget_get_style(GTK_WIDGET(&vvp->drawing_area))->black_gc,
+					 PAD + len + PAD, height - PAD - 10, pl);
 		g_object_unref(pl);
 		pl = NULL;
 	}
@@ -601,24 +606,19 @@ void Viewport::draw_copyright()
 {
 	//g_return_if_fail (vvp != NULL);
 
-	VikViewport * vvp = (VikViewport *) (this->my_parent_vikviewport);
-
-	PangoLayout *pl;
-	PangoRectangle ink_rect, logical_rect;
 	char s[128] = "";
 
 	/* compute copyrights string */
-	unsigned int len = g_slist_length(vvp->port.copyrights);
+	unsigned int len = g_slist_length(copyrights);
 
-	int i;
-	for (i = 0 ; i < len ; i++) {
+	for (int i = 0 ; i < len ; i++) {
 		// Stop when buffer is full
-		int slen = strlen (s);
+		int slen = strlen(s);
 		if (slen >= 127) {
 			break;
 		}
 
-		char *copyright = (char *) g_slist_nth_data (vvp->port.copyrights, i);
+		char *copyright = (char *) g_slist_nth_data(copyrights, i);
 
 		// Only use part of this copyright that fits in the available space left
 		//  remembering 1 character is left available for the appended space
@@ -627,23 +627,26 @@ void Viewport::draw_copyright()
 			clen = 126 - slen;
 		}
 
-		strncat (s, copyright, clen);
-		strcat (s, " ");
+		strncat(s, copyright, clen);
+		strcat(s, " ");
 	}
 
+	VikViewport * vvp = (VikViewport *) (this->vvp);
+
 	/* create pango layout */
-	pl = gtk_widget_create_pango_layout (GTK_WIDGET(&vvp->drawing_area), NULL);
+	PangoLayout * pl = gtk_widget_create_pango_layout (GTK_WIDGET(&vvp->drawing_area), NULL);
 	pango_layout_set_font_description (pl, gtk_widget_get_style(GTK_WIDGET(&vvp->drawing_area))->font_desc);
 	pango_layout_set_alignment (pl, PANGO_ALIGN_RIGHT);
 
 	/* Set the text */
 	pango_layout_set_text(pl, s, -1);
 
+	PangoRectangle ink_rect, logical_rect;
 	/* Use maximum of half the viewport width */
-	pango_layout_set_width (pl, (vvp->port.width / 2) * PANGO_SCALE);
+	pango_layout_set_width (pl, (width / 2) * PANGO_SCALE);
 	pango_layout_get_pixel_extents(pl, &ink_rect, &logical_rect);
-	vvp->port.draw_layout(gtk_widget_get_style(GTK_WIDGET(&vvp->drawing_area))->black_gc,
-				 vvp->port.width / 2, vvp->port.height - logical_rect.height, pl);
+	this->draw_layout(gtk_widget_get_style(GTK_WIDGET(&vvp->drawing_area))->black_gc,
+			  width / 2, height - logical_rect.height, pl);
 
 	/* Free memory */
 	g_object_unref(pl);
@@ -671,28 +674,27 @@ void Viewport::draw_centermark()
 {
 	//g_return_if_fail (vvp != NULL);
 
-	VikViewport * vvp = (VikViewport *) this->my_parent_vikviewport;
-
-	if (!vvp->port.do_draw_centermark) {
+	if (!do_draw_centermark) {
 		return;
 	}
 
 	const int len = 30;
 	const int gap = 4;
-	int center_x = vvp->port.width/2;
-	int center_y = vvp->port.height/2;
+	int center_x = width / 2;
+	int center_y = height / 2;
+	VikViewport * vvp = (VikViewport *) this->vvp;
 	GdkGC * black_gc = gtk_widget_get_style(GTK_WIDGET(&vvp->drawing_area))->black_gc;
 
 	/* white back ground */
-	vvp->port.draw_line(vvp->port.scale_bg_gc, center_x - len, center_y, center_x - gap, center_y);
-	vvp->port.draw_line(vvp->port.scale_bg_gc, center_x + gap, center_y, center_x + len, center_y);
-	vvp->port.draw_line(vvp->port.scale_bg_gc, center_x, center_y - len, center_x, center_y - gap);
-	vvp->port.draw_line(vvp->port.scale_bg_gc, center_x, center_y + gap, center_x, center_y + len);
+	this->draw_line(scale_bg_gc, center_x - len, center_y, center_x - gap, center_y);
+	this->draw_line(scale_bg_gc, center_x + gap, center_y, center_x + len, center_y);
+	this->draw_line(scale_bg_gc, center_x, center_y - len, center_x, center_y - gap);
+	this->draw_line(scale_bg_gc, center_x, center_y + gap, center_x, center_y + len);
 	/* black fore ground */
-	vvp->port.draw_line(black_gc, center_x - len, center_y, center_x - gap, center_y);
-	vvp->port.draw_line(black_gc, center_x + gap, center_y, center_x + len, center_y);
-	vvp->port.draw_line(black_gc, center_x, center_y - len, center_x, center_y - gap);
-	vvp->port.draw_line(black_gc, center_x, center_y + gap, center_x, center_y + len);
+	this->draw_line(black_gc, center_x - len, center_y, center_x - gap, center_y);
+	this->draw_line(black_gc, center_x + gap, center_y, center_x + len, center_y);
+	this->draw_line(black_gc, center_x, center_y - len, center_x, center_y - gap);
+	this->draw_line(black_gc, center_x, center_y + gap, center_x, center_y + len);
 
 }
 
@@ -700,17 +702,14 @@ void Viewport::draw_logo()
 {
 	//g_return_if_fail (vvp != NULL);
 
-	VikViewport *vvp = (VikViewport *) this->my_parent_vikviewport;
-
-	unsigned int len = g_slist_length (vvp->port.logos);
-	int x = vvp->port.width - PAD;
+	unsigned int len = g_slist_length(logos);
+	int x = width - PAD;
 	int y = PAD;
-	int i;
-	for (i = 0 ; i < len ; i++) {
-		GdkPixbuf *logo = (GdkPixbuf *) g_slist_nth_data (vvp->port.logos, i);
+	for (int i = 0 ; i < len ; i++) {
+		GdkPixbuf *logo = (GdkPixbuf *) g_slist_nth_data(logos, i);
 		int width = gdk_pixbuf_get_width (logo);
 		int height = gdk_pixbuf_get_height (logo);
-		vvp->port.draw_pixbuf(logo, 0, 0, x - width, y, width, height);
+		this->draw_pixbuf(logo, 0, 0, x - width, y, width, height);
 		x = x - width - PAD;
 	}
 }
@@ -925,7 +924,7 @@ void Viewport::update_centers()
 	centers_index = g_list_length(centers) - 1;
 
 	// Inform interested subscribers that this change has occurred
-	g_signal_emit (G_OBJECT((VikViewport *) this->my_parent_vikviewport), viewport_signals[VW_UPDATED_CENTER_SIGNAL], 0);
+	g_signal_emit (G_OBJECT((VikViewport *) this->vvp), viewport_signals[VW_UPDATED_CENTER_SIGNAL], 0);
 }
 
 /**
@@ -934,8 +933,8 @@ void Viewport::update_centers()
  */
 void Viewport::show_centers(GtkWindow *parent)
 {
-	GList* node = NULL;
-	GList* texts = NULL;
+	GList * node = NULL;
+	GList * texts = NULL;
 	int index = 0;
 	for (node = centers; node != NULL; node = g_list_next(node)) {
 		char *lat = NULL, *lon = NULL;
@@ -1129,17 +1128,17 @@ void Viewport::corners_for_zonen(int zone, VikCoord *ul, VikCoord *br)
 	ul->mode = VIK_COORD_UTM;
 	*br = *ul;
 
-	ul->north_south += (((VikViewport *) this->my_parent_vikviewport)->port.ympp * height / 2);
-	ul->east_west -= (((VikViewport *) this->my_parent_vikviewport)->port.xmpp * width / 2);
-	br->north_south -= (((VikViewport *) this->my_parent_vikviewport)->port.ympp * height / 2);
-	br->east_west += (((VikViewport *) this->my_parent_vikviewport)->port.xmpp * width / 2);
+	ul->north_south += (ympp * height / 2);
+	ul->east_west -= (xmpp * width / 2);
+	br->north_south -= (ympp * height / 2);
+	br->east_west += (xmpp * width / 2);
 }
 
 void Viewport::center_for_zonen(struct UTM *center_, int zone)
 {
 	if (coord_mode == VIK_COORD_UTM) {
 		*center_ = *((struct UTM *)(get_center()));
-		center_->easting -= (zone - center_->zone) * ((VikViewport *) this->my_parent_vikviewport)->port.utm_zone_width;
+		center_->easting -= (zone - center_->zone) * utm_zone_width;
 		center_->zone = zone;
 	}
 }
@@ -1172,8 +1171,8 @@ void Viewport::set_center_screen(int x, int y)
 	//g_return_if_fail (vvp != NULL);
 	if (coord_mode == VIK_COORD_UTM) {
 		/* slightly optimized */
-		center.east_west += ((VikViewport *) this->my_parent_vikviewport)->port.xmpp * (x - (width/2));
-		center.north_south += ((VikViewport *) this->my_parent_vikviewport)->port.ympp * ((height/2) - y);
+		center.east_west += xmpp * (x - (width/2));
+		center.north_south += ympp * ((height/2) - y);
 		this->utm_zone_check();
 	} else {
 		VikCoord tmp;
@@ -1198,31 +1197,31 @@ void Viewport::screen_to_coord(int x, int y, VikCoord *coord)
 {
 	//g_return_if_fail (vvp != NULL);
 
-	VikViewport * vvp = (VikViewport *) (this->my_parent_vikviewport);
+	VikViewport * vvp = (VikViewport *) (this->vvp);
 
-	if (vvp->port.coord_mode == VIK_COORD_UTM) {
+	if (coord_mode == VIK_COORD_UTM) {
 		int zone_delta;
 		struct UTM *utm = (struct UTM *) coord;
 		coord->mode = VIK_COORD_UTM;
 
-		utm->zone = vvp->port.center.utm_zone;
-		utm->letter = vvp->port.center.utm_letter;
-		utm->easting = ((x - (vvp->port.width_2)) * vvp->port.xmpp) + vvp->port.center.east_west;
-		zone_delta = floor((utm->easting - EASTING_OFFSET) / vvp->port.utm_zone_width + 0.5);
+		utm->zone = center.utm_zone;
+		utm->letter = center.utm_letter;
+		utm->easting = ((x - (width_2)) * xmpp) + center.east_west;
+		zone_delta = floor((utm->easting - EASTING_OFFSET) / utm_zone_width + 0.5);
 		utm->zone += zone_delta;
-		utm->easting -= zone_delta * vvp->port.utm_zone_width;
-		utm->northing = (((vvp->port.height_2) - y) * vvp->port.ympp) + vvp->port.center.north_south;
-	} else if (vvp->port.coord_mode == VIK_COORD_LATLON) {
+		utm->easting -= zone_delta * utm_zone_width;
+		utm->northing = (((height_2) - y) * ympp) + center.north_south;
+	} else if (coord_mode == VIK_COORD_LATLON) {
 		coord->mode = VIK_COORD_LATLON;
-		if (vvp->port.drawmode == VIK_VIEWPORT_DRAWMODE_LATLON) {
-			coord->east_west = vvp->port.center.east_west + (180.0 * vvp->port.xmpp / 65536 / 256 * (x - vvp->port.width_2));
-			coord->north_south = vvp->port.center.north_south + (180.0 * vvp->port.ympp / 65536 / 256 * (vvp->port.height_2 - y));
-		} else if (vvp->port.drawmode == VIK_VIEWPORT_DRAWMODE_EXPEDIA) {
-			calcxy_rev(&(coord->east_west), &(coord->north_south), x, y, vvp->port.center.east_west, vvp->port.center.north_south, vvp->port.xmpp * ALTI_TO_MPP, vvp->port.ympp * ALTI_TO_MPP, vvp->port.width_2, vvp->port.height_2);
-		} else if (vvp->port.drawmode == VIK_VIEWPORT_DRAWMODE_MERCATOR) {
+		if (drawmode == VIK_VIEWPORT_DRAWMODE_LATLON) {
+			coord->east_west = center.east_west + (180.0 * xmpp / 65536 / 256 * (x - width_2));
+			coord->north_south = center.north_south + (180.0 * ympp / 65536 / 256 * (height_2 - y));
+		} else if (drawmode == VIK_VIEWPORT_DRAWMODE_EXPEDIA) {
+			calcxy_rev(&(coord->east_west), &(coord->north_south), x, y, center.east_west, center.north_south, xmpp * ALTI_TO_MPP, ympp * ALTI_TO_MPP, width_2, height_2);
+		} else if (drawmode == VIK_VIEWPORT_DRAWMODE_MERCATOR) {
 			/* This isn't called with a high frequently so less need to optimize */
-			coord->east_west = vvp->port.center.east_west + (180.0 * vvp->port.xmpp / 65536 / 256 * (x - vvp->port.width_2));
-			coord->north_south = DEMERCLAT (MERCLAT(vvp->port.center.north_south) + (180.0 * vvp->port.ympp / 65536 / 256 * (vvp->port.height_2 - y)));
+			coord->east_west = center.east_west + (180.0 * xmpp / 65536 / 256 * (x - width_2));
+			coord->north_south = DEMERCLAT (MERCLAT(center.north_south) + (180.0 * ympp / 65536 / 256 * (height_2 - y)));
 		} else {
 			;
 		}
@@ -1240,7 +1239,7 @@ void Viewport::coord_to_screen(const VikCoord * coord, int *x, int *y)
 	static VikCoord tmp;
 	//g_return_if_fail (vvp != NULL);
 
-	VikViewport * vvp = (VikViewport *) (this->my_parent_vikviewport);
+	VikViewport * vvp = (VikViewport *) (this->vvp);
 
 	if (coord->mode != vvp->port.coord_mode){
 		fprintf(stderr, "WARNING: Have to convert in Viewport::coord_to_screen()! This should never happen!\n");
@@ -1394,20 +1393,18 @@ void Viewport::set_coord_mode(VikCoordMode mode_)
 /* Thanks GPSDrive */
 static bool calcxy_rev(double *lg, double *lt, int x, int y, double zero_long, double zero_lat, double pixelfact_x, double pixelfact_y, int mapSizeX2, int mapSizeY2)
 {
-	int px, py;
-	double dif, lat, lon;
 	double Ra = Radius[90+(int)zero_lat];
 
-	px = (mapSizeX2 - x) * pixelfact_x;
-	py = (-mapSizeY2 + y) * pixelfact_y;
+	int px = (mapSizeX2 - x) * pixelfact_x;
+	int py = (-mapSizeY2 + y) * pixelfact_y;
 
-	lat = zero_lat - py / Ra;
-	lon =
+	double lat = zero_lat - py / Ra;
+	double lon =
 		zero_long -
 		px / (Ra *
 		      cos (DEG2RAD(lat)));
 
-	dif = lat * (1 - (cos (DEG2RAD(fabs (lon - zero_long)))));
+	double dif = lat * (1 - (cos (DEG2RAD(fabs (lon - zero_long)))));
 	lat = lat - dif / 1.5;
 	lon =
 		zero_long -
@@ -1422,19 +1419,17 @@ static bool calcxy_rev(double *lg, double *lt, int x, int y, double zero_long, d
 /* Thanks GPSDrive */
 static bool calcxy(double *x, double *y, double lg, double lt, double zero_long, double zero_lat, double pixelfact_x, double pixelfact_y, int mapSizeX2, int mapSizeY2)
 {
-	double dif;
-	double Ra;
 	int mapSizeX = 2 * mapSizeX2;
 	int mapSizeY = 2 * mapSizeY2;
 
 	assert (lt >= -90.0 && lt <= 90.0);
 	//    lg *= rad2deg; // FIXME, optimize equations
 	//    lt *= rad2deg;
-	Ra = Radius[90+(int)lt];
+	double Ra = Radius[90+(int)lt];
 	*x = Ra *
 		cos (DEG2RAD(lt)) * (lg - zero_long);
 	*y = Ra * (lt - zero_lat);
-	dif = Ra * RAD2DEG(1 - (cos ((DEG2RAD(lg - zero_long)))));
+	double dif = Ra * RAD2DEG(1 - (cos ((DEG2RAD(lg - zero_long)))));
 	*y = *y + dif / 1.85;
 	*x = *x / pixelfact_x;
 	*y = *y / pixelfact_y;
@@ -1450,18 +1445,15 @@ static void viewport_init_ra()
 {
 	static bool done_before = false;
 	if (!done_before) {
-		int i;
-		for (i = -90; i <= 90; i++) {
+		for (int i = -90; i <= 90; i++) {
 			Radius[i+90] = calcR (DEG2RAD((double)i));
 		}
 		done_before = true;
 	}
 }
 
-double calcR (double lat)
+double calcR(double lat)
 {
-	double a = 6378.137, r, sc, x, y, z;
-	double e2 = 0.081082 * 0.081082;
 	/*
 	 * the radius of curvature of an ellipsoidal Earth in the plane of the
 	 * meridian is given by
@@ -1476,13 +1468,14 @@ double calcR (double lat)
 	 * b = 6356.752 km (3950 mi) Polar radius (surface to center distance) e
 	 * = 0.081082 Eccentricity
 	 */
-
+	double a = 6378.137;
+	double e2 = 0.081082 * 0.081082;
 	lat = DEG2RAD(lat);
-	sc = sin (lat);
-	x = a * (1.0 - e2);
-	z = 1.0 - e2 * sc * sc;
-	y = pow (z, 1.5);
-	r = x / y;
+	double sc = sin (lat);
+	double x = a * (1.0 - e2);
+	double z = 1.0 - e2 * sc * sc;
+	double y = pow (z, 1.5);
+	double r = x / y;
 	r = r * 1000.0;
 	return r;
 }
@@ -1560,22 +1553,15 @@ bool vik_viewport_get_half_drawn(VikViewport *vp)
 }
 
 
-const char * Viewport::get_drawmode_name(VikViewportDrawMode mode)
- {
-	 const char *name = NULL;
-	 VikWindow *vw = NULL;
-	 GtkWidget *mode_button;
-	 GtkWidget *label;
-	 VikViewport * vv = (VikViewport *) this->my_parent_vikviewport;
+char const * Viewport::get_drawmode_name(VikViewportDrawMode mode)
+{
+	 VikViewport * vvp = (VikViewport *) this->vvp;
 
+	 VikWindow * vw = VIK_WINDOW_FROM_WIDGET(vvp);
+	 GtkWidget * mode_button = vik_window_get_drawmode_button(vw, mode);
+	 GtkWidget * label = gtk_bin_get_child(GTK_BIN(mode_button));
 
-	 vw = VIK_WINDOW_FROM_WIDGET(vv);
-	 mode_button = vik_window_get_drawmode_button(vw, mode);
-	 label = gtk_bin_get_child(GTK_BIN(mode_button));
-
-	 name = gtk_label_get_text (GTK_LABEL(label));
-
-	 return name;
+	 return gtk_label_get_text(GTK_LABEL(label));
 
  }
 

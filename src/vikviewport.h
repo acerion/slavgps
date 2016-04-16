@@ -70,6 +70,8 @@ namespace SlavGPS {
 
 	public:
 
+		Viewport();
+
 		/* Drawing primitives */
 
 		void draw_line(GdkGC *gc, int x1, int y1, int x2, int y2);
@@ -166,6 +168,9 @@ namespace SlavGPS {
 		bool get_draw_highlight();
 
 
+		void clear();
+
+
 		bool is_one_zone();
 		const char * get_drawmode_name(VikViewportDrawMode mode);
 		void set_drawmode(VikViewportDrawMode drawmode);
@@ -228,7 +233,7 @@ namespace SlavGPS {
 
 
 
-		void * my_parent_vikviewport;
+		void * vvp; /* Parent VikViewport. */
 	};
 
 
@@ -292,7 +297,7 @@ bool vik_viewport_get_half_drawn(VikViewport *vp);
 GdkPixmap *vik_viewport_get_pixmap (VikViewport *vvp); /* get pointer to drawing buffer */
 void vik_viewport_sync (VikViewport *vvp);             /* draw buffer to window */
 void vik_viewport_pan_sync (VikViewport *vvp, int x_off, int y_off);
-void vik_viewport_clear (VikViewport *vvp);
+
 
 
 

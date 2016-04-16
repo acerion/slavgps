@@ -1177,7 +1177,7 @@ static void draw_redraw ( VikWindow *vw )
     vik_viewport_set_half_drawn ( vw->viking_vvp, true );
 
   /* actually draw */
-  vik_viewport_clear ( vw->viking_vvp);
+  vw->viking_vvp->port.clear();
   // Main layer drawing
   vik_layers_panel_draw_all ( vw->viking_vlp );
   // Draw highlight (possibly again but ensures it is on top - especially for when tracks overlap)
