@@ -109,7 +109,6 @@ libviking_a_SOURCES = \
 	mapcache.cpp mapcache.h \
 	maputils.cpp maputils.h \
 	vikmapsource.cpp vikmapsource.h \
-	vikmapsourcedefault.cpp vikmapsourcedefault.h \
 	vikmapslayer.cpp vikmapslayer.h \
 	vikmapslayer_compat.cpp vikmapslayer_compat.h \
 	vikmaptype.cpp vikmaptype.h \
