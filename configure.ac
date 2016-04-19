@@ -141,9 +141,9 @@ fi
 
 # Options
 AC_ARG_ENABLE(bing, AC_HELP_STRING([--enable-bing],
-              [enable Bing stuff (default is enable)]),
+              [enable Bing stuff (default is disable)]),
               [ac_cv_enable_bing=$enableval],
-              [ac_cv_enable_bing=yes])
+              [ac_cv_enable_bing=no])
 AC_CACHE_CHECK([whether to enable Bing stuff],
                [ac_cv_enable_bing], [ac_cv_enable_bing=yes])
 case $ac_cv_enable_bing in
