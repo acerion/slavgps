@@ -1,18 +1,17 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
  * viking
  * Copyright (C) 2009-2010, Guilhem Bonnefille <guilhem.bonnefille@gmail.com>
- * 
+ *
  * viking is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * viking is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License along
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -20,12 +19,13 @@
  /**
   * SECTION:vikmapsource
   * @short_description: the base class to describe map source
-  * 
-  * The #VikMapSource class is both the interface and the base class
+  *
+  * The #MapSource class is both the interface and the base class
   * for the hierarchie of map source.
   */
 
 #include <stdlib.h>
+#include <string.h>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -37,71 +37,219 @@
 #include "download.h"
 #include "vikmapsource.h"
 
-static void vik_map_source_init (VikMapSource *object);
-static void vik_map_source_finalize (GObject *object);
-static void vik_map_source_class_init (VikMapSourceClass *klass);
+using namespace SlavGPS;
 
-static bool _supports_download_only_new (VikMapSource *object);
 
-G_DEFINE_ABSTRACT_TYPE (VikMapSource, vik_map_source, G_TYPE_OBJECT);
-
-static void
-vik_map_source_init (VikMapSource *object)
+MapSource::MapSource()
 {
-	/* TODO: Add initialization code here */
+	fprintf(stderr, "MapSource regular constructor called\n");
+
+	copyright = NULL;
+	license = NULL;
+	license_url = NULL;
+	logo = NULL;
+
+	name = strdup("Unknown");
+	uniq_id = 0;
+	label = strdup("<no-set>");
+
+	tilesize_x = 256;
+	tilesize_y = 256;
+
+	drawmode = VIK_VIEWPORT_DRAWMODE_MERCATOR; // VIK_VIEWPORT_DRAWMODE_UTM;
+	file_extension = strdup(".png");
+
+	download_options.referer = NULL;     /* The REFERER string to use in HTTP request. */
+	download_options.follow_location = 0;  /* Specifies the number of retries to follow a redirect while downloading a page. */
+	download_options.check_file = a_check_map_file;
+	download_options.check_file_server_time = false; /* Age of current cache before redownloading tile. */
+	download_options.use_etag = false;  /* Store etag in a file, and send it to server to check if we have the latest file. */
+
+	server_hostname = NULL;
+	server_path_format = NULL;
+
+	zoom_min =  0;
+	zoom_max = 18;
+	lat_min =  -90.0;
+	lat_max =   90.0;
+	lon_min = -180.0;
+	lon_max =  180.0;
+
+	is_direct_file_access_flag = false; /* Use direct file access to OSM like tile images - no need for a webservice. */
+	is_mbtiles_flag = false; /* Use an SQL MBTiles File for the tileset - no need for a webservice. */
+	is_osm_meta_tiles_flag = false; /* Read from OSM Meta Tiles - Should be 'use-direct-file-access' as well. */
+
+	switch_xy = false; /* Switch the order of x,y components in the URL (such as used by ARCGIS Tile Server. */
 }
 
-static void
-vik_map_source_finalize (GObject *object)
+MapSource::~MapSource()
 {
-	/* TODO: Add deinitalization code here */
+	fprintf(stderr, "MapSource destructor called\n");
 
-	G_OBJECT_CLASS (vik_map_source_parent_class)->finalize (object);
+	free(copyright);
+	free(license);
+	free(license_url);
+	free(logo);
+
+	free(name);
+	free(label);
+
+	free(file_extension);
+
+	free(download_options.referer);
+
+	free(server_hostname);
+	free(server_path_format);
 }
 
-static void
-vik_map_source_class_init (VikMapSourceClass *klass)
+MapSource & MapSource::operator=(MapSource map)
 {
-	GObjectClass* object_class = G_OBJECT_CLASS (klass);
+	fprintf(stderr, "MapSource copy assignment called\n");
 
-	klass->get_copyright = NULL;
-	klass->get_license = NULL;
-	klass->get_license_url = NULL;
-	klass->get_logo = NULL;
-	klass->get_name = NULL;
-	klass->get_uniq_id = NULL;
-	klass->get_label = NULL;
-	klass->get_tilesize_x = NULL;
-	klass->get_tilesize_y = NULL;
-	klass->get_drawmode = NULL;
-	klass->is_direct_file_access = NULL;
-	klass->is_mbtiles = NULL;
-	klass->supports_download_only_new = _supports_download_only_new;
-	klass->get_zoom_min = NULL;
-	klass->get_zoom_max = NULL;
-	klass->get_lat_min = NULL;
-	klass->get_lat_max = NULL;
-	klass->get_lon_min = NULL;
-	klass->get_lon_max = NULL;
-	klass->coord_to_mapcoord = NULL;
-	klass->mapcoord_to_center_coord = NULL;
-	klass->download = NULL;
-	klass->download_handle_init = NULL;
-	klass->download_handle_cleanup = NULL;
-	
-	object_class->finalize = vik_map_source_finalize;
+	this->copyright   = g_strdup(map.copyright);
+	this->license     = g_strdup(map.license);
+	this->license_url = g_strdup(map.license_url);
+	this->logo        = NULL;  //memcpy(this->logo, map.logo, sizeof (GdkPixbuf)); /* FIXME: implement. */
+
+	this->name       = g_strdup(map.name);
+	this->uniq_id    = map.uniq_id;
+	this->label      = g_strdup(map.label);
+
+	this->tilesize_x = map.tilesize_x;
+	this->tilesize_y = map.tilesize_y;
+
+	this->drawmode   = map.drawmode;
+	this->file_extension = g_strdup(map.file_extension);
+
+	memcpy(&this->download_options, &map.download_options, sizeof (DownloadFileOptions));
+
+	this->server_hostname = g_strdup(map.server_hostname);
+	this->server_path_format = g_strdup(map.server_path_format);
+
+	this->zoom_min = map.zoom_min;
+	this->zoom_max = map.zoom_max;
+	this->lat_min = map.lat_min;
+	this->lat_max = map.lat_max;
+	this->lon_min = map.lon_min;
+	this->lon_max = map.lon_max;
+
+	this->is_direct_file_access_flag = map.is_direct_file_access_flag;
+	this->is_mbtiles_flag = map.is_mbtiles_flag;
+	this->is_osm_meta_tiles_flag = map.is_osm_meta_tiles_flag;
+
+	this->switch_xy = map.switch_xy;
+
+        return *this;
 }
 
-bool
-_supports_download_only_new (VikMapSource *self)
+MapSource::MapSource(MapSource & map)
 {
-	// Default feature: does not support
-	return false;
+	fprintf(stderr, "MapSource copy constructor called\n");
+
+	this->copyright   = g_strdup(map.copyright);
+	this->license     = g_strdup(map.license);
+	this->license_url = g_strdup(map.license_url);
+	this->logo        = NULL; //memcpy(this->logo, map.logo, sizeof (GdkPixbuf)); /* FIXME: implement. */
+
+	this->name       = g_strdup(map.name);
+	this->uniq_id    = map.uniq_id;
+	this->label      = g_strdup(map.label);
+
+	this->tilesize_x = map.tilesize_x;
+	this->tilesize_y = map.tilesize_y;
+
+	this->drawmode   = map.drawmode;
+	this->file_extension = g_strdup(map.file_extension);
+
+	memcpy(&this->download_options, &map.download_options, sizeof (DownloadFileOptions));
+
+	this->server_hostname = g_strdup(map.server_hostname);
+	this->server_path_format = g_strdup(map.server_path_format);
+
+	this->zoom_min = map.zoom_min;
+	this->zoom_max = map.zoom_max;
+	this->lat_min = map.lat_min;
+	this->lat_max = map.lat_max;
+	this->lon_min = map.lon_min;
+	this->lon_max = map.lon_max;
+
+	this->is_direct_file_access_flag = map.is_direct_file_access_flag;
+	this->is_mbtiles_flag = map.is_mbtiles_flag;
+	this->is_osm_meta_tiles_flag = map.is_osm_meta_tiles_flag;
+
+	this->switch_xy = map.switch_xy;
+}
+
+void MapSource::set_name(char * name_)
+{
+      // Sanitize the name here for file usage
+      // A simple check just to prevent containing slashes ATM
+      free(name);
+      if (name_) {
+	      name = strdup(name_);
+	      g_strdelimit(name, "\\/", 'x' );
+      }
+}
+
+void MapSource::set_uniq_id(uint16_t uniq_id_)
+{
+	uniq_id = uniq_id_;
+}
+
+void MapSource::set_label(char * label_)
+{
+	free(label);
+	label = g_strdup(label_);
+
+}
+
+void MapSource::set_tilesize_x(uint16_t tilesize_x_)
+{
+	tilesize_x = tilesize_x_;
+
+}
+void MapSource::set_tilesize_y(uint16_t tilesize_y_)
+{
+	tilesize_y = tilesize_y_;
+
+}
+
+void MapSource::set_drawmode(VikViewportDrawMode drawmode_)
+{
+	drawmode = drawmode_;
+
+}
+
+void MapSource::set_copyright(char * copyright_)
+{
+	free(copyright);
+	copyright = g_strdup(copyright_);
+
+}
+
+void MapSource::set_license(char * license_)
+{
+	free(license);
+	license = g_strdup(license_);
+
+}
+
+void MapSource::set_license_url(char * license_url_)
+{
+	free(license_url);
+	license_url = g_strdup(license_url_);
+
+}
+
+void MapSource::set_file_extension(char * file_extension_)
+{
+	free(file_extension);
+	file_extension = g_strdup(file_extension_);
 }
 
 /**
  * vik_map_source_get_copyright:
- * @self: the VikMapSource of interest.
+ * @self: the MapSource of interest.
  * @bbox: bounding box of interest.
  * @zoom: the zoom level of interest.
  * @fct: the callback function to use to return matching copyrights.
@@ -109,384 +257,191 @@ _supports_download_only_new (VikMapSource *self)
  *
  * Retrieve copyright(s) for the corresponding bounding box and zoom level.
  */
-void
-vik_map_source_get_copyright (VikMapSource *self, LatLonBBox bbox, double zoom, void (*fct)(VikViewport*,const char*), void *data)
+void MapSource::get_copyright(LatLonBBox bbox, double zoom, void (* fct)(VikViewport *, const char*), void * data)
 {
-	VikMapSourceClass *klass;
-	g_return_if_fail (self != NULL);
-	g_return_if_fail (VIK_IS_MAP_SOURCE (self));
-	klass = VIK_MAP_SOURCE_GET_CLASS(self);
-
-	g_return_if_fail (klass->get_copyright != NULL);
-
-	(*klass->get_copyright)(self, bbox, zoom, fct, data);
+	return;
 }
 
-const char *
-vik_map_source_get_license (VikMapSource *self)
+const char * MapSource::get_license()
 {
-	VikMapSourceClass *klass;
-	g_return_val_if_fail (self != NULL, NULL);
-	g_return_val_if_fail (VIK_IS_MAP_SOURCE (self), NULL);
-	klass = VIK_MAP_SOURCE_GET_CLASS(self);
-
-	g_return_val_if_fail (klass->get_license != NULL, NULL);
-
-	return (*klass->get_license)(self);
+	return license;
 }
 
-const char *
-vik_map_source_get_license_url (VikMapSource *self)
+const char * MapSource::get_license_url()
 {
-	VikMapSourceClass *klass;
-	g_return_val_if_fail (self != NULL, NULL);
-	g_return_val_if_fail (VIK_IS_MAP_SOURCE (self), NULL);
-	klass = VIK_MAP_SOURCE_GET_CLASS(self);
-
-	g_return_val_if_fail (klass->get_license_url != NULL, NULL);
-
-	return (*klass->get_license_url)(self);
+	return license_url;
 }
 
-const GdkPixbuf *
-vik_map_source_get_logo (VikMapSource *self)
+const GdkPixbuf * MapSource::get_logo()
 {
-	VikMapSourceClass *klass;
-	g_return_val_if_fail (self != NULL, NULL);
-	g_return_val_if_fail (VIK_IS_MAP_SOURCE (self), NULL);
-	klass = VIK_MAP_SOURCE_GET_CLASS(self);
-
-	g_return_val_if_fail (klass->get_logo != NULL, NULL);
-
-	return (*klass->get_logo)(self);
+	return logo;
 }
 
-const char *
-vik_map_source_get_name (VikMapSource *self)
+const char * MapSource::get_name()
 {
-	VikMapSourceClass *klass;
-	g_return_val_if_fail (self != NULL, NULL);
-	g_return_val_if_fail (VIK_IS_MAP_SOURCE (self), NULL);
-	klass = VIK_MAP_SOURCE_GET_CLASS(self);
-
-	g_return_val_if_fail (klass->get_name != NULL, NULL);
-
-	return (*klass->get_name)(self);
+	return name;
 }
 
-uint16_t
-vik_map_source_get_uniq_id (VikMapSource *self)
+uint16_t MapSource::get_uniq_id()
 {
-	VikMapSourceClass *klass;
-	g_return_val_if_fail (self != NULL, (uint16_t )0);
-	g_return_val_if_fail (VIK_IS_MAP_SOURCE (self), (uint16_t )0);
-	klass = VIK_MAP_SOURCE_GET_CLASS(self);
-
-	g_return_val_if_fail (klass->get_uniq_id != NULL, (uint16_t )0);
-
-	return (*klass->get_uniq_id)(self);
+	fprintf(stderr, "MapSource get_uniq_id returns %u, '%s'\n", uniq_id, label);
+	return uniq_id;
 }
 
-const char *
-vik_map_source_get_label (VikMapSource *self)
+const char * MapSource::get_label()
 {
-	VikMapSourceClass *klass;
-	g_return_val_if_fail (self != NULL, NULL);
-	g_return_val_if_fail (VIK_IS_MAP_SOURCE (self), NULL);
-	klass = VIK_MAP_SOURCE_GET_CLASS(self);
-
-	g_return_val_if_fail (klass->get_label != NULL, NULL);
-
-	return (*klass->get_label)(self);
+	return label;
 }
 
-uint16_t
-vik_map_source_get_tilesize_x (VikMapSource *self)
+uint16_t MapSource::get_tilesize_x()
 {
-	VikMapSourceClass *klass;
-	g_return_val_if_fail (self != NULL, (uint16_t )0);
-	g_return_val_if_fail (VIK_IS_MAP_SOURCE (self), (uint16_t )0);
-	klass = VIK_MAP_SOURCE_GET_CLASS(self);
-
-	g_return_val_if_fail (klass->get_tilesize_x != NULL, (uint16_t )0);
-
-	return (*klass->get_tilesize_x)(self);
+	return tilesize_x;
 }
 
-uint16_t
-vik_map_source_get_tilesize_y (VikMapSource *self)
+uint16_t MapSource::get_tilesize_y()
 {
-	VikMapSourceClass *klass;
-	g_return_val_if_fail (self != NULL, (uint16_t )0);
-	g_return_val_if_fail (VIK_IS_MAP_SOURCE (self), (uint16_t )0);
-	klass = VIK_MAP_SOURCE_GET_CLASS(self);
-
-	g_return_val_if_fail (klass->get_tilesize_y != NULL, (uint16_t )0);
-
-	return (*klass->get_tilesize_y)(self);
+	return tilesize_y;
 }
 
-VikViewportDrawMode
-vik_map_source_get_drawmode (VikMapSource *self)
+VikViewportDrawMode MapSource::get_drawmode()
 {
-	VikMapSourceClass *klass;
-	g_return_val_if_fail (self != NULL, (VikViewportDrawMode )0);
-	g_return_val_if_fail (VIK_IS_MAP_SOURCE (self), (VikViewportDrawMode )0);
-	klass = VIK_MAP_SOURCE_GET_CLASS(self);
-
-	g_return_val_if_fail (klass->get_drawmode != NULL, (VikViewportDrawMode )0);
-
-	return (*klass->get_drawmode)(self);
+	return drawmode;
 }
 
 /**
  * vik_map_source_is_direct_file_access:
- * @self: the VikMapSource of interest.
+ * @self: the MapSource of interest.
  *
  *   Return true when we can bypass all this download malarky
  *   Treat the files as a pre generated data set in OSM tile server layout: tiledir/%d/%d/%d.png
  */
-bool
-vik_map_source_is_direct_file_access (VikMapSource * self)
+bool MapSource::is_direct_file_access()
 {
-	VikMapSourceClass *klass;
-	g_return_val_if_fail (self != NULL, 0);
-	g_return_val_if_fail (VIK_IS_MAP_SOURCE (self), 0);
-	klass = VIK_MAP_SOURCE_GET_CLASS(self);
-
-	g_return_val_if_fail (klass->is_direct_file_access != NULL, 0);
-
-	return (*klass->is_direct_file_access)(self);
+	return is_direct_file_access_flag;
 }
 
 /**
  * vik_map_source_is_mbtiles:
- * @self: the VikMapSource of interest.
+ * @self: the MapSource of interest.
  *
  *   Return true when the map is in an MB Tiles format.
  *   See http://github.com/mapbox/mbtiles-spec
  *   (Read Only ATM)
  */
-bool
-vik_map_source_is_mbtiles (VikMapSource * self)
+bool MapSource::is_mbtiles()
 {
-	VikMapSourceClass *klass;
-	g_return_val_if_fail (self != NULL, 0);
-	g_return_val_if_fail (VIK_IS_MAP_SOURCE (self), 0);
-	klass = VIK_MAP_SOURCE_GET_CLASS(self);
-
-	g_return_val_if_fail (klass->is_mbtiles != NULL, 0);
-
-	return (*klass->is_mbtiles)(self);
+	fprintf(stderr, "MapSource: is_mbtiles\n");
+	return is_mbtiles_flag;
 }
 
 /**
  * vik_map_source_is_osm_meta_tiles:
- * @self: the VikMapSource of interest.
+ * @self: the MapSource of interest.
  *
  *   Treat the files as a pre generated data set directly by tirex or renderd
  *     tiledir/Z/[xxxxyyyy]/[xxxxyyyy]/[xxxxyyyy]/[xxxxyyyy]/[xxxxyyyy].meta
  */
-bool vik_map_source_is_osm_meta_tiles (VikMapSource * self)
+bool MapSource::is_osm_meta_tiles()
 {
-	VikMapSourceClass *klass;
-	g_return_val_if_fail (self != NULL, 0);
-	g_return_val_if_fail (VIK_IS_MAP_SOURCE (self), 0);
-	klass = VIK_MAP_SOURCE_GET_CLASS(self);
-
-	g_return_val_if_fail (klass->is_osm_meta_tiles != NULL, 0);
-
-	return (*klass->is_osm_meta_tiles)(self);
+	return is_osm_meta_tiles_flag;
 }
 
-bool
-vik_map_source_supports_download_only_new (VikMapSource * self)
+bool MapSource::supports_download_only_new()
 {
-	VikMapSourceClass *klass;
-	g_return_val_if_fail (self != NULL, 0);
-	g_return_val_if_fail (VIK_IS_MAP_SOURCE (self), 0);
-	klass = VIK_MAP_SOURCE_GET_CLASS(self);
-
-	g_return_val_if_fail (klass->supports_download_only_new != NULL, 0);
-
-	return (*klass->supports_download_only_new)(self);
+	return false;
 }
 
-/**
- *
- */
-uint8_t
-vik_map_source_get_zoom_min (VikMapSource * self)
+uint8_t MapSource::get_zoom_min()
 {
-	VikMapSourceClass *klass;
-	g_return_val_if_fail (self != NULL, 0);
-	g_return_val_if_fail (VIK_IS_MAP_SOURCE (self), 0);
-	klass = VIK_MAP_SOURCE_GET_CLASS(self);
-	g_return_val_if_fail (klass->get_zoom_min != NULL, 0);
-	return (*klass->get_zoom_min)(self);
+	return zoom_min;
 }
 
-/**
- *
- */
-uint8_t
-vik_map_source_get_zoom_max (VikMapSource * self)
+uint8_t MapSource::get_zoom_max()
 {
-	VikMapSourceClass *klass;
-	g_return_val_if_fail (self != NULL, 18);
-	g_return_val_if_fail (VIK_IS_MAP_SOURCE (self), 18);
-	klass = VIK_MAP_SOURCE_GET_CLASS(self);
-	g_return_val_if_fail (klass->get_zoom_max != NULL, 18);
-	return (*klass->get_zoom_max)(self);
+	return zoom_max;
 }
 
-/**
- *
- */
-double
-vik_map_source_get_lat_max (VikMapSource * self)
+double MapSource::get_lat_max()
 {
-	VikMapSourceClass *klass;
-	g_return_val_if_fail (self != NULL, 90.0);
-	g_return_val_if_fail (VIK_IS_MAP_SOURCE (self), 90.0);
-	klass = VIK_MAP_SOURCE_GET_CLASS(self);
-	g_return_val_if_fail (klass->get_lat_max != NULL, 90.0);
-	return (*klass->get_lat_max)(self);
+	return lat_max;
 }
 
-/**
- *
- */
-double
-vik_map_source_get_lat_min (VikMapSource * self)
+double MapSource::get_lat_min()
 {
-	VikMapSourceClass *klass;
-	g_return_val_if_fail (self != NULL, -90.0);
-	g_return_val_if_fail (VIK_IS_MAP_SOURCE (self), -90.0);
-	klass = VIK_MAP_SOURCE_GET_CLASS(self);
-	g_return_val_if_fail (klass->get_lat_min != NULL, -90.0);
-	return (*klass->get_lat_min)(self);
+	return lat_min;
 }
 
-/**
- *
- */
-double
-vik_map_source_get_lon_max (VikMapSource * self)
+double MapSource::get_lon_max()
 {
-	VikMapSourceClass *klass;
-	g_return_val_if_fail (self != NULL, 180.0);
-	g_return_val_if_fail (VIK_IS_MAP_SOURCE (self), 180.0);
-	klass = VIK_MAP_SOURCE_GET_CLASS(self);
-	g_return_val_if_fail (klass->get_lon_max != NULL, 180.0);
-	return (*klass->get_lon_max)(self);
+	return lon_max;
 }
 
-/**
- *
- */
-double
-vik_map_source_get_lon_min (VikMapSource * self)
+double MapSource::get_lon_min()
 {
-	VikMapSourceClass *klass;
-	g_return_val_if_fail (self != NULL, -180.0);
-	g_return_val_if_fail (VIK_IS_MAP_SOURCE (self), -180.0);
-	klass = VIK_MAP_SOURCE_GET_CLASS(self);
-	g_return_val_if_fail (klass->get_lon_min != NULL, -180.0);
-	return (*klass->get_lon_min)(self);
+	return lon_min;
 }
 
 /**
  * vik_map_source_get_file_extension:
- * @self: the VikMapSource of interest.
+ * @self: the MapSource of interest.
  *
  * Returns the file extension of files held on disk.
  *  Typically .png but may be .jpg or whatever the user defines
  *
  */
-const char *
-vik_map_source_get_file_extension (VikMapSource * self)
+const char * MapSource::get_file_extension()
 {
-	VikMapSourceClass *klass;
-	g_return_val_if_fail (self != NULL, NULL);
-	g_return_val_if_fail (VIK_IS_MAP_SOURCE (self), NULL);
-	klass = VIK_MAP_SOURCE_GET_CLASS(self);
-
-	g_return_val_if_fail (klass->get_file_extension != NULL, NULL);
-
-	return (*klass->get_file_extension)(self);
+	return file_extension;
 }
 
-bool
-vik_map_source_coord_to_mapcoord (VikMapSource *self, const VikCoord *src, double xzoom, double yzoom, MapCoord *dest )
+bool MapSource::coord_to_mapcoord(const VikCoord * src, double xzoom, double yzoom, MapCoord * dest)
 {
-	VikMapSourceClass *klass;
-	g_return_val_if_fail (self != NULL, false);
-	g_return_val_if_fail (VIK_IS_MAP_SOURCE (self), false);
-	klass = VIK_MAP_SOURCE_GET_CLASS(self);
-
-	g_return_val_if_fail (klass->coord_to_mapcoord != NULL, false);
-
-	return (*klass->coord_to_mapcoord)(self, src, xzoom, yzoom, dest);
+	fprintf(stderr, "MapSource coord_to_mapcoord() returns false\n");
+	return false;
 }
 
-void
-vik_map_source_mapcoord_to_center_coord (VikMapSource *self, MapCoord *src, VikCoord *dest)
+void MapSource::mapcoord_to_center_coord(MapCoord *src, VikCoord *dest)
 {
-	VikMapSourceClass *klass;
-	g_return_if_fail (self != NULL);
-	g_return_if_fail (VIK_IS_MAP_SOURCE (self));
-	klass = VIK_MAP_SOURCE_GET_CLASS(self);
-
-	g_return_if_fail (klass->mapcoord_to_center_coord != NULL);
-
-	(*klass->mapcoord_to_center_coord)(self, src, dest);
+	fprintf(stderr, "MapSource::mapcoord_to_center_coord\n");
+	return;
 }
 
 /**
  * vik_map_source_download:
- * @self:    The VikMapSource of interest.
+ * @self:    The MapSource of interest.
  * @src:     The map location to download
  * @dest_fn: The filename to save the result in
  * @handle:  Potential reusable Curl Handle (may be NULL)
  *
  * Returns: How successful the download was as per the type #DownloadResult_t
  */
-DownloadResult_t
-vik_map_source_download (VikMapSource * self, MapCoord * src, const char * dest_fn, void *handle)
+DownloadResult_t MapSource::download(MapCoord * src, const char * dest_fn, void *handle)
 {
-	VikMapSourceClass *klass;
-	g_return_val_if_fail (self != NULL, (DownloadResult_t) 0);
-	g_return_val_if_fail (VIK_IS_MAP_SOURCE (self), (DownloadResult_t) 0);
-	klass = VIK_MAP_SOURCE_GET_CLASS(self);
-
-	g_return_val_if_fail (klass->download != NULL, (DownloadResult_t) 0);
-
-	return (DownloadResult_t) (*klass->download)(self, src, dest_fn, handle);
+	fprintf(stderr, "MapSource download\n");
+	return a_http_download_get_url(get_server_hostname(), get_server_path(src), dest_fn, &download_options, handle);
 }
 
-void *
-vik_map_source_download_handle_init (VikMapSource *self)
+void * MapSource::download_handle_init()
 {
-	VikMapSourceClass *klass;
-	g_return_val_if_fail (self != NULL, 0);
-	g_return_val_if_fail (VIK_IS_MAP_SOURCE (self), 0);
-	klass = VIK_MAP_SOURCE_GET_CLASS(self);
-
-	g_return_val_if_fail (klass->download_handle_init != NULL, 0);
-
-	return (*klass->download_handle_init)(self);
+	return a_download_handle_init();
 }
 
-void
-vik_map_source_download_handle_cleanup (VikMapSource * self, void * handle)
+void MapSource::download_handle_cleanup(void * handle)
 {
-	VikMapSourceClass *klass;
-	g_return_if_fail (self != NULL);
-	g_return_if_fail (VIK_IS_MAP_SOURCE (self));
-	klass = VIK_MAP_SOURCE_GET_CLASS(self);
+	a_download_handle_cleanup(handle);
+}
 
-	g_return_if_fail (klass->download_handle_cleanup != NULL);
+char * MapSource::get_server_hostname()
+{
+	return g_strdup(server_hostname);
+}
 
-	(*klass->download_handle_cleanup)(self, handle);
+char * MapSource::get_server_path(MapCoord * src)
+{
+	return NULL;
+}
+
+DownloadFileOptions * MapSource::get_download_options()
+{
+	return &download_options;
 }

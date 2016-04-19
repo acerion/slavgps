@@ -1,29 +1,33 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
  * viking
  * Copyright (C) 2009-2010, Guilhem Bonnefille <guilhem.bonnefille@gmail.com>
- * 
+ *
  * viking is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * viking is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License along
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _VIK_MAP_SOURCE_H_
-#define _VIK_MAP_SOURCE_H_
+#ifndef _SLAVGPS_MAP_SOURCE_H
+#define _SLAVGPS_MAP_SOURCE_H
 
-#include <glib-object.h>
+
+
+
+
+#include <gdk-pixbuf/gdk-pixdata.h>
+#include <gdk-pixbuf/gdk-pixbuf-core.h>
+//#include <glib-object.h>
 #include <stdbool.h>
 #include <stdint.h>
-
 
 #include "vikviewport.h"
 #include "vikcoord.h"
@@ -31,92 +35,120 @@
 #include "bbox.h"
 #include "download.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
-#define VIK_TYPE_MAP_SOURCE             (vik_map_source_get_type ())
-#define VIK_MAP_SOURCE(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_TYPE_MAP_SOURCE, VikMapSource))
-#define VIK_MAP_SOURCE_CLASS(klass)     (G_TYPE_CHECK_CLASS_CAST ((klass), VIK_TYPE_MAP_SOURCE, VikMapSourceClass))
-#define VIK_IS_MAP_SOURCE(obj)          (G_TYPE_CHECK_INSTANCE_TYPE ((obj), VIK_TYPE_MAP_SOURCE))
-#define VIK_IS_MAP_SOURCE_CLASS(klass)  (G_TYPE_CHECK_CLASS_TYPE ((klass), VIK_TYPE_MAP_SOURCE))
-#define VIK_MAP_SOURCE_GET_CLASS(obj)   (G_TYPE_INSTANCE_GET_CLASS ((obj), VIK_TYPE_MAP_SOURCE, VikMapSourceClass))
 
-typedef struct _VikMapSourceClass VikMapSourceClass;
-typedef struct _VikMapSource VikMapSource;
 
-struct _VikMapSourceClass
-{
-	GObjectClass parent_class;
+namespace SlavGPS {
 
-	/* Legal info */
-	void (* get_copyright) (VikMapSource * self, LatLonBBox bbox, double zoom, void (*fct)(VikViewport*,const char*), void *data);
-	const char *(* get_license) (VikMapSource * self);
-	const char *(* get_license_url) (VikMapSource * self);
-	const GdkPixbuf *(* get_logo) (VikMapSource * self);
 
-	const char *(* get_name) (VikMapSource * self);
-	uint16_t (* get_uniq_id) (VikMapSource * self);
-	const char * (* get_label) (VikMapSource * self);
-	uint16_t (* get_tilesize_x) (VikMapSource * self);
-	uint16_t (* get_tilesize_y) (VikMapSource * self);
-	VikViewportDrawMode (* get_drawmode) (VikMapSource * self);
-	bool (* is_direct_file_access) (VikMapSource * self);
-	bool (* is_mbtiles) (VikMapSource * self);
-	bool (* is_osm_meta_tiles) (VikMapSource * self);
-	bool (* supports_download_only_new) (VikMapSource * self);
-	uint8_t (* get_zoom_min) (VikMapSource * self);
-	uint8_t (* get_zoom_max) (VikMapSource * self);
-	double (* get_lat_min) (VikMapSource * self);
-	double (* get_lat_max) (VikMapSource * self);
-	double (* get_lon_min) (VikMapSource * self);
-	double (* get_lon_max) (VikMapSource * self);
-	const char * (* get_file_extension) (VikMapSource * self);
-	bool (* coord_to_mapcoord) (VikMapSource * self, const VikCoord * src, double xzoom, double yzoom, MapCoord * dest);
-	void (* mapcoord_to_center_coord) (VikMapSource * self, MapCoord * src, VikCoord * dest);
-	DownloadResult_t (* download) (VikMapSource * self, MapCoord * src, const char * dest_fn, void * handle);
-	void * (* download_handle_init) (VikMapSource * self);
-	void (* download_handle_cleanup) (VikMapSource * self, void * handle);
-};
 
-struct _VikMapSource
-{
-	GObject parent_instance;
-};
 
-GType vik_map_source_get_type (void) G_GNUC_CONST;
 
-void vik_map_source_get_copyright (VikMapSource * self, LatLonBBox bbox, double zoom, void (*fct)(VikViewport*,const char*), void *data);
-const char *vik_map_source_get_license (VikMapSource * self);
-const char *vik_map_source_get_license_url (VikMapSource * self);
-const GdkPixbuf *vik_map_source_get_logo (VikMapSource * self);
+	class MapSource {
+	public:
+		MapSource();
+		MapSource(MapSource & map);
+		~MapSource();
 
-const char *vik_map_source_get_name (VikMapSource * self);
-uint16_t vik_map_source_get_uniq_id (VikMapSource * self);
-const char *vik_map_source_get_label (VikMapSource * self);
-uint16_t vik_map_source_get_tilesize_x (VikMapSource * self);
-uint16_t vik_map_source_get_tilesize_y (VikMapSource * self);
-VikViewportDrawMode vik_map_source_get_drawmode (VikMapSource * self);
-bool vik_map_source_is_direct_file_access (VikMapSource * self);
-bool vik_map_source_is_mbtiles (VikMapSource * self);
-bool vik_map_source_is_osm_meta_tiles (VikMapSource * self);
-bool vik_map_source_supports_download_only_new (VikMapSource * self);
-uint8_t vik_map_source_get_zoom_min (VikMapSource * self);
-uint8_t vik_map_source_get_zoom_max (VikMapSource * self);
-double vik_map_source_get_lat_min (VikMapSource * self);
-double vik_map_source_get_lat_max (VikMapSource * self);
-double vik_map_source_get_lon_min (VikMapSource * self);
-double vik_map_source_get_lon_max (VikMapSource * self);
-const char * vik_map_source_get_file_extension (VikMapSource * self);
-bool vik_map_source_coord_to_mapcoord (VikMapSource * self, const VikCoord *src, double xzoom, double yzoom, MapCoord *dest );
-void vik_map_source_mapcoord_to_center_coord (VikMapSource * self, MapCoord *src, VikCoord *dest);
-DownloadResult_t vik_map_source_download (VikMapSource * self, MapCoord * src, const char * dest_fn, void * handle);
-void * vik_map_source_download_handle_init (VikMapSource * self);
-void vik_map_source_download_handle_cleanup (VikMapSource * self, void * handle);
+		virtual MapSource & operator=(MapSource map);
 
-#ifdef __cplusplus
-}
-#endif
+		virtual void get_copyright(LatLonBBox bbox, double zoom, void (* fct)(VikViewport *, const char *), void * data);
+		const char * get_license();
+		const char * get_license_url();
+		const GdkPixbuf * get_logo();
 
-#endif /* _VIK_MAP_SOURCE_H_ */
+		char * get_server_hostname();
+		virtual char * get_server_path(MapCoord * src);
+
+		const char * get_name();
+		uint16_t get_uniq_id();
+		const char * get_label();
+		uint16_t get_tilesize_x();
+		uint16_t get_tilesize_y();
+		VikViewportDrawMode get_drawmode();
+
+		virtual bool is_direct_file_access();
+		virtual bool is_mbtiles();
+		virtual bool is_osm_meta_tiles();
+
+		virtual bool supports_download_only_new();
+
+		uint8_t get_zoom_min();
+		uint8_t get_zoom_max();
+		double get_lat_min();
+		double get_lat_max();
+		double get_lon_min();
+		double get_lon_max();
+		const char * get_file_extension();
+
+		virtual bool coord_to_mapcoord(const VikCoord * src, double xzoom, double yzoom, MapCoord * dest);
+		virtual void mapcoord_to_center_coord(MapCoord * src, VikCoord * dest);
+
+		virtual DownloadResult_t download(MapCoord * src, const char * dest_fn, void * handle);
+		void * download_handle_init();
+		void download_handle_cleanup(void * handle);
+
+		DownloadFileOptions * get_download_options();
+
+		void set_name(char * name);
+		void set_uniq_id(uint16_t uniq_id);
+		void set_label(char * label);
+		void set_tilesize_x(uint16_t tilesize_x);
+		void set_tilesize_y(uint16_t tilesize_y);
+		void set_drawmode(VikViewportDrawMode drawmode);
+		void set_copyright(char * copyright);
+		void set_license(char * license);
+		void set_license_url(char * license_url);
+		void set_file_extension(char * file_extension);
+
+
+
+
+		char * copyright; /* The copyright of the map source. */
+		char * license;   /* The license of the map source. */
+		char * license_url; /* The URL of the license of the map source. */
+		GdkPixbuf * logo;
+
+		char * name; /* The name of the map that may be used as the file cache directory. */
+		uint16_t uniq_id; /* Id of the tool. */
+		char * label; /* The label of the map source. */
+
+		uint16_t tilesize_x; /* The size of the tile (x). */
+		uint16_t tilesize_y; /* The size of the tile (x). */
+
+		VikViewportDrawMode drawmode; /* The mode used to draw map. */
+		char * file_extension; /* The file extension of tile files on disk. */
+
+		DownloadFileOptions download_options;
+
+		char * server_hostname;    /* The hostname of the map server. e.g. "tile.openstreetmap.org". */
+		char * server_path_format; /* The template of the tiles' URL. e.g. "/%d/%d/%d.png" */
+
+		// NB Probably best to keep the above fields in same order to be common across Slippy, TMS & WMS map definitions
+		uint8_t zoom_min; /* Minimum Zoom level supported by the map provider.  TMS Zoom level: 0 = Whole World // http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames */
+		uint8_t zoom_max; /* Maximum Zoom level supported by the map provider. / TMS Zoom level: Often 18 for zoomed in. */
+		double lat_min; /* Minimum latitude in degrees supported by the map provider. Degrees. */
+		double lat_max; /* Maximum latitude in degrees supported by the map provider. Degrees. */
+		double lon_min; /* Minimum longitude in degrees supported by the map provider. Degrees. */
+		double lon_max; /* Maximum longitude in degrees supported by the map provider. Degrees. */
+
+		bool is_direct_file_access_flag;
+		bool is_mbtiles_flag;
+		bool is_osm_meta_tiles_flag; // http://wiki.openstreetmap.org/wiki/Meta_tiles as used by tirex or renderd
+
+		// Mainly for ARCGIS Tile Server URL Layout // http://help.arcgis.com/EN/arcgisserver/10.0/apis/rest/tile.html
+		bool switch_xy;
+	};
+
+
+
+
+
+} /* namespace */
+
+
+
+
+
+#endif /* _SLAVGPS_MAP_SOURCE_H */

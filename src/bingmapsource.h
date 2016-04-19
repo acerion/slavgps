@@ -1,18 +1,17 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
  * viking
  * Copyright (C) 2011, Guilhem Bonnefille <guilhem.bonnefille@gmail.com>
- * 
+ *
  * viking is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * viking is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License along
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -27,37 +26,75 @@
 #include "mapcoord.h"
 #include "vikslippymapsource.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
-#define BING_TYPE_MAP_SOURCE             (bing_map_source_get_type ())
-#define BING_MAP_SOURCE(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), BING_TYPE_MAP_SOURCE, BingMapSource))
-#define BING_MAP_SOURCE_CLASS(klass)     (G_TYPE_CHECK_CLASS_CAST ((klass), BING_TYPE_MAP_SOURCE, BingMapSourceClass))
-#define BING_IS_MAP_SOURCE(obj)          (G_TYPE_CHECK_INSTANCE_TYPE ((obj), BING_TYPE_MAP_SOURCE))
-#define BING_IS_MAP_SOURCE_CLASS(klass)  (G_TYPE_CHECK_CLASS_TYPE ((klass), BING_TYPE_MAP_SOURCE))
-#define BING_MAP_SOURCE_GET_CLASS(obj)   (G_TYPE_INSTANCE_GET_CLASS ((obj), BING_TYPE_MAP_SOURCE, BingMapSourceClass))
 
-typedef struct _BingMapSourceClass BingMapSourceClass;
-typedef struct _BingMapSource BingMapSource;
 
-struct _BingMapSourceClass
-{
-	VikSlippyMapSourceClass parent_class;
-};
+namespace SlavGPS {
 
-struct _BingMapSource
-{
-	VikSlippyMapSource parent_instance;
-};
 
-GType bing_map_source_get_type (void) G_GNUC_CONST;
 
-BingMapSource * bing_map_source_new_with_id (uint16_t id, const char *label, const char *key);
 
-#ifdef __cplusplus
-}
-#endif
+
+	struct _Attribution {
+		char * attribution;
+		int minZoom;
+		int maxZoom;
+		LatLonBBox bounds;
+	};
+
+
+
+
+
+	class MapSourceBing : public MapSourceSlippy {
+	public:
+		MapSourceBing::MapSourceBing();
+		MapSourceBing::MapSourceBing(uint16_t id_, const char * label_, const char * key_);
+		MapSourceBing::~MapSourceBing();
+
+		void MapSourceBing::get_copyright(LatLonBBox bbox, double zoom, void (*fct)(VikViewport*,const char*), void *data)
+		char * MapSourceBing::get_server_path(MapCoord *src);
+
+
+		char * bing_api_key;
+
+		GList *attributions;
+		/* Current attribution, when parsing */
+		char *attribution;
+		bool loading_attributions;
+
+	private:
+		int load_attributions();
+		void async_load_attributions();
+		char * compute_quad_tree(int zoom, int tilex, int tiley);
+		static void bstart_element(GMarkupParseContext * context,
+					   const char          * element_name,
+					   const char         ** attribute_names,
+					   const char         ** attribute_values,
+					   void                * user_data,
+					   GError             ** error);
+
+		void btext(GMarkupParseContext * context,
+			   const char          * text,
+			   size_t                text_len,
+			   void                * user_data,
+			   GError             ** error);
+
+		bool parse_file_for_attributions(char *filename);
+		int emit_update(void * data);
+		int load_attributions_thread(void * threaddata);
+		void async_load_attributions();
+	};
+
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
 
 #endif /* _BING_MAP_SOURCE_H_ */
