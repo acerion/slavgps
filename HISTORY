@@ -1,3 +1,7 @@
+2016.04.19
+Committed first non-trivial rewrite of GObject class hierarchy into C++ class hierarchy (VikMapSource and related classes into MapSource and related classes).
+Commit: 35e4a42d4620e49f9fc92fa6d516a80f6313740b
+
 2016.04.09
 Since today every source code file in src/ directory (with exception
 of files in src/libjpeg and src/misc) has extension .cpp (or .h, of
