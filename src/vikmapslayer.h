@@ -32,6 +32,8 @@
 #include "mapcoord.h"
 #include "vikmapslayer_compat.h"
 
+using namespace SlavGPS;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -68,7 +70,7 @@ void maps_layer_init ();
 void maps_layer_set_autodownload_default ( bool autodownload );
 void maps_layer_set_cache_default ( VikMapsCacheLayout layout );
 unsigned int vik_maps_layer_get_default_map_type ();
-void maps_layer_register_map_source ( VikMapSource *map );
+void maps_layer_register_map_source ( MapSource *map );
 void vik_maps_layer_download_section ( VikMapsLayer *vml, VikViewport *vvp, VikCoord *ul, VikCoord *br, double zoom );
 unsigned int vik_maps_layer_get_map_type(VikMapsLayer *vml);
 void vik_maps_layer_set_map_type(VikMapsLayer *vml, unsigned int map_type);

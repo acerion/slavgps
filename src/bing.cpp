@@ -33,6 +33,8 @@
 #include "vikexttools.h"
 #include "map_ids.h"
 
+using namespace SlavGPS;
+
 /** API key registered by Guilhem Bonnefille */
 #define API_KEY "AqsTAipaBBpKLXhcaGgP8kceYukatmtDLS1x0CXEhRZnpl1RELF9hlI8j4mNIkrE"
 

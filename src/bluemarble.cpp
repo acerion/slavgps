@@ -28,21 +28,16 @@
 /* initialisation */
 void bluemarble_init ()
 {
-  VikMapSource *bluemarble_type = VIK_MAP_SOURCE(g_object_new(VIK_TYPE_SLIPPY_MAP_SOURCE,
-							      "id", MAP_ID_BLUE_MARBLE,
-							      "name", "BlueMarble",
-							      "label", "BlueMarble",
-							      "hostname", "s3.amazonaws.com",
-							      "url", "/com.modestmaps.bluemarble/%d-r%3$d-c%2$d.jpg",
-							      "zoom-min", 0,
-							      "zoom-max", 9,
-							      "copyright", "© NASA's Earth Observatory",
-							      "license", "NASA Terms of Use",
-							      "license-url", "http://visibleearth.nasa.gov/useterms.php",
-							      NULL));
-  /* Credit/Copyright from: http://earthobservatory.nasa.gov/Features/BlueMarble/ */
-  /* BlueMarble image hosting is courtesy of the Modest Maps project: http://modestmaps.com/ */
+	MapSource * bluemarble_type = new MapSourceSlippy(MAP_ID_BLUE_MARBLE, "BlueMarble", "s3.amazonaws.com", "/com.modestmaps.bluemarble/%d-r%3$d-c%2$d.jpg");
+	bluemarble_type->set_name((char *) "BlueMarble");
+	bluemarble_type->zoom_min = 0;
+	bluemarble_type->zoom_max = 9;
+	bluemarble_type->set_copyright((char *) "© NASA's Earth Observatory");
+	bluemarble_type->set_license((char *) "NASA Terms of Use");
+	bluemarble_type->set_license_url((char *) "http://visibleearth.nasa.gov/useterms.php");
 
-  maps_layer_register_map_source (bluemarble_type);
+	/* Credit/Copyright from: http://earthobservatory.nasa.gov/Features/BlueMarble/ */
+	/* BlueMarble image hosting is courtesy of the Modest Maps project: http://modestmaps.com/ */
+
+	maps_layer_register_map_source(bluemarble_type);
 }
-

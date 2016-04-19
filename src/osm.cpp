@@ -44,200 +44,161 @@
 #include "vikroutingwebengine.h"
 
 /* initialisation */
-void osm_init (void) {
-  VikMapSource *mapnik_type =
-    VIK_MAP_SOURCE(g_object_new(VIK_TYPE_SLIPPY_MAP_SOURCE,
-                                "id", MAP_ID_OSM_MAPNIK,
-                                "label", "OpenStreetMap (Mapnik)",
-                                "name", "OSM-Mapnik",
-                                "hostname", "tile.openstreetmap.org",
-                                "url", "/%d/%d/%d.png",
-                                "check-file-server-time", false,
-                                "use-etag", true,
-                                "zoom-min", 0,
-                                "zoom-max", 19,
-                                "copyright", "© OpenStreetMap contributors",
-                                "license", "CC-BY-SA",
-                                "license-url", "http://www.openstreetmap.org/copyright",
-                                NULL));
-  VikMapSource *cycle_type =
-    VIK_MAP_SOURCE(g_object_new(VIK_TYPE_SLIPPY_MAP_SOURCE,
-                                "id", MAP_ID_OSM_CYCLE,
-                                "label", "OpenStreetMap (Cycle)",
-                                "name", "OSM-Cycle",
-                                "hostname", "tile.opencyclemap.org",
-                                "url", "/cycle/%d/%d/%d.png",
-                                "check-file-server-time", true,
-                                "use-etag", false,
-                                "zoom-min", 0,
-                                "zoom-max", 18,
-                                "copyright", "Tiles courtesy of Andy Allan © OpenStreetMap contributors",
-                                "license", "CC-BY-SA",
-                                "license-url", "http://www.openstreetmap.org/copyright",
-                                NULL));
-  VikMapSource *transport_type =
-    VIK_MAP_SOURCE(g_object_new(VIK_TYPE_SLIPPY_MAP_SOURCE,
-                                "id", MAP_ID_OSM_TRANSPORT,
-                                "label", "OpenStreetMap (Transport)",
-                                "name", "OSM-Transport",
-                                "hostname", "tile2.opencyclemap.org",
-                                "url", "/transport/%d/%d/%d.png",
-                                "check-file-server-time", true,
-                                "use-etag", false,
-                                "zoom-min", 0,
-                                "zoom-max", 18,
-                                "copyright", "Tiles courtesy of Andy Allan © OpenStreetMap contributors",
-                                "license", "CC-BY-SA",
-                                "license-url", "http://www.openstreetmap.org/copyright",
-                                NULL));
-  VikMapSource *mapquest_type =
-    VIK_MAP_SOURCE(g_object_new(VIK_TYPE_SLIPPY_MAP_SOURCE,
-                                "id", MAP_ID_MAPQUEST_OSM,
-                                "name", "OSM-MapQuest",
-                                "label", "OpenStreetMap (MapQuest)",
-                                "hostname", "otile1.mqcdn.com",
-                                "url", "/tiles/1.0.0/osm/%d/%d/%d.png",
-                                "check-file-server-time", true,
-                                "use-etag", false,
-                                "zoom-min", 0,
-                                "zoom-max", 19,
-                                "copyright", "Tiles Courtesy of MapQuest © OpenStreetMap contributors",
-                                "license", "MapQuest Specific",
-                                "license-url", "http://developer.mapquest.com/web/info/terms-of-use",
-                                NULL));
-  VikMapSource *hot_type =
-    VIK_MAP_SOURCE(g_object_new(VIK_TYPE_SLIPPY_MAP_SOURCE,
-                                "id", MAP_ID_OSM_HUMANITARIAN,
-                                "name", "OSM-Humanitarian",
-                                "label", "OpenStreetMap (Humanitarian)",
-                                "hostname", "c.tile.openstreetmap.fr",
-                                "url", "/hot/%d/%d/%d.png",
-                                "check-file-server-time", true,
-                                "use-etag", false,
-                                "zoom-min", 0,
-                                "zoom-max", 20, // Super detail!!
-                                "copyright", "© OpenStreetMap contributors. Tiles courtesy of Humanitarian OpenStreetMap Team",
-                                "license", "CC-BY-SA",
-                                "license-url", "http://www.openstreetmap.org/copyright",
-                                NULL));
+void osm_init (void)
+{
+	MapSource * mapnik_type = new MapSourceSlippy(MAP_ID_OSM_MAPNIK, "OpenStreetMap (Mapnik)", "tile.openstreetmap.org", "/%d/%d/%d.png");
+	mapnik_type->set_name((char *) "OSM-Mapnik");
+	mapnik_type->download_options.check_file_server_time = false;
+	mapnik_type->download_options.use_etag = true;
+	mapnik_type->zoom_min = 0;
+	mapnik_type->zoom_max = 19;
+	mapnik_type->set_copyright((char *) "© OpenStreetMap contributors");
+	mapnik_type->set_license((char *) "CC-BY-SA");
+	mapnik_type->set_license_url((char *) "http://www.openstreetmap.org/copyright");
 
-  // NB no cache needed for this type!!
-  VikMapSource *direct_type =
-    VIK_MAP_SOURCE(g_object_new(VIK_TYPE_SLIPPY_MAP_SOURCE,
-                                "id", MAP_ID_OSM_ON_DISK,
-                                "label", _("On Disk OSM Tile Format"),
-                                // For using your own generated data assumed you know the license already!
-                                "copyright", "© OpenStreetMap contributors", // probably
-                                "use-direct-file-access", true,
-                                NULL));
 
-  // NB no cache needed for this type!!
-  VikMapSource *mbtiles_type =
-    VIK_MAP_SOURCE(g_object_new(VIK_TYPE_SLIPPY_MAP_SOURCE,
-                                "id", MAP_ID_MBTILES,
-                                "label", _("MBTiles File"),
-                                // For using your own generated data assumed you know the license already!
-                                "copyright", "© OpenStreetMap contributors", // probably
-                                "use-direct-file-access", true,
-                                "is-mbtiles", true,
-                                NULL));
+	MapSource * cycle_type = new MapSourceSlippy(MAP_ID_OSM_CYCLE, "OpenStreetMap (Cycle)", "tile.opencyclemap.org","/cycle/%d/%d/%d.png");
+	cycle_type->set_name((char *) "OSM-Cycle");
+	cycle_type->download_options.check_file_server_time = true;
+	cycle_type->download_options.use_etag = false;
+	cycle_type->zoom_min = 0;
+	cycle_type->zoom_max = 18;
+	cycle_type->set_copyright((char *) "Tiles courtesy of Andy Allan © OpenStreetMap contributors");
+	cycle_type->set_license((char *) "CC-BY-SA");
+	cycle_type->set_license_url((char *) "http://www.openstreetmap.org/copyright");
 
-  // NB no cache needed for this type!!
-  VikMapSource *metatiles_type =
-    VIK_MAP_SOURCE(g_object_new(VIK_TYPE_SLIPPY_MAP_SOURCE,
-                                "id", MAP_ID_OSM_METATILES,
-                                "label", _("OSM Metatiles"),
-                                // For using your own generated data assumed you know the license already!
-                                "copyright", "© OpenStreetMap contributors", // probably
-                                "use-direct-file-access", true,
-                                "is-osm-meta-tiles", true,
-                                NULL));
+	MapSource * transport_type = new MapSourceSlippy(MAP_ID_OSM_TRANSPORT, "OpenStreetMap (Transport)", "tile2.opencyclemap.org", "/transport/%d/%d/%d.png");
+	transport_type->set_name((char *) "OSM-Transport");
+	transport_type->download_options.check_file_server_time = true;
+	transport_type->download_options.use_etag = false;
+	transport_type->zoom_min = 0;
+	transport_type->zoom_max = 18;
+	transport_type->set_copyright((char *) "Tiles courtesy of Andy Allan © OpenStreetMap contributors");
+	transport_type->set_license((char *) "CC-BY-SA");
+	transport_type->set_license_url((char *) "http://www.openstreetmap.org/copyright");
 
-  maps_layer_register_map_source (mapquest_type);
-  maps_layer_register_map_source (mapnik_type);
-  maps_layer_register_map_source (cycle_type);
-  maps_layer_register_map_source (transport_type);
-  maps_layer_register_map_source (hot_type);
-  maps_layer_register_map_source (direct_type);
-  maps_layer_register_map_source (mbtiles_type);
-  maps_layer_register_map_source (metatiles_type);
+	MapSource * mapquest_type = new MapSourceSlippy(MAP_ID_MAPQUEST_OSM, "OpenStreetMap (MapQuest)", "otile1.mqcdn.com", "/tiles/1.0.0/osm/%d/%d/%d.png");
+	mapquest_type->set_name((char *) "OSM-MapQuest");
+	mapquest_type->download_options.check_file_server_time = true;
+	mapquest_type->download_options.use_etag = false;
+	mapquest_type->zoom_min = 0;
+	mapquest_type->zoom_max = 19;
+	mapquest_type->set_copyright((char *) "Tiles Courtesy of MapQuest © OpenStreetMap contributors");
+	mapquest_type->set_license((char *) "MapQuest Specific");
+	mapquest_type->set_license_url((char *) "http://developer.mapquest.com/web/info/terms-of-use");
 
-  // Webtools
-  VikWebtoolCenter *webtool = NULL;
-  webtool = vik_webtool_center_new_with_members ( _("OSM (view)"), "http://www.openstreetmap.org/?lat=%s&lon=%s&zoom=%d" );
-  vik_ext_tools_register ( VIK_EXT_TOOL ( webtool ) );
-  g_object_unref ( webtool );
 
-  webtool = vik_webtool_center_new_with_members ( _("OSM (edit)"), "http://www.openstreetmap.org/edit?lat=%s&lon=%s&zoom=%d" );
-  vik_ext_tools_register ( VIK_EXT_TOOL ( webtool ) );
-  g_object_unref ( webtool );
+	MapSource * hot_type = new MapSourceSlippy(MAP_ID_OSM_HUMANITARIAN, "OpenStreetMap (Humanitarian)", "c.tile.openstreetmap.fr", "/hot/%d/%d/%d.png");
+	hot_type->set_name((char *) "OSM-Humanitarian");
+	hot_type->download_options.check_file_server_time = true;
+	hot_type->download_options.use_etag = false;
+	hot_type->zoom_min = 0;
+	hot_type->zoom_max = 20; // Super detail!!
+	hot_type->set_copyright((char *) "© OpenStreetMap contributors. Tiles courtesy of Humanitarian OpenStreetMap Team");
+	hot_type->set_license((char *) "CC-BY-SA");
+	hot_type->set_license_url((char *) "http://www.openstreetmap.org/copyright");
 
-  // Note the use of positional parameters
-  webtool = vik_webtool_center_new_with_members ( _("OSM (query)"), "http://www.openstreetmap.org/query?lat=%1$s&lon=%2$s#map=%3$d/%1$s/%2$s" );
-  vik_ext_tools_register ( VIK_EXT_TOOL ( webtool ) );
-  g_object_unref ( webtool );
+	// NB no cache needed for this type!!
+	MapSource * direct_type = new MapSourceSlippy(MAP_ID_OSM_ON_DISK,_("On Disk OSM Tile Format"), NULL, NULL);
+	// For using your own generated data assumed you know the license already!
+	direct_type->set_copyright((char *) "© OpenStreetMap contributors"); // probably
+	direct_type->is_direct_file_access_flag = true;
 
-  webtool = vik_webtool_center_new_with_members ( _("OSM (render)"), "http://www.informationfreeway.org/?lat=%s&lon=%s&zoom=%d&layers=B0000F000F" );
-  vik_ext_tools_register ( VIK_EXT_TOOL ( webtool ) );
-  g_object_unref ( webtool );
+	// NB no cache needed for this type!!
+	MapSource * mbtiles_type = new MapSourceSlippy(MAP_ID_MBTILES, _("MBTiles File"), NULL, NULL);
+	// For using your own generated data assumed you know the license already!
+	mbtiles_type->set_copyright((char *) "© OpenStreetMap contributors"); // probably
+	mbtiles_type->is_direct_file_access_flag = true;
+	mbtiles_type->is_mbtiles_flag = true;
 
-  VikWebtoolBounds *webtoolbounds = NULL;
-  // Example: http://127.0.0.1:8111/load_and_zoom?left=8.19&right=8.20&top=48.605&bottom=48.590&select=node413602999
-  // JOSM or merkaartor must already be running with remote interface enabled
-  webtoolbounds = vik_webtool_bounds_new_with_members ( _("Local port 8111 (eg JOSM)"), "http://localhost:8111/load_and_zoom?left=%s&right=%s&bottom=%s&top=%s" );
-  vik_ext_tools_register ( VIK_EXT_TOOL ( webtoolbounds ) );
-  g_object_unref ( webtoolbounds );
 
-  VikWebtoolFormat *vwtf = NULL;
-  vwtf = vik_webtool_format_new_with_members ( _("Geofabrik Map Compare"),
-                                               "http://tools.geofabrik.de/mc/#%s/%s/%s",
-                                               "ZAO" );
-  vik_ext_tools_register ( VIK_EXT_TOOL ( vwtf ) );
-  g_object_unref ( vwtf );
+	// NB no cache needed for this type!!
+	MapSource * metatiles_type = new MapSourceSlippy(MAP_ID_OSM_METATILES, _("OSM Metatiles"), NULL, NULL);
+	// For using your own generated data assumed you know the license already!
+	metatiles_type->set_copyright((char *) "© OpenStreetMap contributors"); // probably
+	metatiles_type->is_direct_file_access_flag = true;
+	metatiles_type->is_osm_meta_tiles_flag = true;
 
-  // Datasource
-  VikWebtoolDatasource *vwtds = NULL;
-  vwtds = vik_webtool_datasource_new_with_members ( _("OpenStreetMap Notes"), "http://api.openstreetmap.org/api/0.6/notes.gpx?bbox=%s,%s,%s,%s&amp;closed=0", "LBRT", NULL, NULL, NULL );
-  vik_ext_tool_datasources_register ( VIK_EXT_TOOL ( vwtds ) );
-  g_object_unref ( vwtds );
+	maps_layer_register_map_source(mapquest_type);
+	maps_layer_register_map_source(mapnik_type);
+	maps_layer_register_map_source(cycle_type);
+	maps_layer_register_map_source(transport_type);
+	maps_layer_register_map_source(hot_type);
+	maps_layer_register_map_source(direct_type);
+	maps_layer_register_map_source(mbtiles_type);
+	maps_layer_register_map_source(metatiles_type);
 
-  // Goto
-  VikGotoXmlTool *nominatim = VIK_GOTO_XML_TOOL ( g_object_new ( VIK_GOTO_XML_TOOL_TYPE, "label", "OSM Nominatim",
-    "url-format", "http://nominatim.openstreetmap.org/search?q=%s&format=xml",
-    "lat-path", "/searchresults/place",
-    "lat-attr", "lat",
-    "lon-path", "/searchresults/place",
-    "lon-attr", "lon",
-    NULL ) );
-    vik_goto_register ( VIK_GOTO_TOOL ( nominatim ) );
-    g_object_unref ( nominatim );
+	// Webtools
+	VikWebtoolCenter * webtool = vik_webtool_center_new_with_members ( _("OSM (view)"), "http://www.openstreetmap.org/?lat=%s&lon=%s&zoom=%d" );
+	vik_ext_tools_register ( VIK_EXT_TOOL ( webtool ) );
+	g_object_unref ( webtool );
 
-  VikGotoXmlTool *namefinder = VIK_GOTO_XML_TOOL ( g_object_new ( VIK_GOTO_XML_TOOL_TYPE, "label", "OSM Name finder",
-    "url-format", "http://gazetteer.openstreetmap.org/namefinder/search.xml?find=%s&max=1",
-    "lat-path", "/searchresults/named",
-    "lat-attr", "lat",
-    "lon-path", "/searchresults/named",
-    "lon-attr", "lon",
-    NULL ) );
-    vik_goto_register ( VIK_GOTO_TOOL ( namefinder ) );
-    g_object_unref ( namefinder );
+	webtool = vik_webtool_center_new_with_members ( _("OSM (edit)"), "http://www.openstreetmap.org/edit?lat=%s&lon=%s&zoom=%d" );
+	vik_ext_tools_register ( VIK_EXT_TOOL ( webtool ) );
+	g_object_unref ( webtool );
 
-  // Not really OSM but can't be bothered to create somewhere else to put it...
-  webtool = vik_webtool_center_new_with_members ( _("Wikimedia Toolserver GeoHack"), "http://tools.wmflabs.org/geohack/geohack.php?params=%s;%s" );
-  vik_ext_tools_register ( VIK_EXT_TOOL ( webtool ) );
-  g_object_unref ( webtool );
-  
-  /* See API references: https://github.com/DennisOSRM/Project-OSRM/wiki/Server-api */
-  VikRoutingEngine *osrm = (VikRoutingEngine *) g_object_new ( VIK_ROUTING_WEB_ENGINE_TYPE,
-    "id", "osrm",
-    "label", "OSRM",
-    "format", "gpx",
-    "url-base", "http://router.project-osrm.org/viaroute?output=gpx",
-    "url-start-ll", "&loc=%s,%s",
-    "url-stop-ll", "&loc=%s,%s",
-    "url-via-ll", "&loc=%s,%s",
-    NULL);
-  vik_routing_register ( VIK_ROUTING_ENGINE ( osrm ) );
-  g_object_unref ( osrm );
+	// Note the use of positional parameters
+	webtool = vik_webtool_center_new_with_members ( _("OSM (query)"), "http://www.openstreetmap.org/query?lat=%1$s&lon=%2$s#map=%3$d/%1$s/%2$s" );
+	vik_ext_tools_register ( VIK_EXT_TOOL ( webtool ) );
+	g_object_unref ( webtool );
+
+	webtool = vik_webtool_center_new_with_members ( _("OSM (render)"), "http://www.informationfreeway.org/?lat=%s&lon=%s&zoom=%d&layers=B0000F000F" );
+	vik_ext_tools_register ( VIK_EXT_TOOL ( webtool ) );
+	g_object_unref ( webtool );
+
+	// Example: http://127.0.0.1:8111/load_and_zoom?left=8.19&right=8.20&top=48.605&bottom=48.590&select=node413602999
+	// JOSM or merkaartor must already be running with remote interface enabled
+	VikWebtoolBounds *webtoolbounds = vik_webtool_bounds_new_with_members ( _("Local port 8111 (eg JOSM)"), "http://localhost:8111/load_and_zoom?left=%s&right=%s&bottom=%s&top=%s" );
+	vik_ext_tools_register ( VIK_EXT_TOOL ( webtoolbounds ) );
+	g_object_unref ( webtoolbounds );
+
+	VikWebtoolFormat *vwtf = vik_webtool_format_new_with_members ( _("Geofabrik Map Compare"),
+								       "http://tools.geofabrik.de/mc/#%s/%s/%s",
+								       "ZAO" );
+	vik_ext_tools_register ( VIK_EXT_TOOL ( vwtf ) );
+	g_object_unref ( vwtf );
+
+	// Datasource
+	VikWebtoolDatasource *vwtds = vik_webtool_datasource_new_with_members ( _("OpenStreetMap Notes"), "http://api.openstreetmap.org/api/0.6/notes.gpx?bbox=%s,%s,%s,%s&amp;closed=0", "LBRT", NULL, NULL, NULL );
+	vik_ext_tool_datasources_register ( VIK_EXT_TOOL ( vwtds ) );
+	g_object_unref ( vwtds );
+
+	// Goto
+	VikGotoXmlTool *nominatim = VIK_GOTO_XML_TOOL ( g_object_new ( VIK_GOTO_XML_TOOL_TYPE, "label", "OSM Nominatim",
+								       "url-format", "http://nominatim.openstreetmap.org/search?q=%s&format=xml",
+								       "lat-path", "/searchresults/place",
+								       "lat-attr", "lat",
+								       "lon-path", "/searchresults/place",
+								       "lon-attr", "lon",
+								       NULL ) );
+	vik_goto_register ( VIK_GOTO_TOOL ( nominatim ) );
+	g_object_unref ( nominatim );
+
+	VikGotoXmlTool *namefinder = VIK_GOTO_XML_TOOL ( g_object_new ( VIK_GOTO_XML_TOOL_TYPE, "label", "OSM Name finder",
+									"url-format", "http://gazetteer.openstreetmap.org/namefinder/search.xml?find=%s&max=1",
+									"lat-path", "/searchresults/named",
+									"lat-attr", "lat",
+									"lon-path", "/searchresults/named",
+									"lon-attr", "lon",
+									NULL ) );
+	vik_goto_register ( VIK_GOTO_TOOL ( namefinder ) );
+	g_object_unref ( namefinder );
+
+	// Not really OSM but can't be bothered to create somewhere else to put it...
+	webtool = vik_webtool_center_new_with_members ( _("Wikimedia Toolserver GeoHack"), "http://tools.wmflabs.org/geohack/geohack.php?params=%s;%s" );
+	vik_ext_tools_register ( VIK_EXT_TOOL ( webtool ) );
+	g_object_unref ( webtool );
+
+	/* See API references: https://github.com/DennisOSRM/Project-OSRM/wiki/Server-api */
+	VikRoutingEngine *osrm = (VikRoutingEngine *) g_object_new ( VIK_ROUTING_WEB_ENGINE_TYPE,
+								     "id", "osrm",
+								     "label", "OSRM",
+								     "format", "gpx",
+								     "url-base", "http://router.project-osrm.org/viaroute?output=gpx",
+								     "url-start-ll", "&loc=%s,%s",
+								     "url-stop-ll", "&loc=%s,%s",
+								     "url-via-ll", "&loc=%s,%s",
+								     NULL);
+	vik_routing_register ( VIK_ROUTING_ENGINE ( osrm ) );
+	g_object_unref ( osrm );
 }
-

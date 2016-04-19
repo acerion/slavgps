@@ -71,10 +71,9 @@
 #define VIKING_ROUTING_FILE "routing.xml"
 
 static void
-modules_register_map_source(VikGobjectBuilder *self, GObject *object)
+modules_register_map_source(VikGobjectBuilder *self, MapSource * mapsource)
 {
   fprintf(stderr, "DEBUG: %s\n", __FUNCTION__);
-  VikMapSource *mapsource = VIK_MAP_SOURCE (object);
   /* FIXME label should be hosted by object */
   maps_layer_register_map_source (mapsource);
 }
@@ -207,9 +206,9 @@ register_loadable_types(void)
   /* Force registering of loadable types */
   volatile GType types[] = {
     /* Maps */
-    VIK_TYPE_SLIPPY_MAP_SOURCE,
-    VIK_TYPE_TMS_MAP_SOURCE,
-    VIK_TYPE_WMSC_MAP_SOURCE,
+    //VIK_TYPE_SLIPPY_MAP_SOURCE,
+    //VIK_TYPE_TMS_MAP_SOURCE,
+    //VIK_TYPE_WMSC_MAP_SOURCE,
 
     /* Goto */
     VIK_GOTO_XML_TOOL_TYPE,
@@ -244,7 +243,7 @@ void modules_init()
 #ifdef VIK_CONFIG_BING
   bing_init();
 #endif
-#ifdef VIK_CONFIG_GOOGLE 
+#ifdef VIK_CONFIG_GOOGLE
   google_init();
 #endif
 #ifdef VIK_CONFIG_EXPEDIA

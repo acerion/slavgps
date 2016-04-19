@@ -821,6 +821,8 @@ static GdkPixbuf *get_pixbuf ( VikMapnikLayer *vml, MapCoord *ulm, MapCoord *brm
 		}
 	}
 
+	fprintf(stderr, "---- returning pixbuf %x\n", pixbuf);
+
 	return pixbuf;
 }
 
