@@ -1150,34 +1150,31 @@ static GdkPixbuf *pixbuf_apply_settings (GdkPixbuf *pixbuf, VikMapsLayer *vml, M
 	return pixbuf;
 }
 
-static void get_filename (const char *cache_dir,
-                           VikMapsCacheLayout cl,
-                           uint16_t id,
-                           const char *name,
-                           int scale,
-                           int z,
-                           int x,
-                           int y,
-                           char *filename_buf,
-                           int buf_len,
-                           const char* file_extension)
+static void get_filename(const char *cache_dir,
+			 VikMapsCacheLayout cl,
+			 uint16_t id,
+			 const char *name,
+			 MapCoord const * coord,
+			 char *filename_buf,
+			 int buf_len,
+			 const char* file_extension)
 {
 	switch (cl) {
 	case VIK_MAPS_CACHE_LAYOUT_OSM:
 		if (name) {
 			if (g_strcmp0 (cache_dir, MAPS_CACHE_DIR)) {
 				// Cache dir not the default - assume it's been directed somewhere specific
-				snprintf(filename_buf, buf_len, DIRECTDIRACCESS, cache_dir, (17 - scale), x, y, file_extension);
+				snprintf(filename_buf, buf_len, DIRECTDIRACCESS, cache_dir, (17 - coord->scale), coord->x, coord->y, file_extension);
 			} else {
 				// Using default cache - so use the map name in the directory path
-				snprintf(filename_buf, buf_len, DIRECTDIRACCESS_WITH_NAME, cache_dir, name, (17 - scale), x, y, file_extension);
+				snprintf(filename_buf, buf_len, DIRECTDIRACCESS_WITH_NAME, cache_dir, name, (17 - coord->scale), coord->x, coord->y, file_extension);
 			}
 		} else {
-			snprintf(filename_buf, buf_len, DIRECTDIRACCESS, cache_dir, (17 - scale), x, y, file_extension);
+			snprintf(filename_buf, buf_len, DIRECTDIRACCESS, cache_dir, (17 - coord->scale), coord->x, coord->y, file_extension);
 		}
 		break;
 	default:
-		snprintf(filename_buf, buf_len, DIRSTRUCTURE, cache_dir, id, scale, z, x, y);
+		snprintf(filename_buf, buf_len, DIRSTRUCTURE, cache_dir, id, coord->scale, coord->z, coord->x, coord->y);
 		break;
 	}
 }
@@ -1206,14 +1203,14 @@ static GdkPixbuf *get_pixbuf(VikMapsLayer *vml, uint16_t id, const char* mapname
 				pixbuf = pixbuf_apply_settings (pixbuf, vml, mapcoord, xshrinkfactor, yshrinkfactor);
 				return pixbuf;
 			} else {
-				get_filename (vml->cache_dir, VIK_MAPS_CACHE_LAYOUT_OSM, id, NULL,
-					       mapcoord->scale, mapcoord->z, mapcoord->x, mapcoord->y, filename_buf, buf_len,
-					       map->get_file_extension());
+				get_filename(vml->cache_dir, VIK_MAPS_CACHE_LAYOUT_OSM, id, NULL,
+					     mapcoord, filename_buf, buf_len,
+					     map->get_file_extension());
 			}
 		} else {
-			get_filename (vml->cache_dir, vml->cache_layout, id, mapname,
-				       mapcoord->scale, mapcoord->z, mapcoord->x, mapcoord->y, filename_buf, buf_len,
-				       map->get_file_extension());
+			get_filename(vml->cache_dir, vml->cache_layout, id, mapname,
+				     mapcoord, filename_buf, buf_len,
+				     map->get_file_extension());
 		}
 
 		if (g_file_test (filename_buf, G_FILE_TEST_EXISTS) == true) {
@@ -1296,7 +1293,7 @@ bool try_draw_scale_down(VikMapsLayer *vml, Viewport * viewport, MapCoord ulm, i
 		ulm2.x = ulm.x / scale_factor;
 		ulm2.y = ulm.y / scale_factor;
 		ulm2.scale = ulm.scale + scale_inc;
-		GdkPixbuf * pixbuf = get_pixbuf (vml, id, mapname, &ulm2, path_buf, max_path_len, xshrinkfactor * scale_factor, yshrinkfactor * scale_factor);
+		GdkPixbuf * pixbuf = get_pixbuf(vml, id, mapname, &ulm2, path_buf, max_path_len, xshrinkfactor * scale_factor, yshrinkfactor * scale_factor);
 		if (pixbuf) {
 			int src_x = (ulm.x % scale_factor) * tilesize_x_ceil;
 			int src_y = (ulm.y % scale_factor) * tilesize_y_ceil;
@@ -1416,7 +1413,7 @@ static void maps_layer_draw_section(VikMapsLayer *vml, Viewport * viewport, VikC
 				for (int y = ymin; y <= ymax; y++) {
 					ulm.x = x;
 					ulm.y = y;
-					pixbuf = get_pixbuf (vml, id, mapname, &ulm, path_buf, max_path_len, xshrinkfactor, yshrinkfactor);
+					pixbuf = get_pixbuf(vml, id, mapname, &ulm, path_buf, max_path_len, xshrinkfactor, yshrinkfactor);
 					if (pixbuf) {
 						width = gdk_pixbuf_get_width (pixbuf);
 						height = gdk_pixbuf_get_height (pixbuf);
@@ -1460,11 +1457,11 @@ static void maps_layer_draw_section(VikMapsLayer *vml, Viewport * viewport, VikC
 
 					if (existence_only) {
 						if (MAPS_LAYER_NTH_TYPE(vml->maptype)->is_direct_file_access()) {
-							get_filename (vml->cache_dir, VIK_MAPS_CACHE_LAYOUT_OSM, id, map->get_name(),
-								      ulm.scale, ulm.z, ulm.x, ulm.y, path_buf, max_path_len, map->get_file_extension());
+							get_filename(vml->cache_dir, VIK_MAPS_CACHE_LAYOUT_OSM, id, map->get_name(),
+								     &ulm, path_buf, max_path_len, map->get_file_extension());
 						} else {
-							get_filename (vml->cache_dir, vml->cache_layout, id, map->get_name(),
-								       ulm.scale, ulm.z, ulm.x, ulm.y, path_buf, max_path_len, map->get_file_extension());
+							get_filename(vml->cache_dir, vml->cache_layout, id, map->get_name(),
+								     &ulm, path_buf, max_path_len, map->get_file_extension());
 						}
 
 						if (g_file_test (path_buf, G_FILE_TEST_EXISTS) == true) {
@@ -1474,7 +1471,7 @@ static void maps_layer_draw_section(VikMapsLayer *vml, Viewport * viewport, VikC
 					} else {
 						// Try correct scale first
 						int scale_factor = 1;
-						pixbuf = get_pixbuf (vml, id, mapname, &ulm, path_buf, max_path_len, xshrinkfactor * scale_factor, yshrinkfactor * scale_factor);
+						pixbuf = get_pixbuf(vml, id, mapname, &ulm, path_buf, max_path_len, xshrinkfactor * scale_factor, yshrinkfactor * scale_factor);
 						if (pixbuf) {
 							int src_x = (ulm.x % scale_factor) * tilesize_x_ceil;
 							int src_y = (ulm.y % scale_factor) * tilesize_y_ceil;
@@ -1634,20 +1631,18 @@ static int map_download_thread (MapDownloadInfo *mdi, void * threaddata)
 	unsigned int donemaps = 0;
 	MapCoord mcoord = mdi->mapcoord;
 
-	for (int x = mdi->x0; x <= mdi->xf; x++) {
-		mcoord.x = x;
-		for (int y = mdi->y0; y <= mdi->yf; y++) {
-			mcoord.y = y;
+	for (mcoord.x = mdi->x0; mcoord.x <= mdi->xf; mcoord.x++) {
+		for (mcoord.y = mdi->y0; mcoord.y <= mdi->yf; mcoord.y++) {
 			// Only attempt to download a tile from supported areas
 			if (is_in_area(MAPS_LAYER_NTH_TYPE(mdi->maptype), &mcoord)) {
 				bool remove_mem_cache = false;
 				bool need_download = false;
 
-				get_filename (mdi->cache_dir, mdi->cache_layout,
-					       MAPS_LAYER_NTH_TYPE(mdi->maptype)->uniq_id,
-					       MAPS_LAYER_NTH_TYPE(mdi->maptype)->get_name(),
-					       mdi->mapcoord.scale, mdi->mapcoord.z, x, y, mdi->filename_buf, mdi->maxlen,
-					       MAPS_LAYER_NTH_TYPE(mdi->maptype)->get_file_extension());
+				get_filename(mdi->cache_dir, mdi->cache_layout,
+					     MAPS_LAYER_NTH_TYPE(mdi->maptype)->uniq_id,
+					     MAPS_LAYER_NTH_TYPE(mdi->maptype)->get_name(),
+					     &mcoord, mdi->filename_buf, mdi->maxlen,
+					     MAPS_LAYER_NTH_TYPE(mdi->maptype)->get_file_extension());
 
 				donemaps++;
 				int res = a_background_thread_progress (threaddata, ((double)donemaps) / mdi->mapstoget); /* this also calls testcancel */
@@ -1707,8 +1702,8 @@ static int map_download_thread (MapDownloadInfo *mdi, void * threaddata)
 					}
 				}
 
-				mdi->mapcoord.x = x;
-				mdi->mapcoord.y = y;
+				mdi->mapcoord.x = mcoord.x;
+				mdi->mapcoord.y = mcoord.y;
 
 				if (need_download) {
 					DownloadResult_t dr = MAPS_LAYER_NTH_TYPE(mdi->maptype)->download(&(mdi->mapcoord), mdi->filename_buf, handle);
@@ -1737,7 +1732,7 @@ static int map_download_thread (MapDownloadInfo *mdi, void * threaddata)
 
 				g_mutex_lock(mdi->mutex);
 				if (remove_mem_cache) {
-					a_mapcache_remove_all_shrinkfactors (x, y, mdi->mapcoord.z, MAPS_LAYER_NTH_TYPE(mdi->maptype)->uniq_id, mdi->mapcoord.scale, mdi->vml->filename);
+					a_mapcache_remove_all_shrinkfactors (mcoord.x, mcoord.y, mdi->mapcoord.z, MAPS_LAYER_NTH_TYPE(mdi->maptype)->uniq_id, mdi->mapcoord.scale, mdi->vml->filename);
 				}
 
 				if (mdi->refresh_display && mdi->map_layer_alive) {
@@ -1761,11 +1756,11 @@ static int map_download_thread (MapDownloadInfo *mdi, void * threaddata)
 static void mdi_cancel_cleanup (MapDownloadInfo *mdi)
 {
 	if (mdi->mapcoord.x || mdi->mapcoord.y) {
-		get_filename (mdi->cache_dir, mdi->cache_layout,
-			       MAPS_LAYER_NTH_TYPE(mdi->maptype)->uniq_id,
-			       MAPS_LAYER_NTH_TYPE(mdi->maptype)->get_name(),
-			       mdi->mapcoord.scale, mdi->mapcoord.z, mdi->mapcoord.x, mdi->mapcoord.y, mdi->filename_buf, mdi->maxlen,
-			       MAPS_LAYER_NTH_TYPE(mdi->maptype)->get_file_extension());
+		get_filename(mdi->cache_dir, mdi->cache_layout,
+			     MAPS_LAYER_NTH_TYPE(mdi->maptype)->uniq_id,
+			     MAPS_LAYER_NTH_TYPE(mdi->maptype)->get_name(),
+			     &mdi->mapcoord, mdi->filename_buf, mdi->maxlen,
+			     MAPS_LAYER_NTH_TYPE(mdi->maptype)->get_file_extension());
 		if (g_file_test (mdi->filename_buf, G_FILE_TEST_EXISTS) == true) {
 			if (g_remove (mdi->filename_buf)) {
 				fprintf(stderr, "WARNING: Cleanup failed to remove: %s", mdi->filename_buf);
@@ -1951,21 +1946,21 @@ static void maps_layer_tile_info (VikMapsLayer *vml)
 		} else {
 			unsigned int max_path_len = strlen(vml->cache_dir) + 40;
 			filename = (char *) malloc(max_path_len * sizeof(char));
-			get_filename (vml->cache_dir, VIK_MAPS_CACHE_LAYOUT_OSM,
-				       map->uniq_id,
-				       NULL,
-				       ulm.scale, ulm.z, ulm.x, ulm.y, filename, max_path_len,
-				       map->get_file_extension());
+			get_filename(vml->cache_dir, VIK_MAPS_CACHE_LAYOUT_OSM,
+				     map->uniq_id,
+				     NULL,
+				     &ulm, filename, max_path_len,
+				     map->get_file_extension());
 			source = g_strconcat ("Source: file://", filename, NULL);
 		}
 	} else {
 		unsigned int max_path_len = strlen(vml->cache_dir) + 40;
 		filename = (char *) malloc(max_path_len * sizeof(char));
-		get_filename (vml->cache_dir, vml->cache_layout,
-			       map->uniq_id,
-			       map->get_name(),
-			       ulm.scale, ulm.z, ulm.x, ulm.y, filename, max_path_len,
-			       map->get_file_extension());
+		get_filename(vml->cache_dir, vml->cache_layout,
+			     map->uniq_id,
+			     map->get_name(),
+			     &ulm, filename, max_path_len,
+			     map->get_file_extension());
 		source = g_markup_printf_escaped ("Source: http://%s%s",
 						   map->get_server_hostname(),
 						   map->get_server_path(&ulm));
@@ -2461,18 +2456,18 @@ void vik_maps_layer_download (VikMapsLayer *vml, VikViewport *vvp, bool only_new
 void mdi_calculate_mapstoget(MapDownloadInfo * mdi, MapSource * map, MapCoord * ulm)
 {
 	MapCoord mcoord = mdi->mapcoord;
+	mcoord.z = ulm->z;
+	mcoord.scale = ulm->scale;
 
-	for (int i = mdi->x0; i <= mdi->xf; i++) {
-		mcoord.x = i;
-		for (int j = mdi->y0; j <= mdi->yf; j++) {
-			mcoord.y = j;
+	for (mcoord.x = mdi->x0; mcoord.x <= mdi->xf; mcoord.x++) {
+		for (mcoord.y = mdi->y0; mcoord.y <= mdi->yf; mcoord.y++) {
 			// Only count tiles from supported areas
 			if (is_in_area(map, &mcoord)) {
-				get_filename (mdi->cache_dir, mdi->cache_layout,
-					       map->uniq_id,
-					       map->get_name(),
-					       ulm->scale, ulm->z, i, j, mdi->filename_buf, mdi->maxlen,
-					       map->get_file_extension());
+				get_filename(mdi->cache_dir, mdi->cache_layout,
+					     map->uniq_id,
+					     map->get_name(),
+					     &mcoord, mdi->filename_buf, mdi->maxlen,
+					     map->get_file_extension());
 
 				if (g_file_test (mdi->filename_buf, G_FILE_TEST_EXISTS) == false) {
 					mdi->mapstoget++;
@@ -2488,19 +2483,19 @@ void mdi_calculate_mapstoget(MapDownloadInfo * mdi, MapSource * map, MapCoord * 
 void mdi_calculate_mapstoget_other(MapDownloadInfo * mdi, MapSource * map, MapCoord * ulm)
 {
 	MapCoord mcoord = mdi->mapcoord;
+	mcoord.z = ulm->z;
+	mcoord.scale = ulm->scale;
 
 	/* calculate how many we need */
-	for (int i = mdi->x0; i <= mdi->xf; i++) {
-		mcoord.x = i;
-		for (int j = mdi->y0; j <= mdi->yf; j++) {
-			mcoord.y = j;
+	for (mcoord.x = mdi->x0; mcoord.x <= mdi->xf; mcoord.x++) {
+		for (mcoord.y = mdi->y0; mcoord.y <= mdi->yf; mcoord.y++) {
 			// Only count tiles from supported areas
 			if (is_in_area(map, &mcoord)) {
-				get_filename (mdi->cache_dir, mdi->cache_layout,
-					      map->uniq_id,
-					      map->get_name(),
-					      ulm->scale, ulm->z, i, j, mdi->filename_buf, mdi->maxlen,
-					      map->get_file_extension());
+				get_filename(mdi->cache_dir, mdi->cache_layout,
+					     map->uniq_id,
+					     map->get_name(),
+					     &mcoord, mdi->filename_buf, mdi->maxlen,
+					     map->get_file_extension());
 				if (mdi->redownload_mode == REDOWNLOAD_NEW) {
 					// Assume the worst - always a new file
 					// Absolute value would require a server lookup - but that is too slow
