@@ -81,7 +81,7 @@ namespace SlavGPS {
 		void draw_polygon(GdkGC *gc, bool filled, GdkPoint *points, int npoints);
 		void draw_layout(GdkGC *gc, int x, int y, PangoLayout *layout);
 
-		void draw_pixbuf(GdkPixbuf *pixbuf, int src_x, int src_y, int dest_x, int dest_y, int w, int h);
+		void draw_pixbuf(GdkPixbuf *pixbuf, int src_x, int src_y, int dest_x, int dest_y, int region_width, int region_height);
 
 		/* run this before drawing a line. vik_viewport_draw_line runs it for you */
 		static void clip_line(int *x1, int *y1, int *x2, int *y2);

@@ -354,11 +354,11 @@ static bool trw_layer_track_menu_popup ( GtkWidget *tree_view,
 	udataU.trk  = trk;
 	udataU.uuid = NULL;
 
-	void * trkf;
+	void ** trkf;
 	if ( trk->is_route )
-		trkf = g_hash_table_find ( vik_trw_layer_get_routes(vtl), (GHRFunc) trw_layer_track_find_uuid, &udataU );
+		trkf = (void **) g_hash_table_find ( vik_trw_layer_get_routes(vtl), (GHRFunc) trw_layer_track_find_uuid, &udataU );
 	else
-		trkf = g_hash_table_find ( vik_trw_layer_get_tracks(vtl), (GHRFunc) trw_layer_track_find_uuid, &udataU );
+		trkf = (void **) g_hash_table_find ( vik_trw_layer_get_tracks(vtl), (GHRFunc) trw_layer_track_find_uuid, &udataU );
 
 	if ( trkf && udataU.uuid ) {
 		VikViewport *vvp = vik_window_viewport((VikWindow *)(VIK_GTK_WINDOW_FROM_LAYER(vtl)));

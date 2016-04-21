@@ -286,7 +286,7 @@ static void trw_layer_free_track_gcs ( VikTrwLayer *vtl );
 static void trw_layer_draw_track_cb ( const void * id, Track * trk, struct DrawingParams *dp );
 static void trw_layer_draw_waypoint ( const void * id, Waypoint * wp, struct DrawingParams *dp );
 
-static void goto_coord ( void * vlp, void * vvp, void * vl, const VikCoord *coord );
+static void goto_coord ( void ** vlp, void * vvp, void * vl, const VikCoord *coord );
 static void trw_layer_goto_track_startpoint ( menu_array_sublayer values );
 static void trw_layer_goto_track_endpoint ( menu_array_sublayer values );
 static void trw_layer_goto_track_max_speed ( menu_array_sublayer values );
@@ -925,8 +925,8 @@ typedef struct {
   const char *date_str;
   const Track * trk;
   const Waypoint * wp;
-  void * trk_id;
-  void * wp_id;
+  void ** trk_id;
+  void ** wp_id;
 } date_finder_type;
 
 static bool trw_layer_find_date_track ( const void * id, const Track * trk, date_finder_type *df )
@@ -940,7 +940,7 @@ static bool trw_layer_find_date_track ( const void * id, const Track * trk, date
     if ( ! g_strcmp0 ( df->date_str, date_buf ) ) {
       df->found = true;
       df->trk = trk;
-      df->trk_id = (void *) id;
+      df->trk_id = (void **) id;
     }
   }
   return df->found;
@@ -957,7 +957,7 @@ static bool trw_layer_find_date_waypoint ( const void * id, const Waypoint * wp,
     if ( ! g_strcmp0 ( df->date_str, date_buf ) ) {
       df->found = true;
       df->wp = wp;
-      df->wp_id = (void *) id;
+      df->wp_id = (void **) id;
     }
   }
   return df->found;
@@ -1038,7 +1038,7 @@ static void trw_layer_copy_item_cb ( menu_array_sublayer values)
 {
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
   int subtype = KPOINTER_TO_INT (values[MA_SUBTYPE]);
-  void * sublayer = values[MA_SUBLAYER_ID];
+  void ** sublayer = (void **) values[MA_SUBLAYER_ID];
   uint8_t *data = NULL;
   unsigned int len;
 
@@ -3260,7 +3260,7 @@ static bool trw_layer_selected ( VikTrwLayer *l, int subtype, void * sublayer, i
 	  case VIK_TRW_LAYER_SUBLAYER_TRACK:
 	    {
 	      Track * trk = (Track *) g_hash_table_lookup ( l->tracks, sublayer );
-	      vik_window_set_selected_track ( (VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(l), (void *) trk, l );
+	      vik_window_set_selected_track ( (VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(l), (void **) trk, l );
 	      /* Mark for redraw */
 	      return true;
 	    }
@@ -3275,7 +3275,7 @@ static bool trw_layer_selected ( VikTrwLayer *l, int subtype, void * sublayer, i
 	  case VIK_TRW_LAYER_SUBLAYER_ROUTE:
 	    {
 	      Track * trk = (Track *) g_hash_table_lookup ( l->routes, sublayer );
-	      vik_window_set_selected_track ( (VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(l), (void *) trk, l );
+	      vik_window_set_selected_track ( (VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(l), (void **) trk, l );
 	      /* Mark for redraw */
 	      return true;
 	    }
@@ -3291,7 +3291,7 @@ static bool trw_layer_selected ( VikTrwLayer *l, int subtype, void * sublayer, i
 	    {
               Waypoint * wp = (Waypoint *) g_hash_table_lookup ( l->waypoints, sublayer );
               if (wp) {
-                vik_window_set_selected_waypoint ( (VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(l), (void *) wp, l );
+                vik_window_set_selected_waypoint ( (VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(l), (void **) wp, l );
                 // Show some waypoint info
                 set_statusbar_msg_info_wpt(l, wp);
                 /* Mark for redraw */
@@ -3462,7 +3462,7 @@ static void trw_layer_centerize ( menu_array_layer values )
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
   VikCoord coord;
   if ( vik_trw_layer_find_center ( vtl, &coord ) )
-    goto_coord ( values[MA_VLP], NULL, NULL, &coord );
+	  goto_coord ( (void **) values[MA_VLP], NULL, NULL, &coord );
   else
     a_dialog_info_msg ( VIK_GTK_WINDOW_FROM_LAYER(vtl), _("This layer has no waypoints or trackpoints.") );
 }
@@ -3630,7 +3630,7 @@ static void trw_layer_goto_wp ( menu_array_layer values )
       udata.uuid = NULL;
 
       // Hmmm, want key of it
-      void * wpf = g_hash_table_find ( vtl->waypoints, (GHRFunc) trw_layer_waypoint_find_uuid, (void *) &udata );
+      void ** wpf = (void **) g_hash_table_find ( vtl->waypoints, (GHRFunc) trw_layer_waypoint_find_uuid, (void**) &udata );
 
       if ( wpf && udata.uuid ) {
         GtkTreeIter *it = (GtkTreeIter *) g_hash_table_lookup ( vtl->waypoints_iters, udata.uuid );
@@ -4785,7 +4785,7 @@ bool vik_trw_layer_delete_track ( VikTrwLayer *vtl, Track * trk)
     udata.uuid = NULL;
 
     // Hmmm, want key of it
-    void * trkf = g_hash_table_find ( vtl->tracks, (GHRFunc) trw_layer_track_find_uuid, &udata );
+    void ** trkf = (void **) g_hash_table_find ( vtl->tracks, (GHRFunc) trw_layer_track_find_uuid, &udata );
 
     if ( trkf && udata.uuid ) {
       /* could be current_tp, so we have to check */
@@ -4833,7 +4833,7 @@ bool vik_trw_layer_delete_route ( VikTrwLayer *vtl, Track * trk)
     udata.uuid = NULL;
 
     // Hmmm, want key of it
-    void * trkf = g_hash_table_find ( vtl->routes, (GHRFunc) trw_layer_track_find_uuid, &udata );
+    void ** trkf = (void **) g_hash_table_find ( vtl->routes, (GHRFunc) trw_layer_track_find_uuid, &udata );
 
     if ( trkf && udata.uuid ) {
       /* could be current_tp, so we have to check */
@@ -4877,7 +4877,7 @@ static bool trw_layer_delete_waypoint ( VikTrwLayer *vtl, Waypoint * wp)
     udata.uuid = NULL;
 
     // Hmmm, want key of it
-    void * wpf = g_hash_table_find ( vtl->waypoints, (GHRFunc) trw_layer_waypoint_find_uuid, (void *) &udata );
+    void ** wpf = (void **) g_hash_table_find ( vtl->waypoints, (GHRFunc) trw_layer_waypoint_find_uuid, (void *) &udata );
 
     if ( wpf && udata.uuid ) {
       GtkTreeIter *it = (GtkTreeIter *) g_hash_table_lookup ( vtl->waypoints_iters, udata.uuid );
@@ -4929,7 +4929,7 @@ static bool trw_layer_delete_waypoint_by_name ( VikTrwLayer *vtl, const char *na
   udata.uuid = NULL;
 
   // Hmmm, want key of it
-  void * wpf = g_hash_table_find ( vtl->waypoints, (GHRFunc) trw_layer_waypoint_find_uuid_by_name, (void *) &udata );
+  void ** wpf = (void **) g_hash_table_find ( vtl->waypoints, (GHRFunc) trw_layer_waypoint_find_uuid_by_name, (void *) &udata );
 
   delete udata.wp;
 
@@ -4970,7 +4970,7 @@ static bool trw_layer_delete_track_by_name ( VikTrwLayer *vtl, const char *name,
   udata.uuid = NULL;
 
   // Hmmm, want key of it
-  void * trkf = g_hash_table_find ( ht_tracks, (GHRFunc) trw_layer_track_find_uuid_by_name, &udata );
+  void ** trkf = (void **) g_hash_table_find ( ht_tracks, (GHRFunc) trw_layer_track_find_uuid_by_name, &udata );
 
   udata.trk->free();
 
@@ -5138,7 +5138,7 @@ void trw_layer_waypoint_rename ( VikTrwLayer *vtl, Waypoint * wp, const char *ne
   udataU.uuid = NULL;
 
   // Need key of it for treeview update
-  void * wpf = g_hash_table_find ( vtl->waypoints, (GHRFunc) trw_layer_waypoint_find_uuid, &udataU );
+  void ** wpf = (void **) g_hash_table_find ( vtl->waypoints, (GHRFunc) trw_layer_waypoint_find_uuid, &udataU );
 
   if ( wpf && udataU.uuid ) {
     GtkTreeIter *it = (GtkTreeIter *) g_hash_table_lookup ( vtl->waypoints_iters, udataU.uuid );
@@ -5161,7 +5161,7 @@ void trw_layer_waypoint_reset_icon ( VikTrwLayer *vtl, Waypoint * wp)
   udataU.uuid = NULL;
 
   // Need key of it for treeview update
-  void * wpf = g_hash_table_find ( vtl->waypoints, (GHRFunc) trw_layer_waypoint_find_uuid, &udataU );
+  void ** wpf = (void **) g_hash_table_find ( vtl->waypoints, (GHRFunc) trw_layer_waypoint_find_uuid, &udataU );
 
   if ( wpf && udataU.uuid ) {
     GtkTreeIter *it = (GtkTreeIter *) g_hash_table_lookup ( vtl->waypoints_iters, udataU.uuid );
@@ -5240,11 +5240,11 @@ void trw_layer_update_treeview ( VikTrwLayer *vtl, Track * trk)
   udata.trk  = trk;
   udata.uuid = NULL;
 
-  void * trkf = NULL;
+  void ** trkf = NULL;
   if ( trk->is_route )
-    trkf = g_hash_table_find ( vtl->routes, (GHRFunc) trw_layer_track_find_uuid, &udata );
+    trkf = (void **) g_hash_table_find ( vtl->routes, (GHRFunc) trw_layer_track_find_uuid, &udata );
   else
-    trkf = g_hash_table_find ( vtl->tracks, (GHRFunc) trw_layer_track_find_uuid, &udata );
+    trkf = (void **) g_hash_table_find ( vtl->tracks, (GHRFunc) trw_layer_track_find_uuid, &udata );
 
   if ( trkf && udata.uuid ) {
 
@@ -5273,7 +5273,7 @@ void trw_layer_update_treeview ( VikTrwLayer *vtl, Track * trk)
    Parameter 2 -> VikLayer
    Parameter 3 -> VikViewport
 */
-static void goto_coord ( void * vlp, void * vl, void * vvp, const VikCoord *coord )
+static void goto_coord ( void ** vlp, void * vl, void * vvp, const VikCoord *coord )
 {
   if ( vlp ) {
     vik_layers_panel_get_viewport (VIK_LAYERS_PANEL(vlp))->port.set_center_coord(coord, true );
@@ -5294,7 +5294,7 @@ static void trw_layer_goto_track_startpoint ( menu_array_sublayer values )
   Track * trk = trw_layer_get_track_helper(values, vtl);
 
   if ( trk && trk->trackpoints )
-    goto_coord ( values[MA_VLP], vtl, values[MA_VVP], &(trk->get_tp_first()->coord) );
+	  goto_coord ( (void **) values[MA_VLP], vtl, values[MA_VVP], &(trk->get_tp_first()->coord) );
 }
 
 static void trw_layer_goto_track_center ( menu_array_sublayer values )
@@ -5310,7 +5310,7 @@ static void trw_layer_goto_track_center ( menu_array_sublayer values )
     average.lat = (maxmin[0].lat+maxmin[1].lat)/2;
     average.lon = (maxmin[0].lon+maxmin[1].lon)/2;
     vik_coord_load_from_latlon ( &coord, vtl->coord_mode, &average );
-    goto_coord ( values[MA_VLP], vtl, values[MA_VVP], &coord);
+    goto_coord ( (void **) values[MA_VLP], vtl, values[MA_VVP], &coord);
   }
 }
 
@@ -5391,7 +5391,7 @@ static void trw_layer_extend_track_end ( menu_array_sublayer values )
   vik_window_enable_layer_tool ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(vtl)), VIK_LAYER_TRW, trk->is_route ? TOOL_CREATE_ROUTE : TOOL_CREATE_TRACK);
 
   if (trk->trackpoints)
-    goto_coord ( values[MA_VLP], vtl, values[MA_VVP], &(trk->get_tp_last()->coord) );
+	  goto_coord ( (void **) values[MA_VLP], vtl, values[MA_VVP], &(trk->get_tp_last()->coord) );
 }
 
 /**
@@ -5409,7 +5409,7 @@ static void trw_layer_extend_track_end_route_finder ( menu_array_sublayer values
   vtl->route_finder_started = true;
 
   if (trk->trackpoints)
-      goto_coord ( values[MA_VLP], vtl, values[MA_VVP], &trk->get_tp_last()->coord );
+	  goto_coord ( (void **) values[MA_VLP], vtl, values[MA_VVP], &trk->get_tp_last()->coord );
 }
 
 /**
@@ -5583,7 +5583,7 @@ static void trw_layer_goto_track_endpoint ( menu_array_sublayer values )
     return;
   if ( !trk->trackpoints )
     return;
-  goto_coord ( values[MA_VLP], vtl, values[MA_VVP], &(trk->get_tp_last()->coord));
+  goto_coord ( (void **) values[MA_VLP], vtl, values[MA_VVP], &(trk->get_tp_last()->coord));
 }
 
 static void trw_layer_goto_track_max_speed ( menu_array_sublayer values )
@@ -5597,7 +5597,7 @@ static void trw_layer_goto_track_max_speed ( menu_array_sublayer values )
   Trackpoint * vtp = trk->get_tp_by_max_speed();
   if ( !vtp )
     return;
-  goto_coord ( values[MA_VLP], vtl, values[MA_VVP], &(vtp->coord));
+  goto_coord ( (void **) values[MA_VLP], vtl, values[MA_VVP], &(vtp->coord));
 }
 
 static void trw_layer_goto_track_max_alt ( menu_array_sublayer values )
@@ -5611,7 +5611,7 @@ static void trw_layer_goto_track_max_alt ( menu_array_sublayer values )
   Trackpoint* vtp = trk->get_tp_by_max_alt();
   if ( !vtp )
     return;
-  goto_coord ( values[MA_VLP], vtl, values[MA_VVP], &(vtp->coord));
+  goto_coord ( (void **) values[MA_VLP], vtl, values[MA_VVP], &(vtp->coord));
 }
 
 static void trw_layer_goto_track_min_alt ( menu_array_sublayer values )
@@ -5625,7 +5625,7 @@ static void trw_layer_goto_track_min_alt ( menu_array_sublayer values )
   Trackpoint* vtp = trk->get_tp_by_min_alt();
   if ( !vtp )
     return;
-  goto_coord ( values[MA_VLP], vtl, values[MA_VVP], &(vtp->coord));
+  goto_coord ( (void **) values[MA_VLP], vtl, values[MA_VVP], &(vtp->coord));
 }
 
 /*
@@ -5789,8 +5789,8 @@ static void find_nearby_tracks_by_time (void * key, void * value, void * user_da
 {
   Track *trk = ((Track *) value);
 
-  GList **nearby_tracks = (GList **) ((unsigned long *) user_data)[0];
-  Track *orig_trk = ((Track *) ((unsigned long *) user_data)[1]);
+  GList **nearby_tracks = (GList **) ((void **) user_data)[0];
+  Track *orig_trk = ((Track *) ((void **) user_data)[1]);
 
   if ( !orig_trk || !orig_trk->trackpoints )
     return;
@@ -6281,11 +6281,11 @@ static void trw_layer_split_at_selected_trackpoint ( VikTrwLayer *vtl, int subty
       udata.uuid = NULL;
 
       // Also need id of newly created track
-      void * trkf;
+      void ** trkf;
       if ( tr->is_route )
-         trkf = g_hash_table_find ( vtl->routes, (GHRFunc) trw_layer_track_find_uuid, &udata );
+         trkf = (void **) g_hash_table_find ( vtl->routes, (GHRFunc) trw_layer_track_find_uuid, &udata );
       else
-         trkf = g_hash_table_find ( vtl->tracks, (GHRFunc) trw_layer_track_find_uuid, &udata );
+         trkf = (void **) g_hash_table_find ( vtl->tracks, (GHRFunc) trw_layer_track_find_uuid, &udata );
 
       if ( trkf && udata.uuid )
         vtl->current_tp_id = udata.uuid;
@@ -6335,7 +6335,7 @@ static void trw_layer_split_by_timestamp ( menu_array_sublayer values )
       if ( a_dialog_yes_or_no ( VIK_GTK_WINDOW_FROM_LAYER(vtl),
                                 _("Can not split track due to trackpoints not ordered in time - such as at %s.\n\nGoto this trackpoint?"),
                                 tmp_str ) ) {
-        goto_coord ( values[MA_VLP], vtl, values[MA_VVP], &(((Trackpoint *) iter->data)->coord) );
+        goto_coord ( (void **) values[MA_VLP], vtl, values[MA_VVP], &(((Trackpoint *) iter->data)->coord) );
       }
       return;
     }
@@ -6981,7 +6981,7 @@ static void vik_trw_layer_uniquify_tracks ( VikTrwLayer *vtl, VikLayersPanel *vl
     udataU.uuid = NULL;
 
     // Need want key of it for treeview update
-    void * trkf = g_hash_table_find ( track_table, (GHRFunc) trw_layer_track_find_uuid, &udataU );
+    void ** trkf = (void **) g_hash_table_find ( track_table, (GHRFunc) trw_layer_track_find_uuid, &udataU );
 
     if ( trkf && udataU.uuid ) {
 
@@ -7607,7 +7607,7 @@ static void trw_layer_goto_waypoint ( menu_array_sublayer values )
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
   Waypoint * wp = (Waypoint *) g_hash_table_lookup ( vtl->waypoints, values[MA_SUBLAYER_ID] );
   if ( wp )
-    goto_coord ( values[MA_VLP], vtl, values[MA_VVP], &(wp->coord) );
+    goto_coord ( (void **) values[MA_VLP], vtl, values[MA_VVP], &(wp->coord) );
 }
 
 static void trw_layer_waypoint_gc_webpage ( menu_array_sublayer values )
@@ -8690,6 +8690,7 @@ static void trw_layer_insert_tp_beside_current_tp ( VikTrwLayer *vtl, bool befor
     tp_other = ((Trackpoint *) vtl->current_tpl->next->data);
   }
 
+  // kamil
   // Use current and other trackpoints to form a new track point which is inserted into the tracklist
   if ( tp_other ) {
 
@@ -8956,7 +8957,7 @@ typedef struct {
   int x, y;
   int closest_x, closest_y;
   bool draw_images;
-  void * closest_wp_id;
+  void ** closest_wp_id;
   Waypoint * closest_wp;
   VikViewport *vvp;
 } WPSearchParams;
@@ -8987,7 +8988,7 @@ static void waypoint_search_closest_tp ( void * id, Waypoint * wp, WPSearchParam
 
     if (    x <= params->x + slackx && x >= params->x - slackx
          && y <= params->y + slacky && y >= params->y - slacky ) {
-      params->closest_wp_id = id;
+      params->closest_wp_id = (void **) id;
       params->closest_wp = wp;
       params->closest_x = x;
       params->closest_y = y;
@@ -8997,7 +8998,7 @@ static void waypoint_search_closest_tp ( void * id, Waypoint * wp, WPSearchParam
 	    ((!params->closest_wp) ||        /* was the old waypoint we already found closer than this one? */
 	     abs(x - params->x)+abs(y - params->y) < abs(x - params->closest_x)+abs(y - params->closest_y)))
     {
-      params->closest_wp_id = id;
+      params->closest_wp_id = (void **) id;
       params->closest_wp = wp;
       params->closest_x = x;
       params->closest_y = y;
@@ -9209,7 +9210,7 @@ static bool trw_layer_select_click ( VikTrwLayer *vtl, GdkEventButton *event, Vi
 	   ( vtl->current_wp == wp_params.closest_wp && !vtl->current_wp->image ) ) {
 	// Put into 'move buffer'
 	// NB vvp & vw already set in tet
-	tet->vtl = (void *)vtl;
+	tet->vtl = (void **)vtl;
 	tet->is_waypoint = true;
 
 	marker_begin_move (tet, event->x, event->y);
@@ -9259,7 +9260,7 @@ static bool trw_layer_select_click ( VikTrwLayer *vtl, GdkEventButton *event, Vi
 	   vtl->current_tpl == tp_params.closest_tpl ) {
 	// Put into 'move buffer'
 	// NB vvp & vw already set in tet
-	tet->vtl = (void *)vtl;
+	tet->vtl = (void **)vtl;
 	marker_begin_move (tet, event->x, event->y);
       }
 
@@ -9294,7 +9295,7 @@ static bool trw_layer_select_click ( VikTrwLayer *vtl, GdkEventButton *event, Vi
 	   vtl->current_tpl == tp_params.closest_tpl ) {
 	// Put into 'move buffer'
 	// NB vvp & vw already set in tet
-	tet->vtl = (void *)vtl;
+	tet->vtl = (void **)vtl;
 	marker_begin_move (tet, event->x, event->y);
       }
 
@@ -9351,11 +9352,11 @@ static bool trw_layer_show_selected_viewport_menu ( VikTrwLayer *vtl, GdkEventBu
       udataU.trk  = trk;
       udataU.uuid = NULL;
 
-      void * trkf;
+      void ** trkf;
       if ( trk->is_route )
-        trkf = g_hash_table_find ( vtl->routes, (GHRFunc) trw_layer_track_find_uuid, &udataU );
+        trkf = (void **) g_hash_table_find ( vtl->routes, (GHRFunc) trw_layer_track_find_uuid, &udataU );
       else
-        trkf = g_hash_table_find ( vtl->tracks, (GHRFunc) trw_layer_track_find_uuid, &udataU );
+        trkf = (void **) g_hash_table_find ( vtl->tracks, (GHRFunc) trw_layer_track_find_uuid, &udataU );
 
       if ( trkf && udataU.uuid ) {
 
@@ -9394,7 +9395,7 @@ static bool trw_layer_show_selected_viewport_menu ( VikTrwLayer *vtl, GdkEventBu
       udata.wp   = waypoint;
       udata.uuid = NULL;
 
-      void * wpf = g_hash_table_find ( vtl->waypoints, (GHRFunc) trw_layer_waypoint_find_uuid, (void *) &udata );
+      void ** wpf = (void **) g_hash_table_find ( vtl->waypoints, (GHRFunc) trw_layer_waypoint_find_uuid, (void *) &udata );
 
       if ( wpf && udata.uuid ) {
         GtkTreeIter *iter = (GtkTreeIter *) g_hash_table_lookup ( vtl->waypoints_iters, udata.uuid );

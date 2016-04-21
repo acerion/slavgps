@@ -82,11 +82,11 @@ void vik_window_set_selected_trw_layer ( VikWindow *vw, void * vtl ); /* input V
 GHashTable *vik_window_get_selected_tracks ( VikWindow *vw );
 void vik_window_set_selected_tracks ( VikWindow *vw, GHashTable *ght, void * vtl ); /* void * is a VikTrwLayer */
 void * vik_window_get_selected_track ( VikWindow *vw ); /* return type Track */
-void vik_window_set_selected_track ( VikWindow *vw, void *vt, void * vtl ); /* void * is a VikTrwLayer */
+void vik_window_set_selected_track ( VikWindow *vw, void **vt, void * vtl ); /* void * is a VikTrwLayer */
 GHashTable *vik_window_get_selected_waypoints ( VikWindow *vw );
 void vik_window_set_selected_waypoints ( VikWindow *vw, GHashTable *ght, void * vtl ); /* void * is a VikTrwLayer */
 void * vik_window_get_selected_waypoint ( VikWindow *vw ); /* return type VikWaypoint */
-void vik_window_set_selected_waypoint ( VikWindow *vw, void *vwp, void * vtl ); /* input VikWaypoint, VikTrwLayer */
+void vik_window_set_selected_waypoint ( VikWindow *vw, void **vwp, void * vtl ); /* input VikWaypoint, VikTrwLayer */
 /* Return the VikTrwLayer of the selected track(s) or waypoint(s) are in (maybe NULL) */
 void * vik_window_get_containing_trw_layer ( VikWindow *vw );
 /* return indicates if a redraw is necessary */
@@ -100,7 +100,7 @@ void vik_window_clear_busy_cursor ( VikWindow *vw );
 typedef struct {
   VikWindow *vw;
   VikViewport *vvp;
-  void *vtl; // VikTrwlayer
+  void **vtl; // VikTrwlayer
   bool holding;
   bool moving;
   bool is_waypoint; // otherwise a track

@@ -1358,12 +1358,12 @@ void Viewport::draw_string(GdkFont *font, GdkGC *gc, int x1, int y1, const char 
 }
 
 void Viewport::draw_pixbuf(GdkPixbuf *pixbuf, int src_x, int src_y,
-			   int dest_x, int dest_y, int w, int h)
+			   int dest_x, int dest_y, int region_width, int region_height)
 {
 	gdk_draw_pixbuf(this->scr_buffer,
 			NULL,
 			pixbuf,
-			src_x, src_y, dest_x, dest_y, w, h,
+			src_x, src_y, dest_x, dest_y, region_width, region_height,
 			GDK_RGB_DITHER_NONE, 0, 0);
 }
 

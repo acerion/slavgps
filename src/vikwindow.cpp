@@ -4854,7 +4854,7 @@ void * vik_window_get_selected_track ( VikWindow *vw )
   return vw->selected_track;
 }
 
-void vik_window_set_selected_track ( VikWindow *vw, void * vt, void * vtl )
+void vik_window_set_selected_track ( VikWindow *vw, void ** vt, void * vtl )
 {
   vw->selected_track = vt;
   vw->containing_vtl = vtl;
@@ -4888,7 +4888,7 @@ void * vik_window_get_selected_waypoint ( VikWindow *vw )
   return vw->selected_waypoint;
 }
 
-void vik_window_set_selected_waypoint ( VikWindow *vw, void * vwp, void * vtl )
+void vik_window_set_selected_waypoint ( VikWindow *vw, void ** vwp, void * vtl )
 {
   vw->selected_waypoint = vwp;
   vw->containing_vtl    = vtl;

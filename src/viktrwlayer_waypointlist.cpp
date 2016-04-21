@@ -415,8 +415,8 @@ static bool trw_layer_waypoint_menu_popup ( GtkWidget *tree_view,
 	udataU.wp   = wp;
 	udataU.uuid = NULL;
 
-	void * wptf;
-	wptf = g_hash_table_find ( vik_trw_layer_get_waypoints(vtl), (GHRFunc) trw_layer_waypoint_find_uuid, &udataU );
+	void ** wptf;
+	wptf = (void **) g_hash_table_find ( vik_trw_layer_get_waypoints(vtl), (GHRFunc) trw_layer_waypoint_find_uuid, &udataU );
 
 	if ( wptf && udataU.uuid ) {
 		VikViewport *vvp = vik_window_viewport((VikWindow *)(VIK_GTK_WINDOW_FROM_LAYER(vtl)));
