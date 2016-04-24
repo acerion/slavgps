@@ -138,13 +138,11 @@ bool MapSourceSlippy::supports_download_only_new()
 bool MapSourceSlippy::coord_to_mapcoord(const VikCoord * src, double xzoom, double yzoom, MapCoord * dest)
 {
 	bool result = map_utils_vikcoord_to_iTMS(src, xzoom, yzoom, dest);
-	fprintf(stderr, "MapSourceSlippy coord_to_mapcoord() returns %d\n", result);
 	return result;
 }
 
 void MapSourceSlippy::mapcoord_to_center_coord(MapCoord *src, VikCoord *dest)
 {
-	fprintf(stderr, "MapSourceSlippy::mapcoord_to_center_coord\n");
 	map_utils_iTMS_to_center_vikcoord(src, dest);
 }
 
@@ -161,6 +159,7 @@ char * MapSourceSlippy::get_server_path(MapCoord *src)
 
 DownloadResult_t MapSourceSlippy::download(MapCoord * src, const char * dest_fn, void * handle)
 {
-	fprintf(stderr, "MapSourceSlippy download called, %s, %s\n", get_server_hostname(), get_server_path(src));
-	return a_http_download_get_url(get_server_hostname(), get_server_path(src), dest_fn, &download_options, handle);
+	DownloadResult_t result = a_http_download_get_url(get_server_hostname(), get_server_path(src), dest_fn, &download_options, handle);
+	fprintf(stderr, "MapSourceSlippy::download(%s, %s) -> %d\n", get_server_hostname(), get_server_path(src), result);
+	return result;
 }
