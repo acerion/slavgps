@@ -676,7 +676,7 @@ static void render ( VikMapnikLayer *vml, VikCoord *ul, VikCoord *br, MapCoord *
 	// NB Mapnik can apply alpha, but use our own function for now
 	if ( vml->alpha < 255 )
 		pixbuf = ui_pixbuf_scale_alpha ( pixbuf, vml->alpha );
-	a_mapcache_add ( pixbuf, (mapcache_extra_t){ tt }, ulm->x, ulm->y, ulm->z, MAP_ID_MAPNIK_RENDER, ulm->scale, vml->alpha, 0.0, 0.0, vml->filename_xml );
+	a_mapcache_add ( pixbuf, (mapcache_extra_t){ tt }, ulm, MAP_ID_MAPNIK_RENDER, vml->alpha, 0.0, 0.0, vml->filename_xml );
 	g_object_unref(pixbuf);
 }
 
@@ -780,7 +780,7 @@ static GdkPixbuf *load_pixbuf ( VikMapnikLayer *vml, MapCoord *ulm, MapCoord *br
 		else {
 			if ( vml->alpha < 255 )
 				pixbuf = ui_pixbuf_set_alpha ( pixbuf, vml->alpha );
-			a_mapcache_add ( pixbuf, (mapcache_extra_t) { -42.0 }, ulm->x, ulm->y, ulm->z, MAP_ID_MAPNIK_RENDER, ulm->scale, vml->alpha, 0.0, 0.0, vml->filename_xml );
+			a_mapcache_add ( pixbuf, (mapcache_extra_t) { -42.0 }, ulm, MAP_ID_MAPNIK_RENDER, vml->alpha, 0.0, 0.0, vml->filename_xml );
 		}
 		// If file is too old mark for rerendering
 		if ( planet_import_time < gsb.st_mtime ) {
@@ -799,14 +799,16 @@ static GdkPixbuf *load_pixbuf ( VikMapnikLayer *vml, MapCoord *ulm, MapCoord *br
 static GdkPixbuf *get_pixbuf ( VikMapnikLayer *vml, MapCoord *ulm, MapCoord *brm )
 {
 	VikCoord ul; VikCoord br;
-	GdkPixbuf *pixbuf = NULL;
 
 	map_utils_iTMS_to_vikcoord (ulm, &ul);
 	map_utils_iTMS_to_vikcoord (brm, &br);
 
-	pixbuf = a_mapcache_get ( ulm->x, ulm->y, ulm->z, MAP_ID_MAPNIK_RENDER, ulm->scale, vml->alpha, 0.0, 0.0, vml->filename_xml );
+	GdkPixbuf * pixbuf = a_mapcache_get(ulm, MAP_ID_MAPNIK_RENDER, vml->alpha, 0.0, 0.0, vml->filename_xml );
+	if (pixbuf) {
+		fprintf(stderr, "MapnikLayer: MAP CACHE HIT\n");
+	} else {
+		fprintf(stderr, "MapnikLayer: MAP CACHE MISS\n");
 
-	if ( ! pixbuf ) {
 		bool rerender = false;
 		if ( vml->use_file_cache && vml->file_cache_dir )
 			pixbuf = load_pixbuf ( vml, ulm, brm, &rerender );
@@ -1085,7 +1087,7 @@ static void mapnik_layer_tile_info ( VikMapnikLayer *vml )
 	// Requested position to map coord
 	map_utils_vikcoord_to_iTMS ( &vml->rerender_ul, vml->rerender_zoom, vml->rerender_zoom, &ulm );
 
-	mapcache_extra_t extra = a_mapcache_get_extra ( ulm.x, ulm.y, ulm.z, MAP_ID_MAPNIK_RENDER, ulm.scale, vml->alpha, 0.0, 0.0, vml->filename_xml );
+	mapcache_extra_t extra = a_mapcache_get_extra ( &ulm, MAP_ID_MAPNIK_RENDER, vml->alpha, 0.0, 0.0, vml->filename_xml );
 
 	char *filename = get_filename ( vml->file_cache_dir, ulm.x, ulm.y, ulm.scale );
 	char *filemsg = NULL;
