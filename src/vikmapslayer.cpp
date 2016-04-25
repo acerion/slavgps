@@ -92,10 +92,10 @@ static std::deque<MapSource *> map_sources;
 
 
 /* List of label for each map type */
-static char **params_maptypes = NULL;
+static char ** map_type_labels = NULL;
 
-/* Corresponding IDS. (Cf. field uniq_id in VikMapsLayer struct) */
-static unsigned int *params_maptypes_ids = NULL;
+/* Corresponding IDs. (Cf. field map_type in MapSource class) */
+static MapTypeID * map_type_ids = NULL;
 
 /******** MAPZOOMS *********/
 
@@ -124,7 +124,7 @@ static void * maps_layer_download_create (VikWindow *vw, VikViewport *vvp);
 static void maps_layer_set_cache_dir (VikMapsLayer *vml, const char *dir);
 static void start_download_thread(VikMapsLayer *vml, Viewport * viewport, const VikCoord *ul, const VikCoord *br, int redownload_mode);
 static void maps_layer_add_menu_items (VikMapsLayer *vml, GtkMenu *menu, VikLayersPanel *vlp);
-static unsigned int map_uniq_id_to_index (unsigned int uniq_id);
+static int map_type_to_map_index(MapTypeID map_type);
 
 
 static VikLayerParamScale params_scales[] = {
@@ -158,7 +158,7 @@ static VikMapsCacheLayout cache_layout_default_value = VIK_MAPS_CACHE_LAYOUT_VIK
 static VikLayerParamData cache_layout_default (void) { return VIK_LPD_UINT (cache_layout_default_value); }
 
 VikLayerParam maps_layer_params[] = {
-	// NB mode => id - But can't break file format just to rename something better
+	// NB mode => map source type id - But can't break file format just to rename something better
 	{ VIK_LAYER_MAPS, "mode",           VIK_LAYER_PARAM_UINT,    VIK_LAYER_GROUP_NONE, N_("Map Type:"),                            VIK_LAYER_WIDGET_COMBOBOX,    NULL,                               NULL, NULL, id_default, NULL, NULL },
 	{ VIK_LAYER_MAPS, "directory",      VIK_LAYER_PARAM_STRING,  VIK_LAYER_GROUP_NONE, N_("Maps Directory:"),                      VIK_LAYER_WIDGET_FOLDERENTRY, NULL,                               NULL, NULL, directory_default, NULL, NULL },
 	{ VIK_LAYER_MAPS, "cache_type",     VIK_LAYER_PARAM_UINT,    VIK_LAYER_GROUP_NONE, N_("Cache Layout:"),                        VIK_LAYER_WIDGET_COMBOBOX,    cache_types,                        NULL, N_("This determines the tile storage layout on disk"), cache_layout_default, NULL, NULL },
@@ -275,7 +275,7 @@ VikLayerInterface vik_maps_layer_interface = {
 
 struct _VikMapsLayer {
 	VikLayer vl;
-	unsigned int maptype;
+	int map_index;
 	char *cache_dir;
 	VikMapsCacheLayout cache_layout;
 	uint8_t alpha;
@@ -353,21 +353,21 @@ void maps_layer_init ()
 /******** MAPS LAYER TYPES **************/
 /****************************************/
 
-void _add_map_source (uint16_t id, const char *label, MapSource *map)
+void _add_map_source(MapSource * map, const char * label, MapTypeID map_type)
 {
 	size_t len = 0;
-	if (params_maptypes) {
-		len = g_strv_length (params_maptypes);
+	if (map_type_labels) {
+		len = g_strv_length(map_type_labels);
 	}
 	/* Add the label */
-	params_maptypes = (char **) g_realloc (params_maptypes, (len+2)*sizeof(char*));
-	params_maptypes[len] = g_strdup(label);
-	params_maptypes[len+1] = NULL;
+	map_type_labels = (char **) g_realloc(map_type_labels, (len + 2) * sizeof (char *));
+	map_type_labels[len] = g_strdup(label);
+	map_type_labels[len+1] = NULL;
 
 	/* Add the id */
-	params_maptypes_ids = (unsigned int *) g_realloc (params_maptypes_ids, (len+2)*sizeof(unsigned int));
-	params_maptypes_ids[len] = id;
-	params_maptypes_ids[len+1] = 0;
+	map_type_ids = (MapTypeID *) g_realloc(map_type_ids, (len + 2) * sizeof (MapTypeID));
+	map_type_ids[len] = map_type;
+	map_type_ids[len+1] = (MapTypeID) 0; /* Guard. */
 
 	/* We have to clone */
 	MapSource clone = *map; /* FIXME: to clone or not to clone? */
@@ -379,14 +379,14 @@ void _add_map_source (uint16_t id, const char *label, MapSource *map)
 	   GLists.
 	*/
 	/*
-	  memcpy(&maps_layer_params[0].widget_data, &params_maptypes, sizeof(void *));
-	  memcpy(&maps_layer_params[0].extra_widget_data, &params_maptypes_ids, sizeof(void *));
+	  memcpy(&maps_layer_params[0].widget_data, &map_type_labels, sizeof(void *));
+	  memcpy(&maps_layer_params[0].extra_widget_data, &map_type_ids, sizeof(void *));
 	*/
-	maps_layer_params[0].widget_data = params_maptypes;
-	maps_layer_params[0].extra_widget_data = params_maptypes_ids;
+	maps_layer_params[0].widget_data = map_type_labels;
+	maps_layer_params[0].extra_widget_data = map_type_ids;
 }
 
-void _update_map_source (const char *label, MapSource *map, int index)
+void _update_map_source(MapSource *map, const char *label, int index)
 {
 	if (index >= map_sources.size()) {
 		return;
@@ -400,8 +400,8 @@ void _update_map_source (const char *label, MapSource *map, int index)
 
 
 	/* Change previous data */
-	free(params_maptypes[index]);
-	params_maptypes[index] = g_strdup(label);
+	free(map_type_labels[index]);
+	map_type_labels[index] = g_strdup(label);
 }
 
 /**
@@ -411,46 +411,46 @@ void _update_map_source (const char *label, MapSource *map, int index)
  * Register a new MapSource.
  * Override existing one (equality of id).
  */
-void maps_layer_register_map_source (MapSource *map)
+void maps_layer_register_map_source(MapSource * map)
 {
 	assert (map != NULL);
 
-	uint16_t id = map->uniq_id;
-	const char *label = map->get_label();
-	assert (label != NULL);
+	MapTypeID map_type = map->map_type;
+	const char * label = map->get_label();
+	assert (label);
 
-	int previous = map_uniq_id_to_index (id);
+	int previous = map_type_to_map_index(map_type);
 	if (previous != map_sources.size()) {
-		_update_map_source (label, map, previous);
+		_update_map_source(map, label, previous);
 	} else {
-		_add_map_source (id, label, map);
+		_add_map_source(map, label, map_type);
 	}
 }
 
-#define MAPS_LAYER_NTH_LABEL(n) (params_maptypes[n])
-#define MAPS_LAYER_NTH_ID(n) (params_maptypes_ids[n])
+#define MAPS_LAYER_NTH_LABEL(n) (map_type_labels[n])
+#define MAPS_LAYER_NTH_ID(n) (map_type_ids[n])
 
 /**
  * vik_maps_layer_get_map_type:
  *
  * Returns the actual map id (rather than the internal type index value)
  */
-unsigned int vik_maps_layer_get_map_type(VikMapsLayer *vml)
+MapTypeID vik_maps_layer_get_map_type(VikMapsLayer *vml)
 {
-	return MAPS_LAYER_NTH_ID(vml->maptype);
+	return MAPS_LAYER_NTH_ID(vml->map_index);
 }
 
 /**
  * vik_maps_layer_set_map_type:
  *
  */
-void vik_maps_layer_set_map_type(VikMapsLayer *vml, unsigned int map_type)
+void vik_maps_layer_set_map_type(VikMapsLayer *vml, MapTypeID map_type)
 {
-	int maptype = map_uniq_id_to_index(map_type);
-	if (maptype == map_sources.size()) {
+	int map_index = map_type_to_map_index(map_type);
+	if (map_index == map_sources.size()) {
 		fprintf(stderr, _("WARNING: Unknown map type\n"));
 	} else {
-		vml->maptype = maptype;
+		vml->map_index = map_index;
 	}
 }
 
@@ -458,19 +458,19 @@ void vik_maps_layer_set_map_type(VikMapsLayer *vml, unsigned int map_type)
  * vik_maps_layer_get_default_map_type:
  *
  */
-unsigned int vik_maps_layer_get_default_map_type ()
+MapTypeID vik_maps_layer_get_default_map_type()
 {
 	VikLayerInterface *vli = vik_layer_get_interface (VIK_LAYER_MAPS);
 	VikLayerParamData vlpd = a_layer_defaults_get (vli->fixed_layer_name, "mode", VIK_LAYER_PARAM_UINT);
 	if (vlpd.u == 0) {
 		vlpd = id_default();
 	}
-	return vlpd.u;
+	return (MapTypeID) vlpd.u;
 }
 
 char *vik_maps_layer_get_map_label(VikMapsLayer *vml)
 {
-	return strdup(MAPS_LAYER_NTH_LABEL(vml->maptype));
+	return strdup(MAPS_LAYER_NTH_LABEL(vml->map_index));
 }
 
 /****************************************/
@@ -607,16 +607,16 @@ GType vik_maps_layer_get_type ()
 /************** PARAMETERS **************/
 /****************************************/
 
-static unsigned int map_index_to_uniq_id (uint16_t index)
+static MapTypeID map_index_to_map_type(int index)
 {
 	assert (index < map_sources.size());
-	return map_sources[index]->uniq_id;
+	return map_sources[index]->map_type;
 }
 
-static unsigned int map_uniq_id_to_index (unsigned int uniq_id)
+static int map_type_to_map_index(MapTypeID map_type)
 {
 	for (int i = 0; i < map_sources.size(); i++) {
-		if (map_sources[i]->uniq_id == uniq_id) {
+		if (map_sources[i]->map_type == map_type) {
 			return i;
 		}
 	}
@@ -652,17 +652,17 @@ static bool maps_layer_set_param (VikMapsLayer *vml, uint16_t id, VikLayerParamD
 		break;
 	case PARAM_MAPTYPE:
 		{
-			int maptype = map_uniq_id_to_index(data.u);
-			if (maptype == map_sources.size()) {
+			int map_index = map_type_to_map_index((MapTypeID) data.u);
+			if (map_index == map_sources.size()) {
 				fprintf(stderr, _("WARNING: Unknown map type\n"));
 			} else {
-				vml->maptype = maptype;
+				vml->map_index = map_index;
 
 				// When loading from a file don't need the license reminder - ensure it's saved into the 'seen' list
 				if (is_file_operation) {
 					a_settings_set_integer_list_containing (VIK_SETTINGS_MAP_LICENSE_SHOWN, data.u);
 				} else {
-					MapSource *map = map_sources[vml->maptype];
+					MapSource *map = map_sources[vml->map_index];
 					if (map->get_license() != NULL) {
 						// Check if licence for this map type has been shown before
 						if (! a_settings_get_integer_list_contains (VIK_SETTINGS_MAP_LICENSE_SHOWN, data.u)) {
@@ -738,7 +738,7 @@ static VikLayerParamData maps_layer_get_param (VikMapsLayer *vml, uint16_t id, b
 		rv.s = vml->filename;
 		break;
 	case PARAM_MAPTYPE:
-		rv.u = map_index_to_uniq_id (vml->maptype);
+		rv.u = map_index_to_map_type(vml->map_index);
 		break;
 	case PARAM_ALPHA:
 		rv.u = vml->alpha;
@@ -760,7 +760,7 @@ static VikLayerParamData maps_layer_get_param (VikMapsLayer *vml, uint16_t id, b
 static void maps_layer_change_param (GtkWidget *widget, ui_change_values values)
 {
 	switch (KPOINTER_TO_INT(values[UI_CHG_PARAM_ID])) {
-		// Alter sensitivity of download option widgets according to the maptype setting.
+		// Alter sensitivity of download option widgets according to the map_index setting.
 	case PARAM_MAPTYPE:
 		{
 			// Get new value
@@ -887,7 +887,7 @@ static void maps_layer_free (VikMapsLayer *vml)
 	vml->filename = NULL;
 
 #ifdef HAVE_SQLITE3_H
-	MapSource *map = map_sources[vml->maptype];
+	MapSource * map = map_sources[vml->map_index];
 	if (map->is_mbtiles()) {
 		if (vml->mbtiles) {
 			int ans = sqlite3_close (vml->mbtiles);
@@ -903,7 +903,7 @@ static void maps_layer_free (VikMapsLayer *vml)
 static void maps_layer_post_read (VikLayer *vl, VikViewport *vp, bool from_file)
 {
 	VikMapsLayer *vml = VIK_MAPS_LAYER(vl);
-	MapSource *map = map_sources[vml->maptype];
+	MapSource * map = map_sources[vml->map_index];
 
 	if (!from_file) {
 		/* If this method is not called in file reading context
@@ -941,7 +941,7 @@ static void maps_layer_post_read (VikLayer *vl, VikViewport *vp, bool from_file)
 #endif
 
 	// If the on Disk OSM Tile Layout type
-	if (map->uniq_id == MAP_ID_OSM_ON_DISK) {
+	if (map->map_type == MAP_ID_OSM_ON_DISK) {
 		// Copy the directory into filename
 		//  thus the mapcache look up will be unique when using more than one of these map types
 		free(vml->filename);
@@ -1184,15 +1184,15 @@ static void get_cache_filename(const char *cache_dir,
  * Caller has to decrease reference counter of returned
  * GdkPixbuf, when buffer is no longer needed.
  */
-static GdkPixbuf * get_pixbuf(VikMapsLayer *vml, uint16_t id, const char* mapname, MapCoord *mapcoord, char *filename_buf, int buf_len, double xshrinkfactor, double yshrinkfactor)
+static GdkPixbuf * get_pixbuf(VikMapsLayer *vml, MapTypeID map_type, const char* mapname, MapCoord *mapcoord, char *filename_buf, int buf_len, double xshrinkfactor, double yshrinkfactor)
 {
 	/* get the thing */
-	GdkPixbuf * pixbuf = a_mapcache_get(mapcoord, id, vml->alpha, xshrinkfactor, yshrinkfactor, vml->filename);
+	GdkPixbuf * pixbuf = a_mapcache_get(mapcoord, map_type, vml->alpha, xshrinkfactor, yshrinkfactor, vml->filename);
 	if (pixbuf) {
 		fprintf(stderr, "MapsLayer: MAP CACHE HIT\n");
 	} else {
 		fprintf(stderr, "MapsLayer: MAP CACHE MISS\n");
-		MapSource *map = map_sources[vml->maptype];
+		MapSource * map = map_sources[vml->map_index];
 		if (map->is_direct_file_access()) {
 			// ATM MBTiles must be 'a direct access type'
 			if (map->is_mbtiles()) {
@@ -1200,13 +1200,13 @@ static GdkPixbuf * get_pixbuf(VikMapsLayer *vml, uint16_t id, const char* mapnam
 			} else if (map->is_osm_meta_tiles()) {
 				pixbuf = get_pixbuf_from_metatile(vml, mapcoord->x, mapcoord->y, (17 - mapcoord->scale));
 			} else {
-				get_cache_filename(vml->cache_dir, VIK_MAPS_CACHE_LAYOUT_OSM, id, NULL,
+				get_cache_filename(vml->cache_dir, VIK_MAPS_CACHE_LAYOUT_OSM, map_type, NULL,
 					     mapcoord, filename_buf, buf_len,
 					     map->get_file_extension());
 				pixbuf = get_pixbuf_from_file(vml, mapcoord, filename_buf);
 			}
 		} else {
-			get_cache_filename(vml->cache_dir, vml->cache_layout, id, mapname,
+			get_cache_filename(vml->cache_dir, vml->cache_layout, map_type, mapname,
 				     mapcoord, filename_buf, buf_len,
 				     map->get_file_extension());
 			pixbuf = get_pixbuf_from_file(vml, mapcoord, filename_buf);
@@ -1215,7 +1215,7 @@ static GdkPixbuf * get_pixbuf(VikMapsLayer *vml, uint16_t id, const char* mapnam
 		if (pixbuf) {
 			pixbuf = pixbuf_apply_settings(pixbuf, vml, xshrinkfactor, yshrinkfactor);
 
-			a_mapcache_add(pixbuf, (mapcache_extra_t) {0.0}, mapcoord, map_sources[vml->maptype]->uniq_id,
+			a_mapcache_add(pixbuf, (mapcache_extra_t) {0.0}, mapcoord, map_sources[vml->map_index]->map_type,
 				       vml->alpha, xshrinkfactor, yshrinkfactor, vml->filename);
 		}
 	}
@@ -1263,7 +1263,7 @@ static bool should_start_autodownload(VikMapsLayer *vml, Viewport * viewport)
 
 	// Don't attempt to download unsupported zoom levels
 	double xzoom = viewport->get_xmpp();
-	MapSource *map = map_sources[vml->maptype];
+	MapSource *map = map_sources[vml->map_index];
 	uint8_t zl = map_utils_mpp_to_zoom_level (xzoom);
 	if (zl < map->get_zoom_min() || zl > map->get_zoom_max()) {
 		return false;
@@ -1295,7 +1295,7 @@ static bool should_start_autodownload(VikMapsLayer *vml, Viewport * viewport)
  *
  */
 bool try_draw_scale_down(VikMapsLayer *vml, Viewport * viewport, MapCoord ulm, int xx, int yy, int tilesize_x_ceil, int tilesize_y_ceil,
-			 double xshrinkfactor, double yshrinkfactor, unsigned int id, const char *mapname, char *path_buf, unsigned int max_path_len)
+			 double xshrinkfactor, double yshrinkfactor, MapTypeID map_type, const char *mapname, char *path_buf, unsigned int max_path_len)
 {
 	for (int scale_inc = 1; scale_inc < SCALE_INC_DOWN; scale_inc++) {
 		// Try with smaller zooms
@@ -1304,7 +1304,7 @@ bool try_draw_scale_down(VikMapsLayer *vml, Viewport * viewport, MapCoord ulm, i
 		ulm2.x = ulm.x / scale_factor;
 		ulm2.y = ulm.y / scale_factor;
 		ulm2.scale = ulm.scale + scale_inc;
-		GdkPixbuf * pixbuf = get_pixbuf (vml, id, mapname, &ulm2, path_buf, max_path_len, xshrinkfactor * scale_factor, yshrinkfactor * scale_factor);
+		GdkPixbuf * pixbuf = get_pixbuf(vml, map_type, mapname, &ulm2, path_buf, max_path_len, xshrinkfactor * scale_factor, yshrinkfactor * scale_factor);
 		if (pixbuf) {
 			int src_x = (ulm.x % scale_factor) * tilesize_x_ceil;
 			int src_y = (ulm.y % scale_factor) * tilesize_y_ceil;
@@ -1320,7 +1320,7 @@ bool try_draw_scale_down(VikMapsLayer *vml, Viewport * viewport, MapCoord ulm, i
  *
  */
 bool try_draw_scale_up(VikMapsLayer *vml, Viewport * viewport, MapCoord ulm, int xx, int yy, int tilesize_x_ceil, int tilesize_y_ceil,
-		       double xshrinkfactor, double yshrinkfactor, unsigned int id, const char *mapname, char *path_buf, unsigned int max_path_len)
+		       double xshrinkfactor, double yshrinkfactor, MapTypeID map_type, const char *mapname, char *path_buf, unsigned int max_path_len)
 {
 	// Try with bigger zooms
 	for (int scale_dec = 1; scale_dec < SCALE_INC_UP; scale_dec++) {
@@ -1334,7 +1334,7 @@ bool try_draw_scale_up(VikMapsLayer *vml, Viewport * viewport, MapCoord ulm, int
 				MapCoord ulm3 = ulm2;
 				ulm3.x += pict_x;
 				ulm3.y += pict_y;
-				GdkPixbuf * pixbuf = get_pixbuf(vml, id, mapname, &ulm3, path_buf, max_path_len, xshrinkfactor / scale_factor, yshrinkfactor / scale_factor);
+				GdkPixbuf * pixbuf = get_pixbuf(vml, map_type, mapname, &ulm3, path_buf, max_path_len, xshrinkfactor / scale_factor, yshrinkfactor / scale_factor);
 				if (pixbuf) {
 					int src_x = 0;
 					int src_y = 0;
@@ -1381,7 +1381,7 @@ static void maps_layer_draw_section(VikMapsLayer *vml, Viewport * viewport, VikC
 
 	/* coord -> ID */
 	MapCoord ulm, brm;
-	MapSource *map = (MapSource *) map_sources[vml->maptype];
+	MapSource *map = (MapSource *) map_sources[vml->map_index];
 	if (map->coord_to_mapcoord(ul, xzoom, yzoom, &ulm) &&
 	     map->coord_to_mapcoord(br, xzoom, yzoom, &brm)) {
 
@@ -1389,7 +1389,7 @@ static void maps_layer_draw_section(VikMapsLayer *vml, Viewport * viewport, VikC
 		//int x, y;
 		int xmin = MIN(ulm.x, brm.x), xmax = MAX(ulm.x, brm.x);
 		int ymin = MIN(ulm.y, brm.y), ymax = MAX(ulm.y, brm.y);
-		uint16_t id = map->uniq_id;
+		MapTypeID map_type = map->map_type;
 		const char *mapname = map->get_name();
 
 		VikCoord coord;
@@ -1424,7 +1424,7 @@ static void maps_layer_draw_section(VikMapsLayer *vml, Viewport * viewport, VikC
 				for (int y = ymin; y <= ymax; y++) {
 					ulm.x = x;
 					ulm.y = y;
-					pixbuf = get_pixbuf (vml, id, mapname, &ulm, path_buf, max_path_len, xshrinkfactor, yshrinkfactor);
+					pixbuf = get_pixbuf(vml, map_type, mapname, &ulm, path_buf, max_path_len, xshrinkfactor, yshrinkfactor);
 					if (pixbuf) {
 						width = gdk_pixbuf_get_width (pixbuf);
 						height = gdk_pixbuf_get_height (pixbuf);
@@ -1467,11 +1467,11 @@ static void maps_layer_draw_section(VikMapsLayer *vml, Viewport * viewport, VikC
 					ulm.y = y;
 
 					if (existence_only) {
-						if (map_sources[vml->maptype]->is_direct_file_access()) {
-							get_cache_filename(vml->cache_dir, VIK_MAPS_CACHE_LAYOUT_OSM, id, map->get_name(),
+						if (map_sources[vml->map_index]->is_direct_file_access()) {
+							get_cache_filename(vml->cache_dir, VIK_MAPS_CACHE_LAYOUT_OSM, map_type, map->get_name(),
 								     &ulm, path_buf, max_path_len, map->get_file_extension());
 						} else {
-							get_cache_filename(vml->cache_dir, vml->cache_layout, id, map->get_name(),
+							get_cache_filename(vml->cache_dir, vml->cache_layout, map_type, map->get_name(),
 								     &ulm, path_buf, max_path_len, map->get_file_extension());
 						}
 
@@ -1482,7 +1482,7 @@ static void maps_layer_draw_section(VikMapsLayer *vml, Viewport * viewport, VikC
 					} else {
 						// Try correct scale first
 						int scale_factor = 1;
-						pixbuf = get_pixbuf(vml, id, mapname, &ulm, path_buf, max_path_len, xshrinkfactor * scale_factor, yshrinkfactor * scale_factor);
+						pixbuf = get_pixbuf(vml, map_type, mapname, &ulm, path_buf, max_path_len, xshrinkfactor * scale_factor, yshrinkfactor * scale_factor);
 						if (pixbuf) {
 							int src_x = (ulm.x % scale_factor) * tilesize_x_ceil;
 							int src_y = (ulm.y % scale_factor) * tilesize_y_ceil;
@@ -1491,12 +1491,12 @@ static void maps_layer_draw_section(VikMapsLayer *vml, Viewport * viewport, VikC
 						} else {
 							// Otherwise try different scales
 							if (SCALE_SMALLER_ZOOM_FIRST) {
-								if (!try_draw_scale_down(vml, viewport ,ulm,xx,yy,tilesize_x_ceil,tilesize_y_ceil,xshrinkfactor,yshrinkfactor,id,mapname,path_buf,max_path_len)) {
-									try_draw_scale_up(vml, viewport ,ulm,xx,yy,tilesize_x_ceil,tilesize_y_ceil,xshrinkfactor,yshrinkfactor,id,mapname,path_buf,max_path_len);
+								if (!try_draw_scale_down(vml, viewport ,ulm,xx,yy,tilesize_x_ceil,tilesize_y_ceil,xshrinkfactor,yshrinkfactor, map_type, mapname,path_buf,max_path_len)) {
+									try_draw_scale_up(vml, viewport ,ulm,xx,yy,tilesize_x_ceil,tilesize_y_ceil,xshrinkfactor,yshrinkfactor, map_type, mapname,path_buf,max_path_len);
 								}
 							} else {
-								if (!try_draw_scale_up(vml, viewport, ulm,xx,yy,tilesize_x_ceil,tilesize_y_ceil,xshrinkfactor,yshrinkfactor,id,mapname,path_buf,max_path_len)) {
-									try_draw_scale_down(vml,viewport ,ulm,xx,yy,tilesize_x_ceil,tilesize_y_ceil,xshrinkfactor,yshrinkfactor,id,mapname,path_buf,max_path_len);
+								if (!try_draw_scale_up(vml, viewport, ulm,xx,yy,tilesize_x_ceil,tilesize_y_ceil,xshrinkfactor,yshrinkfactor, map_type, mapname,path_buf,max_path_len)) {
+									try_draw_scale_down(vml,viewport ,ulm,xx,yy,tilesize_x_ceil,tilesize_y_ceil,xshrinkfactor,yshrinkfactor, map_type, mapname,path_buf,max_path_len);
 								}
 							}
 						}
@@ -1541,17 +1541,17 @@ static void maps_layer_draw_section(VikMapsLayer *vml, Viewport * viewport, VikC
 static void maps_layer_draw (VikMapsLayer *vml, VikViewport *vvp)
 {
 	Viewport * viewport = &vvp->port;
-	if (map_sources[vml->maptype]->get_drawmode() == viewport->get_drawmode()) {
+	if (map_sources[vml->map_index]->get_drawmode() == viewport->get_drawmode()) {
 		VikCoord ul, br;
 
 		/* Copyright */
 		double level = viewport->get_zoom();
 		LatLonBBox bbox;
 		viewport->get_min_max_lat_lon(&bbox.south, &bbox.north, &bbox.west, &bbox.east);
-		map_sources[vml->maptype]->get_copyright(bbox, level, viewport_add_copyright, viewport->vvp);
+		map_sources[vml->map_index]->get_copyright(bbox, level, viewport_add_copyright, viewport->vvp);
 
 		/* Logo */
-		const GdkPixbuf *logo = map_sources[vml->maptype]->get_logo();
+		const GdkPixbuf *logo = map_sources[vml->map_index]->get_logo();
 		viewport->add_logo(logo);
 
 		/* get corner coords */
@@ -1584,7 +1584,7 @@ typedef struct {
 	VikMapsCacheLayout cache_layout;
 	int x0, y0, xf, yf;
 	MapCoord mapcoord;
-	int maptype;
+	int map_index;
 	int maxlen;
 	int mapstoget;
 	int redownload_mode;
@@ -1638,27 +1638,27 @@ static bool is_in_area(MapSource * map, MapCoord * mc)
 
 static int map_download_thread (MapDownloadInfo *mdi, void * threaddata)
 {
-	void *handle = map_sources[mdi->maptype]->download_handle_init();
+	void *handle = map_sources[mdi->map_index]->download_handle_init();
 	unsigned int donemaps = 0;
 	MapCoord mcoord = mdi->mapcoord;
 
 	for (mcoord.x = mdi->x0; mcoord.x <= mdi->xf; mcoord.x++) {
 		for (mcoord.y = mdi->y0; mcoord.y <= mdi->yf; mcoord.y++) {
 			// Only attempt to download a tile from supported areas
-			if (is_in_area(map_sources[mdi->maptype], &mcoord)) {
+			if (is_in_area(map_sources[mdi->map_index], &mcoord)) {
 				bool remove_mem_cache = false;
 				bool need_download = false;
 
 				get_cache_filename(mdi->cache_dir, mdi->cache_layout,
-					     map_sources[mdi->maptype]->uniq_id,
-					     map_sources[mdi->maptype]->get_name(),
+					     map_sources[mdi->map_index]->map_type,
+					     map_sources[mdi->map_index]->get_name(),
 					     &mcoord, mdi->filename_buf, mdi->maxlen,
-					     map_sources[mdi->maptype]->get_file_extension());
+					     map_sources[mdi->map_index]->get_file_extension());
 
 				donemaps++;
 				int res = a_background_thread_progress (threaddata, ((double)donemaps) / mdi->mapstoget); /* this also calls testcancel */
 				if (res != 0) {
-					map_sources[mdi->maptype]->download_handle_cleanup(handle);
+					map_sources[mdi->map_index]->download_handle_cleanup(handle);
 					return -1;
 				}
 
@@ -1717,7 +1717,7 @@ static int map_download_thread (MapDownloadInfo *mdi, void * threaddata)
 				mdi->mapcoord.y = mcoord.y;
 
 				if (need_download) {
-					DownloadResult_t dr = map_sources[mdi->maptype]->download(&(mdi->mapcoord), mdi->filename_buf, handle);
+					DownloadResult_t dr = map_sources[mdi->map_index]->download(&(mdi->mapcoord), mdi->filename_buf, handle);
 					switch (dr) {
 					case DOWNLOAD_HTTP_ERROR:
 					case DOWNLOAD_CONTENT_ERROR:
@@ -1743,7 +1743,7 @@ static int map_download_thread (MapDownloadInfo *mdi, void * threaddata)
 
 				g_mutex_lock(mdi->mutex);
 				if (remove_mem_cache) {
-					a_mapcache_remove_all_shrinkfactors(&mcoord, map_sources[mdi->maptype]->uniq_id, mdi->vml->filename);
+					a_mapcache_remove_all_shrinkfactors(&mcoord, map_sources[mdi->map_index]->map_type, mdi->vml->filename);
 				}
 
 				if (mdi->refresh_display && mdi->map_layer_alive) {
@@ -1755,7 +1755,7 @@ static int map_download_thread (MapDownloadInfo *mdi, void * threaddata)
 			}
 		}
 	}
-	map_sources[mdi->maptype]->download_handle_cleanup(handle);
+	map_sources[mdi->map_index]->download_handle_cleanup(handle);
 	g_mutex_lock(mdi->mutex);
 	if (mdi->map_layer_alive) {
 		g_object_weak_unref(G_OBJECT(mdi->vml), weak_ref_cb, mdi);
@@ -1768,10 +1768,10 @@ static void mdi_cancel_cleanup (MapDownloadInfo *mdi)
 {
 	if (mdi->mapcoord.x || mdi->mapcoord.y) {
 		get_cache_filename(mdi->cache_dir, mdi->cache_layout,
-				   map_sources[mdi->maptype]->uniq_id,
-				   map_sources[mdi->maptype]->get_name(),
+				   map_sources[mdi->map_index]->map_type,
+				   map_sources[mdi->map_index]->get_name(),
 				   &mdi->mapcoord, mdi->filename_buf, mdi->maxlen,
-				   map_sources[mdi->maptype]->get_file_extension());
+				   map_sources[mdi->map_index]->get_file_extension());
 		if (g_file_test (mdi->filename_buf, G_FILE_TEST_EXISTS) == true) {
 			if (g_remove (mdi->filename_buf)) {
 				fprintf(stderr, "WARNING: Cleanup failed to remove: %s", mdi->filename_buf);
@@ -1785,7 +1785,7 @@ static void start_download_thread(VikMapsLayer *vml, Viewport * viewport, const 
 	double xzoom = vml->xmapzoom ? vml->xmapzoom : viewport->get_xmpp();
 	double yzoom = vml->ymapzoom ? vml->ymapzoom : viewport->get_ympp();
 	MapCoord ulm, brm;
-	MapSource *map = map_sources[vml->maptype];
+	MapSource *map = map_sources[vml->map_index];
 
 	// Don't ever attempt download on direct access
 	if (map->is_direct_file_access()) {
@@ -1808,7 +1808,7 @@ static void start_download_thread(VikMapsLayer *vml, Viewport * viewport, const 
 		mdi->mapcoord.y = 0;
 
 		if (mdi->mapstoget) {
-			char * msg = redownload_mode_message(redownload_mode, mdi->mapstoget, MAPS_LAYER_NTH_LABEL(vml->maptype));
+			char * msg = redownload_mode_message(redownload_mode, mdi->mapstoget, MAPS_LAYER_NTH_LABEL(vml->map_index));
 
 			g_object_weak_ref(G_OBJECT(mdi->vml), weak_ref_cb, mdi);
 			/* launch the thread */
@@ -1830,7 +1830,7 @@ static void start_download_thread(VikMapsLayer *vml, Viewport * viewport, const 
 static void maps_layer_download_section (VikMapsLayer *vml, VikViewport *vvp, VikCoord *ul, VikCoord *br, double zoom, int redownload_mode)
 {
 	MapCoord ulm, brm;
-	MapSource *map = map_sources[vml->maptype];
+	MapSource *map = map_sources[vml->map_index];
 
 	// Don't ever attempt download on direct access
 	if (map->is_direct_file_access()) {
@@ -1852,7 +1852,7 @@ static void maps_layer_download_section (VikMapsLayer *vml, VikViewport *vvp, Vi
 	mdi->mapcoord.y = 0;
 
 	if (mdi->mapstoget) {
-		char * msg = redownload_mode_message(redownload_mode, mdi->mapstoget, MAPS_LAYER_NTH_LABEL(vml->maptype));
+		char * msg = redownload_mode_message(redownload_mode, mdi->mapstoget, MAPS_LAYER_NTH_LABEL(vml->map_index));
 
 		g_object_weak_ref(G_OBJECT(mdi->vml), weak_ref_cb, mdi);
 
@@ -1910,7 +1910,7 @@ typedef struct stat GStatBuf;
  */
 static void maps_layer_tile_info (VikMapsLayer *vml)
 {
-	MapSource *map = map_sources[vml->maptype];
+	MapSource *map = map_sources[vml->map_index];
 
 	double xzoom = vml->xmapzoom ? vml->xmapzoom : vml->redownload_viewport->get_xmpp();
 	double yzoom = vml->ymapzoom ? vml->ymapzoom : vml->redownload_viewport->get_ympp();
@@ -1958,7 +1958,7 @@ static void maps_layer_tile_info (VikMapsLayer *vml)
 			unsigned int max_path_len = strlen(vml->cache_dir) + 40;
 			filename = (char *) malloc(max_path_len * sizeof(char));
 			get_cache_filename(vml->cache_dir, VIK_MAPS_CACHE_LAYOUT_OSM,
-				     map->uniq_id,
+				     map->map_type,
 				     NULL,
 				     &ulm, filename, max_path_len,
 				     map->get_file_extension());
@@ -1968,7 +1968,7 @@ static void maps_layer_tile_info (VikMapsLayer *vml)
 		unsigned int max_path_len = strlen(vml->cache_dir) + 40;
 		filename = (char *) malloc(max_path_len * sizeof(char));
 		get_cache_filename(vml->cache_dir, vml->cache_layout,
-			     map->uniq_id,
+			     map->map_type,
 			     map->get_name(),
 			     &ulm, filename, max_path_len,
 			     map->get_file_extension());
@@ -2075,7 +2075,7 @@ static bool maps_layer_download_click (VikMapsLayer *vml, GdkEventButton *event,
 		return false;
 	}
 
-	MapSource *map = map_sources[vml->maptype];
+	MapSource *map = map_sources[vml->map_index];
 	if (map->get_drawmode() == vvp->port.get_drawmode() &&
 	     map->coord_to_mapcoord(vvp->port.get_center(),
 				    vml->xmapzoom ? vml->xmapzoom : vvp->port.get_xmpp(),
@@ -2112,7 +2112,7 @@ static void download_onscreen_maps(menu_array_values values, int redownload_mode
 	viewport->screen_to_coord(0, 0, &ul);
 	viewport->screen_to_coord(viewport->get_width(), viewport->get_height(), &br);
 
-	MapSource *map = map_sources[vml->maptype];
+	MapSource *map = map_sources[vml->map_index];
 	if (map->get_drawmode() == vp_drawmode &&
 	    map->coord_to_mapcoord(&ul, xzoom, yzoom, &ulm) &&
 	    map->coord_to_mapcoord(&br, xzoom, yzoom, &brm)) {
@@ -2148,7 +2148,7 @@ static void maps_layer_redownload_all_onscreen_maps (menu_array_values values)
 static void maps_layer_about (void * vml_vvp[2])
 {
 	VikMapsLayer *vml = (VikMapsLayer *) vml_vvp[0];
-	MapSource *map = map_sources[vml->maptype];
+	MapSource *map = map_sources[vml->map_index];
 
 	if (map->get_license())
 		maps_show_license (VIK_GTK_WINDOW_FROM_LAYER(vml), map);
@@ -2164,7 +2164,7 @@ static void maps_layer_about (void * vml_vvp[2])
 static int maps_layer_how_many_maps (VikMapsLayer *vml, VikViewport *vvp, VikCoord *ul, VikCoord *br, double zoom, int redownload_mode)
 {
 	MapCoord ulm, brm;
-	MapSource *map = map_sources[vml->maptype];
+	MapSource *map = map_sources[vml->map_index];
 
 	if (map->is_direct_file_access()) {
 		return 0;
@@ -2380,7 +2380,7 @@ static void maps_layer_download_all (menu_array_values values)
 static void maps_layer_flush (menu_array_values values)
 {
 	VikMapsLayer *vml = VIK_MAPS_LAYER(values[MA_VML]);
-	a_mapcache_flush_type(map_sources[vml->maptype]->uniq_id);
+	a_mapcache_flush_type(map_sources[vml->map_index]->map_type);
 }
 
 static void maps_layer_add_menu_items (VikMapsLayer *vml, GtkMenu *menu, VikLayersPanel *vlp)
@@ -2401,7 +2401,7 @@ static void maps_layer_add_menu_items (VikMapsLayer *vml, GtkMenu *menu, VikLaye
 	gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
 	gtk_widget_show (item);
 
-	if (map_sources[vml->maptype]->supports_download_only_new ()) {
+	if (map_sources[vml->map_index]->supports_download_only_new ()) {
 		item = gtk_image_menu_item_new_with_mnemonic (_("Download _New Onscreen Maps"));
 		gtk_image_menu_item_set_image ((GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_REDO, GTK_ICON_SIZE_MENU));
 		g_signal_connect_swapped (G_OBJECT(item), "activate", G_CALLBACK(maps_layer_download_new_onscreen_maps), values);
@@ -2475,7 +2475,7 @@ void mdi_calculate_mapstoget(MapDownloadInfo * mdi, MapSource * map, MapCoord * 
 			// Only count tiles from supported areas
 			if (is_in_area(map, &mcoord)) {
 				get_cache_filename(mdi->cache_dir, mdi->cache_layout,
-					     map->uniq_id,
+					     map->map_type,
 					     map->get_name(),
 					     &mcoord, mdi->filename_buf, mdi->maxlen,
 					     map->get_file_extension());
@@ -2503,7 +2503,7 @@ void mdi_calculate_mapstoget_other(MapDownloadInfo * mdi, MapSource * map, MapCo
 			// Only count tiles from supported areas
 			if (is_in_area(map, &mcoord)) {
 				get_cache_filename(mdi->cache_dir, mdi->cache_layout,
-					     map->uniq_id,
+					     map->map_type,
 					     map->get_name(),
 					     &mcoord, mdi->filename_buf, mdi->maxlen,
 					     map->get_file_extension());
@@ -2548,7 +2548,7 @@ MapDownloadInfo * mdi_new(VikMapsLayer * vml, MapCoord * ulm, MapCoord * brm, bo
 	mdi->cache_dir = g_strdup(vml->cache_dir);
 	mdi->maxlen = strlen (vml->cache_dir) + 40;
 	mdi->filename_buf = (char *) malloc(mdi->maxlen * sizeof(char));
-	mdi->maptype = vml->maptype;
+	mdi->map_index = vml->map_index;
 	mdi->cache_layout = vml->cache_layout;
 
 	/* kamilFIXME: in original code there was an assignment of structures:

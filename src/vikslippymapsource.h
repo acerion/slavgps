@@ -29,6 +29,7 @@
 #include "vikcoord.h"
 #include "mapcoord.h"
 #include "vikmapsource.h"
+#include "map_ids.h"
 
 
 
@@ -44,7 +45,7 @@ namespace SlavGPS {
 	public:
 		MapSourceSlippy();
 		~MapSourceSlippy();
-		MapSourceSlippy(uint16_t id, const char *label, const char *hostname, const char * path);
+		MapSourceSlippy(MapTypeID map_type, const char * label, const char * hostname, const char * path);
 
 		MapSourceSlippy & operator=(MapSourceSlippy map);
 
@@ -57,7 +58,6 @@ namespace SlavGPS {
 
 		DownloadResult_t download(MapCoord * src, const char * dest_fn, void * handle);
 
-		uint16_t get_uniq_id();
 
 		bool is_direct_file_access();
 		bool is_mbtiles();

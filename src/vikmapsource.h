@@ -34,6 +34,7 @@
 #include "mapcoord.h"
 #include "bbox.h"
 #include "download.h"
+#include "map_ids.h"
 
 
 
@@ -62,7 +63,7 @@ namespace SlavGPS {
 		virtual char * get_server_path(MapCoord * src);
 
 		const char * get_name();
-		uint16_t get_uniq_id();
+		MapTypeID get_map_type();
 		const char * get_label();
 		uint16_t get_tilesize_x();
 		uint16_t get_tilesize_y();
@@ -92,7 +93,7 @@ namespace SlavGPS {
 		DownloadFileOptions * get_download_options();
 
 		void set_name(char * name);
-		void set_uniq_id(uint16_t uniq_id);
+		void set_map_type(MapTypeID map_type);
 		void set_label(char * label);
 		void set_tilesize_x(uint16_t tilesize_x);
 		void set_tilesize_y(uint16_t tilesize_y);
@@ -111,7 +112,7 @@ namespace SlavGPS {
 		GdkPixbuf * logo;
 
 		char * name; /* The name of the map that may be used as the file cache directory. */
-		uint16_t uniq_id; /* Id of the tool. */
+		MapTypeID map_type; /* Id of source of map (OSM MapQuest, OSM Transport, BlueMarble, etc.). */
 		char * label; /* The label of the map source. */
 
 		uint16_t tilesize_x; /* The size of the tile (x). */

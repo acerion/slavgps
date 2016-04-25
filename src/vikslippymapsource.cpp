@@ -71,7 +71,7 @@ MapSourceSlippy & MapSourceSlippy::operator=(MapSourceSlippy map)
 	this->logo = NULL; //memcpy(this->logo, map.logo, sizeof (GdkPixbuf)); /* FIXME: implement this. */
 
 	this->set_name(map.name);
-	this->uniq_id = map.uniq_id;
+	this->map_type = map.map_type;
 	this->set_label(map.label);
 	this->tilesize_x = map.tilesize_x;
 	this->tilesize_y = map.tilesize_y;
@@ -101,10 +101,10 @@ MapSourceSlippy & MapSourceSlippy::operator=(MapSourceSlippy map)
         return *this;
 }
 
-MapSourceSlippy::MapSourceSlippy(uint16_t id_, const char * label_, const char * hostname_, const char * path_format_)
+MapSourceSlippy::MapSourceSlippy(MapTypeID map_type_, const char * label_, const char * hostname_, const char * path_format_)
 {
-	uniq_id = id_;
-	fprintf(stderr, "++++++++++ called VikSlippy constructor with id %u / %u\n", id_, uniq_id);
+	map_type = map_type_;
+	fprintf(stderr, "++++++++++ called VikSlippy constructor with id %u / %u\n", map_type_, map_type);
 	label = g_strdup(label_);
 	server_hostname = g_strdup(hostname_);
 	server_path_format = g_strdup(path_format_);

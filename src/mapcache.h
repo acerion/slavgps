@@ -28,7 +28,9 @@
 #include <stdint.h>
 
 #include "mapcoord.h"
+#include "map_ids.h"
 
+using namespace SlavGPS;
 
 #ifdef __cplusplus
 extern "C" {
@@ -40,12 +42,12 @@ typedef struct {
 } mapcache_extra_t;
 
 void a_mapcache_init ();
-void a_mapcache_add ( GdkPixbuf *pixbuf, mapcache_extra_t extra, MapCoord * mapcoord, uint16_t type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const char *name );
-GdkPixbuf * a_mapcache_get ( MapCoord * mapcoord, uint16_t type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const char *name );
-mapcache_extra_t a_mapcache_get_extra ( MapCoord * mapcoord, uint16_t type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const char* name );
-void a_mapcache_remove_all_shrinkfactors ( MapCoord * mapcoord, uint16_t type, const char* name );
+void a_mapcache_add ( GdkPixbuf *pixbuf, mapcache_extra_t extra, MapCoord * mapcoord, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const char *name );
+GdkPixbuf * a_mapcache_get ( MapCoord * mapcoord, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const char *name );
+mapcache_extra_t a_mapcache_get_extra ( MapCoord * mapcoord, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const char* name );
+void a_mapcache_remove_all_shrinkfactors ( MapCoord * mapcoord, MapTypeID map_type, const char* name );
 void a_mapcache_flush ();
-void a_mapcache_flush_type ( uint16_t type );
+void a_mapcache_flush_type(MapTypeID map_type);
 void a_mapcache_uninit ();
 
 int a_mapcache_get_size ();

@@ -57,9 +57,9 @@ MapSourceWmsc::~MapSourceWmsc()
 	fprintf(stderr, "MapSourceWmsc destructor end\n");
 }
 
-MapSourceWmsc::MapSourceWmsc(uint16_t id_, const char * label_, const char * hostname_, const char * url_)
+MapSourceWmsc::MapSourceWmsc(MapTypeID map_type_, const char * label_, const char * hostname_, const char * url_)
 {
-	uniq_id = id_;
+	map_type = map_type_;
 	label = g_strdup(label_);
 	server_hostname = g_strdup(hostname_);
 	server_path_format = g_strdup(url_);

@@ -50,7 +50,7 @@ MapSource::MapSource()
 	logo = NULL;
 
 	name = strdup("Unknown");
-	uniq_id = 0;
+	map_type = MAP_TYPE_ID_INITIAL;
 	label = strdup("<no-set>");
 
 	tilesize_x = 256;
@@ -112,7 +112,7 @@ MapSource & MapSource::operator=(MapSource map)
 	this->logo        = NULL;  //memcpy(this->logo, map.logo, sizeof (GdkPixbuf)); /* FIXME: implement. */
 
 	this->name       = g_strdup(map.name);
-	this->uniq_id    = map.uniq_id;
+	this->map_type   = map.map_type;
 	this->label      = g_strdup(map.label);
 
 	this->tilesize_x = map.tilesize_x;
@@ -152,7 +152,7 @@ MapSource::MapSource(MapSource & map)
 	this->logo        = NULL; //memcpy(this->logo, map.logo, sizeof (GdkPixbuf)); /* FIXME: implement. */
 
 	this->name       = g_strdup(map.name);
-	this->uniq_id    = map.uniq_id;
+	this->map_type   = map.map_type;
 	this->label      = g_strdup(map.label);
 
 	this->tilesize_x = map.tilesize_x;
@@ -191,9 +191,9 @@ void MapSource::set_name(char * name_)
       }
 }
 
-void MapSource::set_uniq_id(uint16_t uniq_id_)
+void MapSource::set_map_type(MapTypeID map_type_)
 {
-	uniq_id = uniq_id_;
+	map_type = map_type_;
 }
 
 void MapSource::set_label(char * label_)
@@ -282,10 +282,10 @@ const char * MapSource::get_name()
 	return name;
 }
 
-uint16_t MapSource::get_uniq_id()
+MapTypeID MapSource::get_map_type()
 {
-	fprintf(stderr, "MapSource get_uniq_id returns %u, '%s'\n", uniq_id, label);
-	return uniq_id;
+	fprintf(stderr, "MapSource get_map_type returns %u, '%s'\n", map_type, label);
+	return map_type;
 }
 
 const char * MapSource::get_label()

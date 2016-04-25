@@ -39,6 +39,7 @@
 #include "vikutils.h"
 #include "util.h"
 #include "toolbar.h"
+#include "map_ids.h"
 
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>
@@ -104,10 +105,10 @@ static int myXErrorHandler(Display *display, XErrorEvent *theEvent)
 static double latitude = 0.0;
 static double longitude = 0.0;
 static int zoom_level_osm = -1;
-static int map_id = -1;
+static MapTypeID map_type_id = MAP_TYPE_ID_INITIAL;
 
 /* Options */
-static GOptionEntry entries[] = 
+static GOptionEntry entries[] =
 {
   { "debug", 'd', 0, G_OPTION_ARG_NONE, &vik_debug, N_("Enable debug output"), NULL },
   { "verbose", 'V', 0, G_OPTION_ARG_NONE, &vik_verbose, N_("Enable verbose output"), NULL },
@@ -115,7 +116,7 @@ static GOptionEntry entries[] =
   { "latitude", 0, 0, G_OPTION_ARG_DOUBLE, &latitude, N_("Latitude in decimal degrees"), NULL },
   { "longitude", 0, 0, G_OPTION_ARG_DOUBLE, &longitude, N_("Longitude in decimal degrees"), NULL },
   { "zoom", 'z', 0, G_OPTION_ARG_INT, &zoom_level_osm, N_("Zoom Level (OSM). Value can be 0 - 22"), NULL },
-  { "map", 'm', 0, G_OPTION_ARG_INT, &map_id, N_("Add a map layer by id value. Use 0 for the default map."), NULL },
+  { "map", 'm', 0, G_OPTION_ARG_INT, &map_type_id, N_("Add a map layer by id value. Use 0 for the default map."), NULL },
   { NULL }
 };
 
@@ -127,8 +128,8 @@ int main( int argc, char *argv[] )
   int i = 0;
   GError *error = NULL;
   bool gui_initialized;
-	
-  bindtextdomain (GETTEXT_PACKAGE, LOCALEDIR);  
+
+  bindtextdomain (GETTEXT_PACKAGE, LOCALEDIR);
   bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
   textdomain (GETTEXT_PACKAGE);
 
@@ -156,7 +157,7 @@ int main( int argc, char *argv[] )
     }
     return EXIT_FAILURE;
   }
-   
+
   if (vik_version)
   {
     g_printf ("%s %s\nCopyright (c) 2003-2008 Evan Battaglia\nCopyright (c) 2008-"THEYEAR" Viking's contributors\n", PACKAGE_NAME, PACKAGE_VERSION);
@@ -256,7 +257,7 @@ int main( int argc, char *argv[] )
 
   vik_window_new_window_finish ( first_window );
 
-  vu_command_line ( first_window, latitude, longitude, zoom_level_osm, map_id );
+  vu_command_line ( first_window, latitude, longitude, zoom_level_osm, map_type_id );
 
   gtk_main ();
   gdk_threads_leave ();

@@ -27,6 +27,7 @@
 #include <stdint.h>
 
 #include "viktrwlayer.h"
+#include "map_ids.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -48,7 +49,7 @@ char* vu_get_tz_at_location ( const VikCoord* vc );
 void vu_setup_lat_lon_tz_lookup ();
 void vu_finalize_lat_lon_tz_lookup ();
 
-void vu_command_line ( VikWindow *vw, double latitude, double longitude, int zoom_osm_level, int map_id );
+void vu_command_line ( VikWindow *vw, double latitude, double longitude, int zoom_osm_level, MapTypeID cmdline_type_id );
 
 void vu_copy_label_menu ( GtkWidget *widget, unsigned int button );
 

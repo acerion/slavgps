@@ -153,15 +153,15 @@ static void list_add_entry ( char *key )
  * Function increments reference counter of pixbuf.
  * Caller may (and should) decrease it's reference.
  */
-void a_mapcache_add ( GdkPixbuf *pixbuf, mapcache_extra_t extra, MapCoord * mapcoord, uint16_t type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const char* name )
+void a_mapcache_add ( GdkPixbuf *pixbuf, mapcache_extra_t extra, MapCoord * mapcoord, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const char* name )
 {
   if ( ! GDK_IS_PIXBUF(pixbuf) ) {
-    fprintf(stderr, "DEBUG: Not caching corrupt pixbuf for maptype %d at %d %d %d %d\n", type, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale );
+    fprintf(stderr, "DEBUG: Not caching corrupt pixbuf for maptype %d at %d %d %d %d\n", map_type, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale );
     return;
   }
 
   unsigned int nn = name ? g_str_hash ( name ) : 0;
-  char *key = g_strdup_printf ( HASHKEY_FORMAT_STRING, type, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale, nn, alpha, xshrinkfactor, yshrinkfactor );
+  char *key = g_strdup_printf ( HASHKEY_FORMAT_STRING, map_type, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale, nn, alpha, xshrinkfactor, yshrinkfactor );
 
   g_mutex_lock(mc_mutex);
   g_object_ref(pixbuf);
@@ -196,11 +196,11 @@ void a_mapcache_add ( GdkPixbuf *pixbuf, mapcache_extra_t extra, MapCoord * mapc
  * Function increases reference counter of pixels buffer in behalf of caller.
  * Caller have to decrease references counter, when buffer is no longer needed.
  */
-GdkPixbuf *a_mapcache_get ( MapCoord * mapcoord, uint16_t type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const char* name )
+GdkPixbuf *a_mapcache_get ( MapCoord * mapcoord, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const char* name )
 {
   static char key[MC_KEY_SIZE];
   unsigned int nn = name ? g_str_hash ( name ) : 0;
-  snprintf( key, sizeof(key), HASHKEY_FORMAT_STRING, type, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale, nn, alpha, xshrinkfactor, yshrinkfactor );
+  snprintf( key, sizeof(key), HASHKEY_FORMAT_STRING, map_type, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale, nn, alpha, xshrinkfactor, yshrinkfactor );
   g_mutex_lock(mc_mutex); /* prevent returning pixbuf when cache is being cleared */
   cache_item_t *ci = (cache_item_t *) g_hash_table_lookup ( cache, key );
   if ( ci ) {
@@ -213,11 +213,11 @@ GdkPixbuf *a_mapcache_get ( MapCoord * mapcoord, uint16_t type, uint8_t alpha, d
   }
 }
 
-mapcache_extra_t a_mapcache_get_extra ( MapCoord * mapcoord, uint16_t type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const char* name )
+mapcache_extra_t a_mapcache_get_extra ( MapCoord * mapcoord, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const char* name )
 {
   static char key[MC_KEY_SIZE];
   unsigned int nn = name ? g_str_hash ( name ) : 0;
-  snprintf( key, sizeof(key), HASHKEY_FORMAT_STRING, type, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale, nn, alpha, xshrinkfactor, yshrinkfactor );
+  snprintf( key, sizeof(key), HASHKEY_FORMAT_STRING, map_type, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale, nn, alpha, xshrinkfactor, yshrinkfactor );
   cache_item_t *ci = (cache_item_t *) g_hash_table_lookup ( cache, key );
   if ( ci )
     return ci->extra;
@@ -274,11 +274,11 @@ static void flush_matching ( char *str )
 /**
  * Appears this is only used when redownloading tiles (i.e. to invalidate old images)
  */
-void a_mapcache_remove_all_shrinkfactors ( MapCoord * mapcoord, uint16_t type, const char* name )
+void a_mapcache_remove_all_shrinkfactors ( MapCoord * mapcoord, MapTypeID map_type, const char* name )
 {
   char key[MC_KEY_SIZE];
   unsigned int nn = name ? g_str_hash ( name ) : 0;
-  snprintf( key, sizeof(key), HASHKEY_FORMAT_STRING_NOSHRINK_NOR_ALPHA, type, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale, nn );
+  snprintf( key, sizeof(key), HASHKEY_FORMAT_STRING_NOSHRINK_NOR_ALPHA, map_type, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale, nn );
   flush_matching ( key );
 }
 
@@ -306,15 +306,15 @@ void a_mapcache_flush ()
 
 /**
  * a_mapcache_flush_type:
- *  @type: Specified map type
+ *  @map_type: Specified map type
  *
  * Just remove cache items for the specified map type
  *  i.e. all related xyz+zoom+alpha+etc...
  */
-void a_mapcache_flush_type ( uint16_t type )
+void a_mapcache_flush_type(MapTypeID map_type)
 {
   char key[MC_KEY_SIZE];
-  snprintf( key, sizeof(key), HASHKEY_FORMAT_STRING_TYPE, type );
+  snprintf( key, sizeof(key), HASHKEY_FORMAT_STRING_TYPE, map_type );
   flush_matching ( key );
 }
 

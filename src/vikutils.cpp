@@ -804,7 +804,7 @@ char* vu_get_time_string ( time_t *time, const char *format, const VikCoord* vc,
  * Values are defaulted in such a manner not to be applied when they haven't been specified
  *
  */
-void vu_command_line ( VikWindow *vw, double latitude, double longitude, int zoom_osm_level, int map_id )
+void vu_command_line ( VikWindow *vw, double latitude, double longitude, int zoom_osm_level, MapTypeID cmdline_type_id )
 {
 	if ( !vw )
 		return;
@@ -826,10 +826,13 @@ void vu_command_line ( VikWindow *vw, double latitude, double longitude, int zoo
 		vvp->port.set_zoom(mpp);
 	}
 
-	if ( map_id >= 0 ) {
-		unsigned int my_map_id = map_id;
-		if ( my_map_id == 0 )
-			my_map_id = vik_maps_layer_get_default_map_type ();
+	if (cmdline_type_id != MAP_TYPE_ID_INITIAL) {
+		/* Some value selected in command line. */
+
+		MapTypeID the_type_id = cmdline_type_id;
+		if (the_type_id == MAP_TYPE_ID_DEFAULT) {
+			the_type_id = vik_maps_layer_get_default_map_type();
+		}
 
 		// Don't add map layer if one already exists
 		GList *vmls = vik_layers_panel_get_all_layers_of_type(vik_window_layers_panel(vw), VIK_LAYER_MAPS, true);
@@ -838,8 +841,8 @@ void vu_command_line ( VikWindow *vw, double latitude, double longitude, int zoo
 
 		for (int i = 0; i < num_maps; i++) {
 			VikMapsLayer *vml = (VikMapsLayer*)(vmls->data);
-			int id = vik_maps_layer_get_map_type(vml);
-			if ( my_map_id == id ) {
+			MapTypeID type_id = vik_maps_layer_get_map_type(vml);
+			if (the_type_id == type_id) {
 				add_map = false;
 				break;
 			}
@@ -848,7 +851,7 @@ void vu_command_line ( VikWindow *vw, double latitude, double longitude, int zoo
 
 		if ( add_map ) {
 			VikMapsLayer *vml = VIK_MAPS_LAYER ( vik_layer_create(VIK_LAYER_MAPS, vvp, false) );
-			vik_maps_layer_set_map_type ( vml, my_map_id );
+			vik_maps_layer_set_map_type(vml, the_type_id);
 			vik_layer_rename ( VIK_LAYER(vml), _("Map") );
 			vik_aggregate_layer_add_layer ( vik_layers_panel_get_top_layer(vik_window_layers_panel(vw)), VIK_LAYER(vml), true );
 			vik_layer_emit_update ( VIK_LAYER(vml) );

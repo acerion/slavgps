@@ -45,7 +45,7 @@ namespace SlavGPS {
 	public:
 		MapSourceWmsc();
 		~MapSourceWmsc();
-		MapSourceWmsc(uint16_t id, const char *label, const char *hostname, const char *url);
+		MapSourceWmsc(MapTypeID map_type, const char *label, const char *hostname, const char *url);
 
 		bool coord_to_mapcoord(const VikCoord * src, double xzoom, double yzoom, MapCoord * dest);
 		void mapcoord_to_center_coord(MapCoord * src, VikCoord * dest);

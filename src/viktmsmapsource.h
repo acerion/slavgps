@@ -29,7 +29,7 @@
 #include "vikcoord.h"
 #include "mapcoord.h"
 #include "vikmapsource.h"
-
+#include "map_ids.h"
 
 
 
@@ -45,7 +45,7 @@ namespace SlavGPS {
 	public:
 
 		MapSourceTms();
-		MapSourceTms(uint16_t id, const char * label_, const char * hostname_, const char * url_);
+		MapSourceTms(MapTypeID map_type, const char * label_, const char * hostname_, const char * url_);
 		~MapSourceTms();
 
 		bool is_direct_file_access();

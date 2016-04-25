@@ -25,6 +25,7 @@
 #include "vikcoord.h"
 #include "mapcoord.h"
 #include "vikslippymapsource.h"
+#include "map_ids.h"
 
 
 
@@ -50,7 +51,7 @@ namespace SlavGPS {
 	class MapSourceBing : public MapSourceSlippy {
 	public:
 		MapSourceBing::MapSourceBing();
-		MapSourceBing::MapSourceBing(uint16_t id_, const char * label_, const char * key_);
+		MapSourceBing::MapSourceBing(MapTypeID map_type_, const char * label_, const char * key_);
 		MapSourceBing::~MapSourceBing();
 
 		void MapSourceBing::get_copyright(LatLonBBox bbox, double zoom, void (*fct)(VikViewport*,const char*), void *data)
