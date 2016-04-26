@@ -402,8 +402,8 @@ static bool tool_extended_route_finder_key_press ( VikTrwLayer *vtl, GdkEventKey
 static void cached_pixbuf_free ( CachedPixbuf *cp );
 static int cached_pixbuf_cmp ( CachedPixbuf *cp, const char *name );
 
-static Trackpoint * closest_tp_in_five_pixel_interval ( VikTrwLayer *vtl, VikViewport *vvp, int x, int y );
-static Waypoint * closest_wp_in_five_pixel_interval ( VikTrwLayer *vtl, VikViewport *vvp, int x, int y );
+static Trackpoint * closest_tp_in_five_pixel_interval(VikTrwLayer * vtl, Viewport * viewport, int x, int y);
+static Waypoint * closest_wp_in_five_pixel_interval(VikTrwLayer * vtl, Viewport * viewport, int x, int y);
 
 static void waypoint_convert ( const void * id, Waypoint * wp, VikCoordMode *dest_mode );
 static void track_convert ( const void * id, Track * trk, VikCoordMode *dest_mode );
@@ -786,6 +786,12 @@ VikLayerInterface vik_trw_layer_interface = {
   (VikLayerFuncSelectRelease)           trw_layer_select_release,
   (VikLayerFuncSelectedViewportMenu)    trw_layer_show_selected_viewport_menu,
 };
+
+
+static int  trw_layer_draw_image(Waypoint * wp, int x, int y, struct DrawingParams * dp);
+static void trw_layer_draw_symbol(Waypoint * wp, int x, int y, struct DrawingParams * dp);
+static void trw_layer_draw_label(Waypoint * wp, int x, int y, struct DrawingParams * dp);
+
 
 static bool have_diary_program = false;
 static char *diary_program = NULL;
@@ -2362,170 +2368,209 @@ static int cached_pixbuf_cmp ( CachedPixbuf *cp, const char *name )
   return strcmp ( cp->image, name );
 }
 
-static void trw_layer_draw_waypoint ( const void * id, Waypoint * wp, struct DrawingParams *dp )
+
+
+
+
+static void trw_layer_draw_waypoint(const void * id, Waypoint * wp, struct DrawingParams * dp)
 {
-  if ( wp->visible )
-  if ( (!dp->one_zone && !dp->lat_lon) || ( ( dp->lat_lon || wp->coord.utm_zone == dp->center->utm_zone ) &&
-             wp->coord.east_west < dp->ce2 && wp->coord.east_west > dp->ce1 &&
-             wp->coord.north_south > dp->cn1 && wp->coord.north_south < dp->cn2 ) )
-  {
-    int x, y;
-    dp->vp->port.coord_to_screen(&(wp->coord), &x, &y );
+	if (!wp->visible) {
+		return;
+	}
 
-    /* if in shrunken_cache, get that. If not, get and add to shrunken_cache */
+	bool cond = (!dp->one_zone && !dp->lat_lon) || ((dp->lat_lon || wp->coord.utm_zone == dp->center->utm_zone) &&
+							 wp->coord.east_west < dp->ce2 && wp->coord.east_west > dp->ce1 &&
+							 wp->coord.north_south > dp->cn1 && wp->coord.north_south < dp->cn2);
 
-    if ( wp->image && dp->vtl->drawimages )
-    {
-      GdkPixbuf *pixbuf = NULL;
-      GList *l;
+	if (!cond) {
+		return;
+	}
 
-      if ( dp->vtl->image_alpha == 0)
-        return;
+	int x, y;
+	dp->vp->port.coord_to_screen(&(wp->coord), &x, &y);
 
-      l = g_list_find_custom ( dp->vtl->image_cache->head, wp->image, (GCompareFunc) cached_pixbuf_cmp );
-      if ( l )
-        pixbuf = ((CachedPixbuf *) l->data)->pixbuf;
-      else
-      {
-        char *image = wp->image;
-        GdkPixbuf *regularthumb = a_thumbnails_get ( wp->image );
-        if ( ! regularthumb )
-        {
-          regularthumb = a_thumbnails_get_default (); /* cache one 'not yet loaded' for all thumbs not loaded */
-          image = "\x12\x00"; /* this shouldn't occur naturally. */
-        }
-        if ( regularthumb )
-        {
-          CachedPixbuf *cp = NULL;
-          cp = (CachedPixbuf *) malloc(sizeof (CachedPixbuf));
-          if ( dp->vtl->image_size == 128 )
-            cp->pixbuf = regularthumb;
-          else
-          {
-            cp->pixbuf = a_thumbnails_scale_pixbuf(regularthumb, dp->vtl->image_size, dp->vtl->image_size);
-            assert ( cp->pixbuf );
-            g_object_unref ( G_OBJECT(regularthumb) );
-          }
-          cp->image = g_strdup( image );
+	/* if in shrunken_cache, get that. If not, get and add to shrunken_cache */
+	if (wp->image && dp->vtl->drawimages)	{
+		if (0 == trw_layer_draw_image(wp, x, y, dp)) {
+			return;
+		}
+	}
 
-          // Apply alpha setting to the image before the pixbuf gets stored in the cache
-          if ( dp->vtl->image_alpha != 255 )
-            cp->pixbuf = ui_pixbuf_set_alpha ( cp->pixbuf, dp->vtl->image_alpha );
+	// Draw appropriate symbol - either symbol image or simple types
+	trw_layer_draw_symbol(wp, x, y, dp);
 
-          /* needed so 'click picture' tool knows how big the pic is; we don't
-           * store it in cp because they may have been freed already. */
-          wp->image_width = gdk_pixbuf_get_width ( cp->pixbuf );
-          wp->image_height = gdk_pixbuf_get_height ( cp->pixbuf );
-
-          g_queue_push_head ( dp->vtl->image_cache, cp );
-          if ( dp->vtl->image_cache->length > dp->vtl->image_cache_size )
-            cached_pixbuf_free ( (CachedPixbuf *) g_queue_pop_tail ( dp->vtl->image_cache ) );
-
-          pixbuf = cp->pixbuf;
-        }
-        else
-        {
-          pixbuf = a_thumbnails_get_default (); /* thumbnail not yet loaded */
-        }
-      }
-      if ( pixbuf )
-      {
-        int w, h;
-        w = gdk_pixbuf_get_width ( pixbuf );
-        h = gdk_pixbuf_get_height ( pixbuf );
-
-        if ( x+(w/2) > 0 && y+(h/2) > 0 && x-(w/2) < dp->width && y-(h/2) < dp->height ) /* always draw within boundaries */
-        {
-          if ( dp->highlight ) {
-            // Highlighted - so draw a little border around the chosen one
-            // single line seems a little weak so draw 2 of them
-            dp->vp->port.draw_rectangle(dp->vp->port.get_gc_highlight(), false,
-                                         x - (w/2) - 1, y - (h/2) - 1, w + 2, h + 2 );
-            dp->vp->port.draw_rectangle(dp->vp->port.get_gc_highlight(), false,
-                                         x - (w/2) - 2, y - (h/2) - 2, w + 4, h + 4 );
-          }
-
-          dp->vp->port.draw_pixbuf(pixbuf, 0, 0, x - (w/2), y - (h/2), w, h );
-        }
-        return; /* if failed to draw picture, default to drawing regular waypoint (below) */
-      }
-    }
-
-    // Draw appropriate symbol - either symbol image or simple types
-    if ( dp->vtl->wp_draw_symbols && wp->symbol && wp->symbol_pixbuf ) {
-      dp->vp->port.draw_pixbuf(wp->symbol_pixbuf, 0, 0, x - gdk_pixbuf_get_width(wp->symbol_pixbuf)/2, y - gdk_pixbuf_get_height(wp->symbol_pixbuf)/2, -1, -1 );
-    }
-    else if ( wp == dp->vtl->current_wp ) {
-      switch ( dp->vtl->wp_symbol ) {
-        case WP_SYMBOL_FILLED_SQUARE:
-		dp->vp->port.draw_rectangle(dp->vtl->waypoint_gc, true, x - (dp->vtl->wp_size), y - (dp->vtl->wp_size), dp->vtl->wp_size*2, dp->vtl->wp_size*2 );
-		break;
-        case WP_SYMBOL_SQUARE:
-		dp->vp->port.draw_rectangle(dp->vtl->waypoint_gc, false, x - (dp->vtl->wp_size), y - (dp->vtl->wp_size), dp->vtl->wp_size*2, dp->vtl->wp_size*2 );
-		break;
-        case WP_SYMBOL_CIRCLE:
-		dp->vp->port.draw_arc(dp->vtl->waypoint_gc, true, x - dp->vtl->wp_size, y - dp->vtl->wp_size, dp->vtl->wp_size, dp->vtl->wp_size, 0, 360*64 );
-		break;
-        case WP_SYMBOL_X:
-		dp->vp->port.draw_line(dp->vtl->waypoint_gc, x - dp->vtl->wp_size*2, y - dp->vtl->wp_size*2, x + dp->vtl->wp_size*2, y + dp->vtl->wp_size*2 );
-		dp->vp->port.draw_line(dp->vtl->waypoint_gc, x - dp->vtl->wp_size*2, y + dp->vtl->wp_size*2, x + dp->vtl->wp_size*2, y - dp->vtl->wp_size*2 );
-        default: break;
-      }
-    }
-    else {
-      switch ( dp->vtl->wp_symbol ) {
-        case WP_SYMBOL_FILLED_SQUARE:
-		dp->vp->port.draw_rectangle(dp->vtl->waypoint_gc, true, x - dp->vtl->wp_size/2, y - dp->vtl->wp_size/2, dp->vtl->wp_size, dp->vtl->wp_size );
-		break;
-        case WP_SYMBOL_SQUARE:
-		dp->vp->port.draw_rectangle(dp->vtl->waypoint_gc, false, x - dp->vtl->wp_size/2, y - dp->vtl->wp_size/2, dp->vtl->wp_size, dp->vtl->wp_size );
-		break;
-        case WP_SYMBOL_CIRCLE:
-		dp->vp->port.draw_arc(dp->vtl->waypoint_gc, true, x-dp->vtl->wp_size/2, y-dp->vtl->wp_size/2, dp->vtl->wp_size, dp->vtl->wp_size, 0, 360*64 );
-		break;
-        case WP_SYMBOL_X:
-		dp->vp->port.draw_line(dp->vtl->waypoint_gc, x-dp->vtl->wp_size, y-dp->vtl->wp_size, x+dp->vtl->wp_size, y+dp->vtl->wp_size );
-		dp->vp->port.draw_line(dp->vtl->waypoint_gc, x-dp->vtl->wp_size, y+dp->vtl->wp_size, x+dp->vtl->wp_size, y-dp->vtl->wp_size );
-		break;
-        default:
-		break;
-      }
-    }
-
-    if ( dp->vtl->drawlabels )
-    {
-      /* thanks to the GPSDrive people (Fritz Ganter et al.) for hints on this part ... yah, I'm too lazy to study documentation */
-      int label_x, label_y;
-      int width, height;
-      // Hopefully name won't break the markup (may need to sanitize - g_markup_escape_text())
-
-      // Could this stored in the waypoint rather than recreating each pass?
-      char *wp_label_markup = g_strdup_printf ( "<span size=\"%s\">%s</span>", dp->vtl->wp_fsize_str, wp->name );
-
-      if ( pango_parse_markup ( wp_label_markup, -1, 0, NULL, NULL, NULL, NULL ) )
-        pango_layout_set_markup ( dp->vtl->wplabellayout, wp_label_markup, -1 );
-      else
-        // Fallback if parse failure
-        pango_layout_set_text ( dp->vtl->wplabellayout, wp->name, -1 );
-
-      free( wp_label_markup );
-
-      pango_layout_get_pixel_size ( dp->vtl->wplabellayout, &width, &height );
-      label_x = x - width/2;
-      if ( wp->symbol_pixbuf )
-        label_y = y - height - 2 - gdk_pixbuf_get_height(wp->symbol_pixbuf)/2;
-      else
-        label_y = y - dp->vtl->wp_size - height - 2;
-
-      /* if highlight mode on, then draw background text in highlight colour */
-      if ( dp->highlight )
-        dp->vp->port.draw_rectangle(dp->vp->port.get_gc_highlight(), true, label_x - 1, label_y-1,width+2,height+2);
-      else
-        dp->vp->port.draw_rectangle(dp->vtl->waypoint_bg_gc, true, label_x - 1, label_y-1,width+2,height+2);
-      dp->vp->port.draw_layout(dp->vtl->waypoint_text_gc, label_x, label_y, dp->vtl->wplabellayout );
-    }
-  }
+	if (dp->vtl->drawlabels) {
+		trw_layer_draw_label(wp, x, y, dp);
+	}
 }
+
+
+
+
+
+int trw_layer_draw_image(Waypoint * wp, int x, int y, struct DrawingParams * dp)
+{
+	if (dp->vtl->image_alpha == 0) {
+		return 0;
+	}
+
+	GdkPixbuf * pixbuf = NULL;
+	GList * l = g_list_find_custom (dp->vtl->image_cache->head, wp->image, (GCompareFunc) cached_pixbuf_cmp);
+	if (l) {
+		pixbuf = ((CachedPixbuf *) l->data)->pixbuf;
+	} else {
+		char * image = wp->image;
+		GdkPixbuf * regularthumb = a_thumbnails_get (wp->image);
+		if (!regularthumb) {
+			regularthumb = a_thumbnails_get_default(); /* cache one 'not yet loaded' for all thumbs not loaded */
+			image = "\x12\x00"; /* this shouldn't occur naturally. */
+		}
+		if (regularthumb) {
+			CachedPixbuf * cp = (CachedPixbuf *) malloc(sizeof (CachedPixbuf));
+			if (dp->vtl->image_size == 128) {
+				cp->pixbuf = regularthumb;
+			} else {
+				cp->pixbuf = a_thumbnails_scale_pixbuf(regularthumb, dp->vtl->image_size, dp->vtl->image_size);
+				assert (cp->pixbuf);
+				g_object_unref(G_OBJECT(regularthumb));
+			}
+			cp->image = g_strdup(image);
+
+			// Apply alpha setting to the image before the pixbuf gets stored in the cache
+			if (dp->vtl->image_alpha != 255) {
+				cp->pixbuf = ui_pixbuf_set_alpha(cp->pixbuf, dp->vtl->image_alpha);
+			}
+
+			/* needed so 'click picture' tool knows how big the pic is; we don't
+			 * store it in cp because they may have been freed already. */
+			wp->image_width = gdk_pixbuf_get_width(cp->pixbuf);
+			wp->image_height = gdk_pixbuf_get_height(cp->pixbuf);
+
+			g_queue_push_head(dp->vtl->image_cache, cp);
+			if (dp->vtl->image_cache->length > dp->vtl->image_cache_size) {
+				cached_pixbuf_free ((CachedPixbuf *) g_queue_pop_tail(dp->vtl->image_cache));
+			}
+
+			pixbuf = cp->pixbuf;
+		} else {
+			pixbuf = a_thumbnails_get_default(); /* thumbnail not yet loaded */
+		}
+	}
+	if (pixbuf) {
+		int w = gdk_pixbuf_get_width(pixbuf);
+		int h = gdk_pixbuf_get_height(pixbuf);
+
+		if (x + (w / 2) > 0 && y + (h / 2) > 0 && x - (w / 2) < dp->width && y - (h / 2) < dp->height) { /* always draw within boundaries */
+			if (dp->highlight) {
+				// Highlighted - so draw a little border around the chosen one
+				// single line seems a little weak so draw 2 of them
+				dp->vp->port.draw_rectangle(dp->vp->port.get_gc_highlight(), false,
+							    x - (w / 2) - 1, y - (h / 2) - 1, w + 2, h + 2);
+				dp->vp->port.draw_rectangle(dp->vp->port.get_gc_highlight(), false,
+							    x - (w / 2) - 2, y - (h / 2) - 2, w + 4, h + 4);
+			}
+
+			dp->vp->port.draw_pixbuf(pixbuf, 0, 0, x - (w / 2), y - (h / 2), w, h);
+		}
+		return 0;
+	}
+
+	/* If failed to draw picture, default to drawing regular waypoint. */
+	return 1;
+}
+
+
+
+
+
+void trw_layer_draw_symbol(Waypoint * wp, int x, int y, struct DrawingParams *dp)
+{
+	if (dp->vtl->wp_draw_symbols && wp->symbol && wp->symbol_pixbuf) {
+		dp->vp->port.draw_pixbuf(wp->symbol_pixbuf, 0, 0, x - gdk_pixbuf_get_width(wp->symbol_pixbuf)/2, y - gdk_pixbuf_get_height(wp->symbol_pixbuf)/2, -1, -1);
+	} else if (wp == dp->vtl->current_wp) {
+		switch (dp->vtl->wp_symbol) {
+		case WP_SYMBOL_FILLED_SQUARE:
+			dp->vp->port.draw_rectangle(dp->vtl->waypoint_gc, true, x - (dp->vtl->wp_size), y - (dp->vtl->wp_size), dp->vtl->wp_size*2, dp->vtl->wp_size*2);
+			break;
+		case WP_SYMBOL_SQUARE:
+			dp->vp->port.draw_rectangle(dp->vtl->waypoint_gc, false, x - (dp->vtl->wp_size), y - (dp->vtl->wp_size), dp->vtl->wp_size*2, dp->vtl->wp_size*2);
+			break;
+		case WP_SYMBOL_CIRCLE:
+			dp->vp->port.draw_arc(dp->vtl->waypoint_gc, true, x - dp->vtl->wp_size, y - dp->vtl->wp_size, dp->vtl->wp_size, dp->vtl->wp_size, 0, 360*64);
+			break;
+		case WP_SYMBOL_X:
+			dp->vp->port.draw_line(dp->vtl->waypoint_gc, x - dp->vtl->wp_size*2, y - dp->vtl->wp_size*2, x + dp->vtl->wp_size*2, y + dp->vtl->wp_size*2);
+			dp->vp->port.draw_line(dp->vtl->waypoint_gc, x - dp->vtl->wp_size*2, y + dp->vtl->wp_size*2, x + dp->vtl->wp_size*2, y - dp->vtl->wp_size*2);
+		default:
+			break;
+		}
+	} else {
+		switch (dp->vtl->wp_symbol) {
+		case WP_SYMBOL_FILLED_SQUARE:
+			dp->vp->port.draw_rectangle(dp->vtl->waypoint_gc, true, x - dp->vtl->wp_size/2, y - dp->vtl->wp_size/2, dp->vtl->wp_size, dp->vtl->wp_size);
+			break;
+		case WP_SYMBOL_SQUARE:
+			dp->vp->port.draw_rectangle(dp->vtl->waypoint_gc, false, x - dp->vtl->wp_size/2, y - dp->vtl->wp_size/2, dp->vtl->wp_size, dp->vtl->wp_size);
+			break;
+		case WP_SYMBOL_CIRCLE:
+			dp->vp->port.draw_arc(dp->vtl->waypoint_gc, true, x-dp->vtl->wp_size/2, y-dp->vtl->wp_size/2, dp->vtl->wp_size, dp->vtl->wp_size, 0, 360*64);
+			break;
+		case WP_SYMBOL_X:
+			dp->vp->port.draw_line(dp->vtl->waypoint_gc, x-dp->vtl->wp_size, y-dp->vtl->wp_size, x+dp->vtl->wp_size, y+dp->vtl->wp_size);
+			dp->vp->port.draw_line(dp->vtl->waypoint_gc, x-dp->vtl->wp_size, y+dp->vtl->wp_size, x+dp->vtl->wp_size, y-dp->vtl->wp_size);
+			break;
+		default:
+			break;
+		}
+	}
+
+	return;
+}
+
+
+
+
+void trw_layer_draw_label(Waypoint * wp, int x, int y, struct DrawingParams * dp)
+{
+	/* thanks to the GPSDrive people (Fritz Ganter et al.) for hints on this part ... yah, I'm too lazy to study documentation */
+
+	// Hopefully name won't break the markup (may need to sanitize - g_markup_escape_text())
+
+	// Could this stored in the waypoint rather than recreating each pass?
+	char * wp_label_markup = g_strdup_printf("<span size=\"%s\">%s</span>", dp->vtl->wp_fsize_str, wp->name);
+	if (pango_parse_markup(wp_label_markup, -1, 0, NULL, NULL, NULL, NULL)) {
+		pango_layout_set_markup(dp->vtl->wplabellayout, wp_label_markup, -1);
+	} else {
+		// Fallback if parse failure
+		pango_layout_set_text(dp->vtl->wplabellayout, wp->name, -1);
+	}
+	free(wp_label_markup);
+
+
+	int label_x, label_y;
+	int width, height;
+	pango_layout_get_pixel_size(dp->vtl->wplabellayout, &width, &height);
+	label_x = x - width/2;
+	if (wp->symbol_pixbuf) {
+		label_y = y - height - 2 - gdk_pixbuf_get_height(wp->symbol_pixbuf)/2;
+	} else {
+		label_y = y - dp->vtl->wp_size - height - 2;
+	}
+
+	/* if highlight mode on, then draw background text in highlight colour */
+	if (dp->highlight) {
+		dp->vp->port.draw_rectangle(dp->vp->port.get_gc_highlight(), true, label_x - 1, label_y-1,width+2,height+2);
+	} else {
+		dp->vp->port.draw_rectangle(dp->vtl->waypoint_bg_gc, true, label_x - 1, label_y-1,width+2,height+2);
+	}
+	dp->vp->port.draw_layout(dp->vtl->waypoint_text_gc, label_x, label_y, dp->vtl->wplabellayout);
+
+	return;
+}
+
+
+
+
 
 static void trw_layer_draw_waypoint_cb ( void * id, Waypoint * wp, struct DrawingParams *dp )
 {
@@ -8959,7 +9004,7 @@ typedef struct {
   bool draw_images;
   void ** closest_wp_id;
   Waypoint * closest_wp;
-  VikViewport *vvp;
+  Viewport * viewport;
 } WPSearchParams;
 
 typedef struct {
@@ -8967,102 +9012,112 @@ typedef struct {
   int closest_x, closest_y;
   void * closest_track_id;
   Trackpoint * closest_tp;
-  VikViewport *vvp;
+  Viewport * viewport;
   GList *closest_tpl;
   LatLonBBox bbox;
 } TPSearchParams;
 
-static void waypoint_search_closest_tp ( void * id, Waypoint * wp, WPSearchParams *params )
+static void waypoint_search_closest_tp(void * id, Waypoint * wp, WPSearchParams * params)
 {
-  int x, y;
-  if ( !wp->visible )
-    return;
+	if ( !wp->visible ) {
+		return;
+	}
 
-  params->vvp->port.coord_to_screen(&(wp->coord), &x, &y );
+	int x, y;
+	params->viewport->coord_to_screen(&(wp->coord), &x, &y);
 
-  // If waypoint has an image then use the image size to select
-  if ( params->draw_images && wp->image ) {
-    int slackx, slacky;
-    slackx = wp->image_width / 2;
-    slacky = wp->image_height / 2;
+	// If waypoint has an image then use the image size to select
+	if (params->draw_images && wp->image) {
 
-    if (    x <= params->x + slackx && x >= params->x - slackx
-         && y <= params->y + slacky && y >= params->y - slacky ) {
-      params->closest_wp_id = (void **) id;
-      params->closest_wp = wp;
-      params->closest_x = x;
-      params->closest_y = y;
-    }
-  }
-  else if ( abs (x - params->x) <= WAYPOINT_SIZE_APPROX && abs (y - params->y) <= WAYPOINT_SIZE_APPROX &&
-	    ((!params->closest_wp) ||        /* was the old waypoint we already found closer than this one? */
-	     abs(x - params->x)+abs(y - params->y) < abs(x - params->closest_x)+abs(y - params->closest_y)))
-    {
-      params->closest_wp_id = (void **) id;
-      params->closest_wp = wp;
-      params->closest_x = x;
-      params->closest_y = y;
-    }
+		int slackx, slacky;
+
+		slackx = wp->image_width / 2;
+		slacky = wp->image_height / 2;
+
+		if (x <= params->x + slackx && x >= params->x - slackx
+		    && y <= params->y + slacky && y >= params->y - slacky ) {
+
+			params->closest_wp_id = (void **) id;
+			params->closest_wp = wp;
+			params->closest_x = x;
+			params->closest_y = y;
+		}
+	} else if (abs(x - params->x) <= WAYPOINT_SIZE_APPROX && abs(y - params->y) <= WAYPOINT_SIZE_APPROX &&
+		   ((!params->closest_wp) ||        /* was the old waypoint we already found closer than this one? */
+		    abs(x - params->x) + abs(y - params->y) < abs(x - params->closest_x) + abs(y - params->closest_y)))	{
+
+		params->closest_wp_id = (void **) id;
+		params->closest_wp = wp;
+		params->closest_x = x;
+		params->closest_y = y;
+	}
 }
 
-static void track_search_closest_tp ( void * id, Track *t, TPSearchParams *params )
+static void track_search_closest_tp(void * id, Track * trk, TPSearchParams * params)
 {
-  GList *tpl = t->trackpoints;
-  Trackpoint * tp;
+	if (!trk->visible) {
+		return;
+	}
 
-  if ( !t->visible )
-    return;
+	if (!BBOX_INTERSECT (trk->bbox, params->bbox)) {
+		return;
+	}
 
-  if ( ! BBOX_INTERSECT ( t->bbox, params->bbox ) )
-    return;
+	GList * tpl = trk->trackpoints;
+	while (tpl) {
 
-  while (tpl)
-  {
-    int x, y;
-    tp = ((Trackpoint *) tpl->data);
+		Trackpoint * tp = ((Trackpoint *) tpl->data);
 
-    params->vvp->port.coord_to_screen(&(tp->coord), &x, &y );
+		int x, y;
+		params->viewport->coord_to_screen(&(tp->coord), &x, &y);
 
-    if ( abs (x - params->x) <= TRACKPOINT_SIZE_APPROX && abs (y - params->y) <= TRACKPOINT_SIZE_APPROX &&
-        ((!params->closest_tp) ||        /* was the old trackpoint we already found closer than this one? */
-          abs(x - params->x)+abs(y - params->y) < abs(x - params->closest_x)+abs(y - params->closest_y)))
-    {
-      params->closest_track_id = id;
-      params->closest_tp = tp;
-      params->closest_tpl = tpl;
-      params->closest_x = x;
-      params->closest_y = y;
-    }
-    tpl = tpl->next;
-  }
+		if (abs(x - params->x) <= TRACKPOINT_SIZE_APPROX && abs(y - params->y) <= TRACKPOINT_SIZE_APPROX &&
+		     ((!params->closest_tp) ||        /* was the old trackpoint we already found closer than this one? */
+		      abs(x - params->x)+abs(y - params->y) < abs(x - params->closest_x)+abs(y - params->closest_y))) {
+
+			params->closest_track_id = id;
+			params->closest_tp = tp;
+			params->closest_tpl = tpl;
+			params->closest_x = x;
+			params->closest_y = y;
+		}
+		tpl = tpl->next;
+	}
 }
 
 // ATM: Leave this as 'Track' only.
 //  Not overly bothered about having a snap to route trackpoint capability
-static Trackpoint * closest_tp_in_five_pixel_interval ( VikTrwLayer *vtl, VikViewport *vvp, int x, int y )
+static Trackpoint * closest_tp_in_five_pixel_interval(VikTrwLayer * vtl, Viewport * viewport, int x, int y)
 {
-  TPSearchParams params;
-  params.x = x;
-  params.y = y;
-  params.vvp = vvp;
-  params.closest_track_id = NULL;
-  params.closest_tp = NULL;
-  params.vvp->port.get_min_max_lat_lon(&(params.bbox.south), &(params.bbox.north), &(params.bbox.west), &(params.bbox.east) );
-  g_hash_table_foreach ( vtl->tracks, (GHFunc) track_search_closest_tp, &params);
-  return params.closest_tp;
+	TPSearchParams params;
+
+	params.x = x;
+	params.y = y;
+	params.viewport = viewport;
+	params.closest_track_id = NULL;
+	params.closest_tp = NULL;
+
+	params.viewport->get_min_max_lat_lon(&(params.bbox.south), &(params.bbox.north), &(params.bbox.west), &(params.bbox.east) );
+
+	g_hash_table_foreach(vtl->tracks, (GHFunc) track_search_closest_tp, &params);
+
+	return params.closest_tp;
 }
 
-static Waypoint * closest_wp_in_five_pixel_interval ( VikTrwLayer *vtl, VikViewport *vvp, int x, int y )
+static Waypoint * closest_wp_in_five_pixel_interval(VikTrwLayer *vtl, Viewport * viewport, int x, int y)
 {
-  WPSearchParams params;
-  params.x = x;
-  params.y = y;
-  params.vvp = vvp;
-  params.draw_images = vtl->drawimages;
-  params.closest_wp = NULL;
-  params.closest_wp_id = NULL;
-  g_hash_table_foreach ( vtl->waypoints, (GHFunc) waypoint_search_closest_tp, &params);
-  return params.closest_wp;
+	WPSearchParams params;
+
+	params.x = x;
+	params.y = y;
+	params.viewport = viewport;
+	params.draw_images = vtl->drawimages;
+	params.closest_wp = NULL;
+	params.closest_wp_id = NULL;
+
+	g_hash_table_foreach(vtl->waypoints, (GHFunc) waypoint_search_closest_tp, &params);
+
+	return params.closest_wp;
 }
 
 
@@ -9076,7 +9131,8 @@ static bool trw_layer_select_move ( VikTrwLayer *vtl, GdkEventMotion *event, Vik
 {
   if ( t->holding ) {
     VikCoord new_coord;
-    vvp->port.screen_to_coord(event->x, event->y, &new_coord);
+    Viewport * viewport = &vvp->port;
+    viewport->screen_to_coord(event->x, event->y, &new_coord);
 
     // Here always allow snapping back to the original location
     //  this is useful when one decides not to move the thing afterall
@@ -9085,7 +9141,7 @@ static bool trw_layer_select_move ( VikTrwLayer *vtl, GdkEventMotion *event, Vik
     // snap to TP
     if ( event->state & GDK_CONTROL_MASK )
     {
-      Trackpoint * tp = closest_tp_in_five_pixel_interval ( vtl, vvp, event->x, event->y );
+      Trackpoint * tp = closest_tp_in_five_pixel_interval ( vtl, viewport, event->x, event->y );
       if ( tp )
         new_coord = tp->coord;
     }
@@ -9093,13 +9149,13 @@ static bool trw_layer_select_move ( VikTrwLayer *vtl, GdkEventMotion *event, Vik
     // snap to WP
     if ( event->state & GDK_SHIFT_MASK )
     {
-      Waypoint * wp = closest_wp_in_five_pixel_interval ( vtl, vvp, event->x, event->y );
+      Waypoint * wp = closest_wp_in_five_pixel_interval ( vtl, viewport, event->x, event->y );
       if ( wp )
         new_coord = wp->coord;
     }
 
     int x, y;
-    vvp->port.coord_to_screen(&new_coord, &x, &y );
+    viewport->coord_to_screen(&new_coord, &x, &y );
 
     marker_moveto ( t, x, y );
 
@@ -9112,18 +9168,19 @@ static bool trw_layer_select_release ( VikTrwLayer *vtl, GdkEventButton *event, 
 {
   if ( t->holding && event->button == 1 )
   {
+    Viewport * viewport = &vvp->port;
     // Prevent accidental (small) shifts when specific movement has not been requested
     //  (as the click release has occurred within the click object detection area)
     if ( !t->moving )
       return false;
 
     VikCoord new_coord;
-    vvp->port.screen_to_coord(event->x, event->y, &new_coord );
+    viewport->screen_to_coord(event->x, event->y, &new_coord );
 
     // snap to TP
     if ( event->state & GDK_CONTROL_MASK )
     {
-      Trackpoint * tp = closest_tp_in_five_pixel_interval ( vtl, vvp, event->x, event->y );
+      Trackpoint * tp = closest_tp_in_five_pixel_interval ( vtl, viewport, event->x, event->y );
       if ( tp )
         new_coord = tp->coord;
     }
@@ -9131,7 +9188,7 @@ static bool trw_layer_select_release ( VikTrwLayer *vtl, GdkEventButton *event, 
     // snap to WP
     if ( event->state & GDK_SHIFT_MASK )
     {
-      Waypoint * wp = closest_wp_in_five_pixel_interval ( vtl, vvp, event->x, event->y );
+      Waypoint * wp = closest_wp_in_five_pixel_interval ( vtl, viewport, event->x, event->y );
       if ( wp )
         new_coord = wp->coord;
     }
@@ -9174,154 +9231,158 @@ static bool trw_layer_select_release ( VikTrwLayer *vtl, GdkEventButton *event, 
  */
 static bool trw_layer_select_click ( VikTrwLayer *vtl, GdkEventButton *event, VikViewport *vvp, tool_ed_t* tet )
 {
-  if ( event->button != 1 )
-    return false;
+	if ( event->button != 1 ) {
+		return false;
+	}
 
-  if (!vtl || vtl->vl.type != VIK_LAYER_TRW)
-    return false;
+	if (!vtl || vtl->vl.type != VIK_LAYER_TRW) {
+		return false;
+	}
 
-  if ( !vtl->tracks_visible && !vtl->waypoints_visible && !vtl->routes_visible )
-    return false;
+	if ( !vtl->tracks_visible && !vtl->waypoints_visible && !vtl->routes_visible ) {
+		return false;
+	}
 
-  LatLonBBox bbox;
-  vvp->port.get_min_max_lat_lon(&(bbox.south), &(bbox.north), &(bbox.west), &(bbox.east) );
+	Viewport * viewport = &vvp->port;
+	LatLonBBox bbox;
+	viewport->get_min_max_lat_lon(&(bbox.south), &(bbox.north), &(bbox.west), &(bbox.east) );
 
-  // Go for waypoints first as these often will be near a track, but it's likely the wp is wanted rather then the track
+	// Go for waypoints first as these often will be near a track, but it's likely the wp is wanted rather then the track
 
-  if ( vtl->waypoints_visible && BBOX_INTERSECT (vtl->waypoints_bbox, bbox ) ) {
-    WPSearchParams wp_params;
-    wp_params.vvp = vvp;
-    wp_params.x = event->x;
-    wp_params.y = event->y;
-    wp_params.draw_images = vtl->drawimages;
-    wp_params.closest_wp_id = NULL;
-    wp_params.closest_wp = NULL;
+	if ( vtl->waypoints_visible && BBOX_INTERSECT (vtl->waypoints_bbox, bbox ) ) {
+		WPSearchParams wp_params;
+		wp_params.viewport = viewport;
+		wp_params.x = event->x;
+		wp_params.y = event->y;
+		wp_params.draw_images = vtl->drawimages;
+		wp_params.closest_wp_id = NULL;
+		wp_params.closest_wp = NULL;
 
-    g_hash_table_foreach ( vtl->waypoints, (GHFunc) waypoint_search_closest_tp, &wp_params);
+		g_hash_table_foreach ( vtl->waypoints, (GHFunc) waypoint_search_closest_tp, &wp_params);
 
-    if ( wp_params.closest_wp )  {
+		if ( wp_params.closest_wp )  {
 
-      // Select
-      vik_treeview_select_iter ( VIK_LAYER(vtl)->vt, (GtkTreeIter *) g_hash_table_lookup ( vtl->waypoints_iters, wp_params.closest_wp_id ), true );
+			// Select
+			vik_treeview_select_iter ( VIK_LAYER(vtl)->vt, (GtkTreeIter *) g_hash_table_lookup ( vtl->waypoints_iters, wp_params.closest_wp_id ), true );
 
-      // Too easy to move it so must be holding shift to start immediately moving it
-      //   or otherwise be previously selected but not have an image (otherwise clicking within image bounds (again) moves it)
-      if ( event->state & GDK_SHIFT_MASK ||
-	   ( vtl->current_wp == wp_params.closest_wp && !vtl->current_wp->image ) ) {
-	// Put into 'move buffer'
-	// NB vvp & vw already set in tet
-	tet->vtl = (void **)vtl;
-	tet->is_waypoint = true;
+			// Too easy to move it so must be holding shift to start immediately moving it
+			//   or otherwise be previously selected but not have an image (otherwise clicking within image bounds (again) moves it)
+			if ( event->state & GDK_SHIFT_MASK ||
+			     ( vtl->current_wp == wp_params.closest_wp && !vtl->current_wp->image ) ) {
+				// Put into 'move buffer'
+				// NB vvp & vw already set in tet
+				tet->vtl = (void **)vtl;
+				tet->is_waypoint = true;
 
-	marker_begin_move (tet, event->x, event->y);
-      }
+				marker_begin_move (tet, event->x, event->y);
+			}
 
-      vtl->current_wp =    wp_params.closest_wp;
-      vtl->current_wp_id = wp_params.closest_wp_id;
+			vtl->current_wp =    wp_params.closest_wp;
+			vtl->current_wp_id = wp_params.closest_wp_id;
 
-      if ( event->type == GDK_2BUTTON_PRESS ) {
-        if ( vtl->current_wp->image ) {
-          menu_array_sublayer values;
-          values[MA_VTL] = vtl;
-          values[MA_MISC] = vtl->current_wp->image;
-          trw_layer_show_picture ( values );
-        }
-      }
+			if ( event->type == GDK_2BUTTON_PRESS ) {
+				if ( vtl->current_wp->image ) {
+					menu_array_sublayer values;
+					values[MA_VTL] = vtl;
+					values[MA_MISC] = vtl->current_wp->image;
+					trw_layer_show_picture ( values );
+				}
+			}
 
-      vik_layer_emit_update ( VIK_LAYER(vtl) );
+			vik_layer_emit_update ( VIK_LAYER(vtl) );
 
-      return true;
-    }
-  }
+			return true;
+		}
+	}
 
-  // Used for both track and route lists
-  TPSearchParams tp_params;
-  tp_params.vvp = vvp;
-  tp_params.x = event->x;
-  tp_params.y = event->y;
-  tp_params.closest_track_id = NULL;
-  tp_params.closest_tp = NULL;
-  tp_params.closest_tpl = NULL;
-  tp_params.bbox = bbox;
+	// Used for both track and route lists
+	TPSearchParams tp_params;
+	tp_params.viewport = viewport;
+	tp_params.x = event->x;
+	tp_params.y = event->y;
+	tp_params.closest_track_id = NULL;
+	tp_params.closest_tp = NULL;
+	tp_params.closest_tpl = NULL;
+	tp_params.bbox = bbox;
 
-  if (vtl->tracks_visible) {
-    g_hash_table_foreach ( vtl->tracks, (GHFunc) track_search_closest_tp, &tp_params);
+	if (vtl->tracks_visible) {
+		g_hash_table_foreach ( vtl->tracks, (GHFunc) track_search_closest_tp, &tp_params);
 
-    if ( tp_params.closest_tp )  {
+		if ( tp_params.closest_tp )  {
 
-      // Always select + highlight the track
-      vik_treeview_select_iter ( VIK_LAYER(vtl)->vt, (GtkTreeIter *) g_hash_table_lookup ( vtl->tracks_iters, tp_params.closest_track_id ), true );
+			// Always select + highlight the track
+			vik_treeview_select_iter ( VIK_LAYER(vtl)->vt, (GtkTreeIter *) g_hash_table_lookup ( vtl->tracks_iters, tp_params.closest_track_id ), true );
 
-      tet->is_waypoint = false;
+			tet->is_waypoint = false;
 
-      // Select the Trackpoint
-      // Can move it immediately when control held or it's the previously selected tp
-      if ( event->state & GDK_CONTROL_MASK ||
-	   vtl->current_tpl == tp_params.closest_tpl ) {
-	// Put into 'move buffer'
-	// NB vvp & vw already set in tet
-	tet->vtl = (void **)vtl;
-	marker_begin_move (tet, event->x, event->y);
-      }
+			// Select the Trackpoint
+			// Can move it immediately when control held or it's the previously selected tp
+			if ( event->state & GDK_CONTROL_MASK ||
+			     vtl->current_tpl == tp_params.closest_tpl ) {
+				// Put into 'move buffer'
+				// NB vvp & vw already set in tet
+				tet->vtl = (void **)vtl;
+				marker_begin_move (tet, event->x, event->y);
+			}
 
-      vtl->current_tpl = tp_params.closest_tpl;
-      vtl->current_tp_id = tp_params.closest_track_id;
-      vtl->current_tp_track = (Track *) g_hash_table_lookup ( vtl->tracks, tp_params.closest_track_id );
+			vtl->current_tpl = tp_params.closest_tpl;
+			vtl->current_tp_id = tp_params.closest_track_id;
+			vtl->current_tp_track = (Track *) g_hash_table_lookup ( vtl->tracks, tp_params.closest_track_id );
 
-      set_statusbar_msg_info_trkpt ( vtl, tp_params.closest_tp );
+			set_statusbar_msg_info_trkpt ( vtl, tp_params.closest_tp );
 
-      if ( vtl->tpwin )
-        my_tpwin_set_tp ( vtl );
+			if ( vtl->tpwin )
+				my_tpwin_set_tp ( vtl );
 
-      vik_layer_emit_update ( VIK_LAYER(vtl) );
-      return true;
-    }
-  }
+			vik_layer_emit_update ( VIK_LAYER(vtl) );
+			return true;
+		}
+	}
 
-  // Try again for routes
-  if (vtl->routes_visible) {
-    g_hash_table_foreach ( vtl->routes, (GHFunc) track_search_closest_tp, &tp_params);
+	// Try again for routes
+	if (vtl->routes_visible) {
+		g_hash_table_foreach ( vtl->routes, (GHFunc) track_search_closest_tp, &tp_params);
 
-    if ( tp_params.closest_tp )  {
+		if ( tp_params.closest_tp )  {
 
-      // Always select + highlight the track
-      vik_treeview_select_iter ( VIK_LAYER(vtl)->vt, (GtkTreeIter *) g_hash_table_lookup ( vtl->routes_iters, tp_params.closest_track_id ), true );
+			// Always select + highlight the track
+			vik_treeview_select_iter ( VIK_LAYER(vtl)->vt, (GtkTreeIter *) g_hash_table_lookup ( vtl->routes_iters, tp_params.closest_track_id ), true );
 
-      tet->is_waypoint = false;
+			tet->is_waypoint = false;
 
-      // Select the Trackpoint
-      // Can move it immediately when control held or it's the previously selected tp
-      if ( event->state & GDK_CONTROL_MASK ||
-	   vtl->current_tpl == tp_params.closest_tpl ) {
-	// Put into 'move buffer'
-	// NB vvp & vw already set in tet
-	tet->vtl = (void **)vtl;
-	marker_begin_move (tet, event->x, event->y);
-      }
+			// Select the Trackpoint
+			// Can move it immediately when control held or it's the previously selected tp
+			if ( event->state & GDK_CONTROL_MASK ||
+			     vtl->current_tpl == tp_params.closest_tpl ) {
+				// Put into 'move buffer'
+				// NB vvp & vw already set in tet
+				tet->vtl = (void **)vtl;
+				marker_begin_move (tet, event->x, event->y);
+			}
 
-      vtl->current_tpl = tp_params.closest_tpl;
-      vtl->current_tp_id = tp_params.closest_track_id;
-      vtl->current_tp_track = (Track *) g_hash_table_lookup ( vtl->routes, tp_params.closest_track_id );
+			vtl->current_tpl = tp_params.closest_tpl;
+			vtl->current_tp_id = tp_params.closest_track_id;
+			vtl->current_tp_track = (Track *) g_hash_table_lookup ( vtl->routes, tp_params.closest_track_id );
 
-      set_statusbar_msg_info_trkpt ( vtl, tp_params.closest_tp );
+			set_statusbar_msg_info_trkpt ( vtl, tp_params.closest_tp );
 
-      if ( vtl->tpwin )
-        my_tpwin_set_tp ( vtl );
+			if ( vtl->tpwin )
+				my_tpwin_set_tp ( vtl );
 
-      vik_layer_emit_update ( VIK_LAYER(vtl) );
-      return true;
-    }
-  }
+			vik_layer_emit_update ( VIK_LAYER(vtl) );
+			return true;
+		}
+	}
 
-  /* these aren't the droids you're looking for */
-  vtl->current_wp    = NULL;
-  vtl->current_wp_id = NULL;
-  trw_layer_cancel_current_tp ( vtl, false );
+	/* these aren't the droids you're looking for */
+	vtl->current_wp    = NULL;
+	vtl->current_wp_id = NULL;
+	trw_layer_cancel_current_tp ( vtl, false );
 
-  // Blank info
-  vik_statusbar_set_message ( vik_window_get_statusbar (VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(vtl))), VIK_STATUSBAR_INFO, "" );
+	// Blank info
+	vik_statusbar_set_message ( vik_window_get_statusbar (VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(vtl))), VIK_STATUSBAR_INFO, "" );
 
-  return false;
+	return false;
 }
 
 static bool trw_layer_show_selected_viewport_menu ( VikTrwLayer *vtl, GdkEventButton *event, VikViewport *vvp )
@@ -9484,7 +9545,7 @@ static bool tool_edit_waypoint_click ( VikTrwLayer *vtl, GdkEventButton *event, 
 {
   WPSearchParams params;
   tool_ed_t *t = (tool_ed_t *) data;
-  VikViewport *vvp = t->vvp;
+  Viewport * viewport = &t->vvp->port;
 
   if (!vtl || vtl->vl.type != VIK_LAYER_TRW)
     return false;
@@ -9500,7 +9561,7 @@ static bool tool_edit_waypoint_click ( VikTrwLayer *vtl, GdkEventButton *event, 
   {
     /* first check if current WP is within area (other may be 'closer', but we want to move the current) */
     int x, y;
-    vvp->port.coord_to_screen(&(vtl->current_wp->coord), &x, &y );
+    viewport->coord_to_screen(&(vtl->current_wp->coord), &x, &y );
 
     if ( abs(x - (int)round(event->x)) <= WAYPOINT_SIZE_APPROX &&
          abs(y - (int)round(event->y)) <= WAYPOINT_SIZE_APPROX )
@@ -9514,7 +9575,7 @@ static bool tool_edit_waypoint_click ( VikTrwLayer *vtl, GdkEventButton *event, 
     }
   }
 
-  params.vvp = vvp;
+  params.viewport = viewport;
   params.x = event->x;
   params.y = event->y;
   params.draw_images = vtl->drawimages;
@@ -9556,19 +9617,19 @@ static bool tool_edit_waypoint_click ( VikTrwLayer *vtl, GdkEventButton *event, 
 static bool tool_edit_waypoint_move ( VikTrwLayer *vtl, GdkEventMotion *event, void * data )
 {
   tool_ed_t *t = (tool_ed_t *) data;
-  VikViewport *vvp = t->vvp;
+  Viewport * viewport = &t->vvp->port;
 
   if (!vtl || vtl->vl.type != VIK_LAYER_TRW)
     return false;
 
   if ( t->holding ) {
     VikCoord new_coord;
-    vvp->port.screen_to_coord(event->x, event->y, &new_coord );
+    viewport->screen_to_coord(event->x, event->y, &new_coord );
 
     /* snap to TP */
     if ( event->state & GDK_CONTROL_MASK )
     {
-      Trackpoint * tp = closest_tp_in_five_pixel_interval ( vtl, vvp, event->x, event->y );
+      Trackpoint * tp = closest_tp_in_five_pixel_interval ( vtl, viewport, event->x, event->y );
       if ( tp )
         new_coord = tp->coord;
     }
@@ -9576,14 +9637,14 @@ static bool tool_edit_waypoint_move ( VikTrwLayer *vtl, GdkEventMotion *event, v
     /* snap to WP */
     if ( event->state & GDK_SHIFT_MASK )
     {
-      Waypoint * wp = closest_wp_in_five_pixel_interval ( vtl, vvp, event->x, event->y );
+      Waypoint * wp = closest_wp_in_five_pixel_interval ( vtl, viewport, event->x, event->y );
       if ( wp && wp != vtl->current_wp )
         new_coord = wp->coord;
     }
 
     {
       int x, y;
-      vvp->port.coord_to_screen(&new_coord, &x, &y );
+      viewport->coord_to_screen(&new_coord, &x, &y );
 
       marker_moveto ( t, x, y );
     }
@@ -9595,7 +9656,7 @@ static bool tool_edit_waypoint_move ( VikTrwLayer *vtl, GdkEventMotion *event, v
 static bool tool_edit_waypoint_release ( VikTrwLayer *vtl, GdkEventButton *event, void * data )
 {
   tool_ed_t *t = (tool_ed_t *) data;
-  VikViewport *vvp = t->vvp;
+  Viewport * viewport = &t->vvp->port;
 
   if (!vtl || vtl->vl.type != VIK_LAYER_TRW)
     return false;
@@ -9603,12 +9664,12 @@ static bool tool_edit_waypoint_release ( VikTrwLayer *vtl, GdkEventButton *event
   if ( t->holding && event->button == 1 )
   {
     VikCoord new_coord;
-    vvp->port.screen_to_coord(event->x, event->y, &new_coord );
+    viewport->screen_to_coord(event->x, event->y, &new_coord );
 
     /* snap to TP */
     if ( event->state & GDK_CONTROL_MASK )
     {
-      Trackpoint * tp = closest_tp_in_five_pixel_interval ( vtl, vvp, event->x, event->y );
+      Trackpoint * tp = closest_tp_in_five_pixel_interval ( vtl, viewport, event->x, event->y );
       if ( tp )
         new_coord = tp->coord;
     }
@@ -9616,7 +9677,7 @@ static bool tool_edit_waypoint_release ( VikTrwLayer *vtl, GdkEventButton *event
     /* snap to WP */
     if ( event->state & GDK_SHIFT_MASK )
     {
-      Waypoint * wp = closest_wp_in_five_pixel_interval ( vtl, vvp, event->x, event->y );
+      Waypoint * wp = closest_wp_in_five_pixel_interval ( vtl, viewport, event->x, event->y );
       if ( wp && wp != vtl->current_wp )
         new_coord = wp->coord;
     }
@@ -9636,7 +9697,7 @@ static bool tool_edit_waypoint_release ( VikTrwLayer *vtl, GdkEventButton *event
       g_object_ref_sink ( G_OBJECT(vtl->wp_right_click_menu) );
     if ( vtl->current_wp ) {
       vtl->wp_right_click_menu = GTK_MENU ( gtk_menu_new () );
-      trw_layer_sublayer_add_menu_items ( vtl, vtl->wp_right_click_menu, NULL, VIK_TRW_LAYER_SUBLAYER_WAYPOINT, vtl->current_wp_id, (GtkTreeIter *) g_hash_table_lookup ( vtl->waypoints_iters, vtl->current_wp_id ), vvp );
+      trw_layer_sublayer_add_menu_items ( vtl, vtl->wp_right_click_menu, NULL, VIK_TRW_LAYER_SUBLAYER_WAYPOINT, vtl->current_wp_id, (GtkTreeIter *) g_hash_table_lookup ( vtl->waypoints_iters, vtl->current_wp_id ), (VikViewport *) viewport->vvp );
       gtk_menu_popup ( vtl->wp_right_click_menu, NULL, NULL, NULL, NULL, event->button, gtk_get_current_event_time() );
     }
     vtl->waypoint_rightclick = false;
@@ -9932,8 +9993,6 @@ static bool tool_new_track_key_press ( VikTrwLayer *vtl, GdkEventKey *event, Vik
  */
 static bool tool_new_track_or_route_click ( VikTrwLayer *vtl, GdkEventButton *event, VikViewport *vvp )
 {
-  Trackpoint * tp;
-
   if (!vtl || vtl->vl.type != VIK_LAYER_TRW)
     return false;
 
@@ -9967,13 +10026,14 @@ static bool tool_new_track_or_route_click ( VikTrwLayer *vtl, GdkEventButton *ev
     return true;
   }
 
-  tp = new Trackpoint();
-  vvp->port.screen_to_coord(event->x, event->y, &(tp->coord) );
+  Viewport * viewport = &vvp->port;
+  Trackpoint * tp = new Trackpoint();
+  viewport->screen_to_coord(event->x, event->y, &(tp->coord) );
 
   /* snap to other TP */
   if ( event->state & GDK_CONTROL_MASK )
   {
-    Trackpoint * other_tp = closest_tp_in_five_pixel_interval ( vtl, vvp, event->x, event->y );
+    Trackpoint * other_tp = closest_tp_in_five_pixel_interval ( vtl, viewport, event->x, event->y );
     if ( other_tp )
       tp->coord = other_tp->coord;
   }
@@ -10103,15 +10163,15 @@ static void tool_edit_trackpoint_destroy ( tool_ed_t *t )
 static bool tool_edit_trackpoint_click ( VikTrwLayer *vtl, GdkEventButton *event, void * data )
 {
   tool_ed_t *t = (tool_ed_t *) data;
-  VikViewport *vvp = t->vvp;
+  Viewport * viewport = &t->vvp->port;
   TPSearchParams params;
-  params.vvp = vvp;
+  params.viewport = viewport;
   params.x = event->x;
   params.y = event->y;
   params.closest_track_id = NULL;
   params.closest_tp = NULL;
   params.closest_tpl = NULL;
-  vvp->port.get_min_max_lat_lon(&(params.bbox.south), &(params.bbox.north), &(params.bbox.west), &(params.bbox.east) );
+  viewport->get_min_max_lat_lon(&(params.bbox.south), &(params.bbox.north), &(params.bbox.west), &(params.bbox.east) );
 
   if ( event->button != 1 )
     return false;
@@ -10133,7 +10193,7 @@ static bool tool_edit_trackpoint_click ( VikTrwLayer *vtl, GdkEventButton *event
       return false;
 
     int x, y;
-    vvp->port.coord_to_screen(&(tp->coord), &x, &y );
+    viewport->coord_to_screen(&(tp->coord), &x, &y );
 
     if ( current_tr->visible &&
          abs(x - (int)round(event->x)) < TRACKPOINT_SIZE_APPROX &&
@@ -10181,7 +10241,7 @@ static bool tool_edit_trackpoint_click ( VikTrwLayer *vtl, GdkEventButton *event
 static bool tool_edit_trackpoint_move ( VikTrwLayer *vtl, GdkEventMotion *event, void * data )
 {
   tool_ed_t *t = (tool_ed_t *) data;
-  VikViewport *vvp = t->vvp;
+  Viewport * viewport = &t->vvp->port;
 
   if (!vtl || vtl->vl.type != VIK_LAYER_TRW)
     return false;
@@ -10189,19 +10249,19 @@ static bool tool_edit_trackpoint_move ( VikTrwLayer *vtl, GdkEventMotion *event,
   if ( t->holding )
   {
     VikCoord new_coord;
-    vvp->port.screen_to_coord(event->x, event->y, &new_coord);
+    viewport->screen_to_coord(event->x, event->y, &new_coord);
 
     /* snap to TP */
     if ( event->state & GDK_CONTROL_MASK )
     {
-      Trackpoint * tp = closest_tp_in_five_pixel_interval ( vtl, vvp, event->x, event->y );
+      Trackpoint * tp = closest_tp_in_five_pixel_interval ( vtl, viewport, event->x, event->y );
       if ( tp && tp != vtl->current_tpl->data )
         new_coord = tp->coord;
     }
     //    ((Trackpoint *) vtl->current_tpl->data)->coord = new_coord;
     {
       int x, y;
-      vvp->port.coord_to_screen(&new_coord, &x, &y );
+      viewport->coord_to_screen(&new_coord, &x, &y );
       marker_moveto ( t, x, y );
     }
 
@@ -10213,7 +10273,7 @@ static bool tool_edit_trackpoint_move ( VikTrwLayer *vtl, GdkEventMotion *event,
 static bool tool_edit_trackpoint_release ( VikTrwLayer *vtl, GdkEventButton *event, void * data )
 {
   tool_ed_t *t = (tool_ed_t *) data;
-  VikViewport *vvp = t->vvp;
+  Viewport * viewport = &t->vvp->port;
 
   if (!vtl || vtl->vl.type != VIK_LAYER_TRW)
     return false;
@@ -10222,12 +10282,12 @@ static bool tool_edit_trackpoint_release ( VikTrwLayer *vtl, GdkEventButton *eve
 
   if ( t->holding ) {
     VikCoord new_coord;
-    vvp->port.screen_to_coord(event->x, event->y, &new_coord );
+    viewport->screen_to_coord(event->x, event->y, &new_coord );
 
     /* snap to TP */
     if ( event->state & GDK_CONTROL_MASK )
     {
-      Trackpoint * tp = closest_tp_in_five_pixel_interval ( vtl, vvp, event->x, event->y );
+      Trackpoint * tp = closest_tp_in_five_pixel_interval ( vtl, viewport, event->x, event->y );
       if ( tp && tp != vtl->current_tpl->data )
         new_coord = tp->coord;
     }
