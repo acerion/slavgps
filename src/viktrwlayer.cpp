@@ -7373,79 +7373,79 @@ static void trw_layer_delete_waypoints_from_selection ( menu_array_layer values 
 /**
  *
  */
-static void trw_layer_iter_visibility_toggle ( void * id, GtkTreeIter *it, VikTreeview *vt )
+static void trw_layer_iter_visibility_toggle(void * id, GtkTreeIter * it, VikTreeview * vt)
 {
-  vik_treeview_item_toggle_visible ( vt, it );
+	vik_treeview_item_toggle_visible(vt, it);
 }
 
 /**
  *
  */
-static void trw_layer_iter_visibility ( void * id, GtkTreeIter *it, void * vis_data[2] )
+static void trw_layer_iter_visibility(void * id, GtkTreeIter *it, void * vis_data[2])
 {
-  vik_treeview_item_set_visible ( (VikTreeview*)vis_data[0], it, KPOINTER_TO_INT (vis_data[1]) );
+	vik_treeview_item_set_visible((VikTreeview *) vis_data[0], it, ((int) (long) (vis_data[1])));
 }
 
 /**
  *
  */
-static void trw_layer_waypoints_visibility ( gpointer id, Waypoint * wp, void * on_off )
+static void trw_layer_waypoints_visibility(void * id, Waypoint * wp, void * on_off)
 {
-  wp->visible = KPOINTER_TO_INT (on_off);
+	wp->visible = (bool) on_off;
 }
 
 /**
  *
  */
-static void trw_layer_waypoints_toggle_visibility ( void * id, Waypoint * wp)
+static void trw_layer_waypoints_toggle_visibility(void * id, Waypoint * wp)
 {
-  wp->visible = !wp->visible;
+	wp->visible = !wp->visible;
 }
 
 /**
  *
  */
-static void trw_layer_waypoints_visibility_off ( menu_array_layer values )
+static void trw_layer_waypoints_visibility_off(menu_array_layer values)
 {
-  VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
-  void * vis_data[2] = { VIK_LAYER(vtl)->vt, KINT_TO_POINTER(false) };
-  g_hash_table_foreach ( vtl->waypoints_iters, (GHFunc) trw_layer_iter_visibility, vis_data );
-  g_hash_table_foreach ( vtl->waypoints, (GHFunc) trw_layer_waypoints_visibility, vis_data[1] );
-  // Redraw
-  vik_layer_emit_update ( VIK_LAYER(vtl) );
+	VikTrwLayer * vtl = VIK_TRW_LAYER(values[MA_VTL]);
+	void * vis_data[2] = { VIK_LAYER(vtl)->vt, (void *) ((long) false) };
+	g_hash_table_foreach(vtl->waypoints_iters, (GHFunc) trw_layer_iter_visibility, vis_data);
+	g_hash_table_foreach(vtl->waypoints, (GHFunc) trw_layer_waypoints_visibility, vis_data[1]);
+	// Redraw
+	vik_layer_emit_update(VIK_LAYER(vtl));
 }
 
 /**
  *
  */
-static void trw_layer_waypoints_visibility_on ( menu_array_layer values )
+static void trw_layer_waypoints_visibility_on(menu_array_layer values)
 {
-  VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
-  void * vis_data[2] = { VIK_LAYER(vtl)->vt, KINT_TO_POINTER(true) };
-  g_hash_table_foreach ( vtl->waypoints_iters, (GHFunc) trw_layer_iter_visibility, vis_data );
-  g_hash_table_foreach ( vtl->waypoints, (GHFunc) trw_layer_waypoints_visibility, vis_data[1] );
-  // Redraw
-  vik_layer_emit_update ( VIK_LAYER(vtl) );
+	VikTrwLayer * vtl = VIK_TRW_LAYER(values[MA_VTL]);
+	void * vis_data[2] = { VIK_LAYER(vtl)->vt, (void *) ((long) true) };
+	g_hash_table_foreach(vtl->waypoints_iters, (GHFunc) trw_layer_iter_visibility, vis_data);
+	g_hash_table_foreach(vtl->waypoints, (GHFunc) trw_layer_waypoints_visibility, vis_data[1]);
+	// Redraw
+	vik_layer_emit_update(VIK_LAYER(vtl));
 }
 
 /**
  *
  */
-static void trw_layer_waypoints_visibility_toggle ( menu_array_layer values )
+static void trw_layer_waypoints_visibility_toggle(menu_array_layer values)
 {
-  VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
-  g_hash_table_foreach ( vtl->waypoints_iters, (GHFunc) trw_layer_iter_visibility_toggle, VIK_LAYER(vtl)->vt );
-  g_hash_table_foreach ( vtl->waypoints, (GHFunc) trw_layer_waypoints_toggle_visibility, NULL );
-  // Redraw
-  vik_layer_emit_update ( VIK_LAYER(vtl) );
+	VikTrwLayer * vtl = VIK_TRW_LAYER(values[MA_VTL]);
+	g_hash_table_foreach(vtl->waypoints_iters, (GHFunc) trw_layer_iter_visibility_toggle, VIK_LAYER(vtl)->vt);
+	g_hash_table_foreach(vtl->waypoints, (GHFunc) trw_layer_waypoints_toggle_visibility, NULL);
+	// Redraw
+	vik_layer_emit_update(VIK_LAYER(vtl));
 }
 
 /**
  *
  */
-static void trw_layer_tracks_visibility ( void * id, Track * trk, void * on_off )
+static void trw_layer_tracks_visibility(void * id, Track * trk, void * on_off)
 {
-  trk->visible = KPOINTER_TO_INT (on_off);
+	trk->visible = (bool) on_off;
 }
 
 /**
@@ -7453,83 +7453,83 @@ static void trw_layer_tracks_visibility ( void * id, Track * trk, void * on_off 
  */
 static void trw_layer_tracks_toggle_visibility ( void * id, Track * trk )
 {
-  trk->visible = !trk->visible;
+	trk->visible = !trk->visible;
 }
 
 /**
  *
  */
-static void trw_layer_tracks_visibility_off ( menu_array_layer values )
+static void trw_layer_tracks_visibility_off(menu_array_layer values)
 {
-  VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
-  void * vis_data[2] = { VIK_LAYER(vtl)->vt, KINT_TO_POINTER(false) };
-  g_hash_table_foreach ( vtl->tracks_iters, (GHFunc) trw_layer_iter_visibility, vis_data );
-  g_hash_table_foreach ( vtl->tracks, (GHFunc) trw_layer_tracks_visibility, vis_data[1] );
-  // Redraw
-  vik_layer_emit_update ( VIK_LAYER(vtl) );
+	VikTrwLayer * vtl = VIK_TRW_LAYER(values[MA_VTL]);
+	void * vis_data[2] = { VIK_LAYER(vtl)->vt, (void *) ((long) false) };
+	g_hash_table_foreach(vtl->tracks_iters, (GHFunc) trw_layer_iter_visibility, vis_data);
+	g_hash_table_foreach(vtl->tracks, (GHFunc) trw_layer_tracks_visibility, vis_data[1]);
+	// Redraw
+	vik_layer_emit_update(VIK_LAYER(vtl));
 }
 
 /**
  *
  */
-static void trw_layer_tracks_visibility_on ( menu_array_layer values )
+static void trw_layer_tracks_visibility_on(menu_array_layer values)
 {
-  VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
-  void * vis_data[2] = { VIK_LAYER(vtl)->vt, KINT_TO_POINTER(true) };
-  g_hash_table_foreach ( vtl->tracks_iters, (GHFunc) trw_layer_iter_visibility, vis_data );
-  g_hash_table_foreach ( vtl->tracks, (GHFunc) trw_layer_tracks_visibility, vis_data[1] );
-  // Redraw
-  vik_layer_emit_update ( VIK_LAYER(vtl) );
+	VikTrwLayer * vtl = VIK_TRW_LAYER(values[MA_VTL]);
+	void * vis_data[2] = { VIK_LAYER(vtl)->vt, (void *) ((long) true) };
+	g_hash_table_foreach(vtl->tracks_iters, (GHFunc) trw_layer_iter_visibility, vis_data );
+	g_hash_table_foreach(vtl->tracks, (GHFunc) trw_layer_tracks_visibility, vis_data[1] );
+	// Redraw
+	vik_layer_emit_update(VIK_LAYER(vtl));
 }
 
 /**
  *
  */
-static void trw_layer_tracks_visibility_toggle ( menu_array_layer values )
+static void trw_layer_tracks_visibility_toggle(menu_array_layer values)
 {
-  VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
-  g_hash_table_foreach ( vtl->tracks_iters, (GHFunc) trw_layer_iter_visibility_toggle, VIK_LAYER(vtl)->vt );
-  g_hash_table_foreach ( vtl->tracks, (GHFunc) trw_layer_tracks_toggle_visibility, NULL );
-  // Redraw
-  vik_layer_emit_update ( VIK_LAYER(vtl) );
+	VikTrwLayer * vtl = VIK_TRW_LAYER(values[MA_VTL]);
+	g_hash_table_foreach(vtl->tracks_iters, (GHFunc) trw_layer_iter_visibility_toggle, VIK_LAYER(vtl)->vt);
+	g_hash_table_foreach(vtl->tracks, (GHFunc) trw_layer_tracks_toggle_visibility, NULL );
+	// Redraw
+	vik_layer_emit_update(VIK_LAYER(vtl));
 }
 
 /**
  *
  */
-static void trw_layer_routes_visibility_off ( menu_array_layer values )
+static void trw_layer_routes_visibility_off(menu_array_layer values)
 {
-  VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
-  void * vis_data[2] = { VIK_LAYER(vtl)->vt, KINT_TO_POINTER(false) };
-  g_hash_table_foreach ( vtl->routes_iters, (GHFunc) trw_layer_iter_visibility, vis_data );
-  g_hash_table_foreach ( vtl->routes, (GHFunc) trw_layer_tracks_visibility, vis_data[1] );
-  // Redraw
-  vik_layer_emit_update ( VIK_LAYER(vtl) );
+	VikTrwLayer * vtl = VIK_TRW_LAYER(values[MA_VTL]);
+	void * vis_data[2] = { VIK_LAYER(vtl)->vt, (void *) ((long) false) };
+	g_hash_table_foreach(vtl->routes_iters, (GHFunc) trw_layer_iter_visibility, vis_data );
+	g_hash_table_foreach(vtl->routes, (GHFunc) trw_layer_tracks_visibility, vis_data[1] );
+	// Redraw
+	vik_layer_emit_update(VIK_LAYER(vtl));
 }
 
 /**
  *
  */
-static void trw_layer_routes_visibility_on ( menu_array_layer values )
+static void trw_layer_routes_visibility_on(menu_array_layer values)
 {
-  VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
-  void * vis_data[2] = { VIK_LAYER(vtl)->vt, KINT_TO_POINTER(true) };
-  g_hash_table_foreach ( vtl->routes_iters, (GHFunc) trw_layer_iter_visibility, vis_data );
-  g_hash_table_foreach ( vtl->routes, (GHFunc) trw_layer_tracks_visibility, vis_data[1] );
-  // Redraw
-  vik_layer_emit_update ( VIK_LAYER(vtl) );
+	VikTrwLayer * vtl = VIK_TRW_LAYER(values[MA_VTL]);
+	void * vis_data[2] = { VIK_LAYER(vtl)->vt, (void *) ((long) true) };
+	g_hash_table_foreach(vtl->routes_iters, (GHFunc) trw_layer_iter_visibility, vis_data );
+	g_hash_table_foreach(vtl->routes, (GHFunc) trw_layer_tracks_visibility, vis_data[1] );
+	// Redraw
+	vik_layer_emit_update(VIK_LAYER(vtl));
 }
 
 /**
  *
  */
-static void trw_layer_routes_visibility_toggle ( menu_array_layer values )
+static void trw_layer_routes_visibility_toggle(menu_array_layer values)
 {
-  VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
-  g_hash_table_foreach ( vtl->routes_iters, (GHFunc) trw_layer_iter_visibility_toggle, VIK_LAYER(vtl)->vt );
-  g_hash_table_foreach ( vtl->routes, (GHFunc) trw_layer_tracks_toggle_visibility, NULL );
-  // Redraw
-  vik_layer_emit_update ( VIK_LAYER(vtl) );
+	VikTrwLayer * vtl = VIK_TRW_LAYER(values[MA_VTL]);
+	g_hash_table_foreach(vtl->routes_iters, (GHFunc) trw_layer_iter_visibility_toggle, VIK_LAYER(vtl)->vt );
+	g_hash_table_foreach(vtl->routes, (GHFunc) trw_layer_tracks_toggle_visibility, NULL );
+	// Redraw
+	vik_layer_emit_update(VIK_LAYER(vtl));
 }
 
 /**
