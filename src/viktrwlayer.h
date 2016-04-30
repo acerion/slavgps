@@ -26,6 +26,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include <unordered_map>
+
 #include "viklayer.h"
 #include "vikviewport.h"
 #include "vikwaypoint.h"
@@ -34,6 +36,7 @@
 
 
 using namespace SlavGPS;
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -104,7 +107,7 @@ bool vik_trw_layer_auto_set_view ( VikTrwLayer *vtl, VikViewport *vvp );
 bool vik_trw_layer_find_center ( VikTrwLayer *vtl, VikCoord *dest );
 GHashTable *vik_trw_layer_get_tracks ( VikTrwLayer *l );
 GHashTable *vik_trw_layer_get_routes ( VikTrwLayer *l );
-GHashTable *vik_trw_layer_get_waypoints ( VikTrwLayer *l );
+std::unordered_map<sg_uid_t, Waypoint *> & vik_trw_layer_get_waypoints(VikTrwLayer * l);
 bool vik_trw_layer_is_empty ( VikTrwLayer *vtl );
 
 bool vik_trw_layer_new_waypoint ( VikTrwLayer *vtl, GtkWindow *w, const VikCoord *def_coord );
@@ -122,7 +125,7 @@ void vik_trw_layer_reset_waypoints ( VikTrwLayer *vtl );
 
 void vik_trw_layer_draw_highlight ( VikTrwLayer *vtl, VikViewport *vvp );
 void vik_trw_layer_draw_highlight_item ( VikTrwLayer *vtl, Track * trk, Waypoint * wp, VikViewport *vvp );
-void vik_trw_layer_draw_highlight_items ( VikTrwLayer *vtl, GHashTable *trks, GHashTable *wpts, VikViewport *vvp );
+void vik_trw_layer_draw_highlight_items ( VikTrwLayer *vtl, GHashTable *trks, std::unordered_map<sg_uid_t, Waypoint *> * waypoints, VikViewport *vvp );
 
 // For creating a list of tracks with the corresponding layer it is in
 //  (thus a selection of tracks may be from differing layers)
@@ -169,11 +172,7 @@ typedef struct {
 } trku_udata;
 bool trw_layer_track_find_uuid ( const void * id, const Track * trk, void * udata );
 
-typedef struct {
-  Waypoint * wp; // input
-  void * uuid;   // output
-} wpu_udata;
-bool trw_layer_waypoint_find_uuid ( const void * id, const Waypoint * wp, void * udata );
+sg_uid_t trw_layer_waypoint_find_uuid(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, Waypoint * wp);
 
 void trw_layer_zoom_to_show_latlons ( VikTrwLayer *vtl, VikViewport *vvp, struct LatLon maxmin[2] );
 
@@ -186,5 +185,31 @@ GHashTable *vik_trw_layer_get_waypoints_iters ( VikTrwLayer *vtl );
 #ifdef __cplusplus
 }
 #endif
+
+
+
+
+
+namespace SlavGPS {
+
+
+
+
+
+	class LayerTRW {
+
+
+
+	};
+
+
+
+
+
+}
+
+
+
+
 
 #endif

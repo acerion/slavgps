@@ -62,7 +62,7 @@ VikLayerInterface vik_aggregate_layer_interface = {
   (VikLayerFuncProperties)              NULL,
   (VikLayerFuncDraw)                    vik_aggregate_layer_draw,
   (VikLayerFuncChangeCoordMode)         aggregate_layer_change_coord_mode,
-  
+
   (VikLayerFuncGetTimestamp)            NULL,
 
   (VikLayerFuncSetMenuItemsSelection)	NULL,
@@ -142,7 +142,7 @@ static void aggregate_layer_marshall( VikAggregateLayer *val, uint8_t **data, in
 {
   GList *child = val->children;
   VikLayer *child_layer;
-  uint8_t *ld; 
+  uint8_t *ld;
   int ll;
   GByteArray* b = g_byte_array_new ();
   int len;
@@ -177,7 +177,7 @@ static VikAggregateLayer *aggregate_layer_unmarshall( uint8_t *data, int len, Vi
 #define alm_next \
   len -= sizeof(int) + alm_size; \
   data += sizeof(int) + alm_size;
-  
+
   VikAggregateLayer *rv = vik_aggregate_layer_new();
   VikLayer *child_layer;
 
@@ -511,9 +511,14 @@ static GList* aggregate_layer_waypoint_create_list ( VikLayer *vl, void * user_d
   // For each TRW layers keep adding the waypoints to build a list of all of them
   GList *waypoints_and_layers = NULL;
   layers = g_list_first ( layers );
+  int index = 0;
   while ( layers ) {
-    GList *waypoints = NULL;
-    waypoints = g_list_concat ( waypoints, g_hash_table_get_values ( vik_trw_layer_get_waypoints( VIK_TRW_LAYER(layers->data) ) ) );
+	  GList * waypoints = NULL;
+
+	  std::unordered_map<sg_uid_t, Waypoint *> & wps = vik_trw_layer_get_waypoints(VIK_TRW_LAYER(layers->data));
+	  for (auto i = wps.begin(); i != wps.end(); i++) {
+		  waypoints = g_list_insert(waypoints, i->second, index++);
+	  }
 
     waypoints_and_layers = g_list_concat ( waypoints_and_layers, vik_trw_layer_build_waypoint_list_t ( VIK_TRW_LAYER(layers->data), waypoints ) );
 
@@ -817,7 +822,7 @@ unsigned int vik_aggregate_layer_tool ( VikAggregateLayer *val, VikLayerTypeEnum
   }
   return found_rej ? 2 : 1; /* no one wanted to accept the tool call in this layer */
 }
-#endif 
+#endif
 
 VikLayer *vik_aggregate_layer_get_top_visible_layer_of_type ( VikAggregateLayer *val, VikLayerTypeEnum type )
 {

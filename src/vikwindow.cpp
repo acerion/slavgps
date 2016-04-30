@@ -223,7 +223,7 @@ struct _VikWindow {
   void * selected_vtl; /* notionally VikTrwLayer */
   GHashTable *selected_tracks;
   void * selected_track; /* notionally Track */
-  GHashTable *selected_waypoints;
+  std::unordered_map<sg_uid_t, Waypoint *> * selected_waypoints;
   void * selected_waypoint; /* notionally Waypoint */
   /* only use for individual track or waypoint */
   /* For track(s) & waypoint(s) it is the layer they are in - this helps refering to the individual item easier */
@@ -4867,14 +4867,14 @@ void vik_window_set_selected_track ( VikWindow *vw, void ** vt, void * vtl )
   vw->viking_vvp->port.set_highlight_thickness(vik_trw_layer_get_property_tracks_line_thickness ((VikTrwLayer *) vw->containing_vtl));
 }
 
-GHashTable *vik_window_get_selected_waypoints ( VikWindow *vw )
+std::unordered_map<sg_uid_t, Waypoint *> * vik_window_get_selected_waypoints(VikWindow *vw)
 {
-  return vw->selected_waypoints;
+	return vw->selected_waypoints;
 }
 
-void vik_window_set_selected_waypoints ( VikWindow *vw, GHashTable *ght, void * vtl )
+void vik_window_set_selected_waypoints ( VikWindow *vw, std::unordered_map<sg_uid_t, Waypoint *> * waypoints, void * vtl )
 {
-  vw->selected_waypoints = ght;
+  vw->selected_waypoints = waypoints;
   vw->containing_vtl     = vtl;
   /* Clear others */
   vw->selected_vtl       = NULL;

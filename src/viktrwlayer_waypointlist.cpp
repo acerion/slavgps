@@ -411,14 +411,8 @@ static bool trw_layer_waypoint_menu_popup ( GtkWidget *tree_view,
 	gtk_tree_model_get ( model, &iter, TRW_COL_NUM, &vtl, -1 );
 	if ( !IS_VIK_TRW_LAYER(vtl) ) return false;
 
-	wpu_udata udataU;
-	udataU.wp   = wp;
-	udataU.uuid = NULL;
-
-	void ** wptf;
-	wptf = (void **) g_hash_table_find ( vik_trw_layer_get_waypoints(vtl), (GHRFunc) trw_layer_waypoint_find_uuid, &udataU );
-
-	if ( wptf && udataU.uuid ) {
+    sg_uid_t wp_uuid = trw_layer_waypoint_find_uuid(vik_trw_layer_get_waypoints(vtl), wp);
+	if (wp_uuid) {
 		VikViewport *vvp = vik_window_viewport((VikWindow *)(VIK_GTK_WINDOW_FROM_LAYER(vtl)));
 
 		GtkWidget *menu = gtk_menu_new();
@@ -430,7 +424,7 @@ static bool trw_layer_waypoint_menu_popup ( GtkWidget *tree_view,
 		add_menu_items ( GTK_MENU(menu),
 		                 vtl,
 		                 wp,
-		                 udataU.uuid,
+		                 (void *) ((long) wp_uuid),
 		                 vvp,
 		                 tree_view,
 		                 data );

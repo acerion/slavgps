@@ -29,9 +29,13 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include <unordered_map>
 
+#include "vikwaypoint.h"
 #include "vikviewport.h"
 #include "vikstatus.h"
+
+using namespace SlavGPS;
 
 #ifdef __cplusplus
 extern "C" {
@@ -83,8 +87,8 @@ GHashTable *vik_window_get_selected_tracks ( VikWindow *vw );
 void vik_window_set_selected_tracks ( VikWindow *vw, GHashTable *ght, void * vtl ); /* void * is a VikTrwLayer */
 void * vik_window_get_selected_track ( VikWindow *vw ); /* return type Track */
 void vik_window_set_selected_track ( VikWindow *vw, void **vt, void * vtl ); /* void * is a VikTrwLayer */
-GHashTable *vik_window_get_selected_waypoints ( VikWindow *vw );
-void vik_window_set_selected_waypoints ( VikWindow *vw, GHashTable *ght, void * vtl ); /* void * is a VikTrwLayer */
+std::unordered_map<sg_uid_t, Waypoint *> * vik_window_get_selected_waypoints ( VikWindow *vw );
+void vik_window_set_selected_waypoints ( VikWindow *vw, std::unordered_map<sg_uid_t, Waypoint *> * waypoints, void * vtl ); /* void * is a VikTrwLayer */
 void * vik_window_get_selected_waypoint ( VikWindow *vw ); /* return type VikWaypoint */
 void vik_window_set_selected_waypoint ( VikWindow *vw, void **vwp, void * vtl ); /* input VikWaypoint, VikTrwLayer */
 /* Return the VikTrwLayer of the selected track(s) or waypoint(s) are in (maybe NULL) */

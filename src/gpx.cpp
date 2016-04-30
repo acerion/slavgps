@@ -1150,14 +1150,21 @@ void a_gpx_write_file ( VikTrwLayer *vtl, FILE *f, GpxWritingOptions *options )
   }
 
   if ( vik_trw_layer_get_waypoints_visibility(vtl) || (options && options->hidden) ) {
-    // gather waypoints in a list, then sort
-    GList *gl = g_hash_table_get_values ( vik_trw_layer_get_waypoints ( vtl ) );
-    gl = g_list_sort ( gl, gpx_waypoint_compare );
+	  // gather waypoints in a list, then sort
+	  std::unordered_map<sg_uid_t, Waypoint *> & waypoints = vik_trw_layer_get_waypoints(vtl);
+	  std::unordered_map<sg_uid_t, Waypoint *>::iterator i;
+	  int index = 0;
+	  GList * gl = NULL;
+	  for (i = waypoints.begin(); i != waypoints.end(); i++) {
+		  gl = g_list_insert(gl, i->second, index++);
+	  }
 
-    for (GList *iter = g_list_first (gl); iter != NULL; iter = g_list_next (iter)) {
-      gpx_write_waypoint ((Waypoint *) iter->data, &context );
-    }
-    g_list_free ( gl );
+	  gl = g_list_sort(gl, gpx_waypoint_compare);
+
+	  for (GList *iter = g_list_first (gl); iter != NULL; iter = g_list_next (iter)) {
+		  gpx_write_waypoint ((Waypoint *) iter->data, &context );
+	  }
+	  g_list_free ( gl );
   }
 
   GList *gl = NULL;

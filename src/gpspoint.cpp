@@ -573,90 +573,98 @@ static void gpspoint_process_key_and_value ( const char *key, unsigned int key_l
   }
 }
 
-static void a_gpspoint_write_waypoint ( const void * id, const Waypoint * wp, FILE *f )
+
+
+
+
+static void a_gpspoint_write_waypoints(FILE * f, std::unordered_map<sg_uid_t, Waypoint *> & data)
 {
-  static struct LatLon ll;
-  char *s_lat, *s_lon;
-  // Sanity clauses
-  if ( !wp )
-    return;
-  if ( !(wp->name) )
-    return;
+	for (auto i = data.begin(); i != data.end(); i++) {
 
-  vik_coord_to_latlon ( &(wp->coord), &ll );
-  s_lat = a_coords_dtostr(ll.lat);
-  s_lon = a_coords_dtostr(ll.lon);
-  char *tmp_name = slashdup(wp->name);
-  fprintf ( f, "type=\"waypoint\" latitude=\"%s\" longitude=\"%s\" name=\"%s\"", s_lat, s_lon, tmp_name );
-  free( tmp_name );
-  free( s_lat );
-  free( s_lon );
+		Waypoint * wp = i->second;
 
-  if ( wp->altitude != VIK_DEFAULT_ALTITUDE ) {
-    char *s_alt = a_coords_dtostr(wp->altitude);
-    fprintf ( f, " altitude=\"%s\"", s_alt );
-    free(s_alt);
-  }
-  if ( wp->has_timestamp )
-    fprintf ( f, " unixtime=\"%ld\"", wp->timestamp );
-  if ( wp->comment )
-  {
-    char *tmp_comment = slashdup(wp->comment);
-    fprintf ( f, " comment=\"%s\"", tmp_comment );
-    free( tmp_comment );
-  }
-  if ( wp->description )
-  {
-    char *tmp_description = slashdup(wp->description);
-    fprintf ( f, " description=\"%s\"", tmp_description );
-    free( tmp_description );
-  }
-  if ( wp->source )
-  {
-    char *tmp_source = slashdup(wp->source);
-    fprintf ( f, " source=\"%s\"", tmp_source );
-    free( tmp_source );
-  }
-  if ( wp->type )
-  {
-    char *tmp_type = slashdup(wp->type);
-    fprintf ( f, " xtype=\"%s\"", tmp_type );
-    free( tmp_type );
-  }
-  if ( wp->image )
-  {
-    char *tmp_image = NULL;
-    char *cwd = NULL;
-    if ( a_vik_get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE ) {
-      cwd = g_get_current_dir();
-      if ( cwd )
-        tmp_image = g_strdup( file_GetRelativeFilename ( cwd, wp->image ) );
-    }
+		static struct LatLon ll;
+		char *s_lat, *s_lon;
+		// Sanity clauses
+		if ( !wp )
+			continue;
+		if ( !(wp->name) )
+			continue;
 
-    // if cwd not available - use image filename as is
-    // this should be an absolute path as set in thumbnails
-    if ( !cwd )
-      tmp_image = slashdup(wp->image);
+		vik_coord_to_latlon ( &(wp->coord), &ll );
+		s_lat = a_coords_dtostr(ll.lat);
+		s_lon = a_coords_dtostr(ll.lon);
+		char *tmp_name = slashdup(wp->name);
+		fprintf ( f, "type=\"waypoint\" latitude=\"%s\" longitude=\"%s\" name=\"%s\"", s_lat, s_lon, tmp_name );
+		free( tmp_name );
+		free( s_lat );
+		free( s_lon );
 
-    if ( tmp_image )
-      fprintf ( f, " image=\"%s\"", tmp_image );
+		if ( wp->altitude != VIK_DEFAULT_ALTITUDE ) {
+			char *s_alt = a_coords_dtostr(wp->altitude);
+			fprintf ( f, " altitude=\"%s\"", s_alt );
+			free(s_alt);
+		}
+		if ( wp->has_timestamp )
+			fprintf ( f, " unixtime=\"%ld\"", wp->timestamp );
 
-    free( cwd );
-    free( tmp_image );
-  }
-  if ( wp->symbol )
-  {
-    // Due to changes in garminsymbols - the symbol name is now in Title Case
-    // However to keep newly generated .vik files better compatible with older Viking versions
-    //   The symbol names will always be lowercase
-    char *tmp_symbol = g_utf8_strdown(wp->symbol, -1);
-    fprintf ( f, " symbol=\"%s\"", tmp_symbol );
-    free( tmp_symbol );
-  }
-  if ( ! wp->visible )
-    fprintf ( f, " visible=\"n\"" );
-  fprintf ( f, "\n" );
+		if ( wp->comment ) {
+			char *tmp_comment = slashdup(wp->comment);
+			fprintf ( f, " comment=\"%s\"", tmp_comment );
+			free( tmp_comment );
+		}
+		if ( wp->description ) {
+			char *tmp_description = slashdup(wp->description);
+			fprintf ( f, " description=\"%s\"", tmp_description );
+			free( tmp_description );
+		}
+		if ( wp->source ) {
+			char *tmp_source = slashdup(wp->source);
+			fprintf ( f, " source=\"%s\"", tmp_source );
+			free( tmp_source );
+		}
+		if ( wp->type ) {
+			char *tmp_type = slashdup(wp->type);
+			fprintf ( f, " xtype=\"%s\"", tmp_type );
+			free( tmp_type );
+		}
+		if ( wp->image ) {
+			char *tmp_image = NULL;
+			char *cwd = NULL;
+			if ( a_vik_get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE ) {
+				cwd = g_get_current_dir();
+				if ( cwd )
+					tmp_image = g_strdup( file_GetRelativeFilename ( cwd, wp->image ) );
+			}
+
+			// if cwd not available - use image filename as is
+			// this should be an absolute path as set in thumbnails
+			if ( !cwd )
+				tmp_image = slashdup(wp->image);
+
+			if ( tmp_image )
+				fprintf ( f, " image=\"%s\"", tmp_image );
+
+			free( cwd );
+			free( tmp_image );
+		}
+		if ( wp->symbol ) {
+			// Due to changes in garminsymbols - the symbol name is now in Title Case
+			// However to keep newly generated .vik files better compatible with older Viking versions
+			//   The symbol names will always be lowercase
+			char *tmp_symbol = g_utf8_strdown(wp->symbol, -1);
+			fprintf ( f, " symbol=\"%s\"", tmp_symbol );
+			free( tmp_symbol );
+		}
+		if ( ! wp->visible )
+			fprintf ( f, " visible=\"n\"" );
+		fprintf ( f, "\n" );
+	}
 }
+
+
+
+
 
 static void a_gpspoint_write_trackpoint (Trackpoint * tp, TP_write_info_type *write_info )
 {
@@ -787,10 +795,10 @@ void a_gpspoint_write_file ( VikTrwLayer *trw, FILE *f )
 {
   GHashTable *tracks = vik_trw_layer_get_tracks ( trw );
   GHashTable *routes = vik_trw_layer_get_routes ( trw );
-  GHashTable *waypoints = vik_trw_layer_get_waypoints ( trw );
+  auto waypoints = vik_trw_layer_get_waypoints(trw);
 
   fprintf ( f, "type=\"waypointlist\"\n" );
-  g_hash_table_foreach ( waypoints, (GHFunc) a_gpspoint_write_waypoint, f );
+  a_gpspoint_write_waypoints(f, waypoints);
   fprintf ( f, "type=\"waypointlistend\"\n" );
   g_hash_table_foreach ( tracks, (GHFunc) a_gpspoint_write_track, f );
   g_hash_table_foreach ( routes, (GHFunc) a_gpspoint_write_track, f );

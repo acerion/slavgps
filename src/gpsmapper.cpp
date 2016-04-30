@@ -23,6 +23,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include <algorithm>
+
 /* Name of layer -> RGN type and Type
    format: Name RGN40 0x40
    or:     Name RGN10 0x2f06
@@ -96,21 +98,22 @@ strncasecmp(name+len-6,"0x",2) == 0 )
   }
 }
 
-static void write_waypoint ( const char *name, Waypoint * wp, FILE *f )
+static void write_waypoints(FILE * f, std::unordered_map<sg_uid_t, Waypoint *> & waypoints)
 {
-  static struct LatLon ll;
-  unsigned int len = print_rgn_stuff ( wp->comment, f );
-  if ( len )
-  {
-    char *s_lat, *s_lon;
-    vik_coord_to_latlon ( &(wp->coord), &ll );
-    s_lat = a_coords_dtostr(ll.lat);
-    s_lon = a_coords_dtostr(ll.lon);
-    fprintf ( f, "Data0=(%s,%s)\n", s_lat, s_lon );
-    free( s_lat );
-    free( s_lon );
-    fprintf ( f, "[END-%.5s]\n\n", wp->comment+len+1 );
-  }
+	static struct LatLon ll;
+
+	for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
+		unsigned int len = print_rgn_stuff(i->second->comment, f);
+		if (len) {
+			vik_coord_to_latlon(&(i->second->coord), &ll);
+			char * s_lat = a_coords_dtostr(ll.lat);
+			char * s_lon = a_coords_dtostr(ll.lon);
+			fprintf ( f, "Data0=(%s,%s)\n", s_lat, s_lon);
+			free(s_lat);
+			free(s_lon);
+			fprintf(f, "[END-%.5s]\n\n", i->second->comment+len+1);
+		}
+	}
 }
 
 static void write_trackpoint ( Trackpoint * tp, FILE *f )
@@ -139,11 +142,11 @@ static void write_track ( const char *name, Track * trk, FILE *f )
 void a_gpsmapper_write_file ( VikTrwLayer *trw, FILE *f )
 {
   GHashTable *tracks = vik_trw_layer_get_tracks ( trw );
-  GHashTable *waypoints = vik_trw_layer_get_waypoints ( trw );
+  auto waypoints = vik_trw_layer_get_waypoints(trw);
 
   fprintf ( f, "[IMG ID]\nID=%s\nName=%s\nTreSize=1000\nRgnLimit=700\nLevels=2\nLevel0=22\nLevel1=18\nZoom0=0\nZoom1=1\n[END-IMG ID]\n\n",
       VIK_LAYER(trw)->name, VIK_LAYER(trw)->name );
 
-  g_hash_table_foreach ( waypoints, (GHFunc) write_waypoint, f );
+  write_waypoints(f, waypoints);
   g_hash_table_foreach ( tracks, (GHFunc) write_track, f );
 }

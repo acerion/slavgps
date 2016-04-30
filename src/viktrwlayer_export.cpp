@@ -111,7 +111,7 @@ void vik_trw_layer_export_gpsbabel ( VikTrwLayer *vtl, const char *title, const 
   if ( g_hash_table_size (vik_trw_layer_get_tracks(vtl)) ) {
       mode.tracksWrite = 1;
   }
-  if ( g_hash_table_size (vik_trw_layer_get_waypoints(vtl)) ) {
+  if (vik_trw_layer_get_waypoints(vtl).size()) {
       mode.waypointsWrite = 1;
   }
 
