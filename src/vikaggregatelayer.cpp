@@ -31,6 +31,7 @@
 #include <assert.h>
 #include <glib/gi18n.h>
 
+
 static void aggregate_layer_marshall( VikAggregateLayer *val, uint8_t **data, int *len );
 static VikAggregateLayer *aggregate_layer_unmarshall( uint8_t *data, int len, VikViewport *vvp );
 static void aggregate_layer_change_coord_mode ( VikAggregateLayer *val, VikCoordMode mode );
@@ -598,8 +599,8 @@ static GList* aggregate_layer_track_create_list ( VikLayer *vl, void * user_data
   layers = g_list_first ( layers );
   while ( layers ) {
     GList *tracks = NULL;
-    tracks = g_list_concat ( tracks, g_hash_table_get_values ( vik_trw_layer_get_tracks( VIK_TRW_LAYER(layers->data) ) ) );
-    tracks = g_list_concat ( tracks, g_hash_table_get_values ( vik_trw_layer_get_routes( VIK_TRW_LAYER(layers->data) ) ) );
+    vik_trw_layer_get_track_values(&tracks, vik_trw_layer_get_tracks(VIK_TRW_LAYER(layers->data)));
+    vik_trw_layer_get_track_values(&tracks, vik_trw_layer_get_routes(VIK_TRW_LAYER(layers->data)));
 
     tracks_and_layers = g_list_concat ( tracks_and_layers, vik_trw_layer_build_track_list_t ( VIK_TRW_LAYER(layers->data), tracks ) );
 

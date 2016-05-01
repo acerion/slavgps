@@ -1171,11 +1171,10 @@ void a_gpx_write_file ( VikTrwLayer *vtl, FILE *f, GpxWritingOptions *options )
   if ( vik_trw_layer_get_tracks_visibility(vtl) || (options && options->hidden) ) {
     //gl = g_hash_table_get_values ( vik_trw_layer_get_tracks ( vtl ) );
     // Forming the list manually seems to produce one that is more likely to be nearer to the creation order
-    void * key, *value;
-    GHashTableIter ght_iter;
-    g_hash_table_iter_init ( &ght_iter, vik_trw_layer_get_tracks ( vtl ) );
-    while ( g_hash_table_iter_next (&ght_iter, &key, &value) ) {
-      gl = g_list_prepend ( gl ,value );
+
+    std::unordered_map<sg_uid_t, Track *> tracks = vik_trw_layer_get_tracks(vtl);
+    for (auto i = tracks.begin(); i != tracks.end(); i++) {
+	    gl = g_list_prepend(gl, i->second);
     }
     gl = g_list_reverse ( gl );
 
@@ -1192,8 +1191,13 @@ void a_gpx_write_file ( VikTrwLayer *vtl, FILE *f, GpxWritingOptions *options )
   GList *glrte = NULL;
   // Routes sorted by name
   if ( vik_trw_layer_get_routes_visibility(vtl) || (options && options->hidden) ) {
-    glrte = g_hash_table_get_values ( vik_trw_layer_get_routes ( vtl ) );
-    glrte = g_list_sort ( glrte, gpx_track_compare_name );
+
+	  std::unordered_map<sg_uid_t, Track *> routes = vik_trw_layer_get_routes(vtl);
+	  int index = 0;
+	  for (auto i = routes.begin(); i != routes.end(); i++) {
+		  glrte = g_list_insert(glrte, i->second, index);
+	  }
+	  glrte = g_list_sort ( glrte, gpx_track_compare_name );
   }
 
   // g_list_concat doesn't copy memory properly

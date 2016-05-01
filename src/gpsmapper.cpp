@@ -128,25 +128,26 @@ static void write_trackpoint ( Trackpoint * tp, FILE *f )
   free( s_lon );
 }
 
-static void write_track ( const char *name, Track * trk, FILE *f )
+static void write_track(FILE * f, std::unordered_map<sg_uid_t, Track *> & tracks)
 {
-  unsigned int len = print_rgn_stuff ( trk->comment, f );
-  if ( len )
-  {
-    fprintf ( f, "Data0=" );
-    g_list_foreach ( trk->trackpoints, (GFunc) write_trackpoint, f );
-    fprintf ( f, "\n[END-%.5s]\n\n", trk->comment+len+1 );
-  }
+	for (auto i = tracks.begin(); i != tracks.end(); i++) {
+		unsigned int len = print_rgn_stuff(i->second->comment, f);
+		if (len) {
+			fprintf(f, "Data0=");
+			g_list_foreach(i->second->trackpoints, (GFunc) write_trackpoint, f);
+			fprintf(f, "\n[END-%.5s]\n\n", i->second->comment + len + 1);
+		}
+	}
 }
 
 void a_gpsmapper_write_file ( VikTrwLayer *trw, FILE *f )
 {
-  GHashTable *tracks = vik_trw_layer_get_tracks ( trw );
+  std::unordered_map<sg_uid_t, Track *> & tracks = vik_trw_layer_get_tracks(trw);
   auto waypoints = vik_trw_layer_get_waypoints(trw);
 
   fprintf ( f, "[IMG ID]\nID=%s\nName=%s\nTreSize=1000\nRgnLimit=700\nLevels=2\nLevel0=22\nLevel1=18\nZoom0=0\nZoom1=1\n[END-IMG ID]\n\n",
       VIK_LAYER(trw)->name, VIK_LAYER(trw)->name );
 
   write_waypoints(f, waypoints);
-  g_hash_table_foreach ( tracks, (GHFunc) write_track, f );
+  write_track(f, tracks);
 }

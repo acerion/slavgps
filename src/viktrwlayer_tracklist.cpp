@@ -350,17 +350,13 @@ static bool trw_layer_track_menu_popup ( GtkWidget *tree_view,
 	gtk_tree_model_get ( model, &iter, TRW_COL_NUM, &vtl, -1 );
 	if ( !IS_VIK_TRW_LAYER(vtl) ) return false;
 
-	trku_udata udataU;
-	udataU.trk  = trk;
-	udataU.uuid = NULL;
-
-	void ** trkf;
+	sg_uid_t uid = 0;;
 	if ( trk->is_route )
-		trkf = (void **) g_hash_table_find ( vik_trw_layer_get_routes(vtl), (GHRFunc) trw_layer_track_find_uuid, &udataU );
+		uid = trw_layer_track_find_uuid(vik_trw_layer_get_routes(vtl), trk);
 	else
-		trkf = (void **) g_hash_table_find ( vik_trw_layer_get_tracks(vtl), (GHRFunc) trw_layer_track_find_uuid, &udataU );
+		uid = trw_layer_track_find_uuid(vik_trw_layer_get_tracks(vtl), trk);
 
-	if ( trkf && udataU.uuid ) {
+	if (uid) {
 		VikViewport *vvp = vik_window_viewport((VikWindow *)(VIK_GTK_WINDOW_FROM_LAYER(vtl)));
 
 		GtkWidget *menu = gtk_menu_new();
@@ -372,7 +368,7 @@ static bool trw_layer_track_menu_popup ( GtkWidget *tree_view,
 		add_menu_items ( GTK_MENU(menu),
 		                 vtl,
 		                 trk,
-		                 udataU.uuid,
+		                 (void *) ((long) uid),
 		                 vvp,
 		                 tree_view,
 		                 data );

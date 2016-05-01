@@ -275,6 +275,15 @@ static void trw_layer_geotag_track ( const void * id, Track * trk, geotag_option
 	}
 }
 
+
+static void trw_layer_geotag_tracks(std::unordered_map<sg_uid_t, Track *> & tracks, geotag_options_t *options)
+{
+	for (auto i = tracks.begin(); i != tracks.end(); i++) {
+		trw_layer_geotag_track((void *) ((long) i->first), i->second, options);
+	}
+
+}
+
 /**
  * Simply align the images the waypoint position
  */
@@ -371,9 +380,9 @@ static void trw_layer_geotag_process ( geotag_options_t *options )
 		}
 		else {
 			// Try all tracks
-			GHashTable *tracks = vik_trw_layer_get_tracks ( options->vtl );
-			if ( g_hash_table_size (tracks) > 0 ) {
-				g_hash_table_foreach ( tracks, (GHFunc) trw_layer_geotag_track, options );
+			std::unordered_map<unsigned int, SlavGPS::Track*> & tracks = vik_trw_layer_get_tracks(options->vtl);
+			if (tracks.size() > 0 ) {
+				trw_layer_geotag_tracks(tracks, options);
 			}
 		}
 

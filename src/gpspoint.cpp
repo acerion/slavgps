@@ -735,71 +735,84 @@ static void a_gpspoint_write_trackpoint (Trackpoint * tp, TP_write_info_type *wr
 }
 
 
-static void a_gpspoint_write_track ( const void * id, const Track * trk, FILE *f )
+
+
+
+static void a_gpspoint_write_track(FILE * f, std::unordered_map<sg_uid_t, Track *> & tracks)
 {
-  // Sanity clauses
-  if ( !trk )
-    return;
-  if ( !(trk->name) )
-    return;
+	for (auto i = tracks.begin(); i != tracks.end(); i++) {
 
-  char *tmp_name = slashdup(trk->name);
-  fprintf ( f, "type=\"%s\" name=\"%s\"", trk->is_route ? "route" : "track", tmp_name );
-  free( tmp_name );
+		Track * trk = i->second;
 
-  if ( trk->comment ) {
-    char *tmp = slashdup(trk->comment);
-    fprintf ( f, " comment=\"%s\"", tmp );
-    free( tmp );
-  }
+		// Sanity clauses
+		if ( !trk )
+			continue;
+		if ( !(trk->name) )
+			continue;
 
-  if ( trk->description ) {
-    char *tmp = slashdup(trk->description);
-    fprintf ( f, " description=\"%s\"", tmp );
-    free( tmp );
-  }
+		char *tmp_name = slashdup(trk->name);
+		fprintf ( f, "type=\"%s\" name=\"%s\"", trk->is_route ? "route" : "track", tmp_name );
+		free( tmp_name );
 
-  if ( trk->source ) {
-    char *tmp = slashdup(trk->source);
-    fprintf ( f, " source=\"%s\"", tmp );
-    free( tmp );
-  }
+		if ( trk->comment ) {
+			char *tmp = slashdup(trk->comment);
+			fprintf ( f, " comment=\"%s\"", tmp );
+			free( tmp );
+		}
 
-  if ( trk->type ) {
-    char *tmp = slashdup(trk->type);
-    fprintf ( f, " xtype=\"%s\"", tmp );
-    free( tmp );
-  }
+		if ( trk->description ) {
+			char *tmp = slashdup(trk->description);
+			fprintf ( f, " description=\"%s\"", tmp );
+			free( tmp );
+		}
 
-  if ( trk->has_color ) {
-    fprintf ( f, " color=#%.2x%.2x%.2x", (int)(trk->color.red/256),(int)(trk->color.green/256),(int)(trk->color.blue/256));
-  }
+		if ( trk->source ) {
+			char *tmp = slashdup(trk->source);
+			fprintf ( f, " source=\"%s\"", tmp );
+			free( tmp );
+		}
 
-  if ( trk->draw_name_mode > 0 )
-    fprintf ( f, " draw_name_mode=\"%d\"", trk->draw_name_mode );
+		if ( trk->type ) {
+			char *tmp = slashdup(trk->type);
+			fprintf ( f, " xtype=\"%s\"", tmp );
+			free( tmp );
+		}
 
-  if ( trk->max_number_dist_labels > 0 )
-    fprintf ( f, " number_dist_labels=\"%d\"", trk->max_number_dist_labels );
+		if ( trk->has_color ) {
+			fprintf ( f, " color=#%.2x%.2x%.2x", (int)(trk->color.red/256),(int)(trk->color.green/256),(int)(trk->color.blue/256));
+		}
 
-  if ( ! trk->visible ) {
-    fprintf ( f, " visible=\"n\"" );
-  }
-  fprintf ( f, "\n" );
+		if ( trk->draw_name_mode > 0 )
+			fprintf ( f, " draw_name_mode=\"%d\"", trk->draw_name_mode );
 
-  TP_write_info_type tp_write_info = { f, trk->is_route };
-  g_list_foreach ( trk->trackpoints, (GFunc) a_gpspoint_write_trackpoint, &tp_write_info );
-  fprintf ( f, "type=\"%send\"\n", trk->is_route ? "route" : "track" );
+		if ( trk->max_number_dist_labels > 0 )
+			fprintf ( f, " number_dist_labels=\"%d\"", trk->max_number_dist_labels );
+
+		if ( ! trk->visible ) {
+			fprintf ( f, " visible=\"n\"" );
+		}
+		fprintf ( f, "\n" );
+
+		TP_write_info_type tp_write_info = { f, trk->is_route };
+		g_list_foreach ( trk->trackpoints, (GFunc) a_gpspoint_write_trackpoint, &tp_write_info );
+		fprintf ( f, "type=\"%send\"\n", trk->is_route ? "route" : "track" );
+	}
 }
+
+
+
+
 
 void a_gpspoint_write_file ( VikTrwLayer *trw, FILE *f )
 {
-  GHashTable *tracks = vik_trw_layer_get_tracks ( trw );
-  GHashTable *routes = vik_trw_layer_get_routes ( trw );
-  auto waypoints = vik_trw_layer_get_waypoints(trw);
+	auto tracks = vik_trw_layer_get_tracks(trw);
+	auto routes = vik_trw_layer_get_routes(trw);
+	auto waypoints = vik_trw_layer_get_waypoints(trw);
 
-  fprintf ( f, "type=\"waypointlist\"\n" );
-  a_gpspoint_write_waypoints(f, waypoints);
-  fprintf ( f, "type=\"waypointlistend\"\n" );
-  g_hash_table_foreach ( tracks, (GHFunc) a_gpspoint_write_track, f );
-  g_hash_table_foreach ( routes, (GHFunc) a_gpspoint_write_track, f );
+	fprintf(f, "type=\"waypointlist\"\n");
+	a_gpspoint_write_waypoints(f, waypoints);
+
+	fprintf(f, "type=\"waypointlistend\"\n");
+	a_gpspoint_write_track(f, tracks);
+	a_gpspoint_write_track(f, routes);
 }

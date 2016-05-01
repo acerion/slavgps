@@ -221,7 +221,7 @@ struct _VikWindow {
   /* Store at this level for highlighted selection drawing since it applies to the viewport and the layers panel */
   /* Only one of these items can be selected at the same time */
   void * selected_vtl; /* notionally VikTrwLayer */
-  GHashTable *selected_tracks;
+  std::unordered_map<sg_uid_t, Track*> * selected_tracks;
   void * selected_track; /* notionally Track */
   std::unordered_map<sg_uid_t, Waypoint *> * selected_waypoints;
   void * selected_waypoint; /* notionally Waypoint */
@@ -4831,14 +4831,14 @@ void vik_window_set_selected_trw_layer ( VikWindow *vw, void * vtl )
   vw->viking_vvp->port.set_highlight_thickness(vik_trw_layer_get_property_tracks_line_thickness ((VikTrwLayer *) vw->containing_vtl));
 }
 
-GHashTable *vik_window_get_selected_tracks ( VikWindow *vw )
+std::unordered_map<sg_uid_t, Track*> * vik_window_get_selected_tracks(VikWindow * vw)
 {
-  return vw->selected_tracks;
+	return vw->selected_tracks;
 }
 
-void vik_window_set_selected_tracks ( VikWindow *vw, GHashTable *ght, void * vtl )
+void vik_window_set_selected_tracks ( VikWindow *vw, std::unordered_map<sg_uid_t, Track *> * tracks, void * vtl )
 {
-  vw->selected_tracks = ght;
+  vw->selected_tracks = tracks;
   vw->containing_vtl  = vtl;
   /* Clear others */
   vw->selected_vtl       = NULL;

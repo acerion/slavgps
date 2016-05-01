@@ -34,6 +34,7 @@
 #include "vikwaypoint.h"
 #include "vikviewport.h"
 #include "vikstatus.h"
+#include "viktrack.h"
 
 using namespace SlavGPS;
 
@@ -83,8 +84,8 @@ void vik_window_enable_layer_tool ( VikWindow *vw, int layer_id, int tool_id );
 
 void * vik_window_get_selected_trw_layer ( VikWindow *vw ); /* return type VikTrwLayer */
 void vik_window_set_selected_trw_layer ( VikWindow *vw, void * vtl ); /* input VikTrwLayer */
-GHashTable *vik_window_get_selected_tracks ( VikWindow *vw );
-void vik_window_set_selected_tracks ( VikWindow *vw, GHashTable *ght, void * vtl ); /* void * is a VikTrwLayer */
+std::unordered_map<sg_uid_t, Track *> * vik_window_get_selected_tracks(VikWindow * vw);
+void vik_window_set_selected_tracks ( VikWindow *vw, std::unordered_map<sg_uid_t, Track *> * tracks, void * vtl ); /* void * is a VikTrwLayer */
 void * vik_window_get_selected_track ( VikWindow *vw ); /* return type Track */
 void vik_window_set_selected_track ( VikWindow *vw, void **vt, void * vtl ); /* void * is a VikTrwLayer */
 std::unordered_map<sg_uid_t, Waypoint *> * vik_window_get_selected_waypoints ( VikWindow *vw );
