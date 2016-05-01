@@ -155,13 +155,14 @@ static void trw_layer_track_select ( menu_array_values values )
 {
 	VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
 	Track * trk = ((Track *) values[MA_TRK]);
+	sg_uid_t uid = (sg_uid_t) ((long) values[MA_TRK_UUID]);
 
 	if ( values[MA_TRK_UUID] ) {
 		GtkTreeIter *iter = NULL;
 		if ( trk->is_route )
-			iter = (GtkTreeIter *) g_hash_table_lookup ( vik_trw_layer_get_routes_iters(vtl), values[MA_TRK_UUID] );
+			iter = vik_trw_layer_get_routes_iters(vtl).at(uid);
 		else
-			iter = (GtkTreeIter *) g_hash_table_lookup ( vik_trw_layer_get_tracks_iters(vtl), values[MA_TRK_UUID] );
+			iter = vik_trw_layer_get_tracks_iters(vtl).at(uid);
 
 		if ( iter )
 			vik_treeview_select_iter ( VIK_LAYER(vtl)->vt, iter, true );

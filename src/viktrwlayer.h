@@ -38,6 +38,8 @@
 using namespace SlavGPS;
 
 
+typedef GtkTreeIter TreeIndex;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -172,9 +174,9 @@ sg_uid_t trw_layer_waypoint_find_uuid(std::unordered_map<sg_uid_t, Waypoint *> &
 
 void trw_layer_zoom_to_show_latlons ( VikTrwLayer *vtl, VikViewport *vvp, struct LatLon maxmin[2] );
 
-GHashTable *vik_trw_layer_get_tracks_iters ( VikTrwLayer *vtl );
-GHashTable *vik_trw_layer_get_routes_iters ( VikTrwLayer *vtl );
-GHashTable *vik_trw_layer_get_waypoints_iters ( VikTrwLayer *vtl );
+std::unordered_map<sg_uid_t, TreeIndex *> & vik_trw_layer_get_tracks_iters(VikTrwLayer * vtl);
+std::unordered_map<sg_uid_t, TreeIndex *> & vik_trw_layer_get_routes_iters(VikTrwLayer * vtl);
+std::unordered_map<sg_uid_t, TreeIndex *> & vik_trw_layer_get_waypoints_iters(VikTrwLayer * vtl);
 
 #define VIK_SETTINGS_LIST_DATE_FORMAT "list_date_format"
 

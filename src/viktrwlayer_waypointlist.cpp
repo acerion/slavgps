@@ -156,8 +156,8 @@ static void trw_layer_waypoint_select ( menu_array_values values )
 	VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
 
 	if ( values[MA_WPT_UUID] ) {
-		GtkTreeIter *iter = NULL;
-		iter = (GtkTreeIter *) g_hash_table_lookup ( vik_trw_layer_get_waypoints_iters(vtl), values[MA_WPT_UUID] );
+		sg_uid_t uid = (sg_uid_t) ((long) values[MA_WPT_UUID]);
+		GtkTreeIter * iter = vik_trw_layer_get_waypoints_iters(vtl).at(uid);
 
 		if ( iter )
 			vik_treeview_select_iter ( VIK_LAYER(vtl)->vt, iter, true );
