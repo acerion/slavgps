@@ -93,15 +93,15 @@ void vik_trw_layer_filein_add_track ( VikTrwLayer *vtl, char *name, Track * trk)
 
 int vik_trw_layer_get_property_tracks_line_thickness ( VikTrwLayer *vtl );
 
-void vik_trw_layer_add_waypoint ( VikTrwLayer *vtl, char *name, Waypoint * wp);
-void vik_trw_layer_add_track ( VikTrwLayer *vtl, char *name, Track * trk);
-void vik_trw_layer_add_route ( VikTrwLayer *vtl, char *name, Track * trk);
+void vik_trw_layer_add_waypoint(VikTrwLayer * vtl, char * name, Waypoint * wp);
+void vik_trw_layer_add_track(VikTrwLayer * vtl, char * name, Track * trk);
+void vik_trw_layer_add_route(VikTrwLayer * vtl, char * name, Track * trk);
 
 // Waypoint returned is the first one
-Waypoint * vik_trw_layer_get_waypoint ( VikTrwLayer *vtl, const char *name );
+Waypoint * vik_trw_layer_get_waypoint(VikTrwLayer * vtl, const char * name);
 
 // Track returned is the first one
-Track * vik_trw_layer_get_track ( VikTrwLayer *vtl, const char *name );
+Track * vik_trw_layer_get_track(VikTrwLayer * vtl, const char * name);
 bool vik_trw_layer_delete_track ( VikTrwLayer *vtl, Track * trk);
 bool vik_trw_layer_delete_route ( VikTrwLayer *vtl, Track * trk);
 
