@@ -1785,13 +1785,23 @@ static int track_section_colour_by_speed ( VikTrwLayer *vtl, Trackpoint * tp1, T
   return VIK_TRW_LAYER_TRACK_GC_BLACK;
 }
 
-static void draw_utm_skip_insignia ( VikViewport *vvp, GdkGC *gc, int x, int y )
+
+
+
+
+static void draw_utm_skip_insignia(Viewport * viewport, GdkGC * gc, int x, int y)
 {
-	vvp->port.draw_line(gc, x+5, y, x-5, y);
-	vvp->port.draw_line(gc, x, y+5, x, y-5);
-	vvp->port.draw_line(gc, x+5, y+5, x-5, y-5);
-	vvp->port.draw_line(gc, x+5, y-5, x-5, y+5);
+	/* First draw '+'. */
+	viewport->draw_line(gc, x+5, y,   x-5, y  );
+	viewport->draw_line(gc, x,   y+5, x,   y-5);
+
+	/* And now draw 'x' on top of it. */
+	viewport->draw_line(gc, x+5, y+5, x-5, y-5);
+	viewport->draw_line(gc, x+5, y-5, x-5, y+5);
 }
+
+
+
 
 
 static void trw_layer_draw_track_label ( char *name, char *fgcolour, char *bgcolour, struct DrawingParams *dp, VikCoord *coord )
@@ -2097,287 +2107,322 @@ static void trw_layer_draw_point_names ( struct DrawingParams *dp, Track * trk, 
   free( bgcolour );
 }
 
-static void trw_layer_draw_track ( const void * id, Track * trk, struct DrawingParams *dp, bool draw_track_outline )
+
+
+
+
+void trw_layer_draw_track_draw_midarrow(struct DrawingParams * dp, int x, int y, int oldx, int oldy, GdkGC * main_gc)
 {
-  if ( ! trk->visible )
-    return;
+	int midx = (oldx + x) / 2;
+	int midy = (oldy + y) / 2;
 
-  /* TODO: this function is a mess, get rid of any redundancy */
-  GList *list = trk->trackpoints;
-  GdkGC *main_gc;
-  bool useoldvals = true;
+	double len = sqrt(((midx - oldx) * (midx - oldx)) + ((midy - oldy) * (midy - oldy)));
+	// Avoid divide by zero and ensure at least 1 pixel big
+	if (len > 1) {
+		double dx = (oldx - midx) / len;
+		double dy = (oldy - midy) / len;
+		dp->vp->port.draw_line(main_gc, midx, midy, midx + (dx * dp->cc + dy * dp->ss), midy + (dy * dp->cc - dx * dp->ss));
+		dp->vp->port.draw_line(main_gc, midx, midy, midx + (dx * dp->cc - dy * dp->ss), midy + (dy * dp->cc + dx * dp->ss));
+	}
+}
 
-  bool drawpoints;
-  bool drawstops;
-  bool drawelevation;
-  double min_alt, max_alt, alt_diff = 0;
 
-  const uint8_t tp_size_reg = dp->vtl->drawpoints_size;
-  const uint8_t tp_size_cur = dp->vtl->drawpoints_size*2;
-  uint8_t tp_size;
 
-  if ( dp->vtl->drawelevation )
-  {
-    /* assume if it has elevation at the beginning, it has it throughout. not ness a true good assumption */
-    if ( ( drawelevation = trk->get_minmax_alt(&min_alt, &max_alt ) ) )
-      alt_diff = max_alt - min_alt;
-  }
 
-  /* admittedly this is not an efficient way to do it because we go through the whole GC thing all over... */
-  if ( dp->vtl->bg_line_thickness && !draw_track_outline )
-    trw_layer_draw_track ( id, trk, dp, true );
 
-  if ( draw_track_outline )
-    drawpoints = drawstops = false;
-  else {
-    drawpoints = dp->vtl->drawpoints;
-    drawstops = dp->vtl->drawstops;
-  }
+void trw_layer_draw_track_draw_something(struct DrawingParams * dp, int x, int y, int oldx, int oldy, GdkGC * main_gc, GList * list, double min_alt, double alt_diff)
+{
+	GdkPoint tmp[4];
+#define FIXALTITUDE(what) \
+	((((Trackpoint *) (what))->altitude - min_alt) / alt_diff * DRAW_ELEVATION_FACTOR * dp->vtl->elevation_factor / dp->xmpp)
 
-  bool drawing_highlight = false;
-  /* Current track - used for creation */
-  if ( trk == dp->vtl->current_track )
-    main_gc = dp->vtl->current_track_gc;
-  else {
-    if ( dp->highlight ) {
-      /* Draw all tracks of the layer in special colour
-         NB this supercedes the drawmode */
-      main_gc = dp->vp->port.get_gc_highlight();
-      drawing_highlight = true;
-    }
-    if ( !drawing_highlight ) {
-      // Still need to figure out the gc according to the drawing mode:
-      switch ( dp->vtl->drawmode ) {
-      case DRAWMODE_BY_TRACK:
-        if ( dp->vtl->track_1color_gc )
-          g_object_unref ( dp->vtl->track_1color_gc );
-        dp->vtl->track_1color_gc = vik_viewport_new_gc_from_color ( dp->vp, &trk->color, dp->vtl->line_thickness );
-        main_gc = dp->vtl->track_1color_gc;
-	break;
-      default:
-        // Mostly for DRAWMODE_ALL_SAME_COLOR
-        // but includes DRAWMODE_BY_SPEED, main_gc is set later on as necessary
-        main_gc = g_array_index(dp->vtl->track_gc, GdkGC *, VIK_TRW_LAYER_TRACK_GC_SINGLE);
-        break;
-      }
-    }
-  }
+	tmp[0].x = oldx;
+	tmp[0].y = oldy;
+	tmp[1].x = oldx;
+	tmp[1].y = oldy-FIXALTITUDE(list->data);
+	tmp[2].x = x;
+	tmp[2].y = y-FIXALTITUDE(list->next->data);
+	tmp[3].x = x;
+	tmp[3].y = y;
 
-  if (list) {
-    int x, y, oldx, oldy;
-    Trackpoint * tp = (Trackpoint *) list->data;
+	GdkGC *tmp_gc;
+	if (((oldx - x) > 0 && (oldy - y) > 0) || ((oldx - x) < 0 && (oldy - y) < 0)) {
+		tmp_gc = gtk_widget_get_style(GTK_WIDGET(dp->vp))->light_gc[3];
+	} else {
+		tmp_gc = gtk_widget_get_style(GTK_WIDGET(dp->vp))->dark_gc[0];
+	}
+	dp->vp->port.draw_polygon(tmp_gc, true, tmp, 4);
 
-    tp_size = (list == dp->vtl->current_tpl) ? tp_size_cur : tp_size_reg;
+	dp->vp->port.draw_line(main_gc, oldx, oldy-FIXALTITUDE(list->data), x, y-FIXALTITUDE(list->next->data));
+}
 
-    dp->vp->port.coord_to_screen(&(tp->coord), &x, &y);
 
-    // Draw the first point as something a bit different from the normal points
-    // ATM it's slightly bigger and a triangle
-    if ( drawpoints ) {
-      GdkPoint trian[3] = { { x, y-(3*tp_size) }, { x-(2*tp_size), y+(2*tp_size) }, {x+(2*tp_size), y+(2*tp_size)} };
-      dp->vp->port.draw_polygon(main_gc, true, trian, 3 );
-    }
 
-    oldx = x;
-    oldy = y;
 
-    double average_speed = 0.0;
-    double low_speed = 0.0;
-    double high_speed = 0.0;
-    // If necessary calculate these values - which is done only once per track redraw
-    if ( dp->vtl->drawmode == DRAWMODE_BY_SPEED ) {
-      // the percentage factor away from the average speed determines transistions between the levels
-      average_speed = trk->get_average_speed_moving(dp->vtl->stop_length);
-      low_speed = average_speed - (average_speed*(dp->vtl->track_draw_speed_factor/100.0));
-      high_speed = average_speed + (average_speed*(dp->vtl->track_draw_speed_factor/100.0));
-    }
 
-    while ((list = g_list_next(list)))
-    {
-      tp = ((Trackpoint *) list->data);
-      tp_size = (list == dp->vtl->current_tpl) ? tp_size_cur : tp_size_reg;
-
-      Trackpoint * tp2 = (Trackpoint *) list->prev->data;
-      // See if in a different lat/lon 'quadrant' so don't draw massively long lines (presumably wrong way around the Earth)
-      //  Mainly to prevent wrong lines drawn when a track crosses the 180 degrees East-West longitude boundary
-      //  (since vik_viewport_draw_line() only copes with pixel value and has no concept of the globe)
-      if ( dp->lat_lon &&
-           (( tp2->coord.east_west < -90.0 && tp->coord.east_west > 90.0 ) ||
-            ( tp2->coord.east_west > 90.0 && tp->coord.east_west < -90.0 )) ) {
-        useoldvals = false;
-        continue;
-      }
-      /* check some stuff -- but only if we're in UTM and there's only ONE ZONE; or lat lon */
-      if ( (!dp->one_zone && !dp->lat_lon) ||     /* UTM & zones; do everything */
-             ( ((!dp->one_zone) || tp->coord.utm_zone == dp->center->utm_zone) &&   /* only check zones if UTM & one_zone */
-             tp->coord.east_west < dp->ce2 && tp->coord.east_west > dp->ce1 &&  /* both UTM and lat lon */
-             tp->coord.north_south > dp->cn1 && tp->coord.north_south < dp->cn2 ) )
-      {
-        dp->vp->port.coord_to_screen(&(tp->coord), &x, &y);
-
-	/*
-	 * If points are the same in display coordinates, don't draw.
-	 */
-	if ( useoldvals && x == oldx && y == oldy )
-	{
-	  // Still need to process points to ensure 'stops' are drawn if required
-	  if ( drawstops && drawpoints && ! draw_track_outline && list->next &&
-	       (((Trackpoint *) list->next->data)->timestamp - ((Trackpoint *) list->data)->timestamp > dp->vtl->stop_length) )
-	    dp->vp->port.draw_arc(g_array_index(dp->vtl->track_gc, GdkGC *, 11), true, x-(3*tp_size), y-(3*tp_size), 6*tp_size, 6*tp_size, 0, 360*64 );
-
-	  goto skip;
+static void trw_layer_draw_track(Track * trk, struct DrawingParams * dp, bool draw_track_outline)
+{
+	if (!trk->visible) {
+		return;
 	}
 
-        if ( drawpoints || dp->vtl->drawlines ) {
-          // setup main_gc for both point and line drawing
-          if ( !drawing_highlight && (dp->vtl->drawmode == DRAWMODE_BY_SPEED) ) {
-            main_gc = g_array_index(dp->vtl->track_gc, GdkGC *, track_section_colour_by_speed ( dp->vtl, tp, tp2, average_speed, low_speed, high_speed ) );
-          }
-        }
+	/* TODO: this function is a mess, get rid of any redundancy */
 
-        if ( drawpoints && ! draw_track_outline )
-        {
+	double min_alt, max_alt, alt_diff = 0;
+	if (dp->vtl->drawelevation) {
 
-          if ( list->next ) {
-	    /*
-	     * The concept of drawing stops is that a trackpoint
-	     * that is if the next trackpoint has a timestamp far into
-	     * the future, we draw a circle of 6x trackpoint size,
-	     * instead of a rectangle of 2x trackpoint size.
-	     * This is drawn first so the trackpoint will be drawn on top
-	     */
-            /* stops */
-            if ( drawstops && ((Trackpoint *) list->next->data)->timestamp - ((Trackpoint *) list->data)->timestamp > dp->vtl->stop_length )
-	      /* Stop point.  Draw 6x circle. Always in redish colour */
-              dp->vp->port.draw_arc(g_array_index(dp->vtl->track_gc, GdkGC *, VIK_TRW_LAYER_TRACK_GC_STOP), true, x-(3*tp_size), y-(3*tp_size), 6*tp_size, 6*tp_size, 0, 360*64 );
+		/* assume if it has elevation at the beginning, it has it throughout. not ness a true good assumption */
+		if (trk->get_minmax_alt(&min_alt, &max_alt)) {
+			alt_diff = max_alt - min_alt;
+		}
+	}
 
-	    /* Regular point - draw 2x square. */
-	    dp->vp->port.draw_rectangle(main_gc, true, x-tp_size, y-tp_size, 2*tp_size, 2*tp_size );
-          }
-          else
-	    /* Final point - draw 4x circle. */
-            dp->vp->port.draw_arc(main_gc, true, x-(2*tp_size), y-(2*tp_size), 4*tp_size, 4*tp_size, 0, 360*64 );
-        }
+	/* admittedly this is not an efficient way to do it because we go through the whole GC thing all over... */
+	if (dp->vtl->bg_line_thickness && !draw_track_outline) {
+		trw_layer_draw_track(trk, dp, true);
+	}
 
-        if ((!tp->newsegment) && (dp->vtl->drawlines))
-        {
+	bool drawpoints;
+	bool drawstops;
+	if (draw_track_outline) {
+		drawpoints = drawstops = false;
+	} else {
+		drawpoints = dp->vtl->drawpoints;
+		drawstops = dp->vtl->drawstops;
+	}
+#if 1
+	drawstops = true;
+	dp->vtl->stop_length = 1;
+	dp->vtl->drawmode = DRAWMODE_BY_SPEED;
+#endif
 
-          /* UTM only: zone check */
-          if ( drawpoints && dp->vtl->coord_mode == VIK_COORD_UTM && tp->coord.utm_zone != dp->center->utm_zone )
-            draw_utm_skip_insignia (  dp->vp, main_gc, x, y);
+	GdkGC * main_gc = NULL;
+	bool drawing_highlight = false;
+	/* Current track - used for creation */
+	if (trk == dp->vtl->current_track) {
+		main_gc = dp->vtl->current_track_gc;
+	} else {
+		if (dp->highlight) {
+			/* Draw all tracks of the layer in special colour
+			   NB this supercedes the drawmode */
+			main_gc = dp->vp->port.get_gc_highlight();
+			drawing_highlight = true;
+		}
 
-          if (!useoldvals)
-            dp->vp->port.coord_to_screen(&(tp2->coord), &oldx, &oldy );
+		if (!drawing_highlight) {
+			// Still need to figure out the gc according to the drawing mode:
+			switch (dp->vtl->drawmode) {
+			case DRAWMODE_BY_TRACK:
+				if (dp->vtl->track_1color_gc) {
+					g_object_unref(dp->vtl->track_1color_gc);
+				}
 
-          if ( draw_track_outline ) {
-            dp->vp->port.draw_line(dp->vtl->track_bg_gc, oldx, oldy, x, y);
-          }
-          else {
+				dp->vtl->track_1color_gc = vik_viewport_new_gc_from_color(dp->vp, &trk->color, dp->vtl->line_thickness);
+				main_gc = dp->vtl->track_1color_gc;
+				break;
+			default:
+				// Mostly for DRAWMODE_ALL_SAME_COLOR
+				// but includes DRAWMODE_BY_SPEED, main_gc is set later on as necessary
+				main_gc = g_array_index(dp->vtl->track_gc, GdkGC *, VIK_TRW_LAYER_TRACK_GC_SINGLE);
+				break;
+			}
+		}
+	}
 
-            dp->vp->port.draw_line(main_gc, oldx, oldy, x, y);
+	GList * list = trk->trackpoints;
+	if (list) {
 
-            if ( dp->vtl->drawelevation && list->next && ((Trackpoint *) list->next->data)->altitude != VIK_DEFAULT_ALTITUDE ) {
-              GdkPoint tmp[4];
-              #define FIXALTITUDE(what) ((((Trackpoint *) (what))->altitude-min_alt)/alt_diff*DRAW_ELEVATION_FACTOR*dp->vtl->elevation_factor/dp->xmpp)
+		Trackpoint * tp = (Trackpoint *) list->data;
 
-	      tmp[0].x = oldx;
-	      tmp[0].y = oldy;
-	      tmp[1].x = oldx;
-	      tmp[1].y = oldy-FIXALTITUDE(list->data);
-	      tmp[2].x = x;
-	      tmp[2].y = y-FIXALTITUDE(list->next->data);
-	      tmp[3].x = x;
-	      tmp[3].y = y;
+		const uint8_t tp_size_reg = dp->vtl->drawpoints_size;
+		const uint8_t tp_size_cur = dp->vtl->drawpoints_size * 2;
+		uint8_t tp_size = (list == dp->vtl->current_tpl) ? tp_size_cur : tp_size_reg;
 
-	      GdkGC *tmp_gc;
-	      if ( ((oldx - x) > 0 && (oldy - y) > 0) || ((oldx - x) < 0 && (oldy - y) < 0))
-		tmp_gc = gtk_widget_get_style(GTK_WIDGET(dp->vp))->light_gc[3];
-	      else
-		tmp_gc = gtk_widget_get_style(GTK_WIDGET(dp->vp))->dark_gc[0];
-	      dp->vp->port.draw_polygon(tmp_gc, true, tmp, 4);
+		int x, y;
+		dp->vp->port.coord_to_screen(&(tp->coord), &x, &y);
 
-              dp->vp->port.draw_line(main_gc, oldx, oldy-FIXALTITUDE(list->data), x, y-FIXALTITUDE(list->next->data));
-            }
-          }
-        }
+		// Draw the first point as something a bit different from the normal points
+		// ATM it's slightly bigger and a triangle
+		if (drawpoints) {
+			GdkPoint trian[3] = { { x, y-(3*tp_size) }, { x-(2*tp_size), y+(2*tp_size) }, {x+(2*tp_size), y+(2*tp_size)} };
+			dp->vp->port.draw_polygon(main_gc, true, trian, 3);
+		}
 
-        if ( (!tp->newsegment) && dp->vtl->drawdirections ) {
-          // Draw an arrow at the mid point to show the direction of the track
-          // Code is a rework from vikwindow::draw_ruler()
-          int midx = (oldx + x) / 2;
-          int midy = (oldy + y) / 2;
 
-          double len = sqrt ( ((midx-oldx) * (midx-oldx)) + ((midy-oldy) * (midy-oldy)) );
-          // Avoid divide by zero and ensure at least 1 pixel big
-          if ( len > 1 ) {
-            double dx = (oldx - midx) / len;
-            double dy = (oldy - midy) / len;
-            dp->vp->port.draw_line(main_gc, midx, midy, midx + (dx * dp->cc + dy * dp->ss), midy + (dy * dp->cc - dx * dp->ss) );
-            dp->vp->port.draw_line(main_gc, midx, midy, midx + (dx * dp->cc - dy * dp->ss), midy + (dy * dp->cc + dx * dp->ss) );
-          }
-        }
 
-      skip:
-        oldx = x;
-        oldy = y;
-        useoldvals = true;
-      }
-      else {
-        if (useoldvals && dp->vtl->drawlines && (!tp->newsegment))
-        {
-          if ( dp->vtl->coord_mode != VIK_COORD_UTM || tp->coord.utm_zone == dp->center->utm_zone )
-          {
-            dp->vp->port.coord_to_screen(&(tp->coord), &x, &y);
+		double average_speed = 0.0;
+		double low_speed = 0.0;
+		double high_speed = 0.0;
+		// If necessary calculate these values - which is done only once per track redraw
+		if (dp->vtl->drawmode == DRAWMODE_BY_SPEED) {
+			// the percentage factor away from the average speed determines transistions between the levels
+			average_speed = trk->get_average_speed_moving(dp->vtl->stop_length);
+			low_speed = average_speed - (average_speed*(dp->vtl->track_draw_speed_factor/100.0));
+			high_speed = average_speed + (average_speed*(dp->vtl->track_draw_speed_factor/100.0));
+		}
 
-            if ( !drawing_highlight && (dp->vtl->drawmode == DRAWMODE_BY_SPEED) ) {
-              main_gc = g_array_index(dp->vtl->track_gc, GdkGC *, track_section_colour_by_speed ( dp->vtl, tp, tp2, average_speed, low_speed, high_speed ));
-	    }
+		int prev_x = x;
+		int prev_y = y;
+		bool use_prev_xy = true; /* prev_x/prev_y contain valid coordinates of previous point. */
 
-	    /*
-	     * If points are the same in display coordinates, don't draw.
-	     */
-	    if ( x != oldx || y != oldy )
-	      {
-		if ( draw_track_outline )
-		  dp->vp->port.draw_line(dp->vtl->track_bg_gc, oldx, oldy, x, y);
-		else
-		  dp->vp->port.draw_line(main_gc, oldx, oldy, x, y);
-	      }
-          }
-          else
-          {
-	    /*
-	     * If points are the same in display coordinates, don't draw.
-	     */
-	    if ( x != oldx && y != oldy )
-	      {
-		dp->vp->port.coord_to_screen(&(tp2->coord), &x, &y );
-		draw_utm_skip_insignia ( dp->vp, main_gc, x, y );
-	      }
-          }
-        }
-        useoldvals = false;
-      }
-    }
+		while ((list = g_list_next(list))) {
+			tp = ((Trackpoint *) list->data);
+			tp_size = (list == dp->vtl->current_tpl) ? tp_size_cur : tp_size_reg;
 
-    // Labels drawn after the trackpoints, so the labels are on top
-    if ( dp->vtl->track_draw_labels ) {
-      if ( trk->max_number_dist_labels > 0 ) {
-        trw_layer_draw_dist_labels ( dp, trk, drawing_highlight );
-      }
-      trw_layer_draw_point_names (dp, trk, drawing_highlight );
+			Trackpoint * prev_tp = (Trackpoint *) list->prev->data;
+			// See if in a different lat/lon 'quadrant' so don't draw massively long lines (presumably wrong way around the Earth)
+			//  Mainly to prevent wrong lines drawn when a track crosses the 180 degrees East-West longitude boundary
+			//  (since vik_viewport_draw_line() only copes with pixel value and has no concept of the globe)
+			if (dp->lat_lon &&
+			     ((prev_tp->coord.east_west < -90.0 && tp->coord.east_west > 90.0)
+			      || (prev_tp->coord.east_west > 90.0 && tp->coord.east_west < -90.0))) {
 
-      if ( trk->draw_name_mode != TRACK_DRAWNAME_NO ) {
-        trw_layer_draw_track_name_labels ( dp, trk, drawing_highlight );
-      }
-    }
-  }
+				use_prev_xy = false;
+				continue;
+			}
+
+			/* check some stuff -- but only if we're in UTM and there's only ONE ZONE; or lat lon */
+
+			bool first_condition = (!dp->one_zone && !dp->lat_lon); /* UTM & zones; do everything */
+			bool second_condition_A = ((!dp->one_zone) || tp->coord.utm_zone == dp->center->utm_zone);  /* only check zones if UTM & one_zone */
+			bool second_condition_B = tp->coord.east_west < dp->ce2 && tp->coord.east_west > dp->ce1;  /* both UTM and lat lon */
+			bool second_condition_C = tp->coord.north_south > dp->cn1 && tp->coord.north_south < dp->cn2;
+			bool second_condition = (second_condition_A && second_condition_B && second_condition_C);
+
+#if 0
+			if ((!dp->one_zone && !dp->lat_lon) /* UTM & zones; do everything */
+			    || (((!dp->one_zone) || tp->coord.utm_zone == dp->center->utm_zone) /* only check zones if UTM & one_zone */
+				&& tp->coord.east_west < dp->ce2 && tp->coord.east_west > dp->ce1 /* both UTM and lat lon */
+				&& tp->coord.north_south > dp->cn1 && tp->coord.north_south < dp->cn2))
+
+#endif
+
+			//fprintf(stderr, "%d || (%d && %d && %d)\n", first_condition, second_condition_A, second_condition_B, second_condition_C);
+
+			if (first_condition || second_condition) {
+
+				//fprintf(stderr, "first branch ----\n");
+
+				dp->vp->port.coord_to_screen(&(tp->coord), &x, &y);
+
+				/* The concept of drawing stops is that if the next trackpoint has a
+				   timestamp far into the future, we draw a circle of 6x trackpoint
+				   size, instead of a rectangle of 2x trackpoint size. Stop is drawn
+				   first so the trackpoint will be drawn on top. */
+				if (drawstops && drawpoints && ! draw_track_outline && list->next
+				    && (((Trackpoint *) list->next->data)->timestamp - ((Trackpoint *) list->data)->timestamp > dp->vtl->stop_length)) {
+
+					dp->vp->port.draw_arc(g_array_index(dp->vtl->track_gc, GdkGC *, VIK_TRW_LAYER_TRACK_GC_STOP), true, x-(3*tp_size), y-(3*tp_size), 6*tp_size, 6*tp_size, 0, 360*64); /* kamilFIXME: there was a hardwired value "11" and application reported "(viking:3814): Gdk-CRITICAL **: IA__gdk_draw_arc: assertion 'GDK_IS_GC (gc)' failed" in cmd line. */
+				}
+
+				if (use_prev_xy && x == prev_x && y == prev_y) {
+					/* Points are the same in display coordinates, don't
+					   draw, skip drawing part. Notice that we do
+					   this after drawing stops. */
+					goto skip;
+				}
+
+				if (drawpoints || dp->vtl->drawlines) {
+					// setup main_gc for both point and line drawing
+					if (!drawing_highlight && (dp->vtl->drawmode == DRAWMODE_BY_SPEED)) {
+						main_gc = g_array_index(dp->vtl->track_gc, GdkGC *, track_section_colour_by_speed(dp->vtl, tp, prev_tp, average_speed, low_speed, high_speed));
+					}
+				}
+
+				if (drawpoints && !draw_track_outline) {
+					if (list->next) {
+						/* Regular point - draw 2x square. */
+						dp->vp->port.draw_rectangle(main_gc, true, x-tp_size, y-tp_size, 2*tp_size, 2*tp_size);
+					} else {
+						/* Final point - draw 4x circle. */
+						dp->vp->port.draw_arc(main_gc, true, x-(2*tp_size), y-(2*tp_size), 4*tp_size, 4*tp_size, 0, 360*64);
+					}
+				}
+
+				if ((!tp->newsegment) && (dp->vtl->drawlines)) {
+
+					/* UTM only: zone check */
+					if (drawpoints && dp->vtl->coord_mode == VIK_COORD_UTM && tp->coord.utm_zone != dp->center->utm_zone) {
+						draw_utm_skip_insignia(&dp->vp->port, main_gc, x, y);
+					}
+
+					if (!use_prev_xy) {
+						dp->vp->port.coord_to_screen(&(prev_tp->coord), &prev_x, &prev_y);
+					}
+
+					if (draw_track_outline) {
+						dp->vp->port.draw_line(dp->vtl->track_bg_gc, prev_x, prev_y, x, y);
+					} else {
+						dp->vp->port.draw_line(main_gc, prev_x, prev_y, x, y);
+
+						if (dp->vtl->drawelevation && list->next && ((Trackpoint *) list->next->data)->altitude != VIK_DEFAULT_ALTITUDE) {
+							trw_layer_draw_track_draw_something(dp, x, y, prev_x, prev_y, main_gc, list, min_alt, alt_diff);
+						}
+					}
+				}
+
+				if ((!tp->newsegment) && dp->vtl->drawdirections) {
+					// Draw an arrow at the mid point to show the direction of the track
+					// Code is a rework from vikwindow::draw_ruler()
+					trw_layer_draw_track_draw_midarrow(dp, x, y, prev_x, prev_y, main_gc);
+				}
+
+			skip:
+				prev_x = x;
+				prev_y = y;
+				use_prev_xy = true;
+			} else {
+
+				if (use_prev_xy && dp->vtl->drawlines && (!tp->newsegment)) {
+					if (dp->vtl->coord_mode != VIK_COORD_UTM || tp->coord.utm_zone == dp->center->utm_zone)	{
+						dp->vp->port.coord_to_screen(&(tp->coord), &x, &y);
+
+						if (!drawing_highlight && (dp->vtl->drawmode == DRAWMODE_BY_SPEED)) {
+							main_gc = g_array_index(dp->vtl->track_gc, GdkGC *, track_section_colour_by_speed(dp->vtl, tp, prev_tp, average_speed, low_speed, high_speed));
+						}
+
+						/* Draw only if current point has different coordinates than the previous one. */
+						if (x != prev_x || y != prev_y) {
+							if (draw_track_outline) {
+								dp->vp->port.draw_line(dp->vtl->track_bg_gc, prev_x, prev_y, x, y);
+							} else {
+								dp->vp->port.draw_line(main_gc, prev_x, prev_y, x, y);
+							}
+						}
+					} else {
+						/* Draw only if current point has different coordinates than the previous one. */
+						if (x != prev_x && y != prev_y) { /* kamilFIXME: is && a correct condition? */
+							dp->vp->port.coord_to_screen(&(prev_tp->coord), &x, &y);
+							draw_utm_skip_insignia(&dp->vp->port, main_gc, x, y);
+						}
+					}
+				}
+				use_prev_xy = false;
+			}
+		}
+
+		// Labels drawn after the trackpoints, so the labels are on top
+		if (dp->vtl->track_draw_labels) {
+			if (trk->max_number_dist_labels > 0) {
+				trw_layer_draw_dist_labels(dp, trk, drawing_highlight);
+			}
+			trw_layer_draw_point_names(dp, trk, drawing_highlight);
+
+			if (trk->draw_name_mode != TRACK_DRAWNAME_NO) {
+				trw_layer_draw_track_name_labels(dp, trk, drawing_highlight);
+			}
+		}
+	}
 }
+
+
+
+
 
 static void trw_layer_draw_track_cb ( const void * id, Track * trk, struct DrawingParams *dp )
 {
   if ( BBOX_INTERSECT ( trk->bbox, dp->bbox ) ) {
-    trw_layer_draw_track ( id, trk, dp, false );
+    trw_layer_draw_track(trk, dp, false );
   }
 }
 
@@ -2386,7 +2431,7 @@ static void trw_layer_draw_track_cb(std::unordered_map<sg_uid_t, Track *> & trac
 {
 	for (auto i = tracks.begin(); i != tracks.end(); i++) {
 		if (BBOX_INTERSECT (i->second->bbox, dp->bbox)) {
-			trw_layer_draw_track((void *) ((long) i->first), i->second, dp, false);
+			trw_layer_draw_track(i->second, dp, false);
 		}
 	}
 }
@@ -2417,6 +2462,7 @@ static void trw_layer_draw_waypoint(Waypoint * wp, struct DrawingParams * dp)
 	bool cond = (!dp->one_zone && !dp->lat_lon) || ((dp->lat_lon || wp->coord.utm_zone == dp->center->utm_zone) &&
 							 wp->coord.east_west < dp->ce2 && wp->coord.east_west > dp->ce1 &&
 							 wp->coord.north_south > dp->cn1 && wp->coord.north_south < dp->cn2);
+
 
 	if (!cond) {
 		return;
