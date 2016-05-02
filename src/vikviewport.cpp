@@ -1667,7 +1667,7 @@ void Viewport::compute_bearing(int x1, int y1, int x2, int y2, double *angle, do
 		vik_coord_to_latlon(&test, &ll);
 		ll.lat += get_ympp() * get_height() / 11000.0; // about 11km per degree latitude
 		a_coords_latlon_to_utm(&ll, &u);
-		vik_coord_load_from_utm(&test, VIK_VIEWPORT_DRAWMODE_UTM, &u);
+		vik_coord_load_from_utm(&test, VIK_COORD_UTM, &u); /* kamilFIXME: it was VIK_VIEWPORT_DRAWMODE_UTM. */
 		this->coord_to_screen(&test, &tx, &ty);
 
 		*baseangle = M_PI - atan2(tx-x1, ty-y1);

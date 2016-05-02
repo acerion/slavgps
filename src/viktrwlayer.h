@@ -125,9 +125,9 @@ void trw_layer_cancel_tps_of_track ( VikTrwLayer *vtl, Track * trk);
 
 void vik_trw_layer_reset_waypoints ( VikTrwLayer *vtl );
 
-void vik_trw_layer_draw_highlight ( VikTrwLayer *vtl, VikViewport *vvp );
-void vik_trw_layer_draw_highlight_item ( VikTrwLayer *vtl, Track * trk, Waypoint * wp, VikViewport *vvp );
-void vik_trw_layer_draw_highlight_items ( VikTrwLayer *vtl, std::unordered_map<sg_uid_t, Track *> * tracks, std::unordered_map<sg_uid_t, Waypoint *> * waypoints, VikViewport *vvp );
+void vik_trw_layer_draw_highlight(VikTrwLayer * vtl, Viewport * viewport);
+void vik_trw_layer_draw_highlight_item(VikTrwLayer * vtl, Track * trk, Waypoint * wp, Viewport * viewport);
+void vik_trw_layer_draw_highlight_items(VikTrwLayer * vtl, std::unordered_map<sg_uid_t, Track *> * tracks, std::unordered_map<sg_uid_t, Waypoint *> * waypoints, Viewport * viewport);
 
 // For creating a list of tracks with the corresponding layer it is in
 //  (thus a selection of tracks may be from differing layers)

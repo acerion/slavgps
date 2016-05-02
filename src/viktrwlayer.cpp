@@ -245,20 +245,21 @@ typedef struct {
   char *image; /* filename */
 } CachedPixbuf;
 
-struct DrawingParams {
-  VikViewport *vp;
-  VikTrwLayer *vtl;
-  VikWindow *vw;
-  double xmpp, ympp;
-  uint16_t width, height;
-  double cc; // Cosine factor in track directions
-  double ss; // Sine factor in track directions
-  const VikCoord *center;
-  bool one_zone, lat_lon;
-  double ce1, ce2, cn1, cn2;
-  LatLonBBox bbox;
-  bool highlight;
-};
+typedef struct {
+	Viewport * viewport;
+	VikTrwLayer * vtl;
+	VikWindow * vw;
+	double xmpp, ympp;
+	uint16_t width, height;
+	double cc; // Cosine factor in track directions
+	double ss; // Sine factor in track directions
+	const VikCoord * center;
+	VikCoordMode coord_mode; /* UTM or Lat/Lon. */
+	bool one_utm_zone;       /* Viewport shows only one UTM zone. */
+	double ce1, ce2, cn1, cn2;
+	LatLonBBox bbox;
+	bool highlight;
+} DrawingParams;
 
 static bool trw_layer_delete_waypoint ( VikTrwLayer *vtl, Waypoint * wp);
 
@@ -288,9 +289,9 @@ static void trw_layer_find_maxmin (VikTrwLayer *vtl, struct LatLon maxmin[2]);
 static void trw_layer_new_track_gcs ( VikTrwLayer *vtl, VikViewport *vp );
 static void trw_layer_free_track_gcs ( VikTrwLayer *vtl );
 
-static void trw_layer_draw_track_cb ( const void * id, Track * trk, struct DrawingParams *dp );
-static void trw_layer_draw_track_cb(std::unordered_map<sg_uid_t, Track *> & tracks, struct DrawingParams * dp);
-static void trw_layer_draw_waypoint ( const void * id, Waypoint * wp, struct DrawingParams *dp );
+static void trw_layer_draw_track_cb ( const void * id, Track * trk, DrawingParams * dp);
+static void trw_layer_draw_track_cb(std::unordered_map<sg_uid_t, Track *> & tracks, DrawingParams * dp);
+static void trw_layer_draw_waypoint ( const void * id, Waypoint * wp, DrawingParams * dp);
 
 static void goto_coord ( void ** vlp, void * vvp, void * vl, const VikCoord *coord );
 static void trw_layer_goto_track_startpoint ( menu_array_sublayer values );
@@ -795,9 +796,9 @@ VikLayerInterface vik_trw_layer_interface = {
 };
 
 
-static int  trw_layer_draw_image(Waypoint * wp, int x, int y, struct DrawingParams * dp);
-static void trw_layer_draw_symbol(Waypoint * wp, int x, int y, struct DrawingParams * dp);
-static void trw_layer_draw_label(Waypoint * wp, int x, int y, struct DrawingParams * dp);
+static int  trw_layer_draw_image(Waypoint * wp, int x, int y, DrawingParams * dp);
+static void trw_layer_draw_symbol(Waypoint * wp, int x, int y, DrawingParams * dp);
+static void trw_layer_draw_label(Waypoint * wp, int x, int y, DrawingParams * dp);
 
 
 static bool have_diary_program = false;
@@ -1718,48 +1719,57 @@ static void trw_layer_free ( VikTrwLayer *trwlayer )
   image_cache_free ( trwlayer );
 }
 
-static void init_drawing_params ( struct DrawingParams *dp, VikTrwLayer *vtl, VikViewport *vp, bool highlight )
+
+
+
+
+static void init_drawing_params(DrawingParams * dp, VikTrwLayer * vtl, Viewport * viewport, bool highlight)
 {
-  dp->vtl = vtl;
-  dp->vp = vp;
-  dp->highlight = highlight;
-  dp->vw = (VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(dp->vtl);
-  dp->xmpp = vp->port.get_xmpp();
-  dp->ympp = vp->port.get_ympp();
-  dp->width = vp->port.get_width();
-  dp->height = vp->port.get_height();
-  dp->cc = vtl->drawdirections_size*cos(DEG2RAD(45)); // Calculate once per vtl update - even if not used
-  dp->ss = vtl->drawdirections_size*sin(DEG2RAD(45)); // Calculate once per vtl update - even if not used
+	dp->vtl = vtl;
+	dp->viewport = viewport;
+	dp->highlight = highlight;
+	dp->vw = (VikWindow *) VIK_GTK_WINDOW_FROM_LAYER(dp->vtl);
+	dp->xmpp = viewport->get_xmpp();
+	dp->ympp = viewport->get_ympp();
+	dp->width = viewport->get_width();
+	dp->height = viewport->get_height();
+	dp->cc = vtl->drawdirections_size * cos(DEG2RAD(45)); // Calculate once per vtl update - even if not used
+	dp->ss = vtl->drawdirections_size * sin(DEG2RAD(45)); // Calculate once per vtl update - even if not used
 
-  dp->center = vp->port.get_center();
-  dp->one_zone = vp->port.is_one_zone(); /* false if some other projection besides UTM */
-  dp->lat_lon = vp->port.get_coord_mode() == VIK_COORD_LATLON;
+	dp->center = viewport->get_center();
+	dp->coord_mode = viewport->get_coord_mode();
+	dp->one_utm_zone = viewport->is_one_zone(); /* false if some other projection besides UTM */
 
-  if ( dp->one_zone )
-  {
-    int w2, h2;
-    w2 = dp->xmpp * (dp->width / 2) + 1600 / dp->xmpp;
-    h2 = dp->ympp * (dp->height / 2) + 1600 / dp->ympp;
-    /* leniency -- for tracks. Obviously for waypoints this SHOULD be a lot smaller */
+	if (dp->coord_mode == VIK_COORD_UTM && dp->one_utm_zone) {
+		int w2 = dp->xmpp * (dp->width / 2) + 1600 / dp->xmpp;
+		int h2 = dp->ympp * (dp->height / 2) + 1600 / dp->ympp;
+		/* leniency -- for tracks. Obviously for waypoints this SHOULD be a lot smaller */
 
-    dp->ce1 = dp->center->east_west-w2;
-    dp->ce2 = dp->center->east_west+w2;
-    dp->cn1 = dp->center->north_south-h2;
-    dp->cn2 = dp->center->north_south+h2;
-  } else if ( dp->lat_lon ) {
-    VikCoord upperleft, bottomright;
-    /* quick & dirty calculation; really want to check all corners due to lat/lon smaller at top in northern hemisphere */
-    /* this also DOESN'T WORK if you are crossing 180/-180 lon. I don't plan to in the near future...  */
-    vp->port.screen_to_coord(-500, -500, &upperleft );
-    vp->port.screen_to_coord(dp->width+500, dp->height+500, &bottomright );
-    dp->ce1 = upperleft.east_west;
-    dp->ce2 = bottomright.east_west;
-    dp->cn1 = bottomright.north_south;
-    dp->cn2 = upperleft.north_south;
-  }
+		dp->ce1 = dp->center->east_west - w2;
+		dp->ce2 = dp->center->east_west + w2;
+		dp->cn1 = dp->center->north_south - h2;
+		dp->cn2 = dp->center->north_south + h2;
 
-  vp->port.get_min_max_lat_lon(&(dp->bbox.south), &(dp->bbox.north), &(dp->bbox.west), &(dp->bbox.east) );
+	} else if (dp->coord_mode == VIK_COORD_LATLON) {
+		VikCoord upperleft, bottomright;
+		/* quick & dirty calculation; really want to check all corners due to lat/lon smaller at top in northern hemisphere */
+		/* this also DOESN'T WORK if you are crossing 180/-180 lon. I don't plan to in the near future...  */
+		viewport->screen_to_coord(-500, -500, &upperleft );
+		viewport->screen_to_coord(dp->width + 500, dp->height + 500, &bottomright);
+		dp->ce1 = upperleft.east_west;
+		dp->ce2 = bottomright.east_west;
+		dp->cn1 = bottomright.north_south;
+		dp->cn2 = upperleft.north_south;
+	} else {
+		;
+	}
+
+	viewport->get_min_max_lat_lon(&(dp->bbox.south), &(dp->bbox.north), &(dp->bbox.west), &(dp->bbox.east) );
 }
+
+
+
+
 
 /*
  * Determine the colour of the trackpoint (and/or trackline) relative to the average speed
@@ -1804,7 +1814,7 @@ static void draw_utm_skip_insignia(Viewport * viewport, GdkGC * gc, int x, int y
 
 
 
-static void trw_layer_draw_track_label ( char *name, char *fgcolour, char *bgcolour, struct DrawingParams *dp, VikCoord *coord )
+static void trw_layer_draw_track_label ( char *name, char *fgcolour, char *bgcolour, DrawingParams * dp, VikCoord *coord )
 {
   char *label_markup = g_strdup_printf ( "<span foreground=\"%s\" background=\"%s\" size=\"%s\">%s</span>", fgcolour, bgcolour, dp->vtl->track_fsize_str, name );
 
@@ -1820,8 +1830,8 @@ static void trw_layer_draw_track_label ( char *name, char *fgcolour, char *bgcol
   int width, height;
   pango_layout_get_pixel_size ( dp->vtl->tracklabellayout, &width, &height );
 
-  dp->vp->port.coord_to_screen(coord, &label_x, &label_y);
-  dp->vp->port.draw_layout(dp->vtl->track_bg_gc, label_x-width/2, label_y-height/2, dp->vtl->tracklabellayout);
+  dp->viewport->coord_to_screen(coord, &label_x, &label_y);
+  dp->viewport->draw_layout(dp->vtl->track_bg_gc, label_x-width/2, label_y-height/2, dp->vtl->tracklabellayout);
 }
 
 /**
@@ -1861,7 +1871,7 @@ static double distance_in_preferred_units ( double dist )
  * Draw a few labels along a track at nicely seperated distances
  * This might slow things down if there's many tracks being displayed with this on.
  */
-static void trw_layer_draw_dist_labels ( struct DrawingParams *dp, Track * trk, bool drawing_highlight )
+static void trw_layer_draw_dist_labels (DrawingParams * dp, Track * trk, bool drawing_highlight )
 {
   static const double chunksd[] = {0.25, 0.5, 1.0, 2.0, 5.0, 10.0, 15.0, 20.0,
                                     25.0, 40.0, 50.0, 75.0, 100.0,
@@ -1962,7 +1972,7 @@ static void trw_layer_draw_dist_labels ( struct DrawingParams *dp, Track * trk, 
       // if highlight mode on, then colour the background in the highlight colour
       char *bgcolour;
       if ( drawing_highlight )
-	bgcolour = g_strdup( dp->vp->port.get_highlight_color() );
+	bgcolour = g_strdup( dp->viewport->get_highlight_color() );
       else
         bgcolour = gdk_color_to_string ( &(dp->vtl->track_bg_color) );
 
@@ -1980,7 +1990,7 @@ static void trw_layer_draw_dist_labels ( struct DrawingParams *dp, Track * trk, 
  *
  * Draw a label (or labels) for the track name somewhere depending on the track's properties
  */
-static void trw_layer_draw_track_name_labels ( struct DrawingParams *dp, Track * trk, bool drawing_highlight )
+static void trw_layer_draw_track_name_labels (DrawingParams * dp, Track * trk, bool drawing_highlight )
 {
   char *fgcolour;
   if ( dp->vtl->drawmode == DRAWMODE_BY_TRACK )
@@ -1991,7 +2001,7 @@ static void trw_layer_draw_track_name_labels ( struct DrawingParams *dp, Track *
   // if highlight mode on, then colour the background in the highlight colour
   char *bgcolour;
   if ( drawing_highlight )
-    bgcolour = g_strdup( dp->vp->port.get_highlight_color() );
+    bgcolour = g_strdup( dp->viewport->get_highlight_color() );
   else
     bgcolour = gdk_color_to_string ( &(dp->vtl->track_bg_color) );
 
@@ -2035,10 +2045,10 @@ static void trw_layer_draw_track_name_labels ( struct DrawingParams *dp, Track *
     if ( vik_coord_diff ( &begin_coord, &end_coord ) < distance_diff ) {
       // Start and end 'close' together so only draw one label at an average location
       int x1, x2, y1, y2;
-      dp->vp->port.coord_to_screen(&begin_coord, &x1, &y1);
-      dp->vp->port.coord_to_screen(&end_coord, &x2, &y2);
+      dp->viewport->coord_to_screen(&begin_coord, &x1, &y1);
+      dp->viewport->coord_to_screen(&end_coord, &x2, &y2);
       VikCoord av_coord;
-      dp->vp->port.screen_to_coord((x1 + x2) / 2, (y1 + y2) / 2, &av_coord );
+      dp->viewport->screen_to_coord((x1 + x2) / 2, (y1 + y2) / 2, &av_coord );
 
       char *name = g_strdup_printf ( "%s: %s", ename, _("start/end") );
       trw_layer_draw_track_label ( name, fgcolour, bgcolour, dp, &av_coord );
@@ -2080,7 +2090,7 @@ static void trw_layer_draw_track_name_labels ( struct DrawingParams *dp, Track *
  * Draw a point labels along a track
  * This might slow things down if there's many tracks being displayed with this on.
  */
-static void trw_layer_draw_point_names ( struct DrawingParams *dp, Track * trk, bool drawing_highlight )
+static void trw_layer_draw_point_names (DrawingParams * dp, Track * trk, bool drawing_highlight )
 {
   GList *list = trk->trackpoints;
   if (!list) return;
@@ -2092,7 +2102,7 @@ static void trw_layer_draw_point_names ( struct DrawingParams *dp, Track * trk, 
     fgcolour = gdk_color_to_string ( &(dp->vtl->track_color) );
   char *bgcolour;
   if ( drawing_highlight )
-    bgcolour = g_strdup( dp->vp->port.get_highlight_color() );
+    bgcolour = g_strdup( dp->viewport->get_highlight_color() );
   else
     bgcolour = gdk_color_to_string ( &(dp->vtl->track_bg_color) );
   if ( tp->name )
@@ -2111,7 +2121,7 @@ static void trw_layer_draw_point_names ( struct DrawingParams *dp, Track * trk, 
 
 
 
-void trw_layer_draw_track_draw_midarrow(struct DrawingParams * dp, int x, int y, int oldx, int oldy, GdkGC * main_gc)
+void trw_layer_draw_track_draw_midarrow(DrawingParams * dp, int x, int y, int oldx, int oldy, GdkGC * main_gc)
 {
 	int midx = (oldx + x) / 2;
 	int midy = (oldy + y) / 2;
@@ -2121,8 +2131,8 @@ void trw_layer_draw_track_draw_midarrow(struct DrawingParams * dp, int x, int y,
 	if (len > 1) {
 		double dx = (oldx - midx) / len;
 		double dy = (oldy - midy) / len;
-		dp->vp->port.draw_line(main_gc, midx, midy, midx + (dx * dp->cc + dy * dp->ss), midy + (dy * dp->cc - dx * dp->ss));
-		dp->vp->port.draw_line(main_gc, midx, midy, midx + (dx * dp->cc - dy * dp->ss), midy + (dy * dp->cc + dx * dp->ss));
+		dp->viewport->draw_line(main_gc, midx, midy, midx + (dx * dp->cc + dy * dp->ss), midy + (dy * dp->cc - dx * dp->ss));
+		dp->viewport->draw_line(main_gc, midx, midy, midx + (dx * dp->cc - dy * dp->ss), midy + (dy * dp->cc + dx * dp->ss));
 	}
 }
 
@@ -2130,7 +2140,7 @@ void trw_layer_draw_track_draw_midarrow(struct DrawingParams * dp, int x, int y,
 
 
 
-void trw_layer_draw_track_draw_something(struct DrawingParams * dp, int x, int y, int oldx, int oldy, GdkGC * main_gc, GList * list, double min_alt, double alt_diff)
+void trw_layer_draw_track_draw_something(DrawingParams * dp, int x, int y, int oldx, int oldy, GdkGC * main_gc, GList * list, double min_alt, double alt_diff)
 {
 	GdkPoint tmp[4];
 #define FIXALTITUDE(what) \
@@ -2147,20 +2157,20 @@ void trw_layer_draw_track_draw_something(struct DrawingParams * dp, int x, int y
 
 	GdkGC *tmp_gc;
 	if (((oldx - x) > 0 && (oldy - y) > 0) || ((oldx - x) < 0 && (oldy - y) < 0)) {
-		tmp_gc = gtk_widget_get_style(GTK_WIDGET(dp->vp))->light_gc[3];
+		tmp_gc = gtk_widget_get_style(GTK_WIDGET(dp->viewport->vvp))->light_gc[3];
 	} else {
-		tmp_gc = gtk_widget_get_style(GTK_WIDGET(dp->vp))->dark_gc[0];
+		tmp_gc = gtk_widget_get_style(GTK_WIDGET(dp->viewport->vvp))->dark_gc[0];
 	}
-	dp->vp->port.draw_polygon(tmp_gc, true, tmp, 4);
+	dp->viewport->draw_polygon(tmp_gc, true, tmp, 4);
 
-	dp->vp->port.draw_line(main_gc, oldx, oldy-FIXALTITUDE(list->data), x, y-FIXALTITUDE(list->next->data));
+	dp->viewport->draw_line(main_gc, oldx, oldy-FIXALTITUDE(list->data), x, y-FIXALTITUDE(list->next->data));
 }
 
 
 
 
 
-static void trw_layer_draw_track(Track * trk, struct DrawingParams * dp, bool draw_track_outline)
+static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_track_outline)
 {
 	if (!trk->visible) {
 		return;
@@ -2205,7 +2215,7 @@ static void trw_layer_draw_track(Track * trk, struct DrawingParams * dp, bool dr
 		if (dp->highlight) {
 			/* Draw all tracks of the layer in special colour
 			   NB this supercedes the drawmode */
-			main_gc = dp->vp->port.get_gc_highlight();
+			main_gc = dp->viewport->get_gc_highlight();
 			drawing_highlight = true;
 		}
 
@@ -2217,7 +2227,7 @@ static void trw_layer_draw_track(Track * trk, struct DrawingParams * dp, bool dr
 					g_object_unref(dp->vtl->track_1color_gc);
 				}
 
-				dp->vtl->track_1color_gc = vik_viewport_new_gc_from_color(dp->vp, &trk->color, dp->vtl->line_thickness);
+				dp->vtl->track_1color_gc = vik_viewport_new_gc_from_color((VikViewport *) dp->viewport->vvp, &trk->color, dp->vtl->line_thickness);
 				main_gc = dp->vtl->track_1color_gc;
 				break;
 			default:
@@ -2239,13 +2249,13 @@ static void trw_layer_draw_track(Track * trk, struct DrawingParams * dp, bool dr
 		uint8_t tp_size = (list == dp->vtl->current_tpl) ? tp_size_cur : tp_size_reg;
 
 		int x, y;
-		dp->vp->port.coord_to_screen(&(tp->coord), &x, &y);
+		dp->viewport->coord_to_screen(&(tp->coord), &x, &y);
 
 		// Draw the first point as something a bit different from the normal points
 		// ATM it's slightly bigger and a triangle
 		if (drawpoints) {
 			GdkPoint trian[3] = { { x, y-(3*tp_size) }, { x-(2*tp_size), y+(2*tp_size) }, {x+(2*tp_size), y+(2*tp_size)} };
-			dp->vp->port.draw_polygon(main_gc, true, trian, 3);
+			dp->viewport->draw_polygon(main_gc, true, trian, 3);
 		}
 
 
@@ -2273,7 +2283,7 @@ static void trw_layer_draw_track(Track * trk, struct DrawingParams * dp, bool dr
 			// See if in a different lat/lon 'quadrant' so don't draw massively long lines (presumably wrong way around the Earth)
 			//  Mainly to prevent wrong lines drawn when a track crosses the 180 degrees East-West longitude boundary
 			//  (since vik_viewport_draw_line() only copes with pixel value and has no concept of the globe)
-			if (dp->lat_lon &&
+			if (dp->coord_mode == VIK_COORD_LATLON &&
 			     ((prev_tp->coord.east_west < -90.0 && tp->coord.east_west > 90.0)
 			      || (prev_tp->coord.east_west > 90.0 && tp->coord.east_west < -90.0))) {
 
@@ -2283,15 +2293,16 @@ static void trw_layer_draw_track(Track * trk, struct DrawingParams * dp, bool dr
 
 			/* check some stuff -- but only if we're in UTM and there's only ONE ZONE; or lat lon */
 
-			bool first_condition = (!dp->one_zone && !dp->lat_lon); /* UTM & zones; do everything */
-			bool second_condition_A = ((!dp->one_zone) || tp->coord.utm_zone == dp->center->utm_zone);  /* only check zones if UTM & one_zone */
+			/* kamilTODO: compare this condition with condition in trw_layer_draw_waypoint(). */
+			bool first_condition = (dp->coord_mode == VIK_COORD_UTM && !dp->one_utm_zone); /* UTM coord mode & more than one UTM zone - do everything. */
+			bool second_condition_A = ((!dp->one_utm_zone) || tp->coord.utm_zone == dp->center->utm_zone);  /* only check zones if UTM & one_utm_zone */
 			bool second_condition_B = tp->coord.east_west < dp->ce2 && tp->coord.east_west > dp->ce1;  /* both UTM and lat lon */
 			bool second_condition_C = tp->coord.north_south > dp->cn1 && tp->coord.north_south < dp->cn2;
 			bool second_condition = (second_condition_A && second_condition_B && second_condition_C);
 
 #if 0
-			if ((!dp->one_zone && !dp->lat_lon) /* UTM & zones; do everything */
-			    || (((!dp->one_zone) || tp->coord.utm_zone == dp->center->utm_zone) /* only check zones if UTM & one_zone */
+			if ((!dp->one_utm_zone && !dp->lat_lon) /* UTM & zones; do everything */
+			    || (((!dp->one_utm_zone) || tp->coord.utm_zone == dp->center->utm_zone) /* only check zones if UTM & one_utm_zone */
 				&& tp->coord.east_west < dp->ce2 && tp->coord.east_west > dp->ce1 /* both UTM and lat lon */
 				&& tp->coord.north_south > dp->cn1 && tp->coord.north_south < dp->cn2))
 
@@ -2303,7 +2314,7 @@ static void trw_layer_draw_track(Track * trk, struct DrawingParams * dp, bool dr
 
 				//fprintf(stderr, "first branch ----\n");
 
-				dp->vp->port.coord_to_screen(&(tp->coord), &x, &y);
+				dp->viewport->coord_to_screen(&(tp->coord), &x, &y);
 
 				/* The concept of drawing stops is that if the next trackpoint has a
 				   timestamp far into the future, we draw a circle of 6x trackpoint
@@ -2312,7 +2323,7 @@ static void trw_layer_draw_track(Track * trk, struct DrawingParams * dp, bool dr
 				if (drawstops && drawpoints && ! draw_track_outline && list->next
 				    && (((Trackpoint *) list->next->data)->timestamp - ((Trackpoint *) list->data)->timestamp > dp->vtl->stop_length)) {
 
-					dp->vp->port.draw_arc(g_array_index(dp->vtl->track_gc, GdkGC *, VIK_TRW_LAYER_TRACK_GC_STOP), true, x-(3*tp_size), y-(3*tp_size), 6*tp_size, 6*tp_size, 0, 360*64); /* kamilFIXME: there was a hardwired value "11" and application reported "(viking:3814): Gdk-CRITICAL **: IA__gdk_draw_arc: assertion 'GDK_IS_GC (gc)' failed" in cmd line. */
+					dp->viewport->draw_arc(g_array_index(dp->vtl->track_gc, GdkGC *, VIK_TRW_LAYER_TRACK_GC_STOP), true, x-(3*tp_size), y-(3*tp_size), 6*tp_size, 6*tp_size, 0, 360*64); /* kamilFIXME: there was a hardwired value "11" and application reported "(viking:3814): Gdk-CRITICAL **: IA__gdk_draw_arc: assertion 'GDK_IS_GC (gc)' failed" in cmd line. */
 				}
 
 				if (use_prev_xy && x == prev_x && y == prev_y) {
@@ -2332,10 +2343,10 @@ static void trw_layer_draw_track(Track * trk, struct DrawingParams * dp, bool dr
 				if (drawpoints && !draw_track_outline) {
 					if (list->next) {
 						/* Regular point - draw 2x square. */
-						dp->vp->port.draw_rectangle(main_gc, true, x-tp_size, y-tp_size, 2*tp_size, 2*tp_size);
+						dp->viewport->draw_rectangle(main_gc, true, x-tp_size, y-tp_size, 2*tp_size, 2*tp_size);
 					} else {
 						/* Final point - draw 4x circle. */
-						dp->vp->port.draw_arc(main_gc, true, x-(2*tp_size), y-(2*tp_size), 4*tp_size, 4*tp_size, 0, 360*64);
+						dp->viewport->draw_arc(main_gc, true, x-(2*tp_size), y-(2*tp_size), 4*tp_size, 4*tp_size, 0, 360*64);
 					}
 				}
 
@@ -2343,17 +2354,17 @@ static void trw_layer_draw_track(Track * trk, struct DrawingParams * dp, bool dr
 
 					/* UTM only: zone check */
 					if (drawpoints && dp->vtl->coord_mode == VIK_COORD_UTM && tp->coord.utm_zone != dp->center->utm_zone) {
-						draw_utm_skip_insignia(&dp->vp->port, main_gc, x, y);
+						draw_utm_skip_insignia(dp->viewport, main_gc, x, y);
 					}
 
 					if (!use_prev_xy) {
-						dp->vp->port.coord_to_screen(&(prev_tp->coord), &prev_x, &prev_y);
+						dp->viewport->coord_to_screen(&(prev_tp->coord), &prev_x, &prev_y);
 					}
 
 					if (draw_track_outline) {
-						dp->vp->port.draw_line(dp->vtl->track_bg_gc, prev_x, prev_y, x, y);
+						dp->viewport->draw_line(dp->vtl->track_bg_gc, prev_x, prev_y, x, y);
 					} else {
-						dp->vp->port.draw_line(main_gc, prev_x, prev_y, x, y);
+						dp->viewport->draw_line(main_gc, prev_x, prev_y, x, y);
 
 						if (dp->vtl->drawelevation && list->next && ((Trackpoint *) list->next->data)->altitude != VIK_DEFAULT_ALTITUDE) {
 							trw_layer_draw_track_draw_something(dp, x, y, prev_x, prev_y, main_gc, list, min_alt, alt_diff);
@@ -2375,7 +2386,7 @@ static void trw_layer_draw_track(Track * trk, struct DrawingParams * dp, bool dr
 
 				if (use_prev_xy && dp->vtl->drawlines && (!tp->newsegment)) {
 					if (dp->vtl->coord_mode != VIK_COORD_UTM || tp->coord.utm_zone == dp->center->utm_zone)	{
-						dp->vp->port.coord_to_screen(&(tp->coord), &x, &y);
+						dp->viewport->coord_to_screen(&(tp->coord), &x, &y);
 
 						if (!drawing_highlight && (dp->vtl->drawmode == DRAWMODE_BY_SPEED)) {
 							main_gc = g_array_index(dp->vtl->track_gc, GdkGC *, track_section_colour_by_speed(dp->vtl, tp, prev_tp, average_speed, low_speed, high_speed));
@@ -2384,16 +2395,16 @@ static void trw_layer_draw_track(Track * trk, struct DrawingParams * dp, bool dr
 						/* Draw only if current point has different coordinates than the previous one. */
 						if (x != prev_x || y != prev_y) {
 							if (draw_track_outline) {
-								dp->vp->port.draw_line(dp->vtl->track_bg_gc, prev_x, prev_y, x, y);
+								dp->viewport->draw_line(dp->vtl->track_bg_gc, prev_x, prev_y, x, y);
 							} else {
-								dp->vp->port.draw_line(main_gc, prev_x, prev_y, x, y);
+								dp->viewport->draw_line(main_gc, prev_x, prev_y, x, y);
 							}
 						}
 					} else {
 						/* Draw only if current point has different coordinates than the previous one. */
 						if (x != prev_x && y != prev_y) { /* kamilFIXME: is && a correct condition? */
-							dp->vp->port.coord_to_screen(&(prev_tp->coord), &x, &y);
-							draw_utm_skip_insignia(&dp->vp->port, main_gc, x, y);
+							dp->viewport->coord_to_screen(&(prev_tp->coord), &x, &y);
+							draw_utm_skip_insignia(dp->viewport, main_gc, x, y);
 						}
 					}
 				}
@@ -2419,15 +2430,18 @@ static void trw_layer_draw_track(Track * trk, struct DrawingParams * dp, bool dr
 
 
 
-static void trw_layer_draw_track_cb ( const void * id, Track * trk, struct DrawingParams *dp )
+static void trw_layer_draw_track_cb(const void * id, Track * trk, DrawingParams * dp)
 {
-  if ( BBOX_INTERSECT ( trk->bbox, dp->bbox ) ) {
-    trw_layer_draw_track(trk, dp, false );
-  }
+	if (BBOX_INTERSECT (trk->bbox, dp->bbox)) {
+		trw_layer_draw_track(trk, dp, false);
+	}
 }
 
 
-static void trw_layer_draw_track_cb(std::unordered_map<sg_uid_t, Track *> & tracks, struct DrawingParams * dp)
+
+
+
+static void trw_layer_draw_track_cb(std::unordered_map<sg_uid_t, Track *> & tracks, DrawingParams * dp)
 {
 	for (auto i = tracks.begin(); i != tracks.end(); i++) {
 		if (BBOX_INTERSECT (i->second->bbox, dp->bbox)) {
@@ -2435,6 +2449,8 @@ static void trw_layer_draw_track_cb(std::unordered_map<sg_uid_t, Track *> & trac
 		}
 	}
 }
+
+
 
 
 
@@ -2453,15 +2469,16 @@ static int cached_pixbuf_cmp ( CachedPixbuf *cp, const char *name )
 
 
 
-static void trw_layer_draw_waypoint(Waypoint * wp, struct DrawingParams * dp)
+static void trw_layer_draw_waypoint(Waypoint * wp, DrawingParams * dp)
 {
 	if (!wp->visible) {
 		return;
 	}
 
-	bool cond = (!dp->one_zone && !dp->lat_lon) || ((dp->lat_lon || wp->coord.utm_zone == dp->center->utm_zone) &&
-							 wp->coord.east_west < dp->ce2 && wp->coord.east_west > dp->ce1 &&
-							 wp->coord.north_south > dp->cn1 && wp->coord.north_south < dp->cn2);
+	bool cond = (dp->coord_mode == VIK_COORD_UTM && !dp->one_utm_zone)
+		|| ((dp->coord_mode == VIK_COORD_LATLON || wp->coord.utm_zone == dp->center->utm_zone) &&
+		    wp->coord.east_west < dp->ce2 && wp->coord.east_west > dp->ce1 &&
+		    wp->coord.north_south > dp->cn1 && wp->coord.north_south < dp->cn2);
 
 
 	if (!cond) {
@@ -2469,7 +2486,7 @@ static void trw_layer_draw_waypoint(Waypoint * wp, struct DrawingParams * dp)
 	}
 
 	int x, y;
-	dp->vp->port.coord_to_screen(&(wp->coord), &x, &y);
+	dp->viewport->coord_to_screen(&(wp->coord), &x, &y);
 
 	/* if in shrunken_cache, get that. If not, get and add to shrunken_cache */
 	if (wp->image && dp->vtl->drawimages)	{
@@ -2490,7 +2507,7 @@ static void trw_layer_draw_waypoint(Waypoint * wp, struct DrawingParams * dp)
 
 
 
-int trw_layer_draw_image(Waypoint * wp, int x, int y, struct DrawingParams * dp)
+int trw_layer_draw_image(Waypoint * wp, int x, int y, DrawingParams * dp)
 {
 	if (dp->vtl->image_alpha == 0) {
 		return 0;
@@ -2546,13 +2563,13 @@ int trw_layer_draw_image(Waypoint * wp, int x, int y, struct DrawingParams * dp)
 			if (dp->highlight) {
 				// Highlighted - so draw a little border around the chosen one
 				// single line seems a little weak so draw 2 of them
-				dp->vp->port.draw_rectangle(dp->vp->port.get_gc_highlight(), false,
+				dp->viewport->draw_rectangle(dp->viewport->get_gc_highlight(), false,
 							    x - (w / 2) - 1, y - (h / 2) - 1, w + 2, h + 2);
-				dp->vp->port.draw_rectangle(dp->vp->port.get_gc_highlight(), false,
+				dp->viewport->draw_rectangle(dp->viewport->get_gc_highlight(), false,
 							    x - (w / 2) - 2, y - (h / 2) - 2, w + 4, h + 4);
 			}
 
-			dp->vp->port.draw_pixbuf(pixbuf, 0, 0, x - (w / 2), y - (h / 2), w, h);
+			dp->viewport->draw_pixbuf(pixbuf, 0, 0, x - (w / 2), y - (h / 2), w, h);
 		}
 		return 0;
 	}
@@ -2565,41 +2582,41 @@ int trw_layer_draw_image(Waypoint * wp, int x, int y, struct DrawingParams * dp)
 
 
 
-void trw_layer_draw_symbol(Waypoint * wp, int x, int y, struct DrawingParams *dp)
+void trw_layer_draw_symbol(Waypoint * wp, int x, int y, DrawingParams * dp)
 {
 	if (dp->vtl->wp_draw_symbols && wp->symbol && wp->symbol_pixbuf) {
-		dp->vp->port.draw_pixbuf(wp->symbol_pixbuf, 0, 0, x - gdk_pixbuf_get_width(wp->symbol_pixbuf)/2, y - gdk_pixbuf_get_height(wp->symbol_pixbuf)/2, -1, -1);
+		dp->viewport->draw_pixbuf(wp->symbol_pixbuf, 0, 0, x - gdk_pixbuf_get_width(wp->symbol_pixbuf)/2, y - gdk_pixbuf_get_height(wp->symbol_pixbuf)/2, -1, -1);
 	} else if (wp == dp->vtl->current_wp) {
 		switch (dp->vtl->wp_symbol) {
 		case WP_SYMBOL_FILLED_SQUARE:
-			dp->vp->port.draw_rectangle(dp->vtl->waypoint_gc, true, x - (dp->vtl->wp_size), y - (dp->vtl->wp_size), dp->vtl->wp_size*2, dp->vtl->wp_size*2);
+			dp->viewport->draw_rectangle(dp->vtl->waypoint_gc, true, x - (dp->vtl->wp_size), y - (dp->vtl->wp_size), dp->vtl->wp_size*2, dp->vtl->wp_size*2);
 			break;
 		case WP_SYMBOL_SQUARE:
-			dp->vp->port.draw_rectangle(dp->vtl->waypoint_gc, false, x - (dp->vtl->wp_size), y - (dp->vtl->wp_size), dp->vtl->wp_size*2, dp->vtl->wp_size*2);
+			dp->viewport->draw_rectangle(dp->vtl->waypoint_gc, false, x - (dp->vtl->wp_size), y - (dp->vtl->wp_size), dp->vtl->wp_size*2, dp->vtl->wp_size*2);
 			break;
 		case WP_SYMBOL_CIRCLE:
-			dp->vp->port.draw_arc(dp->vtl->waypoint_gc, true, x - dp->vtl->wp_size, y - dp->vtl->wp_size, dp->vtl->wp_size, dp->vtl->wp_size, 0, 360*64);
+			dp->viewport->draw_arc(dp->vtl->waypoint_gc, true, x - dp->vtl->wp_size, y - dp->vtl->wp_size, dp->vtl->wp_size, dp->vtl->wp_size, 0, 360*64);
 			break;
 		case WP_SYMBOL_X:
-			dp->vp->port.draw_line(dp->vtl->waypoint_gc, x - dp->vtl->wp_size*2, y - dp->vtl->wp_size*2, x + dp->vtl->wp_size*2, y + dp->vtl->wp_size*2);
-			dp->vp->port.draw_line(dp->vtl->waypoint_gc, x - dp->vtl->wp_size*2, y + dp->vtl->wp_size*2, x + dp->vtl->wp_size*2, y - dp->vtl->wp_size*2);
+			dp->viewport->draw_line(dp->vtl->waypoint_gc, x - dp->vtl->wp_size*2, y - dp->vtl->wp_size*2, x + dp->vtl->wp_size*2, y + dp->vtl->wp_size*2);
+			dp->viewport->draw_line(dp->vtl->waypoint_gc, x - dp->vtl->wp_size*2, y + dp->vtl->wp_size*2, x + dp->vtl->wp_size*2, y - dp->vtl->wp_size*2);
 		default:
 			break;
 		}
 	} else {
 		switch (dp->vtl->wp_symbol) {
 		case WP_SYMBOL_FILLED_SQUARE:
-			dp->vp->port.draw_rectangle(dp->vtl->waypoint_gc, true, x - dp->vtl->wp_size/2, y - dp->vtl->wp_size/2, dp->vtl->wp_size, dp->vtl->wp_size);
+			dp->viewport->draw_rectangle(dp->vtl->waypoint_gc, true, x - dp->vtl->wp_size/2, y - dp->vtl->wp_size/2, dp->vtl->wp_size, dp->vtl->wp_size);
 			break;
 		case WP_SYMBOL_SQUARE:
-			dp->vp->port.draw_rectangle(dp->vtl->waypoint_gc, false, x - dp->vtl->wp_size/2, y - dp->vtl->wp_size/2, dp->vtl->wp_size, dp->vtl->wp_size);
+			dp->viewport->draw_rectangle(dp->vtl->waypoint_gc, false, x - dp->vtl->wp_size/2, y - dp->vtl->wp_size/2, dp->vtl->wp_size, dp->vtl->wp_size);
 			break;
 		case WP_SYMBOL_CIRCLE:
-			dp->vp->port.draw_arc(dp->vtl->waypoint_gc, true, x-dp->vtl->wp_size/2, y-dp->vtl->wp_size/2, dp->vtl->wp_size, dp->vtl->wp_size, 0, 360*64);
+			dp->viewport->draw_arc(dp->vtl->waypoint_gc, true, x-dp->vtl->wp_size/2, y-dp->vtl->wp_size/2, dp->vtl->wp_size, dp->vtl->wp_size, 0, 360*64);
 			break;
 		case WP_SYMBOL_X:
-			dp->vp->port.draw_line(dp->vtl->waypoint_gc, x-dp->vtl->wp_size, y-dp->vtl->wp_size, x+dp->vtl->wp_size, y+dp->vtl->wp_size);
-			dp->vp->port.draw_line(dp->vtl->waypoint_gc, x-dp->vtl->wp_size, y+dp->vtl->wp_size, x+dp->vtl->wp_size, y-dp->vtl->wp_size);
+			dp->viewport->draw_line(dp->vtl->waypoint_gc, x-dp->vtl->wp_size, y-dp->vtl->wp_size, x+dp->vtl->wp_size, y+dp->vtl->wp_size);
+			dp->viewport->draw_line(dp->vtl->waypoint_gc, x-dp->vtl->wp_size, y+dp->vtl->wp_size, x+dp->vtl->wp_size, y-dp->vtl->wp_size);
 			break;
 		default:
 			break;
@@ -2612,7 +2629,7 @@ void trw_layer_draw_symbol(Waypoint * wp, int x, int y, struct DrawingParams *dp
 
 
 
-void trw_layer_draw_label(Waypoint * wp, int x, int y, struct DrawingParams * dp)
+void trw_layer_draw_label(Waypoint * wp, int x, int y, DrawingParams * dp)
 {
 	/* thanks to the GPSDrive people (Fritz Ganter et al.) for hints on this part ... yah, I'm too lazy to study documentation */
 
@@ -2641,11 +2658,11 @@ void trw_layer_draw_label(Waypoint * wp, int x, int y, struct DrawingParams * dp
 
 	/* if highlight mode on, then draw background text in highlight colour */
 	if (dp->highlight) {
-		dp->vp->port.draw_rectangle(dp->vp->port.get_gc_highlight(), true, label_x - 1, label_y-1,width+2,height+2);
+		dp->viewport->draw_rectangle(dp->viewport->get_gc_highlight(), true, label_x - 1, label_y-1,width+2,height+2);
 	} else {
-		dp->vp->port.draw_rectangle(dp->vtl->waypoint_bg_gc, true, label_x - 1, label_y-1,width+2,height+2);
+		dp->viewport->draw_rectangle(dp->vtl->waypoint_bg_gc, true, label_x - 1, label_y-1,width+2,height+2);
 	}
-	dp->vp->port.draw_layout(dp->vtl->waypoint_text_gc, label_x, label_y, dp->vtl->wplabellayout);
+	dp->viewport->draw_layout(dp->vtl->waypoint_text_gc, label_x, label_y, dp->vtl->wplabellayout);
 
 	return;
 }
@@ -2654,7 +2671,7 @@ void trw_layer_draw_label(Waypoint * wp, int x, int y, struct DrawingParams * dp
 
 
 
-static void trw_layer_draw_waypoint_cb(Waypoint * wp, struct DrawingParams *dp)
+static void trw_layer_draw_waypoint_cb(Waypoint * wp, DrawingParams * dp)
 {
 	if (BBOX_INTERSECT (dp->vtl->waypoints_bbox, dp->bbox)) {
 		trw_layer_draw_waypoint(wp, dp);
@@ -2665,7 +2682,7 @@ static void trw_layer_draw_waypoint_cb(Waypoint * wp, struct DrawingParams *dp)
 
 
 
-static void trw_layer_draw_waypoints_cb(std::unordered_map<sg_uid_t, Waypoint *> * waypoints, struct DrawingParams *dp)
+static void trw_layer_draw_waypoints_cb(std::unordered_map<sg_uid_t, Waypoint *> * waypoints, DrawingParams * dp)
 {
 	if (BBOX_INTERSECT (dp->vtl->waypoints_bbox, dp->bbox)) {
 		for (auto i = waypoints->begin(); i != waypoints->end(); i++) {
@@ -2682,42 +2699,61 @@ static void trw_layer_draw_waypoints_cb(std::unordered_map<sg_uid_t, Waypoint *>
 
 
 
-static void trw_layer_draw_with_highlight ( VikTrwLayer *l, void * data, bool highlight )
+static void trw_layer_draw_with_highlight(VikTrwLayer * l, Viewport * viewport, bool highlight)
 {
-  static struct DrawingParams dp;
-  assert ( l != NULL );
+	assert (l != NULL);
 
-  init_drawing_params ( &dp, l, VIK_VIEWPORT(data), highlight );
+	static DrawingParams dp;
+	init_drawing_params(&dp, l, viewport, highlight);
 
-  if ( l->tracks_visible )
-    trw_layer_draw_track_cb(l->tracks, &dp );
+	if (l->tracks_visible) {
+		trw_layer_draw_track_cb(l->tracks, &dp);
+	}
 
-  if ( l->routes_visible )
-    trw_layer_draw_track_cb(l->routes, &dp);
+	if (l->routes_visible) {
+		trw_layer_draw_track_cb(l->routes, &dp);
+	}
 
-  if (l->waypoints_visible) {
-    trw_layer_draw_waypoints_cb(&l->waypoints, &dp);
-  }
+	if (l->waypoints_visible) {
+		trw_layer_draw_waypoints_cb(&l->waypoints, &dp);
+	}
 }
 
-static void trw_layer_draw ( VikTrwLayer *l, void * data )
+
+
+
+
+static void trw_layer_draw(VikTrwLayer * l, void * data)
 {
-  // If this layer is to be highlighted - then don't draw now - as it will be drawn later on in the specific highlight draw stage
-  // This may seem slightly inefficient to test each time for every layer
-  //  but for a layer with *lots* of tracks & waypoints this can save some effort by not drawing the items twice
-  if (  ((VikViewport*)data)->port.get_draw_highlight() &&
-       vik_window_get_selected_trw_layer ((VikWindow*)VIK_GTK_WINDOW_FROM_LAYER((VikLayer*)l)) == l )
-    return;
-  trw_layer_draw_with_highlight ( l, data, false );
+	Viewport * viewport = &(VIK_VIEWPORT(data)->port);
+
+	// If this layer is to be highlighted - then don't draw now - as it will be drawn later on in the specific highlight draw stage
+	// This may seem slightly inefficient to test each time for every layer
+	//  but for a layer with *lots* of tracks & waypoints this can save some effort by not drawing the items twice
+	if (viewport->get_draw_highlight() &&
+	    vik_window_get_selected_trw_layer((VikWindow*)VIK_GTK_WINDOW_FROM_LAYER((VikLayer*)l)) == l) {
+		return;
+	}
+
+	trw_layer_draw_with_highlight(l, viewport, false);
 }
 
-void vik_trw_layer_draw_highlight ( VikTrwLayer *vtl, VikViewport *vvp )
+
+
+
+
+void vik_trw_layer_draw_highlight(VikTrwLayer * vtl, Viewport * viewport)
 {
-  // Check the layer for visibility (including all the parents visibilities)
-  if ( !vik_treeview_item_get_visible_tree (VIK_LAYER(vtl)->vt, &(VIK_LAYER(vtl)->iter)) )
-    return;
-  trw_layer_draw_with_highlight ( vtl, vvp, true );
+	// Check the layer for visibility (including all the parents visibilities)
+	if (!vik_treeview_item_get_visible_tree(VIK_LAYER(vtl)->vt, &(VIK_LAYER(vtl)->iter))) {
+		return;
+	}
+	trw_layer_draw_with_highlight(vtl, viewport, true);
 }
+
+
+
+
 
 /**
  * vik_trw_layer_draw_highlight_item:
@@ -2725,24 +2761,30 @@ void vik_trw_layer_draw_highlight ( VikTrwLayer *vtl, VikViewport *vvp )
  * Only handles a single track or waypoint ATM
  * It assumes the track or waypoint belongs to the TRW Layer (it doesn't check this is the case)
  */
-void vik_trw_layer_draw_highlight_item ( VikTrwLayer *vtl, Track * trk, Waypoint * wp, VikViewport *vvp )
+void vik_trw_layer_draw_highlight_item(VikTrwLayer *vtl, Track * trk, Waypoint * wp, Viewport * viewport)
 {
-  // Check the layer for visibility (including all the parents visibilities)
-  if ( !vik_treeview_item_get_visible_tree (VIK_LAYER(vtl)->vt, &(VIK_LAYER(vtl)->iter)) )
-    return;
+	// Check the layer for visibility (including all the parents visibilities)
+	if (!vik_treeview_item_get_visible_tree(VIK_LAYER(vtl)->vt, &(VIK_LAYER(vtl)->iter))) {
+		return;
+	}
 
-  static struct DrawingParams dp;
-  init_drawing_params ( &dp, vtl, vvp, true );
+	static DrawingParams dp;
+	init_drawing_params(&dp, vtl, viewport, true);
 
-  if ( trk ) {
-    bool draw = ( trk->is_route && vtl->routes_visible ) || ( !trk->is_route && vtl->tracks_visible );
-    if ( draw )
-      trw_layer_draw_track_cb ( NULL, trk, &dp );
-  }
-  if ( vtl->waypoints_visible && wp ) {
-    trw_layer_draw_waypoint_cb(wp, &dp );
-  }
+	if (trk) {
+		bool draw = (trk->is_route && vtl->routes_visible) || (!trk->is_route && vtl->tracks_visible);
+		if (draw) {
+			trw_layer_draw_track_cb(NULL, trk, &dp);
+		}
+	}
+	if (vtl->waypoints_visible && wp) {
+		trw_layer_draw_waypoint_cb(wp, &dp);
+	}
 }
+
+
+
+
 
 /**
  * vik_trw_layer_draw_highlight_item:
@@ -2751,26 +2793,32 @@ void vik_trw_layer_draw_highlight_item ( VikTrwLayer *vtl, Track * trk, Waypoint
  * tracks may be actually routes
  * It assumes they belong to the TRW Layer (it doesn't check this is the case)
  */
-void vik_trw_layer_draw_highlight_items( VikTrwLayer *vtl, std::unordered_map<sg_uid_t, Track *> * tracks, std::unordered_map<sg_uid_t, Waypoint *> * waypoints, VikViewport *vvp )
+void vik_trw_layer_draw_highlight_items(VikTrwLayer * vtl, std::unordered_map<sg_uid_t, Track *> * tracks, std::unordered_map<sg_uid_t, Waypoint *> * waypoints, Viewport * viewport)
 {
-  // Check the layer for visibility (including all the parents visibilities)
-  if ( !vik_treeview_item_get_visible_tree (VIK_LAYER(vtl)->vt, &(VIK_LAYER(vtl)->iter)) )
-    return;
+	// Check the layer for visibility (including all the parents visibilities)
+	if (!vik_treeview_item_get_visible_tree (VIK_LAYER(vtl)->vt, &(VIK_LAYER(vtl)->iter))) {
+		return;
+	}
 
-  static struct DrawingParams dp;
-  init_drawing_params ( &dp, vtl, vvp, true );
+	static DrawingParams dp;
+	init_drawing_params(&dp, vtl, viewport, true);
 
-  if ( tracks ) {
-    bool is_routes = (tracks == &vtl->routes);
-    bool draw = ( is_routes && vtl->routes_visible ) || ( !is_routes && vtl->tracks_visible );
-    if ( draw )
-      trw_layer_draw_track_cb(*tracks, &dp);
-  }
+	if (tracks) {
+		bool is_routes = (tracks == &vtl->routes);
+		bool draw = (is_routes && vtl->routes_visible) || (!is_routes && vtl->tracks_visible);
+		if (draw) {
+			trw_layer_draw_track_cb(*tracks, &dp);
+		}
+	}
 
-  if ( vtl->waypoints_visible) {
-    trw_layer_draw_waypoints_cb(waypoints, &dp);
-  }
+	if (vtl->waypoints_visible) {
+		trw_layer_draw_waypoints_cb(waypoints, &dp);
+	}
 }
+
+
+
+
 
 static void trw_layer_free_track_gcs ( VikTrwLayer *vtl )
 {

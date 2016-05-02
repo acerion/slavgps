@@ -32,9 +32,10 @@ extern "C" {
 #endif
 
 
-typedef gshort VikCoordMode;
-#define VIK_COORD_UTM 0
-#define VIK_COORD_LATLON 1
+enum VikCoordMode {
+	VIK_COORD_UTM     = 0,
+	VIK_COORD_LATLON  = 1
+};
 
 #define VIK_UTM(x) ((struct UTM *)(x))
 #define VIK_LATLON(x) ((struct LatLon *)(x))
