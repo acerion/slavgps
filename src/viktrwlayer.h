@@ -76,7 +76,17 @@ namespace SlavGPS {
 
 
 
-		static sg_uid_t find_uid_of_track(std::unordered_map<sg_uid_t, Track *> & input, Track * trk); /* Formerly known as trw_layer_track_find_uuid(std::unordered_map<sg_uid_t, Track *> & tracks, Track * trk). */
+		static sg_uid_t find_uid_of_track(std::unordered_map<sg_uid_t, Track *> & input, Track * trk);                       /* Formerly known as trw_layer_track_find_uuid(std::unordered_map<sg_uid_t, Track *> & tracks, Track * trk). */
+		static sg_uid_t find_uid_of_waypoint_by_name(std::unordered_map<sg_uid_t, Waypoint *> & input, char const * name);   /* Formerly known as trw_layer_waypoint_find_uuid_by_name(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, Waypoint * wp). */
+		static Track *  find_track_by_name(std::unordered_map<sg_uid_t, Track *> & input, char const * name);                /* Formerly known as trw_layer_track_find_uuid_by_name(std::unordered_map<sg_uid_t, Track *> * tracks, char const * name). */
+
+
+
+		bool delete_track(Track * trk);                                 /* Formerly known as vik_trw_layer_delete_track(VikTrwLayer * vtl, Track * trk). */
+		bool delete_track_by_name(char const * name, bool is_route);    /* Formerly known as trw_layer_delete_track_by_name( VikTrwLayer *vtl, const char *name, std::unordered_map<sg_uid_t, Track *> * ht_tracks). */
+		bool delete_route(Track * trk);                                 /* Formerly known as vik_trw_layer_delete_route(VikTrwLayer * vtl, Track * trk). */
+		bool delete_waypoint(Waypoint * wp);                            /* Formerly known as trw_layer_delete_waypoint(VikTrwLayer * vtl, Waypoint * wp). */
+		bool delete_waypoint_by_name(char const * name);                /* Formerly known as trw_layer_delete_waypoint_by_name(VikTrwLayer * vtl, char const * name). */
 
 
 
@@ -97,6 +107,24 @@ namespace SlavGPS {
 
 
 		void * vtl; /* Reference to parent object of type VikTrackLayer. */
+
+
+		/* Waypoint editing tool */
+		Waypoint * current_wp;
+		sg_uid_t current_wp_uid;
+		bool moving_wp;
+		bool waypoint_rightclick;
+
+		/* track editing tool */
+		GList * current_tpl;       /* List of trackpoints, to which belongs currently selected trackpoint (tp)?. The list would be a member of current track current_tp_track. */
+		Track * current_tp_track;  /* Track, to which belongs currently selected trackpoint (tp)? */
+		sg_uid_t current_tp_uid;   /* uid of track, to which belongs currently selected trackpoint (tp)? */
+		VikTrwLayerTpwin *tpwin;
+
+		/* track editing tool -- more specifically, moving tps */
+		bool moving_tp;
+
+
 	};
 
 
@@ -191,20 +219,8 @@ struct _VikTrwLayer {
 
 	VikCoordMode coord_mode;
 
-	/* wp editing tool */
-	Waypoint * current_wp;
-	sg_uid_t current_wp_uid;
-	bool moving_wp;
-	bool waypoint_rightclick;
 
-	/* track editing tool */
-	GList *current_tpl;
-	Track * current_tp_track;
-	sg_uid_t current_tp_uid;
-	VikTrwLayerTpwin *tpwin;
 
-	/* track editing tool -- more specifically, moving tps */
-	bool moving_tp;
 
 	/* route finder tool */
 	bool route_finder_started;
@@ -292,8 +308,8 @@ Waypoint * vik_trw_layer_get_waypoint(VikTrwLayer * vtl, const char * name);
 
 // Track returned is the first one
 Track * vik_trw_layer_get_track(VikTrwLayer * vtl, const char * name);
-bool vik_trw_layer_delete_track ( VikTrwLayer *vtl, Track * trk);
-bool vik_trw_layer_delete_route ( VikTrwLayer *vtl, Track * trk);
+//bool vik_trw_layer_delete_track ( VikTrwLayer *vtl, Track * trk);
+//bool vik_trw_layer_delete_route ( VikTrwLayer *vtl, Track * trk);
 
 bool vik_trw_layer_auto_set_view ( VikTrwLayer *vtl, VikViewport *vvp );
 bool vik_trw_layer_find_center ( VikTrwLayer *vtl, VikCoord *dest );

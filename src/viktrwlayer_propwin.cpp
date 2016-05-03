@@ -2935,9 +2935,9 @@ static void propwin_response_cb( GtkDialog *dialog, int resp, PropWidgets *widge
           /* Don't let track destroy this dialog */
           trk->clear_property_dialog();
           if ( widgets->trk->is_route )
-            vik_trw_layer_delete_route ( vtl, trk);
+	    vtl->trw.delete_route(trk);
           else
-            vik_trw_layer_delete_track ( vtl, trk);
+	    vtl->trw.delete_track(trk);
           vik_layer_emit_update ( VIK_LAYER(vtl) ); /* chase thru the hoops */
         }
       }
