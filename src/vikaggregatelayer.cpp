@@ -516,7 +516,7 @@ static GList* aggregate_layer_waypoint_create_list ( VikLayer *vl, void * user_d
   while ( layers ) {
 	  GList * waypoints = NULL;
 
-	  std::unordered_map<sg_uid_t, Waypoint *> & wps = vik_trw_layer_get_waypoints(VIK_TRW_LAYER(layers->data));
+	  std::unordered_map<sg_uid_t, Waypoint *> & wps = VIK_TRW_LAYER(layers->data)->trw.get_waypoints();
 	  for (auto i = wps.begin(); i != wps.end(); i++) {
 		  waypoints = g_list_insert(waypoints, i->second, index++);
 	  }
@@ -599,8 +599,8 @@ static GList* aggregate_layer_track_create_list ( VikLayer *vl, void * user_data
   layers = g_list_first ( layers );
   while ( layers ) {
     GList *tracks = NULL;
-    vik_trw_layer_get_track_values(&tracks, vik_trw_layer_get_tracks(VIK_TRW_LAYER(layers->data)));
-    vik_trw_layer_get_track_values(&tracks, vik_trw_layer_get_routes(VIK_TRW_LAYER(layers->data)));
+    vik_trw_layer_get_track_values(&tracks, VIK_TRW_LAYER(layers->data)->trw.get_tracks());
+    vik_trw_layer_get_track_values(&tracks, VIK_TRW_LAYER(layers->data)->trw.get_routes());
 
     tracks_and_layers = g_list_concat ( tracks_and_layers, vik_trw_layer_build_track_list_t ( VIK_TRW_LAYER(layers->data), tracks ) );
 

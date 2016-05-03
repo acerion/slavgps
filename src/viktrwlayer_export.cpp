@@ -105,13 +105,13 @@ void vik_trw_layer_export_external_gpx ( VikTrwLayer *vtl, const char* external_
 void vik_trw_layer_export_gpsbabel ( VikTrwLayer *vtl, const char *title, const char* default_name )
 {
   BabelMode mode = { 0, 0, 0, 0, 0, 0 };
-  if (vik_trw_layer_get_routes(vtl).size()) {
+  if (vtl->trw.get_routes().size()) {
       mode.routesWrite = 1;
   }
-  if (vik_trw_layer_get_tracks(vtl).size()) {
+  if (vtl->trw.get_tracks().size()) {
       mode.tracksWrite = 1;
   }
-  if (vik_trw_layer_get_waypoints(vtl).size()) {
+  if (vtl->trw.get_waypoints().size()) {
       mode.waypointsWrite = 1;
   }
 

@@ -380,7 +380,7 @@ static void trw_layer_geotag_process ( geotag_options_t *options )
 		}
 		else {
 			// Try all tracks
-			std::unordered_map<unsigned int, SlavGPS::Track*> & tracks = vik_trw_layer_get_tracks(options->vtl);
+			std::unordered_map<unsigned int, SlavGPS::Track*> & tracks = options->vtl->trw.get_tracks();
 			if (tracks.size() > 0 ) {
 				trw_layer_geotag_tracks(tracks, options);
 			}

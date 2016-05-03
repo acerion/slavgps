@@ -805,9 +805,9 @@ static void a_gpspoint_write_track(FILE * f, std::unordered_map<sg_uid_t, Track 
 
 void a_gpspoint_write_file ( VikTrwLayer *trw, FILE *f )
 {
-	auto tracks = vik_trw_layer_get_tracks(trw);
-	auto routes = vik_trw_layer_get_routes(trw);
-	auto waypoints = vik_trw_layer_get_waypoints(trw);
+	auto tracks = trw->trw.get_tracks();
+	auto routes = trw->trw.get_routes();
+	auto waypoints = trw->trw.get_waypoints();
 
 	fprintf(f, "type=\"waypointlist\"\n");
 	a_gpspoint_write_waypoints(f, waypoints);

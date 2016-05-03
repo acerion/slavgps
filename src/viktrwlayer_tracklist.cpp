@@ -160,9 +160,9 @@ static void trw_layer_track_select ( menu_array_values values )
 	if ( values[MA_TRK_UUID] ) {
 		GtkTreeIter *iter = NULL;
 		if ( trk->is_route )
-			iter = vik_trw_layer_get_routes_iters(vtl).at(uid);
+			iter = vtl->trw.get_routes_iters().at(uid);
 		else
-			iter = vik_trw_layer_get_tracks_iters(vtl).at(uid);
+			iter = vtl->trw.get_tracks_iters().at(uid);
 
 		if ( iter )
 			vik_treeview_select_iter ( VIK_LAYER(vtl)->vt, iter, true );
@@ -353,9 +353,9 @@ static bool trw_layer_track_menu_popup ( GtkWidget *tree_view,
 
 	sg_uid_t uid = 0;;
 	if ( trk->is_route )
-		uid = trw_layer_track_find_uuid(vik_trw_layer_get_routes(vtl), trk);
+		uid = LayerTRW::find_uid_of_track(vtl->trw.get_routes(), trk);
 	else
-		uid = trw_layer_track_find_uuid(vik_trw_layer_get_tracks(vtl), trk);
+		uid = LayerTRW::find_uid_of_track(vtl->trw.get_tracks(), trk);
 
 	if (uid) {
 		VikViewport *vvp = vik_window_viewport((VikWindow *)(VIK_GTK_WINDOW_FROM_LAYER(vtl)));
@@ -452,7 +452,7 @@ static void trw_layer_track_list_add ( vik_trw_track_list_t *vtdl,
 
 	// NB: doesn't include aggegrate visibility
 	bool visible = VIK_LAYER(vtl)->visible && trk->visible;
-	visible = visible && (trk->is_route ? vik_trw_layer_get_routes_visibility(vtl) : vik_trw_layer_get_tracks_visibility(vtl));
+	visible = visible && (trk->is_route ? vtl->trw.get_routes_visibility() : vtl->trw.get_tracks_visibility());
 
 	unsigned int trk_len_time = 0; // In minutes
 	if ( trk->trackpoints ) {

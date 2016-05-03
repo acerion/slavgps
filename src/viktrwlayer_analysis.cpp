@@ -404,8 +404,8 @@ static void val_analyse_item_maybe ( vik_trw_track_list_t *vtlist, const void * 
 	if ( !include_invisible ) {
 		// Skip invisible layers or sublayers
 		if ( !VIK_LAYER(vtl)->visible ||
-			 (trk->is_route && !vik_trw_layer_get_routes_visibility(vtl)) ||
-			 (!trk->is_route && !vik_trw_layer_get_tracks_visibility(vtl)) )
+			 (trk->is_route && !vtl->trw.get_routes_visibility()) ||
+			 (!trk->is_route && !vtl->trw.get_tracks_visibility()) )
 			return;
 
 		// Skip invisible tracks

@@ -2921,9 +2921,9 @@ static void propwin_response_cb( GtkDialog *dialog, int resp, PropWidgets *widge
                                                                widgets->trk->is_route ? VIK_TRW_LAYER_SUBLAYER_ROUTE : VIK_TRW_LAYER_SUBLAYER_TRACK,
                                                                widgets->trk->name);
             if ( widgets->trk->is_route )
-              vik_trw_layer_add_route ( vtl, new_tr_name, tracks[i] );
+              vtl->trw.add_route(tracks[i], new_tr_name);
             else
-              vik_trw_layer_add_track ( vtl, new_tr_name, tracks[i] );
+              vtl->trw.add_track(tracks[i], new_tr_name);
             tracks[i]->calculate_bounds();
 
             free( new_tr_name );
@@ -2969,9 +2969,9 @@ static void propwin_response_cb( GtkDialog *dialog, int resp, PropWidgets *widge
         trk_right->trackpoints = iter;
 
         if ( widgets->trk->is_route )
-          vik_trw_layer_add_route(vtl, r_name, trk_right);
+	  vtl->trw.add_route(trk_right, r_name);
         else
-          vik_trw_layer_add_track(vtl, r_name, trk_right);
+	  vtl->trw.add_track(trk_right, r_name);
         trk->calculate_bounds();
         trk_right->calculate_bounds();
 

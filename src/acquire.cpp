@@ -108,7 +108,7 @@ static void on_complete_process (w_and_interface_t *wi)
     if ( wi->creating_new_layer ) {
       /* Only create the layer if it actually contains anything useful */
       // TODO: create function for this operation to hide detail:
-      if ( ! vik_trw_layer_is_empty ( wi->vtl ) ) {
+      if ( ! wi->vtl->trw.is_empty() ) {
         vik_layer_post_read ( VIK_LAYER(wi->vtl), wi->w->vvp, true );
         vik_aggregate_layer_add_layer ( vik_layers_panel_get_top_layer(wi->w->vlp), VIK_LAYER(wi->vtl), true );
       }

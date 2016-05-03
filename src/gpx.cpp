@@ -1149,9 +1149,9 @@ void a_gpx_write_file ( VikTrwLayer *vtl, FILE *f, GpxWritingOptions *options )
     }
   }
 
-  if ( vik_trw_layer_get_waypoints_visibility(vtl) || (options && options->hidden) ) {
+  if ( vtl->trw.get_waypoints_visibility() || (options && options->hidden) ) {
 	  // gather waypoints in a list, then sort
-	  std::unordered_map<sg_uid_t, Waypoint *> & waypoints = vik_trw_layer_get_waypoints(vtl);
+	  std::unordered_map<sg_uid_t, Waypoint *> & waypoints = vtl->trw.get_waypoints();
 	  std::unordered_map<sg_uid_t, Waypoint *>::iterator i;
 	  int index = 0;
 	  GList * gl = NULL;
@@ -1168,11 +1168,11 @@ void a_gpx_write_file ( VikTrwLayer *vtl, FILE *f, GpxWritingOptions *options )
   }
 
   GList *gl = NULL;
-  if ( vik_trw_layer_get_tracks_visibility(vtl) || (options && options->hidden) ) {
+  if ( vtl->trw.get_tracks_visibility() || (options && options->hidden) ) {
     //gl = g_hash_table_get_values ( vik_trw_layer_get_tracks ( vtl ) );
     // Forming the list manually seems to produce one that is more likely to be nearer to the creation order
 
-    std::unordered_map<sg_uid_t, Track *> tracks = vik_trw_layer_get_tracks(vtl);
+    std::unordered_map<sg_uid_t, Track *> tracks = vtl->trw.get_tracks();
     for (auto i = tracks.begin(); i != tracks.end(); i++) {
 	    gl = g_list_prepend(gl, i->second);
     }
@@ -1190,9 +1190,9 @@ void a_gpx_write_file ( VikTrwLayer *vtl, FILE *f, GpxWritingOptions *options )
 
   GList *glrte = NULL;
   // Routes sorted by name
-  if ( vik_trw_layer_get_routes_visibility(vtl) || (options && options->hidden) ) {
+  if ( vtl->trw.get_routes_visibility() || (options && options->hidden) ) {
 
-	  std::unordered_map<sg_uid_t, Track *> routes = vik_trw_layer_get_routes(vtl);
+	  std::unordered_map<sg_uid_t, Track *> routes = vtl->trw.get_routes();
 	  int index = 0;
 	  for (auto i = routes.begin(); i != routes.end(); i++) {
 		  glrte = g_list_insert(glrte, i->second, index);

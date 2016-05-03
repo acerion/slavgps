@@ -1750,7 +1750,7 @@ static bool rt_gpsd_try_connect(void * *data)
     VikTrwLayer *vtl = vgl->trw_children[TRW_REALTIME];
     vgl->realtime_track = new Track();
     vgl->realtime_track->visible = true;
-    vik_trw_layer_add_track(vtl, make_track_name(vtl), vgl->realtime_track);
+    vtl->trw.add_track(vgl->realtime_track, make_track_name(vtl));
   }
 
 #if GPSD_API_MAJOR_VERSION == 3 || GPSD_API_MAJOR_VERSION == 4
