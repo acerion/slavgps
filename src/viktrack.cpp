@@ -190,6 +190,22 @@ void Track::free()
  */
 Track::Track(const Track & trk, const bool copy_points)
 {
+	trackpoints = NULL;
+	visible = false;
+	is_route = false;
+	draw_name_mode = TRACK_DRAWNAME_NO;
+	max_number_dist_labels = 0;
+	comment = NULL;
+	description = NULL;
+	source = NULL;
+	type = NULL;
+	ref_count = 0;
+	name = NULL;
+	property_dialog = NULL;
+	has_color = 0;
+	memset(&color, 0, sizeof (GdkColor));
+	memset(&bbox, 0, sizeof (LatLonBBox));
+
 	//this->name = g_strdup(trk.name); /* kamilFIXME: in original code initialization of name is duplicated. */
 	this->visible = trk.visible;
 	this->is_route = trk.is_route;
