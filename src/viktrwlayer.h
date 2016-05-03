@@ -33,12 +33,211 @@
 #include "vikwaypoint.h"
 #include "viktrack.h"
 #include "viklayerspanel.h"
+#include "viktrwlayer_tpwin.h"
+
+
+
+
+namespace SlavGPS {
+
+
+
+
+
+	typedef GtkTreeIter TreeIndex;
+
+
+
+
+
+	class LayerTRW {
+
+	public:
+
+		void add_track(Track * trk, char const * name);        /* Formerly known as vik_trw_layer_add_track(VikTrwLayer * vtl, char * name, Track * trk). */
+		void add_route(Track * trk, char const * name);        /* Formerly known as vik_trw_layer_add_route(VikTrwLayer * vtl, char * name, Track * trk). */
+		void add_waypoint(Waypoint * wp, char const * name);   /* Formerly known as vik_trw_layer_add_waypoint(VikTrwLayer * vtl, char * name, Waypoint * wp). */
+
+		std::unordered_map<sg_uid_t, Track *> & get_tracks();         /* Formerly known as vik_trw_layer_get_tracks(VikTrwLayer * l). */
+		std::unordered_map<sg_uid_t, Track *> & get_routes();         /* Formerly known as vik_trw_layer_get_routes(VikTrwLayer * l). */
+		std::unordered_map<sg_uid_t, Waypoint *> & get_waypoints();   /* Formerly known as vik_trw_layer_get_waypoints(VikTrwLayer * l). */
+
+		std::unordered_map<sg_uid_t, TreeIndex *> & get_tracks_iters();     /* Formerly known as vik_trw_layer_get_tracks_iters(VikTrwLayer * vtl). */
+		std::unordered_map<sg_uid_t, TreeIndex *> & get_routes_iters();     /* Formerly known as vik_trw_layer_get_routes_iters(VikTrwLayer * vtl). */
+		std::unordered_map<sg_uid_t, TreeIndex *> & get_waypoints_iters();  /* Formerly known as vik_trw_layer_get_waypoints_iters(VikTrwLayer * vtl). */
+
+		bool get_tracks_visibility();      /* Formerly known as vik_trw_layer_get_tracks_visibility(VikTrwLayer * vtl). */
+		bool get_routes_visibility();      /* Formerly known as vik_trw_layer_get_routes_visibility(VikTrwLayer * vtl). */
+		bool get_waypoints_visibility();   /* Formerly known as vik_trw_layer_get_waypoints_visibility(VikTrwLayer * vtl). */
+
+
+
+		bool is_empty();  /* Formerly known as vik_trw_layer_is_empty(VikTrwLayer * vtl). */
+
+
+
+		static sg_uid_t find_uid_of_track(std::unordered_map<sg_uid_t, Track *> & input, Track * trk); /* Formerly known as trw_layer_track_find_uuid(std::unordered_map<sg_uid_t, Track *> & tracks, Track * trk). */
+
+
+
+		std::unordered_map<sg_uid_t, Track *> tracks;
+		std::unordered_map<sg_uid_t, TreeIndex *> tracks_iters;
+		GtkTreeIter track_iter;
+		bool tracks_visible;
+
+		std::unordered_map<sg_uid_t, Track *> routes;
+		std::unordered_map<sg_uid_t, TreeIndex *> routes_iters;
+		GtkTreeIter route_iter;
+		bool routes_visible;
+
+		std::unordered_map<sg_uid_t, Waypoint *> waypoints;
+		std::unordered_map<sg_uid_t, TreeIndex *> waypoints_iters;
+		TreeIndex waypoint_iter;
+		bool waypoints_visible;
+
+
+		void * vtl; /* Reference to parent object of type VikTrackLayer. */
+	};
+
+
+
+
+
+}
+
+
+
 
 
 using namespace SlavGPS;
 
 
-typedef GtkTreeIter TreeIndex;
+// See http://developer.gnome.org/pango/stable/PangoMarkupFormat.html
+typedef enum {
+	FS_XX_SMALL = 0, // 'xx-small'
+	FS_X_SMALL,
+	FS_SMALL,
+	FS_MEDIUM, // DEFAULT
+	FS_LARGE,
+	FS_X_LARGE,
+	FS_XX_LARGE,
+	FS_NUM_SIZES
+} font_size_t;
+
+
+typedef struct {
+	char * description;
+	char * author;
+	//bool has_time;
+	char * timestamp; // TODO: Consider storing as proper time_t.
+	char * keywords; // TODO: handling/storing a GList of individual tags?
+} VikTRWMetadata;
+
+
+struct _VikTrwLayer {
+	VikLayer vl;
+
+	LayerTRW trw;
+
+
+	LatLonBBox waypoints_bbox;
+
+	bool track_draw_labels;
+	uint8_t drawmode;
+	uint8_t drawpoints;
+	uint8_t drawpoints_size;
+	uint8_t drawelevation;
+	uint8_t elevation_factor;
+	uint8_t drawstops;
+	uint32_t stop_length;
+	uint8_t drawlines;
+	uint8_t drawdirections;
+	uint8_t drawdirections_size;
+	uint8_t line_thickness;
+	uint8_t bg_line_thickness;
+	vik_layer_sort_order_t track_sort_order;
+
+	// Metadata
+	VikTRWMetadata *metadata;
+
+	PangoLayout *tracklabellayout;
+	font_size_t track_font_size;
+	char *track_fsize_str;
+
+	uint8_t wp_symbol;
+	uint8_t wp_size;
+	bool wp_draw_symbols;
+	font_size_t wp_font_size;
+	char *wp_fsize_str;
+	vik_layer_sort_order_t wp_sort_order;
+
+	double track_draw_speed_factor;
+	GArray *track_gc;
+	GdkGC *track_1color_gc;
+	GdkColor track_color;
+	GdkGC *current_track_gc;
+	// Separate GC for a track's potential new point as drawn via separate method
+	//  (compared to the actual track points drawn in the main trw_layer_draw_track function)
+	GdkGC *current_track_newpoint_gc;
+	GdkGC *track_bg_gc; GdkColor track_bg_color;
+	GdkGC *waypoint_gc; GdkColor waypoint_color;
+	GdkGC *waypoint_text_gc; GdkColor waypoint_text_color;
+	GdkGC *waypoint_bg_gc; GdkColor waypoint_bg_color;
+	GdkFunction wpbgand;
+	Track * current_track; // ATM shared between new tracks and new routes
+	uint16_t ct_x1, ct_y1, ct_x2, ct_y2;
+	bool draw_sync_done;
+	bool draw_sync_do;
+
+	VikCoordMode coord_mode;
+
+	/* wp editing tool */
+	Waypoint * current_wp;
+	sg_uid_t current_wp_uid;
+	bool moving_wp;
+	bool waypoint_rightclick;
+
+	/* track editing tool */
+	GList *current_tpl;
+	Track * current_tp_track;
+	sg_uid_t current_tp_uid;
+	VikTrwLayerTpwin *tpwin;
+
+	/* track editing tool -- more specifically, moving tps */
+	bool moving_tp;
+
+	/* route finder tool */
+	bool route_finder_started;
+	bool route_finder_check_added_track;
+	Track * route_finder_added_track;
+	bool route_finder_append;
+
+	bool drawlabels;
+	bool drawimages;
+	uint8_t image_alpha;
+	GQueue *image_cache;
+	uint8_t image_size;
+	uint16_t image_cache_size;
+
+	/* for waypoint text */
+	PangoLayout *wplabellayout;
+
+	bool has_verified_thumbnails;
+
+	GtkMenu *wp_right_click_menu;
+	GtkMenu *track_right_click_menu;
+
+	/* menu */
+	VikStdLayerMenuItem menu_selection;
+
+	int highest_wp_number;
+
+	// One per layer
+	GtkWidget *tracks_analysis_dialog;
+};
+
+
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -71,13 +270,7 @@ GType vik_trw_layer_get_type ();
 
 typedef struct _VikTrwLayer VikTrwLayer;
 
-typedef struct {
-  char *description;
-  char *author;
-  //bool has_time;
-  char *timestamp; // TODO: Consider storing as proper time_t.
-  char *keywords; // TODO: handling/storing a GList of individual tags?
-} VikTRWMetadata;
+
 
 VikTRWMetadata *vik_trw_metadata_new();
 void vik_trw_metadata_free ( VikTRWMetadata *metadata);
@@ -93,9 +286,6 @@ void vik_trw_layer_filein_add_track ( VikTrwLayer *vtl, char *name, Track * trk)
 
 int vik_trw_layer_get_property_tracks_line_thickness ( VikTrwLayer *vtl );
 
-void vik_trw_layer_add_waypoint(VikTrwLayer * vtl, char * name, Waypoint * wp);
-void vik_trw_layer_add_track(VikTrwLayer * vtl, char * name, Track * trk);
-void vik_trw_layer_add_route(VikTrwLayer * vtl, char * name, Track * trk);
 
 // Waypoint returned is the first one
 Waypoint * vik_trw_layer_get_waypoint(VikTrwLayer * vtl, const char * name);
@@ -107,10 +297,6 @@ bool vik_trw_layer_delete_route ( VikTrwLayer *vtl, Track * trk);
 
 bool vik_trw_layer_auto_set_view ( VikTrwLayer *vtl, VikViewport *vvp );
 bool vik_trw_layer_find_center ( VikTrwLayer *vtl, VikCoord *dest );
-std::unordered_map<sg_uid_t, Track *> & vik_trw_layer_get_tracks(VikTrwLayer * l);
-std::unordered_map<sg_uid_t, Track *> & vik_trw_layer_get_routes(VikTrwLayer * l);
-std::unordered_map<sg_uid_t, Waypoint *> & vik_trw_layer_get_waypoints(VikTrwLayer * l);
-bool vik_trw_layer_is_empty ( VikTrwLayer *vtl );
 
 bool vik_trw_layer_new_waypoint ( VikTrwLayer *vtl, GtkWindow *w, const VikCoord *def_coord );
 
@@ -160,23 +346,14 @@ void trw_layer_waypoint_rename ( VikTrwLayer *vtl, Waypoint * wp, const char *ne
 void trw_layer_waypoint_reset_icon ( VikTrwLayer *vtl, Waypoint * wp);
 void trw_layer_calculate_bounds_waypoints ( VikTrwLayer *vtl );
 
-bool vik_trw_layer_get_tracks_visibility ( VikTrwLayer *vtl );
-bool vik_trw_layer_get_routes_visibility ( VikTrwLayer *vtl );
-bool vik_trw_layer_get_waypoints_visibility ( VikTrwLayer *vtl );
-
 void trw_layer_update_treeview ( VikTrwLayer *vtl, Track * trk);
 
 void trw_layer_dialog_shift ( VikTrwLayer *vtl, GtkWindow *dialog, VikCoord *coord, bool vertical );
-
-sg_uid_t trw_layer_track_find_uuid(std::unordered_map<sg_uid_t, Track *> & tracks, Track * trk);
 
 sg_uid_t trw_layer_waypoint_find_uuid(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, Waypoint * wp);
 
 void trw_layer_zoom_to_show_latlons ( VikTrwLayer *vtl, VikViewport *vvp, struct LatLon maxmin[2] );
 
-std::unordered_map<sg_uid_t, TreeIndex *> & vik_trw_layer_get_tracks_iters(VikTrwLayer * vtl);
-std::unordered_map<sg_uid_t, TreeIndex *> & vik_trw_layer_get_routes_iters(VikTrwLayer * vtl);
-std::unordered_map<sg_uid_t, TreeIndex *> & vik_trw_layer_get_waypoints_iters(VikTrwLayer * vtl);
 
 #define VIK_SETTINGS_LIST_DATE_FORMAT "list_date_format"
 
@@ -188,25 +365,6 @@ std::unordered_map<sg_uid_t, TreeIndex *> & vik_trw_layer_get_waypoints_iters(Vi
 
 
 GList * vik_trw_layer_get_track_values(GList ** list, std::unordered_map<sg_uid_t, Track *> & tracks);
-
-namespace SlavGPS {
-
-
-
-
-
-	class LayerTRW {
-
-
-
-	};
-
-
-
-
-
-}
-
 
 
 
