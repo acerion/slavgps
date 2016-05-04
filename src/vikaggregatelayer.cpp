@@ -558,7 +558,7 @@ static void aggregate_layer_search_date ( menu_array_values values )
   // Search tracks first
   while ( gl && !found ) {
     // Make it auto select the item if found
-    found = vik_trw_layer_find_date ( VIK_TRW_LAYER(gl->data), date_str, &position, vvp, true, true );
+    found = VIK_TRW_LAYER(gl->data)->trw.find_by_date(date_str, &position, vvp, true, true);
     gl = g_list_next ( gl );
   }
   g_list_free ( gl );
@@ -568,7 +568,7 @@ static void aggregate_layer_search_date ( menu_array_values values )
     gl = vik_aggregate_layer_get_all_layers_of_type ( val, gl, VIK_LAYER_TRW, true );
     while ( gl && !found ) {
       // Make it auto select the item if found
-      found = vik_trw_layer_find_date ( VIK_TRW_LAYER(gl->data), date_str, &position, vvp, false, true );
+      found = VIK_TRW_LAYER(gl->data)->trw.find_by_date(date_str, &position, vvp, false, true);
       gl = g_list_next ( gl );
     }
     g_list_free ( gl );

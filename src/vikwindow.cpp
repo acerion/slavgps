@@ -1183,13 +1183,13 @@ static void draw_redraw ( VikWindow *vw )
   // Draw highlight (possibly again but ensures it is on top - especially for when tracks overlap)
   if ( vw->viking_vvp->port.get_draw_highlight() ) {
     if ( vw->containing_vtl && (vw->selected_tracks || vw->selected_waypoints ) ) {
-        vik_trw_layer_draw_highlight_items ( (VikTrwLayer *) vw->containing_vtl, vw->selected_tracks, vw->selected_waypoints, &vw->viking_vvp->port );
+        ((VikTrwLayer *) vw->containing_vtl)->trw.draw_highlight_items(vw->selected_tracks, vw->selected_waypoints, &vw->viking_vvp->port);
     }
     else if ( vw->containing_vtl && (vw->selected_track || vw->selected_waypoint) ) {
-        vik_trw_layer_draw_highlight_item ( (VikTrwLayer *) vw->containing_vtl, (Track *) vw->selected_track, (Waypoint *) vw->selected_waypoint, &vw->viking_vvp->port );
+        ((VikTrwLayer *) vw->containing_vtl)->trw.draw_highlight_item((Track *) vw->selected_track, (Waypoint *) vw->selected_waypoint, &vw->viking_vvp->port);
     }
     else if ( vw->selected_vtl ) {
-      vik_trw_layer_draw_highlight ( (VikTrwLayer *) vw->selected_vtl, &vw->viking_vvp->port );
+	((VikTrwLayer *) vw->selected_vtl)->trw.draw_highlight(&vw->viking_vvp->port);
     }
   }
   // Other viewport decoration items on top if they are enabled/in use

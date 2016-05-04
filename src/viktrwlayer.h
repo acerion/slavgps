@@ -50,6 +50,19 @@ namespace SlavGPS {
 
 
 
+	typedef struct {
+		bool found;
+		const char *date_str;
+		const Track * trk;
+		const Waypoint * wp;
+		sg_uid_t trk_uid;
+		sg_uid_t wp_uid;
+	} date_finder_type;
+
+
+
+
+
 	class LayerTRW {
 
 	public:
@@ -79,6 +92,30 @@ namespace SlavGPS {
 		static sg_uid_t find_uid_of_track(std::unordered_map<sg_uid_t, Track *> & input, Track * trk);                       /* Formerly known as trw_layer_track_find_uuid(std::unordered_map<sg_uid_t, Track *> & tracks, Track * trk). */
 		static sg_uid_t find_uid_of_waypoint_by_name(std::unordered_map<sg_uid_t, Waypoint *> & input, char const * name);   /* Formerly known as trw_layer_waypoint_find_uuid_by_name(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, Waypoint * wp). */
 		static Track *  find_track_by_name(std::unordered_map<sg_uid_t, Track *> & input, char const * name);                /* Formerly known as trw_layer_track_find_uuid_by_name(std::unordered_map<sg_uid_t, Track *> * tracks, char const * name). */
+
+
+		bool find_by_date(char const * date_str, VikCoord * position, VikViewport * vvp, bool do_tracks, bool select);    /* Formerly known as vik_trw_layer_find_date(VikTrwLayer * vtl, char const * date_str, VikCoord * position, VikViewport * vvp, bool do_tracks, bool select). */
+		static bool find_track_by_date(std::unordered_map<sg_uid_t, Track *> & tracks, date_finder_type * df);            /* Formerly known as trw_layer_find_date_track(std::unordered_map<sg_uid_t, Track *> & tracks, date_finder_type * df). */
+		static bool find_waypoint_by_date(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, date_finder_type * df);   /* Formerly known as trw_layer_find_date_waypoint(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, date_finder_type * df). */
+
+		void draw_with_highlight(Viewport * viewport, bool highlight); /* void trw_layer_draw_with_highlight(VikTrwLayer * l, Viewport * viewport, bool highlight). */
+		void draw_highlight(Viewport * viewport); /* void vik_trw_layer_draw_highlight(VikTrwLayer * vtl, Viewport * viewport). */
+
+		void draw_highlight_item(Track * trk, Waypoint * wp, Viewport * viewport); /* vik_trw_layer_draw_highlight_item(VikTrwLayer *vtl, Track * trk, Waypoint * wp, Viewport * viewport) */
+		void draw_highlight_items(std::unordered_map<sg_uid_t, Track *> * tracks, std::unordered_map<sg_uid_t, Waypoint *> * waypoints, Viewport * viewport); /* vik_trw_layer_draw_highlight_items(VikTrwLayer * vtl, std::unordered_map<sg_uid_t, Track *> * tracks, std::unordered_map<sg_uid_t, Waypoint *> * waypoints, Viewport * viewport). */
+
+
+		void realize_track(std::unordered_map<sg_uid_t, Track *> & tracks, void * pass_along[4], int sublayer_id); /* static void trw_layer_realize_track(std::unordered_map<sg_uid_t, Track *> & tracks, void * pass_along[5], int sublayer_id). */
+		void realize_waypoints(std::unordered_map<sg_uid_t, Waypoint *> & data, void * pass_along[4], int sublayer_id); /* static void trw_layer_realize_waypoints(std::unordered_map<sg_uid_t, Waypoint *> & data, void * pass_along[5]). */
+
+
+		void add_sublayer_tracks(VikTreeview * vt, GtkTreeIter * layer_iter); /* static void trw_layer_add_sublayer_tracks ( VikTrwLayer *vtl, VikTreeview *vt, GtkTreeIter *layer_iter ) */
+		void add_sublayer_waypoints(VikTreeview * vt, GtkTreeIter * layer_iter); /* static void trw_layer_add_sublayer_waypoints ( VikTrwLayer *vtl, VikTreeview *vt, GtkTreeIter *layer_iter ). */
+		void add_sublayer_routes(VikTreeview * vt, GtkTreeIter * layer_iter); /* static void trw_layer_add_sublayer_routes ( VikTrwLayer *vtl, VikTreeview *vt, GtkTreeIter *layer_iter ). */
+
+
+
+		void set_statusbar_msg_info_trkpt(Trackpoint * tp); /* static void set_statusbar_msg_info_trkpt ( VikTrwLayer *vtl, Trackpoint * tp). */
 
 
 
