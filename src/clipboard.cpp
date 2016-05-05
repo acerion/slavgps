@@ -58,7 +58,7 @@ static GtkTargetEntry target_table[] = {
  ** functions which send to the clipboard client (we are owner) **
  *****************************************************************/
 
-static void clip_get ( GtkClipboard *c, GtkSelectionData *selection_data, unsigned int info, void * p ) 
+static void clip_get ( GtkClipboard *c, GtkSelectionData *selection_data, unsigned int info, void * p )
 {
   vik_clipboard_t *vc = (vik_clipboard_t *) p;
   if ( info == 0 ) {
@@ -87,14 +87,14 @@ static void clip_clear ( GtkClipboard *c, void * p )
  **************************************************************************/
 
 /* our own data type */
-static void clip_receive_viking ( GtkClipboard *c, GtkSelectionData *sd, void * p ) 
+static void clip_receive_viking ( GtkClipboard *c, GtkSelectionData *sd, void * p )
 {
   VikLayersPanel *vlp = (VikLayersPanel *) p;
   vik_clipboard_t *vc;
   if (gtk_selection_data_get_length(sd) == -1) {
     fprintf(stderr, _("WARNING: paste failed\n") );
     return;
-  } 
+  }
   //  fprintf(stdout, "clip receive: target = %s, type = %s\n", gdk_atom_name(gtk_selection_data_get_target(sd), gdk_atom_name(sd->type));
   //assert (!strcmp(gdk_atom_name(gtk_selection_data_get_target(sd)), target_table[0].target));
 
@@ -139,7 +139,7 @@ static void clip_receive_viking ( GtkClipboard *c, GtkSelectionData *sd, void * 
  *
  * Returns: true if coordinates are set.
  */
-static bool clip_parse_latlon ( const char *text, struct LatLon *coord ) 
+static bool clip_parse_latlon ( const char *text, struct LatLon *coord )
 {
   int latdeg, londeg, latmi, lonmi;
   double lats, lons;
@@ -153,7 +153,7 @@ static bool clip_parse_latlon ( const char *text, struct LatLon *coord )
 
   len = strlen(s);
 
-  /* remove non-digits following digits; gets rid of degree symbols or whatever people use, and 
+  /* remove non-digits following digits; gets rid of degree symbols or whatever people use, and
    * punctuation
    */
   for (i=0; i<len-2; i++) {
@@ -244,7 +244,7 @@ static bool clip_parse_latlon ( const char *text, struct LatLon *coord )
   return false;
 }
 
-static void clip_add_wp(VikLayersPanel *vlp, struct LatLon *coord) 
+static void clip_add_wp(VikLayersPanel *vlp, struct LatLon *coord)
 {
   VikCoord vc;
   VikLayer *sel = vik_layers_panel_get_selected ( vlp );
@@ -253,7 +253,7 @@ static void clip_add_wp(VikLayersPanel *vlp, struct LatLon *coord)
   vik_coord_load_from_latlon ( &vc, VIK_COORD_LATLON, coord );
 
   if (sel && sel->type == VIK_LAYER_TRW) {
-    vik_trw_layer_new_waypoint ( VIK_TRW_LAYER(sel), VIK_GTK_WINDOW_FROM_LAYER(sel), &vc );
+    (VIK_TRW_LAYER(sel))->trw.new_waypoint(VIK_GTK_WINDOW_FROM_LAYER(sel), &vc);
     trw_layer_calculate_bounds_waypoints ( VIK_TRW_LAYER(sel) );
     vik_layer_emit_update ( VIK_LAYER(sel) );
   } else {
@@ -286,7 +286,7 @@ static void clip_receive_text (GtkClipboard *c, const char *text, void * p)
   }
 }
 
-static void clip_receive_html ( GtkClipboard *c, GtkSelectionData *sd, void * p ) 
+static void clip_receive_html ( GtkClipboard *c, GtkSelectionData *sd, void * p )
 {
   VikLayersPanel *vlp = (VikLayersPanel *) p;
   size_t r, w;
@@ -297,7 +297,7 @@ static void clip_receive_html ( GtkClipboard *c, GtkSelectionData *sd, void * p 
 
   if (gtk_selection_data_get_length(sd) == -1) {
     return;
-  } 
+  }
 
   /* - copying from Mozilla seems to give html in UTF-16. */
   if (!(s =  g_convert ( (char *)gtk_selection_data_get_data(sd), gtk_selection_data_get_length(sd), "UTF-8", "UTF-16", &r, &w, &err))) {
@@ -305,8 +305,8 @@ static void clip_receive_html ( GtkClipboard *c, GtkSelectionData *sd, void * p 
   }
   //  fprintf(stdout, "html is %d bytes long: %s\n", gtk_selection_data_get_length(sd), s);
 
-  /* scrape a coordinate pasted from a geocaching.com page: look for a 
-   * telltale tag if possible, and then remove tags 
+  /* scrape a coordinate pasted from a geocaching.com page: look for a
+   * telltale tag if possible, and then remove tags
    */
   if (!(span = g_strstr_len(s, w, "<span id=\"LatLon\">"))) {
     span = s;

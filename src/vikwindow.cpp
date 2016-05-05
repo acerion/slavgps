@@ -3670,7 +3670,7 @@ static void preferences_change_update ( VikWindow *vw, void * data )
   while ( layers ) {
     // Reset the individual waypoints themselves due to the preferences change
     VikTrwLayer *vtl = VIK_TRW_LAYER(layers->data);
-    vik_trw_layer_reset_waypoints ( vtl );
+    vtl->trw.reset_waypoints();
     layers = g_list_next ( layers );
   }
 

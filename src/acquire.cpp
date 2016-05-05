@@ -126,7 +126,7 @@ static void on_complete_process (w_and_interface_t *wi)
       vik_layer_post_read ( VIK_LAYER(wi->vtl), wi->w->vvp, true );
       // View this data if desired - must be done after post read (so that the bounds are known)
       if ( wi->w->source_interface->autoview ) {
-	vik_trw_layer_auto_set_view ( wi->vtl, vik_layers_panel_get_viewport(wi->w->vlp) );
+        wi->vtl->trw.auto_set_view(vik_layers_panel_get_viewport(wi->w->vlp));
       }
       vik_layers_panel_emit_update ( wi->w->vlp );
     }

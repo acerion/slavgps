@@ -2890,7 +2890,7 @@ static void propwin_response_cb( GtkDialog *dialog, int resp, PropWidgets *widge
       gtk_color_button_get_color ( GTK_COLOR_BUTTON(widgets->w_color), &(trk->color) );
       trk->draw_name_mode = (TrackDrawnameType) gtk_combo_box_get_active ( GTK_COMBO_BOX(widgets->w_namelabel) );
       trk->max_number_dist_labels = gtk_spin_button_get_value_as_int ( GTK_SPIN_BUTTON(widgets->w_number_distlabels) );
-      trw_layer_update_treeview ( widgets->vtl, widgets->trk);
+      widgets->vtl->trw.update_treeview(widgets->trk);
       vik_layer_emit_update ( VIK_LAYER(vtl) );
       break;
     case VIK_TRW_LAYER_PROPWIN_REVERSE:
@@ -2903,7 +2903,7 @@ static void propwin_response_cb( GtkDialog *dialog, int resp, PropWidgets *widge
       //   choose not to inform the user unnecessarily
 
       /* above operation could have deleted current_tp or last_tp */
-      trw_layer_cancel_tps_of_track ( vtl, trk);
+      vtl->trw.cancel_tps_of_track(trk);
       vik_layer_emit_update ( VIK_LAYER(vtl) );
       break;
     case VIK_TRW_LAYER_PROPWIN_SPLIT:
@@ -2917,9 +2917,8 @@ static void propwin_response_cb( GtkDialog *dialog, int resp, PropWidgets *widge
         for ( i = 0; i < ntracks; i++ )
         {
           if ( tracks[i] ) {
-	    new_tr_name = trw_layer_new_unique_sublayer_name ( vtl,
-                                                               widgets->trk->is_route ? VIK_TRW_LAYER_SUBLAYER_ROUTE : VIK_TRW_LAYER_SUBLAYER_TRACK,
-                                                               widgets->trk->name);
+	    new_tr_name = vtl->trw.new_unique_sublayer_name(widgets->trk->is_route ? VIK_TRW_LAYER_SUBLAYER_ROUTE : VIK_TRW_LAYER_SUBLAYER_TRACK,
+                                                            widgets->trk->name);
             if ( widgets->trk->is_route )
               vtl->trw.add_route(tracks[i], new_tr_name);
             else
@@ -2956,9 +2955,8 @@ static void propwin_response_cb( GtkDialog *dialog, int resp, PropWidgets *widge
           break;
         }
 
-        char *r_name = trw_layer_new_unique_sublayer_name(vtl,
-                                                           widgets->trk->is_route ? VIK_TRW_LAYER_SUBLAYER_ROUTE : VIK_TRW_LAYER_SUBLAYER_TRACK,
-                                                           widgets->trk->name);
+        char *r_name = vtl->trw.new_unique_sublayer_name(widgets->trk->is_route ? VIK_TRW_LAYER_SUBLAYER_ROUTE : VIK_TRW_LAYER_SUBLAYER_TRACK,
+							 widgets->trk->name);
         iter->prev->next = NULL;
         iter->prev = NULL;
         Track * trk_right = new Track();

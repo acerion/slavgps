@@ -344,7 +344,7 @@ static void trw_layer_geotag_process ( geotag_options_t *options )
 				bool updated_waypoint = false;
 
 				if ( options->ov.overwrite_waypoints ) {
-					Waypoint * current_wp = vik_trw_layer_get_waypoint ( options->vtl, name );
+					Waypoint * current_wp = options->vtl->trw.get_waypoint(name);
 					if ( current_wp ) {
 						// Existing wp found, so set new position, comment and image
 						(void)a_geotag_waypoint_positioned ( options->image, wp->coord, wp->altitude, &name, current_wp );
@@ -353,7 +353,7 @@ static void trw_layer_geotag_process ( geotag_options_t *options )
 				}
 
 				if ( !updated_waypoint ) {
-					vik_trw_layer_filein_add_waypoint ( options->vtl, name, wp );
+				    options->vtl->trw.filein_add_waypoint(name, wp);
 				}
 
 				free( name );
@@ -399,7 +399,7 @@ static void trw_layer_geotag_process ( geotag_options_t *options )
 					// Find a WP with current name
 					char *name = NULL;
 					name = g_strdup( a_file_basename ( options->image ) );
-					Waypoint * wp = vik_trw_layer_get_waypoint ( options->vtl, name );
+					Waypoint * wp = options->vtl->trw.get_waypoint(name);
 					if ( wp ) {
 						// Found, so set new position, comment and image
 						(void)a_geotag_waypoint_positioned ( options->image, options->coord, options->altitude, &name, wp );
@@ -414,7 +414,7 @@ static void trw_layer_geotag_process ( geotag_options_t *options )
 					Waypoint * wp = a_geotag_waypoint_positioned ( options->image, options->coord, options->altitude, &name, NULL );
 					if ( !name )
 						name = g_strdup( a_file_basename ( options->image ) );
-					vik_trw_layer_filein_add_waypoint ( options->vtl, name, wp );
+					options->vtl->trw.filein_add_waypoint(name, wp);
 					free( name );
 				}
 

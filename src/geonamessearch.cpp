@@ -159,7 +159,7 @@ static GList *a_select_geoname_from_list(GtkWindow *parent, GList *geonames, boo
 
   GList *geoname_runner = geonames;
   while (geoname_runner)
-  { 
+  {
     geoname = (found_geoname *)geoname_runner->data;
     latlon_string = g_strdup_printf("(%f,%f)", geoname->ll.lat, geoname->ll.lon);
     gtk_tree_store_append(store, &iter, NULL);
@@ -238,7 +238,7 @@ static GList *a_select_geoname_from_list(GtkWindow *parent, GList *geonames, boo
     }
 
     if (selected_geonames)
-    { 
+    {
       gtk_widget_destroy ( dialog );
       return selected_geonames;
     }
@@ -470,7 +470,7 @@ void a_geonames_wikipedia_box ( VikWindow *vw, VikTrwLayer *vtl, struct LatLon m
       if ( !strcmp (wiki_geoname->feature, "forest") )
         wiki_wp->set_symbol("forest");
     }
-    vik_trw_layer_filein_add_waypoint ( vtl, wiki_geoname->name, wiki_wp );
+    vtl->trw.filein_add_waypoint(wiki_geoname->name, wiki_wp);
     wp_runner = g_list_next(wp_runner);
   }
   free_geoname_list(wiki_places);

@@ -1211,7 +1211,7 @@ static void gps_comm_thread(GpsSession *sess)
         if ( sess->vvp && sess->direction == GPS_DOWN ) {
           vik_layer_post_read ( VIK_LAYER(sess->vtl), sess->vvp, true );
           /* View the data available */
-          vik_trw_layer_auto_set_view ( sess->vtl, sess->vvp ) ;
+	  sess->vtl->trw.auto_set_view(sess->vvp) ;
           vik_layer_emit_update ( VIK_LAYER(sess->vtl) ); // NB update from background thread
         }
       }
@@ -1408,9 +1408,9 @@ static void gps_empty_upload_cb( void * layer_and_vlp[2] )
 			      _("Are you sure you want to delete GPS Upload data?"),
 			      NULL ) )
     return;
-  vik_trw_layer_delete_all_waypoints ( vgl-> trw_children[TRW_UPLOAD]);
-  vik_trw_layer_delete_all_tracks ( vgl-> trw_children[TRW_UPLOAD]);
-  vik_trw_layer_delete_all_routes ( vgl-> trw_children[TRW_UPLOAD]);
+  vgl->trw_children[TRW_UPLOAD]->trw.delete_all_waypoints();
+  vgl->trw_children[TRW_UPLOAD]->trw.delete_all_tracks();
+  vgl->trw_children[TRW_UPLOAD]->trw.delete_all_routes();
 }
 
 static void gps_empty_download_cb( void * layer_and_vlp[2] )
@@ -1421,9 +1421,9 @@ static void gps_empty_download_cb( void * layer_and_vlp[2] )
 			      _("Are you sure you want to delete GPS Download data?"),
 			      NULL ) )
     return;
-  vik_trw_layer_delete_all_waypoints ( vgl-> trw_children[TRW_DOWNLOAD]);
-  vik_trw_layer_delete_all_tracks ( vgl-> trw_children[TRW_DOWNLOAD]);
-  vik_trw_layer_delete_all_routes ( vgl-> trw_children[TRW_DOWNLOAD]);
+  vgl->trw_children[TRW_DOWNLOAD]->trw.delete_all_waypoints();
+  vgl->trw_children[TRW_DOWNLOAD]->trw.delete_all_tracks();
+  vgl->trw_children[TRW_DOWNLOAD]->trw.delete_all_routes();
 }
 
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
@@ -1435,8 +1435,8 @@ static void gps_empty_realtime_cb( void * layer_and_vlp[2] )
 			      _("Are you sure you want to delete GPS Realtime data?"),
 			      NULL ) )
     return;
-  vik_trw_layer_delete_all_waypoints ( vgl-> trw_children[TRW_REALTIME]);
-  vik_trw_layer_delete_all_tracks ( vgl-> trw_children[TRW_REALTIME]);
+  vgl->trw_children[TRW_REALTIME]->trw.delete_all_waypoints();
+  vgl->trw_children[TRW_REALTIME]->trw.delete_all_tracks();
 }
 #endif
 
@@ -1448,15 +1448,15 @@ static void gps_empty_all_cb( void * layer_and_vlp[2] )
 			      _("Are you sure you want to delete All GPS data?"),
 			      NULL ) )
     return;
-  vik_trw_layer_delete_all_waypoints ( vgl-> trw_children[TRW_UPLOAD]);
-  vik_trw_layer_delete_all_tracks ( vgl-> trw_children[TRW_UPLOAD]);
-  vik_trw_layer_delete_all_routes ( vgl-> trw_children[TRW_UPLOAD]);
-  vik_trw_layer_delete_all_waypoints ( vgl-> trw_children[TRW_DOWNLOAD]);
-  vik_trw_layer_delete_all_tracks ( vgl-> trw_children[TRW_DOWNLOAD]);
-  vik_trw_layer_delete_all_routes ( vgl-> trw_children[TRW_DOWNLOAD]);
+  vgl->trw_children[TRW_UPLOAD]->trw.delete_all_waypoints();
+  vgl->trw_children[TRW_UPLOAD]->trw.delete_all_tracks();
+  vgl->trw_children[TRW_UPLOAD]->trw.delete_all_routes();
+  vgl->trw_children[TRW_DOWNLOAD]->trw.delete_all_waypoints();
+  vgl->trw_children[TRW_DOWNLOAD]->trw.delete_all_tracks();
+  vgl->trw_children[TRW_DOWNLOAD]->trw.delete_all_routes();
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
-  vik_trw_layer_delete_all_waypoints ( vgl-> trw_children[TRW_REALTIME]);
-  vik_trw_layer_delete_all_tracks ( vgl-> trw_children[TRW_REALTIME]);
+  vgl->trw_children[TRW_REALTIME]->trw.delete_all_waypoints();
+  vgl->trw_children[TRW_REALTIME]->trw.delete_all_tracks();
 #endif
 }
 
@@ -1706,7 +1706,7 @@ static char *make_track_name(VikTrwLayer *vtl)
   strcpy(name, basename);
   int i = 2;
 
-  while (vik_trw_layer_get_track(vtl, name) != NULL) {
+  while (vtl->trw.get_track(name) != NULL) {
     snprintf(name, bufsize, "%s#%d", basename, i);
     i++;
   }

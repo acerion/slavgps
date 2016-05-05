@@ -723,7 +723,7 @@ VikLoadType_t a_file_load ( VikAggregateLayer *top, VikViewport *vp, const char 
       // Complete the setup from the successful load
       vik_layer_post_read ( vtl, vp, true );
       vik_aggregate_layer_add_layer ( top, vtl, false );
-      vik_trw_layer_auto_set_view ( VIK_TRW_LAYER(vtl), vp );
+      (VIK_TRW_LAYER(vtl))->trw.auto_set_view(vp);
     }
   }
   xfclose(f);

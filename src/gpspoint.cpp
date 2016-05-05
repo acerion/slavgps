@@ -240,7 +240,7 @@ bool a_gpspoint_read_file(VikTrwLayer *trw, FILE *f, const char *dirpath ) {
 
       vik_coord_load_from_latlon ( &(wp->coord), coord_mode, &line_latlon );
 
-      vik_trw_layer_filein_add_waypoint ( trw, line_name, wp );
+      trw->trw.filein_add_waypoint(line_name, wp);
       free( line_name );
       line_name = NULL;
 
@@ -313,7 +313,7 @@ bool a_gpspoint_read_file(VikTrwLayer *trw, FILE *f, const char *dirpath ) {
       trk->max_number_dist_labels = line_dist_label;
 
       trk->trackpoints = NULL;
-      vik_trw_layer_filein_add_track ( trw, line_name, trk);
+      trw->trw.filein_add_track(line_name, trk);
       free( line_name );
       line_name = NULL;
 
