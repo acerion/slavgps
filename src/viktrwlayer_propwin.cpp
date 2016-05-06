@@ -3395,7 +3395,7 @@ void vik_trw_layer_propwin_run ( GtkWindow *parent,
     VikCoord vc;
     // Notional center of a track is simply an average of the bounding box extremities
     struct LatLon center = { (trk->bbox.north+trk->bbox.south)/2, (trk->bbox.east+trk->bbox.west)/2 };
-    vik_coord_load_from_latlon ( &vc, vik_trw_layer_get_coord_mode(vtl), &center );
+    vik_coord_load_from_latlon ( &vc, vtl->trw.get_coord_mode(), &center );
 
     widgets->tz = vu_get_tz_at_location ( &vc );
 

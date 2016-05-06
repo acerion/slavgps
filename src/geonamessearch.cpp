@@ -451,7 +451,9 @@ void a_geonames_wikipedia_box ( VikWindow *vw, VikTrwLayer *vtl, struct LatLon m
     wiki_geoname = (found_geoname *)wp_runner->data;
     wiki_wp = new Waypoint();
     wiki_wp->visible = true;
-    vik_coord_load_from_latlon(&(wiki_wp->coord), vik_trw_layer_get_coord_mode ( vtl ), &(wiki_geoname->ll));
+    vik_coord_load_from_latlon(&(wiki_wp->coord),
+			       vtl->trw.get_coord_mode(),
+			       &(wiki_geoname->ll));
     wiki_wp->altitude = wiki_geoname->elevation;
     wiki_wp->set_comment(wiki_geoname->cmt);
     wiki_wp->set_description(wiki_geoname->desc);

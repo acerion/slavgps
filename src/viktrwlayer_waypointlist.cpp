@@ -176,7 +176,7 @@ static void trw_layer_waypoint_properties ( menu_array_values values )
 		waypoint_close_cb ( gw, 0, (GList *) values[MA_WPTS_LIST] );
 
 		bool updated = false;
-		char *new_name = a_dialog_waypoint ( VIK_GTK_WINDOW_FROM_LAYER(vtl), wp->name, vtl, wp, vik_trw_layer_get_coord_mode(vtl), false, &updated );
+		char *new_name = a_dialog_waypoint ( VIK_GTK_WINDOW_FROM_LAYER(vtl), wp->name, vtl, wp, vtl->trw.get_coord_mode(), false, &updated );
 		if ( new_name )
 			vtl->trw.waypoint_rename(wp, new_name);
 

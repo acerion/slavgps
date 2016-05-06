@@ -332,7 +332,9 @@ static void trw_layer_geotag_process ( geotag_options_t *options )
 			if ( options->ov.create_waypoints ) {
 				// Create waypoint with file information
 				char *name = NULL;
-				Waypoint * wp = a_geotag_create_waypoint_from_file ( options->image, vik_trw_layer_get_coord_mode (options->vtl), &name );
+				Waypoint * wp = a_geotag_create_waypoint_from_file ( options->image,
+																	 options->vtl->trw.get_coord_mode(),
+																	 &name );
 				if ( !wp ) {
 					// Couldn't create Waypoint
 					free( datetime );
@@ -468,7 +470,7 @@ static int trw_layer_geotag_thread ( geotag_options_t *options, void * threaddat
 
 	if ( options->redraw ) {
 		if ( IS_VIK_LAYER(options->vtl) ) {
-			trw_layer_calculate_bounds_waypoints ( options->vtl );
+			options->vtl->trw.calculate_bounds_waypoints();
 			// Ensure any new images get shown
 			trw_layer_verify_thumbnails ( options->vtl, NULL ); // NB second parameter not used ATM
 			// Force redraw as verify only redraws if there are new thumbnails (they may already exist)

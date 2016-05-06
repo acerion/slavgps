@@ -260,7 +260,9 @@ static void gpx_start(VikTrwLayer *vtl, const char *el, const char **attr)
          if ( get_attr ( attr, "hidden" ) )
            c_wp->visible = false;
 
-         vik_coord_load_from_latlon ( &(c_wp->coord), vik_trw_layer_get_coord_mode ( vtl ), &c_ll );
+         vik_coord_load_from_latlon ( &(c_wp->coord),
+				      vtl->trw.get_coord_mode(),
+				      &c_ll );
        }
        break;
 
@@ -281,7 +283,7 @@ static void gpx_start(VikTrwLayer *vtl, const char *el, const char **attr)
      case tt_trk_trkseg_trkpt:
        if ( set_c_ll( attr ) ) {
          c_tp = new Trackpoint();
-         vik_coord_load_from_latlon ( &(c_tp->coord), vik_trw_layer_get_coord_mode ( vtl ), &c_ll );
+         vik_coord_load_from_latlon ( &(c_tp->coord), vtl->trw.get_coord_mode(), &c_ll );
          if ( f_tr_newseg ) {
            c_tp->newsegment = true;
            f_tr_newseg = false;
@@ -322,7 +324,7 @@ static void gpx_start(VikTrwLayer *vtl, const char *el, const char **attr)
 
      case tt_waypoint_coord:
        if ( set_c_ll( attr ) )
-         vik_coord_load_from_latlon ( &(c_wp->coord), vik_trw_layer_get_coord_mode ( vtl ), &c_ll );
+	       vik_coord_load_from_latlon ( &(c_wp->coord), vtl->trw.get_coord_mode(), &c_ll );
        break;
 
      case tt_waypoint_name:

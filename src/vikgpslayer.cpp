@@ -1282,7 +1282,7 @@ int vik_gps_comm ( VikTrwLayer *vtl,
     // Enforce unique names in the layer upload to the GPS device
     // NB this may only be a Garmin device restriction (and may be not every Garmin device either...)
     // Thus this maintains the older code in built restriction
-    if ( ! vik_trw_layer_uniquify ( sess->vtl, vlp ) )
+	  if (!sess->vtl->trw.uniquify(vlp))
       vik_statusbar_set_message ( vik_window_get_statusbar (VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(sess->vtl))), VIK_STATUSBAR_INFO,
 				  _("Warning - GPS Upload items may overwrite each other") );
   }
@@ -1572,7 +1572,7 @@ static Trackpoint * create_realtime_trackpoint(VikGpsLayer *vgl, bool forced)
         ll.lat = vgl->realtime_fix.fix.latitude;
         ll.lon = vgl->realtime_fix.fix.longitude;
         vik_coord_load_from_latlon(&tp->coord,
-             vik_trw_layer_get_coord_mode(vgl->trw_children[TRW_REALTIME]), &ll);
+				   vgl->trw_children[TRW_REALTIME]->trw.get_coord_mode(), &ll);
 
         vgl->realtime_track->add_trackpoint(tp, true); // Ensure bounds is recalculated
         vgl->realtime_fix.dirty = false;
@@ -1631,7 +1631,7 @@ static void gpsd_raw_hook(VglGpsd *vgpsd, char *data)
     ll.lat = vgl->realtime_fix.fix.latitude;
     ll.lon = vgl->realtime_fix.fix.longitude;
     vik_coord_load_from_latlon(&vehicle_coord,
-           vik_trw_layer_get_coord_mode(vgl->trw_children[TRW_REALTIME]), &ll);
+			       vgl->trw_children[TRW_REALTIME]->trw.get_coord_mode(), &ll);
 
     if ((vgl->vehicle_position == VEHICLE_POSITION_CENTERED) ||
         (vgl->realtime_jump_to_start && vgl->first_realtime_trackpoint)) {

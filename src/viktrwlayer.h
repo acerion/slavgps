@@ -72,6 +72,28 @@ namespace SlavGPS {
 	} twt_udata;
 
 
+	typedef struct {
+		int x, y;
+		int closest_x, closest_y;
+		bool draw_images;
+		sg_uid_t closest_wp_uid;
+		Waypoint * closest_wp;
+		Viewport * viewport;
+	} WPSearchParams;
+
+	typedef struct {
+		int x, y;
+		int closest_x, closest_y;
+		sg_uid_t closest_track_uid;
+		Trackpoint * closest_tp;
+		Viewport * viewport;
+		GList * closest_tpl;
+		LatLonBBox bbox;
+	} TPSearchParams;
+
+
+
+
 
 
 
@@ -236,6 +258,49 @@ namespace SlavGPS {
 
 		static GList * get_track_values(GList ** list, std::unordered_map<sg_uid_t, Track *> & tracks); /* GList * vik_trw_layer_get_track_values(GList ** list, std::unordered_map<sg_uid_t, Track *> & tracks). */
 
+		void tpwin_init(); /* static void trw_layer_tpwin_init(VikTrwLayer * vtl). */
+
+
+		static void waypoint_search_closest_tp(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, WPSearchParams * params);
+		static void track_search_closest_tp(std::unordered_map<sg_uid_t, Track *> & tracks, TPSearchParams * params);
+
+
+		Trackpoint * closest_tp_in_five_pixel_interval(Viewport * viewport, int x, int y); /* static Trackpoint * closest_tp_in_five_pixel_interval(VikTrwLayer * vtl, Viewport * viewport, int x, int y). */
+		Waypoint * closest_wp_in_five_pixel_interval(Viewport * viewport, int x, int y); /* static Waypoint * closest_wp_in_five_pixel_interval(VikTrwLayer * vtl, Viewport * viewport, int x, int y). */
+
+		static char * tool_show_picture_wp(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, int event_x, int event_y, Viewport * viewport);
+		static GSList * image_wp_make_list(std::unordered_map<sg_uid_t, Waypoint *> & waypoints);
+
+
+		void track_alloc_colors(); /* static void trw_layer_track_alloc_colors(VikTrwLayer * vtl). */
+
+		void calculate_bounds_waypoints(); /* void trw_layer_calculate_bounds_waypoints(VikTrwLayer * vtl). */
+
+		static void calculate_bounds_track(std::unordered_map<sg_uid_t, Track *> & tracks); /* static void trw_layer_calculate_bounds_track(std::unordered_map<sg_uid_t, Track *> & tracks). */
+
+		void calculate_bounds_tracks(); /* static void trw_layer_calculate_bounds_tracks(VikTrwLayer * vtl). */
+
+
+		void sort_all(); /* static void trw_layer_sort_all(VikTrwLayer * vtl). */
+
+		time_t get_timestamp_tracks(); /* static time_t trw_layer_get_timestamp_tracks(VikTrwLayer * vtl). */
+		time_t get_timestamp_waypoints(); /* static time_t trw_layer_get_timestamp_waypoints(VikTrwLayer * vtl). */
+
+
+
+		VikCoordMode get_coord_mode(); /* VikCoordMode vik_trw_layer_get_coord_mode(VikTrwLayer * vtl). */
+
+		bool uniquify(VikLayersPanel * vlp); /* bool vik_trw_layer_uniquify(VikTrwLayer * vtl, VikLayersPanel * vlp). */
+
+
+		static void waypoints_convert(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, VikCoordMode * dest_mode);
+		static void track_convert(std::unordered_map<sg_uid_t, Track *> & tracks, VikCoordMode * dest_mode);
+
+		void highest_wp_number_reset(); /* static void highest_wp_number_reset(VikTrwLayer * vtl) */
+		void highest_wp_number_add_wp(char const * new_wp_name); /* void highest_wp_number_add_wp(VikTrwLayer * vtl, char const * new_wp_name). */
+		void highest_wp_number_remove_wp(char const * old_wp_name); /* static void highest_wp_number_remove_wp(VikTrwLayer * vtl, char const * old_wp_name). */
+		char * highest_wp_number_get(); /* char * highest_wp_number_get(VikTrwLayer * vtl). */
+
 
 #ifdef VIK_CONFIG_GOOGLE
 		bool is_valid_google_route(sg_uid_t track_uid); /* static bool is_valid_google_route(VikTrwLayer * vtl, const void * track_id). */
@@ -285,6 +350,8 @@ namespace SlavGPS {
 		bool moving_tp;
 
 		VikCoordMode coord_mode;
+
+		int highest_wp_number;
 
 	};
 
@@ -407,7 +474,6 @@ struct _VikTrwLayer {
 	/* menu */
 	VikStdLayerMenuItem menu_selection;
 
-	int highest_wp_number;
 
 	// One per layer
 	GtkWidget *tracks_analysis_dialog;

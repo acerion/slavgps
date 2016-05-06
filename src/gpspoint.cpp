@@ -169,7 +169,7 @@ static char *deslashndup ( const char *str, uint16_t len )
  *  thus set a flag if any actual tag found during processing of the file
  */
 bool a_gpspoint_read_file(VikTrwLayer *trw, FILE *f, const char *dirpath ) {
-  VikCoordMode coord_mode = vik_trw_layer_get_coord_mode ( trw );
+  VikCoordMode coord_mode = trw->trw.get_coord_mode();
   char *tag_start, *tag_end;
   assert ( f != NULL && trw != NULL );
   line_type = 0;
