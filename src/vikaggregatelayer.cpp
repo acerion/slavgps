@@ -521,7 +521,7 @@ static GList* aggregate_layer_waypoint_create_list ( VikLayer *vl, void * user_d
 		  waypoints = g_list_insert(waypoints, i->second, index++);
 	  }
 
-    waypoints_and_layers = g_list_concat ( waypoints_and_layers, vik_trw_layer_build_waypoint_list_t ( VIK_TRW_LAYER(layers->data), waypoints ) );
+	  waypoints_and_layers = g_list_concat ( waypoints_and_layers, VIK_TRW_LAYER(layers->data)->trw.build_waypoint_list_t(waypoints));
 
     layers = g_list_next ( layers );
   }
@@ -599,10 +599,10 @@ static GList* aggregate_layer_track_create_list ( VikLayer *vl, void * user_data
   layers = g_list_first ( layers );
   while ( layers ) {
     GList *tracks = NULL;
-    vik_trw_layer_get_track_values(&tracks, VIK_TRW_LAYER(layers->data)->trw.get_tracks());
-    vik_trw_layer_get_track_values(&tracks, VIK_TRW_LAYER(layers->data)->trw.get_routes());
+    LayerTRW::get_track_values(&tracks, VIK_TRW_LAYER(layers->data)->trw.get_tracks());
+    LayerTRW::get_track_values(&tracks, VIK_TRW_LAYER(layers->data)->trw.get_routes());
 
-    tracks_and_layers = g_list_concat ( tracks_and_layers, vik_trw_layer_build_track_list_t ( VIK_TRW_LAYER(layers->data), tracks ) );
+    tracks_and_layers = g_list_concat ( tracks_and_layers, VIK_TRW_LAYER(layers->data)->trw.build_track_list_t(tracks));
 
     layers = g_list_next ( layers );
   }
