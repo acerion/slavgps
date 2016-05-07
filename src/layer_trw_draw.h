@@ -1,7 +1,7 @@
 /*
  * SlavGPS -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
- * A fork of viking, project started in 2016.
+ * Project started in 2016 by forking viking project.
  *
  * Copyright (C) 2003-2005, Evan Battaglia <gtoevan@gmx.net>
  * Copyright (c) 2011-2013, Rob Norris <rw_norris@hotmail.com>
@@ -25,6 +25,94 @@
 
 #ifndef _SG_LAYER_TRW_DRAW_H
 #define _SG_LAYER_TRW_DRAW_H
+
+
+
+
+
+#include <stdint.h>
+#include <stdbool.h>
+
+#include <unordered_map>
+
+#include "vikviewport.h"
+#include "vikwaypoint.h"
+#include "viktrack.h"
+#include "viktrwlayer.h"
+
+
+
+
+
+#define VIK_TRW_LAYER_TRACK_GC 6
+#define VIK_TRW_LAYER_TRACK_GCS 10
+#define VIK_TRW_LAYER_TRACK_GC_BLACK 0
+#define VIK_TRW_LAYER_TRACK_GC_SLOW 1
+#define VIK_TRW_LAYER_TRACK_GC_AVER 2
+#define VIK_TRW_LAYER_TRACK_GC_FAST 3
+#define VIK_TRW_LAYER_TRACK_GC_STOP 4
+#define VIK_TRW_LAYER_TRACK_GC_SINGLE 5
+
+#define DRAWMODE_BY_TRACK 0
+#define DRAWMODE_BY_SPEED 1
+#define DRAWMODE_ALL_SAME_COLOR 2
+// Note using DRAWMODE_BY_SPEED may be slow especially for vast numbers of trackpoints
+//  as we are (re)calculating the colour for every point
+
+
+
+#define DRAW_ELEVATION_FACTOR 30 /* height of elevation plotting, sort of relative to zoom level ("mpp" that isn't mpp necessarily) */
+                                 /* this is multiplied by user-inputted value from 1-100. */
+
+
+enum { WP_SYMBOL_FILLED_SQUARE, WP_SYMBOL_SQUARE, WP_SYMBOL_CIRCLE, WP_SYMBOL_X, WP_NUM_SYMBOLS };
+
+
+
+
+
+typedef struct {
+	Viewport * viewport;
+	VikTrwLayer * vtl;
+	VikWindow * vw;
+	double xmpp, ympp;
+	uint16_t width, height;
+	double cc; // Cosine factor in track directions
+	double ss; // Sine factor in track directions
+	const VikCoord * center;
+	VikCoordMode coord_mode; /* UTM or Lat/Lon. */
+	bool one_utm_zone;       /* Viewport shows only one UTM zone. */
+	double ce1, ce2, cn1, cn2;
+	LatLonBBox bbox;
+	bool highlight;
+} DrawingParams;
+
+
+
+
+
+void init_drawing_params(DrawingParams * dp, VikTrwLayer * vtl, Viewport * viewport, bool highlight);
+void trw_layer_draw_waypoints_cb(std::unordered_map<sg_uid_t, Waypoint *> * waypoints, DrawingParams * dp);
+void trw_layer_draw_waypoint_cb(Waypoint * wp, DrawingParams * dp);
+void trw_layer_draw_track_cb(const void * id, Track * trk, DrawingParams * dp);
+void trw_layer_draw_track_cb(std::unordered_map<sg_uid_t, Track *> & tracks, DrawingParams * dp);
+
+
+
+
+
+/* A cached waypoint image. */
+/* This data structure probably should be put somewhere else. */
+typedef struct {
+	GdkPixbuf *pixbuf;
+	char *image; /* filename */
+} CachedPixbuf;
+
+/* These two functions probably should be put somewhere else. */
+void cached_pixbuf_free ( CachedPixbuf *cp );
+int cached_pixbuf_cmp ( CachedPixbuf *cp, const char *name );
+
+
 
 
 
