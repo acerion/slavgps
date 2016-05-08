@@ -30,6 +30,7 @@
 #include "vikfileentry.h"
 #include "vikfilelist.h"
 #include "viking.h"
+#include "globals.h"
 
 VikLayerParamData vik_lpd_true_default ( void ) { return VIK_LPD_BOOLEAN ( true ); }
 VikLayerParamData vik_lpd_false_default ( void ) { return VIK_LPD_BOOLEAN ( false ); }
@@ -114,7 +115,7 @@ GtkWidget *a_uibuilder_new_widget ( VikLayerParam *param, VikLayerParamData data
             {
               /* Match default value */
               gtk_combo_box_set_active ( GTK_COMBO_BOX ( rv ), i );
-              break; 
+              break;
             }
         }
         else
@@ -523,14 +524,14 @@ VikLayerParamData *a_uibuilder_run_dialog (  const char *dialog_name, GtkWindow 
   VikLayerParamData *paramdatas = (VikLayerParamData *) malloc(params_count * sizeof (VikLayerParamData));
     if ( a_uibuilder_properties_factory ( dialog_name,
 					  parent,
-					  params, 
-					  params_count, 
-					  groups, 
-					  groups_count,
-					  (bool (*)(void*, uint16_t, VikLayerParamData, void*, bool)) uibuilder_run_setparam, 
-					  paramdatas, 
 					  params,
-					  (VikLayerParamData (*)(void*, uint16_t, bool)) uibuilder_run_getparam, 
+					  params_count,
+					  groups,
+					  groups_count,
+					  (bool (*)(void*, uint16_t, VikLayerParamData, void*, bool)) uibuilder_run_setparam,
+					  paramdatas,
+					  params,
+					  (VikLayerParamData (*)(void*, uint16_t, bool)) uibuilder_run_getparam,
 					  params_defaults,
 					  NULL ) > 0 ) {
 

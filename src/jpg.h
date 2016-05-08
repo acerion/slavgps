@@ -27,6 +27,7 @@
 #include <stdint.h>
 
 #include "viking.h"
+#include "vikaggregatelayer.h"
 
 #ifdef __cplusplus
 extern "C" {

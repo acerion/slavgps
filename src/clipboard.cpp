@@ -36,6 +36,10 @@
 #include <glib/gi18n.h>
 
 #include "viking.h"
+#include "clipboard.h"
+#include "dialog.h"
+#include "viktrwlayer.h"
+#include "globals.h"
 
 
 typedef struct {

@@ -34,11 +34,13 @@
 #include <glib/gprintf.h>
 #include <glib/gi18n.h>
 
+#include "vikgpslayer.h"
 #include "datasource_gps.h"
 #include "viking.h"
 #include "babel.h"
 #include "gpx.h"
 #include "acquire.h"
+#include "settings.h"
 
 extern GList * a_babel_device_list;
 
@@ -223,7 +225,7 @@ static void datasource_gps_get_process_options ( void * user_data, ProcessOption
   if (gps_acquire_in_progress) {
     po->babelargs = po->filename = NULL;
   }
-  
+
   gps_acquire_in_progress = true;
 
   device = datasource_gps_get_protocol ( user_data );
@@ -282,7 +284,7 @@ static void datasource_gps_off ( void * user_data, char **babelargs, char **file
   if (!datasource_gps_get_off ( user_data )){
     return;
   }
-  
+
   if (!a_babel_device_list)
     return;
   last_active = gtk_combo_box_get_active(GTK_COMBO_BOX(w->proto_b));
@@ -300,7 +302,7 @@ static void datasource_gps_off ( void * user_data, char **babelargs, char **file
   *babelargs = g_strdup_printf("-i %s", device);
   /* device points to static content => no free */
   device = NULL;
-  
+
 #if GTK_CHECK_VERSION (2, 24, 0)
   ser = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(w->ser_b));
 #else
@@ -391,8 +393,8 @@ static void set_gps_info(const char *info, acq_dialog_widgets_t *w)
   gdk_threads_leave();
 }
 
-/* 
- * This routine relies on gpsbabel's diagnostic output to display the progress information. 
+/*
+ * This routine relies on gpsbabel's diagnostic output to display the progress information.
  * These outputs differ when different GPS devices are used, so we will need to test
  * them on several and add the corresponding support.
  */
@@ -463,7 +465,7 @@ static void datasource_gps_progress ( BabelProgressCode c, void * data, acq_dial
       int lsb, msb, cnt;
 
       if (strlen(line) > 20) {
-       sscanf(line+17, "%x", &lsb); 
+       sscanf(line+17, "%x", &lsb);
        sscanf(line+20, "%x", &msb);
        cnt = lsb + msb * 256;
        set_total_count(cnt, w);

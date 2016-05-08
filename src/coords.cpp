@@ -53,6 +53,7 @@ renaming functions and defining LatLon and UTM structs.
 #ifdef HAVE_VIKING
 #include "viking.h"
 #include "globals.h"
+#include "stdio.h"
 #else
 #define DEG2RAD(x) ((x)*(M_PI/180))
 #define RAD2DEG(x) ((x)*(180/M_PI))

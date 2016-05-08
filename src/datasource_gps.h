@@ -27,6 +27,7 @@
 #include <stdint.h>
 
 #include "viking.h"
+#include "vikgpslayer.h"
 #include "gtk/gtk.h"
 
 #ifdef __cplusplus

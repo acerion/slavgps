@@ -21,9 +21,14 @@
  *
  */
 
+
+#include <gtk/gtk.h>
+#include <gdk-pixbuf/gdk-pixdata.h>
+
 #include "viking.h"
 #include "garminsymbols.h"
 #include "icons/icons.h"
+#include "globals.h"
 
 #include <string.h>
 #include <stdlib.h>

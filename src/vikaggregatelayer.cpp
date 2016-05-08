@@ -21,10 +21,13 @@
  */
 
 #include "viking.h"
+#include "vikgpslayer.h"
 #include "viktrwlayer_analysis.h"
 #include "viktrwlayer_tracklist.h"
 #include "viktrwlayer_waypointlist.h"
 #include "icons/icons.h"
+#include "dialog.h"
+#include "globals.h"
 
 #include <string.h>
 #include <stdlib.h>

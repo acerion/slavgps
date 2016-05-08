@@ -27,6 +27,7 @@
 #include "viking.h"
 #include "acquire.h"
 #include "babel.h"
+#include "settings.h"
 
 // Initially was just going to be a URL and always in GPX format
 // But might as well specify the file type as per datasource_file.c

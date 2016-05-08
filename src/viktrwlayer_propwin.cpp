@@ -44,6 +44,9 @@
 #include "vikviewport.h" /* ugh */
 #include "vikutils.h"
 #include "ui_util.h"
+#include "dialog.h"
+#include "settings.h"
+#include "globals.h"
 #include <gdk-pixbuf/gdk-pixdata.h>
 
 typedef enum {

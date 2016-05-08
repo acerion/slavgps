@@ -23,10 +23,10 @@
 #ifndef _VIKING_TRWLAYER_EXPORT_H
 #define _VIKING_TRWLAYER_EXPORT_H
 
-#include <stdbool.h>
 #include <stdint.h>
 
 #include "viktrwlayer.h"
+#include "file.h"
 
 #ifdef __cplusplus
 extern "C" {

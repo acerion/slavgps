@@ -37,7 +37,12 @@
 #include "viking.h"
 #include "gpx.h"
 #include "babel.h"
+#include "file.h"
+#include "util.h"
 #include "preferences.h"
+#include "globals.h"
+
+
 #include <stdio.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>

@@ -33,6 +33,9 @@
 #include "viking.h"
 #include "vikgototool.h"
 #include "vikgoto.h"
+#include "dialog.h"
+#include "vik_compat.h"
+#include "settings.h"
 
 /* Compatibility */
 #if ! GLIB_CHECK_VERSION(2,22,0)

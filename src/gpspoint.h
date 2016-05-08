@@ -27,16 +27,15 @@
 
 #include "viktrwlayer.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+
+
 
 
 bool a_gpspoint_read_file ( VikTrwLayer *trw, FILE *f, const char *dirpath );
 void a_gpspoint_write_file ( VikTrwLayer *trw, FILE *f );
 
-#ifdef __cplusplus
-}
-#endif
+
+
+
 
 #endif

@@ -32,6 +32,8 @@
 #include "viking.h"
 #include "viktrwlayer_analysis.h"
 #include "ui_util.h"
+#include "settings.h"
+#include "globals.h"
 
 // Units of each item are in SI Units
 // (as returned by the appropriate internal viking track functions)

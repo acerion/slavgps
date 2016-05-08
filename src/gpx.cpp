@@ -34,6 +34,7 @@
 
 #include "gpx.h"
 #include "viking.h"
+#include "globals.h"
 #include <expat.h>
 #ifdef HAVE_STRING_H
 #include <string.h>

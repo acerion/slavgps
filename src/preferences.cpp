@@ -30,6 +30,7 @@
 #include "file.h"
 #include "util.h"
 #include "viking.h"
+#include "globals.h"
 
 // TODO: STRING_LIST
 // TODO: share code in file reading
@@ -150,7 +151,7 @@ static VikLayerParamData preferences_run_getparam ( void * notused, uint16_t i, 
 
 /**
  * a_preferences_save_to_file:
- * 
+ *
  * Returns: true on success
  */
 bool a_preferences_save_to_file()

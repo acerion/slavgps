@@ -41,6 +41,8 @@
 #include "gpx.h"
 #include "background.h"
 #include "preferences.h"
+#include "settings.h"
+#include "globals.h"
 
 /* params will be osm_traces.username, osm_traces.password */
 /* we have to make sure these don't collide. */

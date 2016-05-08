@@ -34,6 +34,9 @@
 #include "vikdatetime_edit_dialog.h"
 #include "vikgoto.h"
 #include "vikutils.h"
+#include "vikfileentry.h"
+#include "dialog.h"
+#include "globals.h"
 
 using namespace SlavGPS;
 

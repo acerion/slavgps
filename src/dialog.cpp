@@ -30,6 +30,10 @@
 #include "authors.h"
 #include "documenters.h"
 #include "ui_util.h"
+#include "dialog.h"
+#include "vik_compat.h"
+#include "vikviewport.h"
+#include "globals.h"
 
 #include <glib/gi18n.h>
 
@@ -404,7 +408,7 @@ bool a_dialog_yes_or_no ( GtkWindow *parent, const char *message, const char *ex
 static void zoom_spin_changed ( GtkSpinButton *spin, GtkWidget *pass_along[3] )
 {
   if ( gtk_toggle_button_get_active ( GTK_TOGGLE_BUTTON(pass_along[2]) ) )
-    gtk_spin_button_set_value ( 
+    gtk_spin_button_set_value (
         GTK_SPIN_BUTTON(pass_along[GTK_WIDGET(spin) == pass_along[0] ? 1 : 0]),
         gtk_spin_button_get_value ( spin ) );
 }
@@ -471,7 +475,7 @@ static void split_spin_focused ( GtkSpinButton *spin, GtkWidget *pass_along[1] )
 
 bool a_dialog_time_threshold ( GtkWindow *parent, char *title_text, char *label_text, unsigned int *thr )
 {
-  GtkWidget *dialog = gtk_dialog_new_with_buttons (title_text, 
+  GtkWidget *dialog = gtk_dialog_new_with_buttons (title_text,
                                                   parent,
 						   (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
                                                   GTK_STOCK_CANCEL,
@@ -529,9 +533,9 @@ bool a_dialog_time_threshold ( GtkWindow *parent, char *title_text, char *label_
 
 /**
  * a_dialog_get_positive_number:
- * 
+ *
  * Dialog to return a positive number via a spinbox within the supplied limits
- * 
+ *
  * Returns: A value of zero indicates the dialog was cancelled
  */
 unsigned int a_dialog_get_positive_number ( GtkWindow *parent, char *title_text, char *label_text, unsigned int default_num, unsigned int min, unsigned int max, unsigned int step )

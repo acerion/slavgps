@@ -62,6 +62,12 @@
 #include "metatile.h"
 #include "ui_util.h"
 #include "map_ids.h"
+#include "viklayer_defaults.h"
+#include "vikfileentry.h"
+#include "dialog.h"
+#include "file.h"
+#include "settings.h"
+#include "globals.h"
 
 #ifdef HAVE_SQLITE3_H
 #include "sqlite3.h"

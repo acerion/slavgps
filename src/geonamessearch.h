@@ -21,7 +21,9 @@
 #ifndef __VIK_GEONAMESSEARCH_H
 #define __VIK_GEONAMESSEARCH_H
 
-#include "viking.h"
+#include "vikwindow.h"
+#include "viktrwlayer.h"
+#include "coords.h"
 
 #ifdef __cplusplus
 extern "C" {

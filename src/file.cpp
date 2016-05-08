@@ -44,8 +44,13 @@
 #include <glib/gstdio.h>
 #include <glib/gi18n.h>
 
+#include "vikgpslayer.h"
 #include "file.h"
 #include "misc/strtod.h"
+#include "gpspoint.h"
+#include "gpsmapper.h"
+#include "fileutils.h"
+#include "globals.h"
 
 #define TEST_BOOLEAN(str) (! ((str)[0] == '\0' || (str)[0] == '0' || (str)[0] == 'n' || (str)[0] == 'N' || (str)[0] == 'f' || (str)[0] == 'F') )
 #define VIK_MAGIC "#VIK"

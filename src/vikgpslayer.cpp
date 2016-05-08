@@ -24,6 +24,9 @@
 #include "config.h"
 #endif
 
+#include <gtk/gtk.h>
+#include <gdk-pixbuf/gdk-pixdata.h>
+
 #include <stdlib.h>
 #ifdef HAVE_MATH_H
 #include <math.h>
@@ -31,6 +34,7 @@
 #include "viking.h"
 #include "icons/icons.h"
 #include "babel.h"
+#include "dialog.h"
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -47,6 +51,9 @@
 #include <gps.h>
 #include "vikutils.h"
 #endif
+#include "vikgpslayer.h"
+#include "settings.h"
+#include "globals.h"
 
 extern GList * a_babel_device_list;
 

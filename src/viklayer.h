@@ -78,7 +78,7 @@ struct _VikLayer {
  * this was useful for clicking a way/trackpoint in any layer,
  * if no layer was selected (find way/trackpoint)
  */
-typedef enum { 
+typedef enum {
   VIK_LAYER_TOOL_IGNORED=0,
   VIK_LAYER_TOOL_ACK,
   VIK_LAYER_TOOL_ACK_REDRAW_ABOVE,
@@ -177,15 +177,15 @@ typedef void          (*VikLayerFuncCopyItem)              (VikLayer *, int, voi
 typedef bool      (*VikLayerFuncPasteItem)             (VikLayer *, int, uint8_t *, unsigned int);
 typedef void          (*VikLayerFuncFreeCopiedItem)        (int, void *);
 
-/* treeview drag and drop method. called on the destination layer. it is given a source and destination layer, 
- * and the source and destination iters in the treeview. 
+/* treeview drag and drop method. called on the destination layer. it is given a source and destination layer,
+ * and the source and destination iters in the treeview.
  */
 typedef void 	      (*VikLayerFuncDragDropRequest)       (VikLayer *, VikLayer *, GtkTreeIter *, GtkTreePath *);
 
-typedef bool      (*VikLayerFuncSelectClick)           (VikLayer *, GdkEventButton *, VikViewport *, tool_ed_t*);
-typedef bool      (*VikLayerFuncSelectMove)            (VikLayer *, GdkEventMotion *, VikViewport *, tool_ed_t*);
-typedef bool      (*VikLayerFuncSelectRelease)         (VikLayer *, GdkEventButton *, VikViewport *, tool_ed_t*);
-typedef bool      (*VikLayerFuncSelectedViewportMenu)  (VikLayer *, GdkEventButton *, VikViewport *);
+typedef bool      (*VikLayerFuncSelectClick)           (VikLayer *, GdkEventButton *, Viewport *, tool_ed_t*);
+typedef bool      (*VikLayerFuncSelectMove)            (VikLayer *, GdkEventMotion *, Viewport *, tool_ed_t*);
+typedef bool      (*VikLayerFuncSelectRelease)         (VikLayer *, GdkEventButton *, Viewport *, tool_ed_t*);
+typedef bool      (*VikLayerFuncSelectedViewportMenu)  (VikLayer *, GdkEventButton *, Viewport *);
 
 typedef time_t        (*VikLayerFuncGetTimestamp)          (VikLayer *);
 

@@ -29,6 +29,7 @@
 #include <stdlib.h>
 
 #include "viking.h"
+#include "vikcoordlayer.h"
 #include "icons/icons.h"
 
 static VikCoordLayer *coord_layer_new ( VikViewport *vp );

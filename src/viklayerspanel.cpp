@@ -25,6 +25,10 @@
 
 #include "viking.h"
 #include "settings.h"
+#include "viklayerspanel.h"
+#include "dialog.h"
+#include "clipboard.h"
+#include "globals.h"
 
 #include <string.h>
 #include <stdlib.h>

@@ -32,6 +32,8 @@
 #include <stdlib.h>
 #include <assert.h>
 #include "viklayer_defaults.h"
+#include "viklayer.h"
+#include "globals.h"
 
 /* functions common to all layers. */
 /* TODO longone: rename interface free -> finalize */
@@ -72,7 +74,7 @@ static void vik_layer_class_init (VikLayerClass *klass)
   parent_class = (GObjectClass *) g_type_class_peek_parent (klass);
 
   layer_signals[VL_UPDATE_SIGNAL] = g_signal_new ( "update", G_TYPE_FROM_CLASS (klass),
-   (GSignalFlags) (G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION), G_STRUCT_OFFSET (VikLayerClass, update), NULL, NULL, 
+   (GSignalFlags) (G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION), G_STRUCT_OFFSET (VikLayerClass, update), NULL, NULL,
       g_cclosure_marshal_VOID__VOID, G_TYPE_NONE, 0);
 
   // Register all parameter defaults, early in the start up sequence
@@ -332,7 +334,7 @@ void vik_layer_marshall_params ( VikLayer *vl, uint8_t **data, int *datalen )
       /* print out the string list in the array */
       case VIK_LAYER_PARAM_STRING_LIST: {
         GList *list = d.sl;
-        
+
         /* write length of list (# of strings) */
         int listlen = g_list_length ( list );
         g_byte_array_append ( b, (uint8_t *)&listlen, sizeof(listlen) );
@@ -352,7 +354,7 @@ void vik_layer_marshall_params ( VikLayer *vl, uint8_t **data, int *datalen )
       }
     }
   }
-  
+
   *data = b->data;
   *datalen = b->len;
   g_byte_array_free ( b, false );
@@ -366,7 +368,7 @@ void vik_layer_unmarshall_params ( VikLayer *vl, uint8_t *data, int datalen, Vik
   VikLayerFuncSetParam set_param = vik_layer_get_interface(vl->type)->set_param;
   char *s;
   uint8_t *b = (uint8_t *)data;
-  
+
 #define vlm_size (*(int *)b)
 #define vlm_read(obj)				\
   memcpy((obj), b+sizeof(int), vlm_size);	\
@@ -389,7 +391,7 @@ void vik_layer_unmarshall_params ( VikLayer *vl, uint8_t *data, int datalen, Vik
       fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, params[i].name);
       switch ( params[i].type )
       {
-      case VIK_LAYER_PARAM_STRING: 
+      case VIK_LAYER_PARAM_STRING:
 	s = (char *) malloc(vlm_size + 1);
 	s[vlm_size]=0;
 	vlm_read(s);
@@ -429,7 +431,7 @@ VikLayer *vik_layer_unmarshall ( uint8_t *data, int len, VikViewport *vvp )
   header_t *header;
 
   header = (header_t *)data;
-  
+
   if ( vik_layer_interfaces[header->layer_type]->unmarshall ) {
     return vik_layer_interfaces[header->layer_type]->unmarshall ( header->data, header->len, vvp );
   } else {
@@ -550,10 +552,10 @@ static bool vik_layer_properties_factory ( VikLayer *vl, VikViewport *vp )
 					    vik_layer_interfaces[vl->type]->params_count,
 					    vik_layer_interfaces[vl->type]->params_groups,
 					    vik_layer_interfaces[vl->type]->params_groups_count,
-					    (bool (*)(void*, uint16_t, VikLayerParamData, void*, bool)) vik_layer_interfaces[vl->type]->set_param, 
-					    vl, 
+					    (bool (*)(void*, uint16_t, VikLayerParamData, void*, bool)) vik_layer_interfaces[vl->type]->set_param,
+					    vl,
 					    vp,
-					    (VikLayerParamData (*)(void*, uint16_t, bool)) vik_layer_interfaces[vl->type]->get_param, 
+					    (VikLayerParamData (*)(void*, uint16_t, bool)) vik_layer_interfaces[vl->type]->get_param,
 					    vl,
 					    (void (*)(GtkWidget*, void**)) vik_layer_interfaces[vl->type]->change_param ) ) {
     case 0:

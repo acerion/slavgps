@@ -39,6 +39,10 @@
 #include "ui_util.h"
 #include "dir.h"
 #include "misc/kdtree.h"
+#include "viklayer_defaults.h"
+#include "dialog.h"
+#include "clipboard.h"
+#include "file.h"
 
 #define FMT_MAX_NUMBER_CODES 9
 

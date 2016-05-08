@@ -32,6 +32,10 @@
 #include "viking.h"
 #include "viktrwlayer_export.h"
 #include "gpx.h"
+#include "fileutils.h"
+#include "dialog.h"
+#include "util.h"
+#include "globals.h"
 
 static char *last_folder_uri = NULL;
 

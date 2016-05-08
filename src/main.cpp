@@ -23,6 +23,9 @@
 #include "config.h"
 #endif /* HAVE_CONFIG */
 
+#include <gtk/gtk.h>
+#include <gdk-pixbuf/gdk-pixdata.h>
+
 #include "viking.h"
 #include "icons/icons.h"
 #include "mapcache.h"
@@ -40,6 +43,8 @@
 #include "util.h"
 #include "toolbar.h"
 #include "map_ids.h"
+#include "file.h"
+#include "settings.h"
 
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>

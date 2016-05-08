@@ -31,7 +31,11 @@
 #include <glib/gi18n.h>
 
 #include "viking.h"
+#include "dialog.h"
 #include "geonamessearch.h"
+#include "download.h"
+#include "util.h"
+#include "globals.h"
 
 using namespace SlavGPS;
 

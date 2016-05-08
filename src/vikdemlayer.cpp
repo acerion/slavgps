@@ -45,6 +45,9 @@
 #include "dem.h"
 #include "dems.h"
 #include "icons/icons.h"
+#include "file.h"
+#include "dialog.h"
+#include "globals.h"
 
 #define MAPS_CACHE_DIR maps_layer_default_dir()
 

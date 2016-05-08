@@ -29,6 +29,7 @@
 #include "viklayer_defaults.h"
 #include "dir.h"
 #include "file.h"
+#include "globals.h"
 
 #define VIKING_LAYER_DEFAULTS_INI_FILE "viking_layer_defaults.ini"
 
@@ -224,9 +225,9 @@ static bool layer_defaults_save_to_file()
     // if ( error ) {
 	//	fprintf(stderr, "WARNING: %s: %s\n", error->message, fn );
 	//	 g_error_free ( error );
-	//  answer = false; 
+	//  answer = false;
 	//	goto tidy;
-	// } 
+	// }
 
 	FILE *ff;
 	if ( !(ff = g_fopen ( fn, "w")) ) {
@@ -266,19 +267,19 @@ bool a_layer_defaults_show_window ( GtkWindow *parent, const char *layername )
 		defaults_load_from_file();
 		loaded = true;
 	}
-  
+
     VikLayerTypeEnum layer = vik_layer_type_from_string ( layername );
-    
+
     // Need to know where the params start and they finish for this layer
 
     // 1. inspect every registered param - see if it has the layer value required to determine overall size
     //    [they are contiguous from the start index]
     // 2. copy the these params from the main list into a tmp struct
-    // 
+    //
     // Then pass this tmp struct to uibuilder for display
 
     unsigned int layer_params_count = 0;
-    
+
     bool found_first = false;
     int index = 0;
     int i;
@@ -303,7 +304,7 @@ bool a_layer_defaults_show_window ( GtkWindow *parent, const char *layername )
     }
 
     char *title = g_strconcat ( layername, ": ", _("Layer Defaults"), NULL );
-    
+
 	if ( a_uibuilder_properties_factory ( title,
 	                                      parent,
 	                                      params,
@@ -319,10 +320,10 @@ bool a_layer_defaults_show_window ( GtkWindow *parent, const char *layername )
 		// Save
 		layer_defaults_save_to_file();
     }
-    
+
     free( title );
     free( params );
-    
+
     return true;
 }
 
@@ -367,7 +368,7 @@ void a_layer_defaults_init()
  */
 void a_layer_defaults_uninit()
 {
-	g_key_file_free ( keyfile );	
+	g_key_file_free ( keyfile );
 	g_ptr_array_foreach ( paramsVD, (GFunc)g_free, NULL );
 	g_ptr_array_free ( paramsVD, true );
 }
@@ -388,7 +389,7 @@ VikLayerParamData a_layer_defaults_get ( const char *layername, const char *para
 		defaults_load_from_file();
 		loaded = true;
 	}
-  
+
 	return get_default_data ( layername, param_name, param_type );
 }
 

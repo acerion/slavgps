@@ -22,11 +22,8 @@
 #ifndef __VIKING_VIKING_H
 #define __VIKING_VIKING_H
 
-#include <gtk/gtk.h>
-#include <gdk-pixbuf/gdk-pixdata.h>
-#include <time.h>
-#include <stdbool.h>
-#include <stdint.h>
+
+
 
 
 #ifdef WINDOWS
@@ -34,48 +31,12 @@
 #include <winsock.h>
 #endif
 
+#ifdef HAVE_CONFIG_H
 #include "config.h"
-
-#include "globals.h"
-#include "coords.h"
-#include "vikcoord.h"
-#include "vik_compat.h"
-#include "download.h"
-#include "vikwaypoint.h"
-#include "viktrack.h"
-#include "vikviewport.h"
-#include "viktreeview.h"
-#include "viklayer.h"
-#include "viklayer_defaults.h"
-#include "vikaggregatelayer.h"
-#include "viklayerspanel.h"
-#include "vikcoordlayer.h"
-#include "vikgeoreflayer.h"
-#include "vikstatus.h"
-#include "vikfileentry.h"
-#include "viktrwlayer.h"
-#include "vikgpslayer.h"
-#ifdef HAVE_LIBMAPNIK
-#include "vikmapniklayer.h"
 #endif
-#include "clipboard.h"
-#include "dialog.h"
-#include "file.h"
-#include "fileutils.h"
-#include "vikwindow.h"
-#include "gpspoint.h"
-#include "gpsmapper.h"
-#include "settings.h"
-#include "util.h"
 
-/* Stuff added during migrantion from glib to something else. */
-/* GINT_TO_POINTER */
-#define KINT_TO_POINTER(i) ((void *) (long) (i))
-/* GPOINTER_TO_INT */
-#define KPOINTER_TO_INT(p) ((int) (long) (p))
-/* GPOINTER_TO_UINT */
-#define KPOINTER_TO_UINT(p) ((unsigned int) (unsigned long) (p))
-/* GUINT_TO_POINTER */
-#define KUINT_TO_POINTER(u) ((void *) (unsigned long) (u))
+
+
+
 
 #endif

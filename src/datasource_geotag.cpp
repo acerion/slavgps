@@ -33,6 +33,7 @@
 #include "viking.h"
 #include "acquire.h"
 #include "geotag_exif.h"
+#include "fileutils.h"
 
 using namespace SlavGPS;
 

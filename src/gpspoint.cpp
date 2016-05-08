@@ -28,6 +28,11 @@
 #endif
 
 #include "viking.h"
+#include "viktrack.h"
+#include "vikwaypoint.h"
+#include "viktrwlayer.h"
+#include "file.h"
+#include "globals.h"
 
 #include <ctype.h>
 #ifdef HAVE_STRING_H

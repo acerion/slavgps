@@ -31,7 +31,6 @@
 
 
 #include <stdint.h>
-#include <stdbool.h>
 
 #include <unordered_map>
 

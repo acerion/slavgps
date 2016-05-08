@@ -19,6 +19,7 @@
  *
  */
 #include "viking.h"
+#include "gpsmapper.h"
 
 #include <string.h>
 #include <stdlib.h>

@@ -41,7 +41,9 @@
 #include <glib/gstdio.h>
 #include "viking.h"
 #include "thumbnails.h"
+#include "file.h"
 #include "icons/icons.h"
+#include "globals.h"
 
 #ifdef __CYGWIN__
 #ifdef __CYGWIN_USE_BIG_TYPES__
@@ -125,7 +127,7 @@ GdkPixbuf *a_thumbnails_scale_pixbuf(GdkPixbuf *src, int max_w, int max_h)
 		float scale = MAX(scale_x, scale_y);
 		int dest_w = w / scale;
 		int dest_h = h / scale;
-		
+
 		return gdk_pixbuf_scale_simple(src,
 						MAX(dest_w, 1),
 						MAX(dest_h, 1),
@@ -314,7 +316,7 @@ out:
  * This code implements the MD5 message-digest algorithm.
  * The algorithm is due to Ron Rivest. The original code was
  * written by Colin Plumb in 1993, and put in the public domain.
- * 
+ *
  * Modified to use glib datatypes. Put under GPL to simplify
  * licensing for ROX-Filer. Taken from Debian's dpkg package.
  *
@@ -405,7 +407,7 @@ static void MD5Update(MD5Context *ctx, md5byte const *buf, unsigned len)
 }
 
 /*
- * Final wrapup - pad to 64-byte boundary with the bit pattern 
+ * Final wrapup - pad to 64-byte boundary with the bit pattern
  * 1 0* (64-bit count of bits processed, MSB-first)
  * Returns the newly allocated string of the hash.
  */
@@ -445,7 +447,7 @@ static char *MD5Final(MD5Context *ctx)
 	for (i = 0; i < 16; i++)
 		sprintf(retval + (i * 2), "%02x", bytes[i]);
 	retval[32] = '\0';
-	
+
 	return retval;
 }
 

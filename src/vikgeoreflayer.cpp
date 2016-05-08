@@ -38,6 +38,12 @@
 #include "preferences.h"
 #include "icons/icons.h"
 #include "vikmapslayer.h"
+#include "vikgeoreflayer.h"
+#include "vikfileentry.h"
+#include "dialog.h"
+#include "file.h"
+#include "settings.h"
+#include "globals.h"
 
 /*
 static VikLayerParamData image_default ( void )

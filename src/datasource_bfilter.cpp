@@ -32,6 +32,8 @@
 #include "gpx.h"
 #include "acquire.h"
 #include "settings.h"
+#include "globals.h"
+
 
 /************************************ Simplify (Count) *****************************/
 

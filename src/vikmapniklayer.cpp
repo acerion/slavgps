@@ -44,8 +44,13 @@
 #include "icons/icons.h"
 #include "mapnik_interface.h"
 #include "background.h"
+#include "dialog.h"
+#include "globals.h"
 
 #include "vikmapslayer.h"
+#include "vikmapniklayer.h"
+#include "vikfileentry.h"
+#include "file.h"
 
 struct _VikMapnikLayerClass
 {

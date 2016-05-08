@@ -36,6 +36,8 @@
 #include "osm-traces.h"
 #include "datasource_gps.h"
 #include "bbox.h"
+#include "dialog.h"
+#include "util.h"
 
 /**
  * See http://wiki.openstreetmap.org/wiki/API_v0.6#GPS_Traces
