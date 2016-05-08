@@ -1683,7 +1683,7 @@ static void trw_layer_new_track_gcs ( VikTrwLayer *vtl, VikViewport *vp )
 
   if ( vtl->track_bg_gc )
     g_object_unref ( vtl->track_bg_gc );
-  vtl->track_bg_gc = vik_viewport_new_gc_from_color ( vp, &(vtl->track_bg_color), width + vtl->bg_line_thickness );
+  vtl->track_bg_gc = vp->port.new_gc_from_color(&(vtl->track_bg_color), width + vtl->bg_line_thickness);
 
   // Ensure new track drawing heeds line thickness setting
   //  however always have a minium of 2, as 1 pixel is really narrow
@@ -1691,25 +1691,25 @@ static void trw_layer_new_track_gcs ( VikTrwLayer *vtl, VikViewport *vp )
 
   if ( vtl->current_track_gc )
     g_object_unref ( vtl->current_track_gc );
-  vtl->current_track_gc = vik_viewport_new_gc ( vp, "#FF0000", new_track_width );
+  vtl->current_track_gc = vp->port.new_gc("#FF0000", new_track_width);
   gdk_gc_set_line_attributes ( vtl->current_track_gc, new_track_width, GDK_LINE_ON_OFF_DASH, GDK_CAP_ROUND, GDK_JOIN_ROUND );
 
   // 'newpoint' gc is exactly the same as the current track gc
   if ( vtl->current_track_newpoint_gc )
     g_object_unref ( vtl->current_track_newpoint_gc );
-  vtl->current_track_newpoint_gc = vik_viewport_new_gc ( vp, "#FF0000", new_track_width );
+  vtl->current_track_newpoint_gc = vp->port.new_gc("#FF0000", new_track_width );
   gdk_gc_set_line_attributes ( vtl->current_track_newpoint_gc, new_track_width, GDK_LINE_ON_OFF_DASH, GDK_CAP_ROUND, GDK_JOIN_ROUND );
 
   vtl->track_gc = g_array_sized_new ( false, false, sizeof ( GdkGC * ), VIK_TRW_LAYER_TRACK_GC );
 
-  gc[VIK_TRW_LAYER_TRACK_GC_STOP] = vik_viewport_new_gc ( vp, "#874200", width );
-  gc[VIK_TRW_LAYER_TRACK_GC_BLACK] = vik_viewport_new_gc ( vp, "#000000", width ); // black
+  gc[VIK_TRW_LAYER_TRACK_GC_STOP] = vp->port.new_gc("#874200", width);
+  gc[VIK_TRW_LAYER_TRACK_GC_BLACK] = vp->port.new_gc("#000000", width); // black
 
-  gc[VIK_TRW_LAYER_TRACK_GC_SLOW] = vik_viewport_new_gc ( vp, "#E6202E", width ); // red-ish
-  gc[VIK_TRW_LAYER_TRACK_GC_AVER] = vik_viewport_new_gc ( vp, "#D2CD26", width ); // yellow-ish
-  gc[VIK_TRW_LAYER_TRACK_GC_FAST] = vik_viewport_new_gc ( vp, "#2B8700", width ); // green-ish
+  gc[VIK_TRW_LAYER_TRACK_GC_SLOW] = vp->port.new_gc("#E6202E", width); // red-ish
+  gc[VIK_TRW_LAYER_TRACK_GC_AVER] = vp->port.new_gc("#D2CD26", width); // yellow-ish
+  gc[VIK_TRW_LAYER_TRACK_GC_FAST] = vp->port.new_gc("#2B8700", width); // green-ish
 
-  gc[VIK_TRW_LAYER_TRACK_GC_SINGLE] = vik_viewport_new_gc_from_color ( vp, &(vtl->track_color), width );
+  gc[VIK_TRW_LAYER_TRACK_GC_SINGLE] = vp->port.new_gc_from_color(&(vtl->track_color), width );
 
   g_array_append_vals ( vtl->track_gc, gc, VIK_TRW_LAYER_TRACK_GC );
 }
@@ -1732,9 +1732,9 @@ static VikTrwLayer* trw_layer_create ( VikViewport *vp )
 
   trw_layer_new_track_gcs ( rv, vp );
 
-  rv->waypoint_gc = vik_viewport_new_gc_from_color ( vp, &(rv->waypoint_color), 2 );
-  rv->waypoint_text_gc = vik_viewport_new_gc_from_color ( vp, &(rv->waypoint_text_color), 1 );
-  rv->waypoint_bg_gc = vik_viewport_new_gc_from_color ( vp, &(rv->waypoint_bg_color), 1 );
+  rv->waypoint_gc = vp->port.new_gc_from_color(&(rv->waypoint_color), 2);
+  rv->waypoint_text_gc = vp->port.new_gc_from_color(&(rv->waypoint_text_color), 1);
+  rv->waypoint_bg_gc = vp->port.new_gc_from_color(&(rv->waypoint_bg_color), 1);
   gdk_gc_set_function ( rv->waypoint_bg_gc, rv->wpbgand );
 
   rv->trw.coord_mode = vp->port.get_coord_mode();
@@ -8501,7 +8501,7 @@ static int tool_sync(void * data)
 {
   Viewport * viewport = (Viewport *) data;
   gdk_threads_enter();
-  vik_viewport_sync(viewport);
+  viewport->sync();
   tool_sync_done = true;
   gdk_threads_leave();
   return 0;
@@ -8510,10 +8510,10 @@ static int tool_sync(void * data)
 static void marker_begin_move ( tool_ed_t *t, int x, int y )
 {
   t->holding = true;
-  t->gc = vik_viewport_new_gc ((VikViewport *) t->viewport->vvp, "black", 2);
+  t->gc = t->viewport->new_gc("black", 2);
   gdk_gc_set_function ( t->gc, GDK_INVERT );
   t->viewport->draw_rectangle(t->gc, false, x-3, y-3, 6, 6 );
-  vik_viewport_sync(t->viewport);
+  t->viewport->sync();
   t->oldx = x;
   t->oldy = y;
   t->moving = false;
@@ -8865,7 +8865,7 @@ static VikLayerToolFuncStatus tool_new_track_move ( VikTrwLayer *vtl, GdkEventMo
     // Reset to background
     gdk_draw_drawable (pixmap,
                        vtl->current_track_newpoint_gc,
-                       vik_viewport_get_pixmap(vvp),
+                       vvp->port.get_pixmap(),
                        0, 0, 0, 0, -1, -1);
 
     draw_sync_t *passalong;
@@ -8930,7 +8930,7 @@ static VikLayerToolFuncStatus tool_new_track_move ( VikTrwLayer *vtl, GdkEventMo
       yd = event->y - hd;
 
       // Create a background block to make the text easier to read over the background map
-      GdkGC *background_block_gc = vik_viewport_new_gc ( vvp, "#cccccc", 1);
+      GdkGC *background_block_gc = vvp->port.new_gc("#cccccc", 1);
       gdk_draw_rectangle (pixmap, background_block_gc, true, xd-2, yd-2, wd+4, hd+2);
       gdk_draw_layout (pixmap, vtl->current_track_newpoint_gc, xd, yd, pl);
 

@@ -312,13 +312,13 @@ void Viewport::set_highlight_thickness(int thickness)
 	gdk_gc_set_line_attributes(highlight_gc, thickness, GDK_LINE_SOLID, GDK_CAP_ROUND, GDK_JOIN_ROUND);
 }
 
-GdkGC *vik_viewport_new_gc (VikViewport *vvp, const char *colorname, int thickness)
+GdkGC * Viewport::new_gc(char const * colorname, int thickness)
 {
 	GdkColor color;
 
-	GdkGC * rv = gdk_gc_new(gtk_widget_get_window(GTK_WIDGET(vvp)));
+	GdkGC * rv = gdk_gc_new(gtk_widget_get_window(GTK_WIDGET((VikViewport *) this->vvp)));
 	if (gdk_color_parse(colorname, &color)) {
-		gdk_gc_set_rgb_fg_color (rv, &color);
+		gdk_gc_set_rgb_fg_color(rv, &color);
 	} else {
 		fprintf(stderr, "WARNING: %s: Failed to parse color '%s'\n", __FUNCTION__, colorname);
 	}
@@ -326,9 +326,9 @@ GdkGC *vik_viewport_new_gc (VikViewport *vvp, const char *colorname, int thickne
 	return rv;
 }
 
-GdkGC *vik_viewport_new_gc_from_color (VikViewport *vvp, GdkColor *color, int thickness)
+GdkGC * Viewport::new_gc_from_color(GdkColor * color, int thickness)
 {
-	GdkGC * rv = gdk_gc_new(gtk_widget_get_window(GTK_WIDGET(vvp)));
+	GdkGC * rv = gdk_gc_new(gtk_widget_get_window(GTK_WIDGET((VikViewport *) this->vvp)));
 	gdk_gc_set_rgb_fg_color(rv, color);
 	gdk_gc_set_line_attributes(rv, thickness, GDK_LINE_SOLID, GDK_CAP_ROUND, GDK_JOIN_ROUND);
 	return rv;
@@ -355,9 +355,9 @@ void vik_viewport_configure_manually (VikViewport *vvp, int width, unsigned int 
 }
 
 
-GdkPixmap *vik_viewport_get_pixmap (VikViewport *vvp)
+GdkPixmap * Viewport::get_pixmap()
 {
-	return vvp->port.scr_buffer;
+	return this->scr_buffer;
 }
 
 bool vik_viewport_configure (VikViewport *vvp)
@@ -390,15 +390,15 @@ bool vik_viewport_configure (VikViewport *vvp)
 
 	/* this is down here so it can get a GC (necessary?) */
 	if (!viewport->background_gc) {
-		viewport->background_gc = vik_viewport_new_gc (vvp, DEFAULT_BACKGROUND_COLOR, 1);
+		viewport->background_gc = viewport->new_gc(DEFAULT_BACKGROUND_COLOR, 1);
 		viewport->set_background_color(DEFAULT_BACKGROUND_COLOR);
 	}
 	if (!viewport->highlight_gc) {
-		viewport->highlight_gc = vik_viewport_new_gc (vvp, DEFAULT_HIGHLIGHT_COLOR, 1);
+		viewport->highlight_gc = viewport->new_gc(DEFAULT_HIGHLIGHT_COLOR, 1);
 		viewport->set_highlight_color(DEFAULT_HIGHLIGHT_COLOR);
 	}
 	if (!viewport->scale_bg_gc) {
-		viewport->scale_bg_gc = vik_viewport_new_gc(vvp, "grey", 3);
+		viewport->scale_bg_gc = viewport->new_gc("grey", 3);
 	}
 
 	return false;
@@ -724,25 +724,26 @@ bool Viewport::get_draw_highlight()
 	return do_draw_highlight;
 }
 
-void vik_viewport_sync(Viewport * viewport)
+void Viewport::sync()
 {
-	VikViewport * vvp = (VikViewport *) viewport->vvp;
+	VikViewport * vvp = (VikViewport *) this->vvp;
 	g_return_if_fail (vvp != NULL);
-	gdk_draw_drawable(gtk_widget_get_window(GTK_WIDGET(vvp)), gtk_widget_get_style(GTK_WIDGET(vvp))->bg_gc[0], GDK_DRAWABLE(viewport->scr_buffer), 0, 0, 0, 0, viewport->width, viewport->height);
+	gdk_draw_drawable(gtk_widget_get_window(GTK_WIDGET(vvp)), gtk_widget_get_style(GTK_WIDGET(vvp))->bg_gc[0], GDK_DRAWABLE(this->scr_buffer), 0, 0, 0, 0, this->width, this->height);
 }
 
-void vik_viewport_pan_sync (VikViewport *vvp, int x_off, int y_off)
+void Viewport::pan_sync(int x_off, int y_off)
 {
 	int x, y, wid, hei;
+	VikViewport * vvp = (VikViewport *) this->vvp;
 
 	g_return_if_fail (vvp != NULL);
-	gdk_draw_drawable(gtk_widget_get_window(GTK_WIDGET(vvp)), gtk_widget_get_style(GTK_WIDGET(vvp))->bg_gc[0], GDK_DRAWABLE(vvp->port.scr_buffer), 0, 0, x_off, y_off, vvp->port.width, vvp->port.height);
+	gdk_draw_drawable(gtk_widget_get_window(GTK_WIDGET(vvp)), gtk_widget_get_style(GTK_WIDGET(vvp))->bg_gc[0], GDK_DRAWABLE(this->scr_buffer), 0, 0, x_off, y_off, this->width, this->height);
 
 	if (x_off >= 0) {
 		x = 0;
 		wid = x_off;
 	} else {
-		x = vvp->port.width+x_off;
+		x = this->width + x_off;
 		wid = -x_off;
 	}
 
@@ -750,11 +751,11 @@ void vik_viewport_pan_sync (VikViewport *vvp, int x_off, int y_off)
 		y = 0;
 		hei = y_off;
 	} else {
-		y = vvp->port.height+y_off;
+		y = this->height + y_off;
 		hei = -y_off;
 	}
-	gtk_widget_queue_draw_area(GTK_WIDGET(vvp), x, 0, wid, vvp->port.height);
-	gtk_widget_queue_draw_area(GTK_WIDGET(vvp), 0, y, vvp->port.width, hei);
+	gtk_widget_queue_draw_area(GTK_WIDGET(vvp), x, 0, wid, this->height);
+	gtk_widget_queue_draw_area(GTK_WIDGET(vvp), 0, y, this->width, hei);
 }
 
 void Viewport::set_zoom(double xympp_)

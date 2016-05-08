@@ -684,10 +684,10 @@ VikGpsLayer *vik_gps_layer_new (VikViewport *vp)
   vgl->realtime_io_watch_id = 0;
   vgl->realtime_retry_timer = 0;
   if ( vp ) {
-    vgl->realtime_track_gc = vik_viewport_new_gc ( vp, "#203070", 2 );
-    vgl->realtime_track_bg_gc = vik_viewport_new_gc ( vp, "grey", 2 );
-    vgl->realtime_track_pt1_gc = vik_viewport_new_gc ( vp, "red", 2 );
-    vgl->realtime_track_pt2_gc = vik_viewport_new_gc ( vp, "green", 2 );
+    vgl->realtime_track_gc = vp->port.new_gc("#203070", 2);
+    vgl->realtime_track_bg_gc = vp->port.new_gc("grey", 2);
+    vgl->realtime_track_pt1_gc = vp->port.new_gc("red", 2);
+    vgl->realtime_track_pt2_gc = vp->port.new_gc("green", 2);
     vgl->realtime_track_pt_gc = vgl->realtime_track_pt1_gc;
   }
   vgl->realtime_track = NULL;

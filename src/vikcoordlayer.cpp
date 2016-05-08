@@ -202,7 +202,7 @@ static void coord_layer_post_read ( VikLayer *vl, VikViewport *vp, bool from_fil
   if ( vcl->gc )
     g_object_unref ( G_OBJECT(vcl->gc) );
 
-  vcl->gc = vik_viewport_new_gc_from_color ( vp, &(vcl->color), vcl->line_thickness );
+  vcl->gc = vp->port.new_gc_from_color(&(vcl->color), vcl->line_thickness);
 }
 
 static VikCoordLayer *coord_layer_new ( VikViewport *vvp )
@@ -229,9 +229,9 @@ static void coord_layer_draw ( VikCoordLayer *vcl, VikViewport *vp )
     double l, r, i, j;
     int x1, y1, x2, y2, smod = 1, mmod = 1;
     bool mins = false, secs = false;
-    GdkGC *dgc = vik_viewport_new_gc_from_color(vp, &(vcl->color), vcl->line_thickness);
-    GdkGC *mgc = vik_viewport_new_gc_from_color(vp, &(vcl->color), MAX(vcl->line_thickness/2, 1));
-    GdkGC *sgc = vik_viewport_new_gc_from_color(vp, &(vcl->color), MAX(vcl->line_thickness/5, 1));
+    GdkGC *dgc = vp->port.new_gc_from_color(&(vcl->color), vcl->line_thickness);
+    GdkGC *mgc = vp->port.new_gc_from_color(&(vcl->color), MAX(vcl->line_thickness/2, 1));
+    GdkGC *sgc = vp->port.new_gc_from_color(&(vcl->color), MAX(vcl->line_thickness/5, 1));
 
     vp->port.screen_to_coord(0, 0, &left );
     vp->port.screen_to_coord(vp->port.get_width(), 0, &right );
@@ -402,7 +402,7 @@ static void coord_layer_update_gc ( VikCoordLayer *vcl, VikViewport *vp )
   if ( vcl->gc )
     g_object_unref ( G_OBJECT(vcl->gc) );
 
-  vcl->gc = vik_viewport_new_gc_from_color ( vp, &(vcl->color), vcl->line_thickness );
+  vcl->gc = vp->port.new_gc_from_color(&(vcl->color), vcl->line_thickness);
 }
 
 static VikCoordLayer *coord_layer_create ( VikViewport *vp )

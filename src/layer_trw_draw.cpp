@@ -585,7 +585,7 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 					g_object_unref(dp->vtl->track_1color_gc);
 				}
 
-				dp->vtl->track_1color_gc = vik_viewport_new_gc_from_color((VikViewport *) dp->viewport->vvp, &trk->color, dp->vtl->line_thickness);
+				dp->vtl->track_1color_gc = dp->viewport->new_gc_from_color(&trk->color, dp->vtl->line_thickness);
 				main_gc = dp->vtl->track_1color_gc;
 				break;
 			default:

@@ -207,7 +207,7 @@ static void draw_page_cairo(GtkPrintContext *context, PrintData *data)
 
   cr = gtk_print_context_get_cairo_context(context);
   pixbuf_to_draw = gdk_pixbuf_get_from_drawable(NULL,
-                               GDK_DRAWABLE(vik_viewport_get_pixmap(data->vvp)),
+                               GDK_DRAWABLE(data->vvp->port.get_pixmap()),
                                NULL, 0, 0, 0, 0, data->width, data->height);
   surface = cairo_image_surface_create(CAIRO_FORMAT_RGB24,
                                        data->width, data->height);
@@ -655,7 +655,7 @@ static GtkWidget *create_custom_widget_cb(GtkPrintOperation *operation, PrintDat
                    G_CALLBACK(scale_change_value_cb), info);
 
 
-  info->preview = vik_print_preview_new (setup, GDK_DRAWABLE(vik_viewport_get_pixmap(data->vvp)));
+  info->preview = vik_print_preview_new (setup, GDK_DRAWABLE(data->vvp->port.get_pixmap()));
   vik_print_preview_set_use_full_page (VIK_PRINT_PREVIEW(info->preview),
                                         data->use_full_page);
   gtk_box_pack_start (GTK_BOX (main_hbox), info->preview, true, true, 0);

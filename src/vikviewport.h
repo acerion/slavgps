@@ -179,6 +179,19 @@ namespace SlavGPS {
 
 
 
+
+		GdkGC * new_gc(char const * colorname, int thickness);
+		GdkGC * new_gc_from_color(GdkColor * color, int thickness);
+
+
+
+		/* Viewport buffer management/drawing to screen */
+		GdkPixmap * get_pixmap(); /* get pointer to drawing buffer */
+		void sync();             /* draw buffer to window */
+		void pan_sync(int x_off, int y_off);
+
+
+
 		/* Utilities */
 		void compute_bearing(int x1, int y1, int x2, int y2, double *angle, double *baseangle);
 
@@ -293,19 +306,9 @@ bool vik_viewport_get_half_drawn(VikViewport *vp);
  *  Drawing-related operations
  ***************************************************************************************************/
 
-/* Viewport buffer management/drawing to screen */
-GdkPixmap *vik_viewport_get_pixmap (VikViewport *vvp); /* get pointer to drawing buffer */
-void vik_viewport_sync(Viewport * viewport);             /* draw buffer to window */
-void vik_viewport_pan_sync (VikViewport *vvp, int x_off, int y_off);
-
-
-
-
 
 
 void vik_gc_get_fg_color (GdkGC *gc, GdkColor *dest); /* warning: could be slow, don't use obsessively */
-GdkGC *vik_viewport_new_gc (VikViewport *vvp, const char *colorname, int thickness);
-GdkGC *vik_viewport_new_gc_from_color (VikViewport *vvp, GdkColor *color, int thickness);
 GdkFunction vik_gc_get_function (GdkGC *gc);
 
 

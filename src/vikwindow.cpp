@@ -1109,7 +1109,7 @@ static void draw_update(VikWindow *vw)
 
 static void draw_sync(VikWindow *vw)
 {
-	vik_viewport_sync(&vw->viking_vvp->port);
+	vw->viking_vvp->port.sync();
 	draw_status(vw);
 }
 
@@ -1467,7 +1467,7 @@ static void draw_ruler(VikViewport *vvp, GdkDrawable *d, GdkGC *gc, int x1, int 
 {
 	PangoLayout *pl;
 	char str[128];
-	GdkGC *labgc = vik_viewport_new_gc(vvp, "#cccccc", 1);
+	GdkGC *labgc = vvp->port.new_gc("#cccccc", 1);
 	GdkGC *thickgc = gdk_gc_new(d);
 
 	double len = sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2));
@@ -1724,7 +1724,7 @@ static VikLayerToolFuncStatus ruler_move(VikLayer *vl, GdkEventMotion *event, ru
 		vvp->port.coord_to_screen(&s->oldcoord, &oldx, &oldy);
 
 		gdk_draw_drawable(buf, gtk_widget_get_style(GTK_WIDGET(vvp))->black_gc,
-				  vik_viewport_get_pixmap(vvp), 0, 0, 0, 0, -1, -1);
+				  vvp->port.get_pixmap(), 0, 0, 0, 0, -1, -1);
 		draw_ruler(vvp, buf, gtk_widget_get_style(GTK_WIDGET(vvp))->black_gc, oldx, oldy, event->x, event->y, vik_coord_diff(&coord, &(s->oldcoord)));
 		if (draw_buf_done) {
 			static void * pass_along[3];
@@ -1919,7 +1919,7 @@ static VikLayerToolFuncStatus zoomtool_move(VikLayer *vl, GdkEventMotion *event,
 		// Blank out currently drawn area
 		gdk_draw_drawable(zts->pixmap,
 				  gtk_widget_get_style(GTK_WIDGET(zts->vw->viking_vvp))->black_gc,
-				  vik_viewport_get_pixmap(zts->vw->viking_vvp),
+				  zts->vw->viking_vvp->port.get_pixmap(),
 				  0, 0, 0, 0, -1, -1);
 
 		// Calculate new box starting point & size in pixels
@@ -3820,7 +3820,7 @@ static void save_image_file(VikWindow *vw, const char *fn, unsigned int w, unsig
 	draw_redraw(vw);
 
 	/* save buffer as file. */
-	pixbuf_to_save = gdk_pixbuf_get_from_drawable(NULL, GDK_DRAWABLE(vik_viewport_get_pixmap(vw->viking_vvp)), NULL, 0, 0, 0, 0, w, h);
+	pixbuf_to_save = gdk_pixbuf_get_from_drawable(NULL, GDK_DRAWABLE(vw->viking_vvp->port.get_pixmap()), NULL, 0, 0, 0, 0, w, h);
 	if (!pixbuf_to_save) {
 		fprintf(stderr, "WARNING: Failed to generate internal pixmap size: %d x %d\n", w, h);
 		gtk_message_dialog_set_markup(GTK_MESSAGE_DIALOG(msgbox), _("Failed to generate internal image.\n\nTry creating a smaller image."));
@@ -3921,7 +3921,7 @@ static void save_image_dir(VikWindow *vw, const char *fn, unsigned int w, unsign
 			draw_redraw(vw);
 
 			/* save buffer as file. */
-			pixbuf_to_save = gdk_pixbuf_get_from_drawable(NULL, GDK_DRAWABLE (vik_viewport_get_pixmap(vw->viking_vvp)), NULL, 0, 0, 0, 0, w, h);
+			pixbuf_to_save = gdk_pixbuf_get_from_drawable(NULL, GDK_DRAWABLE (vw->viking_vvp->port.get_pixmap()), NULL, 0, 0, 0, 0, w, h);
 			gdk_pixbuf_save(pixbuf_to_save, name_of_file, save_as_png ? "png" : "jpeg", &error, NULL);
 			if (error) {
 				char *msg = g_strdup_printf(_("Unable to write to file %s: %s"), name_of_file, error->message);

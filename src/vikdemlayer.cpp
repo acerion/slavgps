@@ -305,13 +305,13 @@ static VikDEMLayer *dem_layer_unmarshall(uint8_t *data, int len, VikViewport *vv
 	/* TODO: share GCS between layers */
 	for (i = 0; i < DEM_N_HEIGHT_COLORS; i++) {
 		if (i == 0) {
-			rv->gcs[i] = vik_viewport_new_gc_from_color(vvp, &(rv->color), UNUSED_LINE_THICKNESS);
+			rv->gcs[i] = vvp->port.new_gc_from_color(&(rv->color), UNUSED_LINE_THICKNESS);
 		} else {
-			rv->gcs[i] = vik_viewport_new_gc(vvp, dem_height_colors[i], UNUSED_LINE_THICKNESS);
+			rv->gcs[i] = vvp->port.new_gc(dem_height_colors[i], UNUSED_LINE_THICKNESS);
 		}
 	}
 	for (i = 0; i < DEM_N_GRADIENT_COLORS; i++) {
-		rv->gcsgradient[i] = vik_viewport_new_gc(vvp, dem_gradient_colors[i], UNUSED_LINE_THICKNESS);
+		rv->gcsgradient[i] = vvp->port.new_gc(dem_gradient_colors[i], UNUSED_LINE_THICKNESS);
 	}
 
 	vik_layer_unmarshall_params(VIK_LAYER(rv), data, len, vvp);
@@ -518,7 +518,7 @@ static VikDEMLayer *dem_layer_new(VikViewport *vvp)
 
 	// Ensure the base GC is available so the default colour can be applied
 	if (vvp) {
-		vdl->gcs[0] = vik_viewport_new_gc(vvp, "#0000FF", 1);
+		vdl->gcs[0] = vvp->port.new_gc("#0000FF", 1);
 	}
 
 	vik_layer_set_defaults (VIK_LAYER(vdl), vvp);
@@ -981,12 +981,12 @@ VikDEMLayer *dem_layer_create(VikViewport *vp)
 		/* TODO: share GCS between layers */
 		for (i = 0; i < DEM_N_HEIGHT_COLORS; i++) {
 			if (i > 0) {
-				vdl->gcs[i] = vik_viewport_new_gc(vp, dem_height_colors[i], UNUSED_LINE_THICKNESS);
+				vdl->gcs[i] = vp->port.new_gc(dem_height_colors[i], UNUSED_LINE_THICKNESS);
 			}
 		}
 
 		for (i = 0; i < DEM_N_GRADIENT_COLORS; i++) {
-			vdl->gcsgradient[i] = vik_viewport_new_gc(vp, dem_gradient_colors[i], UNUSED_LINE_THICKNESS);
+			vdl->gcsgradient[i] = vp->port.new_gc(dem_gradient_colors[i], UNUSED_LINE_THICKNESS);
 		}
 	}
 	return vdl;
