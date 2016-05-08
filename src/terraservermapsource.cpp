@@ -31,12 +31,12 @@
 
 using namespace SlavGPS;
 
-static bool _coord_to_mapcoord ( VikMapSource *self, const VikCoord *src, double xzoom, double yzoom, MapCoord *dest );
-static void _mapcoord_to_center_coord ( VikMapSource *self, MapCoord *src, VikCoord *dest );
+static bool _coord_to_tile( VikMapSource *self, const VikCoord *src, double xzoom, double yzoom, TileInfo *dest );
+static void _tile_to_center_coord ( VikMapSource *self, TileInfo *src, VikCoord *dest );
 static bool _is_direct_file_access ( VikMapSource *self );
 static bool _is_mbtiles ( VikMapSource *self );
 
-static char *_get_uri( VikMapSourceDefault *self, MapCoord *src );
+static char *_get_uri( VikMapSourceDefault *self, TileInfo *src );
 static char *_get_hostname( VikMapSourceDefault *self );
 static DownloadFileOptions *_get_download_options( VikMapSourceDefault *self );
 
@@ -136,8 +136,8 @@ terraserver_map_source_class_init (TerraserverMapSourceClass *klass)
     object_class->get_property = terraserver_map_source_get_property;
 
 	/* Overiding methods */
-	grandparent_class->coord_to_mapcoord =        _coord_to_mapcoord;
-	grandparent_class->mapcoord_to_center_coord = _mapcoord_to_center_coord;
+	grandparent_class->coord_to_tile =        _coord_to_tile;
+	grandparent_class->tile_to_center_coord = _tile_to_center_coord;
 	grandparent_class->is_direct_file_access = _is_direct_file_access;
 	grandparent_class->is_mbtiles = _is_mbtiles;
 
@@ -192,7 +192,7 @@ static double scale_to_mpp ( int scale )
 }
 
 static bool
-_coord_to_mapcoord ( VikMapSource *self, const VikCoord *src, double xmpp, double ympp, MapCoord *dest )
+_coord_to_tile(VikMapSource *self, const VikCoord *src, double xmpp, double ympp, TileInfo *dest )
 {
 	g_return_val_if_fail(TERRASERVER_IS_MAP_SOURCE(self), false);
 
@@ -227,7 +227,7 @@ _is_mbtiles ( VikMapSource *self )
 }
 
 static void
-_mapcoord_to_center_coord ( VikMapSource *self, MapCoord *src, VikCoord *dest )
+_tile_to_center_coord ( VikMapSource *self, TileInfo *src, VikCoord *dest )
 {
 	// FIXME: slowdown here!
 	double mpp = scale_to_mpp ( src->scale );
@@ -238,7 +238,7 @@ _mapcoord_to_center_coord ( VikMapSource *self, MapCoord *src, VikCoord *dest )
 }
 
 static char *
-_get_uri( VikMapSourceDefault *self, MapCoord *src )
+_get_uri( VikMapSourceDefault *self, TileInfo *src )
 {
 	g_return_val_if_fail (TERRASERVER_IS_MAP_SOURCE(self), NULL);
 

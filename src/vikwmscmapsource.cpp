@@ -85,7 +85,7 @@ bool MapSourceWmsc::supports_download_only_new()
 	return download_options.check_file_server_time;
 }
 
-bool MapSourceWmsc::coord_to_mapcoord(const VikCoord * src, double xzoom, double yzoom, MapCoord * dest)
+bool MapSourceWmsc::coord_to_tile(const VikCoord * src, double xzoom, double yzoom, TileInfo * dest)
 {
 	assert ( src->mode == VIK_COORD_LATLON );
 
@@ -110,7 +110,7 @@ bool MapSourceWmsc::coord_to_mapcoord(const VikCoord * src, double xzoom, double
 	return true;
 }
 
-void MapSourceWmsc::mapcoord_to_center_coord(MapCoord *src, VikCoord *dest)
+void MapSourceWmsc::tile_to_center_coord(TileInfo *src, VikCoord *dest)
 {
 	double socalled_mpp;
 	if (src->scale >= 0)
@@ -127,7 +127,7 @@ void MapSourceWmsc::mapcoord_to_center_coord(MapCoord *src, VikCoord *dest)
 		src->x, src->y, dest->east_west, dest->north_south);
 }
 
-char * MapSourceWmsc::get_server_path(MapCoord *src)
+char * MapSourceWmsc::get_server_path(TileInfo *src)
 {
 	double socalled_mpp;
 	if (src->scale >= 0)

@@ -22,13 +22,15 @@
 #ifndef _VIKING_MAPSLAYER_COMPAT_H
 #define _VIKING_MAPSLAYER_COMPAT_H
 
-#include <stdbool.h>
+//#include <stdbool.h>
 #include <stdint.h>
 
 
 #include "vikcoord.h"
-#include "vikviewport.h"
+//#include "vikviewport.h"
 #include "mapcoord.h"
+
+using namespace SlavGPS;
 
 #ifdef __cplusplus
 extern "C" {
@@ -40,9 +42,9 @@ typedef struct {
   uint16_t tilesize_x;
   uint16_t tilesize_y;
   unsigned int drawmode;
-  bool (*coord_to_mapcoord) ( const VikCoord *src, double xzoom, double yzoom, MapCoord *dest );
-  void (*mapcoord_to_center_coord) ( MapCoord *src, VikCoord *dest );
-  DownloadResult_t (*download) ( MapCoord *src, const char *dest_fn, void *handle );
+  bool (*coord_to_tile) ( const VikCoord *src, double xzoom, double yzoom, TileInfo * dest);
+  void (*tile_to_center_coord) (TileInfo * src, VikCoord *dest );
+  DownloadResult_t (*download) (TileInfo * src, const char *dest_fn, void *handle );
   void *(*download_handle_init) ( );
   void (*download_handle_cleanup) ( void *handle );
   /* TODO: constant size (yay!) */

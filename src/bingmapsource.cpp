@@ -130,7 +130,7 @@ char * MapSourceBing::compute_quad_tree(int zoom, int tilex, int tiley)
 	return g_strdup(k);
 }
 
-char * MapSourceBing::get_server_path(MapCoord *src)
+char * MapSourceBing::get_server_path(TileInfo *src)
 {
 	char * quadtree = compute_quad_tree(17 - src->scale, src->x, src->y);
 	char * path = g_strdup_printf(server_path_format, quadtree);

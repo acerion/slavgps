@@ -91,7 +91,7 @@ bool MapSourceTms::supports_download_only_new()
 	return download_options.check_file_server_time;
 }
 
-bool MapSourceTms::coord_to_mapcoord(const VikCoord * src, double xzoom, double yzoom, MapCoord * dest)
+bool MapSourceTms::coord_to_tile(const VikCoord * src, double xzoom, double yzoom, TileInfo * dest)
 {
 	assert ( src->mode == VIK_COORD_LATLON );
 
@@ -116,7 +116,7 @@ bool MapSourceTms::coord_to_mapcoord(const VikCoord * src, double xzoom, double 
 	return true;
 }
 
-void MapSourceTms::mapcoord_to_center_coord(MapCoord *src, VikCoord *dest)
+void MapSourceTms::tile_to_center_coord(TileInfo *src, VikCoord *dest)
 {
 	double socalled_mpp;
 	if (src->scale >= 0)
@@ -133,7 +133,7 @@ void MapSourceTms::mapcoord_to_center_coord(MapCoord *src, VikCoord *dest)
 		src->x, src->y, dest->east_west, dest->north_south);
 }
 
-char * MapSourceTms::get_server_path(MapCoord *src)
+char * MapSourceTms::get_server_path(TileInfo *src)
 {
 	/* We should restore logic of viking:
 	 * tile index on Y axis follow a screen logic (top -> down)

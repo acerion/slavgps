@@ -19,30 +19,36 @@
  *
  */
 
-#ifndef __MAP_COORD_H
-#define __MAP_COORD_H
-
-#include <glib.h>
-#include <stdbool.h>
-#include <stdint.h>
+#ifndef _SG_TILE_INFO_H
+#define _SG_TILE_INFO_H
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
-/* common struct to all map types and map layer, to hold info about a
- * particular tile */
 
-typedef struct {
-  int x, y;
-  int z; /* zone or anything else */
-  int scale;
-} MapCoord;
+namespace SlavGPS {
 
-#ifdef __cplusplus
-}
-#endif
 
-#endif
+
+
+
+	/* Common struct to all map types and map layer, to hold info
+	   about a particular map tile. */
+	class TileInfo {
+	public:
+		int x, y;
+		int z;      /* Zone or anything else. */
+		int scale;
+	};
+
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
+
+#endif /* #ifndef _SG_TILE_INFO_H */

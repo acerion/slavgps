@@ -55,7 +55,7 @@ namespace SlavGPS {
 		MapSourceBing::~MapSourceBing();
 
 		void MapSourceBing::get_copyright(LatLonBBox bbox, double zoom, void (*fct)(VikViewport*,const char*), void *data)
-		char * MapSourceBing::get_server_path(MapCoord *src);
+		char * MapSourceBing::get_server_path(TileInfo * src);
 
 
 		char * bing_api_key;

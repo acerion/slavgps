@@ -60,7 +60,7 @@ namespace SlavGPS {
 		const GdkPixbuf * get_logo();
 
 		char * get_server_hostname();
-		virtual char * get_server_path(MapCoord * src);
+		virtual char * get_server_path(TileInfo * src);
 
 		const char * get_name();
 		MapTypeID get_map_type();
@@ -83,10 +83,10 @@ namespace SlavGPS {
 		double get_lon_max();
 		const char * get_file_extension();
 
-		virtual bool coord_to_mapcoord(const VikCoord * src, double xzoom, double yzoom, MapCoord * dest);
-		virtual void mapcoord_to_center_coord(MapCoord * src, VikCoord * dest);
+		virtual bool coord_to_tile(const VikCoord * src, double xzoom, double yzoom, TileInfo * dest);
+		virtual void tile_to_center_coord(TileInfo * src, VikCoord * dest);
 
-		virtual DownloadResult_t download(MapCoord * src, const char * dest_fn, void * handle);
+		virtual DownloadResult_t download(TileInfo * src, const char * dest_fn, void * handle);
 		void * download_handle_init();
 		void download_handle_cleanup(void * handle);
 

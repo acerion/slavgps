@@ -54,10 +54,10 @@ namespace SlavGPS {
 
 		bool supports_download_only_new();
 
-		bool coord_to_mapcoord(const VikCoord * src, double xzoom, double yzoom, MapCoord * dest);
-		void mapcoord_to_center_coord(MapCoord *src, VikCoord *dest);
+		bool coord_to_tile(const VikCoord * src, double xzoom, double yzoom, TileInfo * dest);
+		void tile_to_center_coord(TileInfo *src, VikCoord *dest);
 
-		char * get_server_path(MapCoord *src);
+		char * get_server_path(TileInfo *src);
 	};
 
 

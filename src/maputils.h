@@ -29,6 +29,8 @@
 #include "mapcoord.h"
 #include "vikcoord.h"
 
+using namespace SlavGPS;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -42,11 +44,11 @@ int map_utils_mpp_to_scale ( double mpp );
 
 uint8_t map_utils_mpp_to_zoom_level ( double mpp );
 
-bool map_utils_vikcoord_to_iTMS ( const VikCoord *src, double xzoom, double yzoom, MapCoord *dest );
+bool map_utils_vikcoord_to_iTMS ( const VikCoord *src, double xzoom, double yzoom, TileInfo * dest);
 
-void map_utils_iTMS_to_center_vikcoord ( const MapCoord *src, VikCoord *dest );
+void map_utils_iTMS_to_center_vikcoord ( const TileInfo *src, VikCoord *dest );
 
-void map_utils_iTMS_to_vikcoord ( const MapCoord *src, VikCoord *dest );
+void map_utils_iTMS_to_vikcoord ( const TileInfo *src, VikCoord *dest );
 
 #ifdef __cplusplus
 }

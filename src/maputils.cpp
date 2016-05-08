@@ -81,7 +81,7 @@ uint8_t map_utils_mpp_to_zoom_level ( double mpp )
  * @short_description: Notes about TMS / Spherical Mercator conversion
  *
  * VikCoords are in Spherical Mercator projection (#VIK_COORD_LATLON)
- * MapCoords are in Inverse TMS
+ * TileInfo are in Inverse TMS
  *
  * See: http://docs.openlayers.org/library/spherical_mercator.html
  * See: http://wiki.osgeo.org/wiki/Tile_Map_Service_Specification
@@ -93,13 +93,13 @@ uint8_t map_utils_mpp_to_zoom_level ( double mpp )
  * @src:   Original #VikCoord in #VIK_COORD_LATLON format
  * @xzoom: Viking zoom level in x direction
  * @yzoom: Viking zoom level in y direction (actually needs to be same as xzoom)
- * @dest:  The resulting Inverse TMS coordinates in #MapCoord
+ * @dest:  The resulting Inverse TMS coordinates in #TileInfo
  *
  * Convert a #VikCoord in VIK_COORD_LATLON format into Inverse TMS coordinates
  *
  * Returns: whether the conversion was performed
  */
-bool map_utils_vikcoord_to_iTMS ( const VikCoord *src, double xzoom, double yzoom, MapCoord *dest )
+bool map_utils_vikcoord_to_iTMS ( const VikCoord *src, double xzoom, double yzoom, TileInfo *dest )
 {
   if ( src->mode != VIK_COORD_LATLON )
     return false;
@@ -119,7 +119,7 @@ bool map_utils_vikcoord_to_iTMS ( const VikCoord *src, double xzoom, double yzoo
 }
 
 // Internal convenience function
-static void _to_vikcoord_with_offset ( const MapCoord *src, VikCoord *dest, double offset )
+static void _to_vikcoord_with_offset ( const TileInfo *src, VikCoord *dest, double offset )
 {
   double socalled_mpp;
   if (src->scale >= 0)
@@ -133,29 +133,29 @@ static void _to_vikcoord_with_offset ( const MapCoord *src, VikCoord *dest, doub
 
 /**
  * map_utils_iTMS_to_center_vikcoord:
- * @src:   Original #MapCoord in Inverse TMS format
+ * @src:   Original #TileInfo in Inverse TMS format
  * @dest:  The resulting Spherical Mercator coordinates in #VikCoord
  *
- * Convert a #MapCoord in Inverse TMS format into Spherical Mercator coordinates for the center of the TMS area
+ * Convert a #TileInfo in Inverse TMS format into Spherical Mercator coordinates for the center of the TMS area
  *
  * Returns: whether the conversion was performed
  */
-void map_utils_iTMS_to_center_vikcoord ( const MapCoord *src, VikCoord *dest )
+void map_utils_iTMS_to_center_vikcoord ( const TileInfo *src, VikCoord *dest )
 {
 	_to_vikcoord_with_offset ( src, dest, 0.5 );
 }
 
 /**
  * map_utils_iTMS_to_vikcoord:
- * @src:   Original #MapCoord in Inverse TMS format
+ * @src:   Original #TileInfo in Inverse TMS format
  * @dest:  The resulting Spherical Mercator coordinates in #VikCoord
  *
- * Convert a #MapCoord in Inverse TMS format into Spherical Mercator coordinates
+ * Convert a #TileInfo in Inverse TMS format into Spherical Mercator coordinates
  *  (for the top left corner of the Inverse TMS area)
  *
  * Returns: whether the conversion was performed
  */
-void map_utils_iTMS_to_vikcoord ( const MapCoord *src, VikCoord *dest )
+void map_utils_iTMS_to_vikcoord ( const TileInfo *src, VikCoord *dest )
 {
 	_to_vikcoord_with_offset ( src, dest, 0.0 );
 }

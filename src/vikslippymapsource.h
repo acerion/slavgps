@@ -49,14 +49,14 @@ namespace SlavGPS {
 
 		MapSourceSlippy & operator=(MapSourceSlippy map);
 
-		bool coord_to_mapcoord(const VikCoord * src, double xzoom, double yzoom, MapCoord * dest);
-		void mapcoord_to_center_coord(MapCoord * src, VikCoord * dest);
+		bool coord_to_tile(const VikCoord * src, double xzoom, double yzoom, TileInfo * dest);
+		void tile_to_center_coord(TileInfo * src, VikCoord * dest);
 
 		bool supports_download_only_new();
 
-		char * get_server_path(MapCoord * src);
+		char * get_server_path(TileInfo * src);
 
-		DownloadResult_t download(MapCoord * src, const char * dest_fn, void * handle);
+		DownloadResult_t download(TileInfo * src, const char * dest_fn, void * handle);
 
 
 		bool is_direct_file_access();

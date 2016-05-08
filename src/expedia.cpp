@@ -44,16 +44,16 @@
 
 #include "expedia.h"
 
-static bool expedia_coord_to_mapcoord ( const VikCoord *src, double xzoom, double yzoom, MapCoord *dest );
-static void expedia_mapcoord_to_center_coord ( MapCoord *src, VikCoord *dest );
-static DownloadResult_t expedia_download ( MapCoord *src, const char *dest_fn, void *handle );
+static bool expedia_coord_to_tile(const VikCoord *src, double xzoom, double yzoom, TileInfo *dest );
+static void expedia_tile_to_center_coord ( TileInfo *src, VikCoord *dest );
+static DownloadResult_t expedia_download ( TileInfo *src, const char *dest_fn, void *handle );
 static void * expedia_handle_init ( );
 static void expedia_handle_cleanup ( void *handle );
 
 static DownloadFileOptions expedia_options = { false, false, NULL, 2, a_check_map_file, NULL };
 
 void expedia_init() {
-  VikMapsLayer_MapType map_type = { MAP_ID_EXPEDIA, 0, 0, VIK_VIEWPORT_DRAWMODE_EXPEDIA, expedia_coord_to_mapcoord, expedia_mapcoord_to_center_coord, expedia_download, expedia_handle_init, expedia_handle_cleanup };
+  VikMapsLayer_MapType map_type = { MAP_ID_EXPEDIA, 0, 0, VIK_VIEWPORT_DRAWMODE_EXPEDIA, expedia_coord_to_tile, expedia_tile_to_center_coord, expedia_download, expedia_handle_init, expedia_handle_cleanup };
   maps_layer_register_type(_("Expedia Street Maps"), MAP_ID_EXPEDIA, &map_type);
 }
 
@@ -136,7 +136,7 @@ void expedia_snip ( const char *file )
 
 /* if degree_freeq = 60 -> nearest minute (in middle) */
 /* everything starts at -90,-180 -> 0,0. then increments by (1/degree_freq) */
-static bool expedia_coord_to_mapcoord ( const VikCoord *src, double xzoom, double yzoom, MapCoord *dest )
+static bool expedia_coord_to_tile(const VikCoord *src, double xzoom, double yzoom, TileInfo *dest )
 {
   int alti;
 
@@ -166,14 +166,14 @@ void expedia_xy_to_latlon_middle ( int alti, int x, int y, struct LatLon *ll )
   ll->lat = (((double)y) / expedia_altis_freq(alti)) - 90;
 }
 
-static void expedia_mapcoord_to_center_coord ( MapCoord *src, VikCoord *dest )
+static void expedia_tile_to_center_coord ( TileInfo *src, VikCoord *dest )
 {
   dest->mode = VIK_COORD_LATLON;
   dest->east_west = (((double)src->x) / expedia_altis_freq(src->scale)) - 180;
   dest->north_south = (((double)src->y) / expedia_altis_freq(src->scale)) - 90;
 }
 
-static DownloadResult_t expedia_download ( MapCoord *src, const char *dest_fn, void *handle )
+static DownloadResult_t expedia_download ( TileInfo *src, const char *dest_fn, void *handle )
 {
   int height, width;
   struct LatLon ll;

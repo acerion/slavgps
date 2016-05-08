@@ -153,7 +153,7 @@ static void list_add_entry ( char *key )
  * Function increments reference counter of pixbuf.
  * Caller may (and should) decrease it's reference.
  */
-void a_mapcache_add ( GdkPixbuf *pixbuf, mapcache_extra_t extra, MapCoord * mapcoord, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const char* name )
+void a_mapcache_add ( GdkPixbuf *pixbuf, mapcache_extra_t extra, TileInfo * mapcoord, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const char* name )
 {
   if ( ! GDK_IS_PIXBUF(pixbuf) ) {
     fprintf(stderr, "DEBUG: Not caching corrupt pixbuf for maptype %d at %d %d %d %d\n", map_type, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale );
@@ -196,7 +196,7 @@ void a_mapcache_add ( GdkPixbuf *pixbuf, mapcache_extra_t extra, MapCoord * mapc
  * Function increases reference counter of pixels buffer in behalf of caller.
  * Caller have to decrease references counter, when buffer is no longer needed.
  */
-GdkPixbuf *a_mapcache_get ( MapCoord * mapcoord, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const char* name )
+GdkPixbuf *a_mapcache_get(TileInfo * mapcoord, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const char* name )
 {
   static char key[MC_KEY_SIZE];
   unsigned int nn = name ? g_str_hash ( name ) : 0;
@@ -213,7 +213,7 @@ GdkPixbuf *a_mapcache_get ( MapCoord * mapcoord, MapTypeID map_type, uint8_t alp
   }
 }
 
-mapcache_extra_t a_mapcache_get_extra ( MapCoord * mapcoord, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const char* name )
+mapcache_extra_t a_mapcache_get_extra(TileInfo * mapcoord, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const char* name )
 {
   static char key[MC_KEY_SIZE];
   unsigned int nn = name ? g_str_hash ( name ) : 0;
@@ -274,7 +274,7 @@ static void flush_matching ( char *str )
 /**
  * Appears this is only used when redownloading tiles (i.e. to invalidate old images)
  */
-void a_mapcache_remove_all_shrinkfactors ( MapCoord * mapcoord, MapTypeID map_type, const char* name )
+void a_mapcache_remove_all_shrinkfactors(TileInfo * mapcoord, MapTypeID map_type, const char* name )
 {
   char key[MC_KEY_SIZE];
   unsigned int nn = name ? g_str_hash ( name ) : 0;

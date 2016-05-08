@@ -394,15 +394,15 @@ const char * MapSource::get_file_extension()
 	return file_extension;
 }
 
-bool MapSource::coord_to_mapcoord(const VikCoord * src, double xzoom, double yzoom, MapCoord * dest)
+bool MapSource::coord_to_tile(const VikCoord * src, double xzoom, double yzoom, TileInfo * dest)
 {
-	fprintf(stderr, "MapSource coord_to_mapcoord() returns false\n");
+	fprintf(stderr, "MapSource coord_to_tile() returns false\n");
 	return false;
 }
 
-void MapSource::mapcoord_to_center_coord(MapCoord *src, VikCoord *dest)
+void MapSource::tile_to_center_coord(TileInfo *src, VikCoord *dest)
 {
-	fprintf(stderr, "MapSource::mapcoord_to_center_coord\n");
+	fprintf(stderr, "MapSource::tile_to_center_coord\n");
 	return;
 }
 
@@ -415,7 +415,7 @@ void MapSource::mapcoord_to_center_coord(MapCoord *src, VikCoord *dest)
  *
  * Returns: How successful the download was as per the type #DownloadResult_t
  */
-DownloadResult_t MapSource::download(MapCoord * src, const char * dest_fn, void *handle)
+DownloadResult_t MapSource::download(TileInfo * src, const char * dest_fn, void *handle)
 {
 	fprintf(stderr, "MapSource download\n");
 	return a_http_download_get_url(get_server_hostname(), get_server_path(src), dest_fn, &download_options, handle);
@@ -436,7 +436,7 @@ char * MapSource::get_server_hostname()
 	return g_strdup(server_hostname);
 }
 
-char * MapSource::get_server_path(MapCoord * src)
+char * MapSource::get_server_path(TileInfo * src)
 {
 	return NULL;
 }

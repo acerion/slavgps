@@ -629,7 +629,7 @@ static char *get_filename ( char *dir, unsigned int x, unsigned int y, unsigned 
 	return g_strdup_printf ( MAPNIK_LAYER_FILE_CACHE_LAYOUT, dir, (17-z), x, y );
 }
 
-static void possibly_save_pixbuf ( VikMapnikLayer *vml, GdkPixbuf *pixbuf, MapCoord *ulm )
+static void possibly_save_pixbuf ( VikMapnikLayer *vml, GdkPixbuf *pixbuf, TileInfo *ulm )
 {
 	if ( vml->use_file_cache ) {
 		if ( vml->file_cache_dir ) {
@@ -656,7 +656,7 @@ typedef struct
 	VikMapnikLayer *vml;
 	VikCoord *ul;
 	VikCoord *br;
-	MapCoord *ulmc;
+	TileInfo *ulmc;
 	const char* request;
 } RenderInfo;
 
@@ -665,7 +665,7 @@ typedef struct
  *
  * Common render function which can run in separate thread
  */
-static void render ( VikMapnikLayer *vml, VikCoord *ul, VikCoord *br, MapCoord *ulm )
+static void render ( VikMapnikLayer *vml, VikCoord *ul, VikCoord *br, TileInfo *ulm )
 {
 	int64_t tt1 = g_get_real_time ();
 	GdkPixbuf *pixbuf = mapnik_interface_render ( vml->mi, ul->north_south, ul->east_west, br->north_south, br->east_west );
@@ -719,7 +719,7 @@ static void render_cancel_cleanup (RenderInfo *data)
 /**
  * Thread
  */
-static void thread_add (VikMapnikLayer *vml, MapCoord *mul, VikCoord *ul, VikCoord *br, int x, int y, int z, int zoom, const char* name )
+static void thread_add (VikMapnikLayer *vml, TileInfo *mul, VikCoord *ul, VikCoord *br, int x, int y, int z, int zoom, const char* name )
 {
 	// Create request
 	unsigned int nn = name ? g_str_hash ( name ) : 0;
@@ -737,10 +737,10 @@ static void thread_add (VikMapnikLayer *vml, MapCoord *mul, VikCoord *ul, VikCoo
 	ri->vml = vml;
 	ri->ul = (VikCoord *) malloc(sizeof (VikCoord));
 	ri->br = (VikCoord *) malloc(sizeof (VikCoord));
-	ri->ulmc = (MapCoord *) malloc(sizeof (MapCoord));
+	ri->ulmc = (TileInfo *) malloc(sizeof (TileInfo));
 	memcpy(ri->ul, ul, sizeof(VikCoord));
 	memcpy(ri->br, br, sizeof(VikCoord));
-	memcpy(ri->ulmc, mul, sizeof(MapCoord));
+	memcpy(ri->ulmc, mul, sizeof(TileInfo));
 	ri->request = request;
 
 	g_hash_table_insert ( requests, request, NULL );
@@ -767,7 +767,7 @@ static void thread_add (VikMapnikLayer *vml, MapCoord *mul, VikCoord *ul, VikCoo
  * If function returns GdkPixbuf properly, reference counter to this
  * buffer has to be decreased, when buffer is no longer needed.
  */
-static GdkPixbuf *load_pixbuf ( VikMapnikLayer *vml, MapCoord *ulm, MapCoord *brm, bool *rerender )
+static GdkPixbuf *load_pixbuf ( VikMapnikLayer *vml, TileInfo *ulm, TileInfo *brm, bool *rerender )
 {
 	*rerender = false;
 	GdkPixbuf *pixbuf = NULL;
@@ -801,7 +801,7 @@ static GdkPixbuf *load_pixbuf ( VikMapnikLayer *vml, MapCoord *ulm, MapCoord *br
  * Caller has to decrease reference counter of returned
  * GdkPixbuf, when buffer is no longer needed.
  */
-static GdkPixbuf *get_pixbuf ( VikMapnikLayer *vml, MapCoord *ulm, MapCoord *brm )
+static GdkPixbuf *get_pixbuf ( VikMapnikLayer *vml, TileInfo *ulm, TileInfo *brm )
 {
 	VikCoord ul; VikCoord br;
 
@@ -863,7 +863,7 @@ static void mapnik_layer_draw ( VikMapnikLayer *vml, VikViewport *vvp )
 	double xzoom = vvp->port.get_xmpp();
 	double yzoom = vvp->port.get_ympp();
 
-	MapCoord ulm, brm;
+	TileInfo ulm, brm;
 
 	if ( map_utils_vikcoord_to_iTMS ( &ul, xzoom, yzoom, &ulm ) &&
 	     map_utils_vikcoord_to_iTMS ( &br, xzoom, yzoom, &brm ) ) {
@@ -1070,13 +1070,13 @@ static void mapnik_layer_add_menu_items ( VikMapnikLayer *vml, GtkMenu *menu, vo
  */
 static void mapnik_layer_rerender ( VikMapnikLayer *vml )
 {
-	MapCoord ulm;
+	TileInfo ulm;
 	// Requested position to map coord
 	map_utils_vikcoord_to_iTMS ( &vml->rerender_ul, vml->rerender_zoom, vml->rerender_zoom, &ulm );
 	// Reconvert back - thus getting the coordinate at the tile *ul corner*
 	map_utils_iTMS_to_vikcoord (&ulm, &vml->rerender_ul );
 	// Bottom right bound is simply +1 in TMS coords
-	MapCoord brm = ulm;
+	TileInfo brm = ulm;
 	brm.x = brm.x+1;
 	brm.y = brm.y+1;
 	map_utils_iTMS_to_vikcoord (&brm, &vml->rerender_br );
@@ -1088,7 +1088,7 @@ static void mapnik_layer_rerender ( VikMapnikLayer *vml )
  */
 static void mapnik_layer_tile_info ( VikMapnikLayer *vml )
 {
-	MapCoord ulm;
+	TileInfo ulm;
 	// Requested position to map coord
 	map_utils_vikcoord_to_iTMS ( &vml->rerender_ul, vml->rerender_zoom, vml->rerender_zoom, &ulm );
 
