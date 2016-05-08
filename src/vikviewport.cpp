@@ -724,10 +724,11 @@ bool Viewport::get_draw_highlight()
 	return do_draw_highlight;
 }
 
-void vik_viewport_sync (VikViewport *vvp)
+void vik_viewport_sync(Viewport * viewport)
 {
+	VikViewport * vvp = (VikViewport *) viewport->vvp;
 	g_return_if_fail (vvp != NULL);
-	gdk_draw_drawable(gtk_widget_get_window(GTK_WIDGET(vvp)), gtk_widget_get_style(GTK_WIDGET(vvp))->bg_gc[0], GDK_DRAWABLE(vvp->port.scr_buffer), 0, 0, 0, 0, vvp->port.width, vvp->port.height);
+	gdk_draw_drawable(gtk_widget_get_window(GTK_WIDGET(vvp)), gtk_widget_get_style(GTK_WIDGET(vvp))->bg_gc[0], GDK_DRAWABLE(viewport->scr_buffer), 0, 0, 0, 0, viewport->width, viewport->height);
 }
 
 void vik_viewport_pan_sync (VikViewport *vvp, int x_off, int y_off)

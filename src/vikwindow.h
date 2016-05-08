@@ -104,7 +104,7 @@ void vik_window_clear_busy_cursor ( VikWindow *vw );
 
 typedef struct {
   VikWindow *vw;
-  VikViewport *vvp;
+  Viewport * viewport;
   void **vtl; // VikTrwlayer
   bool holding;
   bool moving;

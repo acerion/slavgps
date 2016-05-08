@@ -243,7 +243,7 @@ namespace SlavGPS {
 } /* namespace SlavGPS */
 
 
-
+using namespace SlavGPS;
 
 
 struct _VikViewport {
@@ -295,7 +295,7 @@ bool vik_viewport_get_half_drawn(VikViewport *vp);
 
 /* Viewport buffer management/drawing to screen */
 GdkPixmap *vik_viewport_get_pixmap (VikViewport *vvp); /* get pointer to drawing buffer */
-void vik_viewport_sync (VikViewport *vvp);             /* draw buffer to window */
+void vik_viewport_sync(Viewport * viewport);             /* draw buffer to window */
 void vik_viewport_pan_sync (VikViewport *vvp, int x_off, int y_off);
 
 

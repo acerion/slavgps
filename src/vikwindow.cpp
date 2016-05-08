@@ -46,6 +46,12 @@
 #include "vikutils.h"
 #include "dir.h"
 #include "kmz.h"
+#include "file.h"
+#include "fileutils.h"
+#include "dialog.h"
+#include "clipboard.h"
+#include "settings.h"
+#include "globals.h"
 
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>
@@ -1103,7 +1109,7 @@ static void draw_update(VikWindow *vw)
 
 static void draw_sync(VikWindow *vw)
 {
-	vik_viewport_sync(vw->viking_vvp);
+	vik_viewport_sync(&vw->viking_vvp->port);
 	draw_status(vw);
 }
 
@@ -2132,7 +2138,7 @@ static void * selecttool_create(VikWindow *vw, VikViewport *vvp)
 {
 	tool_ed_t *t = (tool_ed_t *) malloc(1 * sizeof (tool_ed_t));
 	t->vw = vw;
-	t->vvp = vvp;
+	t->viewport = &vvp->port;
 	t->vtl = NULL;
 	t->is_waypoint = false;
 	return t;
@@ -2145,7 +2151,7 @@ static void selecttool_destroy(tool_ed_t *t)
 
 typedef struct {
 	bool cont;
-	VikViewport *vvp;
+	Viewport * viewport;
 	GdkEventButton *event;
 	tool_ed_t *tool_edit;
 } clicker;
@@ -2157,7 +2163,7 @@ static void click_layer_selected(VikLayer *vl, clicker *ck)
 	if (ck->cont)
 		if (vl->visible)
 			if (vik_layer_get_interface(vl->type)->select_click)
-				ck->cont = !vik_layer_get_interface(vl->type)->select_click(vl, ck->event, ck->vvp, ck->tool_edit);
+				ck->cont = !vik_layer_get_interface(vl->type)->select_click(vl, ck->event, ck->viewport, ck->tool_edit);
 }
 
 #ifdef WINDOWS
@@ -2183,7 +2189,7 @@ static VikLayerToolFuncStatus selecttool_click(VikLayer *vl, GdkEventButton *eve
 			GList* gl = vik_layers_panel_get_all_layers_of_type(t->vw->viking_vlp, VIK_LAYER_TRW, false); // Don't get invisible layers
 			clicker ck;
 			ck.cont = true;
-			ck.vvp = t->vw->viking_vvp;
+			ck.viewport = &t->vw->viking_vvp->port;
 			ck.event = event;
 			ck.tool_edit = t;
 			g_list_foreach(gl, (GFunc) click_layer_selected, &ck);
@@ -2217,7 +2223,7 @@ static VikLayerToolFuncStatus selecttool_click(VikLayer *vl, GdkEventButton *eve
 			/* Act on currently selected item to show menu */
 			if (t->vw->selected_track || t->vw->selected_waypoint)
 				if (vik_layer_get_interface(vl->type)->show_viewport_menu)
-					vik_layer_get_interface(vl->type)->show_viewport_menu(vl, event, t->vw->viking_vvp);
+					vik_layer_get_interface(vl->type)->show_viewport_menu(vl, event, &t->vw->viking_vvp->port);
 	}
 
 	return VIK_LAYER_TOOL_ACK;
@@ -2229,7 +2235,7 @@ static VikLayerToolFuncStatus selecttool_move(VikLayer *vl, GdkEventMotion *even
 		// Don't care about vl here
 		if (t->vtl)
 			if (vik_layer_get_interface(VIK_LAYER_TRW)->select_move)
-				vik_layer_get_interface(VIK_LAYER_TRW)->select_move(vl, event, t->vvp, t);
+				vik_layer_get_interface(VIK_LAYER_TRW)->select_move(vl, event, t->viewport, t);
 	}
 	else
 		// Optional Panning
@@ -2245,7 +2251,7 @@ static VikLayerToolFuncStatus selecttool_release(VikLayer *vl, GdkEventButton *e
 		// Don't care about vl here
 		if (t->vtl)
 			if (vik_layer_get_interface(VIK_LAYER_TRW)->select_release)
-				vik_layer_get_interface(VIK_LAYER_TRW)->select_release((VikLayer*)t->vtl, event, t->vvp, t);
+				vik_layer_get_interface(VIK_LAYER_TRW)->select_release((VikLayer*)t->vtl, event, t->viewport, t);
 	}
 
 	if (event->button == 1 && (event->state & VIK_MOVE_MODIFIER))
