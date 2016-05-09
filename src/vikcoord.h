@@ -37,8 +37,8 @@ enum VikCoordMode {
 	VIK_COORD_LATLON  = 1
 };
 
-#define VIK_UTM(x) ((struct UTM *)(x))
-#define VIK_LATLON(x) ((struct LatLon *)(x))
+//#define VIK_UTM(x) ((struct UTM *)(x))
+//#define VIK_LATLON(x) ((struct LatLon *)(x))
 
 typedef struct {
   double north_south; /* northing or lat */

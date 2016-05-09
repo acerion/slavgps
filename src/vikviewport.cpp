@@ -1126,7 +1126,7 @@ void Viewport::corners_for_zonen(int zone, VikCoord *ul, VikCoord *br)
 	g_return_if_fail(coord_mode == VIK_COORD_UTM);
 
 	/* get center, then just offset */
-	this->center_for_zonen(VIK_UTM(ul), zone);
+	this->center_for_zonen((struct UTM *) (ul), zone);
 	ul->mode = VIK_COORD_UTM;
 	*br = *ul;
 
