@@ -124,9 +124,9 @@ static void maps_layer_change_param (GtkWidget *widget, ui_change_values values)
 static void maps_layer_draw (VikMapsLayer *vml, VikViewport *vvp);
 static VikMapsLayer *maps_layer_new (VikViewport *vvp);
 static void maps_layer_free (VikMapsLayer *vml);
-static bool maps_layer_download_release (VikMapsLayer *vml, GdkEventButton *event, VikViewport *vvp);
-static bool maps_layer_download_click (VikMapsLayer *vml, GdkEventButton *event, VikViewport *vvp);
-static void * maps_layer_download_create (VikWindow *vw, VikViewport *vvp);
+static bool maps_layer_download_release (VikMapsLayer *vml, GdkEventButton *event, Viewport * viewport);
+static bool maps_layer_download_click(VikMapsLayer *vml, GdkEventButton *event, Viewport * viewport);
+static void * maps_layer_download_create (VikWindow *vw, Viewport * viewport);
 static void maps_layer_set_cache_dir (VikMapsLayer *vml, const char *dir);
 static void start_download_thread(VikMapsLayer *vml, Viewport * viewport, const VikCoord *ul, const VikCoord *br, int redownload_mode);
 static void maps_layer_add_menu_items (VikMapsLayer *vml, GtkMenu *menu, VikLayersPanel *vlp);
@@ -2016,10 +2016,8 @@ static void maps_layer_tile_info (VikMapsLayer *vml)
 	free(filename);
 }
 
-static bool maps_layer_download_release (VikMapsLayer *vml, GdkEventButton *event, VikViewport * vvp)
+static bool maps_layer_download_release(VikMapsLayer *vml, GdkEventButton *event, Viewport * viewport)
 {
-	Viewport * viewport = &vvp->port;
-
 	if (!vml || vml->vl.type != VIK_LAYER_MAPS) {
 		return false;
 	}
@@ -2069,12 +2067,12 @@ static bool maps_layer_download_release (VikMapsLayer *vml, GdkEventButton *even
 	return false;
 }
 
-static void * maps_layer_download_create (VikWindow *vw, VikViewport *vvp)
+static void * maps_layer_download_create (VikWindow *vw, Viewport * viewport)
 {
-	return vvp;
+	return viewport->vvp;
 }
 
-static bool maps_layer_download_click (VikMapsLayer *vml, GdkEventButton *event, VikViewport *vvp)
+static bool maps_layer_download_click(VikMapsLayer *vml, GdkEventButton *event, Viewport * viewport)
 {
 	TileInfo tmp;
 	if (!vml || vml->vl.type != VIK_LAYER_MAPS) {
@@ -2082,10 +2080,10 @@ static bool maps_layer_download_click (VikMapsLayer *vml, GdkEventButton *event,
 	}
 
 	MapSource *map = map_sources[vml->map_index];
-	if (map->get_drawmode() == vvp->port.get_drawmode() &&
-	     map->coord_to_tile(vvp->port.get_center(),
-				vml->xmapzoom ? vml->xmapzoom : vvp->port.get_xmpp(),
-				vml->ymapzoom ? vml->ymapzoom : vvp->port.get_ympp(),
+	if (map->get_drawmode() == viewport->get_drawmode() &&
+	     map->coord_to_tile(viewport->get_center(),
+				vml->xmapzoom ? vml->xmapzoom : viewport->get_xmpp(),
+				vml->ymapzoom ? vml->ymapzoom : viewport->get_ympp(),
 				&tmp)) {
 		vml->dl_tool_x = event->x, vml->dl_tool_y = event->y;
 		return true;

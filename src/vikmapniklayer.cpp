@@ -112,12 +112,12 @@ static void mapnik_layer_free ( VikMapnikLayer *vml );
 static void mapnik_layer_draw ( VikMapnikLayer *vml, VikViewport *vp );
 static void mapnik_layer_add_menu_items ( VikMapnikLayer *vml, GtkMenu *menu, void * vlp );
 
-static void * mapnik_feature_create ( VikWindow *vw, VikViewport *vvp)
+static void * mapnik_feature_create ( VikWindow *vw, Viewport * viewport)
 {
-  return vvp;
+	return viewport->vvp;
 }
 
-static bool mapnik_feature_release ( VikMapnikLayer *vml, GdkEventButton *event, VikViewport *vvp );
+static bool mapnik_feature_release ( VikMapnikLayer *vml, GdkEventButton *event, Viewport * viewport);
 
 // See comment in viktrwlayer.c for advice on values used
 // FUTURE:
@@ -1136,13 +1136,13 @@ static void mapnik_layer_tile_info ( VikMapnikLayer *vml )
 	free( filename );
 }
 
-static bool mapnik_feature_release ( VikMapnikLayer *vml, GdkEventButton *event, VikViewport *vvp )
+static bool mapnik_feature_release ( VikMapnikLayer *vml, GdkEventButton *event, Viewport * viewport)
 {
 	if ( !vml )
 		return false;
 	if ( event->button == 3 ) {
-		vvp->port.screen_to_coord(MAX(0, event->x), MAX(0, event->y), &vml->rerender_ul );
-		vml->rerender_zoom = vvp->port.get_zoom();
+		viewport->screen_to_coord(MAX(0, event->x), MAX(0, event->y), &vml->rerender_ul );
+		vml->rerender_zoom = viewport->get_zoom();
 
 		if ( ! vml->right_click_menu ) {
 			GtkWidget *item;

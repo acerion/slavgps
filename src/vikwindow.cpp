@@ -1630,16 +1630,16 @@ static void draw_ruler(VikViewport *vvp, GdkDrawable *d, GdkGC *gc, int x1, int 
 
 typedef struct {
 	VikWindow *vw;
-	VikViewport *vvp;
+	Viewport * viewport;
 	bool has_oldcoord;
 	VikCoord oldcoord;
 } ruler_tool_state_t;
 
-static void * ruler_create(VikWindow *vw, VikViewport *vvp)
+static void * ruler_create(VikWindow *vw, Viewport * viewport)
 {
 	ruler_tool_state_t *s = (ruler_tool_state_t *) malloc(1 * sizeof (ruler_tool_state_t));
 	s->vw = vw;
-	s->vvp = vvp;
+	s->viewport = viewport;
 	s->has_oldcoord = false;
 	return s;
 }
@@ -1656,7 +1656,7 @@ static VikLayerToolFuncStatus ruler_click(VikLayer *vl, GdkEventButton *event, r
 	char *temp;
 	if (event->button == 1) {
 		char *lat=NULL, *lon=NULL;
-		s->vvp->port.screen_to_coord((int) event->x, (int) event->y, &coord);
+		s->viewport->screen_to_coord((int) event->x, (int) event->y, &coord);
 		vik_coord_to_latlon(&coord, &ll);
 		a_coords_latlon_to_string(&ll, &lat, &lon);
 		if (s->has_oldcoord) {
@@ -1689,7 +1689,7 @@ static VikLayerToolFuncStatus ruler_click(VikLayer *vl, GdkEventButton *event, r
 		s->oldcoord = coord;
 	}
 	else {
-		s->vvp->port.set_center_screen((int) event->x, (int) event->y);
+		s->viewport->set_center_screen((int) event->x, (int) event->y);
 		draw_update(s->vw);
 	}
 	return VIK_LAYER_TOOL_ACK;
@@ -1697,7 +1697,7 @@ static VikLayerToolFuncStatus ruler_click(VikLayer *vl, GdkEventButton *event, r
 
 static VikLayerToolFuncStatus ruler_move(VikLayer *vl, GdkEventMotion *event, ruler_tool_state_t *s)
 {
-	VikViewport *vvp = s->vvp;
+	VikViewport *vvp = (VikViewport *) s->viewport->vvp;
 	VikWindow *vw = s->vw;
 
 	struct LatLon ll;
@@ -1708,8 +1708,8 @@ static VikLayerToolFuncStatus ruler_move(VikLayer *vl, GdkEventMotion *event, ru
 		int oldx, oldy, w1, h1, w2, h2;
 		static GdkPixmap *buf = NULL;
 		char *lat=NULL, *lon=NULL;
-		w1 = vvp->port.get_width();
-		h1 = vvp->port.get_height();
+		w1 = s->viewport->get_width();
+		h1 = s->viewport->get_height();
 		if (!buf) {
 			buf = gdk_pixmap_new(gtk_widget_get_window(GTK_WIDGET(vvp)), w1, h1, -1);
 		}
@@ -1719,12 +1719,12 @@ static VikLayerToolFuncStatus ruler_move(VikLayer *vl, GdkEventMotion *event, ru
 			buf = gdk_pixmap_new(gtk_widget_get_window(GTK_WIDGET(vvp)), w1, h1, -1);
 		}
 
-		vvp->port.screen_to_coord((int) event->x, (int) event->y, &coord);
+		s->viewport->screen_to_coord((int) event->x, (int) event->y, &coord);
 		vik_coord_to_latlon(&coord, &ll);
-		vvp->port.coord_to_screen(&s->oldcoord, &oldx, &oldy);
+		s->viewport->coord_to_screen(&s->oldcoord, &oldx, &oldy);
 
 		gdk_draw_drawable(buf, gtk_widget_get_style(GTK_WIDGET(vvp))->black_gc,
-				  vvp->port.get_pixmap(), 0, 0, 0, 0, -1, -1);
+				  s->viewport->get_pixmap(), 0, 0, 0, 0, -1, -1);
 		draw_ruler(vvp, buf, gtk_widget_get_style(GTK_WIDGET(vvp))->black_gc, oldx, oldy, event->x, event->y, vik_coord_diff(&coord, &(s->oldcoord)));
 		if (draw_buf_done) {
 			static void * pass_along[3];
@@ -1834,7 +1834,7 @@ static void zoomtool_resize_pixmap(zoom_tool_state_t *zts)
 	}
 }
 
-static void * zoomtool_create(VikWindow *vw, VikViewport *vvp)
+static void * zoomtool_create(VikWindow *vw, Viewport * viewport)
 {
 	zoom_tool_state_t *zts = (zoom_tool_state_t *) malloc(1 * sizeof (zoom_tool_state_t));
 	zts->vw = vw;
@@ -2069,7 +2069,7 @@ static VikToolInterface zoom_tool =
 /********************************************************************************
  ** Pan tool code
  ********************************************************************************/
-static void * pantool_create(VikWindow *vw, VikViewport *vvp)
+static void * pantool_create(VikWindow *vw, Viewport * viewport)
 {
 	return vw;
 }
@@ -2134,11 +2134,11 @@ static VikToolInterface pan_tool =
 /********************************************************************************
  ** Select tool code
  ********************************************************************************/
-static void * selecttool_create(VikWindow *vw, VikViewport *vvp)
+static void * selecttool_create(VikWindow *vw, Viewport * viewport)
 {
 	tool_ed_t *t = (tool_ed_t *) malloc(1 * sizeof (tool_ed_t));
 	t->vw = vw;
-	t->viewport = &vvp->port;
+	t->viewport = viewport;
 	t->vtl = NULL;
 	t->is_waypoint = false;
 	return t;
@@ -2764,7 +2764,7 @@ static void toolbox_add_tool(toolbox_tools_t *vt, VikToolInterface *vti, int lay
 	vt->tools[vt->n_tools].ti = *vti;
 	vt->tools[vt->n_tools].layer_type = layer_type;
 	if (vti->create) {
-		vt->tools[vt->n_tools].state = vti->create(vt->vw, vt->vw->viking_vvp);
+		vt->tools[vt->n_tools].state = vti->create(vt->vw, &vt->vw->viking_vvp->port);
 	}
 	else {
 		vt->tools[vt->n_tools].state = NULL;

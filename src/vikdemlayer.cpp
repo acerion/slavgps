@@ -129,14 +129,16 @@ static VikLayerParam dem_layer_params[] = {
 
 enum { PARAM_FILES=0, PARAM_SOURCE, PARAM_COLOR, PARAM_TYPE, PARAM_MIN_ELEV, PARAM_MAX_ELEV, NUM_PARAMS };
 
-static void * dem_layer_download_create(VikWindow *vw, VikViewport *vvp);
-static bool dem_layer_download_release(VikDEMLayer *vdl, GdkEventButton *event, VikViewport *vvp);
-static bool dem_layer_download_click(VikDEMLayer *vdl, GdkEventButton *event, VikViewport *vvp);
+static void * dem_layer_download_create(VikWindow *vw, Viewport * viewport);
+static bool dem_layer_download_release(VikDEMLayer *vdl, GdkEventButton *event, Viewport * viewport);
+static bool dem_layer_download_click(VikDEMLayer *vdl, GdkEventButton *event, Viewport * viewport);
 
 static VikToolInterface dem_tools[] = {
 	{ { "DEMDownload", "vik-icon-DEM Download", N_("_DEM Download"), NULL, N_("DEM Download"), 0 },
 	  (VikToolConstructorFunc) dem_layer_download_create, NULL, NULL, NULL,
-	  (VikToolMouseFunc) dem_layer_download_click, NULL, (VikToolMouseFunc) dem_layer_download_release,
+	  (VikToolMouseFunc) dem_layer_download_click,
+	  NULL,
+	  (VikToolMouseFunc) dem_layer_download_release,
 	  (VikToolKeyFunc) NULL,
 	  false,
 	  GDK_CURSOR_IS_PIXMAP, &cursor_demdl_pixbuf, NULL },
@@ -1288,9 +1290,9 @@ static void free_dem_download_params(DEMDownloadParams *p)
 	free(p);
 }
 
-static void * dem_layer_download_create(VikWindow *vw, VikViewport *vvp)
+static void * dem_layer_download_create(VikWindow *vw, Viewport * viewport)
 {
-	return vvp;
+	return viewport->vvp;
 }
 
 /**
@@ -1352,7 +1354,7 @@ static void dem_layer_file_info(GtkWidget *widget, struct LatLon *ll)
 	free(filename);
 }
 
-static bool dem_layer_download_release(VikDEMLayer *vdl, GdkEventButton *event, VikViewport *vvp)
+static bool dem_layer_download_release(VikDEMLayer *vdl, GdkEventButton *event, Viewport * viewport)
 {
 	VikCoord coord;
 	static struct LatLon ll;
@@ -1360,7 +1362,7 @@ static bool dem_layer_download_release(VikDEMLayer *vdl, GdkEventButton *event, 
 	char *full_path;
 	char *dem_file = NULL;
 
-	vvp->port.screen_to_coord(event->x, event->y, &coord);
+	viewport->screen_to_coord(event->x, event->y, &coord);
 	vik_coord_to_latlon(&coord, &ll);
 
 
@@ -1423,7 +1425,7 @@ static bool dem_layer_download_release(VikDEMLayer *vdl, GdkEventButton *event, 
 	return true;
 }
 
-static bool dem_layer_download_click (VikDEMLayer *vdl, GdkEventButton *event, VikViewport *vvp)
+static bool dem_layer_download_click (VikDEMLayer *vdl, GdkEventButton *event, Viewport * viewport)
 {
 	/* choose & keep track of cache dir
 	 * download in background thread

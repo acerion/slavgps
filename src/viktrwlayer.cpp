@@ -230,30 +230,30 @@ static void trw_layer_tpwin_response ( VikTrwLayer *vtl, int response );
 
 //static void trw_layer_sort_all ( VikTrwLayer *vtl );
 
-static void * tool_edit_trackpoint_create ( VikWindow *vw, VikViewport *vvp);
+static void * tool_edit_trackpoint_create ( VikWindow *vw, Viewport * viewport);
 static void tool_edit_trackpoint_destroy ( tool_ed_t *t );
 static bool tool_edit_trackpoint_click ( VikTrwLayer *vtl, GdkEventButton *event, void * data );
 static bool tool_edit_trackpoint_move ( VikTrwLayer *vtl, GdkEventMotion *event, void * data );
 static bool tool_edit_trackpoint_release ( VikTrwLayer *vtl, GdkEventButton *event, void * data );
-static void * tool_show_picture_create ( VikWindow *vw, VikViewport *vvp);
-static bool tool_show_picture_click ( VikTrwLayer *vtl, GdkEventButton *event, VikViewport *vvp );
-static void * tool_edit_waypoint_create ( VikWindow *vw, VikViewport *vvp);
+static void * tool_show_picture_create ( VikWindow *vw, Viewport * viewport);
+static bool tool_show_picture_click ( VikTrwLayer *vtl, GdkEventButton *event, Viewport * viewport);
+static void * tool_edit_waypoint_create ( VikWindow *vw, Viewport * viewport);
 static void tool_edit_waypoint_destroy ( tool_ed_t *t );
 static bool tool_edit_waypoint_click ( VikTrwLayer *vtl, GdkEventButton *event, void * data );
 static bool tool_edit_waypoint_move ( VikTrwLayer *vtl, GdkEventMotion *event, void * data );
 static bool tool_edit_waypoint_release ( VikTrwLayer *vtl, GdkEventButton *event, void * data );
-static void * tool_new_route_create ( VikWindow *vw, VikViewport *vvp);
-static bool tool_new_route_click ( VikTrwLayer *vtl, GdkEventButton *event, VikViewport *vvp );
-static void * tool_new_track_create ( VikWindow *vw, VikViewport *vvp);
-static bool tool_new_track_click ( VikTrwLayer *vtl, GdkEventButton *event, VikViewport *vvp );
-static VikLayerToolFuncStatus tool_new_track_move ( VikTrwLayer *vtl, GdkEventMotion *event, VikViewport *vvp );
-static void tool_new_track_release ( VikTrwLayer *vtl, GdkEventButton *event, VikViewport *vvp );
-static bool tool_new_track_key_press ( VikTrwLayer *vtl, GdkEventKey *event, VikViewport *vvp );
-static void * tool_new_waypoint_create ( VikWindow *vw, VikViewport *vvp);
-static bool tool_new_waypoint_click ( VikTrwLayer *vtl, GdkEventButton *event, VikViewport *vvp );
-static void * tool_extended_route_finder_create ( VikWindow *vw, VikViewport *vvp);
-static bool tool_extended_route_finder_click ( VikTrwLayer *vtl, GdkEventButton *event, VikViewport *vvp );
-static bool tool_extended_route_finder_key_press ( VikTrwLayer *vtl, GdkEventKey *event, VikViewport *vvp );
+static void * tool_new_route_create ( VikWindow *vw, Viewport * viewport);
+static bool tool_new_route_click ( VikTrwLayer *vtl, GdkEventButton *event, Viewport * viewport);
+static void * tool_new_track_create ( VikWindow *vw, Viewport * viewport);
+static bool tool_new_track_click ( VikTrwLayer *vtl, GdkEventButton *event, Viewport * viewport);
+static VikLayerToolFuncStatus tool_new_track_move ( VikTrwLayer *vtl, GdkEventMotion *event, Viewport * viewport);
+static void tool_new_track_release ( VikTrwLayer *vtl, GdkEventButton *event, Viewport * viewport);
+static bool tool_new_track_key_press ( VikTrwLayer *vtl, GdkEventKey *event, Viewport * viewport);
+static void * tool_new_waypoint_create ( VikWindow *vw, Viewport * viewport);
+static bool tool_new_waypoint_click ( VikTrwLayer *vtl, GdkEventButton *event, Viewport * viewport);
+static void * tool_extended_route_finder_create ( VikWindow *vw, Viewport * viewport);
+static bool tool_extended_route_finder_click ( VikTrwLayer *vtl, GdkEventButton *event, Viewport * viewport);
+static bool tool_extended_route_finder_key_press ( VikTrwLayer *vtl, GdkEventKey *event, Viewport * viewport);
 
 
 //static Trackpoint * closest_tp_in_five_pixel_interval(VikTrwLayer * vtl, Viewport * viewport, int x, int y);
@@ -279,7 +279,10 @@ static Track * trw_layer_get_track_helper(menu_array_sublayer values, VikTrwLaye
 static VikToolInterface trw_layer_tools[] = {
   { { "CreateWaypoint", "vik-icon-Create Waypoint", N_("Create _Waypoint"), "<control><shift>W", N_("Create Waypoint"), 0 },
     (VikToolConstructorFunc) tool_new_waypoint_create,    NULL, NULL, NULL,
-    (VikToolMouseFunc) tool_new_waypoint_click,    NULL, NULL, (VikToolKeyFunc) NULL,
+    (VikToolMouseFunc) tool_new_waypoint_click,
+    NULL,
+    NULL,
+    (VikToolKeyFunc) NULL,
     false,
     GDK_CURSOR_IS_PIXMAP, &cursor_addwp_pixbuf, NULL },
 
@@ -316,7 +319,8 @@ static VikToolInterface trw_layer_tools[] = {
     NULL, NULL,
     (VikToolMouseFunc) tool_edit_waypoint_click,
     (VikToolMouseMoveFunc) tool_edit_waypoint_move,
-    (VikToolMouseFunc) tool_edit_waypoint_release, (VikToolKeyFunc) NULL,
+    (VikToolMouseFunc) tool_edit_waypoint_release,
+    (VikToolKeyFunc) NULL,
     false,
     GDK_CURSOR_IS_PIXMAP, &cursor_edwp_pixbuf, NULL },
 
@@ -326,13 +330,15 @@ static VikToolInterface trw_layer_tools[] = {
     NULL, NULL,
     (VikToolMouseFunc) tool_edit_trackpoint_click,
     (VikToolMouseMoveFunc) tool_edit_trackpoint_move,
-    (VikToolMouseFunc) tool_edit_trackpoint_release, (VikToolKeyFunc) NULL,
+    (VikToolMouseFunc) tool_edit_trackpoint_release,
+    (VikToolKeyFunc) NULL,
     false,
     GDK_CURSOR_IS_PIXMAP, &cursor_edtr_pixbuf, NULL },
 
   { { "ShowPicture", "vik-icon-Show Picture", N_("Show P_icture"), "<control><shift>I", N_("Show Picture"), 0 },
     (VikToolConstructorFunc) tool_show_picture_create,    NULL, NULL, NULL,
-    (VikToolMouseFunc) tool_show_picture_click,    NULL, NULL, (VikToolKeyFunc) NULL,
+    (VikToolMouseFunc) tool_show_picture_click,
+    NULL, NULL, (VikToolKeyFunc) NULL,
     false,
     GDK_CURSOR_IS_PIXMAP, &cursor_showpic_pixbuf, NULL },
 
@@ -8543,10 +8549,10 @@ static void marker_end_move ( tool_ed_t *t )
 
 /*** Edit waypoint ****/
 
-static void * tool_edit_waypoint_create ( VikWindow *vw, VikViewport *vvp)
+static void * tool_edit_waypoint_create ( VikWindow *vw, Viewport * viewport)
 {
   tool_ed_t *t = (tool_ed_t *) malloc(1 * sizeof (tool_ed_t));
-  t->viewport = &vvp->port;
+  t->viewport = viewport;
   t->holding = false;
   return t;
 }
@@ -8719,9 +8725,9 @@ static bool tool_edit_waypoint_release ( VikTrwLayer *vtl, GdkEventButton *event
 
 /*** New track ****/
 
-static void * tool_new_track_create ( VikWindow *vw, VikViewport *vvp)
+static void * tool_new_track_create( VikWindow *vw, Viewport * viewport)
 {
-  return vvp;
+	return viewport->vvp;
 }
 
 typedef struct {
@@ -8842,8 +8848,9 @@ static void update_statusbar ( VikTrwLayer *vtl )
 }
 
 
-static VikLayerToolFuncStatus tool_new_track_move ( VikTrwLayer *vtl, GdkEventMotion *event, VikViewport *vvp )
+static VikLayerToolFuncStatus tool_new_track_move( VikTrwLayer *vtl, GdkEventMotion *event, Viewport * viewport)
 {
+  VikViewport * vvp = (VikViewport *) viewport->vvp;
   /* if we haven't sync'ed yet, we don't have time to do more. */
   if ( vtl->draw_sync_done && vtl->current_track && vtl->current_track->trackpoints ) {
     Trackpoint * last_tpt = vtl->current_track->get_tp_last();
@@ -8851,8 +8858,8 @@ static VikLayerToolFuncStatus tool_new_track_move ( VikTrwLayer *vtl, GdkEventMo
     static GdkPixmap *pixmap = NULL;
     int w1, h1, w2, h2;
     // Need to check in case window has been resized
-    w1 = vvp->port.get_width();
-    h1 = vvp->port.get_height();
+    w1 = viewport->get_width();
+    h1 = viewport->get_height();
     if (!pixmap) {
       pixmap = gdk_pixmap_new ( gtk_widget_get_window(GTK_WIDGET(vvp)), w1, h1, -1 );
     }
@@ -8865,13 +8872,13 @@ static VikLayerToolFuncStatus tool_new_track_move ( VikTrwLayer *vtl, GdkEventMo
     // Reset to background
     gdk_draw_drawable (pixmap,
                        vtl->current_track_newpoint_gc,
-                       vvp->port.get_pixmap(),
+                       viewport->get_pixmap(),
                        0, 0, 0, 0, -1, -1);
 
     draw_sync_t *passalong;
     int x1, y1;
 
-    vvp->port.coord_to_screen(&(last_tpt->coord), &x1, &y1 );
+    viewport->coord_to_screen(&(last_tpt->coord), &x1, &y1 );
 
     // FOR SCREEN OVERLAYS WE MUST DRAW INTO THIS PIXMAP (when using the reset method)
     //  otherwise using vik_viewport_draw_* functions puts the data into the base pixmap,
@@ -8887,7 +8894,7 @@ static VikLayerToolFuncStatus tool_new_track_move ( VikTrwLayer *vtl, GdkEventMo
     // Now add distance to where the pointer is //
     VikCoord coord;
     struct LatLon ll;
-    vvp->port.screen_to_coord((int) event->x, (int) event->y, &coord );
+    viewport->screen_to_coord((int) event->x, (int) event->y, &coord );
     vik_coord_to_latlon ( &coord, &ll );
     double last_step = vik_coord_diff( &coord, &(last_tpt->coord));
     distance = distance + last_step;
@@ -8930,7 +8937,7 @@ static VikLayerToolFuncStatus tool_new_track_move ( VikTrwLayer *vtl, GdkEventMo
       yd = event->y - hd;
 
       // Create a background block to make the text easier to read over the background map
-      GdkGC *background_block_gc = vvp->port.new_gc("#cccccc", 1);
+      GdkGC *background_block_gc = viewport->new_gc("#cccccc", 1);
       gdk_draw_rectangle (pixmap, background_block_gc, true, xd-2, yd-2, wd+4, hd+2);
       gdk_draw_layout (pixmap, vtl->current_track_newpoint_gc, xd, yd, pl);
 
@@ -8947,7 +8954,7 @@ static VikLayerToolFuncStatus tool_new_track_move ( VikTrwLayer *vtl, GdkEventMo
 
     double angle;
     double baseangle;
-    vvp->port.compute_bearing(x1, y1, event->x, event->y, &angle, &baseangle );
+    viewport->compute_bearing(x1, y1, event->x, event->y, &angle, &baseangle );
 
     // Update statusbar with full gain/loss information
     statusbar_write (distance, elev_gain, elev_loss, last_step, angle, vtl);
@@ -8975,7 +8982,7 @@ static void undo_trackpoint_add ( VikTrwLayer *vtl )
   }
 }
 
-static bool tool_new_track_key_press ( VikTrwLayer *vtl, GdkEventKey *event, VikViewport *vvp )
+static bool tool_new_track_key_press ( VikTrwLayer *vtl, GdkEventKey *event, Viewport * viewport)
 {
   if ( vtl->current_track && event->keyval == GDK_Escape ) {
     // Bin track if only one point as it's not very useful
@@ -9003,7 +9010,7 @@ static bool tool_new_track_key_press ( VikTrwLayer *vtl, GdkEventKey *event, Vik
  *  . enables removal of last point via right click
  *  . finishing of the track or route via double clicking
  */
-static bool tool_new_track_or_route_click ( VikTrwLayer *vtl, GdkEventButton *event, VikViewport *vvp )
+static bool tool_new_track_or_route_click ( VikTrwLayer *vtl, GdkEventButton *event, Viewport * viewport)
 {
   if (!vtl || vtl->vl.type != VIK_LAYER_TRW)
     return false;
@@ -9038,7 +9045,6 @@ static bool tool_new_track_or_route_click ( VikTrwLayer *vtl, GdkEventButton *ev
     return true;
   }
 
-  Viewport * viewport = &vvp->port;
   Trackpoint * tp = new Trackpoint();
   viewport->screen_to_coord(event->x, event->y, &(tp->coord) );
 
@@ -9069,7 +9075,7 @@ static bool tool_new_track_or_route_click ( VikTrwLayer *vtl, GdkEventButton *ev
   return true;
 }
 
-static bool tool_new_track_click ( VikTrwLayer *vtl, GdkEventButton *event, VikViewport *vvp )
+static bool tool_new_track_click ( VikTrwLayer *vtl, GdkEventButton *event, Viewport * viewport)
 {
   // if we were running the route finder, cancel it
   vtl->route_finder_started = false;
@@ -9086,10 +9092,10 @@ static bool tool_new_track_click ( VikTrwLayer *vtl, GdkEventButton *event, VikV
     vtl->trw.new_track_create_common(name);
     free( name );
   }
-  return tool_new_track_or_route_click ( vtl, event, vvp );
+  return tool_new_track_or_route_click ( vtl, event, viewport);
 }
 
-static void tool_new_track_release ( VikTrwLayer *vtl, GdkEventButton *event, VikViewport *vvp )
+static void tool_new_track_release ( VikTrwLayer *vtl, GdkEventButton *event, Viewport * viewport)
 {
   if ( event->button == 2 ) {
     // Pan moving ended - enable potential point drawing again
@@ -9100,12 +9106,12 @@ static void tool_new_track_release ( VikTrwLayer *vtl, GdkEventButton *event, Vi
 
 /*** New route ****/
 
-static void * tool_new_route_create ( VikWindow *vw, VikViewport *vvp)
+static void * tool_new_route_create(VikWindow *vw, Viewport * viewport)
 {
-  return vvp;
+  return viewport->vvp;
 }
 
-static bool tool_new_route_click ( VikTrwLayer *vtl, GdkEventButton *event, VikViewport *vvp )
+static bool tool_new_route_click ( VikTrwLayer *vtl, GdkEventButton *event, Viewport * viewport)
 {
   // if we were running the route finder, cancel it
   vtl->route_finder_started = false;
@@ -9123,22 +9129,22 @@ static bool tool_new_route_click ( VikTrwLayer *vtl, GdkEventButton *event, VikV
     vtl->trw.new_route_create_common(name);
     free( name );
   }
-  return tool_new_track_or_route_click ( vtl, event, vvp );
+  return tool_new_track_or_route_click ( vtl, event, viewport);
 }
 
 /*** New waypoint ****/
 
-static void * tool_new_waypoint_create ( VikWindow *vw, VikViewport *vvp)
+static void * tool_new_waypoint_create(VikWindow *vw, Viewport * viewport)
 {
-  return vvp;
+	return viewport->vvp;
 }
 
-static bool tool_new_waypoint_click ( VikTrwLayer *vtl, GdkEventButton *event, VikViewport *vvp )
+static bool tool_new_waypoint_click( VikTrwLayer *vtl, GdkEventButton *event, Viewport * viewport)
 {
   VikCoord coord;
   if (!vtl || vtl->vl.type != VIK_LAYER_TRW)
     return false;
-  vvp->port.screen_to_coord(event->x, event->y, &coord );
+  viewport->screen_to_coord(event->x, event->y, &coord );
   if (vtl->trw.new_waypoint(VIK_GTK_WINDOW_FROM_LAYER(vtl), &coord) ) {
     vtl->trw.calculate_bounds_waypoints();
     if ( VIK_LAYER(vtl)->visible )
@@ -9150,10 +9156,10 @@ static bool tool_new_waypoint_click ( VikTrwLayer *vtl, GdkEventButton *event, V
 
 /*** Edit trackpoint ****/
 
-static void * tool_edit_trackpoint_create ( VikWindow *vw, VikViewport *vvp)
+static void * tool_edit_trackpoint_create ( VikWindow *vw, Viewport * viewport)
 {
   tool_ed_t *t = (tool_ed_t *) malloc(1 * sizeof (tool_ed_t));
-  t->viewport = &vvp->port;
+  t->viewport = viewport;
   t->holding = false;
   return t;
 }
@@ -9321,9 +9327,9 @@ static bool tool_edit_trackpoint_release ( VikTrwLayer *vtl, GdkEventButton *eve
 
 /*** Extended Route Finder ***/
 
-static void * tool_extended_route_finder_create ( VikWindow *vw, VikViewport *vvp)
+static void * tool_extended_route_finder_create(VikWindow *vw, Viewport * viewport)
 {
-  return vvp;
+	return viewport->vvp;
 }
 
 static void tool_extended_route_finder_undo ( VikTrwLayer *vtl )
@@ -9347,11 +9353,11 @@ static void tool_extended_route_finder_undo ( VikTrwLayer *vtl )
 }
 
 
-static bool tool_extended_route_finder_click ( VikTrwLayer *vtl, GdkEventButton *event, VikViewport *vvp )
+static bool tool_extended_route_finder_click(VikTrwLayer *vtl, GdkEventButton *event, Viewport * viewport)
 {
   VikCoord tmp;
   if ( !vtl ) return false;
-  vvp->port.screen_to_coord(event->x, event->y, &tmp);
+  viewport->screen_to_coord(event->x, event->y, &tmp);
   if ( event->button == 3 && vtl->current_track ) {
     tool_extended_route_finder_undo ( vtl );
   }
@@ -9361,7 +9367,7 @@ static bool tool_extended_route_finder_click ( VikTrwLayer *vtl, GdkEventButton 
   }
   // if we started the track but via undo deleted all the track points, begin again
   else if ( vtl->current_track && vtl->current_track->is_route && ! vtl->current_track->get_tp_first() ) {
-    return tool_new_track_or_route_click ( vtl, event, vvp );
+    return tool_new_track_or_route_click ( vtl, event, viewport );
   }
   else if ( ( vtl->current_track && vtl->current_track->is_route ) ||
             ( event->state & GDK_CONTROL_MASK && vtl->current_track ) ) {
@@ -9410,7 +9416,7 @@ static bool tool_extended_route_finder_click ( VikTrwLayer *vtl, GdkEventButton 
     vtl->current_track = NULL;
 
     // create a new route where we will add the planned route to
-    bool ret = tool_new_route_click( vtl, event, vvp );
+    bool ret = tool_new_route_click( vtl, event, viewport );
 
     vtl->route_finder_started = true;
 
@@ -9419,7 +9425,7 @@ static bool tool_extended_route_finder_click ( VikTrwLayer *vtl, GdkEventButton 
   return true;
 }
 
-static bool tool_extended_route_finder_key_press ( VikTrwLayer *vtl, GdkEventKey *event, VikViewport *vvp )
+static bool tool_extended_route_finder_key_press ( VikTrwLayer *vtl, GdkEventKey *event, Viewport * viewport)
 {
   if ( vtl->current_track && event->keyval == GDK_Escape ) {
     vtl->route_finder_started = false;
@@ -9436,9 +9442,9 @@ static bool tool_extended_route_finder_key_press ( VikTrwLayer *vtl, GdkEventKey
 
 /*** Show picture ****/
 
-static void * tool_show_picture_create ( VikWindow *vw, VikViewport *vvp)
+static void * tool_show_picture_create(VikWindow *vw, Viewport * viewport)
 {
-  return vvp;
+	return viewport->vvp;
 }
 
 
@@ -9468,13 +9474,13 @@ static void trw_layer_show_picture ( menu_array_sublayer values )
 
 
 
-static bool tool_show_picture_click(VikTrwLayer * vtl, GdkEventButton * event, VikViewport * vvp)
+static bool tool_show_picture_click(VikTrwLayer * vtl, GdkEventButton * event, Viewport * viewport)
 {
 	if (!vtl || vtl->vl.type != VIK_LAYER_TRW) {
 		return false;
 	}
 
-	char * found = LayerTRW::tool_show_picture_wp(vtl->trw.waypoints, event->x, event->y, &vvp->port);
+	char * found = LayerTRW::tool_show_picture_wp(vtl->trw.waypoints, event->x, event->y, viewport);
 	if (found) {
 		static menu_array_sublayer values;
 		values[MA_VTL] = vtl;

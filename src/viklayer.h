@@ -88,7 +88,7 @@ typedef enum {
 } VikLayerToolFuncStatus;
 
 /* void * is tool-specific state created in the constructor */
-typedef void * (*VikToolConstructorFunc) (VikWindow *, VikViewport *);
+typedef void * (*VikToolConstructorFunc) (VikWindow *, Viewport *);
 typedef void (*VikToolDestructorFunc) (void *);
 typedef VikLayerToolFuncStatus (*VikToolMouseFunc) (VikLayer *, GdkEventButton *, void *);
 typedef VikLayerToolFuncStatus (*VikToolMouseMoveFunc) (VikLayer *, GdkEventMotion *, void *);
