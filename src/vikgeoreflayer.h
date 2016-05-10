@@ -32,7 +32,7 @@ extern "C" {
 #endif
 
 
-#define VIK_GEOREF_LAYER_TYPE            (vik_georef_layer_get_type ())
+#define VIK_GEOREF_LAYER_TYPE            (vik_georef_layer_get_type())
 #define VIK_GEOREF_LAYER(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_GEOREF_LAYER_TYPE, VikGeorefLayer))
 #define VIK_GEOREF_LAYER_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), VIK_GEOREF_LAYER_TYPE, VikGeorefLayerClass))
 #define IS_VIK_GEOREF_LAYER(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), VIK_GEOREF_LAYER_TYPE))
@@ -41,21 +41,21 @@ extern "C" {
 typedef struct _VikGeorefLayerClass VikGeorefLayerClass;
 struct _VikGeorefLayerClass
 {
-  VikLayerClass object_class;
+	VikLayerClass object_class;
 };
 
-GType vik_georef_layer_get_type ();
+GType vik_georef_layer_get_type();
 
 typedef struct _VikGeorefLayer VikGeorefLayer;
 
-void vik_georef_layer_init (void);
+void vik_georef_layer_init(void);
 
-VikGeorefLayer *vik_georef_layer_create ( VikViewport *vp,
-                                          VikLayersPanel *vlp,
-                                          const char *name,
-                                          GdkPixbuf *pibxbuf,
-                                          VikCoord *coord_tr,
-                                          VikCoord *coord_br );
+VikGeorefLayer *vik_georef_layer_create(VikViewport *vp,
+					VikLayersPanel *vlp,
+					const char *name,
+					GdkPixbuf *pibxbuf,
+					VikCoord *coord_tr,
+					VikCoord *coord_br );
 
 #ifdef __cplusplus
 }

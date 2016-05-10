@@ -49,34 +49,34 @@ typedef struct _VikLayersPanelClass VikLayersPanelClass;
 
 struct _VikLayersPanelClass
 {
-  GtkVBoxClass vbox_class;
+	GtkVBoxClass vbox_class;
 
-  void (* update) (VikLayersPanel *vlp);
-  void (* delete_layer) (VikLayersPanel *vlp); // NB Just before (actual layer *not* specified ATM) it is deleted
+	void (* update) (VikLayersPanel *vlp);
+	void (* delete_layer) (VikLayersPanel *vlp); // NB Just before (actual layer *not* specified ATM) it is deleted
 };
 
-GType vik_layers_panel_get_type ();
-VikLayersPanel *vik_layers_panel_new ();
-void vik_layers_panel_free ( VikLayersPanel *vlp );
-void vik_layers_panel_add_layer ( VikLayersPanel *vlp, VikLayer *l );
-void vik_layers_panel_draw_all ( VikLayersPanel *vlp );
-VikLayer *vik_layers_panel_get_selected ( VikLayersPanel *vlp );
-void vik_layers_panel_cut_selected ( VikLayersPanel *vlp );
-void vik_layers_panel_copy_selected ( VikLayersPanel *vlp );
-bool vik_layers_panel_paste_selected ( VikLayersPanel *vlp );
-void vik_layers_panel_delete_selected ( VikLayersPanel *vlp );
-VikLayer *vik_layers_panel_get_layer_of_type ( VikLayersPanel *vlp, VikLayerTypeEnum type );
-void vik_layers_panel_set_viewport ( VikLayersPanel *vlp, VikViewport *vvp );
-//bool vik_layers_panel_tool ( VikLayersPanel *vlp, uint16_t layer_type, VikToolInterfaceFunc tool_func, GdkEventButton *event, VikViewport *vvp );
-VikViewport *vik_layers_panel_get_viewport ( VikLayersPanel *vlp );
-void vik_layers_panel_emit_update ( VikLayersPanel *vlp );
-bool vik_layers_panel_properties ( VikLayersPanel *vlp );
-bool vik_layers_panel_new_layer ( VikLayersPanel *vlp, VikLayerTypeEnum type );
-void vik_layers_panel_clear ( VikLayersPanel *vlp );
-VikAggregateLayer *vik_layers_panel_get_top_layer ( VikLayersPanel *vlp );
-void vik_layers_panel_change_coord_mode ( VikLayersPanel *vlp, VikCoordMode mode );
+GType vik_layers_panel_get_type();
+VikLayersPanel *vik_layers_panel_new();
+void vik_layers_panel_free(VikLayersPanel *vlp);
+void vik_layers_panel_add_layer(VikLayersPanel *vlp, VikLayer *l);
+void vik_layers_panel_draw_all(VikLayersPanel *vlp);
+VikLayer *vik_layers_panel_get_selected(VikLayersPanel *vlp);
+void vik_layers_panel_cut_selected(VikLayersPanel *vlp);
+void vik_layers_panel_copy_selected(VikLayersPanel *vlp);
+bool vik_layers_panel_paste_selected(VikLayersPanel *vlp);
+void vik_layers_panel_delete_selected(VikLayersPanel *vlp);
+VikLayer *vik_layers_panel_get_layer_of_type(VikLayersPanel *vlp, VikLayerTypeEnum type);
+void vik_layers_panel_set_viewport(VikLayersPanel *vlp, VikViewport *vvp);
+//bool vik_layers_panel_tool(VikLayersPanel *vlp, uint16_t layer_type, VikToolInterfaceFunc tool_func, GdkEventButton *event, VikViewport *vvp);
+VikViewport *vik_layers_panel_get_viewport(VikLayersPanel *vlp);
+void vik_layers_panel_emit_update(VikLayersPanel *vlp);
+bool vik_layers_panel_properties(VikLayersPanel *vlp);
+bool vik_layers_panel_new_layer(VikLayersPanel *vlp, VikLayerTypeEnum type);
+void vik_layers_panel_clear(VikLayersPanel *vlp);
+VikAggregateLayer *vik_layers_panel_get_top_layer(VikLayersPanel *vlp);
+void vik_layers_panel_change_coord_mode(VikLayersPanel *vlp, VikCoordMode mode);
 GList *vik_layers_panel_get_all_layers_of_type(VikLayersPanel *vlp, int type, bool include_invisible);
-VikTreeview *vik_layers_panel_get_treeview ( VikLayersPanel *vlp );
+VikTreeview *vik_layers_panel_get_treeview(VikLayersPanel *vlp);
 
 #ifdef __cplusplus
 }
