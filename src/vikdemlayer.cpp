@@ -1292,7 +1292,7 @@ static void free_dem_download_params(DEMDownloadParams *p)
 
 static void * dem_layer_download_create(VikWindow *vw, Viewport * viewport)
 {
-	return viewport->vvp;
+	return viewport;
 }
 
 /**
