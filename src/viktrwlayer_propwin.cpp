@@ -398,8 +398,8 @@ static Trackpoint * set_center_at_graph_position(double event_x,
   if (tp) {
     VikCoord coord = tp->coord;
     if ( vlp ) {
-      vik_layers_panel_get_viewport(vlp)->port.set_center_coord(&coord, true );
-      vik_layers_panel_emit_update ( vlp );
+      vik_layers_panel_get_viewport(vlp->panel_ref)->port.set_center_coord(&coord, true );
+      vik_layers_panel_emit_update ( vlp->panel_ref );
     }
     else {
       /* since vlp not set, vvp should be valid instead! */

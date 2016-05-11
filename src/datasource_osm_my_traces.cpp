@@ -665,7 +665,7 @@ static bool datasource_osm_my_traces_process ( VikTrwLayer *vtl, ProcessOptions 
 
 		if ( result ) {
 			// Can use the layer
-			vik_aggregate_layer_add_layer ( vik_layers_panel_get_top_layer (adw->vlp), VIK_LAYER(vtlX), true );
+			vik_aggregate_layer_add_layer ( vik_layers_panel_get_top_layer (adw->vlp->panel_ref), VIK_LAYER(vtlX), true );
 			// Move to area of the track
 			vik_layer_post_read ( VIK_LAYER(vtlX), vik_window_viewport(adw->vw), true );
 			vtlX->trw.auto_set_view(vik_window_viewport(adw->vw));

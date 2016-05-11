@@ -452,7 +452,7 @@ static void select_cb(GtkTreeSelection *selection, void * data)
 			    tmp_type,
 			    vik_window_layers_panel(vw) ) ) {
     /* Redraw required */
-    vik_layers_panel_emit_update ( vik_window_layers_panel(vw) );
+    vik_layers_panel_emit_update ( vik_window_layers_panel(vw)->panel_ref );
   }
 
 }

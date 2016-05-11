@@ -2392,7 +2392,8 @@ static void maps_layer_add_menu_items (VikMapsLayer *vml, GtkMenu *menu, VikLaye
 	GtkWidget *item;
 	static menu_array_values values;
 	values[MA_VML] = vml;
-	values[MA_VVP] = vik_layers_panel_get_viewport(VIK_LAYERS_PANEL(vlp));
+	VikLayersPanel * vlp_ = VIK_LAYERS_PANEL(vlp);
+	values[MA_VVP] = vik_layers_panel_get_viewport(vlp_->panel_ref);
 
 	item = gtk_menu_item_new();
 	gtk_menu_shell_append (GTK_MENU_SHELL(menu), item);

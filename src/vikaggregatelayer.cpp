@@ -392,7 +392,7 @@ static void aggregate_layer_child_visible_toggle ( menu_array_values values )
     vl = VIK_LAYER ( iter->data );
     vl->visible = !vl->visible;
     // Also set checkbox on/off
-    vik_treeview_item_toggle_visible ( vik_layers_panel_get_treeview ( vlp ), &(vl->iter) );
+    vik_treeview_item_toggle_visible ( vik_layers_panel_get_treeview ( vlp->panel_ref ), &(vl->iter) );
     iter = iter->next;
   }
   // Redraw as view may have changed
@@ -413,7 +413,7 @@ static void aggregate_layer_child_visible ( menu_array_values values, bool on_of
     vl = VIK_LAYER ( iter->data );
     vl->visible = on_off;
     // Also set checkbox on_off
-    vik_treeview_item_set_visible ( vik_layers_panel_get_treeview ( vlp ), &(vl->iter), on_off );
+    vik_treeview_item_set_visible ( vik_layers_panel_get_treeview ( vlp->panel_ref ), &(vl->iter), on_off );
     iter = iter->next;
   }
   // Redraw as view may have changed

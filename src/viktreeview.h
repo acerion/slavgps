@@ -55,8 +55,8 @@ struct _VikTreeviewClass
 };
 
 enum {
- VIK_TREEVIEW_TYPE_LAYER = 0,
- VIK_TREEVIEW_TYPE_SUBLAYER
+	VIK_TREEVIEW_TYPE_LAYER = 0,
+	VIK_TREEVIEW_TYPE_SUBLAYER
 };
 
 GType vik_treeview_get_type ();
