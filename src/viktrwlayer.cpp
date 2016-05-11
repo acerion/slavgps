@@ -2595,8 +2595,8 @@ static void trw_layer_auto_view ( menu_array_layer values )
 {
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
   VikLayersPanel *vlp = VIK_LAYERS_PANEL(values[MA_VLP]);
-  if (vtl->trw.auto_set_view(vik_layers_panel_get_viewport (vlp) ) ) {
-    vik_layers_panel_emit_update ( vlp );
+  if (vtl->trw.auto_set_view(vik_layers_panel_get_viewport (vlp->panel_ref) ) ) {
+    vik_layers_panel_emit_update ( vlp->panel_ref );
   }
   else
     a_dialog_info_msg ( VIK_GTK_WINDOW_FROM_LAYER(vtl), _("This layer has no waypoints or trackpoints.") );
@@ -2721,8 +2721,8 @@ static void trw_layer_goto_wp ( menu_array_layer values )
       a_dialog_error_msg ( VIK_GTK_WINDOW_FROM_LAYER(vtl), _("Waypoint not found in this layer.") );
     else
     {
-      vik_layers_panel_get_viewport(vlp)->port.set_center_coord(&(wp->coord), true );
-      vik_layers_panel_emit_update ( vlp );
+      vik_layers_panel_get_viewport(vlp->panel_ref)->port.set_center_coord(&(wp->coord), true );
+      vik_layers_panel_emit_update ( vlp->panel_ref );
 
       // Find and select on the side panel
       sg_uid_t wp_uid = LayerTRW::find_uid_of_waypoint(vtl->trw.waypoints, wp);
@@ -2785,7 +2785,7 @@ static void trw_layer_new_wikipedia_wp_viewport ( menu_array_layer values )
   vvp->port.get_min_max_lat_lon(&maxmin[1].lat, &maxmin[0].lat, &maxmin[1].lon, &maxmin[0].lon );
   a_geonames_wikipedia_box((VikWindow *)(VIK_GTK_WINDOW_FROM_LAYER(vtl)), vtl, maxmin);
   vtl->trw.calculate_bounds_waypoints();
-  vik_layers_panel_emit_update ( vlp );
+  vik_layers_panel_emit_update ( vlp->panel_ref );
 }
 
 static void trw_layer_new_wikipedia_wp_layer ( menu_array_layer values )
@@ -2797,7 +2797,7 @@ static void trw_layer_new_wikipedia_wp_layer ( menu_array_layer values )
   vtl->trw.find_maxmin(maxmin);
   a_geonames_wikipedia_box((VikWindow *)(VIK_GTK_WINDOW_FROM_LAYER(vtl)), vtl, maxmin);
   vtl->trw.calculate_bounds_waypoints();
-  vik_layers_panel_emit_update ( vlp );
+  vik_layers_panel_emit_update ( vlp->panel_ref );
 }
 
 #ifdef VIK_CONFIG_GEOTAG
@@ -3053,7 +3053,7 @@ static void trw_layer_gps_upload_any ( menu_array_sublayer values )
                  protocol,
                  port,
                  false,
-                 vik_layers_panel_get_viewport (vlp),
+                 vik_layers_panel_get_viewport (vlp->panel_ref),
                  vlp,
                  do_tracks,
                  do_routes,
@@ -3067,10 +3067,10 @@ static void trw_layer_new_wp ( menu_array_layer values )
   VikLayersPanel *vlp = VIK_LAYERS_PANEL(values[MA_VLP]);
   /* TODO longone: okay, if layer above (aggregate) is invisible but vtl->visible is true, this redraws for no reason.
      instead return true if you want to update. */
-  if (vtl->trw.new_waypoint(VIK_GTK_WINDOW_FROM_LAYER(vtl), vik_layers_panel_get_viewport(vlp)->port.get_center()) ) {
+  if (vtl->trw.new_waypoint(VIK_GTK_WINDOW_FROM_LAYER(vtl), vik_layers_panel_get_viewport(vlp->panel_ref)->port.get_center()) ) {
     vtl->trw.calculate_bounds_waypoints();
     if ( VIK_LAYER(vtl)->visible )
-      vik_layers_panel_emit_update ( vlp );
+      vik_layers_panel_emit_update ( vlp->panel_ref );
   }
 }
 
@@ -3156,8 +3156,8 @@ static void trw_layer_auto_routes_view ( menu_array_layer values )
   if (vtl->trw.routes.size() > 0 ) {
     struct LatLon maxmin[2] = { {0,0}, {0,0} };
     LayerTRW::find_maxmin_in_tracks(vtl->trw.routes, maxmin);
-    vtl->trw.zoom_to_show_latlons(vik_layers_panel_get_viewport (vlp), maxmin);
-    vik_layers_panel_emit_update ( vlp );
+    vtl->trw.zoom_to_show_latlons(vik_layers_panel_get_viewport (vlp->panel_ref), maxmin);
+    vik_layers_panel_emit_update ( vlp->panel_ref );
   }
 }
 
@@ -3178,8 +3178,8 @@ static void trw_layer_auto_tracks_view ( menu_array_layer values )
   if (vtl->trw.tracks.size() > 0) {
     struct LatLon maxmin[2] = { {0,0}, {0,0} };
     LayerTRW::find_maxmin_in_tracks(vtl->trw.tracks, maxmin);
-    vtl->trw.zoom_to_show_latlons(vik_layers_panel_get_viewport (vlp), maxmin);
-    vik_layers_panel_emit_update ( vlp );
+    vtl->trw.zoom_to_show_latlons(vik_layers_panel_get_viewport (vlp->panel_ref), maxmin);
+    vik_layers_panel_emit_update ( vlp->panel_ref );
   }
 }
 
@@ -3194,7 +3194,7 @@ static void trw_layer_auto_waypoints_view ( menu_array_layer values )
 
   /* Only 1 waypoint - jump straight to it */
   if (vtl->trw.waypoints.size() == 1) {
-    VikViewport *vvp = vik_layers_panel_get_viewport (vlp);
+    VikViewport *vvp = vik_layers_panel_get_viewport (vlp->panel_ref);
     LayerTRW::single_waypoint_jump(vtl->trw.waypoints, &vvp->port);
   }
   /* If at least 2 waypoints - find center and then zoom to fit */
@@ -3205,10 +3205,10 @@ static void trw_layer_auto_waypoints_view ( menu_array_layer values )
     maxmin[1].lat = vtl->waypoints_bbox.south;
     maxmin[0].lon = vtl->waypoints_bbox.east;
     maxmin[1].lon = vtl->waypoints_bbox.west;
-    vtl->trw.zoom_to_show_latlons(vik_layers_panel_get_viewport (vlp), maxmin);
+    vtl->trw.zoom_to_show_latlons(vik_layers_panel_get_viewport (vlp->panel_ref), maxmin);
   }
 
-  vik_layers_panel_emit_update ( vlp );
+  vik_layers_panel_emit_update ( vlp->panel_ref );
 }
 
 void trw_layer_osm_traces_upload_cb ( menu_array_layer values )
@@ -3533,15 +3533,16 @@ static void trw_layer_add_menu_items ( VikTrwLayer *vtl, GtkMenu *menu, void * v
   gtk_menu_shell_append ( GTK_MENU_SHELL(delete_submenu), item );
   gtk_widget_show ( item );
 
+  VikLayersPanel * vlp_ = VIK_LAYERS_PANEL(vlp);
   item = a_acquire_trwlayer_menu ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(vtl)), (VikLayersPanel *) vlp,
-				   vik_layers_panel_get_viewport(VIK_LAYERS_PANEL(vlp)), vtl );
+				   vik_layers_panel_get_viewport(vlp_->panel_ref), vtl );
   if ( item ) {
     gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
     gtk_widget_show ( item );
   }
 
   item = a_acquire_trwlayer_track_menu ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(vtl)), (VikLayersPanel *) vlp,
-					 vik_layers_panel_get_viewport(VIK_LAYERS_PANEL(vlp)), vtl );
+					 vik_layers_panel_get_viewport(vlp_->panel_ref), vtl );
   if ( item ) {
     gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
     gtk_widget_show ( item );
@@ -4442,8 +4443,9 @@ void LayerTRW::update_treeview(Track * trk)
 static void goto_coord ( void ** vlp, void * vl, void * vvp, const VikCoord *coord )
 {
   if ( vlp ) {
-    vik_layers_panel_get_viewport (VIK_LAYERS_PANEL(vlp))->port.set_center_coord(coord, true );
-    vik_layers_panel_emit_update ( VIK_LAYERS_PANEL(vlp) );
+	  VikLayersPanel * vlp_ = VIK_LAYERS_PANEL(vlp);
+    vik_layers_panel_get_viewport (vlp_->panel_ref)->port.set_center_coord(coord, true );
+    vik_layers_panel_emit_update ( VIK_LAYERS_PANEL(vlp)->panel_ref );
   }
   else {
     /* since vlp not set, vl & vvp should be valid instead! */
@@ -4590,7 +4592,7 @@ bool LayerTRW::dem_test(VikLayersPanel * vlp)
 {
 	// If have a vlp then perform a basic test to see if any DEM info available...
 	if (vlp) {
-		GList * dems = vik_layers_panel_get_all_layers_of_type (vlp, VIK_LAYER_DEM, true); // Includes hidden DEM layer types
+		GList * dems = vik_layers_panel_get_all_layers_of_type (vlp->panel_ref, VIK_LAYER_DEM, true); // Includes hidden DEM layer types
 
 		if (!g_list_length(dems)) {
 			a_dialog_error_msg(VIK_GTK_WINDOW_FROM_LAYER((VikTrwLayer *) this->vtl), _("No DEM layers available, thus no DEM values can be applied."));
@@ -4830,7 +4832,7 @@ static void trw_layer_auto_track_view ( menu_array_sublayer values )
     LayerTRW::find_maxmin_in_track(trk, maxmin);
     vtl->trw.zoom_to_show_latlons((VikViewport *) values[MA_VVP], maxmin);
     if ( values[MA_VLP] )
-      vik_layers_panel_emit_update ( VIK_LAYERS_PANEL(values[MA_VLP]) );
+      vik_layers_panel_emit_update ( VIK_LAYERS_PANEL(values[MA_VLP])->panel_ref );
     else
       vik_layer_emit_update ( VIK_LAYER(vtl) );
   }
@@ -6075,7 +6077,7 @@ void LayerTRW::uniquify_tracks(VikLayersPanel * vlp, std::unordered_map<sg_uid_t
 	}
 
 	// Update
-	vik_layers_panel_emit_update(vlp);
+	vik_layers_panel_emit_update(vlp->panel_ref);
 }
 
 
@@ -6352,7 +6354,7 @@ void LayerTRW::uniquify_waypoints(VikLayersPanel * vlp)
 	}
 
 	// Update
-	vik_layers_panel_emit_update(vlp);
+	vik_layers_panel_emit_update(vlp->panel_ref);
 }
 
 
@@ -6751,7 +6753,7 @@ static const char* trw_layer_sublayer_rename_request ( VikTrwLayer *l, const cha
     vik_treeview_item_set_name ( VIK_LAYER(l)->vt, iter, newname );
     vik_treeview_sort_children ( VIK_LAYER(l)->vt, &(l->trw.waypoint_iter), l->wp_sort_order );
 
-    vik_layers_panel_emit_update ( VIK_LAYERS_PANEL(vlp) );
+    vik_layers_panel_emit_update ( VIK_LAYERS_PANEL(vlp)->panel_ref );
 
     return newname;
   }
@@ -6788,7 +6790,7 @@ static const char* trw_layer_sublayer_rename_request ( VikTrwLayer *l, const cha
     vik_treeview_item_set_name ( VIK_LAYER(l)->vt, iter, newname );
     vik_treeview_sort_children ( VIK_LAYER(l)->vt, &(l->trw.track_iter), l->track_sort_order );
 
-    vik_layers_panel_emit_update ( VIK_LAYERS_PANEL(vlp) );
+    vik_layers_panel_emit_update ( VIK_LAYERS_PANEL(vlp)->panel_ref );
 
     return newname;
   }
@@ -6825,7 +6827,7 @@ static const char* trw_layer_sublayer_rename_request ( VikTrwLayer *l, const cha
     vik_treeview_item_set_name ( VIK_LAYER(l)->vt, iter, newname );
     vik_treeview_sort_children ( VIK_LAYER(l)->vt, &(l->trw.track_iter), l->track_sort_order );
 
-    vik_layers_panel_emit_update ( VIK_LAYERS_PANEL(vlp) );
+    vik_layers_panel_emit_update ( VIK_LAYERS_PANEL(vlp)->panel_ref );
 
     return newname;
   }
@@ -7713,8 +7715,9 @@ static bool trw_layer_sublayer_add_menu_items ( VikTrwLayer *l, GtkMenu *menu, v
     /* ATM This function is only available via the layers panel, due to needing a vlp */
     if ( vlp ) {
       sg_uid_t uid = (sg_uid_t) ((long) sublayer);
+      VikLayersPanel * vlp_ = VIK_LAYERS_PANEL(vlp);
       item = a_acquire_track_menu ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(l)), (VikLayersPanel *) vlp,
-                                    vik_layers_panel_get_viewport(VIK_LAYERS_PANEL(vlp)),
+                                    vik_layers_panel_get_viewport(vlp_->panel_ref),
                                     l->trw.tracks.at(uid));
       if ( item ) {
         gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
@@ -8727,7 +8730,7 @@ static bool tool_edit_waypoint_release ( VikTrwLayer *vtl, GdkEventButton *event
 
 static void * tool_new_track_create( VikWindow *vw, Viewport * viewport)
 {
-	return viewport->vvp;
+	return viewport;
 }
 
 typedef struct {
@@ -9108,7 +9111,7 @@ static void tool_new_track_release ( VikTrwLayer *vtl, GdkEventButton *event, Vi
 
 static void * tool_new_route_create(VikWindow *vw, Viewport * viewport)
 {
-  return viewport->vvp;
+  return viewport;
 }
 
 static bool tool_new_route_click ( VikTrwLayer *vtl, GdkEventButton *event, Viewport * viewport)
@@ -9136,7 +9139,7 @@ static bool tool_new_route_click ( VikTrwLayer *vtl, GdkEventButton *event, View
 
 static void * tool_new_waypoint_create(VikWindow *vw, Viewport * viewport)
 {
-	return viewport->vvp;
+	return viewport;
 }
 
 static bool tool_new_waypoint_click( VikTrwLayer *vtl, GdkEventButton *event, Viewport * viewport)
@@ -9329,7 +9332,7 @@ static bool tool_edit_trackpoint_release ( VikTrwLayer *vtl, GdkEventButton *eve
 
 static void * tool_extended_route_finder_create(VikWindow *vw, Viewport * viewport)
 {
-	return viewport->vvp;
+	return viewport;
 }
 
 static void tool_extended_route_finder_undo ( VikTrwLayer *vtl )
@@ -9444,7 +9447,7 @@ static bool tool_extended_route_finder_key_press ( VikTrwLayer *vtl, GdkEventKey
 
 static void * tool_show_picture_create(VikWindow *vw, Viewport * viewport)
 {
-	return viewport->vvp;
+	return viewport;
 }
 
 
@@ -10097,7 +10100,7 @@ static void trw_layer_download_map_along_track_cb ( menu_array_sublayer values )
 
   VikViewport *vvp = vik_window_viewport((VikWindow *)(VIK_GTK_WINDOW_FROM_LAYER(vtl)));
 
-  GList *vmls = vik_layers_panel_get_all_layers_of_type(vlp, VIK_LAYER_MAPS, true); // Includes hidden map layer types
+  GList *vmls = vik_layers_panel_get_all_layers_of_type(vlp->panel_ref, VIK_LAYER_MAPS, true); // Includes hidden map layer types
   int num_maps = g_list_length(vmls);
 
   if (!num_maps) {
