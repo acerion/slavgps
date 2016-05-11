@@ -1055,16 +1055,16 @@ static bool georef_layer_dialog(VikGeorefLayer *vgl, void * vp, GtkWindow *w)
 static void georef_layer_zoom_to_fit(void * vgl_vlp[2])
 {
 	VikLayersPanel * vlp = VIK_LAYERS_PANEL(vgl_vlp[1]);
-	vik_layers_panel_get_viewport(vlp->panel_ref)->port.set_xmpp(VIK_GEOREF_LAYER(vgl_vlp[0])->mpp_easting);
-	vik_layers_panel_get_viewport(vlp->panel_ref)->port.set_ympp(VIK_GEOREF_LAYER(vgl_vlp[0])->mpp_northing);
-	vik_layers_panel_emit_update(vlp->panel_ref);
+	vlp->panel_ref->get_viewport()->port.set_xmpp(VIK_GEOREF_LAYER(vgl_vlp[0])->mpp_easting);
+	vlp->panel_ref->get_viewport()->port.set_ympp(VIK_GEOREF_LAYER(vgl_vlp[0])->mpp_northing);
+	vlp->panel_ref->emit_update();
 }
 
 static void georef_layer_goto_center(void * vgl_vlp[2])
 {
 	VikGeorefLayer *vgl = VIK_GEOREF_LAYER (vgl_vlp[0]);
 	VikLayersPanel * vlp = VIK_LAYERS_PANEL(vgl_vlp[1]);
-	VikViewport *vp = vik_layers_panel_get_viewport(vlp->panel_ref);
+	VikViewport *vp = vlp->panel_ref->get_viewport();
 	struct UTM utm;
 	VikCoord coord;
 

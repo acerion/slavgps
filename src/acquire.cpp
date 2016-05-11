@@ -112,7 +112,7 @@ static void on_complete_process (w_and_interface_t *wi)
       // TODO: create function for this operation to hide detail:
       if ( ! wi->vtl->trw.is_empty() ) {
         vik_layer_post_read ( VIK_LAYER(wi->vtl), wi->w->vvp, true );
-        vik_aggregate_layer_add_layer ( vik_layers_panel_get_top_layer(wi->w->vlp->panel_ref), VIK_LAYER(wi->vtl), true );
+        vik_aggregate_layer_add_layer ( wi->w->vlp->panel_ref->get_top_layer(), VIK_LAYER(wi->vtl), true );
       }
       else
         gtk_label_set_text ( GTK_LABEL(wi->w->status), _("No data.") );
@@ -128,7 +128,7 @@ static void on_complete_process (w_and_interface_t *wi)
       vik_layer_post_read ( VIK_LAYER(wi->vtl), wi->w->vvp, true );
       // View this data if desired - must be done after post read (so that the bounds are known)
       if ( wi->w->source_interface->autoview ) {
-        wi->vtl->trw.auto_set_view(vik_layers_panel_get_viewport(wi->w->vlp->panel_ref));
+        wi->vtl->trw.auto_set_view(wi->w->vlp->panel_ref->get_viewport());
       }
       vik_layers_panel_emit_update ( wi->w->vlp->panel_ref );
     }
@@ -355,7 +355,7 @@ static void acquire ( VikWindow *vw,
   w->user_data = user_data;
 
   if ( mode == VIK_DATASOURCE_ADDTOLAYER ) {
-    VikLayer *current_selected = vik_layers_panel_get_selected ( w->vlp->panel_ref );
+    VikLayer *current_selected = w->vlp->panel_ref->get_selected();
     if ( IS_VIK_TRW_LAYER(current_selected) ) {
       wi->vtl = VIK_TRW_LAYER(current_selected);
       wi->creating_new_layer = false;
@@ -367,7 +367,7 @@ static void acquire ( VikWindow *vw,
   else if ( mode == VIK_DATASOURCE_MANUAL_LAYER_MANAGEMENT ) {
     // Don't create in acquire - as datasource will perform the necessary actions
     wi->creating_new_layer = false;
-    VikLayer *current_selected = vik_layers_panel_get_selected ( w->vlp->panel_ref );
+    VikLayer *current_selected = w->vlp->panel_ref->get_selected();
     if ( IS_VIK_TRW_LAYER(current_selected) )
       wi->vtl = VIK_TRW_LAYER(current_selected);
   }

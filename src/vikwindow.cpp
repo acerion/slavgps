@@ -479,7 +479,7 @@ void vik_window_new_window_finish(VikWindow *vw)
 	if(a_vik_get_add_default_map_layer()) {
 		VikMapsLayer *vml = VIK_MAPS_LAYER(vik_layer_create(VIK_LAYER_MAPS, vw->viking_vvp, false));
 		vik_layer_rename(VIK_LAYER(vml), _("Default Map"));
-		vik_aggregate_layer_add_layer(vik_layers_panel_get_top_layer(vw->viking_vlp->gob->panel_ref), VIK_LAYER(vml), true);
+		vik_aggregate_layer_add_layer(vw->viking_vlp->gob->panel_ref->get_top_layer(), VIK_LAYER(vml), true);
 
 		draw_update(vw);
 	}
@@ -761,7 +761,7 @@ static void vik_window_init(VikWindow *vw)
 
 	vw->viking_vvp = vik_viewport_new();
 	vw->viking_vlp = vik_layers_panel_new();
-	vik_layers_panel_set_viewport(vw->viking_vlp->gob->panel_ref, vw->viking_vvp);
+	vw->viking_vlp->gob->panel_ref->set_viewport(vw->viking_vvp);
 	vw->viking_vs = vik_statusbar_new();
 
 	vw->vt = toolbox_create(vw);
@@ -949,7 +949,7 @@ static VikWindow *window_new()
 static void simple_map_update(VikWindow *vw, bool only_new)
 {
 	// Find the most relevent single map layer to operate on
-	VikLayer *vl = vik_aggregate_layer_get_top_visible_layer_of_type(vik_layers_panel_get_top_layer(vw->viking_vlp->gob->panel_ref), VIK_LAYER_MAPS);
+	VikLayer *vl = vik_aggregate_layer_get_top_visible_layer_of_type(vw->viking_vlp->gob->panel_ref->get_top_layer(), VIK_LAYER_MAPS);
 	if (vl)
 		vik_maps_layer_download(VIK_MAPS_LAYER(vl), vw->viking_vvp, only_new);
 }
@@ -1001,7 +1001,7 @@ static bool key_press_event(VikWindow *vw, GdkEventKey *event, void * data)
 		return true; // handled keypress
 	}
 
-	VikLayer *vl = vik_layers_panel_get_selected(vw->viking_vlp->gob->panel_ref);
+	VikLayer *vl = vw->viking_vlp->gob->panel_ref->get_selected();
 	if (vl && vw->vt->active_tool != -1 && vw->vt->tools[vw->vt->active_tool].ti.key_press) {
 		int ltype = vw->vt->tools[vw->vt->active_tool].layer_type;
 		if (vl && ltype == vl->type)
@@ -1185,7 +1185,7 @@ static void draw_redraw(VikWindow *vw)
 	/* actually draw */
 	vw->viking_vvp->port.clear();
 	// Main layer drawing
-	vik_layers_panel_draw_all(vw->viking_vlp->gob->panel_ref);
+	vw->viking_vlp->gob->panel_ref->draw_all();
 	// Draw highlight (possibly again but ensures it is on top - especially for when tracks overlap)
 	if (vw->viking_vvp->port.get_draw_highlight()) {
 		if (vw->containing_vtl && (vw->selected_tracks || vw->selected_waypoints)) {
@@ -2186,7 +2186,7 @@ static VikLayerToolFuncStatus selecttool_click(VikLayer *vl, GdkEventButton *eve
 		else {
 			/* Enable click to apply callback to potentially all track/waypoint layers */
 			/* Useful as we can find things that aren't necessarily in the currently selected layer */
-			GList* gl = vik_layers_panel_get_all_layers_of_type(t->vw->viking_vlp->gob->panel_ref, VIK_LAYER_TRW, false); // Don't get invisible layers
+			GList* gl = t->vw->viking_vlp->gob->panel_ref->get_all_layers_of_type(VIK_LAYER_TRW, false); // Don't get invisible layers
 			clicker ck;
 			ck.cont = true;
 			ck.viewport = &t->vw->viking_vvp->port;
@@ -2198,7 +2198,7 @@ static VikLayerToolFuncStatus selecttool_click(VikLayer *vl, GdkEventButton *eve
 			// If nothing found then deselect & redraw screen if necessary to remove the highlight
 			if (ck.cont) {
 				GtkTreeIter iter;
-				VikTreeview *vtv = vik_layers_panel_get_treeview(t->vw->viking_vlp->gob->panel_ref);
+				VikTreeview *vtv = t->vw->viking_vlp->gob->panel_ref->get_treeview();
 
 				if (vik_treeview_get_selected_iter(vtv, &iter)) {
 					// Only clear if selected thing is a TrackWaypoint layer or a sublayer
@@ -2287,7 +2287,7 @@ static void draw_pan_cb(GtkAction *a, VikWindow *vw)
 {
 	// Since the treeview cell editting intercepts standard keyboard handlers, it means we can receive events here
 	// Thus if currently editting, ensure we don't move the viewport when Ctrl+<arrow> is received
-	VikLayer *sel = vik_layers_panel_get_selected(vw->viking_vlp->gob->panel_ref);
+	VikLayer *sel = vw->viking_vlp->gob->panel_ref->get_selected();
 	if (sel && vik_treeview_get_editing(sel->vt))
 		return;
 
@@ -2421,7 +2421,7 @@ static void menu_addlayer_cb(GtkAction *a, VikWindow *vw)
 	int type;
 	for (type = 0; ((VikLayerTypeEnum) type) < VIK_LAYER_NUM_TYPES; type++) {
 		if (!strcmp(vik_layer_get_interface((VikLayerTypeEnum) type)->name, gtk_action_get_name(a))) {
-			if (vik_layers_panel_new_layer(vw->viking_vlp->gob->panel_ref, (VikLayerTypeEnum) type)) {
+			if (vw->viking_vlp->gob->panel_ref->new_layer((VikLayerTypeEnum) type)) {
 				draw_update(vw);
 				vw->modified = true;
 			}
@@ -2436,21 +2436,22 @@ static void menu_copy_layer_cb(GtkAction *a, VikWindow *vw)
 
 static void menu_cut_layer_cb(GtkAction *a, VikWindow *vw)
 {
-	vik_layers_panel_cut_selected(vw->viking_vlp->gob->panel_ref);
+	vw->viking_vlp->gob->panel_ref->cut_selected();
 	vw->modified = true;
 }
 
 static void menu_paste_layer_cb(GtkAction *a, VikWindow *vw)
 {
-	if (vik_layers_panel_paste_selected(vw->viking_vlp->gob->panel_ref)) {
+	if (vw->viking_vlp->gob->panel_ref->paste_selected()) {
 		vw->modified = true;
 	}
 }
 
 static void menu_properties_cb(GtkAction *a, VikWindow *vw)
 {
-	if (! vik_layers_panel_properties(vw->viking_vlp->gob->panel_ref))
+	if (! vw->viking_vlp->gob->panel_ref->properties()) {
 		a_dialog_info_msg(GTK_WINDOW(vw), _("You must select a layer to show its properties."));
+	}
 }
 
 static void help_help_cb(GtkAction *a, VikWindow *vw)
@@ -2660,12 +2661,12 @@ static void back_forward_info_cb(GtkAction *a, VikWindow *vw)
 
 static void menu_delete_layer_cb(GtkAction *a, VikWindow *vw)
 {
-	if (vik_layers_panel_get_selected(vw->viking_vlp->gob->panel_ref)) {
-		vik_layers_panel_delete_selected(vw->viking_vlp->gob->panel_ref);
+	if (vw->viking_vlp->gob->panel_ref->get_selected()) {
+		vw->viking_vlp->gob->panel_ref->delete_selected();
 		vw->modified = true;
-	}
-	else
+	} else {
 		a_dialog_info_msg(GTK_WINDOW(vw), _("You must select a layer to delete."));
+	}
 }
 
 static void full_screen_cb(GtkAction *a, VikWindow *vw)
@@ -2787,7 +2788,7 @@ static void toolbox_activate(toolbox_tools_t *vt, const char *tool_name)
 {
 	int tool = toolbox_get_tool(vt, tool_name);
 	toolbox_tool_t *t = &vt->tools[tool];
-	VikLayer *vl = vik_layers_panel_get_selected(vt->vw->viking_vlp->gob->panel_ref);
+	VikLayer *vl = vt->vw->viking_vlp->gob->panel_ref->get_selected();
 
 	if (tool == vt->n_tools) {
 		fprintf(stderr, "CRITICAL: trying to activate a non-existent tool...\n");
@@ -2828,7 +2829,7 @@ static const GdkCursor *toolbox_get_cursor(toolbox_tools_t *vt, const char *tool
 
 static void toolbox_click(toolbox_tools_t *vt, GdkEventButton *event)
 {
-	VikLayer *vl = vik_layers_panel_get_selected(vt->vw->viking_vlp->gob->panel_ref);
+	VikLayer *vl = vt->vw->viking_vlp->gob->panel_ref->get_selected();
 	if (vt->active_tool != -1 && vt->tools[vt->active_tool].ti.click) {
 		int ltype = vt->tools[vt->active_tool].layer_type;
 		if (ltype == TOOL_LAYER_TYPE_NONE || (vl && ltype == vl->type))
@@ -2838,7 +2839,7 @@ static void toolbox_click(toolbox_tools_t *vt, GdkEventButton *event)
 
 static void toolbox_move(toolbox_tools_t *vt, GdkEventMotion *event)
 {
-	VikLayer *vl = vik_layers_panel_get_selected(vt->vw->viking_vlp->gob->panel_ref);
+	VikLayer *vl = vt->vw->viking_vlp->gob->panel_ref->get_selected();
 	if (vt->active_tool != -1 && vt->tools[vt->active_tool].ti.move) {
 		int ltype = vt->tools[vt->active_tool].layer_type;
 		if (ltype == TOOL_LAYER_TYPE_NONE || (vl && ltype == vl->type))
@@ -2849,7 +2850,7 @@ static void toolbox_move(toolbox_tools_t *vt, GdkEventMotion *event)
 
 static void toolbox_release(toolbox_tools_t *vt, GdkEventButton *event)
 {
-	VikLayer *vl = vik_layers_panel_get_selected(vt->vw->viking_vlp->gob->panel_ref);
+	VikLayer *vl = vt->vw->viking_vlp->gob->panel_ref->get_selected();
 	if (vt->active_tool != -1 && vt->tools[vt->active_tool].ti.release) {
 		int ltype = vt->tools[vt->active_tool].layer_type;
 		if (ltype == TOOL_LAYER_TYPE_NONE || (vl && ltype == vl->type))
@@ -3092,7 +3093,7 @@ void vik_window_open_file(VikWindow *vw, const char *filename, bool change_filen
 	bool success = false;
 	bool restore_original_filename = false;
 
-	vw->loaded_type = a_file_load(vik_layers_panel_get_top_layer(vw->viking_vlp->gob->panel_ref), vw->viking_vvp, filename);
+	vw->loaded_type = a_file_load(vw->viking_vlp->gob->panel_ref->get_top_layer(), vw->viking_vvp, filename);
 	switch (vw->loaded_type) {
 	case LOAD_TYPE_READ_FAILURE:
 		a_dialog_error_msg(GTK_WINDOW(vw), _("The file you requested could not be opened."));
@@ -3127,7 +3128,7 @@ void vik_window_open_file(VikWindow *vw, const char *filename, bool change_filen
 			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mode_button), true);
 			vw->only_updating_coord_mode_ui = false;
 
-			vik_layers_panel_change_coord_mode(vw->viking_vlp->gob->panel_ref, vw->viking_vvp->port.get_coord_mode());
+			vw->viking_vlp->gob->panel_ref->change_coord_mode(vw->viking_vvp->port.get_coord_mode());
 
 			// Slightly long winded methods to align loaded viewport settings with the UI
 			//  Since the rewrite for toolbar + menu actions
@@ -3348,10 +3349,9 @@ static bool window_save(VikWindow *vw)
 	vik_window_set_busy_cursor(vw);
 	bool success = true;
 
-	if (a_file_save(vik_layers_panel_get_top_layer(vw->viking_vlp->gob->panel_ref), vw->viking_vvp, vw->filename)) {
+	if (a_file_save(vw->viking_vlp->gob->panel_ref->get_top_layer(), vw->viking_vvp, vw->filename)) {
 		update_recently_used_document(vw, vw->filename);
-	}
-	else {
+	} else {
 		a_dialog_error_msg(GTK_WINDOW(vw), _("The filename you requested could not be opened for writing."));
 		success = false;
 	}
@@ -3440,7 +3440,7 @@ static bool export_to(VikWindow *vw, GList *gl, VikFileType_t vft, const char *d
 
 static void export_to_common(VikWindow *vw, VikFileType_t vft, const char *extension)
 {
-	GList *gl = vik_layers_panel_get_all_layers_of_type(vw->viking_vlp->gob->panel_ref, VIK_LAYER_TRW, true);
+	GList *gl = vw->viking_vlp->gob->panel_ref->get_all_layers_of_type(VIK_LAYER_TRW, true);
 
 	if (!gl) {
 		a_dialog_info_msg(GTK_WINDOW(vw), _("Nothing to Export!"));
@@ -3654,7 +3654,7 @@ static void layer_defaults_cb(GtkAction *a, VikWindow *vw)
 static void preferences_change_update(VikWindow *vw, void * data)
 {
 	// Want to update all TrackWaypoint layers
-	GList *layers = vik_layers_panel_get_all_layers_of_type(vw->viking_vlp->gob->panel_ref, VIK_LAYER_TRW, true);
+	GList *layers = vw->viking_vlp->gob->panel_ref->get_all_layers_of_type(VIK_LAYER_TRW, true);
 
 	if (!layers)
 		return;
@@ -3748,10 +3748,10 @@ static void default_location_cb(GtkAction *a, VikWindow *vw)
 static void clear_cb(GtkAction *a, VikWindow *vw)
 {
 	// Do nothing if empty
-	VikAggregateLayer *top = vik_layers_panel_get_top_layer(vw->viking_vlp->gob->panel_ref);
+	VikAggregateLayer *top = vw->viking_vlp->gob->panel_ref->get_top_layer();
 	if (! vik_aggregate_layer_is_empty(top)) {
 		if (a_dialog_yes_or_no(GTK_WINDOW(vw), _("Are you sure you wish to delete all layers?"), NULL)) {
-			vik_layers_panel_clear(vw->viking_vlp->gob->panel_ref);
+			vw->viking_vlp->gob->panel_ref->clear();
 			window_set_filename(vw, NULL);
 			draw_update(vw);
 		}
@@ -4359,9 +4359,9 @@ static void window_change_coord_mode_cb(GtkAction *old_a, GtkAction *a, VikWindo
 			/* this takes care of coord mode too */
 			vw->viking_vvp->port.set_drawmode(drawmode);
 			if (drawmode == VIK_VIEWPORT_DRAWMODE_UTM) {
-				vik_layers_panel_change_coord_mode(vw->viking_vlp->gob->panel_ref, VIK_COORD_UTM);
+				vw->viking_vlp->gob->panel_ref->change_coord_mode(VIK_COORD_UTM);
 			} else if (olddrawmode == VIK_VIEWPORT_DRAWMODE_UTM) {
-				vik_layers_panel_change_coord_mode(vw->viking_vlp->gob->panel_ref, VIK_COORD_LATLON);
+				vw->viking_vlp->gob->panel_ref->change_coord_mode(VIK_COORD_LATLON);
 			}
 			draw_update(vw);
 		}

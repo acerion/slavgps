@@ -112,12 +112,12 @@ static void clip_receive_viking ( GtkClipboard *c, GtkSelectionData *sd, void * 
 
   if ( vc->type == VIK_CLIPBOARD_DATA_LAYER )
   {
-    VikLayer *new_layer = vik_layer_unmarshall ( vc->data, vc->len, vik_layers_panel_get_viewport(vlp->panel_ref) );
-    vik_layers_panel_add_layer ( vlp->gob->panel_ref, new_layer );
+    VikLayer *new_layer = vik_layer_unmarshall(vc->data, vc->len, vlp->panel_ref->get_viewport());
+    vlp->gob->panel_ref->add_layer(new_layer);
   }
   else if ( vc->type == VIK_CLIPBOARD_DATA_SUBLAYER )
   {
-    VikLayer *sel = vik_layers_panel_get_selected ( vlp->panel_ref );
+    VikLayer *sel = vlp->panel_ref->get_selected();
     if ( sel && sel->type == vc->layer_type)
     {
       if ( vik_layer_get_interface((VikLayerTypeEnum) vc->layer_type)->paste_item )
@@ -251,7 +251,7 @@ static bool clip_parse_latlon ( const char *text, struct LatLon *coord )
 static void clip_add_wp(VikLayersPanel *vlp, struct LatLon *coord)
 {
   VikCoord vc;
-  VikLayer *sel = vik_layers_panel_get_selected ( vlp->panel_ref );
+  VikLayer *sel = vlp->panel_ref->get_selected();
 
 
   vik_coord_load_from_latlon ( &vc, VIK_COORD_LATLON, coord );
@@ -271,7 +271,7 @@ static void clip_receive_text (GtkClipboard *c, const char *text, void * p)
 
   fprintf(stderr, "DEBUG: got text: %s\n", text );
 
-  VikLayer *sel = vik_layers_panel_get_selected ( vlp->panel_ref );
+  VikLayer *sel = vlp->panel_ref->get_selected();
   if ( sel && vik_treeview_get_editing ( sel->vt ) ) {
     GtkTreeIter iter;
     if ( vik_treeview_get_selected_iter ( sel->vt, &iter ) ) {
@@ -379,7 +379,7 @@ void clip_receive_targets ( GtkClipboard *c, GdkAtom *a, int n, void * p )
  */
 void a_clipboard_copy_selected ( VikLayersPanel *vlp )
 {
-  VikLayer *sel = vik_layers_panel_get_selected ( vlp->panel_ref );
+  VikLayer *sel = vlp->panel_ref->get_selected();
   GtkTreeIter iter;
   VikClipboardDataType type = VIK_CLIPBOARD_DATA_NONE;
   uint16_t layer_type = 0;

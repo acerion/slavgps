@@ -42,6 +42,26 @@ namespace SlavGPS {
 	class LayersPanel {
 	public:
 
+		void add_layer(VikLayer *l);
+		void draw_all();
+		VikLayer * get_selected();
+		void cut_selected();
+		void copy_selected();
+		bool paste_selected();
+		void delete_selected();
+		VikLayer * get_layer_of_type(VikLayerTypeEnum type);
+		void set_viewport(VikViewport *vvp);
+		VikViewport * get_viewport();
+		void emit_update();
+		bool properties();
+		bool new_layer(VikLayerTypeEnum type);
+		void clear();
+		VikAggregateLayer * get_top_layer();
+		void change_coord_mode(VikCoordMode mode);
+		GList * get_all_layers_of_type(int type, bool include_invisible);
+		VikTreeview * get_treeview();
+
+
 		VikAggregateLayer *toplayer;
 		GtkTreeIter toplayer_iter;
 
@@ -49,6 +69,14 @@ namespace SlavGPS {
 		VikViewport * vvp; /* reference */
 
 		_VikLayersPanel * gob;
+
+		/* This should be somehow private. */
+		void item_toggled(GtkTreeIter *iter);
+		void item_edited(GtkTreeIter *iter, const char *new_text);
+		void popup(GtkTreeIter *iter, int mouse_button);
+		bool button_press(GdkEventButton *event);
+		bool key_press(GdkEventKey *event);
+		void move_item(bool up);
 	};
 
 
@@ -91,25 +119,10 @@ struct _VikLayersPanelClass
 GType vik_layers_panel_get_type();
 VikLayersPanel *vik_layers_panel_new();
 void vik_layers_panel_free(VikLayersPanel *vlp);
-void vik_layers_panel_add_layer(LayersPanel * panel, VikLayer *l);
-void vik_layers_panel_draw_all(LayersPanel * panel);
-VikLayer *vik_layers_panel_get_selected(LayersPanel * panel);
-void vik_layers_panel_cut_selected(LayersPanel * panel);
-void vik_layers_panel_copy_selected(LayersPanel * panel);
-bool vik_layers_panel_paste_selected(LayersPanel * panel);
-void vik_layers_panel_delete_selected(LayersPanel * panel);
-VikLayer *vik_layers_panel_get_layer_of_type(LayersPanel * panel, VikLayerTypeEnum type);
-void vik_layers_panel_set_viewport(LayersPanel * layers_panel, VikViewport *vvp);
-//bool vik_layers_panel_tool(VikLayersPanel *vlp, uint16_t layer_type, VikToolInterfaceFunc tool_func, GdkEventButton *event, VikViewport *vvp);
-VikViewport * vik_layers_panel_get_viewport(LayersPanel * panel);
 void vik_layers_panel_emit_update(LayersPanel * panel);
-bool vik_layers_panel_properties(LayersPanel * panel);
-bool vik_layers_panel_new_layer(LayersPanel * panel, VikLayerTypeEnum type);
-void vik_layers_panel_clear(LayersPanel * panel);
-VikAggregateLayer *vik_layers_panel_get_top_layer(LayersPanel * panel);
-void vik_layers_panel_change_coord_mode(LayersPanel * panel, VikCoordMode mode);
-GList *vik_layers_panel_get_all_layers_of_type(LayersPanel * panel, int type, bool include_invisible);
-VikTreeview *vik_layers_panel_get_treeview(LayersPanel * panel);
+
+//bool vik_layers_panel_tool(VikLayersPanel *vlp, uint16_t layer_type, VikToolInterfaceFunc tool_func, GdkEventButton *event, VikViewport *vvp);
+
 
 #ifdef __cplusplus
 }

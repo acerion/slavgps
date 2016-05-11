@@ -95,7 +95,7 @@ bool a_jpg_load_file ( VikAggregateLayer *top, const char *filename, VikViewport
 	VikWindow *vw = (VikWindow *)(VIK_GTK_WINDOW_FROM_LAYER(VIK_LAYER(top)));
 	VikLayersPanel *vlp = vik_window_layers_panel ( vw );
 	// Auto load into TrackWaypoint layer if one is selected
-	VikLayer *vtl = vik_layers_panel_get_selected ( vlp->panel_ref );
+	VikLayer *vtl = vlp->panel_ref->get_selected();
 
 	bool create_layer = false;
 	if ( vtl == NULL || vtl->type != VIK_LAYER_TRW ) {

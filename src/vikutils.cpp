@@ -839,7 +839,7 @@ void vu_command_line ( VikWindow *vw, double latitude, double longitude, int zoo
 		}
 
 		// Don't add map layer if one already exists
-		GList *vmls = vik_layers_panel_get_all_layers_of_type(vik_window_layers_panel(vw)->panel_ref, VIK_LAYER_MAPS, true);
+		GList *vmls = vik_window_layers_panel(vw)->panel_ref->get_all_layers_of_type(VIK_LAYER_MAPS, true);
 		int num_maps = g_list_length(vmls);
 		bool add_map = true;
 
@@ -857,7 +857,7 @@ void vu_command_line ( VikWindow *vw, double latitude, double longitude, int zoo
 			VikMapsLayer *vml = VIK_MAPS_LAYER ( vik_layer_create(VIK_LAYER_MAPS, vvp, false) );
 			vik_maps_layer_set_map_type(vml, the_type_id);
 			vik_layer_rename ( VIK_LAYER(vml), _("Map") );
-			vik_aggregate_layer_add_layer ( vik_layers_panel_get_top_layer(vik_window_layers_panel(vw)->panel_ref), VIK_LAYER(vml), true );
+			vik_aggregate_layer_add_layer ( vik_window_layers_panel(vw)->panel_ref->get_top_layer(), VIK_LAYER(vml), true );
 			vik_layer_emit_update ( VIK_LAYER(vml) );
 		}
 	}

@@ -1027,7 +1027,7 @@ static void mapnik_layer_add_menu_items ( VikMapnikLayer *vml, GtkMenu *menu, vo
 	static menu_array_values values;
 	values[MA_VML] = vml;
 	VikLayersPanel * vlp_ = VIK_LAYERS_PANEL(vlp);
-	values[MA_VVP] = vik_layers_panel_get_viewport(vlp_->panel_ref);
+	values[MA_VVP] = vlp_->panel_ref->get_viewport();
 
 	GtkWidget *item = gtk_menu_item_new();
 	gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
