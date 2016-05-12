@@ -206,7 +206,7 @@ static void trw_layer_track_view ( menu_array_values values )
 	maxmin[0].lon = trk->bbox.east;
 	maxmin[1].lon = trk->bbox.west;
 
-    vtl->trw.zoom_to_show_latlons(vvp, maxmin);
+    vtl->trw.zoom_to_show_latlons(&vvp->port, maxmin);
 
 	trw_layer_track_select (values);
 }

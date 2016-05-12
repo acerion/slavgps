@@ -1218,7 +1218,7 @@ static void gps_comm_thread(GpsSession *sess)
         if ( sess->vvp && sess->direction == GPS_DOWN ) {
           vik_layer_post_read ( VIK_LAYER(sess->vtl), sess->vvp, true );
           /* View the data available */
-	  sess->vtl->trw.auto_set_view(sess->vvp) ;
+	  sess->vtl->trw.auto_set_view(&sess->vvp->port) ;
           vik_layer_emit_update ( VIK_LAYER(sess->vtl) ); // NB update from background thread
         }
       }

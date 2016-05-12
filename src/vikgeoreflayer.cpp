@@ -1055,8 +1055,8 @@ static bool georef_layer_dialog(VikGeorefLayer *vgl, void * vp, GtkWindow *w)
 static void georef_layer_zoom_to_fit(void * vgl_vlp[2])
 {
 	VikLayersPanel * vlp = VIK_LAYERS_PANEL(vgl_vlp[1]);
-	vlp->panel_ref->get_viewport()->port.set_xmpp(VIK_GEOREF_LAYER(vgl_vlp[0])->mpp_easting);
-	vlp->panel_ref->get_viewport()->port.set_ympp(VIK_GEOREF_LAYER(vgl_vlp[0])->mpp_northing);
+	vlp->panel_ref->get_viewport()->set_xmpp(VIK_GEOREF_LAYER(vgl_vlp[0])->mpp_easting);
+	vlp->panel_ref->get_viewport()->set_ympp(VIK_GEOREF_LAYER(vgl_vlp[0])->mpp_northing);
 	vlp->panel_ref->emit_update();
 }
 
@@ -1064,17 +1064,17 @@ static void georef_layer_goto_center(void * vgl_vlp[2])
 {
 	VikGeorefLayer *vgl = VIK_GEOREF_LAYER (vgl_vlp[0]);
 	VikLayersPanel * vlp = VIK_LAYERS_PANEL(vgl_vlp[1]);
-	VikViewport *vp = vlp->panel_ref->get_viewport();
+	Viewport * viewport = vlp->panel_ref->get_viewport();
 	struct UTM utm;
 	VikCoord coord;
 
-	vik_coord_to_utm(vp->port.get_center(), &utm);
+	vik_coord_to_utm(viewport->get_center(), &utm);
 
 	utm.easting = vgl->corner.easting + (vgl->width * vgl->mpp_easting / 2); /* only an approximation */
 	utm.northing = vgl->corner.northing - (vgl->height * vgl->mpp_northing / 2);
 
-	vik_coord_load_from_utm(&coord, vp->port.get_coord_mode(), &utm);
-	vp->port.set_center_coord(&coord, true);
+	vik_coord_load_from_utm(&coord, viewport->get_coord_mode(), &utm);
+	viewport->set_center_coord(&coord, true);
 
 	vik_layers_panel_emit_update(VIK_LAYERS_PANEL(vgl_vlp[1])->panel_ref);
 }

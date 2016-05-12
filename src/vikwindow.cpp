@@ -761,7 +761,7 @@ static void vik_window_init(VikWindow *vw)
 
 	vw->viking_vvp = vik_viewport_new();
 	vw->layers_panel = new LayersPanel();
-	vw->layers_panel->set_viewport(vw->viking_vvp);
+	vw->layers_panel->set_viewport(&vw->viking_vvp->port);
 	vw->viking_vs = vik_statusbar_new();
 
 	vw->vt = toolbox_create(vw);

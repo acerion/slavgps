@@ -53,8 +53,8 @@ namespace SlavGPS {
 		bool paste_selected();
 		void delete_selected();
 		VikLayer * get_layer_of_type(VikLayerTypeEnum type);
-		void set_viewport(VikViewport *vvp);
-		VikViewport * get_viewport();
+		void set_viewport(Viewport * viewport);
+		Viewport * get_viewport();
 		void emit_update();
 		bool properties();
 		bool new_layer(VikLayerTypeEnum type);
@@ -69,7 +69,7 @@ namespace SlavGPS {
 		GtkTreeIter toplayer_iter;
 
 		VikTreeview *vt;
-		VikViewport * vvp; /* reference */
+		Viewport * viewport; /* reference */
 
 		_VikLayersPanel * gob;
 
@@ -118,7 +118,7 @@ GType vik_layers_panel_get_type();
 void vik_layers_panel_free(VikLayersPanel *vlp);
 void vik_layers_panel_emit_update(LayersPanel * panel);
 
-//bool vik_layers_panel_tool(VikLayersPanel *vlp, uint16_t layer_type, VikToolInterfaceFunc tool_func, GdkEventButton *event, VikViewport *vvp);
+//bool vik_layers_panel_tool(VikLayersPanel *vlp, uint16_t layer_type, VikToolInterfaceFunc tool_func, GdkEventButton *event, Viewport * viewport);
 
 
 #ifdef __cplusplus

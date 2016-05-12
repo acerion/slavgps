@@ -398,7 +398,7 @@ static Trackpoint * set_center_at_graph_position(double event_x,
   if (tp) {
     VikCoord coord = tp->coord;
     if ( vlp ) {
-      vlp->panel_ref->get_viewport()->port.set_center_coord(&coord, true );
+      vlp->panel_ref->get_viewport()->set_center_coord(&coord, true );
       vlp->panel_ref->emit_update();
     }
     else {

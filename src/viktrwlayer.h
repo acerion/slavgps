@@ -154,8 +154,8 @@ namespace SlavGPS {
 		void set_statusbar_msg_info_trkpt(Trackpoint * tp); /* static void set_statusbar_msg_info_trkpt ( VikTrwLayer *vtl, Trackpoint * tp). */
 		void set_statusbar_msg_info_wpt(Waypoint * wp); /* static void set_statusbar_msg_info_wpt(VikTrwLayer * vtl, Waypoint * wp). */
 
-		void zoom_to_show_latlons(VikViewport * vvp, struct LatLon maxmin[2]); /* void trw_layer_zoom_to_show_latlons(VikTrwLayer * vtl, VikViewport * vvp, struct LatLon maxmin[2]). */
-		bool auto_set_view(VikViewport * vvp); /* bool vik_trw_layer_auto_set_view(VikTrwLayer * vtl, VikViewport * vvp). */
+		void zoom_to_show_latlons(Viewport * viewport, struct LatLon maxmin[2]); /* void trw_layer_zoom_to_show_latlons(VikTrwLayer * vtl, VikViewport * vvp, struct LatLon maxmin[2]). */
+		bool auto_set_view(Viewport * viewport); /* bool vik_trw_layer_auto_set_view(VikTrwLayer * vtl, VikViewport * vvp). */
 
 
 

@@ -809,7 +809,7 @@ bool LayerTRW::find_by_date(char const * date_str, VikCoord * position, VikViewp
 		if (do_tracks && df.trk) {
 			struct LatLon maxmin[2] = { {0,0}, {0,0} };
 			LayerTRW::find_maxmin_in_track(df.trk, maxmin);
-			this->zoom_to_show_latlons(vvp, maxmin);
+			this->zoom_to_show_latlons(&vvp->port, maxmin);
 			vik_treeview_select_iter(VIK_LAYER((VikTrwLayer *) this->vtl)->vt, tracks_iters.at(df.trk_uid), true);
 		} else if (df.wp) {
 			vvp->port.set_center_coord(&(df.wp->coord), true);
@@ -2565,16 +2565,16 @@ static void trw_layer_centerize ( menu_array_layer values )
 
 
 
-void LayerTRW::zoom_to_show_latlons(VikViewport * vvp, struct LatLon maxmin[2])
+void LayerTRW::zoom_to_show_latlons(Viewport * viewport, struct LatLon maxmin[2])
 {
-	vu_zoom_to_show_latlons(coord_mode, vvp, maxmin);
+	vu_zoom_to_show_latlons(coord_mode, (VikViewport *) viewport->vvp, maxmin);
 }
 
 
 
 
 
-bool LayerTRW::auto_set_view(VikViewport * vvp)
+bool LayerTRW::auto_set_view(Viewport * viewport)
 {
 	/* TODO: what if there's only one waypoint @ 0,0, it will think nothing found. */
 	struct LatLon maxmin[2] = { {0.0,0.0}, {0.0,0.0} };
@@ -2582,7 +2582,7 @@ bool LayerTRW::auto_set_view(VikViewport * vvp)
 	if (maxmin[0].lat == 0.0 && maxmin[0].lon == 0.0 && maxmin[1].lat == 0.0 && maxmin[1].lon == 0.0) {
 		return false;
 	} else {
-		this->zoom_to_show_latlons(vvp, maxmin);
+		this->zoom_to_show_latlons(viewport, maxmin);
 		return true;
 	}
 }
@@ -2721,7 +2721,7 @@ static void trw_layer_goto_wp ( menu_array_layer values )
       a_dialog_error_msg ( VIK_GTK_WINDOW_FROM_LAYER(vtl), _("Waypoint not found in this layer.") );
     else
     {
-      vlp->panel_ref->get_viewport()->port.set_center_coord(&(wp->coord), true );
+      vlp->panel_ref->get_viewport()->set_center_coord(&(wp->coord), true );
       vlp->panel_ref->emit_update();
 
       // Find and select on the side panel
@@ -3053,7 +3053,7 @@ static void trw_layer_gps_upload_any ( menu_array_sublayer values )
                  protocol,
                  port,
                  false,
-                 vlp->panel_ref->get_viewport(),
+                 (VikViewport *) vlp->panel_ref->get_viewport()->vvp,
                  vlp,
                  do_tracks,
                  do_routes,
@@ -3067,7 +3067,7 @@ static void trw_layer_new_wp ( menu_array_layer values )
   VikLayersPanel *vlp = VIK_LAYERS_PANEL(values[MA_VLP]);
   /* TODO longone: okay, if layer above (aggregate) is invisible but vtl->visible is true, this redraws for no reason.
      instead return true if you want to update. */
-  if (vtl->trw.new_waypoint(VIK_GTK_WINDOW_FROM_LAYER(vtl), vlp->panel_ref->get_viewport()->port.get_center()) ) {
+  if (vtl->trw.new_waypoint(VIK_GTK_WINDOW_FROM_LAYER(vtl), vlp->panel_ref->get_viewport()->get_center()) ) {
     vtl->trw.calculate_bounds_waypoints();
     if ( VIK_LAYER(vtl)->visible )
       vik_layers_panel_emit_update ( vlp->panel_ref );
@@ -3194,8 +3194,8 @@ static void trw_layer_auto_waypoints_view ( menu_array_layer values )
 
   /* Only 1 waypoint - jump straight to it */
   if (vtl->trw.waypoints.size() == 1) {
-    VikViewport *vvp = vlp->panel_ref->get_viewport();
-    LayerTRW::single_waypoint_jump(vtl->trw.waypoints, &vvp->port);
+    Viewport * viewport = vlp->panel_ref->get_viewport();
+    LayerTRW::single_waypoint_jump(vtl->trw.waypoints, viewport);
   }
   /* If at least 2 waypoints - find center and then zoom to fit */
   else if (vtl->trw.waypoints.size() > 1)
@@ -3535,14 +3535,14 @@ static void trw_layer_add_menu_items ( VikTrwLayer *vtl, GtkMenu *menu, void * v
 
   VikLayersPanel * vlp_ = VIK_LAYERS_PANEL(vlp);
   item = a_acquire_trwlayer_menu ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(vtl)), (VikLayersPanel *) vlp,
-				   vlp_->panel_ref->get_viewport(), vtl );
+				   (VikViewport *) vlp_->panel_ref->get_viewport()->vvp, vtl );
   if ( item ) {
     gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
     gtk_widget_show ( item );
   }
 
   item = a_acquire_trwlayer_track_menu ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(vtl)), (VikLayersPanel *) vlp,
-					 vlp_->panel_ref->get_viewport(), vtl );
+					 (VikViewport *) vlp_->panel_ref->get_viewport()->vvp, vtl );
   if ( item ) {
     gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
     gtk_widget_show ( item );
@@ -4444,7 +4444,7 @@ static void goto_coord ( void ** vlp, void * vl, void * vvp, const VikCoord *coo
 {
   if ( vlp ) {
 	  VikLayersPanel * vlp_ = VIK_LAYERS_PANEL(vlp);
-    vlp_->panel_ref->get_viewport()->port.set_center_coord(coord, true );
+    vlp_->panel_ref->get_viewport()->set_center_coord(coord, true );
     vik_layers_panel_emit_update ( VIK_LAYERS_PANEL(vlp)->panel_ref );
   }
   else {
@@ -4830,7 +4830,7 @@ static void trw_layer_auto_track_view ( menu_array_sublayer values )
   {
     struct LatLon maxmin[2] = { {0,0}, {0,0} };
     LayerTRW::find_maxmin_in_track(trk, maxmin);
-    vtl->trw.zoom_to_show_latlons((VikViewport *) values[MA_VVP], maxmin);
+    vtl->trw.zoom_to_show_latlons(&((VikViewport *) values[MA_VVP])->port, maxmin);
     if ( values[MA_VLP] )
       vik_layers_panel_emit_update ( VIK_LAYERS_PANEL(values[MA_VLP])->panel_ref );
     else
@@ -7717,7 +7717,7 @@ static bool trw_layer_sublayer_add_menu_items ( VikTrwLayer *l, GtkMenu *menu, v
       sg_uid_t uid = (sg_uid_t) ((long) sublayer);
       VikLayersPanel * vlp_ = VIK_LAYERS_PANEL(vlp);
       item = a_acquire_track_menu ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(l)), (VikLayersPanel *) vlp,
-                                    vlp_->panel_ref->get_viewport(),
+                                    (VikViewport *) vlp_->panel_ref->get_viewport()->vvp,
                                     l->trw.tracks.at(uid));
       if ( item ) {
         gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);

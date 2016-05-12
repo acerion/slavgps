@@ -132,7 +132,7 @@ bool a_jpg_load_file ( VikAggregateLayer *top, const char *filename, VikViewport
 	if ( create_layer )
 		vik_aggregate_layer_add_layer ( top, vtl, false );
 	if ( auto_zoom )
-		(VIK_TRW_LAYER(vtl))->trw.auto_set_view(vvp);
+		(VIK_TRW_LAYER(vtl))->trw.auto_set_view(&vvp->port);
 
 	// ATM This routine can't fail
 	return true;
