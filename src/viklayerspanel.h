@@ -42,6 +42,9 @@ namespace SlavGPS {
 	class LayersPanel {
 	public:
 
+		LayersPanel();
+		~LayersPanel();
+
 		void add_layer(VikLayer *l);
 		void draw_all();
 		VikLayer * get_selected();
@@ -97,12 +100,7 @@ extern "C" {
 struct _VikLayersPanel {
 	GtkVBox vbox;
 
-	LayersPanel panel;
-
-
 	LayersPanel * panel_ref;
-
-	_VikLayersPanel * gob;
 };
 
 typedef struct _VikLayersPanel VikLayersPanel;
@@ -117,7 +115,6 @@ struct _VikLayersPanelClass
 };
 
 GType vik_layers_panel_get_type();
-VikLayersPanel *vik_layers_panel_new();
 void vik_layers_panel_free(VikLayersPanel *vlp);
 void vik_layers_panel_emit_update(LayersPanel * panel);
 
