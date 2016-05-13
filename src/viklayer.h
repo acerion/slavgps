@@ -335,4 +335,21 @@ VikLayerTypedParamData *vik_layer_data_typed_param_copy_from_string ( VikLayerPa
 }
 #endif
 
+
+namespace SlavGPS {
+
+	class Layer {
+	public:
+
+		Layer(VikLayer *vl);
+		~Layer() {};
+
+		VikLayer * vl;
+
+
+	};
+
+
+}
+
 #endif

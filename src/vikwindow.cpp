@@ -2206,7 +2206,7 @@ static VikLayerToolFuncStatus selecttool_click(VikLayer *vl, GdkEventButton *eve
 					// Only clear if selected thing is a TrackWaypoint layer or a sublayer
 					int type = vik_treeview_item_get_type(vtv, &iter);
 					if (type == VIK_TREEVIEW_TYPE_SUBLAYER ||
-					    VIK_LAYER(vik_treeview_item_get_pointer(vtv, &iter))->type == VIK_LAYER_TRW) {
+					    VIK_LAYER(vik_treeview_item_get_pointer(vtv, &iter))->type == VIK_LAYER_TRW) { /* kamil: get_layer() ? */
 
 						vik_treeview_item_unselect(vtv, &iter);
 						if (vik_window_clear_highlight(t->vw))

@@ -226,7 +226,8 @@ void vik_aggregate_layer_insert_layer(VikAggregateLayer *val, VikLayer *l, GtkTr
 	}
 
 	if (vl->realized) {
-		vik_treeview_insert_layer(vl->vt, &(vl->iter), &iter, l->name, val, put_above, l, l->type, l->type, replace_iter, vik_layer_get_timestamp(l));
+		Layer * layer = new Layer(l);
+		vik_treeview_insert_layer(vl->vt, &(vl->iter), &iter, l->name, val, put_above, layer, l->type, l->type, replace_iter, vik_layer_get_timestamp(l));
 		if (! l->visible) {
 			vik_treeview_item_set_visible(vl->vt, &iter, false);
 		}
@@ -239,7 +240,8 @@ void vik_aggregate_layer_insert_layer(VikAggregateLayer *val, VikLayer *l, GtkTr
 	}
 
 	if (replace_iter) {
-		GList *theone = g_list_find(val->children, vik_treeview_item_get_pointer(vl->vt, replace_iter));
+		Layer * layer = (Layer *) vik_treeview_item_get_layer(vl->vt, replace_iter);
+		GList *theone = g_list_find(val->children, layer->vl);
 		if (put_above) {
 			val->children = g_list_insert(val->children, l, g_list_position(val->children,theone)+1);
 		} else {
@@ -278,7 +280,8 @@ void vik_aggregate_layer_add_layer(VikAggregateLayer *val, VikLayer *l, bool all
 	}
 
 	if (vl->realized) {
-		vik_treeview_add_layer(vl->vt, &(vl->iter), &iter, l->name, val, put_above, l, l->type, l->type, vik_layer_get_timestamp(l));
+		Layer * layer = new Layer(l);
+		vik_treeview_add_layer(vl->vt, &(vl->iter), &iter, l->name, val, put_above, layer, l->type, l->type, vik_layer_get_timestamp(l));
 		if (! l->visible) {
 			vik_treeview_item_set_visible(vl->vt, &iter, false);
 		}
@@ -305,7 +308,8 @@ void vik_aggregate_layer_move_layer(VikAggregateLayer *val, GtkTreeIter *child_i
 	VikLayer * vl = (VikLayer *) val;
 	vik_treeview_move_item(vl->vt, child_iter, up);
 
-	theone = g_list_find(val->children, vik_treeview_item_get_pointer(vl->vt, child_iter));
+	Layer * layer = (Layer *) vik_treeview_item_get_layer(vl->vt, child_iter);
+	theone = g_list_find(val->children, layer->vl);
 
 	assert (theone != NULL);
 
@@ -807,13 +811,13 @@ void vik_aggregate_layer_clear(VikAggregateLayer *val)
 bool vik_aggregate_layer_delete(VikAggregateLayer *val, GtkTreeIter *iter)
 {
 	VikLayer * vl_A = (VikLayer *) val;
-	VikLayer *l = (VikLayer *) vik_treeview_item_get_pointer(vl_A->vt, iter);
-	bool was_visible = l->visible;
+	Layer * layer = (Layer *) vik_treeview_item_get_layer(vl_A->vt, iter);
+	bool was_visible = layer->vl->visible;
 
 	vik_treeview_item_delete(vl_A->vt, iter);
-	val->children = g_list_remove(val->children, l);
-	disconnect_layer_signal(l, val);
-	g_object_unref(l);
+	val->children = g_list_remove(val->children, layer->vl);
+	disconnect_layer_signal(layer->vl, val);
+	g_object_unref(layer->vl);
 
 	return was_visible;
 }
@@ -935,16 +939,15 @@ void vik_aggregate_layer_realize(VikAggregateLayer *val, VikTreeview *vt, GtkTre
 {
 	GList *i = val->children;
 	GtkTreeIter iter;
-	VikLayer *vl = (VikLayer *) val;
-	VikLayer *vli;
+	VikLayer * vl = (VikLayer *) val;
 	while (i) {
-		vli = (VikLayer *) i->data;
-		vik_treeview_add_layer(vl->vt, layer_iter, &iter, vli->name, val, true,
-				       vli, vli->type, vli->type, vik_layer_get_timestamp(vli));
-		if (! vli->visible) {
+		Layer * layer = new Layer((VikLayer *) i->data);
+		vik_treeview_add_layer(vl->vt, layer_iter, &iter, layer->vl->name, val, true,
+				       layer, layer->vl->type, layer->vl->type, vik_layer_get_timestamp(layer->vl));
+		if (! layer->vl->visible) {
 			vik_treeview_item_set_visible(vl->vt, &iter, false);
 		}
-		vik_layer_realize(vli, vl->vt, &iter);
+		vik_layer_realize(layer->vl, vl->vt, &iter);
 		i = i->next;
 	}
 }
@@ -965,7 +968,7 @@ bool vik_aggregate_layer_is_empty(VikAggregateLayer *val)
 static void aggregate_layer_drag_drop_request(VikAggregateLayer *val_src, VikAggregateLayer *val_dest, GtkTreeIter *src_item_iter, GtkTreePath *dest_path)
 {
 	VikTreeview *vt = ((VikLayer *) val_src)->vt;
-	VikLayer *vl = (VikLayer *) vik_treeview_item_get_pointer(vt, src_item_iter);
+	Layer * layer = (Layer *) vik_treeview_item_get_layer(vt, src_item_iter);
 	GtkTreeIter dest_iter;
 	char *dp;
 	bool target_exists;
@@ -975,13 +978,13 @@ static void aggregate_layer_drag_drop_request(VikAggregateLayer *val_src, VikAgg
 
 	/* vik_aggregate_layer_delete unrefs, but we don't want that here.
 	 * we're still using the layer. */
-	g_object_ref(vl);
+	g_object_ref(layer->vl);
 	vik_aggregate_layer_delete(val_src, src_item_iter);
 
 	if (target_exists) {
-		vik_aggregate_layer_insert_layer(val_dest, vl, &dest_iter);
+		vik_aggregate_layer_insert_layer(val_dest, layer->vl, &dest_iter);
 	} else {
-		vik_aggregate_layer_insert_layer(val_dest, vl, NULL); /* append */
+		vik_aggregate_layer_insert_layer(val_dest, layer->vl, NULL); /* append */
 	}
 	free(dp);
 }

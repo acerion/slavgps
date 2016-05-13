@@ -675,3 +675,13 @@ void vik_layer_set_defaults ( VikLayer *vl, VikViewport *vvp )
     }
   }
 }
+
+
+
+
+
+
+Layer::Layer(VikLayer * vl_)
+{
+	this->vl = vl_;
+}

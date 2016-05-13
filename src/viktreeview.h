@@ -66,11 +66,16 @@ VikTreeview *vik_treeview_new();
 
 GtkWidget *vik_treeview_get_widget(VikTreeview *vt);
 
+void vik_treeview_add_layer(VikTreeview *vt, GtkTreeIter *parent_iter, GtkTreeIter *iter, const char *name, void * parent, bool above, void * item, int data, VikLayerTypeEnum layer_type, time_t timestamp);
+void vik_treeview_insert_layer(VikTreeview *vt, GtkTreeIter *parent_iter, GtkTreeIter *iter, const char *name, void * parent, bool above, void * item, int data, VikLayerTypeEnum layer_type, GtkTreeIter *sibling, time_t timestamp);
+void * vik_treeview_item_get_layer(VikTreeview *vt, GtkTreeIter *iter);
+
 int vik_treeview_item_get_data(VikTreeview *vt, GtkTreeIter *iter);
 int vik_treeview_item_get_type(VikTreeview *vt, GtkTreeIter *iter);
 char *vik_treeview_item_get_name(VikTreeview *vt, GtkTreeIter *iter);
 void * vik_treeview_item_get_pointer(VikTreeview *vt, GtkTreeIter *iter);
-void vik_treeview_item_set_pointer(VikTreeview *vt, GtkTreeIter *iter, void * pointer);
+
+//void vik_treeview_item_set_pointer(VikTreeview *vt, GtkTreeIter *iter, void * pointer);
 void vik_treeview_item_set_timestamp(VikTreeview *vt, GtkTreeIter *iter, time_t timestamp);
 
 void * vik_treeview_item_get_parent(VikTreeview *vt, GtkTreeIter *iter);
@@ -97,10 +102,7 @@ bool vik_treeview_item_get_parent_iter(VikTreeview *vt, GtkTreeIter *iter,  GtkT
 void vik_treeview_expand_toplevel(VikTreeview *vt);
 void vik_treeview_expand(VikTreeview *vt, GtkTreeIter *iter);
 
-void vik_treeview_add_layer(VikTreeview *vt, GtkTreeIter *parent_iter, GtkTreeIter *iter, const char *name, void * parent, bool above,
-			    void * item, int data, VikLayerTypeEnum layer_type, time_t timestamp);
-void vik_treeview_insert_layer(VikTreeview *vt, GtkTreeIter *parent_iter, GtkTreeIter *iter, const char *name, void * parent, bool above,
-			       void * item, int data, VikLayerTypeEnum layer_type, GtkTreeIter *sibling, time_t timestamp);
+
 void vik_treeview_add_sublayer(VikTreeview *vt, GtkTreeIter *parent_iter, GtkTreeIter *iter, const char *name, void * parent, void * item,
 			       int data, GdkPixbuf *icon, bool editable, time_t timestamp);
 

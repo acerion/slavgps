@@ -397,11 +397,11 @@ void a_clipboard_copy_selected ( VikLayersPanel *vlp )
 
   // Since we intercept copy and paste keyboard operations, this is called even when a cell is being edited
   if ( vik_treeview_get_editing ( sel->vt ) ) {
-    type = VIK_CLIPBOARD_DATA_TEXT;
-    //  I don't think we can access what is actually selected (internal to GTK) so we go for the name of the item
-    // At least this is better than copying the layer data - which is even further away from what the user would be expecting...
-    name = vik_treeview_item_get_name ( sel->vt, &iter );
-    len = 0;
+	  type = VIK_CLIPBOARD_DATA_TEXT;
+	  //  I don't think we can access what is actually selected (internal to GTK) so we go for the name of the item
+	  // At least this is better than copying the layer data - which is even further away from what the user would be expecting...
+	  name = vik_treeview_item_get_name ( sel->vt, &iter );
+	  len = 0;
   }
   else {
     if ( vik_treeview_item_get_type ( sel->vt, &iter ) == VIK_TREEVIEW_TYPE_SUBLAYER ) {
@@ -418,7 +418,7 @@ void a_clipboard_copy_selected ( VikLayersPanel *vlp )
       type = VIK_CLIPBOARD_DATA_LAYER;
       vik_layer_marshall ( sel, &data, &ilen );
       len = ilen;
-      name = vik_layer_get_name ( (VikLayer *) vik_treeview_item_get_pointer(sel->vt, &iter) );
+      name = vik_layer_get_name(((Layer *) vik_treeview_item_get_layer(sel->vt, &iter))->vl);
     }
   }
   a_clipboard_copy ( type, layer_type, subtype, len, name, data );

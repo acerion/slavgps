@@ -225,7 +225,7 @@ vik_treeview_tooltip_cb(GtkWidget  *widget,
 	} else if (rv == VIK_TREEVIEW_TYPE_LAYER) {
 		void * layer;
 		gtk_tree_model_get(model, &iter, ITEM_POINTER_COLUMN, &layer, -1);
-		snprintf(buffer, sizeof(buffer), "%s", vik_layer_layer_tooltip(VIK_LAYER(layer)));
+		snprintf(buffer, sizeof(buffer), "%s", vik_layer_layer_tooltip(((Layer *) layer)->vl));
 	} else {
 		gtk_tree_path_free(path);
 		return false;
@@ -282,10 +282,19 @@ void * vik_treeview_item_get_pointer(VikTreeview *vt, GtkTreeIter *iter)
 	return rv;
 }
 
+void * vik_treeview_item_get_layer(VikTreeview *vt, GtkTreeIter *iter)
+{
+	void * rv;
+	TREEVIEW_GET (vt->model, iter, ITEM_POINTER_COLUMN, &rv);
+	return rv;
+}
+
+#if 0
 void vik_treeview_item_set_pointer(VikTreeview *vt, GtkTreeIter *iter, void * pointer)
 {
 	gtk_tree_store_set (GTK_TREE_STORE(vt->model), iter, ITEM_POINTER_COLUMN, pointer, -1);
 }
+#endif
 
 void vik_treeview_item_set_timestamp(VikTreeview *vt, GtkTreeIter *iter, time_t timestamp)
 {
@@ -422,6 +431,8 @@ static void select_cb(GtkTreeSelection *selection, void * data)
 			tmp_vl = VIK_LAYER(vik_treeview_item_get_parent(vt, &iter));
 			tmp_subtype = vik_treeview_item_get_data(vt, &iter);
 			tmp_type = VIK_TREEVIEW_TYPE_SUBLAYER;
+		} else {
+			tmp_layer = ((Layer *) tmp_layer)->vl;
 		}
 	} else {
 		tmp_subtype = vik_treeview_item_get_data(vt, &iter);
@@ -437,20 +448,20 @@ static void select_cb(GtkTreeSelection *selection, void * data)
 		type = vik_treeview_item_get_type(vt, &iter);
 	}
 
-	vl = VIK_LAYER(vik_treeview_item_get_pointer(vt, &iter));
+	Layer * layer = (Layer *) vik_treeview_item_get_layer(vt, &iter);
 
-	vw = VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(vl));
-	vik_window_selected_layer(vw, vl);
+	vw = VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(layer->vl));
+	vik_window_selected_layer(vw, layer->vl);
 
 	if (tmp_vl == NULL) {
-		tmp_vl = vl;
+		tmp_vl = layer->vl;
 	}
 	/* Apply settings now we have the all details  */
 	if (vik_layer_selected(tmp_vl,
-				tmp_subtype,
-				tmp_layer,
-				tmp_type,
-				vik_window_layers_panel(vw))) {
+			       tmp_subtype,
+			       tmp_layer,
+			       tmp_type,
+			       vik_window_layers_panel(vw))) {
 		/* Redraw required */
 		vik_layers_panel_emit_update(vik_window_layers_panel(vw)->panel_ref);
 	}
@@ -909,12 +920,12 @@ static int vik_treeview_drag_data_received(GtkTreeDragDest *drag_dest, GtkTreePa
 
 			vl_src = (VikLayer *) vik_treeview_item_get_parent(vt, &src_iter);
 			assert (vl_src);
-			vl_dest = (VikLayer *) vik_treeview_item_get_pointer(vt, &dest_parent);
+			Layer * layer_dest = (Layer *) vik_treeview_item_get_layer(vt, &dest_parent);
 
 			/* TODO: might want to allow different types, and let the clients handle how they want */
-			if (vl_src->type == vl_dest->type && vik_layer_get_interface(vl_dest->type)->drag_drop_request) {
-				//	fprintf(stdout, "moving an item from layer '%s' into layer '%s'\n", vl_src->name, vl_dest->name);
-				vik_layer_get_interface(vl_dest->type)->drag_drop_request(vl_src, vl_dest, &src_iter, dest);
+			if (vl_src->type == layer_dest->vl->type && vik_layer_get_interface(layer_dest->vl->type)->drag_drop_request) {
+				//	fprintf(stdout, "moving an item from layer '%s' into layer '%s'\n", vl_src->name, layer_dest->vl->name);
+				vik_layer_get_interface(layer_dest->vl->type)->drag_drop_request(vl_src, layer_dest->vl, &src_iter, dest);
 			}
 		}
 	}
