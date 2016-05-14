@@ -410,5 +410,8 @@ static VikCoordLayer *coord_layer_create ( VikViewport *vp )
   VikCoordLayer *vcl = coord_layer_new ( vp );
   if ( vp )
     coord_layer_update_gc ( vcl, vp );
+
+  ((VikLayer *) vcl)->layer = new LayerCoord((VikLayer *) vcl);
+
   return vcl;
 }

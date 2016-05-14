@@ -684,4 +684,38 @@ void vik_layer_set_defaults ( VikLayer *vl, VikViewport *vvp )
 Layer::Layer(VikLayer * vl_)
 {
 	this->vl = vl_;
+	this->vl->layer = this;
+
+
+	switch (this->vl->type) {
+	case VIK_LAYER_AGGREGATE:
+		strcpy(type_string, "AGGREGATE");
+		break;
+	case VIK_LAYER_TRW:
+		strcpy(type_string, "TRW");
+		break;
+	case VIK_LAYER_COORD:
+		strcpy(type_string, "COORD");
+		break;
+	case VIK_LAYER_GEOREF:
+		strcpy(type_string, "GEOREF");
+		break;
+	case VIK_LAYER_GPS:
+		strcpy(type_string, "GPS");
+		break;
+	case VIK_LAYER_MAPS:
+		strcpy(type_string, "MAPS");
+		break;
+	case VIK_LAYER_DEM:
+		strcpy(type_string, "DEM");
+		break;
+#ifdef HAVE_LIBMAPNIK
+	case VIK_LAYER_MAPNIK:
+		strcpy(type_string, "MAPNIK");
+		break;
+#endif
+	default:
+		strcpy(type_string, "LAST");
+		break;
+	}
 }

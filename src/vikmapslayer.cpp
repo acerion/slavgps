@@ -876,6 +876,9 @@ static VikMapsLayer *maps_layer_new (VikViewport *vvp)
 
 	vml->dl_right_click_menu = NULL;
 	vml->filename = NULL;
+
+	((VikLayer *) vml)->layer = new LayerMaps((VikLayer *) vml);
+
 	return vml;
 }
 

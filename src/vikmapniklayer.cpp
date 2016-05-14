@@ -931,9 +931,12 @@ static void mapnik_layer_free ( VikMapnikLayer *vml )
 		free( vml->filename_xml );
 }
 
-static VikMapnikLayer *mapnik_layer_create ( VikViewport *vp )
+static VikMapnikLayer * mapnik_layer_create(VikViewport * vp)
 {
-	return mapnik_layer_new ( vp );
+	VikMapnikLayer * rv = mapnik_layer_new(vp);
+	((VikLayer *) rv)->layer = new LayerMapnik((VikLayer *) rv);
+
+	return rv;
 }
 
 typedef enum {

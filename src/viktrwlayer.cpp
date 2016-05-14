@@ -1747,6 +1747,8 @@ static VikTrwLayer* trw_layer_create ( VikViewport *vp )
 
   rv->menu_selection = vik_layer_get_interface(VIK_LAYER(rv)->type)->menu_items_selection;
 
+  ((VikLayer *) rv)->layer = new LayerTRW((VikLayer *) rv);
+
   return rv;
 }
 

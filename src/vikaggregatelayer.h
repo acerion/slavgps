@@ -77,4 +77,30 @@ std::list<Layer *> * vik_aggregate_layer_get_all_layers_of_type(VikAggregateLaye
 }
 #endif
 
+
+
+
+
+namespace SlavGPS {
+
+
+
+
+
+	class LayerAggregate : public Layer {
+
+	public:
+		LayerAggregate(VikLayer * vl) : Layer(vl) { };
+	};
+
+
+
+
+
+}
+
+
+
+
+
 #endif

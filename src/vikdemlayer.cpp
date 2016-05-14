@@ -991,6 +991,9 @@ VikDEMLayer *dem_layer_create(VikViewport *vp)
 			vdl->gcsgradient[i] = vp->port.new_gc(dem_gradient_colors[i], UNUSED_LINE_THICKNESS);
 		}
 	}
+
+	((VikLayer *) vdl)->layer = new LayerDEM((VikLayer *) vdl);
+
 	return vdl;
 }
 /**************************************************************

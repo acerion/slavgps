@@ -84,4 +84,29 @@ int vik_gps_comm ( VikTrwLayer *vtl,
 }
 #endif
 
+
+
+
+
+namespace SlavGPS {
+
+
+
+
+
+	class LayerGPS : public Layer {
+	public:
+		LayerGPS(VikLayer * vl) : Layer(vl) { };
+	};
+
+
+
+
+
+}
+
+
+
+
+
 #endif

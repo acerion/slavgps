@@ -142,6 +142,9 @@ VikAggregateLayer *vik_aggregate_layer_create(VikViewport *vp)
 	VikAggregateLayer *rv = vik_aggregate_layer_new();
 	VikLayer * vl = (VikLayer *) rv;
 	vik_layer_rename(vl, vik_aggregate_layer_interface.name);
+
+	vl->layer = new LayerAggregate(vl);
+
 	return rv;
 }
 

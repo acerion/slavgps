@@ -49,4 +49,30 @@ typedef struct _VikCoordLayer VikCoordLayer;
 }
 #endif
 
+
+
+
+
+namespace SlavGPS {
+
+
+
+
+
+	class LayerCoord : public Layer {
+	public:
+		LayerCoord(VikLayer * vl) : Layer(vl) { };
+
+	};
+
+
+
+
+
+}
+
+
+
+
+
 #endif

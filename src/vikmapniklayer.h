@@ -52,4 +52,29 @@ void vik_mapnik_layer_uninit (void);
 }
 #endif
 
+
+
+
+
+namespace SlavGPS {
+
+
+
+
+
+	class LayerMapnik : public Layer {
+	public:
+		LayerMapnik(VikLayer * vl) : Layer(vl) { };
+	};
+
+
+
+
+
+}
+
+
+
+
+
 #endif

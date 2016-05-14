@@ -434,6 +434,9 @@ static VikGpsLayer *vik_gps_layer_create (VikViewport *vp)
     rv->trw_children[i] = VIK_TRW_LAYER(vik_layer_create ( VIK_LAYER_TRW, vp, false ));
     vik_layer_set_menu_items_selection(VIK_LAYER(rv->trw_children[i]), VIK_MENU_ITEM_ALL & ~(VIK_MENU_ITEM_CUT|VIK_MENU_ITEM_DELETE));
   }
+
+  ((VikLayer *) rv)->layer = new LayerGPS((VikLayer *) rv);
+
   return rv;
 }
 

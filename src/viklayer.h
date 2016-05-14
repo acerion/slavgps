@@ -57,17 +57,19 @@ struct _VikLayerClass
 GType vik_layer_get_type ();
 
 struct _VikLayer {
-  GObject obj;
-  char *name;
-  bool visible;
+	GObject obj;
+	char *name;
+	bool visible;
 
-  bool realized;
-  VikViewport *vvp;/* simply a reference */
-  VikTreeview *vt; /* simply a reference */
-  GtkTreeIter iter;
+	bool realized;
+	VikViewport *vvp;/* simply a reference */
+	VikTreeview *vt; /* simply a reference */
+	GtkTreeIter iter;
 
-  /* for explicit "polymorphism" (function type switching) */
-  VikLayerTypeEnum type;
+	/* for explicit "polymorphism" (function type switching) */
+	VikLayerTypeEnum type;
+
+	void * layer; /* class Layer */
 };
 
 /* I think most of these are ignored,
@@ -341,10 +343,12 @@ namespace SlavGPS {
 	class Layer {
 	public:
 
-		Layer(VikLayer *vl);
+		Layer(VikLayer * vl);
 		~Layer() {};
 
 		VikLayer * vl;
+
+		char type_string[10];
 
 
 	};

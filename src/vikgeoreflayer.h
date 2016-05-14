@@ -61,4 +61,29 @@ VikGeorefLayer *vik_georef_layer_create(VikViewport *vp,
 }
 #endif
 
+
+
+
+
+namespace SlavGPS {
+
+
+
+
+
+	class LayerGeoref : public Layer {
+	public:
+		LayerGeoref(VikLayer * vl) : Layer(vl) { };
+	};
+
+
+
+
+
+}
+
+
+
+
+
 #endif

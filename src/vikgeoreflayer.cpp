@@ -510,7 +510,11 @@ static void georef_layer_free(VikGeorefLayer *vgl)
 
 static VikGeorefLayer *georef_layer_create(VikViewport *vp)
 {
-	return georef_layer_new(vp);
+	VikGeorefLayer * rv = georef_layer_new(vp);
+
+	((VikLayer *) rv)->layer = new LayerGeoref((VikLayer *) rv);
+
+	return rv;
 }
 
 static bool georef_layer_properties(VikGeorefLayer *vgl, void * vp)

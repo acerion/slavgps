@@ -82,4 +82,29 @@ void vik_maps_layer_download ( VikMapsLayer *vml, VikViewport *vvp, bool only_ne
 }
 #endif
 
+
+
+
+
+namespace SlavGPS {
+
+
+
+
+
+	class LayerMaps : public Layer {
+	public:
+		LayerMaps(VikLayer * vl) : Layer(vl) { };
+	};
+
+
+
+
+
+}
+
+
+
+
+
 #endif

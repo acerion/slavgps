@@ -49,4 +49,30 @@ typedef struct _VikDEMLayer VikDEMLayer;
 }
 #endif
 
+
+
+
+
+namespace SlavGPS {
+
+
+
+
+
+	class LayerDEM : public Layer {
+	public:
+		LayerDEM(VikLayer * vl) : Layer(vl) { };
+
+	};
+
+
+
+
+
+}
+
+
+
+
+
 #endif
