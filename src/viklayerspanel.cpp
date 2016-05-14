@@ -506,7 +506,8 @@ void LayersPanel::add_layer(VikLayer *l)
 	vik_layer_change_coord_mode(l, this->viewport->get_coord_mode());
 
 	if (! vik_treeview_get_selected_iter(this->vt, &iter)) {
-		vik_aggregate_layer_add_layer(this->toplayer, l, true);
+		Layer * layer = new Layer(l);
+		vik_aggregate_layer_add_layer(this->toplayer, layer, true);
 	} else {
 		VikAggregateLayer *addtoagg;
 		if (vik_treeview_item_get_type(this->vt, &iter) == VIK_TREEVIEW_TYPE_LAYER) {
@@ -536,10 +537,11 @@ void LayersPanel::add_layer(VikLayer *l)
 				replace_iter = &grandpa->iter;
 			}
 		}
+		Layer * layer = new Layer(l);
 		if (replace_iter) {
-			vik_aggregate_layer_insert_layer(addtoagg, l, replace_iter);
+			vik_aggregate_layer_insert_layer(addtoagg, layer, replace_iter);
 		} else {
-			vik_aggregate_layer_add_layer(addtoagg, l, true);
+			vik_aggregate_layer_add_layer(addtoagg, layer, true);
 		}
 	}
 

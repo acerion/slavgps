@@ -479,7 +479,8 @@ void vik_window_new_window_finish(VikWindow *vw)
 	if(a_vik_get_add_default_map_layer()) {
 		VikMapsLayer *vml = VIK_MAPS_LAYER(vik_layer_create(VIK_LAYER_MAPS, vw->viking_vvp, false));
 		vik_layer_rename(VIK_LAYER(vml), _("Default Map"));
-		vik_aggregate_layer_add_layer(vw->layers_panel->get_top_layer(), VIK_LAYER(vml), true);
+		Layer * layer = new Layer(VIK_LAYER(vml));
+		vik_aggregate_layer_add_layer(vw->layers_panel->get_top_layer(), layer, true);
 
 		draw_update(vw);
 	}
