@@ -26,6 +26,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include <list>
+
 
 #include "viklayer.h"
 
@@ -63,13 +65,13 @@ VikAggregateLayer *vik_aggregate_layer_create(VikViewport *vp);
 /* returns: 0 = success, 1 = none appl. found, 2 = found but rejected */
 // unsigned int vik_aggregate_layer_tool(VikAggregateLayer *val, uint16_t layer_type, VikToolInterfaceFunc tool_func, GdkEventButton *event, VikViewport *vvp);
 
-VikLayer *vik_aggregate_layer_get_top_visible_layer_of_type(VikAggregateLayer *val, VikLayerTypeEnum type);
+Layer * vik_aggregate_layer_get_top_visible_layer_of_type(VikAggregateLayer *val, VikLayerTypeEnum type);
 void vik_aggregate_layer_realize(VikAggregateLayer *val, VikTreeview *vt, GtkTreeIter *layer_iter);
 bool vik_aggregate_layer_load_layers(VikAggregateLayer *val, FILE *f, void * vp);
 bool vik_aggregate_layer_is_empty(VikAggregateLayer *val);
 
-const GList *vik_aggregate_layer_get_children(VikAggregateLayer *val);
-GList *vik_aggregate_layer_get_all_layers_of_type(VikAggregateLayer *val, GList *layers, VikLayerTypeEnum type, bool include_invisible);
+const std::list<Layer *> * vik_aggregate_layer_get_children(VikAggregateLayer *val);
+std::list<Layer *> * vik_aggregate_layer_get_all_layers_of_type(VikAggregateLayer *val, std::list<Layer *> * layers, VikLayerTypeEnum type, bool include_invisible);
 
 #ifdef __cplusplus
 }

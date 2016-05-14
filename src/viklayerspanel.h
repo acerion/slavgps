@@ -61,7 +61,7 @@ namespace SlavGPS {
 		void clear();
 		VikAggregateLayer * get_top_layer();
 		void change_coord_mode(VikCoordMode mode);
-		GList * get_all_layers_of_type(int type, bool include_invisible);
+		std::list<Layer *> * get_all_layers_of_type(int type, bool include_invisible);
 		VikTreeview * get_treeview();
 
 

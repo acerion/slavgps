@@ -29,6 +29,8 @@
 #include "dialog.h"
 #include "globals.h"
 
+#include <list>
+
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -106,7 +108,9 @@ VikLayerInterface vik_aggregate_layer_interface = {
 
 struct _VikAggregateLayer {
 	VikLayer vl;
-	GList *children;
+
+	std::list<Layer *> * children;
+
 	// One per layer
 	GtkWidget *tracks_analysis_dialog;
 };
@@ -143,7 +147,8 @@ VikAggregateLayer *vik_aggregate_layer_create(VikViewport *vp)
 
 static void aggregate_layer_marshall(VikAggregateLayer *val, uint8_t **data, int *datalen)
 {
-	GList *child = val->children;
+#if 1
+	auto child = val->children->begin();
 	uint8_t *ld;
 	int ll;
 	GByteArray* b = g_byte_array_new();
@@ -159,39 +164,43 @@ static void aggregate_layer_marshall(VikAggregateLayer *val, uint8_t **data, int
 	alm_append(ld, ll);
 	free(ld);
 
-	while (child) {
-		VikLayer * child_layer = (VikLayer *) child->data;
-		vik_layer_marshall(child_layer, &ld, &ll);
+	while (child != val->children->end()) {
+		vik_layer_marshall((*child)->vl, &ld, &ll);
 		if (ld) {
 			alm_append(ld, ll);
 			free(ld);
 		}
-		child = child->next;
+		child++;
 	}
 	*data = b->data;
 	*datalen = b->len;
 	g_byte_array_free(b, false);
 #undef alm_append
+
+#endif
 }
 
 static VikAggregateLayer *aggregate_layer_unmarshall(uint8_t *data, int len, VikViewport *vvp)
 {
+#if 1
+
 #define alm_size (*(int *)data)
 #define alm_next		 \
 	len -= sizeof(int) + alm_size;		\
 	data += sizeof(int) + alm_size;
 
 	VikAggregateLayer *rv = vik_aggregate_layer_new();
-	VikLayer *child_layer;
 
 	VikLayer * vl = (VikLayer *) rv;
 	vik_layer_unmarshall_params(vl, data+sizeof(int), alm_size, vvp);
 	alm_next;
 
 	while (len>0) {
-		child_layer = vik_layer_unmarshall(data + sizeof(int), alm_size, vvp);
+		VikLayer * child_layer = vik_layer_unmarshall(data + sizeof(int), alm_size, vvp);
 		if (child_layer) {
-			rv->children = g_list_append(rv->children, child_layer);
+			fprintf(stderr, "++++++++++ push front B\n");
+			Layer * new_layer = new Layer(child_layer);
+			rv->children->push_front(new_layer);
 			g_signal_connect_swapped(G_OBJECT(child_layer), "update", G_CALLBACK(vik_layer_emit_update_secondary), rv);
 		}
 		alm_next;
@@ -200,6 +209,8 @@ static VikAggregateLayer *aggregate_layer_unmarshall(uint8_t *data, int len, Vik
 	return rv;
 #undef alm_size
 #undef alm_next
+
+#endif
 }
 
 VikAggregateLayer *vik_aggregate_layer_new()
@@ -208,7 +219,7 @@ VikAggregateLayer *vik_aggregate_layer_new()
 
 	VikLayer * vl = (VikLayer *) val;
 	vik_layer_set_type(vl, VIK_LAYER_AGGREGATE);
-	val->children = NULL;
+	val->children = new std::list<Layer *>;
 	return val;
 }
 
@@ -234,19 +245,27 @@ void vik_aggregate_layer_insert_layer(VikAggregateLayer *val, VikLayer *l, GtkTr
 
 		vik_layer_realize(l, vl->vt, &iter);
 
-		if (val->children == NULL) {
+		if (val->children->empty()) {
 			vik_treeview_expand(vl->vt, &(vl->iter));
 		}
 	}
 
 	if (replace_iter) {
 		Layer * layer = (Layer *) vik_treeview_item_get_layer(vl->vt, replace_iter);
-		GList *theone = g_list_find(val->children, layer->vl);
+
+		auto theone = val->children->end();
+		for (auto i = val->children->begin(); i != val->children->end(); i++) {
+			if ((*i)->vl == layer->vl) {
+				theone = i;
+			}
+		}
+
+		Layer * new_layer = new Layer(l);
 		if (put_above) {
-			val->children = g_list_insert(val->children, l, g_list_position(val->children,theone)+1);
+			val->children->insert(std::next(theone), new_layer);
 		} else {
 			// Thus insert 'here' (so don't add 1)
-			val->children = g_list_insert(val->children, l, g_list_position(val->children,theone));
+			val->children->insert(theone, new_layer);
 		}
 	} else {
 		// Effectively insert at 'end' of the list to match how displayed in the treeview
@@ -254,8 +273,10 @@ void vik_aggregate_layer_insert_layer(VikAggregateLayer *val, VikLayer *l, GtkTr
 		// This ordering is especially important if it is a map or similar type,
 		//  which needs be drawn first for the layering draw method to work properly.
 		// ATM this only happens when a layer is drag/dropped to the end of an aggregate layer
-		val->children = g_list_prepend(val->children, l);
+		Layer * new_layer = new Layer(l);
+		val->children->push_back(new_layer);
 	}
+
 	g_signal_connect_swapped(G_OBJECT(l), "update", G_CALLBACK(vik_layer_emit_update_secondary), val);
 }
 
@@ -288,15 +309,16 @@ void vik_aggregate_layer_add_layer(VikAggregateLayer *val, VikLayer *l, bool all
 
 		vik_layer_realize(l, vl->vt, &iter);
 
-		if (val->children == NULL) {
+		if (val->children->empty()) {
 			vik_treeview_expand(vl->vt, &(vl->iter));
 		}
 	}
 
+	Layer * new_layer = new Layer(l);
 	if (put_above) {
-		val->children = g_list_append(val->children, l);
+		val->children->push_back(new_layer);
 	} else {
-		val->children = g_list_prepend(val->children, l);
+		val->children->push_front(new_layer);
 	}
 
 	g_signal_connect_swapped(G_OBJECT(l), "update", G_CALLBACK(vik_layer_emit_update_secondary), val);
@@ -304,44 +326,43 @@ void vik_aggregate_layer_add_layer(VikAggregateLayer *val, VikLayer *l, bool all
 
 void vik_aggregate_layer_move_layer(VikAggregateLayer *val, GtkTreeIter *child_iter, bool up)
 {
-	GList *theone, *first, *second;
+	auto theone = val->children->end();
+
 	VikLayer * vl = (VikLayer *) val;
 	vik_treeview_move_item(vl->vt, child_iter, up);
 
 	Layer * layer = (Layer *) vik_treeview_item_get_layer(vl->vt, child_iter);
-	theone = g_list_find(val->children, layer->vl);
 
-	assert (theone != NULL);
+	for (auto i = val->children->begin(); i != val->children->end(); i++) {
+		if ((*i)->vl == layer->vl) {
+			theone = i;
+		}
+	}
 
+	if (up) {
+		std::swap(*theone, *std::next(theone));
+	} else {
+		std::swap(*theone, *std::prev(theone));
+	}
+
+#if 0
 	/* the old switcheroo */
-	if (up && theone->next) {
-		first = theone;
-		second = theone->next;
-	} else if (!up && theone->prev) {
+	if (up && theone + 1 != val->children->end()) {
+
+		VikLayer * tmp = *(theone + 1);
+		*(theone + 1) = *(theone);
+		*(theone) = tmp;
+	} else if (!up && theone - 1 != val->children->end()) {
+
+		VikLayer * tmp = *(theone - 1);
+		*(theone - 1) = *(theone);
+
 		first = theone->prev;
 		second = theone;
 	} else {
 		return;
 	}
-
-	first->next = second->next;
-	second->prev = first->prev;
-	first->prev = second;
-	second->next = first;
-
-	/* second is now first */
-
-	if (second->prev) {
-		second->prev->next = second;
-	}
-
-	if (first->next) {
-		first->next->prev = first;
-	}
-
-	if (second->prev == NULL) {
-		val->children = second;
-	}
+#endif
 }
 
 /* Draw the aggregate layer. If vik viewport is in half_drawn mode, this means we are only
@@ -355,11 +376,11 @@ void vik_aggregate_layer_move_layer(VikAggregateLayer *val, GtkTreeIter *child_i
  */
 void vik_aggregate_layer_draw(VikAggregateLayer *val, VikViewport *vp)
 {
-	GList *iter = val->children;
+	auto iter = val->children->begin();
 	VikLayer * trigger = (VikLayer *) vik_viewport_get_trigger(vp);
-	while (iter) {
-		VikLayer * vl = (VikLayer *) iter->data;
-		if (vl == trigger) {
+	while (iter != val->children->end()) {
+		Layer * layer = *iter;
+		if (layer->vl == trigger) {
 			if (vik_viewport_get_half_drawn(vp)) {
 				vik_viewport_set_half_drawn(vp, false);
 				vik_viewport_snapshot_load(vp);
@@ -367,20 +388,54 @@ void vik_aggregate_layer_draw(VikAggregateLayer *val, VikViewport *vp)
 				vik_viewport_snapshot_save(vp);
 			}
 		}
-		if (vl->type == VIK_LAYER_AGGREGATE || vl->type == VIK_LAYER_GPS || ! vik_viewport_get_half_drawn(vp)) {
-			vik_layer_draw (vl, vp);
+		if (layer->vl->type == VIK_LAYER_AGGREGATE || layer->vl->type == VIK_LAYER_GPS || ! vik_viewport_get_half_drawn(vp)) {
+			vik_layer_draw (layer->vl, vp);
 		}
-		iter = iter->next;
+		iter++;
+	}
+
+
+	fprintf(stderr, "%s:%d: children:\n", __FILE__, __LINE__);
+	auto it = val->children->begin();
+	while (it != val->children->end()) {
+		Layer * layer = *it;
+		fprintf(stderr, "    name = '%s', ", layer->vl->name);
+		if (layer->vl->type == VIK_LAYER_AGGREGATE) {
+			fprintf(stderr, "type = LAYER AGGREGATE\n");
+
+		} else if (layer->vl->type == VIK_LAYER_TRW) {
+			fprintf(stderr, "type = LAYER TRW\n");
+		} else if (layer->vl->type == VIK_LAYER_COORD) {
+			fprintf(stderr, "type = LAYER COORD\n");
+		} else if (layer->vl->type == VIK_LAYER_GEOREF) {
+			fprintf(stderr, "type = LAYER GEOREF\n");
+		} else if (layer->vl->type == VIK_LAYER_MAPS) {
+			fprintf(stderr, "type = LAYER MAPS\n");
+		} else if (layer->vl->type == VIK_LAYER_DEM) {
+			fprintf(stderr, "type = LAYER DEM\n");
+		} else if (layer->vl->type == VIK_LAYER_GPS) {
+			fprintf(stderr, "type = LAYER GPS\n");
+#ifdef HAVE_LIBMAPNIK
+		} else if (layer->vl->type == VIK_LAYER_MAPNIK) {
+			fprintf(stderr, "type = LAYER MAPNIK\n");
+#endif
+		} else if (layer->vl->type == VIK_LAYER_NUM_TYPES) {
+			fprintf(stderr, "type = LAYER NUM_TYPES !!!!! \n");
+
+		} else {
+			fprintf(stderr, "type = %d !!!!!! \n", layer->vl->type);
+		}
+		it++;
 	}
 }
 
 static void aggregate_layer_change_coord_mode(VikAggregateLayer *val, VikCoordMode mode)
 {
-	GList *iter = val->children;
-	while (iter) {
-		VikLayer * vl = (VikLayer *) iter->data;
-		vik_layer_change_coord_mode(vl, mode);
-		iter = iter->next;
+	auto iter = val->children->begin();
+	while (iter != val->children->end()) {
+		Layer * layer = *iter;
+		vik_layer_change_coord_mode(layer->vl, mode);
+		iter++;
 	}
 }
 
@@ -401,13 +456,13 @@ static void aggregate_layer_child_visible_toggle(menu_array_values values)
 
 	// Loop around all (child) layers applying visibility setting
 	// This does not descend the tree if there are aggregates within aggregrate - just the first level of layers held
-	GList *iter = val->children;
-	while (iter) {
-		VikLayer * vl = (VikLayer *) iter->data;
-		vl->visible = !vl->visible;
+	auto iter = val->children->begin();
+	while (iter != val->children->end()) {
+		Layer * layer = *iter;
+		layer->vl->visible = !layer->vl->visible;
 		// Also set checkbox on/off
-		vik_treeview_item_toggle_visible(vlp->panel_ref->get_treeview(), &(vl->iter));
-		iter = iter->next;
+		vik_treeview_item_toggle_visible(vlp->panel_ref->get_treeview(), &(layer->vl->iter));
+		iter++;
 	}
 	// Redraw as view may have changed
 	VikLayer * vl_2 = (VikLayer *) val;
@@ -422,13 +477,13 @@ static void aggregate_layer_child_visible(menu_array_values values, bool on_off)
 
 	// Loop around all (child) layers applying visibility setting
 	// This does not descend the tree if there are aggregates within aggregrate - just the first level of layers held
-	GList *iter = val->children;
-	while (iter) {
-		VikLayer * vl = (VikLayer *) iter->data;
-		vl->visible = on_off;
+	auto iter = val->children->begin();
+	while (iter != val->children->end()) {
+		Layer * layer = *iter;
+		layer->vl->visible = on_off;
 		// Also set checkbox on_off
-		vik_treeview_item_set_visible(vlp->panel_ref->get_treeview(), &(vl->iter), on_off);
-		iter = iter->next;
+		vik_treeview_item_set_visible(vlp->panel_ref->get_treeview(), &(layer->vl->iter), on_off);
+		iter++;
 	}
 
 	VikLayer * vl_2 = (VikLayer *) val;
@@ -467,18 +522,22 @@ static int sort_layer_compare(gconstpointer a, gconstpointer b, void * order)
 
 static void aggregate_layer_sort_a2z(menu_array_values values)
 {
+#if 0
 	VikAggregateLayer *val = (VikAggregateLayer *) values[MA_VAL];
 	VikLayer * vl = (VikLayer *) val;
 	vik_treeview_sort_children(vl->vt, &vl->iter, VL_SO_ALPHABETICAL_ASCENDING);
-	val->children = g_list_sort_with_data(val->children, sort_layer_compare, KINT_TO_POINTER(true));
+	g_list_sort_with_data(val->children, sort_layer_compare, KINT_TO_POINTER(true));
+#endif
 }
 
 static void aggregate_layer_sort_z2a(menu_array_values values)
 {
+#if 0
 	VikAggregateLayer *val = (VikAggregateLayer *) values[MA_VAL];
 	VikLayer * vl = (VikLayer *) val;
 	vik_treeview_sort_children(vl->vt, &vl->iter, VL_SO_ALPHABETICAL_DESCENDING);
-	val->children = g_list_sort_with_data(val->children, sort_layer_compare, KINT_TO_POINTER(false));
+	g_list_sort_with_data(val->children, sort_layer_compare, KINT_TO_POINTER(false));
+#endif
 }
 
 /**
@@ -503,18 +562,22 @@ static int sort_layer_compare_timestamp(gconstpointer a, gconstpointer b, void *
 
 static void aggregate_layer_sort_timestamp_ascend(menu_array_values values)
 {
+#if 0
 	VikAggregateLayer *val = (VikAggregateLayer *) values[MA_VAL];
 	VikLayer * vl = (VikLayer *) val;
 	vik_treeview_sort_children(vl->vt, &vl->iter, VL_SO_DATE_ASCENDING);
-	val->children = g_list_sort_with_data(val->children, sort_layer_compare_timestamp, KINT_TO_POINTER(true));
+	g_list_sort_with_data(val->children, sort_layer_compare_timestamp, KINT_TO_POINTER(true));
+#endif
 }
 
 static void aggregate_layer_sort_timestamp_descend(menu_array_values values)
 {
+#if 0
 	VikAggregateLayer *val = (VikAggregateLayer *) values[MA_VAL];
 	VikLayer * vl = (VikLayer *) val;
 	vik_treeview_sort_children(vl->vt, &vl->iter, VL_SO_DATE_DESCENDING);
-	val->children = g_list_sort_with_data(val->children, sort_layer_compare_timestamp, KINT_TO_POINTER(false));
+	g_list_sort_with_data(val->children, sort_layer_compare_timestamp, KINT_TO_POINTER(false));
+#endif
 }
 
 /**
@@ -529,26 +592,23 @@ static GList* aggregate_layer_waypoint_create_list(VikLayer *vl, void * user_dat
 	VikAggregateLayer *val = (VikAggregateLayer *) vl;
 
 	// Get all TRW layers
-	GList *layers = NULL;
+	std::list<Layer *> * layers = new std::list<Layer *>;
 	layers = vik_aggregate_layer_get_all_layers_of_type(val, layers, VIK_LAYER_TRW, true);
 
 	// For each TRW layers keep adding the waypoints to build a list of all of them
 	GList *waypoints_and_layers = NULL;
-	layers = g_list_first(layers);
 	int index = 0;
-	while (layers) {
+	for (auto iter = layers->begin(); iter != layers->end(); iter++) {
 		GList * waypoints = NULL;
 
-		std::unordered_map<sg_uid_t, Waypoint *> & wps = VIK_TRW_LAYER(layers->data)->trw.get_waypoints();
+		std::unordered_map<sg_uid_t, Waypoint *> & wps = VIK_TRW_LAYER(*iter)->trw.get_waypoints();
 		for (auto i = wps.begin(); i != wps.end(); i++) {
 			waypoints = g_list_insert(waypoints, i->second, index++);
 		}
 
-		waypoints_and_layers = g_list_concat(waypoints_and_layers, VIK_TRW_LAYER(layers->data)->trw.build_waypoint_list_t(waypoints));
-
-		layers = g_list_next(layers);
+		waypoints_and_layers = g_list_concat(waypoints_and_layers, VIK_TRW_LAYER(*iter)->trw.build_waypoint_list_t(waypoints));
 	}
-	g_list_free(layers);
+	delete layers;
 
 	return waypoints_and_layers;
 }
@@ -577,26 +637,29 @@ static void aggregate_layer_search_date(menu_array_values values)
 
 	VikViewport *vvp = vik_window_viewport(VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(val)));
 
-	GList *gl = NULL;
-	gl = vik_aggregate_layer_get_all_layers_of_type(val, gl, VIK_LAYER_TRW, true);
+	std::list<Layer *> * layers = new std::list<Layer *>;
+	auto iter = layers->begin();
+	layers = vik_aggregate_layer_get_all_layers_of_type(val, layers, VIK_LAYER_TRW, true);
 	bool found = false;
 	// Search tracks first
-	while (gl && !found) {
+	while (iter != layers->end() && !found) {
 		// Make it auto select the item if found
-		found = VIK_TRW_LAYER(gl->data)->trw.find_by_date(date_str, &position, vvp, true, true);
-		gl = g_list_next(gl);
+		found = VIK_TRW_LAYER(*iter)->trw.find_by_date(date_str, &position, vvp, true, true);
+		iter++;
 	}
-	g_list_free(gl);
+	delete layers;
+
 	if (!found) {
 		// Reset and try on Waypoints
-		gl = NULL;
-		gl = vik_aggregate_layer_get_all_layers_of_type(val, gl, VIK_LAYER_TRW, true);
-		while (gl && !found) {
+		layers = new std::list<Layer *>;
+		layers = vik_aggregate_layer_get_all_layers_of_type(val, layers, VIK_LAYER_TRW, true);
+		iter = layers->begin();
+		while (iter != layers->end() && !found) {
 			// Make it auto select the item if found
-			found = VIK_TRW_LAYER(gl->data)->trw.find_by_date(date_str, &position, vvp, false, true);
-			gl = g_list_next(gl);
+			found = VIK_TRW_LAYER(*iter)->trw.find_by_date(date_str, &position, vvp, false, true);
+			iter++;
 		}
-		g_list_free(gl);
+		delete layers;
 	}
 
 	if (!found) {
@@ -617,22 +680,22 @@ static GList* aggregate_layer_track_create_list(VikLayer *vl, void * user_data)
 	VikAggregateLayer *val = (VikAggregateLayer *) vl;
 
 	// Get all TRW layers
-	GList *layers = NULL;
+	std::list<Layer *> * layers = new std::list<Layer *>;
 	layers = vik_aggregate_layer_get_all_layers_of_type(val, layers, VIK_LAYER_TRW, true);
 
 	// For each TRW layers keep adding the tracks and routes to build a list of all of them
 	GList *tracks_and_layers = NULL;
-	layers = g_list_first(layers);
-	while (layers) {
+	auto iter = layers->begin();
+	while (iter != layers->end()) {
 		GList *tracks = NULL;
-		LayerTRW::get_track_values(&tracks, VIK_TRW_LAYER(layers->data)->trw.get_tracks());
-		LayerTRW::get_track_values(&tracks, VIK_TRW_LAYER(layers->data)->trw.get_routes());
+		LayerTRW::get_track_values(&tracks, VIK_TRW_LAYER(*iter)->trw.get_tracks());
+		LayerTRW::get_track_values(&tracks, VIK_TRW_LAYER(*iter)->trw.get_routes());
 
-		tracks_and_layers = g_list_concat(tracks_and_layers, VIK_TRW_LAYER(layers->data)->trw.build_track_list_t(tracks));
+		tracks_and_layers = g_list_concat(tracks_and_layers, VIK_TRW_LAYER(*iter)->trw.build_track_list_t(tracks));
 
-		layers = g_list_next(layers);
+		iter++;
 	}
-	g_list_free(layers);
+	delete layers;
 
 	return tracks_and_layers;
 }
@@ -784,9 +847,12 @@ static void disconnect_layer_signal(VikLayer *vl, VikAggregateLayer *val)
 
 void vik_aggregate_layer_free(VikAggregateLayer *val)
 {
-	g_list_foreach(val->children, (GFunc)(disconnect_layer_signal), val);
-	g_list_foreach(val->children, (GFunc)(g_object_unref), NULL);
-	g_list_free(val->children);
+	for (auto child = val->children->begin(); child != val->children->end(); child++) {
+		disconnect_layer_signal((*child)->vl, val);
+		g_object_unref((*child)->vl);
+	}
+	// g_list_free(val->children); // kamilFIXME: clean up the list. */
+
 	if (val->tracks_analysis_dialog != NULL) {
 		gtk_widget_destroy(val->tracks_analysis_dialog);
 	}
@@ -801,11 +867,12 @@ static void delete_layer_iter(VikLayer *vl)
 
 void vik_aggregate_layer_clear(VikAggregateLayer *val)
 {
-	g_list_foreach(val->children, (GFunc)(disconnect_layer_signal), val);
-	g_list_foreach(val->children, (GFunc)(delete_layer_iter), NULL);
-	g_list_foreach(val->children, (GFunc)(g_object_unref), NULL);
-	g_list_free(val->children);
-	val->children = NULL;
+	for (auto child = val->children->begin(); child != val->children->end(); child++) {
+		disconnect_layer_signal((*child)->vl, val);
+		delete_layer_iter((*child)->vl);
+		g_object_unref((*child)->vl);
+	}
+	// g_list_free(val->children); // kamilFIXME: clean up the list
 }
 
 bool vik_aggregate_layer_delete(VikAggregateLayer *val, GtkTreeIter *iter)
@@ -815,7 +882,13 @@ bool vik_aggregate_layer_delete(VikAggregateLayer *val, GtkTreeIter *iter)
 	bool was_visible = layer->vl->visible;
 
 	vik_treeview_item_delete(vl_A->vt, iter);
-	val->children = g_list_remove(val->children, layer->vl);
+
+	for (auto i = val->children->begin(); i != val->children->end(); i++) {
+		if ((*i)->vl = layer->vl) {
+			val->children->erase(i);
+			break;
+		}
+	}
 	disconnect_layer_signal(layer->vl, val);
 	g_object_unref(layer->vl);
 
@@ -861,68 +934,63 @@ unsigned int vik_aggregate_layer_tool(VikAggregateLayer *val, VikLayerTypeEnum l
 }
 #endif
 
-VikLayer *vik_aggregate_layer_get_top_visible_layer_of_type(VikAggregateLayer *val, VikLayerTypeEnum type)
+Layer * vik_aggregate_layer_get_top_visible_layer_of_type(VikAggregateLayer *val, VikLayerTypeEnum type)
 {
-	VikLayer *rv;
-	GList *ls = val->children;
-	if (!ls) {
+	if (val->children->empty()) {
 		return NULL;
 	}
 
-	while (ls->next) {
-		ls = ls->next;
-	}
-
-	while (ls) {
-		VikLayer *vl = (VikLayer *) ls->data;
-		if (vl->visible && vl->type == type) {
-			return vl;
-		} else if (vl->visible && vl->type == VIK_LAYER_AGGREGATE) {
-			rv = vik_aggregate_layer_get_top_visible_layer_of_type((VikAggregateLayer *) vl, type);
+	auto child = val->children->end();
+	do {
+		child--;
+		Layer * layer = *child;
+		if (layer->vl->visible && layer->vl->type == type) {
+			return layer;
+		} else if (layer->vl->visible && layer->vl->type == VIK_LAYER_AGGREGATE) {
+			Layer * rv = vik_aggregate_layer_get_top_visible_layer_of_type((VikAggregateLayer *) layer->vl, type);
 			if (rv) {
 				return rv;
 			}
 		}
-		ls = ls->prev;
-	}
+	} while (child != val->children->begin());
+
 	return NULL;
 }
 
-GList *vik_aggregate_layer_get_all_layers_of_type(VikAggregateLayer *val, GList *layers, VikLayerTypeEnum type, bool include_invisible)
+std::list<Layer *> * vik_aggregate_layer_get_all_layers_of_type(VikAggregateLayer *val, std::list<Layer *> * layers, VikLayerTypeEnum type, bool include_invisible)
 {
-	GList *l = layers;
-	GList *children = val->children;
-	if (!children) {
+	if (val->children->empty()) {
 		return layers;
 	}
 
+	auto child = val->children->begin();
 	// Where appropriate *don't* include non-visible layers
-	while (children) {
-		VikLayer * vl = (VikLayer *) children->data;
-		if (vl->type == VIK_LAYER_AGGREGATE) {
+	while (child != val->children->end()) {
+		Layer * layer = *child;
+		if (layer->vl->type == VIK_LAYER_AGGREGATE) {
 			// Don't even consider invisible aggregrates, unless told to
-			if (vl->visible || include_invisible) {
-				l = vik_aggregate_layer_get_all_layers_of_type((VikAggregateLayer *) (children->data), l, type, include_invisible);
+			if (layer->vl->visible || include_invisible) {
+				layers = vik_aggregate_layer_get_all_layers_of_type((VikAggregateLayer *) layer->vl, layers, type, include_invisible);
 			}
-		} else if (vl->type == type) {
-			if (vl->visible || include_invisible) {
-				l = g_list_prepend(l, children->data); /* now in top down order */
+		} else if (layer->vl->type == type) {
+			if (layer->vl->visible || include_invisible) {
+				layers->push_back(layer); /* now in top down order */
 			}
 		} else if (type == VIK_LAYER_TRW) {
 			/* GPS layers contain TRW layers. cf with usage in file.c */
-			if (vl->type == VIK_LAYER_GPS) {
-				if (vl->visible || include_invisible) {
-					if (!vik_gps_layer_is_empty(VIK_GPS_LAYER(children->data))) {
+			if (layer->vl->type == VIK_LAYER_GPS) {
+				if (layer->vl->visible || include_invisible) {
+					if (!vik_gps_layer_is_empty(VIK_GPS_LAYER(layer->vl))) {
 						/*
 						  can not use g_list_concat due to wrong copy method - crashes if used a couple times !!
-						  l = g_list_concat (l, vik_gps_layer_get_children (VIK_GPS_LAYER(children->data)));
+						  l = g_list_concat (l, vik_gps_layer_get_children (VIK_GPS_LAYER((*child)->vl)));
 						*/
 						/* create own copy method instead :(*/
-						GList *gps_trw_layers = (GList *)vik_gps_layer_get_children(VIK_GPS_LAYER(children->data));
+						GList *gps_trw_layers = (GList *) vik_gps_layer_get_children(VIK_GPS_LAYER(layer->vl));
 						int n_layers = g_list_length(gps_trw_layers);
-						int layer = 0;
-						for (layer = 0; layer < n_layers; layer++) {
-							l = g_list_prepend(l, gps_trw_layers->data);
+						int lay = 0;
+						for (lay = 0; lay < n_layers; lay++) {
+							layers->push_front((Layer *) gps_trw_layers->data); /* kamilFIXME: gps_trw_layers->data is not Layer! */
 							gps_trw_layers = gps_trw_layers->next;
 						}
 						g_list_free(gps_trw_layers);
@@ -930,39 +998,40 @@ GList *vik_aggregate_layer_get_all_layers_of_type(VikAggregateLayer *val, GList 
 				}
 			}
 		}
-		children = children->next;
+		child++;
 	}
-	return l;
+	return layers;
 }
 
 void vik_aggregate_layer_realize(VikAggregateLayer *val, VikTreeview *vt, GtkTreeIter *layer_iter)
 {
-	GList *i = val->children;
+	if (val->children->empty()) {
+		return;
+	}
+
+	auto child = val->children->begin();
 	GtkTreeIter iter;
 	VikLayer * vl = (VikLayer *) val;
-	while (i) {
-		Layer * layer = new Layer((VikLayer *) i->data);
+	while (child != val->children->end()) {
+		Layer * layer = *child;
 		vik_treeview_add_layer(vl->vt, layer_iter, &iter, layer->vl->name, val, true,
 				       layer, layer->vl->type, layer->vl->type, vik_layer_get_timestamp(layer->vl));
 		if (! layer->vl->visible) {
 			vik_treeview_item_set_visible(vl->vt, &iter, false);
 		}
 		vik_layer_realize(layer->vl, vl->vt, &iter);
-		i = i->next;
+		child++;
 	}
 }
 
-const GList *vik_aggregate_layer_get_children(VikAggregateLayer *val)
+const std::list<Layer *> * vik_aggregate_layer_get_children(VikAggregateLayer *val)
 {
 	return val->children;
 }
 
 bool vik_aggregate_layer_is_empty(VikAggregateLayer *val)
 {
-	if (val->children) {
-		return false;
-	}
-	return true;
+	return val->children->empty();
 }
 
 static void aggregate_layer_drag_drop_request(VikAggregateLayer *val_src, VikAggregateLayer *val_dest, GtkTreeIter *src_item_iter, GtkTreePath *dest_path)
@@ -997,12 +1066,11 @@ static const char* aggregate_layer_tooltip(VikAggregateLayer *val)
 	static char tmp_buf[128];
 	tmp_buf[0] = '\0';
 
-	GList *children = val->children;
-	if (children) {
-		int nn = g_list_length(children);
+	size_t size = val->children->size();
+	if (size) {
 		// Could have a more complicated tooltip that numbers each type of layers,
 		//  but for now a simple overall count
-		snprintf(tmp_buf, sizeof(tmp_buf), ngettext("One layer", "%d layers", nn), nn);
+		snprintf(tmp_buf, sizeof(tmp_buf), ngettext("One layer", "%d layers", size), size);
 	}
 	return tmp_buf;
 }

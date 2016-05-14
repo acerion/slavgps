@@ -175,8 +175,10 @@ static void file_write ( VikAggregateLayer *top, FILE *f, void * vp )
   VikViewportDrawMode mode;
   char *modestring = NULL;
 
+  const std::list<Layer *> * children = vik_aggregate_layer_get_children(VIK_AGGREGATE_LAYER(top));
+
   push(&stack);
-  stack->data = (void *) vik_aggregate_layer_get_children(VIK_AGGREGATE_LAYER(top));
+  //stack->data = children; /* kamilFIXME: fix the assignment. */
   stack->under = NULL;
 
   /* crazhy CRAZHY */
@@ -213,7 +215,8 @@ static void file_write ( VikAggregateLayer *top, FILE *f, void * vp )
     if ( current_layer->type == VIK_LAYER_AGGREGATE && !vik_aggregate_layer_is_empty(VIK_AGGREGATE_LAYER(current_layer)) )
     {
       push(&stack);
-      stack->data = (void *) vik_aggregate_layer_get_children(VIK_AGGREGATE_LAYER(current_layer));
+      const std::list<Layer *> * children = vik_aggregate_layer_get_children(VIK_AGGREGATE_LAYER(current_layer));
+      // stack->data = children; /* kamilFIXME: fix the assignment. */
     }
     else if ( current_layer->type == VIK_LAYER_GPS && !vik_gps_layer_is_empty(VIK_GPS_LAYER(current_layer)) )
     {

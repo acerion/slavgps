@@ -778,7 +778,7 @@ VikLayer * LayersPanel::get_layer_of_type(VikLayerTypeEnum type)
 	VikLayer *rv = this->get_selected();
 	if (rv == NULL || rv->type != type) {
 		if (VIK_LAYER(this->toplayer)->visible) {
-			return vik_aggregate_layer_get_top_visible_layer_of_type(this->toplayer, type);
+			return vik_aggregate_layer_get_top_visible_layer_of_type(this->toplayer, type)->vl;
 		} else {
 			return NULL;
 		}
@@ -787,11 +787,10 @@ VikLayer * LayersPanel::get_layer_of_type(VikLayerTypeEnum type)
 	}
 }
 
-GList * LayersPanel::get_all_layers_of_type(int type, bool include_invisible)
+std::list<Layer *> * LayersPanel::get_all_layers_of_type(int type, bool include_invisible)
 {
-	GList *layers = NULL;
-
-	return (vik_aggregate_layer_get_all_layers_of_type(this->toplayer, layers, (VikLayerTypeEnum) type, include_invisible));
+	std::list<Layer *> * layers = new std::list<Layer *>;
+	return vik_aggregate_layer_get_all_layers_of_type(this->toplayer, layers, (VikLayerTypeEnum) type, include_invisible);
 }
 
 VikAggregateLayer * LayersPanel::get_top_layer()

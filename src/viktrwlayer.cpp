@@ -4592,9 +4592,8 @@ bool LayerTRW::dem_test(VikLayersPanel * vlp)
 {
 	// If have a vlp then perform a basic test to see if any DEM info available...
 	if (vlp) {
-		GList * dems = vlp->panel_ref->get_all_layers_of_type(VIK_LAYER_DEM, true); // Includes hidden DEM layer types
-
-		if (!g_list_length(dems)) {
+		std::list<Layer *> * dems = vlp->panel_ref->get_all_layers_of_type(VIK_LAYER_DEM, true); // Includes hidden DEM layer types
+		if (dems->empty()) {
 			a_dialog_error_msg(VIK_GTK_WINDOW_FROM_LAYER((VikTrwLayer *) this->vtl), _("No DEM layers available, thus no DEM values can be applied."));
 			return false;
 		}
@@ -10100,8 +10099,8 @@ static void trw_layer_download_map_along_track_cb ( menu_array_sublayer values )
 
   VikViewport *vvp = vik_window_viewport((VikWindow *)(VIK_GTK_WINDOW_FROM_LAYER(vtl)));
 
-  GList *vmls = vlp->panel_ref->get_all_layers_of_type(VIK_LAYER_MAPS, true); // Includes hidden map layer types
-  int num_maps = g_list_length(vmls);
+  std::list<Layer *> * vmls = vlp->panel_ref->get_all_layers_of_type(VIK_LAYER_MAPS, true); // Includes hidden map layer types
+  int num_maps = vmls->size();
 
   if (!num_maps) {
     a_dialog_error_msg(VIK_GTK_WINDOW_FROM_LAYER(vtl), _("No map layer in use. Create one first") );
@@ -10114,12 +10113,10 @@ static void trw_layer_download_map_along_track_cb ( menu_array_sublayer values )
 
   char **np = map_names;
   VikMapsLayer **lp = map_layers;
-  int i;
-  for (i = 0; i < num_maps; i++) {
-    vml = (VikMapsLayer *)(vmls->data);
+  for (auto i = vmls->begin(); i != vmls->end(); i++) {
+    vml = (VikMapsLayer *) *i;
     *lp++ = vml;
     *np++ = vik_maps_layer_get_map_label(vml);
-    vmls = vmls->next;
   }
   // Mark end of the array lists
   *lp = NULL;
@@ -10138,12 +10135,12 @@ static void trw_layer_download_map_along_track_cb ( menu_array_sublayer values )
   vik_track_download_map(trk, map_layers[selected_map], vvp, zoom_vals[selected_zoom]);
 
 done:
-  for (i = 0; i < num_maps; i++)
+  for (int i = 0; i < num_maps; i++)
     free(map_names[i]);
   free(map_names);
   free(map_layers);
 
-  g_list_free(vmls);
+  delete vmls;
 
 }
 

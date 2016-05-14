@@ -951,9 +951,9 @@ static VikWindow *window_new()
 static void simple_map_update(VikWindow *vw, bool only_new)
 {
 	// Find the most relevent single map layer to operate on
-	VikLayer *vl = vik_aggregate_layer_get_top_visible_layer_of_type(vw->layers_panel->get_top_layer(), VIK_LAYER_MAPS);
-	if (vl)
-		vik_maps_layer_download(VIK_MAPS_LAYER(vl), vw->viking_vvp, only_new);
+	Layer * layer = vik_aggregate_layer_get_top_visible_layer_of_type(vw->layers_panel->get_top_layer(), VIK_LAYER_MAPS);
+	if (layer)
+		vik_maps_layer_download(VIK_MAPS_LAYER(layer->vl), vw->viking_vvp, only_new);
 }
 
 /**
@@ -2188,14 +2188,16 @@ static VikLayerToolFuncStatus selecttool_click(VikLayer *vl, GdkEventButton *eve
 		else {
 			/* Enable click to apply callback to potentially all track/waypoint layers */
 			/* Useful as we can find things that aren't necessarily in the currently selected layer */
-			GList* gl = t->vw->layers_panel->get_all_layers_of_type(VIK_LAYER_TRW, false); // Don't get invisible layers
+			std::list<Layer *> * layers = t->vw->layers_panel->get_all_layers_of_type(VIK_LAYER_TRW, false); // Don't get invisible layers
 			clicker ck;
 			ck.cont = true;
 			ck.viewport = &t->vw->viking_vvp->port;
 			ck.event = event;
 			ck.tool_edit = t;
-			g_list_foreach(gl, (GFunc) click_layer_selected, &ck);
-			g_list_free(gl);
+			for (auto iter = layers->begin(); iter != layers->end(); iter++) {
+				click_layer_selected((*iter)->vl, &ck);
+			}
+			delete layers;
 
 			// If nothing found then deselect & redraw screen if necessary to remove the highlight
 			if (ck.cont) {
@@ -3378,7 +3380,7 @@ static bool save_file(GtkAction *a, VikWindow *vw)
  *
  * Returns: %true on success
  */
-static bool export_to(VikWindow *vw, GList *gl, VikFileType_t vft, const char *dir, const char *extension)
+static bool export_to(VikWindow *vw, std::list<Layer *> * layers, VikFileType_t vft, const char *dir, const char *extension)
 {
 	bool success = true;
 
@@ -3386,9 +3388,8 @@ static bool export_to(VikWindow *vw, GList *gl, VikFileType_t vft, const char *d
 
 	vik_window_set_busy_cursor(vw);
 
-	while (gl) {
-
-		char *fn = g_strconcat(dir, G_DIR_SEPARATOR_S, VIK_LAYER(gl->data)->name, extension, NULL);
+	for (auto iter = layers->begin(); iter != layers->end(); iter++) {
+		char *fn = g_strconcat(dir, G_DIR_SEPARATOR_S, VIK_LAYER(*iter)->name, extension, NULL);
 
 		// Some protection in attempting to write too many same named files
 		// As this will get horribly slow...
@@ -3398,7 +3399,7 @@ static bool export_to(VikWindow *vw, GList *gl, VikFileType_t vft, const char *d
 			if (g_file_test(fn, G_FILE_TEST_EXISTS)) {
 				// Try rename
 				free(fn);
-				fn = g_strdup_printf ("%s%s%s#%03d%s", dir, G_DIR_SEPARATOR_S, VIK_LAYER(gl->data)->name, ii, extension);
+				fn = g_strdup_printf ("%s%s%s#%03d%s", dir, G_DIR_SEPARATOR_S, VIK_LAYER(*iter)->name, ii, extension);
 			}
 			else {
 				safe = true;
@@ -3411,7 +3412,7 @@ static bool export_to(VikWindow *vw, GList *gl, VikFileType_t vft, const char *d
 
 		// NB: We allow exporting empty layers
 		if (safe) {
-			bool this_success = a_file_export(VIK_TRW_LAYER(gl->data), fn, vft, NULL, true);
+			bool this_success = a_file_export(VIK_TRW_LAYER(*iter), fn, vft, NULL, true);
 
 			// Show some progress
 			if (this_success) {
@@ -3427,7 +3428,6 @@ static bool export_to(VikWindow *vw, GList *gl, VikFileType_t vft, const char *d
 		}
 
 		free(fn);
-		gl = g_list_next(gl);
 	}
 
 	vik_window_clear_busy_cursor(vw);
@@ -3442,10 +3442,11 @@ static bool export_to(VikWindow *vw, GList *gl, VikFileType_t vft, const char *d
 
 static void export_to_common(VikWindow *vw, VikFileType_t vft, const char *extension)
 {
-	GList *gl = vw->layers_panel->get_all_layers_of_type(VIK_LAYER_TRW, true);
+	std::list<Layer *> * layers = vw->layers_panel->get_all_layers_of_type(VIK_LAYER_TRW, true);
 
-	if (!gl) {
+	if (!layers || layers->empty()) {
 		a_dialog_info_msg(GTK_WINDOW(vw), _("Nothing to Export!"));
+		/* kamilFIXME: delete layers? */
 		return;
 	}
 
@@ -3467,15 +3468,16 @@ static void export_to_common(VikWindow *vw, VikFileType_t vft, const char *exten
 		char *dir = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
 		gtk_widget_destroy(dialog);
 		if (dir) {
-			if (!export_to(vw, gl, vft, dir, extension))
+			if (!export_to(vw, layers, vft, dir, extension)) {
 				a_dialog_error_msg(GTK_WINDOW(vw),_("Could not convert all files"));
+			}
 			free(dir);
 		}
-	}
-	else
+	} else {
 		gtk_widget_destroy(dialog);
+	}
 
-	g_list_free(gl);
+	delete layers;
 }
 
 static void export_to_gpx(GtkAction *a, VikWindow *vw)
@@ -3656,19 +3658,18 @@ static void layer_defaults_cb(GtkAction *a, VikWindow *vw)
 static void preferences_change_update(VikWindow *vw, void * data)
 {
 	// Want to update all TrackWaypoint layers
-	GList *layers = vw->layers_panel->get_all_layers_of_type(VIK_LAYER_TRW, true);
-
-	if (!layers)
+	std::list<Layer *> * layers = vw->layers_panel->get_all_layers_of_type(VIK_LAYER_TRW, true);
+	if (!layers || layers->empty()) {
 		return;
-
-	while (layers) {
-		// Reset the individual waypoints themselves due to the preferences change
-		VikTrwLayer *vtl = VIK_TRW_LAYER(layers->data);
-		vtl->trw.reset_waypoints();
-		layers = g_list_next(layers);
 	}
 
-	g_list_free(layers);
+	for (auto iter = layers->begin(); iter != layers->end(); iter++) {
+		// Reset the individual waypoints themselves due to the preferences change
+		VikTrwLayer *vtl = VIK_TRW_LAYER(*iter);
+		vtl->trw.reset_waypoints();
+	}
+
+	delete layers;
 
 	draw_update(vw);
 }

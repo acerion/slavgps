@@ -839,18 +839,17 @@ void vu_command_line ( VikWindow *vw, double latitude, double longitude, int zoo
 		}
 
 		// Don't add map layer if one already exists
-		GList *vmls = vik_window_layers_panel(vw)->panel_ref->get_all_layers_of_type(VIK_LAYER_MAPS, true);
-		int num_maps = g_list_length(vmls);
+		std::list<Layer *> * vmls = vik_window_layers_panel(vw)->panel_ref->get_all_layers_of_type(VIK_LAYER_MAPS, true);
+		int num_maps = vmls->size();
 		bool add_map = true;
 
-		for (int i = 0; i < num_maps; i++) {
-			VikMapsLayer *vml = (VikMapsLayer*)(vmls->data);
+		for (auto iter = vmls->begin(); iter != vmls->end(); iter++) {
+			VikMapsLayer *vml = (VikMapsLayer*) *iter;
 			MapTypeID type_id = vik_maps_layer_get_map_type(vml);
 			if (the_type_id == type_id) {
 				add_map = false;
 				break;
 			}
-			vmls = vmls->next;
 		}
 
 		if ( add_map ) {
