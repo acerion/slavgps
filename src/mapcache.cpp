@@ -34,8 +34,8 @@
 #define MC_KEY_SIZE 64
 
 typedef struct _List {
-  struct _List *next;
-  char *key;
+	struct _List *next;
+	char *key;
 } List;
 
 /* a circular linked list, a pointer to the tail, and the tail points to the head */
@@ -49,8 +49,8 @@ static uint32_t max_cache_size = VIK_CONFIG_MAPCACHE_SIZE * 1024 * 1024;
 static GHashTable *cache = NULL;
 
 typedef struct {
-  GdkPixbuf *pixbuf;
-  mapcache_extra_t extra;
+	GdkPixbuf *pixbuf;
+	mapcache_extra_t extra;
 } cache_item_t;
 
 static GMutex *mc_mutex = NULL;
@@ -60,248 +60,254 @@ static GMutex *mc_mutex = NULL;
 #define HASHKEY_FORMAT_STRING_TYPE "%d-"
 
 static VikLayerParamScale params_scales[] = {
-  /* min, max, step, digits (decimal places) */
- { 1, 1024, 1, 0 },
+	/* min, max, step, digits (decimal places) */
+	{ 1, 1024, 1, 0 },
 };
 
 static VikLayerParam prefs[] = {
-  { VIK_LAYER_NUM_TYPES, VIKING_PREFERENCES_NAMESPACE "mapcache_size", VIK_LAYER_PARAM_UINT, VIK_LAYER_GROUP_NONE, N_("Map cache memory size (MB):"), VIK_LAYER_WIDGET_HSCALE, params_scales, NULL, NULL, NULL, NULL, NULL },
+	{ VIK_LAYER_NUM_TYPES, VIKING_PREFERENCES_NAMESPACE "mapcache_size", VIK_LAYER_PARAM_UINT, VIK_LAYER_GROUP_NONE, N_("Map cache memory size (MB):"), VIK_LAYER_WIDGET_HSCALE, params_scales, NULL, NULL, NULL, NULL, NULL },
 };
 
-static void cache_item_free (cache_item_t *ci)
+static void cache_item_free(cache_item_t *ci)
 {
-  g_object_unref ( ci->pixbuf );
-  free( ci );
+	g_object_unref(ci->pixbuf);
+	free(ci);
 }
 
-void a_mapcache_init ()
+void a_mapcache_init()
 {
-  VikLayerParamData tmp;
-  tmp.u = VIK_CONFIG_MAPCACHE_SIZE;
-  a_preferences_register(prefs, tmp, VIKING_PREFERENCES_GROUP_KEY);
+	VikLayerParamData tmp;
+	tmp.u = VIK_CONFIG_MAPCACHE_SIZE;
+	a_preferences_register(prefs, tmp, VIKING_PREFERENCES_GROUP_KEY);
 
-  mc_mutex = vik_mutex_new ();
-  cache = g_hash_table_new_full ( g_str_hash, g_str_equal, g_free, (GDestroyNotify) cache_item_free );
+	mc_mutex = vik_mutex_new();
+	cache = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, (GDestroyNotify) cache_item_free);
 }
 
 static void cache_add(char *key, GdkPixbuf *pixbuf, mapcache_extra_t extra)
 {
-  cache_item_t *ci = (cache_item_t *) malloc( sizeof(cache_item_t) );
-  ci->pixbuf = pixbuf;
-  ci->extra = extra;
+	cache_item_t * ci = (cache_item_t *) malloc(sizeof (cache_item_t));
+	ci->pixbuf = pixbuf;
+	ci->extra = extra;
 #if !GLIB_CHECK_VERSION(2,26,0)
-  // Only later versions of GLib actually return a value for this function
-  // Annoyingly the documentation doesn't say anything about this interface change :(
-  if ( g_hash_table_insert ( cache, key, ci ) )
+	// Only later versions of GLib actually return a value for this function
+	// Annoyingly the documentation doesn't say anything about this interface change :(
+	if (g_hash_table_insert(cache, key, ci))
 #else
-  g_hash_table_insert ( cache, key, ci );
+		g_hash_table_insert(cache, key, ci);
 #endif
-  {
-    cache_size += gdk_pixbuf_get_rowstride(pixbuf) * gdk_pixbuf_get_height(pixbuf);
-    // ATM size of 'extra' data hardly worth trying to count (compared to pixbuf sizes)
-    // Not sure what this 100 represents anyway - probably a guess at an average pixbuf metadata size
-    cache_size += 100;
-  }
+	{
+		cache_size += gdk_pixbuf_get_rowstride(pixbuf) * gdk_pixbuf_get_height(pixbuf);
+		// ATM size of 'extra' data hardly worth trying to count (compared to pixbuf sizes)
+		// Not sure what this 100 represents anyway - probably a guess at an average pixbuf metadata size
+		cache_size += 100;
+	}
 }
 
 static void cache_remove(const char *key)
 {
-  cache_item_t *ci = (cache_item_t *) g_hash_table_lookup ( cache, key );
-  if (ci && ci->pixbuf) {
-    cache_size -= gdk_pixbuf_get_rowstride(ci->pixbuf) * gdk_pixbuf_get_height(ci->pixbuf);
-    cache_size -= 100;
-    g_hash_table_remove ( cache, key );
-  }
+	cache_item_t * ci = (cache_item_t *) g_hash_table_lookup(cache, key);
+	if (ci && ci->pixbuf) {
+		cache_size -= gdk_pixbuf_get_rowstride(ci->pixbuf) * gdk_pixbuf_get_height(ci->pixbuf);
+		cache_size -= 100;
+		g_hash_table_remove(cache, key);
+	}
 }
 
 /* returns key from head, adds on newtailkey to tail. */
-static char *list_shift_add_entry ( char *newtailkey )
+static char * list_shift_add_entry(char * newtailkey)
 {
-  char *oldheadkey = queue_tail->next->key;
-  queue_tail->next->key = newtailkey;
-  queue_tail = queue_tail->next;
-  return oldheadkey;
+	char * oldheadkey = queue_tail->next->key;
+	queue_tail->next->key = newtailkey;
+	queue_tail = queue_tail->next;
+	return oldheadkey;
 }
 
-static char *list_shift ()
+static char * list_shift()
 {
-  char *oldheadkey = queue_tail->next->key;
-  List *oldhead = queue_tail->next;
-  queue_tail->next = queue_tail->next->next;
-  free( oldhead );
-  queue_count--;
-  return oldheadkey;
+	char * oldheadkey = queue_tail->next->key;
+	List * oldhead = queue_tail->next;
+	queue_tail->next = queue_tail->next->next;
+	free(oldhead);
+	queue_count--;
+	return oldheadkey;
 }
 
 /* adds key to tail */
-static void list_add_entry ( char *key )
+static void list_add_entry(char * key)
 {
-	List *newlist = (List *) malloc( sizeof ( List ) );
-  newlist->key = key;
-  if ( queue_tail ) {
-    newlist->next = queue_tail->next;
-    queue_tail->next = newlist;
-    queue_tail = newlist;
-  } else {
-    newlist->next = newlist;
-    queue_tail = newlist;
-  }
-  queue_count++;
+	List * newlist = (List *) malloc(sizeof (List));
+	newlist->key = key;
+	if (queue_tail) {
+		newlist->next = queue_tail->next;
+		queue_tail->next = newlist;
+		queue_tail = newlist;
+	} else {
+		newlist->next = newlist;
+		queue_tail = newlist;
+	}
+	queue_count++;
 }
 
 /**
  * Function increments reference counter of pixbuf.
  * Caller may (and should) decrease it's reference.
  */
-void a_mapcache_add ( GdkPixbuf *pixbuf, mapcache_extra_t extra, TileInfo * mapcoord, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const char* name )
+void a_mapcache_add(GdkPixbuf * pixbuf, mapcache_extra_t extra, TileInfo * mapcoord, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const char * name)
 {
-  if ( ! GDK_IS_PIXBUF(pixbuf) ) {
-    fprintf(stderr, "DEBUG: Not caching corrupt pixbuf for maptype %d at %d %d %d %d\n", map_type, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale );
-    return;
-  }
+	if (! GDK_IS_PIXBUF(pixbuf)) {
+		fprintf(stderr, "DEBUG: Not caching corrupt pixbuf for maptype %d at %d %d %d %d\n", map_type, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale);
+		return;
+	}
 
-  unsigned int nn = name ? g_str_hash ( name ) : 0;
-  char *key = g_strdup_printf ( HASHKEY_FORMAT_STRING, map_type, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale, nn, alpha, xshrinkfactor, yshrinkfactor );
+	unsigned int nn = name ? g_str_hash(name) : 0;
+	char * key = g_strdup_printf(HASHKEY_FORMAT_STRING, map_type, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale, nn, alpha, xshrinkfactor, yshrinkfactor);
 
-  g_mutex_lock(mc_mutex);
-  g_object_ref(pixbuf);
-  cache_add(key, pixbuf, extra);
+	g_mutex_lock(mc_mutex);
+	g_object_ref(pixbuf);
+	cache_add(key, pixbuf, extra);
 
-  // TODO: that should be done on preference change only...
-  max_cache_size = a_preferences_get(VIKING_PREFERENCES_NAMESPACE "mapcache_size")->u * 1024 * 1024;
+	// TODO: that should be done on preference change only...
+	max_cache_size = a_preferences_get(VIKING_PREFERENCES_NAMESPACE "mapcache_size")->u * 1024 * 1024;
 
-  if ( cache_size > max_cache_size ) {
-    if ( queue_tail ) {
-      char *oldkey = list_shift_add_entry ( key );
-      cache_remove(oldkey);
+	if (cache_size > max_cache_size) {
+		if (queue_tail) {
+			char * oldkey = list_shift_add_entry(key);
+			cache_remove(oldkey);
 
-      while ( cache_size > max_cache_size &&
-             (queue_tail->next != queue_tail) ) { /* make sure there's more than one thing to delete */
-        oldkey = list_shift ();
-        cache_remove(oldkey);
-      }
-    }
-    /* chop off 'start' etc */
-  } else {
-    list_add_entry ( key );
-    /* business as usual */
-  }
-  g_mutex_unlock(mc_mutex);
+			while (cache_size > max_cache_size &&
+				(queue_tail->next != queue_tail)) { /* make sure there's more than one thing to delete */
+				oldkey = list_shift();
+				cache_remove(oldkey);
+			}
+		}
+		/* chop off 'start' etc */
+	} else {
+		list_add_entry(key);
+		/* business as usual */
+	}
+	g_mutex_unlock(mc_mutex);
 
-  static int tmp = 0;
-  if ( (++tmp == 100 )) { fprintf(stderr, "DEBUG: DEBUG: cache count=%d size=%u list count=%d\n", g_hash_table_size(cache), cache_size, queue_count ); tmp=0; }
+	static int tmp = 0;
+	if ((++tmp == 100)) {
+		fprintf(stderr, "DEBUG: DEBUG: cache count=%d size=%u list count=%d\n", g_hash_table_size(cache), cache_size, queue_count);
+		tmp=0;
+	}
 }
 
 /**
  * Function increases reference counter of pixels buffer in behalf of caller.
  * Caller have to decrease references counter, when buffer is no longer needed.
  */
-GdkPixbuf *a_mapcache_get(TileInfo * mapcoord, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const char* name )
+GdkPixbuf * a_mapcache_get(TileInfo * mapcoord, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const char * name)
 {
-  static char key[MC_KEY_SIZE];
-  unsigned int nn = name ? g_str_hash ( name ) : 0;
-  snprintf( key, sizeof(key), HASHKEY_FORMAT_STRING, map_type, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale, nn, alpha, xshrinkfactor, yshrinkfactor );
-  g_mutex_lock(mc_mutex); /* prevent returning pixbuf when cache is being cleared */
-  cache_item_t *ci = (cache_item_t *) g_hash_table_lookup ( cache, key );
-  if ( ci ) {
-    g_object_ref(ci->pixbuf);
-    g_mutex_unlock(mc_mutex);
-    return ci->pixbuf;
-  } else {
-    g_mutex_unlock(mc_mutex);
-    return NULL;
-  }
+	static char key[MC_KEY_SIZE];
+	unsigned int nn = name ? g_str_hash(name) : 0;
+	snprintf(key, sizeof(key), HASHKEY_FORMAT_STRING, map_type, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale, nn, alpha, xshrinkfactor, yshrinkfactor);
+	g_mutex_lock(mc_mutex); /* prevent returning pixbuf when cache is being cleared */
+	cache_item_t *ci = (cache_item_t *) g_hash_table_lookup(cache, key);
+	if (ci) {
+		g_object_ref(ci->pixbuf);
+		g_mutex_unlock(mc_mutex);
+		return ci->pixbuf;
+	} else {
+		g_mutex_unlock(mc_mutex);
+		return NULL;
+	}
 }
 
-mapcache_extra_t a_mapcache_get_extra(TileInfo * mapcoord, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const char* name )
+mapcache_extra_t a_mapcache_get_extra(TileInfo * mapcoord, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const char * name)
 {
-  static char key[MC_KEY_SIZE];
-  unsigned int nn = name ? g_str_hash ( name ) : 0;
-  snprintf( key, sizeof(key), HASHKEY_FORMAT_STRING, map_type, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale, nn, alpha, xshrinkfactor, yshrinkfactor );
-  cache_item_t *ci = (cache_item_t *) g_hash_table_lookup ( cache, key );
-  if ( ci )
-    return ci->extra;
-  else
-    return (mapcache_extra_t) { 0.0 };
+	static char key[MC_KEY_SIZE];
+	unsigned int nn = name ? g_str_hash(name) : 0;
+	snprintf(key, sizeof(key), HASHKEY_FORMAT_STRING, map_type, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale, nn, alpha, xshrinkfactor, yshrinkfactor);
+	cache_item_t *ci = (cache_item_t *) g_hash_table_lookup(cache, key);
+	if (ci) {
+		return ci->extra;
+	} else {
+		return (mapcache_extra_t) { 0.0 };
+	}
 }
 
 /**
  * Common function to remove cache items for keys starting with the specified string
  */
-static void flush_matching ( char *str )
+static void flush_matching(char *str)
 {
-  g_mutex_lock(mc_mutex);
+	g_mutex_lock(mc_mutex);
 
-  if ( queue_tail == NULL ) {
-    g_mutex_unlock(mc_mutex);
-    return;
-  }
+	if (queue_tail == NULL) {
+		g_mutex_unlock(mc_mutex);
+		return;
+	}
 
-  // The 'loop' variable must be assigned within the mutex lock section,
-  //  otherwise where it points to might not be valid anymore when the actual processing occurs
-  List *loop = queue_tail;
-  List *tmp;
-  int len = strlen(str);
+	// The 'loop' variable must be assigned within the mutex lock section,
+	//  otherwise where it points to might not be valid anymore when the actual processing occurs
+	List *loop = queue_tail;
+	List *tmp;
+	int len = strlen(str);
 
-  do {
-    tmp = loop->next;
-    if ( tmp ) {
-    if ( strncmp(tmp->key, str, len) == 0 )
-    {
-      cache_remove(tmp->key);
-      if ( tmp == loop ) /* we deleted the last thing in the queue! */
-        loop = queue_tail = NULL;
-      else {
-        loop->next = tmp->next;
-        if ( tmp == queue_tail )
-          queue_tail = tmp->next;
-      }
-      free( tmp );
-      tmp = NULL;
-      queue_count--;
-    }
-    else
-      loop = tmp;
-    } else
-      loop = NULL;
-  } while ( loop && (loop != queue_tail || tmp == NULL) );
-  /* loop thru list, looking for the one, compare first whatever chars */
+	do {
+		tmp = loop->next;
+		if (tmp) {
+			if (strncmp(tmp->key, str, len) == 0)	{
+				cache_remove(tmp->key);
+				if (tmp == loop) { /* we deleted the last thing in the queue! */
+					loop = queue_tail = NULL;
+				} else {
+					loop->next = tmp->next;
+					if (tmp == queue_tail) {
+						queue_tail = tmp->next;
+					}
+				}
+				free(tmp);
+				tmp = NULL;
+				queue_count--;
+			} else {
+				loop = tmp;
+			}
+		} else {
+			loop = NULL;
+		}
+	} while (loop && (loop != queue_tail || tmp == NULL));
+	/* loop thru list, looking for the one, compare first whatever chars */
 
-  cache_remove(str);
-  g_mutex_unlock(mc_mutex);
+	cache_remove(str);
+	g_mutex_unlock(mc_mutex);
 }
 
 /**
  * Appears this is only used when redownloading tiles (i.e. to invalidate old images)
  */
-void a_mapcache_remove_all_shrinkfactors(TileInfo * mapcoord, MapTypeID map_type, const char* name )
+void a_mapcache_remove_all_shrinkfactors(TileInfo * mapcoord, MapTypeID map_type, const char* name)
 {
-  char key[MC_KEY_SIZE];
-  unsigned int nn = name ? g_str_hash ( name ) : 0;
-  snprintf( key, sizeof(key), HASHKEY_FORMAT_STRING_NOSHRINK_NOR_ALPHA, map_type, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale, nn );
-  flush_matching ( key );
+	char key[MC_KEY_SIZE];
+	unsigned int nn = name ? g_str_hash(name) : 0;
+	snprintf(key, sizeof(key), HASHKEY_FORMAT_STRING_NOSHRINK_NOR_ALPHA, map_type, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale, nn);
+	flush_matching(key);
 }
 
-void a_mapcache_flush ()
+void a_mapcache_flush()
 {
-  // Everything happens within the mutex lock section
-  g_mutex_lock(mc_mutex);
+	// Everything happens within the mutex lock section
+	g_mutex_lock(mc_mutex);
 
-  List *loop = queue_tail;
-  List *tmp;
+	List *loop = queue_tail;
+	List *tmp;
 
-  while ( loop ) {
-    tmp = loop->next;
-    cache_remove(tmp->key);
-    if ( tmp == queue_tail ) /* we deleted the last thing in the queue */
-      loop = queue_tail = NULL;
-    else
-      loop->next = tmp->next;
-    free( tmp );
-    tmp = NULL;
-  }
+	while (loop) {
+		tmp = loop->next;
+		cache_remove(tmp->key);
+		if (tmp == queue_tail) { /* we deleted the last thing in the queue */
+			loop = queue_tail = NULL;
+		} else {
+			loop->next = tmp->next;
+		}
+		free(tmp);
+		tmp = NULL;
+	}
 
-  g_mutex_unlock(mc_mutex);
+	g_mutex_unlock(mc_mutex);
 }
 
 /**
@@ -313,27 +319,27 @@ void a_mapcache_flush ()
  */
 void a_mapcache_flush_type(MapTypeID map_type)
 {
-  char key[MC_KEY_SIZE];
-  snprintf( key, sizeof(key), HASHKEY_FORMAT_STRING_TYPE, map_type );
-  flush_matching ( key );
+	char key[MC_KEY_SIZE];
+	snprintf(key, sizeof(key), HASHKEY_FORMAT_STRING_TYPE, map_type);
+	flush_matching(key);
 }
 
-void a_mapcache_uninit ()
+void a_mapcache_uninit()
 {
-  g_hash_table_destroy ( cache );
-  /* free list */
-  cache = NULL;
-  vik_mutex_free (mc_mutex);
+	g_hash_table_destroy(cache);
+	/* free list */
+	cache = NULL;
+	vik_mutex_free(mc_mutex);
 }
 
 // Size of mapcache in memory
-int a_mapcache_get_size ()
+int a_mapcache_get_size()
 {
-  return cache_size;
+	return cache_size;
 }
 
 // Count of items in the mapcache
-int a_mapcache_get_count ()
+int a_mapcache_get_count()
 {
-  return g_hash_table_size ( cache );
+	return g_hash_table_size(cache);
 }

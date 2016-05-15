@@ -38,20 +38,20 @@ extern "C" {
 
 
 typedef struct {
-  double duration; // Mostly for Mapnik Rendering duration - negative values indicate not rendered (i.e. read from disk)
+	double duration; // Mostly for Mapnik Rendering duration - negative values indicate not rendered(i.e. read from disk)
 } mapcache_extra_t;
 
-void a_mapcache_init ();
-void a_mapcache_add ( GdkPixbuf *pixbuf, mapcache_extra_t extra, TileInfo * tile_info, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const char *name );
-GdkPixbuf * a_mapcache_get (TileInfo * tile_info, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const char *name );
-mapcache_extra_t a_mapcache_get_extra (TileInfo * tile_info, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const char* name );
-void a_mapcache_remove_all_shrinkfactors (TileInfo * tile_info, MapTypeID map_type, const char* name );
-void a_mapcache_flush ();
+void a_mapcache_init();
+void a_mapcache_add(GdkPixbuf *pixbuf, mapcache_extra_t extra, TileInfo * tile_info, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const char *name);
+GdkPixbuf * a_mapcache_get(TileInfo * tile_info, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const char *name);
+mapcache_extra_t a_mapcache_get_extra(TileInfo * tile_info, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const char* name);
+void a_mapcache_remove_all_shrinkfactors(TileInfo * tile_info, MapTypeID map_type, const char* name);
+void a_mapcache_flush();
 void a_mapcache_flush_type(MapTypeID map_type);
-void a_mapcache_uninit ();
+void a_mapcache_uninit();
 
-int a_mapcache_get_size ();
-int a_mapcache_get_count ();
+int a_mapcache_get_size();
+int a_mapcache_get_count();
 
 #ifdef __cplusplus
 }

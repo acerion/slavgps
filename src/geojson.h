@@ -1,4 +1,3 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
@@ -29,12 +28,12 @@ extern "C" {
 #endif
 
 
-bool a_geojson_write_file ( VikTrwLayer *vtl, FILE *ff );
+bool a_geojson_write_file(VikTrwLayer * vtl, FILE * ff);
 
-const char* a_geojson_program_export ( void );
-const char* a_geojson_program_import ( void );
+const char * a_geojson_program_export(void);
+const char * a_geojson_program_import(void);
 
-char* a_geojson_import_to_gpx ( const char *filename );
+char * a_geojson_import_to_gpx(const char * filename);
 
 #ifdef __cplusplus
 }
