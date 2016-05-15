@@ -65,7 +65,7 @@ static VikDEMLayer *dem_layer_new (VikViewport *vvp);
 static void dem_layer_draw (VikDEMLayer *vdl, VikViewport *vp);
 static void dem_layer_free (VikDEMLayer *vdl);
 static VikDEMLayer *dem_layer_create (VikViewport *vp);
-static const char* dem_layer_tooltip(VikDEMLayer *vdl);
+//static const char* dem_layer_tooltip(VikDEMLayer *vdl);
 static void dem_layer_marshall(VikDEMLayer *vdl, uint8_t **data, int *len);
 static VikDEMLayer *dem_layer_unmarshall(uint8_t *data, int len, VikViewport *vvp);
 static bool dem_layer_set_param (VikDEMLayer *vdl, uint16_t id, VikLayerParamData data, VikViewport *vp, bool is_file_operation);
@@ -224,7 +224,7 @@ VikLayerInterface vik_dem_layer_interface = {
 	(VikLayerFuncSublayerRenameRequest)   NULL,
 	(VikLayerFuncSublayerToggleVisible)   NULL,
 	(VikLayerFuncSublayerTooltip)         NULL,
-	(VikLayerFuncLayerTooltip)            dem_layer_tooltip,
+	(VikLayerFuncLayerTooltip)            NULL,
 	(VikLayerFuncLayerSelected)           NULL,
 
 	(VikLayerFuncMarshall)		      dem_layer_marshall,
@@ -287,9 +287,11 @@ GType vik_dem_layer_get_type()
 	return vdl_type;
 }
 
-static const char* dem_layer_tooltip(VikDEMLayer *vdl)
+char const * LayerDEM::tooltip()
 {
 	static char tmp_buf[100];
+	VikDEMLayer * vdl = (VikDEMLayer *) this->vl;
+
 	snprintf(tmp_buf, sizeof(tmp_buf), _("Number of files: %d"), g_list_length(vdl->files));
 	return tmp_buf;
 }

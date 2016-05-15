@@ -509,20 +509,6 @@ const char *vik_layer_sublayer_rename_request ( VikLayer *l, const char *newname
   return NULL;
 }
 
-const char* vik_layer_sublayer_tooltip ( VikLayer *l, int subtype, void * sublayer )
-{
-  if ( vik_layer_interfaces[l->type]->sublayer_tooltip )
-    return vik_layer_interfaces[l->type]->sublayer_tooltip ( l, subtype, sublayer );
-  return NULL;
-}
-
-const char* vik_layer_layer_tooltip ( VikLayer *l )
-{
-  if ( vik_layer_interfaces[l->type]->layer_tooltip )
-    return vik_layer_interfaces[l->type]->layer_tooltip ( l );
-  return NULL;
-}
-
 GdkPixbuf *vik_layer_load_icon ( VikLayerTypeEnum type )
 {
   assert ( type < VIK_LAYER_NUM_TYPES );
@@ -719,4 +705,28 @@ Layer::Layer(VikLayer * vl_)
 		strcpy(type_string, "LAST");
 		break;
 	}
+}
+
+
+
+char const * Layer::tooltip()
+{
+      static char tmp_buf[32];
+      snprintf(tmp_buf, sizeof(tmp_buf), _("Layer::tooltip"));
+      return tmp_buf;
+}
+
+
+
+char const * Layer::sublayer_tooltip(int subtype, void * sublayer)
+{
+      static char tmp_buf[32];
+      snprintf(tmp_buf, sizeof(tmp_buf), _("Layer::sublayer_tooltip"));
+      return tmp_buf;
+}
+
+
+bool Layer::show_selected_viewport_menu(GdkEventButton * event, Viewport * viewport)
+{
+	return false;
 }

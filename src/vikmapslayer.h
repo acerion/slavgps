@@ -95,6 +95,10 @@ namespace SlavGPS {
 	class LayerMaps : public Layer {
 	public:
 		LayerMaps(VikLayer * vl) : Layer(vl) { };
+
+
+		/* Layer interface methods. */
+		char const * tooltip();
 	};
 
 

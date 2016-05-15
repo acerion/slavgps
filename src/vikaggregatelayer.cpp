@@ -41,7 +41,7 @@ static void aggregate_layer_marshall(VikAggregateLayer *val, uint8_t **data, int
 static VikAggregateLayer *aggregate_layer_unmarshall(uint8_t *data, int len, VikViewport *vvp);
 static void aggregate_layer_change_coord_mode(VikAggregateLayer *val, VikCoordMode mode);
 static void aggregate_layer_drag_drop_request(VikAggregateLayer *val_src, VikAggregateLayer *val_dest, GtkTreeIter *src_item_iter, GtkTreePath *dest_path);
-static const char* aggregate_layer_tooltip(VikAggregateLayer *val);
+//static const char* aggregate_layer_tooltip(VikAggregateLayer *val);
 static void aggregate_layer_add_menu_items(VikAggregateLayer *val, GtkMenu *menu, void * vlp);
 
 VikLayerInterface vik_aggregate_layer_interface = {
@@ -80,7 +80,7 @@ VikLayerInterface vik_aggregate_layer_interface = {
 	(VikLayerFuncSublayerRenameRequest)   NULL,
 	(VikLayerFuncSublayerToggleVisible)   NULL,
 	(VikLayerFuncSublayerTooltip)         NULL,
-	(VikLayerFuncLayerTooltip)            aggregate_layer_tooltip,
+	(VikLayerFuncLayerTooltip)            NULL,
 	(VikLayerFuncLayerSelected)           NULL,
 
 	(VikLayerFuncMarshall)		aggregate_layer_marshall,
@@ -1060,8 +1060,10 @@ static void aggregate_layer_drag_drop_request(VikAggregateLayer *val_src, VikAgg
 /**
  * Generate tooltip text for the layer.
  */
-static const char* aggregate_layer_tooltip(VikAggregateLayer *val)
+char const * LayerAggregate::tooltip()
 {
+	VikAggregateLayer * val = (VikAggregateLayer *) this->vl;
+
 	static char tmp_buf[128];
 	tmp_buf[0] = '\0';
 

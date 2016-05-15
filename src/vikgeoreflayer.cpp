@@ -76,7 +76,7 @@ enum {
 	PARAM_AA,
 	NUM_PARAMS };
 
-static const char* georef_layer_tooltip(VikGeorefLayer *vgl);
+//static const char* georef_layer_tooltip(VikGeorefLayer *vgl);
 static void georef_layer_marshall(VikGeorefLayer *vgl, uint8_t **data, int *len);
 static VikGeorefLayer *georef_layer_unmarshall(uint8_t *data, int len, VikViewport *vvp);
 static bool georef_layer_set_param(VikGeorefLayer *vgl, uint16_t id, VikLayerParamData data, VikViewport *vp, bool is_file_operation);
@@ -164,7 +164,7 @@ VikLayerInterface vik_georef_layer_interface = {
 	(VikLayerFuncSublayerRenameRequest)   NULL,
 	(VikLayerFuncSublayerToggleVisible)   NULL,
 	(VikLayerFuncSublayerTooltip)         NULL,
-	(VikLayerFuncLayerTooltip)            georef_layer_tooltip,
+	(VikLayerFuncLayerTooltip)            NULL,
 	(VikLayerFuncLayerSelected)           NULL,
 
 	(VikLayerFuncMarshall)		georef_layer_marshall,
@@ -260,8 +260,9 @@ GType vik_georef_layer_get_type()
 	return vgl_type;
 }
 
-static const char* georef_layer_tooltip(VikGeorefLayer *vgl)
+char const * LayerGeoref::tooltip()
 {
+	VikGeorefLayer * vgl = (VikGeorefLayer *) this->vl;
 	return vgl->image;
 }
 

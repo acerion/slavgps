@@ -63,6 +63,10 @@ namespace SlavGPS {
 	public:
 		LayerDEM(VikLayer * vl) : Layer(vl) { };
 
+
+		/* Layer interface methods. */
+		char const * tooltip();
+
 	};
 
 

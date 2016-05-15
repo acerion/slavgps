@@ -566,8 +566,8 @@ static void trw_layer_add_menu_items ( VikTrwLayer *vtl, GtkMenu *menu, void * v
 static bool trw_layer_sublayer_add_menu_items ( VikTrwLayer *l, GtkMenu *menu, void * vlp, int subtype, void * sublayer, GtkTreeIter *iter, VikViewport *vvp );
 static const char* trw_layer_sublayer_rename_request ( VikTrwLayer *l, const char *newname, void * vlp, int subtype, void * sublayer, GtkTreeIter *iter );
 static bool trw_layer_sublayer_toggle_visible ( VikTrwLayer *l, int subtype, void * sublayer );
-static const char* trw_layer_layer_tooltip ( VikTrwLayer *vtl );
-static const char* trw_layer_sublayer_tooltip ( VikTrwLayer *l, int subtype, void * sublayer );
+//static const char* trw_layer_layer_tooltip ( VikTrwLayer *vtl );
+//static const char* trw_layer_sublayer_tooltip ( VikTrwLayer *l, int subtype, void * sublayer );
 static bool trw_layer_selected ( VikTrwLayer *l, int subtype, void * sublayer, int type, void * vlp );
 static void trw_layer_marshall ( VikTrwLayer *vtl, uint8_t **data, int *len );
 static VikTrwLayer *trw_layer_unmarshall ( uint8_t *data, int len, VikViewport *vvp );
@@ -583,7 +583,7 @@ static void trw_layer_drag_drop_request ( VikTrwLayer *vtl_src, VikTrwLayer *vtl
 static bool trw_layer_select_click ( VikTrwLayer *vtl, GdkEventButton *event, Viewport * viewport, tool_ed_t *t );
 static bool trw_layer_select_move ( VikTrwLayer *vtl, GdkEventMotion *event, Viewport * viewport, tool_ed_t *t );
 static bool trw_layer_select_release ( VikTrwLayer *vtl, GdkEventButton *event, Viewport * viewport, tool_ed_t *t );
-static bool trw_layer_show_selected_viewport_menu ( VikTrwLayer *vtl, GdkEventButton *event, Viewport * viewport );
+//static bool trw_layer_show_selected_viewport_menu ( VikTrwLayer *vtl, GdkEventButton *event, Viewport * viewport );
 /* End Layer Interface function definitions */
 
 VikLayerInterface vik_trw_layer_interface = {
@@ -620,8 +620,8 @@ VikLayerInterface vik_trw_layer_interface = {
 
   (VikLayerFuncSublayerRenameRequest)   trw_layer_sublayer_rename_request,
   (VikLayerFuncSublayerToggleVisible)   trw_layer_sublayer_toggle_visible,
-  (VikLayerFuncSublayerTooltip)         trw_layer_sublayer_tooltip,
-  (VikLayerFuncLayerTooltip)            trw_layer_layer_tooltip,
+  (VikLayerFuncSublayerTooltip)         NULL,
+  (VikLayerFuncLayerTooltip)            NULL,
   (VikLayerFuncLayerSelected)           trw_layer_selected,
 
   (VikLayerFuncMarshall)                trw_layer_marshall,
@@ -645,7 +645,7 @@ VikLayerInterface vik_trw_layer_interface = {
   (VikLayerFuncSelectClick)             trw_layer_select_click,
   (VikLayerFuncSelectMove)              trw_layer_select_move,
   (VikLayerFuncSelectRelease)           trw_layer_select_release,
-  (VikLayerFuncSelectedViewportMenu)    trw_layer_show_selected_viewport_menu,
+  (VikLayerFuncSelectedViewportMenu)    NULL,
 };
 
 
@@ -2036,7 +2036,7 @@ static void trw_layer_tracks_tooltip(std::unordered_map<sg_uid_t, Track *> & tra
  *   no tracks, a single track or multiple tracks
  *     (which may or may not have timing information)
  */
-static const char* trw_layer_layer_tooltip ( VikTrwLayer *vtl )
+char const * LayerTRW::tooltip()
 {
   char tbuf1[64];
   char tbuf2[64];
@@ -2054,7 +2054,7 @@ static const char* trw_layer_layer_tooltip ( VikTrwLayer *vtl )
 
   if (true) { //vtl->trw->tracks) {
     tooltip_tracks tt = { 0.0, 0, 0, 0 };
-    trw_layer_tracks_tooltip(vtl->trw->tracks, &tt);
+    trw_layer_tracks_tooltip(this->tracks, &tt);
 
     GDate* gdate_start = g_date_new ();
     g_date_set_time_t (gdate_start, tt.start_time);
@@ -2108,7 +2108,7 @@ static const char* trw_layer_layer_tooltip ( VikTrwLayer *vtl )
 
     tbuf1[0] = '\0';
     double rlength = 0.0;
-    trw_layer_routes_tooltip(vtl->trw->routes, &rlength);
+    trw_layer_routes_tooltip(this->routes, &rlength);
     if ( rlength > 0.0 ) {
       double len_in_units;
       // Setup info dependent on distance units
@@ -2132,7 +2132,7 @@ static const char* trw_layer_layer_tooltip ( VikTrwLayer *vtl )
     // Put together all the elements to form compact tooltip text
     snprintf(tmp_buf, sizeof(tmp_buf),
 	     _("Tracks: %d - Waypoints: %d - Routes: %d%s%s"),
-	     vtl->trw->tracks.size(), vtl->trw->waypoints.size(), vtl->trw->routes.size(), tbuf2, tbuf1);
+	     this->tracks.size(), this->waypoints.size(), this->routes.size(), tbuf2, tbuf1);
 
     g_date_free (gdate_start);
     g_date_free (gdate_end);
@@ -2141,7 +2141,7 @@ static const char* trw_layer_layer_tooltip ( VikTrwLayer *vtl )
   return tmp_buf;
 }
 
-static const char* trw_layer_sublayer_tooltip ( VikTrwLayer *l, int subtype, void * sublayer )
+char const * LayerTRW::sublayer_tooltip(int subtype, void * sublayer)
 {
   switch ( subtype )
   {
@@ -2149,7 +2149,7 @@ static const char* trw_layer_sublayer_tooltip ( VikTrwLayer *l, int subtype, voi
     {
       // Very simple tooltip - may expand detail in the future...
       static char tmp_buf[32];
-      snprintf(tmp_buf, sizeof(tmp_buf), _("Tracks: %d"), l->trw->tracks.size());
+      snprintf(tmp_buf, sizeof(tmp_buf), _("Tracks: %d"), this->tracks.size());
       return tmp_buf;
     }
     break;
@@ -2157,7 +2157,7 @@ static const char* trw_layer_sublayer_tooltip ( VikTrwLayer *l, int subtype, voi
     {
       // Very simple tooltip - may expand detail in the future...
       static char tmp_buf[32];
-      snprintf(tmp_buf, sizeof(tmp_buf), _("Routes: %d"), l->trw->routes.size());
+      snprintf(tmp_buf, sizeof(tmp_buf), _("Routes: %d"), this->routes.size());
       return tmp_buf;
     }
     break;
@@ -2169,9 +2169,9 @@ static const char* trw_layer_sublayer_tooltip ( VikTrwLayer *l, int subtype, voi
       Track * trk = NULL;
       sg_uid_t uid = (sg_uid_t) ((long) sublayer);
       if (subtype == VIK_TRW_LAYER_SUBLAYER_TRACK) {
-	      trk = l->trw->tracks.at(uid);
+	      trk = this->tracks.at(uid);
       } else {
-	      trk = l->trw->routes.at(uid);
+	      trk = this->routes.at(uid);
       }
 
       if (trk) {
@@ -2214,14 +2214,14 @@ static const char* trw_layer_sublayer_tooltip ( VikTrwLayer *l, int subtype, voi
     {
       // Very simple tooltip - may expand detail in the future...
       static char tmp_buf[32];
-      snprintf(tmp_buf, sizeof(tmp_buf), _("Waypoints: %d"), l->trw->waypoints.size());
+      snprintf(tmp_buf, sizeof(tmp_buf), _("Waypoints: %d"), this->waypoints.size());
       return tmp_buf;
     }
     break;
     case VIK_TRW_LAYER_SUBLAYER_WAYPOINT:
     {
       sg_uid_t wp_uid = (sg_uid_t) ((long) sublayer);
-      Waypoint * wp = l->trw->waypoints.at(wp_uid);
+      Waypoint * wp = this->waypoints.at(wp_uid);
       // NB It's OK to return NULL
       if (wp) {
         if ( wp->comment )
@@ -8424,46 +8424,46 @@ static bool trw_layer_select_click(VikTrwLayer * vtl, GdkEventButton * event, Vi
 	return false;
 }
 
-static bool trw_layer_show_selected_viewport_menu ( VikTrwLayer *vtl, GdkEventButton *event, Viewport * viewport)
+bool LayerTRW::show_selected_viewport_menu(GdkEventButton * event, Viewport * viewport)
 {
   if ( event->button != 3 )
     return false;
 
-  if (!vtl || vtl->vl.type != VIK_LAYER_TRW)
+  if (this->vl->type != VIK_LAYER_TRW)
     return false;
 
-  if ( !vtl->trw->tracks_visible && !vtl->trw->waypoints_visible && !vtl->trw->routes_visible )
+  if ( !this->tracks_visible && !this->waypoints_visible && !this->routes_visible )
     return false;
 
   /* Post menu for the currently selected item */
 
   /* See if a track is selected */
-  Track * trk = (Track *) vik_window_get_selected_track ( (VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(vtl) );
+  Track * trk = (Track *) vik_window_get_selected_track ( (VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(this->vl) );
   if ( trk && trk->visible ) {
 
     if ( trk->name ) {
 
-      if ( vtl->track_right_click_menu )
-        g_object_ref_sink ( G_OBJECT(vtl->track_right_click_menu) );
+      if ( ((VikTrwLayer *) this->vl)->track_right_click_menu )
+        g_object_ref_sink ( G_OBJECT(((VikTrwLayer *) this->vl)->track_right_click_menu) );
 
-      vtl->track_right_click_menu = GTK_MENU ( gtk_menu_new () );
+      ((VikTrwLayer *) this->vl)->track_right_click_menu = GTK_MENU ( gtk_menu_new () );
 
       sg_uid_t uid = 0;;
       if ( trk->is_route )
-	uid = LayerTRW::find_uid_of_track(vtl->trw->routes, trk);
+	uid = LayerTRW::find_uid_of_track(this->routes, trk);
       else
-	uid = LayerTRW::find_uid_of_track(vtl->trw->tracks, trk);
+	uid = LayerTRW::find_uid_of_track(this->tracks, trk);
 
       if (uid) {
 
         GtkTreeIter *iter;
         if ( trk->is_route )
-	  iter = vtl->trw->routes_iters.at(uid);
+	  iter = this->routes_iters.at(uid);
         else
-	  iter = vtl->trw->tracks_iters.at(uid);
+	  iter = this->tracks_iters.at(uid);
 
-        trw_layer_sublayer_add_menu_items ( vtl,
-                                            vtl->track_right_click_menu,
+        trw_layer_sublayer_add_menu_items ( (VikTrwLayer *) this->vl,
+                                            ((VikTrwLayer *) this->vl)->track_right_click_menu,
                                             NULL,
                                             trk->is_route ? VIK_TRW_LAYER_SUBLAYER_ROUTE : VIK_TRW_LAYER_SUBLAYER_TRACK,
                                             (void *) ((long) uid),
@@ -8471,35 +8471,35 @@ static bool trw_layer_show_selected_viewport_menu ( VikTrwLayer *vtl, GdkEventBu
                                             (VikViewport *) viewport->vvp );
       }
 
-      gtk_menu_popup ( vtl->track_right_click_menu, NULL, NULL, NULL, NULL, event->button, gtk_get_current_event_time() );
+      gtk_menu_popup ( ((VikTrwLayer *) this->vl)->track_right_click_menu, NULL, NULL, NULL, NULL, event->button, gtk_get_current_event_time() );
 
       return true;
     }
   }
 
   /* See if a waypoint is selected */
-  Waypoint * waypoint = (Waypoint*)vik_window_get_selected_waypoint ( (VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(vtl) );
+  Waypoint * waypoint = (Waypoint*)vik_window_get_selected_waypoint ( (VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(this->vl) );
   if ( waypoint && waypoint->visible ) {
     if ( waypoint->name ) {
 
-      if ( vtl->wp_right_click_menu )
-        g_object_ref_sink ( G_OBJECT(vtl->wp_right_click_menu) );
+      if ( ((VikTrwLayer *) this->vl)->wp_right_click_menu )
+        g_object_ref_sink ( G_OBJECT(((VikTrwLayer *) this->vl)->wp_right_click_menu) );
 
-      vtl->wp_right_click_menu = GTK_MENU ( gtk_menu_new () );
+      ((VikTrwLayer *) this->vl)->wp_right_click_menu = GTK_MENU ( gtk_menu_new () );
 
-      sg_uid_t wp_uid = LayerTRW::find_uid_of_waypoint(vtl->trw->waypoints, waypoint);
+      sg_uid_t wp_uid = LayerTRW::find_uid_of_waypoint(this->waypoints, waypoint);
       if (wp_uid) {
-	GtkTreeIter * iter = vtl->trw->waypoints_iters.at(wp_uid);
+	GtkTreeIter * iter = this->waypoints_iters.at(wp_uid);
 
-        trw_layer_sublayer_add_menu_items ( vtl,
-                                            vtl->wp_right_click_menu,
+        trw_layer_sublayer_add_menu_items ( (VikTrwLayer *) this->vl,
+                                            ((VikTrwLayer *) this->vl)->wp_right_click_menu,
                                             NULL,
                                             VIK_TRW_LAYER_SUBLAYER_WAYPOINT,
                                             (void *) ((long) wp_uid),
                                             iter,
                                             (VikViewport *) viewport->vvp );
       }
-      gtk_menu_popup ( vtl->wp_right_click_menu, NULL, NULL, NULL, NULL, event->button, gtk_get_current_event_time() );
+      gtk_menu_popup ( ((VikTrwLayer *) this->vl)->wp_right_click_menu, NULL, NULL, NULL, NULL, event->button, gtk_get_current_event_time() );
 
       return true;
     }

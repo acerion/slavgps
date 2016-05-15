@@ -102,6 +102,14 @@ namespace SlavGPS {
 	public:
 		LayerTRW(VikLayer * vl);
 
+
+		/* Layer interface methods. */
+		char const * tooltip();
+		char const * sublayer_tooltip(int subtype, void * sublayer);
+		bool show_selected_viewport_menu(GdkEventButton * event, Viewport * viewport);
+
+
+
 		void add_track(Track * trk, char const * name);        /* Formerly known as vik_trw_layer_add_track(VikTrwLayer * vtl, char * name, Track * trk). */
 		void add_route(Track * trk, char const * name);        /* Formerly known as vik_trw_layer_add_route(VikTrwLayer * vtl, char * name, Track * trk). */
 		void add_waypoint(Waypoint * wp, char const * name);   /* Formerly known as vik_trw_layer_add_waypoint(VikTrwLayer * vtl, char * name, Waypoint * wp). */

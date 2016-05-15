@@ -101,7 +101,7 @@ enum {
   PARAM_FILE_CACHE_DIR,
   NUM_PARAMS };
 
-static const char* mapnik_layer_tooltip ( VikMapnikLayer *vml );
+//static const char* mapnik_layer_tooltip ( VikMapnikLayer *vml );
 static void mapnik_layer_marshall( VikMapnikLayer *vml, uint8_t **data, int *len );
 static VikMapnikLayer *mapnik_layer_unmarshall( uint8_t *data, int len, VikViewport *vvp );
 static bool mapnik_layer_set_param ( VikMapnikLayer *vml, uint16_t id, VikLayerParamData data, VikViewport *vp, bool is_file_operation );
@@ -175,7 +175,7 @@ VikLayerInterface vik_mapnik_layer_interface = {
 	(VikLayerFuncSublayerRenameRequest)   NULL,
 	(VikLayerFuncSublayerToggleVisible)   NULL,
 	(VikLayerFuncSublayerTooltip)         NULL,
-	(VikLayerFuncLayerTooltip)            mapnik_layer_tooltip,
+	(VikLayerFuncLayerTooltip)            NULL,
 	(VikLayerFuncLayerSelected)           NULL,
 
 	(VikLayerFuncMarshall)                mapnik_layer_marshall,
@@ -368,8 +368,9 @@ GType vik_mapnik_layer_get_type ()
 	return vml_type;
 }
 
-static const char* mapnik_layer_tooltip ( VikMapnikLayer *vml )
+char const * LayerMapnik::tooltip()
 {
+	VikMapnikLayer * vml = (VikMapnikLayer *) this->vl;
 	return vml->filename_xml;
 }
 

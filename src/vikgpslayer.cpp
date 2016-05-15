@@ -68,7 +68,7 @@ static VikGpsLayer *gps_layer_unmarshall( uint8_t *data, int len, VikViewport *v
 static bool gps_layer_set_param ( VikGpsLayer *vgl, uint16_t id, VikLayerParamData data, VikViewport *vp, bool is_file_operation );
 static VikLayerParamData gps_layer_get_param ( VikGpsLayer *vgl, uint16_t id, bool is_file_operation );
 
-static const char* gps_layer_tooltip ( VikGpsLayer *vgl );
+//static const char* gps_layer_tooltip ( VikGpsLayer *vgl );
 
 static void gps_layer_change_coord_mode ( VikGpsLayer *val, VikCoordMode mode );
 static void gps_layer_add_menu_items( VikGpsLayer *vtl, GtkMenu *menu, void * vlp );
@@ -283,7 +283,7 @@ VikLayerInterface vik_gps_layer_interface = {
   (VikLayerFuncSublayerRenameRequest)   NULL,
   (VikLayerFuncSublayerToggleVisible)   NULL,
   (VikLayerFuncSublayerTooltip)         NULL,
-  (VikLayerFuncLayerTooltip)            gps_layer_tooltip,
+  (VikLayerFuncLayerTooltip)            NULL,
   (VikLayerFuncLayerSelected)           NULL,
 
   (VikLayerFuncMarshall)		gps_layer_marshall,
@@ -438,9 +438,10 @@ static VikGpsLayer *vik_gps_layer_create (VikViewport *vp)
   return rv;
 }
 
-static const char* gps_layer_tooltip ( VikGpsLayer *vgl )
+char const * LayerGPS::tooltip()
 {
-  return vgl->protocol;
+	VikGpsLayer * vgl = (VikGpsLayer *) this->vl;
+	return vgl->protocol;
 }
 
 /* "Copy" */

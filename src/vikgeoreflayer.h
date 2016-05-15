@@ -74,6 +74,10 @@ namespace SlavGPS {
 	class LayerGeoref : public Layer {
 	public:
 		LayerGeoref(VikLayer * vl) : Layer(vl) { };
+
+
+		/* Layer interface methods. */
+		char const * tooltip();
 	};
 
 

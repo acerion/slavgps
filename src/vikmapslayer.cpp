@@ -115,7 +115,7 @@ static double __mapzooms_y[] = { 0.0, 0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0, 32.0,
 
 
 static void maps_layer_post_read (VikLayer *vl, VikViewport *vp, bool from_file);
-static const char* maps_layer_tooltip (VikMapsLayer *vml);
+//static const char* maps_layer_tooltip (VikMapsLayer *vml);
 static void maps_layer_marshall(VikMapsLayer *vml, uint8_t **data, int *len);
 static VikMapsLayer *maps_layer_unmarshall(uint8_t *data, int len, VikViewport *vvp);
 static bool maps_layer_set_param (VikMapsLayer *vml, uint16_t id, VikLayerParamData data, VikViewport *vvp, bool is_file_operation);
@@ -253,7 +253,7 @@ VikLayerInterface vik_maps_layer_interface = {
 	(VikLayerFuncSublayerRenameRequest)   NULL,
 	(VikLayerFuncSublayerToggleVisible)   NULL,
 	(VikLayerFuncSublayerTooltip)         NULL,
-	(VikLayerFuncLayerTooltip)            maps_layer_tooltip,
+	(VikLayerFuncLayerTooltip)            NULL,
 	(VikLayerFuncLayerSelected)           NULL,
 
 	(VikLayerFuncMarshall)		maps_layer_marshall,
@@ -958,8 +958,9 @@ static void maps_layer_post_read (VikLayer *vl, VikViewport *vp, bool from_file)
 	}
 }
 
-static const char* maps_layer_tooltip (VikMapsLayer *vml)
+char const * LayerMaps::tooltip()
 {
+	VikMapsLayer * vml = (VikMapsLayer *) this->vl;
 	return vik_maps_layer_get_map_label (vml);
 }
 

@@ -91,6 +91,10 @@ namespace SlavGPS {
 
 	public:
 		LayerAggregate(VikLayer * vl) : Layer(vl) { };
+
+
+		/* Layer interface methods. */
+		char const * tooltip();
 	};
 
 

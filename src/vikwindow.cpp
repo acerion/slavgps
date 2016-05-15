@@ -2224,11 +2224,13 @@ static VikLayerToolFuncStatus selecttool_click(VikLayer *vl, GdkEventButton *eve
 		}
 	}
 	else if ((event->button == 3) && (vl && (vl->type == VIK_LAYER_TRW))) {
-		if (vl->visible)
+		if (vl->visible) {
 			/* Act on currently selected item to show menu */
-			if (t->vw->selected_track || t->vw->selected_waypoint)
-				if (vik_layer_get_interface(vl->type)->show_viewport_menu)
-					vik_layer_get_interface(vl->type)->show_viewport_menu(vl, event, &t->vw->viking_vvp->port);
+			if (t->vw->selected_track || t->vw->selected_waypoint) {
+				Layer * l = (Layer *) vl->layer;
+				l->show_selected_viewport_menu(event, &t->vw->viking_vvp->port);
+			}
+		}
 	}
 
 	return VIK_LAYER_TOOL_ACK;

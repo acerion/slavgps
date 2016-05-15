@@ -221,11 +221,12 @@ vik_treeview_tooltip_cb(GtkWidget  *widget,
 		void * parent;
 		gtk_tree_model_get(model, &iter, ITEM_PARENT_COLUMN, &parent, -1);
 
-		snprintf(buffer, sizeof(buffer), "%s", vik_layer_sublayer_tooltip(VIK_LAYER(parent), rv, sublayer));
+		Layer * l = (Layer *) VIK_LAYER(parent)->layer;
+		snprintf(buffer, sizeof(buffer), "%s", l->sublayer_tooltip(rv, sublayer));
 	} else if (rv == VIK_TREEVIEW_TYPE_LAYER) {
 		void * layer;
 		gtk_tree_model_get(model, &iter, ITEM_POINTER_COLUMN, &layer, -1);
-		snprintf(buffer, sizeof(buffer), "%s", vik_layer_layer_tooltip(((Layer *) layer)->vl));
+		snprintf(buffer, sizeof(buffer), "%s", ((Layer *) layer)->tooltip());
 	} else {
 		gtk_tree_path_free(path);
 		return false;

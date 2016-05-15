@@ -309,7 +309,7 @@ const char *vik_layer_sublayer_rename_request ( VikLayer *l, const char *newname
 
 bool vik_layer_sublayer_toggle_visible ( VikLayer *l, int subtype, void * sublayer );
 
-const char* vik_layer_sublayer_tooltip ( VikLayer *l, int subtype, void * sublayer );
+//const char* vik_layer_sublayer_tooltip ( VikLayer *l, int subtype, void * sublayer );
 
 const char* vik_layer_layer_tooltip ( VikLayer *l );
 
@@ -345,6 +345,13 @@ namespace SlavGPS {
 
 		Layer(VikLayer * vl);
 		~Layer() {};
+
+
+		/* Layer interface methods. */
+		virtual char const * tooltip();
+		virtual char const * sublayer_tooltip(int subtype, void * sublayer);
+		virtual bool show_selected_viewport_menu(GdkEventButton * event, Viewport * viewport);
+
 
 		VikLayer * vl;
 
