@@ -345,9 +345,6 @@ namespace SlavGPS {
 		bool waypoints_visible;
 
 
-		void * vtl; /* Reference to parent object of type VikTrackLayer. */
-
-
 		/* Waypoint editing tool */
 		Waypoint * current_wp;
 		sg_uid_t current_wp_uid;
