@@ -335,7 +335,7 @@ char *a_dialog_waypoint ( GtkWindow *parent, char *default_name, VikTrwLayer *vt
 
   if ( !is_new ) {
     // Shift left<->right to try not to obscure the waypoint.
-    vtl->trw.dialog_shift(GTK_WINDOW(dialog), &(wp->coord), false);
+    vtl->trw->dialog_shift(GTK_WINDOW(dialog), &(wp->coord), false);
   }
 
   while ( gtk_dialog_run ( GTK_DIALOG(dialog) ) == GTK_RESPONSE_ACCEPT )

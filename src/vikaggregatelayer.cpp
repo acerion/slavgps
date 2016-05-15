@@ -600,12 +600,12 @@ static GList* aggregate_layer_waypoint_create_list(VikLayer *vl, void * user_dat
 	for (auto iter = layers->begin(); iter != layers->end(); iter++) {
 		GList * waypoints = NULL;
 
-		std::unordered_map<sg_uid_t, Waypoint *> & wps = VIK_TRW_LAYER(*iter)->trw.get_waypoints();
+		std::unordered_map<sg_uid_t, Waypoint *> & wps = VIK_TRW_LAYER(*iter)->trw->get_waypoints();
 		for (auto i = wps.begin(); i != wps.end(); i++) {
 			waypoints = g_list_insert(waypoints, i->second, index++);
 		}
 
-		waypoints_and_layers = g_list_concat(waypoints_and_layers, VIK_TRW_LAYER(*iter)->trw.build_waypoint_list_t(waypoints));
+		waypoints_and_layers = g_list_concat(waypoints_and_layers, VIK_TRW_LAYER(*iter)->trw->build_waypoint_list_t(waypoints));
 	}
 	delete layers;
 
@@ -643,7 +643,7 @@ static void aggregate_layer_search_date(menu_array_values values)
 	// Search tracks first
 	while (iter != layers->end() && !found) {
 		// Make it auto select the item if found
-		found = VIK_TRW_LAYER(*iter)->trw.find_by_date(date_str, &position, vvp, true, true);
+		found = VIK_TRW_LAYER(*iter)->trw->find_by_date(date_str, &position, vvp, true, true);
 		iter++;
 	}
 	delete layers;
@@ -655,7 +655,7 @@ static void aggregate_layer_search_date(menu_array_values values)
 		iter = layers->begin();
 		while (iter != layers->end() && !found) {
 			// Make it auto select the item if found
-			found = VIK_TRW_LAYER(*iter)->trw.find_by_date(date_str, &position, vvp, false, true);
+			found = VIK_TRW_LAYER(*iter)->trw->find_by_date(date_str, &position, vvp, false, true);
 			iter++;
 		}
 		delete layers;
@@ -687,10 +687,10 @@ static GList* aggregate_layer_track_create_list(VikLayer *vl, void * user_data)
 	auto iter = layers->begin();
 	while (iter != layers->end()) {
 		GList *tracks = NULL;
-		LayerTRW::get_track_values(&tracks, VIK_TRW_LAYER(*iter)->trw.get_tracks());
-		LayerTRW::get_track_values(&tracks, VIK_TRW_LAYER(*iter)->trw.get_routes());
+		LayerTRW::get_track_values(&tracks, VIK_TRW_LAYER(*iter)->trw->get_tracks());
+		LayerTRW::get_track_values(&tracks, VIK_TRW_LAYER(*iter)->trw->get_routes());
 
-		tracks_and_layers = g_list_concat(tracks_and_layers, VIK_TRW_LAYER(*iter)->trw.build_track_list_t(tracks));
+		tracks_and_layers = g_list_concat(tracks_and_layers, VIK_TRW_LAYER(*iter)->trw->build_track_list_t(tracks));
 
 		iter++;
 	}

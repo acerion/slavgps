@@ -161,7 +161,7 @@ static void trw_layer_waypoint_select ( menu_array_values values )
 
 	if ( values[MA_WPT_UUID] ) {
 		sg_uid_t uid = (sg_uid_t) ((long) values[MA_WPT_UUID]);
-		GtkTreeIter * iter = vtl->trw.get_waypoints_iters().at(uid);
+		GtkTreeIter * iter = vtl->trw->get_waypoints_iters().at(uid);
 
 		if ( iter )
 			vik_treeview_select_iter ( VIK_LAYER(vtl)->vt, iter, true );
@@ -180,12 +180,12 @@ static void trw_layer_waypoint_properties ( menu_array_values values )
 		waypoint_close_cb ( gw, 0, (GList *) values[MA_WPTS_LIST] );
 
 		bool updated = false;
-		char *new_name = a_dialog_waypoint ( VIK_GTK_WINDOW_FROM_LAYER(vtl), wp->name, vtl, wp, vtl->trw.get_coord_mode(), false, &updated );
+		char *new_name = a_dialog_waypoint ( VIK_GTK_WINDOW_FROM_LAYER(vtl), wp->name, vtl, wp, vtl->trw->get_coord_mode(), false, &updated );
 		if ( new_name )
-			vtl->trw.waypoint_rename(wp, new_name);
+			vtl->trw->waypoint_rename(wp, new_name);
 
 		if ( updated )
-			vtl->trw.waypoint_reset_icon(wp);
+			vtl->trw->waypoint_reset_icon(wp);
 
 		if ( updated && VIK_LAYER(vtl)->visible )
 			vik_layer_emit_update ( VIK_LAYER(vtl) );
@@ -415,7 +415,7 @@ static bool trw_layer_waypoint_menu_popup ( GtkWidget *tree_view,
 	gtk_tree_model_get ( model, &iter, TRW_COL_NUM, &vtl, -1 );
 	if ( !IS_VIK_TRW_LAYER(vtl) ) return false;
 
-    sg_uid_t wp_uuid = LayerTRW::find_uid_of_waypoint(vtl->trw.get_waypoints(), wp);
+    sg_uid_t wp_uuid = LayerTRW::find_uid_of_waypoint(vtl->trw->get_waypoints(), wp);
 	if (wp_uuid) {
 		VikViewport *vvp = vik_window_viewport((VikWindow *)(VIK_GTK_WINDOW_FROM_LAYER(vtl)));
 
@@ -498,7 +498,7 @@ static void trw_layer_waypoint_list_add ( vik_trw_waypoint_list_t *vtdl,
 
 	// NB: doesn't include aggegrate visibility
 	bool visible = VIK_LAYER(vtl)->visible && wp->visible;
-	visible = visible && vtl->trw.get_waypoints_visibility();
+	visible = visible && vtl->trw->get_waypoints_visibility();
 
 	double alt = wp->altitude;
 	switch (height_units) {

@@ -669,7 +669,7 @@ static bool datasource_osm_my_traces_process ( VikTrwLayer *vtl, ProcessOptions 
 			vik_aggregate_layer_add_layer ( adw->vlp->panel_ref->get_top_layer(), layer, true );
 			// Move to area of the track
 			vik_layer_post_read ( VIK_LAYER(vtlX), vik_window_viewport(adw->vw), true );
-			vtlX->trw.auto_set_view(&vik_window_viewport(adw->vw)->port);
+			vtlX->trw->auto_set_view(&vik_window_viewport(adw->vw)->port);
 			vtl_last = vtlX;
 		}
 		else if ( create_new_layer ) {

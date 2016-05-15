@@ -1192,13 +1192,13 @@ static void draw_redraw(VikWindow *vw)
 	// Draw highlight (possibly again but ensures it is on top - especially for when tracks overlap)
 	if (vw->viking_vvp->port.get_draw_highlight()) {
 		if (vw->containing_vtl && (vw->selected_tracks || vw->selected_waypoints)) {
-			((VikTrwLayer *) vw->containing_vtl)->trw.draw_highlight_items(vw->selected_tracks, vw->selected_waypoints, &vw->viking_vvp->port);
+			((VikTrwLayer *) vw->containing_vtl)->trw->draw_highlight_items(vw->selected_tracks, vw->selected_waypoints, &vw->viking_vvp->port);
 		}
 		else if (vw->containing_vtl && (vw->selected_track || vw->selected_waypoint)) {
-			((VikTrwLayer *) vw->containing_vtl)->trw.draw_highlight_item((Track *) vw->selected_track, (Waypoint *) vw->selected_waypoint, &vw->viking_vvp->port);
+			((VikTrwLayer *) vw->containing_vtl)->trw->draw_highlight_item((Track *) vw->selected_track, (Waypoint *) vw->selected_waypoint, &vw->viking_vvp->port);
 		}
 		else if (vw->selected_vtl) {
-			((VikTrwLayer *) vw->selected_vtl)->trw.draw_highlight(&vw->viking_vvp->port);
+			((VikTrwLayer *) vw->selected_vtl)->trw->draw_highlight(&vw->viking_vvp->port);
 		}
 	}
 	// Other viewport decoration items on top if they are enabled/in use
@@ -3668,7 +3668,7 @@ static void preferences_change_update(VikWindow *vw, void * data)
 	for (auto iter = layers->begin(); iter != layers->end(); iter++) {
 		// Reset the individual waypoints themselves due to the preferences change
 		VikTrwLayer *vtl = VIK_TRW_LAYER(*iter);
-		vtl->trw.reset_waypoints();
+		vtl->trw->reset_waypoints();
 	}
 
 	delete layers;

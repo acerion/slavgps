@@ -336,7 +336,7 @@ static void trw_layer_geotag_process ( geotag_options_t *options )
 				// Create waypoint with file information
 				char *name = NULL;
 				Waypoint * wp = a_geotag_create_waypoint_from_file ( options->image,
-																	 options->vtl->trw.get_coord_mode(),
+																	 options->vtl->trw->get_coord_mode(),
 																	 &name );
 				if ( !wp ) {
 					// Couldn't create Waypoint
@@ -349,7 +349,7 @@ static void trw_layer_geotag_process ( geotag_options_t *options )
 				bool updated_waypoint = false;
 
 				if ( options->ov.overwrite_waypoints ) {
-					Waypoint * current_wp = options->vtl->trw.get_waypoint(name);
+					Waypoint * current_wp = options->vtl->trw->get_waypoint(name);
 					if ( current_wp ) {
 						// Existing wp found, so set new position, comment and image
 						(void)a_geotag_waypoint_positioned ( options->image, wp->coord, wp->altitude, &name, current_wp );
@@ -358,7 +358,7 @@ static void trw_layer_geotag_process ( geotag_options_t *options )
 				}
 
 				if ( !updated_waypoint ) {
-				    options->vtl->trw.filein_add_waypoint(name, wp);
+				    options->vtl->trw->filein_add_waypoint(name, wp);
 				}
 
 				free( name );
@@ -385,7 +385,7 @@ static void trw_layer_geotag_process ( geotag_options_t *options )
 		}
 		else {
 			// Try all tracks
-			std::unordered_map<unsigned int, SlavGPS::Track*> & tracks = options->vtl->trw.get_tracks();
+			std::unordered_map<unsigned int, SlavGPS::Track*> & tracks = options->vtl->trw->get_tracks();
 			if (tracks.size() > 0 ) {
 				trw_layer_geotag_tracks(tracks, options);
 			}
@@ -404,7 +404,7 @@ static void trw_layer_geotag_process ( geotag_options_t *options )
 					// Find a WP with current name
 					char *name = NULL;
 					name = g_strdup( a_file_basename ( options->image ) );
-					Waypoint * wp = options->vtl->trw.get_waypoint(name);
+					Waypoint * wp = options->vtl->trw->get_waypoint(name);
 					if ( wp ) {
 						// Found, so set new position, comment and image
 						(void)a_geotag_waypoint_positioned ( options->image, options->coord, options->altitude, &name, wp );
@@ -419,7 +419,7 @@ static void trw_layer_geotag_process ( geotag_options_t *options )
 					Waypoint * wp = a_geotag_waypoint_positioned ( options->image, options->coord, options->altitude, &name, NULL );
 					if ( !name )
 						name = g_strdup( a_file_basename ( options->image ) );
-					options->vtl->trw.filein_add_waypoint(name, wp);
+					options->vtl->trw->filein_add_waypoint(name, wp);
 					free( name );
 				}
 
@@ -473,7 +473,7 @@ static int trw_layer_geotag_thread ( geotag_options_t *options, void * threaddat
 
 	if ( options->redraw ) {
 		if ( IS_VIK_LAYER(options->vtl) ) {
-			options->vtl->trw.calculate_bounds_waypoints();
+			options->vtl->trw->calculate_bounds_waypoints();
 			// Ensure any new images get shown
 			trw_layer_verify_thumbnails ( options->vtl, NULL ); // NB second parameter not used ATM
 			// Force redraw as verify only redraws if there are new thumbnails (they may already exist)

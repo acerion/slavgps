@@ -2893,7 +2893,7 @@ static void propwin_response_cb( GtkDialog *dialog, int resp, PropWidgets *widge
       gtk_color_button_get_color ( GTK_COLOR_BUTTON(widgets->w_color), &(trk->color) );
       trk->draw_name_mode = (TrackDrawnameType) gtk_combo_box_get_active ( GTK_COMBO_BOX(widgets->w_namelabel) );
       trk->max_number_dist_labels = gtk_spin_button_get_value_as_int ( GTK_SPIN_BUTTON(widgets->w_number_distlabels) );
-      widgets->vtl->trw.update_treeview(widgets->trk);
+      widgets->vtl->trw->update_treeview(widgets->trk);
       vik_layer_emit_update ( VIK_LAYER(vtl) );
       break;
     case VIK_TRW_LAYER_PROPWIN_REVERSE:
@@ -2906,7 +2906,7 @@ static void propwin_response_cb( GtkDialog *dialog, int resp, PropWidgets *widge
       //   choose not to inform the user unnecessarily
 
       /* above operation could have deleted current_tp or last_tp */
-      vtl->trw.cancel_tps_of_track(trk);
+      vtl->trw->cancel_tps_of_track(trk);
       vik_layer_emit_update ( VIK_LAYER(vtl) );
       break;
     case VIK_TRW_LAYER_PROPWIN_SPLIT:
@@ -2920,12 +2920,12 @@ static void propwin_response_cb( GtkDialog *dialog, int resp, PropWidgets *widge
         for ( i = 0; i < ntracks; i++ )
         {
           if ( tracks[i] ) {
-	    new_tr_name = vtl->trw.new_unique_sublayer_name(widgets->trk->is_route ? VIK_TRW_LAYER_SUBLAYER_ROUTE : VIK_TRW_LAYER_SUBLAYER_TRACK,
+	    new_tr_name = vtl->trw->new_unique_sublayer_name(widgets->trk->is_route ? VIK_TRW_LAYER_SUBLAYER_ROUTE : VIK_TRW_LAYER_SUBLAYER_TRACK,
                                                             widgets->trk->name);
             if ( widgets->trk->is_route )
-              vtl->trw.add_route(tracks[i], new_tr_name);
+              vtl->trw->add_route(tracks[i], new_tr_name);
             else
-              vtl->trw.add_track(tracks[i], new_tr_name);
+              vtl->trw->add_track(tracks[i], new_tr_name);
             tracks[i]->calculate_bounds();
 
             free( new_tr_name );
@@ -2937,9 +2937,9 @@ static void propwin_response_cb( GtkDialog *dialog, int resp, PropWidgets *widge
           /* Don't let track destroy this dialog */
           trk->clear_property_dialog();
           if ( widgets->trk->is_route )
-	    vtl->trw.delete_route(trk);
+	    vtl->trw->delete_route(trk);
           else
-	    vtl->trw.delete_track(trk);
+	    vtl->trw->delete_track(trk);
           vik_layer_emit_update ( VIK_LAYER(vtl) ); /* chase thru the hoops */
         }
       }
@@ -2958,7 +2958,7 @@ static void propwin_response_cb( GtkDialog *dialog, int resp, PropWidgets *widge
           break;
         }
 
-        char *r_name = vtl->trw.new_unique_sublayer_name(widgets->trk->is_route ? VIK_TRW_LAYER_SUBLAYER_ROUTE : VIK_TRW_LAYER_SUBLAYER_TRACK,
+        char *r_name = vtl->trw->new_unique_sublayer_name(widgets->trk->is_route ? VIK_TRW_LAYER_SUBLAYER_ROUTE : VIK_TRW_LAYER_SUBLAYER_TRACK,
 							 widgets->trk->name);
         iter->prev->next = NULL;
         iter->prev = NULL;
@@ -2970,9 +2970,9 @@ static void propwin_response_cb( GtkDialog *dialog, int resp, PropWidgets *widge
         trk_right->trackpoints = iter;
 
         if ( widgets->trk->is_route )
-	  vtl->trw.add_route(trk_right, r_name);
+	  vtl->trw->add_route(trk_right, r_name);
         else
-	  vtl->trw.add_track(trk_right, r_name);
+	  vtl->trw->add_track(trk_right, r_name);
         trk->calculate_bounds();
         trk_right->calculate_bounds();
 
@@ -3398,7 +3398,7 @@ void vik_trw_layer_propwin_run ( GtkWindow *parent,
     VikCoord vc;
     // Notional center of a track is simply an average of the bounding box extremities
     struct LatLon center = { (trk->bbox.north+trk->bbox.south)/2, (trk->bbox.east+trk->bbox.west)/2 };
-    vik_coord_load_from_latlon ( &vc, vtl->trw.get_coord_mode(), &center );
+    vik_coord_load_from_latlon ( &vc, vtl->trw->get_coord_mode(), &center );
 
     widgets->tz = vu_get_tz_at_location ( &vc );
 

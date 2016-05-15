@@ -683,6 +683,7 @@ void vik_layer_set_defaults ( VikLayer *vl, VikViewport *vvp )
 
 Layer::Layer(VikLayer * vl_)
 {
+	fprintf(stderr, "-------- Layer constructor, assigning vl = %x\n", (unsigned long) vl_);
 	this->vl = vl_;
 	this->vl->layer = this;
 

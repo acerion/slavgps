@@ -734,7 +734,7 @@ VikLoadType_t a_file_load ( VikAggregateLayer *top, VikViewport *vp, const char 
       vik_layer_post_read ( vtl, vp, true );
       Layer * layer = (Layer *) vtl->layer;
       vik_aggregate_layer_add_layer ( top, layer, false );
-      (VIK_TRW_LAYER(vtl))->trw.auto_set_view(&vp->port);
+      (VIK_TRW_LAYER(vtl))->trw->auto_set_view(&vp->port);
     }
   }
   xfclose(f);

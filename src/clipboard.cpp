@@ -257,8 +257,8 @@ static void clip_add_wp(VikLayersPanel *vlp, struct LatLon *coord)
   vik_coord_load_from_latlon ( &vc, VIK_COORD_LATLON, coord );
 
   if (sel && sel->type == VIK_LAYER_TRW) {
-    (VIK_TRW_LAYER(sel))->trw.new_waypoint(VIK_GTK_WINDOW_FROM_LAYER(sel), &vc);
-    VIK_TRW_LAYER(sel)->trw.calculate_bounds_waypoints();
+    (VIK_TRW_LAYER(sel))->trw->new_waypoint(VIK_GTK_WINDOW_FROM_LAYER(sel), &vc);
+    VIK_TRW_LAYER(sel)->trw->calculate_bounds_waypoints();
     vik_layer_emit_update ( VIK_LAYER(sel) );
   } else {
     a_dialog_error_msg_extra ( VIK_GTK_WINDOW_FROM_WIDGET(GTK_WIDGET(vlp)), _("In order to paste a waypoint, please select an appropriate layer to paste into."), NULL);

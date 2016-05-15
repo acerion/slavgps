@@ -110,7 +110,7 @@ static void on_complete_process (w_and_interface_t *wi)
     if ( wi->creating_new_layer ) {
       /* Only create the layer if it actually contains anything useful */
       // TODO: create function for this operation to hide detail:
-      if ( ! wi->vtl->trw.is_empty() ) {
+      if ( ! wi->vtl->trw->is_empty() ) {
         vik_layer_post_read ( VIK_LAYER(wi->vtl), wi->w->vvp, true );
 	Layer * layer = (Layer *) (VIK_LAYER(wi->vtl))->layer;
         vik_aggregate_layer_add_layer ( wi->w->vlp->panel_ref->get_top_layer(), layer, true );
@@ -129,7 +129,7 @@ static void on_complete_process (w_and_interface_t *wi)
       vik_layer_post_read ( VIK_LAYER(wi->vtl), wi->w->vvp, true );
       // View this data if desired - must be done after post read (so that the bounds are known)
       if ( wi->w->source_interface->autoview ) {
-        wi->vtl->trw.auto_set_view(wi->w->vlp->panel_ref->get_viewport());
+        wi->vtl->trw->auto_set_view(wi->w->vlp->panel_ref->get_viewport());
       }
       vik_layers_panel_emit_update ( wi->w->vlp->panel_ref );
     }

@@ -1222,7 +1222,7 @@ static void gps_comm_thread(GpsSession *sess)
         if ( sess->vvp && sess->direction == GPS_DOWN ) {
           vik_layer_post_read ( VIK_LAYER(sess->vtl), sess->vvp, true );
           /* View the data available */
-	  sess->vtl->trw.auto_set_view(&sess->vvp->port) ;
+	  sess->vtl->trw->auto_set_view(&sess->vvp->port) ;
           vik_layer_emit_update ( VIK_LAYER(sess->vtl) ); // NB update from background thread
         }
       }
@@ -1293,7 +1293,7 @@ int vik_gps_comm ( VikTrwLayer *vtl,
     // Enforce unique names in the layer upload to the GPS device
     // NB this may only be a Garmin device restriction (and may be not every Garmin device either...)
     // Thus this maintains the older code in built restriction
-	  if (!sess->vtl->trw.uniquify(vlp))
+	  if (!sess->vtl->trw->uniquify(vlp))
       vik_statusbar_set_message ( vik_window_get_statusbar (VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(sess->vtl))), VIK_STATUSBAR_INFO,
 				  _("Warning - GPS Upload items may overwrite each other") );
   }
@@ -1419,9 +1419,9 @@ static void gps_empty_upload_cb( void * layer_and_vlp[2] )
 			      _("Are you sure you want to delete GPS Upload data?"),
 			      NULL ) )
     return;
-  vgl->trw_children[TRW_UPLOAD]->trw.delete_all_waypoints();
-  vgl->trw_children[TRW_UPLOAD]->trw.delete_all_tracks();
-  vgl->trw_children[TRW_UPLOAD]->trw.delete_all_routes();
+  vgl->trw_children[TRW_UPLOAD]->trw->delete_all_waypoints();
+  vgl->trw_children[TRW_UPLOAD]->trw->delete_all_tracks();
+  vgl->trw_children[TRW_UPLOAD]->trw->delete_all_routes();
 }
 
 static void gps_empty_download_cb( void * layer_and_vlp[2] )
@@ -1432,9 +1432,9 @@ static void gps_empty_download_cb( void * layer_and_vlp[2] )
 			      _("Are you sure you want to delete GPS Download data?"),
 			      NULL ) )
     return;
-  vgl->trw_children[TRW_DOWNLOAD]->trw.delete_all_waypoints();
-  vgl->trw_children[TRW_DOWNLOAD]->trw.delete_all_tracks();
-  vgl->trw_children[TRW_DOWNLOAD]->trw.delete_all_routes();
+  vgl->trw_children[TRW_DOWNLOAD]->trw->delete_all_waypoints();
+  vgl->trw_children[TRW_DOWNLOAD]->trw->delete_all_tracks();
+  vgl->trw_children[TRW_DOWNLOAD]->trw->delete_all_routes();
 }
 
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
@@ -1446,8 +1446,8 @@ static void gps_empty_realtime_cb( void * layer_and_vlp[2] )
 			      _("Are you sure you want to delete GPS Realtime data?"),
 			      NULL ) )
     return;
-  vgl->trw_children[TRW_REALTIME]->trw.delete_all_waypoints();
-  vgl->trw_children[TRW_REALTIME]->trw.delete_all_tracks();
+  vgl->trw_children[TRW_REALTIME]->trw->delete_all_waypoints();
+  vgl->trw_children[TRW_REALTIME]->trw->delete_all_tracks();
 }
 #endif
 
@@ -1459,15 +1459,15 @@ static void gps_empty_all_cb( void * layer_and_vlp[2] )
 			      _("Are you sure you want to delete All GPS data?"),
 			      NULL ) )
     return;
-  vgl->trw_children[TRW_UPLOAD]->trw.delete_all_waypoints();
-  vgl->trw_children[TRW_UPLOAD]->trw.delete_all_tracks();
-  vgl->trw_children[TRW_UPLOAD]->trw.delete_all_routes();
-  vgl->trw_children[TRW_DOWNLOAD]->trw.delete_all_waypoints();
-  vgl->trw_children[TRW_DOWNLOAD]->trw.delete_all_tracks();
-  vgl->trw_children[TRW_DOWNLOAD]->trw.delete_all_routes();
+  vgl->trw_children[TRW_UPLOAD]->trw->delete_all_waypoints();
+  vgl->trw_children[TRW_UPLOAD]->trw->delete_all_tracks();
+  vgl->trw_children[TRW_UPLOAD]->trw->delete_all_routes();
+  vgl->trw_children[TRW_DOWNLOAD]->trw->delete_all_waypoints();
+  vgl->trw_children[TRW_DOWNLOAD]->trw->delete_all_tracks();
+  vgl->trw_children[TRW_DOWNLOAD]->trw->delete_all_routes();
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
-  vgl->trw_children[TRW_REALTIME]->trw.delete_all_waypoints();
-  vgl->trw_children[TRW_REALTIME]->trw.delete_all_tracks();
+  vgl->trw_children[TRW_REALTIME]->trw->delete_all_waypoints();
+  vgl->trw_children[TRW_REALTIME]->trw->delete_all_tracks();
 #endif
 }
 
@@ -1583,7 +1583,7 @@ static Trackpoint * create_realtime_trackpoint(VikGpsLayer *vgl, bool forced)
         ll.lat = vgl->realtime_fix.fix.latitude;
         ll.lon = vgl->realtime_fix.fix.longitude;
         vik_coord_load_from_latlon(&tp->coord,
-				   vgl->trw_children[TRW_REALTIME]->trw.get_coord_mode(), &ll);
+				   vgl->trw_children[TRW_REALTIME]->trw->get_coord_mode(), &ll);
 
         vgl->realtime_track->add_trackpoint(tp, true); // Ensure bounds is recalculated
         vgl->realtime_fix.dirty = false;
@@ -1642,7 +1642,7 @@ static void gpsd_raw_hook(VglGpsd *vgpsd, char *data)
     ll.lat = vgl->realtime_fix.fix.latitude;
     ll.lon = vgl->realtime_fix.fix.longitude;
     vik_coord_load_from_latlon(&vehicle_coord,
-			       vgl->trw_children[TRW_REALTIME]->trw.get_coord_mode(), &ll);
+			       vgl->trw_children[TRW_REALTIME]->trw->get_coord_mode(), &ll);
 
     if ((vgl->vehicle_position == VEHICLE_POSITION_CENTERED) ||
         (vgl->realtime_jump_to_start && vgl->first_realtime_trackpoint)) {
@@ -1717,7 +1717,7 @@ static char *make_track_name(VikTrwLayer *vtl)
   strcpy(name, basename);
   int i = 2;
 
-  while (vtl->trw.get_track(name) != NULL) {
+  while (vtl->trw->get_track(name) != NULL) {
     snprintf(name, bufsize, "%s#%d", basename, i);
     i++;
   }
@@ -1761,7 +1761,7 @@ static bool rt_gpsd_try_connect(void * *data)
     VikTrwLayer *vtl = vgl->trw_children[TRW_REALTIME];
     vgl->realtime_track = new Track();
     vgl->realtime_track->visible = true;
-    vtl->trw.add_track(vgl->realtime_track, make_track_name(vtl));
+    vtl->trw->add_track(vgl->realtime_track, make_track_name(vtl));
   }
 
 #if GPSD_API_MAJOR_VERSION == 3 || GPSD_API_MAJOR_VERSION == 4
@@ -1845,7 +1845,7 @@ static void rt_gpsd_disconnect(VikGpsLayer *vgl)
 
   if (vgl->realtime_record && vgl->realtime_track) {
     if ((vgl->realtime_track->trackpoints == NULL) || (vgl->realtime_track->trackpoints->next == NULL))
-      vgl->trw_children[TRW_REALTIME]->trw.delete_track(vgl->realtime_track);
+      vgl->trw_children[TRW_REALTIME]->trw->delete_track(vgl->realtime_track);
     vgl->realtime_track = NULL;
   }
 }

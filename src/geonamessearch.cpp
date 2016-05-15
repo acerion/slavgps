@@ -456,7 +456,7 @@ void a_geonames_wikipedia_box ( VikWindow *vw, VikTrwLayer *vtl, struct LatLon m
     wiki_wp = new Waypoint();
     wiki_wp->visible = true;
     vik_coord_load_from_latlon(&(wiki_wp->coord),
-			       vtl->trw.get_coord_mode(),
+			       vtl->trw->get_coord_mode(),
 			       &(wiki_geoname->ll));
     wiki_wp->altitude = wiki_geoname->elevation;
     wiki_wp->set_comment(wiki_geoname->cmt);
@@ -476,7 +476,7 @@ void a_geonames_wikipedia_box ( VikWindow *vw, VikTrwLayer *vtl, struct LatLon m
       if ( !strcmp (wiki_geoname->feature, "forest") )
         wiki_wp->set_symbol("forest");
     }
-    vtl->trw.filein_add_waypoint(wiki_geoname->name, wiki_wp);
+    vtl->trw->filein_add_waypoint(wiki_geoname->name, wiki_wp);
     wp_runner = g_list_next(wp_runner);
   }
   free_geoname_list(wiki_places);

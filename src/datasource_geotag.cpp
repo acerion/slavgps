@@ -165,7 +165,7 @@ static bool datasource_geotag_process ( VikTrwLayer *vtl, ProcessOptions *po, Ba
 			// Create name if geotag method didn't return one
 			if ( !name )
 				name = g_strdup( a_file_basename ( filename ) );
-			vtl->trw.filein_add_waypoint(name, wp);
+			vtl->trw->filein_add_waypoint(name, wp);
 			free( name );
 		}
 		else {

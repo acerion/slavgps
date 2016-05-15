@@ -114,13 +114,13 @@ bool a_jpg_load_file ( VikAggregateLayer *top, const char *filename, VikViewport
 		// Create name if geotag method didn't return one
 		if ( !name )
 			name = g_strdup( a_file_basename ( filename ) );
-		(VIK_TRW_LAYER(vtl))->trw.filein_add_waypoint(name, wp);
+		(VIK_TRW_LAYER(vtl))->trw->filein_add_waypoint(name, wp);
 		free( name );
 	}
 	else {
 		wp = new Waypoint();
 		wp->visible = true;
-		(VIK_TRW_LAYER(vtl))->trw.filein_add_waypoint((char *) a_file_basename(filename), wp);
+		(VIK_TRW_LAYER(vtl))->trw->filein_add_waypoint((char *) a_file_basename(filename), wp);
 		wp->set_image(filename);
 		// Simply set position to the current center
 		wp->coord = *(vvp->port.get_center());
@@ -135,7 +135,7 @@ bool a_jpg_load_file ( VikAggregateLayer *top, const char *filename, VikViewport
 	}
 
 	if ( auto_zoom )
-		(VIK_TRW_LAYER(vtl))->trw.auto_set_view(&vvp->port);
+		(VIK_TRW_LAYER(vtl))->trw->auto_set_view(&vvp->port);
 
 	// ATM This routine can't fail
 	return true;

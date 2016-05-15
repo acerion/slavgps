@@ -312,7 +312,7 @@ static void trw_layer_draw_dist_labels (DrawingParams * dp, Track * trk, bool dr
       struct LatLon ll_new = { ll_current.lat + (ll_next.lat-ll_current.lat)*ratio,
 			       ll_current.lon + (ll_next.lon-ll_current.lon)*ratio };
       VikCoord coord;
-      vik_coord_load_from_latlon ( &coord, dp->vtl->trw.coord_mode, &ll_new );
+      vik_coord_load_from_latlon ( &coord, dp->vtl->trw->coord_mode, &ll_new );
 
       char *fgcolour;
       if ( dp->vtl->drawmode == DRAWMODE_BY_TRACK )
@@ -369,7 +369,7 @@ static void trw_layer_draw_track_name_labels (DrawingParams * dp, Track * trk, b
     average.lat = (maxmin[0].lat+maxmin[1].lat)/2;
     average.lon = (maxmin[0].lon+maxmin[1].lon)/2;
     VikCoord coord;
-    vik_coord_load_from_latlon ( &coord, dp->vtl->trw.coord_mode, &average );
+    vik_coord_load_from_latlon ( &coord, dp->vtl->trw->coord_mode, &average );
 
     trw_layer_draw_track_label ( ename, fgcolour, bgcolour, dp, &coord );
   }
@@ -604,7 +604,7 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 
 		const uint8_t tp_size_reg = dp->vtl->drawpoints_size;
 		const uint8_t tp_size_cur = dp->vtl->drawpoints_size * 2;
-		uint8_t tp_size = (list == dp->vtl->trw.current_tpl) ? tp_size_cur : tp_size_reg;
+		uint8_t tp_size = (list == dp->vtl->trw->current_tpl) ? tp_size_cur : tp_size_reg;
 
 		int x, y;
 		dp->viewport->coord_to_screen(&(tp->coord), &x, &y);
@@ -635,7 +635,7 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 
 		while ((list = g_list_next(list))) {
 			tp = ((Trackpoint *) list->data);
-			tp_size = (list == dp->vtl->trw.current_tpl) ? tp_size_cur : tp_size_reg;
+			tp_size = (list == dp->vtl->trw->current_tpl) ? tp_size_cur : tp_size_reg;
 
 			Trackpoint * prev_tp = (Trackpoint *) list->prev->data;
 			// See if in a different lat/lon 'quadrant' so don't draw massively long lines (presumably wrong way around the Earth)
@@ -711,7 +711,7 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 				if ((!tp->newsegment) && (dp->vtl->drawlines)) {
 
 					/* UTM only: zone check */
-					if (drawpoints && dp->vtl->trw.coord_mode == VIK_COORD_UTM && tp->coord.utm_zone != dp->center->utm_zone) {
+					if (drawpoints && dp->vtl->trw->coord_mode == VIK_COORD_UTM && tp->coord.utm_zone != dp->center->utm_zone) {
 						draw_utm_skip_insignia(dp->viewport, main_gc, x, y);
 					}
 
@@ -743,7 +743,7 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 			} else {
 
 				if (use_prev_xy && dp->vtl->drawlines && (!tp->newsegment)) {
-					if (dp->vtl->trw.coord_mode != VIK_COORD_UTM || tp->coord.utm_zone == dp->center->utm_zone)	{
+					if (dp->vtl->trw->coord_mode != VIK_COORD_UTM || tp->coord.utm_zone == dp->center->utm_zone)	{
 						dp->viewport->coord_to_screen(&(tp->coord), &x, &y);
 
 						if (!drawing_highlight && (dp->vtl->drawmode == DRAWMODE_BY_SPEED)) {
@@ -928,7 +928,7 @@ void trw_layer_draw_symbol(Waypoint * wp, int x, int y, DrawingParams * dp)
 {
 	if (dp->vtl->wp_draw_symbols && wp->symbol && wp->symbol_pixbuf) {
 		dp->viewport->draw_pixbuf(wp->symbol_pixbuf, 0, 0, x - gdk_pixbuf_get_width(wp->symbol_pixbuf)/2, y - gdk_pixbuf_get_height(wp->symbol_pixbuf)/2, -1, -1);
-	} else if (wp == dp->vtl->trw.current_wp) {
+	} else if (wp == dp->vtl->trw->current_wp) {
 		switch (dp->vtl->wp_symbol) {
 		case WP_SYMBOL_FILLED_SQUARE:
 			dp->viewport->draw_rectangle(dp->vtl->waypoint_gc, true, x - (dp->vtl->wp_size), y - (dp->vtl->wp_size), dp->vtl->wp_size*2, dp->vtl->wp_size*2);

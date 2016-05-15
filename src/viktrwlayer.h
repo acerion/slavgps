@@ -100,7 +100,7 @@ namespace SlavGPS {
 	class LayerTRW : public Layer {
 
 	public:
-		LayerTRW(VikLayer * vl) : Layer(vl) { };
+		LayerTRW(VikLayer * vl);
 
 		void add_track(Track * trk, char const * name);        /* Formerly known as vik_trw_layer_add_track(VikTrwLayer * vtl, char * name, Track * trk). */
 		void add_route(Track * trk, char const * name);        /* Formerly known as vik_trw_layer_add_route(VikTrwLayer * vtl, char * name, Track * trk). */
@@ -407,7 +407,7 @@ typedef struct {
 struct _VikTrwLayer {
 	VikLayer vl;
 
-	LayerTRW trw;
+	LayerTRW * trw;
 
 
 	LatLonBBox waypoints_bbox;
