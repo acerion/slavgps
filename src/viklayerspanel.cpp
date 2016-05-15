@@ -109,10 +109,7 @@ LayersPanel::LayersPanel()
 	vik_layer_rename(VIK_LAYER(this->toplayer), _("Top Layer"));
 	int a = g_signal_connect_swapped(G_OBJECT(this->toplayer), "update", G_CALLBACK(vik_layers_panel_emit_update), this);
 
-
-	Layer * debug = (Layer *) this->toplayer;
-	fprintf(stderr, "%s:%d: type string = '%s'\n", __FUNCTION__, __LINE__, debug->type_string);
-
+	/* kamilFIXME: For some reason we have to keep this "new Layer(), even though this->toplayer already has valid ->layer member. */
 	Layer * layer = new Layer((VikLayer *) this->toplayer);
 	vik_treeview_add_layer(this->vt, NULL, &(this->toplayer_iter), VIK_LAYER(this->toplayer)->name, NULL, true, layer, VIK_LAYER_AGGREGATE, VIK_LAYER_AGGREGATE, 0);
 	vik_layer_realize(VIK_LAYER (this->toplayer), this->vt, &(this->toplayer_iter));
@@ -510,10 +507,8 @@ void LayersPanel::add_layer(VikLayer *l)
 
 	if (! vik_treeview_get_selected_iter(this->vt, &iter)) {
 
-		Layer * debug = (Layer *) l->layer;
-		fprintf(stderr, "%s:%d: type string = '%s'\n", __FUNCTION__, __LINE__, debug->type_string);
-
-		Layer * layer = new Layer(l);
+		Layer * layer = (Layer *) l->layer;
+		fprintf(stderr, "%s:%d: type string = '%s'\n", __FUNCTION__, __LINE__, layer->type_string);
 		vik_aggregate_layer_add_layer(this->toplayer, layer, true);
 	} else {
 		VikAggregateLayer *addtoagg;
@@ -544,10 +539,8 @@ void LayersPanel::add_layer(VikLayer *l)
 				replace_iter = &grandpa->iter;
 			}
 		}
-		Layer * debug = (Layer *) l->layer;
-		fprintf(stderr, "%s:%d: type string = '%s'\n", __FUNCTION__, __LINE__, debug->type_string);
-
-		Layer * layer = new Layer(l);
+		Layer * layer = (Layer *) l->layer;
+		fprintf(stderr, "%s:%d: type string = '%s'\n", __FUNCTION__, __LINE__, layer->type_string);
 		if (replace_iter) {
 			vik_aggregate_layer_insert_layer(addtoagg, layer, replace_iter);
 		} else {

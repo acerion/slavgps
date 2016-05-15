@@ -480,6 +480,9 @@ static VikMapnikLayer *mapnik_layer_new ( VikViewport *vvp )
 	vml->tile_size_x = size_default().u; // FUTURE: Is there any use in this being configurable?
 	vml->loaded = false;
 	vml->mi = mapnik_interface_new();
+
+	((VikLayer *) vml)->layer = new LayerMapnik((VikLayer *) vml);
+
 	return vml;
 }
 
@@ -934,7 +937,6 @@ static void mapnik_layer_free ( VikMapnikLayer *vml )
 static VikMapnikLayer * mapnik_layer_create(VikViewport * vp)
 {
 	VikMapnikLayer * rv = mapnik_layer_new(vp);
-	((VikLayer *) rv)->layer = new LayerMapnik((VikLayer *) rv);
 
 	return rv;
 }

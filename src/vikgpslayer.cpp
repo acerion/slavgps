@@ -435,8 +435,6 @@ static VikGpsLayer *vik_gps_layer_create (VikViewport *vp)
     vik_layer_set_menu_items_selection(VIK_LAYER(rv->trw_children[i]), VIK_MENU_ITEM_ALL & ~(VIK_MENU_ITEM_CUT|VIK_MENU_ITEM_DELETE));
   }
 
-  ((VikLayer *) rv)->layer = new LayerGPS((VikLayer *) rv);
-
   return rv;
 }
 
@@ -698,6 +696,8 @@ VikGpsLayer *vik_gps_layer_new (VikViewport *vp)
 
   vik_layer_set_defaults ( VIK_LAYER(vgl), vp );
 
+  ((VikLayer *) vgl)->layer = new LayerGPS((VikLayer *) vgl);
+
   return vgl;
 }
 
@@ -851,7 +851,7 @@ static void vik_gps_layer_realize ( VikGpsLayer *vgl, VikTreeview *vt, GtkTreeIt
 
   for (ix = 0; ix < NUM_TRW; ix++) {
     VikLayer * trw = VIK_LAYER(vgl->trw_children[ix]);
-    Layer * layer = new Layer(trw);
+    Layer * layer = (Layer *) trw->layer;
     vik_treeview_add_layer ( VIK_LAYER(vgl)->vt, layer_iter, &iter,
         _(trw_names[ix]), vgl, true,
         layer, trw->type, trw->type, vik_layer_get_timestamp(trw) );

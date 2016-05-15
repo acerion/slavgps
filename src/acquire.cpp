@@ -112,7 +112,7 @@ static void on_complete_process (w_and_interface_t *wi)
       // TODO: create function for this operation to hide detail:
       if ( ! wi->vtl->trw.is_empty() ) {
         vik_layer_post_read ( VIK_LAYER(wi->vtl), wi->w->vvp, true );
-	Layer * layer = new Layer(VIK_LAYER(wi->vtl));
+	Layer * layer = (Layer *) (VIK_LAYER(wi->vtl))->layer;
         vik_aggregate_layer_add_layer ( wi->w->vlp->panel_ref->get_top_layer(), layer, true );
       }
       else

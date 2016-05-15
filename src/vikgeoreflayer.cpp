@@ -411,6 +411,9 @@ static VikGeorefLayer *georef_layer_new(VikViewport *vvp)
 	vgl->ll_br.lat = 0.0;
 	vgl->ll_br.lon = 0.0;
 	vgl->alpha = 255;
+
+	((VikLayer *) vgl)->layer = new LayerGeoref((VikLayer *) vgl);
+
 	return vgl;
 }
 
@@ -511,8 +514,6 @@ static void georef_layer_free(VikGeorefLayer *vgl)
 static VikGeorefLayer *georef_layer_create(VikViewport *vp)
 {
 	VikGeorefLayer * rv = georef_layer_new(vp);
-
-	((VikLayer *) rv)->layer = new LayerGeoref((VikLayer *) rv);
 
 	return rv;
 }

@@ -479,7 +479,7 @@ void vik_window_new_window_finish(VikWindow *vw)
 	if(a_vik_get_add_default_map_layer()) {
 		VikMapsLayer *vml = VIK_MAPS_LAYER(vik_layer_create(VIK_LAYER_MAPS, vw->viking_vvp, false));
 		vik_layer_rename(VIK_LAYER(vml), _("Default Map"));
-		Layer * layer = new Layer(VIK_LAYER(vml));
+		Layer * layer = (Layer *) (VIK_LAYER(vml))->layer;
 		vik_aggregate_layer_add_layer(vw->layers_panel->get_top_layer(), layer, true);
 
 		draw_update(vw);
@@ -3098,7 +3098,8 @@ void vik_window_open_file(VikWindow *vw, const char *filename, bool change_filen
 	bool success = false;
 	bool restore_original_filename = false;
 
-	vw->loaded_type = a_file_load(vw->layers_panel->get_top_layer(), vw->viking_vvp, filename);
+	VikAggregateLayer * agg = vw->layers_panel->get_top_layer();
+	vw->loaded_type = a_file_load(agg, vw->viking_vvp, filename);
 	switch (vw->loaded_type) {
 	case LOAD_TYPE_READ_FAILURE:
 		a_dialog_error_msg(GTK_WINDOW(vw), _("The file you requested could not be opened."));

@@ -143,8 +143,6 @@ VikAggregateLayer *vik_aggregate_layer_create(VikViewport *vp)
 	VikLayer * vl = (VikLayer *) rv;
 	vik_layer_rename(vl, vik_aggregate_layer_interface.name);
 
-	vl->layer = new LayerAggregate(vl);
-
 	return rv;
 }
 
@@ -201,7 +199,7 @@ static VikAggregateLayer *aggregate_layer_unmarshall(uint8_t *data, int len, Vik
 	while (len>0) {
 		VikLayer * child_layer = vik_layer_unmarshall(data + sizeof(int), alm_size, vvp);
 		if (child_layer) {
-			fprintf(stderr, "++++++++++ push front B\n");
+			/* kamilFIXME: shouldn't we put "new LayerXYZ" in every _unmarshall() function? */
 			Layer * new_layer = new Layer(child_layer);
 			rv->children->push_front(new_layer);
 			g_signal_connect_swapped(G_OBJECT(child_layer), "update", G_CALLBACK(vik_layer_emit_update_secondary), rv);
@@ -223,6 +221,9 @@ VikAggregateLayer *vik_aggregate_layer_new()
 	VikLayer * vl = (VikLayer *) val;
 	vik_layer_set_type(vl, VIK_LAYER_AGGREGATE);
 	val->children = new std::list<Layer *>;
+
+	vl->layer = new LayerAggregate(vl);
+
 	return val;
 }
 

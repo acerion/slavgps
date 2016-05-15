@@ -1468,6 +1468,8 @@ static VikTrwLayer* trw_layer_new1 ( VikViewport *vvp )
 
   rv->trw.vtl = rv; /* Reference to parent object of type VikTrwLayer for trw. */
 
+  ((VikLayer *) rv)->layer = new LayerTRW((VikLayer *) rv);
+
   return rv;
 }
 
@@ -1746,8 +1748,6 @@ static VikTrwLayer* trw_layer_create ( VikViewport *vp )
   rv->trw.coord_mode = vp->port.get_coord_mode();
 
   rv->menu_selection = vik_layer_get_interface(VIK_LAYER(rv)->type)->menu_items_selection;
-
-  ((VikLayer *) rv)->layer = new LayerTRW((VikLayer *) rv);
 
   return rv;
 }
