@@ -3136,28 +3136,28 @@ void vik_trw_layer_propwin_run ( GtkWindow *parent,
   int cnt_prop = 0;
 
   static char *label_texts[] = {
-    N_("<b>Comment:</b>"),
-    N_("<b>Description:</b>"),
-    N_("<b>Source:</b>"),
-    N_("<b>Type:</b>"),
-    N_("<b>Color:</b>"),
-    N_("<b>Draw Name:</b>"),
-    N_("<b>Distance Labels:</b>"),
+	  (char *) N_("<b>Comment:</b>"),
+	  (char *) N_("<b>Description:</b>"),
+	  (char *) N_("<b>Source:</b>"),
+	  (char *) N_("<b>Type:</b>"),
+	  (char *) N_("<b>Color:</b>"),
+	  (char *) N_("<b>Draw Name:</b>"),
+	  (char *) N_("<b>Distance Labels:</b>"),
   };
   static char *stats_texts[] = {
-    N_("<b>Track Length:</b>"),
-    N_("<b>Trackpoints:</b>"),
-    N_("<b>Segments:</b>"),
-    N_("<b>Duplicate Points:</b>"),
-    N_("<b>Max Speed:</b>"),
-    N_("<b>Avg. Speed:</b>"),
-    N_("<b>Moving Avg. Speed:</b>"),
-    N_("<b>Avg. Dist. Between TPs:</b>"),
-    N_("<b>Elevation Range:</b>"),
-    N_("<b>Total Elevation Gain/Loss:</b>"),
-    N_("<b>Start:</b>"),
-    N_("<b>End:</b>"),
-    N_("<b>Duration:</b>"),
+	  (char *) N_("<b>Track Length:</b>"),
+	  (char *) N_("<b>Trackpoints:</b>"),
+	  (char *) N_("<b>Segments:</b>"),
+	  (char *) N_("<b>Duplicate Points:</b>"),
+	  (char *) N_("<b>Max Speed:</b>"),
+	  (char *) N_("<b>Avg. Speed:</b>"),
+	  (char *) N_("<b>Moving Avg. Speed:</b>"),
+	  (char *) N_("<b>Avg. Dist. Between TPs:</b>"),
+	  (char *) N_("<b>Elevation Range:</b>"),
+	  (char *) N_("<b>Total Elevation Gain/Loss:</b>"),
+	  (char *) N_("<b>Start:</b>"),
+	  (char *) N_("<b>End:</b>"),
+	  (char *) N_("<b>Duration:</b>"),
   };
   static char tmp_buf[50];
   double tmp_speed;
@@ -3186,13 +3186,13 @@ void vik_trw_layer_propwin_run ( GtkWindow *parent,
   widgets->w_color = content_prop[cnt_prop++] = gtk_color_button_new_with_color ( &(trk->color) );
 
   static char *draw_name_labels[] = {
-    N_("No"),
-    N_("Centre"),
-    N_("Start only"),
-    N_("End only"),
-    N_("Start and End"),
-    N_("Centre, Start and End"),
-    NULL
+	  (char *) N_("No"),
+	  (char *) N_("Centre"),
+	  (char *) N_("Start only"),
+	  (char *) N_("End only"),
+	  (char *) N_("Start and End"),
+	  (char *) N_("Centre, Start and End"),
+	  NULL
   };
 
   widgets->w_namelabel = content_prop[cnt_prop++] = vik_combo_box_text_new ();

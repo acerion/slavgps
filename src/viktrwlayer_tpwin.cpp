@@ -214,21 +214,21 @@ static bool tpwin_set_name ( VikTrwLayerTpwin *tpwin )
 
 VikTrwLayerTpwin *vik_trw_layer_tpwin_new ( GtkWindow *parent )
 {
-  static char *left_label_texts[] = { N_("<b>Name:</b>"),
-                                       N_("<b>Latitude:</b>"),
-                                       N_("<b>Longitude:</b>"),
-                                       N_("<b>Altitude:</b>"),
-                                       N_("<b>Course:</b>"),
-                                       N_("<b>Timestamp:</b>"),
-                                       N_("<b>Time:</b>") };
-  static char *right_label_texts[] = { N_("<b>Distance Difference:</b>"),
-                                        N_("<b>Time Difference:</b>"),
-                                        N_("<b>\"Speed\" Between:</b>"),
-                                        N_("<b>Speed:</b>"),
-                                        N_("<b>VDOP:</b>"),
-                                        N_("<b>HDOP:</b>"),
-                                        N_("<b>PDOP:</b>"),
-                                        N_("<b>SAT/FIX:</b>") };
+  static char *left_label_texts[] = { (char *) N_("<b>Name:</b>"),
+				      (char *) N_("<b>Latitude:</b>"),
+				      (char *) N_("<b>Longitude:</b>"),
+				      (char *) N_("<b>Altitude:</b>"),
+				      (char *) N_("<b>Course:</b>"),
+				      (char *) N_("<b>Timestamp:</b>"),
+				      (char *) N_("<b>Time:</b>") };
+  static char *right_label_texts[] = { (char *) N_("<b>Distance Difference:</b>"),
+				       (char *) N_("<b>Time Difference:</b>"),
+				       (char *) N_("<b>\"Speed\" Between:</b>"),
+				       (char *) N_("<b>Speed:</b>"),
+				       (char *) N_("<b>VDOP:</b>"),
+				       (char *) N_("<b>HDOP:</b>"),
+				       (char *) N_("<b>PDOP:</b>"),
+				       (char *) N_("<b>SAT/FIX:</b>") };
 
   VikTrwLayerTpwin *tpwin = VIK_TRW_LAYER_TPWIN ( g_object_new ( VIK_TRW_LAYER_TPWIN_TYPE, NULL ) );
   GtkWidget *main_hbox, *left_vbox, *right_vbox;

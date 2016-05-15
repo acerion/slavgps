@@ -254,7 +254,7 @@ enum {
 static unsigned int window_signals[VW_LAST_SIGNAL] = { 0 };
 
 // TODO get rid of this as this is unnecessary duplication...
-static char *tool_names[NUMBER_OF_TOOLS] = { N_("Pan"), N_("Zoom"), N_("Ruler"), N_("Select") };
+static char *tool_names[NUMBER_OF_TOOLS] = { (char *) N_("Pan"), (char *) N_("Zoom"), (char *) N_("Ruler"), (char *) N_("Select") };
 
 G_DEFINE_TYPE (VikWindow, vik_window, GTK_TYPE_WINDOW)
 
@@ -614,7 +614,7 @@ static void zoom_changed(GtkMenuShell *menushell,
 static GtkWidget *create_zoom_menu_all_levels(double mpp)
 {
 	GtkWidget *menu = gtk_menu_new();
-	char *itemLabels[] = { "0.031", "0.063", "0.125", "0.25", "0.5", "1", "2", "4", "8", "16", "32", "64", "128", "256", "512", "1024", "2048", "4096", "8192", "16384", "32768" };
+	char *itemLabels[] = { (char *) "0.031", (char *) "0.063", (char *) "0.125", (char *) "0.25", (char *) "0.5", (char *) "1", (char *) "2", (char *) "4", (char *) "8", (char *) "16", (char *) "32", (char *) "64", (char *) "128", (char *) "256", (char *) "512", (char *) "1024", (char *) "2048", (char *) "4096", (char *) "8192", (char *) "16384", (char *) "32768" };
 
 	int i;
 	for (i = 0 ; i < G_N_ELEMENTS(itemLabels) ; i++) {
@@ -2956,11 +2956,11 @@ GtkWidget *vik_window_get_drawmode_button(VikWindow *vw, VikViewportDrawMode mod
 	char *buttonname;
 	switch (mode) {
 #ifdef VIK_CONFIG_EXPEDIA
-	case VIK_VIEWPORT_DRAWMODE_EXPEDIA: buttonname = "/ui/MainMenu/View/ModeExpedia"; break;
+	case VIK_VIEWPORT_DRAWMODE_EXPEDIA: buttonname = (char *) "/ui/MainMenu/View/ModeExpedia"; break;
 #endif
-	case VIK_VIEWPORT_DRAWMODE_MERCATOR: buttonname = "/ui/MainMenu/View/ModeMercator"; break;
-	case VIK_VIEWPORT_DRAWMODE_LATLON: buttonname = "/ui/MainMenu/View/ModeLatLon"; break;
-	default: buttonname = "/ui/MainMenu/View/ModeUTM";
+	case VIK_VIEWPORT_DRAWMODE_MERCATOR: buttonname = (char *) "/ui/MainMenu/View/ModeMercator"; break;
+	case VIK_VIEWPORT_DRAWMODE_LATLON: buttonname = (char *) "/ui/MainMenu/View/ModeLatLon"; break;
+	default: buttonname = (char *) "/ui/MainMenu/View/ModeUTM";
 	}
 	mode_button = gtk_ui_manager_get_widget(vw->uim, buttonname);
 	assert(mode_button);
@@ -3040,7 +3040,7 @@ static void update_recently_used_document(VikWindow *vw, const char *filename)
 	/* Update Recently Used Document framework */
 	GtkRecentManager *manager = gtk_recent_manager_get_default();
 	GtkRecentData *recent_data = g_slice_new(GtkRecentData);
-	char *groups[] = {"viking", NULL};
+	char *groups[] = { (char *) "viking", NULL};
 	GFile *file = g_file_new_for_commandline_arg(filename);
 	char *uri = g_file_get_uri(file);
 	char *basename = g_path_get_basename(filename);
@@ -3049,7 +3049,7 @@ static void update_recently_used_document(VikWindow *vw, const char *filename)
 
 	recent_data->display_name   = basename;
 	recent_data->description    = NULL;
-	recent_data->mime_type      = "text/x-gps-data";
+	recent_data->mime_type      = (char *) "text/x-gps-data";
 	recent_data->app_name       = (char *) g_get_application_name();
 	recent_data->app_exec       = g_strjoin(" ", g_get_prgname(), "%f", NULL);
 	recent_data->groups         = groups;
@@ -4764,21 +4764,21 @@ static struct {
 	const GdkPixdata *data;
 	char *stock_id;
 } stock_icons[] = {
-	{ &mover_22_pixbuf,		"vik-icon-pan"      },
-	{ &zoom_18_pixbuf,		"vik-icon-zoom"     },
-	{ &ruler_18_pixbuf,		"vik-icon-ruler"    },
-	{ &select_18_pixbuf,		"vik-icon-select"   },
-	{ &vik_new_route_18_pixbuf,   "vik-icon-Create Route"     },
-	{ &route_finder_18_pixbuf,	"vik-icon-Route Finder"     },
-	{ &demdl_18_pixbuf,		"vik-icon-DEM Download"     },
-	{ &showpic_18_pixbuf,		"vik-icon-Show Picture"     },
-	{ &addtr_18_pixbuf,		"vik-icon-Create Track"     },
-	{ &edtr_18_pixbuf,		"vik-icon-Edit Trackpoint"  },
-	{ &addwp_18_pixbuf,		"vik-icon-Create Waypoint"  },
-	{ &edwp_18_pixbuf,		"vik-icon-Edit Waypoint"    },
-	{ &geozoom_18_pixbuf,		"vik-icon-Georef Zoom Tool" },
-	{ &geomove_18_pixbuf,		"vik-icon-Georef Move Map"  },
-	{ &mapdl_18_pixbuf,		"vik-icon-Maps Download"    },
+	{ &mover_22_pixbuf,		(char *) "vik-icon-pan"      },
+	{ &zoom_18_pixbuf,		(char *) "vik-icon-zoom"     },
+	{ &ruler_18_pixbuf,		(char *) "vik-icon-ruler"    },
+	{ &select_18_pixbuf,		(char *) "vik-icon-select"   },
+	{ &vik_new_route_18_pixbuf,     (char *) "vik-icon-Create Route"     },
+	{ &route_finder_18_pixbuf,	(char *) "vik-icon-Route Finder"     },
+	{ &demdl_18_pixbuf,		(char *) "vik-icon-DEM Download"     },
+	{ &showpic_18_pixbuf,		(char *) "vik-icon-Show Picture"     },
+	{ &addtr_18_pixbuf,		(char *) "vik-icon-Create Track"     },
+	{ &edtr_18_pixbuf,		(char *) "vik-icon-Edit Trackpoint"  },
+	{ &addwp_18_pixbuf,		(char *) "vik-icon-Create Waypoint"  },
+	{ &edwp_18_pixbuf,		(char *) "vik-icon-Edit Waypoint"    },
+	{ &geozoom_18_pixbuf,		(char *) "vik-icon-Georef Zoom Tool" },
+	{ &geomove_18_pixbuf,		(char *) "vik-icon-Georef Move Map"  },
+	{ &mapdl_18_pixbuf,		(char *) "vik-icon-Maps Download"    },
 };
 
 static int n_stock_icons = G_N_ELEMENTS (stock_icons);

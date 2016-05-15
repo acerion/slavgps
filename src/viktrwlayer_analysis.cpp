@@ -194,18 +194,18 @@ static GtkWidget *create_table (int cnt, char *labels[], GtkWidget *contents[])
 }
 
 static char *label_texts[] = {
-	N_("Number of Tracks"),
-	N_("Date Range"),
-	N_("Total Length"),
-	N_("Average Length"),
-	N_("Max Speed"),
-	N_("Avg. Speed"),
-	N_("Minimum Altitude"),
-	N_("Maximum Altitude"),
-	N_("Total Elevation Gain/Loss"),
-	N_("Avg. Elevation Gain/Loss"),
-	N_("Total Duration"),
-	N_("Avg. Duration"),
+	(char *) N_("Number of Tracks"),
+	(char *) N_("Date Range"),
+	(char *) N_("Total Length"),
+	(char *) N_("Average Length"),
+	(char *) N_("Max Speed"),
+	(char *) N_("Avg. Speed"),
+	(char *) N_("Minimum Altitude"),
+	(char *) N_("Maximum Altitude"),
+	(char *) N_("Total Elevation Gain/Loss"),
+	(char *) N_("Avg. Elevation Gain/Loss"),
+	(char *) N_("Total Duration"),
+	(char *) N_("Avg. Duration"),
 };
 
 /**

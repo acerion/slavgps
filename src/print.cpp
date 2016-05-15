@@ -50,11 +50,11 @@ typedef struct {
 } PrintCenterName;
 
 static const PrintCenterName center_modes[] = {
-  {N_("None"),          (PrintCenterMode) VIK_PRINT_CENTER_NONE},
-  {N_("Horizontally"),  (PrintCenterMode) VIK_PRINT_CENTER_HORIZONTALLY},
-  {N_("Vertically"),    (PrintCenterMode) VIK_PRINT_CENTER_VERTICALLY},
-  {N_("Both"),          (PrintCenterMode) VIK_PRINT_CENTER_BOTH},
-  {NULL,            (PrintCenterMode) -1}
+	{ (char *) N_("None"),          (PrintCenterMode) VIK_PRINT_CENTER_NONE},
+	{ (char *) N_("Horizontally"),  (PrintCenterMode) VIK_PRINT_CENTER_HORIZONTALLY},
+	{ (char *) N_("Vertically"),    (PrintCenterMode) VIK_PRINT_CENTER_VERTICALLY},
+	{ (char *) N_("Both"),          (PrintCenterMode) VIK_PRINT_CENTER_BOTH},
+	{ NULL,            (PrintCenterMode) -1}
 };
 
 typedef struct {

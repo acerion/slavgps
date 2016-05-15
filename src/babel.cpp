@@ -300,7 +300,7 @@ bool a_babel_convert_from_filter( VikTrwLayer *vt, const char *babelargs, const 
         if (sub_args[j][0] != '\0')
           args[i++] = sub_args[j];
       }
-      args[i++] = "-f";
+      args[i++] = (char *) "-f";
       args[i++] = (char *)from;
       if (babelfilters) {
         sub_filters = g_strsplit(babelfilters, " ", 0);
@@ -310,9 +310,9 @@ bool a_babel_convert_from_filter( VikTrwLayer *vt, const char *babelargs, const 
             args[i++] = sub_filters[j];
         }
       }
-      args[i++] = "-o";
-      args[i++] = "gpx";
-      args[i++] = "-F";
+      args[i++] = (char *) "-o";
+      args[i++] = (char *) "gpx";
+      args[i++] = (char *) "-F";
       args[i++] = name_dst;
       args[i] = NULL;
 
@@ -365,8 +365,8 @@ bool a_babel_convert_from_shellcommand ( VikTrwLayer *vt, const char *input_cmd,
     close(fd_dst);
 
     args = (char **) malloc(4 * sizeof (char *));
-    args[0] = BASH_LOCATION;
-    args[1] = "-c";
+    args[0] = (char *) BASH_LOCATION;
+    args[1] = (char *) "-c";
     args[2] = shell_command;
     args[3] = NULL;
 
@@ -511,15 +511,15 @@ bool a_babel_convert_to( VikTrwLayer *vt, Track * trk, const char *babelargs, co
       if (unbuffer_loc)
         args[i++] = unbuffer_loc;
       args[i++] = gpsbabel_loc;
-      args[i++] = "-i";
-      args[i++] = "gpx";
+      args[i++] = (char *) "-i";
+      args[i++] = (char *) "gpx";
       for (j = 0; sub_args[j]; j++)
         /* some version of gpsbabel can not take extra blank arg */
         if (sub_args[j][0] != '\0')
           args[i++] = sub_args[j];
-      args[i++] = "-f";
+      args[i++] = (char *) "-f";
       args[i++] = name_src;
-      args[i++] = "-F";
+      args[i++] = (char *) "-F";
       args[i++] = (char *)to;
       args[i] = NULL;
 
@@ -618,7 +618,7 @@ static bool load_feature ()
     if ( unbuffer_loc )
       args[i++] = unbuffer_loc;
     args[i++] = gpsbabel_loc;
-    args[i++] = "-^3";
+    args[i++] = (char *) "-^3";
     args[i] = NULL;
 
     ret = babel_general_convert (load_feature_cb, args, NULL);

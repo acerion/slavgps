@@ -631,7 +631,7 @@ void a_dialog_about ( GtkWindow *parent )
   const char *program_name = PACKAGE_NAME;
   const char *version = VIKING_VERSION;
   const char *website = VIKING_URL;
-  const char *copyright = "2003-2008, Evan Battaglia\n2008-"THEYEAR", Viking's contributors";
+  const char *copyright = "2003-2008, Evan Battaglia\n2008-" THEYEAR", Viking's contributors";
   const char *comments = _("GPS Data and Topo Analyzer, Explorer, and Manager.");
   const char *license = _("This program is free software; you can redistribute it and/or modify "
 			"it under the terms of the GNU General Public License as published by "

@@ -186,10 +186,10 @@ static void file_write ( VikAggregateLayer *top, FILE *f, void * vp )
 
   mode = VIK_VIEWPORT(vp)->port.get_drawmode();
   switch ( mode ) {
-    case VIK_VIEWPORT_DRAWMODE_UTM: modestring = "utm"; break;
-    case VIK_VIEWPORT_DRAWMODE_EXPEDIA: modestring = "expedia"; break;
-    case VIK_VIEWPORT_DRAWMODE_MERCATOR: modestring = "mercator"; break;
-    case VIK_VIEWPORT_DRAWMODE_LATLON: modestring = "latlon"; break;
+    case VIK_VIEWPORT_DRAWMODE_UTM: modestring = (char *) "utm"; break;
+    case VIK_VIEWPORT_DRAWMODE_EXPEDIA: modestring = (char *) "expedia"; break;
+    case VIK_VIEWPORT_DRAWMODE_MERCATOR: modestring = (char *) "mercator"; break;
+    case VIK_VIEWPORT_DRAWMODE_LATLON: modestring = (char *) "latlon"; break;
     default:
       fprintf(stderr, "CRITICAL: Houston, we've had a problem. mode=%d\n", mode);
   }
@@ -703,7 +703,7 @@ VikLoadType_t a_file_load ( VikAggregateLayer *top, VikViewport *vp, const char 
     // In fact both kml & gpx files start the same as they are in xml
     if ( a_file_check_ext ( filename, ".kml" ) && check_magic ( f, GPX_MAGIC, GPX_MAGIC_LEN ) ) {
       // Implicit Conversion
-      ProcessOptions po = { "-i kml", filename, NULL, NULL, NULL, NULL };
+      ProcessOptions po = { (char *) "-i kml", filename, NULL, NULL, NULL, NULL };
       if ( ! ( success = a_babel_convert_from ( VIK_TRW_LAYER(vtl), &po, NULL, NULL, NULL ) ) ) {
         load_answer = LOAD_TYPE_GPSBABEL_FAILURE;
       }

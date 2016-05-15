@@ -44,7 +44,7 @@
 #define GOOGLE_GOTO_PATTERN_2 ",lng:"
 #define GOOGLE_GOTO_NOT_FOUND "not understand the location"
 
-static DownloadFileOptions googlesearch_options = { false, false, "http://maps.google.com/", 2, a_check_map_file, NULL, NULL };
+static DownloadFileOptions googlesearch_options = { false, false, (char *) "http://maps.google.com/", 2, a_check_map_file, NULL, NULL };
 
 static void google_goto_tool_finalize ( GObject *gob );
 
@@ -154,7 +154,7 @@ done:
 
 static char *google_goto_tool_get_url_format ( VikGotoTool *self )
 {
-  return GOOGLE_GOTO_URL_FMT;
+  return (char *) GOOGLE_GOTO_URL_FMT;
 }
 
 DownloadFileOptions *google_goto_tool_get_download_options ( VikGotoTool *self )

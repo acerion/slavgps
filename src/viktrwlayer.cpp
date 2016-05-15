@@ -357,11 +357,11 @@ enum {
 
 /****** PARAMETERS ******/
 
-static char *params_groups[] = { N_("Waypoints"), N_("Tracks"), N_("Waypoint Images"), N_("Tracks Advanced"), N_("Metadata") };
+static char *params_groups[] = { (char *) N_("Waypoints"), (char *) N_("Tracks"), (char *) N_("Waypoint Images"), (char *) N_("Tracks Advanced"), (char *) N_("Metadata") };
 enum { GROUP_WAYPOINTS, GROUP_TRACKS, GROUP_IMAGES, GROUP_TRACKS_ADV, GROUP_METADATA };
 
-static char *params_drawmodes[] = { N_("Draw by Track"), N_("Draw by Speed"), N_("All Tracks Same Color"), NULL };
-static char *params_wpsymbols[] = { N_("Filled Square"), N_("Square"), N_("Circle"), N_("X"), 0 };
+static char *params_drawmodes[] = { (char *) N_("Draw by Track"), (char *) N_("Draw by Speed"), (char *) N_("All Tracks Same Color"), NULL };
+static char *params_wpsymbols[] = { (char *) N_("Filled Square"), (char *) N_("Square"), (char *) N_("Circle"), (char *) N_("X"), 0 };
 
 #define MIN_POINT_SIZE 2
 #define MAX_POINT_SIZE 10
@@ -387,23 +387,23 @@ static VikLayerParamScale params_scales[] = {
 };
 
 static char* params_font_sizes[] = {
-  N_("Extra Extra Small"),
-  N_("Extra Small"),
-  N_("Small"),
-  N_("Medium"),
-  N_("Large"),
-  N_("Extra Large"),
-  N_("Extra Extra Large"),
-  NULL };
+	(char *) N_("Extra Extra Small"),
+	(char *) N_("Extra Small"),
+	(char *) N_("Small"),
+	(char *) N_("Medium"),
+	(char *) N_("Large"),
+	(char *) N_("Extra Large"),
+	(char *) N_("Extra Extra Large"),
+	NULL };
 
 // Needs to align with vik_layer_sort_order_t
 static char* params_sort_order[] = {
-  N_("None"),
-  N_("Name Ascending"),
-  N_("Name Descending"),
-  N_("Date Ascending"),
-  N_("Date Descending"),
-  NULL
+	(char *) N_("None"),
+	(char *) N_("Name Ascending"),
+	(char *) N_("Name Descending"),
+	(char *) N_("Date Ascending"),
+	(char *) N_("Date Descending"),
+	NULL
 };
 
 static VikLayerParamData black_color_default ( void ) {
@@ -10088,7 +10088,7 @@ static void trw_layer_download_map_along_track_cb ( menu_array_sublayer values )
 {
   VikMapsLayer *vml;
   int selected_map;
-  char *zoomlist[] = {"0.125", "0.25", "0.5", "1", "2", "4", "8", "16", "32", "64", "128", "256", "512", "1024", NULL };
+  char *zoomlist[] = {(char *) "0.125", (char *) "0.25", (char *) "0.5", (char *) "1", (char *) "2", (char *) "4", (char *) "8", (char *) "16", (char *) "32", (char *) "64", (char *) "128", (char *) "256", (char *) "512", (char *) "1024", NULL };
   double zoom_vals[] = {0.125, 0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024};
   int selected_zoom, default_zoom;
 

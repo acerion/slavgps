@@ -89,19 +89,19 @@ static bool rt_gpsd_connect(VikGpsLayer *vgl, bool ask_if_failed);
 // Shouldn't need to use these much any more as the protocol is now saved as a string.
 // They are kept for compatibility loading old .vik files
 typedef enum {GARMIN_P = 0, MAGELLAN_P, DELORME_P, NAVILINK_P, OLD_NUM_PROTOCOLS} vik_gps_proto;
-static char * protocols_args[]   = {"garmin", "magellan", "delbin", "navilink", NULL};
+static char * protocols_args[]   = { (char *) "garmin", (char *) "magellan", (char *) "delbin", (char *) "navilink", NULL};
 #ifdef WINDOWS
-static char * params_ports[] = {"com1", "usb:", NULL};
+static char * params_ports[] = {(char *) "com1", (char *) "usb:", NULL};
 #else
-static char * params_ports[] = {"/dev/ttyS0", "/dev/ttyS1", "/dev/ttyUSB0", "/dev/ttyUSB1", "usb:", NULL};
+static char * params_ports[] = {(char *) "/dev/ttyS0", (char *) "/dev/ttyS1", (char *) "/dev/ttyUSB0", (char *) "/dev/ttyUSB1", (char *) "usb:", NULL};
 #endif
 /* NUM_PORTS not actually used */
 /* #define NUM_PORTS (sizeof(params_ports)/sizeof(params_ports[0]) - 1) */
 /* Compatibility with previous versions */
 #ifdef WINDOWS
-static char * old_params_ports[] = {"com1", "usb:", NULL};
+static char * old_params_ports[] = {(char *) "com1", (char *) "usb:", NULL};
 #else
-static char * old_params_ports[] = {"/dev/ttyS0", "/dev/ttyS1", "/dev/ttyUSB0", "/dev/ttyUSB1", "usb:", NULL};
+static char * old_params_ports[] = {(char *) "/dev/ttyS0", (char *) "/dev/ttyS1", (char *) "/dev/ttyUSB0", (char *) "/dev/ttyUSB1", (char *) "usb:", NULL};
 #endif
 #define OLD_NUM_PORTS (sizeof(old_params_ports)/sizeof(old_params_ports[0]) - 1)
 
@@ -134,9 +134,9 @@ typedef struct {
 static void gps_session_delete(GpsSession *sess);
 
 static char *params_groups[] = {
-  N_("Data Mode"),
+  (char *) N_("Data Mode"),
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
-  N_("Realtime Tracking Mode"),
+  (char *) N_("Realtime Tracking Mode"),
 #endif
 };
 
@@ -173,9 +173,9 @@ static VikLayerParamData gps_port_default ( void )
 
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
 static char *params_vehicle_position[] = {
-  N_("Keep vehicle at center"),
-  N_("Keep vehicle on screen"),
-  N_("Disable"),
+  (char *) N_("Keep vehicle at center"),
+  (char *) N_("Keep vehicle on screen"),
+  (char *) N_("Disable"),
   NULL
 };
 enum {
@@ -315,9 +315,9 @@ enum {TRW_DOWNLOAD=0, TRW_UPLOAD,
 #endif
   NUM_TRW};
 static char * trw_names[] = {
-  N_("GPS Download"), N_("GPS Upload"),
+  (char *) N_("GPS Download"), (char *) N_("GPS Upload"),
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
-  N_("GPS Realtime Tracking"),
+  (char *) N_("GPS Realtime Tracking"),
 #endif
 };
 
@@ -1303,17 +1303,17 @@ int vik_gps_comm ( VikTrwLayer *vtl,
 #endif
 
   if (do_tracks)
-    tracks = "-t";
+    tracks = (char *) "-t";
   else
-    tracks = "";
+    tracks = (char *) "";
   if (do_routes)
-    routes = "-r";
+    routes = (char *) "-r";
   else
-    routes = "";
+    routes = (char *) "";
   if (do_waypoints)
-    waypoints = "-w";
+    waypoints = (char *) "-w";
   else
-    waypoints = "";
+    waypoints = (char *) "";
 
   sess->babelargs = g_strdup_printf("-D 9 %s %s %s -%c %s",
 				   tracks, routes, waypoints, (dir == GPS_DOWN) ? 'i' : 'o', protocol);

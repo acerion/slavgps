@@ -89,8 +89,8 @@ VikToolbar *vik_toolbar_new ()
 #define TOOLBAR_PARAMS_GROUP_KEY "toolbar"
 #define TOOLBAR_PARAMS_NAMESPACE "toolbar."
 
-static char *params_icon_size[] = { N_("System Default"), N_("Small"), N_("Medium"), N_("Large"), NULL };
-static char *params_icon_style[] = { N_("System Default"), N_("Icons Only"), N_("Text Only"), N_("Icons and Text"), NULL };
+static char *params_icon_size[] = { (char *) N_("System Default"), (char *) N_("Small"), (char *) N_("Medium"), (char *) N_("Large"), NULL };
+static char *params_icon_style[] = { (char *) N_("System Default"), (char *) N_("Icons Only"), (char *) N_("Text Only"), (char *) N_("Icons and Text"), NULL };
 
 typedef struct {
 	VikToolbar *vtb;
@@ -657,7 +657,7 @@ typedef struct
 
 static const GtkTargetEntry tb_editor_dnd_targets[] =
 {
-	{ "VIKING_TB_EDITOR_ROW", 0, 0 }
+	{ (char *) "VIKING_TB_EDITOR_ROW", 0, 0 }
 };
 static const int tb_editor_dnd_targets_len = G_N_ELEMENTS(tb_editor_dnd_targets);
 

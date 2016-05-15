@@ -188,7 +188,7 @@ static int osm_traces_upload_file(const char *user,
   struct curl_httppost *post=NULL;
   struct curl_httppost *last=NULL;
 
-  char *base_url = "http://www.openstreetmap.org/api/0.6/gpx/create";
+  char *base_url = (char *) "http://www.openstreetmap.org/api/0.6/gpx/create";
 
   char *user_pass = osm_get_login();
 

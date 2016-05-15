@@ -54,8 +54,8 @@ typedef struct {
 } vik_clipboard_t;
 
 static GtkTargetEntry target_table[] = {
-  { "application/viking", 0, 0 },
-  { "STRING", 0, 1 },
+	{ (char *) "application/viking", 0, 0 },
+	{ (char *) "STRING", 0, 1 },
 };
 
 /*****************************************************************

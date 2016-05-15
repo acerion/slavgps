@@ -84,16 +84,16 @@ static VikLayerParamScale param_scales[] = {
 };
 
 static char *params_source[] = {
-	"SRTM Global 90m (3 arcsec)",
+	(char *) "SRTM Global 90m (3 arcsec)",
 #ifdef VIK_CONFIG_DEM24K
-	"USA 10m (USGS 24k)",
+	(char *) "USA 10m (USGS 24k)",
 #endif
 	NULL
 };
 
 static char *params_type[] = {
-	N_("Absolute height"),
-	N_("Height gradient"),
+	(char *) N_("Absolute height"),
+	(char *) N_("Height gradient"),
 	NULL
 };
 
@@ -151,15 +151,15 @@ static VikToolInterface dem_tools[] = {
    The other colours, shaded from brown to white are used to give an indication of height.
 */
 static char *dem_height_colors[] = {
-	"#0000FF",
-	"#9b793c", "#9c7d40", "#9d8144", "#9e8549", "#9f894d", "#a08d51", "#a29156", "#a3955a", "#a4995e", "#a69d63",
-	"#a89f65", "#aaa267", "#ada569", "#afa76b", "#b1aa6d", "#b4ad6f", "#b6b071", "#b9b373", "#bcb676", "#beb978",
-	"#c0bc7a", "#c2c07d", "#c4c37f", "#c6c681", "#c8ca84", "#cacd86", "#ccd188", "#cfd58b", "#c2ce84", "#b5c87e",
-	"#a9c278", "#9cbb71", "#8fb56b", "#83af65", "#76a95e", "#6aa358", "#5e9d52", "#63a055", "#69a458", "#6fa85c",
-	"#74ac5f", "#7ab063", "#80b467", "#86b86a", "#8cbc6e", "#92c072", "#94c175", "#97c278", "#9ac47c", "#9cc57f",
-	"#9fc682", "#a2c886", "#a4c989", "#a7cb8d", "#aacd91", "#afce99", "#b5d0a1", "#bbd2aa", "#c0d3b2", "#c6d5ba",
-	"#ccd7c3", "#d1d9cb", "#d7dbd4", "#DDDDDD", "#e0e0e0", "#e4e4e4", "#e8e8e8", "#ebebeb", "#efefef", "#f3f3f3",
-	"#f7f7f7", "#fbfbfb", "#ffffff"
+	(char *) "#0000FF",
+	(char *) "#9b793c", (char *) "#9c7d40", (char *) "#9d8144", (char *) "#9e8549", (char *) "#9f894d", (char *) "#a08d51", (char *) "#a29156", (char *) "#a3955a", (char *) "#a4995e", (char *) "#a69d63",
+	(char *) "#a89f65", (char *) "#aaa267", (char *) "#ada569", (char *) "#afa76b", (char *) "#b1aa6d", (char *) "#b4ad6f", (char *) "#b6b071", (char *) "#b9b373", (char *) "#bcb676", (char *) "#beb978",
+	(char *) "#c0bc7a", (char *) "#c2c07d", (char *) "#c4c37f", (char *) "#c6c681", (char *) "#c8ca84", (char *) "#cacd86", (char *) "#ccd188", (char *) "#cfd58b", (char *) "#c2ce84", (char *) "#b5c87e",
+	(char *) "#a9c278", (char *) "#9cbb71", (char *) "#8fb56b", (char *) "#83af65", (char *) "#76a95e", (char *) "#6aa358", (char *) "#5e9d52", (char *) "#63a055", (char *) "#69a458", (char *) "#6fa85c",
+	(char *) "#74ac5f", (char *) "#7ab063", (char *) "#80b467", (char *) "#86b86a", (char *) "#8cbc6e", (char *) "#92c072", (char *) "#94c175", (char *) "#97c278", (char *) "#9ac47c", (char *) "#9cc57f",
+	(char *) "#9fc682", (char *) "#a2c886", (char *) "#a4c989", (char *) "#a7cb8d", (char *) "#aacd91", (char *) "#afce99", (char *) "#b5d0a1", (char *) "#bbd2aa", (char *) "#c0d3b2", (char *) "#c6d5ba",
+	(char *) "#ccd7c3", (char *) "#d1d9cb", (char *) "#d7dbd4", (char *) "#DDDDDD", (char *) "#e0e0e0", (char *) "#e4e4e4", (char *) "#e8e8e8", (char *) "#ebebeb", (char *) "#efefef", (char *) "#f3f3f3",
+	(char *) "#f7f7f7", (char *) "#fbfbfb", (char *) "#ffffff"
 };
 
 static const unsigned int DEM_N_HEIGHT_COLORS = sizeof(dem_height_colors)/sizeof(dem_height_colors[0]);
@@ -172,17 +172,17 @@ static const unsigned int DEM_N_HEIGHT_COLORS = sizeof(dem_height_colors)/sizeof
 */
 
 static char *dem_gradient_colors[] = {
-	"#AAAAAA",
-	"#000000", "#000011", "#000022", "#000033", "#000044", "#00004c", "#000055", "#00005d", "#000066", "#00006e",
-	"#000077", "#00007f", "#000088", "#000090", "#000099", "#0000a1", "#0000aa", "#0000b2", "#0000bb", "#0000c3",
-	"#0000cc", "#0000d4", "#0000dd", "#0000e5", "#0000ee", "#0000f6", "#0000ff", "#0008f7", "#0011ee", "#0019e6",
-	"#0022dd", "#002ad5", "#0033cc", "#003bc4", "#0044bb", "#004cb3", "#0055aa", "#005da2", "#006699", "#006e91",
-	"#007788", "#007f80", "#008877", "#00906f", "#009966", "#00a15e", "#00aa55", "#00b24d", "#00bb44", "#00c33c",
-	"#00cc33", "#00d42b", "#00dd22", "#00e51a", "#00ee11", "#00f609", "#00ff00", "#08f700", "#11ee00", "#19e600",
-	"#22dd00", "#2ad500", "#33cc00", "#3bc400", "#44bb00", "#4cb300", "#55aa00", "#5da200", "#669900", "#6e9100",
-	"#778800", "#7f8000", "#887700", "#906f00", "#996600", "#a15e00", "#aa5500", "#b24d00", "#bb4400", "#c33c00",
-	"#cc3300", "#d42b00", "#dd2200", "#e51a00", "#ee1100", "#f60900", "#ff0000",
-	"#FFFFFF"
+	(char *) "#AAAAAA",
+	(char *) "#000000", (char *) "#000011", (char *) "#000022", (char *) "#000033", (char *) "#000044", (char *) "#00004c", (char *) "#000055", (char *) "#00005d", (char *) "#000066", (char *) "#00006e",
+	(char *) "#000077", (char *) "#00007f", (char *) "#000088", (char *) "#000090", (char *) "#000099", (char *) "#0000a1", (char *) "#0000aa", (char *) "#0000b2", (char *) "#0000bb", (char *) "#0000c3",
+	(char *) "#0000cc", (char *) "#0000d4", (char *) "#0000dd", (char *) "#0000e5", (char *) "#0000ee", (char *) "#0000f6", (char *) "#0000ff", (char *) "#0008f7", (char *) "#0011ee", (char *) "#0019e6",
+	(char *) "#0022dd", (char *) "#002ad5", (char *) "#0033cc", (char *) "#003bc4", (char *) "#0044bb", (char *) "#004cb3", (char *) "#0055aa", (char *) "#005da2", (char *) "#006699", (char *) "#006e91",
+	(char *) "#007788", (char *) "#007f80", (char *) "#008877", (char *) "#00906f", (char *) "#009966", (char *) "#00a15e", (char *) "#00aa55", (char *) "#00b24d", (char *) "#00bb44", (char *) "#00c33c",
+	(char *) "#00cc33", (char *) "#00d42b", (char *) "#00dd22", (char *) "#00e51a", (char *) "#00ee11", (char *) "#00f609", (char *) "#00ff00", (char *) "#08f700", (char *) "#11ee00", (char *) "#19e600",
+	(char *) "#22dd00", (char *) "#2ad500", (char *) "#33cc00", (char *) "#3bc400", (char *) "#44bb00", (char *) "#4cb300", (char *) "#55aa00", (char *) "#5da200", (char *) "#669900", (char *) "#6e9100",
+	(char *) "#778800", (char *) "#7f8000", (char *) "#887700", (char *) "#906f00", (char *) "#996600", (char *) "#a15e00", (char *) "#aa5500", (char *) "#b24d00", (char *) "#bb4400", (char *) "#c33c00",
+	(char *) "#cc3300", (char *) "#d42b00", (char *) "#dd2200", (char *) "#e51a00", (char *) "#ee1100", (char *) "#f60900", (char *) "#ff0000",
+	(char *) "#FFFFFF"
 };
 
 static const unsigned int DEM_N_GRADIENT_COLORS = sizeof(dem_gradient_colors)/sizeof(dem_gradient_colors[0]);

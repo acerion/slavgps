@@ -84,10 +84,10 @@ static bool check_file_first_line(FILE* f, char *patterns[])
 bool a_check_html_file(FILE* f)
 {
   char * html_str[] = {
-    "<html",
-    "<!DOCTYPE html",
-    "<head",
-    "<title",
+    (char *) "<html",
+    (char *) "<!DOCTYPE html",
+    (char *) "<head",
+    (char *) "<title",
     NULL
   };
 
@@ -103,7 +103,7 @@ bool a_check_map_file(FILE* f)
 bool a_check_kml_file(FILE* f)
 {
   char * kml_str[] = {
-    "<?xml",
+    (char *) "<?xml",
     NULL
   };
 

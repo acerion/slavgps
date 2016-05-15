@@ -370,7 +370,7 @@ static void trw_layer_geotag_process ( geotag_options_t *options )
 			return;
 		}
 
-		options->PhotoTime = ConvertToUnixTime ( datetime, EXIF_DATE_FORMAT, options->ov.TimeZoneHours, options->ov.TimeZoneMins);
+		options->PhotoTime = ConvertToUnixTime ( datetime, (char *) EXIF_DATE_FORMAT, options->ov.TimeZoneHours, options->ov.TimeZoneMins);
 		free( datetime );
 
 		// Apply any offset

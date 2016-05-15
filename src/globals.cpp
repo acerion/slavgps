@@ -64,13 +64,13 @@ int viking_version_to_number ( char *version )
   return version_number;
 }
 
-static char * params_degree_formats[] = {"DDD", "DMM", "DMS", N_("Raw"), NULL};
-static char * params_units_distance[] = {N_("Kilometres"), N_("Miles"), N_("Nautical Miles"), NULL};
-static char * params_units_speed[] = {"km/h", "mph", "m/s", "knots", NULL};
-static char * params_units_height[] = {"Metres", "Feet", NULL};
+static char * params_degree_formats[] = { (char *) "DDD", (char *) "DMM", (char *) "DMS", (char *) N_("Raw"), NULL};
+static char * params_units_distance[] = { (char *) N_("Kilometres"), (char *) N_("Miles"), (char *) N_("Nautical Miles"), NULL};
+static char * params_units_speed[] = { (char *) "km/h", (char *) "mph", (char *) "m/s", (char *) "knots", NULL};
+static char * params_units_height[] = { (char *) "Metres", (char *) "Feet", NULL};
 static VikLayerParamScale params_scales_lat[] = { {-90.0, 90.0, 0.05, 2} };
 static VikLayerParamScale params_scales_long[] = { {-180.0, 180.0, 0.05, 2} };
-static char * params_time_ref_frame[] = {N_("Locale"), N_("World"), N_("UTC"), NULL};
+static char * params_time_ref_frame[] = { (char *) N_("Locale"), (char *) N_("World"), (char *) N_("UTC"), NULL};
 
 static VikLayerParam general_prefs[] = {
   { VIK_LAYER_NUM_TYPES, VIKING_PREFERENCES_NAMESPACE "degree_format", VIK_LAYER_PARAM_UINT, VIK_LAYER_GROUP_NONE, N_("Degree format:"), VIK_LAYER_WIDGET_COMBOBOX, params_degree_formats, NULL, NULL, NULL, NULL, NULL },
@@ -86,9 +86,9 @@ static VikLayerParam general_prefs[] = {
 
 /* External/Export Options */
 
-static char * params_kml_export_units[] = {"Metric", "Statute", "Nautical", NULL};
-static char * params_gpx_export_trk_sort[] = {N_("Alphabetical"), N_("Time"), N_("Creation"), NULL };
-static char * params_gpx_export_wpt_symbols[] = {N_("Title Case"), N_("Lowercase"), NULL};
+static char * params_kml_export_units[] = {(char *) "Metric", (char *) "Statute", (char *) "Nautical", NULL};
+static char * params_gpx_export_trk_sort[] = {(char *) N_("Alphabetical"), (char *) N_("Time"), (char *) N_("Creation"), NULL };
+static char * params_gpx_export_wpt_symbols[] = {(char *) N_("Title Case"), (char *) N_("Lowercase"), NULL};
 
 static VikLayerParam io_prefs[] = {
   { VIK_LAYER_NUM_TYPES, VIKING_PREFERENCES_IO_NAMESPACE "kml_export_units", VIK_LAYER_PARAM_UINT, VIK_LAYER_GROUP_NONE, N_("KML File Export Units:"), VIK_LAYER_WIDGET_COMBOBOX, params_kml_export_units, NULL, NULL, NULL, NULL, NULL },
@@ -108,7 +108,7 @@ static VikLayerParam io_prefs_external_gpx[] = {
   { VIK_LAYER_NUM_TYPES, VIKING_PREFERENCES_IO_NAMESPACE "external_gpx_2", VIK_LAYER_PARAM_STRING, VIK_LAYER_GROUP_NONE, N_("External GPX Program 2:"), VIK_LAYER_WIDGET_FILEENTRY, NULL, NULL, NULL, NULL, NULL, NULL },
 };
 
-static char * params_vik_fileref[] = {N_("Absolute"), N_("Relative"), NULL};
+static char * params_vik_fileref[] = {(char *) N_("Absolute"), (char *) N_("Relative"), NULL};
 static VikLayerParamScale params_recent_files[] = { {-1, 25, 1, 0} };
 
 static VikLayerParam prefs_advanced[] = {
@@ -120,7 +120,7 @@ static VikLayerParam prefs_advanced[] = {
     N_("Only applies to new windows or on application restart. -1 means all available files."), NULL, NULL, NULL },
 };
 
-static char * params_startup_methods[] = {N_("Home Location"), N_("Last Location"), N_("Specified File"), N_("Auto Location"), NULL};
+static char * params_startup_methods[] = {(char *) N_("Home Location"), (char *) N_("Last Location"), (char *) N_("Specified File"), (char *) N_("Auto Location"), NULL};
 
 static VikLayerParam startup_prefs[] = {
   { VIK_LAYER_NUM_TYPES, VIKING_PREFERENCES_STARTUP_NAMESPACE "restore_window_state", VIK_LAYER_PARAM_BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Restore Window Setup:"), VIK_LAYER_WIDGET_CHECKBUTTON, NULL, NULL,
@@ -165,7 +165,7 @@ bool a_vik_very_first_run ()
 
 void a_vik_preferences_init ()
 {
-  fprintf(stderr, "DEBUG: VIKING VERSION as number: %d\n", viking_version_to_number (VIKING_VERSION) );
+  fprintf(stderr, "DEBUG: VIKING VERSION as number: %d\n", viking_version_to_number ((char *) VIKING_VERSION) );
 
   // Defaults for the options are setup here
   a_preferences_register_group ( VIKING_PREFERENCES_GROUP_KEY, _("General") );

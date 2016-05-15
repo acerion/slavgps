@@ -231,19 +231,19 @@ static void datasource_gps_get_process_options ( void * user_data, ProcessOption
   device = datasource_gps_get_protocol ( user_data );
 
   if ( datasource_gps_get_do_tracks ( user_data ) )
-    tracks = "-t";
+    tracks = (char *) "-t";
   else
-    tracks = "";
+    tracks = (char *) "";
 
   if ( datasource_gps_get_do_routes ( user_data ) )
-    routes = "-r";
+    routes = (char *) "-r";
   else
-    routes = "";
+    routes = (char *) "";
 
   if ( datasource_gps_get_do_waypoints ( user_data ) )
-    waypoints = "-w";
+    waypoints = (char *) "-w";
   else
-    waypoints = "";
+    waypoints = (char *) "";
 
   po->babelargs = g_strdup_printf("-D 9 %s %s %s -i %s", tracks, routes, waypoints, device);
   /* device points to static content => no free */
@@ -290,10 +290,10 @@ static void datasource_gps_off ( void * user_data, char **babelargs, char **file
   last_active = gtk_combo_box_get_active(GTK_COMBO_BOX(w->proto_b));
   device = ((BabelDevice*)g_list_nth_data(a_babel_device_list, last_active))->name;
   if (!strcmp(device, "garmin")) {
-    device = "garmin,power_off";
+    device = (char *) "garmin,power_off";
   }
   else if (!strcmp(device, "navilink")) {
-    device = "navilink,power_off";
+    device = (char *) "navilink,power_off";
   }
   else {
     return;

@@ -390,7 +390,7 @@ static void latest_version_thread ( GtkWindow *window )
 	char *text = g_mapped_file_get_contents ( mf );
 
 	int latest_version = viking_version_to_number ( text );
-	int my_version = viking_version_to_number ( VIKING_VERSION );
+	int my_version = viking_version_to_number ( (char *) VIKING_VERSION );
 
 	fprintf(stderr, "DEBUG: The lastest version is: %s\n", text );
 
