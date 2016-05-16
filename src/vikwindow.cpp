@@ -226,14 +226,14 @@ struct _VikWindow {
 
 	/* Store at this level for highlighted selection drawing since it applies to the viewport and the layers panel */
 	/* Only one of these items can be selected at the same time */
-	void * selected_vtl; /* notionally VikTrwLayer */
+	VikTrwLayer * selected_vtl;
 	std::unordered_map<sg_uid_t, Track*> * selected_tracks;
 	void * selected_track; /* notionally Track */
 	std::unordered_map<sg_uid_t, Waypoint *> * selected_waypoints;
 	void * selected_waypoint; /* notionally Waypoint */
 	/* only use for individual track or waypoint */
 	/* For track(s) & waypoint(s) it is the layer they are in - this helps refering to the individual item easier */
-	void * containing_vtl; /* notionally VikTrwLayer */
+	VikTrwLayer * containing_vtl;
 };
 
 enum {
@@ -2163,10 +2163,12 @@ static void click_layer_selected(VikLayer *vl, clicker *ck)
 {
 	/* Do nothing when function call returns true; */
 	/* i.e. stop on first found item */
-	if (ck->cont)
-		if (vl->visible)
-			if (vik_layer_get_interface(vl->type)->select_click)
-				ck->cont = !vik_layer_get_interface(vl->type)->select_click(vl, ck->event, ck->viewport, ck->tool_edit);
+	if (ck->cont) {
+		if (vl->visible) {
+			Layer * l = (Layer *) vl->layer;
+			ck->cont = !l->select_click(ck->event, ck->viewport, ck->tool_edit);
+		}
+	}
 }
 
 #ifdef WINDOWS
@@ -2240,9 +2242,10 @@ static VikLayerToolFuncStatus selecttool_move(VikLayer *vl, GdkEventMotion *even
 {
 	if (t->vw->select_move) {
 		// Don't care about vl here
-		if (t->vtl)
-			if (vik_layer_get_interface(VIK_LAYER_TRW)->select_move)
-				vik_layer_get_interface(VIK_LAYER_TRW)->select_move(vl, event, t->viewport, t);
+		if (t->vtl) {
+			Layer * l = (Layer *) vl->layer;
+			l->select_move(event, t->viewport, t);
+		}
 	}
 	else
 		// Optional Panning
@@ -2256,9 +2259,10 @@ static VikLayerToolFuncStatus selecttool_release(VikLayer *vl, GdkEventButton *e
 {
 	if (t->vw->select_move) {
 		// Don't care about vl here
-		if (t->vtl)
-			if (vik_layer_get_interface(VIK_LAYER_TRW)->select_release)
-				vik_layer_get_interface(VIK_LAYER_TRW)->select_release((VikLayer*)t->vtl, event, t->viewport, t);
+		if (t->vtl) {
+			Layer * l = (Layer *) ((VikLayer *) t->vtl)->layer;
+			l->select_release(event, t->viewport, t);
+		}
 	}
 
 	if (event->button == 1 && (event->state & VIK_MOVE_MODIFIER))
@@ -4805,7 +4809,7 @@ void * vik_window_get_selected_trw_layer(VikWindow *vw)
 	return vw->selected_vtl;
 }
 
-void vik_window_set_selected_trw_layer(VikWindow *vw, void * vtl)
+void vik_window_set_selected_trw_layer(VikWindow *vw, VikTrwLayer * vtl)
 {
 	vw->selected_vtl   = vtl;
 	vw->containing_vtl = vtl;
@@ -4823,7 +4827,7 @@ std::unordered_map<sg_uid_t, Track*> * vik_window_get_selected_tracks(VikWindow 
 	return vw->selected_tracks;
 }
 
-void vik_window_set_selected_tracks(VikWindow *vw, std::unordered_map<sg_uid_t, Track *> * tracks, void * vtl)
+void vik_window_set_selected_tracks(VikWindow *vw, std::unordered_map<sg_uid_t, Track *> * tracks, VikTrwLayer * vtl)
 {
 	vw->selected_tracks = tracks;
 	vw->containing_vtl  = vtl;
@@ -4841,7 +4845,7 @@ void * vik_window_get_selected_track(VikWindow *vw)
 	return vw->selected_track;
 }
 
-void vik_window_set_selected_track(VikWindow *vw, void ** vt, void * vtl)
+void vik_window_set_selected_track(VikWindow *vw, void ** vt, VikTrwLayer * vtl)
 {
 	vw->selected_track = vt;
 	vw->containing_vtl = vtl;
@@ -4859,7 +4863,7 @@ std::unordered_map<sg_uid_t, Waypoint *> * vik_window_get_selected_waypoints(Vik
 	return vw->selected_waypoints;
 }
 
-void vik_window_set_selected_waypoints(VikWindow *vw, std::unordered_map<sg_uid_t, Waypoint *> * waypoints, void * vtl)
+void vik_window_set_selected_waypoints(VikWindow *vw, std::unordered_map<sg_uid_t, Waypoint *> * waypoints, VikTrwLayer * vtl)
 {
 	vw->selected_waypoints = waypoints;
 	vw->containing_vtl     = vtl;
@@ -4875,7 +4879,7 @@ void * vik_window_get_selected_waypoint(VikWindow *vw)
 	return vw->selected_waypoint;
 }
 
-void vik_window_set_selected_waypoint(VikWindow *vw, void ** vwp, void * vtl)
+void vik_window_set_selected_waypoint(VikWindow *vw, void ** vwp, VikTrwLayer * vtl)
 {
 	vw->selected_waypoint = vwp;
 	vw->containing_vtl    = vtl;

@@ -568,7 +568,7 @@ static const char* trw_layer_sublayer_rename_request ( VikTrwLayer *l, const cha
 static bool trw_layer_sublayer_toggle_visible ( VikTrwLayer *l, int subtype, void * sublayer );
 //static const char* trw_layer_layer_tooltip ( VikTrwLayer *vtl );
 //static const char* trw_layer_sublayer_tooltip ( VikTrwLayer *l, int subtype, void * sublayer );
-static bool trw_layer_selected ( VikTrwLayer *l, int subtype, void * sublayer, int type, void * vlp );
+//static bool trw_layer_selected ( VikTrwLayer *l, int subtype, void * sublayer, int type, void * vlp );
 static void trw_layer_marshall ( VikTrwLayer *vtl, uint8_t **data, int *len );
 static VikTrwLayer *trw_layer_unmarshall ( uint8_t *data, int len, VikViewport *vvp );
 static bool trw_layer_set_param ( VikTrwLayer *vtl, uint16_t id, VikLayerParamData data, VikViewport *vp, bool is_file_operation );
@@ -580,9 +580,9 @@ static void trw_layer_copy_item ( VikTrwLayer *vtl, int subtype, void * sublayer
 static bool trw_layer_paste_item ( VikTrwLayer *vtl, int subtype, uint8_t *item, size_t len );
 static void trw_layer_free_copied_item ( int subtype, void * item );
 static void trw_layer_drag_drop_request ( VikTrwLayer *vtl_src, VikTrwLayer *vtl_dest, GtkTreeIter *src_item_iter, GtkTreePath *dest_path );
-static bool trw_layer_select_click ( VikTrwLayer *vtl, GdkEventButton *event, Viewport * viewport, tool_ed_t *t );
-static bool trw_layer_select_move ( VikTrwLayer *vtl, GdkEventMotion *event, Viewport * viewport, tool_ed_t *t );
-static bool trw_layer_select_release ( VikTrwLayer *vtl, GdkEventButton *event, Viewport * viewport, tool_ed_t *t );
+//static bool trw_layer_select_click ( VikTrwLayer *vtl, GdkEventButton *event, Viewport * viewport, tool_ed_t *t );
+//static bool trw_layer_select_move ( VikTrwLayer *vtl, GdkEventMotion *event, Viewport * viewport, tool_ed_t *t );
+//static bool trw_layer_select_release ( VikTrwLayer *vtl, GdkEventButton *event, Viewport * viewport, tool_ed_t *t );
 //static bool trw_layer_show_selected_viewport_menu ( VikTrwLayer *vtl, GdkEventButton *event, Viewport * viewport );
 /* End Layer Interface function definitions */
 
@@ -622,7 +622,7 @@ VikLayerInterface vik_trw_layer_interface = {
   (VikLayerFuncSublayerToggleVisible)   trw_layer_sublayer_toggle_visible,
   (VikLayerFuncSublayerTooltip)         NULL,
   (VikLayerFuncLayerTooltip)            NULL,
-  (VikLayerFuncLayerSelected)           trw_layer_selected,
+  (VikLayerFuncLayerSelected)           NULL,
 
   (VikLayerFuncMarshall)                trw_layer_marshall,
   (VikLayerFuncUnmarshall)              trw_layer_unmarshall,
@@ -642,9 +642,9 @@ VikLayerInterface vik_trw_layer_interface = {
 
   (VikLayerFuncDragDropRequest)         trw_layer_drag_drop_request,
 
-  (VikLayerFuncSelectClick)             trw_layer_select_click,
-  (VikLayerFuncSelectMove)              trw_layer_select_move,
-  (VikLayerFuncSelectRelease)           trw_layer_select_release,
+  (VikLayerFuncSelectClick)             NULL,
+  (VikLayerFuncSelectMove)              NULL,
+  (VikLayerFuncSelectRelease)           NULL,
   (VikLayerFuncSelectedViewportMenu)    NULL,
 };
 
@@ -2311,21 +2311,21 @@ void LayerTRW::set_statusbar_msg_info_wpt(Waypoint * wp)
 /**
  * General layer selection function, find out which bit is selected and take appropriate action
  */
-static bool trw_layer_selected ( VikTrwLayer *l, int subtype, void * sublayer, int type, void * vlp )
+bool LayerTRW::selected(int subtype, void * sublayer, int type, void * vlp)
 {
   // Reset
-  l->trw->current_wp    = NULL;
-  l->trw->current_wp_uid = 0;
-  trw_layer_cancel_current_tp ( l, false );
+  this->current_wp    = NULL;
+  this->current_wp_uid = 0;
+  trw_layer_cancel_current_tp ( (VikTrwLayer *) this->vl, false );
 
   // Clear statusbar
-  vik_statusbar_set_message ( vik_window_get_statusbar (VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(l))), VIK_STATUSBAR_INFO, "" );
+  vik_statusbar_set_message ( vik_window_get_statusbar (VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(this->vl))), VIK_STATUSBAR_INFO, "" );
 
   switch ( type )
     {
     case VIK_TREEVIEW_TYPE_LAYER:
       {
-	vik_window_set_selected_trw_layer ( (VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(l), l );
+	vik_window_set_selected_trw_layer ( (VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(this->vl), (VikTrwLayer *) this->vl );
 	/* Mark for redraw */
 	return true;
       }
@@ -2337,7 +2337,7 @@ static bool trw_layer_selected ( VikTrwLayer *l, int subtype, void * sublayer, i
 	  {
 	  case VIK_TRW_LAYER_SUBLAYER_TRACKS:
 	    {
-	      vik_window_set_selected_tracks ( (VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(l), &l->trw->tracks, l );
+	      vik_window_set_selected_tracks ( (VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(this->vl), &this->tracks, (VikTrwLayer *) this->vl );
 	      /* Mark for redraw */
 	      return true;
 	    }
@@ -2345,15 +2345,15 @@ static bool trw_layer_selected ( VikTrwLayer *l, int subtype, void * sublayer, i
 	  case VIK_TRW_LAYER_SUBLAYER_TRACK:
 	    {
 	      sg_uid_t uid = (sg_uid_t) ((long) sublayer);
-	      Track * trk = l->trw->tracks.at(uid);
-	      vik_window_set_selected_track ( (VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(l), (void **) trk, l );
+	      Track * trk = this->tracks.at(uid);
+	      vik_window_set_selected_track ( (VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(this->vl), (void **) trk, (VikTrwLayer *) this->vl );
 	      /* Mark for redraw */
 	      return true;
 	    }
 	    break;
 	  case VIK_TRW_LAYER_SUBLAYER_ROUTES:
 	    {
-	      vik_window_set_selected_tracks ( (VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(l), &l->trw->routes, l );
+	      vik_window_set_selected_tracks ( (VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(this->vl), &this->routes, (VikTrwLayer *) this->vl );
 	      /* Mark for redraw */
 	      return true;
 	    }
@@ -2361,15 +2361,15 @@ static bool trw_layer_selected ( VikTrwLayer *l, int subtype, void * sublayer, i
 	  case VIK_TRW_LAYER_SUBLAYER_ROUTE:
 	    {
 	      sg_uid_t uid = (sg_uid_t) ((long) sublayer);
-	      Track * trk = l->trw->routes.at(uid);
-	      vik_window_set_selected_track ( (VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(l), (void **) trk, l );
+	      Track * trk = this->routes.at(uid);
+	      vik_window_set_selected_track ( (VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(this->vl), (void **) trk, (VikTrwLayer *) this->vl );
 	      /* Mark for redraw */
 	      return true;
 	    }
 	    break;
 	  case VIK_TRW_LAYER_SUBLAYER_WAYPOINTS:
 	    {
-	      vik_window_set_selected_waypoints ( (VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(l), &l->trw->waypoints, l );
+	      vik_window_set_selected_waypoints ( (VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(this->vl), &this->waypoints, (VikTrwLayer *) this->vl );
 	      /* Mark for redraw */
 	      return true;
 	    }
@@ -2377,11 +2377,11 @@ static bool trw_layer_selected ( VikTrwLayer *l, int subtype, void * sublayer, i
 	  case VIK_TRW_LAYER_SUBLAYER_WAYPOINT:
 	    {
 	      sg_uid_t wp_uid = (sg_uid_t) ((long) sublayer);
-	      Waypoint * wp = l->trw->waypoints.at(wp_uid);
+	      Waypoint * wp = this->waypoints.at(wp_uid);
               if (wp) {
-                vik_window_set_selected_waypoint ( (VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(l), (void **) wp, l );
+                vik_window_set_selected_waypoint ( (VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(this->vl), (void **) wp, (VikTrwLayer *) this->vl );
                 // Show some waypoint info
-                l->trw->set_statusbar_msg_info_wpt(wp);
+                this->set_statusbar_msg_info_wpt(wp);
                 /* Mark for redraw */
                 return true;
               }
@@ -2389,7 +2389,7 @@ static bool trw_layer_selected ( VikTrwLayer *l, int subtype, void * sublayer, i
 	    break;
 	  default:
 	    {
-	      return vik_window_clear_highlight ( (VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(l) );
+	      return vik_window_clear_highlight ( (VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(this->vl) );
 	    }
 	    break;
 	  }
@@ -2398,7 +2398,7 @@ static bool trw_layer_selected ( VikTrwLayer *l, int subtype, void * sublayer, i
       break;
 
     default:
-      return vik_window_clear_highlight ( (VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(l) );
+      return vik_window_clear_highlight ( (VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(this->vl) );
       break;
     }
 }
@@ -8163,7 +8163,7 @@ static void marker_moveto ( tool_ed_t *t, int x, int y );
 static void marker_end_move ( tool_ed_t *t );
 //
 
-static bool trw_layer_select_move ( VikTrwLayer *vtl, GdkEventMotion *event, Viewport * viewport, tool_ed_t* t )
+bool LayerTRW::select_move(GdkEventMotion * event, Viewport * viewport, tool_ed_t * t)
 {
   if ( t->holding ) {
     VikCoord new_coord;
@@ -8176,7 +8176,7 @@ static bool trw_layer_select_move ( VikTrwLayer *vtl, GdkEventMotion *event, Vie
     // snap to TP
     if ( event->state & GDK_CONTROL_MASK )
     {
-      Trackpoint * tp = vtl->trw->closest_tp_in_five_pixel_interval(viewport, event->x, event->y);
+      Trackpoint * tp = this->closest_tp_in_five_pixel_interval(viewport, event->x, event->y);
       if ( tp )
         new_coord = tp->coord;
     }
@@ -8184,7 +8184,7 @@ static bool trw_layer_select_move ( VikTrwLayer *vtl, GdkEventMotion *event, Vie
     // snap to WP
     if ( event->state & GDK_SHIFT_MASK )
     {
-      Waypoint * wp = vtl->trw->closest_wp_in_five_pixel_interval(viewport, event->x, event->y);
+      Waypoint * wp = this->closest_wp_in_five_pixel_interval(viewport, event->x, event->y);
       if ( wp )
         new_coord = wp->coord;
     }
@@ -8199,7 +8199,7 @@ static bool trw_layer_select_move ( VikTrwLayer *vtl, GdkEventMotion *event, Vie
   return false;
 }
 
-static bool trw_layer_select_release ( VikTrwLayer *vtl, GdkEventButton *event, Viewport * viewport, tool_ed_t* t )
+bool LayerTRW::select_release(GdkEventButton * event, Viewport * viewport, tool_ed_t * t)
 {
   if ( t->holding && event->button == 1 )
   {
@@ -8214,7 +8214,7 @@ static bool trw_layer_select_release ( VikTrwLayer *vtl, GdkEventButton *event, 
     // snap to TP
     if ( event->state & GDK_CONTROL_MASK )
     {
-      Trackpoint * tp = vtl->trw->closest_tp_in_five_pixel_interval(viewport, event->x, event->y);
+      Trackpoint * tp = this->closest_tp_in_five_pixel_interval(viewport, event->x, event->y);
       if ( tp )
         new_coord = tp->coord;
     }
@@ -8222,7 +8222,7 @@ static bool trw_layer_select_release ( VikTrwLayer *vtl, GdkEventButton *event, 
     // snap to WP
     if ( event->state & GDK_SHIFT_MASK )
     {
-      Waypoint * wp = vtl->trw->closest_wp_in_five_pixel_interval(viewport, event->x, event->y);
+      Waypoint * wp = this->closest_wp_in_five_pixel_interval(viewport, event->x, event->y);
       if ( wp )
         new_coord = wp->coord;
     }
@@ -8232,27 +8232,27 @@ static bool trw_layer_select_release ( VikTrwLayer *vtl, GdkEventButton *event, 
     // Determine if working on a waypoint or a trackpoint
     if ( t->is_waypoint ) {
       // Update waypoint position
-      vtl->trw->current_wp->coord = new_coord;
-      vtl->trw->calculate_bounds_waypoints();
+      this->current_wp->coord = new_coord;
+      this->calculate_bounds_waypoints();
       // Reset waypoint pointer
-      vtl->trw->current_wp    = NULL;
-      vtl->trw->current_wp_uid = 0;
+      this->current_wp    = NULL;
+      this->current_wp_uid = 0;
     }
     else {
-      if ( vtl->trw->current_tpl ) {
-        ((Trackpoint *) vtl->trw->current_tpl->data)->coord = new_coord;
+      if ( this->current_tpl ) {
+        ((Trackpoint *) this->current_tpl->data)->coord = new_coord;
 
-        if ( vtl->trw->current_tp_track )
-          vtl->trw->current_tp_track->calculate_bounds();
+        if ( this->current_tp_track )
+          this->current_tp_track->calculate_bounds();
 
-        if ( vtl->trw->tpwin )
-          if ( vtl->trw->current_tp_track )
-            vtl->trw->my_tpwin_set_tp();
+        if ( this->tpwin )
+          if ( this->current_tp_track )
+            this->my_tpwin_set_tp();
         // NB don't reset the selected trackpoint, thus ensuring it's still in the tpwin
       }
     }
 
-    vik_layer_emit_update ( VIK_LAYER(vtl) );
+    vik_layer_emit_update ( VIK_LAYER(this->vl) );
     return true;
   }
   return false;
@@ -8267,17 +8267,17 @@ static bool trw_layer_select_release ( VikTrwLayer *vtl, GdkEventButton *event, 
   The item found is automatically selected
   This is a tool like feature but routed via the layer interface, since it's instigated by a 'global' layer tool in vikwindow.c
  */
-static bool trw_layer_select_click(VikTrwLayer * vtl, GdkEventButton * event, Viewport * viewport, tool_ed_t * tet)
+bool LayerTRW::select_click(GdkEventButton * event, Viewport * viewport, tool_ed_t * tet)
 {
 	if (event->button != 1) {
 		return false;
 	}
 
-	if (!vtl || vtl->vl.type != VIK_LAYER_TRW) {
+	if (this->vl->type != VIK_LAYER_TRW) {
 		return false;
 	}
 
-	if (!vtl->trw->tracks_visible && !vtl->trw->waypoints_visible && !vtl->trw->routes_visible) {
+	if (!this->tracks_visible && !this->waypoints_visible && !this->routes_visible) {
 		return false;
 	}
 
@@ -8286,47 +8286,47 @@ static bool trw_layer_select_click(VikTrwLayer * vtl, GdkEventButton * event, Vi
 
 	// Go for waypoints first as these often will be near a track, but it's likely the wp is wanted rather then the track
 
-	if (vtl->trw->waypoints_visible && BBOX_INTERSECT (vtl->waypoints_bbox, bbox)) {
+	if (this->waypoints_visible && BBOX_INTERSECT (((VikTrwLayer *) this->vl)->waypoints_bbox, bbox)) {
 		WPSearchParams wp_params;
 		wp_params.viewport = viewport;
 		wp_params.x = event->x;
 		wp_params.y = event->y;
-		wp_params.draw_images = vtl->drawimages;
+		wp_params.draw_images = ((VikTrwLayer *) this->vl)->drawimages;
 		wp_params.closest_wp_uid = 0;
 		wp_params.closest_wp = NULL;
 
-		LayerTRW::waypoint_search_closest_tp(vtl->trw->waypoints, &wp_params);
+		LayerTRW::waypoint_search_closest_tp(this->waypoints, &wp_params);
 
 		if (wp_params.closest_wp) {
 
 			// Select
-			vik_treeview_select_iter(VIK_LAYER(vtl)->vt, vtl->trw->waypoints_iters.at(wp_params.closest_wp_uid), true);
+			vik_treeview_select_iter(this->vl->vt, this->waypoints_iters.at(wp_params.closest_wp_uid), true);
 
 			// Too easy to move it so must be holding shift to start immediately moving it
 			//   or otherwise be previously selected but not have an image (otherwise clicking within image bounds (again) moves it)
 			if (event->state & GDK_SHIFT_MASK
-			    || (vtl->trw->current_wp == wp_params.closest_wp && !vtl->trw->current_wp->image)) {
+			    || (this->current_wp == wp_params.closest_wp && !this->current_wp->image)) {
 				// Put into 'move buffer'
 				// NB vvp & vw already set in tet
-				tet->vtl = (void **) vtl;
+				tet->vtl = (void **) this->vl;
 				tet->is_waypoint = true;
 
 				marker_begin_move(tet, event->x, event->y);
 			}
 
-			vtl->trw->current_wp =     wp_params.closest_wp;
-			vtl->trw->current_wp_uid = wp_params.closest_wp_uid;
+			this->current_wp =     wp_params.closest_wp;
+			this->current_wp_uid = wp_params.closest_wp_uid;
 
 			if (event->type == GDK_2BUTTON_PRESS) {
-				if (vtl->trw->current_wp->image) {
+				if (this->current_wp->image) {
 					menu_array_sublayer values;
-					values[MA_VTL] = vtl;
-					values[MA_MISC] = vtl->trw->current_wp->image;
+					values[MA_VTL] = this->vl;
+					values[MA_MISC] = this->current_wp->image;
 					trw_layer_show_picture(values);
 				}
 			}
 
-			vik_layer_emit_update(VIK_LAYER(vtl));
+			vik_layer_emit_update(VIK_LAYER(this->vl));
 
 			return true;
 		}
@@ -8342,84 +8342,84 @@ static bool trw_layer_select_click(VikTrwLayer * vtl, GdkEventButton * event, Vi
 	tp_params.closest_tpl = NULL;
 	tp_params.bbox = bbox;
 
-	if (vtl->trw->tracks_visible) {
-		LayerTRW::track_search_closest_tp(vtl->trw->tracks, &tp_params);
+	if (this->tracks_visible) {
+		LayerTRW::track_search_closest_tp(this->tracks, &tp_params);
 
 		if (tp_params.closest_tp) {
 
 			// Always select + highlight the track
-			vik_treeview_select_iter(VIK_LAYER(vtl)->vt, vtl->trw->tracks_iters.at(tp_params.closest_track_uid), true);
+			vik_treeview_select_iter(this->vl->vt, this->tracks_iters.at(tp_params.closest_track_uid), true);
 
 			tet->is_waypoint = false;
 
 			// Select the Trackpoint
 			// Can move it immediately when control held or it's the previously selected tp
 			if (event->state & GDK_CONTROL_MASK
-			     || vtl->trw->current_tpl == tp_params.closest_tpl) {
+			     || this->current_tpl == tp_params.closest_tpl) {
 				// Put into 'move buffer'
 				// NB vvp & vw already set in tet
-				tet->vtl = (void **) vtl;
+				tet->vtl = (void **) this->vl;
 				marker_begin_move(tet, event->x, event->y);
 			}
 
-			vtl->trw->current_tpl = tp_params.closest_tpl;
-			vtl->trw->current_tp_uid = tp_params.closest_track_uid;
-			vtl->trw->current_tp_track = vtl->trw->tracks.at(tp_params.closest_track_uid);
+			this->current_tpl = tp_params.closest_tpl;
+			this->current_tp_uid = tp_params.closest_track_uid;
+			this->current_tp_track = this->tracks.at(tp_params.closest_track_uid);
 
-			vtl->trw->set_statusbar_msg_info_trkpt(tp_params.closest_tp);
+			this->set_statusbar_msg_info_trkpt(tp_params.closest_tp);
 
-			if (vtl->trw->tpwin) {
-				vtl->trw->my_tpwin_set_tp();
+			if (this->tpwin) {
+				this->my_tpwin_set_tp();
 			}
 
-			vik_layer_emit_update(VIK_LAYER(vtl));
+			vik_layer_emit_update(VIK_LAYER(this->vl));
 			return true;
 		}
 	}
 
 	// Try again for routes
-	if (vtl->trw->routes_visible) {
-		LayerTRW::track_search_closest_tp(vtl->trw->routes, &tp_params);
+	if (this->routes_visible) {
+		LayerTRW::track_search_closest_tp(this->routes, &tp_params);
 
 		if (tp_params.closest_tp)  {
 
 			// Always select + highlight the track
-			vik_treeview_select_iter(VIK_LAYER(vtl)->vt, vtl->trw->routes_iters.at(tp_params.closest_track_uid), true);
+			vik_treeview_select_iter(this->vl->vt, this->routes_iters.at(tp_params.closest_track_uid), true);
 
 			tet->is_waypoint = false;
 
 			// Select the Trackpoint
 			// Can move it immediately when control held or it's the previously selected tp
 			if (event->state & GDK_CONTROL_MASK ||
-			     vtl->trw->current_tpl == tp_params.closest_tpl) {
+			     this->current_tpl == tp_params.closest_tpl) {
 				// Put into 'move buffer'
 				// NB vvp & vw already set in tet
-				tet->vtl = (void **) vtl;
+				tet->vtl = (void **) this->vl;
 				marker_begin_move(tet, event->x, event->y);
 			}
 
-			vtl->trw->current_tpl = tp_params.closest_tpl;
-			vtl->trw->current_tp_uid = tp_params.closest_track_uid;
-			vtl->trw->current_tp_track = vtl->trw->routes.at(tp_params.closest_track_uid);
+			this->current_tpl = tp_params.closest_tpl;
+			this->current_tp_uid = tp_params.closest_track_uid;
+			this->current_tp_track = this->routes.at(tp_params.closest_track_uid);
 
-			vtl->trw->set_statusbar_msg_info_trkpt(tp_params.closest_tp);
+			this->set_statusbar_msg_info_trkpt(tp_params.closest_tp);
 
-			if (vtl->trw->tpwin) {
-				vtl->trw->my_tpwin_set_tp();
+			if (this->tpwin) {
+				this->my_tpwin_set_tp();
 			}
 
-			vik_layer_emit_update(VIK_LAYER(vtl));
+			vik_layer_emit_update(VIK_LAYER(this->vl));
 			return true;
 		}
 	}
 
 	/* these aren't the droids you're looking for */
-	vtl->trw->current_wp    = NULL;
-	vtl->trw->current_wp_uid = 0;
-	trw_layer_cancel_current_tp(vtl, false);
+	this->current_wp    = NULL;
+	this->current_wp_uid = 0;
+	trw_layer_cancel_current_tp((VikTrwLayer *) this->vl, false);
 
 	// Blank info
-	vik_statusbar_set_message(vik_window_get_statusbar(VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(vtl))), VIK_STATUSBAR_INFO, "");
+	vik_statusbar_set_message(vik_window_get_statusbar(VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(this->vl))), VIK_STATUSBAR_INFO, "");
 
 	return false;
 }

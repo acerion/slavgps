@@ -106,7 +106,15 @@ namespace SlavGPS {
 		/* Layer interface methods. */
 		char const * tooltip();
 		char const * sublayer_tooltip(int subtype, void * sublayer);
+
+		bool selected(int subtype, void * sublayer, int type, void * vlp);
+
 		bool show_selected_viewport_menu(GdkEventButton * event, Viewport * viewport);
+
+
+		bool select_click(GdkEventButton * event, Viewport * viewport, tool_ed_t * tet);
+		bool select_move(GdkEventMotion * event, Viewport * viewport, tool_ed_t * t);
+		bool select_release(GdkEventButton * event, Viewport * viewport, tool_ed_t * t);
 
 
 

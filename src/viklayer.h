@@ -350,7 +350,14 @@ namespace SlavGPS {
 		/* Layer interface methods. */
 		virtual char const * tooltip();
 		virtual char const * sublayer_tooltip(int subtype, void * sublayer);
+
+		virtual bool selected(int subtype, void * sublayer, int type, void * vlp);
+
 		virtual bool show_selected_viewport_menu(GdkEventButton * event, Viewport * viewport);
+
+		virtual bool select_click(GdkEventButton * event, Viewport * viewport, tool_ed_t * tet);
+		virtual bool select_move(GdkEventMotion * event, Viewport * viewport, tool_ed_t * t);
+		virtual bool select_release(GdkEventButton * event, Viewport * viewport, tool_ed_t * t);
 
 
 		VikLayer * vl;

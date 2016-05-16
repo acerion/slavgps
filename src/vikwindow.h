@@ -42,6 +42,9 @@ using namespace SlavGPS;
 extern "C" {
 #endif
 
+/* Forward declaration. */
+struct _VikTrwLayer;
+
 
 #define VIK_WINDOW_TYPE            (vik_window_get_type ())
 #define VIK_WINDOW(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_WINDOW_TYPE, VikWindow))
@@ -83,15 +86,15 @@ void vik_window_set_redraw_trigger(struct _VikLayer *vl);
 void vik_window_enable_layer_tool ( VikWindow *vw, int layer_id, int tool_id );
 
 void * vik_window_get_selected_trw_layer ( VikWindow *vw ); /* return type VikTrwLayer */
-void vik_window_set_selected_trw_layer ( VikWindow *vw, void * vtl ); /* input VikTrwLayer */
+void vik_window_set_selected_trw_layer ( VikWindow *vw, struct _VikTrwLayer * vtl );
 std::unordered_map<sg_uid_t, Track *> * vik_window_get_selected_tracks(VikWindow * vw);
-void vik_window_set_selected_tracks ( VikWindow *vw, std::unordered_map<sg_uid_t, Track *> * tracks, void * vtl ); /* void * is a VikTrwLayer */
+void vik_window_set_selected_tracks ( VikWindow *vw, std::unordered_map<sg_uid_t, Track *> * tracks, struct _VikTrwLayer * vtl );
 void * vik_window_get_selected_track ( VikWindow *vw ); /* return type Track */
-void vik_window_set_selected_track ( VikWindow *vw, void **vt, void * vtl ); /* void * is a VikTrwLayer */
+void vik_window_set_selected_track ( VikWindow *vw, void **vt, struct _VikTrwLayer * vtl );
 std::unordered_map<sg_uid_t, Waypoint *> * vik_window_get_selected_waypoints ( VikWindow *vw );
-void vik_window_set_selected_waypoints ( VikWindow *vw, std::unordered_map<sg_uid_t, Waypoint *> * waypoints, void * vtl ); /* void * is a VikTrwLayer */
+void vik_window_set_selected_waypoints ( VikWindow *vw, std::unordered_map<sg_uid_t, Waypoint *> * waypoints, struct _VikTrwLayer * vtl );
 void * vik_window_get_selected_waypoint ( VikWindow *vw ); /* return type VikWaypoint */
-void vik_window_set_selected_waypoint ( VikWindow *vw, void **vwp, void * vtl ); /* input VikWaypoint, VikTrwLayer */
+void vik_window_set_selected_waypoint ( VikWindow *vw, void **vwp, struct _VikTrwLayer * vtl ); /* input VikWaypoint */
 /* Return the VikTrwLayer of the selected track(s) or waypoint(s) are in (maybe NULL) */
 void * vik_window_get_containing_trw_layer ( VikWindow *vw );
 /* return indicates if a redraw is necessary */

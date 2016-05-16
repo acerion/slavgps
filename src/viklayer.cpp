@@ -457,12 +457,15 @@ bool vik_layer_sublayer_toggle_visible ( VikLayer *l, int subtype, void * sublay
   return true; /* if unknown, will always be visible */
 }
 
-bool vik_layer_selected ( VikLayer *l, int subtype, void * sublayer, int type, void * vlp )
+bool vik_layer_selected(VikLayer * l, int subtype, void * sublayer, int type, void * vlp)
 {
-  if ( vik_layer_interfaces[l->type]->layer_selected )
-    return vik_layer_interfaces[l->type]->layer_selected ( l, subtype, sublayer, type, vlp );
-  /* Since no 'layer_selected' function explicitly turn off here */
-  return vik_window_clear_highlight ( (VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(l) );
+	Layer * layer = (Layer *) l->layer;
+	bool result = layer->selected(subtype, sublayer, type, vlp);
+	if (result) {
+		return result;
+	} else {
+		return vik_window_clear_highlight((VikWindow *) VIK_GTK_WINDOW_FROM_LAYER(l));
+	}
 }
 
 void vik_layer_realize ( VikLayer *l, VikTreeview *vt, GtkTreeIter *layer_iter )
@@ -707,6 +710,22 @@ Layer::Layer(VikLayer * vl_)
 	}
 }
 
+bool Layer::select_click(GdkEventButton * event, Viewport * viewport, tool_ed_t * tet)
+{
+	return false;
+}
+
+bool Layer::select_move(GdkEventMotion * event, Viewport * viewport, tool_ed_t * t)
+{
+	return false;
+}
+
+
+bool Layer::select_release(GdkEventButton * event, Viewport * viewport, tool_ed_t * t)
+{
+	return false;
+}
+
 
 
 char const * Layer::tooltip()
@@ -723,6 +742,11 @@ char const * Layer::sublayer_tooltip(int subtype, void * sublayer)
       static char tmp_buf[32];
       snprintf(tmp_buf, sizeof(tmp_buf), _("Layer::sublayer_tooltip"));
       return tmp_buf;
+}
+
+bool Layer::selected(int subtype, void * sublayer, int type, void * vlp)
+{
+	return false;
 }
 
 
