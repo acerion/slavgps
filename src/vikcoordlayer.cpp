@@ -33,14 +33,14 @@
 #include "icons/icons.h"
 
 static VikCoordLayer *coord_layer_new ( VikViewport *vp );
-static void coord_layer_draw ( VikCoordLayer *vcl, VikViewport *vp );
+//static void coord_layer_draw ( VikCoordLayer *vcl, VikViewport *vp );
 static void coord_layer_free ( VikCoordLayer *vcl );
 static VikCoordLayer *coord_layer_create ( VikViewport *vp );
-static void coord_layer_marshall( VikCoordLayer *vcl, uint8_t **data, int *len );
+//static void coord_layer_marshall( VikCoordLayer *vcl, uint8_t **data, int *len );
 static VikCoordLayer *coord_layer_unmarshall( uint8_t *data, int len, VikViewport *vvp );
 static bool coord_layer_set_param ( VikCoordLayer *vcl, uint16_t id, VikLayerParamData data, VikViewport *vp, bool is_file_operation );
 static VikLayerParamData coord_layer_get_param ( VikCoordLayer *vcl, uint16_t id, bool is_file_operation );
-static void coord_layer_post_read ( VikLayer *vl, VikViewport *vp, bool from_file );
+//static void coord_layer_post_read ( VikLayer *vl, VikViewport *vp, bool from_file );
 static void coord_layer_update_gc ( VikCoordLayer *vcl, VikViewport *vp );
 
 static VikLayerParamScale param_scales[] = {
@@ -81,11 +81,11 @@ VikLayerInterface vik_coord_layer_interface = {
 
   (VikLayerFuncCreate)                  coord_layer_create,
   (VikLayerFuncRealize)                 NULL,
-  (VikLayerFuncPostRead)                coord_layer_post_read,
+  (VikLayerFuncPostRead)                NULL,
   (VikLayerFuncFree)                    coord_layer_free,
 
   (VikLayerFuncProperties)              NULL,
-  (VikLayerFuncDraw)                    coord_layer_draw,
+  (VikLayerFuncDraw)                    NULL,
   (VikLayerFuncChangeCoordMode)         NULL,
 
   (VikLayerFuncGetTimestamp)            NULL,
@@ -102,7 +102,7 @@ VikLayerInterface vik_coord_layer_interface = {
   (VikLayerFuncLayerTooltip)            NULL,
   (VikLayerFuncLayerSelected)           NULL,
 
-  (VikLayerFuncMarshall)		coord_layer_marshall,
+  (VikLayerFuncMarshall)		NULL,
   (VikLayerFuncUnmarshall)		coord_layer_unmarshall,
 
   (VikLayerFuncSetParam)                coord_layer_set_param,
@@ -157,8 +157,9 @@ GType vik_coord_layer_get_type ()
   return vcl_type;
 }
 
-static void coord_layer_marshall( VikCoordLayer *vcl, uint8_t **data, int *len )
+void LayerCoord::marshall(uint8_t **data, int *len )
 {
+	VikCoordLayer *vcl = (VikCoordLayer *) this->vl;
   vik_layer_marshall_params ( VIK_LAYER(vcl), data, len );
 }
 
@@ -196,13 +197,13 @@ static VikLayerParamData coord_layer_get_param ( VikCoordLayer *vcl, uint16_t id
   return rv;
 }
 
-static void coord_layer_post_read ( VikLayer *vl, VikViewport *vp, bool from_file )
+void LayerCoord::post_read(Viewport * viewport, bool from_file)
 {
-  VikCoordLayer *vcl = VIK_COORD_LAYER(vl);
+  VikCoordLayer * vcl = VIK_COORD_LAYER(this->vl);
   if ( vcl->gc )
     g_object_unref ( G_OBJECT(vcl->gc) );
 
-  vcl->gc = vp->port.new_gc_from_color(&(vcl->color), vcl->line_thickness);
+  vcl->gc = viewport->new_gc_from_color(&(vcl->color), vcl->line_thickness);
 }
 
 static VikCoordLayer *coord_layer_new ( VikViewport *vvp )
@@ -219,31 +220,32 @@ static VikCoordLayer *coord_layer_new ( VikViewport *vvp )
   return vcl;
 }
 
-static void coord_layer_draw ( VikCoordLayer *vcl, VikViewport *vp )
+void LayerCoord::draw(Viewport * viewport)
 {
+  VikCoordLayer * vcl = (VikCoordLayer *) this->vl;
   if ( !vcl->gc ) {
     return;
   }
 
-  if ( vp->port.get_coord_mode() != VIK_COORD_UTM )
+  if ( viewport->get_coord_mode() != VIK_COORD_UTM )
   {
     VikCoord left, right, left2, right2;
     double l, r, i, j;
     int x1, y1, x2, y2, smod = 1, mmod = 1;
     bool mins = false, secs = false;
-    GdkGC *dgc = vp->port.new_gc_from_color(&(vcl->color), vcl->line_thickness);
-    GdkGC *mgc = vp->port.new_gc_from_color(&(vcl->color), MAX(vcl->line_thickness/2, 1));
-    GdkGC *sgc = vp->port.new_gc_from_color(&(vcl->color), MAX(vcl->line_thickness/5, 1));
+    GdkGC *dgc = viewport->new_gc_from_color(&(vcl->color), vcl->line_thickness);
+    GdkGC *mgc = viewport->new_gc_from_color(&(vcl->color), MAX(vcl->line_thickness/2, 1));
+    GdkGC *sgc = viewport->new_gc_from_color(&(vcl->color), MAX(vcl->line_thickness/5, 1));
 
-    vp->port.screen_to_coord(0, 0, &left );
-    vp->port.screen_to_coord(vp->port.get_width(), 0, &right );
-    vp->port.screen_to_coord(0, vp->port.get_height(), &left2 );
-    vp->port.screen_to_coord(vp->port.get_width(), vp->port.get_height(), &right2 );
+    viewport->screen_to_coord(0, 0, &left );
+    viewport->screen_to_coord(viewport->get_width(), 0, &right );
+    viewport->screen_to_coord(0, viewport->get_height(), &left2 );
+    viewport->screen_to_coord(viewport->get_width(), viewport->get_height(), &right2 );
 
 #define CLINE(gc, c1, c2) { \
-	  vp->port.coord_to_screen((c1), &x1, &y1);  \
-	  vp->port.coord_to_screen((c2), &x2, &y2);  \
-	  vp->port.draw_line((gc), x1, y1, x2, y2); \
+	  viewport->coord_to_screen((c1), &x1, &y1);  \
+	  viewport->coord_to_screen((c2), &x2, &y2);  \
+	  viewport->draw_line((gc), x1, y1, x2, y2); \
 	}
 
     l = left.east_west;
@@ -276,7 +278,7 @@ static void coord_layer_draw ( VikCoordLayer *vcl, VikViewport *vp )
       }
     }
 
-    vp->port.screen_to_coord(0, 0, &left );
+    viewport->screen_to_coord(0, 0, &left );
     l = left2.north_south;
     r = left.north_south;
     for (i=floor(l*60); i<ceil(r*60); i+=1.0) {
@@ -305,11 +307,11 @@ static void coord_layer_draw ( VikCoordLayer *vcl, VikViewport *vp )
     return;
   }
 
-  if ( vp->port.get_coord_mode() == VIK_COORD_UTM )
+  if ( viewport->get_coord_mode() == VIK_COORD_UTM )
   {
-    const struct UTM *center = (const struct UTM *) vp->port.get_center();
-    double xmpp = vp->port.get_xmpp(), ympp = vp->port.get_ympp();
-    uint16_t width = vp->port.get_width(), height = vp->port.get_height();
+    const struct UTM *center = (const struct UTM *) viewport->get_center();
+    double xmpp = viewport->get_xmpp(), ympp = viewport->get_ympp();
+    uint16_t width = viewport->get_width(), height = viewport->get_height();
     struct LatLon ll, ll2, min, max;
     double lon;
     int x1, x2;
@@ -366,7 +368,7 @@ static void coord_layer_draw ( VikCoordLayer *vcl, VikViewport *vp )
       x1 = ( (utm.easting - center->easting) / xmpp ) + (width / 2);
       a_coords_latlon_to_utm ( &ll2, &utm );
       x2 = ( (utm.easting - center->easting) / xmpp ) + (width / 2);
-      vp->port.draw_line(vcl->gc, x1, height, x2, 0);
+      viewport->draw_line(vcl->gc, x1, height, x2, 0);
     }
 
     utm = *center;
@@ -388,7 +390,7 @@ static void coord_layer_draw ( VikCoordLayer *vcl, VikViewport *vp )
       x1 = (height / 2) - ( (utm.northing - center->northing) / ympp );
       a_coords_latlon_to_utm ( &ll2, &utm );
       x2 = (height / 2) - ( (utm.northing - center->northing) / ympp );
-      vp->port.draw_line(vcl->gc, width, x2, 0, x1);
+      viewport->draw_line(vcl->gc, width, x2, 0, x1);
     }
   }
 }

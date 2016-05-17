@@ -114,9 +114,9 @@ static double __mapzooms_y[] = { 0.0, 0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0, 32.0,
 /**************************/
 
 
-static void maps_layer_post_read (VikLayer *vl, VikViewport *vp, bool from_file);
+//static void maps_layer_post_read (VikLayer *vl, VikViewport *vp, bool from_file);
 //static const char* maps_layer_tooltip (VikMapsLayer *vml);
-static void maps_layer_marshall(VikMapsLayer *vml, uint8_t **data, int *len);
+//static void maps_layer_marshall(VikMapsLayer *vml, uint8_t **data, int *len);
 static VikMapsLayer *maps_layer_unmarshall(uint8_t *data, int len, VikViewport *vvp);
 static bool maps_layer_set_param (VikMapsLayer *vml, uint16_t id, VikLayerParamData data, VikViewport *vvp, bool is_file_operation);
 static VikLayerParamData maps_layer_get_param (VikMapsLayer *vml, uint16_t id, bool is_file_operation);
@@ -235,11 +235,11 @@ VikLayerInterface vik_maps_layer_interface = {
 
 	(VikLayerFuncCreate)                  maps_layer_new,
 	(VikLayerFuncRealize)                 NULL,
-	(VikLayerFuncPostRead)                maps_layer_post_read,
+	(VikLayerFuncPostRead)                NULL,
 	(VikLayerFuncFree)                    maps_layer_free,
 
 	(VikLayerFuncProperties)              NULL,
-	(VikLayerFuncDraw)                    maps_layer_draw,
+	(VikLayerFuncDraw)                    NULL,
 	(VikLayerFuncChangeCoordMode)         NULL,
 
 	(VikLayerFuncGetTimestamp)            NULL,
@@ -256,8 +256,8 @@ VikLayerInterface vik_maps_layer_interface = {
 	(VikLayerFuncLayerTooltip)            NULL,
 	(VikLayerFuncLayerSelected)           NULL,
 
-	(VikLayerFuncMarshall)		maps_layer_marshall,
-	(VikLayerFuncUnmarshall)		maps_layer_unmarshall,
+	(VikLayerFuncMarshall)		      NULL,
+	(VikLayerFuncUnmarshall)	      maps_layer_unmarshall,
 
 	(VikLayerFuncSetParam)                maps_layer_set_param,
 	(VikLayerFuncGetParam)                maps_layer_get_param,
@@ -909,9 +909,9 @@ static void maps_layer_free (VikMapsLayer *vml)
 #endif
 }
 
-static void maps_layer_post_read (VikLayer *vl, VikViewport *vp, bool from_file)
+void LayerMaps::post_read(Viewport * viewport, bool from_file)
 {
-	VikMapsLayer *vml = VIK_MAPS_LAYER(vl);
+	VikMapsLayer *vml = VIK_MAPS_LAYER(this->vl);
 	MapSource * map = map_sources[vml->map_index];
 
 	if (!from_file) {
@@ -919,12 +919,12 @@ static void maps_layer_post_read (VikLayer *vl, VikViewport *vp, bool from_file)
 		 * it is called in GUI context.
 		 * So, we can check if we have to inform the user about inconsistency */
 		VikViewportDrawMode vp_drawmode;
-		vp_drawmode = vp->port.get_drawmode();
+		vp_drawmode = viewport->get_drawmode();
 
 		if (map->get_drawmode() != vp_drawmode) {
-			const char *drawmode_name = vp->port.get_drawmode_name(map->get_drawmode());
+			const char *drawmode_name = viewport->get_drawmode_name(map->get_drawmode());
 			char *msg = g_strdup_printf(_("New map cannot be displayed in the current drawmode.\nSelect \"%s\" from View menu to view it."), drawmode_name);
-			a_dialog_warning_msg (VIK_GTK_WINDOW_FROM_WIDGET(vp), msg);
+			a_dialog_warning_msg (VIK_GTK_WINDOW_FROM_WIDGET((VikViewport *) viewport->vvp), msg);
 			free(msg);
 		}
 	}
@@ -941,7 +941,7 @@ static void maps_layer_post_read (VikLayer *vl, VikViewport *vp, bool from_file)
 			// That didn't work, so here's why:
 			fprintf(stderr, "WARNING: %s: %s\n", __FUNCTION__, sqlite3_errmsg (vml->mbtiles));
 
-			a_dialog_error_msg_extra (VIK_GTK_WINDOW_FROM_WIDGET(vp),
+			a_dialog_error_msg_extra (VIK_GTK_WINDOW_FROM_WIDGET((VikViewport *) viewport->vvp),
 						   _("Failed to open MBTiles file: %s"),
 						   vml->filename);
 			vml->mbtiles = NULL;
@@ -964,8 +964,9 @@ char const * LayerMaps::tooltip()
 	return vik_maps_layer_get_map_label (vml);
 }
 
-static void maps_layer_marshall(VikMapsLayer *vml, uint8_t **data, int *len)
+void LayerMaps::marshall(uint8_t **data, int *len)
 {
+	VikMapsLayer * vml = (VikMapsLayer *) this->vl;
 	vik_layer_marshall_params (VIK_LAYER(vml), data, len);
 }
 
@@ -973,7 +974,7 @@ static VikMapsLayer *maps_layer_unmarshall(uint8_t *data, int len, VikViewport *
 {
 	VikMapsLayer *rv = maps_layer_new (vvp);
 	vik_layer_unmarshall_params (VIK_LAYER(rv), data, len, vvp);
-	maps_layer_post_read (VIK_LAYER(rv), vvp, false);
+	((Layer *) VIK_LAYER(rv)->layer)->post_read(&vvp->port, false);
 	return rv;
 }
 
@@ -1548,9 +1549,9 @@ static void maps_layer_draw_section(VikMapsLayer *vml, Viewport * viewport, VikC
 	}
 }
 
-static void maps_layer_draw (VikMapsLayer *vml, VikViewport *vvp)
+void LayerMaps::draw(Viewport * viewport)
 {
-	Viewport * viewport = &vvp->port;
+	VikMapsLayer * vml = (VikMapsLayer *) this->vl;
 	if (map_sources[vml->map_index]->get_drawmode() == viewport->get_drawmode()) {
 		VikCoord ul, br;
 

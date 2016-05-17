@@ -120,8 +120,8 @@ static void clip_receive_viking ( GtkClipboard *c, GtkSelectionData *sd, void * 
     VikLayer *sel = vlp->panel_ref->get_selected();
     if ( sel && sel->type == vc->layer_type)
     {
-      if ( vik_layer_get_interface((VikLayerTypeEnum) vc->layer_type)->paste_item )
-        vik_layer_get_interface((VikLayerTypeEnum) vc->layer_type)->paste_item ( sel, vc->subtype, vc->data, vc->len);
+	    Layer * layer = (Layer *) sel->layer;
+	    layer->paste_item(vc->subtype, vc->data, vc->len);
     }
     else
       a_dialog_error_msg_extra ( VIK_GTK_WINDOW_FROM_WIDGET(GTK_WIDGET(vlp)),
@@ -406,12 +406,12 @@ void a_clipboard_copy_selected ( VikLayersPanel *vlp )
   else {
     if ( vik_treeview_item_get_type ( sel->vt, &iter ) == VIK_TREEVIEW_TYPE_SUBLAYER ) {
       type = VIK_CLIPBOARD_DATA_SUBLAYER;
-      if ( vik_layer_get_interface((VikLayerTypeEnum) layer_type)->copy_item) {
-        subtype = vik_treeview_item_get_data(sel->vt, &iter);
-        vik_layer_get_interface((VikLayerTypeEnum) layer_type)->copy_item(sel, subtype, vik_treeview_item_get_pointer(sel->vt, &iter), &data, &len );
-        // This name is used in setting the text representation of the item on the clipboard.
-        name = vik_treeview_item_get_name(sel->vt, &iter);
-      }
+      subtype = vik_treeview_item_get_data(sel->vt, &iter);
+
+      Layer * layer = (Layer *) sel->layer;
+      layer->copy_item(subtype, vik_treeview_item_get_pointer(sel->vt, &iter), &data, &len );
+      // This name is used in setting the text representation of the item on the clipboard.
+      name = vik_treeview_item_get_name(sel->vt, &iter);
     }
     else {
       int ilen;

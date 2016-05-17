@@ -68,7 +68,10 @@ namespace SlavGPS {
 
 
 		/* Layer interface methods. */
+		void post_read(Viewport * viewport, bool from_file);
+		void draw(Viewport * viewport);
 		char const * tooltip();
+		void marshall(uint8_t ** data, int * len);
 	};
 
 

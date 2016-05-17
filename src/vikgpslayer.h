@@ -100,7 +100,9 @@ namespace SlavGPS {
 
 
 		/* Layer interface methods. */
+		void draw(Viewport * viewport);
 		char const * tooltip();
+		void marshall(uint8_t ** data, int * len);
 	};
 
 

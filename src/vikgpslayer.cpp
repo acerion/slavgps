@@ -60,10 +60,10 @@ extern GList * a_babel_device_list;
 static VikGpsLayer *vik_gps_layer_create (VikViewport *vp);
 static void vik_gps_layer_realize ( VikGpsLayer *val, VikTreeview *vt, GtkTreeIter *layer_iter );
 static void vik_gps_layer_free ( VikGpsLayer *val );
-static void vik_gps_layer_draw ( VikGpsLayer *val, VikViewport *vp );
+//static void vik_gps_layer_draw ( VikGpsLayer *val, VikViewport *vp );
 static VikGpsLayer *vik_gps_layer_new ( VikViewport *vp );
 
-static void gps_layer_marshall( VikGpsLayer *val, uint8_t **data, int *len );
+//static void gps_layer_marshall( VikGpsLayer *val, uint8_t **data, int *len );
 static VikGpsLayer *gps_layer_unmarshall( uint8_t *data, int len, VikViewport *vvp );
 static bool gps_layer_set_param ( VikGpsLayer *vgl, uint16_t id, VikLayerParamData data, VikViewport *vp, bool is_file_operation );
 static VikLayerParamData gps_layer_get_param ( VikGpsLayer *vgl, uint16_t id, bool is_file_operation );
@@ -269,7 +269,7 @@ VikLayerInterface vik_gps_layer_interface = {
   (VikLayerFuncFree)                    vik_gps_layer_free,
 
   (VikLayerFuncProperties)              NULL,
-  (VikLayerFuncDraw)                    vik_gps_layer_draw,
+  (VikLayerFuncDraw)                    NULL,
   (VikLayerFuncChangeCoordMode)         gps_layer_change_coord_mode,
 
   (VikLayerFuncGetTimestamp)            NULL,
@@ -286,7 +286,7 @@ VikLayerInterface vik_gps_layer_interface = {
   (VikLayerFuncLayerTooltip)            NULL,
   (VikLayerFuncLayerSelected)           NULL,
 
-  (VikLayerFuncMarshall)		gps_layer_marshall,
+  (VikLayerFuncMarshall)		NULL,
   (VikLayerFuncUnmarshall)		gps_layer_unmarshall,
 
   (VikLayerFuncSetParam)                gps_layer_set_param,
@@ -445,8 +445,9 @@ char const * LayerGPS::tooltip()
 }
 
 /* "Copy" */
-static void gps_layer_marshall( VikGpsLayer *vgl, uint8_t **data, int *datalen )
+void LayerGPS::marshall(uint8_t **data, int *datalen )
 {
+  VikGpsLayer * vgl = (VikGpsLayer *) this->vl;
   VikLayer *child_layer;
   uint8_t *ld;
   int ll;
@@ -702,8 +703,10 @@ VikGpsLayer *vik_gps_layer_new (VikViewport *vp)
   return vgl;
 }
 
-static void vik_gps_layer_draw ( VikGpsLayer *vgl, VikViewport *vp )
+void LayerGPS::draw(Viewport * viewport)
 {
+  VikGpsLayer * vgl = (VikGpsLayer *) this->vl;
+  VikViewport * vp = (VikViewport *) viewport->vvp;
   int i;
   VikLayer *vl;
   VikLayer *trigger = VIK_LAYER(vik_viewport_get_trigger( vp ));
@@ -719,7 +722,7 @@ static void vik_gps_layer_draw ( VikGpsLayer *vgl, VikViewport *vp )
       }
     }
     if (!vik_viewport_get_half_drawn(vp))
-      vik_layer_draw ( vl, vp );
+      vik_layer_draw(vl, &vp->port);
   }
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
   if (vgl->realtime_tracking) {

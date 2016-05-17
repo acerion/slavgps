@@ -102,14 +102,14 @@ enum {
   NUM_PARAMS };
 
 //static const char* mapnik_layer_tooltip ( VikMapnikLayer *vml );
-static void mapnik_layer_marshall( VikMapnikLayer *vml, uint8_t **data, int *len );
+//static void mapnik_layer_marshall( VikMapnikLayer *vml, uint8_t **data, int *len );
 static VikMapnikLayer *mapnik_layer_unmarshall( uint8_t *data, int len, VikViewport *vvp );
 static bool mapnik_layer_set_param ( VikMapnikLayer *vml, uint16_t id, VikLayerParamData data, VikViewport *vp, bool is_file_operation );
 static VikLayerParamData mapnik_layer_get_param ( VikMapnikLayer *vml, uint16_t id, bool is_file_operation );
 static VikMapnikLayer *mapnik_layer_new ( VikViewport *vvp );
 static VikMapnikLayer *mapnik_layer_create ( VikViewport *vp );
 static void mapnik_layer_free ( VikMapnikLayer *vml );
-static void mapnik_layer_draw ( VikMapnikLayer *vml, VikViewport *vp );
+//static void mapnik_layer_draw ( VikMapnikLayer *vml, VikViewport *vp );
 static void mapnik_layer_add_menu_items ( VikMapnikLayer *vml, GtkMenu *menu, void * vlp );
 
 static void * mapnik_feature_create ( VikWindow *vw, Viewport * viewport)
@@ -137,7 +137,7 @@ static VikToolInterface mapnik_tools[] = {
     GDK_LEFT_PTR, NULL, NULL },
 };
 
-static void mapnik_layer_post_read (VikLayer *vl, VikViewport *vvp, bool from_file);
+//static void mapnik_layer_post_read (VikLayer *vl, VikViewport *vvp, bool from_file);
 
 VikLayerInterface vik_mapnik_layer_interface = {
 	"Mapnik Rendering",
@@ -157,11 +157,11 @@ VikLayerInterface vik_mapnik_layer_interface = {
 
 	(VikLayerFuncCreate)                  mapnik_layer_create,
 	(VikLayerFuncRealize)                 NULL,
-	(VikLayerFuncPostRead)                mapnik_layer_post_read,
+	(VikLayerFuncPostRead)                NULL,
 	(VikLayerFuncFree)                    mapnik_layer_free,
 
 	(VikLayerFuncProperties)              NULL,
-	(VikLayerFuncDraw)                    mapnik_layer_draw,
+	(VikLayerFuncDraw)                    NULL,
 	(VikLayerFuncChangeCoordMode)         NULL,
 
 	(VikLayerFuncGetTimestamp)            NULL,
@@ -178,7 +178,7 @@ VikLayerInterface vik_mapnik_layer_interface = {
 	(VikLayerFuncLayerTooltip)            NULL,
 	(VikLayerFuncLayerSelected)           NULL,
 
-	(VikLayerFuncMarshall)                mapnik_layer_marshall,
+	(VikLayerFuncMarshall)                NULL,
 	(VikLayerFuncUnmarshall)              mapnik_layer_unmarshall,
 
 	(VikLayerFuncSetParam)                mapnik_layer_set_param,
@@ -399,8 +399,9 @@ static void mapnik_layer_set_cache_dir ( VikMapnikLayer *vml, const char *name )
 	vml->file_cache_dir = g_strdup(name);
 }
 
-static void mapnik_layer_marshall( VikMapnikLayer *vml, uint8_t **data, int *len )
+void LayerMapnik::marshall(uint8_t **data, int *len )
 {
+	VikMapnikLayer * vml = (VikMapnikLayer *) this->vl;
 	vik_layer_marshall_params ( VIK_LAYER(vml), data, len );
 }
 
@@ -575,9 +576,9 @@ bool carto_load ( VikMapnikLayer *vml, VikViewport *vvp )
 /**
  *
  */
-static void mapnik_layer_post_read (VikLayer *vl, VikViewport *vvp, bool from_file)
+void LayerMapnik::post_read(Viewport * viewport, bool from_file)
 {
-	VikMapnikLayer *vml = VIK_MAPNIK_LAYER(vl);
+	VikMapnikLayer *vml = VIK_MAPNIK_LAYER(this->vl);
 
 	// Determine if carto needs to be run
 	bool do_carto = false;
@@ -608,12 +609,12 @@ static void mapnik_layer_post_read (VikLayer *vl, VikViewport *vvp, bool from_fi
 
 	if ( do_carto )
 		// Don't load the XML config if carto load fails
-		if ( !carto_load ( vml, vvp ) )
+		if ( !carto_load ( vml, (VikViewport *) viewport->vvp ) )
 			return;
 
 	char* ans = mapnik_interface_load_map_file ( vml->mi, vml->filename_xml, vml->tile_size_x, vml->tile_size_x );
 	if ( ans ) {
-		a_dialog_error_msg_extra ( VIK_GTK_WINDOW_FROM_WIDGET(vvp),
+		a_dialog_error_msg_extra ( VIK_GTK_WINDOW_FROM_WIDGET((VikViewport *) viewport->vvp),
 		                           _("Mapnik error loading configuration file:\n%s"),
 		                           ans );
 		free( ans );
@@ -840,12 +841,13 @@ static GdkPixbuf *get_pixbuf ( VikMapnikLayer *vml, TileInfo *ulm, TileInfo *brm
 /**
  *
  */
-static void mapnik_layer_draw ( VikMapnikLayer *vml, VikViewport *vvp )
+void LayerMapnik::draw(Viewport * viewport)
 {
+	VikMapnikLayer * vml = (VikMapnikLayer *) this->vl;
 	if ( !vml->loaded )
 		return;
 
-	if ( vvp->port.get_drawmode() != VIK_VIEWPORT_DRAWMODE_MERCATOR ) {
+	if (viewport->get_drawmode() != VIK_VIEWPORT_DRAWMODE_MERCATOR ) {
 		vik_statusbar_set_message ( vik_window_get_statusbar (VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(vml))),
 		                            VIK_STATUSBAR_INFO, _("Mapnik Rendering must be in Mercator mode") );
 		return;
@@ -854,18 +856,18 @@ static void mapnik_layer_draw ( VikMapnikLayer *vml, VikViewport *vvp )
 	if ( vml->mi ) {
 		char *copyright = mapnik_interface_get_copyright ( vml->mi );
 		if ( copyright ) {
-			vvp->port.add_copyright(copyright);
+			viewport->add_copyright(copyright);
 		}
 	}
 
 	VikCoord ul, br;
 	ul.mode = VIK_COORD_LATLON;
 	br.mode = VIK_COORD_LATLON;
-	vvp->port.screen_to_coord(0, 0, &ul);
-	vvp->port.screen_to_coord(vvp->port.get_width(), vvp->port.get_height(), &br );
+	viewport->screen_to_coord(0, 0, &ul);
+	viewport->screen_to_coord(viewport->get_width(), viewport->get_height(), &br );
 
-	double xzoom = vvp->port.get_xmpp();
-	double yzoom = vvp->port.get_ympp();
+	double xzoom = viewport->get_xmpp();
+	double yzoom = viewport->get_ympp();
 
 	TileInfo ulm, brm;
 
@@ -892,8 +894,8 @@ static void mapnik_layer_draw ( VikMapnikLayer *vml, VikViewport *vvp )
 
 				if ( pixbuf ) {
 					map_utils_iTMS_to_vikcoord ( &ulm, &coord );
-					vvp->port.coord_to_screen(&coord, &xx, &yy );
-					vvp->port.draw_pixbuf(pixbuf, 0, 0, xx, yy, vml->tile_size_x, vml->tile_size_x );
+					viewport->coord_to_screen(&coord, &xx, &yy );
+					viewport->draw_pixbuf(pixbuf, 0, 0, xx, yy, vml->tile_size_x, vml->tile_size_x );
 					g_object_unref(pixbuf);
 				}
 			}
@@ -902,21 +904,21 @@ static void mapnik_layer_draw ( VikMapnikLayer *vml, VikViewport *vvp )
 		// Done after so drawn on top
 		// Just a handy guide to tile blocks.
 		if ( vik_debug && vik_verbose ) {
-			GdkGC *black_gc = GTK_WIDGET(vvp)->style->black_gc;
-			int width = vvp->port.get_width();
-			int height = vvp->port.get_height();
+			GdkGC *black_gc = GTK_WIDGET((VikViewport *) viewport->vvp)->style->black_gc;
+			int width = viewport->get_width();
+			int height = viewport->get_height();
 			int xx, yy;
 			ulm.x = xmin; ulm.y = ymin;
 			map_utils_iTMS_to_center_vikcoord ( &ulm, &coord );
-			vvp->port.coord_to_screen(&coord, &xx, &yy );
+			viewport->coord_to_screen(&coord, &xx, &yy );
 			xx = xx - (vml->tile_size_x/2);
 			yy = yy - (vml->tile_size_x/2); // Yes use X ATM
 			for (int x = xmin; x <= xmax; x++ ) {
-				vvp->port.draw_line(black_gc, xx, 0, xx, height );
+				viewport->draw_line(black_gc, xx, 0, xx, height );
 				xx += vml->tile_size_x;
 			}
 			for (int y = ymin; y <= ymax; y++ ) {
-				vvp->port.draw_line(black_gc, 0, yy, width, yy );
+				viewport->draw_line(black_gc, 0, yy, width, yy );
 				yy += vml->tile_size_x; // Yes use X ATM
 			}
 		}
@@ -965,8 +967,9 @@ static void mapnik_layer_reload ( menu_array_values values )
 {
   VikMapnikLayer * vml = (VikMapnikLayer *) values[MA_VML];
   VikViewport * vvp = (VikViewport *) values[MA_VVP];
-	mapnik_layer_post_read (VIK_LAYER(vml), vvp, false);
-	mapnik_layer_draw ( vml, vvp );
+  Layer * layer = (Layer *) ((VikLayer *) vml)->layer;
+	layer->post_read(&vvp->port, false);
+	layer->draw(&vvp->port);
 }
 
 /**
@@ -992,8 +995,10 @@ static void mapnik_layer_carto ( menu_array_values values )
 		                           ans );
 		free( ans );
 	}
-	else
-		mapnik_layer_draw ( vml, vvp );
+	else {
+		Layer * layer = (Layer *) ((VikLayer *) vml)->layer;
+		layer->draw(&vvp->port);
+	}
 }
 
 /**

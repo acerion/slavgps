@@ -273,7 +273,7 @@ VikLayerInterface *vik_layer_get_interface ( VikLayerTypeEnum type );
 
 
 void vik_layer_set_type ( VikLayer *vl, VikLayerTypeEnum type );
-void vik_layer_draw ( VikLayer *l, VikViewport *vp );
+void vik_layer_draw(VikLayer *l, Viewport * viewport);
 void vik_layer_change_coord_mode ( VikLayer *l, VikCoordMode mode );
 void vik_layer_rename ( VikLayer *l, const char *new_name );
 void vik_layer_rename_no_copy ( VikLayer *l, char *new_name );
@@ -348,6 +348,8 @@ namespace SlavGPS {
 
 
 		/* Layer interface methods. */
+		virtual void post_read(Viewport * viewport, bool from_file);
+		virtual void draw(Viewport * viewport);
 		virtual char const * tooltip();
 		virtual char const * sublayer_tooltip(int subtype, void * sublayer);
 
@@ -358,6 +360,19 @@ namespace SlavGPS {
 		virtual bool select_click(GdkEventButton * event, Viewport * viewport, tool_ed_t * tet);
 		virtual bool select_move(GdkEventMotion * event, Viewport * viewport, tool_ed_t * t);
 		virtual bool select_release(GdkEventButton * event, Viewport * viewport, tool_ed_t * t);
+
+		/* kamilTODO: consider removing them from Layer. They are overriden only in LayerTRW. */
+		virtual void set_menu_selection(uint16_t selection);
+		virtual uint16_t get_menu_selection();
+
+		virtual void marshall(uint8_t ** data, int * len);
+
+		virtual void cut_item(int subtype, void * sublayer);
+		virtual void copy_item(int subtype, void * sublayer, uint8_t ** item, unsigned int * len);
+		virtual bool paste_item(int subtype, uint8_t * item, size_t len);
+		virtual void delete_item(int subtype, void * sublayer);
+
+
 
 
 		VikLayer * vl;

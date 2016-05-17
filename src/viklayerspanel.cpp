@@ -109,8 +109,7 @@ LayersPanel::LayersPanel()
 	vik_layer_rename(VIK_LAYER(this->toplayer), _("Top Layer"));
 	int a = g_signal_connect_swapped(G_OBJECT(this->toplayer), "update", G_CALLBACK(vik_layers_panel_emit_update), this);
 
-	/* kamilFIXME: For some reason we have to keep this "new Layer(), even though this->toplayer already has valid ->layer member. */
-	Layer * layer = new Layer((VikLayer *) this->toplayer);
+	Layer * layer = (Layer *) ((VikLayer *) this->toplayer)->layer;
 	vik_treeview_add_layer(this->vt, NULL, &(this->toplayer_iter), VIK_LAYER(this->toplayer)->name, NULL, true, layer, VIK_LAYER_AGGREGATE, VIK_LAYER_AGGREGATE, 0);
 	vik_layer_realize(VIK_LAYER (this->toplayer), this->vt, &(this->toplayer_iter));
 
@@ -403,6 +402,8 @@ void LayersPanel::popup(GtkTreeIter *iter, int mouse_button)
 				menu = GTK_MENU (layers_panel_create_popup(this->gob, true));
 			} else {
 				GtkWidget *del, *prop;
+				/* kamilFIXME: this doesn't work for Map in treeview. Why?*/
+				fprintf(stderr, "will call get_menu_items_selection.\n");
 				VikStdLayerMenuItem menu_selection = (VikStdLayerMenuItem) vik_layer_get_menu_items_selection(layer->vl);
 
 				menu = GTK_MENU (gtk_menu_new());
@@ -598,7 +599,8 @@ bool LayersPanel::properties()
 void LayersPanel::draw_all()
 {
 	if (this->viewport && VIK_LAYER(this->toplayer)->visible) {
-		vik_aggregate_layer_draw(this->toplayer, (VikViewport *) this->viewport->vvp);
+		Layer * layer = (Layer *) ((VikLayer *) this->toplayer)->layer;
+		layer->draw(this->viewport);
 	}
 }
 
@@ -641,10 +643,9 @@ void LayersPanel::cut_selected()
 		}
 	} else if (type == VIK_TREEVIEW_TYPE_SUBLAYER) {
 		VikLayer *sel = this->get_selected();
-		if (vik_layer_get_interface(sel->type)->cut_item) {
-			int subtype = vik_treeview_item_get_data(this->vt, &iter);
-			vik_layer_get_interface(sel->type)->cut_item(sel, subtype, vik_treeview_item_get_pointer(sel->vt, &iter));
-		}
+		Layer * layer = (Layer *) sel->layer;
+		int subtype = vik_treeview_item_get_data(this->vt, &iter);
+		layer->cut_item(subtype, vik_treeview_item_get_pointer(sel->vt, &iter));
 	}
 }
 
@@ -724,10 +725,9 @@ void LayersPanel::delete_selected()
 		}
 	} else if (type == VIK_TREEVIEW_TYPE_SUBLAYER) {
 		VikLayer *sel = this->get_selected();
-		if (vik_layer_get_interface(sel->type)->delete_item) {
-			int subtype = vik_treeview_item_get_data(this->vt, &iter);
-			vik_layer_get_interface(sel->type)->delete_item(sel, subtype, vik_treeview_item_get_pointer(sel->vt, &iter));
-		}
+		int subtype = vik_treeview_item_get_data(this->vt, &iter);
+		Layer * layer = (Layer *) sel->layer;
+		layer->delete_item(subtype, vik_treeview_item_get_pointer(sel->vt, &iter));
 	}
 }
 

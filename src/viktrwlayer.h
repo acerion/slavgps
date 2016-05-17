@@ -104,6 +104,8 @@ namespace SlavGPS {
 
 
 		/* Layer interface methods. */
+		void draw(Viewport * viewport);
+		void post_read(Viewport * viewport, bool from_file);
 		char const * tooltip();
 		char const * sublayer_tooltip(int subtype, void * sublayer);
 
@@ -111,10 +113,21 @@ namespace SlavGPS {
 
 		bool show_selected_viewport_menu(GdkEventButton * event, Viewport * viewport);
 
-
 		bool select_click(GdkEventButton * event, Viewport * viewport, tool_ed_t * tet);
 		bool select_move(GdkEventMotion * event, Viewport * viewport, tool_ed_t * t);
 		bool select_release(GdkEventButton * event, Viewport * viewport, tool_ed_t * t);
+
+		void set_menu_selection(uint16_t selection);
+		uint16_t get_menu_selection();
+
+		void marshall(uint8_t ** data, int * len);
+
+		void cut_item(int subtype, void * sublayer);
+		void copy_item(int subtype, void * sublayer, uint8_t ** item, unsigned int * len);
+		bool paste_item(int subtype, uint8_t * item, size_t len);
+		void delete_item(int subtype, void * sublayer);
+
+
 
 
 
@@ -609,7 +622,7 @@ GdkPixbuf* get_wp_sym_small ( char *symbol );
 
 /* Exposed Layer Interface function definitions */
 // Intended only for use by other trw_layer subwindows
-void trw_layer_verify_thumbnails ( VikTrwLayer *vtl, GtkWidget *vp );
+void trw_layer_verify_thumbnails(VikTrwLayer * vtl, VikViewport * vp);
 // Other functions only for use by other trw_layer subwindows
 //char *trw_layer_new_unique_sublayer_name ( VikTrwLayer *vtl, int sublayer_type, const char *name );
 //void trw_layer_waypoint_rename ( VikTrwLayer *vtl, Waypoint * wp, const char *new_name );

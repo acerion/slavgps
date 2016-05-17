@@ -37,7 +37,7 @@
 #include <glib/gi18n.h>
 
 
-static void aggregate_layer_marshall(VikAggregateLayer *val, uint8_t **data, int *len);
+//static void aggregate_layer_marshall(VikAggregateLayer *val, uint8_t **data, int *len);
 static VikAggregateLayer *aggregate_layer_unmarshall(uint8_t *data, int len, VikViewport *vvp);
 static void aggregate_layer_change_coord_mode(VikAggregateLayer *val, VikCoordMode mode);
 static void aggregate_layer_drag_drop_request(VikAggregateLayer *val_src, VikAggregateLayer *val_dest, GtkTreeIter *src_item_iter, GtkTreePath *dest_path);
@@ -66,7 +66,7 @@ VikLayerInterface vik_aggregate_layer_interface = {
 	(VikLayerFuncFree)                    vik_aggregate_layer_free,
 
 	(VikLayerFuncProperties)              NULL,
-	(VikLayerFuncDraw)                    vik_aggregate_layer_draw,
+	(VikLayerFuncDraw)                    NULL,
 	(VikLayerFuncChangeCoordMode)         aggregate_layer_change_coord_mode,
 
 	(VikLayerFuncGetTimestamp)            NULL,
@@ -83,8 +83,8 @@ VikLayerInterface vik_aggregate_layer_interface = {
 	(VikLayerFuncLayerTooltip)            NULL,
 	(VikLayerFuncLayerSelected)           NULL,
 
-	(VikLayerFuncMarshall)		aggregate_layer_marshall,
-	(VikLayerFuncUnmarshall)		aggregate_layer_unmarshall,
+	(VikLayerFuncMarshall)		      NULL,
+	(VikLayerFuncUnmarshall)	      aggregate_layer_unmarshall,
 
 	(VikLayerFuncSetParam)                NULL,
 	(VikLayerFuncGetParam)                NULL,
@@ -146,8 +146,9 @@ VikAggregateLayer *vik_aggregate_layer_create(VikViewport *vp)
 	return rv;
 }
 
-static void aggregate_layer_marshall(VikAggregateLayer *val, uint8_t **data, int *datalen)
+void LayerAggregate::marshall(uint8_t **data, int *datalen)
 {
+	VikAggregateLayer * val = (VikAggregateLayer *) this->vl;
 #if 1
 	auto child = val->children->begin();
 	uint8_t *ld;
@@ -373,11 +374,13 @@ void vik_aggregate_layer_move_layer(VikAggregateLayer *val, GtkTreeIter *child_i
  * of the pixmap before drawing the trigger layer so we can use it again
  * later.
  */
-void vik_aggregate_layer_draw(VikAggregateLayer *val, VikViewport *vp)
+void LayerAggregate::draw(Viewport * viewport)
 {
-	auto iter = val->children->begin();
+	VikViewport * vp = (VikViewport *) viewport->vvp;
+
+	auto iter = ((VikAggregateLayer *) this->vl)->children->begin();
 	VikLayer * trigger = (VikLayer *) vik_viewport_get_trigger(vp);
-	while (iter != val->children->end()) {
+	while (iter != ((VikAggregateLayer *) this->vl)->children->end()) {
 		Layer * layer = *iter;
 		if (layer->vl == trigger) {
 			if (vik_viewport_get_half_drawn(vp)) {
@@ -388,15 +391,15 @@ void vik_aggregate_layer_draw(VikAggregateLayer *val, VikViewport *vp)
 			}
 		}
 		if (layer->vl->type == VIK_LAYER_AGGREGATE || layer->vl->type == VIK_LAYER_GPS || ! vik_viewport_get_half_drawn(vp)) {
-			vik_layer_draw (layer->vl, vp);
+			vik_layer_draw(layer->vl, viewport);
 		}
 		iter++;
 	}
 
 
 	fprintf(stderr, "%s:%d: children:\n", __FILE__, __LINE__);
-	auto it = val->children->begin();
-	while (it != val->children->end()) {
+	auto it = ((VikAggregateLayer *) this->vl)->children->begin();
+	while (it != ((VikAggregateLayer *) this->vl)->children->end()) {
 		Layer * layer = *it;
 		fprintf(stderr, "    name = '%s', ", layer->vl->name);
 		if (layer->vl->type == VIK_LAYER_AGGREGATE) {

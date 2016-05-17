@@ -256,11 +256,11 @@ bool vik_layer_properties ( VikLayer *layer, VikViewport *vp )
   return vik_layer_properties_factory ( layer, vp );
 }
 
-void vik_layer_draw ( VikLayer *l, VikViewport *vp )
+void vik_layer_draw(VikLayer * l, Viewport * viewport)
 {
-  if ( l->visible )
-    if ( vik_layer_interfaces[l->type]->draw )
-      vik_layer_interfaces[l->type]->draw ( l, vp );
+	if (l->visible) {
+		((Layer *) l->layer)->draw(viewport);
+	}
 }
 
 void vik_layer_change_coord_mode ( VikLayer *l, VikCoordMode mode )
@@ -278,9 +278,9 @@ typedef struct {
 void vik_layer_marshall ( VikLayer *vl, uint8_t **data, int *len )
 {
   header_t *header;
-  if ( vl && vik_layer_interfaces[vl->type]->marshall ) {
-    vik_layer_interfaces[vl->type]->marshall ( vl, data, len );
-    if (*data) {
+  Layer * layer = (Layer *) vl->layer;
+  layer->marshall(data, len);
+  if (*data) {
       header = (header_t *) malloc(*len + sizeof(*header));
       header->layer_type = vl->type;
       header->len = *len;
@@ -288,9 +288,6 @@ void vik_layer_marshall ( VikLayer *vl, uint8_t **data, int *len )
       free(*data);
       *data = (uint8_t *)header;
       *len = *len + sizeof(*header);
-    }
-  } else {
-    *data = NULL;
   }
 }
 
@@ -479,16 +476,20 @@ void vik_layer_realize ( VikLayer *l, VikTreeview *vt, GtkTreeIter *layer_iter )
 
 void vik_layer_set_menu_items_selection(VikLayer *l, uint16_t selection)
 {
-  if ( vik_layer_interfaces[l->type]->set_menu_selection )
-    vik_layer_interfaces[l->type]->set_menu_selection ( l, selection );
+	Layer * layer = (Layer *) l->layer;
+	layer->set_menu_selection(selection);
 }
 
 uint16_t vik_layer_get_menu_items_selection(VikLayer *l)
 {
-  if ( vik_layer_interfaces[l->type]->get_menu_selection )
-    return(vik_layer_interfaces[l->type]->get_menu_selection (l));
-  else
-    return(vik_layer_interfaces[l->type]->menu_items_selection);
+	Layer * layer = (Layer *) l->layer;
+	uint16_t rv = layer->get_menu_selection();
+	if (rv == (uint16_t) -1) {
+		/* Perhaps this line could go to base class. */
+		return vik_layer_interfaces[l->type]->menu_items_selection;
+	} else {
+		return rv;
+	}
 }
 
 void vik_layer_add_menu_items ( VikLayer *l, GtkMenu *menu, void * vlp )
@@ -529,8 +530,8 @@ bool vik_layer_set_param ( VikLayer *layer, uint16_t id, VikLayerParamData data,
 
 void vik_layer_post_read ( VikLayer *layer, VikViewport *vp, bool from_file )
 {
-  if ( vik_layer_interfaces[layer->type]->post_read )
-    vik_layer_interfaces[layer->type]->post_read ( layer, vp, from_file );
+	Layer * l = (Layer *) layer->layer;
+	l->post_read(&vp->port, from_file);
 }
 
 static bool vik_layer_properties_factory ( VikLayer *vl, VikViewport *vp )
@@ -552,7 +553,10 @@ static bool vik_layer_properties_factory ( VikLayer *vl, VikViewport *vp )
       return false;
       /* redraw (?) */
     case 2:
-      vik_layer_post_read ( vl, vp, false ); /* update any gc's */
+	    {
+		    Layer * layer = (Layer *) vl->layer;
+		    layer->post_read(&vp->port, false); /* update any gc's */
+	    }
     default:
       return true;
   }
@@ -720,6 +724,10 @@ bool Layer::select_move(GdkEventMotion * event, Viewport * viewport, tool_ed_t *
 	return false;
 }
 
+void Layer::post_read(Viewport * viewport, bool from_file)
+{
+	return;
+}
 
 bool Layer::select_release(GdkEventButton * event, Viewport * viewport, tool_ed_t * t)
 {
@@ -727,6 +735,10 @@ bool Layer::select_release(GdkEventButton * event, Viewport * viewport, tool_ed_
 }
 
 
+void Layer::draw(Viewport * viewport)
+{
+	return;
+}
 
 char const * Layer::tooltip()
 {
@@ -753,4 +765,39 @@ bool Layer::selected(int subtype, void * sublayer, int type, void * vlp)
 bool Layer::show_selected_viewport_menu(GdkEventButton * event, Viewport * viewport)
 {
 	return false;
+}
+
+void Layer::set_menu_selection(uint16_t selection)
+{
+	return;
+}
+
+uint16_t Layer::get_menu_selection()
+{
+	return (uint16_t) -1;
+}
+
+void Layer::marshall(uint8_t ** data, int * len)
+{
+	return;
+}
+
+void Layer::cut_item(int subtype, void * sublayer)
+{
+	return;
+}
+
+void Layer::copy_item(int subtype, void * sublayer, uint8_t ** item, unsigned int * len)
+{
+	return;
+}
+
+bool Layer::paste_item(int subtype, uint8_t * item, size_t len)
+{
+	return false;
+}
+
+void Layer::delete_item(int subtype, void * sublayer)
+{
+	return;
 }

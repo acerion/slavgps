@@ -555,13 +555,13 @@ enum {
 /* Layer Interface function definitions */
 static VikTrwLayer* trw_layer_create ( VikViewport *vp );
 static void trw_layer_realize ( VikTrwLayer *vtl, VikTreeview *vt, GtkTreeIter *layer_iter );
-static void trw_layer_post_read ( VikTrwLayer *vtl, GtkWidget *vvp, bool from_file );
+//static void trw_layer_post_read ( VikTrwLayer *vtl, GtkWidget *vvp, bool from_file );
 static void trw_layer_free ( VikTrwLayer *trwlayer );
-static void trw_layer_draw ( VikTrwLayer *l, void * data );
+//static void trw_layer_draw ( VikTrwLayer *l, void * data );
 static void trw_layer_change_coord_mode ( VikTrwLayer *vtl, VikCoordMode dest_mode );
 static time_t trw_layer_get_timestamp ( VikTrwLayer *vtl );
-static void trw_layer_set_menu_selection ( VikTrwLayer *vtl, uint16_t );
-static uint16_t trw_layer_get_menu_selection ( VikTrwLayer *vtl );
+//static void trw_layer_set_menu_selection ( VikTrwLayer *vtl, uint16_t );
+//static uint16_t trw_layer_get_menu_selection ( VikTrwLayer *vtl );
 static void trw_layer_add_menu_items ( VikTrwLayer *vtl, GtkMenu *menu, void * vlp );
 static bool trw_layer_sublayer_add_menu_items ( VikTrwLayer *l, GtkMenu *menu, void * vlp, int subtype, void * sublayer, GtkTreeIter *iter, VikViewport *vvp );
 static const char* trw_layer_sublayer_rename_request ( VikTrwLayer *l, const char *newname, void * vlp, int subtype, void * sublayer, GtkTreeIter *iter );
@@ -569,16 +569,16 @@ static bool trw_layer_sublayer_toggle_visible ( VikTrwLayer *l, int subtype, voi
 //static const char* trw_layer_layer_tooltip ( VikTrwLayer *vtl );
 //static const char* trw_layer_sublayer_tooltip ( VikTrwLayer *l, int subtype, void * sublayer );
 //static bool trw_layer_selected ( VikTrwLayer *l, int subtype, void * sublayer, int type, void * vlp );
-static void trw_layer_marshall ( VikTrwLayer *vtl, uint8_t **data, int *len );
+//static void trw_layer_marshall ( VikTrwLayer *vtl, uint8_t **data, int *len );
 static VikTrwLayer *trw_layer_unmarshall ( uint8_t *data, int len, VikViewport *vvp );
 static bool trw_layer_set_param ( VikTrwLayer *vtl, uint16_t id, VikLayerParamData data, VikViewport *vp, bool is_file_operation );
 static VikLayerParamData trw_layer_get_param ( VikTrwLayer *vtl, uint16_t id, bool is_file_operation );
 static void trw_layer_change_param ( GtkWidget *widget, ui_change_values values );
-static void trw_layer_del_item ( VikTrwLayer *vtl, int subtype, void * sublayer );
-static void trw_layer_cut_item ( VikTrwLayer *vtl, int subtype, void * sublayer );
-static void trw_layer_copy_item ( VikTrwLayer *vtl, int subtype, void * sublayer, uint8_t **item, unsigned int *len );
-static bool trw_layer_paste_item ( VikTrwLayer *vtl, int subtype, uint8_t *item, size_t len );
-static void trw_layer_free_copied_item ( int subtype, void * item );
+//static void trw_layer_del_item ( VikTrwLayer *vtl, int subtype, void * sublayer );
+//static void trw_layer_cut_item ( VikTrwLayer *vtl, int subtype, void * sublayer );
+//static void trw_layer_copy_item ( VikTrwLayer *vtl, int subtype, void * sublayer, uint8_t **item, unsigned int *len );
+//static bool trw_layer_paste_item ( VikTrwLayer *vtl, int subtype, uint8_t *item, size_t len );
+//static void trw_layer_free_copied_item ( int subtype, void * item );
 static void trw_layer_drag_drop_request ( VikTrwLayer *vtl_src, VikTrwLayer *vtl_dest, GtkTreeIter *src_item_iter, GtkTreePath *dest_path );
 //static bool trw_layer_select_click ( VikTrwLayer *vtl, GdkEventButton *event, Viewport * viewport, tool_ed_t *t );
 //static bool trw_layer_select_move ( VikTrwLayer *vtl, GdkEventMotion *event, Viewport * viewport, tool_ed_t *t );
@@ -604,16 +604,16 @@ VikLayerInterface vik_trw_layer_interface = {
 
   (VikLayerFuncCreate)                  trw_layer_create,
   (VikLayerFuncRealize)                 trw_layer_realize,
-  (VikLayerFuncPostRead)                trw_layer_post_read,
+  (VikLayerFuncPostRead)                NULL,
   (VikLayerFuncFree)                    trw_layer_free,
 
   (VikLayerFuncProperties)              NULL,
-  (VikLayerFuncDraw)                    trw_layer_draw,
+  (VikLayerFuncDraw)                    NULL,
   (VikLayerFuncChangeCoordMode)         trw_layer_change_coord_mode,
   (VikLayerFuncGetTimestamp)            trw_layer_get_timestamp,
 
-  (VikLayerFuncSetMenuItemsSelection)   trw_layer_set_menu_selection,
-  (VikLayerFuncGetMenuItemsSelection)   trw_layer_get_menu_selection,
+  (VikLayerFuncSetMenuItemsSelection)   NULL,
+  (VikLayerFuncGetMenuItemsSelection)   NULL,
 
   (VikLayerFuncAddMenuItems)            trw_layer_add_menu_items,
   (VikLayerFuncSublayerAddMenuItems)    trw_layer_sublayer_add_menu_items,
@@ -624,7 +624,7 @@ VikLayerInterface vik_trw_layer_interface = {
   (VikLayerFuncLayerTooltip)            NULL,
   (VikLayerFuncLayerSelected)           NULL,
 
-  (VikLayerFuncMarshall)                trw_layer_marshall,
+  (VikLayerFuncMarshall)                NULL,
   (VikLayerFuncUnmarshall)              trw_layer_unmarshall,
 
   (VikLayerFuncSetParam)                trw_layer_set_param,
@@ -634,11 +634,11 @@ VikLayerInterface vik_trw_layer_interface = {
   (VikLayerFuncReadFileData)            a_gpspoint_read_file,
   (VikLayerFuncWriteFileData)           a_gpspoint_write_file,
 
-  (VikLayerFuncDeleteItem)              trw_layer_del_item,
-  (VikLayerFuncCutItem)                 trw_layer_cut_item,
-  (VikLayerFuncCopyItem)                trw_layer_copy_item,
-  (VikLayerFuncPasteItem)               trw_layer_paste_item,
-  (VikLayerFuncFreeCopiedItem)          trw_layer_free_copied_item,
+  (VikLayerFuncDeleteItem)              NULL,
+  (VikLayerFuncCutItem)                 NULL,
+  (VikLayerFuncCopyItem)                NULL,
+  (VikLayerFuncPasteItem)               NULL,
+  (VikLayerFuncFreeCopiedItem)          NULL,
 
   (VikLayerFuncDragDropRequest)         trw_layer_drag_drop_request,
 
@@ -824,8 +824,9 @@ bool LayerTRW::find_by_date(char const * date_str, VikCoord * position, VikViewp
 
 
 
-static void trw_layer_del_item ( VikTrwLayer *vtl, int subtype, void * sublayer )
+void LayerTRW::delete_item(int subtype, void * sublayer)
 {
+  VikTrwLayer * vtl = (VikTrwLayer *) this->vl;
   static menu_array_sublayer values;
   if (!sublayer) {
     return;
@@ -843,8 +844,9 @@ static void trw_layer_del_item ( VikTrwLayer *vtl, int subtype, void * sublayer 
   trw_layer_delete_item ( values );
 }
 
-static void trw_layer_cut_item ( VikTrwLayer *vtl, int subtype, void * sublayer )
+void LayerTRW::cut_item(int subtype, void * sublayer )
 {
+  VikTrwLayer * vtl = (VikTrwLayer *) this->vl;
   static menu_array_sublayer values;
   if (!sublayer) {
     return;
@@ -872,7 +874,7 @@ static void trw_layer_copy_item_cb ( menu_array_sublayer values)
   uint8_t *data = NULL;
   unsigned int len;
 
-  trw_layer_copy_item( vtl, subtype, sublayer, &data, &len);
+  ((Layer *) ((VikLayer *) vtl)->layer)->copy_item(subtype, sublayer, &data, &len);
 
   if (data) {
     const char* name;
@@ -917,8 +919,9 @@ static void trw_layer_paste_item_cb ( menu_array_sublayer values)
   a_clipboard_paste (VIK_LAYERS_PANEL(values[MA_VLP]));
 }
 
-static void trw_layer_copy_item ( VikTrwLayer *vtl, int subtype, void * sublayer, uint8_t **item, unsigned int *len )
+void LayerTRW::copy_item(int subtype, void * sublayer, uint8_t **item, unsigned int *len )
 {
+  VikTrwLayer * vtl = (VikTrwLayer *) this->vl;
   uint8_t *id;
   size_t il;
 
@@ -946,11 +949,12 @@ static void trw_layer_copy_item ( VikTrwLayer *vtl, int subtype, void * sublayer
   *item = ba->data;
 }
 
-static bool trw_layer_paste_item ( VikTrwLayer *vtl, int subtype, uint8_t *item, size_t len )
+bool LayerTRW::paste_item(int subtype, uint8_t * item, size_t len)
 {
   if ( !item )
     return false;
 
+  VikTrwLayer * vtl = (VikTrwLayer *) this->vl;
   char *name;
 
   if ( subtype == VIK_TRW_LAYER_SUBLAYER_WAYPOINT )
@@ -1000,12 +1004,14 @@ static bool trw_layer_paste_item ( VikTrwLayer *vtl, int subtype, uint8_t *item,
   return false;
 }
 
-static void trw_layer_free_copied_item ( int subtype, void * item )
+#if 0
+void trw_layer_free_copied_item ( int subtype, void * item )
 {
   if (item) {
     free(item);
   }
 }
+#endif
 
 static void image_cache_free ( VikTrwLayer *vtl )
 {
@@ -1273,8 +1279,9 @@ static void trw_layer_change_param ( GtkWidget *widget, ui_change_values values 
   }
 }
 
-static void trw_layer_marshall( VikTrwLayer *vtl, uint8_t **data, int *len )
+void LayerTRW::marshall(uint8_t **data, int *len )
 {
+  VikTrwLayer * vtl = (VikTrwLayer *) this->vl;
   uint8_t *pd;
   int pl;
 
@@ -1550,9 +1557,11 @@ void LayerTRW::draw_with_highlight(Viewport * viewport, bool highlight)
 
 
 
-static void trw_layer_draw(VikTrwLayer * l, void * data)
+void LayerTRW::draw(Viewport * viewport)
 {
-	Viewport * viewport = &(VIK_VIEWPORT(data)->port);
+
+	fprintf(stderr, "%s:%d called\n", __FUNCTION__, __LINE__);
+	VikTrwLayer * l = (VikTrwLayer *) this->vl;
 
 	// If this layer is to be highlighted - then don't draw now - as it will be drawn later on in the specific highlight draw stage
 	// This may seem slightly inefficient to test each time for every layer
@@ -9548,7 +9557,7 @@ static void thumbnail_create_thread_free ( thumbnail_create_thread_data *tctd )
   free( tctd );
 }
 
-void trw_layer_verify_thumbnails ( VikTrwLayer *vtl, GtkWidget *vp )
+void trw_layer_verify_thumbnails ( VikTrwLayer *vtl, VikViewport * vp )
 {
   if ( ! vtl->has_verified_thumbnails )
   {
@@ -9829,10 +9838,11 @@ static time_t trw_layer_get_timestamp ( VikTrwLayer *vtl )
   return timestamp_waypoints;
 }
 
-static void trw_layer_post_read ( VikTrwLayer *vtl, GtkWidget *vvp, bool from_file )
+void LayerTRW::post_read(Viewport * viewport, bool from_file)
 {
+  VikTrwLayer * vtl = (VikTrwLayer *) this->vl;
   if ( VIK_LAYER(vtl)->realized )
-    trw_layer_verify_thumbnails ( vtl, vvp );
+	  trw_layer_verify_thumbnails ( vtl, (VikViewport *) viewport->vvp );
   vtl->trw->track_alloc_colors();
 
   vtl->trw->calculate_bounds_waypoints();
@@ -9926,15 +9936,25 @@ static void trw_layer_change_coord_mode(VikTrwLayer *vtl, VikCoordMode dest_mode
 
 
 
-static void trw_layer_set_menu_selection ( VikTrwLayer *vtl, uint16_t selection )
+void LayerTRW::set_menu_selection(uint16_t selection)
 {
-  vtl->menu_selection = (VikStdLayerMenuItem) selection; /* kamil: invalid cast? */
+	fprintf(stderr, "=============== set menu selection\n");
+	((VikTrwLayer *) this->vl)->menu_selection = (VikStdLayerMenuItem) selection; /* kamil: invalid cast? */
 }
 
-static uint16_t trw_layer_get_menu_selection ( VikTrwLayer *vtl )
+
+
+
+
+uint16_t LayerTRW::get_menu_selection()
 {
-  return (vtl->menu_selection);
+	fprintf(stderr, "=============== get menu selection\n");
+	return ((VikTrwLayer *) this->vl)->menu_selection;
 }
+
+
+
+
 
 /* ----------- Downloading maps along tracks --------------- */
 
