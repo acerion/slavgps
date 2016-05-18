@@ -62,15 +62,11 @@
 #define UNUSED_LINE_THICKNESS 3
 
 static VikDEMLayer *dem_layer_new (VikViewport *vvp);
-//static void dem_layer_draw (VikDEMLayer *vdl, VikViewport *vp);
 static void dem_layer_free (VikDEMLayer *vdl);
 static VikDEMLayer *dem_layer_create (VikViewport *vp);
-//static const char* dem_layer_tooltip(VikDEMLayer *vdl);
-//static void dem_layer_marshall(VikDEMLayer *vdl, uint8_t **data, int *len);
 static VikDEMLayer *dem_layer_unmarshall(uint8_t *data, int len, VikViewport *vvp);
 static bool dem_layer_set_param (VikDEMLayer *vdl, uint16_t id, VikLayerParamData data, VikViewport *vp, bool is_file_operation);
 static VikLayerParamData dem_layer_get_param (VikDEMLayer *vdl, uint16_t id, bool is_file_operation);
-//static void dem_layer_post_read (VikLayer *vl, VikViewport *vp, bool from_file);
 static void srtm_draw_existence (VikViewport *vp);
 
 #ifdef VIK_CONFIG_DEM24K
@@ -206,28 +202,19 @@ VikLayerInterface vik_dem_layer_interface = {
 
 	(VikLayerFuncCreate)                  dem_layer_create,
 	(VikLayerFuncRealize)                 NULL,
-	(VikLayerFuncPostRead)                NULL,
 	(VikLayerFuncFree)                    dem_layer_free,
 
 	(VikLayerFuncProperties)              NULL,
-	(VikLayerFuncDraw)                    NULL,
 	(VikLayerFuncChangeCoordMode)         NULL,
 
 	(VikLayerFuncGetTimestamp)            NULL,
-
-	(VikLayerFuncSetMenuItemsSelection)   NULL,
-	(VikLayerFuncGetMenuItemsSelection)   NULL,
 
 	(VikLayerFuncAddMenuItems)            NULL,
 	(VikLayerFuncSublayerAddMenuItems)    NULL,
 
 	(VikLayerFuncSublayerRenameRequest)   NULL,
 	(VikLayerFuncSublayerToggleVisible)   NULL,
-	(VikLayerFuncSublayerTooltip)         NULL,
-	(VikLayerFuncLayerTooltip)            NULL,
-	(VikLayerFuncLayerSelected)           NULL,
 
-	(VikLayerFuncMarshall)		      NULL,
 	(VikLayerFuncUnmarshall)	      dem_layer_unmarshall,
 
 	(VikLayerFuncSetParam)                dem_layer_set_param,
@@ -237,17 +224,7 @@ VikLayerInterface vik_dem_layer_interface = {
 	(VikLayerFuncReadFileData)            NULL,
 	(VikLayerFuncWriteFileData)           NULL,
 
-	(VikLayerFuncDeleteItem)              NULL,
-	(VikLayerFuncCutItem)                 NULL,
-	(VikLayerFuncCopyItem)                NULL,
-	(VikLayerFuncPasteItem)               NULL,
-	(VikLayerFuncFreeCopiedItem)          NULL,
 	(VikLayerFuncDragDropRequest)	      NULL,
-
-	(VikLayerFuncSelectClick)             NULL,
-	(VikLayerFuncSelectMove)              NULL,
-	(VikLayerFuncSelectRelease)           NULL,
-	(VikLayerFuncSelectedViewportMenu)    NULL,
 };
 
 struct _VikDEMLayer {

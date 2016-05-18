@@ -76,8 +76,6 @@ enum {
 	PARAM_AA,
 	NUM_PARAMS };
 
-//static const char* georef_layer_tooltip(VikGeorefLayer *vgl);
-//static void georef_layer_marshall(VikGeorefLayer *vgl, uint8_t **data, int *len);
 static VikGeorefLayer *georef_layer_unmarshall(uint8_t *data, int len, VikViewport *vvp);
 static bool georef_layer_set_param(VikGeorefLayer *vgl, uint16_t id, VikLayerParamData data, VikViewport *vp, bool is_file_operation);
 static VikLayerParamData georef_layer_get_param(VikGeorefLayer *vgl, uint16_t id, bool is_file_operation);
@@ -85,11 +83,9 @@ static VikGeorefLayer *georef_layer_new(VikViewport *vvp);
 static VikGeorefLayer *georef_layer_create(VikViewport *vp);
 static void georef_layer_free(VikGeorefLayer *vgl);
 static bool georef_layer_properties(VikGeorefLayer *vgl, void * vp);
-//static void georef_layer_draw(VikGeorefLayer *vgl, VikViewport *vp);
 static void georef_layer_add_menu_items(VikGeorefLayer *vgl, GtkMenu *menu, void * vlp);
 static void georef_layer_set_image(VikGeorefLayer *vgl, const char *image);
 static bool georef_layer_dialog(VikGeorefLayer *vgl, void * vp, GtkWindow *w);
-//static void georef_layer_load_image(VikGeorefLayer *vgl, VikViewport *vp, bool from_file);
 
 /* tools */
 static void * georef_layer_move_create(VikWindow *vw, Viewport * viewport);
@@ -146,28 +142,19 @@ VikLayerInterface vik_georef_layer_interface = {
 
 	(VikLayerFuncCreate)                  georef_layer_create,
 	(VikLayerFuncRealize)                 NULL,
-	(VikLayerFuncPostRead)                NULL,
 	(VikLayerFuncFree)                    georef_layer_free,
 
 	(VikLayerFuncProperties)              georef_layer_properties,
-	(VikLayerFuncDraw)                    NULL,
 	(VikLayerFuncChangeCoordMode)         NULL,
 
 	(VikLayerFuncGetTimestamp)            NULL,
-
-	(VikLayerFuncSetMenuItemsSelection)   NULL,
-	(VikLayerFuncGetMenuItemsSelection)   NULL,
 
 	(VikLayerFuncAddMenuItems)            georef_layer_add_menu_items,
 	(VikLayerFuncSublayerAddMenuItems)    NULL,
 
 	(VikLayerFuncSublayerRenameRequest)   NULL,
 	(VikLayerFuncSublayerToggleVisible)   NULL,
-	(VikLayerFuncSublayerTooltip)         NULL,
-	(VikLayerFuncLayerTooltip)            NULL,
-	(VikLayerFuncLayerSelected)           NULL,
 
-	(VikLayerFuncMarshall)		      NULL,
 	(VikLayerFuncUnmarshall)	      georef_layer_unmarshall,
 
 	(VikLayerFuncSetParam)                georef_layer_set_param,
@@ -177,17 +164,7 @@ VikLayerInterface vik_georef_layer_interface = {
 	(VikLayerFuncReadFileData)            NULL,
 	(VikLayerFuncWriteFileData)           NULL,
 
-	(VikLayerFuncDeleteItem)              NULL,
-	(VikLayerFuncCutItem)                 NULL,
-	(VikLayerFuncCopyItem)                NULL,
-	(VikLayerFuncPasteItem)               NULL,
-	(VikLayerFuncFreeCopiedItem)          NULL,
 	(VikLayerFuncDragDropRequest)		NULL,
-
-	(VikLayerFuncSelectClick)             NULL,
-	(VikLayerFuncSelectMove)              NULL,
-	(VikLayerFuncSelectRelease)           NULL,
-	(VikLayerFuncSelectedViewportMenu)    NULL,
 };
 
 typedef struct {

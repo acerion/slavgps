@@ -555,9 +555,7 @@ enum {
 /* Layer Interface function definitions */
 static VikTrwLayer* trw_layer_create ( VikViewport *vp );
 static void trw_layer_realize ( VikTrwLayer *vtl, VikTreeview *vt, GtkTreeIter *layer_iter );
-//static void trw_layer_post_read ( VikTrwLayer *vtl, GtkWidget *vvp, bool from_file );
 static void trw_layer_free ( VikTrwLayer *trwlayer );
-//static void trw_layer_draw ( VikTrwLayer *l, void * data );
 static void trw_layer_change_coord_mode ( VikTrwLayer *vtl, VikCoordMode dest_mode );
 static time_t trw_layer_get_timestamp ( VikTrwLayer *vtl );
 //static void trw_layer_set_menu_selection ( VikTrwLayer *vtl, uint16_t );
@@ -566,24 +564,11 @@ static void trw_layer_add_menu_items ( VikTrwLayer *vtl, GtkMenu *menu, void * v
 static bool trw_layer_sublayer_add_menu_items ( VikTrwLayer *l, GtkMenu *menu, void * vlp, int subtype, void * sublayer, GtkTreeIter *iter, VikViewport *vvp );
 static const char* trw_layer_sublayer_rename_request ( VikTrwLayer *l, const char *newname, void * vlp, int subtype, void * sublayer, GtkTreeIter *iter );
 static bool trw_layer_sublayer_toggle_visible ( VikTrwLayer *l, int subtype, void * sublayer );
-//static const char* trw_layer_layer_tooltip ( VikTrwLayer *vtl );
-//static const char* trw_layer_sublayer_tooltip ( VikTrwLayer *l, int subtype, void * sublayer );
-//static bool trw_layer_selected ( VikTrwLayer *l, int subtype, void * sublayer, int type, void * vlp );
-//static void trw_layer_marshall ( VikTrwLayer *vtl, uint8_t **data, int *len );
 static VikTrwLayer *trw_layer_unmarshall ( uint8_t *data, int len, VikViewport *vvp );
 static bool trw_layer_set_param ( VikTrwLayer *vtl, uint16_t id, VikLayerParamData data, VikViewport *vp, bool is_file_operation );
 static VikLayerParamData trw_layer_get_param ( VikTrwLayer *vtl, uint16_t id, bool is_file_operation );
 static void trw_layer_change_param ( GtkWidget *widget, ui_change_values values );
-//static void trw_layer_del_item ( VikTrwLayer *vtl, int subtype, void * sublayer );
-//static void trw_layer_cut_item ( VikTrwLayer *vtl, int subtype, void * sublayer );
-//static void trw_layer_copy_item ( VikTrwLayer *vtl, int subtype, void * sublayer, uint8_t **item, unsigned int *len );
-//static bool trw_layer_paste_item ( VikTrwLayer *vtl, int subtype, uint8_t *item, size_t len );
-//static void trw_layer_free_copied_item ( int subtype, void * item );
 static void trw_layer_drag_drop_request ( VikTrwLayer *vtl_src, VikTrwLayer *vtl_dest, GtkTreeIter *src_item_iter, GtkTreePath *dest_path );
-//static bool trw_layer_select_click ( VikTrwLayer *vtl, GdkEventButton *event, Viewport * viewport, tool_ed_t *t );
-//static bool trw_layer_select_move ( VikTrwLayer *vtl, GdkEventMotion *event, Viewport * viewport, tool_ed_t *t );
-//static bool trw_layer_select_release ( VikTrwLayer *vtl, GdkEventButton *event, Viewport * viewport, tool_ed_t *t );
-//static bool trw_layer_show_selected_viewport_menu ( VikTrwLayer *vtl, GdkEventButton *event, Viewport * viewport );
 /* End Layer Interface function definitions */
 
 VikLayerInterface vik_trw_layer_interface = {
@@ -604,27 +589,18 @@ VikLayerInterface vik_trw_layer_interface = {
 
   (VikLayerFuncCreate)                  trw_layer_create,
   (VikLayerFuncRealize)                 trw_layer_realize,
-  (VikLayerFuncPostRead)                NULL,
   (VikLayerFuncFree)                    trw_layer_free,
 
   (VikLayerFuncProperties)              NULL,
-  (VikLayerFuncDraw)                    NULL,
   (VikLayerFuncChangeCoordMode)         trw_layer_change_coord_mode,
   (VikLayerFuncGetTimestamp)            trw_layer_get_timestamp,
-
-  (VikLayerFuncSetMenuItemsSelection)   NULL,
-  (VikLayerFuncGetMenuItemsSelection)   NULL,
 
   (VikLayerFuncAddMenuItems)            trw_layer_add_menu_items,
   (VikLayerFuncSublayerAddMenuItems)    trw_layer_sublayer_add_menu_items,
 
   (VikLayerFuncSublayerRenameRequest)   trw_layer_sublayer_rename_request,
   (VikLayerFuncSublayerToggleVisible)   trw_layer_sublayer_toggle_visible,
-  (VikLayerFuncSublayerTooltip)         NULL,
-  (VikLayerFuncLayerTooltip)            NULL,
-  (VikLayerFuncLayerSelected)           NULL,
 
-  (VikLayerFuncMarshall)                NULL,
   (VikLayerFuncUnmarshall)              trw_layer_unmarshall,
 
   (VikLayerFuncSetParam)                trw_layer_set_param,
@@ -634,18 +610,7 @@ VikLayerInterface vik_trw_layer_interface = {
   (VikLayerFuncReadFileData)            a_gpspoint_read_file,
   (VikLayerFuncWriteFileData)           a_gpspoint_write_file,
 
-  (VikLayerFuncDeleteItem)              NULL,
-  (VikLayerFuncCutItem)                 NULL,
-  (VikLayerFuncCopyItem)                NULL,
-  (VikLayerFuncPasteItem)               NULL,
-  (VikLayerFuncFreeCopiedItem)          NULL,
-
   (VikLayerFuncDragDropRequest)         trw_layer_drag_drop_request,
-
-  (VikLayerFuncSelectClick)             NULL,
-  (VikLayerFuncSelectMove)              NULL,
-  (VikLayerFuncSelectRelease)           NULL,
-  (VikLayerFuncSelectedViewportMenu)    NULL,
 };
 
 

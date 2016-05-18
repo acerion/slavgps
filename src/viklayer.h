@@ -127,22 +127,13 @@ typedef VikLayer *    (*VikLayerFuncCreate)                (VikViewport *);
  * are added to the treeview so they can add sublayers to the treeview. */
 typedef void          (*VikLayerFuncRealize)               (VikLayer *,VikTreeview *,GtkTreeIter *);
 
-/* rarely used, this is called after a read operation or properties box is run.
- * usually used to create GC's that depend on params,
- * but GC's can also be created from create() or set_param() */
-typedef void          (*VikLayerFuncPostRead)              (VikLayer *,VikViewport *vp,bool from_file);
-
 typedef void          (*VikLayerFuncFree)                  (VikLayer *);
 
 /* do _not_ use this unless absolutely neccesary. Use the dynamic properties (see coordlayer for example)
   * returns true if OK was pressed */
 typedef bool      (*VikLayerFuncProperties)            (VikLayer *,VikViewport *);
 
-typedef void          (*VikLayerFuncDraw)                  (VikLayer *,VikViewport *);
 typedef void          (*VikLayerFuncChangeCoordMode)       (VikLayer *,VikCoordMode);
-
-typedef void          (*VikLayerFuncSetMenuItemsSelection)          (VikLayer *,uint16_t);
-typedef uint16_t          (*VikLayerFuncGetMenuItemsSelection)          (VikLayer *);
 
 typedef void          (*VikLayerFuncAddMenuItems)          (VikLayer *,GtkMenu *,void *); /* void * is a VikLayersPanel */
 typedef bool      (*VikLayerFuncSublayerAddMenuItems)  (VikLayer *,GtkMenu *,void *, /* first void * is a VikLayersPanel */
@@ -150,11 +141,6 @@ typedef bool      (*VikLayerFuncSublayerAddMenuItems)  (VikLayer *,GtkMenu *,voi
 typedef const char * (*VikLayerFuncSublayerRenameRequest) (VikLayer *,const char *,void *,
                                                             int,VikViewport *,GtkTreeIter *); /* first void * is a VikLayersPanel */
 typedef bool      (*VikLayerFuncSublayerToggleVisible) (VikLayer *,int,void *);
-typedef const char * (*VikLayerFuncSublayerTooltip)       (VikLayer *,int,void *);
-typedef const char * (*VikLayerFuncLayerTooltip)          (VikLayer *);
-typedef bool      (*VikLayerFuncLayerSelected)         (VikLayer *,int,void *,int,void *); /* 2nd void * is a VikLayersPanel */
-
-typedef void          (*VikLayerFuncMarshall)              (VikLayer *, uint8_t **, int *);
 typedef VikLayer *    (*VikLayerFuncUnmarshall)            (uint8_t *, int, VikViewport *);
 
 /* returns true if needs to redraw due to changed param */
@@ -170,24 +156,10 @@ typedef void          (*VikLayerFuncChangeParam)           (GtkWidget *, ui_chan
 typedef bool      (*VikLayerFuncReadFileData)          (VikLayer *, FILE *, const char *); // char* is the directory path. Function should report success or failure
 typedef void          (*VikLayerFuncWriteFileData)         (VikLayer *, FILE *);
 
-/* item manipulation */
-typedef void          (*VikLayerFuncDeleteItem)            (VikLayer *, int, void *);
-                                                         /*      layer, subtype, pointer to sub-item */
-typedef void          (*VikLayerFuncCutItem)               (VikLayer *, int, void *);
-typedef void          (*VikLayerFuncCopyItem)              (VikLayer *, int, void *, uint8_t **, unsigned int *);
-                                                         /*      layer, subtype, pointer to sub-item, return pointer, return len */
-typedef bool      (*VikLayerFuncPasteItem)             (VikLayer *, int, uint8_t *, unsigned int);
-typedef void          (*VikLayerFuncFreeCopiedItem)        (int, void *);
-
 /* treeview drag and drop method. called on the destination layer. it is given a source and destination layer,
  * and the source and destination iters in the treeview.
  */
 typedef void 	      (*VikLayerFuncDragDropRequest)       (VikLayer *, VikLayer *, GtkTreeIter *, GtkTreePath *);
-
-typedef bool      (*VikLayerFuncSelectClick)           (VikLayer *, GdkEventButton *, Viewport *, tool_ed_t*);
-typedef bool      (*VikLayerFuncSelectMove)            (VikLayer *, GdkEventMotion *, Viewport *, tool_ed_t*);
-typedef bool      (*VikLayerFuncSelectRelease)         (VikLayer *, GdkEventButton *, Viewport *, tool_ed_t*);
-typedef bool      (*VikLayerFuncSelectedViewportMenu)  (VikLayer *, GdkEventButton *, Viewport *);
 
 typedef time_t        (*VikLayerFuncGetTimestamp)          (VikLayer *);
 
@@ -223,27 +195,18 @@ struct _VikLayerInterface {
 
   VikLayerFuncCreate                create;
   VikLayerFuncRealize               realize;
-  VikLayerFuncPostRead              post_read;
   VikLayerFuncFree                  free;
 
   VikLayerFuncProperties            properties;
-  VikLayerFuncDraw                  draw;
   VikLayerFuncChangeCoordMode       change_coord_mode;
 
   VikLayerFuncGetTimestamp          get_timestamp;
-
-  VikLayerFuncSetMenuItemsSelection set_menu_selection;
-  VikLayerFuncGetMenuItemsSelection get_menu_selection;
 
   VikLayerFuncAddMenuItems          add_menu_items;
   VikLayerFuncSublayerAddMenuItems  sublayer_add_menu_items;
   VikLayerFuncSublayerRenameRequest sublayer_rename_request;
   VikLayerFuncSublayerToggleVisible sublayer_toggle_visible;
-  VikLayerFuncSublayerTooltip       sublayer_tooltip;
-  VikLayerFuncLayerTooltip          layer_tooltip;
-  VikLayerFuncLayerSelected         layer_selected;
 
-  VikLayerFuncMarshall              marshall;
   VikLayerFuncUnmarshall            unmarshall;
 
   /* for I/O */
@@ -255,18 +218,7 @@ struct _VikLayerInterface {
   VikLayerFuncReadFileData          read_file_data;
   VikLayerFuncWriteFileData         write_file_data;
 
-  VikLayerFuncDeleteItem            delete_item;
-  VikLayerFuncCutItem               cut_item;
-  VikLayerFuncCopyItem              copy_item;
-  VikLayerFuncPasteItem             paste_item;
-  VikLayerFuncFreeCopiedItem        free_copied_item;
-
   VikLayerFuncDragDropRequest       drag_drop_request;
-
-  VikLayerFuncSelectClick           select_click;
-  VikLayerFuncSelectMove            select_move;
-  VikLayerFuncSelectRelease         select_release;
-  VikLayerFuncSelectedViewportMenu  show_viewport_menu;
 };
 
 VikLayerInterface *vik_layer_get_interface ( VikLayerTypeEnum type );
@@ -309,7 +261,6 @@ const char *vik_layer_sublayer_rename_request ( VikLayer *l, const char *newname
 
 bool vik_layer_sublayer_toggle_visible ( VikLayer *l, int subtype, void * sublayer );
 
-//const char* vik_layer_sublayer_tooltip ( VikLayer *l, int subtype, void * sublayer );
 
 const char* vik_layer_layer_tooltip ( VikLayer *l );
 
@@ -348,7 +299,13 @@ namespace SlavGPS {
 
 
 		/* Layer interface methods. */
+
+		/* Rarely used, this is called after a read operation
+		   or properties box is run.  usually used to create
+		   GC's that depend on params, but GC's can also be
+		   created from create() or set_param() */
 		virtual void post_read(Viewport * viewport, bool from_file);
+
 		virtual void draw(Viewport * viewport);
 		virtual char const * tooltip();
 		virtual char const * sublayer_tooltip(int subtype, void * sublayer);

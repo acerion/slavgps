@@ -33,14 +33,11 @@
 #include "icons/icons.h"
 
 static VikCoordLayer *coord_layer_new ( VikViewport *vp );
-//static void coord_layer_draw ( VikCoordLayer *vcl, VikViewport *vp );
 static void coord_layer_free ( VikCoordLayer *vcl );
 static VikCoordLayer *coord_layer_create ( VikViewport *vp );
-//static void coord_layer_marshall( VikCoordLayer *vcl, uint8_t **data, int *len );
 static VikCoordLayer *coord_layer_unmarshall( uint8_t *data, int len, VikViewport *vvp );
 static bool coord_layer_set_param ( VikCoordLayer *vcl, uint16_t id, VikLayerParamData data, VikViewport *vp, bool is_file_operation );
 static VikLayerParamData coord_layer_get_param ( VikCoordLayer *vcl, uint16_t id, bool is_file_operation );
-//static void coord_layer_post_read ( VikLayer *vl, VikViewport *vp, bool from_file );
 static void coord_layer_update_gc ( VikCoordLayer *vcl, VikViewport *vp );
 
 static VikLayerParamScale param_scales[] = {
@@ -81,28 +78,19 @@ VikLayerInterface vik_coord_layer_interface = {
 
   (VikLayerFuncCreate)                  coord_layer_create,
   (VikLayerFuncRealize)                 NULL,
-  (VikLayerFuncPostRead)                NULL,
   (VikLayerFuncFree)                    coord_layer_free,
 
   (VikLayerFuncProperties)              NULL,
-  (VikLayerFuncDraw)                    NULL,
   (VikLayerFuncChangeCoordMode)         NULL,
 
   (VikLayerFuncGetTimestamp)            NULL,
-
-  (VikLayerFuncSetMenuItemsSelection)   NULL,
-  (VikLayerFuncGetMenuItemsSelection)   NULL,
 
   (VikLayerFuncAddMenuItems)            NULL,
   (VikLayerFuncSublayerAddMenuItems)    NULL,
 
   (VikLayerFuncSublayerRenameRequest)   NULL,
   (VikLayerFuncSublayerToggleVisible)   NULL,
-  (VikLayerFuncSublayerTooltip)         NULL,
-  (VikLayerFuncLayerTooltip)            NULL,
-  (VikLayerFuncLayerSelected)           NULL,
 
-  (VikLayerFuncMarshall)		NULL,
   (VikLayerFuncUnmarshall)		coord_layer_unmarshall,
 
   (VikLayerFuncSetParam)                coord_layer_set_param,
@@ -112,17 +100,7 @@ VikLayerInterface vik_coord_layer_interface = {
   (VikLayerFuncReadFileData)            NULL,
   (VikLayerFuncWriteFileData)           NULL,
 
-  (VikLayerFuncDeleteItem)              NULL,
-  (VikLayerFuncCutItem)                 NULL,
-  (VikLayerFuncCopyItem)                NULL,
-  (VikLayerFuncPasteItem)               NULL,
-  (VikLayerFuncFreeCopiedItem)          NULL,
   (VikLayerFuncDragDropRequest)		NULL,
-
-  (VikLayerFuncSelectClick)             NULL,
-  (VikLayerFuncSelectMove)              NULL,
-  (VikLayerFuncSelectRelease)           NULL,
-  (VikLayerFuncSelectedViewportMenu)    NULL,
 };
 
 struct _VikCoordLayer {

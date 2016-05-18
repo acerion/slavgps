@@ -137,7 +137,6 @@ static VikToolInterface mapnik_tools[] = {
     GDK_LEFT_PTR, NULL, NULL },
 };
 
-//static void mapnik_layer_post_read (VikLayer *vl, VikViewport *vvp, bool from_file);
 
 VikLayerInterface vik_mapnik_layer_interface = {
 	"Mapnik Rendering",
@@ -157,28 +156,19 @@ VikLayerInterface vik_mapnik_layer_interface = {
 
 	(VikLayerFuncCreate)                  mapnik_layer_create,
 	(VikLayerFuncRealize)                 NULL,
-	(VikLayerFuncPostRead)                NULL,
 	(VikLayerFuncFree)                    mapnik_layer_free,
 
 	(VikLayerFuncProperties)              NULL,
-	(VikLayerFuncDraw)                    NULL,
 	(VikLayerFuncChangeCoordMode)         NULL,
 
 	(VikLayerFuncGetTimestamp)            NULL,
-
-	(VikLayerFuncSetMenuItemsSelection)   NULL,
-	(VikLayerFuncGetMenuItemsSelection)   NULL,
 
 	(VikLayerFuncAddMenuItems)            mapnik_layer_add_menu_items,
 	(VikLayerFuncSublayerAddMenuItems)    NULL,
 
 	(VikLayerFuncSublayerRenameRequest)   NULL,
 	(VikLayerFuncSublayerToggleVisible)   NULL,
-	(VikLayerFuncSublayerTooltip)         NULL,
-	(VikLayerFuncLayerTooltip)            NULL,
-	(VikLayerFuncLayerSelected)           NULL,
 
-	(VikLayerFuncMarshall)                NULL,
 	(VikLayerFuncUnmarshall)              mapnik_layer_unmarshall,
 
 	(VikLayerFuncSetParam)                mapnik_layer_set_param,
@@ -188,17 +178,7 @@ VikLayerInterface vik_mapnik_layer_interface = {
 	(VikLayerFuncReadFileData)            NULL,
 	(VikLayerFuncWriteFileData)           NULL,
 
-	(VikLayerFuncDeleteItem)              NULL,
-	(VikLayerFuncCutItem)                 NULL,
-	(VikLayerFuncCopyItem)                NULL,
-	(VikLayerFuncPasteItem)               NULL,
-	(VikLayerFuncFreeCopiedItem)          NULL,
 	(VikLayerFuncDragDropRequest)         NULL,
-
-	(VikLayerFuncSelectClick)             NULL,
-	(VikLayerFuncSelectMove)              NULL,
-	(VikLayerFuncSelectRelease)           NULL,
-	(VikLayerFuncSelectedViewportMenu)    NULL,
 };
 
 struct _VikMapnikLayer {

@@ -114,14 +114,10 @@ static double __mapzooms_y[] = { 0.0, 0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0, 32.0,
 /**************************/
 
 
-//static void maps_layer_post_read (VikLayer *vl, VikViewport *vp, bool from_file);
-//static const char* maps_layer_tooltip (VikMapsLayer *vml);
-//static void maps_layer_marshall(VikMapsLayer *vml, uint8_t **data, int *len);
 static VikMapsLayer *maps_layer_unmarshall(uint8_t *data, int len, VikViewport *vvp);
 static bool maps_layer_set_param (VikMapsLayer *vml, uint16_t id, VikLayerParamData data, VikViewport *vvp, bool is_file_operation);
 static VikLayerParamData maps_layer_get_param (VikMapsLayer *vml, uint16_t id, bool is_file_operation);
 static void maps_layer_change_param (GtkWidget *widget, ui_change_values values);
-static void maps_layer_draw (VikMapsLayer *vml, VikViewport *vvp);
 static VikMapsLayer *maps_layer_new (VikViewport *vvp);
 static void maps_layer_free (VikMapsLayer *vml);
 static bool maps_layer_download_release (VikMapsLayer *vml, GdkEventButton *event, Viewport * viewport);
@@ -235,28 +231,19 @@ VikLayerInterface vik_maps_layer_interface = {
 
 	(VikLayerFuncCreate)                  maps_layer_new,
 	(VikLayerFuncRealize)                 NULL,
-	(VikLayerFuncPostRead)                NULL,
 	(VikLayerFuncFree)                    maps_layer_free,
 
 	(VikLayerFuncProperties)              NULL,
-	(VikLayerFuncDraw)                    NULL,
 	(VikLayerFuncChangeCoordMode)         NULL,
 
 	(VikLayerFuncGetTimestamp)            NULL,
-
-	(VikLayerFuncSetMenuItemsSelection)   NULL,
-	(VikLayerFuncGetMenuItemsSelection)   NULL,
 
 	(VikLayerFuncAddMenuItems)            maps_layer_add_menu_items,
 	(VikLayerFuncSublayerAddMenuItems)    NULL,
 
 	(VikLayerFuncSublayerRenameRequest)   NULL,
 	(VikLayerFuncSublayerToggleVisible)   NULL,
-	(VikLayerFuncSublayerTooltip)         NULL,
-	(VikLayerFuncLayerTooltip)            NULL,
-	(VikLayerFuncLayerSelected)           NULL,
 
-	(VikLayerFuncMarshall)		      NULL,
 	(VikLayerFuncUnmarshall)	      maps_layer_unmarshall,
 
 	(VikLayerFuncSetParam)                maps_layer_set_param,
@@ -266,17 +253,7 @@ VikLayerInterface vik_maps_layer_interface = {
 	(VikLayerFuncReadFileData)            NULL,
 	(VikLayerFuncWriteFileData)           NULL,
 
-	(VikLayerFuncDeleteItem)              NULL,
-	(VikLayerFuncCutItem)                 NULL,
-	(VikLayerFuncCopyItem)                NULL,
-	(VikLayerFuncPasteItem)               NULL,
-	(VikLayerFuncFreeCopiedItem)          NULL,
 	(VikLayerFuncDragDropRequest)		NULL,
-
-	(VikLayerFuncSelectClick)             NULL,
-	(VikLayerFuncSelectMove)              NULL,
-	(VikLayerFuncSelectRelease)           NULL,
-	(VikLayerFuncSelectedViewportMenu)    NULL,
 };
 
 struct _VikMapsLayer {

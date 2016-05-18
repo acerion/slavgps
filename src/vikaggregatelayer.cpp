@@ -37,11 +37,9 @@
 #include <glib/gi18n.h>
 
 
-//static void aggregate_layer_marshall(VikAggregateLayer *val, uint8_t **data, int *len);
 static VikAggregateLayer *aggregate_layer_unmarshall(uint8_t *data, int len, VikViewport *vvp);
 static void aggregate_layer_change_coord_mode(VikAggregateLayer *val, VikCoordMode mode);
 static void aggregate_layer_drag_drop_request(VikAggregateLayer *val_src, VikAggregateLayer *val_dest, GtkTreeIter *src_item_iter, GtkTreePath *dest_path);
-//static const char* aggregate_layer_tooltip(VikAggregateLayer *val);
 static void aggregate_layer_add_menu_items(VikAggregateLayer *val, GtkMenu *menu, void * vlp);
 
 VikLayerInterface vik_aggregate_layer_interface = {
@@ -62,28 +60,19 @@ VikLayerInterface vik_aggregate_layer_interface = {
 
 	(VikLayerFuncCreate)                  vik_aggregate_layer_create,
 	(VikLayerFuncRealize)                 vik_aggregate_layer_realize,
-	(VikLayerFuncPostRead)                NULL,
 	(VikLayerFuncFree)                    vik_aggregate_layer_free,
 
 	(VikLayerFuncProperties)              NULL,
-	(VikLayerFuncDraw)                    NULL,
 	(VikLayerFuncChangeCoordMode)         aggregate_layer_change_coord_mode,
 
 	(VikLayerFuncGetTimestamp)            NULL,
-
-	(VikLayerFuncSetMenuItemsSelection)	NULL,
-	(VikLayerFuncGetMenuItemsSelection)	NULL,
 
 	(VikLayerFuncAddMenuItems)            aggregate_layer_add_menu_items,
 	(VikLayerFuncSublayerAddMenuItems)    NULL,
 
 	(VikLayerFuncSublayerRenameRequest)   NULL,
 	(VikLayerFuncSublayerToggleVisible)   NULL,
-	(VikLayerFuncSublayerTooltip)         NULL,
-	(VikLayerFuncLayerTooltip)            NULL,
-	(VikLayerFuncLayerSelected)           NULL,
 
-	(VikLayerFuncMarshall)		      NULL,
 	(VikLayerFuncUnmarshall)	      aggregate_layer_unmarshall,
 
 	(VikLayerFuncSetParam)                NULL,
@@ -93,17 +82,7 @@ VikLayerInterface vik_aggregate_layer_interface = {
 	(VikLayerFuncReadFileData)            NULL,
 	(VikLayerFuncWriteFileData)           NULL,
 
-	(VikLayerFuncDeleteItem)              NULL,
-	(VikLayerFuncCutItem)                 NULL,
-	(VikLayerFuncCopyItem)                NULL,
-	(VikLayerFuncPasteItem)               NULL,
-	(VikLayerFuncFreeCopiedItem)          NULL,
 	(VikLayerFuncDragDropRequest)		aggregate_layer_drag_drop_request,
-
-	(VikLayerFuncSelectClick)             NULL,
-	(VikLayerFuncSelectMove)              NULL,
-	(VikLayerFuncSelectRelease)           NULL,
-	(VikLayerFuncSelectedViewportMenu)    NULL,
 };
 
 struct _VikAggregateLayer {

@@ -265,28 +265,19 @@ VikLayerInterface vik_gps_layer_interface = {
 
   (VikLayerFuncCreate)                  vik_gps_layer_create,
   (VikLayerFuncRealize)                 vik_gps_layer_realize,
-  (VikLayerFuncPostRead)                NULL,
   (VikLayerFuncFree)                    vik_gps_layer_free,
 
   (VikLayerFuncProperties)              NULL,
-  (VikLayerFuncDraw)                    NULL,
   (VikLayerFuncChangeCoordMode)         gps_layer_change_coord_mode,
 
   (VikLayerFuncGetTimestamp)            NULL,
-
-  (VikLayerFuncSetMenuItemsSelection)   NULL,
-  (VikLayerFuncGetMenuItemsSelection)   NULL,
 
   (VikLayerFuncAddMenuItems)            gps_layer_add_menu_items,
   (VikLayerFuncSublayerAddMenuItems)    NULL,
 
   (VikLayerFuncSublayerRenameRequest)   NULL,
   (VikLayerFuncSublayerToggleVisible)   NULL,
-  (VikLayerFuncSublayerTooltip)         NULL,
-  (VikLayerFuncLayerTooltip)            NULL,
-  (VikLayerFuncLayerSelected)           NULL,
 
-  (VikLayerFuncMarshall)		NULL,
   (VikLayerFuncUnmarshall)		gps_layer_unmarshall,
 
   (VikLayerFuncSetParam)                gps_layer_set_param,
@@ -296,17 +287,7 @@ VikLayerInterface vik_gps_layer_interface = {
   (VikLayerFuncReadFileData)            NULL,
   (VikLayerFuncWriteFileData)           NULL,
 
-  (VikLayerFuncDeleteItem)              NULL,
-  (VikLayerFuncCutItem)                 NULL,
-  (VikLayerFuncCopyItem)                NULL,
-  (VikLayerFuncPasteItem)               NULL,
-  (VikLayerFuncFreeCopiedItem)          NULL,
   (VikLayerFuncDragDropRequest)         NULL,
-
-  (VikLayerFuncSelectClick)             NULL,
-  (VikLayerFuncSelectMove)              NULL,
-  (VikLayerFuncSelectRelease)           NULL,
-  (VikLayerFuncSelectedViewportMenu)    NULL,
 };
 
 enum {TRW_DOWNLOAD=0, TRW_UPLOAD,
