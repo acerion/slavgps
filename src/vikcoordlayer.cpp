@@ -80,27 +80,11 @@ VikLayerInterface vik_coord_layer_interface = {
   (VikLayerFuncRealize)                 NULL,
   (VikLayerFuncFree)                    coord_layer_free,
 
-  (VikLayerFuncProperties)              NULL,
-  (VikLayerFuncChangeCoordMode)         NULL,
-
-  (VikLayerFuncGetTimestamp)            NULL,
-
-  (VikLayerFuncAddMenuItems)            NULL,
-  (VikLayerFuncSublayerAddMenuItems)    NULL,
-
-  (VikLayerFuncSublayerRenameRequest)   NULL,
-  (VikLayerFuncSublayerToggleVisible)   NULL,
-
   (VikLayerFuncUnmarshall)		coord_layer_unmarshall,
 
   (VikLayerFuncSetParam)                coord_layer_set_param,
   (VikLayerFuncGetParam)                coord_layer_get_param,
   (VikLayerFuncChangeParam)             NULL,
-
-  (VikLayerFuncReadFileData)            NULL,
-  (VikLayerFuncWriteFileData)           NULL,
-
-  (VikLayerFuncDragDropRequest)		NULL,
 };
 
 struct _VikCoordLayer {

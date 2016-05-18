@@ -155,12 +155,10 @@ static void write_layer_params_and_data ( VikLayer *l, FILE *f )
       file_write_layer_param(f, params[i].name, params[i].type, data);
     }
   }
-  if ( vik_layer_get_interface(l->type)->write_file_data )
-  {
-    fprintf ( f, "\n\n~LayerData\n" );
-    vik_layer_get_interface(l->type)->write_file_data ( l, f );
-    fprintf ( f, "~EndLayerData\n" );
-  }
+
+  Layer * layer = (Layer *) l->layer;
+  layer->write_file(f);
+
   /* foreach param:
      write param, and get_value, etc.
      then run layer data, and that's it.
@@ -394,11 +392,13 @@ static bool file_read ( VikAggregateLayer *top, FILE *f, const char *dirpath, Vi
       }
       else if ( str_starts_with ( line, "LayerData", 9, false ) )
       {
-        if ( stack->data && vik_layer_get_interface(VIK_LAYER(stack->data)->type)->read_file_data )
-        {
-          /* must read until hits ~EndLayerData */
-          if ( ! vik_layer_get_interface(VIK_LAYER(stack->data)->type)->read_file_data ( VIK_LAYER(stack->data), f, dirpath ) )
-            successful_read = false;
+        VikLayer * vl = VIK_LAYER(stack->data);
+        Layer * layer = (Layer *) vl->layer;
+	int rv = layer->read_file(f, dirpath);
+	if (rv == 0) {
+		successful_read = false;
+	} else if (rv > 0) {
+		/* Success, pass. */
         }
         else
         { /* simply skip layer data over */

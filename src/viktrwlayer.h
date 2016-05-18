@@ -127,6 +127,19 @@ namespace SlavGPS {
 		bool paste_item(int subtype, uint8_t * item, size_t len);
 		void delete_item(int subtype, void * sublayer);
 
+		void change_coord_mode(VikCoordMode dest_mode);
+
+		time_t get_timestamp();
+
+		void drag_drop_request(Layer * src, GtkTreeIter * src_item_iter, GtkTreePath * dest_path);
+
+		int read_file(FILE * f, char const * dirpath);
+		void write_file(FILE * f);
+		void add_menu_items(GtkMenu * menu, void * vlp);
+		bool sublayer_add_menu_items(GtkMenu * menu, void * vlp, int subtype, void * sublayer, GtkTreeIter * iter, VikViewport * vvp);
+		char const * sublayer_rename_request(const char * newname, void * vlp, int subtype, void * sublayer, GtkTreeIter * iter);
+		bool sublayer_toggle_visible(int subtype, void * sublayer);
+
 
 
 

@@ -101,16 +101,12 @@ enum {
   PARAM_FILE_CACHE_DIR,
   NUM_PARAMS };
 
-//static const char* mapnik_layer_tooltip ( VikMapnikLayer *vml );
-//static void mapnik_layer_marshall( VikMapnikLayer *vml, uint8_t **data, int *len );
 static VikMapnikLayer *mapnik_layer_unmarshall( uint8_t *data, int len, VikViewport *vvp );
 static bool mapnik_layer_set_param ( VikMapnikLayer *vml, uint16_t id, VikLayerParamData data, VikViewport *vp, bool is_file_operation );
 static VikLayerParamData mapnik_layer_get_param ( VikMapnikLayer *vml, uint16_t id, bool is_file_operation );
 static VikMapnikLayer *mapnik_layer_new ( VikViewport *vvp );
 static VikMapnikLayer *mapnik_layer_create ( VikViewport *vp );
 static void mapnik_layer_free ( VikMapnikLayer *vml );
-//static void mapnik_layer_draw ( VikMapnikLayer *vml, VikViewport *vp );
-static void mapnik_layer_add_menu_items ( VikMapnikLayer *vml, GtkMenu *menu, void * vlp );
 
 static void * mapnik_feature_create ( VikWindow *vw, Viewport * viewport)
 {
@@ -158,27 +154,11 @@ VikLayerInterface vik_mapnik_layer_interface = {
 	(VikLayerFuncRealize)                 NULL,
 	(VikLayerFuncFree)                    mapnik_layer_free,
 
-	(VikLayerFuncProperties)              NULL,
-	(VikLayerFuncChangeCoordMode)         NULL,
-
-	(VikLayerFuncGetTimestamp)            NULL,
-
-	(VikLayerFuncAddMenuItems)            mapnik_layer_add_menu_items,
-	(VikLayerFuncSublayerAddMenuItems)    NULL,
-
-	(VikLayerFuncSublayerRenameRequest)   NULL,
-	(VikLayerFuncSublayerToggleVisible)   NULL,
-
 	(VikLayerFuncUnmarshall)              mapnik_layer_unmarshall,
 
 	(VikLayerFuncSetParam)                mapnik_layer_set_param,
 	(VikLayerFuncGetParam)                mapnik_layer_get_param,
 	(VikLayerFuncChangeParam)             NULL,
-
-	(VikLayerFuncReadFileData)            NULL,
-	(VikLayerFuncWriteFileData)           NULL,
-
-	(VikLayerFuncDragDropRequest)         NULL,
 };
 
 struct _VikMapnikLayer {
@@ -1013,8 +993,10 @@ static void mapnik_layer_about ( menu_array_values values )
 /**
  *
  */
-static void mapnik_layer_add_menu_items ( VikMapnikLayer *vml, GtkMenu *menu, void * vlp )
+void LayerMapnik::add_menu_items(GtkMenu * menu, void * vlp)
 {
+	VikMapnikLayer * vml = (VikMapnikLayer *) this->vl;
+
 	static menu_array_values values;
 	values[MA_VML] = vml;
 	VikLayersPanel * vlp_ = VIK_LAYERS_PANEL(vlp);

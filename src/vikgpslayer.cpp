@@ -60,18 +60,12 @@ extern GList * a_babel_device_list;
 static VikGpsLayer *vik_gps_layer_create (VikViewport *vp);
 static void vik_gps_layer_realize ( VikGpsLayer *val, VikTreeview *vt, GtkTreeIter *layer_iter );
 static void vik_gps_layer_free ( VikGpsLayer *val );
-//static void vik_gps_layer_draw ( VikGpsLayer *val, VikViewport *vp );
 static VikGpsLayer *vik_gps_layer_new ( VikViewport *vp );
 
-//static void gps_layer_marshall( VikGpsLayer *val, uint8_t **data, int *len );
 static VikGpsLayer *gps_layer_unmarshall( uint8_t *data, int len, VikViewport *vvp );
 static bool gps_layer_set_param ( VikGpsLayer *vgl, uint16_t id, VikLayerParamData data, VikViewport *vp, bool is_file_operation );
 static VikLayerParamData gps_layer_get_param ( VikGpsLayer *vgl, uint16_t id, bool is_file_operation );
 
-//static const char* gps_layer_tooltip ( VikGpsLayer *vgl );
-
-static void gps_layer_change_coord_mode ( VikGpsLayer *val, VikCoordMode mode );
-static void gps_layer_add_menu_items( VikGpsLayer *vtl, GtkMenu *menu, void * vlp );
 
 static void gps_upload_cb( void * layer_and_vlp[2] );
 static void gps_download_cb( void * layer_and_vlp[2] );
@@ -267,27 +261,11 @@ VikLayerInterface vik_gps_layer_interface = {
   (VikLayerFuncRealize)                 vik_gps_layer_realize,
   (VikLayerFuncFree)                    vik_gps_layer_free,
 
-  (VikLayerFuncProperties)              NULL,
-  (VikLayerFuncChangeCoordMode)         gps_layer_change_coord_mode,
-
-  (VikLayerFuncGetTimestamp)            NULL,
-
-  (VikLayerFuncAddMenuItems)            gps_layer_add_menu_items,
-  (VikLayerFuncSublayerAddMenuItems)    NULL,
-
-  (VikLayerFuncSublayerRenameRequest)   NULL,
-  (VikLayerFuncSublayerToggleVisible)   NULL,
-
   (VikLayerFuncUnmarshall)		gps_layer_unmarshall,
 
   (VikLayerFuncSetParam)                gps_layer_set_param,
   (VikLayerFuncGetParam)                gps_layer_get_param,
   (VikLayerFuncChangeParam)             NULL,
-
-  (VikLayerFuncReadFileData)            NULL,
-  (VikLayerFuncWriteFileData)           NULL,
-
-  (VikLayerFuncDragDropRequest)         NULL,
 };
 
 enum {TRW_DOWNLOAD=0, TRW_UPLOAD,
@@ -721,16 +699,18 @@ void LayerGPS::draw(Viewport * viewport)
 #endif /* VIK_CONFIG_REALTIME_GPS_TRACKING */
 }
 
-static void gps_layer_change_coord_mode ( VikGpsLayer *vgl, VikCoordMode mode )
+void LayerGPS::change_coord_mode(VikCoordMode mode)
 {
+	VikGpsLayer * vgl = (VikGpsLayer *) this->vl;
   int i;
   for (i = 0; i < NUM_TRW; i++) {
     vik_layer_change_coord_mode(VIK_LAYER(vgl->trw_children[i]), mode);
   }
 }
 
-static void gps_layer_add_menu_items( VikGpsLayer *vgl, GtkMenu *menu, void * vlp )
+void LayerGPS::add_menu_items(GtkMenu * menu, void * vlp)
 {
+  VikGpsLayer * vgl = (VikGpsLayer *) this->vl;
   static void * pass_along[2];
   GtkWidget *item;
   pass_along[0] = vgl;
@@ -838,8 +818,8 @@ static void vik_gps_layer_realize ( VikGpsLayer *vgl, VikTreeview *vt, GtkTreeIt
     VikLayer * trw = VIK_LAYER(vgl->trw_children[ix]);
     Layer * layer = (Layer *) trw->layer;
     vik_treeview_add_layer ( VIK_LAYER(vgl)->vt, layer_iter, &iter,
-        _(trw_names[ix]), vgl, true,
-        layer, trw->type, trw->type, vik_layer_get_timestamp(trw) );
+			     _(trw_names[ix]), vgl, true,
+			     layer, trw->type, trw->type, layer->get_timestamp() );
     if ( ! trw->visible )
       vik_treeview_item_set_visible ( VIK_LAYER(vgl)->vt, &iter, false );
     vik_layer_realize ( trw, VIK_LAYER(vgl)->vt, &iter );

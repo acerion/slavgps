@@ -204,27 +204,11 @@ VikLayerInterface vik_dem_layer_interface = {
 	(VikLayerFuncRealize)                 NULL,
 	(VikLayerFuncFree)                    dem_layer_free,
 
-	(VikLayerFuncProperties)              NULL,
-	(VikLayerFuncChangeCoordMode)         NULL,
-
-	(VikLayerFuncGetTimestamp)            NULL,
-
-	(VikLayerFuncAddMenuItems)            NULL,
-	(VikLayerFuncSublayerAddMenuItems)    NULL,
-
-	(VikLayerFuncSublayerRenameRequest)   NULL,
-	(VikLayerFuncSublayerToggleVisible)   NULL,
-
 	(VikLayerFuncUnmarshall)	      dem_layer_unmarshall,
 
 	(VikLayerFuncSetParam)                dem_layer_set_param,
 	(VikLayerFuncGetParam)                dem_layer_get_param,
 	(VikLayerFuncChangeParam)             NULL,
-
-	(VikLayerFuncReadFileData)            NULL,
-	(VikLayerFuncWriteFileData)           NULL,
-
-	(VikLayerFuncDragDropRequest)	      NULL,
 };
 
 struct _VikDEMLayer {

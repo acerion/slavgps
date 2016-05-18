@@ -556,19 +556,19 @@ enum {
 static VikTrwLayer* trw_layer_create ( VikViewport *vp );
 static void trw_layer_realize ( VikTrwLayer *vtl, VikTreeview *vt, GtkTreeIter *layer_iter );
 static void trw_layer_free ( VikTrwLayer *trwlayer );
-static void trw_layer_change_coord_mode ( VikTrwLayer *vtl, VikCoordMode dest_mode );
-static time_t trw_layer_get_timestamp ( VikTrwLayer *vtl );
+//static void trw_layer_change_coord_mode ( VikTrwLayer *vtl, VikCoordMode dest_mode );
+//static time_t trw_layer_get_timestamp ( VikTrwLayer *vtl );
 //static void trw_layer_set_menu_selection ( VikTrwLayer *vtl, uint16_t );
 //static uint16_t trw_layer_get_menu_selection ( VikTrwLayer *vtl );
-static void trw_layer_add_menu_items ( VikTrwLayer *vtl, GtkMenu *menu, void * vlp );
-static bool trw_layer_sublayer_add_menu_items ( VikTrwLayer *l, GtkMenu *menu, void * vlp, int subtype, void * sublayer, GtkTreeIter *iter, VikViewport *vvp );
-static const char* trw_layer_sublayer_rename_request ( VikTrwLayer *l, const char *newname, void * vlp, int subtype, void * sublayer, GtkTreeIter *iter );
-static bool trw_layer_sublayer_toggle_visible ( VikTrwLayer *l, int subtype, void * sublayer );
+//static void trw_layer_add_menu_items ( VikTrwLayer *vtl, GtkMenu *menu, void * vlp );
+//static bool trw_layer_sublayer_add_menu_items ( VikTrwLayer *l, GtkMenu *menu, void * vlp, int subtype, void * sublayer, GtkTreeIter *iter, VikViewport *vvp );
+//static const char* trw_layer_sublayer_rename_request ( VikTrwLayer *l, const char *newname, void * vlp, int subtype, void * sublayer, GtkTreeIter *iter );
+//static bool trw_layer_sublayer_toggle_visible ( VikTrwLayer *l, int subtype, void * sublayer );
 static VikTrwLayer *trw_layer_unmarshall ( uint8_t *data, int len, VikViewport *vvp );
 static bool trw_layer_set_param ( VikTrwLayer *vtl, uint16_t id, VikLayerParamData data, VikViewport *vp, bool is_file_operation );
 static VikLayerParamData trw_layer_get_param ( VikTrwLayer *vtl, uint16_t id, bool is_file_operation );
 static void trw_layer_change_param ( GtkWidget *widget, ui_change_values values );
-static void trw_layer_drag_drop_request ( VikTrwLayer *vtl_src, VikTrwLayer *vtl_dest, GtkTreeIter *src_item_iter, GtkTreePath *dest_path );
+//static void trw_layer_drag_drop_request ( VikTrwLayer *vtl_src, VikTrwLayer *vtl_dest, GtkTreeIter *src_item_iter, GtkTreePath *dest_path );
 /* End Layer Interface function definitions */
 
 VikLayerInterface vik_trw_layer_interface = {
@@ -591,26 +591,11 @@ VikLayerInterface vik_trw_layer_interface = {
   (VikLayerFuncRealize)                 trw_layer_realize,
   (VikLayerFuncFree)                    trw_layer_free,
 
-  (VikLayerFuncProperties)              NULL,
-  (VikLayerFuncChangeCoordMode)         trw_layer_change_coord_mode,
-  (VikLayerFuncGetTimestamp)            trw_layer_get_timestamp,
-
-  (VikLayerFuncAddMenuItems)            trw_layer_add_menu_items,
-  (VikLayerFuncSublayerAddMenuItems)    trw_layer_sublayer_add_menu_items,
-
-  (VikLayerFuncSublayerRenameRequest)   trw_layer_sublayer_rename_request,
-  (VikLayerFuncSublayerToggleVisible)   trw_layer_sublayer_toggle_visible,
-
   (VikLayerFuncUnmarshall)              trw_layer_unmarshall,
 
   (VikLayerFuncSetParam)                trw_layer_set_param,
   (VikLayerFuncGetParam)                trw_layer_get_param,
   (VikLayerFuncChangeParam)             trw_layer_change_param,
-
-  (VikLayerFuncReadFileData)            a_gpspoint_read_file,
-  (VikLayerFuncWriteFileData)           a_gpspoint_write_file,
-
-  (VikLayerFuncDragDropRequest)         trw_layer_drag_drop_request,
 };
 
 
@@ -1885,8 +1870,10 @@ static void trw_layer_realize(VikTrwLayer * vtl, VikTreeview * vt, GtkTreeIter *
 
 
 
-static bool trw_layer_sublayer_toggle_visible ( VikTrwLayer *l, int subtype, void * sublayer )
+bool LayerTRW::sublayer_toggle_visible(int subtype, void * sublayer)
 {
+  VikTrwLayer * l = (VikTrwLayer *) this->vl;
+
   sg_uid_t uid = (sg_uid_t) ((long) sublayer);
   switch ( subtype )
   {
@@ -3215,8 +3202,10 @@ static GtkWidget* create_external_submenu ( GtkMenu *menu )
   return external_submenu;
 }
 
-static void trw_layer_add_menu_items ( VikTrwLayer *vtl, GtkMenu *menu, void * vlp )
+void LayerTRW::add_menu_items(GtkMenu * menu, void * vlp)
 {
+  VikTrwLayer * vtl = (VikTrwLayer *) this->vl;
+
   static menu_array_layer pass_along;
   GtkWidget *item;
   GtkWidget *export_submenu;
@@ -3835,8 +3824,8 @@ void LayerTRW::move_item(VikTrwLayer * vtl_dest, void * id, int type)
 		free(newname);
 		this->delete_track(trk);
 		// Reset layer timestamps in case they have now changed
-		vik_treeview_item_set_timestamp(vtl_dest->vl.vt, &vtl_dest->vl.iter, trw_layer_get_timestamp(vtl_dest));
-		vik_treeview_item_set_timestamp(vtl_src->vl.vt, &vtl_src->vl.iter, trw_layer_get_timestamp(vtl_src));
+		vik_treeview_item_set_timestamp(vtl_dest->vl.vt, &vtl_dest->vl.iter, vtl_dest->trw->get_timestamp());
+		vik_treeview_item_set_timestamp(vtl_src->vl.vt, &vtl_src->vl.iter, vtl_src->trw->get_timestamp());
 	}
 
 	if (type == VIK_TRW_LAYER_SUBLAYER_ROUTE) {
@@ -3864,8 +3853,8 @@ void LayerTRW::move_item(VikTrwLayer * vtl_dest, void * id, int type)
 		vtl_dest->trw->calculate_bounds_waypoints();
 		vtl_src->trw->calculate_bounds_waypoints();
 		// Reset layer timestamps in case they have now changed
-		vik_treeview_item_set_timestamp(vtl_dest->vl.vt, &vtl_dest->vl.iter, trw_layer_get_timestamp(vtl_dest));
-		vik_treeview_item_set_timestamp(vtl_src->vl.vt, &vtl_src->vl.iter, trw_layer_get_timestamp(vtl_src));
+		vik_treeview_item_set_timestamp(vtl_dest->vl.vt, &vtl_dest->vl.iter, vtl_dest->trw->get_timestamp());
+		vik_treeview_item_set_timestamp(vtl_src->vl.vt, &vtl_src->vl.iter, vtl_src->trw->get_timestamp());
 	}
 }
 
@@ -3873,8 +3862,11 @@ void LayerTRW::move_item(VikTrwLayer * vtl_dest, void * id, int type)
 
 
 
-static void trw_layer_drag_drop_request ( VikTrwLayer *vtl_src, VikTrwLayer *vtl_dest, GtkTreeIter *src_item_iter, GtkTreePath *dest_path )
+void LayerTRW::drag_drop_request(Layer * src, GtkTreeIter * src_item_iter, GtkTreePath * dest_path)
 {
+  VikTrwLayer * vtl_dest = (VikTrwLayer *) this->vl;
+  VikTrwLayer * vtl_src = (VikTrwLayer *) src->vl;
+
   VikTreeview *vt = VIK_LAYER(vtl_src)->vt;
   int type = vik_treeview_item_get_data(vt, src_item_iter);
 
@@ -4222,7 +4214,7 @@ static void trw_layer_delete_item ( menu_array_sublayer values )
       was_visible = vtl->trw->delete_waypoint(wp);
       vtl->trw->calculate_bounds_waypoints();
       // Reset layer timestamp in case it has now changed
-      vik_treeview_item_set_timestamp ( vtl->vl.vt, &vtl->vl.iter, trw_layer_get_timestamp(vtl) );
+      vik_treeview_item_set_timestamp ( vtl->vl.vt, &vtl->vl.iter, vtl->trw->get_timestamp() );
     }
   }
   else if ( KPOINTER_TO_INT (values[MA_SUBTYPE]) == VIK_TRW_LAYER_SUBLAYER_TRACK )
@@ -4237,7 +4229,7 @@ static void trw_layer_delete_item ( menu_array_sublayer values )
           return;
       was_visible = vtl->trw->delete_track(trk);
       // Reset layer timestamp in case it has now changed
-      vik_treeview_item_set_timestamp ( vtl->vl.vt, &vtl->vl.iter, trw_layer_get_timestamp(vtl) );
+      vik_treeview_item_set_timestamp ( vtl->vl.vt, &vtl->vl.iter, vtl->trw->get_timestamp() );
     }
   }
   else
@@ -6157,7 +6149,7 @@ static void trw_layer_delete_tracks_from_selection ( menu_array_layer values )
     }
     g_list_free(delete_list);
     // Reset layer timestamps in case they have now changed
-    vik_treeview_item_set_timestamp ( vtl->vl.vt, &vtl->vl.iter, trw_layer_get_timestamp(vtl) );
+    vik_treeview_item_set_timestamp ( vtl->vl.vt, &vtl->vl.iter, vtl->trw->get_timestamp() );
 
     vik_layer_emit_update( VIK_LAYER(vtl) );
   }
@@ -6386,7 +6378,7 @@ static void trw_layer_delete_waypoints_from_selection ( menu_array_layer values 
 
     vtl->trw->calculate_bounds_waypoints();
     // Reset layer timestamp in case it has now changed
-    vik_treeview_item_set_timestamp ( vtl->vl.vt, &vtl->vl.iter, trw_layer_get_timestamp(vtl) );
+    vik_treeview_item_set_timestamp ( vtl->vl.vt, &vtl->vl.iter, vtl->trw->get_timestamp() );
     vik_layer_emit_update( VIK_LAYER(vtl) );
   }
 
@@ -6704,8 +6696,10 @@ static void trw_layer_waypoint_webpage ( menu_array_sublayer values )
   }
 }
 
-static const char* trw_layer_sublayer_rename_request ( VikTrwLayer *l, const char *newname, void * vlp, int subtype, void * sublayer, GtkTreeIter *iter )
+char const * LayerTRW::sublayer_rename_request(const char * newname, void * vlp, int subtype, void * sublayer, GtkTreeIter * iter)
 {
+  VikTrwLayer * l = (VikTrwLayer *) this->vl;
+
   sg_uid_t uid = (sg_uid_t) ((long) sublayer);
   if ( subtype == VIK_TRW_LAYER_SUBLAYER_WAYPOINT )
   {
@@ -6867,8 +6861,10 @@ static void trw_layer_google_route_webpage ( menu_array_sublayer values )
 
 /* vlp can be NULL if necessary - i.e. right-click from a tool */
 /* viewpoint is now available instead */
-static bool trw_layer_sublayer_add_menu_items ( VikTrwLayer *l, GtkMenu *menu, void * vlp, int subtype, void * sublayer, GtkTreeIter *iter, VikViewport *vvp )
+bool LayerTRW::sublayer_add_menu_items(GtkMenu * menu, void * vlp, int subtype, void * sublayer, GtkTreeIter * iter, VikViewport * vvp)
 {
+  VikTrwLayer * l = (VikTrwLayer *) this->vl;
+
   static menu_array_sublayer pass_along;
   sg_uid_t uid = (sg_uid_t) ((long) sublayer);
   GtkWidget *item;
@@ -8436,13 +8432,12 @@ bool LayerTRW::show_selected_viewport_menu(GdkEventButton * event, Viewport * vi
         else
 	  iter = this->tracks_iters.at(uid);
 
-        trw_layer_sublayer_add_menu_items ( (VikTrwLayer *) this->vl,
-                                            ((VikTrwLayer *) this->vl)->track_right_click_menu,
-                                            NULL,
-                                            trk->is_route ? VIK_TRW_LAYER_SUBLAYER_ROUTE : VIK_TRW_LAYER_SUBLAYER_TRACK,
-                                            (void *) ((long) uid),
-                                            iter,
-                                            (VikViewport *) viewport->vvp );
+        this->sublayer_add_menu_items(((VikTrwLayer *) this->vl)->track_right_click_menu,
+				      NULL,
+				      trk->is_route ? VIK_TRW_LAYER_SUBLAYER_ROUTE : VIK_TRW_LAYER_SUBLAYER_TRACK,
+				      (void *) ((long) uid),
+				      iter,
+				      (VikViewport *) viewport->vvp );
       }
 
       gtk_menu_popup ( ((VikTrwLayer *) this->vl)->track_right_click_menu, NULL, NULL, NULL, NULL, event->button, gtk_get_current_event_time() );
@@ -8465,13 +8460,12 @@ bool LayerTRW::show_selected_viewport_menu(GdkEventButton * event, Viewport * vi
       if (wp_uid) {
 	GtkTreeIter * iter = this->waypoints_iters.at(wp_uid);
 
-        trw_layer_sublayer_add_menu_items ( (VikTrwLayer *) this->vl,
-                                            ((VikTrwLayer *) this->vl)->wp_right_click_menu,
-                                            NULL,
-                                            VIK_TRW_LAYER_SUBLAYER_WAYPOINT,
-                                            (void *) ((long) wp_uid),
-                                            iter,
-                                            (VikViewport *) viewport->vvp );
+        this->sublayer_add_menu_items(((VikTrwLayer *) this->vl)->wp_right_click_menu,
+				      NULL,
+				      VIK_TRW_LAYER_SUBLAYER_WAYPOINT,
+				      (void *) ((long) wp_uid),
+				      iter,
+				      (VikViewport *) viewport->vvp);
       }
       gtk_menu_popup ( ((VikTrwLayer *) this->vl)->wp_right_click_menu, NULL, NULL, NULL, NULL, event->button, gtk_get_current_event_time() );
 
@@ -8697,7 +8691,7 @@ static bool tool_edit_waypoint_release ( VikTrwLayer *vtl, GdkEventButton *event
       g_object_ref_sink ( G_OBJECT(vtl->wp_right_click_menu) );
     if ( vtl->trw->current_wp ) {
       vtl->wp_right_click_menu = GTK_MENU ( gtk_menu_new () );
-      trw_layer_sublayer_add_menu_items ( vtl, vtl->wp_right_click_menu, NULL, VIK_TRW_LAYER_SUBLAYER_WAYPOINT, (void *) ((long) vtl->trw->current_wp_uid), vtl->trw->waypoints_iters.at(vtl->trw->current_wp_uid), (VikViewport *) t->viewport->vvp );
+      vtl->trw->sublayer_add_menu_items(vtl->wp_right_click_menu, NULL, VIK_TRW_LAYER_SUBLAYER_WAYPOINT, (void *) ((long) vtl->trw->current_wp_uid), vtl->trw->waypoints_iters.at(vtl->trw->current_wp_uid), (VikViewport *) t->viewport->vvp );
       gtk_menu_popup ( vtl->wp_right_click_menu, NULL, NULL, NULL, NULL, event->button, gtk_get_current_event_time() );
     }
     vtl->trw->waypoint_rightclick = false;
@@ -9784,8 +9778,9 @@ time_t LayerTRW::get_timestamp_waypoints()
 /**
  * Get the earliest timestamp available for this layer
  */
-static time_t trw_layer_get_timestamp ( VikTrwLayer *vtl )
+time_t LayerTRW::get_timestamp()
 {
+  VikTrwLayer * vtl = ( VikTrwLayer *) this->vl;
   time_t timestamp_tracks = vtl->trw->get_timestamp_tracks();
   time_t timestamp_waypoints = vtl->trw->get_timestamp_waypoints();
   // NB routes don't have timestamps - hence they are not considered
@@ -9833,7 +9828,7 @@ void LayerTRW::post_read(Viewport * viewport, bool from_file)
     if ( need_to_set_time ) {
       GTimeVal timestamp;
       timestamp.tv_usec = 0;
-      timestamp.tv_sec = trw_layer_get_timestamp ( vtl );
+      timestamp.tv_sec = vtl->trw->get_timestamp();
 
       // No time found - so use 'now' for the metadata time
       if ( timestamp.tv_sec == 0 ) {
@@ -9887,8 +9882,9 @@ static void waypoint_convert(Waypoint * wp, VikCoordMode * dest_mode)
 
 
 
-static void trw_layer_change_coord_mode(VikTrwLayer *vtl, VikCoordMode dest_mode)
+void LayerTRW::change_coord_mode(VikCoordMode dest_mode)
 {
+	VikTrwLayer * vtl = (VikTrwLayer *) this->vl;
 	if (vtl->trw->coord_mode != dest_mode) {
 		vtl->trw->coord_mode = dest_mode;
 		LayerTRW::waypoints_convert(vtl->trw->waypoints, &dest_mode);
@@ -10290,4 +10286,22 @@ LayerTRW::LayerTRW(VikLayer * vl) : Layer(vl)
 	memset(&coord_mode, 0, sizeof (VikCoordMode));
 
 	highest_wp_number = 0;
+}
+
+
+
+int LayerTRW::read_file(FILE * f, char const * dirpath)
+{
+	VikTrwLayer * vtl = (VikTrwLayer *) this->vl;
+	return (int) a_gpspoint_read_file(vtl, f, dirpath);
+}
+
+
+void LayerTRW::write_file(FILE * f)
+{
+	VikTrwLayer * vtl = (VikTrwLayer *) this->vl;
+
+	fprintf(f, "\n\n~LayerData\n");
+	a_gpspoint_write_file(vtl, f);
+	fprintf(f, "~EndLayerData\n");
 }

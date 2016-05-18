@@ -103,6 +103,8 @@ namespace SlavGPS {
 		void draw(Viewport * viewport);
 		char const * tooltip();
 		void marshall(uint8_t ** data, int * len);
+		void change_coord_mode(VikCoordMode mode);
+		void add_menu_items(GtkMenu * menu, void * vlp);
 	};
 
 

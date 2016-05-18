@@ -38,9 +38,6 @@
 
 
 static VikAggregateLayer *aggregate_layer_unmarshall(uint8_t *data, int len, VikViewport *vvp);
-static void aggregate_layer_change_coord_mode(VikAggregateLayer *val, VikCoordMode mode);
-static void aggregate_layer_drag_drop_request(VikAggregateLayer *val_src, VikAggregateLayer *val_dest, GtkTreeIter *src_item_iter, GtkTreePath *dest_path);
-static void aggregate_layer_add_menu_items(VikAggregateLayer *val, GtkMenu *menu, void * vlp);
 
 VikLayerInterface vik_aggregate_layer_interface = {
 	"Aggregate",
@@ -62,27 +59,11 @@ VikLayerInterface vik_aggregate_layer_interface = {
 	(VikLayerFuncRealize)                 vik_aggregate_layer_realize,
 	(VikLayerFuncFree)                    vik_aggregate_layer_free,
 
-	(VikLayerFuncProperties)              NULL,
-	(VikLayerFuncChangeCoordMode)         aggregate_layer_change_coord_mode,
-
-	(VikLayerFuncGetTimestamp)            NULL,
-
-	(VikLayerFuncAddMenuItems)            aggregate_layer_add_menu_items,
-	(VikLayerFuncSublayerAddMenuItems)    NULL,
-
-	(VikLayerFuncSublayerRenameRequest)   NULL,
-	(VikLayerFuncSublayerToggleVisible)   NULL,
-
 	(VikLayerFuncUnmarshall)	      aggregate_layer_unmarshall,
 
 	(VikLayerFuncSetParam)                NULL,
 	(VikLayerFuncGetParam)                NULL,
 	(VikLayerFuncChangeParam)             NULL,
-
-	(VikLayerFuncReadFileData)            NULL,
-	(VikLayerFuncWriteFileData)           NULL,
-
-	(VikLayerFuncDragDropRequest)		aggregate_layer_drag_drop_request,
 };
 
 struct _VikAggregateLayer {
@@ -221,7 +202,7 @@ void vik_aggregate_layer_insert_layer(VikAggregateLayer *val, Layer * layer, Gtk
 	}
 
 	if (vl->realized) {
-		vik_treeview_insert_layer(vl->vt, &(vl->iter), &iter, layer->vl->name, val, put_above, layer, layer->vl->type, layer->vl->type, replace_iter, vik_layer_get_timestamp(layer->vl));
+		vik_treeview_insert_layer(vl->vt, &(vl->iter), &iter, layer->vl->name, val, put_above, layer, layer->vl->type, layer->vl->type, replace_iter, layer->get_timestamp());
 		if (! layer->vl->visible) {
 			vik_treeview_item_set_visible(vl->vt, &iter, false);
 		}
@@ -282,7 +263,7 @@ void vik_aggregate_layer_add_layer(VikAggregateLayer *val, Layer * layer, bool a
 	}
 
 	if (vl->realized) {
-		vik_treeview_add_layer(vl->vt, &(vl->iter), &iter, layer->vl->name, val, put_above, layer, layer->vl->type, layer->vl->type, vik_layer_get_timestamp(layer->vl));
+		vik_treeview_add_layer(vl->vt, &(vl->iter), &iter, layer->vl->name, val, put_above, layer, layer->vl->type, layer->vl->type, layer->get_timestamp());
 		if (! layer->vl->visible) {
 			vik_treeview_item_set_visible(vl->vt, &iter, false);
 		}
@@ -410,8 +391,9 @@ void LayerAggregate::draw(Viewport * viewport)
 	}
 }
 
-static void aggregate_layer_change_coord_mode(VikAggregateLayer *val, VikCoordMode mode)
+void LayerAggregate::change_coord_mode(VikCoordMode mode)
 {
+	VikAggregateLayer * val = (VikAggregateLayer *) this->vl;
 	auto iter = val->children->begin();
 	while (iter != val->children->end()) {
 		Layer * layer = *iter;
@@ -531,7 +513,7 @@ static int sort_layer_compare_timestamp(gconstpointer a, gconstpointer b, void *
 
 	// Default ascending order
 	// NB This might be relatively slow...
-	int answer = (vik_layer_get_timestamp(sa) > vik_layer_get_timestamp(sb));
+	int answer = (((Layer *) sa->layer)->get_timestamp() > ((Layer *) sb->layer)->get_timestamp());
 
 	if (KPOINTER_TO_INT(order)) {
 		// Invert sort order for ascending order
@@ -721,8 +703,10 @@ static void aggregate_layer_analyse(menu_array_values values)
 								 aggregate_layer_analyse_close);
 }
 
-static void aggregate_layer_add_menu_items(VikAggregateLayer *val, GtkMenu *menu, void * vlp)
+void LayerAggregate::add_menu_items(GtkMenu * menu, void * vlp)
 {
+	VikAggregateLayer * val = (VikAggregateLayer *) this->vl;
+
 	// Data to pass on in menu functions
 	static menu_array_values values;
 	values[MA_VAL] = val;
@@ -996,7 +980,7 @@ void vik_aggregate_layer_realize(VikAggregateLayer *val, VikTreeview *vt, GtkTre
 	while (child != val->children->end()) {
 		Layer * layer = *child;
 		vik_treeview_add_layer(vl->vt, layer_iter, &iter, layer->vl->name, val, true,
-				       layer, layer->vl->type, layer->vl->type, vik_layer_get_timestamp(layer->vl));
+				       layer, layer->vl->type, layer->vl->type, layer->get_timestamp());
 		if (! layer->vl->visible) {
 			vik_treeview_item_set_visible(vl->vt, &iter, false);
 		}
@@ -1015,8 +999,11 @@ bool vik_aggregate_layer_is_empty(VikAggregateLayer *val)
 	return val->children->empty();
 }
 
-static void aggregate_layer_drag_drop_request(VikAggregateLayer *val_src, VikAggregateLayer *val_dest, GtkTreeIter *src_item_iter, GtkTreePath *dest_path)
+void LayerAggregate::drag_drop_request(Layer * src, GtkTreeIter *src_item_iter, GtkTreePath *dest_path)
 {
+	VikAggregateLayer * val_dest = (VikAggregateLayer *) this->vl;
+	VikAggregateLayer * val_src = (VikAggregateLayer *) src->vl;
+
 	VikTreeview *vt = ((VikLayer *) val_src)->vt;
 	Layer * layer = (Layer *) vik_treeview_item_get_layer(vt, src_item_iter);
 	GtkTreeIter dest_iter;

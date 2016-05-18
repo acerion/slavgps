@@ -82,8 +82,6 @@ static VikLayerParamData georef_layer_get_param(VikGeorefLayer *vgl, uint16_t id
 static VikGeorefLayer *georef_layer_new(VikViewport *vvp);
 static VikGeorefLayer *georef_layer_create(VikViewport *vp);
 static void georef_layer_free(VikGeorefLayer *vgl);
-static bool georef_layer_properties(VikGeorefLayer *vgl, void * vp);
-static void georef_layer_add_menu_items(VikGeorefLayer *vgl, GtkMenu *menu, void * vlp);
 static void georef_layer_set_image(VikGeorefLayer *vgl, const char *image);
 static bool georef_layer_dialog(VikGeorefLayer *vgl, void * vp, GtkWindow *w);
 
@@ -144,27 +142,11 @@ VikLayerInterface vik_georef_layer_interface = {
 	(VikLayerFuncRealize)                 NULL,
 	(VikLayerFuncFree)                    georef_layer_free,
 
-	(VikLayerFuncProperties)              georef_layer_properties,
-	(VikLayerFuncChangeCoordMode)         NULL,
-
-	(VikLayerFuncGetTimestamp)            NULL,
-
-	(VikLayerFuncAddMenuItems)            georef_layer_add_menu_items,
-	(VikLayerFuncSublayerAddMenuItems)    NULL,
-
-	(VikLayerFuncSublayerRenameRequest)   NULL,
-	(VikLayerFuncSublayerToggleVisible)   NULL,
-
 	(VikLayerFuncUnmarshall)	      georef_layer_unmarshall,
 
 	(VikLayerFuncSetParam)                georef_layer_set_param,
 	(VikLayerFuncGetParam)                georef_layer_get_param,
 	(VikLayerFuncChangeParam)             NULL,
-
-	(VikLayerFuncReadFileData)            NULL,
-	(VikLayerFuncWriteFileData)           NULL,
-
-	(VikLayerFuncDragDropRequest)		NULL,
 };
 
 typedef struct {
@@ -499,8 +481,9 @@ static VikGeorefLayer *georef_layer_create(VikViewport *vp)
 	return rv;
 }
 
-static bool georef_layer_properties(VikGeorefLayer *vgl, void * vp)
+bool LayerGeoref::properties(void * vp)
 {
+	VikGeorefLayer * vgl = (VikGeorefLayer *) this->vl;
 	return georef_layer_dialog(vgl, vp, VIK_GTK_WINDOW_FROM_WIDGET(vp));
 }
 
@@ -1067,8 +1050,10 @@ static void georef_layer_goto_center(void * vgl_vlp[2])
 	vik_layers_panel_emit_update(VIK_LAYERS_PANEL(vgl_vlp[1])->panel_ref);
 }
 
-static void georef_layer_add_menu_items(VikGeorefLayer *vgl, GtkMenu *menu, void * vlp)
+void LayerGeoref::add_menu_items(GtkMenu *menu, void * vlp)
 {
+	VikGeorefLayer * vgl = (VikGeorefLayer *) this->vl;
+
 	static void * pass_along[2];
 	GtkWidget *item;
 	pass_along[0] = vgl;

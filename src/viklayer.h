@@ -129,18 +129,8 @@ typedef void          (*VikLayerFuncRealize)               (VikLayer *,VikTreevi
 
 typedef void          (*VikLayerFuncFree)                  (VikLayer *);
 
-/* do _not_ use this unless absolutely neccesary. Use the dynamic properties (see coordlayer for example)
-  * returns true if OK was pressed */
-typedef bool      (*VikLayerFuncProperties)            (VikLayer *,VikViewport *);
 
-typedef void          (*VikLayerFuncChangeCoordMode)       (VikLayer *,VikCoordMode);
 
-typedef void          (*VikLayerFuncAddMenuItems)          (VikLayer *,GtkMenu *,void *); /* void * is a VikLayersPanel */
-typedef bool      (*VikLayerFuncSublayerAddMenuItems)  (VikLayer *,GtkMenu *,void *, /* first void * is a VikLayersPanel */
-                                                            int,void *,GtkTreeIter *,VikViewport *);
-typedef const char * (*VikLayerFuncSublayerRenameRequest) (VikLayer *,const char *,void *,
-                                                            int,VikViewport *,GtkTreeIter *); /* first void * is a VikLayersPanel */
-typedef bool      (*VikLayerFuncSublayerToggleVisible) (VikLayer *,int,void *);
 typedef VikLayer *    (*VikLayerFuncUnmarshall)            (uint8_t *, int, VikViewport *);
 
 /* returns true if needs to redraw due to changed param */
@@ -153,15 +143,7 @@ typedef VikLayerParamData
 
 typedef void          (*VikLayerFuncChangeParam)           (GtkWidget *, ui_change_values );
 
-typedef bool      (*VikLayerFuncReadFileData)          (VikLayer *, FILE *, const char *); // char* is the directory path. Function should report success or failure
-typedef void          (*VikLayerFuncWriteFileData)         (VikLayer *, FILE *);
 
-/* treeview drag and drop method. called on the destination layer. it is given a source and destination layer,
- * and the source and destination iters in the treeview.
- */
-typedef void 	      (*VikLayerFuncDragDropRequest)       (VikLayer *, VikLayer *, GtkTreeIter *, GtkTreePath *);
-
-typedef time_t        (*VikLayerFuncGetTimestamp)          (VikLayer *);
 
 typedef enum {
   VIK_MENU_ITEM_PROPERTY=1,
@@ -197,28 +179,12 @@ struct _VikLayerInterface {
   VikLayerFuncRealize               realize;
   VikLayerFuncFree                  free;
 
-  VikLayerFuncProperties            properties;
-  VikLayerFuncChangeCoordMode       change_coord_mode;
-
-  VikLayerFuncGetTimestamp          get_timestamp;
-
-  VikLayerFuncAddMenuItems          add_menu_items;
-  VikLayerFuncSublayerAddMenuItems  sublayer_add_menu_items;
-  VikLayerFuncSublayerRenameRequest sublayer_rename_request;
-  VikLayerFuncSublayerToggleVisible sublayer_toggle_visible;
-
   VikLayerFuncUnmarshall            unmarshall;
 
   /* for I/O */
   VikLayerFuncSetParam              set_param;
   VikLayerFuncGetParam              get_param;
   VikLayerFuncChangeParam           change_param;
-
-  /* for I/O -- extra non-param data like TrwLayer data */
-  VikLayerFuncReadFileData          read_file_data;
-  VikLayerFuncWriteFileData         write_file_data;
-
-  VikLayerFuncDragDropRequest       drag_drop_request;
 };
 
 VikLayerInterface *vik_layer_get_interface ( VikLayerTypeEnum type );
@@ -328,6 +294,28 @@ namespace SlavGPS {
 		virtual void copy_item(int subtype, void * sublayer, uint8_t ** item, unsigned int * len);
 		virtual bool paste_item(int subtype, uint8_t * item, size_t len);
 		virtual void delete_item(int subtype, void * sublayer);
+
+		virtual void change_coord_mode(VikCoordMode dest_mode);
+
+		virtual time_t get_timestamp();
+
+		/* Treeview drag and drop method. called on the
+		   destination layer. it is given a source and
+		   destination layer, and the source and destination
+		   iters in the treeview. */
+		virtual void drag_drop_request(Layer * src, GtkTreeIter * src_item_iter, GtkTreePath * dest_path);
+
+		virtual int read_file(FILE * f, char const * dirpath);
+		virtual void write_file(FILE * f);
+
+		virtual void add_menu_items(GtkMenu * menu, void * vlp);
+		virtual bool sublayer_add_menu_items(GtkMenu * menu, void * vlp, int subtype, void * sublayer, GtkTreeIter * iter, VikViewport * vvp);
+		virtual char const * sublayer_rename_request(const char * newname, void * vlp, int subtype, void * sublayer, GtkTreeIter * iter);
+		virtual bool sublayer_toggle_visible(int subtype, void * sublayer);
+
+		/* Do _not_ use this unless absolutely neccesary. Use the dynamic properties (see coordlayer for example)
+		   returns true if OK was pressed. */
+		virtual bool properties(void * vp);
 
 
 

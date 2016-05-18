@@ -125,7 +125,6 @@ static bool maps_layer_download_click(VikMapsLayer *vml, GdkEventButton *event, 
 static void * maps_layer_download_create (VikWindow *vw, Viewport * viewport);
 static void maps_layer_set_cache_dir (VikMapsLayer *vml, const char *dir);
 static void start_download_thread(VikMapsLayer *vml, Viewport * viewport, const VikCoord *ul, const VikCoord *br, int redownload_mode);
-static void maps_layer_add_menu_items (VikMapsLayer *vml, GtkMenu *menu, VikLayersPanel *vlp);
 static int map_type_to_map_index(MapTypeID map_type);
 
 
@@ -233,27 +232,11 @@ VikLayerInterface vik_maps_layer_interface = {
 	(VikLayerFuncRealize)                 NULL,
 	(VikLayerFuncFree)                    maps_layer_free,
 
-	(VikLayerFuncProperties)              NULL,
-	(VikLayerFuncChangeCoordMode)         NULL,
-
-	(VikLayerFuncGetTimestamp)            NULL,
-
-	(VikLayerFuncAddMenuItems)            maps_layer_add_menu_items,
-	(VikLayerFuncSublayerAddMenuItems)    NULL,
-
-	(VikLayerFuncSublayerRenameRequest)   NULL,
-	(VikLayerFuncSublayerToggleVisible)   NULL,
-
 	(VikLayerFuncUnmarshall)	      maps_layer_unmarshall,
 
 	(VikLayerFuncSetParam)                maps_layer_set_param,
 	(VikLayerFuncGetParam)                maps_layer_get_param,
 	(VikLayerFuncChangeParam)             maps_layer_change_param,
-
-	(VikLayerFuncReadFileData)            NULL,
-	(VikLayerFuncWriteFileData)           NULL,
-
-	(VikLayerFuncDragDropRequest)		NULL,
 };
 
 struct _VikMapsLayer {
@@ -2369,8 +2352,11 @@ static void maps_layer_flush (menu_array_values values)
 	a_mapcache_flush_type(map_sources[vml->map_index]->map_type);
 }
 
-static void maps_layer_add_menu_items (VikMapsLayer *vml, GtkMenu *menu, VikLayersPanel *vlp)
+void LayerMaps::add_menu_items(GtkMenu * menu, void * vlp_arg)
 {
+	VikMapsLayer * vml = (VikMapsLayer *) this->vl;
+	VikLayersPanel * vlp = (VikLayersPanel *) vlp_arg;
+
 	GtkWidget *item;
 	static menu_array_values values;
 	values[MA_VML] = vml;

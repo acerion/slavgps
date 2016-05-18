@@ -217,11 +217,10 @@ const char *vik_layer_get_name ( VikLayer *l )
   return l->name;
 }
 
-time_t vik_layer_get_timestamp ( VikLayer *vl )
+time_t vik_layer_get_timestamp(VikLayer * vl)
 {
-  if ( vik_layer_interfaces[vl->type]->get_timestamp )
-    return vik_layer_interfaces[vl->type]->get_timestamp ( vl );
-  return 0;
+	Layer * layer = (Layer *) vl->layer;
+	return layer->get_timestamp();
 }
 
 VikLayer *vik_layer_create ( VikLayerTypeEnum type, VikViewport *vp, bool interactive )
@@ -249,11 +248,14 @@ VikLayer *vik_layer_create ( VikLayerTypeEnum type, VikViewport *vp, bool intera
 }
 
 /* returns true if OK was pressed */
-bool vik_layer_properties ( VikLayer *layer, VikViewport *vp )
+bool vik_layer_properties(VikLayer * layer, VikViewport * vp)
 {
-  if ( vik_layer_interfaces[layer->type]->properties )
-    return vik_layer_interfaces[layer->type]->properties ( layer, vp );
-  return vik_layer_properties_factory ( layer, vp );
+	if (layer->type == VIK_LAYER_GEOREF) {
+		Layer * l = (Layer *) layer->layer;
+		return l->properties(vp);
+	}
+
+	return vik_layer_properties_factory ( layer, vp );
 }
 
 void vik_layer_draw(VikLayer * l, Viewport * viewport)
@@ -263,10 +265,10 @@ void vik_layer_draw(VikLayer * l, Viewport * viewport)
 	}
 }
 
-void vik_layer_change_coord_mode ( VikLayer *l, VikCoordMode mode )
+void vik_layer_change_coord_mode(VikLayer * l, VikCoordMode mode)
 {
-  if ( vik_layer_interfaces[l->type]->change_coord_mode )
-    vik_layer_interfaces[l->type]->change_coord_mode ( l, mode );
+	Layer * layer = (Layer *) l->layer;
+	layer->change_coord_mode(mode);
 }
 
 typedef struct {
@@ -449,9 +451,8 @@ static void vik_layer_finalize ( VikLayer *vl )
 /* sublayer switching */
 bool vik_layer_sublayer_toggle_visible ( VikLayer *l, int subtype, void * sublayer )
 {
-  if ( vik_layer_interfaces[l->type]->sublayer_toggle_visible )
-    return vik_layer_interfaces[l->type]->sublayer_toggle_visible ( l, subtype, sublayer );
-  return true; /* if unknown, will always be visible */
+	Layer * layer = (Layer *) l->layer;
+	return layer->sublayer_toggle_visible(subtype, sublayer);
 }
 
 bool vik_layer_selected(VikLayer * l, int subtype, void * sublayer, int type, void * vlp)
@@ -494,23 +495,21 @@ uint16_t vik_layer_get_menu_items_selection(VikLayer *l)
 
 void vik_layer_add_menu_items ( VikLayer *l, GtkMenu *menu, void * vlp )
 {
-  if ( vik_layer_interfaces[l->type]->add_menu_items )
-    vik_layer_interfaces[l->type]->add_menu_items ( l, menu, vlp );
+	Layer * layer = (Layer *) l->layer;
+	layer->add_menu_items(menu, vlp);
 }
 
 bool vik_layer_sublayer_add_menu_items ( VikLayer *l, GtkMenu *menu, void * vlp, int subtype, void * sublayer, GtkTreeIter *iter, VikViewport *vvp )
 {
-  if ( vik_layer_interfaces[l->type]->sublayer_add_menu_items )
-    return vik_layer_interfaces[l->type]->sublayer_add_menu_items ( l, menu, vlp, subtype, sublayer, iter, vvp );
-  return false;
+	Layer * layer = (Layer *) l->layer;
+	return layer->sublayer_add_menu_items(menu, vlp, subtype, sublayer, iter, vvp);
 }
 
 
 const char *vik_layer_sublayer_rename_request ( VikLayer *l, const char *newname, void * vlp, int subtype, void * sublayer, GtkTreeIter *iter )
 {
-  if ( vik_layer_interfaces[l->type]->sublayer_rename_request )
-    return vik_layer_interfaces[l->type]->sublayer_rename_request ( l, newname, vlp, subtype, (VikViewport *) sublayer, iter );
-  return NULL;
+	Layer * layer = (Layer *) l->layer;
+	return layer->sublayer_rename_request(newname, vlp, subtype, (VikViewport *) sublayer, iter);
 }
 
 GdkPixbuf *vik_layer_load_icon ( VikLayerTypeEnum type )
@@ -800,4 +799,58 @@ bool Layer::paste_item(int subtype, uint8_t * item, size_t len)
 void Layer::delete_item(int subtype, void * sublayer)
 {
 	return;
+}
+
+
+void Layer::change_coord_mode(VikCoordMode dest_mode)
+{
+	return;
+}
+
+time_t Layer::get_timestamp()
+{
+	return 0;
+}
+
+void Layer::drag_drop_request(Layer * src, GtkTreeIter * src_item_iter, GtkTreePath * dest_path)
+{
+	return;
+}
+
+int Layer::read_file(FILE * f, char const * dirpath)
+{
+	/* KamilFIXME: Magic number to indicate call of base class method. */
+	return -5;
+}
+
+void Layer::write_file(FILE * f)
+{
+	return;
+}
+
+
+void Layer::add_menu_items(GtkMenu * menu, void * vlp)
+{
+	return;
+}
+
+bool Layer::sublayer_add_menu_items(GtkMenu * menu, void * vlp, int subtype, void * sublayer, GtkTreeIter * iter, VikViewport * vvp)
+{
+	return false;
+}
+
+char const * Layer::sublayer_rename_request(const char * newname, void * vlp, int subtype, void * sublayer, GtkTreeIter * iter)
+{
+	return NULL;
+}
+
+bool Layer::sublayer_toggle_visible(int subtype, void * sublayer)
+{
+	/* if unknown, will always be visible */
+	return true;
+}
+
+bool Layer::properties(void * vp)
+{
+	return false;
 }

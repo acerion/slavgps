@@ -924,10 +924,7 @@ static int vik_treeview_drag_data_received(GtkTreeDragDest *drag_dest, GtkTreePa
 			Layer * layer_dest = (Layer *) vik_treeview_item_get_layer(vt, &dest_parent);
 
 			/* TODO: might want to allow different types, and let the clients handle how they want */
-			if (vl_src->type == layer_dest->vl->type && vik_layer_get_interface(layer_dest->vl->type)->drag_drop_request) {
-				//	fprintf(stdout, "moving an item from layer '%s' into layer '%s'\n", vl_src->name, layer_dest->vl->name);
-				vik_layer_get_interface(layer_dest->vl->type)->drag_drop_request(vl_src, layer_dest->vl, &src_iter, dest);
-			}
+			layer_dest->drag_drop_request((Layer *) vl_src->layer, &src_iter, dest);
 		}
 	}
 
