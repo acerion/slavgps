@@ -496,8 +496,10 @@ void LayerGeoref::load_image(Viewport * viewport, bool from_file)
 		return;
 	}
 
-	if (vgl->pixbuf)
+	if (vgl->pixbuf) {
 		g_object_unref(G_OBJECT(vgl->pixbuf));
+	}
+
 	if (vgl->scaled) {
 		g_object_unref(G_OBJECT(vgl->scaled));
 		vgl->scaled = NULL;

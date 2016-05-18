@@ -38,10 +38,10 @@ extern "C" {
 typedef struct _VikCoordLayerClass VikCoordLayerClass;
 struct _VikCoordLayerClass
 {
-  VikLayerClass object_class;
+	VikLayerClass object_class;
 };
 
-GType vik_coord_layer_get_type ();
+GType vik_coord_layer_get_type();
 
 typedef struct _VikCoordLayer VikCoordLayer;
 

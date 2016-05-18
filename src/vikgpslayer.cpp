@@ -406,34 +406,34 @@ char const * LayerGPS::tooltip()
 /* "Copy" */
 void LayerGPS::marshall(uint8_t **data, int *datalen )
 {
-  VikGpsLayer * vgl = (VikGpsLayer *) this->vl;
-  VikLayer *child_layer;
-  uint8_t *ld;
-  int ll;
-  GByteArray* b = g_byte_array_new ();
-  int len;
-  int i;
+	VikGpsLayer * vgl = (VikGpsLayer *) this->vl;
+	VikLayer *child_layer;
+	uint8_t *ld;
+	int ll;
+	GByteArray* b = g_byte_array_new();
+	int len;
+	int i;
 
 #define alm_append(obj, sz) 	\
-  len = (sz);    		\
-  g_byte_array_append ( b, (uint8_t *)&len, sizeof(len) );	\
-  g_byte_array_append ( b, (uint8_t *)(obj), len );
+	len = (sz);						\
+	g_byte_array_append(b, (uint8_t *)&len, sizeof(len));	\
+	g_byte_array_append(b, (uint8_t *)(obj), len);
 
-  vik_layer_marshall_params(VIK_LAYER(vgl), &ld, &ll);
-  alm_append(ld, ll);
-  free(ld);
+	vik_layer_marshall_params(VIK_LAYER(vgl), &ld, &ll);
+	alm_append(ld, ll);
+	free(ld);
 
-  for (i = 0; i < NUM_TRW; i++) {
-    child_layer = VIK_LAYER(vgl->trw_children[i]);
-    vik_layer_marshall(child_layer, &ld, &ll);
-    if (ld) {
-      alm_append(ld, ll);
-      free(ld);
-    }
-  }
-  *data = b->data;
-  *datalen = b->len;
-  g_byte_array_free(b, false);
+	for (i = 0; i < NUM_TRW; i++) {
+		child_layer = VIK_LAYER(vgl->trw_children[i]);
+		vik_layer_marshall(child_layer, &ld, &ll);
+		if (ld) {
+			alm_append(ld, ll);
+			free(ld);
+		}
+	}
+	*data = b->data;
+	*datalen = b->len;
+	g_byte_array_free(b, false);
 #undef alm_append
 }
 
@@ -664,114 +664,116 @@ VikGpsLayer *vik_gps_layer_new (VikViewport *vp)
 
 void LayerGPS::draw(Viewport * viewport)
 {
-  VikGpsLayer * vgl = (VikGpsLayer *) this->vl;
-  VikViewport * vp = (VikViewport *) viewport->vvp;
-  int i;
-  VikLayer *vl;
-  VikLayer *trigger = VIK_LAYER(vik_viewport_get_trigger( vp ));
+	VikGpsLayer * vgl = (VikGpsLayer *) this->vl;
+	VikViewport * vp = (VikViewport *) viewport->vvp;
+	int i;
+	VikLayer *vl;
+	VikLayer *trigger = VIK_LAYER(vik_viewport_get_trigger( vp ));
 
-  for (i = 0; i < NUM_TRW; i++) {
-    vl = VIK_LAYER(vgl->trw_children[i]);
-    if (vl == trigger) {
-      if ( vik_viewport_get_half_drawn ( vp ) ) {
-        vik_viewport_set_half_drawn ( vp, false );
-        vik_viewport_snapshot_load( vp );
-      } else {
-        vik_viewport_snapshot_save( vp );
-      }
-    }
-    if (!vik_viewport_get_half_drawn(vp))
-      vik_layer_draw(vl, &vp->port);
-  }
+	for (i = 0; i < NUM_TRW; i++) {
+		vl = VIK_LAYER(vgl->trw_children[i]);
+		if (vl == trigger) {
+			if ( vik_viewport_get_half_drawn(vp)) {
+				vik_viewport_set_half_drawn(vp, false);
+				vik_viewport_snapshot_load(vp);
+			} else {
+				vik_viewport_snapshot_save(vp);
+			}
+		}
+		if (!vik_viewport_get_half_drawn(vp)) {
+			vik_layer_draw(vl, &vp->port);
+		}
+	}
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
-  if (vgl->realtime_tracking) {
-    if (VIK_LAYER(vgl) == trigger) {
-      if ( vik_viewport_get_half_drawn ( vp ) ) {
-        vik_viewport_set_half_drawn ( vp, false );
-        vik_viewport_snapshot_load( vp );
-      } else {
-        vik_viewport_snapshot_save( vp );
-      }
-    }
-    if (!vik_viewport_get_half_drawn(vp))
-      realtime_tracking_draw(vgl, vp);
-  }
+	if (vgl->realtime_tracking) {
+		if (VIK_LAYER(vgl) == trigger) {
+			if ( vik_viewport_get_half_drawn(vp)) {
+				vik_viewport_set_half_drawn(vp, false);
+				vik_viewport_snapshot_load(vp);
+			} else {
+				vik_viewport_snapshot_save(vp);
+			}
+		}
+		if (!vik_viewport_get_half_drawn(vp)) {
+			realtime_tracking_draw(vgl, vp);
+		}
+	}
 #endif /* VIK_CONFIG_REALTIME_GPS_TRACKING */
 }
 
 void LayerGPS::change_coord_mode(VikCoordMode mode)
 {
 	VikGpsLayer * vgl = (VikGpsLayer *) this->vl;
-  int i;
-  for (i = 0; i < NUM_TRW; i++) {
-    vik_layer_change_coord_mode(VIK_LAYER(vgl->trw_children[i]), mode);
-  }
+	int i;
+	for (i = 0; i < NUM_TRW; i++) {
+		vik_layer_change_coord_mode(VIK_LAYER(vgl->trw_children[i]), mode);
+	}
 }
 
 void LayerGPS::add_menu_items(GtkMenu * menu, void * vlp)
 {
-  VikGpsLayer * vgl = (VikGpsLayer *) this->vl;
-  static void * pass_along[2];
-  GtkWidget *item;
-  pass_along[0] = vgl;
-  pass_along[1] = vlp;
+	VikGpsLayer * vgl = (VikGpsLayer *) this->vl;
+	static void * pass_along[2];
+	GtkWidget *item;
+	pass_along[0] = vgl;
+	pass_along[1] = vlp;
 
-  item = gtk_menu_item_new();
-  gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
-  gtk_widget_show ( item );
+	item = gtk_menu_item_new();
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item );
+	gtk_widget_show(item);
 
-  /* Now with icons */
-  item = gtk_image_menu_item_new_with_mnemonic ( _("_Upload to GPS") );
-  gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_GO_UP, GTK_ICON_SIZE_MENU) );
-  g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(gps_upload_cb), pass_along );
-  gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-  gtk_widget_show ( item );
+	/* Now with icons */
+	item = gtk_image_menu_item_new_with_mnemonic(_("_Upload to GPS"));
+	gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_GO_UP, GTK_ICON_SIZE_MENU));
+	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(gps_upload_cb), pass_along);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+	gtk_widget_show(item);
 
-  item = gtk_image_menu_item_new_with_mnemonic ( _("Download from _GPS") );
-  gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_GO_DOWN, GTK_ICON_SIZE_MENU) );
-  g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(gps_download_cb), pass_along );
-  gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-  gtk_widget_show ( item );
+	item = gtk_image_menu_item_new_with_mnemonic(_("Download from _GPS"));
+	gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_GO_DOWN, GTK_ICON_SIZE_MENU));
+	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(gps_download_cb), pass_along);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+	gtk_widget_show(item);
 
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
-  item = gtk_image_menu_item_new_with_mnemonic ( vgl->realtime_tracking  ?
-						 "_Stop Realtime Tracking" :
-						 "_Start Realtime Tracking" );
-  gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, vgl->realtime_tracking ?
-				  gtk_image_new_from_stock (GTK_STOCK_MEDIA_STOP, GTK_ICON_SIZE_MENU) :
-				  gtk_image_new_from_stock (GTK_STOCK_MEDIA_PLAY, GTK_ICON_SIZE_MENU) );
-  g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(gps_start_stop_tracking_cb), pass_along );
-  gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-  gtk_widget_show ( item );
+	item = gtk_image_menu_item_new_with_mnemonic(vgl->realtime_tracking  ?
+						       "_Stop Realtime Tracking" :
+						       "_Start Realtime Tracking");
+	gtk_image_menu_item_set_image((GtkImageMenuItem*)item, vgl->realtime_tracking ?
+					gtk_image_new_from_stock(GTK_STOCK_MEDIA_STOP, GTK_ICON_SIZE_MENU) :
+					gtk_image_new_from_stock(GTK_STOCK_MEDIA_PLAY, GTK_ICON_SIZE_MENU));
+	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(gps_start_stop_tracking_cb), pass_along);
+	gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
+	gtk_widget_show(item);
 
-  item = gtk_menu_item_new();
-  gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
-  gtk_widget_show ( item );
+	item = gtk_menu_item_new();
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+	gtk_widget_show(item);
 
-  item = gtk_image_menu_item_new_with_mnemonic ( _("Empty _Realtime") );
-  gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_REMOVE, GTK_ICON_SIZE_MENU) );
-  g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(gps_empty_realtime_cb), pass_along );
-  gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-  gtk_widget_show ( item );
+	item = gtk_image_menu_item_new_with_mnemonic(_("Empty _Realtime"));
+	gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_REMOVE, GTK_ICON_SIZE_MENU));
+	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(gps_empty_realtime_cb), pass_along);
+	gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
+	gtk_widget_show(item);
 #endif /* VIK_CONFIG_REALTIME_GPS_TRACKING */
 
-  item = gtk_image_menu_item_new_with_mnemonic ( _("E_mpty Upload") );
-  gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_REMOVE, GTK_ICON_SIZE_MENU) );
-  g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(gps_empty_upload_cb), pass_along );
-  gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-  gtk_widget_show ( item );
+	item = gtk_image_menu_item_new_with_mnemonic(_("E_mpty Upload"));
+	gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_REMOVE, GTK_ICON_SIZE_MENU));
+	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(gps_empty_upload_cb), pass_along);
+	gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
+	gtk_widget_show(item);
 
-  item = gtk_image_menu_item_new_with_mnemonic ( _("_Empty Download") );
-  gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_REMOVE, GTK_ICON_SIZE_MENU) );
-  g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(gps_empty_download_cb), pass_along );
-  gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-  gtk_widget_show ( item );
+	item = gtk_image_menu_item_new_with_mnemonic(_("_Empty Download"));
+	gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_REMOVE, GTK_ICON_SIZE_MENU));
+	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(gps_empty_download_cb), pass_along);
+	gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
+	gtk_widget_show(item);
 
-  item = gtk_image_menu_item_new_with_mnemonic ( _("Empty _All") );
-  gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_REMOVE, GTK_ICON_SIZE_MENU) );
-  g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(gps_empty_all_cb), pass_along );
-  gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-  gtk_widget_show ( item );
+	item = gtk_image_menu_item_new_with_mnemonic(_("Empty _All"));
+	gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_REMOVE, GTK_ICON_SIZE_MENU));
+	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(gps_empty_all_cb), pass_along);
+	gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
+	gtk_widget_show(item);
 
 }
 

@@ -66,17 +66,17 @@ typedef enum {
 //  http://wiki.openstreetmap.org/wiki/TMS
 //  http://wiki.osgeo.org/wiki/Tile_Map_Service_Specification
 
-void maps_layer_init ();
-void maps_layer_set_autodownload_default ( bool autodownload );
-void maps_layer_set_cache_default ( VikMapsCacheLayout layout );
+void maps_layer_init();
+void maps_layer_set_autodownload_default( bool autodownload);
+void maps_layer_set_cache_default(VikMapsCacheLayout layout);
 MapTypeID vik_maps_layer_get_default_map_type();
-void maps_layer_register_map_source ( MapSource *map );
-void vik_maps_layer_download_section ( VikMapsLayer *vml, VikViewport *vvp, VikCoord *ul, VikCoord *br, double zoom );
+void maps_layer_register_map_source(MapSource *map);
+void vik_maps_layer_download_section(VikMapsLayer *vml, VikViewport *vvp, VikCoord *ul, VikCoord *br, double zoom);
 MapTypeID vik_maps_layer_get_map_type(VikMapsLayer *vml);
 void vik_maps_layer_set_map_type(VikMapsLayer *vml, MapTypeID type_id);
 char *vik_maps_layer_get_map_label(VikMapsLayer *vml);
-char *maps_layer_default_dir ();
-void vik_maps_layer_download ( VikMapsLayer *vml, VikViewport *vvp, bool only_new );
+char *maps_layer_default_dir();
+void vik_maps_layer_download(VikMapsLayer *vml, VikViewport *vvp, bool only_new);
 
 #ifdef __cplusplus
 }

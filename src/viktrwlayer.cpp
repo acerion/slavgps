@@ -776,43 +776,45 @@ bool LayerTRW::find_by_date(char const * date_str, VikCoord * position, VikViewp
 
 void LayerTRW::delete_item(int subtype, void * sublayer)
 {
-  VikTrwLayer * vtl = (VikTrwLayer *) this->vl;
-  static menu_array_sublayer values;
-  if (!sublayer) {
-    return;
-  }
+	VikTrwLayer * vtl = (VikTrwLayer *) this->vl;
+	static menu_array_sublayer values;
+	if (!sublayer) {
+		return;
+	}
 
-  int ii;
-  for ( ii = MA_VTL; ii < MA_LAST; ii++ )
-    values[ii] = NULL;
+	int ii;
+	for (ii = MA_VTL; ii < MA_LAST; ii++) {
+		values[ii] = NULL;
+	}
 
-  values[MA_VTL]         = vtl;
-  values[MA_SUBTYPE]     = KINT_TO_POINTER (subtype);
-  values[MA_SUBLAYER_ID] = sublayer;
-  values[MA_CONFIRM]     = KINT_TO_POINTER (1); // Confirm delete request
+	values[MA_VTL]         = vtl;
+	values[MA_SUBTYPE]     = KINT_TO_POINTER (subtype);
+	values[MA_SUBLAYER_ID] = sublayer;
+	values[MA_CONFIRM]     = KINT_TO_POINTER (1); // Confirm delete request
 
-  trw_layer_delete_item ( values );
+	trw_layer_delete_item(values);
 }
 
-void LayerTRW::cut_item(int subtype, void * sublayer )
+void LayerTRW::cut_item(int subtype, void * sublayer)
 {
-  VikTrwLayer * vtl = (VikTrwLayer *) this->vl;
-  static menu_array_sublayer values;
-  if (!sublayer) {
-    return;
-  }
+	VikTrwLayer * vtl = (VikTrwLayer *) this->vl;
+	static menu_array_sublayer values;
+	if (!sublayer) {
+		return;
+	}
 
-  int ii;
-  for ( ii = MA_VTL; ii < MA_LAST; ii++ )
-    values[ii] = NULL;
+	int ii;
+	for (ii = MA_VTL; ii < MA_LAST; ii++) {
+		values[ii] = NULL;
+	}
 
-  values[MA_VTL]         = vtl;
-  values[MA_SUBTYPE]     = KINT_TO_POINTER (subtype);
-  values[MA_SUBLAYER_ID] = sublayer;
-  values[MA_CONFIRM]     = KINT_TO_POINTER (1); // Confirm delete request
+	values[MA_VTL]         = vtl;
+	values[MA_SUBTYPE]     = KINT_TO_POINTER (subtype);
+	values[MA_SUBLAYER_ID] = sublayer;
+	values[MA_CONFIRM]     = KINT_TO_POINTER (1); // Confirm delete request
 
-  trw_layer_copy_item_cb(values);
-  trw_layer_cut_item_cb(values);
+	trw_layer_copy_item_cb(values);
+	trw_layer_cut_item_cb(values);
 }
 
 static void trw_layer_copy_item_cb ( menu_array_sublayer values)
@@ -871,87 +873,87 @@ static void trw_layer_paste_item_cb ( menu_array_sublayer values)
 
 void LayerTRW::copy_item(int subtype, void * sublayer, uint8_t **item, unsigned int *len )
 {
-  VikTrwLayer * vtl = (VikTrwLayer *) this->vl;
-  uint8_t *id;
-  size_t il;
+	VikTrwLayer * vtl = (VikTrwLayer *) this->vl;
+	uint8_t *id;
+	size_t il;
 
-  if (!sublayer) {
-    *item = NULL;
-    return;
-  }
+	if (!sublayer) {
+		*item = NULL;
+		return;
+	}
 
-  GByteArray *ba = g_byte_array_new ();
-  sg_uid_t uid = (sg_uid_t) ((long) sublayer);
+	GByteArray *ba = g_byte_array_new ();
+	sg_uid_t uid = (sg_uid_t) ((long) sublayer);
 
-  if ( subtype == VIK_TRW_LAYER_SUBLAYER_WAYPOINT ) {
-	  vtl->trw->waypoints.at(uid)->marshall(&id, &il);
-  } else if ( subtype == VIK_TRW_LAYER_SUBLAYER_TRACK ) {
-	  vtl->trw->tracks.at(uid)->marshall(&id, &il);
-  } else {
-	  vtl->trw->routes.at(uid)->marshall(&id, &il);
-  }
+	if (subtype == VIK_TRW_LAYER_SUBLAYER_WAYPOINT) {
+		vtl->trw->waypoints.at(uid)->marshall(&id, &il);
+	} else if (subtype == VIK_TRW_LAYER_SUBLAYER_TRACK) {
+		vtl->trw->tracks.at(uid)->marshall(&id, &il);
+	} else {
+		vtl->trw->routes.at(uid)->marshall(&id, &il);
+	}
 
-  g_byte_array_append ( ba, id, il );
+	g_byte_array_append(ba, id, il);
 
-  free(id);
+	free(id);
 
-  *len = ba->len;
-  *item = ba->data;
+	*len = ba->len;
+	*item = ba->data;
 }
 
 bool LayerTRW::paste_item(int subtype, uint8_t * item, size_t len)
 {
-  if ( !item )
-    return false;
+	if ( !item )
+		return false;
 
-  VikTrwLayer * vtl = (VikTrwLayer *) this->vl;
-  char *name;
+	VikTrwLayer * vtl = (VikTrwLayer *) this->vl;
+	char *name;
 
-  if ( subtype == VIK_TRW_LAYER_SUBLAYER_WAYPOINT )
-  {
-    Waypoint * wp = Waypoint::unmarshall(item, len);
-    // When copying - we'll create a new name based on the original
-    name = vtl->trw->new_unique_sublayer_name(VIK_TRW_LAYER_SUBLAYER_WAYPOINT, wp->name);
-    vtl->trw->add_waypoint(wp, name);
-    waypoint_convert(wp, &vtl->trw->coord_mode);
-    free( name );
+	if (subtype == VIK_TRW_LAYER_SUBLAYER_WAYPOINT) {
+		Waypoint * wp = Waypoint::unmarshall(item, len);
+		// When copying - we'll create a new name based on the original
+		name = vtl->trw->new_unique_sublayer_name(VIK_TRW_LAYER_SUBLAYER_WAYPOINT, wp->name);
+		vtl->trw->add_waypoint(wp, name);
+		waypoint_convert(wp, &vtl->trw->coord_mode);
+		free(name);
 
-    vtl->trw->calculate_bounds_waypoints();
+		vtl->trw->calculate_bounds_waypoints();
 
-    // Consider if redraw necessary for the new item
-    if ( vtl->vl.visible && vtl->trw->waypoints_visible && wp->visible )
-      vik_layer_emit_update ( VIK_LAYER(vtl) );
-    return true;
-  }
-  if ( subtype == VIK_TRW_LAYER_SUBLAYER_TRACK )
-  {
-    Track * trk = Track::unmarshall(item, len);
-    // When copying - we'll create a new name based on the original
-    name = vtl->trw->new_unique_sublayer_name(VIK_TRW_LAYER_SUBLAYER_TRACK, trk->name);
-    vtl->trw->add_track(trk, name);
-    trk->convert(vtl->trw->coord_mode);
-    free( name );
+		// Consider if redraw necessary for the new item
+		if (vtl->vl.visible && vtl->trw->waypoints_visible && wp->visible) {
+			vik_layer_emit_update(VIK_LAYER(vtl));
+		}
+		return true;
+	}
+	if (subtype == VIK_TRW_LAYER_SUBLAYER_TRACK) {
+		Track * trk = Track::unmarshall(item, len);
+		// When copying - we'll create a new name based on the original
+		name = vtl->trw->new_unique_sublayer_name(VIK_TRW_LAYER_SUBLAYER_TRACK, trk->name);
+		vtl->trw->add_track(trk, name);
+		trk->convert(vtl->trw->coord_mode);
+		free(name);
 
-    // Consider if redraw necessary for the new item
-    if ( vtl->vl.visible && vtl->trw->tracks_visible && trk->visible )
-      vik_layer_emit_update ( VIK_LAYER(vtl) );
-    return true;
-  }
-  if ( subtype == VIK_TRW_LAYER_SUBLAYER_ROUTE )
-  {
-    Track * trk = Track::unmarshall(item, len);
-    // When copying - we'll create a new name based on the original
-    name = vtl->trw->new_unique_sublayer_name(VIK_TRW_LAYER_SUBLAYER_ROUTE, trk->name);
-    vtl->trw->add_route(trk, name);
-    trk->convert(vtl->trw->coord_mode);
-    free( name );
+		// Consider if redraw necessary for the new item
+		if (vtl->vl.visible && vtl->trw->tracks_visible && trk->visible) {
+			vik_layer_emit_update(VIK_LAYER(vtl));
+		}
+		return true;
+	}
+	if (subtype == VIK_TRW_LAYER_SUBLAYER_ROUTE) {
+		Track * trk = Track::unmarshall(item, len);
+		// When copying - we'll create a new name based on the original
+		name = vtl->trw->new_unique_sublayer_name(VIK_TRW_LAYER_SUBLAYER_ROUTE, trk->name);
+		vtl->trw->add_route(trk, name);
+		trk->convert(vtl->trw->coord_mode);
+		free(name);
 
-    // Consider if redraw necessary for the new item
-    if ( vtl->vl.visible && vtl->trw->routes_visible && trk->visible )
-      vik_layer_emit_update ( VIK_LAYER(vtl) );
-    return true;
-  }
-  return false;
+		// Consider if redraw necessary for the new item
+		if (vtl->vl.visible && vtl->trw->routes_visible && trk->visible) {
+			vik_layer_emit_update(VIK_LAYER(vtl));
+		}
+		return true;
+	}
+	return false;
 }
 
 #if 0
@@ -1231,67 +1233,67 @@ static void trw_layer_change_param ( GtkWidget *widget, ui_change_values values 
 
 void LayerTRW::marshall(uint8_t **data, int *len )
 {
-  VikTrwLayer * vtl = (VikTrwLayer *) this->vl;
-  uint8_t *pd;
-  int pl;
+	VikTrwLayer * vtl = (VikTrwLayer *) this->vl;
+	uint8_t *pd;
+	int pl;
 
-  *data = NULL;
+	*data = NULL;
 
-  // Use byte arrays to store sublayer data
-  // much like done elsewhere e.g. vik_layer_marshall_params()
-  GByteArray *ba = g_byte_array_new ( );
+	// Use byte arrays to store sublayer data
+	// much like done elsewhere e.g. vik_layer_marshall_params()
+	GByteArray *ba = g_byte_array_new();
 
-  uint8_t *sl_data;
-  size_t sl_len;
+	uint8_t *sl_data;
+	size_t sl_len;
 
-  unsigned int object_length;
-  unsigned int subtype;
-  // store:
-  // the length of the item
-  // the sublayer type of item
-  // the the actual item
+	unsigned int object_length;
+	unsigned int subtype;
+	// store:
+	// the length of the item
+	// the sublayer type of item
+	// the the actual item
 #define tlm_append(object_pointer, size, type)	\
-  subtype = (type); \
-  object_length = (size); \
-  g_byte_array_append ( ba, (uint8_t *)&object_length, sizeof(object_length) ); \
-  g_byte_array_append ( ba, (uint8_t *)&subtype, sizeof(subtype) ); \
-  g_byte_array_append ( ba, (object_pointer), object_length );
+	subtype = (type);			\
+	object_length = (size);						\
+	g_byte_array_append(ba, (uint8_t *)&object_length, sizeof(object_length)); \
+	g_byte_array_append(ba, (uint8_t *)&subtype, sizeof(subtype)); \
+	g_byte_array_append(ba, (object_pointer), object_length);
 
-  // Layer parameters first
-  vik_layer_marshall_params(VIK_LAYER(vtl), &pd, &pl);
-  g_byte_array_append ( ba, (uint8_t *)&pl, sizeof(pl) ); \
-  g_byte_array_append ( ba, pd, pl );
-  free( pd );
+	// Layer parameters first
+	vik_layer_marshall_params(VIK_LAYER(vtl), &pd, &pl);
+	g_byte_array_append(ba, (uint8_t *)&pl, sizeof(pl)); \
+	g_byte_array_append(ba, pd, pl);
+	free(pd);
 
-  // Now sublayer data
-  GHashTableIter iter;
-  void * key, *value;
+	// Now sublayer data
+	GHashTableIter iter;
+	void * key, *value;
 
-  // Waypoints
-  for (auto i = vtl->trw->waypoints.begin(); i != vtl->trw->waypoints.end(); i++) {
-	  i->second->marshall(&sl_data, &sl_len);
-	  tlm_append(sl_data, sl_len, VIK_TRW_LAYER_SUBLAYER_WAYPOINT);
-	  free(sl_data);
-  }
+	// Waypoints
+	for (auto i = vtl->trw->waypoints.begin(); i != vtl->trw->waypoints.end(); i++) {
+		i->second->marshall(&sl_data, &sl_len);
+		tlm_append(sl_data, sl_len, VIK_TRW_LAYER_SUBLAYER_WAYPOINT);
+		free(sl_data);
+	}
 
-  // Tracks
-  for (auto i = vtl->trw->tracks.begin(); i != vtl->trw->tracks.end(); i++) {
-	  i->second->marshall(&sl_data, &sl_len);
-	  tlm_append(sl_data, sl_len, VIK_TRW_LAYER_SUBLAYER_TRACK);
-	  free(sl_data);
-  }
+	// Tracks
+	for (auto i = vtl->trw->tracks.begin(); i != vtl->trw->tracks.end(); i++) {
+		i->second->marshall(&sl_data, &sl_len);
+		tlm_append(sl_data, sl_len, VIK_TRW_LAYER_SUBLAYER_TRACK);
+		free(sl_data);
+	}
 
-  // Routes
-  for (auto i = vtl->trw->routes.begin(); i != vtl->trw->routes.end(); i++) {
-	  i->second->marshall(&sl_data, &sl_len);
-	  tlm_append(sl_data, sl_len, VIK_TRW_LAYER_SUBLAYER_ROUTE);
-	  free(sl_data);
-  }
+	// Routes
+	for (auto i = vtl->trw->routes.begin(); i != vtl->trw->routes.end(); i++) {
+		i->second->marshall(&sl_data, &sl_len);
+		tlm_append(sl_data, sl_len, VIK_TRW_LAYER_SUBLAYER_ROUTE);
+		free(sl_data);
+	}
 
 #undef tlm_append
 
-  *data = ba->data;
-  *len = ba->len;
+	*data = ba->data;
+	*len = ba->len;
 }
 
 static VikTrwLayer *trw_layer_unmarshall( uint8_t *data, int len, VikViewport *vvp )
@@ -1784,7 +1786,7 @@ void LayerTRW::realize_track(std::unordered_map<sg_uid_t, Track *> & tracks, voi
 
 void LayerTRW::realize_waypoints(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, void * pass_along[4], int sublayer_id)
 {
-	for(auto i = waypoints.begin(); i != waypoints.end(); i++) {
+	for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
 		GtkTreeIter *new_iter = (GtkTreeIter *) malloc(sizeof (GtkTreeIter));
 
 		time_t timestamp = 0;
@@ -1872,42 +1874,48 @@ static void trw_layer_realize(VikTrwLayer * vtl, VikTreeview * vt, GtkTreeIter *
 
 bool LayerTRW::sublayer_toggle_visible(int subtype, void * sublayer)
 {
-  VikTrwLayer * l = (VikTrwLayer *) this->vl;
+	VikTrwLayer * l = (VikTrwLayer *) this->vl;
 
-  sg_uid_t uid = (sg_uid_t) ((long) sublayer);
-  switch ( subtype )
-  {
-    case VIK_TRW_LAYER_SUBLAYER_TRACKS: return (l->trw->tracks_visible ^= 1);
-    case VIK_TRW_LAYER_SUBLAYER_WAYPOINTS: return (l->trw->waypoints_visible ^= 1);
-    case VIK_TRW_LAYER_SUBLAYER_ROUTES: return (l->trw->routes_visible ^= 1);
-    case VIK_TRW_LAYER_SUBLAYER_TRACK:
-    {
-      Track * trk = l->trw->tracks.at(uid);
-      if (trk)
-        return (trk->visible ^= 1);
-      else
-        return true;
-    }
-    case VIK_TRW_LAYER_SUBLAYER_WAYPOINT:
-    {
+	sg_uid_t uid = (sg_uid_t) ((long) sublayer);
+	switch (subtype) {
+	case VIK_TRW_LAYER_SUBLAYER_TRACKS:
+		return (l->trw->tracks_visible ^= 1);
+	case VIK_TRW_LAYER_SUBLAYER_WAYPOINTS:
+		return (l->trw->waypoints_visible ^= 1);
+	case VIK_TRW_LAYER_SUBLAYER_ROUTES:
+		return (l->trw->routes_visible ^= 1);
+	case VIK_TRW_LAYER_SUBLAYER_TRACK:
+		{
+			Track * trk = l->trw->tracks.at(uid);
+			if (trk) {
+				return (trk->visible ^= 1);
+			} else {
+				return true;
+			}
+			}
+	case VIK_TRW_LAYER_SUBLAYER_WAYPOINT:
+		{
 
-      Waypoint * wp = l->trw->waypoints.at(uid);
-      if (wp)
-        return (wp->visible ^= 1);
-      else
-        return true;
-    }
-    case VIK_TRW_LAYER_SUBLAYER_ROUTE:
-    {
-      Track * trk = l->trw->routes.at(uid);
-      if (trk)
-        return (trk->visible ^= 1);
-      else
-        return true;
-    }
-    default: break;
-  }
-  return true;
+			Waypoint * wp = l->trw->waypoints.at(uid);
+			if (wp) {
+				return (wp->visible ^= 1);
+			} else {
+				return true;
+			}
+		}
+	case VIK_TRW_LAYER_SUBLAYER_ROUTE:
+		{
+			Track * trk = l->trw->routes.at(uid);
+			if (trk) {
+				return (trk->visible ^= 1);
+			} else {
+				return true;
+				}
+		}
+	default:
+		break;
+	}
+	return true;
 }
 
 /*
@@ -1915,7 +1923,7 @@ bool LayerTRW::sublayer_toggle_visible(int subtype, void * sublayer)
  */
 int vik_trw_layer_get_property_tracks_line_thickness ( VikTrwLayer *vtl )
 {
-  return vtl->line_thickness;
+	return vtl->line_thickness;
 }
 
 
@@ -1999,202 +2007,203 @@ static void trw_layer_tracks_tooltip(std::unordered_map<sg_uid_t, Track *> & tra
  */
 char const * LayerTRW::tooltip()
 {
-  char tbuf1[64];
-  char tbuf2[64];
-  char tbuf3[64];
-  char tbuf4[10];
-  tbuf1[0] = '\0';
-  tbuf2[0] = '\0';
-  tbuf3[0] = '\0';
-  tbuf4[0] = '\0';
+	char tbuf1[64];
+	char tbuf2[64];
+	char tbuf3[64];
+	char tbuf4[10];
+	tbuf1[0] = '\0';
+	tbuf2[0] = '\0';
+	tbuf3[0] = '\0';
+	tbuf4[0] = '\0';
 
-  static char tmp_buf[128];
-  tmp_buf[0] = '\0';
+	static char tmp_buf[128];
+	tmp_buf[0] = '\0';
 
-  // For compact date format I'm using '%x'     [The preferred date representation for the current locale without the time.]
+	// For compact date format I'm using '%x'     [The preferred date representation for the current locale without the time.]
 
-  if (true) { //vtl->trw->tracks) {
-    tooltip_tracks tt = { 0.0, 0, 0, 0 };
-    trw_layer_tracks_tooltip(this->tracks, &tt);
+	if (true) { //vtl->trw->tracks) {
+		tooltip_tracks tt = { 0.0, 0, 0, 0 };
+		trw_layer_tracks_tooltip(this->tracks, &tt);
 
-    GDate* gdate_start = g_date_new ();
-    g_date_set_time_t (gdate_start, tt.start_time);
+		GDate* gdate_start = g_date_new ();
+		g_date_set_time_t (gdate_start, tt.start_time);
 
-    GDate* gdate_end = g_date_new ();
-    g_date_set_time_t (gdate_end, tt.end_time);
+		GDate* gdate_end = g_date_new();
+		g_date_set_time_t (gdate_end, tt.end_time);
 
-    if ( g_date_compare (gdate_start, gdate_end) ) {
-      // Dates differ so print range on separate line
-      g_date_strftime (tbuf1, sizeof(tbuf1), "%x", gdate_start);
-      g_date_strftime (tbuf2, sizeof(tbuf2), "%x", gdate_end);
-      snprintf(tbuf3, sizeof(tbuf3), "%s to %s\n", tbuf1, tbuf2);
-    }
-    else {
-      // Same date so just show it and keep rest of text on the same line - provided it's a valid time!
-      if ( tt.start_time != 0 )
-	g_date_strftime (tbuf3, sizeof(tbuf3), "%x: ", gdate_start);
-    }
+		if (g_date_compare (gdate_start, gdate_end)) {
+			// Dates differ so print range on separate line
+			g_date_strftime(tbuf1, sizeof(tbuf1), "%x", gdate_start);
+			g_date_strftime(tbuf2, sizeof(tbuf2), "%x", gdate_end);
+			snprintf(tbuf3, sizeof(tbuf3), "%s to %s\n", tbuf1, tbuf2);
+		} else {
+			// Same date so just show it and keep rest of text on the same line - provided it's a valid time!
+			if (tt.start_time != 0) {
+				g_date_strftime(tbuf3, sizeof(tbuf3), "%x: ", gdate_start);
+			}
+		}
 
-    tbuf2[0] = '\0';
-    if ( tt.length > 0.0 ) {
-      double len_in_units;
+		tbuf2[0] = '\0';
+		if (tt.length > 0.0) {
+			double len_in_units;
 
-      // Setup info dependent on distance units
-      switch ( a_vik_get_units_distance() ) {
-      case VIK_UNITS_DISTANCE_MILES:
-        snprintf(tbuf4, sizeof(tbuf4), "miles");
-        len_in_units = VIK_METERS_TO_MILES(tt.length);
-        break;
-      case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
-        snprintf(tbuf4, sizeof(tbuf4), "NM");
-        len_in_units = VIK_METERS_TO_NAUTICAL_MILES(tt.length);
-        break;
-      default:
-        snprintf(tbuf4, sizeof(tbuf4), "kms");
-        len_in_units = tt.length/1000.0;
-        break;
-      }
+			// Setup info dependent on distance units
+			switch (a_vik_get_units_distance()) {
+			case VIK_UNITS_DISTANCE_MILES:
+				snprintf(tbuf4, sizeof(tbuf4), "miles");
+				len_in_units = VIK_METERS_TO_MILES(tt.length);
+				break;
+			case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
+				snprintf(tbuf4, sizeof(tbuf4), "NM");
+				len_in_units = VIK_METERS_TO_NAUTICAL_MILES(tt.length);
+				break;
+			default:
+				snprintf(tbuf4, sizeof(tbuf4), "kms");
+				len_in_units = tt.length/1000.0;
+				break;
+			}
 
-      // Timing information if available
-      tbuf1[0] = '\0';
-      if ( tt.duration > 0 ) {
-        snprintf(tbuf1, sizeof(tbuf1),
-                    _(" in %d:%02d hrs:mins"),
-                    (int)(tt.duration/3600), (int)round(tt.duration/60.0)%60);
-      }
-      snprintf(tbuf2, sizeof(tbuf2),
-		  _("\n%sTotal Length %.1f %s%s"),
-		  tbuf3, len_in_units, tbuf4, tbuf1);
-    }
+			// Timing information if available
+			tbuf1[0] = '\0';
+			if ( tt.duration > 0 ) {
+				snprintf(tbuf1, sizeof(tbuf1),
+					 _(" in %d:%02d hrs:mins"),
+					 (int)(tt.duration/3600), (int)round(tt.duration/60.0)%60);
+			}
+			snprintf(tbuf2, sizeof(tbuf2),
+				 _("\n%sTotal Length %.1f %s%s"),
+				 tbuf3, len_in_units, tbuf4, tbuf1);
+		}
 
-    tbuf1[0] = '\0';
-    double rlength = 0.0;
-    trw_layer_routes_tooltip(this->routes, &rlength);
-    if ( rlength > 0.0 ) {
-      double len_in_units;
-      // Setup info dependent on distance units
-      switch ( a_vik_get_units_distance() ) {
-      case VIK_UNITS_DISTANCE_MILES:
-        snprintf(tbuf4, sizeof(tbuf4), "miles");
-        len_in_units = VIK_METERS_TO_MILES(rlength);
-        break;
-      case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
-        snprintf(tbuf4, sizeof(tbuf4), "NM");
-        len_in_units = VIK_METERS_TO_NAUTICAL_MILES(rlength);
-        break;
-      default:
-        snprintf(tbuf4, sizeof(tbuf4), "kms");
-        len_in_units = rlength/1000.0;
-        break;
-      }
-      snprintf(tbuf1, sizeof(tbuf1), _("\nTotal route length %.1f %s"), len_in_units, tbuf4);
-    }
+		tbuf1[0] = '\0';
+		double rlength = 0.0;
+		trw_layer_routes_tooltip(this->routes, &rlength);
+		if (rlength > 0.0) {
+			double len_in_units;
+			// Setup info dependent on distance units
+			switch (a_vik_get_units_distance()) {
+			case VIK_UNITS_DISTANCE_MILES:
+				snprintf(tbuf4, sizeof(tbuf4), "miles");
+				len_in_units = VIK_METERS_TO_MILES(rlength);
+				break;
+			case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
+				snprintf(tbuf4, sizeof(tbuf4), "NM");
+				len_in_units = VIK_METERS_TO_NAUTICAL_MILES(rlength);
+				break;
+			default:
+				snprintf(tbuf4, sizeof(tbuf4), "kms");
+				len_in_units = rlength/1000.0;
+				break;
+			}
+			snprintf(tbuf1, sizeof(tbuf1), _("\nTotal route length %.1f %s"), len_in_units, tbuf4);
+		}
 
-    // Put together all the elements to form compact tooltip text
-    snprintf(tmp_buf, sizeof(tmp_buf),
-	     _("Tracks: %d - Waypoints: %d - Routes: %d%s%s"),
-	     this->tracks.size(), this->waypoints.size(), this->routes.size(), tbuf2, tbuf1);
+		// Put together all the elements to form compact tooltip text
+		snprintf(tmp_buf, sizeof(tmp_buf),
+			 _("Tracks: %d - Waypoints: %d - Routes: %d%s%s"),
+			 this->tracks.size(), this->waypoints.size(), this->routes.size(), tbuf2, tbuf1);
 
-    g_date_free (gdate_start);
-    g_date_free (gdate_end);
-  }
+		g_date_free(gdate_start);
+		g_date_free(gdate_end);
+	}
 
-  return tmp_buf;
+	return tmp_buf;
 }
 
 char const * LayerTRW::sublayer_tooltip(int subtype, void * sublayer)
 {
-  switch ( subtype )
-  {
-    case VIK_TRW_LAYER_SUBLAYER_TRACKS:
-    {
-      // Very simple tooltip - may expand detail in the future...
-      static char tmp_buf[32];
-      snprintf(tmp_buf, sizeof(tmp_buf), _("Tracks: %d"), this->tracks.size());
-      return tmp_buf;
-    }
-    break;
-    case VIK_TRW_LAYER_SUBLAYER_ROUTES:
-    {
-      // Very simple tooltip - may expand detail in the future...
-      static char tmp_buf[32];
-      snprintf(tmp_buf, sizeof(tmp_buf), _("Routes: %d"), this->routes.size());
-      return tmp_buf;
-    }
-    break;
+	switch (subtype) {
+	case VIK_TRW_LAYER_SUBLAYER_TRACKS:
+		{
+			// Very simple tooltip - may expand detail in the future...
+			static char tmp_buf[32];
+			snprintf(tmp_buf, sizeof(tmp_buf), _("Tracks: %d"), this->tracks.size());
+			return tmp_buf;
+		}
+		break;
+	case VIK_TRW_LAYER_SUBLAYER_ROUTES:
+		{
+			// Very simple tooltip - may expand detail in the future...
+			static char tmp_buf[32];
+			snprintf(tmp_buf, sizeof(tmp_buf), _("Routes: %d"), this->routes.size());
+			return tmp_buf;
+		}
+		break;
 
-    case VIK_TRW_LAYER_SUBLAYER_ROUTE:
-      // Same tooltip for a route
-    case VIK_TRW_LAYER_SUBLAYER_TRACK:
-    {
-      Track * trk = NULL;
-      sg_uid_t uid = (sg_uid_t) ((long) sublayer);
-      if (subtype == VIK_TRW_LAYER_SUBLAYER_TRACK) {
-	      trk = this->tracks.at(uid);
-      } else {
-	      trk = this->routes.at(uid);
-      }
+	case VIK_TRW_LAYER_SUBLAYER_ROUTE:
+		// Same tooltip for a route
+	case VIK_TRW_LAYER_SUBLAYER_TRACK:
+		{
+			Track * trk = NULL;
+			sg_uid_t uid = (sg_uid_t) ((long) sublayer);
+			if (subtype == VIK_TRW_LAYER_SUBLAYER_TRACK) {
+				trk = this->tracks.at(uid);
+			} else {
+				trk = this->routes.at(uid);
+			}
 
-      if (trk) {
-	// Could be a better way of handling strings - but this works...
-	char time_buf1[20];
-	char time_buf2[20];
-	time_buf1[0] = '\0';
-	time_buf2[0] = '\0';
-	static char tmp_buf[100];
-	// Compact info: Short date eg (11/20/99), duration and length
-	// Hopefully these are the things that are most useful and so promoted into the tooltip
-	if ( trk->trackpoints && trk->get_tp_first()->has_timestamp ) {
-	  // %x     The preferred date representation for the current locale without the time.
-	  strftime (time_buf1, sizeof(time_buf1), "%x: ", gmtime(&(trk->get_tp_first()->timestamp)));
-	  time_t dur = trk->get_duration(true);
-	  if ( dur > 0 )
-	    snprintf( time_buf2, sizeof(time_buf2), _("- %d:%02d hrs:mins"), (int)(dur/3600), (int)round(dur/60.0)%60 );
+			if (trk) {
+				// Could be a better way of handling strings - but this works...
+				char time_buf1[20];
+				char time_buf2[20];
+				time_buf1[0] = '\0';
+				time_buf2[0] = '\0';
+				static char tmp_buf[100];
+				// Compact info: Short date eg (11/20/99), duration and length
+				// Hopefully these are the things that are most useful and so promoted into the tooltip
+				if (trk->trackpoints && trk->get_tp_first()->has_timestamp) {
+					// %x     The preferred date representation for the current locale without the time.
+					strftime (time_buf1, sizeof(time_buf1), "%x: ", gmtime(&(trk->get_tp_first()->timestamp)));
+					time_t dur = trk->get_duration(true);
+					if (dur > 0) {
+						snprintf( time_buf2, sizeof(time_buf2), _("- %d:%02d hrs:mins"), (int)(dur/3600), (int)round(dur/60.0)%60 );
+					}
+				}
+				// Get length and consider the appropriate distance units
+				double tr_len = trk->get_length();
+				vik_units_distance_t dist_units = a_vik_get_units_distance();
+				switch (dist_units) {
+				case VIK_UNITS_DISTANCE_KILOMETRES:
+					snprintf(tmp_buf, sizeof(tmp_buf), _("%s%.1f km %s"), time_buf1, tr_len/1000.0, time_buf2);
+					break;
+				case VIK_UNITS_DISTANCE_MILES:
+					snprintf(tmp_buf, sizeof(tmp_buf), _("%s%.1f miles %s"), time_buf1, VIK_METERS_TO_MILES(tr_len), time_buf2);
+					break;
+				case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
+					snprintf(tmp_buf, sizeof(tmp_buf), _("%s%.1f NM %s"), time_buf1, VIK_METERS_TO_NAUTICAL_MILES(tr_len), time_buf2);
+					break;
+				default:
+					break;
+				}
+				return tmp_buf;
+			}
+		}
+		break;
+	case VIK_TRW_LAYER_SUBLAYER_WAYPOINTS:
+		{
+			// Very simple tooltip - may expand detail in the future...
+			static char tmp_buf[32];
+			snprintf(tmp_buf, sizeof(tmp_buf), _("Waypoints: %d"), this->waypoints.size());
+			return tmp_buf;
+		}
+		break;
+	case VIK_TRW_LAYER_SUBLAYER_WAYPOINT:
+		{
+			sg_uid_t wp_uid = (sg_uid_t) ((long) sublayer);
+			Waypoint * wp = this->waypoints.at(wp_uid);
+			// NB It's OK to return NULL
+			if (wp) {
+				if (wp->comment) {
+					return wp->comment;
+				} else {
+					return wp->description;
+				}
+			}
+		}
+		break;
+	default: break;
 	}
-	// Get length and consider the appropriate distance units
-	double tr_len = trk->get_length();
-	vik_units_distance_t dist_units = a_vik_get_units_distance ();
-	switch (dist_units) {
-	case VIK_UNITS_DISTANCE_KILOMETRES:
-	  snprintf(tmp_buf, sizeof(tmp_buf), _("%s%.1f km %s"), time_buf1, tr_len/1000.0, time_buf2);
-	  break;
-	case VIK_UNITS_DISTANCE_MILES:
-	  snprintf(tmp_buf, sizeof(tmp_buf), _("%s%.1f miles %s"), time_buf1, VIK_METERS_TO_MILES(tr_len), time_buf2);
-	  break;
-	case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
-	  snprintf(tmp_buf, sizeof(tmp_buf), _("%s%.1f NM %s"), time_buf1, VIK_METERS_TO_NAUTICAL_MILES(tr_len), time_buf2);
-	  break;
-	default:
-	  break;
-	}
-	return tmp_buf;
-      }
-    }
-    break;
-    case VIK_TRW_LAYER_SUBLAYER_WAYPOINTS:
-    {
-      // Very simple tooltip - may expand detail in the future...
-      static char tmp_buf[32];
-      snprintf(tmp_buf, sizeof(tmp_buf), _("Waypoints: %d"), this->waypoints.size());
-      return tmp_buf;
-    }
-    break;
-    case VIK_TRW_LAYER_SUBLAYER_WAYPOINT:
-    {
-      sg_uid_t wp_uid = (sg_uid_t) ((long) sublayer);
-      Waypoint * wp = this->waypoints.at(wp_uid);
-      // NB It's OK to return NULL
-      if (wp) {
-        if ( wp->comment )
-          return wp->comment;
-        else
-          return wp->description;
-      }
-    }
-    break;
-    default: break;
-  }
-  return NULL;
+	return NULL;
 }
 
 #define VIK_SETTINGS_TRKPT_SELECTED_STATUSBAR_FORMAT "trkpt_selected_statusbar_format"
@@ -2274,93 +2283,91 @@ void LayerTRW::set_statusbar_msg_info_wpt(Waypoint * wp)
  */
 bool LayerTRW::selected(int subtype, void * sublayer, int type, void * vlp)
 {
-  // Reset
-  this->current_wp    = NULL;
-  this->current_wp_uid = 0;
-  trw_layer_cancel_current_tp ( (VikTrwLayer *) this->vl, false );
+	// Reset
+	this->current_wp    = NULL;
+	this->current_wp_uid = 0;
+	trw_layer_cancel_current_tp((VikTrwLayer *) this->vl, false);
 
-  // Clear statusbar
-  vik_statusbar_set_message ( vik_window_get_statusbar (VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(this->vl))), VIK_STATUSBAR_INFO, "" );
+	// Clear statusbar
+	vik_statusbar_set_message(vik_window_get_statusbar (VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(this->vl))), VIK_STATUSBAR_INFO, "");
 
-  switch ( type )
-    {
-    case VIK_TREEVIEW_TYPE_LAYER:
-      {
-	vik_window_set_selected_trw_layer ( (VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(this->vl), (VikTrwLayer *) this->vl );
-	/* Mark for redraw */
-	return true;
-      }
-      break;
+	switch (type)	{
+	case VIK_TREEVIEW_TYPE_LAYER:
+		{
+			vik_window_set_selected_trw_layer((VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(this->vl), (VikTrwLayer *) this->vl);
+			/* Mark for redraw */
+			return true;
+		}
+		break;
 
-    case VIK_TREEVIEW_TYPE_SUBLAYER:
-      {
-	switch ( subtype )
-	  {
-	  case VIK_TRW_LAYER_SUBLAYER_TRACKS:
-	    {
-	      vik_window_set_selected_tracks ( (VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(this->vl), &this->tracks, (VikTrwLayer *) this->vl );
-	      /* Mark for redraw */
-	      return true;
+	case VIK_TREEVIEW_TYPE_SUBLAYER:
+		{
+			switch (subtype) {
+			case VIK_TRW_LAYER_SUBLAYER_TRACKS:
+				{
+					vik_window_set_selected_tracks((VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(this->vl), &this->tracks, (VikTrwLayer *) this->vl);
+					/* Mark for redraw */
+					return true;
 	    }
-	    break;
-	  case VIK_TRW_LAYER_SUBLAYER_TRACK:
-	    {
-	      sg_uid_t uid = (sg_uid_t) ((long) sublayer);
-	      Track * trk = this->tracks.at(uid);
-	      vik_window_set_selected_track ( (VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(this->vl), (void **) trk, (VikTrwLayer *) this->vl );
-	      /* Mark for redraw */
-	      return true;
-	    }
-	    break;
-	  case VIK_TRW_LAYER_SUBLAYER_ROUTES:
-	    {
-	      vik_window_set_selected_tracks ( (VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(this->vl), &this->routes, (VikTrwLayer *) this->vl );
-	      /* Mark for redraw */
-	      return true;
-	    }
-	    break;
-	  case VIK_TRW_LAYER_SUBLAYER_ROUTE:
-	    {
-	      sg_uid_t uid = (sg_uid_t) ((long) sublayer);
-	      Track * trk = this->routes.at(uid);
-	      vik_window_set_selected_track ( (VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(this->vl), (void **) trk, (VikTrwLayer *) this->vl );
-	      /* Mark for redraw */
-	      return true;
-	    }
-	    break;
-	  case VIK_TRW_LAYER_SUBLAYER_WAYPOINTS:
-	    {
-	      vik_window_set_selected_waypoints ( (VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(this->vl), &this->waypoints, (VikTrwLayer *) this->vl );
-	      /* Mark for redraw */
-	      return true;
-	    }
-	    break;
-	  case VIK_TRW_LAYER_SUBLAYER_WAYPOINT:
-	    {
-	      sg_uid_t wp_uid = (sg_uid_t) ((long) sublayer);
-	      Waypoint * wp = this->waypoints.at(wp_uid);
-              if (wp) {
-                vik_window_set_selected_waypoint ( (VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(this->vl), (void **) wp, (VikTrwLayer *) this->vl );
-                // Show some waypoint info
-                this->set_statusbar_msg_info_wpt(wp);
-                /* Mark for redraw */
-                return true;
-              }
-	    }
-	    break;
-	  default:
-	    {
-	      return vik_window_clear_highlight ( (VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(this->vl) );
-	    }
-	    break;
-	  }
-	return false;
-      }
-      break;
+				break;
+			case VIK_TRW_LAYER_SUBLAYER_TRACK:
+				{
+					sg_uid_t uid = (sg_uid_t) ((long) sublayer);
+					Track * trk = this->tracks.at(uid);
+					vik_window_set_selected_track((VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(this->vl), (void **) trk, (VikTrwLayer *) this->vl);
+					/* Mark for redraw */
+					return true;
+				}
+				break;
+			case VIK_TRW_LAYER_SUBLAYER_ROUTES:
+				{
+					vik_window_set_selected_tracks((VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(this->vl), &this->routes, (VikTrwLayer *) this->vl);
+					/* Mark for redraw */
+					return true;
+				}
+				break;
+			case VIK_TRW_LAYER_SUBLAYER_ROUTE:
+				{
+					sg_uid_t uid = (sg_uid_t) ((long) sublayer);
+					Track * trk = this->routes.at(uid);
+					vik_window_set_selected_track((VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(this->vl), (void **) trk, (VikTrwLayer *) this->vl );
+					/* Mark for redraw */
+					return true;
+				}
+				break;
+			case VIK_TRW_LAYER_SUBLAYER_WAYPOINTS:
+				{
+					vik_window_set_selected_waypoints((VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(this->vl), &this->waypoints, (VikTrwLayer *) this->vl);
+					/* Mark for redraw */
+					return true;
+				}
+				break;
+			case VIK_TRW_LAYER_SUBLAYER_WAYPOINT:
+				{
+					sg_uid_t wp_uid = (sg_uid_t) ((long) sublayer);
+					Waypoint * wp = this->waypoints.at(wp_uid);
+					if (wp) {
+						vik_window_set_selected_waypoint((VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(this->vl), (void **) wp, (VikTrwLayer *) this->vl);
+						// Show some waypoint info
+						this->set_statusbar_msg_info_wpt(wp);
+						/* Mark for redraw */
+						return true;
+					}
+				}
+				break;
+			default:
+				{
+					return vik_window_clear_highlight((VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(this->vl));
+				}
+				break;
+			}
+			return false;
+		}
+		break;
 
-    default:
-      return vik_window_clear_highlight ( (VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(this->vl) );
-      break;
+	default:
+		return vik_window_clear_highlight ( (VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(this->vl) );
+		break;
     }
 }
 
@@ -3204,336 +3211,337 @@ static GtkWidget* create_external_submenu ( GtkMenu *menu )
 
 void LayerTRW::add_menu_items(GtkMenu * menu, void * vlp)
 {
-  VikTrwLayer * vtl = (VikTrwLayer *) this->vl;
+	VikTrwLayer * vtl = (VikTrwLayer *) this->vl;
 
-  static menu_array_layer pass_along;
-  GtkWidget *item;
-  GtkWidget *export_submenu;
-  pass_along[MA_VTL] = vtl;
-  pass_along[MA_VLP] = vlp;
+	static menu_array_layer pass_along;
+	GtkWidget *item;
+	GtkWidget *export_submenu;
+	pass_along[MA_VTL] = vtl;
+	pass_along[MA_VLP] = vlp;
 
-  item = gtk_menu_item_new();
-  gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
-  gtk_widget_show ( item );
+	item = gtk_menu_item_new();
+	gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
+	gtk_widget_show ( item );
 
-  if ( vtl->current_track ) {
-    if ( vtl->current_track->is_route )
-      item = gtk_menu_item_new_with_mnemonic ( _("_Finish Route") );
-    else
-      item = gtk_menu_item_new_with_mnemonic ( _("_Finish Track") );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_finish_track), pass_along );
-    gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-    gtk_widget_show ( item );
+	if (vtl->current_track) {
+		if (vtl->current_track->is_route) {
+			item = gtk_menu_item_new_with_mnemonic(_("_Finish Route"));
+		} else {
+			item = gtk_menu_item_new_with_mnemonic(_("_Finish Track"));
+		}
+		g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(trw_layer_finish_track), pass_along);
+		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
+		gtk_widget_show(item);
 
-    // Add separator
-    item = gtk_menu_item_new ();
-    gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
-    gtk_widget_show ( item );
-  }
+		// Add separator
+		item = gtk_menu_item_new();
+		gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+		gtk_widget_show(item);
+	}
 
-  /* Now with icons */
-  item = gtk_image_menu_item_new_with_mnemonic ( _("_View Layer") );
-  gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_ZOOM_FIT, GTK_ICON_SIZE_MENU) );
-  g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_auto_view), pass_along );
-  gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-  gtk_widget_show ( item );
+	/* Now with icons */
+	item = gtk_image_menu_item_new_with_mnemonic ( _("_View Layer") );
+	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_ZOOM_FIT, GTK_ICON_SIZE_MENU) );
+	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_auto_view), pass_along );
+	gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
+	gtk_widget_show ( item );
 
-  GtkWidget *view_submenu = gtk_menu_new();
-  item = gtk_image_menu_item_new_with_mnemonic ( _("V_iew") );
-  gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_FIND, GTK_ICON_SIZE_MENU) );
-  gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-  gtk_widget_show ( item );
-  gtk_menu_item_set_submenu (GTK_MENU_ITEM (item), view_submenu );
+	GtkWidget *view_submenu = gtk_menu_new();
+	item = gtk_image_menu_item_new_with_mnemonic ( _("V_iew") );
+	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_FIND, GTK_ICON_SIZE_MENU) );
+	gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
+	gtk_widget_show ( item );
+	gtk_menu_item_set_submenu (GTK_MENU_ITEM (item), view_submenu );
 
-  item = gtk_menu_item_new_with_mnemonic ( _("View All _Tracks") );
-  g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_auto_tracks_view), pass_along );
-  gtk_menu_shell_append (GTK_MENU_SHELL (view_submenu), item);
-  gtk_widget_show ( item );
+	item = gtk_menu_item_new_with_mnemonic ( _("View All _Tracks") );
+	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_auto_tracks_view), pass_along );
+	gtk_menu_shell_append (GTK_MENU_SHELL (view_submenu), item);
+	gtk_widget_show ( item );
 
-  item = gtk_menu_item_new_with_mnemonic ( _("View All _Routes") );
-  g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_auto_routes_view), pass_along );
-  gtk_menu_shell_append (GTK_MENU_SHELL (view_submenu), item);
-  gtk_widget_show ( item );
+	item = gtk_menu_item_new_with_mnemonic ( _("View All _Routes") );
+	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_auto_routes_view), pass_along );
+	gtk_menu_shell_append (GTK_MENU_SHELL (view_submenu), item);
+	gtk_widget_show ( item );
 
-  item = gtk_menu_item_new_with_mnemonic ( _("View All _Waypoints") );
-  g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_auto_waypoints_view), pass_along );
-  gtk_menu_shell_append (GTK_MENU_SHELL (view_submenu), item);
-  gtk_widget_show ( item );
+	item = gtk_menu_item_new_with_mnemonic ( _("View All _Waypoints") );
+	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_auto_waypoints_view), pass_along );
+	gtk_menu_shell_append (GTK_MENU_SHELL (view_submenu), item);
+	gtk_widget_show ( item );
 
-  item = gtk_image_menu_item_new_with_mnemonic ( _("_Goto Center of Layer") );
-  gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_JUMP_TO, GTK_ICON_SIZE_MENU) );
-  g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_centerize), pass_along );
-  gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-  gtk_widget_show ( item );
+	item = gtk_image_menu_item_new_with_mnemonic ( _("_Goto Center of Layer") );
+	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_JUMP_TO, GTK_ICON_SIZE_MENU) );
+	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_centerize), pass_along );
+	gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
+	gtk_widget_show ( item );
 
-  item = gtk_menu_item_new_with_mnemonic ( _("Goto _Waypoint...") );
-  g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_goto_wp), pass_along );
-  gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-  gtk_widget_show ( item );
+	item = gtk_menu_item_new_with_mnemonic ( _("Goto _Waypoint...") );
+	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_goto_wp), pass_along );
+	gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
+	gtk_widget_show ( item );
 
-  export_submenu = gtk_menu_new ();
-  item = gtk_image_menu_item_new_with_mnemonic ( _("_Export Layer") );
-  gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_HARDDISK, GTK_ICON_SIZE_MENU) );
-  gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-  gtk_widget_show ( item );
-  gtk_menu_item_set_submenu (GTK_MENU_ITEM (item), export_submenu );
+	export_submenu = gtk_menu_new ();
+	item = gtk_image_menu_item_new_with_mnemonic ( _("_Export Layer") );
+	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_HARDDISK, GTK_ICON_SIZE_MENU) );
+	gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
+	gtk_widget_show ( item );
+	gtk_menu_item_set_submenu (GTK_MENU_ITEM (item), export_submenu );
 
-  item = gtk_menu_item_new_with_mnemonic ( _("Export as GPS_Point...") );
-  g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_export_gpspoint), pass_along );
-  gtk_menu_shell_append (GTK_MENU_SHELL (export_submenu), item);
-  gtk_widget_show ( item );
+	item = gtk_menu_item_new_with_mnemonic ( _("Export as GPS_Point...") );
+	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_export_gpspoint), pass_along );
+	gtk_menu_shell_append (GTK_MENU_SHELL (export_submenu), item);
+	gtk_widget_show ( item );
 
-  item = gtk_menu_item_new_with_mnemonic ( _("Export as GPS_Mapper...") );
-  g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_export_gpsmapper), pass_along );
-  gtk_menu_shell_append (GTK_MENU_SHELL (export_submenu), item);
-  gtk_widget_show ( item );
+	item = gtk_menu_item_new_with_mnemonic ( _("Export as GPS_Mapper...") );
+	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_export_gpsmapper), pass_along );
+	gtk_menu_shell_append (GTK_MENU_SHELL (export_submenu), item);
+	gtk_widget_show ( item );
 
-  item = gtk_menu_item_new_with_mnemonic ( _("Export as _GPX...") );
-  g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_export_gpx), pass_along );
-  gtk_menu_shell_append (GTK_MENU_SHELL (export_submenu), item);
-  gtk_widget_show ( item );
+	item = gtk_menu_item_new_with_mnemonic ( _("Export as _GPX...") );
+	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_export_gpx), pass_along );
+	gtk_menu_shell_append (GTK_MENU_SHELL (export_submenu), item);
+	gtk_widget_show ( item );
 
-  item = gtk_menu_item_new_with_mnemonic ( _("Export as _KML...") );
-  g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_export_kml), pass_along );
-  gtk_menu_shell_append (GTK_MENU_SHELL (export_submenu), item);
-  gtk_widget_show ( item );
+	item = gtk_menu_item_new_with_mnemonic ( _("Export as _KML...") );
+	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_export_kml), pass_along );
+	gtk_menu_shell_append (GTK_MENU_SHELL (export_submenu), item);
+	gtk_widget_show ( item );
 
-  if ( have_geojson_export ) {
-    item = gtk_menu_item_new_with_mnemonic ( _("Export as GEO_JSON...") );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_export_geojson), pass_along );
-    gtk_menu_shell_append (GTK_MENU_SHELL (export_submenu), item);
-    gtk_widget_show ( item );
-  }
+	if ( have_geojson_export ) {
+		item = gtk_menu_item_new_with_mnemonic ( _("Export as GEO_JSON...") );
+		g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_export_geojson), pass_along );
+		gtk_menu_shell_append (GTK_MENU_SHELL (export_submenu), item);
+		gtk_widget_show ( item );
+	}
 
-  item = gtk_menu_item_new_with_mnemonic ( _("Export via GPSbabel...") );
-  g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_export_babel), pass_along );
-  gtk_menu_shell_append (GTK_MENU_SHELL (export_submenu), item);
-  gtk_widget_show ( item );
+	item = gtk_menu_item_new_with_mnemonic ( _("Export via GPSbabel...") );
+	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_export_babel), pass_along );
+	gtk_menu_shell_append (GTK_MENU_SHELL (export_submenu), item);
+	gtk_widget_show ( item );
 
-  char* external1 = g_strdup_printf ( _("Open with External Program_1: %s"), a_vik_get_external_gpx_program_1() );
-  item = gtk_menu_item_new_with_mnemonic ( external1 );
-  free( external1 );
-  g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_export_external_gpx_1), pass_along );
-  gtk_menu_shell_append (GTK_MENU_SHELL (export_submenu), item);
-  gtk_widget_show ( item );
+	char* external1 = g_strdup_printf ( _("Open with External Program_1: %s"), a_vik_get_external_gpx_program_1() );
+	item = gtk_menu_item_new_with_mnemonic ( external1 );
+	free( external1 );
+	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_export_external_gpx_1), pass_along );
+	gtk_menu_shell_append (GTK_MENU_SHELL (export_submenu), item);
+	gtk_widget_show ( item );
 
-  char* external2 = g_strdup_printf ( _("Open with External Program_2: %s"), a_vik_get_external_gpx_program_2() );
-  item = gtk_menu_item_new_with_mnemonic ( external2 );
-  free( external2 );
-  g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_export_external_gpx_2), pass_along );
-  gtk_menu_shell_append (GTK_MENU_SHELL (export_submenu), item);
-  gtk_widget_show ( item );
+	char* external2 = g_strdup_printf ( _("Open with External Program_2: %s"), a_vik_get_external_gpx_program_2() );
+	item = gtk_menu_item_new_with_mnemonic ( external2 );
+	free( external2 );
+	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_export_external_gpx_2), pass_along );
+	gtk_menu_shell_append (GTK_MENU_SHELL (export_submenu), item);
+	gtk_widget_show ( item );
 
-  GtkWidget *new_submenu = gtk_menu_new();
-  item = gtk_image_menu_item_new_with_mnemonic ( _("_New") );
-  gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_NEW, GTK_ICON_SIZE_MENU) );
-  gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-  gtk_widget_show(item);
-  gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), new_submenu);
+	GtkWidget *new_submenu = gtk_menu_new();
+	item = gtk_image_menu_item_new_with_mnemonic ( _("_New") );
+	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_NEW, GTK_ICON_SIZE_MENU) );
+	gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
+	gtk_widget_show(item);
+	gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), new_submenu);
 
-  item = gtk_image_menu_item_new_with_mnemonic ( _("New _Waypoint...") );
-  gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_NEW, GTK_ICON_SIZE_MENU) );
-  g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_new_wp), pass_along );
-  gtk_menu_shell_append (GTK_MENU_SHELL (new_submenu), item);
-  gtk_widget_show ( item );
+	item = gtk_image_menu_item_new_with_mnemonic ( _("New _Waypoint...") );
+	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_NEW, GTK_ICON_SIZE_MENU) );
+	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_new_wp), pass_along );
+	gtk_menu_shell_append (GTK_MENU_SHELL (new_submenu), item);
+	gtk_widget_show ( item );
 
-  item = gtk_image_menu_item_new_with_mnemonic ( _("New _Track") );
-  gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_NEW, GTK_ICON_SIZE_MENU) );
-  g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_new_track), pass_along );
-  gtk_menu_shell_append (GTK_MENU_SHELL (new_submenu), item);
-  gtk_widget_show ( item );
-  // Make it available only when a new track *not* already in progress
-  gtk_widget_set_sensitive ( item, ! (bool)KPOINTER_TO_INT(vtl->current_track) );
+	item = gtk_image_menu_item_new_with_mnemonic ( _("New _Track") );
+	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_NEW, GTK_ICON_SIZE_MENU) );
+	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_new_track), pass_along );
+	gtk_menu_shell_append (GTK_MENU_SHELL (new_submenu), item);
+	gtk_widget_show ( item );
+	// Make it available only when a new track *not* already in progress
+	gtk_widget_set_sensitive ( item, ! (bool)KPOINTER_TO_INT(vtl->current_track) );
 
-  item = gtk_image_menu_item_new_with_mnemonic ( _("New _Route") );
-  gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_NEW, GTK_ICON_SIZE_MENU) );
-  g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_new_route), pass_along );
-  gtk_menu_shell_append (GTK_MENU_SHELL (new_submenu), item);
-  gtk_widget_show ( item );
-  // Make it available only when a new track *not* already in progress
-  gtk_widget_set_sensitive ( item, ! (bool)KPOINTER_TO_INT(vtl->current_track) );
+	item = gtk_image_menu_item_new_with_mnemonic ( _("New _Route") );
+	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_NEW, GTK_ICON_SIZE_MENU) );
+	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_new_route), pass_along );
+	gtk_menu_shell_append (GTK_MENU_SHELL (new_submenu), item);
+	gtk_widget_show ( item );
+	// Make it available only when a new track *not* already in progress
+	gtk_widget_set_sensitive ( item, ! (bool)KPOINTER_TO_INT(vtl->current_track) );
 
 #ifdef VIK_CONFIG_GEOTAG
-  item = gtk_menu_item_new_with_mnemonic ( _("Geotag _Images...") );
-  g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_geotagging), pass_along );
-  gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-  gtk_widget_show ( item );
+	item = gtk_menu_item_new_with_mnemonic ( _("Geotag _Images...") );
+	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_geotagging), pass_along );
+	gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
+	gtk_widget_show ( item );
 #endif
 
-  GtkWidget *acquire_submenu = gtk_menu_new ();
-  item = gtk_image_menu_item_new_with_mnemonic ( _("_Acquire") );
-  gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_GO_DOWN, GTK_ICON_SIZE_MENU) );
-  gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-  gtk_widget_show ( item );
-  gtk_menu_item_set_submenu (GTK_MENU_ITEM (item), acquire_submenu );
+	GtkWidget *acquire_submenu = gtk_menu_new ();
+	item = gtk_image_menu_item_new_with_mnemonic ( _("_Acquire") );
+	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_GO_DOWN, GTK_ICON_SIZE_MENU) );
+	gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
+	gtk_widget_show ( item );
+	gtk_menu_item_set_submenu (GTK_MENU_ITEM (item), acquire_submenu );
 
-  item = gtk_menu_item_new_with_mnemonic ( _("From _GPS...") );
-  g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_acquire_gps_cb), pass_along );
-  gtk_menu_shell_append (GTK_MENU_SHELL (acquire_submenu), item);
-  gtk_widget_show ( item );
+	item = gtk_menu_item_new_with_mnemonic ( _("From _GPS...") );
+	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_acquire_gps_cb), pass_along );
+	gtk_menu_shell_append (GTK_MENU_SHELL (acquire_submenu), item);
+	gtk_widget_show ( item );
 
-  /* FIXME: only add menu when at least a routing engine has support for Directions */
-  item = gtk_menu_item_new_with_mnemonic ( _("From _Directions...") );
-  g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_acquire_routing_cb), pass_along );
-  gtk_menu_shell_append (GTK_MENU_SHELL (acquire_submenu), item);
-  gtk_widget_show ( item );
+	/* FIXME: only add menu when at least a routing engine has support for Directions */
+	item = gtk_menu_item_new_with_mnemonic ( _("From _Directions...") );
+	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_acquire_routing_cb), pass_along );
+	gtk_menu_shell_append (GTK_MENU_SHELL (acquire_submenu), item);
+	gtk_widget_show ( item );
 
 #ifdef VIK_CONFIG_OPENSTREETMAP
-  item = gtk_menu_item_new_with_mnemonic ( _("From _OSM Traces...") );
-  g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_acquire_osm_cb), pass_along );
-  gtk_menu_shell_append (GTK_MENU_SHELL (acquire_submenu), item);
-  gtk_widget_show ( item );
+	item = gtk_menu_item_new_with_mnemonic ( _("From _OSM Traces...") );
+	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_acquire_osm_cb), pass_along );
+	gtk_menu_shell_append (GTK_MENU_SHELL (acquire_submenu), item);
+	gtk_widget_show ( item );
 
-  item = gtk_menu_item_new_with_mnemonic ( _("From _My OSM Traces...") );
-  g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_acquire_osm_my_traces_cb), pass_along );
-  gtk_menu_shell_append (GTK_MENU_SHELL (acquire_submenu), item);
-  gtk_widget_show ( item );
+	item = gtk_menu_item_new_with_mnemonic ( _("From _My OSM Traces...") );
+	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_acquire_osm_my_traces_cb), pass_along );
+	gtk_menu_shell_append (GTK_MENU_SHELL (acquire_submenu), item);
+	gtk_widget_show ( item );
 #endif
 
-  item = gtk_menu_item_new_with_mnemonic ( _("From _URL...") );
-  g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_acquire_url_cb), pass_along );
-  gtk_menu_shell_append (GTK_MENU_SHELL (acquire_submenu), item);
-  gtk_widget_show ( item );
+	item = gtk_menu_item_new_with_mnemonic ( _("From _URL...") );
+	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_acquire_url_cb), pass_along );
+	gtk_menu_shell_append (GTK_MENU_SHELL (acquire_submenu), item);
+	gtk_widget_show ( item );
 
 #ifdef VIK_CONFIG_GEONAMES
-  GtkWidget *wikipedia_submenu = gtk_menu_new();
-  item = gtk_image_menu_item_new_with_mnemonic ( _("From _Wikipedia Waypoints") );
-  gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_ADD, GTK_ICON_SIZE_MENU) );
-  gtk_menu_shell_append(GTK_MENU_SHELL (acquire_submenu), item);
-  gtk_widget_show(item);
-  gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), wikipedia_submenu);
+	GtkWidget *wikipedia_submenu = gtk_menu_new();
+	item = gtk_image_menu_item_new_with_mnemonic ( _("From _Wikipedia Waypoints") );
+	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_ADD, GTK_ICON_SIZE_MENU) );
+	gtk_menu_shell_append(GTK_MENU_SHELL (acquire_submenu), item);
+	gtk_widget_show(item);
+	gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), wikipedia_submenu);
 
-  item = gtk_image_menu_item_new_with_mnemonic ( _("Within _Layer Bounds") );
-  gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_ZOOM_FIT, GTK_ICON_SIZE_MENU) );
-  g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_new_wikipedia_wp_layer), pass_along );
-  gtk_menu_shell_append (GTK_MENU_SHELL (wikipedia_submenu), item);
-  gtk_widget_show ( item );
+	item = gtk_image_menu_item_new_with_mnemonic ( _("Within _Layer Bounds") );
+	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_ZOOM_FIT, GTK_ICON_SIZE_MENU) );
+	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_new_wikipedia_wp_layer), pass_along );
+	gtk_menu_shell_append (GTK_MENU_SHELL (wikipedia_submenu), item);
+	gtk_widget_show ( item );
 
-  item = gtk_image_menu_item_new_with_mnemonic ( _("Within _Current View") );
-  gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_ZOOM_100, GTK_ICON_SIZE_MENU) );
-  g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_new_wikipedia_wp_viewport), pass_along );
-  gtk_menu_shell_append (GTK_MENU_SHELL (wikipedia_submenu), item);
-  gtk_widget_show ( item );
+	item = gtk_image_menu_item_new_with_mnemonic ( _("Within _Current View") );
+	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_ZOOM_100, GTK_ICON_SIZE_MENU) );
+	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_new_wikipedia_wp_viewport), pass_along );
+	gtk_menu_shell_append (GTK_MENU_SHELL (wikipedia_submenu), item);
+	gtk_widget_show ( item );
 #endif
 
 #ifdef VIK_CONFIG_GEOCACHES
-  item = gtk_menu_item_new_with_mnemonic ( _("From Geo_caching...") );
-  g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_acquire_geocache_cb), pass_along );
-  gtk_menu_shell_append (GTK_MENU_SHELL (acquire_submenu), item);
-  gtk_widget_show ( item );
+	item = gtk_menu_item_new_with_mnemonic ( _("From Geo_caching...") );
+	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_acquire_geocache_cb), pass_along );
+	gtk_menu_shell_append (GTK_MENU_SHELL (acquire_submenu), item);
+	gtk_widget_show ( item );
 #endif
 
 #ifdef VIK_CONFIG_GEOTAG
-  item = gtk_menu_item_new_with_mnemonic ( _("From Geotagged _Images...") );
-  g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_acquire_geotagged_cb), pass_along );
-  gtk_menu_shell_append (GTK_MENU_SHELL (acquire_submenu), item);
-  gtk_widget_show ( item );
+	item = gtk_menu_item_new_with_mnemonic ( _("From Geotagged _Images...") );
+	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_acquire_geotagged_cb), pass_along );
+	gtk_menu_shell_append (GTK_MENU_SHELL (acquire_submenu), item);
+	gtk_widget_show ( item );
 #endif
 
-  item = gtk_menu_item_new_with_mnemonic ( _("From _File...") );
-  g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_acquire_file_cb), pass_along );
-  gtk_menu_shell_append (GTK_MENU_SHELL (acquire_submenu), item);
-  gtk_widget_set_tooltip_text (item, _("Import File With GPS_Babel..."));
-  gtk_widget_show ( item );
+	item = gtk_menu_item_new_with_mnemonic ( _("From _File...") );
+	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_acquire_file_cb), pass_along );
+	gtk_menu_shell_append (GTK_MENU_SHELL (acquire_submenu), item);
+	gtk_widget_set_tooltip_text (item, _("Import File With GPS_Babel..."));
+	gtk_widget_show ( item );
 
-  vik_ext_tool_datasources_add_menu_items_to_menu ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(vtl)), GTK_MENU (acquire_submenu) );
+	vik_ext_tool_datasources_add_menu_items_to_menu ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(vtl)), GTK_MENU (acquire_submenu) );
 
-  GtkWidget *upload_submenu = gtk_menu_new ();
-  item = gtk_image_menu_item_new_with_mnemonic ( _("_Upload") );
-  gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_GO_UP, GTK_ICON_SIZE_MENU) );
-  gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-  gtk_widget_show ( item );
-  gtk_menu_item_set_submenu (GTK_MENU_ITEM (item), upload_submenu );
+	GtkWidget *upload_submenu = gtk_menu_new ();
+	item = gtk_image_menu_item_new_with_mnemonic ( _("_Upload") );
+	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_GO_UP, GTK_ICON_SIZE_MENU) );
+	gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
+	gtk_widget_show ( item );
+	gtk_menu_item_set_submenu (GTK_MENU_ITEM (item), upload_submenu );
 
-  item = gtk_image_menu_item_new_with_mnemonic ( _("Upload to _GPS...") );
-  gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_GO_FORWARD, GTK_ICON_SIZE_MENU) );
-  g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_gps_upload), pass_along );
-  gtk_menu_shell_append (GTK_MENU_SHELL (upload_submenu), item);
-  gtk_widget_show ( item );
+	item = gtk_image_menu_item_new_with_mnemonic ( _("Upload to _GPS...") );
+	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_GO_FORWARD, GTK_ICON_SIZE_MENU) );
+	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_gps_upload), pass_along );
+	gtk_menu_shell_append (GTK_MENU_SHELL (upload_submenu), item);
+	gtk_widget_show ( item );
 
 #ifdef VIK_CONFIG_OPENSTREETMAP
-  item = gtk_image_menu_item_new_with_mnemonic ( _("Upload to _OSM...") );
-  gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_GO_UP, GTK_ICON_SIZE_MENU) );
-  g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_osm_traces_upload_cb), pass_along );
-  gtk_menu_shell_append (GTK_MENU_SHELL (upload_submenu), item);
-  gtk_widget_show ( item );
+	item = gtk_image_menu_item_new_with_mnemonic ( _("Upload to _OSM...") );
+	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_GO_UP, GTK_ICON_SIZE_MENU) );
+	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_osm_traces_upload_cb), pass_along );
+	gtk_menu_shell_append (GTK_MENU_SHELL (upload_submenu), item);
+	gtk_widget_show ( item );
 #endif
 
-  GtkWidget *delete_submenu = gtk_menu_new ();
-  item = gtk_image_menu_item_new_with_mnemonic ( _("De_lete") );
-  gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_REMOVE, GTK_ICON_SIZE_MENU) );
-  gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-  gtk_widget_show ( item );
-  gtk_menu_item_set_submenu (GTK_MENU_ITEM (item), delete_submenu );
+	GtkWidget *delete_submenu = gtk_menu_new ();
+	item = gtk_image_menu_item_new_with_mnemonic ( _("De_lete") );
+	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_REMOVE, GTK_ICON_SIZE_MENU) );
+	gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
+	gtk_widget_show ( item );
+	gtk_menu_item_set_submenu (GTK_MENU_ITEM (item), delete_submenu );
 
-  item = gtk_image_menu_item_new_with_mnemonic ( _("Delete All _Tracks") );
-  gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_REMOVE, GTK_ICON_SIZE_MENU) );
-  g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_delete_all_tracks), pass_along );
-  gtk_menu_shell_append ( GTK_MENU_SHELL(delete_submenu), item );
-  gtk_widget_show ( item );
+	item = gtk_image_menu_item_new_with_mnemonic ( _("Delete All _Tracks") );
+	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_REMOVE, GTK_ICON_SIZE_MENU) );
+	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_delete_all_tracks), pass_along );
+	gtk_menu_shell_append ( GTK_MENU_SHELL(delete_submenu), item );
+	gtk_widget_show ( item );
 
-  item = gtk_image_menu_item_new_with_mnemonic ( _("Delete Tracks _From Selection...") );
-  gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_INDEX, GTK_ICON_SIZE_MENU) );
-  g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_delete_tracks_from_selection), pass_along );
-  gtk_menu_shell_append ( GTK_MENU_SHELL(delete_submenu), item );
-  gtk_widget_show ( item );
+	item = gtk_image_menu_item_new_with_mnemonic ( _("Delete Tracks _From Selection...") );
+	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_INDEX, GTK_ICON_SIZE_MENU) );
+	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_delete_tracks_from_selection), pass_along );
+	gtk_menu_shell_append ( GTK_MENU_SHELL(delete_submenu), item );
+	gtk_widget_show ( item );
 
-  item = gtk_image_menu_item_new_with_mnemonic ( _("Delete _All Routes") );
-  gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_REMOVE, GTK_ICON_SIZE_MENU) );
-  g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_delete_all_routes), pass_along );
-  gtk_menu_shell_append ( GTK_MENU_SHELL(delete_submenu), item );
-  gtk_widget_show ( item );
+	item = gtk_image_menu_item_new_with_mnemonic ( _("Delete _All Routes") );
+	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_REMOVE, GTK_ICON_SIZE_MENU) );
+	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_delete_all_routes), pass_along );
+	gtk_menu_shell_append ( GTK_MENU_SHELL(delete_submenu), item );
+	gtk_widget_show ( item );
 
-  item = gtk_image_menu_item_new_with_mnemonic ( _("_Delete Routes From Selection...") );
-  gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_INDEX, GTK_ICON_SIZE_MENU) );
-  g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_delete_routes_from_selection), pass_along );
-  gtk_menu_shell_append ( GTK_MENU_SHELL(delete_submenu), item );
-  gtk_widget_show ( item );
+	item = gtk_image_menu_item_new_with_mnemonic ( _("_Delete Routes From Selection...") );
+	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_INDEX, GTK_ICON_SIZE_MENU) );
+	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_delete_routes_from_selection), pass_along );
+	gtk_menu_shell_append ( GTK_MENU_SHELL(delete_submenu), item );
+	gtk_widget_show ( item );
 
-  item = gtk_image_menu_item_new_with_mnemonic ( _("Delete All _Waypoints") );
-  gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_REMOVE, GTK_ICON_SIZE_MENU) );
-  g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_delete_all_waypoints), pass_along );
-  gtk_menu_shell_append ( GTK_MENU_SHELL(delete_submenu), item );
-  gtk_widget_show ( item );
+	item = gtk_image_menu_item_new_with_mnemonic ( _("Delete All _Waypoints") );
+	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_REMOVE, GTK_ICON_SIZE_MENU) );
+	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_delete_all_waypoints), pass_along );
+	gtk_menu_shell_append ( GTK_MENU_SHELL(delete_submenu), item );
+	gtk_widget_show ( item );
 
-  item = gtk_image_menu_item_new_with_mnemonic ( _("Delete Waypoints From _Selection...") );
-  gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_INDEX, GTK_ICON_SIZE_MENU) );
-  g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_delete_waypoints_from_selection), pass_along );
-  gtk_menu_shell_append ( GTK_MENU_SHELL(delete_submenu), item );
-  gtk_widget_show ( item );
+	item = gtk_image_menu_item_new_with_mnemonic ( _("Delete Waypoints From _Selection...") );
+	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_INDEX, GTK_ICON_SIZE_MENU) );
+	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_delete_waypoints_from_selection), pass_along );
+	gtk_menu_shell_append ( GTK_MENU_SHELL(delete_submenu), item );
+	gtk_widget_show ( item );
 
-  VikLayersPanel * vlp_ = VIK_LAYERS_PANEL(vlp);
-  item = a_acquire_trwlayer_menu ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(vtl)), (VikLayersPanel *) vlp,
-				   (VikViewport *) vlp_->panel_ref->get_viewport()->vvp, vtl );
-  if ( item ) {
-    gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-    gtk_widget_show ( item );
-  }
-
-  item = a_acquire_trwlayer_track_menu ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(vtl)), (VikLayersPanel *) vlp,
+	VikLayersPanel * vlp_ = VIK_LAYERS_PANEL(vlp);
+	item = a_acquire_trwlayer_menu ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(vtl)), (VikLayersPanel *) vlp,
 					 (VikViewport *) vlp_->panel_ref->get_viewport()->vvp, vtl );
-  if ( item ) {
-    gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-    gtk_widget_show ( item );
-  }
+	if ( item ) {
+		gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
+		gtk_widget_show ( item );
+	}
 
-  item = gtk_image_menu_item_new_with_mnemonic ( _("Track _List...") );
-  gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_INDEX, GTK_ICON_SIZE_MENU) );
-  g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_track_list_dialog), pass_along );
-  gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
-  gtk_widget_show ( item );
-  gtk_widget_set_sensitive ( item, (bool)(vtl->trw->tracks.size() + vtl->trw->routes.size()) );
+	item = a_acquire_trwlayer_track_menu ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(vtl)), (VikLayersPanel *) vlp,
+					       (VikViewport *) vlp_->panel_ref->get_viewport()->vvp, vtl );
+	if ( item ) {
+		gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
+		gtk_widget_show ( item );
+	}
 
-  item = gtk_image_menu_item_new_with_mnemonic ( _("_Waypoint List...") );
-  gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_INDEX, GTK_ICON_SIZE_MENU) );
-  g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_waypoint_list_dialog), pass_along );
-  gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
-  gtk_widget_show ( item );
-  gtk_widget_set_sensitive ( item, (bool) (vtl->trw->waypoints.size()) );
+	item = gtk_image_menu_item_new_with_mnemonic ( _("Track _List...") );
+	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_INDEX, GTK_ICON_SIZE_MENU) );
+	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_track_list_dialog), pass_along );
+	gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
+	gtk_widget_show ( item );
+	gtk_widget_set_sensitive ( item, (bool)(vtl->trw->tracks.size() + vtl->trw->routes.size()) );
 
-  GtkWidget *external_submenu = create_external_submenu ( menu );
-  // TODO: Should use selected layer's centre - rather than implicitly using the current viewport
-  vik_ext_tools_add_menu_items_to_menu ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(vtl)), GTK_MENU (external_submenu), NULL );
+	item = gtk_image_menu_item_new_with_mnemonic ( _("_Waypoint List...") );
+	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_INDEX, GTK_ICON_SIZE_MENU) );
+	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_waypoint_list_dialog), pass_along );
+	gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
+	gtk_widget_show ( item );
+	gtk_widget_set_sensitive ( item, (bool) (vtl->trw->waypoints.size()) );
+
+	GtkWidget *external_submenu = create_external_submenu ( menu );
+	// TODO: Should use selected layer's centre - rather than implicitly using the current viewport
+	vik_ext_tools_add_menu_items_to_menu ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(vtl)), GTK_MENU (external_submenu), NULL );
 }
 
 // Fake Waypoint UUIDs vith simple increasing integer
@@ -3864,43 +3872,44 @@ void LayerTRW::move_item(VikTrwLayer * vtl_dest, void * id, int type)
 
 void LayerTRW::drag_drop_request(Layer * src, GtkTreeIter * src_item_iter, GtkTreePath * dest_path)
 {
-  VikTrwLayer * vtl_dest = (VikTrwLayer *) this->vl;
-  VikTrwLayer * vtl_src = (VikTrwLayer *) src->vl;
+	VikTrwLayer * vtl_dest = (VikTrwLayer *) this->vl;
+	VikTrwLayer * vtl_src = (VikTrwLayer *) src->vl;
 
-  VikTreeview *vt = VIK_LAYER(vtl_src)->vt;
-  int type = vik_treeview_item_get_data(vt, src_item_iter);
+	VikTreeview *vt = VIK_LAYER(vtl_src)->vt;
+	int type = vik_treeview_item_get_data(vt, src_item_iter);
 
-  if (!vik_treeview_item_get_pointer(vt, src_item_iter)) {
-    GList *items = NULL;
-    GList *iter;
+	if (!vik_treeview_item_get_pointer(vt, src_item_iter)) {
+		GList *items = NULL;
+		GList *iter;
 
-    if (type==VIK_TRW_LAYER_SUBLAYER_TRACKS) {
-      LayerTRW::list_trk_uids(vtl_src->trw->tracks, &items);
-    }
-    if (type==VIK_TRW_LAYER_SUBLAYER_WAYPOINTS) {
-      LayerTRW::list_wp_uids(vtl_src->trw->waypoints, &items);
-    }
-    if (type==VIK_TRW_LAYER_SUBLAYER_ROUTES) {
-      LayerTRW::list_trk_uids(vtl_src->trw->routes, &items);
-    }
+		if (type==VIK_TRW_LAYER_SUBLAYER_TRACKS) {
+			LayerTRW::list_trk_uids(vtl_src->trw->tracks, &items);
+		}
+		if (type==VIK_TRW_LAYER_SUBLAYER_WAYPOINTS) {
+			LayerTRW::list_wp_uids(vtl_src->trw->waypoints, &items);
+		}
+		if (type==VIK_TRW_LAYER_SUBLAYER_ROUTES) {
+			LayerTRW::list_trk_uids(vtl_src->trw->routes, &items);
+		}
 
-    iter = items;
-    while (iter) {
-      if (type==VIK_TRW_LAYER_SUBLAYER_TRACKS) {
-	vtl_src->trw->move_item(vtl_dest, iter->data, VIK_TRW_LAYER_SUBLAYER_TRACK);
-      } else if (type==VIK_TRW_LAYER_SUBLAYER_ROUTES) {
-	vtl_src->trw->move_item(vtl_dest, iter->data, VIK_TRW_LAYER_SUBLAYER_ROUTE);
-      } else {
-	vtl_src->trw->move_item(vtl_dest, iter->data, VIK_TRW_LAYER_SUBLAYER_WAYPOINT);
-      }
-      iter = iter->next;
-    }
-    if (items)
-      g_list_free(items);
-  } else {
-    char *name = (char *) vik_treeview_item_get_pointer(vt, src_item_iter);
-    vtl_src->trw->move_item(vtl_dest, name, type);
-  }
+		iter = items;
+		while (iter) {
+			if (type==VIK_TRW_LAYER_SUBLAYER_TRACKS) {
+				vtl_src->trw->move_item(vtl_dest, iter->data, VIK_TRW_LAYER_SUBLAYER_TRACK);
+			} else if (type==VIK_TRW_LAYER_SUBLAYER_ROUTES) {
+				vtl_src->trw->move_item(vtl_dest, iter->data, VIK_TRW_LAYER_SUBLAYER_ROUTE);
+			} else {
+				vtl_src->trw->move_item(vtl_dest, iter->data, VIK_TRW_LAYER_SUBLAYER_WAYPOINT);
+			}
+			iter = iter->next;
+		}
+		if (items) {
+			g_list_free(items);
+		}
+	} else {
+		char *name = (char *) vik_treeview_item_get_pointer(vt, src_item_iter);
+		vtl_src->trw->move_item(vtl_dest, name, type);
+	}
 }
 
 
@@ -6698,113 +6707,119 @@ static void trw_layer_waypoint_webpage ( menu_array_sublayer values )
 
 char const * LayerTRW::sublayer_rename_request(const char * newname, void * vlp, int subtype, void * sublayer, GtkTreeIter * iter)
 {
-  VikTrwLayer * l = (VikTrwLayer *) this->vl;
+	VikTrwLayer * l = (VikTrwLayer *) this->vl;
 
-  sg_uid_t uid = (sg_uid_t) ((long) sublayer);
-  if ( subtype == VIK_TRW_LAYER_SUBLAYER_WAYPOINT )
-  {
-    Waypoint * wp = l->trw->waypoints.at(uid);
+	sg_uid_t uid = (sg_uid_t) ((long) sublayer);
+	if (subtype == VIK_TRW_LAYER_SUBLAYER_WAYPOINT) {
+		Waypoint * wp = l->trw->waypoints.at(uid);
 
-    // No actual change to the name supplied
-    if ( wp->name )
-      if (strcmp(newname, wp->name) == 0 )
-       return NULL;
+		// No actual change to the name supplied
+		if (wp->name) {
+			if (strcmp(newname, wp->name) == 0) {
+				return NULL;
+			}
+		}
 
-    Waypoint * wpf = l->trw->get_waypoint(newname);
+		Waypoint * wpf = l->trw->get_waypoint(newname);
 
-    if ( wpf ) {
-      // An existing waypoint has been found with the requested name
-      if ( ! a_dialog_yes_or_no ( VIK_GTK_WINDOW_FROM_LAYER(l),
-           _("A waypoint with the name \"%s\" already exists. Really rename to the same name?"),
-           newname ) )
-        return NULL;
-    }
+		if (wpf) {
+			// An existing waypoint has been found with the requested name
+			if (! a_dialog_yes_or_no (VIK_GTK_WINDOW_FROM_LAYER(l),
+						    _("A waypoint with the name \"%s\" already exists. Really rename to the same name?"),
+						  newname)) {
+				return NULL;
+			}
+		}
 
-    // Update WP name and refresh the treeview
-    wp->set_name(newname);
+		// Update WP name and refresh the treeview
+		wp->set_name(newname);
 
-    vik_treeview_item_set_name ( VIK_LAYER(l)->vt, iter, newname );
-    vik_treeview_sort_children ( VIK_LAYER(l)->vt, &(l->trw->waypoint_iter), l->wp_sort_order );
+		vik_treeview_item_set_name (VIK_LAYER(l)->vt, iter, newname);
+		vik_treeview_sort_children (VIK_LAYER(l)->vt, &(l->trw->waypoint_iter), l->wp_sort_order);
 
-    vik_layers_panel_emit_update ( VIK_LAYERS_PANEL(vlp)->panel_ref );
+		vik_layers_panel_emit_update (VIK_LAYERS_PANEL(vlp)->panel_ref);
 
-    return newname;
-  }
+		return newname;
+	}
 
-  if ( subtype == VIK_TRW_LAYER_SUBLAYER_TRACK )
-  {
-    Track * trk = l->trw->tracks.at(uid);
+	if (subtype == VIK_TRW_LAYER_SUBLAYER_TRACK) {
+		Track * trk = l->trw->tracks.at(uid);
 
-    // No actual change to the name supplied
-    if ( trk->name )
-      if (strcmp(newname, trk->name) == 0)
+		// No actual change to the name supplied
+		if (trk->name) {
+			if (strcmp(newname, trk->name) == 0) {
+				return NULL;
+			}
+		}
+
+		Track *trkf = l->trw->get_track((const char *) newname);
+
+		if (trkf) {
+			// An existing track has been found with the requested name
+			if (! a_dialog_yes_or_no(VIK_GTK_WINDOW_FROM_LAYER(l),
+						 _("A track with the name \"%s\" already exists. Really rename to the same name?"),
+						 newname)) {
+				return NULL;
+			}
+		}
+		// Update track name and refresh GUI parts
+		trk->set_name(newname);
+
+		// Update any subwindows that could be displaying this track which has changed name
+		// Only one Track Edit Window
+		if (l->trw->current_tp_track == trk && l->trw->tpwin) {
+			vik_trw_layer_tpwin_set_track_name(l->trw->tpwin, newname);
+		}
+		// Property Dialog of the track
+		vik_trw_layer_propwin_update(trk);
+
+		vik_treeview_item_set_name(VIK_LAYER(l)->vt, iter, newname);
+		vik_treeview_sort_children(VIK_LAYER(l)->vt, &(l->trw->track_iter), l->track_sort_order);
+
+		vik_layers_panel_emit_update(VIK_LAYERS_PANEL(vlp)->panel_ref);
+
+		return newname;
+	}
+
+	if (subtype == VIK_TRW_LAYER_SUBLAYER_ROUTE) {
+		Track * trk = l->trw->routes.at(uid);
+
+		// No actual change to the name supplied
+		if (trk->name) {
+			if (strcmp(newname, trk->name) == 0) {
+				return NULL;
+			}
+		}
+
+		Track * trkf = l->trw->get_route((const char *) newname);
+
+		if (trkf) {
+			// An existing track has been found with the requested name
+			if (! a_dialog_yes_or_no(VIK_GTK_WINDOW_FROM_LAYER(l),
+						 _("A route with the name \"%s\" already exists. Really rename to the same name?"),
+						 newname)) {
+				return NULL;
+			}
+		}
+		// Update track name and refresh GUI parts
+		trk->set_name(newname);
+
+		// Update any subwindows that could be displaying this track which has changed name
+		// Only one Track Edit Window
+		if (l->trw->current_tp_track == trk && l->trw->tpwin) {
+			vik_trw_layer_tpwin_set_track_name(l->trw->tpwin, newname);
+		}
+		// Property Dialog of the track
+		vik_trw_layer_propwin_update(trk);
+
+		vik_treeview_item_set_name(VIK_LAYER(l)->vt, iter, newname);
+		vik_treeview_sort_children(VIK_LAYER(l)->vt, &(l->trw->track_iter), l->track_sort_order);
+
+		vik_layers_panel_emit_update(VIK_LAYERS_PANEL(vlp)->panel_ref);
+
+		return newname;
+	}
 	return NULL;
-
-    Track *trkf = l->trw->get_track((const char *) newname);
-
-    if ( trkf ) {
-      // An existing track has been found with the requested name
-      if ( ! a_dialog_yes_or_no ( VIK_GTK_WINDOW_FROM_LAYER(l),
-          _("A track with the name \"%s\" already exists. Really rename to the same name?"),
-          newname ) )
-        return NULL;
-    }
-    // Update track name and refresh GUI parts
-    trk->set_name(newname);
-
-    // Update any subwindows that could be displaying this track which has changed name
-    // Only one Track Edit Window
-    if ( l->trw->current_tp_track == trk && l->trw->tpwin ) {
-      vik_trw_layer_tpwin_set_track_name ( l->trw->tpwin, newname );
-    }
-    // Property Dialog of the track
-    vik_trw_layer_propwin_update ( trk );
-
-    vik_treeview_item_set_name ( VIK_LAYER(l)->vt, iter, newname );
-    vik_treeview_sort_children ( VIK_LAYER(l)->vt, &(l->trw->track_iter), l->track_sort_order );
-
-    vik_layers_panel_emit_update ( VIK_LAYERS_PANEL(vlp)->panel_ref );
-
-    return newname;
-  }
-
-  if ( subtype == VIK_TRW_LAYER_SUBLAYER_ROUTE )
-  {
-    Track * trk = l->trw->routes.at(uid);
-
-    // No actual change to the name supplied
-    if ( trk->name )
-      if (strcmp(newname, trk->name) == 0)
-        return NULL;
-
-    Track * trkf = l->trw->get_route((const char *) newname);
-
-    if ( trkf ) {
-      // An existing track has been found with the requested name
-      if ( ! a_dialog_yes_or_no ( VIK_GTK_WINDOW_FROM_LAYER(l),
-          _("A route with the name \"%s\" already exists. Really rename to the same name?"),
-          newname ) )
-        return NULL;
-    }
-    // Update track name and refresh GUI parts
-    trk->set_name(newname);
-
-    // Update any subwindows that could be displaying this track which has changed name
-    // Only one Track Edit Window
-    if ( l->trw->current_tp_track == trk && l->trw->tpwin ) {
-      vik_trw_layer_tpwin_set_track_name ( l->trw->tpwin, newname );
-    }
-    // Property Dialog of the track
-    vik_trw_layer_propwin_update ( trk );
-
-    vik_treeview_item_set_name ( VIK_LAYER(l)->vt, iter, newname );
-    vik_treeview_sort_children ( VIK_LAYER(l)->vt, &(l->trw->track_iter), l->track_sort_order );
-
-    vik_layers_panel_emit_update ( VIK_LAYERS_PANEL(vlp)->panel_ref );
-
-    return newname;
-  }
-  return NULL;
 }
 
 static bool is_valid_geocache_name ( char *str )
@@ -8135,97 +8150,99 @@ static void marker_end_move ( tool_ed_t *t );
 
 bool LayerTRW::select_move(GdkEventMotion * event, Viewport * viewport, tool_ed_t * t)
 {
-  if ( t->holding ) {
-    VikCoord new_coord;
-    viewport->screen_to_coord(event->x, event->y, &new_coord);
+	if (t->holding) {
+		VikCoord new_coord;
+		viewport->screen_to_coord(event->x, event->y, &new_coord);
 
-    // Here always allow snapping back to the original location
-    //  this is useful when one decides not to move the thing afterall
-    // If one wants to move the item only a little bit then don't hold down the 'snap' key!
+		// Here always allow snapping back to the original location
+		//  this is useful when one decides not to move the thing afterall
+		// If one wants to move the item only a little bit then don't hold down the 'snap' key!
 
-    // snap to TP
-    if ( event->state & GDK_CONTROL_MASK )
-    {
-      Trackpoint * tp = this->closest_tp_in_five_pixel_interval(viewport, event->x, event->y);
-      if ( tp )
-        new_coord = tp->coord;
-    }
+		// snap to TP
+		if (event->state & GDK_CONTROL_MASK) {
+			Trackpoint * tp = this->closest_tp_in_five_pixel_interval(viewport, event->x, event->y);
+			if (tp) {
+				new_coord = tp->coord;
+			}
+		}
 
-    // snap to WP
-    if ( event->state & GDK_SHIFT_MASK )
-    {
-      Waypoint * wp = this->closest_wp_in_five_pixel_interval(viewport, event->x, event->y);
-      if ( wp )
-        new_coord = wp->coord;
-    }
+		// snap to WP
+		if (event->state & GDK_SHIFT_MASK) {
+			Waypoint * wp = this->closest_wp_in_five_pixel_interval(viewport, event->x, event->y);
+			if (wp) {
+				new_coord = wp->coord;
+			}
+		}
 
-    int x, y;
-    viewport->coord_to_screen(&new_coord, &x, &y );
+		int x, y;
+		viewport->coord_to_screen(&new_coord, &x, &y);
 
-    marker_moveto ( t, x, y );
+		marker_moveto(t, x, y);
 
-    return true;
-  }
-  return false;
+		return true;
+	}
+	return false;
 }
 
 bool LayerTRW::select_release(GdkEventButton * event, Viewport * viewport, tool_ed_t * t)
 {
-  if ( t->holding && event->button == 1 )
-  {
-    // Prevent accidental (small) shifts when specific movement has not been requested
-    //  (as the click release has occurred within the click object detection area)
-    if ( !t->moving )
-      return false;
+	if (t->holding && event->button == 1) {
+		// Prevent accidental (small) shifts when specific movement has not been requested
+		//  (as the click release has occurred within the click object detection area)
+		if (!t->moving) {
+			return false;
+		}
 
-    VikCoord new_coord;
-    viewport->screen_to_coord(event->x, event->y, &new_coord );
+		VikCoord new_coord;
+		viewport->screen_to_coord(event->x, event->y, &new_coord);
 
-    // snap to TP
-    if ( event->state & GDK_CONTROL_MASK )
-    {
-      Trackpoint * tp = this->closest_tp_in_five_pixel_interval(viewport, event->x, event->y);
-      if ( tp )
-        new_coord = tp->coord;
-    }
+		// snap to TP
+		if (event->state & GDK_CONTROL_MASK) {
+			Trackpoint * tp = this->closest_tp_in_five_pixel_interval(viewport, event->x, event->y);
+			if (tp) {
+				new_coord = tp->coord;
+			}
+		}
 
-    // snap to WP
-    if ( event->state & GDK_SHIFT_MASK )
-    {
-      Waypoint * wp = this->closest_wp_in_five_pixel_interval(viewport, event->x, event->y);
-      if ( wp )
-        new_coord = wp->coord;
-    }
+		// snap to WP
+		if (event->state & GDK_SHIFT_MASK) {
+			Waypoint * wp = this->closest_wp_in_five_pixel_interval(viewport, event->x, event->y);
+			if (wp) {
+				new_coord = wp->coord;
+			}
+		}
 
-    marker_end_move ( t );
+		marker_end_move(t);
 
-    // Determine if working on a waypoint or a trackpoint
-    if ( t->is_waypoint ) {
-      // Update waypoint position
-      this->current_wp->coord = new_coord;
-      this->calculate_bounds_waypoints();
-      // Reset waypoint pointer
-      this->current_wp    = NULL;
-      this->current_wp_uid = 0;
-    }
-    else {
-      if ( this->current_tpl ) {
-        ((Trackpoint *) this->current_tpl->data)->coord = new_coord;
+		// Determine if working on a waypoint or a trackpoint
+		if (t->is_waypoint) {
+			// Update waypoint position
+			this->current_wp->coord = new_coord;
+			this->calculate_bounds_waypoints();
+			// Reset waypoint pointer
+			this->current_wp    = NULL;
+			this->current_wp_uid = 0;
+		} else {
+			if (this->current_tpl) {
+				((Trackpoint *) this->current_tpl->data)->coord = new_coord;
 
-        if ( this->current_tp_track )
-          this->current_tp_track->calculate_bounds();
+				if (this->current_tp_track) {
+					this->current_tp_track->calculate_bounds();
+				}
 
-        if ( this->tpwin )
-          if ( this->current_tp_track )
-            this->my_tpwin_set_tp();
-        // NB don't reset the selected trackpoint, thus ensuring it's still in the tpwin
-      }
-    }
+				if (this->tpwin) {
+					if (this->current_tp_track) {
+						this->my_tpwin_set_tp();
+					}
+				}
+				// NB don't reset the selected trackpoint, thus ensuring it's still in the tpwin
+			}
+		}
 
-    vik_layer_emit_update ( VIK_LAYER(this->vl) );
-    return true;
-  }
-  return false;
+		vik_layer_emit_update(VIK_LAYER(this->vl));
+		return true;
+	}
+	return false;
 }
 
 
@@ -8396,84 +8413,91 @@ bool LayerTRW::select_click(GdkEventButton * event, Viewport * viewport, tool_ed
 
 bool LayerTRW::show_selected_viewport_menu(GdkEventButton * event, Viewport * viewport)
 {
-  if ( event->button != 3 )
-    return false;
+	if (event->button != 3) {
+		return false;
+	}
 
-  if (this->vl->type != VIK_LAYER_TRW)
-    return false;
+	if (this->vl->type != VIK_LAYER_TRW) {
+		return false;
+	}
 
-  if ( !this->tracks_visible && !this->waypoints_visible && !this->routes_visible )
-    return false;
+	if (!this->tracks_visible && !this->waypoints_visible && !this->routes_visible) {
+		return false;
+	}
 
-  /* Post menu for the currently selected item */
+	/* Post menu for the currently selected item */
 
-  /* See if a track is selected */
-  Track * trk = (Track *) vik_window_get_selected_track ( (VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(this->vl) );
-  if ( trk && trk->visible ) {
+	/* See if a track is selected */
+	Track * trk = (Track *) vik_window_get_selected_track((VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(this->vl));
+	if (trk && trk->visible) {
 
-    if ( trk->name ) {
+		if (trk->name) {
 
-      if ( ((VikTrwLayer *) this->vl)->track_right_click_menu )
-        g_object_ref_sink ( G_OBJECT(((VikTrwLayer *) this->vl)->track_right_click_menu) );
+			if (((VikTrwLayer *) this->vl)->track_right_click_menu) {
+				g_object_ref_sink(G_OBJECT(((VikTrwLayer *) this->vl)->track_right_click_menu));
+			}
 
-      ((VikTrwLayer *) this->vl)->track_right_click_menu = GTK_MENU ( gtk_menu_new () );
+			((VikTrwLayer *) this->vl)->track_right_click_menu = GTK_MENU (gtk_menu_new());
 
-      sg_uid_t uid = 0;;
-      if ( trk->is_route )
-	uid = LayerTRW::find_uid_of_track(this->routes, trk);
-      else
-	uid = LayerTRW::find_uid_of_track(this->tracks, trk);
+			sg_uid_t uid = 0;;
+			if (trk->is_route) {
+				uid = LayerTRW::find_uid_of_track(this->routes, trk);
+			} else {
+				uid = LayerTRW::find_uid_of_track(this->tracks, trk);
+			}
 
-      if (uid) {
+			if (uid) {
 
-        GtkTreeIter *iter;
-        if ( trk->is_route )
-	  iter = this->routes_iters.at(uid);
-        else
-	  iter = this->tracks_iters.at(uid);
+				GtkTreeIter *iter;
+				if (trk->is_route) {
+					iter = this->routes_iters.at(uid);
+				} else {
+					iter = this->tracks_iters.at(uid);
+				}
 
-        this->sublayer_add_menu_items(((VikTrwLayer *) this->vl)->track_right_click_menu,
-				      NULL,
-				      trk->is_route ? VIK_TRW_LAYER_SUBLAYER_ROUTE : VIK_TRW_LAYER_SUBLAYER_TRACK,
-				      (void *) ((long) uid),
-				      iter,
-				      (VikViewport *) viewport->vvp );
-      }
+				this->sublayer_add_menu_items(((VikTrwLayer *) this->vl)->track_right_click_menu,
+							      NULL,
+							      trk->is_route ? VIK_TRW_LAYER_SUBLAYER_ROUTE : VIK_TRW_LAYER_SUBLAYER_TRACK,
+							      (void *) ((long) uid),
+							      iter,
+							      (VikViewport *) viewport->vvp);
+			}
 
-      gtk_menu_popup ( ((VikTrwLayer *) this->vl)->track_right_click_menu, NULL, NULL, NULL, NULL, event->button, gtk_get_current_event_time() );
+			gtk_menu_popup(((VikTrwLayer *) this->vl)->track_right_click_menu, NULL, NULL, NULL, NULL, event->button, gtk_get_current_event_time());
 
-      return true;
-    }
-  }
+			return true;
+		}
+	}
 
-  /* See if a waypoint is selected */
-  Waypoint * waypoint = (Waypoint*)vik_window_get_selected_waypoint ( (VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(this->vl) );
-  if ( waypoint && waypoint->visible ) {
-    if ( waypoint->name ) {
+	/* See if a waypoint is selected */
+	Waypoint * waypoint = (Waypoint*)vik_window_get_selected_waypoint((VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(this->vl));
+	if (waypoint && waypoint->visible) {
+		if (waypoint->name) {
 
-      if ( ((VikTrwLayer *) this->vl)->wp_right_click_menu )
-        g_object_ref_sink ( G_OBJECT(((VikTrwLayer *) this->vl)->wp_right_click_menu) );
+			if (((VikTrwLayer *) this->vl)->wp_right_click_menu) {
+				g_object_ref_sink(G_OBJECT(((VikTrwLayer *) this->vl)->wp_right_click_menu));
+			}
 
-      ((VikTrwLayer *) this->vl)->wp_right_click_menu = GTK_MENU ( gtk_menu_new () );
+			((VikTrwLayer *) this->vl)->wp_right_click_menu = GTK_MENU (gtk_menu_new());
 
-      sg_uid_t wp_uid = LayerTRW::find_uid_of_waypoint(this->waypoints, waypoint);
-      if (wp_uid) {
-	GtkTreeIter * iter = this->waypoints_iters.at(wp_uid);
+			sg_uid_t wp_uid = LayerTRW::find_uid_of_waypoint(this->waypoints, waypoint);
+			if (wp_uid) {
+				GtkTreeIter * iter = this->waypoints_iters.at(wp_uid);
 
-        this->sublayer_add_menu_items(((VikTrwLayer *) this->vl)->wp_right_click_menu,
-				      NULL,
-				      VIK_TRW_LAYER_SUBLAYER_WAYPOINT,
-				      (void *) ((long) wp_uid),
-				      iter,
-				      (VikViewport *) viewport->vvp);
-      }
-      gtk_menu_popup ( ((VikTrwLayer *) this->vl)->wp_right_click_menu, NULL, NULL, NULL, NULL, event->button, gtk_get_current_event_time() );
+				this->sublayer_add_menu_items(((VikTrwLayer *) this->vl)->wp_right_click_menu,
+							      NULL,
+							      VIK_TRW_LAYER_SUBLAYER_WAYPOINT,
+							      (void *) ((long) wp_uid),
+							      iter,
+							      (VikViewport *) viewport->vvp);
+			}
+			gtk_menu_popup(((VikTrwLayer *) this->vl)->wp_right_click_menu, NULL, NULL, NULL, NULL, event->button, gtk_get_current_event_time());
 
-      return true;
-    }
-  }
+			return true;
+		}
+	}
 
-  return false;
+	return false;
 }
 
 /* background drawing hook, to be passed the viewport */
@@ -9780,64 +9804,69 @@ time_t LayerTRW::get_timestamp_waypoints()
  */
 time_t LayerTRW::get_timestamp()
 {
-  VikTrwLayer * vtl = ( VikTrwLayer *) this->vl;
-  time_t timestamp_tracks = vtl->trw->get_timestamp_tracks();
-  time_t timestamp_waypoints = vtl->trw->get_timestamp_waypoints();
-  // NB routes don't have timestamps - hence they are not considered
+	VikTrwLayer * vtl = (VikTrwLayer *) this->vl;
+	time_t timestamp_tracks = vtl->trw->get_timestamp_tracks();
+	time_t timestamp_waypoints = vtl->trw->get_timestamp_waypoints();
+	// NB routes don't have timestamps - hence they are not considered
 
-  if ( !timestamp_tracks && !timestamp_waypoints ) {
-    // Fallback to get time from the metadata when no other timestamps available
-    GTimeVal gtv;
-    if  ( vtl->metadata && vtl->metadata->timestamp && g_time_val_from_iso8601 ( vtl->metadata->timestamp, &gtv ) )
-      return gtv.tv_sec;
-  }
-  if ( timestamp_tracks && !timestamp_waypoints )
-    return timestamp_tracks;
-  if ( timestamp_tracks && timestamp_waypoints && (timestamp_tracks < timestamp_waypoints) )
-    return timestamp_tracks;
-  return timestamp_waypoints;
+	if (!timestamp_tracks && !timestamp_waypoints) {
+		// Fallback to get time from the metadata when no other timestamps available
+		GTimeVal gtv;
+		if  (vtl->metadata && vtl->metadata->timestamp && g_time_val_from_iso8601(vtl->metadata->timestamp, &gtv)) {
+			return gtv.tv_sec;
+		}
+	}
+	if (timestamp_tracks && !timestamp_waypoints) {
+		return timestamp_tracks;
+	}
+	if (timestamp_tracks && timestamp_waypoints && (timestamp_tracks < timestamp_waypoints)) {
+		return timestamp_tracks;
+	}
+	return timestamp_waypoints;
 }
 
 void LayerTRW::post_read(Viewport * viewport, bool from_file)
 {
-  VikTrwLayer * vtl = (VikTrwLayer *) this->vl;
-  if ( VIK_LAYER(vtl)->realized )
-	  trw_layer_verify_thumbnails ( vtl, (VikViewport *) viewport->vvp );
-  vtl->trw->track_alloc_colors();
+	VikTrwLayer * vtl = (VikTrwLayer *) this->vl;
+	if (VIK_LAYER(vtl)->realized) {
+		trw_layer_verify_thumbnails (vtl, (VikViewport *) viewport->vvp);
+	}
+	vtl->trw->track_alloc_colors();
 
-  vtl->trw->calculate_bounds_waypoints();
-  vtl->trw->calculate_bounds_tracks();
+	vtl->trw->calculate_bounds_waypoints();
+	vtl->trw->calculate_bounds_tracks();
 
-  // Apply treeview sort after loading all the tracks for this layer
-  //  (rather than sorted insert on each individual track additional)
-  //  and after subsequent changes to the properties as the specified order may have changed.
-  //  since the sorting of a treeview section is now very quick
-  // NB sorting is also performed after every name change as well to maintain the list order
-  vtl->trw->sort_all();
+	// Apply treeview sort after loading all the tracks for this layer
+	//  (rather than sorted insert on each individual track additional)
+	//  and after subsequent changes to the properties as the specified order may have changed.
+	//  since the sorting of a treeview section is now very quick
+	// NB sorting is also performed after every name change as well to maintain the list order
+	vtl->trw->sort_all();
 
-  // Setting metadata time if not otherwise set
-  if ( vtl->metadata ) {
+	// Setting metadata time if not otherwise set
+	if (vtl->metadata) {
 
-    bool need_to_set_time = true;
-    if ( vtl->metadata->timestamp ) {
-      need_to_set_time = false;
-      if ( !g_strcmp0(vtl->metadata->timestamp, "" ) )
-        need_to_set_time = true;
-    }
+		bool need_to_set_time = true;
+		if (vtl->metadata->timestamp) {
+			need_to_set_time = false;
+			if (!g_strcmp0(vtl->metadata->timestamp, "")) {
+				need_to_set_time = true;
+			}
+		}
 
-    if ( need_to_set_time ) {
-      GTimeVal timestamp;
-      timestamp.tv_usec = 0;
-      timestamp.tv_sec = vtl->trw->get_timestamp();
+		if (need_to_set_time) {
+			GTimeVal timestamp;
+			timestamp.tv_usec = 0;
+			timestamp.tv_sec = vtl->trw->get_timestamp();
 
-      // No time found - so use 'now' for the metadata time
-      if ( timestamp.tv_sec == 0 ) {
-        g_get_current_time ( &timestamp );
-      }
+			// No time found - so use 'now' for the metadata time
+			if (timestamp.tv_sec == 0) {
+				g_get_current_time(&timestamp);
+			}
 
-      vtl->metadata->timestamp = g_time_val_to_iso8601 ( &timestamp );
-    }
-  }
+			vtl->metadata->timestamp = g_time_val_to_iso8601(&timestamp);
+		}
+	}
 }
 
 
