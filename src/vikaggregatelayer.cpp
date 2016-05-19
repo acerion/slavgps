@@ -339,18 +339,18 @@ void LayerAggregate::draw(Viewport * viewport)
 	VikViewport * vp = (VikViewport *) viewport->vvp;
 
 	auto iter = ((VikAggregateLayer *) this->vl)->children->begin();
-	VikLayer * trigger = (VikLayer *) vik_viewport_get_trigger(vp);
+	VikLayer * trigger = (VikLayer *) viewport->get_trigger();
 	while (iter != ((VikAggregateLayer *) this->vl)->children->end()) {
 		Layer * layer = *iter;
 		if (layer->vl == trigger) {
-			if (vik_viewport_get_half_drawn(vp)) {
-				vik_viewport_set_half_drawn(vp, false);
-				vik_viewport_snapshot_load(vp);
+			if (viewport->get_half_drawn()) {
+				viewport->set_half_drawn(false);
+				viewport->snapshot_load();
 			} else {
-				vik_viewport_snapshot_save(vp);
+				viewport->snapshot_save();
 			}
 		}
-		if (layer->vl->type == VIK_LAYER_AGGREGATE || layer->vl->type == VIK_LAYER_GPS || ! vik_viewport_get_half_drawn(vp)) {
+		if (layer->vl->type == VIK_LAYER_AGGREGATE || layer->vl->type == VIK_LAYER_GPS || ! viewport->get_half_drawn()) {
 			vik_layer_draw(layer->vl, viewport);
 		}
 		iter++;

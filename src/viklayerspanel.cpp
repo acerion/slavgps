@@ -624,8 +624,8 @@ void LayersPanel::cut_selected()
 		VikAggregateLayer *parent = (VikAggregateLayer *) vik_treeview_item_get_parent(this->vt, &iter);
 		if (parent){
 			/* reset trigger if trigger deleted */
-			if (this->get_selected() == vik_viewport_get_trigger((VikViewport *) this->viewport->vvp)) {
-				vik_viewport_set_trigger((VikViewport *) this->viewport->vvp, NULL);
+			if (this->get_selected() == this->viewport->get_trigger()) {
+				this->viewport->set_trigger(NULL);
 			}
 
 			a_clipboard_copy_selected(this->gob);
@@ -708,8 +708,8 @@ void LayersPanel::delete_selected()
 		VikAggregateLayer *parent = (VikAggregateLayer *) vik_treeview_item_get_parent(this->vt, &iter);
 		if (parent) {
 			/* reset trigger if trigger deleted */
-			if (this->get_selected() == vik_viewport_get_trigger((VikViewport *) this->viewport->vvp)) {
-				vik_viewport_set_trigger((VikViewport *) this->viewport->vvp, NULL);
+			if (this->get_selected() == this->viewport->get_trigger()) {
+				this->viewport->set_trigger(NULL);
 			}
 
 			if (IS_VIK_AGGREGATE_LAYER(parent)) {

@@ -668,33 +668,33 @@ void LayerGPS::draw(Viewport * viewport)
 	VikViewport * vp = (VikViewport *) viewport->vvp;
 	int i;
 	VikLayer *vl;
-	VikLayer *trigger = VIK_LAYER(vik_viewport_get_trigger( vp ));
+	VikLayer *trigger = VIK_LAYER(viewport->get_trigger());
 
 	for (i = 0; i < NUM_TRW; i++) {
 		vl = VIK_LAYER(vgl->trw_children[i]);
 		if (vl == trigger) {
-			if ( vik_viewport_get_half_drawn(vp)) {
-				vik_viewport_set_half_drawn(vp, false);
-				vik_viewport_snapshot_load(vp);
+			if (viewport->get_half_drawn()) {
+				viewport->set_half_drawn(false);
+				viewport->snapshot_load();
 			} else {
-				vik_viewport_snapshot_save(vp);
+				viewport->snapshot_save();
 			}
 		}
-		if (!vik_viewport_get_half_drawn(vp)) {
+		if (!viewport->get_half_drawn()) {
 			vik_layer_draw(vl, &vp->port);
 		}
 	}
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
 	if (vgl->realtime_tracking) {
 		if (VIK_LAYER(vgl) == trigger) {
-			if ( vik_viewport_get_half_drawn(vp)) {
-				vik_viewport_set_half_drawn(vp, false);
-				vik_viewport_snapshot_load(vp);
+			if (viewport->get_half_drawn()) {
+				viewport->set_half_drawn(false);
+				viewport->snapshot_load();
 			} else {
-				vik_viewport_snapshot_save(vp);
+				viewport->snapshot_save();
 			}
 		}
-		if (!vik_viewport_get_half_drawn(vp)) {
+		if (!viewport->get_half_drawn()) {
 			realtime_tracking_draw(vgl, vp);
 		}
 	}

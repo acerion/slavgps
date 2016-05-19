@@ -72,6 +72,10 @@ namespace SlavGPS {
 
 		Viewport();
 
+		/* Viking initialization */
+		bool configure();
+		void configure_manually(int width, unsigned int height); /* for off-screen viewports */
+
 		/* Drawing primitives */
 
 		void draw_line(GdkGC *gc, int x1, int y1, int x2, int y2);
@@ -197,6 +201,20 @@ namespace SlavGPS {
 
 
 
+		/* Trigger stuff. */
+		void set_trigger(void * trigger);
+		void * get_trigger();
+
+		void snapshot_save();
+		void snapshot_load();
+
+		void set_half_drawn(bool half_drawn);
+		bool get_half_drawn();
+
+
+
+
+
 		/* Wether or not display OSD info */
 		bool do_draw_scale;
 		bool do_draw_centermark;
@@ -247,6 +265,12 @@ namespace SlavGPS {
 
 
 		void * vvp; /* Parent VikViewport. */
+
+
+		/* trigger stuff */
+		void * trigger; /* Usually pointer to VikLayer. */
+		GdkPixmap * snapshot_buffer;
+		bool half_drawn;
 	};
 
 
@@ -261,11 +285,6 @@ using namespace SlavGPS;
 
 struct _VikViewport {
 	GtkDrawingArea drawing_area;
-
-	/* trigger stuff */
-	void * trigger;
-	GdkPixmap *snapshot_buffer;
-	bool half_drawn;
 
 	SlavGPS::Viewport port;
 };
@@ -286,34 +305,15 @@ GType vik_viewport_get_type ();
 
 /* Viking initialization */
 VikViewport *vik_viewport_new ();
-void vik_viewport_configure_manually (VikViewport *vvp, int width, unsigned int height); /* for off-screen viewports */
-bool vik_viewport_configure (VikViewport *vp);
 
 
 
+void vik_gc_get_fg_color(GdkGC * gc, GdkColor * dest); /* warning: could be slow, don't use obsessively */
+GdkFunction vik_gc_get_function(GdkGC * gc);
 
 
-/* Triggers */
-void vik_viewport_set_trigger (VikViewport *vp, void * trigger);
-void * vik_viewport_get_trigger (VikViewport *vp);
-void vik_viewport_snapshot_save (VikViewport *vp);
-void vik_viewport_snapshot_load (VikViewport *vp);
-void vik_viewport_set_half_drawn(VikViewport *vp, bool half_drawn);
-bool vik_viewport_get_half_drawn(VikViewport *vp);
-
-
-/***************************************************************************************************
- *  Drawing-related operations
- ***************************************************************************************************/
-
-
-
-void vik_gc_get_fg_color (GdkGC *gc, GdkColor *dest); /* warning: could be slow, don't use obsessively */
-GdkFunction vik_gc_get_function (GdkGC *gc);
-
-
-void viewport_add_copyright(VikViewport * vvp, const char * copyright_);
-
+void vik_viewport_add_copyright_cb(VikViewport * vvp, const char * copyright);
+bool vik_viewport_configure_cb(VikViewport * vpp);
 
 #ifdef __cplusplus
 }

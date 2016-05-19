@@ -1176,14 +1176,14 @@ static void draw_redraw(VikWindow *vw)
 	vw->trigger_center = *(vw->viking_vvp->port.get_center());
 	VikLayer *new_trigger = vw->trigger;
 	vw->trigger = NULL;
-	VikLayer *old_trigger = VIK_LAYER(vik_viewport_get_trigger(vw->viking_vvp));
+	VikLayer *old_trigger = VIK_LAYER(vw->viking_vvp->port.get_trigger());
 
 	if (! new_trigger)
 		; /* do nothing -- have to redraw everything. */
 	else if ((old_trigger != new_trigger) || !vik_coord_equals(&old_center, &vw->trigger_center) || (new_trigger->type == VIK_LAYER_AGGREGATE))
-		vik_viewport_set_trigger(vw->viking_vvp, new_trigger); /* todo: set to half_drawn mode if new trigger is above old */
+		vw->viking_vvp->port.set_trigger(new_trigger); /* todo: set to half_drawn mode if new trigger is above old */
 	else
-		vik_viewport_set_half_drawn(vw->viking_vvp, true);
+		vw->viking_vvp->port.set_half_drawn(true);
 
 	/* actually draw */
 	vw->viking_vvp->port.clear();
@@ -1207,7 +1207,7 @@ static void draw_redraw(VikWindow *vw)
 	vw->viking_vvp->port.draw_centermark();
 	vw->viking_vvp->port.draw_logo();
 
-	vik_viewport_set_half_drawn(vw->viking_vvp, false); /* just in case. */
+	vw->viking_vvp->port.set_half_drawn(false); /* just in case. */
 }
 
 bool draw_buf_done = true;
@@ -3825,7 +3825,7 @@ static void save_image_file(VikWindow *vw, const char *fn, unsigned int w, unsig
 	vw->viking_vvp->port.set_zoom(zoom);
 
 	/* reset width and height: */
-	vik_viewport_configure_manually(vw->viking_vvp, w, h);
+	vw->viking_vvp->port.configure_manually(w, h);
 
 	/* draw all layers */
 	draw_redraw(vw);
@@ -3844,7 +3844,7 @@ static void save_image_file(VikWindow *vw, const char *fn, unsigned int w, unsig
 		/* pretend like nothing happened ;) */
 		vw->viking_vvp->port.set_xmpp(old_xmpp);
 		vw->viking_vvp->port.set_ympp(old_ympp);
-		vik_viewport_configure(vw->viking_vvp);
+		vw->viking_vvp->port.configure();
 		draw_update(vw);
 
 		return;
@@ -3881,7 +3881,7 @@ static void save_image_file(VikWindow *vw, const char *fn, unsigned int w, unsig
 	/* pretend like nothing happened ;) */
 	vw->viking_vvp->port.set_xmpp(old_xmpp);
 	vw->viking_vvp->port.set_ympp(old_ympp);
-	vik_viewport_configure(vw->viking_vvp);
+	vw->viking_vvp->port.configure();
 	draw_update(vw);
 }
 
@@ -3903,7 +3903,7 @@ static void save_image_dir(VikWindow *vw, const char *fn, unsigned int w, unsign
 	vw->viking_vvp->port.set_zoom(zoom);
 
 	/* reset width and height: do this only once for all images (same size) */
-	vik_viewport_configure_manually(vw->viking_vvp, w, h);
+	vw->viking_vvp->port.configure_manually(w, h);
 	/* *** end copy from above *** */
 
 	assert (vw->viking_vvp->port.get_coord_mode() == VIK_COORD_UTM);
@@ -3948,7 +3948,7 @@ static void save_image_dir(VikWindow *vw, const char *fn, unsigned int w, unsign
 	vw->viking_vvp->port.set_center_utm(&utm_orig, false);
 	vw->viking_vvp->port.set_xmpp(old_xmpp);
 	vw->viking_vvp->port.set_ympp(old_ympp);
-	vik_viewport_configure(vw->viking_vvp);
+	vw->viking_vvp->port.configure();
 	draw_update(vw);
 
 	free(name_of_file);

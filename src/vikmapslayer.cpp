@@ -1519,7 +1519,7 @@ void LayerMaps::draw(Viewport * viewport)
 		double level = viewport->get_zoom();
 		LatLonBBox bbox;
 		viewport->get_min_max_lat_lon(&bbox.south, &bbox.north, &bbox.west, &bbox.east);
-		map_sources[vml->map_index]->get_copyright(bbox, level, viewport_add_copyright, viewport->vvp);
+		map_sources[vml->map_index]->get_copyright(bbox, level, vik_viewport_add_copyright_cb, viewport->vvp);
 
 		/* Logo */
 		const GdkPixbuf *logo = map_sources[vml->map_index]->get_logo();
