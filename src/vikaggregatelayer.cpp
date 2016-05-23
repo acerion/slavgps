@@ -649,8 +649,8 @@ static GList* aggregate_layer_track_create_list(VikLayer *vl, void * user_data)
 	auto iter = layers->begin();
 	while (iter != layers->end()) {
 		GList *tracks = NULL;
-		LayerTRW::get_track_values(&tracks, VIK_TRW_LAYER(*iter)->trw->get_tracks());
-		LayerTRW::get_track_values(&tracks, VIK_TRW_LAYER(*iter)->trw->get_routes());
+		LayerTRWc::get_track_values(&tracks, VIK_TRW_LAYER(*iter)->trw->get_tracks());
+		LayerTRWc::get_track_values(&tracks, VIK_TRW_LAYER(*iter)->trw->get_routes());
 
 		tracks_and_layers = g_list_concat(tracks_and_layers, VIK_TRW_LAYER(*iter)->trw->build_track_list_t(tracks));
 

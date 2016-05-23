@@ -356,9 +356,9 @@ static bool trw_layer_track_menu_popup ( GtkWidget *tree_view,
 
 	sg_uid_t uid = 0;;
 	if ( trk->is_route )
-		uid = LayerTRW::find_uid_of_track(vtl->trw->get_routes(), trk);
+		uid = LayerTRWc::find_uid_of_track(vtl->trw->get_routes(), trk);
 	else
-		uid = LayerTRW::find_uid_of_track(vtl->trw->get_tracks(), trk);
+		uid = LayerTRWc::find_uid_of_track(vtl->trw->get_tracks(), trk);
 
 	if (uid) {
 		Viewport * viewport = vik_window_viewport((VikWindow *)(VIK_GTK_WINDOW_FROM_LAYER(vtl)));

@@ -415,7 +415,7 @@ static bool trw_layer_waypoint_menu_popup ( GtkWidget *tree_view,
 	gtk_tree_model_get ( model, &iter, TRW_COL_NUM, &vtl, -1 );
 	if ( !IS_VIK_TRW_LAYER(vtl) ) return false;
 
-    sg_uid_t wp_uuid = LayerTRW::find_uid_of_waypoint(vtl->trw->get_waypoints(), wp);
+    sg_uid_t wp_uuid = LayerTRWc::find_uid_of_waypoint(vtl->trw->get_waypoints(), wp);
 	if (wp_uuid) {
 		Viewport * viewport = vik_window_viewport((VikWindow *)(VIK_GTK_WINDOW_FROM_LAYER(vtl)));
 
