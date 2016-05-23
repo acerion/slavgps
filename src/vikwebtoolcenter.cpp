@@ -178,7 +178,7 @@ static uint8_t webtool_center_mpp_to_zoom ( VikWebtool *self, double mpp ) {
 static char *webtool_center_get_url_at_position ( VikWebtool *self, VikWindow *vwindow, VikCoord *vc )
 {
   VikWebtoolCenterPrivate *priv = NULL;
-  VikViewport *viewport = NULL;
+  Viewport * viewport = NULL;
   uint8_t zoom = 17;
   struct LatLon ll;
   char strlat[G_ASCII_DTOSTR_BUF_SIZE], strlon[G_ASCII_DTOSTR_BUF_SIZE];
@@ -191,13 +191,13 @@ static char *webtool_center_get_url_at_position ( VikWebtool *self, VikWindow *v
     vik_coord_to_latlon ( vc, &ll );
   else {
     const VikCoord *coord = NULL;
-    coord = viewport->port.get_center();
+    coord = viewport->get_center();
     vik_coord_to_latlon ( coord, &ll );
   }
 
   // zoom - ideally x & y factors need to be the same otherwise use the default
-  if ( viewport->port.get_xmpp() == viewport->port.get_ympp() )
-    zoom = vik_webtool_center_mpp_to_zoom ( self, viewport->port.get_zoom() );
+  if ( viewport->get_xmpp() == viewport->get_ympp() )
+    zoom = vik_webtool_center_mpp_to_zoom ( self, viewport->get_zoom() );
 
   // Cannot simply use g_strdup_printf and double due to locale.
   // As we compute an URL, we have to think in C locale.

@@ -336,8 +336,6 @@ void vik_aggregate_layer_move_layer(VikAggregateLayer *val, GtkTreeIter *child_i
  */
 void LayerAggregate::draw(Viewport * viewport)
 {
-	VikViewport * vp = (VikViewport *) viewport->vvp;
-
 	auto iter = ((VikAggregateLayer *) this->vl)->children->begin();
 	VikLayer * trigger = (VikLayer *) viewport->get_trigger();
 	while (iter != ((VikAggregateLayer *) this->vl)->children->end()) {
@@ -598,7 +596,7 @@ static void aggregate_layer_search_date(menu_array_values values)
 		return;
 	}
 
-	VikViewport *vvp = vik_window_viewport(VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(val)));
+	Viewport * viewport = vik_window_viewport(VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(val)));
 
 	std::list<Layer *> * layers = new std::list<Layer *>;
 	auto iter = layers->begin();
@@ -607,7 +605,7 @@ static void aggregate_layer_search_date(menu_array_values values)
 	// Search tracks first
 	while (iter != layers->end() && !found) {
 		// Make it auto select the item if found
-		found = VIK_TRW_LAYER(*iter)->trw->find_by_date(date_str, &position, vvp, true, true);
+		found = VIK_TRW_LAYER(*iter)->trw->find_by_date(date_str, &position, viewport, true, true);
 		iter++;
 	}
 	delete layers;
@@ -619,7 +617,7 @@ static void aggregate_layer_search_date(menu_array_values values)
 		iter = layers->begin();
 		while (iter != layers->end() && !found) {
 			// Make it auto select the item if found
-			found = VIK_TRW_LAYER(*iter)->trw->find_by_date(date_str, &position, vvp, false, true);
+			found = VIK_TRW_LAYER(*iter)->trw->find_by_date(date_str, &position, viewport, false, true);
 			iter++;
 		}
 		delete layers;

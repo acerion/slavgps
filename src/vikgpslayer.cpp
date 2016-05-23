@@ -120,7 +120,7 @@ typedef struct {
   GtkWidget *rte_label;
   GtkWidget *progress_label;
   vik_gps_xfer_type progress_type;
-  VikViewport *vvp;
+  Viewport * viewport;
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
   bool realtime_tracking;
 #endif
@@ -1186,10 +1186,10 @@ static void gps_comm_thread(GpsSession *sess)
       if (!sess->realtime_tracking)
 #endif
       {
-        if ( sess->vvp && sess->direction == GPS_DOWN ) {
-          vik_layer_post_read ( VIK_LAYER(sess->vtl), sess->vvp, true );
+        if ( sess->viewport && sess->direction == GPS_DOWN ) {
+          vik_layer_post_read ( VIK_LAYER(sess->vtl), sess->viewport, true );
           /* View the data available */
-	  sess->vtl->trw->auto_set_view(&sess->vvp->port) ;
+	  sess->vtl->trw->auto_set_view(sess->viewport) ;
           vik_layer_emit_update ( VIK_LAYER(sess->vtl) ); // NB update from background thread
         }
       }
@@ -1233,7 +1233,7 @@ int vik_gps_comm ( VikTrwLayer *vtl,
                     char *protocol,
                     char *port,
                     bool tracking,
-                    VikViewport *vvp,
+                    Viewport * viewport,
                     VikLayersPanel *vlp,
                     bool do_tracks,
                     bool do_routes,
@@ -1252,7 +1252,7 @@ int vik_gps_comm ( VikTrwLayer *vtl,
   sess->port = g_strdup(port);
   sess->ok = true;
   sess->window_title = (dir == GPS_DOWN) ? _("GPS Download") : _("GPS Upload");
-  sess->vvp = vvp;
+  sess->viewport = viewport;
 
   // This must be done inside the main thread as the uniquify causes screen updates
   //  (originally performed this nearer the point of upload in the thread)
@@ -1361,8 +1361,8 @@ static void gps_upload_cb( void * layer_and_vlp[2] )
   VikLayersPanel *vlp = VIK_LAYERS_PANEL(layer_and_vlp[1]);
   VikTrwLayer *vtl = vgl->trw_children[TRW_UPLOAD];
   VikWindow *vw = VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(vgl));
-  VikViewport *vvp = vik_window_viewport(vw);
-  vik_gps_comm(vtl, NULL, GPS_UP, vgl->protocol, vgl->serial_port, false, vvp, vlp, vgl->upload_tracks, vgl->upload_routes, vgl->upload_waypoints, false);
+  Viewport * viewport = vik_window_viewport(vw);
+  vik_gps_comm(vtl, NULL, GPS_UP, vgl->protocol, vgl->serial_port, false, viewport, vlp, vgl->upload_tracks, vgl->upload_routes, vgl->upload_waypoints, false);
 }
 
 static void gps_download_cb( void * layer_and_vlp[2] )
@@ -1370,11 +1370,11 @@ static void gps_download_cb( void * layer_and_vlp[2] )
   VikGpsLayer *vgl = (VikGpsLayer *)layer_and_vlp[0];
   VikTrwLayer *vtl = vgl->trw_children[TRW_DOWNLOAD];
   VikWindow *vw = VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(vgl));
-  VikViewport *vvp = vik_window_viewport(vw);
+  Viewport * viewport = vik_window_viewport(vw);
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
-  vik_gps_comm(vtl, NULL, GPS_DOWN, vgl->protocol, vgl->serial_port, vgl->realtime_tracking, vvp, NULL, vgl->download_tracks, vgl->download_routes, vgl->download_waypoints, false);
+  vik_gps_comm(vtl, NULL, GPS_DOWN, vgl->protocol, vgl->serial_port, vgl->realtime_tracking, viewport, NULL, vgl->download_tracks, vgl->download_routes, vgl->download_waypoints, false);
 #else
-  vik_gps_comm(vtl, NULL, GPS_DOWN, vgl->protocol, vgl->serial_port, false, vvp, NULL, vgl->download_tracks, vgl->download_routes, vgl->download_waypoints, false);
+  vik_gps_comm(vtl, NULL, GPS_DOWN, vgl->protocol, vgl->serial_port, false, viewport, NULL, vgl->download_tracks, vgl->download_routes, vgl->download_waypoints, false);
 #endif
 }
 
@@ -1598,7 +1598,7 @@ static void gpsd_raw_hook(VglGpsd *vgpsd, char *data)
       !isnan(vgpsd->gpsd.fix.longitude)) {
 
     VikWindow *vw = VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(vgl));
-    VikViewport *vvp = vik_window_viewport(vw);
+    Viewport * viewport = vik_window_viewport(vw);
     vgl->realtime_fix.fix = vgpsd->gpsd.fix;
     vgl->realtime_fix.satellites_used = vgpsd->gpsd.satellites_used;
     vgl->realtime_fix.dirty = true;
@@ -1613,27 +1613,27 @@ static void gpsd_raw_hook(VglGpsd *vgpsd, char *data)
 
     if ((vgl->vehicle_position == VEHICLE_POSITION_CENTERED) ||
         (vgl->realtime_jump_to_start && vgl->first_realtime_trackpoint)) {
-      vvp->port.set_center_coord(&vehicle_coord, false);
+      viewport->set_center_coord(&vehicle_coord, false);
       update_all = true;
     }
     else if (vgl->vehicle_position == VEHICLE_POSITION_ON_SCREEN) {
       const int hdiv = 6;
       const int vdiv = 6;
       const int px = 20; /* adjust ment in pixels to make sure vehicle is inside the box */
-      int width = vvp->port.get_width();
-      int height = vvp->port.get_height();
+      int width = viewport->get_width();
+      int height = viewport->get_height();
       int vx, vy;
 
-      vvp->port.coord_to_screen(&vehicle_coord, &vx, &vy);
+      viewport->coord_to_screen(&vehicle_coord, &vx, &vy);
       update_all = true;
       if (vx < (width/hdiv))
-        vvp->port.set_center_screen(vx - width/2 + width/hdiv + px, vy);
+        viewport->set_center_screen(vx - width/2 + width/hdiv + px, vy);
       else if (vx > (width - width/hdiv))
-        vvp->port.set_center_screen(vx + width/2 - width/hdiv - px, vy);
+        viewport->set_center_screen(vx + width/2 - width/hdiv - px, vy);
       else if (vy < (height/vdiv))
-        vvp->port.set_center_screen(vx, vy - height/2 + height/vdiv + px);
+        viewport->set_center_screen(vx, vy - height/2 + height/vdiv + px);
       else if (vy > (height - height/vdiv))
-	vvp->port.set_center_screen(vx, vy + height/2 - height/vdiv - px);
+	viewport->set_center_screen(vx, vy + height/2 - height/vdiv - px);
       else
         update_all = false;
     }

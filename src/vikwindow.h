@@ -74,7 +74,7 @@ bool vik_window_get_pan_move ( VikWindow *vw );
 void vik_window_open_file ( VikWindow *vw, const char *filename, bool changefilename );
 struct _VikLayer;
 void vik_window_selected_layer(VikWindow *vw, struct _VikLayer *vl);
-struct _VikViewport * vik_window_viewport(VikWindow *vw);
+Viewport * vik_window_viewport(VikWindow *vw);
 struct _VikLayersPanel * vik_window_layers_panel(VikWindow *vw);
 struct _VikStatusbar * vik_window_get_statusbar(VikWindow *vw);
 const char *vik_window_get_filename(VikWindow *vw);

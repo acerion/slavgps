@@ -813,13 +813,13 @@ void vu_command_line ( VikWindow *vw, double latitude, double longitude, int zoo
 	if ( !vw )
 		return;
 
-	VikViewport *vvp = vik_window_viewport(vw);
+	Viewport * viewport = vik_window_viewport(vw);
 
 	if ( latitude != 0.0 || longitude != 0.0 ) {
 		struct LatLon ll;
 		ll.lat = latitude;
 		ll.lon = longitude;
-		vvp->port.set_center_latlon(&ll, true );
+		viewport->set_center_latlon(&ll, true );
 	}
 
 	if ( zoom_osm_level >= 0 ) {
@@ -827,7 +827,7 @@ void vu_command_line ( VikWindow *vw, double latitude, double longitude, int zoo
 		double mpp = exp ( (17-zoom_osm_level) * log(2) );
 		if ( mpp > 1.0 )
 			mpp = round (mpp);
-		vvp->port.set_zoom(mpp);
+		viewport->set_zoom(mpp);
 	}
 
 	if (cmdline_type_id != MAP_TYPE_ID_INITIAL) {
@@ -853,7 +853,7 @@ void vu_command_line ( VikWindow *vw, double latitude, double longitude, int zoo
 		}
 
 		if ( add_map ) {
-			VikMapsLayer *vml = VIK_MAPS_LAYER ( vik_layer_create(VIK_LAYER_MAPS, vvp, false) );
+			VikMapsLayer *vml = VIK_MAPS_LAYER ( vik_layer_create(VIK_LAYER_MAPS, (VikViewport *) viewport->vvp, false) );
 			vik_maps_layer_set_map_type(vml, the_type_id);
 			vik_layer_rename ( VIK_LAYER(vml), _("Map") );
 			Layer * layer = (Layer *) (VIK_LAYER(vml))->layer;

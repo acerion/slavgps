@@ -169,7 +169,7 @@ static void webtool_bounds_finalize ( GObject *gob )
 static char *webtool_bounds_get_url ( VikWebtool *self, VikWindow *vwindow )
 {
   VikWebtoolBoundsPrivate *priv = NULL;
-  VikViewport *viewport = NULL;
+  Viewport * viewport = NULL;
 
   priv = WEBTOOL_BOUNDS_GET_PRIVATE (self);
   viewport = vik_window_viewport ( vwindow );
@@ -180,7 +180,7 @@ static char *webtool_bounds_get_url ( VikWebtool *self, VikWindow *vwindow )
   char smaxlon[G_ASCII_DTOSTR_BUF_SIZE];
   char sminlat[G_ASCII_DTOSTR_BUF_SIZE];
   char smaxlat[G_ASCII_DTOSTR_BUF_SIZE];
-  viewport->port.get_min_max_lat_lon(&min_lat, &max_lat, &min_lon, &max_lon );
+  viewport->get_min_max_lat_lon(&min_lat, &max_lat, &min_lon, &max_lon );
 
   // Cannot simply use g_strdup_printf and double due to locale.
   // As we compute an URL, we have to think in C locale.

@@ -219,7 +219,7 @@ bool vik_goto_tool_parse_file_for_latlon (VikGotoTool *self, char *filename, str
  *  1  = search unavailable in the #VikGotoTool due to communication issue
  *
  */
-int vik_goto_tool_get_coord ( VikGotoTool *self, VikWindow *vw, VikViewport *vvp, char *srch_str, VikCoord *coord )
+int vik_goto_tool_get_coord ( VikGotoTool *self, VikWindow *vw, Viewport * viewport, char *srch_str, VikCoord *coord )
 {
   char *tmpname;
   char *uri;
@@ -248,7 +248,7 @@ int vik_goto_tool_get_coord ( VikGotoTool *self, VikWindow *vw, VikViewport *vvp
     ret = -1;
     goto done;
   }
-  vik_coord_load_from_latlon ( coord, vvp->port.get_coord_mode(), &ll );
+  vik_coord_load_from_latlon ( coord, viewport->get_coord_mode(), &ll );
 
 done:
   (void)util_remove(tmpname);

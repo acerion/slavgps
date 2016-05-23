@@ -136,7 +136,7 @@ namespace SlavGPS {
 		int read_file(FILE * f, char const * dirpath);
 		void write_file(FILE * f);
 		void add_menu_items(GtkMenu * menu, void * vlp);
-		bool sublayer_add_menu_items(GtkMenu * menu, void * vlp, int subtype, void * sublayer, GtkTreeIter * iter, VikViewport * vvp);
+		bool sublayer_add_menu_items(GtkMenu * menu, void * vlp, int subtype, void * sublayer, GtkTreeIter * iter, Viewport * viewport);
 		char const * sublayer_rename_request(const char * newname, void * vlp, int subtype, void * sublayer, GtkTreeIter * iter);
 		bool sublayer_toggle_visible(int subtype, void * sublayer);
 
@@ -163,7 +163,7 @@ namespace SlavGPS {
 		bool is_empty();  /* Formerly known as vik_trw_layer_is_empty(VikTrwLayer * vtl). */
 
 
-		bool find_by_date(char const * date_str, VikCoord * position, VikViewport * vvp, bool do_tracks, bool select);    /* Formerly known as vik_trw_layer_find_date(VikTrwLayer * vtl, char const * date_str, VikCoord * position, VikViewport * vvp, bool do_tracks, bool select). */
+		bool find_by_date(char const * date_str, VikCoord * position, Viewport * viewport, bool do_tracks, bool select);    /* Formerly known as vik_trw_layer_find_date(VikTrwLayer * vtl, char const * date_str, VikCoord * position, VikViewport * vvp, bool do_tracks, bool select). */
 
 		Track * get_track(const char * name); /* Track * vik_trw_layer_get_track(VikTrwLayer * vtl, const char * name). */
 		Track * get_route(const char * name); /* Track * vik_trw_layer_get_route(VikTrwLayer * vtl, const char * name). */
@@ -575,7 +575,7 @@ void vik_trw_metadata_free ( VikTRWMetadata *metadata);
 VikTRWMetadata *vik_trw_layer_get_metadata ( VikTrwLayer *vtl );
 void vik_trw_layer_set_metadata ( VikTrwLayer *vtl, VikTRWMetadata *metadata);
 
-bool vik_trw_layer_find_date ( VikTrwLayer *vtl, const char *date_str, VikCoord *position, VikViewport *vvp, bool do_tracks, bool select );
+//bool vik_trw_layer_find_date ( VikTrwLayer *vtl, const char *date_str, VikCoord *position, VikViewport *vvp, bool do_tracks, bool select );
 
 int vik_trw_layer_get_property_tracks_line_thickness ( VikTrwLayer *vtl );
 
@@ -625,7 +625,7 @@ GdkPixbuf* get_wp_sym_small ( char *symbol );
 
 /* Exposed Layer Interface function definitions */
 // Intended only for use by other trw_layer subwindows
-void trw_layer_verify_thumbnails(VikTrwLayer * vtl, VikViewport * vp);
+void trw_layer_verify_thumbnails(VikTrwLayer * vtl, Viewport * viewport);
 void trw_layer_calculate_bounds_waypoints ( VikTrwLayer *vtl );
 
 

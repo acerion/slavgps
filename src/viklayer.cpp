@@ -499,10 +499,10 @@ void vik_layer_add_menu_items ( VikLayer *l, GtkMenu *menu, void * vlp )
 	layer->add_menu_items(menu, vlp);
 }
 
-bool vik_layer_sublayer_add_menu_items ( VikLayer *l, GtkMenu *menu, void * vlp, int subtype, void * sublayer, GtkTreeIter *iter, VikViewport *vvp )
+bool vik_layer_sublayer_add_menu_items ( VikLayer *l, GtkMenu *menu, void * vlp, int subtype, void * sublayer, GtkTreeIter *iter, Viewport * viewport)
 {
 	Layer * layer = (Layer *) l->layer;
-	return layer->sublayer_add_menu_items(menu, vlp, subtype, sublayer, iter, vvp);
+	return layer->sublayer_add_menu_items(menu, vlp, subtype, sublayer, iter, viewport);
 }
 
 
@@ -527,10 +527,10 @@ bool vik_layer_set_param ( VikLayer *layer, uint16_t id, VikLayerParamData data,
   return false;
 }
 
-void vik_layer_post_read ( VikLayer *layer, VikViewport *vp, bool from_file )
+void vik_layer_post_read ( VikLayer *layer, Viewport * viewport, bool from_file )
 {
 	Layer * l = (Layer *) layer->layer;
-	l->post_read(&vp->port, from_file);
+	l->post_read(viewport, from_file);
 }
 
 static bool vik_layer_properties_factory ( VikLayer *vl, VikViewport *vp )
@@ -834,7 +834,7 @@ void Layer::add_menu_items(GtkMenu * menu, void * vlp)
 	return;
 }
 
-bool Layer::sublayer_add_menu_items(GtkMenu * menu, void * vlp, int subtype, void * sublayer, GtkTreeIter * iter, VikViewport * vvp)
+bool Layer::sublayer_add_menu_items(GtkMenu * menu, void * vlp, int subtype, void * sublayer, GtkTreeIter * iter, Viewport * viewport)
 {
 	return false;
 }

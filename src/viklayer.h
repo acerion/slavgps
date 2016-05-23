@@ -213,9 +213,9 @@ VikLayer *vik_layer_create ( VikLayerTypeEnum type, VikViewport *vp, bool intera
 bool vik_layer_properties ( VikLayer *layer, VikViewport *vp );
 
 void vik_layer_realize ( VikLayer *l, VikTreeview *vt, GtkTreeIter * layer_iter );
-void vik_layer_post_read ( VikLayer *layer, VikViewport *vp, bool from_file );
+void vik_layer_post_read ( VikLayer *layer, Viewport * viewport, bool from_file );
 
-bool vik_layer_sublayer_add_menu_items ( VikLayer *l, GtkMenu *menu, void * vlp, int subtype, void * sublayer, GtkTreeIter *iter, VikViewport *vvp );
+bool vik_layer_sublayer_add_menu_items ( VikLayer *l, GtkMenu *menu, void * vlp, int subtype, void * sublayer, GtkTreeIter *iter, Viewport * viewport);
 
 VikLayer *vik_layer_copy ( VikLayer *vl, void * vp );
 void      vik_layer_marshall ( VikLayer *vl, uint8_t **data, int *len );
@@ -309,7 +309,7 @@ namespace SlavGPS {
 		virtual void write_file(FILE * f);
 
 		virtual void add_menu_items(GtkMenu * menu, void * vlp);
-		virtual bool sublayer_add_menu_items(GtkMenu * menu, void * vlp, int subtype, void * sublayer, GtkTreeIter * iter, VikViewport * vvp);
+		virtual bool sublayer_add_menu_items(GtkMenu * menu, void * vlp, int subtype, void * sublayer, GtkTreeIter * iter, Viewport * viewport);
 		virtual char const * sublayer_rename_request(const char * newname, void * vlp, int subtype, void * sublayer, GtkTreeIter * iter);
 		virtual bool sublayer_toggle_visible(int subtype, void * sublayer);
 

@@ -295,7 +295,7 @@ static void webtool_datasource_open ( VikExtTool *self, VikWindow *vw )
 	};
 	memcpy ( vik_datasource_interface, &data, sizeof(VikDataSourceInterface) );
 
-	a_acquire ( vw, vik_window_layers_panel(vw), vik_window_viewport (vw), data.mode, vik_datasource_interface, self, cleanup );
+	a_acquire ( vw, vik_window_layers_panel(vw), (VikViewport *) vik_window_viewport(vw)->vvp, data.mode, vik_datasource_interface, self, cleanup );
 }
 
 static void vik_webtool_datasource_class_init ( VikWebtoolDatasourceClass *klass )
@@ -423,7 +423,7 @@ static void webtool_datasource_finalize ( GObject *gob )
 static char *webtool_datasource_get_url ( VikWebtool *self, VikWindow *vw )
 {
 	VikWebtoolDatasourcePrivate *priv = WEBTOOL_DATASOURCE_GET_PRIVATE ( self );
-	VikViewport *viewport = vik_window_viewport ( vw );
+	Viewport * viewport = vik_window_viewport ( vw );
 
 	// Get top left and bottom right lat/lon pairs from the viewport
 	double min_lat, max_lat, min_lon, max_lon;
@@ -431,7 +431,7 @@ static char *webtool_datasource_get_url ( VikWebtool *self, VikWindow *vw )
 	char smaxlon[G_ASCII_DTOSTR_BUF_SIZE];
 	char sminlat[G_ASCII_DTOSTR_BUF_SIZE];
 	char smaxlat[G_ASCII_DTOSTR_BUF_SIZE];
-	viewport->port.get_min_max_lat_lon(&min_lat, &max_lat, &min_lon, &max_lon );
+	viewport->get_min_max_lat_lon(&min_lat, &max_lat, &min_lon, &max_lon );
 
 	// Cannot simply use g_strdup_printf and double due to locale.
 	// As we compute an URL, we have to think in C locale.
@@ -441,7 +441,7 @@ static char *webtool_datasource_get_url ( VikWebtool *self, VikWindow *vw )
 	g_ascii_dtostr (smaxlat, G_ASCII_DTOSTR_BUF_SIZE, max_lat);
 
 	// Center values
-	const VikCoord *coord = viewport->port.get_center();
+	const VikCoord *coord = viewport->get_center();
 	struct LatLon ll;
 	vik_coord_to_latlon ( coord, &ll );
 
@@ -452,8 +452,8 @@ static char *webtool_datasource_get_url ( VikWebtool *self, VikWindow *vw )
 
 	uint8_t zoom = 17; // A zoomed in default
 	// zoom - ideally x & y factors need to be the same otherwise use the default
-	if ( viewport->port.get_xmpp() == viewport->port.get_ympp())
-		zoom = map_utils_mpp_to_zoom_level(viewport->port.get_zoom());
+	if ( viewport->get_xmpp() == viewport->get_ympp())
+		zoom = map_utils_mpp_to_zoom_level(viewport->get_zoom());
 
 	char szoom[G_ASCII_DTOSTR_BUF_SIZE];
 	snprintf( szoom, G_ASCII_DTOSTR_BUF_SIZE, "%d", zoom );

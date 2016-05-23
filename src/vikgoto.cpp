@@ -67,8 +67,8 @@ char * a_vik_goto_get_search_string_for_this_place(VikWindow *vw)
   if (!last_coord)
     return NULL;
 
-  VikViewport *vvp = vik_window_viewport(vw);
-  const VikCoord *cur_center = vvp->port.get_center();
+  Viewport * viewport = vik_window_viewport(vw);
+  const VikCoord *cur_center = viewport->get_center();
   if (vik_coord_equals(cur_center, last_coord)) {
     return(last_successful_goto_str);
   }
@@ -225,7 +225,7 @@ static char *a_prompt_for_goto_string(VikWindow *vw)
  *
  * Returns: %true if a successful lookup
  */
-static bool vik_goto_place ( VikWindow *vw, VikViewport *vvp, char* name, VikCoord *vcoord )
+static bool vik_goto_place ( VikWindow *vw, Viewport * viewport, char* name, VikCoord *vcoord )
 {
   // Ensure last_goto_tool is given a value
   get_provider ();
@@ -233,14 +233,14 @@ static bool vik_goto_place ( VikWindow *vw, VikViewport *vvp, char* name, VikCoo
   if ( goto_tools_list ) {
     VikGotoTool *gototool = (VikGotoTool *) g_list_nth_data ( goto_tools_list, last_goto_tool );
     if ( gototool ) {
-      if ( vik_goto_tool_get_coord ( gototool, vw, vvp, name, vcoord ) == 0 )
+      if ( vik_goto_tool_get_coord ( gototool, vw, viewport, name, vcoord ) == 0 )
         return true;
     }
   }
   return false;
 }
 
-void a_vik_goto(VikWindow *vw, VikViewport *vvp)
+void a_vik_goto(VikWindow *vw, Viewport * viewport)
 {
   VikCoord new_center;
   char *s_str;
@@ -259,7 +259,7 @@ void a_vik_goto(VikWindow *vw, VikViewport *vvp)
       more = false;
     }
     else {
-      int ans = vik_goto_tool_get_coord((VikGotoTool *) g_list_nth_data (goto_tools_list, last_goto_tool), vw, vvp, s_str, &new_center);
+      int ans = vik_goto_tool_get_coord((VikGotoTool *) g_list_nth_data (goto_tools_list, last_goto_tool), vw, viewport, s_str, &new_center);
       if ( ans == 0 ) {
         if (last_coord)
           free(last_coord);
@@ -268,7 +268,7 @@ void a_vik_goto(VikWindow *vw, VikViewport *vvp)
         if (last_successful_goto_str)
           free(last_successful_goto_str);
         last_successful_goto_str = g_strdup(last_goto_str);
-        vvp->port.set_center_coord(&new_center, true);
+        viewport->set_center_coord(&new_center, true);
         more = false;
       }
       else if ( ans == -1 ) {
@@ -301,7 +301,7 @@ void a_vik_goto(VikWindow *vw, VikViewport *vvp)
  *   3 if position only as precise as a country
  * @name: Contains the name of place found. Free this string after use.
  */
-int a_vik_goto_where_am_i ( VikViewport *vvp, struct LatLon *ll, char **name )
+int a_vik_goto_where_am_i(Viewport * viewport, struct LatLon *ll, char **name )
 {
   int result = 0;
   *name = NULL;
@@ -403,7 +403,7 @@ int a_vik_goto_where_am_i ( VikViewport *vvp, struct LatLon *ll, char **name )
       fprintf(stderr, "DEBUG: %s: found city %s\n", __FUNCTION__, city );
       if ( strcmp ( city, "(Unknown city)" ) != 0 ) {
         VikCoord new_center;
-        if ( vik_goto_place ( NULL, vvp, city, &new_center ) ) {
+        if ( vik_goto_place ( NULL, viewport, city, &new_center ) ) {
           // Got something
           vik_coord_to_latlon ( &new_center, ll );
           result = 2;
@@ -418,7 +418,7 @@ int a_vik_goto_where_am_i ( VikViewport *vvp, struct LatLon *ll, char **name )
       fprintf(stderr, "DEBUG: %s: found country %s\n", __FUNCTION__, country );
       if ( strcmp ( country, "(Unknown Country)" ) != 0 ) {
         VikCoord new_center;
-        if ( vik_goto_place ( NULL, vvp, country, &new_center ) ) {
+        if ( vik_goto_place ( NULL, viewport, country, &new_center ) ) {
           // Finally got something
           vik_coord_to_latlon ( &new_center, ll );
           result = 3;

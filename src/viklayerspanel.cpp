@@ -446,7 +446,7 @@ void LayersPanel::popup(GtkTreeIter *iter, int mouse_button)
 			vik_layer_add_menu_items(layer->vl, menu, this->gob);
 		} else {
 			menu = GTK_MENU (gtk_menu_new());
-			if (! vik_layer_sublayer_add_menu_items ((VikLayer *) vik_treeview_item_get_parent(this->vt, iter), menu, this->gob, vik_treeview_item_get_data(this->vt, iter), vik_treeview_item_get_pointer(this->vt, iter), iter, (VikViewport *) this->viewport->vvp)) { // kamil
+			if (! vik_layer_sublayer_add_menu_items ((VikLayer *) vik_treeview_item_get_parent(this->vt, iter), menu, this->gob, vik_treeview_item_get_data(this->vt, iter), vik_treeview_item_get_pointer(this->vt, iter), iter, this->viewport)) { // kamil
 				gtk_widget_destroy (GTK_WIDGET(menu));
 				return;
 			}

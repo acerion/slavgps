@@ -741,7 +741,7 @@ void vik_trw_layer_set_metadata ( VikTrwLayer *vtl, VikTRWMetadata *metadata)
 /**
  * Find an item by date
  */
-bool LayerTRW::find_by_date(char const * date_str, VikCoord * position, VikViewport * vvp, bool do_tracks, bool select)
+bool LayerTRW::find_by_date(char const * date_str, VikCoord * position, Viewport * viewport, bool do_tracks, bool select)
 {
 	date_finder_type df;
 	df.found = false;
@@ -759,10 +759,10 @@ bool LayerTRW::find_by_date(char const * date_str, VikCoord * position, VikViewp
 		if (do_tracks && df.trk) {
 			struct LatLon maxmin[2] = { {0,0}, {0,0} };
 			LayerTRW::find_maxmin_in_track(df.trk, maxmin);
-			this->zoom_to_show_latlons(&vvp->port, maxmin);
+			this->zoom_to_show_latlons(viewport, maxmin);
 			vik_treeview_select_iter(VIK_LAYER(this->vl)->vt, tracks_iters.at(df.trk_uid), true);
 		} else if (df.wp) {
-			vvp->port.set_center_coord(&(df.wp->coord), true);
+			viewport->set_center_coord(&(df.wp->coord), true);
 			vik_treeview_select_iter(VIK_LAYER(this->vl)->vt, waypoints_iters.at(df.wp_uid), true);
 		}
 		vik_layer_emit_update(VIK_LAYER(this->vl));
@@ -2753,10 +2753,10 @@ static void trw_layer_new_wikipedia_wp_viewport ( menu_array_layer values )
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
   VikLayersPanel *vlp = VIK_LAYERS_PANEL(values[MA_VLP]);
   VikWindow *vw = (VikWindow *)(VIK_GTK_WINDOW_FROM_LAYER(vtl));
-  VikViewport *vvp =  vik_window_viewport(vw);
+  Viewport * viewport =  vik_window_viewport(vw);
 
   // Note the order is max part first then min part - thus reverse order of use in min_max function:
-  vvp->port.get_min_max_lat_lon(&maxmin[1].lat, &maxmin[0].lat, &maxmin[1].lon, &maxmin[0].lon );
+  viewport->get_min_max_lat_lon(&maxmin[1].lat, &maxmin[0].lat, &maxmin[1].lon, &maxmin[0].lon );
   a_geonames_wikipedia_box((VikWindow *)(VIK_GTK_WINDOW_FROM_LAYER(vtl)), vtl, maxmin);
   vtl->trw->calculate_bounds_waypoints();
   vik_layers_panel_emit_update ( vlp->panel_ref );
@@ -2842,12 +2842,12 @@ static void trw_layer_acquire ( menu_array_layer values, VikDataSourceInterface 
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
   VikLayersPanel *vlp = VIK_LAYERS_PANEL(values[MA_VLP]);
   VikWindow *vw = (VikWindow *)(VIK_GTK_WINDOW_FROM_LAYER(vtl));
-  VikViewport *vvp =  vik_window_viewport(vw);
+  Viewport * viewport =  vik_window_viewport(vw);
 
   vik_datasource_mode_t mode = datasource->mode;
   if ( mode == VIK_DATASOURCE_AUTO_LAYER_MANAGEMENT )
     mode = VIK_DATASOURCE_ADDTOLAYER;
-  a_acquire ( vw, vlp, vvp, mode, datasource, NULL, NULL );
+  a_acquire ( vw, vlp, (VikViewport *) viewport->vvp, mode, datasource, NULL, NULL );
 }
 
 /*
@@ -3027,7 +3027,7 @@ static void trw_layer_gps_upload_any ( menu_array_sublayer values )
                  protocol,
                  port,
                  false,
-                 (VikViewport *) vlp->panel_ref->get_viewport()->vvp,
+                 vlp->panel_ref->get_viewport(),
                  vlp,
                  do_tracks,
                  do_routes,
@@ -6876,7 +6876,7 @@ static void trw_layer_google_route_webpage ( menu_array_sublayer values )
 
 /* vlp can be NULL if necessary - i.e. right-click from a tool */
 /* viewpoint is now available instead */
-bool LayerTRW::sublayer_add_menu_items(GtkMenu * menu, void * vlp, int subtype, void * sublayer, GtkTreeIter * iter, VikViewport * vvp)
+bool LayerTRW::sublayer_add_menu_items(GtkMenu * menu, void * vlp, int subtype, void * sublayer, GtkTreeIter * iter, Viewport * viewport)
 {
   VikTrwLayer * l = (VikTrwLayer *) this->vl;
 
@@ -6890,7 +6890,7 @@ bool LayerTRW::sublayer_add_menu_items(GtkMenu * menu, void * vlp, int subtype, 
   pass_along[MA_SUBTYPE]     = KINT_TO_POINTER (subtype);
   pass_along[MA_SUBLAYER_ID] = sublayer;
   pass_along[MA_CONFIRM]     = KINT_TO_POINTER (1); // Confirm delete request
-  pass_along[MA_VVP]         = vvp;
+  pass_along[MA_VVP]         = (VikViewport *) viewport->vvp;
   pass_along[MA_TV_ITER]     = iter;
   pass_along[MA_MISC]        = NULL; // For misc purposes - maybe track or waypoint
 
@@ -7995,16 +7995,16 @@ void LayerTRW::dialog_shift(GtkWindow * dialog, VikCoord * coord, bool vertical)
 	// Dialog not 'realized'/positioned - so can't really do any repositioning logic
 	if (dia_pos_x > 2 && dia_pos_y > 2) {
 
-		VikViewport * vvp = vik_window_viewport(VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(vtl)));
+		Viewport * viewport = vik_window_viewport(VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(vtl)));
 
 		int vp_xx, vp_yy; // In viewport pixels
-		vvp->port.coord_to_screen(coord, &vp_xx, &vp_yy);
+		viewport->coord_to_screen(coord, &vp_xx, &vp_yy);
 
 		// Work out the 'bounding box' in pixel terms of the dialog and only move it when over the position
 
 		int dest_x = 0;
 		int dest_y = 0;
-		if (gtk_widget_translate_coordinates(GTK_WIDGET(vvp), GTK_WIDGET(parent), 0, 0, &dest_x, &dest_y)) {
+		if (gtk_widget_translate_coordinates(GTK_WIDGET(viewport->vvp), GTK_WIDGET(parent), 0, 0, &dest_x, &dest_y)) {
 
 			// Transform Viewport pixels into absolute pixels
 			int tmp_xx = vp_xx + dest_x + win_pos_x - 10;
@@ -8016,7 +8016,7 @@ void LayerTRW::dialog_shift(GtkWindow * dialog, VikCoord * coord, bool vertical)
 
 				if (vertical) {
 					// Shift up<->down
-					int hh = vvp->port.get_height();
+					int hh = viewport->get_height();
 
 					// Consider the difference in viewport to the full window
 					int offset_y = dest_y;
@@ -8032,7 +8032,7 @@ void LayerTRW::dialog_shift(GtkWindow * dialog, VikCoord * coord, bool vertical)
 					}
 				} else {
 					// Shift left<->right
-					int ww = vvp->port.get_width();
+					int ww = viewport->get_width();
 
 					// Consider the difference in viewport to the full window
 					int offset_x = dest_x;
@@ -8460,7 +8460,7 @@ bool LayerTRW::show_selected_viewport_menu(GdkEventButton * event, Viewport * vi
 							      trk->is_route ? VIK_TRW_LAYER_SUBLAYER_ROUTE : VIK_TRW_LAYER_SUBLAYER_TRACK,
 							      (void *) ((long) uid),
 							      iter,
-							      (VikViewport *) viewport->vvp);
+							      viewport);
 			}
 
 			gtk_menu_popup(((VikTrwLayer *) this->vl)->track_right_click_menu, NULL, NULL, NULL, NULL, event->button, gtk_get_current_event_time());
@@ -8489,7 +8489,7 @@ bool LayerTRW::show_selected_viewport_menu(GdkEventButton * event, Viewport * vi
 							      VIK_TRW_LAYER_SUBLAYER_WAYPOINT,
 							      (void *) ((long) wp_uid),
 							      iter,
-							      (VikViewport *) viewport->vvp);
+							      viewport);
 			}
 			gtk_menu_popup(((VikTrwLayer *) this->vl)->wp_right_click_menu, NULL, NULL, NULL, NULL, event->button, gtk_get_current_event_time());
 
@@ -8715,7 +8715,7 @@ static bool tool_edit_waypoint_release ( VikTrwLayer *vtl, GdkEventButton *event
       g_object_ref_sink ( G_OBJECT(vtl->wp_right_click_menu) );
     if ( vtl->trw->current_wp ) {
       vtl->wp_right_click_menu = GTK_MENU ( gtk_menu_new () );
-      vtl->trw->sublayer_add_menu_items(vtl->wp_right_click_menu, NULL, VIK_TRW_LAYER_SUBLAYER_WAYPOINT, (void *) ((long) vtl->trw->current_wp_uid), vtl->trw->waypoints_iters.at(vtl->trw->current_wp_uid), (VikViewport *) t->viewport->vvp );
+      vtl->trw->sublayer_add_menu_items(vtl->wp_right_click_menu, NULL, VIK_TRW_LAYER_SUBLAYER_WAYPOINT, (void *) ((long) vtl->trw->current_wp_uid), vtl->trw->waypoints_iters.at(vtl->trw->current_wp_uid), t->viewport);
       gtk_menu_popup ( vtl->wp_right_click_menu, NULL, NULL, NULL, NULL, event->button, gtk_get_current_event_time() );
     }
     vtl->trw->waypoint_rightclick = false;
@@ -9540,7 +9540,7 @@ static void thumbnail_create_thread_free ( thumbnail_create_thread_data *tctd )
   free( tctd );
 }
 
-void trw_layer_verify_thumbnails ( VikTrwLayer *vtl, VikViewport * vp )
+void trw_layer_verify_thumbnails ( VikTrwLayer *vtl, Viewport * viewport )
 {
   if ( ! vtl->has_verified_thumbnails )
   {
@@ -9829,7 +9829,7 @@ void LayerTRW::post_read(Viewport * viewport, bool from_file)
 {
 	VikTrwLayer * vtl = (VikTrwLayer *) this->vl;
 	if (VIK_LAYER(vtl)->realized) {
-		trw_layer_verify_thumbnails (vtl, (VikViewport *) viewport->vvp);
+		trw_layer_verify_thumbnails(vtl, viewport);
 	}
 	vtl->trw->track_alloc_colors();
 
@@ -9948,7 +9948,7 @@ uint16_t LayerTRW::get_menu_selection()
 
 /* ----------- Downloading maps along tracks --------------- */
 
-static int get_download_area_width(VikViewport *vvp, double zoom_level, struct LatLon *wh)
+static int get_download_area_width(Viewport * viewport, double zoom_level, struct LatLon *wh) /* kamilFIXME: viewport is unused, why? */
 {
   /* TODO: calculating based on current size of viewport */
   const double w_at_zoom_0_125 = 0.0013;
@@ -10002,7 +10002,7 @@ static GList *add_fillins(GList *list, VikCoord *from, VikCoord *to, struct LatL
   return list;
 }
 
-void vik_track_download_map(Track *tr, VikMapsLayer *vml, VikViewport *vvp, double zoom_level)
+void vik_track_download_map(Track *tr, VikMapsLayer *vml, Viewport * viewport, double zoom_level)
 {
   typedef struct _Rect {
     VikCoord tl;
@@ -10015,7 +10015,7 @@ void vik_track_download_map(Track *tr, VikMapsLayer *vml, VikViewport *vvp, doub
   GList *rects_to_download = NULL;
   GList *rect_iter;
 
-  if (get_download_area_width(vvp, zoom_level, &wh))
+  if (get_download_area_width(viewport, zoom_level, &wh))
     return;
 
   GList *iter = tr->trackpoints;
@@ -10083,7 +10083,7 @@ void vik_track_download_map(Track *tr, VikMapsLayer *vml, VikViewport *vvp, doub
   }
 
   for (rect_iter = rects_to_download; rect_iter; rect_iter = rect_iter->next) {
-    vik_maps_layer_download_section (vml, vvp, &(((Rect *)(rect_iter->data))->tl), &(((Rect *)(rect_iter->data))->br), zoom_level);
+    vik_maps_layer_download_section (vml, (VikViewport *) viewport->vvp, &(((Rect *)(rect_iter->data))->tl), &(((Rect *)(rect_iter->data))->br), zoom_level);
   }
 
   if (fillins) {
@@ -10113,7 +10113,7 @@ static void trw_layer_download_map_along_track_cb ( menu_array_sublayer values )
   if ( !trk )
     return;
 
-  VikViewport *vvp = vik_window_viewport((VikWindow *)(VIK_GTK_WINDOW_FROM_LAYER(vtl)));
+  Viewport * viewport = vik_window_viewport((VikWindow *)(VIK_GTK_WINDOW_FROM_LAYER(vtl)));
 
   std::list<Layer *> * vmls = vlp->panel_ref->get_all_layers_of_type(VIK_LAYER_MAPS, true); // Includes hidden map layer types
   int num_maps = vmls->size();
@@ -10138,7 +10138,7 @@ static void trw_layer_download_map_along_track_cb ( menu_array_sublayer values )
   *lp = NULL;
   *np = NULL;
 
-  double cur_zoom = vvp->port.get_zoom();
+  double cur_zoom = viewport->get_zoom();
   for (default_zoom = 0; default_zoom < G_N_ELEMENTS(zoom_vals); default_zoom++) {
     if (cur_zoom == zoom_vals[default_zoom])
       break;
@@ -10148,7 +10148,7 @@ static void trw_layer_download_map_along_track_cb ( menu_array_sublayer values )
   if (!a_dialog_map_n_zoom(VIK_GTK_WINDOW_FROM_LAYER(vtl), map_names, 0, zoomlist, default_zoom, &selected_map, &selected_zoom))
     goto done;
 
-  vik_track_download_map(trk, map_layers[selected_map], vvp, zoom_vals[selected_zoom]);
+  vik_track_download_map(trk, map_layers[selected_map], viewport, zoom_vals[selected_zoom]);
 
 done:
   for (int i = 0; i < num_maps; i++)

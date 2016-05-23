@@ -377,7 +377,7 @@ static bool file_read ( VikAggregateLayer *top, FILE *f, const char *dirpath, Vi
             if (VIK_LAYER(stack->under->data)->type == VIK_LAYER_AGGREGATE) {
 	      Layer * layer = (Layer *) (VIK_LAYER(stack->data))->layer;
               vik_aggregate_layer_add_layer ( VIK_AGGREGATE_LAYER(stack->under->data), layer, false );
-              vik_layer_post_read ( VIK_LAYER(stack->data), vp, true );
+              vik_layer_post_read ( VIK_LAYER(stack->data), &vp->port, true );
             }
             else if (VIK_LAYER(stack->under->data)->type == VIK_LAYER_GPS) {
               /* TODO: anything else needs to be done here ? */
@@ -554,7 +554,7 @@ name=this
     {
       Layer * layer = (Layer *) (VIK_LAYER(stack->data))->layer;
       vik_aggregate_layer_add_layer ( VIK_AGGREGATE_LAYER(stack->under->data), layer, false );
-      vik_layer_post_read ( VIK_LAYER(stack->data), vp, true );
+      vik_layer_post_read ( VIK_LAYER(stack->data), &vp->port, true );
     }
     pop(&stack);
   }
@@ -731,7 +731,7 @@ VikLoadType_t a_file_load ( VikAggregateLayer *top, VikViewport *vp, const char 
     }
     else {
       // Complete the setup from the successful load
-      vik_layer_post_read ( vtl, vp, true );
+      vik_layer_post_read ( vtl, &vp->port, true );
       Layer * layer = (Layer *) vtl->layer;
       vik_aggregate_layer_add_layer ( top, layer, false );
       (VIK_TRW_LAYER(vtl))->trw->auto_set_view(&vp->port);

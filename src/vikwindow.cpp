@@ -258,9 +258,9 @@ static char *tool_names[NUMBER_OF_TOOLS] = { (char *) N_("Pan"), (char *) N_("Zo
 
 G_DEFINE_TYPE (VikWindow, vik_window, GTK_TYPE_WINDOW)
 
-VikViewport * vik_window_viewport(VikWindow *vw)
+Viewport * vik_window_viewport(VikWindow *vw)
 {
-	return(((VikViewport *) vw->viewport->vvp));
+	return vw->viewport;
 }
 
 VikLayersPanel * vik_window_layers_panel(VikWindow *vw)
@@ -422,7 +422,7 @@ static int determine_location_thread(VikWindow *vw, void * threaddata)
 {
 	struct LatLon ll;
 	char *name = NULL;
-	int ans = a_vik_goto_where_am_i(((VikViewport *) vw->viewport->vvp), &ll, &name);
+	int ans = a_vik_goto_where_am_i(vw->viewport, &ll, &name);
 
 	int result = a_background_thread_progress(threaddata, 1.0);
 	if (result != 0) {
@@ -3609,7 +3609,7 @@ static void goto_default_location(GtkAction *a, VikWindow *vw)
 
 static void goto_address(GtkAction *a, VikWindow *vw)
 {
-	a_vik_goto(vw, ((VikViewport *) vw->viewport->vvp));
+	a_vik_goto(vw, vw->viewport);
 	vik_layers_panel_emit_update(vw->layers_panel);
 }
 

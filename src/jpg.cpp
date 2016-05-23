@@ -128,7 +128,7 @@ bool a_jpg_load_file ( VikAggregateLayer *top, const char *filename, VikViewport
 	}
 
 	// Complete the setup
-	vik_layer_post_read ( vtl, vvp, true );
+	vik_layer_post_read ( vtl, &vvp->port, true );
 	if ( create_layer ) {
 		Layer * layer = (Layer *) vtl->layer;
 		vik_aggregate_layer_add_layer ( top, layer, false );
