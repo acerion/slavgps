@@ -46,13 +46,13 @@
 using namespace SlavGPS;
 
 typedef struct {
-  FILE *f;
-  bool is_route;
+	FILE *f;
+	bool is_route;
 } TP_write_info_type;
 
-static void a_gpspoint_write_track ( const void * id, const Track * trk, FILE *f );
-static void a_gpspoint_write_trackpoint ( Trackpoint * tp, TP_write_info_type *write_info );
-static void a_gpspoint_write_waypoint ( const void * id, const Waypoint * wp, FILE *f );
+static void a_gpspoint_write_track( const void * id, const Track * trk, FILE *f);
+static void a_gpspoint_write_trackpoint(Trackpoint * tp, TP_write_info_type *write_info);
+static void a_gpspoint_write_waypoint(const void * id, const Waypoint * wp, FILE *f);
 
 /* outline for file gpspoint.c
 
@@ -108,64 +108,70 @@ static double line_pdop = VIK_DEFAULT_DOP;
 /* other possible properties go here */
 
 
-static void gpspoint_process_tag ( const char *tag, unsigned int len );
-static void gpspoint_process_key_and_value ( const char *key, unsigned int key_len, const char *value, unsigned int value_len );
+static void gpspoint_process_tag(const char *tag, unsigned int len);
+static void gpspoint_process_key_and_value(const char *key, unsigned int key_len, const char *value, unsigned int value_len);
 
 static char *slashdup(const char *str)
 {
-  size_t len = strlen(str);
-  size_t need_bs_count, i, j;
-  char *rv;
-  for ( i = 0, need_bs_count = 0; i < len; i++ )
-    if ( str[i] == '\\' || str[i] == '"' )
-      need_bs_count++;
-  rv = (char *) malloc( (len+need_bs_count+1) * sizeof(char) );
-  for ( i = 0, j = 0; i < len; i++, j++ )
-  {
-    if ( str[i] == '\\' || str[i] == '"' )
-      rv[j++] = '\\';
-    rv[j] = str[i];
-    // Basic normalization of strings - replace Linefeed and Carriage returns as blanks.
-    //  although allowed in GPX Spec - Viking file format can't handle multi-line strings yet...
-    if ( str[i] == '\n' || str[i] == '\r' )
-      rv[j] = ' ';
-  }
-  rv[j] = '\0';
-  return rv;
+	size_t len = strlen(str);
+	size_t need_bs_count, i, j;
+	char *rv;
+	for (i = 0, need_bs_count = 0; i < len; i++) {
+		if (str[i] == '\\' || str[i] == '"') {
+			need_bs_count++;
+		}
+	}
+
+	rv = (char *) malloc((len+need_bs_count+1) * sizeof(char));
+	for (i = 0, j = 0; i < len; i++, j++) {
+		if (str[i] == '\\' || str[i] == '"') {
+			rv[j++] = '\\';
+		}
+		rv[j] = str[i];
+		// Basic normalization of strings - replace Linefeed and Carriage returns as blanks.
+		//  although allowed in GPX Spec - Viking file format can't handle multi-line strings yet...
+		if (str[i] == '\n' || str[i] == '\r') {
+			rv[j] = ' ';
+		}
+	}
+	rv[j] = '\0';
+	return rv;
 }
 
-static char *deslashndup ( const char *str, uint16_t len )
+static char *deslashndup(const char *str, uint16_t len)
 {
-  uint16_t i,j, bs_count, new_len;
-  bool backslash = false;
-  char *rv;
+	uint16_t i,j, bs_count, new_len;
+	bool backslash = false;
+	char *rv;
 
-  if ( len < 1 )
-    return NULL;
+	if (len < 1) {
+		return NULL;
+	}
 
-  for ( i = 0, bs_count = 0; i < len; i++ )
-   if ( str[i] == '\\' )
-   {
-     bs_count++;
-     i++;
-   }
+	for (i = 0, bs_count = 0; i < len; i++) {
+		if (str[i] == '\\') {
+			bs_count++;
+			i++;
+		}
+	}
 
-  if ( str[i-1] == '\\' && (len == 1 || str[i-2] != '\\') )
-    bs_count--;
+	if (str[i-1] == '\\' && (len == 1 || str[i-2] != '\\')) {
+		bs_count--;
+	}
 
-  new_len = len - bs_count;
-  rv = (char *) malloc( (new_len+1) * sizeof (char));
-  for ( i = 0, j = 0; i < len && j < new_len; i++ )
-    if ( str[i] == '\\' && !backslash )
-      backslash = true;
-    else
-    {
-      rv[j++] = str[i];
-      backslash = false;
-    }
+	new_len = len - bs_count;
+	rv = (char *) malloc((new_len+1) * sizeof (char));
+	for (i = 0, j = 0; i < len && j < new_len; i++) {
+		if (str[i] == '\\' && !backslash) {
+			backslash = true;
+		} else {
+			rv[j++] = str[i];
+			backslash = false;
+		}
+	}
 
-  rv[new_len] = '\0';
-  return rv;
+	rv[new_len] = '\0';
+	return rv;
 }
 
 /*
@@ -173,224 +179,230 @@ static char *deslashndup ( const char *str, uint16_t len )
  * No obvious way to test for a 'gpspoint' file,
  *  thus set a flag if any actual tag found during processing of the file
  */
-bool a_gpspoint_read_file(VikTrwLayer *trw, FILE *f, const char *dirpath ) {
-  VikCoordMode coord_mode = trw->trw->get_coord_mode();
-  char *tag_start, *tag_end;
-  assert ( f != NULL && trw != NULL );
-  line_type = 0;
-  line_timestamp = 0;
-  line_newsegment = false;
-  line_image = NULL;
-  line_symbol = NULL;
-  current_track = NULL;
-  bool have_read_something = false;
+bool a_gpspoint_read_file(VikTrwLayer *trw, FILE *f, const char *dirpath) {
+	VikCoordMode coord_mode = trw->trw->get_coord_mode();
+	char *tag_start, *tag_end;
+	assert (f != NULL && trw != NULL);
+	line_type = 0;
+	line_timestamp = 0;
+	line_newsegment = false;
+	line_image = NULL;
+	line_symbol = NULL;
+	current_track = NULL;
+	bool have_read_something = false;
 
-  while (fgets(line_buffer, VIKING_LINE_SIZE, f))
-  {
-    bool inside_quote = 0;
-    bool backslash = 0;
+	while (fgets(line_buffer, VIKING_LINE_SIZE, f)) {
+		bool inside_quote = 0;
+		bool backslash = 0;
 
-    line_buffer[strlen(line_buffer)-1] = '\0'; /* chop off newline */
+		line_buffer[strlen(line_buffer)-1] = '\0'; /* chop off newline */
 
-    /* for gpspoint files wrapped inside */
-    if ( strlen(line_buffer) >= 13 && strncmp ( line_buffer, "~EndLayerData", 13 ) == 0 ) {
-      // Even just a blank TRW is ok when in a .vik file
-      have_read_something = true;
-      break;
-    }
+		/* for gpspoint files wrapped inside */
+		if (strlen(line_buffer) >= 13 && strncmp(line_buffer, "~EndLayerData", 13) == 0) {
+			// Even just a blank TRW is ok when in a .vik file
+			have_read_something = true;
+			break;
+		}
 
-    /* each line: nullify stuff, make thing if nes, free name if ness */
-    tag_start = line_buffer;
-    for (;;)
-    {
-      /* my addition: find first non-whitespace character. if the null, skip line. */
-      while (*tag_start != '\0' && isspace(*tag_start))
-        tag_start++;
-      if (*tag_start == '\0')
-        break;
+		/* each line: nullify stuff, make thing if nes, free name if ness */
+		tag_start = line_buffer;
+		for (;;) {
+			/* my addition: find first non-whitespace character. if the null, skip line. */
+			while (*tag_start != '\0' && isspace(*tag_start)) {
+				tag_start++;
+			}
 
-      if (*tag_start == '#')
-        break;
+			if (*tag_start == '\0') {
+				break;
+			}
 
-      tag_end = tag_start;
-        if (*tag_end == '"')
-          inside_quote = !inside_quote;
-      while (*tag_end != '\0' && (!isspace(*tag_end) || inside_quote)) {
-        tag_end++;
-        if (*tag_end == '\\' && !backslash)
-          backslash = true;
-        else if (backslash)
-          backslash = false;
-        else if (*tag_end == '"')
-          inside_quote = !inside_quote;
-      }
+			if (*tag_start == '#') {
+				break;
+			}
 
-      // Won't have super massively long strings, so potential truncation in cast is acceptable.
-      unsigned int len = (unsigned int)(tag_end - tag_start);
-      gpspoint_process_tag ( tag_start, len );
+			tag_end = tag_start;
+			if (*tag_end == '"') {
+				inside_quote = !inside_quote;
+			}
+			while (*tag_end != '\0' && (!isspace(*tag_end) || inside_quote)) {
+				tag_end++;
+				if (*tag_end == '\\' && !backslash) {
+					backslash = true;
+				} else if (backslash) {
+					backslash = false;
+				} else if (*tag_end == '"') {
+					inside_quote = !inside_quote;
+				}
+			}
 
-      if (*tag_end == '\0' )
-        break;
-      else
-        tag_start = tag_end+1;
-    }
-    if (line_type == GPSPOINT_TYPE_WAYPOINT && line_name)
-    {
-      have_read_something = true;
-      Waypoint * wp = new Waypoint();
-      wp->visible = line_visible;
-      wp->altitude = line_altitude;
-      wp->has_timestamp = line_has_timestamp;
-      wp->timestamp = line_timestamp;
+			// Won't have super massively long strings, so potential truncation in cast is acceptable.
+			unsigned int len = (unsigned int)(tag_end - tag_start);
+			gpspoint_process_tag(tag_start, len);
 
-      vik_coord_load_from_latlon ( &(wp->coord), coord_mode, &line_latlon );
+			if (*tag_end == '\0') {
+				break;
+			} else {
+				tag_start = tag_end+1;
+			}
+		}
+		if (line_type == GPSPOINT_TYPE_WAYPOINT && line_name) {
+			have_read_something = true;
+			Waypoint * wp = new Waypoint();
+			wp->visible = line_visible;
+			wp->altitude = line_altitude;
+			wp->has_timestamp = line_has_timestamp;
+			wp->timestamp = line_timestamp;
 
-      trw->trw->filein_add_waypoint(line_name, wp);
-      free( line_name );
-      line_name = NULL;
+			vik_coord_load_from_latlon(&(wp->coord), coord_mode, &line_latlon);
 
-      if (line_comment) {
-        wp->set_comment(line_comment);
-      }
+			trw->trw->filein_add_waypoint(line_name, wp);
+			free(line_name);
+			line_name = NULL;
 
-      if (line_description) {
-        wp->set_description(line_description);
-      }
+			if (line_comment) {
+				wp->set_comment(line_comment);
+			}
 
-      if (line_source) {
-        wp->set_source(line_source);
-      }
+			if (line_description) {
+				wp->set_description(line_description);
+			}
 
-      if (line_xtype) {
-        wp->set_type(line_xtype);
-      }
+			if (line_source) {
+				wp->set_source(line_source);
+			}
 
-      if (line_image) {
-        // Ensure the filename is absolute
-        if ( g_path_is_absolute ( line_image ) )
-          wp->set_image(line_image);
-        else {
-          // Otherwise create the absolute filename from the directory of the .vik file & and the relative filename
-          char *full = g_strconcat(dirpath, G_DIR_SEPARATOR_S, line_image, NULL);
-          char *absolute = file_realpath_dup ( full ); // resolved into the canonical name
-          wp->set_image(absolute);
-          free( absolute );
-          free( full );
-        }
-      }
+			if (line_xtype) {
+				wp->set_type(line_xtype);
+			}
 
-      if (line_symbol) {
-        wp->set_symbol(line_symbol);
-      }
-    }
-    else if ((line_type == GPSPOINT_TYPE_TRACK || line_type == GPSPOINT_TYPE_ROUTE) && line_name)
-    {
-      have_read_something = true;
-      Track * trk = new Track();
-      // NB don't set defaults here as all properties are stored in the GPS_POINT format
-      //vik_track_set_defaults ( pl );
+			if (line_image) {
+				// Ensure the filename is absolute
+				if (g_path_is_absolute(line_image)) {
+					wp->set_image(line_image);
+				} else {
+					// Otherwise create the absolute filename from the directory of the .vik file & and the relative filename
+					char *full = g_strconcat(dirpath, G_DIR_SEPARATOR_S, line_image, NULL);
+					char *absolute = file_realpath_dup(full); // resolved into the canonical name
+					wp->set_image(absolute);
+					free(absolute);
+					free(full);
+				}
+			}
 
-      /* Thanks to Peter Jones for this Fix */
-      if (!line_name) line_name = g_strdup("UNK");
+			if (line_symbol) {
+				wp->set_symbol(line_symbol);
+			}
+		} else if ((line_type == GPSPOINT_TYPE_TRACK || line_type == GPSPOINT_TYPE_ROUTE) && line_name) {
+			have_read_something = true;
+			Track * trk = new Track();
+			// NB don't set defaults here as all properties are stored in the GPS_POINT format
+			//vik_track_set_defaults (pl);
 
-      trk->visible = line_visible;
-      trk->is_route = (line_type == GPSPOINT_TYPE_ROUTE);
+			/* Thanks to Peter Jones for this Fix */
+			if (!line_name) {
+				line_name = g_strdup("UNK");
+			}
 
-      if ( line_comment )
-        trk->set_comment(line_comment);
+			trk->visible = line_visible;
+			trk->is_route = (line_type == GPSPOINT_TYPE_ROUTE);
 
-      if ( line_description )
-        trk->set_description(line_description);
+			if (line_comment) {
+				trk->set_comment(line_comment);
+			}
 
-      if ( line_source )
-        trk->set_source(line_source);
+			if (line_description) {
+				trk->set_description(line_description);
+			}
 
-      if ( line_xtype )
-        trk->set_type(line_xtype);
+			if (line_source) {
+				trk->set_source(line_source);
+			}
 
-      if ( line_color )
-      {
-        if ( gdk_color_parse ( line_color, &(trk->color) ) )
-        trk->has_color = true;
-      }
+			if (line_xtype) {
+				trk->set_type(line_xtype);
+			}
 
-      trk->draw_name_mode = (TrackDrawnameType) line_name_label;
-      trk->max_number_dist_labels = line_dist_label;
+			if (line_color) {
+				if (gdk_color_parse(line_color, &(trk->color))) {
+					trk->has_color = true;
+				}
+			}
 
-      trk->trackpoints = NULL;
-      trw->trw->filein_add_track(line_name, trk);
-      free( line_name );
-      line_name = NULL;
+			trk->draw_name_mode = (TrackDrawnameType) line_name_label;
+			trk->max_number_dist_labels = line_dist_label;
 
-      current_track = trk;
-    }
-    else if ((line_type == GPSPOINT_TYPE_TRACKPOINT || line_type == GPSPOINT_TYPE_ROUTEPOINT) && current_track)
-    {
-      have_read_something = true;
-      Trackpoint * tp = new Trackpoint();
-      vik_coord_load_from_latlon ( &(tp->coord), coord_mode, &line_latlon );
-      tp->newsegment = line_newsegment;
-      tp->has_timestamp = line_has_timestamp;
-      tp->timestamp = line_timestamp;
-      tp->altitude = line_altitude;
-      tp->set_name(line_name);
-      if (line_extended) {
-        tp->speed = line_speed;
-        tp->course = line_course;
-        tp->nsats = line_sat;
-        tp->fix_mode = (FixMode) line_fix;
-        tp->hdop = line_hdop;
-        tp->vdop = line_vdop;
-        tp->pdop = line_pdop;
-      }
-      current_track->trackpoints = g_list_append ( current_track->trackpoints, tp );
-    }
+			trk->trackpoints = NULL;
+			trw->trw->filein_add_track(line_name, trk);
+			free(line_name);
+			line_name = NULL;
 
-    if (line_name)
-      free( line_name );
-    line_name = NULL;
-    if (line_comment)
-      free( line_comment );
-    if (line_description)
-      free( line_description );
-    if (line_source)
-      free( line_source );
-    if (line_xtype)
-      free( line_xtype );
-    if (line_color)
-      free( line_color );
-    if (line_image)
-      free( line_image );
-    if (line_symbol)
-      free( line_symbol );
-    line_comment = NULL;
-    line_description = NULL;
-    line_source = NULL;
-    line_xtype = NULL;
-    line_color = NULL;
-    line_image = NULL;
-    line_symbol = NULL;
-    line_type = GPSPOINT_TYPE_NONE;
-    line_newsegment = false;
-    line_has_timestamp = false;
-    line_timestamp = 0;
-    line_altitude = VIK_DEFAULT_ALTITUDE;
-    line_visible = true;
-    line_symbol = NULL;
+			current_track = trk;
+		} else if ((line_type == GPSPOINT_TYPE_TRACKPOINT || line_type == GPSPOINT_TYPE_ROUTEPOINT) && current_track) {
+			have_read_something = true;
+			Trackpoint * tp = new Trackpoint();
+			vik_coord_load_from_latlon(&(tp->coord), coord_mode, &line_latlon);
+			tp->newsegment = line_newsegment;
+			tp->has_timestamp = line_has_timestamp;
+			tp->timestamp = line_timestamp;
+			tp->altitude = line_altitude;
+			tp->set_name(line_name);
+			if (line_extended) {
+				tp->speed = line_speed;
+				tp->course = line_course;
+				tp->nsats = line_sat;
+				tp->fix_mode = (FixMode) line_fix;
+				tp->hdop = line_hdop;
+				tp->vdop = line_vdop;
+				tp->pdop = line_pdop;
+			}
+			current_track->trackpoints = g_list_append(current_track->trackpoints, tp);
+		}
 
-    line_extended = false;
-    line_speed = NAN;
-    line_course = NAN;
-    line_sat = 0;
-    line_fix = 0;
-    line_hdop = VIK_DEFAULT_DOP;
-    line_vdop = VIK_DEFAULT_DOP;
-    line_pdop = VIK_DEFAULT_DOP;
-    line_name_label = 0;
-    line_dist_label = 0;
-  }
+		if (line_name)
+			free(line_name);
+		line_name = NULL;
+		if (line_comment)
+			free(line_comment);
+		if (line_description)
+			free(line_description);
+		if (line_source)
+			free(line_source);
+		if (line_xtype)
+			free(line_xtype);
+		if (line_color)
+			free(line_color);
+		if (line_image)
+			free(line_image);
+		if (line_symbol)
+			free(line_symbol);
+		line_comment = NULL;
+		line_description = NULL;
+		line_source = NULL;
+		line_xtype = NULL;
+		line_color = NULL;
+		line_image = NULL;
+		line_symbol = NULL;
+		line_type = GPSPOINT_TYPE_NONE;
+		line_newsegment = false;
+		line_has_timestamp = false;
+		line_timestamp = 0;
+		line_altitude = VIK_DEFAULT_ALTITUDE;
+		line_visible = true;
+		line_symbol = NULL;
 
-  return have_read_something;
+		line_extended = false;
+		line_speed = NAN;
+		line_course = NAN;
+		line_sat = 0;
+		line_fix = 0;
+		line_hdop = VIK_DEFAULT_DOP;
+		line_vdop = VIK_DEFAULT_DOP;
+		line_pdop = VIK_DEFAULT_DOP;
+		line_name_label = 0;
+		line_dist_label = 0;
+	}
+
+	return have_read_something;
 }
 
 /* Tag will be of a few defined forms:
@@ -401,181 +413,137 @@ bool a_gpspoint_read_file(VikTrwLayer *trw, FILE *f, const char *dirpath ) {
 
 So we must determine end of tag name, start of value, end of value.
 */
-static void gpspoint_process_tag ( const char *tag, unsigned int len )
+static void gpspoint_process_tag(const char *tag, unsigned int len)
 {
-  const char *key_end, *value_start, *value_end;
+	const char *key_end, *value_start, *value_end;
 
-  /* Searching for key end */
-  key_end = tag;
+	/* Searching for key end */
+	key_end = tag;
 
-  while (++key_end - tag < len)
-    if (*key_end == '=')
-      break;
+	while (++key_end - tag < len) {
+		if (*key_end == '=') {
+			break;
+		}
+	}
 
-  if (key_end - tag == len)
-    return; /* no good */
+	if (key_end - tag == len) {
+		return; /* no good */
+	}
 
-  if (key_end - tag == len + 1)
-    value_start = value_end = 0; /* size = 0 */
-  else
-  {
-    value_start = key_end + 1; /* equal_sign plus one */
+	if (key_end - tag == len + 1) {
+		value_start = value_end = 0; /* size = 0 */
+	} else {
+		value_start = key_end + 1; /* equal_sign plus one */
 
-    if (*value_start == '"')
-    {
-      value_start++;
-      if (*value_start == '"')
-        value_start = value_end = 0; /* size = 0 */
-      else
-      {
-        if (*(tag+len-1) == '"')
-          value_end = tag + len - 1;
-        else
-          return; /* bogus */
-      }
-    }
-    else
-      value_end = tag + len; /* value start really IS value start. */
+		if (*value_start == '"') {
+			value_start++;
+			if (*value_start == '"') {
+				value_start = value_end = 0; /* size = 0 */
+			} else {
+				if (*(tag+len-1) == '"') {
+					value_end = tag + len - 1;
+				} else {
+					return; /* bogus */
+				}
+			}
+		} else {
+			value_end = tag + len; /* value start really IS value start. */
+		}
 
-    // Detect broken lines which end without any text or the enclosing ". i.e. like: comment="
-    if ( (value_end - value_start) < 0 )
-      return;
+		// Detect broken lines which end without any text or the enclosing ". i.e. like: comment="
+		if ((value_end - value_start) < 0) {
+			return;
+		}
 
-    gpspoint_process_key_and_value(tag, key_end - tag, value_start, value_end - value_start);
-  }
+		gpspoint_process_key_and_value(tag, key_end - tag, value_start, value_end - value_start);
+	}
 }
 
 /*
-value = NULL for none
+  value = NULL for none
 */
-static void gpspoint_process_key_and_value ( const char *key, unsigned int key_len, const char *value, unsigned int value_len )
+static void gpspoint_process_key_and_value(const char *key, unsigned int key_len, const char *value, unsigned int value_len)
 {
-  if (key_len == 4 && strncasecmp( key, "type", key_len ) == 0 )
-  {
-    if (value == NULL)
-      line_type = GPSPOINT_TYPE_NONE;
-    else if (value_len == 5 && strncasecmp( value, "track", value_len ) == 0 )
-      line_type = GPSPOINT_TYPE_TRACK;
-    else if (value_len == 10 && strncasecmp( value, "trackpoint", value_len ) == 0 )
-      line_type = GPSPOINT_TYPE_TRACKPOINT;
-    else if (value_len == 8 && strncasecmp( value, "waypoint", value_len ) == 0 )
-      line_type = GPSPOINT_TYPE_WAYPOINT;
-    else if (value_len == 5 && strncasecmp( value, "route", value_len ) == 0 )
-      line_type = GPSPOINT_TYPE_ROUTE;
-    else if (value_len == 10 && strncasecmp( value, "routepoint", value_len ) == 0 )
-      line_type = GPSPOINT_TYPE_ROUTEPOINT;
-    else
-      /* all others are ignored */
-      line_type = GPSPOINT_TYPE_NONE;
-  }
-  else if (key_len == 4 && strncasecmp( key, "name", key_len ) == 0 && value != NULL)
-  {
-    if (line_name == NULL)
-    {
-      line_name = deslashndup ( value, value_len );
-    }
-  }
-  else if (key_len == 7 && strncasecmp( key, "comment", key_len ) == 0 && value != NULL)
-  {
-    if (line_comment == NULL)
-      line_comment = deslashndup ( value, value_len );
-  }
-  else if (key_len == 11 && strncasecmp( key, "description", key_len ) == 0 && value != NULL)
-  {
-    if (line_description == NULL)
-      line_description = deslashndup ( value, value_len );
-  }
-  else if (key_len == 6 && strncasecmp( key, "source", key_len ) == 0 && value != NULL)
-  {
-    if (line_source == NULL)
-      line_source = deslashndup ( value, value_len );
-  }
-  // NB using 'xtype' to differentiate from our own 'type' key
-  else if (key_len == 5 && strncasecmp( key, "xtype", key_len ) == 0 && value != NULL)
-  {
-    if (line_xtype == NULL)
-      line_xtype = deslashndup ( value, value_len );
-  }
-  else if (key_len == 5 && strncasecmp( key, "color", key_len ) == 0 && value != NULL)
-  {
-    if (line_color == NULL)
-      line_color = deslashndup ( value, value_len );
-  }
-  else if (key_len == 14 && strncasecmp( key, "draw_name_mode", key_len ) == 0 && value != NULL)
-  {
-    line_name_label = atoi(value);
-  }
-  else if (key_len == 18 && strncasecmp( key, "number_dist_labels", key_len ) == 0 && value != NULL)
-  {
-    line_dist_label = atoi(value);
-  }
-  else if (key_len == 5 && strncasecmp( key, "image", key_len ) == 0 && value != NULL)
-  {
-    if (line_image == NULL)
-      line_image = deslashndup ( value, value_len );
-  }
-  else if (key_len == 8 && strncasecmp( key, "latitude", key_len ) == 0 && value != NULL)
-  {
-    line_latlon.lat = g_ascii_strtod(value, NULL);
-  }
-  else if (key_len == 9 && strncasecmp( key, "longitude", key_len ) == 0 && value != NULL)
-  {
-    line_latlon.lon = g_ascii_strtod(value, NULL);
-  }
-  else if (key_len == 8 && strncasecmp( key, "altitude", key_len ) == 0 && value != NULL)
-  {
-    line_altitude = g_ascii_strtod(value, NULL);
-  }
-  else if (key_len == 7 && strncasecmp( key, "visible", key_len ) == 0 && value != NULL && value[0] != 'y' && value[0] != 'Y' && value[0] != 't' && value[0] != 'T')
-  {
-    line_visible = false;
-  }
-  else if (key_len == 6 && strncasecmp( key, "symbol", key_len ) == 0 && value != NULL)
-  {
-    line_symbol = g_strndup ( value, value_len );
-  }
-  else if (key_len == 8 && strncasecmp( key, "unixtime", key_len ) == 0 && value != NULL)
-  {
-    line_timestamp = g_ascii_strtod(value, NULL);
-    if ( line_timestamp != 0x80000000 )
-      line_has_timestamp = true;
-  }
-  else if (key_len == 10 && strncasecmp( key, "newsegment", key_len ) == 0 && value != NULL)
-  {
-    line_newsegment = true;
-  }
-  else if (key_len == 8 && strncasecmp( key, "extended", key_len ) == 0 && value != NULL)
-  {
-    line_extended = true;
-  }
-  else if (key_len == 5 && strncasecmp( key, "speed", key_len ) == 0 && value != NULL)
-  {
-    line_speed = g_ascii_strtod(value, NULL);
-  }
-  else if (key_len == 6 && strncasecmp( key, "course", key_len ) == 0 && value != NULL)
-  {
-    line_course = g_ascii_strtod(value, NULL);
-  }
-  else if (key_len == 3 && strncasecmp( key, "sat", key_len ) == 0 && value != NULL)
-  {
-    line_sat = atoi(value);
-  }
-  else if (key_len == 3 && strncasecmp( key, "fix", key_len ) == 0 && value != NULL)
-  {
-    line_fix = atoi(value);
-  }
-  else if (key_len == 4 && strncasecmp( key, "hdop", key_len ) == 0 && value != NULL)
-  {
-    line_hdop = g_ascii_strtod(value, NULL);
-  }
-  else if (key_len == 4 && strncasecmp( key, "vdop", key_len ) == 0 && value != NULL)
-  {
-    line_vdop = g_ascii_strtod(value, NULL);
-  }
-  else if (key_len == 4 && strncasecmp( key, "pdop", key_len ) == 0 && value != NULL)
-  {
-    line_pdop = g_ascii_strtod(value, NULL);
-  }
+	if (key_len == 4 && strncasecmp(key, "type", key_len) == 0) {
+		if (value == NULL) {
+			line_type = GPSPOINT_TYPE_NONE;
+		} else if (value_len == 5 && strncasecmp(value, "track", value_len) == 0) {
+			line_type = GPSPOINT_TYPE_TRACK;
+		} else if (value_len == 10 && strncasecmp(value, "trackpoint", value_len) == 0) {
+			line_type = GPSPOINT_TYPE_TRACKPOINT;
+		} else if (value_len == 8 && strncasecmp(value, "waypoint", value_len) == 0) {
+			line_type = GPSPOINT_TYPE_WAYPOINT;
+		} else if (value_len == 5 && strncasecmp(value, "route", value_len) == 0) {
+			line_type = GPSPOINT_TYPE_ROUTE;
+		} else if (value_len == 10 && strncasecmp(value, "routepoint", value_len) == 0) {
+			line_type = GPSPOINT_TYPE_ROUTEPOINT;
+		} else {
+			/* all others are ignored */
+			line_type = GPSPOINT_TYPE_NONE;
+		}
+	} else if (key_len == 4 && strncasecmp(key, "name", key_len) == 0 && value != NULL) {
+		if (line_name == NULL) {
+			line_name = deslashndup(value, value_len);
+		}
+	} else if (key_len == 7 && strncasecmp(key, "comment", key_len) == 0 && value != NULL) {
+		if (line_comment == NULL)
+			line_comment = deslashndup(value, value_len);
+	} else if (key_len == 11 && strncasecmp(key, "description", key_len) == 0 && value != NULL) {
+		if (line_description == NULL)
+			line_description = deslashndup(value, value_len);
+	} else if (key_len == 6 && strncasecmp(key, "source", key_len) == 0 && value != NULL) {
+		if (line_source == NULL)
+			line_source = deslashndup(value, value_len);
+	}
+	// NB using 'xtype' to differentiate from our own 'type' key
+	else if (key_len == 5 && strncasecmp(key, "xtype", key_len) == 0 && value != NULL) {
+		if (line_xtype == NULL)
+			line_xtype = deslashndup(value, value_len);
+	} else if (key_len == 5 && strncasecmp(key, "color", key_len) == 0 && value != NULL) {
+		if (line_color == NULL)
+			line_color = deslashndup(value, value_len);
+	} else if (key_len == 14 && strncasecmp(key, "draw_name_mode", key_len) == 0 && value != NULL) {
+		line_name_label = atoi(value);
+	} else if (key_len == 18 && strncasecmp(key, "number_dist_labels", key_len) == 0 && value != NULL) {
+		line_dist_label = atoi(value);
+	} else if (key_len == 5 && strncasecmp(key, "image", key_len) == 0 && value != NULL) {
+		if (line_image == NULL) {
+			line_image = deslashndup(value, value_len);
+		}
+	} else if (key_len == 8 && strncasecmp(key, "latitude", key_len) == 0 && value != NULL) {
+		line_latlon.lat = g_ascii_strtod(value, NULL);
+	} else if (key_len == 9 && strncasecmp(key, "longitude", key_len) == 0 && value != NULL) {
+		line_latlon.lon = g_ascii_strtod(value, NULL);
+	} else if (key_len == 8 && strncasecmp(key, "altitude", key_len) == 0 && value != NULL) {
+		line_altitude = g_ascii_strtod(value, NULL);
+	} else if (key_len == 7 && strncasecmp(key, "visible", key_len) == 0 && value != NULL && value[0] != 'y' && value[0] != 'Y' && value[0] != 't' && value[0] != 'T') {
+		line_visible = false;
+	} else if (key_len == 6 && strncasecmp(key, "symbol", key_len) == 0 && value != NULL) {
+		line_symbol = g_strndup(value, value_len);
+	} else if (key_len == 8 && strncasecmp(key, "unixtime", key_len) == 0 && value != NULL) {
+		line_timestamp = g_ascii_strtod(value, NULL);
+		if (line_timestamp != 0x80000000) {
+			line_has_timestamp = true;
+		}
+	} else if (key_len == 10 && strncasecmp(key, "newsegment", key_len) == 0 && value != NULL) {
+		line_newsegment = true;
+	} else if (key_len == 8 && strncasecmp(key, "extended", key_len) == 0 && value != NULL) {
+		line_extended = true;
+	} else if (key_len == 5 && strncasecmp(key, "speed", key_len) == 0 && value != NULL){
+		line_speed = g_ascii_strtod(value, NULL);
+	} else if (key_len == 6 && strncasecmp(key, "course", key_len) == 0 && value != NULL) {
+		line_course = g_ascii_strtod(value, NULL);
+	} else if (key_len == 3 && strncasecmp(key, "sat", key_len) == 0 && value != NULL) {
+		line_sat = atoi(value);
+	} else if (key_len == 3 && strncasecmp(key, "fix", key_len) == 0 && value != NULL) {
+		line_fix = atoi(value);
+	} else if (key_len == 4 && strncasecmp(key, "hdop", key_len) == 0 && value != NULL) {
+		line_hdop = g_ascii_strtod(value, NULL);
+	} else if (key_len == 4 && strncasecmp(key, "vdop", key_len) == 0 && value != NULL) {
+		line_vdop = g_ascii_strtod(value, NULL);
+	} else if (key_len == 4 && strncasecmp(key, "pdop", key_len) == 0 && value != NULL) {
+		line_pdop = g_ascii_strtod(value, NULL);
+	}
 }
 
 
@@ -591,79 +559,87 @@ static void a_gpspoint_write_waypoints(FILE * f, std::unordered_map<sg_uid_t, Wa
 		static struct LatLon ll;
 		char *s_lat, *s_lon;
 		// Sanity clauses
-		if ( !wp )
+		if (!wp) {
 			continue;
-		if ( !(wp->name) )
-			continue;
+		}
 
-		vik_coord_to_latlon ( &(wp->coord), &ll );
+		if (!(wp->name)) {
+			continue;
+		}
+
+		vik_coord_to_latlon(&(wp->coord), &ll);
 		s_lat = a_coords_dtostr(ll.lat);
 		s_lon = a_coords_dtostr(ll.lon);
 		char *tmp_name = slashdup(wp->name);
-		fprintf ( f, "type=\"waypoint\" latitude=\"%s\" longitude=\"%s\" name=\"%s\"", s_lat, s_lon, tmp_name );
-		free( tmp_name );
-		free( s_lat );
-		free( s_lon );
+		fprintf(f, "type=\"waypoint\" latitude=\"%s\" longitude=\"%s\" name=\"%s\"", s_lat, s_lon, tmp_name);
+		free(tmp_name);
+		free(s_lat);
+		free(s_lon);
 
-		if ( wp->altitude != VIK_DEFAULT_ALTITUDE ) {
+		if (wp->altitude != VIK_DEFAULT_ALTITUDE) {
 			char *s_alt = a_coords_dtostr(wp->altitude);
-			fprintf ( f, " altitude=\"%s\"", s_alt );
+			fprintf(f, " altitude=\"%s\"", s_alt);
 			free(s_alt);
 		}
-		if ( wp->has_timestamp )
-			fprintf ( f, " unixtime=\"%ld\"", wp->timestamp );
+		if (wp->has_timestamp) {
+			fprintf(f, " unixtime=\"%ld\"", wp->timestamp);
+		}
 
-		if ( wp->comment ) {
+		if (wp->comment) {
 			char *tmp_comment = slashdup(wp->comment);
-			fprintf ( f, " comment=\"%s\"", tmp_comment );
-			free( tmp_comment );
+			fprintf(f, " comment=\"%s\"", tmp_comment);
+			free(tmp_comment);
 		}
-		if ( wp->description ) {
+		if (wp->description) {
 			char *tmp_description = slashdup(wp->description);
-			fprintf ( f, " description=\"%s\"", tmp_description );
-			free( tmp_description );
+			fprintf(f, " description=\"%s\"", tmp_description);
+			free(tmp_description);
 		}
-		if ( wp->source ) {
+		if (wp->source) {
 			char *tmp_source = slashdup(wp->source);
-			fprintf ( f, " source=\"%s\"", tmp_source );
-			free( tmp_source );
+			fprintf(f, " source=\"%s\"", tmp_source);
+			free(tmp_source);
 		}
-		if ( wp->type ) {
+		if (wp->type) {
 			char *tmp_type = slashdup(wp->type);
-			fprintf ( f, " xtype=\"%s\"", tmp_type );
-			free( tmp_type );
+			fprintf(f, " xtype=\"%s\"", tmp_type);
+			free(tmp_type);
 		}
-		if ( wp->image ) {
+		if (wp->image) {
 			char *tmp_image = NULL;
 			char *cwd = NULL;
-			if ( a_vik_get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE ) {
+			if (a_vik_get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE) {
 				cwd = g_get_current_dir();
-				if ( cwd )
-					tmp_image = g_strdup( file_GetRelativeFilename ( cwd, wp->image ) );
+				if (cwd) {
+					tmp_image = g_strdup(file_GetRelativeFilename(cwd, wp->image));
+				}
 			}
 
 			// if cwd not available - use image filename as is
 			// this should be an absolute path as set in thumbnails
-			if ( !cwd )
+			if (!cwd) {
 				tmp_image = slashdup(wp->image);
+			}
 
-			if ( tmp_image )
-				fprintf ( f, " image=\"%s\"", tmp_image );
+			if (tmp_image) {
+				fprintf(f, " image=\"%s\"", tmp_image);
+			}
 
-			free( cwd );
-			free( tmp_image );
+			free(cwd);
+			free(tmp_image);
 		}
-		if ( wp->symbol ) {
+		if (wp->symbol) {
 			// Due to changes in garminsymbols - the symbol name is now in Title Case
 			// However to keep newly generated .vik files better compatible with older Viking versions
 			//   The symbol names will always be lowercase
 			char *tmp_symbol = g_utf8_strdown(wp->symbol, -1);
-			fprintf ( f, " symbol=\"%s\"", tmp_symbol );
-			free( tmp_symbol );
+			fprintf(f, " symbol=\"%s\"", tmp_symbol);
+			free(tmp_symbol);
 		}
-		if ( ! wp->visible )
-			fprintf ( f, " visible=\"n\"" );
-		fprintf ( f, "\n" );
+		if (! wp->visible) {
+			fprintf(f, " visible=\"n\"");
+		}
+		fprintf(f, "\n");
 	}
 }
 
@@ -671,72 +647,78 @@ static void a_gpspoint_write_waypoints(FILE * f, std::unordered_map<sg_uid_t, Wa
 
 
 
-static void a_gpspoint_write_trackpoint (Trackpoint * tp, TP_write_info_type *write_info )
+static void a_gpspoint_write_trackpoint(Trackpoint * tp, TP_write_info_type *write_info)
 {
-  static struct LatLon ll;
-  char *s_lat, *s_lon;
-  vik_coord_to_latlon ( &(tp->coord), &ll );
+	static struct LatLon ll;
+	char *s_lat, *s_lon;
+	vik_coord_to_latlon(&(tp->coord), &ll);
 
-  FILE *f = write_info->f;
+	FILE *f = write_info->f;
 
-  /* TODO: modify a_coords_dtostr() to accept (optional) buffer
-   * instead of doing malloc/free everytime */
-  s_lat = a_coords_dtostr(ll.lat);
-  s_lon = a_coords_dtostr(ll.lon);
-  fprintf ( f, "type=\"%spoint\" latitude=\"%s\" longitude=\"%s\"", write_info->is_route ? "route" : "track", s_lat, s_lon );
-  free( s_lat );
-  free( s_lon );
+	/* TODO: modify a_coords_dtostr() to accept (optional) buffer
+	 * instead of doing malloc/free everytime */
+	s_lat = a_coords_dtostr(ll.lat);
+	s_lon = a_coords_dtostr(ll.lon);
+	fprintf(f, "type=\"%spoint\" latitude=\"%s\" longitude=\"%s\"", write_info->is_route ? "route" : "track", s_lat, s_lon);
+	free(s_lat);
+	free(s_lon);
 
-  if ( tp->name ) {
-    char *name = slashdup(tp->name);
-    fprintf ( f, " name=\"%s\"", name );
-    free(name);
-  }
+	if (tp->name) {
+		char *name = slashdup(tp->name);
+		fprintf(f, " name=\"%s\"", name);
+		free(name);
+	}
 
-  if ( tp->altitude != VIK_DEFAULT_ALTITUDE ) {
-    char *s_alt = a_coords_dtostr(tp->altitude);
-    fprintf ( f, " altitude=\"%s\"", s_alt );
-    free(s_alt);
-  }
-  if ( tp->has_timestamp )
-    fprintf ( f, " unixtime=\"%ld\"", tp->timestamp );
-  if ( tp->newsegment )
-    fprintf ( f, " newsegment=\"yes\"" );
+	if (tp->altitude != VIK_DEFAULT_ALTITUDE) {
+		char *s_alt = a_coords_dtostr(tp->altitude);
+		fprintf(f, " altitude=\"%s\"", s_alt);
+		free(s_alt);
+	}
+	if (tp->has_timestamp) {
+		fprintf(f, " unixtime=\"%ld\"", tp->timestamp);
+	}
 
-  if (!isnan(tp->speed) || !isnan(tp->course) || tp->nsats > 0) {
-    fprintf ( f, " extended=\"yes\"" );
-    if (!isnan(tp->speed)) {
-      char *s_speed = a_coords_dtostr(tp->speed);
-      fprintf ( f, " speed=\"%s\"", s_speed );
-      free(s_speed);
-    }
-    if (!isnan(tp->course)) {
-      char *s_course = a_coords_dtostr(tp->course);
-      fprintf ( f, " course=\"%s\"", s_course );
-      free(s_course);
-    }
-    if (tp->nsats > 0)
-      fprintf ( f, " sat=\"%d\"", tp->nsats );
-    if (tp->fix_mode > 0)
-      fprintf ( f, " fix=\"%d\"", tp->fix_mode );
+	if (tp->newsegment) {
+		fprintf(f, " newsegment=\"yes\"");
+	}
 
-    if ( tp->hdop != VIK_DEFAULT_DOP ) {
-      char *ss = a_coords_dtostr(tp->hdop);
-      fprintf ( f, " hdop=\"%s\"", ss );
-      free(ss);
-    }
-    if ( tp->vdop != VIK_DEFAULT_DOP ) {
-      char *ss = a_coords_dtostr(tp->vdop);
-      fprintf ( f, " vdop=\"%s\"", ss );
-     free(ss);
-    }
-    if ( tp->pdop != VIK_DEFAULT_DOP ) {
-      char *ss = a_coords_dtostr(tp->pdop);
-      fprintf ( f, " pdop=\"%s\"", ss );
-      free(ss);
-    }
-  }
-  fprintf ( f, "\n" );
+	if (!isnan(tp->speed) || !isnan(tp->course) || tp->nsats > 0) {
+		fprintf(f, " extended=\"yes\"");
+		if (!isnan(tp->speed)) {
+			char *s_speed = a_coords_dtostr(tp->speed);
+			fprintf(f, " speed=\"%s\"", s_speed);
+			free(s_speed);
+		}
+		if (!isnan(tp->course)) {
+			char *s_course = a_coords_dtostr(tp->course);
+			fprintf(f, " course=\"%s\"", s_course);
+			free(s_course);
+		}
+		if (tp->nsats > 0) {
+			fprintf(f, " sat=\"%d\"", tp->nsats);
+		}
+
+		if (tp->fix_mode > 0) {
+			fprintf(f, " fix=\"%d\"", tp->fix_mode);
+		}
+
+		if (tp->hdop != VIK_DEFAULT_DOP) {
+			char *ss = a_coords_dtostr(tp->hdop);
+			fprintf(f, " hdop=\"%s\"", ss);
+			free(ss);
+		}
+		if (tp->vdop != VIK_DEFAULT_DOP) {
+			char *ss = a_coords_dtostr(tp->vdop);
+			fprintf(f, " vdop=\"%s\"", ss);
+			free(ss);
+		}
+		if (tp->pdop != VIK_DEFAULT_DOP) {
+			char *ss = a_coords_dtostr(tp->pdop);
+			fprintf(f, " pdop=\"%s\"", ss);
+			free(ss);
+		}
+	}
+	fprintf(f, "\n");
 }
 
 
@@ -750,57 +732,62 @@ static void a_gpspoint_write_track(FILE * f, std::unordered_map<sg_uid_t, Track 
 		Track * trk = i->second;
 
 		// Sanity clauses
-		if ( !trk )
+		if (!trk) {
 			continue;
-		if ( !(trk->name) )
+		}
+
+		if (!(trk->name)) {
 			continue;
+		}
 
 		char *tmp_name = slashdup(trk->name);
-		fprintf ( f, "type=\"%s\" name=\"%s\"", trk->is_route ? "route" : "track", tmp_name );
-		free( tmp_name );
+		fprintf(f, "type=\"%s\" name=\"%s\"", trk->is_route ? "route" : "track", tmp_name);
+		free(tmp_name);
 
-		if ( trk->comment ) {
+		if (trk->comment) {
 			char *tmp = slashdup(trk->comment);
-			fprintf ( f, " comment=\"%s\"", tmp );
-			free( tmp );
+			fprintf(f, " comment=\"%s\"", tmp);
+			free(tmp);
 		}
 
-		if ( trk->description ) {
+		if (trk->description) {
 			char *tmp = slashdup(trk->description);
-			fprintf ( f, " description=\"%s\"", tmp );
-			free( tmp );
+			fprintf(f, " description=\"%s\"", tmp);
+			free(tmp);
 		}
 
-		if ( trk->source ) {
+		if (trk->source) {
 			char *tmp = slashdup(trk->source);
-			fprintf ( f, " source=\"%s\"", tmp );
-			free( tmp );
+			fprintf(f, " source=\"%s\"", tmp);
+			free(tmp);
 		}
 
-		if ( trk->type ) {
+		if (trk->type) {
 			char *tmp = slashdup(trk->type);
-			fprintf ( f, " xtype=\"%s\"", tmp );
-			free( tmp );
+			fprintf(f, " xtype=\"%s\"", tmp);
+			free(tmp);
 		}
 
-		if ( trk->has_color ) {
-			fprintf ( f, " color=#%.2x%.2x%.2x", (int)(trk->color.red/256),(int)(trk->color.green/256),(int)(trk->color.blue/256));
+		if (trk->has_color) {
+			fprintf(f, " color=#%.2x%.2x%.2x", (int)(trk->color.red/256),(int)(trk->color.green/256),(int)(trk->color.blue/256));
 		}
 
-		if ( trk->draw_name_mode > 0 )
-			fprintf ( f, " draw_name_mode=\"%d\"", trk->draw_name_mode );
-
-		if ( trk->max_number_dist_labels > 0 )
-			fprintf ( f, " number_dist_labels=\"%d\"", trk->max_number_dist_labels );
-
-		if ( ! trk->visible ) {
-			fprintf ( f, " visible=\"n\"" );
+		if (trk->draw_name_mode > 0) {
+			fprintf(f, " draw_name_mode=\"%d\"", trk->draw_name_mode);
 		}
-		fprintf ( f, "\n" );
+
+		if (trk->max_number_dist_labels > 0) {
+			fprintf(f, " number_dist_labels=\"%d\"", trk->max_number_dist_labels);
+		}
+
+		if (! trk->visible) {
+			fprintf(f, " visible=\"n\"");
+		}
+		fprintf(f, "\n");
 
 		TP_write_info_type tp_write_info = { f, trk->is_route };
-		g_list_foreach ( trk->trackpoints, (GFunc) a_gpspoint_write_trackpoint, &tp_write_info );
-		fprintf ( f, "type=\"%send\"\n", trk->is_route ? "route" : "track" );
+		g_list_foreach(trk->trackpoints, (GFunc) a_gpspoint_write_trackpoint, &tp_write_info);
+		fprintf(f, "type=\"%send\"\n", trk->is_route ? "route" : "track");
 	}
 }
 
@@ -808,7 +795,7 @@ static void a_gpspoint_write_track(FILE * f, std::unordered_map<sg_uid_t, Track 
 
 
 
-void a_gpspoint_write_file ( VikTrwLayer *trw, FILE *f )
+void a_gpspoint_write_file(VikTrwLayer *trw, FILE *f)
 {
 	auto tracks = trw->trw->get_tracks();
 	auto routes = trw->trw->get_routes();

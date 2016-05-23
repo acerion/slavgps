@@ -41,10 +41,10 @@ extern "C" {
 typedef struct _VikDataSourceInterface VikDataSourceInterface;
 
 typedef struct {
-  VikWindow *vw;
-  VikLayersPanel *vlp;
-  VikViewport *vvp;
-  void * userdata;
+	VikWindow *vw;
+	VikLayersPanel *vlp;
+	VikViewport *vvp;
+	void * userdata;
 } acq_vik_t;
 
 /**
@@ -53,29 +53,29 @@ typedef struct {
  * global data structure used to expose the progress dialog to the worker thread.
  */
 typedef struct {
-  GtkWidget *status;
-  VikWindow *vw;
-  VikLayersPanel *vlp;
-  VikViewport *vvp;
-  GtkWidget *dialog;
-  bool running;
-  VikDataSourceInterface *source_interface;
-  void * user_data;
+	GtkWidget *status;
+	VikWindow *vw;
+	VikLayersPanel *vlp;
+	VikViewport *vvp;
+	GtkWidget *dialog;
+	bool running;
+	VikDataSourceInterface *source_interface;
+	void * user_data;
 } acq_dialog_widgets_t;
 
 typedef enum {
-  VIK_DATASOURCE_CREATENEWLAYER, // Generally Datasources shouldn't use these and let the HCI decide
-  VIK_DATASOURCE_ADDTOLAYER,     //    between the create or add to layer options
-  VIK_DATASOURCE_AUTO_LAYER_MANAGEMENT,
-  VIK_DATASOURCE_MANUAL_LAYER_MANAGEMENT,
+	VIK_DATASOURCE_CREATENEWLAYER, // Generally Datasources shouldn't use these and let the HCI decide
+	VIK_DATASOURCE_ADDTOLAYER,     //    between the create or add to layer options
+	VIK_DATASOURCE_AUTO_LAYER_MANAGEMENT,
+	VIK_DATASOURCE_MANUAL_LAYER_MANAGEMENT,
 } vik_datasource_mode_t;
 /* TODO: replace track/layer? */
 
 typedef enum {
-  VIK_DATASOURCE_INPUTTYPE_NONE = 0,
-  VIK_DATASOURCE_INPUTTYPE_TRWLAYER,
-  VIK_DATASOURCE_INPUTTYPE_TRACK,
-  VIK_DATASOURCE_INPUTTYPE_TRWLAYER_TRACK
+	VIK_DATASOURCE_INPUTTYPE_NONE = 0,
+	VIK_DATASOURCE_INPUTTYPE_TRWLAYER,
+	VIK_DATASOURCE_INPUTTYPE_TRACK,
+	VIK_DATASOURCE_INPUTTYPE_TRWLAYER_TRACK
 } vik_datasource_inputtype_t;
 
 /**
@@ -148,56 +148,56 @@ typedef void (*VikDataSourceOffFunc) ( void * user_data, char **babelargs, char 
  * Main interface.
  */
 struct _VikDataSourceInterface {
-  const char *window_title;
-  const char *layer_title;
-  vik_datasource_mode_t mode;
-  vik_datasource_inputtype_t inputtype;
-  bool autoview;
-  bool keep_dialog_open; /* when done */
+	const char *window_title;
+	const char *layer_title;
+	vik_datasource_mode_t mode;
+	vik_datasource_inputtype_t inputtype;
+	bool autoview;
+	bool keep_dialog_open; /* when done */
 
-  bool is_thread;
+	bool is_thread;
 
-  /*** Manual UI Building ***/
-  VikDataSourceInitFunc init_func;
-  VikDataSourceCheckExistenceFunc check_existence_func;
-  VikDataSourceAddSetupWidgetsFunc add_setup_widgets_func;
-  /***                    ***/
+	/*** Manual UI Building ***/
+	VikDataSourceInitFunc init_func;
+	VikDataSourceCheckExistenceFunc check_existence_func;
+	VikDataSourceAddSetupWidgetsFunc add_setup_widgets_func;
+	/***                    ***/
 
-  VikDataSourceGetProcessOptionsFunc get_process_options_func;
+	VikDataSourceGetProcessOptionsFunc get_process_options_func;
 
-  VikDataSourceProcessFunc process_func;
+	VikDataSourceProcessFunc process_func;
 
-  VikDataSourceProgressFunc progress_func;
-  VikDataSourceAddProgressWidgetsFunc add_progress_widgets_func;
-  VikDataSourceCleanupFunc cleanup_func;
-  VikDataSourceOffFunc off_func;
+	VikDataSourceProgressFunc progress_func;
+	VikDataSourceAddProgressWidgetsFunc add_progress_widgets_func;
+	VikDataSourceCleanupFunc cleanup_func;
+	VikDataSourceOffFunc off_func;
 
-  /*** UI Building        ***/
-  VikLayerParam *                   params;
-  uint16_t                           params_count;
-  VikLayerParamData *               params_defaults;
-  char **                          params_groups;
-  uint8_t                            params_groups_count;
+	/*** UI Building        ***/
+	VikLayerParam *                   params;
+	uint16_t                          params_count;
+	VikLayerParamData *               params_defaults;
+	char **                           params_groups;
+	uint8_t                           params_groups_count;
 
 };
 
 /**********************************/
 
-void a_acquire ( VikWindow *vw,
-                 VikLayersPanel *vlp,
-                 VikViewport *vvp,
-                 vik_datasource_mode_t mode,
-                 VikDataSourceInterface *source_interface,
-                 void * userdata,
-                 VikDataSourceCleanupFunc cleanup_function );
+void a_acquire(VikWindow *vw,
+	       VikLayersPanel *vlp,
+	       VikViewport *vvp,
+	       vik_datasource_mode_t mode,
+	       VikDataSourceInterface *source_interface,
+	       void * userdata,
+	       VikDataSourceCleanupFunc cleanup_function);
 
-GtkWidget *a_acquire_trwlayer_menu (VikWindow *vw, VikLayersPanel *vlp, VikViewport *vvp, VikTrwLayer *vtl);
+GtkWidget *a_acquire_trwlayer_menu(VikWindow *vw, VikLayersPanel *vlp, VikViewport *vvp, VikTrwLayer *vtl);
 
-GtkWidget *a_acquire_trwlayer_track_menu (VikWindow *vw, VikLayersPanel *vlp, VikViewport *vvp, VikTrwLayer *vtl);
+GtkWidget *a_acquire_trwlayer_track_menu(VikWindow *vw, VikLayersPanel *vlp, VikViewport *vvp, VikTrwLayer *vtl);
 
-GtkWidget *a_acquire_track_menu (VikWindow *vw, VikLayersPanel *vlp, VikViewport *vvp, Track * trk);
+GtkWidget *a_acquire_track_menu(VikWindow *vw, VikLayersPanel *vlp, VikViewport *vvp, Track * trk);
 
-void a_acquire_set_filter_track (Track * trk);
+void a_acquire_set_filter_track(Track * trk);
 
 #ifdef __cplusplus
 }
