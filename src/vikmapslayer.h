@@ -22,6 +22,11 @@
 #ifndef _VIKING_MAPSLAYER_H
 #define _VIKING_MAPSLAYER_H
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -31,6 +36,12 @@
 #include "vikmapsource.h"
 #include "mapcoord.h"
 #include "vikmapslayer_compat.h"
+
+#ifdef HAVE_SQLITE3_H
+#include "sqlite3.h"
+#include <gio/gio.h>
+#endif
+
 
 using namespace SlavGPS;
 
@@ -53,7 +64,9 @@ struct _VikMapsLayerClass
 
 GType vik_maps_layer_get_type ();
 
-typedef struct _VikMapsLayer VikMapsLayer;
+typedef struct {
+	VikLayer vl;
+} VikMapsLayer;
 
 typedef enum {
   VIK_MAPS_CACHE_LAYOUT_VIKING=0, // CacheDir/t<MapId>s<VikingZoom>z0/X/Y (NB no file extension) - Legacy default layout
@@ -71,12 +84,11 @@ void maps_layer_set_autodownload_default( bool autodownload);
 void maps_layer_set_cache_default(VikMapsCacheLayout layout);
 MapTypeID vik_maps_layer_get_default_map_type();
 void maps_layer_register_map_source(MapSource *map);
-void vik_maps_layer_download_section(VikMapsLayer *vml, VikViewport *vvp, VikCoord *ul, VikCoord *br, double zoom);
+void vik_maps_layer_download_section(VikMapsLayer *vml, VikCoord *ul, VikCoord *br, double zoom);
 MapTypeID vik_maps_layer_get_map_type(VikMapsLayer *vml);
 void vik_maps_layer_set_map_type(VikMapsLayer *vml, MapTypeID type_id);
-char *vik_maps_layer_get_map_label(VikMapsLayer *vml);
 char *maps_layer_default_dir();
-void vik_maps_layer_download(VikMapsLayer *vml, VikViewport *vvp, bool only_new);
+void vik_maps_layer_download(VikMapsLayer *vml, Viewport * viewport, bool only_new);
 
 #ifdef __cplusplus
 }
@@ -94,15 +106,55 @@ namespace SlavGPS {
 
 	class LayerMaps : public Layer {
 	public:
-		LayerMaps(VikLayer * vl) : Layer(vl) { };
+		LayerMaps(VikLayer * vl);
 
 
 		/* Layer interface methods. */
 		void post_read(Viewport * viewport, bool from_file);
 		void draw(Viewport * viewport);
+		void draw_section(Viewport * viewport, VikCoord *ul, VikCoord *br);
 		char const * tooltip();
 		void marshall(uint8_t ** data, int * len);
 		void add_menu_items(GtkMenu * menu, void * vlp);
+
+
+
+		char * get_map_label();
+		int how_many_maps(Viewport * viewport, VikCoord *ul, VikCoord *br, double zoom, int redownload_mode);
+		void download_section_sub(VikCoord *ul, VikCoord *br, double zoom, int redownload_mode);
+		void set_cache_dir(char const * dir);
+		void mkdir_if_default_dir();
+		void set_file(char const * name);
+
+
+		int map_index;
+		char * cache_dir;
+		VikMapsCacheLayout cache_layout;
+		uint8_t alpha;
+
+
+		unsigned int mapzoom_id;
+		double xmapzoom, ymapzoom;
+
+		bool autodownload;
+		bool adl_only_missing;
+
+
+		VikCoord *last_center;
+		double last_xmpp;
+		double last_ympp;
+
+
+		int dl_tool_x, dl_tool_y;
+
+		GtkMenu * dl_right_click_menu;
+		VikCoord redownload_ul, redownload_br; /* right click menu only */
+		Viewport * redownload_viewport;
+		char *filename;
+#ifdef HAVE_SQLITE3_H
+		sqlite3 * mbtiles;
+#endif
+
 	};
 
 

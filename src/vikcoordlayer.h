@@ -43,7 +43,10 @@ struct _VikCoordLayerClass
 
 GType vik_coord_layer_get_type();
 
-typedef struct _VikCoordLayer VikCoordLayer;
+typedef struct  {
+	VikLayer vl;
+} VikCoordLayer;
+
 
 #ifdef __cplusplus
 }
@@ -68,6 +71,17 @@ namespace SlavGPS {
 		void post_read(Viewport * viewport, bool from_file);
 		void draw(Viewport * viewport);
 		void marshall(uint8_t ** data, int * len);
+
+		void update_gc(Viewport * viewport);
+
+
+		GdkGC * gc;
+		GdkColor color;
+
+		double deg_inc;
+		uint8_t line_thickness;
+
+
 
 	};
 

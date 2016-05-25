@@ -10059,7 +10059,7 @@ void vik_track_download_map(Track *tr, VikMapsLayer *vml, Viewport * viewport, d
   }
 
   for (rect_iter = rects_to_download; rect_iter; rect_iter = rect_iter->next) {
-    vik_maps_layer_download_section (vml, (VikViewport *) viewport->vvp, &(((Rect *)(rect_iter->data))->tl), &(((Rect *)(rect_iter->data))->br), zoom_level);
+    vik_maps_layer_download_section(vml, &(((Rect *)(rect_iter->data))->tl), &(((Rect *)(rect_iter->data))->br), zoom_level);
   }
 
   if (fillins) {
@@ -10108,7 +10108,8 @@ static void trw_layer_download_map_along_track_cb ( menu_array_sublayer values )
   for (auto i = vmls->begin(); i != vmls->end(); i++) {
     vml = (VikMapsLayer *) *i;
     *lp++ = vml;
-    *np++ = vik_maps_layer_get_map_label(vml);
+    LayerMaps * lm = (LayerMaps *) ((VikLayer *) vml)->layer;
+    *np++ = lm->get_map_label();
   }
   // Mark end of the array lists
   *lp = NULL;

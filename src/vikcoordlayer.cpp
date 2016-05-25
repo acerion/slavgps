@@ -38,7 +38,7 @@ static VikCoordLayer *coord_layer_create(VikViewport *vp);
 static VikCoordLayer *coord_layer_unmarshall(uint8_t *data, int len, VikViewport *vvp);
 static bool coord_layer_set_param(VikCoordLayer *vcl, uint16_t id, VikLayerParamData data, VikViewport *vp, bool is_file_operation);
 static VikLayerParamData coord_layer_get_param(VikCoordLayer *vcl, uint16_t id, bool is_file_operation);
-static void coord_layer_update_gc(VikCoordLayer *vcl, VikViewport *vp);
+
 
 static VikLayerParamScale param_scales[] = {
 	{ 0.05, 60.0, 0.25, 10 },
@@ -87,14 +87,6 @@ VikLayerInterface vik_coord_layer_interface = {
 	(VikLayerFuncChangeParam)             NULL,
 };
 
-struct _VikCoordLayer {
-	VikLayer vl;
-	GdkGC *gc;
-	double deg_inc;
-	uint8_t line_thickness;
-	GdkColor color;
-};
-
 GType vik_coord_layer_get_type()
 {
 	static GType vcl_type = 0;
@@ -127,23 +119,26 @@ static VikCoordLayer *coord_layer_unmarshall(uint8_t *data, int len, VikViewport
 {
 	VikCoordLayer *rv = coord_layer_new(vvp);
 	vik_layer_unmarshall_params(VIK_LAYER(rv), data, len, vvp);
-	coord_layer_update_gc(rv, vvp);
+
+	LayerCoord * layer = (LayerCoord *) ((VikLayer * ) rv)->layer;
+	layer->update_gc(&vvp->port);
 	return rv;
 }
 
 // NB VikViewport can be null as it's not used ATM
 bool coord_layer_set_param(VikCoordLayer *vcl, uint16_t id, VikLayerParamData data, VikViewport *vp, bool is_file_operation)
 {
+	LayerCoord * layer = (LayerCoord *) ((VikLayer * ) vcl)->layer;
 	switch (id) {
 	case PARAM_COLOR:
-		vcl->color = data.c;
+		layer->color = data.c;
 		break;
 	case PARAM_MIN_INC:
-		vcl->deg_inc = data.d / 60.0;
+		layer->deg_inc = data.d / 60.0;
 		break;
 	case PARAM_LINE_THICKNESS:
 		if (data.u >= 1 && data.u <= 15) {
-			vcl->line_thickness = data.u;
+			layer->line_thickness = data.u;
 		}
 		break;
 	default:
@@ -154,16 +149,18 @@ bool coord_layer_set_param(VikCoordLayer *vcl, uint16_t id, VikLayerParamData da
 
 static VikLayerParamData coord_layer_get_param(VikCoordLayer *vcl, uint16_t id, bool is_file_operation)
 {
+	LayerCoord * layer = (LayerCoord *) ((VikLayer * ) vcl)->layer;
+
 	VikLayerParamData rv;
 	switch (id) {
 	case PARAM_COLOR:
-		rv.c = vcl->color;
+		rv.c = layer->color;
 		break;
 	case PARAM_MIN_INC:
-		rv.d = vcl->deg_inc * 60.0;
+		rv.d = layer->deg_inc * 60.0;
 		break;
 	case PARAM_LINE_THICKNESS:
-		rv.i = vcl->line_thickness;
+		rv.i = layer->line_thickness;
 		break;
 	default:
 		break;
@@ -173,12 +170,11 @@ static VikLayerParamData coord_layer_get_param(VikCoordLayer *vcl, uint16_t id, 
 
 void LayerCoord::post_read(Viewport * viewport, bool from_file)
 {
-	VikCoordLayer * vcl = VIK_COORD_LAYER(this->vl);
-	if (vcl->gc) {
-		g_object_unref(G_OBJECT(vcl->gc));
+	if (this->gc) {
+		g_object_unref(G_OBJECT(this->gc));
 	}
 
-	vcl->gc = viewport->new_gc_from_color(&(vcl->color), vcl->line_thickness);
+	this->gc = viewport->new_gc_from_color(&(this->color), this->line_thickness);
 }
 
 static VikCoordLayer *coord_layer_new(VikViewport *vvp)
@@ -186,19 +182,20 @@ static VikCoordLayer *coord_layer_new(VikViewport *vvp)
 	VikCoordLayer *vcl = VIK_COORD_LAYER(g_object_new(VIK_COORD_LAYER_TYPE, NULL));
 	vik_layer_set_type(VIK_LAYER(vcl), VIK_LAYER_COORD);
 
+	((VikLayer *) vcl)->layer = new LayerCoord((VikLayer *) vcl);
+
 	vik_layer_set_defaults(VIK_LAYER(vcl), vvp);
 
-	vcl->gc = NULL;
+	LayerCoord * layer = (LayerCoord *) ((VikLayer * ) vcl)->layer;
 
-	((VikLayer *) vcl)->layer = new LayerCoord((VikLayer *) vcl);
+	layer->gc = NULL;
 
 	return vcl;
 }
 
 void LayerCoord::draw(Viewport * viewport)
 {
-	VikCoordLayer * vcl = (VikCoordLayer *) this->vl;
-	if (!vcl->gc) {
+	if (!this->gc) {
 		return;
 	}
 
@@ -207,9 +204,9 @@ void LayerCoord::draw(Viewport * viewport)
 		double l, r, i, j;
 		int x1, y1, x2, y2, smod = 1, mmod = 1;
 		bool mins = false, secs = false;
-		GdkGC *dgc = viewport->new_gc_from_color(&(vcl->color), vcl->line_thickness);
-		GdkGC *mgc = viewport->new_gc_from_color(&(vcl->color), MAX(vcl->line_thickness/2, 1));
-		GdkGC *sgc = viewport->new_gc_from_color(&(vcl->color), MAX(vcl->line_thickness/5, 1));
+		GdkGC *dgc = viewport->new_gc_from_color(&(this->color), this->line_thickness);
+		GdkGC *mgc = viewport->new_gc_from_color(&(this->color), MAX(this->line_thickness/2, 1));
+		GdkGC *sgc = viewport->new_gc_from_color(&(this->color), MAX(this->line_thickness/5, 1));
 
 		viewport->screen_to_coord(0, 0, &left);
 		viewport->screen_to_coord(viewport->get_width(), 0, &right);
@@ -339,15 +336,15 @@ void LayerCoord::draw(Viewport * viewport)
 			max.lat = 90.0;
 		}
 
-		lon = ((double) ((long) ((min.lon)/ vcl->deg_inc))) * vcl->deg_inc;
+		lon = ((double) ((long) ((min.lon)/ this->deg_inc))) * this->deg_inc;
 		ll.lon = ll2.lon = lon;
 
-		for (; ll.lon <= max.lon; ll.lon += vcl->deg_inc, ll2.lon += vcl->deg_inc) {
+		for (; ll.lon <= max.lon; ll.lon += this->deg_inc, ll2.lon += this->deg_inc) {
 			a_coords_latlon_to_utm(&ll, &utm);
 			x1 = ((utm.easting - center->easting) / xmpp) + (width / 2);
 			a_coords_latlon_to_utm(&ll2, &utm);
 			x2 = ((utm.easting - center->easting) / xmpp) + (width / 2);
-			viewport->draw_line(vcl->gc, x1, height, x2, 0);
+			viewport->draw_line(this->gc, x1, height, x2, 0);
 		}
 
 		utm = *center;
@@ -360,40 +357,42 @@ void LayerCoord::draw(Viewport * viewport)
 		a_coords_utm_to_latlon(&utm, &ll2);
 
 		/* really lat, just reusing a variable */
-		lon = ((double) ((long) ((min.lat)/ vcl->deg_inc))) * vcl->deg_inc;
+		lon = ((double) ((long) ((min.lat)/ this->deg_inc))) * this->deg_inc;
 		ll.lat = ll2.lat = lon;
 
-		for (; ll.lat <= max.lat ; ll.lat += vcl->deg_inc, ll2.lat += vcl->deg_inc) {
+		for (; ll.lat <= max.lat ; ll.lat += this->deg_inc, ll2.lat += this->deg_inc) {
 			a_coords_latlon_to_utm (&ll, &utm);
 			x1 = (height / 2) - ((utm.northing - center->northing) / ympp);
 			a_coords_latlon_to_utm (&ll2, &utm);
 			x2 = (height / 2) - ((utm.northing - center->northing) / ympp);
-			viewport->draw_line(vcl->gc, width, x2, 0, x1);
+			viewport->draw_line(this->gc, width, x2, 0, x1);
 		}
 	}
 }
 
 static void coord_layer_free(VikCoordLayer *vcl)
 {
-	if (vcl->gc != NULL) {
-		g_object_unref(G_OBJECT(vcl->gc));
+	LayerCoord * layer = (LayerCoord *) ((VikLayer * ) vcl)->layer;
+	if (layer->gc != NULL) {
+		g_object_unref(G_OBJECT(layer->gc));
 	}
 }
 
-static void coord_layer_update_gc(VikCoordLayer *vcl, VikViewport *vp)
+void LayerCoord::update_gc(Viewport * viewport)
 {
-	if (vcl->gc) {
-		g_object_unref(G_OBJECT(vcl->gc));
+	if (this->gc) {
+		g_object_unref(G_OBJECT(this->gc));
 	}
 
-	vcl->gc = vp->port.new_gc_from_color(&(vcl->color), vcl->line_thickness);
+	this->gc = viewport->new_gc_from_color(&(this->color), this->line_thickness);
 }
 
 static VikCoordLayer *coord_layer_create(VikViewport *vp)
 {
 	VikCoordLayer *vcl = coord_layer_new(vp);
 	if (vp) {
-		coord_layer_update_gc(vcl, vp);
+		LayerCoord * layer = (LayerCoord *) ((VikLayer * ) vcl)->layer;
+		layer->update_gc(&vp->port);
 	}
 
 	return vcl;
