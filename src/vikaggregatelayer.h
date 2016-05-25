@@ -56,11 +56,11 @@ VikAggregateLayer *vik_aggregate_layer_new();
 void vik_aggregate_layer_add_layer(VikAggregateLayer *val, Layer * layer, bool allow_reordering);
 void vik_aggregate_layer_insert_layer(VikAggregateLayer *val, Layer * layer, GtkTreeIter *replace_layer);
 void vik_aggregate_layer_move_layer(VikAggregateLayer *val, GtkTreeIter *child_iter, bool up);
-void vik_aggregate_layer_draw(VikAggregateLayer *val, VikViewport *vp);
+//void vik_aggregate_layer_draw(VikAggregateLayer *val, Viewport * viewport);
 void vik_aggregate_layer_free(VikAggregateLayer *val);
 void vik_aggregate_layer_clear(VikAggregateLayer *val);
 bool vik_aggregate_layer_delete(VikAggregateLayer *val, GtkTreeIter *iter);
-VikAggregateLayer *vik_aggregate_layer_create(VikViewport *vp);
+VikAggregateLayer *vik_aggregate_layer_create(Viewport * viewport);
 
 /* returns: 0 = success, 1 = none appl. found, 2 = found but rejected */
 // unsigned int vik_aggregate_layer_tool(VikAggregateLayer *val, uint16_t layer_type, VikToolInterfaceFunc tool_func, GdkEventButton *event, VikViewport *vvp);

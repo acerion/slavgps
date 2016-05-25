@@ -76,14 +76,14 @@ enum {
 	PARAM_AA,
 	NUM_PARAMS };
 
-static VikGeorefLayer *georef_layer_unmarshall(uint8_t *data, int len, VikViewport *vvp);
-static bool georef_layer_set_param(VikGeorefLayer *vgl, uint16_t id, VikLayerParamData data, VikViewport *vp, bool is_file_operation);
+static VikGeorefLayer *georef_layer_unmarshall(uint8_t *data, int len, Viewport * viewport);
+static bool georef_layer_set_param(VikGeorefLayer *vgl, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
 static VikLayerParamData georef_layer_get_param(VikGeorefLayer *vgl, uint16_t id, bool is_file_operation);
-static VikGeorefLayer *georef_layer_new(VikViewport *vvp);
-static VikGeorefLayer *georef_layer_create(VikViewport *vp);
+static VikGeorefLayer *georef_layer_new(Viewport * viewport);
+static VikGeorefLayer *georef_layer_create(Viewport * viewport);
 static void georef_layer_free(VikGeorefLayer *vgl);
 static void georef_layer_set_image(VikGeorefLayer *vgl, const char *image);
-static bool georef_layer_dialog(VikGeorefLayer *vgl, void * vp, GtkWindow *w);
+static bool georef_layer_dialog(VikGeorefLayer *vgl, Viewport * viewport, GtkWindow *w);
 
 /* tools */
 static void * georef_layer_move_create(VikWindow *vw, Viewport * viewport);
@@ -231,17 +231,17 @@ void LayerGeoref::marshall(uint8_t **data, int *len)
 	vik_layer_marshall_params(VIK_LAYER(vgl), data, len);
 }
 
-static VikGeorefLayer *georef_layer_unmarshall(uint8_t *data, int len, VikViewport *vvp)
+static VikGeorefLayer * georef_layer_unmarshall(uint8_t *data, int len, Viewport * viewport)
 {
-	VikGeorefLayer *rv = georef_layer_new(vvp);
-	vik_layer_unmarshall_params(VIK_LAYER(rv), data, len, vvp);
+	VikGeorefLayer *rv = georef_layer_new(viewport);
+	vik_layer_unmarshall_params(VIK_LAYER(rv), data, len, viewport);
 	if (rv->image) {
-		((LayerGeoref *) ((VikLayer *) rv)->layer)->post_read(&vvp->port, true);
+		((LayerGeoref *) ((VikLayer *) rv)->layer)->post_read(viewport, true);
 	}
 	return rv;
 }
 
-static bool georef_layer_set_param(VikGeorefLayer *vgl, uint16_t id, VikLayerParamData data, VikViewport *vp, bool is_file_operation)
+static bool georef_layer_set_param(VikGeorefLayer *vgl, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
 {
 	switch (id) {
 	case PARAM_IMAGE:
@@ -348,19 +348,19 @@ static VikLayerParamData georef_layer_get_param(VikGeorefLayer *vgl, uint16_t id
 	return rv;
 }
 
-static VikGeorefLayer *georef_layer_new(VikViewport *vvp)
+static VikGeorefLayer * georef_layer_new(Viewport * viewport)
 {
 	VikGeorefLayer *vgl = VIK_GEOREF_LAYER(g_object_new(VIK_GEOREF_LAYER_TYPE, NULL));
 	vik_layer_set_type(VIK_LAYER(vgl), VIK_LAYER_GEOREF);
 
 	// Since GeoRef layer doesn't use uibuilder
 	//  initializing this way won't do anything yet..
-	vik_layer_set_defaults(VIK_LAYER(vgl), vvp);
+	vik_layer_set_defaults(VIK_LAYER(vgl), viewport);
 
 	// Make these defaults based on the current view
-	vgl->mpp_northing = vvp->port.get_ympp();
-	vgl->mpp_easting = vvp->port.get_xmpp();
-	vik_coord_to_utm(vvp->port.get_center(), &(vgl->corner));
+	vgl->mpp_northing = viewport->get_ympp();
+	vgl->mpp_easting = viewport->get_xmpp();
+	vik_coord_to_utm(viewport->get_center(), &(vgl->corner));
 
 	vgl->image = NULL;
 	vgl->pixbuf = NULL;
@@ -474,17 +474,17 @@ static void georef_layer_free(VikGeorefLayer *vgl)
 	}
 }
 
-static VikGeorefLayer *georef_layer_create(VikViewport *vp)
+static VikGeorefLayer * georef_layer_create(Viewport * viewport)
 {
-	VikGeorefLayer * rv = georef_layer_new(vp);
+	VikGeorefLayer * rv = georef_layer_new(viewport);
 
 	return rv;
 }
 
-bool LayerGeoref::properties(void * vp)
+bool LayerGeoref::properties(void * viewport)
 {
 	VikGeorefLayer * vgl = (VikGeorefLayer *) this->vl;
-	return georef_layer_dialog(vgl, vp, VIK_GTK_WINDOW_FROM_WIDGET(vp));
+	return georef_layer_dialog(vgl, (Viewport *) viewport, VIK_GTK_WINDOW_FROM_WIDGET(((Viewport *) viewport)->vvp));
 }
 
 /* Formerly known as georef_layer_load_image(). */
@@ -829,7 +829,7 @@ static void calculate_mpp_from_coords(GtkWidget *ww, VikGeorefLayer *vgl)
 #define VIK_SETTINGS_GEOREF_TAB "georef_coordinate_tab"
 
 /* returns true if OK was pressed. */
-static bool georef_layer_dialog(VikGeorefLayer *vgl, void * vp, GtkWindow *w)
+static bool georef_layer_dialog(VikGeorefLayer *vgl, Viewport * viewport, GtkWindow *w)
 {
 	GtkWidget *dialog = gtk_dialog_new_with_buttons(_("Layer Properties"),
 							 w,
@@ -1003,7 +1003,7 @@ static bool georef_layer_dialog(VikGeorefLayer *vgl, void * vp, GtkWindow *w)
 		if (!vgl->pixbuf) {
 			if (g_strcmp0 (vgl->image, vik_file_entry_get_filename(VIK_FILE_ENTRY(cw.imageentry))) != 0) {
 				georef_layer_set_image (vgl, vik_file_entry_get_filename(VIK_FILE_ENTRY(cw.imageentry)));
-				((LayerGeoref *) ((VikLayer *) vgl)->layer)->post_read(&(VIK_VIEWPORT(vp)->port), false);
+				((LayerGeoref *) ((VikLayer *) vgl)->layer)->post_read(viewport, false);
 			}
 		}
 
@@ -1144,9 +1144,7 @@ static bool georef_layer_move_press(VikGeorefLayer *vgl, GdkEventButton *event, 
 	return true;
 }
 
-static void goto_center_ll(VikViewport *vp,
-                             struct LatLon ll_tl,
-                             struct LatLon ll_br)
+static void goto_center_ll(Viewport * viewport, struct LatLon ll_tl, struct LatLon ll_br)
 {
 	VikCoord vc_center;
 	struct LatLon ll_center;
@@ -1154,21 +1152,21 @@ static void goto_center_ll(VikViewport *vp,
 	ll_center.lat = (ll_tl.lat + ll_br.lat) / 2.0;
 	ll_center.lon = (ll_tl.lon + ll_br.lon) / 2.0;
 
-	vik_coord_load_from_latlon(&vc_center, vp->port.get_coord_mode(), &ll_center);
-	vp->port.set_center_coord(&vc_center, true);
+	vik_coord_load_from_latlon(&vc_center, viewport->get_coord_mode(), &ll_center);
+	viewport->set_center_coord(&vc_center, true);
 }
 
 /**
  *
  */
-VikGeorefLayer *vik_georef_layer_create(VikViewport *vp,
-                                          VikLayersPanel *vlp,
-                                          const char *name,
-                                          GdkPixbuf *pixbuf,
-                                          VikCoord *coord_tl,
-                                          VikCoord *coord_br)
+VikGeorefLayer *vik_georef_layer_create(Viewport * viewport,
+					VikLayersPanel *vlp,
+					const char *name,
+					GdkPixbuf *pixbuf,
+					VikCoord *coord_tl,
+					VikCoord *coord_br)
 {
-	VikGeorefLayer *vgl = georef_layer_new(vp);
+	VikGeorefLayer *vgl = georef_layer_new(viewport);
 	vik_layer_rename(VIK_LAYER(vgl), name);
 
 	vgl->pixbuf = pixbuf;
@@ -1187,17 +1185,17 @@ VikGeorefLayer *vik_georef_layer_create(VikViewport *vp,
 			struct LatLon ll_br;
 			vik_coord_to_latlon(coord_br, &ll_br);
 
-			VikCoordMode mode = vp->port.get_coord_mode();
+			VikCoordMode mode = viewport->get_coord_mode();
 
 			double xmpp, ympp;
 			georef_layer_mpp_from_coords(mode, ll_tl, ll_br, vgl->width, vgl->height, &xmpp, &ympp);
 			vgl->mpp_easting = xmpp;
 			vgl->mpp_northing = ympp;
 
-			goto_center_ll(vp, ll_tl, ll_br);
+			goto_center_ll(viewport, ll_tl, ll_br);
 			// Set best zoom level
 			struct LatLon maxmin[2] = { ll_tl, ll_br };
-			vu_zoom_to_show_latlons(vp->port.get_coord_mode(), vp, maxmin);
+			vu_zoom_to_show_latlons(viewport->get_coord_mode(), viewport, maxmin);
 
 			return vgl;
 		}

@@ -554,7 +554,7 @@ char *vu_get_canonical_filename ( VikLayer *vl, const char *filename )
   if ( g_path_is_absolute ( filename ) )
     canonical = g_strdup( filename );
   else {
-    const char *vw_filename = vik_window_get_filename ( VIK_WINDOW_FROM_WIDGET (vl->vvp) );
+    const char *vw_filename = vik_window_get_filename ( VIK_WINDOW_FROM_WIDGET (vl->viewport->vvp) );
     char *dirpath = NULL;
     if ( vw_filename )
       dirpath = g_path_get_dirname ( vw_filename );
@@ -853,7 +853,7 @@ void vu_command_line ( VikWindow *vw, double latitude, double longitude, int zoo
 		}
 
 		if ( add_map ) {
-			VikMapsLayer *vml = VIK_MAPS_LAYER ( vik_layer_create(VIK_LAYER_MAPS, (VikViewport *) viewport->vvp, false) );
+			VikMapsLayer *vml = VIK_MAPS_LAYER ( vik_layer_create(VIK_LAYER_MAPS, viewport, false) );
 			vik_maps_layer_set_map_type(vml, the_type_id);
 			vik_layer_rename ( VIK_LAYER(vml), _("Map") );
 			Layer * layer = (Layer *) (VIK_LAYER(vml))->layer;
@@ -887,7 +887,7 @@ void vu_copy_label_menu ( GtkWidget *widget, unsigned int button )
 /**
  * Work out the best zoom level for the LatLon area and set the viewport to that zoom level
  */
-void vu_zoom_to_show_latlons ( VikCoordMode mode, VikViewport *vvp, struct LatLon maxmin[2] )
+void vu_zoom_to_show_latlons ( VikCoordMode mode, Viewport * viewport, struct LatLon maxmin[2] )
 {
 	/* First set the center [in case previously viewing from elsewhere] */
 	/* Then loop through zoom levels until provided positions are in view */
@@ -895,7 +895,7 @@ void vu_zoom_to_show_latlons ( VikCoordMode mode, VikViewport *vvp, struct LatLo
 	struct LatLon average = { (maxmin[0].lat+maxmin[1].lat)/2, (maxmin[0].lon+maxmin[1].lon)/2 };
 	VikCoord coord;
 	vik_coord_load_from_latlon ( &coord, mode, &average );
-	vvp->port.set_center_coord(&coord, true );
+	viewport->set_center_coord(&coord, true );
 
 	/* Convert into definite 'smallest' and 'largest' positions */
 	struct LatLon minmin;
@@ -913,12 +913,12 @@ void vu_zoom_to_show_latlons ( VikCoordMode mode, VikViewport *vvp, struct LatLo
 	/* Never zoom in too far - generally not that useful, as too close ! */
 	/* Always recalculate the 'best' zoom level */
 	double zoom = 1.0;
-	vvp->port.set_zoom(zoom);
+	viewport->set_zoom(zoom);
 
 	double min_lat, max_lat, min_lon, max_lon;
 	/* Should only be a maximum of about 18 iterations from min to max zoom levels */
 	while ( zoom <= VIK_VIEWPORT_MAX_ZOOM ) {
-		vvp->port.get_min_max_lat_lon(&min_lat, &max_lat, &min_lon, &max_lon );
+		viewport->get_min_max_lat_lon(&min_lat, &max_lat, &min_lon, &max_lon );
 		/* NB I think the logic used in this test to determine if the bounds is within view
 		   fails if track goes across 180 degrees longitude.
 		   Hopefully that situation is not too common...
@@ -932,6 +932,6 @@ void vu_zoom_to_show_latlons ( VikCoordMode mode, VikViewport *vvp, struct LatLo
 
 		/* Try next */
 		zoom = zoom * 2;
-		vvp->port.set_zoom(zoom);
+		viewport->set_zoom(zoom);
 	}
 }

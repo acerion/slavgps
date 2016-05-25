@@ -57,13 +57,13 @@
 
 extern GList * a_babel_device_list;
 
-static VikGpsLayer *vik_gps_layer_create (VikViewport *vp);
+static VikGpsLayer *vik_gps_layer_create(Viewport * viewport);
 static void vik_gps_layer_realize ( VikGpsLayer *val, VikTreeview *vt, GtkTreeIter *layer_iter );
 static void vik_gps_layer_free ( VikGpsLayer *val );
-static VikGpsLayer *vik_gps_layer_new ( VikViewport *vp );
+static VikGpsLayer * vik_gps_layer_new(Viewport * viewport);
 
-static VikGpsLayer *gps_layer_unmarshall( uint8_t *data, int len, VikViewport *vvp );
-static bool gps_layer_set_param ( VikGpsLayer *vgl, uint16_t id, VikLayerParamData data, VikViewport *vp, bool is_file_operation );
+static VikGpsLayer * gps_layer_unmarshall( uint8_t *data, int len, Viewport * viewport);
+static bool gps_layer_set_param( VikGpsLayer *vgl, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation );
 static VikLayerParamData gps_layer_get_param ( VikGpsLayer *vgl, uint16_t id, bool is_file_operation );
 
 
@@ -382,15 +382,15 @@ GType vik_gps_layer_get_type ()
   return val_type;
 }
 
-static VikGpsLayer *vik_gps_layer_create (VikViewport *vp)
+static VikGpsLayer * vik_gps_layer_create(Viewport * viewport)
 {
   int i;
 
-  VikGpsLayer *rv = vik_gps_layer_new (vp);
+  VikGpsLayer *rv = vik_gps_layer_new (viewport);
   vik_layer_rename ( VIK_LAYER(rv), vik_gps_layer_interface.name );
 
   for (i = 0; i < NUM_TRW; i++) {
-    rv->trw_children[i] = VIK_TRW_LAYER(vik_layer_create ( VIK_LAYER_TRW, vp, false ));
+    rv->trw_children[i] = VIK_TRW_LAYER(vik_layer_create ( VIK_LAYER_TRW, viewport, false ));
     vik_layer_set_menu_items_selection(VIK_LAYER(rv->trw_children[i]), VIK_MENU_ITEM_ALL & ~(VIK_MENU_ITEM_CUT|VIK_MENU_ITEM_DELETE));
   }
 
@@ -438,23 +438,23 @@ void LayerGPS::marshall(uint8_t **data, int *datalen )
 }
 
 /* "Paste" */
-static VikGpsLayer *gps_layer_unmarshall( uint8_t *data, int len, VikViewport *vvp )
+static VikGpsLayer * gps_layer_unmarshall(uint8_t *data, int len, Viewport * viewport)
 {
 #define alm_size (*(int *)data)
 #define alm_next \
   len -= sizeof(int) + alm_size; \
   data += sizeof(int) + alm_size;
 
-  VikGpsLayer *rv = vik_gps_layer_new(vvp);
+  VikGpsLayer *rv = vik_gps_layer_new(viewport);
   VikLayer *child_layer;
   int i;
 
-  vik_layer_unmarshall_params ( VIK_LAYER(rv), data+sizeof(int), alm_size, vvp );
+  vik_layer_unmarshall_params ( VIK_LAYER(rv), data+sizeof(int), alm_size, viewport );
   alm_next;
 
   i = 0;
   while (len>0 && i < NUM_TRW) {
-    child_layer = vik_layer_unmarshall ( data + sizeof(int), alm_size, vvp );
+    child_layer = vik_layer_unmarshall ( data + sizeof(int), alm_size, viewport );
     if (child_layer) {
       rv->trw_children[i++] = (VikTrwLayer *)child_layer;
       // NB no need to attach signal update handler here
@@ -469,7 +469,7 @@ static VikGpsLayer *gps_layer_unmarshall( uint8_t *data, int len, VikViewport *v
 #undef alm_next
 }
 
-static bool gps_layer_set_param ( VikGpsLayer *vgl, uint16_t id, VikLayerParamData data, VikViewport *vp, bool is_file_operation )
+static bool gps_layer_set_param( VikGpsLayer *vgl, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation )
 {
   switch ( id )
   {
@@ -626,7 +626,7 @@ static VikLayerParamData gps_layer_get_param ( VikGpsLayer *vgl, uint16_t id, bo
   return rv;
 }
 
-VikGpsLayer *vik_gps_layer_new (VikViewport *vp)
+VikGpsLayer *vik_gps_layer_new(Viewport * viewport)
 {
   int i;
   VikGpsLayer *vgl = VIK_GPS_LAYER ( g_object_new ( VIK_GPS_LAYER_TYPE, NULL ) );
@@ -645,17 +645,17 @@ VikGpsLayer *vik_gps_layer_new (VikViewport *vp)
   vgl->realtime_io_channel = NULL;
   vgl->realtime_io_watch_id = 0;
   vgl->realtime_retry_timer = 0;
-  if ( vp ) {
-    vgl->realtime_track_gc = vp->port.new_gc("#203070", 2);
-    vgl->realtime_track_bg_gc = vp->port.new_gc("grey", 2);
-    vgl->realtime_track_pt1_gc = vp->port.new_gc("red", 2);
-    vgl->realtime_track_pt2_gc = vp->port.new_gc("green", 2);
+  if (viewport) {
+    vgl->realtime_track_gc = viewport->new_gc("#203070", 2);
+    vgl->realtime_track_bg_gc = viewport->new_gc("grey", 2);
+    vgl->realtime_track_pt1_gc = viewport->new_gc("red", 2);
+    vgl->realtime_track_pt2_gc = viewport->new_gc("green", 2);
     vgl->realtime_track_pt_gc = vgl->realtime_track_pt1_gc;
   }
   vgl->realtime_track = NULL;
 #endif // VIK_CONFIG_REALTIME_GPS_TRACKING
 
-  vik_layer_set_defaults ( VIK_LAYER(vgl), vp );
+  vik_layer_set_defaults ( VIK_LAYER(vgl), viewport);
 
   ((VikLayer *) vgl)->layer = new LayerGPS((VikLayer *) vgl);
 

@@ -136,7 +136,7 @@ static void trw_layer_cut_item_cb ( menu_array_sublayer values );
 
 static void trw_layer_find_maxmin (VikTrwLayer *vtl, struct LatLon maxmin[2]);
 
-static void trw_layer_new_track_gcs ( VikTrwLayer *vtl, VikViewport *vp );
+static void trw_layer_new_track_gcs ( VikTrwLayer *vtl, Viewport * viewport);
 static void trw_layer_free_track_gcs ( VikTrwLayer *vtl );
 
 
@@ -538,11 +538,11 @@ enum {
 /****** END PARAMETERS ******/
 
 /* Layer Interface function definitions */
-static VikTrwLayer* trw_layer_create ( VikViewport *vp );
+static VikTrwLayer* trw_layer_create(Viewport * viewport);
 static void trw_layer_realize ( VikTrwLayer *vtl, VikTreeview *vt, GtkTreeIter *layer_iter );
 static void trw_layer_free ( VikTrwLayer *trwlayer );
-static VikTrwLayer *trw_layer_unmarshall ( uint8_t *data, int len, VikViewport *vvp );
-static bool trw_layer_set_param ( VikTrwLayer *vtl, uint16_t id, VikLayerParamData data, VikViewport *vp, bool is_file_operation );
+static VikTrwLayer *trw_layer_unmarshall(uint8_t *data, int len, Viewport * viewport);
+static bool trw_layer_set_param( VikTrwLayer *vtl, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation );
 static VikLayerParamData trw_layer_get_param ( VikTrwLayer *vtl, uint16_t id, bool is_file_operation );
 static void trw_layer_change_param ( GtkWidget *widget, ui_change_values values );
 /* End Layer Interface function definitions */
@@ -947,7 +947,7 @@ static void image_cache_free ( VikTrwLayer *vtl )
   g_queue_free ( vtl->image_cache );
 }
 
-static bool trw_layer_set_param ( VikTrwLayer *vtl, uint16_t id, VikLayerParamData data, VikViewport *vp, bool is_file_operation )
+static bool trw_layer_set_param( VikTrwLayer *vtl, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation )
 {
   switch ( id )
   {
@@ -973,7 +973,7 @@ static bool trw_layer_set_param ( VikTrwLayer *vtl, uint16_t id, VikLayerParamDa
     case PARAM_DM: vtl->drawmode = data.u; break;
     case PARAM_TC:
       vtl->track_color = data.c;
-      if ( vp ) trw_layer_new_track_gcs ( vtl, vp );
+      if (viewport) trw_layer_new_track_gcs ( vtl, viewport);
       break;
     case PARAM_DP: vtl->drawpoints = data.b; break;
     case PARAM_DPS:
@@ -997,13 +997,13 @@ static bool trw_layer_set_param ( VikTrwLayer *vtl, uint16_t id, VikLayerParamDa
     case PARAM_LT: if ( data.u > 0 && data.u < 15 && data.u != vtl->line_thickness )
                    {
                      vtl->line_thickness = data.u;
-                     if ( vp ) trw_layer_new_track_gcs ( vtl, vp );
+                     if (viewport) trw_layer_new_track_gcs ( vtl, viewport);
                    }
                    break;
     case PARAM_BLT: if ( data.u <= 8 && data.u != vtl->bg_line_thickness )
                    {
                      vtl->bg_line_thickness = data.u;
-                     if ( vp ) trw_layer_new_track_gcs ( vtl, vp );
+                     if (viewport) trw_layer_new_track_gcs ( vtl, viewport);
                    }
                    break;
     case PARAM_TBGC:
@@ -1272,16 +1272,16 @@ void LayerTRW::marshall(uint8_t **data, int *len )
 	*len = ba->len;
 }
 
-static VikTrwLayer *trw_layer_unmarshall( uint8_t *data, int len, VikViewport *vvp )
+static VikTrwLayer * trw_layer_unmarshall(uint8_t *data, int len, Viewport * viewport)
 {
-  VikTrwLayer *vtl = VIK_TRW_LAYER(vik_layer_create ( VIK_LAYER_TRW, vvp, false ));
+  VikTrwLayer *vtl = VIK_TRW_LAYER(vik_layer_create ( VIK_LAYER_TRW, viewport, false ));
   int pl;
   int consumed_length;
 
   // First the overall layer parameters
   memcpy(&pl, data, sizeof(pl));
   data += sizeof(pl);
-  vik_layer_unmarshall_params ( VIK_LAYER(vtl), data, pl, vvp );
+  vik_layer_unmarshall_params ( VIK_LAYER(vtl), data, pl, viewport);
   data += pl;
 
   consumed_length = pl;
@@ -1364,7 +1364,7 @@ static unsigned int strcase_hash(gconstpointer v)
 
 // Stick a 1 at the end of the function name to make it more unique
 //  thus more easily searchable in a simple text editor
-static VikTrwLayer* trw_layer_new1 ( VikViewport *vvp )
+static VikTrwLayer* trw_layer_new1(Viewport * viewport)
 {
   VikTrwLayer *rv = VIK_TRW_LAYER ( g_object_new ( VIK_TRW_LAYER_TYPE, NULL ) );
   vik_layer_set_type ( VIK_LAYER(rv), VIK_LAYER_TRW );
@@ -1390,7 +1390,7 @@ static VikTrwLayer* trw_layer_new1 ( VikViewport *vvp )
 
   rv->image_cache = g_queue_new(); // Must be performed before set_params via set_defaults
 
-  vik_layer_set_defaults ( VIK_LAYER(rv), vvp );
+  vik_layer_set_defaults ( VIK_LAYER(rv), viewport);
 
 
   ((VikLayer *) rv)->layer = new LayerTRW((VikLayer *) rv);
@@ -1622,7 +1622,7 @@ static void trw_layer_free_track_gcs ( VikTrwLayer *vtl )
   vtl->track_gc = NULL;
 }
 
-static void trw_layer_new_track_gcs ( VikTrwLayer *vtl, VikViewport *vp )
+static void trw_layer_new_track_gcs ( VikTrwLayer *vtl, Viewport * viewport)
 {
   GdkGC *gc[ VIK_TRW_LAYER_TRACK_GC ];
   int width = vtl->line_thickness;
@@ -1632,7 +1632,7 @@ static void trw_layer_new_track_gcs ( VikTrwLayer *vtl, VikViewport *vp )
 
   if ( vtl->track_bg_gc )
     g_object_unref ( vtl->track_bg_gc );
-  vtl->track_bg_gc = vp->port.new_gc_from_color(&(vtl->track_bg_color), width + vtl->bg_line_thickness);
+  vtl->track_bg_gc = viewport->new_gc_from_color(&(vtl->track_bg_color), width + vtl->bg_line_thickness);
 
   // Ensure new track drawing heeds line thickness setting
   //  however always have a minium of 2, as 1 pixel is really narrow
@@ -1640,53 +1640,53 @@ static void trw_layer_new_track_gcs ( VikTrwLayer *vtl, VikViewport *vp )
 
   if ( vtl->current_track_gc )
     g_object_unref ( vtl->current_track_gc );
-  vtl->current_track_gc = vp->port.new_gc("#FF0000", new_track_width);
+  vtl->current_track_gc = viewport->new_gc("#FF0000", new_track_width);
   gdk_gc_set_line_attributes ( vtl->current_track_gc, new_track_width, GDK_LINE_ON_OFF_DASH, GDK_CAP_ROUND, GDK_JOIN_ROUND );
 
   // 'newpoint' gc is exactly the same as the current track gc
   if ( vtl->current_track_newpoint_gc )
     g_object_unref ( vtl->current_track_newpoint_gc );
-  vtl->current_track_newpoint_gc = vp->port.new_gc("#FF0000", new_track_width );
+  vtl->current_track_newpoint_gc = viewport->new_gc("#FF0000", new_track_width );
   gdk_gc_set_line_attributes ( vtl->current_track_newpoint_gc, new_track_width, GDK_LINE_ON_OFF_DASH, GDK_CAP_ROUND, GDK_JOIN_ROUND );
 
   vtl->track_gc = g_array_sized_new ( false, false, sizeof ( GdkGC * ), VIK_TRW_LAYER_TRACK_GC );
 
-  gc[VIK_TRW_LAYER_TRACK_GC_STOP] = vp->port.new_gc("#874200", width);
-  gc[VIK_TRW_LAYER_TRACK_GC_BLACK] = vp->port.new_gc("#000000", width); // black
+  gc[VIK_TRW_LAYER_TRACK_GC_STOP] = viewport->new_gc("#874200", width);
+  gc[VIK_TRW_LAYER_TRACK_GC_BLACK] = viewport->new_gc("#000000", width); // black
 
-  gc[VIK_TRW_LAYER_TRACK_GC_SLOW] = vp->port.new_gc("#E6202E", width); // red-ish
-  gc[VIK_TRW_LAYER_TRACK_GC_AVER] = vp->port.new_gc("#D2CD26", width); // yellow-ish
-  gc[VIK_TRW_LAYER_TRACK_GC_FAST] = vp->port.new_gc("#2B8700", width); // green-ish
+  gc[VIK_TRW_LAYER_TRACK_GC_SLOW] = viewport->new_gc("#E6202E", width); // red-ish
+  gc[VIK_TRW_LAYER_TRACK_GC_AVER] = viewport->new_gc("#D2CD26", width); // yellow-ish
+  gc[VIK_TRW_LAYER_TRACK_GC_FAST] = viewport->new_gc("#2B8700", width); // green-ish
 
-  gc[VIK_TRW_LAYER_TRACK_GC_SINGLE] = vp->port.new_gc_from_color(&(vtl->track_color), width );
+  gc[VIK_TRW_LAYER_TRACK_GC_SINGLE] = viewport->new_gc_from_color(&(vtl->track_color), width );
 
   g_array_append_vals ( vtl->track_gc, gc, VIK_TRW_LAYER_TRACK_GC );
 }
 
-static VikTrwLayer* trw_layer_create ( VikViewport *vp )
+static VikTrwLayer* trw_layer_create(Viewport * viewport)
 {
-  VikTrwLayer *rv = trw_layer_new1 ( vp );
+  VikTrwLayer *rv = trw_layer_new1(viewport);
   vik_layer_rename ( VIK_LAYER(rv), vik_trw_layer_interface.name );
 
-  if ( vp == NULL || gtk_widget_get_window(GTK_WIDGET(vp)) == NULL ) {
+  if ( viewport == NULL || gtk_widget_get_window(GTK_WIDGET(viewport->vvp)) == NULL ) {
     /* early exit, as the rest is GUI related */
     return rv;
   }
 
-  rv->wplabellayout = gtk_widget_create_pango_layout (GTK_WIDGET(vp), NULL);
-  pango_layout_set_font_description (rv->wplabellayout, gtk_widget_get_style(GTK_WIDGET(vp))->font_desc);
+  rv->wplabellayout = gtk_widget_create_pango_layout (GTK_WIDGET(viewport->vvp), NULL);
+  pango_layout_set_font_description (rv->wplabellayout, gtk_widget_get_style(GTK_WIDGET(viewport->vvp))->font_desc);
 
-  rv->tracklabellayout = gtk_widget_create_pango_layout (GTK_WIDGET(vp), NULL);
-  pango_layout_set_font_description (rv->tracklabellayout, gtk_widget_get_style(GTK_WIDGET(vp))->font_desc);
+  rv->tracklabellayout = gtk_widget_create_pango_layout (GTK_WIDGET(viewport->vvp), NULL);
+  pango_layout_set_font_description (rv->tracklabellayout, gtk_widget_get_style(GTK_WIDGET(viewport->vvp))->font_desc);
 
-  trw_layer_new_track_gcs ( rv, vp );
+  trw_layer_new_track_gcs ( rv, viewport);
 
-  rv->waypoint_gc = vp->port.new_gc_from_color(&(rv->waypoint_color), 2);
-  rv->waypoint_text_gc = vp->port.new_gc_from_color(&(rv->waypoint_text_color), 1);
-  rv->waypoint_bg_gc = vp->port.new_gc_from_color(&(rv->waypoint_bg_color), 1);
+  rv->waypoint_gc = viewport->new_gc_from_color(&(rv->waypoint_color), 2);
+  rv->waypoint_text_gc = viewport->new_gc_from_color(&(rv->waypoint_text_color), 1);
+  rv->waypoint_bg_gc = viewport->new_gc_from_color(&(rv->waypoint_bg_color), 1);
   gdk_gc_set_function ( rv->waypoint_bg_gc, rv->wpbgand );
 
-  rv->trw->coord_mode = vp->port.get_coord_mode();
+  rv->trw->coord_mode = viewport->get_coord_mode();
 
   rv->menu_selection = vik_layer_get_interface(VIK_LAYER(rv)->type)->menu_items_selection;
 
@@ -2517,7 +2517,7 @@ static void trw_layer_centerize ( menu_array_layer values )
 
 void LayerTRW::zoom_to_show_latlons(Viewport * viewport, struct LatLon maxmin[2])
 {
-	vu_zoom_to_show_latlons(coord_mode, (VikViewport *) viewport->vvp, maxmin);
+	vu_zoom_to_show_latlons(coord_mode, viewport, maxmin);
 }
 
 

@@ -114,11 +114,11 @@ static double __mapzooms_y[] = { 0.0, 0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0, 32.0,
 /**************************/
 
 
-static VikMapsLayer *maps_layer_unmarshall(uint8_t *data, int len, VikViewport *vvp);
-static bool maps_layer_set_param(VikMapsLayer *vml, uint16_t id, VikLayerParamData data, VikViewport *vvp, bool is_file_operation);
+static VikMapsLayer * maps_layer_unmarshall(uint8_t *data, int len, Viewport * viewport);
+static bool maps_layer_set_param(VikMapsLayer *vml, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
 static VikLayerParamData maps_layer_get_param(VikMapsLayer *vml, uint16_t id, bool is_file_operation);
 static void maps_layer_change_param(GtkWidget *widget, ui_change_values values);
-static VikMapsLayer *maps_layer_new(VikViewport *vvp);
+static VikMapsLayer * maps_layer_new(Viewport * viewport);
 static void maps_layer_free(VikMapsLayer *vml);
 static bool maps_layer_download_release(VikMapsLayer *vml, GdkEventButton *event, Viewport * viewport);
 static bool maps_layer_download_click(VikMapsLayer *vml, GdkEventButton *event, Viewport * viewport);
@@ -577,7 +577,7 @@ static void maps_show_license(GtkWindow *parent, MapSource *map)
 			 map->get_license_url());
 }
 
-static bool maps_layer_set_param(VikMapsLayer *vml, uint16_t id, VikLayerParamData data, VikViewport *vvp, bool is_file_operation)
+static bool maps_layer_set_param(VikMapsLayer *vml, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
 {
 	LayerMaps * layer = (LayerMaps *) ((VikLayer *) vml)->layer;
 	switch (id) {
@@ -608,8 +608,8 @@ static bool maps_layer_set_param(VikMapsLayer *vml, uint16_t id, VikLayerParamDa
 					if (map->get_license() != NULL) {
 						// Check if licence for this map type has been shown before
 						if (! a_settings_get_integer_list_contains(VIK_SETTINGS_MAP_LICENSE_SHOWN, data.u)) {
-							if (vvp) {
-								maps_show_license(VIK_GTK_WINDOW_FROM_WIDGET(vvp), map);
+							if (viewport) {
+								maps_show_license(VIK_GTK_WINDOW_FROM_WIDGET(viewport->vvp), map);
 							}
 							a_settings_set_integer_list_containing(VIK_SETTINGS_MAP_LICENSE_SHOWN, data.u);
 						}
@@ -800,7 +800,7 @@ static void maps_layer_change_param(GtkWidget *widget, ui_change_values values)
 /****** CREATING, COPYING, FREEING ******/
 /****************************************/
 
-static VikMapsLayer *maps_layer_new(VikViewport *vvp)
+static VikMapsLayer * maps_layer_new(Viewport * viewport)
 {
 	VikMapsLayer *vml = VIK_MAPS_LAYER (g_object_new(VIK_MAPS_LAYER_TYPE, NULL));
 	vik_layer_set_type(VIK_LAYER(vml), VIK_LAYER_MAPS);
@@ -809,7 +809,7 @@ static VikMapsLayer *maps_layer_new(VikViewport *vvp)
 
 	LayerMaps * layer = (LayerMaps *) ((VikLayer *) vml)->layer;
 
-	vik_layer_set_defaults(VIK_LAYER(vml), vvp);
+	vik_layer_set_defaults(VIK_LAYER(vml), viewport);
 
 	layer->dl_tool_x = layer->dl_tool_y = -1;
 	layer->last_center = NULL;
@@ -912,11 +912,11 @@ void LayerMaps::marshall(uint8_t **data, int *len)
 	vik_layer_marshall_params(VIK_LAYER(vml), data, len);
 }
 
-static VikMapsLayer *maps_layer_unmarshall(uint8_t *data, int len, VikViewport *vvp)
+static VikMapsLayer * maps_layer_unmarshall(uint8_t *data, int len, Viewport * viewport)
 {
-	VikMapsLayer *rv = maps_layer_new(vvp);
-	vik_layer_unmarshall_params(VIK_LAYER(rv), data, len, vvp);
-	((Layer *) VIK_LAYER(rv)->layer)->post_read(&vvp->port, false);
+	VikMapsLayer *rv = maps_layer_new(viewport);
+	vik_layer_unmarshall_params(VIK_LAYER(rv), data, len, viewport);
+	((Layer *) VIK_LAYER(rv)->layer)->post_read(viewport, false);
 	return rv;
 }
 

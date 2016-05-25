@@ -62,7 +62,7 @@ struct _VikLayer {
 	bool visible;
 
 	bool realized;
-	VikViewport *vvp;/* simply a reference */
+	Viewport * viewport;/* simply a reference */
 	VikTreeview *vt; /* simply a reference */
 	GtkTreeIter iter;
 
@@ -121,7 +121,7 @@ struct _VikToolInterface {
 /* layer interface functions */
 
 /* Create a new layer of a certain type. Should be filled with defaults */
-typedef VikLayer *    (*VikLayerFuncCreate)                (VikViewport *);
+typedef VikLayer *    (*VikLayerFuncCreate)                (Viewport *);
 
 /* normally only needed for layers with sublayers. This is called when they
  * are added to the treeview so they can add sublayers to the treeview. */
@@ -131,11 +131,11 @@ typedef void          (*VikLayerFuncFree)                  (VikLayer *);
 
 
 
-typedef VikLayer *    (*VikLayerFuncUnmarshall)            (uint8_t *, int, VikViewport *);
+typedef VikLayer *    (*VikLayerFuncUnmarshall)            (uint8_t *, int, Viewport *);
 
 /* returns true if needs to redraw due to changed param */
 /* in parameter bool denotes if for file I/O, as opposed to display/cut/copy etc... operations */
-typedef bool      (*VikLayerFuncSetParam)              (VikLayer *, uint16_t, VikLayerParamData, VikViewport *, bool);
+typedef bool      (*VikLayerFuncSetParam)              (VikLayer *, uint16_t, VikLayerParamData, Viewport *, bool);
 
 /* in parameter bool denotes if for file I/O, as opposed to display/cut/copy etc... operations */
 typedef VikLayerParamData
@@ -199,9 +199,9 @@ const char *vik_layer_get_name ( VikLayer *l );
 
 time_t vik_layer_get_timestamp ( VikLayer *vl );
 
-bool vik_layer_set_param (VikLayer *layer, uint16_t id, VikLayerParamData data, void * vp, bool is_file_operation);
+bool vik_layer_set_param (VikLayer *layer, uint16_t id, VikLayerParamData data, void * viewport, bool is_file_operation);
 
-void vik_layer_set_defaults ( VikLayer *vl, VikViewport *vvp );
+void vik_layer_set_defaults ( VikLayer *vl, Viewport * viewport);
 
 void vik_layer_emit_update ( VikLayer *vl );
 
@@ -209,19 +209,19 @@ void vik_layer_emit_update ( VikLayer *vl );
 void vik_layer_set_menu_items_selection(VikLayer *l, uint16_t selection);
 uint16_t vik_layer_get_menu_items_selection(VikLayer *l);
 void vik_layer_add_menu_items ( VikLayer *l, GtkMenu *menu, void * vlp );
-VikLayer *vik_layer_create ( VikLayerTypeEnum type, VikViewport *vp, bool interactive );
-bool vik_layer_properties ( VikLayer *layer, VikViewport *vp );
+VikLayer *vik_layer_create ( VikLayerTypeEnum type, Viewport * viewport, bool interactive );
+bool vik_layer_properties ( VikLayer *layer, Viewport * viewport);
 
 void vik_layer_realize ( VikLayer *l, VikTreeview *vt, GtkTreeIter * layer_iter );
 void vik_layer_post_read ( VikLayer *layer, Viewport * viewport, bool from_file );
 
 bool vik_layer_sublayer_add_menu_items ( VikLayer *l, GtkMenu *menu, void * vlp, int subtype, void * sublayer, GtkTreeIter *iter, Viewport * viewport);
 
-VikLayer *vik_layer_copy ( VikLayer *vl, void * vp );
+VikLayer *vik_layer_copy(VikLayer *vl, void * viewport);
 void      vik_layer_marshall ( VikLayer *vl, uint8_t **data, int *len );
-VikLayer *vik_layer_unmarshall ( uint8_t *data, int len, VikViewport *vvp );
+VikLayer *vik_layer_unmarshall ( uint8_t *data, int len, Viewport * viewport);
 void      vik_layer_marshall_params ( VikLayer *vl, uint8_t **data, int *len );
-void      vik_layer_unmarshall_params ( VikLayer *vl, uint8_t *data, int len, VikViewport *vvp );
+void      vik_layer_unmarshall_params ( VikLayer *vl, uint8_t *data, int len, Viewport * viewport);
 
 const char *vik_layer_sublayer_rename_request ( VikLayer *l, const char *newname, void * vlp, int subtype, void * sublayer, GtkTreeIter *iter );
 
@@ -315,7 +315,7 @@ namespace SlavGPS {
 
 		/* Do _not_ use this unless absolutely neccesary. Use the dynamic properties (see coordlayer for example)
 		   returns true if OK was pressed. */
-		virtual bool properties(void * vp);
+		virtual bool properties(void * viewport);
 
 
 

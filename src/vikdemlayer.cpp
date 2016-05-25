@@ -61,16 +61,16 @@
 
 #define UNUSED_LINE_THICKNESS 3
 
-static VikDEMLayer *dem_layer_new (VikViewport *vvp);
-static void dem_layer_free (VikDEMLayer *vdl);
-static VikDEMLayer *dem_layer_create (VikViewport *vp);
-static VikDEMLayer *dem_layer_unmarshall(uint8_t *data, int len, VikViewport *vvp);
-static bool dem_layer_set_param (VikDEMLayer *vdl, uint16_t id, VikLayerParamData data, VikViewport *vp, bool is_file_operation);
-static VikLayerParamData dem_layer_get_param (VikDEMLayer *vdl, uint16_t id, bool is_file_operation);
-static void srtm_draw_existence (VikViewport *vp);
+static VikDEMLayer *dem_layer_new(Viewport * viewport);
+static void dem_layer_free(VikDEMLayer *vdl);
+static VikDEMLayer *dem_layer_create(Viewport * viewport);
+static VikDEMLayer *dem_layer_unmarshall(uint8_t *data, int len, Viewport * viewport);
+static bool dem_layer_set_param(VikDEMLayer *vdl, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
+static VikLayerParamData dem_layer_get_param(VikDEMLayer *vdl, uint16_t id, bool is_file_operation);
+static void srtm_draw_existence(Viewport * viewport);
 
 #ifdef VIK_CONFIG_DEM24K
-static void dem24k_draw_existence (VikViewport *vp);
+static void dem24k_draw_existence(Viewport * viewport);
 #endif
 
 /* Upped upper limit incase units are feet */
@@ -263,24 +263,24 @@ void LayerDEM::marshall(uint8_t **data, int *len)
 	vik_layer_marshall_params(VIK_LAYER(vdl), data, len);
 }
 
-static VikDEMLayer *dem_layer_unmarshall(uint8_t *data, int len, VikViewport *vvp)
+static VikDEMLayer * dem_layer_unmarshall(uint8_t *data, int len, Viewport * viewport)
 {
-	VikDEMLayer *rv = dem_layer_new(vvp);
+	VikDEMLayer *rv = dem_layer_new(viewport);
 	int i;
 
 	/* TODO: share GCS between layers */
 	for (i = 0; i < DEM_N_HEIGHT_COLORS; i++) {
 		if (i == 0) {
-			rv->gcs[i] = vvp->port.new_gc_from_color(&(rv->color), UNUSED_LINE_THICKNESS);
+			rv->gcs[i] = viewport->new_gc_from_color(&(rv->color), UNUSED_LINE_THICKNESS);
 		} else {
-			rv->gcs[i] = vvp->port.new_gc(dem_height_colors[i], UNUSED_LINE_THICKNESS);
+			rv->gcs[i] = viewport->new_gc(dem_height_colors[i], UNUSED_LINE_THICKNESS);
 		}
 	}
 	for (i = 0; i < DEM_N_GRADIENT_COLORS; i++) {
-		rv->gcsgradient[i] = vvp->port.new_gc(dem_gradient_colors[i], UNUSED_LINE_THICKNESS);
+		rv->gcsgradient[i] = viewport->new_gc(dem_gradient_colors[i], UNUSED_LINE_THICKNESS);
 	}
 
-	vik_layer_unmarshall_params(VIK_LAYER(rv), data, len, vvp);
+	vik_layer_unmarshall_params(VIK_LAYER(rv), data, len, viewport);
 	return rv;
 }
 
@@ -360,7 +360,7 @@ static GList *dem_layer_convert_to_relative_filenaming(GList *files)
 	return files;
 }
 
-bool dem_layer_set_param(VikDEMLayer *vdl, uint16_t id, VikLayerParamData data, VikViewport *vp, bool is_file_operation)
+bool dem_layer_set_param(VikDEMLayer *vdl, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
 {
 	switch (id) {
 	case PARAM_COLOR:
@@ -405,7 +405,7 @@ bool dem_layer_set_param(VikDEMLayer *vdl, uint16_t id, VikLayerParamData data, 
 				dltd->vdl->files = data.sl;
 
 				a_background_thread(BACKGROUND_POOL_LOCAL,
-						    VIK_GTK_WINDOW_FROM_WIDGET(vp),
+						    VIK_GTK_WINDOW_FROM_WIDGET(viewport->vvp),
 						    _("DEM Loading"),
 						    (vik_thr_func) dem_layer_load_list_thread,
 						    dltd,
@@ -465,7 +465,7 @@ static VikLayerParamData dem_layer_get_param(VikDEMLayer *vdl, uint16_t id, bool
 	return rv;
 }
 
-static VikDEMLayer *dem_layer_new(VikViewport *vvp)
+static VikDEMLayer *dem_layer_new(Viewport * viewport)
 {
 	VikDEMLayer *vdl = VIK_DEM_LAYER (g_object_new (VIK_DEM_LAYER_TYPE, NULL));
 
@@ -478,11 +478,11 @@ static VikDEMLayer *dem_layer_new(VikViewport *vvp)
 	/* make new gcs only if we need it (copy layer -> use old) */
 
 	// Ensure the base GC is available so the default colour can be applied
-	if (vvp) {
-		vdl->gcs[0] = vvp->port.new_gc("#0000FF", 1);
+	if (viewport) {
+		vdl->gcs[0] = viewport->new_gc("#0000FF", 1);
 	}
 
-	vik_layer_set_defaults (VIK_LAYER(vdl), vvp);
+	vik_layer_set_defaults (VIK_LAYER(vdl), viewport);
 
 	((VikLayer *) vdl)->layer = new LayerDEM((VikLayer *) vdl);
 
@@ -500,7 +500,7 @@ static inline uint16_t get_height_difference(int16_t elev, int16_t new_elev)
 }
 
 
-static void vik_dem_layer_draw_dem(VikDEMLayer *vdl, VikViewport *vp, VikDEM *dem)
+static void vik_dem_layer_draw_dem(VikDEMLayer *vdl, Viewport * viewport, VikDEM *dem)
 {
 	VikDEMColumn *column, *prevcolumn, *nextcolumn;
 
@@ -510,7 +510,7 @@ static void vik_dem_layer_draw_dem(VikDEMLayer *vdl, VikViewport *vp, VikDEM *de
 	/**** Check if viewport and DEM data overlap ****/
 
 	/* get min, max lat/lon of viewport */
-	vp->port.get_min_max_lat_lon(&min_lat, &max_lat, &min_lon, &max_lon);
+	viewport->get_min_max_lat_lon(&min_lat, &max_lat, &min_lon, &max_lon);
 
 	/* get min, max lat/lon of DEM data */
 	if (dem->horiz_units == VIK_DEM_HORIZ_LL_ARCSECONDS) {
@@ -560,18 +560,18 @@ static void vik_dem_layer_draw_dem(VikDEMLayer *vdl, VikViewport *vp, VikDEM *de
 	{
 		VikCoord demne, demsw;
 		int x1, y1, x2, y2;
-		vik_coord_load_from_latlon(&demne, vik_viewport_get_coord_mode(vp), &dem_northeast);
-		vik_coord_load_from_latlon(&demsw, vik_viewport_get_coord_mode(vp), &dem_southwest);
+		vik_coord_load_from_latlon(&demne, vik_viewport_get_coord_mode(viewport->vvp), &dem_northeast);
+		vik_coord_load_from_latlon(&demsw, vik_viewport_get_coord_mode(viewport->vvp), &dem_southwest);
 
-		vp->port.coord_to_screen(&demne, &x1, &y1);
-		vp->port.coord_to_screen(&demsw, &x2, &y2);
+		viewport->coord_to_screen(&demne, &x1, &y1);
+		viewport->coord_to_screen(&demsw, &x2, &y2);
 
-		if (x1 > vp->port.get_width()) {
-			x1=vp->port.get_width();
+		if (x1 > viewport->get_width()) {
+			x1 = viewport->get_width();
 		}
 
-		if (y2 > vp->port.get_height()) {
-			y2=vp->port.get_height();
+		if (y2 > viewport->get_height()) {
+			y2 = viewport->get_height();
 		}
 
 		if (x2 < 0) {
@@ -582,8 +582,8 @@ static void vik_dem_layer_draw_dem(VikDEMLayer *vdl, VikViewport *vp, VikDEM *de
 			y1 = 0;
 		}
 
-		vik_viewport_draw_rectangle(vp, gtk_widget_get_style(GTK_WIDGET(vp))->black_gc,
-					    false, x2, y1, x1-x2, y2-y1);
+		viewport->draw_rectangle(gtk_widget_get_style(GTK_WIDGET(viewport->vvp))->black_gc,
+					 false, x2, y1, x1-x2, y2-y1);
 		return;
 	}
 #endif
@@ -602,7 +602,7 @@ static void vik_dem_layer_draw_dem(VikDEMLayer *vdl, VikViewport *vp, VikDEM *de
 
 		int16_t elev;
 
-		unsigned int skip_factor = ceil(vp->port.get_xmpp() / 80); /* todo: smarter calculation. */
+		unsigned int skip_factor = ceil(viewport->get_xmpp() / 80); /* todo: smarter calculation. */
 
 		double nscale_deg = dem->north_scale / ((double) 3600);
 		double escale_deg = dem->east_scale / ((double) 3600);
@@ -667,8 +667,8 @@ static void vik_dem_layer_draw_dem(VikDEMLayer *vdl, VikViewport *vp, VikDEM *de
 					box_c = counter;
 					box_c.lat += (nscale_deg * skip_factor)/2;
 					box_c.lon -= (escale_deg * skip_factor)/2;
-					vik_coord_load_from_latlon(&tmp, vp->port.get_coord_mode(), &box_c);
-					vp->port.coord_to_screen(&tmp, &box_x, &box_y);
+					vik_coord_load_from_latlon(&tmp, viewport->get_coord_mode(), &box_c);
+					viewport->coord_to_screen(&tmp, &box_x, &box_y);
 					// catch box at borders
 					if(box_x < 0) {
 						box_x = 0;
@@ -680,8 +680,8 @@ static void vik_dem_layer_draw_dem(VikDEMLayer *vdl, VikViewport *vp, VikDEM *de
 
 					box_c.lat -= nscale_deg * skip_factor;
 					box_c.lon += escale_deg * skip_factor;
-					vik_coord_load_from_latlon(&tmp, vp->port.get_coord_mode(), &box_c);
-					vp->port.coord_to_screen(&tmp, &box_width, &box_height);
+					vik_coord_load_from_latlon(&tmp, viewport->get_coord_mode(), &box_c);
+					viewport->coord_to_screen(&tmp, &box_width, &box_height);
 					box_width -= box_x;
 					box_height -= box_y;
 					// catch box at borders
@@ -743,7 +743,7 @@ static void vik_dem_layer_draw_dem(VikDEMLayer *vdl, VikViewport *vp, VikDEM *de
 								}
 
 								// void vik_viewport_draw_rectangle (VikViewport *vvp, GdkGC *gc, bool filled, int x1, int y1, int x2, int y2);
-								vp->port.draw_rectangle(vdl->gcsgradient[(int)floor(((change - vdl->min_elev)/(vdl->max_elev - vdl->min_elev))*(DEM_N_GRADIENT_COLORS-2))+1], true, box_x, box_y, box_width, box_height);
+								viewport->draw_rectangle(vdl->gcsgradient[(int)floor(((change - vdl->min_elev)/(vdl->max_elev - vdl->min_elev))*(DEM_N_GRADIENT_COLORS-2))+1], true, box_x, box_y, box_width, box_height);
 							}
 						} else {
 							if (vdl->type == DEM_TYPE_HEIGHT) {
@@ -751,9 +751,9 @@ static void vik_dem_layer_draw_dem(VikDEMLayer *vdl, VikViewport *vp, VikDEM *de
 									; /* don't draw it */
 								} else if (elev <= 0 || below_minimum) {
 									/* If 'sea' colour or below the defined mininum draw in the configurable colour */
-									vp->port.draw_rectangle(vdl->gcs[0], true, box_x, box_y, box_width, box_height);
+									viewport->draw_rectangle(vdl->gcs[0], true, box_x, box_y, box_width, box_height);
 								} else {
-									vp->port.draw_rectangle(vdl->gcs[(int)floor(((elev - vdl->min_elev)/(vdl->max_elev - vdl->min_elev))*(DEM_N_HEIGHT_COLORS-2))+1], true, box_x, box_y, box_width, box_height);
+									viewport->draw_rectangle(vdl->gcs[(int)floor(((elev - vdl->min_elev)/(vdl->max_elev - vdl->min_elev))*(DEM_N_HEIGHT_COLORS-2))+1], true, box_x, box_y, box_width, box_height);
 								}
 							}
 						}
@@ -772,14 +772,14 @@ static void vik_dem_layer_draw_dem(VikDEMLayer *vdl, VikViewport *vp, VikDEM *de
 		VikCoord tmp; /* TODO: don't use coord_load_from_latlon, especially if in latlon drawing mode */
 		struct UTM counter;
 
-		unsigned int skip_factor = ceil(vp->port.get_xmpp() / 10); /* todo: smarter calculation. */
+		unsigned int skip_factor = ceil(viewport->get_xmpp() / 10); /* todo: smarter calculation. */
 
 		VikCoord tleft, tright, bleft, bright;
 
-		vp->port.screen_to_coord(0, 0, &tleft);
-		vp->port.screen_to_coord(vp->port.get_width(), 0, &tright);
-		vp->port.screen_to_coord(0, vp->port.get_height(), &bleft);
-		vp->port.screen_to_coord(vp->port.get_width(), vp->port.get_height(), &bright);
+		viewport->screen_to_coord(0,                     0,                      &tleft);
+		viewport->screen_to_coord(viewport->get_width(), 0,                      &tright);
+		viewport->screen_to_coord(0,                     viewport->get_height(), &bleft);
+		viewport->screen_to_coord(viewport->get_width(), viewport->get_height(), &bright);
 
 
 		vik_coord_convert(&tleft, VIK_COORD_UTM);
@@ -844,14 +844,14 @@ static void vik_dem_layer_draw_dem(VikDEMLayer *vdl, VikViewport *vp, VikDEM *de
 
 					{
 						int a, b;
-						vik_coord_load_from_utm(&tmp, vp->port.get_coord_mode(), &counter);
-						vp->port.coord_to_screen(&tmp, &a, &b);
+						vik_coord_load_from_utm(&tmp, viewport->get_coord_mode(), &counter);
+						viewport->coord_to_screen(&tmp, &a, &b);
 						if (elev == VIK_DEM_INVALID_ELEVATION) {
 							; /* don't draw it */
 						} else if (elev <= 0) {
-							vp->port.draw_rectangle(vdl->gcs[0], true, a-1, b-1, 2, 2);
+							viewport->draw_rectangle(vdl->gcs[0], true, a-1, b-1, 2, 2);
 						} else {
-							vp->port.draw_rectangle(vdl->gcs[(int)floor((elev - vdl->min_elev)/(vdl->max_elev - vdl->min_elev)*(DEM_N_HEIGHT_COLORS-2))+1], true, a-1, b-1, 2, 2);
+							viewport->draw_rectangle(vdl->gcs[(int)floor((elev - vdl->min_elev)/(vdl->max_elev - vdl->min_elev)*(DEM_N_HEIGHT_COLORS-2))+1], true, a-1, b-1, 2, 2);
 						}
 					}
 				} /* for y= */
@@ -893,7 +893,6 @@ static const char *srtm_continent_dir(int lat, int lon)
 void LayerDEM::draw(Viewport * viewport)
 {
 	VikDEMLayer * vdl = (VikDEMLayer *) this->vl;
-	VikViewport * vp = (VikViewport *) viewport->vvp;
 	GList *dems_iter = vdl->files;
 	VikDEM *dem;
 
@@ -901,7 +900,7 @@ void LayerDEM::draw(Viewport * viewport)
 	/* search for SRTM3 90m */
 
 	if (vdl->source == DEM_SOURCE_SRTM) {
-		srtm_draw_existence(vp);
+		srtm_draw_existence(viewport);
 #ifdef VIK_CONFIG_DEM24K
 	} else if (vdl->source == DEM_SOURCE_DEM24K) {
 		dem24k_draw_existence(vp);
@@ -911,7 +910,7 @@ void LayerDEM::draw(Viewport * viewport)
 	while (dems_iter) {
 		dem = a_dems_get((const char *) (dems_iter->data));
 		if (dem) {
-			vik_dem_layer_draw_dem(vdl, vp, dem);
+			vik_dem_layer_draw_dem(vdl, viewport, dem);
 		}
 		dems_iter = dems_iter->next;
 	}
@@ -938,20 +937,20 @@ static void dem_layer_free(VikDEMLayer *vdl)
 	a_dems_list_free(vdl->files);
 }
 
-VikDEMLayer *dem_layer_create(VikViewport *vp)
+VikDEMLayer *dem_layer_create(Viewport * viewport)
 {
-	VikDEMLayer *vdl = dem_layer_new(vp);
+	VikDEMLayer *vdl = dem_layer_new(viewport);
 	int i;
-	if (vp) {
+	if (viewport) {
 		/* TODO: share GCS between layers */
 		for (i = 0; i < DEM_N_HEIGHT_COLORS; i++) {
 			if (i > 0) {
-				vdl->gcs[i] = vp->port.new_gc(dem_height_colors[i], UNUSED_LINE_THICKNESS);
+				vdl->gcs[i] = viewport->new_gc(dem_height_colors[i], UNUSED_LINE_THICKNESS);
 			}
 		}
 
 		for (i = 0; i < DEM_N_GRADIENT_COLORS; i++) {
-			vdl->gcsgradient[i] = vp->port.new_gc(dem_gradient_colors[i], UNUSED_LINE_THICKNESS);
+			vdl->gcsgradient[i] = viewport->new_gc(dem_gradient_colors[i], UNUSED_LINE_THICKNESS);
 		}
 	}
 
@@ -1049,13 +1048,13 @@ static char *srtm_lat_lon_to_dest_fn(double lat, double lon)
 }
 
 /* TODO: generalize */
-static void srtm_draw_existence(VikViewport *vp)
+static void srtm_draw_existence(Viewport * viewport)
 {
 	double max_lat, max_lon, min_lat, min_lon;
 	char buf[strlen(MAPS_CACHE_DIR)+strlen(SRTM_CACHE_TEMPLATE)+30];
 	int i, j;
 
-	vp->port.get_min_max_lat_lon(&min_lat, &max_lat, &min_lon, &max_lon);
+	viewport->get_min_max_lat_lon(&min_lat, &max_lat, &min_lon, &max_lon);
 
 	for (i = floor(min_lat); i <= floor(max_lat); i++) {
 		for (j = floor(min_lon); j <= floor(max_lon); j++) {
@@ -1081,8 +1080,8 @@ static void srtm_draw_existence(VikViewport *vp)
 				ne.north_south = i+1;
 				ne.east_west = j+1;
 				ne.mode = VIK_COORD_LATLON;
-				vp->port.coord_to_screen(&sw, &x1, &y1);
-				vp->port.coord_to_screen(&ne, &x2, &y2);
+				viewport->coord_to_screen(&sw, &x1, &y1);
+				viewport->coord_to_screen(&ne, &x2, &y2);
 
 				if (x1 < 0) {
 					x1 = 0;
@@ -1092,8 +1091,8 @@ static void srtm_draw_existence(VikViewport *vp)
 					y2 = 0;
 				}
 
-				vp->port.draw_rectangle(gtk_widget_get_style(GTK_WIDGET(vp))->black_gc,
-							false, x1, y2, x2-x1, y1-y2);
+				viewport->draw_rectangle(gtk_widget_get_style(GTK_WIDGET(viewport->vvp))->black_gc,
+							 false, x1, y2, x2-x1, y1-y2);
 			}
 		}
 	}
@@ -1128,13 +1127,13 @@ static char *dem24k_lat_lon_to_dest_fn(double lat, double lon)
 }
 
 /* TODO: generalize */
-static void dem24k_draw_existence(VikViewport *vp)
+static void dem24k_draw_existence(Viewport * viewport)
 {
 	double max_lat, max_lon, min_lat, min_lon;
 	char buf[strlen(MAPS_CACHE_DIR)+40];
 	double i, j;
 
-	vp->port.get_min_max_lat_lon(&min_lat, &max_lat, &min_lon, &max_lon);
+	viewport->get_min_max_lat_lon(&min_lat, &max_lat, &min_lon, &max_lon);
 
 	for (i = floor(min_lat*8)/8; i <= floor(max_lat*8)/8; i+=0.125) {
 		/* check lat dir first -- faster */
@@ -1167,8 +1166,8 @@ static void dem24k_draw_existence(VikViewport *vp)
 				ne.north_south = i+0.125;
 				ne.east_west = j;
 				ne.mode = VIK_COORD_LATLON;
-				vp->port.coord_to_screen(&sw, &x1, &y1);
-				vp->port.coord_to_screen(&ne, &x2, &y2);
+				viewport->coord_to_screen(&sw, &x1, &y1);
+				viewport->coord_to_screen(&ne, &x2, &y2);
 
 				if (x1 < 0) {
 					x1 = 0;
@@ -1178,8 +1177,8 @@ static void dem24k_draw_existence(VikViewport *vp)
 					y2 = 0;
 				}
 
-				vp->port.draw_rectangle(gtk_widget_get_style(GTK_WIDGET(vp))->black_gc,
-							false, x1, y2, x2-x1, y1-y2);
+				viewport->draw_rectangle(gtk_widget_get_style(GTK_WIDGET(viewport->vvp))->black_gc,
+							 false, x1, y2, x2-x1, y1-y2);
 			}
 		}
 	}

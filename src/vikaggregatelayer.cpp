@@ -37,7 +37,7 @@
 #include <glib/gi18n.h>
 
 
-static VikAggregateLayer *aggregate_layer_unmarshall(uint8_t *data, int len, VikViewport *vvp);
+static VikAggregateLayer *aggregate_layer_unmarshall(uint8_t *data, int len, Viewport * viewport);
 
 VikLayerInterface vik_aggregate_layer_interface = {
 	"Aggregate",
@@ -97,7 +97,7 @@ GType vik_aggregate_layer_get_type()
 	return val_type;
 }
 
-VikAggregateLayer *vik_aggregate_layer_create(VikViewport *vp)
+VikAggregateLayer * vik_aggregate_layer_create(Viewport * viewport)
 {
 	VikAggregateLayer *rv = vik_aggregate_layer_new();
 	VikLayer * vl = (VikLayer *) rv;
@@ -142,7 +142,7 @@ void LayerAggregate::marshall(uint8_t **data, int *datalen)
 #endif
 }
 
-static VikAggregateLayer *aggregate_layer_unmarshall(uint8_t *data, int len, VikViewport *vvp)
+static VikAggregateLayer * aggregate_layer_unmarshall(uint8_t *data, int len, Viewport * viewport)
 {
 #if 1
 
@@ -154,11 +154,11 @@ static VikAggregateLayer *aggregate_layer_unmarshall(uint8_t *data, int len, Vik
 	VikAggregateLayer *rv = vik_aggregate_layer_new();
 
 	VikLayer * vl = (VikLayer *) rv;
-	vik_layer_unmarshall_params(vl, data+sizeof(int), alm_size, vvp);
+	vik_layer_unmarshall_params(vl, data+sizeof(int), alm_size, viewport);
 	alm_next;
 
 	while (len>0) {
-		VikLayer * child_layer = vik_layer_unmarshall(data + sizeof(int), alm_size, vvp);
+		VikLayer * child_layer = vik_layer_unmarshall(data + sizeof(int), alm_size, viewport);
 		if (child_layer) {
 			/* kamilFIXME: shouldn't we put "new LayerXYZ" in every _unmarshall() function? */
 			Layer * new_layer = new Layer(child_layer);

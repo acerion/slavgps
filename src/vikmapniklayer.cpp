@@ -101,11 +101,11 @@ enum {
   PARAM_FILE_CACHE_DIR,
   NUM_PARAMS };
 
-static VikMapnikLayer *mapnik_layer_unmarshall(uint8_t *data, int len, VikViewport *vvp);
-static bool mapnik_layer_set_param(VikMapnikLayer *vml, uint16_t id, VikLayerParamData data, VikViewport *vp, bool is_file_operation);
+static VikMapnikLayer *mapnik_layer_unmarshall(uint8_t *data, int len, Viewport * viewport);
+static bool mapnik_layer_set_param(VikMapnikLayer *vml, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
 static VikLayerParamData mapnik_layer_get_param(VikMapnikLayer *vml, uint16_t id, bool is_file_operation);
-static VikMapnikLayer *mapnik_layer_new(VikViewport *vvp);
-static VikMapnikLayer *mapnik_layer_create(VikViewport *vp);
+static VikMapnikLayer * mapnik_layer_new(Viewport * viewport);
+static VikMapnikLayer * mapnik_layer_create(Viewport * viewport);
 static void mapnik_layer_free(VikMapnikLayer *vml);
 
 static void * mapnik_feature_create(VikWindow *vw, Viewport * viewport)
@@ -372,14 +372,14 @@ void LayerMapnik::marshall(uint8_t **data, int *len)
 	vik_layer_marshall_params(VIK_LAYER(vml), data, len);
 }
 
-static VikMapnikLayer *mapnik_layer_unmarshall(uint8_t *data, int len, VikViewport *vvp)
+static VikMapnikLayer * mapnik_layer_unmarshall(uint8_t *data, int len, Viewport * viewport)
 {
-	VikMapnikLayer *rv = mapnik_layer_new(vvp);
-	vik_layer_unmarshall_params(VIK_LAYER(rv), data, len, vvp);
+	VikMapnikLayer *rv = mapnik_layer_new(viewport);
+	vik_layer_unmarshall_params(VIK_LAYER(rv), data, len, viewport);
 	return rv;
 }
 
-static bool mapnik_layer_set_param(VikMapnikLayer *vml, uint16_t id, VikLayerParamData data, VikViewport *vp, bool is_file_operation)
+static bool mapnik_layer_set_param(VikMapnikLayer *vml, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
 {
 	switch (id) {
 		case PARAM_CONFIG_CSS:
@@ -461,11 +461,11 @@ static VikLayerParamData mapnik_layer_get_param(VikMapnikLayer *vml, uint16_t id
 /**
  *
  */
-static VikMapnikLayer *mapnik_layer_new(VikViewport *vvp)
+static VikMapnikLayer * mapnik_layer_new(Viewport * viewport)
 {
 	VikMapnikLayer *vml = VIK_MAPNIK_LAYER(g_object_new (VIK_MAPNIK_LAYER_TYPE, NULL));
 	vik_layer_set_type(VIK_LAYER(vml), VIK_LAYER_MAPNIK);
-	vik_layer_set_defaults(VIK_LAYER(vml), vvp);
+	vik_layer_set_defaults(VIK_LAYER(vml), viewport);
 	vml->tile_size_x = size_default().u; // FUTURE: Is there any use in this being configurable?
 	vml->loaded = false;
 	vml->mi = mapnik_interface_new();
@@ -931,9 +931,9 @@ static void mapnik_layer_free(VikMapnikLayer *vml)
 	}
 }
 
-static VikMapnikLayer * mapnik_layer_create(VikViewport * vp)
+static VikMapnikLayer * mapnik_layer_create(Viewport * viewport)
 {
-	VikMapnikLayer * rv = mapnik_layer_new(vp);
+	VikMapnikLayer * rv = mapnik_layer_new(viewport);
 
 	return rv;
 }

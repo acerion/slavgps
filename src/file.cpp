@@ -360,7 +360,7 @@ static bool file_read(VikAggregateLayer *top, FILE *f, const char *dirpath, VikV
 						params = vik_layer_get_interface(type)->params;
 						params_count = vik_layer_get_interface(type)->params_count;
 					} else {
-						stack->data = (void *) vik_layer_create(type, vp, false);
+						stack->data = (void *) vik_layer_create(type, &vp->port, false);
 						params = vik_layer_get_interface(type)->params;
 						params_count = vik_layer_get_interface(type)->params_count;
 					}
@@ -700,7 +700,7 @@ VikLoadType_t a_file_load(VikAggregateLayer *top, VikViewport *vp, const char *f
 		//  must be loaded into a new TrackWaypoint layer (hence it be created)
 		bool success = true; // Detect load failures - mainly to remove the layer created as it's not required
 
-		VikLayer *vtl = vik_layer_create(VIK_LAYER_TRW, vp, false);
+		VikLayer *vtl = vik_layer_create(VIK_LAYER_TRW, &vp->port, false);
 		vik_layer_rename(vtl, a_file_basename(filename));
 
 		// In fact both kml & gpx files start the same as they are in xml

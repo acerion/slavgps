@@ -112,7 +112,7 @@ static void clip_receive_viking ( GtkClipboard *c, GtkSelectionData *sd, void * 
 
   if ( vc->type == VIK_CLIPBOARD_DATA_LAYER )
   {
-	  VikLayer *new_layer = vik_layer_unmarshall(vc->data, vc->len, (VikViewport *) vlp->panel_ref->get_viewport()->vvp);
+	  VikLayer *new_layer = vik_layer_unmarshall(vc->data, vc->len, vlp->panel_ref->get_viewport());
     vlp->panel_ref->add_layer(new_layer);
   }
   else if ( vc->type == VIK_CLIPBOARD_DATA_SUBLAYER )

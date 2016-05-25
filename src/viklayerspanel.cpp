@@ -484,7 +484,7 @@ bool LayersPanel::new_layer(VikLayerTypeEnum type)
 		(void)a_settings_get_boolean(VIK_SETTINGS_LAYERS_TRW_CREATE_DEFAULT, &ask_user);
 	}
 	ask_user = !ask_user;
-	VikLayer * l = vik_layer_create(type, (VikViewport *) this->viewport->vvp, ask_user);
+	VikLayer * l = vik_layer_create(type, this->viewport, ask_user);
 	if (l) {
 		this->add_layer(l);
 		return true;
@@ -587,7 +587,7 @@ bool LayersPanel::properties()
 			a_dialog_info_msg(VIK_GTK_WINDOW_FROM_WIDGET(this->gob), _("Aggregate Layers have no settable properties."));
 		}
 		Layer * layer = (Layer *) vik_treeview_item_get_layer(this->vt, &iter);
-		if (vik_layer_properties(layer->vl, (VikViewport *) this->viewport->vvp)) {
+		if (vik_layer_properties(layer->vl, this->viewport)) {
 			vik_layer_emit_update(layer->vl);
 		}
 		return true;

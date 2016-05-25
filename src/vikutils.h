@@ -53,7 +53,7 @@ void vu_command_line ( VikWindow *vw, double latitude, double longitude, int zoo
 
 void vu_copy_label_menu ( GtkWidget *widget, unsigned int button );
 
-void vu_zoom_to_show_latlons ( VikCoordMode mode, VikViewport *vvp, struct LatLon maxmin[2] );
+void vu_zoom_to_show_latlons ( VikCoordMode mode, Viewport * viewport, struct LatLon maxmin[2] );
 
 #ifdef __cplusplus
 }

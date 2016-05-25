@@ -58,7 +58,7 @@ static unsigned int layer_signals[VL_LAST_SIGNAL] = { 0 };
 static GObjectClass *parent_class;
 
 static void vik_layer_finalize ( VikLayer *vl );
-static bool vik_layer_properties_factory ( VikLayer *vl, VikViewport *vp );
+static bool vik_layer_properties_factory ( VikLayer *vl, Viewport * viewport);
 static bool layer_defaults_register ( VikLayerTypeEnum type );
 
 G_DEFINE_TYPE (VikLayer, vik_layer, G_TYPE_OBJECT)
@@ -223,18 +223,18 @@ time_t vik_layer_get_timestamp(VikLayer * vl)
 	return layer->get_timestamp();
 }
 
-VikLayer *vik_layer_create ( VikLayerTypeEnum type, VikViewport *vp, bool interactive )
+VikLayer *vik_layer_create ( VikLayerTypeEnum type, Viewport * viewport, bool interactive )
 {
   VikLayer *new_layer = NULL;
   assert ( type < VIK_LAYER_NUM_TYPES );
 
-  new_layer = vik_layer_interfaces[type]->create ( vp );
+  new_layer = vik_layer_interfaces[type]->create(viewport);
 
   assert ( new_layer != NULL );
 
   if ( interactive )
   {
-    if ( vik_layer_properties ( new_layer, vp ) )
+    if ( vik_layer_properties(new_layer, viewport) )
       /* We translate the name here */
       /* in order to avoid translating name set by user */
       vik_layer_rename ( VIK_LAYER(new_layer), _(vik_layer_interfaces[type]->name) );
@@ -248,14 +248,14 @@ VikLayer *vik_layer_create ( VikLayerTypeEnum type, VikViewport *vp, bool intera
 }
 
 /* returns true if OK was pressed */
-bool vik_layer_properties(VikLayer * layer, VikViewport * vp)
+bool vik_layer_properties(VikLayer * layer, Viewport * viewport)
 {
 	if (layer->type == VIK_LAYER_GEOREF) {
 		Layer * l = (Layer *) layer->layer;
-		return l->properties(vp);
+		return l->properties(viewport);
 	}
 
-	return vik_layer_properties_factory ( layer, vp );
+	return vik_layer_properties_factory(layer, viewport);
 }
 
 void vik_layer_draw(VikLayer * l, Viewport * viewport)
@@ -361,7 +361,7 @@ void vik_layer_marshall_params ( VikLayer *vl, uint8_t **data, int *datalen )
 #undef vlm_append
 }
 
-void vik_layer_unmarshall_params ( VikLayer *vl, uint8_t *data, int datalen, VikViewport *vvp )
+void vik_layer_unmarshall_params ( VikLayer *vl, uint8_t *data, int datalen, Viewport * viewport)
 {
   VikLayerParam *params = vik_layer_get_interface(vl->type)->params;
   VikLayerFuncSetParam set_param = vik_layer_get_interface(vl->type)->set_param;
@@ -395,7 +395,7 @@ void vik_layer_unmarshall_params ( VikLayer *vl, uint8_t *data, int datalen, Vik
 	s[vlm_size]=0;
 	vlm_read(s);
 	d.s = s;
-	set_param(vl, i, d, vvp, false);
+	set_param(vl, i, d, viewport, false);
 	free(s);
 	break;
       case VIK_LAYER_PARAM_STRING_LIST:  {
@@ -411,28 +411,28 @@ void vik_layer_unmarshall_params ( VikLayer *vl, uint8_t *data, int datalen, Vik
           list = g_list_append ( list, s );
         }
         d.sl = list;
-        set_param(vl, i, d, vvp, false);
+        set_param(vl, i, d, viewport, false);
         /* don't free -- string list is responsibility of the layer */
 
         break;
         }
       default:
 	vlm_read(&d);
-	set_param(vl, i, d, vvp, false);
+	set_param(vl, i, d, viewport, false);
 	break;
       }
     }
   }
 }
 
-VikLayer *vik_layer_unmarshall ( uint8_t *data, int len, VikViewport *vvp )
+VikLayer *vik_layer_unmarshall ( uint8_t *data, int len, Viewport * viewport)
 {
   header_t *header;
 
   header = (header_t *)data;
 
   if ( vik_layer_interfaces[header->layer_type]->unmarshall ) {
-    return vik_layer_interfaces[header->layer_type]->unmarshall ( header->data, header->len, vvp );
+    return vik_layer_interfaces[header->layer_type]->unmarshall ( header->data, header->len, viewport);
   } else {
     return NULL;
   }
@@ -520,10 +520,10 @@ GdkPixbuf *vik_layer_load_icon ( VikLayerTypeEnum type )
   return NULL;
 }
 
-bool vik_layer_set_param ( VikLayer *layer, uint16_t id, VikLayerParamData data, void * vp, bool is_file_operation )
+bool vik_layer_set_param ( VikLayer *layer, uint16_t id, VikLayerParamData data, void * viewport, bool is_file_operation )
 {
   if ( vik_layer_interfaces[layer->type]->set_param )
-    return vik_layer_interfaces[layer->type]->set_param ( layer, id, data, (VikViewport *) vp, is_file_operation );
+    return vik_layer_interfaces[layer->type]->set_param ( layer, id, data, (Viewport *) viewport, is_file_operation );
   return false;
 }
 
@@ -533,17 +533,17 @@ void vik_layer_post_read ( VikLayer *layer, Viewport * viewport, bool from_file 
 	l->post_read(viewport, from_file);
 }
 
-static bool vik_layer_properties_factory ( VikLayer *vl, VikViewport *vp )
+static bool vik_layer_properties_factory ( VikLayer *vl, Viewport * viewport)
 {
   switch ( a_uibuilder_properties_factory ( _("Layer Properties"),
-					    VIK_GTK_WINDOW_FROM_WIDGET(vp),
+					    VIK_GTK_WINDOW_FROM_WIDGET(viewport->vvp),
 					    vik_layer_interfaces[vl->type]->params,
 					    vik_layer_interfaces[vl->type]->params_count,
 					    vik_layer_interfaces[vl->type]->params_groups,
 					    vik_layer_interfaces[vl->type]->params_groups_count,
 					    (bool (*)(void*, uint16_t, VikLayerParamData, void*, bool)) vik_layer_interfaces[vl->type]->set_param,
 					    vl,
-					    vp,
+					    viewport->vvp,
 					    (VikLayerParamData (*)(void*, uint16_t, bool)) vik_layer_interfaces[vl->type]->get_param,
 					    vl,
 					    (void (*)(GtkWidget*, void**)) vik_layer_interfaces[vl->type]->change_param ) ) {
@@ -554,7 +554,7 @@ static bool vik_layer_properties_factory ( VikLayer *vl, VikViewport *vp )
     case 2:
 	    {
 		    Layer * layer = (Layer *) vl->layer;
-		    layer->post_read(&vp->port, false); /* update any gc's */
+		    layer->post_read(viewport, false); /* update any gc's */
 	    }
     default:
       return true;
@@ -646,10 +646,10 @@ VikLayerTypedParamData *vik_layer_data_typed_param_copy_from_string ( VikLayerPa
  * Loop around all parameters for the specified layer to call the function to get the
  *  default value for that parameter
  */
-void vik_layer_set_defaults ( VikLayer *vl, VikViewport *vvp )
+void vik_layer_set_defaults ( VikLayer *vl, Viewport * viewport)
 {
   // Sneaky initialize of the viewport value here
-  vl->vvp = vvp;
+  vl->viewport = viewport;
   VikLayerInterface *vli = vik_layer_get_interface ( vl->type );
   const char *layer_name = vli->fixed_layer_name;
   VikLayerParamData data;
@@ -662,7 +662,7 @@ void vik_layer_set_defaults ( VikLayer *vl, VikViewport *vvp )
       // only DEM files uses this currently
       if ( vli->params[i].type != VIK_LAYER_PARAM_STRING_LIST ) {
         data = a_layer_defaults_get ( layer_name, vli->params[i].name, vli->params[i].type );
-        vik_layer_set_param ( vl, i, data, vvp, true ); // Possibly come from a file
+        vik_layer_set_param ( vl, i, data, viewport, true ); // Possibly come from a file
       }
     }
   }
@@ -850,7 +850,7 @@ bool Layer::sublayer_toggle_visible(int subtype, void * sublayer)
 	return true;
 }
 
-bool Layer::properties(void * vp)
+bool Layer::properties(void * viewport)
 {
 	return false;
 }
