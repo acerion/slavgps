@@ -62,7 +62,6 @@
 #define UNUSED_LINE_THICKNESS 3
 
 static VikDEMLayer *dem_layer_new(Viewport * viewport);
-static void dem_layer_free(VikDEMLayer *vdl);
 static VikDEMLayer *dem_layer_create(Viewport * viewport);
 static VikDEMLayer *dem_layer_unmarshall(uint8_t *data, int len, Viewport * viewport);
 static bool dem_layer_set_param(VikDEMLayer *vdl, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
@@ -201,8 +200,6 @@ VikLayerInterface vik_dem_layer_interface = {
 	VIK_MENU_ITEM_ALL,
 
 	(VikLayerFuncCreate)                  dem_layer_create,
-	(VikLayerFuncRealize)                 NULL,
-	(VikLayerFuncFree)                    dem_layer_free,
 
 	(VikLayerFuncUnmarshall)	      dem_layer_unmarshall,
 
@@ -916,8 +913,9 @@ void LayerDEM::draw(Viewport * viewport)
 	}
 }
 
-static void dem_layer_free(VikDEMLayer *vdl)
+void LayerDEM::free_()
 {
+	VikDEMLayer * vdl = (VikDEMLayer *) this->vl;
 	int i;
 	if (vdl->gcs) {
 		for (i = 0; i < DEM_N_HEIGHT_COLORS; i++) {

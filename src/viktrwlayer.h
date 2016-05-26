@@ -91,6 +91,9 @@ namespace SlavGPS {
 		char const * sublayer_rename_request(const char * newname, void * vlp, int subtype, void * sublayer, GtkTreeIter * iter);
 		bool sublayer_toggle_visible(int subtype, void * sublayer);
 
+		void realize(VikTreeview * vt, GtkTreeIter * layer_iter);
+		void free_();
+
 
 
 

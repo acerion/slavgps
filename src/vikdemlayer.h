@@ -68,6 +68,7 @@ namespace SlavGPS {
 		void draw(Viewport * viewport);
 		char const * tooltip();
 		void marshall(uint8_t ** data, int * len);
+		void free_();
 
 	};
 

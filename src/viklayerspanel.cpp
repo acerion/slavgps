@@ -111,7 +111,7 @@ LayersPanel::LayersPanel()
 	int a = g_signal_connect_swapped(G_OBJECT(this->toplayer->vl), "update", G_CALLBACK(vik_layers_panel_emit_update), this);
 
 	vik_treeview_add_layer(this->vt, NULL, &(this->toplayer_iter), VIK_LAYER(this->toplayer->vl)->name, NULL, true, this->toplayer, VIK_LAYER_AGGREGATE, VIK_LAYER_AGGREGATE, 0);
-	vik_layer_realize(VIK_LAYER (this->toplayer->vl), this->vt, &(this->toplayer_iter));
+	this->toplayer->realize(this->vt, &(this->toplayer_iter));
 
 	a = g_signal_connect_swapped (this->vt, "popup_menu", G_CALLBACK(menu_popup_cb), this->gob);
 	a = g_signal_connect_swapped (this->vt, "button_press_event", G_CALLBACK(layers_button_press_cb), this->gob);

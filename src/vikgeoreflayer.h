@@ -83,6 +83,7 @@ namespace SlavGPS {
 		void marshall(uint8_t ** data, int * len);
 		void add_menu_items(GtkMenu * menu, void * vlp);
 		bool properties(void * vp);
+		void free_();
 	};
 
 

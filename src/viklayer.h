@@ -123,14 +123,6 @@ struct _VikToolInterface {
 /* Create a new layer of a certain type. Should be filled with defaults */
 typedef VikLayer *    (*VikLayerFuncCreate)                (Viewport *);
 
-/* normally only needed for layers with sublayers. This is called when they
- * are added to the treeview so they can add sublayers to the treeview. */
-typedef void          (*VikLayerFuncRealize)               (VikLayer *,VikTreeview *,GtkTreeIter *);
-
-typedef void          (*VikLayerFuncFree)                  (VikLayer *);
-
-
-
 typedef VikLayer *    (*VikLayerFuncUnmarshall)            (uint8_t *, int, Viewport *);
 
 /* returns true if needs to redraw due to changed param */
@@ -176,8 +168,6 @@ struct _VikLayerInterface {
   VikStdLayerMenuItem               menu_items_selection;
 
   VikLayerFuncCreate                create;
-  VikLayerFuncRealize               realize;
-  VikLayerFuncFree                  free;
 
   VikLayerFuncUnmarshall            unmarshall;
 
@@ -212,7 +202,6 @@ void vik_layer_add_menu_items ( VikLayer *l, GtkMenu *menu, void * vlp );
 VikLayer *vik_layer_create ( VikLayerTypeEnum type, Viewport * viewport, bool interactive );
 bool vik_layer_properties ( VikLayer *layer, Viewport * viewport);
 
-void vik_layer_realize ( VikLayer *l, VikTreeview *vt, GtkTreeIter * layer_iter );
 void vik_layer_post_read ( VikLayer *layer, Viewport * viewport, bool from_file );
 
 bool vik_layer_sublayer_add_menu_items ( VikLayer *l, GtkMenu *menu, void * vlp, int subtype, void * sublayer, GtkTreeIter *iter, Viewport * viewport);
@@ -316,6 +305,11 @@ namespace SlavGPS {
 		/* Do _not_ use this unless absolutely neccesary. Use the dynamic properties (see coordlayer for example)
 		   returns true if OK was pressed. */
 		virtual bool properties(void * viewport);
+
+		/* Normally only needed for layers with sublayers. This is called when they
+		   are added to the treeview so they can add sublayers to the treeview. */
+		virtual void realize(VikTreeview * vt, GtkTreeIter * layer_iter);
+		virtual void free_();
 
 
 

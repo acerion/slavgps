@@ -441,8 +441,10 @@ VikLayer *vik_layer_unmarshall ( uint8_t *data, int len, Viewport * viewport)
 static void vik_layer_finalize ( VikLayer *vl )
 {
   assert ( vl != NULL );
-  if ( vik_layer_interfaces[vl->type]->free )
-    vik_layer_interfaces[vl->type]->free ( vl );
+
+  Layer * layer = (Layer *) vl->layer;
+  layer->free_();
+
   if ( vl->name )
     free( vl->name );
   G_OBJECT_CLASS(parent_class)->finalize(G_OBJECT(vl));
@@ -464,15 +466,6 @@ bool vik_layer_selected(VikLayer * l, int subtype, void * sublayer, int type, vo
 	} else {
 		return vik_window_clear_highlight((VikWindow *) VIK_GTK_WINDOW_FROM_LAYER(l));
 	}
-}
-
-void vik_layer_realize ( VikLayer *l, VikTreeview *vt, GtkTreeIter *layer_iter )
-{
-  l->vt = vt;
-  l->iter = *layer_iter;
-  l->realized = true;
-  if ( vik_layer_interfaces[l->type]->realize )
-    vik_layer_interfaces[l->type]->realize ( l, vt, layer_iter );
 }
 
 void vik_layer_set_menu_items_selection(VikLayer *l, uint16_t selection)
@@ -853,4 +846,20 @@ bool Layer::sublayer_toggle_visible(int subtype, void * sublayer)
 bool Layer::properties(void * viewport)
 {
 	return false;
+}
+
+
+void Layer::realize(VikTreeview * vt, GtkTreeIter * layer_iter)
+{
+	this->vl->vt = vt;
+	this->vl->iter = *layer_iter;
+	this->vl->realized = true;
+
+	return;
+}
+
+
+void Layer::free_()
+{
+	return;
 }

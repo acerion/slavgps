@@ -71,6 +71,9 @@ namespace SlavGPS {
 		void post_read(Viewport * viewport, bool from_file);
 		void draw(Viewport * viewport);
 		void marshall(uint8_t ** data, int * len);
+		void free_();
+
+
 
 		void update_gc(Viewport * viewport);
 

@@ -58,8 +58,6 @@
 extern GList * a_babel_device_list;
 
 static VikGpsLayer *vik_gps_layer_create(Viewport * viewport);
-static void vik_gps_layer_realize ( VikGpsLayer *val, VikTreeview *vt, GtkTreeIter *layer_iter );
-static void vik_gps_layer_free ( VikGpsLayer *val );
 static VikGpsLayer * vik_gps_layer_new(Viewport * viewport);
 
 static VikGpsLayer * gps_layer_unmarshall( uint8_t *data, int len, Viewport * viewport);
@@ -258,8 +256,6 @@ VikLayerInterface vik_gps_layer_interface = {
   VIK_MENU_ITEM_ALL,
 
   (VikLayerFuncCreate)                  vik_gps_layer_create,
-  (VikLayerFuncRealize)                 vik_gps_layer_realize,
-  (VikLayerFuncFree)                    vik_gps_layer_free,
 
   (VikLayerFuncUnmarshall)		gps_layer_unmarshall,
 
@@ -785,8 +781,9 @@ static void disconnect_layer_signal ( VikLayer *vl, VikGpsLayer *vgl )
   }
 }
 
-static void vik_gps_layer_free ( VikGpsLayer *vgl )
+void LayerGPS::free_(  )
 {
+  VikGpsLayer * vgl = (VikGpsLayer *) this->vl;
   int i;
   for (i = 0; i < NUM_TRW; i++) {
     if (vgl->vl.realized)
@@ -806,10 +803,15 @@ static void vik_gps_layer_free ( VikGpsLayer *vgl )
 #endif /* VIK_CONFIG_REALTIME_GPS_TRACKING */
 }
 
-static void vik_gps_layer_realize ( VikGpsLayer *vgl, VikTreeview *vt, GtkTreeIter *layer_iter )
+void LayerGPS::realize(VikTreeview *vt, GtkTreeIter *layer_iter)
 {
   GtkTreeIter iter;
   int ix;
+  VikGpsLayer * vgl = (VikGpsLayer *) this->vl;
+
+  this->vl->vt = vt;
+  this->vl->iter = *layer_iter;
+  this->vl->realized = true;
 
   // TODO set to garmin by default
   //if (a_babel_device_list)
@@ -824,7 +826,7 @@ static void vik_gps_layer_realize ( VikGpsLayer *vgl, VikTreeview *vt, GtkTreeIt
 			     layer, trw->type, trw->type, layer->get_timestamp() );
     if ( ! trw->visible )
       vik_treeview_item_set_visible ( VIK_LAYER(vgl)->vt, &iter, false );
-    vik_layer_realize ( trw, VIK_LAYER(vgl)->vt, &iter );
+    layer->realize(VIK_LAYER(vgl)->vt, &iter);
     g_signal_connect_swapped ( G_OBJECT(trw), "update", G_CALLBACK(vik_layer_emit_update_secondary), vgl );
   }
 }

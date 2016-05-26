@@ -77,8 +77,6 @@ VikLayerInterface vik_coord_layer_interface = {
 	VIK_MENU_ITEM_ALL,
 
 	(VikLayerFuncCreate)                  coord_layer_create,
-	(VikLayerFuncRealize)                 NULL,
-	(VikLayerFuncFree)                    coord_layer_free,
 
 	(VikLayerFuncUnmarshall)		coord_layer_unmarshall,
 
@@ -370,11 +368,10 @@ void LayerCoord::draw(Viewport * viewport)
 	}
 }
 
-static void coord_layer_free(VikCoordLayer *vcl)
+void LayerCoord::free_()
 {
-	LayerCoord * layer = (LayerCoord *) ((VikLayer * ) vcl)->layer;
-	if (layer->gc != NULL) {
-		g_object_unref(G_OBJECT(layer->gc));
+	if (this->gc) {
+		g_object_unref(G_OBJECT(this->gc));
 	}
 }
 

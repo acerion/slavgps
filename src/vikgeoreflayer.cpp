@@ -81,7 +81,6 @@ static bool georef_layer_set_param(VikGeorefLayer *vgl, uint16_t id, VikLayerPar
 static VikLayerParamData georef_layer_get_param(VikGeorefLayer *vgl, uint16_t id, bool is_file_operation);
 static VikGeorefLayer *georef_layer_new(Viewport * viewport);
 static VikGeorefLayer *georef_layer_create(Viewport * viewport);
-static void georef_layer_free(VikGeorefLayer *vgl);
 static void georef_layer_set_image(VikGeorefLayer *vgl, const char *image);
 static bool georef_layer_dialog(VikGeorefLayer *vgl, Viewport * viewport, GtkWindow *w);
 
@@ -139,8 +138,6 @@ VikLayerInterface vik_georef_layer_interface = {
 	VIK_MENU_ITEM_ALL,
 
 	(VikLayerFuncCreate)                  georef_layer_create,
-	(VikLayerFuncRealize)                 NULL,
-	(VikLayerFuncFree)                    georef_layer_free,
 
 	(VikLayerFuncUnmarshall)	      georef_layer_unmarshall,
 
@@ -463,8 +460,9 @@ void LayerGeoref::draw(Viewport * viewport)
 	}
 }
 
-static void georef_layer_free(VikGeorefLayer *vgl)
+void LayerGeoref::free_()
 {
+	VikGeorefLayer * vgl = (VikGeorefLayer *) this->vl;
 	if (vgl->image != NULL) {
 		free(vgl->image);
 	}
@@ -1202,6 +1200,7 @@ VikGeorefLayer *vik_georef_layer_create(Viewport * viewport,
 	}
 
 	// Bad image
-	georef_layer_free(vgl);
+	LayerGeoref * layer = (LayerGeoref *) ((VikLayer *) vgl)->layer;
+	layer->free_();
 	return NULL;
 }

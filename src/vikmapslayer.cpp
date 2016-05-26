@@ -119,7 +119,6 @@ static bool maps_layer_set_param(VikMapsLayer *vml, uint16_t id, VikLayerParamDa
 static VikLayerParamData maps_layer_get_param(VikMapsLayer *vml, uint16_t id, bool is_file_operation);
 static void maps_layer_change_param(GtkWidget *widget, ui_change_values values);
 static VikMapsLayer * maps_layer_new(Viewport * viewport);
-static void maps_layer_free(VikMapsLayer *vml);
 static bool maps_layer_download_release(VikMapsLayer *vml, GdkEventButton *event, Viewport * viewport);
 static bool maps_layer_download_click(VikMapsLayer *vml, GdkEventButton *event, Viewport * viewport);
 static void * maps_layer_download_create(VikWindow *vw, Viewport * viewport);
@@ -228,8 +227,6 @@ VikLayerInterface vik_maps_layer_interface = {
 	VIK_MENU_ITEM_ALL,
 
 	(VikLayerFuncCreate)                  maps_layer_new,
-	(VikLayerFuncRealize)                 NULL,
-	(VikLayerFuncFree)                    maps_layer_free,
 
 	(VikLayerFuncUnmarshall)	      maps_layer_unmarshall,
 
@@ -824,26 +821,24 @@ static VikMapsLayer * maps_layer_new(Viewport * viewport)
 	return vml;
 }
 
-static void maps_layer_free(VikMapsLayer *vml)
+void LayerMaps::free_()
 {
-	LayerMaps * layer = (LayerMaps *) ((VikLayer *) vml)->layer;
-
-	free(layer->cache_dir);
-	layer->cache_dir = NULL;
-	if (layer->dl_right_click_menu) {
-		g_object_ref_sink(G_OBJECT(layer->dl_right_click_menu));
+	free(this->cache_dir);
+	this->cache_dir = NULL;
+	if (this->dl_right_click_menu) {
+		g_object_ref_sink(G_OBJECT(this->dl_right_click_menu));
 	}
 
-	free(layer->last_center);
-	layer->last_center = NULL;
-	free(layer->filename);
-	layer->filename = NULL;
+	free(this->last_center);
+	this->last_center = NULL;
+	free(this->filename);
+	this->filename = NULL;
 
 #ifdef HAVE_SQLITE3_H
-	MapSource * map = map_sources[layer->map_index];
+	MapSource * map = map_sources[this->map_index];
 	if (map->is_mbtiles()) {
-		if (layer->mbtiles) {
-			int ans = sqlite3_close(layer->mbtiles);
+		if (this->mbtiles) {
+			int ans = sqlite3_close(this->mbtiles);
 			if (ans != SQLITE_OK) {
 				// Only to console for information purposes only
 				fprintf(stderr, "WARNING: SQL Close problem: %d\n", ans);

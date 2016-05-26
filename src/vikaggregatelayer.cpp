@@ -38,7 +38,6 @@
 
 
 static VikAggregateLayer *aggregate_layer_unmarshall(uint8_t *data, int len, Viewport * viewport);
-static void vik_aggregate_layer_realize(VikAggregateLayer *val, VikTreeview *vt, GtkTreeIter *layer_iter);
 
 VikLayerInterface vik_aggregate_layer_interface = {
 	"Aggregate",
@@ -57,9 +56,6 @@ VikLayerInterface vik_aggregate_layer_interface = {
 	VIK_MENU_ITEM_ALL,
 
 	(VikLayerFuncCreate)                  vik_aggregate_layer_create,
-	(VikLayerFuncRealize)                 vik_aggregate_layer_realize,
-	(VikLayerFuncFree)                    vik_aggregate_layer_free,
-
 	(VikLayerFuncUnmarshall)	      aggregate_layer_unmarshall,
 
 	(VikLayerFuncSetParam)                NULL,
@@ -197,7 +193,7 @@ void LayerAggregate::insert_layer(Layer * layer, GtkTreeIter *replace_iter)
 			vik_treeview_item_set_visible(vl->vt, &iter, false);
 		}
 
-		vik_layer_realize(layer->vl, vl->vt, &iter);
+		layer->realize(vl->vt, &iter);
 
 		if (this->children->empty()) {
 			vik_treeview_expand(vl->vt, &(vl->iter));
@@ -258,7 +254,7 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 			vik_treeview_item_set_visible(vl->vt, &iter, false);
 		}
 
-		vik_layer_realize(layer->vl, vl->vt, &iter);
+		layer->realize(vl->vt, &iter);
 
 		if (this->children->empty()) {
 			vik_treeview_expand(vl->vt, &(vl->iter));
@@ -804,17 +800,16 @@ static void disconnect_layer_signal(VikLayer *vl, VikAggregateLayer *val)
 	}
 }
 
-void vik_aggregate_layer_free(VikAggregateLayer *val)
+void LayerAggregate::free_()
 {
-	LayerAggregate * aggregate = (LayerAggregate *) ((VikLayer *) val)->layer;
-	for (auto child = aggregate->children->begin(); child != aggregate->children->end(); child++) {
-		disconnect_layer_signal((*child)->vl, val);
+	for (auto child = this->children->begin(); child != this->children->end(); child++) {
+		disconnect_layer_signal((*child)->vl, (VikAggregateLayer *) this->vl);
 		g_object_unref((*child)->vl);
 	}
 	// g_list_free(val->children); // kamilFIXME: clean up the list. */
 
-	if (aggregate->tracks_analysis_dialog) {
-		gtk_widget_destroy(aggregate->tracks_analysis_dialog);
+	if (this->tracks_analysis_dialog) {
+		gtk_widget_destroy(this->tracks_analysis_dialog);
 	}
 }
 
@@ -966,17 +961,16 @@ std::list<Layer *> * LayerAggregate::get_all_layers_of_type(std::list<Layer *> *
 	return layers;
 }
 
-void vik_aggregate_layer_realize(VikAggregateLayer *val, VikTreeview *vt, GtkTreeIter *layer_iter)
-{
-	LayerAggregate * aggregate = (LayerAggregate *) ((VikLayer *) val)->layer;
-	aggregate->realize(vt, layer_iter);
 
-	return;
-}
+
 
 
 void LayerAggregate::realize(VikTreeview *vt, GtkTreeIter *layer_iter)
 {
+	this->vl->vt = vt;
+	this->vl->iter = *layer_iter;
+	this->vl->realized = true;
+
 	if (this->children->empty()) {
 		return;
 	}
@@ -990,7 +984,7 @@ void LayerAggregate::realize(VikTreeview *vt, GtkTreeIter *layer_iter)
 		if (! layer->vl->visible) {
 			vik_treeview_item_set_visible(vl->vt, &iter, false);
 		}
-		vik_layer_realize(layer->vl, this->vl->vt, &iter);
+		layer->realize(this->vl->vt, &iter);
 	}
 }
 

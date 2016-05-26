@@ -105,6 +105,8 @@ namespace SlavGPS {
 		void marshall(uint8_t ** data, int * len);
 		void change_coord_mode(VikCoordMode mode);
 		void add_menu_items(GtkMenu * menu, void * vlp);
+		void realize(VikTreeview *vt, GtkTreeIter *layer_iter);
+		void free_();
 	};
 
 

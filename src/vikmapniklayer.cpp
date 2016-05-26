@@ -106,7 +106,6 @@ static bool mapnik_layer_set_param(VikMapnikLayer *vml, uint16_t id, VikLayerPar
 static VikLayerParamData mapnik_layer_get_param(VikMapnikLayer *vml, uint16_t id, bool is_file_operation);
 static VikMapnikLayer * mapnik_layer_new(Viewport * viewport);
 static VikMapnikLayer * mapnik_layer_create(Viewport * viewport);
-static void mapnik_layer_free(VikMapnikLayer *vml);
 
 static void * mapnik_feature_create(VikWindow *vw, Viewport * viewport)
 {
@@ -151,8 +150,6 @@ VikLayerInterface vik_mapnik_layer_interface = {
 	VIK_MENU_ITEM_ALL,
 
 	(VikLayerFuncCreate)                  mapnik_layer_create,
-	(VikLayerFuncRealize)                 NULL,
-	(VikLayerFuncFree)                    mapnik_layer_free,
 
 	(VikLayerFuncUnmarshall)              mapnik_layer_unmarshall,
 
@@ -919,8 +916,9 @@ void LayerMapnik::draw(Viewport * viewport)
 /**
  *
  */
-static void mapnik_layer_free(VikMapnikLayer *vml)
+void LayerMapnik::free_()
 {
+	VikMapnikLayer * vml = (VikMapnikLayer *) this->vl;
 	mapnik_interface_free(vml->mi);
 	if (vml->filename_css) {
 		free(vml->filename_css);
