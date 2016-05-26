@@ -31,6 +31,7 @@
 
 #include "viklayer.h"
 
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -50,28 +51,17 @@ struct _VikAggregateLayerClass
 
 GType vik_aggregate_layer_get_type();
 
-typedef struct _VikAggregateLayer VikAggregateLayer;
+typedef struct {
+	VikLayer vl;
+} VikAggregateLayer;
+
 
 VikAggregateLayer *vik_aggregate_layer_new();
-void vik_aggregate_layer_add_layer(VikAggregateLayer *val, Layer * layer, bool allow_reordering);
-void vik_aggregate_layer_insert_layer(VikAggregateLayer *val, Layer * layer, GtkTreeIter *replace_layer);
-void vik_aggregate_layer_move_layer(VikAggregateLayer *val, GtkTreeIter *child_iter, bool up);
-//void vik_aggregate_layer_draw(VikAggregateLayer *val, Viewport * viewport);
 void vik_aggregate_layer_free(VikAggregateLayer *val);
-void vik_aggregate_layer_clear(VikAggregateLayer *val);
 bool vik_aggregate_layer_delete(VikAggregateLayer *val, GtkTreeIter *iter);
 VikAggregateLayer *vik_aggregate_layer_create(Viewport * viewport);
+//bool vik_aggregate_layer_load_layers(VikAggregateLayer *val, FILE *f, void * vp);
 
-/* returns: 0 = success, 1 = none appl. found, 2 = found but rejected */
-// unsigned int vik_aggregate_layer_tool(VikAggregateLayer *val, uint16_t layer_type, VikToolInterfaceFunc tool_func, GdkEventButton *event, VikViewport *vvp);
-
-Layer * vik_aggregate_layer_get_top_visible_layer_of_type(VikAggregateLayer *val, VikLayerTypeEnum type);
-void vik_aggregate_layer_realize(VikAggregateLayer *val, VikTreeview *vt, GtkTreeIter *layer_iter);
-bool vik_aggregate_layer_load_layers(VikAggregateLayer *val, FILE *f, void * vp);
-bool vik_aggregate_layer_is_empty(VikAggregateLayer *val);
-
-const std::list<Layer *> * vik_aggregate_layer_get_children(VikAggregateLayer *val);
-std::list<Layer *> * vik_aggregate_layer_get_all_layers_of_type(VikAggregateLayer *val, std::list<Layer *> * layers, VikLayerTypeEnum type, bool include_invisible);
 
 #ifdef __cplusplus
 }
@@ -79,6 +69,9 @@ std::list<Layer *> * vik_aggregate_layer_get_all_layers_of_type(VikAggregateLaye
 
 
 
+/* Forward declarations. */
+struct _VikLayersPanel;
+typedef struct _VikLayersPanel VikLayersPanel;
 
 
 namespace SlavGPS {
@@ -90,7 +83,7 @@ namespace SlavGPS {
 	class LayerAggregate : public Layer {
 
 	public:
-		LayerAggregate(VikLayer * vl) : Layer(vl) { };
+		LayerAggregate(VikLayer * vl);
 
 
 		/* Layer interface methods. */
@@ -101,6 +94,35 @@ namespace SlavGPS {
 		void change_coord_mode(VikCoordMode mode);
 		void drag_drop_request(Layer * src, GtkTreeIter * src_item_iter, GtkTreePath * dest_path);
 		void add_menu_items(GtkMenu * menu, void * vlp);
+
+
+
+
+
+
+		void add_layer(Layer * layer, bool allow_reordering);
+		void insert_layer(Layer * layer, GtkTreeIter *replace_iter);
+		void move_layer(GtkTreeIter * child_iter, bool up);
+		void clear();
+
+		Layer * get_top_visible_layer_of_type(VikLayerTypeEnum type);
+		GList * waypoint_create_list();
+		GList * track_create_list();
+		std::list<Layer *> * get_all_layers_of_type(std::list<Layer *> * layers, VikLayerTypeEnum type, bool include_invisible);
+		bool is_empty();
+		const std::list<Layer *> * get_children();
+		void realize(VikTreeview *vt, GtkTreeIter *layer_iter);
+
+		void search_date();
+
+		void child_visible_set(VikLayersPanel * vlp, bool visible);
+		void child_visible_toggle(VikLayersPanel * vlp);
+
+		std::list<Layer *> * children;
+
+		// One per layer
+		GtkWidget * tracks_analysis_dialog;
+
 	};
 
 

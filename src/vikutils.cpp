@@ -857,7 +857,7 @@ void vu_command_line ( VikWindow *vw, double latitude, double longitude, int zoo
 			vik_maps_layer_set_map_type(vml, the_type_id);
 			vik_layer_rename ( VIK_LAYER(vml), _("Map") );
 			Layer * layer = (Layer *) (VIK_LAYER(vml))->layer;
-			vik_aggregate_layer_add_layer ( vik_window_layers_panel(vw)->panel_ref->get_top_layer(), layer, true );
+			vik_window_layers_panel(vw)->panel_ref->get_top_layer()->add_layer(layer, true);
 			vik_layer_emit_update ( VIK_LAYER(vml) );
 		}
 	}

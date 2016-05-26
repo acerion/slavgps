@@ -180,13 +180,14 @@ static void write_layer_params_and_data(VikLayer *l, FILE *f)
 
 static void file_write(VikAggregateLayer *top, FILE *f, void * vp)
 {
+	LayerAggregate * aggregate = (LayerAggregate *) ((VikLayer *) top)->layer;
 	Stack *stack = NULL;
 	VikLayer *current_layer;
 	struct LatLon ll;
 	VikViewportDrawMode mode;
 	char *modestring = NULL;
 
-	const std::list<Layer *> * children = vik_aggregate_layer_get_children(VIK_AGGREGATE_LAYER(top));
+	const std::list<Layer *> * children = aggregate->get_children();
 
 	push(&stack);
 	//stack->data = children; /* kamilFIXME: fix the assignment. */
@@ -231,9 +232,9 @@ static void file_write(VikAggregateLayer *top, FILE *f, void * vp)
 		current_layer = VIK_LAYER(((GList *)stack->data)->data);
 		fprintf(f, "\n~Layer %s\n", vik_layer_get_interface(current_layer->type)->fixed_layer_name);
 		write_layer_params_and_data(current_layer, f);
-		if (current_layer->type == VIK_LAYER_AGGREGATE && !vik_aggregate_layer_is_empty(VIK_AGGREGATE_LAYER(current_layer))) {
+		if (current_layer->type == VIK_LAYER_AGGREGATE && !((LayerAggregate *) current_layer->layer)->is_empty()) {
 			push(&stack);
-			const std::list<Layer *> * children = vik_aggregate_layer_get_children(VIK_AGGREGATE_LAYER(current_layer));
+			const std::list<Layer *> * children = ((LayerAggregate *) current_layer->layer)->get_children();
 			// stack->data = children; /* kamilFIXME: fix the assignment. */
 		} else if (current_layer->type == VIK_LAYER_GPS && !vik_gps_layer_is_empty(VIK_GPS_LAYER(current_layer))) {
 			push(&stack);
@@ -380,7 +381,7 @@ static bool file_read(VikAggregateLayer *top, FILE *f, const char *dirpath, VikV
 					if (stack->data && stack->under->data) {
 						if (VIK_LAYER(stack->under->data)->type == VIK_LAYER_AGGREGATE) {
 							Layer * layer = (Layer *) (VIK_LAYER(stack->data))->layer;
-							vik_aggregate_layer_add_layer(VIK_AGGREGATE_LAYER(stack->under->data), layer, false);
+							((LayerAggregate *) ((VikLayer *) stack->under->data)->layer)->add_layer(layer, false);
 							vik_layer_post_read(VIK_LAYER(stack->data), &vp->port, true);
 						} else if (VIK_LAYER(stack->under->data)->type == VIK_LAYER_GPS) {
 							/* TODO: anything else needs to be done here ? */
@@ -554,7 +555,7 @@ static bool file_read(VikAggregateLayer *top, FILE *f, const char *dirpath, VikV
 	while (stack) {
 		if (stack->under && stack->under->data && stack->data){
 			Layer * layer = (Layer *) (VIK_LAYER(stack->data))->layer;
-			vik_aggregate_layer_add_layer(VIK_AGGREGATE_LAYER(stack->under->data), layer, false);
+			((LayerAggregate *) ((VikLayer *) stack->under->data)->layer)->add_layer(layer, false);
 			vik_layer_post_read(VIK_LAYER(stack->data), &vp->port, true);
 		}
 		pop(&stack);
@@ -734,7 +735,7 @@ VikLoadType_t a_file_load(VikAggregateLayer *top, VikViewport *vp, const char *f
 			// Complete the setup from the successful load
 			vik_layer_post_read(vtl, &vp->port, true);
 			Layer * layer = (Layer *) vtl->layer;
-			vik_aggregate_layer_add_layer(top, layer, false);
+			((LayerAggregate *) ((VikLayer *) top)->layer)->add_layer(layer, false);
 			(VIK_TRW_LAYER(vtl))->trw->auto_set_view(&vp->port);
 		}
 	}

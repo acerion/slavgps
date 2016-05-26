@@ -480,7 +480,7 @@ void vik_window_new_window_finish(VikWindow *vw)
 		VikMapsLayer *vml = VIK_MAPS_LAYER(vik_layer_create(VIK_LAYER_MAPS, (vw->viewport), false));
 		vik_layer_rename(VIK_LAYER(vml), _("Default Map"));
 		Layer * layer = (Layer *) (VIK_LAYER(vml))->layer;
-		vik_aggregate_layer_add_layer(vw->layers_panel->get_top_layer(), layer, true);
+		vw->layers_panel->get_top_layer()->add_layer(layer, true);
 
 		draw_update(vw);
 	}
@@ -953,7 +953,7 @@ static VikWindow *window_new()
 static void simple_map_update(VikWindow *vw, bool only_new)
 {
 	// Find the most relevent single map layer to operate on
-	Layer * layer = vik_aggregate_layer_get_top_visible_layer_of_type(vw->layers_panel->get_top_layer(), VIK_LAYER_MAPS);
+	Layer * layer = vw->layers_panel->get_top_layer()->get_top_visible_layer_of_type(VIK_LAYER_MAPS);
 	if (layer)
 		vik_maps_layer_download(VIK_MAPS_LAYER(layer->vl), vw->viewport, only_new);
 }
@@ -3105,7 +3105,7 @@ void vik_window_open_file(VikWindow *vw, const char *filename, bool change_filen
 	bool success = false;
 	bool restore_original_filename = false;
 
-	VikAggregateLayer * agg = vw->layers_panel->get_top_layer();
+	VikAggregateLayer * agg = (VikAggregateLayer *) vw->layers_panel->get_top_layer()->vl;
 	vw->loaded_type = a_file_load(agg, ((VikViewport *) vw->viewport->vvp), filename);
 	switch (vw->loaded_type) {
 	case LOAD_TYPE_READ_FAILURE:
@@ -3362,7 +3362,7 @@ static bool window_save(VikWindow *vw)
 	vik_window_set_busy_cursor(vw);
 	bool success = true;
 
-	if (a_file_save(vw->layers_panel->get_top_layer(), ((VikViewport *) vw->viewport->vvp), vw->filename)) {
+	if (a_file_save((VikAggregateLayer *) vw->layers_panel->get_top_layer()->vl, ((VikViewport *) vw->viewport->vvp), vw->filename)) {
 		update_recently_used_document(vw, vw->filename);
 	} else {
 		a_dialog_error_msg(GTK_WINDOW(vw), _("The filename you requested could not be opened for writing."));
@@ -3760,8 +3760,7 @@ static void default_location_cb(GtkAction *a, VikWindow *vw)
 static void clear_cb(GtkAction *a, VikWindow *vw)
 {
 	// Do nothing if empty
-	VikAggregateLayer *top = vw->layers_panel->get_top_layer();
-	if (! vik_aggregate_layer_is_empty(top)) {
+	if (! vw->layers_panel->get_top_layer()->is_empty()) {
 		if (a_dialog_yes_or_no(GTK_WINDOW(vw), _("Are you sure you wish to delete all layers?"), NULL)) {
 			vw->layers_panel->clear();
 			window_set_filename(vw, NULL);

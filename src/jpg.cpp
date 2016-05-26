@@ -131,7 +131,7 @@ bool a_jpg_load_file ( VikAggregateLayer *top, const char *filename, VikViewport
 	vik_layer_post_read ( vtl, &vvp->port, true );
 	if ( create_layer ) {
 		Layer * layer = (Layer *) vtl->layer;
-		vik_aggregate_layer_add_layer ( top, layer, false );
+		((LayerAggregate *) ((VikLayer *) top)->layer)->add_layer(layer, false);
 	}
 
 	if ( auto_zoom )

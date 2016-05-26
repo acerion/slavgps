@@ -115,7 +115,7 @@ static void on_complete_process(w_and_interface_t *wi)
 			if (! wi->vtl->trw->is_empty()) {
 				vik_layer_post_read(VIK_LAYER(wi->vtl), &wi->w->vvp->port, true);
 				Layer * layer = (Layer *) (VIK_LAYER(wi->vtl))->layer;
-				vik_aggregate_layer_add_layer(wi->w->vlp->panel_ref->get_top_layer(), layer, true);
+				wi->w->vlp->panel_ref->get_top_layer()->add_layer(layer, true);
 			} else {
 				gtk_label_set_text(GTK_LABEL(wi->w->status), _("No data."));
 			}

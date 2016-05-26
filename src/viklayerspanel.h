@@ -59,13 +59,13 @@ namespace SlavGPS {
 		bool properties();
 		bool new_layer(VikLayerTypeEnum type);
 		void clear();
-		VikAggregateLayer * get_top_layer();
+		LayerAggregate * get_top_layer();
 		void change_coord_mode(VikCoordMode mode);
 		std::list<Layer *> * get_all_layers_of_type(int type, bool include_invisible);
 		VikTreeview * get_treeview();
 
 
-		VikAggregateLayer *toplayer;
+		LayerAggregate * toplayer;
 		GtkTreeIter toplayer_iter;
 
 		VikTreeview *vt;
