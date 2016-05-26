@@ -356,7 +356,7 @@ static void gpx_end(VikTrwLayer *vtl, const char *el)
        break;
 
      case tt_gpx_name:
-       vik_layer_rename ( VIK_LAYER(vtl), c_cdata->str );
+       vtl->trw->rename(c_cdata->str );
        g_string_erase ( c_cdata, 0, -1 );
        break;
 
@@ -1121,7 +1121,7 @@ void a_gpx_write_file ( VikTrwLayer *vtl, FILE *f, GpxWritingOptions *options )
   gpx_write_header ( f );
 
   char *tmp;
-  const char *name = vik_layer_get_name(VIK_LAYER(vtl));
+  const char *name = vtl->trw->get_name();
   if ( name ) {
     tmp = entitize ( name );
     fprintf ( f, "  <name>%s</name>\n", tmp );

@@ -98,10 +98,11 @@ bool a_jpg_load_file ( VikAggregateLayer *top, const char *filename, VikViewport
 	VikLayer *vtl = vlp->panel_ref->get_selected();
 
 	bool create_layer = false;
-	if ( vtl == NULL || vtl->type != VIK_LAYER_TRW ) {
+	if ( vtl == NULL || ((Layer *) vtl->layer)->type != VIK_LAYER_TRW ) {
 		// Create layer if necessary
+
 		vtl = vik_layer_create ( VIK_LAYER_TRW, &vvp->port, false );
-		vik_layer_rename ( vtl, a_file_basename ( filename ) );
+		((VikTrwLayer *) vtl)->trw->rename(a_file_basename ( filename ) );
 		create_layer = true;
 	}
 

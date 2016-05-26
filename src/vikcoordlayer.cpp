@@ -178,7 +178,6 @@ void LayerCoord::post_read(Viewport * viewport, bool from_file)
 static VikCoordLayer * coord_layer_new(Viewport * viewport)
 {
 	VikCoordLayer *vcl = VIK_COORD_LAYER(g_object_new(VIK_COORD_LAYER_TYPE, NULL));
-	vik_layer_set_type(VIK_LAYER(vcl), VIK_LAYER_COORD);
 
 	((VikLayer *) vcl)->layer = new LayerCoord((VikLayer *) vcl);
 
@@ -394,3 +393,11 @@ static VikCoordLayer * coord_layer_create(Viewport * viewport)
 
 	return vcl;
 }
+
+
+
+
+LayerCoord::LayerCoord(VikLayer * vl) : Layer(vl)
+{
+	this->type = VIK_LAYER_COORD;
+};

@@ -636,9 +636,9 @@ static bool datasource_osm_my_traces_process ( VikTrwLayer *vtl, ProcessOptions 
 			// Have data but no layer - so create one
 			vtlX = VIK_TRW_LAYER ( vik_layer_create ( VIK_LAYER_TRW, &adw->vvp->port, false ) );
 			if ( ((gpx_meta_data_t*)selected_iterator->data)->name )
-				vik_layer_rename ( VIK_LAYER ( vtlX ), ((gpx_meta_data_t*)selected_iterator->data)->name );
+				vtlX->trw->rename(((gpx_meta_data_t*)selected_iterator->data)->name);
 			else
-				vik_layer_rename ( VIK_LAYER ( vtlX ), _("My OSM Traces") );
+				vtlX->trw->rename(_("My OSM Traces"));
 		}
 
 		result = false;

@@ -905,8 +905,7 @@ static int vik_treeview_drag_data_received(GtkTreeDragDest *drag_dest, GtkTreePa
 
 		gtk_tree_model_get_iter_first(tree_model, &root_iter);
 		TREEVIEW_GET(tree_model, &root_iter, ITEM_POINTER_COLUMN, &vl);
-		vt = vl->vt;
-
+		Layer * layer = (Layer *) vl->layer;
 
 		if (gtk_tree_path_get_depth(dest_cp)>1) { /* can't be sibling of top layer */
 			VikLayer *vl_src, *vl_dest;
@@ -916,12 +915,12 @@ static int vik_treeview_drag_data_received(GtkTreeDragDest *drag_dest, GtkTreePa
 				gtk_tree_path_up(dest_cp);
 				gtk_tree_model_get_iter(src_model, &dest_parent, dest_cp);
 			} while (gtk_tree_path_get_depth(dest_cp)>1 &&
-				 vik_treeview_item_get_type(vt, &dest_parent) != VIK_TREEVIEW_TYPE_LAYER);
+				 vik_treeview_item_get_type(layer->vt, &dest_parent) != VIK_TREEVIEW_TYPE_LAYER);
 
 
-			vl_src = (VikLayer *) vik_treeview_item_get_parent(vt, &src_iter);
+			vl_src = (VikLayer *) vik_treeview_item_get_parent(layer->vt, &src_iter);
 			assert (vl_src);
-			Layer * layer_dest = (Layer *) vik_treeview_item_get_layer(vt, &dest_parent);
+			Layer * layer_dest = (Layer *) vik_treeview_item_get_layer(layer->vt, &dest_parent);
 
 			/* TODO: might want to allow different types, and let the clients handle how they want */
 			layer_dest->drag_drop_request((Layer *) vl_src->layer, &src_iter, dest);

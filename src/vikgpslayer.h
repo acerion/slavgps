@@ -96,7 +96,7 @@ namespace SlavGPS {
 
 	class LayerGPS : public Layer {
 	public:
-		LayerGPS(VikLayer * vl) : Layer(vl) { };
+		LayerGPS(VikLayer * vl);
 
 
 		/* Layer interface methods. */

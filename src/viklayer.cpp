@@ -98,20 +98,22 @@ static bool idle_draw ( VikLayer *vl )
  */
 void vik_layer_emit_update ( VikLayer *vl )
 {
-  if ( vl->visible && vl->realized ) {
-    GThread *thread = vik_window_get_thread ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(vl)) );
+  Layer * layer = (Layer *) vl->layer;
+
+  if ( layer->visible && layer->realized ) {
+    GThread *thread = vik_window_get_thread ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(layer->vl)) );
     if ( !thread )
       // Do nothing
       return;
 
-    vik_window_set_redraw_trigger(vl);
+    vik_window_set_redraw_trigger(layer->vl);
 
     // Only ever draw when there is time to do so
     if ( g_thread_self() != thread )
       // Drawing requested from another (background) thread, so handle via the gdk thread method
-      gdk_threads_add_idle ( (GSourceFunc) idle_draw, vl );
+      gdk_threads_add_idle ( (GSourceFunc) idle_draw, layer->vl );
     else
-      g_idle_add ( (GSourceFunc) idle_draw, vl );
+      g_idle_add ( (GSourceFunc) idle_draw, layer->vl );
   }
 }
 
@@ -128,7 +130,9 @@ void vik_layer_emit_update_although_invisible ( VikLayer *vl )
 /* doesn't set the trigger. should be done by aggregate layer when child emits update. */
 void vik_layer_emit_update_secondary ( VikLayer *vl )
 {
-  if ( vl->visible )
+  Layer * layer = (Layer *) vl->layer;
+
+  if (layer->visible)
     // TODO: this can used from the background - eg in acquire
     //       so will need to flow background update status through too
     g_idle_add ( (GSourceFunc) idle_draw, vl );
@@ -182,39 +186,29 @@ static bool layer_defaults_register ( VikLayerTypeEnum type )
   return answer;
 }
 
-static void vik_layer_init ( VikLayer *vl )
+static void vik_layer_init(VikLayer * vl)
 {
-  vl->visible = true;
-  vl->name = NULL;
-  vl->realized = false;
-}
-
-void vik_layer_set_type ( VikLayer *vl, VikLayerTypeEnum type )
-{
-  vl->type = type;
+	return;
 }
 
 /* frees old name */
-void vik_layer_rename ( VikLayer *l, const char *new_name )
+void Layer::rename(char const * new_name)
 {
-  assert ( l != NULL );
-  assert ( new_name != NULL );
-  free( l->name );
-  l->name = g_strdup( new_name );
+	assert (new_name);
+	free(this->name);
+	this->name = strdup(new_name);
 }
 
-void vik_layer_rename_no_copy ( VikLayer *l, char *new_name )
+void Layer::rename_no_copy(char * new_name)
 {
-  assert ( l != NULL );
-  assert ( new_name != NULL );
-  free( l->name );
-  l->name = new_name;
+	assert (new_name);
+	free(this->name);
+	this->name = new_name;
 }
 
-const char *vik_layer_get_name ( VikLayer *l )
+char const * Layer::get_name()
 {
-  assert ( l != NULL);
-  return l->name;
+	return this->name;
 }
 
 time_t vik_layer_get_timestamp(VikLayer * vl)
@@ -237,7 +231,7 @@ VikLayer *vik_layer_create ( VikLayerTypeEnum type, Viewport * viewport, bool in
     if ( vik_layer_properties(new_layer, viewport) )
       /* We translate the name here */
       /* in order to avoid translating name set by user */
-      vik_layer_rename ( VIK_LAYER(new_layer), _(vik_layer_interfaces[type]->name) );
+	    ((Layer *) ((VikLayer *) new_layer)->layer)->rename(_(vik_layer_interfaces[type]->name));
     else
     {
       g_object_unref ( G_OBJECT(new_layer) ); /* cancel that */
@@ -248,20 +242,20 @@ VikLayer *vik_layer_create ( VikLayerTypeEnum type, Viewport * viewport, bool in
 }
 
 /* returns true if OK was pressed */
-bool vik_layer_properties(VikLayer * layer, Viewport * viewport)
+bool vik_layer_properties(VikLayer * vl, Viewport * viewport)
 {
+	Layer * layer = (Layer *) vl->layer;
 	if (layer->type == VIK_LAYER_GEOREF) {
-		Layer * l = (Layer *) layer->layer;
-		return l->properties(viewport);
+		return layer->properties(viewport);
 	}
 
-	return vik_layer_properties_factory(layer, viewport);
+	return vik_layer_properties_factory(vl, viewport);
 }
 
-void vik_layer_draw(VikLayer * l, Viewport * viewport)
+void Layer::draw_visible(Viewport * viewport)
 {
-	if (l->visible) {
-		((Layer *) l->layer)->draw(viewport);
+	if (this->visible) {
+		this->draw(viewport);
 	}
 }
 
@@ -284,7 +278,7 @@ void vik_layer_marshall ( VikLayer *vl, uint8_t **data, int *len )
   layer->marshall(data, len);
   if (*data) {
       header = (header_t *) malloc(*len + sizeof(*header));
-      header->layer_type = vl->type;
+      header->layer_type = layer->type;
       header->len = *len;
       memcpy(header->data, *data, *len);
       free(*data);
@@ -295,8 +289,10 @@ void vik_layer_marshall ( VikLayer *vl, uint8_t **data, int *len )
 
 void vik_layer_marshall_params ( VikLayer *vl, uint8_t **data, int *datalen )
 {
-  VikLayerParam *params = vik_layer_get_interface(vl->type)->params;
-  VikLayerFuncGetParam get_param = vik_layer_get_interface(vl->type)->get_param;
+  Layer * layer = (Layer *) vl->layer;
+  VikLayerParam *params = vik_layer_get_interface(layer->type)->params;
+  VikLayerFuncGetParam get_param = vik_layer_get_interface(layer->type)->get_param;
+
   GByteArray* b = g_byte_array_new ();
   int len;
 
@@ -306,14 +302,14 @@ void vik_layer_marshall_params ( VikLayer *vl, uint8_t **data, int *datalen )
   g_byte_array_append ( b, (uint8_t *)(obj), len );
 
   // Store the internal properties first
-  vlm_append(&vl->visible, sizeof(vl->visible));
-  vlm_append(vl->name, strlen(vl->name));
+  vlm_append(&layer->visible, sizeof(layer->visible));
+  vlm_append(layer->name, strlen(layer->name));
 
   // Now the actual parameters
   if ( params && get_param )
   {
     VikLayerParamData d;
-    uint16_t i, params_count = vik_layer_get_interface(vl->type)->params_count;
+    uint16_t i, params_count = vik_layer_get_interface(layer->type)->params_count;
     for ( i = 0; i < params_count; i++ )
     {
       fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, params[i].name);
@@ -363,8 +359,10 @@ void vik_layer_marshall_params ( VikLayer *vl, uint8_t **data, int *datalen )
 
 void vik_layer_unmarshall_params ( VikLayer *vl, uint8_t *data, int datalen, Viewport * viewport)
 {
-  VikLayerParam *params = vik_layer_get_interface(vl->type)->params;
-  VikLayerFuncSetParam set_param = vik_layer_get_interface(vl->type)->set_param;
+  Layer * layer = (Layer *) vl->layer;
+  VikLayerParam *params = vik_layer_get_interface(layer->type)->params;
+  VikLayerFuncSetParam set_param = vik_layer_get_interface(layer->type)->set_param;
+
   char *s;
   uint8_t *b = (uint8_t *)data;
 
@@ -373,18 +371,18 @@ void vik_layer_unmarshall_params ( VikLayer *vl, uint8_t *data, int datalen, Vie
   memcpy((obj), b+sizeof(int), vlm_size);	\
   b += sizeof(int) + vlm_size;
 
-  vlm_read(&vl->visible);
+  vlm_read(&layer->visible);
 
   s = (char *) malloc(vlm_size + 1);
   s[vlm_size]=0;
   vlm_read(s);
-  vik_layer_rename(vl, s);
+  layer->rename(s);
   free(s);
 
   if ( params && set_param )
   {
     VikLayerParamData d;
-    uint16_t i, params_count = vik_layer_get_interface(vl->type)->params_count;
+    uint16_t i, params_count = vik_layer_get_interface(layer->type)->params_count;
     for ( i = 0; i < params_count; i++ )
     {
       fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, params[i].name);
@@ -443,10 +441,12 @@ static void vik_layer_finalize ( VikLayer *vl )
   assert ( vl != NULL );
 
   Layer * layer = (Layer *) vl->layer;
+  if (layer->name) {
+	  free(layer->name);
+  }
+
   layer->free_();
 
-  if ( vl->name )
-    free( vl->name );
   G_OBJECT_CLASS(parent_class)->finalize(G_OBJECT(vl));
 }
 
@@ -480,7 +480,7 @@ uint16_t vik_layer_get_menu_items_selection(VikLayer *l)
 	uint16_t rv = layer->get_menu_selection();
 	if (rv == (uint16_t) -1) {
 		/* Perhaps this line could go to base class. */
-		return vik_layer_interfaces[l->type]->menu_items_selection;
+		return vik_layer_interfaces[layer->type]->menu_items_selection;
 	} else {
 		return rv;
 	}
@@ -513,10 +513,11 @@ GdkPixbuf *vik_layer_load_icon ( VikLayerTypeEnum type )
   return NULL;
 }
 
-bool vik_layer_set_param ( VikLayer *layer, uint16_t id, VikLayerParamData data, void * viewport, bool is_file_operation )
+bool vik_layer_set_param ( VikLayer *vl, uint16_t id, VikLayerParamData data, void * viewport, bool is_file_operation )
 {
+  Layer * layer = (Layer *) vl->layer;
   if ( vik_layer_interfaces[layer->type]->set_param )
-    return vik_layer_interfaces[layer->type]->set_param ( layer, id, data, (Viewport *) viewport, is_file_operation );
+	  return vik_layer_interfaces[layer->type]->set_param(vl, id, data, (Viewport *) viewport, is_file_operation );
   return false;
 }
 
@@ -528,18 +529,19 @@ void vik_layer_post_read ( VikLayer *layer, Viewport * viewport, bool from_file 
 
 static bool vik_layer_properties_factory ( VikLayer *vl, Viewport * viewport)
 {
+  Layer * layer = (Layer *) vl->layer;
   switch ( a_uibuilder_properties_factory ( _("Layer Properties"),
 					    VIK_GTK_WINDOW_FROM_WIDGET(viewport->vvp),
-					    vik_layer_interfaces[vl->type]->params,
-					    vik_layer_interfaces[vl->type]->params_count,
-					    vik_layer_interfaces[vl->type]->params_groups,
-					    vik_layer_interfaces[vl->type]->params_groups_count,
-					    (bool (*)(void*, uint16_t, VikLayerParamData, void*, bool)) vik_layer_interfaces[vl->type]->set_param,
+					    vik_layer_interfaces[layer->type]->params,
+					    vik_layer_interfaces[layer->type]->params_count,
+					    vik_layer_interfaces[layer->type]->params_groups,
+					    vik_layer_interfaces[layer->type]->params_groups_count,
+					    (bool (*)(void*, uint16_t, VikLayerParamData, void*, bool)) vik_layer_interfaces[layer->type]->set_param,
 					    vl,
 					    viewport->vvp,
-					    (VikLayerParamData (*)(void*, uint16_t, bool)) vik_layer_interfaces[vl->type]->get_param,
+					    (VikLayerParamData (*)(void*, uint16_t, bool)) vik_layer_interfaces[layer->type]->get_param,
 					    vl,
-					    (void (*)(GtkWidget*, void**)) vik_layer_interfaces[vl->type]->change_param ) ) {
+					    (void (*)(GtkWidget*, void**)) vik_layer_interfaces[layer->type]->change_param ) ) {
     case 0:
     case 3:
       return false;
@@ -642,8 +644,9 @@ VikLayerTypedParamData *vik_layer_data_typed_param_copy_from_string ( VikLayerPa
 void vik_layer_set_defaults ( VikLayer *vl, Viewport * viewport)
 {
   // Sneaky initialize of the viewport value here
-  vl->viewport = viewport;
-  VikLayerInterface *vli = vik_layer_get_interface ( vl->type );
+  Layer * layer = (Layer *) vl->layer;
+  layer->viewport = viewport;
+  VikLayerInterface *vli = vik_layer_get_interface ( layer->type );
   const char *layer_name = vli->fixed_layer_name;
   VikLayerParamData data;
 
@@ -668,12 +671,15 @@ void vik_layer_set_defaults ( VikLayer *vl, Viewport * viewport)
 
 Layer::Layer(VikLayer * vl_)
 {
-	fprintf(stderr, "-------- Layer constructor, assigning vl = %x\n", (unsigned long) vl_);
 	this->vl = vl_;
 	this->vl->layer = this;
 
+	this->name = NULL;
+	this->visible = true;
+	this->realized = false;
 
-	switch (this->vl->type) {
+
+	switch (this->type) {
 	case VIK_LAYER_AGGREGATE:
 		strcpy(type_string, "AGGREGATE");
 		break;
@@ -851,9 +857,9 @@ bool Layer::properties(void * viewport)
 
 void Layer::realize(VikTreeview * vt, GtkTreeIter * layer_iter)
 {
-	this->vl->vt = vt;
-	this->vl->iter = *layer_iter;
-	this->vl->realized = true;
+	this->vt = vt;
+	this->iter = *layer_iter;
+	this->realized = true;
 
 	return;
 }

@@ -280,7 +280,7 @@ static bool georef_layer_set_param(VikGeorefLayer *vgl, uint16_t id, VikLayerPar
 static void create_image_file(VikGeorefLayer *vgl)
 {
 	// Create in .viking-maps
-	char *filename = g_strconcat(maps_layer_default_dir(), vik_layer_get_name(VIK_LAYER(vgl)), ".jpg", NULL);
+	char *filename = g_strconcat(maps_layer_default_dir(), ((Layer *) ((VikLayer *) vgl)->layer)->get_name(), ".jpg", NULL);
 	GError *error = NULL;
 	gdk_pixbuf_save(vgl->pixbuf, filename, "jpeg", &error, NULL);
 	if (error) {
@@ -348,7 +348,8 @@ static VikLayerParamData georef_layer_get_param(VikGeorefLayer *vgl, uint16_t id
 static VikGeorefLayer * georef_layer_new(Viewport * viewport)
 {
 	VikGeorefLayer *vgl = VIK_GEOREF_LAYER(g_object_new(VIK_GEOREF_LAYER_TYPE, NULL));
-	vik_layer_set_type(VIK_LAYER(vgl), VIK_LAYER_GEOREF);
+
+	((VikLayer *) vgl)->layer = new LayerGeoref((VikLayer *) vgl);
 
 	// Since GeoRef layer doesn't use uibuilder
 	//  initializing this way won't do anything yet..
@@ -369,8 +370,6 @@ static VikGeorefLayer * georef_layer_new(Viewport * viewport)
 	vgl->ll_br.lat = 0.0;
 	vgl->ll_br.lon = 0.0;
 	vgl->alpha = 255;
-
-	((VikLayer *) vgl)->layer = new LayerGeoref((VikLayer *) vgl);
 
 	return vgl;
 }
@@ -1091,7 +1090,7 @@ static void * georef_layer_move_create(VikWindow *vw, Viewport * viewport)
 
 static bool georef_layer_move_release(VikGeorefLayer *vgl, GdkEventButton *event, Viewport * viewport)
 {
-	if (!vgl || vgl->vl.type != VIK_LAYER_GEOREF) {
+	if (!vgl || ((Layer *) ((VikLayer *) vgl)->layer)->type != VIK_LAYER_GEOREF) {
 		return false;
 	}
 
@@ -1111,7 +1110,7 @@ static void * georef_layer_zoom_create(VikWindow *vw, Viewport * viewport)
 
 static bool georef_layer_zoom_press(VikGeorefLayer *vgl, GdkEventButton *event, Viewport * viewport)
 {
-	if (!vgl || vgl->vl.type != VIK_LAYER_GEOREF) {
+	if (!vgl || ((Layer *) ((VikLayer *) vgl)->layer)->type != VIK_LAYER_GEOREF) {
 		return false;
 	}
 
@@ -1134,7 +1133,7 @@ static bool georef_layer_zoom_press(VikGeorefLayer *vgl, GdkEventButton *event, 
 
 static bool georef_layer_move_press(VikGeorefLayer *vgl, GdkEventButton *event, Viewport * viewport)
 {
-	if (!vgl || vgl->vl.type != VIK_LAYER_GEOREF) {
+	if (!vgl || ((Layer *) ((VikLayer *) vgl)->layer)->type != VIK_LAYER_GEOREF) {
 		return false;
 	}
 	vgl->click_x = event->x;
@@ -1165,7 +1164,7 @@ VikGeorefLayer *vik_georef_layer_create(Viewport * viewport,
 					VikCoord *coord_br)
 {
 	VikGeorefLayer *vgl = georef_layer_new(viewport);
-	vik_layer_rename(VIK_LAYER(vgl), name);
+	((Layer *) ((VikLayer *) vgl)->layer)->rename(name);
 
 	vgl->pixbuf = pixbuf;
 
@@ -1203,4 +1202,12 @@ VikGeorefLayer *vik_georef_layer_create(Viewport * viewport,
 	LayerGeoref * layer = (LayerGeoref *) ((VikLayer *) vgl)->layer;
 	layer->free_();
 	return NULL;
+}
+
+
+
+
+LayerGeoref::LayerGeoref(VikLayer * vl) : Layer(vl)
+{
+	this->type = VIK_LAYER_GEOREF;
 }

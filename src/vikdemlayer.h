@@ -61,7 +61,7 @@ namespace SlavGPS {
 
 	class LayerDEM : public Layer {
 	public:
-		LayerDEM(VikLayer * vl) : Layer(vl) { };
+		LayerDEM(VikLayer * vl);
 
 
 		/* Layer interface methods. */

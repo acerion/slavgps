@@ -64,7 +64,7 @@ namespace SlavGPS {
 
 	class LayerCoord : public Layer {
 	public:
-		LayerCoord(VikLayer * vl) : Layer(vl) { };
+		LayerCoord(VikLayer * vl);
 
 
 		/* Layer interface methods. */

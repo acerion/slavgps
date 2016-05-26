@@ -378,7 +378,7 @@ static void acquire(VikWindow *vw,
 	}
 	if (wi->creating_new_layer) {
 		wi->vtl = VIK_TRW_LAYER(vik_layer_create(VIK_LAYER_TRW, &w->vvp->port, false));
-		vik_layer_rename (VIK_LAYER (wi->vtl), _(source_interface->layer_title));
+		wi->vtl->trw->rename(_(source_interface->layer_title));
 	}
 
 	if (source_interface->is_thread) {

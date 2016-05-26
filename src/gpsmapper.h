@@ -29,7 +29,7 @@ extern "C" {
 #endif
 
 
-void a_gpsmapper_write_file(VikTrwLayer *trw, FILE *f);
+	void a_gpsmapper_write_file(FILE *f, LayerTRW * layer);
 
 #ifdef __cplusplus
 }

@@ -152,24 +152,25 @@ void file_write_layer_param(FILE *f, const char *name, VikLayerParamType type, V
 
 static void write_layer_params_and_data(VikLayer *l, FILE *f)
 {
-	VikLayerParam *params = vik_layer_get_interface(l->type)->params;
-	VikLayerFuncGetParam get_param = vik_layer_get_interface(l->type)->get_param;
+	Layer * layer = (Layer *) l->layer;
+	VikLayerParam *params = vik_layer_get_interface(layer->type)->params;
+	VikLayerFuncGetParam get_param = vik_layer_get_interface(layer->type)->get_param;
 
-	fprintf(f, "name=%s\n", l->name ? l->name : "");
-	if (!l->visible) {
+
+	fprintf(f, "name=%s\n", layer->name ? layer->name : "");
+	if (!layer->visible) {
 		fprintf(f, "visible=f\n");
 	}
 
 	if (params && get_param) {
 		VikLayerParamData data;
-		uint16_t i, params_count = vik_layer_get_interface(l->type)->params_count;
+		uint16_t i, params_count = vik_layer_get_interface(layer->type)->params_count;
 		for (i = 0; i < params_count; i++) {
 			data = get_param(l, i, true);
 			file_write_layer_param(f, params[i].name, params[i].type, data);
 		}
 	}
 
-	Layer * layer = (Layer *) l->layer;
 	layer->write_file(f);
 
 	/* foreach param:
@@ -224,19 +225,20 @@ static void file_write(VikAggregateLayer *top, FILE *f, void * vp)
 		VIK_VIEWPORT(vp)->port.get_draw_centermark() ? "t" : "f",
 		VIK_VIEWPORT(vp)->port.get_draw_highlight() ? "t" : "f");
 
-	if (! VIK_LAYER(top)->visible) {
+	if (!aggregate->visible) {
 		fprintf(f, "visible=f\n");
 	}
 
 	while (stack && stack->data) {
 		current_layer = VIK_LAYER(((GList *)stack->data)->data);
-		fprintf(f, "\n~Layer %s\n", vik_layer_get_interface(current_layer->type)->fixed_layer_name);
+		Layer * current = (Layer *) current_layer->layer;
+		fprintf(f, "\n~Layer %s\n", vik_layer_get_interface(current->type)->fixed_layer_name);
 		write_layer_params_and_data(current_layer, f);
-		if (current_layer->type == VIK_LAYER_AGGREGATE && !((LayerAggregate *) current_layer->layer)->is_empty()) {
+		if (current->type == VIK_LAYER_AGGREGATE && !((LayerAggregate *) current)->is_empty()) {
 			push(&stack);
-			const std::list<Layer *> * children = ((LayerAggregate *) current_layer->layer)->get_children();
+			const std::list<Layer *> * children = ((LayerAggregate *) current)->get_children();
 			// stack->data = children; /* kamilFIXME: fix the assignment. */
-		} else if (current_layer->type == VIK_LAYER_GPS && !vik_gps_layer_is_empty(VIK_GPS_LAYER(current_layer))) {
+		} else if (current->type == VIK_LAYER_GPS && !vik_gps_layer_is_empty(VIK_GPS_LAYER(current_layer))) {
 			push(&stack);
 			stack->data = (void *) vik_gps_layer_get_children(VIK_GPS_LAYER(current_layer));
 		} else {
@@ -303,6 +305,7 @@ static bool file_read(VikAggregateLayer *top, FILE *f, const char *dirpath, VikV
 	uint8_t params_count = 0;
 
 	GHashTable *string_lists = g_hash_table_new(g_direct_hash,g_direct_equal);
+	LayerAggregate * aggregate = (LayerAggregate *) ((VikLayer *) top)->layer;
 
 	bool successful_read = true;
 
@@ -342,7 +345,7 @@ static bool file_read(VikAggregateLayer *top, FILE *f, const char *dirpath, VikV
 			if (*line == '\0') {
 				continue;
 			} else if (str_starts_with(line, "Layer ", 6, true)) {
-				int parent_type = VIK_LAYER(stack->data)->type;
+				int parent_type = ((Layer *) ((VikLayer *) stack->data)->layer)->type;
 				if ((! stack->data) || ((parent_type != VIK_LAYER_AGGREGATE) && (parent_type != VIK_LAYER_GPS))) {
 					successful_read = false;
 					fprintf(stderr, "WARNING: Line %ld: Layer command inside non-Aggregate Layer (type %d)\n", line_num, parent_type);
@@ -379,15 +382,15 @@ static bool file_read(VikAggregateLayer *top, FILE *f, const char *dirpath, VikV
 					g_hash_table_remove_all(string_lists);
 
 					if (stack->data && stack->under->data) {
-						if (VIK_LAYER(stack->under->data)->type == VIK_LAYER_AGGREGATE) {
+						if (((Layer *) ((VikLayer *) stack->under->data)->layer)->type == VIK_LAYER_AGGREGATE) {
 							Layer * layer = (Layer *) (VIK_LAYER(stack->data))->layer;
 							((LayerAggregate *) ((VikLayer *) stack->under->data)->layer)->add_layer(layer, false);
 							vik_layer_post_read(VIK_LAYER(stack->data), &vp->port, true);
-						} else if (VIK_LAYER(stack->under->data)->type == VIK_LAYER_GPS) {
+						} else if (((Layer *) ((VikLayer *) stack->under->data)->layer)->type == VIK_LAYER_GPS) {
 							/* TODO: anything else needs to be done here ? */
 						} else {
 							successful_read = false;
-							fprintf(stderr, "WARNING: Line %ld: EndLayer command inside non-Aggregate Layer (type %d)\n", line_num, VIK_LAYER(stack->data)->type);
+							fprintf(stderr, "WARNING: Line %ld: EndLayer command inside non-Aggregate Layer (type %d)\n", line_num, ((Layer *) ((VikLayer *) stack->data)->layer)->type);
 						}
 					}
 					pop(&stack);
@@ -438,6 +441,8 @@ static bool file_read(VikAggregateLayer *top, FILE *f, const char *dirpath, VikV
 				}
 			}
 
+			Layer * layer = (Layer *) (VIK_LAYER(stack->data))->layer;
+
 			if (stack->under == NULL && eq_pos == 12 && strncasecmp(line, "FILE_VERSION", eq_pos) == 0) {
 				int version = strtol(line+13, NULL, 10);
 				fprintf(stderr, "DEBUG: %s: reading file version %d\n", __FUNCTION__, version);
@@ -477,10 +482,13 @@ static bool file_read(VikAggregateLayer *top, FILE *f, const char *dirpath, VikV
 				VIK_VIEWPORT(vp)->port.set_draw_centermark(TEST_BOOLEAN(line+15));
 			} else if (stack->under == NULL && eq_pos == 13 && strncasecmp(line, "drawhighlight", eq_pos) == 0) {
 				VIK_VIEWPORT(vp)->port.set_draw_highlight(TEST_BOOLEAN(line+14));
+
 			} else if (stack->under && eq_pos == 4 && strncasecmp(line, "name", eq_pos) == 0) {
-				vik_layer_rename(VIK_LAYER(stack->data), line+5);
+				layer->rename(line+5);
+
 			} else if (eq_pos == 7 && strncasecmp(line, "visible", eq_pos) == 0) {
-				VIK_LAYER(stack->data)->visible = TEST_BOOLEAN(line+8);
+				layer->visible = TEST_BOOLEAN(line+8);
+
 			} else if (eq_pos != -1 && stack->under) {
 				bool found_match = false;
 
@@ -565,8 +573,8 @@ static bool file_read(VikAggregateLayer *top, FILE *f, const char *dirpath, VikV
 		VIK_VIEWPORT(vp)->port.set_center_latlon(&ll, true);
 	}
 
-	if ((! VIK_LAYER(top)->visible) && VIK_LAYER(top)->realized) {
-		vik_treeview_item_set_visible(VIK_LAYER(top)->vt, &(VIK_LAYER(top)->iter), false);
+	if ((!aggregate->visible) && aggregate->realized) {
+		vik_treeview_item_set_visible(aggregate->vt, &aggregate->iter, false);
 	}
 
 	/* delete anything we've forgotten about -- should only happen when file ends before an EndLayer */
@@ -702,7 +710,7 @@ VikLoadType_t a_file_load(VikAggregateLayer *top, VikViewport *vp, const char *f
 		bool success = true; // Detect load failures - mainly to remove the layer created as it's not required
 
 		VikLayer *vtl = vik_layer_create(VIK_LAYER_TRW, &vp->port, false);
-		vik_layer_rename(vtl, a_file_basename(filename));
+		((Layer *) ((VikLayer *) vtl)->layer)->rename(a_file_basename(filename));
 
 		// In fact both kml & gpx files start the same as they are in xml
 		if (a_file_check_ext(filename, ".kml") && check_magic(f, GPX_MAGIC, GPX_MAGIC_LEN)) {
@@ -835,7 +843,7 @@ bool a_file_export(VikTrwLayer *vtl, const char *filename, VikFileType_t file_ty
 		} else {
 			switch (file_type) {
 			case FILE_TYPE_GPSMAPPER:
-				a_gpsmapper_write_file(vtl, f);
+				a_gpsmapper_write_file(f, vtl->trw);
 				break;
 			case FILE_TYPE_GPX:
 				a_gpx_write_file(vtl, f, &options);

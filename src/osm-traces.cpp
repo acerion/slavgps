@@ -421,7 +421,7 @@ void osm_traces_upload_viktrwlayer ( VikTrwLayer *vtl, Track * trk )
   if (trk != NULL)
     name = trk->name;
   else
-    name = vik_layer_get_name(VIK_LAYER(vtl));
+    name = vtl->trw->get_name();
   gtk_entry_set_text(GTK_ENTRY(name_entry), name);
   gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dia))), name_label, false, false, 0);
   gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dia))), name_entry, false, false, 0);

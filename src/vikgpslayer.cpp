@@ -383,7 +383,8 @@ static VikGpsLayer * vik_gps_layer_create(Viewport * viewport)
   int i;
 
   VikGpsLayer *rv = vik_gps_layer_new (viewport);
-  vik_layer_rename ( VIK_LAYER(rv), vik_gps_layer_interface.name );
+  Layer * layer = (Layer *) ((VikLayer *) rv)->layer;
+  layer->rename(vik_gps_layer_interface.name);
 
   for (i = 0; i < NUM_TRW; i++) {
     rv->trw_children[i] = VIK_TRW_LAYER(vik_layer_create ( VIK_LAYER_TRW, viewport, false ));
@@ -626,7 +627,6 @@ VikGpsLayer *vik_gps_layer_new(Viewport * viewport)
 {
   int i;
   VikGpsLayer *vgl = VIK_GPS_LAYER ( g_object_new ( VIK_GPS_LAYER_TYPE, NULL ) );
-  vik_layer_set_type ( VIK_LAYER(vgl), VIK_LAYER_GPS );
   for (i = 0; i < NUM_TRW; i++) {
     vgl->trw_children[i] = NULL;
   }
@@ -651,9 +651,11 @@ VikGpsLayer *vik_gps_layer_new(Viewport * viewport)
   vgl->realtime_track = NULL;
 #endif // VIK_CONFIG_REALTIME_GPS_TRACKING
 
+  ((VikLayer *) vgl)->layer = new LayerGPS((VikLayer *) vgl);
+
   vik_layer_set_defaults ( VIK_LAYER(vgl), viewport);
 
-  ((VikLayer *) vgl)->layer = new LayerGPS((VikLayer *) vgl);
+
 
   return vgl;
 }
@@ -677,7 +679,8 @@ void LayerGPS::draw(Viewport * viewport)
 			}
 		}
 		if (!viewport->get_half_drawn()) {
-			vik_layer_draw(vl, &vp->port);
+			Layer * layer = (Layer *) ((VikLayer *) vl)->layer;
+			layer->draw_visible(&vp->port);
 		}
 	}
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
@@ -786,7 +789,7 @@ void LayerGPS::free_(  )
   VikGpsLayer * vgl = (VikGpsLayer *) this->vl;
   int i;
   for (i = 0; i < NUM_TRW; i++) {
-    if (vgl->vl.realized)
+    if (this->realized)
       disconnect_layer_signal(VIK_LAYER(vgl->trw_children[i]), vgl);
     g_object_unref(vgl->trw_children[i]);
   }
@@ -809,9 +812,9 @@ void LayerGPS::realize(VikTreeview *vt, GtkTreeIter *layer_iter)
   int ix;
   VikGpsLayer * vgl = (VikGpsLayer *) this->vl;
 
-  this->vl->vt = vt;
-  this->vl->iter = *layer_iter;
-  this->vl->realized = true;
+  this->vt = vt;
+  this->iter = *layer_iter;
+  this->realized = true;
 
   // TODO set to garmin by default
   //if (a_babel_device_list)
@@ -821,12 +824,12 @@ void LayerGPS::realize(VikTreeview *vt, GtkTreeIter *layer_iter)
   for (ix = 0; ix < NUM_TRW; ix++) {
     VikLayer * trw = VIK_LAYER(vgl->trw_children[ix]);
     Layer * layer = (Layer *) trw->layer;
-    vik_treeview_add_layer ( VIK_LAYER(vgl)->vt, layer_iter, &iter,
+    vik_treeview_add_layer ( ((Layer *) ((VikLayer *) vgl)->layer)->vt, layer_iter, &iter,
 			     _(trw_names[ix]), vgl, true,
-			     layer, trw->type, trw->type, layer->get_timestamp() );
-    if ( ! trw->visible )
-      vik_treeview_item_set_visible ( VIK_LAYER(vgl)->vt, &iter, false );
-    layer->realize(VIK_LAYER(vgl)->vt, &iter);
+			     layer, ((Layer *) trw->layer)->type, ((Layer *) trw->layer)->type, layer->get_timestamp() );
+    if ( ! layer->visible )
+	    vik_treeview_item_set_visible ( ((Layer *) ((VikLayer *) vgl)->layer)->vt, &iter, false );
+    layer->realize(((Layer *) ((VikLayer *) vgl)->layer)->vt, &iter);
     g_signal_connect_swapped ( G_OBJECT(trw), "update", G_CALLBACK(vik_layer_emit_update_secondary), vgl );
   }
 }
@@ -1842,3 +1845,11 @@ static void gps_start_stop_tracking_cb( void * layer_and_vlp[2])
   }
 }
 #endif /* VIK_CONFIG_REALTIME_GPS_TRACKING */
+
+
+
+
+LayerGPS::LayerGPS(VikLayer * vl) : Layer(vl)
+{
+	this->type = VIK_LAYER_GPS;
+};

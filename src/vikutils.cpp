@@ -547,6 +547,7 @@ void vu_set_auto_features_on_first_run ( void )
  */
 char *vu_get_canonical_filename ( VikLayer *vl, const char *filename )
 {
+  Layer * layer = (Layer *) vl->layer;
   char *canonical = NULL;
   if ( !filename )
     return NULL;
@@ -554,7 +555,7 @@ char *vu_get_canonical_filename ( VikLayer *vl, const char *filename )
   if ( g_path_is_absolute ( filename ) )
     canonical = g_strdup( filename );
   else {
-    const char *vw_filename = vik_window_get_filename ( VIK_WINDOW_FROM_WIDGET (vl->viewport->vvp) );
+    const char *vw_filename = vik_window_get_filename ( VIK_WINDOW_FROM_WIDGET (layer->viewport->vvp) );
     char *dirpath = NULL;
     if ( vw_filename )
       dirpath = g_path_get_dirname ( vw_filename );
@@ -854,9 +855,11 @@ void vu_command_line ( VikWindow *vw, double latitude, double longitude, int zoo
 
 		if ( add_map ) {
 			VikMapsLayer *vml = VIK_MAPS_LAYER ( vik_layer_create(VIK_LAYER_MAPS, viewport, false) );
-			vik_maps_layer_set_map_type(vml, the_type_id);
-			vik_layer_rename ( VIK_LAYER(vml), _("Map") );
 			Layer * layer = (Layer *) (VIK_LAYER(vml))->layer;
+
+			vik_maps_layer_set_map_type(vml, the_type_id);
+			layer->rename(_("Map"));
+
 			vik_window_layers_panel(vw)->panel_ref->get_top_layer()->add_layer(layer, true);
 			vik_layer_emit_update ( VIK_LAYER(vml) );
 		}

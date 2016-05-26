@@ -461,13 +461,13 @@ static VikLayerParamData mapnik_layer_get_param(VikMapnikLayer *vml, uint16_t id
 static VikMapnikLayer * mapnik_layer_new(Viewport * viewport)
 {
 	VikMapnikLayer *vml = VIK_MAPNIK_LAYER(g_object_new (VIK_MAPNIK_LAYER_TYPE, NULL));
-	vik_layer_set_type(VIK_LAYER(vml), VIK_LAYER_MAPNIK);
+	((VikLayer *) vml)->layer = new LayerMapnik((VikLayer *) vml);
 	vik_layer_set_defaults(VIK_LAYER(vml), viewport);
 	vml->tile_size_x = size_default().u; // FUTURE: Is there any use in this being configurable?
 	vml->loaded = false;
 	vml->mi = mapnik_interface_new();
 
-	((VikLayer *) vml)->layer = new LayerMapnik((VikLayer *) vml);
+
 
 	return vml;
 }
@@ -1172,4 +1172,10 @@ static bool mapnik_feature_release(VikMapnikLayer *vml, GdkEventButton *event, V
 	}
 
 	return false;
+}
+
+
+LayerMapnik::LayerMapnik(VikLayer * vl) : Layer(vl)
+{
+	this->type = VIK_LAYER_MAPNIK;
 }

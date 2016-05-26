@@ -64,7 +64,7 @@ namespace SlavGPS {
 
 	class LayerMapnik : public Layer {
 	public:
-		LayerMapnik(VikLayer * vl) : Layer(vl) { };
+		LayerMapnik(VikLayer * vl);
 
 
 		/* Layer interface methods. */

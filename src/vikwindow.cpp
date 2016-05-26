@@ -478,8 +478,9 @@ void vik_window_new_window_finish(VikWindow *vw)
 	// Maybe add a default map layer
 	if(a_vik_get_add_default_map_layer()) {
 		VikMapsLayer *vml = VIK_MAPS_LAYER(vik_layer_create(VIK_LAYER_MAPS, (vw->viewport), false));
-		vik_layer_rename(VIK_LAYER(vml), _("Default Map"));
 		Layer * layer = (Layer *) (VIK_LAYER(vml))->layer;
+		layer->rename(_("Default Map"));
+
 		vw->layers_panel->get_top_layer()->add_layer(layer, true);
 
 		draw_update(vw);
@@ -531,6 +532,7 @@ void vik_window_selected_layer(VikWindow *vw, VikLayer *vl)
 {
 	int i, j, tool_count;
 	VikLayerInterface *layer_interface;
+	Layer * layer = (Layer *) vl->layer;
 
 	if (!vw->action_group) {
 		return;
@@ -544,8 +546,8 @@ void vik_window_selected_layer(VikWindow *vw, VikLayer *vl)
 		for (j = 0; j < tool_count; j++) {
 			action = gtk_action_group_get_action(vw->action_group,
 							     layer_interface->tools[j].radioActionEntry.name);
-			g_object_set(action, "sensitive", i == vl->type, NULL);
-			toolbar_action_set_sensitive(vw->viking_vtb, vik_layer_get_interface((VikLayerTypeEnum) i)->tools[j].radioActionEntry.name, i == vl->type);
+			g_object_set(action, "sensitive", i == layer->type, NULL);
+			toolbar_action_set_sensitive(vw->viking_vtb, vik_layer_get_interface((VikLayerTypeEnum) i)->tools[j].radioActionEntry.name, i == layer->type);
 		}
 	}
 }
@@ -1008,7 +1010,7 @@ static bool key_press_event(VikWindow *vw, GdkEventKey *event, void * data)
 	VikLayer *vl = vw->layers_panel->get_selected();
 	if (vl && vw->vt->active_tool != -1 && vw->vt->tools[vw->vt->active_tool].ti.key_press) {
 		int ltype = vw->vt->tools[vw->vt->active_tool].layer_type;
-		if (vl && ltype == vl->type)
+		if (vl && ltype == ((Layer *) vl->layer)->type)
 			return vw->vt->tools[vw->vt->active_tool].ti.key_press(vl, event, vw->vt->tools[vw->vt->active_tool].state);
 	}
 
@@ -1181,7 +1183,7 @@ static void draw_redraw(VikWindow *vw)
 
 	if (! new_trigger)
 		; /* do nothing -- have to redraw everything. */
-	else if ((old_trigger != new_trigger) || !vik_coord_equals(&old_center, &vw->trigger_center) || (new_trigger->type == VIK_LAYER_AGGREGATE))
+	else if ((old_trigger != new_trigger) || !vik_coord_equals(&old_center, &vw->trigger_center) || (((Layer *) new_trigger->layer)->type == VIK_LAYER_AGGREGATE))
 		vw->viewport->set_trigger(new_trigger); /* todo: set to half_drawn mode if new trigger is above old */
 	else
 		vw->viewport->set_half_drawn(true);
@@ -2165,8 +2167,8 @@ static void click_layer_selected(VikLayer *vl, clicker *ck)
 	/* Do nothing when function call returns true; */
 	/* i.e. stop on first found item */
 	if (ck->cont) {
-		if (vl->visible) {
-			Layer * l = (Layer *) vl->layer;
+		Layer * l = (Layer *) vl->layer;
+		if (l->visible) {
 			ck->cont = !l->select_click(ck->event, ck->viewport, ck->tool_edit);
 		}
 	}
@@ -2212,7 +2214,7 @@ static VikLayerToolFuncStatus selecttool_click(VikLayer *vl, GdkEventButton *eve
 					// Only clear if selected thing is a TrackWaypoint layer or a sublayer
 					int type = vik_treeview_item_get_type(vtv, &iter);
 					if (type == VIK_TREEVIEW_TYPE_SUBLAYER ||
-					    VIK_LAYER(vik_treeview_item_get_pointer(vtv, &iter))->type == VIK_LAYER_TRW) { /* kamil: get_layer() ? */
+					    ((Layer *) ((VikLayer *) vik_treeview_item_get_pointer(vtv, &iter))->layer)->type == VIK_LAYER_TRW) { /* kamil: get_layer() ? */
 
 						vik_treeview_item_unselect(vtv, &iter);
 						if (vik_window_clear_highlight(t->vw))
@@ -2226,11 +2228,11 @@ static VikLayerToolFuncStatus selecttool_click(VikLayer *vl, GdkEventButton *eve
 			}
 		}
 	}
-	else if ((event->button == 3) && (vl && (vl->type == VIK_LAYER_TRW))) {
-		if (vl->visible) {
+	else if ((event->button == 3) && (vl && (((Layer *) vl->layer)->type == VIK_LAYER_TRW))) {
+		Layer * l = (Layer *) vl->layer;
+		if (l->visible) {
 			/* Act on currently selected item to show menu */
 			if (t->vw->selected_track || t->vw->selected_waypoint) {
-				Layer * l = (Layer *) vl->layer;
 				l->show_selected_viewport_menu(event, t->vw->viewport);
 			}
 		}
@@ -2300,7 +2302,7 @@ static void draw_pan_cb(GtkAction *a, VikWindow *vw)
 	// Since the treeview cell editting intercepts standard keyboard handlers, it means we can receive events here
 	// Thus if currently editting, ensure we don't move the viewport when Ctrl+<arrow> is received
 	VikLayer *sel = vw->layers_panel->get_selected();
-	if (sel && vik_treeview_get_editing(sel->vt))
+	if (sel && vik_treeview_get_editing(((Layer *) sel->layer)->vt))
 		return;
 
 	if (!strcmp(gtk_action_get_name(a), "PanNorth")) {
@@ -2842,9 +2844,10 @@ static const GdkCursor *toolbox_get_cursor(toolbox_tools_t *vt, const char *tool
 static void toolbox_click(toolbox_tools_t *vt, GdkEventButton *event)
 {
 	VikLayer *vl = vt->vw->layers_panel->get_selected();
+
 	if (vt->active_tool != -1 && vt->tools[vt->active_tool].ti.click) {
 		int ltype = vt->tools[vt->active_tool].layer_type;
-		if (ltype == TOOL_LAYER_TYPE_NONE || (vl && ltype == vl->type))
+		if (ltype == TOOL_LAYER_TYPE_NONE || (vl && ltype == ((Layer *) vl->layer)->type))
 			vt->tools[vt->active_tool].ti.click(vl, event, vt->tools[vt->active_tool].state);
 	}
 }
@@ -2854,7 +2857,7 @@ static void toolbox_move(toolbox_tools_t *vt, GdkEventMotion *event)
 	VikLayer *vl = vt->vw->layers_panel->get_selected();
 	if (vt->active_tool != -1 && vt->tools[vt->active_tool].ti.move) {
 		int ltype = vt->tools[vt->active_tool].layer_type;
-		if (ltype == TOOL_LAYER_TYPE_NONE || (vl && ltype == vl->type))
+		if (ltype == TOOL_LAYER_TYPE_NONE || (vl && ltype == ((Layer *) vl->layer)->type))
 			if (VIK_LAYER_TOOL_ACK_GRAB_FOCUS == vt->tools[vt->active_tool].ti.move(vl, event, vt->tools[vt->active_tool].state))
 				gtk_widget_grab_focus(GTK_WIDGET(vt->vw->viewport->vvp));
 	}
@@ -2865,7 +2868,7 @@ static void toolbox_release(toolbox_tools_t *vt, GdkEventButton *event)
 	VikLayer *vl = vt->vw->layers_panel->get_selected();
 	if (vt->active_tool != -1 && vt->tools[vt->active_tool].ti.release) {
 		int ltype = vt->tools[vt->active_tool].layer_type;
-		if (ltype == TOOL_LAYER_TYPE_NONE || (vl && ltype == vl->type))
+		if (ltype == TOOL_LAYER_TYPE_NONE || (vl && ltype == ((Layer *) vl->layer)->type))
 			vt->tools[vt->active_tool].ti.release(vl, event, vt->tools[vt->active_tool].state);
 	}
 }
@@ -3398,7 +3401,8 @@ static bool export_to(VikWindow *vw, std::list<Layer *> * layers, VikFileType_t 
 	vik_window_set_busy_cursor(vw);
 
 	for (auto iter = layers->begin(); iter != layers->end(); iter++) {
-		char *fn = g_strconcat(dir, G_DIR_SEPARATOR_S, VIK_LAYER(*iter)->name, extension, NULL);
+		Layer * l = (Layer *) (VIK_LAYER(*iter))->layer;
+		char *fn = g_strconcat(dir, G_DIR_SEPARATOR_S, l->name, extension, NULL);
 
 		// Some protection in attempting to write too many same named files
 		// As this will get horribly slow...
@@ -3408,7 +3412,8 @@ static bool export_to(VikWindow *vw, std::list<Layer *> * layers, VikFileType_t 
 			if (g_file_test(fn, G_FILE_TEST_EXISTS)) {
 				// Try rename
 				free(fn);
-				fn = g_strdup_printf ("%s%s%s#%03d%s", dir, G_DIR_SEPARATOR_S, VIK_LAYER(*iter)->name, ii, extension);
+
+				fn = g_strdup_printf ("%s%s%s#%03d%s", dir, G_DIR_SEPARATOR_S, l->name, ii, extension);
 			}
 			else {
 				safe = true;

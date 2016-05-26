@@ -800,7 +800,6 @@ static void maps_layer_change_param(GtkWidget *widget, ui_change_values values)
 static VikMapsLayer * maps_layer_new(Viewport * viewport)
 {
 	VikMapsLayer *vml = VIK_MAPS_LAYER (g_object_new(VIK_MAPS_LAYER_TYPE, NULL));
-	vik_layer_set_type(VIK_LAYER(vml), VIK_LAYER_MAPS);
 
 	((VikLayer *) vml)->layer = new LayerMaps((VikLayer *) vml);
 
@@ -1969,7 +1968,7 @@ static void maps_layer_tile_info(VikMapsLayer *vml)
 
 static bool maps_layer_download_release(VikMapsLayer *vml, GdkEventButton *event, Viewport * viewport)
 {
-	if (!vml || vml->vl.type != VIK_LAYER_MAPS) {
+	if (!vml || ((Layer *) ((VikLayer *) vml)->layer)->type != VIK_LAYER_MAPS) {
 		return false;
 	}
 
@@ -2028,7 +2027,7 @@ static void * maps_layer_download_create(VikWindow *vw, Viewport * viewport)
 static bool maps_layer_download_click(VikMapsLayer *vml, GdkEventButton *event, Viewport * viewport)
 {
 	TileInfo tmp;
-	if (!vml || vml->vl.type != VIK_LAYER_MAPS) {
+	if (!vml || ((Layer *) ((VikLayer *) vml)->layer)->type != VIK_LAYER_MAPS) {
 		return false;
 	}
 
@@ -2552,6 +2551,8 @@ char * redownload_mode_message(int redownload_mode, int mapstoget, char * label)
 
 LayerMaps::LayerMaps(VikLayer * vl) : Layer(vl)
 {
+	this->type = VIK_LAYER_MAPS;
+
 	map_index = 0;
 	cache_dir = NULL;
 	cache_layout = VIK_MAPS_CACHE_LAYOUT_VIKING;

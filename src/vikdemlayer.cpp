@@ -466,8 +466,6 @@ static VikDEMLayer *dem_layer_new(Viewport * viewport)
 {
 	VikDEMLayer *vdl = VIK_DEM_LAYER (g_object_new (VIK_DEM_LAYER_TYPE, NULL));
 
-	vik_layer_set_type(VIK_LAYER(vdl), VIK_LAYER_DEM);
-
 	vdl->files = NULL;
 
 	vdl->gcs = (GdkGC **) malloc(sizeof(GdkGC *) * DEM_N_HEIGHT_COLORS);
@@ -479,9 +477,9 @@ static VikDEMLayer *dem_layer_new(Viewport * viewport)
 		vdl->gcs[0] = viewport->new_gc("#0000FF", 1);
 	}
 
-	vik_layer_set_defaults (VIK_LAYER(vdl), viewport);
-
 	((VikLayer *) vdl)->layer = new LayerDEM((VikLayer *) vdl);
+
+	vik_layer_set_defaults (VIK_LAYER(vdl), viewport);
 
 	return vdl;
 }
@@ -1392,4 +1390,10 @@ static bool dem_layer_download_click (VikDEMLayer *vdl, GdkEventButton *event, V
 	 * download in background thread
 	 * download over area */
 	return true;
+}
+
+
+LayerDEM::LayerDEM(VikLayer * vl) : Layer(vl)
+{
+	this->type = VIK_LAYER_DEM;
 }

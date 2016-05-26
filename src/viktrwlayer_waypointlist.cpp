@@ -164,7 +164,7 @@ static void trw_layer_waypoint_select ( menu_array_values values )
 		GtkTreeIter * iter = vtl->trw->get_waypoints_iters().at(uid);
 
 		if ( iter )
-			vik_treeview_select_iter ( VIK_LAYER(vtl)->vt, iter, true );
+			vik_treeview_select_iter (vtl->trw->vt, iter, true );
 	}
 }
 
@@ -187,7 +187,7 @@ static void trw_layer_waypoint_properties ( menu_array_values values )
 		if ( updated )
 			vtl->trw->waypoint_reset_icon(wp);
 
-		if ( updated && VIK_LAYER(vtl)->visible )
+		if ( updated && vtl->trw->visible )
 			vik_layer_emit_update ( VIK_LAYER(vtl) );
 	}
 }
@@ -477,6 +477,7 @@ static void trw_layer_waypoint_list_add ( vik_trw_waypoint_list_t *vtdl,
 	Waypoint * wp = vtdl->wp;
 	VikTrwLayer *vtl = vtdl->vtl;
 
+
 	// Get start date
 	char time_buf[32];
 	time_buf[0] = '\0';
@@ -497,7 +498,7 @@ static void trw_layer_waypoint_list_add ( vik_trw_waypoint_list_t *vtdl,
 	}
 
 	// NB: doesn't include aggegrate visibility
-	bool visible = VIK_LAYER(vtl)->visible && wp->visible;
+	bool visible = vtl->trw->visible && wp->visible;
 	visible = visible && vtl->trw->get_waypoints_visibility();
 
 	double alt = wp->altitude;
@@ -510,7 +511,7 @@ static void trw_layer_waypoint_list_add ( vik_trw_waypoint_list_t *vtdl,
 
 	gtk_tree_store_append ( store, &t_iter, NULL );
 	gtk_tree_store_set ( store, &t_iter,
-	                     0, VIK_LAYER(vtl)->name,
+	                     0, vtl->trw->name,
 	                     1, wp->name,
 	                     2, time_buf,
 	                     3, visible,

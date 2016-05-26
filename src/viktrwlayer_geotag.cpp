@@ -706,8 +706,10 @@ void trw_layer_geotag_dialog ( GtkWindow *parent,
 	}
 	else if (widgets->trk)
 		track_string = g_strdup_printf ( _("Using track: %s"), trk->name );
-	else
-		track_string = g_strdup_printf ( _("Using all tracks in: %s"), VIK_LAYER(widgets->vtl)->name );
+	else {
+		Layer * l = (Layer *) (VIK_LAYER(widgets->vtl))->layer;
+		track_string = g_strdup_printf ( _("Using all tracks in: %s"), l->name);
+	}
 
 	gtk_box_pack_start ( GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(widgets->dialog))), gtk_label_new ( track_string ), false, false, 5 );
 

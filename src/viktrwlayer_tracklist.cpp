@@ -168,7 +168,7 @@ static void trw_layer_track_select ( menu_array_values values )
 			iter = vtl->trw->get_tracks_iters().at(uid);
 
 		if ( iter )
-			vik_treeview_select_iter ( VIK_LAYER(vtl)->vt, iter, true );
+			vik_treeview_select_iter (vtl->trw->vt, iter, true );
 	}
 }
 
@@ -454,7 +454,7 @@ static void trw_layer_track_list_add ( vik_trw_track_list_t *vtdl,
 	}
 
 	// NB: doesn't include aggegrate visibility
-	bool visible = VIK_LAYER(vtl)->visible && trk->visible;
+	bool visible = vtl->trw->visible && trk->visible;
 	visible = visible && (trk->is_route ? vtl->trw->get_routes_visibility() : vtl->trw->get_tracks_visibility());
 
 	unsigned int trk_len_time = 0; // In minutes
@@ -511,7 +511,7 @@ static void trw_layer_track_list_add ( vik_trw_track_list_t *vtdl,
 
 	gtk_tree_store_append ( store, &t_iter, NULL );
 	gtk_tree_store_set ( store, &t_iter,
-	                     0, VIK_LAYER(vtl)->name,
+	                     0, vtl->trw->name,
 	                     1, trk->name,
 	                     2, time_buf,
 	                     3, visible,

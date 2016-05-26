@@ -142,13 +142,13 @@ static void write_track(FILE * f, std::unordered_map<sg_uid_t, Track *> & tracks
 	}
 }
 
-void a_gpsmapper_write_file(VikTrwLayer *trw, FILE *f)
+void a_gpsmapper_write_file(FILE * f, LayerTRW * layer)
 {
-	std::unordered_map<sg_uid_t, Track *> & tracks = trw->trw->get_tracks();
-	auto waypoints = trw->trw->get_waypoints();
+	std::unordered_map<sg_uid_t, Track *> & tracks = layer->get_tracks();
+	auto waypoints = layer->get_waypoints();
 
 	fprintf(f, "[IMG ID]\nID=%s\nName=%s\nTreSize=1000\nRgnLimit=700\nLevels=2\nLevel0=22\nLevel1=18\nZoom0=0\nZoom1=1\n[END-IMG ID]\n\n",
-		VIK_LAYER(trw)->name, VIK_LAYER(trw)->name);
+		layer->name, layer->name);
 
 	write_waypoints(f, waypoints);
 	write_track(f, tracks);

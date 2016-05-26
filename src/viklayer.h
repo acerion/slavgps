@@ -58,17 +58,6 @@ GType vik_layer_get_type ();
 
 struct _VikLayer {
 	GObject obj;
-	char *name;
-	bool visible;
-
-	bool realized;
-	Viewport * viewport;/* simply a reference */
-	VikTreeview *vt; /* simply a reference */
-	GtkTreeIter iter;
-
-	/* for explicit "polymorphism" (function type switching) */
-	VikLayerTypeEnum type;
-
 	void * layer; /* class Layer */
 };
 
@@ -178,21 +167,10 @@ struct _VikLayerInterface {
 };
 
 VikLayerInterface *vik_layer_get_interface ( VikLayerTypeEnum type );
-
-
-void vik_layer_set_type ( VikLayer *vl, VikLayerTypeEnum type );
-void vik_layer_draw(VikLayer *l, Viewport * viewport);
 void vik_layer_change_coord_mode ( VikLayer *l, VikCoordMode mode );
-void vik_layer_rename ( VikLayer *l, const char *new_name );
-void vik_layer_rename_no_copy ( VikLayer *l, char *new_name );
-const char *vik_layer_get_name ( VikLayer *l );
-
 time_t vik_layer_get_timestamp ( VikLayer *vl );
-
 bool vik_layer_set_param (VikLayer *layer, uint16_t id, VikLayerParamData data, void * viewport, bool is_file_operation);
-
 void vik_layer_set_defaults ( VikLayer *vl, Viewport * viewport);
-
 void vik_layer_emit_update ( VikLayer *vl );
 
 /* GUI */
@@ -310,6 +288,25 @@ namespace SlavGPS {
 		   are added to the treeview so they can add sublayers to the treeview. */
 		virtual void realize(VikTreeview * vt, GtkTreeIter * layer_iter);
 		virtual void free_();
+
+
+
+		char const * get_name();
+		void rename(char const * new_name);
+		void rename_no_copy(char * new_name);
+		void draw_visible(Viewport * viewport);
+
+
+
+		char * name;
+		bool visible;
+		bool realized;
+		Viewport * viewport; /* Simply a reference. */
+		VikTreeview * vt; /* Simply a reference. */
+		GtkTreeIter iter;
+
+		/* for explicit "polymorphism" (function type switching) */
+		VikLayerTypeEnum type;
 
 
 
