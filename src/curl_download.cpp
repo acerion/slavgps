@@ -103,7 +103,7 @@ int curl_download_uri ( const char *uri, FILE *f, DownloadFileOptions *options, 
   struct curl_slist *curl_send_headers = NULL;
   CURLcode res = CURLE_FAILED_INIT;
 
-  fprintf(stderr, "DEBUG: %s: uri=%s\n", __PRETTY_FUNCTION__, uri);
+  //fprintf(stderr, "DEBUG: %s: uri=%s\n", __PRETTY_FUNCTION__, uri);
 
   curl = handle ? handle : curl_easy_init ();
   if ( !curl ) {
@@ -160,7 +160,7 @@ int curl_download_uri ( const char *uri, FILE *f, DownloadFileOptions *options, 
     } else if (response == 200 ||  // http: 200 = Ok
                response == 226) {  // ftp:  226 = sucess
       double size;
-      /* verify if curl sends us any data - this is a workaround on using CURLOPT_TIMECONDITION 
+      /* verify if curl sends us any data - this is a workaround on using CURLOPT_TIMECONDITION
          when the server has a (incorrect) time earlier than the time on the file we already have */
       curl_easy_getinfo(curl, CURLINFO_SIZE_DOWNLOAD, &size);
       if (size == 0)
