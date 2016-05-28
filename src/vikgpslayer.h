@@ -44,41 +44,41 @@ extern "C" {
 typedef struct _VikGpsLayerClass VikGpsLayerClass;
 struct _VikGpsLayerClass
 {
-  VikLayerClass vik_layer_class;
+	VikLayerClass vik_layer_class;
 };
 
-GType vik_gps_layer_get_type ();
+GType vik_gps_layer_get_type();
 
 typedef enum {
-  GPS_DOWN=0,
-  GPS_UP
+	GPS_DOWN = 0,
+	GPS_UP
 } vik_gps_dir;
 
 typedef enum {
-  WPT=0,
-  TRK=1,
-  RTE=2
+	WPT = 0,
+	TRK = 1,
+	RTE = 2
 } vik_gps_xfer_type;
 
 typedef struct _VikGpsLayer VikGpsLayer;
 
-bool vik_gps_layer_is_empty ( VikGpsLayer *vgl );
-const GList *vik_gps_layer_get_children ( VikGpsLayer *vgl );
+bool vik_gps_layer_is_empty(VikGpsLayer *vgl);
+const GList *vik_gps_layer_get_children(VikGpsLayer *vgl);
 VikTrwLayer * vik_gps_layer_get_a_child(VikGpsLayer *vgl);
 
 // Non layer specific but expose communal method
-int vik_gps_comm ( VikTrwLayer *vtl,
-                    Track * trk,
-                    vik_gps_dir dir,
-                    char *protocol,
-                    char *port,
-                    bool tracking,
-                    Viewport * viewport,
-                    VikLayersPanel *vlp,
-                    bool do_tracks,
-                    bool do_routes,
-                    bool do_waypoints,
-		    bool turn_off);
+int vik_gps_comm(VikTrwLayer *vtl,
+		 Track * trk,
+		 vik_gps_dir dir,
+		 char *protocol,
+		 char *port,
+		 bool tracking,
+		 Viewport * viewport,
+		 VikLayersPanel *vlp,
+		 bool do_tracks,
+		 bool do_routes,
+		 bool do_waypoints,
+		 bool turn_off);
 
 #ifdef __cplusplus
 }
