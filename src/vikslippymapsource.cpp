@@ -160,6 +160,6 @@ char * MapSourceSlippy::get_server_path(TileInfo * src)
 DownloadResult_t MapSourceSlippy::download(TileInfo * src, const char * dest_fn, void * handle)
 {
 	DownloadResult_t result = a_http_download_get_url(get_server_hostname(), get_server_path(src), dest_fn, &download_options, handle);
-	fprintf(stderr, "MapSourceSlippy::download(%s, %s) -> %d\n", get_server_hostname(), get_server_path(src), result);
+	//fprintf(stderr, "MapSourceSlippy::download(%s, %s) -> %d\n", get_server_hostname(), get_server_path(src), result);
 	return result;
 }
