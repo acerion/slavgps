@@ -678,38 +678,7 @@ Layer::Layer(VikLayer * vl_)
 	this->visible = true;
 	this->realized = false;
 
-
-	switch (this->type) {
-	case VIK_LAYER_AGGREGATE:
-		strcpy(type_string, "AGGREGATE");
-		break;
-	case VIK_LAYER_TRW:
-		strcpy(type_string, "TRW");
-		break;
-	case VIK_LAYER_COORD:
-		strcpy(type_string, "COORD");
-		break;
-	case VIK_LAYER_GEOREF:
-		strcpy(type_string, "GEOREF");
-		break;
-	case VIK_LAYER_GPS:
-		strcpy(type_string, "GPS");
-		break;
-	case VIK_LAYER_MAPS:
-		strcpy(type_string, "MAPS");
-		break;
-	case VIK_LAYER_DEM:
-		strcpy(type_string, "DEM");
-		break;
-#ifdef HAVE_LIBMAPNIK
-	case VIK_LAYER_MAPNIK:
-		strcpy(type_string, "MAPNIK");
-		break;
-#endif
-	default:
-		strcpy(type_string, "LAST");
-		break;
-	}
+	strcpy(this->type_string, "LAST");
 }
 
 bool Layer::select_click(GdkEventButton * event, Viewport * viewport, tool_ed_t * tet)

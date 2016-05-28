@@ -1210,4 +1210,6 @@ VikGeorefLayer *vik_georef_layer_create(Viewport * viewport,
 LayerGeoref::LayerGeoref(VikLayer * vl) : Layer(vl)
 {
 	this->type = VIK_LAYER_GEOREF;
+
+	strcpy(this->type_string, "GEOREF");
 }

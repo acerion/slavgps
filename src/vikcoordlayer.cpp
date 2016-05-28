@@ -400,4 +400,6 @@ static VikCoordLayer * coord_layer_create(Viewport * viewport)
 LayerCoord::LayerCoord(VikLayer * vl) : Layer(vl)
 {
 	this->type = VIK_LAYER_COORD;
+
+	strcpy(this->type_string, "COORD");
 };

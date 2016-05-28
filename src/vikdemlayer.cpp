@@ -1396,4 +1396,6 @@ static bool dem_layer_download_click (VikDEMLayer *vdl, GdkEventButton *event, V
 LayerDEM::LayerDEM(VikLayer * vl) : Layer(vl)
 {
 	this->type = VIK_LAYER_DEM;
+
+	strcpy(this->type_string, "DEM");
 }

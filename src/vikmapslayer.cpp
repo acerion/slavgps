@@ -2553,6 +2553,8 @@ LayerMaps::LayerMaps(VikLayer * vl) : Layer(vl)
 {
 	this->type = VIK_LAYER_MAPS;
 
+	strcpy(this->type_string, "MAPS");
+
 	map_index = 0;
 	cache_dir = NULL;
 	cache_layout = VIK_MAPS_CACHE_LAYOUT_VIKING;

@@ -1178,4 +1178,6 @@ static bool mapnik_feature_release(VikMapnikLayer *vml, GdkEventButton *event, V
 LayerMapnik::LayerMapnik(VikLayer * vl) : Layer(vl)
 {
 	this->type = VIK_LAYER_MAPNIK;
+
+	strcpy(this->type_string, "MAPNIK");
 }
