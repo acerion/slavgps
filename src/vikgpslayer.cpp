@@ -825,7 +825,7 @@ void LayerGPS::realize(VikTreeview *vt, GtkTreeIter *layer_iter)
     VikLayer * trw = VIK_LAYER(vgl->trw_children[ix]);
     Layer * layer = (Layer *) trw->layer;
     vik_treeview_add_layer ( ((Layer *) ((VikLayer *) vgl)->layer)->vt, layer_iter, &iter,
-			     _(trw_names[ix]), vgl, true,
+			     _(trw_names[ix]), this, true,
 			     layer, ((Layer *) trw->layer)->type, ((Layer *) trw->layer)->type, layer->get_timestamp() );
     if ( ! layer->visible )
 	    vik_treeview_item_set_visible ( ((Layer *) ((VikLayer *) vgl)->layer)->vt, &iter, false );
@@ -1852,4 +1852,6 @@ static void gps_start_stop_tracking_cb( void * layer_and_vlp[2])
 LayerGPS::LayerGPS(VikLayer * vl) : Layer(vl)
 {
 	this->type = VIK_LAYER_GPS;
+
+	strcpy(this->type_string, "GPS");
 };

@@ -112,16 +112,15 @@ static void clip_receive_viking ( GtkClipboard *c, GtkSelectionData *sd, void * 
 
   if ( vc->type == VIK_CLIPBOARD_DATA_LAYER )
   {
-	  VikLayer *new_layer = vik_layer_unmarshall(vc->data, vc->len, vlp->panel_ref->get_viewport());
-    vlp->panel_ref->add_layer(new_layer);
+    VikLayer *new_layer = vik_layer_unmarshall(vc->data, vc->len, vlp->panel_ref->get_viewport());
+    vlp->panel_ref->add_layer((Layer *) new_layer->layer);
   }
   else if ( vc->type == VIK_CLIPBOARD_DATA_SUBLAYER )
   {
-    VikLayer *sel = vlp->panel_ref->get_selected();
-    if ( sel && ((Layer *) sel->layer)->type == vc->layer_type)
+    Layer * selected = vlp->panel_ref->get_selected();
+    if ( selected && selected->type == vc->layer_type)
     {
-	    Layer * layer = (Layer *) sel->layer;
-	    layer->paste_item(vc->subtype, vc->data, vc->len);
+	    selected->paste_item(vc->subtype, vc->data, vc->len);
     }
     else
       a_dialog_error_msg_extra ( VIK_GTK_WINDOW_FROM_WIDGET(GTK_WIDGET(vlp)),
@@ -251,15 +250,14 @@ static bool clip_parse_latlon ( const char *text, struct LatLon *coord )
 static void clip_add_wp(VikLayersPanel *vlp, struct LatLon *coord)
 {
   VikCoord vc;
-  VikLayer *sel = vlp->panel_ref->get_selected();
-
+  Layer * selected = vlp->panel_ref->get_selected();
 
   vik_coord_load_from_latlon ( &vc, VIK_COORD_LATLON, coord );
 
-  if (sel && ((Layer *) sel->layer)->type == VIK_LAYER_TRW) {
-    (VIK_TRW_LAYER(sel))->trw->new_waypoint(VIK_GTK_WINDOW_FROM_LAYER(sel), &vc);
-    VIK_TRW_LAYER(sel)->trw->calculate_bounds_waypoints();
-    vik_layer_emit_update ( VIK_LAYER(sel) );
+  if (selected && selected->type == VIK_LAYER_TRW) {
+    ((LayerTRW *) selected)->new_waypoint(VIK_GTK_WINDOW_FROM_LAYER(selected->vl), &vc);
+    ((LayerTRW *) selected)->calculate_bounds_waypoints();
+    vik_layer_emit_update((VikLayer *) selected->vl);
   } else {
     a_dialog_error_msg_extra ( VIK_GTK_WINDOW_FROM_WIDGET(GTK_WIDGET(vlp)), _("In order to paste a waypoint, please select an appropriate layer to paste into."), NULL);
   }
@@ -271,17 +269,16 @@ static void clip_receive_text (GtkClipboard *c, const char *text, void * p)
 
   fprintf(stderr, "DEBUG: got text: %s\n", text );
 
-  VikLayer *sel = vlp->panel_ref->get_selected();
-  Layer * layer = (Layer *) sel->layer;
+  Layer * selected = vlp->panel_ref->get_selected();
 
-  if ( sel && vik_treeview_get_editing (layer->vt ) ) {
+  if ( selected && vik_treeview_get_editing (selected->vt ) ) {
     GtkTreeIter iter;
-    if ( vik_treeview_get_selected_iter (layer->vt, &iter ) ) {
+    if ( vik_treeview_get_selected_iter (selected->vt, &iter ) ) {
       // Try to sanitize input:
       char *name = g_strescape ( text, NULL );
 
-      layer->rename(name);
-      vik_treeview_item_set_name (layer->vt, &iter, name );
+      selected->rename(name);
+      vik_treeview_item_set_name(selected->vt, &iter, name );
       free( name );
     }
     return;
@@ -382,8 +379,7 @@ void clip_receive_targets ( GtkClipboard *c, GdkAtom *a, int n, void * p )
  */
 void a_clipboard_copy_selected ( VikLayersPanel *vlp )
 {
-  VikLayer *sel = vlp->panel_ref->get_selected();
-  Layer * layer = (Layer *) sel->layer;
+  Layer * selected = vlp->panel_ref->get_selected();
   GtkTreeIter iter;
   VikClipboardDataType type = VIK_CLIPBOARD_DATA_NONE;
   uint16_t layer_type = 0;
@@ -392,36 +388,36 @@ void a_clipboard_copy_selected ( VikLayersPanel *vlp )
   unsigned int len = 0;
   const char *name = NULL;
 
-  if ( ! sel )
+  if ( ! selected )
     return;
 
-  if ( !vik_treeview_get_selected_iter (layer->vt, &iter ) )
+  if ( !vik_treeview_get_selected_iter (selected->vt, &iter ) )
     return;
-  layer_type = ((Layer *) sel->layer)->type;
+  layer_type = selected->type;
 
   // Since we intercept copy and paste keyboard operations, this is called even when a cell is being edited
-  if ( vik_treeview_get_editing (layer->vt ) ) {
+  if ( vik_treeview_get_editing (selected->vt ) ) {
 	  type = VIK_CLIPBOARD_DATA_TEXT;
 	  //  I don't think we can access what is actually selected (internal to GTK) so we go for the name of the item
 	  // At least this is better than copying the layer data - which is even further away from what the user would be expecting...
-	  name = vik_treeview_item_get_name (layer->vt, &iter );
+	  name = vik_treeview_item_get_name (selected->vt, &iter );
 	  len = 0;
   }
   else {
-    if ( vik_treeview_item_get_type (layer->vt, &iter ) == VIK_TREEVIEW_TYPE_SUBLAYER ) {
+    if ( vik_treeview_item_get_type (selected->vt, &iter ) == VIK_TREEVIEW_TYPE_SUBLAYER ) {
       type = VIK_CLIPBOARD_DATA_SUBLAYER;
-      subtype = vik_treeview_item_get_data(layer->vt, &iter);
+      subtype = vik_treeview_item_get_data(selected->vt, &iter);
 
-      layer->copy_item(subtype, vik_treeview_item_get_pointer(layer->vt, &iter), &data, &len );
+      selected->copy_item(subtype, vik_treeview_item_get_pointer(selected->vt, &iter), &data, &len );
       // This name is used in setting the text representation of the item on the clipboard.
-      name = vik_treeview_item_get_name(layer->vt, &iter);
+      name = vik_treeview_item_get_name(selected->vt, &iter);
     }
     else {
       int ilen;
       type = VIK_CLIPBOARD_DATA_LAYER;
-      vik_layer_marshall ( sel, &data, &ilen );
+      vik_layer_marshall ( selected->vl, &data, &ilen );
       len = ilen;
-      name = ((Layer *) vik_treeview_item_get_layer(layer->vt, &iter))->get_name();
+      name = ((Layer *) vik_treeview_item_get_layer(selected->vt, &iter))->get_name();
     }
   }
   a_clipboard_copy ( type, layer_type, subtype, len, name, data );

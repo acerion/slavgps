@@ -187,7 +187,7 @@ void LayerAggregate::insert_layer(Layer * layer, GtkTreeIter *replace_iter)
 	}
 
 	if (this->realized) {
-		vik_treeview_insert_layer(this->vt, &this->iter, &iter, layer->name, this->vl, put_above, layer, layer->type, layer->type, replace_iter, layer->get_timestamp());
+		vik_treeview_insert_layer(this->vt, &this->iter, &iter, layer->name, this, put_above, layer, layer->type, layer->type, replace_iter, layer->get_timestamp());
 		if (! layer->visible) {
 			vik_treeview_item_set_visible(this->vt, &iter, false);
 		}
@@ -248,7 +248,7 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 	}
 
 	if (this->realized) {
-		vik_treeview_add_layer(this->vt, &this->iter, &iter, layer->name, this->vl, put_above, layer, layer->type, layer->type, layer->get_timestamp());
+		vik_treeview_add_layer(this->vt, &this->iter, &iter, layer->name, this, put_above, layer, layer->type, layer->type, layer->get_timestamp());
 		if (! layer->visible) {
 			vik_treeview_item_set_visible(this->vt, &iter, false);
 		}
@@ -337,7 +337,7 @@ void LayerAggregate::draw(Viewport * viewport)
 		}
 	}
 
-
+#if 0
 	fprintf(stderr, "%s:%d: children:\n", __FILE__, __LINE__);
 	for (auto child = this->children->begin(); child != this->children->end(); child++) {
 		Layer * layer = *child;
@@ -368,13 +368,14 @@ void LayerAggregate::draw(Viewport * viewport)
 			fprintf(stderr, "type = %d !!!!!! \n", layer->type);
 		}
 	}
+#endif
 }
 
 void LayerAggregate::change_coord_mode(VikCoordMode mode)
 {
 	for (auto child = this->children->begin(); child != this->children->end(); child++) {
 		Layer * layer = *child;
-		vik_layer_change_coord_mode(layer->vl, mode);
+		layer->change_coord_mode(mode);
 	}
 }
 
@@ -979,7 +980,7 @@ void LayerAggregate::realize(VikTreeview *vt, GtkTreeIter *layer_iter)
 
 	for (auto child = this->children->begin(); child != this->children->end(); child++) {
 		Layer * layer = *child;
-		vik_treeview_add_layer(this->vt, layer_iter, &iter, layer->name, this->vl, true,
+		vik_treeview_add_layer(this->vt, layer_iter, &iter, layer->name, this, true,
 				       layer, layer->type, layer->type, layer->get_timestamp());
 		if (! layer->visible) {
 			vik_treeview_item_set_visible(this->vt, &iter, false);
@@ -1048,4 +1049,5 @@ LayerAggregate::LayerAggregate(VikLayer * vl) : Layer(vl)
 	this->type = VIK_LAYER_AGGREGATE;
 	this->children = new std::list<Layer *>;
 	this->tracks_analysis_dialog = NULL;
+	strcpy(this->type_string, "AGGREGATE");
 }

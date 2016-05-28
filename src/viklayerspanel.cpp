@@ -108,7 +108,7 @@ LayersPanel::LayersPanel()
 	VikAggregateLayer * val = vik_aggregate_layer_new();
 	this->toplayer = (LayerAggregate *) ((VikLayer *) val)->layer;
 	this->toplayer->rename(_("Top Layer"));
-	int a = g_signal_connect_swapped(G_OBJECT(this->toplayer->vl), "update", G_CALLBACK(vik_layers_panel_emit_update), this);
+	int a = g_signal_connect_swapped(G_OBJECT(this->toplayer->vl), "update", G_CALLBACK(vik_layers_panel_emit_update_cb), this);
 
 	vik_treeview_add_layer(this->vt, NULL, &(this->toplayer_iter), this->toplayer->name, NULL, true, this->toplayer, VIK_LAYER_AGGREGATE, VIK_LAYER_AGGREGATE, 0);
 	this->toplayer->realize(this->vt, &(this->toplayer_iter));
@@ -265,7 +265,7 @@ static bool idle_draw_panel(VikLayersPanel *vlp)
 	return false; // Nothing else to do
 }
 
-void vik_layers_panel_emit_update(LayersPanel * panel)
+void vik_layers_panel_emit_update_cb(LayersPanel * panel)
 {
 	GThread *thread = vik_window_get_thread(VIK_WINDOW(VIK_GTK_WINDOW_FROM_WIDGET(panel->gob)));
 	if (!thread) {
@@ -285,7 +285,7 @@ void vik_layers_panel_emit_update(LayersPanel * panel)
 
 void LayersPanel::emit_update()
 {
-	vik_layers_panel_emit_update(this);
+	vik_layers_panel_emit_update_cb(this);
 }
 
 static void layers_item_toggled_cb(VikLayersPanel *vlp, GtkTreeIter *iter)
@@ -308,13 +308,13 @@ void LayersPanel::item_toggled(GtkTreeIter *iter)
 		vik_layer_emit_update_although_invisible(layer->vl); /* set trigger for half-drawn */
 		break;
 		}
-	case VIK_TREEVIEW_TYPE_SUBLAYER:
-		{
-		visible = vik_layer_sublayer_toggle_visible(VIK_LAYER(vik_treeview_item_get_parent(this->vt, iter)),
+	case VIK_TREEVIEW_TYPE_SUBLAYER: {
+		Layer * parent = (Layer *) vik_treeview_item_get_parent(this->vt, iter);
+		visible = vik_layer_sublayer_toggle_visible(parent->vl,
 							    vik_treeview_item_get_data(this->vt, iter), p);
-		vik_layer_emit_update_although_invisible(VIK_LAYER(vik_treeview_item_get_parent(this->vt, iter)));
+		vik_layer_emit_update_although_invisible(parent->vl);
 		break;
-		}
+	}
 	default:
 		return;
 	}
@@ -348,7 +348,8 @@ void LayersPanel::item_edited(GtkTreeIter *iter, const char *new_text)
 			vik_treeview_item_set_name(this->vt, iter, layer->name);
 		}
 	} else {
-		const char *name = vik_layer_sublayer_rename_request((VikLayer *) vik_treeview_item_get_parent(this->vt, iter), new_text, this->gob, vik_treeview_item_get_data(this->vt, iter), vik_treeview_item_get_pointer(this->vt, iter), iter);
+		Layer * parent = (Layer *) vik_treeview_item_get_parent(this->vt, iter);
+		const char *name = vik_layer_sublayer_rename_request(parent->vl, new_text, this->gob, vik_treeview_item_get_data(this->vt, iter), vik_treeview_item_get_pointer(this->vt, iter), iter);
 		if (name) {
 			vik_treeview_item_set_name(this->vt, iter, name);
 		}
@@ -446,7 +447,8 @@ void LayersPanel::popup(GtkTreeIter *iter, int mouse_button)
 			vik_layer_add_menu_items(layer->vl, menu, this->gob);
 		} else {
 			menu = GTK_MENU (gtk_menu_new());
-			if (! vik_layer_sublayer_add_menu_items ((VikLayer *) vik_treeview_item_get_parent(this->vt, iter), menu, this->gob, vik_treeview_item_get_data(this->vt, iter), vik_treeview_item_get_pointer(this->vt, iter), iter, this->viewport)) { // kamil
+			Layer * parent = (Layer *) (VikLayer *) vik_treeview_item_get_parent(this->vt, iter);
+			if (! vik_layer_sublayer_add_menu_items(parent->vl, menu, this->gob, vik_treeview_item_get_data(this->vt, iter), vik_treeview_item_get_pointer(this->vt, iter), iter, this->viewport)) { // kamil
 				gtk_widget_destroy (GTK_WIDGET(menu));
 				return;
 			}
@@ -486,7 +488,7 @@ bool LayersPanel::new_layer(VikLayerTypeEnum type)
 	ask_user = !ask_user;
 	VikLayer * l = vik_layer_create(type, this->viewport, ask_user);
 	if (l) {
-		this->add_layer(l);
+		this->add_layer((Layer *) l->layer);
 		return true;
 	}
 	return false;
@@ -498,54 +500,53 @@ bool LayersPanel::new_layer(VikLayerTypeEnum type)
  *
  * Add an existing layer to panel.
  */
-void LayersPanel::add_layer(VikLayer *l)
+void LayersPanel::add_layer(Layer * layer)
 {
 	GtkTreeIter iter;
-	GtkTreeIter *replace_iter = NULL;
 
 	/* could be something different so we have to do this */
-	vik_layer_change_coord_mode(l, this->viewport->get_coord_mode());
+	layer->change_coord_mode(this->viewport->get_coord_mode());
+	fprintf(stderr, "INFO: %s:%d: attempting to add layer '%s'\n", __FUNCTION__, __LINE__, layer->type_string);
 
 	if (! vik_treeview_get_selected_iter(this->vt, &iter)) {
 
-		Layer * layer = (Layer *) l->layer;
-		fprintf(stderr, "%s:%d: type string = '%s'\n", __FUNCTION__, __LINE__, layer->type_string);
+		/* No particular layer is selected in panel, so the
+		   layer to be added goes directly under top level
+		   aggregate layer. */
+		fprintf(stderr, "INFO: %s:%d: No selected layer, adding layer '%s' under top level aggregate layer\n", __FUNCTION__, __LINE__, layer->type_string);
 		this->toplayer->add_layer(layer, true);
+
 	} else {
-		VikAggregateLayer *addtoagg;
-		if (vik_treeview_item_get_type(this->vt, &iter) == VIK_TREEVIEW_TYPE_LAYER) {
-			Layer * layer = (Layer *) vik_treeview_item_get_layer(this->vt, &iter);
-			if (IS_VIK_AGGREGATE_LAYER(layer->vl)) {
-				addtoagg = VIK_AGGREGATE_LAYER(layer->vl);
-			} else {
-				Layer * layer = (Layer *) vik_treeview_item_get_parent(this->vt, &iter);
-				while (! IS_VIK_AGGREGATE_LAYER(layer->vl)) {
-					iter = layer->iter;
-					layer = (Layer *) vik_treeview_item_get_parent(this->vt, &layer->iter);
-					assert (layer->realized);
-				}
-				addtoagg = VIK_AGGREGATE_LAYER(layer->vl);
-				replace_iter = &iter;
-			}
+		/* Some item in tree view is already selected. Let's find a good
+		   place for given layer to be added - a first aggregate
+		   layer that we meet going up in hierarchy. */
+
+		GtkTreeIter * replace_iter = NULL;
+		Layer * current = NULL;
+
+		if (vik_treeview_item_get_type(this->vt, &iter) == VIK_TREEVIEW_TYPE_SUBLAYER) {
+			current = (Layer *) vik_treeview_item_get_parent(this->vt, &iter);
+			fprintf(stderr, "INFO: %s:%d: Capturing parent layer '%s' as current layer\n",
+				__FUNCTION__, __LINE__, current->type_string);
 		} else {
-			/* a sublayer is selected, first get its parent (layer), then find the layer's parent (aggr. layer) */
-			VikLayer *vl = VIK_LAYER(vik_treeview_item_get_parent(this->vt, &iter));
-			replace_iter = &(((Layer *) vl->layer)->iter);
-			assert (((Layer *) vl->layer)->realized);
-			VikLayer *grandpa = (VikLayer *) (vik_treeview_item_get_parent(this->vt, &((Layer *) vl->layer)->iter));
-			if (IS_VIK_AGGREGATE_LAYER(grandpa)) {
-				addtoagg = VIK_AGGREGATE_LAYER(grandpa);
-			} else {
-				addtoagg = (VikAggregateLayer *) this->toplayer->vl;
-				replace_iter = &((Layer *) grandpa)->iter;
-			}
+			current = (Layer *) vik_treeview_item_get_layer(this->vt, &iter);
+			fprintf(stderr, "INFO: %s:%d: Capturing selected layer '%s' as current layer\n",
+				__FUNCTION__, __LINE__, current->type_string);
 		}
-		Layer * layer = (Layer *) l->layer;
-		fprintf(stderr, "%s:%d: type string = '%s'\n", __FUNCTION__, __LINE__, layer->type_string);
+		assert (current->realized);
+
+		/* Go further up until you find first aggregate layer. */
+		while (current->type != VIK_LAYER_AGGREGATE) {
+			current = (Layer *) vik_treeview_item_get_parent(this->vt, &iter);
+			iter = current->iter;
+			assert (current->realized);
+		}
+
+		LayerAggregate * aggregate = (LayerAggregate *) current;
 		if (replace_iter) {
-			((LayerAggregate *) ((VikLayer *) addtoagg)->layer)->insert_layer(layer, replace_iter);
+			aggregate->insert_layer(layer, replace_iter);
 		} else {
-			((LayerAggregate *) ((VikLayer *) addtoagg)->layer)->add_layer(layer, true);
+			aggregate->add_layer(layer, true);
 		}
 	}
 
@@ -564,9 +565,9 @@ void LayersPanel::move_item(bool up)
 	vik_treeview_select_iter(this->vt, &iter, false); /* cancel any layer-name editing going on... */
 
 	if (vik_treeview_item_get_type(this->vt, &iter) == VIK_TREEVIEW_TYPE_LAYER) {
-		VikAggregateLayer * parent = VIK_AGGREGATE_LAYER(vik_treeview_item_get_parent(this->vt, &iter));
+		LayerAggregate * parent = (LayerAggregate *) vik_treeview_item_get_parent(this->vt, &iter);
 		if (parent) {/* not toplevel */
-			((LayerAggregate *) ((VikLayer *) parent)->layer)->move_layer(&iter, up);
+			parent->move_layer(&iter, up);
 			this->emit_update();
 		}
 	}
@@ -621,20 +622,20 @@ void LayersPanel::cut_selected()
 	int type = vik_treeview_item_get_type(this->vt, &iter);
 
 	if (type == VIK_TREEVIEW_TYPE_LAYER) {
-		VikAggregateLayer *parent = (VikAggregateLayer *) vik_treeview_item_get_parent(this->vt, &iter);
+		LayerAggregate * parent = (LayerAggregate *) vik_treeview_item_get_parent(this->vt, &iter);
 		if (parent){
 			/* reset trigger if trigger deleted */
-			if (this->get_selected() == this->viewport->get_trigger()) {
+			if (this->get_selected()->vl == this->viewport->get_trigger()) {
 				this->viewport->set_trigger(NULL);
 			}
 
 			a_clipboard_copy_selected(this->gob);
 
-			if (IS_VIK_AGGREGATE_LAYER(parent)) {
+			if (parent->type == VIK_LAYER_AGGREGATE) {
 
 				g_signal_emit(G_OBJECT(this->gob), layers_panel_signals[VLP_DELETE_LAYER_SIGNAL], 0);
 
-				if (vik_aggregate_layer_delete(parent, &iter)) {
+				if (vik_aggregate_layer_delete((VikAggregateLayer *) parent->vl, &iter)) {
 					this->emit_update();
 				}
 			}
@@ -642,10 +643,9 @@ void LayersPanel::cut_selected()
 			a_dialog_info_msg(VIK_GTK_WINDOW_FROM_WIDGET(this->gob), _("You cannot cut the Top Layer."));
 		}
 	} else if (type == VIK_TREEVIEW_TYPE_SUBLAYER) {
-		VikLayer *sel = this->get_selected();
-		Layer * layer = (Layer *) sel->layer;
+		Layer * selected = this->get_selected();
 		int subtype = vik_treeview_item_get_data(this->vt, &iter);
-		layer->cut_item(subtype, vik_treeview_item_get_pointer(layer->vt, &iter));
+		selected->cut_item(subtype, vik_treeview_item_get_pointer(selected->vt, &iter));
 	}
 }
 
@@ -705,18 +705,18 @@ void LayersPanel::delete_selected()
 			return;
 		}
 
-		VikAggregateLayer *parent = (VikAggregateLayer *) vik_treeview_item_get_parent(this->vt, &iter);
+		LayerAggregate * parent = (LayerAggregate *) vik_treeview_item_get_parent(this->vt, &iter);
 		if (parent) {
 			/* reset trigger if trigger deleted */
-			if (this->get_selected() == this->viewport->get_trigger()) {
+			if (this->get_selected()->vl == this->viewport->get_trigger()) {
 				this->viewport->set_trigger(NULL);
 			}
 
-			if (IS_VIK_AGGREGATE_LAYER(parent)) {
+			if (parent->type == VIK_LAYER_AGGREGATE) {
 
 				g_signal_emit(G_OBJECT(this->gob), layers_panel_signals[VLP_DELETE_LAYER_SIGNAL], 0);
 
-				if (vik_aggregate_layer_delete(parent, &iter)) {
+				if (vik_aggregate_layer_delete((VikAggregateLayer *) parent->vl, &iter)) {
 					this->emit_update();
 				}
 			}
@@ -724,14 +724,13 @@ void LayersPanel::delete_selected()
 			a_dialog_info_msg (VIK_GTK_WINDOW_FROM_WIDGET(this->gob), _("You cannot delete the Top Layer."));
 		}
 	} else if (type == VIK_TREEVIEW_TYPE_SUBLAYER) {
-		VikLayer *sel = this->get_selected();
+		Layer * selected = this->get_selected();
 		int subtype = vik_treeview_item_get_data(this->vt, &iter);
-		Layer * layer = (Layer *) sel->layer;
-		layer->delete_item(subtype, vik_treeview_item_get_pointer(layer->vt, &iter));
+		selected->delete_item(subtype, vik_treeview_item_get_pointer(selected->vt, &iter));
 	}
 }
 
-VikLayer * LayersPanel::get_selected()
+Layer * LayersPanel::get_selected()
 {
 	GtkTreeIter iter, parent;
 	memset(&iter, 0, sizeof (GtkTreeIter));
@@ -750,7 +749,7 @@ VikLayer * LayersPanel::get_selected()
 		type = vik_treeview_item_get_type(this->vt, &iter);
 	}
 
-	return ((Layer *) vik_treeview_item_get_layer(this->vt, &iter))->vl;
+	return (Layer *) vik_treeview_item_get_layer(this->vt, &iter);
 }
 
 static void layers_move_item_up_cb(VikLayersPanel *vlp)
@@ -778,17 +777,17 @@ bool vik_layers_panel_tool(VikLayersPanel *vlp, uint16_t layer_type, VikToolInte
 }
 #endif
 
-VikLayer * LayersPanel::get_layer_of_type(VikLayerTypeEnum type)
+Layer * LayersPanel::get_layer_of_type(VikLayerTypeEnum type)
 {
-	VikLayer *rv = this->get_selected();
-	if (rv == NULL || ((Layer *) rv->layer)->type != type) {
+	Layer * layer = this->get_selected();
+	if (layer == NULL || layer->type != type) {
 		if (this->toplayer->visible) {
-			return this->toplayer->get_top_visible_layer_of_type(type)->vl;
+			return this->toplayer->get_top_visible_layer_of_type(type);
 		} else {
 			return NULL;
 		}
 	} else {
-		return rv;
+		return (Layer *) layer;
 	}
 }
 
@@ -816,7 +815,7 @@ void LayersPanel::clear()
 
 void LayersPanel::change_coord_mode(VikCoordMode mode)
 {
-		vik_layer_change_coord_mode(VIK_LAYER(this->toplayer->vl), mode);
+	this->toplayer->change_coord_mode(mode);
 }
 
 static void layers_panel_finalize(GObject *gob)

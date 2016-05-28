@@ -45,14 +45,14 @@ namespace SlavGPS {
 		LayersPanel();
 		~LayersPanel();
 
-		void add_layer(VikLayer *l);
+		void add_layer(Layer * layer);
 		void draw_all();
-		VikLayer * get_selected();
+		Layer * get_selected();
 		void cut_selected();
 		void copy_selected();
 		bool paste_selected();
 		void delete_selected();
-		VikLayer * get_layer_of_type(VikLayerTypeEnum type);
+		Layer * get_layer_of_type(VikLayerTypeEnum type);
 		void set_viewport(Viewport * viewport);
 		Viewport * get_viewport();
 		void emit_update();
@@ -115,10 +115,8 @@ struct _VikLayersPanelClass
 };
 
 GType vik_layers_panel_get_type();
-void vik_layers_panel_free(VikLayersPanel *vlp);
-void vik_layers_panel_emit_update(LayersPanel * panel);
+void vik_layers_panel_emit_update_cb(LayersPanel * panel);
 
-//bool vik_layers_panel_tool(VikLayersPanel *vlp, uint16_t layer_type, VikToolInterfaceFunc tool_func, GdkEventButton *event, Viewport * viewport);
 
 
 #ifdef __cplusplus

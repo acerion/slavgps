@@ -1484,7 +1484,7 @@ void LayerTRW::draw_with_highlight(Viewport * viewport, bool highlight)
 void LayerTRW::draw(Viewport * viewport)
 {
 
-	fprintf(stderr, "%s:%d called\n", __FUNCTION__, __LINE__);
+	//fprintf(stderr, "%s:%d called\n", __FUNCTION__, __LINE__);
 	VikTrwLayer * l = (VikTrwLayer *) this->vl;
 
 	// If this layer is to be highlighted - then don't draw now - as it will be drawn later on in the specific highlight draw stage
@@ -1731,7 +1731,8 @@ void LayerTRW::realize_track(std::unordered_map<sg_uid_t, Track *> & tracks, voi
 			timestamp = tpt->timestamp;
 		}
 
-		vik_treeview_add_sublayer((VikTreeview *) pass_along[3], (GtkTreeIter *) pass_along[0], (GtkTreeIter *) pass_along[1], trk->name, pass_along[2], (void *) ((long) i->first), sublayer_id, pixbuf, true, timestamp);
+		Layer * parent = (Layer *) ((VikLayer *) pass_along[2])->layer;
+		vik_treeview_add_sublayer((VikTreeview *) pass_along[3], (GtkTreeIter *) pass_along[0], (GtkTreeIter *) pass_along[1], trk->name, parent, (void *) ((long) i->first), sublayer_id, pixbuf, true, timestamp);
 
 		if (pixbuf) {
 			g_object_unref(pixbuf);
@@ -1764,7 +1765,9 @@ void LayerTRW::realize_waypoints(std::unordered_map<sg_uid_t, Waypoint *> & wayp
 			timestamp = i->second->timestamp;
 		}
 
-		vik_treeview_add_sublayer((VikTreeview *) pass_along[3], (GtkTreeIter *) pass_along[0], (GtkTreeIter *) pass_along[1], i->second->name, pass_along[2], (void *) ((long) i->first), sublayer_id, get_wp_sym_small(i->second->symbol), true, timestamp);
+		Layer * parent = (Layer *) ((VikLayer *) pass_along[2])->layer;
+
+		vik_treeview_add_sublayer((VikTreeview *) pass_along[3], (GtkTreeIter *) pass_along[0], (GtkTreeIter *) pass_along[1], i->second->name, parent, (void *) ((long) i->first), sublayer_id, get_wp_sym_small(i->second->symbol), true, timestamp);
 
 		*new_iter = *((GtkTreeIter *) pass_along[1]);
 		this->waypoints_iters.insert({{ i->first, new_iter }});
@@ -1781,7 +1784,7 @@ void LayerTRW::realize_waypoints(std::unordered_map<sg_uid_t, Waypoint *> & wayp
 
 void LayerTRW::add_sublayer_tracks(VikTreeview * vt, GtkTreeIter * layer_iter)
 {
-	vik_treeview_add_sublayer(vt, layer_iter, &(track_iter), _("Tracks"), this->vl, NULL, VIK_TRW_LAYER_SUBLAYER_TRACKS, NULL, false, 0);
+	vik_treeview_add_sublayer(vt, layer_iter, &(track_iter), _("Tracks"), this, NULL, VIK_TRW_LAYER_SUBLAYER_TRACKS, NULL, false, 0);
 }
 
 
@@ -1790,7 +1793,7 @@ void LayerTRW::add_sublayer_tracks(VikTreeview * vt, GtkTreeIter * layer_iter)
 
 void LayerTRW::add_sublayer_waypoints(VikTreeview * vt, GtkTreeIter * layer_iter)
 {
-	vik_treeview_add_sublayer(vt, layer_iter, &(waypoint_iter), _("Waypoints"), this->vl, NULL, VIK_TRW_LAYER_SUBLAYER_WAYPOINTS, NULL, false, 0 );
+	vik_treeview_add_sublayer(vt, layer_iter, &(waypoint_iter), _("Waypoints"), this, NULL, VIK_TRW_LAYER_SUBLAYER_WAYPOINTS, NULL, false, 0 );
 }
 
 
@@ -1799,7 +1802,7 @@ void LayerTRW::add_sublayer_waypoints(VikTreeview * vt, GtkTreeIter * layer_iter
 
 void LayerTRW::add_sublayer_routes(VikTreeview * vt, GtkTreeIter * layer_iter)
 {
-	vik_treeview_add_sublayer(vt, layer_iter, &(route_iter), _("Routes"), this->vl, NULL, VIK_TRW_LAYER_SUBLAYER_ROUTES, NULL, false, 0);
+	vik_treeview_add_sublayer(vt, layer_iter, &(route_iter), _("Routes"), this, NULL, VIK_TRW_LAYER_SUBLAYER_ROUTES, NULL, false, 0);
 }
 
 
@@ -3550,7 +3553,7 @@ void LayerTRW::add_waypoint(Waypoint * wp, char const * name)
 		}
 
 		// Visibility column always needed for waypoints
-		vik_treeview_add_sublayer(this->vt, &(waypoint_iter), iter, name, this->vl, KUINT_TO_POINTER(global_wp_uid), VIK_TRW_LAYER_SUBLAYER_WAYPOINT, get_wp_sym_small (wp->symbol), true, timestamp);
+		vik_treeview_add_sublayer(this->vt, &(waypoint_iter), iter, name, this, KUINT_TO_POINTER(global_wp_uid), VIK_TRW_LAYER_SUBLAYER_WAYPOINT, get_wp_sym_small (wp->symbol), true, timestamp);
 
 		// Actual setting of visibility dependent on the waypoint
 		vik_treeview_item_set_visible(this->vt, iter, wp->visible);
@@ -3595,7 +3598,7 @@ void LayerTRW::add_track(Track * trk, char const * name)
 		}
 
 		// Visibility column always needed for tracks
-		vik_treeview_add_sublayer(this->vt, &(track_iter), iter, name, this->vl, KUINT_TO_POINTER(global_tr_uuid), VIK_TRW_LAYER_SUBLAYER_TRACK, NULL, true, timestamp);
+		vik_treeview_add_sublayer(this->vt, &(track_iter), iter, name, this, KUINT_TO_POINTER(global_tr_uuid), VIK_TRW_LAYER_SUBLAYER_TRACK, NULL, true, timestamp);
 
 		// Actual setting of visibility dependent on the track
 		vik_treeview_item_set_visible(this->vt, iter, trk->visible);
@@ -3634,7 +3637,7 @@ void LayerTRW::add_route(Track * trk, char const * name)
 
 		GtkTreeIter *iter = (GtkTreeIter *) malloc(sizeof(GtkTreeIter));
 		// Visibility column always needed for routes
-		vik_treeview_add_sublayer(this->vt, &(route_iter), iter, name, this->vl, KUINT_TO_POINTER(global_rt_uuid), VIK_TRW_LAYER_SUBLAYER_ROUTE, NULL, true, 0); // Routes don't have times
+		vik_treeview_add_sublayer(this->vt, &(route_iter), iter, name, this, KUINT_TO_POINTER(global_rt_uuid), VIK_TRW_LAYER_SUBLAYER_ROUTE, NULL, true, 0); // Routes don't have times
 		// Actual setting of visibility dependent on the route
 		vik_treeview_item_set_visible(this->vt, iter, trk->visible);
 
@@ -9914,7 +9917,7 @@ void LayerTRW::change_coord_mode(VikCoordMode dest_mode)
 
 void LayerTRW::set_menu_selection(uint16_t selection)
 {
-	fprintf(stderr, "=============== set menu selection\n");
+	//fprintf(stderr, "=============== set menu selection\n");
 	((VikTrwLayer *) this->vl)->menu_selection = (VikStdLayerMenuItem) selection; /* kamil: invalid cast? */
 }
 
@@ -9924,7 +9927,7 @@ void LayerTRW::set_menu_selection(uint16_t selection)
 
 uint16_t LayerTRW::get_menu_selection()
 {
-	fprintf(stderr, "=============== get menu selection\n");
+	//fprintf(stderr, "=============== get menu selection\n");
 	return ((VikTrwLayer *) this->vl)->menu_selection;
 }
 
@@ -10288,6 +10291,8 @@ Track * trw_layer_get_track_helper(menu_array_sublayer values, VikTrwLayer * vtl
 LayerTRW::LayerTRW(VikLayer * vl) : Layer(vl)
 {
 	this->type = VIK_LAYER_TRW;
+
+	strcpy(this->type_string, "TRW");
 
 	current_wp = NULL;
 	current_wp_uid = 0;

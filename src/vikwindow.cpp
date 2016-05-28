@@ -1007,7 +1007,11 @@ static bool key_press_event(VikWindow *vw, GdkEventKey *event, void * data)
 		return true; // handled keypress
 	}
 
-	VikLayer *vl = vw->layers_panel->get_selected();
+	Layer * layer = vw->layers_panel->get_selected();
+	VikLayer * vl = NULL;
+	if (layer) {
+		vl = layer->vl;
+	}
 	if (vl && vw->vt->active_tool != -1 && vw->vt->tools[vw->vt->active_tool].ti.key_press) {
 		int ltype = vw->vt->tools[vw->vt->active_tool].layer_type;
 		if (vl && ltype == ((Layer *) vl->layer)->type)
@@ -2301,7 +2305,7 @@ static void draw_pan_cb(GtkAction *a, VikWindow *vw)
 {
 	// Since the treeview cell editting intercepts standard keyboard handlers, it means we can receive events here
 	// Thus if currently editting, ensure we don't move the viewport when Ctrl+<arrow> is received
-	VikLayer *sel = vw->layers_panel->get_selected();
+	VikLayer *sel = vw->layers_panel->get_selected()->vl;
 	if (sel && vik_treeview_get_editing(((Layer *) sel->layer)->vt))
 		return;
 
@@ -2802,7 +2806,11 @@ static void toolbox_activate(toolbox_tools_t *vt, const char *tool_name)
 {
 	int tool = toolbox_get_tool(vt, tool_name);
 	toolbox_tool_t *t = &vt->tools[tool];
-	VikLayer *vl = vt->vw->layers_panel->get_selected();
+	Layer * layer = vt->vw->layers_panel->get_selected();
+	VikLayer * vl = NULL;
+	if (layer) {
+		vl = layer->vl;
+	}
 
 	if (tool == vt->n_tools) {
 		fprintf(stderr, "CRITICAL: trying to activate a non-existent tool...\n");
@@ -2843,7 +2851,11 @@ static const GdkCursor *toolbox_get_cursor(toolbox_tools_t *vt, const char *tool
 
 static void toolbox_click(toolbox_tools_t *vt, GdkEventButton *event)
 {
-	VikLayer *vl = vt->vw->layers_panel->get_selected();
+	Layer * layer = vt->vw->layers_panel->get_selected();
+	VikLayer * vl = NULL;
+	if (layer) {
+		vl = layer->vl;
+	}
 
 	if (vt->active_tool != -1 && vt->tools[vt->active_tool].ti.click) {
 		int ltype = vt->tools[vt->active_tool].layer_type;
@@ -2854,7 +2866,12 @@ static void toolbox_click(toolbox_tools_t *vt, GdkEventButton *event)
 
 static void toolbox_move(toolbox_tools_t *vt, GdkEventMotion *event)
 {
-	VikLayer *vl = vt->vw->layers_panel->get_selected();
+	Layer * layer = vt->vw->layers_panel->get_selected();
+	VikLayer * vl = NULL;
+	if (layer) {
+		vl = layer->vl;
+	}
+
 	if (vt->active_tool != -1 && vt->tools[vt->active_tool].ti.move) {
 		int ltype = vt->tools[vt->active_tool].layer_type;
 		if (ltype == TOOL_LAYER_TYPE_NONE || (vl && ltype == ((Layer *) vl->layer)->type))
@@ -2865,7 +2882,12 @@ static void toolbox_move(toolbox_tools_t *vt, GdkEventMotion *event)
 
 static void toolbox_release(toolbox_tools_t *vt, GdkEventButton *event)
 {
-	VikLayer *vl = vt->vw->layers_panel->get_selected();
+	Layer * layer = vt->vw->layers_panel->get_selected();
+	VikLayer * vl = NULL;
+	if (layer) {
+		vl = layer->vl;
+	}
+
 	if (vt->active_tool != -1 && vt->tools[vt->active_tool].ti.release) {
 		int ltype = vt->tools[vt->active_tool].layer_type;
 		if (ltype == TOOL_LAYER_TYPE_NONE || (vl && ltype == ((Layer *) vl->layer)->type))

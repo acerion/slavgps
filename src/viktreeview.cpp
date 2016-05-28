@@ -221,8 +221,7 @@ vik_treeview_tooltip_cb(GtkWidget  *widget,
 		void * parent;
 		gtk_tree_model_get(model, &iter, ITEM_PARENT_COLUMN, &parent, -1);
 
-		Layer * l = (Layer *) VIK_LAYER(parent)->layer;
-		snprintf(buffer, sizeof(buffer), "%s", l->sublayer_tooltip(rv, sublayer));
+		snprintf(buffer, sizeof(buffer), "%s", ((Layer *) parent)->sublayer_tooltip(rv, sublayer));
 	} else if (rv == VIK_TREEVIEW_TYPE_LAYER) {
 		void * layer;
 		gtk_tree_model_get(model, &iter, ITEM_POINTER_COLUMN, &layer, -1);
@@ -302,7 +301,7 @@ void vik_treeview_item_set_timestamp(VikTreeview *vt, GtkTreeIter *iter, time_t 
 	gtk_tree_store_set (GTK_TREE_STORE(vt->model), iter, ITEM_TIMESTAMP_COLUMN, (int64_t)timestamp, -1);
 }
 
-void * vik_treeview_item_get_parent(VikTreeview *vt, GtkTreeIter *iter)
+/* Layer */ void * vik_treeview_item_get_parent(VikTreeview *vt, GtkTreeIter *iter)
 {
 	void * rv;
 	TREEVIEW_GET (vt->model, iter, ITEM_PARENT_COLUMN, &rv);
@@ -418,7 +417,7 @@ static void select_cb(GtkTreeSelection *selection, void * data)
 	VikWindow * vw;
 
 	void * tmp_layer;
-	VikLayer *tmp_vl = NULL;
+	Layer * tmp_vl = NULL;
 	int tmp_subtype = 0;
 	int tmp_type = VIK_TREEVIEW_TYPE_LAYER;
 
@@ -429,7 +428,7 @@ static void select_cb(GtkTreeSelection *selection, void * data)
 	tmp_layer = vik_treeview_item_get_pointer(vt, &iter);
 	if (tmp_layer) {
 		if (type == VIK_TREEVIEW_TYPE_SUBLAYER) {
-			tmp_vl = VIK_LAYER(vik_treeview_item_get_parent(vt, &iter));
+			tmp_vl = (Layer *) vik_treeview_item_get_parent(vt, &iter);
 			tmp_subtype = vik_treeview_item_get_data(vt, &iter);
 			tmp_type = VIK_TREEVIEW_TYPE_SUBLAYER;
 		} else {
@@ -455,10 +454,10 @@ static void select_cb(GtkTreeSelection *selection, void * data)
 	vik_window_selected_layer(vw, layer->vl);
 
 	if (tmp_vl == NULL) {
-		tmp_vl = layer->vl;
+		tmp_vl = layer;
 	}
 	/* Apply settings now we have the all details  */
-	if (vik_layer_selected(tmp_vl,
+	if (vik_layer_selected(tmp_vl->vl,
 			       tmp_subtype,
 			       tmp_layer,
 			       tmp_type,
@@ -674,8 +673,16 @@ void vik_treeview_item_unselect(VikTreeview *vt, GtkTreeIter *iter)
 	gtk_tree_selection_unselect_iter(gtk_tree_view_get_selection(GTK_TREE_VIEW (vt)), iter);
 }
 
-void vik_treeview_add_layer(VikTreeview *vt, GtkTreeIter *parent_iter, GtkTreeIter *iter, const char *name, void * parent, bool above,
-			     void * item, int data, VikLayerTypeEnum layer_type, time_t timestamp)
+void vik_treeview_add_layer(VikTreeview * vt,
+			    GtkTreeIter * parent_iter,
+			    GtkTreeIter *iter,
+			    const char * name,
+			    void * parent_layer, /* Layer * parent_layer */
+			    bool above,
+			    void * layer,        /* Layer * layer */
+			    int data,
+			    VikLayerTypeEnum layer_type,
+			    time_t timestamp)
 {
 	assert (iter != NULL);
 	if (above) {
@@ -687,17 +694,26 @@ void vik_treeview_add_layer(VikTreeview *vt, GtkTreeIter *parent_iter, GtkTreeIt
 			    NAME_COLUMN, name,
 			    VISIBLE_COLUMN, true,
 			    TYPE_COLUMN, VIK_TREEVIEW_TYPE_LAYER,
-			    ITEM_PARENT_COLUMN, parent,
-			    ITEM_POINTER_COLUMN, item,
+			    ITEM_PARENT_COLUMN, parent_layer,
+			    ITEM_POINTER_COLUMN, layer,
 			    ITEM_DATA_COLUMN, data,
-			    EDITABLE_COLUMN, parent == NULL ? false : true,
+			    EDITABLE_COLUMN, parent_layer == NULL ? false : true,
 			    ICON_COLUMN, layer_type >= 0 ? vt->layer_type_icons[layer_type] : NULL,
 			    ITEM_TIMESTAMP_COLUMN, (int64_t)timestamp,
 			    -1);
 }
 
-void vik_treeview_insert_layer(VikTreeview *vt, GtkTreeIter *parent_iter, GtkTreeIter *iter, const char *name, void * parent, bool above,
-				void * item, int data, VikLayerTypeEnum layer_type, GtkTreeIter *sibling, time_t timestamp)
+void vik_treeview_insert_layer(VikTreeview * vt,
+			       GtkTreeIter * parent_iter,
+			       GtkTreeIter * iter,
+			       const char * name,
+			       void * parent_layer, /* Layer * parent_layer */
+			       bool above,
+			       void * layer,        /* Layer * layer */
+			       int data,
+			       VikLayerTypeEnum layer_type,
+			       GtkTreeIter *sibling,
+			       time_t timestamp)
 {
 	assert (iter != NULL);
 	if (sibling) {
@@ -718,8 +734,8 @@ void vik_treeview_insert_layer(VikTreeview *vt, GtkTreeIter *parent_iter, GtkTre
 			    NAME_COLUMN, name,
 			    VISIBLE_COLUMN, true,
 			    TYPE_COLUMN, VIK_TREEVIEW_TYPE_LAYER,
-			    ITEM_PARENT_COLUMN, parent,
-			    ITEM_POINTER_COLUMN, item,
+			    ITEM_PARENT_COLUMN, parent_layer,
+			    ITEM_POINTER_COLUMN, layer,
 			    ITEM_DATA_COLUMN, data,
 			    EDITABLE_COLUMN, true,
 			    ICON_COLUMN, layer_type >= 0 ? vt->layer_type_icons[layer_type] : NULL,
@@ -727,8 +743,16 @@ void vik_treeview_insert_layer(VikTreeview *vt, GtkTreeIter *parent_iter, GtkTre
 			    -1);
 }
 
-void vik_treeview_add_sublayer(VikTreeview *vt, GtkTreeIter *parent_iter, GtkTreeIter *iter, const char *name, void * parent, void * item,
-				int data, GdkPixbuf *icon, bool editable, time_t timestamp)
+void vik_treeview_add_sublayer(VikTreeview * vt,
+			       GtkTreeIter * parent_iter,
+			       GtkTreeIter * iter,
+			       const char * name,
+			       void * parent_layer, /* Layer * parent_layer */
+			       void * sublayer,
+			       int data,
+			       GdkPixbuf * icon,
+			       bool editable,
+			       time_t timestamp)
 {
 	assert (iter != NULL);
 
@@ -737,8 +761,8 @@ void vik_treeview_add_sublayer(VikTreeview *vt, GtkTreeIter *parent_iter, GtkTre
 			    NAME_COLUMN, name,
 			    VISIBLE_COLUMN, true,
 			    TYPE_COLUMN, VIK_TREEVIEW_TYPE_SUBLAYER,
-			    ITEM_PARENT_COLUMN, parent,
-			    ITEM_POINTER_COLUMN, item,
+			    ITEM_PARENT_COLUMN, parent_layer,
+			    ITEM_POINTER_COLUMN, sublayer,
 			    ITEM_DATA_COLUMN, data,
 			    EDITABLE_COLUMN, editable,
 			    ICON_COLUMN, icon,
@@ -908,7 +932,6 @@ static int vik_treeview_drag_data_received(GtkTreeDragDest *drag_dest, GtkTreePa
 		Layer * layer = (Layer *) vl->layer;
 
 		if (gtk_tree_path_get_depth(dest_cp)>1) { /* can't be sibling of top layer */
-			VikLayer *vl_src, *vl_dest;
 
 			/* Find the first ancestor that is a full layer, and store in dest_parent. */
 			do {
@@ -918,12 +941,12 @@ static int vik_treeview_drag_data_received(GtkTreeDragDest *drag_dest, GtkTreePa
 				 vik_treeview_item_get_type(layer->vt, &dest_parent) != VIK_TREEVIEW_TYPE_LAYER);
 
 
-			vl_src = (VikLayer *) vik_treeview_item_get_parent(layer->vt, &src_iter);
-			assert (vl_src);
+			Layer * layer_source  = (Layer *) vik_treeview_item_get_parent(layer->vt, &src_iter);
+			assert (layer_source);
 			Layer * layer_dest = (Layer *) vik_treeview_item_get_layer(layer->vt, &dest_parent);
 
 			/* TODO: might want to allow different types, and let the clients handle how they want */
-			layer_dest->drag_drop_request((Layer *) vl_src->layer, &src_iter, dest);
+			layer_dest->drag_drop_request(layer_source, &src_iter, dest);
 		}
 	}
 

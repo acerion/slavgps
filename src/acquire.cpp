@@ -362,7 +362,7 @@ static void acquire(VikWindow *vw,
 	w->user_data = user_data;
 
 	if (mode == VIK_DATASOURCE_ADDTOLAYER) {
-		VikLayer *current_selected = w->vlp->panel_ref->get_selected();
+		VikLayer *current_selected = w->vlp->panel_ref->get_selected()->vl;
 		if (IS_VIK_TRW_LAYER(current_selected)) {
 			wi->vtl = VIK_TRW_LAYER(current_selected);
 			wi->creating_new_layer = false;
@@ -372,7 +372,7 @@ static void acquire(VikWindow *vw,
 	} else if (mode == VIK_DATASOURCE_MANUAL_LAYER_MANAGEMENT) {
 		// Don't create in acquire - as datasource will perform the necessary actions
 		wi->creating_new_layer = false;
-		VikLayer *current_selected = w->vlp->panel_ref->get_selected();
+		VikLayer *current_selected = w->vlp->panel_ref->get_selected()->vl;
 		if (IS_VIK_TRW_LAYER(current_selected))
 			wi->vtl = VIK_TRW_LAYER(current_selected);
 	}
