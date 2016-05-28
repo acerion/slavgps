@@ -133,7 +133,7 @@ static void on_complete_process(w_and_interface_t *wi)
 			if (wi->w->source_interface->autoview) {
 				wi->vtl->trw->auto_set_view(wi->w->vlp->panel_ref->get_viewport());
 			}
-			vik_layers_panel_emit_update(wi->w->vlp->panel_ref);
+			vik_layers_panel_emit_update_cb(wi->w->vlp->panel_ref);
 		}
 	} else {
 		/* cancelled */

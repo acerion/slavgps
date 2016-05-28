@@ -187,20 +187,20 @@ void LayerAggregate::insert_layer(Layer * layer, GtkTreeIter *replace_iter)
 	}
 
 	if (this->realized) {
-		vik_treeview_insert_layer(this->vt, &this->iter, &iter, layer->name, this, put_above, layer, layer->type, layer->type, replace_iter, layer->get_timestamp());
+		this->vt->tree->insert_layer(&this->iter, &iter, layer->name, this, put_above, layer, layer->type, layer->type, replace_iter, layer->get_timestamp());
 		if (! layer->visible) {
-			vik_treeview_item_set_visible(this->vt, &iter, false);
+			this->vt->tree->set_visibility(&iter, false);
 		}
 
 		layer->realize(this->vt, &iter);
 
 		if (this->children->empty()) {
-			vik_treeview_expand(this->vt, &this->iter);
+			this->vt->tree->expand(&this->iter);
 		}
 	}
 
 	if (replace_iter) {
-		Layer * existing_layer = (Layer *) vik_treeview_item_get_layer(this->vt, replace_iter);
+		Layer * existing_layer = (Layer *) this->vt->tree->get_layer(replace_iter);
 
 		auto theone = this->children->end();
 		for (auto i = this->children->begin(); i != this->children->end(); i++) {
@@ -248,15 +248,15 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 	}
 
 	if (this->realized) {
-		vik_treeview_add_layer(this->vt, &this->iter, &iter, layer->name, this, put_above, layer, layer->type, layer->type, layer->get_timestamp());
-		if (! layer->visible) {
-			vik_treeview_item_set_visible(this->vt, &iter, false);
+		this->vt->tree->add_layer(&this->iter, &iter, layer->name, this, put_above, layer, layer->type, layer->type, layer->get_timestamp());
+		if (!layer->visible) {
+			this->vt->tree->set_visibility(&iter, false);
 		}
 
 		layer->realize(this->vt, &iter);
 
 		if (this->children->empty()) {
-			vik_treeview_expand(this->vt, &this->iter);
+			this->vt->tree->expand(&this->iter);
 		}
 	}
 
@@ -273,9 +273,9 @@ void LayerAggregate::move_layer(GtkTreeIter *child_iter, bool up)
 {
 	auto theone = this->children->end();
 
-	vik_treeview_move_item(this->vt, child_iter, up);
+	this->vt->tree->move(child_iter, up);
 
-	Layer * layer = (Layer *) vik_treeview_item_get_layer(this->vt, child_iter);
+	Layer * layer = (Layer *) this->vt->tree->get_layer(child_iter);
 
 	for (auto i = this->children->begin(); i != this->children->end(); i++) {
 		if ((*i)->vl == layer->vl) {
@@ -400,13 +400,15 @@ static void aggregate_layer_child_visible_toggle(menu_array_values values)
 
 void LayerAggregate::child_visible_toggle(VikLayersPanel * vlp)
 {
+	TreeView * tree = vlp->panel_ref->get_treeview()->tree;
+
 	// Loop around all (child) layers applying visibility setting
 	// This does not descend the tree if there are aggregates within aggregrate - just the first level of layers held
 	for (auto child = this->children->begin(); child != this->children->end(); child++) {
 		Layer * layer = *child;
 		layer->visible = !layer->visible;
 		// Also set checkbox on/off
-		vik_treeview_item_toggle_visible(vlp->panel_ref->get_treeview(), &layer->iter);
+		tree->toggle_visibility(&layer->iter);
 	}
 	// Redraw as view may have changed
 	vik_layer_emit_update(this->vl);
@@ -420,7 +422,7 @@ void LayerAggregate::child_visible_set(VikLayersPanel * vlp, bool on_off)
 		Layer * layer = *child;
 		layer->visible = on_off;
 		// Also set checkbox on_off
-		vik_treeview_item_set_visible(vlp->panel_ref->get_treeview(), &layer->iter, on_off);
+		vlp->panel_ref->get_treeview()->tree->set_visibility(&layer->iter, on_off);
 	}
 
 	// Redraw as view may have changed
@@ -817,7 +819,7 @@ static void delete_layer_iter(VikLayer *vl)
 {
 	Layer * layer = (Layer *) vl->layer;
 	if (layer->realized) {
-		vik_treeview_item_delete(layer->vt, &layer->iter);
+		layer->vt->tree->delete_(&layer->iter);
 	}
 }
 
@@ -831,23 +833,21 @@ void LayerAggregate::clear()
 	// g_list_free(val->children); // kamilFIXME: clean up the list
 }
 
-bool vik_aggregate_layer_delete(VikAggregateLayer *val, GtkTreeIter *iter)
+/* Delete a layer specified by \p iter. */
+bool LayerAggregate::delete_layer(GtkTreeIter * iter)
 {
-	VikLayer * vl_A = (VikLayer *) val;
-	LayerAggregate * aggregate = (LayerAggregate *) ((VikLayer *) val)->layer;
-
-	Layer * layer = (Layer *) vik_treeview_item_get_layer(((Layer *) vl_A->layer)->vt, iter);
+	Layer * layer = (Layer *) this->vt->tree->get_layer(iter);
 	bool was_visible = layer->visible;
 
-	vik_treeview_item_delete(((Layer *) vl_A->layer)->vt, iter);
+	this->vt->tree->delete_(iter);
 
-	for (auto i = aggregate->children->begin(); i != aggregate->children->end(); i++) {
+	for (auto i = this->children->begin(); i != this->children->end(); i++) {
 		if ((*i)->vl = layer->vl) {
-			aggregate->children->erase(i);
+			this->children->erase(i);
 			break;
 		}
 	}
-	disconnect_layer_signal(layer->vl, val);
+	disconnect_layer_signal(layer->vl, (VikAggregateLayer *) this->vl);
 	g_object_unref(layer->vl);
 
 	return was_visible;
@@ -980,10 +980,10 @@ void LayerAggregate::realize(VikTreeview *vt, GtkTreeIter *layer_iter)
 
 	for (auto child = this->children->begin(); child != this->children->end(); child++) {
 		Layer * layer = *child;
-		vik_treeview_add_layer(this->vt, layer_iter, &iter, layer->name, this, true,
-				       layer, layer->type, layer->type, layer->get_timestamp());
+		this->vt->tree->add_layer(layer_iter, &iter, layer->name, this, true,
+					  layer, layer->type, layer->type, layer->get_timestamp());
 		if (! layer->visible) {
-			vik_treeview_item_set_visible(this->vt, &iter, false);
+			this->vt->tree->set_visibility(&iter, false);
 		}
 		layer->realize(this->vt, &iter);
 	}
@@ -1002,18 +1002,18 @@ bool LayerAggregate::is_empty()
 void LayerAggregate::drag_drop_request(Layer * src, GtkTreeIter *src_item_iter, GtkTreePath *dest_path)
 {
 	VikTreeview * vt = src->vt;
-	Layer * layer = (Layer *) vik_treeview_item_get_layer(vt, src_item_iter);
+	Layer * layer = (Layer *) vt->tree->get_layer(src_item_iter);
 	GtkTreeIter dest_iter;
 	char *dp;
 	bool target_exists;
 
 	dp = gtk_tree_path_to_string(dest_path);
-	target_exists = vik_treeview_get_iter_from_path_str(vt, &dest_iter, dp);
+	target_exists = vt->tree->get_iter_from_path_str(&dest_iter, dp);
 
-	/* vik_aggregate_layer_delete unrefs, but we don't want that here.
+	/* LayerAggregate::delete_layer unrefs, but we don't want that here.
 	 * we're still using the layer. */
 	g_object_ref(layer->vl);
-	vik_aggregate_layer_delete((VikAggregateLayer *) src->vl, src_item_iter);
+	((LayerAggregate *) src)->delete_layer(src_item_iter);
 
 	if (target_exists) {
 		this->insert_layer(layer, &dest_iter);

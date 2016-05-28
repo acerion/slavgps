@@ -164,7 +164,7 @@ static void trw_layer_waypoint_select ( menu_array_values values )
 		GtkTreeIter * iter = vtl->trw->get_waypoints_iters().at(uid);
 
 		if ( iter )
-			vik_treeview_select_iter (vtl->trw->vt, iter, true );
+			vtl->trw->vt->tree->select_iter(iter, true);
 	}
 }
 

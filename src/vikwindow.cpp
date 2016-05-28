@@ -452,7 +452,7 @@ static int determine_location_thread(VikWindow *vw, void * threaddata)
 		free(message);
 
 		// Signal to redraw from the background
-		vik_layers_panel_emit_update(vw->layers_panel);
+		vik_layers_panel_emit_update_cb(vw->layers_panel);
 	}
 	else
 		vik_window_statusbar_update(vw, _("Unable to determine location"), VIK_STATUSBAR_INFO);
@@ -2214,19 +2214,19 @@ static VikLayerToolFuncStatus selecttool_click(VikLayer *vl, GdkEventButton *eve
 				GtkTreeIter iter;
 				VikTreeview *vtv = t->vw->layers_panel->get_treeview();
 
-				if (vik_treeview_get_selected_iter(vtv, &iter)) {
+				if (vtv->tree->get_selected_iter(&iter)) {
 					// Only clear if selected thing is a TrackWaypoint layer or a sublayer
-					int type = vik_treeview_item_get_type(vtv, &iter);
+					int type = vtv->tree->get_type(&iter);
 					if (type == VIK_TREEVIEW_TYPE_SUBLAYER ||
-					    ((Layer *) ((VikLayer *) vik_treeview_item_get_pointer(vtv, &iter))->layer)->type == VIK_LAYER_TRW) { /* kamil: get_layer() ? */
+					    ((Layer *) vtv->tree->get_pointer(&iter))->type == VIK_LAYER_TRW) { /* kamil: get_layer() ? */
 
-						vik_treeview_item_unselect(vtv, &iter);
-						if (vik_window_clear_highlight(t->vw))
+						vtv->tree->unselect(&iter);
+						if (vik_window_clear_highlight(t->vw)) {
 							draw_update(t->vw);
+						}
 					}
 				}
-			}
-			else {
+			} else {
 				// Something found - so enable movement
 				t->vw->select_move = true;
 			}
@@ -2306,7 +2306,7 @@ static void draw_pan_cb(GtkAction *a, VikWindow *vw)
 	// Since the treeview cell editting intercepts standard keyboard handlers, it means we can receive events here
 	// Thus if currently editting, ensure we don't move the viewport when Ctrl+<arrow> is received
 	VikLayer *sel = vw->layers_panel->get_selected()->vl;
-	if (sel && vik_treeview_get_editing(((Layer *) sel->layer)->vt))
+	if (sel && ((Layer *) sel->layer)->vt->tree->get_editing())
 		return;
 
 	if (!strcmp(gtk_action_get_name(a), "PanNorth")) {
@@ -3630,14 +3630,14 @@ static void goto_default_location(GtkAction *a, VikWindow *vw)
 	ll.lat = a_vik_get_default_lat();
 	ll.lon = a_vik_get_default_long();
 	vw->viewport->set_center_latlon(&ll, true);
-	vik_layers_panel_emit_update(vw->layers_panel);
+	vik_layers_panel_emit_update_cb(vw->layers_panel);
 }
 
 
 static void goto_address(GtkAction *a, VikWindow *vw)
 {
 	a_vik_goto(vw, vw->viewport);
-	vik_layers_panel_emit_update(vw->layers_panel);
+	vik_layers_panel_emit_update_cb(vw->layers_panel);
 }
 
 static void mapcache_flush_cb(GtkAction *a, VikWindow *vw)

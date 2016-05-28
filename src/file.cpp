@@ -574,7 +574,7 @@ static bool file_read(VikAggregateLayer *top, FILE *f, const char *dirpath, VikV
 	}
 
 	if ((!aggregate->visible) && aggregate->realized) {
-		vik_treeview_item_set_visible(aggregate->vt, &aggregate->iter, false);
+		aggregate->vt->tree->set_visibility(&aggregate->iter, false);
 	}
 
 	/* delete anything we've forgotten about -- should only happen when file ends before an EndLayer */

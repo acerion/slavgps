@@ -58,7 +58,6 @@ typedef struct {
 
 VikAggregateLayer *vik_aggregate_layer_new();
 void vik_aggregate_layer_free(VikAggregateLayer *val);
-bool vik_aggregate_layer_delete(VikAggregateLayer *val, GtkTreeIter *iter);
 VikAggregateLayer *vik_aggregate_layer_create(Viewport * viewport);
 //bool vik_aggregate_layer_load_layers(VikAggregateLayer *val, FILE *f, void * vp);
 
@@ -98,12 +97,12 @@ namespace SlavGPS {
 		void free_();
 
 
-
-
 		void add_layer(Layer * layer, bool allow_reordering);
 		void insert_layer(Layer * layer, GtkTreeIter *replace_iter);
 		void move_layer(GtkTreeIter * child_iter, bool up);
+		bool delete_layer(GtkTreeIter * iter);
 		void clear();
+
 
 		Layer * get_top_visible_layer_of_type(VikLayerTypeEnum type);
 		GList * waypoint_create_list();

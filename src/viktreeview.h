@@ -22,7 +22,6 @@
 #ifndef _VIKING_TREEVIEW_H
 #define _VIKING_TREEVIEW_H
 
-#include <stdbool.h>
 #include <stdint.h>
 
 
@@ -62,56 +61,101 @@ enum {
 GType vik_treeview_get_type();
 
 
-VikTreeview *vik_treeview_new();
+VikTreeview * vik_treeview_new();
 
-GtkWidget *vik_treeview_get_widget(VikTreeview *vt);
-
-void vik_treeview_add_layer(VikTreeview *vt, GtkTreeIter *parent_iter, GtkTreeIter *iter, const char *name, void * parent, bool above, void * item, int data, VikLayerTypeEnum layer_type, time_t timestamp);
-void vik_treeview_insert_layer(VikTreeview *vt, GtkTreeIter *parent_iter, GtkTreeIter *iter, const char *name, void * parent, bool above, void * item, int data, VikLayerTypeEnum layer_type, GtkTreeIter *sibling, time_t timestamp);
-void * vik_treeview_item_get_layer(VikTreeview *vt, GtkTreeIter *iter);
-
-int vik_treeview_item_get_data(VikTreeview *vt, GtkTreeIter *iter);
-int vik_treeview_item_get_type(VikTreeview *vt, GtkTreeIter *iter);
-char *vik_treeview_item_get_name(VikTreeview *vt, GtkTreeIter *iter);
-void * vik_treeview_item_get_pointer(VikTreeview *vt, GtkTreeIter *iter);
-
-//void vik_treeview_item_set_pointer(VikTreeview *vt, GtkTreeIter *iter, void * pointer);
-void vik_treeview_item_set_timestamp(VikTreeview *vt, GtkTreeIter *iter, time_t timestamp);
-
-void * vik_treeview_item_get_parent(VikTreeview *vt, GtkTreeIter *iter);
-bool vik_treeview_item_get_visible_tree(VikTreeview *vt, GtkTreeIter *iter);
-
-void vik_treeview_select_iter(VikTreeview *vt, GtkTreeIter *iter, bool view_all);
-bool vik_treeview_get_selected_iter(VikTreeview *vt, GtkTreeIter *iter);
-bool vik_treeview_get_editing(VikTreeview *vt);
-
-void vik_treeview_item_set_icon(VikTreeview *vt, GtkTreeIter *iter, const GdkPixbuf *icon);
-void vik_treeview_item_set_name(VikTreeview *vt, GtkTreeIter *iter, const char *to);
-void vik_treeview_item_set_visible(VikTreeview *vt, GtkTreeIter *iter, bool to);
-void vik_treeview_item_toggle_visible(VikTreeview *vt, GtkTreeIter *iter);
-void vik_treeview_item_delete(VikTreeview *vt, GtkTreeIter *iter);
-
-bool vik_treeview_get_iter_at_pos(VikTreeview *vt, GtkTreeIter *iter, int x, int y);
-
-bool vik_treeview_get_iter_from_path_str(VikTreeview *vt, GtkTreeIter *iter, const char *path_str);
-bool vik_treeview_move_item(VikTreeview *vt, GtkTreeIter *iter, bool up);
-void vik_treeview_item_select(VikTreeview *vt, GtkTreeIter *iter);
-void vik_treeview_item_unselect(VikTreeview *vt, GtkTreeIter *iter);
-
-bool vik_treeview_item_get_parent_iter(VikTreeview *vt, GtkTreeIter *iter,  GtkTreeIter *parent);
-void vik_treeview_expand_toplevel(VikTreeview *vt);
-void vik_treeview_expand(VikTreeview *vt, GtkTreeIter *iter);
+//GtkWidget * vik_treeview_get_widget(VikTreeview * vt);
 
 
-void vik_treeview_add_sublayer(VikTreeview *vt, GtkTreeIter *parent_iter, GtkTreeIter *iter, const char *name, void * parent, void * item,
-			       int data, GdkPixbuf *icon, bool editable, time_t timestamp);
 
-bool vik_treeview_get_iter_with_name(VikTreeview *vt, GtkTreeIter *iter, GtkTreeIter *parent_iter, const char *name);
 
-void vik_treeview_sort_children(VikTreeview *vt, GtkTreeIter *parent, vik_layer_sort_order_t order);
+
+
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif
+
+
+
+
+namespace SlavGPS {
+
+
+
+
+
+	class TreeView {
+	public:
+		TreeView(VikTreeview *);
+
+		void add_layer(GtkTreeIter *parent_iter, GtkTreeIter *iter, const char *name, void * parent, bool above, void * item, int data, VikLayerTypeEnum layer_type, time_t timestamp);
+		void insert_layer(GtkTreeIter *parent_iter, GtkTreeIter *iter, const char *name, void * parent, bool above, void * item, int data, VikLayerTypeEnum layer_type, GtkTreeIter *sibling, time_t timestamp);
+		void add_sublayer(GtkTreeIter *parent_iter, GtkTreeIter *iter, const char *name, void * parent, void * item, int data, GdkPixbuf *icon, bool editable, time_t timestamp);
+
+
+		void * get_layer(GtkTreeIter * iter);
+		int    get_data(GtkTreeIter * iter);
+		int    get_type(GtkTreeIter * iter);
+		char * get_name(GtkTreeIter * iter);
+		void * get_pointer(GtkTreeIter * iter);
+		void * get_parent(GtkTreeIter * iter);
+
+
+
+		void set_icon(GtkTreeIter * iter, GdkPixbuf const * icon);
+		void set_name(GtkTreeIter * iter, char const * name);
+		void set_visibility(GtkTreeIter * iter, bool visible);
+		void toggle_visibility(GtkTreeIter * iter);
+		void set_timestamp(GtkTreeIter * iter, time_t timestamp);
+
+		void select(GtkTreeIter * iter);
+		void unselect(GtkTreeIter * iter);
+
+		void delete_(GtkTreeIter * iter);
+		bool move(GtkTreeIter * iter, bool up);
+
+		bool get_selected_iter(GtkTreeIter * iter);
+		bool get_iter_at_pos(GtkTreeIter * iter, int x, int y);
+		bool get_iter_from_path_str(GtkTreeIter * iter, char const * path_str);
+		bool get_parent_iter(GtkTreeIter * iter, GtkTreeIter * parent);
+
+		bool is_visible_in_tree(GtkTreeIter * iter);
+		void select_iter(GtkTreeIter * iter, bool view_all);
+		bool get_editing();
+		//void vik_treeview_expand_toplevel(VikTreeview *vt);
+		void expand(GtkTreeIter * iter);
+		void sort_children(GtkTreeIter * parent, vik_layer_sort_order_t order);
+
+
+
+
+
+		GtkTreeModel * model;
+		bool editing;
+		bool was_a_toggle;
+		GdkPixbuf * layer_type_icons[VIK_LAYER_NUM_TYPES];
+
+		VikTreeview * vt;
+	};
+
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
+
+struct _VikTreeview {
+	GtkTreeView treeview;
+	TreeView * tree;
+};
+
+
+
+
+
+#endif /* #ifndef _VIKING_TREEVIEW_H */

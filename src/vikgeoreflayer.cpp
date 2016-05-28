@@ -1046,7 +1046,7 @@ static void georef_layer_goto_center(void * vgl_vlp[2])
 	vik_coord_load_from_utm(&coord, viewport->get_coord_mode(), &utm);
 	viewport->set_center_coord(&coord, true);
 
-	vik_layers_panel_emit_update(VIK_LAYERS_PANEL(vgl_vlp[1])->panel_ref);
+	vik_layers_panel_emit_update_cb(VIK_LAYERS_PANEL(vgl_vlp[1])->panel_ref);
 }
 
 void LayerGeoref::add_menu_items(GtkMenu *menu, void * vlp)

@@ -168,7 +168,7 @@ static void trw_layer_track_select ( menu_array_values values )
 			iter = vtl->trw->get_tracks_iters().at(uid);
 
 		if ( iter )
-			vik_treeview_select_iter (vtl->trw->vt, iter, true );
+			vtl->trw->vt->tree->select_iter(iter, true);
 	}
 }
 

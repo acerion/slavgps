@@ -835,11 +835,11 @@ void LayerGPS::realize(VikTreeview *vt, GtkTreeIter *layer_iter)
 	for (ix = 0; ix < NUM_TRW; ix++) {
 		VikLayer * trw = VIK_LAYER(vgl->trw_children[ix]);
 		Layer * layer = (Layer *) trw->layer;
-		vik_treeview_add_layer(((Layer *) ((VikLayer *) vgl)->layer)->vt, layer_iter, &iter,
-					 _(trw_names[ix]), this, true,
-					 layer, ((Layer *) trw->layer)->type, ((Layer *) trw->layer)->type, layer->get_timestamp());
+		((Layer *) ((VikLayer *) vgl)->layer)->vt->tree->add_layer(layer_iter, &iter,
+									   _(trw_names[ix]), this, true,
+									   layer, ((Layer *) trw->layer)->type, ((Layer *) trw->layer)->type, layer->get_timestamp());
 		if (! layer->visible) {
-			this->vt->tree->set_item_visibility(&iter, false);
+			this->vt->tree->set_visibility(&iter, false);
 		}
 		layer->realize(((Layer *) ((VikLayer *) vgl)->layer)->vt, &iter);
 		g_signal_connect_swapped(G_OBJECT(trw), "update", G_CALLBACK(vik_layer_emit_update_secondary), vgl);

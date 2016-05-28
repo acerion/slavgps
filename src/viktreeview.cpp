@@ -38,6 +38,8 @@
 #include "viklayerspanel.h"
 #include "globals.h"
 
+using namespace SlavGPS;
+
 #define TREEVIEW_GET(model,iter,what,dest) gtk_tree_model_get(GTK_TREE_MODEL(model),(iter),(what),(dest),-1)
 
 enum {
@@ -65,15 +67,6 @@ enum {
 	NUM_COLUMNS
 };
 
-struct _VikTreeview {
-	GtkTreeView treeview;
-	GtkTreeModel *model;
-
-	GdkPixbuf *layer_type_icons[VIK_LAYER_NUM_TYPES];
-
-	bool was_a_toggle;
-	bool editing;
-};
 
 /* TODO: find, make "static" and put up here all non-"a_" functions */
 static void vik_treeview_finalize(GObject *gob);
@@ -136,23 +129,23 @@ static void vik_treeview_class_init(VikTreeviewClass *klass)
 
 static void vik_treeview_edited_cb(GtkCellRendererText *cell, char *path_str, const char *new_name, VikTreeview *vt)
 {
-	vt->editing = false;
+	vt->tree->editing = false;
 	GtkTreeIter iter;
 
 	/* get type and data */
-	vik_treeview_get_iter_from_path_str(vt, &iter, path_str);
+	vt->tree->get_iter_from_path_str(&iter, path_str);
 
 	g_signal_emit(G_OBJECT(vt), treeview_signals[VT_ITEM_EDITED_SIGNAL], 0, &iter, new_name);
 }
 
 static void vik_treeview_edit_start_cb(GtkCellRenderer *cell, GtkCellEditable *editable, char *path, VikTreeview *vt)
 {
-	vt->editing = true;
+	vt->tree->editing = true;
 }
 
 static void vik_treeview_edit_stop_cb(GtkCellRenderer *cell, VikTreeview *vt)
 {
-	vt->editing = false;
+	vt->tree->editing = false;
 }
 
 static void vik_treeview_toggled_cb(GtkCellRendererToggle *cell, char *path_str, VikTreeview *vt)
@@ -161,22 +154,22 @@ static void vik_treeview_toggled_cb(GtkCellRendererToggle *cell, char *path_str,
 	GtkTreeIter iter_selected;
 
 	/* get type and data */
-	vik_treeview_get_iter_from_path_str(vt, &iter_toggle, path_str);
+	vt->tree->get_iter_from_path_str(&iter_toggle, path_str);
 
-	GtkTreePath *tp_toggle = gtk_tree_model_get_path(vt->model, &iter_toggle);
+	GtkTreePath *tp_toggle = gtk_tree_model_get_path(vt->tree->model, &iter_toggle);
 
 	if (gtk_tree_selection_get_selected(gtk_tree_view_get_selection(GTK_TREE_VIEW (vt)), NULL, &iter_selected)) {
-		GtkTreePath *tp_selected = gtk_tree_model_get_path(vt->model, &iter_selected);
+		GtkTreePath *tp_selected = gtk_tree_model_get_path(vt->tree->model, &iter_selected);
 		if (gtk_tree_path_compare(tp_toggle, tp_selected)) {
 			// Toggle set on different path
 			// therefore prevent subsequent auto selection (otherwise no action needed)
-			vt->was_a_toggle = true;
+			vt->tree->was_a_toggle = true;
 		}
 		gtk_tree_path_free(tp_selected);
 	} else {
 		// Toggle set on new path
 		// therefore prevent subsequent auto selection
-		vt->was_a_toggle = true;
+		vt->tree->was_a_toggle = true;
 	}
 
 	gtk_tree_path_free(tp_toggle);
@@ -254,63 +247,63 @@ VikTreeview *vik_treeview_new()
 	return VIK_TREEVIEW(g_object_new(VIK_TREEVIEW_TYPE, NULL));
 }
 
-int vik_treeview_item_get_type(VikTreeview *vt, GtkTreeIter *iter)
+int TreeView::get_type(GtkTreeIter *iter)
 {
 	int rv;
-	TREEVIEW_GET (vt->model, iter, TYPE_COLUMN, &rv);
+	TREEVIEW_GET (this->model, iter, TYPE_COLUMN, &rv);
 	return rv;
 }
 
-char* vik_treeview_item_get_name(VikTreeview *vt, GtkTreeIter *iter)
+char* TreeView::get_name(GtkTreeIter * iter)
 {
 	char *rv;
-	TREEVIEW_GET (vt->model, iter, NAME_COLUMN, &rv);
+	TREEVIEW_GET (this->model, iter, NAME_COLUMN, &rv);
 	return rv;
 }
 
-int vik_treeview_item_get_data(VikTreeview *vt, GtkTreeIter *iter)
+int TreeView::get_data(GtkTreeIter * iter)
 {
 	int rv;
-	TREEVIEW_GET (vt->model, iter, ITEM_DATA_COLUMN, &rv);
+	TREEVIEW_GET (this->model, iter, ITEM_DATA_COLUMN, &rv);
 	return rv;
 }
 
-void * vik_treeview_item_get_pointer(VikTreeview *vt, GtkTreeIter *iter)
+void * TreeView::get_pointer(GtkTreeIter * iter)
 {
 	void * rv;
-	TREEVIEW_GET (vt->model, iter, ITEM_POINTER_COLUMN, &rv);
+	TREEVIEW_GET (this->model, iter, ITEM_POINTER_COLUMN, &rv);
 	return rv;
 }
 
-void * vik_treeview_item_get_layer(VikTreeview *vt, GtkTreeIter *iter)
+void * TreeView::get_layer(GtkTreeIter * iter)
 {
 	void * rv;
-	TREEVIEW_GET (vt->model, iter, ITEM_POINTER_COLUMN, &rv);
+	TREEVIEW_GET (this->model, iter, ITEM_POINTER_COLUMN, &rv);
 	return rv;
 }
 
 #if 0
 void vik_treeview_item_set_pointer(VikTreeview *vt, GtkTreeIter *iter, void * pointer)
 {
-	gtk_tree_store_set (GTK_TREE_STORE(vt->model), iter, ITEM_POINTER_COLUMN, pointer, -1);
+	gtk_tree_store_set (GTK_TREE_STORE(vt->tree->model), iter, ITEM_POINTER_COLUMN, pointer, -1);
 }
 #endif
 
-void vik_treeview_item_set_timestamp(VikTreeview *vt, GtkTreeIter *iter, time_t timestamp)
+void TreeView::set_timestamp(GtkTreeIter *iter, time_t timestamp)
 {
-	gtk_tree_store_set (GTK_TREE_STORE(vt->model), iter, ITEM_TIMESTAMP_COLUMN, (int64_t)timestamp, -1);
+	gtk_tree_store_set (GTK_TREE_STORE(this->model), iter, ITEM_TIMESTAMP_COLUMN, (int64_t) timestamp, -1);
 }
 
-/* Layer */ void * vik_treeview_item_get_parent(VikTreeview *vt, GtkTreeIter *iter)
+void * TreeView::get_parent(GtkTreeIter *iter)
 {
 	void * rv;
-	TREEVIEW_GET (vt->model, iter, ITEM_PARENT_COLUMN, &rv);
+	TREEVIEW_GET (this->model, iter, ITEM_PARENT_COLUMN, &rv);
 	return rv;
 }
 
-bool vik_treeview_get_iter_from_path_str(VikTreeview *vt, GtkTreeIter *iter, const char *path_str)
+bool TreeView::get_iter_from_path_str(GtkTreeIter * iter, char const * path_str)
 {
-	return gtk_tree_model_get_iter_from_string(GTK_TREE_MODEL(vt->model), iter, path_str);
+	return gtk_tree_model_get_iter_from_string(GTK_TREE_MODEL (this->model), iter, path_str);
 }
 
 /**
@@ -318,20 +311,20 @@ bool vik_treeview_get_iter_from_path_str(VikTreeview *vt, GtkTreeIter *iter, con
  *  i.e. if any parent is off then this item will also be considered off
  *   (even though itself may be marked as on.)
  */
-bool vik_treeview_item_get_visible_tree(VikTreeview *vt, GtkTreeIter *iter)
+bool TreeView::is_visible_in_tree(GtkTreeIter * iter)
 {
 	bool ans;
-	TREEVIEW_GET (vt->model, iter, VISIBLE_COLUMN, &ans);
+	TREEVIEW_GET (this->model, iter, VISIBLE_COLUMN, &ans);
 
 	if (!ans) {
 		return ans;
 	}
 
 	GtkTreeIter parent;
-	GtkTreeIter child = *iter;
-	while (gtk_tree_model_iter_parent(vt->model, &parent, &child)) {
+	GtkTreeIter child = * iter;
+	while (gtk_tree_model_iter_parent(this->model, &parent, &child)) {
 		// Visibility of this parent
-		TREEVIEW_GET (vt->model, &parent, VISIBLE_COLUMN, &ans);
+		TREEVIEW_GET (this->model, &parent, VISIBLE_COLUMN, &ans);
 		// If not visible, no need to check further ancestors
 		if (!ans) {
 			break;
@@ -408,6 +401,7 @@ static void vik_treeview_add_columns(VikTreeview *vt)
 	g_signal_connect(GTK_TREE_VIEW (vt), "query-tooltip", G_CALLBACK (vik_treeview_tooltip_cb), vt);
 }
 
+/* kamilTODO: review this function, it still uses VikLayer. */
 static void select_cb(GtkTreeSelection *selection, void * data)
 {
 	VikTreeview *vt = (VikTreeview *) data;
@@ -422,33 +416,33 @@ static void select_cb(GtkTreeSelection *selection, void * data)
 	int tmp_type = VIK_TREEVIEW_TYPE_LAYER;
 
 	if (!gtk_tree_selection_get_selected(selection, NULL, &iter)) return;
-	type = vik_treeview_item_get_type(vt, &iter);
+	type = vt->tree->get_type(&iter);
 
 	/* Find the Sublayer type if possible */
-	tmp_layer = vik_treeview_item_get_pointer(vt, &iter);
+	tmp_layer = vt->tree->get_pointer(&iter);
 	if (tmp_layer) {
 		if (type == VIK_TREEVIEW_TYPE_SUBLAYER) {
-			tmp_vl = (Layer *) vik_treeview_item_get_parent(vt, &iter);
-			tmp_subtype = vik_treeview_item_get_data(vt, &iter);
+			tmp_vl = (Layer *) vt->tree->get_parent(&iter);
+			tmp_subtype = vt->tree->get_data(&iter);
 			tmp_type = VIK_TREEVIEW_TYPE_SUBLAYER;
 		} else {
 			tmp_layer = ((Layer *) tmp_layer)->vl;
 		}
 	} else {
-		tmp_subtype = vik_treeview_item_get_data(vt, &iter);
+		tmp_subtype = vt->tree->get_data(&iter);
 		tmp_type = VIK_TREEVIEW_TYPE_SUBLAYER;
 	}
 
 	/* Go up the tree to find the Vik Layer */
 	while (type != VIK_TREEVIEW_TYPE_LAYER) {
-		if (! vik_treeview_item_get_parent_iter(vt, &iter, &parent)) {
+		if (! vt->tree->get_parent_iter(&iter, &parent)) {
 			return;
 		}
 		iter = parent;
-		type = vik_treeview_item_get_type(vt, &iter);
+		type = vt->tree->get_type(&iter);
 	}
 
-	Layer * layer = (Layer *) vik_treeview_item_get_layer(vt, &iter);
+	Layer * layer = (Layer *) vt->tree->get_layer(&iter);
 
 	vw = VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(layer->vl));
 	vik_window_selected_layer(vw, layer->vl);
@@ -463,7 +457,7 @@ static void select_cb(GtkTreeSelection *selection, void * data)
 			       tmp_type,
 			       vik_window_layers_panel(vw))) {
 		/* Redraw required */
-		vik_layers_panel_emit_update(vik_window_layers_panel(vw)->panel_ref);
+		vik_layers_panel_emit_update_cb(vik_window_layers_panel(vw)->panel_ref);
 	}
 
 }
@@ -472,8 +466,8 @@ static int vik_treeview_selection_filter(GtkTreeSelection *selection, GtkTreeMod
 {
 	VikTreeview *vt = (VikTreeview *) data;
 
-	if (vt->was_a_toggle) {
-		vt->was_a_toggle = false;
+	if (vt->tree->was_a_toggle) {
+		vt->tree->was_a_toggle = false;
 		return false;
 	}
 
@@ -482,34 +476,36 @@ static int vik_treeview_selection_filter(GtkTreeSelection *selection, GtkTreeMod
 
 void vik_treeview_init(VikTreeview *vt)
 {
-	vt->was_a_toggle = false;
-	vt->editing = false;
+	vt->tree = new TreeView(vt);
+
+	vt->tree->was_a_toggle = false;
+	vt->tree->editing = false;
 
 	// ATM The dates are stored on initial creation and updated when items are deleted
 	//  this should be good enough for most purposes, although it may get inaccurate if items are edited in a particular manner
 	// NB implicit conversion of time_t to int64_t
-	vt->model = GTK_TREE_MODEL(gtk_tree_store_new(NUM_COLUMNS,
-						       G_TYPE_STRING,  // Name
-						       G_TYPE_BOOLEAN, // Visibility
-						       GDK_TYPE_PIXBUF,// The Icon
-						       G_TYPE_INT,     // Layer Type
-						       G_TYPE_POINTER, // pointer to TV parent
-						       G_TYPE_POINTER, // pointer to the layer or sublayer
-						       G_TYPE_INT,     // type of the sublayer
-						       G_TYPE_BOOLEAN, // Editable
-						       G_TYPE_INT64)); // Timestamp
+	vt->tree->model = GTK_TREE_MODEL(gtk_tree_store_new(NUM_COLUMNS,
+							    G_TYPE_STRING,  // Name
+							    G_TYPE_BOOLEAN, // Visibility
+							    GDK_TYPE_PIXBUF,// The Icon
+							    G_TYPE_INT,     // Layer Type
+							    G_TYPE_POINTER, // pointer to TV parent
+							    G_TYPE_POINTER, // pointer to the layer or sublayer
+							    G_TYPE_INT,     // type of the sublayer
+							    G_TYPE_BOOLEAN, // Editable
+							    G_TYPE_INT64)); // Timestamp
 
 	/* create tree view */
 	gtk_tree_selection_set_select_function(gtk_tree_view_get_selection(GTK_TREE_VIEW(vt)), vik_treeview_selection_filter, vt, NULL);
 
-	gtk_tree_view_set_model(GTK_TREE_VIEW(vt), vt->model);
+	gtk_tree_view_set_model(GTK_TREE_VIEW(vt), vt->tree->model);
 	vik_treeview_add_columns(vt);
 
 	// Can not specify 'auto' sort order with a 'GtkTreeSortable' on the name since we want to control the ordering of layers
 	// Thus need to create special sort to operate on a subsection of treeview (i.e. from a specific child either a layer or sublayer)
 	// see vik_treeview_sort_children()
 
-	g_object_unref(vt->model);
+	g_object_unref(vt->tree->model);
 
 	gtk_tree_view_set_rules_hint(GTK_TREE_VIEW(vt), true);
 	gtk_tree_selection_set_mode(gtk_tree_view_get_selection(GTK_TREE_VIEW (vt)),
@@ -523,16 +519,16 @@ void vik_treeview_init(VikTreeview *vt)
 		GtkTreeDragSourceIface *isrc;
 		GtkTreeDragDestIface *idest;
 
-		isrc = (GtkTreeDragSourceIface *) g_type_interface_peek(g_type_class_peek(G_OBJECT_TYPE((GtkTreeDragSourceIface *)vt->model)), GTK_TYPE_TREE_DRAG_SOURCE);
+		isrc = (GtkTreeDragSourceIface *) g_type_interface_peek(g_type_class_peek(G_OBJECT_TYPE((GtkTreeDragSourceIface *)vt->tree->model)), GTK_TYPE_TREE_DRAG_SOURCE);
 		isrc->drag_data_delete = vik_treeview_drag_data_delete;
 
-		idest = (GtkTreeDragDestIface *) g_type_interface_peek(g_type_class_peek(G_OBJECT_TYPE(vt->model)), GTK_TYPE_TREE_DRAG_DEST);
+		idest = (GtkTreeDragDestIface *) g_type_interface_peek(g_type_class_peek(G_OBJECT_TYPE(vt->tree->model)), GTK_TYPE_TREE_DRAG_DEST);
 		idest->drag_data_received = vik_treeview_drag_data_received;
 	}
 
 	int i;
 	for (i = 0; ((VikLayerTypeEnum) i) < VIK_LAYER_NUM_TYPES; i++) {
-		vt->layer_type_icons[i] = vik_layer_load_icon((VikLayerTypeEnum) i); /* if icon can't be loaded, it will be null and simply not be shown. */
+		vt->tree->layer_type_icons[i] = vik_layer_load_icon((VikLayerTypeEnum) i); /* if icon can't be loaded, it will be null and simply not be shown. */
 	}
 
 	gtk_tree_view_set_reorderable(GTK_TREE_VIEW(vt), true);
@@ -541,55 +537,55 @@ void vik_treeview_init(VikTreeview *vt)
 
 }
 
-bool vik_treeview_item_get_parent_iter(VikTreeview *vt, GtkTreeIter *iter,  GtkTreeIter *parent)
+bool TreeView::get_parent_iter(GtkTreeIter * iter, GtkTreeIter * parent)
 {
-	return gtk_tree_model_iter_parent(GTK_TREE_MODEL(vt->model), parent, iter);
+	return gtk_tree_model_iter_parent(GTK_TREE_MODEL(this->model), parent, iter);
 }
 
-bool vik_treeview_move_item(VikTreeview *vt, GtkTreeIter *iter, bool up)
+bool TreeView::move(GtkTreeIter * iter, bool up)
 {
-	int t = vik_treeview_item_get_type(vt, iter);
+	int t = this->vt->tree->get_type(iter);
 	if (t == VIK_TREEVIEW_TYPE_LAYER) {
 		GtkTreeIter switch_iter;
 		if (up) {
 			/* iter to path to iter */
-			GtkTreePath *path = gtk_tree_model_get_path(vt->model, iter);
-			if (!gtk_tree_path_prev(path) || !gtk_tree_model_get_iter(vt->model, &switch_iter, path)) {
+			GtkTreePath *path = gtk_tree_model_get_path(this->model, iter);
+			if (!gtk_tree_path_prev(path) || !gtk_tree_model_get_iter(this->model, &switch_iter, path)) {
 				gtk_tree_path_free(path);
 				return false;
 			}
 			gtk_tree_path_free(path);
 		} else {
 			switch_iter = *iter;
-			if (!gtk_tree_model_iter_next(vt->model, &switch_iter)) {
+			if (!gtk_tree_model_iter_next(this->model, &switch_iter)) {
 				return false;
 			}
 		}
-		gtk_tree_store_swap(GTK_TREE_STORE(vt->model), iter, &switch_iter);
+		gtk_tree_store_swap(GTK_TREE_STORE(this->model), iter, &switch_iter);
 		return true;
 		/* now, the easy part. actually switching them, not the GUI */
 	} /* if item is map */
 	return false;
 }
 
-bool vik_treeview_get_iter_at_pos(VikTreeview *vt, GtkTreeIter *iter, int x, int y)
+bool TreeView::get_iter_at_pos(GtkTreeIter * iter, int x, int y)
 {
-	GtkTreePath *path;
-	(void)gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(vt), x, y, &path, NULL, NULL, NULL);
-	if (! path) {
+	GtkTreePath * path;
+	(void) gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW (this->vt), x, y, &path, NULL, NULL, NULL);
+	if (!path) {
 		return false;
 	}
 
-	gtk_tree_model_get_iter(GTK_TREE_MODEL(vt->model), iter, path);
+	gtk_tree_model_get_iter(GTK_TREE_MODEL (this->model), iter, path);
 	gtk_tree_path_free(path);
 	return true;
 }
 
 /* Option to ensure visible */
-void vik_treeview_select_iter(VikTreeview *vt, GtkTreeIter *iter, bool view_all)
+void TreeView::select_iter(GtkTreeIter * iter, bool view_all)
 {
-	GtkTreeView *tree_view = GTK_TREE_VIEW (vt);
-	GtkTreePath *path;
+	GtkTreeView * tree_view = GTK_TREE_VIEW (this->vt);
+	GtkTreePath * path = NULL;
 
 	if (view_all) {
 		path = gtk_tree_model_get_path(gtk_tree_view_get_model (tree_view), iter);
@@ -608,166 +604,162 @@ void vik_treeview_select_iter(VikTreeview *vt, GtkTreeIter *iter, bool view_all)
 	}
 }
 
-bool vik_treeview_get_selected_iter(VikTreeview *vt, GtkTreeIter *iter)
+bool TreeView::get_selected_iter(GtkTreeIter * iter)
 {
-	return gtk_tree_selection_get_selected(gtk_tree_view_get_selection(GTK_TREE_VIEW (vt)), NULL, iter);
+	return gtk_tree_selection_get_selected(gtk_tree_view_get_selection(GTK_TREE_VIEW (this->vt)), NULL, iter);
 }
 
-bool vik_treeview_get_editing(VikTreeview *vt)
+bool TreeView::get_editing()
 {
 	// Don't know how to get cell for the selected item
 	//return KPOINTER_TO_INT(g_object_get_data(G_OBJECT(cell), "editing"));
 	// Instead maintain our own value applying to the whole tree
-	return vt->editing;
+	return this->editing;
 }
 
-void vik_treeview_item_delete(VikTreeview *vt, GtkTreeIter *iter)
+void TreeView::delete_(GtkTreeIter *iter)
 {
-	gtk_tree_store_remove(GTK_TREE_STORE(vt->model), iter);
+	gtk_tree_store_remove(GTK_TREE_STORE (this->model), iter);
 }
 
 /* Treeview Reform Project */
 
-void vik_treeview_item_set_icon(VikTreeview *vt, GtkTreeIter *iter, const GdkPixbuf *icon)
+void TreeView::set_icon(GtkTreeIter * iter, const GdkPixbuf * icon)
 {
 	g_return_if_fail(iter != NULL);
-	gtk_tree_store_set(GTK_TREE_STORE(vt->model), iter, ICON_COLUMN, icon, -1);
+	gtk_tree_store_set(GTK_TREE_STORE(this->model), iter, ICON_COLUMN, icon, -1);
 }
 
-void vik_treeview_item_set_name(VikTreeview *vt, GtkTreeIter *iter, const char *to)
+void TreeView::set_name(GtkTreeIter *iter, char const * name)
 {
-	g_return_if_fail(iter != NULL && to != NULL);
-	gtk_tree_store_set(GTK_TREE_STORE(vt->model), iter, NAME_COLUMN, to, -1);
+	g_return_if_fail(iter != NULL && name != NULL);
+	gtk_tree_store_set(GTK_TREE_STORE(this->model), iter, NAME_COLUMN, name, -1);
 }
 
-void vik_treeview_item_set_visible(VikTreeview *vt, GtkTreeIter *iter, bool to)
-{
-	g_return_if_fail(iter != NULL);
-	gtk_tree_store_set(GTK_TREE_STORE(vt->model), iter, VISIBLE_COLUMN, to, -1);
-}
-
-void vik_treeview_item_toggle_visible(VikTreeview *vt, GtkTreeIter *iter)
+void TreeView::set_visibility(GtkTreeIter *iter, bool visible)
 {
 	g_return_if_fail(iter != NULL);
-	bool to;
-	TREEVIEW_GET(vt->model, iter, VISIBLE_COLUMN, &to);
-	to = !to;
-	gtk_tree_store_set(GTK_TREE_STORE(vt->model), iter, VISIBLE_COLUMN, to, -1);
+	gtk_tree_store_set(GTK_TREE_STORE(this->model), iter, VISIBLE_COLUMN, visible, -1);
 }
 
-void vik_treeview_expand(VikTreeview *vt, GtkTreeIter *iter)
+void TreeView::toggle_visibility(GtkTreeIter *iter)
+{
+	g_return_if_fail(iter != NULL);
+	bool visibility;
+	TREEVIEW_GET(this->model, iter, VISIBLE_COLUMN, &visibility);
+	gtk_tree_store_set(GTK_TREE_STORE(this->model), iter, VISIBLE_COLUMN, !visibility, -1);
+}
+
+void TreeView::expand(GtkTreeIter * iter)
 {
 	GtkTreePath *path;
-	path = gtk_tree_model_get_path(vt->model, iter);
-	gtk_tree_view_expand_row(GTK_TREE_VIEW(vt), path, false);
+	path = gtk_tree_model_get_path(this->model, iter);
+	gtk_tree_view_expand_row(GTK_TREE_VIEW(this->vt), path, false);
 	gtk_tree_path_free(path);
 }
 
-void vik_treeview_item_select(VikTreeview *vt, GtkTreeIter *iter)
+void TreeView::select(GtkTreeIter *iter)
 {
-	gtk_tree_selection_select_iter(gtk_tree_view_get_selection (GTK_TREE_VIEW (vt)), iter);
+	gtk_tree_selection_select_iter(gtk_tree_view_get_selection (GTK_TREE_VIEW (this->vt)), iter);
 }
 
-void vik_treeview_item_unselect(VikTreeview *vt, GtkTreeIter *iter)
+void TreeView::unselect(GtkTreeIter *iter)
 {
-	gtk_tree_selection_unselect_iter(gtk_tree_view_get_selection(GTK_TREE_VIEW (vt)), iter);
+	gtk_tree_selection_unselect_iter(gtk_tree_view_get_selection(GTK_TREE_VIEW (this->vt)), iter);
 }
 
-void vik_treeview_add_layer(VikTreeview * vt,
-			    GtkTreeIter * parent_iter,
-			    GtkTreeIter *iter,
+void TreeView::add_layer(GtkTreeIter * parent_iter,
+			 GtkTreeIter *iter,
+			 const char * name,
+			 void * parent_layer, /* Layer * parent_layer */
+			 bool above,
+			 void * layer,        /* Layer * layer */
+			 int data,
+			 VikLayerTypeEnum layer_type,
+			 time_t timestamp)
+{
+	assert (iter);
+	if (above) {
+		gtk_tree_store_prepend(GTK_TREE_STORE (this->model), iter, parent_iter);
+	} else {
+		gtk_tree_store_append(GTK_TREE_STORE (this->model), iter, parent_iter);
+	}
+	gtk_tree_store_set(GTK_TREE_STORE (this->model), iter,
+			   NAME_COLUMN, name,
+			   VISIBLE_COLUMN, true,
+			   TYPE_COLUMN, VIK_TREEVIEW_TYPE_LAYER,
+			   ITEM_PARENT_COLUMN, parent_layer,
+			   ITEM_POINTER_COLUMN, layer,
+			   ITEM_DATA_COLUMN, data,
+			   EDITABLE_COLUMN, parent_layer == NULL ? false : true,
+			   ICON_COLUMN, layer_type >= 0 ? this->layer_type_icons[layer_type] : NULL,
+			   ITEM_TIMESTAMP_COLUMN, (int64_t) timestamp,
+			   -1);
+}
+
+void TreeView::insert_layer(GtkTreeIter * parent_iter,
+			    GtkTreeIter * iter,
 			    const char * name,
 			    void * parent_layer, /* Layer * parent_layer */
 			    bool above,
 			    void * layer,        /* Layer * layer */
 			    int data,
 			    VikLayerTypeEnum layer_type,
+			    GtkTreeIter * sibling,
+			    time_t timestamp)
+{
+	assert (iter);
+	if (sibling) {
+		if (above) {
+			gtk_tree_store_insert_before(GTK_TREE_STORE (this->model), iter, parent_iter, sibling);
+		} else {
+			gtk_tree_store_insert_after(GTK_TREE_STORE (this->model), iter, parent_iter, sibling);
+		}
+	} else {
+		if (above) {
+			gtk_tree_store_append(GTK_TREE_STORE (this->model), iter, parent_iter);
+		} else {
+			gtk_tree_store_prepend(GTK_TREE_STORE (this->model), iter, parent_iter);
+		}
+	}
+
+	gtk_tree_store_set(GTK_TREE_STORE (this->model), iter,
+			   NAME_COLUMN, name,
+			   VISIBLE_COLUMN, true,
+			   TYPE_COLUMN, VIK_TREEVIEW_TYPE_LAYER,
+			   ITEM_PARENT_COLUMN, parent_layer,
+			   ITEM_POINTER_COLUMN, layer,
+			   ITEM_DATA_COLUMN, data,
+			   EDITABLE_COLUMN, true,
+			   ICON_COLUMN, layer_type >= 0 ? this->layer_type_icons[layer_type] : NULL,
+			   ITEM_TIMESTAMP_COLUMN, (int64_t) timestamp,
+			   -1);
+}
+
+void TreeView::add_sublayer(GtkTreeIter * parent_iter,
+			    GtkTreeIter * iter,
+			    const char * name,
+			    void * parent_layer, /* Layer * parent_layer */
+			    void * sublayer,
+			    int data,
+			    GdkPixbuf * icon,
+			    bool editable,
 			    time_t timestamp)
 {
 	assert (iter != NULL);
-	if (above) {
-		gtk_tree_store_prepend(GTK_TREE_STORE(vt->model), iter, parent_iter);
-	} else {
-		gtk_tree_store_append(GTK_TREE_STORE(vt->model), iter, parent_iter);
-	}
-	gtk_tree_store_set(GTK_TREE_STORE(vt->model), iter,
-			    NAME_COLUMN, name,
-			    VISIBLE_COLUMN, true,
-			    TYPE_COLUMN, VIK_TREEVIEW_TYPE_LAYER,
-			    ITEM_PARENT_COLUMN, parent_layer,
-			    ITEM_POINTER_COLUMN, layer,
-			    ITEM_DATA_COLUMN, data,
-			    EDITABLE_COLUMN, parent_layer == NULL ? false : true,
-			    ICON_COLUMN, layer_type >= 0 ? vt->layer_type_icons[layer_type] : NULL,
-			    ITEM_TIMESTAMP_COLUMN, (int64_t)timestamp,
-			    -1);
-}
 
-void vik_treeview_insert_layer(VikTreeview * vt,
-			       GtkTreeIter * parent_iter,
-			       GtkTreeIter * iter,
-			       const char * name,
-			       void * parent_layer, /* Layer * parent_layer */
-			       bool above,
-			       void * layer,        /* Layer * layer */
-			       int data,
-			       VikLayerTypeEnum layer_type,
-			       GtkTreeIter *sibling,
-			       time_t timestamp)
-{
-	assert (iter != NULL);
-	if (sibling) {
-		if (above) {
-			gtk_tree_store_insert_before(GTK_TREE_STORE(vt->model), iter, parent_iter, sibling);
-		} else {
-			gtk_tree_store_insert_after(GTK_TREE_STORE(vt->model), iter, parent_iter, sibling);
-		}
-	} else {
-		if (above) {
-			gtk_tree_store_append(GTK_TREE_STORE(vt->model), iter, parent_iter);
-		} else {
-			gtk_tree_store_prepend(GTK_TREE_STORE(vt->model), iter, parent_iter);
-		}
-	}
-
-	gtk_tree_store_set(GTK_TREE_STORE(vt->model), iter,
-			    NAME_COLUMN, name,
-			    VISIBLE_COLUMN, true,
-			    TYPE_COLUMN, VIK_TREEVIEW_TYPE_LAYER,
-			    ITEM_PARENT_COLUMN, parent_layer,
-			    ITEM_POINTER_COLUMN, layer,
-			    ITEM_DATA_COLUMN, data,
-			    EDITABLE_COLUMN, true,
-			    ICON_COLUMN, layer_type >= 0 ? vt->layer_type_icons[layer_type] : NULL,
-			    ITEM_TIMESTAMP_COLUMN, (int64_t)timestamp,
-			    -1);
-}
-
-void vik_treeview_add_sublayer(VikTreeview * vt,
-			       GtkTreeIter * parent_iter,
-			       GtkTreeIter * iter,
-			       const char * name,
-			       void * parent_layer, /* Layer * parent_layer */
-			       void * sublayer,
-			       int data,
-			       GdkPixbuf * icon,
-			       bool editable,
-			       time_t timestamp)
-{
-	assert (iter != NULL);
-
-	gtk_tree_store_append(GTK_TREE_STORE(vt->model), iter, parent_iter);
-	gtk_tree_store_set(GTK_TREE_STORE(vt->model), iter,
-			    NAME_COLUMN, name,
-			    VISIBLE_COLUMN, true,
-			    TYPE_COLUMN, VIK_TREEVIEW_TYPE_SUBLAYER,
-			    ITEM_PARENT_COLUMN, parent_layer,
-			    ITEM_POINTER_COLUMN, sublayer,
-			    ITEM_DATA_COLUMN, data,
-			    EDITABLE_COLUMN, editable,
-			    ICON_COLUMN, icon,
-			    ITEM_TIMESTAMP_COLUMN, (int64_t)timestamp,
-			    -1);
+	gtk_tree_store_append(GTK_TREE_STORE(vt->tree->model), iter, parent_iter);
+	gtk_tree_store_set(GTK_TREE_STORE(vt->tree->model), iter,
+			   NAME_COLUMN, name,
+			   VISIBLE_COLUMN, true,
+			   TYPE_COLUMN, VIK_TREEVIEW_TYPE_SUBLAYER,
+			   ITEM_PARENT_COLUMN, parent_layer,
+			   ITEM_POINTER_COLUMN, sublayer,
+			   ITEM_DATA_COLUMN, data,
+			   EDITABLE_COLUMN, editable,
+			   ICON_COLUMN, icon,
+			   ITEM_TIMESTAMP_COLUMN, (int64_t)timestamp,
+			   -1);
 }
 
 // Inspired by the internals of GtkTreeView sorting itself
@@ -829,14 +821,14 @@ static int sort_tuple_compare(gconstpointer a, gconstpointer b, void * order)
  * For a KML file with over 10,000 tracks (3Mb zipped) - See 'UK Hampshire Rights of Way'
  * http://www3.hants.gov.uk/row/row-maps.htm
  */
-void vik_treeview_sort_children(VikTreeview *vt, GtkTreeIter *parent, vik_layer_sort_order_t order)
+void TreeView::sort_children(GtkTreeIter * parent, vik_layer_sort_order_t order)
 {
 	if (order == VL_SO_NONE) {
 		// Nothing to do
 		return;
 	}
 
-	GtkTreeModel *model = vt->model;
+	GtkTreeModel * model = this->model;
 	GtkTreeIter child;
 	if (!gtk_tree_model_iter_children(model, &child, parent)) {
 		return;
@@ -858,13 +850,13 @@ void vik_treeview_sort_children(VikTreeview *vt, GtkTreeIter *parent, vik_layer_
 
 	// Sort list...
 	g_qsort_with_data(sort_array,
-			   length,
-			   sizeof (SortTuple),
-			   sort_tuple_compare,
-			   KINT_TO_POINTER(order));
+			  length,
+			  sizeof (SortTuple),
+			  sort_tuple_compare,
+			  KINT_TO_POINTER(order));
 
 	// As the sorted list contains the reordered position offsets, extract this and then apply to the treeview
-	int *positions = (int *) malloc(sizeof(int) * length);
+	int * positions = (int *) malloc(sizeof(int) * length);
 	for (ii = 0; ii < length; ii++) {
 		positions[ii] = sort_array[ii].offset;
 		free(sort_array[ii].name);
@@ -881,8 +873,8 @@ static void vik_treeview_finalize(GObject *gob)
 	VikTreeview *vt = VIK_TREEVIEW (gob);
 	int i;
 	for (i = 0; ((VikLayerTypeEnum) i) < VIK_LAYER_NUM_TYPES; i++) {
-		if (vt->layer_type_icons[i] != NULL) {
-			g_object_unref(G_OBJECT(vt->layer_type_icons[i]));
+		if (vt->tree->layer_type_icons[i] != NULL) {
+			g_object_unref(G_OBJECT(vt->tree->layer_type_icons[i]));
 		}
 	}
 
@@ -938,12 +930,12 @@ static int vik_treeview_drag_data_received(GtkTreeDragDest *drag_dest, GtkTreePa
 				gtk_tree_path_up(dest_cp);
 				gtk_tree_model_get_iter(src_model, &dest_parent, dest_cp);
 			} while (gtk_tree_path_get_depth(dest_cp)>1 &&
-				 vik_treeview_item_get_type(layer->vt, &dest_parent) != VIK_TREEVIEW_TYPE_LAYER);
+				 layer->vt->tree->get_type(&dest_parent) != VIK_TREEVIEW_TYPE_LAYER);
 
 
-			Layer * layer_source  = (Layer *) vik_treeview_item_get_parent(layer->vt, &src_iter);
+			Layer * layer_source  = (Layer *) layer->vt->tree->get_parent(&src_iter);
 			assert (layer_source);
-			Layer * layer_dest = (Layer *) vik_treeview_item_get_layer(layer->vt, &dest_parent);
+			Layer * layer_dest = (Layer *) layer->vt->tree->get_layer(&dest_parent);
 
 			/* TODO: might want to allow different types, and let the clients handle how they want */
 			layer_dest->drag_drop_request(layer_source, &src_iter, dest);
@@ -971,4 +963,15 @@ static int vik_treeview_drag_data_delete(GtkTreeDragSource *drag_source, GtkTree
 	fprintf(stdout, _("delete data from %s\n"), s_dest);
 	free(s_dest);
 	return false;
+}
+
+
+
+
+
+TreeView::TreeView(VikTreeview * vt_)
+{
+	this->vt = vt_;
+
+	memset(this->layer_type_icons, 0, sizeof (this->layer_type_icons));
 }
