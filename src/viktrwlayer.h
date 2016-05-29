@@ -51,7 +51,9 @@ namespace SlavGPS {
 	class LayerTRW : public Layer {
 
 	public:
+		LayerTRW();
 		LayerTRW(VikLayer * vl);
+		LayerTRW(Viewport * viewport);
 
 
 		/* Layer interface methods. */

@@ -854,14 +854,13 @@ void vu_command_line ( VikWindow *vw, double latitude, double longitude, int zoo
 		}
 
 		if ( add_map ) {
-			VikMapsLayer *vml = VIK_MAPS_LAYER ( vik_layer_create(VIK_LAYER_MAPS, viewport, false) );
-			Layer * layer = (Layer *) (VIK_LAYER(vml))->layer;
+			LayerMaps * layer = new LayerMaps(viewport);
 
-			vik_maps_layer_set_map_type(vml, the_type_id);
+			vik_maps_layer_set_map_type(((VikMapsLayer *) layer->vl), the_type_id);
 			layer->rename(_("Map"));
 
 			vik_window_layers_panel(vw)->panel_ref->get_top_layer()->add_layer(layer, true);
-			vik_layer_emit_update ( VIK_LAYER(vml) );
+			vik_layer_emit_update (layer->vl);
 		}
 	}
 }

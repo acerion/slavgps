@@ -477,8 +477,7 @@ void vik_window_new_window_finish(VikWindow *vw)
 
 	// Maybe add a default map layer
 	if(a_vik_get_add_default_map_layer()) {
-		VikMapsLayer *vml = VIK_MAPS_LAYER(vik_layer_create(VIK_LAYER_MAPS, (vw->viewport), false));
-		Layer * layer = (Layer *) (VIK_LAYER(vml))->layer;
+		LayerMaps * layer = new LayerMaps(vw->viewport);
 		layer->rename(_("Default Map"));
 
 		vw->layers_panel->get_top_layer()->add_layer(layer, true);

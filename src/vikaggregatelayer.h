@@ -23,7 +23,6 @@
 #define _VIKING_AGGREGATELAYER_H
 
 #include <glib.h>
-#include <stdbool.h>
 #include <stdint.h>
 
 #include <list>
@@ -56,15 +55,14 @@ typedef struct {
 } VikAggregateLayer;
 
 
-VikAggregateLayer *vik_aggregate_layer_new();
-void vik_aggregate_layer_free(VikAggregateLayer *val);
-VikAggregateLayer *vik_aggregate_layer_create(Viewport * viewport);
-//bool vik_aggregate_layer_load_layers(VikAggregateLayer *val, FILE *f, void * vp);
+
 
 
 #ifdef __cplusplus
 }
 #endif
+
+
 
 
 
@@ -82,7 +80,9 @@ namespace SlavGPS {
 	class LayerAggregate : public Layer {
 
 	public:
+		LayerAggregate();
 		LayerAggregate(VikLayer * vl);
+		LayerAggregate(Viewport * viewport);
 
 
 		/* Layer interface methods. */

@@ -34,7 +34,7 @@
 
 static VikCoordLayer *coord_layer_new(Viewport * viewport);
 static void coord_layer_free(VikCoordLayer *vcl);
-static VikCoordLayer * coord_layer_create(Viewport * viewport);
+//static VikCoordLayer * coord_layer_create(Viewport * viewport);
 static VikCoordLayer *coord_layer_unmarshall(uint8_t *data, int len, Viewport * viewport);
 static bool coord_layer_set_param(VikCoordLayer *vcl, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
 static VikLayerParamData coord_layer_get_param(VikCoordLayer *vcl, uint16_t id, bool is_file_operation);
@@ -76,7 +76,7 @@ VikLayerInterface vik_coord_layer_interface = {
 
 	VIK_MENU_ITEM_ALL,
 
-	(VikLayerFuncCreate)                  coord_layer_create,
+	(VikLayerFuncCreate)                  NULL,
 
 	(VikLayerFuncUnmarshall)		coord_layer_unmarshall,
 
@@ -383,6 +383,7 @@ void LayerCoord::update_gc(Viewport * viewport)
 	this->gc = viewport->new_gc_from_color(&(this->color), this->line_thickness);
 }
 
+#if 0
 static VikCoordLayer * coord_layer_create(Viewport * viewport)
 {
 	VikCoordLayer *vcl = coord_layer_new(viewport);
@@ -393,13 +394,44 @@ static VikCoordLayer * coord_layer_create(Viewport * viewport)
 
 	return vcl;
 }
+#endif
 
 
+LayerCoord::LayerCoord()
+{
+	fprintf(stderr, "LayerCoord()\n");
+	this->gc = NULL;
+	this->type = VIK_LAYER_COORD;
+	strcpy(this->type_string, "COORD");
+}
 
 
 LayerCoord::LayerCoord(VikLayer * vl) : Layer(vl)
 {
+	fprintf(stderr, "LayerCoord(vl)\n");
+	this->gc = NULL;
 	this->type = VIK_LAYER_COORD;
-
 	strcpy(this->type_string, "COORD");
-};
+}
+
+
+
+LayerCoord::LayerCoord(Viewport * viewport)
+{
+	fprintf(stderr, "LayerCoord()\n");
+	VikCoordLayer * vcl = VIK_COORD_LAYER(g_object_new(VIK_COORD_LAYER_TYPE, NULL));
+	((VikLayer *) vcl)->layer = this;
+	this->vl = (VikLayer *) vcl;
+
+
+	this->gc = NULL;
+	this->type = VIK_LAYER_COORD;
+	strcpy(this->type_string, "COORD");
+
+
+	vik_layer_set_defaults(VIK_LAYER(vcl), viewport);
+	if (viewport) {
+		LayerCoord * layer = (LayerCoord *) ((VikLayer * ) vcl)->layer;
+		this->update_gc(viewport);
+	}
+}

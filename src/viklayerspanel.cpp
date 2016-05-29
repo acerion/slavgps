@@ -105,8 +105,8 @@ LayersPanel::LayersPanel()
 	   vik_layers_panel_init(), because leaving it in _init()
 	   caused problems during execution time. */
 
-	VikAggregateLayer * val = vik_aggregate_layer_new();
-	this->toplayer = (LayerAggregate *) ((VikLayer *) val)->layer;
+	Viewport * viewport = NULL;
+	this->toplayer = new LayerAggregate(viewport);
 	this->toplayer->rename(_("Top Layer"));
 	int a = g_signal_connect_swapped(G_OBJECT(this->toplayer->vl), "update", G_CALLBACK(vik_layers_panel_emit_update_cb), this);
 
@@ -486,10 +486,19 @@ bool LayersPanel::new_layer(VikLayerTypeEnum type)
 		(void)a_settings_get_boolean(VIK_SETTINGS_LAYERS_TRW_CREATE_DEFAULT, &ask_user);
 	}
 	ask_user = !ask_user;
-	VikLayer * l = vik_layer_create(type, this->viewport, ask_user);
-	if (l) {
-		this->add_layer((Layer *) l->layer);
-		return true;
+
+	if (type != VIK_LAYER_GPS && type != VIK_LAYER_NUM_TYPES) {
+		Layer * layer = vik_layer_new(type, this->viewport, ask_user);
+		if (layer) {
+			this->add_layer(layer);
+			return true;
+		}
+	} else {
+		VikLayer * l = vik_layer_create(type, this->viewport, ask_user);
+		if (l) {
+			this->add_layer((Layer *) l->layer);
+			return true;
+		}
 	}
 	return false;
 }

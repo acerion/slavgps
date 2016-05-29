@@ -105,7 +105,7 @@ static VikMapnikLayer *mapnik_layer_unmarshall(uint8_t *data, int len, Viewport 
 static bool mapnik_layer_set_param(VikMapnikLayer *vml, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
 static VikLayerParamData mapnik_layer_get_param(VikMapnikLayer *vml, uint16_t id, bool is_file_operation);
 static VikMapnikLayer * mapnik_layer_new(Viewport * viewport);
-static VikMapnikLayer * mapnik_layer_create(Viewport * viewport);
+//static VikMapnikLayer * mapnik_layer_create(Viewport * viewport);
 
 static void * mapnik_feature_create(VikWindow *vw, Viewport * viewport)
 {
@@ -149,7 +149,7 @@ VikLayerInterface vik_mapnik_layer_interface = {
 
 	VIK_MENU_ITEM_ALL,
 
-	(VikLayerFuncCreate)                  mapnik_layer_create,
+	(VikLayerFuncCreate)                  NULL,
 
 	(VikLayerFuncUnmarshall)              mapnik_layer_unmarshall,
 
@@ -929,12 +929,14 @@ void LayerMapnik::free_()
 	}
 }
 
+#if 0
 static VikMapnikLayer * mapnik_layer_create(Viewport * viewport)
 {
 	VikMapnikLayer * rv = mapnik_layer_new(viewport);
 
 	return rv;
 }
+#endif
 
 typedef enum {
 	MA_VML = 0,
@@ -1175,9 +1177,37 @@ static bool mapnik_feature_release(VikMapnikLayer *vml, GdkEventButton *event, V
 }
 
 
+
+
+
+LayerMapnik::LayerMapnik()
+{
+	this->type = VIK_LAYER_MAPNIK;
+	strcpy(this->type_string, "MAPNIK");
+}
+
+
+
+
+
 LayerMapnik::LayerMapnik(VikLayer * vl) : Layer(vl)
 {
 	this->type = VIK_LAYER_MAPNIK;
-
 	strcpy(this->type_string, "MAPNIK");
+}
+
+
+
+
+
+LayerMapnik::LayerMapnik(Viewport * viewport) : LayerMapnik()
+{
+	VikMapnikLayer *vml = VIK_MAPNIK_LAYER(g_object_new (VIK_MAPNIK_LAYER_TYPE, NULL));
+	((VikLayer *) vml)->layer = this;
+	this->vl = (VikLayer *) vml;
+
+	vik_layer_set_defaults(VIK_LAYER(vml), viewport);
+	vml->tile_size_x = size_default().u; // FUTURE: Is there any use in this being configurable?
+	vml->loaded = false;
+	vml->mi = mapnik_interface_new();
 }

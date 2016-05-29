@@ -33,7 +33,17 @@
 #include <assert.h>
 #include "viklayer_defaults.h"
 #include "viklayer.h"
+#include "vikaggregatelayer.h"
+#include "viktrwlayer.h"
+#include "vikcoordlayer.h"
+#include "vikmapslayer.h"
+#include "vikdemlayer.h"
+#include "vikgeoreflayer.h"
+#include "vikgpslayer.h"
+#include "vikmapniklayer.h"
 #include "globals.h"
+
+using namespace SlavGPS;
 
 /* functions common to all layers. */
 /* TODO longone: rename interface free -> finalize */
@@ -217,28 +227,77 @@ time_t vik_layer_get_timestamp(VikLayer * vl)
 	return layer->get_timestamp();
 }
 
-VikLayer *vik_layer_create ( VikLayerTypeEnum type, Viewport * viewport, bool interactive )
+/* For GPS layer only. Layers of other types are already created by vik_layer_new(). */
+VikLayer * vik_layer_create(VikLayerTypeEnum type, Viewport * viewport, bool interactive)
 {
-  VikLayer *new_layer = NULL;
-  assert ( type < VIK_LAYER_NUM_TYPES );
+	assert (type == VIK_LAYER_GPS);
 
-  new_layer = vik_layer_interfaces[type]->create(viewport);
+	VikLayer * new_layer = (VikLayer *) vik_gps_layer_create(viewport);
+	assert (new_layer);
 
-  assert ( new_layer != NULL );
+	if (interactive) {
+		if (vik_layer_properties(new_layer, viewport)) {
+			/* We translate the name here */
+			/* in order to avoid translating name set by user */
+			((Layer *) ((VikLayer *) new_layer)->layer)->rename(_(vik_layer_interfaces[type]->name));
+		} else {
+			g_object_unref(G_OBJECT (new_layer)); /* cancel that */
+			new_layer = NULL;
+		}
+	}
+	return new_layer;
+}
 
-  if ( interactive )
-  {
-    if ( vik_layer_properties(new_layer, viewport) )
-      /* We translate the name here */
-      /* in order to avoid translating name set by user */
-	    ((Layer *) ((VikLayer *) new_layer)->layer)->rename(_(vik_layer_interfaces[type]->name));
-    else
-    {
-      g_object_unref ( G_OBJECT(new_layer) ); /* cancel that */
-      new_layer = NULL;
-    }
-  }
-  return new_layer;
+Layer * SlavGPS::vik_layer_new(VikLayerTypeEnum type, Viewport * viewport, bool interactive)
+{
+	assert (type != VIK_LAYER_GPS && type != VIK_LAYER_NUM_TYPES);
+
+	Layer * layer = NULL;
+	if (type == VIK_LAYER_AGGREGATE) {
+		fprintf(stderr, "\n\n\n NEW AGGREGATE\n\n\n");
+		layer = new LayerAggregate(viewport);
+
+	} else if (type == VIK_LAYER_TRW) {
+		fprintf(stderr, "\n\n\n NEW TRW\n\n\n");
+		layer = new LayerTRW(viewport);
+
+	} else if (type == VIK_LAYER_COORD) {
+		fprintf(stderr, "\n\n\n NEW COORD\n\n\n");
+		layer = new LayerCoord(viewport);
+
+	} else if (type == VIK_LAYER_MAPS) {
+		fprintf(stderr, "\n\n\n NEW MAPS\n\n\n");
+		layer = new LayerMaps(viewport);
+
+	} else if (type == VIK_LAYER_DEM) {
+		fprintf(stderr, "\n\n\n NEW DEM\n\n\n");
+		layer = new LayerDEM(viewport);
+
+	} else if (type == VIK_LAYER_GEOREF) {
+		fprintf(stderr, "\n\n\n NEW GEOREF\n\n\n");
+		layer = new LayerGeoref(viewport);
+
+	} else if (type == VIK_LAYER_MAPNIK) {
+		fprintf(stderr, "\n\n\n NEW MAPNIK\n\n\n");
+		layer = new LayerMapnik(viewport);
+	} else {
+		assert (0);
+	}
+
+	assert (layer);
+
+	if (interactive) {
+		if (vik_layer_properties(layer->vl, viewport)) {
+			/* We translate the name here */
+			/* in order to avoid translating name set by user */
+			layer->rename(_(vik_layer_interfaces[type]->name));
+		} else {
+			g_object_unref( G_OBJECT(layer->vl) ); /* cancel that */
+			delete layer;
+			layer = NULL;
+		}
+	}
+	return layer;
 }
 
 /* returns true if OK was pressed */
@@ -666,19 +725,26 @@ void vik_layer_set_defaults ( VikLayer *vl, Viewport * viewport)
 
 
 
-
-
-
-Layer::Layer(VikLayer * vl_)
+Layer::Layer()
 {
-	this->vl = vl_;
-	this->vl->layer = this;
+	fprintf(stderr, "Layer::Layer()\n");
 
 	this->name = NULL;
 	this->visible = true;
 	this->realized = false;
 
 	strcpy(this->type_string, "LAST");
+}
+
+
+
+
+Layer::Layer(VikLayer * vl_) : Layer()
+{
+	fprintf(stderr, "Layer::Layer(vl)\n");
+	this->vl = vl_;
+	this->vl->layer = this;
+
 }
 
 bool Layer::select_click(GdkEventButton * event, Viewport * viewport, tool_ed_t * tet)

@@ -561,7 +561,7 @@ VikLayerInterface vik_trw_layer_interface = {
 
   VIK_MENU_ITEM_ALL,
 
-  (VikLayerFuncCreate)                  trw_layer_create,
+  (VikLayerFuncCreate)                  NULL,
 
   (VikLayerFuncUnmarshall)              trw_layer_unmarshall,
 
@@ -1270,7 +1270,7 @@ void LayerTRW::marshall(uint8_t **data, int *len )
 
 static VikTrwLayer * trw_layer_unmarshall(uint8_t *data, int len, Viewport * viewport)
 {
-  VikTrwLayer *vtl = VIK_TRW_LAYER(vik_layer_create ( VIK_LAYER_TRW, viewport, false ));
+  VikTrwLayer *vtl = trw_layer_create(viewport);
   int pl;
   int consumed_length;
 
@@ -10329,4 +10329,113 @@ void LayerTRW::write_file(FILE * f)
 	fprintf(f, "\n\n~LayerData\n");
 	a_gpspoint_write_file(vtl, f);
 	fprintf(f, "~EndLayerData\n");
+}
+
+
+
+LayerTRW::LayerTRW()
+{
+
+}
+
+
+
+
+LayerTRW::LayerTRW(Viewport * viewport)
+{
+	this->type = VIK_LAYER_TRW;
+
+	strcpy(this->type_string, "TRW");
+
+	current_wp = NULL;
+	current_wp_uid = 0;
+	moving_wp = false;
+	waypoint_rightclick = false;
+
+	current_tpl = NULL;
+	current_tp_track = NULL;
+	current_tp_uid = 0;
+	tpwin = NULL;
+
+	moving_tp = false;
+
+	memset(&coord_mode, 0, sizeof (VikCoordMode));
+
+	highest_wp_number = 0;
+
+	VikTrwLayer * rv = NULL;
+
+	/* VikTrwLayer *rv = trw_layer_new1(viewport); */
+	{
+
+		rv = VIK_TRW_LAYER ( g_object_new ( VIK_TRW_LAYER_TYPE, NULL ) );
+
+		// It's not entirely clear the benefits of hash tables usage here - possibly the simplicity of first implementation for unique names
+		// Now with the name of the item stored as part of the item - these tables are effectively straightforward lists
+
+		// For this reworking I've choosen to keep the use of hash tables since for the expected data sizes
+		// - even many hundreds of waypoints and tracks is quite small in the grand scheme of things,
+		//  and with normal PC processing capabilities - it has negligibile performance impact
+		// This also minimized the amount of rework - as the management of the hash tables already exists.
+
+		// The hash tables are indexed by simple integers acting as a UUID hash, which again shouldn't affect performance much
+		//   we have to maintain a uniqueness (as before when multiple names where not allowed),
+		//   this is to ensure it refers to the same item in the data structures used on the viewport and on the layers panel
+
+		//rv->waypoints = g_hash_table_new_full ( g_direct_hash, g_direct_equal, NULL, (GDestroyNotify) Waypoint::delete_waypoint);
+		//rv->waypoints_iters = g_hash_table_new_full ( g_direct_hash, g_direct_equal, NULL, g_free );
+		//rv->tracks = g_hash_table_new_full ( g_direct_hash, g_direct_equal, NULL, (GDestroyNotify) Track::delete_track);
+		//rv->tracks_iters = g_hash_table_new_full ( g_direct_hash, g_direct_equal, NULL, g_free );
+		//rv->routes = g_hash_table_new_full ( g_direct_hash, g_direct_equal, NULL, (GDestroyNotify) Track::delete_track);
+		//rv->routes_iters = g_hash_table_new_full ( g_direct_hash, g_direct_equal, NULL, g_free );
+
+		rv->image_cache = g_queue_new(); // Must be performed before set_params via set_defaults
+
+		((VikLayer *) rv)->layer = this;
+		this->vl = (VikLayer *) rv;
+		rv->trw = (LayerTRW *) ((VikLayer *) rv)->layer;
+
+		vik_layer_set_defaults ( VIK_LAYER(rv), viewport);
+
+
+		// Param settings that are not available via the GUI
+		// Force to on after processing params (which defaults them to off with a zero value)
+		rv->trw->waypoints_visible = rv->trw->tracks_visible = rv->trw->routes_visible = true;
+
+		rv->metadata = vik_trw_metadata_new ();
+		rv->draw_sync_done = true;
+		rv->draw_sync_do = true;
+		// Everything else is 0, false or NULL
+
+		//rv->trw->vtl = rv; /* Reference to parent object of type VikTrwLayer for trw. */
+	}
+
+
+
+	/* trw_layer_create(Viewport * viewport) */
+	{
+		((Layer *) ((VikLayer *) rv)->layer)->rename(vik_trw_layer_interface.name);
+
+		if ( viewport == NULL || gtk_widget_get_window(GTK_WIDGET(viewport->vvp)) == NULL ) {
+			;
+		} else {
+
+			rv->wplabellayout = gtk_widget_create_pango_layout (GTK_WIDGET(viewport->vvp), NULL);
+			pango_layout_set_font_description (rv->wplabellayout, gtk_widget_get_style(GTK_WIDGET(viewport->vvp))->font_desc);
+
+			rv->tracklabellayout = gtk_widget_create_pango_layout (GTK_WIDGET(viewport->vvp), NULL);
+			pango_layout_set_font_description (rv->tracklabellayout, gtk_widget_get_style(GTK_WIDGET(viewport->vvp))->font_desc);
+
+			trw_layer_new_track_gcs ( rv, viewport);
+
+			rv->waypoint_gc = viewport->new_gc_from_color(&(rv->waypoint_color), 2);
+			rv->waypoint_text_gc = viewport->new_gc_from_color(&(rv->waypoint_text_color), 1);
+			rv->waypoint_bg_gc = viewport->new_gc_from_color(&(rv->waypoint_bg_color), 1);
+			gdk_gc_set_function ( rv->waypoint_bg_gc, rv->wpbgand );
+
+			rv->trw->coord_mode = viewport->get_coord_mode();
+
+			rv->menu_selection = vik_layer_get_interface(rv->trw->type)->menu_items_selection;
+		}
+	}
 }

@@ -106,7 +106,9 @@ namespace SlavGPS {
 
 	class LayerMaps : public Layer {
 	public:
+		LayerMaps();
 		LayerMaps(VikLayer * vl);
+		LayerMaps(Viewport * viewport);
 
 
 		/* Layer interface methods. */

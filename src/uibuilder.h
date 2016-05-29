@@ -85,15 +85,15 @@ VIK_LAYER_PARAM_PTR, // Not really a 'parameter' but useful to route to extended
 } VikLayerParamType;
 
 typedef enum {
-  VIK_LAYER_AGGREGATE = 0,
-  VIK_LAYER_TRW,
-  VIK_LAYER_COORD,
-  VIK_LAYER_GEOREF,
+  VIK_LAYER_AGGREGATE = 0, /* SlavGPS::vik_layer_new() */
+  VIK_LAYER_TRW,           /* SlavGPS::vik_layer_new() */
+  VIK_LAYER_COORD,         /* SlavGPS::vik_layer_new() */
+  VIK_LAYER_GEOREF,        /* SlavGPS::vik_layer_new() */
   VIK_LAYER_GPS,
-  VIK_LAYER_MAPS,
-  VIK_LAYER_DEM,
+  VIK_LAYER_MAPS,          /* SlavGPS::vik_layer_new() */
+  VIK_LAYER_DEM,           /* SlavGPS::vik_layer_new() */
 #ifdef HAVE_LIBMAPNIK
-  VIK_LAYER_MAPNIK,
+  VIK_LAYER_MAPNIK,        /* SlavGPS::vik_layer_new() */
 #endif
   VIK_LAYER_NUM_TYPES // Also use this value to indicate no layer association
 } VikLayerTypeEnum;

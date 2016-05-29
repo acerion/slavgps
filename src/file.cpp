@@ -363,8 +363,13 @@ static bool file_read(VikAggregateLayer *top, FILE *f, const char *dirpath, VikV
 						stack->data = (void *) vik_gps_layer_get_a_child(VIK_GPS_LAYER(stack->under->data));
 						params = vik_layer_get_interface(type)->params;
 						params_count = vik_layer_get_interface(type)->params_count;
-					} else {
-						stack->data = (void *) vik_layer_create(type, &vp->port, false);
+					} else if (type == VIK_LAYER_GPS) {
+						stack->data = (void *) vik_gps_layer_create(&vp->port);
+						params = vik_layer_get_interface(type)->params;
+						params_count = vik_layer_get_interface(type)->params_count;
+					} else { /* Any other VIK_LAYER_x type. */
+						Layer * layer = vik_layer_new(type, &vp->port, false);
+						stack->data = (void *) layer->vl;
 						params = vik_layer_get_interface(type)->params;
 						params_count = vik_layer_get_interface(type)->params_count;
 					}
@@ -709,26 +714,26 @@ VikLoadType_t a_file_load(VikAggregateLayer *top, VikViewport *vp, const char *f
 		//  must be loaded into a new TrackWaypoint layer (hence it be created)
 		bool success = true; // Detect load failures - mainly to remove the layer created as it's not required
 
-		VikLayer *vtl = vik_layer_create(VIK_LAYER_TRW, &vp->port, false);
-		((Layer *) ((VikLayer *) vtl)->layer)->rename(a_file_basename(filename));
+		LayerTRW * layer = new LayerTRW(&vp->port);
+		layer->rename(a_file_basename(filename));
 
 		// In fact both kml & gpx files start the same as they are in xml
 		if (a_file_check_ext(filename, ".kml") && check_magic(f, GPX_MAGIC, GPX_MAGIC_LEN)) {
 			// Implicit Conversion
 			ProcessOptions po = { (char *) "-i kml", filename, NULL, NULL, NULL, NULL };
-			if (! (success = a_babel_convert_from(VIK_TRW_LAYER(vtl), &po, NULL, NULL, NULL))) {
+			if (! (success = a_babel_convert_from(VIK_TRW_LAYER(layer->vl), &po, NULL, NULL, NULL))) {
 				load_answer = LOAD_TYPE_GPSBABEL_FAILURE;
 			}
 		}
 		// NB use a extension check first, as a GPX file header may have a Byte Order Mark (BOM) in it
 		//    - which currently confuses our check_magic function
 		else if (a_file_check_ext(filename, ".gpx") || check_magic(f, GPX_MAGIC, GPX_MAGIC_LEN)) {
-			if (! (success = a_gpx_read_file(VIK_TRW_LAYER(vtl), f))) {
+			if (! (success = a_gpx_read_file(VIK_TRW_LAYER(layer->vl), f))) {
 				load_answer = LOAD_TYPE_GPX_FAILURE;
 			}
 		} else {
 			// Try final supported file type
-			if (! (success = a_gpspoint_read_file(VIK_TRW_LAYER(vtl), f, dirpath))) {
+			if (! (success = a_gpspoint_read_file(VIK_TRW_LAYER(layer->vl), f, dirpath))) {
 				// Failure here means we don't know how to handle the file
 				load_answer = LOAD_TYPE_UNSUPPORTED_FAILURE;
 			}
@@ -738,13 +743,12 @@ VikLoadType_t a_file_load(VikAggregateLayer *top, VikViewport *vp, const char *f
 		// Clean up when we can't handle the file
 		if (! success) {
 			// free up layer
-			g_object_unref(vtl);
+			g_object_unref(layer->vl);
 		} else {
 			// Complete the setup from the successful load
-			vik_layer_post_read(vtl, &vp->port, true);
-			Layer * layer = (Layer *) vtl->layer;
+			vik_layer_post_read(layer->vl, &vp->port, true);
 			((LayerAggregate *) ((VikLayer *) top)->layer)->add_layer(layer, false);
-			(VIK_TRW_LAYER(vtl))->trw->auto_set_view(&vp->port);
+			layer->auto_set_view(&vp->port);
 		}
 	}
 	xfclose(f);

@@ -57,7 +57,7 @@
 
 extern GList * a_babel_device_list;
 
-static VikGpsLayer *vik_gps_layer_create(Viewport * viewport);
+
 static VikGpsLayer * vik_gps_layer_new(Viewport * viewport);
 
 static VikGpsLayer * gps_layer_unmarshall(uint8_t *data, int len, Viewport * viewport);
@@ -378,7 +378,7 @@ GType vik_gps_layer_get_type()
 	return val_type;
 }
 
-static VikGpsLayer * vik_gps_layer_create(Viewport * viewport)
+VikGpsLayer * vik_gps_layer_create(Viewport * viewport)
 {
 	int i;
 
@@ -387,7 +387,8 @@ static VikGpsLayer * vik_gps_layer_create(Viewport * viewport)
 	layer->rename(vik_gps_layer_interface.name);
 
 	for (i = 0; i < NUM_TRW; i++) {
-		rv->trw_children[i] = VIK_TRW_LAYER(vik_layer_create(VIK_LAYER_TRW, viewport, false));
+		LayerTRW * layer = new LayerTRW(viewport);
+		rv->trw_children[i] = (VikTrwLayer *) layer->vl;
 		vik_layer_set_menu_items_selection(VIK_LAYER(rv->trw_children[i]), VIK_MENU_ITEM_ALL & ~(VIK_MENU_ITEM_CUT|VIK_MENU_ITEM_DELETE));
 	}
 

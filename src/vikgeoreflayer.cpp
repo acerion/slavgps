@@ -80,7 +80,7 @@ static VikGeorefLayer *georef_layer_unmarshall(uint8_t *data, int len, Viewport 
 static bool georef_layer_set_param(VikGeorefLayer *vgl, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
 static VikLayerParamData georef_layer_get_param(VikGeorefLayer *vgl, uint16_t id, bool is_file_operation);
 static VikGeorefLayer *georef_layer_new(Viewport * viewport);
-static VikGeorefLayer *georef_layer_create(Viewport * viewport);
+//static VikGeorefLayer *georef_layer_create(Viewport * viewport);
 static void georef_layer_set_image(VikGeorefLayer *vgl, const char *image);
 static bool georef_layer_dialog(VikGeorefLayer *vgl, Viewport * viewport, GtkWindow *w);
 
@@ -137,7 +137,7 @@ VikLayerInterface vik_georef_layer_interface = {
 
 	VIK_MENU_ITEM_ALL,
 
-	(VikLayerFuncCreate)                  georef_layer_create,
+	(VikLayerFuncCreate)                  NULL,
 
 	(VikLayerFuncUnmarshall)	      georef_layer_unmarshall,
 
@@ -471,12 +471,14 @@ void LayerGeoref::free_()
 	}
 }
 
+#if 0
 static VikGeorefLayer * georef_layer_create(Viewport * viewport)
 {
 	VikGeorefLayer * rv = georef_layer_new(viewport);
 
 	return rv;
 }
+#endif
 
 bool LayerGeoref::properties(void * viewport)
 {
@@ -1207,9 +1209,51 @@ VikGeorefLayer *vik_georef_layer_create(Viewport * viewport,
 
 
 
+
+LayerGeoref::LayerGeoref()
+{
+	this->type = VIK_LAYER_GEOREF;
+	strcpy(this->type_string, "GEOREF");
+}
+
+
+
+
+
 LayerGeoref::LayerGeoref(VikLayer * vl) : Layer(vl)
 {
 	this->type = VIK_LAYER_GEOREF;
-
 	strcpy(this->type_string, "GEOREF");
+}
+
+
+
+
+
+LayerGeoref::LayerGeoref(Viewport * viewport) : LayerGeoref()
+{
+	VikGeorefLayer *vgl = VIK_GEOREF_LAYER(g_object_new(VIK_GEOREF_LAYER_TYPE, NULL));
+
+	((VikLayer *) vgl)->layer = this;
+	this->vl = (VikLayer *) vgl;
+
+	// Since GeoRef layer doesn't use uibuilder
+	//  initializing this way won't do anything yet..
+	vik_layer_set_defaults(VIK_LAYER(vgl), viewport);
+
+	// Make these defaults based on the current view
+	vgl->mpp_northing = viewport->get_ympp();
+	vgl->mpp_easting = viewport->get_xmpp();
+	vik_coord_to_utm(viewport->get_center(), &(vgl->corner));
+
+	vgl->image = NULL;
+	vgl->pixbuf = NULL;
+	vgl->click_x = -1;
+	vgl->click_y = -1;
+	vgl->scaled = NULL;
+	vgl->scaled_width = 0;
+	vgl->scaled_height = 0;
+	vgl->ll_br.lat = 0.0;
+	vgl->ll_br.lon = 0.0;
+	vgl->alpha = 255;
 }

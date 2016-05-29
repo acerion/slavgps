@@ -101,8 +101,9 @@ bool a_jpg_load_file ( VikAggregateLayer *top, const char *filename, VikViewport
 	if ( vtl == NULL || ((Layer *) vtl->layer)->type != VIK_LAYER_TRW ) {
 		// Create layer if necessary
 
-		vtl = vik_layer_create ( VIK_LAYER_TRW, &vvp->port, false );
-		((VikTrwLayer *) vtl)->trw->rename(a_file_basename ( filename ) );
+		LayerTRW * layer = new LayerTRW(&vvp->port);
+		vtl = layer->vl;
+		layer->rename(a_file_basename(filename));
 		create_layer = true;
 	}
 

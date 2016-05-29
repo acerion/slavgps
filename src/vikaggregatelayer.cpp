@@ -36,7 +36,9 @@
 #include <assert.h>
 #include <glib/gi18n.h>
 
+using namespace SlavGPS;
 
+static VikAggregateLayer *vik_aggregate_layer_new();
 static VikAggregateLayer *aggregate_layer_unmarshall(uint8_t *data, int len, Viewport * viewport);
 
 VikLayerInterface vik_aggregate_layer_interface = {
@@ -55,7 +57,7 @@ VikLayerInterface vik_aggregate_layer_interface = {
 
 	VIK_MENU_ITEM_ALL,
 
-	(VikLayerFuncCreate)                  vik_aggregate_layer_create,
+	(VikLayerFuncCreate)                  NULL,
 	(VikLayerFuncUnmarshall)	      aggregate_layer_unmarshall,
 
 	(VikLayerFuncSetParam)                NULL,
@@ -85,6 +87,7 @@ GType vik_aggregate_layer_get_type()
 	return val_type;
 }
 
+#if 0
 VikAggregateLayer * vik_aggregate_layer_create(Viewport * viewport)
 {
 	VikAggregateLayer *rv = vik_aggregate_layer_new();
@@ -93,6 +96,7 @@ VikAggregateLayer * vik_aggregate_layer_create(Viewport * viewport)
 
 	return rv;
 }
+#endif
 
 void LayerAggregate::marshall(uint8_t **data, int *datalen)
 {
@@ -1044,10 +1048,35 @@ char const * LayerAggregate::tooltip()
 
 
 
+LayerAggregate::LayerAggregate()
+{
+	this->vl = NULL;
+	this->type = VIK_LAYER_AGGREGATE;
+	this->rename(vik_aggregate_layer_interface.name);
+	this->children = new std::list<Layer *>;
+	this->tracks_analysis_dialog = NULL;
+	strcpy(this->type_string, "AGGREGATE");
+}
+
+
+
+
+
 LayerAggregate::LayerAggregate(VikLayer * vl) : Layer(vl)
 {
 	this->type = VIK_LAYER_AGGREGATE;
 	this->children = new std::list<Layer *>;
 	this->tracks_analysis_dialog = NULL;
 	strcpy(this->type_string, "AGGREGATE");
+}
+
+
+
+
+
+LayerAggregate::LayerAggregate(Viewport * viewport) : LayerAggregate()
+{
+	VikAggregateLayer *val = (VikAggregateLayer *) g_object_new(VIK_AGGREGATE_LAYER_TYPE, NULL);
+	((VikLayer *) val)->layer = this;
+	this->vl = (VikLayer *) val;
 }

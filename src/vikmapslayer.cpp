@@ -226,7 +226,7 @@ VikLayerInterface vik_maps_layer_interface = {
 
 	VIK_MENU_ITEM_ALL,
 
-	(VikLayerFuncCreate)                  maps_layer_new,
+	(VikLayerFuncCreate)                  NULL,
 
 	(VikLayerFuncUnmarshall)	      maps_layer_unmarshall,
 
@@ -2549,6 +2549,7 @@ char * redownload_mode_message(int redownload_mode, int mapstoget, char * label)
 
 
 
+
 LayerMaps::LayerMaps(VikLayer * vl) : Layer(vl)
 {
 	this->type = VIK_LAYER_MAPS;
@@ -2588,3 +2589,72 @@ LayerMaps::LayerMaps(VikLayer * vl) : Layer(vl)
 	mbtiles = NULL;
 #endif
 }
+
+
+
+
+LayerMaps::LayerMaps()
+{
+	fprintf(stderr, "LayerMaps::LayerMaps()\n");
+
+	this->type = VIK_LAYER_MAPS;
+
+	strcpy(this->type_string, "MAPS");
+
+	map_index = 0;
+	cache_dir = NULL;
+	cache_layout = VIK_MAPS_CACHE_LAYOUT_VIKING;
+	alpha = 0;
+
+
+	mapzoom_id = 0;
+	xmapzoom = 0;
+	ymapzoom = 0;
+
+	autodownload = 0;
+	adl_only_missing = 0;
+
+
+	last_center = NULL;
+	last_xmpp = 0;
+	last_ympp = 0;
+
+
+	dl_tool_x = 0;
+	dl_tool_y = 0;
+
+	dl_right_click_menu = NULL;
+
+	memset(&redownload_ul, 0, sizeof (VikCoord));
+	memset(&redownload_br, 0, sizeof (VikCoord));
+
+	redownload_viewport = NULL;
+	filename = NULL;
+#ifdef HAVE_SQLITE3_H
+	mbtiles = NULL;
+#endif
+}
+
+LayerMaps::LayerMaps(Viewport * viewport) : LayerMaps()
+{
+	fprintf(stderr, "LayerMaps::LayerMaps(viewport)\n");
+
+	VikMapsLayer *vml = VIK_MAPS_LAYER (g_object_new(VIK_MAPS_LAYER_TYPE, NULL));
+
+	((VikLayer *) vml)->layer = this;
+	this->vl = (VikLayer *) vml;
+
+	LayerMaps * layer = (LayerMaps *) ((VikLayer *) vml)->layer;
+
+	vik_layer_set_defaults(VIK_LAYER(vml), viewport);
+
+	layer->dl_tool_x = layer->dl_tool_y = -1;
+	layer->last_center = NULL;
+	layer->last_xmpp = 0.0;
+	layer->last_ympp = 0.0;
+
+	layer->dl_right_click_menu = NULL;
+	layer->filename = NULL;
+
+}
+

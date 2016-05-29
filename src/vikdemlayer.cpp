@@ -62,7 +62,7 @@
 #define UNUSED_LINE_THICKNESS 3
 
 static VikDEMLayer *dem_layer_new(Viewport * viewport);
-static VikDEMLayer *dem_layer_create(Viewport * viewport);
+//static VikDEMLayer *dem_layer_create(Viewport * viewport);
 static VikDEMLayer *dem_layer_unmarshall(uint8_t *data, int len, Viewport * viewport);
 static bool dem_layer_set_param(VikDEMLayer *vdl, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
 static VikLayerParamData dem_layer_get_param(VikDEMLayer *vdl, uint16_t id, bool is_file_operation);
@@ -199,7 +199,7 @@ VikLayerInterface vik_dem_layer_interface = {
 
 	VIK_MENU_ITEM_ALL,
 
-	(VikLayerFuncCreate)                  dem_layer_create,
+	(VikLayerFuncCreate)                  NULL,
 
 	(VikLayerFuncUnmarshall)	      dem_layer_unmarshall,
 
@@ -933,6 +933,7 @@ void LayerDEM::free_()
 	a_dems_list_free(vdl->files);
 }
 
+#if 0
 VikDEMLayer *dem_layer_create(Viewport * viewport)
 {
 	VikDEMLayer *vdl = dem_layer_new(viewport);
@@ -952,6 +953,8 @@ VikDEMLayer *dem_layer_create(Viewport * viewport)
 
 	return vdl;
 }
+#endif
+
 /**************************************************************
  **** SOURCES & DOWNLOADING
  **************************************************************/
@@ -1393,9 +1396,67 @@ static bool dem_layer_download_click (VikDEMLayer *vdl, GdkEventButton *event, V
 }
 
 
+
+
+
+LayerDEM::LayerDEM()
+{
+	this->type = VIK_LAYER_DEM;
+	strcpy(this->type_string, "DEM");
+}
+
+
+
+
+
 LayerDEM::LayerDEM(VikLayer * vl) : Layer(vl)
 {
 	this->type = VIK_LAYER_DEM;
-
 	strcpy(this->type_string, "DEM");
+}
+
+
+
+
+
+LayerDEM::LayerDEM(Viewport * viewport) : LayerDEM()
+{
+	VikDEMLayer * vdl = NULL;
+	/* dem_layer_new(Viewport * viewport) */
+	{
+		vdl = VIK_DEM_LAYER (g_object_new (VIK_DEM_LAYER_TYPE, NULL));
+
+		vdl->files = NULL;
+
+		vdl->gcs = (GdkGC **) malloc(sizeof(GdkGC *) * DEM_N_HEIGHT_COLORS);
+		vdl->gcsgradient = (GdkGC **) malloc(sizeof(GdkGC *) * DEM_N_GRADIENT_COLORS);
+		/* make new gcs only if we need it (copy layer -> use old) */
+
+		// Ensure the base GC is available so the default colour can be applied
+		if (viewport) {
+			vdl->gcs[0] = viewport->new_gc("#0000FF", 1);
+		}
+
+		((VikLayer *) vdl)->layer = this;
+		this->vl = (VikLayer *) vdl;
+
+		vik_layer_set_defaults (VIK_LAYER(vdl), viewport);
+
+	}
+
+	/* dem_layer_create() */
+	{
+		if (viewport) {
+			/* TODO: share GCS between layers */
+			for (int i = 0; i < DEM_N_HEIGHT_COLORS; i++) {
+				if (i > 0) {
+					vdl->gcs[i] = viewport->new_gc(dem_height_colors[i], UNUSED_LINE_THICKNESS);
+				}
+			}
+
+			for (int i = 0; i < DEM_N_GRADIENT_COLORS; i++) {
+				vdl->gcsgradient[i] = viewport->new_gc(dem_gradient_colors[i], UNUSED_LINE_THICKNESS);
+			}
+		}
+	}
 }

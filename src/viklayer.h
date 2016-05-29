@@ -227,6 +227,7 @@ namespace SlavGPS {
 	class Layer {
 	public:
 
+		Layer();
 		Layer(VikLayer * vl);
 		~Layer() {};
 
@@ -318,7 +319,12 @@ namespace SlavGPS {
 
 	};
 
+	Layer * vik_layer_new(VikLayerTypeEnum type, Viewport * viewport, bool interactive);
 
 }
+
+
+
+
 
 #endif
