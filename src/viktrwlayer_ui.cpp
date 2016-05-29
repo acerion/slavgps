@@ -134,11 +134,13 @@ void LayerTRW::add_menu_items(GtkMenu * menu, void * vlp)
 {
 	VikTrwLayer * vtl = (VikTrwLayer *) this->vl;
 
-	static menu_array_layer pass_along;
+	static trw_menu_layer_t pass_along_data;
+	pass_along_data.layer = this;
+	pass_along_data.panel = (LayersPanel *) (((VikLayersPanel *) vlp)->panel_ref);
+	static trw_menu_layer_t * pass_along = &pass_along_data;
+
 	GtkWidget *item;
 	GtkWidget *export_submenu;
-	pass_along[MA_VTL] = vtl;
-	pass_along[MA_VLP] = vlp;
 
 	item = gtk_menu_item_new();
 	gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
@@ -470,23 +472,27 @@ void LayerTRW::add_menu_items(GtkMenu * menu, void * vlp)
 
 /* vlp can be NULL if necessary - i.e. right-click from a tool */
 /* viewpoint is now available instead */
-bool LayerTRW::sublayer_add_menu_items(GtkMenu * menu, void * vlp, int subtype, void * sublayer, GtkTreeIter * iter, Viewport * viewport)
+bool LayerTRW::sublayer_add_menu_items(GtkMenu * menu, void * panel, int subtype, void * sublayer, GtkTreeIter * iter, Viewport * viewport)
 {
   VikTrwLayer * l = (VikTrwLayer *) this->vl;
 
-  static menu_array_sublayer pass_along;
+
   sg_uid_t uid = (sg_uid_t) ((long) sublayer);
   GtkWidget *item;
   bool rv = false;
 
-  pass_along[MA_VTL]         = l;
-  pass_along[MA_VLP]         = vlp;
-  pass_along[MA_SUBTYPE]     = KINT_TO_POINTER (subtype);
-  pass_along[MA_SUBLAYER_ID] = sublayer;
-  pass_along[MA_CONFIRM]     = KINT_TO_POINTER (1); // Confirm delete request
-  pass_along[MA_VVP]         = (VikViewport *) viewport->vvp;
-  pass_along[MA_TV_ITER]     = iter;
-  pass_along[MA_MISC]        = NULL; // For misc purposes - maybe track or waypoint
+
+  static trw_menu_sublayer_t pass_along_data;
+  static trw_menu_sublayer_t * pass_along = &pass_along_data;
+
+  pass_along->layer       = this;
+  pass_along->panel       = (LayersPanel *) panel;
+  pass_along->subtype     = subtype;
+  pass_along->sublayer_id = uid;
+  pass_along->confirm     = true; // Confirm delete request
+  pass_along->viewport    = viewport;
+  pass_along->tv_iter     = iter;
+  pass_along->misc        = NULL; // For misc purposes - maybe track or waypoint
 
   if ( subtype == VIK_TRW_LAYER_SUBLAYER_WAYPOINT || subtype == VIK_TRW_LAYER_SUBLAYER_TRACK || subtype == VIK_TRW_LAYER_SUBLAYER_ROUTE )
   {
@@ -531,7 +537,7 @@ bool LayerTRW::sublayer_add_menu_items(GtkMenu * menu, void * vlp, int subtype, 
       gtk_widget_show ( item );
 
       /* could be a right-click using the tool */
-      if ( vlp != NULL ) {
+      if ( panel != NULL ) {
         item = gtk_image_menu_item_new_with_mnemonic ( _("_Goto") );
         gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_JUMP_TO, GTK_ICON_SIZE_MENU) );
         g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_goto_waypoint), pass_along );
@@ -561,7 +567,7 @@ bool LayerTRW::sublayer_add_menu_items(GtkMenu * menu, void * vlp, int subtype, 
       if ( wp && wp->image )
       {
         // Set up image paramater
-        pass_along[MA_MISC] = wp->image;
+        pass_along->misc = wp->image;
 
         item = gtk_image_menu_item_new_with_mnemonic ( _("_Show Picture...") );
 	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock ("vik-icon-Show Picture", GTK_ICON_SIZE_MENU) ); // Own icon - see stock_icons in vikwindow.c
@@ -621,7 +627,7 @@ bool LayerTRW::sublayer_add_menu_items(GtkMenu * menu, void * vlp, int subtype, 
     gtk_widget_show ( item );
   }
 
-  if ( vlp && (subtype == VIK_TRW_LAYER_SUBLAYER_WAYPOINTS || subtype == VIK_TRW_LAYER_SUBLAYER_WAYPOINT) )
+  if ( panel && (subtype == VIK_TRW_LAYER_SUBLAYER_WAYPOINTS || subtype == VIK_TRW_LAYER_SUBLAYER_WAYPOINT) )
   {
     rv = true;
     item = gtk_image_menu_item_new_with_mnemonic ( _("_New Waypoint...") );
@@ -1170,7 +1176,7 @@ bool LayerTRW::sublayer_add_menu_items(GtkMenu * menu, void * vlp, int subtype, 
     }
 
     /* ATM This function is only available via the layers panel, due to the method in finding out the maps in use */
-    if ( vlp ) {
+    if ( panel ) {
       if ( subtype == VIK_TRW_LAYER_SUBLAYER_TRACK )
         item = gtk_image_menu_item_new_with_mnemonic ( _("Down_load Maps Along Track...") );
       else
@@ -1280,7 +1286,7 @@ bool LayerTRW::sublayer_add_menu_items(GtkMenu * menu, void * vlp, int subtype, 
     item = gtk_image_menu_item_new_with_mnemonic ( _("Upload to _OSM...") );
     // Convert internal pointer into track
     sg_uid_t uid = (sg_uid_t) ((long) sublayer);
-    pass_along[MA_MISC] = l->trw->tracks.at(uid);
+    pass_along->misc = l->trw->tracks.at(uid);
     gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_GO_UP, GTK_ICON_SIZE_MENU) );
     g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_osm_traces_upload_track_cb), pass_along );
     gtk_menu_shell_append ( GTK_MENU_SHELL(upload_submenu), item );
@@ -1296,12 +1302,11 @@ bool LayerTRW::sublayer_add_menu_items(GtkMenu * menu, void * vlp, int subtype, 
     gtk_widget_show ( item );
 #endif
 
-    /* ATM This function is only available via the layers panel, due to needing a vlp */
-    if ( vlp ) {
+    /* ATM This function is only available via the layers panel, due to needing a panel */
+    if ( panel ) {
       sg_uid_t uid = (sg_uid_t) ((long) sublayer);
-      VikLayersPanel * vlp_ = VIK_LAYERS_PANEL(vlp);
-      item = a_acquire_track_menu ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(l)), (VikLayersPanel *) vlp,
-                                    (VikViewport *) vlp_->panel_ref->get_viewport()->vvp,
+      item = a_acquire_track_menu ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(l)), (VikLayersPanel *) ((LayersPanel *) panel)->gob,
+                                    (VikViewport *) ((LayersPanel *) panel)->get_viewport()->vvp,
                                     l->trw->tracks.at(uid));
       if ( item ) {
         gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
@@ -1319,7 +1324,7 @@ bool LayerTRW::sublayer_add_menu_items(GtkMenu * menu, void * vlp, int subtype, 
 
   if ( subtype == VIK_TRW_LAYER_SUBLAYER_TRACK || subtype == VIK_TRW_LAYER_SUBLAYER_ROUTE ) {
     // Only show on viewport popmenu when a trackpoint is selected
-    if ( ! vlp && l->trw->current_tpl ) {
+    if ( ! panel && l->trw->current_tpl ) {
       // Add separator
       item = gtk_menu_item_new ();
       gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );

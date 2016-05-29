@@ -551,10 +551,10 @@ void vik_layer_add_menu_items ( VikLayer *l, GtkMenu *menu, void * vlp )
 	layer->add_menu_items(menu, vlp);
 }
 
-bool vik_layer_sublayer_add_menu_items ( VikLayer *l, GtkMenu *menu, void * vlp, int subtype, void * sublayer, GtkTreeIter *iter, Viewport * viewport)
+bool vik_layer_sublayer_add_menu_items ( VikLayer *l, GtkMenu *menu, void * panel, int subtype, void * sublayer, GtkTreeIter *iter, Viewport * viewport)
 {
 	Layer * layer = (Layer *) l->layer;
-	return layer->sublayer_add_menu_items(menu, vlp, subtype, sublayer, iter, viewport);
+	return layer->sublayer_add_menu_items(menu, panel, subtype, sublayer, iter, viewport);
 }
 
 
@@ -868,7 +868,7 @@ void Layer::add_menu_items(GtkMenu * menu, void * vlp)
 	return;
 }
 
-bool Layer::sublayer_add_menu_items(GtkMenu * menu, void * vlp, int subtype, void * sublayer, GtkTreeIter * iter, Viewport * viewport)
+bool Layer::sublayer_add_menu_items(GtkMenu * menu, void * panel, int subtype, void * sublayer, GtkTreeIter * iter, Viewport * viewport)
 {
 	return false;
 }

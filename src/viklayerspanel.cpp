@@ -448,7 +448,7 @@ void LayersPanel::popup(GtkTreeIter *iter, int mouse_button)
 		} else {
 			menu = GTK_MENU (gtk_menu_new());
 			Layer * parent = (Layer *) this->vt->tree->get_parent(iter);
-			if (! vik_layer_sublayer_add_menu_items(parent->vl, menu, this->gob, this->vt->tree->get_data(iter), this->vt->tree->get_pointer(iter), iter, this->viewport)) { // kamil
+			if (! vik_layer_sublayer_add_menu_items(parent->vl, menu, this, this->vt->tree->get_data(iter), this->vt->tree->get_pointer(iter), iter, this->viewport)) { // kamil
 				gtk_widget_destroy (GTK_WIDGET(menu));
 				return;
 			}
