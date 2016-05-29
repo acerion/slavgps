@@ -100,6 +100,7 @@ libviking_a_SOURCES = \
 	viktrwlayer_analysis.cpp viktrwlayer_analysis.h \
 	viktrwlayer_tracklist.cpp viktrwlayer_tracklist.h \
 	viktrwlayer_waypointlist.cpp viktrwlayer_waypointlist.h \
+	viktrwlayer_ui.cpp \
 	vikrouting.cpp vikrouting.h \
 	vikroutingengine.cpp vikroutingengine.h \
 	vikroutingwebengine.cpp vikroutingwebengine.h \

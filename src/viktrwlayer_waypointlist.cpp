@@ -205,7 +205,7 @@ static void trw_layer_waypoint_view ( menu_array_values values )
 	vik_layer_emit_update ( VIK_LAYER(vtl) );
 }
 
-static void trw_layer_show_picture ( menu_array_values values )
+static void trw_layer_show_picture_wp ( menu_array_values values )
 {
 	Waypoint * wp = (Waypoint *) (values[MA_WPT]);
 #ifdef WINDOWS
@@ -358,7 +358,7 @@ static bool add_menu_items ( GtkMenu *menu, VikTrwLayer *vtl, Waypoint * wp, voi
 
 	item = gtk_image_menu_item_new_with_mnemonic ( _("_Show Picture...") );
 	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock ("vik-icon-Show Picture", GTK_ICON_SIZE_MENU) ); // Own icon - see stock_icons in vikwindow.c
-	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_show_picture), values );
+	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_show_picture_wp), values );
 	gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
 	gtk_widget_show ( item );
 	gtk_widget_set_sensitive ( item, KPOINTER_TO_INT(wp->image) );

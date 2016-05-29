@@ -113,8 +113,6 @@ using namespace SlavGPS;
 
 
 
-
-
 typedef enum {
   MA_VTL = 0,
   MA_VLP,
@@ -127,12 +125,9 @@ typedef enum {
   MA_LAST,
 } menu_array_index;
 
-typedef void * menu_array_layer[2];
-typedef void * menu_array_sublayer[MA_LAST];
 
-static void trw_layer_delete_item ( menu_array_sublayer values );
-static void trw_layer_copy_item_cb ( menu_array_sublayer values );
-static void trw_layer_cut_item_cb ( menu_array_sublayer values );
+
+
 
 static void trw_layer_find_maxmin (VikTrwLayer *vtl, struct LatLon maxmin[2]);
 
@@ -141,82 +136,6 @@ static void trw_layer_free_track_gcs ( VikTrwLayer *vtl );
 
 
 static void goto_coord ( void ** vlp, void * vvp, void * vl, const VikCoord *coord );
-static void trw_layer_goto_track_startpoint ( menu_array_sublayer values );
-static void trw_layer_goto_track_endpoint ( menu_array_sublayer values );
-static void trw_layer_goto_track_max_speed ( menu_array_sublayer values );
-static void trw_layer_goto_track_max_alt ( menu_array_sublayer values );
-static void trw_layer_goto_track_min_alt ( menu_array_sublayer values );
-static void trw_layer_goto_track_center ( menu_array_sublayer values );
-static void trw_layer_merge_by_segment ( menu_array_sublayer values );
-static void trw_layer_merge_by_timestamp ( menu_array_sublayer values );
-static void trw_layer_merge_with_other ( menu_array_sublayer values );
-static void trw_layer_append_track ( menu_array_sublayer values );
-static void trw_layer_split_by_timestamp ( menu_array_sublayer values );
-static void trw_layer_split_by_n_points ( menu_array_sublayer values );
-static void trw_layer_split_at_trackpoint ( menu_array_sublayer values );
-static void trw_layer_split_segments ( menu_array_sublayer values );
-static void trw_layer_delete_point_selected ( menu_array_sublayer values );
-static void trw_layer_delete_points_same_position ( menu_array_sublayer values );
-static void trw_layer_delete_points_same_time ( menu_array_sublayer values );
-static void trw_layer_reverse ( menu_array_sublayer values );
-static void trw_layer_download_map_along_track_cb ( menu_array_sublayer values );
-static void trw_layer_edit_trackpoint ( menu_array_sublayer values );
-static void trw_layer_show_picture ( menu_array_sublayer values );
-static void trw_layer_gps_upload_any ( menu_array_sublayer values );
-
-static void trw_layer_centerize ( menu_array_layer values );
-static void trw_layer_auto_view ( menu_array_layer values );
-static void trw_layer_goto_wp ( menu_array_layer values );
-static void trw_layer_new_wp ( menu_array_layer values );
-static void trw_layer_new_track ( menu_array_layer values );
-static void trw_layer_new_route ( menu_array_layer values );
-static void trw_layer_finish_track ( menu_array_layer values );
-static void trw_layer_auto_waypoints_view ( menu_array_layer values );
-static void trw_layer_auto_tracks_view ( menu_array_layer values );
-static void trw_layer_delete_all_tracks ( menu_array_layer values );
-static void trw_layer_delete_tracks_from_selection ( menu_array_layer values );
-static void trw_layer_delete_all_waypoints ( menu_array_layer values );
-static void trw_layer_delete_waypoints_from_selection ( menu_array_layer values );
-static void trw_layer_new_wikipedia_wp_viewport ( menu_array_layer values );
-static void trw_layer_new_wikipedia_wp_layer ( menu_array_layer values );
-#ifdef VIK_CONFIG_GEOTAG
-static void trw_layer_geotagging_waypoint_mtime_keep ( menu_array_sublayer values );
-static void trw_layer_geotagging_waypoint_mtime_update ( menu_array_sublayer values );
-static void trw_layer_geotagging_track ( menu_array_sublayer values );
-static void trw_layer_geotagging ( menu_array_layer values );
-#endif
-static void trw_layer_acquire_gps_cb ( menu_array_layer values );
-static void trw_layer_acquire_routing_cb ( menu_array_layer values );
-static void trw_layer_acquire_url_cb ( menu_array_layer values );
-#ifdef VIK_CONFIG_OPENSTREETMAP
-static void trw_layer_acquire_osm_cb ( menu_array_layer values );
-static void trw_layer_acquire_osm_my_traces_cb ( menu_array_layer values );
-#endif
-#ifdef VIK_CONFIG_GEOCACHES
-static void trw_layer_acquire_geocache_cb ( menu_array_layer values );
-#endif
-#ifdef VIK_CONFIG_GEOTAG
-static void trw_layer_acquire_geotagged_cb ( menu_array_layer values );
-#endif
-static void trw_layer_acquire_file_cb ( menu_array_layer values );
-static void trw_layer_gps_upload ( menu_array_layer values );
-
-static void trw_layer_track_list_dialog_single ( menu_array_sublayer values );
-static void trw_layer_track_list_dialog ( menu_array_layer values );
-static void trw_layer_waypoint_list_dialog ( menu_array_layer values );
-
-// Specific route versions:
-//  Most track handling functions can handle operating on the route list
-//  However these ones are easier in separate functions
-static void trw_layer_auto_routes_view ( menu_array_layer values );
-static void trw_layer_delete_all_routes ( menu_array_layer values );
-static void trw_layer_delete_routes_from_selection ( menu_array_layer values );
-
-/* pop-up items */
-static void trw_layer_properties_item ( void * pass_along[7] ); //TODO??
-static void trw_layer_goto_waypoint ( menu_array_sublayer values );
-static void trw_layer_waypoint_gc_webpage ( menu_array_sublayer values );
-static void trw_layer_waypoint_webpage ( menu_array_sublayer values );
 
 
 
@@ -573,14 +492,14 @@ VikLayerInterface vik_trw_layer_interface = {
 
 
 
-static bool have_diary_program = false;
-static char *diary_program = NULL;
+bool have_diary_program = false;
+char *diary_program = NULL;
 #define VIK_SETTINGS_EXTERNAL_DIARY_PROGRAM "external_diary_program"
 
-static bool have_geojson_export = false;
+bool have_geojson_export = false;
 
-static bool have_astro_program = false;
-static char *astro_program = NULL;
+bool have_astro_program = false;
+char *astro_program = NULL;
 #define VIK_SETTINGS_EXTERNAL_ASTRO_PROGRAM "external_astro_program"
 
 // NB Only performed once per program run
@@ -789,7 +708,7 @@ void LayerTRW::cut_item(int subtype, void * sublayer)
 	trw_layer_cut_item_cb(values);
 }
 
-static void trw_layer_copy_item_cb ( menu_array_sublayer values)
+void trw_layer_copy_item_cb ( menu_array_sublayer values)
 {
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
   int subtype = KPOINTER_TO_INT (values[MA_SUBTYPE]);
@@ -830,14 +749,14 @@ static void trw_layer_copy_item_cb ( menu_array_sublayer values)
   }
 }
 
-static void trw_layer_cut_item_cb ( menu_array_sublayer values)
+void trw_layer_cut_item_cb ( menu_array_sublayer values)
 {
   trw_layer_copy_item_cb(values);
   values[MA_CONFIRM] = KINT_TO_POINTER (0); // Never need to confirm automatic delete
   trw_layer_delete_item(values);
 }
 
-static void trw_layer_paste_item_cb ( menu_array_sublayer values)
+void trw_layer_paste_item_cb ( menu_array_sublayer values)
 {
   // Slightly cheating method, routing via the panels capability
   a_clipboard_paste (VIK_LAYERS_PANEL(values[MA_VLP]));
@@ -2504,8 +2423,7 @@ bool LayerTRW::find_center(VikCoord * dest)
 
 
 
-
-static void trw_layer_centerize ( menu_array_layer values )
+void trw_layer_centerize ( menu_array_layer values )
 {
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
   VikCoord coord;
@@ -2544,8 +2462,7 @@ bool LayerTRW::auto_set_view(Viewport * viewport)
 
 
 
-
-static void trw_layer_auto_view ( menu_array_layer values )
+void trw_layer_auto_view ( menu_array_layer values )
 {
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
   VikLayersPanel *vlp = VIK_LAYERS_PANEL(values[MA_VLP]);
@@ -2556,7 +2473,7 @@ static void trw_layer_auto_view ( menu_array_layer values )
     a_dialog_info_msg ( VIK_GTK_WINDOW_FROM_LAYER(vtl), _("This layer has no waypoints or trackpoints.") );
 }
 
-static void trw_layer_export_gpspoint ( menu_array_layer values )
+void trw_layer_export_gpspoint ( menu_array_layer values )
 {
   LayerTRW * layer = (LayerTRW *) ((VikLayer *) values[MA_VTL]);
   char *auto_save_name = append_file_ext(layer->get_name(), FILE_TYPE_GPSPOINT );
@@ -2566,7 +2483,7 @@ static void trw_layer_export_gpspoint ( menu_array_layer values )
   free( auto_save_name );
 }
 
-static void trw_layer_export_gpsmapper ( menu_array_layer values )
+void trw_layer_export_gpsmapper ( menu_array_layer values )
 {
   LayerTRW * layer = (LayerTRW *) ((VikLayer *) values[MA_VTL]);
   char *auto_save_name = append_file_ext(layer->get_name(), FILE_TYPE_GPSMAPPER );
@@ -2576,7 +2493,7 @@ static void trw_layer_export_gpsmapper ( menu_array_layer values )
   free( auto_save_name );
 }
 
-static void trw_layer_export_gpx ( menu_array_layer values )
+void trw_layer_export_gpx ( menu_array_layer values )
 {
   LayerTRW * layer = (LayerTRW *) ((VikLayer *) values[MA_VTL]);
   char *auto_save_name = append_file_ext(layer->get_name(), FILE_TYPE_GPX );
@@ -2586,7 +2503,7 @@ static void trw_layer_export_gpx ( menu_array_layer values )
   free( auto_save_name );
 }
 
-static void trw_layer_export_kml ( menu_array_layer values )
+void trw_layer_export_kml ( menu_array_layer values )
 {
   LayerTRW * layer = (LayerTRW *) ((VikLayer *) values[MA_VTL]);
   char *auto_save_name = append_file_ext(layer->get_name(), FILE_TYPE_KML );
@@ -2596,7 +2513,7 @@ static void trw_layer_export_kml ( menu_array_layer values )
   free( auto_save_name );
 }
 
-static void trw_layer_export_geojson ( menu_array_layer values )
+void trw_layer_export_geojson ( menu_array_layer values )
 {
   LayerTRW * layer = (LayerTRW *) ((VikLayer *) values[MA_VTL]);
   char *auto_save_name = append_file_ext (layer->get_name(), FILE_TYPE_GEOJSON );
@@ -2606,24 +2523,24 @@ static void trw_layer_export_geojson ( menu_array_layer values )
   free( auto_save_name );
 }
 
-static void trw_layer_export_babel ( void * layer_and_vlp[2] )
+void trw_layer_export_babel ( void * layer_and_vlp[2] )
 {
   LayerTRW * layer = (LayerTRW *) ((VikLayer *) layer_and_vlp[0]);
   const char *auto_save_name = layer->get_name();
   vik_trw_layer_export_gpsbabel ( VIK_TRW_LAYER (layer_and_vlp[0]), _("Export Layer"), auto_save_name );
 }
 
-static void trw_layer_export_external_gpx_1 ( menu_array_layer values )
+void trw_layer_export_external_gpx_1 ( menu_array_layer values )
 {
   vik_trw_layer_export_external_gpx ( VIK_TRW_LAYER (values[MA_VTL]), a_vik_get_external_gpx_program_1() );
 }
 
-static void trw_layer_export_external_gpx_2 ( menu_array_layer values )
+void trw_layer_export_external_gpx_2 ( menu_array_layer values )
 {
   vik_trw_layer_export_external_gpx ( VIK_TRW_LAYER (values[MA_VTL]), a_vik_get_external_gpx_program_2() );
 }
 
-static void trw_layer_export_gpx_track ( menu_array_sublayer values )
+void trw_layer_export_gpx_track ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
   Track * trk = trw_layer_get_track_helper(values, vtl);
@@ -2646,8 +2563,7 @@ static void trw_layer_export_gpx_track ( menu_array_sublayer values )
 
 
 
-
-static void trw_layer_goto_wp ( menu_array_layer values )
+void trw_layer_goto_wp ( menu_array_layer values )
 {
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
   VikLayersPanel *vlp = VIK_LAYERS_PANEL(values[MA_VLP]);
@@ -2732,8 +2648,7 @@ bool LayerTRW::new_waypoint(GtkWindow * w, const VikCoord * def_coord)
 
 
 
-
-static void trw_layer_new_wikipedia_wp_viewport ( menu_array_layer values )
+void trw_layer_new_wikipedia_wp_viewport ( menu_array_layer values )
 {
   struct LatLon maxmin[2] = { {0.0,0.0}, {0.0,0.0} };
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
@@ -2748,7 +2663,7 @@ static void trw_layer_new_wikipedia_wp_viewport ( menu_array_layer values )
   vik_layers_panel_emit_update_cb( vlp->panel_ref );
 }
 
-static void trw_layer_new_wikipedia_wp_layer ( menu_array_layer values )
+void trw_layer_new_wikipedia_wp_layer ( menu_array_layer values )
 {
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
   VikLayersPanel *vlp = VIK_LAYERS_PANEL(values[MA_VLP]);
@@ -2761,7 +2676,7 @@ static void trw_layer_new_wikipedia_wp_layer ( menu_array_layer values )
 }
 
 #ifdef VIK_CONFIG_GEOTAG
-static void trw_layer_geotagging_waypoint_mtime_keep ( menu_array_sublayer values )
+void trw_layer_geotagging_waypoint_mtime_keep ( menu_array_sublayer values )
 {
   sg_uid_t wp_uid = (sg_uid_t) ((long) values[MA_SUBLAYER_ID]);
   Waypoint * wp = VIK_TRW_LAYER(values[MA_VTL])->trw->waypoints.at(wp_uid);
@@ -2770,7 +2685,7 @@ static void trw_layer_geotagging_waypoint_mtime_keep ( menu_array_sublayer value
     a_geotag_write_exif_gps ( wp->image, wp->coord, wp->altitude, true );
 }
 
-static void trw_layer_geotagging_waypoint_mtime_update ( menu_array_sublayer values )
+void trw_layer_geotagging_waypoint_mtime_update ( menu_array_sublayer values )
 {
   sg_uid_t wp_uid = (sg_uid_t) ((long) values[MA_SUBLAYER_ID]);
   Waypoint * wp = VIK_TRW_LAYER(values[MA_VTL])->trw->waypoints.at(wp_uid);
@@ -2782,7 +2697,7 @@ static void trw_layer_geotagging_waypoint_mtime_update ( menu_array_sublayer val
 /*
  * Use code in separate file for this feature as reasonably complex
  */
-static void trw_layer_geotagging_track ( menu_array_sublayer values )
+void trw_layer_geotagging_track ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
   sg_uid_t uid = (sg_uid_t) ((long) values[MA_SUBLAYER_ID]);
@@ -2796,7 +2711,7 @@ static void trw_layer_geotagging_track ( menu_array_sublayer values )
                             trk);
 }
 
-static void trw_layer_geotagging_waypoint ( menu_array_sublayer values )
+void trw_layer_geotagging_waypoint ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
   sg_uid_t wp_uid = (sg_uid_t) ((long) values[MA_SUBLAYER_ID]);
@@ -2808,7 +2723,7 @@ static void trw_layer_geotagging_waypoint ( menu_array_sublayer values )
                             NULL );
 }
 
-static void trw_layer_geotagging ( menu_array_layer values )
+void trw_layer_geotagging ( menu_array_layer values )
 {
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
   // Unset so can be reverified later if necessary
@@ -2839,7 +2754,7 @@ static void trw_layer_acquire ( menu_array_layer values, VikDataSourceInterface 
 /*
  * Acquire into this TRW Layer straight from GPS Device
  */
-static void trw_layer_acquire_gps_cb ( menu_array_layer values )
+void trw_layer_acquire_gps_cb ( menu_array_layer values )
 {
   trw_layer_acquire ( values, &vik_datasource_gps_interface );
 }
@@ -2847,7 +2762,7 @@ static void trw_layer_acquire_gps_cb ( menu_array_layer values )
 /*
  * Acquire into this TRW Layer from Directions
  */
-static void trw_layer_acquire_routing_cb ( menu_array_layer values )
+void trw_layer_acquire_routing_cb ( menu_array_layer values )
 {
   trw_layer_acquire ( values, &vik_datasource_routing_interface );
 }
@@ -2855,7 +2770,7 @@ static void trw_layer_acquire_routing_cb ( menu_array_layer values )
 /*
  * Acquire into this TRW Layer from an entered URL
  */
-static void trw_layer_acquire_url_cb ( menu_array_layer values )
+void trw_layer_acquire_url_cb ( menu_array_layer values )
 {
   trw_layer_acquire ( values, &vik_datasource_url_interface );
 }
@@ -2864,7 +2779,7 @@ static void trw_layer_acquire_url_cb ( menu_array_layer values )
 /*
  * Acquire into this TRW Layer from OSM
  */
-static void trw_layer_acquire_osm_cb ( menu_array_layer values )
+void trw_layer_acquire_osm_cb ( menu_array_layer values )
 {
   trw_layer_acquire ( values, &vik_datasource_osm_interface );
 }
@@ -2872,7 +2787,7 @@ static void trw_layer_acquire_osm_cb ( menu_array_layer values )
 /**
  * Acquire into this TRW Layer from OSM for 'My' Traces
  */
-static void trw_layer_acquire_osm_my_traces_cb ( menu_array_layer values )
+void trw_layer_acquire_osm_my_traces_cb ( menu_array_layer values )
 {
   trw_layer_acquire ( values, &vik_datasource_osm_my_traces_interface );
 }
@@ -2882,7 +2797,7 @@ static void trw_layer_acquire_osm_my_traces_cb ( menu_array_layer values )
 /*
  * Acquire into this TRW Layer from Geocaching.com
  */
-static void trw_layer_acquire_geocache_cb ( menu_array_layer values )
+void trw_layer_acquire_geocache_cb ( menu_array_layer values )
 {
   trw_layer_acquire ( values, &vik_datasource_gc_interface );
 }
@@ -2892,7 +2807,7 @@ static void trw_layer_acquire_geocache_cb ( menu_array_layer values )
 /*
  * Acquire into this TRW Layer from images
  */
-static void trw_layer_acquire_geotagged_cb ( menu_array_layer values )
+void trw_layer_acquire_geotagged_cb ( menu_array_layer values )
 {
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
 
@@ -2907,12 +2822,12 @@ static void trw_layer_acquire_geotagged_cb ( menu_array_layer values )
 /*
  * Acquire into this TRW Layer from any GPS Babel supported file
  */
-static void trw_layer_acquire_file_cb ( menu_array_layer values )
+void trw_layer_acquire_file_cb ( menu_array_layer values )
 {
   trw_layer_acquire ( values, &vik_datasource_file_interface );
 }
 
-static void trw_layer_gps_upload ( menu_array_layer values )
+void trw_layer_gps_upload ( menu_array_layer values )
 {
   menu_array_sublayer data;
   int ii;
@@ -2927,7 +2842,7 @@ static void trw_layer_gps_upload ( menu_array_layer values )
 /**
  * If pass_along[3] is defined that this will upload just that track
  */
-static void trw_layer_gps_upload_any ( menu_array_sublayer values )
+void trw_layer_gps_upload_any ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
   VikLayersPanel *vlp = VIK_LAYERS_PANEL(values[MA_VLP]);
@@ -3021,7 +2936,7 @@ static void trw_layer_gps_upload_any ( menu_array_sublayer values )
                  turn_off );
 }
 
-static void trw_layer_new_wp ( menu_array_layer values )
+void trw_layer_new_wp ( menu_array_layer values )
 {
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
   VikLayersPanel *vlp = VIK_LAYERS_PANEL(values[MA_VLP]);
@@ -3060,8 +2975,7 @@ void LayerTRW::new_track_create_common(char * name)
 
 
 
-
-static void trw_layer_new_track ( menu_array_layer values )
+void trw_layer_new_track ( menu_array_layer values )
 {
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
 
@@ -3095,8 +3009,7 @@ void LayerTRW::new_route_create_common(char * name)
 
 
 
-
-static void trw_layer_new_route ( menu_array_layer values )
+void trw_layer_new_route ( menu_array_layer values )
 {
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
 
@@ -3108,7 +3021,7 @@ static void trw_layer_new_route ( menu_array_layer values )
   }
 }
 
-static void trw_layer_auto_routes_view ( menu_array_layer values )
+void trw_layer_auto_routes_view ( menu_array_layer values )
 {
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
   VikLayersPanel *vlp = VIK_LAYERS_PANEL(values[MA_VLP]);
@@ -3122,7 +3035,7 @@ static void trw_layer_auto_routes_view ( menu_array_layer values )
 }
 
 
-static void trw_layer_finish_track ( menu_array_layer values )
+void trw_layer_finish_track ( menu_array_layer values )
 {
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
   vtl->current_track = NULL;
@@ -3130,7 +3043,7 @@ static void trw_layer_finish_track ( menu_array_layer values )
   vik_layer_emit_update ( VIK_LAYER(vtl) );
 }
 
-static void trw_layer_auto_tracks_view ( menu_array_layer values )
+void trw_layer_auto_tracks_view ( menu_array_layer values )
 {
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
   VikLayersPanel *vlp = VIK_LAYERS_PANEL(values[MA_VLP]);
@@ -3146,8 +3059,7 @@ static void trw_layer_auto_tracks_view ( menu_array_layer values )
 
 
 
-
-static void trw_layer_auto_waypoints_view ( menu_array_layer values )
+void trw_layer_auto_waypoints_view ( menu_array_layer values )
 {
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
   VikLayersPanel *vlp = VIK_LAYERS_PANEL(values[MA_VLP]);
@@ -3184,7 +3096,7 @@ void trw_layer_osm_traces_upload_track_cb ( menu_array_sublayer values )
   }
 }
 
-static GtkWidget* create_external_submenu ( GtkMenu *menu )
+GtkWidget* create_external_submenu ( GtkMenu *menu )
 {
   GtkWidget *external_submenu = gtk_menu_new ();
   GtkWidget *item = gtk_image_menu_item_new_with_mnemonic ( _("Externa_l") );
@@ -3193,341 +3105,6 @@ static GtkWidget* create_external_submenu ( GtkMenu *menu )
   gtk_widget_show ( item );
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (item), external_submenu );
   return external_submenu;
-}
-
-void LayerTRW::add_menu_items(GtkMenu * menu, void * vlp)
-{
-	VikTrwLayer * vtl = (VikTrwLayer *) this->vl;
-
-	static menu_array_layer pass_along;
-	GtkWidget *item;
-	GtkWidget *export_submenu;
-	pass_along[MA_VTL] = vtl;
-	pass_along[MA_VLP] = vlp;
-
-	item = gtk_menu_item_new();
-	gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
-	gtk_widget_show ( item );
-
-	if (vtl->current_track) {
-		if (vtl->current_track->is_route) {
-			item = gtk_menu_item_new_with_mnemonic(_("_Finish Route"));
-		} else {
-			item = gtk_menu_item_new_with_mnemonic(_("_Finish Track"));
-		}
-		g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(trw_layer_finish_track), pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-		gtk_widget_show(item);
-
-		// Add separator
-		item = gtk_menu_item_new();
-		gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-		gtk_widget_show(item);
-	}
-
-	/* Now with icons */
-	item = gtk_image_menu_item_new_with_mnemonic ( _("_View Layer") );
-	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_ZOOM_FIT, GTK_ICON_SIZE_MENU) );
-	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_auto_view), pass_along );
-	gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-	gtk_widget_show ( item );
-
-	GtkWidget *view_submenu = gtk_menu_new();
-	item = gtk_image_menu_item_new_with_mnemonic ( _("V_iew") );
-	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_FIND, GTK_ICON_SIZE_MENU) );
-	gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-	gtk_widget_show ( item );
-	gtk_menu_item_set_submenu (GTK_MENU_ITEM (item), view_submenu );
-
-	item = gtk_menu_item_new_with_mnemonic ( _("View All _Tracks") );
-	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_auto_tracks_view), pass_along );
-	gtk_menu_shell_append (GTK_MENU_SHELL (view_submenu), item);
-	gtk_widget_show ( item );
-
-	item = gtk_menu_item_new_with_mnemonic ( _("View All _Routes") );
-	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_auto_routes_view), pass_along );
-	gtk_menu_shell_append (GTK_MENU_SHELL (view_submenu), item);
-	gtk_widget_show ( item );
-
-	item = gtk_menu_item_new_with_mnemonic ( _("View All _Waypoints") );
-	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_auto_waypoints_view), pass_along );
-	gtk_menu_shell_append (GTK_MENU_SHELL (view_submenu), item);
-	gtk_widget_show ( item );
-
-	item = gtk_image_menu_item_new_with_mnemonic ( _("_Goto Center of Layer") );
-	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_JUMP_TO, GTK_ICON_SIZE_MENU) );
-	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_centerize), pass_along );
-	gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-	gtk_widget_show ( item );
-
-	item = gtk_menu_item_new_with_mnemonic ( _("Goto _Waypoint...") );
-	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_goto_wp), pass_along );
-	gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-	gtk_widget_show ( item );
-
-	export_submenu = gtk_menu_new ();
-	item = gtk_image_menu_item_new_with_mnemonic ( _("_Export Layer") );
-	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_HARDDISK, GTK_ICON_SIZE_MENU) );
-	gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-	gtk_widget_show ( item );
-	gtk_menu_item_set_submenu (GTK_MENU_ITEM (item), export_submenu );
-
-	item = gtk_menu_item_new_with_mnemonic ( _("Export as GPS_Point...") );
-	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_export_gpspoint), pass_along );
-	gtk_menu_shell_append (GTK_MENU_SHELL (export_submenu), item);
-	gtk_widget_show ( item );
-
-	item = gtk_menu_item_new_with_mnemonic ( _("Export as GPS_Mapper...") );
-	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_export_gpsmapper), pass_along );
-	gtk_menu_shell_append (GTK_MENU_SHELL (export_submenu), item);
-	gtk_widget_show ( item );
-
-	item = gtk_menu_item_new_with_mnemonic ( _("Export as _GPX...") );
-	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_export_gpx), pass_along );
-	gtk_menu_shell_append (GTK_MENU_SHELL (export_submenu), item);
-	gtk_widget_show ( item );
-
-	item = gtk_menu_item_new_with_mnemonic ( _("Export as _KML...") );
-	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_export_kml), pass_along );
-	gtk_menu_shell_append (GTK_MENU_SHELL (export_submenu), item);
-	gtk_widget_show ( item );
-
-	if ( have_geojson_export ) {
-		item = gtk_menu_item_new_with_mnemonic ( _("Export as GEO_JSON...") );
-		g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_export_geojson), pass_along );
-		gtk_menu_shell_append (GTK_MENU_SHELL (export_submenu), item);
-		gtk_widget_show ( item );
-	}
-
-	item = gtk_menu_item_new_with_mnemonic ( _("Export via GPSbabel...") );
-	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_export_babel), pass_along );
-	gtk_menu_shell_append (GTK_MENU_SHELL (export_submenu), item);
-	gtk_widget_show ( item );
-
-	char* external1 = g_strdup_printf ( _("Open with External Program_1: %s"), a_vik_get_external_gpx_program_1() );
-	item = gtk_menu_item_new_with_mnemonic ( external1 );
-	free( external1 );
-	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_export_external_gpx_1), pass_along );
-	gtk_menu_shell_append (GTK_MENU_SHELL (export_submenu), item);
-	gtk_widget_show ( item );
-
-	char* external2 = g_strdup_printf ( _("Open with External Program_2: %s"), a_vik_get_external_gpx_program_2() );
-	item = gtk_menu_item_new_with_mnemonic ( external2 );
-	free( external2 );
-	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_export_external_gpx_2), pass_along );
-	gtk_menu_shell_append (GTK_MENU_SHELL (export_submenu), item);
-	gtk_widget_show ( item );
-
-	GtkWidget *new_submenu = gtk_menu_new();
-	item = gtk_image_menu_item_new_with_mnemonic ( _("_New") );
-	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_NEW, GTK_ICON_SIZE_MENU) );
-	gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-	gtk_widget_show(item);
-	gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), new_submenu);
-
-	item = gtk_image_menu_item_new_with_mnemonic ( _("New _Waypoint...") );
-	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_NEW, GTK_ICON_SIZE_MENU) );
-	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_new_wp), pass_along );
-	gtk_menu_shell_append (GTK_MENU_SHELL (new_submenu), item);
-	gtk_widget_show ( item );
-
-	item = gtk_image_menu_item_new_with_mnemonic ( _("New _Track") );
-	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_NEW, GTK_ICON_SIZE_MENU) );
-	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_new_track), pass_along );
-	gtk_menu_shell_append (GTK_MENU_SHELL (new_submenu), item);
-	gtk_widget_show ( item );
-	// Make it available only when a new track *not* already in progress
-	gtk_widget_set_sensitive ( item, ! (bool)KPOINTER_TO_INT(vtl->current_track) );
-
-	item = gtk_image_menu_item_new_with_mnemonic ( _("New _Route") );
-	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_NEW, GTK_ICON_SIZE_MENU) );
-	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_new_route), pass_along );
-	gtk_menu_shell_append (GTK_MENU_SHELL (new_submenu), item);
-	gtk_widget_show ( item );
-	// Make it available only when a new track *not* already in progress
-	gtk_widget_set_sensitive ( item, ! (bool)KPOINTER_TO_INT(vtl->current_track) );
-
-#ifdef VIK_CONFIG_GEOTAG
-	item = gtk_menu_item_new_with_mnemonic ( _("Geotag _Images...") );
-	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_geotagging), pass_along );
-	gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-	gtk_widget_show ( item );
-#endif
-
-	GtkWidget *acquire_submenu = gtk_menu_new ();
-	item = gtk_image_menu_item_new_with_mnemonic ( _("_Acquire") );
-	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_GO_DOWN, GTK_ICON_SIZE_MENU) );
-	gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-	gtk_widget_show ( item );
-	gtk_menu_item_set_submenu (GTK_MENU_ITEM (item), acquire_submenu );
-
-	item = gtk_menu_item_new_with_mnemonic ( _("From _GPS...") );
-	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_acquire_gps_cb), pass_along );
-	gtk_menu_shell_append (GTK_MENU_SHELL (acquire_submenu), item);
-	gtk_widget_show ( item );
-
-	/* FIXME: only add menu when at least a routing engine has support for Directions */
-	item = gtk_menu_item_new_with_mnemonic ( _("From _Directions...") );
-	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_acquire_routing_cb), pass_along );
-	gtk_menu_shell_append (GTK_MENU_SHELL (acquire_submenu), item);
-	gtk_widget_show ( item );
-
-#ifdef VIK_CONFIG_OPENSTREETMAP
-	item = gtk_menu_item_new_with_mnemonic ( _("From _OSM Traces...") );
-	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_acquire_osm_cb), pass_along );
-	gtk_menu_shell_append (GTK_MENU_SHELL (acquire_submenu), item);
-	gtk_widget_show ( item );
-
-	item = gtk_menu_item_new_with_mnemonic ( _("From _My OSM Traces...") );
-	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_acquire_osm_my_traces_cb), pass_along );
-	gtk_menu_shell_append (GTK_MENU_SHELL (acquire_submenu), item);
-	gtk_widget_show ( item );
-#endif
-
-	item = gtk_menu_item_new_with_mnemonic ( _("From _URL...") );
-	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_acquire_url_cb), pass_along );
-	gtk_menu_shell_append (GTK_MENU_SHELL (acquire_submenu), item);
-	gtk_widget_show ( item );
-
-#ifdef VIK_CONFIG_GEONAMES
-	GtkWidget *wikipedia_submenu = gtk_menu_new();
-	item = gtk_image_menu_item_new_with_mnemonic ( _("From _Wikipedia Waypoints") );
-	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_ADD, GTK_ICON_SIZE_MENU) );
-	gtk_menu_shell_append(GTK_MENU_SHELL (acquire_submenu), item);
-	gtk_widget_show(item);
-	gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), wikipedia_submenu);
-
-	item = gtk_image_menu_item_new_with_mnemonic ( _("Within _Layer Bounds") );
-	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_ZOOM_FIT, GTK_ICON_SIZE_MENU) );
-	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_new_wikipedia_wp_layer), pass_along );
-	gtk_menu_shell_append (GTK_MENU_SHELL (wikipedia_submenu), item);
-	gtk_widget_show ( item );
-
-	item = gtk_image_menu_item_new_with_mnemonic ( _("Within _Current View") );
-	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_ZOOM_100, GTK_ICON_SIZE_MENU) );
-	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_new_wikipedia_wp_viewport), pass_along );
-	gtk_menu_shell_append (GTK_MENU_SHELL (wikipedia_submenu), item);
-	gtk_widget_show ( item );
-#endif
-
-#ifdef VIK_CONFIG_GEOCACHES
-	item = gtk_menu_item_new_with_mnemonic ( _("From Geo_caching...") );
-	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_acquire_geocache_cb), pass_along );
-	gtk_menu_shell_append (GTK_MENU_SHELL (acquire_submenu), item);
-	gtk_widget_show ( item );
-#endif
-
-#ifdef VIK_CONFIG_GEOTAG
-	item = gtk_menu_item_new_with_mnemonic ( _("From Geotagged _Images...") );
-	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_acquire_geotagged_cb), pass_along );
-	gtk_menu_shell_append (GTK_MENU_SHELL (acquire_submenu), item);
-	gtk_widget_show ( item );
-#endif
-
-	item = gtk_menu_item_new_with_mnemonic ( _("From _File...") );
-	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_acquire_file_cb), pass_along );
-	gtk_menu_shell_append (GTK_MENU_SHELL (acquire_submenu), item);
-	gtk_widget_set_tooltip_text (item, _("Import File With GPS_Babel..."));
-	gtk_widget_show ( item );
-
-	vik_ext_tool_datasources_add_menu_items_to_menu ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(vtl)), GTK_MENU (acquire_submenu) );
-
-	GtkWidget *upload_submenu = gtk_menu_new ();
-	item = gtk_image_menu_item_new_with_mnemonic ( _("_Upload") );
-	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_GO_UP, GTK_ICON_SIZE_MENU) );
-	gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-	gtk_widget_show ( item );
-	gtk_menu_item_set_submenu (GTK_MENU_ITEM (item), upload_submenu );
-
-	item = gtk_image_menu_item_new_with_mnemonic ( _("Upload to _GPS...") );
-	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_GO_FORWARD, GTK_ICON_SIZE_MENU) );
-	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_gps_upload), pass_along );
-	gtk_menu_shell_append (GTK_MENU_SHELL (upload_submenu), item);
-	gtk_widget_show ( item );
-
-#ifdef VIK_CONFIG_OPENSTREETMAP
-	item = gtk_image_menu_item_new_with_mnemonic ( _("Upload to _OSM...") );
-	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_GO_UP, GTK_ICON_SIZE_MENU) );
-	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_osm_traces_upload_cb), pass_along );
-	gtk_menu_shell_append (GTK_MENU_SHELL (upload_submenu), item);
-	gtk_widget_show ( item );
-#endif
-
-	GtkWidget *delete_submenu = gtk_menu_new ();
-	item = gtk_image_menu_item_new_with_mnemonic ( _("De_lete") );
-	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_REMOVE, GTK_ICON_SIZE_MENU) );
-	gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-	gtk_widget_show ( item );
-	gtk_menu_item_set_submenu (GTK_MENU_ITEM (item), delete_submenu );
-
-	item = gtk_image_menu_item_new_with_mnemonic ( _("Delete All _Tracks") );
-	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_REMOVE, GTK_ICON_SIZE_MENU) );
-	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_delete_all_tracks), pass_along );
-	gtk_menu_shell_append ( GTK_MENU_SHELL(delete_submenu), item );
-	gtk_widget_show ( item );
-
-	item = gtk_image_menu_item_new_with_mnemonic ( _("Delete Tracks _From Selection...") );
-	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_INDEX, GTK_ICON_SIZE_MENU) );
-	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_delete_tracks_from_selection), pass_along );
-	gtk_menu_shell_append ( GTK_MENU_SHELL(delete_submenu), item );
-	gtk_widget_show ( item );
-
-	item = gtk_image_menu_item_new_with_mnemonic ( _("Delete _All Routes") );
-	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_REMOVE, GTK_ICON_SIZE_MENU) );
-	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_delete_all_routes), pass_along );
-	gtk_menu_shell_append ( GTK_MENU_SHELL(delete_submenu), item );
-	gtk_widget_show ( item );
-
-	item = gtk_image_menu_item_new_with_mnemonic ( _("_Delete Routes From Selection...") );
-	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_INDEX, GTK_ICON_SIZE_MENU) );
-	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_delete_routes_from_selection), pass_along );
-	gtk_menu_shell_append ( GTK_MENU_SHELL(delete_submenu), item );
-	gtk_widget_show ( item );
-
-	item = gtk_image_menu_item_new_with_mnemonic ( _("Delete All _Waypoints") );
-	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_REMOVE, GTK_ICON_SIZE_MENU) );
-	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_delete_all_waypoints), pass_along );
-	gtk_menu_shell_append ( GTK_MENU_SHELL(delete_submenu), item );
-	gtk_widget_show ( item );
-
-	item = gtk_image_menu_item_new_with_mnemonic ( _("Delete Waypoints From _Selection...") );
-	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_INDEX, GTK_ICON_SIZE_MENU) );
-	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_delete_waypoints_from_selection), pass_along );
-	gtk_menu_shell_append ( GTK_MENU_SHELL(delete_submenu), item );
-	gtk_widget_show ( item );
-
-	VikLayersPanel * vlp_ = VIK_LAYERS_PANEL(vlp);
-	item = a_acquire_trwlayer_menu ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(vtl)), (VikLayersPanel *) vlp,
-					 (VikViewport *) vlp_->panel_ref->get_viewport()->vvp, vtl );
-	if ( item ) {
-		gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-		gtk_widget_show ( item );
-	}
-
-	item = a_acquire_trwlayer_track_menu ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(vtl)), (VikLayersPanel *) vlp,
-					       (VikViewport *) vlp_->panel_ref->get_viewport()->vvp, vtl );
-	if ( item ) {
-		gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-		gtk_widget_show ( item );
-	}
-
-	item = gtk_image_menu_item_new_with_mnemonic ( _("Track _List...") );
-	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_INDEX, GTK_ICON_SIZE_MENU) );
-	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_track_list_dialog), pass_along );
-	gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
-	gtk_widget_show ( item );
-	gtk_widget_set_sensitive ( item, (bool)(vtl->trw->tracks.size() + vtl->trw->routes.size()) );
-
-	item = gtk_image_menu_item_new_with_mnemonic ( _("_Waypoint List...") );
-	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_INDEX, GTK_ICON_SIZE_MENU) );
-	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_waypoint_list_dialog), pass_along );
-	gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
-	gtk_widget_show ( item );
-	gtk_widget_set_sensitive ( item, (bool) (vtl->trw->waypoints.size()) );
-
-	GtkWidget *external_submenu = create_external_submenu ( menu );
-	// TODO: Should use selected layer's centre - rather than implicitly using the current viewport
-	vik_ext_tools_add_menu_items_to_menu ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(vtl)), GTK_MENU (external_submenu), NULL );
 }
 
 // Fake Waypoint UUIDs vith simple increasing integer
@@ -4159,8 +3736,7 @@ void LayerTRW::delete_all_waypoints()
 
 
 
-
-static void trw_layer_delete_all_tracks ( menu_array_layer values )
+void trw_layer_delete_all_tracks ( menu_array_layer values )
 {
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
   // Get confirmation from the user
@@ -4172,7 +3748,7 @@ static void trw_layer_delete_all_tracks ( menu_array_layer values )
   }
 }
 
-static void trw_layer_delete_all_routes ( menu_array_layer values )
+void trw_layer_delete_all_routes ( menu_array_layer values )
 {
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
   // Get confirmation from the user
@@ -4184,7 +3760,7 @@ static void trw_layer_delete_all_routes ( menu_array_layer values )
   }
 }
 
-static void trw_layer_delete_all_waypoints ( menu_array_layer values )
+void trw_layer_delete_all_waypoints ( menu_array_layer values )
 {
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
   // Get confirmation from the user
@@ -4196,7 +3772,7 @@ static void trw_layer_delete_all_waypoints ( menu_array_layer values )
   }
 }
 
-static void trw_layer_delete_item ( menu_array_sublayer values )
+void trw_layer_delete_item ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
   sg_uid_t uid = (sg_uid_t) ((long) values[MA_SUBLAYER_ID]);
@@ -4299,7 +3875,7 @@ void LayerTRW::waypoint_reset_icon(Waypoint * wp)
 
 
 
-static void trw_layer_properties_item ( menu_array_sublayer values )
+void trw_layer_properties_item ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
   if ( KPOINTER_TO_INT (values[MA_SUBTYPE]) == VIK_TRW_LAYER_SUBLAYER_WAYPOINT )
@@ -4344,7 +3920,7 @@ static void trw_layer_properties_item ( menu_array_sublayer values )
  * ATM jump to the stats page in the properties
  * TODO: consider separating the stats into an individual dialog?
  */
-static void trw_layer_track_statistics ( menu_array_sublayer values )
+void trw_layer_track_statistics ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
   Track * trk = trw_layer_get_track_helper(values, vtl);
@@ -4428,7 +4004,7 @@ static void goto_coord ( void ** vlp, void * vl, void * vvp, const VikCoord *coo
   }
 }
 
-static void trw_layer_goto_track_startpoint ( menu_array_sublayer values )
+void trw_layer_goto_track_startpoint ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = (VikTrwLayer *)values[MA_VTL];
   Track * trk = trw_layer_get_track_helper(values, vtl);
@@ -4437,7 +4013,7 @@ static void trw_layer_goto_track_startpoint ( menu_array_sublayer values )
 	  goto_coord ( (void **) values[MA_VLP], vtl, values[MA_VVP], &(trk->get_tp_first()->coord) );
 }
 
-static void trw_layer_goto_track_center ( menu_array_sublayer values )
+void trw_layer_goto_track_center ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = (VikTrwLayer *)values[MA_VTL];
   Track * trk = trw_layer_get_track_helper(values, vtl);
@@ -4454,7 +4030,7 @@ static void trw_layer_goto_track_center ( menu_array_sublayer values )
   }
 }
 
-static void trw_layer_convert_track_route ( menu_array_sublayer values )
+void trw_layer_convert_track_route ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = (VikTrwLayer *)values[MA_VTL];
   Track * trk = trw_layer_get_track_helper(values, vtl);
@@ -4500,8 +4076,7 @@ static void trw_layer_convert_track_route ( menu_array_sublayer values )
   // Update in case color of track / route changes when moving between sublayers
   vik_layer_emit_update ( VIK_LAYER(vtl) );
 }
-
-static void trw_layer_anonymize_times ( menu_array_sublayer values )
+void trw_layer_anonymize_times ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = (VikTrwLayer *)values[MA_VTL];
   Track * trk = trw_layer_get_track_helper(values, vtl);
@@ -4510,7 +4085,7 @@ static void trw_layer_anonymize_times ( menu_array_sublayer values )
     trk->anonymize_times();
 }
 
-static void trw_layer_interpolate_times ( menu_array_sublayer values )
+void trw_layer_interpolate_times ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = (VikTrwLayer *)values[MA_VTL];
   Track * trk = trw_layer_get_track_helper(values, vtl);
@@ -4519,7 +4094,7 @@ static void trw_layer_interpolate_times ( menu_array_sublayer values )
     trk->interpolate_times();
 }
 
-static void trw_layer_extend_track_end ( menu_array_sublayer values )
+void trw_layer_extend_track_end ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
   Track * trk = trw_layer_get_track_helper(values, vtl);
@@ -4537,7 +4112,7 @@ static void trw_layer_extend_track_end ( menu_array_sublayer values )
 /**
  * extend a track using route finder
  */
-static void trw_layer_extend_track_end_route_finder ( menu_array_sublayer values )
+void trw_layer_extend_track_end_route_finder ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
   sg_uid_t uid = (sg_uid_t) ((long) values[MA_SUBLAYER_ID]);
@@ -4599,8 +4174,7 @@ void LayerTRW::apply_dem_data_common(VikLayersPanel * vlp, Track * trk, bool ski
 
 
 
-
-static void trw_layer_apply_dem_data_all ( menu_array_sublayer values )
+void trw_layer_apply_dem_data_all ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = (VikTrwLayer *)values[MA_VTL];
   Track * trk = trw_layer_get_track_helper(values, vtl);
@@ -4609,7 +4183,7 @@ static void trw_layer_apply_dem_data_all ( menu_array_sublayer values )
     vtl->trw->apply_dem_data_common((VikLayersPanel *) values[MA_VLP], trk, false);
 }
 
-static void trw_layer_apply_dem_data_only_missing ( menu_array_sublayer values )
+void trw_layer_apply_dem_data_only_missing ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = (VikTrwLayer *)values[MA_VTL];
   Track * trk = trw_layer_get_track_helper(values, vtl);
@@ -4644,7 +4218,7 @@ void LayerTRW::smooth_it(Track * trk, bool flat)
 /**
  *
  */
-static void trw_layer_missing_elevation_data_interp ( menu_array_sublayer values )
+void trw_layer_missing_elevation_data_interp ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = (VikTrwLayer *)values[MA_VTL];
   Track * trk = trw_layer_get_track_helper(values, vtl);
@@ -4655,7 +4229,7 @@ static void trw_layer_missing_elevation_data_interp ( menu_array_sublayer values
   vtl->trw->smooth_it(trk, false);
 }
 
-static void trw_layer_missing_elevation_data_flat ( menu_array_sublayer values )
+void trw_layer_missing_elevation_data_flat ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = (VikTrwLayer *)values[MA_VTL];
   Track * trk = trw_layer_get_track_helper(values, vtl);
@@ -4684,8 +4258,7 @@ void LayerTRW::wp_changed_message(int changed)
 
 
 
-
-static void trw_layer_apply_dem_data_wpt_all ( menu_array_sublayer values )
+void trw_layer_apply_dem_data_wpt_all ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = (VikTrwLayer *)values[MA_VTL];
   VikLayersPanel *vlp = (VikLayersPanel *)values[MA_VLP];
@@ -4710,7 +4283,7 @@ static void trw_layer_apply_dem_data_wpt_all ( menu_array_sublayer values )
   vtl->trw->wp_changed_message(changed);
 }
 
-static void trw_layer_apply_dem_data_wpt_only_missing ( menu_array_sublayer values )
+void trw_layer_apply_dem_data_wpt_only_missing ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = (VikTrwLayer *)values[MA_VTL];
   VikLayersPanel *vlp = (VikLayersPanel *)values[MA_VLP];
@@ -4735,7 +4308,7 @@ static void trw_layer_apply_dem_data_wpt_only_missing ( menu_array_sublayer valu
   vtl->trw->wp_changed_message(changed);
 }
 
-static void trw_layer_goto_track_endpoint ( menu_array_sublayer values )
+void trw_layer_goto_track_endpoint ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = (VikTrwLayer *)values[MA_VTL];
   Track * trk = trw_layer_get_track_helper(values, vtl);
@@ -4747,7 +4320,7 @@ static void trw_layer_goto_track_endpoint ( menu_array_sublayer values )
   goto_coord ( (void **) values[MA_VLP], vtl, values[MA_VVP], &(trk->get_tp_last()->coord));
 }
 
-static void trw_layer_goto_track_max_speed ( menu_array_sublayer values )
+void trw_layer_goto_track_max_speed ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = (VikTrwLayer *)values[MA_VTL];
   Track * trk = trw_layer_get_track_helper(values, vtl);
@@ -4761,7 +4334,7 @@ static void trw_layer_goto_track_max_speed ( menu_array_sublayer values )
   goto_coord ( (void **) values[MA_VLP], vtl, values[MA_VVP], &(vtp->coord));
 }
 
-static void trw_layer_goto_track_max_alt ( menu_array_sublayer values )
+void trw_layer_goto_track_max_alt ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = (VikTrwLayer *)values[MA_VTL];
   Track * trk = trw_layer_get_track_helper(values, vtl);
@@ -4775,7 +4348,7 @@ static void trw_layer_goto_track_max_alt ( menu_array_sublayer values )
   goto_coord ( (void **) values[MA_VLP], vtl, values[MA_VVP], &(vtp->coord));
 }
 
-static void trw_layer_goto_track_min_alt ( menu_array_sublayer values )
+void trw_layer_goto_track_min_alt ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = (VikTrwLayer *)values[MA_VTL];
   Track * trk = trw_layer_get_track_helper(values, vtl);
@@ -4792,7 +4365,7 @@ static void trw_layer_goto_track_min_alt ( menu_array_sublayer values )
 /*
  * Automatically change the viewport to center on the track and zoom to see the extent of the track
  */
-static void trw_layer_auto_track_view ( menu_array_sublayer values )
+void trw_layer_auto_track_view ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
   Track * trk = trw_layer_get_track_helper(values, vtl);
@@ -4813,7 +4386,7 @@ static void trw_layer_auto_track_view ( menu_array_sublayer values )
  * Refine the selected track/route with a routing engine.
  * The routing engine is selected by the user, when requestiong the job.
  */
-static void trw_layer_route_refine ( menu_array_sublayer values )
+void trw_layer_route_refine ( menu_array_sublayer values )
 {
   static int last_engine = 0;
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
@@ -4889,7 +4462,7 @@ static void trw_layer_route_refine ( menu_array_sublayer values )
   }
 }
 
-static void trw_layer_edit_trackpoint ( menu_array_sublayer values )
+void trw_layer_edit_trackpoint ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
   vtl->trw->tpwin_init();
@@ -4963,7 +4536,7 @@ int sort_alphabetically (gconstpointer a, gconstpointer b, void * user_data)
  * Tracks to merge with must be of the same 'type' as the selected track -
  *  either all with timestamps, or all without timestamps
  */
-static void trw_layer_merge_with_other ( menu_array_sublayer values )
+void trw_layer_merge_with_other ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = (VikTrwLayer *)values[MA_VTL];
   sg_uid_t uid = (sg_uid_t) ((long) values[MA_SUBLAYER_ID]);
@@ -5045,13 +4618,12 @@ static void trw_layer_merge_with_other ( menu_array_sublayer values )
 
 
 
-
 /**
  * Join - this allows combining 'tracks' and 'track routes'
  *  i.e. doesn't care about whether tracks have consistent timestamps
  * ATM can only append one track at a time to the currently selected track
  */
-static void trw_layer_append_track ( menu_array_sublayer values )
+void trw_layer_append_track ( menu_array_sublayer values )
 {
 
   VikTrwLayer *vtl = (VikTrwLayer *)values[MA_VTL];
@@ -5125,7 +4697,7 @@ static void trw_layer_append_track ( menu_array_sublayer values )
  * If a track is selected, then is shows routes and joins the selected one
  * If a route is selected, then is shows tracks and joins the selected one
  */
-static void trw_layer_append_other ( menu_array_sublayer values )
+void trw_layer_append_other ( menu_array_sublayer values )
 {
 
   VikTrwLayer *vtl = (VikTrwLayer *)values[MA_VTL];
@@ -5217,7 +4789,7 @@ static void trw_layer_append_other ( menu_array_sublayer values )
 }
 
 /* merge by segments */
-static void trw_layer_merge_by_segment ( menu_array_sublayer values )
+void trw_layer_merge_by_segment ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = (VikTrwLayer *)values[MA_VTL];
   sg_uid_t uid = (sg_uid_t) ((long) values[MA_SUBLAYER_ID]);
@@ -5232,7 +4804,7 @@ static void trw_layer_merge_by_segment ( menu_array_sublayer values )
 }
 
 /* merge by time routine */
-static void trw_layer_merge_by_timestamp ( menu_array_sublayer values )
+void trw_layer_merge_by_timestamp ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = (VikTrwLayer *)values[MA_VTL];
   sg_uid_t uid = (sg_uid_t) ((long) values[MA_SUBLAYER_ID]);
@@ -5366,7 +4938,7 @@ void LayerTRW::split_at_selected_trackpoint(int subtype)
 
 
 /* split by time routine */
-static void trw_layer_split_by_timestamp ( menu_array_sublayer values )
+void trw_layer_split_by_timestamp ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = (VikTrwLayer *)values[MA_VTL];
   sg_uid_t uid = (sg_uid_t) ((long) values[MA_SUBLAYER_ID]);
@@ -5448,7 +5020,7 @@ static void trw_layer_split_by_timestamp ( menu_array_sublayer values )
 /**
  * Split a track by the number of points as specified by the user
  */
-static void trw_layer_split_by_n_points ( menu_array_sublayer values )
+void trw_layer_split_by_n_points ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = (VikTrwLayer *)values[MA_VTL];
   Track * trk = trw_layer_get_track_helper(values, vtl);
@@ -5533,7 +5105,7 @@ static void trw_layer_split_by_n_points ( menu_array_sublayer values )
 /**
  * Split a track at the currently selected trackpoint
  */
-static void trw_layer_split_at_trackpoint ( menu_array_sublayer values )
+void trw_layer_split_at_trackpoint ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = (VikTrwLayer *)values[MA_VTL];
   int subtype = KPOINTER_TO_INT (values[MA_SUBTYPE]);
@@ -5544,7 +5116,7 @@ static void trw_layer_split_at_trackpoint ( menu_array_sublayer values )
  * Split a track by its segments
  * Routes do not have segments so don't call this for routes
  */
-static void trw_layer_split_segments ( menu_array_sublayer values )
+void trw_layer_split_segments ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = (VikTrwLayer *)values[MA_VTL];
   sg_uid_t uid = (sg_uid_t) ((long) values[MA_SUBLAYER_ID]);
@@ -5611,11 +5183,10 @@ void LayerTRW::trackpoint_selected_delete(Track * trk)
 
 
 
-
 /**
  * Delete the selected point
  */
-static void trw_layer_delete_point_selected ( menu_array_sublayer values )
+void trw_layer_delete_point_selected ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = (VikTrwLayer *)values[MA_VTL];
   Track * trk = trw_layer_get_track_helper(values, vtl);
@@ -5638,7 +5209,7 @@ static void trw_layer_delete_point_selected ( menu_array_sublayer values )
  * Delete adjacent track points at the same position
  * AKA Delete Dulplicates on the Properties Window
  */
-static void trw_layer_delete_points_same_position ( menu_array_sublayer values )
+void trw_layer_delete_points_same_position ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = (VikTrwLayer *)values[MA_VTL];
   Track * trk = trw_layer_get_track_helper(values, vtl);
@@ -5664,7 +5235,7 @@ static void trw_layer_delete_points_same_position ( menu_array_sublayer values )
  * Delete adjacent track points with the same timestamp
  * Normally new tracks that are 'routes' won't have any timestamps so should be OK to clean up the track
  */
-static void trw_layer_delete_points_same_time ( menu_array_sublayer values )
+void trw_layer_delete_points_same_time ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = (VikTrwLayer *)values[MA_VTL];
   Track * trk = trw_layer_get_track_helper(values, vtl);
@@ -5689,7 +5260,7 @@ static void trw_layer_delete_points_same_time ( menu_array_sublayer values )
 /**
  * Insert a point
  */
-static void trw_layer_insert_point_after ( menu_array_sublayer values )
+void trw_layer_insert_point_after ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = (VikTrwLayer *)values[MA_VTL];
   Track * trk = trw_layer_get_track_helper(values, vtl);
@@ -5702,7 +5273,7 @@ static void trw_layer_insert_point_after ( menu_array_sublayer values )
   vik_layer_emit_update ( VIK_LAYER(vtl) );
 }
 
-static void trw_layer_insert_point_before ( menu_array_sublayer values )
+void trw_layer_insert_point_before ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = (VikTrwLayer *)values[MA_VTL];
   Track * trk = trw_layer_get_track_helper(values, vtl);
@@ -5718,7 +5289,7 @@ static void trw_layer_insert_point_before ( menu_array_sublayer values )
 /**
  * Reverse a track
  */
-static void trw_layer_reverse ( menu_array_sublayer values )
+void trw_layer_reverse ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = (VikTrwLayer *)values[MA_VTL];
   Track * trk = trw_layer_get_track_helper(values, vtl);
@@ -5755,11 +5326,10 @@ void LayerTRW::diary_open(char const * date_str)
 
 
 
-
 /**
  * Open a diary at the date of the track or waypoint
  */
-static void trw_layer_diary ( menu_array_sublayer values )
+void trw_layer_diary ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
   sg_uid_t uid = (sg_uid_t) ((long) values[MA_SUBLAYER_ID]);
@@ -5865,7 +5435,7 @@ static char *convert_to_dms ( double dec )
 /**
  * Open an astronomy program at the date & position of the track center, trackpoint or waypoint
  */
-static void trw_layer_astro ( menu_array_sublayer values )
+void trw_layer_astro ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
   sg_uid_t uid = (sg_uid_t) ((long) values[MA_SUBLAYER_ID]);
@@ -6081,26 +5651,25 @@ void LayerTRW::sort_order_specified(unsigned int sublayer_type, vik_layer_sort_o
 
 
 
-
-static void trw_layer_sort_order_a2z ( menu_array_sublayer values )
+void trw_layer_sort_order_a2z ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
   vtl->trw->sort_order_specified(KPOINTER_TO_INT(values[MA_SUBTYPE]), VL_SO_ALPHABETICAL_ASCENDING);
 }
 
-static void trw_layer_sort_order_z2a ( menu_array_sublayer values )
+void trw_layer_sort_order_z2a ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
   vtl->trw->sort_order_specified(KPOINTER_TO_INT(values[MA_SUBTYPE]), VL_SO_ALPHABETICAL_DESCENDING);
 }
 
-static void trw_layer_sort_order_timestamp_ascend ( menu_array_sublayer values )
+void trw_layer_sort_order_timestamp_ascend ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
   vtl->trw->sort_order_specified(KPOINTER_TO_INT(values[MA_SUBTYPE]), VL_SO_DATE_ASCENDING);
 }
 
-static void trw_layer_sort_order_timestamp_descend ( menu_array_sublayer values )
+void trw_layer_sort_order_timestamp_descend ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
   vtl->trw->sort_order_specified(KPOINTER_TO_INT(values[MA_SUBTYPE]), VL_SO_DATE_DESCENDING);
@@ -6109,7 +5678,7 @@ static void trw_layer_sort_order_timestamp_descend ( menu_array_sublayer values 
 /**
  *
  */
-static void trw_layer_delete_tracks_from_selection ( menu_array_layer values )
+void trw_layer_delete_tracks_from_selection ( menu_array_layer values )
 {
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
 
@@ -6158,7 +5727,7 @@ static void trw_layer_delete_tracks_from_selection ( menu_array_layer values )
 /**
  *
  */
-static void trw_layer_delete_routes_from_selection ( menu_array_layer values )
+void trw_layer_delete_routes_from_selection ( menu_array_layer values )
 {
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
 
@@ -6334,7 +5903,7 @@ void LayerTRW::uniquify_waypoints(VikLayersPanel * vlp)
 /**
  *
  */
-static void trw_layer_delete_waypoints_from_selection ( menu_array_layer values )
+void trw_layer_delete_waypoints_from_selection ( menu_array_layer values )
 {
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
   GList *all = NULL;
@@ -6383,10 +5952,11 @@ static void trw_layer_delete_waypoints_from_selection ( menu_array_layer values 
   }
 
 }
+
 /**
  *
  */
-static void trw_layer_waypoints_visibility_off(menu_array_layer values)
+void trw_layer_waypoints_visibility_off(menu_array_layer values)
 {
 	VikTrwLayer * vtl = VIK_TRW_LAYER(values[MA_VTL]);
 	LayerTRWc::set_iter_visibility(vtl->trw->waypoints_iters, vtl->trw->vt, false);
@@ -6402,7 +5972,7 @@ static void trw_layer_waypoints_visibility_off(menu_array_layer values)
 /**
  *
  */
-static void trw_layer_waypoints_visibility_on(menu_array_layer values)
+void trw_layer_waypoints_visibility_on(menu_array_layer values)
 {
 	VikTrwLayer * vtl = VIK_TRW_LAYER(values[MA_VTL]);
 	LayerTRWc::set_iter_visibility(vtl->trw->waypoints_iters, vtl->trw->vt, true);
@@ -6418,7 +5988,7 @@ static void trw_layer_waypoints_visibility_on(menu_array_layer values)
 /**
  *
  */
-static void trw_layer_waypoints_visibility_toggle(menu_array_layer values)
+void trw_layer_waypoints_visibility_toggle(menu_array_layer values)
 {
 	VikTrwLayer * vtl = VIK_TRW_LAYER(values[MA_VTL]);
 	LayerTRWc::iter_visibility_toggle(vtl->trw->waypoints_iters, vtl->trw->vt);
@@ -6434,7 +6004,7 @@ static void trw_layer_waypoints_visibility_toggle(menu_array_layer values)
 /**
  *
  */
-static void trw_layer_tracks_visibility_off(menu_array_layer values)
+void trw_layer_tracks_visibility_off(menu_array_layer values)
 {
 	VikTrwLayer * vtl = VIK_TRW_LAYER(values[MA_VTL]);
 	LayerTRWc::set_iter_visibility(vtl->trw->tracks_iters, vtl->trw->vt, false);
@@ -6450,7 +6020,7 @@ static void trw_layer_tracks_visibility_off(menu_array_layer values)
 /**
  *
  */
-static void trw_layer_tracks_visibility_on(menu_array_layer values)
+void trw_layer_tracks_visibility_on(menu_array_layer values)
 {
 	VikTrwLayer * vtl = VIK_TRW_LAYER(values[MA_VTL]);
 	LayerTRWc::set_iter_visibility(vtl->trw->tracks_iters, vtl->trw->vt, true);
@@ -6466,7 +6036,7 @@ static void trw_layer_tracks_visibility_on(menu_array_layer values)
 /**
  *
  */
-static void trw_layer_tracks_visibility_toggle(menu_array_layer values)
+void trw_layer_tracks_visibility_toggle(menu_array_layer values)
 {
 	VikTrwLayer * vtl = VIK_TRW_LAYER(values[MA_VTL]);
 	LayerTRWc::iter_visibility_toggle(vtl->trw->tracks_iters, vtl->trw->vt);
@@ -6482,7 +6052,7 @@ static void trw_layer_tracks_visibility_toggle(menu_array_layer values)
 /**
  *
  */
-static void trw_layer_routes_visibility_off(menu_array_layer values)
+void trw_layer_routes_visibility_off(menu_array_layer values)
 {
 	VikTrwLayer * vtl = VIK_TRW_LAYER(values[MA_VTL]);
 	LayerTRWc::set_iter_visibility(vtl->trw->routes_iters, vtl->trw->vt, false);
@@ -6498,7 +6068,7 @@ static void trw_layer_routes_visibility_off(menu_array_layer values)
 /**
  *
  */
-static void trw_layer_routes_visibility_on(menu_array_layer values)
+void trw_layer_routes_visibility_on(menu_array_layer values)
 {
 	VikTrwLayer * vtl = VIK_TRW_LAYER(values[MA_VTL]);
 	LayerTRWc::set_iter_visibility(vtl->trw->routes_iters, vtl->trw->vt, true);
@@ -6514,7 +6084,7 @@ static void trw_layer_routes_visibility_on(menu_array_layer values)
 /**
  *
  */
-static void trw_layer_routes_visibility_toggle(menu_array_layer values)
+void trw_layer_routes_visibility_toggle(menu_array_layer values)
 {
 	VikTrwLayer * vtl = VIK_TRW_LAYER(values[MA_VTL]);
 	LayerTRWc::iter_visibility_toggle(vtl->trw->routes_iters, vtl->trw->vt);
@@ -6626,7 +6196,7 @@ static GList* trw_layer_create_track_list ( VikLayer *vl, void * user_data )
   return vtl->trw->build_track_list_t(tracks);
 }
 
-static void trw_layer_tracks_stats ( menu_array_layer values )
+void trw_layer_tracks_stats ( menu_array_layer values )
 {
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
   // There can only be one!
@@ -6644,7 +6214,7 @@ static void trw_layer_tracks_stats ( menu_array_layer values )
 /**
  *
  */
-static void trw_layer_routes_stats ( menu_array_layer values )
+void trw_layer_routes_stats ( menu_array_layer values )
 {
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
   // There can only be one!
@@ -6659,7 +6229,7 @@ static void trw_layer_routes_stats ( menu_array_layer values )
                                                              trw_layer_analyse_close );
 }
 
-static void trw_layer_goto_waypoint ( menu_array_sublayer values )
+void trw_layer_goto_waypoint ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
   sg_uid_t wp_uid = (sg_uid_t) ((long) values[MA_SUBLAYER_ID]);
@@ -6668,7 +6238,7 @@ static void trw_layer_goto_waypoint ( menu_array_sublayer values )
     goto_coord ( (void **) values[MA_VLP], vtl, values[MA_VVP], &(wp->coord) );
 }
 
-static void trw_layer_waypoint_gc_webpage ( menu_array_sublayer values )
+void trw_layer_waypoint_gc_webpage ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
   sg_uid_t wp_uid = (sg_uid_t) ((long) values[MA_SUBLAYER_ID]);
@@ -6680,7 +6250,7 @@ static void trw_layer_waypoint_gc_webpage ( menu_array_sublayer values )
   free( webpage );
 }
 
-static void trw_layer_waypoint_webpage ( menu_array_sublayer values )
+void trw_layer_waypoint_webpage ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
   sg_uid_t wp_uid = (sg_uid_t) ((long) values[MA_SUBLAYER_ID]);
@@ -6813,14 +6383,14 @@ char const * LayerTRW::sublayer_rename_request(const char * newname, void * vlp,
 	return NULL;
 }
 
-static bool is_valid_geocache_name ( char *str )
+bool is_valid_geocache_name ( char *str )
 {
   int len = strlen ( str );
   return len >= 3 && len <= 7 && str[0] == 'G' && str[1] == 'C' && isalnum(str[2]) && (len < 4 || isalnum(str[3])) && (len < 5 || isalnum(str[4])) && (len < 6 || isalnum(str[5])) && (len < 7 || isalnum(str[6]));
 }
 
 #ifndef WINDOWS
-static void trw_layer_track_use_with_filter ( menu_array_sublayer values )
+void trw_layer_track_use_with_filter ( menu_array_sublayer values )
 {
   sg_uid_t uid = (sg_uid_t) ((long) values[MA_SUBLAYER_ID]);
   Track * trk = VIK_TRW_LAYER(values[MA_VTL])->trw->tracks.at(uid);
@@ -6844,8 +6414,7 @@ bool LayerTRW::is_valid_google_route(sg_uid_t track_uid)
 
 
 
-
-static void trw_layer_google_route_webpage ( menu_array_sublayer values )
+void trw_layer_google_route_webpage ( menu_array_sublayer values )
 {
   sg_uid_t uid = (sg_uid_t) ((long) values[MA_SUBLAYER_ID]);
   Track * trk = VIK_TRW_LAYER(values[MA_VTL])->trw->routes.at(uid);
@@ -6864,905 +6433,6 @@ static void trw_layer_google_route_webpage ( menu_array_sublayer values )
 
 
 
-
-/* vlp can be NULL if necessary - i.e. right-click from a tool */
-/* viewpoint is now available instead */
-bool LayerTRW::sublayer_add_menu_items(GtkMenu * menu, void * vlp, int subtype, void * sublayer, GtkTreeIter * iter, Viewport * viewport)
-{
-  VikTrwLayer * l = (VikTrwLayer *) this->vl;
-
-  static menu_array_sublayer pass_along;
-  sg_uid_t uid = (sg_uid_t) ((long) sublayer);
-  GtkWidget *item;
-  bool rv = false;
-
-  pass_along[MA_VTL]         = l;
-  pass_along[MA_VLP]         = vlp;
-  pass_along[MA_SUBTYPE]     = KINT_TO_POINTER (subtype);
-  pass_along[MA_SUBLAYER_ID] = sublayer;
-  pass_along[MA_CONFIRM]     = KINT_TO_POINTER (1); // Confirm delete request
-  pass_along[MA_VVP]         = (VikViewport *) viewport->vvp;
-  pass_along[MA_TV_ITER]     = iter;
-  pass_along[MA_MISC]        = NULL; // For misc purposes - maybe track or waypoint
-
-  if ( subtype == VIK_TRW_LAYER_SUBLAYER_WAYPOINT || subtype == VIK_TRW_LAYER_SUBLAYER_TRACK || subtype == VIK_TRW_LAYER_SUBLAYER_ROUTE )
-  {
-    rv = true;
-
-    item = gtk_image_menu_item_new_from_stock ( GTK_STOCK_PROPERTIES, NULL );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_properties_item), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
-    gtk_widget_show ( item );
-
-    if (subtype == VIK_TRW_LAYER_SUBLAYER_TRACK) {
-      Track * trk = l->trw->tracks.at(uid);
-      if (trk && trk->property_dialog)
-        gtk_widget_set_sensitive(GTK_WIDGET(item), false );
-    }
-    if (subtype == VIK_TRW_LAYER_SUBLAYER_ROUTE) {
-      Track * trk = l->trw->routes.at(uid);
-      if (trk && trk->property_dialog)
-        gtk_widget_set_sensitive(GTK_WIDGET(item), false );
-    }
-
-    item = gtk_image_menu_item_new_from_stock ( GTK_STOCK_CUT, NULL );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_cut_item_cb), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
-    gtk_widget_show ( item );
-
-    item = gtk_image_menu_item_new_from_stock ( GTK_STOCK_COPY, NULL );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_copy_item_cb), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
-    gtk_widget_show ( item );
-
-    item = gtk_image_menu_item_new_from_stock ( GTK_STOCK_DELETE, NULL );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_delete_item), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
-    gtk_widget_show ( item );
-
-    if ( subtype == VIK_TRW_LAYER_SUBLAYER_WAYPOINT )
-    {
-      // Always create separator as now there is always at least the transform menu option
-      item = gtk_menu_item_new ();
-      gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
-      gtk_widget_show ( item );
-
-      /* could be a right-click using the tool */
-      if ( vlp != NULL ) {
-        item = gtk_image_menu_item_new_with_mnemonic ( _("_Goto") );
-        gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_JUMP_TO, GTK_ICON_SIZE_MENU) );
-        g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_goto_waypoint), pass_along );
-        gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
-        gtk_widget_show ( item );
-      }
-
-      sg_uid_t wp_uid = (sg_uid_t) ((long) sublayer);
-      Waypoint * wp = VIK_TRW_LAYER(l)->trw->waypoints.at(wp_uid);
-
-      if ( wp && wp->name ) {
-        if ( is_valid_geocache_name ( wp->name ) ) {
-          item = gtk_menu_item_new_with_mnemonic ( _("_Visit Geocache Webpage") );
-          g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_waypoint_gc_webpage), pass_along );
-          gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
-          gtk_widget_show ( item );
-        }
-#ifdef VIK_CONFIG_GEOTAG
-        item = gtk_menu_item_new_with_mnemonic ( _("Geotag _Images...") );
-        g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_geotagging_waypoint), pass_along );
-        gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-        gtk_widget_set_tooltip_text (item, _("Geotag multiple images against this waypoint"));
-        gtk_widget_show ( item );
-#endif
-      }
-
-      if ( wp && wp->image )
-      {
-        // Set up image paramater
-        pass_along[MA_MISC] = wp->image;
-
-        item = gtk_image_menu_item_new_with_mnemonic ( _("_Show Picture...") );
-	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock ("vik-icon-Show Picture", GTK_ICON_SIZE_MENU) ); // Own icon - see stock_icons in vikwindow.c
-        g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_show_picture), pass_along );
-        gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
-        gtk_widget_show ( item );
-
-#ifdef VIK_CONFIG_GEOTAG
-	GtkWidget *geotag_submenu = gtk_menu_new ();
-	item = gtk_image_menu_item_new_with_mnemonic ( _("Update Geotag on _Image") );
-	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_REFRESH, GTK_ICON_SIZE_MENU) );
-	gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-	gtk_widget_show ( item );
-	gtk_menu_item_set_submenu (GTK_MENU_ITEM (item), geotag_submenu );
-
-	item = gtk_menu_item_new_with_mnemonic ( _("_Update") );
-	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_geotagging_waypoint_mtime_update), pass_along );
-	gtk_menu_shell_append (GTK_MENU_SHELL (geotag_submenu), item);
-	gtk_widget_show ( item );
-
-	item = gtk_menu_item_new_with_mnemonic ( _("Update and _Keep File Timestamp") );
-	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_geotagging_waypoint_mtime_keep), pass_along );
-	gtk_menu_shell_append (GTK_MENU_SHELL (geotag_submenu), item);
-	gtk_widget_show ( item );
-#endif
-      }
-
-      if ( wp )
-      {
-        if ( wp->url ||
-             ( wp->comment && !strncmp(wp->comment, "http", 4) ) ||
-             ( wp->description && !strncmp(wp->description, "http", 4) )) {
-          item = gtk_image_menu_item_new_with_mnemonic ( _("Visit _Webpage") );
-          gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_NETWORK, GTK_ICON_SIZE_MENU) );
-          g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_waypoint_webpage), pass_along );
-          gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-          gtk_widget_show ( item );
-        }
-      }
-    }
-  }
-
-  if ( subtype == VIK_TRW_LAYER_SUBLAYER_WAYPOINTS || subtype == VIK_TRW_LAYER_SUBLAYER_TRACKS || subtype == VIK_TRW_LAYER_SUBLAYER_ROUTES ) {
-    item = gtk_image_menu_item_new_from_stock ( GTK_STOCK_PASTE, NULL );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_paste_item_cb), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
-    gtk_widget_show ( item );
-    // TODO: only enable if suitable item is in clipboard - want to determine *which* sublayer type
-    if ( a_clipboard_type ( ) == VIK_CLIPBOARD_DATA_SUBLAYER )
-      gtk_widget_set_sensitive ( item, true );
-    else
-      gtk_widget_set_sensitive ( item, false );
-
-    // Add separator
-    item = gtk_menu_item_new ();
-    gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
-    gtk_widget_show ( item );
-  }
-
-  if ( vlp && (subtype == VIK_TRW_LAYER_SUBLAYER_WAYPOINTS || subtype == VIK_TRW_LAYER_SUBLAYER_WAYPOINT) )
-  {
-    rv = true;
-    item = gtk_image_menu_item_new_with_mnemonic ( _("_New Waypoint...") );
-    gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_NEW, GTK_ICON_SIZE_MENU) );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_new_wp), pass_along );
-    gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-    gtk_widget_show ( item );
-  }
-
-  if ( subtype == VIK_TRW_LAYER_SUBLAYER_WAYPOINTS )
-  {
-    item = gtk_image_menu_item_new_with_mnemonic ( _("_View All Waypoints") );
-    gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_ZOOM_FIT, GTK_ICON_SIZE_MENU) );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_auto_waypoints_view), pass_along );
-    gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-    gtk_widget_show ( item );
-
-    item = gtk_image_menu_item_new_with_mnemonic ( _("Goto _Waypoint...") );
-    gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_JUMP_TO, GTK_ICON_SIZE_MENU) );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_goto_wp), pass_along );
-    gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-    gtk_widget_show ( item );
-
-    item = gtk_image_menu_item_new_with_mnemonic ( _("Delete _All Waypoints") );
-    gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_REMOVE, GTK_ICON_SIZE_MENU) );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_delete_all_waypoints), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
-    gtk_widget_show ( item );
-
-    item = gtk_image_menu_item_new_with_mnemonic ( _("_Delete Waypoints From Selection...") );
-    gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_INDEX, GTK_ICON_SIZE_MENU) );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_delete_waypoints_from_selection), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
-    gtk_widget_show ( item );
-
-    GtkWidget *vis_submenu = gtk_menu_new ();
-    item = gtk_menu_item_new_with_mnemonic ( _("_Visibility") );
-    gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-    gtk_widget_show ( item );
-    gtk_menu_item_set_submenu (GTK_MENU_ITEM (item), vis_submenu );
-
-    item = gtk_image_menu_item_new_with_mnemonic ( _("_Show All Waypoints") );
-    gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_APPLY, GTK_ICON_SIZE_MENU) );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_waypoints_visibility_on), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(vis_submenu), item );
-    gtk_widget_show ( item );
-
-    item = gtk_image_menu_item_new_with_mnemonic ( _("_Hide All Waypoints") );
-    gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_CLEAR, GTK_ICON_SIZE_MENU) );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_waypoints_visibility_off), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(vis_submenu), item );
-    gtk_widget_show ( item );
-
-    item = gtk_image_menu_item_new_with_mnemonic ( _("_Toggle") );
-    gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_REFRESH, GTK_ICON_SIZE_MENU) );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_waypoints_visibility_toggle), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(vis_submenu), item );
-    gtk_widget_show ( item );
-
-    item = gtk_image_menu_item_new_with_mnemonic ( _("_List Waypoints...") );
-    gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_INDEX, GTK_ICON_SIZE_MENU) );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_waypoint_list_dialog), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
-  }
-
-  if ( subtype == VIK_TRW_LAYER_SUBLAYER_TRACKS )
-  {
-    rv = true;
-
-    if ( l->current_track && !l->current_track->is_route ) {
-      item = gtk_menu_item_new_with_mnemonic ( _("_Finish Track") );
-      g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_finish_track), pass_along );
-      gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-      gtk_widget_show ( item );
-      // Add separator
-      item = gtk_menu_item_new ();
-      gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
-      gtk_widget_show ( item );
-    }
-
-    item = gtk_image_menu_item_new_with_mnemonic ( _("_View All Tracks") );
-    gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_ZOOM_FIT, GTK_ICON_SIZE_MENU) );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_auto_tracks_view), pass_along );
-    gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-    gtk_widget_show ( item );
-
-    item = gtk_image_menu_item_new_with_mnemonic ( _("_New Track") );
-    gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_NEW, GTK_ICON_SIZE_MENU) );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_new_track), pass_along );
-    gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-    gtk_widget_show ( item );
-    // Make it available only when a new track *not* already in progress
-    gtk_widget_set_sensitive ( item, ! (bool)KPOINTER_TO_INT(l->current_track) );
-
-    item = gtk_image_menu_item_new_with_mnemonic ( _("Delete _All Tracks") );
-    gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_REMOVE, GTK_ICON_SIZE_MENU) );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_delete_all_tracks), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
-    gtk_widget_show ( item );
-
-    item = gtk_image_menu_item_new_with_mnemonic ( _("_Delete Tracks From Selection...") );
-    gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_INDEX, GTK_ICON_SIZE_MENU) );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_delete_tracks_from_selection), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
-    gtk_widget_show ( item );
-
-    GtkWidget *vis_submenu = gtk_menu_new ();
-    item = gtk_menu_item_new_with_mnemonic ( _("_Visibility") );
-    gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-    gtk_widget_show ( item );
-    gtk_menu_item_set_submenu (GTK_MENU_ITEM (item), vis_submenu );
-
-    item = gtk_image_menu_item_new_with_mnemonic ( _("_Show All Tracks") );
-    gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_APPLY, GTK_ICON_SIZE_MENU) );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_tracks_visibility_on), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(vis_submenu), item );
-    gtk_widget_show ( item );
-
-    item = gtk_image_menu_item_new_with_mnemonic ( _("_Hide All Tracks") );
-    gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_CLEAR, GTK_ICON_SIZE_MENU) );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_tracks_visibility_off), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(vis_submenu), item );
-    gtk_widget_show ( item );
-
-    item = gtk_image_menu_item_new_with_mnemonic ( _("_Toggle") );
-    gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_REFRESH, GTK_ICON_SIZE_MENU) );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_tracks_visibility_toggle), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(vis_submenu), item );
-
-    item = gtk_image_menu_item_new_with_mnemonic ( _("_List Tracks...") );
-    gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_INDEX, GTK_ICON_SIZE_MENU) );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_track_list_dialog_single), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
-    gtk_widget_show ( item );
-
-    item = gtk_menu_item_new_with_mnemonic ( _("_Statistics") );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_tracks_stats), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
-    gtk_widget_show ( item );
-  }
-
-  if ( subtype == VIK_TRW_LAYER_SUBLAYER_ROUTES )
-  {
-    rv = true;
-
-    if ( l->current_track && l->current_track->is_route ) {
-      item = gtk_menu_item_new_with_mnemonic ( _("_Finish Route") );
-      // Reuse finish track method
-      g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_finish_track), pass_along );
-      gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-      gtk_widget_show ( item );
-      // Add separator
-      item = gtk_menu_item_new ();
-      gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
-      gtk_widget_show ( item );
-    }
-
-    item = gtk_image_menu_item_new_with_mnemonic ( _("_View All Routes") );
-    gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_ZOOM_FIT, GTK_ICON_SIZE_MENU) );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_auto_routes_view), pass_along );
-    gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-    gtk_widget_show ( item );
-
-    item = gtk_image_menu_item_new_with_mnemonic ( _("_New Route") );
-    gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_NEW, GTK_ICON_SIZE_MENU) );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_new_route), pass_along );
-    gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-    gtk_widget_show ( item );
-    // Make it available only when a new track *not* already in progress
-    gtk_widget_set_sensitive ( item, ! (bool)KPOINTER_TO_INT(l->current_track) );
-
-    item = gtk_image_menu_item_new_with_mnemonic ( _("Delete _All Routes") );
-    gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_REMOVE, GTK_ICON_SIZE_MENU) );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_delete_all_routes), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
-    gtk_widget_show ( item );
-
-    item = gtk_image_menu_item_new_with_mnemonic ( _("_Delete Routes From Selection...") );
-    gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_INDEX, GTK_ICON_SIZE_MENU) );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_delete_routes_from_selection), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
-    gtk_widget_show ( item );
-
-    GtkWidget *vis_submenu = gtk_menu_new ();
-    item = gtk_menu_item_new_with_mnemonic ( _("_Visibility") );
-    gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-    gtk_widget_show ( item );
-    gtk_menu_item_set_submenu (GTK_MENU_ITEM (item), vis_submenu );
-
-    item = gtk_image_menu_item_new_with_mnemonic ( _("_Show All Routes") );
-    gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_APPLY, GTK_ICON_SIZE_MENU) );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_routes_visibility_on), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(vis_submenu), item );
-    gtk_widget_show ( item );
-
-    item = gtk_image_menu_item_new_with_mnemonic ( _("_Hide All Routes") );
-    gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_CLEAR, GTK_ICON_SIZE_MENU) );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_routes_visibility_off), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(vis_submenu), item );
-    gtk_widget_show ( item );
-
-    item = gtk_image_menu_item_new_with_mnemonic ( _("_Toggle") );
-    gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_REFRESH, GTK_ICON_SIZE_MENU) );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_routes_visibility_toggle), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(vis_submenu), item );
-
-    item = gtk_image_menu_item_new_with_mnemonic ( _("_List Routes...") );
-    gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_INDEX, GTK_ICON_SIZE_MENU) );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_track_list_dialog_single), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
-
-    gtk_widget_show ( item );
-
-    item = gtk_menu_item_new_with_mnemonic ( _("_Statistics") );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_routes_stats), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
-    gtk_widget_show ( item );
-  }
-
-
-  if ( subtype == VIK_TRW_LAYER_SUBLAYER_WAYPOINTS || subtype == VIK_TRW_LAYER_SUBLAYER_TRACKS || subtype == VIK_TRW_LAYER_SUBLAYER_ROUTES ) {
-    GtkWidget *submenu_sort = gtk_menu_new ();
-    item = gtk_image_menu_item_new_with_mnemonic ( _("_Sort") );
-    gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_REFRESH, GTK_ICON_SIZE_MENU) );
-    gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-    gtk_widget_show ( item );
-    gtk_menu_item_set_submenu (GTK_MENU_ITEM (item), submenu_sort );
-
-    item = gtk_image_menu_item_new_with_mnemonic ( _("Name _Ascending") );
-    gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_SORT_ASCENDING, GTK_ICON_SIZE_MENU) );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_sort_order_a2z), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(submenu_sort), item );
-    gtk_widget_show ( item );
-
-    item = gtk_image_menu_item_new_with_mnemonic ( _("Name _Descending") );
-    gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_SORT_DESCENDING, GTK_ICON_SIZE_MENU) );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_sort_order_z2a), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(submenu_sort), item );
-    gtk_widget_show ( item );
-
-    item = gtk_image_menu_item_new_with_mnemonic ( _("Date Ascending") );
-    gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_SORT_ASCENDING, GTK_ICON_SIZE_MENU) );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_sort_order_timestamp_ascend), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(submenu_sort), item );
-    gtk_widget_show ( item );
-
-    item = gtk_image_menu_item_new_with_mnemonic ( _("Date Descending") );
-    gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_SORT_DESCENDING, GTK_ICON_SIZE_MENU) );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_sort_order_timestamp_descend), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(submenu_sort), item );
-    gtk_widget_show ( item );
-  }
-
-  GtkWidget *upload_submenu = gtk_menu_new ();
-
-  if ( subtype == VIK_TRW_LAYER_SUBLAYER_TRACK || subtype == VIK_TRW_LAYER_SUBLAYER_ROUTE )
-  {
-    item = gtk_menu_item_new ();
-    gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
-    gtk_widget_show ( item );
-
-    if ( l->current_track && subtype == VIK_TRW_LAYER_SUBLAYER_TRACK && !l->current_track->is_route )
-      item = gtk_menu_item_new_with_mnemonic ( _("_Finish Track") );
-    if ( l->current_track && subtype == VIK_TRW_LAYER_SUBLAYER_ROUTE && l->current_track->is_route )
-      item = gtk_menu_item_new_with_mnemonic ( _("_Finish Route") );
-    if ( l->current_track ) {
-      g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_finish_track), pass_along );
-      gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-      gtk_widget_show ( item );
-
-      // Add separator
-      item = gtk_menu_item_new ();
-      gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
-      gtk_widget_show ( item );
-    }
-
-    if ( subtype == VIK_TRW_LAYER_SUBLAYER_TRACK )
-      item = gtk_image_menu_item_new_with_mnemonic ( _("_View Track") );
-    else
-      item = gtk_image_menu_item_new_with_mnemonic ( _("_View Route") );
-    gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_ZOOM_FIT, GTK_ICON_SIZE_MENU) );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_auto_track_view), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
-    gtk_widget_show ( item );
-
-    item = gtk_menu_item_new_with_mnemonic ( _("_Statistics") );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_track_statistics), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
-    gtk_widget_show ( item );
-
-    GtkWidget *goto_submenu;
-    goto_submenu = gtk_menu_new ();
-    item = gtk_image_menu_item_new_with_mnemonic ( _("_Goto") );
-    gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_JUMP_TO, GTK_ICON_SIZE_MENU) );
-    gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-    gtk_widget_show ( item );
-    gtk_menu_item_set_submenu (GTK_MENU_ITEM (item), goto_submenu );
-
-    item = gtk_image_menu_item_new_with_mnemonic ( _("_Startpoint") );
-    gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_GOTO_FIRST, GTK_ICON_SIZE_MENU) );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_goto_track_startpoint), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(goto_submenu), item );
-    gtk_widget_show ( item );
-
-    item = gtk_image_menu_item_new_with_mnemonic ( _("\"_Center\"") );
-    gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_JUMP_TO, GTK_ICON_SIZE_MENU) );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_goto_track_center), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(goto_submenu), item );
-    gtk_widget_show ( item );
-
-    item = gtk_image_menu_item_new_with_mnemonic ( _("_Endpoint") );
-    gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_GOTO_LAST, GTK_ICON_SIZE_MENU) );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_goto_track_endpoint), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(goto_submenu), item );
-    gtk_widget_show ( item );
-
-    item = gtk_image_menu_item_new_with_mnemonic ( _("_Highest Altitude") );
-    gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_GOTO_TOP, GTK_ICON_SIZE_MENU) );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_goto_track_max_alt), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(goto_submenu), item );
-    gtk_widget_show ( item );
-
-    item = gtk_image_menu_item_new_with_mnemonic ( _("_Lowest Altitude") );
-    gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_GOTO_BOTTOM, GTK_ICON_SIZE_MENU) );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_goto_track_min_alt), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(goto_submenu), item );
-    gtk_widget_show ( item );
-
-    // Routes don't have speeds
-    if ( subtype == VIK_TRW_LAYER_SUBLAYER_TRACK ) {
-      item = gtk_image_menu_item_new_with_mnemonic ( _("_Maximum Speed") );
-      gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_MEDIA_FORWARD, GTK_ICON_SIZE_MENU) );
-      g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_goto_track_max_speed), pass_along );
-      gtk_menu_shell_append ( GTK_MENU_SHELL(goto_submenu), item );
-      gtk_widget_show ( item );
-    }
-
-    GtkWidget *combine_submenu;
-    combine_submenu = gtk_menu_new ();
-    item = gtk_image_menu_item_new_with_mnemonic ( _("Co_mbine") );
-    gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_CONNECT, GTK_ICON_SIZE_MENU) );
-    gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-    gtk_widget_show ( item );
-    gtk_menu_item_set_submenu (GTK_MENU_ITEM (item), combine_submenu );
-
-    // Routes don't have times or segments...
-    if ( subtype == VIK_TRW_LAYER_SUBLAYER_TRACK ) {
-      item = gtk_menu_item_new_with_mnemonic ( _("_Merge By Time...") );
-      g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_merge_by_timestamp), pass_along );
-      gtk_menu_shell_append ( GTK_MENU_SHELL(combine_submenu), item );
-      gtk_widget_show ( item );
-
-      item = gtk_menu_item_new_with_mnemonic ( _("Merge _Segments") );
-      g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_merge_by_segment), pass_along );
-      gtk_menu_shell_append ( GTK_MENU_SHELL(combine_submenu), item );
-      gtk_widget_show ( item );
-    }
-
-    item = gtk_menu_item_new_with_mnemonic ( _("Merge _With Other Tracks...") );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_merge_with_other), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(combine_submenu), item );
-    gtk_widget_show ( item );
-
-    if ( subtype == VIK_TRW_LAYER_SUBLAYER_TRACK )
-      item = gtk_menu_item_new_with_mnemonic ( _("_Append Track...") );
-    else
-      item = gtk_menu_item_new_with_mnemonic ( _("_Append Route...") );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_append_track), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(combine_submenu), item );
-    gtk_widget_show ( item );
-
-    if ( subtype == VIK_TRW_LAYER_SUBLAYER_TRACK )
-      item = gtk_menu_item_new_with_mnemonic ( _("Append _Route...") );
-    else
-      item = gtk_menu_item_new_with_mnemonic ( _("Append _Track...") );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_append_other), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(combine_submenu), item );
-    gtk_widget_show ( item );
-
-    GtkWidget *split_submenu;
-    split_submenu = gtk_menu_new ();
-    item = gtk_image_menu_item_new_with_mnemonic ( _("_Split") );
-    gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_DISCONNECT, GTK_ICON_SIZE_MENU) );
-    gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-    gtk_widget_show ( item );
-    gtk_menu_item_set_submenu (GTK_MENU_ITEM (item), split_submenu );
-
-    // Routes don't have times or segments...
-    if ( subtype == VIK_TRW_LAYER_SUBLAYER_TRACK ) {
-      item = gtk_menu_item_new_with_mnemonic ( _("_Split By Time...") );
-      g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_split_by_timestamp), pass_along );
-      gtk_menu_shell_append ( GTK_MENU_SHELL(split_submenu), item );
-      gtk_widget_show ( item );
-
-      // ATM always enable this entry - don't want to have to analyse the track before displaying the menu - to keep the menu speedy
-      item = gtk_menu_item_new_with_mnemonic ( _("Split Se_gments") );
-      g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_split_segments), pass_along );
-      gtk_menu_shell_append ( GTK_MENU_SHELL(split_submenu), item );
-      gtk_widget_show ( item );
-    }
-
-    item = gtk_menu_item_new_with_mnemonic ( _("Split By _Number of Points...") );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_split_by_n_points), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(split_submenu), item );
-    gtk_widget_show ( item );
-
-    item = gtk_menu_item_new_with_mnemonic ( _("Split at _Trackpoint") );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_split_at_trackpoint), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(split_submenu), item );
-    gtk_widget_show ( item );
-    // Make it available only when a trackpoint is selected.
-    gtk_widget_set_sensitive ( item, (bool)KPOINTER_TO_INT(l->trw->current_tpl) );
-
-    GtkWidget *insert_submenu = gtk_menu_new ();
-    item = gtk_image_menu_item_new_with_mnemonic ( _("_Insert Points") );
-    gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_ADD, GTK_ICON_SIZE_MENU) );
-    gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-    gtk_widget_show ( item );
-    gtk_menu_item_set_submenu (GTK_MENU_ITEM (item), insert_submenu );
-
-    item = gtk_menu_item_new_with_mnemonic ( _("Insert Point _Before Selected Point") );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_insert_point_before), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(insert_submenu), item );
-    gtk_widget_show ( item );
-    // Make it available only when a point is selected
-    gtk_widget_set_sensitive ( item, (bool)KPOINTER_TO_INT(l->trw->current_tpl) );
-
-    item = gtk_menu_item_new_with_mnemonic ( _("Insert Point _After Selected Point") );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_insert_point_after), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(insert_submenu), item );
-    gtk_widget_show ( item );
-    // Make it available only when a point is selected
-    gtk_widget_set_sensitive ( item, (bool)KPOINTER_TO_INT(l->trw->current_tpl) );
-
-    GtkWidget *delete_submenu;
-    delete_submenu = gtk_menu_new ();
-    item = gtk_image_menu_item_new_with_mnemonic ( _("Delete Poi_nts") );
-    gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_DELETE, GTK_ICON_SIZE_MENU) );
-    gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-    gtk_widget_show ( item );
-    gtk_menu_item_set_submenu (GTK_MENU_ITEM (item), delete_submenu );
-
-    item = gtk_image_menu_item_new_with_mnemonic ( _("Delete _Selected Point") );
-    gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_DELETE, GTK_ICON_SIZE_MENU) );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_delete_point_selected), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(delete_submenu), item );
-    gtk_widget_show ( item );
-    // Make it available only when a point is selected
-    gtk_widget_set_sensitive ( item, (bool)KPOINTER_TO_INT(l->trw->current_tpl) );
-
-    item = gtk_menu_item_new_with_mnemonic ( _("Delete Points With The Same _Position") );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_delete_points_same_position), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(delete_submenu), item );
-    gtk_widget_show ( item );
-
-    item = gtk_menu_item_new_with_mnemonic ( _("Delete Points With The Same _Time") );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_delete_points_same_time), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(delete_submenu), item );
-    gtk_widget_show ( item );
-
-    GtkWidget *transform_submenu;
-    transform_submenu = gtk_menu_new ();
-    item = gtk_image_menu_item_new_with_mnemonic ( _("_Transform") );
-    gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_CONVERT, GTK_ICON_SIZE_MENU) );
-    gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-    gtk_widget_show ( item );
-    gtk_menu_item_set_submenu (GTK_MENU_ITEM (item), transform_submenu );
-
-    GtkWidget *dem_submenu;
-    dem_submenu = gtk_menu_new ();
-    item = gtk_image_menu_item_new_with_mnemonic ( _("_Apply DEM Data") );
-    gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock ("vik-icon-DEM Download", GTK_ICON_SIZE_MENU) ); // Own icon - see stock_icons in vikwindow.c
-    gtk_menu_shell_append ( GTK_MENU_SHELL(transform_submenu), item );
-    gtk_menu_item_set_submenu (GTK_MENU_ITEM (item), dem_submenu );
-
-    item = gtk_image_menu_item_new_with_mnemonic ( _("_Overwrite") );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_apply_dem_data_all), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(dem_submenu), item );
-    gtk_widget_set_tooltip_text (item, _("Overwrite any existing elevation values with DEM values"));
-    gtk_widget_show ( item );
-
-    item = gtk_image_menu_item_new_with_mnemonic ( _("_Keep Existing") );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_apply_dem_data_only_missing), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(dem_submenu), item );
-    gtk_widget_set_tooltip_text (item, _("Keep existing elevation values, only attempt for missing values"));
-    gtk_widget_show ( item );
-
-    GtkWidget *smooth_submenu;
-    smooth_submenu = gtk_menu_new ();
-    item = gtk_menu_item_new_with_mnemonic ( _("_Smooth Missing Elevation Data") );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(transform_submenu), item );
-    gtk_widget_show ( item );
-    gtk_menu_item_set_submenu (GTK_MENU_ITEM (item), smooth_submenu );
-
-    item = gtk_image_menu_item_new_with_mnemonic ( _("_Interpolated") );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_missing_elevation_data_interp), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(smooth_submenu), item );
-    gtk_widget_set_tooltip_text (item, _("Interpolate between known elevation values to derive values for the missing elevations"));
-    gtk_widget_show ( item );
-
-    item = gtk_image_menu_item_new_with_mnemonic ( _("_Flat") );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_missing_elevation_data_flat), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(smooth_submenu), item );
-    gtk_widget_set_tooltip_text (item, _("Set unknown elevation values to the last known value"));
-    gtk_widget_show ( item );
-
-    if ( subtype == VIK_TRW_LAYER_SUBLAYER_TRACK )
-      item = gtk_image_menu_item_new_with_mnemonic ( _("C_onvert to a Route") );
-    else
-      item = gtk_image_menu_item_new_with_mnemonic ( _("C_onvert to a Track") );
-    gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_CONVERT, GTK_ICON_SIZE_MENU) );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_convert_track_route), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(transform_submenu), item );
-    gtk_widget_show ( item );
-
-    // Routes don't have timestamps - so these are only available for tracks
-    if ( subtype == VIK_TRW_LAYER_SUBLAYER_TRACK ) {
-      item = gtk_image_menu_item_new_with_mnemonic ( _("_Anonymize Times") );
-      g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_anonymize_times), pass_along );
-      gtk_menu_shell_append ( GTK_MENU_SHELL(transform_submenu), item );
-      gtk_widget_set_tooltip_text (item, _("Shift timestamps to a relative offset from 1901-01-01"));
-      gtk_widget_show ( item );
-
-      item = gtk_image_menu_item_new_with_mnemonic ( _("_Interpolate Times") );
-      g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_interpolate_times), pass_along );
-      gtk_menu_shell_append ( GTK_MENU_SHELL(transform_submenu), item );
-      gtk_widget_set_tooltip_text (item, _("Reset trackpoint timestamps between the first and last points such that track is traveled at equal speed"));
-      gtk_widget_show ( item );
-    }
-
-    if ( subtype == VIK_TRW_LAYER_SUBLAYER_TRACK )
-      item = gtk_image_menu_item_new_with_mnemonic ( _("_Reverse Track") );
-    else
-      item = gtk_image_menu_item_new_with_mnemonic ( _("_Reverse Route") );
-    gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_GO_BACK, GTK_ICON_SIZE_MENU) );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_reverse), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
-    gtk_widget_show ( item );
-
-    if ( subtype == VIK_TRW_LAYER_SUBLAYER_ROUTE ) {
-      item = gtk_image_menu_item_new_with_mnemonic ( _("Refine Route...") );
-      gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_FIND, GTK_ICON_SIZE_MENU) );
-      g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_route_refine), pass_along );
-      gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
-      gtk_widget_show ( item );
-    }
-
-    /* ATM This function is only available via the layers panel, due to the method in finding out the maps in use */
-    if ( vlp ) {
-      if ( subtype == VIK_TRW_LAYER_SUBLAYER_TRACK )
-        item = gtk_image_menu_item_new_with_mnemonic ( _("Down_load Maps Along Track...") );
-      else
-        item = gtk_image_menu_item_new_with_mnemonic ( _("Down_load Maps Along Route...") );
-      gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock ("vik-icon-Maps Download", GTK_ICON_SIZE_MENU) ); // Own icon - see stock_icons in vikwindow.c
-      g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_download_map_along_track_cb), pass_along );
-      gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
-      gtk_widget_show ( item );
-    }
-
-    if ( subtype == VIK_TRW_LAYER_SUBLAYER_TRACK )
-      item = gtk_image_menu_item_new_with_mnemonic ( _("_Export Track as GPX...") );
-    else
-      item = gtk_image_menu_item_new_with_mnemonic ( _("_Export Route as GPX...") );
-    gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_HARDDISK, GTK_ICON_SIZE_MENU) );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_export_gpx_track), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
-    gtk_widget_show ( item );
-
-    if ( subtype == VIK_TRW_LAYER_SUBLAYER_TRACK )
-      item = gtk_image_menu_item_new_with_mnemonic ( _("E_xtend Track End") );
-    else
-      item = gtk_image_menu_item_new_with_mnemonic ( _("E_xtend Route End") );
-    gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_ADD, GTK_ICON_SIZE_MENU) );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_extend_track_end), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
-    gtk_widget_show ( item );
-
-    if ( subtype == VIK_TRW_LAYER_SUBLAYER_ROUTE ) {
-      item = gtk_image_menu_item_new_with_mnemonic ( _("Extend _Using Route Finder") );
-      gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock ("vik-icon-Route Finder", GTK_ICON_SIZE_MENU) ); // Own icon - see stock_icons in vikwindow.c
-      g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_extend_track_end_route_finder), pass_along );
-      gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
-      gtk_widget_show ( item );
-    }
-
-    // ATM can't upload a single waypoint but can do waypoints to a GPS
-    if ( subtype != VIK_TRW_LAYER_SUBLAYER_WAYPOINT ) {
-      item = gtk_image_menu_item_new_with_mnemonic ( _("_Upload") );
-      gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_GO_UP, GTK_ICON_SIZE_MENU) );
-      gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-      gtk_widget_show ( item );
-      gtk_menu_item_set_submenu (GTK_MENU_ITEM (item), upload_submenu );
-
-      item = gtk_image_menu_item_new_with_mnemonic ( _("_Upload to GPS...") );
-      gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_GO_FORWARD, GTK_ICON_SIZE_MENU) );
-      g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_gps_upload_any), pass_along );
-      gtk_menu_shell_append ( GTK_MENU_SHELL(upload_submenu), item );
-      gtk_widget_show ( item );
-    }
-  }
-
-  GtkWidget *external_submenu = create_external_submenu ( menu );
-
-  // These are only made available if a suitable program is installed
-  if ( (have_astro_program || have_diary_program) &&
-       (subtype == VIK_TRW_LAYER_SUBLAYER_TRACK || subtype == VIK_TRW_LAYER_SUBLAYER_WAYPOINT) ) {
-
-    if ( have_diary_program ) {
-      item = gtk_image_menu_item_new_with_mnemonic ( _("_Diary") );
-      gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_SPELL_CHECK, GTK_ICON_SIZE_MENU) );
-      g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_diary), pass_along );
-      gtk_menu_shell_append ( GTK_MENU_SHELL(external_submenu), item );
-      gtk_widget_set_tooltip_text (item, _("Open diary program at this date"));
-      gtk_widget_show ( item );
-    }
-
-    if ( have_astro_program ) {
-      item = gtk_image_menu_item_new_with_mnemonic ( _("_Astronomy") );
-      g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_astro), pass_along );
-      gtk_menu_shell_append ( GTK_MENU_SHELL(external_submenu), item );
-      gtk_widget_set_tooltip_text (item, _("Open astronomy program at this date and location"));
-      gtk_widget_show ( item );
-    }
-  }
-
-  if ( l->trw->current_tpl || l->trw->current_wp ) {
-    // For the selected point
-    VikCoord *vc;
-    if ( l->trw->current_tpl )
-      vc = &(((Trackpoint *) l->trw->current_tpl->data)->coord);
-    else
-      vc = &(l->trw->current_wp->coord);
-    vik_ext_tools_add_menu_items_to_menu ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(l)), GTK_MENU (external_submenu), vc );
-  }
-  else {
-    // Otherwise for the selected sublayer
-    // TODO: Should use selected items centre - rather than implicitly using the current viewport
-    vik_ext_tools_add_menu_items_to_menu ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(l)), GTK_MENU (external_submenu), NULL );
-  }
-
-
-#ifdef VIK_CONFIG_GOOGLE
-  if ( subtype == VIK_TRW_LAYER_SUBLAYER_ROUTE &&  ( l->trw->is_valid_google_route((sg_uid_t) ((long) sublayer)) ))
-  {
-    item = gtk_image_menu_item_new_with_mnemonic ( _("_View Google Directions") );
-    gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_NETWORK, GTK_ICON_SIZE_MENU) );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_google_route_webpage), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
-    gtk_widget_show ( item );
-  }
-#endif
-
-  // Some things aren't usable with routes
-  if ( subtype == VIK_TRW_LAYER_SUBLAYER_TRACK ) {
-#ifdef VIK_CONFIG_OPENSTREETMAP
-    item = gtk_image_menu_item_new_with_mnemonic ( _("Upload to _OSM...") );
-    // Convert internal pointer into track
-    sg_uid_t uid = (sg_uid_t) ((long) sublayer);
-    pass_along[MA_MISC] = l->trw->tracks.at(uid);
-    gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_GO_UP, GTK_ICON_SIZE_MENU) );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_osm_traces_upload_track_cb), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(upload_submenu), item );
-    gtk_widget_show ( item );
-#endif
-
-    // Currently filter with functions all use shellcommands and thus don't work in Windows
-#ifndef WINDOWS
-    item = gtk_image_menu_item_new_with_mnemonic ( _("Use with _Filter") );
-    gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_INDEX, GTK_ICON_SIZE_MENU) );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_track_use_with_filter), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
-    gtk_widget_show ( item );
-#endif
-
-    /* ATM This function is only available via the layers panel, due to needing a vlp */
-    if ( vlp ) {
-      sg_uid_t uid = (sg_uid_t) ((long) sublayer);
-      VikLayersPanel * vlp_ = VIK_LAYERS_PANEL(vlp);
-      item = a_acquire_track_menu ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(l)), (VikLayersPanel *) vlp,
-                                    (VikViewport *) vlp_->panel_ref->get_viewport()->vvp,
-                                    l->trw->tracks.at(uid));
-      if ( item ) {
-        gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-        gtk_widget_show ( item );
-      }
-    }
-
-#ifdef VIK_CONFIG_GEOTAG
-    item = gtk_menu_item_new_with_mnemonic ( _("Geotag _Images...") );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_geotagging_track), pass_along );
-    gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-    gtk_widget_show ( item );
-#endif
-  }
-
-  if ( subtype == VIK_TRW_LAYER_SUBLAYER_TRACK || subtype == VIK_TRW_LAYER_SUBLAYER_ROUTE ) {
-    // Only show on viewport popmenu when a trackpoint is selected
-    if ( ! vlp && l->trw->current_tpl ) {
-      // Add separator
-      item = gtk_menu_item_new ();
-      gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
-      gtk_widget_show ( item );
-
-      item = gtk_image_menu_item_new_with_mnemonic ( _("_Edit Trackpoint") );
-      gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_PROPERTIES, GTK_ICON_SIZE_MENU) );
-      g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_edit_trackpoint), pass_along );
-      gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
-      gtk_widget_show ( item );
-    }
-  }
-
-  if ( subtype == VIK_TRW_LAYER_SUBLAYER_WAYPOINTS || subtype == VIK_TRW_LAYER_SUBLAYER_WAYPOINT ) {
-    GtkWidget *transform_submenu;
-    transform_submenu = gtk_menu_new ();
-    item = gtk_image_menu_item_new_with_mnemonic ( _("_Transform") );
-    gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_CONVERT, GTK_ICON_SIZE_MENU) );
-    gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-    gtk_widget_show ( item );
-    gtk_menu_item_set_submenu (GTK_MENU_ITEM (item), transform_submenu );
-
-    GtkWidget *dem_submenu;
-    dem_submenu = gtk_menu_new ();
-    item = gtk_image_menu_item_new_with_mnemonic ( _("_Apply DEM Data") );
-    gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock ("vik-icon-DEM Download", GTK_ICON_SIZE_MENU) ); // Own icon - see stock_icons in vikwindow.c
-    gtk_menu_shell_append ( GTK_MENU_SHELL(transform_submenu), item );
-    gtk_menu_item_set_submenu (GTK_MENU_ITEM (item), dem_submenu );
-
-    item = gtk_image_menu_item_new_with_mnemonic ( _("_Overwrite") );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_apply_dem_data_wpt_all), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(dem_submenu), item );
-    gtk_widget_set_tooltip_text (item, _("Overwrite any existing elevation values with DEM values"));
-    gtk_widget_show ( item );
-
-    item = gtk_image_menu_item_new_with_mnemonic ( _("_Keep Existing") );
-    g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_apply_dem_data_wpt_only_missing), pass_along );
-    gtk_menu_shell_append ( GTK_MENU_SHELL(dem_submenu), item );
-    gtk_widget_set_tooltip_text (item, _("Keep existing elevation values, only attempt for missing values"));
-    gtk_widget_show ( item );
-  }
-
-  gtk_widget_show_all ( GTK_WIDGET(menu) );
-
-  return rv;
-}
 
 
 
@@ -9441,8 +8111,7 @@ static void * tool_show_picture_create(VikWindow *vw, Viewport * viewport)
 
 
 
-
-static void trw_layer_show_picture ( menu_array_sublayer values )
+void trw_layer_show_picture ( menu_array_sublayer values )
 {
   /* thanks to the Gaim people for showing me ShellExecute and g_spawn_command_line_async */
 #ifdef WINDOWS
@@ -10089,7 +8758,7 @@ void vik_track_download_map(Track *tr, VikMapsLayer *vml, Viewport * viewport, d
   }
 }
 
-static void trw_layer_download_map_along_track_cb ( menu_array_sublayer values )
+void trw_layer_download_map_along_track_cb ( menu_array_sublayer values )
 {
   VikMapsLayer *vml;
   int selected_map;
@@ -10243,7 +8912,7 @@ static GList* trw_layer_create_track_list_both ( VikLayer *vl, void * user_data 
   return vtl->trw->build_track_list_t(tracks);
 }
 
-static void trw_layer_track_list_dialog_single ( menu_array_sublayer values )
+void trw_layer_track_list_dialog_single ( menu_array_sublayer values )
 {
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
 
@@ -10257,7 +8926,7 @@ static void trw_layer_track_list_dialog_single ( menu_array_sublayer values )
   free( title );
 }
 
-static void trw_layer_track_list_dialog ( menu_array_layer values )
+void trw_layer_track_list_dialog ( menu_array_layer values )
 {
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
 
@@ -10266,7 +8935,7 @@ static void trw_layer_track_list_dialog ( menu_array_layer values )
   free( title );
 }
 
-static void trw_layer_waypoint_list_dialog ( menu_array_layer values )
+void trw_layer_waypoint_list_dialog ( menu_array_layer values )
 {
   VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
 

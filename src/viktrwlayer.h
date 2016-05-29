@@ -334,6 +334,12 @@ namespace SlavGPS {
 using namespace SlavGPS;
 
 
+
+typedef void * menu_array_layer[2];
+typedef void * menu_array_sublayer[8];
+
+
+
 // See http://developer.gnome.org/pango/stable/PangoMarkupFormat.html
 typedef enum {
 	FS_XX_SMALL = 0, // 'xx-small'
@@ -550,6 +556,144 @@ int check_tracks_for_same_name ( gconstpointer aa, gconstpointer bb, void * udat
 
 
 #define VIK_SETTINGS_LIST_DATE_FORMAT "list_date_format"
+
+
+
+
+/* This needs to be visible in viktrwlayer_ui.h. */
+void trw_layer_goto_track_startpoint(menu_array_sublayer values);
+void trw_layer_goto_track_endpoint(menu_array_sublayer values);
+void trw_layer_goto_track_max_speed(menu_array_sublayer values);
+void trw_layer_goto_track_max_alt(menu_array_sublayer values);
+void trw_layer_goto_track_min_alt(menu_array_sublayer values);
+void trw_layer_goto_track_center(menu_array_sublayer values);
+void trw_layer_merge_by_segment(menu_array_sublayer values);
+void trw_layer_merge_by_timestamp(menu_array_sublayer values);
+void trw_layer_merge_with_other(menu_array_sublayer values);
+void trw_layer_append_track(menu_array_sublayer values);
+void trw_layer_split_by_timestamp(menu_array_sublayer values);
+void trw_layer_split_by_n_points(menu_array_sublayer values);
+void trw_layer_split_at_trackpoint(menu_array_sublayer values);
+void trw_layer_split_segments(menu_array_sublayer values);
+void trw_layer_delete_point_selected(menu_array_sublayer values);
+void trw_layer_delete_points_same_position(menu_array_sublayer values);
+void trw_layer_delete_points_same_time(menu_array_sublayer values);
+void trw_layer_reverse(menu_array_sublayer values);
+void trw_layer_download_map_along_track_cb(menu_array_sublayer values);
+void trw_layer_edit_trackpoint(menu_array_sublayer values);
+void trw_layer_show_picture(menu_array_sublayer values);
+void trw_layer_gps_upload_any(menu_array_sublayer values);
+void trw_layer_centerize(menu_array_layer values);
+void trw_layer_auto_view(menu_array_layer values);
+void trw_layer_goto_wp(menu_array_layer values);
+void trw_layer_new_wp(menu_array_layer values);
+void trw_layer_new_track(menu_array_layer values);
+void trw_layer_new_route(menu_array_layer values);
+void trw_layer_finish_track(menu_array_layer values);
+void trw_layer_auto_waypoints_view(menu_array_layer values);
+void trw_layer_auto_tracks_view(menu_array_layer values);
+void trw_layer_delete_all_tracks(menu_array_layer values);
+void trw_layer_delete_tracks_from_selection(menu_array_layer values);
+void trw_layer_delete_all_waypoints(menu_array_layer values);
+void trw_layer_delete_waypoints_from_selection(menu_array_layer values);
+void trw_layer_new_wikipedia_wp_viewport(menu_array_layer values);
+void trw_layer_new_wikipedia_wp_layer(menu_array_layer values);
+#ifdef VIK_CONFIG_GEOTAG
+void trw_layer_geotagging_waypoint_mtime_keep(menu_array_sublayer values);
+void trw_layer_geotagging_waypoint_mtime_update(menu_array_sublayer values);
+void trw_layer_geotagging_track(menu_array_sublayer values);
+void trw_layer_geotagging(menu_array_layer values);
+#endif
+void trw_layer_acquire_gps_cb(menu_array_layer values);
+void trw_layer_acquire_routing_cb(menu_array_layer values);
+void trw_layer_acquire_url_cb(menu_array_layer values);
+#ifdef VIK_CONFIG_OPENSTREETMAP
+void trw_layer_acquire_osm_cb(menu_array_layer values);
+void trw_layer_acquire_osm_my_traces_cb(menu_array_layer values);
+#endif
+#ifdef VIK_CONFIG_GEOCACHES
+void trw_layer_acquire_geocache_cb(menu_array_layer values);
+#endif
+#ifdef VIK_CONFIG_GEOTAG
+void trw_layer_acquire_geotagged_cb(menu_array_layer values);
+#endif
+void trw_layer_acquire_file_cb(menu_array_layer values);
+void trw_layer_gps_upload(menu_array_layer values);
+void trw_layer_track_list_dialog_single(menu_array_sublayer values);
+void trw_layer_track_list_dialog(menu_array_layer values);
+void trw_layer_waypoint_list_dialog(menu_array_layer values);
+// Specific route versions:
+//  Most track handling functions can handle operating on the route list
+//  However these ones are easier in separate functions
+void trw_layer_auto_routes_view(menu_array_layer values);
+void trw_layer_delete_all_routes(menu_array_layer values);
+void trw_layer_delete_routes_from_selection(menu_array_layer values);
+/* pop-up items */
+void trw_layer_properties_item(void * pass_along[7]); //TODO??
+void trw_layer_goto_waypoint(menu_array_sublayer values);
+void trw_layer_waypoint_gc_webpage(menu_array_sublayer values);
+void trw_layer_waypoint_webpage(menu_array_sublayer values);
+void trw_layer_paste_item_cb(menu_array_sublayer values);
+void trw_layer_export_gpspoint(menu_array_layer values);
+void trw_layer_export_gpsmapper(menu_array_layer values);
+void trw_layer_export_gpx(menu_array_layer values);
+void trw_layer_export_kml(menu_array_layer values);
+void trw_layer_export_geojson(menu_array_layer values);
+void trw_layer_export_babel(void * layer_and_vlp[2]);
+void trw_layer_export_external_gpx_1(menu_array_layer values);
+void trw_layer_export_external_gpx_2(menu_array_layer values);
+void trw_layer_export_gpx_track(menu_array_sublayer values);
+void trw_layer_geotagging_waypoint(menu_array_sublayer values);
+void trw_layer_osm_traces_upload_cb(menu_array_layer values);
+void trw_layer_osm_traces_upload_track_cb(menu_array_sublayer values);
+GtkWidget* create_external_submenu(GtkMenu *menu);
+void trw_layer_track_statistics(menu_array_sublayer values);
+void trw_layer_convert_track_route(menu_array_sublayer values);
+void trw_layer_anonymize_times(menu_array_sublayer values);
+void trw_layer_interpolate_times(menu_array_sublayer values);
+void trw_layer_extend_track_end(menu_array_sublayer values);
+void trw_layer_extend_track_end_route_finder(menu_array_sublayer values);
+void trw_layer_apply_dem_data_all(menu_array_sublayer values);
+void trw_layer_apply_dem_data_only_missing(menu_array_sublayer values);
+void trw_layer_missing_elevation_data_interp(menu_array_sublayer values);
+void trw_layer_missing_elevation_data_flat(menu_array_sublayer values);
+void trw_layer_apply_dem_data_wpt_all(menu_array_sublayer values);
+void trw_layer_apply_dem_data_wpt_only_missing(menu_array_sublayer values);
+void trw_layer_auto_track_view(menu_array_sublayer values);
+void trw_layer_route_refine(menu_array_sublayer values);
+void trw_layer_append_other(menu_array_sublayer values);
+void trw_layer_insert_point_after(menu_array_sublayer values);
+void trw_layer_insert_point_before(menu_array_sublayer values);
+void trw_layer_diary(menu_array_sublayer values);
+void trw_layer_astro(menu_array_sublayer values);
+void trw_layer_sort_order_a2z(menu_array_sublayer values);
+void trw_layer_sort_order_z2a(menu_array_sublayer values);
+void trw_layer_sort_order_timestamp_ascend(menu_array_sublayer values);
+void trw_layer_sort_order_timestamp_descend(menu_array_sublayer values);
+void trw_layer_waypoints_visibility_off(menu_array_layer values);
+void trw_layer_waypoints_visibility_on(menu_array_layer values);
+void trw_layer_waypoints_visibility_toggle(menu_array_layer values);
+void trw_layer_tracks_visibility_off(menu_array_layer values);
+void trw_layer_tracks_visibility_on(menu_array_layer values);
+void trw_layer_tracks_visibility_toggle(menu_array_layer values);
+void trw_layer_routes_visibility_off(menu_array_layer values);
+void trw_layer_routes_visibility_on(menu_array_layer values);
+void trw_layer_routes_visibility_toggle(menu_array_layer values);
+void trw_layer_tracks_stats(menu_array_layer values);
+void trw_layer_routes_stats(menu_array_layer values);
+bool is_valid_geocache_name(char *str);
+#ifndef WINDOWS
+void trw_layer_track_use_with_filter(menu_array_sublayer values);
+#endif
+void trw_layer_google_route_webpage(menu_array_sublayer values);
+void trw_layer_delete_item(menu_array_sublayer values);
+void trw_layer_copy_item_cb(menu_array_sublayer values);
+void trw_layer_cut_item_cb(menu_array_sublayer values);
+
+
+
+
+
 
 #ifdef __cplusplus
 }
