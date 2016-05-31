@@ -23,6 +23,7 @@
 #define _VIKING_DEMLAYER_H
 
 #include "viklayer.h"
+#include "dem.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -70,7 +71,22 @@ namespace SlavGPS {
 		char const * tooltip();
 		void marshall(uint8_t ** data, int * len);
 		void free_();
+		bool download_release(GdkEventButton * event, Viewport * viewport);
+		bool add_file(char const * filename);
+		void draw_dem(Viewport * viewport, VikDEM * dem);
 
+
+		GdkGC ** gcs;
+		GdkGC ** gcsgradient;
+		GList * files;
+		double min_elev;
+		double max_elev;
+		GdkColor color;
+		unsigned int source;
+		unsigned int dem_type;
+
+		// right click menu only stuff - similar to mapslayer
+		GtkMenu * right_click_menu;
 	};
 
 

@@ -210,17 +210,6 @@ VikLayerInterface vik_dem_layer_interface = {
 
 struct _VikDEMLayer {
 	VikLayer vl;
-	GdkGC **gcs;
-	GdkGC **gcsgradient;
-	GList *files;
-	double min_elev;
-	double max_elev;
-	GdkColor color;
-	unsigned int source;
-	unsigned int type;
-
-	// right click menu only stuff - similar to mapslayer
-	GtkMenu *right_click_menu;
 };
 
 GType vik_dem_layer_get_type()
@@ -250,7 +239,7 @@ char const * LayerDEM::tooltip()
 	static char tmp_buf[100];
 	VikDEMLayer * vdl = (VikDEMLayer *) this->vl;
 
-	snprintf(tmp_buf, sizeof(tmp_buf), _("Number of files: %d"), g_list_length(vdl->files));
+	snprintf(tmp_buf, sizeof(tmp_buf), _("Number of files: %d"), g_list_length(this->files));
 	return tmp_buf;
 }
 
@@ -263,37 +252,38 @@ void LayerDEM::marshall(uint8_t **data, int *len)
 static VikDEMLayer * dem_layer_unmarshall(uint8_t *data, int len, Viewport * viewport)
 {
 	VikDEMLayer *rv = dem_layer_new(viewport);
+	LayerDEM * layer = (LayerDEM *) ((VikLayer *) rv)->layer;
 	int i;
 
 	/* TODO: share GCS between layers */
 	for (i = 0; i < DEM_N_HEIGHT_COLORS; i++) {
 		if (i == 0) {
-			rv->gcs[i] = viewport->new_gc_from_color(&(rv->color), UNUSED_LINE_THICKNESS);
+			layer->gcs[i] = viewport->new_gc_from_color(&layer->color, UNUSED_LINE_THICKNESS);
 		} else {
-			rv->gcs[i] = viewport->new_gc(dem_height_colors[i], UNUSED_LINE_THICKNESS);
+			layer->gcs[i] = viewport->new_gc(dem_height_colors[i], UNUSED_LINE_THICKNESS);
 		}
 	}
 	for (i = 0; i < DEM_N_GRADIENT_COLORS; i++) {
-		rv->gcsgradient[i] = viewport->new_gc(dem_gradient_colors[i], UNUSED_LINE_THICKNESS);
+		layer->gcsgradient[i] = viewport->new_gc(dem_gradient_colors[i], UNUSED_LINE_THICKNESS);
 	}
 
-	vik_layer_unmarshall_params(VIK_LAYER(rv), data, len, viewport);
+	vik_layer_unmarshall_params(VIK_LAYER(layer->vl), data, len, viewport);
 	return rv;
 }
 
 /* Structure for DEM data used in background thread */
 typedef struct {
-	VikDEMLayer *vdl;
+	LayerDEM * layer;
 } dem_load_thread_data;
 
 /*
  * Function for starting the DEM file loading as a background thread
  */
-static int dem_layer_load_list_thread(dem_load_thread_data *dltd, void * threaddata)
+static int dem_layer_load_list_thread(dem_load_thread_data * dltd, void * threaddata)
 {
 	int result = 0; // Default to good
 	// Actual Load
-	if (a_dems_load_list(&(dltd->vdl->files), threaddata)) {
+	if (a_dems_load_list(&(dltd->layer->files), threaddata)) {
 		// Thread cancelled
 		result = -1;
 	}
@@ -302,21 +292,21 @@ static int dem_layer_load_list_thread(dem_load_thread_data *dltd, void * threadd
 	// Thus force draw only at the end, as loading is complete/aborted
 	//gdk_threads_enter();
 	// Test is helpful to prevent Gtk-CRITICAL warnings if the program is exitted whilst loading
-	if (IS_VIK_LAYER(dltd->vdl)) {
-		vik_layer_emit_update(VIK_LAYER(dltd->vdl)); // NB update from background thread
+	if (IS_VIK_LAYER(dltd->layer->vl)) {
+		vik_layer_emit_update(VIK_LAYER(dltd->layer->vl)); // NB update from background thread
 	}
 	//gdk_threads_leave();
 
 	return result;
 }
 
-static void dem_layer_thread_data_free(dem_load_thread_data *data)
+static void dem_layer_thread_data_free(dem_load_thread_data * data)
 {
 	// Simple release
 	free(data);
 }
 
-static void dem_layer_thread_cancel(dem_load_thread_data *data)
+static void dem_layer_thread_cancel(dem_load_thread_data * data)
 {
 	// Abort loading
 	// Instead of freeing the list, leave it as partially processed
@@ -359,47 +349,49 @@ static GList *dem_layer_convert_to_relative_filenaming(GList *files)
 
 bool dem_layer_set_param(VikDEMLayer *vdl, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
 {
+	LayerDEM * layer = (LayerDEM *) ((VikLayer *) vdl)->layer;
+
 	switch (id) {
 	case PARAM_COLOR:
-		vdl->color = data.c;
-		gdk_gc_set_rgb_fg_color(vdl->gcs[0], &(vdl->color));
+		layer->color = data.c;
+		gdk_gc_set_rgb_fg_color(layer->gcs[0], &(layer->color));
 		break;
 	case PARAM_SOURCE:
-		vdl->source = data.u;
+		layer->source = data.u;
 		break;
 	case PARAM_TYPE:
-		vdl->type = data.u;
+		layer->dem_type = data.u;
 		break;
 	case PARAM_MIN_ELEV:
 		/* Convert to store internally
 		   NB file operation always in internal units (metres) */
 		if (!is_file_operation && a_vik_get_units_height() == VIK_UNITS_HEIGHT_FEET) {
-			vdl->min_elev = VIK_FEET_TO_METERS(data.d);
+			layer->min_elev = VIK_FEET_TO_METERS(data.d);
 		} else {
-			vdl->min_elev = data.d;
+			layer->min_elev = data.d;
 		}
 		break;
 	case PARAM_MAX_ELEV:
 		/* Convert to store internally
 		   NB file operation always in internal units (metres) */
 		if (!is_file_operation && a_vik_get_units_height() == VIK_UNITS_HEIGHT_FEET) {
-			vdl->max_elev = VIK_FEET_TO_METERS(data.d);
+			layer->max_elev = VIK_FEET_TO_METERS(data.d);
 		} else {
-			vdl->max_elev = data.d;
+			layer->max_elev = data.d;
 		}
 		break;
 	case PARAM_FILES:
 		{
 			// Clear out old settings - if any commonalities with new settings they will have to be read again
-			a_dems_list_free (vdl->files);
+			a_dems_list_free (layer->files);
 			// Set file list so any other intermediate screen drawing updates will show currently loaded DEMs by the working thread
-			vdl->files = data.sl;
+			layer->files = data.sl;
 			// No need for thread if no files
-			if (vdl->files) {
+			if (layer->files) {
 				// Thread Load
-				dem_load_thread_data *dltd = (dem_load_thread_data *) malloc(sizeof(dem_load_thread_data));
-				dltd->vdl = vdl;
-				dltd->vdl->files = data.sl;
+				dem_load_thread_data * dltd = (dem_load_thread_data *) malloc(sizeof(dem_load_thread_data));
+				dltd->layer = layer;
+				dltd->layer->files = data.sl;
 
 				a_background_thread(BACKGROUND_POOL_LOCAL,
 						    VIK_GTK_WINDOW_FROM_WIDGET(viewport->vvp),
@@ -420,9 +412,11 @@ bool dem_layer_set_param(VikDEMLayer *vdl, uint16_t id, VikLayerParamData data, 
 static VikLayerParamData dem_layer_get_param(VikDEMLayer *vdl, uint16_t id, bool is_file_operation)
 {
 	VikLayerParamData rv;
+	LayerDEM * layer = (LayerDEM *) ((VikLayer *) vdl)->layer;
+
 	switch (id) {
 	case PARAM_FILES:
-		rv.sl = vdl->files;
+		rv.sl = layer->files;
 		if (is_file_operation) {
 			// Save in relative format if necessary
 			if (a_vik_get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE) {
@@ -431,30 +425,30 @@ static VikLayerParamData dem_layer_get_param(VikDEMLayer *vdl, uint16_t id, bool
 		}
 		break;
 	case PARAM_SOURCE:
-		rv.u = vdl->source;
+		rv.u = layer->source;
 		break;
 	case PARAM_TYPE:
-		rv.u = vdl->type;
+		rv.u = layer->dem_type;
 		break;
 	case PARAM_COLOR:
-		rv.c = vdl->color;
+		rv.c = layer->color;
 		break;
 	case PARAM_MIN_ELEV:
 		/* Convert for display in desired units
 		   NB file operation always in internal units (metres) */
 		if (!is_file_operation && a_vik_get_units_height() == VIK_UNITS_HEIGHT_FEET) {
-			rv.d = VIK_METERS_TO_FEET(vdl->min_elev);
+			rv.d = VIK_METERS_TO_FEET(layer->min_elev);
 		} else {
-			rv.d = vdl->min_elev;
+			rv.d = layer->min_elev;
 		}
 		break;
 	case PARAM_MAX_ELEV:
 		/* Convert for display in desired units
 		   NB file operation always in internal units (metres) */
 		if (!is_file_operation && a_vik_get_units_height() == VIK_UNITS_HEIGHT_FEET) {
-			rv.d = VIK_METERS_TO_FEET(vdl->max_elev);
+			rv.d = VIK_METERS_TO_FEET(layer->max_elev);
 		} else {
-			rv.d = vdl->max_elev;
+			rv.d = layer->max_elev;
 		}
 		break;
 	default: break;
@@ -462,24 +456,24 @@ static VikLayerParamData dem_layer_get_param(VikDEMLayer *vdl, uint16_t id, bool
 	return rv;
 }
 
-static VikDEMLayer *dem_layer_new(Viewport * viewport)
+static VikDEMLayer * dem_layer_new(Viewport * viewport)
 {
-	VikDEMLayer *vdl = VIK_DEM_LAYER (g_object_new (VIK_DEM_LAYER_TYPE, NULL));
+	VikDEMLayer * vdl = VIK_DEM_LAYER (g_object_new (VIK_DEM_LAYER_TYPE, NULL));
+	LayerDEM * layer = new LayerDEM((VikLayer *) vdl);
+	((VikLayer *) vdl)->layer = (Layer *) layer;
 
-	vdl->files = NULL;
+	layer->files = NULL;
 
-	vdl->gcs = (GdkGC **) malloc(sizeof(GdkGC *) * DEM_N_HEIGHT_COLORS);
-	vdl->gcsgradient = (GdkGC **) malloc(sizeof(GdkGC *) * DEM_N_GRADIENT_COLORS);
+	layer->gcs = (GdkGC **) malloc(sizeof(GdkGC *) * DEM_N_HEIGHT_COLORS);
+	layer->gcsgradient = (GdkGC **) malloc(sizeof(GdkGC *) * DEM_N_GRADIENT_COLORS);
 	/* make new gcs only if we need it (copy layer -> use old) */
 
 	// Ensure the base GC is available so the default colour can be applied
 	if (viewport) {
-		vdl->gcs[0] = viewport->new_gc("#0000FF", 1);
+		layer->gcs[0] = viewport->new_gc("#0000FF", 1);
 	}
 
-	((VikLayer *) vdl)->layer = new LayerDEM((VikLayer *) vdl);
-
-	vik_layer_set_defaults (VIK_LAYER(vdl), viewport);
+	vik_layer_set_defaults(VIK_LAYER(vdl), viewport);
 
 	return vdl;
 }
@@ -495,7 +489,7 @@ static inline uint16_t get_height_difference(int16_t elev, int16_t new_elev)
 }
 
 
-static void vik_dem_layer_draw_dem(VikDEMLayer *vdl, Viewport * viewport, VikDEM *dem)
+void LayerDEM::draw_dem(Viewport * viewport, VikDEM * dem)
 {
 	VikDEMColumn *column, *prevcolumn, *nextcolumn;
 
@@ -619,13 +613,13 @@ static void vik_dem_layer_draw_dem(VikDEMLayer *vdl, Viewport * viewport, VikDEM
 
 		vik_dem_east_north_to_xy(dem, start_lon_as, start_lat_as, &start_x, &start_y);
 		unsigned int gradient_skip_factor = 1;
-		if(vdl->type == DEM_TYPE_GRADIENT) {
+		if (this->dem_type == DEM_TYPE_GRADIENT) {
 			gradient_skip_factor = skip_factor;
 		}
 
 		/* verify sane elev interval */
-		if (vdl->max_elev <= vdl->min_elev) {
-			vdl->max_elev = vdl->min_elev + 1;
+		if (this->max_elev <= this->min_elev) {
+			this->max_elev = this->min_elev + 1;
 		}
 
 		for (x=start_x, counter.lon = start_lon; counter.lon <= end_lon+escale_deg*skip_factor; counter.lon += escale_deg * skip_factor, x += skip_factor) {
@@ -686,19 +680,19 @@ static void vik_dem_layer_draw_dem(VikDEMLayer *vdl, Viewport * viewport, VikDEM
 					}
 
 					bool below_minimum = false;
-					if(vdl->type == DEM_TYPE_HEIGHT) {
-						if (elev != VIK_DEM_INVALID_ELEVATION && elev < vdl->min_elev) {
-							// Prevent 'elev - vdl->min_elev' from being negative so can safely use as array index
-							elev = ceil(vdl->min_elev);
+					if (this->dem_type == DEM_TYPE_HEIGHT) {
+						if (elev != VIK_DEM_INVALID_ELEVATION && elev < this->min_elev) {
+							// Prevent 'elev - this->min_elev' from being negative so can safely use as array index
+							elev = ceil(this->min_elev);
 							below_minimum = true;
 						}
-						if (elev != VIK_DEM_INVALID_ELEVATION && elev > vdl->max_elev) {
-							elev = vdl->max_elev;
+						if (elev != VIK_DEM_INVALID_ELEVATION && elev > this->max_elev) {
+							elev = this->max_elev;
 						}
 					}
 
 					{
-						if(vdl->type == DEM_TYPE_GRADIENT) {
+						if (this->dem_type == DEM_TYPE_GRADIENT) {
 							if(elev == VIK_DEM_INVALID_ELEVATION) {
 								/* don't draw it */
 							} else {
@@ -728,27 +722,27 @@ static void vik_dem_layer_draw_dem(VikDEMLayer *vdl, Viewport * viewport, VikDEM
 
 								change = change / ((skip_factor > 1) ? log(skip_factor) : 0.55); // FIXME: better calc.
 
-								if (change < vdl->min_elev) {
-									// Prevent 'change - vdl->min_elev' from being negative so can safely use as array index
-									change = ceil(vdl->min_elev);
+								if (change < this->min_elev) {
+									// Prevent 'change - this->min_elev' from being negative so can safely use as array index
+									change = ceil(this->min_elev);
 								}
 
-								if (change > vdl->max_elev) {
-									change = vdl->max_elev;
+								if (change > this->max_elev) {
+									change = this->max_elev;
 								}
 
 								// void vik_viewport_draw_rectangle (VikViewport *vvp, GdkGC *gc, bool filled, int x1, int y1, int x2, int y2);
-								viewport->draw_rectangle(vdl->gcsgradient[(int)floor(((change - vdl->min_elev)/(vdl->max_elev - vdl->min_elev))*(DEM_N_GRADIENT_COLORS-2))+1], true, box_x, box_y, box_width, box_height);
+								viewport->draw_rectangle(this->gcsgradient[(int)floor(((change - this->min_elev)/(this->max_elev - this->min_elev))*(DEM_N_GRADIENT_COLORS-2))+1], true, box_x, box_y, box_width, box_height);
 							}
 						} else {
-							if (vdl->type == DEM_TYPE_HEIGHT) {
+							if (this->dem_type == DEM_TYPE_HEIGHT) {
 								if (elev == VIK_DEM_INVALID_ELEVATION) {
 									; /* don't draw it */
 								} else if (elev <= 0 || below_minimum) {
 									/* If 'sea' colour or below the defined mininum draw in the configurable colour */
-									viewport->draw_rectangle(vdl->gcs[0], true, box_x, box_y, box_width, box_height);
+									viewport->draw_rectangle(this->gcs[0], true, box_x, box_y, box_width, box_height);
 								} else {
-									viewport->draw_rectangle(vdl->gcs[(int)floor(((elev - vdl->min_elev)/(vdl->max_elev - vdl->min_elev))*(DEM_N_HEIGHT_COLORS-2))+1], true, box_x, box_y, box_width, box_height);
+									viewport->draw_rectangle(this->gcs[(int)floor(((elev - this->min_elev)/(this->max_elev - this->min_elev))*(DEM_N_HEIGHT_COLORS-2))+1], true, box_x, box_y, box_width, box_height);
 								}
 							}
 						}
@@ -828,12 +822,12 @@ static void vik_dem_layer_draw_dem(VikDEMLayer *vdl, Viewport * viewport, VikDEM
 					}
 
 					elev = column->points[y];
-					if (elev != VIK_DEM_INVALID_ELEVATION && elev < vdl->min_elev) {
-						elev = vdl->min_elev;
+					if (elev != VIK_DEM_INVALID_ELEVATION && elev < this->min_elev) {
+						elev = this->min_elev;
 					}
 
-					if (elev != VIK_DEM_INVALID_ELEVATION && elev > vdl->max_elev) {
-						elev = vdl->max_elev;
+					if (elev != VIK_DEM_INVALID_ELEVATION && elev > this->max_elev) {
+						elev = this->max_elev;
 					}
 
 
@@ -844,9 +838,9 @@ static void vik_dem_layer_draw_dem(VikDEMLayer *vdl, Viewport * viewport, VikDEM
 						if (elev == VIK_DEM_INVALID_ELEVATION) {
 							; /* don't draw it */
 						} else if (elev <= 0) {
-							viewport->draw_rectangle(vdl->gcs[0], true, a-1, b-1, 2, 2);
+							viewport->draw_rectangle(this->gcs[0], true, a-1, b-1, 2, 2);
 						} else {
-							viewport->draw_rectangle(vdl->gcs[(int)floor((elev - vdl->min_elev)/(vdl->max_elev - vdl->min_elev)*(DEM_N_HEIGHT_COLORS-2))+1], true, a-1, b-1, 2, 2);
+							viewport->draw_rectangle(this->gcs[(int)floor((elev - this->min_elev)/(this->max_elev - this->min_elev)*(DEM_N_HEIGHT_COLORS-2))+1], true, a-1, b-1, 2, 2);
 						}
 					}
 				} /* for y= */
@@ -888,16 +882,16 @@ static const char *srtm_continent_dir(int lat, int lon)
 void LayerDEM::draw(Viewport * viewport)
 {
 	VikDEMLayer * vdl = (VikDEMLayer *) this->vl;
-	GList *dems_iter = vdl->files;
+	GList *dems_iter = this->files;
 	VikDEM *dem;
 
 
 	/* search for SRTM3 90m */
 
-	if (vdl->source == DEM_SOURCE_SRTM) {
+	if (this->source == DEM_SOURCE_SRTM) {
 		srtm_draw_existence(viewport);
 #ifdef VIK_CONFIG_DEM24K
-	} else if (vdl->source == DEM_SOURCE_DEM24K) {
+	} else if (this->source == DEM_SOURCE_DEM24K) {
 		dem24k_draw_existence(vp);
 #endif
 	}
@@ -905,7 +899,7 @@ void LayerDEM::draw(Viewport * viewport)
 	while (dems_iter) {
 		dem = a_dems_get((const char *) (dems_iter->data));
 		if (dem) {
-			vik_dem_layer_draw_dem(vdl, viewport, dem);
+			this->draw_dem(viewport, dem);
 		}
 		dems_iter = dems_iter->next;
 	}
@@ -915,22 +909,22 @@ void LayerDEM::free_()
 {
 	VikDEMLayer * vdl = (VikDEMLayer *) this->vl;
 	int i;
-	if (vdl->gcs) {
+	if (this->gcs) {
 		for (i = 0; i < DEM_N_HEIGHT_COLORS; i++) {
-			g_object_unref(vdl->gcs[i]);
+			g_object_unref(this->gcs[i]);
 		}
 	}
 
-	free(vdl->gcs);
+	free(this->gcs);
 
-	if (vdl->gcsgradient) {
+	if (this->gcsgradient) {
 		for (i = 0; i < DEM_N_GRADIENT_COLORS; i++) {
-			g_object_unref(vdl->gcsgradient[i]);
+			g_object_unref(this->gcsgradient[i]);
 		}
 	}
-	free(vdl->gcsgradient);
+	free(this->gcsgradient);
 
-	a_dems_list_free(vdl->files);
+	a_dems_list_free(this->files);
 }
 
 #if 0
@@ -942,12 +936,12 @@ VikDEMLayer *dem_layer_create(Viewport * viewport)
 		/* TODO: share GCS between layers */
 		for (i = 0; i < DEM_N_HEIGHT_COLORS; i++) {
 			if (i > 0) {
-				vdl->gcs[i] = viewport->new_gc(dem_height_colors[i], UNUSED_LINE_THICKNESS);
+				vdl->layer->gcs[i] = viewport->new_gc(dem_height_colors[i], UNUSED_LINE_THICKNESS);
 			}
 		}
 
 		for (i = 0; i < DEM_N_GRADIENT_COLORS; i++) {
-			vdl->gcsgradient[i] = viewport->new_gc(dem_gradient_colors[i], UNUSED_LINE_THICKNESS);
+			vdl->layer->gcsgradient[i] = viewport->new_gc(dem_gradient_colors[i], UNUSED_LINE_THICKNESS);
 		}
 	}
 
@@ -963,7 +957,7 @@ typedef struct {
 	double lat, lon;
 
 	GMutex *mutex;
-	VikDEMLayer *vdl; /* NULL if not alive */
+	LayerDEM * layer; /* NULL if not alive */
 
 	unsigned int source;
 } DEMDownloadParams;
@@ -973,7 +967,7 @@ typedef struct {
  *  SOURCE: SRTM                                  *
  **************************************************/
 
-static void srtm_dem_download_thread(DEMDownloadParams *p, void * threaddata)
+static void srtm_dem_download_thread(DEMDownloadParams * p, void * threaddata)
 {
 	int intlat, intlon;
 	const char *continent_dir;
@@ -983,9 +977,9 @@ static void srtm_dem_download_thread(DEMDownloadParams *p, void * threaddata)
 	continent_dir = srtm_continent_dir(intlat, intlon);
 
 	if (!continent_dir) {
-		if (p->vdl) {
+		if (p->layer) {
 			char *msg = g_strdup_printf(_("No SRTM data available for %f, %f"), p->lat, p->lon);
-			vik_window_statusbar_update((VikWindow*)VIK_GTK_WINDOW_FROM_LAYER(p->vdl), msg, VIK_STATUSBAR_INFO);
+			vik_window_statusbar_update((VikWindow *) VIK_GTK_WINDOW_FROM_LAYER(p->layer->vl), msg, VIK_STATUSBAR_INFO);
 			free(msg);
 		}
 		return;
@@ -1005,13 +999,13 @@ static void srtm_dem_download_thread(DEMDownloadParams *p, void * threaddata)
 	case DOWNLOAD_CONTENT_ERROR:
 	case DOWNLOAD_HTTP_ERROR: {
 		char *msg = g_strdup_printf(_("DEM download failure for %f, %f"), p->lat, p->lon);
-		vik_window_statusbar_update((VikWindow*)VIK_GTK_WINDOW_FROM_LAYER(p->vdl), msg, VIK_STATUSBAR_INFO);
+		vik_window_statusbar_update((VikWindow *) VIK_GTK_WINDOW_FROM_LAYER(p->layer->vl), msg, VIK_STATUSBAR_INFO);
 		free(msg);
 		break;
 	}
 	case DOWNLOAD_FILE_WRITE_ERROR: {
 		char *msg = g_strdup_printf(_("DEM write failure for %s"), p->dest);
-		vik_window_statusbar_update((VikWindow*)VIK_GTK_WINDOW_FROM_LAYER(p->vdl), msg, VIK_STATUSBAR_INFO);
+		vik_window_statusbar_update((VikWindow *) VIK_GTK_WINDOW_FROM_LAYER(p->layer->vl), msg, VIK_STATUSBAR_INFO);
 		free(msg);
 		break;
 	}
@@ -1104,7 +1098,7 @@ static void srtm_draw_existence(Viewport * viewport)
 
 #ifdef VIK_CONFIG_DEM24K
 
-static void dem24k_dem_download_thread(DEMDownloadParams *p, void * threaddata)
+static void dem24k_dem_download_thread(DEMDownloadParams * p, void * threaddata)
 {
 	/* TODO: dest dir */
 	char *cmdline = g_strdup_printf("%s %.03f %.03f",
@@ -1191,9 +1185,9 @@ static void dem24k_draw_existence(Viewport * viewport)
 
 static void weak_ref_cb(void * ptr, GObject * dead_vdl)
 {
-	DEMDownloadParams *p = (DEMDownloadParams *) ptr;
+	DEMDownloadParams * p = (DEMDownloadParams *) ptr;
 	g_mutex_lock(p->mutex);
-	p->vdl = NULL;
+	p->layer = NULL;
 	g_mutex_unlock(p->mutex);
 }
 
@@ -1201,15 +1195,15 @@ static void weak_ref_cb(void * ptr, GObject * dead_vdl)
  * filename will be copied.
  * returns false if file does not exists, true otherwise.
  */
-static bool dem_layer_add_file(VikDEMLayer *vdl, const char *filename)
+bool LayerDEM::add_file(char const * filename)
 {
 	if (g_file_test(filename, G_FILE_TEST_EXISTS) == true) {
 		/* only load if file size is not 0 (not in progress) */
 		GStatBuf sb;
-		(void)stat(filename, &sb);
+		(void) stat(filename, &sb);
 		if (sb.st_size) {
-			char *duped_path = g_strdup(filename);
-			vdl->files = g_list_prepend(vdl->files, duped_path);
+			char * duped_path = g_strdup(filename);
+			this->files = g_list_prepend(this->files, duped_path);
 			a_dems_load(duped_path);
 			fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, duped_path);
 		}
@@ -1219,7 +1213,7 @@ static bool dem_layer_add_file(VikDEMLayer *vdl, const char *filename)
 	}
 }
 
-static void dem_download_thread(DEMDownloadParams *p, void * threaddata)
+static void dem_download_thread(DEMDownloadParams * p, void * threaddata)
 {
 	if (p->source == DEM_SOURCE_SRTM) {
 		srtm_dem_download_thread(p, threaddata);
@@ -1233,11 +1227,11 @@ static void dem_download_thread(DEMDownloadParams *p, void * threaddata)
 
 	//gdk_threads_enter();
 	g_mutex_lock(p->mutex);
-	if (p->vdl) {
-		g_object_weak_unref(G_OBJECT(p->vdl), weak_ref_cb, p);
+	if (p->layer) {
+		g_object_weak_unref(G_OBJECT(p->layer->vl), weak_ref_cb, p);
 
-		if (dem_layer_add_file(p->vdl, p->dest)) {
-			vik_layer_emit_update(VIK_LAYER(p->vdl)); // NB update from background thread
+		if (p->layer->add_file(p->dest)) {
+			vik_layer_emit_update(p->layer->vl); // NB update from background thread
 		}
 	}
 	g_mutex_unlock(p->mutex);
@@ -1245,7 +1239,7 @@ static void dem_download_thread(DEMDownloadParams *p, void * threaddata)
 }
 
 
-static void free_dem_download_params(DEMDownloadParams *p)
+static void free_dem_download_params(DEMDownloadParams * p)
 {
 	vik_mutex_free(p->mutex);
 	free(p->dest);
@@ -1316,7 +1310,14 @@ static void dem_layer_file_info(GtkWidget *widget, struct LatLon *ll)
 	free(filename);
 }
 
-static bool dem_layer_download_release(VikDEMLayer *vdl, GdkEventButton *event, Viewport * viewport)
+static bool dem_layer_download_release(VikDEMLayer * vdl, GdkEventButton * event, Viewport * viewport)
+{
+	LayerDEM * layer = (LayerDEM *) ((VikLayer *) vdl)->layer;
+	return layer->download_release(event, viewport);
+}
+
+
+bool LayerDEM::download_release(GdkEventButton * event, Viewport * viewport)
 {
 	VikCoord coord;
 	static struct LatLon ll;
@@ -1328,15 +1329,15 @@ static bool dem_layer_download_release(VikDEMLayer *vdl, GdkEventButton *event, 
 	vik_coord_to_latlon(&coord, &ll);
 
 
-	if (vdl->source == DEM_SOURCE_SRTM) {
+	if (this->source == DEM_SOURCE_SRTM) {
 		dem_file = srtm_lat_lon_to_dest_fn(ll.lat, ll.lon);
 #ifdef VIK_CONFIG_DEM24K
-	} else if (vdl->source == DEM_SOURCE_DEM24K) {
+	} else if (this->source == DEM_SOURCE_DEM24K) {
 		dem_file = dem24k_lat_lon_to_dest_fn(ll.lat, ll.lon);
 #endif
 	}
 
-	if (! dem_file) {
+	if (!dem_file) {
 		return true;
 	}
 
@@ -1346,39 +1347,39 @@ static bool dem_layer_download_release(VikDEMLayer *vdl, GdkEventButton *event, 
 
 	if (event->button == 1) {
 		// TODO: check if already in filelist
-		if (! dem_layer_add_file(vdl, full_path)) {
-			char *tmp = g_strdup_printf(_("Downloading DEM %s"), dem_file);
-			DEMDownloadParams *p = (DEMDownloadParams *) malloc(sizeof(DEMDownloadParams));
+		if (!this->add_file(full_path)) {
+			char * tmp = g_strdup_printf(_("Downloading DEM %s"), dem_file);
+			DEMDownloadParams * p = (DEMDownloadParams *) malloc(sizeof(DEMDownloadParams));
 			p->dest = g_strdup(full_path);
 			p->lat = ll.lat;
 			p->lon = ll.lon;
-			p->vdl = vdl;
+			p->layer = this;
 			p->mutex = vik_mutex_new();
-			p->source = vdl->source;
-			g_object_weak_ref(G_OBJECT(p->vdl), weak_ref_cb, p);
+			p->source = this->source;
+			g_object_weak_ref(G_OBJECT(p->layer->vl), weak_ref_cb, p);
 
 			a_background_thread(BACKGROUND_POOL_REMOTE,
-					      VIK_GTK_WINDOW_FROM_LAYER(vdl), tmp,
-					      (vik_thr_func) dem_download_thread, p,
-					      (vik_thr_free_func) free_dem_download_params, NULL, 1);
+					    VIK_GTK_WINDOW_FROM_LAYER(this->vl), tmp,
+					    (vik_thr_func) dem_download_thread, p,
+					    (vik_thr_free_func) free_dem_download_params, NULL, 1);
 
 			free(tmp);
 		} else {
-			vik_layer_emit_update(VIK_LAYER(vdl));
+			vik_layer_emit_update(this->vl);
 		}
 	} else {
-		if (!vdl->right_click_menu) {
+		if (!this->right_click_menu) {
 			GtkWidget *item;
-			vdl->right_click_menu = GTK_MENU (gtk_menu_new());
+			this->right_click_menu = GTK_MENU (gtk_menu_new());
 
 			item = gtk_image_menu_item_new_with_mnemonic(_("_Show DEM File Information"));
 			gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_INFO, GTK_ICON_SIZE_MENU));
 			g_signal_connect(G_OBJECT(item), "activate", G_CALLBACK(dem_layer_file_info), &ll);
-			gtk_menu_shell_append(GTK_MENU_SHELL(vdl->right_click_menu), item);
+			gtk_menu_shell_append(GTK_MENU_SHELL(this->right_click_menu), item);
 		}
 
-		gtk_menu_popup(vdl->right_click_menu, NULL, NULL, NULL, NULL, event->button, event->time);
-		gtk_widget_show_all(GTK_WIDGET(vdl->right_click_menu));
+		gtk_menu_popup(this->right_click_menu, NULL, NULL, NULL, NULL, event->button, event->time);
+		gtk_widget_show_all(GTK_WIDGET(this->right_click_menu));
 	}
 
 	free(dem_file);
@@ -1387,7 +1388,7 @@ static bool dem_layer_download_release(VikDEMLayer *vdl, GdkEventButton *event, 
 	return true;
 }
 
-static bool dem_layer_download_click (VikDEMLayer *vdl, GdkEventButton *event, Viewport * viewport)
+static bool dem_layer_download_click(VikDEMLayer * vdl, GdkEventButton * event, Viewport * viewport)
 {
 	/* choose & keep track of cache dir
 	 * download in background thread
@@ -1402,6 +1403,7 @@ static bool dem_layer_download_click (VikDEMLayer *vdl, GdkEventButton *event, V
 LayerDEM::LayerDEM()
 {
 	this->type = VIK_LAYER_DEM;
+	this->dem_type = 0;
 	strcpy(this->type_string, "DEM");
 }
 
@@ -1412,6 +1414,7 @@ LayerDEM::LayerDEM()
 LayerDEM::LayerDEM(VikLayer * vl) : Layer(vl)
 {
 	this->type = VIK_LAYER_DEM;
+	this->dem_type = 0;
 	strcpy(this->type_string, "DEM");
 }
 
@@ -1425,20 +1428,19 @@ LayerDEM::LayerDEM(Viewport * viewport) : LayerDEM()
 	/* dem_layer_new(Viewport * viewport) */
 	{
 		vdl = VIK_DEM_LAYER (g_object_new (VIK_DEM_LAYER_TYPE, NULL));
+		((VikLayer *) vdl)->layer = this;
+		this->vl = (VikLayer *) vdl;
 
-		vdl->files = NULL;
+		this->files = NULL;
 
-		vdl->gcs = (GdkGC **) malloc(sizeof(GdkGC *) * DEM_N_HEIGHT_COLORS);
-		vdl->gcsgradient = (GdkGC **) malloc(sizeof(GdkGC *) * DEM_N_GRADIENT_COLORS);
+		this->gcs = (GdkGC **) malloc(sizeof(GdkGC *) * DEM_N_HEIGHT_COLORS);
+		this->gcsgradient = (GdkGC **) malloc(sizeof(GdkGC *) * DEM_N_GRADIENT_COLORS);
 		/* make new gcs only if we need it (copy layer -> use old) */
 
 		// Ensure the base GC is available so the default colour can be applied
 		if (viewport) {
-			vdl->gcs[0] = viewport->new_gc("#0000FF", 1);
+			this->gcs[0] = viewport->new_gc("#0000FF", 1);
 		}
-
-		((VikLayer *) vdl)->layer = this;
-		this->vl = (VikLayer *) vdl;
 
 		vik_layer_set_defaults (VIK_LAYER(vdl), viewport);
 
@@ -1450,12 +1452,12 @@ LayerDEM::LayerDEM(Viewport * viewport) : LayerDEM()
 			/* TODO: share GCS between layers */
 			for (int i = 0; i < DEM_N_HEIGHT_COLORS; i++) {
 				if (i > 0) {
-					vdl->gcs[i] = viewport->new_gc(dem_height_colors[i], UNUSED_LINE_THICKNESS);
+					this->gcs[i] = viewport->new_gc(dem_height_colors[i], UNUSED_LINE_THICKNESS);
 				}
 			}
 
 			for (int i = 0; i < DEM_N_GRADIENT_COLORS; i++) {
-				vdl->gcsgradient[i] = viewport->new_gc(dem_gradient_colors[i], UNUSED_LINE_THICKNESS);
+				this->gcsgradient[i] = viewport->new_gc(dem_gradient_colors[i], UNUSED_LINE_THICKNESS);
 			}
 		}
 	}
