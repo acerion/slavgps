@@ -943,13 +943,13 @@ std::list<Layer *> * LayerAggregate::get_all_layers_of_type(std::list<Layer *> *
 			/* GPS layers contain TRW layers. cf with usage in file.c */
 			if (layer->type == VIK_LAYER_GPS) {
 				if (layer->visible || include_invisible) {
-					if (!vik_gps_layer_is_empty(VIK_GPS_LAYER(layer->vl))) {
+					if (!((LayerGPS *) layer)->is_empty()) {
 						/*
 						  can not use g_list_concat due to wrong copy method - crashes if used a couple times !!
-						  l = g_list_concat (l, vik_gps_layer_get_children (VIK_GPS_LAYER((*child)->vl)));
+						  l = g_list_concat (l, (*child)->get_children();
 						*/
 						/* create own copy method instead :(*/
-						GList *gps_trw_layers = (GList *) vik_gps_layer_get_children(VIK_GPS_LAYER(layer->vl));
+						GList *gps_trw_layers = (GList *) ((LayerGPS *) layer)->get_children();
 						int n_layers = g_list_length(gps_trw_layers);
 						int lay = 0;
 						for (lay = 0; lay < n_layers; lay++) {

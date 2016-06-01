@@ -238,9 +238,9 @@ static void file_write(VikAggregateLayer *top, FILE *f, void * vp)
 			push(&stack);
 			const std::list<Layer *> * children = ((LayerAggregate *) current)->get_children();
 			// stack->data = children; /* kamilFIXME: fix the assignment. */
-		} else if (current->type == VIK_LAYER_GPS && !vik_gps_layer_is_empty(VIK_GPS_LAYER(current_layer))) {
+		} else if (current->type == VIK_LAYER_GPS && !((LayerGPS *) current)->is_empty()) {
 			push(&stack);
-			stack->data = (void *) vik_gps_layer_get_children(VIK_GPS_LAYER(current_layer));
+			stack->data = (void *) ((LayerGPS *) current)->get_children();
 		} else {
 			stack->data = (void *) ((GList *)stack->data)->next;
 			fprintf(f, "~EndLayer\n\n");
@@ -360,7 +360,8 @@ static bool file_read(VikAggregateLayer *top, FILE *f, const char *dirpath, VikV
 						fprintf(stderr, "WARNING: Line %ld: Unknown type %s\n", line_num, line+6);
 						stack->data = NULL;
 					} else if (parent_type == VIK_LAYER_GPS) {
-						stack->data = (void *) vik_gps_layer_get_a_child(VIK_GPS_LAYER(stack->under->data));
+						LayerGPS * g = (LayerGPS *) ((VikLayer *) stack->under->data)->layer;
+						stack->data = (void *) g->get_a_child();
 						params = vik_layer_get_interface(type)->params;
 						params_count = vik_layer_get_interface(type)->params_count;
 					} else if (type == VIK_LAYER_GPS) {

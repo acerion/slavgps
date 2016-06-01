@@ -47,7 +47,24 @@ struct _VikGpsLayerClass
 	VikLayerClass vik_layer_class;
 };
 
+struct _VikGpsLayer {
+	VikLayer vl;
+};
+
+typedef struct _VikGpsLayer VikGpsLayer;
+
+
 GType vik_gps_layer_get_type();
+
+enum {
+	TRW_DOWNLOAD = 0,
+	TRW_UPLOAD,
+#if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
+	TRW_REALTIME,
+#endif
+	NUM_TRW
+};
+
 
 typedef enum {
 	GPS_DOWN = 0,
@@ -60,7 +77,20 @@ typedef enum {
 	RTE = 2
 } vik_gps_xfer_type;
 
-typedef struct _VikGpsLayer VikGpsLayer;
+#if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
+typedef struct {
+	struct gps_data_t gpsd;
+	VikGpsLayer *vgl;
+} VglGpsd;
+
+typedef struct {
+	struct gps_fix_t fix;
+	int satellites_used;
+	bool dirty;   /* needs to be saved */
+} GpsFix;
+#endif /* VIK_CONFIG_REALTIME_GPS_TRACKING */
+
+
 
 VikGpsLayer *vik_gps_layer_create(Viewport * viewport);
 bool vik_gps_layer_is_empty(VikGpsLayer *vgl);
@@ -108,6 +138,68 @@ namespace SlavGPS {
 		void add_menu_items(GtkMenu * menu, void * vlp);
 		void realize(VikTreeview *vt, GtkTreeIter *layer_iter);
 		void free_();
+
+
+		void disconnect_layer_signal(VikLayer * vl);
+		const GList * get_children();
+		VikTrwLayer * get_a_child();
+		bool is_empty();
+		void realtime_tracking_draw(Viewport * viewport);
+		Trackpoint * create_realtime_trackpoint(bool forced);
+		void update_statusbar(VikWindow * vw);
+		bool rt_ask_retry();
+
+
+
+#if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
+		void rt_gpsd_disconnect();
+		bool rt_gpsd_connect(bool ask_if_failed);
+#endif
+
+
+
+
+		VikTrwLayer * trw_children[NUM_TRW];
+		GList * children;	/* used only for writing file */
+		int cur_read_child;   /* used only for reading file */
+
+#if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
+		VglGpsd * vgpsd;
+		bool realtime_tracking;  /* set/reset only by the callback */
+		bool first_realtime_trackpoint;
+		GpsFix realtime_fix;
+		GpsFix last_fix;
+
+		Track * realtime_track;
+
+		GIOChannel *realtime_io_channel;
+		unsigned int realtime_io_watch_id;
+		unsigned int realtime_retry_timer;
+		GdkGC *realtime_track_gc;
+		GdkGC *realtime_track_bg_gc;
+		GdkGC *realtime_track_pt_gc;
+		GdkGC *realtime_track_pt1_gc;
+		GdkGC *realtime_track_pt2_gc;
+
+		/* params */
+		char *gpsd_host;
+		char *gpsd_port;
+		int gpsd_retry_interval;
+		bool realtime_record;
+		bool realtime_jump_to_start;
+		unsigned int vehicle_position;
+		bool realtime_update_statusbar;
+		Trackpoint * tp;
+		Trackpoint * tp_prev;
+#endif /* VIK_CONFIG_REALTIME_GPS_TRACKING */
+		char * protocol;
+		char *serial_port;
+		bool download_tracks;
+		bool download_routes;
+		bool download_waypoints;
+		bool upload_tracks;
+		bool upload_routes;
+		bool upload_waypoints;
 	};
 
 
