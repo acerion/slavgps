@@ -371,9 +371,8 @@ VikGpsLayer * vik_gps_layer_create(Viewport * viewport)
 	layer->rename(vik_gps_layer_interface.name);
 
 	for (int i = 0; i < NUM_TRW; i++) {
-		LayerTRW * trw = new LayerTRW(viewport);
-		layer->trw_children[i] = (VikTrwLayer *) trw->vl;
-		vik_layer_set_menu_items_selection(VIK_LAYER(layer->trw_children[i]), VIK_MENU_ITEM_ALL & ~(VIK_MENU_ITEM_CUT|VIK_MENU_ITEM_DELETE));
+		layer->trw_children[i] = new LayerTRW(viewport);
+		vik_layer_set_menu_items_selection(layer->trw_children[i]->vl, VIK_MENU_ITEM_ALL & ~(VIK_MENU_ITEM_CUT|VIK_MENU_ITEM_DELETE));
 	}
 
 	return rv;
@@ -405,7 +404,7 @@ void LayerGPS::marshall(uint8_t **data, int *datalen)
 	free(ld);
 
 	for (i = 0; i < NUM_TRW; i++) {
-		child_layer = VIK_LAYER(this->trw_children[i]);
+		child_layer = this->trw_children[i]->vl;
 		vik_layer_marshall(child_layer, &ld, &ll);
 		if (ld) {
 			alm_append(ld, ll);
@@ -438,7 +437,7 @@ static VikGpsLayer * gps_layer_unmarshall(uint8_t *data, int len, Viewport * vie
 	while (len>0 && i < NUM_TRW) {
 		child_layer = vik_layer_unmarshall(data + sizeof(int), alm_size, viewport);
 		if (child_layer) {
-			layer->trw_children[i++] = (VikTrwLayer *)child_layer;
+			layer->trw_children[i++] = ((VikTrwLayer *) child_layer)->trw;
 			// NB no need to attach signal update handler here
 			//  as this will always be performed later on in vik_gps_layer_realize()
 		}
@@ -666,8 +665,8 @@ void LayerGPS::draw(Viewport * viewport)
 	VikLayer *trigger = VIK_LAYER(viewport->get_trigger());
 
 	for (int i = 0; i < NUM_TRW; i++) {
-		VikLayer * trw = VIK_LAYER(this->trw_children[i]);
-		if (trw == trigger) {
+		LayerTRW * trw = this->trw_children[i];
+		if (trw->vl == trigger) {
 			if (viewport->get_half_drawn()) {
 				viewport->set_half_drawn(false);
 				viewport->snapshot_load();
@@ -676,8 +675,7 @@ void LayerGPS::draw(Viewport * viewport)
 			}
 		}
 		if (!viewport->get_half_drawn()) {
-			Layer * t_r_w = (Layer *) ((VikLayer *) trw)->layer;
-			t_r_w->draw_visible(viewport);
+			trw->draw_visible(viewport);
 		}
 	}
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
@@ -700,7 +698,7 @@ void LayerGPS::draw(Viewport * viewport)
 void LayerGPS::change_coord_mode(VikCoordMode mode)
 {
 	for (int i = 0; i < NUM_TRW; i++) {
-		vik_layer_change_coord_mode(VIK_LAYER(this->trw_children[i]), mode);
+		vik_layer_change_coord_mode(this->trw_children[i]->vl, mode);
 	}
 }
 
@@ -782,9 +780,9 @@ void LayerGPS::free_()
 {
 	for (int i = 0; i < NUM_TRW; i++) {
 		if (this->realized) {
-			this->disconnect_layer_signal(VIK_LAYER(this->trw_children[i]));
+			this->disconnect_layer_signal(this->trw_children[i]->vl);
 		}
-		g_object_unref(this->trw_children[i]);
+		g_object_unref(this->trw_children[i]->vl);
 	}
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
 	this->rt_gpsd_disconnect();
@@ -820,7 +818,7 @@ void LayerGPS::realize(VikTreeview *vt, GtkTreeIter *layer_iter)
 	// Need to access uibuild widgets somehow....
 
 	for (int ix = 0; ix < NUM_TRW; ix++) {
-		LayerTRW * trw = (LayerTRW *) (VIK_LAYER(this->trw_children[ix]))->layer;
+		LayerTRW * trw = this->trw_children[ix];
 		this->vt->tree->add_layer(layer_iter, &iter,
 					  _(trw_names[ix]), this, true,
 					  trw, trw->type, trw->type, trw->get_timestamp());
@@ -842,15 +840,15 @@ const GList * LayerGPS::get_children()
 	return this->children;
 }
 
-VikTrwLayer * LayerGPS::get_a_child()
+LayerTRW * LayerGPS::get_a_child()
 {
 	assert ((this->cur_read_child >= 0) && (this->cur_read_child < NUM_TRW));
 
-	VikTrwLayer * vtl = this->trw_children[this->cur_read_child];
+	LayerTRW * trw = this->trw_children[this->cur_read_child];
 	if (++(this->cur_read_child) >= NUM_TRW) {
 		this->cur_read_child = 0;
 	}
-	return(vtl);
+	return(trw);
 }
 
 bool LayerGPS::is_empty()
@@ -1397,7 +1395,7 @@ static void gps_upload_cb(gps_layer_data_t * data)
 
 	VikWindow * vw = VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(layer->vl));
 	Viewport * viewport = vik_window_viewport(vw);
-	VikTrwLayer * vtl = layer->trw_children[TRW_UPLOAD];
+	VikTrwLayer * vtl = (VikTrwLayer *) layer->trw_children[TRW_UPLOAD]->vl;
 
 	vik_gps_comm(vtl,
 		     NULL,
@@ -1419,7 +1417,7 @@ static void gps_download_cb(gps_layer_data_t * data)
 
 	VikWindow * vw = VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(layer->vl));
 	Viewport * viewport = vik_window_viewport(vw);
-	VikTrwLayer * vtl = layer->trw_children[TRW_DOWNLOAD];
+	VikTrwLayer * vtl = (VikTrwLayer *) layer->trw_children[TRW_DOWNLOAD]->vl;
 
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
 	vik_gps_comm(vtl,
@@ -1462,9 +1460,9 @@ static void gps_empty_upload_cb(gps_layer_data_t * data)
 		return;
 	}
 
-	layer->trw_children[TRW_UPLOAD]->trw->delete_all_waypoints();
-	layer->trw_children[TRW_UPLOAD]->trw->delete_all_tracks();
-	layer->trw_children[TRW_UPLOAD]->trw->delete_all_routes();
+	layer->trw_children[TRW_UPLOAD]->delete_all_waypoints();
+	layer->trw_children[TRW_UPLOAD]->delete_all_tracks();
+	layer->trw_children[TRW_UPLOAD]->delete_all_routes();
 }
 
 static void gps_empty_download_cb(gps_layer_data_t * data)
@@ -1479,9 +1477,9 @@ static void gps_empty_download_cb(gps_layer_data_t * data)
 		return;
 	}
 
-	layer->trw_children[TRW_DOWNLOAD]->trw->delete_all_waypoints();
-	layer->trw_children[TRW_DOWNLOAD]->trw->delete_all_tracks();
-	layer->trw_children[TRW_DOWNLOAD]->trw->delete_all_routes();
+	layer->trw_children[TRW_DOWNLOAD]->delete_all_waypoints();
+	layer->trw_children[TRW_DOWNLOAD]->delete_all_tracks();
+	layer->trw_children[TRW_DOWNLOAD]->delete_all_routes();
 }
 
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
@@ -1497,8 +1495,8 @@ static void gps_empty_realtime_cb(gps_layer_data_t * data)
 		return;
 	}
 
-	layer->trw_children[TRW_REALTIME]->trw->delete_all_waypoints();
-	layer->trw_children[TRW_REALTIME]->trw->delete_all_tracks();
+	layer->trw_children[TRW_REALTIME]->delete_all_waypoints();
+	layer->trw_children[TRW_REALTIME]->delete_all_tracks();
 }
 #endif
 
@@ -1514,15 +1512,15 @@ static void gps_empty_all_cb(gps_layer_data_t * data)
 		return;
 	}
 
-	layer->trw_children[TRW_UPLOAD]->trw->delete_all_waypoints();
-	layer->trw_children[TRW_UPLOAD]->trw->delete_all_tracks();
-	layer->trw_children[TRW_UPLOAD]->trw->delete_all_routes();
-	layer->trw_children[TRW_DOWNLOAD]->trw->delete_all_waypoints();
-	layer->trw_children[TRW_DOWNLOAD]->trw->delete_all_tracks();
-	layer->trw_children[TRW_DOWNLOAD]->trw->delete_all_routes();
+	layer->trw_children[TRW_UPLOAD]->delete_all_waypoints();
+	layer->trw_children[TRW_UPLOAD]->delete_all_tracks();
+	layer->trw_children[TRW_UPLOAD]->delete_all_routes();
+	layer->trw_children[TRW_DOWNLOAD]->delete_all_waypoints();
+	layer->trw_children[TRW_DOWNLOAD]->delete_all_tracks();
+	layer->trw_children[TRW_DOWNLOAD]->delete_all_routes();
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
-	layer->trw_children[TRW_REALTIME]->trw->delete_all_waypoints();
-	layer->trw_children[TRW_REALTIME]->trw->delete_all_tracks();
+	layer->trw_children[TRW_REALTIME]->delete_all_waypoints();
+	layer->trw_children[TRW_REALTIME]->delete_all_tracks();
 #endif
 }
 
@@ -1638,7 +1636,7 @@ Trackpoint * LayerGPS::create_realtime_trackpoint(bool forced)
 			ll.lat = this->realtime_fix.fix.latitude;
 			ll.lon = this->realtime_fix.fix.longitude;
 			vik_coord_load_from_latlon(&tp->coord,
-						   this->trw_children[TRW_REALTIME]->trw->get_coord_mode(), &ll);
+						   this->trw_children[TRW_REALTIME]->get_coord_mode(), &ll);
 
 			this->realtime_track->add_trackpoint(tp, true); // Ensure bounds is recalculated
 			this->realtime_fix.dirty = false;
@@ -1699,7 +1697,7 @@ static void gpsd_raw_hook(VglGpsd *vgpsd, char *data)
 		ll.lat = layer->realtime_fix.fix.latitude;
 		ll.lon = layer->realtime_fix.fix.longitude;
 		vik_coord_load_from_latlon(&vehicle_coord,
-					   layer->trw_children[TRW_REALTIME]->trw->get_coord_mode(), &ll);
+					   layer->trw_children[TRW_REALTIME]->get_coord_mode(), &ll);
 
 		if ((layer->vehicle_position == VEHICLE_POSITION_CENTERED) ||
 		    (layer->realtime_jump_to_start && layer->first_realtime_trackpoint)) {
@@ -1739,7 +1737,7 @@ static void gpsd_raw_hook(VglGpsd *vgpsd, char *data)
 			layer->tp_prev = layer->tp;
 		}
 
-		vik_layer_emit_update(update_all ? VIK_LAYER(vgl) : VIK_LAYER(layer->trw_children[TRW_REALTIME])); // NB update from background thread
+		vik_layer_emit_update(update_all ? VIK_LAYER(vgl) : layer->trw_children[TRW_REALTIME]->vl); // NB update from background thread
 	}
 }
 
@@ -1819,10 +1817,10 @@ static bool rt_gpsd_try_connect(void * *data)
 	layer->realtime_fix.fix.speed = layer->last_fix.fix.speed = NAN;
 
 	if (layer->realtime_record) {
-		VikTrwLayer *vtl = layer->trw_children[TRW_REALTIME];
+		LayerTRW * trw = layer->trw_children[TRW_REALTIME];
 		layer->realtime_track = new Track();
 		layer->realtime_track->visible = true;
-		vtl->trw->add_track(layer->realtime_track, make_track_name(vtl));
+		trw->add_track(layer->realtime_track, make_track_name((VikTrwLayer *) trw->vl));
 	}
 
 #if GPSD_API_MAJOR_VERSION == 3 || GPSD_API_MAJOR_VERSION == 4
@@ -1906,7 +1904,7 @@ void LayerGPS::rt_gpsd_disconnect()
 
 	if (this->realtime_record && this->realtime_track) {
 		if ((this->realtime_track->trackpoints == NULL) || (this->realtime_track->trackpoints->next == NULL)) {
-			this->trw_children[TRW_REALTIME]->trw->delete_track(this->realtime_track);
+			this->trw_children[TRW_REALTIME]->delete_track(this->realtime_track);
 		}
 		this->realtime_track = NULL;
 	}
@@ -2013,8 +2011,7 @@ LayerGPS::LayerGPS(Viewport * viewport) : LayerGPS()
 	this->rename(vik_gps_layer_interface.name);
 
 	for (int i = 0; i < NUM_TRW; i++) {
-		LayerTRW * trw = new LayerTRW(viewport);
-		this->trw_children[i] = (VikTrwLayer *) trw->vl;
-		vik_layer_set_menu_items_selection(VIK_LAYER(this->trw_children[i]), VIK_MENU_ITEM_ALL & ~(VIK_MENU_ITEM_CUT|VIK_MENU_ITEM_DELETE));
+		this->trw_children[i] = new LayerTRW(viewport);
+		vik_layer_set_menu_items_selection(this->trw_children[i]->vl, VIK_MENU_ITEM_ALL & ~(VIK_MENU_ITEM_CUT|VIK_MENU_ITEM_DELETE));
 	}
 };

@@ -361,7 +361,7 @@ static bool file_read(VikAggregateLayer *top, FILE *f, const char *dirpath, VikV
 						stack->data = NULL;
 					} else if (parent_type == VIK_LAYER_GPS) {
 						LayerGPS * g = (LayerGPS *) ((VikLayer *) stack->under->data)->layer;
-						stack->data = (void *) g->get_a_child();
+						stack->data = (void *) g->get_a_child()->vl;
 						params = vik_layer_get_interface(type)->params;
 						params_count = vik_layer_get_interface(type)->params_count;
 

@@ -92,11 +92,6 @@ typedef struct {
 
 
 
-VikGpsLayer *vik_gps_layer_create(Viewport * viewport);
-//bool vik_gps_layer_is_empty(VikGpsLayer *vgl);
-//const GList *vik_gps_layer_get_children(VikGpsLayer *vgl);
-//VikTrwLayer * vik_gps_layer_get_a_child(VikGpsLayer *vgl);
-
 // Non layer specific but expose communal method
 int vik_gps_comm(VikTrwLayer *vtl,
 		 Track * trk,
@@ -143,7 +138,7 @@ namespace SlavGPS {
 
 		void disconnect_layer_signal(VikLayer * vl);
 		const GList * get_children();
-		VikTrwLayer * get_a_child();
+		LayerTRW * get_a_child();
 		bool is_empty();
 		void realtime_tracking_draw(Viewport * viewport);
 		Trackpoint * create_realtime_trackpoint(bool forced);
@@ -160,7 +155,7 @@ namespace SlavGPS {
 
 
 
-		VikTrwLayer * trw_children[NUM_TRW];
+		LayerTRW * trw_children[NUM_TRW];
 		GList * children;	/* used only for writing file */
 		int cur_read_child;   /* used only for reading file */
 
