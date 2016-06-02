@@ -216,11 +216,11 @@ namespace SlavGPS {
 
 
 
-		void uniquify_tracks(VikLayersPanel * vlp, std::unordered_map<sg_uid_t, Track *> & track_table, bool ontrack); /* static void vik_trw_layer_uniquify_tracks(VikTrwLayer * vtl, VikLayersPanel * vlp, std::unordered_map<sg_uid_t, Track *> & track_table, bool ontrack). */
+		void uniquify_tracks(LayersPanel * panel, std::unordered_map<sg_uid_t, Track *> & track_table, bool ontrack); /* static void vik_trw_layer_uniquify_tracks(VikTrwLayer * vtl, VikLayersPanel * vlp, std::unordered_map<sg_uid_t, Track *> & track_table, bool ontrack). */
 		void sort_order_specified(unsigned int sublayer_type, vik_layer_sort_order_t order); /* void trw_layer_sort_order_specified(VikTrwLayer * vtl, unsigned int sublayer_type, vik_layer_sort_order_t order). */
 
 		bool has_same_waypoint_names(); /* bool trw_layer_has_same_waypoint_names(VikTrwLayer * vtl). */
-		void uniquify_waypoints(VikLayersPanel * vlp); /* static void vik_trw_layer_uniquify_waypoints(VikTrwLayer * vtl, VikLayersPanel * vlp). */
+		void uniquify_waypoints(LayersPanel * panel); /* static void vik_trw_layer_uniquify_waypoints(VikTrwLayer * vtl, VikLayersPanel * vlp). */
 
 
 
@@ -257,7 +257,7 @@ namespace SlavGPS {
 
 		VikCoordMode get_coord_mode(); /* VikCoordMode vik_trw_layer_get_coord_mode(VikTrwLayer * vtl). */
 
-		bool uniquify(VikLayersPanel * vlp); /* bool vik_trw_layer_uniquify(VikTrwLayer * vtl, VikLayersPanel * vlp). */
+		bool uniquify(LayersPanel * panel); /* bool vik_trw_layer_uniquify(VikTrwLayer * vtl, VikLayersPanel * vlp). */
 
 
 		void highest_wp_number_reset(); /* static void highest_wp_number_reset(VikTrwLayer * vtl) */

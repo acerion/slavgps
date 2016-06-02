@@ -2911,7 +2911,7 @@ void trw_layer_gps_upload_any(trw_menu_sublayer_t * data)
 		     port,
 		     false,
 		     vlp->panel_ref->get_viewport(),
-		     vlp,
+		     vlp->panel_ref,
 		     do_tracks,
 		     do_routes,
 		     do_waypoints,
@@ -5499,7 +5499,7 @@ int check_tracks_for_same_name(gconstpointer aa, gconstpointer bb, void * udata)
  * Note the panel is a required parameter to enable the update of the names displayed
  * Specify if on tracks or else on routes
  */
-void LayerTRW::uniquify_tracks(VikLayersPanel * vlp, std::unordered_map<sg_uid_t, Track *> & track_table, bool ontrack)
+void LayerTRW::uniquify_tracks(LayersPanel * panel, std::unordered_map<sg_uid_t, Track *> & track_table, bool ontrack)
 {
 	// . Search list for an instance of repeated name
 	// . get track of this name
@@ -5585,7 +5585,7 @@ void LayerTRW::uniquify_tracks(VikLayersPanel * vlp, std::unordered_map<sg_uid_t
 	}
 
 	// Update
-	vik_layers_panel_emit_update_cb(vlp->panel_ref);
+	vik_layers_panel_emit_update_cb(panel);
 }
 
 
@@ -5649,7 +5649,7 @@ void trw_layer_delete_tracks_from_selection(trw_menu_layer_t * data)
 	if (LayerTRWc::has_same_track_names(vtl->trw->tracks)) {
 		if (a_dialog_yes_or_no(VIK_GTK_WINDOW_FROM_LAYER(vtl),
 				       _("Multiple entries with the same name exist. This method only works with unique names. Force unique names now?"), NULL)) {
-			vtl->trw->uniquify_tracks(VIK_LAYERS_PANEL(((VikLayersPanel *) data->panel->gob)), vtl->trw->tracks, true);
+			vtl->trw->uniquify_tracks(data->panel, vtl->trw->tracks, true);
 		}
 		else
 			return;
@@ -5698,7 +5698,7 @@ void trw_layer_delete_routes_from_selection(trw_menu_layer_t * data)
 	if (LayerTRWc::has_same_track_names(vtl->trw->routes)) {
 		if (a_dialog_yes_or_no(VIK_GTK_WINDOW_FROM_LAYER(vtl),
 				       _("Multiple entries with the same name exist. This method only works with unique names. Force unique names now?"), NULL)) {
-			vtl->trw->uniquify_tracks(VIK_LAYERS_PANEL(((VikLayersPanel *) data->panel->gob)), vtl->trw->routes, false);
+			vtl->trw->uniquify_tracks(data->panel, vtl->trw->routes, false);
 		}
 		else
 			return;
@@ -5798,7 +5798,7 @@ bool LayerTRW::has_same_waypoint_names()
  * Force unqiue waypoint names for this layer
  * Note the panel is a required parameter to enable the update of the names displayed
  */
-void LayerTRW::uniquify_waypoints(VikLayersPanel * vlp)
+void LayerTRW::uniquify_waypoints(LayersPanel * panel)
 {
 	// . Search list for an instance of repeated name
 	// . get waypoint of this name
@@ -5857,7 +5857,7 @@ void LayerTRW::uniquify_waypoints(VikLayersPanel * vlp)
 	}
 
 	// Update
-	vik_layers_panel_emit_update_cb(vlp->panel_ref);
+	vik_layers_panel_emit_update_cb(panel);
 }
 
 
@@ -5875,10 +5875,10 @@ void trw_layer_delete_waypoints_from_selection(trw_menu_layer_t * data)
 	if (vtl->trw->has_same_waypoint_names()) {
 		if (a_dialog_yes_or_no(VIK_GTK_WINDOW_FROM_LAYER(vtl),
 				       _("Multiple entries with the same name exist. This method only works with unique names. Force unique names now?"), NULL)) {
-			vtl->trw->uniquify_waypoints(VIK_LAYERS_PANEL(((VikLayersPanel *) data->panel->gob)));
-		}
-		else
+			vtl->trw->uniquify_waypoints(data->panel);
+		} else {
 			return;
+		}
 	}
 
 	// Sort list alphabetically for better presentation
@@ -8476,12 +8476,12 @@ VikCoordMode LayerTRW::get_coord_mode()
  * Also requires the layers panel as the names shown there need updating too
  * Returns whether the operation was successful or not
  */
-bool LayerTRW::uniquify(VikLayersPanel * vlp)
+bool LayerTRW::uniquify(LayersPanel * panel)
 {
-	if (vlp) {
-		this->uniquify_tracks(vlp, this->tracks, true);
-		this->uniquify_tracks(vlp, this->routes, false);
-		this->uniquify_waypoints(vlp);
+	if (panel) {
+		this->uniquify_tracks(panel, this->tracks, true);
+		this->uniquify_tracks(panel, this->routes, false);
+		this->uniquify_waypoints(panel);
 		return true;
 	}
 	return false;

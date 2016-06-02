@@ -93,9 +93,9 @@ typedef struct {
 
 
 VikGpsLayer *vik_gps_layer_create(Viewport * viewport);
-bool vik_gps_layer_is_empty(VikGpsLayer *vgl);
-const GList *vik_gps_layer_get_children(VikGpsLayer *vgl);
-VikTrwLayer * vik_gps_layer_get_a_child(VikGpsLayer *vgl);
+//bool vik_gps_layer_is_empty(VikGpsLayer *vgl);
+//const GList *vik_gps_layer_get_children(VikGpsLayer *vgl);
+//VikTrwLayer * vik_gps_layer_get_a_child(VikGpsLayer *vgl);
 
 // Non layer specific but expose communal method
 int vik_gps_comm(VikTrwLayer *vtl,
@@ -105,7 +105,7 @@ int vik_gps_comm(VikTrwLayer *vtl,
 		 char *port,
 		 bool tracking,
 		 Viewport * viewport,
-		 VikLayersPanel *vlp,
+		 LayersPanel * panel,
 		 bool do_tracks,
 		 bool do_routes,
 		 bool do_waypoints,
@@ -172,18 +172,18 @@ namespace SlavGPS {
 
 		Track * realtime_track;
 
-		GIOChannel *realtime_io_channel;
+		GIOChannel * realtime_io_channel;
 		unsigned int realtime_io_watch_id;
 		unsigned int realtime_retry_timer;
-		GdkGC *realtime_track_gc;
-		GdkGC *realtime_track_bg_gc;
-		GdkGC *realtime_track_pt_gc;
-		GdkGC *realtime_track_pt1_gc;
-		GdkGC *realtime_track_pt2_gc;
+		GdkGC * realtime_track_gc;
+		GdkGC * realtime_track_bg_gc;
+		GdkGC * realtime_track_pt_gc;
+		GdkGC * realtime_track_pt1_gc;
+		GdkGC * realtime_track_pt2_gc;
 
 		/* params */
-		char *gpsd_host;
-		char *gpsd_port;
+		char * gpsd_host;
+		char * gpsd_port;
 		int gpsd_retry_interval;
 		bool realtime_record;
 		bool realtime_jump_to_start;
@@ -193,7 +193,7 @@ namespace SlavGPS {
 		Trackpoint * tp_prev;
 #endif /* VIK_CONFIG_REALTIME_GPS_TRACKING */
 		char * protocol;
-		char *serial_port;
+		char * serial_port;
 		bool download_tracks;
 		bool download_routes;
 		bool download_waypoints;
