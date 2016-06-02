@@ -227,7 +227,8 @@ time_t vik_layer_get_timestamp(VikLayer * vl)
 	return layer->get_timestamp();
 }
 
-/* For GPS layer only. Layers of other types are already created by vik_layer_new(). */
+#if 0
+/* For GPS layer only. Layers of other types are already created by Layer::new_(). */
 VikLayer * vik_layer_create(VikLayerTypeEnum type, Viewport * viewport, bool interactive)
 {
 	assert (type == VIK_LAYER_GPS);
@@ -247,10 +248,11 @@ VikLayer * vik_layer_create(VikLayerTypeEnum type, Viewport * viewport, bool int
 	}
 	return new_layer;
 }
+#endif
 
-Layer * SlavGPS::vik_layer_new(VikLayerTypeEnum type, Viewport * viewport, bool interactive)
+Layer * Layer::new_(VikLayerTypeEnum type, Viewport * viewport, bool interactive)
 {
-	assert (type != VIK_LAYER_GPS && type != VIK_LAYER_NUM_TYPES);
+	assert (type != VIK_LAYER_NUM_TYPES);
 
 	Layer * layer = NULL;
 	if (type == VIK_LAYER_AGGREGATE) {
@@ -280,6 +282,10 @@ Layer * SlavGPS::vik_layer_new(VikLayerTypeEnum type, Viewport * viewport, bool 
 	} else if (type == VIK_LAYER_MAPNIK) {
 		fprintf(stderr, "\n\n\n NEW MAPNIK\n\n\n");
 		layer = new LayerMapnik(viewport);
+
+	} else if (type == VIK_LAYER_GPS) {
+		fprintf(stderr, "\n\n\n NEW GPS\n\n\n");
+		layer = new LayerGPS(viewport);
 	} else {
 		assert (0);
 	}

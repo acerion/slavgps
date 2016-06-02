@@ -364,12 +364,9 @@ static bool file_read(VikAggregateLayer *top, FILE *f, const char *dirpath, VikV
 						stack->data = (void *) g->get_a_child();
 						params = vik_layer_get_interface(type)->params;
 						params_count = vik_layer_get_interface(type)->params_count;
-					} else if (type == VIK_LAYER_GPS) {
-						stack->data = (void *) vik_gps_layer_create(&vp->port);
-						params = vik_layer_get_interface(type)->params;
-						params_count = vik_layer_get_interface(type)->params_count;
+
 					} else { /* Any other VIK_LAYER_x type. */
-						Layer * layer = vik_layer_new(type, &vp->port, false);
+						Layer * layer = Layer::new_(type, &vp->port, false);
 						stack->data = (void *) layer->vl;
 						params = vik_layer_get_interface(type)->params;
 						params_count = vik_layer_get_interface(type)->params_count;

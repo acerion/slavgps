@@ -480,8 +480,6 @@ VikLayerInterface vik_trw_layer_interface = {
 
 	VIK_MENU_ITEM_ALL,
 
-	(VikLayerFuncCreate)                  NULL,
-
 	(VikLayerFuncUnmarshall)              trw_layer_unmarshall,
 
 	(VikLayerFuncSetParam)                trw_layer_set_param,

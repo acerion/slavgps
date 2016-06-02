@@ -120,7 +120,6 @@ namespace SlavGPS {
 
 		// One per layer
 		GtkWidget * tracks_analysis_dialog;
-
 	};
 
 

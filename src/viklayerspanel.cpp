@@ -487,18 +487,12 @@ bool LayersPanel::new_layer(VikLayerTypeEnum type)
 	}
 	ask_user = !ask_user;
 
-	if (type != VIK_LAYER_GPS && type != VIK_LAYER_NUM_TYPES) {
-		Layer * layer = vik_layer_new(type, this->viewport, ask_user);
-		if (layer) {
-			this->add_layer(layer);
-			return true;
-		}
-	} else {
-		VikLayer * l = vik_layer_create(type, this->viewport, ask_user);
-		if (l) {
-			this->add_layer((Layer *) l->layer);
-			return true;
-		}
+	assert (type != VIK_LAYER_NUM_TYPES);
+
+	Layer * layer = Layer::new_(type, this->viewport, ask_user);
+	if (layer) {
+		this->add_layer(layer);
+		return true;
 	}
 	return false;
 }

@@ -149,8 +149,6 @@ VikLayerInterface vik_mapnik_layer_interface = {
 
 	VIK_MENU_ITEM_ALL,
 
-	(VikLayerFuncCreate)                  NULL,
-
 	(VikLayerFuncUnmarshall)              mapnik_layer_unmarshall,
 
 	(VikLayerFuncSetParam)                mapnik_layer_set_param,

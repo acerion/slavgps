@@ -303,8 +303,6 @@ VikLayerInterface vik_gps_layer_interface = {
 
 	VIK_MENU_ITEM_ALL,
 
-	(VikLayerFuncCreate)                  vik_gps_layer_create,
-
 	(VikLayerFuncUnmarshall)		gps_layer_unmarshall,
 
 	(VikLayerFuncSetParam)                gps_layer_set_param,
@@ -365,6 +363,7 @@ GType vik_gps_layer_get_type()
 	return val_type;
 }
 
+#if 0
 VikGpsLayer * vik_gps_layer_create(Viewport * viewport)
 {
 	VikGpsLayer *rv = vik_gps_layer_new(viewport);
@@ -379,6 +378,7 @@ VikGpsLayer * vik_gps_layer_create(Viewport * viewport)
 
 	return rv;
 }
+#endif
 
 char const * LayerGPS::tooltip()
 {
@@ -1939,9 +1939,82 @@ static void gps_start_stop_tracking_cb(gps_layer_data_t * data)
 
 
 
+
+LayerGPS::LayerGPS()
+{
+	this->type = VIK_LAYER_GPS;
+	strcpy(this->type_string, "GPS");
+}
+
+
+
+
+
 LayerGPS::LayerGPS(VikLayer * vl) : Layer(vl)
 {
 	this->type = VIK_LAYER_GPS;
 
 	strcpy(this->type_string, "GPS");
+};
+
+
+
+
+
+LayerGPS::LayerGPS(Viewport * viewport) : LayerGPS()
+{
+
+	/* vik_gps_layer_new() */
+
+	VikGpsLayer * vgl = VIK_GPS_LAYER (g_object_new(VIK_GPS_LAYER_TYPE, NULL));
+	((VikLayer *) vgl)->layer = this;
+	this->vl = (VikLayer *) vgl;
+
+	for (int i = 0; i < NUM_TRW; i++) {
+		this->trw_children[i] = NULL;
+	}
+	this->children = NULL;
+	this->cur_read_child = 0;
+
+#if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
+	this->vgpsd = NULL;
+	this->first_realtime_trackpoint = false;
+	this->realtime_track = NULL;
+
+	this->realtime_io_channel = NULL;
+	this->realtime_io_watch_id = 0;
+	this->realtime_retry_timer = 0;
+	if (viewport) {
+		this->realtime_track_gc = viewport->new_gc("#203070", 2);
+		this->realtime_track_bg_gc = viewport->new_gc("grey", 2);
+		this->realtime_track_pt1_gc = viewport->new_gc("red", 2);
+		this->realtime_track_pt2_gc = viewport->new_gc("green", 2);
+		this->realtime_track_pt_gc = this->realtime_track_pt1_gc;
+	}
+
+	this->gpsd_host = strdup("host");
+	this->gpsd_port = strdup("port");
+
+	this->tp = NULL;
+	this->tp_prev = NULL;
+
+#endif // VIK_CONFIG_REALTIME_GPS_TRACKING
+
+	this->protocol = NULL;
+	this->serial_port = NULL;
+
+	vik_layer_set_defaults(this->vl, viewport);
+
+
+
+
+	/* vik_gps_layer_create() */
+
+	this->rename(vik_gps_layer_interface.name);
+
+	for (int i = 0; i < NUM_TRW; i++) {
+		LayerTRW * trw = new LayerTRW(viewport);
+		this->trw_children[i] = (VikTrwLayer *) trw->vl;
+		vik_layer_set_menu_items_selection(VIK_LAYER(this->trw_children[i]), VIK_MENU_ITEM_ALL & ~(VIK_MENU_ITEM_CUT|VIK_MENU_ITEM_DELETE));
+	}
 };

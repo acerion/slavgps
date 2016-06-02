@@ -109,9 +109,6 @@ struct _VikToolInterface {
 
 /* layer interface functions */
 
-/* Create a new layer of a certain type. Should be filled with defaults */
-typedef VikLayer *    (*VikLayerFuncCreate)                (Viewport *);
-
 typedef VikLayer *    (*VikLayerFuncUnmarshall)            (uint8_t *, int, Viewport *);
 
 /* returns true if needs to redraw due to changed param */
@@ -156,8 +153,6 @@ struct _VikLayerInterface {
   /* menu items to be created */
   VikStdLayerMenuItem               menu_items_selection;
 
-  VikLayerFuncCreate                create;
-
   VikLayerFuncUnmarshall            unmarshall;
 
   /* for I/O */
@@ -177,7 +172,7 @@ void vik_layer_emit_update ( VikLayer *vl );
 void vik_layer_set_menu_items_selection(VikLayer *l, uint16_t selection);
 uint16_t vik_layer_get_menu_items_selection(VikLayer *l);
 void vik_layer_add_menu_items ( VikLayer *l, GtkMenu *menu, void * vlp );
-VikLayer *vik_layer_create ( VikLayerTypeEnum type, Viewport * viewport, bool interactive );
+//VikLayer *vik_layer_create ( VikLayerTypeEnum type, Viewport * viewport, bool interactive );
 bool vik_layer_properties ( VikLayer *layer, Viewport * viewport);
 
 void vik_layer_post_read ( VikLayer *layer, Viewport * viewport, bool from_file );
@@ -230,6 +225,8 @@ namespace SlavGPS {
 		Layer();
 		Layer(VikLayer * vl);
 		~Layer() {};
+
+		static Layer * new_(VikLayerTypeEnum type, Viewport * viewport, bool interactive);
 
 
 		/* Layer interface methods. */
@@ -319,7 +316,7 @@ namespace SlavGPS {
 
 	};
 
-	Layer * vik_layer_new(VikLayerTypeEnum type, Viewport * viewport, bool interactive);
+
 
 }
 

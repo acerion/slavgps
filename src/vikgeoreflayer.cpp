@@ -137,8 +137,6 @@ VikLayerInterface vik_georef_layer_interface = {
 
 	VIK_MENU_ITEM_ALL,
 
-	(VikLayerFuncCreate)                  NULL,
-
 	(VikLayerFuncUnmarshall)	      georef_layer_unmarshall,
 
 	(VikLayerFuncSetParam)                georef_layer_set_param,

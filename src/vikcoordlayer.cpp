@@ -76,8 +76,6 @@ VikLayerInterface vik_coord_layer_interface = {
 
 	VIK_MENU_ITEM_ALL,
 
-	(VikLayerFuncCreate)                  NULL,
-
 	(VikLayerFuncUnmarshall)		coord_layer_unmarshall,
 
 	(VikLayerFuncSetParam)                coord_layer_set_param,

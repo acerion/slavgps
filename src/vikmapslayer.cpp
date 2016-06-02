@@ -226,8 +226,6 @@ VikLayerInterface vik_maps_layer_interface = {
 
 	VIK_MENU_ITEM_ALL,
 
-	(VikLayerFuncCreate)                  NULL,
-
 	(VikLayerFuncUnmarshall)	      maps_layer_unmarshall,
 
 	(VikLayerFuncSetParam)                maps_layer_set_param,
@@ -2657,4 +2655,3 @@ LayerMaps::LayerMaps(Viewport * viewport) : LayerMaps()
 	layer->filename = NULL;
 
 }
-

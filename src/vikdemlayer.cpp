@@ -199,8 +199,6 @@ VikLayerInterface vik_dem_layer_interface = {
 
 	VIK_MENU_ITEM_ALL,
 
-	(VikLayerFuncCreate)                  NULL,
-
 	(VikLayerFuncUnmarshall)	      dem_layer_unmarshall,
 
 	(VikLayerFuncSetParam)                dem_layer_set_param,

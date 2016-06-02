@@ -127,8 +127,9 @@ namespace SlavGPS {
 
 	class LayerGPS : public Layer {
 	public:
+		LayerGPS();
 		LayerGPS(VikLayer * vl);
-
+		LayerGPS(Viewport * viewport);
 
 		/* Layer interface methods. */
 		void draw(Viewport * viewport);
