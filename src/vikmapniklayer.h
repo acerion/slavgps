@@ -26,6 +26,7 @@
 #include <stdint.h>
 
 #include "viklayer.h"
+#include "mapnik_interface.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -76,6 +77,42 @@ namespace SlavGPS {
 		void marshall(uint8_t ** data, int * len);
 		void add_menu_items(GtkMenu * menu, void * vlp);
 		void free_();
+
+
+
+
+		void set_file_xml(char const * name);
+		void set_file_css(char const * name);
+		void set_cache_dir(char const * name);
+		bool carto_load(VikViewport * vvp);
+		void possibly_save_pixbuf(GdkPixbuf * pixbuf, TileInfo * ulm);
+		void render(VikCoord * ul, VikCoord * br, TileInfo * ulm);
+		void thread_add(TileInfo * mul, VikCoord * ul, VikCoord * br, int x, int y, int z, int zoom, char const * name);
+		GdkPixbuf * load_pixbuf(TileInfo * ulm, TileInfo * brm, bool * rerender);
+		GdkPixbuf * get_pixbuf(TileInfo * ulm, TileInfo * brm);
+		void rerender();
+		void tile_info();
+		bool feature_release(GdkEventButton * event, Viewport * viewport);
+
+
+
+
+		char * filename_css; // CartoCSS MML File - use 'carto' to convert into xml
+		char * filename_xml;
+		uint8_t alpha;
+
+		unsigned int tile_size_x; // Y is the same as X ATM
+		bool loaded;
+		MapnikInterface * mi;
+		unsigned int rerender_timeout;
+
+		bool use_file_cache;
+		char * file_cache_dir;
+
+		VikCoord rerender_ul;
+		VikCoord rerender_br;
+		double rerender_zoom;
+		GtkWidget * right_click_menu;
 	};
 
 
