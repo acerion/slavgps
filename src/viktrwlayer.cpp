@@ -129,7 +129,7 @@ typedef enum {
 
 
 
-static void trw_layer_find_maxmin(VikTrwLayer *vtl, struct LatLon maxmin[2]);
+//static void trw_layer_find_maxmin(VikTrwLayer *vtl, struct LatLon maxmin[2]);
 
 //static void trw_layer_new_track_gcs(VikTrwLayer *vtl, Viewport * viewport);
 //static void trw_layer_free_track_gcs(VikTrwLayer *vtl);
@@ -153,9 +153,9 @@ static void * tool_show_picture_create(VikWindow *vw, Viewport * viewport);
 static bool tool_show_picture_click(VikTrwLayer *vtl, GdkEventButton *event, Viewport * viewport);
 static void * tool_edit_waypoint_create(VikWindow *vw, Viewport * viewport);
 static void tool_edit_waypoint_destroy(tool_ed_t *t);
-static bool tool_edit_waypoint_click(VikTrwLayer *vtl, GdkEventButton *event, void * data);
-static bool tool_edit_waypoint_move(VikTrwLayer *vtl, GdkEventMotion *event, void * data);
-static bool tool_edit_waypoint_release(VikTrwLayer *vtl, GdkEventButton *event, void * data);
+static bool tool_edit_waypoint_click_cb(VikTrwLayer *vtl, GdkEventButton *event, void * data);
+static bool tool_edit_waypoint_move_cb(VikTrwLayer *vtl, GdkEventMotion *event, void * data);
+static bool tool_edit_waypoint_release_cb(VikTrwLayer *vtl, GdkEventButton *event, void * data);
 static void * tool_new_route_create(VikWindow *vw, Viewport * viewport);
 static bool tool_new_route_click(VikTrwLayer *vtl, GdkEventButton *event, Viewport * viewport);
 static void * tool_new_track_create(VikWindow *vw, Viewport * viewport);
@@ -172,7 +172,6 @@ static bool tool_extended_route_finder_key_press(VikTrwLayer *vtl, GdkEventKey *
 
 static void waypoint_convert(Waypoint * wp, VikCoordMode * dest_mode);
 
-static Track * trw_layer_get_track_helper(trw_menu_sublayer_t * data, VikTrwLayer * vtl);
 
 // Note for the following tool GtkRadioActionEntry texts:
 //  the very first text value is an internal name not displayed anywhere
@@ -221,9 +220,9 @@ static VikToolInterface trw_layer_tools[] = {
 	  (VikToolConstructorFunc) tool_edit_waypoint_create,
 	  (VikToolDestructorFunc) tool_edit_waypoint_destroy,
 	  NULL, NULL,
-	  (VikToolMouseFunc) tool_edit_waypoint_click,
-	  (VikToolMouseMoveFunc) tool_edit_waypoint_move,
-	  (VikToolMouseFunc) tool_edit_waypoint_release,
+	  (VikToolMouseFunc) tool_edit_waypoint_click_cb,
+	  (VikToolMouseMoveFunc) tool_edit_waypoint_move_cb,
+	  (VikToolMouseFunc) tool_edit_waypoint_release_cb,
 	  (VikToolKeyFunc) NULL,
 	  false,
 	  GDK_CURSOR_IS_PIXMAP, &cursor_edwp_pixbuf, NULL },
@@ -707,7 +706,7 @@ void LayerTRW::cut_item(int subtype, sg_uid_t sublayer_uid)
 
 void trw_layer_copy_item_cb(trw_menu_sublayer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
+	LayerTRW * layer = data->layer;
 	int subtype = data->subtype;
 	sg_uid_t uid = data->sublayer_id;
 	uint8_t *data_ = NULL;
@@ -718,21 +717,21 @@ void trw_layer_copy_item_cb(trw_menu_sublayer_t * data)
 	if (data_) {
 		const char* name;
 		if (subtype == VIK_TRW_LAYER_SUBLAYER_WAYPOINT) {
-			Waypoint * wp = vtl->trw->waypoints.at(uid);
+			Waypoint * wp = layer->waypoints.at(uid);
 			if (wp && wp->name)
 				name = wp->name;
 			else
 				name = NULL; // Broken :(
 		}
 		else if (subtype == VIK_TRW_LAYER_SUBLAYER_TRACK) {
-			Track * trk = vtl->trw->tracks.at(uid);
+			Track * trk = layer->tracks.at(uid);
 			if (trk && trk->name)
 				name = trk->name;
 			else
 				name = NULL; // Broken :(
 		}
 		else {
-			Track * trk = vtl->trw->routes.at(uid);
+			Track * trk = layer->routes.at(uid);
 			if (trk && trk->name)
 				name = trk->name;
 			else
@@ -788,10 +787,10 @@ void LayerTRW::copy_item(int subtype, sg_uid_t sublayer_uid, uint8_t **item, uns
 
 bool LayerTRW::paste_item(int subtype, uint8_t * item, size_t len)
 {
-	if (!item)
+	if (!item) {
 		return false;
+	}
 
-	VikTrwLayer * vtl = (VikTrwLayer *) this->vl;
 	char *name;
 
 	if (subtype == VIK_TRW_LAYER_SUBLAYER_WAYPOINT) {
@@ -1252,7 +1251,7 @@ static VikTrwLayer * trw_layer_unmarshall(uint8_t *data, int len, Viewport * vie
 	// First the overall layer parameters
 	memcpy(&pl, data, sizeof(pl));
 	data += sizeof(pl);
-	vik_layer_unmarshall_params(VIK_LAYER(vtl), data, pl, viewport);
+	vik_layer_unmarshall_params((VikLayer *) vtl, data, pl, viewport);
 	data += pl;
 
 	consumed_length = pl;
@@ -1337,7 +1336,7 @@ static unsigned int strcase_hash(gconstpointer v)
 //  thus more easily searchable in a simple text editor
 static VikTrwLayer* trw_layer_new1(Viewport * viewport)
 {
-	VikTrwLayer *rv = VIK_TRW_LAYER(g_object_new(VIK_TRW_LAYER_TYPE, NULL));
+	VikTrwLayer *rv = (VikTrwLayer *) g_object_new(VIK_TRW_LAYER_TYPE, NULL);
 
 	// It's not entirely clear the benefits of hash tables usage here - possibly the simplicity of first implementation for unique names
 	// Now with the name of the item stored as part of the item - these tables are effectively straightforward lists
@@ -1363,7 +1362,7 @@ static VikTrwLayer* trw_layer_new1(Viewport * viewport)
 	((VikLayer *) rv)->layer = new LayerTRW((VikLayer *) rv);
 	rv->trw = (LayerTRW *) ((VikLayer *) rv)->layer;
 
-	vik_layer_set_defaults(VIK_LAYER(rv), viewport);
+	vik_layer_set_defaults((VikLayer *) rv, viewport);
 
 
 	// Param settings that are not available via the GUI
@@ -1497,7 +1496,7 @@ void LayerTRW::draw_highlight(Viewport * viewport)
  */
 void LayerTRW::draw_highlight_item(Track * trk, Waypoint * wp, Viewport * viewport)
 {
-	VikLayer * parent = VIK_LAYER(this->vl);
+	VikLayer * parent = this->vl;
 
 	// Check the layer for visibility (including all the parents visibilities)
 	if (!this->vt->tree->is_visible_in_tree(&this->iter)) {
@@ -1531,7 +1530,7 @@ void LayerTRW::draw_highlight_item(Track * trk, Waypoint * wp, Viewport * viewpo
  */
 void LayerTRW::draw_highlight_items(std::unordered_map<sg_uid_t, Track *> * tracks, std::unordered_map<sg_uid_t, Waypoint *> * waypoints, Viewport * viewport)
 {
-	VikLayer * parent = VIK_LAYER(this->vl);
+	VikLayer * parent = this->vl;
 
 	// Check the layer for visibility (including all the parents visibilities)
 	if (!this->vt->tree->is_visible_in_tree(&this->iter)) {
@@ -1791,8 +1790,7 @@ void LayerTRW::add_sublayer_routes(VikTreeview * vt, GtkTreeIter * layer_iter)
 void LayerTRW::realize(VikTreeview * vt, GtkTreeIter * layer_iter)
 {
 	GtkTreeIter iter2;
-	VikTrwLayer * vtl = (VikTrwLayer *) this->vl;
-	void * pass_along[4] = { &(this->track_iter), &iter2, vtl, vt };
+	void * pass_along[4] = { &(this->track_iter), &iter2, (VikTrwLayer *) this->vl, vt };
 
 	this->vt = vt;
 	this->iter = *layer_iter;
@@ -1820,7 +1818,7 @@ void LayerTRW::realize(VikTreeview * vt, GtkTreeIter * layer_iter)
 		vt->tree->set_visibility(&(this->waypoint_iter), this->waypoints_visible);
 	}
 
-	trw_layer_verify_thumbnails(vtl, NULL);
+	this->verify_thumbnails(NULL);
 
 	this->sort_all();
 }
@@ -2481,12 +2479,12 @@ bool LayerTRW::find_center(VikCoord * dest)
 
 void trw_layer_centerize(trw_menu_layer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
+	LayerTRW * layer = data->layer;
 	VikCoord coord;
-	if (vtl->trw->find_center(&coord))
+	if (layer->find_center(&coord))
 		goto_coord(data->panel, NULL, NULL, &coord);
 	else
-		a_dialog_info_msg(VIK_GTK_WINDOW_FROM_LAYER(vtl), _("This layer has no waypoints or trackpoints."));
+		a_dialog_info_msg(VIK_GTK_WINDOW_FROM_LAYER(layer->vl), _("This layer has no waypoints or trackpoints."));
 }
 
 
@@ -2520,13 +2518,13 @@ bool LayerTRW::auto_set_view(Viewport * viewport)
 
 void trw_layer_auto_view(trw_menu_layer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
+	LayerTRW * layer = data->layer;
 	VikLayersPanel * vlp = (VikLayersPanel *) data->panel->gob;
-	if (vtl->trw->auto_set_view(vlp->panel_ref->get_viewport())) {
+	if (layer->auto_set_view(vlp->panel_ref->get_viewport())) {
 		vik_layers_panel_emit_update_cb(vlp->panel_ref);
 	}
 	else
-		a_dialog_info_msg(VIK_GTK_WINDOW_FROM_LAYER(vtl), _("This layer has no waypoints or trackpoints."));
+		a_dialog_info_msg(VIK_GTK_WINDOW_FROM_LAYER(layer->vl), _("This layer has no waypoints or trackpoints."));
 }
 
 void trw_layer_export_gpspoint(trw_menu_layer_t * data)
@@ -2534,7 +2532,7 @@ void trw_layer_export_gpspoint(trw_menu_layer_t * data)
 	LayerTRW * layer = data->layer;
 	char *auto_save_name = append_file_ext(layer->get_name(), FILE_TYPE_GPSPOINT);
 
-	vik_trw_layer_export((VikTrwLayer *) layer->vl, _("Export Layer"), auto_save_name, NULL, FILE_TYPE_GPSPOINT);
+	vik_trw_layer_export(layer, _("Export Layer"), auto_save_name, NULL, FILE_TYPE_GPSPOINT);
 
 	free(auto_save_name);
 }
@@ -2544,7 +2542,7 @@ void trw_layer_export_gpsmapper(trw_menu_layer_t * data)
 	LayerTRW * layer = data->layer;
 	char *auto_save_name = append_file_ext(layer->get_name(), FILE_TYPE_GPSMAPPER);
 
-	vik_trw_layer_export((VikTrwLayer *) layer->vl, _("Export Layer"), auto_save_name, NULL, FILE_TYPE_GPSMAPPER);
+	vik_trw_layer_export(layer, _("Export Layer"), auto_save_name, NULL, FILE_TYPE_GPSMAPPER);
 
 	free(auto_save_name);
 }
@@ -2554,7 +2552,7 @@ void trw_layer_export_gpx(trw_menu_layer_t * data)
 	LayerTRW * layer = data->layer;
 	char *auto_save_name = append_file_ext(layer->get_name(), FILE_TYPE_GPX);
 
-	vik_trw_layer_export((VikTrwLayer *) layer->vl, _("Export Layer"), auto_save_name, NULL, FILE_TYPE_GPX);
+	vik_trw_layer_export(layer, _("Export Layer"), auto_save_name, NULL, FILE_TYPE_GPX);
 
 	free(auto_save_name);
 }
@@ -2564,7 +2562,7 @@ void trw_layer_export_kml(trw_menu_layer_t * data)
 	LayerTRW * layer = data->layer;
 	char *auto_save_name = append_file_ext(layer->get_name(), FILE_TYPE_KML);
 
-	vik_trw_layer_export((VikTrwLayer *) layer->vl, _("Export Layer"), auto_save_name, NULL, FILE_TYPE_KML);
+	vik_trw_layer_export(layer, _("Export Layer"), auto_save_name, NULL, FILE_TYPE_KML);
 
 	free(auto_save_name);
 }
@@ -2574,7 +2572,7 @@ void trw_layer_export_geojson(trw_menu_layer_t * data)
 	LayerTRW * layer = data->layer;
 	char *auto_save_name = append_file_ext(layer->get_name(), FILE_TYPE_GEOJSON);
 
-	vik_trw_layer_export((VikTrwLayer *) layer->vl, _("Export Layer"), auto_save_name, NULL, FILE_TYPE_GEOJSON);
+	vik_trw_layer_export(layer, _("Export Layer"), auto_save_name, NULL, FILE_TYPE_GEOJSON);
 
 	free(auto_save_name);
 }
@@ -2598,20 +2596,22 @@ void trw_layer_export_external_gpx_2(trw_menu_layer_t * data)
 
 void trw_layer_export_gpx_track(trw_menu_sublayer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
-	Track * trk = trw_layer_get_track_helper(data, vtl);
+	LayerTRW * layer = data->layer;
+	Track * trk = layer->get_track_helper(data);
 
-	if (!trk || !trk->name)
+	if (!trk || !trk->name) {
 		return;
+	}
 
-	char *auto_save_name = append_file_ext(trk->name, FILE_TYPE_GPX);
+	char * auto_save_name = append_file_ext(trk->name, FILE_TYPE_GPX);
 
-	char *label = NULL;
-	if (data->subtype == VIK_TRW_LAYER_SUBLAYER_ROUTE)
+	char * label = NULL;
+	if (data->subtype == VIK_TRW_LAYER_SUBLAYER_ROUTE) {
 		label = _("Export Route as GPX");
-	else
+	} else {
 		label = _("Export Track as GPX");
-	vik_trw_layer_export(((VikTrwLayer *) data->layer->vl), label, auto_save_name, trk, FILE_TYPE_GPX);
+	}
+	vik_trw_layer_export(data->layer, label, auto_save_name, trk, FILE_TYPE_GPX);
 
 	free(auto_save_name);
 }
@@ -2621,10 +2621,10 @@ void trw_layer_export_gpx_track(trw_menu_sublayer_t * data)
 
 void trw_layer_goto_wp(trw_menu_layer_t * data)
 {
-	VikTrwLayer *vtl = ((VikTrwLayer *) data->layer->vl);
+	LayerTRW * layer = data->layer;
 	VikLayersPanel * vlp = (VikLayersPanel *) data->panel->gob;
 	GtkWidget *dia = gtk_dialog_new_with_buttons(_("Find"),
-						     VIK_GTK_WINDOW_FROM_LAYER(vtl),
+						     VIK_GTK_WINDOW_FROM_LAYER(layer->vl),
 						     (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
 						     GTK_STOCK_CANCEL,
 						     GTK_RESPONSE_REJECT,
@@ -2646,19 +2646,19 @@ void trw_layer_goto_wp(trw_menu_layer_t * data)
 	while (gtk_dialog_run(GTK_DIALOG(dia)) == GTK_RESPONSE_ACCEPT) {
 		char *name = g_strdup(gtk_entry_get_text(GTK_ENTRY(entry)));
 		// Find *first* wp with the given name
-		Waypoint * wp = vtl->trw->get_waypoint((const char *) name);
+		Waypoint * wp = layer->get_waypoint((const char *) name);
 
 		if (!wp)
-			a_dialog_error_msg(VIK_GTK_WINDOW_FROM_LAYER(vtl), _("Waypoint not found in this layer."));
+			a_dialog_error_msg(VIK_GTK_WINDOW_FROM_LAYER(layer->vl), _("Waypoint not found in this layer."));
 		else {
 			vlp->panel_ref->get_viewport()->set_center_coord(&(wp->coord), true);
 			vlp->panel_ref->emit_update();
 
 			// Find and select on the side panel
-			sg_uid_t wp_uid = LayerTRWc::find_uid_of_waypoint(vtl->trw->waypoints, wp);
+			sg_uid_t wp_uid = LayerTRWc::find_uid_of_waypoint(layer->waypoints, wp);
 			if (wp_uid) {
-				GtkTreeIter * it = vtl->trw->waypoints_iters.at(wp_uid);
-				vtl->trw->vt->tree->select_iter(it, true);
+				GtkTreeIter * it = layer->waypoints_iters.at(wp_uid);
+				layer->vt->tree->select_iter(it, true);
 			}
 
 			break;
@@ -2705,27 +2705,27 @@ bool LayerTRW::new_waypoint(GtkWindow * w, const VikCoord * def_coord)
 void trw_layer_new_wikipedia_wp_viewport(trw_menu_layer_t * data)
 {
 	struct LatLon maxmin[2] = { {0.0,0.0}, {0.0,0.0} };
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
+	LayerTRW * layer = data->layer;
 	VikLayersPanel * vlp = (VikLayersPanel *) data->panel->gob;
-	VikWindow *vw = (VikWindow *)(VIK_GTK_WINDOW_FROM_LAYER(vtl));
+	VikWindow *vw = (VikWindow *)(VIK_GTK_WINDOW_FROM_LAYER(layer->vl));
 	Viewport * viewport =  vik_window_viewport(vw);
 
 	// Note the order is max part first then min part - thus reverse order of use in min_max function:
 	viewport->get_min_max_lat_lon(&maxmin[1].lat, &maxmin[0].lat, &maxmin[1].lon, &maxmin[0].lon);
-	a_geonames_wikipedia_box((VikWindow *)(VIK_GTK_WINDOW_FROM_LAYER(vtl)), vtl, maxmin);
-	vtl->trw->calculate_bounds_waypoints();
+	a_geonames_wikipedia_box((VikWindow *)(VIK_GTK_WINDOW_FROM_LAYER(layer->vl)), (VikTrwLayer *) layer->vl, maxmin);
+	layer->calculate_bounds_waypoints();
 	vik_layers_panel_emit_update_cb(vlp->panel_ref);
 }
 
 void trw_layer_new_wikipedia_wp_layer(trw_menu_layer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
+	LayerTRW * layer = data->layer;
 	VikLayersPanel * vlp = (VikLayersPanel *) data->panel->gob;
 	struct LatLon maxmin[2] = { {0.0,0.0}, {0.0,0.0} };
 
-	vtl->trw->find_maxmin(maxmin);
-	a_geonames_wikipedia_box((VikWindow *)(VIK_GTK_WINDOW_FROM_LAYER(vtl)), vtl, maxmin);
-	vtl->trw->calculate_bounds_waypoints();
+	layer->find_maxmin(maxmin);
+	a_geonames_wikipedia_box((VikWindow *)(VIK_GTK_WINDOW_FROM_LAYER(layer->vl)), (VikTrwLayer *) layer->vl, maxmin);
+	layer->calculate_bounds_waypoints();
 	vik_layers_panel_emit_update_cb(vlp->panel_ref);
 }
 
@@ -2753,38 +2753,38 @@ void trw_layer_geotagging_waypoint_mtime_update(trw_menu_sublayer_t * data)
  */
 void trw_layer_geotagging_track(trw_menu_sublayer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
+	LayerTRW * layer = data->layer;
 	sg_uid_t uid = data->sublayer_id;
-	Track * trk = vtl->trw->tracks.at(uid);
+	Track * trk = layer->tracks.at(uid);
 	// Unset so can be reverified later if necessary
-	vtl->trw->has_verified_thumbnails = false;
+	layer->has_verified_thumbnails = false;
 
-	trw_layer_geotag_dialog(VIK_GTK_WINDOW_FROM_LAYER(vtl),
-				vtl,
+	trw_layer_geotag_dialog(VIK_GTK_WINDOW_FROM_LAYER(layer->vl),
+				layer,
 				NULL,
 				trk);
 }
 
 void trw_layer_geotagging_waypoint(trw_menu_sublayer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
+	LayerTRW * layer = data->layer;
 	sg_uid_t wp_uid = data->sublayer_id;
-	Waypoint * wp = vtl->trw->waypoints.at(wp_uid);
+	Waypoint * wp = layer->waypoints.at(wp_uid);
 
-	trw_layer_geotag_dialog(VIK_GTK_WINDOW_FROM_LAYER(vtl),
-				vtl,
+	trw_layer_geotag_dialog(VIK_GTK_WINDOW_FROM_LAYER(layer->vl),
+				layer,
 				wp,
 				NULL);
 }
 
 void trw_layer_geotagging(trw_menu_layer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
+	LayerTRW * layer = data->layer;
 	// Unset so can be reverified later if necessary
-	vtl->trw->has_verified_thumbnails = false;
+	layer->has_verified_thumbnails = false;
 
-	trw_layer_geotag_dialog(VIK_GTK_WINDOW_FROM_LAYER(vtl),
-				vtl,
+	trw_layer_geotag_dialog(VIK_GTK_WINDOW_FROM_LAYER(layer->vl),
+				layer,
 				NULL,
 				NULL);
 }
@@ -2794,9 +2794,9 @@ void trw_layer_geotagging(trw_menu_layer_t * data)
 
 static void trw_layer_acquire(trw_menu_layer_t * data, VikDataSourceInterface *datasource)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
+	LayerTRW * layer = data->layer;
 	VikLayersPanel * vlp = (VikLayersPanel *) data->panel->gob;
-	VikWindow *vw = (VikWindow *)(VIK_GTK_WINDOW_FROM_LAYER(vtl));
+	VikWindow *vw = (VikWindow *)(VIK_GTK_WINDOW_FROM_LAYER(layer->vl));
 	Viewport * viewport =  vik_window_viewport(vw);
 
 	vik_datasource_mode_t mode = datasource->mode;
@@ -2863,13 +2863,13 @@ void trw_layer_acquire_geocache_cb(trw_menu_layer_t * data)
  */
 void trw_layer_acquire_geotagged_cb(trw_menu_layer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
+	LayerTRW * layer = data->layer;
 
 	trw_layer_acquire(data, &vik_datasource_geotag_interface);
 
 	// Reverify thumbnails as they may have changed
-	vtl->trw->has_verified_thumbnails = false;
-	trw_layer_verify_thumbnails(vtl, NULL);
+	layer->has_verified_thumbnails = false;
+	layer->verify_thumbnails(NULL);
 }
 #endif
 
@@ -2897,7 +2897,7 @@ void trw_layer_gps_upload(trw_menu_layer_t * data)
  */
 void trw_layer_gps_upload_any(trw_menu_sublayer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
+	LayerTRW * layer = data->layer;
 	VikLayersPanel *vlp = (VikLayersPanel *) data->panel->gob;
 	sg_uid_t uid = data->sublayer_id;
 
@@ -2909,11 +2909,11 @@ void trw_layer_gps_upload_any(trw_menu_sublayer_t * data)
 	if (data->subtype) {
 		xfer_all = false;
 		if (data->subtype == VIK_TRW_LAYER_SUBLAYER_ROUTE) {
-			trk = vtl->trw->routes.at(uid);
+			trk = layer->routes.at(uid);
 			xfer_type = RTE;
 		}
 		else if (data->subtype == VIK_TRW_LAYER_SUBLAYER_TRACK) {
-			trk = vtl->trw->tracks.at(uid);
+			trk = layer->tracks.at(uid);
 			xfer_type = TRK;
 		}
 		else if (data->subtype == VIK_TRW_LAYER_SUBLAYER_WAYPOINTS) {
@@ -2927,12 +2927,12 @@ void trw_layer_gps_upload_any(trw_menu_sublayer_t * data)
 		xfer_all = true; // i.e. whole layer
 
 	if (trk && !trk->visible) {
-		a_dialog_error_msg(VIK_GTK_WINDOW_FROM_LAYER(vtl), _("Can not upload invisible track."));
+		a_dialog_error_msg(VIK_GTK_WINDOW_FROM_LAYER(layer->vl), _("Can not upload invisible track."));
 		return;
 	}
 
 	GtkWidget *dialog = gtk_dialog_new_with_buttons(_("GPS Upload"),
-							VIK_GTK_WINDOW_FROM_LAYER(vtl),
+							VIK_GTK_WINDOW_FROM_LAYER(layer->vl),
 							GTK_DIALOG_DESTROY_WITH_PARENT,
 							GTK_STOCK_OK,
 							GTK_RESPONSE_ACCEPT,
@@ -2970,11 +2970,11 @@ void trw_layer_gps_upload_any(trw_menu_sublayer_t * data)
 
 	// When called from the viewport - work the corresponding layerspanel:
 	if (!vlp) {
-		vlp = vik_window_layers_panel(VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(vtl)));
+		vlp = vik_window_layers_panel(VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(layer->vl)));
 	}
 
 	// Apply settings to transfer to the GPS device
-	vik_gps_comm(vtl,
+	vik_gps_comm(layer,
 		     trk,
 		     GPS_UP,
 		     protocol,
@@ -2990,13 +2990,13 @@ void trw_layer_gps_upload_any(trw_menu_sublayer_t * data)
 
 void trw_layer_new_wp(trw_menu_layer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
+	LayerTRW * layer = data->layer;
 	VikLayersPanel * vlp = (VikLayersPanel *) data->panel->gob;
 	/* TODO longone: okay, if layer above (aggregate) is invisible but vtl->visible is true, this redraws for no reason.
 	   instead return true if you want to update. */
-	if (vtl->trw->new_waypoint(VIK_GTK_WINDOW_FROM_LAYER(vtl), vlp->panel_ref->get_viewport()->get_center())) {
-		vtl->trw->calculate_bounds_waypoints();
-		if (vtl->trw->visible)
+	if (layer->new_waypoint(VIK_GTK_WINDOW_FROM_LAYER(layer->vl), vlp->panel_ref->get_viewport()->get_center())) {
+		layer->calculate_bounds_waypoints();
+		if (layer->visible)
 			vik_layers_panel_emit_update_cb(vlp->panel_ref);
 	}
 }
@@ -3027,14 +3027,14 @@ void LayerTRW::new_track_create_common(char * name)
 
 void trw_layer_new_track(trw_menu_layer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
+	LayerTRW * layer = data->layer;
 
-	if (! vtl->trw->current_track) {
-		char *name = vtl->trw->new_unique_sublayer_name(VIK_TRW_LAYER_SUBLAYER_TRACK, _("Track")) ;
-		vtl->trw->new_track_create_common(name);
+	if (! layer->current_track) {
+		char *name = layer->new_unique_sublayer_name(VIK_TRW_LAYER_SUBLAYER_TRACK, _("Track")) ;
+		layer->new_track_create_common(name);
 		free(name);
 
-		vik_window_enable_layer_tool(VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(vtl)), VIK_LAYER_TRW, TOOL_CREATE_TRACK);
+		vik_window_enable_layer_tool(VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(layer->vl)), VIK_LAYER_TRW, TOOL_CREATE_TRACK);
 	}
 }
 
@@ -3059,25 +3059,25 @@ void LayerTRW::new_route_create_common(char * name)
 
 void trw_layer_new_route(trw_menu_layer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
+	LayerTRW * layer = data->layer;
 
-	if (! vtl->trw->current_track) {
-		char *name = vtl->trw->new_unique_sublayer_name(VIK_TRW_LAYER_SUBLAYER_ROUTE, _("Route")) ;
-		vtl->trw->new_route_create_common(name);
+	if (! layer->current_track) {
+		char *name = layer->new_unique_sublayer_name(VIK_TRW_LAYER_SUBLAYER_ROUTE, _("Route")) ;
+		layer->new_route_create_common(name);
 		free(name);
-		vik_window_enable_layer_tool(VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(vtl)), VIK_LAYER_TRW, TOOL_CREATE_ROUTE);
+		vik_window_enable_layer_tool(VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(layer->vl)), VIK_LAYER_TRW, TOOL_CREATE_ROUTE);
 	}
 }
 
 void trw_layer_auto_routes_view(trw_menu_layer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
+	LayerTRW * layer = data->layer;
 	VikLayersPanel * vlp = (VikLayersPanel *) data->panel->gob;
 
-	if (vtl->trw->routes.size() > 0) {
+	if (layer->routes.size() > 0) {
 		struct LatLon maxmin[2] = { {0,0}, {0,0} };
-		LayerTRWc::find_maxmin_in_tracks(vtl->trw->routes, maxmin);
-		vtl->trw->zoom_to_show_latlons(vlp->panel_ref->get_viewport(), maxmin);
+		LayerTRWc::find_maxmin_in_tracks(layer->routes, maxmin);
+		layer->zoom_to_show_latlons(vlp->panel_ref->get_viewport(), maxmin);
 		vik_layers_panel_emit_update_cb(vlp->panel_ref);
 	}
 }
@@ -3085,21 +3085,21 @@ void trw_layer_auto_routes_view(trw_menu_layer_t * data)
 
 void trw_layer_finish_track(trw_menu_layer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
-	vtl->trw->current_track = NULL;
-	vtl->trw->route_finder_started = false;
-	vik_layer_emit_update(VIK_LAYER(vtl));
+	LayerTRW * layer = data->layer;
+	layer->current_track = NULL;
+	layer->route_finder_started = false;
+	vik_layer_emit_update(layer->vl);
 }
 
 void trw_layer_auto_tracks_view(trw_menu_layer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
+	LayerTRW * layer = data->layer;
 	VikLayersPanel * vlp = (VikLayersPanel *) data->panel->gob;
 
-	if (vtl->trw->tracks.size() > 0) {
+	if (layer->tracks.size() > 0) {
 		struct LatLon maxmin[2] = { {0,0}, {0,0} };
-		LayerTRWc::find_maxmin_in_tracks(vtl->trw->tracks, maxmin);
-		vtl->trw->zoom_to_show_latlons(vlp->panel_ref->get_viewport(), maxmin);
+		LayerTRWc::find_maxmin_in_tracks(layer->tracks, maxmin);
+		layer->zoom_to_show_latlons(vlp->panel_ref->get_viewport(), maxmin);
 		vik_layers_panel_emit_update_cb(vlp->panel_ref);
 	}
 }
@@ -3159,7 +3159,7 @@ static sg_uid_t global_wp_uid = 0;
 
 void LayerTRW::add_waypoint(Waypoint * wp, char const * name)
 {
-	VikLayer * parent = VIK_LAYER(this->vl);
+	VikLayer * parent = this->vl;
 
 	global_wp_uid++;
 
@@ -3203,7 +3203,7 @@ static unsigned int global_tr_uuid = 0;
 
 void LayerTRW::add_track(Track * trk, char const * name)
 {
-	VikLayer * parent = VIK_LAYER(this->vl);
+	VikLayer * parent = this->vl;
 
 	global_tr_uuid++;
 
@@ -3249,7 +3249,7 @@ static unsigned int global_rt_uuid = 0;
 
 void LayerTRW::add_route(Track * trk, char const * name)
 {
-	VikLayer * parent = VIK_LAYER(this->vl);
+	VikLayer * parent = this->vl;
 
 	global_rt_uuid++;
 
@@ -3775,89 +3775,89 @@ void LayerTRW::delete_all_waypoints()
 
 void trw_layer_delete_all_tracks(trw_menu_layer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
+	LayerTRW * layer = data->layer;
 	// Get confirmation from the user
-	if (a_dialog_yes_or_no(VIK_GTK_WINDOW_FROM_LAYER(vtl),
+	if (a_dialog_yes_or_no(VIK_GTK_WINDOW_FROM_LAYER(layer->vl),
 			       _("Are you sure you want to delete all tracks in %s?"),
-			       vtl->trw->get_name())) {
+			       layer->get_name())) {
 
-		vtl->trw->delete_all_tracks();
+		layer->delete_all_tracks();
 	}
 }
 
 void trw_layer_delete_all_routes(trw_menu_layer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
+	LayerTRW * layer = data->layer;
 	// Get confirmation from the user
-	if (a_dialog_yes_or_no(VIK_GTK_WINDOW_FROM_LAYER(vtl),
+	if (a_dialog_yes_or_no(VIK_GTK_WINDOW_FROM_LAYER(layer->vl),
 			       _("Are you sure you want to delete all routes in %s?"),
-			       vtl->trw->get_name())) {
+			       layer->get_name())) {
 
-		vtl->trw->delete_all_routes();
+		layer->delete_all_routes();
 	}
 }
 
 void trw_layer_delete_all_waypoints(trw_menu_layer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
+	LayerTRW * layer = data->layer;
 	// Get confirmation from the user
-	if (a_dialog_yes_or_no(VIK_GTK_WINDOW_FROM_LAYER(vtl),
+	if (a_dialog_yes_or_no(VIK_GTK_WINDOW_FROM_LAYER(layer->vl),
 			       _("Are you sure you want to delete all waypoints in %s?"),
-			       vtl->trw->get_name())) {
+			       layer->get_name())) {
 
-		vtl->trw->delete_all_waypoints();
+		layer->delete_all_waypoints();
 	}
 }
 
 void trw_layer_delete_item(trw_menu_sublayer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
+	LayerTRW * layer = data->layer;
 	sg_uid_t uid = data->sublayer_id;
 	bool was_visible = false;
 	if (data->subtype == VIK_TRW_LAYER_SUBLAYER_WAYPOINT) {
-		Waypoint * wp = vtl->trw->waypoints.at(uid);
+		Waypoint * wp = layer->waypoints.at(uid);
 		if (wp && wp->name) {
 			if (data->confirm)
 				// Get confirmation from the user
 				// Maybe this Waypoint Delete should be optional as is it could get annoying...
-				if (! a_dialog_yes_or_no(VIK_GTK_WINDOW_FROM_LAYER(vtl),
+				if (! a_dialog_yes_or_no(VIK_GTK_WINDOW_FROM_LAYER(layer->vl),
 							 _("Are you sure you want to delete the waypoint \"%s\"?"),
 							 wp->name))
 					return;
-			was_visible = vtl->trw->delete_waypoint(wp);
-			vtl->trw->calculate_bounds_waypoints();
+			was_visible = layer->delete_waypoint(wp);
+			layer->calculate_bounds_waypoints();
 			// Reset layer timestamp in case it has now changed
-			vtl->trw->vt->tree->set_timestamp(&vtl->trw->iter, vtl->trw->get_timestamp());
+			layer->vt->tree->set_timestamp(&layer->iter, layer->get_timestamp());
 		}
 	}
 	else if (data->subtype == VIK_TRW_LAYER_SUBLAYER_TRACK) {
-		Track * trk = vtl->trw->tracks.at(uid);
+		Track * trk = layer->tracks.at(uid);
 		if (trk && trk->name) {
 			if (data->confirm)
 				// Get confirmation from the user
-				if (! a_dialog_yes_or_no(VIK_GTK_WINDOW_FROM_LAYER(vtl),
+				if (! a_dialog_yes_or_no(VIK_GTK_WINDOW_FROM_LAYER(layer->vl),
 							 _("Are you sure you want to delete the track \"%s\"?"),
 							 trk->name))
 					return;
-			was_visible = vtl->trw->delete_track(trk);
+			was_visible = layer->delete_track(trk);
 			// Reset layer timestamp in case it has now changed
-			vtl->trw->vt->tree->set_timestamp(&vtl->trw->iter, vtl->trw->get_timestamp());
+			layer->vt->tree->set_timestamp(&layer->iter, layer->get_timestamp());
 		}
 	}
 	else {
-		Track * trk = vtl->trw->routes.at(uid);
+		Track * trk = layer->routes.at(uid);
 		if (trk && trk->name) {
 			if (data->confirm)
 				// Get confirmation from the user
-				if (! a_dialog_yes_or_no(VIK_GTK_WINDOW_FROM_LAYER(vtl),
+				if (! a_dialog_yes_or_no(VIK_GTK_WINDOW_FROM_LAYER(layer->vl),
 							 _("Are you sure you want to delete the route \"%s\"?"),
 							 trk->name))
 					return;
-			was_visible = vtl->trw->delete_route(trk);
+			was_visible = layer->delete_route(trk);
 		}
 	}
 	if (was_visible)
-		vik_layer_emit_update(VIK_LAYER(vtl));
+		vik_layer_emit_update(layer->vl);
 }
 
 
@@ -3898,7 +3898,6 @@ void LayerTRW::waypoint_reset_icon(Waypoint * wp)
 	if (uid) {
 		GtkTreeIter * it = this->waypoints_iters.at(uid);
 		if (it) {
-			VikTrwLayer * vtl = (VikTrwLayer *) this->vl;
 			this->vt->tree->set_icon(it, get_wp_sym_small(wp->symbol));
 		}
 	}
@@ -3910,30 +3909,30 @@ void LayerTRW::waypoint_reset_icon(Waypoint * wp)
 
 void trw_layer_properties_item(trw_menu_sublayer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
+	LayerTRW * layer = data->layer;
+
 	if (data->subtype == VIK_TRW_LAYER_SUBLAYER_WAYPOINT) {
 		sg_uid_t wp_uid = data->sublayer_id;
-		Waypoint * wp = vtl->trw->waypoints.at(wp_uid);
+		Waypoint * wp = layer->waypoints.at(wp_uid);
 
 		if (wp && wp->name) {
 			bool updated = false;
-			char *new_name = a_dialog_waypoint(VIK_GTK_WINDOW_FROM_LAYER(vtl), wp->name, vtl, wp, vtl->trw->coord_mode, false, &updated);
+			char *new_name = a_dialog_waypoint(VIK_GTK_WINDOW_FROM_LAYER(layer->vl), wp->name, (VikTrwLayer *) layer->vl, wp, layer->coord_mode, false, &updated);
 			if (new_name)
-				vtl->trw->waypoint_rename(wp, new_name);
+				layer->waypoint_rename(wp, new_name);
 
 			if (updated && data->tv_iter)
-				vtl->trw->vt->tree->set_icon(data->tv_iter, get_wp_sym_small(wp->symbol));
+				layer->vt->tree->set_icon(data->tv_iter, get_wp_sym_small(wp->symbol));
 
-			if (updated && vtl->trw->visible)
-				vik_layer_emit_update(VIK_LAYER(vtl));
+			if (updated && layer->visible)
+				vik_layer_emit_update(layer->vl);
 		}
-	}
-	else {
-		Track * trk = trw_layer_get_track_helper(data, vtl);
+	} else {
+		Track * trk = layer->get_track_helper(data);
 
 		if (trk && trk->name) {
-			vik_trw_layer_propwin_run(VIK_GTK_WINDOW_FROM_LAYER(vtl),
-						  vtl,
+			vik_trw_layer_propwin_run(VIK_GTK_WINDOW_FROM_LAYER(layer->vl),
+						  layer,
 						  trk,
 						  data->panel ? data->panel->gob : NULL,
 						  (VikViewport *) data->viewport->vvp,
@@ -3951,12 +3950,12 @@ void trw_layer_properties_item(trw_menu_sublayer_t * data)
  */
 void trw_layer_track_statistics(trw_menu_sublayer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
-	Track * trk = trw_layer_get_track_helper(data, vtl);
+	LayerTRW * layer = data->layer;
+	Track * trk = layer->get_track_helper(data);
 
 	if (trk && trk->name) {
-		vik_trw_layer_propwin_run(VIK_GTK_WINDOW_FROM_LAYER(vtl),
-					  vtl,
+		vik_trw_layer_propwin_run(VIK_GTK_WINDOW_FROM_LAYER(layer->vl),
+					  layer,
 					  trk,
 					  data->panel->gob,
 					  (VikViewport *) data->viewport->vvp,
@@ -4033,17 +4032,18 @@ static void goto_coord(LayersPanel * panel, Layer * layer, Viewport * viewport, 
 
 void trw_layer_goto_track_startpoint(trw_menu_sublayer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
-	Track * trk = trw_layer_get_track_helper(data, vtl);
+	LayerTRW * layer = data->layer;
+	Track * trk = layer->get_track_helper(data);
 
-	if (trk && trk->trackpoints)
+	if (trk && trk->trackpoints) {
 		goto_coord(data->panel, data->layer, data->viewport, &(trk->get_tp_first()->coord));
+	}
 }
 
 void trw_layer_goto_track_center(trw_menu_sublayer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
-	Track * trk = trw_layer_get_track_helper(data, vtl);
+	LayerTRW * layer = data->layer;
+	Track * trk = layer->get_track_helper(data);
 
 	if (trk && trk->trackpoints) {
 		struct LatLon average, maxmin[2] = { {0,0}, {0,0} };
@@ -4051,15 +4051,15 @@ void trw_layer_goto_track_center(trw_menu_sublayer_t * data)
 		LayerTRW::find_maxmin_in_track(trk, maxmin);
 		average.lat = (maxmin[0].lat+maxmin[1].lat)/2;
 		average.lon = (maxmin[0].lon+maxmin[1].lon)/2;
-		vik_coord_load_from_latlon(&coord, vtl->trw->coord_mode, &average);
+		vik_coord_load_from_latlon(&coord, layer->coord_mode, &average);
 		goto_coord(data->panel, data->layer, data->viewport, &coord);
 	}
 }
 
 void trw_layer_convert_track_route(trw_menu_sublayer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
-	Track * trk = trw_layer_get_track_helper(data, vtl);
+	LayerTRW * layer = data->layer;
+	Track * trk = layer->get_track_helper(data);
 
 	if (!trk)
 		return;
@@ -4070,7 +4070,7 @@ void trw_layer_convert_track_route(trw_menu_sublayer_t * data)
 	    ((trk->get_segment_count() > 1) ||
 	     (trk->get_average_speed() > 0.0))) {
 
-		if (! a_dialog_yes_or_no(VIK_GTK_WINDOW_FROM_LAYER(vtl),
+		if (! a_dialog_yes_or_no(VIK_GTK_WINDOW_FROM_LAYER(layer->vl),
                                 _("Converting a track to a route removes extra track data such as segments, timestamps, etc...\nDo you want to continue?"), NULL))
 			return;
 	}
@@ -4086,26 +4086,26 @@ void trw_layer_convert_track_route(trw_menu_sublayer_t * data)
 
 	// Delete old one and then add new one
 	if (trk->is_route) {
-		vtl->trw->delete_route(trk);
-		vtl->trw->add_track(trk_copy, name);
+		layer->delete_route(trk);
+		layer->add_track(trk_copy, name);
 	}
 	else {
 		// Extra route conversion bits...
 		trk_copy->merge_segments();
 		trk_copy->to_routepoints();
 
-		vtl->trw->delete_track(trk);
-		vtl->trw->add_route(trk_copy, name);
+		layer->delete_track(trk);
+		layer->add_route(trk_copy, name);
 	}
 	free(name);
 
 	// Update in case color of track / route changes when moving between sublayers
-	vik_layer_emit_update(VIK_LAYER(vtl));
+	vik_layer_emit_update(layer->vl);
 }
 void trw_layer_anonymize_times(trw_menu_sublayer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
-	Track * trk = trw_layer_get_track_helper(data, vtl);
+	LayerTRW * layer = data->layer;
+	Track * trk = layer->get_track_helper(data);
 
 	if (trk)
 		trk->anonymize_times();
@@ -4113,8 +4113,8 @@ void trw_layer_anonymize_times(trw_menu_sublayer_t * data)
 
 void trw_layer_interpolate_times(trw_menu_sublayer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
-	Track * trk = trw_layer_get_track_helper(data, vtl);
+	LayerTRW * layer = data->layer;
+	Track * trk = layer->get_track_helper(data);
 
 	if (trk)
 		trk->interpolate_times();
@@ -4122,14 +4122,14 @@ void trw_layer_interpolate_times(trw_menu_sublayer_t * data)
 
 void trw_layer_extend_track_end(trw_menu_sublayer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
-	Track * trk = trw_layer_get_track_helper(data, vtl);
+	LayerTRW * layer = data->layer;
+	Track * trk = layer->get_track_helper(data);
 
 	if (!trk)
 		return;
 
-	vtl->trw->current_track = trk;
-	vik_window_enable_layer_tool(VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(vtl)), VIK_LAYER_TRW, trk->is_route ? TOOL_CREATE_ROUTE : TOOL_CREATE_TRACK);
+	layer->current_track = trk;
+	vik_window_enable_layer_tool(VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(layer->vl)), VIK_LAYER_TRW, trk->is_route ? TOOL_CREATE_ROUTE : TOOL_CREATE_TRACK);
 
 	if (trk->trackpoints)
 		goto_coord(data->panel, data->layer, data->viewport, &(trk->get_tp_last()->coord));
@@ -4140,15 +4140,15 @@ void trw_layer_extend_track_end(trw_menu_sublayer_t * data)
  */
 void trw_layer_extend_track_end_route_finder(trw_menu_sublayer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
+	LayerTRW * layer = data->layer;
 	sg_uid_t uid = data->sublayer_id;
-	Track * trk = vtl->trw->routes.at(uid);
+	Track * trk = layer->routes.at(uid);
 	if (!trk)
 		return;
 
-	vik_window_enable_layer_tool(VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(vtl)), VIK_LAYER_TRW, TOOL_ROUTE_FINDER);
-	vtl->trw->current_track = trk;
-	vtl->trw->route_finder_started = true;
+	vik_window_enable_layer_tool(VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(layer->vl)), VIK_LAYER_TRW, TOOL_ROUTE_FINDER);
+	layer->current_track = trk;
+	layer->route_finder_started = true;
 
 	if (trk->trackpoints)
 		goto_coord(data->panel, data->layer, data->viewport, &trk->get_tp_last()->coord);
@@ -4202,20 +4202,20 @@ void LayerTRW::apply_dem_data_common(VikLayersPanel * vlp, Track * trk, bool ski
 
 void trw_layer_apply_dem_data_all(trw_menu_sublayer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
-	Track * trk = trw_layer_get_track_helper(data, vtl);
+	LayerTRW * layer = data->layer;
+	Track * trk = layer->get_track_helper(data);
 
 	if (trk)
-		vtl->trw->apply_dem_data_common(data->panel->gob, trk, false);
+		layer->apply_dem_data_common(data->panel->gob, trk, false);
 }
 
 void trw_layer_apply_dem_data_only_missing(trw_menu_sublayer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
-	Track * trk = trw_layer_get_track_helper(data, vtl);
+	LayerTRW * layer = data->layer;
+	Track * trk = layer->get_track_helper(data);
 
 	if (trk)
-		vtl->trw->apply_dem_data_common(data->panel->gob, trk, true);
+		layer->apply_dem_data_common(data->panel->gob, trk, true);
 }
 
 
@@ -4246,24 +4246,24 @@ void LayerTRW::smooth_it(Track * trk, bool flat)
  */
 void trw_layer_missing_elevation_data_interp(trw_menu_sublayer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
-	Track * trk = trw_layer_get_track_helper(data, vtl);
+	LayerTRW * layer = data->layer;
+	Track * trk = layer->get_track_helper(data);
 
 	if (!trk)
 		return;
 
-	vtl->trw->smooth_it(trk, false);
+	layer->smooth_it(trk, false);
 }
 
 void trw_layer_missing_elevation_data_flat(trw_menu_sublayer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
-	Track * trk = trw_layer_get_track_helper(data, vtl);
+	LayerTRW * layer = data->layer;
+	Track * trk = layer->get_track_helper(data);
 
 	if (!trk)
 		return;
 
-	vtl->trw->smooth_it(trk, true);
+	layer->smooth_it(trk, true);
 }
 
 
@@ -4286,58 +4286,58 @@ void LayerTRW::wp_changed_message(int changed)
 
 void trw_layer_apply_dem_data_wpt_all(trw_menu_sublayer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
+	LayerTRW * layer = data->layer;
 	VikLayersPanel *vlp = data->panel->gob;
 
-	if (!vtl->trw->dem_test(vlp))
+	if (!layer->dem_test(vlp))
 		return;
 
 	int changed = 0;
 	if (data->subtype == VIK_TRW_LAYER_SUBLAYER_WAYPOINT) {
 		// Single Waypoint
 		sg_uid_t wp_uid = data->sublayer_id;
-		Waypoint * wp = vtl->trw->waypoints.at(wp_uid);
+		Waypoint * wp = layer->waypoints.at(wp_uid);
 		if (wp)
 			changed = (int) wp->apply_dem_data(false);
 	}
 	else {
 		// All waypoints
-		for (auto i = vtl->trw->waypoints.begin(); i != vtl->trw->waypoints.end(); i++) {
+		for (auto i = layer->waypoints.begin(); i != layer->waypoints.end(); i++) {
 			changed = changed + (int) i->second->apply_dem_data(false);
 		}
 	}
-	vtl->trw->wp_changed_message(changed);
+	layer->wp_changed_message(changed);
 }
 
 void trw_layer_apply_dem_data_wpt_only_missing(trw_menu_sublayer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
+	LayerTRW * layer = data->layer;
 	VikLayersPanel *vlp = data->panel->gob;
 
-	if (!vtl->trw->dem_test(vlp))
+	if (!layer->dem_test(vlp))
 		return;
 
 	int changed = 0;
 	if (data->subtype == VIK_TRW_LAYER_SUBLAYER_WAYPOINT) {
 		// Single Waypoint
 		sg_uid_t wp_uid = data->sublayer_id;
-		Waypoint * wp = vtl->trw->waypoints.at(wp_uid);
+		Waypoint * wp = layer->waypoints.at(wp_uid);
 		if (wp)
 			changed = (int) wp->apply_dem_data(true);
 	}
 	else {
 		// All waypoints
-		for (auto i = vtl->trw->waypoints.begin(); i != vtl->trw->waypoints.end(); i++) {
+		for (auto i = layer->waypoints.begin(); i != layer->waypoints.end(); i++) {
 			changed = changed + (int) i->second->apply_dem_data(true);
 		}
 	}
-	vtl->trw->wp_changed_message(changed);
+	layer->wp_changed_message(changed);
 }
 
 void trw_layer_goto_track_endpoint(trw_menu_sublayer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
-	Track * trk = trw_layer_get_track_helper(data, vtl);
+	LayerTRW * layer = data->layer;
+	Track * trk = layer->get_track_helper(data);
 
 	if (!trk)
 		return;
@@ -4348,8 +4348,8 @@ void trw_layer_goto_track_endpoint(trw_menu_sublayer_t * data)
 
 void trw_layer_goto_track_max_speed(trw_menu_sublayer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
-	Track * trk = trw_layer_get_track_helper(data, vtl);
+	LayerTRW * layer = data->layer;
+	Track * trk = layer->get_track_helper(data);
 
 	if (!trk)
 		return;
@@ -4362,8 +4362,8 @@ void trw_layer_goto_track_max_speed(trw_menu_sublayer_t * data)
 
 void trw_layer_goto_track_max_alt(trw_menu_sublayer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
-	Track * trk = trw_layer_get_track_helper(data, vtl);
+	LayerTRW * layer = data->layer;
+	Track * trk = layer->get_track_helper(data);
 
 	if (!trk)
 		return;
@@ -4376,8 +4376,8 @@ void trw_layer_goto_track_max_alt(trw_menu_sublayer_t * data)
 
 void trw_layer_goto_track_min_alt(trw_menu_sublayer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
-	Track * trk = trw_layer_get_track_helper(data, vtl);
+	LayerTRW * layer = data->layer;
+	Track * trk = layer->get_track_helper(data);
 
 	if (!trk)
 		return;
@@ -4393,17 +4393,17 @@ void trw_layer_goto_track_min_alt(trw_menu_sublayer_t * data)
  */
 void trw_layer_auto_track_view(trw_menu_sublayer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
-	Track * trk = trw_layer_get_track_helper(data, vtl);
+	LayerTRW * layer = data->layer;
+	Track * trk = layer->get_track_helper(data);
 
 	if (trk && trk->trackpoints) {
 		struct LatLon maxmin[2] = { {0,0}, {0,0} };
 		LayerTRW::find_maxmin_in_track(trk, maxmin);
-		vtl->trw->zoom_to_show_latlons(data->viewport, maxmin);
+		layer->zoom_to_show_latlons(data->viewport, maxmin);
 		if (data->panel->gob)
 			vik_layers_panel_emit_update_cb(((VikLayersPanel *) data->panel->gob)->panel_ref);
 		else
-			vik_layer_emit_update(VIK_LAYER(vtl));
+			vik_layer_emit_update(layer->vl);
 	}
 }
 
@@ -4414,14 +4414,14 @@ void trw_layer_auto_track_view(trw_menu_sublayer_t * data)
 void trw_layer_route_refine(trw_menu_sublayer_t * data)
 {
 	static int last_engine = 0;
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
-	Track * trk = trw_layer_get_track_helper(data, vtl);
+	LayerTRW * layer = data->layer;
+	Track * trk = layer->get_track_helper(data);
 
 	if (trk && trk->trackpoints) {
 		/* Check size of the route */
 		int nb = trk->get_tp_count();
 		if (nb > 100) {
-			GtkWidget *dialog = gtk_message_dialog_new(VIK_GTK_WINDOW_FROM_LAYER (vtl),
+			GtkWidget *dialog = gtk_message_dialog_new(VIK_GTK_WINDOW_FROM_LAYER (layer->vl),
 								   (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
 								   GTK_MESSAGE_WARNING,
 								   GTK_BUTTONS_OK_CANCEL,
@@ -4434,7 +4434,7 @@ void trw_layer_route_refine(trw_menu_sublayer_t * data)
 		}
 		/* Select engine from dialog */
 		GtkWidget *dialog = gtk_dialog_new_with_buttons(_("Refine Route with Routing Engine..."),
-								VIK_GTK_WINDOW_FROM_LAYER (vtl),
+								VIK_GTK_WINDOW_FROM_LAYER (layer->vl),
 								(GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
 								GTK_STOCK_CANCEL,
 								GTK_RESPONSE_REJECT,
@@ -4460,27 +4460,27 @@ void trw_layer_route_refine(trw_menu_sublayer_t * data)
 			VikRoutingEngine *routing = vik_routing_ui_selector_get_nth(combo, last_engine);
 
 			/* Change cursor */
-			vik_window_set_busy_cursor(VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(vtl)));
+			vik_window_set_busy_cursor(VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(layer->vl)));
 
 			/* Force saving track */
 			/* FIXME: remove or rename this hack */
-			vtl->trw->route_finder_check_added_track = true;
+			layer->route_finder_check_added_track = true;
 
 			/* the job */
-			vik_routing_engine_refine(routing, vtl, trk);
+			vik_routing_engine_refine(routing, (VikTrwLayer *) layer->vl, trk);
 
 			/* FIXME: remove or rename this hack */
-			if (vtl->trw->route_finder_added_track) {
-				vtl->trw->route_finder_added_track->calculate_bounds();
+			if (layer->route_finder_added_track) {
+				layer->route_finder_added_track->calculate_bounds();
 			}
 
-			vtl->trw->route_finder_added_track = NULL;
-			vtl->trw->route_finder_check_added_track = false;
+			layer->route_finder_added_track = NULL;
+			layer->route_finder_check_added_track = false;
 
-			vik_layer_emit_update(VIK_LAYER(vtl));
+			vik_layer_emit_update(layer->vl);
 
 			/* Restore cursor */
-			vik_window_clear_busy_cursor(VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(vtl)));
+			vik_window_clear_busy_cursor(VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(layer->vl)));
 		}
 		gtk_widget_destroy(dialog);
 	}
@@ -4488,8 +4488,8 @@ void trw_layer_route_refine(trw_menu_sublayer_t * data)
 
 void trw_layer_edit_trackpoint(trw_menu_sublayer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
-	vtl->trw->tpwin_init();
+	LayerTRW * layer = data->layer;
+	layer->tpwin_init();
 }
 
 
@@ -4562,13 +4562,13 @@ int sort_alphabetically(gconstpointer a, gconstpointer b, void * user_data)
  */
 void trw_layer_merge_with_other(trw_menu_sublayer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
+	LayerTRW * layer = data->layer;
 	sg_uid_t uid = data->sublayer_id;
 	std::unordered_map<sg_uid_t, SlavGPS::Track*> * ght_tracks = NULL;
 	if (data->subtype == VIK_TRW_LAYER_SUBLAYER_ROUTE)
-		ght_tracks = &vtl->trw->routes;
+		ght_tracks = &layer->routes;
 	else
-		ght_tracks = &vtl->trw->tracks;
+		ght_tracks = &layer->tracks;
 
 	Track * trk = ght_tracks->at(uid);
 
@@ -4586,9 +4586,9 @@ void trw_layer_merge_with_other(trw_menu_sublayer_t * data)
 
 	if (!other_tracks) {
 		if (with_timestamps)
-			a_dialog_error_msg(VIK_GTK_WINDOW_FROM_LAYER(vtl), _("Failed. No other tracks with timestamps in this layer found"));
+			a_dialog_error_msg(VIK_GTK_WINDOW_FROM_LAYER(layer->vl), _("Failed. No other tracks with timestamps in this layer found"));
 		else
-			a_dialog_error_msg(VIK_GTK_WINDOW_FROM_LAYER(vtl), _("Failed. No other tracks without timestamps in this layer found"));
+			a_dialog_error_msg(VIK_GTK_WINDOW_FROM_LAYER(layer->vl), _("Failed. No other tracks without timestamps in this layer found"));
 		return;
 	}
 
@@ -4604,7 +4604,7 @@ void trw_layer_merge_with_other(trw_menu_sublayer_t * data)
 
 	other_tracks_names = g_list_sort_with_data(other_tracks_names, sort_alphabetically, NULL);
 
-	GList *merge_list = a_dialog_select_from_list(VIK_GTK_WINDOW_FROM_LAYER(vtl),
+	GList *merge_list = a_dialog_select_from_list(VIK_GTK_WINDOW_FROM_LAYER(layer->vl),
 						      other_tracks_names,
 						      true,
                                                 _("Merge with..."),
@@ -4617,16 +4617,16 @@ void trw_layer_merge_with_other(trw_menu_sublayer_t * data)
 		for (l = merge_list; l != NULL; l = g_list_next(l)) {
 			Track *merge_track;
 			if (trk->is_route)
-				merge_track = vtl->trw->get_route((const char *) l->data);
+				merge_track = layer->get_route((const char *) l->data);
 			else
-				merge_track = vtl->trw->get_track((const char *) l->data);
+				merge_track = layer->get_track((const char *) l->data);
 
 			if (merge_track) {
 				trk->steal_and_append_trackpoints(merge_track);
 				if (trk->is_route)
-					vtl->trw->delete_route(merge_track);
+					layer->delete_route(merge_track);
 				else
-					vtl->trw->delete_track(merge_track);
+					layer->delete_track(merge_track);
 				trk->trackpoints = g_list_sort(trk->trackpoints, trackpoint_compare);
 			}
 		}
@@ -4634,7 +4634,7 @@ void trw_layer_merge_with_other(trw_menu_sublayer_t * data)
 			free(l->data);
 		g_list_free(merge_list);
 
-		vik_layer_emit_update(VIK_LAYER(vtl));
+		vik_layer_emit_update(layer->vl);
 	}
 }
 
@@ -4649,13 +4649,13 @@ void trw_layer_merge_with_other(trw_menu_sublayer_t * data)
 void trw_layer_append_track(trw_menu_sublayer_t * data)
 {
 
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
+	LayerTRW * layer = data->layer;
 	Track *trk;
 	std::unordered_map<sg_uid_t, SlavGPS::Track*> * ght_tracks = NULL;
 	if (data->subtype == VIK_TRW_LAYER_SUBLAYER_ROUTE)
-		ght_tracks = &vtl->trw->routes;
+		ght_tracks = &layer->routes;
 	else
-		ght_tracks = &vtl->trw->tracks;
+		ght_tracks = &layer->tracks;
 
 	sg_uid_t uid = data->sublayer_id;
 	trk = ght_tracks->at(uid);
@@ -4677,7 +4677,7 @@ void trw_layer_append_track(trw_menu_sublayer_t * data)
 	// Note the limit to selecting one track only
 	//  this is to control the ordering of appending tracks, i.e. the selected track always goes after the current track
 	//  (otherwise with multiple select the ordering would not be controllable by the user - automatically being alphabetically)
-	GList *append_list = a_dialog_select_from_list(VIK_GTK_WINDOW_FROM_LAYER(vtl),
+	GList *append_list = a_dialog_select_from_list(VIK_GTK_WINDOW_FROM_LAYER(layer->vl),
 						       other_tracks_names,
 						       false,
 						       trk->is_route ? _("Append Route"): _("Append Track"),
@@ -4694,23 +4694,23 @@ void trw_layer_append_track(trw_menu_sublayer_t * data)
 			//  which with potential multiple same named tracks may not be the one selected...
 			Track *append_track;
 			if (trk->is_route)
-				append_track = vtl->trw->get_route((const char *) l->data);
+				append_track = layer->get_route((const char *) l->data);
 			else
-				append_track = vtl->trw->get_track((const char *) l->data);
+				append_track = layer->get_track((const char *) l->data);
 
 			if (append_track) {
 				trk->steal_and_append_trackpoints(append_track);
 				if (trk->is_route)
-					vtl->trw->delete_route(append_track);
+					layer->delete_route(append_track);
 				else
-					vtl->trw->delete_track(append_track);
+					layer->delete_track(append_track);
 			}
 		}
 		for (l = append_list; l != NULL; l = g_list_next(l))
 			free(l->data);
 		g_list_free(append_list);
 
-		vik_layer_emit_update(VIK_LAYER(vtl));
+		vik_layer_emit_update(layer->vl);
 	}
 }
 
@@ -4722,19 +4722,18 @@ void trw_layer_append_track(trw_menu_sublayer_t * data)
  */
 void trw_layer_append_other(trw_menu_sublayer_t * data)
 {
-
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
+	LayerTRW * layer = data->layer;
 	sg_uid_t uid = data->sublayer_id;
 	Track *trk;
 	std::unordered_map<sg_uid_t, SlavGPS::Track*> * ght_mykind;
 	std::unordered_map<sg_uid_t, SlavGPS::Track*> * ght_others;
 	if (data->subtype == VIK_TRW_LAYER_SUBLAYER_ROUTE) {
-		ght_mykind = &vtl->trw->routes;
-		ght_others = &vtl->trw->tracks;
+		ght_mykind = &layer->routes;
+		ght_others = &layer->tracks;
 	}
 	else {
-		ght_mykind = &vtl->trw->tracks;
-		ght_others = &vtl->trw->routes;
+		ght_mykind = &layer->tracks;
+		ght_others = &layer->routes;
 	}
 
 	trk = ght_mykind->at(uid);
@@ -4756,7 +4755,7 @@ void trw_layer_append_other(trw_menu_sublayer_t * data)
 	// Note the limit to selecting one track only
 	//  this is to control the ordering of appending tracks, i.e. the selected track always goes after the current track
 	//  (otherwise with multiple select the ordering would not be controllable by the user - automatically being alphabetically)
-	GList *append_list = a_dialog_select_from_list(VIK_GTK_WINDOW_FROM_LAYER(vtl),
+	GList *append_list = a_dialog_select_from_list(VIK_GTK_WINDOW_FROM_LAYER(layer->vl),
 						       other_tracks_names,
 						       false,
 						       trk->is_route ? _("Append Track"): _("Append Route"),
@@ -4775,9 +4774,9 @@ void trw_layer_append_other(trw_menu_sublayer_t * data)
 			// Get FROM THE OTHER TYPE list
 			Track *append_track;
 			if (trk->is_route)
-				append_track = vtl->trw->get_track((const char *) l->data);
+				append_track = layer->get_track((const char *) l->data);
 			else
-				append_track = vtl->trw->get_route((const char *) l->data);
+				append_track = layer->get_route((const char *) l->data);
 
 			if (append_track) {
 
@@ -4785,7 +4784,7 @@ void trw_layer_append_other(trw_menu_sublayer_t * data)
 				    ((append_track->get_segment_count() > 1) ||
 				     (append_track->get_average_speed() > 0.0))) {
 
-					if (a_dialog_yes_or_no(VIK_GTK_WINDOW_FROM_LAYER(vtl),
+					if (a_dialog_yes_or_no(VIK_GTK_WINDOW_FROM_LAYER(layer->vl),
 							       _("Converting a track to a route removes extra track data such as segments, timestamps, etc...\nDo you want to continue?"), NULL)) {
 						append_track->merge_segments();
 						append_track->to_routepoints();
@@ -4799,60 +4798,60 @@ void trw_layer_append_other(trw_menu_sublayer_t * data)
 
 				// Delete copied which is FROM THE OTHER TYPE list
 				if (trk->is_route)
-					vtl->trw->delete_track(append_track);
+					layer->delete_track(append_track);
 				else
-					vtl->trw->delete_route(append_track);
+					layer->delete_route(append_track);
 			}
 		}
 		for (l = append_list; l != NULL; l = g_list_next(l))
 			free(l->data);
 		g_list_free(append_list);
-		vik_layer_emit_update(VIK_LAYER(vtl));
+		vik_layer_emit_update(layer->vl);
 	}
 }
 
 /* merge by segments */
 void trw_layer_merge_by_segment(trw_menu_sublayer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
+	LayerTRW * layer = data->layer;
 	sg_uid_t uid = data->sublayer_id;
-	Track * trk = vtl->trw->tracks.at(uid);
+	Track * trk = layer->tracks.at(uid);
 	unsigned int segments = trk->merge_segments();
 	// NB currently no need to redraw as segments not actually shown on the display
 	// However inform the user of what happened:
 	char str[64];
 	const char *tmp_str = ngettext("%d segment merged", "%d segments merged", segments);
 	snprintf(str, 64, tmp_str, segments);
-	a_dialog_info_msg(VIK_GTK_WINDOW_FROM_LAYER(vtl), str);
+	a_dialog_info_msg(VIK_GTK_WINDOW_FROM_LAYER(layer->vl), str);
 }
 
 /* merge by time routine */
 void trw_layer_merge_by_timestamp(trw_menu_sublayer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
+	LayerTRW * layer = data->layer;
 	sg_uid_t uid = data->sublayer_id;
 
 	//time_t t1, t2;
 
 
-	Track *orig_trk = vtl->trw->tracks.at(uid);
+	Track *orig_trk = layer->tracks.at(uid);
 	if (orig_trk->trackpoints &&
 	    !orig_trk->get_tp_first()->has_timestamp) {
-		a_dialog_error_msg(VIK_GTK_WINDOW_FROM_LAYER(vtl), _("Failed. This track does not have timestamp"));
+		a_dialog_error_msg(VIK_GTK_WINDOW_FROM_LAYER(layer->vl), _("Failed. This track does not have timestamp"));
 		return;
 	}
 
-	GList * tracks_with_timestamp = LayerTRWc::find_tracks_with_timestamp_type(&vtl->trw->tracks, true, orig_trk);
+	GList * tracks_with_timestamp = LayerTRWc::find_tracks_with_timestamp_type(&layer->tracks, true, orig_trk);
 	tracks_with_timestamp = g_list_reverse(tracks_with_timestamp);
 
 	if (!tracks_with_timestamp) {
-		a_dialog_error_msg(VIK_GTK_WINDOW_FROM_LAYER(vtl), _("Failed. No other track in this layer has timestamp"));
+		a_dialog_error_msg(VIK_GTK_WINDOW_FROM_LAYER(layer->vl), _("Failed. No other track in this layer has timestamp"));
 		return;
 	}
 	g_list_free(tracks_with_timestamp);
 
 	static unsigned int threshold_in_minutes = 1;
-	if (!a_dialog_time_threshold(VIK_GTK_WINDOW_FROM_LAYER(vtl),
+	if (!a_dialog_time_threshold(VIK_GTK_WINDOW_FROM_LAYER(layer->vl),
 				     _("Merge Threshold..."),
 				     _("Merge when time between tracks less than:"),
 				     &threshold_in_minutes)) {
@@ -4879,14 +4878,14 @@ void trw_layer_merge_by_timestamp(trw_menu_sublayer_t * data)
 		}
 
 		/* get a list of adjacent-in-time tracks */
-		nearby_tracks = LayerTRWc::find_nearby_tracks_by_time(vtl->trw->tracks, orig_trk, (threshold_in_minutes * 60));
+		nearby_tracks = LayerTRWc::find_nearby_tracks_by_time(layer->tracks, orig_trk, (threshold_in_minutes * 60));
 
 		/* merge them */
 		GList *l = nearby_tracks;
 		while (l) {
 			/* remove trackpoints from merged track, delete track */
 			orig_trk->steal_and_append_trackpoints(((Track *) l->data));
-			vtl->trw->delete_track(((Track *) l->data));
+			layer->delete_track(((Track *) l->data));
 
 			// Tracks have changed, therefore retry again against all the remaining tracks
 			attempt_merge = true;
@@ -4899,7 +4898,7 @@ void trw_layer_merge_by_timestamp(trw_menu_sublayer_t * data)
 
 	g_list_free(nearby_tracks);
 
-	vik_layer_emit_update(VIK_LAYER(vtl));
+	vik_layer_emit_update(layer->vl);
 }
 
 
@@ -4963,9 +4962,9 @@ void LayerTRW::split_at_selected_trackpoint(int subtype)
 /* split by time routine */
 void trw_layer_split_by_timestamp(trw_menu_sublayer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
+	LayerTRW * layer = data->layer;
 	sg_uid_t uid = data->sublayer_id;
-	Track * trk = vtl->trw->tracks.at(uid);
+	Track * trk = layer->tracks.at(uid);
 	GList *trps = trk->trackpoints;
 	GList *iter;
 	GList *newlists = NULL;
@@ -4977,7 +4976,7 @@ void trw_layer_split_by_timestamp(trw_menu_sublayer_t * data)
 	if (!trps)
 		return;
 
-	if (!a_dialog_time_threshold(VIK_GTK_WINDOW_FROM_LAYER(vtl),
+	if (!a_dialog_time_threshold(VIK_GTK_WINDOW_FROM_LAYER(layer->vl),
 				     _("Split Threshold..."),
 				     _("Split when time between trackpoints exceeds:"),
 				     &thr)) {
@@ -4995,7 +4994,7 @@ void trw_layer_split_by_timestamp(trw_menu_sublayer_t * data)
 		if (ts < prev_ts) {
 			char tmp_str[64];
 			strftime(tmp_str, sizeof(tmp_str), "%c", localtime(&ts));
-			if (a_dialog_yes_or_no(VIK_GTK_WINDOW_FROM_LAYER(vtl),
+			if (a_dialog_yes_or_no(VIK_GTK_WINDOW_FROM_LAYER(layer->vl),
 					       _("Can not split track due to trackpoints not ordered in time - such as at %s.\n\nGoto this trackpoint?"),
 					       tmp_str)) {
 				goto_coord(data->panel, data->layer, data->viewport, &(((Trackpoint *) iter->data)->coord));
@@ -5027,15 +5026,15 @@ void trw_layer_split_by_timestamp(trw_menu_sublayer_t * data)
 			Track *trk_copy = new Track(*trk, false);
 			trk_copy->trackpoints = (GList *)(iter->data);
 
-			new_tr_name = vtl->trw->new_unique_sublayer_name(VIK_TRW_LAYER_SUBLAYER_TRACK, trk->name);
-			vtl->trw->add_track(trk_copy, new_tr_name);
+			new_tr_name = layer->new_unique_sublayer_name(VIK_TRW_LAYER_SUBLAYER_TRACK, trk->name);
+			layer->add_track(trk_copy, new_tr_name);
 			free(new_tr_name);
 			trk_copy->calculate_bounds();
 			iter = g_list_next(iter);
 		}
 		// Remove original track and then update the display
-		vtl->trw->delete_track(trk);
-		vik_layer_emit_update(VIK_LAYER(vtl));
+		layer->delete_track(trk);
+		vik_layer_emit_update(layer->vl);
 	}
 	g_list_free(newlists);
 }
@@ -5045,8 +5044,8 @@ void trw_layer_split_by_timestamp(trw_menu_sublayer_t * data)
  */
 void trw_layer_split_by_n_points(trw_menu_sublayer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
-	Track * trk = trw_layer_get_track_helper(data, vtl);
+	LayerTRW * layer = data->layer;
+	Track * trk = layer->get_track_helper(data);
 
 	if (!trk)
 		return;
@@ -5056,7 +5055,7 @@ void trw_layer_split_by_n_points(trw_menu_sublayer_t * data)
 	if (!trps)
 		return;
 
-	int points = a_dialog_get_positive_number(VIK_GTK_WINDOW_FROM_LAYER(vtl),
+	int points = a_dialog_get_positive_number(VIK_GTK_WINDOW_FROM_LAYER(layer->vl),
 						  _("Split Every Nth Point"),
 						  _("Split on every Nth point:"),
 						  250,   // Default value as per typical limited track capacity of various GPS devices
@@ -5103,12 +5102,12 @@ void trw_layer_split_by_n_points(trw_menu_sublayer_t * data)
 			tr_copy->trackpoints = (GList *)(iter->data);
 
 			if (trk->is_route) {
-				new_tr_name = vtl->trw->new_unique_sublayer_name(VIK_TRW_LAYER_SUBLAYER_ROUTE, trk->name);
-				vtl->trw->add_route(tr_copy, new_tr_name);
+				new_tr_name = layer->new_unique_sublayer_name(VIK_TRW_LAYER_SUBLAYER_ROUTE, trk->name);
+				layer->add_route(tr_copy, new_tr_name);
 			}
 			else {
-				new_tr_name = vtl->trw->new_unique_sublayer_name(VIK_TRW_LAYER_SUBLAYER_TRACK, trk->name);
-				vtl->trw->add_track(tr_copy, new_tr_name);
+				new_tr_name = layer->new_unique_sublayer_name(VIK_TRW_LAYER_SUBLAYER_TRACK, trk->name);
+				layer->add_track(tr_copy, new_tr_name);
 			}
 			free(new_tr_name);
 			tr_copy->calculate_bounds();
@@ -5117,10 +5116,10 @@ void trw_layer_split_by_n_points(trw_menu_sublayer_t * data)
 		}
 		// Remove original track and then update the display
 		if (trk->is_route)
-			vtl->trw->delete_route(trk);
+			layer->delete_route(trk);
 		else
-			vtl->trw->delete_track(trk);
-		vik_layer_emit_update(VIK_LAYER(vtl));
+			layer->delete_track(trk);
+		vik_layer_emit_update(layer->vl);
 	}
 	g_list_free(newlists);
 }
@@ -5130,8 +5129,8 @@ void trw_layer_split_by_n_points(trw_menu_sublayer_t * data)
  */
 void trw_layer_split_at_trackpoint(trw_menu_sublayer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
-	vtl->trw->split_at_selected_trackpoint(data->subtype);
+	LayerTRW * layer = data->layer;
+	layer->split_at_selected_trackpoint(data->subtype);
 }
 
 /**
@@ -5140,9 +5139,9 @@ void trw_layer_split_at_trackpoint(trw_menu_sublayer_t * data)
  */
 void trw_layer_split_segments(trw_menu_sublayer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
+	LayerTRW * layer = data->layer;
 	sg_uid_t uid = data->sublayer_id;
-	Track *trk = vtl->trw->tracks.at(uid);
+	Track *trk = layer->tracks.at(uid);
 
 	if (!trk)
 		return;
@@ -5154,19 +5153,19 @@ void trw_layer_split_segments(trw_menu_sublayer_t * data)
 	unsigned int i;
 	for (i = 0; i < ntracks; i++) {
 		if (tracks[i]) {
-			new_tr_name = vtl->trw->new_unique_sublayer_name(VIK_TRW_LAYER_SUBLAYER_TRACK, trk->name);
-			vtl->trw->add_track(tracks[i], new_tr_name);
+			new_tr_name = layer->new_unique_sublayer_name(VIK_TRW_LAYER_SUBLAYER_TRACK, trk->name);
+			layer->add_track(tracks[i], new_tr_name);
 			free(new_tr_name);
 		}
 	}
 	if (tracks) {
 		free(tracks);
 		// Remove original track
-		vtl->trw->delete_track(trk);
-		vik_layer_emit_update(VIK_LAYER(vtl));
+		layer->delete_track(trk);
+		vik_layer_emit_update(layer->vl);
 	}
 	else {
-		a_dialog_error_msg(VIK_GTK_WINDOW_FROM_LAYER(vtl), _("Can not split track as it has no segments"));
+		a_dialog_error_msg(VIK_GTK_WINDOW_FROM_LAYER(layer->vl), _("Can not split track as it has no segments"));
 	}
 }
 /* end of split/merge routines */
@@ -5210,21 +5209,21 @@ void LayerTRW::trackpoint_selected_delete(Track * trk)
  */
 void trw_layer_delete_point_selected(trw_menu_sublayer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
-	Track * trk = trw_layer_get_track_helper(data, vtl);
+	LayerTRW * layer = data->layer;
+	Track * trk = layer->get_track_helper(data);
 
 	if (!trk)
 		return;
 
-	if (!vtl->trw->current_tpl)
+	if (!layer->current_tpl)
 		return;
 
-	vtl->trw->trackpoint_selected_delete(trk);
+	layer->trackpoint_selected_delete(trk);
 
 	// Track has been updated so update tps:
-	vtl->trw->cancel_tps_of_track(trk);
+	layer->cancel_tps_of_track(trk);
 
-	vik_layer_emit_update(VIK_LAYER(vtl));
+	vik_layer_emit_update(layer->vl);
 }
 
 /**
@@ -5233,8 +5232,8 @@ void trw_layer_delete_point_selected(trw_menu_sublayer_t * data)
  */
 void trw_layer_delete_points_same_position(trw_menu_sublayer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
-	Track * trk = trw_layer_get_track_helper(data, vtl);
+	LayerTRW * layer = data->layer;
+	Track * trk = layer->get_track_helper(data);
 
 	if (!trk)
 		return;
@@ -5242,15 +5241,15 @@ void trw_layer_delete_points_same_position(trw_menu_sublayer_t * data)
 	unsigned long removed = trk->remove_dup_points();
 
 	// Track has been updated so update tps:
-	vtl->trw->cancel_tps_of_track(trk);
+	layer->cancel_tps_of_track(trk);
 
 	// Inform user how much was deleted as it's not obvious from the normal view
 	char str[64];
 	const char *tmp_str = ngettext("Deleted %ld point", "Deleted %ld points", removed);
 	snprintf(str, 64, tmp_str, removed);
-	a_dialog_info_msg(VIK_GTK_WINDOW_FROM_LAYER(vtl), str);
+	a_dialog_info_msg(VIK_GTK_WINDOW_FROM_LAYER(layer->vl), str);
 
-	vik_layer_emit_update(VIK_LAYER(vtl));
+	vik_layer_emit_update(layer->vl);
 }
 
 /**
@@ -5259,8 +5258,8 @@ void trw_layer_delete_points_same_position(trw_menu_sublayer_t * data)
  */
 void trw_layer_delete_points_same_time(trw_menu_sublayer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
-	Track * trk = trw_layer_get_track_helper(data, vtl);
+	LayerTRW * layer = data->layer;
+	Track * trk = layer->get_track_helper(data);
 
 	if (!trk)
 		return;
@@ -5268,15 +5267,15 @@ void trw_layer_delete_points_same_time(trw_menu_sublayer_t * data)
 	unsigned long removed = trk->remove_same_time_points();
 
 	// Track has been updated so update tps:
-	vtl->trw->cancel_tps_of_track(trk);
+	layer->cancel_tps_of_track(trk);
 
 	// Inform user how much was deleted as it's not obvious from the normal view
 	char str[64];
 	const char *tmp_str = ngettext("Deleted %ld point", "Deleted %ld points", removed);
 	snprintf(str, 64, tmp_str, removed);
-	a_dialog_info_msg(VIK_GTK_WINDOW_FROM_LAYER(vtl), str);
+	a_dialog_info_msg(VIK_GTK_WINDOW_FROM_LAYER(layer->vl), str);
 
-	vik_layer_emit_update(VIK_LAYER(vtl));
+	vik_layer_emit_update(layer->vl);
 }
 
 /**
@@ -5284,28 +5283,28 @@ void trw_layer_delete_points_same_time(trw_menu_sublayer_t * data)
  */
 void trw_layer_insert_point_after(trw_menu_sublayer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
-	Track * trk = trw_layer_get_track_helper(data, vtl);
+	LayerTRW * layer = data->layer;
+	Track * trk = layer->get_track_helper(data);
 
 	if (!trk)
 		return;
 
-	vtl->trw->insert_tp_beside_current_tp(false);
+	layer->insert_tp_beside_current_tp(false);
 
-	vik_layer_emit_update(VIK_LAYER(vtl));
+	vik_layer_emit_update(layer->vl);
 }
 
 void trw_layer_insert_point_before(trw_menu_sublayer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
-	Track * trk = trw_layer_get_track_helper(data, vtl);
+	LayerTRW * layer = data->layer;
+	Track * trk = layer->get_track_helper(data);
 
 	if (!trk)
 		return;
 
-	vtl->trw->insert_tp_beside_current_tp(true);
+	layer->insert_tp_beside_current_tp(true);
 
-	vik_layer_emit_update(VIK_LAYER(vtl));
+	vik_layer_emit_update(layer->vl);
 }
 
 /**
@@ -5313,15 +5312,15 @@ void trw_layer_insert_point_before(trw_menu_sublayer_t * data)
  */
 void trw_layer_reverse(trw_menu_sublayer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
-	Track * trk = trw_layer_get_track_helper(data, vtl);
+	LayerTRW * layer = data->layer;
+	Track * trk = layer->get_track_helper(data);
 
 	if (!trk)
 		return;
 
 	trk->reverse();
 
-	vik_layer_emit_update(VIK_LAYER(vtl));
+	vik_layer_emit_update(layer->vl);
 }
 
 
@@ -5353,11 +5352,11 @@ void LayerTRW::diary_open(char const * date_str)
  */
 void trw_layer_diary(trw_menu_sublayer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
+	LayerTRW * layer = data->layer;
 	sg_uid_t uid = data->sublayer_id;
 
 	if (data->subtype == VIK_TRW_LAYER_SUBLAYER_TRACK) {
-		Track * trk = vtl->trw->tracks.at(uid);
+		Track * trk = layer->tracks.at(uid);
 		if (!trk)
 			return;
 
@@ -5365,13 +5364,13 @@ void trw_layer_diary(trw_menu_sublayer_t * data)
 		date_buf[0] = '\0';
 		if (trk->trackpoints && ((Trackpoint *) trk->trackpoints->data)->has_timestamp) {
 			strftime(date_buf, sizeof(date_buf), "%Y-%m-%d", gmtime(&(((Trackpoint *) trk->trackpoints->data)->timestamp)));
-			vtl->trw->diary_open(date_buf);
+			layer->diary_open(date_buf);
 		}
 		else
-			a_dialog_info_msg(VIK_GTK_WINDOW_FROM_LAYER(vtl), _("This track has no date information."));
+			a_dialog_info_msg(VIK_GTK_WINDOW_FROM_LAYER(layer->vl), _("This track has no date information."));
 	}
 	else if (data->subtype == VIK_TRW_LAYER_SUBLAYER_WAYPOINT) {
-		Waypoint * wp = vtl->trw->waypoints.at(uid);
+		Waypoint * wp = layer->waypoints.at(uid);
 		if (!wp)
 			return;
 
@@ -5379,10 +5378,10 @@ void trw_layer_diary(trw_menu_sublayer_t * data)
 		date_buf[0] = '\0';
 		if (wp->has_timestamp) {
 			strftime(date_buf, sizeof(date_buf), "%Y-%m-%d", gmtime(&(wp->timestamp)));
-			vtl->trw->diary_open(date_buf);
+			layer->diary_open(date_buf);
 		}
 		else
-			a_dialog_info_msg(VIK_GTK_WINDOW_FROM_LAYER(vtl), _("This waypoint has no date information."));
+			a_dialog_info_msg(VIK_GTK_WINDOW_FROM_LAYER(layer->vl), _("This waypoint has no date information."));
 	}
 }
 
@@ -5459,18 +5458,18 @@ static char *convert_to_dms(double dec)
  */
 void trw_layer_astro(trw_menu_sublayer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
+	LayerTRW * layer = data->layer;
 	sg_uid_t uid = data->sublayer_id;
 
 	if (data->subtype == VIK_TRW_LAYER_SUBLAYER_TRACK) {
-		Track * trk = vtl->trw->tracks.at(uid);
+		Track * trk = layer->tracks.at(uid);
 		if (!trk)
 			return;
 
 		Trackpoint * tp = NULL;
-		if (vtl->trw->current_tpl)
+		if (layer->current_tpl)
 			// Current Trackpoint
-			tp = ((Trackpoint *) vtl->trw->current_tpl->data);
+			tp = ((Trackpoint *) layer->current_tpl->data);
 		else if (trk->trackpoints)
 			// Otherwise first trackpoint
 			tp = ((Trackpoint *) trk->trackpoints->data);
@@ -5489,16 +5488,16 @@ void trw_layer_astro(trw_menu_sublayer_t * data)
 			char *lon_str = convert_to_dms(ll.lon);
 			char alt_buf[20];
 			snprintf(alt_buf, sizeof(alt_buf), "%d", (int)round(tp->altitude));
-			vtl->trw->astro_open(date_buf, time_buf, lat_str, lon_str, alt_buf);
+			layer->astro_open(date_buf, time_buf, lat_str, lon_str, alt_buf);
 			free(lat_str);
 			free(lon_str);
 		}
 		else
-			a_dialog_info_msg(VIK_GTK_WINDOW_FROM_LAYER(vtl), _("This track has no date information."));
+			a_dialog_info_msg(VIK_GTK_WINDOW_FROM_LAYER(layer->vl), _("This track has no date information."));
 	}
 	else if (data->subtype == VIK_TRW_LAYER_SUBLAYER_WAYPOINT) {
 		sg_uid_t wp_uid = data->sublayer_id;
-		Waypoint * wp = vtl->trw->waypoints.at(wp_uid);
+		Waypoint * wp = layer->waypoints.at(wp_uid);
 		if (!wp)
 			return;
 
@@ -5513,12 +5512,12 @@ void trw_layer_astro(trw_menu_sublayer_t * data)
 			char *lon_str = convert_to_dms(ll.lon);
 			char alt_buf[20];
 			snprintf(alt_buf, sizeof(alt_buf), "%d", (int)round(wp->altitude));
-			vtl->trw->astro_open(date_buf, time_buf, lat_str, lon_str, alt_buf);
+			layer->astro_open(date_buf, time_buf, lat_str, lon_str, alt_buf);
 			free(lat_str);
 			free(lon_str);
 		}
 		else
-			a_dialog_info_msg(VIK_GTK_WINDOW_FROM_LAYER(vtl), _("This waypoint has no date information."));
+			a_dialog_info_msg(VIK_GTK_WINDOW_FROM_LAYER(layer->vl), _("This waypoint has no date information."));
 	}
 }
 
@@ -5695,28 +5694,28 @@ void trw_layer_sort_order_timestamp_descend(trw_menu_sublayer_t * data)
  */
 void trw_layer_delete_tracks_from_selection(trw_menu_layer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
+	LayerTRW * layer = data->layer;
 
 	// Ensure list of track names offered is unique
-	if (LayerTRWc::has_same_track_names(vtl->trw->tracks)) {
-		if (a_dialog_yes_or_no(VIK_GTK_WINDOW_FROM_LAYER(vtl),
+	if (LayerTRWc::has_same_track_names(layer->tracks)) {
+		if (a_dialog_yes_or_no(VIK_GTK_WINDOW_FROM_LAYER(layer->vl),
 				       _("Multiple entries with the same name exist. This method only works with unique names. Force unique names now?"), NULL)) {
-			vtl->trw->uniquify_tracks(data->panel, vtl->trw->tracks, true);
+			layer->uniquify_tracks(data->panel, layer->tracks, true);
 		}
 		else
 			return;
 	}
 
 	// Sort list alphabetically for better presentation
-	GList * all = LayerTRWc::sorted_track_id_by_name_list(vtl->trw->tracks);
+	GList * all = LayerTRWc::sorted_track_id_by_name_list(layer->tracks);
 
 	if (! all) {
-		a_dialog_error_msg(VIK_GTK_WINDOW_FROM_LAYER(vtl),	_("No tracks found"));
+		a_dialog_error_msg(VIK_GTK_WINDOW_FROM_LAYER(layer->vl), _("No tracks found"));
 		return;
 	}
 
 	// Get list of items to delete from the user
-	GList *delete_list = a_dialog_select_from_list(VIK_GTK_WINDOW_FROM_LAYER(vtl),
+	GList *delete_list = a_dialog_select_from_list(VIK_GTK_WINDOW_FROM_LAYER(layer->vl),
 						       all,
 						       true,
 						       _("Delete Selection"),
@@ -5729,13 +5728,13 @@ void trw_layer_delete_tracks_from_selection(trw_menu_layer_t * data)
 		GList *l;
 		for (l = delete_list; l != NULL; l = g_list_next(l)) {
 			// This deletes first trk it finds of that name (but uniqueness is enforced above)
-			vtl->trw->delete_track_by_name((const char *) l->data, false);
+			layer->delete_track_by_name((const char *) l->data, false);
 		}
 		g_list_free(delete_list);
 		// Reset layer timestamps in case they have now changed
-		vtl->trw->vt->tree->set_timestamp(&vtl->trw->iter, vtl->trw->get_timestamp());
+		layer->vt->tree->set_timestamp(&layer->iter, layer->get_timestamp());
 
-		vik_layer_emit_update(VIK_LAYER(vtl));
+		vik_layer_emit_update(layer->vl);
 	}
 }
 
@@ -5744,28 +5743,28 @@ void trw_layer_delete_tracks_from_selection(trw_menu_layer_t * data)
  */
 void trw_layer_delete_routes_from_selection(trw_menu_layer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
+	LayerTRW * layer = data->layer;
 
 	// Ensure list of track names offered is unique
-	if (LayerTRWc::has_same_track_names(vtl->trw->routes)) {
-		if (a_dialog_yes_or_no(VIK_GTK_WINDOW_FROM_LAYER(vtl),
+	if (LayerTRWc::has_same_track_names(layer->routes)) {
+		if (a_dialog_yes_or_no(VIK_GTK_WINDOW_FROM_LAYER(layer->vl),
 				       _("Multiple entries with the same name exist. This method only works with unique names. Force unique names now?"), NULL)) {
-			vtl->trw->uniquify_tracks(data->panel, vtl->trw->routes, false);
+			layer->uniquify_tracks(data->panel, layer->routes, false);
 		}
 		else
 			return;
 	}
 
 	// Sort list alphabetically for better presentation
-	GList * all = LayerTRWc::sorted_track_id_by_name_list(vtl->trw->routes);
+	GList * all = LayerTRWc::sorted_track_id_by_name_list(layer->routes);
 
 	if (! all) {
-		a_dialog_error_msg(VIK_GTK_WINDOW_FROM_LAYER(vtl), _("No routes found"));
+		a_dialog_error_msg(VIK_GTK_WINDOW_FROM_LAYER(layer->vl), _("No routes found"));
 		return;
 	}
 
 	// Get list of items to delete from the user
-	GList *delete_list = a_dialog_select_from_list(VIK_GTK_WINDOW_FROM_LAYER(vtl),
+	GList *delete_list = a_dialog_select_from_list(VIK_GTK_WINDOW_FROM_LAYER(layer->vl),
 						       all,
 						       true,
 						       _("Delete Selection"),
@@ -5778,10 +5777,10 @@ void trw_layer_delete_routes_from_selection(trw_menu_layer_t * data)
 		GList *l;
 		for (l = delete_list; l != NULL; l = g_list_next(l)) {
 			// This deletes first route it finds of that name (but uniqueness is enforced above)
-			vtl->trw->delete_track_by_name((const char *) l->data, true);
+			layer->delete_track_by_name((const char *) l->data, true);
 		}
 		g_list_free(delete_list);
-		vik_layer_emit_update(VIK_LAYER(vtl));
+		vik_layer_emit_update(layer->vl);
 	}
 }
 
@@ -5918,30 +5917,30 @@ void LayerTRW::uniquify_waypoints(LayersPanel * panel)
  */
 void trw_layer_delete_waypoints_from_selection(trw_menu_layer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
+	LayerTRW * layer = data->layer;
 	GList *all = NULL;
 
 	// Ensure list of waypoint names offered is unique
-	if (vtl->trw->has_same_waypoint_names()) {
-		if (a_dialog_yes_or_no(VIK_GTK_WINDOW_FROM_LAYER(vtl),
+	if (layer->has_same_waypoint_names()) {
+		if (a_dialog_yes_or_no(VIK_GTK_WINDOW_FROM_LAYER(layer->vl),
 				       _("Multiple entries with the same name exist. This method only works with unique names. Force unique names now?"), NULL)) {
-			vtl->trw->uniquify_waypoints(data->panel);
+			layer->uniquify_waypoints(data->panel);
 		} else {
 			return;
 		}
 	}
 
 	// Sort list alphabetically for better presentation
-	LayerTRWc::sorted_wp_id_by_name_list(vtl->trw->waypoints, &all);
+	LayerTRWc::sorted_wp_id_by_name_list(layer->waypoints, &all);
 	if (! all) {
-		a_dialog_error_msg(VIK_GTK_WINDOW_FROM_LAYER(vtl), _("No waypoints found"));
+		a_dialog_error_msg(VIK_GTK_WINDOW_FROM_LAYER(layer->vl), _("No waypoints found"));
 		return;
 	}
 
 	all = g_list_sort_with_data(all, sort_alphabetically, NULL);
 
 	// Get list of items to delete from the user
-	GList *delete_list = a_dialog_select_from_list(VIK_GTK_WINDOW_FROM_LAYER(vtl),
+	GList *delete_list = a_dialog_select_from_list(VIK_GTK_WINDOW_FROM_LAYER(layer->vl),
 						       all,
 						       true,
 						       _("Delete Selection"),
@@ -5954,14 +5953,14 @@ void trw_layer_delete_waypoints_from_selection(trw_menu_layer_t * data)
 		GList *l;
 		for (l = delete_list; l != NULL; l = g_list_next(l)) {
 			// This deletes first waypoint it finds of that name (but uniqueness is enforced above)
-			vtl->trw->delete_waypoint_by_name((const char *) l->data);
+			layer->delete_waypoint_by_name((const char *) l->data);
 		}
 		g_list_free(delete_list);
 
-		vtl->trw->calculate_bounds_waypoints();
+		layer->calculate_bounds_waypoints();
 		// Reset layer timestamp in case it has now changed
-		vtl->trw->vt->tree->set_timestamp(&vtl->trw->iter, vtl->trw->get_timestamp());
-		vik_layer_emit_update(VIK_LAYER(vtl));
+		layer->vt->tree->set_timestamp(&layer->iter, layer->get_timestamp());
+		vik_layer_emit_update(layer->vl);
 	}
 
 }
@@ -5971,11 +5970,11 @@ void trw_layer_delete_waypoints_from_selection(trw_menu_layer_t * data)
  */
 void trw_layer_waypoints_visibility_off(trw_menu_layer_t * data)
 {
-	VikTrwLayer * vtl = (VikTrwLayer *) data->layer->vl;
-	LayerTRWc::set_iter_visibility(vtl->trw->waypoints_iters, vtl->trw->vt, false);
-	LayerTRWc::set_waypoints_visibility(vtl->trw->waypoints, false);
+	LayerTRW * layer = data->layer;
+	LayerTRWc::set_iter_visibility(layer->waypoints_iters, layer->vt, false);
+	LayerTRWc::set_waypoints_visibility(layer->waypoints, false);
 	// Redraw
-	vik_layer_emit_update(VIK_LAYER(vtl));
+	vik_layer_emit_update(layer->vl);
 }
 
 
@@ -5987,11 +5986,11 @@ void trw_layer_waypoints_visibility_off(trw_menu_layer_t * data)
  */
 void trw_layer_waypoints_visibility_on(trw_menu_layer_t * data)
 {
-	VikTrwLayer * vtl = (VikTrwLayer *) data->layer->vl;
-	LayerTRWc::set_iter_visibility(vtl->trw->waypoints_iters, vtl->trw->vt, true);
-	LayerTRWc::set_waypoints_visibility(vtl->trw->waypoints, true);
+	LayerTRW * layer = data->layer;
+	LayerTRWc::set_iter_visibility(layer->waypoints_iters, layer->vt, true);
+	LayerTRWc::set_waypoints_visibility(layer->waypoints, true);
 	// Redraw
-	vik_layer_emit_update(VIK_LAYER(vtl));
+	vik_layer_emit_update(layer->vl);
 }
 
 
@@ -6003,11 +6002,11 @@ void trw_layer_waypoints_visibility_on(trw_menu_layer_t * data)
  */
 void trw_layer_waypoints_visibility_toggle(trw_menu_layer_t * data)
 {
-	VikTrwLayer * vtl = (VikTrwLayer *) data->layer->vl;
-	LayerTRWc::iter_visibility_toggle(vtl->trw->waypoints_iters, vtl->trw->vt);
-	LayerTRWc::waypoints_toggle_visibility(vtl->trw->waypoints);
+	LayerTRW * layer = data->layer;
+	LayerTRWc::iter_visibility_toggle(layer->waypoints_iters, layer->vt);
+	LayerTRWc::waypoints_toggle_visibility(layer->waypoints);
 	// Redraw
-	vik_layer_emit_update(VIK_LAYER(vtl));
+	vik_layer_emit_update(layer->vl);
 }
 
 
@@ -6019,11 +6018,11 @@ void trw_layer_waypoints_visibility_toggle(trw_menu_layer_t * data)
  */
 void trw_layer_tracks_visibility_off(trw_menu_layer_t * data)
 {
-	VikTrwLayer * vtl = (VikTrwLayer *) data->layer->vl;
-	LayerTRWc::set_iter_visibility(vtl->trw->tracks_iters, vtl->trw->vt, false);
-	LayerTRWc::set_tracks_visibility(vtl->trw->tracks, false);
+	LayerTRW * layer = data->layer;
+	LayerTRWc::set_iter_visibility(layer->tracks_iters, layer->vt, false);
+	LayerTRWc::set_tracks_visibility(layer->tracks, false);
 	// Redraw
-	vik_layer_emit_update(VIK_LAYER(vtl));
+	vik_layer_emit_update(layer->vl);
 }
 
 
@@ -6035,11 +6034,11 @@ void trw_layer_tracks_visibility_off(trw_menu_layer_t * data)
  */
 void trw_layer_tracks_visibility_on(trw_menu_layer_t * data)
 {
-	VikTrwLayer * vtl = (VikTrwLayer *) data->layer->vl;
-	LayerTRWc::set_iter_visibility(vtl->trw->tracks_iters, vtl->trw->vt, true);
-	LayerTRWc::set_tracks_visibility(vtl->trw->tracks, true);
+	LayerTRW * layer = data->layer;
+	LayerTRWc::set_iter_visibility(layer->tracks_iters, layer->vt, true);
+	LayerTRWc::set_tracks_visibility(layer->tracks, true);
 	// Redraw
-	vik_layer_emit_update(VIK_LAYER(vtl));
+	vik_layer_emit_update(layer->vl);
 }
 
 
@@ -6051,11 +6050,11 @@ void trw_layer_tracks_visibility_on(trw_menu_layer_t * data)
  */
 void trw_layer_tracks_visibility_toggle(trw_menu_layer_t * data)
 {
-	VikTrwLayer * vtl = (VikTrwLayer *) data->layer->vl;
-	LayerTRWc::iter_visibility_toggle(vtl->trw->tracks_iters, vtl->trw->vt);
-	LayerTRWc::tracks_toggle_visibility(vtl->trw->tracks);
+	LayerTRW * layer = data->layer;
+	LayerTRWc::iter_visibility_toggle(layer->tracks_iters, layer->vt);
+	LayerTRWc::tracks_toggle_visibility(layer->tracks);
 	// Redraw
-	vik_layer_emit_update(VIK_LAYER(vtl));
+	vik_layer_emit_update(layer->vl);
 }
 
 
@@ -6067,11 +6066,11 @@ void trw_layer_tracks_visibility_toggle(trw_menu_layer_t * data)
  */
 void trw_layer_routes_visibility_off(trw_menu_layer_t * data)
 {
-	VikTrwLayer * vtl = (VikTrwLayer *) data->layer->vl;
-	LayerTRWc::set_iter_visibility(vtl->trw->routes_iters, vtl->trw->vt, false);
-	LayerTRWc::set_tracks_visibility(vtl->trw->routes, false);
+	LayerTRW * layer = data->layer;
+	LayerTRWc::set_iter_visibility(layer->routes_iters, layer->vt, false);
+	LayerTRWc::set_tracks_visibility(layer->routes, false);
 	// Redraw
-	vik_layer_emit_update(VIK_LAYER(vtl));
+	vik_layer_emit_update(layer->vl);
 }
 
 
@@ -6083,11 +6082,11 @@ void trw_layer_routes_visibility_off(trw_menu_layer_t * data)
  */
 void trw_layer_routes_visibility_on(trw_menu_layer_t * data)
 {
-	VikTrwLayer * vtl = (VikTrwLayer *) data->layer->vl;
-	LayerTRWc::set_iter_visibility(vtl->trw->routes_iters, vtl->trw->vt, true);
-	LayerTRWc::set_tracks_visibility(vtl->trw->routes, true);
+	LayerTRW * layer = data->layer;
+	LayerTRWc::set_iter_visibility(layer->routes_iters, layer->vt, true);
+	LayerTRWc::set_tracks_visibility(layer->routes, true);
 	// Redraw
-	vik_layer_emit_update(VIK_LAYER(vtl));
+	vik_layer_emit_update(layer->vl);
 }
 
 
@@ -6099,11 +6098,11 @@ void trw_layer_routes_visibility_on(trw_menu_layer_t * data)
  */
 void trw_layer_routes_visibility_toggle(trw_menu_layer_t * data)
 {
-	VikTrwLayer * vtl = (VikTrwLayer *) data->layer->vl;
-	LayerTRWc::iter_visibility_toggle(vtl->trw->routes_iters, vtl->trw->vt);
-	LayerTRWc::tracks_toggle_visibility(vtl->trw->routes);
+	LayerTRW * layer = data->layer;
+	LayerTRWc::iter_visibility_toggle(layer->routes_iters, layer->vt);
+	LayerTRWc::tracks_toggle_visibility(layer->routes);
 	// Redraw
-	vik_layer_emit_update(VIK_LAYER(vtl));
+	vik_layer_emit_update(layer->vl);
 }
 
 
@@ -6161,9 +6160,9 @@ static GList * trw_layer_create_waypoint_list(VikLayer * vl, void * user_data)
  */
 static void trw_layer_analyse_close(GtkWidget *dialog, int resp, VikLayer* vl)
 {
-	VikTrwLayer *vtl = VIK_TRW_LAYER(vl);
+	LayerTRW * layer = (LayerTRW *) vl->layer;
 	gtk_widget_destroy(dialog);
-	vtl->trw->tracks_analysis_dialog = NULL;
+	layer->tracks_analysis_dialog = NULL;
 }
 
 
@@ -6199,30 +6198,31 @@ GList * LayerTRW::build_track_list_t(GList * tracks)
  */
 static GList* trw_layer_create_track_list(VikLayer *vl, void * user_data)
 {
-	VikTrwLayer *vtl = VIK_TRW_LAYER(vl);
+	LayerTRW * layer = (LayerTRW *) vl->layer;
 	GList *tracks = NULL;
-	if (*((sg_uid_t *) user_data) == VIK_TRW_LAYER_SUBLAYER_TRACKS)
-		tracks = LayerTRWc::get_track_values(&tracks, vtl->trw->get_tracks());
-	else
-		tracks = LayerTRWc::get_track_values(&tracks, vtl->trw->get_routes());
+	if (*((sg_uid_t *) user_data) == VIK_TRW_LAYER_SUBLAYER_TRACKS) {
+		tracks = LayerTRWc::get_track_values(&tracks, layer->get_tracks());
+	} else {
+		tracks = LayerTRWc::get_track_values(&tracks, layer->get_routes());
+	}
 
-	return vtl->trw->build_track_list_t(tracks);
+	return layer->build_track_list_t(tracks);
 }
 
 void trw_layer_tracks_stats(trw_menu_layer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
+	LayerTRW * layer = data->layer;
 	// There can only be one!
-	if (vtl->trw->tracks_analysis_dialog) {
+	if (layer->tracks_analysis_dialog) {
 		return;
 	}
 
-	vtl->trw->tracks_analysis_dialog = vik_trw_layer_analyse_this(VIK_GTK_WINDOW_FROM_LAYER(vtl),
-								      vtl->trw->name,
-								      VIK_LAYER(vtl),
-								      KINT_TO_POINTER(VIK_TRW_LAYER_SUBLAYER_TRACKS),
-								      trw_layer_create_track_list,
-								      trw_layer_analyse_close);
+	layer->tracks_analysis_dialog = vik_trw_layer_analyse_this(VIK_GTK_WINDOW_FROM_LAYER(layer->vl),
+								   layer->name,
+								   layer->vl,
+								   KINT_TO_POINTER(VIK_TRW_LAYER_SUBLAYER_TRACKS),
+								   trw_layer_create_track_list,
+								   trw_layer_analyse_close);
 }
 
 /**
@@ -6230,18 +6230,18 @@ void trw_layer_tracks_stats(trw_menu_layer_t * data)
  */
 void trw_layer_routes_stats(trw_menu_layer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
+	LayerTRW * layer = data->layer;
 	// There can only be one!
-	if (vtl->trw->tracks_analysis_dialog) {
+	if (layer->tracks_analysis_dialog) {
 		return;
 	}
 
-	vtl->trw->tracks_analysis_dialog = vik_trw_layer_analyse_this(VIK_GTK_WINDOW_FROM_LAYER(vtl),
-								      vtl->trw->name,
-								      VIK_LAYER(vtl),
-								      KINT_TO_POINTER(VIK_TRW_LAYER_SUBLAYER_ROUTES),
-								      trw_layer_create_track_list,
-								      trw_layer_analyse_close);
+	layer->tracks_analysis_dialog = vik_trw_layer_analyse_this(VIK_GTK_WINDOW_FROM_LAYER(layer->vl),
+								   layer->name,
+								   layer->vl,
+								   KINT_TO_POINTER(VIK_TRW_LAYER_SUBLAYER_ROUTES),
+								   trw_layer_create_track_list,
+								   trw_layer_analyse_close);
 }
 
 void trw_layer_goto_waypoint(trw_menu_sublayer_t * data)
@@ -6259,23 +6259,25 @@ void trw_layer_waypoint_gc_webpage(trw_menu_sublayer_t * data)
 	if (!wp)
 		return;
 	char *webpage = g_strdup_printf("http://www.geocaching.com/seek/cache_details.aspx?wp=%s", wp->name);
-	open_url(VIK_GTK_WINDOW_FROM_LAYER(VIK_LAYER(data->layer->vl)), webpage);
+	open_url(VIK_GTK_WINDOW_FROM_LAYER(data->layer->vl), webpage);
 	free(webpage);
 }
 
 void trw_layer_waypoint_webpage(trw_menu_sublayer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
+	LayerTRW * layer = data->layer;
 	sg_uid_t wp_uid = data->sublayer_id;
-	Waypoint * wp = vtl->trw->waypoints.at(wp_uid);
-	if (!wp)
+	Waypoint * wp = layer->waypoints.at(wp_uid);
+	if (!wp) {
 		return;
+	}
+
 	if (wp->url) {
-		open_url(VIK_GTK_WINDOW_FROM_LAYER(VIK_LAYER(vtl)), wp->url);
+		open_url(VIK_GTK_WINDOW_FROM_LAYER(layer->vl), wp->url);
 	} else if (!strncmp(wp->comment, "http", 4)) {
-		open_url(VIK_GTK_WINDOW_FROM_LAYER(VIK_LAYER(vtl)), wp->comment);
+		open_url(VIK_GTK_WINDOW_FROM_LAYER(layer->vl), wp->comment);
 	} else if (!strncmp(wp->description, "http", 4)) {
-		open_url(VIK_GTK_WINDOW_FROM_LAYER(VIK_LAYER(vtl)), wp->description);
+		open_url(VIK_GTK_WINDOW_FROM_LAYER(layer->vl), wp->description);
 	}
 }
 
@@ -7238,30 +7240,37 @@ static void tool_edit_waypoint_destroy(tool_ed_t *t)
 	free(t);
 }
 
-static bool tool_edit_waypoint_click(VikTrwLayer *vtl, GdkEventButton *event, void * data)
+
+static bool tool_edit_waypoint_click_cb(VikTrwLayer *vtl, GdkEventButton *event, void * data)
 {
-	WPSearchParams params;
-	tool_ed_t *t = (tool_ed_t *) data;
+	LayerTRW * layer = (LayerTRW *) ((VikLayer *) vtl)->layer;
+	return layer->tool_edit_waypoint_click(event, data);
+}
 
-	if (!vtl || vtl->trw->type != VIK_LAYER_TRW)
+bool LayerTRW::tool_edit_waypoint_click(GdkEventButton * event, void * data)
+{
+	if (this->type != VIK_LAYER_TRW) {
 		return false;
+	}
 
+	tool_ed_t *t = (tool_ed_t *) data;
 	if (t->holding) {
 		return true;
 	}
 
-	if (!vtl->trw->visible || !vtl->trw->waypoints_visible)
+	if (!this->visible || !this->waypoints_visible) {
 		return false;
+	}
 
-	if (vtl->trw->current_wp && vtl->trw->current_wp->visible) {
+	if (this->current_wp && this->current_wp->visible) {
 		/* first check if current WP is within area (other may be 'closer', but we want to move the current) */
 		int x, y;
-		t->viewport->coord_to_screen(&(vtl->trw->current_wp->coord), &x, &y);
+		t->viewport->coord_to_screen(&(this->current_wp->coord), &x, &y);
 
 		if (abs(x - (int)round(event->x)) <= WAYPOINT_SIZE_APPROX &&
 		    abs(y - (int)round(event->y)) <= WAYPOINT_SIZE_APPROX) {
 			if (event->button == 3)
-				vtl->trw->waypoint_rightclick = true; /* remember that we're clicking; other layers will ignore release signal */
+				this->waypoint_rightclick = true; /* remember that we're clicking; other layers will ignore release signal */
 			else {
 				marker_begin_move(t, event->x, event->y);
 			}
@@ -7269,65 +7278,73 @@ static bool tool_edit_waypoint_click(VikTrwLayer *vtl, GdkEventButton *event, vo
 		}
 	}
 
+	WPSearchParams params;
 	params.viewport = t->viewport;
 	params.x = event->x;
 	params.y = event->y;
-	params.draw_images = vtl->trw->drawimages;
+	params.draw_images = this->drawimages;
 	params.closest_wp_uid = 0;
 	params.closest_wp = NULL;
-	LayerTRWc::waypoint_search_closest_tp(vtl->trw->waypoints, &params);
-	if (vtl->trw->current_wp && (vtl->trw->current_wp == params.closest_wp)) {
+	LayerTRWc::waypoint_search_closest_tp(this->waypoints, &params);
+	if (this->current_wp && (this->current_wp == params.closest_wp)) {
 		if (event->button == 3)
-			vtl->trw->waypoint_rightclick = true; /* remember that we're clicking; other layers will ignore release signal */
+			this->waypoint_rightclick = true; /* remember that we're clicking; other layers will ignore release signal */
 		else
 			marker_begin_move(t, event->x, event->y);
 		return false;
 	}
 	else if (params.closest_wp) {
 		if (event->button == 3)
-			vtl->trw->waypoint_rightclick = true; /* remember that we're clicking; other layers will ignore release signal */
+			this->waypoint_rightclick = true; /* remember that we're clicking; other layers will ignore release signal */
 		else
-			vtl->trw->waypoint_rightclick = false;
+			this->waypoint_rightclick = false;
 
-		vtl->trw->vt->tree->select_iter(vtl->trw->waypoints_iters.at(params.closest_wp_uid), true);
+		this->vt->tree->select_iter(this->waypoints_iters.at(params.closest_wp_uid), true);
 
-		vtl->trw->current_wp = params.closest_wp;
-		vtl->trw->current_wp_uid = params.closest_wp_uid;
+		this->current_wp = params.closest_wp;
+		this->current_wp_uid = params.closest_wp_uid;
 
 		/* could make it so don't update if old WP is off screen and new is null but oh well */
-		vik_layer_emit_update(VIK_LAYER(vtl));
+		vik_layer_emit_update(this->vl);
 		return true;
 	}
 
-	vtl->trw->current_wp = NULL;
-	vtl->trw->current_wp_uid = 0;
-	vtl->trw->waypoint_rightclick = false;
-	vik_layer_emit_update(VIK_LAYER(vtl));
+	this->current_wp = NULL;
+	this->current_wp_uid = 0;
+	this->waypoint_rightclick = false;
+	vik_layer_emit_update(this->vl);
 	return false;
 }
 
-static bool tool_edit_waypoint_move(VikTrwLayer *vtl, GdkEventMotion *event, void * data)
+
+static bool tool_edit_waypoint_move_cb(VikTrwLayer *vtl, GdkEventMotion *event, void * data)
 {
-	tool_ed_t *t = (tool_ed_t *) data;
+	LayerTRW * layer = (LayerTRW *) ((VikLayer *) vtl)->layer;
+	return layer->tool_edit_waypoint_move(event, data);
+}
 
-	if (!vtl || vtl->trw->type != VIK_LAYER_TRW)
+bool LayerTRW::tool_edit_waypoint_move(GdkEventMotion * event, void * data)
+{
+	if (this->type != VIK_LAYER_TRW) {
 		return false;
+	}
 
+	tool_ed_t *t = (tool_ed_t *) data;
 	if (t->holding) {
 		VikCoord new_coord;
 		t->viewport->screen_to_coord(event->x, event->y, &new_coord);
 
 		/* snap to TP */
 		if (event->state & GDK_CONTROL_MASK) {
-			Trackpoint * tp = vtl->trw->closest_tp_in_five_pixel_interval(t->viewport, event->x, event->y);
+			Trackpoint * tp = this->closest_tp_in_five_pixel_interval(t->viewport, event->x, event->y);
 			if (tp)
 				new_coord = tp->coord;
 		}
 
 		/* snap to WP */
 		if (event->state & GDK_SHIFT_MASK) {
-			Waypoint * wp = vtl->trw->closest_wp_in_five_pixel_interval(t->viewport, event->x, event->y);
-			if (wp && wp != vtl->trw->current_wp)
+			Waypoint * wp = this->closest_wp_in_five_pixel_interval(t->viewport, event->x, event->y);
+			if (wp && wp != this->current_wp)
 				new_coord = wp->coord;
 		}
 
@@ -7342,50 +7359,56 @@ static bool tool_edit_waypoint_move(VikTrwLayer *vtl, GdkEventMotion *event, voi
 	return false;
 }
 
-static bool tool_edit_waypoint_release(VikTrwLayer *vtl, GdkEventButton *event, void * data)
+static bool tool_edit_waypoint_release_cb(VikTrwLayer * vtl, GdkEventButton * event, void * data)
 {
-	tool_ed_t *t = (tool_ed_t *) data;
+	LayerTRW * layer = (LayerTRW *) ((VikLayer *) vtl)->layer;
+	return layer->tool_edit_waypoint_release(event, data);
+}
 
-	if (!vtl || vtl->trw->type != VIK_LAYER_TRW)
+bool LayerTRW::tool_edit_waypoint_release(GdkEventButton * event, void * data)
+{
+	if (this->type != VIK_LAYER_TRW) {
 		return false;
+	}
 
+	tool_ed_t *t = (tool_ed_t *) data;
 	if (t->holding && event->button == 1) {
 		VikCoord new_coord;
 		t->viewport->screen_to_coord(event->x, event->y, &new_coord);
 
 		/* snap to TP */
 		if (event->state & GDK_CONTROL_MASK) {
-			Trackpoint * tp = vtl->trw->closest_tp_in_five_pixel_interval(t->viewport, event->x, event->y);
+			Trackpoint * tp = this->closest_tp_in_five_pixel_interval(t->viewport, event->x, event->y);
 			if (tp)
 				new_coord = tp->coord;
 		}
 
 		/* snap to WP */
 		if (event->state & GDK_SHIFT_MASK) {
-			Waypoint * wp = vtl->trw->closest_wp_in_five_pixel_interval(t->viewport, event->x, event->y);
-			if (wp && wp != vtl->trw->current_wp)
+			Waypoint * wp = this->closest_wp_in_five_pixel_interval(t->viewport, event->x, event->y);
+			if (wp && wp != this->current_wp)
 				new_coord = wp->coord;
 		}
 
 		marker_end_move(t);
 
-		vtl->trw->current_wp->coord = new_coord;
+		this->current_wp->coord = new_coord;
 
-		vtl->trw->calculate_bounds_waypoints();
-		vik_layer_emit_update(VIK_LAYER(vtl));
+		this->calculate_bounds_waypoints();
+		vik_layer_emit_update(this->vl);
 		return true;
 	}
 	/* PUT IN RIGHT PLACE!!! */
-	if (event->button == 3 && vtl->trw->waypoint_rightclick) {
-		if (vtl->trw->wp_right_click_menu) {
-			g_object_ref_sink(G_OBJECT(vtl->trw->wp_right_click_menu));
+	if (event->button == 3 && this->waypoint_rightclick) {
+		if (this->wp_right_click_menu) {
+			g_object_ref_sink(G_OBJECT(this->wp_right_click_menu));
 		}
-		if (vtl->trw->current_wp) {
-			vtl->trw->wp_right_click_menu = GTK_MENU (gtk_menu_new());
-			vtl->trw->sublayer_add_menu_items(vtl->trw->wp_right_click_menu, NULL, VIK_TRW_LAYER_SUBLAYER_WAYPOINT, (void *) ((long) vtl->trw->current_wp_uid), vtl->trw->waypoints_iters.at(vtl->trw->current_wp_uid), t->viewport);
-			gtk_menu_popup(vtl->trw->wp_right_click_menu, NULL, NULL, NULL, NULL, event->button, gtk_get_current_event_time());
+		if (this->current_wp) {
+			this->wp_right_click_menu = GTK_MENU (gtk_menu_new());
+			this->sublayer_add_menu_items(this->wp_right_click_menu, NULL, VIK_TRW_LAYER_SUBLAYER_WAYPOINT, (void *) ((long) this->current_wp_uid), this->waypoints_iters.at(this->current_wp_uid), t->viewport);
+			gtk_menu_popup(this->wp_right_click_menu, NULL, NULL, NULL, NULL, event->button, gtk_get_current_event_time());
 		}
-		vtl->trw->waypoint_rightclick = false;
+		this->waypoint_rightclick = false;
 	}
 	return false;
 }
@@ -7398,7 +7421,7 @@ static void * tool_new_track_create(VikWindow *vw, Viewport * viewport)
 }
 
 typedef struct {
-	VikTrwLayer *vtl;
+	LayerTRW * layer;
 	GdkDrawable *drawable;
 	GdkGC *gc;
 	GdkPixmap *pixmap;
@@ -7409,17 +7432,17 @@ typedef struct {
  */
 static int draw_sync(void * data)
 {
-	draw_sync_t *ds = (draw_sync_t*) data;
+	draw_sync_t * ds = (draw_sync_t *) data;
 	// Sometimes don't want to draw
 	//  normally because another update has taken precedent such as panning the display
 	//   which means this pixmap is no longer valid
-	if (ds->vtl->trw->draw_sync_do) {
+	if (ds->layer->draw_sync_do) {
 		gdk_threads_enter();
 		gdk_draw_drawable(ds->drawable,
 				  ds->gc,
 				  ds->pixmap,
 				  0, 0, 0, 0, -1, -1);
-		ds->vtl->trw->draw_sync_done = true;
+		ds->layer->draw_sync_done = true;
 		gdk_threads_leave();
 	}
 	free(ds);
@@ -7468,7 +7491,7 @@ static char* distance_string(double distance)
 /*
  * Actually set the message in statusbar
  */
-static void statusbar_write(double distance, double elev_gain, double elev_loss, double last_step, double angle, VikTrwLayer *vtl)
+static void statusbar_write(double distance, double elev_gain, double elev_loss, double last_step, double angle, LayerTRW * layer)
 {
 	// Only show elevation data when track has some elevation properties
 	char str_gain_loss[64];
@@ -7490,7 +7513,7 @@ static void statusbar_write(double distance, double elev_gain, double elev_loss,
 		free(tmp);
 	}
 
-	VikWindow *vw = VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(vtl));
+	VikWindow *vw = VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(layer->vl));
 
 	// Write with full gain/loss information
 	char *msg = g_strdup_printf("Total %s%s%s", str_total, str_last_step, str_gain_loss);
@@ -7502,16 +7525,16 @@ static void statusbar_write(double distance, double elev_gain, double elev_loss,
 /*
  * Figure out what information should be set in the statusbar and then write it
  */
-static void update_statusbar(VikTrwLayer *vtl)
+void LayerTRW::update_statusbar()
 {
 	// Get elevation data
 	double elev_gain, elev_loss;
-	vtl->trw->current_track->get_total_elevation_gain(&elev_gain, &elev_loss);
+	this->current_track->get_total_elevation_gain(&elev_gain, &elev_loss);
 
 	/* Find out actual distance of current track */
-	double distance = vtl->trw->current_track->get_length();
+	double distance = this->current_track->get_length();
 
-	statusbar_write(distance, elev_gain, elev_loss, 0, 0, vtl);
+	statusbar_write(distance, elev_gain, elev_loss, 0, 0, this);
 }
 
 
@@ -7542,7 +7565,7 @@ static VikLayerToolFuncStatus tool_new_track_move(VikTrwLayer *vtl, GdkEventMoti
 				  viewport->get_pixmap(),
 				  0, 0, 0, 0, -1, -1);
 
-		draw_sync_t *passalong;
+		draw_sync_t * passalong;
 		int x1, y1;
 
 		viewport->coord_to_screen(&(last_tpt->coord), &x1, &y1);
@@ -7614,7 +7637,7 @@ static VikLayerToolFuncStatus tool_new_track_move(VikTrwLayer *vtl, GdkEventMoti
 		}
 
 		passalong = (draw_sync_t *) malloc(1 * sizeof (draw_sync_t)); // freed by draw_sync()
-		passalong->vtl = vtl;
+		passalong->layer = vtl->trw;
 		passalong->pixmap = pixmap;
 		passalong->drawable = gtk_widget_get_window(GTK_WIDGET(vvp));
 		passalong->gc = vtl->trw->current_track_newpoint_gc;
@@ -7624,7 +7647,7 @@ static VikLayerToolFuncStatus tool_new_track_move(VikTrwLayer *vtl, GdkEventMoti
 		viewport->compute_bearing(x1, y1, event->x, event->y, &angle, &baseangle);
 
 		// Update statusbar with full gain/loss information
-		statusbar_write(distance, elev_gain, elev_loss, last_step, angle, vtl);
+		statusbar_write(distance, elev_gain, elev_loss, last_step, angle, vtl->trw);
 
 		// draw pixmap when we have time to
 		g_idle_add_full(G_PRIORITY_HIGH_IDLE + 10, draw_sync, passalong, NULL);
@@ -7661,12 +7684,12 @@ static bool tool_new_track_key_press(VikTrwLayer *vtl, GdkEventKey *event, Viewp
 			}
 		}
 		vtl->trw->current_track = NULL;
-		vik_layer_emit_update(VIK_LAYER(vtl));
+		vik_layer_emit_update(vtl->trw->vl);
 		return true;
 	} else if (vtl->trw->current_track && event->keyval == GDK_BackSpace) {
 		undo_trackpoint_add(vtl);
-		update_statusbar(vtl);
-		vik_layer_emit_update(VIK_LAYER(vtl));
+		vtl->trw->update_statusbar();
+		vik_layer_emit_update(vtl->trw->vl);
 		return true;
 	}
 	return false;
@@ -7695,8 +7718,8 @@ static bool tool_new_track_or_route_click(VikTrwLayer *vtl, GdkEventButton *even
 			return false;
 		}
 		undo_trackpoint_add(vtl);
-		update_statusbar(vtl);
-		vik_layer_emit_update(VIK_LAYER(vtl));
+		vtl->trw->update_statusbar();
+		vik_layer_emit_update(vtl->trw->vl);
 		return true;
 	}
 
@@ -7707,7 +7730,7 @@ static bool tool_new_track_or_route_click(VikTrwLayer *vtl, GdkEventButton *even
 			undo_trackpoint_add(vtl);
 			vtl->trw->current_track = NULL;
 		}
-		vik_layer_emit_update(VIK_LAYER(vtl));
+		vik_layer_emit_update(vtl->trw->vl);
 		return true;
 	}
 
@@ -7736,7 +7759,7 @@ static bool tool_new_track_or_route_click(VikTrwLayer *vtl, GdkEventButton *even
 	vtl->trw->ct_x2 = event->x;
 	vtl->trw->ct_y2 = event->y;
 
-	vik_layer_emit_update(VIK_LAYER(vtl));
+	vik_layer_emit_update(vtl->trw->vl);
 	return true;
 }
 
@@ -7811,7 +7834,7 @@ static bool tool_new_waypoint_click(VikTrwLayer *vtl, GdkEventButton *event, Vie
 	if (vtl->trw->new_waypoint(VIK_GTK_WINDOW_FROM_LAYER(vtl), &coord)) {
 		vtl->trw->calculate_bounds_waypoints();
 		if (vtl->trw->visible)
-			vik_layer_emit_update(VIK_LAYER(vtl));
+			vik_layer_emit_update(vtl->trw->vl);
 	}
 	return true;
 }
@@ -7893,7 +7916,7 @@ static bool tool_edit_trackpoint_click(VikTrwLayer *vtl, GdkEventButton *event, 
 		vtl->trw->current_tp_track = vtl->trw->tracks.at(params.closest_track_uid);
 		vtl->trw->tpwin_init();
 		vtl->trw->set_statusbar_msg_info_trkpt(params.closest_tp);
-		vik_layer_emit_update(VIK_LAYER(vtl));
+		vik_layer_emit_update(vtl->trw->vl);
 		return true;
 	}
 
@@ -7907,7 +7930,7 @@ static bool tool_edit_trackpoint_click(VikTrwLayer *vtl, GdkEventButton *event, 
 		vtl->trw->current_tp_track = vtl->trw->routes.at(params.closest_track_uid);
 		vtl->trw->tpwin_init();
 		vtl->trw->set_statusbar_msg_info_trkpt(params.closest_tp);
-		vik_layer_emit_update(VIK_LAYER(vtl));
+		vik_layer_emit_update(vtl->trw->vl);
 		return true;
 	}
 
@@ -7975,7 +7998,7 @@ static bool tool_edit_trackpoint_release(VikTrwLayer *vtl, GdkEventButton *event
 			if (vtl->trw->current_tp_track)
 				vtl->trw->my_tpwin_set_tp();
 
-		vik_layer_emit_update(VIK_LAYER(vtl));
+		vik_layer_emit_update(vtl->trw->vl);
 		return true;
 	}
 	return false;
@@ -7995,7 +8018,7 @@ static void tool_extended_route_finder_undo(VikTrwLayer *vtl)
 	new_end = vtl->trw->current_track->cut_back_to_double_point();
 	if (new_end) {
 		free(new_end);
-		vik_layer_emit_update(VIK_LAYER(vtl));
+		vik_layer_emit_update(vtl->trw->vl);
 
 		/* remove last ' to:...' */
 		if (vtl->trw->current_track->comment) {
@@ -8068,7 +8091,7 @@ static bool tool_extended_route_finder_click(VikTrwLayer *vtl, GdkEventButton *e
 		vik_statusbar_set_message(sb, VIK_STATUSBAR_INFO, msg);
 		free(msg);
 
-		vik_layer_emit_update(VIK_LAYER(vtl));
+		vik_layer_emit_update(vtl->trw->vl);
 	} else {
 		vtl->trw->current_track = NULL;
 
@@ -8087,7 +8110,7 @@ static bool tool_extended_route_finder_key_press(VikTrwLayer *vtl, GdkEventKey *
 	if (vtl->trw->current_track && event->keyval == GDK_Escape) {
 		vtl->trw->route_finder_started = false;
 		vtl->trw->current_track = NULL;
-		vik_layer_emit_update(VIK_LAYER(vtl));
+		vik_layer_emit_update(vtl->trw->vl);
 		return true;
 	} else if (vtl->trw->current_track && event->keyval == GDK_BackSpace) {
 		tool_extended_route_finder_undo(vtl);
@@ -8163,11 +8186,11 @@ static bool tool_show_picture_click(VikTrwLayer * vtl, GdkEventButton * event, V
 
 /* Structure for thumbnail creating data used in the background thread */
 typedef struct {
-	VikTrwLayer *vtl; // Layer needed for redrawing
-	GSList *pics;     // Image list
+	LayerTRW * layer;  /* Layer needed for redrawing. */
+	GSList * pics;     /* Image list. */
 } thumbnail_create_thread_data;
 
-static int create_thumbnails_thread(thumbnail_create_thread_data *tctd, void * threaddata)
+static int create_thumbnails_thread(thumbnail_create_thread_data * tctd, void * threaddata)
 {
 	unsigned int total = g_slist_length(tctd->pics), done = 0;
 	while (tctd->pics) {
@@ -8180,13 +8203,14 @@ static int create_thumbnails_thread(thumbnail_create_thread_data *tctd, void * t
 	}
 
 	// Redraw to show the thumbnails as they are now created
-	if (IS_VIK_LAYER(tctd->vtl))
-		vik_layer_emit_update(VIK_LAYER(tctd->vtl)); // NB update from background thread
+	if (IS_VIK_LAYER(tctd->layer->vl)) {
+		vik_layer_emit_update(tctd->layer->vl); // NB update from background thread
+	}
 
 	return 0;
 }
 
-static void thumbnail_create_thread_free(thumbnail_create_thread_data *tctd)
+static void thumbnail_create_thread_free(thumbnail_create_thread_data * tctd)
 {
 	while (tctd->pics) {
 		free(tctd->pics->data);
@@ -8195,18 +8219,18 @@ static void thumbnail_create_thread_free(thumbnail_create_thread_data *tctd)
 	free(tctd);
 }
 
-void trw_layer_verify_thumbnails(VikTrwLayer *vtl, Viewport * viewport)
+void LayerTRW::verify_thumbnails(Viewport * viewport)
 {
-	if (! vtl->trw->has_verified_thumbnails) {
-		GSList *pics = LayerTRWc::image_wp_make_list(vtl->trw->waypoints);
+	if (!this->has_verified_thumbnails) {
+		GSList *pics = LayerTRWc::image_wp_make_list(this->waypoints);
 		if (pics) {
 			int len = g_slist_length(pics);
 			char *tmp = g_strdup_printf(_("Creating %d Image Thumbnails..."), len);
-			thumbnail_create_thread_data *tctd = (thumbnail_create_thread_data *) malloc(sizeof (thumbnail_create_thread_data));
-			tctd->vtl = vtl;
+			thumbnail_create_thread_data * tctd = (thumbnail_create_thread_data *) malloc(sizeof (thumbnail_create_thread_data));
+			tctd->layer = this;
 			tctd->pics = pics;
 			a_background_thread(BACKGROUND_POOL_LOCAL,
-					    VIK_GTK_WINDOW_FROM_LAYER(vtl),
+					    VIK_GTK_WINDOW_FROM_LAYER(this->vl),
 					    tmp,
 					    (vik_thr_func) create_thumbnails_thread,
 					    tctd,
@@ -8382,8 +8406,7 @@ void LayerTRW::sort_all()
 	}
 
 	if (this->waypoints.size() > 1) {
-		VikTrwLayer * vtl = (VikTrwLayer *) this->vl;
-		this->vt->tree->sort_children(&(this->waypoint_iter), vtl->trw->wp_sort_order);
+		this->vt->tree->sort_children(&(this->waypoint_iter), this->wp_sort_order);
 	}
 }
 
@@ -8474,9 +8497,8 @@ time_t LayerTRW::get_timestamp()
 
 void LayerTRW::post_read(Viewport * viewport, bool from_file)
 {
-	VikTrwLayer * vtl = (VikTrwLayer *) this->vl;
 	if (this->realized) {
-		trw_layer_verify_thumbnails((VikTrwLayer *) this->vl, viewport);
+		this->verify_thumbnails(viewport);
 	}
 	this->track_alloc_colors();
 
@@ -8752,20 +8774,20 @@ void trw_layer_download_map_along_track_cb(trw_menu_sublayer_t * data)
 	double zoom_vals[] = {0.125, 0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024};
 	int selected_zoom, default_zoom;
 
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
+	LayerTRW * layer = data->layer;
 	VikLayersPanel *vlp = (VikLayersPanel *) data->panel->gob;
-	Track * trk = trw_layer_get_track_helper(data, vtl);
+	Track * trk = layer->get_track_helper(data);
 
 	if (!trk)
 		return;
 
-	Viewport * viewport = vik_window_viewport((VikWindow *)(VIK_GTK_WINDOW_FROM_LAYER(vtl)));
+	Viewport * viewport = vik_window_viewport((VikWindow *)(VIK_GTK_WINDOW_FROM_LAYER(layer->vl)));
 
 	std::list<Layer *> * vmls = vlp->panel_ref->get_all_layers_of_type(VIK_LAYER_MAPS, true); // Includes hidden map layer types
 	int num_maps = vmls->size();
 
 	if (!num_maps) {
-		a_dialog_error_msg(VIK_GTK_WINDOW_FROM_LAYER(vtl), _("No map layer in use. Create one first"));
+		a_dialog_error_msg(VIK_GTK_WINDOW_FROM_LAYER(layer->vl), _("No map layer in use. Create one first"));
 		return;
 	}
 
@@ -8792,7 +8814,7 @@ void trw_layer_download_map_along_track_cb(trw_menu_sublayer_t * data)
 	}
 	default_zoom = (default_zoom == G_N_ELEMENTS(zoom_vals)) ? G_N_ELEMENTS(zoom_vals) - 1 : default_zoom;
 
-	if (!a_dialog_map_n_zoom(VIK_GTK_WINDOW_FROM_LAYER(vtl), map_names, 0, zoomlist, default_zoom, &selected_map, &selected_zoom))
+	if (!a_dialog_map_n_zoom(VIK_GTK_WINDOW_FROM_LAYER(layer->vl), map_names, 0, zoomlist, default_zoom, &selected_map, &selected_zoom))
 		goto done;
 
 	vik_track_download_map(trk, map_layers[selected_map], viewport, zoom_vals[selected_zoom]);
@@ -8890,43 +8912,44 @@ char * LayerTRW::highest_wp_number_get()
  */
 static GList* trw_layer_create_track_list_both(VikLayer *vl, void * user_data)
 {
-	VikTrwLayer *vtl = VIK_TRW_LAYER(vl);
+	LayerTRW * layer = (LayerTRW *) vl->layer;
 	GList * tracks = NULL;
-	LayerTRWc::get_track_values(&tracks, vtl->trw->get_tracks());
-	LayerTRWc::get_track_values(&tracks, vtl->trw->get_routes());
+	LayerTRWc::get_track_values(&tracks, layer->get_tracks());
+	LayerTRWc::get_track_values(&tracks, layer->get_routes());
 
-	return vtl->trw->build_track_list_t(tracks);
+	return layer->build_track_list_t(tracks);
 }
 
 void trw_layer_track_list_dialog_single(trw_menu_sublayer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
+	LayerTRW * layer = data->layer;
 
 	char *title = NULL;
-	if (data->subtype == VIK_TRW_LAYER_SUBLAYER_TRACKS)
-		title = g_strdup_printf(_("%s: Track List"), vtl->trw->name);
-	else
-		title = g_strdup_printf(_("%s: Route List"), vtl->trw->name);
+	if (data->subtype == VIK_TRW_LAYER_SUBLAYER_TRACKS) {
+		title = g_strdup_printf(_("%s: Track List"), layer->name);
+	} else {
+		title = g_strdup_printf(_("%s: Route List"), layer->name);
+	}
 
-	vik_trw_layer_track_list_show_dialog(title, VIK_LAYER(vtl), &data->subtype, trw_layer_create_track_list, false);
+	vik_trw_layer_track_list_show_dialog(title, layer->vl, &data->subtype, trw_layer_create_track_list, false);
 	free(title);
 }
 
 void trw_layer_track_list_dialog(trw_menu_layer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
+	LayerTRW * layer = data->layer;
 
-	char *title = g_strdup_printf(_("%s: Track and Route List"), vtl->trw->name);
-	vik_trw_layer_track_list_show_dialog(title, VIK_LAYER(vtl), NULL, trw_layer_create_track_list_both, false);
+	char *title = g_strdup_printf(_("%s: Track and Route List"), layer->name);
+	vik_trw_layer_track_list_show_dialog(title, layer->vl, NULL, trw_layer_create_track_list_both, false);
 	free(title);
 }
 
 void trw_layer_waypoint_list_dialog(trw_menu_layer_t * data)
 {
-	VikTrwLayer *vtl = (VikTrwLayer *) data->layer->vl;
+	LayerTRW * layer = data->layer;
 
-	char *title = g_strdup_printf(_("%s: Waypoint List"), vtl->trw->name);
-	vik_trw_layer_waypoint_list_show_dialog(title, VIK_LAYER(vtl), NULL, trw_layer_create_waypoint_list, false);
+	char * title = g_strdup_printf(_("%s: Waypoint List"), layer->name);
+	vik_trw_layer_waypoint_list_show_dialog(title, layer->vl, NULL, trw_layer_create_waypoint_list, false);
 	free(title);
 }
 
@@ -8934,13 +8957,13 @@ void trw_layer_waypoint_list_dialog(trw_menu_layer_t * data)
 
 
 
-Track * trw_layer_get_track_helper(trw_menu_sublayer_t * data, VikTrwLayer * vtl)
+Track * LayerTRW::get_track_helper(trw_menu_sublayer_t * data)
 {
 	sg_uid_t uid = data->sublayer_id;
 	if (data->subtype == VIK_TRW_LAYER_SUBLAYER_ROUTE) {
-		return vtl->trw->routes.at(uid);
+		return this->routes.at(uid);
 	} else {
-		return vtl->trw->tracks.at(uid);
+		return this->tracks.at(uid);
 	}
 }
 
@@ -8972,17 +8995,14 @@ LayerTRW::LayerTRW(VikLayer * vl) : Layer(vl)
 
 int LayerTRW::read_file(FILE * f, char const * dirpath)
 {
-	VikTrwLayer * vtl = (VikTrwLayer *) this->vl;
-	return (int) a_gpspoint_read_file(vtl, f, dirpath);
+	return (int) a_gpspoint_read_file((VikTrwLayer *) this->vl, f, dirpath);
 }
 
 
 void LayerTRW::write_file(FILE * f)
 {
-	VikTrwLayer * vtl = (VikTrwLayer *) this->vl;
-
 	fprintf(f, "\n\n~LayerData\n");
-	a_gpspoint_write_file(vtl, f);
+	a_gpspoint_write_file((VikTrwLayer *) this->vl, f);
 	fprintf(f, "~EndLayerData\n");
 }
 
@@ -9116,7 +9136,7 @@ LayerTRW::LayerTRW(Viewport * viewport)
 
 		this->image_cache = g_queue_new(); // Must be performed before set_params via set_defaults
 
-		vik_layer_set_defaults(VIK_LAYER(rv), viewport);
+		vik_layer_set_defaults((VikLayer *) rv, viewport);
 
 
 		// Param settings that are not available via the GUI

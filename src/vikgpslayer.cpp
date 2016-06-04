@@ -1240,7 +1240,7 @@ static void gps_comm_thread(GpsSession *sess)
 
 /**
  * vik_gps_comm:
- * @vtl: The TrackWaypoint layer to operate on
+ * @layer: The TrackWaypoint layer to operate on
  * @track: Operate on a particular track when specified
  * @dir: The direction of the transfer
  * @protocol: The GPS device communication protocol
@@ -1254,7 +1254,7 @@ static void gps_comm_thread(GpsSession *sess)
  *
  * Talk to a GPS Device using a thread which updates a dialog with the progress
  */
-int vik_gps_comm(VikTrwLayer *vtl,
+int vik_gps_comm(LayerTRW * layer,
 		 Track * trk,
 		 vik_gps_dir dir,
 		 char *protocol,
@@ -1274,7 +1274,7 @@ int vik_gps_comm(VikTrwLayer *vtl,
 
 	sess->mutex = vik_mutex_new();
 	sess->direction = dir;
-	sess->vtl = vtl;
+	sess->vtl = (VikTrwLayer *) layer->vl;
 	sess->trk = trk;
 	sess->port = g_strdup(port);
 	sess->ok = true;
@@ -1322,7 +1322,7 @@ int vik_gps_comm(VikTrwLayer *vtl,
 
 	// Only create dialog if we're going to do some transferring
 	if (do_tracks || do_waypoints || do_routes) {
-		sess->dialog = gtk_dialog_new_with_buttons("", VIK_GTK_WINDOW_FROM_LAYER(vtl), (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL);
+		sess->dialog = gtk_dialog_new_with_buttons("", VIK_GTK_WINDOW_FROM_LAYER(layer->vl), (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL);
 		gtk_dialog_set_response_sensitive(GTK_DIALOG(sess->dialog),
 						    GTK_RESPONSE_ACCEPT, false);
 		gtk_window_set_title(GTK_WINDOW(sess->dialog), sess->window_title);
@@ -1361,7 +1361,7 @@ int vik_gps_comm(VikTrwLayer *vtl,
 		gtk_widget_destroy(sess->dialog);
 	} else {
 		if (!turn_off) {
-			a_dialog_info_msg(VIK_GTK_WINDOW_FROM_LAYER(vtl), _("No GPS items selected for transfer."));
+			a_dialog_info_msg(VIK_GTK_WINDOW_FROM_LAYER(layer->vl), _("No GPS items selected for transfer."));
 		}
 	}
 
@@ -1377,7 +1377,7 @@ int vik_gps_comm(VikTrwLayer *vtl,
 			ProcessOptions po = { device_off, port, NULL, NULL, NULL, NULL };
 			bool result = a_babel_convert_from(NULL, &po, NULL, NULL, NULL);
 			if (!result) {
-				a_dialog_error_msg(VIK_GTK_WINDOW_FROM_LAYER(vtl), _("Could not turn off device."));
+				a_dialog_error_msg(VIK_GTK_WINDOW_FROM_LAYER(layer->vl), _("Could not turn off device."));
 			}
 			free(device_off);
 		}
@@ -1395,9 +1395,9 @@ static void gps_upload_cb(gps_layer_data_t * data)
 
 	VikWindow * vw = VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(layer->vl));
 	Viewport * viewport = vik_window_viewport(vw);
-	VikTrwLayer * vtl = (VikTrwLayer *) layer->trw_children[TRW_UPLOAD]->vl;
+	LayerTRW * trw = layer->trw_children[TRW_UPLOAD];
 
-	vik_gps_comm(vtl,
+	vik_gps_comm(trw,
 		     NULL,
 		     GPS_UP,
 		     layer->protocol,
@@ -1417,10 +1417,10 @@ static void gps_download_cb(gps_layer_data_t * data)
 
 	VikWindow * vw = VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(layer->vl));
 	Viewport * viewport = vik_window_viewport(vw);
-	VikTrwLayer * vtl = (VikTrwLayer *) layer->trw_children[TRW_DOWNLOAD]->vl;
+	LayerTRW * trw = layer->trw_children[TRW_DOWNLOAD];
 
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
-	vik_gps_comm(vtl,
+	vik_gps_comm(trw,
 		     NULL,
 		     GPS_DOWN,
 		     layer->protocol,
@@ -1433,7 +1433,7 @@ static void gps_download_cb(gps_layer_data_t * data)
 		     layer->download_waypoints,
 		     false);
 #else
-	vik_gps_comm(vtl,
+	vik_gps_comm(trw,
 		     NULL,
 		     GPS_DOWN,
 		     layer->protocol,

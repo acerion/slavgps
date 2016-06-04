@@ -1,5 +1,3 @@
-
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
@@ -39,7 +37,7 @@
 
 static char *last_folder_uri = NULL;
 
-void vik_trw_layer_export ( VikTrwLayer *vtl, const char *title, const char* default_name, Track * trk, VikFileType_t file_type )
+void vik_trw_layer_export(LayerTRW * layer, char const * title, char const * default_name, Track * trk, VikFileType_t file_type)
 {
   GtkWidget *file_selector;
   const char *fn;
@@ -65,16 +63,16 @@ void vik_trw_layer_export ( VikTrwLayer *vtl, const char *title, const char* def
       last_folder_uri = gtk_file_chooser_get_current_folder_uri ( GTK_FILE_CHOOSER(file_selector) );
 
       gtk_widget_hide ( file_selector );
-      vik_window_set_busy_cursor ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(vtl)) );
+      vik_window_set_busy_cursor ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(layer->vl)) );
       // Don't Export invisible items - unless requested on this specific track
-      failed = ! a_file_export ( vtl, fn, file_type, trk, trk ? true : false );
-      vik_window_clear_busy_cursor ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(vtl)) );
+      failed = ! a_file_export ( (VikTrwLayer *) layer->vl, fn, file_type, trk, trk ? true : false );
+      vik_window_clear_busy_cursor ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(layer->vl)) );
       break;
     }
   }
   gtk_widget_destroy ( file_selector );
   if ( failed )
-    a_dialog_error_msg ( VIK_GTK_WINDOW_FROM_LAYER(vtl), _("The filename you requested could not be opened for writing.") );
+    a_dialog_error_msg ( VIK_GTK_WINDOW_FROM_LAYER(layer->vl), _("The filename you requested could not be opened for writing.") );
 }
 
 

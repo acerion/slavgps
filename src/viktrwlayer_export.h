@@ -33,7 +33,7 @@ extern "C" {
 #endif
 
 
-void vik_trw_layer_export ( VikTrwLayer *vtl, const char *title, const char* default_name, Track * trk, VikFileType_t file_type );
+void vik_trw_layer_export(LayerTRW * layer, char const * title, char const * default_name, Track * trk, VikFileType_t file_type);
 
 void vik_trw_layer_export_external_gpx ( VikTrwLayer *vtl, const char* external_program );
 

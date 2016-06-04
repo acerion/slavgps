@@ -475,9 +475,9 @@ static int trw_layer_geotag_thread ( geotag_options_t *options, void * threaddat
 		if ( IS_VIK_LAYER(options->vtl) ) {
 			options->vtl->trw->calculate_bounds_waypoints();
 			// Ensure any new images get shown
-			trw_layer_verify_thumbnails ( options->vtl, NULL ); // NB second parameter not used ATM
+			options->vtl->trw->verify_thumbnails(NULL); // NB second parameter not used ATM
 			// Force redraw as verify only redraws if there are new thumbnails (they may already exist)
-			vik_layer_emit_update ( VIK_LAYER(options->vtl) ); // NB Update from background
+			vik_layer_emit_update(options->vtl->trw->vl); // NB Update from background
 		}
 	}
 
@@ -589,14 +589,14 @@ static void create_waypoints_b_cb ( GtkWidget *gw, GeoTagWidgets *gtw )
 /**
  * trw_layer_geotag_dialog:
  * @parent: The Window of the calling process
- * @vtl: The VikTrwLayer to use for correlating images to tracks
+ * @layer: The LayerTrw to use for correlating images to tracks
  * @track: Optional - The particular track to use (if specified) for correlating images
  * @track_name: Optional - The name of specified track to use
  */
-void trw_layer_geotag_dialog ( GtkWindow *parent,
-                               VikTrwLayer *vtl,
-                               Waypoint * wp,
-                               Track * trk)
+void trw_layer_geotag_dialog(GtkWindow * parent,
+							 LayerTRW * layer,
+							 Waypoint * wp,
+							 Track * trk)
 {
 	GeoTagWidgets *widgets = geotag_widgets_new();
 
@@ -611,7 +611,7 @@ void trw_layer_geotag_dialog ( GtkWindow *parent,
 	gtk_file_filter_add_mime_type ( filter, "image/jpeg");
 
 	widgets->files = VIK_FILE_LIST(vik_file_list_new ( _("Images"), filter ));
-	widgets->vtl = vtl;
+	widgets->vtl = (VikTrwLayer *) layer->vl;
 	widgets->wp = wp;
 	widgets->trk = trk;
 	widgets->create_waypoints_b = GTK_CHECK_BUTTON ( gtk_check_button_new () );

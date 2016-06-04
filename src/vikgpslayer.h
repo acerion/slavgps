@@ -93,7 +93,7 @@ typedef struct {
 
 
 // Non layer specific but expose communal method
-int vik_gps_comm(VikTrwLayer *vtl,
+int vik_gps_comm(LayerTRW * layer,
 		 Track * trk,
 		 vik_gps_dir dir,
 		 char *protocol,

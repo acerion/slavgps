@@ -40,6 +40,7 @@
 
 
 struct _VikTrwLayer;
+struct _trw_menu_sublayer_t;
 
 
 namespace SlavGPS {
@@ -313,6 +314,15 @@ namespace SlavGPS {
 		VikTRWMetadata * get_metadata();
 		void set_metadata(VikTRWMetadata * metadata);
 
+		/* Intended only for use by other trw_layer subwindows. */
+		void verify_thumbnails(Viewport * viewport);
+
+
+		/* Callback-related. */
+		bool tool_edit_waypoint_click(GdkEventButton * event, void * data);
+		bool tool_edit_waypoint_move(GdkEventMotion * event, void * data);
+		bool tool_edit_waypoint_release(GdkEventButton * event, void * data);
+
 
 		/* This should be private. */
 		void image_cache_free();
@@ -320,6 +330,8 @@ namespace SlavGPS {
 		void free_track_gcs();
 		void cancel_current_tp(bool destroy);
 		void tpwin_response(int response);
+		Track * get_track_helper(struct _trw_menu_sublayer_t * data);
+		void update_statusbar();
 
 
 
@@ -485,7 +497,7 @@ typedef struct {
 } trw_menu_layer_t;
 
 
-typedef struct {
+typedef struct _trw_menu_sublayer_t {
 	LayerTRW * layer;
 	LayersPanel * panel;
 	int subtype;
@@ -603,7 +615,7 @@ GdkPixbuf* get_wp_sym_small ( char *symbol );
 
 /* Exposed Layer Interface function definitions */
 // Intended only for use by other trw_layer subwindows
-void trw_layer_verify_thumbnails(VikTrwLayer * vtl, Viewport * viewport);
+//void trw_layer_verify_thumbnails(VikTrwLayer * vtl, Viewport * viewport);
 void trw_layer_calculate_bounds_waypoints ( VikTrwLayer *vtl );
 
 

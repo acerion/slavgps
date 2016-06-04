@@ -3078,15 +3078,15 @@ static GtkWidget *create_table (int cnt, char *labels[], GtkWidget *contents[])
   return GTK_WIDGET (table);
 }
 
-void vik_trw_layer_propwin_run ( GtkWindow *parent,
-                                 VikTrwLayer *vtl,
-                                 Track * trk,
-                                 void * vlp,
-                                 VikViewport *vvp,
-                                 bool start_on_stats )
+void vik_trw_layer_propwin_run(GtkWindow *parent,
+			       LayerTRW * layer,
+			       Track * trk,
+			       void * vlp,
+			       VikViewport *vvp,
+			       bool start_on_stats )
 {
   PropWidgets *widgets = prop_widgets_new();
-  widgets->vtl = vtl;
+  widgets->vtl = (VikTrwLayer *) layer->vl;
   widgets->vvp = vvp;
   widgets->vlp = (VikLayersPanel *) vlp;
   widgets->trk = trk;
@@ -3398,7 +3398,7 @@ void vik_trw_layer_propwin_run ( GtkWindow *parent,
     VikCoord vc;
     // Notional center of a track is simply an average of the bounding box extremities
     struct LatLon center = { (trk->bbox.north+trk->bbox.south)/2, (trk->bbox.east+trk->bbox.west)/2 };
-    vik_coord_load_from_latlon ( &vc, vtl->trw->get_coord_mode(), &center );
+    vik_coord_load_from_latlon ( &vc, layer->get_coord_mode(), &center );
 
     widgets->tz = vu_get_tz_at_location ( &vc );
 

@@ -37,10 +37,10 @@ extern "C" {
 
 
 // To be only called from within viktrwlayer
-void trw_layer_geotag_dialog ( GtkWindow *parent,
-                               VikTrwLayer *vtl,
-                               Waypoint * wp,
-                               Track * trk);
+void trw_layer_geotag_dialog(GtkWindow * parent,
+							 LayerTRW * layer ,
+							 Waypoint * wp,
+							 Track * trk);
 
 #ifdef __cplusplus
 }
