@@ -436,7 +436,7 @@ void osm_traces_upload_viktrwlayer ( VikTrwLayer *vtl, Track * trk )
   if (trk != NULL)
     description = trk->description;
   else {
-    VikTRWMetadata *md = vik_trw_layer_get_metadata (vtl);
+    VikTRWMetadata *md = vtl->trw->get_metadata();
     description = md ? md->description : NULL;
   }
   if (description)
@@ -458,7 +458,7 @@ void osm_traces_upload_viktrwlayer ( VikTrwLayer *vtl, Track * trk )
 
   tags_label = gtk_label_new(_("Tags:"));
   tags_entry = gtk_entry_new();
-  VikTRWMetadata *md = vik_trw_layer_get_metadata (vtl);
+  VikTRWMetadata *md = vtl->trw->get_metadata();
   if (md->keywords)
     gtk_entry_set_text(GTK_ENTRY(tags_entry), md->keywords);
   gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dia))), tags_label, false, false, 0);

@@ -306,6 +306,22 @@ namespace SlavGPS {
 		void dialog_shift(GtkWindow * dialog, VikCoord * coord, bool vertical); /* void trw_layer_dialog_shift(VikTrwLayer * vtl, GtkWindow * dialog, VikCoord * coord, bool vertical). */
 
 
+		int get_property_tracks_line_thickness();
+
+		static VikTRWMetadata * metadata_new();
+		static void metadata_free(VikTRWMetadata * metadata);
+		VikTRWMetadata * get_metadata();
+		void set_metadata(VikTRWMetadata * metadata);
+
+
+		/* This should be private. */
+		void image_cache_free();
+		void new_track_gcs(Viewport * viewport);
+		void free_track_gcs();
+		void cancel_current_tp(bool destroy);
+		void tpwin_response(int response);
+
+
 
 		/* Move this to layer_trw_containers.h. */
 
@@ -532,36 +548,36 @@ typedef struct _VikTrwLayer VikTrwLayer;
 
 
 
-VikTRWMetadata *vik_trw_metadata_new();
-void vik_trw_metadata_free ( VikTRWMetadata *metadata);
-VikTRWMetadata *vik_trw_layer_get_metadata ( VikTrwLayer *vtl );
-void vik_trw_layer_set_metadata ( VikTrwLayer *vtl, VikTRWMetadata *metadata);
+//VikTRWMetadata *vik_trw_metadata_new();
+//void vik_trw_metadata_free ( VikTRWMetadata *metadata);
+//VikTRWMetadata *vik_trw_layer_get_metadata ( VikTrwLayer *vtl );
+//void vik_trw_layer_set_metadata ( VikTrwLayer *vtl, VikTRWMetadata *metadata);
 
 //bool vik_trw_layer_find_date ( VikTrwLayer *vtl, const char *date_str, VikCoord *position, VikViewport *vvp, bool do_tracks, bool select );
 
-int vik_trw_layer_get_property_tracks_line_thickness ( VikTrwLayer *vtl );
+//int vik_trw_layer_get_property_tracks_line_thickness ( VikTrwLayer *vtl );
 
 // Waypoint returned is the first one
-Waypoint * vik_trw_layer_get_waypoint(VikTrwLayer * vtl, const char * name);
+//Waypoint * vik_trw_layer_get_waypoint(VikTrwLayer * vtl, const char * name);
 
 // Track returned is the first one
-Track * vik_trw_layer_get_track(VikTrwLayer * vtl, const char * name);
+//Track * vik_trw_layer_get_track(VikTrwLayer * vtl, const char * name);
 
-bool vik_trw_layer_find_center ( VikTrwLayer *vtl, VikCoord *dest );
+//bool vik_trw_layer_find_center ( VikTrwLayer *vtl, VikCoord *dest );
 
-VikCoordMode vik_trw_layer_get_coord_mode ( VikTrwLayer *vtl );
+//VikCoordMode vik_trw_layer_get_coord_mode ( VikTrwLayer *vtl );
 
-bool vik_trw_layer_uniquify ( VikTrwLayer *vtl, VikLayersPanel *vlp );
+//bool vik_trw_layer_uniquify ( VikTrwLayer *vtl, VikLayersPanel *vlp );
 
-void vik_trw_layer_delete_all_waypoints ( VikTrwLayer *vtl );
-void vik_trw_layer_delete_all_tracks ( VikTrwLayer *vtl );
-void vik_trw_layer_delete_all_routes ( VikTrwLayer *vtl );
+//void vik_trw_layer_delete_all_waypoints ( VikTrwLayer *vtl );
+//void vik_trw_layer_delete_all_tracks ( VikTrwLayer *vtl );
+//void vik_trw_layer_delete_all_routes ( VikTrwLayer *vtl );
 
-void vik_trw_layer_reset_waypoints ( VikTrwLayer *vtl );
+//void vik_trw_layer_reset_waypoints ( VikTrwLayer *vtl );
 
-void vik_trw_layer_draw_highlight(VikTrwLayer * vtl, Viewport * viewport);
-void vik_trw_layer_draw_highlight_item(VikTrwLayer * vtl, Track * trk, Waypoint * wp, Viewport * viewport);
-void vik_trw_layer_draw_highlight_items(VikTrwLayer * vtl, std::unordered_map<sg_uid_t, Track *> * tracks, std::unordered_map<sg_uid_t, Waypoint *> * waypoints, Viewport * viewport);
+//void vik_trw_layer_draw_highlight(VikTrwLayer * vtl, Viewport * viewport);
+//void vik_trw_layer_draw_highlight_item(VikTrwLayer * vtl, Track * trk, Waypoint * wp, Viewport * viewport);
+//void vik_trw_layer_draw_highlight_items(VikTrwLayer * vtl, std::unordered_map<sg_uid_t, Track *> * tracks, std::unordered_map<sg_uid_t, Waypoint *> * waypoints, Viewport * viewport);
 
 // For creating a list of tracks with the corresponding layer it is in
 //  (thus a selection of tracks may be from differing layers)

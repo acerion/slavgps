@@ -251,7 +251,7 @@ static void gpx_start(VikTrwLayer *vtl, const char *el, const char **attr)
   switch ( current_tag ) {
 
      case tt_gpx:
-       c_md = vik_trw_metadata_new();
+       c_md = LayerTRW::metadata_new();
        break;
 
      case tt_wpt:
@@ -351,7 +351,7 @@ static void gpx_end(VikTrwLayer *vtl, const char *el)
   switch ( current_tag ) {
 
      case tt_gpx:
-       vik_trw_layer_set_metadata ( vtl, c_md );
+       vtl->trw->set_metadata(c_md);
        c_md = NULL;
        break;
 
@@ -1128,7 +1128,7 @@ void a_gpx_write_file ( VikTrwLayer *vtl, FILE *f, GpxWritingOptions *options )
     free( tmp );
   }
 
-  VikTRWMetadata *md = vik_trw_layer_get_metadata (vtl);
+  VikTRWMetadata *md = vtl->trw->get_metadata();
   if ( md ) {
     if ( md->author ) {
       tmp = entitize ( md->author );

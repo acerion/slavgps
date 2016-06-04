@@ -4845,7 +4845,7 @@ void vik_window_set_selected_trw_layer(VikWindow *vw, VikTrwLayer * vtl)
 	vw->selected_waypoint  = NULL;
 	vw->selected_waypoints = NULL;
 	// Set highlight thickness
-	vw->viewport->set_highlight_thickness(vik_trw_layer_get_property_tracks_line_thickness((VikTrwLayer *) vw->containing_vtl));
+	vw->viewport->set_highlight_thickness(vw->containing_vtl->trw->get_property_tracks_line_thickness());
 }
 
 std::unordered_map<sg_uid_t, Track*> * vik_window_get_selected_tracks(VikWindow * vw)
@@ -4863,7 +4863,7 @@ void vik_window_set_selected_tracks(VikWindow *vw, std::unordered_map<sg_uid_t, 
 	vw->selected_waypoint  = NULL;
 	vw->selected_waypoints = NULL;
 	// Set highlight thickness
-	vw->viewport->set_highlight_thickness(vik_trw_layer_get_property_tracks_line_thickness((VikTrwLayer *) vw->containing_vtl));
+	vw->viewport->set_highlight_thickness(vw->containing_vtl->trw->get_property_tracks_line_thickness());
 }
 
 void * vik_window_get_selected_track(VikWindow *vw)
@@ -4881,7 +4881,7 @@ void vik_window_set_selected_track(VikWindow *vw, void ** vt, VikTrwLayer * vtl)
 	vw->selected_waypoint  = NULL;
 	vw->selected_waypoints = NULL;
 	// Set highlight thickness
-	vw->viewport->set_highlight_thickness(vik_trw_layer_get_property_tracks_line_thickness((VikTrwLayer *) vw->containing_vtl));
+	vw->viewport->set_highlight_thickness(vw->containing_vtl->trw->get_property_tracks_line_thickness());
 }
 
 std::unordered_map<sg_uid_t, Waypoint *> * vik_window_get_selected_waypoints(VikWindow *vw)
