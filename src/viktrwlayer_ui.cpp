@@ -146,8 +146,8 @@ void LayerTRW::add_menu_items(GtkMenu * menu, void * vlp)
 	gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
 	gtk_widget_show ( item );
 
-	if (vtl->current_track) {
-		if (vtl->current_track->is_route) {
+	if (vtl->trw->current_track) {
+		if (vtl->trw->current_track->is_route) {
 			item = gtk_menu_item_new_with_mnemonic(_("_Finish Route"));
 		} else {
 			item = gtk_menu_item_new_with_mnemonic(_("_Finish Track"));
@@ -274,7 +274,7 @@ void LayerTRW::add_menu_items(GtkMenu * menu, void * vlp)
 	gtk_menu_shell_append (GTK_MENU_SHELL (new_submenu), item);
 	gtk_widget_show ( item );
 	// Make it available only when a new track *not* already in progress
-	gtk_widget_set_sensitive ( item, ! (bool)KPOINTER_TO_INT(vtl->current_track) );
+	gtk_widget_set_sensitive ( item, ! (bool)KPOINTER_TO_INT(vtl->trw->current_track) );
 
 	item = gtk_image_menu_item_new_with_mnemonic ( _("New _Route") );
 	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_NEW, GTK_ICON_SIZE_MENU) );
@@ -282,7 +282,7 @@ void LayerTRW::add_menu_items(GtkMenu * menu, void * vlp)
 	gtk_menu_shell_append (GTK_MENU_SHELL (new_submenu), item);
 	gtk_widget_show ( item );
 	// Make it available only when a new track *not* already in progress
-	gtk_widget_set_sensitive ( item, ! (bool)KPOINTER_TO_INT(vtl->current_track) );
+	gtk_widget_set_sensitive ( item, ! (bool)KPOINTER_TO_INT(vtl->trw->current_track) );
 
 #ifdef VIK_CONFIG_GEOTAG
 	item = gtk_menu_item_new_with_mnemonic ( _("Geotag _Images...") );
@@ -697,7 +697,7 @@ bool LayerTRW::sublayer_add_menu_items(GtkMenu * menu, void * panel, int subtype
   {
     rv = true;
 
-    if ( l->current_track && !l->current_track->is_route ) {
+    if ( l->trw->current_track && !l->trw->current_track->is_route ) {
       item = gtk_menu_item_new_with_mnemonic ( _("_Finish Track") );
       g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_finish_track), pass_along );
       gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
@@ -720,7 +720,7 @@ bool LayerTRW::sublayer_add_menu_items(GtkMenu * menu, void * panel, int subtype
     gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
     gtk_widget_show ( item );
     // Make it available only when a new track *not* already in progress
-    gtk_widget_set_sensitive ( item, ! (bool)KPOINTER_TO_INT(l->current_track) );
+    gtk_widget_set_sensitive ( item, ! (bool)KPOINTER_TO_INT(l->trw->current_track) );
 
     item = gtk_image_menu_item_new_with_mnemonic ( _("Delete _All Tracks") );
     gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_REMOVE, GTK_ICON_SIZE_MENU) );
@@ -773,7 +773,7 @@ bool LayerTRW::sublayer_add_menu_items(GtkMenu * menu, void * panel, int subtype
   {
     rv = true;
 
-    if ( l->current_track && l->current_track->is_route ) {
+    if ( l->trw->current_track && l->trw->current_track->is_route ) {
       item = gtk_menu_item_new_with_mnemonic ( _("_Finish Route") );
       // Reuse finish track method
       g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_finish_track), pass_along );
@@ -797,7 +797,7 @@ bool LayerTRW::sublayer_add_menu_items(GtkMenu * menu, void * panel, int subtype
     gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
     gtk_widget_show ( item );
     // Make it available only when a new track *not* already in progress
-    gtk_widget_set_sensitive ( item, ! (bool)KPOINTER_TO_INT(l->current_track) );
+    gtk_widget_set_sensitive ( item, ! (bool)KPOINTER_TO_INT(l->trw->current_track) );
 
     item = gtk_image_menu_item_new_with_mnemonic ( _("Delete _All Routes") );
     gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_REMOVE, GTK_ICON_SIZE_MENU) );
@@ -889,11 +889,11 @@ bool LayerTRW::sublayer_add_menu_items(GtkMenu * menu, void * panel, int subtype
     gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
     gtk_widget_show ( item );
 
-    if ( l->current_track && subtype == VIK_TRW_LAYER_SUBLAYER_TRACK && !l->current_track->is_route )
+    if ( l->trw->current_track && subtype == VIK_TRW_LAYER_SUBLAYER_TRACK && !l->trw->current_track->is_route )
       item = gtk_menu_item_new_with_mnemonic ( _("_Finish Track") );
-    if ( l->current_track && subtype == VIK_TRW_LAYER_SUBLAYER_ROUTE && l->current_track->is_route )
+    if ( l->trw->current_track && subtype == VIK_TRW_LAYER_SUBLAYER_ROUTE && l->trw->current_track->is_route )
       item = gtk_menu_item_new_with_mnemonic ( _("_Finish Route") );
-    if ( l->current_track ) {
+    if ( l->trw->current_track ) {
       g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_finish_track), pass_along );
       gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
       gtk_widget_show ( item );

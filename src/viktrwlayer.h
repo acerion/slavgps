@@ -48,6 +48,34 @@ namespace SlavGPS {
 
 
 
+	typedef struct {
+		char * description;
+		char * author;
+		//bool has_time;
+		char * timestamp; // TODO: Consider storing as proper time_t.
+		char * keywords; // TODO: handling/storing a GList of individual tags?
+	} VikTRWMetadata;
+
+
+
+
+
+	// See http://developer.gnome.org/pango/stable/PangoMarkupFormat.html
+	typedef enum {
+		FS_XX_SMALL = 0, // 'xx-small'
+		FS_X_SMALL,
+		FS_SMALL,
+		FS_MEDIUM, // DEFAULT
+		FS_LARGE,
+		FS_X_LARGE,
+		FS_XX_LARGE,
+		FS_NUM_SIZES
+	} font_size_t;
+
+
+
+
+
 	class LayerTRW : public Layer {
 
 	public:
@@ -319,6 +347,106 @@ namespace SlavGPS {
 
 		int highest_wp_number;
 
+
+
+		LatLonBBox waypoints_bbox;
+		bool track_draw_labels;
+
+		uint8_t drawmode;
+		uint8_t drawpoints;
+		uint8_t drawpoints_size;
+		uint8_t drawelevation;
+		uint8_t elevation_factor;
+		uint8_t drawstops;
+		uint32_t stop_length;
+		uint8_t drawlines;
+		uint8_t drawdirections;
+		uint8_t drawdirections_size;
+		uint8_t line_thickness;
+		uint8_t bg_line_thickness;
+		vik_layer_sort_order_t track_sort_order;
+
+		// Metadata
+		VikTRWMetadata * metadata;
+
+		PangoLayout * tracklabellayout;
+		font_size_t track_font_size;
+		char * track_fsize_str;
+
+		uint8_t wp_symbol;
+		uint8_t wp_size;
+		bool wp_draw_symbols;
+		font_size_t wp_font_size;
+		char * wp_fsize_str;
+		vik_layer_sort_order_t wp_sort_order;
+
+
+		double track_draw_speed_factor;
+		GArray * track_gc;
+		GdkGC * track_1color_gc;
+		GdkColor track_color;
+		GdkGC * current_track_gc;
+		// Separate GC for a track's potential new point as drawn via separate method
+		//  (compared to the actual track points drawn in the main trw_layer_draw_track function)
+		GdkGC * current_track_newpoint_gc;
+
+		GdkGC * track_bg_gc;
+		GdkColor track_bg_color;
+
+		GdkGC * waypoint_gc;
+		GdkColor waypoint_color;
+
+		GdkGC * waypoint_text_gc;
+		GdkColor waypoint_text_color;
+
+		GdkGC * waypoint_bg_gc;
+		GdkColor waypoint_bg_color;
+
+		GdkFunction wpbgand;
+
+
+
+		Track * current_track; // ATM shared between new tracks and new routes
+		uint16_t ct_x1;
+		uint16_t ct_y1;
+		uint16_t ct_x2;
+		uint16_t ct_y2;
+		bool draw_sync_done;
+		bool draw_sync_do;
+
+		/* route finder tool */
+		bool route_finder_started;
+		bool route_finder_check_added_track;
+		Track * route_finder_added_track;
+		bool route_finder_append;
+
+
+		bool drawlabels;
+		bool drawimages;
+		uint8_t image_alpha;
+		GQueue * image_cache;
+		uint8_t image_size;
+		uint16_t image_cache_size;
+
+
+
+
+		/* for waypoint text */
+		PangoLayout * wplabellayout;
+
+		bool has_verified_thumbnails;
+
+		GtkMenu * wp_right_click_menu;
+		GtkMenu * track_right_click_menu;
+
+		/* menu */
+		VikStdLayerMenuItem menu_selection;
+
+
+		// One per layer
+		GtkWidget * tracks_analysis_dialog;
+
+
 	};
 
 
@@ -359,115 +487,13 @@ typedef void * menu_array_sublayer[8];
 
 
 
-// See http://developer.gnome.org/pango/stable/PangoMarkupFormat.html
-typedef enum {
-	FS_XX_SMALL = 0, // 'xx-small'
-	FS_X_SMALL,
-	FS_SMALL,
-	FS_MEDIUM, // DEFAULT
-	FS_LARGE,
-	FS_X_LARGE,
-	FS_XX_LARGE,
-	FS_NUM_SIZES
-} font_size_t;
 
-
-typedef struct {
-	char * description;
-	char * author;
-	//bool has_time;
-	char * timestamp; // TODO: Consider storing as proper time_t.
-	char * keywords; // TODO: handling/storing a GList of individual tags?
-} VikTRWMetadata;
 
 
 struct _VikTrwLayer {
 	VikLayer vl;
 
 	LayerTRW * trw;
-
-
-	LatLonBBox waypoints_bbox;
-
-	bool track_draw_labels;
-	uint8_t drawmode;
-	uint8_t drawpoints;
-	uint8_t drawpoints_size;
-	uint8_t drawelevation;
-	uint8_t elevation_factor;
-	uint8_t drawstops;
-	uint32_t stop_length;
-	uint8_t drawlines;
-	uint8_t drawdirections;
-	uint8_t drawdirections_size;
-	uint8_t line_thickness;
-	uint8_t bg_line_thickness;
-	vik_layer_sort_order_t track_sort_order;
-
-	// Metadata
-	VikTRWMetadata *metadata;
-
-	PangoLayout *tracklabellayout;
-	font_size_t track_font_size;
-	char *track_fsize_str;
-
-	uint8_t wp_symbol;
-	uint8_t wp_size;
-	bool wp_draw_symbols;
-	font_size_t wp_font_size;
-	char *wp_fsize_str;
-	vik_layer_sort_order_t wp_sort_order;
-
-	double track_draw_speed_factor;
-	GArray *track_gc;
-	GdkGC *track_1color_gc;
-	GdkColor track_color;
-	GdkGC *current_track_gc;
-	// Separate GC for a track's potential new point as drawn via separate method
-	//  (compared to the actual track points drawn in the main trw_layer_draw_track function)
-	GdkGC *current_track_newpoint_gc;
-	GdkGC *track_bg_gc; GdkColor track_bg_color;
-	GdkGC *waypoint_gc; GdkColor waypoint_color;
-	GdkGC *waypoint_text_gc; GdkColor waypoint_text_color;
-	GdkGC *waypoint_bg_gc; GdkColor waypoint_bg_color;
-	GdkFunction wpbgand;
-	Track * current_track; // ATM shared between new tracks and new routes
-	uint16_t ct_x1, ct_y1, ct_x2, ct_y2;
-	bool draw_sync_done;
-	bool draw_sync_do;
-
-
-
-
-
-
-	/* route finder tool */
-	bool route_finder_started;
-	bool route_finder_check_added_track;
-	Track * route_finder_added_track;
-	bool route_finder_append;
-
-	bool drawlabels;
-	bool drawimages;
-	uint8_t image_alpha;
-	GQueue *image_cache;
-	uint8_t image_size;
-	uint16_t image_cache_size;
-
-	/* for waypoint text */
-	PangoLayout *wplabellayout;
-
-	bool has_verified_thumbnails;
-
-	GtkMenu *wp_right_click_menu;
-	GtkMenu *track_right_click_menu;
-
-	/* menu */
-	VikStdLayerMenuItem menu_selection;
-
-
-	// One per layer
-	GtkWidget *tracks_analysis_dialog;
 };
 
 

@@ -22,7 +22,6 @@
 #ifndef _VIKING_GEOREFLAYER_H
 #define _VIKING_GEOREFLAYER_H
 
-#include <stdbool.h>
 #include <stdint.h>
 
 #include "viklayer.h"
@@ -70,6 +69,27 @@ namespace SlavGPS {
 
 
 
+	typedef struct {
+		GtkWidget * x_spin;
+		GtkWidget * y_spin;
+		// UTM widgets
+		GtkWidget * ce_spin; // top left
+		GtkWidget * cn_spin; //    "
+		GtkWidget * utm_zone_spin;
+		GtkWidget * utm_letter_entry;
+
+		GtkWidget * lat_tl_spin;
+		GtkWidget * lon_tl_spin;
+		GtkWidget * lat_br_spin;
+		GtkWidget * lon_br_spin;
+		//
+		GtkWidget * tabs;
+		GtkWidget * imageentry;
+	} changeable_widgets;
+
+
+
+
 
 	class LayerGeoref : public Layer {
 	public:
@@ -86,6 +106,48 @@ namespace SlavGPS {
 		void add_menu_items(GtkMenu * menu, void * vlp);
 		bool properties(void * vp);
 		void free_();
+
+
+
+
+
+		void create_image_file();
+		void set_image(char const * image);
+		struct LatLon get_ll_tl();
+		struct LatLon get_ll_br();
+		void align_utm2ll();
+		void align_ll2utm();
+		void align_coords();
+		void check_br_is_good_or_msg_user();
+		void calculate_mpp_from_coords(GtkWidget * ww);
+		bool dialog(Viewport * viewport, GtkWindow * w);
+		bool move_release(GdkEventButton * event, Viewport * viewport);
+		bool zoom_press(GdkEventButton * event, Viewport * viewport);
+		bool move_press(GdkEventButton * event, Viewport * viewport);
+
+
+
+
+
+		char * image;
+		GdkPixbuf * pixbuf;
+		uint8_t alpha;
+
+		struct UTM corner; // Top Left
+		double mpp_easting;
+		double mpp_northing;
+		struct LatLon ll_br; // Bottom Right
+		unsigned int width;
+		unsigned int height;
+
+		GdkPixbuf * scaled;
+		uint32_t scaled_width;
+		uint32_t scaled_height;
+
+		int click_x;
+		int click_y;
+		changeable_widgets cw;
+
 	};
 
 
