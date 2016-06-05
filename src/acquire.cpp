@@ -71,7 +71,7 @@ typedef struct {
 	acq_dialog_widgets_t *w;
 	ProcessOptions *po;
 	bool creating_new_layer;
-	VikTrwLayer *vtl;
+	LayerTRW * trw;
 	DownloadFileOptions *options;
 } w_and_interface_t;
 
@@ -105,16 +105,16 @@ static void progress_func(BabelProgressCode c, void * data, acq_dialog_widgets_t
  *  . Update dialog info
  *  . Update main dsisplay
  */
-static void on_complete_process(w_and_interface_t *wi)
+static void on_complete_process(w_and_interface_t * wi)
 {
 	if (wi->w->running) {
 		gtk_label_set_text(GTK_LABEL(wi->w->status), _("Done."));
 		if (wi->creating_new_layer) {
 			/* Only create the layer if it actually contains anything useful */
 			// TODO: create function for this operation to hide detail:
-			if (! wi->vtl->trw->is_empty()) {
-				vik_layer_post_read(VIK_LAYER(wi->vtl), &wi->w->vvp->port, true);
-				Layer * layer = (Layer *) (VIK_LAYER(wi->vtl))->layer;
+			if (! wi->trw->is_empty()) {
+				vik_layer_post_read(wi->trw->vl, &wi->w->vvp->port, true);
+				Layer * layer = wi->trw;
 				wi->w->vlp->panel_ref->get_top_layer()->add_layer(layer, true);
 			} else {
 				gtk_label_set_text(GTK_LABEL(wi->w->status), _("No data."));
@@ -127,18 +127,18 @@ static void on_complete_process(w_and_interface_t *wi)
 			gtk_dialog_response(GTK_DIALOG(wi->w->dialog), GTK_RESPONSE_ACCEPT);
 		}
 		// Main display update
-		if (wi->vtl) {
-			vik_layer_post_read(VIK_LAYER(wi->vtl), &wi->w->vvp->port, true);
+		if (wi->trw) {
+			vik_layer_post_read(wi->trw->vl, &wi->w->vvp->port, true);
 			// View this data if desired - must be done after post read (so that the bounds are known)
 			if (wi->w->source_interface->autoview) {
-				wi->vtl->trw->auto_set_view(wi->w->vlp->panel_ref->get_viewport());
+				wi->trw->auto_set_view(wi->w->vlp->panel_ref->get_viewport());
 			}
 			vik_layers_panel_emit_update_cb(wi->w->vlp->panel_ref);
 		}
 	} else {
 		/* cancelled */
 		if (wi->creating_new_layer) {
-			g_object_unref(wi->vtl);
+			g_object_unref(wi->trw->vl);
 		}
   }
 }
@@ -164,7 +164,7 @@ static void get_from_anything(w_and_interface_t *wi)
 	VikDataSourceInterface *source_interface = wi->w->source_interface;
 
 	if (source_interface->process_func) {
-		result = source_interface->process_func(wi->vtl, wi->po, (BabelStatusFunc)progress_func, wi->w, wi->options);
+		result = source_interface->process_func(wi->trw, wi->po, (BabelStatusFunc)progress_func, wi->w, wi->options);
 	}
 	free_process_options(wi->po);
 	free(wi->options);
@@ -173,7 +173,7 @@ static void get_from_anything(w_and_interface_t *wi)
 		gdk_threads_enter();
 		gtk_label_set_text(GTK_LABEL(wi->w->status), _("Error: acquisition failed."));
 		if (wi->creating_new_layer) {
-			g_object_unref(G_OBJECT (wi->vtl));
+			g_object_unref(G_OBJECT (wi->trw->vl));
 		}
 		gdk_threads_leave();
 	} else {
@@ -218,6 +218,8 @@ static void acquire(VikWindow *vw,
 	void * user_data;
 	DownloadFileOptions * options = (DownloadFileOptions *) malloc(sizeof (DownloadFileOptions));
 	memset(options, 0, sizeof (DownloadFileOptions));
+
+	LayerTRW * trw = (LayerTRW *) ((VikLayer *) vtl)->layer;
 
 	acq_vik_t avt;
 	avt.vlp = vlp;
@@ -290,7 +292,7 @@ static void acquire(VikWindow *vw,
 	memset(po, 0, sizeof (ProcessOptions));
 
 	if (source_interface->inputtype == VIK_DATASOURCE_INPUTTYPE_TRWLAYER) {
-		char *name_src = a_gpx_write_tmp_file(vtl, NULL);
+		char *name_src = a_gpx_write_tmp_file(trw, NULL);
 
 		source_interface->get_process_options_func(pass_along_data, po, NULL, name_src, NULL);
 
@@ -298,7 +300,7 @@ static void acquire(VikWindow *vw,
 
 		free(name_src);
 	} else if (source_interface->inputtype == VIK_DATASOURCE_INPUTTYPE_TRWLAYER_TRACK) {
-		char *name_src = a_gpx_write_tmp_file(vtl, NULL);
+		char *name_src = a_gpx_write_tmp_file(trw, NULL);
 		char *name_src_track = a_gpx_write_track_tmp_file(trk, NULL);
 
 		source_interface->get_process_options_func(pass_along_data, po, NULL, name_src, name_src_track);
@@ -336,7 +338,7 @@ static void acquire(VikWindow *vw,
 	wi->w->source_interface = source_interface;
 	wi->po = po;
 	wi->options = options;
-	wi->vtl = vtl;
+	wi->trw = trw;
 	wi->creating_new_layer = (!vtl); // Default if Auto Layer Management is passed in
 
 	dialog = gtk_dialog_new_with_buttons("", GTK_WINDOW(vw), (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL);
@@ -362,9 +364,9 @@ static void acquire(VikWindow *vw,
 	w->user_data = user_data;
 
 	if (mode == VIK_DATASOURCE_ADDTOLAYER) {
-		VikLayer *current_selected = w->vlp->panel_ref->get_selected()->vl;
-		if (IS_VIK_TRW_LAYER(current_selected)) {
-			wi->vtl = VIK_TRW_LAYER(current_selected);
+		Layer * current_selected = w->vlp->panel_ref->get_selected();
+		if (current_selected->type == VIK_LAYER_TRW) {
+			wi->trw = (LayerTRW *) current_selected;
 			wi->creating_new_layer = false;
 		}
 	} else if (mode == VIK_DATASOURCE_CREATENEWLAYER) {
@@ -372,14 +374,14 @@ static void acquire(VikWindow *vw,
 	} else if (mode == VIK_DATASOURCE_MANUAL_LAYER_MANAGEMENT) {
 		// Don't create in acquire - as datasource will perform the necessary actions
 		wi->creating_new_layer = false;
-		VikLayer *current_selected = w->vlp->panel_ref->get_selected()->vl;
-		if (IS_VIK_TRW_LAYER(current_selected))
-			wi->vtl = VIK_TRW_LAYER(current_selected);
+		Layer * current_selected = w->vlp->panel_ref->get_selected();
+		if (current_selected->type == VIK_TRW_LAYER_TYPE) {
+			wi->trw = (LayerTRW *) current_selected;
+		}
 	}
 	if (wi->creating_new_layer) {
-		LayerTRW * layer = new LayerTRW(&w->vvp->port);
-		wi->vtl = (VikTrwLayer *) layer->vl;
-		wi->vtl->trw->rename(_(source_interface->layer_title));
+		wi->trw = new LayerTRW(&w->vvp->port);
+		wi->trw->rename(_(source_interface->layer_title));
 	}
 
 	if (source_interface->is_thread) {
@@ -417,7 +419,7 @@ static void acquire(VikWindow *vw,
 	} else {
 		// bypass thread method malarkly - you'll just have to wait...
 		if (source_interface->process_func) {
-			bool result = source_interface->process_func(wi->vtl, po, (BabelStatusFunc) progress_func, w, options);
+			bool result = source_interface->process_func(wi->trw, po, (BabelStatusFunc) progress_func, w, options);
 			if (!result) {
 				a_dialog_msg(GTK_WINDOW(vw), GTK_MESSAGE_ERROR, _("Error: acquisition failed."), NULL);
 			}

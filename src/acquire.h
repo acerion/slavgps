@@ -121,7 +121,7 @@ typedef void (*VikDataSourceGetProcessOptionsFunc) ( void * user_data, ProcessOp
  *
  * The actual function to do stuff - must report success/failure.
  */
-typedef bool (*VikDataSourceProcessFunc) ( void * vtl, ProcessOptions *process_options, BabelStatusFunc, acq_dialog_widgets_t *adw, void * download_options );
+typedef bool (*VikDataSourceProcessFunc) ( void * trw, ProcessOptions *process_options, BabelStatusFunc, acq_dialog_widgets_t *adw, void * download_options );
 
 /* NB Same as BabelStatusFunc */
 typedef void  (*VikDataSourceProgressFunc)  ( BabelProgressCode c, void * data, acq_dialog_widgets_t *w );

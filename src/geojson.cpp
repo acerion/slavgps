@@ -44,11 +44,11 @@ static void my_watch(GPid pid, int status, void * user_data)
  *
  * Returns true if successfully written
  */
-bool a_geojson_write_file(VikTrwLayer * vtl, FILE * ff)
+bool a_geojson_write_file(LayerTRW * trw, FILE * ff)
 {
 	bool result = false;
 
-	char *tmp_filename = a_gpx_write_tmp_file(vtl, NULL);
+	char *tmp_filename = a_gpx_write_tmp_file(trw, NULL);
 	if (!tmp_filename) {
 		return result;
 	}
@@ -69,9 +69,9 @@ bool a_geojson_write_file(VikTrwLayer * vtl, FILE * ff)
 	// TODO: monitor stderr?
 	if (!g_spawn_async_with_pipes(NULL, argv, NULL, (GSpawnFlags) (G_SPAWN_SEARCH_PATH | G_SPAWN_DO_NOT_REAP_CHILD), NULL, NULL, &pid, NULL, &mystdout, NULL, &error)) {
 
-		if (IS_VIK_WINDOW ((VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(vtl))) {
+		if (IS_VIK_WINDOW ((VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(trw->vl))) {
 			char* msg = g_strdup_printf(_("%s command failed: %s"), argv[0], error->message);
-			vik_window_statusbar_update((VikWindow*)VIK_GTK_WINDOW_FROM_LAYER(vtl), msg, VIK_STATUSBAR_INFO);
+			vik_window_statusbar_update((VikWindow*)VIK_GTK_WINDOW_FROM_LAYER(trw->vl), msg, VIK_STATUSBAR_INFO);
 			free(msg);
 		} else {
 			fprintf(stderr, "WARNING: Async command failed: %s\n", error->message);

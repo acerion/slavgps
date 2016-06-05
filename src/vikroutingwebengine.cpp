@@ -427,7 +427,7 @@ vik_routing_web_engine_find ( VikRoutingEngine *self, VikTrwLayer *vtl, struct L
 
   char *format = vik_routing_engine_get_format ( self );
   ProcessOptions po = { NULL, NULL, format, uri, NULL, NULL };
-  bool ret = a_babel_convert_from ( vtl, &po, NULL, NULL, options );
+  bool ret = a_babel_convert_from ( (LayerTRW *) ((VikLayer *) vtl)->layer, &po, NULL, NULL, options );
 
   free(uri);
 
@@ -561,7 +561,7 @@ vik_routing_web_engine_refine ( VikRoutingEngine *self, VikTrwLayer *vtl, Track 
   /* Convert and insert data in model */
   char *format = vik_routing_engine_get_format ( self );
   ProcessOptions po = { NULL, NULL, format, uri, NULL, NULL };
-  bool ret = a_babel_convert_from ( vtl, &po, NULL, NULL, options );
+  bool ret = a_babel_convert_from ((LayerTRW *) ((VikLayer *) vtl)->layer, &po, NULL, NULL, options );
 
   free(uri);
 

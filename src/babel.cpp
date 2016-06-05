@@ -127,7 +127,7 @@ void a_babel_foreach_file_read_any (GFunc func, void * user_data)
 
 /**
  * a_babel_convert:
- * @vt:        The TRW layer to modify. All data will be deleted, and replaced by what gpsbabel outputs.
+ * @trw:        The TRW layer to modify. All data will be deleted, and replaced by what gpsbabel outputs.
  * @babelargs: A string containing gpsbabel command line filter options. No file types or names should
  *             be specified.
  * @cb:        A callback function.
@@ -140,15 +140,15 @@ void a_babel_foreach_file_read_any (GFunc func, void * user_data)
  *
  * Returns: %true on success
  */
-bool a_babel_convert( VikTrwLayer *vt, const char *babelargs, BabelStatusFunc cb, void * user_data, void * not_used )
+bool a_babel_convert(LayerTRW * trw, const char *babelargs, BabelStatusFunc cb, void * user_data, void * not_used )
 {
   bool ret = false;
   char *bargs = g_strconcat(babelargs, " -i gpx", NULL);
-  char *name_src = a_gpx_write_tmp_file ( vt, NULL );
+  char *name_src = a_gpx_write_tmp_file(trw, NULL );
 
   if ( name_src ) {
     ProcessOptions po = { bargs, name_src, NULL, NULL, NULL };
-    ret = a_babel_convert_from ( vt, &po, cb, user_data, (DownloadFileOptions *) not_used );
+    ret = a_babel_convert_from(trw, &po, cb, user_data, (DownloadFileOptions *) not_used );
     (void)g_remove(name_src);
     free(name_src);
   }
@@ -235,7 +235,7 @@ static bool babel_general_convert( BabelStatusFunc cb, char **args, void * user_
  *
  * Returns: %true on success
  */
-static bool babel_general_convert_from( VikTrwLayer *vt, BabelStatusFunc cb, char **args, const char *name_dst, void * user_data )
+static bool babel_general_convert_from(LayerTRW * trw, BabelStatusFunc cb, char **args, const char *name_dst, void * user_data )
 {
   bool ret = false;
   FILE *f = NULL;
@@ -244,12 +244,12 @@ static bool babel_general_convert_from( VikTrwLayer *vt, BabelStatusFunc cb, cha
 
     /* No data actually required but still need to have run gpsbabel anyway
        - eg using the device power command_off */
-    if ( vt == NULL )
+    if (trw == NULL )
       return true;
 
     f = g_fopen(name_dst, "r");
     if (f) {
-      ret = a_gpx_read_file ( vt, f );
+      ret = a_gpx_read_file(trw, f );
       fclose(f);
       f = NULL;
     }
@@ -260,7 +260,7 @@ static bool babel_general_convert_from( VikTrwLayer *vt, BabelStatusFunc cb, cha
 
 /**
  * a_babel_convert_from_filter:
- * @vt:           The TRW layer to place data into. Duplicate items will be overwritten.
+ * @trw:           The TRW layer to place data into. Duplicate items will be overwritten.
  * @babelargs:    A string containing gpsbabel command line options. This string
  *                must include the input file type (-i) option.
  * @from          the file name to convert from
@@ -275,7 +275,7 @@ static bool babel_general_convert_from( VikTrwLayer *vt, BabelStatusFunc cb, cha
  *
  * Returns: %true on success
  */
-bool a_babel_convert_from_filter( VikTrwLayer *vt, const char *babelargs, const char *from, const char *babelfilters, BabelStatusFunc cb, void * user_data, void * not_used )
+bool a_babel_convert_from_filter(LayerTRW * trw, const char *babelargs, const char *from, const char *babelfilters, BabelStatusFunc cb, void * user_data, void * not_used )
 {
   int i,j;
   int fd_dst;
@@ -316,7 +316,7 @@ bool a_babel_convert_from_filter( VikTrwLayer *vt, const char *babelargs, const 
       args[i++] = name_dst;
       args[i] = NULL;
 
-      ret = babel_general_convert_from ( vt, cb, args, name_dst, user_data );
+      ret = babel_general_convert_from(trw, cb, args, name_dst, user_data );
 
       g_strfreev(sub_args);
       if (sub_filters)
@@ -332,7 +332,7 @@ bool a_babel_convert_from_filter( VikTrwLayer *vt, const char *babelargs, const 
 
 /**
  * a_babel_convert_from_shellcommand:
- * @vt: The #VikTrwLayer where to insert the collected data
+ * @trw: The #VikTrwLayer where to insert the collected data
  * @input_cmd: the command to run
  * @input_file_type:
  * @cb:	       Optional callback function. Same usage as in a_babel_convert().
@@ -345,7 +345,7 @@ bool a_babel_convert_from_filter( VikTrwLayer *vt, const char *babelargs, const 
  * Uses babel_general_convert_from() to actually run the command. This function
  * prepares the command and temporary file, and sets up the arguments for bash.
  */
-bool a_babel_convert_from_shellcommand ( VikTrwLayer *vt, const char *input_cmd, const char *input_file_type, BabelStatusFunc cb, void * user_data, void * not_used )
+bool a_babel_convert_from_shellcommand(LayerTRW * trw, const char *input_cmd, const char *input_file_type, BabelStatusFunc cb, void * user_data, void * not_used )
 {
   int fd_dst;
   char *name_dst = NULL;
@@ -370,7 +370,7 @@ bool a_babel_convert_from_shellcommand ( VikTrwLayer *vt, const char *input_cmd,
     args[2] = shell_command;
     args[3] = NULL;
 
-    ret = babel_general_convert_from ( vt, cb, args, name_dst, user_data );
+    ret = babel_general_convert_from(trw, cb, args, name_dst, user_data );
     free( args );
     free( shell_command );
     (void)g_remove(name_dst);
@@ -382,7 +382,7 @@ bool a_babel_convert_from_shellcommand ( VikTrwLayer *vt, const char *input_cmd,
 
 /**
  * a_babel_convert_from_url_filter:
- * @vt: The #VikTrwLayer where to insert the collected data
+ * @trw: The #VikTrwLayer where to insert the collected data
  * @url: the URL to fetch
  * @input_type:   If input_type is %NULL, input must be GPX.
  * @babelfilters: The filter arguments to pass to gpsbabel
@@ -396,7 +396,7 @@ bool a_babel_convert_from_shellcommand ( VikTrwLayer *vt, const char *input_cmd,
  * Returns: %true on successful invocation of GPSBabel or read of the GPX
  *
  */
-bool a_babel_convert_from_url_filter ( VikTrwLayer *vt, const char *url, const char *input_type, const char *babelfilters, BabelStatusFunc cb, void * user_data, DownloadFileOptions *options )
+bool a_babel_convert_from_url_filter(LayerTRW * trw, const char *url, const char *input_type, const char *babelfilters, BabelStatusFunc cb, void * user_data, DownloadFileOptions *options )
 {
   // If no download options specified, use defaults:
   DownloadFileOptions myoptions = { false, false, NULL, 2, NULL, NULL, NULL };
@@ -419,13 +419,13 @@ bool a_babel_convert_from_url_filter ( VikTrwLayer *vt, const char *url, const c
     if (fetch_ret == DOWNLOAD_SUCCESS) {
       if (input_type != NULL || babelfilters != NULL) {
         babelargs = (input_type) ? g_strdup_printf(" -i %s", input_type) : g_strdup("");
-        ret = a_babel_convert_from_filter( vt, babelargs, name_src, babelfilters, NULL, NULL, NULL );
+        ret = a_babel_convert_from_filter(trw, babelargs, name_src, babelfilters, NULL, NULL, NULL );
       } else {
         /* Process directly the retrieved file */
         fprintf(stderr, "DEBUG: %s: directly read GPX file %s\n", __FUNCTION__, name_src);
         FILE *f = g_fopen(name_src, "r");
         if (f) {
-          ret = a_gpx_read_file ( vt, f );
+          ret = a_gpx_read_file(trw, f );
           fclose(f);
           f = NULL;
         }
@@ -453,22 +453,22 @@ bool a_babel_convert_from_url_filter ( VikTrwLayer *vt, const char *url, const c
  *
  * Returns: %true on success
  */
-bool a_babel_convert_from ( VikTrwLayer *vt, ProcessOptions *process_options, BabelStatusFunc cb, void * user_data, DownloadFileOptions *download_options )
+bool a_babel_convert_from(LayerTRW * trw, ProcessOptions *process_options, BabelStatusFunc cb, void * user_data, DownloadFileOptions *download_options )
 {
   if ( !process_options ) return false;
   if ( process_options->url )
-    return a_babel_convert_from_url_filter ( vt, process_options->url, process_options->input_file_type, process_options->babel_filters, cb, user_data, download_options );
+    return a_babel_convert_from_url_filter(trw, process_options->url, process_options->input_file_type, process_options->babel_filters, cb, user_data, download_options );
   if ( process_options->babelargs )
-    return a_babel_convert_from_filter ( vt, process_options->babelargs, process_options->filename, process_options->babel_filters, cb, user_data, download_options );
+    return a_babel_convert_from_filter(trw, process_options->babelargs, process_options->filename, process_options->babel_filters, cb, user_data, download_options );
   if ( process_options->shell_command )
-    return a_babel_convert_from_shellcommand ( vt, process_options->shell_command, process_options->filename, cb, user_data, download_options );
+    return a_babel_convert_from_shellcommand(trw, process_options->shell_command, process_options->filename, cb, user_data, download_options );
   return false;
 }
 
-static bool babel_general_convert_to( VikTrwLayer *vt, Track * trk, BabelStatusFunc cb, char **args, const char *name_src, void * user_data )
+static bool babel_general_convert_to(LayerTRW * trw, Track * trk, BabelStatusFunc cb, char **args, const char *name_src, void * user_data )
 {
   // Now strips out invisible tracks and waypoints
-  if (!a_file_export(vt, name_src, FILE_TYPE_GPX, trk, false)) {
+  if (!a_file_export(trw, name_src, FILE_TYPE_GPX, trk, false)) {
     fprintf(stderr, "CRITICAL: Error exporting to %s\n", name_src);
     return false;
   }
@@ -492,7 +492,7 @@ static bool babel_general_convert_to( VikTrwLayer *vt, Track * trk, BabelStatusF
  *
  * Returns: %true on successful invocation of GPSBabel command
  */
-bool a_babel_convert_to( VikTrwLayer *vt, Track * trk, const char *babelargs, const char *to, BabelStatusFunc cb, void * user_data )
+bool a_babel_convert_to(LayerTRW * trw, Track * trk, const char *babelargs, const char *to, BabelStatusFunc cb, void * user_data )
 {
   int i,j;
   int fd_src;
@@ -523,7 +523,7 @@ bool a_babel_convert_to( VikTrwLayer *vt, Track * trk, const char *babelargs, co
       args[i++] = (char *)to;
       args[i] = NULL;
 
-      ret = babel_general_convert_to ( vt, trk, cb, args, name_src, user_data );
+      ret = babel_general_convert_to(trw, trk, cb, args, name_src, user_data );
 
       g_strfreev(sub_args);
     } else

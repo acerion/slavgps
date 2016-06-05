@@ -552,12 +552,12 @@ GList * LayerAggregate::waypoint_create_list()
 	for (auto iter = layers->begin(); iter != layers->end(); iter++) {
 		GList * waypoints = NULL;
 
-		std::unordered_map<sg_uid_t, Waypoint *> & wps = VIK_TRW_LAYER(*iter)->trw->get_waypoints();
+		std::unordered_map<sg_uid_t, Waypoint *> & wps = ((LayerTRW *) (*iter))->get_waypoints();
 		for (auto i = wps.begin(); i != wps.end(); i++) {
 			waypoints = g_list_insert(waypoints, i->second, index++);
 		}
 
-		waypoints_and_layers = g_list_concat(waypoints_and_layers, VIK_TRW_LAYER(*iter)->trw->build_waypoint_list_t(waypoints));
+		waypoints_and_layers = g_list_concat(waypoints_and_layers, ((LayerTRW *) (*iter))->build_waypoint_list_t(waypoints));
 	}
 	delete layers;
 
@@ -602,7 +602,7 @@ void LayerAggregate::search_date()
 	// Search tracks first
 	for (auto iter = layers->begin(); iter != layers->end(); iter++) {
 		// Make it auto select the item if found
-		found = VIK_TRW_LAYER(*iter)->trw->find_by_date(date_str, &position, viewport, true, true);
+		found = ((LayerTRW *) (*iter))->find_by_date(date_str, &position, viewport, true, true);
 		if (found) {
 			break;
 		}
@@ -616,7 +616,7 @@ void LayerAggregate::search_date()
 
 		for (auto iter = layers->begin(); iter != layers->end(); iter++) {
 			// Make it auto select the item if found
-			found = VIK_TRW_LAYER(*iter)->trw->find_by_date(date_str, &position, viewport, false, true);
+			found = ((LayerTRW *) (*iter))->find_by_date(date_str, &position, viewport, false, true);
 			if (found) {
 				break;
 			}
@@ -651,10 +651,10 @@ GList * LayerAggregate::track_create_list()
 
 	for (auto iter = layers->begin(); iter != layers->end(); iter++) {
 		GList *tracks = NULL;
-		LayerTRWc::get_track_values(&tracks, VIK_TRW_LAYER(*iter)->trw->get_tracks());
-		LayerTRWc::get_track_values(&tracks, VIK_TRW_LAYER(*iter)->trw->get_routes());
+		LayerTRWc::get_track_values(&tracks, ((LayerTRW *) (*iter))->get_tracks());
+		LayerTRWc::get_track_values(&tracks, ((LayerTRW *) (*iter))->get_routes());
 
-		tracks_and_layers = g_list_concat(tracks_and_layers, VIK_TRW_LAYER(*iter)->trw->build_track_list_t(tracks));
+		tracks_and_layers = g_list_concat(tracks_and_layers, ((LayerTRW *) (*iter))->build_track_list_t(tracks));
 	}
 	delete layers;
 

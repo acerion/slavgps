@@ -226,14 +226,14 @@ struct _VikWindow {
 
 	/* Store at this level for highlighted selection drawing since it applies to the viewport and the layers panel */
 	/* Only one of these items can be selected at the same time */
-	VikTrwLayer * selected_vtl;
+	LayerTRW * selected_trw;
 	std::unordered_map<sg_uid_t, Track*> * selected_tracks;
 	void * selected_track; /* notionally Track */
 	std::unordered_map<sg_uid_t, Waypoint *> * selected_waypoints;
 	void * selected_waypoint; /* notionally Waypoint */
 	/* only use for individual track or waypoint */
 	/* For track(s) & waypoint(s) it is the layer they are in - this helps refering to the individual item easier */
-	VikTrwLayer * containing_vtl;
+	LayerTRW * containing_trw;
 };
 
 enum {
@@ -1197,14 +1197,14 @@ static void draw_redraw(VikWindow *vw)
 	vw->layers_panel->draw_all();
 	// Draw highlight (possibly again but ensures it is on top - especially for when tracks overlap)
 	if (vw->viewport->get_draw_highlight()) {
-		if (vw->containing_vtl && (vw->selected_tracks || vw->selected_waypoints)) {
-			((VikTrwLayer *) vw->containing_vtl)->trw->draw_highlight_items(vw->selected_tracks, vw->selected_waypoints, vw->viewport);
+		if (vw->containing_trw && (vw->selected_tracks || vw->selected_waypoints)) {
+			vw->containing_trw->draw_highlight_items(vw->selected_tracks, vw->selected_waypoints, vw->viewport);
 		}
-		else if (vw->containing_vtl && (vw->selected_track || vw->selected_waypoint)) {
-			((VikTrwLayer *) vw->containing_vtl)->trw->draw_highlight_item((Track *) vw->selected_track, (Waypoint *) vw->selected_waypoint, vw->viewport);
+		else if (vw->containing_trw && (vw->selected_track || vw->selected_waypoint)) {
+			vw->containing_trw->draw_highlight_item((Track *) vw->selected_track, (Waypoint *) vw->selected_waypoint, vw->viewport);
 		}
-		else if (vw->selected_vtl) {
-			((VikTrwLayer *) vw->selected_vtl)->trw->draw_highlight(vw->viewport);
+		else if (vw->selected_trw) {
+			vw->selected_trw->draw_highlight(vw->viewport);
 		}
 	}
 	// Other viewport decoration items on top if they are enabled/in use
@@ -2148,7 +2148,7 @@ static void * selecttool_create(VikWindow *vw, Viewport * viewport)
 	tool_ed_t *t = (tool_ed_t *) malloc(1 * sizeof (tool_ed_t));
 	t->vw = vw;
 	t->viewport = viewport;
-	t->vtl = NULL;
+	t->trw = NULL;
 	t->is_waypoint = false;
 	return t;
 }
@@ -2248,8 +2248,8 @@ static VikLayerToolFuncStatus selecttool_move(VikLayer *vl, GdkEventMotion *even
 {
 	if (t->vw->select_move) {
 		// Don't care about vl here
-		if (t->vtl) {
-			Layer * l = (Layer *) vl->layer;
+		if (t->trw) {
+			Layer * l = (Layer *) vl->layer; /* kamilFIXME: vl->layer or trw->layer? */
 			l->select_move(event, t->viewport, t);
 		}
 	}
@@ -2265,9 +2265,8 @@ static VikLayerToolFuncStatus selecttool_release(VikLayer *vl, GdkEventButton *e
 {
 	if (t->vw->select_move) {
 		// Don't care about vl here
-		if (t->vtl) {
-			Layer * l = (Layer *) ((VikLayer *) t->vtl)->layer;
-			l->select_release(event, t->viewport, t);
+		if (t->trw) {
+			((LayerTRW *) t->trw)->select_release(event, t->viewport, t);
 		}
 	}
 
@@ -3447,7 +3446,7 @@ static bool export_to(VikWindow *vw, std::list<Layer *> * layers, VikFileType_t 
 
 		// NB: We allow exporting empty layers
 		if (safe) {
-			bool this_success = a_file_export(VIK_TRW_LAYER(*iter), fn, vft, NULL, true);
+			bool this_success = a_file_export((LayerTRW *) (*iter), fn, vft, NULL, true);
 
 			// Show some progress
 			if (this_success) {
@@ -3700,8 +3699,8 @@ static void preferences_change_update(VikWindow *vw, void * data)
 
 	for (auto iter = layers->begin(); iter != layers->end(); iter++) {
 		// Reset the individual waypoints themselves due to the preferences change
-		VikTrwLayer *vtl = VIK_TRW_LAYER(*iter);
-		vtl->trw->reset_waypoints();
+		LayerTRW * trw = (LayerTRW *) *iter;
+		trw->reset_waypoints();
 	}
 
 	delete layers;
@@ -4832,20 +4831,20 @@ register_vik_icons(GtkIconFactory *icon_factory)
 
 void * vik_window_get_selected_trw_layer(VikWindow *vw)
 {
-	return vw->selected_vtl;
+	return vw->selected_trw;
 }
 
-void vik_window_set_selected_trw_layer(VikWindow *vw, VikTrwLayer * vtl)
+void vik_window_set_selected_trw_layer(VikWindow *vw, void * trw)
 {
-	vw->selected_vtl   = vtl;
-	vw->containing_vtl = vtl;
+	vw->selected_trw   = (LayerTRW *) trw;
+	vw->containing_trw = (LayerTRW *) trw;
 	/* Clear others */
 	vw->selected_track     = NULL;
 	vw->selected_tracks    = NULL;
 	vw->selected_waypoint  = NULL;
 	vw->selected_waypoints = NULL;
 	// Set highlight thickness
-	vw->viewport->set_highlight_thickness(vw->containing_vtl->trw->get_property_tracks_line_thickness());
+	vw->viewport->set_highlight_thickness(vw->containing_trw->get_property_tracks_line_thickness());
 }
 
 std::unordered_map<sg_uid_t, Track*> * vik_window_get_selected_tracks(VikWindow * vw)
@@ -4853,17 +4852,17 @@ std::unordered_map<sg_uid_t, Track*> * vik_window_get_selected_tracks(VikWindow 
 	return vw->selected_tracks;
 }
 
-void vik_window_set_selected_tracks(VikWindow *vw, std::unordered_map<sg_uid_t, Track *> * tracks, VikTrwLayer * vtl)
+void vik_window_set_selected_tracks(VikWindow *vw, std::unordered_map<sg_uid_t, Track *> * tracks, void * trw)
 {
 	vw->selected_tracks = tracks;
-	vw->containing_vtl  = vtl;
+	vw->containing_trw  = (LayerTRW *) trw;
 	/* Clear others */
-	vw->selected_vtl       = NULL;
+	vw->selected_trw       = NULL;
 	vw->selected_track     = NULL;
 	vw->selected_waypoint  = NULL;
 	vw->selected_waypoints = NULL;
 	// Set highlight thickness
-	vw->viewport->set_highlight_thickness(vw->containing_vtl->trw->get_property_tracks_line_thickness());
+	vw->viewport->set_highlight_thickness(vw->containing_trw->get_property_tracks_line_thickness());
 }
 
 void * vik_window_get_selected_track(VikWindow *vw)
@@ -4871,17 +4870,17 @@ void * vik_window_get_selected_track(VikWindow *vw)
 	return vw->selected_track;
 }
 
-void vik_window_set_selected_track(VikWindow *vw, void ** vt, VikTrwLayer * vtl)
+void vik_window_set_selected_track(VikWindow *vw, void ** vt, void * trw)
 {
 	vw->selected_track = vt;
-	vw->containing_vtl = vtl;
+	vw->containing_trw = (LayerTRW *) trw;
 	/* Clear others */
-	vw->selected_vtl       = NULL;
+	vw->selected_trw       = NULL;
 	vw->selected_tracks    = NULL;
 	vw->selected_waypoint  = NULL;
 	vw->selected_waypoints = NULL;
 	// Set highlight thickness
-	vw->viewport->set_highlight_thickness(vw->containing_vtl->trw->get_property_tracks_line_thickness());
+	vw->viewport->set_highlight_thickness(vw->containing_trw->get_property_tracks_line_thickness());
 }
 
 std::unordered_map<sg_uid_t, Waypoint *> * vik_window_get_selected_waypoints(VikWindow *vw)
@@ -4889,12 +4888,12 @@ std::unordered_map<sg_uid_t, Waypoint *> * vik_window_get_selected_waypoints(Vik
 	return vw->selected_waypoints;
 }
 
-void vik_window_set_selected_waypoints(VikWindow *vw, std::unordered_map<sg_uid_t, Waypoint *> * waypoints, VikTrwLayer * vtl)
+void vik_window_set_selected_waypoints(VikWindow *vw, std::unordered_map<sg_uid_t, Waypoint *> * waypoints, void * trw)
 {
 	vw->selected_waypoints = waypoints;
-	vw->containing_vtl     = vtl;
+	vw->containing_trw     = (LayerTRW *) trw;
 	/* Clear others */
-	vw->selected_vtl       = NULL;
+	vw->selected_trw       = NULL;
 	vw->selected_track     = NULL;
 	vw->selected_tracks    = NULL;
 	vw->selected_waypoint  = NULL;
@@ -4905,12 +4904,12 @@ void * vik_window_get_selected_waypoint(VikWindow *vw)
 	return vw->selected_waypoint;
 }
 
-void vik_window_set_selected_waypoint(VikWindow *vw, void ** vwp, VikTrwLayer * vtl)
+void vik_window_set_selected_waypoint(VikWindow *vw, void ** vwp, void * trw)
 {
 	vw->selected_waypoint = vwp;
-	vw->containing_vtl    = vtl;
+	vw->containing_trw    = (LayerTRW *) trw;
 	/* Clear others */
-	vw->selected_vtl       = NULL;
+	vw->selected_trw       = NULL;
 	vw->selected_track     = NULL;
 	vw->selected_tracks    = NULL;
 	vw->selected_waypoints = NULL;
@@ -4919,8 +4918,8 @@ void vik_window_set_selected_waypoint(VikWindow *vw, void ** vwp, VikTrwLayer * 
 bool vik_window_clear_highlight(VikWindow *vw)
 {
 	bool need_redraw = false;
-	if (vw->selected_vtl != NULL) {
-		vw->selected_vtl = NULL;
+	if (vw->selected_trw != NULL) {
+		vw->selected_trw = NULL;
 		need_redraw = true;
 	}
 	if (vw->selected_track != NULL) {

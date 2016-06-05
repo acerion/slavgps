@@ -143,7 +143,7 @@ typedef struct {
 	bool ok;
 	int total_count;
 	int count;
-	VikTrwLayer * vtl;
+	LayerTRW * trw;
 	Track * trk;
 	char * babelargs;
 	char * window_title;
@@ -437,7 +437,7 @@ static VikGpsLayer * gps_layer_unmarshall(uint8_t *data, int len, Viewport * vie
 	while (len>0 && i < NUM_TRW) {
 		child_layer = vik_layer_unmarshall(data + sizeof(int), alm_size, viewport);
 		if (child_layer) {
-			layer->trw_children[i++] = ((VikTrwLayer *) child_layer)->trw;
+			layer->trw_children[i++] = (LayerTRW *) ((VikLayer *) child_layer)->layer;
 			// NB no need to attach signal update handler here
 			//  as this will always be performed later on in vik_gps_layer_realize()
 		}
@@ -1194,9 +1194,9 @@ static void gps_comm_thread(GpsSession *sess)
 
 	if (sess->direction == GPS_DOWN) {
 		ProcessOptions po = { sess->babelargs, sess->port, NULL, NULL, NULL, NULL };
-		result = a_babel_convert_from(sess->vtl, &po, (BabelStatusFunc) gps_download_progress_func, sess, NULL);
+		result = a_babel_convert_from(sess->trw, &po, (BabelStatusFunc) gps_download_progress_func, sess, NULL);
 	} else {
-		result = a_babel_convert_to(sess->vtl, sess->trk, sess->babelargs, sess->port,
+		result = a_babel_convert_to(sess->trw, sess->trk, sess->babelargs, sess->port,
 					     (BabelStatusFunc) gps_upload_progress_func, sess);
 	}
 
@@ -1215,10 +1215,10 @@ static void gps_comm_thread(GpsSession *sess)
 #endif
 				{
 					if (sess->viewport && sess->direction == GPS_DOWN) {
-						vik_layer_post_read(VIK_LAYER(sess->vtl), sess->viewport, true);
+						vik_layer_post_read(sess->trw->vl, sess->viewport, true);
 						/* View the data available */
-						sess->vtl->trw->auto_set_view(sess->viewport) ;
-						vik_layer_emit_update(VIK_LAYER(sess->vtl)); // NB update from background thread
+						sess->trw->auto_set_view(sess->viewport) ;
+						vik_layer_emit_update(sess->trw->vl); // NB update from background thread
 					}
 				}
 		} else {
@@ -1274,7 +1274,7 @@ int vik_gps_comm(LayerTRW * layer,
 
 	sess->mutex = vik_mutex_new();
 	sess->direction = dir;
-	sess->vtl = (VikTrwLayer *) layer->vl;
+	sess->trw = layer;
 	sess->trk = trk;
 	sess->port = g_strdup(port);
 	sess->ok = true;
@@ -1287,8 +1287,8 @@ int vik_gps_comm(LayerTRW * layer,
 		// Enforce unique names in the layer upload to the GPS device
 		// NB this may only be a Garmin device restriction (and may be not every Garmin device either...)
 		// Thus this maintains the older code in built restriction
-		if (!sess->vtl->trw->uniquify(panel)) {
-			vik_statusbar_set_message(vik_window_get_statusbar(VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(sess->vtl))), VIK_STATUSBAR_INFO,
+		if (!sess->trw->uniquify(panel)) {
+			vik_statusbar_set_message(vik_window_get_statusbar(VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(sess->trw->vl))), VIK_STATUSBAR_INFO,
 						    _("Warning - GPS Upload items may overwrite each other"));
 		}
 	}
@@ -1766,7 +1766,7 @@ static int gpsd_data_available(GIOChannel *source, GIOCondition condition, void 
 	return false; /* no further calling */
 }
 
-static char *make_track_name(VikTrwLayer *vtl)
+static char *make_track_name(LayerTRW * trw)
 {
 	const char basename[] = "REALTIME";
 	const int bufsize = sizeof(basename) + 5;
@@ -1774,7 +1774,7 @@ static char *make_track_name(VikTrwLayer *vtl)
 	strcpy(name, basename);
 	int i = 2;
 
-	while (vtl->trw->get_track(name) != NULL) {
+	while (trw->get_track(name) != NULL) {
 		snprintf(name, bufsize, "%s#%d", basename, i);
 		i++;
 	}
@@ -1820,7 +1820,7 @@ static bool rt_gpsd_try_connect(void * *data)
 		LayerTRW * trw = layer->trw_children[TRW_REALTIME];
 		layer->realtime_track = new Track();
 		layer->realtime_track->visible = true;
-		trw->add_track(layer->realtime_track, make_track_name((VikTrwLayer *) trw->vl));
+		trw->add_track(layer->realtime_track, make_track_name(trw));
 	}
 
 #if GPSD_API_MAJOR_VERSION == 3 || GPSD_API_MAJOR_VERSION == 4
@@ -1982,6 +1982,11 @@ LayerGPS::LayerGPS(Viewport * viewport) : LayerGPS()
 	this->realtime_io_channel = NULL;
 	this->realtime_io_watch_id = 0;
 	this->realtime_retry_timer = 0;
+	this->realtime_track_gc = NULL;
+	this->realtime_track_bg_gc = NULL;
+	this->realtime_track_pt1_gc = NULL;
+	this->realtime_track_pt2_gc = NULL;
+	this->realtime_track_pt_gc = NULL;
 	if (viewport) {
 		this->realtime_track_gc = viewport->new_gc("#203070", 2);
 		this->realtime_track_bg_gc = viewport->new_gc("grey", 2);
@@ -1990,8 +1995,8 @@ LayerGPS::LayerGPS(Viewport * viewport) : LayerGPS()
 		this->realtime_track_pt_gc = this->realtime_track_pt1_gc;
 	}
 
-	this->gpsd_host = strdup("host");
-	this->gpsd_port = strdup("port");
+	this->gpsd_host = NULL; //strdup("host");
+	this->gpsd_port = NULL; //strdup("port");
 
 	this->tp = NULL;
 	this->tp_prev = NULL;

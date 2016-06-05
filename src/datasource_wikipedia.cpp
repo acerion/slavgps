@@ -28,7 +28,7 @@
 #include "acquire.h"
 #include "geonamessearch.h"
 
-static bool datasource_wikipedia_process ( VikTrwLayer *vtl, ProcessOptions *po, BabelStatusFunc status_cb, acq_dialog_widgets_t *adw );
+static bool datasource_wikipedia_process(LayerTRW * trw, ProcessOptions *po, BabelStatusFunc status_cb, acq_dialog_widgets_t *adw );
 
 VikDataSourceInterface vik_datasource_wikipedia_interface = {
   N_("Create Waypoints from Wikipedia Articles"),
@@ -58,15 +58,15 @@ VikDataSourceInterface vik_datasource_wikipedia_interface = {
 /**
  * Process selected files and try to generate waypoints storing them in the given vtl
  */
-static bool datasource_wikipedia_process ( VikTrwLayer *vtl, ProcessOptions *po, BabelStatusFunc status_cb, acq_dialog_widgets_t *adw )
+static bool datasource_wikipedia_process(LayerTRW * trw, ProcessOptions *po, BabelStatusFunc status_cb, acq_dialog_widgets_t *adw )
 {
 	struct LatLon maxmin[2] = { {0.0,0.0}, {0.0,0.0} };
 
 	// Note the order is max part first then min part - thus reverse order of use in min_max function:
 	adw->vvp->port.get_min_max_lat_lon(&maxmin[1].lat, &maxmin[0].lat, &maxmin[1].lon, &maxmin[0].lon );
 
-	if ( vtl ) {
-		a_geonames_wikipedia_box ( adw->vw, vtl, maxmin );
+	if (trw) {
+		a_geonames_wikipedia_box ( adw->vw, trw, maxmin );
 		return true;
 	}
 	else

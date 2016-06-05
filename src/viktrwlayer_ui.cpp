@@ -132,8 +132,6 @@ typedef enum {
 
 void LayerTRW::add_menu_items(GtkMenu * menu, void * vlp)
 {
-	VikTrwLayer * vtl = (VikTrwLayer *) this->vl;
-
 	static trw_menu_layer_t pass_along_data;
 	pass_along_data.layer = this;
 	pass_along_data.panel = (LayersPanel *) (((VikLayersPanel *) vlp)->panel_ref);
@@ -146,8 +144,8 @@ void LayerTRW::add_menu_items(GtkMenu * menu, void * vlp)
 	gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
 	gtk_widget_show ( item );
 
-	if (vtl->trw->current_track) {
-		if (vtl->trw->current_track->is_route) {
+	if (this->current_track) {
+		if (this->current_track->is_route) {
 			item = gtk_menu_item_new_with_mnemonic(_("_Finish Route"));
 		} else {
 			item = gtk_menu_item_new_with_mnemonic(_("_Finish Track"));
@@ -274,7 +272,7 @@ void LayerTRW::add_menu_items(GtkMenu * menu, void * vlp)
 	gtk_menu_shell_append (GTK_MENU_SHELL (new_submenu), item);
 	gtk_widget_show ( item );
 	// Make it available only when a new track *not* already in progress
-	gtk_widget_set_sensitive ( item, ! (bool)KPOINTER_TO_INT(vtl->trw->current_track) );
+	gtk_widget_set_sensitive ( item, ! (bool)KPOINTER_TO_INT(this->current_track) );
 
 	item = gtk_image_menu_item_new_with_mnemonic ( _("New _Route") );
 	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_NEW, GTK_ICON_SIZE_MENU) );
@@ -282,7 +280,7 @@ void LayerTRW::add_menu_items(GtkMenu * menu, void * vlp)
 	gtk_menu_shell_append (GTK_MENU_SHELL (new_submenu), item);
 	gtk_widget_show ( item );
 	// Make it available only when a new track *not* already in progress
-	gtk_widget_set_sensitive ( item, ! (bool)KPOINTER_TO_INT(vtl->trw->current_track) );
+	gtk_widget_set_sensitive ( item, ! (bool)KPOINTER_TO_INT(this->current_track) );
 
 #ifdef VIK_CONFIG_GEOTAG
 	item = gtk_menu_item_new_with_mnemonic ( _("Geotag _Images...") );
@@ -367,7 +365,7 @@ void LayerTRW::add_menu_items(GtkMenu * menu, void * vlp)
 	gtk_widget_set_tooltip_text (item, _("Import File With GPS_Babel..."));
 	gtk_widget_show ( item );
 
-	vik_ext_tool_datasources_add_menu_items_to_menu ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(vtl)), GTK_MENU (acquire_submenu) );
+	vik_ext_tool_datasources_add_menu_items_to_menu ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(this->vl)), GTK_MENU (acquire_submenu) );
 
 	GtkWidget *upload_submenu = gtk_menu_new ();
 	item = gtk_image_menu_item_new_with_mnemonic ( _("_Upload") );
@@ -434,15 +432,15 @@ void LayerTRW::add_menu_items(GtkMenu * menu, void * vlp)
 	gtk_widget_show ( item );
 
 	VikLayersPanel * vlp_ = VIK_LAYERS_PANEL(vlp);
-	item = a_acquire_trwlayer_menu ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(vtl)), (VikLayersPanel *) vlp,
-					 (VikViewport *) vlp_->panel_ref->get_viewport()->vvp, vtl );
+	item = a_acquire_trwlayer_menu ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(this->vl)), (VikLayersPanel *) vlp,
+					 (VikViewport *) vlp_->panel_ref->get_viewport()->vvp, (VikTrwLayer *) this->vl);
 	if ( item ) {
 		gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
 		gtk_widget_show ( item );
 	}
 
-	item = a_acquire_trwlayer_track_menu ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(vtl)), (VikLayersPanel *) vlp,
-					       (VikViewport *) vlp_->panel_ref->get_viewport()->vvp, vtl );
+	item = a_acquire_trwlayer_track_menu ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(this->vl)), (VikLayersPanel *) vlp,
+					       (VikViewport *) vlp_->panel_ref->get_viewport()->vvp, (VikTrwLayer *) this->vl);
 	if ( item ) {
 		gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
 		gtk_widget_show ( item );
@@ -453,18 +451,18 @@ void LayerTRW::add_menu_items(GtkMenu * menu, void * vlp)
 	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_track_list_dialog), pass_along );
 	gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
 	gtk_widget_show ( item );
-	gtk_widget_set_sensitive ( item, (bool)(vtl->trw->tracks.size() + vtl->trw->routes.size()) );
+	gtk_widget_set_sensitive ( item, (bool) (this->tracks.size() + this->routes.size()) );
 
 	item = gtk_image_menu_item_new_with_mnemonic ( _("_Waypoint List...") );
 	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_INDEX, GTK_ICON_SIZE_MENU) );
 	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_waypoint_list_dialog), pass_along );
 	gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
 	gtk_widget_show ( item );
-	gtk_widget_set_sensitive ( item, (bool) (vtl->trw->waypoints.size()) );
+	gtk_widget_set_sensitive ( item, (bool) (this->waypoints.size()) );
 
 	GtkWidget *external_submenu = create_external_submenu ( menu );
 	// TODO: Should use selected layer's centre - rather than implicitly using the current viewport
-	vik_ext_tools_add_menu_items_to_menu ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(vtl)), GTK_MENU (external_submenu), NULL );
+	vik_ext_tools_add_menu_items_to_menu ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(this->vl)), GTK_MENU (external_submenu), NULL );
 }
 
 
@@ -474,9 +472,6 @@ void LayerTRW::add_menu_items(GtkMenu * menu, void * vlp)
 /* viewpoint is now available instead */
 bool LayerTRW::sublayer_add_menu_items(GtkMenu * menu, void * panel, int subtype, void * sublayer, GtkTreeIter * iter, Viewport * viewport)
 {
-  VikTrwLayer * l = (VikTrwLayer *) this->vl;
-
-
   sg_uid_t uid = (sg_uid_t) ((long) sublayer);
   GtkWidget *item;
   bool rv = false;
@@ -504,12 +499,12 @@ bool LayerTRW::sublayer_add_menu_items(GtkMenu * menu, void * panel, int subtype
     gtk_widget_show ( item );
 
     if (subtype == VIK_TRW_LAYER_SUBLAYER_TRACK) {
-      Track * trk = l->trw->tracks.at(uid);
+      Track * trk = this->tracks.at(uid);
       if (trk && trk->property_dialog)
         gtk_widget_set_sensitive(GTK_WIDGET(item), false );
     }
     if (subtype == VIK_TRW_LAYER_SUBLAYER_ROUTE) {
-      Track * trk = l->trw->routes.at(uid);
+      Track * trk = this->routes.at(uid);
       if (trk && trk->property_dialog)
         gtk_widget_set_sensitive(GTK_WIDGET(item), false );
     }
@@ -546,7 +541,7 @@ bool LayerTRW::sublayer_add_menu_items(GtkMenu * menu, void * panel, int subtype
       }
 
       sg_uid_t wp_uid = (sg_uid_t) ((long) sublayer);
-      Waypoint * wp = VIK_TRW_LAYER(l)->trw->waypoints.at(wp_uid);
+      Waypoint * wp = this->waypoints.at(wp_uid);
 
       if ( wp && wp->name ) {
         if ( is_valid_geocache_name ( wp->name ) ) {
@@ -697,7 +692,7 @@ bool LayerTRW::sublayer_add_menu_items(GtkMenu * menu, void * panel, int subtype
   {
     rv = true;
 
-    if ( l->trw->current_track && !l->trw->current_track->is_route ) {
+    if (this->current_track && !this->current_track->is_route ) {
       item = gtk_menu_item_new_with_mnemonic ( _("_Finish Track") );
       g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_finish_track), pass_along );
       gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
@@ -720,7 +715,7 @@ bool LayerTRW::sublayer_add_menu_items(GtkMenu * menu, void * panel, int subtype
     gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
     gtk_widget_show ( item );
     // Make it available only when a new track *not* already in progress
-    gtk_widget_set_sensitive ( item, ! (bool)KPOINTER_TO_INT(l->trw->current_track) );
+    gtk_widget_set_sensitive ( item, ! (bool)KPOINTER_TO_INT(this->current_track) );
 
     item = gtk_image_menu_item_new_with_mnemonic ( _("Delete _All Tracks") );
     gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_REMOVE, GTK_ICON_SIZE_MENU) );
@@ -773,7 +768,7 @@ bool LayerTRW::sublayer_add_menu_items(GtkMenu * menu, void * panel, int subtype
   {
     rv = true;
 
-    if ( l->trw->current_track && l->trw->current_track->is_route ) {
+    if (this->current_track && this->current_track->is_route ) {
       item = gtk_menu_item_new_with_mnemonic ( _("_Finish Route") );
       // Reuse finish track method
       g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_finish_track), pass_along );
@@ -797,7 +792,7 @@ bool LayerTRW::sublayer_add_menu_items(GtkMenu * menu, void * panel, int subtype
     gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
     gtk_widget_show ( item );
     // Make it available only when a new track *not* already in progress
-    gtk_widget_set_sensitive ( item, ! (bool)KPOINTER_TO_INT(l->trw->current_track) );
+    gtk_widget_set_sensitive ( item, ! (bool)KPOINTER_TO_INT(this->current_track) );
 
     item = gtk_image_menu_item_new_with_mnemonic ( _("Delete _All Routes") );
     gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_REMOVE, GTK_ICON_SIZE_MENU) );
@@ -889,11 +884,11 @@ bool LayerTRW::sublayer_add_menu_items(GtkMenu * menu, void * panel, int subtype
     gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
     gtk_widget_show ( item );
 
-    if ( l->trw->current_track && subtype == VIK_TRW_LAYER_SUBLAYER_TRACK && !l->trw->current_track->is_route )
+    if (this->current_track && subtype == VIK_TRW_LAYER_SUBLAYER_TRACK && !this->current_track->is_route )
       item = gtk_menu_item_new_with_mnemonic ( _("_Finish Track") );
-    if ( l->trw->current_track && subtype == VIK_TRW_LAYER_SUBLAYER_ROUTE && l->trw->current_track->is_route )
+    if (this->current_track && subtype == VIK_TRW_LAYER_SUBLAYER_ROUTE && this->current_track->is_route )
       item = gtk_menu_item_new_with_mnemonic ( _("_Finish Route") );
-    if ( l->trw->current_track ) {
+    if (this->current_track ) {
       g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_finish_track), pass_along );
       gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
       gtk_widget_show ( item );
@@ -1039,7 +1034,7 @@ bool LayerTRW::sublayer_add_menu_items(GtkMenu * menu, void * panel, int subtype
     gtk_menu_shell_append ( GTK_MENU_SHELL(split_submenu), item );
     gtk_widget_show ( item );
     // Make it available only when a trackpoint is selected.
-    gtk_widget_set_sensitive ( item, (bool)KPOINTER_TO_INT(l->trw->current_tpl) );
+    gtk_widget_set_sensitive ( item, (bool)KPOINTER_TO_INT(this->current_tpl) );
 
     GtkWidget *insert_submenu = gtk_menu_new ();
     item = gtk_image_menu_item_new_with_mnemonic ( _("_Insert Points") );
@@ -1053,14 +1048,14 @@ bool LayerTRW::sublayer_add_menu_items(GtkMenu * menu, void * panel, int subtype
     gtk_menu_shell_append ( GTK_MENU_SHELL(insert_submenu), item );
     gtk_widget_show ( item );
     // Make it available only when a point is selected
-    gtk_widget_set_sensitive ( item, (bool)KPOINTER_TO_INT(l->trw->current_tpl) );
+    gtk_widget_set_sensitive ( item, (bool)KPOINTER_TO_INT(this->current_tpl) );
 
     item = gtk_menu_item_new_with_mnemonic ( _("Insert Point _After Selected Point") );
     g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_insert_point_after), pass_along );
     gtk_menu_shell_append ( GTK_MENU_SHELL(insert_submenu), item );
     gtk_widget_show ( item );
     // Make it available only when a point is selected
-    gtk_widget_set_sensitive ( item, (bool)KPOINTER_TO_INT(l->trw->current_tpl) );
+    gtk_widget_set_sensitive ( item, (bool)KPOINTER_TO_INT(this->current_tpl) );
 
     GtkWidget *delete_submenu;
     delete_submenu = gtk_menu_new ();
@@ -1076,7 +1071,7 @@ bool LayerTRW::sublayer_add_menu_items(GtkMenu * menu, void * panel, int subtype
     gtk_menu_shell_append ( GTK_MENU_SHELL(delete_submenu), item );
     gtk_widget_show ( item );
     // Make it available only when a point is selected
-    gtk_widget_set_sensitive ( item, (bool)KPOINTER_TO_INT(l->trw->current_tpl) );
+    gtk_widget_set_sensitive ( item, (bool)KPOINTER_TO_INT(this->current_tpl) );
 
     item = gtk_menu_item_new_with_mnemonic ( _("Delete Points With The Same _Position") );
     g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_delete_points_same_position), pass_along );
@@ -1253,24 +1248,24 @@ bool LayerTRW::sublayer_add_menu_items(GtkMenu * menu, void * panel, int subtype
     }
   }
 
-  if ( l->trw->current_tpl || l->trw->current_wp ) {
+  if (this->current_tpl || this->current_wp ) {
     // For the selected point
     VikCoord *vc;
-    if ( l->trw->current_tpl )
-      vc = &(((Trackpoint *) l->trw->current_tpl->data)->coord);
+    if (this->current_tpl )
+      vc = &(((Trackpoint *) this->current_tpl->data)->coord);
     else
-      vc = &(l->trw->current_wp->coord);
-    vik_ext_tools_add_menu_items_to_menu ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(l)), GTK_MENU (external_submenu), vc );
+      vc = &(this->current_wp->coord);
+    vik_ext_tools_add_menu_items_to_menu ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(this->vl)), GTK_MENU (external_submenu), vc );
   }
   else {
     // Otherwise for the selected sublayer
     // TODO: Should use selected items centre - rather than implicitly using the current viewport
-    vik_ext_tools_add_menu_items_to_menu ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(l)), GTK_MENU (external_submenu), NULL );
+    vik_ext_tools_add_menu_items_to_menu ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(this->vl)), GTK_MENU (external_submenu), NULL );
   }
 
 
 #ifdef VIK_CONFIG_GOOGLE
-  if ( subtype == VIK_TRW_LAYER_SUBLAYER_ROUTE &&  ( l->trw->is_valid_google_route((sg_uid_t) ((long) sublayer)) ))
+  if ( subtype == VIK_TRW_LAYER_SUBLAYER_ROUTE &&  (this->is_valid_google_route((sg_uid_t) ((long) sublayer)) ))
   {
     item = gtk_image_menu_item_new_with_mnemonic ( _("_View Google Directions") );
     gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_NETWORK, GTK_ICON_SIZE_MENU) );
@@ -1286,7 +1281,7 @@ bool LayerTRW::sublayer_add_menu_items(GtkMenu * menu, void * panel, int subtype
     item = gtk_image_menu_item_new_with_mnemonic ( _("Upload to _OSM...") );
     // Convert internal pointer into track
     sg_uid_t uid = (sg_uid_t) ((long) sublayer);
-    pass_along->misc = l->trw->tracks.at(uid);
+    pass_along->misc = this->tracks.at(uid);
     gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_GO_UP, GTK_ICON_SIZE_MENU) );
     g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_osm_traces_upload_track_cb), pass_along );
     gtk_menu_shell_append ( GTK_MENU_SHELL(upload_submenu), item );
@@ -1305,9 +1300,9 @@ bool LayerTRW::sublayer_add_menu_items(GtkMenu * menu, void * panel, int subtype
     /* ATM This function is only available via the layers panel, due to needing a panel */
     if ( panel ) {
       sg_uid_t uid = (sg_uid_t) ((long) sublayer);
-      item = a_acquire_track_menu ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(l)), (VikLayersPanel *) ((LayersPanel *) panel)->gob,
+      item = a_acquire_track_menu ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(this->vl)), (VikLayersPanel *) ((LayersPanel *) panel)->gob,
                                     (VikViewport *) ((LayersPanel *) panel)->get_viewport()->vvp,
-                                    l->trw->tracks.at(uid));
+                                    this->tracks.at(uid));
       if ( item ) {
         gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
         gtk_widget_show ( item );
@@ -1324,7 +1319,7 @@ bool LayerTRW::sublayer_add_menu_items(GtkMenu * menu, void * panel, int subtype
 
   if ( subtype == VIK_TRW_LAYER_SUBLAYER_TRACK || subtype == VIK_TRW_LAYER_SUBLAYER_ROUTE ) {
     // Only show on viewport popmenu when a trackpoint is selected
-    if ( ! panel && l->trw->current_tpl ) {
+    if ( ! panel && this->current_tpl ) {
       // Add separator
       item = gtk_menu_item_new ();
       gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );

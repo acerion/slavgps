@@ -105,7 +105,7 @@ static void symbol_entry_changed_cb(GtkWidget *combo, GtkListStore *store)
     The name to use is returned
  */
 /* todo: less on this side, like add track */
-char *a_dialog_waypoint ( GtkWindow *parent, char *default_name, VikTrwLayer *vtl, Waypoint * wp, VikCoordMode coord_mode, bool is_new, bool *updated )
+char *a_dialog_waypoint ( GtkWindow *parent, char *default_name, LayerTRW * trw, Waypoint * wp, VikCoordMode coord_mode, bool is_new, bool *updated )
 {
   GtkWidget *dialog = gtk_dialog_new_with_buttons (_("Waypoint Properties"),
                                                    parent,
@@ -335,7 +335,7 @@ char *a_dialog_waypoint ( GtkWindow *parent, char *default_name, VikTrwLayer *vt
 
   if ( !is_new ) {
     // Shift left<->right to try not to obscure the waypoint.
-    vtl->trw->dialog_shift(GTK_WINDOW(dialog), &(wp->coord), false);
+    trw->dialog_shift(GTK_WINDOW(dialog), &(wp->coord), false);
   }
 
   while ( gtk_dialog_run ( GTK_DIALOG(dialog) ) == GTK_RESPONSE_ACCEPT )

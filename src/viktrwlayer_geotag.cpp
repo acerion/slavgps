@@ -96,7 +96,7 @@ time_t ConvertToUnixTime(char* StringTime, char* Format, int TZOffsetHours, int 
 typedef struct {
 	GtkWidget *dialog;
 	VikFileList *files;
-	VikTrwLayer *vtl;    // to pass on
+	LayerTRW * trw;    // to pass on
 	Waypoint * wp;    // Use specified waypoint or otherwise the track(s) if NULL
 	Track * trk;     // Use specified track or all tracks if NULL
 	GtkCheckButton *create_waypoints_b;
@@ -139,7 +139,7 @@ typedef struct {
 } option_values_t;
 
 typedef struct {
-	VikTrwLayer *vtl;
+	LayerTRW * trw;
 	char *image;
 	Waypoint * wp;    // Use specified waypoint or otherwise the track(s) if NULL
 	Track * trk;     // Use specified track or all tracks if NULL
@@ -301,7 +301,7 @@ static void trw_layer_geotag_waypoint ( geotag_options_t *options )
 			int ans = a_geotag_write_exif_gps ( options->image, options->wp->coord, options->wp->altitude, options->ov.no_change_mtime );
 			if ( ans != 0 ) {
 				char *message = g_strdup_printf ( _("Failed updating EXIF on %s"), options->image );
-				vik_window_statusbar_update ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(options->vtl)), message, VIK_STATUSBAR_INFO );
+				vik_window_statusbar_update ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(options->trw->vl)), message, VIK_STATUSBAR_INFO );
 				free( message );
 			}
 		}
@@ -314,7 +314,7 @@ static void trw_layer_geotag_waypoint ( geotag_options_t *options )
  */
 static void trw_layer_geotag_process ( geotag_options_t *options )
 {
-	if ( !options->vtl || !IS_VIK_LAYER(options->vtl) )
+	if ( !options->trw || !IS_VIK_LAYER(options->trw->vl) )
 		return;
 
 	if ( !options->image )
@@ -336,7 +336,7 @@ static void trw_layer_geotag_process ( geotag_options_t *options )
 				// Create waypoint with file information
 				char *name = NULL;
 				Waypoint * wp = a_geotag_create_waypoint_from_file ( options->image,
-																	 options->vtl->trw->get_coord_mode(),
+																	 options->trw->get_coord_mode(),
 																	 &name );
 				if ( !wp ) {
 					// Couldn't create Waypoint
@@ -349,7 +349,7 @@ static void trw_layer_geotag_process ( geotag_options_t *options )
 				bool updated_waypoint = false;
 
 				if ( options->ov.overwrite_waypoints ) {
-					Waypoint * current_wp = options->vtl->trw->get_waypoint(name);
+					Waypoint * current_wp = options->trw->get_waypoint(name);
 					if ( current_wp ) {
 						// Existing wp found, so set new position, comment and image
 						(void)a_geotag_waypoint_positioned ( options->image, wp->coord, wp->altitude, &name, current_wp );
@@ -358,7 +358,7 @@ static void trw_layer_geotag_process ( geotag_options_t *options )
 				}
 
 				if ( !updated_waypoint ) {
-				    options->vtl->trw->filein_add_waypoint(name, wp);
+				    options->trw->filein_add_waypoint(name, wp);
 				}
 
 				free( name );
@@ -385,7 +385,7 @@ static void trw_layer_geotag_process ( geotag_options_t *options )
 		}
 		else {
 			// Try all tracks
-			std::unordered_map<unsigned int, SlavGPS::Track*> & tracks = options->vtl->trw->get_tracks();
+			std::unordered_map<unsigned int, SlavGPS::Track*> & tracks = options->trw->get_tracks();
 			if (tracks.size() > 0 ) {
 				trw_layer_geotag_tracks(tracks, options);
 			}
@@ -404,7 +404,7 @@ static void trw_layer_geotag_process ( geotag_options_t *options )
 					// Find a WP with current name
 					char *name = NULL;
 					name = g_strdup( a_file_basename ( options->image ) );
-					Waypoint * wp = options->vtl->trw->get_waypoint(name);
+					Waypoint * wp = options->trw->get_waypoint(name);
 					if ( wp ) {
 						// Found, so set new position, comment and image
 						(void)a_geotag_waypoint_positioned ( options->image, options->coord, options->altitude, &name, wp );
@@ -419,7 +419,7 @@ static void trw_layer_geotag_process ( geotag_options_t *options )
 					Waypoint * wp = a_geotag_waypoint_positioned ( options->image, options->coord, options->altitude, &name, NULL );
 					if ( !name )
 						name = g_strdup( a_file_basename ( options->image ) );
-					options->vtl->trw->filein_add_waypoint(name, wp);
+					options->trw->filein_add_waypoint(name, wp);
 					free( name );
 				}
 
@@ -432,7 +432,7 @@ static void trw_layer_geotag_process ( geotag_options_t *options )
 				int ans = a_geotag_write_exif_gps ( options->image, options->coord, options->altitude, options->ov.no_change_mtime );
 				if ( ans != 0 ) {
 					char *message = g_strdup_printf ( _("Failed updating EXIF on %s"), options->image );
-					vik_window_statusbar_update ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(options->vtl)), message, VIK_STATUSBAR_INFO );
+					vik_window_statusbar_update ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(options->trw->vl)), message, VIK_STATUSBAR_INFO );
 					free( message );
 				}
 			}
@@ -472,12 +472,12 @@ static int trw_layer_geotag_thread ( geotag_options_t *options, void * threaddat
 	}
 
 	if ( options->redraw ) {
-		if ( IS_VIK_LAYER(options->vtl) ) {
-			options->vtl->trw->calculate_bounds_waypoints();
+		if ( IS_VIK_LAYER(options->trw->vl) ) {
+			options->trw->calculate_bounds_waypoints();
 			// Ensure any new images get shown
-			options->vtl->trw->verify_thumbnails(NULL); // NB second parameter not used ATM
+			options->trw->verify_thumbnails(NULL); // NB second parameter not used ATM
 			// Force redraw as verify only redraws if there are new thumbnails (they may already exist)
-			vik_layer_emit_update(options->vtl->trw->vl); // NB Update from background
+			vik_layer_emit_update(options->trw->vl); // NB Update from background
 		}
 	}
 
@@ -497,7 +497,7 @@ static void trw_layer_geotag_response_cb ( GtkDialog *dialog, int resp, GeoTagWi
 		//GTK_RESPONSE_ACCEPT:
 		// Get options
 		geotag_options_t * options = (geotag_options_t *) malloc(sizeof (geotag_options_t));
-		options->vtl = widgets->vtl;
+		options->trw = widgets->trw;
 		options->wp = widgets->wp;
 		options->trk = widgets->trk;
 		// Values extracted from the widgets:
@@ -536,7 +536,7 @@ static void trw_layer_geotag_response_cb ( GtkDialog *dialog, int resp, GeoTagWi
 
 		// Processing lots of files can take time - so run a background effort
 		a_background_thread ( BACKGROUND_POOL_LOCAL,
-		                      VIK_GTK_WINDOW_FROM_LAYER(options->vtl),
+		                      VIK_GTK_WINDOW_FROM_LAYER(options->trw->vl),
 		                      tmp,
 		                      (vik_thr_func) trw_layer_geotag_thread,
 		                      options,
@@ -594,7 +594,7 @@ static void create_waypoints_b_cb ( GtkWidget *gw, GeoTagWidgets *gtw )
  * @track_name: Optional - The name of specified track to use
  */
 void trw_layer_geotag_dialog(GtkWindow * parent,
-							 LayerTRW * layer,
+							 LayerTRW * trw,
 							 Waypoint * wp,
 							 Track * trk)
 {
@@ -611,7 +611,7 @@ void trw_layer_geotag_dialog(GtkWindow * parent,
 	gtk_file_filter_add_mime_type ( filter, "image/jpeg");
 
 	widgets->files = VIK_FILE_LIST(vik_file_list_new ( _("Images"), filter ));
-	widgets->vtl = (VikTrwLayer *) layer->vl;
+	widgets->trw = trw;
 	widgets->wp = wp;
 	widgets->trk = trk;
 	widgets->create_waypoints_b = GTK_CHECK_BUTTON ( gtk_check_button_new () );
@@ -707,8 +707,7 @@ void trw_layer_geotag_dialog(GtkWindow * parent,
 	else if (widgets->trk)
 		track_string = g_strdup_printf ( _("Using track: %s"), trk->name );
 	else {
-		Layer * l = (Layer *) (VIK_LAYER(widgets->vtl))->layer;
-		track_string = g_strdup_printf ( _("Using all tracks in: %s"), l->name);
+		track_string = g_strdup_printf ( _("Using all tracks in: %s"), trw->name);
 	}
 
 	gtk_box_pack_start ( GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(widgets->dialog))), gtk_label_new ( track_string ), false, false, 5 );

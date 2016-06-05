@@ -1,4 +1,3 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
@@ -95,15 +94,14 @@ bool a_jpg_load_file ( VikAggregateLayer *top, const char *filename, VikViewport
 	VikWindow *vw = (VikWindow *)(VIK_GTK_WINDOW_FROM_LAYER(VIK_LAYER(top)));
 	VikLayersPanel *vlp = vik_window_layers_panel ( vw );
 	// Auto load into TrackWaypoint layer if one is selected
-	VikLayer * vtl = vlp->panel_ref->get_selected()->vl;
+	Layer * trw = vlp->panel_ref->get_selected();
 
 	bool create_layer = false;
-	if ( vtl == NULL || ((Layer *) vtl->layer)->type != VIK_LAYER_TRW ) {
+	if (trw == NULL || trw->type != VIK_LAYER_TRW) {
 		// Create layer if necessary
 
-		LayerTRW * layer = new LayerTRW(&vvp->port);
-		vtl = layer->vl;
-		layer->rename(a_file_basename(filename));
+		trw = (LayerTRW *) new LayerTRW(&vvp->port);
+		trw->rename(a_file_basename(filename));
 		create_layer = true;
 	}
 
@@ -116,13 +114,13 @@ bool a_jpg_load_file ( VikAggregateLayer *top, const char *filename, VikViewport
 		// Create name if geotag method didn't return one
 		if ( !name )
 			name = g_strdup( a_file_basename ( filename ) );
-		(VIK_TRW_LAYER(vtl))->trw->filein_add_waypoint(name, wp);
+		((LayerTRW *) trw)->filein_add_waypoint(name, wp);
 		free( name );
 	}
 	else {
 		wp = new Waypoint();
 		wp->visible = true;
-		(VIK_TRW_LAYER(vtl))->trw->filein_add_waypoint((char *) a_file_basename(filename), wp);
+		((LayerTRW *) trw)->filein_add_waypoint((char *) a_file_basename(filename), wp);
 		wp->set_image(filename);
 		// Simply set position to the current center
 		wp->coord = *(vvp->port.get_center());
@@ -130,14 +128,13 @@ bool a_jpg_load_file ( VikAggregateLayer *top, const char *filename, VikViewport
 	}
 
 	// Complete the setup
-	vik_layer_post_read ( vtl, &vvp->port, true );
+	vik_layer_post_read(trw->vl, &vvp->port, true );
 	if ( create_layer ) {
-		Layer * layer = (Layer *) vtl->layer;
-		((LayerAggregate *) ((VikLayer *) top)->layer)->add_layer(layer, false);
+		((LayerAggregate *) ((VikLayer *) top)->layer)->add_layer(trw, false);
 	}
 
 	if ( auto_zoom )
-		(VIK_TRW_LAYER(vtl))->trw->auto_set_view(&vvp->port);
+		((LayerTRW *) trw)->auto_set_view(&vvp->port);
 
 	// ATM This routine can't fail
 	return true;

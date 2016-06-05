@@ -240,7 +240,7 @@ static bool set_c_ll ( const char **attr )
   return false;
 }
 
-static void gpx_start(VikTrwLayer *vtl, const char *el, const char **attr)
+static void gpx_start(LayerTRW * trw, const char *el, const char **attr)
 {
   static const char *tmp;
 
@@ -262,7 +262,7 @@ static void gpx_start(VikTrwLayer *vtl, const char *el, const char **attr)
            c_wp->visible = false;
 
          vik_coord_load_from_latlon ( &(c_wp->coord),
-				      vtl->trw->get_coord_mode(),
+				      trw->get_coord_mode(),
 				      &c_ll );
        }
        break;
@@ -284,7 +284,7 @@ static void gpx_start(VikTrwLayer *vtl, const char *el, const char **attr)
      case tt_trk_trkseg_trkpt:
        if ( set_c_ll( attr ) ) {
          c_tp = new Trackpoint();
-         vik_coord_load_from_latlon ( &(c_tp->coord), vtl->trw->get_coord_mode(), &c_ll );
+         vik_coord_load_from_latlon ( &(c_tp->coord), trw->get_coord_mode(), &c_ll );
          if ( f_tr_newseg ) {
            c_tp->newsegment = true;
            f_tr_newseg = false;
@@ -325,7 +325,7 @@ static void gpx_start(VikTrwLayer *vtl, const char *el, const char **attr)
 
      case tt_waypoint_coord:
        if ( set_c_ll( attr ) )
-	       vik_coord_load_from_latlon ( &(c_wp->coord), vtl->trw->get_coord_mode(), &c_ll );
+	       vik_coord_load_from_latlon ( &(c_wp->coord), trw->get_coord_mode(), &c_ll );
        break;
 
      case tt_waypoint_name:
@@ -341,7 +341,7 @@ static void gpx_start(VikTrwLayer *vtl, const char *el, const char **attr)
   }
 }
 
-static void gpx_end(VikTrwLayer *vtl, const char *el)
+static void gpx_end(LayerTRW * trw, const char *el)
 {
   static GTimeVal tp_time;
   static GTimeVal wp_time;
@@ -351,12 +351,12 @@ static void gpx_end(VikTrwLayer *vtl, const char *el)
   switch ( current_tag ) {
 
      case tt_gpx:
-       vtl->trw->set_metadata(c_md);
+       trw->set_metadata(c_md);
        c_md = NULL;
        break;
 
      case tt_gpx_name:
-       vtl->trw->rename(c_cdata->str );
+       trw->rename(c_cdata->str );
        g_string_erase ( c_cdata, 0, -1 );
        break;
 
@@ -392,7 +392,7 @@ static void gpx_end(VikTrwLayer *vtl, const char *el)
      case tt_wpt:
        if ( ! c_wp_name )
          c_wp_name = g_strdup_printf("VIKING_WP%04d", unnamed_waypoints++);
-       vtl->trw->filein_add_waypoint(c_wp_name, c_wp );
+       trw->filein_add_waypoint(c_wp_name, c_wp );
        free( c_wp_name );
        c_wp = NULL;
        c_wp_name = NULL;
@@ -405,7 +405,7 @@ static void gpx_end(VikTrwLayer *vtl, const char *el)
      case tt_rte:
        if ( ! c_tr_name )
          c_tr_name = g_strdup_printf("VIKING_RT%03d", unnamed_routes++);
-       vtl->trw->filein_add_track(c_tr_name, c_tr);
+       trw->filein_add_track(c_tr_name, c_tr);
        free( c_tr_name );
        c_tr = NULL;
        c_tr_name = NULL;
@@ -607,18 +607,18 @@ static void gpx_cdata(void *dta, const XML_Char *s, int len)
 // make like a "stack" of tag names
 // like gpspoint's separated like /gpx/wpt/whatever
 
-bool a_gpx_read_file( VikTrwLayer *vtl, FILE *f ) {
+bool a_gpx_read_file(LayerTRW * trw, FILE *f ) {
   XML_Parser parser = XML_ParserCreate(NULL);
   int done=0, len;
   enum XML_Status status = XML_STATUS_ERROR;
 
   XML_SetElementHandler(parser, (XML_StartElementHandler) gpx_start, (XML_EndElementHandler) gpx_end);
-  XML_SetUserData(parser, vtl); /* in the future we could remove all global variables */
+  XML_SetUserData(parser, trw); /* in the future we could remove all global variables */
   XML_SetCharacterDataHandler(parser, (XML_CharacterDataHandler) gpx_cdata);
 
   char buf[4096];
 
-  assert ( f != NULL && vtl != NULL );
+  assert ( f != NULL && trw != NULL );
 
   xpath = g_string_new ( "" );
   c_cdata = g_string_new ( "" );
@@ -1114,21 +1114,21 @@ static int gpx_track_compare_name(const void *x, const void *y)
   return strcmp(a->name,b->name);
 }
 
-void a_gpx_write_file ( VikTrwLayer *vtl, FILE *f, GpxWritingOptions *options )
+void a_gpx_write_file(LayerTRW * trw, FILE *f, GpxWritingOptions *options )
 {
   GpxWritingContext context = { options, f };
 
   gpx_write_header ( f );
 
   char *tmp;
-  const char *name = vtl->trw->get_name();
+  const char *name = trw->get_name();
   if ( name ) {
     tmp = entitize ( name );
     fprintf ( f, "  <name>%s</name>\n", tmp );
     free( tmp );
   }
 
-  VikTRWMetadata *md = vtl->trw->get_metadata();
+  VikTRWMetadata *md = trw->get_metadata();
   if ( md ) {
     if ( md->author ) {
       tmp = entitize ( md->author );
@@ -1152,9 +1152,9 @@ void a_gpx_write_file ( VikTrwLayer *vtl, FILE *f, GpxWritingOptions *options )
     }
   }
 
-  if ( vtl->trw->get_waypoints_visibility() || (options && options->hidden) ) {
+  if (trw->get_waypoints_visibility() || (options && options->hidden) ) {
 	  // gather waypoints in a list, then sort
-	  std::unordered_map<sg_uid_t, Waypoint *> & waypoints = vtl->trw->get_waypoints();
+	  std::unordered_map<sg_uid_t, Waypoint *> & waypoints = trw->get_waypoints();
 	  std::unordered_map<sg_uid_t, Waypoint *>::iterator i;
 	  int index = 0;
 	  GList * gl = NULL;
@@ -1171,11 +1171,11 @@ void a_gpx_write_file ( VikTrwLayer *vtl, FILE *f, GpxWritingOptions *options )
   }
 
   GList *gl = NULL;
-  if ( vtl->trw->get_tracks_visibility() || (options && options->hidden) ) {
-    //gl = g_hash_table_get_values ( vik_trw_layer_get_tracks ( vtl ) );
+  if (trw->get_tracks_visibility() || (options && options->hidden) ) {
+    //gl = g_hash_table_get_values ( vik_trw_layer_get_tracks ( trw ) );
     // Forming the list manually seems to produce one that is more likely to be nearer to the creation order
 
-    std::unordered_map<sg_uid_t, Track *> tracks = vtl->trw->get_tracks();
+    std::unordered_map<sg_uid_t, Track *> tracks = trw->get_tracks();
     for (auto i = tracks.begin(); i != tracks.end(); i++) {
 	    gl = g_list_prepend(gl, i->second);
     }
@@ -1193,9 +1193,9 @@ void a_gpx_write_file ( VikTrwLayer *vtl, FILE *f, GpxWritingOptions *options )
 
   GList *glrte = NULL;
   // Routes sorted by name
-  if ( vtl->trw->get_routes_visibility() || (options && options->hidden) ) {
+  if (trw->get_routes_visibility() || (options && options->hidden) ) {
 
-	  std::unordered_map<sg_uid_t, Track *> routes = vtl->trw->get_routes();
+	  std::unordered_map<sg_uid_t, Track *> routes = trw->get_routes();
 	  int index = 0;
 	  for (auto i = routes.begin(); i != routes.end(); i++) {
 		  glrte = g_list_insert(glrte, i->second, index);
@@ -1241,7 +1241,7 @@ void a_gpx_write_track_file (Track * trk, FILE *f, GpxWritingOptions *options )
 /**
  * Common write of a temporary GPX file
  */
-static char* write_tmp_file ( VikTrwLayer *vtl, Track * trk, GpxWritingOptions *options )
+static char* write_tmp_file(LayerTRW * trw, Track * trk, GpxWritingOptions *options )
 {
 	char *tmp_filename = NULL;
 	GError *error = NULL;
@@ -1259,7 +1259,7 @@ static char* write_tmp_file ( VikTrwLayer *vtl, Track * trk, GpxWritingOptions *
 	if ( trk )
 		a_gpx_write_track_file ( trk, ff, options );
 	else
-		a_gpx_write_file ( vtl, ff, options );
+		a_gpx_write_file(trw, ff, options );
 
 	fclose (ff);
 
@@ -1268,16 +1268,16 @@ static char* write_tmp_file ( VikTrwLayer *vtl, Track * trk, GpxWritingOptions *
 
 /*
  * a_gpx_write_tmp_file:
- * @vtl:     The #VikTrwLayer to write
+ * @trw:     The #LayerTRW to write
  * @options: Possible ways of writing the file data (can be NULL)
  *
  * Returns: The name of newly created temporary GPX file
  *          This file should be removed once used and the string freed.
  *          If NULL then the process failed.
  */
-char* a_gpx_write_tmp_file ( VikTrwLayer *vtl, GpxWritingOptions *options )
+char* a_gpx_write_tmp_file(LayerTRW * trw, GpxWritingOptions *options )
 {
-	return write_tmp_file ( vtl, NULL, options );
+	return write_tmp_file(trw, NULL, options );
 }
 
 /*

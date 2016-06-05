@@ -179,8 +179,8 @@ static char *deslashndup(const char *str, uint16_t len)
  * No obvious way to test for a 'gpspoint' file,
  *  thus set a flag if any actual tag found during processing of the file
  */
-bool a_gpspoint_read_file(VikTrwLayer *trw, FILE *f, const char *dirpath) {
-	VikCoordMode coord_mode = trw->trw->get_coord_mode();
+bool a_gpspoint_read_file(LayerTRW * trw, FILE *f, const char *dirpath) {
+	VikCoordMode coord_mode = trw->get_coord_mode();
 	char *tag_start, *tag_end;
 	assert (f != NULL && trw != NULL);
 	line_type = 0;
@@ -255,7 +255,7 @@ bool a_gpspoint_read_file(VikTrwLayer *trw, FILE *f, const char *dirpath) {
 
 			vik_coord_load_from_latlon(&(wp->coord), coord_mode, &line_latlon);
 
-			trw->trw->filein_add_waypoint(line_name, wp);
+			trw->filein_add_waypoint(line_name, wp);
 			free(line_name);
 			line_name = NULL;
 
@@ -332,7 +332,7 @@ bool a_gpspoint_read_file(VikTrwLayer *trw, FILE *f, const char *dirpath) {
 			trk->max_number_dist_labels = line_dist_label;
 
 			trk->trackpoints = NULL;
-			trw->trw->filein_add_track(line_name, trk);
+			trw->filein_add_track(line_name, trk);
 			free(line_name);
 			line_name = NULL;
 
@@ -795,11 +795,11 @@ static void a_gpspoint_write_track(FILE * f, std::unordered_map<sg_uid_t, Track 
 
 
 
-void a_gpspoint_write_file(VikTrwLayer *trw, FILE *f)
+void a_gpspoint_write_file(LayerTRW * trw, FILE *f)
 {
-	auto tracks = trw->trw->get_tracks();
-	auto routes = trw->trw->get_routes();
-	auto waypoints = trw->trw->get_waypoints();
+	auto tracks = trw->get_tracks();
+	auto routes = trw->get_routes();
+	auto waypoints = trw->get_waypoints();
 
 	fprintf(f, "type=\"waypointlist\"\n");
 	a_gpspoint_write_waypoints(f, waypoints);

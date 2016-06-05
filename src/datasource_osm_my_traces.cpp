@@ -55,7 +55,7 @@ typedef struct {
 static void * datasource_osm_my_traces_init ( acq_vik_t *avt );
 static void datasource_osm_my_traces_add_setup_widgets ( GtkWidget *dialog, VikViewport *vvp, void * user_data );
 static void datasource_osm_my_traces_get_process_options ( void * user_data, ProcessOptions *po, DownloadFileOptions *options, const char *notused1, const char *notused2 );
-static bool datasource_osm_my_traces_process ( VikTrwLayer *vtl, ProcessOptions *process_options, BabelStatusFunc status_cb, acq_dialog_widgets_t *adw, DownloadFileOptions *options_unused );
+static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *process_options, BabelStatusFunc status_cb, acq_dialog_widgets_t *adw, DownloadFileOptions *options_unused );
 static void datasource_osm_my_traces_cleanup ( void * data );
 
 VikDataSourceInterface vik_datasource_osm_my_traces_interface = {
@@ -530,7 +530,7 @@ static void none_found ( GtkWindow *gw )
 /**
  * For each track - mark whether the start is in within the viewport
  */
-static void set_in_current_view_property ( VikTrwLayer *vtl, datasource_osm_my_traces_t *data, GList *gl )
+static void set_in_current_view_property(LayerTRW * trw, datasource_osm_my_traces_t *data, GList *gl )
 {
 	double min_lat, max_lat, min_lon, max_lon;
 	/* get Viewport bounding box */
@@ -561,7 +561,7 @@ static void set_in_current_view_property ( VikTrwLayer *vtl, datasource_osm_my_t
 	}
 }
 
-static bool datasource_osm_my_traces_process ( VikTrwLayer *vtl, ProcessOptions *process_options, BabelStatusFunc status_cb, acq_dialog_widgets_t *adw, DownloadFileOptions *options_unused )
+static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *process_options, BabelStatusFunc status_cb, acq_dialog_widgets_t *adw, DownloadFileOptions *options_unused )
 {
 	//datasource_osm_my_traces_t *data = (datasource_osm_my_traces_t *)adw->user_data;
 
@@ -606,7 +606,7 @@ static bool datasource_osm_my_traces_process ( VikTrwLayer *vtl, ProcessOptions 
 
 	xd->list_of_gpx_meta_data = g_list_reverse ( xd->list_of_gpx_meta_data );
 
-	set_in_current_view_property ( vtl, (datasource_osm_my_traces_t *) adw->user_data, xd->list_of_gpx_meta_data );
+	set_in_current_view_property(trw, (datasource_osm_my_traces_t *) adw->user_data, xd->list_of_gpx_meta_data );
 
     if (vik_datasource_osm_my_traces_interface.is_thread) gdk_threads_enter();
 	GList *selected = select_from_list ( GTK_WINDOW(adw->vw), xd->list_of_gpx_meta_data, "Select GPS Traces", "Select the GPS traces you want to add." );
@@ -621,16 +621,16 @@ static bool datasource_osm_my_traces_process ( VikTrwLayer *vtl, ProcessOptions 
 	// Hence the preference is to create multiple layers
 	//  and so this creation of the layers must be managed here
 
-	bool create_new_layer = ( !vtl );
+	bool create_new_layer = ( !trw );
 
 	// Only update the screen on the last layer acquired
-	VikTrwLayer *vtl_last = vtl;
+	VikTrwLayer *vtl_last = (VikTrwLayer *) trw->vl;
 	bool got_something = false;
 
 	GList *selected_iterator = selected;
 	while ( selected_iterator ) {
 
-		VikTrwLayer *vtlX = vtl;
+		VikTrwLayer *vtlX = (VikTrwLayer *) trw->vl;
 
 		if ( create_new_layer ) {
 			// Have data but no layer - so create one
@@ -651,7 +651,7 @@ static bool datasource_osm_my_traces_process ( VikTrwLayer *vtl, ProcessOptions 
 			// NB download type is GPX (or a compressed version)
 			ProcessOptions my_po = *process_options;
 			my_po.url = url;
-			result = a_babel_convert_from ( vtlX, &my_po, status_cb, adw, &options );
+			result = a_babel_convert_from((LayerTRW *) ((VikLayer *) vtlX)->layer, &my_po, status_cb, adw, &options );
 			// TODO investigate using a progress bar:
 			// http://developer.gnome.org/gtk/2.24/GtkProgressBar.html
 
@@ -667,11 +667,11 @@ static bool datasource_osm_my_traces_process ( VikTrwLayer *vtl, ProcessOptions 
 
 		if ( result ) {
 			// Can use the layer
-			Layer * layer = (Layer *) (VIK_LAYER(vtlX))->layer;
+			LayerTRW * layer = (LayerTRW *) ((VikLayer *) vtlX)->layer;
 			adw->vlp->panel_ref->get_top_layer()->add_layer(layer, true);
 			// Move to area of the track
-			vik_layer_post_read ( VIK_LAYER(vtlX), vik_window_viewport(adw->vw), true );
-			vtlX->trw->auto_set_view(vik_window_viewport(adw->vw));
+			vik_layer_post_read ( (VikLayer *) vtlX, vik_window_viewport(adw->vw), true );
+			layer->auto_set_view(vik_window_viewport(adw->vw));
 			vtl_last = vtlX;
 		}
 		else if ( create_new_layer ) {
@@ -694,7 +694,7 @@ static bool datasource_osm_my_traces_process ( VikTrwLayer *vtl, ProcessOptions 
 	// Would prefer to keep the update in acquire.c,
 	//  however since we may create the layer - need to do the update here
 	if ( got_something )
-		vik_layer_emit_update ( VIK_LAYER(vtl_last) );
+		vik_layer_emit_update ( (VikLayer *) vtl_last );
 
 	// ATM The user is only informed if all getting *all* of the traces failed
 	if ( selected )

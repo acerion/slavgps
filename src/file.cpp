@@ -719,19 +719,19 @@ VikLoadType_t a_file_load(VikAggregateLayer *top, VikViewport *vp, const char *f
 		if (a_file_check_ext(filename, ".kml") && check_magic(f, GPX_MAGIC, GPX_MAGIC_LEN)) {
 			// Implicit Conversion
 			ProcessOptions po = { (char *) "-i kml", filename, NULL, NULL, NULL, NULL };
-			if (! (success = a_babel_convert_from(VIK_TRW_LAYER(layer->vl), &po, NULL, NULL, NULL))) {
+			if (! (success = a_babel_convert_from(layer, &po, NULL, NULL, NULL))) {
 				load_answer = LOAD_TYPE_GPSBABEL_FAILURE;
 			}
 		}
 		// NB use a extension check first, as a GPX file header may have a Byte Order Mark (BOM) in it
 		//    - which currently confuses our check_magic function
 		else if (a_file_check_ext(filename, ".gpx") || check_magic(f, GPX_MAGIC, GPX_MAGIC_LEN)) {
-			if (! (success = a_gpx_read_file(VIK_TRW_LAYER(layer->vl), f))) {
+			if (! (success = a_gpx_read_file(layer, f))) {
 				load_answer = LOAD_TYPE_GPX_FAILURE;
 			}
 		} else {
 			// Try final supported file type
-			if (! (success = a_gpspoint_read_file(VIK_TRW_LAYER(layer->vl), f, dirpath))) {
+			if (! (success = a_gpspoint_read_file(layer, f, dirpath))) {
 				// Failure here means we don't know how to handle the file
 				load_answer = LOAD_TYPE_UNSUPPORTED_FAILURE;
 			}
@@ -825,7 +825,7 @@ bool a_file_check_ext(const char *filename, const char *fileext)
  * A general export command to convert from Viking TRW layer data to an external supported format.
  * The write_hidden option is provided mainly to be able to transfer selected items when uploading to a GPS
  */
-bool a_file_export(VikTrwLayer *vtl, const char *filename, VikFileType_t file_type, Track * trk, bool write_hidden)
+bool a_file_export(LayerTRW * trw, const char *filename, VikFileType_t file_type, Track * trk, bool write_hidden)
 {
 	GpxWritingOptions options = { false, false, write_hidden, false };
 	FILE *f = g_fopen(filename, "w");
@@ -845,29 +845,29 @@ bool a_file_export(VikTrwLayer *vtl, const char *filename, VikFileType_t file_ty
 		} else {
 			switch (file_type) {
 			case FILE_TYPE_GPSMAPPER:
-				a_gpsmapper_write_file(f, vtl->trw);
+				a_gpsmapper_write_file(f, trw);
 				break;
 			case FILE_TYPE_GPX:
-				a_gpx_write_file(vtl, f, &options);
+				a_gpx_write_file(trw, f, &options);
 				break;
 			case FILE_TYPE_GPSPOINT:
-				a_gpspoint_write_file(vtl, f);
+				a_gpspoint_write_file(trw, f);
 				break;
 			case FILE_TYPE_GEOJSON:
-				result = a_geojson_write_file(vtl, f);
+				result = a_geojson_write_file(trw, f);
 				break;
 			case FILE_TYPE_KML:
 				fclose(f);
 				switch (a_vik_get_kml_export_units()) {
 				case VIK_KML_EXPORT_UNITS_STATUTE:
-					return a_babel_convert_to(vtl, NULL, "-o kml", filename, NULL, NULL);
+					return a_babel_convert_to(trw, NULL, "-o kml", filename, NULL, NULL);
 					break;
 				case VIK_KML_EXPORT_UNITS_NAUTICAL:
-					return a_babel_convert_to(vtl, NULL, "-o kml,units=n", filename, NULL, NULL);
+					return a_babel_convert_to(trw, NULL, "-o kml,units=n", filename, NULL, NULL);
 					break;
 				default:
 					// VIK_KML_EXPORT_UNITS_METRIC:
-					return a_babel_convert_to(vtl, NULL, "-o kml,units=m", filename, NULL, NULL);
+					return a_babel_convert_to(trw, NULL, "-o kml,units=m", filename, NULL, NULL);
 					break;
 				}
 				break;
@@ -884,7 +884,7 @@ bool a_file_export(VikTrwLayer *vtl, const char *filename, VikFileType_t file_ty
 /**
  * a_file_export_babel:
  */
-bool a_file_export_babel(VikTrwLayer *vtl, const char *filename, const char *format,
+bool a_file_export_babel(LayerTRW * trw, const char *filename, const char *format,
 			  bool tracks, bool routes, bool waypoints)
 {
 	char *args = g_strdup_printf("%s %s %s -o %s",
@@ -892,7 +892,7 @@ bool a_file_export_babel(VikTrwLayer *vtl, const char *filename, const char *for
 				     routes ? "-r" : "",
 				     waypoints ? "-w" : "",
 				     format);
-	bool result = a_babel_convert_to(vtl, NULL, args, filename, NULL, NULL);
+	bool result = a_babel_convert_to(trw, NULL, args, filename, NULL, NULL);
 	free(args);
 	return result;
 }

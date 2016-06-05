@@ -209,7 +209,7 @@ namespace SlavGPS {
 
 
 
-		void move_item(_VikTrwLayer * vtl_dest, void * id, int type); /* static void trw_layer_move_item(VikTrwLayer * vtl_src, VikTrwLayer * vtl_dest, void * id, int type). */
+		void move_item(LayerTRW * vtl_dest, void * id, int type); /* static void trw_layer_move_item(VikTrwLayer * vtl_src, VikTrwLayer * vtl_dest, void * id, int type). */
 
 
 
@@ -322,6 +322,20 @@ namespace SlavGPS {
 		bool tool_edit_waypoint_click(GdkEventButton * event, void * data);
 		bool tool_edit_waypoint_move(GdkEventMotion * event, void * data);
 		bool tool_edit_waypoint_release(GdkEventButton * event, void * data);
+		bool tool_extended_route_finder_click(GdkEventButton * event, Viewport * viewport);
+		bool tool_extended_route_finder_key_press(GdkEventKey * event, Viewport * viewport);
+		bool tool_show_picture_click(GdkEventButton * event, Viewport * viewport);
+		bool tool_edit_trackpoint_click(GdkEventButton * event, void * data);
+		bool tool_edit_trackpoint_move(GdkEventMotion *event, void * data);
+		bool tool_edit_trackpoint_release(GdkEventButton * event, void * data);
+		VikLayerToolFuncStatus tool_new_track_move(GdkEventMotion * event, Viewport * viewport);
+		bool tool_new_track_key_press(GdkEventKey *event, Viewport * viewport);
+		bool tool_new_track_click(GdkEventButton * event, Viewport * viewport);
+		bool tool_new_waypoint_click(GdkEventButton * event, Viewport * viewport);
+		bool tool_new_route_click(GdkEventButton * event, Viewport * viewport);
+		void tool_new_track_release(GdkEventButton *event, Viewport * viewport);
+
+
 
 
 		/* This should be private. */
@@ -332,6 +346,9 @@ namespace SlavGPS {
 		void tpwin_response(int response);
 		Track * get_track_helper(struct _trw_menu_sublayer_t * data);
 		void update_statusbar();
+		void tool_extended_route_finder_undo();
+		bool tool_new_track_or_route_click(GdkEventButton * event, Viewport * viewport);
+		void undo_trackpoint_add();
 
 
 
@@ -521,7 +538,7 @@ typedef void * menu_array_sublayer[8];
 struct _VikTrwLayer {
 	VikLayer vl;
 
-	LayerTRW * trw;
+	//LayerTRW * trw;
 };
 
 
@@ -595,7 +612,7 @@ typedef struct _VikTrwLayer VikTrwLayer;
 //  (thus a selection of tracks may be from differing layers)
 typedef struct {
   Track * trk;
-  VikTrwLayer *vtl;
+  LayerTRW * trw;
 } vik_trw_track_list_t;
 
 typedef GList* (*VikTrwlayerGetTracksAndLayersFunc) (VikLayer*, void *);
@@ -605,7 +622,7 @@ GList *vik_trw_layer_build_track_list_t ( VikTrwLayer *vtl, GList *tracks );
 //  (thus a selection of waypoints may be from differing layers)
 typedef struct {
   Waypoint * wp;
-  VikTrwLayer *vtl;
+  LayerTRW * trw;
 } vik_trw_waypoint_list_t;
 
 typedef GList* (*VikTrwlayerGetWaypointsAndLayersFunc) (VikLayer*, void *);

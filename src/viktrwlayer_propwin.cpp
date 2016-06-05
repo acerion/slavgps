@@ -122,7 +122,7 @@ typedef struct _propsaved {
 
 typedef struct _propwidgets {
   bool  configure_dialog;
-  VikTrwLayer *vtl;
+  LayerTRW * trw;
   Track * trk;
   VikViewport *vvp;
   VikLayersPanel *vlp;
@@ -376,7 +376,7 @@ static unsigned int get_distance_chunk_index (double length)
 
 static Trackpoint * set_center_at_graph_position(double event_x,
 						   int img_width,
-						   VikTrwLayer *vtl,
+						   LayerTRW * trw,
 						   VikLayersPanel *vlp,
 						   VikViewport *vvp,
 						   Track * trk,
@@ -405,7 +405,7 @@ static Trackpoint * set_center_at_graph_position(double event_x,
       /* since vlp not set, vvp should be valid instead! */
       if ( vvp )
         vvp->port.set_center_coord(&coord, true );
-      vik_layer_emit_update ( VIK_LAYER(vtl) );
+      vik_layer_emit_update(trw->vl);
     }
   }
   return tp;
@@ -510,7 +510,7 @@ static void track_graph_click( GtkWidget *event_box, GdkEventButton *event, Prop
   GtkAllocation allocation;
   gtk_widget_get_allocation ( event_box, &allocation );
 
-  Trackpoint * tp = set_center_at_graph_position(event->x, allocation.width, widgets->vtl, widgets->vlp, widgets->vvp, widgets->trk, is_time_graph, widgets->profile_width);
+  Trackpoint * tp = set_center_at_graph_position(event->x, allocation.width, widgets->trw, widgets->vlp, widgets->vvp, widgets->trk, is_time_graph, widgets->profile_width);
   // Unable to get the point so give up
   if (tp == NULL) {
     gtk_dialog_set_response_sensitive(GTK_DIALOG(widgets->dialog), VIK_TRW_LAYER_PROPWIN_SPLIT_MARKER, false);
@@ -2876,7 +2876,7 @@ static void destroy_cb ( GtkDialog *dialog, PropWidgets *widgets )
 static void propwin_response_cb( GtkDialog *dialog, int resp, PropWidgets *widgets )
 {
   Track * trk = widgets->trk;
-  VikTrwLayer *vtl = widgets->vtl;
+  LayerTRW * trw = widgets->trw;
   bool keep_dialog = false;
 
   /* FIXME: check and make sure the track still exists before doing anything to it */
@@ -2893,12 +2893,12 @@ static void propwin_response_cb( GtkDialog *dialog, int resp, PropWidgets *widge
       gtk_color_button_get_color ( GTK_COLOR_BUTTON(widgets->w_color), &(trk->color) );
       trk->draw_name_mode = (TrackDrawnameType) gtk_combo_box_get_active ( GTK_COMBO_BOX(widgets->w_namelabel) );
       trk->max_number_dist_labels = gtk_spin_button_get_value_as_int ( GTK_SPIN_BUTTON(widgets->w_number_distlabels) );
-      widgets->vtl->trw->update_treeview(widgets->trk);
-      vik_layer_emit_update ( VIK_LAYER(vtl) );
+      widgets->trw->update_treeview(widgets->trk);
+      vik_layer_emit_update(trw->vl);
       break;
     case VIK_TRW_LAYER_PROPWIN_REVERSE:
       trk->reverse();
-      vik_layer_emit_update ( VIK_LAYER(vtl) );
+      vik_layer_emit_update(trw->vl);
       break;
     case VIK_TRW_LAYER_PROPWIN_DEL_DUP:
       trk->remove_dup_points(); // NB ignore the returned answer
@@ -2906,8 +2906,8 @@ static void propwin_response_cb( GtkDialog *dialog, int resp, PropWidgets *widge
       //   choose not to inform the user unnecessarily
 
       /* above operation could have deleted current_tp or last_tp */
-      vtl->trw->cancel_tps_of_track(trk);
-      vik_layer_emit_update ( VIK_LAYER(vtl) );
+      trw->cancel_tps_of_track(trk);
+      vik_layer_emit_update(trw->vl);
       break;
     case VIK_TRW_LAYER_PROPWIN_SPLIT:
       {
@@ -2920,12 +2920,12 @@ static void propwin_response_cb( GtkDialog *dialog, int resp, PropWidgets *widge
         for ( i = 0; i < ntracks; i++ )
         {
           if ( tracks[i] ) {
-	    new_tr_name = vtl->trw->new_unique_sublayer_name(widgets->trk->is_route ? VIK_TRW_LAYER_SUBLAYER_ROUTE : VIK_TRW_LAYER_SUBLAYER_TRACK,
+	    new_tr_name = trw->new_unique_sublayer_name(widgets->trk->is_route ? VIK_TRW_LAYER_SUBLAYER_ROUTE : VIK_TRW_LAYER_SUBLAYER_TRACK,
                                                             widgets->trk->name);
             if ( widgets->trk->is_route )
-              vtl->trw->add_route(tracks[i], new_tr_name);
+              trw->add_route(tracks[i], new_tr_name);
             else
-              vtl->trw->add_track(tracks[i], new_tr_name);
+              trw->add_track(tracks[i], new_tr_name);
             tracks[i]->calculate_bounds();
 
             free( new_tr_name );
@@ -2937,10 +2937,10 @@ static void propwin_response_cb( GtkDialog *dialog, int resp, PropWidgets *widge
           /* Don't let track destroy this dialog */
           trk->clear_property_dialog();
           if ( widgets->trk->is_route )
-	    vtl->trw->delete_route(trk);
+	    trw->delete_route(trk);
           else
-	    vtl->trw->delete_track(trk);
-          vik_layer_emit_update ( VIK_LAYER(vtl) ); /* chase thru the hoops */
+	    trw->delete_track(trk);
+          vik_layer_emit_update(trw->vl); /* chase thru the hoops */
         }
       }
       break;
@@ -2952,13 +2952,13 @@ static void propwin_response_cb( GtkDialog *dialog, int resp, PropWidgets *widge
             break;
         }
         if (iter == NULL) {
-          a_dialog_msg(VIK_GTK_WINDOW_FROM_LAYER(vtl), GTK_MESSAGE_ERROR,
+          a_dialog_msg(VIK_GTK_WINDOW_FROM_LAYER(trw->vl), GTK_MESSAGE_ERROR,
                   _("Failed spliting track. Track unchanged"), NULL);
           keep_dialog = true;
           break;
         }
 
-        char *r_name = vtl->trw->new_unique_sublayer_name(widgets->trk->is_route ? VIK_TRW_LAYER_SUBLAYER_ROUTE : VIK_TRW_LAYER_SUBLAYER_TRACK,
+        char *r_name = trw->new_unique_sublayer_name(widgets->trk->is_route ? VIK_TRW_LAYER_SUBLAYER_ROUTE : VIK_TRW_LAYER_SUBLAYER_TRACK,
 							 widgets->trk->name);
         iter->prev->next = NULL;
         iter->prev = NULL;
@@ -2970,15 +2970,15 @@ static void propwin_response_cb( GtkDialog *dialog, int resp, PropWidgets *widge
         trk_right->trackpoints = iter;
 
         if ( widgets->trk->is_route )
-	  vtl->trw->add_route(trk_right, r_name);
+	  trw->add_route(trk_right, r_name);
         else
-	  vtl->trw->add_track(trk_right, r_name);
+	  trw->add_track(trk_right, r_name);
         trk->calculate_bounds();
         trk_right->calculate_bounds();
 
         free( r_name );
 
-        vik_layer_emit_update ( VIK_LAYER(vtl) );
+        vik_layer_emit_update(trw->vl);
       }
       break;
     default:
@@ -3086,7 +3086,7 @@ void vik_trw_layer_propwin_run(GtkWindow *parent,
 			       bool start_on_stats )
 {
   PropWidgets *widgets = prop_widgets_new();
-  widgets->vtl = (VikTrwLayer *) layer->vl;
+  widgets->trw = layer;
   widgets->vvp = vvp;
   widgets->vlp = (VikLayersPanel *) vlp;
   widgets->trk = trk;
@@ -3295,7 +3295,7 @@ void vik_trw_layer_propwin_run(GtkWindow *parent,
   widgets->w_avg_speed = content[cnt++] = ui_label_new_selectable ( tmp_buf );
 
   // Use 60sec as the default period to be considered stopped
-  //  this is the TrackWaypoint draw stops default value 'vtl->stop_length'
+  //  this is the TrackWaypoint draw stops default value 'trw->stop_length'
   //  however this variable is not directly accessible - and I don't expect it's often changed from the default
   //  so ATM just put in the number
   tmp_speed = trk->get_average_speed_moving(60);

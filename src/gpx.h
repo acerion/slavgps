@@ -43,12 +43,12 @@ typedef struct {
 	bool is_route; /// For internal convience
 } GpxWritingOptions;
 
-bool a_gpx_read_file ( VikTrwLayer *trw, FILE *f );
-void a_gpx_write_file ( VikTrwLayer *trw, FILE *f, GpxWritingOptions *options );
-void a_gpx_write_track_file (Track * trk, FILE *f, GpxWritingOptions *options );
+bool a_gpx_read_file(LayerTRW * trw, FILE *f );
+void a_gpx_write_file(LayerTRW * trw, FILE *f, GpxWritingOptions *options);
+void a_gpx_write_track_file(Track * trk, FILE *f, GpxWritingOptions *options);
 
-char* a_gpx_write_tmp_file ( VikTrwLayer *vtl, GpxWritingOptions *options );
-char* a_gpx_write_track_tmp_file (Track * trk, GpxWritingOptions *options );
+char* a_gpx_write_tmp_file(LayerTRW * trw, GpxWritingOptions *options);
+char* a_gpx_write_track_tmp_file(Track * trk, GpxWritingOptions *options);
 
 #ifdef __cplusplus
 }

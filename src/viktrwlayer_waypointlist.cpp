@@ -131,11 +131,11 @@ static void trw_layer_waypoint_select_cb ( GtkTreeSelection *selection, void * d
 	gtk_tree_model_get ( model, &iter, WPT_COL_NUM, &wp, -1 );
 	if ( !wp ) return;
 
-	VikTrwLayer *vtl;
-	gtk_tree_model_get ( model, &iter, TRW_COL_NUM, &vtl, -1 );
-	if ( !IS_VIK_TRW_LAYER(vtl) ) return;
+	VikTrwLayer * trw;
+	gtk_tree_model_get ( model, &iter, TRW_COL_NUM, &trw->vl, -1 );
+	if (trw->type != VIK_LAYER_TRW) return;
 
-	//vik_treeview_select_iter ( VIK_LAYER(vtl)->vt, g_hash_table_lookup ( vtl->waypoint_iters, uuid ), true );
+	//vik_treeview_select_iter ( trw->vt, g_hash_table_lookup ( trw->waypoint_iters, uuid ), true );
 }
 */
 
@@ -157,20 +157,20 @@ typedef void * menu_array_values[MA_LAST];
 // This is performed on demand via the specific menu request
 static void trw_layer_waypoint_select ( menu_array_values values )
 {
-	VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
+	LayerTRW * trw = (LayerTRW *) values[MA_VTL];
 
 	if ( values[MA_WPT_UUID] ) {
 		sg_uid_t uid = (sg_uid_t) ((long) values[MA_WPT_UUID]);
-		GtkTreeIter * iter = vtl->trw->get_waypoints_iters().at(uid);
+		GtkTreeIter * iter = trw->get_waypoints_iters().at(uid);
 
 		if ( iter )
-			vtl->trw->vt->tree->select_iter(iter, true);
+			trw->vt->tree->select_iter(iter, true);
 	}
 }
 
 static void trw_layer_waypoint_properties ( menu_array_values values )
 {
-	VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
+	LayerTRW * trw = (LayerTRW *) values[MA_VTL];
 	Waypoint * wp = (Waypoint *) (values[MA_WPT]);
 
 	if (wp && wp->name) {
@@ -180,21 +180,21 @@ static void trw_layer_waypoint_properties ( menu_array_values values )
 		waypoint_close_cb ( gw, 0, (GList *) values[MA_WPTS_LIST] );
 
 		bool updated = false;
-		char *new_name = a_dialog_waypoint ( VIK_GTK_WINDOW_FROM_LAYER(vtl), wp->name, vtl, wp, vtl->trw->get_coord_mode(), false, &updated );
+		char *new_name = a_dialog_waypoint ( VIK_GTK_WINDOW_FROM_LAYER(trw->vl), wp->name, trw, wp, trw->get_coord_mode(), false, &updated );
 		if ( new_name )
-			vtl->trw->waypoint_rename(wp, new_name);
+			trw->waypoint_rename(wp, new_name);
 
 		if ( updated )
-			vtl->trw->waypoint_reset_icon(wp);
+			trw->waypoint_reset_icon(wp);
 
-		if ( updated && vtl->trw->visible )
-			vik_layer_emit_update ( VIK_LAYER(vtl) );
+		if ( updated && trw->visible )
+			vik_layer_emit_update(trw->vl);
 	}
 }
 
 static void trw_layer_waypoint_view ( menu_array_values values )
 {
-	VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
+	LayerTRW * trw = (LayerTRW *) values[MA_VTL];
 	Waypoint * wp = (Waypoint *) (values[MA_WPT]);
 	VikViewport *vvp = VIK_VIEWPORT(values[MA_VVP]);
 
@@ -202,7 +202,7 @@ static void trw_layer_waypoint_view ( menu_array_values values )
 
 	trw_layer_waypoint_select (values);
 
-	vik_layer_emit_update ( VIK_LAYER(vtl) );
+	vik_layer_emit_update(trw->vl);
 }
 
 static void trw_layer_show_picture_wp ( menu_array_values values )
@@ -211,13 +211,13 @@ static void trw_layer_show_picture_wp ( menu_array_values values )
 #ifdef WINDOWS
 	ShellExecute(NULL, "open", wp->image, NULL, NULL, SW_SHOWNORMAL);
 #else
-	VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
+	LayerTRW * trw = (LayerTRW *) values[MA_VTL];
 	GError *err = NULL;
 	char *quoted_file = g_shell_quote (wp->image);
 	char *cmd = g_strdup_printf ( "%s %s", a_vik_get_image_viewer(), quoted_file );
 	free( quoted_file );
 	if ( ! g_spawn_command_line_async ( cmd, &err ) ) {
-		a_dialog_error_msg_extra ( VIK_GTK_WINDOW_FROM_LAYER(vtl), _("Could not launch %s to open file."), a_vik_get_image_viewer() );
+		a_dialog_error_msg_extra ( VIK_GTK_WINDOW_FROM_LAYER(trw->vl), _("Could not launch %s to open file."), a_vik_get_image_viewer() );
 		g_error_free ( err );
 	}
 	free( cmd );
@@ -323,12 +323,12 @@ static void add_copy_menu_items ( GtkMenu *menu, GtkWidget *tree_view )
 	gtk_widget_show ( item );
 }
 
-static bool add_menu_items ( GtkMenu *menu, VikTrwLayer *vtl, Waypoint * wp, void * wp_uuid, VikViewport *vvp, GtkWidget *tree_view, void * data )
+static bool add_menu_items ( GtkMenu *menu, LayerTRW * trw, Waypoint * wp, void * wp_uuid, VikViewport *vvp, GtkWidget *tree_view, void * data )
 {
 	static menu_array_values values;
 	GtkWidget *item;
 
-	values[MA_VTL]       = vtl;
+	values[MA_VTL]       = trw;
 	values[MA_WPT]       = wp;
 	values[MA_WPT_UUID]  = wp_uuid;
 	values[MA_VVP]       = vvp;
@@ -413,11 +413,14 @@ static bool trw_layer_waypoint_menu_popup ( GtkWidget *tree_view,
 
 	VikTrwLayer *vtl;
 	gtk_tree_model_get ( model, &iter, TRW_COL_NUM, &vtl, -1 );
-	if ( !IS_VIK_TRW_LAYER(vtl) ) return false;
+	LayerTRW * trw = (LayerTRW *) ((VikLayer *) vtl)->layer;
+	if (trw->type != VIK_LAYER_TRW) {
+		return false;
+	}
 
-    sg_uid_t wp_uuid = LayerTRWc::find_uid_of_waypoint(vtl->trw->get_waypoints(), wp);
+    sg_uid_t wp_uuid = LayerTRWc::find_uid_of_waypoint(trw->get_waypoints(), wp);
 	if (wp_uuid) {
-		Viewport * viewport = vik_window_viewport((VikWindow *)(VIK_GTK_WINDOW_FROM_LAYER(vtl)));
+		Viewport * viewport = vik_window_viewport((VikWindow *)(VIK_GTK_WINDOW_FROM_LAYER(trw->vl)));
 
 		GtkWidget *menu = gtk_menu_new();
 
@@ -426,7 +429,7 @@ static bool trw_layer_waypoint_menu_popup ( GtkWidget *tree_view,
 		//  so without an easy way to distinguish read only operations,
 		//  create a very minimal new set of operations
 		add_menu_items ( GTK_MENU(menu),
-		                 vtl,
+		                 trw,
 		                 wp,
 		                 (void *) ((long) wp_uuid),
 		                 (VikViewport *) viewport->vvp,
@@ -475,7 +478,7 @@ static void trw_layer_waypoint_list_add ( vik_trw_waypoint_list_t *vtdl,
 {
 	GtkTreeIter t_iter;
 	Waypoint * wp = vtdl->wp;
-	VikTrwLayer *vtl = vtdl->vtl;
+	LayerTRW * trw = vtdl->trw;
 
 
 	// Get start date
@@ -498,8 +501,8 @@ static void trw_layer_waypoint_list_add ( vik_trw_waypoint_list_t *vtdl,
 	}
 
 	// NB: doesn't include aggegrate visibility
-	bool visible = vtl->trw->visible && wp->visible;
-	visible = visible && vtl->trw->get_waypoints_visibility();
+	bool visible = trw->visible && wp->visible;
+	visible = visible && trw->get_waypoints_visibility();
 
 	double alt = wp->altitude;
 	switch (height_units) {
@@ -511,14 +514,14 @@ static void trw_layer_waypoint_list_add ( vik_trw_waypoint_list_t *vtdl,
 
 	gtk_tree_store_append ( store, &t_iter, NULL );
 	gtk_tree_store_set ( store, &t_iter,
-	                     0, vtl->trw->name,
+	                     0, trw->name,
 	                     1, wp->name,
 	                     2, time_buf,
 	                     3, visible,
 	                     4, wp->comment,
 	                     5, (int)round(alt),
 	                     6, get_wp_sym_small (wp->symbol),
-	                     TRW_COL_NUM, vtl,
+	                     TRW_COL_NUM, trw->vl,
 	                     WPT_COL_NUM, wp,
 	                     -1 );
 }

@@ -387,27 +387,27 @@ static void table_output ( track_stats ts, GtkWidget *content[] )
 
 /**
  * val_analyse_item_maybe:
- * @vtlist: A track and the associated layer to consider for analysis
+ * @trwlist: A track and the associated layer to consider for analysis
  * @data:   Whether to include invisible items
  *
  * Analyse this particular track
  *  considering whether it should be included depending on it's visibility
  */
-static void val_analyse_item_maybe ( vik_trw_track_list_t *vtlist, const void * data )
+static void val_analyse_item_maybe ( vik_trw_track_list_t * trwlist, const void * data )
 {
 	bool include_invisible = KPOINTER_TO_INT(data);
-	Track * trk = vtlist->trk;
-	VikTrwLayer *vtl = vtlist->vtl;
+	Track * trk = trwlist->trk;
+	LayerTRW * trw = trwlist->trw;
 
 	// Safety first - items shouldn't be deleted...
-	if ( !IS_VIK_TRW_LAYER(vtl) ) return;
+	if (trw->type != VIK_LAYER_TRW) return;
 	if ( !trk ) return;
 
 	if ( !include_invisible ) {
 		// Skip invisible layers or sublayers
-		if ( !vtl->trw->visible ||
-			 (trk->is_route && !vtl->trw->get_routes_visibility()) ||
-			 (!trk->is_route && !vtl->trw->get_tracks_visibility()) )
+		if (!trw->visible ||
+			 (trk->is_route && !trw->get_routes_visibility()) ||
+			 (!trk->is_route && !trw->get_tracks_visibility()) )
 			return;
 
 		// Skip invisible tracks

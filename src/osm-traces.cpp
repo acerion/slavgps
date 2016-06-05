@@ -92,7 +92,7 @@ typedef struct _OsmTracesInfo {
   char *tags;
   bool anonymize_times; // ATM only available on a single track.
   const OsmTraceVis_t *vistype;
-  VikTrwLayer *vtl;
+  LayerTRW * trw;
   Track * trk;
 } OsmTracesInfo;
 
@@ -112,7 +112,8 @@ static void oti_free(OsmTracesInfo *oti)
     free(oti->description); oti->description = NULL;
     free(oti->tags); oti->tags = NULL;
 
-    g_object_unref(oti->vtl); oti->vtl = NULL;
+    g_object_unref(oti->trw->vl);
+    oti->trw = NULL;
   }
   /* Main struct has been g_malloc'ed */
   free(oti);
@@ -292,7 +293,7 @@ static void osm_traces_upload_thread ( OsmTracesInfo *oti, void * threaddata )
   else
   {
     /* Upload the whole VikTrwLayer */
-    filename = a_gpx_write_tmp_file (oti->vtl, &options);
+    filename = a_gpx_write_tmp_file(oti->trw, &options);
   }
 
   if ( !filename )
@@ -321,7 +322,7 @@ static void osm_traces_upload_thread ( OsmTracesInfo *oti, void * threaddata )
   // Test to see if window it was invoked on is still valid
   // Not sure if this test really works! (i.e. if the window was closed in the mean time)
   //
-  if ( IS_VIK_WINDOW ((VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(oti->vtl)) ) {
+  if ( IS_VIK_WINDOW ((VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(oti->trw->vl)) ) {
     char* msg;
     if ( ans == 0 ) {
       // Success
@@ -334,7 +335,7 @@ static void osm_traces_upload_thread ( OsmTracesInfo *oti, void * threaddata )
     else {
       msg = g_strdup_printf ( "%s : %s %d (@%s)", _("FAILED TO UPLOAD DATA TO OSM"), _("HTTP response code"), ans, timestr );
     }
-    vik_window_statusbar_update ( (VikWindow*)VIK_GTK_WINDOW_FROM_LAYER(oti->vtl), msg, VIK_STATUSBAR_INFO );
+    vik_window_statusbar_update ( (VikWindow*)VIK_GTK_WINDOW_FROM_LAYER(oti->trw->vl), msg, VIK_STATUSBAR_INFO );
     free(msg);
   }
   /* Removing temporary file */
@@ -372,15 +373,15 @@ void osm_login_widgets (GtkWidget *user_entry, GtkWidget *password_entry)
 }
 
 /**
- * Uploading a VikTrwLayer
+ * Uploading a LayerTRW
  *
- * @param vtl VikTrwLayer
+ * @param trw LayerTRW
  * @param trk if not null, the track to upload
  */
-void osm_traces_upload_viktrwlayer ( VikTrwLayer *vtl, Track * trk )
+void osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk )
 {
   GtkWidget *dia = gtk_dialog_new_with_buttons (_("OSM upload"),
-                                                 VIK_GTK_WINDOW_FROM_LAYER(vtl),
+                                                 VIK_GTK_WINDOW_FROM_LAYER(trw->vl),
 						(GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
                                                  GTK_STOCK_CANCEL,
                                                  GTK_RESPONSE_REJECT,
@@ -421,7 +422,7 @@ void osm_traces_upload_viktrwlayer ( VikTrwLayer *vtl, Track * trk )
   if (trk != NULL)
     name = trk->name;
   else
-    name = vtl->trw->get_name();
+    name = trw->get_name();
   gtk_entry_set_text(GTK_ENTRY(name_entry), name);
   gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dia))), name_label, false, false, 0);
   gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dia))), name_entry, false, false, 0);
@@ -436,7 +437,7 @@ void osm_traces_upload_viktrwlayer ( VikTrwLayer *vtl, Track * trk )
   if (trk != NULL)
     description = trk->description;
   else {
-    VikTRWMetadata *md = vtl->trw->get_metadata();
+    VikTRWMetadata *md = trw->get_metadata();
     description = md ? md->description : NULL;
   }
   if (description)
@@ -458,7 +459,7 @@ void osm_traces_upload_viktrwlayer ( VikTrwLayer *vtl, Track * trk )
 
   tags_label = gtk_label_new(_("Tags:"));
   tags_entry = gtk_entry_new();
-  VikTRWMetadata *md = vtl->trw->get_metadata();
+  VikTRWMetadata *md = trw->get_metadata();
   if (md->keywords)
     gtk_entry_set_text(GTK_ENTRY(tags_entry), md->keywords);
   gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dia))), tags_label, false, false, 0);
@@ -515,7 +516,7 @@ void osm_traces_upload_viktrwlayer ( VikTrwLayer *vtl, Track * trk )
     /* TODO Normalize tags: they will be used as URL part */
     info->tags        = g_strdup(gtk_entry_get_text(GTK_ENTRY(tags_entry)));
     info->vistype     = &OsmTraceVis[gtk_combo_box_get_active(GTK_COMBO_BOX(visibility))];
-    info->vtl         = VIK_TRW_LAYER(g_object_ref(vtl));
+    info->trw         = trw; // kamilFIXME: it was: VIK_TRW_LAYER(g_object_ref(vtl));
     info->trk         = trk;
     if (trk != NULL && anonymize_checkbutton != NULL )
       info->anonymize_times = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(anonymize_checkbutton));
@@ -530,7 +531,7 @@ void osm_traces_upload_viktrwlayer ( VikTrwLayer *vtl, Track * trk )
 
     // launch the thread
     a_background_thread( BACKGROUND_POOL_REMOTE,
-                         VIK_GTK_WINDOW_FROM_LAYER(vtl),          /* parent window */
+                         VIK_GTK_WINDOW_FROM_LAYER(trw->vl),          /* parent window */
                          title,                                   /* description string */
                          (vik_thr_func) osm_traces_upload_thread, /* function to call within thread */
                          info,                                    /* pass along data */

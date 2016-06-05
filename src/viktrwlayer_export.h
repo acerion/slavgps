@@ -35,9 +35,9 @@ extern "C" {
 
 void vik_trw_layer_export(LayerTRW * layer, char const * title, char const * default_name, Track * trk, VikFileType_t file_type);
 
-void vik_trw_layer_export_external_gpx ( VikTrwLayer *vtl, const char* external_program );
+void vik_trw_layer_export_external_gpx(LayerTRW * trw, const char* external_program);
 
-void vik_trw_layer_export_gpsbabel ( VikTrwLayer *vtl, const char *title, const char* default_name );
+void vik_trw_layer_export_gpsbabel(LayerTRW * trw, const char *title, const char* default_name);
 
 #ifdef __cplusplus
 }

@@ -130,11 +130,11 @@ static void trw_layer_track_select_cb ( GtkTreeSelection *selection, void * data
 	gtk_tree_model_get ( model, &iter, TRK_COL_NUM, &trk, -1 );
 	if ( !trk ) return;
 
-	VikTrwLayer *vtl;
-	gtk_tree_model_get ( model, &iter, TRW_COL_NUM, &vtl, -1 );
-	if ( !IS_VIK_TRW_LAYER(vtl) ) return;
+	LayerTRW * trw;
+	gtk_tree_model_get ( model, &iter, TRW_COL_NUM, &trw->vl, -1 );
+	if ( !IS_VIK_TRW_LAYER(trw->vl) ) return;
 
-	//vik_treeview_select_iter ( VIK_LAYER(vtl)->vt, g_hash_table_lookup ( vtl->track_iters, uuid ), true );
+	//vik_treeview_select_iter(trw->vt, g_hash_table_lookup ( trw->track_iters, uuid ), true );
 }
 */
 
@@ -156,25 +156,25 @@ typedef void * menu_array_values[MA_LAST];
 // This is performed on demand via the specific menu request
 static void trw_layer_track_select ( menu_array_values values )
 {
-	VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
+	LayerTRW * trw = (LayerTRW *) values[MA_VTL];
 	Track * trk = ((Track *) values[MA_TRK]);
 	sg_uid_t uid = (sg_uid_t) ((long) values[MA_TRK_UUID]);
 
 	if ( values[MA_TRK_UUID] ) {
 		GtkTreeIter *iter = NULL;
 		if ( trk->is_route )
-			iter = vtl->trw->get_routes_iters().at(uid);
+			iter = trw->get_routes_iters().at(uid);
 		else
-			iter = vtl->trw->get_tracks_iters().at(uid);
+			iter = trw->get_tracks_iters().at(uid);
 
 		if ( iter )
-			vtl->trw->vt->tree->select_iter(iter, true);
+			trw->vt->tree->select_iter(iter, true);
 	}
 }
 
 static void trw_layer_track_stats ( menu_array_values values )
 {
-	VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
+	LayerTRW * trw = (LayerTRW *) values[MA_VTL];
 	Track * trk = ((Track *) values[MA_TRK]);
 	VikViewport *vvp = VIK_VIEWPORT(values[MA_VVP]);
 
@@ -184,8 +184,8 @@ static void trw_layer_track_stats ( menu_array_values values )
 		GtkWidget *gw = gtk_widget_get_toplevel ( (GtkWidget *) values[MA_TREEVIEW] );
 		track_close_cb ( gw, 0, (GList *) values[MA_TRKS_LIST] );
 
-		vik_trw_layer_propwin_run(VIK_GTK_WINDOW_FROM_LAYER(vtl),
-								  vtl->trw,
+		vik_trw_layer_propwin_run(VIK_GTK_WINDOW_FROM_LAYER(trw->vl),
+								  trw,
 								  trk,
 								  NULL, // vlp
 								  vvp,
@@ -195,7 +195,7 @@ static void trw_layer_track_stats ( menu_array_values values )
 
 static void trw_layer_track_view ( menu_array_values values )
 {
-	VikTrwLayer *vtl = VIK_TRW_LAYER(values[MA_VTL]);
+	LayerTRW * trw = (LayerTRW *) values[MA_VTL];
 	Track * trk = ((Track *) values[MA_TRK]);
 	VikViewport *vvp = VIK_VIEWPORT(values[MA_VVP]);
 
@@ -206,9 +206,9 @@ static void trw_layer_track_view ( menu_array_values values )
 	maxmin[0].lon = trk->bbox.east;
 	maxmin[1].lon = trk->bbox.west;
 
-    vtl->trw->zoom_to_show_latlons(&vvp->port, maxmin);
+    trw->zoom_to_show_latlons(&vvp->port, maxmin);
 
-	trw_layer_track_select (values);
+	trw_layer_track_select(values);
 }
 
 typedef struct {
@@ -270,12 +270,12 @@ static void add_copy_menu_item ( GtkMenu *menu, GtkWidget *tree_view )
 	gtk_widget_show ( item );
 }
 
-static bool add_menu_items ( GtkMenu *menu, VikTrwLayer *vtl, Track * trk, void * trk_uuid, VikViewport *vvp, GtkWidget *tree_view, void * data )
+static bool add_menu_items ( GtkMenu *menu, LayerTRW * trw, Track * trk, void * trk_uuid, VikViewport *vvp, GtkWidget *tree_view, void * data )
 {
 	static menu_array_values values;
 	GtkWidget *item;
 
-	values[MA_VTL]       = vtl;
+	values[MA_VTL]       = trw;
 	values[MA_TRK]       = trk;
 	values[MA_TRK_UUID]  = trk_uuid;
 	values[MA_VVP]       = vvp;
@@ -352,16 +352,17 @@ static bool trw_layer_track_menu_popup ( GtkWidget *tree_view,
 
 	VikTrwLayer *vtl;
 	gtk_tree_model_get ( model, &iter, TRW_COL_NUM, &vtl, -1 );
-	if ( !IS_VIK_TRW_LAYER(vtl) ) return false;
+	LayerTRW * trw = (LayerTRW *) ((VikLayer *) vtl)->layer;
+	if (trw->type != VIK_LAYER_TRW) return false;
 
 	sg_uid_t uid = 0;;
 	if ( trk->is_route )
-		uid = LayerTRWc::find_uid_of_track(vtl->trw->get_routes(), trk);
+		uid = LayerTRWc::find_uid_of_track(trw->get_routes(), trk);
 	else
-		uid = LayerTRWc::find_uid_of_track(vtl->trw->get_tracks(), trk);
+		uid = LayerTRWc::find_uid_of_track(trw->get_tracks(), trk);
 
 	if (uid) {
-		Viewport * viewport = vik_window_viewport((VikWindow *)(VIK_GTK_WINDOW_FROM_LAYER(vtl)));
+		Viewport * viewport = vik_window_viewport((VikWindow *)(VIK_GTK_WINDOW_FROM_LAYER(trw->vl)));
 
 		GtkWidget *menu = gtk_menu_new();
 
@@ -370,7 +371,7 @@ static bool trw_layer_track_menu_popup ( GtkWidget *tree_view,
 		//  so without an easy way to distinguish read only operations,
 		//  create a very minimal new set of operations
 		add_menu_items ( GTK_MENU(menu),
-		                 vtl,
+		                 trw,
 		                 trk,
 		                 (void *) ((long) uid),
 		                 (VikViewport *) viewport->vvp,
@@ -421,7 +422,7 @@ static void trw_layer_track_list_add ( vik_trw_track_list_t *vtdl,
 {
 	GtkTreeIter t_iter;
 	Track * trk = vtdl->trk;
-	VikTrwLayer *vtl = vtdl->vtl;
+	LayerTRW * trw = vtdl->trw;
 
 	double trk_dist = trk->get_length();
 	// Store unit converted value
@@ -454,8 +455,8 @@ static void trw_layer_track_list_add ( vik_trw_track_list_t *vtdl,
 	}
 
 	// NB: doesn't include aggegrate visibility
-	bool visible = vtl->trw->visible && trk->visible;
-	visible = visible && (trk->is_route ? vtl->trw->get_routes_visibility() : vtl->trw->get_tracks_visibility());
+	bool visible = trw->visible && trk->visible;
+	visible = visible && (trk->is_route ? trw->get_routes_visibility() : trw->get_tracks_visibility());
 
 	unsigned int trk_len_time = 0; // In minutes
 	if ( trk->trackpoints ) {
@@ -511,7 +512,7 @@ static void trw_layer_track_list_add ( vik_trw_track_list_t *vtdl,
 
 	gtk_tree_store_append ( store, &t_iter, NULL );
 	gtk_tree_store_set ( store, &t_iter,
-	                     0, vtl->trw->name,
+	                     0, trw->name,
 	                     1, trk->name,
 	                     2, time_buf,
 	                     3, visible,
@@ -520,7 +521,7 @@ static void trw_layer_track_list_add ( vik_trw_track_list_t *vtdl,
 	                     6, av_speed,
 	                     7, max_speed,
 	                     8, (int)round(max_alt),
-	                     TRW_COL_NUM, vtl,
+	                     TRW_COL_NUM, trw->vl,
 	                     TRK_COL_NUM, trk,
 	                     -1 );
 }

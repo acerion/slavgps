@@ -72,7 +72,7 @@ enum { WP_SYMBOL_FILLED_SQUARE, WP_SYMBOL_SQUARE, WP_SYMBOL_CIRCLE, WP_SYMBOL_X,
 
 typedef struct {
 	Viewport * viewport;
-	VikTrwLayer * vtl;
+	LayerTRW * trw;
 	VikWindow * vw;
 	double xmpp, ympp;
 	uint16_t width, height;
@@ -90,7 +90,7 @@ typedef struct {
 
 
 
-void init_drawing_params(DrawingParams * dp, VikTrwLayer * vtl, Viewport * viewport, bool highlight);
+void init_drawing_params(DrawingParams * dp, LayerTRW * trw, Viewport * viewport, bool highlight);
 void trw_layer_draw_waypoints_cb(std::unordered_map<sg_uid_t, Waypoint *> * waypoints, DrawingParams * dp);
 void trw_layer_draw_waypoint_cb(Waypoint * wp, DrawingParams * dp);
 void trw_layer_draw_track_cb(const void * id, Track * trk, DrawingParams * dp);

@@ -48,7 +48,7 @@ static char *last_folder_uri = NULL;
 static void * datasource_geotag_init ( acq_vik_t *avt );
 static void datasource_geotag_add_setup_widgets ( GtkWidget *dialog, VikViewport *vvp, void * user_data );
 static void datasource_geotag_get_process_options ( void * user_data, ProcessOptions *po, void * not_used, const char *not_used2, const char *not_used3 );
-static bool datasource_geotag_process ( VikTrwLayer *vtl, ProcessOptions *po, BabelStatusFunc status_cb, acq_dialog_widgets_t *adw, void * not_used );
+static bool datasource_geotag_process(LayerTRW * trw, ProcessOptions *po, BabelStatusFunc status_cb, acq_dialog_widgets_t *adw, void * not_used );
 static void datasource_geotag_cleanup ( void * user_data );
 
 VikDataSourceInterface vik_datasource_geotag_interface = {
@@ -150,7 +150,7 @@ static void datasource_geotag_get_process_options ( void * user_data, ProcessOpt
 /**
  * Process selected files and try to generate waypoints storing them in the given vtl
  */
-static bool datasource_geotag_process ( VikTrwLayer *vtl, ProcessOptions *po, BabelStatusFunc status_cb, acq_dialog_widgets_t *adw, void * not_used )
+static bool datasource_geotag_process(LayerTRW * trw, ProcessOptions *po, BabelStatusFunc status_cb, acq_dialog_widgets_t *adw, void * not_used )
 {
 	datasource_geotag_user_data_t *user_data = (datasource_geotag_user_data_t *)adw->user_data;
 
@@ -165,7 +165,7 @@ static bool datasource_geotag_process ( VikTrwLayer *vtl, ProcessOptions *po, Ba
 			// Create name if geotag method didn't return one
 			if ( !name )
 				name = g_strdup( a_file_basename ( filename ) );
-			vtl->trw->filein_add_waypoint(name, wp);
+			trw->filein_add_waypoint(name, wp);
 			free( name );
 		}
 		else {
