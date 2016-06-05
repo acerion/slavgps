@@ -244,7 +244,7 @@ char const * LayerDEM::tooltip()
 void LayerDEM::marshall(uint8_t **data, int *len)
 {
 	VikDEMLayer * vdl = (VikDEMLayer *) this->vl;
-	vik_layer_marshall_params(VIK_LAYER(vdl), data, len);
+	vik_layer_marshall_params((VikLayer *) vdl, data, len);
 }
 
 static VikDEMLayer * dem_layer_unmarshall(uint8_t *data, int len, Viewport * viewport)
@@ -265,7 +265,7 @@ static VikDEMLayer * dem_layer_unmarshall(uint8_t *data, int len, Viewport * vie
 		layer->gcsgradient[i] = viewport->new_gc(dem_gradient_colors[i], UNUSED_LINE_THICKNESS);
 	}
 
-	vik_layer_unmarshall_params(VIK_LAYER(layer->vl), data, len, viewport);
+	vik_layer_unmarshall_params(layer->vl, data, len, viewport);
 	return rv;
 }
 
@@ -456,7 +456,7 @@ static VikLayerParamData dem_layer_get_param(VikDEMLayer *vdl, uint16_t id, bool
 
 static VikDEMLayer * dem_layer_new(Viewport * viewport)
 {
-	VikDEMLayer * vdl = VIK_DEM_LAYER (g_object_new (VIK_DEM_LAYER_TYPE, NULL));
+	VikDEMLayer * vdl = (VikDEMLayer *) g_object_new (VIK_DEM_LAYER_TYPE, NULL);
 	LayerDEM * layer = new LayerDEM((VikLayer *) vdl);
 	((VikLayer *) vdl)->layer = (Layer *) layer;
 
@@ -471,7 +471,7 @@ static VikDEMLayer * dem_layer_new(Viewport * viewport)
 		layer->gcs[0] = viewport->new_gc("#0000FF", 1);
 	}
 
-	vik_layer_set_defaults(VIK_LAYER(vdl), viewport);
+	vik_layer_set_defaults((VikLayer *) vdl, viewport);
 
 	return vdl;
 }
@@ -1425,7 +1425,7 @@ LayerDEM::LayerDEM(Viewport * viewport) : LayerDEM()
 	VikDEMLayer * vdl = NULL;
 	/* dem_layer_new(Viewport * viewport) */
 	{
-		vdl = VIK_DEM_LAYER (g_object_new (VIK_DEM_LAYER_TYPE, NULL));
+		vdl = (VikDEMLayer *) g_object_new (VIK_DEM_LAYER_TYPE, NULL);
 		((VikLayer *) vdl)->layer = this;
 		this->vl = (VikLayer *) vdl;
 
@@ -1440,7 +1440,7 @@ LayerDEM::LayerDEM(Viewport * viewport) : LayerDEM()
 			this->gcs[0] = viewport->new_gc("#0000FF", 1);
 		}
 
-		vik_layer_set_defaults (VIK_LAYER(vdl), viewport);
+		vik_layer_set_defaults((VikLayer *) vdl, viewport);
 
 	}
 

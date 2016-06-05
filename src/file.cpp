@@ -230,7 +230,7 @@ static void file_write(VikAggregateLayer *top, FILE *f, void * vp)
 	}
 
 	while (stack && stack->data) {
-		current_layer = VIK_LAYER(((GList *)stack->data)->data);
+		current_layer = (VikLayer *) ((GList *)stack->data)->data;
 		Layer * current = (Layer *) current_layer->layer;
 		fprintf(f, "\n~Layer %s\n", vik_layer_get_interface(current->type)->fixed_layer_name);
 		write_layer_params_and_data(current_layer, f);
@@ -281,7 +281,7 @@ static void string_list_set_param(int i, GList *list, void * *layer_and_vp)
 {
 	VikLayerParamData x;
 	x.sl = list;
-	vik_layer_set_param(VIK_LAYER(layer_and_vp[0]), i, x, layer_and_vp[1], true);
+	vik_layer_set_param((VikLayer *) layer_and_vp[0], i, x, layer_and_vp[1], true);
 }
 
 /**
@@ -399,7 +399,7 @@ static bool file_read(VikAggregateLayer *top, FILE *f, const char *dirpath, VikV
 					pop(&stack);
 				}
 			} else if (str_starts_with(line, "LayerData", 9, false)) {
-				VikLayer * vl = VIK_LAYER(stack->data);
+				VikLayer * vl = (VikLayer *) stack->data;
 				Layer * layer = (Layer *) vl->layer;
 				int rv = layer->read_file(f, dirpath);
 				if (rv == 0) {
@@ -444,7 +444,7 @@ static bool file_read(VikAggregateLayer *top, FILE *f, const char *dirpath, VikV
 				}
 			}
 
-			Layer * layer = (Layer *) (VIK_LAYER(stack->data))->layer;
+			Layer * layer = (Layer *) ((VikLayer *) stack->data)->layer;
 
 			if (stack->under == NULL && eq_pos == 12 && strncasecmp(line, "FILE_VERSION", eq_pos) == 0) {
 				int version = strtol(line+13, NULL, 10);
@@ -535,7 +535,7 @@ static bool file_read(VikAggregateLayer *top, FILE *f, const char *dirpath, VikV
 								/* STRING or STRING_LIST -- if STRING_LIST, just set param to add a STRING */
 							default: x.s = line;
 							}
-							vik_layer_set_param(VIK_LAYER(stack->data), i, x, vp, true);
+							vik_layer_set_param((VikLayer *) stack->data, i, x, vp, true);
 						}
 						found_match = true;
 						break;

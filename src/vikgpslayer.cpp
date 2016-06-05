@@ -399,7 +399,7 @@ void LayerGPS::marshall(uint8_t **data, int *datalen)
 	g_byte_array_append(b, (uint8_t *)&len, sizeof(len));	\
 	g_byte_array_append(b, (uint8_t *)(obj), len);
 
-	vik_layer_marshall_params(VIK_LAYER(this->vl), &ld, &ll);
+	vik_layer_marshall_params(this->vl, &ld, &ll);
 	alm_append(ld, ll);
 	free(ld);
 
@@ -430,7 +430,7 @@ static VikGpsLayer * gps_layer_unmarshall(uint8_t *data, int len, Viewport * vie
 	VikLayer *child_layer;
 	int i;
 
-	vik_layer_unmarshall_params(VIK_LAYER(rv), data+sizeof(int), alm_size, viewport);
+	vik_layer_unmarshall_params((VikLayer *) rv, data+sizeof(int), alm_size, viewport);
 	alm_next;
 
 	i = 0;
@@ -618,7 +618,7 @@ static VikLayerParamData gps_layer_get_param(VikGpsLayer *vgl, uint16_t id, bool
 
 VikGpsLayer *vik_gps_layer_new(Viewport * viewport)
 {
-	VikGpsLayer *vgl = VIK_GPS_LAYER (g_object_new(VIK_GPS_LAYER_TYPE, NULL));
+	VikGpsLayer * vgl = (VikGpsLayer *) g_object_new(VIK_GPS_LAYER_TYPE, NULL);
 	((VikLayer *) vgl)->layer = new LayerGPS((VikLayer *) vgl);
 	LayerGPS * layer = (LayerGPS *) ((VikLayer *) vgl)->layer;
 
@@ -655,14 +655,14 @@ VikGpsLayer *vik_gps_layer_new(Viewport * viewport)
 	layer->protocol = NULL;
 	layer->serial_port = NULL;
 
-	vik_layer_set_defaults(VIK_LAYER(vgl), viewport);
+	vik_layer_set_defaults((VikLayer *) vgl, viewport);
 
 	return vgl;
 }
 
 void LayerGPS::draw(Viewport * viewport)
 {
-	VikLayer *trigger = VIK_LAYER(viewport->get_trigger());
+	VikLayer *trigger = (VikLayer *) viewport->get_trigger();
 
 	for (int i = 0; i < NUM_TRW; i++) {
 		LayerTRW * trw = this->trw_children[i];
@@ -1969,7 +1969,7 @@ LayerGPS::LayerGPS(Viewport * viewport) : LayerGPS()
 
 	/* vik_gps_layer_new() */
 
-	VikGpsLayer * vgl = VIK_GPS_LAYER (g_object_new(VIK_GPS_LAYER_TYPE, NULL));
+	VikGpsLayer * vgl = (VikGpsLayer *) g_object_new(VIK_GPS_LAYER_TYPE, NULL);
 	((VikLayer *) vgl)->layer = this;
 	this->vl = (VikLayer *) vgl;
 

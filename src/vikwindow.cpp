@@ -956,7 +956,7 @@ static void simple_map_update(VikWindow *vw, bool only_new)
 	// Find the most relevent single map layer to operate on
 	Layer * layer = vw->layers_panel->get_top_layer()->get_top_visible_layer_of_type(VIK_LAYER_MAPS);
 	if (layer)
-		vik_maps_layer_download(VIK_MAPS_LAYER(layer->vl), vw->viewport, only_new);
+		vik_maps_layer_download((VikMapsLayer *) layer->vl, vw->viewport, only_new);
 }
 
 /**
@@ -1182,7 +1182,7 @@ static void draw_redraw(VikWindow *vw)
 	vw->trigger_center = *(vw->viewport->get_center());
 	VikLayer *new_trigger = vw->trigger;
 	vw->trigger = NULL;
-	VikLayer *old_trigger = VIK_LAYER(vw->viewport->get_trigger());
+	VikLayer *old_trigger = (VikLayer *) vw->viewport->get_trigger();
 
 	if (! new_trigger)
 		; /* do nothing -- have to redraw everything. */
@@ -3421,7 +3421,7 @@ static bool export_to(VikWindow *vw, std::list<Layer *> * layers, VikFileType_t 
 	vik_window_set_busy_cursor(vw);
 
 	for (auto iter = layers->begin(); iter != layers->end(); iter++) {
-		Layer * l = (Layer *) (VIK_LAYER(*iter))->layer;
+		Layer * l = *iter;
 		char *fn = g_strconcat(dir, G_DIR_SEPARATOR_S, l->name, extension, NULL);
 
 		// Some protection in attempting to write too many same named files

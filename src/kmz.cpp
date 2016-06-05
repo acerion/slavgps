@@ -453,7 +453,7 @@ typedef struct zip_file zip_file_t;
 			VikGeorefLayer *vgl = vik_georef_layer_create ( vvp, vlp, name, pixbuf, &vc_tl, &vc_br );
 			if ( vgl ) {
 				VikAggregateLayer *top = vik_layers_panel_get_top_layer ( vlp );
-				vik_aggregate_layer_add_layer ( top, VIK_LAYER(vgl), false );
+				vik_aggregate_layer_add_layer ( top, (VikLayer *) vgl, false );
 			}
 		}
 	}

@@ -346,14 +346,14 @@ void LayerMapnik::set_cache_dir(char const * name)
 
 void LayerMapnik::marshall(uint8_t **data, int *len)
 {
-	VikMapnikLayer * vml = (VikMapnikLayer *) this->vl;
-	vik_layer_marshall_params(VIK_LAYER(vml), data, len);
+	//VikMapnikLayer * vml = (VikMapnikLayer *) this->vl;
+	vik_layer_marshall_params(this->vl, data, len);
 }
 
 static VikMapnikLayer * mapnik_layer_unmarshall(uint8_t *data, int len, Viewport * viewport)
 {
 	VikMapnikLayer *rv = mapnik_layer_new(viewport);
-	vik_layer_unmarshall_params(VIK_LAYER(rv), data, len, viewport);
+	vik_layer_unmarshall_params((VikLayer *) rv, data, len, viewport);
 	return rv;
 }
 
@@ -443,11 +443,11 @@ static VikLayerParamData mapnik_layer_get_param(VikMapnikLayer *vml, uint16_t id
  */
 static VikMapnikLayer * mapnik_layer_new(Viewport * viewport)
 {
-	VikMapnikLayer *vml = VIK_MAPNIK_LAYER(g_object_new (VIK_MAPNIK_LAYER_TYPE, NULL));
+	VikMapnikLayer * vml = (VikMapnikLayer *) g_object_new (VIK_MAPNIK_LAYER_TYPE, NULL);
 	((VikLayer *) vml)->layer = new LayerMapnik((VikLayer *) vml);
 	LayerMapnik * layer = (LayerMapnik *) ((VikLayer *) vml)->layer;
 
-	vik_layer_set_defaults(VIK_LAYER(vml), viewport);
+	vik_layer_set_defaults((VikLayer *) vml, viewport);
 	layer->tile_size_x = size_default().u; // FUTURE: Is there any use in this being configurable?
 	layer->loaded = false;
 	layer->mi = mapnik_interface_new();
@@ -544,7 +544,7 @@ bool LayerMapnik::carto_load(VikViewport * vvp)
  */
 void LayerMapnik::post_read(Viewport * viewport, bool from_file)
 {
-	VikMapnikLayer *vml = VIK_MAPNIK_LAYER(this->vl);
+	VikMapnikLayer * vml = (VikMapnikLayer *) this->vl;
 
 	// Determine if carto needs to be run
 	bool do_carto = false;
@@ -1246,11 +1246,11 @@ LayerMapnik::LayerMapnik(VikLayer * vl) : Layer(vl)
 
 LayerMapnik::LayerMapnik(Viewport * viewport) : LayerMapnik()
 {
-	VikMapnikLayer *vml = VIK_MAPNIK_LAYER(g_object_new (VIK_MAPNIK_LAYER_TYPE, NULL));
+	VikMapnikLayer * vml = (VikMapnikLayer *) g_object_new (VIK_MAPNIK_LAYER_TYPE, NULL);
 	((VikLayer *) vml)->layer = this;
 	this->vl = (VikLayer *) vml;
 
-	vik_layer_set_defaults(VIK_LAYER(vml), viewport);
+	vik_layer_set_defaults((VikLayer *) vml, viewport);
 	this->tile_size_x = size_default().u; // FUTURE: Is there any use in this being configurable?
 	this->loaded = false;
 	this->mi = mapnik_interface_new();

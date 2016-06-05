@@ -771,7 +771,7 @@ bool vik_layers_panel_tool(VikLayersPanel *vlp, uint16_t layer_type, VikToolInte
 	if (vl && vl->type == layer_type) {
 		tool_func(vl, event, viewport);
 		return true;
-	} else if (VIK_LAYER(vlp->panel_ref->toplayer->vl)->visible &&
+	} else if (vlp->panel_ref->toplayer->vl->visible &&
 		   vik_aggregate_layer_tool((VikAggregateLayer *) vlp->panel_ref->toplayer->vl, layer_type, tool_func, event, viewport) != 1) { /* either accepted or rejected, but a layer was found */
 		return true;
 	}
@@ -823,7 +823,7 @@ void LayersPanel::change_coord_mode(VikCoordMode mode)
 static void layers_panel_finalize(GObject *gob)
 {
 	VikLayersPanel *vlp = VIK_LAYERS_PANEL (gob);
-	g_object_unref(VIK_LAYER(vlp->panel_ref->toplayer->vl));
+	g_object_unref(vlp->panel_ref->toplayer->vl);
 	G_OBJECT_CLASS(parent_class)->finalize(gob);
 }
 

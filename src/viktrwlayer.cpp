@@ -9187,7 +9187,7 @@ LayerTRW::LayerTRW(Viewport * viewport) : Layer()
 	/* VikTrwLayer *rv = trw_layer_new1(viewport); */
 	{
 
-		rv = VIK_TRW_LAYER (g_object_new(VIK_TRW_LAYER_TYPE, NULL));
+		rv = (VikTrwLayer *) g_object_new(VIK_TRW_LAYER_TYPE, NULL);
 
 		((VikLayer *) rv)->layer = this;
 		this->vl = (VikLayer *) rv;

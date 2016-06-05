@@ -487,7 +487,7 @@ void LayerMaps::set_cache_dir(char const * dir)
 		}
 	}
 
-	char *canonical_dir = vu_get_canonical_filename(VIK_LAYER(this->vl), mydir);
+	char *canonical_dir = vu_get_canonical_filename(this->vl, mydir);
 
 	// Ensure cache_dir always ends with a separator
 	unsigned int len = strlen(canonical_dir);
@@ -714,7 +714,7 @@ static void maps_layer_change_param(GtkWidget *widget, ui_change_values values)
 			GtkWidget *w3 = ww1[PARAM_AUTODOWNLOAD];
 			GtkWidget *w4 = ww2[PARAM_AUTODOWNLOAD];
 			// Depends on autodownload value
-			LayerMaps * layer = (LayerMaps *) ((VikLayer *) VIK_MAPS_LAYER(values[UI_CHG_LAYER]))->layer;
+			LayerMaps * layer = (LayerMaps *) ((VikLayer *) values[UI_CHG_LAYER])->layer;
 			bool missing_sense = sensitive && layer->autodownload;
 			if (w1) {
 				gtk_widget_set_sensitive(w1, missing_sense);
@@ -797,13 +797,13 @@ static void maps_layer_change_param(GtkWidget *widget, ui_change_values values)
 
 static VikMapsLayer * maps_layer_new(Viewport * viewport)
 {
-	VikMapsLayer *vml = VIK_MAPS_LAYER (g_object_new(VIK_MAPS_LAYER_TYPE, NULL));
+	VikMapsLayer * vml = (VikMapsLayer *) g_object_new(VIK_MAPS_LAYER_TYPE, NULL);
 
 	((VikLayer *) vml)->layer = new LayerMaps((VikLayer *) vml);
 
 	LayerMaps * layer = (LayerMaps *) ((VikLayer *) vml)->layer;
 
-	vik_layer_set_defaults(VIK_LAYER(vml), viewport);
+	vik_layer_set_defaults((VikLayer *) vml, viewport);
 
 	layer->dl_tool_x = layer->dl_tool_y = -1;
 	layer->last_center = NULL;
@@ -900,15 +900,15 @@ char const * LayerMaps::tooltip()
 
 void LayerMaps::marshall(uint8_t **data, int *len)
 {
-	VikMapsLayer * vml = (VikMapsLayer *) this->vl;
-	vik_layer_marshall_params(VIK_LAYER(vml), data, len);
+	//VikMapsLayer * vml = (VikMapsLayer *) this->vl;
+	vik_layer_marshall_params(this->vl, data, len);
 }
 
 static VikMapsLayer * maps_layer_unmarshall(uint8_t *data, int len, Viewport * viewport)
 {
 	VikMapsLayer *rv = maps_layer_new(viewport);
-	vik_layer_unmarshall_params(VIK_LAYER(rv), data, len, viewport);
-	((Layer *) VIK_LAYER(rv)->layer)->post_read(viewport, false);
+	vik_layer_unmarshall_params((VikLayer *) rv, data, len, viewport);
+	((Layer *) ((VikLayer *) rv)->layer)->post_read(viewport, false);
 	return rv;
 }
 
@@ -2637,14 +2637,14 @@ LayerMaps::LayerMaps(Viewport * viewport) : LayerMaps()
 {
 	fprintf(stderr, "LayerMaps::LayerMaps(viewport)\n");
 
-	VikMapsLayer *vml = VIK_MAPS_LAYER (g_object_new(VIK_MAPS_LAYER_TYPE, NULL));
+	VikMapsLayer * vml = (VikMapsLayer *) g_object_new(VIK_MAPS_LAYER_TYPE, NULL);
 
 	((VikLayer *) vml)->layer = this;
 	this->vl = (VikLayer *) vml;
 
 	LayerMaps * layer = (LayerMaps *) ((VikLayer *) vml)->layer;
 
-	vik_layer_set_defaults(VIK_LAYER(vml), viewport);
+	vik_layer_set_defaults((VikLayer *) vml, viewport);
 
 	layer->dl_tool_x = layer->dl_tool_y = -1;
 	layer->last_center = NULL;

@@ -108,13 +108,13 @@ GType vik_coord_layer_get_type()
 void LayerCoord::marshall(uint8_t **data, int *len)
 {
 	VikCoordLayer *vcl = (VikCoordLayer *) this->vl;
-	vik_layer_marshall_params(VIK_LAYER(vcl), data, len);
+	vik_layer_marshall_params((VikLayer *) vcl, data, len);
 }
 
 static VikCoordLayer * coord_layer_unmarshall(uint8_t *data, int len, Viewport * viewport)
 {
 	VikCoordLayer *rv = coord_layer_new(viewport);
-	vik_layer_unmarshall_params(VIK_LAYER(rv), data, len, viewport);
+	vik_layer_unmarshall_params((VikLayer *) rv, data, len, viewport);
 
 	LayerCoord * layer = (LayerCoord *) ((VikLayer * ) rv)->layer;
 	layer->update_gc(viewport);
@@ -175,11 +175,11 @@ void LayerCoord::post_read(Viewport * viewport, bool from_file)
 
 static VikCoordLayer * coord_layer_new(Viewport * viewport)
 {
-	VikCoordLayer *vcl = VIK_COORD_LAYER(g_object_new(VIK_COORD_LAYER_TYPE, NULL));
+	VikCoordLayer * vcl = (VikCoordLayer *) g_object_new(VIK_COORD_LAYER_TYPE, NULL);
 
 	((VikLayer *) vcl)->layer = new LayerCoord((VikLayer *) vcl);
 
-	vik_layer_set_defaults(VIK_LAYER(vcl), viewport);
+	vik_layer_set_defaults((VikLayer *) vcl, viewport);
 
 	LayerCoord * layer = (LayerCoord *) ((VikLayer * ) vcl)->layer;
 
@@ -417,7 +417,7 @@ LayerCoord::LayerCoord(VikLayer * vl) : Layer(vl)
 LayerCoord::LayerCoord(Viewport * viewport)
 {
 	fprintf(stderr, "LayerCoord()\n");
-	VikCoordLayer * vcl = VIK_COORD_LAYER(g_object_new(VIK_COORD_LAYER_TYPE, NULL));
+	VikCoordLayer * vcl = (VikCoordLayer *) g_object_new(VIK_COORD_LAYER_TYPE, NULL);
 	((VikLayer *) vcl)->layer = this;
 	this->vl = (VikLayer *) vcl;
 
@@ -427,7 +427,7 @@ LayerCoord::LayerCoord(Viewport * viewport)
 	strcpy(this->type_string, "COORD");
 
 
-	vik_layer_set_defaults(VIK_LAYER(vcl), viewport);
+	vik_layer_set_defaults((VikLayer *) vcl, viewport);
 	if (viewport) {
 		LayerCoord * layer = (LayerCoord *) ((VikLayer * ) vcl)->layer;
 		this->update_gc(viewport);
