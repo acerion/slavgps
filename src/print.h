@@ -31,7 +31,7 @@ extern "C" {
 #endif
 
 
-void a_print(VikWindow *vw, VikViewport *vvp);
+void a_print(VikWindow *vw, Viewport * viewport);
 
 #ifdef __cplusplus
 }

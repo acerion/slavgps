@@ -702,12 +702,12 @@ void LayerGPS::change_coord_mode(VikCoordMode mode)
 	}
 }
 
-void LayerGPS::add_menu_items(GtkMenu * menu, void * vlp)
+void LayerGPS::add_menu_items(GtkMenu * menu, void * panel)
 {
 	static gps_layer_data_t pass_along;
 	GtkWidget *item;
 	pass_along.layer = this;
-	pass_along.panel = ((VikLayersPanel *) vlp)->panel_ref;
+	pass_along.panel = (LayersPanel *) panel;
 
 	item = gtk_menu_item_new();
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
@@ -1247,7 +1247,7 @@ static void gps_comm_thread(GpsSession *sess)
  * @port: The GPS serial port
  * @tracking: If tracking then viewport display update will be skipped
  * @vvp: A viewport is required as the display may get updated
- * @vlp: A layers panel is needed for uploading as the items maybe modified
+ * @panel: A layers panel is needed for uploading as the items maybe modified
  * @do_tracks: Whether tracks shoud be processed
  * @do_waypoints: Whether waypoints shoud be processed
  * @turn_off: Whether we should attempt to turn off the GPS device after the transfer (only some devices support this)

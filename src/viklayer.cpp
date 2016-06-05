@@ -536,10 +536,10 @@ bool vik_layer_sublayer_toggle_visible ( VikLayer *l, int subtype, void * sublay
 }
 #endif
 
-bool vik_layer_selected(VikLayer * l, int subtype, void * sublayer, int type, void * vlp)
+bool vik_layer_selected(VikLayer * l, int subtype, void * sublayer, int type, void * panel)
 {
 	Layer * layer = (Layer *) l->layer;
-	bool result = layer->selected(subtype, sublayer, type, vlp);
+	bool result = layer->selected(subtype, sublayer, type, panel);
 	if (result) {
 		return result;
 	} else {
@@ -568,10 +568,10 @@ uint16_t vik_layer_get_menu_items_selection(VikLayer *l)
 }
 
 #if 0
-void vik_layer_add_menu_items ( VikLayer *l, GtkMenu *menu, void * vlp )
+void vik_layer_add_menu_items ( VikLayer *l, GtkMenu *menu, void * panel)
 {
 	Layer * layer = (Layer *) l->layer;
-	layer->add_menu_items(menu, vlp);
+	layer->add_menu_items(menu, panel);
 }
 
 bool vik_layer_sublayer_add_menu_items ( VikLayer *l, GtkMenu *menu, void * panel, int subtype, void * sublayer, GtkTreeIter *iter, Viewport * viewport)
@@ -580,10 +580,10 @@ bool vik_layer_sublayer_add_menu_items ( VikLayer *l, GtkMenu *menu, void * pane
 	return layer->sublayer_add_menu_items(menu, panel, subtype, sublayer, iter, viewport);
 }
 
-const char *vik_layer_sublayer_rename_request ( VikLayer *l, const char *newname, void * vlp, int subtype, void * sublayer, GtkTreeIter *iter )
+const char *vik_layer_sublayer_rename_request ( VikLayer *l, const char *newname, void * panel, int subtype, void * sublayer, GtkTreeIter *iter )
 {
 	Layer * layer = (Layer *) l->layer;
-	return layer->sublayer_rename_request(newname, vlp, subtype, (VikViewport *) sublayer, iter);
+	return layer->sublayer_rename_request(newname, panel, subtype, (VikViewport *) sublayer, iter);
 }
 #endif
 
@@ -595,11 +595,11 @@ GdkPixbuf *vik_layer_load_icon ( VikLayerTypeEnum type )
   return NULL;
 }
 
-bool vik_layer_set_param ( VikLayer *vl, uint16_t id, VikLayerParamData data, void * viewport, bool is_file_operation )
+bool vik_layer_set_param ( VikLayer *vl, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation )
 {
   Layer * layer = (Layer *) vl->layer;
   if ( vik_layer_interfaces[layer->type]->set_param )
-	  return vik_layer_interfaces[layer->type]->set_param(vl, id, data, (Viewport *) viewport, is_file_operation );
+	  return vik_layer_interfaces[layer->type]->set_param(vl, id, data, viewport, is_file_operation );
   return false;
 }
 
@@ -815,7 +815,7 @@ char const * Layer::sublayer_tooltip(int subtype, void * sublayer)
       return tmp_buf;
 }
 
-bool Layer::selected(int subtype, void * sublayer, int type, void * vlp)
+bool Layer::selected(int subtype, void * sublayer, int type, void * panel)
 {
 	return false;
 }
@@ -889,7 +889,7 @@ void Layer::write_file(FILE * f)
 }
 
 
-void Layer::add_menu_items(GtkMenu * menu, void * vlp)
+void Layer::add_menu_items(GtkMenu * menu, void * panel)
 {
 	return;
 }
@@ -899,7 +899,7 @@ bool Layer::sublayer_add_menu_items(GtkMenu * menu, void * panel, int subtype, v
 	return false;
 }
 
-char const * Layer::sublayer_rename_request(const char * newname, void * vlp, int subtype, void * sublayer, GtkTreeIter * iter)
+char const * Layer::sublayer_rename_request(const char * newname, void * panel, int subtype, void * sublayer, GtkTreeIter * iter)
 {
 	return NULL;
 }

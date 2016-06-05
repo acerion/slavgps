@@ -47,7 +47,7 @@ using namespace SlavGPS;
  *  Uses Magic library if available to determine the jpgness.
  *  Otherwise uses a rudimentary extension name check.
  */
-bool a_jpg_magic_check ( const char *filename )
+bool a_jpg_magic_check(char const * filename)
 {
 	bool is_jpg = false;
 #ifdef HAVE_MAGIC_H
@@ -80,7 +80,7 @@ bool a_jpg_magic_check ( const char *filename )
  *
  * @top:      The Aggregate layer that a new TRW layer may be created in
  * @filename: The JPG filename
- * @vvp:      The viewport
+ * @viewport: The viewport
  *
  * Returns: Whether the loading was a success or not
  *
@@ -88,10 +88,10 @@ bool a_jpg_magic_check ( const char *filename )
  *  Otherwise the waypoint will be positioned at the current screen center.
  * If a TRW layer is already selected the waypoint will be created in that layer.
  */
-bool a_jpg_load_file ( VikAggregateLayer *top, const char *filename, VikViewport *vvp )
+bool a_jpg_load_file(LayerAggregate * top, char const * filename, Viewport * viewport)
 {
 	bool auto_zoom = true;
-	VikWindow *vw = (VikWindow *)(VIK_GTK_WINDOW_FROM_LAYER((VikLayer *) top));
+	VikWindow *vw = (VikWindow *) (VIK_GTK_WINDOW_FROM_LAYER(top->vl));
 	VikLayersPanel *vlp = vik_window_layers_panel ( vw );
 	// Auto load into TrackWaypoint layer if one is selected
 	Layer * trw = vlp->panel_ref->get_selected();
@@ -100,7 +100,7 @@ bool a_jpg_load_file ( VikAggregateLayer *top, const char *filename, VikViewport
 	if (trw == NULL || trw->type != VIK_LAYER_TRW) {
 		// Create layer if necessary
 
-		trw = (LayerTRW *) new LayerTRW(&vvp->port);
+		trw = (LayerTRW *) new LayerTRW(viewport);
 		trw->rename(a_file_basename(filename));
 		create_layer = true;
 	}
@@ -108,7 +108,7 @@ bool a_jpg_load_file ( VikAggregateLayer *top, const char *filename, VikViewport
 	char *name = NULL;
 	Waypoint * wp = NULL;
 #ifdef VIK_CONFIG_GEOTAG
-	wp = a_geotag_create_waypoint_from_file ( filename, vvp->port.get_coord_mode(), &name );
+	wp = a_geotag_create_waypoint_from_file ( filename, viewport->get_coord_mode(), &name );
 #endif
 	if ( wp ) {
 		// Create name if geotag method didn't return one
@@ -123,18 +123,18 @@ bool a_jpg_load_file ( VikAggregateLayer *top, const char *filename, VikViewport
 		((LayerTRW *) trw)->filein_add_waypoint((char *) a_file_basename(filename), wp);
 		wp->set_image(filename);
 		// Simply set position to the current center
-		wp->coord = *(vvp->port.get_center());
+		wp->coord = *(viewport->get_center());
 		auto_zoom = false;
 	}
 
 	// Complete the setup
-	trw->post_read(&vvp->port, true );
+	trw->post_read(viewport, true );
 	if ( create_layer ) {
-		((LayerAggregate *) ((VikLayer *) top)->layer)->add_layer(trw, false);
+		top->add_layer(trw, false);
 	}
 
 	if ( auto_zoom )
-		((LayerTRW *) trw)->auto_set_view(&vvp->port);
+		((LayerTRW *) trw)->auto_set_view(viewport);
 
 	// ATM This routine can't fail
 	return true;

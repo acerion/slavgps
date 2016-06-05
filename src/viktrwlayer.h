@@ -91,7 +91,7 @@ namespace SlavGPS {
 		char const * tooltip();
 		char const * sublayer_tooltip(int subtype, void * sublayer);
 
-		bool selected(int subtype, void * sublayer, int type, void * vlp);
+		bool selected(int subtype, void * sublayer, int type, void * panel);
 
 		bool show_selected_viewport_menu(GdkEventButton * event, Viewport * viewport);
 
@@ -117,9 +117,9 @@ namespace SlavGPS {
 
 		int read_file(FILE * f, char const * dirpath);
 		void write_file(FILE * f);
-		void add_menu_items(GtkMenu * menu, void * vlp);
+		void add_menu_items(GtkMenu * menu, void * panel);
 		bool sublayer_add_menu_items(GtkMenu * menu, void * panel, int subtype, void * sublayer, GtkTreeIter * iter, Viewport * viewport);
-		char const * sublayer_rename_request(const char * newname, void * vlp, int subtype, void * sublayer, GtkTreeIter * iter);
+		char const * sublayer_rename_request(const char * newname, void * panel, int subtype, void * sublayer, GtkTreeIter * iter);
 		bool sublayer_toggle_visible(int subtype, void * sublayer);
 
 		void realize(VikTreeview * vt, GtkTreeIter * layer_iter);
@@ -229,8 +229,8 @@ namespace SlavGPS {
 		void waypoint_reset_icon(Waypoint * wp); /* void trw_layer_waypoint_reset_icon ( VikTrwLayer *vtl, Waypoint * wp). */
 		void update_treeview(Track * trk); /* void trw_layer_update_treeview(VikTrwLayer * vtl, Track * trk). */
 
-		bool dem_test(VikLayersPanel * vlp); /* static bool trw_layer_dem_test(VikTrwLayer * vtl, VikLayersPanel * vlp). */
-		void apply_dem_data_common(VikLayersPanel * vlp, Track * trk, bool skip_existing_elevations); /* static void apply_dem_data_common(VikTrwLayer * vtl, VikLayersPanel * vlp, Track * trk, bool skip_existing_elevations). */
+		bool dem_test(LayersPanel * panel); /* static bool trw_layer_dem_test(VikTrwLayer * vtl, VikLayersPanel * vlp). */
+		void apply_dem_data_common(LayersPanel * panel, Track * trk, bool skip_existing_elevations); /* static void apply_dem_data_common(VikTrwLayer * vtl, VikLayersPanel * vlp, Track * trk, bool skip_existing_elevations). */
 		void smooth_it(Track * trk, bool flat); /* static void smooth_it(VikTrwLayer * vtl, Track * trk, bool flat). */
 		void wp_changed_message(int changed); /* static void wp_changed_message(VikTrwLayer * vtl, int changed). */
 

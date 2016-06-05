@@ -176,7 +176,7 @@ static void trw_layer_track_stats ( menu_array_values values )
 {
 	LayerTRW * trw = (LayerTRW *) values[MA_VTL];
 	Track * trk = ((Track *) values[MA_TRK]);
-	VikViewport *vvp = VIK_VIEWPORT(values[MA_VVP]);
+	Viewport * viewport = (Viewport *) values[MA_VVP];
 
 	if ( trk && trk->name ) {
 		// Kill off this dialog to allow interaction with properties window
@@ -187,8 +187,8 @@ static void trw_layer_track_stats ( menu_array_values values )
 		vik_trw_layer_propwin_run(VIK_GTK_WINDOW_FROM_LAYER(trw->vl),
 								  trw,
 								  trk,
-								  NULL, // vlp
-								  vvp,
+								  NULL, // panel
+								  viewport,
 								  true );
     }
 }
@@ -197,7 +197,7 @@ static void trw_layer_track_view ( menu_array_values values )
 {
 	LayerTRW * trw = (LayerTRW *) values[MA_VTL];
 	Track * trk = ((Track *) values[MA_TRK]);
-	VikViewport *vvp = VIK_VIEWPORT(values[MA_VVP]);
+	Viewport * viewport = (Viewport *) values[MA_VVP];
 
 	// TODO create common function to convert between LatLon[2] and LatLonBBox or even change LatLonBBox to be 2 LatLons!
 	struct LatLon maxmin[2];
@@ -206,7 +206,7 @@ static void trw_layer_track_view ( menu_array_values values )
 	maxmin[0].lon = trk->bbox.east;
 	maxmin[1].lon = trk->bbox.west;
 
-    trw->zoom_to_show_latlons(&vvp->port, maxmin);
+    trw->zoom_to_show_latlons(viewport, maxmin);
 
 	trw_layer_track_select(values);
 }
@@ -270,7 +270,7 @@ static void add_copy_menu_item ( GtkMenu *menu, GtkWidget *tree_view )
 	gtk_widget_show ( item );
 }
 
-static bool add_menu_items ( GtkMenu *menu, LayerTRW * trw, Track * trk, void * trk_uuid, VikViewport *vvp, GtkWidget *tree_view, void * data )
+static bool add_menu_items ( GtkMenu *menu, LayerTRW * trw, Track * trk, void * trk_uuid, Viewport * viewport, GtkWidget *tree_view, void * data )
 {
 	static menu_array_values values;
 	GtkWidget *item;
@@ -278,7 +278,7 @@ static bool add_menu_items ( GtkMenu *menu, LayerTRW * trw, Track * trk, void * 
 	values[MA_VTL]       = trw;
 	values[MA_TRK]       = trk;
 	values[MA_TRK_UUID]  = trk_uuid;
-	values[MA_VVP]       = vvp;
+	values[MA_VVP]       = viewport;
 	values[MA_TREEVIEW]  = tree_view;
 	values[MA_TRKS_LIST] = data;
 
@@ -374,7 +374,7 @@ static bool trw_layer_track_menu_popup ( GtkWidget *tree_view,
 		                 trw,
 		                 trk,
 		                 (void *) ((long) uid),
-		                 (VikViewport *) viewport->vvp,
+		                 viewport,
 		                 tree_view,
 		                 data );
 

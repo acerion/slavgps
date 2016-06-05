@@ -61,7 +61,7 @@ typedef struct {
   int                num_pages;
   bool            show_info_header;
   VikWindow           *vw;
-  VikViewport         *vvp;
+  Viewport         * viewport;
   double             xmpp, ympp;  /* zoom level (meters/pixel) */
   double             xres;
   double             yres;
@@ -79,7 +79,7 @@ static void begin_print(GtkPrintOperation *operation, GtkPrintContext *context, 
 static void draw_page(GtkPrintOperation *print, GtkPrintContext *context, int page_nr, PrintData *data);
 static void end_print(GtkPrintOperation *operation, GtkPrintContext *context,  PrintData *data);
 
-void a_print(VikWindow *vw, VikViewport *vvp)
+void a_print(VikWindow *vw, Viewport * viewport)
 {
   /* TODO: make print_settings non-static when saving_settings_to_file is
    * implemented. Keep it static for now to retain settings for each
@@ -95,17 +95,17 @@ void a_print(VikWindow *vw, VikViewport *vvp)
 
   data.num_pages     = 1;
   data.vw            = vw;
-  data.vvp           = vvp;
+  data.viewport      = viewport;
   data.offset_x      = 0;
   data.offset_y      = 0;
   data.center        = VIK_PRINT_CENTER_BOTH;
   data.use_full_page = false;
   data.operation     = print_oper;
 
-  data.xmpp          = vvp->port.get_xmpp();
-  data.ympp          = vvp->port.get_ympp();
-  data.width         = vvp->port.get_width();
-  data.height        = vvp->port.get_height();
+  data.xmpp          = viewport->get_xmpp();
+  data.ympp          = viewport->get_ympp();
+  data.width         = viewport->get_width();
+  data.height        = viewport->get_height();
 
   data.xres = data.yres = 1; // This forces it to default to a 100% page size
 
@@ -207,7 +207,7 @@ static void draw_page_cairo(GtkPrintContext *context, PrintData *data)
 
   cr = gtk_print_context_get_cairo_context(context);
   pixbuf_to_draw = gdk_pixbuf_get_from_drawable(NULL,
-                               GDK_DRAWABLE(data->vvp->port.get_pixmap()),
+                               GDK_DRAWABLE(data->viewport->get_pixmap()),
                                NULL, 0, 0, 0, 0, data->width, data->height);
   surface = cairo_image_surface_create(CAIRO_FORMAT_RGB24,
                                        data->width, data->height);
@@ -655,7 +655,7 @@ static GtkWidget *create_custom_widget_cb(GtkPrintOperation *operation, PrintDat
                    G_CALLBACK(scale_change_value_cb), info);
 
 
-  info->preview = vik_print_preview_new (setup, GDK_DRAWABLE(data->vvp->port.get_pixmap()));
+  info->preview = vik_print_preview_new (setup, GDK_DRAWABLE(data->viewport->get_pixmap()));
   vik_print_preview_set_use_full_page (VIK_PRINT_PREVIEW(info->preview),
                                         data->use_full_page);
   gtk_box_pack_start (GTK_BOX (main_hbox), info->preview, true, true, 0);

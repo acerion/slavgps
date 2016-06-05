@@ -64,8 +64,8 @@ typedef enum {
 
 char *append_file_ext(const char *filename, VikFileType_t type);
 
-VikLoadType_t a_file_load(VikAggregateLayer *top, VikViewport *vp, const char *filename);
-bool a_file_save(VikAggregateLayer *top, void * vp, const char *filename);
+VikLoadType_t a_file_load(LayerAggregate * top, Viewport * viewport, char const * filename);
+bool a_file_save(LayerAggregate * top, Viewport * viewport, const char *filename);
 /* Only need to define Track if the file type is FILE_TYPE_GPX_TRACK */
 bool a_file_export(LayerTRW * trw, const char *filename, VikFileType_t file_type, Track * trk, bool write_hidden);
 bool a_file_export_babel(LayerTRW * trw, const char *filename, const char *format,

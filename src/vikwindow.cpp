@@ -263,9 +263,9 @@ Viewport * vik_window_viewport(VikWindow *vw)
 	return vw->viewport;
 }
 
-VikLayersPanel * vik_window_layers_panel(VikWindow *vw)
+struct _VikLayersPanel * vik_window_layers_panel(VikWindow *vw)
 {
-	return(vw->layers_panel->gob);
+	return vw->layers_panel->gob;
 }
 
 /**
@@ -3128,8 +3128,8 @@ void vik_window_open_file(VikWindow *vw, const char *filename, bool change_filen
 	bool success = false;
 	bool restore_original_filename = false;
 
-	VikAggregateLayer * agg = (VikAggregateLayer *) vw->layers_panel->get_top_layer()->vl;
-	vw->loaded_type = a_file_load(agg, ((VikViewport *) vw->viewport->vvp), filename);
+	LayerAggregate * agg = vw->layers_panel->get_top_layer();
+	vw->loaded_type = a_file_load(agg, vw->viewport, filename);
 	switch (vw->loaded_type) {
 	case LOAD_TYPE_READ_FAILURE:
 		a_dialog_error_msg(GTK_WINDOW(vw), _("The file you requested could not be opened."));
@@ -3385,7 +3385,7 @@ static bool window_save(VikWindow *vw)
 	vik_window_set_busy_cursor(vw);
 	bool success = true;
 
-	if (a_file_save((VikAggregateLayer *) vw->layers_panel->get_top_layer()->vl, ((VikViewport *) vw->viewport->vvp), vw->filename)) {
+	if (a_file_save(vw->layers_panel->get_top_layer(), vw->viewport, vw->filename)) {
 		update_recently_used_document(vw, vw->filename);
 	} else {
 		a_dialog_error_msg(GTK_WINDOW(vw), _("The filename you requested could not be opened for writing."));
@@ -3561,7 +3561,7 @@ static void my_acquire(VikWindow *vw, VikDataSourceInterface *datasource)
 	vik_datasource_mode_t mode = datasource->mode;
 	if (mode == VIK_DATASOURCE_AUTO_LAYER_MANAGEMENT)
 		mode = VIK_DATASOURCE_CREATENEWLAYER;
-	a_acquire(vw, vw->layers_panel->gob, ((VikViewport *) vw->viewport->vvp), mode, datasource, NULL, NULL);
+	a_acquire(vw, vw->layers_panel, vw->viewport, mode, datasource, NULL, NULL);
 }
 
 static void acquire_from_gps(GtkAction *a, VikWindow *vw)
@@ -4360,7 +4360,7 @@ static void import_kmz_file_cb(GtkAction *a, VikWindow *vw)
 
 static void print_cb(GtkAction *a, VikWindow *vw)
 {
-	a_print(vw, ((VikViewport *) vw->viewport->vvp));
+	a_print(vw, vw->viewport);
 }
 
 /* really a misnomer: changes coord mode (actual coordinates) AND/OR draw mode (viewport only) */

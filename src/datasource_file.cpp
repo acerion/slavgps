@@ -56,7 +56,7 @@ static BabelFile *last_file_filter = NULL;
 static int last_type = 0;
 
 static void * datasource_file_init ( acq_vik_t *avt );
-static void datasource_file_add_setup_widgets ( GtkWidget *dialog, VikViewport *vvp, void * user_data );
+static void datasource_file_add_setup_widgets ( GtkWidget *dialog, Viewport * viewport, void * user_data );
 static void datasource_file_get_process_options ( datasource_file_widgets_t *widgets, ProcessOptions *po, void * not_used, const char *not_used2, const char *not_used3 );
 static void datasource_file_cleanup ( void * data );
 
@@ -123,7 +123,7 @@ static void add_file_filter (void * data, void * user_data)
 }
 
 /* See VikDataSourceInterface */
-static void datasource_file_add_setup_widgets ( GtkWidget *dialog, VikViewport *vvp, void * user_data )
+static void datasource_file_add_setup_widgets ( GtkWidget *dialog, Viewport * viewport, void * user_data )
 {
   datasource_file_widgets_t *widgets = (datasource_file_widgets_t *)user_data;
   GtkWidget *filename_label, *type_label;
@@ -197,4 +197,3 @@ static void datasource_file_cleanup ( void * data )
 {
   free( data );
 }
-

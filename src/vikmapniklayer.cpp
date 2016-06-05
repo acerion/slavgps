@@ -460,7 +460,7 @@ static VikMapnikLayer * mapnik_layer_new(Viewport * viewport)
  * ATM don't have any version issues AFAIK
  * Tested with carto 0.14.0
  */
-bool LayerMapnik::carto_load(VikViewport * vvp)
+bool LayerMapnik::carto_load(Viewport * viewport)
 {
 	char *mystdout = NULL;
 	char *mystderr = NULL;
@@ -477,7 +477,7 @@ bool LayerMapnik::carto_load(VikViewport * vvp)
 
 	// NB Running carto may take several seconds
 	//  especially for large style sheets like the default OSM Mapnik style (~6 seconds on my system)
-	VikWindow *vw = VIK_WINDOW(VIK_GTK_WINDOW_FROM_WIDGET(vvp));
+	VikWindow *vw = VIK_WINDOW(VIK_GTK_WINDOW_FROM_WIDGET(viewport->vvp));
 	if (vw) {
 		char *msg = g_strdup_printf("%s: %s", _("Running"), command);
 		vik_window_statusbar_update(vw, msg, VIK_STATUSBAR_INFO);
@@ -497,7 +497,7 @@ bool LayerMapnik::carto_load(VikViewport * vvp)
 #endif
 		if (mystderr)
 			if (strlen(mystderr) > 1) {
-				a_dialog_error_msg_extra(VIK_GTK_WINDOW_FROM_WIDGET(vvp), _("Error running carto command:\n%s"), mystderr);
+				a_dialog_error_msg_extra(VIK_GTK_WINDOW_FROM_WIDGET(viewport->vvp), _("Error running carto command:\n%s"), mystderr);
 				answer = false;
 			}
 		if (mystdout) {
@@ -574,13 +574,13 @@ void LayerMapnik::post_read(Viewport * viewport, bool from_file)
 
 	if (do_carto)
 		// Don't load the XML config if carto load fails
-		if (!this->carto_load((VikViewport *) viewport->vvp)) {
+		if (!this->carto_load(viewport)) {
 			return;
 		}
 
 	char* ans = mapnik_interface_load_map_file(this->mi, this->filename_xml, this->tile_size_x, this->tile_size_x);
 	if (ans) {
-		a_dialog_error_msg_extra(VIK_GTK_WINDOW_FROM_WIDGET((VikViewport *) viewport->vvp),
+		a_dialog_error_msg_extra(VIK_GTK_WINDOW_FROM_WIDGET(viewport->vvp),
 		                           _("Mapnik error loading configuration file:\n%s"),
 		                           ans);
 		free(ans);
@@ -876,7 +876,7 @@ void LayerMapnik::draw(Viewport * viewport)
 		// Done after so drawn on top
 		// Just a handy guide to tile blocks.
 		if (vik_debug && vik_verbose) {
-			GdkGC *black_gc = GTK_WIDGET((VikViewport *) viewport->vvp)->style->black_gc;
+			GdkGC *black_gc = GTK_WIDGET(viewport->vvp)->style->black_gc;
 			int width = viewport->get_width();
 			int height = viewport->get_height();
 			int xx, yy;
@@ -944,10 +944,10 @@ static void mapnik_layer_flush_memory(menu_array_values values)
 static void mapnik_layer_reload(menu_array_values values)
 {
 	VikMapnikLayer * vml = (VikMapnikLayer *) values[MA_VML];
-	VikViewport * vvp = (VikViewport *) values[MA_VVP];
+	Viewport * viewport = (Viewport *) values[MA_VVP];
 	Layer * layer = (Layer *) ((VikLayer *) vml)->layer;
-	layer->post_read(&vvp->port, false);
-	layer->draw(&vvp->port);
+	layer->post_read(viewport, false);
+	layer->draw(viewport);
 }
 
 /**
@@ -960,23 +960,23 @@ static void mapnik_layer_reload(menu_array_values values)
 static void mapnik_layer_carto(menu_array_values values)
 {
 	VikMapnikLayer * vml = (VikMapnikLayer *) values[MA_VML];
-	VikViewport * vvp = (VikViewport *) values[MA_VVP];
+	Viewport * viewport = (Viewport *) values[MA_VVP];
 	LayerMapnik * layer = (LayerMapnik *) ((VikLayer *) vml)->layer;
 
 	// Don't load the XML config if carto load fails
-	if (!layer->carto_load(vvp)) {
+	if (!layer->carto_load(viewport)) {
 		return;
 	}
 
 	char* ans = mapnik_interface_load_map_file(layer->mi, layer->filename_xml, layer->tile_size_x, layer->tile_size_x);
 	if (ans) {
-		a_dialog_error_msg_extra(VIK_GTK_WINDOW_FROM_WIDGET(vvp),
+		a_dialog_error_msg_extra(VIK_GTK_WINDOW_FROM_WIDGET(viewport->vvp),
 		                           _("Mapnik error loading configuration file:\n%s"),
 		                           ans);
 		free(ans);
 	} else {
 		Layer * vml_ = (Layer *) ((VikLayer *) vml)->layer;
-		vml_->draw(&vvp->port);
+		vml_->draw(viewport);
 	}
 }
 
@@ -1016,14 +1016,14 @@ static void mapnik_layer_about(menu_array_values values)
 /**
  *
  */
-void LayerMapnik::add_menu_items(GtkMenu * menu, void * vlp)
+void LayerMapnik::add_menu_items(GtkMenu * menu, void * panel_)
 {
 	VikMapnikLayer * vml = (VikMapnikLayer *) this->vl;
 
 	static menu_array_values values;
 	values[MA_VML] = vml;
-	VikLayersPanel * vlp_ = VIK_LAYERS_PANEL(vlp);
-	values[MA_VVP] = vlp_->panel_ref->get_viewport();
+	LayersPanel * panel = (LayersPanel *) panel_;
+	values[MA_VVP] = panel->get_viewport();
 
 	GtkWidget *item = gtk_menu_item_new();
 	gtk_menu_shell_append (GTK_MENU_SHELL(menu), item);

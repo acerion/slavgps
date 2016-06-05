@@ -46,7 +46,7 @@ typedef struct {
 static char *last_folder_uri = NULL;
 
 static void * datasource_geotag_init ( acq_vik_t *avt );
-static void datasource_geotag_add_setup_widgets ( GtkWidget *dialog, VikViewport *vvp, void * user_data );
+static void datasource_geotag_add_setup_widgets ( GtkWidget *dialog, Viewport * viewport, void * user_data );
 static void datasource_geotag_get_process_options ( void * user_data, ProcessOptions *po, void * not_used, const char *not_used2, const char *not_used3 );
 static bool datasource_geotag_process(LayerTRW * trw, ProcessOptions *po, BabelStatusFunc status_cb, acq_dialog_widgets_t *adw, void * not_used );
 static void datasource_geotag_cleanup ( void * user_data );
@@ -85,7 +85,7 @@ static void * datasource_geotag_init ( acq_vik_t *avt )
 }
 
 /* See VikDataSourceInterface */
-static void datasource_geotag_add_setup_widgets ( GtkWidget *dialog, VikViewport *vvp, void * user_data )
+static void datasource_geotag_add_setup_widgets ( GtkWidget *dialog, Viewport * viewport, void * user_data )
 {
 	datasource_geotag_user_data_t *userdata = (datasource_geotag_user_data_t *)user_data;
 
@@ -160,7 +160,7 @@ static bool datasource_geotag_process(LayerTRW * trw, ProcessOptions *po, BabelS
 	while ( cur_file ) {
 		char *filename = (char *) cur_file->data;
 		char *name;
-		Waypoint * wp = a_geotag_create_waypoint_from_file(filename, adw->vvp->port.get_coord_mode(), &name);
+		Waypoint * wp = a_geotag_create_waypoint_from_file(filename, adw->viewport->get_coord_mode(), &name);
 		if (wp) {
 			// Create name if geotag method didn't return one
 			if ( !name )

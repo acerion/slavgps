@@ -124,8 +124,8 @@ typedef struct _propwidgets {
   bool  configure_dialog;
   LayerTRW * trw;
   Track * trk;
-  VikViewport *vvp;
-  VikLayersPanel *vlp;
+  Viewport * viewport;
+  LayersPanel * panel;
   int      profile_width;
   int      profile_height;
   int      profile_width_old;
@@ -377,8 +377,8 @@ static unsigned int get_distance_chunk_index (double length)
 static Trackpoint * set_center_at_graph_position(double event_x,
 						   int img_width,
 						   LayerTRW * trw,
-						   VikLayersPanel *vlp,
-						   VikViewport *vvp,
+						   LayersPanel * panel,
+						   Viewport * viewport,
 						   Track * trk,
 						   bool time_base,
 						   int PROFILE_WIDTH)
@@ -397,14 +397,14 @@ static Trackpoint * set_center_at_graph_position(double event_x,
 
   if (tp) {
     VikCoord coord = tp->coord;
-    if ( vlp ) {
-      vlp->panel_ref->get_viewport()->set_center_coord(&coord, true );
-      vlp->panel_ref->emit_update();
+    if ( panel ) {
+      panel->get_viewport()->set_center_coord(&coord, true );
+      panel->emit_update();
     }
     else {
-      /* since vlp not set, vvp should be valid instead! */
-      if ( vvp )
-        vvp->port.set_center_coord(&coord, true );
+      /* since panel not set, viewport should be valid instead! */
+      if ( viewport)
+        viewport->set_center_coord(&coord, true );
       trw->emit_update();
     }
   }
@@ -510,7 +510,7 @@ static void track_graph_click( GtkWidget *event_box, GdkEventButton *event, Prop
   GtkAllocation allocation;
   gtk_widget_get_allocation ( event_box, &allocation );
 
-  Trackpoint * tp = set_center_at_graph_position(event->x, allocation.width, widgets->trw, widgets->vlp, widgets->vvp, widgets->trk, is_time_graph, widgets->profile_width);
+  Trackpoint * tp = set_center_at_graph_position(event->x, allocation.width, widgets->trw, widgets->panel, widgets->viewport, widgets->trk, is_time_graph, widgets->profile_width);
   // Unable to get the point so give up
   if (tp == NULL) {
     gtk_dialog_set_response_sensitive(GTK_DIALOG(widgets->dialog), VIK_TRW_LAYER_PROPWIN_SPLIT_MARKER, false);
@@ -3081,14 +3081,14 @@ static GtkWidget *create_table (int cnt, char *labels[], GtkWidget *contents[])
 void vik_trw_layer_propwin_run(GtkWindow *parent,
 			       LayerTRW * layer,
 			       Track * trk,
-			       void * vlp,
-			       VikViewport *vvp,
+			       void * panel,
+			       Viewport * viewport,
 			       bool start_on_stats )
 {
   PropWidgets *widgets = prop_widgets_new();
   widgets->trw = layer;
-  widgets->vvp = vvp;
-  widgets->vlp = (VikLayersPanel *) vlp;
+  widgets->viewport = viewport;
+  widgets->panel = (LayersPanel *) panel;
   widgets->trk = trk;
 
   int profile_size_value;

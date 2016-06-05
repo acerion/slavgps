@@ -52,7 +52,7 @@ static void * datasource_gps_init_func ( acq_vik_t *avt );
 static void datasource_gps_get_process_options ( void * user_data, ProcessOptions *po, void * not_used, const char *not_used2, const char *not_used3 );
 static void datasource_gps_cleanup ( void * user_data );
 static void datasource_gps_progress ( BabelProgressCode c, void * data, acq_dialog_widgets_t *w );
-static void datasource_gps_add_setup_widgets ( GtkWidget *dialog, VikViewport *vvp, void * user_data );
+static void datasource_gps_add_setup_widgets ( GtkWidget *dialog, Viewport * viewport, void * user_data );
 static void datasource_gps_add_progress_widgets ( GtkWidget *dialog, void * user_data );
 static void datasource_gps_off ( void * add_widgets_data_not_used, char **babelargs, char **input_file );
 
@@ -503,7 +503,7 @@ static void find_protocol (void * elem, void * user_data)
   }
 }
 
-static void datasource_gps_add_setup_widgets ( GtkWidget *dialog, VikViewport *vvp, void * user_data )
+static void datasource_gps_add_setup_widgets ( GtkWidget *dialog, Viewport * viewport, void * user_data )
 {
   gps_user_data_t *w = (gps_user_data_t *)user_data;
   GtkTable *box, *data_type_box;

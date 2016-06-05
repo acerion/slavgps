@@ -1030,11 +1030,11 @@ static void georef_layer_goto_center(georef_data_t * data)
 	vik_layers_panel_emit_update_cb(panel);
 }
 
-void LayerGeoref::add_menu_items(GtkMenu *menu, void * vlp)
+void LayerGeoref::add_menu_items(GtkMenu *menu, void * panel)
 {
 	static georef_data_t pass_along;
 	pass_along.layer = this;
-	pass_along.panel = ((VikLayersPanel *) vlp)->panel_ref;
+	pass_along.panel = (LayersPanel *) panel;
 
 	GtkWidget *item;
 
@@ -1159,7 +1159,7 @@ static void goto_center_ll(Viewport * viewport, struct LatLon ll_tl, struct LatL
  *
  */
 VikGeorefLayer * vik_georef_layer_create(Viewport * viewport,
-					 VikLayersPanel * vlp,
+					 LayersPanel * panel,
 					 const char *name,
 					 GdkPixbuf *pixbuf,
 					 VikCoord *coord_tl,

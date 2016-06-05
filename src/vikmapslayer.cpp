@@ -2341,14 +2341,14 @@ static void maps_layer_flush(menu_array_values values)
 	a_mapcache_flush_type(map_sources[layer->map_index]->map_type);
 }
 
-void LayerMaps::add_menu_items(GtkMenu * menu, void * vlp_arg)
+void LayerMaps::add_menu_items(GtkMenu * menu, void * panel_)
 {
-	VikLayersPanel * vlp = (VikLayersPanel *) vlp_arg;
+	LayersPanel * panel = (LayersPanel *) panel_;
 
 	GtkWidget *item;
 	static menu_array_values values;
 	values[MA_VML] = this;
-	values[MA_VVP] = vlp->panel_ref->get_viewport();
+	values[MA_VVP] = panel->get_viewport();
 
 	item = gtk_menu_item_new();
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);

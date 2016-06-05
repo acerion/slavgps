@@ -42,8 +42,8 @@ typedef struct _VikDataSourceInterface VikDataSourceInterface;
 
 typedef struct {
 	VikWindow *vw;
-	VikLayersPanel *vlp;
-	VikViewport *vvp;
+	LayersPanel * panel;
+	Viewport * viewport;
 	void * userdata;
 } acq_vik_t;
 
@@ -55,8 +55,8 @@ typedef struct {
 typedef struct {
 	GtkWidget *status;
 	VikWindow *vw;
-	VikLayersPanel *vlp;
-	VikViewport *vvp;
+	LayersPanel * panel;
+	Viewport * viewport;
 	GtkWidget *dialog;
 	bool running;
 	VikDataSourceInterface *source_interface;
@@ -97,7 +97,7 @@ typedef char *(*VikDataSourceCheckExistenceFunc) ();
  *
  * Create widgets to show in a setup dialog, set up state via user_data.
  */
-typedef void (*VikDataSourceAddSetupWidgetsFunc) ( GtkWidget *dialog, VikViewport *vvp, void * user_data );
+typedef void (*VikDataSourceAddSetupWidgetsFunc) ( GtkWidget *dialog, Viewport * viewport, void * user_data );
 
 /**
  * VikDataSourceGetProcessOptionsFunc:
@@ -184,18 +184,18 @@ struct _VikDataSourceInterface {
 /**********************************/
 
 void a_acquire(VikWindow *vw,
-	       VikLayersPanel *vlp,
-	       VikViewport *vvp,
+	       LayersPanel * panel,
+	       Viewport * viewport,
 	       vik_datasource_mode_t mode,
 	       VikDataSourceInterface *source_interface,
 	       void * userdata,
 	       VikDataSourceCleanupFunc cleanup_function);
 
-GtkWidget *a_acquire_trwlayer_menu(VikWindow *vw, VikLayersPanel *vlp, VikViewport *vvp, VikTrwLayer *vtl);
+GtkWidget *a_acquire_trwlayer_menu(VikWindow *vw, LayersPanel * panel, Viewport * viewport, LayerTRW * trw);
 
-GtkWidget *a_acquire_trwlayer_track_menu(VikWindow *vw, VikLayersPanel *vlp, VikViewport *vvp, VikTrwLayer *vtl);
+GtkWidget *a_acquire_trwlayer_track_menu(VikWindow *vw, LayersPanel * panel, Viewport * viewport, LayerTRW * trw);
 
-GtkWidget *a_acquire_track_menu(VikWindow *vw, VikLayersPanel *vlp, VikViewport *vvp, Track * trk);
+GtkWidget *a_acquire_track_menu(VikWindow *vw, LayersPanel * panel, Viewport * viewport, Track * trk);
 
 void a_acquire_set_filter_track(Track * trk);
 

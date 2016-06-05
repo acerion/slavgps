@@ -117,7 +117,7 @@ namespace SlavGPS {
 		void draw_section(Viewport * viewport, VikCoord *ul, VikCoord *br);
 		char const * tooltip();
 		void marshall(uint8_t ** data, int * len);
-		void add_menu_items(GtkMenu * menu, void * vlp);
+		void add_menu_items(GtkMenu * menu, void * panel);
 		void free_();
 
 

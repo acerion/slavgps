@@ -40,13 +40,13 @@
 
 typedef struct {
   GtkWidget *page_number;
-  VikViewport *vvp;
+  Viewport * viewport;
 } datasource_osm_widgets_t;
 
 static double last_page_number = 0;
 
 static void * datasource_osm_init ( acq_vik_t *avt );
-static void datasource_osm_add_setup_widgets ( GtkWidget *dialog, VikViewport *vvp, void * user_data );
+static void datasource_osm_add_setup_widgets ( GtkWidget *dialog, Viewport * viewport, void * user_data );
 static void datasource_osm_get_process_options ( datasource_osm_widgets_t *widgets, ProcessOptions *po, DownloadFileOptions *options, const char *notused1, const char *notused2);
 static void datasource_osm_cleanup ( void * data );
 
@@ -79,11 +79,11 @@ static void * datasource_osm_init ( acq_vik_t *avt )
 {
   datasource_osm_widgets_t *widgets = (datasource_osm_widgets_t *) malloc(sizeof (datasource_osm_widgets_t));
   /* Keep reference to viewport */
-  widgets->vvp = avt->vvp;
+  widgets->viewport = avt->viewport;
   return widgets;
 }
 
-static void datasource_osm_add_setup_widgets ( GtkWidget *dialog, VikViewport *vvp, void * user_data )
+static void datasource_osm_add_setup_widgets ( GtkWidget *dialog, Viewport * viewport, void * user_data )
 {
   datasource_osm_widgets_t *widgets = (datasource_osm_widgets_t *)user_data;
   GtkWidget *page_number_label;
@@ -108,7 +108,7 @@ static void datasource_osm_get_process_options ( datasource_osm_widgets_t *widge
   char smaxlat[G_ASCII_DTOSTR_BUF_SIZE];
 
   /* get Viewport bounding box */
-  widgets->vvp->port.get_min_max_lat_lon(&min_lat, &max_lat, &min_lon, &max_lon );
+  widgets->viewport->get_min_max_lat_lon(&min_lat, &max_lat, &min_lon, &max_lon );
 
   /* Convert as LANG=C double representation */
   g_ascii_dtostr (sminlon, G_ASCII_DTOSTR_BUF_SIZE, min_lon);

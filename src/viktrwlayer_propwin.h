@@ -42,8 +42,8 @@ extern "C" {
 void vik_trw_layer_propwin_run(GtkWindow * parent,
 							   LayerTRW * layer,
 							   Track * trk,
-							   void * vlp,
-							   VikViewport * vvp,
+							   void * panel,
+							   Viewport * viewport,
 							   bool start_on_stats);
 
 /**

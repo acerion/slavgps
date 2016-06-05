@@ -147,7 +147,7 @@ static void webtool_datasource_get_property (GObject    *object,
 typedef struct {
 	VikExtTool *self;
 	VikWindow *vw;
-	VikViewport *vvp;
+	Viewport * viewport;
 	GtkWidget *user_string;
 } datasource_t;
 
@@ -183,12 +183,12 @@ static void * datasource_init ( acq_vik_t *avt )
 	datasource_t *data = (datasource_t *) malloc(sizeof(*data));
 	data->self = (VikExtTool *) avt->userdata;
 	data->vw = avt->vw;
-	data->vvp = avt->vvp;
+	data->viewport = avt->viewport;
 	data->user_string = NULL;
 	return data;
 }
 
-static void datasource_add_setup_widgets ( GtkWidget *dialog, VikViewport *vvp, void * user_data )
+static void datasource_add_setup_widgets ( GtkWidget *dialog, Viewport * viewport, void * user_data )
 {
 	datasource_t *widgets = (datasource_t *)user_data;
 	VikWebtoolDatasourcePrivate *priv = WEBTOOL_DATASOURCE_GET_PRIVATE ( widgets->self );
@@ -295,7 +295,7 @@ static void webtool_datasource_open ( VikExtTool *self, VikWindow *vw )
 	};
 	memcpy ( vik_datasource_interface, &data, sizeof(VikDataSourceInterface) );
 
-	a_acquire ( vw, vik_window_layers_panel(vw), (VikViewport *) vik_window_viewport(vw)->vvp, data.mode, vik_datasource_interface, self, cleanup );
+	a_acquire ( vw, vik_window_layers_panel(vw)->panel_ref, vik_window_viewport(vw), data.mode, vik_datasource_interface, self, cleanup );
 }
 
 static void vik_webtool_datasource_class_init ( VikWebtoolDatasourceClass *klass )

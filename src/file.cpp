@@ -179,9 +179,9 @@ static void write_layer_params_and_data(VikLayer *l, FILE *f)
 	*/
 }
 
-static void file_write(VikAggregateLayer *top, FILE *f, void * vp)
+static void file_write(LayerAggregate * top, FILE *f, Viewport * viewport)
 {
-	LayerAggregate * aggregate = (LayerAggregate *) ((VikLayer *) top)->layer;
+	LayerAggregate * aggregate = top;
 	Stack *stack = NULL;
 	VikLayer *current_layer;
 	struct LatLon ll;
@@ -195,9 +195,9 @@ static void file_write(VikAggregateLayer *top, FILE *f, void * vp)
 	stack->under = NULL;
 
 	/* crazhy CRAZHY */
-	vik_coord_to_latlon((VIK_VIEWPORT(vp))->port.get_center(), &ll);
+	vik_coord_to_latlon(viewport->get_center(), &ll);
 
-	mode = VIK_VIEWPORT(vp)->port.get_drawmode();
+	mode = viewport->get_drawmode();
 	switch (mode) {
 	case VIK_VIEWPORT_DRAWMODE_UTM:
 		modestring = (char *) "utm";
@@ -218,12 +218,12 @@ static void file_write(VikAggregateLayer *top, FILE *f, void * vp)
 	fprintf(f, "#VIKING GPS Data file " VIKING_URL "\n");
 	fprintf(f, "FILE_VERSION=%d\n", VIKING_FILE_VERSION);
 	fprintf(f, "\nxmpp=%f\nympp=%f\nlat=%f\nlon=%f\nmode=%s\ncolor=%s\nhighlightcolor=%s\ndrawscale=%s\ndrawcentermark=%s\ndrawhighlight=%s\n",
-		VIK_VIEWPORT(vp)->port.get_xmpp(), VIK_VIEWPORT(vp)->port.get_ympp(), ll.lat, ll.lon,
-		modestring, VIK_VIEWPORT(vp)->port.get_background_color(),
-		VIK_VIEWPORT(vp)->port.get_highlight_color(),
-		VIK_VIEWPORT(vp)->port.get_draw_scale() ? "t" : "f",
-		VIK_VIEWPORT(vp)->port.get_draw_centermark() ? "t" : "f",
-		VIK_VIEWPORT(vp)->port.get_draw_highlight() ? "t" : "f");
+		viewport->get_xmpp(), viewport->get_ympp(), ll.lat, ll.lon,
+		modestring, viewport->get_background_color(),
+		viewport->get_highlight_color(),
+		viewport->get_draw_scale() ? "t" : "f",
+		viewport->get_draw_centermark() ? "t" : "f",
+		viewport->get_draw_highlight() ? "t" : "f");
 
 	if (!aggregate->visible) {
 		fprintf(f, "visible=f\n");
@@ -281,7 +281,7 @@ static void string_list_set_param(int i, GList *list, void * *layer_and_vp)
 {
 	VikLayerParamData x;
 	x.sl = list;
-	vik_layer_set_param((VikLayer *) layer_and_vp[0], i, x, layer_and_vp[1], true);
+	vik_layer_set_param((VikLayer *) layer_and_vp[0], i, x, (Viewport *) layer_and_vp[1], true);
 }
 
 /**
@@ -292,7 +292,7 @@ static void string_list_set_param(int i, GList *list, void * *layer_and_vp)
  * TODO flow up line number(s) / error messages of problems encountered...
  *
  */
-static bool file_read(VikAggregateLayer *top, FILE *f, const char *dirpath, VikViewport *vp)
+static bool file_read(LayerAggregate * top, FILE *f, const char *dirpath, Viewport * viewport)
 {
 	Stack *stack = NULL;
 	struct LatLon ll = { 0.0, 0.0 };
@@ -305,13 +305,13 @@ static bool file_read(VikAggregateLayer *top, FILE *f, const char *dirpath, VikV
 	uint8_t params_count = 0;
 
 	GHashTable *string_lists = g_hash_table_new(g_direct_hash,g_direct_equal);
-	LayerAggregate * aggregate = (LayerAggregate *) ((VikLayer *) top)->layer;
+	LayerAggregate * aggregate = top;
 
 	bool successful_read = true;
 
 	push(&stack);
 	stack->under = NULL;
-	stack->data = (void *) top;
+	stack->data = (void *) top->vl;
 
 	while (fgets (buffer, 4096, f))  {
 		line_num++;
@@ -366,7 +366,7 @@ static bool file_read(VikAggregateLayer *top, FILE *f, const char *dirpath, VikV
 						params_count = vik_layer_get_interface(type)->params_count;
 
 					} else { /* Any other VIK_LAYER_x type. */
-						Layer * layer = Layer::new_(type, &vp->port, false);
+						Layer * layer = Layer::new_(type, viewport, false);
 						stack->data = (void *) layer->vl;
 						params = vik_layer_get_interface(type)->params;
 						params_count = vik_layer_get_interface(type)->params_count;
@@ -380,7 +380,7 @@ static bool file_read(VikAggregateLayer *top, FILE *f, const char *dirpath, VikV
 					/* add any string lists we've accumulated */
 					void * layer_and_vp[2];
 					layer_and_vp[0] = stack->data;
-					layer_and_vp[1] = vp;
+					layer_and_vp[1] = viewport;
 					g_hash_table_foreach(string_lists, (GHFunc) string_list_set_param, layer_and_vp);
 					g_hash_table_remove_all(string_lists);
 
@@ -388,7 +388,7 @@ static bool file_read(VikAggregateLayer *top, FILE *f, const char *dirpath, VikV
 						if (((Layer *) ((VikLayer *) stack->under->data)->layer)->type == VIK_LAYER_AGGREGATE) {
 							Layer * layer = (Layer *) ((VikLayer *) stack->data)->layer;
 							((LayerAggregate *) ((VikLayer *) stack->under->data)->layer)->add_layer(layer, false);
-							layer->post_read(&vp->port, true);
+							layer->post_read(viewport, true);
 						} else if (((Layer *) ((VikLayer *) stack->under->data)->layer)->type == VIK_LAYER_GPS) {
 							/* TODO: anything else needs to be done here ? */
 						} else {
@@ -454,17 +454,17 @@ static bool file_read(VikAggregateLayer *top, FILE *f, const char *dirpath, VikV
 				}
 				// However we'll still carry and attempt to read whatever we can
 			} else if (stack->under == NULL && eq_pos == 4 && strncasecmp(line, "xmpp", eq_pos) == 0) { /* "hard coded" params: global & for all layer-types */
-				VIK_VIEWPORT(vp)->port.set_xmpp(strtod_i8n(line+5, NULL));
+				viewport->set_xmpp(strtod_i8n(line+5, NULL));
 			} else if (stack->under == NULL && eq_pos == 4 && strncasecmp(line, "ympp", eq_pos) == 0) {
-				VIK_VIEWPORT(vp)->port.set_ympp(strtod_i8n(line+5, NULL));
+				viewport->set_ympp(strtod_i8n(line+5, NULL));
 			} else if (stack->under == NULL && eq_pos == 3 && strncasecmp(line, "lat", eq_pos) == 0) {
 				ll.lat = strtod_i8n(line+4, NULL);
 			} else if (stack->under == NULL && eq_pos == 3 && strncasecmp(line, "lon", eq_pos) == 0) {
 				ll.lon = strtod_i8n(line+4, NULL);
 			} else if (stack->under == NULL && eq_pos == 4 && strncasecmp(line, "mode", eq_pos) == 0 && strcasecmp(line+5, "utm") == 0) {
-				VIK_VIEWPORT(vp)->port.set_drawmode(VIK_VIEWPORT_DRAWMODE_UTM);
+				viewport->set_drawmode(VIK_VIEWPORT_DRAWMODE_UTM);
 			} else if (stack->under == NULL && eq_pos == 4 && strncasecmp(line, "mode", eq_pos) == 0 && strcasecmp(line+5, "expedia") == 0) {
-				VIK_VIEWPORT(vp)->port.set_drawmode(VIK_VIEWPORT_DRAWMODE_EXPEDIA);
+				viewport->set_drawmode(VIK_VIEWPORT_DRAWMODE_EXPEDIA);
 			} else if (stack->under == NULL && eq_pos == 4 && strncasecmp(line, "mode", eq_pos) == 0 && strcasecmp(line+5, "google") == 0) {
 				successful_read = false;
 				fprintf(stderr, _("WARNING: Draw mode '%s' no more supported\n"), "google");
@@ -472,19 +472,19 @@ static bool file_read(VikAggregateLayer *top, FILE *f, const char *dirpath, VikV
 				successful_read = false;
 				fprintf(stderr, _("WARNING: Draw mode '%s' no more supported\n"), "kh");
 			} else if (stack->under == NULL && eq_pos == 4 && strncasecmp(line, "mode", eq_pos) == 0 && strcasecmp(line+5, "mercator") == 0) {
-				VIK_VIEWPORT(vp)->port.set_drawmode(VIK_VIEWPORT_DRAWMODE_MERCATOR);
+				viewport->set_drawmode(VIK_VIEWPORT_DRAWMODE_MERCATOR);
 			} else if (stack->under == NULL && eq_pos == 4 && strncasecmp(line, "mode", eq_pos) == 0 && strcasecmp(line+5, "latlon") == 0) {
-				VIK_VIEWPORT(vp)->port.set_drawmode(VIK_VIEWPORT_DRAWMODE_LATLON);
+				viewport->set_drawmode(VIK_VIEWPORT_DRAWMODE_LATLON);
 			} else if (stack->under == NULL && eq_pos == 5 && strncasecmp(line, "color", eq_pos) == 0) {
-				VIK_VIEWPORT(vp)->port.set_background_color(line+6);
+				viewport->set_background_color(line+6);
 			} else if (stack->under == NULL && eq_pos == 14 && strncasecmp(line, "highlightcolor", eq_pos) == 0) {
-				VIK_VIEWPORT(vp)->port.set_highlight_color(line+15);
+				viewport->set_highlight_color(line+15);
 			} else if (stack->under == NULL && eq_pos == 9 && strncasecmp(line, "drawscale", eq_pos) == 0) {
-				VIK_VIEWPORT(vp)->port.set_draw_scale(TEST_BOOLEAN(line+10));
+				viewport->set_draw_scale(TEST_BOOLEAN(line+10));
 			} else if (stack->under == NULL && eq_pos == 14 && strncasecmp(line, "drawcentermark", eq_pos) == 0) {
-				VIK_VIEWPORT(vp)->port.set_draw_centermark(TEST_BOOLEAN(line+15));
+				viewport->set_draw_centermark(TEST_BOOLEAN(line+15));
 			} else if (stack->under == NULL && eq_pos == 13 && strncasecmp(line, "drawhighlight", eq_pos) == 0) {
-				VIK_VIEWPORT(vp)->port.set_draw_highlight(TEST_BOOLEAN(line+14));
+				viewport->set_draw_highlight(TEST_BOOLEAN(line+14));
 
 			} else if (stack->under && eq_pos == 4 && strncasecmp(line, "name", eq_pos) == 0) {
 				layer->rename(line+5);
@@ -535,7 +535,7 @@ static bool file_read(VikAggregateLayer *top, FILE *f, const char *dirpath, VikV
 								/* STRING or STRING_LIST -- if STRING_LIST, just set param to add a STRING */
 							default: x.s = line;
 							}
-							vik_layer_set_param((VikLayer *) stack->data, i, x, vp, true);
+							vik_layer_set_param((VikLayer *) stack->data, i, x, viewport, true);
 						}
 						found_match = true;
 						break;
@@ -567,13 +567,13 @@ static bool file_read(VikAggregateLayer *top, FILE *f, const char *dirpath, VikV
 		if (stack->under && stack->under->data && stack->data){
 			Layer * layer = (Layer *) ((VikLayer *) stack->data)->layer;
 			((LayerAggregate *) ((VikLayer *) stack->under->data)->layer)->add_layer(layer, false);
-			layer->post_read(&vp->port, true);
+			layer->post_read(viewport, true);
 		}
 		pop(&stack);
 	}
 
 	if (ll.lat != 0.0 || ll.lon != 0.0) {
-		VIK_VIEWPORT(vp)->port.set_center_latlon(&ll, true);
+		viewport->set_center_latlon(&ll, true);
 	}
 
 	if ((!aggregate->visible) && aggregate->realized) {
@@ -597,7 +597,7 @@ if "[EndLayer]"
   pop(&stack);
   vik_aggregate_layer_add_layer(stack->data, vl);
 if "[LayerData]"
-  vik_layer_data (VIK_LAYER_DATA(stack->data), f, vp);
+  vik_layer_data (VIK_LAYER_DATA(stack->data), f, viewport);
 
 */
 
@@ -675,9 +675,9 @@ char *append_file_ext(const char *filename, VikFileType_t type)
 	return new_name;
 }
 
-VikLoadType_t a_file_load(VikAggregateLayer *top, VikViewport *vp, const char *filename_or_uri)
+VikLoadType_t a_file_load(LayerAggregate * top, Viewport * viewport, const char *filename_or_uri)
 {
-	g_return_val_if_fail(vp != NULL, LOAD_TYPE_READ_FAILURE);
+	g_return_val_if_fail(viewport != NULL, LOAD_TYPE_READ_FAILURE);
 
 	char *filename = (char *)filename_or_uri;
 	if (strncmp(filename, "file://", 7) == 0) {
@@ -698,13 +698,13 @@ VikLoadType_t a_file_load(VikAggregateLayer *top, VikViewport *vp, const char *f
 	char *dirpath = g_path_get_dirname(filename);
 	// Attempt loading the primary file type first - our internal .vik file:
 	if (check_magic(f, VIK_MAGIC, VIK_MAGIC_LEN)) {
-		if (file_read(top, f, dirpath, vp)) {
+		if (file_read(top, f, dirpath, viewport)) {
 			load_answer = LOAD_TYPE_VIK_SUCCESS;
 		} else {
 			load_answer = LOAD_TYPE_VIK_FAILURE_NON_FATAL;
 		}
 	} else if (a_jpg_magic_check(filename)) {
-		if (! a_jpg_load_file(top, filename, vp)) {
+		if (! a_jpg_load_file(top, filename, viewport)) {
 			load_answer = LOAD_TYPE_UNSUPPORTED_FAILURE;
 		}
 	} else {
@@ -712,7 +712,7 @@ VikLoadType_t a_file_load(VikAggregateLayer *top, VikViewport *vp, const char *f
 		//  must be loaded into a new TrackWaypoint layer (hence it be created)
 		bool success = true; // Detect load failures - mainly to remove the layer created as it's not required
 
-		LayerTRW * layer = new LayerTRW(&vp->port);
+		LayerTRW * layer = new LayerTRW(viewport);
 		layer->rename(a_file_basename(filename));
 
 		// In fact both kml & gpx files start the same as they are in xml
@@ -744,16 +744,16 @@ VikLoadType_t a_file_load(VikAggregateLayer *top, VikViewport *vp, const char *f
 			g_object_unref(layer->vl);
 		} else {
 			// Complete the setup from the successful load
-			layer->post_read(&vp->port, true);
-			((LayerAggregate *) ((VikLayer *) top)->layer)->add_layer(layer, false);
-			layer->auto_set_view(&vp->port);
+			layer->post_read(viewport, true);
+			top->add_layer(layer, false);
+			layer->auto_set_view(viewport);
 		}
 	}
 	xfclose(f);
 	return load_answer;
 }
 
-bool a_file_save(VikAggregateLayer *top, void * vp, const char *filename)
+bool a_file_save(LayerAggregate * top, Viewport * viewport, const char *filename)
 {
 	FILE *f;
 
@@ -777,7 +777,7 @@ bool a_file_save(VikAggregateLayer *top, void * vp, const char *filename)
 		free(dir);
 	}
 
-	file_write(top, f, vp);
+	file_write(top, f, viewport);
 
 	// Restore previous working directory
 	if (cwd) {

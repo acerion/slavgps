@@ -156,7 +156,7 @@ struct _VikLayerInterface {
 };
 
 VikLayerInterface *vik_layer_get_interface ( VikLayerTypeEnum type );
-bool vik_layer_set_param (VikLayer *layer, uint16_t id, VikLayerParamData data, void * viewport, bool is_file_operation);
+bool vik_layer_set_param (VikLayer *layer, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
 void vik_layer_set_defaults ( VikLayer *vl, Viewport * viewport);
 
 
@@ -170,7 +170,7 @@ VikLayer *vik_layer_unmarshall ( uint8_t *data, int len, Viewport * viewport);
 void      vik_layer_marshall_params ( VikLayer *vl, uint8_t **data, int *len );
 void      vik_layer_unmarshall_params ( VikLayer *vl, uint8_t *data, int len, Viewport * viewport);
 
-bool vik_layer_selected ( VikLayer *l, int subtype, void * sublayer, int type, void * vlp );
+bool vik_layer_selected ( VikLayer *l, int subtype, void * sublayer, int type, void * panel);
 
 /* TODO: put in layerspanel */
 GdkPixbuf *vik_layer_load_icon ( VikLayerTypeEnum type );
@@ -219,7 +219,7 @@ namespace SlavGPS {
 		virtual char const * tooltip();
 		virtual char const * sublayer_tooltip(int subtype, void * sublayer);
 
-		virtual bool selected(int subtype, void * sublayer, int type, void * vlp);
+		virtual bool selected(int subtype, void * sublayer, int type, void * panel);
 
 		virtual bool show_selected_viewport_menu(GdkEventButton * event, Viewport * viewport);
 
@@ -251,9 +251,9 @@ namespace SlavGPS {
 		virtual int read_file(FILE * f, char const * dirpath);
 		virtual void write_file(FILE * f);
 
-		virtual void add_menu_items(GtkMenu * menu, void * vlp);
+		virtual void add_menu_items(GtkMenu * menu, void * panel);
 		virtual bool sublayer_add_menu_items(GtkMenu * menu, void * panel, int subtype, void * sublayer, GtkTreeIter * iter, Viewport * viewport);
-		virtual char const * sublayer_rename_request(const char * newname, void * vlp, int subtype, void * sublayer, GtkTreeIter * iter);
+		virtual char const * sublayer_rename_request(const char * newname, void * panel, int subtype, void * sublayer, GtkTreeIter * iter);
 		virtual bool sublayer_toggle_visible(int subtype, void * sublayer);
 
 		/* Do _not_ use this unless absolutely neccesary. Use the dynamic properties (see coordlayer for example)

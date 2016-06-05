@@ -49,11 +49,11 @@ typedef struct {
 	GtkWidget *user_entry;
 	GtkWidget *password_entry;
 	// NB actual user and password values are stored in oms-traces.c
-	VikViewport *vvp;
+	Viewport * viewport;
 } datasource_osm_my_traces_t;
 
 static void * datasource_osm_my_traces_init ( acq_vik_t *avt );
-static void datasource_osm_my_traces_add_setup_widgets ( GtkWidget *dialog, VikViewport *vvp, void * user_data );
+static void datasource_osm_my_traces_add_setup_widgets ( GtkWidget *dialog, Viewport * viewport, void * user_data );
 static void datasource_osm_my_traces_get_process_options ( void * user_data, ProcessOptions *po, DownloadFileOptions *options, const char *notused1, const char *notused2 );
 static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *process_options, BabelStatusFunc status_cb, acq_dialog_widgets_t *adw, DownloadFileOptions *options_unused );
 static void datasource_osm_my_traces_cleanup ( void * data );
@@ -98,7 +98,7 @@ static void * datasource_osm_my_traces_init ( acq_vik_t *avt )
   return data;
 }
 
-static void datasource_osm_my_traces_add_setup_widgets ( GtkWidget *dialog, VikViewport *vvp, void * user_data )
+static void datasource_osm_my_traces_add_setup_widgets ( GtkWidget *dialog, Viewport * viewport, void * user_data )
 {
 	datasource_osm_my_traces_t *data = (datasource_osm_my_traces_t *)user_data;
 
@@ -125,7 +125,7 @@ static void datasource_osm_my_traces_add_setup_widgets ( GtkWidget *dialog, VikV
 	gtk_widget_show_all ( dialog );
 
 	/* Keep reference to viewport */
-	data->vvp = vvp;
+	data->viewport = viewport;
 }
 
 static void datasource_osm_my_traces_get_process_options ( void * user_data, ProcessOptions *po, DownloadFileOptions *options, const char *notused1, const char *notused2 )
@@ -534,7 +534,7 @@ static void set_in_current_view_property(LayerTRW * trw, datasource_osm_my_trace
 {
 	double min_lat, max_lat, min_lon, max_lon;
 	/* get Viewport bounding box */
-	data->vvp->port.get_min_max_lat_lon(&min_lat, &max_lat, &min_lon, &max_lon );
+	data->viewport->get_min_max_lat_lon(&min_lat, &max_lat, &min_lon, &max_lon );
 
 	LatLonBBox bbox;
 	bbox.north = max_lat;
@@ -634,7 +634,7 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 
 		if ( create_new_layer ) {
 			// Have data but no layer - so create one
-			LayerTRW * layer = new LayerTRW(&adw->vvp->port);
+			LayerTRW * layer = new LayerTRW(adw->viewport);
 			vtlX = (VikTrwLayer *) layer->vl;
 			if (((gpx_meta_data_t *) selected_iterator->data)->name) {
 				layer->rename(((gpx_meta_data_t *) selected_iterator->data)->name);
@@ -668,7 +668,7 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 		if ( result ) {
 			// Can use the layer
 			LayerTRW * layer = (LayerTRW *) ((VikLayer *) vtlX)->layer;
-			adw->vlp->panel_ref->get_top_layer()->add_layer(layer, true);
+			adw->panel->get_top_layer()->add_layer(layer, true);
 			// Move to area of the track
 			layer->post_read(vik_window_viewport(adw->vw), true );
 			layer->auto_set_view(vik_window_viewport(adw->vw));

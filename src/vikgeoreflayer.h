@@ -49,8 +49,8 @@ typedef struct _VikGeorefLayer VikGeorefLayer;
 
 void vik_georef_layer_init(void);
 
-VikGeorefLayer *vik_georef_layer_create(VikViewport *vp,
-					VikLayersPanel *vlp,
+VikGeorefLayer *vik_georef_layer_create(Viewport * viewport,
+					LayersPanel * panel,
 					const char *name,
 					GdkPixbuf *pibxbuf,
 					VikCoord *coord_tr,
@@ -103,7 +103,7 @@ namespace SlavGPS {
 		void draw(Viewport * viewport);
 		char const * tooltip();
 		void marshall(uint8_t ** data, int * len);
-		void add_menu_items(GtkMenu * menu, void * vlp);
+		void add_menu_items(GtkMenu * menu, void * panel);
 		bool properties(void * vp);
 		void free_();
 

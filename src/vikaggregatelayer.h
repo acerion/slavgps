@@ -92,7 +92,7 @@ namespace SlavGPS {
 		void marshall(uint8_t ** data, int * len);
 		void change_coord_mode(VikCoordMode mode);
 		void drag_drop_request(Layer * src, GtkTreeIter * src_item_iter, GtkTreePath * dest_path);
-		void add_menu_items(GtkMenu * menu, void * vlp);
+		void add_menu_items(GtkMenu * menu, void * panel);
 		void realize(VikTreeview * vt, GtkTreeIter * layer_iter);
 		void free_();
 
@@ -113,8 +113,8 @@ namespace SlavGPS {
 
 		void search_date();
 
-		void child_visible_set(VikLayersPanel * vlp, bool visible);
-		void child_visible_toggle(VikLayersPanel * vlp);
+		void child_visible_set(struct _VikLayersPanel * panel, bool visible);
+		void child_visible_toggle(struct _VikLayersPanel * panel);
 
 		std::list<Layer *> * children;
 

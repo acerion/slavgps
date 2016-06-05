@@ -63,7 +63,7 @@ static bool datasource_wikipedia_process(LayerTRW * trw, ProcessOptions *po, Bab
 	struct LatLon maxmin[2] = { {0.0,0.0}, {0.0,0.0} };
 
 	// Note the order is max part first then min part - thus reverse order of use in min_max function:
-	adw->vvp->port.get_min_max_lat_lon(&maxmin[1].lat, &maxmin[0].lat, &maxmin[1].lon, &maxmin[0].lon );
+	adw->viewport->get_min_max_lat_lon(&maxmin[1].lat, &maxmin[0].lat, &maxmin[1].lon, &maxmin[0].lon );
 
 	if (trw) {
 		a_geonames_wikipedia_box ( adw->vw, trw, maxmin );

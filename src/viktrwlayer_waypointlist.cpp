@@ -196,11 +196,11 @@ static void trw_layer_waypoint_view ( menu_array_values values )
 {
 	LayerTRW * trw = (LayerTRW *) values[MA_VTL];
 	Waypoint * wp = (Waypoint *) (values[MA_WPT]);
-	VikViewport *vvp = VIK_VIEWPORT(values[MA_VVP]);
+	Viewport * viewport = (Viewport *) values[MA_VVP];
 
-	vvp->port.set_center_coord(&(wp->coord), true );
+	viewport->set_center_coord(&(wp->coord), true );
 
-	trw_layer_waypoint_select (values);
+	trw_layer_waypoint_select(values);
 
 	trw->emit_update();
 }
@@ -323,7 +323,7 @@ static void add_copy_menu_items ( GtkMenu *menu, GtkWidget *tree_view )
 	gtk_widget_show ( item );
 }
 
-static bool add_menu_items ( GtkMenu *menu, LayerTRW * trw, Waypoint * wp, void * wp_uuid, VikViewport *vvp, GtkWidget *tree_view, void * data )
+static bool add_menu_items ( GtkMenu *menu, LayerTRW * trw, Waypoint * wp, void * wp_uuid, Viewport * viewport, GtkWidget *tree_view, void * data )
 {
 	static menu_array_values values;
 	GtkWidget *item;
@@ -331,7 +331,7 @@ static bool add_menu_items ( GtkMenu *menu, LayerTRW * trw, Waypoint * wp, void 
 	values[MA_VTL]       = trw;
 	values[MA_WPT]       = wp;
 	values[MA_WPT_UUID]  = wp_uuid;
-	values[MA_VVP]       = vvp;
+	values[MA_VVP]       = viewport;
 	values[MA_TREEVIEW]  = tree_view;
 	values[MA_WPTS_LIST] = data;
 
@@ -432,7 +432,7 @@ static bool trw_layer_waypoint_menu_popup ( GtkWidget *tree_view,
 		                 trw,
 		                 wp,
 		                 (void *) ((long) wp_uuid),
-		                 (VikViewport *) viewport->vvp,
+		                 viewport,
 		                 tree_view,
 		                 data );
 

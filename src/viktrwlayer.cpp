@@ -2239,7 +2239,7 @@ void LayerTRW::set_statusbar_msg_info_wpt(Waypoint * wp)
 /**
  * General layer selection function, find out which bit is selected and take appropriate action
  */
-bool LayerTRW::selected(int subtype, void * sublayer, int type, void * vlp)
+bool LayerTRW::selected(int subtype, void * sublayer, int type, void * panel)
 {
 	// Reset
 	this->current_wp    = NULL;
@@ -2522,9 +2522,9 @@ bool LayerTRW::auto_set_view(Viewport * viewport)
 void trw_layer_auto_view(trw_menu_layer_t * data)
 {
 	LayerTRW * layer = data->layer;
-	VikLayersPanel * vlp = (VikLayersPanel *) data->panel->gob;
-	if (layer->auto_set_view(vlp->panel_ref->get_viewport())) {
-		vik_layers_panel_emit_update_cb(vlp->panel_ref);
+	LayersPanel * panel = data->panel;
+	if (layer->auto_set_view(panel->get_viewport())) {
+		vik_layers_panel_emit_update_cb(panel);
 	}
 	else
 		a_dialog_info_msg(VIK_GTK_WINDOW_FROM_LAYER(layer->vl), _("This layer has no waypoints or trackpoints."));
@@ -2625,7 +2625,7 @@ void trw_layer_export_gpx_track(trw_menu_sublayer_t * data)
 void trw_layer_goto_wp(trw_menu_layer_t * data)
 {
 	LayerTRW * layer = data->layer;
-	VikLayersPanel * vlp = (VikLayersPanel *) data->panel->gob;
+	LayersPanel * panel = data->panel;
 	GtkWidget *dia = gtk_dialog_new_with_buttons(_("Find"),
 						     VIK_GTK_WINDOW_FROM_LAYER(layer->vl),
 						     (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
@@ -2654,8 +2654,8 @@ void trw_layer_goto_wp(trw_menu_layer_t * data)
 		if (!wp)
 			a_dialog_error_msg(VIK_GTK_WINDOW_FROM_LAYER(layer->vl), _("Waypoint not found in this layer."));
 		else {
-			vlp->panel_ref->get_viewport()->set_center_coord(&(wp->coord), true);
-			vlp->panel_ref->emit_update();
+			panel->get_viewport()->set_center_coord(&(wp->coord), true);
+			panel->emit_update();
 
 			// Find and select on the side panel
 			sg_uid_t wp_uid = LayerTRWc::find_uid_of_waypoint(layer->waypoints, wp);
@@ -2709,7 +2709,7 @@ void trw_layer_new_wikipedia_wp_viewport(trw_menu_layer_t * data)
 {
 	struct LatLon maxmin[2] = { {0.0,0.0}, {0.0,0.0} };
 	LayerTRW * layer = data->layer;
-	VikLayersPanel * vlp = (VikLayersPanel *) data->panel->gob;
+	LayersPanel * panel = data->panel;
 	VikWindow *vw = (VikWindow *)(VIK_GTK_WINDOW_FROM_LAYER(layer->vl));
 	Viewport * viewport =  vik_window_viewport(vw);
 
@@ -2717,19 +2717,19 @@ void trw_layer_new_wikipedia_wp_viewport(trw_menu_layer_t * data)
 	viewport->get_min_max_lat_lon(&maxmin[1].lat, &maxmin[0].lat, &maxmin[1].lon, &maxmin[0].lon);
 	a_geonames_wikipedia_box((VikWindow *)(VIK_GTK_WINDOW_FROM_LAYER(layer->vl)), layer, maxmin);
 	layer->calculate_bounds_waypoints();
-	vik_layers_panel_emit_update_cb(vlp->panel_ref);
+	vik_layers_panel_emit_update_cb(panel);
 }
 
 void trw_layer_new_wikipedia_wp_layer(trw_menu_layer_t * data)
 {
 	LayerTRW * layer = data->layer;
-	VikLayersPanel * vlp = (VikLayersPanel *) data->panel->gob;
+	LayersPanel * panel = data->panel;
 	struct LatLon maxmin[2] = { {0.0,0.0}, {0.0,0.0} };
 
 	layer->find_maxmin(maxmin);
 	a_geonames_wikipedia_box((VikWindow *)(VIK_GTK_WINDOW_FROM_LAYER(layer->vl)), layer, maxmin);
 	layer->calculate_bounds_waypoints();
-	vik_layers_panel_emit_update_cb(vlp->panel_ref);
+	vik_layers_panel_emit_update_cb(panel);
 }
 
 #ifdef VIK_CONFIG_GEOTAG
@@ -2798,14 +2798,14 @@ void trw_layer_geotagging(trw_menu_layer_t * data)
 static void trw_layer_acquire(trw_menu_layer_t * data, VikDataSourceInterface *datasource)
 {
 	LayerTRW * layer = data->layer;
-	VikLayersPanel * vlp = (VikLayersPanel *) data->panel->gob;
+	LayersPanel * panel = (LayersPanel *) data->panel;
 	VikWindow *vw = (VikWindow *)(VIK_GTK_WINDOW_FROM_LAYER(layer->vl));
 	Viewport * viewport =  vik_window_viewport(vw);
 
 	vik_datasource_mode_t mode = datasource->mode;
 	if (mode == VIK_DATASOURCE_AUTO_LAYER_MANAGEMENT)
 		mode = VIK_DATASOURCE_ADDTOLAYER;
-	a_acquire(vw, vlp, (VikViewport *) viewport->vvp, mode, datasource, NULL, NULL);
+	a_acquire(vw, panel, viewport, mode, datasource, NULL, NULL);
 }
 
 /*
@@ -2901,7 +2901,7 @@ void trw_layer_gps_upload(trw_menu_layer_t * data)
 void trw_layer_gps_upload_any(trw_menu_sublayer_t * data)
 {
 	LayerTRW * layer = data->layer;
-	VikLayersPanel *vlp = (VikLayersPanel *) data->panel->gob;
+	LayersPanel * panel = data->panel;
 	sg_uid_t uid = data->sublayer_id;
 
 	// May not actually get a track here as values[2&3] can be null
@@ -2972,8 +2972,8 @@ void trw_layer_gps_upload_any(trw_menu_sublayer_t * data)
 	gtk_widget_destroy(dialog);
 
 	// When called from the viewport - work the corresponding layerspanel:
-	if (!vlp) {
-		vlp = vik_window_layers_panel(VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(layer->vl)));
+	if (!panel) {
+		panel = vik_window_layers_panel(VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(layer->vl)))->panel_ref;
 	}
 
 	// Apply settings to transfer to the GPS device
@@ -2983,8 +2983,8 @@ void trw_layer_gps_upload_any(trw_menu_sublayer_t * data)
 		     protocol,
 		     port,
 		     false,
-		     vlp->panel_ref->get_viewport(),
-		     vlp->panel_ref,
+		     panel->get_viewport(),
+		     panel,
 		     do_tracks,
 		     do_routes,
 		     do_waypoints,
@@ -2994,13 +2994,13 @@ void trw_layer_gps_upload_any(trw_menu_sublayer_t * data)
 void trw_layer_new_wp(trw_menu_layer_t * data)
 {
 	LayerTRW * layer = data->layer;
-	VikLayersPanel * vlp = (VikLayersPanel *) data->panel->gob;
+	LayersPanel * panel = (LayersPanel *) data->panel->gob;
 	/* TODO longone: okay, if layer above (aggregate) is invisible but vtl->visible is true, this redraws for no reason.
 	   instead return true if you want to update. */
-	if (layer->new_waypoint(VIK_GTK_WINDOW_FROM_LAYER(layer->vl), vlp->panel_ref->get_viewport()->get_center())) {
+	if (layer->new_waypoint(VIK_GTK_WINDOW_FROM_LAYER(layer->vl), panel->get_viewport()->get_center())) {
 		layer->calculate_bounds_waypoints();
 		if (layer->visible)
-			vik_layers_panel_emit_update_cb(vlp->panel_ref);
+			vik_layers_panel_emit_update_cb(panel);
 	}
 }
 
@@ -3075,13 +3075,13 @@ void trw_layer_new_route(trw_menu_layer_t * data)
 void trw_layer_auto_routes_view(trw_menu_layer_t * data)
 {
 	LayerTRW * layer = data->layer;
-	VikLayersPanel * vlp = (VikLayersPanel *) data->panel->gob;
+	LayersPanel * panel = data->panel;
 
 	if (layer->routes.size() > 0) {
 		struct LatLon maxmin[2] = { {0,0}, {0,0} };
 		LayerTRWc::find_maxmin_in_tracks(layer->routes, maxmin);
-		layer->zoom_to_show_latlons(vlp->panel_ref->get_viewport(), maxmin);
-		vik_layers_panel_emit_update_cb(vlp->panel_ref);
+		layer->zoom_to_show_latlons(panel->get_viewport(), maxmin);
+		vik_layers_panel_emit_update_cb(panel);
 	}
 }
 
@@ -3097,13 +3097,13 @@ void trw_layer_finish_track(trw_menu_layer_t * data)
 void trw_layer_auto_tracks_view(trw_menu_layer_t * data)
 {
 	LayerTRW * layer = data->layer;
-	VikLayersPanel * vlp = (VikLayersPanel *) data->panel->gob;
+	LayersPanel * panel = data->panel;
 
 	if (layer->tracks.size() > 0) {
 		struct LatLon maxmin[2] = { {0,0}, {0,0} };
 		LayerTRWc::find_maxmin_in_tracks(layer->tracks, maxmin);
-		layer->zoom_to_show_latlons(vlp->panel_ref->get_viewport(), maxmin);
-		vik_layers_panel_emit_update_cb(vlp->panel_ref);
+		layer->zoom_to_show_latlons(panel->get_viewport(), maxmin);
+		vik_layers_panel_emit_update_cb(panel);
 	}
 }
 
@@ -3939,8 +3939,8 @@ void trw_layer_properties_item(trw_menu_sublayer_t * data)
 			vik_trw_layer_propwin_run(VIK_GTK_WINDOW_FROM_LAYER(layer->vl),
 						  layer,
 						  trk,
-						  data->panel ? data->panel->gob : NULL,
-						  (VikViewport *) data->viewport->vvp,
+						  data->panel ? data->panel : NULL,
+						  data->viewport,
 						  false);
 		}
 	}
@@ -3962,8 +3962,8 @@ void trw_layer_track_statistics(trw_menu_sublayer_t * data)
 		vik_trw_layer_propwin_run(VIK_GTK_WINDOW_FROM_LAYER(layer->vl),
 					  layer,
 					  trk,
-					  data->panel->gob,
-					  (VikViewport *) data->viewport->vvp,
+					  data->panel,
+					  data->viewport,
 					  true);
 	}
 }
@@ -4166,11 +4166,11 @@ void trw_layer_extend_track_end_route_finder(trw_menu_sublayer_t * data)
 /**
  *
  */
-bool LayerTRW::dem_test(VikLayersPanel * vlp)
+bool LayerTRW::dem_test(LayersPanel * panel)
 {
-	// If have a vlp then perform a basic test to see if any DEM info available...
-	if (vlp) {
-		std::list<Layer *> * dems = vlp->panel_ref->get_all_layers_of_type(VIK_LAYER_DEM, true); // Includes hidden DEM layer types
+	// If have a panel then perform a basic test to see if any DEM info available...
+	if (panel) {
+		std::list<Layer *> * dems = panel->get_all_layers_of_type(VIK_LAYER_DEM, true); // Includes hidden DEM layer types
 		if (dems->empty()) {
 			a_dialog_error_msg(VIK_GTK_WINDOW_FROM_LAYER(this->vl), _("No DEM layers available, thus no DEM values can be applied."));
 			return false;
@@ -4188,9 +4188,9 @@ bool LayerTRW::dem_test(VikLayersPanel * vlp)
  *
  * A common function for applying the DEM values and reporting the results.
  */
-void LayerTRW::apply_dem_data_common(VikLayersPanel * vlp, Track * trk, bool skip_existing_elevations)
+void LayerTRW::apply_dem_data_common(LayersPanel * panel, Track * trk, bool skip_existing_elevations)
 {
-	if (!this->dem_test(vlp)) {
+	if (!this->dem_test(panel)) {
 		return;
 	}
 
@@ -4211,7 +4211,7 @@ void trw_layer_apply_dem_data_all(trw_menu_sublayer_t * data)
 	Track * trk = layer->get_track_helper(data);
 
 	if (trk)
-		layer->apply_dem_data_common(data->panel->gob, trk, false);
+		layer->apply_dem_data_common(data->panel, trk, false);
 }
 
 void trw_layer_apply_dem_data_only_missing(trw_menu_sublayer_t * data)
@@ -4220,7 +4220,7 @@ void trw_layer_apply_dem_data_only_missing(trw_menu_sublayer_t * data)
 	Track * trk = layer->get_track_helper(data);
 
 	if (trk)
-		layer->apply_dem_data_common(data->panel->gob, trk, true);
+		layer->apply_dem_data_common(data->panel, trk, true);
 }
 
 
@@ -4292,9 +4292,9 @@ void LayerTRW::wp_changed_message(int changed)
 void trw_layer_apply_dem_data_wpt_all(trw_menu_sublayer_t * data)
 {
 	LayerTRW * layer = data->layer;
-	VikLayersPanel *vlp = data->panel->gob;
+	LayersPanel * panel = data->panel;
 
-	if (!layer->dem_test(vlp))
+	if (!layer->dem_test(panel))
 		return;
 
 	int changed = 0;
@@ -4317,9 +4317,9 @@ void trw_layer_apply_dem_data_wpt_all(trw_menu_sublayer_t * data)
 void trw_layer_apply_dem_data_wpt_only_missing(trw_menu_sublayer_t * data)
 {
 	LayerTRW * layer = data->layer;
-	VikLayersPanel *vlp = data->panel->gob;
+	LayersPanel * panel = data->panel;
 
-	if (!layer->dem_test(vlp))
+	if (!layer->dem_test(panel))
 		return;
 
 	int changed = 0;
@@ -4405,8 +4405,8 @@ void trw_layer_auto_track_view(trw_menu_sublayer_t * data)
 		struct LatLon maxmin[2] = { {0,0}, {0,0} };
 		LayerTRW::find_maxmin_in_track(trk, maxmin);
 		layer->zoom_to_show_latlons(data->viewport, maxmin);
-		if (data->panel->gob) {
-			vik_layers_panel_emit_update_cb(((VikLayersPanel *) data->panel->gob)->panel_ref);
+		if (data->panel) {
+			vik_layers_panel_emit_update_cb(data->panel);
 		} else {
 			layer->emit_update();
 		}
@@ -6287,7 +6287,7 @@ void trw_layer_waypoint_webpage(trw_menu_sublayer_t * data)
 	}
 }
 
-char const * LayerTRW::sublayer_rename_request(const char * newname, void * vlp, int subtype, void * sublayer, GtkTreeIter * iter)
+char const * LayerTRW::sublayer_rename_request(const char * newname, void * panel, int subtype, void * sublayer, GtkTreeIter * iter)
 {
 	sg_uid_t uid = (sg_uid_t) ((long) sublayer);
 	if (subtype == VIK_TRW_LAYER_SUBLAYER_WAYPOINT) {
@@ -6317,7 +6317,7 @@ char const * LayerTRW::sublayer_rename_request(const char * newname, void * vlp,
 		this->vt->tree->set_name(iter, newname);
 		this->vt->tree->sort_children(&(this->waypoint_iter), this->wp_sort_order);
 
-		vik_layers_panel_emit_update_cb(VIK_LAYERS_PANEL(vlp)->panel_ref);
+		vik_layers_panel_emit_update_cb((LayersPanel *) panel);
 
 		return newname;
 	}
@@ -6356,7 +6356,7 @@ char const * LayerTRW::sublayer_rename_request(const char * newname, void * vlp,
 		this->vt->tree->set_name(iter, newname);
 		this->vt->tree->sort_children(&(this->track_iter), this->track_sort_order);
 
-		vik_layers_panel_emit_update_cb(VIK_LAYERS_PANEL(vlp)->panel_ref);
+		vik_layers_panel_emit_update_cb((LayersPanel *) panel);
 
 		return newname;
 	}
@@ -6395,7 +6395,7 @@ char const * LayerTRW::sublayer_rename_request(const char * newname, void * vlp,
 		this->vt->tree->set_name(iter, newname);
 		this->vt->tree->sort_children(&(this->track_iter), this->track_sort_order);
 
-		vik_layers_panel_emit_update_cb(VIK_LAYERS_PANEL(vlp)->panel_ref);
+		vik_layers_panel_emit_update_cb((LayersPanel *) panel);
 
 		return newname;
 	}
@@ -8853,7 +8853,7 @@ void trw_layer_download_map_along_track_cb(trw_menu_sublayer_t * data)
 	int selected_zoom, default_zoom;
 
 	LayerTRW * layer = data->layer;
-	VikLayersPanel *vlp = (VikLayersPanel *) data->panel->gob;
+	LayersPanel * panel = data->panel;
 	Track * trk = layer->get_track_helper(data);
 
 	if (!trk)
@@ -8861,7 +8861,7 @@ void trw_layer_download_map_along_track_cb(trw_menu_sublayer_t * data)
 
 	Viewport * viewport = vik_window_viewport((VikWindow *)(VIK_GTK_WINDOW_FROM_LAYER(layer->vl)));
 
-	std::list<Layer *> * vmls = vlp->panel_ref->get_all_layers_of_type(VIK_LAYER_MAPS, true); // Includes hidden map layer types
+	std::list<Layer *> * vmls = panel->get_all_layers_of_type(VIK_LAYER_MAPS, true); // Includes hidden map layer types
 	int num_maps = vmls->size();
 
 	if (!num_maps) {

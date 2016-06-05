@@ -130,11 +130,12 @@ typedef enum {
 
 
 
-void LayerTRW::add_menu_items(GtkMenu * menu, void * vlp)
+void LayerTRW::add_menu_items(GtkMenu * menu, void * panel_)
 {
 	static trw_menu_layer_t pass_along_data;
+	LayersPanel * panel = (LayersPanel *) panel_;
 	pass_along_data.layer = this;
-	pass_along_data.panel = (LayersPanel *) (((VikLayersPanel *) vlp)->panel_ref);
+	pass_along_data.panel = panel;
 	static trw_menu_layer_t * pass_along = &pass_along_data;
 
 	GtkWidget *item;
@@ -431,16 +432,15 @@ void LayerTRW::add_menu_items(GtkMenu * menu, void * vlp)
 	gtk_menu_shell_append ( GTK_MENU_SHELL(delete_submenu), item );
 	gtk_widget_show ( item );
 
-	VikLayersPanel * vlp_ = VIK_LAYERS_PANEL(vlp);
-	item = a_acquire_trwlayer_menu ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(this->vl)), (VikLayersPanel *) vlp,
-					 (VikViewport *) vlp_->panel_ref->get_viewport()->vvp, (VikTrwLayer *) this->vl);
+	item = a_acquire_trwlayer_menu ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(this->vl)), panel,
+					 panel->get_viewport(), this);
 	if ( item ) {
 		gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
 		gtk_widget_show ( item );
 	}
 
-	item = a_acquire_trwlayer_track_menu ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(this->vl)), (VikLayersPanel *) vlp,
-					       (VikViewport *) vlp_->panel_ref->get_viewport()->vvp, (VikTrwLayer *) this->vl);
+	item = a_acquire_trwlayer_track_menu ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(this->vl)), panel,
+					       panel->get_viewport(), this);
 	if ( item ) {
 		gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
 		gtk_widget_show ( item );
@@ -468,7 +468,7 @@ void LayerTRW::add_menu_items(GtkMenu * menu, void * vlp)
 
 
 
-/* vlp can be NULL if necessary - i.e. right-click from a tool */
+/* panel can be NULL if necessary - i.e. right-click from a tool */
 /* viewpoint is now available instead */
 bool LayerTRW::sublayer_add_menu_items(GtkMenu * menu, void * panel, int subtype, void * sublayer, GtkTreeIter * iter, Viewport * viewport)
 {
@@ -1300,8 +1300,8 @@ bool LayerTRW::sublayer_add_menu_items(GtkMenu * menu, void * panel, int subtype
     /* ATM This function is only available via the layers panel, due to needing a panel */
     if ( panel ) {
       sg_uid_t uid = (sg_uid_t) ((long) sublayer);
-      item = a_acquire_track_menu ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(this->vl)), (VikLayersPanel *) ((LayersPanel *) panel)->gob,
-                                    (VikViewport *) ((LayersPanel *) panel)->get_viewport()->vvp,
+      item = a_acquire_track_menu ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(this->vl)), (LayersPanel *) panel,
+                                    ((LayersPanel *) panel)->get_viewport(),
                                     this->tracks.at(uid));
       if ( item ) {
         gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);

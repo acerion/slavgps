@@ -75,7 +75,7 @@ namespace SlavGPS {
 		void draw(Viewport * viewport);
 		char const * tooltip();
 		void marshall(uint8_t ** data, int * len);
-		void add_menu_items(GtkMenu * menu, void * vlp);
+		void add_menu_items(GtkMenu * menu, void * panel);
 		void free_();
 
 
@@ -84,7 +84,7 @@ namespace SlavGPS {
 		void set_file_xml(char const * name);
 		void set_file_css(char const * name);
 		void set_cache_dir(char const * name);
-		bool carto_load(VikViewport * vvp);
+		bool carto_load(Viewport * viewport);
 		void possibly_save_pixbuf(GdkPixbuf * pixbuf, TileInfo * ulm);
 		void render(VikCoord * ul, VikCoord * br, TileInfo * ulm);
 		void thread_add(TileInfo * mul, VikCoord * ul, VikCoord * br, int x, int y, int z, int zoom, char const * name);

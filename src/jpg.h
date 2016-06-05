@@ -34,8 +34,8 @@ extern "C" {
 #endif
 
 
-bool a_jpg_magic_check ( const char *filename );
-bool a_jpg_load_file ( VikAggregateLayer *top, const char *filename, VikViewport *vvp );
+bool a_jpg_magic_check(char const * filename);
+bool a_jpg_load_file(LayerAggregate * top, char const * filename, Viewport * viewport);
 
 #ifdef __cplusplus
 }

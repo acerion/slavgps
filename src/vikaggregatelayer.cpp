@@ -395,9 +395,9 @@ typedef void * menu_array_values[MA_LAST];
 static void aggregate_layer_child_visible_toggle(menu_array_values values)
 {
 	LayerAggregate * aggregate = (LayerAggregate *) values[MA_VAL];
-	VikLayersPanel *vlp = VIK_LAYERS_PANEL (values[MA_VLP]);
+	LayersPanel * panel = (LayersPanel *) values[MA_VLP];
 
-	aggregate->child_visible_toggle(vlp);
+	aggregate->child_visible_toggle(panel->gob);
 }
 
 
@@ -435,17 +435,17 @@ void LayerAggregate::child_visible_set(VikLayersPanel * vlp, bool on_off)
 static void aggregate_layer_child_visible_on(menu_array_values values)
 {
 	LayerAggregate * aggregate = (LayerAggregate *) values[MA_VAL];
-	VikLayersPanel * vlp = VIK_LAYERS_PANEL (values[MA_VLP]);
+	LayersPanel * panel = (LayersPanel *) values[MA_VLP];
 
-	aggregate->child_visible_set(vlp, true);
+	aggregate->child_visible_set(panel->gob, true);
 }
 
 static void aggregate_layer_child_visible_off(menu_array_values values)
 {
 	LayerAggregate * aggregate = (LayerAggregate *) values[MA_VAL];
-	VikLayersPanel * vlp = VIK_LAYERS_PANEL (values[MA_VLP]);
+	LayersPanel * panel = (LayersPanel *) values[MA_VLP];
 
-	aggregate->child_visible_set(vlp, false);
+	aggregate->child_visible_set(panel->gob, false);
 }
 
 /**
@@ -700,12 +700,12 @@ static void aggregate_layer_analyse(menu_array_values values)
 								       aggregate_layer_analyse_close);
 }
 
-void LayerAggregate::add_menu_items(GtkMenu * menu, void * vlp)
+void LayerAggregate::add_menu_items(GtkMenu * menu, void * panel)
 {
 	// Data to pass on in menu functions
 	static menu_array_values values;
 	values[MA_VAL] = this;
-	values[MA_VLP] = vlp;
+	values[MA_VLP] = panel;
 
 	GtkWidget *item = gtk_menu_item_new();
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);

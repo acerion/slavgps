@@ -45,7 +45,7 @@ extern GList * a_babel_file_list;
 static int last_type = -1;
 
 static void * datasource_url_init ( acq_vik_t *avt );
-static void datasource_url_add_setup_widgets ( GtkWidget *dialog, VikViewport *vvp, void * user_data );
+static void datasource_url_add_setup_widgets ( GtkWidget *dialog, Viewport * viewport, void * user_data );
 static void datasource_url_get_process_options ( datasource_url_widgets_t *widgets, ProcessOptions *po, DownloadFileOptions *download_options, const char *not_used2, const char *not_used3 );
 static void datasource_url_cleanup ( void * data );
 
@@ -100,7 +100,7 @@ static void find_type (void * elem, void * user_data)
 
 #define VIK_SETTINGS_URL_FILE_DL_TYPE "url_file_download_type"
 
-static void datasource_url_add_setup_widgets ( GtkWidget *dialog, VikViewport *vvp, void * user_data )
+static void datasource_url_add_setup_widgets ( GtkWidget *dialog, Viewport * viewport, void * user_data )
 {
 	datasource_url_widgets_t *widgets = (datasource_url_widgets_t *)user_data;
 	GtkWidget *label = gtk_label_new (_("URL:"));
