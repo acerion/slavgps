@@ -1084,7 +1084,7 @@ bool LayerGeoref::move_release(GdkEventButton * event, Viewport * viewport)
 	if (this->click_x != -1) {
 		this->corner.easting += (event->x - this->click_x) * viewport->get_xmpp();
 		this->corner.northing -= (event->y - this->click_y) * viewport->get_ympp();
-		vik_layer_emit_update(this->vl);
+		this->emit_update();
 		return true;
 	}
 	return false; /* I didn't move anything on this layer! */
@@ -1121,7 +1121,7 @@ bool LayerGeoref::zoom_press(GdkEventButton * event, Viewport * viewport)
 	}
 	viewport->set_xmpp(this->mpp_easting);
 	viewport->set_ympp(this->mpp_northing);
-	vik_layer_emit_update(this->vl);
+	this->emit_update();
 	return true;
 }
 

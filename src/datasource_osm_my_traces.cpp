@@ -670,7 +670,7 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 			LayerTRW * layer = (LayerTRW *) ((VikLayer *) vtlX)->layer;
 			adw->vlp->panel_ref->get_top_layer()->add_layer(layer, true);
 			// Move to area of the track
-			vik_layer_post_read ( (VikLayer *) vtlX, vik_window_viewport(adw->vw), true );
+			layer->post_read(vik_window_viewport(adw->vw), true );
 			layer->auto_set_view(vik_window_viewport(adw->vw));
 			vtl_last = vtlX;
 		}
@@ -693,8 +693,10 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 
 	// Would prefer to keep the update in acquire.c,
 	//  however since we may create the layer - need to do the update here
-	if ( got_something )
-		vik_layer_emit_update ( (VikLayer *) vtl_last );
+	if ( got_something ) {
+		Layer * layer_last = (Layer *) ((VikLayer *) vtl_last)->layer;
+		layer_last->emit_update();
+	}
 
 	// ATM The user is only informed if all getting *all* of the traces failed
 	if ( selected )

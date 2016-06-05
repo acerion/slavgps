@@ -310,8 +310,7 @@ void LayersPanel::item_toggled(GtkTreeIter *iter)
 		}
 	case VIK_TREEVIEW_TYPE_SUBLAYER: {
 		Layer * parent = (Layer *) this->vt->tree->get_parent(iter);
-		visible = vik_layer_sublayer_toggle_visible(parent->vl,
-							    this->vt->tree->get_data(iter), p);
+		visible = parent->sublayer_toggle_visible(this->vt->tree->get_data(iter), p);
 		vik_layer_emit_update_although_invisible(parent->vl);
 		break;
 	}
@@ -349,7 +348,7 @@ void LayersPanel::item_edited(GtkTreeIter *iter, const char *new_text)
 		}
 	} else {
 		Layer * parent = (Layer *) this->vt->tree->get_parent(iter);
-		const char *name = vik_layer_sublayer_rename_request(parent->vl, new_text, this->gob, this->vt->tree->get_data(iter), this->vt->tree->get_pointer(iter), iter);
+		const char *name = parent->sublayer_rename_request(new_text, this->gob, this->vt->tree->get_data(iter), this->vt->tree->get_pointer(iter), iter);
 		if (name) {
 			this->vt->tree->set_name(iter, name);
 		}
@@ -444,11 +443,11 @@ void LayersPanel::popup(GtkTreeIter *iter, int mouse_button)
 					gtk_widget_show (del);
 				}
 			}
-			vik_layer_add_menu_items(layer->vl, menu, this->gob);
+			layer->add_menu_items(menu, this->gob);
 		} else {
 			menu = GTK_MENU (gtk_menu_new());
 			Layer * parent = (Layer *) this->vt->tree->get_parent(iter);
-			if (! vik_layer_sublayer_add_menu_items(parent->vl, menu, this, this->vt->tree->get_data(iter), this->vt->tree->get_pointer(iter), iter, this->viewport)) { // kamil
+			if (! parent->sublayer_add_menu_items(menu, this, this->vt->tree->get_data(iter), this->vt->tree->get_pointer(iter), iter, this->viewport)) { // kamil
 				gtk_widget_destroy (GTK_WIDGET(menu));
 				return;
 			}
@@ -592,7 +591,7 @@ bool LayersPanel::properties()
 		}
 		Layer * layer = (Layer *) this->vt->tree->get_layer(&iter);
 		if (vik_layer_properties(layer->vl, this->viewport)) {
-			vik_layer_emit_update(layer->vl);
+			layer->emit_update();
 		}
 		return true;
 	} else {

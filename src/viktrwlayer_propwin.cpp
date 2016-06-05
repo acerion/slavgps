@@ -405,7 +405,7 @@ static Trackpoint * set_center_at_graph_position(double event_x,
       /* since vlp not set, vvp should be valid instead! */
       if ( vvp )
         vvp->port.set_center_coord(&coord, true );
-      vik_layer_emit_update(trw->vl);
+      trw->emit_update();
     }
   }
   return tp;
@@ -2894,11 +2894,11 @@ static void propwin_response_cb( GtkDialog *dialog, int resp, PropWidgets *widge
       trk->draw_name_mode = (TrackDrawnameType) gtk_combo_box_get_active ( GTK_COMBO_BOX(widgets->w_namelabel) );
       trk->max_number_dist_labels = gtk_spin_button_get_value_as_int ( GTK_SPIN_BUTTON(widgets->w_number_distlabels) );
       widgets->trw->update_treeview(widgets->trk);
-      vik_layer_emit_update(trw->vl);
+      trw->emit_update();
       break;
     case VIK_TRW_LAYER_PROPWIN_REVERSE:
       trk->reverse();
-      vik_layer_emit_update(trw->vl);
+      trw->emit_update();
       break;
     case VIK_TRW_LAYER_PROPWIN_DEL_DUP:
       trk->remove_dup_points(); // NB ignore the returned answer
@@ -2907,7 +2907,7 @@ static void propwin_response_cb( GtkDialog *dialog, int resp, PropWidgets *widge
 
       /* above operation could have deleted current_tp or last_tp */
       trw->cancel_tps_of_track(trk);
-      vik_layer_emit_update(trw->vl);
+      trw->emit_update();
       break;
     case VIK_TRW_LAYER_PROPWIN_SPLIT:
       {
@@ -2940,7 +2940,7 @@ static void propwin_response_cb( GtkDialog *dialog, int resp, PropWidgets *widge
 	    trw->delete_route(trk);
           else
 	    trw->delete_track(trk);
-          vik_layer_emit_update(trw->vl); /* chase thru the hoops */
+          trw->emit_update(); /* chase thru the hoops */
         }
       }
       break;
@@ -2978,7 +2978,7 @@ static void propwin_response_cb( GtkDialog *dialog, int resp, PropWidgets *widge
 
         free( r_name );
 
-        vik_layer_emit_update(trw->vl);
+        trw->emit_update();
       }
       break;
     default:

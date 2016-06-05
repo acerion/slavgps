@@ -414,7 +414,7 @@ void LayerAggregate::child_visible_toggle(VikLayersPanel * vlp)
 		tree->toggle_visibility(&layer->iter);
 	}
 	// Redraw as view may have changed
-	vik_layer_emit_update(this->vl);
+	this->emit_update();
 }
 
 void LayerAggregate::child_visible_set(VikLayersPanel * vlp, bool on_off)
@@ -429,7 +429,7 @@ void LayerAggregate::child_visible_set(VikLayersPanel * vlp, bool on_off)
 	}
 
 	// Redraw as view may have changed
-	vik_layer_emit_update(this->vl);
+	this->emit_update();
 }
 
 static void aggregate_layer_child_visible_on(menu_array_values values)

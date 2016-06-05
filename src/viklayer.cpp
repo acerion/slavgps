@@ -103,29 +103,39 @@ static bool idle_draw ( VikLayer *vl )
   return false; // Nothing else to do
 }
 
+
+
+
+
 /**
  * Draw specified layer
  */
-void vik_layer_emit_update ( VikLayer *vl )
+void Layer::emit_update()
 {
-  Layer * layer = (Layer *) vl->layer;
+	Layer * layer = (Layer *) vl->layer;
 
-  if ( layer->visible && layer->realized ) {
-    GThread *thread = vik_window_get_thread ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(layer->vl)) );
-    if ( !thread )
-      // Do nothing
-      return;
+	if (this->visible && this->realized) {
+		GThread * thread = vik_window_get_thread(VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(this->vl)));
+		if (!thread) {
+			// Do nothing
+			return;
+		}
 
-    vik_window_set_redraw_trigger(layer->vl);
+		vik_window_set_redraw_trigger(this->vl);
 
-    // Only ever draw when there is time to do so
-    if ( g_thread_self() != thread )
-      // Drawing requested from another (background) thread, so handle via the gdk thread method
-      gdk_threads_add_idle ( (GSourceFunc) idle_draw, layer->vl );
-    else
-      g_idle_add ( (GSourceFunc) idle_draw, layer->vl );
-  }
+		// Only ever draw when there is time to do so
+		if (g_thread_self() != thread) {
+			// Drawing requested from another (background) thread, so handle via the gdk thread method
+			gdk_threads_add_idle((GSourceFunc) idle_draw, this->vl);
+		} else {
+			g_idle_add((GSourceFunc) idle_draw, this->vl);
+		}
+	}
 }
+
+
+
+
 
 /**
  * should only be done by VikLayersPanel (hence never used from the background)
@@ -221,11 +231,13 @@ char const * Layer::get_name()
 	return this->name;
 }
 
+#if 0
 time_t vik_layer_get_timestamp(VikLayer * vl)
 {
 	Layer * layer = (Layer *) vl->layer;
 	return layer->get_timestamp();
 }
+#endif
 
 #if 0
 /* For GPS layer only. Layers of other types are already created by Layer::new_(). */
@@ -323,12 +335,13 @@ void Layer::draw_visible(Viewport * viewport)
 		this->draw(viewport);
 	}
 }
-
+#if 0
 void vik_layer_change_coord_mode(VikLayer * l, VikCoordMode mode)
 {
 	Layer * layer = (Layer *) l->layer;
 	layer->change_coord_mode(mode);
 }
+#endif
 
 typedef struct {
   VikLayerTypeEnum layer_type;
@@ -514,13 +527,14 @@ static void vik_layer_finalize ( VikLayer *vl )
 
   G_OBJECT_CLASS(parent_class)->finalize(G_OBJECT(vl));
 }
-
+#if 0
 /* sublayer switching */
 bool vik_layer_sublayer_toggle_visible ( VikLayer *l, int subtype, void * sublayer )
 {
 	Layer * layer = (Layer *) l->layer;
 	return layer->sublayer_toggle_visible(subtype, sublayer);
 }
+#endif
 
 bool vik_layer_selected(VikLayer * l, int subtype, void * sublayer, int type, void * vlp)
 {
@@ -533,11 +547,13 @@ bool vik_layer_selected(VikLayer * l, int subtype, void * sublayer, int type, vo
 	}
 }
 
+#if 0
 void vik_layer_set_menu_items_selection(VikLayer *l, uint16_t selection)
 {
 	Layer * layer = (Layer *) l->layer;
 	layer->set_menu_selection(selection);
 }
+#endif
 
 uint16_t vik_layer_get_menu_items_selection(VikLayer *l)
 {
@@ -551,6 +567,7 @@ uint16_t vik_layer_get_menu_items_selection(VikLayer *l)
 	}
 }
 
+#if 0
 void vik_layer_add_menu_items ( VikLayer *l, GtkMenu *menu, void * vlp )
 {
 	Layer * layer = (Layer *) l->layer;
@@ -563,12 +580,12 @@ bool vik_layer_sublayer_add_menu_items ( VikLayer *l, GtkMenu *menu, void * pane
 	return layer->sublayer_add_menu_items(menu, panel, subtype, sublayer, iter, viewport);
 }
 
-
 const char *vik_layer_sublayer_rename_request ( VikLayer *l, const char *newname, void * vlp, int subtype, void * sublayer, GtkTreeIter *iter )
 {
 	Layer * layer = (Layer *) l->layer;
 	return layer->sublayer_rename_request(newname, vlp, subtype, (VikViewport *) sublayer, iter);
 }
+#endif
 
 GdkPixbuf *vik_layer_load_icon ( VikLayerTypeEnum type )
 {
@@ -586,11 +603,13 @@ bool vik_layer_set_param ( VikLayer *vl, uint16_t id, VikLayerParamData data, vo
   return false;
 }
 
+#if 0
 void vik_layer_post_read ( VikLayer *layer, Viewport * viewport, bool from_file )
 {
 	Layer * l = (Layer *) layer->layer;
 	l->post_read(viewport, from_file);
 }
+#endif
 
 static bool vik_layer_properties_factory ( VikLayer *vl, Viewport * viewport)
 {
@@ -621,13 +640,14 @@ static bool vik_layer_properties_factory ( VikLayer *vl, Viewport * viewport)
   }
 }
 
-VikLayerTypeEnum vik_layer_type_from_string ( const char *str )
+VikLayerTypeEnum Layer::type_from_string(char const * str)
 {
-  int i;
-  for ( i = 0; ((VikLayerTypeEnum) i) < VIK_LAYER_NUM_TYPES; i++ )
-    if ( strcasecmp ( str, vik_layer_get_interface((VikLayerTypeEnum) i)->fixed_layer_name ) == 0 )
-      return (VikLayerTypeEnum) i;
-  return VIK_LAYER_NUM_TYPES;
+	for (int i = 0; ((VikLayerTypeEnum) i) < VIK_LAYER_NUM_TYPES; i++) {
+		if (strcasecmp(str, vik_layer_get_interface((VikLayerTypeEnum) i)->fixed_layer_name) == 0) {
+			return (VikLayerTypeEnum) i;
+		}
+	}
+	return VIK_LAYER_NUM_TYPES;
 }
 
 void vik_layer_typed_param_data_free ( void * gp )

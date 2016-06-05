@@ -353,7 +353,7 @@ static bool file_read(VikAggregateLayer *top, FILE *f, const char *dirpath, VikV
 					stack->data = NULL;
 					continue;
 				} else {
-					VikLayerTypeEnum type = vik_layer_type_from_string(line+6);
+					VikLayerTypeEnum type = Layer::type_from_string(line + 6);
 					push(&stack);
 					if (type == VIK_LAYER_NUM_TYPES) {
 						successful_read = false;
@@ -386,9 +386,9 @@ static bool file_read(VikAggregateLayer *top, FILE *f, const char *dirpath, VikV
 
 					if (stack->data && stack->under->data) {
 						if (((Layer *) ((VikLayer *) stack->under->data)->layer)->type == VIK_LAYER_AGGREGATE) {
-							Layer * layer = (Layer *) (VIK_LAYER(stack->data))->layer;
+							Layer * layer = (Layer *) ((VikLayer *) stack->data)->layer;
 							((LayerAggregate *) ((VikLayer *) stack->under->data)->layer)->add_layer(layer, false);
-							vik_layer_post_read(VIK_LAYER(stack->data), &vp->port, true);
+							layer->post_read(&vp->port, true);
 						} else if (((Layer *) ((VikLayer *) stack->under->data)->layer)->type == VIK_LAYER_GPS) {
 							/* TODO: anything else needs to be done here ? */
 						} else {
@@ -565,9 +565,9 @@ static bool file_read(VikAggregateLayer *top, FILE *f, const char *dirpath, VikV
 
 	while (stack) {
 		if (stack->under && stack->under->data && stack->data){
-			Layer * layer = (Layer *) (VIK_LAYER(stack->data))->layer;
+			Layer * layer = (Layer *) ((VikLayer *) stack->data)->layer;
 			((LayerAggregate *) ((VikLayer *) stack->under->data)->layer)->add_layer(layer, false);
-			vik_layer_post_read(VIK_LAYER(stack->data), &vp->port, true);
+			layer->post_read(&vp->port, true);
 		}
 		pop(&stack);
 	}
@@ -744,7 +744,7 @@ VikLoadType_t a_file_load(VikAggregateLayer *top, VikViewport *vp, const char *f
 			g_object_unref(layer->vl);
 		} else {
 			// Complete the setup from the successful load
-			vik_layer_post_read(layer->vl, &vp->port, true);
+			layer->post_read(&vp->port, true);
 			((LayerAggregate *) ((VikLayer *) top)->layer)->add_layer(layer, false);
 			layer->auto_set_view(&vp->port);
 		}

@@ -268,7 +268,7 @@ bool a_layer_defaults_show_window ( GtkWindow *parent, const char *layername )
 		loaded = true;
 	}
 
-    VikLayerTypeEnum layer = vik_layer_type_from_string ( layername );
+    VikLayerTypeEnum layer = Layer::type_from_string(layername);
 
     // Need to know where the params start and they finish for this layer
 

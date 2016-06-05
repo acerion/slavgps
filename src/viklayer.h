@@ -103,33 +103,27 @@ struct _VikToolInterface {
   const GdkCursor *cursor;
 };
 
-/* Parameters (for I/O and Properties) */
-/* --> moved to uibuilder.h */
 
 
 /* layer interface functions */
 
-typedef VikLayer *    (*VikLayerFuncUnmarshall)            (uint8_t *, int, Viewport *);
-
+typedef VikLayer *               (* VikLayerFuncUnmarshall)    (uint8_t *, int, Viewport *);
 /* returns true if needs to redraw due to changed param */
 /* in parameter bool denotes if for file I/O, as opposed to display/cut/copy etc... operations */
-typedef bool      (*VikLayerFuncSetParam)              (VikLayer *, uint16_t, VikLayerParamData, Viewport *, bool);
-
+typedef bool                     (* VikLayerFuncSetParam)      (VikLayer *, uint16_t, VikLayerParamData, Viewport *, bool);
 /* in parameter bool denotes if for file I/O, as opposed to display/cut/copy etc... operations */
-typedef VikLayerParamData
-                      (*VikLayerFuncGetParam)              (VikLayer *, uint16_t, bool);
-
-typedef void          (*VikLayerFuncChangeParam)           (GtkWidget *, ui_change_values );
+typedef VikLayerParamData        (* VikLayerFuncGetParam)      (VikLayer *, uint16_t, bool);
+typedef void                     (* VikLayerFuncChangeParam)   (GtkWidget *, ui_change_values);
 
 
 
 typedef enum {
-  VIK_MENU_ITEM_PROPERTY=1,
-  VIK_MENU_ITEM_CUT=2,
-  VIK_MENU_ITEM_COPY=4,
-  VIK_MENU_ITEM_PASTE=8,
-  VIK_MENU_ITEM_DELETE=16,
-  VIK_MENU_ITEM_ALL=0xff
+	VIK_MENU_ITEM_PROPERTY =    1,
+	VIK_MENU_ITEM_CUT      =    2,
+	VIK_MENU_ITEM_COPY     =    4,
+	VIK_MENU_ITEM_PASTE    =    8,
+	VIK_MENU_ITEM_DELETE   =   16,
+	VIK_MENU_ITEM_ALL      = 0xff
 } VikStdLayerMenuItem;
 
 typedef struct _VikLayerInterface VikLayerInterface;
@@ -162,22 +156,13 @@ struct _VikLayerInterface {
 };
 
 VikLayerInterface *vik_layer_get_interface ( VikLayerTypeEnum type );
-void vik_layer_change_coord_mode ( VikLayer *l, VikCoordMode mode );
-time_t vik_layer_get_timestamp ( VikLayer *vl );
 bool vik_layer_set_param (VikLayer *layer, uint16_t id, VikLayerParamData data, void * viewport, bool is_file_operation);
 void vik_layer_set_defaults ( VikLayer *vl, Viewport * viewport);
-void vik_layer_emit_update ( VikLayer *vl );
+
 
 /* GUI */
-void vik_layer_set_menu_items_selection(VikLayer *l, uint16_t selection);
 uint16_t vik_layer_get_menu_items_selection(VikLayer *l);
-void vik_layer_add_menu_items ( VikLayer *l, GtkMenu *menu, void * vlp );
-//VikLayer *vik_layer_create ( VikLayerTypeEnum type, Viewport * viewport, bool interactive );
 bool vik_layer_properties ( VikLayer *layer, Viewport * viewport);
-
-void vik_layer_post_read ( VikLayer *layer, Viewport * viewport, bool from_file );
-
-bool vik_layer_sublayer_add_menu_items ( VikLayer *l, GtkMenu *menu, void * panel, int subtype, void * sublayer, GtkTreeIter *iter, Viewport * viewport);
 
 VikLayer *vik_layer_copy(VikLayer *vl, void * viewport);
 void      vik_layer_marshall ( VikLayer *vl, uint8_t **data, int *len );
@@ -185,23 +170,14 @@ VikLayer *vik_layer_unmarshall ( uint8_t *data, int len, Viewport * viewport);
 void      vik_layer_marshall_params ( VikLayer *vl, uint8_t **data, int *len );
 void      vik_layer_unmarshall_params ( VikLayer *vl, uint8_t *data, int len, Viewport * viewport);
 
-const char *vik_layer_sublayer_rename_request ( VikLayer *l, const char *newname, void * vlp, int subtype, void * sublayer, GtkTreeIter *iter );
-
-bool vik_layer_sublayer_toggle_visible ( VikLayer *l, int subtype, void * sublayer );
-
-
-const char* vik_layer_layer_tooltip ( VikLayer *l );
-
 bool vik_layer_selected ( VikLayer *l, int subtype, void * sublayer, int type, void * vlp );
 
 /* TODO: put in layerspanel */
 GdkPixbuf *vik_layer_load_icon ( VikLayerTypeEnum type );
 
-VikLayer *vik_layer_get_and_reset_trigger();
 void vik_layer_emit_update_secondary ( VikLayer *vl ); /* to be called by aggregate layer only. doesn't set the trigger */
 void vik_layer_emit_update_although_invisible ( VikLayer *vl );
 
-VikLayerTypeEnum vik_layer_type_from_string ( const char *str );
 
 typedef struct {
   VikLayerParamData data;
@@ -227,6 +203,8 @@ namespace SlavGPS {
 		~Layer() {};
 
 		static Layer * new_(VikLayerTypeEnum type, Viewport * viewport, bool interactive);
+
+		void emit_update();
 
 
 		/* Layer interface methods. */
@@ -286,6 +264,11 @@ namespace SlavGPS {
 		   are added to the treeview so they can add sublayers to the treeview. */
 		virtual void realize(VikTreeview * vt, GtkTreeIter * layer_iter);
 		virtual void free_();
+
+
+
+		static VikLayerTypeEnum type_from_string(char const * str);
+
 
 
 

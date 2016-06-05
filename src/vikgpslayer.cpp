@@ -698,7 +698,7 @@ void LayerGPS::draw(Viewport * viewport)
 void LayerGPS::change_coord_mode(VikCoordMode mode)
 {
 	for (int i = 0; i < NUM_TRW; i++) {
-		vik_layer_change_coord_mode(this->trw_children[i]->vl, mode);
+		this->trw_children[i]->change_coord_mode(mode);
 	}
 }
 
@@ -1215,10 +1215,10 @@ static void gps_comm_thread(GpsSession *sess)
 #endif
 				{
 					if (sess->viewport && sess->direction == GPS_DOWN) {
-						vik_layer_post_read(sess->trw->vl, sess->viewport, true);
+						sess->trw->post_read(sess->viewport, true);
 						/* View the data available */
 						sess->trw->auto_set_view(sess->viewport) ;
-						vik_layer_emit_update(sess->trw->vl); // NB update from background thread
+						sess->trw->emit_update(); // NB update from background thread
 					}
 				}
 		} else {
@@ -1685,7 +1685,7 @@ static void gpsd_raw_hook(VglGpsd *vgpsd, char *data)
 	    !isnan(vgpsd->gpsd.fix.latitude) &&
 	    !isnan(vgpsd->gpsd.fix.longitude)) {
 
-		VikWindow *vw = VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(vgl));
+		VikWindow *vw = VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(layer->vl));
 		Viewport * viewport = vik_window_viewport(vw);
 		layer->realtime_fix.fix = vgpsd->gpsd.fix;
 		layer->realtime_fix.satellites_used = vgpsd->gpsd.satellites_used;
@@ -1737,7 +1737,12 @@ static void gpsd_raw_hook(VglGpsd *vgpsd, char *data)
 			layer->tp_prev = layer->tp;
 		}
 
-		vik_layer_emit_update(update_all ? VIK_LAYER(vgl) : layer->trw_children[TRW_REALTIME]->vl); // NB update from background thread
+		// NB update from background thread
+		if (update_all) {
+			layer->emit_update();
+		} else {
+			layer->trw_children[TRW_REALTIME]->emit_update();
+		}
 	}
 }
 
@@ -2017,6 +2022,6 @@ LayerGPS::LayerGPS(Viewport * viewport) : LayerGPS()
 
 	for (int i = 0; i < NUM_TRW; i++) {
 		this->trw_children[i] = new LayerTRW(viewport);
-		vik_layer_set_menu_items_selection(this->trw_children[i]->vl, VIK_MENU_ITEM_ALL & ~(VIK_MENU_ITEM_CUT|VIK_MENU_ITEM_DELETE));
+		this->trw_children[i]->set_menu_selection(VIK_MENU_ITEM_ALL & ~(VIK_MENU_ITEM_CUT|VIK_MENU_ITEM_DELETE));
 	}
 };

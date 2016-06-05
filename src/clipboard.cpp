@@ -257,7 +257,7 @@ static void clip_add_wp(VikLayersPanel *vlp, struct LatLon *coord)
   if (selected && selected->type == VIK_LAYER_TRW) {
     ((LayerTRW *) selected)->new_waypoint(VIK_GTK_WINDOW_FROM_LAYER(selected->vl), &vc);
     ((LayerTRW *) selected)->calculate_bounds_waypoints();
-    vik_layer_emit_update((VikLayer *) selected->vl);
+    selected->emit_update();
   } else {
     a_dialog_error_msg_extra ( VIK_GTK_WINDOW_FROM_WIDGET(GTK_WIDGET(vlp)), _("In order to paste a waypoint, please select an appropriate layer to paste into."), NULL);
   }

@@ -652,7 +652,7 @@ bool LayerTRW::find_by_date(char const * date_str, VikCoord * position, Viewport
 			viewport->set_center_coord(&(df.wp->coord), true);
 			this->vt->tree->select_iter(waypoints_iters.at(df.wp_uid), true);
 		}
-		vik_layer_emit_update(this->vl);
+		this->emit_update();
 	}
 	return df.found;
 }
@@ -805,7 +805,7 @@ bool LayerTRW::paste_item(int subtype, uint8_t * item, size_t len)
 
 		// Consider if redraw necessary for the new item
 		if (this->visible && this->waypoints_visible && wp->visible) {
-			vik_layer_emit_update(this->vl);
+			this->emit_update();
 		}
 		return true;
 	}
@@ -819,7 +819,7 @@ bool LayerTRW::paste_item(int subtype, uint8_t * item, size_t len)
 
 		// Consider if redraw necessary for the new item
 		if (this->visible && this->tracks_visible && trk->visible) {
-			vik_layer_emit_update(this->vl);
+			this->emit_update();
 		}
 		return true;
 	}
@@ -833,7 +833,7 @@ bool LayerTRW::paste_item(int subtype, uint8_t * item, size_t len)
 
 		// Consider if redraw necessary for the new item
 		if (this->visible && this->routes_visible && trk->visible) {
-			vik_layer_emit_update(this->vl);
+			this->emit_update();
 		}
 		return true;
 	}
@@ -3091,7 +3091,7 @@ void trw_layer_finish_track(trw_menu_layer_t * data)
 	LayerTRW * layer = data->layer;
 	layer->current_track = NULL;
 	layer->route_finder_started = false;
-	vik_layer_emit_update(layer->vl);
+	layer->emit_update();
 }
 
 void trw_layer_auto_tracks_view(trw_menu_layer_t * data)
@@ -3728,7 +3728,7 @@ void LayerTRW::delete_all_routes()
 
 	this->vt->tree->delete_(&this->route_iter);
 
-	vik_layer_emit_update(this->vl);
+	this->emit_update();
 }
 
 
@@ -3749,7 +3749,7 @@ void LayerTRW::delete_all_tracks()
 
 	this->vt->tree->delete_(&this->track_iter);
 
-	vik_layer_emit_update(this->vl);
+	this->emit_update();
 }
 
 
@@ -3770,7 +3770,7 @@ void LayerTRW::delete_all_waypoints()
 
 	this->vt->tree->delete_(&this->waypoint_iter);
 
-	vik_layer_emit_update(this->vl);
+	this->emit_update();
 }
 
 
@@ -3859,8 +3859,9 @@ void trw_layer_delete_item(trw_menu_sublayer_t * data)
 			was_visible = layer->delete_route(trk);
 		}
 	}
-	if (was_visible)
-		vik_layer_emit_update(layer->vl);
+	if (was_visible) {
+		layer->emit_update();
+	}
 }
 
 
@@ -3927,8 +3928,9 @@ void trw_layer_properties_item(trw_menu_sublayer_t * data)
 			if (updated && data->tv_iter)
 				layer->vt->tree->set_icon(data->tv_iter, get_wp_sym_small(wp->symbol));
 
-			if (updated && layer->visible)
-				vik_layer_emit_update(layer->vl);
+			if (updated && layer->visible) {
+				layer->emit_update();
+			}
 		}
 	} else {
 		Track * trk = layer->get_track_helper(data);
@@ -4023,7 +4025,7 @@ static void goto_coord(LayersPanel * panel, Layer * layer, Viewport * viewport, 
 		/* Since panel not set, layer & viewport should be valid instead! */
 		if (layer && viewport) {
 			viewport->set_center_coord(coord, true);
-			vik_layer_emit_update(layer->vl);
+			layer->emit_update();
 		}
 	}
 }
@@ -4103,7 +4105,7 @@ void trw_layer_convert_track_route(trw_menu_sublayer_t * data)
 	free(name);
 
 	// Update in case color of track / route changes when moving between sublayers
-	vik_layer_emit_update(layer->vl);
+	layer->emit_update();
 }
 void trw_layer_anonymize_times(trw_menu_sublayer_t * data)
 {
@@ -4403,10 +4405,11 @@ void trw_layer_auto_track_view(trw_menu_sublayer_t * data)
 		struct LatLon maxmin[2] = { {0,0}, {0,0} };
 		LayerTRW::find_maxmin_in_track(trk, maxmin);
 		layer->zoom_to_show_latlons(data->viewport, maxmin);
-		if (data->panel->gob)
+		if (data->panel->gob) {
 			vik_layers_panel_emit_update_cb(((VikLayersPanel *) data->panel->gob)->panel_ref);
-		else
-			vik_layer_emit_update(layer->vl);
+		} else {
+			layer->emit_update();
+		}
 	}
 }
 
@@ -4480,7 +4483,7 @@ void trw_layer_route_refine(trw_menu_sublayer_t * data)
 			layer->route_finder_added_track = NULL;
 			layer->route_finder_check_added_track = false;
 
-			vik_layer_emit_update(layer->vl);
+			layer->emit_update();
 
 			/* Restore cursor */
 			vik_window_clear_busy_cursor(VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(layer->vl)));
@@ -4637,7 +4640,7 @@ void trw_layer_merge_with_other(trw_menu_sublayer_t * data)
 			free(l->data);
 		g_list_free(merge_list);
 
-		vik_layer_emit_update(layer->vl);
+		layer->emit_update();
 	}
 }
 
@@ -4713,7 +4716,7 @@ void trw_layer_append_track(trw_menu_sublayer_t * data)
 			free(l->data);
 		g_list_free(append_list);
 
-		vik_layer_emit_update(layer->vl);
+		layer->emit_update();
 	}
 }
 
@@ -4809,7 +4812,7 @@ void trw_layer_append_other(trw_menu_sublayer_t * data)
 		for (l = append_list; l != NULL; l = g_list_next(l))
 			free(l->data);
 		g_list_free(append_list);
-		vik_layer_emit_update(layer->vl);
+		layer->emit_update();
 	}
 }
 
@@ -4901,7 +4904,7 @@ void trw_layer_merge_by_timestamp(trw_menu_sublayer_t * data)
 
 	g_list_free(nearby_tracks);
 
-	vik_layer_emit_update(layer->vl);
+	layer->emit_update();
 }
 
 
@@ -4952,7 +4955,7 @@ void LayerTRW::split_at_selected_trackpoint(int subtype)
 
 			this->current_tp_uid = uid;
 
-			vik_layer_emit_update(this->vl);
+			this->emit_update();
 		}
 		free(name);
 	}
@@ -5037,7 +5040,7 @@ void trw_layer_split_by_timestamp(trw_menu_sublayer_t * data)
 		}
 		// Remove original track and then update the display
 		layer->delete_track(trk);
-		vik_layer_emit_update(layer->vl);
+		layer->emit_update();
 	}
 	g_list_free(newlists);
 }
@@ -5122,7 +5125,7 @@ void trw_layer_split_by_n_points(trw_menu_sublayer_t * data)
 			layer->delete_route(trk);
 		else
 			layer->delete_track(trk);
-		vik_layer_emit_update(layer->vl);
+		layer->emit_update();
 	}
 	g_list_free(newlists);
 }
@@ -5165,7 +5168,7 @@ void trw_layer_split_segments(trw_menu_sublayer_t * data)
 		free(tracks);
 		// Remove original track
 		layer->delete_track(trk);
-		vik_layer_emit_update(layer->vl);
+		layer->emit_update();
 	}
 	else {
 		a_dialog_error_msg(VIK_GTK_WINDOW_FROM_LAYER(layer->vl), _("Can not split track as it has no segments"));
@@ -5226,7 +5229,7 @@ void trw_layer_delete_point_selected(trw_menu_sublayer_t * data)
 	// Track has been updated so update tps:
 	layer->cancel_tps_of_track(trk);
 
-	vik_layer_emit_update(layer->vl);
+	layer->emit_update();
 }
 
 /**
@@ -5252,7 +5255,7 @@ void trw_layer_delete_points_same_position(trw_menu_sublayer_t * data)
 	snprintf(str, 64, tmp_str, removed);
 	a_dialog_info_msg(VIK_GTK_WINDOW_FROM_LAYER(layer->vl), str);
 
-	vik_layer_emit_update(layer->vl);
+	layer->emit_update();
 }
 
 /**
@@ -5278,7 +5281,7 @@ void trw_layer_delete_points_same_time(trw_menu_sublayer_t * data)
 	snprintf(str, 64, tmp_str, removed);
 	a_dialog_info_msg(VIK_GTK_WINDOW_FROM_LAYER(layer->vl), str);
 
-	vik_layer_emit_update(layer->vl);
+	layer->emit_update();
 }
 
 /**
@@ -5294,7 +5297,7 @@ void trw_layer_insert_point_after(trw_menu_sublayer_t * data)
 
 	layer->insert_tp_beside_current_tp(false);
 
-	vik_layer_emit_update(layer->vl);
+	layer->emit_update();
 }
 
 void trw_layer_insert_point_before(trw_menu_sublayer_t * data)
@@ -5307,7 +5310,7 @@ void trw_layer_insert_point_before(trw_menu_sublayer_t * data)
 
 	layer->insert_tp_beside_current_tp(true);
 
-	vik_layer_emit_update(layer->vl);
+	layer->emit_update();
 }
 
 /**
@@ -5323,7 +5326,7 @@ void trw_layer_reverse(trw_menu_sublayer_t * data)
 
 	trk->reverse();
 
-	vik_layer_emit_update(layer->vl);
+	layer->emit_update();
 }
 
 
@@ -5737,7 +5740,7 @@ void trw_layer_delete_tracks_from_selection(trw_menu_layer_t * data)
 		// Reset layer timestamps in case they have now changed
 		layer->vt->tree->set_timestamp(&layer->iter, layer->get_timestamp());
 
-		vik_layer_emit_update(layer->vl);
+		layer->emit_update();
 	}
 }
 
@@ -5783,7 +5786,7 @@ void trw_layer_delete_routes_from_selection(trw_menu_layer_t * data)
 			layer->delete_track_by_name((const char *) l->data, true);
 		}
 		g_list_free(delete_list);
-		vik_layer_emit_update(layer->vl);
+		layer->emit_update();
 	}
 }
 
@@ -5963,7 +5966,7 @@ void trw_layer_delete_waypoints_from_selection(trw_menu_layer_t * data)
 		layer->calculate_bounds_waypoints();
 		// Reset layer timestamp in case it has now changed
 		layer->vt->tree->set_timestamp(&layer->iter, layer->get_timestamp());
-		vik_layer_emit_update(layer->vl);
+		layer->emit_update();
 	}
 
 }
@@ -5977,7 +5980,7 @@ void trw_layer_waypoints_visibility_off(trw_menu_layer_t * data)
 	LayerTRWc::set_iter_visibility(layer->waypoints_iters, layer->vt, false);
 	LayerTRWc::set_waypoints_visibility(layer->waypoints, false);
 	// Redraw
-	vik_layer_emit_update(layer->vl);
+	layer->emit_update();
 }
 
 
@@ -5993,7 +5996,7 @@ void trw_layer_waypoints_visibility_on(trw_menu_layer_t * data)
 	LayerTRWc::set_iter_visibility(layer->waypoints_iters, layer->vt, true);
 	LayerTRWc::set_waypoints_visibility(layer->waypoints, true);
 	// Redraw
-	vik_layer_emit_update(layer->vl);
+	layer->emit_update();
 }
 
 
@@ -6009,7 +6012,7 @@ void trw_layer_waypoints_visibility_toggle(trw_menu_layer_t * data)
 	LayerTRWc::iter_visibility_toggle(layer->waypoints_iters, layer->vt);
 	LayerTRWc::waypoints_toggle_visibility(layer->waypoints);
 	// Redraw
-	vik_layer_emit_update(layer->vl);
+	layer->emit_update();
 }
 
 
@@ -6025,7 +6028,7 @@ void trw_layer_tracks_visibility_off(trw_menu_layer_t * data)
 	LayerTRWc::set_iter_visibility(layer->tracks_iters, layer->vt, false);
 	LayerTRWc::set_tracks_visibility(layer->tracks, false);
 	// Redraw
-	vik_layer_emit_update(layer->vl);
+	layer->emit_update();
 }
 
 
@@ -6041,7 +6044,7 @@ void trw_layer_tracks_visibility_on(trw_menu_layer_t * data)
 	LayerTRWc::set_iter_visibility(layer->tracks_iters, layer->vt, true);
 	LayerTRWc::set_tracks_visibility(layer->tracks, true);
 	// Redraw
-	vik_layer_emit_update(layer->vl);
+	layer->emit_update();
 }
 
 
@@ -6057,7 +6060,7 @@ void trw_layer_tracks_visibility_toggle(trw_menu_layer_t * data)
 	LayerTRWc::iter_visibility_toggle(layer->tracks_iters, layer->vt);
 	LayerTRWc::tracks_toggle_visibility(layer->tracks);
 	// Redraw
-	vik_layer_emit_update(layer->vl);
+	layer->emit_update();
 }
 
 
@@ -6073,7 +6076,7 @@ void trw_layer_routes_visibility_off(trw_menu_layer_t * data)
 	LayerTRWc::set_iter_visibility(layer->routes_iters, layer->vt, false);
 	LayerTRWc::set_tracks_visibility(layer->routes, false);
 	// Redraw
-	vik_layer_emit_update(layer->vl);
+	layer->emit_update();
 }
 
 
@@ -6089,7 +6092,7 @@ void trw_layer_routes_visibility_on(trw_menu_layer_t * data)
 	LayerTRWc::set_iter_visibility(layer->routes_iters, layer->vt, true);
 	LayerTRWc::set_tracks_visibility(layer->routes, true);
 	// Redraw
-	vik_layer_emit_update(layer->vl);
+	layer->emit_update();
 }
 
 
@@ -6105,7 +6108,7 @@ void trw_layer_routes_visibility_toggle(trw_menu_layer_t * data)
 	LayerTRWc::iter_visibility_toggle(layer->routes_iters, layer->vt);
 	LayerTRWc::tracks_toggle_visibility(layer->routes);
 	// Redraw
-	vik_layer_emit_update(layer->vl);
+	layer->emit_update();
 }
 
 
@@ -6559,7 +6562,7 @@ void LayerTRW::cancel_current_tp(bool destroy)
 		this->current_tpl = NULL;
 		this->current_tp_track = NULL;
 		this->current_tp_uid = 0;
-		vik_layer_emit_update(this->vl);
+		this->emit_update();
 	}
 }
 
@@ -6615,28 +6618,28 @@ void LayerTRW::tpwin_response(int response)
 			// Reset dialog with the available adjacent trackpoint
 			this->my_tpwin_set_tp();
 
-		vik_layer_emit_update(this->vl);
+		this->emit_update();
 	}
 	else if (response == VIK_TRW_LAYER_TPWIN_FORWARD && this->current_tpl->next) {
 		if (this->current_tp_track) {
 			this->current_tpl = this->current_tpl->next;
 			this->my_tpwin_set_tp();
 		}
-		vik_layer_emit_update(this->vl); /* TODO longone: either move or only update if tp is inside drawing window */
+		this->emit_update(); /* TODO longone: either move or only update if tp is inside drawing window */
 	}
 	else if (response == VIK_TRW_LAYER_TPWIN_BACK && this->current_tpl->prev) {
 		if (this->current_tp_track) {
 			this->current_tpl = this->current_tpl->prev;
 			this->my_tpwin_set_tp();
 		}
-		vik_layer_emit_update(this->vl);
+		this->emit_update();
 	}
 	else if (response == VIK_TRW_LAYER_TPWIN_INSERT && this->current_tpl->next) {
 		this->insert_tp_beside_current_tp(false);
-		vik_layer_emit_update(this->vl);
+		this->emit_update();
 	}
 	else if (response == VIK_TRW_LAYER_TPWIN_DATA_CHANGED) {
-		vik_layer_emit_update(this->vl);
+		this->emit_update();
 	}
 }
 
@@ -6920,7 +6923,7 @@ bool LayerTRW::select_release(GdkEventButton * event, Viewport * viewport, tool_
 			}
 		}
 
-		vik_layer_emit_update(this->vl);
+		this->emit_update();
 		return true;
 	}
 	return false;
@@ -6995,7 +6998,7 @@ bool LayerTRW::select_click(GdkEventButton * event, Viewport * viewport, tool_ed
 				}
 			}
 
-			vik_layer_emit_update(this->vl);
+			this->emit_update();
 			return true;
 		}
 	}
@@ -7040,7 +7043,7 @@ bool LayerTRW::select_click(GdkEventButton * event, Viewport * viewport, tool_ed
 				this->my_tpwin_set_tp();
 			}
 
-			vik_layer_emit_update(this->vl);
+			this->emit_update();
 			return true;
 		}
 	}
@@ -7076,7 +7079,7 @@ bool LayerTRW::select_click(GdkEventButton * event, Viewport * viewport, tool_ed
 				this->my_tpwin_set_tp();
 			}
 
-			vik_layer_emit_update(this->vl);
+			this->emit_update();
 			return true;
 		}
 	}
@@ -7308,14 +7311,14 @@ bool LayerTRW::tool_edit_waypoint_click(GdkEventButton * event, void * data)
 		this->current_wp_uid = params.closest_wp_uid;
 
 		/* could make it so don't update if old WP is off screen and new is null but oh well */
-		vik_layer_emit_update(this->vl);
+		this->emit_update();
 		return true;
 	}
 
 	this->current_wp = NULL;
 	this->current_wp_uid = 0;
 	this->waypoint_rightclick = false;
-	vik_layer_emit_update(this->vl);
+	this->emit_update();
 	return false;
 }
 
@@ -7398,7 +7401,7 @@ bool LayerTRW::tool_edit_waypoint_release(GdkEventButton * event, void * data)
 		this->current_wp->coord = new_coord;
 
 		this->calculate_bounds_waypoints();
-		vik_layer_emit_update(this->vl);
+		this->emit_update();
 		return true;
 	}
 	/* PUT IN RIGHT PLACE!!! */
@@ -7698,12 +7701,12 @@ bool LayerTRW::tool_new_track_key_press(GdkEventKey *event, Viewport * viewport)
 			}
 		}
 		this->current_track = NULL;
-		vik_layer_emit_update(this->vl);
+		this->emit_update();
 		return true;
 	} else if (this->current_track && event->keyval == GDK_BackSpace) {
 		this->undo_trackpoint_add();
 		this->update_statusbar();
-		vik_layer_emit_update(this->vl);
+		this->emit_update();
 		return true;
 	}
 	return false;
@@ -7733,7 +7736,7 @@ bool LayerTRW::tool_new_track_or_route_click(GdkEventButton * event, Viewport * 
 		}
 		this->undo_trackpoint_add();
 		this->update_statusbar();
-		vik_layer_emit_update(this->vl);
+		this->emit_update();
 		return true;
 	}
 
@@ -7744,7 +7747,7 @@ bool LayerTRW::tool_new_track_or_route_click(GdkEventButton * event, Viewport * 
 			this->undo_trackpoint_add();
 			this->current_track = NULL;
 		}
-		vik_layer_emit_update(this->vl);
+		this->emit_update();
 		return true;
 	}
 
@@ -7773,7 +7776,7 @@ bool LayerTRW::tool_new_track_or_route_click(GdkEventButton * event, Viewport * 
 	this->ct_x2 = event->x;
 	this->ct_y2 = event->y;
 
-	vik_layer_emit_update(this->vl);
+	this->emit_update();
 	return true;
 }
 
@@ -7874,7 +7877,7 @@ bool LayerTRW::tool_new_waypoint_click(GdkEventButton * event, Viewport * viewpo
 	if (this->new_waypoint(VIK_GTK_WINDOW_FROM_LAYER(this->vl), &coord)) {
 		this->calculate_bounds_waypoints();
 		if (this->visible)
-			vik_layer_emit_update(this->vl);
+			this->emit_update();
 	}
 	return true;
 }
@@ -7962,7 +7965,7 @@ bool LayerTRW::tool_edit_trackpoint_click(GdkEventButton * event, void * data)
 		this->current_tp_track = this->tracks.at(params.closest_track_uid);
 		this->tpwin_init();
 		this->set_statusbar_msg_info_trkpt(params.closest_tp);
-		vik_layer_emit_update(this->vl);
+		this->emit_update();
 		return true;
 	}
 
@@ -7976,7 +7979,7 @@ bool LayerTRW::tool_edit_trackpoint_click(GdkEventButton * event, void * data)
 		this->current_tp_track = this->routes.at(params.closest_track_uid);
 		this->tpwin_init();
 		this->set_statusbar_msg_info_trkpt(params.closest_tp);
-		vik_layer_emit_update(this->vl);
+		this->emit_update();
 		return true;
 	}
 
@@ -8056,7 +8059,7 @@ bool LayerTRW::tool_edit_trackpoint_release(GdkEventButton * event, void * data)
 			if (this->current_tp_track)
 				this->my_tpwin_set_tp();
 
-		vik_layer_emit_update(this->vl);
+		this->emit_update();
 		return true;
 	}
 	return false;
@@ -8076,7 +8079,7 @@ void LayerTRW::tool_extended_route_finder_undo()
 	new_end = this->current_track->cut_back_to_double_point();
 	if (new_end) {
 		free(new_end);
-		vik_layer_emit_update(this->vl);
+		this->emit_update();
 
 		/* remove last ' to:...' */
 		if (this->current_track->comment) {
@@ -8154,7 +8157,7 @@ bool LayerTRW::tool_extended_route_finder_click(GdkEventButton * event, Viewport
 		vik_statusbar_set_message(sb, VIK_STATUSBAR_INFO, msg);
 		free(msg);
 
-		vik_layer_emit_update(this->vl);
+		this->emit_update();
 	} else {
 		this->current_track = NULL;
 
@@ -8180,7 +8183,7 @@ bool LayerTRW::tool_extended_route_finder_key_press(GdkEventKey * event, Viewpor
 	if (this->current_track && event->keyval == GDK_Escape) {
 		this->route_finder_started = false;
 		this->current_track = NULL;
-		vik_layer_emit_update(this->vl);
+		this->emit_update();
 		return true;
 	} else if (this->current_track && event->keyval == GDK_BackSpace) {
 		this->tool_extended_route_finder_undo();
@@ -8279,7 +8282,7 @@ static int create_thumbnails_thread(thumbnail_create_thread_data * tctd, void * 
 
 	// Redraw to show the thumbnails as they are now created
 	if (IS_VIK_LAYER(tctd->layer->vl)) {
-		vik_layer_emit_update(tctd->layer->vl); // NB update from background thread
+		tctd->layer->emit_update(); // NB update from background thread
 	}
 
 	return 0;

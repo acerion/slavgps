@@ -188,7 +188,7 @@ static void trw_layer_waypoint_properties ( menu_array_values values )
 			trw->waypoint_reset_icon(wp);
 
 		if ( updated && trw->visible )
-			vik_layer_emit_update(trw->vl);
+			trw->emit_update();
 	}
 }
 
@@ -202,7 +202,7 @@ static void trw_layer_waypoint_view ( menu_array_values values )
 
 	trw_layer_waypoint_select (values);
 
-	vik_layer_emit_update(trw->vl);
+	trw->emit_update();
 }
 
 static void trw_layer_show_picture_wp ( menu_array_values values )

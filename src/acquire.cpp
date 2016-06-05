@@ -113,7 +113,7 @@ static void on_complete_process(w_and_interface_t * wi)
 			/* Only create the layer if it actually contains anything useful */
 			// TODO: create function for this operation to hide detail:
 			if (! wi->trw->is_empty()) {
-				vik_layer_post_read(wi->trw->vl, &wi->w->vvp->port, true);
+				wi->trw->post_read(&wi->w->vvp->port, true);
 				Layer * layer = wi->trw;
 				wi->w->vlp->panel_ref->get_top_layer()->add_layer(layer, true);
 			} else {
@@ -128,7 +128,7 @@ static void on_complete_process(w_and_interface_t * wi)
 		}
 		// Main display update
 		if (wi->trw) {
-			vik_layer_post_read(wi->trw->vl, &wi->w->vvp->port, true);
+			wi->trw->post_read(&wi->w->vvp->port, true);
 			// View this data if desired - must be done after post read (so that the bounds are known)
 			if (wi->w->source_interface->autoview) {
 				wi->trw->auto_set_view(wi->w->vlp->panel_ref->get_viewport());

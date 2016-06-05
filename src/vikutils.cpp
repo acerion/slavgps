@@ -860,7 +860,7 @@ void vu_command_line ( VikWindow *vw, double latitude, double longitude, int zoo
 			layer->rename(_("Map"));
 
 			vik_window_layers_panel(vw)->panel_ref->get_top_layer()->add_layer(layer, true);
-			vik_layer_emit_update (layer->vl);
+			layer->emit_update();
 		}
 	}
 }
