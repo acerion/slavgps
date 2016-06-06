@@ -281,7 +281,8 @@ static void string_list_set_param(int i, GList *list, void * *layer_and_vp)
 {
 	VikLayerParamData x;
 	x.sl = list;
-	vik_layer_set_param((VikLayer *) layer_and_vp[0], i, x, (Viewport *) layer_and_vp[1], true);
+	Layer * layer = (Layer *) ((VikLayer *) layer_and_vp[0])->layer;
+	layer->set_param(i, x, (Viewport *) layer_and_vp[1], true);
 }
 
 /**
@@ -535,7 +536,8 @@ static bool file_read(LayerAggregate * top, FILE *f, const char *dirpath, Viewpo
 								/* STRING or STRING_LIST -- if STRING_LIST, just set param to add a STRING */
 							default: x.s = line;
 							}
-							vik_layer_set_param((VikLayer *) stack->data, i, x, viewport, true);
+							Layer * l_a_y_e_r = (Layer *) ((VikLayer *) stack->data)->layer;
+							l_a_y_e_r->set_param(i, x, viewport, true);
 						}
 						found_match = true;
 						break;

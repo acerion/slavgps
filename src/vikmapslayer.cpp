@@ -575,17 +575,22 @@ static void maps_show_license(GtkWindow *parent, MapSource *map)
 static bool maps_layer_set_param(VikMapsLayer *vml, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
 {
 	LayerMaps * layer = (LayerMaps *) ((VikLayer *) vml)->layer;
+	return layer->set_param(id, data, viewport, is_file_operation);
+}
+
+bool LayerMaps::set_param(uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
+{
 	switch (id) {
 	case PARAM_CACHE_DIR:
-		layer->set_cache_dir(data.s);
+		this->set_cache_dir(data.s);
 		break;
 	case PARAM_CACHE_LAYOUT:
 		if (data.u < VIK_MAPS_CACHE_LAYOUT_NUM) {
-			layer->cache_layout = (VikMapsCacheLayout) data.u;
+			this->cache_layout = (VikMapsCacheLayout) data.u;
 		}
 		break;
 	case PARAM_FILE:
-		layer->set_file(data.s);
+		this->set_file(data.s);
 		break;
 	case PARAM_MAPTYPE:
 		{
@@ -593,13 +598,13 @@ static bool maps_layer_set_param(VikMapsLayer *vml, uint16_t id, VikLayerParamDa
 			if (map_index == map_sources.size()) {
 				fprintf(stderr, _("WARNING: Unknown map type\n"));
 			} else {
-				layer->map_index = map_index;
+				this->map_index = map_index;
 
 				// When loading from a file don't need the license reminder - ensure it's saved into the 'seen' list
 				if (is_file_operation) {
 					a_settings_set_integer_list_containing(VIK_SETTINGS_MAP_LICENSE_SHOWN, data.u);
 				} else {
-					MapSource *map = map_sources[layer->map_index];
+					MapSource *map = map_sources[this->map_index];
 					if (map->get_license() != NULL) {
 						// Check if licence for this map type has been shown before
 						if (! a_settings_get_integer_list_contains(VIK_SETTINGS_MAP_LICENSE_SHOWN, data.u)) {
@@ -615,20 +620,20 @@ static bool maps_layer_set_param(VikMapsLayer *vml, uint16_t id, VikLayerParamDa
 		}
 	case PARAM_ALPHA:
 		if (data.u <= 255) {
-			layer->alpha = data.u;
+			this->alpha = data.u;
 		}
 		break;
 	case PARAM_AUTODOWNLOAD:
-		layer->autodownload = data.b;
+		this->autodownload = data.b;
 		break;
 	case PARAM_ONLYMISSING:
-		layer->adl_only_missing = data.b;
+		this->adl_only_missing = data.b;
 		break;
 	case PARAM_MAPZOOM:
 		if (data.u < NUM_MAPZOOMS) {
-			layer->mapzoom_id = data.u;
-			layer->xmapzoom = __mapzooms_x [data.u];
-			layer->ymapzoom = __mapzooms_y [data.u];
+			this->mapzoom_id = data.u;
+			this->xmapzoom = __mapzooms_x [data.u];
+			this->ymapzoom = __mapzooms_y [data.u];
 		} else {
 			fprintf(stderr, _("WARNING: Unknown Map Zoom\n"));
 		}
@@ -642,6 +647,11 @@ static bool maps_layer_set_param(VikMapsLayer *vml, uint16_t id, VikLayerParamDa
 static VikLayerParamData maps_layer_get_param(VikMapsLayer *vml, uint16_t id, bool is_file_operation)
 {
 	LayerMaps * layer = (LayerMaps *) ((VikLayer *) vml)->layer;
+	return layer->get_param(id, is_file_operation);
+}
+
+VikLayerParamData LayerMaps::get_param(uint16_t id, bool is_file_operation)
+{
 	VikLayerParamData rv;
 	switch (id) {
 	case PARAM_CACHE_DIR:
@@ -650,14 +660,14 @@ static VikLayerParamData maps_layer_get_param(VikMapsLayer *vml, uint16_t id, bo
 			/* Only save a blank when the map cache location equals the default
 			   On reading in, when it is blank then the default is reconstructed
 			   Since the default changes dependent on the user and OS, it means the resultant file is more portable */
-			if (is_file_operation && layer->cache_dir && strcmp(layer->cache_dir, MAPS_CACHE_DIR) == 0) {
+			if (is_file_operation && this->cache_dir && strcmp(this->cache_dir, MAPS_CACHE_DIR) == 0) {
 				rv.s = "";
 				set = true;
-			} else if (is_file_operation && layer->cache_dir) {
+			} else if (is_file_operation && this->cache_dir) {
 				if (a_vik_get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE) {
 					char *cwd = g_get_current_dir();
 					if (cwd) {
-						rv.s = file_GetRelativeFilename(cwd, layer->cache_dir);
+						rv.s = file_GetRelativeFilename(cwd, this->cache_dir);
 						if (!rv.s) rv.s = "";
 						set = true;
 					}
@@ -665,30 +675,30 @@ static VikLayerParamData maps_layer_get_param(VikMapsLayer *vml, uint16_t id, bo
 			}
 
 			if (!set) {
-				rv.s = layer->cache_dir ? layer->cache_dir : "";
+				rv.s = this->cache_dir ? this->cache_dir : "";
 			}
 			break;
 		}
 	case PARAM_CACHE_LAYOUT:
-		rv.u = layer->cache_layout;
+		rv.u = this->cache_layout;
 		break;
 	case PARAM_FILE:
-		rv.s = layer->filename;
+		rv.s = this->filename;
 		break;
 	case PARAM_MAPTYPE:
-		rv.u = map_index_to_map_type(layer->map_index);
+		rv.u = map_index_to_map_type(this->map_index);
 		break;
 	case PARAM_ALPHA:
-		rv.u = layer->alpha;
+		rv.u = this->alpha;
 		break;
 	case PARAM_AUTODOWNLOAD:
-		rv.u = layer->autodownload;
+		rv.u = this->autodownload;
 		break;
 	case PARAM_ONLYMISSING:
-		rv.u = layer->adl_only_missing;
+		rv.u = this->adl_only_missing;
 		break;
 	case PARAM_MAPZOOM:
-		rv.u = layer->mapzoom_id;
+		rv.u = this->mapzoom_id;
 		break;
 	default: break;
 	}
@@ -802,8 +812,6 @@ static VikMapsLayer * maps_layer_new(Viewport * viewport)
 	((VikLayer *) vml)->layer = new LayerMaps((VikLayer *) vml);
 
 	LayerMaps * layer = (LayerMaps *) ((VikLayer *) vml)->layer;
-
-	vik_layer_set_defaults((VikLayer *) vml, viewport);
 
 	layer->dl_tool_x = layer->dl_tool_y = -1;
 	layer->last_center = NULL;
@@ -2586,6 +2594,7 @@ LayerMaps::LayerMaps(VikLayer * vl) : Layer(vl)
 #ifdef HAVE_SQLITE3_H
 	mbtiles = NULL;
 #endif
+	this->set_defaults(viewport);
 }
 
 
@@ -2644,7 +2653,7 @@ LayerMaps::LayerMaps(Viewport * viewport) : LayerMaps()
 
 	LayerMaps * layer = (LayerMaps *) ((VikLayer *) vml)->layer;
 
-	vik_layer_set_defaults((VikLayer *) vml, viewport);
+	this->set_defaults(viewport);
 
 	layer->dl_tool_x = layer->dl_tool_y = -1;
 	layer->last_center = NULL;

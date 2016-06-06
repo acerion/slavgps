@@ -134,6 +134,8 @@ namespace SlavGPS {
 		void add_menu_items(GtkMenu * menu, void * panel);
 		void realize(VikTreeview *vt, GtkTreeIter *layer_iter);
 		void free_();
+		bool set_param(uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
+		VikLayerParamData get_param(uint16_t id, bool is_file_operation);
 
 
 		void disconnect_layer_signal(VikLayer * vl);

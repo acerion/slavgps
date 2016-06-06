@@ -595,12 +595,10 @@ GdkPixbuf *vik_layer_load_icon ( VikLayerTypeEnum type )
   return NULL;
 }
 
-bool vik_layer_set_param ( VikLayer *vl, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation )
+bool vik_layer_set_param(VikLayer * vl, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
 {
-  Layer * layer = (Layer *) vl->layer;
-  if ( vik_layer_interfaces[layer->type]->set_param )
-	  return vik_layer_interfaces[layer->type]->set_param(vl, id, data, viewport, is_file_operation );
-  return false;
+	Layer * layer = (Layer *) vl->layer;
+	return layer->set_param(id, data, viewport, is_file_operation );
 }
 
 #if 0
@@ -721,32 +719,31 @@ VikLayerTypedParamData *vik_layer_data_typed_param_copy_from_string ( VikLayerPa
 
 
 /**
- * vik_layer_set_defaults:
+ * Layer::set_defaults:
  *
  * Loop around all parameters for the specified layer to call the function to get the
  *  default value for that parameter
  */
-void vik_layer_set_defaults ( VikLayer *vl, Viewport * viewport)
+void Layer::set_defaults(Viewport * viewport)
 {
-  // Sneaky initialize of the viewport value here
-  Layer * layer = (Layer *) vl->layer;
-  layer->viewport = viewport;
-  VikLayerInterface *vli = vik_layer_get_interface ( layer->type );
-  const char *layer_name = vli->fixed_layer_name;
-  VikLayerParamData data;
+	// Sneaky initialize of the viewport value here
+	this->viewport = viewport;
 
-  int i;
-  for ( i = 0; i < vli->params_count; i++ ) {
-    // Ensure parameter is for use
-    if ( vli->params[i].group > VIK_LAYER_NOT_IN_PROPERTIES ) {
-      // ATM can't handle string lists
-      // only DEM files uses this currently
-      if ( vli->params[i].type != VIK_LAYER_PARAM_STRING_LIST ) {
-        data = a_layer_defaults_get ( layer_name, vli->params[i].name, vli->params[i].type );
-        vik_layer_set_param ( vl, i, data, viewport, true ); // Possibly come from a file
-      }
-    }
-  }
+	VikLayerInterface * vli = vik_layer_get_interface(this->type);
+	char const * layer_name = vli->fixed_layer_name;
+	VikLayerParamData data;
+
+	for (int i = 0; i < vli->params_count; i++) {
+		// Ensure parameter is for use
+		if (vli->params[i].group > VIK_LAYER_NOT_IN_PROPERTIES) {
+			// ATM can't handle string lists
+			// only DEM files uses this currently
+			if (vli->params[i].type != VIK_LAYER_PARAM_STRING_LIST) {
+				data = a_layer_defaults_get(layer_name, vli->params[i].name, vli->params[i].type);
+				this->set_param(i, data, viewport, true); // Possibly come from a file
+			}
+		}
+	}
 }
 
 
@@ -929,4 +926,10 @@ void Layer::realize(VikTreeview * vt, GtkTreeIter * layer_iter)
 void Layer::free_()
 {
 	return;
+}
+
+
+bool Layer::set_param(uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
+{
+	return false;
 }

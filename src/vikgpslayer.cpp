@@ -449,15 +449,18 @@ static VikGpsLayer * gps_layer_unmarshall(uint8_t *data, int len, Viewport * vie
 #undef alm_size
 #undef alm_next
 }
-
 static bool gps_layer_set_param(VikGpsLayer *vgl, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
 {
 	LayerGPS * layer = (LayerGPS *) ((VikLayer *) vgl)->layer;
+	return layer->set_param(id, data, viewport, is_file_operation);
+}
 
+bool LayerGPS::set_param(uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
+{
 	switch (id) {
 	case PARAM_PROTOCOL:
 		if (data.s) {
-			free(layer->protocol);
+			free(this->protocol);
 			// Backwards Compatibility: previous versions <v1.4 stored protocol as an array index
 			int index = data.s[0] - '0';
 			if (data.s[0] != '\0' &&
@@ -466,18 +469,18 @@ static bool gps_layer_set_param(VikGpsLayer *vgl, uint16_t id, VikLayerParamData
 			    index < OLD_NUM_PROTOCOLS) {
 
 				// It is a single digit: activate compatibility
-				layer->protocol = g_strdup(protocols_args[index]);
+				this->protocol = g_strdup(protocols_args[index]);
 			} else {
-				layer->protocol = g_strdup(data.s);
+				this->protocol = g_strdup(data.s);
 			}
-			fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, layer->protocol);
+			fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, this->protocol);
 		} else {
 			fprintf(stderr, _("WARNING: Unknown GPS Protocol\n"));
 		}
 		break;
 	case PARAM_PORT:
 		if (data.s) {
-			free(layer->serial_port);
+			free(this->serial_port);
 			// Backwards Compatibility: previous versions <v0.9.91 stored serial_port as an array index
 			int index = data.s[0] - '0';
 			if (data.s[0] != '\0' &&
@@ -486,69 +489,69 @@ static bool gps_layer_set_param(VikGpsLayer *vgl, uint16_t id, VikLayerParamData
 			    index < OLD_NUM_PORTS) {
 
 				/* It is a single digit: activate compatibility */
-				layer->serial_port = g_strdup(old_params_ports[index]);
+				this->serial_port = g_strdup(old_params_ports[index]);
 
 			} else {
-				layer->serial_port = g_strdup(data.s);
+				this->serial_port = g_strdup(data.s);
 			}
-			fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, layer->serial_port);
+			fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, this->serial_port);
 		} else {
 			fprintf(stderr, _("WARNING: Unknown serial port device\n"));
 		}
 		break;
 	case PARAM_DOWNLOAD_TRACKS:
-		layer->download_tracks = data.b;
+		this->download_tracks = data.b;
 		break;
 	case PARAM_UPLOAD_TRACKS:
-		layer->upload_tracks = data.b;
+		this->upload_tracks = data.b;
 		break;
 	case PARAM_DOWNLOAD_ROUTES:
-		layer->download_routes = data.b;
+		this->download_routes = data.b;
 		break;
 	case PARAM_UPLOAD_ROUTES:
-		layer->upload_routes = data.b;
+		this->upload_routes = data.b;
 		break;
 	case PARAM_DOWNLOAD_WAYPOINTS:
-		layer->download_waypoints = data.b;
+		this->download_waypoints = data.b;
 		break;
 	case PARAM_UPLOAD_WAYPOINTS:
-		layer->upload_waypoints = data.b;
+		this->upload_waypoints = data.b;
 		break;
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
 	case PARAM_GPSD_HOST:
 		if (data.s) {
-			if (layer->gpsd_host) {
-				free(layer->gpsd_host);
+			if (this->gpsd_host) {
+				free(this->gpsd_host);
 			}
-			layer->gpsd_host = g_strdup(data.s);
+			this->gpsd_host = g_strdup(data.s);
 		}
 		break;
 	case PARAM_GPSD_PORT:
 		if (data.s) {
-			if (layer->gpsd_port) {
-				free(layer->gpsd_port);
+			if (this->gpsd_port) {
+				free(this->gpsd_port);
 			}
-			layer->gpsd_port = g_strdup(data.s);
+			this->gpsd_port = g_strdup(data.s);
 		}
 		break;
 	case PARAM_GPSD_RETRY_INTERVAL:
-		layer->gpsd_retry_interval = strtol(data.s, NULL, 10);
+		this->gpsd_retry_interval = strtol(data.s, NULL, 10);
 		break;
 	case PARAM_REALTIME_REC:
-		layer->realtime_record = data.b;
+		this->realtime_record = data.b;
 		break;
 	case PARAM_REALTIME_CENTER_START:
-		layer->realtime_jump_to_start = data.b;
+		this->realtime_jump_to_start = data.b;
 		break;
 	case PARAM_VEHICLE_POSITION:
-		layer->vehicle_position = data.u;
+		this->vehicle_position = data.u;
 		break;
 	case PARAM_REALTIME_UPDATE_STATUSBAR:
-		layer->realtime_update_statusbar = data.b;
+		this->realtime_update_statusbar = data.b;
 		break;
 #endif /* VIK_CONFIG_REALTIME_GPS_TRACKING */
 	default:
-		fprintf(stderr, "WARNING: gps_layer_set_param(): unknown parameter\n");
+		fprintf(stderr, "WARNING: LayerGPS::set_param(): unknown parameter\n");
 	}
 
 	return true;
@@ -557,56 +560,60 @@ static bool gps_layer_set_param(VikGpsLayer *vgl, uint16_t id, VikLayerParamData
 static VikLayerParamData gps_layer_get_param(VikGpsLayer *vgl, uint16_t id, bool is_file_operation)
 {
 	LayerGPS * layer = (LayerGPS *) ((VikLayer *) vgl)->layer;
+	return layer->get_param(id, is_file_operation);
+}
 
+VikLayerParamData LayerGPS::get_param(uint16_t id, bool is_file_operation)
+{
 	VikLayerParamData rv;
 	switch (id) {
 	case PARAM_PROTOCOL:
-		rv.s = layer->protocol;
+		rv.s = this->protocol;
 		fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, rv.s);
 		break;
 	case PARAM_PORT:
-		rv.s = layer->serial_port;
+		rv.s = this->serial_port;
 		fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, rv.s);
 		break;
 	case PARAM_DOWNLOAD_TRACKS:
-		rv.b = layer->download_tracks;
+		rv.b = this->download_tracks;
 		break;
 	case PARAM_UPLOAD_TRACKS:
-		rv.b = layer->upload_tracks;
+		rv.b = this->upload_tracks;
 		break;
 	case PARAM_DOWNLOAD_ROUTES:
-		rv.b = layer->download_routes;
+		rv.b = this->download_routes;
 		break;
 	case PARAM_UPLOAD_ROUTES:
-		rv.b = layer->upload_routes;
+		rv.b = this->upload_routes;
 		break;
 	case PARAM_DOWNLOAD_WAYPOINTS:
-		rv.b = layer->download_waypoints;
+		rv.b = this->download_waypoints;
 		break;
 	case PARAM_UPLOAD_WAYPOINTS:
-		rv.b = layer->upload_waypoints;
+		rv.b = this->upload_waypoints;
 		break;
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
 	case PARAM_GPSD_HOST:
-		rv.s = layer->gpsd_host ? layer->gpsd_host : "";
+		rv.s = this->gpsd_host ? this->gpsd_host : "";
 		break;
 	case PARAM_GPSD_PORT:
-		rv.s = layer->gpsd_port ? layer->gpsd_port : g_strdup(DEFAULT_GPSD_PORT);
+		rv.s = this->gpsd_port ? this->gpsd_port : g_strdup(DEFAULT_GPSD_PORT);
 		break;
 	case PARAM_GPSD_RETRY_INTERVAL:
-		rv.s = g_strdup_printf("%d", layer->gpsd_retry_interval);
+		rv.s = g_strdup_printf("%d", this->gpsd_retry_interval);
 		break;
 	case PARAM_REALTIME_REC:
-		rv.b = layer->realtime_record;
+		rv.b = this->realtime_record;
 		break;
 	case PARAM_REALTIME_CENTER_START:
-		rv.b = layer->realtime_jump_to_start;
+		rv.b = this->realtime_jump_to_start;
 		break;
 	case PARAM_VEHICLE_POSITION:
-		rv.u = layer->vehicle_position;
+		rv.u = this->vehicle_position;
 		break;
 	case PARAM_REALTIME_UPDATE_STATUSBAR:
-		rv.u = layer->realtime_update_statusbar;
+		rv.u = this->realtime_update_statusbar;
 		break;
 #endif /* VIK_CONFIG_REALTIME_GPS_TRACKING */
 	default:
@@ -654,8 +661,6 @@ VikGpsLayer *vik_gps_layer_new(Viewport * viewport)
 
 	layer->protocol = NULL;
 	layer->serial_port = NULL;
-
-	vik_layer_set_defaults((VikLayer *) vgl, viewport);
 
 	return vgl;
 }
@@ -1958,6 +1963,7 @@ LayerGPS::LayerGPS(VikLayer * vl) : Layer(vl)
 	this->type = VIK_LAYER_GPS;
 
 	strcpy(this->type_string, "GPS");
+	this->set_defaults(viewport);
 };
 
 
@@ -2011,8 +2017,7 @@ LayerGPS::LayerGPS(Viewport * viewport) : LayerGPS()
 	this->protocol = NULL;
 	this->serial_port = NULL;
 
-	vik_layer_set_defaults(this->vl, viewport);
-
+	this->set_defaults(viewport);
 
 
 

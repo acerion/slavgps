@@ -125,16 +125,22 @@ static VikCoordLayer * coord_layer_unmarshall(uint8_t *data, int len, Viewport *
 bool coord_layer_set_param(VikCoordLayer *vcl, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
 {
 	LayerCoord * layer = (LayerCoord *) ((VikLayer * ) vcl)->layer;
+	return layer->set_param(id, data, viewport, is_file_operation);
+}
+
+// NB VikViewport can be null as it's not used ATM
+bool LayerCoord::set_param(uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
+{
 	switch (id) {
 	case PARAM_COLOR:
-		layer->color = data.c;
+		this->color = data.c;
 		break;
 	case PARAM_MIN_INC:
-		layer->deg_inc = data.d / 60.0;
+		this->deg_inc = data.d / 60.0;
 		break;
 	case PARAM_LINE_THICKNESS:
 		if (data.u >= 1 && data.u <= 15) {
-			layer->line_thickness = data.u;
+			this->line_thickness = data.u;
 		}
 		break;
 	default:
@@ -146,17 +152,21 @@ bool coord_layer_set_param(VikCoordLayer *vcl, uint16_t id, VikLayerParamData da
 static VikLayerParamData coord_layer_get_param(VikCoordLayer *vcl, uint16_t id, bool is_file_operation)
 {
 	LayerCoord * layer = (LayerCoord *) ((VikLayer * ) vcl)->layer;
+	return layer->get_param(id, is_file_operation);
+}
 
+VikLayerParamData LayerCoord::get_param(uint16_t id, bool is_file_operation)
+{
 	VikLayerParamData rv;
 	switch (id) {
 	case PARAM_COLOR:
-		rv.c = layer->color;
+		rv.c = this->color;
 		break;
 	case PARAM_MIN_INC:
-		rv.d = layer->deg_inc * 60.0;
+		rv.d = this->deg_inc * 60.0;
 		break;
 	case PARAM_LINE_THICKNESS:
-		rv.i = layer->line_thickness;
+		rv.i = this->line_thickness;
 		break;
 	default:
 		break;
@@ -178,8 +188,6 @@ static VikCoordLayer * coord_layer_new(Viewport * viewport)
 	VikCoordLayer * vcl = (VikCoordLayer *) g_object_new(VIK_COORD_LAYER_TYPE, NULL);
 
 	((VikLayer *) vcl)->layer = new LayerCoord((VikLayer *) vcl);
-
-	vik_layer_set_defaults((VikLayer *) vcl, viewport);
 
 	LayerCoord * layer = (LayerCoord *) ((VikLayer * ) vcl)->layer;
 
@@ -410,6 +418,8 @@ LayerCoord::LayerCoord(VikLayer * vl) : Layer(vl)
 	this->gc = NULL;
 	this->type = VIK_LAYER_COORD;
 	strcpy(this->type_string, "COORD");
+
+	this->set_defaults(viewport);
 }
 
 
@@ -427,7 +437,7 @@ LayerCoord::LayerCoord(Viewport * viewport)
 	strcpy(this->type_string, "COORD");
 
 
-	vik_layer_set_defaults((VikLayer *) vcl, viewport);
+	this->set_defaults(viewport);
 	if (viewport) {
 		LayerCoord * layer = (LayerCoord *) ((VikLayer * ) vcl)->layer;
 		this->update_gc(viewport);

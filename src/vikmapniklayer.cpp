@@ -356,27 +356,31 @@ static VikMapnikLayer * mapnik_layer_unmarshall(uint8_t *data, int len, Viewport
 	vik_layer_unmarshall_params((VikLayer *) rv, data, len, viewport);
 	return rv;
 }
-
 static bool mapnik_layer_set_param(VikMapnikLayer *vml, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
 {
 	LayerMapnik * layer = (LayerMapnik *) ((VikLayer *) vml)->layer;
+	return layer->set_param(id, data, viewport, is_file_operation);
+}
+
+bool LayerMapnik::set_param(uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
+{
 	switch (id) {
 		case PARAM_CONFIG_CSS:
-			layer->set_file_css(data.s);
+			this->set_file_css(data.s);
 			break;
 		case PARAM_CONFIG_XML:
-			layer->set_file_xml(data.s);
+			this->set_file_xml(data.s);
 			break;
 		case PARAM_ALPHA:
 			if (data.u <= 255) {
-				layer->alpha = data.u;
+				this->alpha = data.u;
 			}
 			break;
 		case PARAM_USE_FILE_CACHE:
-			layer->use_file_cache = data.b;
+			this->use_file_cache = data.b;
 			break;
 		case PARAM_FILE_CACHE_DIR:
-			layer->set_cache_dir(data.s);
+			this->set_cache_dir(data.s);
 			break;
 		default: break;
 	}
@@ -386,52 +390,57 @@ static bool mapnik_layer_set_param(VikMapnikLayer *vml, uint16_t id, VikLayerPar
 static VikLayerParamData mapnik_layer_get_param(VikMapnikLayer *vml, uint16_t id, bool is_file_operation)
 {
 	LayerMapnik * layer = (LayerMapnik *) ((VikLayer *) vml)->layer;
+	return layer->get_param(id, is_file_operation);
+}
+
+VikLayerParamData LayerMapnik::get_param(uint16_t id, bool is_file_operation)
+{
 	VikLayerParamData data;
 	switch (id) {
 		case PARAM_CONFIG_CSS: {
-			data.s = layer->filename_css;
+			data.s = this->filename_css;
 			bool set = false;
 			if (is_file_operation) {
 				if (a_vik_get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE) {
 					char *cwd = g_get_current_dir();
 					if (cwd) {
-						data.s = file_GetRelativeFilename(cwd, layer->filename_css);
+						data.s = file_GetRelativeFilename(cwd, this->filename_css);
 						if (!data.s) data.s = "";
 						set = true;
 					}
 				}
 			}
 			if (!set) {
-				data.s = layer->filename_css ? layer->filename_css : "";
+				data.s = this->filename_css ? this->filename_css : "";
 			}
 			break;
 		}
 		case PARAM_CONFIG_XML: {
-			data.s = layer->filename_xml;
+			data.s = this->filename_xml;
 			bool set = false;
 			if (is_file_operation) {
 				if (a_vik_get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE) {
 					char *cwd = g_get_current_dir();
 					if (cwd) {
-						data.s = file_GetRelativeFilename(cwd, layer->filename_xml);
+						data.s = file_GetRelativeFilename(cwd, this->filename_xml);
 						if (!data.s) data.s = "";
 						set = true;
 					}
 				}
 			}
 			if (!set) {
-				data.s = layer->filename_xml ? layer->filename_xml : "";
+				data.s = this->filename_xml ? this->filename_xml : "";
 			}
 			break;
 		}
 		case PARAM_ALPHA:
-			data.u = layer->alpha;
+			data.u = this->alpha;
 			break;
 		case PARAM_USE_FILE_CACHE:
-			data.b = layer->use_file_cache;
+			data.b = this->use_file_cache;
 			break;
 		case PARAM_FILE_CACHE_DIR:
-			data.s = layer->file_cache_dir;
+			data.s = this->file_cache_dir;
 			break;
 		default: break;
 	}
@@ -447,7 +456,6 @@ static VikMapnikLayer * mapnik_layer_new(Viewport * viewport)
 	((VikLayer *) vml)->layer = new LayerMapnik((VikLayer *) vml);
 	LayerMapnik * layer = (LayerMapnik *) ((VikLayer *) vml)->layer;
 
-	vik_layer_set_defaults((VikLayer *) vml, viewport);
 	layer->tile_size_x = size_default().u; // FUTURE: Is there any use in this being configurable?
 	layer->loaded = false;
 	layer->mi = mapnik_interface_new();
@@ -1238,6 +1246,7 @@ LayerMapnik::LayerMapnik(VikLayer * vl) : Layer(vl)
 	this->rerender_zoom = 0;
 	this->right_click_menu = NULL;
 
+	this->set_defaults(viewport);
 }
 
 
@@ -1250,7 +1259,7 @@ LayerMapnik::LayerMapnik(Viewport * viewport) : LayerMapnik()
 	((VikLayer *) vml)->layer = this;
 	this->vl = (VikLayer *) vml;
 
-	vik_layer_set_defaults((VikLayer *) vml, viewport);
+	this->set_defaults(viewport);
 	this->tile_size_x = size_default().u; // FUTURE: Is there any use in this being configurable?
 	this->loaded = false;
 	this->mi = mapnik_interface_new();

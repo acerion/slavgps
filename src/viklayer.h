@@ -157,7 +157,6 @@ struct _VikLayerInterface {
 
 VikLayerInterface *vik_layer_get_interface ( VikLayerTypeEnum type );
 bool vik_layer_set_param (VikLayer *layer, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
-void vik_layer_set_defaults ( VikLayer *vl, Viewport * viewport);
 
 
 /* GUI */
@@ -264,6 +263,7 @@ namespace SlavGPS {
 		   are added to the treeview so they can add sublayers to the treeview. */
 		virtual void realize(VikTreeview * vt, GtkTreeIter * layer_iter);
 		virtual void free_();
+		virtual bool set_param(uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
 
 
 
@@ -276,6 +276,9 @@ namespace SlavGPS {
 		void rename(char const * new_name);
 		void rename_no_copy(char * new_name);
 		void draw_visible(Viewport * viewport);
+
+		void set_defaults(Viewport * viewport);
+
 
 
 

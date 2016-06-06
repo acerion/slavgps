@@ -348,47 +348,51 @@ static GList *dem_layer_convert_to_relative_filenaming(GList *files)
 bool dem_layer_set_param(VikDEMLayer *vdl, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
 {
 	LayerDEM * layer = (LayerDEM *) ((VikLayer *) vdl)->layer;
+	return layer->set_param(id, data, viewport, is_file_operation);
+}
 
+bool LayerDEM::set_param(uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
+{
 	switch (id) {
 	case PARAM_COLOR:
-		layer->color = data.c;
-		gdk_gc_set_rgb_fg_color(layer->gcs[0], &(layer->color));
+		this->color = data.c;
+		gdk_gc_set_rgb_fg_color(this->gcs[0], &(this->color));
 		break;
 	case PARAM_SOURCE:
-		layer->source = data.u;
+		this->source = data.u;
 		break;
 	case PARAM_TYPE:
-		layer->dem_type = data.u;
+		this->dem_type = data.u;
 		break;
 	case PARAM_MIN_ELEV:
 		/* Convert to store internally
 		   NB file operation always in internal units (metres) */
 		if (!is_file_operation && a_vik_get_units_height() == VIK_UNITS_HEIGHT_FEET) {
-			layer->min_elev = VIK_FEET_TO_METERS(data.d);
+			this->min_elev = VIK_FEET_TO_METERS(data.d);
 		} else {
-			layer->min_elev = data.d;
+			this->min_elev = data.d;
 		}
 		break;
 	case PARAM_MAX_ELEV:
 		/* Convert to store internally
 		   NB file operation always in internal units (metres) */
 		if (!is_file_operation && a_vik_get_units_height() == VIK_UNITS_HEIGHT_FEET) {
-			layer->max_elev = VIK_FEET_TO_METERS(data.d);
+			this->max_elev = VIK_FEET_TO_METERS(data.d);
 		} else {
-			layer->max_elev = data.d;
+			this->max_elev = data.d;
 		}
 		break;
 	case PARAM_FILES:
 		{
 			// Clear out old settings - if any commonalities with new settings they will have to be read again
-			a_dems_list_free (layer->files);
+			a_dems_list_free (this->files);
 			// Set file list so any other intermediate screen drawing updates will show currently loaded DEMs by the working thread
-			layer->files = data.sl;
+			this->files = data.sl;
 			// No need for thread if no files
-			if (layer->files) {
+			if (this->files) {
 				// Thread Load
 				dem_load_thread_data * dltd = (dem_load_thread_data *) malloc(sizeof(dem_load_thread_data));
-				dltd->layer = layer;
+				dltd->layer = this;
 				dltd->layer->files = data.sl;
 
 				a_background_thread(BACKGROUND_POOL_LOCAL,
@@ -409,12 +413,17 @@ bool dem_layer_set_param(VikDEMLayer *vdl, uint16_t id, VikLayerParamData data, 
 
 static VikLayerParamData dem_layer_get_param(VikDEMLayer *vdl, uint16_t id, bool is_file_operation)
 {
-	VikLayerParamData rv;
 	LayerDEM * layer = (LayerDEM *) ((VikLayer *) vdl)->layer;
+	return layer->get_param(id, is_file_operation);
+}
+
+VikLayerParamData LayerDEM::get_param(uint16_t id, bool is_file_operation)
+{
+	VikLayerParamData rv;
 
 	switch (id) {
 	case PARAM_FILES:
-		rv.sl = layer->files;
+		rv.sl = this->files;
 		if (is_file_operation) {
 			// Save in relative format if necessary
 			if (a_vik_get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE) {
@@ -423,30 +432,30 @@ static VikLayerParamData dem_layer_get_param(VikDEMLayer *vdl, uint16_t id, bool
 		}
 		break;
 	case PARAM_SOURCE:
-		rv.u = layer->source;
+		rv.u = this->source;
 		break;
 	case PARAM_TYPE:
-		rv.u = layer->dem_type;
+		rv.u = this->dem_type;
 		break;
 	case PARAM_COLOR:
-		rv.c = layer->color;
+		rv.c = this->color;
 		break;
 	case PARAM_MIN_ELEV:
 		/* Convert for display in desired units
 		   NB file operation always in internal units (metres) */
 		if (!is_file_operation && a_vik_get_units_height() == VIK_UNITS_HEIGHT_FEET) {
-			rv.d = VIK_METERS_TO_FEET(layer->min_elev);
+			rv.d = VIK_METERS_TO_FEET(this->min_elev);
 		} else {
-			rv.d = layer->min_elev;
+			rv.d = this->min_elev;
 		}
 		break;
 	case PARAM_MAX_ELEV:
 		/* Convert for display in desired units
 		   NB file operation always in internal units (metres) */
 		if (!is_file_operation && a_vik_get_units_height() == VIK_UNITS_HEIGHT_FEET) {
-			rv.d = VIK_METERS_TO_FEET(layer->max_elev);
+			rv.d = VIK_METERS_TO_FEET(this->max_elev);
 		} else {
-			rv.d = layer->max_elev;
+			rv.d = this->max_elev;
 		}
 		break;
 	default: break;
@@ -470,8 +479,6 @@ static VikDEMLayer * dem_layer_new(Viewport * viewport)
 	if (viewport) {
 		layer->gcs[0] = viewport->new_gc("#0000FF", 1);
 	}
-
-	vik_layer_set_defaults((VikLayer *) vdl, viewport);
 
 	return vdl;
 }
@@ -1414,6 +1421,7 @@ LayerDEM::LayerDEM(VikLayer * vl) : Layer(vl)
 	this->type = VIK_LAYER_DEM;
 	this->dem_type = 0;
 	strcpy(this->type_string, "DEM");
+	this->set_defaults(viewport);
 }
 
 
@@ -1440,7 +1448,7 @@ LayerDEM::LayerDEM(Viewport * viewport) : LayerDEM()
 			this->gcs[0] = viewport->new_gc("#0000FF", 1);
 		}
 
-		vik_layer_set_defaults((VikLayer *) vdl, viewport);
+		this->set_defaults(viewport);
 
 	}
 

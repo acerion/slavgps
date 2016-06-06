@@ -210,36 +210,40 @@ static VikGeorefLayer * georef_layer_unmarshall(uint8_t *data, int len, Viewport
 static bool georef_layer_set_param(VikGeorefLayer *vgl, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
 {
 	LayerGeoref * layer = (LayerGeoref *) ((VikLayer *) vgl)->layer;
+	return layer->set_param(id, data, viewport, is_file_operation);
+}
 
+bool LayerGeoref::set_param(uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
+{
 	switch (id) {
 	case PARAM_IMAGE:
-		layer->set_image(data.s);
+		this->set_image(data.s);
 		break;
 	case PARAM_CN:
-		layer->corner.northing = data.d;
+		this->corner.northing = data.d;
 		break;
 	case PARAM_CE:
-		layer->corner.easting = data.d;
+		this->corner.easting = data.d;
 		break;
 	case PARAM_MN:
-		layer->mpp_northing = data.d;
+		this->mpp_northing = data.d;
 		break;
 	case PARAM_ME:
-		layer->mpp_easting = data.d;
+		this->mpp_easting = data.d;
 		break;
 	case PARAM_CZ:
 		if (data.u <= 60) {
-			layer->corner.zone = data.u;
+			this->corner.zone = data.u;
 		}
 		break;
 	case PARAM_CL:
 		if (data.u >= 65 || data.u <= 90) {
-			layer->corner.letter = data.u;
+			this->corner.letter = data.u;
 		}
 		break;
 	case PARAM_AA:
 		if (data.u <= 255) {
-			layer->alpha = data.u;
+			this->alpha = data.u;
 		}
 		break;
 	default:
@@ -267,49 +271,54 @@ void LayerGeoref::create_image_file()
 static VikLayerParamData georef_layer_get_param(VikGeorefLayer * vgl, uint16_t id, bool is_file_operation)
 {
 	LayerGeoref * layer = (LayerGeoref *) ((VikLayer *) vgl)->layer;
+	return layer->get_param(id, is_file_operation);
+}
+
+VikLayerParamData LayerGeoref::get_param(uint16_t id, bool is_file_operation)
+{
 	VikLayerParamData rv;
 	switch (id) {
 	case PARAM_IMAGE: {
 		bool set = false;
 		if (is_file_operation) {
-			if (layer->pixbuf && !layer->image) {
+			if (this->pixbuf && !this->image) {
 				// Force creation of image file
-				layer->create_image_file();
+				this->create_image_file();
 			}
 			if (a_vik_get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE) {
 				char *cwd = g_get_current_dir();
 				if (cwd) {
-					rv.s = file_GetRelativeFilename(cwd, layer->image);
+					rv.s = file_GetRelativeFilename(cwd, this->image);
 					if (!rv.s) rv.s = "";
 					set = true;
 				}
 			}
 		}
 		if (!set) {
-			rv.s = layer->image ? layer->image : "";
+			rv.s = this->image ? this->image : "";
 		}
 		break;
 	}
 	case PARAM_CN:
-		rv.d = layer->corner.northing;
+		rv.d = this->corner.northing;
 		break;
 	case PARAM_CE:
-		rv.d = layer->corner.easting;
+		rv.d = this->corner.easting;
 		break;
 	case PARAM_MN:
-		rv.d = layer->mpp_northing;
+		rv.d = this->mpp_northing;
 		break;
 	case PARAM_ME:
-		rv.d = layer->mpp_easting;
+		rv.d = this->mpp_easting;
 		break;
 	case PARAM_CZ:
-		rv.u = layer->corner.zone;
+		rv.u = this->corner.zone;
 		break;
 	case PARAM_CL:
-		rv.u = layer->corner.letter;
+		rv.u = this->corner.letter;
 		break;
 	case PARAM_AA:
-		rv.u = layer->alpha;
+		rv.u = this->alpha;
 		break;
 	default:
 		break;
@@ -323,10 +332,6 @@ static VikGeorefLayer * georef_layer_new(Viewport * viewport)
 
 	((VikLayer *) vgl)->layer = new LayerGeoref((VikLayer *) vgl);
 	LayerGeoref * layer = (LayerGeoref *) ((VikLayer *) vgl)->layer;
-
-	// Since GeoRef layer doesn't use uibuilder
-	//  initializing this way won't do anything yet..
-	vik_layer_set_defaults((VikLayer *) vgl, viewport);
 
 	// Make these defaults based on the current view
 	layer->mpp_northing = viewport->get_ympp();
@@ -1252,6 +1257,8 @@ LayerGeoref::LayerGeoref(VikLayer * vl) : Layer(vl)
 
 	this->click_x = -1;
 	this->click_y = -1;
+
+	this->set_defaults(viewport);
 }
 
 
@@ -1267,7 +1274,7 @@ LayerGeoref::LayerGeoref(Viewport * viewport) : LayerGeoref()
 
 	// Since GeoRef layer doesn't use uibuilder
 	//  initializing this way won't do anything yet..
-	vik_layer_set_defaults((VikLayer *) vgl, viewport);
+	this->set_defaults(viewport);
 
 	// Make these defaults based on the current view
 	this->mpp_northing = viewport->get_ympp();

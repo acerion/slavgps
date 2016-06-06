@@ -858,178 +858,183 @@ void LayerTRW::image_cache_free()
 static bool trw_layer_set_param(VikTrwLayer *vtl, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
 {
 	LayerTRW * layer = (LayerTRW *) ((VikLayer *) vtl)->layer;
+	return layer->set_param(id, data, viewport, is_file_operation);
+}
+
+bool LayerTRW::set_param(uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
+{
 	switch (id) {
-	case PARAM_TV: layer->tracks_visible = data.b; break;
-	case PARAM_WV: layer->waypoints_visible = data.b; break;
-	case PARAM_RV: layer->routes_visible = data.b; break;
-	case PARAM_TDL: layer->track_draw_labels = data.b; break;
+	case PARAM_TV: this->tracks_visible = data.b; break;
+	case PARAM_WV: this->waypoints_visible = data.b; break;
+	case PARAM_RV: this->routes_visible = data.b; break;
+	case PARAM_TDL: this->track_draw_labels = data.b; break;
 	case PARAM_TLFONTSIZE:
 		if (data.u < FS_NUM_SIZES) {
-			layer->track_font_size = (font_size_t) data.u;
-			free(layer->track_fsize_str);
-			switch (layer->track_font_size) {
-			case FS_XX_SMALL: layer->track_fsize_str = g_strdup("xx-small"); break;
-			case FS_X_SMALL: layer->track_fsize_str = g_strdup("x-small"); break;
-			case FS_SMALL: layer->track_fsize_str = g_strdup("small"); break;
-			case FS_LARGE: layer->track_fsize_str = g_strdup("large"); break;
-			case FS_X_LARGE: layer->track_fsize_str = g_strdup("x-large"); break;
-			case FS_XX_LARGE: layer->track_fsize_str = g_strdup("xx-large"); break;
-			default: layer->track_fsize_str = g_strdup("medium"); break;
+			this->track_font_size = (font_size_t) data.u;
+			free(this->track_fsize_str);
+			switch (this->track_font_size) {
+			case FS_XX_SMALL: this->track_fsize_str = g_strdup("xx-small"); break;
+			case FS_X_SMALL: this->track_fsize_str = g_strdup("x-small"); break;
+			case FS_SMALL: this->track_fsize_str = g_strdup("small"); break;
+			case FS_LARGE: this->track_fsize_str = g_strdup("large"); break;
+			case FS_X_LARGE: this->track_fsize_str = g_strdup("x-large"); break;
+			case FS_XX_LARGE: this->track_fsize_str = g_strdup("xx-large"); break;
+			default: this->track_fsize_str = g_strdup("medium"); break;
 			}
 		}
 		break;
-	case PARAM_DM: layer->drawmode = data.u; break;
+	case PARAM_DM: this->drawmode = data.u; break;
 	case PARAM_TC:
-		layer->track_color = data.c;
+		this->track_color = data.c;
 		if (viewport) {
-			layer->new_track_gcs(viewport);
+			this->new_track_gcs(viewport);
 		}
 		break;
-	case PARAM_DP: layer->drawpoints = data.b; break;
+	case PARAM_DP: this->drawpoints = data.b; break;
 	case PARAM_DPS:
 		if (data.u >= MIN_POINT_SIZE && data.u <= MAX_POINT_SIZE)
-			layer->drawpoints_size = data.u;
+			this->drawpoints_size = data.u;
 		break;
-	case PARAM_DE: layer->drawelevation = data.b; break;
-	case PARAM_DS: layer->drawstops = data.b; break;
-	case PARAM_DL: layer->drawlines = data.b; break;
-	case PARAM_DD: layer->drawdirections = data.b; break;
+	case PARAM_DE: this->drawelevation = data.b; break;
+	case PARAM_DS: this->drawstops = data.b; break;
+	case PARAM_DL: this->drawlines = data.b; break;
+	case PARAM_DD: this->drawdirections = data.b; break;
 	case PARAM_DDS:
 		if (data.u >= MIN_ARROW_SIZE && data.u <= MAX_ARROW_SIZE) {
-			layer->drawdirections_size = data.u;
+			this->drawdirections_size = data.u;
 		}
 		break;
 	case PARAM_SL:
 		if (data.u >= MIN_STOP_LENGTH && data.u <= MAX_STOP_LENGTH) {
-			layer->stop_length = data.u;
+			this->stop_length = data.u;
 		}
 		break;
 	case PARAM_EF:
 		if (data.u >= 1 && data.u <= 100) {
-			layer->elevation_factor = data.u;
+			this->elevation_factor = data.u;
 		}
 		break;
 	case PARAM_LT:
-		if (data.u > 0 && data.u < 15 && data.u != layer->line_thickness) {
-			layer->line_thickness = data.u;
+		if (data.u > 0 && data.u < 15 && data.u != this->line_thickness) {
+			this->line_thickness = data.u;
 			if (viewport) {
-				layer->new_track_gcs(viewport);
+				this->new_track_gcs(viewport);
 			}
 		}
 		break;
 	case PARAM_BLT:
-		if (data.u <= 8 && data.u != layer->bg_line_thickness) {
-			layer->bg_line_thickness = data.u;
+		if (data.u <= 8 && data.u != this->bg_line_thickness) {
+			this->bg_line_thickness = data.u;
 			if (viewport) {
-				layer->new_track_gcs(viewport);
+				this->new_track_gcs(viewport);
 			}
 		}
 		break;
 	case PARAM_TBGC:
-		layer->track_bg_color = data.c;
-		if (layer->track_bg_gc)
-			gdk_gc_set_rgb_fg_color(layer->track_bg_gc, &(layer->track_bg_color));
+		this->track_bg_color = data.c;
+		if (this->track_bg_gc)
+			gdk_gc_set_rgb_fg_color(this->track_bg_gc, &(this->track_bg_color));
 		break;
 	case PARAM_TDSF:
-		layer->track_draw_speed_factor = data.d;
+		this->track_draw_speed_factor = data.d;
 		break;
 	case PARAM_TSO:
 		if (data.u < VL_SO_LAST) {
-			layer->track_sort_order = (vik_layer_sort_order_t) data.u;
+			this->track_sort_order = (vik_layer_sort_order_t) data.u;
 		}
 		break;
 	case PARAM_DLA:
-		layer->drawlabels = data.b;
+		this->drawlabels = data.b;
 		break;
-	case PARAM_DI: layer->drawimages = data.b; break;
-	case PARAM_IS: if (data.u != layer->image_size) {
-			layer->image_size = data.u;
-			layer->image_cache_free();
-			layer->image_cache = g_queue_new();
+	case PARAM_DI: this->drawimages = data.b; break;
+	case PARAM_IS: if (data.u != this->image_size) {
+			this->image_size = data.u;
+			this->image_cache_free();
+			this->image_cache = g_queue_new();
 		}
 		break;
-	case PARAM_IA: if (data.u != layer->image_alpha) {
-			layer->image_alpha = data.u;
-			layer->image_cache_free();
-			layer->image_cache = g_queue_new();
+	case PARAM_IA: if (data.u != this->image_alpha) {
+			this->image_alpha = data.u;
+			this->image_cache_free();
+			this->image_cache = g_queue_new();
 		}
 		break;
-	case PARAM_ICS: layer->image_cache_size = data.u;
-		while (layer->image_cache->length > layer->image_cache_size) /* if shrinking cache_size, free pixbuf ASAP */
-			cached_pixbuf_free((CachedPixbuf *) g_queue_pop_tail(layer->image_cache));
+	case PARAM_ICS: this->image_cache_size = data.u;
+		while (this->image_cache->length > this->image_cache_size) /* if shrinking cache_size, free pixbuf ASAP */
+			cached_pixbuf_free((CachedPixbuf *) g_queue_pop_tail(this->image_cache));
 		break;
 	case PARAM_WPC:
-		layer->waypoint_color = data.c;
-		if (layer->waypoint_gc) {
-			gdk_gc_set_rgb_fg_color(layer->waypoint_gc, &(layer->waypoint_color));
+		this->waypoint_color = data.c;
+		if (this->waypoint_gc) {
+			gdk_gc_set_rgb_fg_color(this->waypoint_gc, &(this->waypoint_color));
 		}
 		break;
 	case PARAM_WPTC:
-		layer->waypoint_text_color = data.c;
-		if (layer->waypoint_text_gc) {
-			gdk_gc_set_rgb_fg_color(layer->waypoint_text_gc, &(layer->waypoint_text_color));
+		this->waypoint_text_color = data.c;
+		if (this->waypoint_text_gc) {
+			gdk_gc_set_rgb_fg_color(this->waypoint_text_gc, &(this->waypoint_text_color));
 		}
 		break;
 	case PARAM_WPBC:
-		layer->waypoint_bg_color = data.c;
-		if (layer->waypoint_bg_gc) {
-			gdk_gc_set_rgb_fg_color(layer->waypoint_bg_gc, &(layer->waypoint_bg_color));
+		this->waypoint_bg_color = data.c;
+		if (this->waypoint_bg_gc) {
+			gdk_gc_set_rgb_fg_color(this->waypoint_bg_gc, &(this->waypoint_bg_color));
 		}
 		break;
 	case PARAM_WPBA:
-		layer->wpbgand = (GdkFunction) data.b;
-		if (layer->waypoint_bg_gc) {
-			gdk_gc_set_function(layer->waypoint_bg_gc, data.b ? GDK_AND : GDK_COPY);
+		this->wpbgand = (GdkFunction) data.b;
+		if (this->waypoint_bg_gc) {
+			gdk_gc_set_function(this->waypoint_bg_gc, data.b ? GDK_AND : GDK_COPY);
 		}
 		break;
 	case PARAM_WPSYM:
 		if (data.u < WP_NUM_SYMBOLS) {
-			layer->wp_symbol = data.u;
+			this->wp_symbol = data.u;
 		}
 		break;
 	case PARAM_WPSIZE:
 		if (data.u > 0 && data.u <= 64) {
-			layer->wp_size = data.u;
+			this->wp_size = data.u;
 		}
 		break;
 	case PARAM_WPSYMS:
-		layer->wp_draw_symbols = data.b;
+		this->wp_draw_symbols = data.b;
 		break;
 	case PARAM_WPFONTSIZE:
 		if (data.u < FS_NUM_SIZES) {
-			layer->wp_font_size = (font_size_t) data.u;
-			free(layer->wp_fsize_str);
-			switch (layer->wp_font_size) {
-			case FS_XX_SMALL: layer->wp_fsize_str = g_strdup("xx-small"); break;
-			case FS_X_SMALL: layer->wp_fsize_str = g_strdup("x-small"); break;
-			case FS_SMALL: layer->wp_fsize_str = g_strdup("small"); break;
-			case FS_LARGE: layer->wp_fsize_str = g_strdup("large"); break;
-			case FS_X_LARGE: layer->wp_fsize_str = g_strdup("x-large"); break;
-			case FS_XX_LARGE: layer->wp_fsize_str = g_strdup("xx-large"); break;
-			default: layer->wp_fsize_str = g_strdup("medium"); break;
+			this->wp_font_size = (font_size_t) data.u;
+			free(this->wp_fsize_str);
+			switch (this->wp_font_size) {
+			case FS_XX_SMALL: this->wp_fsize_str = g_strdup("xx-small"); break;
+			case FS_X_SMALL: this->wp_fsize_str = g_strdup("x-small"); break;
+			case FS_SMALL: this->wp_fsize_str = g_strdup("small"); break;
+			case FS_LARGE: this->wp_fsize_str = g_strdup("large"); break;
+			case FS_X_LARGE: this->wp_fsize_str = g_strdup("x-large"); break;
+			case FS_XX_LARGE: this->wp_fsize_str = g_strdup("xx-large"); break;
+			default: this->wp_fsize_str = g_strdup("medium"); break;
 			}
 		}
 		break;
-	case PARAM_WPSO: if (data.u < VL_SO_LAST) layer->wp_sort_order = (vik_layer_sort_order_t) data.u; break;
+	case PARAM_WPSO: if (data.u < VL_SO_LAST) this->wp_sort_order = (vik_layer_sort_order_t) data.u; break;
 		// Metadata
 	case PARAM_MDDESC:
-		if (data.s && layer->metadata) {
-			layer->metadata->description = g_strdup(data.s);
+		if (data.s && this->metadata) {
+			this->metadata->description = g_strdup(data.s);
 		}
 		break;
 	case PARAM_MDAUTH:
-		if (data.s && layer->metadata) {
-			layer->metadata->author = g_strdup(data.s);
+		if (data.s && this->metadata) {
+			this->metadata->author = g_strdup(data.s);
 		}
 		break;
 	case PARAM_MDTIME:
-		if (data.s && layer->metadata) {
-			layer->metadata->timestamp = g_strdup(data.s);
+		if (data.s && this->metadata) {
+			this->metadata->timestamp = g_strdup(data.s);
 		}
 		break;
 	case PARAM_MDKEYS:
-		if (data.s && layer->metadata) {
-			layer->metadata->keywords = g_strdup(data.s);
+		if (data.s && this->metadata) {
+			this->metadata->keywords = g_strdup(data.s);
 		}
 		break;
 	default: break;
@@ -1040,62 +1045,67 @@ static bool trw_layer_set_param(VikTrwLayer *vtl, uint16_t id, VikLayerParamData
 static VikLayerParamData trw_layer_get_param(VikTrwLayer *vtl, uint16_t id, bool is_file_operation)
 {
 	LayerTRW * layer = (LayerTRW *) ((VikLayer *) vtl)->layer;
+	return layer->get_param(id, is_file_operation);
+}
+
+VikLayerParamData LayerTRW::get_param(uint16_t id, bool is_file_operation)
+{
 	VikLayerParamData rv;
 	switch (id) {
-	case PARAM_TV: rv.b = layer->tracks_visible; break;
-	case PARAM_WV: rv.b = layer->waypoints_visible; break;
-	case PARAM_RV: rv.b = layer->routes_visible; break;
-	case PARAM_TDL: rv.b = layer->track_draw_labels; break;
-	case PARAM_TLFONTSIZE: rv.u = layer->track_font_size; break;
-	case PARAM_DM: rv.u = layer->drawmode; break;
-	case PARAM_TC: rv.c = layer->track_color; break;
-	case PARAM_DP: rv.b = layer->drawpoints; break;
-	case PARAM_DPS: rv.u = layer->drawpoints_size; break;
-	case PARAM_DE: rv.b = layer->drawelevation; break;
-	case PARAM_EF: rv.u = layer->elevation_factor; break;
-	case PARAM_DS: rv.b = layer->drawstops; break;
-	case PARAM_SL: rv.u = layer->stop_length; break;
-	case PARAM_DL: rv.b = layer->drawlines; break;
-	case PARAM_DD: rv.b = layer->drawdirections; break;
-	case PARAM_DDS: rv.u = layer->drawdirections_size; break;
-	case PARAM_LT: rv.u = layer->line_thickness; break;
-	case PARAM_BLT: rv.u = layer->bg_line_thickness; break;
-	case PARAM_DLA: rv.b = layer->drawlabels; break;
-	case PARAM_DI: rv.b = layer->drawimages; break;
-	case PARAM_TBGC: rv.c = layer->track_bg_color; break;
-	case PARAM_TDSF: rv.d = layer->track_draw_speed_factor; break;
-	case PARAM_TSO: rv.u = layer->track_sort_order; break;
-	case PARAM_IS: rv.u = layer->image_size; break;
-	case PARAM_IA: rv.u = layer->image_alpha; break;
-	case PARAM_ICS: rv.u = layer->image_cache_size; break;
-	case PARAM_WPC: rv.c = layer->waypoint_color; break;
-	case PARAM_WPTC: rv.c = layer->waypoint_text_color; break;
-	case PARAM_WPBC: rv.c = layer->waypoint_bg_color; break;
-	case PARAM_WPBA: rv.b = layer->wpbgand; break;
-	case PARAM_WPSYM: rv.u = layer->wp_symbol; break;
-	case PARAM_WPSIZE: rv.u = layer->wp_size; break;
-	case PARAM_WPSYMS: rv.b = layer->wp_draw_symbols; break;
-	case PARAM_WPFONTSIZE: rv.u = layer->wp_font_size; break;
-	case PARAM_WPSO: rv.u = layer->wp_sort_order; break;
+	case PARAM_TV: rv.b = this->tracks_visible; break;
+	case PARAM_WV: rv.b = this->waypoints_visible; break;
+	case PARAM_RV: rv.b = this->routes_visible; break;
+	case PARAM_TDL: rv.b = this->track_draw_labels; break;
+	case PARAM_TLFONTSIZE: rv.u = this->track_font_size; break;
+	case PARAM_DM: rv.u = this->drawmode; break;
+	case PARAM_TC: rv.c = this->track_color; break;
+	case PARAM_DP: rv.b = this->drawpoints; break;
+	case PARAM_DPS: rv.u = this->drawpoints_size; break;
+	case PARAM_DE: rv.b = this->drawelevation; break;
+	case PARAM_EF: rv.u = this->elevation_factor; break;
+	case PARAM_DS: rv.b = this->drawstops; break;
+	case PARAM_SL: rv.u = this->stop_length; break;
+	case PARAM_DL: rv.b = this->drawlines; break;
+	case PARAM_DD: rv.b = this->drawdirections; break;
+	case PARAM_DDS: rv.u = this->drawdirections_size; break;
+	case PARAM_LT: rv.u = this->line_thickness; break;
+	case PARAM_BLT: rv.u = this->bg_line_thickness; break;
+	case PARAM_DLA: rv.b = this->drawlabels; break;
+	case PARAM_DI: rv.b = this->drawimages; break;
+	case PARAM_TBGC: rv.c = this->track_bg_color; break;
+	case PARAM_TDSF: rv.d = this->track_draw_speed_factor; break;
+	case PARAM_TSO: rv.u = this->track_sort_order; break;
+	case PARAM_IS: rv.u = this->image_size; break;
+	case PARAM_IA: rv.u = this->image_alpha; break;
+	case PARAM_ICS: rv.u = this->image_cache_size; break;
+	case PARAM_WPC: rv.c = this->waypoint_color; break;
+	case PARAM_WPTC: rv.c = this->waypoint_text_color; break;
+	case PARAM_WPBC: rv.c = this->waypoint_bg_color; break;
+	case PARAM_WPBA: rv.b = this->wpbgand; break;
+	case PARAM_WPSYM: rv.u = this->wp_symbol; break;
+	case PARAM_WPSIZE: rv.u = this->wp_size; break;
+	case PARAM_WPSYMS: rv.b = this->wp_draw_symbols; break;
+	case PARAM_WPFONTSIZE: rv.u = this->wp_font_size; break;
+	case PARAM_WPSO: rv.u = this->wp_sort_order; break;
 		// Metadata
 	case PARAM_MDDESC:
-		if (layer->metadata) {
-			rv.s = layer->metadata->description;
+		if (this->metadata) {
+			rv.s = this->metadata->description;
 		}
 		break;
 	case PARAM_MDAUTH:
-		if (layer->metadata) {
-			rv.s = layer->metadata->author;
+		if (this->metadata) {
+			rv.s = this->metadata->author;
 		}
 		break;
 	case PARAM_MDTIME:
-		if (layer->metadata) {
-			rv.s = layer->metadata->timestamp;
+		if (this->metadata) {
+			rv.s = this->metadata->timestamp;
 		}
 		break;
 	case PARAM_MDKEYS:
-		if (layer->metadata) {
-			rv.s = layer->metadata->keywords;
+		if (this->metadata) {
+			rv.s = this->metadata->keywords;
 		}
 		break;
 	default: break;
@@ -1365,8 +1375,6 @@ static VikTrwLayer* trw_layer_new1(Viewport * viewport)
 	layer->image_cache = g_queue_new(); // Must be performed before set_params via set_defaults
 
 	//rv->trw = (LayerTRW *) ((VikLayer *) rv)->layer; // kamilLASTtrw
-
-	vik_layer_set_defaults((VikLayer *) rv, viewport);
 
 
 	// Param settings that are not available via the GUI
@@ -9067,6 +9075,8 @@ LayerTRW::LayerTRW(VikLayer * vl) : Layer(vl)
 	memset(&coord_mode, 0, sizeof (VikCoordMode));
 
 	highest_wp_number = 0;
+
+	this->set_defaults(viewport);
 }
 
 
@@ -9214,8 +9224,7 @@ LayerTRW::LayerTRW(Viewport * viewport) : Layer()
 
 		this->image_cache = g_queue_new(); // Must be performed before set_params via set_defaults
 
-		vik_layer_set_defaults((VikLayer *) rv, viewport);
-
+		this->set_defaults(viewport);
 
 		// Param settings that are not available via the GUI
 		// Force to on after processing params (which defaults them to off with a zero value)

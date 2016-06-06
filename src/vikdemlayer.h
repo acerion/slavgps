@@ -74,6 +74,8 @@ namespace SlavGPS {
 		bool download_release(GdkEventButton * event, Viewport * viewport);
 		bool add_file(char const * filename);
 		void draw_dem(Viewport * viewport, VikDEM * dem);
+		bool set_param(uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
+		VikLayerParamData get_param(uint16_t id, bool is_file_operation);
 
 
 		GdkGC ** gcs;
