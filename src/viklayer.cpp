@@ -757,6 +757,9 @@ Layer::Layer()
 	this->realized = false;
 
 	strcpy(this->type_string, "LAST");
+
+	this->vl = (VikLayer *) g_object_new(VIK_LAYER_TYPE, NULL);
+	this->vl->layer = this;
 }
 
 
@@ -765,9 +768,6 @@ Layer::Layer()
 Layer::Layer(VikLayer * vl_) : Layer()
 {
 	fprintf(stderr, "Layer::Layer(vl)\n");
-	this->vl = vl_;
-	this->vl->layer = this;
-
 }
 
 bool Layer::select_click(GdkEventButton * event, Viewport * viewport, tool_ed_t * tet)

@@ -167,13 +167,9 @@ static VikAggregateLayer * aggregate_layer_unmarshall(uint8_t *data, int len, Vi
 
 VikAggregateLayer *vik_aggregate_layer_new()
 {
-	VikAggregateLayer *val = (VikAggregateLayer *) g_object_new(VIK_AGGREGATE_LAYER_TYPE, NULL);
+	LayerAggregate * layer = new LayerAggregate((VikLayer *) NULL);
 
-	VikLayer * vl = (VikLayer *) val;
-
-	vl->layer = new LayerAggregate(vl);
-
-	return val;
+	return (VikAggregateLayer *) layer->vl;
 }
 
 void LayerAggregate::insert_layer(Layer * layer, GtkTreeIter *replace_iter)
@@ -1049,7 +1045,6 @@ char const * LayerAggregate::tooltip()
 
 LayerAggregate::LayerAggregate()
 {
-	this->vl = NULL;
 	this->type = VIK_LAYER_AGGREGATE;
 	this->rename(vik_aggregate_layer_interface.name);
 	this->children = new std::list<Layer *>;
@@ -1075,7 +1070,4 @@ LayerAggregate::LayerAggregate(VikLayer * vl) : Layer(vl)
 
 LayerAggregate::LayerAggregate(Viewport * viewport) : LayerAggregate()
 {
-	VikAggregateLayer *val = (VikAggregateLayer *) g_object_new(VIK_AGGREGATE_LAYER_TYPE, NULL);
-	((VikLayer *) val)->layer = this;
-	this->vl = (VikLayer *) val;
 }

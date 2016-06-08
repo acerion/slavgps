@@ -185,15 +185,10 @@ void LayerCoord::post_read(Viewport * viewport, bool from_file)
 
 static VikCoordLayer * coord_layer_new(Viewport * viewport)
 {
-	VikCoordLayer * vcl = (VikCoordLayer *) g_object_new(VIK_COORD_LAYER_TYPE, NULL);
-
-	((VikLayer *) vcl)->layer = new LayerCoord((VikLayer *) vcl);
-
-	LayerCoord * layer = (LayerCoord *) ((VikLayer * ) vcl)->layer;
-
+	LayerCoord * layer = new LayerCoord((VikLayer *) NULL);
 	layer->gc = NULL;
 
-	return vcl;
+	return (VikCoordLayer *) layer->vl;
 }
 
 void LayerCoord::draw(Viewport * viewport)
@@ -427,10 +422,6 @@ LayerCoord::LayerCoord(VikLayer * vl) : Layer(vl)
 LayerCoord::LayerCoord(Viewport * viewport)
 {
 	fprintf(stderr, "LayerCoord()\n");
-	VikCoordLayer * vcl = (VikCoordLayer *) g_object_new(VIK_COORD_LAYER_TYPE, NULL);
-	((VikLayer *) vcl)->layer = this;
-	this->vl = (VikLayer *) vcl;
-
 
 	this->gc = NULL;
 	this->type = VIK_LAYER_COORD;
@@ -439,7 +430,6 @@ LayerCoord::LayerCoord(Viewport * viewport)
 
 	this->set_defaults(viewport);
 	if (viewport) {
-		LayerCoord * layer = (LayerCoord *) ((VikLayer * ) vcl)->layer;
 		this->update_gc(viewport);
 	}
 }

@@ -625,9 +625,7 @@ VikLayerParamData LayerGPS::get_param(uint16_t id, bool is_file_operation)
 
 VikGpsLayer *vik_gps_layer_new(Viewport * viewport)
 {
-	VikGpsLayer * vgl = (VikGpsLayer *) g_object_new(VIK_GPS_LAYER_TYPE, NULL);
-	((VikLayer *) vgl)->layer = new LayerGPS((VikLayer *) vgl);
-	LayerGPS * layer = (LayerGPS *) ((VikLayer *) vgl)->layer;
+	LayerGPS * layer = new LayerGPS((VikLayer *) NULL);
 
 	for (int i = 0; i < NUM_TRW; i++) {
 		layer->trw_children[i] = NULL;
@@ -662,7 +660,7 @@ VikGpsLayer *vik_gps_layer_new(Viewport * viewport)
 	layer->protocol = NULL;
 	layer->serial_port = NULL;
 
-	return vgl;
+	return (VikGpsLayer *) layer->vl;
 }
 
 void LayerGPS::draw(Viewport * viewport)
@@ -1974,10 +1972,6 @@ LayerGPS::LayerGPS(Viewport * viewport) : LayerGPS()
 {
 
 	/* vik_gps_layer_new() */
-
-	VikGpsLayer * vgl = (VikGpsLayer *) g_object_new(VIK_GPS_LAYER_TYPE, NULL);
-	((VikLayer *) vgl)->layer = this;
-	this->vl = (VikLayer *) vgl;
 
 	for (int i = 0; i < NUM_TRW; i++) {
 		this->trw_children[i] = NULL;

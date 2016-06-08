@@ -1348,8 +1348,6 @@ static unsigned int strcase_hash(gconstpointer v)
 //  thus more easily searchable in a simple text editor
 static VikTrwLayer* trw_layer_new1(Viewport * viewport)
 {
-	VikTrwLayer *rv = (VikTrwLayer *) g_object_new(VIK_TRW_LAYER_TYPE, NULL);
-
 	// It's not entirely clear the benefits of hash tables usage here - possibly the simplicity of first implementation for unique names
 	// Now with the name of the item stored as part of the item - these tables are effectively straightforward lists
 
@@ -1369,8 +1367,7 @@ static VikTrwLayer* trw_layer_new1(Viewport * viewport)
 	//rv->routes = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, (GDestroyNotify) Track::delete_track);
 	//rv->routes_iters = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, g_free);
 
-	((VikLayer *) rv)->layer = new LayerTRW((VikLayer *) rv);
-	LayerTRW * layer = (LayerTRW *) ((VikLayer *) rv)->layer;
+	LayerTRW * layer = new LayerTRW((VikLayer *) NULL);
 
 	layer->image_cache = g_queue_new(); // Must be performed before set_params via set_defaults
 
@@ -1388,7 +1385,7 @@ static VikTrwLayer* trw_layer_new1(Viewport * viewport)
 
 	//rv->trw->vtl = rv; /* Reference to parent object of type VikTrwLayer for trw. */
 
-	return rv;
+	return (VikTrwLayer *) layer->vl;
 }
 
 
@@ -9192,15 +9189,9 @@ LayerTRW::LayerTRW(Viewport * viewport) : Layer()
 	tracks_analysis_dialog = NULL;
 
 
-	VikTrwLayer * rv = NULL;
 
 	/* VikTrwLayer *rv = trw_layer_new1(viewport); */
 	{
-
-		rv = (VikTrwLayer *) g_object_new(VIK_TRW_LAYER_TYPE, NULL);
-
-		((VikLayer *) rv)->layer = this;
-		this->vl = (VikLayer *) rv;
 		//rv->trw = (LayerTRW *) ((VikLayer *) rv)->layer; // kamilLASTtrw
 
 		// It's not entirely clear the benefits of hash tables usage here - possibly the simplicity of first implementation for unique names
@@ -9242,7 +9233,7 @@ LayerTRW::LayerTRW(Viewport * viewport) : Layer()
 
 	/* trw_layer_create(Viewport * viewport) */
 	{
-		((Layer *) ((VikLayer *) rv)->layer)->rename(vik_trw_layer_interface.name);
+		this->rename(vik_trw_layer_interface.name);
 
 		if (viewport == NULL || gtk_widget_get_window(GTK_WIDGET(viewport->vvp)) == NULL) {
 			;

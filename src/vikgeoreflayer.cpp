@@ -328,10 +328,7 @@ VikLayerParamData LayerGeoref::get_param(uint16_t id, bool is_file_operation)
 
 static VikGeorefLayer * georef_layer_new(Viewport * viewport)
 {
-	VikGeorefLayer *vgl = (VikGeorefLayer *) g_object_new(VIK_GEOREF_LAYER_TYPE, NULL);
-
-	((VikLayer *) vgl)->layer = new LayerGeoref((VikLayer *) vgl);
-	LayerGeoref * layer = (LayerGeoref *) ((VikLayer *) vgl)->layer;
+	LayerGeoref * layer = new LayerGeoref((VikLayer *) NULL);
 
 	// Make these defaults based on the current view
 	layer->mpp_northing = viewport->get_ympp();
@@ -349,7 +346,7 @@ static VikGeorefLayer * georef_layer_new(Viewport * viewport)
 	layer->ll_br.lon = 0.0;
 	layer->alpha = 255;
 
-	return vgl;
+	return (VikGeorefLayer *) layer->vl;
 }
 
 /**
@@ -1267,11 +1264,6 @@ LayerGeoref::LayerGeoref(VikLayer * vl) : Layer(vl)
 
 LayerGeoref::LayerGeoref(Viewport * viewport) : LayerGeoref()
 {
-	VikGeorefLayer *vgl = (VikGeorefLayer *) g_object_new(VIK_GEOREF_LAYER_TYPE, NULL);
-
-	((VikLayer *) vgl)->layer = this;
-	this->vl = (VikLayer *) vgl;
-
 	// Since GeoRef layer doesn't use uibuilder
 	//  initializing this way won't do anything yet..
 	this->set_defaults(viewport);

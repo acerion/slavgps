@@ -807,11 +807,7 @@ static void maps_layer_change_param(GtkWidget *widget, ui_change_values values)
 
 static VikMapsLayer * maps_layer_new(Viewport * viewport)
 {
-	VikMapsLayer * vml = (VikMapsLayer *) g_object_new(VIK_MAPS_LAYER_TYPE, NULL);
-
-	((VikLayer *) vml)->layer = new LayerMaps((VikLayer *) vml);
-
-	LayerMaps * layer = (LayerMaps *) ((VikLayer *) vml)->layer;
+	LayerMaps * layer = new LayerMaps((VikLayer *) NULL);
 
 	layer->dl_tool_x = layer->dl_tool_y = -1;
 	layer->last_center = NULL;
@@ -823,7 +819,7 @@ static VikMapsLayer * maps_layer_new(Viewport * viewport)
 
 
 
-	return vml;
+	return (VikMapsLayer *) layer->vl;
 }
 
 void LayerMaps::free_()
@@ -2646,21 +2642,14 @@ LayerMaps::LayerMaps(Viewport * viewport) : LayerMaps()
 {
 	fprintf(stderr, "LayerMaps::LayerMaps(viewport)\n");
 
-	VikMapsLayer * vml = (VikMapsLayer *) g_object_new(VIK_MAPS_LAYER_TYPE, NULL);
-
-	((VikLayer *) vml)->layer = this;
-	this->vl = (VikLayer *) vml;
-
-	LayerMaps * layer = (LayerMaps *) ((VikLayer *) vml)->layer;
-
 	this->set_defaults(viewport);
 
-	layer->dl_tool_x = layer->dl_tool_y = -1;
-	layer->last_center = NULL;
-	layer->last_xmpp = 0.0;
-	layer->last_ympp = 0.0;
+	this->dl_tool_x = this->dl_tool_y = -1;
+	this->last_center = NULL;
+	this->last_xmpp = 0.0;
+	this->last_ympp = 0.0;
 
-	layer->dl_right_click_menu = NULL;
-	layer->filename = NULL;
+	this->dl_right_click_menu = NULL;
+	this->filename = NULL;
 
 }

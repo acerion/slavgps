@@ -465,9 +465,7 @@ VikLayerParamData LayerDEM::get_param(uint16_t id, bool is_file_operation)
 
 static VikDEMLayer * dem_layer_new(Viewport * viewport)
 {
-	VikDEMLayer * vdl = (VikDEMLayer *) g_object_new (VIK_DEM_LAYER_TYPE, NULL);
-	LayerDEM * layer = new LayerDEM((VikLayer *) vdl);
-	((VikLayer *) vdl)->layer = (Layer *) layer;
+	LayerDEM * layer = new LayerDEM((VikLayer *) NULL);
 
 	layer->files = NULL;
 
@@ -480,7 +478,7 @@ static VikDEMLayer * dem_layer_new(Viewport * viewport)
 		layer->gcs[0] = viewport->new_gc("#0000FF", 1);
 	}
 
-	return vdl;
+	return (VikDEMLayer *) layer->vl;
 }
 
 
@@ -1430,13 +1428,8 @@ LayerDEM::LayerDEM(VikLayer * vl) : Layer(vl)
 
 LayerDEM::LayerDEM(Viewport * viewport) : LayerDEM()
 {
-	VikDEMLayer * vdl = NULL;
 	/* dem_layer_new(Viewport * viewport) */
 	{
-		vdl = (VikDEMLayer *) g_object_new (VIK_DEM_LAYER_TYPE, NULL);
-		((VikLayer *) vdl)->layer = this;
-		this->vl = (VikLayer *) vdl;
-
 		this->files = NULL;
 
 		this->gcs = (GdkGC **) malloc(sizeof(GdkGC *) * DEM_N_HEIGHT_COLORS);

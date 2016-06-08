@@ -452,15 +452,13 @@ VikLayerParamData LayerMapnik::get_param(uint16_t id, bool is_file_operation)
  */
 static VikMapnikLayer * mapnik_layer_new(Viewport * viewport)
 {
-	VikMapnikLayer * vml = (VikMapnikLayer *) g_object_new (VIK_MAPNIK_LAYER_TYPE, NULL);
-	((VikLayer *) vml)->layer = new LayerMapnik((VikLayer *) vml);
-	LayerMapnik * layer = (LayerMapnik *) ((VikLayer *) vml)->layer;
+	LayerMapnik * layer = new LayerMapnik((VikLayer *) NULL);
 
 	layer->tile_size_x = size_default().u; // FUTURE: Is there any use in this being configurable?
 	layer->loaded = false;
 	layer->mi = mapnik_interface_new();
 
-	return vml;
+	return (VikMapnikLayer *) layer->vl;
 }
 
 /**
@@ -1255,10 +1253,6 @@ LayerMapnik::LayerMapnik(VikLayer * vl) : Layer(vl)
 
 LayerMapnik::LayerMapnik(Viewport * viewport) : LayerMapnik()
 {
-	VikMapnikLayer * vml = (VikMapnikLayer *) g_object_new (VIK_MAPNIK_LAYER_TYPE, NULL);
-	((VikLayer *) vml)->layer = this;
-	this->vl = (VikLayer *) vml;
-
 	this->set_defaults(viewport);
 	this->tile_size_x = size_default().u; // FUTURE: Is there any use in this being configurable?
 	this->loaded = false;
