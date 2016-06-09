@@ -112,7 +112,7 @@ using namespace SlavGPS;
 
 
 
-
+#if 0
 typedef enum {
   MA_VTL = 0,
   MA_VLP,
@@ -124,15 +124,10 @@ typedef enum {
   MA_MISC,
   MA_LAST,
 } menu_array_index;
+#endif
 
 
 
-
-
-//static void trw_layer_find_maxmin(VikLayer *vtl, struct LatLon maxmin[2]);
-
-//static void trw_layer_new_track_gcs(VikLayer *vtl, Viewport * viewport);
-//static void trw_layer_free_track_gcs(VikLayer *vtl);
 
 
 static void goto_coord(LayersPanel * panel, Layer * layer, Viewport * viewport, const VikCoord * coord);
@@ -1383,15 +1378,12 @@ static VikLayer* trw_layer_new1(Viewport * viewport)
 	layer->draw_sync_do = true;
 	// Everything else is 0, false or NULL
 
-	//rv->trw->vtl = rv; /* Reference to parent object of type VikLayer for trw. */
-
 	return layer->vl;
 }
 
 
 void LayerTRW::free_()
 {
-	VikLayer *trwlayer = this->vl;
 	/* kamilTODO: call destructors of objects in these maps. */
 	this->waypoints.clear();
 	this->waypoints_iters.clear();
@@ -1465,10 +1457,6 @@ void LayerTRW::draw_with_highlight(Viewport * viewport, bool highlight)
 
 void LayerTRW::draw(Viewport * viewport)
 {
-
-	//fprintf(stderr, "%s:%d called\n", __FUNCTION__, __LINE__);
-	//VikLayer * l = this->vl;
-
 	// If this layer is to be highlighted - then don't draw now - as it will be drawn later on in the specific highlight draw stage
 	// This may seem slightly inefficient to test each time for every layer
 	//  but for a layer with *lots* of tracks & waypoints this can save some effort by not drawing the items twice
@@ -1505,8 +1493,6 @@ void LayerTRW::draw_highlight(Viewport * viewport)
  */
 void LayerTRW::draw_highlight_item(Track * trk, Waypoint * wp, Viewport * viewport)
 {
-	VikLayer * parent = this->vl;
-
 	// Check the layer for visibility (including all the parents visibilities)
 	if (!this->vt->tree->is_visible_in_tree(&this->iter)) {
 		return;
@@ -1539,8 +1525,6 @@ void LayerTRW::draw_highlight_item(Track * trk, Waypoint * wp, Viewport * viewpo
  */
 void LayerTRW::draw_highlight_items(std::unordered_map<sg_uid_t, Track *> * tracks, std::unordered_map<sg_uid_t, Waypoint *> * waypoints, Viewport * viewport)
 {
-	VikLayer * parent = this->vl;
-
 	// Check the layer for visibility (including all the parents visibilities)
 	if (!this->vt->tree->is_visible_in_tree(&this->iter)) {
 		return;
@@ -9192,8 +9176,6 @@ LayerTRW::LayerTRW(Viewport * viewport) : Layer()
 
 	/* VikLayer *rv = trw_layer_new1(viewport); */
 	{
-		//rv->trw = (LayerTRW *) rv->layer; // kamilLASTtrw
-
 		// It's not entirely clear the benefits of hash tables usage here - possibly the simplicity of first implementation for unique names
 		// Now with the name of the item stored as part of the item - these tables are effectively straightforward lists
 
@@ -9225,8 +9207,6 @@ LayerTRW::LayerTRW(Viewport * viewport) : Layer()
 		this->draw_sync_done = true;
 		this->draw_sync_do = true;
 		// Everything else is 0, false or NULL
-
-		//this->vtl = rv; /* Reference to parent object of type VikLayer for trw. */
 	}
 
 

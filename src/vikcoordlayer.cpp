@@ -33,8 +33,6 @@
 #include "icons/icons.h"
 
 static VikLayer *coord_layer_new(Viewport * viewport);
-static void coord_layer_free(VikLayer *vcl);
-//static VikLayer * coord_layer_create(Viewport * viewport);
 static VikLayer *coord_layer_unmarshall(uint8_t *data, int len, Viewport * viewport);
 static bool coord_layer_set_param(VikLayer *vcl, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
 static VikLayerParamData coord_layer_get_param(VikLayer *vcl, uint16_t id, bool is_file_operation);
@@ -383,20 +381,6 @@ void LayerCoord::update_gc(Viewport * viewport)
 
 	this->gc = viewport->new_gc_from_color(&(this->color), this->line_thickness);
 }
-
-#if 0
-static VikLayer * coord_layer_create(Viewport * viewport)
-{
-	VikLayer *vcl = coord_layer_new(viewport);
-	if (viewport) {
-		LayerCoord * layer = (LayerCoord *) vcl->layer;
-		layer->update_gc(viewport);
-	}
-
-	return vcl;
-}
-#endif
-
 
 LayerCoord::LayerCoord()
 {

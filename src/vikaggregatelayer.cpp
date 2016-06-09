@@ -86,16 +86,9 @@ GType vik_aggregate_layer_get_type()
 	return val_type;
 }
 
-#if 0
-VikLayer * vik_aggregate_layer_create(Viewport * viewport)
-{
-	VikLayer *rv = vik_aggregate_layer_new();
-	Layer * layer = (Layer *) rv->layer;
-	layer->rename(vik_aggregate_layer_interface.name);
 
-	return rv;
-}
-#endif
+
+
 
 void LayerAggregate::marshall(uint8_t **data, int *datalen)
 {
@@ -175,7 +168,6 @@ VikLayer *vik_aggregate_layer_new()
 void LayerAggregate::insert_layer(Layer * layer, GtkTreeIter *replace_iter)
 {
 	GtkTreeIter iter;
-	VikLayer * vl = this->vl;
 
 	// By default layers are inserted above the selected layer
 	bool put_above = true;
@@ -234,7 +226,6 @@ void LayerAggregate::insert_layer(Layer * layer, GtkTreeIter *replace_iter)
 void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 {
 	GtkTreeIter iter;
-	VikLayer *vl = this->vl;
 
 	// By default layers go to the top
 	bool put_above = true;
@@ -335,39 +326,6 @@ void LayerAggregate::draw(Viewport * viewport)
 			layer->draw_visible(viewport);
 		}
 	}
-
-#if 0
-	fprintf(stderr, "%s:%d: children:\n", __FILE__, __LINE__);
-	for (auto child = this->children->begin(); child != this->children->end(); child++) {
-		Layer * layer = *child;
-		fprintf(stderr, "    name = '%s', ", layer->name);
-		if (layer->type == VIK_LAYER_AGGREGATE) {
-			fprintf(stderr, "type = LAYER AGGREGATE\n");
-
-		} else if (layer->type == VIK_LAYER_TRW) {
-			fprintf(stderr, "type = LAYER TRW\n");
-		} else if (layer->type == VIK_LAYER_COORD) {
-			fprintf(stderr, "type = LAYER COORD\n");
-		} else if (layer->type == VIK_LAYER_GEOREF) {
-			fprintf(stderr, "type = LAYER GEOREF\n");
-		} else if (layer->type == VIK_LAYER_MAPS) {
-			fprintf(stderr, "type = LAYER MAPS\n");
-		} else if (layer->type == VIK_LAYER_DEM) {
-			fprintf(stderr, "type = LAYER DEM\n");
-		} else if (layer->type == VIK_LAYER_GPS) {
-			fprintf(stderr, "type = LAYER GPS\n");
-#ifdef HAVE_LIBMAPNIK
-		} else if (layer->type == VIK_LAYER_MAPNIK) {
-			fprintf(stderr, "type = LAYER MAPNIK\n");
-#endif
-		} else if (layer->type == VIK_LAYER_NUM_TYPES) {
-			fprintf(stderr, "type = LAYER NUM_TYPES !!!!! \n");
-
-		} else {
-			fprintf(stderr, "type = %d !!!!!! \n", layer->type);
-		}
-	}
-#endif
 }
 
 void LayerAggregate::change_coord_mode(VikCoordMode mode)

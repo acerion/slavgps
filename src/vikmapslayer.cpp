@@ -1496,7 +1496,6 @@ void LayerMaps::draw_section(Viewport * viewport, VikCoord *ul, VikCoord *br)
 
 void LayerMaps::draw(Viewport * viewport)
 {
-	VikLayer * vml = this->vl;
 	if (map_sources[this->map_index]->get_drawmode() == viewport->get_drawmode()) {
 		VikCoord ul, br;
 

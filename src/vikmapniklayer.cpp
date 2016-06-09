@@ -105,7 +105,6 @@ static VikLayer *mapnik_layer_unmarshall(uint8_t *data, int len, Viewport * view
 static bool mapnik_layer_set_param(VikLayer *vml, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
 static VikLayerParamData mapnik_layer_get_param(VikLayer *vml, uint16_t id, bool is_file_operation);
 static VikLayer * mapnik_layer_new(Viewport * viewport);
-//static VikLayer * mapnik_layer_create(Viewport * viewport);
 
 static void * mapnik_feature_create(VikWindow *vw, Viewport * viewport)
 {
@@ -549,8 +548,6 @@ bool LayerMapnik::carto_load(Viewport * viewport)
  */
 void LayerMapnik::post_read(Viewport * viewport, bool from_file)
 {
-	VikLayer * vml = this->vl;
-
 	// Determine if carto needs to be run
 	bool do_carto = false;
 	if (this->filename_css && strlen(this->filename_css) > 1) {
@@ -907,7 +904,6 @@ void LayerMapnik::draw(Viewport * viewport)
  */
 void LayerMapnik::free_()
 {
-	VikLayer * vml = this->vl;
 	mapnik_interface_free(this->mi);
 	if (this->filename_css) {
 		free(this->filename_css);
@@ -917,15 +913,6 @@ void LayerMapnik::free_()
 		free(this->filename_xml);
 	}
 }
-
-#if 0
-static VikLayer * mapnik_layer_create(Viewport * viewport)
-{
-	VikLayer * rv = mapnik_layer_new(viewport);
-
-	return rv;
-}
-#endif
 
 typedef enum {
 	MA_VML = 0,

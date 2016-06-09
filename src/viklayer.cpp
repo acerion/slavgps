@@ -112,8 +112,6 @@ static bool idle_draw ( VikLayer *vl )
  */
 void Layer::emit_update()
 {
-	Layer * layer = (Layer *) vl->layer;
-
 	if (this->visible && this->realized) {
 		GThread * thread = vik_window_get_thread(VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(this->vl)));
 		if (!thread) {
@@ -231,36 +229,6 @@ char const * Layer::get_name()
 	return this->name;
 }
 
-#if 0
-time_t vik_layer_get_timestamp(VikLayer * vl)
-{
-	Layer * layer = (Layer *) vl->layer;
-	return layer->get_timestamp();
-}
-#endif
-
-#if 0
-/* For GPS layer only. Layers of other types are already created by Layer::new_(). */
-VikLayer * vik_layer_create(VikLayerTypeEnum type, Viewport * viewport, bool interactive)
-{
-	assert (type == VIK_LAYER_GPS);
-
-	VikLayer * new_layer = vik_gps_layer_create(viewport);
-	assert (new_layer);
-
-	if (interactive) {
-		if (vik_layer_properties(new_layer, viewport)) {
-			/* We translate the name here */
-			/* in order to avoid translating name set by user */
-			((Layer *) new_layer->layer)->rename(_(vik_layer_interfaces[type]->name));
-		} else {
-			g_object_unref(G_OBJECT (new_layer)); /* cancel that */
-			new_layer = NULL;
-		}
-	}
-	return new_layer;
-}
-#endif
 
 Layer * Layer::new_(VikLayerTypeEnum type, Viewport * viewport, bool interactive)
 {
@@ -335,13 +303,7 @@ void Layer::draw_visible(Viewport * viewport)
 		this->draw(viewport);
 	}
 }
-#if 0
-void vik_layer_change_coord_mode(VikLayer * l, VikCoordMode mode)
-{
-	Layer * layer = (Layer *) l->layer;
-	layer->change_coord_mode(mode);
-}
-#endif
+
 
 typedef struct {
   VikLayerTypeEnum layer_type;
@@ -527,14 +489,7 @@ static void vik_layer_finalize ( VikLayer *vl )
 
   G_OBJECT_CLASS(parent_class)->finalize(G_OBJECT(vl));
 }
-#if 0
-/* sublayer switching */
-bool vik_layer_sublayer_toggle_visible ( VikLayer *l, int subtype, void * sublayer )
-{
-	Layer * layer = (Layer *) l->layer;
-	return layer->sublayer_toggle_visible(subtype, sublayer);
-}
-#endif
+
 
 bool vik_layer_selected(VikLayer * l, int subtype, void * sublayer, int type, void * panel)
 {
@@ -546,14 +501,6 @@ bool vik_layer_selected(VikLayer * l, int subtype, void * sublayer, int type, vo
 		return vik_window_clear_highlight((VikWindow *) VIK_GTK_WINDOW_FROM_LAYER(l));
 	}
 }
-
-#if 0
-void vik_layer_set_menu_items_selection(VikLayer *l, uint16_t selection)
-{
-	Layer * layer = (Layer *) l->layer;
-	layer->set_menu_selection(selection);
-}
-#endif
 
 uint16_t vik_layer_get_menu_items_selection(VikLayer *l)
 {
@@ -567,25 +514,7 @@ uint16_t vik_layer_get_menu_items_selection(VikLayer *l)
 	}
 }
 
-#if 0
-void vik_layer_add_menu_items ( VikLayer *l, GtkMenu *menu, void * panel)
-{
-	Layer * layer = (Layer *) l->layer;
-	layer->add_menu_items(menu, panel);
-}
 
-bool vik_layer_sublayer_add_menu_items ( VikLayer *l, GtkMenu *menu, void * panel, int subtype, void * sublayer, GtkTreeIter *iter, Viewport * viewport)
-{
-	Layer * layer = (Layer *) l->layer;
-	return layer->sublayer_add_menu_items(menu, panel, subtype, sublayer, iter, viewport);
-}
-
-const char *vik_layer_sublayer_rename_request ( VikLayer *l, const char *newname, void * panel, int subtype, void * sublayer, GtkTreeIter *iter )
-{
-	Layer * layer = (Layer *) l->layer;
-	return layer->sublayer_rename_request(newname, panel, subtype, (VikViewport *) sublayer, iter);
-}
-#endif
 
 GdkPixbuf *vik_layer_load_icon ( VikLayerTypeEnum type )
 {
@@ -601,13 +530,6 @@ bool vik_layer_set_param(VikLayer * vl, uint16_t id, VikLayerParamData data, Vie
 	return layer->set_param(id, data, viewport, is_file_operation );
 }
 
-#if 0
-void vik_layer_post_read ( VikLayer *layer, Viewport * viewport, bool from_file )
-{
-	Layer * l = (Layer *) layer->layer;
-	l->post_read(viewport, from_file);
-}
-#endif
 
 static bool vik_layer_properties_factory ( VikLayer *vl, Viewport * viewport)
 {

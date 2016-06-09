@@ -443,15 +443,6 @@ void LayerGeoref::free_()
 	}
 }
 
-#if 0
-static VikLayer * georef_layer_create(Viewport * viewport)
-{
-	VikLayer * rv = georef_layer_new(viewport);
-
-	return rv;
-}
-#endif
-
 bool LayerGeoref::properties(void * viewport)
 {
 	return this->dialog((Viewport *) viewport, VIK_GTK_WINDOW_FROM_WIDGET(((Viewport *) viewport)->vvp));
@@ -604,7 +595,6 @@ static void georef_layer_dialog_load(changeable_widgets *cw)
 static void georef_layer_export_params(georef_data_t * data)
 {
 	LayerGeoref * layer = data->layer;
-	LayersPanel * panel = data->panel;
 
 	GtkWidget * file_selector = gtk_file_chooser_dialog_new(_("Choose World file"),
 								NULL,

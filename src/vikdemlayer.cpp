@@ -62,7 +62,6 @@
 #define UNUSED_LINE_THICKNESS 3
 
 static VikLayer *dem_layer_new(Viewport * viewport);
-//static VikLayer *dem_layer_create(Viewport * viewport);
 static VikLayer *dem_layer_unmarshall(uint8_t *data, int len, Viewport * viewport);
 static bool dem_layer_set_param(VikLayer *vdl, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
 static VikLayerParamData dem_layer_get_param(VikLayer *vdl, uint16_t id, bool is_file_operation);
@@ -235,7 +234,6 @@ GType vik_dem_layer_get_type()
 char const * LayerDEM::tooltip()
 {
 	static char tmp_buf[100];
-	VikLayer * vdl = this->vl;
 
 	snprintf(tmp_buf, sizeof(tmp_buf), _("Number of files: %d"), g_list_length(this->files));
 	return tmp_buf;
@@ -884,7 +882,6 @@ static const char *srtm_continent_dir(int lat, int lon)
 
 void LayerDEM::draw(Viewport * viewport)
 {
-	VikLayer * vdl = this->vl;
 	GList *dems_iter = this->files;
 	VikDEM *dem;
 
@@ -910,7 +907,6 @@ void LayerDEM::draw(Viewport * viewport)
 
 void LayerDEM::free_()
 {
-	VikLayer * vdl = this->vl;
 	int i;
 	if (this->gcs) {
 		for (i = 0; i < DEM_N_HEIGHT_COLORS; i++) {
@@ -929,28 +925,6 @@ void LayerDEM::free_()
 
 	a_dems_list_free(this->files);
 }
-
-#if 0
-VikLayer *dem_layer_create(Viewport * viewport)
-{
-	VikLayer *vdl = dem_layer_new(viewport);
-	int i;
-	if (viewport) {
-		/* TODO: share GCS between layers */
-		for (i = 0; i < DEM_N_HEIGHT_COLORS; i++) {
-			if (i > 0) {
-				vdl->layer->gcs[i] = viewport->new_gc(dem_height_colors[i], UNUSED_LINE_THICKNESS);
-			}
-		}
-
-		for (i = 0; i < DEM_N_GRADIENT_COLORS; i++) {
-			vdl->layer->gcsgradient[i] = viewport->new_gc(dem_gradient_colors[i], UNUSED_LINE_THICKNESS);
-		}
-	}
-
-	return vdl;
-}
-#endif
 
 /**************************************************************
  **** SOURCES & DOWNLOADING
