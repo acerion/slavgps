@@ -50,6 +50,17 @@ namespace SlavGPS {
 
 
 	typedef struct {
+		GtkTreeIter * path_iter;
+		GtkTreeIter * iter2;
+		Layer * layer;
+		TreeView * tree;
+	} trw_data4_t;
+
+
+
+
+
+	typedef struct {
 		char * description;
 		char * author;
 		//bool has_time;
@@ -164,8 +175,8 @@ namespace SlavGPS {
 		void draw_highlight_items(std::unordered_map<sg_uid_t, Track *> * tracks, std::unordered_map<sg_uid_t, Waypoint *> * waypoints, Viewport * viewport);
 
 
-		void realize_track(std::unordered_map<sg_uid_t, Track *> & tracks, void * pass_along[4], int sublayer_id);
-		void realize_waypoints(std::unordered_map<sg_uid_t, Waypoint *> & data, void * pass_along[4], int sublayer_id);
+		void realize_track(std::unordered_map<sg_uid_t, Track *> & tracks, trw_data4_t * pass_along, int sublayer_id);
+		void realize_waypoints(std::unordered_map<sg_uid_t, Waypoint *> & data, trw_data4_t * pass_along, int sublayer_id);
 
 
 		void add_sublayer_tracks(VikTreeview * vt, GtkTreeIter * layer_iter);
@@ -528,8 +539,8 @@ typedef struct _trw_menu_sublayer_t {
 
 
 
-typedef void * menu_array_layer[2];
-typedef void * menu_array_sublayer[8];
+//typedef void * menu_array_layer[2];
+//typedef void * menu_array_sublayer[8];
 
 
 
@@ -698,7 +709,7 @@ void trw_layer_export_gpsmapper(trw_menu_layer_t * data);
 void trw_layer_export_gpx(trw_menu_layer_t * data);
 void trw_layer_export_kml(trw_menu_layer_t * data);
 void trw_layer_export_geojson(trw_menu_layer_t * data);
-void trw_layer_export_babel(void * layer_and_vlp[2]);
+void trw_layer_export_babel(trw_menu_layer_t * data);
 void trw_layer_export_external_gpx_1(trw_menu_layer_t * data);
 void trw_layer_export_external_gpx_2(trw_menu_layer_t * data);
 void trw_layer_export_gpx_track(trw_menu_sublayer_t * data);

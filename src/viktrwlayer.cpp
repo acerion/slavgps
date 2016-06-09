@@ -110,26 +110,6 @@ using namespace SlavGPS;
 
 
 
-
-
-#if 0
-typedef enum {
-  MA_VTL = 0,
-  MA_VLP,
-  MA_SUBTYPE, // OR END for Layer only
-  MA_SUBLAYER_ID,
-  MA_CONFIRM,
-  MA_VVP,
-  MA_TV_ITER,
-  MA_MISC,
-  MA_LAST,
-} menu_array_index;
-#endif
-
-
-
-
-
 static void goto_coord(LayersPanel * panel, Layer * layer, Viewport * viewport, const VikCoord * coord);
 
 
@@ -1366,9 +1346,6 @@ static VikLayer* trw_layer_new1(Viewport * viewport)
 
 	layer->image_cache = g_queue_new(); // Must be performed before set_params via set_defaults
 
-	//rv->trw = (LayerTRW *) rv->layer; // kamilLASTtrw
-
-
 	// Param settings that are not available via the GUI
 	// Force to on after processing params (which defaults them to off with a zero value)
 	layer->waypoints_visible = layer->tracks_visible = layer->routes_visible = true;
@@ -1675,7 +1652,7 @@ GdkPixbuf* get_wp_sym_small(char *symbol)
 
 
 
-void LayerTRW::realize_track(std::unordered_map<sg_uid_t, Track *> & tracks, void * pass_along[4], int sublayer_id)
+void LayerTRW::realize_track(std::unordered_map<sg_uid_t, Track *> & tracks, trw_data4_t * pass_along, int sublayer_id)
 {
 	for (auto i = tracks.begin(); i != tracks.end(); i++) {
 		GtkTreeIter * new_iter = (GtkTreeIter *) malloc(sizeof(GtkTreeIter));
@@ -1701,15 +1678,15 @@ void LayerTRW::realize_track(std::unordered_map<sg_uid_t, Track *> & tracks, voi
 			timestamp = tpt->timestamp;
 		}
 
-		Layer * parent = (Layer *) ((VikLayer *) pass_along[2])->layer;
-		TreeView * tree = (TreeView *) ((VikTreeview *) pass_along[3])->tree;
-		tree->add_sublayer((GtkTreeIter *) pass_along[0], (GtkTreeIter *) pass_along[1], trk->name, parent, (void *) ((long) i->first), sublayer_id, pixbuf, true, timestamp);
+		Layer * parent = pass_along->layer;
+		TreeView * tree = pass_along->tree;
+		tree->add_sublayer(pass_along->path_iter, pass_along->iter2, trk->name, parent, (void *) ((long) i->first), sublayer_id, pixbuf, true, timestamp);
 
 		if (pixbuf) {
 			g_object_unref(pixbuf);
 		}
 
-		*new_iter = *((GtkTreeIter *) pass_along[1]);
+		*new_iter = *(pass_along->iter2);
 		if (trk->is_route) {
 			this->routes_iters.insert({{ i->first, new_iter }});
 		} else {
@@ -1717,7 +1694,7 @@ void LayerTRW::realize_track(std::unordered_map<sg_uid_t, Track *> & tracks, voi
 		}
 
 		if (!trk->visible) {
-			((VikTreeview *) pass_along[3])->tree->set_visibility((GtkTreeIter *) pass_along[1], false);
+			pass_along->tree->set_visibility(pass_along->iter2, false);
 		}
 	}
 }
@@ -1726,7 +1703,7 @@ void LayerTRW::realize_track(std::unordered_map<sg_uid_t, Track *> & tracks, voi
 
 
 
-void LayerTRW::realize_waypoints(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, void * pass_along[4], int sublayer_id)
+void LayerTRW::realize_waypoints(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, trw_data4_t * pass_along, int sublayer_id)
 {
 	for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
 		GtkTreeIter *new_iter = (GtkTreeIter *) malloc(sizeof (GtkTreeIter));
@@ -1736,16 +1713,16 @@ void LayerTRW::realize_waypoints(std::unordered_map<sg_uid_t, Waypoint *> & wayp
 			timestamp = i->second->timestamp;
 		}
 
-		Layer * parent = (Layer *) ((VikLayer *) pass_along[2])->layer;
-		TreeView * tree = (TreeView *) ((VikTreeview *) pass_along[3])->tree;
+		Layer * parent = pass_along->layer;
+		TreeView * tree = pass_along->tree;
 
-		tree->add_sublayer((GtkTreeIter *) pass_along[0], (GtkTreeIter *) pass_along[1], i->second->name, parent, (void *) ((long) i->first), sublayer_id, get_wp_sym_small(i->second->symbol), true, timestamp);
+		tree->add_sublayer(pass_along->path_iter, pass_along->iter2, i->second->name, parent, (void *) ((long) i->first), sublayer_id, get_wp_sym_small(i->second->symbol), true, timestamp);
 
-		*new_iter = *((GtkTreeIter *) pass_along[1]);
+		*new_iter = *(pass_along->iter2);
 		this->waypoints_iters.insert({{ i->first, new_iter }});
 
 		if (!i->second->visible) {
-			((VikTreeview *) pass_along[3])->tree->set_visibility((GtkTreeIter *) pass_along[1], false);
+			pass_along->tree->set_visibility(pass_along->iter2, false);
 		}
 	}
 }
@@ -1779,12 +1756,14 @@ void LayerTRW::add_sublayer_routes(VikTreeview * vt, GtkTreeIter * layer_iter)
 
 
 
-
-
 void LayerTRW::realize(VikTreeview * vt, GtkTreeIter * layer_iter)
 {
 	GtkTreeIter iter2;
-	void * pass_along[4] = { &(this->track_iter), &iter2, this->vl, vt };
+	trw_data4_t pass_along;
+	pass_along.path_iter = &this->track_iter;
+	pass_along.iter2 = &iter2;
+	pass_along.layer = this;
+	pass_along.tree = vt->tree;
 
 	this->vt = vt;
 	this->iter = *layer_iter;
@@ -1792,23 +1771,23 @@ void LayerTRW::realize(VikTreeview * vt, GtkTreeIter * layer_iter)
 
 	if (this->tracks.size() > 0) {
 		this->add_sublayer_tracks(vt, layer_iter);
-		this->realize_track(this->tracks, pass_along, VIK_TRW_LAYER_SUBLAYER_TRACK);
+		this->realize_track(this->tracks, &pass_along, VIK_TRW_LAYER_SUBLAYER_TRACK);
 		vt->tree->set_visibility(&(this->track_iter), this->tracks_visible);
 	}
 
 	if (this->routes.size() > 0) {
-		pass_along[0] = &(this->route_iter);
+		pass_along.path_iter = &(this->route_iter);
 
 		this->add_sublayer_routes(vt, layer_iter);
-		this->realize_track(this->routes, pass_along, VIK_TRW_LAYER_SUBLAYER_ROUTE);
+		this->realize_track(this->routes, &pass_along, VIK_TRW_LAYER_SUBLAYER_ROUTE);
 		vt->tree->set_visibility(&(this->route_iter), this->routes_visible);
 	}
 
 	if (this->waypoints.size() > 0) {
-		pass_along[0] = &(this->waypoint_iter);
+		pass_along.path_iter = &(this->waypoint_iter);
 
 		this->add_sublayer_waypoints(vt, layer_iter);
-		this->realize_waypoints(this->waypoints, pass_along, VIK_TRW_LAYER_SUBLAYER_WAYPOINT);
+		this->realize_waypoints(this->waypoints, &pass_along, VIK_TRW_LAYER_SUBLAYER_WAYPOINT);
 		vt->tree->set_visibility(&(this->waypoint_iter), this->waypoints_visible);
 	}
 
@@ -2569,9 +2548,9 @@ void trw_layer_export_geojson(trw_menu_layer_t * data)
 	free(auto_save_name);
 }
 
-void trw_layer_export_babel(void * layer_and_vlp[2])
+void trw_layer_export_babel(trw_menu_layer_t * data)
 {
-	LayerTRW * layer = (LayerTRW *) ((VikLayer *) layer_and_vlp[0]);
+	LayerTRW * layer = data->layer;
 	const char *auto_save_name = layer->get_name();
 	vik_trw_layer_export_gpsbabel(layer, _("Export Layer"), auto_save_name);
 }
@@ -2885,7 +2864,7 @@ void trw_layer_gps_upload(trw_menu_layer_t * data)
 }
 
 /**
- * If pass_along[3] is defined that this will upload just that track
+ * If pass_along->tree is defined that this will upload just that track
  */
 void trw_layer_gps_upload_any(trw_menu_sublayer_t * data)
 {
