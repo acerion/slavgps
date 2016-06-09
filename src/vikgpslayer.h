@@ -80,7 +80,7 @@ typedef enum {
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
 typedef struct {
 	struct gps_data_t gpsd;
-	VikGpsLayer *vgl;
+	VikLayer *vgl;
 } VglGpsd;
 
 typedef struct {

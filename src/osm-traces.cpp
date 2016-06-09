@@ -292,7 +292,7 @@ static void osm_traces_upload_thread ( OsmTracesInfo *oti, void * threaddata )
   }
   else
   {
-    /* Upload the whole VikTrwLayer */
+    /* Upload the whole LayerTRW */
     filename = a_gpx_write_tmp_file(oti->trw, &options);
   }
 

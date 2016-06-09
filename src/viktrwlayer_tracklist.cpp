@@ -350,9 +350,9 @@ static bool trw_layer_track_menu_popup ( GtkWidget *tree_view,
 	gtk_tree_model_get ( model, &iter, TRK_COL_NUM, &trk, -1 );
 	if ( !trk ) return false;
 
-	VikTrwLayer *vtl;
+	VikLayer *vtl;
 	gtk_tree_model_get ( model, &iter, TRW_COL_NUM, &vtl, -1 );
-	LayerTRW * trw = (LayerTRW *) ((VikLayer *) vtl)->layer;
+	LayerTRW * trw = (LayerTRW *) vtl->layer;
 	if (trw->type != VIK_LAYER_TRW) return false;
 
 	sg_uid_t uid = 0;;

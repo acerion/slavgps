@@ -114,13 +114,13 @@ static double __mapzooms_y[] = { 0.0, 0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0, 32.0,
 /**************************/
 
 
-static VikMapsLayer * maps_layer_unmarshall(uint8_t *data, int len, Viewport * viewport);
-static bool maps_layer_set_param(VikMapsLayer *vml, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
-static VikLayerParamData maps_layer_get_param(VikMapsLayer *vml, uint16_t id, bool is_file_operation);
+static VikLayer * maps_layer_unmarshall(uint8_t *data, int len, Viewport * viewport);
+static bool maps_layer_set_param(VikLayer *vml, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
+static VikLayerParamData maps_layer_get_param(VikLayer *vml, uint16_t id, bool is_file_operation);
 static void maps_layer_change_param(GtkWidget *widget, ui_change_values values);
-static VikMapsLayer * maps_layer_new(Viewport * viewport);
-static bool maps_layer_download_release(VikMapsLayer *vml, GdkEventButton *event, Viewport * viewport);
-static bool maps_layer_download_click(VikMapsLayer *vml, GdkEventButton *event, Viewport * viewport);
+static VikLayer * maps_layer_new(Viewport * viewport);
+static bool maps_layer_download_release(VikLayer *vml, GdkEventButton *event, Viewport * viewport);
+static bool maps_layer_download_click(VikLayer *vml, GdkEventButton *event, Viewport * viewport);
 static void * maps_layer_download_create(VikWindow *vw, Viewport * viewport);
 static void start_download_thread(LayerMaps * layer, Viewport * viewport, const VikCoord *ul, const VikCoord *br, int redownload_mode);
 static int map_type_to_map_index(MapTypeID map_type);
@@ -370,9 +370,9 @@ void maps_layer_register_map_source(MapSource * map)
  *
  * Returns the actual map id (rather than the internal type index value)
  */
-MapTypeID vik_maps_layer_get_map_type(VikMapsLayer *vml)
+MapTypeID vik_maps_layer_get_map_type(VikLayer *vml)
 {
-	LayerMaps * layer = (LayerMaps *) ((VikLayer *) vml)->layer;
+	LayerMaps * layer = (LayerMaps *) vml->layer;
 	return MAPS_LAYER_NTH_ID(layer->map_index);
 }
 
@@ -380,9 +380,9 @@ MapTypeID vik_maps_layer_get_map_type(VikMapsLayer *vml)
  * vik_maps_layer_set_map_type:
  *
  */
-void vik_maps_layer_set_map_type(VikMapsLayer *vml, MapTypeID map_type)
+void vik_maps_layer_set_map_type(VikLayer *vml, MapTypeID map_type)
 {
-	LayerMaps * layer = (LayerMaps *) ((VikLayer *) vml)->layer;
+	LayerMaps * layer = (LayerMaps *) vml->layer;
 	int map_index = map_type_to_map_index(map_type);
 	if (map_index == map_sources.size()) {
 		fprintf(stderr, _("WARNING: Unknown map type\n"));
@@ -572,9 +572,9 @@ static void maps_show_license(GtkWindow *parent, MapSource *map)
 			 map->get_license_url());
 }
 
-static bool maps_layer_set_param(VikMapsLayer *vml, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
+static bool maps_layer_set_param(VikLayer *vml, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
 {
-	LayerMaps * layer = (LayerMaps *) ((VikLayer *) vml)->layer;
+	LayerMaps * layer = (LayerMaps *) vml->layer;
 	return layer->set_param(id, data, viewport, is_file_operation);
 }
 
@@ -644,9 +644,9 @@ bool LayerMaps::set_param(uint16_t id, VikLayerParamData data, Viewport * viewpo
 	return true;
 }
 
-static VikLayerParamData maps_layer_get_param(VikMapsLayer *vml, uint16_t id, bool is_file_operation)
+static VikLayerParamData maps_layer_get_param(VikLayer *vml, uint16_t id, bool is_file_operation)
 {
-	LayerMaps * layer = (LayerMaps *) ((VikLayer *) vml)->layer;
+	LayerMaps * layer = (LayerMaps *) vml->layer;
 	return layer->get_param(id, is_file_operation);
 }
 
@@ -805,7 +805,7 @@ static void maps_layer_change_param(GtkWidget *widget, ui_change_values values)
 /****** CREATING, COPYING, FREEING ******/
 /****************************************/
 
-static VikMapsLayer * maps_layer_new(Viewport * viewport)
+static VikLayer * maps_layer_new(Viewport * viewport)
 {
 	LayerMaps * layer = new LayerMaps((VikLayer *) NULL);
 
@@ -819,7 +819,7 @@ static VikMapsLayer * maps_layer_new(Viewport * viewport)
 
 
 
-	return (VikMapsLayer *) layer->vl;
+	return layer->vl;
 }
 
 void LayerMaps::free_()
@@ -904,15 +904,14 @@ char const * LayerMaps::tooltip()
 
 void LayerMaps::marshall(uint8_t **data, int *len)
 {
-	//VikMapsLayer * vml = (VikMapsLayer *) this->vl;
 	vik_layer_marshall_params(this->vl, data, len);
 }
 
-static VikMapsLayer * maps_layer_unmarshall(uint8_t *data, int len, Viewport * viewport)
+static VikLayer * maps_layer_unmarshall(uint8_t *data, int len, Viewport * viewport)
 {
-	VikMapsLayer *rv = maps_layer_new(viewport);
-	vik_layer_unmarshall_params((VikLayer *) rv, data, len, viewport);
-	((Layer *) ((VikLayer *) rv)->layer)->post_read(viewport, false);
+	VikLayer *rv = maps_layer_new(viewport);
+	vik_layer_unmarshall_params(rv, data, len, viewport);
+	((Layer *) rv->layer)->post_read(viewport, false);
 	return rv;
 }
 
@@ -920,7 +919,7 @@ static VikMapsLayer * maps_layer_unmarshall(uint8_t *data, int len, Viewport * v
 /****** DRAWING ******/
 /*********************/
 
-static GdkPixbuf * get_pixbuf_from_file(VikMapsLayer * vml, TileInfo * mapcoord, char * filename_buf);
+static GdkPixbuf * get_pixbuf_from_file(VikLayer * vml, TileInfo * mapcoord, char * filename_buf);
 
 static GdkPixbuf *pixbuf_shrink(GdkPixbuf *pixbuf, double xshrinkfactor, double yshrinkfactor)
 {
@@ -1012,10 +1011,10 @@ static GdkPixbuf *get_pixbuf_sql_exec(sqlite3 *sql, int xx, int yy, int zoom)
 }
 #endif
 
-static GdkPixbuf *get_mbtiles_pixbuf(VikMapsLayer *vml, int xx, int yy, int zoom)
+static GdkPixbuf *get_mbtiles_pixbuf(VikLayer *vml, int xx, int yy, int zoom)
 {
 	GdkPixbuf *pixbuf = NULL;
-	LayerMaps * layer = (LayerMaps *) ((VikLayer *) vml)->layer;
+	LayerMaps * layer = (LayerMaps *) vml->layer;
 
 #ifdef HAVE_SQLITE3_H
 	if (layer->mbtiles) {
@@ -1040,9 +1039,9 @@ static GdkPixbuf *get_mbtiles_pixbuf(VikMapsLayer *vml, int xx, int yy, int zoom
 	return pixbuf;
 }
 
-static GdkPixbuf *get_pixbuf_from_metatile(VikMapsLayer *vml, int xx, int yy, int zz)
+static GdkPixbuf *get_pixbuf_from_metatile(VikLayer *vml, int xx, int yy, int zz)
 {
-	LayerMaps * layer = (LayerMaps *) ((VikLayer *) vml)->layer;
+	LayerMaps * layer = (LayerMaps *) vml->layer;
 	const int tile_max = METATILE_MAX_SIZE;
 	char err_msg[PATH_MAX];
 	int compressed;
@@ -1088,9 +1087,9 @@ static GdkPixbuf *get_pixbuf_from_metatile(VikMapsLayer *vml, int xx, int yy, in
  * Caller has to decrease reference counter of returned
  * GdkPixbuf, when buffer is no longer needed.
  */
-static GdkPixbuf * pixbuf_apply_settings(GdkPixbuf * pixbuf, VikMapsLayer * vml, double xshrinkfactor, double yshrinkfactor)
+static GdkPixbuf * pixbuf_apply_settings(GdkPixbuf * pixbuf, VikLayer * vml, double xshrinkfactor, double yshrinkfactor)
 {
-	LayerMaps * layer = (LayerMaps *) ((VikLayer *) vml)->layer;
+	LayerMaps * layer = (LayerMaps *) vml->layer;
 	// Apply alpha setting
 	if (pixbuf && layer->alpha < 255) {
 		pixbuf = ui_pixbuf_set_alpha(pixbuf, layer->alpha);
@@ -1136,9 +1135,9 @@ static void get_cache_filename(const char *cache_dir,
  * Caller has to decrease reference counter of returned
  * GdkPixbuf, when buffer is no longer needed.
  */
-static GdkPixbuf * get_pixbuf(VikMapsLayer *vml, MapTypeID map_type, const char* mapname, TileInfo *mapcoord, char *filename_buf, int buf_len, double xshrinkfactor, double yshrinkfactor)
+static GdkPixbuf * get_pixbuf(VikLayer *vml, MapTypeID map_type, const char* mapname, TileInfo *mapcoord, char *filename_buf, int buf_len, double xshrinkfactor, double yshrinkfactor)
 {
-	LayerMaps * layer = (LayerMaps *) ((VikLayer *) vml)->layer;
+	LayerMaps * layer = (LayerMaps *) vml->layer;
 	/* get the thing */
 	GdkPixbuf * pixbuf = a_mapcache_get(mapcoord, map_type, layer->alpha, xshrinkfactor, yshrinkfactor, layer->filename);
 	if (pixbuf) {
@@ -1175,7 +1174,7 @@ static GdkPixbuf * get_pixbuf(VikMapsLayer *vml, MapTypeID map_type, const char*
 	return pixbuf;
 }
 
-static GdkPixbuf * get_pixbuf_from_file(VikMapsLayer * vml, TileInfo * mapcoord, char * filename_buf)
+static GdkPixbuf * get_pixbuf_from_file(VikLayer * vml, TileInfo * mapcoord, char * filename_buf)
 {
 	GdkPixbuf * pixbuf = NULL;
 
@@ -1205,7 +1204,7 @@ static GdkPixbuf * get_pixbuf_from_file(VikMapsLayer * vml, TileInfo * mapcoord,
 	return pixbuf;
 }
 
-static bool should_start_autodownload(VikMapsLayer *vml, Viewport * viewport)
+static bool should_start_autodownload(VikLayer *vml, Viewport * viewport)
 {
 	const VikCoord *center = viewport->get_center();
 
@@ -1214,7 +1213,7 @@ static bool should_start_autodownload(VikMapsLayer *vml, Viewport * viewport)
 		return false;
 	}
 
-	LayerMaps * layer = (LayerMaps *) ((VikLayer *) vml)->layer;
+	LayerMaps * layer = (LayerMaps *) vml->layer;
 
 	// Don't attempt to download unsupported zoom levels
 	double xzoom = viewport->get_xmpp();
@@ -1249,7 +1248,7 @@ static bool should_start_autodownload(VikMapsLayer *vml, Viewport * viewport)
 /**
  *
  */
-bool try_draw_scale_down(VikMapsLayer *vml, Viewport * viewport, TileInfo ulm, int xx, int yy, int tilesize_x_ceil, int tilesize_y_ceil,
+bool try_draw_scale_down(VikLayer *vml, Viewport * viewport, TileInfo ulm, int xx, int yy, int tilesize_x_ceil, int tilesize_y_ceil,
 			 double xshrinkfactor, double yshrinkfactor, MapTypeID map_type, const char *mapname, char *path_buf, unsigned int max_path_len)
 {
 	for (int scale_inc = 1; scale_inc < SCALE_INC_DOWN; scale_inc++) {
@@ -1274,7 +1273,7 @@ bool try_draw_scale_down(VikMapsLayer *vml, Viewport * viewport, TileInfo ulm, i
 /**
  *
  */
-bool try_draw_scale_up(VikMapsLayer *vml, Viewport * viewport, TileInfo ulm, int xx, int yy, int tilesize_x_ceil, int tilesize_y_ceil,
+bool try_draw_scale_up(VikLayer *vml, Viewport * viewport, TileInfo ulm, int xx, int yy, int tilesize_x_ceil, int tilesize_y_ceil,
 		       double xshrinkfactor, double yshrinkfactor, MapTypeID map_type, const char *mapname, char *path_buf, unsigned int max_path_len)
 {
 	// Try with bigger zooms
@@ -1312,7 +1311,7 @@ void LayerMaps::draw_section(Viewport * viewport, VikCoord *ul, VikCoord *br)
 	double xshrinkfactor = 1.0, yshrinkfactor = 1.0;
 	bool existence_only = false;
 
-	VikMapsLayer * vml = (VikMapsLayer *) this->vl;
+	VikLayer * vml = this->vl;
 
 	if (this->xmapzoom && (this->xmapzoom != xzoom || this->ymapzoom != yzoom)) {
 		xshrinkfactor = this->xmapzoom / xzoom;
@@ -1497,7 +1496,7 @@ void LayerMaps::draw_section(Viewport * viewport, VikCoord *ul, VikCoord *br)
 
 void LayerMaps::draw(Viewport * viewport)
 {
-	VikMapsLayer * vml = (VikMapsLayer *) this->vl;
+	VikLayer * vml = this->vl;
 	if (map_sources[this->map_index]->get_drawmode() == viewport->get_drawmode()) {
 		VikCoord ul, br;
 
@@ -1837,9 +1836,9 @@ void LayerMaps::download_section_sub(VikCoord *ul, VikCoord *br, double zoom, in
  *
  * Download a specified map area at a certain zoom level
  */
-void vik_maps_layer_download_section(VikMapsLayer *vml, VikCoord *ul, VikCoord *br, double zoom)
+void vik_maps_layer_download_section(VikLayer *vml, VikCoord *ul, VikCoord *br, double zoom)
 {
-	LayerMaps * layer = (LayerMaps *) ((VikLayer *) vml)->layer;
+	LayerMaps * layer = (LayerMaps *) vml->layer;
 	layer->download_section_sub(ul, br, zoom, REDOWNLOAD_NONE);
 }
 
@@ -1865,9 +1864,9 @@ typedef struct stat GStatBuf;
 /**
  * Display a simple dialog with information about this particular map tile
  */
-static void maps_layer_tile_info(VikMapsLayer *vml)
+static void maps_layer_tile_info(VikLayer *vml)
 {
-	LayerMaps * layer = (LayerMaps *) ((VikLayer *) vml)->layer;
+	LayerMaps * layer = (LayerMaps *) vml->layer;
 	MapSource *map = map_sources[layer->map_index];
 
 	double xzoom = layer->xmapzoom ? layer->xmapzoom : layer->redownload_viewport->get_xmpp();
@@ -1968,13 +1967,13 @@ static void maps_layer_tile_info(VikMapsLayer *vml)
 	free(filename);
 }
 
-static bool maps_layer_download_release(VikMapsLayer *vml, GdkEventButton *event, Viewport * viewport)
+static bool maps_layer_download_release(VikLayer *vml, GdkEventButton *event, Viewport * viewport)
 {
-	if (!vml || ((Layer *) ((VikLayer *) vml)->layer)->type != VIK_LAYER_MAPS) {
+	if (!vml || ((Layer *) vml->layer)->type != VIK_LAYER_MAPS) {
 		return false;
 	}
 
-	LayerMaps * layer = (LayerMaps *) ((VikLayer *) vml)->layer;
+	LayerMaps * layer = (LayerMaps *) vml->layer;
 
 	if (layer->dl_tool_x != -1 && layer->dl_tool_y != -1) {
 		if (event->button == 1) {
@@ -2026,14 +2025,14 @@ static void * maps_layer_download_create(VikWindow *vw, Viewport * viewport)
 	return viewport->vvp;
 }
 
-static bool maps_layer_download_click(VikMapsLayer *vml, GdkEventButton *event, Viewport * viewport)
+static bool maps_layer_download_click(VikLayer *vml, GdkEventButton *event, Viewport * viewport)
 {
 	TileInfo tmp;
-	if (!vml || ((Layer *) ((VikLayer *) vml)->layer)->type != VIK_LAYER_MAPS) {
+	if (!vml || ((Layer *) vml->layer)->type != VIK_LAYER_MAPS) {
 		return false;
 	}
 
-	LayerMaps * layer = (LayerMaps *) ((VikLayer *) vml)->layer;
+	LayerMaps * layer = (LayerMaps *) vml->layer;
 
 	MapSource *map = map_sources[layer->map_index];
 	if (map->get_drawmode() == viewport->get_drawmode() &&
@@ -2107,8 +2106,8 @@ static void maps_layer_redownload_all_onscreen_maps(menu_array_values values)
 
 static void maps_layer_about(void * vml_vvp[2])
 {
-	VikMapsLayer *vml = (VikMapsLayer *) vml_vvp[0];
-	LayerMaps * layer = (LayerMaps *) ((VikLayer *) vml)->layer;
+	VikLayer *vml = (VikLayer *) vml_vvp[0];
+	LayerMaps * layer = (LayerMaps *) vml->layer;
 	MapSource *map = map_sources[layer->map_index];
 
 	if (map->get_license()) {
@@ -2403,7 +2402,7 @@ void LayerMaps::add_menu_items(GtkMenu * menu, void * panel_)
 /**
  * Enable downloading maps of the current screen area either 'new' or 'everything'
  */
-void vik_maps_layer_download(VikMapsLayer *vml, Viewport * viewport, bool only_new)
+void vik_maps_layer_download(VikLayer *vml, Viewport * viewport, bool only_new)
 {
 	if (!vml) {
 		return;
@@ -2414,7 +2413,7 @@ void vik_maps_layer_download(VikMapsLayer *vml, Viewport * viewport, bool only_n
 	}
 
 	static menu_array_values values;
-	values[MA_VML] = ((VikLayer *) vml)->layer;
+	values[MA_VML] = vml->layer;
 	values[MA_VVP] = viewport;
 
 	if (only_new) {

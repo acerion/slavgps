@@ -32,12 +32,12 @@
 #include "vikcoordlayer.h"
 #include "icons/icons.h"
 
-static VikCoordLayer *coord_layer_new(Viewport * viewport);
-static void coord_layer_free(VikCoordLayer *vcl);
-//static VikCoordLayer * coord_layer_create(Viewport * viewport);
-static VikCoordLayer *coord_layer_unmarshall(uint8_t *data, int len, Viewport * viewport);
-static bool coord_layer_set_param(VikCoordLayer *vcl, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
-static VikLayerParamData coord_layer_get_param(VikCoordLayer *vcl, uint16_t id, bool is_file_operation);
+static VikLayer *coord_layer_new(Viewport * viewport);
+static void coord_layer_free(VikLayer *vcl);
+//static VikLayer * coord_layer_create(Viewport * viewport);
+static VikLayer *coord_layer_unmarshall(uint8_t *data, int len, Viewport * viewport);
+static bool coord_layer_set_param(VikLayer *vcl, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
+static VikLayerParamData coord_layer_get_param(VikLayer *vcl, uint16_t id, bool is_file_operation);
 
 
 static VikLayerParamScale param_scales[] = {
@@ -107,13 +107,13 @@ GType vik_coord_layer_get_type()
 
 void LayerCoord::marshall(uint8_t **data, int *len)
 {
-	VikCoordLayer *vcl = (VikCoordLayer *) this->vl;
-	vik_layer_marshall_params((VikLayer *) vcl, data, len);
+	VikLayer *vcl = this->vl;
+	vik_layer_marshall_params(vcl, data, len);
 }
 
-static VikCoordLayer * coord_layer_unmarshall(uint8_t *data, int len, Viewport * viewport)
+static VikLayer * coord_layer_unmarshall(uint8_t *data, int len, Viewport * viewport)
 {
-	VikCoordLayer *rv = coord_layer_new(viewport);
+	VikLayer *rv = coord_layer_new(viewport);
 	vik_layer_unmarshall_params((VikLayer *) rv, data, len, viewport);
 
 	LayerCoord * layer = (LayerCoord *) ((VikLayer * ) rv)->layer;
@@ -122,9 +122,9 @@ static VikCoordLayer * coord_layer_unmarshall(uint8_t *data, int len, Viewport *
 }
 
 // NB VikViewport can be null as it's not used ATM
-bool coord_layer_set_param(VikCoordLayer *vcl, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
+bool coord_layer_set_param(VikLayer *vcl, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
 {
-	LayerCoord * layer = (LayerCoord *) ((VikLayer * ) vcl)->layer;
+	LayerCoord * layer = (LayerCoord *) vcl->layer;
 	return layer->set_param(id, data, viewport, is_file_operation);
 }
 
@@ -149,9 +149,9 @@ bool LayerCoord::set_param(uint16_t id, VikLayerParamData data, Viewport * viewp
 	return true;
 }
 
-static VikLayerParamData coord_layer_get_param(VikCoordLayer *vcl, uint16_t id, bool is_file_operation)
+static VikLayerParamData coord_layer_get_param(VikLayer *vcl, uint16_t id, bool is_file_operation)
 {
-	LayerCoord * layer = (LayerCoord *) ((VikLayer * ) vcl)->layer;
+	LayerCoord * layer = (LayerCoord *) vcl->layer;
 	return layer->get_param(id, is_file_operation);
 }
 
@@ -183,12 +183,12 @@ void LayerCoord::post_read(Viewport * viewport, bool from_file)
 	this->gc = viewport->new_gc_from_color(&(this->color), this->line_thickness);
 }
 
-static VikCoordLayer * coord_layer_new(Viewport * viewport)
+static VikLayer * coord_layer_new(Viewport * viewport)
 {
 	LayerCoord * layer = new LayerCoord((VikLayer *) NULL);
 	layer->gc = NULL;
 
-	return (VikCoordLayer *) layer->vl;
+	return layer->vl;
 }
 
 void LayerCoord::draw(Viewport * viewport)
@@ -385,11 +385,11 @@ void LayerCoord::update_gc(Viewport * viewport)
 }
 
 #if 0
-static VikCoordLayer * coord_layer_create(Viewport * viewport)
+static VikLayer * coord_layer_create(Viewport * viewport)
 {
-	VikCoordLayer *vcl = coord_layer_new(viewport);
+	VikLayer *vcl = coord_layer_new(viewport);
 	if (viewport) {
-		LayerCoord * layer = (LayerCoord *) ((VikLayer * ) vcl)->layer;
+		LayerCoord * layer = (LayerCoord *) vcl->layer;
 		layer->update_gc(viewport);
 	}
 

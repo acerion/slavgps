@@ -61,11 +61,11 @@
 
 #define UNUSED_LINE_THICKNESS 3
 
-static VikDEMLayer *dem_layer_new(Viewport * viewport);
-//static VikDEMLayer *dem_layer_create(Viewport * viewport);
-static VikDEMLayer *dem_layer_unmarshall(uint8_t *data, int len, Viewport * viewport);
-static bool dem_layer_set_param(VikDEMLayer *vdl, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
-static VikLayerParamData dem_layer_get_param(VikDEMLayer *vdl, uint16_t id, bool is_file_operation);
+static VikLayer *dem_layer_new(Viewport * viewport);
+//static VikLayer *dem_layer_create(Viewport * viewport);
+static VikLayer *dem_layer_unmarshall(uint8_t *data, int len, Viewport * viewport);
+static bool dem_layer_set_param(VikLayer *vdl, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
+static VikLayerParamData dem_layer_get_param(VikLayer *vdl, uint16_t id, bool is_file_operation);
 static void srtm_draw_existence(Viewport * viewport);
 
 #ifdef VIK_CONFIG_DEM24K
@@ -125,8 +125,8 @@ static VikLayerParam dem_layer_params[] = {
 enum { PARAM_FILES=0, PARAM_SOURCE, PARAM_COLOR, PARAM_TYPE, PARAM_MIN_ELEV, PARAM_MAX_ELEV, NUM_PARAMS };
 
 static void * dem_layer_download_create(VikWindow *vw, Viewport * viewport);
-static bool dem_layer_download_release(VikDEMLayer *vdl, GdkEventButton *event, Viewport * viewport);
-static bool dem_layer_download_click(VikDEMLayer *vdl, GdkEventButton *event, Viewport * viewport);
+static bool dem_layer_download_release(VikLayer *vdl, GdkEventButton *event, Viewport * viewport);
+static bool dem_layer_download_click(VikLayer *vdl, GdkEventButton *event, Viewport * viewport);
 
 static VikToolInterface dem_tools[] = {
 	{ { "DEMDownload", "vik-icon-DEM Download", N_("_DEM Download"), NULL, N_("DEM Download"), 0 },
@@ -235,7 +235,7 @@ GType vik_dem_layer_get_type()
 char const * LayerDEM::tooltip()
 {
 	static char tmp_buf[100];
-	VikDEMLayer * vdl = (VikDEMLayer *) this->vl;
+	VikLayer * vdl = this->vl;
 
 	snprintf(tmp_buf, sizeof(tmp_buf), _("Number of files: %d"), g_list_length(this->files));
 	return tmp_buf;
@@ -243,14 +243,14 @@ char const * LayerDEM::tooltip()
 
 void LayerDEM::marshall(uint8_t **data, int *len)
 {
-	VikDEMLayer * vdl = (VikDEMLayer *) this->vl;
-	vik_layer_marshall_params((VikLayer *) vdl, data, len);
+	VikLayer * vdl = this->vl;
+	vik_layer_marshall_params(vdl, data, len);
 }
 
-static VikDEMLayer * dem_layer_unmarshall(uint8_t *data, int len, Viewport * viewport)
+static VikLayer * dem_layer_unmarshall(uint8_t *data, int len, Viewport * viewport)
 {
-	VikDEMLayer *rv = dem_layer_new(viewport);
-	LayerDEM * layer = (LayerDEM *) ((VikLayer *) rv)->layer;
+	VikLayer *rv = dem_layer_new(viewport);
+	LayerDEM * layer = (LayerDEM *) rv->layer;
 	int i;
 
 	/* TODO: share GCS between layers */
@@ -345,9 +345,9 @@ static GList *dem_layer_convert_to_relative_filenaming(GList *files)
 	return files;
 }
 
-bool dem_layer_set_param(VikDEMLayer *vdl, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
+bool dem_layer_set_param(VikLayer *vdl, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
 {
-	LayerDEM * layer = (LayerDEM *) ((VikLayer *) vdl)->layer;
+	LayerDEM * layer = (LayerDEM *) vdl->layer;
 	return layer->set_param(id, data, viewport, is_file_operation);
 }
 
@@ -411,9 +411,9 @@ bool LayerDEM::set_param(uint16_t id, VikLayerParamData data, Viewport * viewpor
 	return true;
 }
 
-static VikLayerParamData dem_layer_get_param(VikDEMLayer *vdl, uint16_t id, bool is_file_operation)
+static VikLayerParamData dem_layer_get_param(VikLayer *vdl, uint16_t id, bool is_file_operation)
 {
-	LayerDEM * layer = (LayerDEM *) ((VikLayer *) vdl)->layer;
+	LayerDEM * layer = (LayerDEM *) vdl->layer;
 	return layer->get_param(id, is_file_operation);
 }
 
@@ -463,7 +463,7 @@ VikLayerParamData LayerDEM::get_param(uint16_t id, bool is_file_operation)
 	return rv;
 }
 
-static VikDEMLayer * dem_layer_new(Viewport * viewport)
+static VikLayer * dem_layer_new(Viewport * viewport)
 {
 	LayerDEM * layer = new LayerDEM((VikLayer *) NULL);
 
@@ -478,7 +478,7 @@ static VikDEMLayer * dem_layer_new(Viewport * viewport)
 		layer->gcs[0] = viewport->new_gc("#0000FF", 1);
 	}
 
-	return (VikDEMLayer *) layer->vl;
+	return layer->vl;
 }
 
 
@@ -884,7 +884,7 @@ static const char *srtm_continent_dir(int lat, int lon)
 
 void LayerDEM::draw(Viewport * viewport)
 {
-	VikDEMLayer * vdl = (VikDEMLayer *) this->vl;
+	VikLayer * vdl = this->vl;
 	GList *dems_iter = this->files;
 	VikDEM *dem;
 
@@ -910,7 +910,7 @@ void LayerDEM::draw(Viewport * viewport)
 
 void LayerDEM::free_()
 {
-	VikDEMLayer * vdl = (VikDEMLayer *) this->vl;
+	VikLayer * vdl = this->vl;
 	int i;
 	if (this->gcs) {
 		for (i = 0; i < DEM_N_HEIGHT_COLORS; i++) {
@@ -931,9 +931,9 @@ void LayerDEM::free_()
 }
 
 #if 0
-VikDEMLayer *dem_layer_create(Viewport * viewport)
+VikLayer *dem_layer_create(Viewport * viewport)
 {
-	VikDEMLayer *vdl = dem_layer_new(viewport);
+	VikLayer *vdl = dem_layer_new(viewport);
 	int i;
 	if (viewport) {
 		/* TODO: share GCS between layers */
@@ -1313,9 +1313,9 @@ static void dem_layer_file_info(GtkWidget *widget, struct LatLon *ll)
 	free(filename);
 }
 
-static bool dem_layer_download_release(VikDEMLayer * vdl, GdkEventButton * event, Viewport * viewport)
+static bool dem_layer_download_release(VikLayer * vdl, GdkEventButton * event, Viewport * viewport)
 {
-	LayerDEM * layer = (LayerDEM *) ((VikLayer *) vdl)->layer;
+	LayerDEM * layer = (LayerDEM *) vdl->layer;
 	return layer->download_release(event, viewport);
 }
 
@@ -1391,7 +1391,7 @@ bool LayerDEM::download_release(GdkEventButton * event, Viewport * viewport)
 	return true;
 }
 
-static bool dem_layer_download_click(VikDEMLayer * vdl, GdkEventButton * event, Viewport * viewport)
+static bool dem_layer_download_click(VikLayer * vdl, GdkEventButton * event, Viewport * viewport)
 {
 	/* choose & keep track of cache dir
 	 * download in background thread

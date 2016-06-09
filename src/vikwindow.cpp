@@ -956,7 +956,7 @@ static void simple_map_update(VikWindow *vw, bool only_new)
 	// Find the most relevent single map layer to operate on
 	Layer * layer = vw->layers_panel->get_top_layer()->get_top_visible_layer_of_type(VIK_LAYER_MAPS);
 	if (layer)
-		vik_maps_layer_download((VikMapsLayer *) layer->vl, vw->viewport, only_new);
+		vik_maps_layer_download(layer->vl, vw->viewport, only_new);
 }
 
 /**

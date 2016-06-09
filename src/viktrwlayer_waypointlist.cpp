@@ -131,7 +131,7 @@ static void trw_layer_waypoint_select_cb ( GtkTreeSelection *selection, void * d
 	gtk_tree_model_get ( model, &iter, WPT_COL_NUM, &wp, -1 );
 	if ( !wp ) return;
 
-	VikTrwLayer * trw;
+	VikLayer * trw;
 	gtk_tree_model_get ( model, &iter, TRW_COL_NUM, &trw->vl, -1 );
 	if (trw->type != VIK_LAYER_TRW) return;
 
@@ -411,9 +411,9 @@ static bool trw_layer_waypoint_menu_popup ( GtkWidget *tree_view,
 	gtk_tree_model_get ( model, &iter, WPT_COL_NUM, &wp, -1 );
 	if (!wp) return false;
 
-	VikTrwLayer *vtl;
+	VikLayer *vtl;
 	gtk_tree_model_get ( model, &iter, TRW_COL_NUM, &vtl, -1 );
-	LayerTRW * trw = (LayerTRW *) ((VikLayer *) vtl)->layer;
+	LayerTRW * trw = (LayerTRW *) vtl->layer;
 	if (trw->type != VIK_LAYER_TRW) {
 		return false;
 	}

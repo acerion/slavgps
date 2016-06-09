@@ -445,7 +445,7 @@ static void acquire(VikWindow *vw,
 /**
  * a_acquire:
  * @vw: The #VikWindow to work with
- * @panel: The #LayersPanel in which a #VikTrwLayer layer may be created/appended
+ * @panel: The #LayersPanel in which a #LayerTRW layer may be created/appended
  * @viewport: The #Viewport defining the current view
  * @mode: How layers should be managed
  * @source_interface: The #VikDataSourceInterface determining how and what actions to take

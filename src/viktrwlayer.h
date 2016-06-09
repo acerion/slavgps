@@ -581,34 +581,34 @@ typedef struct _VikTrwLayer VikTrwLayer;
 
 //VikTRWMetadata *vik_trw_metadata_new();
 //void vik_trw_metadata_free ( VikTRWMetadata *metadata);
-//VikTRWMetadata *vik_trw_layer_get_metadata ( VikTrwLayer *vtl );
-//void vik_trw_layer_set_metadata ( VikTrwLayer *vtl, VikTRWMetadata *metadata);
+//VikTRWMetadata *vik_trw_layer_get_metadata ( VikLayer *vtl );
+//void vik_trw_layer_set_metadata ( VikLayer *vtl, VikTRWMetadata *metadata);
 
-//bool vik_trw_layer_find_date ( VikTrwLayer *vtl, const char *date_str, VikCoord *position, VikViewport *vvp, bool do_tracks, bool select );
+//bool vik_trw_layer_find_date ( VikLayer *vtl, const char *date_str, VikCoord *position, VikViewport *vvp, bool do_tracks, bool select );
 
-//int vik_trw_layer_get_property_tracks_line_thickness ( VikTrwLayer *vtl );
+//int vik_trw_layer_get_property_tracks_line_thickness ( VikLayer *vtl );
 
 // Waypoint returned is the first one
-//Waypoint * vik_trw_layer_get_waypoint(VikTrwLayer * vtl, const char * name);
+//Waypoint * vik_trw_layer_get_waypoint(VikLayer * vtl, const char * name);
 
 // Track returned is the first one
-//Track * vik_trw_layer_get_track(VikTrwLayer * vtl, const char * name);
+//Track * vik_trw_layer_get_track(VikLayer * vtl, const char * name);
 
-//bool vik_trw_layer_find_center ( VikTrwLayer *vtl, VikCoord *dest );
+//bool vik_trw_layer_find_center ( VikLayer *vtl, VikCoord *dest );
 
-//VikCoordMode vik_trw_layer_get_coord_mode ( VikTrwLayer *vtl );
+//VikCoordMode vik_trw_layer_get_coord_mode ( VikLayer *vtl );
 
-//bool vik_trw_layer_uniquify ( VikTrwLayer *vtl, VikLayersPanel *vlp );
+//bool vik_trw_layer_uniquify ( VikLayer *vtl, VikLayersPanel *vlp );
 
-//void vik_trw_layer_delete_all_waypoints ( VikTrwLayer *vtl );
-//void vik_trw_layer_delete_all_tracks ( VikTrwLayer *vtl );
-//void vik_trw_layer_delete_all_routes ( VikTrwLayer *vtl );
+//void vik_trw_layer_delete_all_waypoints ( VikLayer *vtl );
+//void vik_trw_layer_delete_all_tracks ( VikLayer *vtl );
+//void vik_trw_layer_delete_all_routes ( VikLayer *vtl );
 
-//void vik_trw_layer_reset_waypoints ( VikTrwLayer *vtl );
+//void vik_trw_layer_reset_waypoints ( VikLayer *vtl );
 
-//void vik_trw_layer_draw_highlight(VikTrwLayer * vtl, Viewport * viewport);
-//void vik_trw_layer_draw_highlight_item(VikTrwLayer * vtl, Track * trk, Waypoint * wp, Viewport * viewport);
-//void vik_trw_layer_draw_highlight_items(VikTrwLayer * vtl, std::unordered_map<sg_uid_t, Track *> * tracks, std::unordered_map<sg_uid_t, Waypoint *> * waypoints, Viewport * viewport);
+//void vik_trw_layer_draw_highlight(VikLayer * vtl, Viewport * viewport);
+//void vik_trw_layer_draw_highlight_item(VikLayer * vtl, Track * trk, Waypoint * wp, Viewport * viewport);
+//void vik_trw_layer_draw_highlight_items(VikLayer * vtl, std::unordered_map<sg_uid_t, Track *> * tracks, std::unordered_map<sg_uid_t, Waypoint *> * waypoints, Viewport * viewport);
 
 // For creating a list of tracks with the corresponding layer it is in
 //  (thus a selection of tracks may be from differing layers)
@@ -618,7 +618,7 @@ typedef struct {
 } vik_trw_track_list_t;
 
 typedef GList* (*VikTrwlayerGetTracksAndLayersFunc) (VikLayer*, void *);
-GList *vik_trw_layer_build_track_list_t ( VikTrwLayer *vtl, GList *tracks );
+GList *vik_trw_layer_build_track_list_t ( VikLayer *vtl, GList *tracks );
 
 // For creating a list of waypoints with the corresponding layer it is in
 //  (thus a selection of waypoints may be from differing layers)
@@ -628,14 +628,14 @@ typedef struct {
 } vik_trw_waypoint_list_t;
 
 typedef GList* (*VikTrwlayerGetWaypointsAndLayersFunc) (VikLayer*, void *);
-GList *vik_trw_layer_build_waypoint_list_t ( VikTrwLayer *vtl, GList *waypoints );
+GList *vik_trw_layer_build_waypoint_list_t ( VikLayer *vtl, GList *waypoints );
 
 GdkPixbuf* get_wp_sym_small ( char *symbol );
 
 /* Exposed Layer Interface function definitions */
 // Intended only for use by other trw_layer subwindows
-//void trw_layer_verify_thumbnails(VikTrwLayer * vtl, Viewport * viewport);
-void trw_layer_calculate_bounds_waypoints ( VikTrwLayer *vtl );
+//void trw_layer_verify_thumbnails(VikLayer * vtl, Viewport * viewport);
+void trw_layer_calculate_bounds_waypoints ( VikLayer *vtl );
 
 
 typedef struct {

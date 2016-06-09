@@ -49,7 +49,7 @@ typedef struct _VikGeorefLayer VikGeorefLayer;
 
 void vik_georef_layer_init(void);
 
-VikGeorefLayer *vik_georef_layer_create(Viewport * viewport,
+VikLayer *vik_georef_layer_create(Viewport * viewport,
 					LayersPanel * panel,
 					const char *name,
 					GdkPixbuf *pibxbuf,

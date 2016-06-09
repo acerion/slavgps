@@ -58,10 +58,10 @@
 extern GList * a_babel_device_list;
 
 
-static VikGpsLayer * vik_gps_layer_new(Viewport * viewport);
-static VikGpsLayer * gps_layer_unmarshall(uint8_t *data, int len, Viewport * viewport);
-static bool gps_layer_set_param(VikGpsLayer *vgl, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
-static VikLayerParamData gps_layer_get_param(VikGpsLayer *vgl, uint16_t id, bool is_file_operation);
+static VikLayer * vik_gps_layer_new(Viewport * viewport);
+static VikLayer * gps_layer_unmarshall(uint8_t *data, int len, Viewport * viewport);
+static bool gps_layer_set_param(VikLayer *vgl, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
+static VikLayerParamData gps_layer_get_param(VikLayer *vgl, uint16_t id, bool is_file_operation);
 
 
 typedef struct {
@@ -364,10 +364,10 @@ GType vik_gps_layer_get_type()
 }
 
 #if 0
-VikGpsLayer * vik_gps_layer_create(Viewport * viewport)
+VikLayer * vik_gps_layer_create(Viewport * viewport)
 {
-	VikGpsLayer *rv = vik_gps_layer_new(viewport);
-	LayerGPS * layer = (LayerGPS *) ((VikLayer *) rv)->layer;
+	VikLayer *rv = vik_gps_layer_new(viewport);
+	LayerGPS * layer = (LayerGPS *) rv->layer;
 	layer->rename(vik_gps_layer_interface.name);
 
 	for (int i = 0; i < NUM_TRW; i++) {
@@ -418,15 +418,15 @@ void LayerGPS::marshall(uint8_t **data, int *datalen)
 }
 
 /* "Paste" */
-static VikGpsLayer * gps_layer_unmarshall(uint8_t *data, int len, Viewport * viewport)
+static VikLayer * gps_layer_unmarshall(uint8_t *data, int len, Viewport * viewport)
 {
 #define alm_size (*(int *)data)
 #define alm_next		 \
 	len -= sizeof(int) + alm_size;		\
 	data += sizeof(int) + alm_size;
 
-	VikGpsLayer *rv = vik_gps_layer_new(viewport);
-	LayerGPS * layer = (LayerGPS *) ((VikLayer *) rv)->layer;
+	VikLayer *rv = vik_gps_layer_new(viewport);
+	LayerGPS * layer = (LayerGPS *) rv->layer;
 	VikLayer *child_layer;
 	int i;
 
@@ -437,7 +437,7 @@ static VikGpsLayer * gps_layer_unmarshall(uint8_t *data, int len, Viewport * vie
 	while (len>0 && i < NUM_TRW) {
 		child_layer = vik_layer_unmarshall(data + sizeof(int), alm_size, viewport);
 		if (child_layer) {
-			layer->trw_children[i++] = (LayerTRW *) ((VikLayer *) child_layer)->layer;
+			layer->trw_children[i++] = (LayerTRW *) child_layer->layer;
 			// NB no need to attach signal update handler here
 			//  as this will always be performed later on in vik_gps_layer_realize()
 		}
@@ -449,9 +449,9 @@ static VikGpsLayer * gps_layer_unmarshall(uint8_t *data, int len, Viewport * vie
 #undef alm_size
 #undef alm_next
 }
-static bool gps_layer_set_param(VikGpsLayer *vgl, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
+static bool gps_layer_set_param(VikLayer *vgl, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
 {
-	LayerGPS * layer = (LayerGPS *) ((VikLayer *) vgl)->layer;
+	LayerGPS * layer = (LayerGPS *) vgl->layer;
 	return layer->set_param(id, data, viewport, is_file_operation);
 }
 
@@ -557,9 +557,9 @@ bool LayerGPS::set_param(uint16_t id, VikLayerParamData data, Viewport * viewpor
 	return true;
 }
 
-static VikLayerParamData gps_layer_get_param(VikGpsLayer *vgl, uint16_t id, bool is_file_operation)
+static VikLayerParamData gps_layer_get_param(VikLayer *vgl, uint16_t id, bool is_file_operation)
 {
-	LayerGPS * layer = (LayerGPS *) ((VikLayer *) vgl)->layer;
+	LayerGPS * layer = (LayerGPS *) vgl->layer;
 	return layer->get_param(id, is_file_operation);
 }
 
@@ -623,7 +623,7 @@ VikLayerParamData LayerGPS::get_param(uint16_t id, bool is_file_operation)
 	return rv;
 }
 
-VikGpsLayer *vik_gps_layer_new(Viewport * viewport)
+VikLayer *vik_gps_layer_new(Viewport * viewport)
 {
 	LayerGPS * layer = new LayerGPS((VikLayer *) NULL);
 
@@ -660,7 +660,7 @@ VikGpsLayer *vik_gps_layer_new(Viewport * viewport)
 	layer->protocol = NULL;
 	layer->serial_port = NULL;
 
-	return (VikGpsLayer *) layer->vl;
+	return layer->vl;
 }
 
 void LayerGPS::draw(Viewport * viewport)
@@ -1676,8 +1676,8 @@ void LayerGPS::update_statusbar(VikWindow * vw)
 static void gpsd_raw_hook(VglGpsd *vgpsd, char *data)
 {
 	bool update_all = false;
-	VikGpsLayer *vgl = vgpsd->vgl;
-	LayerGPS * layer = (LayerGPS *) ((VikLayer *) vgl)->layer;
+	VikLayer *vgl = vgpsd->vgl;
+	LayerGPS * layer = (LayerGPS *) vgl->layer;
 
 	if (!layer->realtime_tracking) {
 		fprintf(stderr, "WARNING: %s: receiving GPS data while not in realtime mode\n", __PRETTY_FUNCTION__);
@@ -1751,8 +1751,8 @@ static void gpsd_raw_hook(VglGpsd *vgpsd, char *data)
 
 static int gpsd_data_available(GIOChannel *source, GIOCondition condition, void * data)
 {
-	VikGpsLayer *vgl = (VikGpsLayer *) data;
-	LayerGPS * layer = (LayerGPS *) ((VikLayer *) vgl)->layer;
+	VikLayer *vgl = (VikLayer *) data;
+	LayerGPS * layer = (LayerGPS *) vgl->layer;
 
 	if (condition == G_IO_IN) {
 #if GPSD_API_MAJOR_VERSION == 3 || GPSD_API_MAJOR_VERSION == 4
@@ -1792,8 +1792,8 @@ static char *make_track_name(LayerTRW * trw)
 
 static bool rt_gpsd_try_connect(void * *data)
 {
-	VikGpsLayer *vgl = (VikGpsLayer *)data;
-	LayerGPS * layer = (LayerGPS *) ((VikLayer *) vgl)->layer;
+	VikLayer *vgl = (VikLayer *) data;
+	LayerGPS * layer = (LayerGPS *) vgl->layer;
 
 #if GPSD_API_MAJOR_VERSION == 3
 	struct gps_data_t *gpsd = gps_open(layer->gpsd_host, layer->gpsd_port);

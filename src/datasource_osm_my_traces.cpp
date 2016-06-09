@@ -624,18 +624,18 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 	bool create_new_layer = ( !trw );
 
 	// Only update the screen on the last layer acquired
-	VikTrwLayer *vtl_last = (VikTrwLayer *) trw->vl;
+	VikLayer *vtl_last = trw->vl;
 	bool got_something = false;
 
 	GList *selected_iterator = selected;
 	while ( selected_iterator ) {
 
-		VikTrwLayer *vtlX = (VikTrwLayer *) trw->vl;
+		VikLayer *vtlX = trw->vl;
 
 		if ( create_new_layer ) {
 			// Have data but no layer - so create one
 			LayerTRW * layer = new LayerTRW(adw->viewport);
-			vtlX = (VikTrwLayer *) layer->vl;
+			vtlX = layer->vl;
 			if (((gpx_meta_data_t *) selected_iterator->data)->name) {
 				layer->rename(((gpx_meta_data_t *) selected_iterator->data)->name);
 			} else {
@@ -651,7 +651,7 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 			// NB download type is GPX (or a compressed version)
 			ProcessOptions my_po = *process_options;
 			my_po.url = url;
-			result = a_babel_convert_from((LayerTRW *) ((VikLayer *) vtlX)->layer, &my_po, status_cb, adw, &options );
+			result = a_babel_convert_from((LayerTRW *) vtlX->layer, &my_po, status_cb, adw, &options );
 			// TODO investigate using a progress bar:
 			// http://developer.gnome.org/gtk/2.24/GtkProgressBar.html
 
@@ -667,7 +667,7 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 
 		if ( result ) {
 			// Can use the layer
-			LayerTRW * layer = (LayerTRW *) ((VikLayer *) vtlX)->layer;
+			LayerTRW * layer = (LayerTRW *) vtlX->layer;
 			adw->panel->get_top_layer()->add_layer(layer, true);
 			// Move to area of the track
 			layer->post_read(vik_window_viewport(adw->vw), true );
@@ -694,7 +694,7 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 	// Would prefer to keep the update in acquire.c,
 	//  however since we may create the layer - need to do the update here
 	if ( got_something ) {
-		Layer * layer_last = (Layer *) ((VikLayer *) vtl_last)->layer;
+		Layer * layer_last = (Layer *) vtl_last->layer;
 		layer_last->emit_update();
 	}
 

@@ -76,17 +76,17 @@ enum {
 	PARAM_AA,
 	NUM_PARAMS };
 
-static VikGeorefLayer *georef_layer_unmarshall(uint8_t *data, int len, Viewport * viewport);
-static bool georef_layer_set_param(VikGeorefLayer *vgl, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
-static VikLayerParamData georef_layer_get_param(VikGeorefLayer *vgl, uint16_t id, bool is_file_operation);
-static VikGeorefLayer *georef_layer_new(Viewport * viewport);
+static VikLayer *georef_layer_unmarshall(uint8_t *data, int len, Viewport * viewport);
+static bool georef_layer_set_param(VikLayer *vgl, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
+static VikLayerParamData georef_layer_get_param(VikLayer *vgl, uint16_t id, bool is_file_operation);
+static VikLayer *georef_layer_new(Viewport * viewport);
 
 /* tools */
 static void * georef_layer_move_create(VikWindow *vw, Viewport * viewport);
-static bool georef_layer_move_release_cb(VikGeorefLayer *vgl, GdkEventButton *event, Viewport * viewport);
-static bool georef_layer_move_press_cb(VikGeorefLayer *vgl, GdkEventButton *event, Viewport * viewport);
+static bool georef_layer_move_release_cb(VikLayer *vgl, GdkEventButton *event, Viewport * viewport);
+static bool georef_layer_move_press_cb(VikLayer *vgl, GdkEventButton *event, Viewport * viewport);
 static void * georef_layer_zoom_create(VikWindow *vw, Viewport * viewport);
-static bool georef_layer_zoom_press_cb(VikGeorefLayer *vgl, GdkEventButton *event, Viewport * viewport);
+static bool georef_layer_zoom_press_cb(VikLayer *vgl, GdkEventButton *event, Viewport * viewport);
 
 // See comment in viktrwlayer.c for advice on values used
 static VikToolInterface georef_tools[] = {
@@ -195,21 +195,21 @@ void LayerGeoref::marshall(uint8_t **data, int *len)
 	vik_layer_marshall_params(this->vl, data, len);
 }
 
-static VikGeorefLayer * georef_layer_unmarshall(uint8_t *data, int len, Viewport * viewport)
+static VikLayer * georef_layer_unmarshall(uint8_t *data, int len, Viewport * viewport)
 {
-	VikGeorefLayer *rv = georef_layer_new(viewport);
-	vik_layer_unmarshall_params((VikLayer *) rv, data, len, viewport);
+	VikLayer *rv = georef_layer_new(viewport);
+	vik_layer_unmarshall_params(rv, data, len, viewport);
 
-	LayerGeoref * layer = (LayerGeoref *) ((VikLayer *) rv)->layer;
+	LayerGeoref * layer = (LayerGeoref *) rv->layer;
 	if (layer->image) {
 		layer->post_read(viewport, true);
 	}
 	return rv;
 }
 
-static bool georef_layer_set_param(VikGeorefLayer *vgl, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
+static bool georef_layer_set_param(VikLayer *vgl, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
 {
-	LayerGeoref * layer = (LayerGeoref *) ((VikLayer *) vgl)->layer;
+	LayerGeoref * layer = (LayerGeoref *) vgl->layer;
 	return layer->set_param(id, data, viewport, is_file_operation);
 }
 
@@ -268,9 +268,9 @@ void LayerGeoref::create_image_file()
 	free(filename);
 }
 
-static VikLayerParamData georef_layer_get_param(VikGeorefLayer * vgl, uint16_t id, bool is_file_operation)
+static VikLayerParamData georef_layer_get_param(VikLayer * vgl, uint16_t id, bool is_file_operation)
 {
-	LayerGeoref * layer = (LayerGeoref *) ((VikLayer *) vgl)->layer;
+	LayerGeoref * layer = (LayerGeoref *) vgl->layer;
 	return layer->get_param(id, is_file_operation);
 }
 
@@ -326,7 +326,7 @@ VikLayerParamData LayerGeoref::get_param(uint16_t id, bool is_file_operation)
 	return rv;
 }
 
-static VikGeorefLayer * georef_layer_new(Viewport * viewport)
+static VikLayer * georef_layer_new(Viewport * viewport)
 {
 	LayerGeoref * layer = new LayerGeoref((VikLayer *) NULL);
 
@@ -346,7 +346,7 @@ static VikGeorefLayer * georef_layer_new(Viewport * viewport)
 	layer->ll_br.lon = 0.0;
 	layer->alpha = 255;
 
-	return (VikGeorefLayer *) layer->vl;
+	return layer->vl;
 }
 
 /**
@@ -444,9 +444,9 @@ void LayerGeoref::free_()
 }
 
 #if 0
-static VikGeorefLayer * georef_layer_create(Viewport * viewport)
+static VikLayer * georef_layer_create(Viewport * viewport)
 {
-	VikGeorefLayer * rv = georef_layer_new(viewport);
+	VikLayer * rv = georef_layer_new(viewport);
 
 	return rv;
 }
@@ -1070,9 +1070,9 @@ static void * georef_layer_move_create(VikWindow *vw, Viewport * viewport)
 	return viewport->vvp;
 }
 
-static bool georef_layer_move_release_cb(VikGeorefLayer * vgl, GdkEventButton * event, Viewport * viewport)
+static bool georef_layer_move_release_cb(VikLayer * vgl, GdkEventButton * event, Viewport * viewport)
 {
-	LayerGeoref * layer = (LayerGeoref *) ((VikLayer *) vgl)->layer;
+	LayerGeoref * layer = (LayerGeoref *) vgl->layer;
 	return layer->move_release(event, viewport);
 }
 
@@ -1097,9 +1097,9 @@ static void * georef_layer_zoom_create(VikWindow *vw, Viewport * viewport)
 	return viewport->vvp;
 }
 
-static bool georef_layer_zoom_press_cb(VikGeorefLayer * vgl, GdkEventButton * event, Viewport * viewport)
+static bool georef_layer_zoom_press_cb(VikLayer * vgl, GdkEventButton * event, Viewport * viewport)
 {
-	LayerGeoref * layer = (LayerGeoref *) ((VikLayer *) vgl)->layer;
+	LayerGeoref * layer = (LayerGeoref *) vgl->layer;
 	return layer->zoom_press(event, viewport);
 }
 
@@ -1128,9 +1128,9 @@ bool LayerGeoref::zoom_press(GdkEventButton * event, Viewport * viewport)
 }
 
 
-static bool georef_layer_move_press_cb(VikGeorefLayer *vgl, GdkEventButton *event, Viewport * viewport)
+static bool georef_layer_move_press_cb(VikLayer *vgl, GdkEventButton *event, Viewport * viewport)
 {
-	LayerGeoref * layer = (LayerGeoref *) ((VikLayer *) vgl)->layer;
+	LayerGeoref * layer = (LayerGeoref *) vgl->layer;
 	return layer->move_press(event, viewport);
 }
 
@@ -1160,16 +1160,16 @@ static void goto_center_ll(Viewport * viewport, struct LatLon ll_tl, struct LatL
 /**
  *
  */
-VikGeorefLayer * vik_georef_layer_create(Viewport * viewport,
+VikLayer * vik_georef_layer_create(Viewport * viewport,
 					 LayersPanel * panel,
 					 const char *name,
 					 GdkPixbuf *pixbuf,
 					 VikCoord *coord_tl,
 					 VikCoord *coord_br)
 {
-	VikGeorefLayer *vgl = georef_layer_new(viewport);
-	((Layer *) ((VikLayer *) vgl)->layer)->rename(name);
-	LayerGeoref * layer = (LayerGeoref *) ((VikLayer *) vgl)->layer;
+	VikLayer *vgl = georef_layer_new(viewport);
+	((Layer *) vgl->layer)->rename(name);
+	LayerGeoref * layer = (LayerGeoref *) vgl->layer;
 
 	layer->pixbuf = pixbuf;
 

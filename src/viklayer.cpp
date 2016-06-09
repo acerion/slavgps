@@ -245,14 +245,14 @@ VikLayer * vik_layer_create(VikLayerTypeEnum type, Viewport * viewport, bool int
 {
 	assert (type == VIK_LAYER_GPS);
 
-	VikLayer * new_layer = (VikLayer *) vik_gps_layer_create(viewport);
+	VikLayer * new_layer = vik_gps_layer_create(viewport);
 	assert (new_layer);
 
 	if (interactive) {
 		if (vik_layer_properties(new_layer, viewport)) {
 			/* We translate the name here */
 			/* in order to avoid translating name set by user */
-			((Layer *) ((VikLayer *) new_layer)->layer)->rename(_(vik_layer_interfaces[type]->name));
+			((Layer *) new_layer->layer)->rename(_(vik_layer_interfaces[type]->name));
 		} else {
 			g_object_unref(G_OBJECT (new_layer)); /* cancel that */
 			new_layer = NULL;

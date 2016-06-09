@@ -845,7 +845,7 @@ void vu_command_line ( VikWindow *vw, double latitude, double longitude, int zoo
 		bool add_map = true;
 
 		for (auto iter = vmls->begin(); iter != vmls->end(); iter++) {
-			VikMapsLayer *vml = (VikMapsLayer*) *iter;
+			VikLayer *vml = (VikLayer*) *iter;
 			MapTypeID type_id = vik_maps_layer_get_map_type(vml);
 			if (the_type_id == type_id) {
 				add_map = false;
@@ -856,7 +856,7 @@ void vu_command_line ( VikWindow *vw, double latitude, double longitude, int zoo
 		if ( add_map ) {
 			LayerMaps * layer = new LayerMaps(viewport);
 
-			vik_maps_layer_set_map_type(((VikMapsLayer *) layer->vl), the_type_id);
+			vik_maps_layer_set_map_type(layer->vl, the_type_id);
 			layer->rename(_("Map"));
 
 			vik_window_layers_panel(vw)->panel_ref->get_top_layer()->add_layer(layer, true);

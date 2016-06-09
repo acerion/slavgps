@@ -332,7 +332,7 @@ bool a_babel_convert_from_filter(LayerTRW * trw, const char *babelargs, const ch
 
 /**
  * a_babel_convert_from_shellcommand:
- * @trw: The #VikTrwLayer where to insert the collected data
+ * @trw: The #LayerTRW where to insert the collected data
  * @input_cmd: the command to run
  * @input_file_type:
  * @cb:	       Optional callback function. Same usage as in a_babel_convert().
@@ -382,7 +382,7 @@ bool a_babel_convert_from_shellcommand(LayerTRW * trw, const char *input_cmd, co
 
 /**
  * a_babel_convert_from_url_filter:
- * @trw: The #VikTrwLayer where to insert the collected data
+ * @trw: The #LayerTRW where to insert the collected data
  * @url: the URL to fetch
  * @input_type:   If input_type is %NULL, input must be GPX.
  * @babelfilters: The filter arguments to pass to gpsbabel

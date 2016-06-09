@@ -34,7 +34,7 @@ extern "C" {
 
 
 /* Default */
-bool vik_routing_default_find ( VikTrwLayer *vt, struct LatLon start, struct LatLon end );
+bool vik_routing_default_find ( VikLayer *vt, struct LatLon start, struct LatLon end );
 
 /* Routing engines management */
 void vik_routing_prefs_init();

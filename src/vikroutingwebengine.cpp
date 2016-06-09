@@ -43,10 +43,10 @@
 
 static void vik_routing_web_engine_finalize ( GObject *gob );
 
-static bool vik_routing_web_engine_find ( VikRoutingEngine *self, VikTrwLayer *vtl, struct LatLon start, struct LatLon end );
+static bool vik_routing_web_engine_find ( VikRoutingEngine *self, VikLayer *vtl, struct LatLon start, struct LatLon end );
 static char *vik_routing_web_engine_get_url_from_directions(VikRoutingEngine *self, const char *start, const char *end);
 static bool vik_routing_web_engine_supports_direction(VikRoutingEngine *self);
-static bool vik_routing_web_engine_refine ( VikRoutingEngine *self, VikTrwLayer *vtl, Track * trk);
+static bool vik_routing_web_engine_refine ( VikRoutingEngine *self, VikLayer *vtl, Track * trk);
 static bool vik_routing_web_engine_supports_refine ( VikRoutingEngine *self );
 
 typedef struct _VikRoutingWebEnginePrivate VikRoutingWebEnginePrivate;
@@ -419,7 +419,7 @@ vik_routing_web_engine_get_url_for_coords ( VikRoutingEngine *self, struct LatLo
 }
 
 static bool
-vik_routing_web_engine_find ( VikRoutingEngine *self, VikTrwLayer *vtl, struct LatLon start, struct LatLon end )
+vik_routing_web_engine_find ( VikRoutingEngine *self, VikLayer *vtl, struct LatLon start, struct LatLon end )
 {
   char *uri = vik_routing_web_engine_get_url_for_coords(self, start, end);
 
@@ -427,7 +427,7 @@ vik_routing_web_engine_find ( VikRoutingEngine *self, VikTrwLayer *vtl, struct L
 
   char *format = vik_routing_engine_get_format ( self );
   ProcessOptions po = { NULL, NULL, format, uri, NULL, NULL };
-  bool ret = a_babel_convert_from ( (LayerTRW *) ((VikLayer *) vtl)->layer, &po, NULL, NULL, options );
+  bool ret = a_babel_convert_from ( (LayerTRW *) vtl->layer, &po, NULL, NULL, options );
 
   free(uri);
 
@@ -550,7 +550,7 @@ vik_routing_web_engine_get_url_for_track ( VikRoutingEngine *self, Track * trk)
 }
 
 static bool
-vik_routing_web_engine_refine ( VikRoutingEngine *self, VikTrwLayer *vtl, Track * trk)
+vik_routing_web_engine_refine ( VikRoutingEngine *self, VikLayer *vtl, Track * trk)
 {
   /* Compute URL */
   char *uri = vik_routing_web_engine_get_url_for_track ( self, trk);
@@ -561,7 +561,7 @@ vik_routing_web_engine_refine ( VikRoutingEngine *self, VikTrwLayer *vtl, Track 
   /* Convert and insert data in model */
   char *format = vik_routing_engine_get_format ( self );
   ProcessOptions po = { NULL, NULL, format, uri, NULL, NULL };
-  bool ret = a_babel_convert_from ((LayerTRW *) ((VikLayer *) vtl)->layer, &po, NULL, NULL, options );
+  bool ret = a_babel_convert_from ((LayerTRW *) vtl->layer, &po, NULL, NULL, options );
 
   free(uri);
 

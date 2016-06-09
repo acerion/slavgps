@@ -85,7 +85,7 @@ void vik_window_set_redraw_trigger(struct _VikLayer *vl);
 
 void vik_window_enable_layer_tool ( VikWindow *vw, int layer_id, int tool_id );
 
-void * vik_window_get_selected_trw_layer ( VikWindow *vw ); /* return type VikTrwLayer */
+void * vik_window_get_selected_trw_layer ( VikWindow *vw ); /* return type LayerTRW */
 void vik_window_set_selected_trw_layer ( VikWindow *vw, void * trw);
 std::unordered_map<sg_uid_t, Track *> * vik_window_get_selected_tracks(VikWindow * vw);
 void vik_window_set_selected_tracks ( VikWindow *vw, std::unordered_map<sg_uid_t, Track *> * tracks, void * trw);
@@ -95,8 +95,8 @@ std::unordered_map<sg_uid_t, Waypoint *> * vik_window_get_selected_waypoints ( V
 void vik_window_set_selected_waypoints ( VikWindow *vw, std::unordered_map<sg_uid_t, Waypoint *> * waypoints, void * trw);
 void * vik_window_get_selected_waypoint ( VikWindow *vw ); /* return type VikWaypoint */
 void vik_window_set_selected_waypoint ( VikWindow *vw, void **vwp, void * trw); /* input VikWaypoint */
-/* Return the VikTrwLayer of the selected track(s) or waypoint(s) are in (maybe NULL) */
-void * vik_window_get_containing_trw_layer ( VikWindow *vw );
+/* Return the VikLayer of the selected track(s) or waypoint(s) are in (maybe NULL) */
+//void * vik_window_get_containing_trw_layer ( VikWindow *vw );
 /* return indicates if a redraw is necessary */
 bool vik_window_clear_highlight ( VikWindow *vw );
 

@@ -450,10 +450,10 @@ typedef struct zip_file zip_file_t;
 			vik_coord_load_from_latlon ( &vc_tl, vik_viewport_get_coord_mode(vvp), &ll_tl );
 			vik_coord_load_from_latlon ( &vc_br, vik_viewport_get_coord_mode(vvp), &ll_br );
 
-			VikGeorefLayer *vgl = vik_georef_layer_create ( vvp, vlp, name, pixbuf, &vc_tl, &vc_br );
+			VikLayer *vgl = vik_georef_layer_create ( vvp, vlp, name, pixbuf, &vc_tl, &vc_br );
 			if ( vgl ) {
-				VikAggregateLayer *top = vik_layers_panel_get_top_layer ( vlp );
-				vik_aggregate_layer_add_layer ( top, (VikLayer *) vgl, false );
+				VikLayer *top = vik_layers_panel_get_top_layer ( vlp );
+				vik_aggregate_layer_add_layer ( top, vgl, false );
 			}
 		}
 	}

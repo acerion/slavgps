@@ -772,7 +772,7 @@ bool vik_layers_panel_tool(LayersPanel * panel, uint16_t layer_type, VikToolInte
 		tool_func(vl, event, viewport);
 		return true;
 	} else if (panel->toplayer->vl->visible &&
-		   vik_aggregate_layer_tool((VikAggregateLayer *) panel->toplayer->vl, layer_type, tool_func, event, viewport) != 1) { /* either accepted or rejected, but a layer was found */
+		   vik_aggregate_layer_tool(panel->toplayer->vl, layer_type, tool_func, event, viewport) != 1) { /* either accepted or rejected, but a layer was found */
 		return true;
 	}
 	return false;

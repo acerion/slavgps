@@ -101,18 +101,18 @@ enum {
   PARAM_FILE_CACHE_DIR,
   NUM_PARAMS };
 
-static VikMapnikLayer *mapnik_layer_unmarshall(uint8_t *data, int len, Viewport * viewport);
-static bool mapnik_layer_set_param(VikMapnikLayer *vml, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
-static VikLayerParamData mapnik_layer_get_param(VikMapnikLayer *vml, uint16_t id, bool is_file_operation);
-static VikMapnikLayer * mapnik_layer_new(Viewport * viewport);
-//static VikMapnikLayer * mapnik_layer_create(Viewport * viewport);
+static VikLayer *mapnik_layer_unmarshall(uint8_t *data, int len, Viewport * viewport);
+static bool mapnik_layer_set_param(VikLayer *vml, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
+static VikLayerParamData mapnik_layer_get_param(VikLayer *vml, uint16_t id, bool is_file_operation);
+static VikLayer * mapnik_layer_new(Viewport * viewport);
+//static VikLayer * mapnik_layer_create(Viewport * viewport);
 
 static void * mapnik_feature_create(VikWindow *vw, Viewport * viewport)
 {
 	return viewport->vvp;
 }
 
-static bool mapnik_feature_release_cb(VikMapnikLayer *vml, GdkEventButton *event, Viewport * viewport);
+static bool mapnik_feature_release_cb(VikLayer *vml, GdkEventButton *event, Viewport * viewport);
 
 // See comment in viktrwlayer.c for advice on values used
 // FUTURE:
@@ -346,19 +346,18 @@ void LayerMapnik::set_cache_dir(char const * name)
 
 void LayerMapnik::marshall(uint8_t **data, int *len)
 {
-	//VikMapnikLayer * vml = (VikMapnikLayer *) this->vl;
 	vik_layer_marshall_params(this->vl, data, len);
 }
 
-static VikMapnikLayer * mapnik_layer_unmarshall(uint8_t *data, int len, Viewport * viewport)
+static VikLayer * mapnik_layer_unmarshall(uint8_t *data, int len, Viewport * viewport)
 {
-	VikMapnikLayer *rv = mapnik_layer_new(viewport);
-	vik_layer_unmarshall_params((VikLayer *) rv, data, len, viewport);
+	VikLayer *rv = mapnik_layer_new(viewport);
+	vik_layer_unmarshall_params(rv, data, len, viewport);
 	return rv;
 }
-static bool mapnik_layer_set_param(VikMapnikLayer *vml, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
+static bool mapnik_layer_set_param(VikLayer *vml, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
 {
-	LayerMapnik * layer = (LayerMapnik *) ((VikLayer *) vml)->layer;
+	LayerMapnik * layer = (LayerMapnik *) vml->layer;
 	return layer->set_param(id, data, viewport, is_file_operation);
 }
 
@@ -387,9 +386,9 @@ bool LayerMapnik::set_param(uint16_t id, VikLayerParamData data, Viewport * view
 	return true;
 }
 
-static VikLayerParamData mapnik_layer_get_param(VikMapnikLayer *vml, uint16_t id, bool is_file_operation)
+static VikLayerParamData mapnik_layer_get_param(VikLayer *vml, uint16_t id, bool is_file_operation)
 {
-	LayerMapnik * layer = (LayerMapnik *) ((VikLayer *) vml)->layer;
+	LayerMapnik * layer = (LayerMapnik *) vml->layer;
 	return layer->get_param(id, is_file_operation);
 }
 
@@ -450,7 +449,7 @@ VikLayerParamData LayerMapnik::get_param(uint16_t id, bool is_file_operation)
 /**
  *
  */
-static VikMapnikLayer * mapnik_layer_new(Viewport * viewport)
+static VikLayer * mapnik_layer_new(Viewport * viewport)
 {
 	LayerMapnik * layer = new LayerMapnik((VikLayer *) NULL);
 
@@ -458,7 +457,7 @@ static VikMapnikLayer * mapnik_layer_new(Viewport * viewport)
 	layer->loaded = false;
 	layer->mi = mapnik_interface_new();
 
-	return (VikMapnikLayer *) layer->vl;
+	return layer->vl;
 }
 
 /**
@@ -550,7 +549,7 @@ bool LayerMapnik::carto_load(Viewport * viewport)
  */
 void LayerMapnik::post_read(Viewport * viewport, bool from_file)
 {
-	VikMapnikLayer * vml = (VikMapnikLayer *) this->vl;
+	VikLayer * vml = this->vl;
 
 	// Determine if carto needs to be run
 	bool do_carto = false;
@@ -632,7 +631,7 @@ void LayerMapnik::possibly_save_pixbuf(GdkPixbuf * pixbuf, TileInfo * ulm)
 
 typedef struct
 {
-	VikMapnikLayer *vml;
+	VikLayer *vml;
 	VikCoord *ul;
 	VikCoord *br;
 	TileInfo *ulmc;
@@ -678,7 +677,7 @@ static void background(RenderInfo *data, void * threaddata)
 {
 	int res = a_background_thread_progress(threaddata, 0);
 	if (res == 0) {
-		((LayerMapnik *) ((VikLayer *) data->vml)->layer)->render(data->ul, data->br, data->ulmc);
+		((LayerMapnik *) data->vml->layer)->render(data->ul, data->br, data->ulmc);
 	}
 
 	g_mutex_lock(tp_mutex);
@@ -686,7 +685,7 @@ static void background(RenderInfo *data, void * threaddata)
 	g_mutex_unlock(tp_mutex);
 
 	if (res == 0) {
-		Layer * layer = (Layer *) ((VikLayer *) data->vml)->layer;
+		Layer * layer = (Layer *) data->vml->layer;
 		layer->emit_update(); // NB update display from background
 	}
 }
@@ -716,7 +715,7 @@ void LayerMapnik::thread_add(TileInfo * mul, VikCoord * ul, VikCoord * br, int x
 	}
 
 	RenderInfo * ri = (RenderInfo *) malloc(sizeof(RenderInfo));
-	ri->vml = (VikMapnikLayer *) this->vl;
+	ri->vml = this->vl;
 	ri->ul = (VikCoord *) malloc(sizeof (VikCoord));
 	ri->br = (VikCoord *) malloc(sizeof (VikCoord));
 	ri->ulmc = (TileInfo *) malloc(sizeof (TileInfo));
@@ -820,7 +819,7 @@ GdkPixbuf * LayerMapnik::get_pixbuf(TileInfo * ulm, TileInfo * brm)
  */
 void LayerMapnik::draw(Viewport * viewport)
 {
-	VikMapnikLayer * vml = (VikMapnikLayer *) this->vl;
+	VikLayer * vml = this->vl;
 	if (!this->loaded) {
 		return;
 	}
@@ -908,7 +907,7 @@ void LayerMapnik::draw(Viewport * viewport)
  */
 void LayerMapnik::free_()
 {
-	VikMapnikLayer * vml = (VikMapnikLayer *) this->vl;
+	VikLayer * vml = this->vl;
 	mapnik_interface_free(this->mi);
 	if (this->filename_css) {
 		free(this->filename_css);
@@ -920,9 +919,9 @@ void LayerMapnik::free_()
 }
 
 #if 0
-static VikMapnikLayer * mapnik_layer_create(Viewport * viewport)
+static VikLayer * mapnik_layer_create(Viewport * viewport)
 {
-	VikMapnikLayer * rv = mapnik_layer_new(viewport);
+	VikLayer * rv = mapnik_layer_new(viewport);
 
 	return rv;
 }
@@ -949,9 +948,9 @@ static void mapnik_layer_flush_memory(menu_array_values values)
  */
 static void mapnik_layer_reload(menu_array_values values)
 {
-	VikMapnikLayer * vml = (VikMapnikLayer *) values[MA_VML];
+	VikLayer * vml = (VikLayer *) values[MA_VML];
 	Viewport * viewport = (Viewport *) values[MA_VVP];
-	Layer * layer = (Layer *) ((VikLayer *) vml)->layer;
+	Layer * layer = (Layer *) vml->layer;
 	layer->post_read(viewport, false);
 	layer->draw(viewport);
 }
@@ -965,9 +964,9 @@ static void mapnik_layer_reload(menu_array_values values)
  */
 static void mapnik_layer_carto(menu_array_values values)
 {
-	VikMapnikLayer * vml = (VikMapnikLayer *) values[MA_VML];
+	VikLayer * vml = (VikLayer *) values[MA_VML];
 	Viewport * viewport = (Viewport *) values[MA_VVP];
-	LayerMapnik * layer = (LayerMapnik *) ((VikLayer *) vml)->layer;
+	LayerMapnik * layer = (LayerMapnik *) vml->layer;
 
 	// Don't load the XML config if carto load fails
 	if (!layer->carto_load(viewport)) {
@@ -981,7 +980,7 @@ static void mapnik_layer_carto(menu_array_values values)
 		                           ans);
 		free(ans);
 	} else {
-		Layer * vml_ = (Layer *) ((VikLayer *) vml)->layer;
+		Layer * vml_ = (Layer *) vml->layer;
 		vml_->draw(viewport);
 	}
 }
@@ -991,8 +990,8 @@ static void mapnik_layer_carto(menu_array_values values)
  */
 static void mapnik_layer_information(menu_array_values values)
 {
-	VikMapnikLayer * vml = (VikMapnikLayer *) values[MA_VML];
-	LayerMapnik * layer = (LayerMapnik *) ((VikLayer *) vml)->layer;
+	VikLayer * vml = (VikLayer *) values[MA_VML];
+	LayerMapnik * layer = (LayerMapnik *) vml->layer;
 
 	if (!layer->mi) {
 		return;
@@ -1013,7 +1012,7 @@ static void mapnik_layer_information(menu_array_values values)
  */
 static void mapnik_layer_about(menu_array_values values)
 {
-	VikMapnikLayer * vml =(VikMapnikLayer *) values[MA_VML];
+	VikLayer * vml =(VikLayer *) values[MA_VML];
 	char *msg = mapnik_interface_about();
 	a_dialog_info_msg(VIK_GTK_WINDOW_FROM_LAYER(vml),  msg);
 	free(msg);
@@ -1024,7 +1023,7 @@ static void mapnik_layer_about(menu_array_values values)
  */
 void LayerMapnik::add_menu_items(GtkMenu * menu, void * panel_)
 {
-	VikMapnikLayer * vml = (VikMapnikLayer *) this->vl;
+	VikLayer * vml = this->vl;
 
 	static menu_array_values values;
 	values[MA_VML] = vml;
@@ -1069,9 +1068,9 @@ void LayerMapnik::add_menu_items(GtkMenu * menu, void * panel_)
 }
 
 
-static void mapnik_layer_rerender_cb(VikMapnikLayer * vml)
+static void mapnik_layer_rerender_cb(VikLayer * vml)
 {
-	LayerMapnik * layer = (LayerMapnik *) ((VikLayer *) vml)->layer;
+	LayerMapnik * layer = (LayerMapnik *) vml->layer;
 	layer->rerender();
 }
 
@@ -1095,9 +1094,9 @@ void LayerMapnik::rerender()
 }
 
 
-static void mapnik_layer_tile_info_cb(VikMapnikLayer *vml)
+static void mapnik_layer_tile_info_cb(VikLayer *vml)
 {
-	LayerMapnik * layer = (LayerMapnik *) ((VikLayer *) vml)->layer;
+	LayerMapnik * layer = (LayerMapnik *) vml->layer;
 	layer->tile_info();
 }
 
@@ -1152,13 +1151,13 @@ void LayerMapnik::tile_info()
 	free(filename);
 }
 
-static bool mapnik_feature_release_cb(VikMapnikLayer *vml, GdkEventButton *event, Viewport * viewport)
+static bool mapnik_feature_release_cb(VikLayer *vml, GdkEventButton *event, Viewport * viewport)
 {
 	if (!vml) {
 		return false;
 	}
 
-	LayerMapnik * layer = (LayerMapnik *) ((VikLayer *) vml)->layer;
+	LayerMapnik * layer = (LayerMapnik *) vml->layer;
 	return layer->feature_release(event, viewport);
 }
 
