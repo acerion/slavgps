@@ -863,7 +863,7 @@ void LayerMaps::post_read(Viewport * viewport, bool from_file)
 		if (map->get_drawmode() != vp_drawmode) {
 			const char *drawmode_name = viewport->get_drawmode_name(map->get_drawmode());
 			char *msg = g_strdup_printf(_("New map cannot be displayed in the current drawmode.\nSelect \"%s\" from View menu to view it."), drawmode_name);
-			a_dialog_warning_msg(VIK_GTK_WINDOW_FROM_WIDGET((VikViewport *) viewport->vvp), msg);
+			a_dialog_warning_msg(VIK_GTK_WINDOW_FROM_WIDGET(viewport->vvp), msg);
 			free(msg);
 		}
 	}
@@ -880,7 +880,7 @@ void LayerMaps::post_read(Viewport * viewport, bool from_file)
 			// That didn't work, so here's why:
 			fprintf(stderr, "WARNING: %s: %s\n", __FUNCTION__, sqlite3_errmsg(this->mbtiles));
 
-			a_dialog_error_msg_extra(VIK_GTK_WINDOW_FROM_WIDGET((VikViewport *) viewport->vvp),
+			a_dialog_error_msg_extra(VIK_GTK_WINDOW_FROM_WIDGET(viewport->vvp),
 						 _("Failed to open MBTiles file: %s"),
 						 this->filename);
 			this->mbtiles = NULL;
@@ -1503,7 +1503,7 @@ void LayerMaps::draw(Viewport * viewport)
 		double level = viewport->get_zoom();
 		LatLonBBox bbox;
 		viewport->get_min_max_lat_lon(&bbox.south, &bbox.north, &bbox.west, &bbox.east);
-		map_sources[this->map_index]->get_copyright(bbox, level, vik_viewport_add_copyright_cb, viewport->vvp);
+		map_sources[this->map_index]->get_copyright(bbox, level, vik_viewport_add_copyright_cb, viewport);
 
 		/* Logo */
 		const GdkPixbuf *logo = map_sources[this->map_index]->get_logo();

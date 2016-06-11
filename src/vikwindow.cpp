@@ -773,8 +773,7 @@ static void vik_window_init(VikWindow * vw)
 {
 	vw->action_group = NULL;
 
-	VikViewport * vvp = vik_viewport_new();
-	vw->viewport = &vvp->port;
+	vw->viewport = new Viewport();
 	vw->layers_panel = new LayersPanel();
 	vw->layers_panel->set_viewport(vw->viewport);
 	vw->viking_vs = vik_statusbar_new();
@@ -1502,11 +1501,11 @@ static void draw_scroll(VikWindow * vw, GdkEventScroll *event)
 /********************************************************************************
  ** Ruler tool code
  ********************************************************************************/
-static void draw_ruler(VikViewport *vvp, GdkDrawable *d, GdkGC *gc, int x1, int y1, int x2, int y2, double distance)
+static void draw_ruler(Viewport * viewport, GdkDrawable *d, GdkGC *gc, int x1, int y1, int x2, int y2, double distance)
 {
 	PangoLayout *pl;
 	char str[128];
-	GdkGC *labgc = vvp->port.new_gc("#cccccc", 1);
+	GdkGC *labgc = viewport->new_gc("#cccccc", 1);
 	GdkGC *thickgc = gdk_gc_new(d);
 
 	double len = sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2));
@@ -1539,7 +1538,7 @@ static void draw_ruler(VikViewport *vvp, GdkDrawable *d, GdkGC *gc, int x1, int 
 #define CR 80
 #define CW 4
 
-	vvp->port.compute_bearing(x1, y1, x2, y2, &angle, &baseangle);
+	viewport->compute_bearing(x1, y1, x2, y2, &angle, &baseangle);
 
 	{
 		GdkColor color;
@@ -1583,8 +1582,8 @@ static void draw_ruler(VikViewport *vvp, GdkDrawable *d, GdkGC *gc, int x1, int 
 		int wd, hd, xd, yd;
 		int wb, hb, xb, yb;
 
-		pl = gtk_widget_create_pango_layout(GTK_WIDGET(vvp), NULL);
-		pango_layout_set_font_description(pl, gtk_widget_get_style(GTK_WIDGET(vvp))->font_desc);
+		pl = gtk_widget_create_pango_layout(GTK_WIDGET(viewport->vvp), NULL);
+		pango_layout_set_font_description(pl, gtk_widget_get_style(GTK_WIDGET(viewport->vvp))->font_desc);
 		pango_layout_set_text(pl, "N", -1);
 		gdk_draw_layout(d, gc, x1-5, y1-CR-3*CW-8, pl);
 
@@ -1633,7 +1632,7 @@ static void draw_ruler(VikViewport *vvp, GdkDrawable *d, GdkGC *gc, int x1, int 
 			yd = (y1+y2)/2 - hd/2 + dx;
 		}
 
-		if (xd < -5 || yd < -5 || xd > vvp->port.get_width() + 5 || yd > vvp->port.get_height() + 5) {
+		if (xd < -5 || yd < -5 || xd > viewport->get_width() + 5 || yd > viewport->get_height() + 5) {
 			xd = x2 + 10;
 			yd = y2 - 5;
 		}
@@ -1647,7 +1646,7 @@ static void draw_ruler(VikViewport *vvp, GdkDrawable *d, GdkGC *gc, int x1, int 
 		xb = x1 + CR*cos(angle-M_PI_2);
 		yb = y1 + CR*sin(angle-M_PI_2);
 
-		if (xb < -5 || yb < -5 || xb > vvp->port.get_width() + 5 || yb > vvp->port.get_height() + 5) {
+		if (xb < -5 || yb < -5 || xb > viewport->get_width() + 5 || yb > viewport->get_height() + 5) {
 			xb = x2 + 10;
 			yb = y2 + 10;
 		}
@@ -1734,7 +1733,6 @@ static VikLayerToolFuncStatus ruler_click(VikLayer *vl, GdkEventButton *event, r
 
 static VikLayerToolFuncStatus ruler_move(VikLayer *vl, GdkEventMotion *event, ruler_tool_state_t *s)
 {
-	VikViewport *vvp = (VikViewport *) s->viewport->vvp;
 	VikWindow * vw = s->vw;
 
 	struct LatLon ll;
@@ -1748,25 +1746,25 @@ static VikLayerToolFuncStatus ruler_move(VikLayer *vl, GdkEventMotion *event, ru
 		w1 = s->viewport->get_width();
 		h1 = s->viewport->get_height();
 		if (!buf) {
-			buf = gdk_pixmap_new(gtk_widget_get_window(GTK_WIDGET(vvp)), w1, h1, -1);
+			buf = gdk_pixmap_new(gtk_widget_get_window(GTK_WIDGET(s->viewport->vvp)), w1, h1, -1);
 		}
 		gdk_drawable_get_size(buf, &w2, &h2);
 		if (w1 != w2 || h1 != h2) {
 			g_object_unref(G_OBJECT (buf));
-			buf = gdk_pixmap_new(gtk_widget_get_window(GTK_WIDGET(vvp)), w1, h1, -1);
+			buf = gdk_pixmap_new(gtk_widget_get_window(GTK_WIDGET(s->viewport->vvp)), w1, h1, -1);
 		}
 
 		s->viewport->screen_to_coord((int) event->x, (int) event->y, &coord);
 		vik_coord_to_latlon(&coord, &ll);
 		s->viewport->coord_to_screen(&s->oldcoord, &oldx, &oldy);
 
-		gdk_draw_drawable(buf, gtk_widget_get_style(GTK_WIDGET(vvp))->black_gc,
+		gdk_draw_drawable(buf, gtk_widget_get_style(GTK_WIDGET(s->viewport->vvp))->black_gc,
 				  s->viewport->get_pixmap(), 0, 0, 0, 0, -1, -1);
-		draw_ruler(vvp, buf, gtk_widget_get_style(GTK_WIDGET(vvp))->black_gc, oldx, oldy, event->x, event->y, vik_coord_diff(&coord, &(s->oldcoord)));
+		draw_ruler(s->viewport, buf, gtk_widget_get_style(GTK_WIDGET(s->viewport->vvp))->black_gc, oldx, oldy, event->x, event->y, vik_coord_diff(&coord, &(s->oldcoord)));
 		if (draw_buf_done) {
 			static void * pass_along[3];
-			pass_along[0] = gtk_widget_get_window(GTK_WIDGET(vvp));
-			pass_along[1] = gtk_widget_get_style(GTK_WIDGET(vvp))->black_gc;
+			pass_along[0] = gtk_widget_get_window(GTK_WIDGET(s->viewport->vvp));
+			pass_along[1] = gtk_widget_get_style(GTK_WIDGET(s->viewport->vvp))->black_gc;
 			pass_along[2] = buf;
 			g_idle_add_full (G_PRIORITY_HIGH_IDLE + 10, draw_buf, pass_along, NULL);
 			draw_buf_done = false;
@@ -4413,7 +4411,7 @@ static void import_kmz_file_cb(GtkAction * a, VikWindow * vw)
 	if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)  {
 		char *fn = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
 		// TODO convert ans value into readable explaination of failure...
-		int ans = kmz_open_file(fn, ((VikViewport *) vw->viewport->vvp), vw->layers_panel->gob);
+		int ans = kmz_open_file(fn, vw->viewport, vw->layers_panel->gob);
 		if (ans) {
 			a_dialog_error_msg_extra(GTK_WINDOW(vw), _("Unable to import %s."), fn);
 		}

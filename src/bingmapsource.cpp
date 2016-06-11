@@ -138,7 +138,7 @@ char * MapSourceBing::get_server_path(TileInfo *src)
 	return path;
 }
 
-void MapSourceBing::get_copyright(LatLonBBox bbox, double zoom, void (*fct)(VikViewport*,const char*), void *data)
+void MapSourceBing::get_copyright(LatLonBBox bbox, double zoom, void (*fct)(Viewport *, const char *), void * data)
 {
 	fprintf(stderr, "DEBUG: %s: looking for %g %g %g %g at %g\n", __FUNCTION__, bbox.south, bbox.north, bbox.east, bbox.west, zoom);
 
@@ -159,7 +159,7 @@ void MapSourceBing::get_copyright(LatLonBBox bbox, double zoom, void (*fct)(VikV
 		if (BBOX_INTERSECT(bbox, current->bounds) &&
 		    (17 - level) > current->minZoom &&
 		    (17 - level) < current->maxZoom) {
-			(*fct)((VikViewport *) data, current->attribution);
+			(*fct)((Viewport *) data, current->attribution);
 			fprintf(stderr, "DEBUG: %s: found match %s\n", __FUNCTION__, current->attribution);
 		}
 		attribution = attribution->next;

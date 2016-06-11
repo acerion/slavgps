@@ -257,7 +257,7 @@ void MapSource::set_file_extension(char * file_extension_)
  *
  * Retrieve copyright(s) for the corresponding bounding box and zoom level.
  */
-void MapSource::get_copyright(LatLonBBox bbox, double zoom, void (* fct)(VikViewport *, const char*), void * data)
+void MapSource::get_copyright(LatLonBBox bbox, double zoom, void (* fct)(Viewport *, const char *), void * data)
 {
 	return;
 }

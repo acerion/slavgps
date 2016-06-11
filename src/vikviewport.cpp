@@ -43,6 +43,8 @@
 #include <stdlib.h>
 #include <assert.h>
 
+#include <glib-object.h>
+
 #include "coords.h"
 #include "vikcoord.h"
 #include "vikwindow.h"
@@ -54,16 +56,27 @@
 #include "settings.h"
 #include "dialog.h"
 
-#define MERCATOR_FACTOR(x) ((65536.0 / 180 / (x)) * 256.0)
+
+
+
 
 using namespace SlavGPS;
 
+
+
+
+
+#define MERCATOR_FACTOR(x) ((65536.0 / 180 / (x)) * 256.0)
+
+#define VIK_SETTINGS_VIEW_LAST_LATITUDE "viewport_last_latitude"
+#define VIK_SETTINGS_VIEW_LAST_LONGITUDE "viewport_last_longitude"
+#define VIK_SETTINGS_VIEW_LAST_ZOOM_X "viewport_last_zoom_xpp"
+#define VIK_SETTINGS_VIEW_LAST_ZOOM_Y "viewport_last_zoom_ypp"
+#define VIK_SETTINGS_VIEW_HISTORY_SIZE "viewport_history_size"
+#define VIK_SETTINGS_VIEW_HISTORY_DIFF_DIST "viewport_history_diff_dist"
+
 static double EASTING_OFFSET = 500000.0;
-
 static int PAD = 10;
-
-static void viewport_finalize (GObject *gob);
-
 
 static bool calcxy(double *x, double *y, double lg, double lt, double zero_long, double zero_lat, double pixelfact_x, double pixelfact_y, int mapSizeX2, int mapSizeY2);
 static bool calcxy_rev(double *lg, double *lt, int x, int y, double zero_long, double zero_lat, double pixelfact_x, double pixelfact_y, int mapSizeX2, int mapSizeY2);
@@ -72,28 +85,33 @@ double calcR (double lat);
 static double Radius[181];
 static void viewport_init_ra();
 
-static GObjectClass *parent_class;
 
 
 
-double Viewport::calculate_utm_zone_width()
-{
-	if (coord_mode == VIK_COORD_UTM) {
-		struct LatLon ll;
 
-		/* get latitude of screen bottom */
-		struct UTM utm = *((struct UTM *)(get_center()));
-		utm.northing -= height * ympp / 2;
-		a_coords_utm_to_latlon(&utm, &ll);
+#define VIK_VIEWPORT_TYPE            (vik_viewport_get_type ())
+#define VIK_VIEWPORT(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_VIEWPORT_TYPE, VikViewport))
+#define VIK_VIEWPORT_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), VIK_VIEWPORT_TYPE, VikViewportClass))
+#define VIK_IS_VIEWPORT(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), VIK_VIEWPORT_TYPE))
+#define VIK_IS_VIEWPORT_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), VIK_VIEWPORT_TYPE))
 
-		/* boundary */
-		ll.lon = (utm.zone - 1) * 6 - 180 ;
-		a_coords_latlon_to_utm(&ll, &utm);
-		return fabs(utm.easting - EASTING_OFFSET) * 2;
-	} else {
-		return 0.0;
-	}
-}
+struct _VikViewport {
+	GtkDrawingArea drawing_area;
+	void * viewport; /* class Viewport. Used in glib callbacks. */
+};
+
+/* Glib type inheritance and initialization */
+typedef struct _VikViewport VikViewport;
+typedef struct _VikViewportClass VikViewportClass;
+
+struct _VikViewportClass {
+	GtkDrawingAreaClass drawing_area_class;
+	void (*updated_center) (VikViewport *vw);
+};
+GType vik_viewport_get_type();
+static void viewport_finalize(GObject * gob);
+bool vik_viewport_configure_cb(VikViewport * vpp);
+static GObjectClass * parent_class;
 
 enum {
 	VW_UPDATED_CENTER_SIGNAL = 0,
@@ -119,27 +137,6 @@ static void vik_viewport_class_init (VikViewportClass *klass)
 								    g_cclosure_marshal_VOID__VOID, G_TYPE_NONE, 0);
 }
 
-VikViewport *vik_viewport_new ()
-{
-	VikViewport *vv = VIK_VIEWPORT (g_object_new (VIK_VIEWPORT_TYPE, NULL));
-
-	vv->port.scr_buffer = NULL;
-	vv->port.width = 0;
-	vv->port.height = 0;
-	vv->port.width_2 = 0;
-	vv->port.height_2 = 0;
-	vv->port.vvp = (void *) vv;
-
-	return vv;
-}
-
-#define VIK_SETTINGS_VIEW_LAST_LATITUDE "viewport_last_latitude"
-#define VIK_SETTINGS_VIEW_LAST_LONGITUDE "viewport_last_longitude"
-#define VIK_SETTINGS_VIEW_LAST_ZOOM_X "viewport_last_zoom_xpp"
-#define VIK_SETTINGS_VIEW_LAST_ZOOM_Y "viewport_last_zoom_ypp"
-#define VIK_SETTINGS_VIEW_HISTORY_SIZE "viewport_history_size"
-#define VIK_SETTINGS_VIEW_HISTORY_DIFF_DIST "viewport_history_diff_dist"
-
 static void vik_viewport_init(VikViewport *vvp)
 {
 	viewport_init_ra();
@@ -153,12 +150,43 @@ static void vik_viewport_init(VikViewport *vvp)
 #endif
 }
 
+
+
+
+
+double Viewport::calculate_utm_zone_width()
+{
+	if (coord_mode == VIK_COORD_UTM) {
+		struct LatLon ll;
+
+		/* get latitude of screen bottom */
+		struct UTM utm = *((struct UTM *)(get_center()));
+		utm.northing -= height * ympp / 2;
+		a_coords_utm_to_latlon(&utm, &ll);
+
+		/* boundary */
+		ll.lon = (utm.zone - 1) * 6 - 180 ;
+		a_coords_latlon_to_utm(&ll, &utm);
+		return fabs(utm.easting - EASTING_OFFSET) * 2;
+	} else {
+		return 0.0;
+	}
+}
+
+
+
+
+
 GdkColor * Viewport::get_background_gdkcolor()
 {
 	GdkColor *rv = (GdkColor *) malloc(sizeof (GdkColor));
 	*rv = background_color;  /* kamilTODO: what? */
 	return rv;
 }
+
+
+
+
 
 Viewport::Viewport()
 {
@@ -233,13 +261,15 @@ Viewport::Viewport()
 	do_draw_highlight = true;
 
 
-	// Initiate center history
-	update_centers();
-
 	trigger = NULL;
 	snapshot_buffer = NULL;
 	half_drawn = false;
 
+	this->vvp = (VikViewport *) g_object_new(VIK_VIEWPORT_TYPE, NULL);
+	((VikViewport *) this->vvp)->viewport = this;
+
+	// Initiate center history
+	update_centers();
 }
 
 /* returns pointer to internal static storage, changes next time function called, use quickly */
@@ -361,10 +391,10 @@ GdkPixmap * Viewport::get_pixmap()
 	return this->scr_buffer;
 }
 
-bool vik_viewport_configure_cb(VikViewport *vvp)
+bool vik_viewport_configure_cb(VikViewport * vvp)
 {
 	assert (vvp);
-	return vvp->port.configure();
+	return ((Viewport *) vvp->viewport)->configure();
 }
 
 
@@ -408,10 +438,10 @@ bool Viewport::configure()
 	return false;
 }
 
-static void viewport_finalize (GObject *gob)
+static void viewport_finalize(GObject * gob)
 {
-	VikViewport * vvp = VIK_VIEWPORT(gob);
-	Viewport * viewport = &vvp->port;
+	VikViewport * vvp = VIK_VIEWPORT (gob);
+	Viewport * viewport = (Viewport *) vvp->viewport;
 
 	g_return_if_fail (vvp != NULL);
 
@@ -1563,7 +1593,7 @@ void Viewport::reset_copyrights()
  *
  * Add a copyright to display on viewport.
  */
-void Viewport::add_copyright(const char *copyright_)
+void Viewport::add_copyright(char const * copyright_)
 {
 	if (copyright_) {
 		GSList * found = g_slist_find_custom(copyrights, copyright_, (GCompareFunc) strcmp);
@@ -1574,9 +1604,9 @@ void Viewport::add_copyright(const char *copyright_)
 	}
 }
 
-void vik_viewport_add_copyright_cb(VikViewport * vvp, const char * copyright_)
+void vik_viewport_add_copyright_cb(Viewport * viewport, char const * copyright_)
 {
-	vvp->port.add_copyright(copyright_);
+	viewport->add_copyright(copyright_);
 }
 
 void Viewport::reset_logos()

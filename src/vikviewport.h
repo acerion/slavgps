@@ -21,14 +21,10 @@
 
 #ifndef _VIKING_VIEWPORT_H
 #define _VIKING_VIEWPORT_H
-/* Requires <gtk/gtk.h> or glib, and coords.h*/
 
 #include <glib.h>
-#include <glib-object.h>
 #include <gtk/gtk.h>
-#include <stdbool.h>
 #include <stdint.h>
-
 
 #include "vikcoord.h"
 
@@ -38,12 +34,6 @@ extern "C" {
 #endif
 
 
-
-#define VIK_VIEWPORT_TYPE            (vik_viewport_get_type ())
-#define VIK_VIEWPORT(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_VIEWPORT_TYPE, VikViewport))
-#define VIK_VIEWPORT_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), VIK_VIEWPORT_TYPE, VikViewportClass))
-#define VIK_IS_VIEWPORT(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), VIK_VIEWPORT_TYPE))
-#define VIK_IS_VIEWPORT_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), VIK_VIEWPORT_TYPE))
 
 #define VIK_VIEWPORT_MAX_ZOOM 32768.0
 #define VIK_VIEWPORT_MIN_ZOOM (1 / 32.0)
@@ -133,7 +123,7 @@ namespace SlavGPS {
 
 
 		void reset_copyrights();
-		void add_copyright(const char *copyright);
+		void add_copyright(char const * copyright);
 
 		void reset_logos();
 		void add_logo(const GdkPixbuf *logo);
@@ -262,15 +252,13 @@ namespace SlavGPS {
 		GdkColor highlight_color;
 
 
-
-
-		void * vvp; /* Parent VikViewport. */
-
-
 		/* trigger stuff */
 		void * trigger; /* Usually pointer to VikLayer. */
 		GdkPixmap * snapshot_buffer;
 		bool half_drawn;
+
+
+		void * vvp; /* Related VikViewport. */
 	};
 
 
@@ -280,40 +268,12 @@ namespace SlavGPS {
 } /* namespace SlavGPS */
 
 
-using namespace SlavGPS;
-
-
-struct _VikViewport {
-	GtkDrawingArea drawing_area;
-
-	SlavGPS::Viewport port;
-};
-
-/* Glib type inheritance and initialization */
-typedef struct _VikViewport VikViewport;
-typedef struct _VikViewportClass VikViewportClass;
-
-struct _VikViewportClass {
-	GtkDrawingAreaClass drawing_area_class;
-	void (*updated_center) (VikViewport *vw);
-};
-GType vik_viewport_get_type ();
-
-
-
-
-
-/* Viking initialization */
-VikViewport *vik_viewport_new ();
-
-
-
 void vik_gc_get_fg_color(GdkGC * gc, GdkColor * dest); /* warning: could be slow, don't use obsessively */
 GdkFunction vik_gc_get_function(GdkGC * gc);
 
 
-void vik_viewport_add_copyright_cb(VikViewport * vvp, const char * copyright);
-bool vik_viewport_configure_cb(VikViewport * vpp);
+void vik_viewport_add_copyright_cb(SlavGPS::Viewport * viewport, char const * copyright);
+
 
 #ifdef __cplusplus
 }

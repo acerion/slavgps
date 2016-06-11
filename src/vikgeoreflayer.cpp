@@ -469,7 +469,7 @@ void LayerGeoref::load_image(Viewport * viewport, bool from_file)
 
 	if (gx) {
 		if (!from_file) {
-			a_dialog_error_msg_extra(VIK_GTK_WINDOW_FROM_WIDGET((VikViewport *) viewport->vvp), _("Couldn't open image file: %s"), gx->message);
+			a_dialog_error_msg_extra(VIK_GTK_WINDOW_FROM_WIDGET(viewport->vvp), _("Couldn't open image file: %s"), gx->message);
 		}
 		g_error_free (gx);
 	} else {

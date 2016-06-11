@@ -54,7 +54,7 @@ namespace SlavGPS {
 
 		virtual MapSource & operator=(MapSource map);
 
-		virtual void get_copyright(LatLonBBox bbox, double zoom, void (* fct)(VikViewport *, const char *), void * data);
+		virtual void get_copyright(LatLonBBox bbox, double zoom, void (* fct)(Viewport *, const char *), void * data);
 		const char * get_license();
 		const char * get_license_url();
 		const GdkPixbuf * get_logo();

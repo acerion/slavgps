@@ -7519,7 +7519,6 @@ static VikLayerToolFuncStatus tool_new_track_move_cb(VikLayer *vtl, GdkEventMoti
 
 VikLayerToolFuncStatus LayerTRW::tool_new_track_move(GdkEventMotion * event, Viewport * viewport)
 {
-	VikViewport * vvp = (VikViewport *) viewport->vvp;
 	/* if we haven't sync'ed yet, we don't have time to do more. */
 	if (this->draw_sync_done && this->current_track && this->current_track->trackpoints) {
 		Trackpoint * last_tpt = this->current_track->get_tp_last();
@@ -7530,12 +7529,12 @@ VikLayerToolFuncStatus LayerTRW::tool_new_track_move(GdkEventMotion * event, Vie
 		w1 = viewport->get_width();
 		h1 = viewport->get_height();
 		if (!pixmap) {
-			pixmap = gdk_pixmap_new(gtk_widget_get_window(GTK_WIDGET(vvp)), w1, h1, -1);
+			pixmap = gdk_pixmap_new(gtk_widget_get_window(GTK_WIDGET(viewport->vvp)), w1, h1, -1);
 		}
 		gdk_drawable_get_size(pixmap, &w2, &h2);
 		if (w1 != w2 || h1 != h2) {
 			g_object_unref(G_OBJECT (pixmap));
-			pixmap = gdk_pixmap_new(gtk_widget_get_window(GTK_WIDGET(vvp)), w1, h1, -1);
+			pixmap = gdk_pixmap_new(gtk_widget_get_window(GTK_WIDGET(viewport->vvp)), w1, h1, -1);
 		}
 
 		// Reset to background
@@ -7594,8 +7593,8 @@ VikLayerToolFuncStatus LayerTRW::tool_new_track_move(GdkEventMotion * event, Vie
 
 			char *str = distance_string(distance);
 
-			PangoLayout *pl = gtk_widget_create_pango_layout(GTK_WIDGET(vvp), NULL);
-			pango_layout_set_font_description(pl, gtk_widget_get_style(GTK_WIDGET(vvp))->font_desc);
+			PangoLayout *pl = gtk_widget_create_pango_layout(GTK_WIDGET(viewport->vvp), NULL);
+			pango_layout_set_font_description(pl, gtk_widget_get_style(GTK_WIDGET(viewport->vvp))->font_desc);
 			pango_layout_set_text(pl, str, -1);
 			int wd, hd;
 			pango_layout_get_pixel_size(pl, &wd, &hd);
@@ -7618,7 +7617,7 @@ VikLayerToolFuncStatus LayerTRW::tool_new_track_move(GdkEventMotion * event, Vie
 		passalong = (draw_sync_t *) malloc(1 * sizeof (draw_sync_t)); // freed by draw_sync()
 		passalong->layer = this;
 		passalong->pixmap = pixmap;
-		passalong->drawable = gtk_widget_get_window(GTK_WIDGET(vvp));
+		passalong->drawable = gtk_widget_get_window(GTK_WIDGET(viewport->vvp));
 		passalong->gc = this->current_track_newpoint_gc;
 
 		double angle;
