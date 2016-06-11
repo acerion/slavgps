@@ -23,17 +23,17 @@
 #ifndef _VIKING_DIR_H
 #define _VIKING_DIR_H
 
-#include <glib.h>
+//#include <glib.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 
-const char *a_get_viking_dir();
-char *a_get_viking_dir_no_create();
+char const * a_get_viking_dir();
+char * a_get_viking_dir_no_create();
 char ** a_get_viking_data_path();
-char *a_get_viking_data_home();
+char * a_get_viking_data_home();
 
 #ifdef __cplusplus
 }

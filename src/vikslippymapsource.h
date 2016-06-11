@@ -23,7 +23,6 @@
 
 
 
-#include <stdbool.h>
 #include <stdint.h>
 
 #include "vikcoord.h"
@@ -45,7 +44,7 @@ namespace SlavGPS {
 	public:
 		MapSourceSlippy();
 		~MapSourceSlippy();
-		MapSourceSlippy(MapTypeID map_type, const char * label, const char * hostname, const char * path);
+		MapSourceSlippy(MapTypeID map_type, char const * label, char const * hostname, char const * path);
 
 		MapSourceSlippy & operator=(MapSourceSlippy map);
 

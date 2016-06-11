@@ -24,7 +24,6 @@
 #define _VIKING_FILE_H
 
 #include <glib.h>
-#include <stdbool.h>
 #include <stdint.h>
 
 
@@ -38,19 +37,19 @@ extern "C" {
 
 
 typedef enum {
-	FILE_TYPE_GPSPOINT=1,
-	FILE_TYPE_GPSMAPPER=2,
-	FILE_TYPE_GPX=3,
-	FILE_TYPE_KML=4,
-	FILE_TYPE_GEOJSON=5,
+	FILE_TYPE_GPSPOINT  = 1,
+	FILE_TYPE_GPSMAPPER = 2,
+	FILE_TYPE_GPX       = 3,
+	FILE_TYPE_KML       = 4,
+	FILE_TYPE_GEOJSON   = 5
 } VikFileType_t;
 
-bool a_file_check_ext(const char *filename, const char *fileext);
+bool a_file_check_ext(char const * filename, char const * fileext);
 
 	/*
  * Function to determine if a filename is a 'viking' type file
  */
-bool check_file_magic_vik(const char *filename);
+bool check_file_magic_vik(char const * filename);
 
 typedef enum {
 	LOAD_TYPE_READ_FAILURE,
@@ -62,22 +61,22 @@ typedef enum {
 	LOAD_TYPE_OTHER_SUCCESS,
 } VikLoadType_t;
 
-char *append_file_ext(const char *filename, VikFileType_t type);
+char * append_file_ext(char const * filename, VikFileType_t type);
 
 VikLoadType_t a_file_load(LayerAggregate * top, Viewport * viewport, char const * filename);
-bool a_file_save(LayerAggregate * top, Viewport * viewport, const char *filename);
+bool a_file_save(LayerAggregate * top, Viewport * viewport, char const * filename);
 /* Only need to define Track if the file type is FILE_TYPE_GPX_TRACK */
-bool a_file_export(LayerTRW * trw, const char *filename, VikFileType_t file_type, Track * trk, bool write_hidden);
-bool a_file_export_babel(LayerTRW * trw, const char *filename, const char *format,
+bool a_file_export(LayerTRW * trw, char const * filename, VikFileType_t file_type, Track * trk, bool write_hidden);
+bool a_file_export_babel(LayerTRW * trw, char const * filename, char const * format,
 			 bool tracks, bool routes, bool waypoints);
 
-void file_write_layer_param(FILE *f, const char *name, VikLayerParamType type, VikLayerParamData data);
+void file_write_layer_param(FILE * f, char const * name, VikLayerParamType type, VikLayerParamData data);
 
-char *file_realpath(const char *path, char *real);
+char * file_realpath(char const * path, char * real);
 
-char *file_realpath_dup(const char *path);
+char * file_realpath_dup(char const * path);
 
-const char *file_GetRelativeFilename(char *currentDirectory, char *absoluteFilename);
+char const * file_GetRelativeFilename(char * currentDirectory, char * absoluteFilename);
 
 #ifdef __cplusplus
 }

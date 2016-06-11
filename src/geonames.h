@@ -26,7 +26,7 @@
 extern "C" {
 #endif
 
-void geonames_init ();
+void geonames_init();
 
 #ifdef __cplusplus
 }

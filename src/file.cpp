@@ -67,20 +67,21 @@ struct _Stack {
 	void * data;
 };
 
-static void pop(Stack **stack) {
-	Stack *tmp = (*stack)->under;
+static void pop(Stack **stack)
+{
+	Stack * tmp = (*stack)->under;
 	free(*stack);
 	*stack = tmp;
 }
 
-static void push(Stack **stack)
+static void push(Stack ** stack)
 {
-	Stack *tmp = (Stack *) malloc(sizeof (Stack));
+	Stack * tmp = (Stack *) malloc(sizeof (Stack));
 	tmp->under = *stack;
 	*stack = tmp;
 }
 
-static bool check_magic(FILE *f, const char *magic_number, unsigned int magic_length)
+static bool check_magic(FILE * f, char const * magic_number, unsigned int magic_length)
 {
 	char magic[magic_length];
 	bool rv = false;
@@ -97,7 +98,7 @@ static bool check_magic(FILE *f, const char *magic_number, unsigned int magic_le
 }
 
 
-static bool str_starts_with(const char *haystack, const char *needle, uint16_t len_needle, bool must_be_longer)
+static bool str_starts_with(char const * haystack, char const * needle, uint16_t len_needle, bool must_be_longer)
 {
 	if (strlen(haystack) > len_needle - (!must_be_longer) && strncasecmp(haystack, needle, len_needle) == 0) {
 		return true;
@@ -105,7 +106,7 @@ static bool str_starts_with(const char *haystack, const char *needle, uint16_t l
 	return false;
 }
 
-void file_write_layer_param(FILE *f, const char *name, VikLayerParamType type, VikLayerParamData data)
+void file_write_layer_param(FILE * f, char const * name, VikLayerParamType type, VikLayerParamData data)
 {
 	/* string lists are handled differently. We get a GList (that shouldn't
 	 * be freed) back for get_param and if it is null we shouldn't write
@@ -114,10 +115,10 @@ void file_write_layer_param(FILE *f, const char *name, VikLayerParamType type, V
 	 */
 	if (type == VIK_LAYER_PARAM_STRING_LIST) {
 		if (data.sl) {
-			GList *iter = (GList *)data.sl;
+			GList * iter = (GList *) data.sl;
 			while (iter) {
 				fprintf(f, "%s=", name);
-				fprintf(f, "%s\n", (char *)(iter->data));
+				fprintf(f, "%s\n", (char *) (iter->data));
 				iter = iter->next;
 			}
 		}
@@ -150,7 +151,7 @@ void file_write_layer_param(FILE *f, const char *name, VikLayerParamType type, V
 	}
 }
 
-static void write_layer_params_and_data(VikLayer *l, FILE *f)
+static void write_layer_params_and_data(VikLayer * l, FILE * f)
 {
 	Layer * layer = (Layer *) l->layer;
 	VikLayerParam *params = vik_layer_get_interface(layer->type)->params;
@@ -179,7 +180,7 @@ static void write_layer_params_and_data(VikLayer *l, FILE *f)
 	*/
 }
 
-static void file_write(LayerAggregate * top, FILE *f, Viewport * viewport)
+static void file_write(LayerAggregate * top, FILE * f, Viewport * viewport)
 {
 	LayerAggregate * aggregate = top;
 	Stack *stack = NULL;
@@ -269,7 +270,7 @@ static void file_write(LayerAggregate * top, FILE *f, Viewport * viewport)
 static void string_list_delete(void * key, void * l, void * user_data)
 {
 	/* 20071021 bugfix */
-	GList *iter = (GList *) l;
+	GList * iter = (GList *) l;
 	while (iter) {
 		free(iter->data);
 		iter = iter->next;
@@ -277,7 +278,7 @@ static void string_list_delete(void * key, void * l, void * user_data)
 	g_list_free ((GList *) l);
 }
 
-static void string_list_set_param(int i, GList *list, void * *layer_and_vp)
+static void string_list_set_param(int i, GList * list, void ** layer_and_vp)
 {
 	VikLayerParamData x;
 	x.sl = list;
@@ -293,7 +294,7 @@ static void string_list_set_param(int i, GList *list, void * *layer_and_vp)
  * TODO flow up line number(s) / error messages of problems encountered...
  *
  */
-static bool file_read(LayerAggregate * top, FILE *f, const char *dirpath, Viewport * viewport)
+static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, Viewport * viewport)
 {
 	Stack *stack = NULL;
 	struct LatLon ll = { 0.0, 0.0 };
@@ -605,7 +606,7 @@ if "[LayerData]"
 
 /* ---------------------------------------------------- */
 
-static FILE *xfopen(const char *fn)
+static FILE * xfopen(char const * fn)
 {
 	if (strcmp(fn,"-") == 0) {
 		return stdin;
@@ -614,7 +615,7 @@ static FILE *xfopen(const char *fn)
 	}
 }
 
-static void xfclose(FILE *f)
+static void xfclose(FILE * f)
 {
 	if (f != stdin && f != stdout) {
 		fclose(f);
@@ -625,10 +626,10 @@ static void xfclose(FILE *f)
 /*
  * Function to determine if a filename is a 'viking' type file
  */
-bool check_file_magic_vik(const char *filename)
+bool check_file_magic_vik(char const * filename)
 {
 	bool result = false;
-	FILE *ff = xfopen(filename);
+	FILE * ff = xfopen(filename);
 	if (ff) {
 		result = check_magic(ff, VIK_MAGIC, VIK_MAGIC_LEN);
 		xfclose(ff);
@@ -643,9 +644,9 @@ bool check_file_magic_vik(const char *filename)
  *
  * Returns: a newly allocated string
  */
-char *append_file_ext(const char *filename, VikFileType_t type)
+char * append_file_ext(char const * filename, VikFileType_t type)
 {
-	char *new_name = NULL;
+	char * new_name = NULL;
 	const char *ext = NULL;
 
 	/* Select an extension */
@@ -677,11 +678,11 @@ char *append_file_ext(const char *filename, VikFileType_t type)
 	return new_name;
 }
 
-VikLoadType_t a_file_load(LayerAggregate * top, Viewport * viewport, const char *filename_or_uri)
+VikLoadType_t a_file_load(LayerAggregate * top, Viewport * viewport, char const * filename_or_uri)
 {
 	g_return_val_if_fail(viewport != NULL, LOAD_TYPE_READ_FAILURE);
 
-	char *filename = (char *)filename_or_uri;
+	char * filename = (char *) filename_or_uri;
 	if (strncmp(filename, "file://", 7) == 0) {
 		// Consider replacing this with:
 		// filename = g_filename_from_uri (entry, NULL, NULL);
@@ -689,15 +690,15 @@ VikLoadType_t a_file_load(LayerAggregate * top, Viewport * viewport, const char 
 		filename = filename + 7;
 		fprintf(stderr, "DEBUG: Loading file %s from URI %s\n", filename, filename_or_uri);
 	}
-	FILE *f = xfopen(filename);
+	FILE * f = xfopen(filename);
 
-	if (! f) {
+	if (!f) {
 		return LOAD_TYPE_READ_FAILURE;
 	}
 
 	VikLoadType_t load_answer = LOAD_TYPE_OTHER_SUCCESS;
 
-	char *dirpath = g_path_get_dirname(filename);
+	char * dirpath = g_path_get_dirname(filename);
 	// Attempt loading the primary file type first - our internal .vik file:
 	if (check_magic(f, VIK_MAGIC, VIK_MAGIC_LEN)) {
 		if (file_read(top, f, dirpath, viewport)) {
@@ -755,9 +756,9 @@ VikLoadType_t a_file_load(LayerAggregate * top, Viewport * viewport, const char 
 	return load_answer;
 }
 
-bool a_file_save(LayerAggregate * top, Viewport * viewport, const char *filename)
+bool a_file_save(LayerAggregate * top, Viewport * viewport, char const * filename)
 {
-	FILE *f;
+	FILE * f;
 
 	if (strncmp(filename, "file://", 7) == 0) {
 		filename = filename + 7;
@@ -765,13 +766,13 @@ bool a_file_save(LayerAggregate * top, Viewport * viewport, const char *filename
 
 	f = g_fopen(filename, "w");
 
-	if (! f) {
+	if (!f) {
 		return false;
 	}
 
 	// Enable relative paths in .vik files to work
-	char *cwd = g_get_current_dir();
-	char *dir = g_path_get_dirname(filename);
+	char * cwd = g_get_current_dir();
+	char * dir = g_path_get_dirname(filename);
 	if (dir) {
 		if (g_chdir(dir)) {
 			fprintf(stderr, "WARNING: Could not change directory to %s\n", dir);
@@ -799,16 +800,16 @@ bool a_file_save(LayerAggregate * top, Viewport * viewport, const char *filename
 /* example:
      bool is_gpx = a_file_check_ext ("a/b/c.gpx", ".gpx");
 */
-bool a_file_check_ext(const char *filename, const char *fileext)
+bool a_file_check_ext(char const * filename, char const * fileext)
 {
 	g_return_val_if_fail(filename != NULL, false);
 	g_return_val_if_fail(fileext && fileext[0]=='.', false);
-	const char *basename = a_file_basename(filename);
+	char const * basename = a_file_basename(filename);
 	if (!basename) {
 		return false;
 	}
 
-	const char * dot = strrchr(basename, '.');
+	char const * dot = strrchr(basename, '.');
 	if (dot && !strcmp(dot, fileext)) {
 		return true;
 	}
@@ -827,10 +828,10 @@ bool a_file_check_ext(const char *filename, const char *fileext)
  * A general export command to convert from Viking TRW layer data to an external supported format.
  * The write_hidden option is provided mainly to be able to transfer selected items when uploading to a GPS
  */
-bool a_file_export(LayerTRW * trw, const char *filename, VikFileType_t file_type, Track * trk, bool write_hidden)
+bool a_file_export(LayerTRW * trw, char const * filename, VikFileType_t file_type, Track * trk, bool write_hidden)
 {
 	GpxWritingOptions options = { false, false, write_hidden, false };
-	FILE *f = g_fopen(filename, "w");
+	FILE * f = g_fopen(filename, "w");
 	if (f) {
 		bool result = true;
 
@@ -886,14 +887,14 @@ bool a_file_export(LayerTRW * trw, const char *filename, VikFileType_t file_type
 /**
  * a_file_export_babel:
  */
-bool a_file_export_babel(LayerTRW * trw, const char *filename, const char *format,
-			  bool tracks, bool routes, bool waypoints)
+bool a_file_export_babel(LayerTRW * trw, char const * filename, char const * format,
+			 bool tracks, bool routes, bool waypoints)
 {
-	char *args = g_strdup_printf("%s %s %s -o %s",
-				     tracks ? "-t" : "",
-				     routes ? "-r" : "",
-				     waypoints ? "-w" : "",
-				     format);
+	char * args = g_strdup_printf("%s %s %s -o %s",
+				      tracks ? "-t" : "",
+				      routes ? "-r" : "",
+				      waypoints ? "-w" : "",
+				      format);
 	bool result = a_babel_convert_to(trw, NULL, args, filename, NULL, NULL);
 	free(args);
 	return result;
@@ -902,7 +903,7 @@ bool a_file_export_babel(LayerTRW * trw, const char *filename, const char *forma
 /**
  * Just a wrapper around realpath, which itself is platform dependent
  */
-char *file_realpath(const char *path, char *real)
+char * file_realpath(char const * path, char * real)
 {
 	return realpath(path, real);
 }
@@ -913,7 +914,7 @@ char *file_realpath(const char *path, char *real)
 /**
  * Always return the canonical filename in a newly allocated string
  */
-char *file_realpath_dup(const char *path)
+char * file_realpath_dup(char const * path)
 {
 	char real[MAXPATHLEN];
 
@@ -950,7 +951,7 @@ char *file_realpath_dup(const char *path)
 // For example, if the current directory is C:\foo\bar and the filename C:\foo\whee\text.txt is given,
 // GetRelativeFilename will return ..\whee\text.txt.
 
-const char *file_GetRelativeFilename(char *currentDirectory, char *absoluteFilename)
+char const * file_GetRelativeFilename(char * currentDirectory, char * absoluteFilename)
 {
 	int afMarker = 0, rfMarker = 0;
 	int cdLen = 0, afLen = 0;

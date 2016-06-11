@@ -22,7 +22,6 @@
 #define _VIKING_WEBTOOL_CENTER_H
 
 #include <glib.h>
-#include <stdbool.h>
 #include <stdint.h>
 
 
@@ -46,20 +45,20 @@ typedef struct _VikWebtoolCenterClass VikWebtoolCenterClass;
 
 struct _VikWebtoolCenterClass
 {
-  VikWebtoolClass object_class;
-  uint8_t (* mpp_to_zoom) (VikWebtool *self, double mpp);
+	VikWebtoolClass object_class;
+	uint8_t (* mpp_to_zoom) (VikWebtool * self, double mpp);
 };
 
-GType vik_webtool_center_get_type ();
+GType vik_webtool_center_get_type();
 
 struct _VikWebtoolCenter {
-  VikWebtool obj;
+	VikWebtool obj;
 };
 
-uint8_t vik_webtool_center_mpp_to_zoom (VikWebtool *self, double mpp);
+uint8_t vik_webtool_center_mpp_to_zoom(VikWebtool * self, double mpp);
 
-VikWebtoolCenter* vik_webtool_center_new ( );
-VikWebtoolCenter* vik_webtool_center_new_with_members ( const char *label, const char *url );
+VikWebtoolCenter * vik_webtool_center_new();
+VikWebtoolCenter * vik_webtool_center_new_with_members(char const * label, char const * url);
 
 #ifdef __cplusplus
 }

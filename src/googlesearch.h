@@ -48,16 +48,16 @@ typedef struct _GoogleGotoToolClass GoogleGotoToolClass;
 
 struct _GoogleGotoToolClass
 {
-  VikGotoToolClass object_class;
+	VikGotoToolClass object_class;
 };
 
-GType google_goto_tool_get_type ();
+GType google_goto_tool_get_type();
 
 struct _GoogleGotoTool {
-  VikGotoTool obj;
+	VikGotoTool obj;
 };
 
-GoogleGotoTool *google_goto_tool_new ();
+GoogleGotoTool * google_goto_tool_new();
 
 #ifdef __cplusplus
 }

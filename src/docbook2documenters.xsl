@@ -24,7 +24,7 @@
 
   <xsl:template match="/">
 <xsl:text>/* Generated file. */
-const gchar *DOCUMENTERS[] = {\
+const char *DOCUMENTERS[] = {\
 </xsl:text>
     <xsl:for-each select="//author">
       <xsl:text>"</xsl:text>

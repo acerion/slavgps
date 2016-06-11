@@ -24,7 +24,6 @@
 
 #include <glib.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
-#include <stdbool.h>
 #include <stdint.h>
 
 #include "mapcoord.h"
@@ -42,10 +41,10 @@ typedef struct {
 } mapcache_extra_t;
 
 void a_mapcache_init();
-void a_mapcache_add(GdkPixbuf *pixbuf, mapcache_extra_t extra, TileInfo * tile_info, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const char *name);
-GdkPixbuf * a_mapcache_get(TileInfo * tile_info, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const char *name);
-mapcache_extra_t a_mapcache_get_extra(TileInfo * tile_info, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const char* name);
-void a_mapcache_remove_all_shrinkfactors(TileInfo * tile_info, MapTypeID map_type, const char* name);
+void a_mapcache_add(GdkPixbuf * pixbuf, mapcache_extra_t extra, TileInfo * tile_info, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, char const * name);
+GdkPixbuf * a_mapcache_get(TileInfo * tile_info, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, char const * name);
+mapcache_extra_t a_mapcache_get_extra(TileInfo * tile_info, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, char const * name);
+void a_mapcache_remove_all_shrinkfactors(TileInfo * tile_info, MapTypeID map_type, char const * name);
 void a_mapcache_flush();
 void a_mapcache_flush_type(MapTypeID map_type);
 void a_mapcache_uninit();

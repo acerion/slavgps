@@ -1,4 +1,3 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
@@ -24,51 +23,51 @@
 
 #include <stdlib.h>
 
-#include "viking.h"
+//#include "viking.h"
 #include "acquire.h"
 #include "geonamessearch.h"
 
-static bool datasource_wikipedia_process(LayerTRW * trw, ProcessOptions *po, BabelStatusFunc status_cb, acq_dialog_widgets_t *adw );
+static bool datasource_wikipedia_process(LayerTRW * trw, ProcessOptions * po, BabelStatusFunc status_cb, acq_dialog_widgets_t * adw);
 
 VikDataSourceInterface vik_datasource_wikipedia_interface = {
-  N_("Create Waypoints from Wikipedia Articles"),
-  N_("Wikipedia Waypoints"),
-  VIK_DATASOURCE_AUTO_LAYER_MANAGEMENT,
-  VIK_DATASOURCE_INPUTTYPE_NONE,
-  false,
-  false, // Not even using the dialog
-  false, // Own method for getting data - does not fit encapsulation with current thread logic
-  (VikDataSourceInitFunc)               NULL,
-  (VikDataSourceCheckExistenceFunc)	    NULL,
-  (VikDataSourceAddSetupWidgetsFunc)    NULL,
-  (VikDataSourceGetProcessOptionsFunc)  NULL,
-  (VikDataSourceProcessFunc)            datasource_wikipedia_process,
-  (VikDataSourceProgressFunc)           NULL,
-  (VikDataSourceAddProgressWidgetsFunc) NULL,
-  (VikDataSourceCleanupFunc)            NULL,
-  (VikDataSourceOffFunc)                NULL,
+	N_("Create Waypoints from Wikipedia Articles"),
+	N_("Wikipedia Waypoints"),
+	VIK_DATASOURCE_AUTO_LAYER_MANAGEMENT,
+	VIK_DATASOURCE_INPUTTYPE_NONE,
+	false,
+	false, // Not even using the dialog
+	false, // Own method for getting data - does not fit encapsulation with current thread logic
+	(VikDataSourceInitFunc)               NULL,
+	(VikDataSourceCheckExistenceFunc)    NULL,
+	(VikDataSourceAddSetupWidgetsFunc)    NULL,
+	(VikDataSourceGetProcessOptionsFunc)  NULL,
+	(VikDataSourceProcessFunc)            datasource_wikipedia_process,
+	(VikDataSourceProgressFunc)           NULL,
+	(VikDataSourceAddProgressWidgetsFunc) NULL,
+	(VikDataSourceCleanupFunc)            NULL,
+	(VikDataSourceOffFunc)                NULL,
 
-  NULL,
-  0,
-  NULL,
-  NULL,
-  0
+	NULL,
+	0,
+	NULL,
+	NULL,
+	0
 };
 
 /**
  * Process selected files and try to generate waypoints storing them in the given vtl
  */
-static bool datasource_wikipedia_process(LayerTRW * trw, ProcessOptions *po, BabelStatusFunc status_cb, acq_dialog_widgets_t *adw )
+static bool datasource_wikipedia_process(LayerTRW * trw, ProcessOptions * po, BabelStatusFunc status_cb, acq_dialog_widgets_t * adw)
 {
 	struct LatLon maxmin[2] = { {0.0,0.0}, {0.0,0.0} };
 
 	// Note the order is max part first then min part - thus reverse order of use in min_max function:
-	adw->viewport->get_min_max_lat_lon(&maxmin[1].lat, &maxmin[0].lat, &maxmin[1].lon, &maxmin[0].lon );
+	adw->viewport->get_min_max_lat_lon(&maxmin[1].lat, &maxmin[0].lat, &maxmin[1].lon, &maxmin[0].lon);
 
 	if (trw) {
-		a_geonames_wikipedia_box ( adw->vw, trw, maxmin );
+		a_geonames_wikipedia_box(adw->vw, trw, maxmin);
 		return true;
-	}
-	else
+	} else {
 		return false;
+	}
 }

@@ -44,17 +44,17 @@
 
 #include "expedia.h"
 
-static bool expedia_coord_to_tile(const VikCoord *src, double xzoom, double yzoom, TileInfo *dest );
-static void expedia_tile_to_center_coord ( TileInfo *src, VikCoord *dest );
-static DownloadResult_t expedia_download ( TileInfo *src, const char *dest_fn, void *handle );
-static void * expedia_handle_init ( );
-static void expedia_handle_cleanup ( void *handle );
+static bool expedia_coord_to_tile(const VikCoord * src, double xzoom, double yzoom, TileInfo * dest);
+static void expedia_tile_to_center_coord(TileInfo * src, VikCoord * dest);
+static DownloadResult_t expedia_download(TileInfo * src, char const * dest_fn, void * handle);
+static void * expedia_handle_init();
+static void expedia_handle_cleanup(void * handle);
 
 static DownloadFileOptions expedia_options = { false, false, NULL, 2, a_check_map_file, NULL };
 
 void expedia_init() {
-  VikMapsLayer_MapType map_type = { MAP_ID_EXPEDIA, 0, 0, VIK_VIEWPORT_DRAWMODE_EXPEDIA, expedia_coord_to_tile, expedia_tile_to_center_coord, expedia_download, expedia_handle_init, expedia_handle_cleanup };
-  maps_layer_register_type(_("Expedia Street Maps"), MAP_ID_EXPEDIA, &map_type);
+	VikMapsLayer_MapType map_type = { MAP_ID_EXPEDIA, 0, 0, VIK_VIEWPORT_DRAWMODE_EXPEDIA, expedia_coord_to_tile, expedia_tile_to_center_coord, expedia_download, expedia_handle_init, expedia_handle_cleanup };
+	maps_layer_register_type(_("Expedia Street Maps"), MAP_ID_EXPEDIA, &map_type);
 }
 
 #define EXPEDIA_SITE "expedia.com"
@@ -75,135 +75,139 @@ static const unsigned int expedia_altis[]              = { 1, 2, 4, 8, 16, 32, 6
 static const double expedia_altis_degree_freq[]  = { 120, 60, 30, 15, 8, 4, 2, 1, 1, 1 };
 static const unsigned int expedia_altis_count = sizeof(expedia_altis) / sizeof(expedia_altis[0]);
 
-double expedia_altis_freq ( int alti )
+double expedia_altis_freq(int alti)
 {
-  static int i;
-  for ( i = 0; i < expedia_altis_count; i++ )
-    if ( expedia_altis[i] == alti )
-      return expedia_altis_degree_freq [ i ];
+	static int i;
+	for (i = 0; i < expedia_altis_count; i++) {
+		if (expedia_altis[i] == alti) {
+			return expedia_altis_degree_freq[i];
+		}
+	}
 
-  fprintf(stderr, _("ERROR: Invalid expedia altitude\n") );
-  return 0;
+	fprintf(stderr, _("ERROR: Invalid expedia altitude\n"));
+	return 0;
 }
 
 /* returns -1 if none of the above. */
-int expedia_zoom_to_alti ( double zoom )
+int expedia_zoom_to_alti(double zoom)
 {
-  unsigned int i;
-  for ( i = 0; i < expedia_altis_count; i++ )
-    if ( fabs(expedia_altis[i] - zoom) / zoom < MPP_MARGIN_OF_ERROR )
-      return expedia_altis[i];
-  return -1;
+	unsigned int i;
+	for (i = 0; i < expedia_altis_count; i++) {
+		if (fabs(expedia_altis[i] - zoom) / zoom < MPP_MARGIN_OF_ERROR) {
+			return expedia_altis[i];
+		}
+	}
+	return -1;
 }
 
 /*
-int expedia_pseudo_zone ( int alti, int x, int y )
+int expedia_pseudo_zone (int alti, int x, int y)
 {
   return (int) (x/expedia_altis_freq(alti)*180) + (int) (y/expedia_altis_freq(alti)*90);
 }
 */
 
-void expedia_snip ( const char *file )
+void expedia_snip(char const * file)
 {
-  /* Load the pixbuf */
-  GError *gx = NULL;
-  GdkPixbuf *old, *cropped;
-  int width, height;
+	/* Load the pixbuf */
+	GError *gx = NULL;
+	GdkPixbuf *old, *cropped;
+	int width, height;
 
-  old = gdk_pixbuf_new_from_file ( file, &gx );
-  if (gx)
-  {
-    fprintf(stderr, _("WARNING: Couldn't open EXPEDIA image file (right after successful download! Please report and delete image file!): %s\n"), gx->message );
-    g_error_free ( gx );
-    return;
-  }
+	old = gdk_pixbuf_new_from_file(file, &gx);
+	if (gx) {
+		fprintf(stderr, _("WARNING: Couldn't open EXPEDIA image file (right after successful download! Please report and delete image file!): %s\n"), gx->message);
+		g_error_free (gx);
+		return;
+	}
 
-  width = gdk_pixbuf_get_width ( old );
-  height = gdk_pixbuf_get_height ( old );
+	width = gdk_pixbuf_get_width(old);
+	height = gdk_pixbuf_get_height(old);
 
-  cropped = gdk_pixbuf_new_subpixbuf ( old, WIDTH_BUFFER, HEIGHT_BUFFER,
-                              width - 2*WIDTH_BUFFER, height - 2*HEIGHT_BUFFER );
+	cropped = gdk_pixbuf_new_subpixbuf(old, WIDTH_BUFFER, HEIGHT_BUFFER,
+					   width - 2*WIDTH_BUFFER, height - 2*HEIGHT_BUFFER);
 
-  gdk_pixbuf_save ( cropped, file, "png", &gx, NULL );
-  if ( gx ) {
-    fprintf(stderr, _("WARNING: Couldn't save EXPEDIA image file (right after successful download! Please report and delete image file!): %s\n"), gx->message );
-    g_error_free ( gx );
-  }
+	gdk_pixbuf_save(cropped, file, "png", &gx, NULL);
+	if (gx) {
+		fprintf(stderr, _("WARNING: Couldn't save EXPEDIA image file (right after successful download! Please report and delete image file!): %s\n"), gx->message);
+		g_error_free (gx);
+	}
 
-  g_object_unref ( cropped );
-  g_object_unref ( old );
+	g_object_unref(cropped);
+	g_object_unref(old);
 }
 
 /* if degree_freeq = 60 -> nearest minute (in middle) */
 /* everything starts at -90,-180 -> 0,0. then increments by (1/degree_freq) */
-static bool expedia_coord_to_tile(const VikCoord *src, double xzoom, double yzoom, TileInfo *dest )
+static bool expedia_coord_to_tile(const VikCoord * src, double xzoom, double yzoom, TileInfo * dest)
 {
-  int alti;
+	int alti;
 
-  assert ( src->mode == VIK_COORD_LATLON );
+	assert (src->mode == VIK_COORD_LATLON);
 
-  if ( xzoom != yzoom )
-    return false;
+	if (xzoom != yzoom) {
+		return false;
+	}
 
-  alti = expedia_zoom_to_alti ( xzoom );
-  if ( alti != -1 )
-  {
-    dest->scale = alti;
-    dest->x = (int) (((src->east_west+180) * expedia_altis_freq(alti))+0.5);
-    dest->y = (int) (((src->north_south+90) * expedia_altis_freq(alti))+0.5);
-    /* + 0.5 to round off and not floor */
+	alti = expedia_zoom_to_alti(xzoom);
+	if (alti != -1) {
+		dest->scale = alti;
+		dest->x = (int) (((src->east_west+180) * expedia_altis_freq(alti))+0.5);
+		dest->y = (int) (((src->north_south+90) * expedia_altis_freq(alti))+0.5);
+		/* + 0.5 to round off and not floor */
 
-    /* just to space out tiles on the filesystem */
-    dest->z = 0;
-    return true;
-  }
-  return false;
+		/* just to space out tiles on the filesystem */
+		dest->z = 0;
+		return true;
+	}
+	return false;
 }
 
-void expedia_xy_to_latlon_middle ( int alti, int x, int y, struct LatLon *ll )
+void expedia_xy_to_latlon_middle(int alti, int x, int y, struct LatLon * ll)
 {
-  ll->lon = (((double)x) / expedia_altis_freq(alti)) - 180;
-  ll->lat = (((double)y) / expedia_altis_freq(alti)) - 90;
+	ll->lon = (((double)x) / expedia_altis_freq(alti)) - 180;
+	ll->lat = (((double)y) / expedia_altis_freq(alti)) - 90;
 }
 
-static void expedia_tile_to_center_coord ( TileInfo *src, VikCoord *dest )
+static void expedia_tile_to_center_coord(TileInfo * src, VikCoord * dest)
 {
-  dest->mode = VIK_COORD_LATLON;
-  dest->east_west = (((double)src->x) / expedia_altis_freq(src->scale)) - 180;
-  dest->north_south = (((double)src->y) / expedia_altis_freq(src->scale)) - 90;
+	dest->mode = VIK_COORD_LATLON;
+	dest->east_west = (((double)src->x) / expedia_altis_freq(src->scale)) - 180;
+	dest->north_south = (((double)src->y) / expedia_altis_freq(src->scale)) - 90;
 }
 
-static DownloadResult_t expedia_download ( TileInfo *src, const char *dest_fn, void *handle )
+static DownloadResult_t expedia_download(TileInfo * src, const char * dest_fn, void * handle)
 {
-  int height, width;
-  struct LatLon ll;
-  char *uri;
+	int height, width;
+	struct LatLon ll;
+	char * uri;
 
-  expedia_xy_to_latlon_middle ( src->scale, src->x, src->y, &ll );
+	expedia_xy_to_latlon_middle(src->scale, src->x, src->y, &ll);
 
-  height = HEIGHT_OF_LAT_DEGREE / expedia_altis_freq(src->scale) / (src->scale);
-  width = height * cos ( ll.lat * DEGREES_TO_RADS );
+	height = HEIGHT_OF_LAT_DEGREE / expedia_altis_freq(src->scale) / (src->scale);
+	width = height * cos(ll.lat * DEGREES_TO_RADS);
 
-  height += 2*REAL_HEIGHT_BUFFER;
-  width  += 2*REAL_WIDTH_BUFFER;
+	height += 2 * REAL_HEIGHT_BUFFER;
+	width  += 2 * REAL_WIDTH_BUFFER;
 
-  uri = g_strdup_printf ( "/pub/agent.dll?qscr=mrdt&ID=3XNsF.&CenP=%lf,%lf&Lang=%s&Alti=%d&Size=%d,%d&Offs=0.000000,0.000000&BCheck&tpid=1",
-               ll.lat, ll.lon, (ll.lon > -30) ? "EUR0809" : "USA0409", src->scale, width, height );
+	uri = g_strdup_printf("/pub/agent.dll?qscr=mrdt&ID=3XNsF.&CenP=%lf,%lf&Lang=%s&Alti=%d&Size=%d,%d&Offs=0.000000,0.000000&BCheck&tpid=1",
+			      ll.lat, ll.lon, (ll.lon > -30) ? "EUR0809" : "USA0409", src->scale, width, height);
 
-  DownloadResult_t res = a_http_download_get_url ( EXPEDIA_SITE, uri, dest_fn, &expedia_options, NULL );
-  if (res == DOWNLOAD_SUCCESS)
-  	expedia_snip ( dest_fn );
-  free(uri);
-  return(res);
+	DownloadResult_t res = a_http_download_get_url (EXPEDIA_SITE, uri, dest_fn, &expedia_options, NULL);
+	if (res == DOWNLOAD_SUCCESS) {
+		expedia_snip (dest_fn);
+	}
+	free(uri);
+	return(res);
 }
 
-static void * expedia_handle_init ( )
+static void * expedia_handle_init()
 {
-  // Not much going on here
-  return 0;
+	// Not much going on here
+	return 0;
 }
 
-static void expedia_handle_cleanup ( void *handle )
+static void expedia_handle_cleanup(void * handle)
 {
-  // Even less here!
+	// Even less here!
 }

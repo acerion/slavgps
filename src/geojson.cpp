@@ -166,7 +166,7 @@ char * a_geojson_import_to_gpx(const char * filename)
 	} else {
 		// Probably should use GIOChannels...
 		char line[512];
-		FILE *fout = fdopen(mystdout, "r");
+		FILE * fout = fdopen(mystdout, "r");
 		setvbuf(fout, NULL, _IONBF, 0);
 
 		while (fgets(line, sizeof(line), fout)) {

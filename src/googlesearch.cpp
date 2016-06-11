@@ -46,118 +46,123 @@
 
 static DownloadFileOptions googlesearch_options = { false, false, (char *) "http://maps.google.com/", 2, a_check_map_file, NULL, NULL };
 
-static void google_goto_tool_finalize ( GObject *gob );
+static void google_goto_tool_finalize(GObject * gob);
 
-static char *google_goto_tool_get_url_format ( VikGotoTool *self );
-static DownloadFileOptions *google_goto_tool_get_download_options ( VikGotoTool *self );
-static bool google_goto_tool_parse_file_for_latlon(VikGotoTool *self, char *filename, struct LatLon *ll);
+static char *google_goto_tool_get_url_format(VikGotoTool * self);
+static DownloadFileOptions *google_goto_tool_get_download_options(VikGotoTool * self);
+static bool google_goto_tool_parse_file_for_latlon(VikGotoTool * self, char * filename, struct LatLon * ll);
 
 G_DEFINE_TYPE (GoogleGotoTool, google_goto_tool, VIK_GOTO_TOOL_TYPE)
 
-static void google_goto_tool_class_init ( GoogleGotoToolClass *klass )
+static void google_goto_tool_class_init(GoogleGotoToolClass *klass)
 {
-  GObjectClass *object_class;
-  VikGotoToolClass *parent_class;
+	GObjectClass *object_class;
+	VikGotoToolClass *parent_class;
 
-  object_class = G_OBJECT_CLASS (klass);
+	object_class = G_OBJECT_CLASS (klass);
 
-  object_class->finalize = google_goto_tool_finalize;
+	object_class->finalize = google_goto_tool_finalize;
 
-  parent_class = VIK_GOTO_TOOL_CLASS (klass);
+	parent_class = VIK_GOTO_TOOL_CLASS (klass);
 
-  parent_class->get_url_format = google_goto_tool_get_url_format;
-  parent_class->get_download_options = google_goto_tool_get_download_options;
-  parent_class->parse_file_for_latlon = google_goto_tool_parse_file_for_latlon;
+	parent_class->get_url_format = google_goto_tool_get_url_format;
+	parent_class->get_download_options = google_goto_tool_get_download_options;
+	parent_class->parse_file_for_latlon = google_goto_tool_parse_file_for_latlon;
 }
 
-GoogleGotoTool *google_goto_tool_new ()
+GoogleGotoTool *google_goto_tool_new()
 {
-  return GOOGLE_GOTO_TOOL ( g_object_new ( GOOGLE_GOTO_TOOL_TYPE, "label", "Google", NULL ) );
+	return GOOGLE_GOTO_TOOL (g_object_new(GOOGLE_GOTO_TOOL_TYPE, "label", "Google", NULL));
 }
 
-static void google_goto_tool_init ( GoogleGotoTool *vlp )
+static void google_goto_tool_init(GoogleGotoTool * vlp)
 {
 }
 
-static void google_goto_tool_finalize ( GObject *gob )
+static void google_goto_tool_finalize(GObject * gob)
 {
-  G_OBJECT_GET_CLASS(gob)->finalize(gob);
+	G_OBJECT_GET_CLASS(gob)->finalize(gob);
 }
 
-static bool google_goto_tool_parse_file_for_latlon(VikGotoTool *self, char *file_name, struct LatLon *ll)
+static bool google_goto_tool_parse_file_for_latlon(VikGotoTool * self, char * file_name, struct LatLon * ll)
 {
-  char *text, *pat;
-  GMappedFile *mf;
-  size_t len;
-  bool found = true;
-  char lat_buf[32], lon_buf[32];
-  char *s;
+	char *text, *pat;
+	GMappedFile *mf;
+	size_t len;
+	bool found = true;
+	char lat_buf[32], lon_buf[32];
+	char *s;
 
-  lat_buf[0] = lon_buf[0] = '\0';
+	lat_buf[0] = lon_buf[0] = '\0';
 
-  if ((mf = g_mapped_file_new(file_name, false, NULL)) == NULL) {
-    fprintf(stderr, _("CRITICAL: couldn't map temp file\n"));
-    return false;
-  }
-  len = g_mapped_file_get_length(mf);
-  text = g_mapped_file_get_contents(mf);
+	if ((mf = g_mapped_file_new(file_name, false, NULL)) == NULL) {
+		fprintf(stderr, _("CRITICAL: couldn't map temp file\n"));
+		return false;
+	}
+	len = g_mapped_file_get_length(mf);
+	text = g_mapped_file_get_contents(mf);
 
-  if (g_strstr_len(text, len, GOOGLE_GOTO_NOT_FOUND) != NULL) {
-    found = false;
-    goto done;
-  }
+	if (g_strstr_len(text, len, GOOGLE_GOTO_NOT_FOUND) != NULL) {
+		found = false;
+		goto done;
+	}
 
-  if ((pat = g_strstr_len(text, len, GOOGLE_GOTO_PATTERN_1)) == NULL) {
-    found = false;
-    goto done;
-  }
-  pat += strlen(GOOGLE_GOTO_PATTERN_1);
-  s = lat_buf;
-  if (*pat == '-')
-    *s++ = *pat++;
-  while ((s < (lat_buf + sizeof(lat_buf))) && (pat < (text + len)) &&
-          (g_ascii_isdigit(*pat) || (*pat == '.')))
-    *s++ = *pat++;
-  *s = '\0';
-  if ((pat >= (text + len)) || (lat_buf[0] == '\0')) {
-    found = false;
-    goto done;
-  }
+	if ((pat = g_strstr_len(text, len, GOOGLE_GOTO_PATTERN_1)) == NULL) {
+		found = false;
+		goto done;
+	}
+	pat += strlen(GOOGLE_GOTO_PATTERN_1);
+	s = lat_buf;
+	if (*pat == '-') {
+		*s++ = *pat++;
+	}
+	while ((s < (lat_buf + sizeof(lat_buf))) && (pat < (text + len)) &&
+	       (g_ascii_isdigit(*pat) || (*pat == '.'))) {
+		*s++ = *pat++;
+	}
 
-  if (strncmp(pat, GOOGLE_GOTO_PATTERN_2, strlen(GOOGLE_GOTO_PATTERN_2))) {
-      found = false;
-      goto done;
-  }
+	*s = '\0';
+	if ((pat >= (text + len)) || (lat_buf[0] == '\0')) {
+		found = false;
+		goto done;
+	}
 
-  pat += strlen(GOOGLE_GOTO_PATTERN_2);
-  s = lon_buf;
+	if (strncmp(pat, GOOGLE_GOTO_PATTERN_2, strlen(GOOGLE_GOTO_PATTERN_2))) {
+		found = false;
+		goto done;
+	}
 
-  if (*pat == '-')
-    *s++ = *pat++;
-  while ((s < (lon_buf + sizeof(lon_buf))) && (pat < (text + len)) &&
-          (g_ascii_isdigit(*pat) || (*pat == '.')))
-    *s++ = *pat++;
-  *s = '\0';
-  if ((pat >= (text + len)) || (lon_buf[0] == '\0')) {
-    found = false;
-    goto done;
-  }
+	pat += strlen(GOOGLE_GOTO_PATTERN_2);
+	s = lon_buf;
 
-  ll->lat = g_ascii_strtod(lat_buf, NULL);
-  ll->lon = g_ascii_strtod(lon_buf, NULL);
+	if (*pat == '-') {
+		*s++ = *pat++;
+	}
 
-done:
-  g_mapped_file_unref(mf);
-  return (found);
+	while ((s < (lon_buf + sizeof(lon_buf))) && (pat < (text + len)) &&
+	       (g_ascii_isdigit(*pat) || (*pat == '.')))
+		*s++ = *pat++;
+	*s = '\0';
+	if ((pat >= (text + len)) || (lon_buf[0] == '\0')) {
+		found = false;
+		goto done;
+	}
+
+	ll->lat = g_ascii_strtod(lat_buf, NULL);
+	ll->lon = g_ascii_strtod(lon_buf, NULL);
+
+ done:
+	g_mapped_file_unref(mf);
+	return (found);
 
 }
 
-static char *google_goto_tool_get_url_format ( VikGotoTool *self )
+static char * google_goto_tool_get_url_format(VikGotoTool * self)
 {
-  return (char *) GOOGLE_GOTO_URL_FMT;
+	return (char *) GOOGLE_GOTO_URL_FMT;
 }
 
-DownloadFileOptions *google_goto_tool_get_download_options ( VikGotoTool *self )
+DownloadFileOptions * google_goto_tool_get_download_options(VikGotoTool * self)
 {
-  return &googlesearch_options;
+	return &googlesearch_options;
 }

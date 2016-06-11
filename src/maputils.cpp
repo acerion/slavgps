@@ -1,4 +1,3 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
@@ -30,12 +29,12 @@
 // No map provider is going to have tiles at the highest zoom in level - but we can interpolate to that.
 
 static const double scale_mpps[] = { VIK_GZ(0), VIK_GZ(1), VIK_GZ(2), VIK_GZ(3), VIK_GZ(4), VIK_GZ(5),
-                                      VIK_GZ(6), VIK_GZ(7), VIK_GZ(8), VIK_GZ(9), VIK_GZ(10), VIK_GZ(11),
-                                      VIK_GZ(12), VIK_GZ(13), VIK_GZ(14), VIK_GZ(15), VIK_GZ(16), VIK_GZ(17) };
+				     VIK_GZ(6), VIK_GZ(7), VIK_GZ(8), VIK_GZ(9), VIK_GZ(10), VIK_GZ(11),
+				     VIK_GZ(12), VIK_GZ(13), VIK_GZ(14), VIK_GZ(15), VIK_GZ(16), VIK_GZ(17) };
 static const int num_scales = (sizeof(scale_mpps) / sizeof(scale_mpps[0]));
 
 static const double scale_neg_mpps[] = { 1.0/VIK_GZ(0), 1.0/VIK_GZ(1), 1.0/VIK_GZ(2),
-                                          1.0/VIK_GZ(3), 1.0/VIK_GZ(4), 1.0/VIK_GZ(5) };
+					 1.0/VIK_GZ(3), 1.0/VIK_GZ(4), 1.0/VIK_GZ(5) };
 static const int num_scales_neg = (sizeof(scale_neg_mpps) / sizeof(scale_neg_mpps[0]));
 
 #define ERROR_MARGIN 0.01
@@ -45,15 +44,15 @@ static const int num_scales_neg = (sizeof(scale_neg_mpps) / sizeof(scale_neg_mpp
  *
  * Returns: the zoom scale value which may be negative.
  */
-int map_utils_mpp_to_scale ( double mpp ) {
+int map_utils_mpp_to_scale(double mpp) {
 	int i;
-	for ( i = 0; i < num_scales; i++ ) {
-		if ( ABS(scale_mpps[i] - mpp) < ERROR_MARGIN ) {
+	for (i = 0; i < num_scales; i++) {
+		if (ABS(scale_mpps[i] - mpp) < ERROR_MARGIN) {
 			return i;
 		}
 	}
-	for ( i = 0; i < num_scales_neg; i++ ) {
-		if ( ABS(scale_neg_mpps[i] - mpp) < 0.000001 ) {
+	for (i = 0; i < num_scales_neg; i++) {
+		if (ABS(scale_neg_mpps[i] - mpp) < 0.000001) {
 			return -i;
 		}
 	}
@@ -68,11 +67,12 @@ int map_utils_mpp_to_scale ( double mpp ) {
  * Returns: a Zoom Level
  *  See: http://wiki.openstreetmap.org/wiki/Zoom_levels
  */
-uint8_t map_utils_mpp_to_zoom_level ( double mpp )
+uint8_t map_utils_mpp_to_zoom_level(double mpp)
 {
-	int answer = 17 - map_utils_mpp_to_scale ( mpp );
-	if ( answer < 0 )
+	int answer = 17 - map_utils_mpp_to_scale(mpp);
+	if (answer < 0) {
 		answer = 17;
+	}
 	return answer;
 }
 
@@ -99,36 +99,40 @@ uint8_t map_utils_mpp_to_zoom_level ( double mpp )
  *
  * Returns: whether the conversion was performed
  */
-bool map_utils_vikcoord_to_iTMS ( const VikCoord *src, double xzoom, double yzoom, TileInfo *dest )
+bool map_utils_vikcoord_to_iTMS(const VikCoord * src, double xzoom, double yzoom, TileInfo * dest)
 {
-  if ( src->mode != VIK_COORD_LATLON )
-    return false;
+	if (src->mode != VIK_COORD_LATLON) {
+		return false;
+	}
 
-  if ( xzoom != yzoom )
-    return false;
+	if (xzoom != yzoom) {
+		return false;
+	}
 
-  dest->scale = map_utils_mpp_to_scale ( xzoom );
-  if ( dest->scale == 255 )
-    return false;
+	dest->scale = map_utils_mpp_to_scale (xzoom);
+	if (dest->scale == 255) {
+		return false;
+	}
 
-  dest->x = (src->east_west + 180) / 360 * VIK_GZ(17) / xzoom;
-  dest->y = (180 - MERCLAT(src->north_south)) / 360 * VIK_GZ(17) / xzoom;
-  dest->z = 0;
+	dest->x = (src->east_west + 180) / 360 * VIK_GZ(17) / xzoom;
+	dest->y = (180 - MERCLAT(src->north_south)) / 360 * VIK_GZ(17) / xzoom;
+	dest->z = 0;
 
-  return true;
+	return true;
 }
 
 // Internal convenience function
-static void _to_vikcoord_with_offset ( const TileInfo *src, VikCoord *dest, double offset )
+static void _to_vikcoord_with_offset(const TileInfo * src, VikCoord * dest, double offset)
 {
-  double socalled_mpp;
-  if (src->scale >= 0)
-    socalled_mpp = VIK_GZ(src->scale);
-  else
-    socalled_mpp = 1.0/VIK_GZ(-src->scale);
-  dest->mode = VIK_COORD_LATLON;
-  dest->east_west = ((src->x+offset) / VIK_GZ(17) * socalled_mpp * 360) - 180;
-  dest->north_south = DEMERCLAT(180 - ((src->y+offset) / VIK_GZ(17) * socalled_mpp * 360));
+	double socalled_mpp;
+	if (src->scale >= 0) {
+		socalled_mpp = VIK_GZ(src->scale);
+	} else {
+		socalled_mpp = 1.0/VIK_GZ(-src->scale);
+	}
+	dest->mode = VIK_COORD_LATLON;
+	dest->east_west = ((src->x+offset) / VIK_GZ(17) * socalled_mpp * 360) - 180;
+	dest->north_south = DEMERCLAT(180 - ((src->y+offset) / VIK_GZ(17) * socalled_mpp * 360));
 }
 
 /**
@@ -140,9 +144,9 @@ static void _to_vikcoord_with_offset ( const TileInfo *src, VikCoord *dest, doub
  *
  * Returns: whether the conversion was performed
  */
-void map_utils_iTMS_to_center_vikcoord ( const TileInfo *src, VikCoord *dest )
+void map_utils_iTMS_to_center_vikcoord(const TileInfo * src, VikCoord * dest)
 {
-	_to_vikcoord_with_offset ( src, dest, 0.5 );
+	_to_vikcoord_with_offset(src, dest, 0.5);
 }
 
 /**
@@ -155,7 +159,7 @@ void map_utils_iTMS_to_center_vikcoord ( const TileInfo *src, VikCoord *dest )
  *
  * Returns: whether the conversion was performed
  */
-void map_utils_iTMS_to_vikcoord ( const TileInfo *src, VikCoord *dest )
+void map_utils_iTMS_to_vikcoord(const TileInfo * src, VikCoord * dest)
 {
-	_to_vikcoord_with_offset ( src, dest, 0.0 );
+	_to_vikcoord_with_offset(src, dest, 0.0);
 }

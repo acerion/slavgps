@@ -22,8 +22,7 @@
 #ifndef _VIKING_VIKCOORD_H
 #define _VIKING_VIKCOORD_H
 
-#include <stdbool.h>
-#include <stdint.h>
+//#include <stdint.h>
 
 #include "coords.h"
 
@@ -37,34 +36,32 @@ enum VikCoordMode {
 	VIK_COORD_LATLON  = 1
 };
 
-//#define VIK_UTM(x) ((struct UTM *)(x))
-//#define VIK_LATLON(x) ((struct LatLon *)(x))
 
 typedef struct {
-  double north_south; /* northing or lat */
-  double east_west;   /* easting or lon */
-  char utm_zone;
-  char utm_letter;
+	double north_south; /* northing or lat */
+	double east_west;   /* easting or lon */
+	char utm_zone;
+	char utm_letter;
 
-  VikCoordMode mode;
+	VikCoordMode mode;
 } VikCoord;
 /* notice we can cast to either UTM or LatLon */
 /* possible more modes to come? xy? we'll leave that as an option */
 
-void vik_coord_convert(VikCoord *coord, VikCoordMode dest_mode);
-void vik_coord_copy_convert(const VikCoord *coord, VikCoordMode dest_mode, VikCoord *dest);
-double vik_coord_diff(const VikCoord *c1, const VikCoord *c2);
+void vik_coord_convert(VikCoord * coord, VikCoordMode dest_mode);
+void vik_coord_copy_convert(const VikCoord * coord, VikCoordMode dest_mode, VikCoord * dest);
+double vik_coord_diff(const VikCoord * c1, const VikCoord * c2);
 
-void vik_coord_load_from_latlon ( VikCoord *coord, VikCoordMode mode, const struct LatLon *ll );
-void vik_coord_load_from_utm ( VikCoord *coord, VikCoordMode mode, const struct UTM *utm );
+void vik_coord_load_from_latlon(VikCoord * coord, VikCoordMode mode, const struct LatLon * ll);
+void vik_coord_load_from_utm(VikCoord * coord, VikCoordMode mode, const struct UTM * utm);
 
-void vik_coord_to_latlon ( const VikCoord *coord, struct LatLon *dest );
-void vik_coord_to_utm ( const VikCoord *coord, struct UTM *dest );
+void vik_coord_to_latlon(const VikCoord * coord, struct LatLon * dest);
+void vik_coord_to_utm(const VikCoord * coord, struct UTM * dest);
 
-bool vik_coord_equals ( const VikCoord *coord1, const VikCoord *coord2 );
+bool vik_coord_equals(const VikCoord * coord1, const VikCoord * coord2);
 
-void vik_coord_set_area(const VikCoord *coord, const struct LatLon *wh, VikCoord *tl, VikCoord *br);
-bool vik_coord_inside(const VikCoord *coord, const VikCoord *tl, const VikCoord *br);
+void vik_coord_set_area(const VikCoord * coord, const struct LatLon * wh, VikCoord * tl, VikCoord * br);
+bool vik_coord_inside(const VikCoord * coord, const VikCoord * tl, const VikCoord * br);
 /* all coord operations MUST BE ABSTRACTED!!! */
 
 #ifdef __cplusplus

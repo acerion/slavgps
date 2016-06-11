@@ -10,7 +10,7 @@ noinst_LIBRARIES = libviking.a
 authors.h: $(top_srcdir)/AUTHORS
 	rm -f $@
 	echo "/* Generated file. */" >> $@
-	echo "const gchar *AUTHORS[] = {\\" >> $@
+	echo "const char *AUTHORS[] = {\\" >> $@
 	sed -e "s/ \*\*.*//" -e 's/^/"/' -e 's/$$/",\\/' -e '$$s/\\$$//' $< >> $@
 	echo "NULL};" >> $@
 
@@ -21,7 +21,7 @@ else
 documenters.h:
 	rm -f $@
 	echo "/* Generated file. */" >> $@
-	echo "const gchar *DOCUMENTERS[] = {\\" >> $@
+	echo "const char *DOCUMENTERS[] = {\\" >> $@
 	echo "NULL};" >> $@
 endif
 

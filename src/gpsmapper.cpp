@@ -18,7 +18,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-#include "viking.h"
+//#include "viking.h"
 #include "gpsmapper.h"
 
 #include <string.h>
@@ -31,7 +31,7 @@
    or:     Name RGN10 0x2f06
 */
 /* returns 0 if invalid/no rgn stuff, else returns len of */
-static unsigned int print_rgn_stuff(const char *nm, FILE *f)
+static unsigned int print_rgn_stuff(const char * nm, FILE * f)
 {
 	unsigned int len;
 	char *layers;
@@ -52,37 +52,37 @@ static unsigned int print_rgn_stuff(const char *nm, FILE *f)
 	/* Format may also be: Name RGN40 0x40 Layers=1  */
 	/* or: Name RGN10 0x2f06 Layers=1                */
 
-	if (len > 20 && strncasecmp(name+len-8,"LAYERS=",7) == 0) { /* Layers is added to the description */
-		layers=name+len-8;
-		*(name+len-9)=0;
+	if (len > 20 && strncasecmp(name + len - 8, "LAYERS=", 7) == 0) { /* Layers is added to the description */
+		layers=name + len - 8;
+		*(name + len - 9) = 0;
 		len = strlen(name);
 	} else {
-		layers=0;
+		layers = 0;
 	}
 	/* --------------------------------------------- */
 
 
 
-	if (len > 11 && strncasecmp(name+len-10,"RGN",3) == 0 &&
-	     strncasecmp(name+len-4,"0x",2) == 0) {
+	if (len > 11 && strncasecmp(name + len - 10, "RGN", 3) == 0 &&
+	     strncasecmp(name + len - 4, "0x", 2) == 0) {
 
-		fprintf(f, "[%.5s]\nType=%.4s\nLabel=", name+len-10, name+len-4);
+		fprintf(f, "[%.5s]\nType=%.4s\nLabel=", name + len - 10, name + len - 4);
 		fwrite(name, sizeof(char), len - 11, f);
 		fprintf(f, "\n");
 
 		/* added by oddgeir@oddgeirkvien.com, 2005.02.02 */
 		if (layers) {
-			fprintf(f, "%s\n",layers);
+			fprintf(f, "%s\n", layers);
 		}
 
 		free(name);
 
 		return len - 11;
 
-	} else if (len > 13 && strncasecmp(name+len-12,"RGN",3) == 0 &&
-		    strncasecmp(name+len-6,"0x",2) == 0) {
+	} else if (len > 13 && strncasecmp(name + len - 12, "RGN", 3) == 0 &&
+		    strncasecmp(name + len - 6, "0x", 2) == 0) {
 
-		fprintf(f, "[%.5s]\nType=%.6s\nLabel=", name+len-12, name+len-6);
+		fprintf(f, "[%.5s]\nType=%.6s\nLabel=", name + len - 12, name + len - 6);
 		fwrite(name, sizeof(char), len - 13, f);
 		fprintf(f, "\n");
 

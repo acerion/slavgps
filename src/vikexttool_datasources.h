@@ -23,8 +23,7 @@
 #define _VIKING_EXT_TOOL_DATASOURCES_H
 
 #include <gtk/gtk.h>
-#include <stdbool.h>
-#include <stdint.h>
+//#include <stdint.h>
 
 
 #include "vikwindow.h"
@@ -36,10 +35,10 @@ extern "C" {
 #endif
 
 
-void vik_ext_tool_datasources_register ( VikExtTool *tool );
-void vik_ext_tool_datasources_unregister_all ();
-void vik_ext_tool_datasources_add_menu_items_to_menu ( VikWindow *vw, GtkMenu *menu );
-void vik_ext_tool_datasources_add_menu_items ( VikWindow *vw, GtkUIManager *uim );
+void vik_ext_tool_datasources_register(VikExtTool * tool);
+void vik_ext_tool_datasources_unregister_all();
+void vik_ext_tool_datasources_add_menu_items_to_menu(VikWindow * vw, GtkMenu * menu);
+void vik_ext_tool_datasources_add_menu_items(VikWindow * vw, GtkUIManager * uim);
 
 #ifdef __cplusplus
 }

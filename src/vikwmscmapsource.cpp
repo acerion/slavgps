@@ -57,7 +57,7 @@ MapSourceWmsc::~MapSourceWmsc()
 	fprintf(stderr, "MapSourceWmsc destructor end\n");
 }
 
-MapSourceWmsc::MapSourceWmsc(MapTypeID map_type_, const char * label_, const char * hostname_, const char * url_)
+MapSourceWmsc::MapSourceWmsc(MapTypeID map_type_, char const * label_, char const * hostname_, char const * url_)
 {
 	map_type = map_type_;
 	label = g_strdup(label_);
@@ -87,14 +87,16 @@ bool MapSourceWmsc::supports_download_only_new()
 
 bool MapSourceWmsc::coord_to_tile(const VikCoord * src, double xzoom, double yzoom, TileInfo * dest)
 {
-	assert ( src->mode == VIK_COORD_LATLON );
+	assert (src->mode == VIK_COORD_LATLON);
 
-	if ( xzoom != yzoom )
+	if (xzoom != yzoom) {
 		return false;
+	}
 
-	dest->scale = map_utils_mpp_to_scale ( xzoom );
-	if ( dest->scale == 255 )
+	dest->scale = map_utils_mpp_to_scale(xzoom);
+	if (dest->scale == 255) {
 		return false;
+	}
 
 	/* Note : VIK_GZ(17) / xzoom / 2 = number of tile on Y axis */
 	fprintf(stderr, "DEBUG: %s: xzoom=%f yzoom=%f -> %f\n", __FUNCTION__,
@@ -113,10 +115,11 @@ bool MapSourceWmsc::coord_to_tile(const VikCoord * src, double xzoom, double yzo
 void MapSourceWmsc::tile_to_center_coord(TileInfo *src, VikCoord *dest)
 {
 	double socalled_mpp;
-	if (src->scale >= 0)
+	if (src->scale >= 0) {
 		socalled_mpp = VIK_GZ(src->scale);
-	else
+	} else {
 		socalled_mpp = 1.0/VIK_GZ(-src->scale);
+	}
 	dest->mode = VIK_COORD_LATLON;
 	dest->east_west = (src->x+0.5) * 180 / VIK_GZ(17) * socalled_mpp * 2 - 180;
 	/* We should restore logic of viking:
@@ -130,10 +133,11 @@ void MapSourceWmsc::tile_to_center_coord(TileInfo *src, VikCoord *dest)
 char * MapSourceWmsc::get_server_path(TileInfo *src)
 {
 	double socalled_mpp;
-	if (src->scale >= 0)
+	if (src->scale >= 0) {
 		socalled_mpp = VIK_GZ(src->scale);
-	else
+	} else {
 		socalled_mpp = 1.0/VIK_GZ(-src->scale);
+	}
 	double minx = (double)src->x * 180 / VIK_GZ(17) * socalled_mpp * 2 - 180;
 	double maxx = (double)(src->x + 1) * 180 / VIK_GZ(17) * socalled_mpp * 2 - 180;
 	/* We should restore logic of viking:
@@ -152,7 +156,7 @@ char * MapSourceWmsc::get_server_path(TileInfo *src)
 	g_ascii_dtostr (sminy, G_ASCII_DTOSTR_BUF_SIZE, miny);
 	g_ascii_dtostr (smaxy, G_ASCII_DTOSTR_BUF_SIZE, maxy);
 
-	char *uri = g_strdup_printf(server_path_format, sminx, sminy, smaxx, smaxy);
+	char * uri = g_strdup_printf(server_path_format, sminx, sminy, smaxx, smaxy);
 
 	return uri;
 }

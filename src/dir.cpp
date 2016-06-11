@@ -1,13 +1,13 @@
 /*
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
- * Copyright (C) 2003-2005, Evan Battaglia <gtoevan@gmx.net>
- * Copyright (C) 2012, Guilhem Bonnefille <guilhem.bonnefille@gmail.com>
+ * Copyright(C) 2003-2005, Evan Battaglia <gtoevan@gmx.net>
+ * Copyright(C) 2012, Guilhem Bonnefille <guilhem.bonnefille@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ *(at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -38,43 +38,47 @@
  * For external use, free the result
  * Made externally available primarily to detect when Viking is first run
  */
-char *a_get_viking_dir_no_create()
+char * a_get_viking_dir_no_create()
 {
-  // TODO: use g_get_user_config_dir ?
+	// TODO: use g_get_user_config_dir ?
 
-  const char *home = g_getenv("HOME");
-  if (!home || g_access(home, W_OK))
-    home = g_get_home_dir ();
+	char const * home = g_getenv("HOME");
+	if (!home || g_access(home, W_OK)) {
+		home = g_get_home_dir();
+	}
+
 #ifdef HAVE_MKDTEMP
-  if (!home || g_access(home, W_OK))
-    {
-      static char temp[] = {"/tmp/vikXXXXXX"};
-      home = mkdtemp(temp);
-    }
+	if (!home || g_access(home, W_OK)) {
+		static char temp[] = {"/tmp/vikXXXXXX"};
+		home = mkdtemp(temp);
+	}
 #endif
-  if (!home || g_access(home, W_OK))
-    /* Fatal error */
-    fprintf(stderr, "CRITICAL: Unable to find a base directory\n");
+	if (!home || g_access(home, W_OK)) {
+		/* Fatal error */
+		fprintf(stderr, "CRITICAL: Unable to find a base directory\n");
+	}
 
-    /* Build the name of the directory */
+	/* Build the name of the directory */
 #ifdef __APPLE__
-  return g_build_filename(home, "/Library/Application Support/Viking", NULL);
+	return g_build_filename(home, "/Library/Application Support/Viking", NULL);
 #else
-  return g_build_filename(home, ".viking", NULL);
+	return g_build_filename(home, ".viking", NULL);
 #endif
 }
 
-static char *viking_dir = NULL;
+static char * viking_dir = NULL;
 
-const char *a_get_viking_dir()
+const char * a_get_viking_dir(void)
 {
-  if (!viking_dir) {
-    viking_dir = a_get_viking_dir_no_create ();
-    if (g_file_test(viking_dir, G_FILE_TEST_EXISTS) == false)
-      if ( g_mkdir(viking_dir, 0755) != 0 )
-        fprintf(stderr, "WARNING: %s: Failed to create directory %s\n", __FUNCTION__, viking_dir );
-  }
-  return viking_dir;
+	if (!viking_dir) {
+		viking_dir = a_get_viking_dir_no_create();
+		if (g_file_test(viking_dir, G_FILE_TEST_EXISTS) == false) {
+			if( g_mkdir(viking_dir, 0755) != 0) {
+				fprintf(stderr, "WARNING: %s: Failed to create directory %s\n", __FUNCTION__, viking_dir);
+			}
+		}
+	}
+	return viking_dir;
 }
 
 /**
@@ -82,18 +86,14 @@ const char *a_get_viking_dir()
  *
  * Retrieves the XDG compliant user's data directory.
  *
- * Retuns: the directory (can be NULL). Should be freed with g_free.
+ * Retuns: the directory(can be NULL). Should be freed with g_free.
  */
-char *
-a_get_viking_data_home()
+char * a_get_viking_data_home()
 {
-	const char *xdg_data_home = g_getenv("XDG_DATA_HOME");
-	if (xdg_data_home)
-	{
+	char const * xdg_data_home = g_getenv("XDG_DATA_HOME");
+	if (xdg_data_home) {
 		return g_build_filename(xdg_data_home, PACKAGE, NULL);
-	}
-	else
-	{
+	} else {
 		return NULL;
 	}
 }
@@ -105,35 +105,32 @@ a_get_viking_data_home()
  *
  * Returns: list of directories to scan for data. Should be freed with g_strfreev.
  */
-char **
-a_get_viking_data_path()
+char ** a_get_viking_data_path()
 {
 #ifdef WINDOWS
-  // Try to use from the install directory - normally the working directory of Viking is where ever it's install location is
-  const char *xdg_data_dirs = "./data";
-  //const char *xdg_data_dirs = g_strdup( "%s/%s/data", g_getenv("ProgramFiles"), PACKAGE );
+	// Try to use from the install directory - normally the working directory of Viking is where ever it's install location is
+	char const * xdg_data_dirs = "./data";
+	//const char *xdg_data_dirs = g_strdup( "%s/%s/data", g_getenv("ProgramFiles"), PACKAGE);
 #else
-  const char *xdg_data_dirs = g_getenv("XDG_DATA_DIRS");
+	char const * xdg_data_dirs = g_getenv("XDG_DATA_DIRS");
 #endif
-  if (xdg_data_dirs == NULL)
-  {
-    /* Default value specified in
-     http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html
-     */
-    xdg_data_dirs = "/usr/local/share/:/usr/share/";
-  }
+	if (xdg_data_dirs == NULL) {
+		/* Default value specified in
+		   http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html
+		*/
+		xdg_data_dirs = "/usr/local/share/:/usr/share/";
+	}
 
-  char **data_path = g_strsplit(xdg_data_dirs, G_SEARCHPATH_SEPARATOR_S, 0);
+	char ** data_path = g_strsplit(xdg_data_dirs, G_SEARCHPATH_SEPARATOR_S, 0);
 
 #ifndef WINDOWS
-  /* Append the viking dir */
-  char **path;
-  for (path = data_path ; *path != NULL ; path++)
-  {
-    char *dir = *path;
-    *path = g_build_filename(dir, PACKAGE, NULL);
-    free(dir);
-  }
+	/* Append the viking dir */
+	char ** path;
+	for (path = data_path ; *path != NULL ; path++) {
+		char * dir = *path;
+		*path = g_build_filename(dir, PACKAGE, NULL);
+		free(dir);
+	}
 #endif
-  return data_path;
+	return data_path;
 }

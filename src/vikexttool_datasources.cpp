@@ -1,4 +1,3 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
@@ -36,45 +35,46 @@
 
 static GList *ext_tool_datasources_list = NULL;
 
-void vik_ext_tool_datasources_register ( VikExtTool *tool )
+void vik_ext_tool_datasources_register(VikExtTool * tool)
 {
-	if ( IS_VIK_EXT_TOOL( tool ) )
-		ext_tool_datasources_list = g_list_append ( ext_tool_datasources_list, g_object_ref ( tool ) );
+	if (IS_VIK_EXT_TOOL (tool)) {
+		ext_tool_datasources_list = g_list_append(ext_tool_datasources_list, g_object_ref(tool));
+	}
 }
 
-void vik_ext_tool_datasources_unregister_all ()
+void vik_ext_tool_datasources_unregister_all()
 {
-	g_list_foreach ( ext_tool_datasources_list, (GFunc) g_object_unref, NULL );
+	g_list_foreach(ext_tool_datasources_list, (GFunc) g_object_unref, NULL);
 }
 
-static void ext_tool_datasources_open_cb ( GtkWidget *widget, VikWindow *vw )
+static void ext_tool_datasources_open_cb(GtkWidget * widget, VikWindow * vw)
 {
-	void * ptr = g_object_get_data ( G_OBJECT(widget), VIK_TOOL_DATASOURCE_KEY );
-	VikExtTool *ext_tool = VIK_EXT_TOOL ( ptr );
-	vik_ext_tool_open ( ext_tool, vw );
+	void * ptr = g_object_get_data(G_OBJECT (widget), VIK_TOOL_DATASOURCE_KEY);
+	VikExtTool * ext_tool = VIK_EXT_TOOL(ptr);
+	vik_ext_tool_open(ext_tool, vw);
 }
 
 /**
  * Add to any menu
  *  mostly for allowing to assign for TrackWaypoint layer menus
  */
-void vik_ext_tool_datasources_add_menu_items_to_menu ( VikWindow *vw, GtkMenu *menu )
+void vik_ext_tool_datasources_add_menu_items_to_menu(VikWindow * vw, GtkMenu * menu)
 {
-	GList *iter;
+	GList * iter;
 	for (iter = ext_tool_datasources_list; iter; iter = iter->next) {
-		VikExtTool *ext_tool = NULL;
-		char *label = NULL;
-		ext_tool = VIK_EXT_TOOL ( iter->data );
-		label = vik_ext_tool_get_label ( ext_tool );
-		if ( label ) {
-			GtkWidget *item = NULL;
-			item = gtk_menu_item_new_with_label ( _(label) );
-			free( label ); label = NULL;
+		VikExtTool * ext_tool = NULL;
+		char * label = NULL;
+		ext_tool = VIK_EXT_TOOL(iter->data);
+		label = vik_ext_tool_get_label(ext_tool);
+		if (label) {
+			GtkWidget * item = NULL;
+			item = gtk_menu_item_new_with_label(_(label));
+			free(label); label = NULL;
 			// Store tool's ref into the menu entry
-			g_object_set_data ( G_OBJECT(item), VIK_TOOL_DATASOURCE_KEY, ext_tool );
-			g_signal_connect ( G_OBJECT(item), "activate", G_CALLBACK(ext_tool_datasources_open_cb), vw );
-			gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-			gtk_widget_show ( item );
+			g_object_set_data(G_OBJECT(item), VIK_TOOL_DATASOURCE_KEY, ext_tool);
+			g_signal_connect(G_OBJECT(item), "activate", G_CALLBACK(ext_tool_datasources_open_cb), vw);
+			gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
+			gtk_widget_show(item);
 		}
 	}
 }
@@ -82,10 +82,10 @@ void vik_ext_tool_datasources_add_menu_items_to_menu ( VikWindow *vw, GtkMenu *m
 /**
  * Adds to the File->Acquire menu only
  */
-void vik_ext_tool_datasources_add_menu_items ( VikWindow *vw, GtkUIManager *uim )
+void vik_ext_tool_datasources_add_menu_items(VikWindow * vw, GtkUIManager * uim)
 {
-	GtkWidget *widget = gtk_ui_manager_get_widget ( uim, "/MainMenu/File/Acquire/" );
-	GtkMenu *menu = GTK_MENU ( gtk_menu_item_get_submenu ( GTK_MENU_ITEM(widget) ) );
-	vik_ext_tool_datasources_add_menu_items_to_menu ( vw, menu );
-	gtk_widget_show ( widget );
+	GtkWidget * widget = gtk_ui_manager_get_widget(uim, "/MainMenu/File/Acquire/");
+	GtkMenu * menu = GTK_MENU (gtk_menu_item_get_submenu(GTK_MENU_ITEM(widget)));
+	vik_ext_tool_datasources_add_menu_items_to_menu(vw, menu);
+	gtk_widget_show(widget);
 }

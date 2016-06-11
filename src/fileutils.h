@@ -21,14 +21,13 @@
 #ifndef __FILE_UTILS_H
 #define __FILE_UTILS_H
 
-#include <glib.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 
-const char *a_file_basename ( const char *filename );
+char const * a_file_basename(char const * filename);
 
 #ifdef __cplusplus
 }

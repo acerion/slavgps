@@ -63,7 +63,7 @@ MapSourceTms::~MapSourceTms()
 	fprintf(stderr, "MapSourceTms destructor end\n");
 }
 
-MapSourceTms::MapSourceTms(MapTypeID map_type_, const char * label_, const char * hostname_, const char * url_)
+MapSourceTms::MapSourceTms(MapTypeID map_type_, char const * label_, char const * hostname_, char const * url_)
 {
 	map_type = map_type_;
 	label = g_strdup(label_);
@@ -93,14 +93,16 @@ bool MapSourceTms::supports_download_only_new()
 
 bool MapSourceTms::coord_to_tile(const VikCoord * src, double xzoom, double yzoom, TileInfo * dest)
 {
-	assert ( src->mode == VIK_COORD_LATLON );
+	assert (src->mode == VIK_COORD_LATLON);
 
-	if ( xzoom != yzoom )
+	if (xzoom != yzoom) {
 		return false;
+	}
 
-	dest->scale = map_utils_mpp_to_scale ( xzoom );
-	if ( dest->scale == 255 )
+	dest->scale = map_utils_mpp_to_scale(xzoom);
+	if (dest->scale == 255) {
 		return false;
+	}
 
 	/* Note : VIK_GZ(17) / xzoom / 2 = number of tile on Y axis */
 	fprintf(stderr, "DEBUG: %s: xzoom=%f yzoom=%f -> %f\n", __FUNCTION__,
@@ -116,24 +118,25 @@ bool MapSourceTms::coord_to_tile(const VikCoord * src, double xzoom, double yzoo
 	return true;
 }
 
-void MapSourceTms::tile_to_center_coord(TileInfo *src, VikCoord *dest)
+void MapSourceTms::tile_to_center_coord(TileInfo * src, VikCoord * dest)
 {
 	double socalled_mpp;
-	if (src->scale >= 0)
+	if (src->scale >= 0) {
 		socalled_mpp = VIK_GZ(src->scale);
-	else
+	} else {
 		socalled_mpp = 1.0/VIK_GZ(-src->scale);
+	}
 	dest->mode = VIK_COORD_LATLON;
-	dest->east_west = (src->x+0.5) * 180 / VIK_GZ(17) * socalled_mpp * 2 - 180;
+	dest->east_west = (src->x + 0.5) * 180 / VIK_GZ(17) * socalled_mpp * 2 - 180;
 	/* We should restore logic of viking:
 	 * tile index on Y axis follow a screen logic (top -> down)
 	 */
-	dest->north_south = -((src->y+0.5) * 180 / VIK_GZ(17) * socalled_mpp * 2 - 90);
+	dest->north_south = -((src->y + 0.5) * 180 / VIK_GZ(17) * socalled_mpp * 2 - 90);
 	fprintf(stderr, "DEBUG: %s: %d,%d -> %f,%f\n", __FUNCTION__,
 		src->x, src->y, dest->east_west, dest->north_south);
 }
 
-char * MapSourceTms::get_server_path(TileInfo *src)
+char * MapSourceTms::get_server_path(TileInfo * src)
 {
 	/* We should restore logic of viking:
 	 * tile index on Y axis follow a screen logic (top -> down)
@@ -142,7 +145,7 @@ char * MapSourceTms::get_server_path(TileInfo *src)
 	/* Note : nb tiles on Y axis */
 	int nb_tiles = VIK_GZ(17 - src->scale - 1);
 
-	char *uri = g_strdup_printf (server_path_format, 17 - src->scale - 1, src->x, nb_tiles - src->y - 1);
+	char * uri = g_strdup_printf(server_path_format, 17 - src->scale - 1, src->x, nb_tiles - src->y - 1);
 
 	return uri;
 }

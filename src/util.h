@@ -26,7 +26,6 @@
 #define _VIKING_UTIL_H
 
 #include <glib.h>
-#include <stdbool.h>
 #include <stdint.h>
 
 
@@ -35,18 +34,18 @@ extern "C" {
 #endif
 
 
-unsigned int util_get_number_of_cpus (void);
+unsigned int util_get_number_of_cpus(void);
 
-char *uri_escape(char *str);
+char * uri_escape(char * str);
 
-GList * str_array_to_glist(char* data[]);
+GList * str_array_to_glist(char * data[]);
 
-bool split_string_from_file_on_equals ( const char *buf, char **key, char **val );
+bool split_string_from_file_on_equals(char const * buf, char ** key, char ** val);
 
-void util_add_to_deletion_list ( const char* filename );
-void util_remove_all_in_deletion_list ( void );
+void util_add_to_deletion_list(char const * filename);
+void util_remove_all_in_deletion_list(void);
 
-char *util_str_remove_chars(char *string, const char *chars);
+char * util_str_remove_chars(char * string, char const * chars);
 
 /** Returns @c true if @a ptr is @c NULL or @c *ptr is @c false. */
 #define EMPTY(ptr) \
@@ -71,9 +70,9 @@ char *util_str_remove_chars(char *string, const char *chars);
 #define foreach_str(char_ptr, string) \
 	for (char_ptr = string; *char_ptr; char_ptr++)
 
-int util_remove ( const char *filename );
+int util_remove(char const * filename);
 
-char* util_write_tmp_file_from_bytes ( const void *buffer, size_t count );
+char * util_write_tmp_file_from_bytes(const void * buffer, size_t count);
 
 void free_string(char ** s);
 

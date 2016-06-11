@@ -30,14 +30,14 @@
 #include "vikgoto.h"
 
 /* initialisation */
-void geonames_init () {
-  // Goto
-  VikGotoXmlTool *geonames = VIK_GOTO_XML_TOOL ( g_object_new ( VIK_GOTO_XML_TOOL_TYPE, "label", "Geonames",
-    "url-format", "http://api.geonames.org/search?q=%s&maxRows=1&lang=en&style=short&username=viking",
-    "lat-path", "/geonames/geoname/lat",
-    "lon-path", "/geonames/geoname/lng",
-    NULL ) );
-    vik_goto_register ( VIK_GOTO_TOOL ( geonames ) );
-    g_object_unref ( geonames );
+void geonames_init()
+{
+	// Goto
+	VikGotoXmlTool * geonames = VIK_GOTO_XML_TOOL (g_object_new(VIK_GOTO_XML_TOOL_TYPE, "label", "Geonames",
+								    "url-format", "http://api.geonames.org/search?q=%s&maxRows=1&lang=en&style=short&username=viking",
+								    "lat-path", "/geonames/geoname/lat",
+								    "lon-path", "/geonames/geoname/lng",
+								    NULL));
+	vik_goto_register( VIK_GOTO_TOOL (geonames));
+	g_object_unref(geonames);
 }
-

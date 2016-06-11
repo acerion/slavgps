@@ -25,6 +25,8 @@
 #include "config.h"
 #endif
 
+#include <stdio.h>
+
 #include "viking.h"
 #include "degrees_converters.h"
 #include "authors.h"

@@ -23,8 +23,8 @@
  * Otherwise see file.c
  */
 #include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
+//#include <stdlib.h>
+//#include <stdio.h>
 
 #include "fileutils.h"
 
@@ -34,13 +34,16 @@
 #define FILE_SEP '/'
 #endif
 
-const char *a_file_basename ( const char *filename )
+char const * a_file_basename(char const * filename)
 {
-  const char *t = filename + strlen(filename) - 1;
-  while ( --t > filename )
-    if ( *(t-1) == FILE_SEP )
-      break;
-  if ( t >= filename )
-    return t;
-  return filename;
+	char const * t = filename + strlen(filename) - 1;
+	while (--t > filename) {
+		if (*(t - 1) == FILE_SEP) {
+			break;
+		}
+	}
+	if (t >= filename) {
+		return t;
+	}
+	return filename;
 }

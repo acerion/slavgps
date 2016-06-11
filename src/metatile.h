@@ -1,4 +1,3 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
@@ -30,9 +29,9 @@
 extern "C" {
 #endif
 
-int xyz_to_meta(char *path, size_t len, const char *dir, int x, int y, int z);
+int xyz_to_meta(char * path, size_t len, char const * dir, int x, int y, int z);
 
-int metatile_read(const char *dir, int x, int y, int z, char *buf, size_t sz, int * compressed, char * log_msg);
+int metatile_read(char const * dir, int x, int y, int z, char * buf, size_t sz, int * compressed, char * log_msg);
 
 #ifdef __cplusplus
 }

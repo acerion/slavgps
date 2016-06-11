@@ -1,4 +1,3 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
@@ -38,46 +37,46 @@
 using namespace SlavGPS;
 
 typedef struct {
-	GtkWidget *files;
-	GSList *filelist;  // Files selected
+	GtkWidget * files;
+	GSList * filelist;  // Files selected
 } datasource_geotag_user_data_t;
 
 /* The last used directory */
-static char *last_folder_uri = NULL;
+static char * last_folder_uri = NULL;
 
-static void * datasource_geotag_init ( acq_vik_t *avt );
-static void datasource_geotag_add_setup_widgets ( GtkWidget *dialog, Viewport * viewport, void * user_data );
-static void datasource_geotag_get_process_options ( void * user_data, ProcessOptions *po, void * not_used, const char *not_used2, const char *not_used3 );
-static bool datasource_geotag_process(LayerTRW * trw, ProcessOptions *po, BabelStatusFunc status_cb, acq_dialog_widgets_t *adw, void * not_used );
-static void datasource_geotag_cleanup ( void * user_data );
+static void * datasource_geotag_init(acq_vik_t * avt);
+static void datasource_geotag_add_setup_widgets(GtkWidget * dialog, Viewport * viewport, void * user_data);
+static void datasource_geotag_get_process_options(void * user_data, ProcessOptions * po, void * not_used, char const * not_used2, char const * not_used3);
+static bool datasource_geotag_process(LayerTRW * trw, ProcessOptions * po, BabelStatusFunc status_cb, acq_dialog_widgets_t * adw, void * not_used);
+static void datasource_geotag_cleanup(void * user_data);
 
 VikDataSourceInterface vik_datasource_geotag_interface = {
-  N_("Create Waypoints from Geotagged Images"),
-  N_("Geotagged Images"),
-  VIK_DATASOURCE_AUTO_LAYER_MANAGEMENT,
-  VIK_DATASOURCE_INPUTTYPE_NONE,
-  true,
-  false, // We should be able to see the data on the screen so no point in keeping the dialog open
-  true,
-  (VikDataSourceInitFunc)		        datasource_geotag_init,
-  (VikDataSourceCheckExistenceFunc)	    NULL,
-  (VikDataSourceAddSetupWidgetsFunc)    datasource_geotag_add_setup_widgets,
-  (VikDataSourceGetProcessOptionsFunc)  datasource_geotag_get_process_options,
-  (VikDataSourceProcessFunc)            datasource_geotag_process,
-  (VikDataSourceProgressFunc)		    NULL,
-  (VikDataSourceAddProgressWidgetsFunc)	NULL,
-  (VikDataSourceCleanupFunc)		    datasource_geotag_cleanup,
-  (VikDataSourceOffFunc)                NULL,
+	N_("Create Waypoints from Geotagged Images"),
+	N_("Geotagged Images"),
+	VIK_DATASOURCE_AUTO_LAYER_MANAGEMENT,
+	VIK_DATASOURCE_INPUTTYPE_NONE,
+	true,
+	false, // We should be able to see the data on the screen so no point in keeping the dialog open
+	true,
+	(VikDataSourceInitFunc)		        datasource_geotag_init,
+	(VikDataSourceCheckExistenceFunc)	    NULL,
+	(VikDataSourceAddSetupWidgetsFunc)    datasource_geotag_add_setup_widgets,
+	(VikDataSourceGetProcessOptionsFunc)  datasource_geotag_get_process_options,
+	(VikDataSourceProcessFunc)            datasource_geotag_process,
+	(VikDataSourceProgressFunc)		    NULL,
+	(VikDataSourceAddProgressWidgetsFunc)	NULL,
+	(VikDataSourceCleanupFunc)		    datasource_geotag_cleanup,
+	(VikDataSourceOffFunc)                NULL,
 
-  NULL,
-  0,
-  NULL,
-  NULL,
-  0
+	NULL,
+	0,
+	NULL,
+	NULL,
+	0
 };
 
 /* See VikDataSourceInterface */
-static void * datasource_geotag_init ( acq_vik_t *avt )
+static void * datasource_geotag_init(acq_vik_t * avt)
 {
 	datasource_geotag_user_data_t * user_data = (datasource_geotag_user_data_t *) malloc(sizeof (datasource_geotag_user_data_t));
 	user_data->filelist = NULL;
@@ -85,63 +84,64 @@ static void * datasource_geotag_init ( acq_vik_t *avt )
 }
 
 /* See VikDataSourceInterface */
-static void datasource_geotag_add_setup_widgets ( GtkWidget *dialog, Viewport * viewport, void * user_data )
+static void datasource_geotag_add_setup_widgets(GtkWidget * dialog, Viewport * viewport, void * user_data)
 {
-	datasource_geotag_user_data_t *userdata = (datasource_geotag_user_data_t *)user_data;
+	datasource_geotag_user_data_t * userdata = (datasource_geotag_user_data_t *) user_data;
 
 	/* The files selector */
-	userdata->files = gtk_file_chooser_widget_new ( GTK_FILE_CHOOSER_ACTION_OPEN );
+	userdata->files = gtk_file_chooser_widget_new(GTK_FILE_CHOOSER_ACTION_OPEN);
 
 	// try to make it a nice size - otherwise seems to default to something impractically small
-	gtk_window_set_default_size ( GTK_WINDOW (dialog) , 600, 300 );
+	gtk_window_set_default_size(GTK_WINDOW (dialog) , 600, 300);
 
-	if ( last_folder_uri )
-		gtk_file_chooser_set_current_folder_uri ( GTK_FILE_CHOOSER(userdata->files), last_folder_uri );
+	if (last_folder_uri) {
+		gtk_file_chooser_set_current_folder_uri(GTK_FILE_CHOOSER(userdata->files), last_folder_uri);
+	}
 
-	GtkFileChooser *chooser = GTK_FILE_CHOOSER ( userdata->files );
+	GtkFileChooser * chooser = GTK_FILE_CHOOSER (userdata->files);
 
 	/* Add filters */
 	GtkFileFilter *filter;
-	filter = gtk_file_filter_new ();
-	gtk_file_filter_set_name ( filter, _("All") );
-	gtk_file_filter_add_pattern ( filter, "*" );
-	gtk_file_chooser_add_filter ( chooser, filter );
+	filter = gtk_file_filter_new();
+	gtk_file_filter_set_name(filter, _("All"));
+	gtk_file_filter_add_pattern(filter, "*");
+	gtk_file_chooser_add_filter(chooser, filter);
 
-	filter = gtk_file_filter_new ();
-	gtk_file_filter_set_name ( filter, _("JPG") );
-	gtk_file_filter_add_mime_type ( filter, "image/jpeg");
-	gtk_file_chooser_add_filter ( chooser, filter );
+	filter = gtk_file_filter_new();
+	gtk_file_filter_set_name(filter, _("JPG"));
+	gtk_file_filter_add_mime_type(filter, "image/jpeg");
+	gtk_file_chooser_add_filter(chooser, filter);
 
 	// Default to jpgs
-	gtk_file_chooser_set_filter ( chooser, filter );
+	gtk_file_chooser_set_filter(chooser, filter);
 
 	// Allow selecting more than one
-	gtk_file_chooser_set_select_multiple ( chooser, true );
+	gtk_file_chooser_set_select_multiple(chooser, true);
 
 	// Could add code to setup a default symbol (see dialog.c for symbol usage)
 	//  Store in user_data type and then apply when creating the waypoints
 	//  However not much point since these will have images associated with them!
 
 	/* Packing all widgets */
-	GtkBox *box = GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog)));
-	gtk_box_pack_start ( box, userdata->files, true, true, 0 );
+	GtkBox * box = GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog)));
+	gtk_box_pack_start(box, userdata->files, true, true, 0);
 
-	gtk_widget_show_all ( dialog );
+	gtk_widget_show_all(dialog);
 }
 
-static void datasource_geotag_get_process_options ( void * user_data, ProcessOptions *po, void * not_used, const char *not_used2, const char *not_used3 )
+static void datasource_geotag_get_process_options(void * user_data, ProcessOptions * po, void * not_used, char const * not_used2, char const * not_used3)
 {
-	datasource_geotag_user_data_t *userdata = (datasource_geotag_user_data_t *)user_data;
+	datasource_geotag_user_data_t * userdata = (datasource_geotag_user_data_t *)user_data;
 	/* Retrieve the files selected */
-	userdata->filelist = gtk_file_chooser_get_filenames ( GTK_FILE_CHOOSER(userdata->files) ); // Not reusable !!
+	userdata->filelist = gtk_file_chooser_get_filenames(GTK_FILE_CHOOSER(userdata->files)); // Not reusable !!
 
 	/* Memorize the directory for later use */
-	free( last_folder_uri );
-	last_folder_uri = gtk_file_chooser_get_current_folder_uri ( GTK_FILE_CHOOSER(userdata->files) );
-	last_folder_uri = g_strdup( last_folder_uri );
+	free(last_folder_uri);
+	last_folder_uri = gtk_file_chooser_get_current_folder_uri(GTK_FILE_CHOOSER(userdata->files));
+	last_folder_uri = g_strdup(last_folder_uri);
 
 	/* TODO Memorize the file filter for later use... */
-	//GtkFileFilter *filter = gtk_file_chooser_get_filter ( GTK_FILE_CHOOSER(userdata->files) );
+	//GtkFileFilter *filter = gtk_file_chooser_get_filter (GTK_FILE_CHOOSER(userdata->files));
 
 	// return some value so *thread* processing will continue
 	po->babelargs = g_strdup("fake command"); // Not really used, thus no translations
@@ -150,42 +150,42 @@ static void datasource_geotag_get_process_options ( void * user_data, ProcessOpt
 /**
  * Process selected files and try to generate waypoints storing them in the given vtl
  */
-static bool datasource_geotag_process(LayerTRW * trw, ProcessOptions *po, BabelStatusFunc status_cb, acq_dialog_widgets_t *adw, void * not_used )
+static bool datasource_geotag_process(LayerTRW * trw, ProcessOptions * po, BabelStatusFunc status_cb, acq_dialog_widgets_t * adw, void * not_used)
 {
-	datasource_geotag_user_data_t *user_data = (datasource_geotag_user_data_t *)adw->user_data;
+	datasource_geotag_user_data_t * user_data = (datasource_geotag_user_data_t *) adw->user_data;
 
 	// Process selected files
 	// In prinicple this loading should be quite fast and so don't need to have any progress monitoring
-	GSList *cur_file = user_data->filelist;
-	while ( cur_file ) {
+	GSList * cur_file = user_data->filelist;
+	while (cur_file) {
 		char *filename = (char *) cur_file->data;
 		char *name;
 		Waypoint * wp = a_geotag_create_waypoint_from_file(filename, adw->viewport->get_coord_mode(), &name);
 		if (wp) {
 			// Create name if geotag method didn't return one
-			if ( !name )
-				name = g_strdup( a_file_basename ( filename ) );
+			if (!name) {
+				name = g_strdup(a_file_basename (filename));
+			}
 			trw->filein_add_waypoint(name, wp);
-			free( name );
-		}
-		else {
-			char* msg = g_strdup_printf ( _("Unable to create waypoint from %s"), filename );
-			vik_window_statusbar_update ( adw->vw, msg, VIK_STATUSBAR_INFO );
+			free(name);
+		} else {
+			char * msg = g_strdup_printf(_("Unable to create waypoint from %s"), filename);
+			vik_window_statusbar_update(adw->vw, msg, VIK_STATUSBAR_INFO);
 			free(msg);
 		}
-		free( filename );
-		cur_file = g_slist_next ( cur_file );
+		free(filename);
+		cur_file = g_slist_next(cur_file);
 	}
 
 	/* Free memory */
-	g_slist_free ( user_data->filelist );
+	g_slist_free(user_data->filelist);
 
 	// No failure
 	return true;
 }
 
 /* See VikDataSourceInterface */
-static void datasource_geotag_cleanup ( void * user_data )
+static void datasource_geotag_cleanup(void * user_data)
 {
-	free( user_data );
+	free(user_data);
 }

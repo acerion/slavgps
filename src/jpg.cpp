@@ -51,26 +51,29 @@ bool a_jpg_magic_check(char const * filename)
 {
 	bool is_jpg = false;
 #ifdef HAVE_MAGIC_H
-	magic_t myt = magic_open ( MAGIC_CONTINUE|MAGIC_ERROR|MAGIC_MIME );
-	if ( myt ) {
+	magic_t myt = magic_open(MAGIC_CONTINUE|MAGIC_ERROR|MAGIC_MIME);
+	if (myt) {
 #ifdef WINDOWS
 		// We have to 'package' the magic database ourselves :(
 		//  --> %PROGRAM FILES%\Viking\magic.mgc
-		magic_load ( myt, "magic.mgc" );
+		magic_load(myt, "magic.mgc");
 #else
 		// Use system default
-		magic_load ( myt, NULL );
+		magic_load(myt, NULL);
 #endif
-		const char* magic = magic_file (myt, filename);
-		fprintf(stderr, "DEBUG: %s:%s\n", __FUNCTION__, magic );
-		if ( g_ascii_strncasecmp (magic, "image/jpeg", 10) == 0 )
+		char const * magic = magic_file(myt, filename);
+		fprintf(stderr, "DEBUG: %s:%s\n", __FUNCTION__, magic);
+		if (g_ascii_strncasecmp(magic, "image/jpeg", 10) == 0) {
 			is_jpg = true;
+		}
 
-		magic_close ( myt );
-	}
-	else
+		magic_close(myt);
+	} else
 #endif
-		is_jpg = a_file_check_ext ( filename, ".jpg" );
+	{
+		is_jpg = a_file_check_ext(filename, ".jpg");
+	}
+
 
 	return is_jpg;
 }
@@ -91,8 +94,8 @@ bool a_jpg_magic_check(char const * filename)
 bool a_jpg_load_file(LayerAggregate * top, char const * filename, Viewport * viewport)
 {
 	bool auto_zoom = true;
-	VikWindow *vw = (VikWindow *) (VIK_GTK_WINDOW_FROM_LAYER(top->vl));
-	VikLayersPanel *vlp = vik_window_layers_panel ( vw );
+	VikWindow * vw = (VikWindow *) (VIK_GTK_WINDOW_FROM_LAYER(top->vl));
+	VikLayersPanel * vlp = vik_window_layers_panel(vw);
 	// Auto load into TrackWaypoint layer if one is selected
 	Layer * trw = vlp->panel_ref->get_selected();
 
@@ -105,19 +108,19 @@ bool a_jpg_load_file(LayerAggregate * top, char const * filename, Viewport * vie
 		create_layer = true;
 	}
 
-	char *name = NULL;
+	char * name = NULL;
 	Waypoint * wp = NULL;
 #ifdef VIK_CONFIG_GEOTAG
-	wp = a_geotag_create_waypoint_from_file ( filename, viewport->get_coord_mode(), &name );
+	wp = a_geotag_create_waypoint_from_file(filename, viewport->get_coord_mode(), &name);
 #endif
-	if ( wp ) {
+	if (wp) {
 		// Create name if geotag method didn't return one
-		if ( !name )
-			name = g_strdup( a_file_basename ( filename ) );
+		if (!name) {
+			name = g_strdup(a_file_basename(filename));
+		}
 		((LayerTRW *) trw)->filein_add_waypoint(name, wp);
-		free( name );
-	}
-	else {
+		free(name);
+	} else {
 		wp = new Waypoint();
 		wp->visible = true;
 		((LayerTRW *) trw)->filein_add_waypoint((char *) a_file_basename(filename), wp);
@@ -128,13 +131,14 @@ bool a_jpg_load_file(LayerAggregate * top, char const * filename, Viewport * vie
 	}
 
 	// Complete the setup
-	trw->post_read(viewport, true );
-	if ( create_layer ) {
+	trw->post_read(viewport, true);
+	if (create_layer) {
 		top->add_layer(trw, false);
 	}
 
-	if ( auto_zoom )
+	if (auto_zoom) {
 		((LayerTRW *) trw)->auto_set_view(viewport);
+	}
 
 	// ATM This routine can't fail
 	return true;

@@ -1,4 +1,3 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
@@ -34,8 +33,8 @@
 // However in this version we'll cope with no GPSBabel available and in this case just try GPX
 
 typedef struct {
-	GtkWidget *url;
-	GtkWidget *type;
+	GtkWidget * url;
+	GtkWidget * type;
 } datasource_url_widgets_t;
 
 extern GList * a_babel_device_list;
@@ -44,10 +43,10 @@ extern GList * a_babel_file_list;
 /* The last file format selected */
 static int last_type = -1;
 
-static void * datasource_url_init ( acq_vik_t *avt );
-static void datasource_url_add_setup_widgets ( GtkWidget *dialog, Viewport * viewport, void * user_data );
-static void datasource_url_get_process_options ( datasource_url_widgets_t *widgets, ProcessOptions *po, DownloadFileOptions *download_options, const char *not_used2, const char *not_used3 );
-static void datasource_url_cleanup ( void * data );
+static void * datasource_url_init(acq_vik_t * avt);
+static void datasource_url_add_setup_widgets(GtkWidget * dialog, Viewport * viewport, void * user_data);
+static void datasource_url_get_process_options(datasource_url_widgets_t * widgets, ProcessOptions * po, DownloadFileOptions * download_options, char const * not_used2, char const * not_used3);
+static void datasource_url_cleanup(void * data);
 
 VikDataSourceInterface vik_datasource_url_interface = {
 	N_("Acquire from URL"),
@@ -73,25 +72,25 @@ VikDataSourceInterface vik_datasource_url_interface = {
 	0
 };
 
-static void * datasource_url_init ( acq_vik_t *avt )
+static void * datasource_url_init(acq_vik_t * avt)
 {
-	datasource_url_widgets_t *widgets = (datasource_url_widgets_t *) malloc(sizeof (datasource_url_widgets_t));
+	datasource_url_widgets_t * widgets = (datasource_url_widgets_t *) malloc(sizeof (datasource_url_widgets_t));
 	return widgets;
 }
 
-static void fill_combo_box (void * data, void * user_data)
+static void fill_combo_box(void * data, void * user_data)
 {
-	const char *label = ((BabelFile*) data)->label;
+	char const * label = ((BabelFile *) data)->label;
 	vik_combo_box_text_append (GTK_WIDGET(user_data), label);
 }
 
 static int find_entry = -1;
 static int wanted_entry = -1;
 
-static void find_type (void * elem, void * user_data)
+static void find_type(void * elem, void * user_data)
 {
-	const char *name = ((BabelFile*)elem)->name;
-	const char *type_name = (const char *) user_data;
+	const char * name = ((BabelFile*)elem)->name;
+	const char * type_name = (char const *) user_data;
 	find_entry++;
 	if (!g_strcmp0(name, type_name)) {
 		wanted_entry = find_entry;
@@ -100,71 +99,72 @@ static void find_type (void * elem, void * user_data)
 
 #define VIK_SETTINGS_URL_FILE_DL_TYPE "url_file_download_type"
 
-static void datasource_url_add_setup_widgets ( GtkWidget *dialog, Viewport * viewport, void * user_data )
+static void datasource_url_add_setup_widgets(GtkWidget * dialog, Viewport * viewport, void * user_data)
 {
-	datasource_url_widgets_t *widgets = (datasource_url_widgets_t *)user_data;
-	GtkWidget *label = gtk_label_new (_("URL:"));
-	widgets->url = gtk_entry_new ( );
+	datasource_url_widgets_t * widgets = (datasource_url_widgets_t *) user_data;
+	GtkWidget *label = gtk_label_new(_("URL:"));
+	widgets->url = gtk_entry_new();
 
-	GtkWidget *type_label = gtk_label_new (_("File type:"));
+	GtkWidget * type_label = gtk_label_new(_("File type:"));
 
-	if ( last_type < 0 ) {
+	if (last_type < 0) {
 		find_entry = -1;
 		wanted_entry = -1;
 		char *type = NULL;
-		if ( a_settings_get_string ( VIK_SETTINGS_URL_FILE_DL_TYPE, &type ) ) {
+		if (a_settings_get_string(VIK_SETTINGS_URL_FILE_DL_TYPE, &type)) {
 			// Use setting
-			if ( type )
-				g_list_foreach (a_babel_file_list, find_type, type);
-		}
-		else {
+			if (type) {
+				g_list_foreach(a_babel_file_list, find_type, type);
+			}
+		} else {
 			// Default to GPX if possible
-			g_list_foreach (a_babel_file_list, find_type, (void *) "gpx");
+			g_list_foreach(a_babel_file_list, find_type, (void *) "gpx");
 		}
 		// If not found set it to the first entry, otherwise use the entry
-		last_type = ( wanted_entry < 0 ) ? 0 : wanted_entry;
+		last_type = (wanted_entry < 0) ? 0 : wanted_entry;
 	}
 
-	if ( a_babel_available() ) {
-		widgets->type = vik_combo_box_text_new ();
-		g_list_foreach (a_babel_file_list, fill_combo_box, widgets->type);
-		gtk_combo_box_set_active (GTK_COMBO_BOX (widgets->type), last_type);
-	}
-	else {
+	if (a_babel_available()) {
+		widgets->type = vik_combo_box_text_new();
+		g_list_foreach(a_babel_file_list, fill_combo_box, widgets->type);
+		gtk_combo_box_set_active(GTK_COMBO_BOX (widgets->type), last_type);
+	} else {
 		// Only GPX (not using GPSbabel)
 		widgets->type = gtk_label_new (_("GPX"));
 	}
 
 	/* Packing all widgets */
-	GtkBox *box = GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog)));
-	gtk_box_pack_start ( box, label, false, false, 5 );
-	gtk_box_pack_start ( box, widgets->url, false, false, 5 );
-	gtk_box_pack_start ( box, type_label, false, false, 5 );
-	gtk_box_pack_start ( box, widgets->type, false, false, 5 );
+	GtkBox * box = GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog)));
+	gtk_box_pack_start(box, label, false, false, 5);
+	gtk_box_pack_start(box, widgets->url, false, false, 5);
+	gtk_box_pack_start(box, type_label, false, false, 5);
+	gtk_box_pack_start(box, widgets->type, false, false, 5);
 
 	gtk_widget_show_all(dialog);
 }
 
-static void datasource_url_get_process_options ( datasource_url_widgets_t *widgets, ProcessOptions *po, DownloadFileOptions *download_options, const char *not_used2, const char *not_used3 )
+static void datasource_url_get_process_options(datasource_url_widgets_t * widgets, ProcessOptions * po, DownloadFileOptions * download_options, char const * not_used2, char const * not_used3)
 {
 	// Retrieve the user entered value
-	const char *value = gtk_entry_get_text ( GTK_ENTRY(widgets->url) );
+	char const * value = gtk_entry_get_text(GTK_ENTRY(widgets->url));
 
-	if (GTK_IS_COMBO_BOX (widgets->type) )
-		last_type = gtk_combo_box_get_active ( GTK_COMBO_BOX (widgets->type) );
+	if (GTK_IS_COMBO_BOX (widgets->type)) {
+		last_type = gtk_combo_box_get_active(GTK_COMBO_BOX (widgets->type));
+	}
 
 	po->input_file_type = NULL; // Default to gpx
-	if ( a_babel_file_list )
-		po->input_file_type = g_strdup( ((BabelFile*)g_list_nth_data (a_babel_file_list, last_type))->name );
+	if (a_babel_file_list) {
+		po->input_file_type = g_strdup(((BabelFile*)g_list_nth_data (a_babel_file_list, last_type))->name);
+	}
 
-	po->url = g_strdup( value );
+	po->url = g_strdup(value);
 
 	// Support .zip + bzip2 files directly
 	download_options->convert_file = a_try_decompress_file;
 	download_options->follow_location = 5;
 }
 
-static void datasource_url_cleanup ( void * data )
+static void datasource_url_cleanup(void * data)
 {
-	free( data );
+	free(data);
 }

@@ -23,13 +23,13 @@
 
 
 
-#include <stdbool.h>
 #include <stdint.h>
 
 #include "vikcoord.h"
 #include "mapcoord.h"
 #include "vikmapsource.h"
 #include "map_ids.h"
+
 
 
 
@@ -45,7 +45,7 @@ namespace SlavGPS {
 	public:
 
 		MapSourceTms();
-		MapSourceTms(MapTypeID map_type, const char * label_, const char * hostname_, const char * url_);
+		MapSourceTms(MapTypeID map_type, char const * label_, char const * hostname_, const char * url_);
 		~MapSourceTms();
 
 		bool is_direct_file_access();
@@ -55,9 +55,9 @@ namespace SlavGPS {
 		bool supports_download_only_new();
 
 		bool coord_to_tile(const VikCoord * src, double xzoom, double yzoom, TileInfo * dest);
-		void tile_to_center_coord(TileInfo *src, VikCoord *dest);
+		void tile_to_center_coord(TileInfo * src, VikCoord * dest);
 
-		char * get_server_path(TileInfo *src);
+		char * get_server_path(TileInfo * src);
 	};
 
 

@@ -42,56 +42,58 @@
 #include <unistd.h>
 #endif
 
-unsigned int util_get_number_of_cpus ()
+unsigned int util_get_number_of_cpus()
 {
 #if GLIB_CHECK_VERSION (2, 36, 0)
-  return g_get_num_processors();
+	return g_get_num_processors();
 #else
-  long nprocs = 1;
+	long nprocs = 1;
 #ifdef WINDOWS
-  SYSTEM_INFO info;
-  GetSystemInfo(&info);
-  nprocs = info.dwNumberOfProcessors;
+	SYSTEM_INFO info;
+	GetSystemInfo(&info);
+	nprocs = info.dwNumberOfProcessors;
 #else
 #ifdef _SC_NPROCESSORS_ONLN
-  nprocs = sysconf(_SC_NPROCESSORS_ONLN);
-  if (nprocs < 1)
-    nprocs = 1;
+	nprocs = sysconf(_SC_NPROCESSORS_ONLN);
+	if (nprocs < 1) {
+		nprocs = 1;
+	}
 #endif
 #endif
-  return nprocs;
+	return nprocs;
 #endif
 }
 
-char *uri_escape(char *str)
+char * uri_escape(char * str)
 {
-	char *esc_str = (char *) malloc(3*strlen(str));
-  char *dst = esc_str;
-  char *src;
+	char * esc_str = (char *) malloc(3 * strlen(str));
+	char * dst = esc_str;
+	char * src;
 
-  for (src = str; *src; src++) {
-    if (*src == ' ')
-     *dst++ = '+';
-    else if (g_ascii_isalnum(*src))
-     *dst++ = *src;
-    else {
-      g_sprintf(dst, "%%%02hhX", *src);
-      dst += 3;
-    }
-  }
-  *dst = '\0';
+	for (src = str; *src; src++) {
+		if (*src == ' ') {
+			*dst++ = '+';
+		} else if (g_ascii_isalnum(*src)) {
+			*dst++ = *src;
+		} else {
+			g_sprintf(dst, "%%%02hhX", *src);
+			dst += 3;
+		}
+	}
+	*dst = '\0';
 
-  return(esc_str);
+	return esc_str;
 }
 
 #if 0
 GList * str_array_to_glist(char* data[])
 {
-  GList *gl = NULL;
-  void * * p;
-  for (p = (void *)data; *p; p++)
-    gl = g_list_prepend(gl, *p);
-  return g_list_reverse(gl);
+	GList *gl = NULL;
+	void * * p;
+	for (p = (void *)data; *p; p++) {
+		gl = g_list_prepend(gl, *p);
+	}
+	return g_list_reverse(gl);
 }
 #endif
 
@@ -110,37 +112,40 @@ GList * str_array_to_glist(char* data[])
  *   key = "GPS.parameter"
  *   val = "42"
  */
-bool split_string_from_file_on_equals ( const char *buf, char **key, char **val )
+bool split_string_from_file_on_equals(char const * buf, char ** key, char ** val)
 {
-  // comments, special characters in viking file format
-  if ( buf == NULL || buf[0] == '\0' || buf[0] == '~' || buf[0] == '=' || buf[0] == '#' )
-    return false;
+	// comments, special characters in viking file format
+	if (buf == NULL || buf[0] == '\0' || buf[0] == '~' || buf[0] == '=' || buf[0] == '#') {
+		return false;
+	}
 
-  if ( ! strchr ( buf, '=' ) )
-    return false;
+	if (!strchr(buf, '=')) {
+		return false;
+	}
 
-  char **strv = g_strsplit ( buf, "=", 2 );
+	char ** strv = g_strsplit(buf, "=", 2);
 
-  int gi = 0;
-  char *str = strv[gi];
-  while ( str ) {
-	if ( gi == 0 )
-	  *key = g_strdup( str );
-	else
-	  *val = g_strdup( str );
-    gi++;
-    str = strv[gi];
-  }
+	int gi = 0;
+	char * str = strv[gi];
+	while (str) {
+		if (gi == 0) {
+			*key = g_strdup(str);
+		} else {
+			*val = g_strdup(str);
+		}
+		gi++;
+		str = strv[gi];
+	}
 
-  g_strfreev ( strv );
+	g_strfreev(strv);
 
-  // Remove newline from val and also any other whitespace
-  *key = g_strstrip ( *key );
-  *val = g_strstrip ( *val );
-  return true;
+	// Remove newline from val and also any other whitespace
+	*key = g_strstrip(*key);
+	*val = g_strstrip(*val);
+	return true;
 }
 
-static GSList* deletion_list = NULL;
+static GSList * deletion_list = NULL;
 
 /**
  * util_add_to_deletion_list:
@@ -149,9 +154,9 @@ static GSList* deletion_list = NULL;
  * Normally this is for files that get used asynchronously,
  *  so we don't know when it's time to delete them - other than at this program's end
  */
-void util_add_to_deletion_list ( const char* filename )
+void util_add_to_deletion_list(char const * filename)
 {
-	deletion_list = g_slist_append ( deletion_list, g_strdup(filename) );
+	deletion_list = g_slist_append(deletion_list, g_strdup(filename));
 }
 
 /**
@@ -160,14 +165,14 @@ void util_add_to_deletion_list ( const char* filename )
  * Delete all the files in the deletion list
  * This should only be called on program exit
  */
-void util_remove_all_in_deletion_list ( void )
+void util_remove_all_in_deletion_list(void)
 {
-	while ( deletion_list )
-	{
-		if ( g_remove ( (const char*)deletion_list->data ) )
-			fprintf(stderr, "WARNING: %s: Failed to remove %s\n", __FUNCTION__, (char*)deletion_list->data );
-		free( deletion_list->data );
-		deletion_list = g_slist_delete_link ( deletion_list, deletion_list );
+	while (deletion_list) {
+		if (g_remove((const char*)deletion_list->data)) {
+			fprintf(stderr, "WARNING: %s: Failed to remove %s\n", __FUNCTION__, (char*) deletion_list->data);
+		}
+		free(deletion_list->data);
+		deletion_list = g_slist_delete_link (deletion_list, deletion_list);
 	}
 }
 
@@ -182,19 +187,20 @@ void util_remove_all_in_deletion_list ( void )
  *
  *  @see @c g_strdelimit.
  **/
-char *util_str_remove_chars(char *string, const char *chars)
+char * util_str_remove_chars(char * string, char const * chars)
 {
-	const char *r;
-	char *w = string;
+	const char * r;
+	char * w = string;
 
 	g_return_val_if_fail(string, NULL);
-	if (G_UNLIKELY(EMPTY(chars)))
+	if (G_UNLIKELY(EMPTY(chars))) {
 		return string;
+	}
 
-	foreach_str(r, string)
-	{
-		if (!strchr(chars, *r))
+	foreach_str(r, string) {
+		if (!strchr(chars, *r)) {
 			*w++ = *r;
+		}
 	}
 	*w = 0x0;
 	return string;
@@ -207,14 +213,14 @@ char *util_str_remove_chars(char *string, const char *chars)
  * Only use this for 'occasional' downloaded temporary files that need interpretation,
  *  rather than large volume items such as Bing attributions.
  */
-int util_remove ( const char *filename )
+int util_remove(char const * filename)
 {
-	if ( vik_debug && vik_verbose ) {
-		fprintf(stderr, "WARNING: Not removing file: %s\n", filename );
+	if (vik_debug && vik_verbose) {
+		fprintf(stderr, "WARNING: Not removing file: %s\n", filename);
 		return 0;
+	} else {
+		return g_remove(filename);
 	}
-	else
-		return g_remove ( filename );
 }
 
 /**
@@ -225,46 +231,46 @@ int util_remove ( const char *filename )
  *
  * @return the filename of the buffer that was written
  */
-char* util_write_tmp_file_from_bytes ( const void *buffer, size_t count )
+char * util_write_tmp_file_from_bytes(const void * buffer, size_t count)
 {
-	GFileIOStream *gios;
-	GError *error = NULL;
-	char *tmpname = NULL;
+	GFileIOStream * gios;
+	GError * error = NULL;
+	char * tmpname = NULL;
 
 #if GLIB_CHECK_VERSION(2,32,0)
-	GFile *gf = g_file_new_tmp ( "vik-tmp.XXXXXX", &gios, &error );
-	tmpname = g_file_get_path (gf);
+	GFile * gf = g_file_new_tmp("vik-tmp.XXXXXX", &gios, &error);
+	tmpname = g_file_get_path(gf);
 #else
-	int fd = g_file_open_tmp ( "vik-tmp.XXXXXX", &tmpname, &error );
-	if ( error ) {
-		fprintf(stderr, "WARNING: %s\n", error->message );
-		g_error_free ( error );
+	int fd = g_file_open_tmp("vik-tmp.XXXXXX", &tmpname, &error);
+	if (error) {
+		fprintf(stderr, "WARNING: %s\n", error->message);
+		g_error_free(error);
 		return NULL;
 	}
-	gios = g_file_open_readwrite ( g_file_new_for_path (tmpname), NULL, &error );
-	if ( error ) {
-		fprintf(stderr, "WARNING: %s\n", error->message );
-		g_error_free ( error );
+	gios = g_file_open_readwrite(g_file_new_for_path (tmpname), NULL, &error);
+	if (error) {
+		fprintf(stderr, "WARNING: %s\n", error->message);
+		g_error_free(error);
 		return NULL;
 	}
 #endif
 
-	gios = g_file_open_readwrite ( g_file_new_for_path (tmpname), NULL, &error );
-	if ( error ) {
-		fprintf(stderr, "WARNING: %s\n", error->message );
-		g_error_free ( error );
+	gios = g_file_open_readwrite(g_file_new_for_path(tmpname), NULL, &error);
+	if (error) {
+		fprintf(stderr, "WARNING: %s\n", error->message);
+		g_error_free(error);
 		return NULL;
 	}
 
-	GOutputStream *gos = g_io_stream_get_output_stream ( G_IO_STREAM(gios) );
-	if ( g_output_stream_write ( gos, buffer, count, NULL, &error ) < 0 ) {
-		fprintf(stderr, "CRITICAL: Couldn't write tmp %s file due to %s\n", tmpname, error->message );
+	GOutputStream * gos = g_io_stream_get_output_stream(G_IO_STREAM(gios));
+	if (g_output_stream_write(gos, buffer, count, NULL, &error) < 0) {
+		fprintf(stderr, "CRITICAL: Couldn't write tmp %s file due to %s\n", tmpname, error->message);
 		free(tmpname);
 		tmpname = NULL;
 	}
 
-	g_output_stream_close ( gos, NULL, &error );
-	g_object_unref ( gios );
+	g_output_stream_close(gos, NULL, &error);
+	g_object_unref(gios);
 
 	return tmpname;
 }

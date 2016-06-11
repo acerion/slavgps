@@ -1,5 +1,3 @@
-
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
@@ -184,4 +182,3 @@ void a_babel_ui_modes_get ( GtkWidget *container, bool *tracks, bool *routes, bo
   child = (GtkWidget *) g_list_nth_data ( children, 2 );
   *waypoints = gtk_toggle_button_get_active ( GTK_TOGGLE_BUTTON(child) );
 }
-

@@ -22,8 +22,8 @@
 #define _VIKING_EXT_TOOL_H
 
 #include <glib.h>
-#include <stdbool.h>
-#include <stdint.h>
+//#include <stdbool.h>
+//#include <stdint.h>
 
 
 #include "vikwindow.h"
@@ -45,23 +45,22 @@ extern "C" {
 typedef struct _VikExtTool VikExtTool;
 typedef struct _VikExtToolClass VikExtToolClass;
 
-struct _VikExtToolClass
-{
-  GObjectClass object_class;
-  char *(* get_label) (VikExtTool *self);
-  void (* open) (VikExtTool *self, VikWindow *vwindow);
-  void (* open_at_position) (VikExtTool *self, VikWindow *vwindow, VikCoord *vc);
+struct _VikExtToolClass {
+	GObjectClass object_class;
+	char *(* get_label) (VikExtTool * self);
+	void (* open) (VikExtTool *self, VikWindow * vwindow);
+	void (* open_at_position) (VikExtTool * self, VikWindow * vwindow, VikCoord * vc);
 };
 
-GType vik_ext_tool_get_type ();
+GType vik_ext_tool_get_type();
 
 struct _VikExtTool {
-  GObject obj;
+	GObject obj;
 };
 
-char *vik_ext_tool_get_label ( VikExtTool *self );
-void vik_ext_tool_open ( VikExtTool *self, VikWindow *vwindow );
-void vik_ext_tool_open_at_position ( VikExtTool *self, VikWindow *vwindow, VikCoord *vc );
+char * vik_ext_tool_get_label(VikExtTool * self);
+void vik_ext_tool_open(VikExtTool * self, VikWindow * vwindow);
+void vik_ext_tool_open_at_position(VikExtTool * self, VikWindow * vwindow, VikCoord * vc);
 
 #ifdef __cplusplus
 }

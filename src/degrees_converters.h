@@ -22,23 +22,22 @@
 #ifndef _VIKING_CONVERTER_H
 #define _VIKING_CONVERTER_H
 
-#include <glib.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 
-char *convert_lat_dec_to_ddd(double lat);
-char *convert_lon_dec_to_ddd(double lon);
+char * convert_lat_dec_to_ddd(double lat);
+char * convert_lon_dec_to_ddd(double lon);
 
-char *convert_lat_dec_to_dmm(double lat);
-char *convert_lon_dec_to_dmm(double lon);
+char * convert_lat_dec_to_dmm(double lat);
+char * convert_lon_dec_to_dmm(double lon);
 
-char *convert_lat_dec_to_dms(double lat);
-char *convert_lon_dec_to_dms(double lon);
+char * convert_lat_dec_to_dms(double lat);
+char * convert_lon_dec_to_dms(double lon);
 
-double convert_dms_to_dec(const char *dms);
+double convert_dms_to_dec(char const * dms);
 
 #ifdef __cplusplus
 }

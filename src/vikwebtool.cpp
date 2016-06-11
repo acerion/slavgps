@@ -32,74 +32,75 @@
 
 #include "ui_util.h"
 
-static GObjectClass *parent_class;
+static GObjectClass * parent_class;
 
-static void webtool_finalize ( GObject *gob );
+static void webtool_finalize(GObject * gob);
 
-static void webtool_open ( VikExtTool *self, VikWindow *vwindow );
-static void webtool_open_at_position ( VikExtTool *self, VikWindow *vwindow, VikCoord *vc );
+static void webtool_open(VikExtTool * self, VikWindow * vwindow);
+static void webtool_open_at_position(VikExtTool * self, VikWindow * vwindow, VikCoord * vc);
 
 G_DEFINE_ABSTRACT_TYPE (VikWebtool, vik_webtool, VIK_EXT_TOOL_TYPE)
 
-static void vik_webtool_class_init ( VikWebtoolClass *klass )
+static void vik_webtool_class_init(VikWebtoolClass * klass)
 {
-  GObjectClass *object_class;
-  VikExtToolClass *ext_tool_class;
+	GObjectClass *object_class;
+	VikExtToolClass *ext_tool_class;
 
-  object_class = G_OBJECT_CLASS (klass);
+	object_class = G_OBJECT_CLASS (klass);
 
-  object_class->finalize = webtool_finalize;
+	object_class->finalize = webtool_finalize;
 
-  parent_class = (GObjectClass *) g_type_class_peek_parent (klass);
+	parent_class = (GObjectClass *) g_type_class_peek_parent(klass);
 
-  ext_tool_class = VIK_EXT_TOOL_CLASS ( klass );
-  ext_tool_class->open = webtool_open;
-  ext_tool_class->open_at_position = webtool_open_at_position;
+	ext_tool_class = VIK_EXT_TOOL_CLASS(klass);
+	ext_tool_class->open = webtool_open;
+	ext_tool_class->open_at_position = webtool_open_at_position;
 }
 
-VikWebtool *vik_webtool_new ()
+VikWebtool * vik_webtool_new()
 {
-  return VIK_WEBTOOL ( g_object_new ( VIK_WEBTOOL_TYPE, NULL ) );
+	return VIK_WEBTOOL (g_object_new(VIK_WEBTOOL_TYPE, NULL));
 }
 
-static void vik_webtool_init ( VikWebtool *vlp )
+static void vik_webtool_init(VikWebtool * vlp)
 {
-  // NOTHING
+	// NOTHING
 }
 
-static void webtool_finalize ( GObject *gob )
+static void webtool_finalize(GObject * gob)
 {
-  // VikWebtool *w = VIK_WEBTOOL ( gob );
-  G_OBJECT_CLASS(parent_class)->finalize(gob);
+	// VikWebtool * w = VIK_WEBTOOL(gob);
+	G_OBJECT_CLASS(parent_class)->finalize(gob);
 }
 
-static void webtool_open ( VikExtTool *self, VikWindow *vwindow )
+static void webtool_open(VikExtTool * self, VikWindow * vwindow)
 {
-  VikWebtool *vwd = VIK_WEBTOOL ( self );
-  char *url = vik_webtool_get_url ( vwd, vwindow );
-  open_url ( GTK_WINDOW(vwindow), url );
-  free( url );
+	VikWebtool * vwd = VIK_WEBTOOL(self);
+	char * url = vik_webtool_get_url(vwd, vwindow);
+	open_url(GTK_WINDOW(vwindow), url);
+	free(url);
 }
 
-static void webtool_open_at_position ( VikExtTool *self, VikWindow *vwindow, VikCoord *vc )
+static void webtool_open_at_position(VikExtTool * self, VikWindow * vwindow, VikCoord * vc)
 {
-  VikWebtool *vwd = VIK_WEBTOOL ( self );
-  char *url = vik_webtool_get_url_at_position ( vwd, vwindow, vc );
-  if ( url ) {
-    open_url ( GTK_WINDOW(vwindow), url );
-    free( url );
-  }
+	VikWebtool * vwd = VIK_WEBTOOL(self);
+	char * url = vik_webtool_get_url_at_position(vwd, vwindow, vc);
+	if (url) {
+		open_url(GTK_WINDOW(vwindow), url);
+		free(url);
+	}
 }
 
-char *vik_webtool_get_url ( VikWebtool *self, VikWindow *vwindow )
+char * vik_webtool_get_url(VikWebtool * self, VikWindow * vwindow)
 {
-  return VIK_WEBTOOL_GET_CLASS( self )->get_url( self, vwindow );
+	return VIK_WEBTOOL_GET_CLASS( self )->get_url(self, vwindow);
 }
 
-char *vik_webtool_get_url_at_position ( VikWebtool *self, VikWindow *vwindow, VikCoord *vc )
+char * vik_webtool_get_url_at_position(VikWebtool * self, VikWindow * vwindow, VikCoord * vc)
 {
-  if ( VIK_WEBTOOL_GET_CLASS( self )->get_url_at_position )
-    return VIK_WEBTOOL_GET_CLASS( self )->get_url_at_position( self, vwindow, vc );
-  else
-    return NULL;
+	if (VIK_WEBTOOL_GET_CLASS( self )->get_url_at_position) {
+		return VIK_WEBTOOL_GET_CLASS( self )->get_url_at_position(self, vwindow, vc);
+	} else {
+		return NULL;
+	}
 }

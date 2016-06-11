@@ -26,7 +26,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "viking.h"
+//#include "viking.h"
 #include "vikaggregatelayer.h"
 
 #ifdef __cplusplus

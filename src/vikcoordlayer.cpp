@@ -45,18 +45,23 @@ static VikLayerParamScale param_scales[] = {
 
 static VikLayerParamData color_default(void) {
 	VikLayerParamData data; gdk_color_parse("red", &data.c); return data;
-  // or: return VIK_LPD_COLOR (0, 65535, 0, 0);
+	// or: return VIK_LPD_COLOR (0, 65535, 0, 0);
 }
 static VikLayerParamData min_inc_default(void) { return VIK_LPD_DOUBLE(1.0); }
 static VikLayerParamData line_thickness_default(void) { return VIK_LPD_UINT(3); }
 
 static VikLayerParam coord_layer_params[] = {
-  { VIK_LAYER_COORD, "color", VIK_LAYER_PARAM_COLOR, VIK_LAYER_GROUP_NONE, N_("Color:"), VIK_LAYER_WIDGET_COLOR, NULL, NULL, NULL, color_default, NULL, NULL },
-  { VIK_LAYER_COORD, "min_inc", VIK_LAYER_PARAM_DOUBLE, VIK_LAYER_GROUP_NONE, N_("Minutes Width:"), VIK_LAYER_WIDGET_SPINBUTTON, &param_scales[0], NULL, NULL, min_inc_default, NULL, NULL },
-  { VIK_LAYER_COORD, "line_thickness", VIK_LAYER_PARAM_UINT, VIK_LAYER_GROUP_NONE, N_("Line Thickness:"), VIK_LAYER_WIDGET_SPINBUTTON, &param_scales[1], NULL, NULL, line_thickness_default, NULL, NULL },
+	{ VIK_LAYER_COORD, "color",          VIK_LAYER_PARAM_COLOR,  VIK_LAYER_GROUP_NONE, N_("Color:"),          VIK_LAYER_WIDGET_COLOR,      NULL,             NULL, NULL, color_default,          NULL, NULL },
+	{ VIK_LAYER_COORD, "min_inc",        VIK_LAYER_PARAM_DOUBLE, VIK_LAYER_GROUP_NONE, N_("Minutes Width:"),  VIK_LAYER_WIDGET_SPINBUTTON, &param_scales[0], NULL, NULL, min_inc_default,        NULL, NULL },
+	{ VIK_LAYER_COORD, "line_thickness", VIK_LAYER_PARAM_UINT,   VIK_LAYER_GROUP_NONE, N_("Line Thickness:"), VIK_LAYER_WIDGET_SPINBUTTON, &param_scales[1], NULL, NULL, line_thickness_default, NULL, NULL },
 };
 
-enum { PARAM_COLOR = 0, PARAM_MIN_INC, PARAM_LINE_THICKNESS, NUM_PARAMS };
+enum {
+	PARAM_COLOR = 0,
+	PARAM_MIN_INC,
+	PARAM_LINE_THICKNESS,
+	NUM_PARAMS
+};
 
 VikLayerInterface vik_coord_layer_interface = {
 	"Coord",
@@ -103,15 +108,15 @@ GType vik_coord_layer_get_type()
 	return vcl_type;
 }
 
-void LayerCoord::marshall(uint8_t **data, int *len)
+void LayerCoord::marshall(uint8_t ** data, int * len)
 {
-	VikLayer *vcl = this->vl;
+	VikLayer * vcl = this->vl;
 	vik_layer_marshall_params(vcl, data, len);
 }
 
-static VikLayer * coord_layer_unmarshall(uint8_t *data, int len, Viewport * viewport)
+static VikLayer * coord_layer_unmarshall(uint8_t * data, int len, Viewport * viewport)
 {
-	VikLayer *rv = coord_layer_new(viewport);
+	VikLayer * rv = coord_layer_new(viewport);
 	vik_layer_unmarshall_params((VikLayer *) rv, data, len, viewport);
 
 	LayerCoord * layer = (LayerCoord *) ((VikLayer * ) rv)->layer;

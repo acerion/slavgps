@@ -35,25 +35,25 @@
 
 typedef struct _List {
 	struct _List *next;
-	char *key;
+	char * key;
 } List;
 
 /* a circular linked list, a pointer to the tail, and the tail points to the head */
 /* this is so we can free the last */
-static List *queue_tail = NULL;
+static List * queue_tail = NULL;
 static int queue_count = 0;
 
 static uint32_t cache_size = 0;
 static uint32_t max_cache_size = VIK_CONFIG_MAPCACHE_SIZE * 1024 * 1024;
 
-static GHashTable *cache = NULL;
+static GHashTable * cache = NULL;
 
 typedef struct {
-	GdkPixbuf *pixbuf;
+	GdkPixbuf * pixbuf;
 	mapcache_extra_t extra;
 } cache_item_t;
 
-static GMutex *mc_mutex = NULL;
+static GMutex * mc_mutex = NULL;
 
 #define HASHKEY_FORMAT_STRING "%d-%d-%d-%d-%d-%d-%d-%.3f-%.3f"
 #define HASHKEY_FORMAT_STRING_NOSHRINK_NOR_ALPHA "%d-%d-%d-%d-%d-%d-"
@@ -68,7 +68,7 @@ static VikLayerParam prefs[] = {
 	{ VIK_LAYER_NUM_TYPES, VIKING_PREFERENCES_NAMESPACE "mapcache_size", VIK_LAYER_PARAM_UINT, VIK_LAYER_GROUP_NONE, N_("Map cache memory size (MB):"), VIK_LAYER_WIDGET_HSCALE, params_scales, NULL, NULL, NULL, NULL, NULL },
 };
 
-static void cache_item_free(cache_item_t *ci)
+static void cache_item_free(cache_item_t * ci)
 {
 	g_object_unref(ci->pixbuf);
 	free(ci);
@@ -104,7 +104,7 @@ static void cache_add(char *key, GdkPixbuf *pixbuf, mapcache_extra_t extra)
 	}
 }
 
-static void cache_remove(const char *key)
+static void cache_remove(char const * key)
 {
 	cache_item_t * ci = (cache_item_t *) g_hash_table_lookup(cache, key);
 	if (ci && ci->pixbuf) {
@@ -153,7 +153,7 @@ static void list_add_entry(char * key)
  * Function increments reference counter of pixbuf.
  * Caller may (and should) decrease it's reference.
  */
-void a_mapcache_add(GdkPixbuf * pixbuf, mapcache_extra_t extra, TileInfo * mapcoord, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const char * name)
+void a_mapcache_add(GdkPixbuf * pixbuf, mapcache_extra_t extra, TileInfo * mapcoord, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, char const * name)
 {
 	if (! GDK_IS_PIXBUF(pixbuf)) {
 		fprintf(stderr, "DEBUG: Not caching corrupt pixbuf for maptype %d at %d %d %d %d\n", map_type, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale);
@@ -199,7 +199,7 @@ void a_mapcache_add(GdkPixbuf * pixbuf, mapcache_extra_t extra, TileInfo * mapco
  * Function increases reference counter of pixels buffer in behalf of caller.
  * Caller have to decrease references counter, when buffer is no longer needed.
  */
-GdkPixbuf * a_mapcache_get(TileInfo * mapcoord, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const char * name)
+GdkPixbuf * a_mapcache_get(TileInfo * mapcoord, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, char const * name)
 {
 	static char key[MC_KEY_SIZE];
 	unsigned int nn = name ? g_str_hash(name) : 0;
@@ -216,7 +216,7 @@ GdkPixbuf * a_mapcache_get(TileInfo * mapcoord, MapTypeID map_type, uint8_t alph
 	}
 }
 
-mapcache_extra_t a_mapcache_get_extra(TileInfo * mapcoord, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, const char * name)
+mapcache_extra_t a_mapcache_get_extra(TileInfo * mapcoord, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, char const * name)
 {
 	static char key[MC_KEY_SIZE];
 	unsigned int nn = name ? g_str_hash(name) : 0;
@@ -232,7 +232,7 @@ mapcache_extra_t a_mapcache_get_extra(TileInfo * mapcoord, MapTypeID map_type, u
 /**
  * Common function to remove cache items for keys starting with the specified string
  */
-static void flush_matching(char *str)
+static void flush_matching(char * str)
 {
 	g_mutex_lock(mc_mutex);
 
@@ -279,7 +279,7 @@ static void flush_matching(char *str)
 /**
  * Appears this is only used when redownloading tiles (i.e. to invalidate old images)
  */
-void a_mapcache_remove_all_shrinkfactors(TileInfo * mapcoord, MapTypeID map_type, const char* name)
+void a_mapcache_remove_all_shrinkfactors(TileInfo * mapcoord, MapTypeID map_type, char const * name)
 {
 	char key[MC_KEY_SIZE];
 	unsigned int nn = name ? g_str_hash(name) : 0;
@@ -292,8 +292,8 @@ void a_mapcache_flush()
 	// Everything happens within the mutex lock section
 	g_mutex_lock(mc_mutex);
 
-	List *loop = queue_tail;
-	List *tmp;
+	List * loop = queue_tail;
+	List * tmp;
 
 	while (loop) {
 		tmp = loop->next;

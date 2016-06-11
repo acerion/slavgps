@@ -101,7 +101,7 @@ MapSourceSlippy & MapSourceSlippy::operator=(MapSourceSlippy map)
         return *this;
 }
 
-MapSourceSlippy::MapSourceSlippy(MapTypeID map_type_, const char * label_, const char * hostname_, const char * path_format_)
+MapSourceSlippy::MapSourceSlippy(MapTypeID map_type_, char const * label_, char const * hostname_, char const * path_format_)
 {
 	map_type = map_type_;
 	fprintf(stderr, "++++++++++ called VikSlippy constructor with id %u / %u\n", map_type_, map_type);

@@ -22,8 +22,7 @@
 #ifndef _MAP_UTILS_H
 #define _MAP_UTILS_H
 
-#include <glib.h>
-#include <stdbool.h>
+//#include <glib.h>
 #include <stdint.h>
 
 #include "mapcoord.h"
@@ -40,15 +39,15 @@ extern "C" {
 #define VIK_GZ(x) ((1<<(x)))
 // Not sure what GZ stands for probably Google Zoom
 
-int map_utils_mpp_to_scale ( double mpp );
+int map_utils_mpp_to_scale(double mpp);
 
-uint8_t map_utils_mpp_to_zoom_level ( double mpp );
+uint8_t map_utils_mpp_to_zoom_level(double mpp);
 
-bool map_utils_vikcoord_to_iTMS ( const VikCoord *src, double xzoom, double yzoom, TileInfo * dest);
+bool map_utils_vikcoord_to_iTMS(const VikCoord * src, double xzoom, double yzoom, TileInfo * dest);
 
-void map_utils_iTMS_to_center_vikcoord ( const TileInfo *src, VikCoord *dest );
+void map_utils_iTMS_to_center_vikcoord(const TileInfo * src, VikCoord * dest);
 
-void map_utils_iTMS_to_vikcoord ( const TileInfo *src, VikCoord *dest );
+void map_utils_iTMS_to_vikcoord(const TileInfo * src, VikCoord * dest);
 
 #ifdef __cplusplus
 }
