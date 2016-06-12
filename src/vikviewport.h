@@ -259,6 +259,8 @@ namespace SlavGPS {
 
 
 		void * vvp; /* Related VikViewport. */
+
+		char type_string[30];
 	};
 
 

@@ -270,6 +270,8 @@ Viewport::Viewport()
 
 	// Initiate center history
 	update_centers();
+
+	strncpy(this->type_string, "Le Viewport", (sizeof (this->type_string)) - 1);
 }
 
 /* returns pointer to internal static storage, changes next time function called, use quickly */
