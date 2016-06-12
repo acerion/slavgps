@@ -71,7 +71,7 @@ void init_drawing_params(DrawingParams * dp, LayerTRW * trw, Viewport * viewport
 	dp->trw = trw;
 	dp->viewport = viewport;
 	dp->highlight = highlight;
-	dp->vw = (VikWindow *) VIK_GTK_WINDOW_FROM_LAYER(dp->trw->vl);
+	dp->vw = vik_window_from_layer(dp->trw);
 	dp->xmpp = viewport->get_xmpp();
 	dp->ympp = viewport->get_ympp();
 	dp->width = viewport->get_width();

@@ -1187,7 +1187,7 @@ void Window::draw_status()
 
 void vik_window_set_redraw_trigger(Layer * layer)
 {
-	VikWindow * vw = VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(layer->vl));
+	VikWindow * vw = vik_window_from_layer(layer);
 	if (NULL != vw) {
 		vw->trigger = layer->vl;
 	}
@@ -5109,4 +5109,13 @@ Window::Window()
 	this->selected_waypoints = NULL;
 	this->selected_waypoint = NULL;
 	this->containing_trw = NULL;
+}
+
+
+
+
+
+VikWindow * vik_window_from_layer(Layer * layer)
+{
+	return (VikWindow *) GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(layer->vt)));
 }

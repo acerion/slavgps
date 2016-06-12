@@ -113,7 +113,7 @@ static bool idle_draw ( VikLayer *vl )
 void Layer::emit_update()
 {
 	if (this->visible && this->realized) {
-		GThread * thread = vik_window_get_thread(VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(this->vl)));
+		GThread * thread = vik_window_get_thread(vik_window_from_layer(this));
 		if (!thread) {
 			// Do nothing
 			return;
@@ -498,7 +498,7 @@ bool vik_layer_selected(VikLayer * l, int subtype, void * sublayer, int type, vo
 	if (result) {
 		return result;
 	} else {
-		return vik_window_clear_highlight((VikWindow *) VIK_GTK_WINDOW_FROM_LAYER(l));
+		return vik_window_clear_highlight(vik_window_from_layer(layer));
 	}
 }
 

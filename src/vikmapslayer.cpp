@@ -1192,9 +1192,9 @@ static GdkPixbuf * get_pixbuf_from_file(VikLayer * vml, TileInfo * mapcoord, cha
 		if (gx) {
 			if (gx->domain != GDK_PIXBUF_ERROR || gx->code != GDK_PIXBUF_ERROR_CORRUPT_IMAGE) {
 				// Report a warning
-				if (IS_VIK_WINDOW ((VikWindow *) VIK_GTK_WINDOW_FROM_LAYER(vml))) {
+				if (IS_VIK_WINDOW (vik_window_from_layer((Layer *) vml->layer))) {
 					char* msg = g_strdup_printf(_("Couldn't open image file: %s"), gx->message);
-					vik_window_statusbar_update((VikWindow *) VIK_GTK_WINDOW_FROM_LAYER(vml), msg, VIK_STATUSBAR_INFO);
+					vik_window_statusbar_update(vik_window_from_layer((Layer *) vml->layer), msg, VIK_STATUSBAR_INFO);
 					free(msg);
 				}
 			}
@@ -1331,9 +1331,9 @@ void LayerMaps::draw_section(Viewport * viewport, VikCoord *ul, VikCoord *br)
 				existence_only = true;
 			} else {
 				// Report the reason for not drawing
-				if (IS_VIK_WINDOW ((VikWindow*)VIK_GTK_WINDOW_FROM_LAYER(this->vl))) {
+				if (IS_VIK_WINDOW (vik_window_from_layer(this))) {
 					char* msg = g_strdup_printf(_("Cowardly refusing to draw tiles or existence of tiles beyond %d zoom out factor"), (int)(1.0/REAL_MIN_SHRINKFACTOR));
-					vik_window_statusbar_update((VikWindow*)VIK_GTK_WINDOW_FROM_LAYER(this->vl), msg, VIK_STATUSBAR_INFO);
+					vik_window_statusbar_update(vik_window_from_layer(this), msg, VIK_STATUSBAR_INFO);
 					free(msg);
 				}
 				return;
@@ -1685,13 +1685,13 @@ static int map_download_thread(MapDownloadInfo *mdi, void * threaddata)
 						{
 							// TODO: ?? count up the number of download errors somehow...
 							char* msg = g_strdup_printf("%s: %s", mdi->layer->get_map_label(), _("Failed to download tile"));
-							vik_window_statusbar_update((VikWindow*)VIK_GTK_WINDOW_FROM_LAYER(mdi->layer->vl), msg, VIK_STATUSBAR_INFO);
+							vik_window_statusbar_update(vik_window_from_layer(mdi->layer), msg, VIK_STATUSBAR_INFO);
 							free(msg);
 							break;
 						}
 					case DOWNLOAD_FILE_WRITE_ERROR: {
 						char* msg = g_strdup_printf("%s: %s", mdi->layer->get_map_label(), _("Unable to save tile"));
-						vik_window_statusbar_update((VikWindow*)VIK_GTK_WINDOW_FROM_LAYER(mdi->layer->vl), msg, VIK_STATUSBAR_INFO);
+						vik_window_statusbar_update(vik_window_from_layer(mdi->layer), msg, VIK_STATUSBAR_INFO);
 						free(msg);
 						break;
 					}

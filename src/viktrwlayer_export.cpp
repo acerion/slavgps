@@ -68,10 +68,10 @@ void vik_trw_layer_export(LayerTRW * layer, char const * title, char const * def
 			last_folder_uri = gtk_file_chooser_get_current_folder_uri(GTK_FILE_CHOOSER(file_selector));
 
 			gtk_widget_hide(file_selector);
-			vik_window_set_busy_cursor(VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(layer->vl)));
+			vik_window_set_busy_cursor(vik_window_from_layer(layer));
 			// Don't Export invisible items - unless requested on this specific track
 			failed = ! a_file_export(layer, fn, file_type, trk, trk ? true : false);
-			vik_window_clear_busy_cursor(VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(layer->vl)));
+			vik_window_clear_busy_cursor(vik_window_from_layer(layer));
 			break;
 		}
 	}
@@ -182,11 +182,11 @@ void vik_trw_layer_export_gpsbabel(LayerTRW * trw, char const *title, char const
 				a_dialog_error_msg(VIK_GTK_WINDOW_FROM_LAYER(trw->vl), _("You did not select a valid file format."));
 			} else {
 				gtk_widget_hide(file_selector);
-				vik_window_set_busy_cursor(VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(trw->vl)));
+				vik_window_set_busy_cursor(vik_window_from_layer(trw));
 				bool tracks, routes, waypoints;
 				a_babel_ui_modes_get(babel_modes, &tracks, &routes, &waypoints);
 				failed = ! a_file_export_babel(trw, fn, active->name, tracks, routes, waypoints);
-				vik_window_clear_busy_cursor(VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(trw->vl)));
+				vik_window_clear_busy_cursor(vik_window_from_layer(trw));
 				break;
 			}
 		}

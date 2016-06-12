@@ -822,13 +822,12 @@ GdkPixbuf * LayerMapnik::get_pixbuf(TileInfo * ulm, TileInfo * brm)
  */
 void LayerMapnik::draw(Viewport * viewport)
 {
-	VikLayer * vml = this->vl;
 	if (!this->loaded) {
 		return;
 	}
 
 	if (viewport->get_drawmode() != VIK_VIEWPORT_DRAWMODE_MERCATOR) {
-		vik_statusbar_set_message(vik_window_get_statusbar (VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(vml))),
+		vik_statusbar_set_message(vik_window_get_statusbar (vik_window_from_layer(this)),
 		                            VIK_STATUSBAR_INFO, _("Mapnik Rendering must be in Mercator mode"));
 		return;
 	}

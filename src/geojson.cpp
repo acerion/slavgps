@@ -71,9 +71,9 @@ bool a_geojson_write_file(LayerTRW * trw, FILE * ff)
 	// TODO: monitor stderr?
 	if (!g_spawn_async_with_pipes(NULL, argv, NULL, (GSpawnFlags) (G_SPAWN_SEARCH_PATH | G_SPAWN_DO_NOT_REAP_CHILD), NULL, NULL, &pid, NULL, &mystdout, NULL, &error)) {
 
-		if (IS_VIK_WINDOW ((VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(trw->vl))) {
+		if (IS_VIK_WINDOW (vik_window_from_layer(trw))) {
 			char* msg = g_strdup_printf(_("%s command failed: %s"), argv[0], error->message);
-			vik_window_statusbar_update((VikWindow*)VIK_GTK_WINDOW_FROM_LAYER(trw->vl), msg, VIK_STATUSBAR_INFO);
+			vik_window_statusbar_update(vik_window_from_layer(trw), msg, VIK_STATUSBAR_INFO);
 			free(msg);
 		} else {
 			fprintf(stderr, "WARNING: Async command failed: %s\n", error->message);

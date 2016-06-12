@@ -1296,7 +1296,7 @@ int vik_gps_comm(LayerTRW * layer,
 		// NB this may only be a Garmin device restriction (and may be not every Garmin device either...)
 		// Thus this maintains the older code in built restriction
 		if (!sess->trw->uniquify(panel)) {
-			vik_statusbar_set_message(vik_window_get_statusbar(VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(sess->trw->vl))), VIK_STATUSBAR_INFO,
+			vik_statusbar_set_message(vik_window_get_statusbar(vik_window_from_layer(sess->trw)), VIK_STATUSBAR_INFO,
 						    _("Warning - GPS Upload items may overwrite each other"));
 		}
 	}
@@ -1401,7 +1401,7 @@ static void gps_upload_cb(gps_layer_data_t * data)
 	LayersPanel * panel = data->panel;
 	LayerGPS * layer = data->layer;
 
-	VikWindow * vw = VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(layer->vl));
+	VikWindow * vw = vik_window_from_layer(layer);
 	Viewport * viewport = vik_window_viewport(vw);
 	LayerTRW * trw = layer->trw_children[TRW_UPLOAD];
 
@@ -1423,7 +1423,7 @@ static void gps_download_cb(gps_layer_data_t * data)
 {
 	LayerGPS * layer = data->layer;
 
-	VikWindow * vw = VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(layer->vl));
+	VikWindow * vw = vik_window_from_layer(layer);
 	Viewport * viewport = vik_window_viewport(vw);
 	LayerTRW * trw = layer->trw_children[TRW_DOWNLOAD];
 
@@ -1693,7 +1693,7 @@ static void gpsd_raw_hook(VglGpsd *vgpsd, char *data)
 	    !isnan(vgpsd->gpsd.fix.latitude) &&
 	    !isnan(vgpsd->gpsd.fix.longitude)) {
 
-		VikWindow *vw = VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(layer->vl));
+		VikWindow *vw = vik_window_from_layer(layer);
 		Viewport * viewport = vik_window_viewport(vw);
 		layer->realtime_fix.fix = vgpsd->gpsd.fix;
 		layer->realtime_fix.satellites_used = vgpsd->gpsd.satellites_used;

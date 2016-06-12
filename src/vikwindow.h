@@ -112,7 +112,7 @@ void vik_window_clear_busy_cursor(VikWindow * vw);
 #endif
 
 #define VIK_WINDOW_FROM_WIDGET(x) VIK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(x)))
-
+VikWindow * vik_window_from_layer(SlavGPS::Layer * layer);
 
 
 typedef enum {

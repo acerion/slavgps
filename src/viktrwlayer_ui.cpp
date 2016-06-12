@@ -365,7 +365,7 @@ void LayerTRW::add_menu_items(GtkMenu * menu, void * panel_)
 	gtk_widget_set_tooltip_text (item, _("Import File With GPS_Babel..."));
 	gtk_widget_show ( item );
 
-	vik_ext_tool_datasources_add_menu_items_to_menu ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(this->vl)), GTK_MENU (acquire_submenu) );
+	vik_ext_tool_datasources_add_menu_items_to_menu ( vik_window_from_layer(this), GTK_MENU (acquire_submenu) );
 
 	GtkWidget *upload_submenu = gtk_menu_new ();
 	item = gtk_image_menu_item_new_with_mnemonic ( _("_Upload") );
@@ -431,14 +431,14 @@ void LayerTRW::add_menu_items(GtkMenu * menu, void * panel_)
 	gtk_menu_shell_append ( GTK_MENU_SHELL(delete_submenu), item );
 	gtk_widget_show ( item );
 
-	item = a_acquire_trwlayer_menu ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(this->vl)), panel,
+	item = a_acquire_trwlayer_menu ( vik_window_from_layer(this), panel,
 					 panel->get_viewport(), this);
 	if ( item ) {
 		gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
 		gtk_widget_show ( item );
 	}
 
-	item = a_acquire_trwlayer_track_menu ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(this->vl)), panel,
+	item = a_acquire_trwlayer_track_menu ( vik_window_from_layer(this), panel,
 					       panel->get_viewport(), this);
 	if ( item ) {
 		gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
@@ -461,7 +461,7 @@ void LayerTRW::add_menu_items(GtkMenu * menu, void * panel_)
 
 	GtkWidget *external_submenu = create_external_submenu ( menu );
 	// TODO: Should use selected layer's centre - rather than implicitly using the current viewport
-	vik_ext_tools_add_menu_items_to_menu ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(this->vl)), GTK_MENU (external_submenu), NULL );
+	vik_ext_tools_add_menu_items_to_menu ( vik_window_from_layer(this), GTK_MENU (external_submenu), NULL );
 }
 
 
@@ -1253,12 +1253,12 @@ bool LayerTRW::sublayer_add_menu_items(GtkMenu * menu, void * panel, int subtype
       vc = &(((Trackpoint *) this->current_tpl->data)->coord);
     else
       vc = &(this->current_wp->coord);
-    vik_ext_tools_add_menu_items_to_menu ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(this->vl)), GTK_MENU (external_submenu), vc );
+    vik_ext_tools_add_menu_items_to_menu ( vik_window_from_layer(this), GTK_MENU (external_submenu), vc );
   }
   else {
     // Otherwise for the selected sublayer
     // TODO: Should use selected items centre - rather than implicitly using the current viewport
-    vik_ext_tools_add_menu_items_to_menu ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(this->vl)), GTK_MENU (external_submenu), NULL );
+	  vik_ext_tools_add_menu_items_to_menu ( vik_window_from_layer(this), GTK_MENU (external_submenu), NULL );
   }
 
 
@@ -1298,7 +1298,7 @@ bool LayerTRW::sublayer_add_menu_items(GtkMenu * menu, void * panel, int subtype
     /* ATM This function is only available via the layers panel, due to needing a panel */
     if ( panel ) {
       sg_uid_t uid = (sg_uid_t) ((long) sublayer);
-      item = a_acquire_track_menu ( VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(this->vl)), (LayersPanel *) panel,
+      item = a_acquire_track_menu ( vik_window_from_layer(this), (LayersPanel *) panel,
                                     ((LayersPanel *) panel)->get_viewport(),
                                     this->tracks.at(uid));
       if ( item ) {

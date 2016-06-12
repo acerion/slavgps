@@ -95,7 +95,7 @@ bool a_jpg_magic_check(char const * filename)
 bool a_jpg_load_file(LayerAggregate * top, char const * filename, Viewport * viewport)
 {
 	bool auto_zoom = true;
-	VikWindow * vw = (VikWindow *) (VIK_GTK_WINDOW_FROM_LAYER(top->vl));
+	VikWindow * vw = vik_window_from_layer(top);
 	VikLayersPanel * vlp = vik_window_layers_panel(vw);
 	// Auto load into TrackWaypoint layer if one is selected
 	Layer * trw = vlp->panel_ref->get_selected();
