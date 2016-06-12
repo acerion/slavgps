@@ -558,7 +558,7 @@ char *vu_get_canonical_filename ( VikLayer *vl, const char *filename )
   if ( g_path_is_absolute ( filename ) )
     canonical = g_strdup( filename );
   else {
-    const char *vw_filename = vik_window_get_filename ( VIK_WINDOW_FROM_WIDGET (layer->viewport->vvp) );
+    const char *vw_filename = window_from_widget(layer->viewport->vvp)->get_filename_2();
     char *dirpath = NULL;
     if ( vw_filename )
       dirpath = g_path_get_dirname ( vw_filename );

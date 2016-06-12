@@ -129,6 +129,7 @@ static void draw_zoom_cb(GtkAction * a, VikWindow * vw);
 static void draw_goto_cb(GtkAction * a, VikWindow * vw);
 static void draw_refresh_cb(GtkAction * a, VikWindow * vw);
 
+static bool vik_window_clear_highlight_cb(VikWindow * vw);
 
 /* End Drawing Functions */
 
@@ -275,9 +276,9 @@ VikStatusbar * vik_window_get_statusbar(VikWindow * vw)
 /**
  *  Returns the 'project' filename
  */
-char const *vik_window_get_filename(VikWindow * vw)
+char const * Window::get_filename_2()
 {
-	return vw->filename;
+	return ((VikWindow *) this->vw)->filename;
 }
 
 typedef struct {
@@ -529,25 +530,21 @@ static void open_window(VikWindow * vw, GSList *files)
 }
 // End signals
 
-void vik_window_selected_layer(VikWindow * vw, Layer * layer)
+void Window::selected_layer(Layer * layer)
 {
-	int i, j, tool_count;
-	VikLayerInterface *layer_interface;
-
-	if (!vw->action_group) {
+	if (!((VikWindow *) this->vw)->action_group) {
 		return;
 	}
 
-	for (i=0; i<VIK_LAYER_NUM_TYPES; i++) {
-		GtkAction *action;
-		layer_interface = vik_layer_get_interface((VikLayerTypeEnum) i);
-		tool_count = layer_interface->tools_count;
+	for (int type = VIK_LAYER_AGGREGATE; type < VIK_LAYER_NUM_TYPES; type++) {
+		VikLayerInterface * layer_interface = vik_layer_get_interface((VikLayerTypeEnum) type);
+		int tool_count = layer_interface->tools_count;
 
-		for (j = 0; j < tool_count; j++) {
-			action = gtk_action_group_get_action(vw->action_group,
-							     layer_interface->tools[j].radioActionEntry.name);
-			g_object_set(action, "sensitive", i == layer->type, NULL);
-			toolbar_action_set_sensitive(vw->viking_vtb, vik_layer_get_interface((VikLayerTypeEnum) i)->tools[j].radioActionEntry.name, i == layer->type);
+		for (int tool = 0; tool < tool_count; tool++) {
+			GtkAction * action = gtk_action_group_get_action(((VikWindow *) this->vw)->action_group,
+									 layer_interface->tools[tool].radioActionEntry.name);
+			g_object_set(action, "sensitive", type == layer->type, NULL);
+			toolbar_action_set_sensitive(((VikWindow *) this->vw)->viking_vtb, vik_layer_get_interface((VikLayerTypeEnum) type)->tools[tool].radioActionEntry.name, type == layer->type);
 		}
 	}
 }
@@ -855,7 +852,7 @@ static void vik_window_init(VikWindow * vw)
 	g_signal_connect_swapped(G_OBJECT(vw->viewport->vvp), "motion_notify_event", G_CALLBACK(draw_mouse_motion), vw);
 
 	g_signal_connect_swapped(G_OBJECT(vw->layers_panel->gob), "update", G_CALLBACK(draw_update_cb), &vw->window);
-	g_signal_connect_swapped(G_OBJECT(vw->layers_panel->gob), "delete_layer", G_CALLBACK(vik_window_clear_highlight), vw);
+	g_signal_connect_swapped(G_OBJECT(vw->layers_panel->gob), "delete_layer", G_CALLBACK(vik_window_clear_highlight_cb), vw);
 
 	// Allow key presses to be processed anywhere
 	g_signal_connect_swapped(G_OBJECT (vw), "key_press_event", G_CALLBACK (key_press_event), vw);
@@ -2268,7 +2265,7 @@ static VikLayerToolFuncStatus selecttool_click(Layer * layer, GdkEventButton * e
 					    ((Layer *) vtv->tree->get_pointer(&iter))->type == VIK_LAYER_TRW) { /* kamil: get_layer() ? */
 
 						vtv->tree->unselect(&iter);
-						if (vik_window_clear_highlight(t->vw)) {
+						if (t->vw->window.clear_highlight()) {
 							t->vw->window.draw_update();
 						}
 					}
@@ -4976,113 +4973,118 @@ register_vik_icons(GtkIconFactory *icon_factory)
 	}
 }
 
-void * vik_window_get_selected_trw_layer(VikWindow * vw)
+void * Window::get_selected_trw_layer()
 {
-	return vw->window.selected_trw;
+	return this->selected_trw;
 }
 
-void vik_window_set_selected_trw_layer(VikWindow * vw, void * trw)
+void Window::set_selected_trw_layer(void * trw)
 {
-	vw->window.selected_trw   = (LayerTRW *) trw;
-	vw->window.containing_trw = (LayerTRW *) trw;
+	this->selected_trw   = (LayerTRW *) trw;
+	this->containing_trw = (LayerTRW *) trw;
 	/* Clear others */
-	vw->window.selected_track     = NULL;
-	vw->window.selected_tracks    = NULL;
-	vw->window.selected_waypoint  = NULL;
-	vw->window.selected_waypoints = NULL;
+	this->selected_track     = NULL;
+	this->selected_tracks    = NULL;
+	this->selected_waypoint  = NULL;
+	this->selected_waypoints = NULL;
 	// Set highlight thickness
-	vw->viewport->set_highlight_thickness(vw->window.containing_trw->get_property_tracks_line_thickness());
+	((VikWindow *) this->vw)->viewport->set_highlight_thickness(this->containing_trw->get_property_tracks_line_thickness());
 }
 
-std::unordered_map<sg_uid_t, Track*> * vik_window_get_selected_tracks(VikWindow * vw)
+Tracks * Window::get_selected_tracks()
 {
-	return vw->window.selected_tracks;
+	return this->selected_tracks;
 }
 
-void vik_window_set_selected_tracks(VikWindow * vw, std::unordered_map<sg_uid_t, Track *> * tracks, void * trw)
+void Window::set_selected_tracks(Tracks * tracks, void * trw)
 {
-	vw->window.selected_tracks = tracks;
-	vw->window.containing_trw  = (LayerTRW *) trw;
+	this->selected_tracks = tracks;
+	this->containing_trw  = (LayerTRW *) trw;
 	/* Clear others */
-	vw->window.selected_trw       = NULL;
-	vw->window.selected_track     = NULL;
-	vw->window.selected_waypoint  = NULL;
-	vw->window.selected_waypoints = NULL;
+	this->selected_trw       = NULL;
+	this->selected_track     = NULL;
+	this->selected_waypoint  = NULL;
+	this->selected_waypoints = NULL;
 	// Set highlight thickness
-	vw->viewport->set_highlight_thickness(vw->window.containing_trw->get_property_tracks_line_thickness());
+	((VikWindow *) this->vw)->viewport->set_highlight_thickness(this->containing_trw->get_property_tracks_line_thickness());
 }
 
-Track * vik_window_get_selected_track(VikWindow * vw)
+Track * Window::get_selected_track()
 {
-	return vw->window.selected_track;
+	return this->selected_track;
 }
 
-void vik_window_set_selected_track(VikWindow * vw, Track * track, void * trw)
+void Window::set_selected_track(Track * track, void * trw)
 {
-	vw->window.selected_track = track;
-	vw->window.containing_trw = (LayerTRW *) trw;
+	this->selected_track = track;
+	this->containing_trw = (LayerTRW *) trw;
 	/* Clear others */
-	vw->window.selected_trw       = NULL;
-	vw->window.selected_tracks    = NULL;
-	vw->window.selected_waypoint  = NULL;
-	vw->window.selected_waypoints = NULL;
+	this->selected_trw       = NULL;
+	this->selected_tracks    = NULL;
+	this->selected_waypoint  = NULL;
+	this->selected_waypoints = NULL;
 	// Set highlight thickness
-	vw->viewport->set_highlight_thickness(vw->window.containing_trw->get_property_tracks_line_thickness());
+	((VikWindow *) this->vw)->viewport->set_highlight_thickness(this->containing_trw->get_property_tracks_line_thickness());
 }
 
-std::unordered_map<sg_uid_t, Waypoint *> * vik_window_get_selected_waypoints(VikWindow * vw)
+Waypoints * Window::get_selected_waypoints()
 {
-	return vw->window.selected_waypoints;
+	return this->selected_waypoints;
 }
 
-void vik_window_set_selected_waypoints(VikWindow * vw, std::unordered_map<sg_uid_t, Waypoint *> * waypoints, void * trw)
+void Window::set_selected_waypoints(Waypoints * waypoints, void * trw)
 {
-	vw->window.selected_waypoints = waypoints;
-	vw->window.containing_trw     = (LayerTRW *) trw;
+	this->selected_waypoints = waypoints;
+	this->containing_trw     = (LayerTRW *) trw;
 	/* Clear others */
-	vw->window.selected_trw       = NULL;
-	vw->window.selected_track     = NULL;
-	vw->window.selected_tracks    = NULL;
-	vw->window.selected_waypoint  = NULL;
+	this->selected_trw       = NULL;
+	this->selected_track     = NULL;
+	this->selected_tracks    = NULL;
+	this->selected_waypoint  = NULL;
 }
 
-Waypoint * vik_window_get_selected_waypoint(VikWindow * vw)
+Waypoint * Window::get_selected_waypoint()
 {
-	return vw->window.selected_waypoint;
+	return this->selected_waypoint;
 }
 
-void vik_window_set_selected_waypoint(VikWindow * vw, Waypoint * wp, void * trw)
+void Window::set_selected_waypoint(Waypoint * wp, void * trw)
 {
-	vw->window.selected_waypoint = wp;
-	vw->window.containing_trw    = (LayerTRW *) trw;
+	this->selected_waypoint = wp;
+	this->containing_trw    = (LayerTRW *) trw;
 	/* Clear others */
-	vw->window.selected_trw       = NULL;
-	vw->window.selected_track     = NULL;
-	vw->window.selected_tracks    = NULL;
-	vw->window.selected_waypoints = NULL;
+	this->selected_trw       = NULL;
+	this->selected_track     = NULL;
+	this->selected_tracks    = NULL;
+	this->selected_waypoints = NULL;
 }
 
-bool vik_window_clear_highlight(VikWindow * vw)
+bool vik_window_clear_highlight_cb(VikWindow * vw)
+{
+	return vw->window.clear_highlight();
+}
+
+bool Window::clear_highlight()
 {
 	bool need_redraw = false;
-	if (vw->window.selected_trw != NULL) {
-		vw->window.selected_trw = NULL;
+	if (this->selected_trw != NULL) {
+		this->selected_trw = NULL;
 		need_redraw = true;
 	}
-	if (vw->window.selected_track != NULL) {
-		vw->window.selected_track = NULL;
+	if (this->selected_track != NULL) {
+		this->selected_track = NULL;
 		need_redraw = true;
 	}
-	if (vw->window.selected_tracks != NULL) {
-		vw->window.selected_tracks = NULL;
+	if (this->selected_tracks != NULL) {
+		this->selected_tracks = NULL;
 		need_redraw = true;
 	}
-	if (vw->window.selected_waypoint != NULL) {
-		vw->window.selected_waypoint = NULL;
+	if (this->selected_waypoint != NULL) {
+		this->selected_waypoint = NULL;
 		need_redraw = true;
 	}
-	if (vw->window.selected_waypoints != NULL) {
-		vw->window.selected_waypoints = NULL;
+	if (this->selected_waypoints != NULL) {
+		this->selected_waypoints = NULL;
 		need_redraw = true;
 	}
 	return need_redraw;
@@ -5118,4 +5120,15 @@ Window::Window()
 VikWindow * vik_window_from_layer(Layer * layer)
 {
 	return (VikWindow *) GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(layer->vt)));
+}
+
+
+Window * window_from_layer(Layer * layer)
+{
+	return &(vik_window_from_layer(layer)->window);
+}
+
+Window * window_from_widget(void * widget)
+{
+	return &((VikWindow *) gtk_widget_get_toplevel(GTK_WIDGET(widget)))->window;
 }

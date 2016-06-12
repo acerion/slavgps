@@ -1438,7 +1438,7 @@ void LayerTRW::draw(Viewport * viewport)
 	// This may seem slightly inefficient to test each time for every layer
 	//  but for a layer with *lots* of tracks & waypoints this can save some effort by not drawing the items twice
 	if (viewport->get_draw_highlight()
-	    && vik_window_get_selected_trw_layer(vik_window_from_layer(this)) == this) {
+	    && window_from_layer(this)->get_selected_trw_layer() == this) {
 
 		return;
 	}
@@ -1471,10 +1471,13 @@ void LayerTRW::draw_highlight(Viewport * viewport)
  */
 void LayerTRW::draw_highlight_item(Track * trk, Waypoint * wp, Viewport * viewport)
 {
+	/* kamilFIXME: enabling this code and then compiling it with -O0 results in crash when selecting trackpoint in viewport. */
+#if 0
 	// Check the layer for visibility (including all the parents visibilities)
 	if (!this->vt->tree->is_visible_in_tree(&this->iter)) {
 		return;
 	}
+#endif
 
 	static DrawingParams dp;
 	init_drawing_params(&dp, this, viewport, true);
@@ -2221,7 +2224,7 @@ bool LayerTRW::selected(int subtype, void * sublayer, int type, void * panel)
 	switch (type)	{
 	case VIK_TREEVIEW_TYPE_LAYER:
 		{
-			vik_window_set_selected_trw_layer(vik_window_from_layer(this), this);
+			window_from_layer(this)->set_selected_trw_layer(this);
 			/* Mark for redraw */
 			return true;
 		}
@@ -2232,7 +2235,7 @@ bool LayerTRW::selected(int subtype, void * sublayer, int type, void * panel)
 			switch (subtype) {
 			case VIK_TRW_LAYER_SUBLAYER_TRACKS:
 				{
-					vik_window_set_selected_tracks(vik_window_from_layer(this), &this->tracks, this);
+					window_from_layer(this)->set_selected_tracks(&this->tracks, this);
 					/* Mark for redraw */
 					return true;
 				}
@@ -2241,14 +2244,14 @@ bool LayerTRW::selected(int subtype, void * sublayer, int type, void * panel)
 				{
 					sg_uid_t uid = (sg_uid_t) ((long) sublayer);
 					Track * trk = this->tracks.at(uid);
-					vik_window_set_selected_track(vik_window_from_layer(this), trk, this);
+					window_from_layer(this)->set_selected_track(trk, this);
 					/* Mark for redraw */
 					return true;
 				}
 				break;
 			case VIK_TRW_LAYER_SUBLAYER_ROUTES:
 				{
-					vik_window_set_selected_tracks(vik_window_from_layer(this), &this->routes, this);
+					window_from_layer(this)->set_selected_tracks(&this->routes, this);
 					/* Mark for redraw */
 					return true;
 				}
@@ -2257,14 +2260,14 @@ bool LayerTRW::selected(int subtype, void * sublayer, int type, void * panel)
 				{
 					sg_uid_t uid = (sg_uid_t) ((long) sublayer);
 					Track * trk = this->routes.at(uid);
-					vik_window_set_selected_track(vik_window_from_layer(this), trk, this);
+					window_from_layer(this)->set_selected_track(trk, this);
 					/* Mark for redraw */
 					return true;
 				}
 				break;
 			case VIK_TRW_LAYER_SUBLAYER_WAYPOINTS:
 				{
-					vik_window_set_selected_waypoints(vik_window_from_layer(this), &this->waypoints, this);
+					window_from_layer(this)->set_selected_waypoints(&this->waypoints, this);
 					/* Mark for redraw */
 					return true;
 				}
@@ -2274,7 +2277,7 @@ bool LayerTRW::selected(int subtype, void * sublayer, int type, void * panel)
 					sg_uid_t wp_uid = (sg_uid_t) ((long) sublayer);
 					Waypoint * wp = this->waypoints.at(wp_uid);
 					if (wp) {
-						vik_window_set_selected_waypoint(vik_window_from_layer(this), wp, this);
+						window_from_layer(this)->set_selected_waypoint(wp, this);
 						// Show some waypoint info
 						this->set_statusbar_msg_info_wpt(wp);
 						/* Mark for redraw */
@@ -2284,7 +2287,7 @@ bool LayerTRW::selected(int subtype, void * sublayer, int type, void * panel)
 				break;
 			default:
 				{
-					return vik_window_clear_highlight(vik_window_from_layer(this));
+					return window_from_layer(this)->clear_highlight();
 				}
 				break;
 			}
@@ -2293,7 +2296,7 @@ bool LayerTRW::selected(int subtype, void * sublayer, int type, void * panel)
 		break;
 
 	default:
-		return vik_window_clear_highlight(vik_window_from_layer(this));
+		return window_from_layer(this)->clear_highlight();
 		break;
     }
 }
@@ -3532,7 +3535,7 @@ bool LayerTRW::delete_track(Track * trk)
 				}
 			}
 			// In case it was selected (no item delete signal ATM)
-			vik_window_clear_highlight(vik_window_from_layer(this));
+			window_from_layer(this)->clear_highlight();
 		}
 	}
 	return was_visible;
@@ -3582,7 +3585,7 @@ bool LayerTRW::delete_route(Track * trk)
 				}
 			}
 			// Incase it was selected (no item delete signal ATM)
-			vik_window_clear_highlight(vik_window_from_layer(this));
+			window_from_layer(this)->clear_highlight();
 		}
 	}
 	return was_visible;
@@ -3626,7 +3629,7 @@ bool LayerTRW::delete_waypoint(Waypoint * wp)
 				}
 			}
 			// Incase it was selected (no item delete signal ATM)
-			vik_window_clear_highlight(vik_window_from_layer(this));
+			window_from_layer(this)->clear_highlight();
 		}
 	}
 
@@ -4435,7 +4438,7 @@ void trw_layer_route_refine(trw_menu_sublayer_t * data)
 			VikRoutingEngine *routing = vik_routing_ui_selector_get_nth(combo, last_engine);
 
 			/* Change cursor */
-			vik_window_set_busy_cursor(vik_window_from_layer(layer));
+			window_from_layer(layer)->set_busy_cursor();
 
 			/* Force saving track */
 			/* FIXME: remove or rename this hack */
@@ -4455,7 +4458,7 @@ void trw_layer_route_refine(trw_menu_sublayer_t * data)
 			layer->emit_update();
 
 			/* Restore cursor */
-			vik_window_clear_busy_cursor(vik_window_from_layer(layer));
+			window_from_layer(layer)->clear_busy_cursor();
 		}
 		gtk_widget_destroy(dialog);
 	}
@@ -7081,7 +7084,7 @@ bool LayerTRW::show_selected_viewport_menu(GdkEventButton * event, Viewport * vi
 	/* Post menu for the currently selected item */
 
 	/* See if a track is selected */
-	Track * trk = (Track *) vik_window_get_selected_track(vik_window_from_layer(this));
+	Track * trk = window_from_layer(this)->get_selected_track();
 	if (trk && trk->visible) {
 
 		if (trk->name) {
@@ -7123,7 +7126,7 @@ bool LayerTRW::show_selected_viewport_menu(GdkEventButton * event, Viewport * vi
 	}
 
 	/* See if a waypoint is selected */
-	Waypoint * waypoint = (Waypoint *) vik_window_get_selected_waypoint(vik_window_from_layer(this));
+	Waypoint * waypoint = window_from_layer(this)->get_selected_waypoint();
 	if (waypoint && waypoint->visible) {
 		if (waypoint->name) {
 
@@ -8093,7 +8096,7 @@ bool LayerTRW::tool_extended_route_finder_click(GdkEventButton * event, Viewport
 					    start.lat, start.lon, end.lat, end.lon);
 		vik_statusbar_set_message(sb, VIK_STATUSBAR_INFO, msg);
 		free(msg);
-		vik_window_set_busy_cursor(vik_window_from_layer(this));
+		window_from_layer(this)->set_busy_cursor();
 
 
 		/* Give GTK a change to display the new status bar before querying the web */
@@ -8103,7 +8106,7 @@ bool LayerTRW::tool_extended_route_finder_click(GdkEventButton * event, Viewport
 		bool find_status = vik_routing_default_find(this->vl, start, end);
 
 		/* Update UI to say we're done */
-		vik_window_clear_busy_cursor(vik_window_from_layer(this));
+		window_from_layer(this)->clear_busy_cursor();
 		msg = (find_status) ? g_strdup_printf(_("%s returned route between (%.3f, %.3f) and (%.3f, %.3f)."),
 						      vik_routing_engine_get_label(engine),
 						      start.lat, start.lon, end.lat, end.lon)

@@ -487,11 +487,11 @@ bool LayerMapnik::carto_load(Viewport * viewport)
 
 	// NB Running carto may take several seconds
 	//  especially for large style sheets like the default OSM Mapnik style (~6 seconds on my system)
-	VikWindow *vw = VIK_WINDOW(VIK_GTK_WINDOW_FROM_WIDGET(viewport->vvp));
-	if (vw) {
+	Window * window = window_from_widget(viewport->vvp);
+	if (window) {
 		char *msg = g_strdup_printf("%s: %s", _("Running"), command);
-		vik_window_statusbar_update(vw, msg, VIK_STATUSBAR_INFO);
-		vik_window_set_busy_cursor(vw);
+		vik_window_statusbar_update((VikWindow *) window->vw, msg, VIK_STATUSBAR_INFO);
+		window->set_busy_cursor();
 	}
 
 	int64_t tt1 = 0;
@@ -540,11 +540,11 @@ bool LayerMapnik::carto_load(Viewport * viewport)
 	}
 	free(command);
 
-	if (vw) {
+	if (window) {
 		char *msg = g_strdup_printf("%s %s %.1f %s",  vlpd->s, _(" completed in "), (double)(tt2-tt1)/G_USEC_PER_SEC, _("seconds"));
-		vik_window_statusbar_update(vw, msg, VIK_STATUSBAR_INFO);
+		vik_window_statusbar_update((VikWindow *) window->vw, msg, VIK_STATUSBAR_INFO);
 		free(msg);
-		vik_window_clear_busy_cursor(vw);
+		window->clear_busy_cursor();
 	}
 	return answer;
 }

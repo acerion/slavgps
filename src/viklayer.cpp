@@ -498,7 +498,7 @@ bool vik_layer_selected(VikLayer * l, int subtype, void * sublayer, int type, vo
 	if (result) {
 		return result;
 	} else {
-		return vik_window_clear_highlight(vik_window_from_layer(layer));
+		return window_from_layer(layer)->clear_highlight();
 	}
 }
 
@@ -542,7 +542,7 @@ static bool vik_layer_properties_factory ( VikLayer *vl, Viewport * viewport)
 					    vik_layer_interfaces[layer->type]->params_groups_count,
 					    (bool (*)(void*, uint16_t, VikLayerParamData, void*, bool)) vik_layer_interfaces[layer->type]->set_param,
 					    vl,
-					    viewport->vvp,
+					    viewport,
 					    (VikLayerParamData (*)(void*, uint16_t, bool)) vik_layer_interfaces[layer->type]->get_param,
 					    vl,
 					    (void (*)(GtkWidget*, void**)) vik_layer_interfaces[layer->type]->change_param ) ) {
@@ -677,6 +677,11 @@ Layer::Layer()
 	this->name = NULL;
 	this->visible = true;
 	this->realized = false;
+
+	this->vt = NULL;
+
+	fprintf(stderr, "setting iter\n");
+	memset(&this->iter, 0, sizeof (this->iter));
 
 	strcpy(this->type_string, "LAST");
 

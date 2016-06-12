@@ -37,6 +37,7 @@
 #include "viktrack.h"
 #include "viklayer.h"
 #include "viktrwlayer.h"
+#include "layer_trw_containers.h"
 #include "file.h"
 
 
@@ -74,11 +75,9 @@ void vik_window_new_window_finish(VikWindow * vw);
 GtkWidget *vik_window_get_drawmode_button(VikWindow * vw, VikViewportDrawMode mode);
 bool vik_window_get_pan_move(VikWindow *vw);
 void vik_window_open_file(VikWindow * vw, char const * filename, bool changefilename);
-void vik_window_selected_layer(VikWindow *vw, SlavGPS::Layer * layer);
 SlavGPS::Viewport * vik_window_viewport(VikWindow *vw);
 struct _VikLayersPanel * vik_window_layers_panel(VikWindow * vw);
 struct _VikStatusbar * vik_window_get_statusbar(VikWindow * vw);
-char const *vik_window_get_filename(VikWindow * vw);
 
 void vik_window_statusbar_update(VikWindow * vw, char const * message, vik_statusbar_type_t vs_type);
 
@@ -86,20 +85,6 @@ void vik_window_set_redraw_trigger(SlavGPS::Layer * layer);
 
 void vik_window_enable_layer_tool(VikWindow * vw, int layer_id, int tool_id);
 
-void * vik_window_get_selected_trw_layer(VikWindow * vw); /* return type LayerTRW */
-void vik_window_set_selected_trw_layer(VikWindow * vw, void * trw);
-std::unordered_map<sg_uid_t, SlavGPS::Track *> * vik_window_get_selected_tracks(VikWindow * vw);
-void vik_window_set_selected_tracks(VikWindow *vw, std::unordered_map<sg_uid_t, SlavGPS::Track *> * tracks, void * trw);
-SlavGPS::Track * vik_window_get_selected_track (VikWindow *vw); /* return type Track */
-void vik_window_set_selected_track(VikWindow * vw, SlavGPS::Track * track, void * trw);
-std::unordered_map<sg_uid_t, SlavGPS::Waypoint *> * vik_window_get_selected_waypoints(VikWindow * vw);
-void vik_window_set_selected_waypoints (VikWindow * vw, std::unordered_map<sg_uid_t, SlavGPS::Waypoint *> * waypoints, void * trw);
-SlavGPS::Waypoint * vik_window_get_selected_waypoint(VikWindow * vw); /* return type VikWaypoint */
-void vik_window_set_selected_waypoint(VikWindow * vw, SlavGPS::Waypoint * wp, void * trw);
-/* Return the VikLayer of the selected track(s) or waypoint(s) are in (maybe NULL) */
-//void * vik_window_get_containing_trw_layer (VikWindow *vw);
-/* return indicates if a redraw is necessary */
-bool vik_window_clear_highlight(VikWindow * vw);
 
 GThread * vik_window_get_thread(VikWindow * vw);
 
@@ -165,6 +150,31 @@ namespace SlavGPS {
 		void save_image_dir(char const * fn, unsigned int w, unsigned int h, double zoom, bool save_as_png, unsigned int tiles_w, unsigned int tiles_h);
 		void draw_to_image_file(img_generation_t img_gen);
 
+		void * get_selected_trw_layer();
+		void set_selected_trw_layer(void * trw);
+
+		Tracks * get_selected_tracks();
+		void set_selected_tracks(Tracks * tracks, void * trw);
+
+		Track * get_selected_track();
+		void set_selected_track(Track * track, void * trw);
+
+		Waypoints * get_selected_waypoints();
+		void set_selected_waypoints(Waypoints * waypoints, void * trw);
+
+		Waypoint * get_selected_waypoint();
+		void set_selected_waypoint(Waypoint * wp, void * trw);
+
+		/* Return the VikLayer of the selected track(s) or waypoint(s) are in (maybe NULL) */
+		//void * vik_window_get_containing_trw_layer(VikWindow *vw);
+
+		/* Return indicates if a redraw is necessary. */
+		bool clear_highlight();
+
+		char const * get_filename_2();
+
+		void selected_layer(Layer * layer);
+
 
 
 
@@ -172,7 +182,7 @@ namespace SlavGPS {
 		/* Store at this level for highlighted selection drawing since it applies to the viewport and the layers panel */
 		/* Only one of these items can be selected at the same time */
 		LayerTRW * selected_trw;
-		std::unordered_map<sg_uid_t, Track*> * selected_tracks;
+		Tracks * selected_tracks;
 		Track * selected_track;
 		std::unordered_map<sg_uid_t, Waypoint *> * selected_waypoints;
 		Waypoint * selected_waypoint;
@@ -192,6 +202,7 @@ namespace SlavGPS {
 
 
 
-
+SlavGPS::Window * window_from_layer(SlavGPS::Layer * layer);
+SlavGPS::Window * window_from_widget(void * widget);
 
 #endif
