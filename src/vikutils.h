@@ -27,6 +27,7 @@
 #include <stdint.h>
 
 #include "viktrwlayer.h"
+#include "vikwindow.h"
 #include "map_ids.h"
 
 #ifdef __cplusplus

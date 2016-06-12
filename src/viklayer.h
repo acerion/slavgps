@@ -30,7 +30,7 @@
 
 
 #include "uibuilder.h"
-#include "vikwindow.h"
+//#include "vikwindow.h"
 #include "viktreeview.h"
 #include "vikviewport.h"
 
@@ -78,8 +78,11 @@ typedef enum {
   VIK_LAYER_TOOL_ACK_GRAB_FOCUS, /* only for move */
 } VikLayerToolFuncStatus;
 
+
+struct _VikWindow;
+
 /* void * is tool-specific state created in the constructor */
-typedef void * (*VikToolConstructorFunc) (VikWindow *, SlavGPS::Viewport *);
+typedef void * (*VikToolConstructorFunc) (struct _VikWindow *, SlavGPS::Viewport *);
 typedef void (*VikToolDestructorFunc) (void *);
 typedef VikLayerToolFuncStatus (*VikToolMouseFunc) (VikLayer *, GdkEventButton *, void *);
 typedef VikLayerToolFuncStatus (*VikToolMouseMoveFunc) (VikLayer *, GdkEventMotion *, void *);
@@ -190,6 +193,19 @@ VikLayerTypedParamData *vik_layer_data_typed_param_copy_from_string ( VikLayerPa
 #ifdef __cplusplus
 }
 #endif
+
+
+typedef struct {
+	struct _VikWindow * vw;
+	SlavGPS::Viewport * viewport;
+	void * trw; // LayerTRW
+	bool holding;
+	bool moving;
+	bool is_waypoint; // otherwise a track
+	GdkGC * gc;
+	int oldx, oldy;
+} tool_ed_t;
+
 
 
 namespace SlavGPS {

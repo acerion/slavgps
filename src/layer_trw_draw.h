@@ -38,6 +38,7 @@
 #include "vikwaypoint.h"
 #include "viktrack.h"
 #include "viktrwlayer.h"
+#include "vikwindow.h"
 
 
 

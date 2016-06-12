@@ -34,6 +34,7 @@
 #include "dialog.h"
 #include "util.h"
 #include "globals.h"
+#include "vikwindow.h"
 
 using namespace SlavGPS;
 

@@ -29,6 +29,7 @@
 #include "dialog.h"
 #include "clipboard.h"
 #include "globals.h"
+#include "vikwindow.h"
 
 #include <string.h>
 #include <stdlib.h>

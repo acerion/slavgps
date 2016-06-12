@@ -29,6 +29,7 @@
 #include "viklayer.h"
 #include "viktrack.h"
 #include "viktrwlayer.h"
+#include "vikwindow.h"
 
 #ifdef __cplusplus
 extern "C" {

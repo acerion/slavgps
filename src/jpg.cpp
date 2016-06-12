@@ -26,6 +26,7 @@
 #include "file.h"
 #include "fileutils.h"
 #include "viktrwlayer.h"
+#include "vikwindow.h"
 #include "viklayerspanel.h"
 #include "globals.h"
 #ifdef VIK_CONFIG_GEOTAG

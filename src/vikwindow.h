@@ -35,6 +35,10 @@
 #include "vikviewport.h"
 #include "vikstatus.h"
 #include "viktrack.h"
+#include "viklayer.h"
+#include "viktrwlayer.h"
+#include "file.h"
+
 
 
 #ifdef __cplusplus
@@ -103,21 +107,92 @@ GThread * vik_window_get_thread(VikWindow * vw);
 void vik_window_set_busy_cursor(VikWindow * vw);
 void vik_window_clear_busy_cursor(VikWindow * vw);
 
-typedef struct {
-	VikWindow * vw;
-	SlavGPS::Viewport * viewport;
-	void * trw; // LayerTRW
-	bool holding;
-	bool moving;
-	bool is_waypoint; // otherwise a track
-	GdkGC * gc;
-	int oldx, oldy;
-} tool_ed_t;
 
 #ifdef __cplusplus
 }
 #endif
 
 #define VIK_WINDOW_FROM_WIDGET(x) VIK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(x)))
+
+
+
+typedef enum {
+	VW_GEN_SINGLE_IMAGE,
+	VW_GEN_DIRECTORY_OF_IMAGES,
+	VW_GEN_KMZ_FILE,
+} img_generation_t;
+
+
+
+
+
+namespace SlavGPS {
+
+
+
+
+
+	class Window {
+	public:
+
+		Window();
+
+		void draw_redraw();
+		void draw_status();
+		void draw_scroll(GdkEventScroll * event);
+		void draw_sync();
+		void draw_update();
+
+		void open_file(char const * filename, bool change_filename);
+
+		char const * get_filename();
+		void set_filename(char const * filename);
+
+		void set_busy_cursor();
+		void clear_busy_cursor();
+
+		void toggle_draw_scale(GtkAction * a);
+		void toggle_draw_centermark(GtkAction * a);
+		void toggle_draw_highlight(GtkAction * a);
+
+		bool window_save();
+
+		void update_recently_used_document(char const * filename);
+		void setup_recent_files();
+
+		bool export_to(std::list<Layer *> * layers, VikFileType_t vft, char const * dir, char const * extension);
+		void export_to_common(VikFileType_t vft, char const * extension);
+
+		void save_image_dir(char const * fn, unsigned int w, unsigned int h, double zoom, bool save_as_png, unsigned int tiles_w, unsigned int tiles_h);
+		void draw_to_image_file(img_generation_t img_gen);
+
+
+
+
+
+		/* Store at this level for highlighted selection drawing since it applies to the viewport and the layers panel */
+		/* Only one of these items can be selected at the same time */
+		LayerTRW * selected_trw;
+		std::unordered_map<sg_uid_t, Track*> * selected_tracks;
+		Track * selected_track;
+		std::unordered_map<sg_uid_t, Waypoint *> * selected_waypoints;
+		Waypoint * selected_waypoint;
+		/* only use for individual track or waypoint */
+		/* For track(s) & waypoint(s) it is the layer they are in - this helps refering to the individual item easier */
+		LayerTRW * containing_trw;
+
+
+		void * vw; /* VikWindow. */
+	}; /* class Window */
+
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
 
 #endif
