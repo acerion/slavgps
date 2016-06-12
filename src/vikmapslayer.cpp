@@ -74,6 +74,12 @@
 #include <gio/gio.h>
 #endif
 
+
+
+using namespace SlavGPS;
+
+
+
 #define VIK_SETTINGS_MAP_MAX_TILES "maps_max_tiles"
 static int MAX_TILES = 1000;
 

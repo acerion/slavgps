@@ -63,11 +63,11 @@ typedef enum {
 
 char * append_file_ext(char const * filename, VikFileType_t type);
 
-VikLoadType_t a_file_load(LayerAggregate * top, Viewport * viewport, char const * filename);
-bool a_file_save(LayerAggregate * top, Viewport * viewport, char const * filename);
+VikLoadType_t a_file_load(SlavGPS::LayerAggregate * top, SlavGPS::Viewport * viewport, char const * filename);
+bool a_file_save(SlavGPS::LayerAggregate * top, SlavGPS::Viewport * viewport, char const * filename);
 /* Only need to define Track if the file type is FILE_TYPE_GPX_TRACK */
-bool a_file_export(LayerTRW * trw, char const * filename, VikFileType_t file_type, Track * trk, bool write_hidden);
-bool a_file_export_babel(LayerTRW * trw, char const * filename, char const * format,
+bool a_file_export(SlavGPS::LayerTRW * trw, char const * filename, VikFileType_t file_type, SlavGPS::Track * trk, bool write_hidden);
+bool a_file_export_babel(SlavGPS::LayerTRW * trw, char const * filename, char const * format,
 			 bool tracks, bool routes, bool waypoints);
 
 void file_write_layer_param(FILE * f, char const * name, VikLayerParamType type, VikLayerParamData data);

@@ -79,7 +79,7 @@ typedef enum {
 } VikLayerToolFuncStatus;
 
 /* void * is tool-specific state created in the constructor */
-typedef void * (*VikToolConstructorFunc) (VikWindow *, Viewport *);
+typedef void * (*VikToolConstructorFunc) (VikWindow *, SlavGPS::Viewport *);
 typedef void (*VikToolDestructorFunc) (void *);
 typedef VikLayerToolFuncStatus (*VikToolMouseFunc) (VikLayer *, GdkEventButton *, void *);
 typedef VikLayerToolFuncStatus (*VikToolMouseMoveFunc) (VikLayer *, GdkEventMotion *, void *);
@@ -107,10 +107,10 @@ struct _VikToolInterface {
 
 /* layer interface functions */
 
-typedef VikLayer *               (* VikLayerFuncUnmarshall)    (uint8_t *, int, Viewport *);
+typedef VikLayer *               (* VikLayerFuncUnmarshall)    (uint8_t *, int, SlavGPS::Viewport *);
 /* returns true if needs to redraw due to changed param */
 /* in parameter bool denotes if for file I/O, as opposed to display/cut/copy etc... operations */
-typedef bool                     (* VikLayerFuncSetParam)      (VikLayer *, uint16_t, VikLayerParamData, Viewport *, bool);
+typedef bool                     (* VikLayerFuncSetParam)      (VikLayer *, uint16_t, VikLayerParamData, SlavGPS::Viewport *, bool);
 /* in parameter bool denotes if for file I/O, as opposed to display/cut/copy etc... operations */
 typedef VikLayerParamData        (* VikLayerFuncGetParam)      (VikLayer *, uint16_t, bool);
 typedef void                     (* VikLayerFuncChangeParam)   (GtkWidget *, ui_change_values);
@@ -156,18 +156,18 @@ struct _VikLayerInterface {
 };
 
 VikLayerInterface *vik_layer_get_interface ( VikLayerTypeEnum type );
-bool vik_layer_set_param (VikLayer *layer, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
+bool vik_layer_set_param (VikLayer *layer, uint16_t id, VikLayerParamData data, SlavGPS::Viewport * viewport, bool is_file_operation);
 
 
 /* GUI */
 uint16_t vik_layer_get_menu_items_selection(VikLayer *l);
-bool vik_layer_properties ( VikLayer *layer, Viewport * viewport);
+bool vik_layer_properties ( VikLayer *layer, SlavGPS::Viewport * viewport);
 
 VikLayer *vik_layer_copy(VikLayer *vl, void * viewport);
 void      vik_layer_marshall ( VikLayer *vl, uint8_t **data, int *len );
-VikLayer *vik_layer_unmarshall ( uint8_t *data, int len, Viewport * viewport);
+VikLayer *vik_layer_unmarshall ( uint8_t *data, int len, SlavGPS::Viewport * viewport);
 void      vik_layer_marshall_params ( VikLayer *vl, uint8_t **data, int *len );
-void      vik_layer_unmarshall_params ( VikLayer *vl, uint8_t *data, int len, Viewport * viewport);
+void      vik_layer_unmarshall_params ( VikLayer *vl, uint8_t *data, int len, SlavGPS::Viewport * viewport);
 
 bool vik_layer_selected ( VikLayer *l, int subtype, void * sublayer, int type, void * panel);
 

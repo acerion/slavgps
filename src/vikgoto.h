@@ -37,8 +37,8 @@ extern "C" {
 void vik_goto_register (VikGotoTool *tool);
 void vik_goto_unregister_all (void);
 
-int a_vik_goto_where_am_i(Viewport * viewport, struct LatLon *ll, char **name );
-void a_vik_goto(VikWindow *vw, Viewport * viewport);
+int a_vik_goto_where_am_i(SlavGPS::Viewport * viewport, struct LatLon *ll, char **name );
+void a_vik_goto(VikWindow *vw, SlavGPS::Viewport * viewport);
 char * a_vik_goto_get_search_string_for_this_place(VikWindow *vw);
 
 #ifdef __cplusplus

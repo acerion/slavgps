@@ -64,6 +64,9 @@
 #include "vikmapniklayer.h"
 #endif
 
+using namespace SlavGPS;
+
+
 #define VIKING_MAPS_FILE "maps.xml"
 #define VIKING_EXTTOOLS_FILE "external_tools.xml"
 #define VIKING_DATASOURCES_FILE "datasources.xml"

@@ -36,6 +36,12 @@
 #include "acquire.h"
 #include "vikrouting.h"
 
+
+
+using namespace SlavGPS;
+
+
+
 typedef struct {
 	GtkWidget * engines_combo;
 	GtkWidget * from_entry, * to_entry;

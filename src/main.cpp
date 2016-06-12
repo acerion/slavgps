@@ -72,6 +72,12 @@
 #include "X11/Xlib.h"
 #endif
 
+
+
+using namespace SlavGPS;
+
+
+
 #if GLIB_CHECK_VERSION (2, 32, 0)
 /* Callback to log message */
 static void log_debug(const char *log_domain,

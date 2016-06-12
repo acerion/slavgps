@@ -516,23 +516,21 @@ namespace SlavGPS {
 
 
 
-using namespace SlavGPS;
-
 
 
 typedef struct {
-	LayerTRW * layer;
-	LayersPanel * panel;
+	SlavGPS::LayerTRW * layer;
+	SlavGPS::LayersPanel * panel;
 } trw_menu_layer_t;
 
 
 typedef struct _trw_menu_sublayer_t {
-	LayerTRW * layer;
-	LayersPanel * panel;
+	SlavGPS::LayerTRW * layer;
+	SlavGPS::LayersPanel * panel;
 	int subtype;
 	sg_uid_t sublayer_id;
 	bool confirm;
-	Viewport * viewport;
+	SlavGPS::Viewport * viewport;
 	GtkTreeIter * tv_iter;
 	void * misc;
 } trw_menu_sublayer_t;
@@ -591,8 +589,8 @@ typedef struct _VikTrwLayer VikTrwLayer;
 // For creating a list of tracks with the corresponding layer it is in
 //  (thus a selection of tracks may be from differing layers)
 typedef struct {
-  Track * trk;
-  LayerTRW * trw;
+  SlavGPS::Track * trk;
+  SlavGPS::LayerTRW * trw;
 } vik_trw_track_list_t;
 
 typedef GList* (*VikTrwlayerGetTracksAndLayersFunc) (VikLayer*, void *);
@@ -601,8 +599,8 @@ GList *vik_trw_layer_build_track_list_t ( VikLayer *vtl, GList *tracks );
 // For creating a list of waypoints with the corresponding layer it is in
 //  (thus a selection of waypoints may be from differing layers)
 typedef struct {
-  Waypoint * wp;
-  LayerTRW * trw;
+  SlavGPS::Waypoint * wp;
+  SlavGPS::LayerTRW * trw;
 } vik_trw_waypoint_list_t;
 
 typedef GList* (*VikTrwlayerGetWaypointsAndLayersFunc) (VikLayer*, void *);
@@ -772,7 +770,7 @@ void trw_layer_cut_item_cb(trw_menu_sublayer_t * data);
 
 
 
-GList * vik_trw_layer_get_track_values(GList ** list, std::unordered_map<sg_uid_t, Track *> & tracks);
+GList * vik_trw_layer_get_track_values(GList ** list, std::unordered_map<sg_uid_t, SlavGPS::Track *> & tracks);
 
 
 

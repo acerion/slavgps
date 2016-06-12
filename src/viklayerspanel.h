@@ -100,7 +100,7 @@ extern "C" {
 struct _VikLayersPanel {
 	GtkVBox vbox;
 
-	LayersPanel * panel_ref;
+	SlavGPS::LayersPanel * panel_ref;
 };
 
 typedef struct _VikLayersPanel VikLayersPanel;
@@ -115,7 +115,7 @@ struct _VikLayersPanelClass
 };
 
 GType vik_layers_panel_get_type();
-void vik_layers_panel_emit_update_cb(LayersPanel * panel);
+void vik_layers_panel_emit_update_cb(SlavGPS::LayersPanel * panel);
 
 
 

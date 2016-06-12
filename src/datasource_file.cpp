@@ -36,6 +36,12 @@
 #include "babel_ui.h"
 #include "acquire.h"
 
+
+
+using namespace SlavGPS;
+
+
+
 typedef struct {
 	GtkWidget * file;
 	GtkWidget * type;

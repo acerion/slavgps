@@ -29,7 +29,6 @@
 
 #include "viktrwlayer.h"
 
-using namespace SlavGPS;
 
 #ifdef __cplusplus
 extern "C" {
@@ -38,9 +37,9 @@ extern "C" {
 
 // To be only called from within viktrwlayer
 void trw_layer_geotag_dialog(GtkWindow * parent,
-							 LayerTRW * layer ,
-							 Waypoint * wp,
-							 Track * trk);
+							 SlavGPS::LayerTRW * layer,
+							 SlavGPS::Waypoint * wp,
+							 SlavGPS::Track * trk);
 
 #ifdef __cplusplus
 }

@@ -53,6 +53,10 @@
 #include <glib/gstdio.h>
 #include <glib/gi18n.h>
 
+
+using namespace SlavGPS;
+
+
 /* TODO in the future we could have support for other shells (change command strings), or not use a shell at all */
 #define BASH_LOCATION "/bin/bash"
 

@@ -43,7 +43,6 @@
 #endif
 
 
-using namespace SlavGPS;
 
 #ifdef __cplusplus
 extern "C" {
@@ -82,13 +81,13 @@ typedef enum {
 void maps_layer_init();
 void maps_layer_set_autodownload_default( bool autodownload);
 void maps_layer_set_cache_default(VikMapsCacheLayout layout);
-MapTypeID vik_maps_layer_get_default_map_type();
-void maps_layer_register_map_source(MapSource *map);
+SlavGPS::MapTypeID vik_maps_layer_get_default_map_type();
+void maps_layer_register_map_source(SlavGPS::MapSource *map);
 void vik_maps_layer_download_section(VikLayer *vml, VikCoord *ul, VikCoord *br, double zoom);
-MapTypeID vik_maps_layer_get_map_type(VikLayer *vml);
-void vik_maps_layer_set_map_type(VikLayer *vml, MapTypeID type_id);
+SlavGPS::MapTypeID vik_maps_layer_get_map_type(VikLayer *vml);
+void vik_maps_layer_set_map_type(VikLayer *vml, SlavGPS::MapTypeID type_id);
 char *maps_layer_default_dir();
-void vik_maps_layer_download(VikLayer *vml, Viewport * viewport, bool only_new);
+void vik_maps_layer_download(VikLayer *vml, SlavGPS::Viewport * viewport, bool only_new);
 
 #ifdef __cplusplus
 }

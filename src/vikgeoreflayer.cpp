@@ -45,6 +45,11 @@
 #include "settings.h"
 #include "globals.h"
 
+
+using namespace SlavGPS;
+
+
+
 /*
 static VikLayerParamData image_default (void)
 {

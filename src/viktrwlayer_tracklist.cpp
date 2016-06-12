@@ -1,4 +1,3 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
@@ -33,6 +32,10 @@
 #include "clipboard.h"
 #include "settings.h"
 #include "globals.h"
+
+
+using namespace SlavGPS;
+
 
 // Long formatted date+basic time - listing this way ensures the string comparison sort works - so no local type format %x or %c here!
 #define TRACK_LIST_DATE_FORMAT "%Y-%m-%d %H:%M"

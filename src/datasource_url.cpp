@@ -28,6 +28,11 @@
 #include "babel.h"
 #include "settings.h"
 
+
+using namespace SlavGPS;
+
+
+
 // Initially was just going to be a URL and always in GPX format
 // But might as well specify the file type as per datasource_file.c
 // However in this version we'll cope with no GPSBabel available and in this case just try GPX

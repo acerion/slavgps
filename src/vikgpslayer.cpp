@@ -55,6 +55,11 @@
 #include "settings.h"
 #include "globals.h"
 
+
+using namespace SlavGPS;
+
+
+
 extern GList * a_babel_device_list;
 
 

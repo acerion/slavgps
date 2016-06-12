@@ -49,6 +49,10 @@
 #include "globals.h"
 #include <gdk-pixbuf/gdk-pixdata.h>
 
+
+using namespace SlavGPS;
+
+
 typedef enum {
   PROPWIN_GRAPH_TYPE_ELEVATION_DISTANCE,
   PROPWIN_GRAPH_TYPE_GRADIENT_DISTANCE,

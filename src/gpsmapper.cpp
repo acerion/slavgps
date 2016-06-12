@@ -26,6 +26,8 @@
 
 #include <algorithm>
 
+using namespace SlavGPS;
+
 /* Name of layer -> RGN type and Type
    format: Name RGN40 0x40
    or:     Name RGN10 0x2f06

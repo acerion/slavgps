@@ -1,4 +1,3 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
@@ -38,6 +37,12 @@
 #include "bbox.h"
 #include "dialog.h"
 #include "util.h"
+
+
+
+using namespace SlavGPS;
+
+
 
 /**
  * See http://wiki.openstreetmap.org/wiki/API_v0.6#GPS_Traces

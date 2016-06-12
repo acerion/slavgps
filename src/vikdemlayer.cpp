@@ -49,6 +49,12 @@
 #include "dialog.h"
 #include "globals.h"
 
+
+
+using namespace SlavGPS;
+
+
+
 #define MAPS_CACHE_DIR maps_layer_default_dir()
 
 #define SRTM_CACHE_TEMPLATE "%ssrtm3-%s%s%c%02d%c%03d.hgt.zip"

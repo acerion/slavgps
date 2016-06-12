@@ -93,14 +93,14 @@ typedef struct {
 
 
 // Non layer specific but expose communal method
-int vik_gps_comm(LayerTRW * layer,
-		 Track * trk,
+int vik_gps_comm(SlavGPS::LayerTRW * layer,
+		 SlavGPS::Track * trk,
 		 vik_gps_dir dir,
 		 char *protocol,
 		 char *port,
 		 bool tracking,
-		 Viewport * viewport,
-		 LayersPanel * panel,
+		 SlavGPS::Viewport * viewport,
+		 SlavGPS::LayersPanel * panel,
 		 bool do_tracks,
 		 bool do_routes,
 		 bool do_waypoints,

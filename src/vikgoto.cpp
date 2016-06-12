@@ -37,6 +37,10 @@
 #include "vik_compat.h"
 #include "settings.h"
 
+using namespace SlavGPS;
+
+
+
 /* Compatibility */
 #if ! GLIB_CHECK_VERSION(2,22,0)
 #define g_mapped_file_unref g_mapped_file_free

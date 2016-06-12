@@ -25,6 +25,12 @@
 #include "vikslippymapsource.h"
 #include "map_ids.h"
 
+
+
+using namespace SlavGPS;
+
+
+
 /* initialisation */
 void bluemarble_init ()
 {

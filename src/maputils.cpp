@@ -23,6 +23,10 @@
 #include <math.h>
 #include <stdlib.h>
 
+using namespace SlavGPS;
+
+
+
 // World Scale: VIK_GZ(17)
 //  down to
 // Submeter scale: 1/VIK_GZ(5)

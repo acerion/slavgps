@@ -35,6 +35,14 @@
 #include "globals.h"
 #include "maputils.h"
 
+
+
+
+using namespace SlavGPS;
+
+
+
+
 static GObjectClass *parent_class;
 
 static void webtool_center_finalize(GObject * gob);

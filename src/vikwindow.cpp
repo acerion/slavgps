@@ -71,6 +71,11 @@
 #include <gio/gio.h>
 #include <gdk/gdkkeysyms.h>
 
+
+using namespace SlavGPS;
+
+
+
 // This seems rather arbitary, quite large and pointless
 //  I mean, if you have a thousand windows open;
 //   why not be allowed to open a thousand more...
@@ -136,9 +141,9 @@ public:
 	/* Only one of these items can be selected at the same time */
 	LayerTRW * selected_trw;
 	std::unordered_map<sg_uid_t, Track*> * selected_tracks;
-	void * selected_track; /* notionally Track */
+	Track * selected_track;
 	std::unordered_map<sg_uid_t, Waypoint *> * selected_waypoints;
-	void * selected_waypoint; /* notionally Waypoint */
+	Waypoint * selected_waypoint;
 	/* only use for individual track or waypoint */
 	/* For track(s) & waypoint(s) it is the layer they are in - this helps refering to the individual item easier */
 	LayerTRW * containing_trw;
@@ -1298,7 +1303,7 @@ void Window::draw_redraw()
 			this->containing_trw->draw_highlight_items(this->selected_tracks, this->selected_waypoints, vw->viewport);
 
 		} else if (this->containing_trw && (this->selected_track || this->selected_waypoint)) {
-			this->containing_trw->draw_highlight_item((Track *) this->selected_track, (Waypoint *) this->selected_waypoint, vw->viewport);
+			this->containing_trw->draw_highlight_item((Track *) this->selected_track, this->selected_waypoint, vw->viewport);
 
 		} else if (this->selected_trw) {
 			this->selected_trw->draw_highlight(vw->viewport);
@@ -5073,14 +5078,14 @@ void vik_window_set_selected_tracks(VikWindow * vw, std::unordered_map<sg_uid_t,
 	vw->viewport->set_highlight_thickness(vw->window.containing_trw->get_property_tracks_line_thickness());
 }
 
-void * vik_window_get_selected_track(VikWindow * vw)
+Track * vik_window_get_selected_track(VikWindow * vw)
 {
 	return vw->window.selected_track;
 }
 
-void vik_window_set_selected_track(VikWindow * vw, void ** vt, void * trw)
+void vik_window_set_selected_track(VikWindow * vw, Track * track, void * trw)
 {
-	vw->window.selected_track = vt;
+	vw->window.selected_track = track;
 	vw->window.containing_trw = (LayerTRW *) trw;
 	/* Clear others */
 	vw->window.selected_trw       = NULL;
@@ -5107,14 +5112,14 @@ void vik_window_set_selected_waypoints(VikWindow * vw, std::unordered_map<sg_uid
 	vw->window.selected_waypoint  = NULL;
 }
 
-void * vik_window_get_selected_waypoint(VikWindow * vw)
+Waypoint * vik_window_get_selected_waypoint(VikWindow * vw)
 {
 	return vw->window.selected_waypoint;
 }
 
-void vik_window_set_selected_waypoint(VikWindow * vw, void ** vwp, void * trw)
+void vik_window_set_selected_waypoint(VikWindow * vw, Waypoint * wp, void * trw)
 {
-	vw->window.selected_waypoint = vwp;
+	vw->window.selected_waypoint = wp;
 	vw->window.containing_trw    = (LayerTRW *) trw;
 	/* Clear others */
 	vw->window.selected_trw       = NULL;

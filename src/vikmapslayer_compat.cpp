@@ -33,6 +33,10 @@
 #include "vikmapslayer_compat.h"
 #include "vikmaptype.h"
 
+
+using namespace SlavGPS;
+
+
 void maps_layer_register_type ( const char *label, unsigned int id, VikMapsLayer_MapType *map_type )
 {
     assert (id == map_type->uniq_id);

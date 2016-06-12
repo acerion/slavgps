@@ -36,6 +36,13 @@
 #include "dialog.h"
 #include "util.h"
 
+
+
+using namespace SlavGPS;
+
+
+
+
 /************************ FILTER LIST *******************/
 // extern VikDataSourceInterface vik_datasource_gps_interface;
 

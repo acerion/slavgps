@@ -151,7 +151,7 @@ namespace SlavGPS {
 
 struct _VikTreeview {
 	GtkTreeView treeview;
-	TreeView * tree;
+	SlavGPS::TreeView * tree;
 };
 
 

@@ -119,9 +119,9 @@ void a_babel_foreach_file_with_mode (BabelMode mode, GFunc func, void * user_dat
 void a_babel_foreach_file_read_any (GFunc func, void * user_data);
 
 // NB needs to match typedef VikDataSourceProcessFunc in acquire.h
-bool a_babel_convert_from(LayerTRW * trw, ProcessOptions *process_options, BabelStatusFunc cb, void * user_data, DownloadFileOptions *download_options );
+bool a_babel_convert_from(SlavGPS::LayerTRW * trw, ProcessOptions *process_options, BabelStatusFunc cb, void * user_data, DownloadFileOptions *download_options );
 
-bool a_babel_convert_to(LayerTRW * trw, Track * trk, const char *babelargs, const char *file, BabelStatusFunc cb, void * user_data );
+bool a_babel_convert_to(SlavGPS::LayerTRW * trw, SlavGPS::Track * trk, const char *babelargs, const char *file, BabelStatusFunc cb, void * user_data );
 
 void a_babel_init ();
 void a_babel_post_init ();

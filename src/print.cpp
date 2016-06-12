@@ -36,6 +36,12 @@
 #include "print-preview.h"
 #include "vik_compat.h"
 
+
+
+using namespace SlavGPS;
+
+
+
 typedef enum
 {
   VIK_PRINT_CENTER_NONE         = 0,

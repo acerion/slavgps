@@ -36,7 +36,6 @@
 #include "vikstatus.h"
 #include "viktrack.h"
 
-using namespace SlavGPS;
 
 #ifdef __cplusplus
 extern "C" {
@@ -73,7 +72,7 @@ bool vik_window_get_pan_move(VikWindow *vw);
 void vik_window_open_file(VikWindow * vw, char const * filename, bool changefilename);
 struct _VikLayer;
 void vik_window_selected_layer(VikWindow *vw, struct _VikLayer * vl);
-Viewport * vik_window_viewport(VikWindow *vw);
+SlavGPS::Viewport * vik_window_viewport(VikWindow *vw);
 struct _VikLayersPanel * vik_window_layers_panel(VikWindow * vw);
 struct _VikStatusbar * vik_window_get_statusbar(VikWindow * vw);
 char const *vik_window_get_filename(VikWindow * vw);
@@ -86,14 +85,14 @@ void vik_window_enable_layer_tool(VikWindow * vw, int layer_id, int tool_id);
 
 void * vik_window_get_selected_trw_layer(VikWindow * vw); /* return type LayerTRW */
 void vik_window_set_selected_trw_layer(VikWindow * vw, void * trw);
-std::unordered_map<sg_uid_t, Track *> * vik_window_get_selected_tracks(VikWindow * vw);
-void vik_window_set_selected_tracks(VikWindow *vw, std::unordered_map<sg_uid_t, Track *> * tracks, void * trw);
-void * vik_window_get_selected_track (VikWindow *vw); /* return type Track */
-void vik_window_set_selected_track(VikWindow * vw, void ** vt, void * trw);
-std::unordered_map<sg_uid_t, Waypoint *> * vik_window_get_selected_waypoints(VikWindow * vw);
-void vik_window_set_selected_waypoints (VikWindow * vw, std::unordered_map<sg_uid_t, Waypoint *> * waypoints, void * trw);
-void * vik_window_get_selected_waypoint(VikWindow * vw); /* return type VikWaypoint */
-void vik_window_set_selected_waypoint(VikWindow * vw, void ** vwp, void * trw); /* input VikWaypoint */
+std::unordered_map<sg_uid_t, SlavGPS::Track *> * vik_window_get_selected_tracks(VikWindow * vw);
+void vik_window_set_selected_tracks(VikWindow *vw, std::unordered_map<sg_uid_t, SlavGPS::Track *> * tracks, void * trw);
+SlavGPS::Track * vik_window_get_selected_track (VikWindow *vw); /* return type Track */
+void vik_window_set_selected_track(VikWindow * vw, SlavGPS::Track * track, void * trw);
+std::unordered_map<sg_uid_t, SlavGPS::Waypoint *> * vik_window_get_selected_waypoints(VikWindow * vw);
+void vik_window_set_selected_waypoints (VikWindow * vw, std::unordered_map<sg_uid_t, SlavGPS::Waypoint *> * waypoints, void * trw);
+SlavGPS::Waypoint * vik_window_get_selected_waypoint(VikWindow * vw); /* return type VikWaypoint */
+void vik_window_set_selected_waypoint(VikWindow * vw, SlavGPS::Waypoint * wp, void * trw);
 /* Return the VikLayer of the selected track(s) or waypoint(s) are in (maybe NULL) */
 //void * vik_window_get_containing_trw_layer (VikWindow *vw);
 /* return indicates if a redraw is necessary */
@@ -106,7 +105,7 @@ void vik_window_clear_busy_cursor(VikWindow * vw);
 
 typedef struct {
 	VikWindow * vw;
-	Viewport * viewport;
+	SlavGPS::Viewport * viewport;
 	void * trw; // LayerTRW
 	bool holding;
 	bool moving;

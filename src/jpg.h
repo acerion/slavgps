@@ -35,7 +35,7 @@ extern "C" {
 
 
 bool a_jpg_magic_check(char const * filename);
-bool a_jpg_load_file(LayerAggregate * top, char const * filename, Viewport * viewport);
+bool a_jpg_load_file(SlavGPS::LayerAggregate * top, char const * filename, SlavGPS::Viewport * viewport);
 
 #ifdef __cplusplus
 }

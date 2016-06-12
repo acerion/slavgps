@@ -31,7 +31,7 @@ extern "C" {
 #endif
 
 
-void a_print(VikWindow *vw, Viewport * viewport);
+void a_print(VikWindow *vw, SlavGPS::Viewport * viewport);
 
 #ifdef __cplusplus
 }

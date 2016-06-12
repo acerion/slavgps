@@ -41,6 +41,11 @@
 
 #include "vikroutingwebengine.h"
 
+
+using namespace SlavGPS;
+
+
+
 static void vik_routing_web_engine_finalize ( GObject *gob );
 
 static bool vik_routing_web_engine_find ( VikRoutingEngine *self, VikLayer *vtl, struct LatLon start, struct LatLon end );

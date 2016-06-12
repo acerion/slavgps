@@ -42,6 +42,11 @@
 #include "vikdatetime_edit_dialog.h"
 #include "ui_util.h"
 
+
+using namespace SlavGPS;
+
+
+
 struct _VikTrwLayerTpwin {
   GtkDialog parent;
   GtkSpinButton *lat, *lon, *alt, *ts;

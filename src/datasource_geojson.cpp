@@ -29,6 +29,12 @@
 #include "babel.h"
 #include "geojson.h"
 
+
+
+using namespace SlavGPS;
+
+
+
 typedef struct {
 	GtkWidget * files;
 	GSList * filelist;  // Files selected

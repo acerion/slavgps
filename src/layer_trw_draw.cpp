@@ -55,6 +55,7 @@
 #include "globals.h"
 
 
+using namespace SlavGPS;
 
 static void trw_layer_draw_symbol(Waypoint * wp, int x, int y, DrawingParams * dp);
 static void trw_layer_draw_label(Waypoint * wp, int x, int y, DrawingParams * dp);

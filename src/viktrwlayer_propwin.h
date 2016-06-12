@@ -40,17 +40,17 @@ extern "C" {
 #define VIK_TRW_LAYER_PROPWIN_SPLIT_MARKER 4
 
 void vik_trw_layer_propwin_run(GtkWindow * parent,
-							   LayerTRW * layer,
-							   Track * trk,
+							   SlavGPS::LayerTRW * layer,
+							   SlavGPS::Track * trk,
 							   void * panel,
-							   Viewport * viewport,
+							   SlavGPS::Viewport * viewport,
 							   bool start_on_stats);
 
 /**
  * Update this property dialog
  * e.g. if the track has been renamed
  */
-void vik_trw_layer_propwin_update(Track * trk);
+void vik_trw_layer_propwin_update(SlavGPS::Track * trk);
 
 #ifdef __cplusplus
 }

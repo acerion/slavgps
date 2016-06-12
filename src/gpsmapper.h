@@ -29,7 +29,7 @@ extern "C" {
 #endif
 
 
-void a_gpsmapper_write_file(FILE * f, LayerTRW * layer);
+void a_gpsmapper_write_file(FILE * f, SlavGPS::LayerTRW * layer);
 
 #ifdef __cplusplus
 }

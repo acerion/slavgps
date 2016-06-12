@@ -44,6 +44,12 @@
 #include "settings.h"
 #include "globals.h"
 
+
+
+using namespace SlavGPS;
+
+
+
 /* params will be osm_traces.username, osm_traces.password */
 /* we have to make sure these don't collide. */
 #define VIKING_OSM_TRACES_PARAMS_GROUP_KEY "osm_traces"

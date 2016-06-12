@@ -52,6 +52,12 @@
 #include "vikfileentry.h"
 #include "file.h"
 
+
+
+using namespace SlavGPS;
+
+
+
 struct _VikMapnikLayerClass
 {
 	VikLayerClass object_class;

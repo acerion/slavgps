@@ -31,6 +31,8 @@
 #include <glib/gi18n.h>
 #include <stdlib.h>
 
+using namespace SlavGPS;
+
 /**
  * Perform any cleanup actions once program has completed running
  */

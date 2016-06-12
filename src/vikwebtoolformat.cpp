@@ -1,4 +1,3 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
@@ -33,6 +32,12 @@
 #include "util.h"
 #include "globals.h"
 #include "maputils.h"
+
+
+
+using namespace SlavGPS;
+
+
 
 static GObjectClass *parent_class;
 

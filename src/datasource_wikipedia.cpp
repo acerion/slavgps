@@ -27,6 +27,12 @@
 #include "acquire.h"
 #include "geonamessearch.h"
 
+
+
+using namespace SlavGPS;
+
+
+
 static bool datasource_wikipedia_process(LayerTRW * trw, ProcessOptions * po, BabelStatusFunc status_cb, acq_dialog_widgets_t * adw);
 
 VikDataSourceInterface vik_datasource_wikipedia_interface = {

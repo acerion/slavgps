@@ -37,6 +37,12 @@
 #endif
 #include <math.h>
 
+
+
+using namespace SlavGPS;
+
+
+
 #ifdef HAVE_ZIP_H
 /**
  * Simple KML 'file' with a Ground Overlay

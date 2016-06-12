@@ -42,6 +42,12 @@
 #include "acquire.h"
 #include "settings.h"
 
+
+
+using namespace SlavGPS;
+
+
+
 extern GList * a_babel_device_list;
 
 static bool gps_acquire_in_progress = false;

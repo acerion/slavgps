@@ -43,6 +43,12 @@
 #include "vikrouting.h"
 #include "vikroutingwebengine.h"
 
+
+
+using namespace SlavGPS;
+
+
+
 /* initialisation */
 void osm_init (void)
 {

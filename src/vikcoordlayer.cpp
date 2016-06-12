@@ -32,6 +32,8 @@
 #include "vikcoordlayer.h"
 #include "icons/icons.h"
 
+using namespace SlavGPS;
+
 static VikLayer *coord_layer_new(Viewport * viewport);
 static VikLayer *coord_layer_unmarshall(uint8_t *data, int len, Viewport * viewport);
 static bool coord_layer_set_param(VikLayer *vcl, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);

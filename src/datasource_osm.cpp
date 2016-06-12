@@ -33,6 +33,13 @@
 #include "gpx.h"
 #include "acquire.h"
 
+
+
+using namespace SlavGPS;
+
+
+
+
 /**
  * See http://wiki.openstreetmap.org/wiki/API_v0.6#GPS_Traces
  */

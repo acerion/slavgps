@@ -49,12 +49,12 @@ typedef struct _VikGeorefLayer VikGeorefLayer;
 
 void vik_georef_layer_init(void);
 
-VikLayer *vik_georef_layer_create(Viewport * viewport,
-					LayersPanel * panel,
-					const char *name,
-					GdkPixbuf *pibxbuf,
-					VikCoord *coord_tr,
-					VikCoord *coord_br );
+VikLayer *vik_georef_layer_create(SlavGPS::Viewport * viewport,
+				  SlavGPS::LayersPanel * panel,
+				  const char *name,
+				  GdkPixbuf *pibxbuf,
+				  VikCoord *coord_tr,
+				  VikCoord *coord_br );
 
 #ifdef __cplusplus
 }

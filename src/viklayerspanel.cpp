@@ -37,6 +37,8 @@
 #include <glib/gi18n.h>
 #include <gdk/gdkkeysyms.h>
 
+using namespace SlavGPS;
+
 enum {
 	VLP_UPDATE_SIGNAL,
 	VLP_DELETE_LAYER_SIGNAL,

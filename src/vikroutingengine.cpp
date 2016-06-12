@@ -39,6 +39,10 @@
 
 #include "vikroutingengine.h"
 
+
+using namespace SlavGPS;
+
+
 static void vik_routing_engine_finalize ( GObject *gob );
 static GObjectClass *parent_class;
 

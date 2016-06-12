@@ -1,4 +1,3 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
@@ -30,6 +29,12 @@
 #include "dir.h"
 #include "file.h"
 #include "globals.h"
+
+
+
+using namespace SlavGPS;
+
+
 
 #define VIKING_LAYER_DEFAULTS_INI_FILE "viking_layer_defaults.ini"
 

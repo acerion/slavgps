@@ -33,6 +33,8 @@
 #include <glib/gi18n.h>
 #include <glib/gstdio.h>
 
+using namespace SlavGPS;
+
 static GObjectClass *parent_class;
 
 static void goto_tool_finalize ( GObject *gob );

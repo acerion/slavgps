@@ -35,6 +35,10 @@
 #include "util.h"
 #include "globals.h"
 
+using namespace SlavGPS;
+
+
+
 static char * last_folder_uri = NULL;
 
 void vik_trw_layer_export(LayerTRW * layer, char const * title, char const * default_name, Track * trk, VikFileType_t file_type)

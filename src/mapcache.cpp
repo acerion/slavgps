@@ -31,6 +31,9 @@
 #include "preferences.h"
 #include "vik_compat.h"
 
+using namespace SlavGPS;
+
+
 #define MC_KEY_SIZE 64
 
 typedef struct _List {

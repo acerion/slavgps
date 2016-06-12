@@ -2240,7 +2240,7 @@ bool LayerTRW::selected(int subtype, void * sublayer, int type, void * panel)
 				{
 					sg_uid_t uid = (sg_uid_t) ((long) sublayer);
 					Track * trk = this->tracks.at(uid);
-					vik_window_set_selected_track((VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(this->vl), (void **) trk, this);
+					vik_window_set_selected_track((VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(this->vl), trk, this);
 					/* Mark for redraw */
 					return true;
 				}
@@ -2256,7 +2256,7 @@ bool LayerTRW::selected(int subtype, void * sublayer, int type, void * panel)
 				{
 					sg_uid_t uid = (sg_uid_t) ((long) sublayer);
 					Track * trk = this->routes.at(uid);
-					vik_window_set_selected_track((VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(this->vl), (void **) trk, this);
+					vik_window_set_selected_track((VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(this->vl), trk, this);
 					/* Mark for redraw */
 					return true;
 				}
@@ -2273,7 +2273,7 @@ bool LayerTRW::selected(int subtype, void * sublayer, int type, void * panel)
 					sg_uid_t wp_uid = (sg_uid_t) ((long) sublayer);
 					Waypoint * wp = this->waypoints.at(wp_uid);
 					if (wp) {
-						vik_window_set_selected_waypoint((VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(this->vl), (void **) wp, this);
+						vik_window_set_selected_waypoint((VikWindow *)VIK_GTK_WINDOW_FROM_LAYER(this->vl), wp, this);
 						// Show some waypoint info
 						this->set_statusbar_msg_info_wpt(wp);
 						/* Mark for redraw */

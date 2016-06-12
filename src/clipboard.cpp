@@ -41,6 +41,8 @@
 #include "viktrwlayer.h"
 #include "globals.h"
 
+using namespace SlavGPS;
+
 
 typedef struct {
   void * clipboard;

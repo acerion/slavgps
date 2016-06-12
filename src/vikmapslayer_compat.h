@@ -30,7 +30,6 @@
 //#include "vikviewport.h"
 #include "mapcoord.h"
 
-using namespace SlavGPS;
 
 #ifdef __cplusplus
 extern "C" {
@@ -42,9 +41,9 @@ typedef struct {
   uint16_t tilesize_x;
   uint16_t tilesize_y;
   unsigned int drawmode;
-  bool (*coord_to_tile) ( const VikCoord *src, double xzoom, double yzoom, TileInfo * dest);
-  void (*tile_to_center_coord) (TileInfo * src, VikCoord *dest );
-  DownloadResult_t (*download) (TileInfo * src, const char *dest_fn, void *handle );
+  bool (*coord_to_tile) ( const VikCoord *src, double xzoom, double yzoom, SlavGPS::TileInfo * dest);
+  void (*tile_to_center_coord) (SlavGPS::TileInfo * src, VikCoord *dest );
+  DownloadResult_t (*download) (SlavGPS::TileInfo * src, const char *dest_fn, void *handle );
   void *(*download_handle_init) ( );
   void (*download_handle_cleanup) ( void *handle );
   /* TODO: constant size (yay!) */
