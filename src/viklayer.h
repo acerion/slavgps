@@ -81,32 +81,6 @@ typedef enum {
 
 struct _VikWindow;
 
-/* void * is tool-specific state created in the constructor */
-typedef void * (*VikToolConstructorFunc) (struct _VikWindow *, SlavGPS::Viewport *);
-typedef void (*VikToolDestructorFunc) (void *);
-typedef VikLayerToolFuncStatus (*VikToolMouseFunc) (VikLayer *, GdkEventButton *, void *);
-typedef VikLayerToolFuncStatus (*VikToolMouseMoveFunc) (VikLayer *, GdkEventMotion *, void *);
-typedef void (*VikToolActivationFunc) (VikLayer *, void *);
-typedef bool (*VikToolKeyFunc) (VikLayer *, GdkEventKey *, void *);
-
-typedef struct _VikToolInterface VikToolInterface;
-struct _VikToolInterface {
-  GtkRadioActionEntry radioActionEntry;
-  VikToolConstructorFunc create;
-  VikToolDestructorFunc destroy;
-  VikToolActivationFunc activate;
-  VikToolActivationFunc deactivate;
-  VikToolMouseFunc click;
-  VikToolMouseMoveFunc move;
-  VikToolMouseFunc release;
-  VikToolKeyFunc key_press; /* return false if we don't use the key press -- should return false most of the time if we want any shortcuts / UI keybindings to work! use sparingly. */
-  bool pan_handler; // Call click & release funtions even when 'Pan Mode' is on
-  GdkCursorType cursor_type;
-  const GdkPixdata *cursor_data;
-  const GdkCursor *cursor;
-};
-
-
 
 /* layer interface functions */
 
@@ -130,6 +104,7 @@ typedef enum {
 } VikStdLayerMenuItem;
 
 typedef struct _VikLayerInterface VikLayerInterface;
+struct _VikToolInterface;
 
 /* See vik_layer_* for function parameter names */
 struct _VikLayerInterface {
@@ -138,7 +113,7 @@ struct _VikLayerInterface {
   const char *                     accelerator;
   const GdkPixdata *                icon;
 
-  VikToolInterface *                tools;
+  struct _VikToolInterface *                tools;
   uint16_t                           tools_count;
 
   /* for I/O reading to and from .vik files -- params like coordline width, color, etc. */
@@ -321,6 +296,37 @@ namespace SlavGPS {
 
 
 }
+
+
+
+
+/* void * is tool-specific state created in the constructor */
+typedef void * (*VikToolConstructorFunc) (struct _VikWindow *, SlavGPS::Viewport *);
+typedef void (*VikToolDestructorFunc) (void *);
+typedef VikLayerToolFuncStatus (*VikToolMouseFunc) (SlavGPS::Layer *, GdkEventButton *, void *);
+typedef VikLayerToolFuncStatus (*VikToolMouseMoveFunc) (SlavGPS::Layer *, GdkEventMotion *, void *);
+typedef void (*VikToolActivationFunc) (SlavGPS::Layer *, void *);
+typedef bool (*VikToolKeyFunc) (SlavGPS::Layer *, GdkEventKey *, void *);
+
+typedef struct _VikToolInterface VikToolInterface;
+struct _VikToolInterface {
+  GtkRadioActionEntry radioActionEntry;
+
+  VikToolConstructorFunc create;
+  VikToolDestructorFunc destroy;
+  VikToolActivationFunc activate;
+  VikToolActivationFunc deactivate;
+  VikToolMouseFunc click;
+  VikToolMouseMoveFunc move;
+  VikToolMouseFunc release;
+  VikToolKeyFunc key_press; /* return false if we don't use the key press -- should return false most of the time if we want any shortcuts / UI keybindings to work! use sparingly. */
+
+  bool pan_handler; // Call click & release funtions even when 'Pan Mode' is on
+  GdkCursorType cursor_type;
+  const GdkPixdata *cursor_data;
+  const GdkCursor *cursor;
+};
+
 
 
 

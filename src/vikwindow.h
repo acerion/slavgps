@@ -74,8 +74,7 @@ void vik_window_new_window_finish(VikWindow * vw);
 GtkWidget *vik_window_get_drawmode_button(VikWindow * vw, VikViewportDrawMode mode);
 bool vik_window_get_pan_move(VikWindow *vw);
 void vik_window_open_file(VikWindow * vw, char const * filename, bool changefilename);
-struct _VikLayer;
-void vik_window_selected_layer(VikWindow *vw, struct _VikLayer * vl);
+void vik_window_selected_layer(VikWindow *vw, SlavGPS::Layer * layer);
 SlavGPS::Viewport * vik_window_viewport(VikWindow *vw);
 struct _VikLayersPanel * vik_window_layers_panel(VikWindow * vw);
 struct _VikStatusbar * vik_window_get_statusbar(VikWindow * vw);
@@ -83,7 +82,7 @@ char const *vik_window_get_filename(VikWindow * vw);
 
 void vik_window_statusbar_update(VikWindow * vw, char const * message, vik_statusbar_type_t vs_type);
 
-void vik_window_set_redraw_trigger(struct _VikLayer * vl);
+void vik_window_set_redraw_trigger(SlavGPS::Layer * layer);
 
 void vik_window_enable_layer_tool(VikWindow * vw, int layer_id, int tool_id);
 

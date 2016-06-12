@@ -130,8 +130,8 @@ static VikLayerParam dem_layer_params[] = {
 enum { PARAM_FILES=0, PARAM_SOURCE, PARAM_COLOR, PARAM_TYPE, PARAM_MIN_ELEV, PARAM_MAX_ELEV, NUM_PARAMS };
 
 static void * dem_layer_download_create(VikWindow *vw, Viewport * viewport);
-static bool dem_layer_download_release(VikLayer *vdl, GdkEventButton *event, Viewport * viewport);
-static bool dem_layer_download_click(VikLayer *vdl, GdkEventButton *event, Viewport * viewport);
+static bool dem_layer_download_release(Layer * vdl, GdkEventButton *event, Viewport * viewport);
+static bool dem_layer_download_click(Layer * vdl, GdkEventButton *event, Viewport * viewport);
 
 static VikToolInterface dem_tools[] = {
 	{ { "DEMDownload", "vik-icon-DEM Download", N_("_DEM Download"), NULL, N_("DEM Download"), 0 },
@@ -1293,10 +1293,9 @@ static void dem_layer_file_info(GtkWidget *widget, struct LatLon *ll)
 	free(filename);
 }
 
-static bool dem_layer_download_release(VikLayer * vdl, GdkEventButton * event, Viewport * viewport)
+static bool dem_layer_download_release(Layer * vdl, GdkEventButton * event, Viewport * viewport)
 {
-	LayerDEM * layer = (LayerDEM *) vdl->layer;
-	return layer->download_release(event, viewport);
+	return ((LayerDEM *) vdl)->download_release(event, viewport);
 }
 
 
@@ -1371,7 +1370,7 @@ bool LayerDEM::download_release(GdkEventButton * event, Viewport * viewport)
 	return true;
 }
 
-static bool dem_layer_download_click(VikLayer * vdl, GdkEventButton * event, Viewport * viewport)
+static bool dem_layer_download_click(Layer * vdl, GdkEventButton * event, Viewport * viewport)
 {
 	/* choose & keep track of cache dir
 	 * download in background thread

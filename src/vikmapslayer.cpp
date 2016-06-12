@@ -125,8 +125,8 @@ static bool maps_layer_set_param(VikLayer *vml, uint16_t id, VikLayerParamData d
 static VikLayerParamData maps_layer_get_param(VikLayer *vml, uint16_t id, bool is_file_operation);
 static void maps_layer_change_param(GtkWidget *widget, ui_change_values values);
 static VikLayer * maps_layer_new(Viewport * viewport);
-static bool maps_layer_download_release(VikLayer *vml, GdkEventButton *event, Viewport * viewport);
-static bool maps_layer_download_click(VikLayer *vml, GdkEventButton *event, Viewport * viewport);
+static bool maps_layer_download_release(Layer * vml, GdkEventButton *event, Viewport * viewport);
+static bool maps_layer_download_click(Layer * vml, GdkEventButton *event, Viewport * viewport);
 static void * maps_layer_download_create(VikWindow *vw, Viewport * viewport);
 static void start_download_thread(LayerMaps * layer, Viewport * viewport, const VikCoord *ul, const VikCoord *br, int redownload_mode);
 static int map_type_to_map_index(MapTypeID map_type);
@@ -1972,13 +1972,13 @@ static void maps_layer_tile_info(VikLayer *vml)
 	free(filename);
 }
 
-static bool maps_layer_download_release(VikLayer *vml, GdkEventButton *event, Viewport * viewport)
+static bool maps_layer_download_release(Layer * vml, GdkEventButton *event, Viewport * viewport)
 {
-	if (!vml || ((Layer *) vml->layer)->type != VIK_LAYER_MAPS) {
+	if (!vml || vml->type != VIK_LAYER_MAPS) {
 		return false;
 	}
 
-	LayerMaps * layer = (LayerMaps *) vml->layer;
+	LayerMaps * layer = (LayerMaps *) vml;
 
 	if (layer->dl_tool_x != -1 && layer->dl_tool_y != -1) {
 		if (event->button == 1) {
@@ -2030,14 +2030,14 @@ static void * maps_layer_download_create(VikWindow *vw, Viewport * viewport)
 	return viewport->vvp;
 }
 
-static bool maps_layer_download_click(VikLayer *vml, GdkEventButton *event, Viewport * viewport)
+static bool maps_layer_download_click(Layer * vml, GdkEventButton *event, Viewport * viewport)
 {
 	TileInfo tmp;
-	if (!vml || ((Layer *) vml->layer)->type != VIK_LAYER_MAPS) {
+	if (!vml || vml->type != VIK_LAYER_MAPS) {
 		return false;
 	}
 
-	LayerMaps * layer = (LayerMaps *) vml->layer;
+	LayerMaps * layer = (LayerMaps *) vml;
 
 	MapSource *map = map_sources[layer->map_index];
 	if (map->get_drawmode() == viewport->get_drawmode() &&

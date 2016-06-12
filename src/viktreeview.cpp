@@ -446,7 +446,7 @@ static void select_cb(GtkTreeSelection *selection, void * data)
 	Layer * layer = (Layer *) vt->tree->get_layer(&iter);
 
 	vw = VIK_WINDOW(VIK_GTK_WINDOW_FROM_LAYER(layer->vl));
-	vik_window_selected_layer(vw, layer->vl);
+	vik_window_selected_layer(vw, layer);
 
 	if (tmp_vl == NULL) {
 		tmp_vl = layer;

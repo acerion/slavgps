@@ -88,10 +88,10 @@ static VikLayer *georef_layer_new(Viewport * viewport);
 
 /* tools */
 static void * georef_layer_move_create(VikWindow *vw, Viewport * viewport);
-static bool georef_layer_move_release_cb(VikLayer *vgl, GdkEventButton *event, Viewport * viewport);
-static bool georef_layer_move_press_cb(VikLayer *vgl, GdkEventButton *event, Viewport * viewport);
+static bool georef_layer_move_release_cb(Layer * vgl, GdkEventButton *event, Viewport * viewport);
+static bool georef_layer_move_press_cb(Layer * vgl, GdkEventButton *event, Viewport * viewport);
 static void * georef_layer_zoom_create(VikWindow *vw, Viewport * viewport);
-static bool georef_layer_zoom_press_cb(VikLayer *vgl, GdkEventButton *event, Viewport * viewport);
+static bool georef_layer_zoom_press_cb(Layer * vgl, GdkEventButton *event, Viewport * viewport);
 
 // See comment in viktrwlayer.c for advice on values used
 static VikToolInterface georef_tools[] = {
@@ -1065,10 +1065,9 @@ static void * georef_layer_move_create(VikWindow *vw, Viewport * viewport)
 	return viewport->vvp;
 }
 
-static bool georef_layer_move_release_cb(VikLayer * vgl, GdkEventButton * event, Viewport * viewport)
+static bool georef_layer_move_release_cb(Layer * vgl, GdkEventButton * event, Viewport * viewport)
 {
-	LayerGeoref * layer = (LayerGeoref *) vgl->layer;
-	return layer->move_release(event, viewport);
+	return ((LayerGeoref *) vgl)->move_release(event, viewport);
 }
 
 bool LayerGeoref::move_release(GdkEventButton * event, Viewport * viewport)
@@ -1092,10 +1091,9 @@ static void * georef_layer_zoom_create(VikWindow *vw, Viewport * viewport)
 	return viewport->vvp;
 }
 
-static bool georef_layer_zoom_press_cb(VikLayer * vgl, GdkEventButton * event, Viewport * viewport)
+static bool georef_layer_zoom_press_cb(Layer * vgl, GdkEventButton * event, Viewport * viewport)
 {
-	LayerGeoref * layer = (LayerGeoref *) vgl->layer;
-	return layer->zoom_press(event, viewport);
+	return ((LayerGeoref *) vgl)->zoom_press(event, viewport);
 }
 
 bool LayerGeoref::zoom_press(GdkEventButton * event, Viewport * viewport)
@@ -1123,10 +1121,9 @@ bool LayerGeoref::zoom_press(GdkEventButton * event, Viewport * viewport)
 }
 
 
-static bool georef_layer_move_press_cb(VikLayer *vgl, GdkEventButton *event, Viewport * viewport)
+static bool georef_layer_move_press_cb(Layer * vgl, GdkEventButton *event, Viewport * viewport)
 {
-	LayerGeoref * layer = (LayerGeoref *) vgl->layer;
-	return layer->move_press(event, viewport);
+	return ((LayerGeoref *) vgl)->move_press(event, viewport);
 }
 
 bool LayerGeoref::move_press(GdkEventButton * event, Viewport * viewport)

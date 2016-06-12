@@ -119,7 +119,7 @@ void Layer::emit_update()
 			return;
 		}
 
-		vik_window_set_redraw_trigger(this->vl);
+		vik_window_set_redraw_trigger(this);
 
 		// Only ever draw when there is time to do so
 		if (g_thread_self() != thread) {
@@ -141,7 +141,7 @@ void Layer::emit_update()
  */
 void vik_layer_emit_update_although_invisible ( VikLayer *vl )
 {
-  vik_window_set_redraw_trigger(vl);
+  vik_window_set_redraw_trigger((Layer *) vl->layer);
   g_idle_add ( (GSourceFunc) idle_draw, vl );
 }
 

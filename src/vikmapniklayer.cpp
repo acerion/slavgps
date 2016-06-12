@@ -117,7 +117,7 @@ static void * mapnik_feature_create(VikWindow *vw, Viewport * viewport)
 	return viewport->vvp;
 }
 
-static bool mapnik_feature_release_cb(VikLayer *vml, GdkEventButton *event, Viewport * viewport);
+static bool mapnik_feature_release_cb(Layer * vml, GdkEventButton *event, Viewport * viewport);
 
 // See comment in viktrwlayer.c for advice on values used
 // FUTURE:
@@ -1144,14 +1144,13 @@ void LayerMapnik::tile_info()
 	free(filename);
 }
 
-static bool mapnik_feature_release_cb(VikLayer *vml, GdkEventButton *event, Viewport * viewport)
+static bool mapnik_feature_release_cb(Layer * vml, GdkEventButton *event, Viewport * viewport)
 {
 	if (!vml) {
 		return false;
 	}
 
-	LayerMapnik * layer = (LayerMapnik *) vml->layer;
-	return layer->feature_release(event, viewport);
+	return ((LayerMapnik *) vml)->feature_release(event, viewport);
 }
 
 bool LayerMapnik::feature_release(GdkEventButton * event, Viewport * viewport)
