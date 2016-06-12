@@ -44,6 +44,8 @@ namespace SlavGPS {
 
 
 	typedef GtkTreeIter TreeIndex;
+	typedef std::unordered_map<sg_uid_t, Track *> Tracks;
+	typedef std::unordered_map<sg_uid_t, Waypoint *> Waypoints;
 
 
 
