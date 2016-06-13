@@ -962,7 +962,7 @@ static void srtm_dem_download_thread(DEMDownloadParams * p, void * threaddata)
 	if (!continent_dir) {
 		if (p->layer) {
 			char *msg = g_strdup_printf(_("No SRTM data available for %f, %f"), p->lat, p->lon);
-			vik_window_statusbar_update(vik_window_from_layer(p->layer), msg, VIK_STATUSBAR_INFO);
+			window_from_layer(p->layer)->statusbar_update(msg, VIK_STATUSBAR_INFO);
 			free(msg);
 		}
 		return;
@@ -982,13 +982,13 @@ static void srtm_dem_download_thread(DEMDownloadParams * p, void * threaddata)
 	case DOWNLOAD_CONTENT_ERROR:
 	case DOWNLOAD_HTTP_ERROR: {
 		char *msg = g_strdup_printf(_("DEM download failure for %f, %f"), p->lat, p->lon);
-		vik_window_statusbar_update(vik_window_from_layer(p->layer), msg, VIK_STATUSBAR_INFO);
+		window_from_layer(p->layer)->statusbar_update(msg, VIK_STATUSBAR_INFO);
 		free(msg);
 		break;
 	}
 	case DOWNLOAD_FILE_WRITE_ERROR: {
 		char *msg = g_strdup_printf(_("DEM write failure for %s"), p->dest);
-		vik_window_statusbar_update(vik_window_from_layer(p->layer), msg, VIK_STATUSBAR_INFO);
+		window_from_layer(p->layer)->statusbar_update(msg, VIK_STATUSBAR_INFO);
 		free(msg);
 		break;
 	}

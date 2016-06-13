@@ -113,13 +113,13 @@ static bool idle_draw ( VikLayer *vl )
 void Layer::emit_update()
 {
 	if (this->visible && this->realized) {
-		GThread * thread = vik_window_get_thread(vik_window_from_layer(this));
+		GThread * thread = window_from_layer(this)->get_thread();
 		if (!thread) {
 			// Do nothing
 			return;
 		}
 
-		vik_window_set_redraw_trigger(this);
+		Window::set_redraw_trigger(this);
 
 		// Only ever draw when there is time to do so
 		if (g_thread_self() != thread) {
@@ -141,8 +141,8 @@ void Layer::emit_update()
  */
 void vik_layer_emit_update_although_invisible ( VikLayer *vl )
 {
-  vik_window_set_redraw_trigger((Layer *) vl->layer);
-  g_idle_add ( (GSourceFunc) idle_draw, vl );
+	Window::set_redraw_trigger((Layer *) vl->layer);
+	g_idle_add ( (GSourceFunc) idle_draw, vl );
 }
 
 /* doesn't set the trigger. should be done by aggregate layer when child emits update. */

@@ -445,8 +445,8 @@ static void select_cb(GtkTreeSelection *selection, void * data)
 
 	Layer * layer = (Layer *) vt->tree->get_layer(&iter);
 
-	vw = vik_window_from_layer(layer);
-	window_from_layer(layer)->selected_layer(layer);
+	Window * window = window_from_layer(layer);
+	window->selected_layer(layer);
 
 	if (tmp_vl == NULL) {
 		tmp_vl = layer;
@@ -456,9 +456,9 @@ static void select_cb(GtkTreeSelection *selection, void * data)
 			       tmp_subtype,
 			       tmp_layer,
 			       tmp_type,
-			       vik_window_layers_panel(vw))) {
+			       window->get_layers_panel())) {
 		/* Redraw required */
-		vik_layers_panel_emit_update_cb(vik_window_layers_panel(vw)->panel_ref);
+		vik_layers_panel_emit_update_cb(window->get_layers_panel()->panel_ref);
 	}
 
 }

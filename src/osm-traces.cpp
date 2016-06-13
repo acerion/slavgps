@@ -341,7 +341,7 @@ static void osm_traces_upload_thread ( OsmTracesInfo *oti, void * threaddata )
     else {
       msg = g_strdup_printf ( "%s : %s %d (@%s)", _("FAILED TO UPLOAD DATA TO OSM"), _("HTTP response code"), ans, timestr );
     }
-    vik_window_statusbar_update (vik_window_from_layer(oti->trw), msg, VIK_STATUSBAR_INFO );
+    window_from_layer(oti->trw)->statusbar_update(msg, VIK_STATUSBAR_INFO );
     free(msg);
   }
   /* Removing temporary file */

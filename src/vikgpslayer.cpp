@@ -1296,8 +1296,8 @@ int vik_gps_comm(LayerTRW * layer,
 		// NB this may only be a Garmin device restriction (and may be not every Garmin device either...)
 		// Thus this maintains the older code in built restriction
 		if (!sess->trw->uniquify(panel)) {
-			vik_statusbar_set_message(vik_window_get_statusbar(vik_window_from_layer(sess->trw)), VIK_STATUSBAR_INFO,
-						    _("Warning - GPS Upload items may overwrite each other"));
+			vik_statusbar_set_message(window_from_layer(sess->trw)->get_statusbar(), VIK_STATUSBAR_INFO,
+						  _("Warning - GPS Upload items may overwrite each other"));
 		}
 	}
 

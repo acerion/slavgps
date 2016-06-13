@@ -73,7 +73,7 @@ bool a_geojson_write_file(LayerTRW * trw, FILE * ff)
 
 		if (IS_VIK_WINDOW (vik_window_from_layer(trw))) {
 			char* msg = g_strdup_printf(_("%s command failed: %s"), argv[0], error->message);
-			vik_window_statusbar_update(vik_window_from_layer(trw), msg, VIK_STATUSBAR_INFO);
+			window_from_layer(trw)->statusbar_update(msg, VIK_STATUSBAR_INFO);
 			free(msg);
 		} else {
 			fprintf(stderr, "WARNING: Async command failed: %s\n", error->message);

@@ -490,7 +490,7 @@ bool LayerMapnik::carto_load(Viewport * viewport)
 	Window * window = window_from_widget(viewport->vvp);
 	if (window) {
 		char *msg = g_strdup_printf("%s: %s", _("Running"), command);
-		vik_window_statusbar_update((VikWindow *) window->vw, msg, VIK_STATUSBAR_INFO);
+		window->statusbar_update(msg, VIK_STATUSBAR_INFO);
 		window->set_busy_cursor();
 	}
 
@@ -542,7 +542,7 @@ bool LayerMapnik::carto_load(Viewport * viewport)
 
 	if (window) {
 		char *msg = g_strdup_printf("%s %s %.1f %s",  vlpd->s, _(" completed in "), (double)(tt2-tt1)/G_USEC_PER_SEC, _("seconds"));
-		vik_window_statusbar_update((VikWindow *) window->vw, msg, VIK_STATUSBAR_INFO);
+		window->statusbar_update(msg, VIK_STATUSBAR_INFO);
 		free(msg);
 		window->clear_busy_cursor();
 	}
@@ -827,7 +827,7 @@ void LayerMapnik::draw(Viewport * viewport)
 	}
 
 	if (viewport->get_drawmode() != VIK_VIEWPORT_DRAWMODE_MERCATOR) {
-		vik_statusbar_set_message(vik_window_get_statusbar (vik_window_from_layer(this)),
+		vik_statusbar_set_message(window_from_layer(this)->get_statusbar(),
 		                            VIK_STATUSBAR_INFO, _("Mapnik Rendering must be in Mercator mode"));
 		return;
 	}

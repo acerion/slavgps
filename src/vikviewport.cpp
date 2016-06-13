@@ -1554,13 +1554,12 @@ bool Viewport::get_half_drawn()
 
 char const * Viewport::get_drawmode_name(VikViewportDrawMode mode)
 {
-	 VikWindow * vw = VIK_WINDOW_FROM_WIDGET(this->vvp);
-	 GtkWidget * mode_button = vik_window_get_drawmode_button(vw, mode);
-	 GtkWidget * label = gtk_bin_get_child(GTK_BIN(mode_button));
+	GtkWidget * mode_button = window_from_widget(this->vvp)->get_drawmode_button(mode);
+	GtkWidget * label = gtk_bin_get_child(GTK_BIN(mode_button));
 
-	 return gtk_label_get_text(GTK_LABEL(label));
+	return gtk_label_get_text(GTK_LABEL(label));
 
- }
+}
 
 /* kamilTODO: perhaps make the method accept bounding box? */
 void Viewport::get_min_max_lat_lon(double *min_lat, double *max_lat, double *min_lon, double *max_lon)

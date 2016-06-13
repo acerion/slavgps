@@ -2159,7 +2159,7 @@ void LayerTRW::set_statusbar_msg_info_trkpt(Trackpoint * tp)
 	}
 
 	char * msg = vu_trackpoint_formatted_message(statusbar_format_code, tp, tp_prev, current_tp_track, NAN);
-	vik_statusbar_set_message(vik_window_get_statusbar(vik_window_from_layer(this)), VIK_STATUSBAR_INFO, msg);
+	vik_statusbar_set_message(window_from_layer(this)->get_statusbar(), VIK_STATUSBAR_INFO, msg);
 	free(msg);
 
 	if (need2free) {
@@ -2202,7 +2202,7 @@ void LayerTRW::set_statusbar_msg_info_wpt(Waypoint * wp)
 	} else {
 		msg = g_strdup_printf(_("%s | %s %s"), tmp_buf1, lat, lon);
 	}
-	vik_statusbar_set_message(vik_window_get_statusbar(vik_window_from_layer(this)), VIK_STATUSBAR_INFO, msg);
+	vik_statusbar_set_message(window_from_layer(this)->get_statusbar(), VIK_STATUSBAR_INFO, msg);
 	free(lat);
 	free(lon);
 	free(msg);
@@ -2219,7 +2219,7 @@ bool LayerTRW::selected(int subtype, void * sublayer, int type, void * panel)
 	this->cancel_current_tp(false);
 
 	// Clear statusbar
-	vik_statusbar_set_message(vik_window_get_statusbar(vik_window_from_layer(this)), VIK_STATUSBAR_INFO, "");
+	vik_statusbar_set_message(window_from_layer(this)->get_statusbar(), VIK_STATUSBAR_INFO, "");
 
 	switch (type)	{
 	case VIK_TREEVIEW_TYPE_LAYER:
@@ -2944,7 +2944,7 @@ void trw_layer_gps_upload_any(trw_menu_sublayer_t * data)
 
 	// When called from the viewport - work the corresponding layerspanel:
 	if (!panel) {
-		panel = vik_window_layers_panel(vik_window_from_layer(layer))->panel_ref;
+		panel = window_from_layer(layer)->get_layers_panel()->panel_ref;
 	}
 
 	// Apply settings to transfer to the GPS device
@@ -3008,7 +3008,7 @@ void trw_layer_new_track(trw_menu_layer_t * data)
 		layer->new_track_create_common(name);
 		free(name);
 
-		vik_window_enable_layer_tool(vik_window_from_layer(layer), VIK_LAYER_TRW, TOOL_CREATE_TRACK);
+		window_from_layer(layer)->enable_layer_tool(VIK_LAYER_TRW, TOOL_CREATE_TRACK);
 	}
 }
 
@@ -3039,7 +3039,7 @@ void trw_layer_new_route(trw_menu_layer_t * data)
 		char *name = layer->new_unique_sublayer_name(VIK_TRW_LAYER_SUBLAYER_ROUTE, _("Route")) ;
 		layer->new_route_create_common(name);
 		free(name);
-		vik_window_enable_layer_tool(vik_window_from_layer(layer), VIK_LAYER_TRW, TOOL_CREATE_ROUTE);
+		window_from_layer(layer)->enable_layer_tool(VIK_LAYER_TRW, TOOL_CREATE_ROUTE);
 	}
 }
 
@@ -4105,7 +4105,7 @@ void trw_layer_extend_track_end(trw_menu_sublayer_t * data)
 		return;
 
 	layer->current_track = trk;
-	vik_window_enable_layer_tool(vik_window_from_layer(layer), VIK_LAYER_TRW, trk->is_route ? TOOL_CREATE_ROUTE : TOOL_CREATE_TRACK);
+	window_from_layer(layer)->enable_layer_tool(VIK_LAYER_TRW, trk->is_route ? TOOL_CREATE_ROUTE : TOOL_CREATE_TRACK);
 
 	if (trk->trackpoints)
 		goto_coord(data->panel, data->layer, data->viewport, &(trk->get_tp_last()->coord));
@@ -4122,7 +4122,7 @@ void trw_layer_extend_track_end_route_finder(trw_menu_sublayer_t * data)
 	if (!trk)
 		return;
 
-	vik_window_enable_layer_tool(vik_window_from_layer(layer), VIK_LAYER_TRW, TOOL_ROUTE_FINDER);
+	window_from_layer(layer)->enable_layer_tool(VIK_LAYER_TRW, TOOL_ROUTE_FINDER);
 	layer->current_track = trk;
 	layer->route_finder_started = true;
 
@@ -5571,7 +5571,7 @@ void LayerTRW::uniquify_tracks(LayersPanel * panel, std::unordered_map<sg_uid_t,
 		if (!trk) {
 			// Broken :(
 			fprintf(stderr, "CRITICAL: Houston, we've had a problem.\n");
-			vik_statusbar_set_message(vik_window_get_statusbar(vik_window_from_layer(this)), VIK_STATUSBAR_INFO,
+			vik_statusbar_set_message(window_from_layer(this)->get_statusbar(), VIK_STATUSBAR_INFO,
 						    _("Internal Error in LayerTRW::uniquify_tracks"));
 			return;
 		}
@@ -5860,8 +5860,8 @@ void LayerTRW::uniquify_waypoints(LayersPanel * panel)
 		if (!wp) {
 			// Broken :(
 			fprintf(stderr, "CRITICAL: Houston, we've had a problem.\n");
-			vik_statusbar_set_message(vik_window_get_statusbar(vik_window_from_layer(this)), VIK_STATUSBAR_INFO,
-						    _("Internal Error in uniquify_waypoints"));
+			vik_statusbar_set_message(window_from_layer(this)->get_statusbar(), VIK_STATUSBAR_INFO,
+						  _("Internal Error in uniquify_waypoints"));
 			return;
 		}
 
@@ -7061,7 +7061,7 @@ bool LayerTRW::select_click(GdkEventButton * event, Viewport * viewport, tool_ed
 	this->cancel_current_tp(false);
 
 	// Blank info
-	vik_statusbar_set_message(vik_window_get_statusbar(vik_window_from_layer(this)), VIK_STATUSBAR_INFO, "");
+	vik_statusbar_set_message(window_from_layer(this)->get_statusbar(), VIK_STATUSBAR_INFO, "");
 
 	return false;
 }
@@ -7487,11 +7487,9 @@ static void statusbar_write(double distance, double elev_gain, double elev_loss,
 		free(tmp);
 	}
 
-	VikWindow *vw = vik_window_from_layer(layer);
-
 	// Write with full gain/loss information
 	char *msg = g_strdup_printf("Total %s%s%s", str_total, str_last_step, str_gain_loss);
-	vik_statusbar_set_message(vik_window_get_statusbar(vw), VIK_STATUSBAR_INFO, msg);
+	vik_statusbar_set_message(window_from_layer(layer)->get_statusbar(), VIK_STATUSBAR_INFO, msg);
 	free(msg);
 	free(str_total);
 }
@@ -8084,7 +8082,7 @@ bool LayerTRW::tool_extended_route_finder_click(GdkEventButton * event, Viewport
 		this->route_finder_append = true;  // merge tracks. keep started true.
 
 		// update UI to let user know what's going on
-		VikStatusbar *sb = vik_window_get_statusbar(vik_window_from_layer(this));
+		VikStatusbar *sb = window_from_layer(this)->get_statusbar();
 		VikRoutingEngine *engine = vik_routing_default_engine();
 		if (! engine) {
 			vik_statusbar_set_message(sb, VIK_STATUSBAR_INFO, "Cannot plan route without a default routing engine.");

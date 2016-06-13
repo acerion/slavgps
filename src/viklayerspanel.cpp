@@ -270,7 +270,7 @@ static bool idle_draw_panel(LayersPanel * panel)
 
 void vik_layers_panel_emit_update_cb(LayersPanel * panel)
 {
-	GThread *thread = vik_window_get_thread(VIK_WINDOW(VIK_GTK_WINDOW_FROM_WIDGET(panel->gob)));
+	GThread *thread = window_from_widget(panel->gob)->get_thread();
 	if (!thread) {
 		// Do nothing
 		return;

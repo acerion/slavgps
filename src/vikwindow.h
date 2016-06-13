@@ -39,6 +39,7 @@
 #include "viktrwlayer.h"
 #include "layer_trw_containers.h"
 #include "file.h"
+#include "toolbar.h"
 
 
 
@@ -69,28 +70,18 @@ GType vik_window_get_type();
 
 // To call from main to start things off:
 VikWindow * vik_window_new_window();
-
 void vik_window_new_window_finish(VikWindow * vw);
-
-GtkWidget *vik_window_get_drawmode_button(VikWindow * vw, VikViewportDrawMode mode);
-bool vik_window_get_pan_move(VikWindow *vw);
 void vik_window_open_file(VikWindow * vw, char const * filename, bool changefilename);
 
-struct _VikLayersPanel * vik_window_layers_panel(VikWindow * vw);
-struct _VikStatusbar * vik_window_get_statusbar(VikWindow * vw);
 
-void vik_window_statusbar_update(VikWindow * vw, char const * message, vik_statusbar_type_t vs_type);
-
-void vik_window_set_redraw_trigger(SlavGPS::Layer * layer);
-
-void vik_window_enable_layer_tool(VikWindow * vw, int layer_id, int tool_id);
-
-
-GThread * vik_window_get_thread(VikWindow * vw);
 
 void vik_window_set_busy_cursor(VikWindow * vw);
 void vik_window_clear_busy_cursor(VikWindow * vw);
 SlavGPS::Viewport * vik_window_viewport(VikWindow *vw);
+struct _VikLayersPanel * vik_window_layers_panel(VikWindow * vw);
+struct _VikStatusbar * vik_window_get_statusbar(VikWindow * vw);
+void vik_window_statusbar_update(VikWindow * vw, char const * message, vik_statusbar_type_t vs_type);
+
 
 #ifdef __cplusplus
 }
@@ -177,6 +168,17 @@ namespace SlavGPS {
 		Viewport * get_viewport();
 
 
+		GtkWidget * get_drawmode_button(VikViewportDrawMode mode);
+		bool get_pan_move();
+		struct _VikLayersPanel * get_layers_panel();
+		struct _VikStatusbar * get_statusbar();
+		void statusbar_update(char const * message, vik_statusbar_type_t vs_type);
+
+		static void set_redraw_trigger(Layer * layer);
+
+		void enable_layer_tool(int layer_id, int tool_id);
+		GThread * get_thread();
+
 
 
 
@@ -192,9 +194,52 @@ namespace SlavGPS {
 		LayerTRW * containing_trw;
 
 		Viewport * viewport;
+		LayersPanel * layers_panel;
+		VikStatusbar * viking_vs;
+		VikToolbar * viking_vtb;
+
+		char * filename;
+		bool modified;
+		VikLoadType_t loaded_type;
+
+		unsigned int draw_image_width;
+		unsigned int draw_image_height;
+		bool draw_image_save_as_png;
+
+
+
+		bool only_updating_coord_mode_ui; /* hack for a bug in GTK */
+		GtkUIManager * uim;
+
+		GThread  * thread;
+		/* half-drawn update */
+		VikLayer * trigger;
+		VikCoord trigger_center;
+
+
+		// Display controls
+		// NB scale, centermark and highlight are in viewport.
+		bool show_full_screen;
+		bool show_side_panel;
+		bool show_statusbar;
+		bool show_toolbar;
+		bool show_main_menu;
+
+
 
 
 		void * vw; /* VikWindow. */
+
+
+		// private:
+		void simple_map_update(bool only_new);
+		void toggle_side_panel();
+		void toggle_full_screen();
+		void toggle_statusbar();
+		void toggle_toolbar();
+		void toggle_main_menu();
+
+
 	}; /* class Window */
 
 
