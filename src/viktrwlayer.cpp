@@ -2682,8 +2682,7 @@ void trw_layer_new_wikipedia_wp_viewport(trw_menu_layer_t * data)
 	struct LatLon maxmin[2] = { {0.0,0.0}, {0.0,0.0} };
 	LayerTRW * layer = data->layer;
 	LayersPanel * panel = data->panel;
-	VikWindow *vw = vik_window_from_layer(layer);
-	Viewport * viewport =  vik_window_viewport(vw);
+	Viewport * viewport =  window_from_layer(layer)->get_viewport();
 
 	// Note the order is max part first then min part - thus reverse order of use in min_max function:
 	viewport->get_min_max_lat_lon(&maxmin[1].lat, &maxmin[0].lat, &maxmin[1].lon, &maxmin[0].lon);
@@ -2772,7 +2771,7 @@ static void trw_layer_acquire(trw_menu_layer_t * data, VikDataSourceInterface *d
 	LayerTRW * layer = data->layer;
 	LayersPanel * panel = (LayersPanel *) data->panel;
 	VikWindow *vw = vik_window_from_layer(layer);
-	Viewport * viewport =  vik_window_viewport(vw);
+	Viewport * viewport =  window_from_layer(layer)->get_viewport();
 
 	vik_datasource_mode_t mode = datasource->mode;
 	if (mode == VIK_DATASOURCE_AUTO_LAYER_MANAGEMENT)
@@ -6653,7 +6652,7 @@ void LayerTRW::dialog_shift(GtkWindow * dialog, VikCoord * coord, bool vertical)
 	// Dialog not 'realized'/positioned - so can't really do any repositioning logic
 	if (dia_pos_x > 2 && dia_pos_y > 2) {
 
-		Viewport * viewport = vik_window_viewport(vik_window_from_layer(this));
+		Viewport * viewport = window_from_layer(this)->get_viewport();
 
 		int vp_xx, vp_yy; // In viewport pixels
 		viewport->coord_to_screen(coord, &vp_xx, &vp_yy);
@@ -8815,7 +8814,7 @@ void trw_layer_download_map_along_track_cb(trw_menu_sublayer_t * data)
 	if (!trk)
 		return;
 
-	Viewport * viewport = vik_window_viewport(vik_window_from_layer(layer));
+	Viewport * viewport = window_from_layer(layer)->get_viewport();
 
 	std::list<Layer *> * vmls = panel->get_all_layers_of_type(VIK_LAYER_MAPS, true); // Includes hidden map layer types
 	int num_maps = vmls->size();

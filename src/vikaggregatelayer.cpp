@@ -546,7 +546,7 @@ void LayerAggregate::search_date()
 		return;
 	}
 
-	Viewport * viewport = vik_window_viewport(vik_window_from_layer(this));
+	Viewport * viewport = window_from_layer(this)->get_viewport();
 
 	bool found = false;
 	std::list<Layer *> * layers = new std::list<Layer *>;

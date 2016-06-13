@@ -75,7 +75,7 @@ void vik_window_new_window_finish(VikWindow * vw);
 GtkWidget *vik_window_get_drawmode_button(VikWindow * vw, VikViewportDrawMode mode);
 bool vik_window_get_pan_move(VikWindow *vw);
 void vik_window_open_file(VikWindow * vw, char const * filename, bool changefilename);
-SlavGPS::Viewport * vik_window_viewport(VikWindow *vw);
+
 struct _VikLayersPanel * vik_window_layers_panel(VikWindow * vw);
 struct _VikStatusbar * vik_window_get_statusbar(VikWindow * vw);
 
@@ -90,7 +90,7 @@ GThread * vik_window_get_thread(VikWindow * vw);
 
 void vik_window_set_busy_cursor(VikWindow * vw);
 void vik_window_clear_busy_cursor(VikWindow * vw);
-
+SlavGPS::Viewport * vik_window_viewport(VikWindow *vw);
 
 #ifdef __cplusplus
 }
@@ -174,6 +174,7 @@ namespace SlavGPS {
 		char const * get_filename_2();
 
 		void selected_layer(Layer * layer);
+		Viewport * get_viewport();
 
 
 
@@ -189,6 +190,8 @@ namespace SlavGPS {
 		/* only use for individual track or waypoint */
 		/* For track(s) & waypoint(s) it is the layer they are in - this helps refering to the individual item easier */
 		LayerTRW * containing_trw;
+
+		Viewport * viewport;
 
 
 		void * vw; /* VikWindow. */

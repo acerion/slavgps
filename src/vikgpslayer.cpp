@@ -1401,8 +1401,7 @@ static void gps_upload_cb(gps_layer_data_t * data)
 	LayersPanel * panel = data->panel;
 	LayerGPS * layer = data->layer;
 
-	VikWindow * vw = vik_window_from_layer(layer);
-	Viewport * viewport = vik_window_viewport(vw);
+	Viewport * viewport = window_from_layer(layer)->get_viewport();
 	LayerTRW * trw = layer->trw_children[TRW_UPLOAD];
 
 	vik_gps_comm(trw,
@@ -1423,8 +1422,7 @@ static void gps_download_cb(gps_layer_data_t * data)
 {
 	LayerGPS * layer = data->layer;
 
-	VikWindow * vw = vik_window_from_layer(layer);
-	Viewport * viewport = vik_window_viewport(vw);
+	Viewport * viewport = window_from_layer(layer)->get_viewport();
 	LayerTRW * trw = layer->trw_children[TRW_DOWNLOAD];
 
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
@@ -1694,7 +1692,7 @@ static void gpsd_raw_hook(VglGpsd *vgpsd, char *data)
 	    !isnan(vgpsd->gpsd.fix.longitude)) {
 
 		VikWindow *vw = vik_window_from_layer(layer);
-		Viewport * viewport = vik_window_viewport(vw);
+		Viewport * viewport = window_from_layer(layer)->get_viewport();
 		layer->realtime_fix.fix = vgpsd->gpsd.fix;
 		layer->realtime_fix.satellites_used = vgpsd->gpsd.satellites_used;
 		layer->realtime_fix.dirty = true;
