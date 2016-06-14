@@ -47,7 +47,7 @@ static GHashTable *last_user_strings = NULL;
 
 static void webtool_datasource_finalize ( GObject *gob );
 
-static char *webtool_datasource_get_url ( VikWebtool *self, VikWindow *vw );
+static char *webtool_datasource_get_url ( VikWebtool *self, Window * window);
 
 static bool webtool_needs_user_string ( VikWebtool *self );
 
@@ -151,7 +151,7 @@ static void webtool_datasource_get_property (GObject    *object,
 
 typedef struct {
 	VikExtTool *self;
-	VikWindow *vw;
+	Window * window;
 	Viewport * viewport;
 	GtkWidget *user_string;
 } datasource_t;
@@ -187,7 +187,7 @@ static void * datasource_init ( acq_vik_t *avt )
 {
 	datasource_t *data = (datasource_t *) malloc(sizeof(*data));
 	data->self = (VikExtTool *) avt->userdata;
-	data->vw = avt->vw;
+	data->window = avt->window;
 	data->viewport = avt->viewport;
 	data->user_string = NULL;
 	return data;
@@ -238,7 +238,7 @@ static void datasource_get_process_options ( void * user_data, ProcessOptions *p
         }
     }
 
-	char *url = vik_webtool_get_url ( vwd, data->vw );
+	char *url = vik_webtool_get_url(vwd, data->window);
 	fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, url );
 
 	po->url = g_strdup( url );
@@ -265,7 +265,7 @@ static void cleanup ( void * data )
 	free( data );
 }
 
-static void webtool_datasource_open ( VikExtTool *self, VikWindow *vw )
+static void webtool_datasource_open(VikExtTool * self, Window * window)
 {
 	bool search = webtool_needs_user_string ( VIK_WEBTOOL ( self ) );
 
@@ -300,7 +300,7 @@ static void webtool_datasource_open ( VikExtTool *self, VikWindow *vw )
 	};
 	memcpy ( vik_datasource_interface, &data, sizeof(VikDataSourceInterface) );
 
-	a_acquire ( vw, vik_window_layers_panel(vw)->panel_ref, vik_window_viewport(vw), data.mode, vik_datasource_interface, self, cleanup );
+	a_acquire(window, window->get_layers_panel()->panel_ref, window->get_viewport(), data.mode, vik_datasource_interface, self, cleanup );
 }
 
 static void vik_webtool_datasource_class_init ( VikWebtoolDatasourceClass *klass )
@@ -425,10 +425,10 @@ static void webtool_datasource_finalize ( GObject *gob )
  * Calculate individual elements (similarly to the VikWebtool Bounds & Center) for *all* potential values
  * Then only values specified by the URL format are used in parameterizing the URL
  */
-static char *webtool_datasource_get_url ( VikWebtool *self, VikWindow *vw )
+static char *webtool_datasource_get_url(VikWebtool *self, Window * window)
 {
 	VikWebtoolDatasourcePrivate *priv = WEBTOOL_DATASOURCE_GET_PRIVATE ( self );
-	Viewport * viewport = vik_window_viewport ( vw );
+	Viewport * viewport = window->get_viewport();
 
 	// Get top left and bottom right lat/lon pairs from the viewport
 	double min_lat, max_lat, min_lon, max_lon;

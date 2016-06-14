@@ -151,13 +151,13 @@ static bool datasource_geojson_process(LayerTRW * trw, ProcessOptions * process_
 		char * gpx_filename = a_geojson_import_to_gpx(filename);
 		if (gpx_filename) {
 			// Important that this process is run in the main thread
-			vik_window_open_file(adw->vw, gpx_filename, false);
+			adw->window->open_file(gpx_filename, false);
 			// Delete the temporary file
 			(void) g_remove(gpx_filename);
 			free(gpx_filename);
 		} else {
 			char * msg = g_strdup_printf(_("Unable to import from: %s"), filename);
-			vik_window_statusbar_update(adw->vw, msg, VIK_STATUSBAR_INFO);
+			adw->window->statusbar_update(msg, VIK_STATUSBAR_INFO);
 			free(msg);
 		}
 

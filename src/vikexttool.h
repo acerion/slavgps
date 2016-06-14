@@ -48,8 +48,8 @@ typedef struct _VikExtToolClass VikExtToolClass;
 struct _VikExtToolClass {
 	GObjectClass object_class;
 	char *(* get_label) (VikExtTool * self);
-	void (* open) (VikExtTool *self, VikWindow * vwindow);
-	void (* open_at_position) (VikExtTool * self, VikWindow * vwindow, VikCoord * vc);
+	void (* open) (VikExtTool *self, SlavGPS::Window * window);
+	void (* open_at_position) (VikExtTool * self, SlavGPS::Window * window, VikCoord * vc);
 };
 
 GType vik_ext_tool_get_type();
@@ -59,8 +59,8 @@ struct _VikExtTool {
 };
 
 char * vik_ext_tool_get_label(VikExtTool * self);
-void vik_ext_tool_open(VikExtTool * self, VikWindow * vwindow);
-void vik_ext_tool_open_at_position(VikExtTool * self, VikWindow * vwindow, VikCoord * vc);
+void vik_ext_tool_open(VikExtTool * self, SlavGPS::Window * window);
+void vik_ext_tool_open_at_position(VikExtTool * self, SlavGPS::Window * window, VikCoord * vc);
 
 #ifdef __cplusplus
 }

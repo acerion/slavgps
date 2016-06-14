@@ -48,8 +48,8 @@ typedef struct _VikWebtoolClass VikWebtoolClass;
 
 struct _VikWebtoolClass {
 	VikExtToolClass object_class;
-	char *(* get_url) (VikWebtool * self, VikWindow * vwindow);
-	char *(* get_url_at_position) (VikWebtool * self, VikWindow * vwindow, VikCoord * vc);
+	char *(* get_url) (VikWebtool * self, SlavGPS::Window * window);
+	char *(* get_url_at_position) (VikWebtool * self, SlavGPS::Window * window, VikCoord * vc);
 };
 
 GType vik_webtool_get_type();
@@ -58,8 +58,8 @@ struct _VikWebtool {
 	VikExtTool obj;
 };
 
-char * vik_webtool_get_url(VikWebtool * self, VikWindow * vwindow);
-char * vik_webtool_get_url_at_position(VikWebtool *self, VikWindow * vwindow, VikCoord * vc);
+char * vik_webtool_get_url(VikWebtool * self, SlavGPS::Window * vwindow);
+char * vik_webtool_get_url_at_position(VikWebtool *self, SlavGPS::Window * window, VikCoord * vc);
 
 #ifdef __cplusplus
 }

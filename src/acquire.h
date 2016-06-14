@@ -41,7 +41,7 @@ extern "C" {
 typedef struct _VikDataSourceInterface VikDataSourceInterface;
 
 typedef struct {
-	VikWindow *vw;
+	SlavGPS::Window * window;
 	SlavGPS::LayersPanel * panel;
 	SlavGPS::Viewport * viewport;
 	void * userdata;
@@ -54,7 +54,7 @@ typedef struct {
  */
 typedef struct {
 	GtkWidget *status;
-	VikWindow *vw;
+	SlavGPS::Window * window;
 	SlavGPS::LayersPanel * panel;
 	SlavGPS::Viewport * viewport;
 	GtkWidget *dialog;
@@ -183,7 +183,7 @@ struct _VikDataSourceInterface {
 
 /**********************************/
 
-void a_acquire(VikWindow *vw,
+void a_acquire(SlavGPS::Window * window,
 	       SlavGPS::LayersPanel * panel,
 	       SlavGPS::Viewport * viewport,
 	       vik_datasource_mode_t mode,
@@ -191,11 +191,11 @@ void a_acquire(VikWindow *vw,
 	       void * userdata,
 	       VikDataSourceCleanupFunc cleanup_function);
 
-GtkWidget *a_acquire_trwlayer_menu(VikWindow *vw, SlavGPS::LayersPanel * panel, SlavGPS::Viewport * viewport, SlavGPS::LayerTRW * trw);
+GtkWidget *a_acquire_trwlayer_menu(SlavGPS::Window * window, SlavGPS::LayersPanel * panel, SlavGPS::Viewport * viewport, SlavGPS::LayerTRW * trw);
 
-GtkWidget *a_acquire_trwlayer_track_menu(VikWindow *vw, SlavGPS::LayersPanel * panel, SlavGPS::Viewport * viewport, SlavGPS::LayerTRW * trw);
+GtkWidget *a_acquire_trwlayer_track_menu(SlavGPS::Window * window, SlavGPS::LayersPanel * panel, SlavGPS::Viewport * viewport, SlavGPS::LayerTRW * trw);
 
-GtkWidget *a_acquire_track_menu(VikWindow *vw, SlavGPS::LayersPanel * panel, SlavGPS::Viewport * viewport, SlavGPS::Track * trk);
+GtkWidget *a_acquire_track_menu(SlavGPS::Window * window, SlavGPS::LayersPanel * panel, SlavGPS::Viewport * viewport, SlavGPS::Track * trk);
 
 void a_acquire_set_filter_track(SlavGPS::Track * trk);
 

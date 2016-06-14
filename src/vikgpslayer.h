@@ -145,7 +145,7 @@ namespace SlavGPS {
 		bool is_empty();
 		void realtime_tracking_draw(Viewport * viewport);
 		Trackpoint * create_realtime_trackpoint(bool forced);
-		void update_statusbar(VikWindow * vw);
+		void update_statusbar(Window * window);
 		bool rt_ask_retry();
 
 

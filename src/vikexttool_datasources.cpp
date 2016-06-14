@@ -31,6 +31,10 @@
 
 #include <glib/gi18n.h>
 
+
+using namespace SlavGPS;
+
+
 #define VIK_TOOL_DATASOURCE_KEY "vik-datasource-tool"
 
 static GList *ext_tool_datasources_list = NULL;
@@ -47,18 +51,18 @@ void vik_ext_tool_datasources_unregister_all()
 	g_list_foreach(ext_tool_datasources_list, (GFunc) g_object_unref, NULL);
 }
 
-static void ext_tool_datasources_open_cb(GtkWidget * widget, VikWindow * vw)
+static void ext_tool_datasources_open_cb(GtkWidget * widget, Window * window)
 {
 	void * ptr = g_object_get_data(G_OBJECT (widget), VIK_TOOL_DATASOURCE_KEY);
 	VikExtTool * ext_tool = VIK_EXT_TOOL(ptr);
-	vik_ext_tool_open(ext_tool, vw);
+	vik_ext_tool_open(ext_tool, window);
 }
 
 /**
  * Add to any menu
  *  mostly for allowing to assign for TrackWaypoint layer menus
  */
-void vik_ext_tool_datasources_add_menu_items_to_menu(VikWindow * vw, GtkMenu * menu)
+void vik_ext_tool_datasources_add_menu_items_to_menu(Window * window, GtkMenu * menu)
 {
 	GList * iter;
 	for (iter = ext_tool_datasources_list; iter; iter = iter->next) {
@@ -72,7 +76,7 @@ void vik_ext_tool_datasources_add_menu_items_to_menu(VikWindow * vw, GtkMenu * m
 			free(label); label = NULL;
 			// Store tool's ref into the menu entry
 			g_object_set_data(G_OBJECT(item), VIK_TOOL_DATASOURCE_KEY, ext_tool);
-			g_signal_connect(G_OBJECT(item), "activate", G_CALLBACK(ext_tool_datasources_open_cb), vw);
+			g_signal_connect(G_OBJECT(item), "activate", G_CALLBACK(ext_tool_datasources_open_cb), window);
 			gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
 			gtk_widget_show(item);
 		}
@@ -82,10 +86,10 @@ void vik_ext_tool_datasources_add_menu_items_to_menu(VikWindow * vw, GtkMenu * m
 /**
  * Adds to the File->Acquire menu only
  */
-void vik_ext_tool_datasources_add_menu_items(VikWindow * vw, GtkUIManager * uim)
+void vik_ext_tool_datasources_add_menu_items(Window * window, GtkUIManager * uim)
 {
 	GtkWidget * widget = gtk_ui_manager_get_widget(uim, "/MainMenu/File/Acquire/");
 	GtkMenu * menu = GTK_MENU (gtk_menu_item_get_submenu(GTK_MENU_ITEM(widget)));
-	vik_ext_tool_datasources_add_menu_items_to_menu(vw, menu);
+	vik_ext_tool_datasources_add_menu_items_to_menu(window, menu);
 	gtk_widget_show(widget);
 }

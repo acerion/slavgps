@@ -170,7 +170,7 @@ static bool datasource_geotag_process(LayerTRW * trw, ProcessOptions * po, Babel
 			free(name);
 		} else {
 			char * msg = g_strdup_printf(_("Unable to create waypoint from %s"), filename);
-			vik_window_statusbar_update(adw->vw, msg, VIK_STATUSBAR_INFO);
+			adw->window->statusbar_update(msg, VIK_STATUSBAR_INFO);
 			free(msg);
 		}
 		free(filename);

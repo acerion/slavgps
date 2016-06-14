@@ -604,7 +604,7 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 
 	if ( g_list_length ( xd->list_of_gpx_meta_data ) == 0 ) {
 		if (!vik_datasource_osm_my_traces_interface.is_thread)
-			none_found ( GTK_WINDOW(adw->vw) );
+			none_found ( GTK_WINDOW(adw->window->vw) );
 		free( xd );
 		return false;
 	}
@@ -614,12 +614,12 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 	set_in_current_view_property(trw, (datasource_osm_my_traces_t *) adw->user_data, xd->list_of_gpx_meta_data );
 
     if (vik_datasource_osm_my_traces_interface.is_thread) gdk_threads_enter();
-	GList *selected = select_from_list ( GTK_WINDOW(adw->vw), xd->list_of_gpx_meta_data, "Select GPS Traces", "Select the GPS traces you want to add." );
+	GList *selected = select_from_list ( GTK_WINDOW(adw->window->vw), xd->list_of_gpx_meta_data, "Select GPS Traces", "Select the GPS traces you want to add." );
     if (vik_datasource_osm_my_traces_interface.is_thread) gdk_threads_leave();
 
 	// If non thread - show program is 'doing something...'
 	if ( !vik_datasource_osm_my_traces_interface.is_thread )
-		vik_window_set_busy_cursor ( adw->vw );
+		adw->window->set_busy_cursor();
 
 	// If passed in on an existing layer - we will create everything into that.
 	//  thus with many differing gpx's - this will combine all waypoints into this single layer!
@@ -664,7 +664,7 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 			if ( !result ) {
 				// Report errors to the status bar
 				char* msg = g_strdup_printf ( _("Unable to get trace: %s"), url );
-				vik_window_statusbar_update ( adw->vw, msg, VIK_STATUSBAR_INFO );
+				adw->window->statusbar_update(msg, VIK_STATUSBAR_INFO);
 				free(msg);
 			}
 			free( url );
@@ -675,8 +675,8 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 			LayerTRW * layer = (LayerTRW *) vtlX->layer;
 			adw->panel->get_top_layer()->add_layer(layer, true);
 			// Move to area of the track
-			layer->post_read(vik_window_viewport(adw->vw), true );
-			layer->auto_set_view(vik_window_viewport(adw->vw));
+			layer->post_read(adw->window->get_viewport(), true );
+			layer->auto_set_view(adw->window->get_viewport());
 			vtl_last = vtlX;
 		}
 		else if ( create_new_layer ) {
@@ -711,7 +711,7 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 		result = true;
 
 	if ( !vik_datasource_osm_my_traces_interface.is_thread )
-		vik_window_clear_busy_cursor ( adw->vw );
+		adw->window->clear_busy_cursor();
 
 	return result;
 }

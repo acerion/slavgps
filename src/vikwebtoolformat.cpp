@@ -44,8 +44,8 @@ static GObjectClass *parent_class;
 static void webtool_format_finalize ( GObject *gob );
 
 static uint8_t webtool_format_mpp_to_zoom ( VikWebtool *self, double mpp );
-static char *webtool_format_get_url ( VikWebtool *vw, VikWindow *vwindow );
-static char *webtool_format_get_url_at_position ( VikWebtool *vw, VikWindow *vwindow, VikCoord *vc );
+static char *webtool_format_get_url ( VikWebtool *vw, Window * window);
+static char *webtool_format_get_url_at_position ( VikWebtool *vw, Window * window, VikCoord *vc );
 
 typedef struct _VikWebtoolFormatPrivate VikWebtoolFormatPrivate;
 
@@ -204,12 +204,12 @@ static uint8_t webtool_format_mpp_to_zoom ( VikWebtool *self, double mpp ) {
 
 #define MAX_NUMBER_CODES 9
 
-static char *webtool_format_get_url_at_position ( VikWebtool *self, VikWindow *vw, VikCoord *vc )
+static char *webtool_format_get_url_at_position ( VikWebtool *self, Window * window, VikCoord *vc )
 {
 	VikWebtoolFormatPrivate *priv = NULL;
 	priv = WEBTOOL_FORMAT_GET_PRIVATE (self);
 
-	Viewport * viewport = vik_window_viewport ( vw );
+	Viewport * viewport = window->get_viewport();
 
 	// Get top left and bottom right lat/lon pairs from the viewport
 	double min_lat, max_lat, min_lon, max_lon;
@@ -292,9 +292,9 @@ static char *webtool_format_get_url_at_position ( VikWebtool *self, VikWindow *v
 	return url;
 }
 
-static char *webtool_format_get_url ( VikWebtool *self, VikWindow *vw )
+static char *webtool_format_get_url ( VikWebtool *self, Window * window)
 {
-  return webtool_format_get_url_at_position ( self, vw, NULL );
+  return webtool_format_get_url_at_position ( self, window, NULL );
 }
 
 uint8_t vik_webtool_format_mpp_to_zoom (VikWebtool *self, double mpp)

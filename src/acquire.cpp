@@ -207,7 +207,7 @@ static void get_from_anything(w_and_interface_t *wi)
 /* depending on type of filter, often only vtl or track will be given.
  * the other can be NULL.
  */
-static void acquire(VikWindow *vw,
+static void acquire(Window * window,
 		    LayersPanel * panel,
 		    Viewport * viewport,
 		    vik_datasource_mode_t mode,
@@ -229,7 +229,7 @@ static void acquire(VikWindow *vw,
 	acq_vik_t avt;
 	avt.panel = panel;
 	avt.viewport = viewport;
-	avt.vw = vw;
+	avt.window = window;
 	avt.userdata = userdata;
 
 	/* for UI builder */
@@ -247,7 +247,7 @@ static void acquire(VikWindow *vw,
 	if (source_interface->check_existence_func) {
 		char *error_str = source_interface->check_existence_func();
 		if (error_str) {
-			a_dialog_error_msg(GTK_WINDOW(vw), error_str);
+			a_dialog_error_msg(GTK_WINDOW(window->vw), error_str);
 			free(error_str);
 			return;
 		}
@@ -258,7 +258,7 @@ static void acquire(VikWindow *vw,
 	/* POSSIBILITY 0: NO OPTIONS. DO NOTHING HERE. */
 	/* POSSIBILITY 1: ADD_SETUP_WIDGETS_FUNC */
 	if (source_interface->add_setup_widgets_func) {
-		dialog = gtk_dialog_new_with_buttons("", GTK_WINDOW(vw), (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL);
+		dialog = gtk_dialog_new_with_buttons("", GTK_WINDOW(window->vw), (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL);
 
 		gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
 		GtkWidget *response_w = NULL;
@@ -281,7 +281,7 @@ static void acquire(VikWindow *vw,
 	}
 	/* POSSIBILITY 2: UI BUILDER */
 	else if (source_interface->params) {
-		paramdatas = a_uibuilder_run_dialog(source_interface->window_title, GTK_WINDOW(vw),
+		paramdatas = a_uibuilder_run_dialog(source_interface->window_title, GTK_WINDOW(window->vw),
 						    source_interface->params, source_interface->params_count,
 						    source_interface->params_groups, source_interface->params_groups_count,
 						    source_interface->params_defaults);
@@ -346,7 +346,7 @@ static void acquire(VikWindow *vw,
 	wi->trw = trw;
 	wi->creating_new_layer = (!trw); // Default if Auto Layer Management is passed in
 
-	dialog = gtk_dialog_new_with_buttons("", GTK_WINDOW(vw), (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL);
+	dialog = gtk_dialog_new_with_buttons("", GTK_WINDOW(window->vw), (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL);
 	gtk_dialog_set_response_sensitive(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT, false);
 	gtk_window_set_title(GTK_WINDOW(dialog), _(source_interface->window_title));
 
@@ -360,7 +360,7 @@ static void acquire(VikWindow *vw,
 		gtk_widget_show_all(dialog);
 	w->status = status;
 
-	w->vw = vw;
+	w->window = window;
 	w->panel = panel;
 	w->viewport = viewport;
 	if (source_interface->add_progress_widgets_func) {
@@ -426,7 +426,7 @@ static void acquire(VikWindow *vw,
 		if (source_interface->process_func) {
 			bool result = source_interface->process_func(wi->trw, po, (BabelStatusFunc) progress_func, w, options);
 			if (!result) {
-				a_dialog_msg(GTK_WINDOW(vw), GTK_MESSAGE_ERROR, _("Error: acquisition failed."), NULL);
+				a_dialog_msg(GTK_WINDOW(window->vw), GTK_MESSAGE_ERROR, _("Error: acquisition failed."), NULL);
 			}
 		}
 		free_process_options(po);
@@ -451,7 +451,7 @@ static void acquire(VikWindow *vw,
 
 /**
  * a_acquire:
- * @vw: The #VikWindow to work with
+ * @window: The #Window to work with
  * @panel: The #LayersPanel in which a #LayerTRW layer may be created/appended
  * @viewport: The #Viewport defining the current view
  * @mode: How layers should be managed
@@ -461,7 +461,7 @@ static void acquire(VikWindow *vw,
  *
  * Process the given VikDataSourceInterface for sources with no input data.
  */
-void a_acquire(VikWindow *vw,
+void a_acquire(Window * window,
 	       LayersPanel * panel,
 	       Viewport * viewport,
 	       vik_datasource_mode_t mode,
@@ -469,22 +469,22 @@ void a_acquire(VikWindow *vw,
 	       void * userdata,
 	       VikDataSourceCleanupFunc cleanup_function)
 {
-	acquire(vw, panel, viewport, mode, source_interface, NULL, NULL, userdata, cleanup_function);
+	acquire(window, panel, viewport, mode, source_interface, NULL, NULL, userdata, cleanup_function);
 }
 
-static void acquire_trwlayer_callback(GObject *menuitem, void * *pass_along)
+static void acquire_trwlayer_callback(GObject *menuitem, void ** pass_along)
 {
 	VikDataSourceInterface * iface = (VikDataSourceInterface *) g_object_get_data (menuitem, "vik_acq_iface");
-	VikWindow *vw = (VikWindow *) pass_along[0];
+	Window * window = (Window *) pass_along[0];
 	LayersPanel * panel = (LayersPanel *) pass_along[1];
 	Viewport * viewport = (Viewport *) pass_along[2];
 	LayerTRW * trw = (LayerTRW *) pass_along[3];
 	Track * trk = (Track *) pass_along[4];
 
-	acquire(vw, panel, viewport, iface->mode, iface, trw, trk, NULL, NULL);
+	acquire(window, panel, viewport, iface->mode, iface, trw, trk, NULL, NULL);
 }
 
-static GtkWidget * acquire_build_menu(VikWindow *vw, LayersPanel * panel, Viewport * viewport,
+static GtkWidget * acquire_build_menu(Window * window, LayersPanel * panel, Viewport * viewport,
 				      LayerTRW * trw, Track * trk, /* both passed to acquire, although for many filters only one ness */
 				      const char *menu_title, vik_datasource_inputtype_t inputtype)
 {
@@ -493,7 +493,7 @@ static GtkWidget * acquire_build_menu(VikWindow *vw, LayersPanel * panel, Viewpo
 	GtkWidget *item=NULL;
 	int i;
 
-	pass_along[0] = vw;
+	pass_along[0] = window;
 	pass_along[1] = panel;
 	pass_along[2] = viewport;
 	pass_along[3] = trw;
@@ -525,9 +525,9 @@ static GtkWidget * acquire_build_menu(VikWindow *vw, LayersPanel * panel, Viewpo
  *
  * Returns: %NULL if no filters.
  */
-GtkWidget *a_acquire_trwlayer_menu(VikWindow *vw, LayersPanel * panel, Viewport * viewport, LayerTRW * trw)
+GtkWidget *a_acquire_trwlayer_menu(Window * window, LayersPanel * panel, Viewport * viewport, LayerTRW * trw)
 {
-	return acquire_build_menu(vw, panel, viewport, trw, NULL, _("_Filter"), VIK_DATASOURCE_INPUTTYPE_TRWLAYER);
+	return acquire_build_menu(window, panel, viewport, trw, NULL, _("_Filter"), VIK_DATASOURCE_INPUTTYPE_TRWLAYER);
 }
 
 /**
@@ -537,13 +537,13 @@ GtkWidget *a_acquire_trwlayer_menu(VikWindow *vw, LayersPanel * panel, Viewport 
  *
  * Returns: %NULL if no filters or no filter track has been set.
  */
-GtkWidget *a_acquire_trwlayer_track_menu(VikWindow *vw, LayersPanel * panel, Viewport * viewport, LayerTRW * trw)
+GtkWidget *a_acquire_trwlayer_track_menu(Window * window, LayersPanel * panel, Viewport * viewport, LayerTRW * trw)
 {
 	if (filter_track == NULL) {
 		return NULL;
 	} else {
 		char *menu_title = g_strdup_printf(_("Filter with %s"), filter_track->name);
-		GtkWidget *rv = acquire_build_menu(vw, panel, viewport, trw, filter_track,
+		GtkWidget *rv = acquire_build_menu(window, panel, viewport, trw, filter_track,
 						   menu_title, VIK_DATASOURCE_INPUTTYPE_TRWLAYER_TRACK);
 		free(menu_title);
 		return rv;
@@ -557,9 +557,9 @@ GtkWidget *a_acquire_trwlayer_track_menu(VikWindow *vw, LayersPanel * panel, Vie
  *
  * Returns: %NULL if no applicable filters
  */
-GtkWidget *a_acquire_track_menu(VikWindow *vw, LayersPanel * panel, Viewport * viewport, Track * trk)
+GtkWidget *a_acquire_track_menu(Window * window, LayersPanel * panel, Viewport * viewport, Track * trk)
 {
-	return acquire_build_menu(vw, panel, viewport, NULL, trk, _("Filter"), VIK_DATASOURCE_INPUTTYPE_TRACK);
+	return acquire_build_menu(window, panel, viewport, NULL, trk, _("Filter"), VIK_DATASOURCE_INPUTTYPE_TRACK);
 }
 
 /**

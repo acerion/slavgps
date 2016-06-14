@@ -74,7 +74,7 @@ enum { WP_SYMBOL_FILLED_SQUARE, WP_SYMBOL_SQUARE, WP_SYMBOL_CIRCLE, WP_SYMBOL_X,
 typedef struct {
 	SlavGPS::Viewport * viewport;
 	SlavGPS::LayerTRW * trw;
-	VikWindow * vw;
+	SlavGPS::Window * window;
 	double xmpp, ympp;
 	uint16_t width, height;
 	double cc; // Cosine factor in track directions

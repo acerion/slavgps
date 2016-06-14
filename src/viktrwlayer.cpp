@@ -2770,13 +2770,14 @@ static void trw_layer_acquire(trw_menu_layer_t * data, VikDataSourceInterface *d
 {
 	LayerTRW * layer = data->layer;
 	LayersPanel * panel = (LayersPanel *) data->panel;
-	VikWindow *vw = vik_window_from_layer(layer);
-	Viewport * viewport =  window_from_layer(layer)->get_viewport();
+	Window * window = window_from_layer(layer);
+	Viewport * viewport =  window->get_viewport();
 
 	vik_datasource_mode_t mode = datasource->mode;
-	if (mode == VIK_DATASOURCE_AUTO_LAYER_MANAGEMENT)
+	if (mode == VIK_DATASOURCE_AUTO_LAYER_MANAGEMENT) {
 		mode = VIK_DATASOURCE_ADDTOLAYER;
-	a_acquire(vw, panel, viewport, mode, datasource, NULL, NULL);
+	}
+	a_acquire(window, panel, viewport, mode, datasource, NULL, NULL);
 }
 
 /*

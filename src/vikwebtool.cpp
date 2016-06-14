@@ -32,12 +32,17 @@
 
 #include "ui_util.h"
 
+
+using namespace SlavGPS;
+
+
+
 static GObjectClass * parent_class;
 
 static void webtool_finalize(GObject * gob);
 
-static void webtool_open(VikExtTool * self, VikWindow * vwindow);
-static void webtool_open_at_position(VikExtTool * self, VikWindow * vwindow, VikCoord * vc);
+static void webtool_open(VikExtTool * self, Window * window);
+static void webtool_open_at_position(VikExtTool * self, Window * window, VikCoord * vc);
 
 G_DEFINE_ABSTRACT_TYPE (VikWebtool, vik_webtool, VIK_EXT_TOOL_TYPE)
 
@@ -73,33 +78,33 @@ static void webtool_finalize(GObject * gob)
 	G_OBJECT_CLASS(parent_class)->finalize(gob);
 }
 
-static void webtool_open(VikExtTool * self, VikWindow * vwindow)
+static void webtool_open(VikExtTool * self, Window * window)
 {
 	VikWebtool * vwd = VIK_WEBTOOL(self);
-	char * url = vik_webtool_get_url(vwd, vwindow);
-	open_url(GTK_WINDOW(vwindow), url);
+	char * url = vik_webtool_get_url(vwd, window);
+	open_url(GTK_WINDOW(window->vw), url);
 	free(url);
 }
 
-static void webtool_open_at_position(VikExtTool * self, VikWindow * vwindow, VikCoord * vc)
+static void webtool_open_at_position(VikExtTool * self, Window * window, VikCoord * vc)
 {
 	VikWebtool * vwd = VIK_WEBTOOL(self);
-	char * url = vik_webtool_get_url_at_position(vwd, vwindow, vc);
+	char * url = vik_webtool_get_url_at_position(vwd, window, vc);
 	if (url) {
-		open_url(GTK_WINDOW(vwindow), url);
+		open_url(GTK_WINDOW(window->vw), url);
 		free(url);
 	}
 }
 
-char * vik_webtool_get_url(VikWebtool * self, VikWindow * vwindow)
+char * vik_webtool_get_url(VikWebtool * self, Window * window)
 {
-	return VIK_WEBTOOL_GET_CLASS( self )->get_url(self, vwindow);
+	return VIK_WEBTOOL_GET_CLASS( self )->get_url(self, window);
 }
 
-char * vik_webtool_get_url_at_position(VikWebtool * self, VikWindow * vwindow, VikCoord * vc)
+char * vik_webtool_get_url_at_position(VikWebtool * self, Window * window, VikCoord * vc)
 {
 	if (VIK_WEBTOOL_GET_CLASS( self )->get_url_at_position) {
-		return VIK_WEBTOOL_GET_CLASS( self )->get_url_at_position(self, vwindow, vc);
+		return VIK_WEBTOOL_GET_CLASS( self )->get_url_at_position(self, window, vc);
 	} else {
 		return NULL;
 	}

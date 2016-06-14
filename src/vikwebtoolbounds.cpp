@@ -42,8 +42,8 @@ using namespace SlavGPS;
 static GObjectClass *parent_class;
 
 static void webtool_bounds_finalize ( GObject *gob );
-static char *webtool_bounds_get_url ( VikWebtool *vw, VikWindow *vwindow );
-static char *webtool_bounds_get_url_at_position ( VikWebtool *vw, VikWindow *vwindow, VikCoord *vc );
+static char *webtool_bounds_get_url ( VikWebtool *vw, Window * window);
+static char *webtool_bounds_get_url_at_position ( VikWebtool *vw, Window * window, VikCoord *vc );
 
 typedef struct _VikWebtoolBoundsPrivate VikWebtoolBoundsPrivate;
 
@@ -171,13 +171,13 @@ static void webtool_bounds_finalize ( GObject *gob )
   G_OBJECT_CLASS(parent_class)->finalize(gob);
 }
 
-static char *webtool_bounds_get_url ( VikWebtool *self, VikWindow *vwindow )
+static char *webtool_bounds_get_url ( VikWebtool *self, Window * window)
 {
   VikWebtoolBoundsPrivate *priv = NULL;
   Viewport * viewport = NULL;
 
   priv = WEBTOOL_BOUNDS_GET_PRIVATE (self);
-  viewport = vik_window_viewport ( vwindow );
+  viewport = window->get_viewport();
 
   // Get top left and bottom right lat/lon pairs from the viewport
   double min_lat, max_lat, min_lon, max_lon;
@@ -197,9 +197,9 @@ static char *webtool_bounds_get_url ( VikWebtool *self, VikWindow *vwindow )
   return g_strdup_printf ( priv->url, sminlon, smaxlon, sminlat, smaxlat );
 }
 
-static char *webtool_bounds_get_url_at_position ( VikWebtool *self, VikWindow *vwindow, VikCoord *vc )
+static char *webtool_bounds_get_url_at_position ( VikWebtool *self, Window * window, VikCoord *vc )
 {
   // TODO: could use zoom level to generate an offset from center lat/lon to get the bounds
   // For now simply use the existing function to use bounds from the viewport
-  return webtool_bounds_get_url ( self, vwindow );
+  return webtool_bounds_get_url(self, window);
 }

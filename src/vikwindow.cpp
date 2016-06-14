@@ -252,14 +252,6 @@ struct _VikLayersPanel * Window::get_layers_panel()
 /**
  *  Returns the statusbar for the window
  */
-VikStatusbar * vik_window_get_statusbar(VikWindow * vw)
-{
-	return vw->window->get_statusbar();
-}
-
-/**
- *  Returns the statusbar for the window
- */
 VikStatusbar * Window::get_statusbar()
 {
 	return this->viking_vs;
@@ -843,7 +835,7 @@ static void vik_window_init(VikWindow * vw)
 		}
 	}
 
-	vik_ext_tool_datasources_add_menu_items (vw, vw->window->uim);
+	vik_ext_tool_datasources_add_menu_items(vw->window, vw->window->uim);
 
 	GtkWidget * zoom_levels = gtk_ui_manager_get_widget(vw->window->uim, "/MainMenu/View/SetZoom");
 	GtkWidget * zoom_levels_menu = create_zoom_menu_all_levels(vw->window->viewport->get_zoom());
@@ -3667,7 +3659,7 @@ static void my_acquire(VikWindow * vw, VikDataSourceInterface *datasource)
 	vik_datasource_mode_t mode = datasource->mode;
 	if (mode == VIK_DATASOURCE_AUTO_LAYER_MANAGEMENT)
 		mode = VIK_DATASOURCE_CREATENEWLAYER;
-	a_acquire(vw, vw->window->layers_panel, vw->window->viewport, mode, datasource, NULL, NULL);
+	a_acquire(vw->window, vw->window->layers_panel, vw->window->viewport, mode, datasource, NULL, NULL);
 }
 
 static void acquire_from_gps(GtkAction * a, VikWindow * vw)
@@ -4927,7 +4919,7 @@ static void window_create_ui(VikWindow * window)
 	}
 
 	// This is done last so we don't need to track the value of mid anymore
-	vik_ext_tools_add_action_items(window, window->window->uim, action_group, mid);
+	vik_ext_tools_add_action_items(window->window, window->window->uim, action_group, mid);
 
 	window->action_group = action_group;
 

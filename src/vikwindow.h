@@ -79,7 +79,6 @@ void vik_window_set_busy_cursor(VikWindow * vw);
 void vik_window_clear_busy_cursor(VikWindow * vw);
 SlavGPS::Viewport * vik_window_viewport(VikWindow *vw);
 struct _VikLayersPanel * vik_window_layers_panel(VikWindow * vw);
-struct _VikStatusbar * vik_window_get_statusbar(VikWindow * vw);
 void vik_window_statusbar_update(VikWindow * vw, char const * message, vik_statusbar_type_t vs_type);
 
 

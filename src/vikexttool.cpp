@@ -30,6 +30,12 @@
 
 #include <glib/gi18n.h>
 
+
+
+using namespace SlavGPS;
+
+
+
 static GObjectClass * parent_class;
 
 static void ext_tool_finalize(GObject * gob);
@@ -171,14 +177,14 @@ char * vik_ext_tool_get_label(VikExtTool * w)
 	return VIK_EXT_TOOL_GET_CLASS(w)->get_label(w);
 }
 
-void vik_ext_tool_open(VikExtTool * self, VikWindow * vwindow)
+void vik_ext_tool_open(VikExtTool * self, Window * window)
 {
-	VIK_EXT_TOOL_GET_CLASS(self)->open(self, vwindow);
+	VIK_EXT_TOOL_GET_CLASS(self)->open(self, window);
 }
 
-void vik_ext_tool_open_at_position(VikExtTool * self, VikWindow * vwindow, VikCoord * vc)
+void vik_ext_tool_open_at_position(VikExtTool * self, Window * window, VikCoord * vc)
 {
 	if (VIK_EXT_TOOL_GET_CLASS(self)->open_at_position) {
-		VIK_EXT_TOOL_GET_CLASS(self)->open_at_position(self, vwindow, vc);
+		VIK_EXT_TOOL_GET_CLASS(self)->open_at_position(self, window, vc);
 	}
 }

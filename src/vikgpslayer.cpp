@@ -1656,7 +1656,7 @@ Trackpoint * LayerGPS::create_realtime_trackpoint(bool forced)
 
 #define VIK_SETTINGS_GPS_STATUSBAR_FORMAT "gps_statusbar_format"
 
-void LayerGPS::update_statusbar(VikWindow * vw)
+void LayerGPS::update_statusbar(Window * window)
 {
 	char *statusbar_format_code = NULL;
 	bool need2free = false;
@@ -1667,7 +1667,7 @@ void LayerGPS::update_statusbar(VikWindow * vw)
 	}
 
 	char *msg = vu_trackpoint_formatted_message(statusbar_format_code, this->tp, this->tp_prev, this->realtime_track, this->last_fix.fix.climb);
-	vik_statusbar_set_message(vik_window_get_statusbar(vw), VIK_STATUSBAR_INFO, msg);
+	vik_statusbar_set_message(window->get_statusbar(), VIK_STATUSBAR_INFO, msg);
 	free(msg);
 
 	if (need2free) {
@@ -1691,7 +1691,7 @@ static void gpsd_raw_hook(VglGpsd *vgpsd, char *data)
 	    !isnan(vgpsd->gpsd.fix.latitude) &&
 	    !isnan(vgpsd->gpsd.fix.longitude)) {
 
-		VikWindow *vw = vik_window_from_layer(layer);
+		Window * window = window_from_layer(layer);
 		Viewport * viewport = window_from_layer(layer)->get_viewport();
 		layer->realtime_fix.fix = vgpsd->gpsd.fix;
 		layer->realtime_fix.satellites_used = vgpsd->gpsd.satellites_used;
@@ -1738,7 +1738,7 @@ static void gpsd_raw_hook(VglGpsd *vgpsd, char *data)
 
 		if (layer->tp) {
 			if (layer->realtime_update_statusbar) {
-				layer->update_statusbar(vw);
+				layer->update_statusbar(window);
 			}
 			layer->tp_prev = layer->tp;
 		}

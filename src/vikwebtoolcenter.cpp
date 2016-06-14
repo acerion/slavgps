@@ -48,8 +48,8 @@ static GObjectClass *parent_class;
 static void webtool_center_finalize(GObject * gob);
 
 static uint8_t webtool_center_mpp_to_zoom(VikWebtool * self, double mpp);
-static char *webtool_center_get_url(VikWebtool * vw, VikWindow * vwindow);
-static char *webtool_center_get_url_at_position(VikWebtool * vw, VikWindow * vwindow, VikCoord * vc);
+static char *webtool_center_get_url(VikWebtool * vw, Window * window);
+static char *webtool_center_get_url_at_position(VikWebtool * vw, Window * window, VikCoord * vc);
 
 typedef struct _VikWebtoolCenterPrivate VikWebtoolCenterPrivate;
 
@@ -182,7 +182,7 @@ static uint8_t webtool_center_mpp_to_zoom(VikWebtool * self, double mpp)
 	return map_utils_mpp_to_zoom_level(mpp);
 }
 
-static char * webtool_center_get_url_at_position(VikWebtool * self, VikWindow * vwindow, VikCoord * vc)
+static char * webtool_center_get_url_at_position(VikWebtool * self, Window * window, VikCoord * vc)
 {
 	VikWebtoolCenterPrivate * priv = NULL;
 	Viewport * viewport = NULL;
@@ -191,7 +191,7 @@ static char * webtool_center_get_url_at_position(VikWebtool * self, VikWindow * 
 	char strlat[G_ASCII_DTOSTR_BUF_SIZE], strlon[G_ASCII_DTOSTR_BUF_SIZE];
 
 	priv = WEBTOOL_CENTER_GET_PRIVATE (self);
-	viewport = vik_window_viewport(vwindow);
+	viewport = window->get_viewport();
 	// Coords
 	// Use the provided position otherwise use center of the viewport
 	if (vc) {
@@ -215,9 +215,9 @@ static char * webtool_center_get_url_at_position(VikWebtool * self, VikWindow * 
 	return g_strdup_printf(priv->url, strlat, strlon, zoom);
 }
 
-static char * webtool_center_get_url(VikWebtool * self, VikWindow * vwindow)
+static char * webtool_center_get_url(VikWebtool * self, Window * window)
 {
-	return webtool_center_get_url_at_position(self, vwindow, NULL);
+	return webtool_center_get_url_at_position(self, window, NULL);
 }
 
 uint8_t vik_webtool_center_mpp_to_zoom(VikWebtool * self, double mpp)
