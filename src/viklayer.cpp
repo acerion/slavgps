@@ -60,47 +60,48 @@ extern VikLayerInterface vik_mapnik_layer_interface;
 #endif
 
 enum {
-  VL_UPDATE_SIGNAL,
-  VL_LAST_SIGNAL
+	VL_UPDATE_SIGNAL,
+	VL_LAST_SIGNAL
 };
 static unsigned int layer_signals[VL_LAST_SIGNAL] = { 0 };
 
-static GObjectClass *parent_class;
+static GObjectClass * parent_class;
 
-static void vik_layer_finalize ( VikLayer *vl );
-static bool vik_layer_properties_factory ( VikLayer *vl, Viewport * viewport);
-static bool layer_defaults_register ( VikLayerTypeEnum type );
+static void vik_layer_finalize(VikLayer * vl);
+static bool vik_layer_properties_factory(VikLayer * vl, Viewport * viewport);
+static bool layer_defaults_register(VikLayerTypeEnum type);
 
 G_DEFINE_TYPE (VikLayer, vik_layer, G_TYPE_OBJECT)
 
-static void vik_layer_class_init (VikLayerClass *klass)
+static void vik_layer_class_init(VikLayerClass * klass)
 {
-  GObjectClass *object_class;
+	GObjectClass * object_class;
 
-  object_class = G_OBJECT_CLASS (klass);
+	object_class = G_OBJECT_CLASS (klass);
 
-  object_class->finalize = (GObjectFinalizeFunc) vik_layer_finalize;
+	object_class->finalize = (GObjectFinalizeFunc) vik_layer_finalize;
 
-  parent_class = (GObjectClass *) g_type_class_peek_parent (klass);
+	parent_class = (GObjectClass *) g_type_class_peek_parent(klass);
 
-  layer_signals[VL_UPDATE_SIGNAL] = g_signal_new ( "update", G_TYPE_FROM_CLASS (klass),
-   (GSignalFlags) (G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION), G_STRUCT_OFFSET (VikLayerClass, update), NULL, NULL,
-      g_cclosure_marshal_VOID__VOID, G_TYPE_NONE, 0);
+	layer_signals[VL_UPDATE_SIGNAL] = g_signal_new("update", G_TYPE_FROM_CLASS (klass),
+						       (GSignalFlags) (G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION), G_STRUCT_OFFSET (VikLayerClass, update), NULL, NULL,
+						       g_cclosure_marshal_VOID__VOID, G_TYPE_NONE, 0);
 
-  // Register all parameter defaults, early in the start up sequence
-  int layer;
-  for ( layer = 0; ((VikLayerTypeEnum) layer) < VIK_LAYER_NUM_TYPES; layer++ )
-    // ATM ignore the returned value
-    layer_defaults_register((VikLayerTypeEnum) layer);
+	// Register all parameter defaults, early in the start up sequence
+	int layer;
+	for (layer = 0; ((VikLayerTypeEnum) layer) < VIK_LAYER_NUM_TYPES; layer++) {
+		// ATM ignore the returned value
+		layer_defaults_register((VikLayerTypeEnum) layer);
+	}
 }
 
 /**
  * Invoke the actual drawing via signal method
  */
-static bool idle_draw ( VikLayer *vl )
+static bool idle_draw(VikLayer * vl)
 {
-  g_signal_emit ( G_OBJECT(vl), layer_signals[VL_UPDATE_SIGNAL], 0 );
-  return false; // Nothing else to do
+	g_signal_emit(G_OBJECT(vl), layer_signals[VL_UPDATE_SIGNAL], 0);
+	return false; // Nothing else to do
 }
 
 
@@ -139,40 +140,41 @@ void Layer::emit_update()
  * should only be done by VikLayersPanel (hence never used from the background)
  * need to redraw and record trigger when we make a layer invisible.
  */
-void vik_layer_emit_update_although_invisible ( VikLayer *vl )
+void vik_layer_emit_update_although_invisible(VikLayer * vl)
 {
 	Window::set_redraw_trigger((Layer *) vl->layer);
-	g_idle_add ( (GSourceFunc) idle_draw, vl );
+	g_idle_add((GSourceFunc) idle_draw, vl);
 }
 
 /* doesn't set the trigger. should be done by aggregate layer when child emits update. */
-void vik_layer_emit_update_secondary ( VikLayer *vl )
+void vik_layer_emit_update_secondary(VikLayer * vl)
 {
-  Layer * layer = (Layer *) vl->layer;
+	Layer * layer = (Layer *) vl->layer;
 
-  if (layer->visible)
-    // TODO: this can used from the background - eg in acquire
-    //       so will need to flow background update status through too
-    g_idle_add ( (GSourceFunc) idle_draw, vl );
+	if (layer->visible) {
+		// TODO: this can used from the background - eg in acquire
+		//       so will need to flow background update status through too
+		g_idle_add((GSourceFunc) idle_draw, vl);
+	}
 }
 
-static VikLayerInterface *vik_layer_interfaces[VIK_LAYER_NUM_TYPES] = {
-  &vik_aggregate_layer_interface,
-  &vik_trw_layer_interface,
-  &vik_coord_layer_interface,
-  &vik_georef_layer_interface,
-  &vik_gps_layer_interface,
-  &vik_maps_layer_interface,
-  &vik_dem_layer_interface,
+static VikLayerInterface * vik_layer_interfaces[VIK_LAYER_NUM_TYPES] = {
+	&vik_aggregate_layer_interface,
+	&vik_trw_layer_interface,
+	&vik_coord_layer_interface,
+	&vik_georef_layer_interface,
+	&vik_gps_layer_interface,
+	&vik_maps_layer_interface,
+	&vik_dem_layer_interface,
 #ifdef HAVE_LIBMAPNIK
-  &vik_mapnik_layer_interface,
+	&vik_mapnik_layer_interface,
 #endif
 };
 
-VikLayerInterface *vik_layer_get_interface ( VikLayerTypeEnum type )
+VikLayerInterface * vik_layer_get_interface(VikLayerTypeEnum type)
 {
-  assert ( type < VIK_LAYER_NUM_TYPES );
-  return vik_layer_interfaces[type];
+	assert (type < VIK_LAYER_NUM_TYPES);
+	return vik_layer_interfaces[type];
 }
 
 /**
@@ -180,28 +182,29 @@ VikLayerInterface *vik_layer_get_interface ( VikLayerTypeEnum type )
  *
  * Returns whether any parameters where registered
  */
-static bool layer_defaults_register ( VikLayerTypeEnum type )
+static bool layer_defaults_register(VikLayerTypeEnum type)
 {
-  // See if any parameters
-  VikLayerParam *params = vik_layer_interfaces[type]->params;
-  if ( ! params )
-    return false;
+	// See if any parameters
+	VikLayerParam *params = vik_layer_interfaces[type]->params;
+	if (!params) {
+		return false;
+	}
 
-  bool answer = false; // Incase all parameters are 'not in properties'
-  uint16_t params_count = vik_layer_interfaces[type]->params_count;
-  uint16_t i;
-  // Process each parameter
-  for ( i = 0; i < params_count; i++ ) {
-    if ( params[i].group != VIK_LAYER_NOT_IN_PROPERTIES ) {
-      if ( params[i].default_value ) {
-        VikLayerParamData paramd = params[i].default_value();
-        a_layer_defaults_register ( &params[i], paramd, vik_layer_interfaces[type]->fixed_layer_name );
-        answer = true;
-      }
-    }
-  }
+	bool answer = false; // Incase all parameters are 'not in properties'
+	uint16_t params_count = vik_layer_interfaces[type]->params_count;
+	uint16_t i;
+	// Process each parameter
+	for (i = 0; i < params_count; i++) {
+		if (params[i].group != VIK_LAYER_NOT_IN_PROPERTIES) {
+			if (params[i].default_value) {
+				VikLayerParamData paramd = params[i].default_value();
+				a_layer_defaults_register(&params[i], paramd, vik_layer_interfaces[type]->fixed_layer_name);
+				answer = true;
+			}
+		}
+	}
 
-  return answer;
+	return answer;
 }
 
 static void vik_layer_init(VikLayer * vl)
@@ -278,7 +281,7 @@ Layer * Layer::new_(VikLayerTypeEnum type, Viewport * viewport, bool interactive
 			/* in order to avoid translating name set by user */
 			layer->rename(_(vik_layer_interfaces[type]->name));
 		} else {
-			g_object_unref( G_OBJECT(layer->vl) ); /* cancel that */
+			g_object_unref(G_OBJECT(layer->vl)); /* cancel that */
 			delete layer;
 			layer = NULL;
 		}
@@ -306,188 +309,181 @@ void Layer::draw_visible(Viewport * viewport)
 
 
 typedef struct {
-  VikLayerTypeEnum layer_type;
-  int len;
-  uint8_t data[0];
+	VikLayerTypeEnum layer_type;
+	int len;
+	uint8_t data[0];
 } header_t;
 
-void vik_layer_marshall ( VikLayer *vl, uint8_t **data, int *len )
+void vik_layer_marshall(VikLayer * vl, uint8_t ** data, int * len)
 {
-  header_t *header;
-  Layer * layer = (Layer *) vl->layer;
-  layer->marshall(data, len);
-  if (*data) {
-      header = (header_t *) malloc(*len + sizeof(*header));
-      header->layer_type = layer->type;
-      header->len = *len;
-      memcpy(header->data, *data, *len);
-      free(*data);
-      *data = (uint8_t *)header;
-      *len = *len + sizeof(*header);
-  }
+	header_t *header;
+	Layer * layer = (Layer *) vl->layer;
+	layer->marshall(data, len);
+	if (*data) {
+		header = (header_t *) malloc(*len + sizeof(*header));
+		header->layer_type = layer->type;
+		header->len = *len;
+		memcpy(header->data, *data, *len);
+		free(*data);
+		*data = (uint8_t *)header;
+		*len = *len + sizeof(*header);
+	}
 }
 
-void vik_layer_marshall_params ( VikLayer *vl, uint8_t **data, int *datalen )
+void vik_layer_marshall_params(VikLayer * vl, uint8_t ** data, int * datalen)
 {
-  Layer * layer = (Layer *) vl->layer;
-  VikLayerParam *params = vik_layer_get_interface(layer->type)->params;
-  VikLayerFuncGetParam get_param = vik_layer_get_interface(layer->type)->get_param;
+	Layer * layer = (Layer *) vl->layer;
+	VikLayerParam * params = vik_layer_get_interface(layer->type)->params;
+	VikLayerFuncGetParam get_param = vik_layer_get_interface(layer->type)->get_param;
 
-  GByteArray* b = g_byte_array_new ();
-  int len;
+	GByteArray* b = g_byte_array_new();
+	int len;
 
 #define vlm_append(obj, sz) 	\
-  len = (sz);    		\
-  g_byte_array_append ( b, (uint8_t *)&len, sizeof(len) );	\
-  g_byte_array_append ( b, (uint8_t *)(obj), len );
+	len = (sz);					\
+	g_byte_array_append(b, (uint8_t *)&len, sizeof(len));	\
+	g_byte_array_append(b, (uint8_t *)(obj), len);
 
-  // Store the internal properties first
-  vlm_append(&layer->visible, sizeof(layer->visible));
-  vlm_append(layer->name, strlen(layer->name));
+	// Store the internal properties first
+	vlm_append(&layer->visible, sizeof(layer->visible));
+	vlm_append(layer->name, strlen(layer->name));
 
-  // Now the actual parameters
-  if ( params && get_param )
-  {
-    VikLayerParamData d;
-    uint16_t i, params_count = vik_layer_get_interface(layer->type)->params_count;
-    for ( i = 0; i < params_count; i++ )
-    {
-      fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, params[i].name);
-      d = get_param(vl, i, false);
-      switch ( params[i].type )
-      {
-      case VIK_LAYER_PARAM_STRING:
-        // Remember need braces as these are macro calls, not single statement functions!
-        if ( d.s ) {
-          vlm_append(d.s, strlen(d.s));
-        }
-        else {
-          // Need to insert empty string otherwise the unmarshall will get confused
-          vlm_append("", 0);
-        }
-        break;
-      /* print out the string list in the array */
-      case VIK_LAYER_PARAM_STRING_LIST: {
-        GList *list = d.sl;
+	// Now the actual parameters
+	if (params && get_param) {
+		VikLayerParamData d;
+		uint16_t i, params_count = vik_layer_get_interface(layer->type)->params_count;
+		for (i = 0; i < params_count; i++) {
+			fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, params[i].name);
+			d = get_param(vl, i, false);
+			switch (params[i].type) {
+			case VIK_LAYER_PARAM_STRING:
+				// Remember need braces as these are macro calls, not single statement functions!
+				if (d.s) {
+					vlm_append(d.s, strlen(d.s));
+				} else {
+					// Need to insert empty string otherwise the unmarshall will get confused
+					vlm_append("", 0);
+				}
+				break;
+				/* print out the string list in the array */
+			case VIK_LAYER_PARAM_STRING_LIST: {
+				GList *list = d.sl;
 
-        /* write length of list (# of strings) */
-        int listlen = g_list_length ( list );
-        g_byte_array_append ( b, (uint8_t *)&listlen, sizeof(listlen) );
+				/* write length of list (# of strings) */
+				int listlen = g_list_length(list);
+				g_byte_array_append(b, (uint8_t *)&listlen, sizeof(listlen));
 
-        /* write each string */
-        while ( list ) {
-          char *s = (char *) list->data;
-          vlm_append(s, strlen(s));
-          list = list->next;
-        }
+				/* write each string */
+				while (list) {
+					char *s = (char *) list->data;
+					vlm_append(s, strlen(s));
+					list = list->next;
+				}
 
-	break;
-      }
-      default:
-	vlm_append(&d, sizeof(d));
-	break;
-      }
-    }
-  }
+				break;
+			}
+			default:
+				vlm_append(&d, sizeof(d));
+				break;
+			}
+		}
+	}
 
-  *data = b->data;
-  *datalen = b->len;
-  g_byte_array_free ( b, false );
+	*data = b->data;
+	*datalen = b->len;
+	g_byte_array_free (b, false);
 
 #undef vlm_append
 }
 
-void vik_layer_unmarshall_params ( VikLayer *vl, uint8_t *data, int datalen, Viewport * viewport)
+void vik_layer_unmarshall_params(VikLayer * vl, uint8_t * data, int datalen, Viewport * viewport)
 {
-  Layer * layer = (Layer *) vl->layer;
-  VikLayerParam *params = vik_layer_get_interface(layer->type)->params;
-  VikLayerFuncSetParam set_param = vik_layer_get_interface(layer->type)->set_param;
+	Layer * layer = (Layer *) vl->layer;
+	VikLayerParam *params = vik_layer_get_interface(layer->type)->params;
+	VikLayerFuncSetParam set_param = vik_layer_get_interface(layer->type)->set_param;
 
-  char *s;
-  uint8_t *b = (uint8_t *)data;
+	char *s;
+	uint8_t *b = (uint8_t *) data;
 
-#define vlm_size (*(int *)b)
+#define vlm_size (*(int *) b)
 #define vlm_read(obj)				\
-  memcpy((obj), b+sizeof(int), vlm_size);	\
-  b += sizeof(int) + vlm_size;
+	memcpy((obj), b+sizeof(int), vlm_size);	\
+	b += sizeof(int) + vlm_size;
 
-  vlm_read(&layer->visible);
+	vlm_read(&layer->visible);
 
-  s = (char *) malloc(vlm_size + 1);
-  s[vlm_size]=0;
-  vlm_read(s);
-  layer->rename(s);
-  free(s);
-
-  if ( params && set_param )
-  {
-    VikLayerParamData d;
-    uint16_t i, params_count = vik_layer_get_interface(layer->type)->params_count;
-    for ( i = 0; i < params_count; i++ )
-    {
-      fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, params[i].name);
-      switch ( params[i].type )
-      {
-      case VIK_LAYER_PARAM_STRING:
 	s = (char *) malloc(vlm_size + 1);
 	s[vlm_size]=0;
 	vlm_read(s);
-	d.s = s;
-	set_param(vl, i, d, viewport, false);
+	layer->rename(s);
 	free(s);
-	break;
-      case VIK_LAYER_PARAM_STRING_LIST:  {
-        int listlen = vlm_size, j;
-        GList *list = NULL;
-        b += sizeof(int); /* skip listlen */;
 
-        for ( j = 0; j < listlen; j++ ) {
-          /* get a string */
-          s = (char *) malloc(vlm_size + 1);
-	  s[vlm_size]=0;
-	  vlm_read(s);
-          list = g_list_append ( list, s );
-        }
-        d.sl = list;
-        set_param(vl, i, d, viewport, false);
-        /* don't free -- string list is responsibility of the layer */
+	if (params && set_param) {
+		VikLayerParamData d;
+		uint16_t i, params_count = vik_layer_get_interface(layer->type)->params_count;
+		for (i = 0; i < params_count; i++){
+			fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, params[i].name);
+			switch (params[i].type) {
+			case VIK_LAYER_PARAM_STRING:
+				s = (char *) malloc(vlm_size + 1);
+				s[vlm_size] = 0;
+				vlm_read(s);
+				d.s = s;
+				set_param(vl, i, d, viewport, false);
+				free(s);
+				break;
+			case VIK_LAYER_PARAM_STRING_LIST: {
+				int listlen = vlm_size, j;
+				GList * list = NULL;
+				b += sizeof(int); /* skip listlen */;
 
-        break;
-        }
-      default:
-	vlm_read(&d);
-	set_param(vl, i, d, viewport, false);
-	break;
-      }
-    }
-  }
+				for (j = 0; j < listlen; j++) {
+					/* get a string */
+					s = (char *) malloc(vlm_size + 1);
+					s[vlm_size]=0;
+					vlm_read(s);
+					list = g_list_append(list, s);
+				}
+				d.sl = list;
+				set_param(vl, i, d, viewport, false);
+				/* don't free -- string list is responsibility of the layer */
+
+				break;
+			}
+			default:
+				vlm_read(&d);
+				set_param(vl, i, d, viewport, false);
+				break;
+			}
+		}
+	}
 }
 
-VikLayer *vik_layer_unmarshall ( uint8_t *data, int len, Viewport * viewport)
+VikLayer * vik_layer_unmarshall(uint8_t * data, int len, Viewport * viewport)
 {
-  header_t *header;
+	header_t * header;
 
-  header = (header_t *)data;
+	header = (header_t *) data;
 
-  if ( vik_layer_interfaces[header->layer_type]->unmarshall ) {
-    return vik_layer_interfaces[header->layer_type]->unmarshall ( header->data, header->len, viewport);
-  } else {
-    return NULL;
-  }
+	if (vik_layer_interfaces[header->layer_type]->unmarshall) {
+		return vik_layer_interfaces[header->layer_type]->unmarshall(header->data, header->len, viewport);
+	} else {
+		return NULL;
+	}
 }
 
-static void vik_layer_finalize ( VikLayer *vl )
+static void vik_layer_finalize(VikLayer * vl)
 {
-  assert ( vl != NULL );
+	assert (vl != NULL);
 
-  Layer * layer = (Layer *) vl->layer;
-  if (layer->name) {
-	  free(layer->name);
-  }
+	Layer * layer = (Layer *) vl->layer;
+	if (layer->name) {
+		free(layer->name);
+	}
 
-  layer->free_();
+	layer->free_();
 
-  G_OBJECT_CLASS(parent_class)->finalize(G_OBJECT(vl));
+	G_OBJECT_CLASS(parent_class)->finalize(G_OBJECT(vl));
 }
 
 
@@ -516,48 +512,48 @@ uint16_t vik_layer_get_menu_items_selection(VikLayer *l)
 
 
 
-GdkPixbuf *vik_layer_load_icon ( VikLayerTypeEnum type )
+GdkPixbuf * vik_layer_load_icon(VikLayerTypeEnum type)
 {
-  assert ( type < VIK_LAYER_NUM_TYPES );
-  if ( vik_layer_interfaces[type]->icon )
-    return gdk_pixbuf_from_pixdata ( vik_layer_interfaces[type]->icon, false, NULL );
-  return NULL;
+	assert (type < VIK_LAYER_NUM_TYPES);
+	if (vik_layer_interfaces[type]->icon) {
+		return gdk_pixbuf_from_pixdata(vik_layer_interfaces[type]->icon, false, NULL);
+	}
+	return NULL;
 }
 
 bool vik_layer_set_param(VikLayer * vl, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
 {
 	Layer * layer = (Layer *) vl->layer;
-	return layer->set_param(id, data, viewport, is_file_operation );
+	return layer->set_param(id, data, viewport, is_file_operation);
 }
 
 
-static bool vik_layer_properties_factory ( VikLayer *vl, Viewport * viewport)
+static bool vik_layer_properties_factory (VikLayer *vl, Viewport * viewport)
 {
-  Layer * layer = (Layer *) vl->layer;
-  switch ( a_uibuilder_properties_factory ( _("Layer Properties"),
-					    VIK_GTK_WINDOW_FROM_WIDGET(viewport->vvp),
-					    vik_layer_interfaces[layer->type]->params,
-					    vik_layer_interfaces[layer->type]->params_count,
-					    vik_layer_interfaces[layer->type]->params_groups,
-					    vik_layer_interfaces[layer->type]->params_groups_count,
-					    (bool (*)(void*, uint16_t, VikLayerParamData, void*, bool)) vik_layer_interfaces[layer->type]->set_param,
-					    vl,
-					    viewport,
-					    (VikLayerParamData (*)(void*, uint16_t, bool)) vik_layer_interfaces[layer->type]->get_param,
-					    vl,
-					    (void (*)(GtkWidget*, void**)) vik_layer_interfaces[layer->type]->change_param ) ) {
-    case 0:
-    case 3:
-      return false;
-      /* redraw (?) */
-    case 2:
-	    {
-		    Layer * layer = (Layer *) vl->layer;
-		    layer->post_read(viewport, false); /* update any gc's */
-	    }
-    default:
-      return true;
-  }
+	Layer * layer = (Layer *) vl->layer;
+	switch (a_uibuilder_properties_factory(_("Layer Properties"),
+					       VIK_GTK_WINDOW_FROM_WIDGET(viewport->vvp),
+					       vik_layer_interfaces[layer->type]->params,
+					       vik_layer_interfaces[layer->type]->params_count,
+					       vik_layer_interfaces[layer->type]->params_groups,
+					       vik_layer_interfaces[layer->type]->params_groups_count,
+					       (bool (*)(void*, uint16_t, VikLayerParamData, void*, bool)) vik_layer_interfaces[layer->type]->set_param,
+					       vl,
+					       viewport,
+					       (VikLayerParamData (*)(void*, uint16_t, bool)) vik_layer_interfaces[layer->type]->get_param,
+					       vl,
+					       (void (*)(GtkWidget*, void**)) vik_layer_interfaces[layer->type]->change_param)) {
+	case 0:
+	case 3:
+		return false;
+		/* redraw (?) */
+	case 2: {
+		Layer * layer = (Layer *) vl->layer;
+		layer->post_read(viewport, false); /* update any gc's */
+	}
+	default:
+		return true;
+	}
 }
 
 VikLayerTypeEnum Layer::type_from_string(char const * str)
@@ -570,73 +566,84 @@ VikLayerTypeEnum Layer::type_from_string(char const * str)
 	return VIK_LAYER_NUM_TYPES;
 }
 
-void vik_layer_typed_param_data_free ( void * gp )
+void vik_layer_typed_param_data_free(void * gp)
 {
-  VikLayerTypedParamData *val = (VikLayerTypedParamData *)gp;
-  switch ( val->type ) {
-    case VIK_LAYER_PARAM_STRING:
-      if ( val->data.s )
-        free( (void *)val->data.s );
-      break;
-    /* TODO: APPLICABLE TO US? NOTE: string layer works auniquely: data.sl should NOT be free'd when
-     * the internals call get_param -- i.e. it should be managed w/in the layer.
-     * The value passed by the internals into set_param should also be managed
-     * by the layer -- i.e. free'd by the layer.
-     */
-    case VIK_LAYER_PARAM_STRING_LIST:
-      fprintf(stderr, "WARNING: Param strings not implemented\n"); //fake it
-      break;
-    default:
-      break;
-  }
-  free( val );
+	VikLayerTypedParamData *val = (VikLayerTypedParamData *)gp;
+	switch (val->type) {
+	case VIK_LAYER_PARAM_STRING:
+		if (val->data.s) {
+			free((void *) val->data.s);
+		}
+		break;
+		/* TODO: APPLICABLE TO US? NOTE: string layer works auniquely: data.sl should NOT be free'd when
+		 * the internals call get_param -- i.e. it should be managed w/in the layer.
+		 * The value passed by the internals into set_param should also be managed
+		 * by the layer -- i.e. free'd by the layer.
+		 */
+	case VIK_LAYER_PARAM_STRING_LIST:
+		fprintf(stderr, "WARNING: Param strings not implemented\n"); //fake it
+		break;
+	default:
+		break;
+	}
+	free(val);
 }
 
-VikLayerTypedParamData *vik_layer_typed_param_data_copy_from_data (VikLayerParamType type, VikLayerParamData val) {
-  VikLayerTypedParamData *newval = (VikLayerTypedParamData *) malloc(1 * sizeof (VikLayerTypedParamData));
-  newval->data = val;
-  newval->type = type;
-  switch ( newval->type ) {
-    case VIK_LAYER_PARAM_STRING: {
-      char *s = g_strdup(newval->data.s);
-      newval->data.s = s;
-      break;
-    }
-    /* TODO: APPLICABLE TO US? NOTE: string layer works auniquely: data.sl should NOT be free'd when
-     * the internals call get_param -- i.e. it should be managed w/in the layer.
-     * The value passed by the internals into set_param should also be managed
-     * by the layer -- i.e. free'd by the layer.
-     */
-    case VIK_LAYER_PARAM_STRING_LIST:
-      fprintf(stderr, "CRITICAL: Param strings not implemented\n"); //fake it
-      break;
-    default:
-      break;
-  }
-  return newval;
+VikLayerTypedParamData * vik_layer_typed_param_data_copy_from_data(VikLayerParamType type, VikLayerParamData val)
+{
+	VikLayerTypedParamData * newval = (VikLayerTypedParamData *) malloc(1 * sizeof (VikLayerTypedParamData));
+	newval->data = val;
+	newval->type = type;
+	switch (newval->type) {
+	case VIK_LAYER_PARAM_STRING: {
+		char * s = g_strdup(newval->data.s);
+		newval->data.s = s;
+		break;
+	}
+		/* TODO: APPLICABLE TO US? NOTE: string layer works auniquely: data.sl should NOT be free'd when
+		 * the internals call get_param -- i.e. it should be managed w/in the layer.
+		 * The value passed by the internals into set_param should also be managed
+		 * by the layer -- i.e. free'd by the layer.
+		 */
+	case VIK_LAYER_PARAM_STRING_LIST:
+		fprintf(stderr, "CRITICAL: Param strings not implemented\n"); //fake it
+		break;
+	default:
+		break;
+	}
+	return newval;
 }
 
-#define TEST_BOOLEAN(str) (! ((str)[0] == '\0' || (str)[0] == '0' || (str)[0] == 'n' || (str)[0] == 'N' || (str)[0] == 'f' || (str)[0] == 'F') )
+#define TEST_BOOLEAN(str) (! ((str)[0] == '\0' || (str)[0] == '0' || (str)[0] == 'n' || (str)[0] == 'N' || (str)[0] == 'f' || (str)[0] == 'F'))
 
-VikLayerTypedParamData *vik_layer_data_typed_param_copy_from_string ( VikLayerParamType type, const char *str )
+VikLayerTypedParamData * vik_layer_data_typed_param_copy_from_string(VikLayerParamType type, const char * str)
 {
-  VikLayerTypedParamData *rv = (VikLayerTypedParamData *) malloc(1 * sizeof (VikLayerTypedParamData));
-  rv->type = type;
-  switch ( type )
-  {
-    case VIK_LAYER_PARAM_DOUBLE: rv->data.d = strtod(str, NULL); break;
-    case VIK_LAYER_PARAM_UINT: rv->data.u = strtoul(str, NULL, 10); break;
-    case VIK_LAYER_PARAM_INT: rv->data.i = strtol(str, NULL, 10); break;
-    case VIK_LAYER_PARAM_BOOLEAN: rv->data.b = TEST_BOOLEAN(str); break;
-    case VIK_LAYER_PARAM_COLOR: memset(&(rv->data.c), 0, sizeof(rv->data.c)); /* default: black */
-      gdk_color_parse ( str, &(rv->data.c) ); break;
-    /* STRING or STRING_LIST -- if STRING_LIST, just set param to add a STRING */
-    default: {
-      char *s = g_strdup(str);
-      rv->data.s = s;
-    }
-  }
-  return rv;
+	VikLayerTypedParamData * rv = (VikLayerTypedParamData *) malloc(1 * sizeof (VikLayerTypedParamData));
+	rv->type = type;
+	switch (type) {
+	case VIK_LAYER_PARAM_DOUBLE:
+		rv->data.d = strtod(str, NULL);
+		break;
+	case VIK_LAYER_PARAM_UINT:
+		rv->data.u = strtoul(str, NULL, 10);
+		break;
+	case VIK_LAYER_PARAM_INT:
+		rv->data.i = strtol(str, NULL, 10);
+		break;
+	case VIK_LAYER_PARAM_BOOLEAN:
+		rv->data.b = TEST_BOOLEAN(str);
+		break;
+	case VIK_LAYER_PARAM_COLOR:
+		memset(&(rv->data.c), 0, sizeof(rv->data.c)); /* default: black */
+		gdk_color_parse (str, &(rv->data.c));
+		break;
+		/* STRING or STRING_LIST -- if STRING_LIST, just set param to add a STRING */
+	default: {
+		char *s = g_strdup(str);
+		rv->data.s = s;
+	}
+	}
+	return rv;
 }
 
 

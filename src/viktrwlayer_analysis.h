@@ -30,14 +30,14 @@
 extern "C" {
 #endif
 
-typedef void (*VikTrwlayerAnalyseCloseFunc) (GtkWidget*, int, VikLayer*);
+typedef void (* VikTrwlayerAnalyseCloseFunc) (GtkWidget *, int, VikLayer *);
 
-GtkWidget* vik_trw_layer_analyse_this ( GtkWindow *window,
-                                        const char *name,
-                                        VikLayer *vl,
-                                        void * user_data,
-                                        VikTrwlayerGetTracksAndLayersFunc get_tracks_and_layers_cb,
-                                        VikTrwlayerAnalyseCloseFunc on_close_cb );
+GtkWidget * vik_trw_layer_analyse_this(GtkWindow * window,
+									   const char * name,
+									   VikLayer * vl,
+									   void * user_data,
+									   VikTrwlayerGetTracksAndLayersFunc get_tracks_and_layers_cb,
+									   VikTrwlayerAnalyseCloseFunc on_close_cb);
 
 #ifdef __cplusplus
 }

@@ -33,16 +33,16 @@ extern "C" {
 
 
 typedef enum {
-  VIK_CLIPBOARD_DATA_NONE = 0,
-  VIK_CLIPBOARD_DATA_LAYER,
-  VIK_CLIPBOARD_DATA_SUBLAYER,
-  VIK_CLIPBOARD_DATA_TEXT,
+	VIK_CLIPBOARD_DATA_NONE = 0,
+	VIK_CLIPBOARD_DATA_LAYER,
+	VIK_CLIPBOARD_DATA_SUBLAYER,
+	VIK_CLIPBOARD_DATA_TEXT,
 } VikClipboardDataType;
 
-void a_clipboard_copy(VikClipboardDataType  type, uint16_t layer_type, int subtype, unsigned int len, const char* text, uint8_t * data);
-void a_clipboard_copy_selected ( VikLayersPanel *vlp );
-bool a_clipboard_paste ( VikLayersPanel *vlp );
-VikClipboardDataType a_clipboard_type ( );
+void a_clipboard_copy(VikClipboardDataType  type, uint16_t layer_type, int subtype, unsigned int len, const char * text, uint8_t * data);
+void a_clipboard_copy_selected(VikLayersPanel * vlp);
+bool a_clipboard_paste(VikLayersPanel * vlp);
+VikClipboardDataType a_clipboard_type();
 
 #ifdef __cplusplus
 }

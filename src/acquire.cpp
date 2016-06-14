@@ -58,7 +58,7 @@ extern VikDataSourceInterface vik_datasource_bfilter_exclude_polygon_interface;
 
 /*** Input is a track ***/
 
-const VikDataSourceInterface *filters[] = {
+const VikDataSourceInterface * filters[] = {
 	&vik_datasource_bfilter_simplify_interface,
 	&vik_datasource_bfilter_compress_interface,
 	&vik_datasource_bfilter_dup_interface,
@@ -75,11 +75,11 @@ Track * filter_track = NULL;
 
 /* passed along to worker thread */
 typedef struct {
-	acq_dialog_widgets_t *w;
-	ProcessOptions *po;
+	acq_dialog_widgets_t * w;
+	ProcessOptions * po;
 	bool creating_new_layer;
 	LayerTRW * trw;
-	DownloadFileOptions *options;
+	DownloadFileOptions * options;
 } w_and_interface_t;
 
 
@@ -87,7 +87,7 @@ typedef struct {
  * Definitions and routines for acquiring data from Data Sources in general
  *********************************************************/
 
-static void progress_func(BabelProgressCode c, void * data, acq_dialog_widgets_t *w)
+static void progress_func(BabelProgressCode c, void * data, acq_dialog_widgets_t * w)
 {
 	if (w->source_interface->is_thread) {
 		gdk_threads_enter();
@@ -164,11 +164,11 @@ static void free_process_options(ProcessOptions *po)
 }
 
 /* this routine is the worker thread.  there is only one simultaneous download allowed */
-static void get_from_anything(w_and_interface_t *wi)
+static void get_from_anything(w_and_interface_t * wi)
 {
 	bool result = true;
 
-	VikDataSourceInterface *source_interface = wi->w->source_interface;
+	VikDataSourceInterface * source_interface = wi->w->source_interface;
 
 	if (source_interface->process_func) {
 		result = source_interface->process_func(wi->trw, wi->po, (BabelStatusFunc)progress_func, wi->w, wi->options);
@@ -218,10 +218,10 @@ static void acquire(Window * window,
 		    VikDataSourceCleanupFunc cleanup_function)
 {
 	/* for manual dialogs */
-	GtkWidget *dialog = NULL;
-	GtkWidget *status;
-	char *args_off = NULL;
-	char *fd_off = NULL;
+	GtkWidget * dialog = NULL;
+	GtkWidget * status;
+	char * args_off = NULL;
+	char * fd_off = NULL;
 	void * user_data;
 	DownloadFileOptions * options = (DownloadFileOptions *) malloc(sizeof (DownloadFileOptions));
 	memset(options, 0, sizeof (DownloadFileOptions));
@@ -293,11 +293,11 @@ static void acquire(Window * window,
 	}
 
 	/* CREATE INPUT DATA & GET OPTIONS */
-	ProcessOptions *po = (ProcessOptions *) malloc(sizeof (ProcessOptions));
+	ProcessOptions * po = (ProcessOptions *) malloc(sizeof (ProcessOptions));
 	memset(po, 0, sizeof (ProcessOptions));
 
 	if (source_interface->inputtype == VIK_DATASOURCE_INPUTTYPE_TRWLAYER) {
-		char *name_src = a_gpx_write_tmp_file(trw, NULL);
+		char * name_src = a_gpx_write_tmp_file(trw, NULL);
 
 		source_interface->get_process_options_func(pass_along_data, po, NULL, name_src, NULL);
 
@@ -305,8 +305,8 @@ static void acquire(Window * window,
 
 		free(name_src);
 	} else if (source_interface->inputtype == VIK_DATASOURCE_INPUTTYPE_TRWLAYER_TRACK) {
-		char *name_src = a_gpx_write_tmp_file(trw, NULL);
-		char *name_src_track = a_gpx_write_track_tmp_file(trk, NULL);
+		char * name_src = a_gpx_write_tmp_file(trw, NULL);
+		char * name_src_track = a_gpx_write_track_tmp_file(trk, NULL);
 
 		source_interface->get_process_options_func(pass_along_data, po, NULL, name_src, name_src_track);
 
@@ -338,7 +338,7 @@ static void acquire(Window * window,
 	}
 
 	acq_dialog_widgets_t * w = (acq_dialog_widgets_t *) malloc(sizeof (acq_dialog_widgets_t));
-	w_and_interface_t *wi = (w_and_interface_t *) malloc(sizeof (w_and_interface_t));
+	w_and_interface_t * wi = (w_and_interface_t *) malloc(sizeof (w_and_interface_t));
 	wi->w = w;
 	wi->w->source_interface = source_interface;
 	wi->po = po;
@@ -356,8 +356,9 @@ static void acquire(Window * window,
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), status, false, false, 5);
 	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
 	// May not want to see the dialog at all
-	if (source_interface->is_thread || source_interface->keep_dialog_open)
+	if (source_interface->is_thread || source_interface->keep_dialog_open) {
 		gtk_widget_show_all(dialog);
+	}
 	w->status = status;
 
 	w->window = window;
@@ -525,7 +526,7 @@ static GtkWidget * acquire_build_menu(Window * window, LayersPanel * panel, View
  *
  * Returns: %NULL if no filters.
  */
-GtkWidget *a_acquire_trwlayer_menu(Window * window, LayersPanel * panel, Viewport * viewport, LayerTRW * trw)
+GtkWidget * a_acquire_trwlayer_menu(Window * window, LayersPanel * panel, Viewport * viewport, LayerTRW * trw)
 {
 	return acquire_build_menu(window, panel, viewport, trw, NULL, _("_Filter"), VIK_DATASOURCE_INPUTTYPE_TRWLAYER);
 }
@@ -537,7 +538,7 @@ GtkWidget *a_acquire_trwlayer_menu(Window * window, LayersPanel * panel, Viewpor
  *
  * Returns: %NULL if no filters or no filter track has been set.
  */
-GtkWidget *a_acquire_trwlayer_track_menu(Window * window, LayersPanel * panel, Viewport * viewport, LayerTRW * trw)
+GtkWidget * a_acquire_trwlayer_track_menu(Window * window, LayersPanel * panel, Viewport * viewport, LayerTRW * trw)
 {
 	if (filter_track == NULL) {
 		return NULL;
@@ -557,7 +558,7 @@ GtkWidget *a_acquire_trwlayer_track_menu(Window * window, LayersPanel * panel, V
  *
  * Returns: %NULL if no applicable filters
  */
-GtkWidget *a_acquire_track_menu(Window * window, LayersPanel * panel, Viewport * viewport, Track * trk)
+GtkWidget * a_acquire_track_menu(Window * window, LayersPanel * panel, Viewport * viewport, Track * trk)
 {
 	return acquire_build_menu(window, panel, viewport, NULL, trk, _("Filter"), VIK_DATASOURCE_INPUTTYPE_TRACK);
 }

@@ -48,13 +48,12 @@ extern "C" {
 typedef struct _VikLayer VikLayer;
 typedef struct _VikLayerClass VikLayerClass;
 
-struct _VikLayerClass
-{
-  GObjectClass object_class;
-  void (* update) (VikLayer *vl);
+struct _VikLayerClass {
+	GObjectClass object_class;
+	void (* update) (VikLayer *vl);
 };
 
-GType vik_layer_get_type ();
+GType vik_layer_get_type();
 
 struct _VikLayer {
 	GObject obj;
@@ -70,12 +69,12 @@ struct _VikLayer {
  * if no layer was selected (find way/trackpoint)
  */
 typedef enum {
-  VIK_LAYER_TOOL_IGNORED=0,
-  VIK_LAYER_TOOL_ACK,
-  VIK_LAYER_TOOL_ACK_REDRAW_ABOVE,
-  VIK_LAYER_TOOL_ACK_REDRAW_ALL,
-  VIK_LAYER_TOOL_ACK_REDRAW_IF_VISIBLE,
-  VIK_LAYER_TOOL_ACK_GRAB_FOCUS, /* only for move */
+	VIK_LAYER_TOOL_IGNORED=0,
+	VIK_LAYER_TOOL_ACK,
+	VIK_LAYER_TOOL_ACK_REDRAW_ABOVE,
+	VIK_LAYER_TOOL_ACK_REDRAW_ALL,
+	VIK_LAYER_TOOL_ACK_REDRAW_IF_VISIBLE,
+	VIK_LAYER_TOOL_ACK_GRAB_FOCUS, /* only for move */
 } VikLayerToolFuncStatus;
 
 
@@ -108,52 +107,52 @@ struct _VikToolInterface;
 
 /* See vik_layer_* for function parameter names */
 struct _VikLayerInterface {
-  const char *                     fixed_layer_name; // Used in .vik files - this should never change to maintain file compatibility
-  const char *                     name;             // Translate-able name used for display purposes
-  const char *                     accelerator;
-  const GdkPixdata *                icon;
+	const char *                     fixed_layer_name; // Used in .vik files - this should never change to maintain file compatibility
+	const char *                     name;             // Translate-able name used for display purposes
+	const char *                     accelerator;
+	const GdkPixdata *                icon;
 
-  struct _VikToolInterface *                tools;
-  uint16_t                           tools_count;
+	struct _VikToolInterface *                tools;
+	uint16_t                           tools_count;
 
-  /* for I/O reading to and from .vik files -- params like coordline width, color, etc. */
-  VikLayerParam *                   params;
-  uint16_t                           params_count;
-  char **                          params_groups;
-  uint8_t                            params_groups_count;
+	/* for I/O reading to and from .vik files -- params like coordline width, color, etc. */
+	VikLayerParam *                   params;
+	uint16_t                           params_count;
+	char **                          params_groups;
+	uint8_t                            params_groups_count;
 
-  /* menu items to be created */
-  VikStdLayerMenuItem               menu_items_selection;
+	/* menu items to be created */
+	VikStdLayerMenuItem               menu_items_selection;
 
-  VikLayerFuncUnmarshall            unmarshall;
+	VikLayerFuncUnmarshall            unmarshall;
 
-  /* for I/O */
-  VikLayerFuncSetParam              set_param;
-  VikLayerFuncGetParam              get_param;
-  VikLayerFuncChangeParam           change_param;
+	/* for I/O */
+	VikLayerFuncSetParam              set_param;
+	VikLayerFuncGetParam              get_param;
+	VikLayerFuncChangeParam           change_param;
 };
 
-VikLayerInterface *vik_layer_get_interface ( VikLayerTypeEnum type );
-bool vik_layer_set_param (VikLayer *layer, uint16_t id, VikLayerParamData data, SlavGPS::Viewport * viewport, bool is_file_operation);
+VikLayerInterface * vik_layer_get_interface(VikLayerTypeEnum type);
+bool vik_layer_set_param(VikLayer * layer, uint16_t id, VikLayerParamData data, SlavGPS::Viewport * viewport, bool is_file_operation);
 
 
 /* GUI */
-uint16_t vik_layer_get_menu_items_selection(VikLayer *l);
-bool vik_layer_properties ( VikLayer *layer, SlavGPS::Viewport * viewport);
+uint16_t vik_layer_get_menu_items_selection(VikLayer * l);
+bool vik_layer_properties(VikLayer * layer, SlavGPS::Viewport * viewport);
 
-VikLayer *vik_layer_copy(VikLayer *vl, void * viewport);
-void      vik_layer_marshall ( VikLayer *vl, uint8_t **data, int *len );
-VikLayer *vik_layer_unmarshall ( uint8_t *data, int len, SlavGPS::Viewport * viewport);
-void      vik_layer_marshall_params ( VikLayer *vl, uint8_t **data, int *len );
-void      vik_layer_unmarshall_params ( VikLayer *vl, uint8_t *data, int len, SlavGPS::Viewport * viewport);
+VikLayer *vik_layer_copy(VikLayer * vl, void * viewport);
+void      vik_layer_marshall(VikLayer * vl, uint8_t ** data, int * len);
+VikLayer *vik_layer_unmarshall(uint8_t * data, int len, SlavGPS::Viewport * viewport);
+void      vik_layer_marshall_params(VikLayer * vl, uint8_t ** data, int * len);
+void      vik_layer_unmarshall_params(VikLayer * vl, uint8_t * data, int len, SlavGPS::Viewport * viewport);
 
-bool vik_layer_selected ( VikLayer *l, int subtype, void * sublayer, int type, void * panel);
+bool vik_layer_selected(VikLayer * l, int subtype, void * sublayer, int type, void * panel);
 
 /* TODO: put in layerspanel */
-GdkPixbuf *vik_layer_load_icon ( VikLayerTypeEnum type );
+GdkPixbuf * vik_layer_load_icon(VikLayerTypeEnum type);
 
-void vik_layer_emit_update_secondary ( VikLayer *vl ); /* to be called by aggregate layer only. doesn't set the trigger */
-void vik_layer_emit_update_although_invisible ( VikLayer *vl );
+void vik_layer_emit_update_secondary(VikLayer * vl); /* to be called by aggregate layer only. doesn't set the trigger */
+void vik_layer_emit_update_although_invisible(VikLayer * vl);
 
 
 typedef struct {
@@ -161,9 +160,9 @@ typedef struct {
   VikLayerParamType type;
 } VikLayerTypedParamData;
 
-void vik_layer_typed_param_data_free ( void * gp );
-VikLayerTypedParamData *vik_layer_typed_param_data_copy_from_data ( VikLayerParamType type, VikLayerParamData val );
-VikLayerTypedParamData *vik_layer_data_typed_param_copy_from_string ( VikLayerParamType type, const char *str );
+void vik_layer_typed_param_data_free(void * gp);
+VikLayerTypedParamData * vik_layer_typed_param_data_copy_from_data(VikLayerParamType type, VikLayerParamData val);
+VikLayerTypedParamData * vik_layer_data_typed_param_copy_from_string(VikLayerParamType type, const char * str);
 
 #ifdef __cplusplus
 }
@@ -310,21 +309,21 @@ typedef bool (*VikToolKeyFunc) (SlavGPS::Layer *, GdkEventKey *, void *);
 
 typedef struct _VikToolInterface VikToolInterface;
 struct _VikToolInterface {
-  GtkRadioActionEntry radioActionEntry;
+	GtkRadioActionEntry radioActionEntry;
 
-  VikToolConstructorFunc create;
-  VikToolDestructorFunc destroy;
-  VikToolActivationFunc activate;
-  VikToolActivationFunc deactivate;
-  VikToolMouseFunc click;
-  VikToolMouseMoveFunc move;
-  VikToolMouseFunc release;
-  VikToolKeyFunc key_press; /* return false if we don't use the key press -- should return false most of the time if we want any shortcuts / UI keybindings to work! use sparingly. */
+	VikToolConstructorFunc create;
+	VikToolDestructorFunc destroy;
+	VikToolActivationFunc activate;
+	VikToolActivationFunc deactivate;
+	VikToolMouseFunc click;
+	VikToolMouseMoveFunc move;
+	VikToolMouseFunc release;
+	VikToolKeyFunc key_press; /* return false if we don't use the key press -- should return false most of the time if we want any shortcuts / UI keybindings to work! use sparingly. */
 
-  bool pan_handler; // Call click & release funtions even when 'Pan Mode' is on
-  GdkCursorType cursor_type;
-  const GdkPixdata *cursor_data;
-  const GdkCursor *cursor;
+	bool pan_handler; // Call click & release funtions even when 'Pan Mode' is on
+	GdkCursorType cursor_type;
+	const GdkPixdata *cursor_data;
+	const GdkCursor *cursor;
 };
 
 

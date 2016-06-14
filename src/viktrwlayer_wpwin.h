@@ -1,4 +1,3 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
@@ -24,7 +23,6 @@
 
 #include <glib.h>
 #include <gtk/gtk.h>
-#include <stdbool.h>
 #include <stdint.h>
 
 #include "viktrwlayer.h"
@@ -41,7 +39,7 @@ extern "C" {
     The name to use is returned
    When an existing waypoint the name is shown but is not allowed to be changed and NULL is returned
  */
-char *a_dialog_waypoint ( GtkWindow *parent, char *default_name, SlavGPS::LayerTRW * trw, SlavGPS::Waypoint * wp, VikCoordMode coord_mode, bool is_new, bool *updated );
+char * a_dialog_waypoint(GtkWindow * parent, char * default_name, SlavGPS::LayerTRW * trw, SlavGPS::Waypoint * wp, VikCoordMode coord_mode, bool is_new, bool * updated);
 
 #ifdef __cplusplus
 }
