@@ -227,6 +227,11 @@ typedef struct _propwidgets {
 	char     *tz; // TimeZone at track's location
 } PropWidgets;
 
+typedef void (* draw_graph_fn_t)(GtkWidget * image, Track * trk, PropWidgets * widgets);
+typedef int (* get_blobby_fn_t)(double x_blob, PropWidgets * widgets);
+
+void draw_single_graph(GtkWidget * window, PropWidgets * widgets, bool resized, GList * child, draw_graph_fn_t draw_graph, get_blobby_fn_t get_blobby, bool by_time, PropSaved * saved_img);
+
 static PropWidgets * prop_widgets_new()
 {
 	PropWidgets * widgets = (PropWidgets *) malloc(sizeof (PropWidgets));
@@ -813,9 +818,9 @@ void track_profile_move(GtkWidget *event_box, GdkEventMotion *event, PropWidgets
 		return;
 	}
 
-	GtkWidget *window = gtk_widget_get_toplevel(event_box);
-	GList *child = gtk_container_get_children(GTK_CONTAINER(event_box));
-	GtkWidget *image = GTK_WIDGET(child->data);
+	GtkWidget * window = gtk_widget_get_toplevel(event_box);
+	GList * child = gtk_container_get_children(GTK_CONTAINER(event_box));
+	GtkWidget * image = GTK_WIDGET(child->data);
 
 	int y_blob = blobby_altitude(x, widgets);
 
@@ -900,9 +905,9 @@ void track_gradient_move(GtkWidget * event_box, GdkEventMotion * event, PropWidg
 		return;
 	}
 
-	GtkWidget *window = gtk_widget_get_toplevel(event_box);
-	GList *child = gtk_container_get_children(GTK_CONTAINER(event_box));
-	GtkWidget *image = GTK_WIDGET(child->data);
+	GtkWidget * window = gtk_widget_get_toplevel(event_box);
+	GList * child = gtk_container_get_children(GTK_CONTAINER(event_box));
+	GtkWidget * image = GTK_WIDGET(child->data);
 
 	int y_blob = blobby_gradient(x, widgets);
 
@@ -1112,9 +1117,9 @@ void track_dt_move(GtkWidget * event_box, GdkEventMotion * event, PropWidgets * 
 		return;
 	}
 
-	GtkWidget *window = gtk_widget_get_toplevel(event_box);
-	GList *child = gtk_container_get_children(GTK_CONTAINER(event_box));
-	GtkWidget *image = GTK_WIDGET(child->data);
+	GtkWidget * window = gtk_widget_get_toplevel(event_box);
+	GList * child = gtk_container_get_children(GTK_CONTAINER(event_box));
+	GtkWidget * image = GTK_WIDGET(child->data);
 
 	int y_blob = blobby_distance(x, widgets);
 
@@ -1197,9 +1202,9 @@ void track_et_move(GtkWidget * event_box, GdkEventMotion * event, PropWidgets * 
 		return;
 	}
 
-	GtkWidget *window = gtk_widget_get_toplevel(event_box);
-	GList *child = gtk_container_get_children(GTK_CONTAINER(event_box));
-	GtkWidget *image = GTK_WIDGET(child->data);
+	GtkWidget * window = gtk_widget_get_toplevel(event_box);
+	GList * child = gtk_container_get_children(GTK_CONTAINER(event_box));
+	GtkWidget * image = GTK_WIDGET(child->data);
 
 	int y_blob = blobby_altitude_time(x, widgets);
 
@@ -2385,319 +2390,116 @@ static void draw_sd(GtkWidget * image, Track * trk, PropWidgets * widgets)
 }
 #undef LINES
 
+
+
 /**
  * Draw all graphs
  */
 static void draw_all_graphs(GtkWidget * widget, PropWidgets * widgets, bool resized)
 {
-	// Draw graphs even if they are not visible
-
-	GList *child = NULL;
-	GtkWidget *image = NULL;
-	GtkWidget *window = gtk_widget_get_toplevel(widget);
-	double pc = NAN;
-	double pc_blob = NAN;
+	GtkWidget * window = gtk_widget_get_toplevel(widget);
 
 	// Draw elevations
 	if (widgets->elev_box != NULL) {
-
-		// Saved image no longer any good as we've resized, so we remove it here
-		if (resized && widgets->elev_graph_saved_img.img) {
-			g_object_unref(widgets->elev_graph_saved_img.img);
-			widgets->elev_graph_saved_img.img = NULL;
-			widgets->elev_graph_saved_img.saved = false;
-		}
-
-		child = gtk_container_get_children(GTK_CONTAINER(widgets->elev_box));
-		draw_elevations(GTK_WIDGET(child->data), widgets->trk, widgets);
-
-		image = GTK_WIDGET(child->data);
+		GList * child = gtk_container_get_children(GTK_CONTAINER(widgets->elev_box));
+		draw_single_graph(window, widgets, resized, child, draw_elevations, blobby_altitude, false, &widgets->elev_graph_saved_img);
 		g_list_free(child);
-
-		// Ensure marker or blob are redrawn if necessary
-		if (widgets->is_marker_drawn || widgets->is_blob_drawn) {
-
-			pc = tp_percentage_by_distance(widgets->trk, widgets->marker_tp, widgets->track_length_inc_gaps);
-
-			double x_blob = -MARGIN_X - 1.0; // i.e. Don't draw unless we get a valid value
-			int y_blob = 0;
-			if (widgets->is_blob_drawn) {
-				pc_blob = tp_percentage_by_distance(widgets->trk, widgets->blob_tp, widgets->track_length_inc_gaps);
-				if (!isnan(pc_blob)) {
-					x_blob = (pc_blob * widgets->profile_width);
-				}
-
-				y_blob = blobby_altitude(x_blob, widgets);
-			}
-
-			double marker_x = -1.0; // i.e. Don't draw unless we get a valid value
-			if (!isnan(pc)) {
-				marker_x = (pc * widgets->profile_width) + MARGIN_X;
-			}
-
-			save_image_and_draw_graph_marks(image,
-							marker_x,
-							gtk_widget_get_style(window)->black_gc,
-							x_blob+MARGIN_X,
-							y_blob+MARGIN_Y,
-							&widgets->elev_graph_saved_img,
-							widgets->profile_width,
-							widgets->profile_height,
-							&widgets->is_marker_drawn,
-							&widgets->is_blob_drawn);
-		}
 	}
 
 	// Draw gradients
 	if (widgets->gradient_box != NULL) {
-
-		// Saved image no longer any good as we've resized, so we remove it here
-		if (resized && widgets->gradient_graph_saved_img.img) {
-			g_object_unref(widgets->gradient_graph_saved_img.img);
-			widgets->gradient_graph_saved_img.img = NULL;
-			widgets->gradient_graph_saved_img.saved = false;
-		}
-
-		child = gtk_container_get_children(GTK_CONTAINER(widgets->gradient_box));
-		draw_gradients(GTK_WIDGET(child->data), widgets->trk, widgets);
-
-		image = GTK_WIDGET(child->data);
+		GList * child = gtk_container_get_children(GTK_CONTAINER(widgets->gradient_box));
+		draw_single_graph(window, widgets, resized, child, draw_gradients, blobby_gradient, false, &widgets->gradient_graph_saved_img);
 		g_list_free(child);
-
-		// Ensure marker or blob are redrawn if necessary
-		if (widgets->is_marker_drawn || widgets->is_blob_drawn) {
-
-			pc = tp_percentage_by_distance(widgets->trk, widgets->marker_tp, widgets->track_length_inc_gaps);
-
-			double x_blob = -MARGIN_X - 1.0; // i.e. Don't draw unless we get a valid value
-			int y_blob = 0;
-			if (widgets->is_blob_drawn) {
-				pc_blob = tp_percentage_by_distance(widgets->trk, widgets->blob_tp, widgets->track_length_inc_gaps);
-				if (!isnan(pc_blob)) {
-					x_blob = (pc_blob * widgets->profile_width);
-				}
-
-				y_blob = blobby_gradient(x_blob, widgets);
-			}
-
-			double marker_x = -1.0; // i.e. Don't draw unless we get a valid value
-			if (!isnan(pc)) {
-				marker_x = (pc * widgets->profile_width) + MARGIN_X;
-			}
-
-			save_image_and_draw_graph_marks(image,
-							marker_x,
-							gtk_widget_get_style(window)->black_gc,
-							x_blob+MARGIN_X,
-							y_blob+MARGIN_Y,
-							&widgets->gradient_graph_saved_img,
-							widgets->profile_width,
-							widgets->profile_height,
-							&widgets->is_marker_drawn,
-							&widgets->is_blob_drawn);
-		}
 	}
 
 	// Draw speeds
 	if (widgets->speed_box != NULL) {
-
-		// Saved image no longer any good as we've resized
-		if (resized && widgets->speed_graph_saved_img.img) {
-			g_object_unref(widgets->speed_graph_saved_img.img);
-			widgets->speed_graph_saved_img.img = NULL;
-			widgets->speed_graph_saved_img.saved = false;
-		}
-
-		child = gtk_container_get_children(GTK_CONTAINER(widgets->speed_box));
-		draw_vt(GTK_WIDGET(child->data), widgets->trk, widgets);
-
-		image = GTK_WIDGET(child->data);
+		GList * child = gtk_container_get_children(GTK_CONTAINER(widgets->speed_box));
+		draw_single_graph(window, widgets, resized, child, draw_vt, blobby_speed, true, &widgets->speed_graph_saved_img);
 		g_list_free(child);
-
-		// Ensure marker or blob are redrawn if necessary
-		if (widgets->is_marker_drawn || widgets->is_blob_drawn) {
-
-			pc = tp_percentage_by_time(widgets->trk, widgets->marker_tp);
-
-			double x_blob = -MARGIN_X - 1.0; // i.e. Don't draw unless we get a valid value
-			int y_blob = 0;
-			if (widgets->is_blob_drawn) {
-				pc_blob = tp_percentage_by_time(widgets->trk, widgets->blob_tp);
-				if (!isnan(pc_blob)) {
-					x_blob = (pc_blob * widgets->profile_width);
-				}
-
-				y_blob = blobby_speed(x_blob, widgets);
-			}
-
-			double marker_x = -1.0; // i.e. Don't draw unless we get a valid value
-			if (!isnan(pc)) {
-				marker_x = (pc * widgets->profile_width) + MARGIN_X;
-			}
-
-			save_image_and_draw_graph_marks(image,
-							marker_x,
-							gtk_widget_get_style(window)->black_gc,
-							x_blob+MARGIN_X,
-							y_blob+MARGIN_Y,
-							&widgets->speed_graph_saved_img,
-							widgets->profile_width,
-							widgets->profile_height,
-							&widgets->is_marker_drawn,
-							&widgets->is_blob_drawn);
-		}
 	}
 
 	// Draw Distances
 	if (widgets->dist_box != NULL) {
-
-		// Saved image no longer any good as we've resized
-		if (resized && widgets->dist_graph_saved_img.img) {
-			g_object_unref(widgets->dist_graph_saved_img.img);
-			widgets->dist_graph_saved_img.img = NULL;
-			widgets->dist_graph_saved_img.saved = false;
-		}
-
-		child = gtk_container_get_children(GTK_CONTAINER(widgets->dist_box));
-		draw_dt(GTK_WIDGET(child->data), widgets->trk, widgets);
-
-		image = GTK_WIDGET(child->data);
+		GList * child = gtk_container_get_children(GTK_CONTAINER(widgets->dist_box));
+		draw_single_graph(window, widgets, resized, child, draw_dt, blobby_distance, true, &widgets->dist_graph_saved_img);
 		g_list_free(child);
-
-		// Ensure marker or blob are redrawn if necessary
-		if (widgets->is_marker_drawn || widgets->is_blob_drawn) {
-
-			pc = tp_percentage_by_time(widgets->trk, widgets->marker_tp);
-
-			double x_blob = -MARGIN_X - 1.0; // i.e. Don't draw unless we get a valid value
-			int y_blob = 0;
-			if (widgets->is_blob_drawn) {
-				pc_blob = tp_percentage_by_time(widgets->trk, widgets->blob_tp);
-				if (!isnan(pc_blob)) {
-					x_blob = (pc_blob * widgets->profile_width);
-				}
-
-				y_blob = blobby_distance(x_blob, widgets);
-			}
-
-			double marker_x = -1.0; // i.e. Don't draw unless we get a valid value
-			if (!isnan(pc)) {
-				marker_x = (pc * widgets->profile_width) + MARGIN_X;
-			}
-
-			save_image_and_draw_graph_marks(image,
-							marker_x,
-							gtk_widget_get_style(window)->black_gc,
-							x_blob+MARGIN_X,
-							y_blob+MARGIN_Y,
-							&widgets->dist_graph_saved_img,
-							widgets->profile_width,
-							widgets->profile_height,
-							&widgets->is_marker_drawn,
-							&widgets->is_blob_drawn);
-		}
 	}
 
 	// Draw Elevations in timely manner
 	if (widgets->elev_time_box != NULL) {
-
-		// Saved image no longer any good as we've resized
-		if (resized && widgets->elev_time_graph_saved_img.img) {
-			g_object_unref(widgets->elev_time_graph_saved_img.img);
-			widgets->elev_time_graph_saved_img.img = NULL;
-			widgets->elev_time_graph_saved_img.saved = false;
-		}
-
-		child = gtk_container_get_children(GTK_CONTAINER(widgets->elev_time_box));
-		draw_et(GTK_WIDGET(child->data), widgets->trk, widgets);
-
-		image = GTK_WIDGET(child->data);
+		GList * child = gtk_container_get_children(GTK_CONTAINER(widgets->elev_time_box));
+		draw_single_graph(window, widgets, resized, child, draw_et, blobby_altitude_time, true, &widgets->elev_time_graph_saved_img);
 		g_list_free(child);
-
-		// Ensure marker or blob are redrawn if necessary
-		if (widgets->is_marker_drawn || widgets->is_blob_drawn) {
-
-			pc = tp_percentage_by_time(widgets->trk, widgets->marker_tp);
-
-			double x_blob = -MARGIN_X - 1.0; // i.e. Don't draw unless we get a valid value
-			int y_blob = 0;
-			if (widgets->is_blob_drawn) {
-				pc_blob = tp_percentage_by_time(widgets->trk, widgets->blob_tp);
-				if (!isnan(pc_blob)) {
-					x_blob = (pc_blob * widgets->profile_width);
-				}
-
-				y_blob = blobby_altitude_time(x_blob, widgets);
-			}
-
-			double marker_x = -1.0; // i.e. Don't draw unless we get a valid value
-			if (!isnan(pc)) {
-				marker_x = (pc * widgets->profile_width) + MARGIN_X;
-			}
-
-			save_image_and_draw_graph_marks(image,
-							marker_x,
-							gtk_widget_get_style(window)->black_gc,
-							x_blob+MARGIN_X,
-							y_blob+MARGIN_Y,
-							&widgets->elev_time_graph_saved_img,
-							widgets->profile_width,
-							widgets->profile_height,
-							&widgets->is_marker_drawn,
-							&widgets->is_blob_drawn);
-		}
 	}
 
 	// Draw speed distances
 	if (widgets->speed_dist_box != NULL) {
-
-		// Saved image no longer any good as we've resized, so we remove it here
-		if (resized && widgets->speed_dist_graph_saved_img.img) {
-			g_object_unref(widgets->speed_dist_graph_saved_img.img);
-			widgets->speed_dist_graph_saved_img.img = NULL;
-			widgets->speed_dist_graph_saved_img.saved = false;
-		}
-
-		child = gtk_container_get_children(GTK_CONTAINER(widgets->speed_dist_box));
-		draw_sd(GTK_WIDGET(child->data), widgets->trk, widgets);
-
-		image = GTK_WIDGET(child->data);
+		GList * child = gtk_container_get_children(GTK_CONTAINER(widgets->speed_dist_box));
+		draw_single_graph(window, widgets, resized, child, draw_sd, blobby_speed_dist, true, &widgets->speed_dist_graph_saved_img);
 		g_list_free(child);
-
-		// Ensure marker or blob are redrawn if necessary
-		if (widgets->is_marker_drawn || widgets->is_blob_drawn) {
-
-			pc = tp_percentage_by_distance(widgets->trk, widgets->marker_tp, widgets->track_length_inc_gaps);
-
-			double x_blob = -MARGIN_X - 1.0; // i.e. Don't draw unless we get a valid value
-			int y_blob = 0;
-			if (widgets->is_blob_drawn) {
-				pc_blob = tp_percentage_by_distance(widgets->trk, widgets->blob_tp, widgets->track_length_inc_gaps);
-				if (!isnan(pc_blob)) {
-					x_blob = (pc_blob * widgets->profile_width);
-				}
-
-				y_blob = blobby_speed_dist(x_blob, widgets);
-			}
-
-			double marker_x = -1.0; // i.e. Don't draw unless we get a valid value
-			if (!isnan(pc)) {
-				marker_x = (pc * widgets->profile_width) + MARGIN_X;
-			}
-
-			save_image_and_draw_graph_marks(image,
-							marker_x,
-							gtk_widget_get_style(window)->black_gc,
-							x_blob+MARGIN_X,
-							y_blob+MARGIN_Y,
-							&widgets->speed_dist_graph_saved_img,
-							widgets->profile_width,
-							widgets->profile_height,
-							&widgets->is_marker_drawn,
-							&widgets->is_blob_drawn);
-		}
 	}
 
+}
+
+
+
+void draw_single_graph(GtkWidget * window, PropWidgets * widgets, bool resized, GList * child, draw_graph_fn_t draw_graph, get_blobby_fn_t get_blobby, bool by_time, PropSaved * saved_img)
+{
+	// Saved image no longer any good as we've resized, so we remove it here
+	if (resized && saved_img->img) {
+		g_object_unref(saved_img->img);
+		saved_img->img = NULL;
+		saved_img->saved = false;
+	}
+
+	draw_graph(GTK_WIDGET(child->data), widgets->trk, widgets);
+
+	GtkWidget * image = GTK_WIDGET(child->data);
+
+	// Ensure marker or blob are redrawn if necessary
+	if (widgets->is_marker_drawn || widgets->is_blob_drawn) {
+
+		double pc = NAN;
+		if (by_time) {
+			pc = tp_percentage_by_time(widgets->trk, widgets->marker_tp);
+		} else {
+			pc = tp_percentage_by_distance(widgets->trk, widgets->marker_tp, widgets->track_length_inc_gaps);
+		}
+
+		double x_blob = -MARGIN_X - 1.0; // i.e. Don't draw unless we get a valid value
+		int y_blob = 0;
+		if (widgets->is_blob_drawn) {
+			double pc_blob = NAN;
+			if (by_time) {
+				pc_blob = tp_percentage_by_time(widgets->trk, widgets->blob_tp);
+			} else {
+				pc_blob = tp_percentage_by_distance(widgets->trk, widgets->blob_tp, widgets->track_length_inc_gaps);
+			}
+			if (!isnan(pc_blob)) {
+				x_blob = (pc_blob * widgets->profile_width);
+			}
+
+			y_blob = get_blobby(x_blob, widgets);
+		}
+
+		double marker_x = -1.0; // i.e. Don't draw unless we get a valid value
+		if (!isnan(pc)) {
+			marker_x = (pc * widgets->profile_width) + MARGIN_X;
+		}
+
+		save_image_and_draw_graph_marks(image,
+						marker_x,
+						gtk_widget_get_style(window)->black_gc,
+						x_blob+MARGIN_X,
+						y_blob+MARGIN_Y,
+						saved_img,
+						widgets->profile_width,
+						widgets->profile_height,
+						&widgets->is_marker_drawn,
+						&widgets->is_blob_drawn);
+	}
 }
 
 /**
