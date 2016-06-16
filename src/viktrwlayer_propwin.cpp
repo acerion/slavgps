@@ -230,7 +230,14 @@ typedef struct _propwidgets {
 typedef void (* draw_graph_fn_t)(GtkWidget * image, Track * trk, PropWidgets * widgets);
 typedef int (* get_blobby_fn_t)(double x_blob, PropWidgets * widgets);
 
-void draw_single_graph(GtkWidget * window, PropWidgets * widgets, bool resized, GList * child, draw_graph_fn_t draw_graph, get_blobby_fn_t get_blobby, bool by_time, PropSaved * saved_img);
+static void get_mouse_event_x(GtkWidget * event_box, GdkEventMotion * event, PropWidgets * widgets, double * x, int * ix);
+static void draw_single_graph(GtkWidget * window, PropWidgets * widgets, bool resized, GList * child, draw_graph_fn_t draw_graph, get_blobby_fn_t get_blobby, bool by_time, PropSaved * saved_img);
+static void distance_label_update(GtkWidget * widget, double meters_from_start);
+static void elevation_label_update(GtkWidget * widget, Trackpoint * tp);
+static void real_time_label_update(GtkWidget * widget, Trackpoint * tp);
+static void speed_label_update(GtkWidget * widget, double value);
+static void dist_dist_label_update(GtkWidget * widget, double distance);
+static void gradient_label_update(GtkWidget * widget, double gradient);
 
 static PropWidgets * prop_widgets_new()
 {
@@ -760,63 +767,26 @@ static int blobby_speed_dist(double x_blob, PropWidgets * widgets)
 
 void track_profile_move(GtkWidget *event_box, GdkEventMotion *event, PropWidgets *widgets)
 {
-	int mouse_x, mouse_y;
-	GdkModifierType state;
-
-	if (event->is_hint) {
-		gdk_window_get_pointer(event->window, &mouse_x, &mouse_y, &state);
-	} else {
-		mouse_x = event->x;
+	if (widgets->altitudes == NULL) {
+		return;
 	}
 
-	GtkAllocation allocation;
-	gtk_widget_get_allocation(event_box, &allocation);
-
-	double x = mouse_x - allocation.width / 2 + widgets->profile_width / 2 - MARGIN_X / 2;
-	if (x < 0) {
-		x = 0;
-	}
-	if (x > widgets->profile_width) {
-		x = widgets->profile_width;
-	}
+	double x = NAN;
+	int ix = 0;
+	get_mouse_event_x(event_box, event, widgets, &x, &ix);
 
 	double meters_from_start;
 	Trackpoint * tp = widgets->trk->get_closest_tp_by_percentage_dist((double) x / widgets->profile_width, &meters_from_start);
 	if (tp && widgets->w_cur_dist) {
-		static char tmp_buf[20];
-		vik_units_distance_t dist_units = a_vik_get_units_distance();
-		switch (dist_units) {
-		case VIK_UNITS_DISTANCE_KILOMETRES:
-			snprintf(tmp_buf, sizeof(tmp_buf), "%.2f km", meters_from_start/1000.0);
-			break;
-		case VIK_UNITS_DISTANCE_MILES:
-			snprintf(tmp_buf, sizeof(tmp_buf), "%.2f miles", VIK_METERS_TO_MILES(meters_from_start));
-			break;
-		case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
-			snprintf(tmp_buf, sizeof(tmp_buf), "%.2f NM", VIK_METERS_TO_NAUTICAL_MILES(meters_from_start));
-			break;
-		default:
-			fprintf(stderr, "CRITICAL: Houston, we've had a problem. distance=%d\n", dist_units);
-		}
-		gtk_label_set_text(GTK_LABEL(widgets->w_cur_dist), tmp_buf);
+		distance_label_update(widgets->w_cur_dist, meters_from_start);
 	}
 
 	// Show track elevation for this position - to the nearest whole number
 	if (tp && widgets->w_cur_elevation) {
-		static char tmp_buf[20];
-		if (a_vik_get_units_height() == VIK_UNITS_HEIGHT_FEET) {
-			snprintf(tmp_buf, sizeof(tmp_buf), "%d ft", (int)VIK_METERS_TO_FEET(tp->altitude));
-		} else {
-			snprintf(tmp_buf, sizeof(tmp_buf), "%d m", (int) tp->altitude);
-		}
-		gtk_label_set_text(GTK_LABEL(widgets->w_cur_elevation), tmp_buf);
+		elevation_label_update(widgets->w_cur_elevation, tp);
 	}
 
 	widgets->blob_tp = tp;
-
-	if (widgets->altitudes == NULL) {
-		return;
-	}
 
 	GtkWidget * window = gtk_widget_get_toplevel(event_box);
 	GList * child = gtk_container_get_children(GTK_CONTAINER(event_box));
@@ -848,62 +818,26 @@ void track_profile_move(GtkWidget *event_box, GdkEventMotion *event, PropWidgets
 
 void track_gradient_move(GtkWidget * event_box, GdkEventMotion * event, PropWidgets * widgets)
 {
-	int mouse_x, mouse_y;
-	GdkModifierType state;
-
-	if (event->is_hint) {
-		gdk_window_get_pointer(event->window, &mouse_x, &mouse_y, &state);
-	} else {
-		mouse_x = event->x;
+	if (widgets->gradients == NULL) {
+		return;
 	}
 
-	GtkAllocation allocation;
-	gtk_widget_get_allocation(event_box, &allocation);
-
-	double x = mouse_x - allocation.width / 2 + widgets->profile_width / 2 - MARGIN_X / 2;
-	if (x < 0) {
-		x = 0;
-	}
-	if (x > widgets->profile_width) {
-		x = widgets->profile_width;
-	}
+	double x = NAN;
+	int ix = 0;
+	get_mouse_event_x(event_box, event, widgets, &x, &ix);
 
 	double meters_from_start;
 	Trackpoint * tp = widgets->trk->get_closest_tp_by_percentage_dist((double) x / widgets->profile_width, &meters_from_start);
 	if (tp && widgets->w_cur_gradient_dist) {
-		static char tmp_buf[20];
-		vik_units_distance_t dist_units = a_vik_get_units_distance();
-		switch (dist_units) {
-		case VIK_UNITS_DISTANCE_KILOMETRES:
-			snprintf(tmp_buf, sizeof(tmp_buf), "%.2f km", meters_from_start/1000.0);
-			break;
-		case VIK_UNITS_DISTANCE_MILES:
-			snprintf(tmp_buf, sizeof(tmp_buf), "%.2f miles", VIK_METERS_TO_MILES(meters_from_start));
-			break;
-		case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
-			snprintf(tmp_buf, sizeof(tmp_buf), "%.2f NM", VIK_METERS_TO_NAUTICAL_MILES(meters_from_start));
-			break;
-		default:
-			fprintf(stderr, "CRITICAL: Houston, we've had a problem. distance=%d\n", dist_units);
-		}
-		gtk_label_set_text(GTK_LABEL(widgets->w_cur_gradient_dist), tmp_buf);
+		distance_label_update(widgets->w_cur_gradient_dist, meters_from_start);
 	}
 
 	// Show track gradient for this position - to the nearest whole number
 	if (tp && widgets->w_cur_gradient_gradient) {
-		static char tmp_buf[20];
-
-		double gradient = widgets->gradients[(int) x];
-
-		snprintf(tmp_buf, sizeof(tmp_buf), "%d%%", (int)gradient);
-		gtk_label_set_text(GTK_LABEL(widgets->w_cur_gradient_gradient), tmp_buf);
+		gradient_label_update(widgets->w_cur_gradient_gradient, widgets->gradients[ix]);
 	}
 
 	widgets->blob_tp = tp;
-
-	if (widgets->gradients == NULL) {
-		return;
-	}
 
 	GtkWidget * window = gtk_widget_get_toplevel(event_box);
 	GList * child = gtk_container_get_children(GTK_CONTAINER(event_box));
@@ -934,7 +868,7 @@ void track_gradient_move(GtkWidget * event_box, GdkEventMotion * event, PropWidg
 }
 
 //
-static void time_label_update(GtkWidget * widget, time_t seconds_from_start)
+void time_label_update(GtkWidget * widget, time_t seconds_from_start)
 {
 	static char tmp_buf[20];
 	unsigned int h = seconds_from_start/3600;
@@ -942,10 +876,12 @@ static void time_label_update(GtkWidget * widget, time_t seconds_from_start)
 	unsigned int s = seconds_from_start - (3600*h) - (60*m);
 	snprintf(tmp_buf, sizeof(tmp_buf), "%02d:%02d:%02d", h, m, s);
 	gtk_label_set_text(GTK_LABEL(widget), tmp_buf);
+
+	return;
 }
 
 //
-static void real_time_label_update(PropWidgets * widgets, GtkWidget * widget, Trackpoint * tp)
+void real_time_label_update(GtkWidget * widget, Trackpoint * tp)
 {
 	static char tmp_buf[64];
 	if (tp->has_timestamp) {
@@ -956,29 +892,56 @@ static void real_time_label_update(PropWidgets * widgets, GtkWidget * widget, Tr
 		snprintf(tmp_buf, sizeof(tmp_buf), _("No Data"));
 	}
 	gtk_label_set_text(GTK_LABEL(widget), tmp_buf);
+
+	return;
 }
+
+void speed_label_update(GtkWidget * widget, double value)
+{
+	static char tmp_buf[20];
+	// Even if GPS speed available (tp->speed), the text will correspond to the speed map shown
+	// No conversions needed as already in appropriate units
+	vik_units_speed_t speed_units = a_vik_get_units_speed();
+	switch (speed_units) {
+	case VIK_UNITS_SPEED_KILOMETRES_PER_HOUR:
+		snprintf(tmp_buf, sizeof(tmp_buf), _("%.1f kph"), value);
+		break;
+	case VIK_UNITS_SPEED_MILES_PER_HOUR:
+		snprintf(tmp_buf, sizeof(tmp_buf), _("%.1f mph"), value);
+		break;
+	case VIK_UNITS_SPEED_KNOTS:
+		snprintf(tmp_buf, sizeof(tmp_buf), _("%.1f knots"), value);
+		break;
+	default:
+		// VIK_UNITS_SPEED_METRES_PER_SECOND:
+		snprintf(tmp_buf, sizeof(tmp_buf), _("%.1f m/s"), value);
+		break;
+	}
+	gtk_label_set_text(GTK_LABEL(widget), tmp_buf);
+
+	return;
+}
+
+void gradient_label_update(GtkWidget * widget, double gradient)
+{
+	static char tmp_buf[20];
+	snprintf(tmp_buf, sizeof(tmp_buf), "%d%%", (int) gradient);
+	gtk_label_set_text(GTK_LABEL(widget), tmp_buf);
+
+	return;
+}
+
+
 
 void track_vt_move(GtkWidget * event_box, GdkEventMotion * event, PropWidgets * widgets)
 {
-	int mouse_x, mouse_y;
-	GdkModifierType state;
-
-	if (event->is_hint) {
-		gdk_window_get_pointer(event->window, &mouse_x, &mouse_y, &state);
-	} else {
-		mouse_x = event->x;
+	if (widgets->speeds == NULL) {
+		return;
 	}
 
-	GtkAllocation allocation;
-	gtk_widget_get_allocation(event_box, &allocation);
-
-	double x = mouse_x - allocation.width / 2 + widgets->profile_width / 2 - MARGIN_X / 2;
-	if (x < 0) {
-		x = 0;
-	}
-	if (x > widgets->profile_width) {
-		x = widgets->profile_width;
-	}
+	double x = NAN;
+	int ix = 0;
+	get_mouse_event_x(event_box, event, widgets, &x, &ix);
 
 	time_t seconds_from_start;
 	Trackpoint * tp = widgets->trk->get_closest_tp_by_percentage_time((double) x / widgets->profile_width, &seconds_from_start);
@@ -987,44 +950,15 @@ void track_vt_move(GtkWidget * event_box, GdkEventMotion * event, PropWidgets * 
 	}
 
 	if (tp && widgets->w_cur_time_real) {
-		real_time_label_update(widgets, widgets->w_cur_time_real, tp);
-	}
-
-	int ix = (int)x;
-	// Ensure ix is inbounds
-	if (ix == widgets->profile_width) {
-		ix--;
+		real_time_label_update(widgets->w_cur_time_real, tp);
 	}
 
 	// Show track speed for this position
 	if (tp && widgets->w_cur_speed) {
-		static char tmp_buf[20];
-		// Even if GPS speed available (tp->speed), the text will correspond to the speed map shown
-		// No conversions needed as already in appropriate units
-		vik_units_speed_t speed_units = a_vik_get_units_speed();
-		switch (speed_units) {
-		case VIK_UNITS_SPEED_KILOMETRES_PER_HOUR:
-			snprintf(tmp_buf, sizeof(tmp_buf), _("%.1f kph"), widgets->speeds[ix]);
-			break;
-		case VIK_UNITS_SPEED_MILES_PER_HOUR:
-			snprintf(tmp_buf, sizeof(tmp_buf), _("%.1f mph"), widgets->speeds[ix]);
-			break;
-		case VIK_UNITS_SPEED_KNOTS:
-			snprintf(tmp_buf, sizeof(tmp_buf), _("%.1f knots"), widgets->speeds[ix]);
-			break;
-		default:
-			// VIK_UNITS_SPEED_METRES_PER_SECOND:
-			snprintf(tmp_buf, sizeof(tmp_buf), _("%.1f m/s"), widgets->speeds[ix]);
-			break;
-		}
-		gtk_label_set_text(GTK_LABEL(widgets->w_cur_speed), tmp_buf);
+		speed_label_update(widgets->w_cur_speed, widgets->speeds[ix]);
 	}
 
 	widgets->blob_tp = tp;
-
-	if (widgets->speeds == NULL) {
-		return;
-	}
 
 	GtkWidget * window = gtk_widget_get_toplevel(event_box);
 	GList * child = gtk_container_get_children(GTK_CONTAINER(event_box));
@@ -1059,25 +993,13 @@ void track_vt_move(GtkWidget * event_box, GdkEventMotion * event, PropWidgets * 
  */
 void track_dt_move(GtkWidget * event_box, GdkEventMotion * event, PropWidgets * widgets)
 {
-	int mouse_x, mouse_y;
-	GdkModifierType state;
-
-	if (event->is_hint) {
-		gdk_window_get_pointer(event->window, &mouse_x, &mouse_y, &state);
-	} else {
-		mouse_x = event->x;
+	if (widgets->distances == NULL) {
+		return;
 	}
 
-	GtkAllocation allocation;
-	gtk_widget_get_allocation(event_box, &allocation);
-
-	double x = mouse_x - allocation.width / 2 + widgets->profile_width / 2 - MARGIN_X / 2;
-	if (x < 0) {
-		x = 0;
-	}
-	if (x > widgets->profile_width) {
-		x = widgets->profile_width;
-	}
+	double x = NAN;
+	int ix = 0;
+	get_mouse_event_x(event_box, event, widgets, &x, &ix);
 
 	time_t seconds_from_start;
 	Trackpoint * tp = widgets->trk->get_closest_tp_by_percentage_time((double) x / widgets->profile_width, &seconds_from_start);
@@ -1086,36 +1008,14 @@ void track_dt_move(GtkWidget * event_box, GdkEventMotion * event, PropWidgets * 
 	}
 
 	if (tp && widgets->w_cur_dist_time_real) {
-		real_time_label_update(widgets, widgets->w_cur_dist_time_real, tp);
-	}
-
-	int ix = (int)x;
-	// Ensure ix is inbounds
-	if (ix == widgets->profile_width) {
-		ix--;
+		real_time_label_update(widgets->w_cur_dist_time_real, tp);
 	}
 
 	if (tp && widgets->w_cur_dist_dist) {
-		static char tmp_buf[20];
-		switch (a_vik_get_units_distance()) {
-		case VIK_UNITS_DISTANCE_MILES:
-			snprintf(tmp_buf, sizeof(tmp_buf), "%.2f miles", widgets->distances[ix]);
-			break;
-		case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
-			snprintf(tmp_buf, sizeof(tmp_buf), "%.2f NM", widgets->distances[ix]);
-			break;
-		default:
-			snprintf(tmp_buf, sizeof(tmp_buf), "%.2f km", widgets->distances[ix]);
-			break;
-		}
-		gtk_label_set_text(GTK_LABEL(widgets->w_cur_dist_dist), tmp_buf);
+		dist_dist_label_update(widgets->w_cur_dist_dist, widgets->distances[ix]);
 	}
 
 	widgets->blob_tp = tp;
-
-	if (widgets->distances == NULL) {
-		return;
-	}
 
 	GtkWidget * window = gtk_widget_get_toplevel(event_box);
 	GList * child = gtk_container_get_children(GTK_CONTAINER(event_box));
@@ -1150,25 +1050,13 @@ void track_dt_move(GtkWidget * event_box, GdkEventMotion * event, PropWidgets * 
  */
 void track_et_move(GtkWidget * event_box, GdkEventMotion * event, PropWidgets * widgets)
 {
-	int mouse_x, mouse_y;
-	GdkModifierType state;
-
-	if (event->is_hint) {
-		gdk_window_get_pointer(event->window, &mouse_x, &mouse_y, &state);
-	} else {
-		mouse_x = event->x;
+	if (widgets->ats == NULL) {
+		return;
 	}
 
-	GtkAllocation allocation;
-	gtk_widget_get_allocation(event_box, &allocation);
-
-	double x = mouse_x - allocation.width / 2 + widgets->profile_width / 2 - MARGIN_X / 2;
-	if (x < 0) {
-		x = 0;
-	}
-	if (x > widgets->profile_width) {
-		x = widgets->profile_width;
-	}
+	double x = NAN;
+	int ix = 0;
+	get_mouse_event_x(event_box, event, widgets, &x, &ix);
 
 	time_t seconds_from_start;
 	Trackpoint * tp = widgets->trk->get_closest_tp_by_percentage_time((double) x / widgets->profile_width, &seconds_from_start);
@@ -1177,30 +1065,14 @@ void track_et_move(GtkWidget * event_box, GdkEventMotion * event, PropWidgets * 
 	}
 
 	if (tp && widgets->w_cur_elev_time_real) {
-		real_time_label_update(widgets, widgets->w_cur_elev_time_real, tp);
-	}
-
-	int ix = (int)x;
-	// Ensure ix is inbounds
-	if (ix == widgets->profile_width) {
-		ix--;
+		real_time_label_update(widgets->w_cur_elev_time_real, tp);
 	}
 
 	if (tp && widgets->w_cur_elev_elev) {
-		static char tmp_buf[20];
-		if (a_vik_get_units_height() == VIK_UNITS_HEIGHT_FEET) {
-			snprintf(tmp_buf, sizeof(tmp_buf), "%d ft", (int)VIK_METERS_TO_FEET(tp->altitude));
-		} else {
-			snprintf(tmp_buf, sizeof(tmp_buf), "%d m", (int) tp->altitude);
-		}
-		gtk_label_set_text(GTK_LABEL(widgets->w_cur_elev_elev), tmp_buf);
+		elevation_label_update(widgets->w_cur_elev_elev, tp);
 	}
 
 	widgets->blob_tp = tp;
-
-	if (widgets->ats == NULL) {
-		return;
-	}
 
 	GtkWidget * window = gtk_widget_get_toplevel(event_box);
 	GList * child = gtk_container_get_children(GTK_CONTAINER(event_box));
@@ -1232,79 +1104,23 @@ void track_et_move(GtkWidget * event_box, GdkEventMotion * event, PropWidgets * 
 
 void track_sd_move(GtkWidget * event_box, GdkEventMotion * event, PropWidgets * widgets)
 {
-	int mouse_x, mouse_y;
-	GdkModifierType state;
-
-	if (event->is_hint) {
-		gdk_window_get_pointer(event->window, &mouse_x, &mouse_y, &state);
-	} else {
-		mouse_x = event->x;
-	}
-
-	GtkAllocation allocation;
-	gtk_widget_get_allocation(event_box, &allocation);
-
-	double x = mouse_x - allocation.width / 2 + widgets->profile_width / 2 - MARGIN_X / 2;
-	if (x < 0) {
-		x = 0;
-	}
-	if (x > widgets->profile_width) {
-		x = widgets->profile_width;
-	}
-
-	double meters_from_start;
-	Trackpoint * tp = widgets->trk->get_closest_tp_by_percentage_dist((double) x / widgets->profile_width, &meters_from_start);
-	if (tp && widgets->w_cur_speed_dist) {
-		static char tmp_buf[20];
-		vik_units_distance_t dist_units = a_vik_get_units_distance();
-		switch (dist_units) {
-		case VIK_UNITS_DISTANCE_KILOMETRES:
-			snprintf(tmp_buf, sizeof(tmp_buf), "%.2f km", meters_from_start/1000.0);
-			break;
-		case VIK_UNITS_DISTANCE_MILES:
-			snprintf(tmp_buf, sizeof(tmp_buf), "%.2f miles", VIK_METERS_TO_MILES(meters_from_start));
-			break;
-		case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
-			snprintf(tmp_buf, sizeof(tmp_buf), "%.2f NM", VIK_METERS_TO_NAUTICAL_MILES(meters_from_start));
-			break;
-		default:
-			fprintf(stderr, "CRITICAL: Houston, we've had a problem. distance=%d\n", dist_units);
-		}
-		gtk_label_set_text(GTK_LABEL(widgets->w_cur_speed_dist), tmp_buf);
-	}
-
-	int ix = (int)x;
-	// Ensure ix is inbounds
-	if (ix == widgets->profile_width) {
-		ix--;
-	}
-
 	if (widgets->speeds_dist == NULL) {
 		return;
 	}
 
+	double x = NAN;
+	int ix = 0;
+	get_mouse_event_x(event_box, event, widgets, &x, &ix);
+
+	double meters_from_start;
+	Trackpoint * tp = widgets->trk->get_closest_tp_by_percentage_dist((double) x / widgets->profile_width, &meters_from_start);
+	if (tp && widgets->w_cur_speed_dist) {
+		distance_label_update(widgets->w_cur_speed_dist, meters_from_start);
+	}
+
 	// Show track speed for this position
 	if (widgets->w_cur_speed_speed) {
-		static char tmp_buf[20];
-		// Even if GPS speed available (tp->speed), the text will correspond to the speed map shown
-		// No conversions needed as already in appropriate units
-		vik_units_speed_t speed_units = a_vik_get_units_speed();
-		switch (speed_units) {
-		case VIK_UNITS_SPEED_KILOMETRES_PER_HOUR:
-			snprintf(tmp_buf, sizeof(tmp_buf), _("%.1f kph"), widgets->speeds_dist[ix]);
-			break;
-		case VIK_UNITS_SPEED_MILES_PER_HOUR:
-			snprintf(tmp_buf, sizeof(tmp_buf), _("%.1f mph"), widgets->speeds_dist[ix]);
-			break;
-		case VIK_UNITS_SPEED_KNOTS:
-			snprintf(tmp_buf, sizeof(tmp_buf), _("%.1f knots"), widgets->speeds_dist[ix]);
-			break;
-		default:
-			// VIK_UNITS_SPEED_METRES_PER_SECOND:
-			snprintf(tmp_buf, sizeof(tmp_buf), _("%.1f m/s"), widgets->speeds_dist[ix]);
-			break;
-		}
-		gtk_label_set_text(GTK_LABEL(widgets->w_cur_speed_speed), tmp_buf);
+		speed_label_update(widgets->w_cur_speed_speed, widgets->speeds_dist[ix]);
 	}
 
 	widgets->blob_tp = tp;
@@ -1336,6 +1152,96 @@ void track_sd_move(GtkWidget * event_box, GdkEventMotion * event, PropWidgets * 
 
 	g_list_free(child);
 }
+
+
+
+void get_mouse_event_x(GtkWidget * event_box, GdkEventMotion * event, PropWidgets * widgets, double * x, int * ix)
+{
+	int mouse_x, mouse_y;
+	GdkModifierType state;
+
+	if (event->is_hint) {
+		gdk_window_get_pointer(event->window, &mouse_x, &mouse_y, &state);
+	} else {
+		mouse_x = event->x;
+	}
+
+	GtkAllocation allocation;
+	gtk_widget_get_allocation(event_box, &allocation);
+
+	(*x) = mouse_x - allocation.width / 2 + widgets->profile_width / 2 - MARGIN_X / 2;
+	if ((*x) < 0) {
+		(*x) = 0;
+	}
+	if ((*x) > widgets->profile_width) {
+		(*x) = widgets->profile_width;
+	}
+
+	*ix = (int) (*x);
+	// Ensure ix is inbounds
+	if (*ix == widgets->profile_width) {
+		(*ix)--;
+	}
+
+	return;
+}
+
+
+void distance_label_update(GtkWidget * widget, double meters_from_start)
+{
+	static char tmp_buf[20];
+	vik_units_distance_t dist_units = a_vik_get_units_distance();
+	switch (dist_units) {
+	case VIK_UNITS_DISTANCE_KILOMETRES:
+		snprintf(tmp_buf, sizeof(tmp_buf), "%.2f km", meters_from_start/1000.0);
+		break;
+	case VIK_UNITS_DISTANCE_MILES:
+		snprintf(tmp_buf, sizeof(tmp_buf), "%.2f miles", VIK_METERS_TO_MILES(meters_from_start));
+		break;
+	case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
+		snprintf(tmp_buf, sizeof(tmp_buf), "%.2f NM", VIK_METERS_TO_NAUTICAL_MILES(meters_from_start));
+		break;
+	default:
+		fprintf(stderr, "CRITICAL: Houston, we've had a problem. distance=%d\n", dist_units);
+	}
+	gtk_label_set_text(GTK_LABEL(widget), tmp_buf);
+
+	return;
+
+}
+
+void elevation_label_update(GtkWidget * widget, Trackpoint * tp)
+{
+	static char tmp_buf[20];
+	if (a_vik_get_units_height() == VIK_UNITS_HEIGHT_FEET) {
+		snprintf(tmp_buf, sizeof(tmp_buf), "%d ft", (int)VIK_METERS_TO_FEET(tp->altitude));
+	} else {
+		snprintf(tmp_buf, sizeof(tmp_buf), "%d m", (int) tp->altitude);
+	}
+	gtk_label_set_text(GTK_LABEL(widget), tmp_buf);
+
+	return;
+}
+
+void dist_dist_label_update(GtkWidget * widget, double distance)
+{
+	static char tmp_buf[20];
+	switch (a_vik_get_units_distance()) {
+	case VIK_UNITS_DISTANCE_MILES:
+		snprintf(tmp_buf, sizeof(tmp_buf), "%.2f miles", distance);
+		break;
+	case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
+		snprintf(tmp_buf, sizeof(tmp_buf), "%.2f NM", distance);
+		break;
+	default:
+		snprintf(tmp_buf, sizeof(tmp_buf), "%.2f km", distance);
+		break;
+	}
+	gtk_label_set_text(GTK_LABEL(widget), tmp_buf);
+
+	return;
+}
+
 
 /**
  * Draws DEM points and a respresentative speed on the supplied pixmap
