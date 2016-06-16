@@ -126,14 +126,14 @@ static VikLayer * coord_layer_unmarshall(uint8_t * data, int len, Viewport * vie
 	return rv;
 }
 
-// NB VikViewport can be null as it's not used ATM
+// NB Viewport can be null as it's not used ATM
 bool coord_layer_set_param(VikLayer *vcl, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
 {
 	LayerCoord * layer = (LayerCoord *) vcl->layer;
 	return layer->set_param(id, data, viewport, is_file_operation);
 }
 
-// NB VikViewport can be null as it's not used ATM
+// NB Viewport can be null as it's not used ATM
 bool LayerCoord::set_param(uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
 {
 	switch (id) {

@@ -6950,7 +6950,7 @@ bool LayerTRW::select_click(GdkEventButton * event, Viewport * viewport, tool_ed
 			if (event->state & GDK_SHIFT_MASK
 			    || (this->current_wp == wp_params.closest_wp && !this->current_wp->image)) {
 				// Put into 'move buffer'
-				// NB vvp & vw already set in tet
+				// NB viewport & window already set in tet
 				tet->trw = this;
 				tet->is_waypoint = true;
 
@@ -7000,7 +7000,7 @@ bool LayerTRW::select_click(GdkEventButton * event, Viewport * viewport, tool_ed
 			if (event->state & GDK_CONTROL_MASK
 			     || this->current_tpl == tp_params.closest_tpl) {
 				// Put into 'move buffer'
-				// NB vvp & vw already set in tet
+				// NB viewport & window already set in tet
 				tet->trw = this;
 				marker_begin_move(tet, event->x, event->y);
 			}
@@ -7036,7 +7036,7 @@ bool LayerTRW::select_click(GdkEventButton * event, Viewport * viewport, tool_ed
 			if (event->state & GDK_CONTROL_MASK ||
 			     this->current_tpl == tp_params.closest_tpl) {
 				// Put into 'move buffer'
-				// NB vvp & vw already set in tet
+				// NB viewport & window already set in tet
 				tet->trw = this;
 				marker_begin_move(tet, event->x, event->y);
 			}
@@ -7547,7 +7547,7 @@ VikLayerToolFuncStatus LayerTRW::tool_new_track_move(GdkEventMotion * event, Vie
 		viewport->coord_to_screen(&(last_tpt->coord), &x1, &y1);
 
 		// FOR SCREEN OVERLAYS WE MUST DRAW INTO THIS PIXMAP (when using the reset method)
-		//  otherwise using vik_viewport_draw_* functions puts the data into the base pixmap,
+		//  otherwise using Viewport::draw_* functions puts the data into the base pixmap,
 		//  thus when we come to reset to the background it would include what we have already drawn!!
 		gdk_draw_line(pixmap,
 			      this->current_track_newpoint_gc,

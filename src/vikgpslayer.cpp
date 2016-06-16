@@ -1254,7 +1254,7 @@ static void gps_comm_thread(GpsSession *sess)
  * @protocol: The GPS device communication protocol
  * @port: The GPS serial port
  * @tracking: If tracking then viewport display update will be skipped
- * @vvp: A viewport is required as the display may get updated
+ * @viewport: A viewport is required as the display may get updated
  * @panel: A layers panel is needed for uploading as the items maybe modified
  * @do_tracks: Whether tracks shoud be processed
  * @do_waypoints: Whether waypoints shoud be processed

@@ -556,8 +556,8 @@ void LayerDEM::draw_dem(Viewport * viewport, VikDEM * dem)
 	{
 		VikCoord demne, demsw;
 		int x1, y1, x2, y2;
-		vik_coord_load_from_latlon(&demne, vik_viewport_get_coord_mode(viewport->vvp), &dem_northeast);
-		vik_coord_load_from_latlon(&demsw, vik_viewport_get_coord_mode(viewport->vvp), &dem_southwest);
+		vik_coord_load_from_latlon(&demne, viewport->get_coord_mode(), &dem_northeast);
+		vik_coord_load_from_latlon(&demsw, viewport->get_coord_mode(), &dem_southwest);
 
 		viewport->coord_to_screen(&demne, &x1, &y1);
 		viewport->coord_to_screen(&demsw, &x2, &y2);
@@ -738,7 +738,7 @@ void LayerDEM::draw_dem(Viewport * viewport, VikDEM * dem)
 									change = this->max_elev;
 								}
 
-								// void vik_viewport_draw_rectangle (VikViewport *vvp, GdkGC *gc, bool filled, int x1, int y1, int x2, int y2);
+								// void Viewport::draw_rectangle(Viewport * viewport, GdkGC *gc, bool filled, int x1, int y1, int x2, int y2);
 								viewport->draw_rectangle(this->gcsgradient[(int)floor(((change - this->min_elev)/(this->max_elev - this->min_elev))*(DEM_N_GRADIENT_COLORS-2))+1], true, box_x, box_y, box_width, box_height);
 							}
 						} else {

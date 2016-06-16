@@ -812,7 +812,7 @@ bool LayerAggregate::delete_layer(GtkTreeIter * iter)
 
 #if 0
 /* returns: 0 = success, 1 = none appl. found, 2 = found but rejected */
-unsigned int vik_aggregate_layer_tool(VikLayer *val, VikLayerTypeEnum layer_type, VikToolInterfaceFunc tool_func, GdkEventButton *event, VikViewport *vvp)
+unsigned int vik_aggregate_layer_tool(VikLayer *val, VikLayerTypeEnum layer_type, VikToolInterfaceFunc tool_func, GdkEventButton *event, Viewport * viewport)
 {
 	GList *iter = val->children;
 	bool found_rej = false;
@@ -827,7 +827,7 @@ unsigned int vik_aggregate_layer_tool(VikLayer *val, VikLayerTypeEnum layer_type
 		/* if this layer "accepts" the tool call */
 		VikLayer * vl = (VikLayer *) iter->data;
 		if (vl->visible && vl->type == layer_type) {
-			if (tool_func(vl, event, vvp)) {
+			if (tool_func(vl, event, viewport)) {
 				return 0;
 			} else {
 				found_rej = true;
@@ -836,7 +836,7 @@ unsigned int vik_aggregate_layer_tool(VikLayer *val, VikLayerTypeEnum layer_type
 
 		/* recursive -- try the same for the child aggregate layer. */
 		else if (vl->visible && vl->type == VIK_LAYER_AGGREGATE) {
-			int rv = vik_aggregate_layer_tool((VikLayer *) iter->data, layer_type, tool_func, event, vvp);
+			int rv = vik_aggregate_layer_tool((VikLayer *) iter->data, layer_type, tool_func, event, viewport);
 			if (rv == 0) {
 				return 0;
 			} else if (rv == 2) {

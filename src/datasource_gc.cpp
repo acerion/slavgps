@@ -179,7 +179,7 @@ static void datasource_gc_draw_circle ( datasource_gc_widgets_t *widgets )
 
   /* see if onscreen */
   /* okay */
-  vik_viewport_sync ( widgets->viewport->vvp );
+  widgets->viewport->sync();
 }
 
 static void datasource_gc_add_setup_widgets ( GtkWidget *dialog, Viewport * viewport, void * user_data )
@@ -203,7 +203,7 @@ static void datasource_gc_add_setup_widgets ( GtkWidget *dialog, Viewport * view
 
 
   widgets->viewport = viewport;
-  widgets->circle_gc = vik_viewport_new_gc((VikViewport *) viewport->vvp, "#000000", 3);
+  widgets->circle_gc = viewport->new_gc("#000000", 3);
   gdk_gc_set_function ( widgets->circle_gc, GDK_INVERT );
   widgets->circle_onscreen = true;
   datasource_gc_draw_circle ( widgets );
@@ -266,7 +266,7 @@ static void datasource_gc_cleanup ( datasource_gc_widgets_t *widgets )
 		widgets->circle_x - widgets->circle_width/2,
 		widgets->circle_y - widgets->circle_width/2,
 		widgets->circle_width, widgets->circle_width, 0, 360*64 );
-    vik_viewport_sync((VikViewport *) widgets->viewport->vvp);
+    widgets->viewport->sync();
   }
   free( widgets );
 }

@@ -641,7 +641,7 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 			Trackpoint * prev_tp = (Trackpoint *) list->prev->data;
 			// See if in a different lat/lon 'quadrant' so don't draw massively long lines (presumably wrong way around the Earth)
 			//  Mainly to prevent wrong lines drawn when a track crosses the 180 degrees East-West longitude boundary
-			//  (since vik_viewport_draw_line() only copes with pixel value and has no concept of the globe)
+			//  (since Viewport::draw_line() only copes with pixel value and has no concept of the globe)
 			if (dp->coord_mode == VIK_COORD_LATLON &&
 			     ((prev_tp->coord.east_west < -90.0 && tp->coord.east_west > 90.0)
 			      || (prev_tp->coord.east_west > 90.0 && tp->coord.east_west < -90.0))) {

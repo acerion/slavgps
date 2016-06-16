@@ -574,6 +574,8 @@ static void window_finalize(GObject * gob)
 
 	vik_toolbar_finalize(vw->window->viking_vtb);
 
+	delete vw->window->viewport;
+
 	G_OBJECT_CLASS(parent_class)->finalize(gob);
 }
 
@@ -2434,7 +2436,7 @@ static void center_changed_cb(VikWindow * vw)
 	/*
 	  GtkAction* action_back = gtk_action_group_get_action(vw->action_group, "GoBack");
 	  if (action_back) {
-	  gtk_action_set_sensitive(action_back, vik_viewport_back_available(((VikViewport *) vw->window->viewport->vvp)));
+	  gtk_action_set_sensitive(action_back, vik_viewport_back_available((vw->window->viewport)));
 	  }
 	*/
 	GtkAction* action_forward = gtk_action_group_get_action(vw->action_group, "GoForward");

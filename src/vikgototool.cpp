@@ -211,7 +211,7 @@ bool vik_goto_tool_parse_file_for_latlon (VikGotoTool *self, char *filename, str
  * vik_goto_tool_get_coord:
  *
  * @self:      The #VikGotoTool
- * @vvp:       The #VikViewport
+ * @viewport:  The #Viewport
  * @srch_str:  The string to search with
  * @coord:     Returns the top match position for a successful search
  *

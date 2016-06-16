@@ -652,7 +652,7 @@ void LayerTRWc::track_search_closest_tp(std::unordered_map<sg_uid_t, Track *> & 
 
 
 
-/* Params are: vvp, event, last match found or NULL */
+/* Params are: viewport, event, last match found or NULL */
 char * LayerTRWc::tool_show_picture_wp(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, int event_x, int event_y, Viewport * viewport)
 {
 	char * found = NULL;

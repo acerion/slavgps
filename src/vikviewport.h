@@ -19,19 +19,20 @@
  *
  */
 
-#ifndef _VIKING_VIEWPORT_H
-#define _VIKING_VIEWPORT_H
+#ifndef _SG_VIEWPORT_H
+#define _SG_VIEWPORT_H
 
-#include <glib.h>
+
+
+
+
+//#include <glib.h>
 #include <gtk/gtk.h>
 #include <stdint.h>
 
 #include "vikcoord.h"
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
 
@@ -44,9 +45,11 @@ extern "C" {
 
 
 
+
+
 /* drawmode management */
 typedef enum {
-	VIK_VIEWPORT_DRAWMODE_UTM=0,
+	VIK_VIEWPORT_DRAWMODE_UTM = 0,
 	VIK_VIEWPORT_DRAWMODE_EXPEDIA,
 	VIK_VIEWPORT_DRAWMODE_MERCATOR,
 	VIK_VIEWPORT_DRAWMODE_LATLON,
@@ -54,13 +57,20 @@ typedef enum {
 } VikViewportDrawMode;
 
 
+
+
+
 namespace SlavGPS {
+
+
+
+
 
 	class Viewport {
 
 	public:
-
 		Viewport();
+		~Viewport();
 
 		/* Viking initialization */
 		bool configure();
@@ -68,17 +78,17 @@ namespace SlavGPS {
 
 		/* Drawing primitives */
 
-		void draw_line(GdkGC *gc, int x1, int y1, int x2, int y2);
-		void draw_rectangle(GdkGC *gc, bool filled, int x1, int y1, int x2, int y2);
-		void draw_string(GdkFont *font, GdkGC *gc, int x1, int y1, const char *string);
-		void draw_arc(GdkGC *gc, bool filled, int x, int y, int width, int height, int angle1, int angle2);
-		void draw_polygon(GdkGC *gc, bool filled, GdkPoint *points, int npoints);
-		void draw_layout(GdkGC *gc, int x, int y, PangoLayout *layout);
+		void draw_line(GdkGC * gc, int x1, int y1, int x2, int y2);
+		void draw_rectangle(GdkGC * gc, bool filled, int x1, int y1, int x2, int y2);
+		void draw_string(GdkFont * font, GdkGC * gc, int x1, int y1, char const * string);
+		void draw_arc(GdkGC * gc, bool filled, int x, int y, int width, int height, int angle1, int angle2);
+		void draw_polygon(GdkGC * gc, bool filled, GdkPoint * points, int npoints);
+		void draw_layout(GdkGC * gc, int x, int y, PangoLayout * layout);
 
-		void draw_pixbuf(GdkPixbuf *pixbuf, int src_x, int src_y, int dest_x, int dest_y, int region_width, int region_height);
+		void draw_pixbuf(GdkPixbuf * pixbuf, int src_x, int src_y, int dest_x, int dest_y, int region_width, int region_height);
 
-		/* run this before drawing a line. vik_viewport_draw_line runs it for you */
-		static void clip_line(int *x1, int *y1, int *x2, int *y2);
+		/* run this before drawing a line. Viewport::draw_line() runs it for you */
+		static void clip_line(int * x1, int * y1, int * x2, int * y2);
 
 		VikCoordMode get_coord_mode(); // const
 		VikCoord * get_center(); // const
@@ -94,22 +104,22 @@ namespace SlavGPS {
 
 
 		/* viewport position */
-		void set_center_coord(const VikCoord *coord, bool save_position);
+		void set_center_coord(const VikCoord * coord, bool save_position);
 		void set_center_screen(int x, int y);
 		void center_for_zonen(struct UTM *center, int zone);
 		char leftmost_zone();
 		char rightmost_zone();
-		void set_center_utm(const struct UTM *utm, bool save_position);
-		void set_center_latlon(const struct LatLon *ll, bool save_position);
-		void corners_for_zonen(int zone, VikCoord *ul, VikCoord *br);
-		void get_min_max_lat_lon(double *min_lat, double *max_lat, double *min_lon, double *max_lon);
+		void set_center_utm(const struct UTM * utm, bool save_position);
+		void set_center_latlon(const struct LatLon * ll, bool save_position);
+		void corners_for_zonen(int zone, VikCoord * ul, VikCoord * br);
+		void get_min_max_lat_lon(double * min_lat, double * max_lat, double * min_lon, double * max_lon);
 
 		int get_width();
 		int get_height();
 
 		/* coordinate transformations */
-		void screen_to_coord(int x, int y, VikCoord *coord);
-		void coord_to_screen(const VikCoord *coord, int *x, int *y);
+		void screen_to_coord(int x, int y, VikCoord * coord);
+		void coord_to_screen(const VikCoord * coord, int * x, int * y);
 
 		/* viewport scale */
 		void set_ympp(double ympp);
@@ -126,11 +136,11 @@ namespace SlavGPS {
 		void add_copyright(char const * copyright);
 
 		void reset_logos();
-		void add_logo(const GdkPixbuf *logo);
+		void add_logo(const GdkPixbuf * logo);
 
 
-		void set_highlight_color(const char *color);
-		const char *get_highlight_color();
+		void set_highlight_color(char const * color);
+		char const * get_highlight_color();
 		GdkColor *get_highlight_gdkcolor();
 		void set_highlight_gdkcolor(GdkColor *);
 		GdkGC* get_gc_highlight();
@@ -139,7 +149,7 @@ namespace SlavGPS {
 
 
 		/* Color/graphics context management */
-		void set_background_color(const char *color);
+		void set_background_color(char const * color);
 		const char *get_background_color();
 		GdkColor *get_background_gdkcolor();
 		void set_background_gdkcolor(GdkColor *);
@@ -166,10 +176,10 @@ namespace SlavGPS {
 
 
 		bool is_one_zone();
-		const char * get_drawmode_name(VikViewportDrawMode mode);
+		char const * get_drawmode_name(VikViewportDrawMode mode);
 		void set_drawmode(VikViewportDrawMode drawmode);
 		VikViewportDrawMode get_drawmode();
-		/* Do not forget to update vik_viewport_get_drawmode_name() if you modify VikViewportDrawMode */
+		/* Do not forget to update Viewport::get_drawmode_name() if you modify VikViewportDrawMode */
 
 
 
@@ -210,8 +220,8 @@ namespace SlavGPS {
 		bool do_draw_centermark;
 		bool do_draw_highlight;
 
-		GSList *copyrights;
-		GSList *logos;
+		GSList * copyrights;
+		GSList * logos;
 
 
 		double xmpp, ympp;
@@ -220,13 +230,13 @@ namespace SlavGPS {
 
 		VikCoordMode coord_mode;
 		VikCoord center;
-		GList *centers;         // The history of requested positions (of VikCoord type)
+		GList * centers;         // The history of requested positions (of VikCoord type)
 
 		unsigned int centers_index;    // current position within the history list
 		unsigned int centers_max;      // configurable maximum size of the history list
 		unsigned int centers_radius;   // Metres
 
-		GdkPixmap *scr_buffer;
+		GdkPixmap * scr_buffer;
 		int width;
 		int height;
 		// Half of the normal width and height
@@ -247,8 +257,8 @@ namespace SlavGPS {
 
 		GdkGC * background_gc;
 		GdkColor background_color;
-		GdkGC *scale_bg_gc;
-		GdkGC *highlight_gc;
+		GdkGC * scale_bg_gc;
+		GdkGC * highlight_gc;
 		GdkColor highlight_color;
 
 
@@ -267,20 +277,23 @@ namespace SlavGPS {
 
 
 
+	void vik_gc_get_fg_color(GdkGC * gc, GdkColor * dest); /* warning: could be slow, don't use obsessively */
+	GdkFunction vik_gc_get_function(GdkGC * gc);
+
+
+
+
+
 } /* namespace SlavGPS */
 
 
-void vik_gc_get_fg_color(GdkGC * gc, GdkColor * dest); /* warning: could be slow, don't use obsessively */
-GdkFunction vik_gc_get_function(GdkGC * gc);
+
 
 
 void vik_viewport_add_copyright_cb(SlavGPS::Viewport * viewport, char const * copyright);
 
 
-#ifdef __cplusplus
-}
-#endif
 
 
 
-#endif
+#endif /* _SG_VIEWPORT_H */
