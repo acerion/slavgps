@@ -40,8 +40,8 @@ typedef enum {
 } VikClipboardDataType;
 
 void a_clipboard_copy(VikClipboardDataType  type, uint16_t layer_type, int subtype, unsigned int len, const char * text, uint8_t * data);
-void a_clipboard_copy_selected(VikLayersPanel * vlp);
-bool a_clipboard_paste(VikLayersPanel * vlp);
+void a_clipboard_copy_selected(SlavGPS::LayersPanel * panel);
+bool a_clipboard_paste(SlavGPS::LayersPanel * panel);
 VikClipboardDataType a_clipboard_type();
 
 #ifdef __cplusplus

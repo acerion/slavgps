@@ -137,7 +137,7 @@ void Layer::emit_update()
 
 
 /**
- * should only be done by VikLayersPanel (hence never used from the background)
+ * should only be done by LayersPanel (hence never used from the background)
  * need to redraw and record trigger when we make a layer invisible.
  */
 void vik_layer_emit_update_although_invisible(VikLayer * vl)

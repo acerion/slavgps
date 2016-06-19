@@ -19,25 +19,32 @@
  *
  */
 
-#ifndef _VIKING_LAYERS_PANEL_H
-#define _VIKING_LAYERS_PANEL_H
+#ifndef _SG_LAYERS_PANEL_H
+#define _SG_LAYERS_PANEL_H
 
-#include <glib.h>
-#include <glib-object.h>
+
 #include <gtk/gtk.h>
 
-#include <stdbool.h>
 #include <stdint.h>
-
 
 #include "viklayer.h"
 #include "vikaggregatelayer.h"
 
 
-struct _VikLayersPanel;
+
 
 
 namespace SlavGPS {
+
+
+
+
+
+	class LayerAggregate;
+
+
+
+
 
 	class LayersPanel {
 	public:
@@ -68,59 +75,28 @@ namespace SlavGPS {
 		LayerAggregate * toplayer;
 		GtkTreeIter toplayer_iter;
 
-		VikTreeview *vt;
+		VikTreeview * vt;
 		Viewport * viewport; /* reference */
 
-		_VikLayersPanel * gob;
+		void * gob; /* Related VikLayersPanel. */
 
 		/* This should be somehow private. */
-		void item_toggled(GtkTreeIter *iter);
-		void item_edited(GtkTreeIter *iter, const char *new_text);
-		void popup(GtkTreeIter *iter, int mouse_button);
-		bool button_press(GdkEventButton *event);
-		bool key_press(GdkEventKey *event);
+		void item_toggled(GtkTreeIter * iter);
+		void item_edited(GtkTreeIter * iter, char const * new_text);
+		void popup(GtkTreeIter * iter, int mouse_button);
+		bool button_press(GdkEventButton * event);
+		bool key_press(GdkEventKey * event);
 		void move_item(bool up);
 	};
 
 
 
+
+
 }
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
-#define VIK_LAYERS_PANEL_TYPE            (vik_layers_panel_get_type ())
-#define VIK_LAYERS_PANEL(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_LAYERS_PANEL_TYPE, VikLayersPanel))
-#define VIK_LAYERS_PANEL_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), VIK_LAYERS_PANEL_TYPE, VikLayersPanelClass))
-#define IS_VIK_LAYERS_PANEL(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), VIK_LAYERS_PANEL_TYPE))
-#define IS_VIK_LAYERS_PANEL_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), VIK_LAYERS_PANEL_TYPE))
-
-struct _VikLayersPanel {
-	GtkVBox vbox;
-
-	SlavGPS::LayersPanel * panel_ref;
-};
-
-typedef struct _VikLayersPanel VikLayersPanel;
-typedef struct _VikLayersPanelClass VikLayersPanelClass;
-
-struct _VikLayersPanelClass
-{
-	GtkVBoxClass vbox_class;
-
-	void (* update) (VikLayersPanel *vlp);
-	void (* delete_layer) (VikLayersPanel *vlp); // NB Just before (actual layer *not* specified ATM) it is deleted
-};
-
-GType vik_layers_panel_get_type();
-void vik_layers_panel_emit_update_cb(SlavGPS::LayersPanel * panel);
 
 
 
-#ifdef __cplusplus
-}
-#endif
 
-#endif
+#endif /* #ifndef _SG_LAYERS_PANEL_H */

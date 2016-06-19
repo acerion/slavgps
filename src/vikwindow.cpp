@@ -238,15 +238,15 @@ Viewport * Window::get_viewport()
 	return this->viewport;
 }
 
-struct _VikLayersPanel * vik_window_layers_panel(VikWindow * vw)
+LayersPanel * vik_window_layers_panel(VikWindow * vw)
 {
 	return vw->window->get_layers_panel();
 }
 
 
-struct _VikLayersPanel * Window::get_layers_panel()
+LayersPanel * Window::get_layers_panel()
 {
-	return this->layers_panel->gob;
+	return this->layers_panel;
 }
 
 /**
@@ -456,7 +456,7 @@ static int determine_location_thread(VikWindow * vw, void * threaddata)
 		free(message);
 
 		// Signal to redraw from the background
-		vik_layers_panel_emit_update_cb(vw->window->layers_panel);
+		vw->window->layers_panel->emit_update();
 	} else {
 		vw->window->statusbar_update(_("Unable to determine location"), VIK_STATUSBAR_INFO);
 	}
@@ -575,6 +575,7 @@ static void window_finalize(GObject * gob)
 	vik_toolbar_finalize(vw->window->viking_vtb);
 
 	delete vw->window->viewport;
+	delete vw->window->layers_panel;
 
 	G_OBJECT_CLASS(parent_class)->finalize(gob);
 }
@@ -2494,7 +2495,7 @@ static void menu_addlayer_cb(GtkAction * a, VikWindow * vw)
 
 static void menu_copy_layer_cb(GtkAction * a, VikWindow * vw)
 {
-	a_clipboard_copy_selected(vw->window->layers_panel->gob);
+	a_clipboard_copy_selected(vw->window->layers_panel);
 }
 
 static void menu_cut_layer_cb(GtkAction * a, VikWindow * vw)
@@ -3728,14 +3729,14 @@ static void goto_default_location(GtkAction * a, VikWindow * vw)
 	ll.lat = a_vik_get_default_lat();
 	ll.lon = a_vik_get_default_long();
 	vw->window->viewport->set_center_latlon(&ll, true);
-	vik_layers_panel_emit_update_cb(vw->window->layers_panel);
+	vw->window->layers_panel->emit_update();
 }
 
 
 static void goto_address(GtkAction * a, VikWindow * vw)
 {
 	a_vik_goto(vw, vw->window->viewport);
-	vik_layers_panel_emit_update_cb(vw->window->layers_panel);
+	vw->window->layers_panel->emit_update();
 }
 
 static void mapcache_flush_cb(GtkAction * a, VikWindow * vw)
@@ -4470,7 +4471,7 @@ static void import_kmz_file_cb(GtkAction * a, VikWindow * vw)
 	if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)  {
 		char *fn = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
 		// TODO convert ans value into readable explaination of failure...
-		int ans = kmz_open_file(fn, vw->window->viewport, vw->window->layers_panel->gob);
+		int ans = kmz_open_file(fn, vw->window->viewport, vw->window->layers_panel);
 		if (ans) {
 			a_dialog_error_msg_extra(GTK_WINDOW(vw), _("Unable to import %s."), fn);
 		}

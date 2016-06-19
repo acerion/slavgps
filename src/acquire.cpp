@@ -140,7 +140,7 @@ static void on_complete_process(w_and_interface_t * wi)
 			if (wi->w->source_interface->autoview) {
 				wi->trw->auto_set_view(wi->w->panel->get_viewport());
 			}
-			vik_layers_panel_emit_update_cb(wi->w->panel);
+			wi->w->panel->emit_update();
 		}
 	} else {
 		/* cancelled */

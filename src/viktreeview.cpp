@@ -458,7 +458,7 @@ static void select_cb(GtkTreeSelection *selection, void * data)
 			       tmp_type,
 			       window->get_layers_panel())) {
 		/* Redraw required */
-		vik_layers_panel_emit_update_cb(window->get_layers_panel()->panel_ref);
+		window->get_layers_panel()->emit_update();
 	}
 
 }

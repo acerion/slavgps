@@ -78,7 +78,6 @@ void vik_window_open_file(VikWindow * vw, char const * filename, bool changefile
 void vik_window_set_busy_cursor(VikWindow * vw);
 void vik_window_clear_busy_cursor(VikWindow * vw);
 SlavGPS::Viewport * vik_window_viewport(VikWindow *vw);
-struct _VikLayersPanel * vik_window_layers_panel(VikWindow * vw);
 void vik_window_statusbar_update(VikWindow * vw, char const * message, vik_statusbar_type_t vs_type);
 
 
@@ -101,6 +100,12 @@ typedef enum {
 
 
 namespace SlavGPS {
+
+
+
+
+
+	class LayersPanel;
 
 
 
@@ -169,7 +174,7 @@ namespace SlavGPS {
 
 		GtkWidget * get_drawmode_button(VikViewportDrawMode mode);
 		bool get_pan_move();
-		struct _VikLayersPanel * get_layers_panel();
+		LayersPanel * get_layers_panel();
 		struct _VikStatusbar * get_statusbar();
 		void statusbar_update(char const * message, vik_statusbar_type_t vs_type);
 
@@ -238,7 +243,6 @@ namespace SlavGPS {
 		void toggle_toolbar();
 		void toggle_main_menu();
 
-
 	}; /* class Window */
 
 
@@ -249,7 +253,14 @@ namespace SlavGPS {
 
 
 
+
+
 SlavGPS::Window * window_from_layer(SlavGPS::Layer * layer);
 SlavGPS::Window * window_from_widget(void * widget);
+SlavGPS::LayersPanel * vik_window_layers_panel(VikWindow * vw);
+
+
+
+
 
 #endif

@@ -1024,7 +1024,7 @@ static void georef_layer_goto_center(georef_data_t * data)
 	vik_coord_load_from_utm(&coord, viewport->get_coord_mode(), &utm);
 	viewport->set_center_coord(&coord, true);
 
-	vik_layers_panel_emit_update_cb(panel);
+	panel->emit_update();
 }
 
 void LayerGeoref::add_menu_items(GtkMenu *menu, void * panel)

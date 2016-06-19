@@ -29,6 +29,7 @@
 
 
 #include "viklayer.h"
+#include "viklayerspanel.h"
 
 
 #ifdef __cplusplus
@@ -66,12 +67,14 @@ typedef struct {
 
 
 
-/* Forward declarations. */
-struct _VikLayersPanel;
-typedef struct _VikLayersPanel VikLayersPanel;
-
 
 namespace SlavGPS {
+
+
+
+
+
+	class LayersPanel;
 
 
 
@@ -113,8 +116,8 @@ namespace SlavGPS {
 
 		void search_date();
 
-		void child_visible_set(struct _VikLayersPanel * panel, bool visible);
-		void child_visible_toggle(struct _VikLayersPanel * panel);
+		void child_visible_set(LayersPanel * panel, bool visible);
+		void child_visible_toggle(LayersPanel * panel);
 
 		std::list<Layer *> * children;
 

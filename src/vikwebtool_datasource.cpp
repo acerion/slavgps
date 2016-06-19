@@ -300,7 +300,7 @@ static void webtool_datasource_open(VikExtTool * self, Window * window)
 	};
 	memcpy ( vik_datasource_interface, &data, sizeof(VikDataSourceInterface) );
 
-	a_acquire(window, window->get_layers_panel()->panel_ref, window->get_viewport(), data.mode, vik_datasource_interface, self, cleanup );
+	a_acquire(window, window->get_layers_panel(), window->get_viewport(), data.mode, vik_datasource_interface, self, cleanup );
 }
 
 static void vik_webtool_datasource_class_init ( VikWebtoolDatasourceClass *klass )

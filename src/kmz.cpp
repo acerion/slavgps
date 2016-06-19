@@ -342,9 +342,9 @@ static bool parse_kml ( const char* buffer, int len, char **name, char **image, 
 
 /**
  * kmz_open_file:
- * @filename: The KMZ file to open
- * @viewport:      The #Viewport
- * @vlp:      The #VikLayersPanel that the converted KMZ will be stored in
+ * @filename:   The KMZ file to open
+ * @viewport:   The #Viewport
+ * @panel:      The #LayersPanel that the converted KMZ will be stored in
  *
  * Returns:
  *  -1 if KMZ not supported (this shouldn't happen)
@@ -357,7 +357,7 @@ static bool parse_kml ( const char* buffer, int len, char **name, char **image, 
  *  132 - Couldn't get image from KML
  *  133 - Image file problem
  */
-int kmz_open_file ( const char* filename, Viewport * viewport, VikLayersPanel *vlp )
+int kmz_open_file(const char * filename, Viewport * viewport, LayersPanel * panel)
 {
 	// Unzip
 #ifdef HAVE_ZIP_H
@@ -456,10 +456,10 @@ typedef struct zip_file zip_file_t;
 			vik_coord_load_from_latlon ( &vc_tl, viewport->get_coord_mode(), &ll_tl );
 			vik_coord_load_from_latlon ( &vc_br, viewport->get_coord_mode(), &ll_br );
 
-			VikLayer *vgl = vik_georef_layer_create (viewport, vlp, name, pixbuf, &vc_tl, &vc_br );
-			if ( vgl ) {
-				VikLayer *top = vik_layers_panel_get_top_layer ( vlp );
-				vik_aggregate_layer_add_layer ( top, vgl, false );
+			VikLayer * vgl = vik_georef_layer_create (viewport, panel, name, pixbuf, &vc_tl, &vc_br );
+			if (vgl) {
+				LayerAggregate * top = panel->get_top_layer();
+				top->add_layer(vgl, false);
 			}
 		}
 	}

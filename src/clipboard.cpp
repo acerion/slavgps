@@ -96,7 +96,7 @@ static void clip_clear(GtkClipboard * c, void * p)
 /* our own data type */
 static void clip_receive_viking(GtkClipboard * c, GtkSelectionData * sd, void * p)
 {
-	VikLayersPanel *vlp = (VikLayersPanel *) p;
+	LayersPanel * panel = (LayersPanel *) p;
 	vik_clipboard_t *vc;
 	if (gtk_selection_data_get_length(sd) == -1) {
 		fprintf(stderr, _("WARNING: paste failed\n"));
@@ -114,14 +114,14 @@ static void clip_receive_viking(GtkClipboard * c, GtkSelectionData * sd, void * 
 	}
 
 	if (vc->type == VIK_CLIPBOARD_DATA_LAYER) {
-		VikLayer *new_layer = vik_layer_unmarshall(vc->data, vc->len, vlp->panel_ref->get_viewport());
-		vlp->panel_ref->add_layer((Layer *) new_layer->layer);
+		VikLayer *new_layer = vik_layer_unmarshall(vc->data, vc->len, panel->get_viewport());
+		panel->add_layer((Layer *) new_layer->layer);
 	} else if (vc->type == VIK_CLIPBOARD_DATA_SUBLAYER) {
-		Layer * selected = vlp->panel_ref->get_selected();
+		Layer * selected = panel->get_selected();
 		if (selected && selected->type == vc->layer_type) {
 			selected->paste_item(vc->subtype, vc->data, vc->len);
 		} else {
-			a_dialog_error_msg_extra(VIK_GTK_WINDOW_FROM_WIDGET(GTK_WIDGET(vlp)),
+			a_dialog_error_msg_extra(VIK_GTK_WINDOW_FROM_WIDGET(GTK_WIDGET(panel->gob)),
 						 _("The clipboard contains sublayer data for %s layers. "
 						   "You must select a layer of this type to paste the clipboard data."),
 						 vik_layer_get_interface((VikLayerTypeEnum) vc->layer_type)->name);
@@ -250,10 +250,10 @@ static bool clip_parse_latlon(const char * text, struct LatLon * coord)
 	return false;
 }
 
-static void clip_add_wp(VikLayersPanel * vlp, struct LatLon * coord)
+static void clip_add_wp(LayersPanel * panel, struct LatLon * coord)
 {
 	VikCoord vc;
-	Layer * selected = vlp->panel_ref->get_selected();
+	Layer * selected = panel->get_selected();
 
 	vik_coord_load_from_latlon (&vc, VIK_COORD_LATLON, coord);
 
@@ -262,17 +262,17 @@ static void clip_add_wp(VikLayersPanel * vlp, struct LatLon * coord)
 		((LayerTRW *) selected)->calculate_bounds_waypoints();
 		selected->emit_update();
 	} else {
-		a_dialog_error_msg_extra (VIK_GTK_WINDOW_FROM_WIDGET(GTK_WIDGET(vlp)), _("In order to paste a waypoint, please select an appropriate layer to paste into."), NULL);
+		a_dialog_error_msg_extra(VIK_GTK_WINDOW_FROM_WIDGET(GTK_WIDGET(panel->gob)), _("In order to paste a waypoint, please select an appropriate layer to paste into."), NULL);
 	}
 }
 
 static void clip_receive_text(GtkClipboard * c, const char * text, void * p)
 {
-	VikLayersPanel * vlp = (VikLayersPanel *) p;
+	LayersPanel * panel = (LayersPanel *) p;
 
 	fprintf(stderr, "DEBUG: got text: %s\n", text);
 
-	Layer * selected = vlp->panel_ref->get_selected();
+	Layer * selected = panel->get_selected();
 
 	if (selected && selected->vt->tree->get_editing()) {
 		GtkTreeIter iter;
@@ -289,13 +289,13 @@ static void clip_receive_text(GtkClipboard * c, const char * text, void * p)
 
 	struct LatLon coord;
 	if (clip_parse_latlon(text, &coord)) {
-		clip_add_wp(vlp, &coord);
+		clip_add_wp(panel, &coord);
 	}
 }
 
 static void clip_receive_html(GtkClipboard * c, GtkSelectionData * sd, void * p)
 {
-	VikLayersPanel * vlp = (VikLayersPanel *) p;
+	LayersPanel * panel = (LayersPanel *) p;
 	size_t r, w;
 	GError *err = NULL;
 	char *s, *span;
@@ -331,7 +331,7 @@ static void clip_receive_html(GtkClipboard * c, GtkSelectionData * sd, void * p)
 		}
 	}
 	if (clip_parse_latlon(span, &coord)) {
-		clip_add_wp(vlp, &coord);
+		clip_add_wp(panel, &coord);
 	}
 
 	free(s);
@@ -344,7 +344,7 @@ static void clip_receive_html(GtkClipboard * c, GtkSelectionData * sd, void * p)
  */
 void clip_receive_targets(GtkClipboard * c, GdkAtom * a, int n, void * p)
 {
-	VikLayersPanel * vlp = (VikLayersPanel *) p;
+	LayersPanel * panel = (LayersPanel *) p;
 	int i;
 
 	for (i=0; i<n; i++) {
@@ -352,15 +352,15 @@ void clip_receive_targets(GtkClipboard * c, GdkAtom * a, int n, void * p)
 		//fprintf(stdout, "  ""%s""\n", name);
 		bool breaktime = false;
 		if (!g_strcmp0(name, "text/html")) {
-			gtk_clipboard_request_contents(c, gdk_atom_intern("text/html", true), clip_receive_html, vlp);
+			gtk_clipboard_request_contents(c, gdk_atom_intern("text/html", true), clip_receive_html, panel);
 			breaktime = true;
 		}
 		if (a[i] == GDK_TARGET_STRING) {
-			gtk_clipboard_request_text(c, clip_receive_text, vlp);
+			gtk_clipboard_request_text(c, clip_receive_text, panel);
 			breaktime = true;
 		}
 		if (!g_strcmp0(name, "application/viking")) {
-			gtk_clipboard_request_contents(c, gdk_atom_intern("application/viking", true), clip_receive_viking, vlp);
+			gtk_clipboard_request_contents(c, gdk_atom_intern("application/viking", true), clip_receive_viking, panel);
 			breaktime = true;
 		}
 
@@ -381,9 +381,9 @@ void clip_receive_targets(GtkClipboard * c, GdkAtom * a, int n, void * p)
  *
  * Make a copy of selected object and associate ourselves with the clipboard.
  */
-void a_clipboard_copy_selected(VikLayersPanel * vlp)
+void a_clipboard_copy_selected(LayersPanel * panel)
 {
-	Layer * selected = vlp->panel_ref->get_selected();
+	Layer * selected = panel->get_selected();
 	GtkTreeIter iter;
 	VikClipboardDataType type = VIK_CLIPBOARD_DATA_NONE;
 	uint16_t layer_type = 0;
@@ -457,10 +457,10 @@ void a_clipboard_copy(VikClipboardDataType type, uint16_t layer_type, int subtyp
  * To deal with multiple data types, we first request the type of data on the clipboard,
  * and handle them in the callback.
  */
-bool a_clipboard_paste(VikLayersPanel * vlp)
+bool a_clipboard_paste(LayersPanel * panel)
 {
 	GtkClipboard * c = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
-	gtk_clipboard_request_targets(c, clip_receive_targets, vlp);
+	gtk_clipboard_request_targets(c, clip_receive_targets, panel);
 	return true;
 }
 

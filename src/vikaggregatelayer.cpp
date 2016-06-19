@@ -351,13 +351,13 @@ static void aggregate_layer_child_visible_toggle(menu_array_values values)
 	LayerAggregate * aggregate = (LayerAggregate *) values[MA_VAL];
 	LayersPanel * panel = (LayersPanel *) values[MA_VLP];
 
-	aggregate->child_visible_toggle(panel->gob);
+	aggregate->child_visible_toggle(panel);
 }
 
 
-void LayerAggregate::child_visible_toggle(VikLayersPanel * vlp)
+void LayerAggregate::child_visible_toggle(LayersPanel * panel)
 {
-	TreeView * tree = vlp->panel_ref->get_treeview()->tree;
+	TreeView * tree = panel->get_treeview()->tree;
 
 	// Loop around all (child) layers applying visibility setting
 	// This does not descend the tree if there are aggregates within aggregrate - just the first level of layers held
@@ -371,7 +371,7 @@ void LayerAggregate::child_visible_toggle(VikLayersPanel * vlp)
 	this->emit_update();
 }
 
-void LayerAggregate::child_visible_set(VikLayersPanel * vlp, bool on_off)
+void LayerAggregate::child_visible_set(LayersPanel * panel, bool on_off)
 {
 	// Loop around all (child) layers applying visibility setting
 	// This does not descend the tree if there are aggregates within aggregrate - just the first level of layers held
@@ -379,7 +379,7 @@ void LayerAggregate::child_visible_set(VikLayersPanel * vlp, bool on_off)
 		Layer * layer = *child;
 		layer->visible = on_off;
 		// Also set checkbox on_off
-		vlp->panel_ref->get_treeview()->tree->set_visibility(&layer->iter, on_off);
+		panel->get_treeview()->tree->set_visibility(&layer->iter, on_off);
 	}
 
 	// Redraw as view may have changed
@@ -391,7 +391,7 @@ static void aggregate_layer_child_visible_on(menu_array_values values)
 	LayerAggregate * aggregate = (LayerAggregate *) values[MA_VAL];
 	LayersPanel * panel = (LayersPanel *) values[MA_VLP];
 
-	aggregate->child_visible_set(panel->gob, true);
+	aggregate->child_visible_set(panel, true);
 }
 
 static void aggregate_layer_child_visible_off(menu_array_values values)
@@ -399,7 +399,7 @@ static void aggregate_layer_child_visible_off(menu_array_values values)
 	LayerAggregate * aggregate = (LayerAggregate *) values[MA_VAL];
 	LayersPanel * panel = (LayersPanel *) values[MA_VLP];
 
-	aggregate->child_visible_set(panel->gob, false);
+	aggregate->child_visible_set(panel, false);
 }
 
 /**
