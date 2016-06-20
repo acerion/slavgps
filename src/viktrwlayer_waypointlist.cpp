@@ -180,7 +180,7 @@ static void trw_layer_waypoint_properties ( menu_array_values values )
 		waypoint_close_cb ( gw, 0, (GList *) values[MA_WPTS_LIST] );
 
 		bool updated = false;
-		char *new_name = a_dialog_waypoint ( VIK_GTK_WINDOW_FROM_LAYER(trw->vl), wp->name, trw, wp, trw->get_coord_mode(), false, &updated );
+		char *new_name = a_dialog_waypoint ( gtk_window_from_layer(trw), wp->name, trw, wp, trw->get_coord_mode(), false, &updated );
 		if ( new_name )
 			trw->waypoint_rename(wp, new_name);
 
@@ -217,7 +217,7 @@ static void trw_layer_show_picture_wp ( menu_array_values values )
 	char *cmd = g_strdup_printf ( "%s %s", a_vik_get_image_viewer(), quoted_file );
 	free( quoted_file );
 	if ( ! g_spawn_command_line_async ( cmd, &err ) ) {
-		a_dialog_error_msg_extra ( VIK_GTK_WINDOW_FROM_LAYER(trw->vl), _("Could not launch %s to open file."), a_vik_get_image_viewer() );
+		a_dialog_error_msg_extra ( gtk_window_from_layer(trw), _("Could not launch %s to open file."), a_vik_get_image_viewer() );
 		g_error_free ( err );
 	}
 	free( cmd );
@@ -691,20 +691,20 @@ static void vik_trw_layer_waypoint_list_internal ( GtkWidget *dialog,
  * Common method for showing a list of waypoints with extended information
  *
  */
-void vik_trw_layer_waypoint_list_show_dialog ( char *title,
-                                               VikLayer *vl,
+void vik_trw_layer_waypoint_list_show_dialog(char * title,
+					     Layer * layer,
                                                void * user_data,
                                                VikTrwlayerGetWaypointsAndLayersFunc get_waypoints_and_layers_cb,
                                                bool show_layer_names )
 {
 	GtkWidget *dialog = gtk_dialog_new_with_buttons ( title,
-	                                                  VIK_GTK_WINDOW_FROM_LAYER(vl),
+	                                                  gtk_window_from_layer(layer),
 	                                                  GTK_DIALOG_DESTROY_WITH_PARENT,
 	                                                  GTK_STOCK_CLOSE,
 	                                                  GTK_RESPONSE_CLOSE,
 	                                                  NULL );
 
-	GList *gl = get_waypoints_and_layers_cb ( vl, user_data );
+	GList *gl = get_waypoints_and_layers_cb ( layer->vl, user_data );
 
 	vik_trw_layer_waypoint_list_internal ( dialog, gl, show_layer_names );
 

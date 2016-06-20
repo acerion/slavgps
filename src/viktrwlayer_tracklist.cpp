@@ -188,7 +188,7 @@ static void trw_layer_track_stats ( menu_array_values values )
 		GtkWidget *gw = gtk_widget_get_toplevel ( (GtkWidget *) values[MA_TREEVIEW] );
 		track_close_cb ( gw, 0, (GList *) values[MA_TRKS_LIST] );
 
-		vik_trw_layer_propwin_run(VIK_GTK_WINDOW_FROM_LAYER(trw->vl),
+		vik_trw_layer_propwin_run(gtk_window_from_layer(trw),
 								  trw,
 								  trk,
 								  NULL, // panel
@@ -707,20 +707,20 @@ static void vik_trw_layer_track_list_internal ( GtkWidget *dialog,
  * Common method for showing a list of tracks with extended information
  *
  */
-void vik_trw_layer_track_list_show_dialog ( char *title,
-                                            VikLayer *vl,
+void vik_trw_layer_track_list_show_dialog(char * title,
+                                            Layer * layer,
                                             void * user_data,
                                             VikTrwlayerGetTracksAndLayersFunc get_tracks_and_layers_cb,
                                             bool show_layer_names )
 {
 	GtkWidget *dialog = gtk_dialog_new_with_buttons ( title,
-	                                                  VIK_GTK_WINDOW_FROM_LAYER(vl),
+	                                                  gtk_window_from_layer(layer),
 	                                                  GTK_DIALOG_DESTROY_WITH_PARENT,
 	                                                  GTK_STOCK_CLOSE,
 	                                                  GTK_RESPONSE_CLOSE,
 	                                                  NULL );
 
-	GList *gl = get_tracks_and_layers_cb ( vl, user_data );
+	GList *gl = get_tracks_and_layers_cb ( layer->vl, user_data );
 
 	vik_trw_layer_track_list_internal ( dialog, gl, show_layer_names );
 

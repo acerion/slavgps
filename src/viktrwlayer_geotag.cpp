@@ -536,7 +536,7 @@ static void trw_layer_geotag_response_cb ( GtkDialog *dialog, int resp, GeoTagWi
 
 		// Processing lots of files can take time - so run a background effort
 		a_background_thread ( BACKGROUND_POOL_LOCAL,
-		                      VIK_GTK_WINDOW_FROM_LAYER(options->trw->vl),
+		                      gtk_window_from_layer(options->trw),
 		                      tmp,
 		                      (vik_thr_func) trw_layer_geotag_thread,
 		                      options,

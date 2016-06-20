@@ -42,6 +42,8 @@
 #include "vikgpslayer.h"
 #include "vikmapniklayer.h"
 #include "globals.h"
+#include "viktreeview.h"
+
 
 using namespace SlavGPS;
 
@@ -866,4 +868,9 @@ void Layer::free_()
 bool Layer::set_param(uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
 {
 	return false;
+}
+
+GtkWindow * gtk_window_from_layer(Layer * layer)
+{
+	return GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(layer->vt)));
 }

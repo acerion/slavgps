@@ -77,7 +77,7 @@ void vik_trw_layer_export(LayerTRW * layer, char const * title, char const * def
 	}
 	gtk_widget_destroy(file_selector);
 	if (failed) {
-		a_dialog_error_msg(VIK_GTK_WINDOW_FROM_LAYER(layer->vl), _("The filename you requested could not be opened for writing."));
+		a_dialog_error_msg(gtk_window_from_layer(layer), _("The filename you requested could not be opened for writing."));
 	}
 }
 
@@ -98,14 +98,14 @@ void vik_trw_layer_export_external_gpx(LayerTRW * trw, char const * external_pro
 		char *cmd = g_strdup_printf("%s %s", external_program, quoted_file);
 		free(quoted_file);
 		if (! g_spawn_command_line_async(cmd, &err)) {
-			a_dialog_error_msg_extra(VIK_GTK_WINDOW_FROM_LAYER(trw->vl), _("Could not launch %s."), external_program);
+			a_dialog_error_msg_extra(gtk_window_from_layer(trw), _("Could not launch %s."), external_program);
 			g_error_free(err);
 		}
 		free(cmd);
 		util_add_to_deletion_list(name_used);
 		free(name_used);
 	} else {
-		a_dialog_error_msg (VIK_GTK_WINDOW_FROM_LAYER(trw->vl), _("Could not create temporary file for export."));
+		a_dialog_error_msg (gtk_window_from_layer(trw), _("Could not create temporary file for export."));
 	}
 }
 
@@ -179,7 +179,7 @@ void vik_trw_layer_export_gpsbabel(LayerTRW * trw, char const *title, char const
 
 			BabelFile * active = a_babel_ui_file_type_selector_get(babel_selector);
 			if (active == NULL) {
-				a_dialog_error_msg(VIK_GTK_WINDOW_FROM_LAYER(trw->vl), _("You did not select a valid file format."));
+				a_dialog_error_msg(gtk_window_from_layer(trw), _("You did not select a valid file format."));
 			} else {
 				gtk_widget_hide(file_selector);
 				window_from_layer(trw)->set_busy_cursor();
@@ -194,6 +194,6 @@ void vik_trw_layer_export_gpsbabel(LayerTRW * trw, char const *title, char const
 	//babel_ui_selector_destroy(babel_selector);
 	gtk_widget_destroy(file_selector);
 	if (failed) {
-		a_dialog_error_msg(VIK_GTK_WINDOW_FROM_LAYER(trw->vl), _("The filename you requested could not be opened for writing."));
+		a_dialog_error_msg(gtk_window_from_layer(trw), _("The filename you requested could not be opened for writing."));
 	}
 }

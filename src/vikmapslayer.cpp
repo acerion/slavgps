@@ -1774,7 +1774,7 @@ static void start_download_thread(LayerMaps * layer, Viewport * viewport, const 
 			g_object_weak_ref(G_OBJECT(mdi->layer->vl), weak_ref_cb, mdi);
 			/* launch the thread */
 			a_background_thread(BACKGROUND_POOL_REMOTE,
-					      VIK_GTK_WINDOW_FROM_LAYER(layer->vl), /* parent window */
+					    gtk_window_from_layer(layer), /* parent window */
 					      msg,                                              /* description string */
 					      (vik_thr_func) map_download_thread,               /* function to call within thread */
 					      mdi,                                              /* pass along data */
@@ -1819,7 +1819,7 @@ void LayerMaps::download_section_sub(VikCoord *ul, VikCoord *br, double zoom, in
 
 		// launch the thread
 		a_background_thread(BACKGROUND_POOL_REMOTE,
-				    VIK_GTK_WINDOW_FROM_LAYER(this->vl), /* parent window */
+				    gtk_window_from_layer(this), /* parent window */
 				    msg,                                /* description string */
 				    (vik_thr_func) map_download_thread, /* function to call within thread */
 				    mdi,                                /* pass along data */
@@ -1963,7 +1963,7 @@ static void maps_layer_tile_info(VikLayer *vml)
 		g_array_append_val(array, filemsg);
 	}
 
-	a_dialog_list( VIK_GTK_WINDOW_FROM_LAYER(layer->vl), _("Tile Information"), array, 5);
+	a_dialog_list(gtk_window_from_layer(layer), _("Tile Information"), array, 5);
 	g_array_free(array, false);
 
 	free(timemsg);
@@ -2086,10 +2086,10 @@ static void download_onscreen_maps(menu_array_values values, int redownload_mode
 	} else if (map->get_drawmode() != vp_drawmode) {
 		const char * drawmode_name = viewport->get_drawmode_name(map->get_drawmode());
 		char *err = g_strdup_printf(_("Wrong drawmode for this map.\nSelect \"%s\" from View menu and try again."), _(drawmode_name));
-		a_dialog_error_msg(VIK_GTK_WINDOW_FROM_LAYER(layer->vl), err);
+		a_dialog_error_msg(gtk_window_from_layer(layer), err);
 		free(err);
 	} else {
-		a_dialog_error_msg(VIK_GTK_WINDOW_FROM_LAYER(layer->vl), _("Wrong zoom level for this map."));
+		a_dialog_error_msg(gtk_window_from_layer(layer), _("Wrong zoom level for this map."));
 	}
 
 }
@@ -2116,9 +2116,9 @@ static void maps_layer_about(void * vml_vvp[2])
 	MapSource *map = map_sources[layer->map_index];
 
 	if (map->get_license()) {
-		maps_show_license(VIK_GTK_WINDOW_FROM_LAYER(vml), map);
+		maps_show_license(gtk_window_from_layer(layer), map);
 	} else {
-		a_dialog_info_msg(VIK_GTK_WINDOW_FROM_LAYER(vml),
+		a_dialog_info_msg(gtk_window_from_layer(layer),
 				  map->get_label());
 	}
 }
@@ -2281,7 +2281,7 @@ static void maps_layer_download_all(menu_array_values values)
 
 	char *title = g_strdup_printf (("%s: %s"), layer->get_map_label(), _("Download for Zoom Levels"));
 
-	if (! maps_dialog_zoom_between(VIK_GTK_WINDOW_FROM_LAYER(layer->vl),
+	if (! maps_dialog_zoom_between(gtk_window_from_layer(layer),
 					  title,
 					  zoom_list,
 					  lower_zoom,
@@ -2319,7 +2319,7 @@ static void maps_layer_download_all(menu_array_values values)
 	// Absolute protection of hammering a map server
 	if (map_count > REALLY_LARGE_AMOUNT_OF_TILES) {
 		char *str = g_strdup_printf(_("You are not allowed to download more than %d tiles in one go (requested %d)"), REALLY_LARGE_AMOUNT_OF_TILES, map_count);
-		a_dialog_error_msg(VIK_GTK_WINDOW_FROM_LAYER(layer->vl), str);
+		a_dialog_error_msg(gtk_window_from_layer(layer), str);
 		free(str);
 		return;
 	}
@@ -2327,7 +2327,7 @@ static void maps_layer_download_all(menu_array_values values)
 	// Confirm really want to do this
 	if (map_count > CONFIRM_LARGE_AMOUNT_OF_TILES) {
 		char *str = g_strdup_printf(_("Do you really want to download %d tiles?"), map_count);
-		bool ans = a_dialog_yes_or_no(VIK_GTK_WINDOW_FROM_LAYER(layer->vl), str, NULL);
+		bool ans = a_dialog_yes_or_no(gtk_window_from_layer(layer), str, NULL);
 		free(str);
 		if (! ans) {
 			return;

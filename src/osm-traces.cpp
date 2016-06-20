@@ -387,7 +387,7 @@ void osm_login_widgets (GtkWidget *user_entry, GtkWidget *password_entry)
 void osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk )
 {
   GtkWidget *dia = gtk_dialog_new_with_buttons (_("OSM upload"),
-                                                 VIK_GTK_WINDOW_FROM_LAYER(trw->vl),
+                                                 gtk_window_from_layer(trw),
 						(GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
                                                  GTK_STOCK_CANCEL,
                                                  GTK_RESPONSE_REJECT,
@@ -537,7 +537,7 @@ void osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk )
 
     // launch the thread
     a_background_thread( BACKGROUND_POOL_REMOTE,
-                         VIK_GTK_WINDOW_FROM_LAYER(trw->vl),          /* parent window */
+                         gtk_window_from_layer(trw),          /* parent window */
                          title,                                   /* description string */
                          (vik_thr_func) osm_traces_upload_thread, /* function to call within thread */
                          info,                                    /* pass along data */

@@ -735,7 +735,7 @@ void LayerMapnik::thread_add(TileInfo * mul, VikCoord * ul, VikCoord * br, int x
 	char *description = g_strdup_printf(_("Mapnik Render %d:%d:%d %s"), zoom, x, y, basename);
 	free(basename);
 	a_background_thread(BACKGROUND_POOL_LOCAL_MAPNIK,
-			    VIK_GTK_WINDOW_FROM_LAYER(this->vl),
+			    gtk_window_from_layer(this),
 			    description,
 			    (vik_thr_func) background,
 			    ri,
@@ -990,7 +990,7 @@ static void mapnik_layer_information(menu_array_values values)
 	}
 	GArray *array = mapnik_interface_get_parameters(layer->mi);
 	if (array->len) {
-		a_dialog_list( VIK_GTK_WINDOW_FROM_LAYER(vml), _("Mapnik Information"), array, 1);
+		a_dialog_list( gtk_window_from_layer(layer), _("Mapnik Information"), array, 1);
 		// Free the copied strings
 		for (int i = 0; i < array->len; i++) {
 			free(g_array_index(array,char*,i));
@@ -1006,7 +1006,7 @@ static void mapnik_layer_about(menu_array_values values)
 {
 	VikLayer * vml =(VikLayer *) values[MA_VML];
 	char *msg = mapnik_interface_about();
-	a_dialog_info_msg(VIK_GTK_WINDOW_FROM_LAYER(vml),  msg);
+	a_dialog_info_msg(gtk_window_from_layer((Layer *) vml->layer),  msg);
 	free(msg);
 }
 
@@ -1134,7 +1134,7 @@ void LayerMapnik::tile_info()
 		g_array_append_val(array, rendmsg);
 	}
 
-	a_dialog_list( VIK_GTK_WINDOW_FROM_LAYER(this->vl), _("Tile Information"), array, 5);
+	a_dialog_list(gtk_window_from_layer(this), _("Tile Information"), array, 5);
 	g_array_free(array, false);
 
 	free(rendmsg);

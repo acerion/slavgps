@@ -36,6 +36,7 @@
 #include <glib/gi18n.h>
 
 #include "viking.h"
+#include "viktreeview.h"
 #include "clipboard.h"
 #include "dialog.h"
 #include "viktrwlayer.h"
@@ -258,7 +259,7 @@ static void clip_add_wp(LayersPanel * panel, struct LatLon * coord)
 	vik_coord_load_from_latlon (&vc, VIK_COORD_LATLON, coord);
 
 	if (selected && selected->type == VIK_LAYER_TRW) {
-		((LayerTRW *) selected)->new_waypoint(VIK_GTK_WINDOW_FROM_LAYER(selected->vl), &vc);
+		((LayerTRW *) selected)->new_waypoint(gtk_window_from_layer(selected), &vc);
 		((LayerTRW *) selected)->calculate_bounds_waypoints();
 		selected->emit_update();
 	} else {

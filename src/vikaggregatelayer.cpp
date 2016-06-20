@@ -521,9 +521,8 @@ GList * LayerAggregate::waypoint_create_list()
 static void aggregate_layer_waypoint_list_dialog(menu_array_values values)
 {
 	LayerAggregate * aggregate = (LayerAggregate *) values[MA_VAL];
-	VikLayer * vl = aggregate->vl;
 	char *title = g_strdup_printf(_("%s: Waypoint List"), aggregate->name);
-	vik_trw_layer_waypoint_list_show_dialog(title, vl, NULL, aggregate_layer_waypoint_create_list, true);
+	vik_trw_layer_waypoint_list_show_dialog(title, aggregate, NULL, aggregate_layer_waypoint_create_list, true);
 	free(title);
 }
 
@@ -540,7 +539,7 @@ static void aggregate_layer_search_date(menu_array_values values)
 void LayerAggregate::search_date()
 {
 	VikCoord position;
-	char * date_str = a_dialog_get_date(VIK_GTK_WINDOW_FROM_LAYER(this->vl), _("Search by Date"));
+	char * date_str = a_dialog_get_date(gtk_window_from_layer(this), _("Search by Date"));
 
 	if (!date_str) {
 		return;
@@ -579,7 +578,7 @@ void LayerAggregate::search_date()
 	}
 
 	if (!found) {
-		a_dialog_info_msg(VIK_GTK_WINDOW_FROM_LAYER(this->vl), _("No items found with the requested date."));
+		a_dialog_info_msg(gtk_window_from_layer(this), _("No items found with the requested date."));
 	}
 	free(date_str);
 }
@@ -618,9 +617,8 @@ GList * LayerAggregate::track_create_list()
 static void aggregate_layer_track_list_dialog(menu_array_values values)
 {
 	LayerAggregate * aggregate = (LayerAggregate *) values[MA_VAL];
-	VikLayer * vl = aggregate->vl;
 	char *title = g_strdup_printf(_("%s: Track and Route List"), aggregate->name);
-	vik_trw_layer_track_list_show_dialog(title, vl, NULL, aggregate_layer_track_create_list, true);
+	vik_trw_layer_track_list_show_dialog(title, aggregate, NULL, aggregate_layer_track_create_list, true);
 	free(title);
 }
 
@@ -646,7 +644,7 @@ static void aggregate_layer_analyse(menu_array_values values)
 		return;
 	}
 
-	aggregate->tracks_analysis_dialog = vik_trw_layer_analyse_this(VIK_GTK_WINDOW_FROM_LAYER(aggregate->vl),
+	aggregate->tracks_analysis_dialog = vik_trw_layer_analyse_this(gtk_window_from_layer(aggregate),
 								       aggregate->name,
 								       aggregate->vl,
 								       NULL,

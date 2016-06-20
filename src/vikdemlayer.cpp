@@ -1341,7 +1341,7 @@ bool LayerDEM::download_release(GdkEventButton * event, Viewport * viewport)
 			g_object_weak_ref(G_OBJECT(p->layer->vl), weak_ref_cb, p);
 
 			a_background_thread(BACKGROUND_POOL_REMOTE,
-					    VIK_GTK_WINDOW_FROM_LAYER(this->vl), tmp,
+					    gtk_window_from_layer(this), tmp,
 					    (vik_thr_func) dem_download_thread, p,
 					    (vik_thr_free_func) free_dem_download_params, NULL, 1);
 

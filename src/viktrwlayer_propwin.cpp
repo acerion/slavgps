@@ -2764,7 +2764,7 @@ static void propwin_response_cb(GtkDialog * dialog, int resp, PropWidgets * widg
 			}
 		}
 		if (iter == NULL) {
-			a_dialog_msg(VIK_GTK_WINDOW_FROM_LAYER(trw->vl), GTK_MESSAGE_ERROR,
+			a_dialog_msg(gtk_window_from_layer(trw), GTK_MESSAGE_ERROR,
 				     _("Failed spliting track. Track unchanged"), NULL);
 			keep_dialog = true;
 			break;

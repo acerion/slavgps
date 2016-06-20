@@ -749,7 +749,7 @@ void LayerGeoref::check_br_is_good_or_msg_user()
 
 	struct LatLon ll_tl = this->get_ll_tl();
 	if (ll_tl.lat < this->ll_br.lat || ll_tl.lon > this->ll_br.lon) {
-		a_dialog_warning_msg(VIK_GTK_WINDOW_FROM_LAYER(this->vl), _("Lower right corner values may not be consistent with upper right values"));
+		a_dialog_warning_msg(gtk_window_from_layer(this), _("Lower right corner values may not be consistent with upper right values"));
 	}
 }
 

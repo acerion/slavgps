@@ -299,6 +299,13 @@ namespace SlavGPS {
 
 
 
+
+GtkWindow * gtk_window_from_layer(SlavGPS::Layer * layer);
+
+
+
+
+
 /* void * is tool-specific state created in the constructor */
 typedef void * (*VikToolConstructorFunc) (struct _VikWindow *, SlavGPS::Viewport *);
 typedef void (*VikToolDestructorFunc) (void *);

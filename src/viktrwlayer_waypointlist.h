@@ -33,8 +33,8 @@ extern "C" {
 #endif
 
 
-void vik_trw_layer_waypoint_list_show_dialog ( char *title,
-                                               VikLayer *vl,
+void vik_trw_layer_waypoint_list_show_dialog(char * title,
+											 SlavGPS::Layer * layer,
                                                void * user_data,
                                                VikTrwlayerGetWaypointsAndLayersFunc get_waypoints_and_layers_cb,
                                                bool is_aggregate );
