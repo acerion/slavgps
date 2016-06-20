@@ -118,11 +118,11 @@ static void free_geoname_list(GList *found_places)
   g_list_free(found_places);
 }
 
-static void none_found(VikWindow *vw)
+static void none_found(Window * window)
 {
   GtkWidget *dialog = NULL;
 
-  dialog = gtk_dialog_new_with_buttons ( "", GTK_WINDOW(vw), (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, NULL );
+  dialog = gtk_dialog_new_with_buttons ( "", GTK_WINDOW(window->vw), (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, NULL );
   gtk_window_set_title(GTK_WINDOW(dialog), _("Search"));
 
   GtkWidget *search_label = gtk_label_new(_("No entries found!"));
@@ -419,7 +419,7 @@ static GList *get_entries_from_file(char *file_name)
 }
 
 
-void a_geonames_wikipedia_box ( VikWindow *vw, LayerTRW * trw, struct LatLon maxmin[2] )
+void a_geonames_wikipedia_box(Window * window, LayerTRW * trw, struct LatLon maxmin[2] )
 {
   char *uri;
   char *tmpname;
@@ -441,15 +441,15 @@ void a_geonames_wikipedia_box ( VikWindow *vw, LayerTRW * trw, struct LatLon max
   free(west);  west = NULL;
   tmpname = a_download_uri_to_tmp_file ( uri, NULL );
   if (!tmpname) {
-    none_found(vw);
+    none_found(window);
     return;
   }
   wiki_places = get_entries_from_file(tmpname);
   if (g_list_length(wiki_places) == 0) {
-    none_found(vw);
+    none_found(window);
     goto done;
   }
-  selected = a_select_geoname_from_list(VIK_GTK_WINDOW_FROM_WIDGET(vw), wiki_places, true, "Select articles", "Select the articles you want to add.");
+  selected = a_select_geoname_from_list(VIK_GTK_WINDOW_FROM_WIDGET(window->vw), wiki_places, true, "Select articles", "Select the articles you want to add.");
   wp_runner = selected;
   while (wp_runner) {
     wiki_geoname = (found_geoname *)wp_runner->data;

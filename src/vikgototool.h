@@ -64,7 +64,7 @@ char *vik_goto_tool_get_label ( VikGotoTool *self );
 char *vik_goto_tool_get_url_format ( VikGotoTool *self );
 DownloadFileOptions *vik_goto_tool_get_download_options ( VikGotoTool *self );
 bool vik_goto_tool_parse_file_for_latlon ( VikGotoTool *self, char *filename, struct LatLon *ll );
-int vik_goto_tool_get_coord ( VikGotoTool *self, VikWindow *vw, SlavGPS::Viewport * viewport, char *srch_str, VikCoord *coord );
+int vik_goto_tool_get_coord ( VikGotoTool *self, SlavGPS::Window * window, SlavGPS::Viewport * viewport, char *srch_str, VikCoord *coord );
 
 #ifdef __cplusplus
 }

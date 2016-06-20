@@ -71,7 +71,7 @@ static bool datasource_wikipedia_process(LayerTRW * trw, ProcessOptions * po, Ba
 	adw->viewport->get_min_max_lat_lon(&maxmin[1].lat, &maxmin[0].lat, &maxmin[1].lon, &maxmin[0].lon);
 
 	if (trw) {
-		a_geonames_wikipedia_box((VikWindow *) adw->window->vw, trw, maxmin);
+		a_geonames_wikipedia_box(adw->window, trw, maxmin);
 		return true;
 	} else {
 		return false;

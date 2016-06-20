@@ -47,8 +47,25 @@
 extern "C" {
 #endif
 
+/* tool management */
+typedef struct {
+	VikToolInterface ti;
+	void * state;
+	int layer_type;
+} toolbox_tool_t;
+#define TOOL_LAYER_TYPE_NONE -1
+
+typedef struct {
+	int active_tool;
+	int n_tools;
+	toolbox_tool_t * tools;
+	struct _VikWindow * vw;
+} toolbox_tools_t;
+
+
 /* Forward declaration. */
 struct _VikTrwLayer;
+struct _VikWindow;
 
 
 #define VIK_WINDOW_TYPE            (vik_window_get_type ())
@@ -73,12 +90,6 @@ VikWindow * vik_window_new_window();
 void vik_window_new_window_finish(VikWindow * vw);
 void vik_window_open_file(VikWindow * vw, char const * filename, bool changefilename);
 
-
-
-void vik_window_set_busy_cursor(VikWindow * vw);
-void vik_window_clear_busy_cursor(VikWindow * vw);
-SlavGPS::Viewport * vik_window_viewport(VikWindow *vw);
-void vik_window_statusbar_update(VikWindow * vw, char const * message, vik_statusbar_type_t vs_type);
 
 
 #ifdef __cplusplus
@@ -230,6 +241,29 @@ namespace SlavGPS {
 		bool show_main_menu;
 
 
+		GdkCursor * busy_cursor;
+		GdkCursor * viewport_cursor; // only a reference
+
+
+
+		/* tool management state */
+		unsigned int current_tool;
+		uint16_t tool_layer_id;
+		uint16_t tool_tool_id;
+		toolbox_tools_t * vt;
+
+
+		// Display controls
+		bool select_move;
+		bool pan_move;
+		int pan_x, pan_y;
+		int delayed_pan_x, delayed_pan_y; // Temporary storage
+		bool single_click_pending;
+
+
+
+
+		GtkActionGroup * action_group;
 
 
 		void * vw; /* VikWindow. */
@@ -257,8 +291,7 @@ namespace SlavGPS {
 
 SlavGPS::Window * window_from_layer(SlavGPS::Layer * layer);
 SlavGPS::Window * window_from_widget(void * widget);
-SlavGPS::LayersPanel * vik_window_layers_panel(VikWindow * vw);
-
+SlavGPS::Window * window_from_vik_window(VikWindow * vw);
 
 
 

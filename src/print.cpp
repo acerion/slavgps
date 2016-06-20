@@ -66,7 +66,7 @@ static const PrintCenterName center_modes[] = {
 typedef struct {
   int                num_pages;
   bool            show_info_header;
-  VikWindow           *vw;
+  //Window           * window;
   Viewport         * viewport;
   double             xmpp, ympp;  /* zoom level (meters/pixel) */
   double             xres;
@@ -85,7 +85,7 @@ static void begin_print(GtkPrintOperation *operation, GtkPrintContext *context, 
 static void draw_page(GtkPrintOperation *print, GtkPrintContext *context, int page_nr, PrintData *data);
 static void end_print(GtkPrintOperation *operation, GtkPrintContext *context,  PrintData *data);
 
-void a_print(VikWindow *vw, Viewport * viewport)
+void a_print(Window * window, Viewport * viewport)
 {
   /* TODO: make print_settings non-static when saving_settings_to_file is
    * implemented. Keep it static for now to retain settings for each
@@ -100,7 +100,7 @@ void a_print(VikWindow *vw, Viewport * viewport)
   print_oper = gtk_print_operation_new ();
 
   data.num_pages     = 1;
-  data.vw            = vw;
+  //data.window        = window;
   data.viewport      = viewport;
   data.offset_x      = 0;
   data.offset_y      = 0;
@@ -127,7 +127,7 @@ void a_print(VikWindow *vw, Viewport * viewport)
 
   res = gtk_print_operation_run (print_oper,
                                  GTK_PRINT_OPERATION_ACTION_PRINT_DIALOG,
-                                 GTK_WINDOW (vw), NULL);
+                                 GTK_WINDOW (window->vw), NULL);
 
   if (res == GTK_PRINT_OPERATION_RESULT_APPLY) {
     if (print_settings != NULL)

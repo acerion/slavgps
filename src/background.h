@@ -24,7 +24,6 @@
 
 #include <glib.h>
 #include <gtk/gtk.h>
-#include <stdbool.h>
 #include <stdint.h>
 
 
@@ -54,8 +53,8 @@ void a_background_show_window ();
 void a_background_init ();
 void a_background_post_init ();
 void a_background_uninit ();
-void a_background_add_window (VikWindow *vw);
-void a_background_remove_window (VikWindow *vw);
+void a_background_add_window(SlavGPS::Window * window);
+void a_background_remove_window(SlavGPS::Window * window);
 
 #ifdef __cplusplus
 }

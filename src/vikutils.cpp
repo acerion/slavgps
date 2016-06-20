@@ -806,18 +806,18 @@ char* vu_get_time_string ( time_t *time, const char *format, const VikCoord* vc,
 }
 
 /**
- * vu_command_line:
- *
  * Apply any startup values that have been specified from the command line
  * Values are defaulted in such a manner not to be applied when they haven't been specified
  *
  */
-void vu_command_line ( VikWindow *vw, double latitude, double longitude, int zoom_osm_level, MapTypeID cmdline_type_id )
+void vu_command_line(VikWindow * vw, double latitude, double longitude, int zoom_osm_level, MapTypeID cmdline_type_id )
 {
-	if ( !vw )
+	if (!vw) {
 		return;
+	}
 
-	Viewport * viewport = vik_window_viewport(vw);
+	Window * window = window_from_vik_window(vw);
+	Viewport * viewport = window->get_viewport();
 
 	if ( latitude != 0.0 || longitude != 0.0 ) {
 		struct LatLon ll;
@@ -843,7 +843,7 @@ void vu_command_line ( VikWindow *vw, double latitude, double longitude, int zoo
 		}
 
 		// Don't add map layer if one already exists
-		std::list<Layer *> * vmls = vik_window_layers_panel(vw)->get_all_layers_of_type(VIK_LAYER_MAPS, true);
+		std::list<Layer *> * vmls = window->get_layers_panel()->get_all_layers_of_type(VIK_LAYER_MAPS, true);
 		int num_maps = vmls->size();
 		bool add_map = true;
 
@@ -863,7 +863,7 @@ void vu_command_line ( VikWindow *vw, double latitude, double longitude, int zoo
 			vik_maps_layer_set_map_type(layer->vl, the_type_id);
 			layer->rename(_("Map"));
 
-			vik_window_layers_panel(vw)->get_top_layer()->add_layer(layer, true);
+			window->get_layers_panel()->get_top_layer()->add_layer(layer, true);
 			layer->emit_update();
 		}
 	}

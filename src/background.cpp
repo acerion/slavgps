@@ -24,6 +24,8 @@
 #include <glib/gi18n.h>
 #include <stdlib.h>
 
+#include <list>
+
 #include "background.h"
 #include "settings.h"
 #include "util.h"
@@ -32,6 +34,13 @@
 #include "globals.h"
 #include "preferences.h"
 #include "viking.h"
+#include "vikwindow.h"
+
+
+
+using namespace SlavGPS;
+
+
 
 static GThreadPool *thread_pool_remote = NULL;
 static GThreadPool *thread_pool_local = NULL;
@@ -45,7 +54,7 @@ static GtkWidget *bgtreeview = NULL;
 static GtkListStore *bgstore = NULL;
 
 // Still only actually updating the statusbar though
-static GSList *windows_to_update = NULL;
+static std::list<Window *> windows_to_update;
 
 static int bgitemcount = 0;
 
@@ -59,16 +68,15 @@ enum
   N_COLUMNS,
 };
 
-void a_background_update_status ( VikWindow *vw, void * data )
+static void background_thread_update()
 {
-  static char buf[20];
-  snprintf(buf, sizeof(buf), _("%d items"), bgitemcount);
-  vik_window_statusbar_update ( vw, buf, VIK_STATUSBAR_ITEMS );
-}
+	static char buf[20];
+	for (auto i = windows_to_update.begin(); i != windows_to_update.end(); i++) {
+		snprintf(buf, sizeof(buf), _("%d items"), bgitemcount);
+		(*i)->statusbar_update(buf, VIK_STATUSBAR_ITEMS);
+	}
 
-static void background_thread_update ()
-{
-  g_slist_foreach ( windows_to_update, (GFunc) a_background_update_status, NULL );
+	return;
 }
 
 /**
@@ -371,12 +379,12 @@ void a_background_uninit()
   gtk_widget_destroy ( bgwindow );
 }
 
-void a_background_add_window (VikWindow *vw)
+void a_background_add_window(Window * window)
 {
-  windows_to_update = g_slist_prepend(windows_to_update,vw);
+	windows_to_update.push_front(window);
 }
 
-void a_background_remove_window (VikWindow *vw)
+void a_background_remove_window(Window * window)
 {
-  windows_to_update = g_slist_remove(windows_to_update,vw);
+	windows_to_update.remove(window);
 }

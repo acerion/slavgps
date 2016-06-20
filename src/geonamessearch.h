@@ -31,7 +31,7 @@ extern "C" {
 
 
 /* Finding Wikipedia entries within a certain box */
-void a_geonames_wikipedia_box(VikWindow * vw, SlavGPS::LayerTRW * trw, struct LatLon maxmin[2]);
+void a_geonames_wikipedia_box(SlavGPS::Window * window, SlavGPS::LayerTRW * trw, struct LatLon maxmin[2]);
 
 #ifdef __cplusplus
 }

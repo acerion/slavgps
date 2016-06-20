@@ -221,7 +221,7 @@ bool vik_goto_tool_parse_file_for_latlon (VikGotoTool *self, char *filename, str
  *  1  = search unavailable in the #VikGotoTool due to communication issue
  *
  */
-int vik_goto_tool_get_coord ( VikGotoTool *self, VikWindow *vw, Viewport * viewport, char *srch_str, VikCoord *coord )
+int vik_goto_tool_get_coord ( VikGotoTool *self, Window * window, Viewport * viewport, char *srch_str, VikCoord *coord )
 {
   char *tmpname;
   char *uri;

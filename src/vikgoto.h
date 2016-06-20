@@ -38,8 +38,8 @@ void vik_goto_register (VikGotoTool *tool);
 void vik_goto_unregister_all (void);
 
 int a_vik_goto_where_am_i(SlavGPS::Viewport * viewport, struct LatLon *ll, char **name );
-void a_vik_goto(VikWindow *vw, SlavGPS::Viewport * viewport);
-char * a_vik_goto_get_search_string_for_this_place(VikWindow *vw);
+void a_vik_goto(SlavGPS::Window * window, SlavGPS::Viewport * viewport);
+char * a_vik_goto_get_search_string_for_this_place(SlavGPS::Window * window);
 
 #ifdef __cplusplus
 }

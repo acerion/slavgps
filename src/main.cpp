@@ -45,6 +45,7 @@
 #include "map_ids.h"
 #include "file.h"
 #include "settings.h"
+#include "vikwindow.h"
 
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>

@@ -2686,7 +2686,7 @@ void trw_layer_new_wikipedia_wp_viewport(trw_menu_layer_t * data)
 
 	// Note the order is max part first then min part - thus reverse order of use in min_max function:
 	viewport->get_min_max_lat_lon(&maxmin[1].lat, &maxmin[0].lat, &maxmin[1].lon, &maxmin[0].lon);
-	a_geonames_wikipedia_box(vik_window_from_layer(layer), layer, maxmin);
+	a_geonames_wikipedia_box(window_from_layer(layer), layer, maxmin);
 	layer->calculate_bounds_waypoints();
 	panel->emit_update();
 }
@@ -2698,7 +2698,7 @@ void trw_layer_new_wikipedia_wp_layer(trw_menu_layer_t * data)
 	struct LatLon maxmin[2] = { {0.0,0.0}, {0.0,0.0} };
 
 	layer->find_maxmin(maxmin);
-	a_geonames_wikipedia_box(vik_window_from_layer(layer), layer, maxmin);
+	a_geonames_wikipedia_box(window_from_layer(layer), layer, maxmin);
 	layer->calculate_bounds_waypoints();
 	panel->emit_update();
 }

@@ -66,13 +66,12 @@ void vik_goto_unregister_all ()
   g_list_foreach ( goto_tools_list, (GFunc) g_object_unref, NULL );
 }
 
-char * a_vik_goto_get_search_string_for_this_place(VikWindow *vw)
+char * a_vik_goto_get_search_string_for_this_place(Window * window)
 {
   if (!last_coord)
     return NULL;
 
-  Viewport * viewport = vik_window_viewport(vw);
-  const VikCoord *cur_center = viewport->get_center();
+  const VikCoord * cur_center = window->get_viewport()->get_center();
   if (vik_coord_equals(cur_center, last_coord)) {
     return(last_successful_goto_str);
   }
@@ -80,23 +79,23 @@ char * a_vik_goto_get_search_string_for_this_place(VikWindow *vw)
     return NULL;
 }
 
-static void display_no_tool(VikWindow *vw)
+static void display_no_tool(Window * window)
 {
   GtkWidget *dialog = NULL;
 
-  dialog = gtk_message_dialog_new ( GTK_WINDOW(vw), GTK_DIALOG_MODAL, GTK_MESSAGE_WARNING, GTK_BUTTONS_OK, _("No goto tool available.") );
+  dialog = gtk_message_dialog_new ( GTK_WINDOW(window->vw), GTK_DIALOG_MODAL, GTK_MESSAGE_WARNING, GTK_BUTTONS_OK, _("No goto tool available.") );
 
   gtk_dialog_run ( GTK_DIALOG(dialog) );
 
   gtk_widget_destroy(dialog);
 }
 
-static bool prompt_try_again(VikWindow *vw, const char *msg)
+static bool prompt_try_again(Window * window, const char *msg)
 {
   GtkWidget *dialog = NULL;
   bool ret = true;
 
-  dialog = gtk_dialog_new_with_buttons ( "", GTK_WINDOW(vw), (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL );
+  dialog = gtk_dialog_new_with_buttons ( "", GTK_WINDOW(window->vw), (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL );
   gtk_window_set_title(GTK_WINDOW(dialog), _("goto"));
 
   GtkWidget *goto_label = gtk_label_new(msg);
@@ -156,11 +155,11 @@ text_changed_cb (GtkEntry   *entry,
   gtk_widget_set_sensitive ( button, has_text );
 }
 
-static char *a_prompt_for_goto_string(VikWindow *vw)
+static char *a_prompt_for_goto_string(Window * window)
 {
   GtkWidget *dialog = NULL;
 
-  dialog = gtk_dialog_new_with_buttons ( "", GTK_WINDOW(vw), (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL );
+  dialog = gtk_dialog_new_with_buttons ( "", GTK_WINDOW(window->vw), (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL );
   gtk_window_set_title(GTK_WINDOW(dialog), _("goto"));
 
   GtkWidget *tool_label = gtk_label_new(_("goto provider:"));
@@ -229,7 +228,7 @@ static char *a_prompt_for_goto_string(VikWindow *vw)
  *
  * Returns: %true if a successful lookup
  */
-static bool vik_goto_place ( VikWindow *vw, Viewport * viewport, char* name, VikCoord *vcoord )
+static bool vik_goto_place(Window * window, Viewport * viewport, char* name, VikCoord *vcoord )
 {
   // Ensure last_goto_tool is given a value
   get_provider ();
@@ -237,14 +236,14 @@ static bool vik_goto_place ( VikWindow *vw, Viewport * viewport, char* name, Vik
   if ( goto_tools_list ) {
     VikGotoTool *gototool = (VikGotoTool *) g_list_nth_data ( goto_tools_list, last_goto_tool );
     if ( gototool ) {
-      if ( vik_goto_tool_get_coord ( gototool, vw, viewport, name, vcoord ) == 0 )
+      if ( vik_goto_tool_get_coord ( gototool, window, viewport, name, vcoord ) == 0 )
         return true;
     }
   }
   return false;
 }
 
-void a_vik_goto(VikWindow *vw, Viewport * viewport)
+void a_vik_goto(Window * window, Viewport * viewport)
 {
   VikCoord new_center;
   char *s_str;
@@ -253,17 +252,17 @@ void a_vik_goto(VikWindow *vw, Viewport * viewport)
   if (goto_tools_list == NULL)
   {
     /* Empty list */
-    display_no_tool(vw);
+    display_no_tool(window);
     return;
   }
 
   do {
-    s_str = a_prompt_for_goto_string(vw);
+    s_str = a_prompt_for_goto_string(window);
     if ((!s_str) || (s_str[0] == 0)) {
       more = false;
     }
     else {
-      int ans = vik_goto_tool_get_coord((VikGotoTool *) g_list_nth_data (goto_tools_list, last_goto_tool), vw, viewport, s_str, &new_center);
+      int ans = vik_goto_tool_get_coord((VikGotoTool *) g_list_nth_data (goto_tools_list, last_goto_tool), window, viewport, s_str, &new_center);
       if ( ans == 0 ) {
         if (last_coord)
           free(last_coord);
@@ -276,10 +275,10 @@ void a_vik_goto(VikWindow *vw, Viewport * viewport)
         more = false;
       }
       else if ( ans == -1 ) {
-        if (!prompt_try_again(vw, _("I don't know that place. Do you want another goto?")))
+        if (!prompt_try_again(window, _("I don't know that place. Do you want another goto?")))
           more = false;
       }
-      else if (!prompt_try_again(vw, _("Service request failure. Do you want another goto?")))
+      else if (!prompt_try_again(window, _("Service request failure. Do you want another goto?")))
         more = false;
     }
     free(s_str);
