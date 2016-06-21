@@ -47,20 +47,6 @@
 extern "C" {
 #endif
 
-/* tool management */
-typedef struct {
-	VikToolInterface ti;
-	void * state;
-	int layer_type;
-} toolbox_tool_t;
-#define TOOL_LAYER_TYPE_NONE -1
-
-typedef struct {
-	int active_tool;
-	int n_tools;
-	toolbox_tool_t * tools;
-	struct _VikWindow * vw;
-} toolbox_tools_t;
 
 
 /* Forward declaration. */
@@ -117,6 +103,25 @@ namespace SlavGPS {
 
 
 	class LayersPanel;
+	class Window;
+	struct _VikToolInterface;
+
+
+
+	/* tool management */
+	typedef struct {
+		struct _VikToolInterface ti;
+		void * state;
+		int layer_type;
+	} toolbox_tool_t;
+#define TOOL_LAYER_TYPE_NONE -1
+
+	typedef struct {
+		int active_tool;
+		int n_tools;
+		toolbox_tool_t * tools;
+		Window * window;
+	} toolbox_tools_t;
 
 
 
@@ -259,6 +264,12 @@ namespace SlavGPS {
 		int pan_x, pan_y;
 		int delayed_pan_x, delayed_pan_y; // Temporary storage
 		bool single_click_pending;
+
+
+
+		GtkWidget * hpaned;
+		GtkWidget * main_vbox;
+		GtkWidget * menu_hbox;
 
 
 

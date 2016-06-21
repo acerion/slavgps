@@ -266,6 +266,7 @@ Viewport::Viewport()
 	half_drawn = false;
 
 	this->vvp = (VikViewport *) g_object_new(VIK_VIEWPORT_TYPE, NULL);
+	fprintf(stderr, "%s:%d: %x\n", __FUNCTION__, __LINE__, this->vvp);
 	((VikViewport *) this->vvp)->viewport = this;
 
 	// Initiate center history

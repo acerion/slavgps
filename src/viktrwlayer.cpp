@@ -119,28 +119,28 @@ static void trw_layer_cancel_current_tp_cb(LayerTRW * layer, bool destroy);
 static void trw_layer_tpwin_response_cb(LayerTRW * layer, int response);
 
 
-static void * tool_edit_trackpoint_create(VikWindow *vw, Viewport * viewport);
+static void * tool_edit_trackpoint_create(Window * window, Viewport * viewport);
 static void tool_edit_trackpoint_destroy(tool_ed_t *t);
 static bool tool_edit_trackpoint_click_cb(Layer * trw, GdkEventButton *event, void * data);
 static bool tool_edit_trackpoint_move_cb(Layer * trw, GdkEventMotion *event, void * data);
 static bool tool_edit_trackpoint_release_cb(Layer * trw, GdkEventButton *event, void * data);
-static void * tool_show_picture_create(VikWindow *vw, Viewport * viewport);
+static void * tool_show_picture_create(Window * window, Viewport * viewport);
 static bool tool_show_picture_click_cb(Layer * trw, GdkEventButton *event, Viewport * viewport);
-static void * tool_edit_waypoint_create(VikWindow *vw, Viewport * viewport);
+static void * tool_edit_waypoint_create(Window * window, Viewport * viewport);
 static void tool_edit_waypoint_destroy(tool_ed_t *t);
 static bool tool_edit_waypoint_click_cb(Layer * trw, GdkEventButton *event, void * data);
 static bool tool_edit_waypoint_move_cb(Layer * trw, GdkEventMotion *event, void * data);
 static bool tool_edit_waypoint_release_cb(Layer * trw, GdkEventButton *event, void * data);
-static void * tool_new_route_create(VikWindow *vw, Viewport * viewport);
+static void * tool_new_route_create(Window * window, Viewport * viewport);
 static bool tool_new_route_click_cb(Layer * trw, GdkEventButton *event, Viewport * viewport);
-static void * tool_new_track_create(VikWindow *vw, Viewport * viewport);
+static void * tool_new_track_create(Window * window, Viewport * viewport);
 static bool tool_new_track_click_cb(Layer * trw, GdkEventButton *event, Viewport * viewport);
 static VikLayerToolFuncStatus tool_new_track_move_cb(Layer * trw, GdkEventMotion *event, Viewport * viewport);
 static void tool_new_track_release_cb(Layer * trw, GdkEventButton *event, Viewport * viewport);
 static bool tool_new_track_key_press_cb(Layer * trw, GdkEventKey *event, Viewport * viewport);
-static void * tool_new_waypoint_create(VikWindow *vw, Viewport * viewport);
+static void * tool_new_waypoint_create(Window * window, Viewport * viewport);
 static bool tool_new_waypoint_click_cb(Layer * trw, GdkEventButton *event, Viewport * viewport);
-static void * tool_extended_route_finder_create(VikWindow *vw, Viewport * viewport);
+static void * tool_extended_route_finder_create(Window * window, Viewport * viewport);
 static bool tool_extended_route_finder_click_cb(Layer * trw, GdkEventButton *event, Viewport * viewport);
 static bool tool_extended_route_finder_key_press_cb(Layer * trw, GdkEventKey *event, Viewport * viewport);
 
@@ -156,7 +156,8 @@ static void waypoint_convert(Waypoint * wp, VikCoordMode * dest_mode);
 //  the value is always set to 0 and the tool loader in VikWindow will set the actual appropriate value used
 static VikToolInterface trw_layer_tools[] = {
 	{ { "CreateWaypoint", "vik-icon-Create Waypoint", N_("Create _Waypoint"), "<control><shift>W", N_("Create Waypoint"), 0 },
-	  (VikToolConstructorFunc) tool_new_waypoint_create,    NULL, NULL, NULL,
+	  tool_new_waypoint_create, /* (VikToolConstructorFunc) */
+	  NULL, NULL, NULL,
 	  (VikToolMouseFunc) tool_new_waypoint_click_cb,
 	  NULL,
 	  NULL,
@@ -165,7 +166,8 @@ static VikToolInterface trw_layer_tools[] = {
 	  GDK_CURSOR_IS_PIXMAP, &cursor_addwp_pixbuf, NULL },
 
 	{ { "CreateTrack", "vik-icon-Create Track", N_("Create _Track"), "<control><shift>T", N_("Create Track"), 0 },
-	  (VikToolConstructorFunc) tool_new_track_create,       NULL, NULL, NULL,
+	  tool_new_track_create, /* (VikToolConstructorFunc) */
+	  NULL, NULL, NULL,
 	  (VikToolMouseFunc) tool_new_track_click_cb,
 	  (VikToolMouseMoveFunc) tool_new_track_move_cb,
 	  (VikToolMouseFunc) tool_new_track_release_cb,
@@ -174,7 +176,8 @@ static VikToolInterface trw_layer_tools[] = {
 	  GDK_CURSOR_IS_PIXMAP, &cursor_addtr_pixbuf, NULL },
 
 	{ { "CreateRoute", "vik-icon-Create Route", N_("Create _Route"), "<control><shift>B", N_("Create Route"), 0 },
-	  (VikToolConstructorFunc) tool_new_route_create,       NULL, NULL, NULL,
+	  tool_new_route_create, /* (VikToolConstructorFunc) */
+	  NULL, NULL, NULL,
 	  (VikToolMouseFunc) tool_new_route_click_cb,
 	  (VikToolMouseMoveFunc) tool_new_track_move_cb, // -\#
 	  (VikToolMouseFunc) tool_new_track_release_cb,  //   -> Reuse these track methods on a route
@@ -183,7 +186,8 @@ static VikToolInterface trw_layer_tools[] = {
 	  GDK_CURSOR_IS_PIXMAP, &cursor_new_route_pixbuf, NULL },
 
 	{ { "ExtendedRouteFinder", "vik-icon-Route Finder", N_("Route _Finder"), "<control><shift>F", N_("Route Finder"), 0 },
-	  (VikToolConstructorFunc) tool_extended_route_finder_create,  NULL, NULL, NULL,
+	  tool_extended_route_finder_create, /* (VikToolConstructorFunc) */
+	  NULL, NULL, NULL,
 	  (VikToolMouseFunc) tool_extended_route_finder_click_cb,
 	  (VikToolMouseMoveFunc) tool_new_track_move_cb, // -\#
 	  (VikToolMouseFunc) tool_new_track_release_cb,  //   -> Reuse these track methods on a route
@@ -192,7 +196,7 @@ static VikToolInterface trw_layer_tools[] = {
 	  GDK_CURSOR_IS_PIXMAP, &cursor_route_finder_pixbuf, NULL },
 
 	{ { "EditWaypoint", "vik-icon-Edit Waypoint", N_("_Edit Waypoint"), "<control><shift>E", N_("Edit Waypoint"), 0 },
-	  (VikToolConstructorFunc) tool_edit_waypoint_create,
+	  tool_edit_waypoint_create, /* (VikToolConstructorFunc) */
 	  (VikToolDestructorFunc) tool_edit_waypoint_destroy,
 	  NULL, NULL,
 	  (VikToolMouseFunc) tool_edit_waypoint_click_cb,
@@ -203,7 +207,7 @@ static VikToolInterface trw_layer_tools[] = {
 	  GDK_CURSOR_IS_PIXMAP, &cursor_edwp_pixbuf, NULL },
 
 	{ { "EditTrackpoint", "vik-icon-Edit Trackpoint", N_("Edit Trac_kpoint"), "<control><shift>K", N_("Edit Trackpoint"), 0 },
-	  (VikToolConstructorFunc) tool_edit_trackpoint_create,
+	  tool_edit_trackpoint_create, /* (VikToolConstructorFunc) */
 	  (VikToolDestructorFunc) tool_edit_trackpoint_destroy,
 	  NULL, NULL,
 	  (VikToolMouseFunc) tool_edit_trackpoint_click_cb,
@@ -214,7 +218,8 @@ static VikToolInterface trw_layer_tools[] = {
 	  GDK_CURSOR_IS_PIXMAP, &cursor_edtr_pixbuf, NULL },
 
 	{ { "ShowPicture", "vik-icon-Show Picture", N_("Show P_icture"), "<control><shift>I", N_("Show Picture"), 0 },
-	  (VikToolConstructorFunc) tool_show_picture_create,    NULL, NULL, NULL,
+	  tool_show_picture_create, /* (VikToolConstructorFunc) */
+	  NULL, NULL, NULL,
 	  (VikToolMouseFunc) tool_show_picture_click_cb,
 	  NULL, NULL, (VikToolKeyFunc) NULL,
 	  false,
@@ -445,7 +450,7 @@ VikLayerInterface vik_trw_layer_interface = {
 	&viktrwlayer_pixbuf,
 
 	trw_layer_tools,
-	sizeof(trw_layer_tools) / sizeof(VikToolInterface),
+	sizeof(trw_layer_tools) / sizeof(SlavGPS::VikToolInterface),
 
 	trw_layer_params,
 	NUM_PARAMS,
@@ -7205,7 +7210,7 @@ static void marker_end_move(tool_ed_t *t)
 
 /*** Edit waypoint ****/
 
-static void * tool_edit_waypoint_create(VikWindow *vw, Viewport * viewport)
+static void * tool_edit_waypoint_create(Window * window, Viewport * viewport)
 {
 	tool_ed_t *t = (tool_ed_t *) malloc(1 * sizeof (tool_ed_t));
 	t->viewport = viewport;
@@ -7390,7 +7395,7 @@ bool LayerTRW::tool_edit_waypoint_release(GdkEventButton * event, void * data)
 
 /*** New track ****/
 
-static void * tool_new_track_create(VikWindow *vw, Viewport * viewport)
+static void * tool_new_track_create(Window * window, Viewport * viewport)
 {
 	return viewport;
 }
@@ -7784,7 +7789,7 @@ void LayerTRW::tool_new_track_release(GdkEventButton *event, Viewport * viewport
 
 /*** New route ****/
 
-static void * tool_new_route_create(VikWindow *vw, Viewport * viewport)
+static void * tool_new_route_create(Window * window, Viewport * viewport)
 {
 	return viewport;
 }
@@ -7816,7 +7821,7 @@ bool LayerTRW::tool_new_route_click(GdkEventButton * event, Viewport * viewport)
 
 /*** New waypoint ****/
 
-static void * tool_new_waypoint_create(VikWindow *vw, Viewport * viewport)
+static void * tool_new_waypoint_create(Window * window, Viewport * viewport)
 {
 	return viewport;
 }
@@ -7845,7 +7850,7 @@ bool LayerTRW::tool_new_waypoint_click(GdkEventButton * event, Viewport * viewpo
 
 /*** Edit trackpoint ****/
 
-static void * tool_edit_trackpoint_create(VikWindow *vw, Viewport * viewport)
+static void * tool_edit_trackpoint_create(Window * window, Viewport * viewport)
 {
 	tool_ed_t *t = (tool_ed_t *) malloc(1 * sizeof (tool_ed_t));
 	t->viewport = viewport;
@@ -8025,7 +8030,7 @@ bool LayerTRW::tool_edit_trackpoint_release(GdkEventButton * event, void * data)
 
 /*** Extended Route Finder ***/
 
-static void * tool_extended_route_finder_create(VikWindow *vw, Viewport * viewport)
+static void * tool_extended_route_finder_create(Window * window, Viewport * viewport)
 {
 	return viewport;
 }
@@ -8150,7 +8155,7 @@ bool LayerTRW::tool_extended_route_finder_key_press(GdkEventKey * event, Viewpor
 
 /*** Show picture ****/
 
-static void * tool_show_picture_create(VikWindow *vw, Viewport * viewport)
+static void * tool_show_picture_create(Window * window, Viewport * viewport)
 {
 	return viewport;
 }

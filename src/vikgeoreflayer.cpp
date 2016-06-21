@@ -87,16 +87,16 @@ static VikLayerParamData georef_layer_get_param(VikLayer *vgl, uint16_t id, bool
 static VikLayer *georef_layer_new(Viewport * viewport);
 
 /* tools */
-static void * georef_layer_move_create(VikWindow *vw, Viewport * viewport);
+static void * georef_layer_move_create(Window * window, Viewport * viewport);
 static bool georef_layer_move_release_cb(Layer * vgl, GdkEventButton *event, Viewport * viewport);
 static bool georef_layer_move_press_cb(Layer * vgl, GdkEventButton *event, Viewport * viewport);
-static void * georef_layer_zoom_create(VikWindow *vw, Viewport * viewport);
+static void * georef_layer_zoom_create(Window * window, Viewport * viewport);
 static bool georef_layer_zoom_press_cb(Layer * vgl, GdkEventButton *event, Viewport * viewport);
 
 // See comment in viktrwlayer.c for advice on values used
 static VikToolInterface georef_tools[] = {
 	{ { "GeorefMoveMap", "vik-icon-Georef Move Map",  N_("_Georef Move Map"), NULL,  N_("Georef Move Map"), 0 },
-	  (VikToolConstructorFunc) georef_layer_move_create,
+	  georef_layer_move_create, /* (VikToolConstructorFunc) */
 	  NULL,
 	  NULL,
 	  NULL,
@@ -110,7 +110,7 @@ static VikToolInterface georef_tools[] = {
 	  NULL },
 
 	{ { "GeorefZoomTool", "vik-icon-Georef Zoom Tool",  N_("Georef Z_oom Tool"), NULL,  N_("Georef Zoom Tool"), 0 },
-	  (VikToolConstructorFunc) georef_layer_zoom_create,
+	  georef_layer_zoom_create, /* (VikToolConstructorFunc) */
 	  NULL,
 	  NULL,
 	  NULL,
@@ -1060,9 +1060,9 @@ void LayerGeoref::add_menu_items(GtkMenu *menu, void * panel)
 }
 
 
-static void * georef_layer_move_create(VikWindow *vw, Viewport * viewport)
+static void * georef_layer_move_create(Window * window, Viewport * viewport)
 {
-	return viewport->vvp;
+	return viewport;
 }
 
 static bool georef_layer_move_release_cb(Layer * vgl, GdkEventButton * event, Viewport * viewport)
@@ -1086,9 +1086,9 @@ bool LayerGeoref::move_release(GdkEventButton * event, Viewport * viewport)
 	return false; /* I didn't move anything on this layer! */
 }
 
-static void * georef_layer_zoom_create(VikWindow *vw, Viewport * viewport)
+static void * georef_layer_zoom_create(Window * window, Viewport * viewport)
 {
-	return viewport->vvp;
+	return viewport;
 }
 
 static bool georef_layer_zoom_press_cb(Layer * vgl, GdkEventButton * event, Viewport * viewport)

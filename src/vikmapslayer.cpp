@@ -127,7 +127,7 @@ static void maps_layer_change_param(GtkWidget *widget, ui_change_values values);
 static VikLayer * maps_layer_new(Viewport * viewport);
 static bool maps_layer_download_release(Layer * vml, GdkEventButton *event, Viewport * viewport);
 static bool maps_layer_download_click(Layer * vml, GdkEventButton *event, Viewport * viewport);
-static void * maps_layer_download_create(VikWindow *vw, Viewport * viewport);
+static void * maps_layer_download_create(Window * window, Viewport * viewport);
 static void start_download_thread(LayerMaps * layer, Viewport * viewport, const VikCoord *ul, const VikCoord *br, int redownload_mode);
 static int map_type_to_map_index(MapTypeID map_type);
 
@@ -204,7 +204,7 @@ void maps_layer_set_cache_default (VikMapsCacheLayout layout)
 
 static VikToolInterface maps_tools[] = {
 	{ { "MapsDownload", "vik-icon-Maps Download", N_("_Maps Download"), NULL, N_("Maps Download"), 0 },
-	  (VikToolConstructorFunc) maps_layer_download_create,
+	  maps_layer_download_create, /* (VikToolConstructorFunc) */
 	  NULL,
 	  NULL,
 	  NULL,
@@ -2025,9 +2025,9 @@ static bool maps_layer_download_release(Layer * vml, GdkEventButton *event, View
 	return false;
 }
 
-static void * maps_layer_download_create(VikWindow *vw, Viewport * viewport)
+static void * maps_layer_download_create(Window * window, Viewport * viewport)
 {
-	return viewport->vvp;
+	return viewport;
 }
 
 static bool maps_layer_download_click(Layer * vml, GdkEventButton *event, Viewport * viewport)

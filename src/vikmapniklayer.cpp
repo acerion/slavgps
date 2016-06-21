@@ -112,9 +112,9 @@ static bool mapnik_layer_set_param(VikLayer *vml, uint16_t id, VikLayerParamData
 static VikLayerParamData mapnik_layer_get_param(VikLayer *vml, uint16_t id, bool is_file_operation);
 static VikLayer * mapnik_layer_new(Viewport * viewport);
 
-static void * mapnik_feature_create(VikWindow *vw, Viewport * viewport)
+static void * mapnik_feature_create(Window * window, Viewport * viewport)
 {
-	return viewport->vvp;
+	return viewport;
 }
 
 static bool mapnik_feature_release_cb(Layer * vml, GdkEventButton *event, Viewport * viewport);
@@ -125,7 +125,7 @@ static VikToolInterface mapnik_tools[] = {
 	// Layer Info
 	// Zoom All?
   { { "MapnikFeatures", GTK_STOCK_INFO, N_("_Mapnik Features"), NULL, N_("Mapnik Features"), 0 },
-    (VikToolConstructorFunc) mapnik_feature_create,
+    mapnik_feature_create, /* (VikToolConstructorFunc) */
     NULL,
     NULL,
     NULL,

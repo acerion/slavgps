@@ -129,13 +129,14 @@ static VikLayerParam dem_layer_params[] = {
 
 enum { PARAM_FILES=0, PARAM_SOURCE, PARAM_COLOR, PARAM_TYPE, PARAM_MIN_ELEV, PARAM_MAX_ELEV, NUM_PARAMS };
 
-static void * dem_layer_download_create(VikWindow *vw, Viewport * viewport);
+static void * dem_layer_download_create(Window * window, Viewport * viewport);
 static bool dem_layer_download_release(Layer * vdl, GdkEventButton *event, Viewport * viewport);
 static bool dem_layer_download_click(Layer * vdl, GdkEventButton *event, Viewport * viewport);
 
 static VikToolInterface dem_tools[] = {
 	{ { "DEMDownload", "vik-icon-DEM Download", N_("_DEM Download"), NULL, N_("DEM Download"), 0 },
-	  (VikToolConstructorFunc) dem_layer_download_create, NULL, NULL, NULL,
+	  dem_layer_download_create, /* (VikToolConstructorFunc)  */
+	  NULL, NULL, NULL,
 	  (VikToolMouseFunc) dem_layer_download_click,
 	  NULL,
 	  (VikToolMouseFunc) dem_layer_download_release,
@@ -1229,8 +1230,9 @@ static void free_dem_download_params(DEMDownloadParams * p)
 	free(p);
 }
 
-static void * dem_layer_download_create(VikWindow *vw, Viewport * viewport)
+static void * dem_layer_download_create(Window * window, Viewport * viewport)
 {
+	fprintf(stderr, "%s:%d: %x / %x\n", __FUNCTION__, __LINE__, viewport, viewport->vvp);
 	return viewport;
 }
 
