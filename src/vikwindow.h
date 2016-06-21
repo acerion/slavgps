@@ -288,6 +288,8 @@ namespace SlavGPS {
 		void toggle_toolbar();
 		void toggle_main_menu();
 
+		char type_string[30];
+
 	}; /* class Window */
 
 
