@@ -101,7 +101,6 @@ static void window_finalize(GObject *gob);
 static GObjectClass *parent_class;
 
 
-static VikWindow *window_new();
 
 static void draw_update_cb(Window * window);
 
@@ -288,20 +287,26 @@ static void destroy_window(GtkWidget * widget, void * data)
 // Thus this value is for setting manually via editting the settings file directly
 #define VIK_SETTINGS_WIN_MENUBAR "window_menubar"
 
-VikWindow *vik_window_new_window()
+
+VikWindow * vik_window_new_window(VikWindow * vw)
+{
+	Window * new_window = new Window();
+	return (VikWindow *) new_window->vw;
+}
+
+Window * Window::new_window()
 {
 	if (window_count < MAX_WINDOWS) {
-		VikWindow * vw = window_new();
-		Window * window = vw->window;
+		Window * window = new Window();
 
-		g_signal_connect(G_OBJECT (vw), "destroy",
+		g_signal_connect(G_OBJECT (window->vw), "destroy",
 				 G_CALLBACK (destroy_window), NULL);
-		g_signal_connect(G_OBJECT (vw), "newwindow",
+		g_signal_connect(G_OBJECT (window->vw), "newwindow",
 				 G_CALLBACK (vik_window_new_window), NULL);
-		g_signal_connect(G_OBJECT (vw), "openwindow",
+		g_signal_connect(G_OBJECT (window->vw), "openwindow",
 				 G_CALLBACK (open_window), NULL);
 
-		gtk_widget_show_all(GTK_WIDGET(vw));
+		gtk_widget_show_all(GTK_WIDGET(window->vw));
 
 		if (a_vik_get_restore_window_state()) {
 			// These settings are applied after the show all as these options hide widgets
@@ -343,7 +348,7 @@ VikWindow *vik_window_new_window()
 		}
 		window_count++;
 
-		return vw;
+		return window;
 	}
 	return NULL;
 }
@@ -403,43 +408,41 @@ static int determine_location_thread(Window * window, void * threaddata)
 /**
  * Steps to be taken once initial loading has completed
  */
-void vik_window_new_window_finish(VikWindow * vw)
+void Window::finish_new()
 {
-	Window * window = vw->window;
-
 	// Don't add a map if we've loaded a Viking file already
-	if (window->filename) {
+	if (this->filename) {
 		return;
 	}
 
 	if (a_vik_get_startup_method() == VIK_STARTUP_METHOD_SPECIFIED_FILE) {
-		window->open_file(a_vik_get_startup_file(), true);
-		if (window->filename) {
+		this->open_file(a_vik_get_startup_file(), true);
+		if (this->filename) {
 			return;
 		}
 	}
 
 	// Maybe add a default map layer
 	if(a_vik_get_add_default_map_layer()) {
-		LayerMaps * layer = new LayerMaps(window->viewport);
+		LayerMaps * layer = new LayerMaps(this->viewport);
 		layer->rename(_("Default Map"));
 
-		window->layers_panel->get_top_layer()->add_layer(layer, true);
+		this->layers_panel->get_top_layer()->add_layer(layer, true);
 
-		window->draw_update();
+		this->draw_update();
 	}
 
 	// If not loaded any file, maybe try the location lookup
-	if (window->loaded_type == LOAD_TYPE_READ_FAILURE) {
+	if (this->loaded_type == LOAD_TYPE_READ_FAILURE) {
 		if (a_vik_get_startup_method() == VIK_STARTUP_METHOD_AUTO_LOCATION) {
 
-			vik_statusbar_set_message(window->viking_vs, VIK_STATUSBAR_INFO, _("Trying to determine location..."));
+			vik_statusbar_set_message(this->viking_vs, VIK_STATUSBAR_INFO, _("Trying to determine location..."));
 
 			a_background_thread(BACKGROUND_POOL_REMOTE,
 					    GTK_WINDOW(vw),
 					    _("Determining location"),
 					    (vik_thr_func) determine_location_thread,
-					    window,
+					    this,
 					    NULL,
 					    NULL,
 					    1);
@@ -459,9 +462,9 @@ static void open_window(Window * window, GSList *files)
 		// Only open a new window if a viking file
 		char *file_name = (char *) cur_file->data;
 		if (window->filename && check_file_magic_vik(file_name)) {
-			VikWindow *newvw = vik_window_new_window();
-			if (newvw) {
-				newvw->window->open_file(file_name, true);
+			Window * new_window = Window::new_window();
+			if (new_window) {
+				new_window->open_file(file_name, true);
 			}
 		} else {
 			window->open_file(file_name, change_fn);
@@ -498,26 +501,6 @@ static void window_finalize(GObject * gob)
 	if (!vw) {
 		return;
 	}
-
-	Window * window = vw->window;
-
-	a_background_remove_window(window);
-
-	window_list.remove(window);
-
-	gdk_cursor_unref(window->busy_cursor);
-	for (int tt = 0; tt < window->vt->n_tools; tt++) {
-		if (window->vt->tools[tt].ti.destroy) {
-			window->vt->tools[tt].ti.destroy(window->vt->tools[tt].state);
-		}
-	}
-	free(window->vt->tools);
-	free(window->vt);
-
-	vik_toolbar_finalize(window->viking_vtb);
-
-	delete window->viewport;
-	delete window->layers_panel;
 
 	G_OBJECT_CLASS(parent_class)->finalize(gob);
 }
@@ -719,195 +702,6 @@ static void toolbar_reload_cb(GtkActionGroup *grp, void * gp)
 
 static void vik_window_init(VikWindow * vw)
 {
-	vw->window = new Window();
-	vw->window->vw = vw;
-
-	vw->window->action_group = NULL;
-	vw->window->viewport = new Viewport();
-	vw->window->layers_panel = new LayersPanel();
-	vw->window->layers_panel->set_viewport(vw->window->viewport);
-	vw->window->viking_vs = vik_statusbar_new();
-
-	vw->window->vt = toolbox_create(vw->window);
-	vw->window->viking_vtb = vik_toolbar_new();
-	window_create_ui(vw->window);
-	vw->window->set_filename(NULL);
-
-	vw->window->busy_cursor = gdk_cursor_new(GDK_WATCH);
-
-	vw->window->filename = NULL;
-	vw->window->loaded_type = LOAD_TYPE_READ_FAILURE; //AKA none
-	vw->window->modified = false;
-	vw->window->only_updating_coord_mode_ui = false;
-
-	vw->window->select_move = false;
-	vw->window->pan_move = false;
-	vw->window->pan_x = vw->window->pan_y = -1;
-	vw->window->single_click_pending = false;
-
-	int draw_image_width;
-	if (a_settings_get_integer(VIK_SETTINGS_WIN_SAVE_IMAGE_WIDTH, &draw_image_width)) {
-		vw->window->draw_image_width = draw_image_width;
-	} else {
-		vw->window->draw_image_width = DRAW_IMAGE_DEFAULT_WIDTH;
-	}
-	int draw_image_height;
-	if (a_settings_get_integer(VIK_SETTINGS_WIN_SAVE_IMAGE_HEIGHT, &draw_image_height)) {
-		vw->window->draw_image_height = draw_image_height;
-	} else {
-		vw->window->draw_image_height = DRAW_IMAGE_DEFAULT_HEIGHT;
-	}
-	bool draw_image_save_as_png;
-	if (a_settings_get_boolean(VIK_SETTINGS_WIN_SAVE_IMAGE_PNG, &draw_image_save_as_png)) {
-		vw->window->draw_image_save_as_png = draw_image_save_as_png;
-	} else {
-		vw->window->draw_image_save_as_png = DRAW_IMAGE_DEFAULT_SAVE_AS_PNG;
-	}
-
-	vw->window->main_vbox = gtk_vbox_new(false, 1);
-	gtk_container_add(GTK_CONTAINER (vw), vw->window->main_vbox);
-	vw->window->menu_hbox = gtk_hbox_new(false, 1);
-	GtkWidget *menu_bar = gtk_ui_manager_get_widget(vw->window->uim, "/MainMenu");
-	gtk_box_pack_start(GTK_BOX(vw->window->menu_hbox), menu_bar, false, true, 0);
-	gtk_box_pack_start(GTK_BOX(vw->window->main_vbox), vw->window->menu_hbox, false, true, 0);
-
-	toolbar_init(vw->window->viking_vtb,
-		     &vw->gtkwindow,
-		     vw->window->main_vbox,
-		     vw->window->menu_hbox,
-		     toolbar_tool_cb,
-		     toolbar_reload_cb,
-		     (void *)vw->window); // This auto packs toolbar into the vbox
-	// Must be performed post toolbar init
-	for (int i = 0; i < VIK_LAYER_NUM_TYPES; i++) {
-		for (int j = 0; j < vik_layer_get_interface((VikLayerTypeEnum) i)->tools_count; j++) {
-			toolbar_action_set_sensitive(vw->window->viking_vtb, vik_layer_get_interface((VikLayerTypeEnum) i)->tools[j].radioActionEntry.name, false);
-		}
-	}
-
-	vik_ext_tool_datasources_add_menu_items(vw->window, vw->window->uim);
-
-	GtkWidget * zoom_levels = gtk_ui_manager_get_widget(vw->window->uim, "/MainMenu/View/SetZoom");
-	GtkWidget * zoom_levels_menu = create_zoom_menu_all_levels(vw->window->viewport->get_zoom());
-	gtk_menu_item_set_submenu(GTK_MENU_ITEM(zoom_levels), zoom_levels_menu);
-	g_signal_connect(G_OBJECT(zoom_levels_menu), "selection-done", G_CALLBACK(zoom_changed_cb), vw->window);
-	g_signal_connect_swapped(G_OBJECT(vw->window->viking_vs), "clicked", G_CALLBACK(zoom_popup_handler), zoom_levels_menu);
-
-	g_signal_connect(G_OBJECT (vw), "delete_event", G_CALLBACK (delete_event), NULL);
-
-	// Own signals
-	g_signal_connect_swapped(G_OBJECT(vw->window->viewport->vvp), "updated_center", G_CALLBACK(center_changed_cb), vw->window);
-	// Signals from GTK
-	g_signal_connect_swapped(G_OBJECT(vw->window->viewport->vvp), "expose_event", G_CALLBACK(draw_sync_cb), vw->window);
-	g_signal_connect_swapped(G_OBJECT(vw->window->viewport->vvp), "configure_event", G_CALLBACK(window_configure_event), vw->window);
-	gtk_widget_add_events(GTK_WIDGET(vw->window->viewport->vvp), GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_KEY_PRESS_MASK);
-	g_signal_connect_swapped(G_OBJECT(vw->window->viewport->vvp), "scroll_event", G_CALLBACK(draw_scroll_cb), vw->window);
-	int a = g_signal_connect_swapped(G_OBJECT(vw->window->viewport->vvp), "button_press_event", G_CALLBACK(draw_click_cb), vw->window);
-	g_signal_connect_swapped(G_OBJECT(vw->window->viewport->vvp), "button_release_event", G_CALLBACK(draw_release_cb), vw->window);
-	g_signal_connect_swapped(G_OBJECT(vw->window->viewport->vvp), "motion_notify_event", G_CALLBACK(draw_mouse_motion_cb), vw->window);
-
-	g_signal_connect_swapped(G_OBJECT(vw->window->layers_panel->gob), "update", G_CALLBACK(draw_update_cb), vw->window);
-	g_signal_connect_swapped(G_OBJECT(vw->window->layers_panel->gob), "delete_layer", G_CALLBACK(vik_window_clear_highlight_cb), vw->window);
-
-	// Allow key presses to be processed anywhere
-	g_signal_connect_swapped(G_OBJECT (vw), "key_press_event", G_CALLBACK (key_press_event_cb), vw->window);
-
-	// Set initial button sensitivity
-	center_changed_cb(vw->window);
-
-	vw->window->hpaned = gtk_hpaned_new();
-	gtk_paned_pack1(GTK_PANED(vw->window->hpaned), GTK_WIDGET (vw->window->layers_panel->gob), false, true);
-	gtk_paned_pack2(GTK_PANED(vw->window->hpaned), GTK_WIDGET (vw->window->viewport->vvp), true, true);
-
-	/* This packs the button into the window (a gtk container). */
-	gtk_box_pack_start(GTK_BOX(vw->window->main_vbox), vw->window->hpaned, true, true, 0);
-
-	gtk_box_pack_end(GTK_BOX(vw->window->main_vbox), GTK_WIDGET(vw->window->viking_vs), false, true, 0);
-
-	a_background_add_window(vw->window);
-
-	window_list.push_front(vw->window);
-
-	int height = VIKING_WINDOW_HEIGHT;
-	int width = VIKING_WINDOW_WIDTH;
-
-	if (a_vik_get_restore_window_state()) {
-		if (a_settings_get_integer(VIK_SETTINGS_WIN_HEIGHT, &height)) {
-			// Enforce a basic minimum size
-			if (height < 160) {
-				height = 160;
-			}
-		} else {
-			// No setting - so use default
-			height = VIKING_WINDOW_HEIGHT;
-		}
-
-		if (a_settings_get_integer(VIK_SETTINGS_WIN_WIDTH, &width)) {
-			// Enforce a basic minimum size
-			if (width < 320) {
-				width = 320;
-			}
-		} else {
-			// No setting - so use default
-			width = VIKING_WINDOW_WIDTH;
-		}
-
-		bool maxed;
-		if (a_settings_get_boolean(VIK_SETTINGS_WIN_MAX, &maxed)) {
-			if (maxed) {
-				gtk_window_maximize(GTK_WINDOW(vw));
-			}
-		}
-
-		bool full;
-		if (a_settings_get_boolean(VIK_SETTINGS_WIN_FULLSCREEN, &full)) {
-			if (full) {
-				vw->window->show_full_screen = true;
-				gtk_window_fullscreen(GTK_WINDOW(vw));
-				GtkWidget *check_box = gtk_ui_manager_get_widget(vw->window->uim, "/ui/MainMenu/View/FullScreen");
-				if (check_box) {
-					gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(check_box), true);
-				}
-			}
-		}
-
-		int position = -1; // Let GTK determine default positioning
-		if (!a_settings_get_integer(VIK_SETTINGS_WIN_PANE_POSITION, &position)) {
-			position = -1;
-		}
-		gtk_paned_set_position(GTK_PANED(vw->window->hpaned), position);
-	}
-
-	gtk_window_set_default_size(GTK_WINDOW(vw), width, height);
-
-	vw->window->show_side_panel = true;
-	vw->window->show_statusbar = true;
-	vw->window->show_toolbar = true;
-	vw->window->show_main_menu = true;
-
-	// Only accept Drag and Drop of files onto the viewport
-	gtk_drag_dest_set(GTK_WIDGET(vw->window->viewport->vvp), GTK_DEST_DEFAULT_ALL, NULL, 0, GDK_ACTION_COPY);
-	gtk_drag_dest_add_uri_targets(GTK_WIDGET(vw->window->viewport->vvp));
-	g_signal_connect(GTK_WIDGET(vw->window->viewport->vvp), "drag-data-received", G_CALLBACK(drag_data_received_cb), NULL);
-
-	// Store the thread value so comparisons can be made to determine the gdk update method
-	// Hopefully we are storing the main thread value here :)
-	//  [ATM any window initialization is always be performed by the main thread]
-	vw->window->thread = g_thread_self();
-
-	// Set the default tool + mode
-	gtk_action_activate(gtk_action_group_get_action(vw->window->action_group, "Pan"));
-	gtk_action_activate(gtk_action_group_get_action(vw->window->action_group, "ModeMercator"));
-
-	char *accel_file_name = g_build_filename(a_get_viking_dir(), VIKING_ACCELERATOR_KEY_FILE, NULL);
-	gtk_accel_map_load(accel_file_name);
-	free(accel_file_name);
-}
-
-static VikWindow * window_new()
-{
-	VikWindow * w = (VikWindow *) g_object_new(VIK_WINDOW_TYPE, NULL);
-	return w;
 }
 
 /**
@@ -3137,10 +2931,8 @@ void Window::clear_busy_cursor()
 	gdk_window_set_cursor(gtk_widget_get_window(GTK_WIDGET(this->viewport->vvp)), this->viewport_cursor);
 }
 
-void vik_window_open_file(VikWindow * vw, char const * filename, bool change_filename)
+void vik_window_open_file(Window * window, char const * filename, bool change_filename)
 {
-	Window * window = vw->window;
-
 	window->open_file(filename, change_filename);
 }
 
@@ -3334,9 +3126,9 @@ static void load_file(GtkAction * a, Window * window)
 						first_vik_file = false;
 					} else {
 						// Load each subsequent .vik file in a separate window
-						VikWindow *newvw = vik_window_new_window();
-						if (newvw) {
-							newvw->window->open_file(file_name, true);
+						Window * new_window = Window::new_window();
+						if (new_window) {
+							new_window->open_file(file_name, true);
 						}
 					}
 				} else {
@@ -5023,7 +4815,225 @@ Window::Window()
 
 	this->viewport = NULL;
 
+	this->filename = NULL;
+
 	strcpy(this->type_string, "The WINDOW");
+
+
+	this->vw = (VikWindow *) g_object_new(VIK_WINDOW_TYPE, NULL);
+	((VikWindow *) this->vw)->window = this;
+
+
+
+	this->action_group = NULL;
+	this->viewport = new Viewport();
+	this->layers_panel = new LayersPanel();
+	this->layers_panel->set_viewport(this->viewport);
+	this->viking_vs = vik_statusbar_new();
+
+	this->vt = toolbox_create(this);
+	this->viking_vtb = vik_toolbar_new();
+	window_create_ui(this);
+	this->set_filename(NULL);
+
+	this->busy_cursor = gdk_cursor_new(GDK_WATCH);
+
+	this->loaded_type = LOAD_TYPE_READ_FAILURE; //AKA none
+	this->modified = false;
+	this->only_updating_coord_mode_ui = false;
+
+	this->select_move = false;
+	this->pan_move = false;
+	this->pan_x = this->pan_y = -1;
+	this->single_click_pending = false;
+
+	int draw_image_width;
+	if (a_settings_get_integer(VIK_SETTINGS_WIN_SAVE_IMAGE_WIDTH, &draw_image_width)) {
+		this->draw_image_width = draw_image_width;
+	} else {
+		this->draw_image_width = DRAW_IMAGE_DEFAULT_WIDTH;
+	}
+	int draw_image_height;
+	if (a_settings_get_integer(VIK_SETTINGS_WIN_SAVE_IMAGE_HEIGHT, &draw_image_height)) {
+		this->draw_image_height = draw_image_height;
+	} else {
+		this->draw_image_height = DRAW_IMAGE_DEFAULT_HEIGHT;
+	}
+	bool draw_image_save_as_png;
+	if (a_settings_get_boolean(VIK_SETTINGS_WIN_SAVE_IMAGE_PNG, &draw_image_save_as_png)) {
+		this->draw_image_save_as_png = draw_image_save_as_png;
+	} else {
+		this->draw_image_save_as_png = DRAW_IMAGE_DEFAULT_SAVE_AS_PNG;
+	}
+
+	this->main_vbox = gtk_vbox_new(false, 1);
+	gtk_container_add(GTK_CONTAINER (this->vw), this->main_vbox);
+	this->menu_hbox = gtk_hbox_new(false, 1);
+	GtkWidget *menu_bar = gtk_ui_manager_get_widget(this->uim, "/MainMenu");
+	gtk_box_pack_start(GTK_BOX(this->menu_hbox), menu_bar, false, true, 0);
+	gtk_box_pack_start(GTK_BOX(this->main_vbox), this->menu_hbox, false, true, 0);
+
+	toolbar_init(this->viking_vtb,
+		     &((VikWindow *) this->vw)->gtkwindow,
+		     this->main_vbox,
+		     this->menu_hbox,
+		     toolbar_tool_cb,
+		     toolbar_reload_cb,
+		     (void *) this); // This auto packs toolbar into the vbox
+	// Must be performed post toolbar init
+	for (int i = 0; i < VIK_LAYER_NUM_TYPES; i++) {
+		for (int j = 0; j < vik_layer_get_interface((VikLayerTypeEnum) i)->tools_count; j++) {
+			toolbar_action_set_sensitive(this->viking_vtb, vik_layer_get_interface((VikLayerTypeEnum) i)->tools[j].radioActionEntry.name, false);
+		}
+	}
+
+	vik_ext_tool_datasources_add_menu_items(this, this->uim);
+
+	GtkWidget * zoom_levels = gtk_ui_manager_get_widget(this->uim, "/MainMenu/View/SetZoom");
+	GtkWidget * zoom_levels_menu = create_zoom_menu_all_levels(this->viewport->get_zoom());
+	gtk_menu_item_set_submenu(GTK_MENU_ITEM(zoom_levels), zoom_levels_menu);
+	g_signal_connect(G_OBJECT(zoom_levels_menu), "selection-done", G_CALLBACK(zoom_changed_cb), this);
+	g_signal_connect_swapped(G_OBJECT(this->viking_vs), "clicked", G_CALLBACK(zoom_popup_handler), zoom_levels_menu);
+
+	g_signal_connect(G_OBJECT (this->vw), "delete_event", G_CALLBACK (delete_event), NULL);
+
+	// Own signals
+	g_signal_connect_swapped(G_OBJECT(this->viewport->vvp), "updated_center", G_CALLBACK(center_changed_cb), this);
+	// Signals from GTK
+	g_signal_connect_swapped(G_OBJECT(this->viewport->vvp), "expose_event", G_CALLBACK(draw_sync_cb), this);
+	g_signal_connect_swapped(G_OBJECT(this->viewport->vvp), "configure_event", G_CALLBACK(window_configure_event), this);
+	gtk_widget_add_events(GTK_WIDGET(this->viewport->vvp), GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_KEY_PRESS_MASK);
+	g_signal_connect_swapped(G_OBJECT(this->viewport->vvp), "scroll_event", G_CALLBACK(draw_scroll_cb), this);
+	int a = g_signal_connect_swapped(G_OBJECT(this->viewport->vvp), "button_press_event", G_CALLBACK(draw_click_cb), this);
+	g_signal_connect_swapped(G_OBJECT(this->viewport->vvp), "button_release_event", G_CALLBACK(draw_release_cb), this);
+	g_signal_connect_swapped(G_OBJECT(this->viewport->vvp), "motion_notify_event", G_CALLBACK(draw_mouse_motion_cb), this);
+
+	g_signal_connect_swapped(G_OBJECT(this->layers_panel->gob), "update", G_CALLBACK(draw_update_cb), this);
+	g_signal_connect_swapped(G_OBJECT(this->layers_panel->gob), "delete_layer", G_CALLBACK(vik_window_clear_highlight_cb), this);
+
+	// Allow key presses to be processed anywhere
+	g_signal_connect_swapped(G_OBJECT (this->vw), "key_press_event", G_CALLBACK (key_press_event_cb), this);
+
+	// Set initial button sensitivity
+	center_changed_cb(this);
+
+	this->hpaned = gtk_hpaned_new();
+	gtk_paned_pack1(GTK_PANED(this->hpaned), GTK_WIDGET (this->layers_panel->gob), false, true);
+	gtk_paned_pack2(GTK_PANED(this->hpaned), GTK_WIDGET (this->viewport->vvp), true, true);
+
+	/* This packs the button into the window (a gtk container). */
+	gtk_box_pack_start(GTK_BOX(this->main_vbox), this->hpaned, true, true, 0);
+
+	gtk_box_pack_end(GTK_BOX(this->main_vbox), GTK_WIDGET(this->viking_vs), false, true, 0);
+
+	a_background_add_window(this);
+
+	window_list.push_front(this);
+
+	int height = VIKING_WINDOW_HEIGHT;
+	int width = VIKING_WINDOW_WIDTH;
+
+	if (a_vik_get_restore_window_state()) {
+		if (a_settings_get_integer(VIK_SETTINGS_WIN_HEIGHT, &height)) {
+			// Enforce a basic minimum size
+			if (height < 160) {
+				height = 160;
+			}
+		} else {
+			// No setting - so use default
+			height = VIKING_WINDOW_HEIGHT;
+		}
+
+		if (a_settings_get_integer(VIK_SETTINGS_WIN_WIDTH, &width)) {
+			// Enforce a basic minimum size
+			if (width < 320) {
+				width = 320;
+			}
+		} else {
+			// No setting - so use default
+			width = VIKING_WINDOW_WIDTH;
+		}
+
+		bool maxed;
+		if (a_settings_get_boolean(VIK_SETTINGS_WIN_MAX, &maxed)) {
+			if (maxed) {
+				gtk_window_maximize(GTK_WINDOW(this->vw));
+			}
+		}
+
+		bool full;
+		if (a_settings_get_boolean(VIK_SETTINGS_WIN_FULLSCREEN, &full)) {
+			if (full) {
+				this->show_full_screen = true;
+				gtk_window_fullscreen(GTK_WINDOW(this->vw));
+				GtkWidget *check_box = gtk_ui_manager_get_widget(this->uim, "/ui/MainMenu/View/FullScreen");
+				if (check_box) {
+					gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(check_box), true);
+				}
+			}
+		}
+
+		int position = -1; // Let GTK determine default positioning
+		if (!a_settings_get_integer(VIK_SETTINGS_WIN_PANE_POSITION, &position)) {
+			position = -1;
+		}
+		gtk_paned_set_position(GTK_PANED(this->hpaned), position);
+	}
+
+	gtk_window_set_default_size(GTK_WINDOW(this->vw), width, height);
+
+	this->show_side_panel = true;
+	this->show_statusbar = true;
+	this->show_toolbar = true;
+	this->show_main_menu = true;
+
+	// Only accept Drag and Drop of files onto the viewport
+	gtk_drag_dest_set(GTK_WIDGET(this->viewport->vvp), GTK_DEST_DEFAULT_ALL, NULL, 0, GDK_ACTION_COPY);
+	gtk_drag_dest_add_uri_targets(GTK_WIDGET(this->viewport->vvp));
+	g_signal_connect(GTK_WIDGET(this->viewport->vvp), "drag-data-received", G_CALLBACK(drag_data_received_cb), NULL);
+
+	// Store the thread value so comparisons can be made to determine the gdk update method
+	// Hopefully we are storing the main thread value here :)
+	//  [ATM any window initialization is always be performed by the main thread]
+	this->thread = g_thread_self();
+
+	// Set the default tool + mode
+	gtk_action_activate(gtk_action_group_get_action(this->action_group, "Pan"));
+	gtk_action_activate(gtk_action_group_get_action(this->action_group, "ModeMercator"));
+
+	char *accel_file_name = g_build_filename(a_get_viking_dir(), VIKING_ACCELERATOR_KEY_FILE, NULL);
+	gtk_accel_map_load(accel_file_name);
+	free(accel_file_name);
+
+
+}
+
+
+
+
+
+Window::~Window()
+{
+	a_background_remove_window(this);
+
+	window_list.remove(this);
+
+	gdk_cursor_unref(this->busy_cursor);
+	for (int tt = 0; tt < this->vt->n_tools; tt++) {
+		if (this->vt->tools[tt].ti.destroy) {
+			this->vt->tools[tt].ti.destroy(this->vt->tools[tt].state);
+		}
+	}
+	free(this->vt->tools);
+	free(this->vt);
+
+	vik_toolbar_finalize(this->viking_vtb);
+
+	delete this->viewport;
+	delete this->layers_panel;
+
+	window_finalize((GObject *) this->vw);
+	this->vw = NULL;
 }
 
 

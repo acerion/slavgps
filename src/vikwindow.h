@@ -26,7 +26,6 @@
 #include <glib.h>
 #include <glib-object.h>
 #include <gtk/gtk.h>
-#include <stdbool.h>
 #include <stdint.h>
 
 #include <unordered_map>
@@ -43,15 +42,14 @@
 
 
 
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 
 
-/* Forward declaration. */
-struct _VikTrwLayer;
-struct _VikWindow;
 
 
 #define VIK_WINDOW_TYPE            (vik_window_get_type ())
@@ -71,10 +69,7 @@ struct _VikWindowClass {
 
 GType vik_window_get_type();
 
-// To call from main to start things off:
-VikWindow * vik_window_new_window();
-void vik_window_new_window_finish(VikWindow * vw);
-void vik_window_open_file(VikWindow * vw, char const * filename, bool changefilename);
+
 
 
 
@@ -82,8 +77,10 @@ void vik_window_open_file(VikWindow * vw, char const * filename, bool changefile
 }
 #endif
 
-#define VIK_WINDOW_FROM_WIDGET(x) VIK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(x)))
-VikWindow * vik_window_from_layer(SlavGPS::Layer * layer);
+
+
+
+
 
 
 typedef enum {
@@ -109,6 +106,8 @@ namespace SlavGPS {
 
 
 
+
+
 	/* tool management */
 	typedef struct {
 		struct _VikToolInterface ti;
@@ -116,6 +115,10 @@ namespace SlavGPS {
 		int layer_type;
 	} toolbox_tool_t;
 #define TOOL_LAYER_TYPE_NONE -1
+
+
+
+
 
 	typedef struct {
 		int active_tool;
@@ -132,6 +135,13 @@ namespace SlavGPS {
 	public:
 
 		Window();
+		~Window();
+
+		// To call from main to start things off:
+		static Window * new_window();
+
+
+		void finish_new();
 
 		void draw_redraw();
 		void draw_status();
@@ -303,9 +313,12 @@ namespace SlavGPS {
 
 
 
+#define VIK_WINDOW_FROM_WIDGET(x) VIK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(x)))
+VikWindow * vik_window_from_layer(SlavGPS::Layer * layer);
 SlavGPS::Window * window_from_layer(SlavGPS::Layer * layer);
 SlavGPS::Window * window_from_widget(void * widget);
 SlavGPS::Window * window_from_vik_window(VikWindow * vw);
+
 
 
 

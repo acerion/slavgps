@@ -127,7 +127,6 @@ static GOptionEntry entries[] = {
 
 int main(int argc, char *argv[])
 {
-	VikWindow *first_window;
 	GdkPixbuf *main_icon;
 	bool dashdash_already = false;
 	int i = 0;
@@ -237,28 +236,28 @@ int main(int argc, char *argv[])
 	vu_set_auto_features_on_first_run();
 
 	/* Create the first window */
-	first_window = vik_window_new_window();
+	SlavGPS::Window * first_window = SlavGPS::Window::new_window();
 
-	vu_check_latest_version(GTK_WINDOW(first_window));
+	vu_check_latest_version(GTK_WINDOW(first_window->vw));
 
 	while (++i < argc) {
 		if (strcmp(argv[i],"--") == 0 && !dashdash_already) {
 			dashdash_already = true; /* hack to open '-' */
 		} else {
-			VikWindow * newvw = first_window;
+			SlavGPS::Window * new_window = first_window;
 			bool change_filename = (i == 1);
 
 			// Open any subsequent .vik files in their own window
 			if (i > 1 && check_file_magic_vik(argv[i])) {
-				newvw = vik_window_new_window();
+				new_window = SlavGPS::Window::new_window();
 				change_filename = true;
 			}
 
-			vik_window_open_file(newvw, argv[i], change_filename);
+			new_window->open_file(argv[i], change_filename);
 		}
 	}
 
-	vik_window_new_window_finish(first_window);
+	first_window->finish_new();
 
 	vu_command_line(first_window, latitude, longitude, zoom_level_osm, map_type_id);
 
@@ -282,6 +281,8 @@ int main(int argc, char *argv[])
 
 	// Clean up any temporary files
 	util_remove_all_in_deletion_list();
+
+	delete first_window;
 
 	return 0;
 }

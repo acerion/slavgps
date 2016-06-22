@@ -810,13 +810,12 @@ char* vu_get_time_string ( time_t *time, const char *format, const VikCoord* vc,
  * Values are defaulted in such a manner not to be applied when they haven't been specified
  *
  */
-void vu_command_line(VikWindow * vw, double latitude, double longitude, int zoom_osm_level, MapTypeID cmdline_type_id )
+void vu_command_line(Window * window, double latitude, double longitude, int zoom_osm_level, MapTypeID cmdline_type_id )
 {
-	if (!vw) {
+	if (!window) {
 		return;
 	}
 
-	Window * window = window_from_vik_window(vw);
 	Viewport * viewport = window->get_viewport();
 
 	if ( latitude != 0.0 || longitude != 0.0 ) {
