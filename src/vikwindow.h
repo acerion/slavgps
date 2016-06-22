@@ -102,6 +102,7 @@ namespace SlavGPS {
 
 
 
+	class LayerTRW;
 	class LayersPanel;
 	class Window;
 	struct _VikToolInterface;
@@ -161,20 +162,20 @@ namespace SlavGPS {
 		void save_image_dir(char const * fn, unsigned int w, unsigned int h, double zoom, bool save_as_png, unsigned int tiles_w, unsigned int tiles_h);
 		void draw_to_image_file(img_generation_t img_gen);
 
-		void * get_selected_trw_layer();
-		void set_selected_trw_layer(void * trw);
+		LayerTRW * get_selected_trw_layer();
+		void set_selected_trw_layer(LayerTRW * trw);
 
 		Tracks * get_selected_tracks();
-		void set_selected_tracks(Tracks * tracks, void * trw);
+		void set_selected_tracks(Tracks * tracks, LayerTRW * trw);
 
 		Track * get_selected_track();
-		void set_selected_track(Track * track, void * trw);
+		void set_selected_track(Track * track, LayerTRW * trw);
 
 		Waypoints * get_selected_waypoints();
-		void set_selected_waypoints(Waypoints * waypoints, void * trw);
+		void set_selected_waypoints(Waypoints * waypoints, LayerTRW * trw);
 
 		Waypoint * get_selected_waypoint();
-		void set_selected_waypoint(Waypoint * wp, void * trw);
+		void set_selected_waypoint(Waypoint * wp, LayerTRW * trw);
 
 		/* Return the VikLayer of the selected track(s) or waypoint(s) are in (maybe NULL) */
 		//void * vik_window_get_containing_trw_layer(VikWindow *vw);

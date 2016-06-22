@@ -378,8 +378,7 @@ static int determine_location_thread(Window * window, void * threaddata)
 		if (ans == 2) {
 			// Position found with city precision - so zoom out more
 			zoom = 128.0;
-		}
-		else if (ans == 3) {
+		} else if (ans == 3) {
 			// Position found via country name search - so zoom wayyyy out
 			zoom = 2048.0;
 		}
@@ -387,7 +386,7 @@ static int determine_location_thread(Window * window, void * threaddata)
 		window->viewport->set_zoom(zoom);
 		window->viewport->set_center_latlon(&ll, false);
 
-		char *message = g_strdup_printf(_("Location found: %s"), name);
+		char * message = g_strdup_printf(_("Location found: %s"), name);
 		window->statusbar_update(message, VIK_STATUSBAR_INFO);
 		free(name);
 		free(message);
@@ -496,17 +495,18 @@ void Window::selected_layer(Layer * layer)
 static void window_finalize(GObject * gob)
 {
 	VikWindow * vw = VIK_WINDOW(gob);
-	Window * window = vw->window;
+	if (!vw) {
+		return;
+	}
 
-	g_return_if_fail(vw != NULL);
+	Window * window = vw->window;
 
 	a_background_remove_window(window);
 
 	window_list.remove(window);
 
 	gdk_cursor_unref(window->busy_cursor);
-	int tt;
-	for (tt = 0; tt < window->vt->n_tools; tt++) {
+	for (int tt = 0; tt < window->vt->n_tools; tt++) {
 		if (window->vt->tools[tt].ti.destroy) {
 			window->vt->tools[tt].ti.destroy(window->vt->tools[tt].state);
 		}
@@ -565,11 +565,10 @@ static void zoom_changed_cb(GtkMenuShell * menushell, void * user_data)
  */
 static GtkWidget * create_zoom_menu_all_levels(double mpp)
 {
-	GtkWidget *menu = gtk_menu_new();
-	char *itemLabels[] = { (char *) "0.031", (char *) "0.063", (char *) "0.125", (char *) "0.25", (char *) "0.5", (char *) "1", (char *) "2", (char *) "4", (char *) "8", (char *) "16", (char *) "32", (char *) "64", (char *) "128", (char *) "256", (char *) "512", (char *) "1024", (char *) "2048", (char *) "4096", (char *) "8192", (char *) "16384", (char *) "32768" };
+	GtkWidget * menu = gtk_menu_new();
+	char * itemLabels[] = { (char *) "0.031", (char *) "0.063", (char *) "0.125", (char *) "0.25", (char *) "0.5", (char *) "1", (char *) "2", (char *) "4", (char *) "8", (char *) "16", (char *) "32", (char *) "64", (char *) "128", (char *) "256", (char *) "512", (char *) "1024", (char *) "2048", (char *) "4096", (char *) "8192", (char *) "16384", (char *) "32768" };
 
-	int i;
-	for (i = 0 ; i < G_N_ELEMENTS(itemLabels) ; i++) {
+	for (int i = 0 ; i < G_N_ELEMENTS(itemLabels) ; i++) {
 		GtkWidget *item = gtk_menu_item_new_with_label(itemLabels[i]);
 		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
 		gtk_widget_show(item);
@@ -617,15 +616,18 @@ static GtkWidget * create_zoom_combo_all_levels()
 
 static int zoom_popup_handler(GtkWidget * widget)
 {
-	GtkMenu * menu;
+	if (!widget) {
+		return false;
+	}
 
-	g_return_val_if_fail(widget != NULL, false);
-	g_return_val_if_fail(GTK_IS_MENU (widget), false);
+	if (!GTK_IS_MENU (widget)) {
+		return false;
+	}
 
 	/* The "widget" is the menu that was supplied when
 	 * g_signal_connect_swapped() was called.
 	 */
-	menu = GTK_MENU (widget);
+	GtkMenu * menu = GTK_MENU (widget);
 
 	gtk_menu_popup(menu, NULL, NULL, NULL, NULL,
 		       1, gtk_get_current_event_time());
@@ -647,7 +649,7 @@ static void drag_data_received_cb(GtkWidget * widget,
 {
 	bool success = false;
 
-	if((selection_data != NULL) && (gtk_selection_data_get_length(selection_data) > 0)) {
+	if ((selection_data != NULL) && (gtk_selection_data_get_length(selection_data) > 0)) {
 		switch (target_type) {
 		case TARGET_URIS: {
 			char * str = (char *) gtk_selection_data_get_data(selection_data);
@@ -722,7 +724,6 @@ static void vik_window_init(VikWindow * vw)
 
 	vw->window->action_group = NULL;
 	vw->window->viewport = new Viewport();
-	fprintf(stderr, "%s:%d: %x\n", __FUNCTION__, __LINE__, vw->window->viewport);
 	vw->window->layers_panel = new LayersPanel();
 	vw->window->layers_panel->set_viewport(vw->window->viewport);
 	vw->window->viking_vs = vik_statusbar_new();
@@ -778,9 +779,8 @@ static void vik_window_init(VikWindow * vw)
 		     toolbar_reload_cb,
 		     (void *)vw->window); // This auto packs toolbar into the vbox
 	// Must be performed post toolbar init
-	int i,j;
-	for (i=0; i<VIK_LAYER_NUM_TYPES; i++) {
-		for (j = 0; j < vik_layer_get_interface((VikLayerTypeEnum) i)->tools_count; j++) {
+	for (int i = 0; i < VIK_LAYER_NUM_TYPES; i++) {
+		for (int j = 0; j < vik_layer_get_interface((VikLayerTypeEnum) i)->tools_count; j++) {
 			toolbar_action_set_sensitive(vw->window->viking_vtb, vik_layer_get_interface((VikLayerTypeEnum) i)->tools[j].radioActionEntry.name, false);
 		}
 	}
@@ -906,7 +906,7 @@ static void vik_window_init(VikWindow * vw)
 
 static VikWindow * window_new()
 {
-	VikWindow * w = VIK_WINDOW (g_object_new(VIK_WINDOW_TYPE, NULL));
+	VikWindow * w = (VikWindow *) g_object_new(VIK_WINDOW_TYPE, NULL);
 	return w;
 }
 
@@ -1026,12 +1026,17 @@ static bool delete_event(VikWindow * vw)
 							   "Your changes will be lost if you don't save them."),
 							 window->get_filename()));
 		gtk_dialog_add_buttons(dia, _("Don't Save"), GTK_RESPONSE_NO, GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL, GTK_STOCK_SAVE, GTK_RESPONSE_YES, NULL);
-		switch (gtk_dialog_run(dia))
-			{
-			case GTK_RESPONSE_NO: gtk_widget_destroy(GTK_WIDGET(dia)); return false;
-			case GTK_RESPONSE_CANCEL: gtk_widget_destroy(GTK_WIDGET(dia)); return true;
-			default: gtk_widget_destroy(GTK_WIDGET(dia)); return ! save_file(NULL, vw->window);
-			}
+		switch (gtk_dialog_run(dia)) {
+		case GTK_RESPONSE_NO:
+			gtk_widget_destroy(GTK_WIDGET(dia));
+			return false;
+		case GTK_RESPONSE_CANCEL:
+			gtk_widget_destroy(GTK_WIDGET(dia));
+			return true;
+		default:
+			gtk_widget_destroy(GTK_WIDGET(dia));
+			return !save_file(NULL, vw->window);
+		}
 	}
 
 	if (window_count == 1) {
@@ -1167,7 +1172,7 @@ void Window::draw_redraw()
 	this->trigger = NULL;
 	VikLayer *old_trigger = (VikLayer *) this->viewport->get_trigger();
 
-	if (! new_trigger) {
+	if (!new_trigger) {
 		; /* do nothing -- have to redraw everything. */
 	} else if ((old_trigger != new_trigger) || !vik_coord_equals(&old_center, &this->trigger_center) || (((Layer *) new_trigger->layer)->type == VIK_LAYER_AGGREGATE)) {
 		this->viewport->set_trigger(new_trigger); /* todo: set to half_drawn mode if new trigger is above old */
@@ -1202,12 +1207,17 @@ void Window::draw_redraw()
 
 bool draw_buf_done = true;
 
-static int draw_buf(void * data)
+typedef struct {
+	GdkDrawable * gdk_window;
+	GdkGC * gdk_style;
+	GdkPixmap * pixmap;
+} draw_buf_data_t;
+
+static int draw_buf(draw_buf_data_t * data)
 {
-	void * *pass_along = (void **) data;
 	gdk_threads_enter();
-	gdk_draw_drawable((GdkDrawable *) pass_along[0], (GdkGC *) pass_along[1],
-			  (GdkDrawable *) pass_along[2], 0, 0, 0, 0, -1, -1);
+	gdk_draw_drawable(data->gdk_window, data->gdk_style, data->pixmap,
+			  0, 0, 0, 0, -1, -1);
 	draw_buf_done = true;
 	gdk_threads_leave();
 	return false;
@@ -1216,7 +1226,7 @@ static int draw_buf(void * data)
 
 /* Mouse event handlers ************************************************************************/
 
-static void vik_window_pan_click (Window * window, GdkEventButton *event)
+static void vik_window_pan_click(Window * window, GdkEventButton * event)
 {
 	/* set panning origin */
 	window->pan_move = false;
@@ -1224,7 +1234,7 @@ static void vik_window_pan_click (Window * window, GdkEventButton *event)
 	window->pan_y = (int) event->y;
 }
 
-static void draw_click_cb(Window * window, GdkEventButton *event)
+static void draw_click_cb(Window * window, GdkEventButton * event)
 {
 	gtk_widget_grab_focus(GTK_WIDGET(window->viewport->vvp));
 
@@ -1242,7 +1252,7 @@ static void draw_click_cb(Window * window, GdkEventButton *event)
 	}
 }
 
-static void vik_window_pan_move(Window * window, GdkEventMotion *event)
+static void vik_window_pan_move(Window * window, GdkEventMotion * event)
 {
 	if (window->pan_x != -1) {
 		window->viewport->set_center_screen(window->viewport->get_width()/2 - event->x + window->pan_x,
@@ -1275,7 +1285,7 @@ static void get_location_strings(Window * window, struct UTM utm, char **lat, ch
 	}
 }
 
-static void draw_mouse_motion_cb(Window * window, GdkEventMotion *event)
+static void draw_mouse_motion_cb(Window * window, GdkEventMotion * event)
 {
 	static VikCoord coord;
 	static struct UTM utm;
@@ -1357,7 +1367,7 @@ static bool vik_window_pan_timeout(Window * window)
 	return false;
 }
 
-static void vik_window_pan_release(Window * window, GdkEventButton *event)
+static void vik_window_pan_release(Window * window, GdkEventButton * event)
 {
 	bool do_draw = true;
 
@@ -1392,7 +1402,7 @@ static void vik_window_pan_release(Window * window, GdkEventButton *event)
 	}
 }
 
-static void draw_release_cb(Window * window, GdkEventButton *event)
+static void draw_release_cb(Window * window, GdkEventButton * event)
 {
 	gtk_widget_grab_focus(GTK_WIDGET(window->viewport->vvp));
 
@@ -1409,7 +1419,6 @@ static void draw_release_cb(Window * window, GdkEventButton *event)
 
 static void draw_scroll_cb(Window * window, GdkEventScroll * event)
 {
-	fprintf(stderr, "scroll\n");
 	window->draw_scroll(event);
 }
 
@@ -1480,7 +1489,6 @@ static void draw_ruler(Viewport * viewport, GdkDrawable *d, GdkGC *gc, int x1, i
 	double s = sin(DEG2RAD(15.0));
 	double angle;
 	double baseangle = 0;
-	int i;
 
 	/* draw line with arrow ends */
 	{
@@ -1517,11 +1525,11 @@ static void draw_ruler(Viewport * viewport, GdkDrawable *d, GdkGC *gc, int x1, i
 
 	gdk_gc_copy(thickgc, gc);
 	gdk_gc_set_line_attributes(thickgc, 2, GDK_LINE_SOLID, GDK_CAP_BUTT, GDK_JOIN_MITER);
-	for (i=0; i<180; i++) {
+	for (int i = 0; i < 180; i++) {
 		c = cos(DEG2RAD(i)*2 + baseangle);
 		s = sin(DEG2RAD(i)*2 + baseangle);
 
-		if (i%5) {
+		if (i % 5) {
 			gdk_draw_line(d, gc, x1 + CR*c, y1 + CR*s, x1 + (CR+CW)*c, y1 + (CR+CW)*s);
 		} else {
 			double ticksize = 2*CW;
@@ -1653,13 +1661,13 @@ static void ruler_destroy(ruler_tool_state_t *s)
 	free(s);
 }
 
-static VikLayerToolFuncStatus ruler_click(Layer * layer, GdkEventButton *event, ruler_tool_state_t *s)
+static VikLayerToolFuncStatus ruler_click(Layer * layer, GdkEventButton * event, ruler_tool_state_t *s)
 {
 	struct LatLon ll;
 	VikCoord coord;
 	char *temp;
 	if (event->button == 1) {
-		char *lat=NULL, *lon=NULL;
+		char *lat = NULL, *lon = NULL;
 		s->viewport->screen_to_coord((int) event->x, (int) event->y, &coord);
 		vik_coord_to_latlon(&coord, &ll);
 		a_coords_latlon_to_string(&ll, &lat, &lon);
@@ -1697,7 +1705,7 @@ static VikLayerToolFuncStatus ruler_click(Layer * layer, GdkEventButton *event, 
 	return VIK_LAYER_TOOL_ACK;
 }
 
-static VikLayerToolFuncStatus ruler_move(Layer * layer, GdkEventMotion *event, ruler_tool_state_t * s)
+static VikLayerToolFuncStatus ruler_move(Layer * layer, GdkEventMotion * event, ruler_tool_state_t * s)
 {
 	Window * window = s->window;
 
@@ -1706,14 +1714,15 @@ static VikLayerToolFuncStatus ruler_move(Layer * layer, GdkEventMotion *event, r
 	char *temp;
 
 	if (s->has_oldcoord) {
-		int oldx, oldy, w1, h1, w2, h2;
 		static GdkPixmap *buf = NULL;
-		char *lat=NULL, *lon=NULL;
-		w1 = s->viewport->get_width();
-		h1 = s->viewport->get_height();
+		char *lat = NULL, *lon = NULL;
+		int w1 = s->viewport->get_width();
+		int h1 = s->viewport->get_height();
 		if (!buf) {
 			buf = gdk_pixmap_new(gtk_widget_get_window(GTK_WIDGET(s->viewport->vvp)), w1, h1, -1);
 		}
+
+		int w2, h2;
 		gdk_drawable_get_size(buf, &w2, &h2);
 		if (w1 != w2 || h1 != h2) {
 			g_object_unref(G_OBJECT (buf));
@@ -1722,17 +1731,18 @@ static VikLayerToolFuncStatus ruler_move(Layer * layer, GdkEventMotion *event, r
 
 		s->viewport->screen_to_coord((int) event->x, (int) event->y, &coord);
 		vik_coord_to_latlon(&coord, &ll);
+		int oldx, oldy;
 		s->viewport->coord_to_screen(&s->oldcoord, &oldx, &oldy);
 
 		gdk_draw_drawable(buf, gtk_widget_get_style(GTK_WIDGET(s->viewport->vvp))->black_gc,
 				  s->viewport->get_pixmap(), 0, 0, 0, 0, -1, -1);
 		draw_ruler(s->viewport, buf, gtk_widget_get_style(GTK_WIDGET(s->viewport->vvp))->black_gc, oldx, oldy, event->x, event->y, vik_coord_diff(&coord, &(s->oldcoord)));
 		if (draw_buf_done) {
-			static void * pass_along[3];
-			pass_along[0] = gtk_widget_get_window(GTK_WIDGET(s->viewport->vvp));
-			pass_along[1] = gtk_widget_get_style(GTK_WIDGET(s->viewport->vvp))->black_gc;
-			pass_along[2] = buf;
-			g_idle_add_full (G_PRIORITY_HIGH_IDLE + 10, draw_buf, pass_along, NULL);
+			static draw_buf_data_t pass_along;
+			pass_along.gdk_window = gtk_widget_get_window(GTK_WIDGET(s->viewport->vvp));
+			pass_along.gdk_style = gtk_widget_get_style(GTK_WIDGET(s->viewport->vvp))->black_gc;
+			pass_along.pixmap = buf;
+			g_idle_add_full (G_PRIORITY_HIGH_IDLE + 10, (GSourceFunc) draw_buf, (void *) &pass_along, NULL);
 			draw_buf_done = false;
 		}
 		a_coords_latlon_to_string(&ll, &lat, &lon);
@@ -1757,7 +1767,7 @@ static VikLayerToolFuncStatus ruler_move(Layer * layer, GdkEventMotion *event, r
 	return VIK_LAYER_TOOL_ACK;
 }
 
-static VikLayerToolFuncStatus ruler_release(Layer * layer, GdkEventButton *event, ruler_tool_state_t *s)
+static VikLayerToolFuncStatus ruler_release(Layer * layer, GdkEventButton * event, ruler_tool_state_t *s)
 {
 	return VIK_LAYER_TOOL_ACK;
 }
@@ -1815,17 +1825,16 @@ typedef struct {
  */
 static void zoomtool_resize_pixmap(zoom_tool_state_t *zts)
 {
-	int w1, h1, w2, h2;
-
 	// Allocate a drawing area the size of the viewport
-	w1 = zts->window->viewport->get_width();
-	h1 = zts->window->viewport->get_height();
+	int w1 = zts->window->viewport->get_width();
+	int h1 = zts->window->viewport->get_height();
 
 	if (!zts->pixmap) {
 		// Totally new
 		zts->pixmap = gdk_pixmap_new(gtk_widget_get_window(GTK_WIDGET(zts->window->viewport->vvp)), w1, h1, -1);
 	}
 
+	int w2, h2;
 	gdk_drawable_get_size(zts->pixmap, &w2, &h2);
 
 	if (w1 != w2 || h1 != h2) {
@@ -1854,13 +1863,12 @@ static void zoomtool_destroy(zoom_tool_state_t *zts)
 	free(zts);
 }
 
-static VikLayerToolFuncStatus zoomtool_click(Layer * layer, GdkEventButton *event, zoom_tool_state_t *zts)
+static VikLayerToolFuncStatus zoomtool_click(Layer * layer, GdkEventButton * event, zoom_tool_state_t *zts)
 {
 	zts->window->modified = true;
 	unsigned int modifiers = event->state & (GDK_SHIFT_MASK | GDK_CONTROL_MASK);
 
 	VikCoord coord;
-	int x, y;
 	int center_x = zts->window->viewport->get_width() / 2;
 	int center_y = zts->window->viewport->get_height() / 2;
 
@@ -1900,6 +1908,7 @@ static VikLayerToolFuncStatus zoomtool_click(Layer * layer, GdkEventButton *even
 		} else if (event->button == 3) {
 			zts->window->viewport->zoom_out();
 		}
+		int x, y;
 		zts->window->viewport->coord_to_screen(&coord, &x, &y);
 		zts->window->viewport->set_center_screen(center_x + (x - event->x),
 						     center_y + (y - event->y));
@@ -1912,7 +1921,7 @@ static VikLayerToolFuncStatus zoomtool_click(Layer * layer, GdkEventButton *even
 	return VIK_LAYER_TOOL_ACK;
 }
 
-static VikLayerToolFuncStatus zoomtool_move(Layer * layer, GdkEventMotion *event, zoom_tool_state_t *zts)
+static VikLayerToolFuncStatus zoomtool_move(Layer * layer, GdkEventMotion * event, zoom_tool_state_t *zts)
 {
 	unsigned int modifiers = event->state & (GDK_SHIFT_MASK | GDK_CONTROL_MASK);
 
@@ -1947,11 +1956,11 @@ static VikLayerToolFuncStatus zoomtool_move(Layer * layer, GdkEventMotion *event
 
 		// Only actually draw when there's time to do so
 		if (draw_buf_done) {
-			static void * pass_along[3];
-			pass_along[0] = gtk_widget_get_window(GTK_WIDGET(zts->window->viewport->vvp));
-			pass_along[1] = gtk_widget_get_style(GTK_WIDGET(zts->window->viewport->vvp))->black_gc;
-			pass_along[2] = zts->pixmap;
-			g_idle_add_full (G_PRIORITY_HIGH_IDLE + 10, draw_buf, pass_along, NULL);
+			static draw_buf_data_t pass_along;
+			pass_along.gdk_window = gtk_widget_get_window(GTK_WIDGET(zts->window->viewport->vvp));
+			pass_along.gdk_style = gtk_widget_get_style(GTK_WIDGET(zts->window->viewport->vvp))->black_gc;
+			pass_along.pixmap = zts->pixmap;
+			g_idle_add_full (G_PRIORITY_HIGH_IDLE + 10, (GSourceFunc) draw_buf, &pass_along, NULL);
 			draw_buf_done = false;
 		}
 	} else {
@@ -1961,7 +1970,7 @@ static VikLayerToolFuncStatus zoomtool_move(Layer * layer, GdkEventMotion *event
 	return VIK_LAYER_TOOL_ACK;
 }
 
-static VikLayerToolFuncStatus zoomtool_release(Layer * layer, GdkEventButton *event, zoom_tool_state_t *zts)
+static VikLayerToolFuncStatus zoomtool_release(Layer * layer, GdkEventButton * event, zoom_tool_state_t *zts)
 {
 	unsigned int modifiers = event->state & (GDK_SHIFT_MASK | GDK_CONTROL_MASK);
 
@@ -2145,7 +2154,6 @@ static void * selecttool_create(Window * window, Viewport * viewport)
 	tool_ed_t *t = (tool_ed_t *) malloc(1 * sizeof (tool_ed_t));
 	t->window = window;
 	t->viewport = viewport;
-	fprintf(stderr, "%s:%d: %x\n", __FUNCTION__, __LINE__, t->viewport);
 	t->trw = NULL;
 	t->is_waypoint = false;
 	return t;
@@ -2257,7 +2265,7 @@ static VikLayerToolFuncStatus selecttool_move(Layer * layer, GdkEventMotion * ev
 	return VIK_LAYER_TOOL_ACK;
 }
 
-static VikLayerToolFuncStatus selecttool_release(Layer * layer, GdkEventButton *event, tool_ed_t *t)
+static VikLayerToolFuncStatus selecttool_release(Layer * layer, GdkEventButton * event, tool_ed_t *t)
 {
 	if (t->window->select_move) {
 		// Don't care about vl here
@@ -2476,8 +2484,7 @@ static void help_help_cb(GtkAction * a, Window * window)
 #ifdef WINDOWS
 	ShellExecute(NULL, "open", ""PACKAGE".pdf", NULL, NULL, SW_SHOWNORMAL);
 #else /* WINDOWS */
-	char *uri;
-	uri = g_strdup_printf("ghelp:%s", PACKAGE);
+	char * uri = g_strdup_printf("ghelp:%s", PACKAGE);
 	GError *error = NULL;
 	bool show = gtk_show_uri(NULL, uri, GDK_CURRENT_TIME, &error);
 	if (!show && !error)
@@ -2545,7 +2552,9 @@ void Window::toggle_main_menu()
 // Only for 'view' toggle menu widgets ATM.
 GtkWidget * get_show_widget_by_name(Window * window, char const * name)
 {
-	g_return_val_if_fail(name != NULL, NULL);
+	if (!name) {
+		return NULL;
+	}
 
 	// ATM only FullScreen is *not* in SetShow path
 	char *path;
@@ -2670,13 +2679,12 @@ static void help_cache_info_cb(GtkAction * a, Window * window)
 	// NB: No i18n as this is just for debug
 	int byte_size = a_mapcache_get_size();
 	char *msg_sz = NULL;
-	char *msg = NULL;
 #if GLIB_CHECK_VERSION(2,30,0)
 	msg_sz = g_format_size_full(byte_size, G_FORMAT_SIZE_LONG_FORMAT);
 #else
 	msg_sz = g_format_size_for_display(byte_size);
 #endif
-	msg = g_strdup_printf("Map Cache size is %s with %d items", msg_sz, a_mapcache_get_count());
+	char * msg = g_strdup_printf("Map Cache size is %s with %d items", msg_sz, a_mapcache_get_count());
 	a_dialog_info_msg_extra(GTK_WINDOW(window->vw), "%s", msg);
 	free(msg_sz);
 	free(msg);
@@ -2808,7 +2816,7 @@ static void toolbox_add_tool(toolbox_tools_t *vt, VikToolInterface *vti, int lay
 static int toolbox_get_tool(toolbox_tools_t *vt, char const *tool_name)
 {
 	int i;
-	for (i=0; i<vt->n_tools; i++) {
+	for (i = 0; i < vt->n_tools; i++) {
 		if (!strcmp(tool_name, vt->tools[i].ti.radioActionEntry.name)) {
 			break;
 		}
@@ -2864,7 +2872,7 @@ static const GdkCursor *toolbox_get_cursor(toolbox_tools_t *vt, char const *tool
 	return t->ti.cursor;
 }
 
-static void toolbox_click(toolbox_tools_t *vt, GdkEventButton *event)
+static void toolbox_click(toolbox_tools_t *vt, GdkEventButton * event)
 {
 	Layer * layer = vt->window->layers_panel->get_selected();
 #if 0
@@ -2880,7 +2888,7 @@ static void toolbox_click(toolbox_tools_t *vt, GdkEventButton *event)
 	}
 }
 
-static void toolbox_move(toolbox_tools_t *vt, GdkEventMotion *event)
+static void toolbox_move(toolbox_tools_t *vt, GdkEventMotion * event)
 {
 	Layer * layer = vt->window->layers_panel->get_selected();
 #if 0
@@ -2897,7 +2905,7 @@ static void toolbox_move(toolbox_tools_t *vt, GdkEventMotion *event)
 	}
 }
 
-static void toolbox_release(toolbox_tools_t *vt, GdkEventButton *event)
+static void toolbox_release(toolbox_tools_t *vt, GdkEventButton * event)
 {
 	Layer * layer = vt->window->layers_panel->get_selected();
 #if 0
@@ -2934,8 +2942,6 @@ static void toolbar_sync(Window * window, char const *name, bool state)
 // Note old is not used
 static void menu_cb(GtkAction *old, GtkAction * a, Window * window)
 {
-	fprintf(stderr, "%s\n", __FUNCTION__);
-
 	// Ensure Toolbar kept in sync
 	char const *name = gtk_action_get_name(a);
 	toolbar_sync(window, name, true);
@@ -3002,11 +3008,18 @@ GtkWidget * Window::get_drawmode_button(VikViewportDrawMode mode)
 	char *buttonname;
 	switch (mode) {
 #ifdef VIK_CONFIG_EXPEDIA
-	case VIK_VIEWPORT_DRAWMODE_EXPEDIA: buttonname = (char *) "/ui/MainMenu/View/ModeExpedia"; break;
+	case VIK_VIEWPORT_DRAWMODE_EXPEDIA:
+		buttonname = (char *) "/ui/MainMenu/View/ModeExpedia";
+		break;
 #endif
-	case VIK_VIEWPORT_DRAWMODE_MERCATOR: buttonname = (char *) "/ui/MainMenu/View/ModeMercator"; break;
-	case VIK_VIEWPORT_DRAWMODE_LATLON: buttonname = (char *) "/ui/MainMenu/View/ModeLatLon"; break;
-	default: buttonname = (char *) "/ui/MainMenu/View/ModeUTM";
+	case VIK_VIEWPORT_DRAWMODE_MERCATOR:
+		buttonname = (char *) "/ui/MainMenu/View/ModeMercator";
+		break;
+	case VIK_VIEWPORT_DRAWMODE_LATLON:
+		buttonname = (char *) "/ui/MainMenu/View/ModeLatLon";
+		break;
+	default:
+		buttonname = (char *) "/ui/MainMenu/View/ModeUTM";
 	}
 	mode_button = gtk_ui_manager_get_widget(this->uim, buttonname);
 	assert(mode_button);
@@ -3030,9 +3043,7 @@ bool Window::get_pan_move()
 
 static void on_activate_recent_item(GtkRecentChooser *chooser, Window * window)
 {
-	char * filename = NULL;
-
-	filename = gtk_recent_chooser_get_current_uri(chooser);
+	char * filename = gtk_recent_chooser_get_current_uri(chooser);
 	if (filename != NULL) {
 		GFile * file = g_file_new_for_uri(filename);
 		char * path = g_file_get_path(file);
@@ -3053,21 +3064,17 @@ static void on_activate_recent_item(GtkRecentChooser *chooser, Window * window)
 
 void Window::setup_recent_files()
 {
-	GtkRecentManager *manager;
-	GtkRecentFilter *filter;
-	GtkWidget *menu, *menu_item;
-
-	filter = gtk_recent_filter_new();
+	GtkRecentFilter * filter = gtk_recent_filter_new();
 	/* gtk_recent_filter_add_application (filter, g_get_application_name()); */
 	gtk_recent_filter_add_group(filter, "viking");
 
-	manager = gtk_recent_manager_get_default();
-	menu = gtk_recent_chooser_menu_new_for_manager(manager);
+	GtkRecentManager * manager = gtk_recent_manager_get_default();
+	GtkWidget * menu = gtk_recent_chooser_menu_new_for_manager(manager);
 	gtk_recent_chooser_set_sort_type(GTK_RECENT_CHOOSER (menu), GTK_RECENT_SORT_MRU);
 	gtk_recent_chooser_add_filter(GTK_RECENT_CHOOSER (menu), filter);
 	gtk_recent_chooser_set_limit(GTK_RECENT_CHOOSER (menu), a_vik_get_recent_number_files());
 
-	menu_item = gtk_ui_manager_get_widget(this->uim, "/ui/MainMenu/File/OpenRecentFile");
+	GtkWidget * menu_item = gtk_ui_manager_get_widget(this->uim, "/ui/MainMenu/File/OpenRecentFile");
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM (menu_item), menu);
 
 	g_signal_connect(G_OBJECT (menu), "item-activated",
@@ -3361,8 +3368,7 @@ static bool save_file_as(GtkAction * a, Window * window)
 		gtk_file_chooser_set_current_folder_uri(GTK_FILE_CHOOSER(dialog), last_folder_files_uri);
 	}
 
-	GtkFileFilter *filter;
-	filter = gtk_file_filter_new();
+	GtkFileFilter * filter = gtk_file_filter_new();
 	gtk_file_filter_set_name(filter, _("All"));
 	gtk_file_filter_add_pattern(filter, "*");
 	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog), filter);
@@ -3380,9 +3386,10 @@ static bool save_file_as(GtkAction * a, Window * window)
 
 
 	// Auto append / replace extension with '.vik' to the suggested file name as it's going to be a Viking File
-	char* auto_save_name = g_strdup(window->get_filename());
-	if (! a_file_check_ext(auto_save_name, ".vik"))
+	char * auto_save_name = g_strdup(window->get_filename());
+	if (!a_file_check_ext(auto_save_name, ".vik")) {
 		auto_save_name = g_strconcat(auto_save_name, ".vik", NULL);
+	}
 
 	gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(dialog), auto_save_name);
 
@@ -3670,11 +3677,10 @@ static void mapcache_flush_cb(GtkAction * a, Window * window)
 
 static void menu_copy_centre_cb(GtkAction * a, Window * window)
 {
-	const VikCoord* coord;
-	struct UTM utm;
 	char *lat = NULL, *lon = NULL;
 
-	coord = window->viewport->get_center();
+	const VikCoord * coord = window->viewport->get_center();
+	struct UTM utm;
 	vik_coord_to_utm(coord, &utm);
 
 	bool full_format = false;
@@ -3708,7 +3714,7 @@ static void layer_defaults_cb(GtkAction * a, Window * window)
 		return; // Internally broken :(
 	}
 
-	if (! a_layer_defaults_show_window(GTK_WINDOW(window->vw), texts[1])) {
+	if (!a_layer_defaults_show_window(GTK_WINDOW(window->vw), texts[1])) {
 		a_dialog_info_msg(GTK_WINDOW(window->vw), _("This layer has no configurable properties."));
 	}
 	// NB no update needed
@@ -3946,17 +3952,14 @@ void Window::save_image_dir(char const * fn, unsigned int w, unsigned int h, dou
 {
 	unsigned long size = sizeof(char) * (strlen(fn) + 15);
 	char *name_of_file = (char *) malloc(size);
-	unsigned int x = 1, y = 1;
-	struct UTM utm_orig, utm;
+	struct UTM utm;
 
 	/* *** copied from above *** */
-	GdkPixbuf *pixbuf_to_save;
-	double old_xmpp, old_ympp;
-	GError *error = NULL;
+
 
 	/* backup old zoom & set new */
-	old_xmpp = this->viewport->get_xmpp();
-	old_ympp = this->viewport->get_ympp();
+	double old_xmpp = this->viewport->get_xmpp();
+	double old_ympp = this->viewport->get_ympp();
 	this->viewport->set_zoom(zoom);
 
 	/* reset width and height: do this only once for all images (same size) */
@@ -3969,10 +3972,11 @@ void Window::save_image_dir(char const * fn, unsigned int w, unsigned int h, dou
 		fprintf(stderr, "WARNING: %s: Failed to create directory %s\n", __FUNCTION__, fn);
 	}
 
-	utm_orig = *((const struct UTM *) this->viewport->get_center());
+	struct UTM utm_orig = *((const struct UTM *) this->viewport->get_center());
 
-	for (y = 1; y <= tiles_h; y++) {
-		for (x = 1; x <= tiles_w; x++) {
+	GError *error = NULL;
+	for (unsigned int y = 1; y <= tiles_h; y++) {
+		for (unsigned int x = 1; x <= tiles_w; x++) {
 			snprintf(name_of_file, size, "%s%cy%d-x%d.%s", fn, G_DIR_SEPARATOR, y, x, save_as_png ? "png" : "jpg");
 			utm = utm_orig;
 			if (tiles_w & 0x1) {
@@ -3993,7 +3997,7 @@ void Window::save_image_dir(char const * fn, unsigned int w, unsigned int h, dou
 			this->draw_redraw();
 
 			/* save buffer as file. */
-			pixbuf_to_save = gdk_pixbuf_get_from_drawable(NULL, GDK_DRAWABLE (this->viewport->get_pixmap()), NULL, 0, 0, 0, 0, w, h);
+			GdkPixbuf * pixbuf_to_save = gdk_pixbuf_get_from_drawable(NULL, GDK_DRAWABLE (this->viewport->get_pixmap()), NULL, 0, 0, 0, 0, w, h);
 			gdk_pixbuf_save(pixbuf_to_save, name_of_file, save_as_png ? "png" : "jpeg", &error, NULL);
 			if (error) {
 				char *msg = g_strdup_printf(_("Unable to write to file %s: %s"), name_of_file, error->message);
@@ -4015,7 +4019,7 @@ void Window::save_image_dir(char const * fn, unsigned int w, unsigned int h, dou
 	free(name_of_file);
 }
 
-static void draw_to_image_file_current_window_cb(GtkWidget* widget,GdkEventButton *event,void * *pass_along)
+static void draw_to_image_file_current_window_cb(GtkWidget* widget,GdkEventButton * event, void ** pass_along)
 {
 	Window * window = (Window *) pass_along[0];
 	GtkSpinButton *width_spin = GTK_SPIN_BUTTON(pass_along[1]), *height_spin = GTK_SPIN_BUTTON(pass_along[2]);
@@ -4024,14 +4028,13 @@ static void draw_to_image_file_current_window_cb(GtkWidget* widget,GdkEventButto
 	double zoom = pow(2, active-2);
 
 	double width_min, width_max, height_min, height_max;
-	int width, height;
 
 	gtk_spin_button_get_range(width_spin, &width_min, &width_max);
 	gtk_spin_button_get_range(height_spin, &height_min, &height_max);
 
 	/* TODO: support for xzoom and yzoom values */
-	width = window->viewport->get_width() * window->viewport->get_xmpp() / zoom;
-	height = window->viewport->get_height() * window->viewport->get_xmpp() / zoom;
+	int width = window->viewport->get_width() * window->viewport->get_xmpp() / zoom;
+	int height = window->viewport->get_height() * window->viewport->get_xmpp() / zoom;
 
 	if (width > width_max || width < width_min || height > height_max || height < height_min) {
 		a_dialog_info_msg(GTK_WINDOW(window->vw), _("Viewable region outside allowable pixel size bounds for image. Clipping width/height values."));
@@ -4041,7 +4044,7 @@ static void draw_to_image_file_current_window_cb(GtkWidget* widget,GdkEventButto
 	gtk_spin_button_set_value(height_spin, height);
 }
 
-static void draw_to_image_file_total_area_cb(GtkSpinButton *spinbutton, void * *pass_along)
+static void draw_to_image_file_total_area_cb(GtkSpinButton *spinbutton, void ** pass_along)
 {
 	GtkSpinButton *width_spin = GTK_SPIN_BUTTON(pass_along[1]), *height_spin = GTK_SPIN_BUTTON(pass_along[2]);
 
@@ -4049,9 +4052,8 @@ static void draw_to_image_file_total_area_cb(GtkSpinButton *spinbutton, void * *
 	double zoom = pow(2, active-2);
 
 	char *label_text;
-	double w, h;
-	w = gtk_spin_button_get_value(width_spin) * zoom;
-	h = gtk_spin_button_get_value(height_spin) * zoom;
+	double w = gtk_spin_button_get_value(width_spin) * zoom;
+	double h = gtk_spin_button_get_value(height_spin) * zoom;
 	if (pass_along[4]) { /* save many images; find TOTAL area covered */
 		w *= gtk_spin_button_get_value(GTK_SPIN_BUTTON(pass_along[4]));
 		h *= gtk_spin_button_get_value(GTK_SPIN_BUTTON(pass_along[5]));
@@ -4179,25 +4181,20 @@ void Window::draw_to_image_file(img_generation_t img_gen)
 							 GTK_STOCK_OK,
 							 GTK_RESPONSE_ACCEPT,
 							 NULL);
-	GtkWidget *width_label, *width_spin, *height_label, *height_spin;
-	GtkWidget *current_window_button;
-	void * current_window_pass_along[7];
-	GtkWidget *zoom_label, *zoom_combo;
-	GtkWidget *total_size_label;
 
 	// only used for VW_GEN_DIRECTORY_OF_IMAGES
 	GtkWidget *tiles_width_spin = NULL, *tiles_height_spin = NULL;
 
-	width_label = gtk_label_new(_("Width(pixels):"));
-	width_spin = gtk_spin_button_new(GTK_ADJUSTMENT(gtk_adjustment_new(this->draw_image_width, 10, 50000, 10, 100, 0)), 10, 0);
-	height_label = gtk_label_new(_("Height (pixels):"));
-	height_spin = gtk_spin_button_new(GTK_ADJUSTMENT(gtk_adjustment_new(this->draw_image_height, 10, 50000, 10, 100, 0)), 10, 0);
+	GtkWidget * width_label = gtk_label_new(_("Width(pixels):"));
+	GtkWidget * width_spin = gtk_spin_button_new(GTK_ADJUSTMENT(gtk_adjustment_new(this->draw_image_width, 10, 50000, 10, 100, 0)), 10, 0);
+	GtkWidget * height_label = gtk_label_new(_("Height (pixels):"));
+	GtkWidget * height_spin = gtk_spin_button_new(GTK_ADJUSTMENT(gtk_adjustment_new(this->draw_image_height, 10, 50000, 10, 100, 0)), 10, 0);
 #ifdef WINDOWS
 	GtkWidget *win_warning_label = gtk_label_new(_("WARNING: USING LARGE IMAGES OVER 10000x10000\nMAY CRASH THE PROGRAM!"));
 #endif
-	zoom_label = gtk_label_new(_("Zoom (meters per pixel):"));
+	GtkWidget * zoom_label = gtk_label_new(_("Zoom (meters per pixel):"));
 	/* TODO: separate xzoom and yzoom factors */
-	zoom_combo = create_zoom_combo_all_levels();
+	GtkWidget * zoom_combo = create_zoom_combo_all_levels();
 
 	double mpp = this->viewport->get_xmpp();
 	int active = 2 + round(log(mpp) / log(2));
@@ -4211,9 +4208,10 @@ void Window::draw_to_image_file(img_generation_t img_gen)
 	}
 	gtk_combo_box_set_active(GTK_COMBO_BOX(zoom_combo), active);
 
-	total_size_label = gtk_label_new(NULL);
+	GtkWidget * total_size_label = gtk_label_new(NULL);
 
-	current_window_button = gtk_button_new_with_label(_("Area in current viewable window"));
+	GtkWidget * current_window_button = gtk_button_new_with_label(_("Area in current viewable window"));
+	void * current_window_pass_along[7];
 	current_window_pass_along[0] = this;
 	current_window_pass_along[1] = width_spin;
 	current_window_pass_along[2] = height_spin;
@@ -4375,8 +4373,7 @@ static void import_kmz_file_cb(GtkAction * a, Window * window)
 							 GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
 							 NULL);
 
-	GtkFileFilter *filter;
-	filter = gtk_file_filter_new();
+	GtkFileFilter * filter = gtk_file_filter_new();
 	gtk_file_filter_set_name(filter, _("KMZ"));
 	gtk_file_filter_add_mime_type(filter, "vnd.google-earth.kmz");
 	gtk_file_filter_add_pattern(filter, "*.kmz");
@@ -4544,75 +4541,75 @@ static GtkActionEntry entries[] = {
 	{ "Exttools", NULL, N_("_Webtools"), 0, 0, 0 },
 	{ "Help",     NULL, N_("_Help"),     0, 0, 0 },
 
-	{ "New",       GTK_STOCK_NEW,          N_("_New"),                          "<control>N", N_("New file"),                                     (GCallback)newwindow_cb          },
-	{ "Open",      GTK_STOCK_OPEN,         N_("_Open..."),                         "<control>O", N_("Open a file"),                                  (GCallback)load_file             },
-	{ "OpenRecentFile", NULL,              N_("Open _Recent File"),         NULL,         NULL,                                               (GCallback)NULL },
-	{ "Append",    GTK_STOCK_ADD,          N_("Append _File..."),           NULL,         N_("Append data from a different file"),            (GCallback)load_file             },
-	{ "Export",    GTK_STOCK_CONVERT,      N_("_Export All"),               NULL,         N_("Export All TrackWaypoint Layers"),              (GCallback)NULL                  },
-	{ "ExportGPX", NULL,                   N_("_GPX..."),           	      NULL,         N_("Export as GPX"),                                (GCallback)export_to_gpx_cb         },
-	{ "Acquire",   GTK_STOCK_GO_DOWN,      N_("A_cquire"),                  NULL,         NULL,                                               (GCallback)NULL },
-	{ "AcquireGPS",   NULL,                N_("From _GPS..."),           	  NULL,         N_("Transfer data from a GPS device"),              (GCallback)acquire_from_gps      },
-	{ "AcquireGPSBabel",   NULL,                N_("Import File With GPS_Babel..."),           	  NULL,         N_("Import file via GPSBabel converter"),              (GCallback)acquire_from_file      },
-	{ "AcquireRouting",   NULL,             N_("_Directions..."),     NULL,         N_("Get driving directions"),           (GCallback)acquire_from_routing   },
+	{ "New",                 GTK_STOCK_NEW,            N_("_New"),                               "<control>N",       N_("New file"),                                           (GCallback) newwindow_cb              },
+	{ "Open",                GTK_STOCK_OPEN,           N_("_Open..."),                           "<control>O",       N_("Open a file"),                                        (GCallback) load_file                 },
+	{ "OpenRecentFile",      NULL,                     N_("Open _Recent File"),                  NULL,               NULL,                                                     (GCallback) NULL                      },
+	{ "Append",              GTK_STOCK_ADD,            N_("Append _File..."),                    NULL,               N_("Append data from a different file"),                  (GCallback) load_file                 },
+	{ "Export",              GTK_STOCK_CONVERT,        N_("_Export All"),                        NULL,               N_("Export All TrackWaypoint Layers"),                    (GCallback) NULL                      },
+	{ "ExportGPX",           NULL,                     N_("_GPX..."),           	             NULL,               N_("Export as GPX"),                                      (GCallback) export_to_gpx_cb          },
+	{ "Acquire",             GTK_STOCK_GO_DOWN,        N_("A_cquire"),                           NULL,               NULL,                                                     (GCallback) NULL                      },
+	{ "AcquireGPS",          NULL,                     N_("From _GPS..."),                       NULL,               N_("Transfer data from a GPS device"),                    (GCallback) acquire_from_gps          },
+	{ "AcquireGPSBabel",     NULL,                     N_("Import File With GPS_Babel..."),      NULL,               N_("Import file via GPSBabel converter"),                 (GCallback) acquire_from_file         },
+	{ "AcquireRouting",      NULL,                     N_("_Directions..."),                     NULL,               N_("Get driving directions"),                             (GCallback) acquire_from_routing      },
 #ifdef VIK_CONFIG_OPENSTREETMAP
-	{ "AcquireOSM",   NULL,                 N_("_OSM Traces..."),    	  NULL,         N_("Get traces from OpenStreetMap"),            (GCallback)acquire_from_osm       },
-	{ "AcquireMyOSM", NULL,                 N_("_My OSM Traces..."),    	  NULL,         N_("Get Your Own Traces from OpenStreetMap"),   (GCallback)acquire_from_my_osm    },
+	{ "AcquireOSM",          NULL,                     N_("_OSM Traces..."),                     NULL,               N_("Get traces from OpenStreetMap"),                      (GCallback) acquire_from_osm          },
+	{ "AcquireMyOSM",        NULL,                     N_("_My OSM Traces..."),      	     NULL,               N_("Get Your Own Traces from OpenStreetMap"),             (GCallback) acquire_from_my_osm       },
 #endif
 #ifdef VIK_CONFIG_GEOCACHES
-	{ "AcquireGC",   NULL,                 N_("Geo_caches..."),    	  NULL,         N_("Get Geocaches from geocaching.com"),            (GCallback)acquire_from_gc       },
+	{ "AcquireGC",           NULL,                     N_("Geo_caches..."),    	             NULL,               N_("Get Geocaches from geocaching.com"),                  (GCallback) acquire_from_gc           },
 #endif
 #ifdef VIK_CONFIG_GEOTAG
-	{ "AcquireGeotag", NULL,               N_("From Geotagged _Images..."), NULL,         N_("Create waypoints from geotagged images"),       (GCallback)acquire_from_geotag   },
+	{ "AcquireGeotag",       NULL,                     N_("From Geotagged _Images..."),          NULL,               N_("Create waypoints from geotagged images"),             (GCallback) acquire_from_geotag       },
 #endif
-	{ "AcquireURL", NULL,                  N_("From _URL..."),              NULL,         N_("Get a file from a URL"),                        (GCallback)acquire_from_url },
+	{ "AcquireURL",          NULL,                     N_("From _URL..."),                       NULL,               N_("Get a file from a URL"),                              (GCallback) acquire_from_url          },
 #ifdef VIK_CONFIG_GEONAMES
-	{ "AcquireWikipedia", NULL,            N_("From _Wikipedia Waypoints"), NULL,         N_("Create waypoints from Wikipedia items in the current view"), (GCallback)acquire_from_wikipedia },
+	{ "AcquireWikipedia",    NULL,                     N_("From _Wikipedia Waypoints"),          NULL,               N_("Create waypoints from Wikipedia items in the current view"), (GCallback) acquire_from_wikipedia },
 #endif
-	{ "Save",      GTK_STOCK_SAVE,         N_("_Save"),                         "<control>S", N_("Save the file"),                                (GCallback)save_file             },
-	{ "SaveAs",    GTK_STOCK_SAVE_AS,      N_("Save _As..."),                      NULL,  N_("Save the file under different name"),           (GCallback)save_file_as          },
-	{ "FileProperties", NULL,              N_("Properties..."),                    NULL,  N_("File Properties"),                              (GCallback)file_properties_cb },
+	{ "Save",                GTK_STOCK_SAVE,           N_("_Save"),                              "<control>S",       N_("Save the file"),                                      (GCallback) save_file                 },
+	{ "SaveAs",              GTK_STOCK_SAVE_AS,        N_("Save _As..."),                        NULL,               N_("Save the file under different name"),                 (GCallback) save_file_as              },
+	{ "FileProperties",      NULL,                     N_("Properties..."),                      NULL,               N_("File Properties"),                                    (GCallback) file_properties_cb        },
 #ifdef HAVE_ZIP_H
-	{ "ImportKMZ", GTK_STOCK_CONVERT,      N_("Import KMZ _Map File..."),        NULL,  N_("Import a KMZ file"), (GCallback)import_kmz_file_cb },
-	{ "GenKMZ",    GTK_STOCK_DND,          N_("Generate _KMZ Map File..."),        NULL,  N_("Generate a KMZ file with an overlay of the current view"), (GCallback)draw_to_kmz_file_cb },
+	{ "ImportKMZ",           GTK_STOCK_CONVERT,        N_("Import KMZ _Map File..."),            NULL,               N_("Import a KMZ file"), (GCallback)import_kmz_file_cb },
+	{ "GenKMZ",              GTK_STOCK_DND,            N_("Generate _KMZ Map File..."),          NULL,               N_("Generate a KMZ file with an overlay of the current view"), (GCallback) draw_to_kmz_file_cb  },
 #endif
-	{ "GenImg",    GTK_STOCK_FILE,         N_("_Generate Image File..."),          NULL,  N_("Save a snapshot of the workspace into a file"), (GCallback)draw_to_image_file_cb },
-	{ "GenImgDir", GTK_STOCK_DND_MULTIPLE, N_("Generate _Directory of Images..."), NULL,  N_("Generate _Directory of Images"),                (GCallback)draw_to_image_dir_cb },
-	{ "Print",    GTK_STOCK_PRINT,        N_("_Print..."),          NULL,         N_("Print maps"), (GCallback)print_cb },
-	{ "Exit",      GTK_STOCK_QUIT,         N_("E_xit"),                         "<control>W", N_("Exit the program"),                             (GCallback)window_close          },
-	{ "SaveExit",  GTK_STOCK_QUIT,         N_("Save and Exit"),                 NULL, N_("Save and Exit the program"),                             (GCallback)save_file_and_exit          },
+	{ "GenImg",              GTK_STOCK_FILE,           N_("_Generate Image File..."),            NULL,               N_("Save a snapshot of the workspace into a file"),       (GCallback) draw_to_image_file_cb     },
+	{ "GenImgDir",           GTK_STOCK_DND_MULTIPLE,   N_("Generate _Directory of Images..."),   NULL,               N_("Generate _Directory of Images"),                      (GCallback) draw_to_image_dir_cb      },
+	{ "Print",               GTK_STOCK_PRINT,          N_("_Print..."),                          NULL,               N_("Print maps"),                                         (GCallback) print_cb                  },
+	{ "Exit",                GTK_STOCK_QUIT,           N_("E_xit"),                              "<control>W",       N_("Exit the program"),                                   (GCallback) window_close              },
+	{ "SaveExit",            GTK_STOCK_QUIT,           N_("Save and Exit"),                      NULL,               N_("Save and Exit the program"),                          (GCallback) save_file_and_exit        },
 
-	{ "GoBack",    GTK_STOCK_GO_BACK,      N_("Go to the Pre_vious Location"),  NULL,         N_("Go to the previous location"),              (GCallback)draw_goto_back_and_forth },
-	{ "GoForward", GTK_STOCK_GO_FORWARD,   N_("Go to the _Next Location"),      NULL,         N_("Go to the next location"),                  (GCallback)draw_goto_back_and_forth },
-  { "GotoDefaultLocation", GTK_STOCK_HOME, N_("Go to the _Default Location"),  NULL,         N_("Go to the default location"),                     (GCallback)goto_default_location },
-	{ "GotoSearch", GTK_STOCK_JUMP_TO,     N_("Go to _Location..."),    	      NULL,         N_("Go to address/place using text search"),        (GCallback)goto_address       },
-	{ "GotoLL",    GTK_STOCK_JUMP_TO,      N_("_Go to Lat/Lon..."),           NULL,         N_("Go to arbitrary lat/lon coordinate"),         (GCallback)draw_goto_cb          },
-	{ "GotoUTM",   GTK_STOCK_JUMP_TO,      N_("Go to UTM..."),                  NULL,         N_("Go to arbitrary UTM coordinate"),               (GCallback)draw_goto_cb          },
-	{ "Refresh",   GTK_STOCK_REFRESH,      N_("_Refresh"),                      "F5",         N_("Refresh any maps displayed"),               (GCallback)draw_refresh_cb       },
-	{ "SetHLColor",GTK_STOCK_SELECT_COLOR, N_("Set _Highlight Color..."),       NULL,         N_("Set Highlight Color"),                      (GCallback)set_highlight_color },
-	{ "SetBGColor",GTK_STOCK_SELECT_COLOR, N_("Set Bac_kground Color..."),      NULL,         N_("Set Background Color"),                     (GCallback)set_bg_color },
-	{ "ZoomIn",    GTK_STOCK_ZOOM_IN,      N_("Zoom _In"),                  "<control>plus",  N_("Zoom In"),                                  (GCallback)draw_zoom_cb },
-	{ "ZoomOut",   GTK_STOCK_ZOOM_OUT,     N_("Zoom _Out"),                 "<control>minus", N_("Zoom Out"),                                 (GCallback)draw_zoom_cb },
-	{ "ZoomTo",    GTK_STOCK_ZOOM_FIT,     N_("Zoom _To..."),               "<control>Z",     N_("Zoom To"),                                  (GCallback)zoom_to_cb },
-	{ "PanNorth",  NULL,                   N_("Pan _North"),                "<control>Up",    NULL,                                           (GCallback)draw_pan_cb },
-	{ "PanEast",   NULL,                   N_("Pan _East"),                 "<control>Right", NULL,                                           (GCallback)draw_pan_cb },
-	{ "PanSouth",  NULL,                   N_("Pan _South"),                "<control>Down",  NULL,                                           (GCallback)draw_pan_cb },
-	{ "PanWest",   NULL,                   N_("Pan _West"),                 "<control>Left",  NULL,                                           (GCallback)draw_pan_cb },
-	{ "BGJobs",    GTK_STOCK_EXECUTE,      N_("Background _Jobs"),              NULL,         N_("Background Jobs"),                          (GCallback)a_background_show_window },
+	{ "GoBack",              GTK_STOCK_GO_BACK,        N_("Go to the Pre_vious Location"),       NULL,               N_("Go to the previous location"),                        (GCallback) draw_goto_back_and_forth  },
+	{ "GoForward",           GTK_STOCK_GO_FORWARD,     N_("Go to the _Next Location"),           NULL,               N_("Go to the next location"),                            (GCallback) draw_goto_back_and_forth  },
+	{ "GotoDefaultLocation", GTK_STOCK_HOME,           N_("Go to the _Default Location"),        NULL,               N_("Go to the default location"),                         (GCallback) goto_default_location     },
+	{ "GotoSearch",          GTK_STOCK_JUMP_TO,        N_("Go to _Location..."),    	     NULL,               N_("Go to address/place using text search"),              (GCallback) goto_address              },
+	{ "GotoLL",              GTK_STOCK_JUMP_TO,        N_("_Go to Lat/Lon..."),                  NULL,               N_("Go to arbitrary lat/lon coordinate"),                 (GCallback) draw_goto_cb              },
+	{ "GotoUTM",             GTK_STOCK_JUMP_TO,        N_("Go to UTM..."),                       NULL,               N_("Go to arbitrary UTM coordinate"),                     (GCallback) draw_goto_cb              },
+	{ "Refresh",             GTK_STOCK_REFRESH,        N_("_Refresh"),                           "F5",               N_("Refresh any maps displayed"),                         (GCallback) draw_refresh_cb           },
+	{ "SetHLColor",          GTK_STOCK_SELECT_COLOR,   N_("Set _Highlight Color..."),            NULL,               N_("Set Highlight Color"),                                (GCallback) set_highlight_color       },
+	{ "SetBGColor",          GTK_STOCK_SELECT_COLOR,   N_("Set Bac_kground Color..."),           NULL,               N_("Set Background Color"),                               (GCallback) set_bg_color              },
+	{ "ZoomIn",              GTK_STOCK_ZOOM_IN,        N_("Zoom _In"),                           "<control>plus",    N_("Zoom In"),                                            (GCallback) draw_zoom_cb              },
+	{ "ZoomOut",             GTK_STOCK_ZOOM_OUT,       N_("Zoom _Out"),                          "<control>minus",   N_("Zoom Out"),                                           (GCallback) draw_zoom_cb              },
+	{ "ZoomTo",              GTK_STOCK_ZOOM_FIT,       N_("Zoom _To..."),                        "<control>Z",       N_("Zoom To"),                                            (GCallback) zoom_to_cb                },
+	{ "PanNorth",            NULL,                     N_("Pan _North"),                         "<control>Up",      NULL,                                                     (GCallback) draw_pan_cb               },
+	{ "PanEast",             NULL,                     N_("Pan _East"),                          "<control>Right",   NULL,                                                     (GCallback) draw_pan_cb               },
+	{ "PanSouth",            NULL,                     N_("Pan _South"),                         "<control>Down",    NULL,                                                     (GCallback) draw_pan_cb               },
+	{ "PanWest",             NULL,                     N_("Pan _West"),                          "<control>Left",    NULL,                                                     (GCallback) draw_pan_cb               },
+	{ "BGJobs",              GTK_STOCK_EXECUTE,        N_("Background _Jobs"),                   NULL,               N_("Background Jobs"),                                    (GCallback) a_background_show_window  },
 
-	{ "Cut",       GTK_STOCK_CUT,          N_("Cu_t"),                          NULL,         N_("Cut selected layer"),                       (GCallback)menu_cut_layer_cb     },
-	{ "Copy",      GTK_STOCK_COPY,         N_("_Copy"),                         NULL,         N_("Copy selected layer"),                      (GCallback)menu_copy_layer_cb    },
-	{ "Paste",     GTK_STOCK_PASTE,        N_("_Paste"),                        NULL,         N_("Paste layer into selected container layer or otherwise above selected layer"), (GCallback)menu_paste_layer_cb },
-	{ "Delete",    GTK_STOCK_DELETE,       N_("_Delete"),                       NULL,         N_("Remove selected layer"),                    (GCallback)menu_delete_layer_cb  },
-	{ "DeleteAll", NULL,                   N_("Delete All"),                    NULL,         NULL,                                           (GCallback)clear_cb              },
-	{ "CopyCentre",NULL,                   N_("Copy Centre _Location"),     "<control>h",     NULL,                                           (GCallback)menu_copy_centre_cb   },
-	{ "MapCacheFlush",NULL,                N_("_Flush Map Cache"),              NULL,         NULL,                                           (GCallback)mapcache_flush_cb     },
-	{ "SetDefaultLocation", GTK_STOCK_GO_FORWARD, N_("_Set the Default Location"), NULL, N_("Set the Default Location to the current position"),(GCallback)default_location_cb },
-	{ "Preferences",GTK_STOCK_PREFERENCES, N_("_Preferences"),                  NULL,         N_("Program Preferences"),                      (GCallback)preferences_cb },
-	{ "LayerDefaults",GTK_STOCK_PROPERTIES, N_("_Layer Defaults"),             NULL,         NULL,                                           NULL },
-	{ "Properties",GTK_STOCK_PROPERTIES,   N_("_Properties"),                   NULL,         N_("Layer Properties"),                         (GCallback)menu_properties_cb },
+	{ "Cut",                 GTK_STOCK_CUT,            N_("Cu_t"),                               NULL,               N_("Cut selected layer"),                                 (GCallback) menu_cut_layer_cb         },
+	{ "Copy",                GTK_STOCK_COPY,           N_("_Copy"),                              NULL,               N_("Copy selected layer"),                                (GCallback) menu_copy_layer_cb        },
+	{ "Paste",               GTK_STOCK_PASTE,          N_("_Paste"),                             NULL,               N_("Paste layer into selected container layer or otherwise above selected layer"), (GCallback) menu_paste_layer_cb },
+	{ "Delete",              GTK_STOCK_DELETE,         N_("_Delete"),                            NULL,               N_("Remove selected layer"),                              (GCallback) menu_delete_layer_cb      },
+	{ "DeleteAll",           NULL,                     N_("Delete All"),                         NULL,               NULL,                                                     (GCallback) clear_cb                  },
+	{ "CopyCentre",          NULL,                     N_("Copy Centre _Location"),              "<control>h",       NULL,                                                     (GCallback) menu_copy_centre_cb       },
+	{ "MapCacheFlush",       NULL,                     N_("_Flush Map Cache"),                   NULL,               NULL,                                                     (GCallback) mapcache_flush_cb         },
+	{ "SetDefaultLocation",  GTK_STOCK_GO_FORWARD,     N_("_Set the Default Location"),          NULL,               N_("Set the Default Location to the current position"),   (GCallback) default_location_cb       },
+	{ "Preferences",         GTK_STOCK_PREFERENCES,    N_("_Preferences"),                       NULL,               N_("Program Preferences"),                                (GCallback) preferences_cb            },
+	{ "LayerDefaults",       GTK_STOCK_PROPERTIES,     N_("_Layer Defaults"),                    NULL,               NULL,                                                     NULL                                  },
+	{ "Properties",          GTK_STOCK_PROPERTIES,     N_("_Properties"),                        NULL,               N_("Layer Properties"),                                   (GCallback) menu_properties_cb        },
 
-	{ "HelpEntry", GTK_STOCK_HELP,         N_("_Help"),                         "F1",         N_("Help"),                                     (GCallback)help_help_cb },
-	{ "About",     GTK_STOCK_ABOUT,        N_("_About"),                        NULL,         N_("About"),                                    (GCallback)help_about_cb },
+	{ "HelpEntry",           GTK_STOCK_HELP,           N_("_Help"),                              "F1",               N_("Help"),                                               (GCallback) help_help_cb              },
+	{ "About",               GTK_STOCK_ABOUT,          N_("_About"),                             NULL,               N_("About"),                                              (GCallback) help_about_cb             },
 };
 
 static GtkActionEntry debug_entries[] = {
@@ -4662,17 +4659,10 @@ static GCallback toggle_entries_toolbar_cb[] = {
 #include "menu.xml.h"
 static void window_create_ui(Window * window)
 {
-	GtkUIManager *uim;
-	GtkActionGroup *action_group;
-	GtkAccelGroup *accel_group;
-	GError *error;
-	unsigned int i, j, mid;
-	GtkIconFactory *icon_factory;
-	GtkIconSet *icon_set;
+	GtkIconSet * icon_set;
 	GtkRadioActionEntry *tools = NULL, *radio;
-	unsigned int ntools;
 
-	uim = gtk_ui_manager_new();
+	GtkUIManager * uim = gtk_ui_manager_new();
 	window->uim = uim;
 
 	toolbox_add_tool(window->vt, &ruler_tool, TOOL_LAYER_TYPE_NONE);
@@ -4685,13 +4675,14 @@ static void window_create_ui(Window * window)
 	toolbar_action_tool_entry_register(window->viking_vtb, &ruler_tool.radioActionEntry);
 	toolbar_action_tool_entry_register(window->viking_vtb, &select_tool.radioActionEntry);
 
-	error = NULL;
+	GError * error = NULL;
+	unsigned int mid;
 	if (!(mid = gtk_ui_manager_add_ui_from_string(uim, menu_xml, -1, &error))) {
 		g_error_free(error);
 		exit(1);
 	}
 
-	action_group = gtk_action_group_new("MenuActions");
+	GtkActionGroup * action_group = gtk_action_group_new("MenuActions");
 	gtk_action_group_set_translation_domain(action_group, PACKAGE_NAME);
 	gtk_action_group_add_actions(action_group, entries, G_N_ELEMENTS (entries), window);
 	gtk_action_group_add_toggle_actions(action_group, toggle_entries, G_N_ELEMENTS (toggle_entries), window);
@@ -4707,7 +4698,7 @@ static void window_create_ui(Window * window)
 		}
 	}
 
-	for (i=0; i < G_N_ELEMENTS (entries); i++) {
+	for (unsigned int i = 0; i < G_N_ELEMENTS (entries); i++) {
 		if (entries[i].callback) {
 			toolbar_action_entry_register(window->viking_vtb, &entries[i]);
 		}
@@ -4717,13 +4708,13 @@ static void window_create_ui(Window * window)
 		fprintf(stdout,  "Broken entries definitions\n");
 		exit(1);
 	}
-	for (i=0; i < G_N_ELEMENTS (toggle_entries); i++) {
+	for (unsigned int i = 0; i < G_N_ELEMENTS (toggle_entries); i++) {
 		if (toggle_entries_toolbar_cb[i]) {
 			toolbar_action_toggle_entry_register(window->viking_vtb, &toggle_entries[i], (void *) toggle_entries_toolbar_cb[i]);
 		}
 	}
 
-	for (i=0; i < G_N_ELEMENTS (mode_entries); i++) {
+	for (unsigned int i = 0; i < G_N_ELEMENTS (mode_entries); i++) {
 		toolbar_action_mode_entry_register(window->viking_vtb, &mode_entries[i]);
 	}
 
@@ -4746,15 +4737,15 @@ static void window_create_ui(Window * window)
 		}
 	}
 
-	icon_factory = gtk_icon_factory_new();
+	GtkIconFactory * icon_factory = gtk_icon_factory_new();
 	gtk_icon_factory_add_default(icon_factory);
 
 	register_vik_icons(icon_factory);
 
 	// Copy the tool RadioActionEntries out of the main Window structure into an extending array 'tools'
 	//  so that it can be applied to the UI in one action group add function call below
-	ntools = 0;
-	for (i=0; i < window->vt->n_tools; i++) {
+	unsigned int ntools = 0;
+	for (unsigned int i = 0; i < window->vt->n_tools; i++) {
 		tools = g_renew(GtkRadioActionEntry, tools, ntools+1);
 		radio = &tools[ntools];
 		ntools++;
@@ -4762,7 +4753,7 @@ static void window_create_ui(Window * window)
 		radio->value = ntools;
 	}
 
-	for (i=0; i<VIK_LAYER_NUM_TYPES; i++) {
+	for (int i = 0; i<VIK_LAYER_NUM_TYPES; i++) {
 		GtkActionEntry action;
 		gtk_ui_manager_add_ui(uim, mid,  "/ui/MainMenu/Layers/",
 				      vik_layer_get_interface((VikLayerTypeEnum) i)->name,
@@ -4788,7 +4779,7 @@ static void window_create_ui(Window * window)
 		}
 
 		// Further tool copying for to apply to the UI, also apply menu UI setup
-		for (j = 0; j < vik_layer_get_interface((VikLayerTypeEnum) i)->tools_count; j++) {
+		for (unsigned int j = 0; j < vik_layer_get_interface((VikLayerTypeEnum) i)->tools_count; j++) {
 			tools = g_renew(GtkRadioActionEntry, tools, ntools+1);
 			radio = &tools[ntools];
 			ntools++;
@@ -4833,8 +4824,8 @@ static void window_create_ui(Window * window)
 
 	gtk_ui_manager_insert_action_group(uim, action_group, 0);
 
-	for (i=0; i<VIK_LAYER_NUM_TYPES; i++) {
-		for (j = 0; j < vik_layer_get_interface((VikLayerTypeEnum) i)->tools_count; j++) {
+	for (unsigned int i = 0; i<VIK_LAYER_NUM_TYPES; i++) {
+		for (unsigned int j = 0; j < vik_layer_get_interface((VikLayerTypeEnum) i)->tools_count; j++) {
 			GtkAction *action = gtk_action_group_get_action(action_group,
 									vik_layer_get_interface((VikLayerTypeEnum) i)->tools[j].radioActionEntry.name);
 			g_object_set(action, "sensitive", false, NULL);
@@ -4846,7 +4837,7 @@ static void window_create_ui(Window * window)
 
 	window->action_group = action_group;
 
-	accel_group = gtk_ui_manager_get_accel_group(uim);
+	GtkAccelGroup * accel_group = gtk_ui_manager_get_accel_group(uim);
 	gtk_window_add_accel_group(GTK_WINDOW (window), accel_group);
 	gtk_ui_manager_ensure_update(uim);
 
@@ -4860,10 +4851,10 @@ static struct {
 	const GdkPixdata *data;
 	char *stock_id;
 } stock_icons[] = {
-	{ &mover_22_pixbuf,		(char *) "vik-icon-pan"      },
-	{ &zoom_18_pixbuf,		(char *) "vik-icon-zoom"     },
-	{ &ruler_18_pixbuf,		(char *) "vik-icon-ruler"    },
-	{ &select_18_pixbuf,		(char *) "vik-icon-select"   },
+	{ &mover_22_pixbuf,		(char *) "vik-icon-pan"              },
+	{ &zoom_18_pixbuf,		(char *) "vik-icon-zoom"             },
+	{ &ruler_18_pixbuf,		(char *) "vik-icon-ruler"            },
+	{ &select_18_pixbuf,		(char *) "vik-icon-select"           },
 	{ &vik_new_route_18_pixbuf,     (char *) "vik-icon-Create Route"     },
 	{ &route_finder_18_pixbuf,	(char *) "vik-icon-Route Finder"     },
 	{ &demdl_18_pixbuf,		(char *) "vik-icon-DEM Download"     },
@@ -4883,25 +4874,23 @@ static void
 register_vik_icons(GtkIconFactory *icon_factory)
 {
 	GtkIconSet *icon_set;
-	int i;
 
-	for (i = 0; i < n_stock_icons; i++) {
-		icon_set = gtk_icon_set_new_from_pixbuf(gdk_pixbuf_from_pixdata(
-										stock_icons[i].data, false, NULL));
+	for (int i = 0; i < n_stock_icons; i++) {
+		icon_set = gtk_icon_set_new_from_pixbuf(gdk_pixbuf_from_pixdata(stock_icons[i].data, false, NULL));
 		gtk_icon_factory_add(icon_factory, stock_icons[i].stock_id, icon_set);
 		gtk_icon_set_unref(icon_set);
 	}
 }
 
-void * Window::get_selected_trw_layer()
+LayerTRW * Window::get_selected_trw_layer()
 {
 	return this->selected_trw;
 }
 
-void Window::set_selected_trw_layer(void * trw)
+void Window::set_selected_trw_layer(LayerTRW * trw)
 {
-	this->selected_trw   = (LayerTRW *) trw;
-	this->containing_trw = (LayerTRW *) trw;
+	this->selected_trw       = trw;
+	this->containing_trw     = trw;
 	/* Clear others */
 	this->selected_track     = NULL;
 	this->selected_tracks    = NULL;
@@ -4916,10 +4905,10 @@ Tracks * Window::get_selected_tracks()
 	return this->selected_tracks;
 }
 
-void Window::set_selected_tracks(Tracks * tracks, void * trw)
+void Window::set_selected_tracks(Tracks * tracks, LayerTRW * trw)
 {
-	this->selected_tracks = tracks;
-	this->containing_trw  = (LayerTRW *) trw;
+	this->selected_tracks    = tracks;
+	this->containing_trw     = trw;
 	/* Clear others */
 	this->selected_trw       = NULL;
 	this->selected_track     = NULL;
@@ -4934,10 +4923,10 @@ Track * Window::get_selected_track()
 	return this->selected_track;
 }
 
-void Window::set_selected_track(Track * track, void * trw)
+void Window::set_selected_track(Track * track, LayerTRW * trw)
 {
-	this->selected_track = track;
-	this->containing_trw = (LayerTRW *) trw;
+	this->selected_track     = track;
+	this->containing_trw     = trw;
 	/* Clear others */
 	this->selected_trw       = NULL;
 	this->selected_tracks    = NULL;
@@ -4952,10 +4941,10 @@ Waypoints * Window::get_selected_waypoints()
 	return this->selected_waypoints;
 }
 
-void Window::set_selected_waypoints(Waypoints * waypoints, void * trw)
+void Window::set_selected_waypoints(Waypoints * waypoints, LayerTRW * trw)
 {
 	this->selected_waypoints = waypoints;
-	this->containing_trw     = (LayerTRW *) trw;
+	this->containing_trw     = trw;
 	/* Clear others */
 	this->selected_trw       = NULL;
 	this->selected_track     = NULL;
@@ -4968,10 +4957,10 @@ Waypoint * Window::get_selected_waypoint()
 	return this->selected_waypoint;
 }
 
-void Window::set_selected_waypoint(Waypoint * wp, void * trw)
+void Window::set_selected_waypoint(Waypoint * wp, LayerTRW * trw)
 {
-	this->selected_waypoint = wp;
-	this->containing_trw    = (LayerTRW *) trw;
+	this->selected_waypoint  = wp;
+	this->containing_trw     = trw;
 	/* Clear others */
 	this->selected_trw       = NULL;
 	this->selected_track     = NULL;
