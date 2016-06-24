@@ -22,6 +22,9 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
+#include <vector>
+
 #include <string.h>
 #include <stdlib.h>
 
@@ -47,7 +50,7 @@ typedef struct {
 	GtkWidget * type;
 } datasource_file_widgets_t;
 
-extern GList * a_babel_file_list;
+extern std::vector<BabelFile *> a_babel_file_list;
 
 /* The last used directory */
 static char * last_folder_uri = NULL;
@@ -143,7 +146,10 @@ static void datasource_file_add_setup_widgets(GtkWidget * dialog, Viewport * vie
 		gtk_file_chooser_set_current_folder_uri(GTK_FILE_CHOOSER(widgets->file), last_folder_uri);
 	}
 	/* Add filters */
-	g_list_foreach(a_babel_file_list, add_file_filter, widgets->file);
+	for (auto iter = a_babel_file_list.begin(); iter != a_babel_file_list.end(); iter++) {
+		fprintf(stderr, "%s:%d: name = %s\n", __FUNCTION__, __LINE__, (*iter)->name);
+		add_file_filter(*iter, widgets->file);
+	}
 	GtkFileFilter *all_filter = gtk_file_filter_new();
 	gtk_file_filter_add_pattern(all_filter, "*");
 	gtk_file_filter_set_name(all_filter, _("All files"));

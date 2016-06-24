@@ -27,6 +27,8 @@
 #include <gtk/gtk.h>
 #include <gdk-pixbuf/gdk-pixdata.h>
 
+#include <vector>
+
 #include <stdlib.h>
 #ifdef HAVE_MATH_H
 #include <math.h>
@@ -60,7 +62,8 @@ using namespace SlavGPS;
 
 
 
-extern GList * a_babel_device_list;
+
+extern std::vector<BabelDevice *> a_babel_device_list;
 
 
 static VikLayer * vik_gps_layer_new(Viewport * viewport);
@@ -332,14 +335,13 @@ static void gps_layer_inst_init(VikGpsLayer *self)
 {
 	int new_proto = 0;
 	// +1 for luck (i.e the NULL terminator)
-	char **new_protocols = (char **) g_malloc_n(1 + g_list_length(a_babel_device_list), sizeof(void *));
+	char **new_protocols = (char **) g_malloc_n(1 + a_babel_device_list.size(), sizeof(void *));
 
-	GList *gl = g_list_first(a_babel_device_list);
-	while (gl) {
+	for (auto iter = a_babel_device_list.begin(); iter != a_babel_device_list.end(); iter++) {
 		// should be using label property but use name for now
 		//  thus don't need to mess around converting label to name later on
-		new_protocols[new_proto++] = ((BabelDevice*)gl->data)->name;
-		gl = g_list_next(gl);
+		new_protocols[new_proto++] = (*iter)->name;
+		fprintf(stderr, "%s:%d: new_protocols: '%s'\n", __FUNCTION__, __LINE__, (*iter)->name);
 	}
 	new_protocols[new_proto] = NULL;
 
@@ -392,15 +394,12 @@ char const * LayerGPS::tooltip()
 /* "Copy" */
 void LayerGPS::marshall(uint8_t **data, int *datalen)
 {
-	VikLayer *child_layer;
 	uint8_t *ld;
 	int ll;
 	GByteArray* b = g_byte_array_new();
-	int len;
-	int i;
 
 #define alm_append(obj, sz) 	\
-	len = (sz);						\
+	int len = (sz);						\
 	g_byte_array_append(b, (uint8_t *)&len, sizeof(len));	\
 	g_byte_array_append(b, (uint8_t *)(obj), len);
 
@@ -408,8 +407,8 @@ void LayerGPS::marshall(uint8_t **data, int *datalen)
 	alm_append(ld, ll);
 	free(ld);
 
-	for (i = 0; i < NUM_TRW; i++) {
-		child_layer = this->trw_children[i]->vl;
+	for (int i = 0; i < NUM_TRW; i++) {
+		VikLayer * child_layer = this->trw_children[i]->vl;
 		vik_layer_marshall(child_layer, &ld, &ll);
 		if (ld) {
 			alm_append(ld, ll);
@@ -430,17 +429,15 @@ static VikLayer * gps_layer_unmarshall(uint8_t *data, int len, Viewport * viewpo
 	len -= sizeof(int) + alm_size;		\
 	data += sizeof(int) + alm_size;
 
-	VikLayer *rv = vik_gps_layer_new(viewport);
+	VikLayer * rv = vik_gps_layer_new(viewport);
 	LayerGPS * layer = (LayerGPS *) rv->layer;
-	VikLayer *child_layer;
-	int i;
 
 	vik_layer_unmarshall_params((VikLayer *) rv, data+sizeof(int), alm_size, viewport);
 	alm_next;
 
-	i = 0;
+	int i = 0;
 	while (len>0 && i < NUM_TRW) {
-		child_layer = vik_layer_unmarshall(data + sizeof(int), alm_size, viewport);
+		VikLayer * child_layer = vik_layer_unmarshall(data + sizeof(int), alm_size, viewport);
 		if (child_layer) {
 			layer->trw_children[i++] = (LayerTRW *) child_layer->layer;
 			// NB no need to attach signal update handler here
@@ -1012,7 +1009,6 @@ static void process_line_for_gps_info(const char *line, GpsSession *sess)
 		char **tokens = g_strsplit(line, " ", 0);
 		char info[128];
 		int ilen = 0;
-		int i;
 		int n_tokens = 0;
 
 		while (tokens[n_tokens]) {
@@ -1023,7 +1019,7 @@ static void process_line_for_gps_info(const char *line, GpsSession *sess)
 		//  Obviously trying to decipher some kind of text/naming scheme
 		//  Anyway this will be superceded if there is 'Unit:' information
 		if (n_tokens > 8) {
-			for (i=8; tokens[i] && ilen < sizeof(info)-2 && strcmp(tokens[i], "00"); i++) {
+			for (int i = 8; tokens[i] && ilen < sizeof(info) - 2 && strcmp(tokens[i], "00"); i++) {
 				unsigned int ch;
 				sscanf(tokens[i], "%x", &ch);
 				info[ilen++] = ch;
@@ -1093,12 +1089,11 @@ static void gps_download_progress_func(BabelProgressCode c, void * data, GpsSess
 		process_line_for_gps_info(line, sess);
 
 		if (strstr(line, "RECORD")) {
-			int lsb, msb, cnt;
-
 			if (strlen(line) > 20) {
-				sscanf(line+17, "%x", &lsb);
-				sscanf(line+20, "%x", &msb);
-				cnt = lsb + msb * 256;
+				int lsb, msb;
+				sscanf(line + 17, "%x", &lsb);
+				sscanf(line + 20, "%x", &msb);
+				int cnt = lsb + msb * 256;
 				set_total_count(cnt, sess);
 				sess->count = 0;
 			}
@@ -1147,11 +1142,12 @@ static void gps_upload_progress_func(BabelProgressCode c, void * data, GpsSessio
 		process_line_for_gps_info(line, sess);
 
 		if (strstr(line, "RECORD")) {
-			int lsb, msb;
+
 
 			if (strlen(line) > 20) {
-				sscanf(line+17, "%x", &lsb);
-				sscanf(line+20, "%x", &msb);
+				int lsb, msb;
+				sscanf(line + 17, "%x", &lsb);
+				sscanf(line + 20, "%x", &msb);
 				cnt = lsb + msb * 256;
 				/* set_total_count(cnt, sess); */
 				sess->count = 0;
@@ -1221,14 +1217,14 @@ static void gps_comm_thread(GpsSession *sess)
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
 			if (!sess->realtime_tracking)
 #endif
-				{
-					if (sess->viewport && sess->direction == GPS_DOWN) {
-						sess->trw->post_read(sess->viewport, true);
-						/* View the data available */
-						sess->trw->auto_set_view(sess->viewport) ;
-						sess->trw->emit_update(); // NB update from background thread
-					}
+			{
+				if (sess->viewport && sess->direction == GPS_DOWN) {
+					sess->trw->post_read(sess->viewport, true);
+					/* View the data available */
+					sess->trw->auto_set_view(sess->viewport) ;
+					sess->trw->emit_update(); // NB update from background thread
 				}
+			}
 		} else {
 			/* canceled */
 		}
@@ -1545,42 +1541,38 @@ void LayerGPS::realtime_tracking_draw(Viewport * viewport)
 	     this->realtime_fix.fix.longitude > lnw.lon &&
 	     this->realtime_fix.fix.longitude < lse.lon &&
 	     !isnan(this->realtime_fix.fix.track)) {
+
 		VikCoord gps;
-		int x, y;
-		int half_back_x, half_back_y;
-		int half_back_bg_x, half_back_bg_y;
-		int pt_x, pt_y;
-		int ptbg_x;
-		int side1_x, side1_y, side2_x, side2_y;
-		int side1bg_x, side1bg_y, side2bg_x, side2bg_y;
 
 		ll.lat = this->realtime_fix.fix.latitude;
 		ll.lon = this->realtime_fix.fix.longitude;
 		vik_coord_load_from_latlon(&gps, viewport->get_coord_mode(), &ll);
+
+		int x, y;
 		viewport->coord_to_screen(&gps, &x, &y);
 
 		double heading_cos = cos(DEG2RAD(this->realtime_fix.fix.track));
 		double heading_sin = sin(DEG2RAD(this->realtime_fix.fix.track));
 
-		half_back_y = y+8*heading_cos;
-		half_back_x = x-8*heading_sin;
-		half_back_bg_y = y+10*heading_cos;
-		half_back_bg_x = x-10*heading_sin;
+		int half_back_y = y + 8 * heading_cos;
+		int half_back_x = x - 8 * heading_sin;
+		int half_back_bg_y = y + 10 * heading_cos;
+		int half_back_bg_x = x -10 * heading_sin;
 
-		pt_y = half_back_y-24*heading_cos;
-		pt_x = half_back_x+24*heading_sin;
-		//ptbg_y = half_back_bg_y-28*heading_cos;
-		ptbg_x = half_back_bg_x+28*heading_sin;
+		int pt_y = half_back_y - 24 * heading_cos;
+		int pt_x = half_back_x + 24 * heading_sin;
+		//ptbg_y = half_back_bg_y - 28 * heading_cos;
+		int ptbg_x = half_back_bg_x + 28 * heading_sin;
 
-		side1_y = half_back_y+9*heading_sin;
-		side1_x = half_back_x+9*heading_cos;
-		side1bg_y = half_back_bg_y+11*heading_sin;
-		side1bg_x = half_back_bg_x+11*heading_cos;
+		int side1_y = half_back_y + 9 * heading_sin;
+		int side1_x = half_back_x + 9 * heading_cos;
+		int side1bg_y = half_back_bg_y + 11 * heading_sin;
+		int side1bg_x = half_back_bg_x + 11 * heading_cos;
 
-		side2_y = half_back_y-9*heading_sin;
-		side2_x = half_back_x-9*heading_cos;
-		side2bg_y = half_back_bg_y-11*heading_sin;
-		side2bg_x = half_back_bg_x-11*heading_cos;
+		int side2_y = half_back_y - 9 * heading_sin;
+		int side2_x = half_back_x - 9 * heading_cos;
+		int side2bg_y = half_back_bg_y - 11 * heading_sin;
+		int side2bg_x = half_back_bg_x - 11 * heading_cos;
 
 		GdkPoint trian[3] = { { pt_x, pt_y }, {side1_x, side1_y}, {side2_x, side2_y} };
 		GdkPoint trian_bg[3] = { { ptbg_x, pt_y }, {side1bg_x, side1bg_y}, {side2bg_x, side2bg_y} };
@@ -1679,8 +1671,7 @@ void LayerGPS::update_statusbar(Window * window)
 static void gpsd_raw_hook(VglGpsd *vgpsd, char *data)
 {
 	bool update_all = false;
-	VikLayer *vgl = vgpsd->vgl;
-	LayerGPS * layer = (LayerGPS *) vgl->layer;
+	LayerGPS * layer = vgpsd->gps_layer;
 
 	if (!layer->realtime_tracking) {
 		fprintf(stderr, "WARNING: %s: receiving GPS data while not in realtime mode\n", __PRETTY_FUNCTION__);
@@ -1752,10 +1743,9 @@ static void gpsd_raw_hook(VglGpsd *vgpsd, char *data)
 	}
 }
 
-static int gpsd_data_available(GIOChannel *source, GIOCondition condition, void * data)
+static int gpsd_data_available(GIOChannel *source, GIOCondition condition, void * gps_layer)
 {
-	VikLayer *vgl = (VikLayer *) data;
-	LayerGPS * layer = (LayerGPS *) vgl->layer;
+	LayerGPS * layer = (LayerGPS *) gps_layer;
 
 	if (condition == G_IO_IN) {
 #if GPSD_API_MAJOR_VERSION == 3 || GPSD_API_MAJOR_VERSION == 4
@@ -1793,10 +1783,9 @@ static char *make_track_name(LayerTRW * trw)
 
 }
 
-static bool rt_gpsd_try_connect(void * *data)
+static bool rt_gpsd_try_connect(void * gps_layer)
 {
-	VikLayer *vgl = (VikLayer *) data;
-	LayerGPS * layer = (LayerGPS *) vgl->layer;
+	LayerGPS * layer = (LayerGPS *) gps_layer;
 
 #if GPSD_API_MAJOR_VERSION == 3
 	struct gps_data_t *gpsd = gps_open(layer->gpsd_host, layer->gpsd_port);
@@ -1820,7 +1809,7 @@ static bool rt_gpsd_try_connect(void * *data)
 #if GPSD_API_MAJOR_VERSION == 3
 	layer->vgpsd = realloc(gpsd, sizeof(VglGpsd));
 #endif
-	layer->vgpsd->vgl = vgl;
+	layer->vgpsd->gps_layer = layer;
 
 	layer->realtime_fix.dirty = layer->last_fix.dirty = false;
   /* track alt/time graph uses VIK_DEFAULT_ALTITUDE (0.0) as invalid */
@@ -1840,7 +1829,7 @@ static bool rt_gpsd_try_connect(void * *data)
 
 	layer->realtime_io_channel = g_io_channel_unix_new(layer->vgpsd->gpsd.gps_fd);
 	layer->realtime_io_watch_id = g_io_add_watch(layer->realtime_io_channel,
-						    (GIOCondition) (G_IO_IN | G_IO_ERR | G_IO_HUP), gpsd_data_available, vgl);
+						    (GIOCondition) (G_IO_IN | G_IO_ERR | G_IO_HUP), gpsd_data_available, layer);
 
 #if GPSD_API_MAJOR_VERSION == 3
 	gps_query(&layer->vgpsd->gpsd, "w+x");
@@ -1871,7 +1860,7 @@ bool LayerGPS::rt_ask_retry()
 bool LayerGPS::rt_gpsd_connect(bool ask_if_failed)
 {
 	this->realtime_retry_timer = 0;
-	if (rt_gpsd_try_connect((void * *)this->vl)) {
+	if (rt_gpsd_try_connect((void * ) this)) {
 		if (this->gpsd_retry_interval <= 0) {
 			fprintf(stderr, "WARNING: Failed to connect to gpsd but will not retry because retry intervel was set to %d (which is 0 or negative)\n", this->gpsd_retry_interval);
 			return false;
@@ -1879,7 +1868,7 @@ bool LayerGPS::rt_gpsd_connect(bool ask_if_failed)
 			return false;
 		} else {
 			this->realtime_retry_timer = g_timeout_add_seconds(this->gpsd_retry_interval,
-									   (GSourceFunc)rt_gpsd_try_connect, (void **) this->vl);
+									   (GSourceFunc)rt_gpsd_try_connect, (void *) this);
 		}
 	}
 	return true;

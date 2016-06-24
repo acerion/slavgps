@@ -23,7 +23,6 @@
 #ifndef _VIKING_GPSLAYER_H
 #define _VIKING_GPSLAYER_H
 
-#include <stdbool.h>
 #include <stdint.h>
 
 #include "viklayer.h"
@@ -78,23 +77,11 @@ typedef enum {
 	RTE = 2
 } vik_gps_xfer_type;
 
-#if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
-typedef struct {
-	struct gps_data_t gpsd;
-	VikLayer *vgl;
-} VglGpsd;
-
-typedef struct {
-	struct gps_fix_t fix;
-	int satellites_used;
-	bool dirty;   /* needs to be saved */
-} GpsFix;
-#endif /* VIK_CONFIG_REALTIME_GPS_TRACKING */
 
 
 
 // Non layer specific but expose communal method
-int vik_gps_comm(SlavGPS::LayerTRW * layer,
+int vik_gps_comm(SlavGPS::LayerTRW * trw_layer,
 		 SlavGPS::Track * trk,
 		 vik_gps_dir dir,
 		 char *protocol,
@@ -116,6 +103,30 @@ int vik_gps_comm(SlavGPS::LayerTRW * layer,
 
 
 namespace SlavGPS {
+
+
+
+
+
+	class LayerGPS;
+
+
+
+
+
+#if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
+	typedef struct {
+		struct gps_data_t gpsd;
+		LayerGPS * gps_layer;
+	} VglGpsd;
+
+	typedef struct {
+		struct gps_fix_t fix;
+		int satellites_used;
+		bool dirty;   /* needs to be saved */
+	} GpsFix;
+#endif /* VIK_CONFIG_REALTIME_GPS_TRACKING */
+
 
 
 

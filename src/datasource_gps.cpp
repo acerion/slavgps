@@ -23,6 +23,9 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
+#include <vector>
+
 #include <string.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -48,7 +51,7 @@ using namespace SlavGPS;
 
 
 
-extern GList * a_babel_device_list;
+std::vector<BabelDevice *> a_babel_device_list;
 
 static bool gps_acquire_in_progress = false;
 
@@ -150,8 +153,9 @@ char* datasource_gps_get_protocol ( void * user_data )
   // Uses the list of supported devices
   gps_user_data_t *w = (gps_user_data_t *)user_data;
   last_active = gtk_combo_box_get_active(GTK_COMBO_BOX(w->proto_b));
-  if (a_babel_device_list) {
-    char *protocol = ((BabelDevice*)g_list_nth_data(a_babel_device_list, last_active))->name;
+  if (a_babel_device_list.size()) {
+    char *protocol = a_babel_device_list[last_active]->name;
+    fprintf(stderr, "%s:%d: protocol '%s'\n", __FUNCTION__, __LINE__, protocol);
     a_settings_set_string ( VIK_SETTINGS_GPS_PROTOCOL, protocol );
     return protocol;
   }
@@ -291,10 +295,11 @@ static void datasource_gps_off ( void * user_data, char **babelargs, char **file
     return;
   }
 
-  if (!a_babel_device_list)
+  if (a_babel_device_list.empty())
     return;
   last_active = gtk_combo_box_get_active(GTK_COMBO_BOX(w->proto_b));
-  device = ((BabelDevice*)g_list_nth_data(a_babel_device_list, last_active))->name;
+  device = a_babel_device_list[last_active]->name;
+  fprintf(stderr, "%s:%d: last active device: '%s'\n", __FUNCTION__, __LINE__, device);
   if (!strcmp(device, "garmin")) {
     device = (char *) "garmin,power_off";
   }
@@ -516,7 +521,9 @@ static void datasource_gps_add_setup_widgets ( GtkWidget *dialog, Viewport * vie
 
   w->proto_l = gtk_label_new (_("GPS Protocol:"));
   w->proto_b = vik_combo_box_text_new ();
-  g_list_foreach (a_babel_device_list, append_element, w->proto_b);
+  for (auto iter = a_babel_device_list.begin(); iter != a_babel_device_list.end(); iter++) {
+	  append_element(*iter, w->proto_b);
+  }
 
   if ( last_active < 0 ) {
     find_entry = -1;
@@ -524,12 +531,17 @@ static void datasource_gps_add_setup_widgets ( GtkWidget *dialog, Viewport * vie
     char *protocol = NULL;
     if ( a_settings_get_string ( VIK_SETTINGS_GPS_PROTOCOL, &protocol ) ) {
       // Use setting
-      if ( protocol )
-        g_list_foreach (a_babel_device_list, find_protocol, protocol);
+	    if ( protocol ) {
+		    for (auto iter = a_babel_device_list.begin(); iter != a_babel_device_list.end(); iter++) {
+			    find_protocol(*iter, protocol);
+		    }
+	    }
     }
     else {
       // Attempt to maintain default to Garmin devices (assumed most popular/numerous device)
-      g_list_foreach (a_babel_device_list, find_protocol, (void *) "garmin");
+	    for (auto iter = a_babel_device_list.begin(); iter != a_babel_device_list.end(); iter++) {
+		    find_protocol(*iter, (void *) "garmin");
+	    }
     }
     // If not found set it to the first entry, otherwise use the entry
     last_active = ( wanted_entry < 0 ) ? 0 : wanted_entry;

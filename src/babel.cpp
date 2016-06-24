@@ -34,6 +34,8 @@
 #include "config.h"
 #endif
 
+#include <vector>
+
 #include "viking.h"
 #include "gpx.h"
 #include "babel.h"
@@ -73,24 +75,20 @@ static char *unbuffer_loc = NULL;
 /**
  * List of file formats supported by gpsbabel.
  */
-GList *a_babel_file_list;
+std::vector<BabelFile *> a_babel_file_list;
 
 /**
  * List of device supported by gpsbabel.
  */
-GList *a_babel_device_list;
+extern std::vector<BabelDevice *> a_babel_device_list;
 
 /**
  * Run a function on all file formats supporting a given mode.
  */
 void a_babel_foreach_file_with_mode (BabelMode mode, GFunc func, void * user_data)
 {
-  GList *current;
-  for ( current = g_list_first (a_babel_file_list) ;
-        current != NULL ;
-        current = g_list_next (current) )
-  {
-    BabelFile * currentFile = (BabelFile *) current->data;
+  for (auto iter = a_babel_file_list.begin(); iter != a_babel_file_list.end(); iter++) {
+    BabelFile * currentFile = *iter;
     /* Check compatibility of modes */
     bool compat = true;
     if (mode.waypointsRead  && ! currentFile->mode.waypointsRead)  compat = false;
@@ -115,12 +113,8 @@ void a_babel_foreach_file_with_mode (BabelMode mode, GFunc func, void * user_dat
  */
 void a_babel_foreach_file_read_any (GFunc func, void * user_data)
 {
-  GList *current;
-  for ( current = g_list_first (a_babel_file_list) ;
-        current != NULL ;
-        current = g_list_next (current) )
-  {
-    BabelFile *currentFile = (BabelFile *) current->data;
+  for (auto iter = a_babel_file_list.begin(); iter != a_babel_file_list.end(); iter++) {
+    BabelFile *currentFile = *iter;
     // Call function when any read mode found
     if ( currentFile->mode.waypointsRead ||
          currentFile->mode.tracksRead ||
@@ -568,7 +562,7 @@ static void load_feature_parse_line (char *line)
         set_mode (&(device->mode), tokens[1]);
         device->name = g_strdup(tokens[2]);
         device->label = g_strndup (tokens[4], 50); // Limit really long label text
-        a_babel_device_list = g_list_append (a_babel_device_list, device);
+	a_babel_device_list.push_back(device);
         fprintf(stderr, "DEBUG: New gpsbabel device: %s, %d%d%d%d%d%d(%s)\n",
         		device->name,
         		device->mode.waypointsRead, device->mode.waypointsWrite,
@@ -588,7 +582,7 @@ static void load_feature_parse_line (char *line)
         file->name = g_strdup(tokens[2]);
         file->ext = g_strdup(tokens[3]);
         file->label = g_strdup(tokens[4]);
-        a_babel_file_list = g_list_append (a_babel_file_list, file);
+        a_babel_file_list.push_back(file);
         fprintf(stderr, "DEBUG: New gpsbabel file: %s, %d%d%d%d%d%d(%s)\n",
 			file->name,
 			file->mode.waypointsRead, file->mode.waypointsWrite,
@@ -700,27 +694,31 @@ void a_babel_uninit ()
   free( gpsbabel_loc );
   free( unbuffer_loc );
 
-  if ( a_babel_file_list ) {
-    GList *gl;
-    for (gl = a_babel_file_list; gl != NULL; gl = g_list_next(gl)) {
-      BabelFile * file = (BabelFile *) gl->data;
-      free( file->name );
-      free( file->ext );
-      free( file->label );
-      free( gl->data );
+  if (a_babel_file_list.size()) {
+    for (auto iter = a_babel_file_list.begin(); iter != a_babel_file_list.end(); iter++) {
+      BabelFile * file = *iter;
+      fprintf(stderr, "%s:%d: freeing file '%s' / '%s'\n", __FUNCTION__, __LINE__, file->name, file->label);
+      free(file->name);
+      free(file->ext);
+      free(file->label);
+
+      /* kamilFIXME: how should we do this? How to destroy BabelFile? */
+      // free(*iter);
+      //a_babel_file_list.erase(iter);
     }
-    g_list_free ( a_babel_file_list );
   }
 
-  if ( a_babel_device_list ) {
-    GList *gl;
-    for (gl = a_babel_device_list; gl != NULL; gl = g_list_next(gl)) {
-      BabelDevice *device = (BabelDevice *) gl->data;
-      free( device->name );
-      free( device->label );
-      free( gl->data );
+  if (a_babel_device_list.size()) {
+    for (auto iter = a_babel_device_list.begin(); iter != a_babel_device_list.end(); iter++) {
+      BabelDevice * device = *iter;
+      fprintf(stderr, "%s:%d: freeing device '%s' / '%s'\n", __FUNCTION__, __LINE__, device->name, device->label);
+      free(device->name);
+      free(device->label);
+
+      /* kamilFIXME: how should we do this? How to destroy BabelDevice? */
+      //free(*iter);
+      // a_babel_device_list.erase(iter);
     }
-    g_list_free ( a_babel_device_list );
   }
 
 }
@@ -732,7 +730,7 @@ void a_babel_uninit ()
  *
  * Returns: true if babel available
  */
-bool a_babel_available ()
+bool a_babel_available()
 {
-  return a_babel_device_list != NULL;
+	return !a_babel_device_list.empty();
 }
