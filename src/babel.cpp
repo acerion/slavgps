@@ -85,22 +85,23 @@ extern std::vector<BabelDevice *> a_babel_device_list;
 /**
  * Run a function on all file formats supporting a given mode.
  */
-void a_babel_foreach_file_with_mode (BabelMode mode, GFunc func, void * user_data)
+void a_babel_foreach_file_with_mode(BabelMode mode, GFunc func, void * user_data)
 {
-  for (auto iter = a_babel_file_list.begin(); iter != a_babel_file_list.end(); iter++) {
-    BabelFile * currentFile = *iter;
-    /* Check compatibility of modes */
-    bool compat = true;
-    if (mode.waypointsRead  && ! currentFile->mode.waypointsRead)  compat = false;
-    if (mode.waypointsWrite && ! currentFile->mode.waypointsWrite) compat = false;
-    if (mode.tracksRead     && ! currentFile->mode.tracksRead)     compat = false;
-    if (mode.tracksWrite    && ! currentFile->mode.tracksWrite)    compat = false;
-    if (mode.routesRead     && ! currentFile->mode.routesRead)     compat = false;
-    if (mode.routesWrite    && ! currentFile->mode.routesWrite)    compat = false;
-    /* Do call */
-    if (compat)
-      func (currentFile, user_data);
-  }
+	for (auto iter = a_babel_file_list.begin(); iter != a_babel_file_list.end(); iter++) {
+		BabelFile * currentFile = *iter;
+		/* Check compatibility of modes */
+		bool compat = true;
+		if (mode.waypointsRead  && ! currentFile->mode.waypointsRead)  compat = false;
+		if (mode.waypointsWrite && ! currentFile->mode.waypointsWrite) compat = false;
+		if (mode.tracksRead     && ! currentFile->mode.tracksRead)     compat = false;
+		if (mode.tracksWrite    && ! currentFile->mode.tracksWrite)    compat = false;
+		if (mode.routesRead     && ! currentFile->mode.routesRead)     compat = false;
+		if (mode.routesWrite    && ! currentFile->mode.routesWrite)    compat = false;
+		/* Do call */
+		if (compat) {
+			func(currentFile, user_data);
+		}
+	}
 }
 
 /**
@@ -111,16 +112,18 @@ void a_babel_foreach_file_with_mode (BabelMode mode, GFunc func, void * user_dat
  * Run a function on all file formats with any kind of read method
  *  (which is almost all but not quite - e.g. with GPSBabel v1.4.4 - PalmDoc is write only waypoints)
  */
-void a_babel_foreach_file_read_any (GFunc func, void * user_data)
+void a_babel_foreach_file_read_any(GFunc func, void * user_data)
 {
-  for (auto iter = a_babel_file_list.begin(); iter != a_babel_file_list.end(); iter++) {
-    BabelFile *currentFile = *iter;
-    // Call function when any read mode found
-    if ( currentFile->mode.waypointsRead ||
-         currentFile->mode.tracksRead ||
-         currentFile->mode.routesRead)
-      func (currentFile, user_data);
-  }
+	for (auto iter = a_babel_file_list.begin(); iter != a_babel_file_list.end(); iter++) {
+		BabelFile *currentFile = *iter;
+		// Call function when any read mode found
+		if (currentFile->mode.waypointsRead ||
+		     currentFile->mode.tracksRead ||
+		     currentFile->mode.routesRead) {
+
+			func(currentFile, user_data);
+		}
+	}
 }
 
 /**
@@ -138,31 +141,29 @@ void a_babel_foreach_file_read_any (GFunc func, void * user_data)
  *
  * Returns: %true on success
  */
-bool a_babel_convert(LayerTRW * trw, const char *babelargs, BabelStatusFunc cb, void * user_data, void * not_used )
+bool a_babel_convert(LayerTRW * trw, const char * babelargs, BabelStatusFunc cb, void * user_data, void * not_used)
 {
-  bool ret = false;
-  char *bargs = g_strconcat(babelargs, " -i gpx", NULL);
-  char *name_src = a_gpx_write_tmp_file(trw, NULL );
+	bool ret = false;
+	char *bargs = g_strconcat(babelargs, " -i gpx", NULL);
+	char *name_src = a_gpx_write_tmp_file(trw, NULL);
 
-  if ( name_src ) {
-    ProcessOptions po = { bargs, name_src, NULL, NULL, NULL };
-    ret = a_babel_convert_from(trw, &po, cb, user_data, (DownloadFileOptions *) not_used );
-    (void)g_remove(name_src);
-    free(name_src);
-  }
+	if (name_src) {
+		ProcessOptions po = { bargs, name_src, NULL, NULL, NULL };
+		ret = a_babel_convert_from(trw, &po, cb, user_data, (DownloadFileOptions *) not_used);
+		(void)g_remove(name_src);
+		free(name_src);
+	}
 
-  free(bargs);
-  return ret;
+	free(bargs);
+	return ret;
 }
 
 /**
  * Perform any cleanup actions once GPSBabel has completed running
  */
-static void babel_watch ( GPid pid,
-                          int status,
-                          void * user_data )
+static void babel_watch(GPid pid, int status, void * user_data)
 {
-  g_spawn_close_pid ( pid );
+	g_spawn_close_pid(pid);
 }
 
 /**
@@ -176,44 +177,47 @@ static void babel_watch ( GPid pid,
  *
  * Returns: %true on successful invocation of GPSBabel command
  */
-static bool babel_general_convert( BabelStatusFunc cb, char **args, void * user_data )
+static bool babel_general_convert(BabelStatusFunc cb, char **args, void * user_data)
 {
-  bool ret = false;
-  GPid pid;
-  GError *error = NULL;
-  int babel_stdout;
+	bool ret = false;
+	GPid pid;
+	GError *error = NULL;
+	int babel_stdout;
 
-  if ( vik_debug ) {
-    for ( unsigned int i=0; args[i]; i++ )
-      fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, args[i] );
-  }
+	if (vik_debug) {
+		for (unsigned int i=0; args[i]; i++) {
+			fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, args[i]);
+		}
+	}
 
-  if (!g_spawn_async_with_pipes (NULL, args, NULL, G_SPAWN_DO_NOT_REAP_CHILD, NULL, NULL, &pid, NULL, &babel_stdout, NULL, &error)) {
-    fprintf(stderr, "WARNING: Async command failed: %s\n", error->message);
-    g_error_free(error);
-    ret = false;
-  } else {
+	if (!g_spawn_async_with_pipes(NULL, args, NULL, G_SPAWN_DO_NOT_REAP_CHILD, NULL, NULL, &pid, NULL, &babel_stdout, NULL, &error)) {
+		fprintf(stderr, "WARNING: Async command failed: %s\n", error->message);
+		g_error_free(error);
+		ret = false;
+	} else {
 
-    char line[512];
-    FILE *diag;
-    diag = fdopen(babel_stdout, "r");
-    setvbuf(diag, NULL, _IONBF, 0);
+		char line[512];
+		FILE *diag;
+		diag = fdopen(babel_stdout, "r");
+		setvbuf(diag, NULL, _IONBF, 0);
 
-    while (fgets(line, sizeof(line), diag)) {
-      if ( cb )
-        cb(BABEL_DIAG_OUTPUT, line, user_data);
-    }
-    if ( cb )
-      cb(BABEL_DONE, NULL, user_data);
-    fclose(diag);
-    diag = NULL;
+		while (fgets(line, sizeof(line), diag)) {
+			if (cb) {
+				cb(BABEL_DIAG_OUTPUT, line, user_data);
+			}
+		}
+		if (cb) {
+			cb(BABEL_DONE, NULL, user_data);
+		}
+		fclose(diag);
+		diag = NULL;
 
-    g_child_watch_add ( pid, (GChildWatchFunc) babel_watch, NULL );
+		g_child_watch_add(pid, (GChildWatchFunc) babel_watch, NULL);
 
-    ret = true;
-  }
+		ret = true;
+	}
 
-  return ret;
+	return ret;
 }
 
 /**
@@ -233,27 +237,28 @@ static bool babel_general_convert( BabelStatusFunc cb, char **args, void * user_
  *
  * Returns: %true on success
  */
-static bool babel_general_convert_from(LayerTRW * trw, BabelStatusFunc cb, char **args, const char *name_dst, void * user_data )
+static bool babel_general_convert_from(LayerTRW * trw, BabelStatusFunc cb, char **args, const char *name_dst, void * user_data)
 {
-  bool ret = false;
-  FILE *f = NULL;
+	bool ret = false;
+	FILE *f = NULL;
 
-  if (babel_general_convert(cb, args, user_data)) {
+	if (babel_general_convert(cb, args, user_data)) {
 
-    /* No data actually required but still need to have run gpsbabel anyway
-       - eg using the device power command_off */
-    if (trw == NULL )
-      return true;
+		/* No data actually required but still need to have run gpsbabel anyway
+		   - eg using the device power command_off */
+		if (trw == NULL) {
+			return true;
+		}
 
-    f = g_fopen(name_dst, "r");
-    if (f) {
-      ret = a_gpx_read_file(trw, f );
-      fclose(f);
-      f = NULL;
-    }
-  }
+		f = g_fopen(name_dst, "r");
+		if (f) {
+			ret = a_gpx_read_file(trw, f);
+			fclose(f);
+			f = NULL;
+		}
+	}
 
-  return ret;
+	return ret;
 }
 
 /**
@@ -273,59 +278,64 @@ static bool babel_general_convert_from(LayerTRW * trw, BabelStatusFunc cb, char 
  *
  * Returns: %true on success
  */
-bool a_babel_convert_from_filter(LayerTRW * trw, const char *babelargs, const char *from, const char *babelfilters, BabelStatusFunc cb, void * user_data, void * not_used )
+bool a_babel_convert_from_filter(LayerTRW * trw, const char *babelargs, const char *from, const char *babelfilters, BabelStatusFunc cb, void * user_data, void * not_used)
 {
-  int i,j;
-  int fd_dst;
-  char *name_dst = NULL;
-  bool ret = false;
-  char *args[64];
+	int i,j;
+	int fd_dst;
+	char *name_dst = NULL;
+	bool ret = false;
+	char *args[64];
 
-  if ((fd_dst = g_file_open_tmp("tmp-viking.XXXXXX", &name_dst, NULL)) >= 0) {
-    fprintf(stderr, "DEBUG: %s: temporary file: %s\n", __FUNCTION__, name_dst);
-    close(fd_dst);
+	if ((fd_dst = g_file_open_tmp("tmp-viking.XXXXXX", &name_dst, NULL)) >= 0) {
+		fprintf(stderr, "DEBUG: %s: temporary file: %s\n", __FUNCTION__, name_dst);
+		close(fd_dst);
 
-    if (gpsbabel_loc ) {
-      char **sub_args = g_strsplit(babelargs, " ", 0);
-      char **sub_filters = NULL;
+		if (gpsbabel_loc) {
+			char **sub_args = g_strsplit(babelargs, " ", 0);
+			char **sub_filters = NULL;
 
-      i = 0;
-      if (unbuffer_loc)
-        args[i++] = unbuffer_loc;
-      args[i++] = gpsbabel_loc;
-      for (j = 0; sub_args[j]; j++) {
-        /* some version of gpsbabel can not take extra blank arg */
-        if (sub_args[j][0] != '\0')
-          args[i++] = sub_args[j];
-      }
-      args[i++] = (char *) "-f";
-      args[i++] = (char *)from;
-      if (babelfilters) {
-        sub_filters = g_strsplit(babelfilters, " ", 0);
-        for (j = 0; sub_filters[j]; j++) {
-          /* some version of gpsbabel can not take extra blank arg */
-          if (sub_filters[j][0] != '\0')
-            args[i++] = sub_filters[j];
-        }
-      }
-      args[i++] = (char *) "-o";
-      args[i++] = (char *) "gpx";
-      args[i++] = (char *) "-F";
-      args[i++] = name_dst;
-      args[i] = NULL;
+			i = 0;
+			if (unbuffer_loc) {
+				args[i++] = unbuffer_loc;
+			}
+			args[i++] = gpsbabel_loc;
+			for (j = 0; sub_args[j]; j++) {
+				/* some version of gpsbabel can not take extra blank arg */
+				if (sub_args[j][0] != '\0') {
+					args[i++] = sub_args[j];
+				}
+			}
+			args[i++] = (char *) "-f";
+			args[i++] = (char *)from;
+			if (babelfilters) {
+				sub_filters = g_strsplit(babelfilters, " ", 0);
+				for (j = 0; sub_filters[j]; j++) {
+					/* some version of gpsbabel can not take extra blank arg */
+					if (sub_filters[j][0] != '\0') {
+						args[i++] = sub_filters[j];
+					}
+				}
+			}
+			args[i++] = (char *) "-o";
+			args[i++] = (char *) "gpx";
+			args[i++] = (char *) "-F";
+			args[i++] = name_dst;
+			args[i] = NULL;
 
-      ret = babel_general_convert_from(trw, cb, args, name_dst, user_data );
+			ret = babel_general_convert_from(trw, cb, args, name_dst, user_data);
 
-      g_strfreev(sub_args);
-      if (sub_filters)
-          g_strfreev(sub_filters);
-    } else
-      fprintf(stderr, "CRITICAL: gpsbabel not found in PATH\n");
-    (void)g_remove(name_dst);
-    free(name_dst);
-  }
+			g_strfreev(sub_args);
+			if (sub_filters) {
+				g_strfreev(sub_filters);
+			}
+		} else {
+			fprintf(stderr, "CRITICAL: gpsbabel not found in PATH\n");
+		}
+		(void)g_remove(name_dst);
+		free(name_dst);
+	}
 
-  return ret;
+	return ret;
 }
 
 /**
@@ -343,39 +353,40 @@ bool a_babel_convert_from_filter(LayerTRW * trw, const char *babelargs, const ch
  * Uses babel_general_convert_from() to actually run the command. This function
  * prepares the command and temporary file, and sets up the arguments for bash.
  */
-bool a_babel_convert_from_shellcommand(LayerTRW * trw, const char *input_cmd, const char *input_file_type, BabelStatusFunc cb, void * user_data, void * not_used )
+bool a_babel_convert_from_shellcommand(LayerTRW * trw, const char *input_cmd, const char *input_file_type, BabelStatusFunc cb, void * user_data, void * not_used)
 {
-  int fd_dst;
-  char *name_dst = NULL;
-  bool ret = false;
-  char **args;
+	int fd_dst;
+	char *name_dst = NULL;
+	bool ret = false;
+	char **args;
 
-  if ((fd_dst = g_file_open_tmp("tmp-viking.XXXXXX", &name_dst, NULL)) >= 0) {
-    fprintf(stderr, "DEBUG: %s: temporary file: %s\n", __FUNCTION__, name_dst);
-    char *shell_command;
-    if ( input_file_type )
-      shell_command = g_strdup_printf("%s | %s -i %s -f - -o gpx -F %s",
-        input_cmd, gpsbabel_loc, input_file_type, name_dst);
-    else
-      shell_command = g_strdup_printf("%s > %s", input_cmd, name_dst);
+	if ((fd_dst = g_file_open_tmp("tmp-viking.XXXXXX", &name_dst, NULL)) >= 0) {
+		fprintf(stderr, "DEBUG: %s: temporary file: %s\n", __FUNCTION__, name_dst);
+		char *shell_command;
+		if (input_file_type) {
+			shell_command = g_strdup_printf("%s | %s -i %s -f - -o gpx -F %s",
+							input_cmd, gpsbabel_loc, input_file_type, name_dst);
+		} else {
+			shell_command = g_strdup_printf("%s > %s", input_cmd, name_dst);
+		}
 
-    fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, shell_command);
-    close(fd_dst);
+		fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, shell_command);
+		close(fd_dst);
 
-    args = (char **) malloc(4 * sizeof (char *));
-    args[0] = (char *) BASH_LOCATION;
-    args[1] = (char *) "-c";
-    args[2] = shell_command;
-    args[3] = NULL;
+		args = (char **) malloc(4 * sizeof (char *));
+		args[0] = (char *) BASH_LOCATION;
+		args[1] = (char *) "-c";
+		args[2] = shell_command;
+		args[3] = NULL;
 
-    ret = babel_general_convert_from(trw, cb, args, name_dst, user_data );
-    free( args );
-    free( shell_command );
-    (void)g_remove(name_dst);
-    free(name_dst);
-  }
+		ret = babel_general_convert_from(trw, cb, args, name_dst, user_data);
+		free(args);
+		free(shell_command);
+		(void)g_remove(name_dst);
+		free(name_dst);
+	}
 
-  return ret;
+	return ret;
 }
 
 /**
@@ -394,47 +405,48 @@ bool a_babel_convert_from_shellcommand(LayerTRW * trw, const char *input_cmd, co
  * Returns: %true on successful invocation of GPSBabel or read of the GPX
  *
  */
-bool a_babel_convert_from_url_filter(LayerTRW * trw, const char *url, const char *input_type, const char *babelfilters, BabelStatusFunc cb, void * user_data, DownloadFileOptions *options )
+bool a_babel_convert_from_url_filter(LayerTRW * trw, const char *url, const char *input_type, const char *babelfilters, BabelStatusFunc cb, void * user_data, DownloadFileOptions *options)
 {
-  // If no download options specified, use defaults:
-  DownloadFileOptions myoptions = { false, false, NULL, 2, NULL, NULL, NULL };
-  if ( options )
-    myoptions = *options;
-  int fd_src;
-  int fetch_ret;
-  bool ret = false;
-  char *name_src = NULL;
-  char *babelargs = NULL;
+	// If no download options specified, use defaults:
+	DownloadFileOptions myoptions = { false, false, NULL, 2, NULL, NULL, NULL };
+	if (options) {
+		myoptions = *options;
+	}
+	int fd_src;
+	int fetch_ret;
+	bool ret = false;
+	char *name_src = NULL;
+	char *babelargs = NULL;
 
-  fprintf(stderr, "DEBUG: %s: input_type=%s url=%s\n", __FUNCTION__, input_type, url);
+	fprintf(stderr, "DEBUG: %s: input_type=%s url=%s\n", __FUNCTION__, input_type, url);
 
-  if ((fd_src = g_file_open_tmp("tmp-viking.XXXXXX", &name_src, NULL)) >= 0) {
-    fprintf(stderr, "DEBUG: %s: temporary file: %s\n", __FUNCTION__, name_src);
-    close(fd_src);
-    (void)g_remove(name_src);
+	if ((fd_src = g_file_open_tmp("tmp-viking.XXXXXX", &name_src, NULL)) >= 0) {
+		fprintf(stderr, "DEBUG: %s: temporary file: %s\n", __FUNCTION__, name_src);
+		close(fd_src);
+		(void)g_remove(name_src);
 
-    fetch_ret = a_http_download_get_url(url, "", name_src, &myoptions, NULL);
-    if (fetch_ret == DOWNLOAD_SUCCESS) {
-      if (input_type != NULL || babelfilters != NULL) {
-        babelargs = (input_type) ? g_strdup_printf(" -i %s", input_type) : g_strdup("");
-        ret = a_babel_convert_from_filter(trw, babelargs, name_src, babelfilters, NULL, NULL, NULL );
-      } else {
-        /* Process directly the retrieved file */
-        fprintf(stderr, "DEBUG: %s: directly read GPX file %s\n", __FUNCTION__, name_src);
-        FILE *f = g_fopen(name_src, "r");
-        if (f) {
-          ret = a_gpx_read_file(trw, f );
-          fclose(f);
-          f = NULL;
-        }
-      }
-    }
-    (void)util_remove(name_src);
-    free(babelargs);
-    free(name_src);
-  }
+		fetch_ret = a_http_download_get_url(url, "", name_src, &myoptions, NULL);
+		if (fetch_ret == DOWNLOAD_SUCCESS) {
+			if (input_type != NULL || babelfilters != NULL) {
+				babelargs = (input_type) ? g_strdup_printf(" -i %s", input_type) : g_strdup("");
+				ret = a_babel_convert_from_filter(trw, babelargs, name_src, babelfilters, NULL, NULL, NULL);
+			} else {
+				/* Process directly the retrieved file */
+				fprintf(stderr, "DEBUG: %s: directly read GPX file %s\n", __FUNCTION__, name_src);
+				FILE *f = g_fopen(name_src, "r");
+				if (f) {
+					ret = a_gpx_read_file(trw, f);
+					fclose(f);
+					f = NULL;
+				}
+			}
+		}
+		(void)util_remove(name_src);
+		free(babelargs);
+		free(name_src);
+	}
 
-  return ret;
+	return ret;
 }
 
 /**
@@ -451,27 +463,35 @@ bool a_babel_convert_from_url_filter(LayerTRW * trw, const char *url, const char
  *
  * Returns: %true on success
  */
-bool a_babel_convert_from(LayerTRW * trw, ProcessOptions *process_options, BabelStatusFunc cb, void * user_data, DownloadFileOptions *download_options )
+bool a_babel_convert_from(LayerTRW * trw, ProcessOptions *process_options, BabelStatusFunc cb, void * user_data, DownloadFileOptions *download_options)
 {
-  if ( !process_options ) return false;
-  if ( process_options->url )
-    return a_babel_convert_from_url_filter(trw, process_options->url, process_options->input_file_type, process_options->babel_filters, cb, user_data, download_options );
-  if ( process_options->babelargs )
-    return a_babel_convert_from_filter(trw, process_options->babelargs, process_options->filename, process_options->babel_filters, cb, user_data, download_options );
-  if ( process_options->shell_command )
-    return a_babel_convert_from_shellcommand(trw, process_options->shell_command, process_options->filename, cb, user_data, download_options );
-  return false;
+	if (!process_options) {
+		return false;
+	}
+
+	if (process_options->url) {
+		return a_babel_convert_from_url_filter(trw, process_options->url, process_options->input_file_type, process_options->babel_filters, cb, user_data, download_options);
+	}
+
+	if (process_options->babelargs) {
+		return a_babel_convert_from_filter(trw, process_options->babelargs, process_options->filename, process_options->babel_filters, cb, user_data, download_options);
+	}
+
+	if (process_options->shell_command) {
+		return a_babel_convert_from_shellcommand(trw, process_options->shell_command, process_options->filename, cb, user_data, download_options);
+	}
+	return false;
 }
 
-static bool babel_general_convert_to(LayerTRW * trw, Track * trk, BabelStatusFunc cb, char **args, const char *name_src, void * user_data )
+static bool babel_general_convert_to(LayerTRW * trw, Track * trk, BabelStatusFunc cb, char **args, const char *name_src, void * user_data)
 {
-  // Now strips out invisible tracks and waypoints
-  if (!a_file_export(trw, name_src, FILE_TYPE_GPX, trk, false)) {
-    fprintf(stderr, "CRITICAL: Error exporting to %s\n", name_src);
-    return false;
-  }
+	// Now strips out invisible tracks and waypoints
+	if (!a_file_export(trw, name_src, FILE_TYPE_GPX, trk, false)) {
+		fprintf(stderr, "CRITICAL: Error exporting to %s\n", name_src);
+		return false;
+	}
 
-  return babel_general_convert (cb, args, user_data);
+	return babel_general_convert(cb, args, user_data);
 }
 
 /**
@@ -490,57 +510,61 @@ static bool babel_general_convert_to(LayerTRW * trw, Track * trk, BabelStatusFun
  *
  * Returns: %true on successful invocation of GPSBabel command
  */
-bool a_babel_convert_to(LayerTRW * trw, Track * trk, const char *babelargs, const char *to, BabelStatusFunc cb, void * user_data )
+bool a_babel_convert_to(LayerTRW * trw, Track * trk, const char *babelargs, const char *to, BabelStatusFunc cb, void * user_data)
 {
-  int i,j;
-  int fd_src;
-  char *name_src = NULL;
-  bool ret = false;
-  char *args[64];
+	int i,j;
+	int fd_src;
+	char *name_src = NULL;
+	bool ret = false;
+	char *args[64];
 
-  if ((fd_src = g_file_open_tmp("tmp-viking.XXXXXX", &name_src, NULL)) >= 0) {
-    fprintf(stderr, "DEBUG: %s: temporary file: %s\n", __FUNCTION__, name_src);
-    close(fd_src);
+	if ((fd_src = g_file_open_tmp("tmp-viking.XXXXXX", &name_src, NULL)) >= 0) {
+		fprintf(stderr, "DEBUG: %s: temporary file: %s\n", __FUNCTION__, name_src);
+		close(fd_src);
 
-    if (gpsbabel_loc ) {
-      char **sub_args = g_strsplit(babelargs, " ", 0);
+		if (gpsbabel_loc) {
+			char **sub_args = g_strsplit(babelargs, " ", 0);
 
-      i = 0;
-      if (unbuffer_loc)
-        args[i++] = unbuffer_loc;
-      args[i++] = gpsbabel_loc;
-      args[i++] = (char *) "-i";
-      args[i++] = (char *) "gpx";
-      for (j = 0; sub_args[j]; j++)
-        /* some version of gpsbabel can not take extra blank arg */
-        if (sub_args[j][0] != '\0')
-          args[i++] = sub_args[j];
-      args[i++] = (char *) "-f";
-      args[i++] = name_src;
-      args[i++] = (char *) "-F";
-      args[i++] = (char *)to;
-      args[i] = NULL;
+			i = 0;
+			if (unbuffer_loc) {
+				args[i++] = unbuffer_loc;
+			}
+			args[i++] = gpsbabel_loc;
+			args[i++] = (char *) "-i";
+			args[i++] = (char *) "gpx";
+			for (j = 0; sub_args[j]; j++) {
+				/* some version of gpsbabel can not take extra blank arg */
+				if (sub_args[j][0] != '\0') {
+					args[i++] = sub_args[j];
+				}
+			}
+			args[i++] = (char *) "-f";
+			args[i++] = name_src;
+			args[i++] = (char *) "-F";
+			args[i++] = (char *)to;
+			args[i] = NULL;
 
-      ret = babel_general_convert_to(trw, trk, cb, args, name_src, user_data );
+			ret = babel_general_convert_to(trw, trk, cb, args, name_src, user_data);
 
-      g_strfreev(sub_args);
-    } else
-      fprintf(stderr, "CRITICAL: gpsbabel not found in PATH\n");
-    (void)g_remove(name_src);
-    free(name_src);
-  }
+			g_strfreev(sub_args);
+		} else {
+			fprintf(stderr, "CRITICAL: gpsbabel not found in PATH\n");
+		}
+		(void)g_remove(name_src);
+		free(name_src);
+	}
 
-  return ret;
+	return ret;
 }
 
 static void set_mode(BabelMode *mode, char *smode)
 {
-  mode->waypointsRead  = smode[0] == 'r';
-  mode->waypointsWrite = smode[1] == 'w';
-  mode->tracksRead     = smode[2] == 'r';
-  mode->tracksWrite    = smode[3] == 'w';
-  mode->routesRead     = smode[4] == 'r';
-  mode->routesWrite    = smode[5] == 'w';
+	mode->waypointsRead  = smode[0] == 'r';
+	mode->waypointsWrite = smode[1] == 'w';
+	mode->tracksRead     = smode[2] == 'r';
+	mode->tracksWrite    = smode[3] == 'w';
+	mode->routesRead     = smode[4] == 'r';
+	mode->routesWrite    = smode[5] == 'w';
 }
 
 /**
@@ -550,85 +574,90 @@ static void set_mode(BabelMode *mode, char *smode)
  */
 static void load_feature_parse_line (char *line)
 {
-  char **tokens = g_strsplit ( line, "\t", 0 );
-  if ( tokens != NULL
-       && tokens[0] != NULL ) {
-    if ( strcmp("serial", tokens[0]) == 0 ) {
-      if ( tokens[1] != NULL
-           && tokens[2] != NULL
-           && tokens[3] != NULL
-           && tokens[4] != NULL ) {
-        BabelDevice * device = (BabelDevice *) malloc(sizeof (BabelDevice));
-        set_mode (&(device->mode), tokens[1]);
-        device->name = g_strdup(tokens[2]);
-        device->label = g_strndup (tokens[4], 50); // Limit really long label text
-	a_babel_device_list.push_back(device);
-        fprintf(stderr, "DEBUG: New gpsbabel device: %s, %d%d%d%d%d%d(%s)\n",
-        		device->name,
-        		device->mode.waypointsRead, device->mode.waypointsWrite,
-        		device->mode.tracksRead, device->mode.tracksWrite,
-        		device->mode.routesRead, device->mode.routesWrite,
-        			tokens[1]);
-      } else {
-        fprintf(stderr, "WARNING: Unexpected gpsbabel format string: %s\n", line);
-      }
-    } else if ( strcmp("file", tokens[0]) == 0 ) {
-      if ( tokens[1] != NULL
-           && tokens[2] != NULL
-           && tokens[3] != NULL
-           && tokens[4] != NULL ) {
-        BabelFile * file = (BabelFile *) malloc(sizeof (BabelFile));
-        set_mode (&(file->mode), tokens[1]);
-        file->name = g_strdup(tokens[2]);
-        file->ext = g_strdup(tokens[3]);
-        file->label = g_strdup(tokens[4]);
-        a_babel_file_list.push_back(file);
-        fprintf(stderr, "DEBUG: New gpsbabel file: %s, %d%d%d%d%d%d(%s)\n",
-			file->name,
-			file->mode.waypointsRead, file->mode.waypointsWrite,
-			file->mode.tracksRead, file->mode.tracksWrite,
-			file->mode.routesRead, file->mode.routesWrite,
-			tokens[1]);
-      } else {
-        fprintf(stderr, "WARNING: Unexpected gpsbabel format string: %s\n", line);
-      }
-    } /* else: ignore */
-  } else {
-    fprintf(stderr, "WARNING: Unexpected gpsbabel format string: %s\n", line);
-  }
-  g_strfreev ( tokens );
+	char **tokens = g_strsplit (line, "\t", 0);
+	if (tokens != NULL
+	    && tokens[0] != NULL) {
+		if (strcmp("serial", tokens[0]) == 0) {
+			if (tokens[1] != NULL
+			    && tokens[2] != NULL
+			    && tokens[3] != NULL
+			    && tokens[4] != NULL) {
+
+				BabelDevice * device = (BabelDevice *) malloc(sizeof (BabelDevice));
+				set_mode (&(device->mode), tokens[1]);
+				device->name = g_strdup(tokens[2]);
+				device->label = g_strndup (tokens[4], 50); // Limit really long label text
+				a_babel_device_list.push_back(device);
+				fprintf(stderr, "DEBUG: New gpsbabel device: %s, %d%d%d%d%d%d(%s)\n",
+					device->name,
+					device->mode.waypointsRead, device->mode.waypointsWrite,
+					device->mode.tracksRead, device->mode.tracksWrite,
+					device->mode.routesRead, device->mode.routesWrite,
+					tokens[1]);
+			} else {
+				fprintf(stderr, "WARNING: Unexpected gpsbabel format string: %s\n", line);
+			}
+		} else if (strcmp("file", tokens[0]) == 0) {
+			if (tokens[1] != NULL
+			    && tokens[2] != NULL
+			    && tokens[3] != NULL
+			    && tokens[4] != NULL) {
+
+				BabelFile * file = (BabelFile *) malloc(sizeof (BabelFile));
+				set_mode (&(file->mode), tokens[1]);
+				file->name = g_strdup(tokens[2]);
+				file->ext = g_strdup(tokens[3]);
+				file->label = g_strdup(tokens[4]);
+				a_babel_file_list.push_back(file);
+				fprintf(stderr, "DEBUG: New gpsbabel file: %s, %d%d%d%d%d%d(%s)\n",
+					file->name,
+					file->mode.waypointsRead, file->mode.waypointsWrite,
+					file->mode.tracksRead, file->mode.tracksWrite,
+					file->mode.routesRead, file->mode.routesWrite,
+					tokens[1]);
+			} else {
+				fprintf(stderr, "WARNING: Unexpected gpsbabel format string: %s\n", line);
+			}
+		} /* else: ignore */
+	} else {
+		fprintf(stderr, "WARNING: Unexpected gpsbabel format string: %s\n", line);
+	}
+	g_strfreev (tokens);
 }
 
 static void load_feature_cb (BabelProgressCode code, void * line, void * user_data)
 {
-  if (line != NULL)
-    load_feature_parse_line ((char *) line);
+	if (line != NULL) {
+		load_feature_parse_line((char *) line);
+	}
 }
 
-static bool load_feature ()
+static bool load_feature()
 {
-  int i;
-  bool ret = false;
-  char *args[4];
+	int i;
+	bool ret = false;
+	char *args[4];
 
-  if ( gpsbabel_loc ) {
-    i = 0;
-    if ( unbuffer_loc )
-      args[i++] = unbuffer_loc;
-    args[i++] = gpsbabel_loc;
-    args[i++] = (char *) "-^3";
-    args[i] = NULL;
+	if (gpsbabel_loc) {
+		i = 0;
+		if (unbuffer_loc) {
+			args[i++] = unbuffer_loc;
+		}
+		args[i++] = gpsbabel_loc;
+		args[i++] = (char *) "-^3";
+		args[i] = NULL;
 
-    ret = babel_general_convert (load_feature_cb, args, NULL);
-  } else
-    fprintf(stderr, "CRITICAL: gpsbabel not found in PATH\n");
+		ret = babel_general_convert(load_feature_cb, args, NULL);
+	} else {
+		fprintf(stderr, "CRITICAL: gpsbabel not found in PATH\n");
+	}
 
-  return ret;
+	return ret;
 }
 
 static VikLayerParam prefs[] = {
-  { VIK_LAYER_NUM_TYPES, VIKING_PREFERENCES_IO_NAMESPACE "gpsbabel", VIK_LAYER_PARAM_STRING, VIK_LAYER_GROUP_NONE, N_("GPSBabel:"), VIK_LAYER_WIDGET_FILEENTRY, NULL, NULL,
-      N_("Allow setting the specific instance of GPSBabel. You must restart Viking for this value to take effect."), NULL, NULL, NULL },
+	{ VIK_LAYER_NUM_TYPES, VIKING_PREFERENCES_IO_NAMESPACE "gpsbabel", VIK_LAYER_PARAM_STRING, VIK_LAYER_GROUP_NONE, N_("GPSBabel:"), VIK_LAYER_WIDGET_FILEENTRY, NULL, NULL,
+	  N_("Allow setting the specific instance of GPSBabel. You must restart Viking for this value to take effect."), NULL, NULL, NULL },
 };
 
 /**
@@ -636,21 +665,22 @@ static VikLayerParam prefs[] = {
  *
  * Just setup preferences first
  */
-void a_babel_init ()
+void a_babel_init()
 {
-  // Set the defaults
-  VikLayerParamData vlpd;
+	// Set the defaults
+	VikLayerParamData vlpd;
 #ifdef WINDOWS
-  // Basic guesses - could use %ProgramFiles% but this is simpler:
-  if ( g_file_test ( "C:\\Program Files (x86)\\GPSBabel\\gpsbabel.exe", G_FILE_TEST_EXISTS ) )
-    // 32 bit location on a 64 bit system
-    vlpd.s = "C:\\Program Files (x86)\\GPSBabel\\gpsbabel.exe";
-  else
-    vlpd.s = "C:\\Program Files\\GPSBabel\\gpsbabel.exe";
+	// Basic guesses - could use %ProgramFiles% but this is simpler:
+	if (g_file_test ("C:\\Program Files (x86)\\GPSBabel\\gpsbabel.exe", G_FILE_TEST_EXISTS)) {
+		// 32 bit location on a 64 bit system
+		vlpd.s = "C:\\Program Files (x86)\\GPSBabel\\gpsbabel.exe";
+	} else {
+		vlpd.s = "C:\\Program Files\\GPSBabel\\gpsbabel.exe";
+	}
 #else
-  vlpd.s = "gpsbabel";
+	vlpd.s = "gpsbabel";
 #endif
-  a_preferences_register(&prefs[0], vlpd, VIKING_PREFERENCES_IO_GROUP_KEY);
+	a_preferences_register(&prefs[0], vlpd, VIKING_PREFERENCES_IO_GROUP_KEY);
 }
 
 /**
@@ -660,28 +690,30 @@ void a_babel_init ()
  * Mainly check existence of gpsbabel progam
  * and load all features available in that version.
  */
-void a_babel_post_init ()
+void a_babel_post_init()
 {
-  // Read the current preference
-  const char *gpsbabel = a_preferences_get(VIKING_PREFERENCES_IO_NAMESPACE "gpsbabel")->s;
-  // If setting is still the UNIX default then lookup in the path - otherwise attempt to use the specified value directly.
-  if ( g_strcmp0 ( gpsbabel, "gpsbabel" ) == 0 ) {
-    gpsbabel_loc = g_find_program_in_path( "gpsbabel" );
-    if ( !gpsbabel_loc )
-      fprintf(stderr, "CRITICAL: gpsbabel not found in PATH\n" );
-  }
-  else
-    gpsbabel_loc = (char*)gpsbabel;
+	// Read the current preference
+	const char *gpsbabel = a_preferences_get(VIKING_PREFERENCES_IO_NAMESPACE "gpsbabel")->s;
+	// If setting is still the UNIX default then lookup in the path - otherwise attempt to use the specified value directly.
+	if (g_strcmp0 (gpsbabel, "gpsbabel") == 0) {
+		gpsbabel_loc = g_find_program_in_path("gpsbabel");
+		if (!gpsbabel_loc) {
+			fprintf(stderr, "CRITICAL: gpsbabel not found in PATH\n");
+		}
+	} else {
+		gpsbabel_loc = (char*)gpsbabel;
+	}
 
-  // Unlikely to package unbuffer on Windows so ATM don't even bother trying
-  // Highly unlikely unbuffer is available on a Windows system otherwise
+	// Unlikely to package unbuffer on Windows so ATM don't even bother trying
+	// Highly unlikely unbuffer is available on a Windows system otherwise
 #ifndef WINDOWS
-  unbuffer_loc = g_find_program_in_path( "unbuffer" );
-  if ( !unbuffer_loc )
-    fprintf(stderr, "WARNING: unbuffer not found in PATH\n" );
+	unbuffer_loc = g_find_program_in_path("unbuffer");
+	if (!unbuffer_loc) {
+		fprintf(stderr, "WARNING: unbuffer not found in PATH\n");
+	}
 #endif
 
-  load_feature ();
+	load_feature();
 }
 
 /**
@@ -691,35 +723,35 @@ void a_babel_post_init ()
  */
 void a_babel_uninit ()
 {
-  free( gpsbabel_loc );
-  free( unbuffer_loc );
+	free(gpsbabel_loc);
+	free(unbuffer_loc);
 
-  if (a_babel_file_list.size()) {
-    for (auto iter = a_babel_file_list.begin(); iter != a_babel_file_list.end(); iter++) {
-      BabelFile * file = *iter;
-      fprintf(stderr, "%s:%d: freeing file '%s' / '%s'\n", __FUNCTION__, __LINE__, file->name, file->label);
-      free(file->name);
-      free(file->ext);
-      free(file->label);
+	if (a_babel_file_list.size()) {
+		for (auto iter = a_babel_file_list.begin(); iter != a_babel_file_list.end(); iter++) {
+			BabelFile * file = *iter;
+			fprintf(stderr, "%s:%d: freeing file '%s' / '%s'\n", __FUNCTION__, __LINE__, file->name, file->label);
+			free(file->name);
+			free(file->ext);
+			free(file->label);
 
-      /* kamilFIXME: how should we do this? How to destroy BabelFile? */
-      // free(*iter);
-      //a_babel_file_list.erase(iter);
-    }
-  }
+			/* kamilFIXME: how should we do this? How to destroy BabelFile? */
+			// free(*iter);
+			//a_babel_file_list.erase(iter);
+		}
+	}
 
-  if (a_babel_device_list.size()) {
-    for (auto iter = a_babel_device_list.begin(); iter != a_babel_device_list.end(); iter++) {
-      BabelDevice * device = *iter;
-      fprintf(stderr, "%s:%d: freeing device '%s' / '%s'\n", __FUNCTION__, __LINE__, device->name, device->label);
-      free(device->name);
-      free(device->label);
+	if (a_babel_device_list.size()) {
+		for (auto iter = a_babel_device_list.begin(); iter != a_babel_device_list.end(); iter++) {
+			BabelDevice * device = *iter;
+			fprintf(stderr, "%s:%d: freeing device '%s' / '%s'\n", __FUNCTION__, __LINE__, device->name, device->label);
+			free(device->name);
+			free(device->label);
 
-      /* kamilFIXME: how should we do this? How to destroy BabelDevice? */
-      //free(*iter);
-      // a_babel_device_list.erase(iter);
-    }
-  }
+			/* kamilFIXME: how should we do this? How to destroy BabelDevice? */
+			//free(*iter);
+			// a_babel_device_list.erase(iter);
+		}
+	}
 
 }
 

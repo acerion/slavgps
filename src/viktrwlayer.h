@@ -564,18 +564,18 @@ extern "C" {
 #define IS_VIK_TRW_LAYER_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), VIK_TRW_LAYER_TYPE))
 
 enum {
-  VIK_TRW_LAYER_SUBLAYER_TRACKS,
-  VIK_TRW_LAYER_SUBLAYER_WAYPOINTS,
-  VIK_TRW_LAYER_SUBLAYER_TRACK,
-  VIK_TRW_LAYER_SUBLAYER_WAYPOINT,
-  VIK_TRW_LAYER_SUBLAYER_ROUTES,
-  VIK_TRW_LAYER_SUBLAYER_ROUTE
+	VIK_TRW_LAYER_SUBLAYER_TRACKS,
+	VIK_TRW_LAYER_SUBLAYER_WAYPOINTS,
+	VIK_TRW_LAYER_SUBLAYER_TRACK,
+	VIK_TRW_LAYER_SUBLAYER_WAYPOINT,
+	VIK_TRW_LAYER_SUBLAYER_ROUTES,
+	VIK_TRW_LAYER_SUBLAYER_ROUTE
 };
 
 typedef struct _VikTrwLayerClass VikTrwLayerClass;
 struct _VikTrwLayerClass
 {
-  VikLayerClass object_class;
+	VikLayerClass object_class;
 };
 
 
@@ -589,29 +589,29 @@ typedef struct _VikTrwLayer VikTrwLayer;
 // For creating a list of tracks with the corresponding layer it is in
 //  (thus a selection of tracks may be from differing layers)
 typedef struct {
-  SlavGPS::Track * trk;
-  SlavGPS::LayerTRW * trw;
+	SlavGPS::Track * trk;
+	SlavGPS::LayerTRW * trw;
 } vik_trw_track_list_t;
 
 typedef GList* (*VikTrwlayerGetTracksAndLayersFunc) (VikLayer*, void *);
-GList *vik_trw_layer_build_track_list_t ( VikLayer *vtl, GList *tracks );
+GList *vik_trw_layer_build_track_list_t(VikLayer *vtl, GList *tracks);
 
 // For creating a list of waypoints with the corresponding layer it is in
 //  (thus a selection of waypoints may be from differing layers)
 typedef struct {
-  SlavGPS::Waypoint * wp;
-  SlavGPS::LayerTRW * trw;
+	SlavGPS::Waypoint * wp;
+	SlavGPS::LayerTRW * trw;
 } vik_trw_waypoint_list_t;
 
 typedef GList* (*VikTrwlayerGetWaypointsAndLayersFunc) (VikLayer*, void *);
-GList *vik_trw_layer_build_waypoint_list_t ( VikLayer *vtl, GList *waypoints );
+GList *vik_trw_layer_build_waypoint_list_t (VikLayer *vtl, GList *waypoints);
 
-GdkPixbuf* get_wp_sym_small ( char *symbol );
+GdkPixbuf* get_wp_sym_small(char *symbol);
 
 /* Exposed Layer Interface function definitions */
 // Intended only for use by other trw_layer subwindows
 //void trw_layer_verify_thumbnails(VikLayer * vtl, Viewport * viewport);
-void trw_layer_calculate_bounds_waypoints ( VikLayer *vtl );
+void trw_layer_calculate_bounds_waypoints(VikLayer *vtl);
 
 
 typedef struct {
@@ -619,8 +619,8 @@ typedef struct {
 	const char *same_track_name;
 } same_track_name_udata;
 
-int sort_alphabetically (gconstpointer a, gconstpointer b, void * user_data);
-int check_tracks_for_same_name ( gconstpointer aa, gconstpointer bb, void * udata );
+int sort_alphabetically(gconstpointer a, gconstpointer b, void * user_data);
+int check_tracks_for_same_name(gconstpointer aa, gconstpointer bb, void * udata);
 
 
 #define VIK_SETTINGS_LIST_DATE_FORMAT "list_date_format"

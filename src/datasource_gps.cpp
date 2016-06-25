@@ -57,37 +57,37 @@ static bool gps_acquire_in_progress = false;
 
 static int last_active = -1;
 
-static void * datasource_gps_init_func ( acq_vik_t *avt );
-static void datasource_gps_get_process_options ( void * user_data, ProcessOptions *po, void * not_used, const char *not_used2, const char *not_used3 );
-static void datasource_gps_cleanup ( void * user_data );
-static void datasource_gps_progress ( BabelProgressCode c, void * data, acq_dialog_widgets_t *w );
-static void datasource_gps_add_setup_widgets ( GtkWidget *dialog, Viewport * viewport, void * user_data );
-static void datasource_gps_add_progress_widgets ( GtkWidget *dialog, void * user_data );
-static void datasource_gps_off ( void * add_widgets_data_not_used, char **babelargs, char **input_file );
+static void * datasource_gps_init_func(acq_vik_t *avt);
+static void datasource_gps_get_process_options(void * user_data, ProcessOptions *po, void * not_used, const char *not_used2, const char *not_used3);
+static void datasource_gps_cleanup(void * user_data);
+static void datasource_gps_progress(BabelProgressCode c, void * data, acq_dialog_widgets_t *w);
+static void datasource_gps_add_setup_widgets(GtkWidget *dialog, Viewport * viewport, void * user_data);
+static void datasource_gps_add_progress_widgets(GtkWidget *dialog, void * user_data);
+static void datasource_gps_off(void * add_widgets_data_not_used, char **babelargs, char **input_file);
 
 VikDataSourceInterface vik_datasource_gps_interface = {
-  N_("Acquire from GPS"),
-  N_("Acquired from GPS"),
-  VIK_DATASOURCE_AUTO_LAYER_MANAGEMENT,
-  VIK_DATASOURCE_INPUTTYPE_NONE,
-  true,
-  true,
-  true,
-  (VikDataSourceInitFunc)		datasource_gps_init_func,
-  (VikDataSourceCheckExistenceFunc)	NULL,
-  (VikDataSourceAddSetupWidgetsFunc)	datasource_gps_add_setup_widgets,
-  (VikDataSourceGetProcessOptionsFunc)  datasource_gps_get_process_options,
-  (VikDataSourceProcessFunc)            a_babel_convert_from,
-  (VikDataSourceProgressFunc)		datasource_gps_progress,
-  (VikDataSourceAddProgressWidgetsFunc)	datasource_gps_add_progress_widgets,
-  (VikDataSourceCleanupFunc)		datasource_gps_cleanup,
-  (VikDataSourceOffFunc)                datasource_gps_off,
+	N_("Acquire from GPS"),
+	N_("Acquired from GPS"),
+	VIK_DATASOURCE_AUTO_LAYER_MANAGEMENT,
+	VIK_DATASOURCE_INPUTTYPE_NONE,
+	true,
+	true,
+	true,
+	(VikDataSourceInitFunc)		datasource_gps_init_func,
+	(VikDataSourceCheckExistenceFunc)	NULL,
+	(VikDataSourceAddSetupWidgetsFunc)	datasource_gps_add_setup_widgets,
+	(VikDataSourceGetProcessOptionsFunc)  datasource_gps_get_process_options,
+	(VikDataSourceProcessFunc)            a_babel_convert_from,
+	(VikDataSourceProgressFunc)		datasource_gps_progress,
+	(VikDataSourceAddProgressWidgetsFunc)	datasource_gps_add_progress_widgets,
+	(VikDataSourceCleanupFunc)		datasource_gps_cleanup,
+	(VikDataSourceOffFunc)                datasource_gps_off,
 
-  NULL,
-  0,
-  NULL,
-  NULL,
-  0
+	NULL,
+	0,
+	NULL,
+	NULL,
+	0
 };
 
 /*********************************************************
@@ -98,35 +98,35 @@ VikDataSourceInterface vik_datasource_gps_interface = {
 /* widgets in progress dialog specific to GPS */
 /* also counts needed for progress */
 typedef struct {
-  /* setup dialog */
-  GtkWidget *proto_l;
-  GtkWidget *proto_b;
-  GtkWidget *ser_l;
-  GtkWidget *ser_b;
-  GtkWidget *off_request_l;
-  GtkCheckButton *off_request_b;
-  GtkWidget *get_tracks_l;
-  GtkCheckButton *get_tracks_b;
-  GtkWidget *get_routes_l;
-  GtkCheckButton *get_routes_b;
-  GtkWidget *get_waypoints_l;
-  GtkCheckButton *get_waypoints_b;
+	/* setup dialog */
+	GtkWidget *proto_l;
+	GtkWidget *proto_b;
+	GtkWidget *ser_l;
+	GtkWidget *ser_b;
+	GtkWidget *off_request_l;
+	GtkCheckButton *off_request_b;
+	GtkWidget *get_tracks_l;
+	GtkCheckButton *get_tracks_b;
+	GtkWidget *get_routes_l;
+	GtkCheckButton *get_routes_b;
+	GtkWidget *get_waypoints_l;
+	GtkCheckButton *get_waypoints_b;
 
-  /* progress dialog */
-  GtkWidget *gps_label;
-  GtkWidget *ver_label;
-  GtkWidget *id_label;
-  GtkWidget *wp_label;
-  GtkWidget *trk_label;
-  GtkWidget *rte_label;
-  GtkWidget *progress_label;
-  vik_gps_xfer_type progress_type;
+	/* progress dialog */
+	GtkWidget *gps_label;
+	GtkWidget *ver_label;
+	GtkWidget *id_label;
+	GtkWidget *wp_label;
+	GtkWidget *trk_label;
+	GtkWidget *rte_label;
+	GtkWidget *progress_label;
+	vik_gps_xfer_type progress_type;
 
-  /* state */
-  int total_count;
-  int count;
-  // Know which way xfer is so xfer setting types are only stored for download
-  vik_gps_dir direction;
+	/* state */
+	int total_count;
+	int count;
+	// Know which way xfer is so xfer setting types are only stored for download
+	vik_gps_dir direction;
 } gps_user_data_t;
 
 #define VIK_SETTINGS_GPS_GET_TRACKS "gps_download_tracks"
@@ -136,11 +136,11 @@ typedef struct {
 #define VIK_SETTINGS_GPS_PORT "gps_port"
 #define VIK_SETTINGS_GPS_POWER_OFF "gps_power_off"
 
-static void * datasource_gps_init_func ( acq_vik_t *avt )
+static void * datasource_gps_init_func(acq_vik_t *avt)
 {
-  gps_user_data_t *gps_ud = (gps_user_data_t *) malloc(sizeof (gps_user_data_t));
-  gps_ud->direction = GPS_DOWN;
-  return gps_ud;
+	gps_user_data_t *gps_ud = (gps_user_data_t *) malloc(sizeof (gps_user_data_t));
+	gps_ud->direction = GPS_DOWN;
+	return gps_ud;
 }
 
 /**
@@ -148,19 +148,19 @@ static void * datasource_gps_init_func ( acq_vik_t *avt )
  *
  * Method to get the communication protocol of the GPS device from the widget structure
  */
-char* datasource_gps_get_protocol ( void * user_data )
+char* datasource_gps_get_protocol(void * user_data)
 {
-  // Uses the list of supported devices
-  gps_user_data_t *w = (gps_user_data_t *)user_data;
-  last_active = gtk_combo_box_get_active(GTK_COMBO_BOX(w->proto_b));
-  if (a_babel_device_list.size()) {
-    char *protocol = a_babel_device_list[last_active]->name;
-    fprintf(stderr, "%s:%d: protocol '%s'\n", __FUNCTION__, __LINE__, protocol);
-    a_settings_set_string ( VIK_SETTINGS_GPS_PROTOCOL, protocol );
-    return protocol;
-  }
+	// Uses the list of supported devices
+	gps_user_data_t *w = (gps_user_data_t *)user_data;
+	last_active = gtk_combo_box_get_active(GTK_COMBO_BOX(w->proto_b));
+	if (a_babel_device_list.size()) {
+		char *protocol = a_babel_device_list[last_active]->name;
+		fprintf(stderr, "%s:%d: protocol '%s'\n", __FUNCTION__, __LINE__, protocol);
+		a_settings_set_string(VIK_SETTINGS_GPS_PROTOCOL, protocol);
+		return protocol;
+	}
 
-  return NULL;
+	return NULL;
 }
 
 /**
@@ -170,17 +170,17 @@ char* datasource_gps_get_protocol ( void * user_data )
  * "Everything is a file"
  * Could actually be normal file or a serial port
  */
-char* datasource_gps_get_descriptor ( void * user_data )
+char* datasource_gps_get_descriptor(void * user_data)
 {
-  gps_user_data_t *w = (gps_user_data_t *)user_data;
+	gps_user_data_t *w = (gps_user_data_t *)user_data;
 
 #if GTK_CHECK_VERSION (2, 24, 0)
-  char *descriptor = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(w->ser_b));
+	char *descriptor = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(w->ser_b));
 #else
-  char *descriptor = gtk_combo_box_get_active_text(GTK_COMBO_BOX(w->ser_b));
+	char *descriptor = gtk_combo_box_get_active_text(GTK_COMBO_BOX(w->ser_b));
 #endif
-  a_settings_set_string ( VIK_SETTINGS_GPS_PORT, descriptor );
-  return descriptor;
+	a_settings_set_string(VIK_SETTINGS_GPS_PORT, descriptor);
+	return descriptor;
 }
 
 /**
@@ -188,13 +188,14 @@ char* datasource_gps_get_descriptor ( void * user_data )
  *
  * Method to get the track handling behaviour from the widget structure
  */
-bool datasource_gps_get_do_tracks ( void * user_data )
+bool datasource_gps_get_do_tracks(void * user_data)
 {
-  gps_user_data_t *w = (gps_user_data_t *)user_data;
-  bool get_tracks = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w->get_tracks_b));
-  if ( w->direction == GPS_DOWN )
-    a_settings_set_boolean ( VIK_SETTINGS_GPS_GET_TRACKS, get_tracks );
-  return get_tracks;
+	gps_user_data_t *w = (gps_user_data_t *)user_data;
+	bool get_tracks = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w->get_tracks_b));
+	if (w->direction == GPS_DOWN) {
+		a_settings_set_boolean(VIK_SETTINGS_GPS_GET_TRACKS, get_tracks);
+	}
+	return get_tracks;
 }
 
 /**
@@ -202,13 +203,14 @@ bool datasource_gps_get_do_tracks ( void * user_data )
  *
  * Method to get the route handling behaviour from the widget structure
  */
-bool datasource_gps_get_do_routes ( void * user_data )
+bool datasource_gps_get_do_routes(void * user_data)
 {
-  gps_user_data_t *w = (gps_user_data_t *)user_data;
-  bool get_routes = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w->get_routes_b));
-  if ( w->direction == GPS_DOWN )
-    a_settings_set_boolean ( VIK_SETTINGS_GPS_GET_ROUTES, get_routes );
-  return get_routes;
+	gps_user_data_t *w = (gps_user_data_t *)user_data;
+	bool get_routes = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w->get_routes_b));
+	if (w->direction == GPS_DOWN) {
+		a_settings_set_boolean(VIK_SETTINGS_GPS_GET_ROUTES, get_routes);
+	}
+	return get_routes;
 }
 
 /**
@@ -216,55 +218,59 @@ bool datasource_gps_get_do_routes ( void * user_data )
  *
  * Method to get the waypoint handling behaviour from the widget structure
  */
-bool datasource_gps_get_do_waypoints ( void * user_data )
+bool datasource_gps_get_do_waypoints(void * user_data)
 {
-  gps_user_data_t *w = (gps_user_data_t *)user_data;
-  bool get_waypoints = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w->get_waypoints_b));
-  if ( w->direction == GPS_DOWN )
-    a_settings_set_boolean ( VIK_SETTINGS_GPS_GET_WAYPOINTS, get_waypoints );
-  return get_waypoints;
+	gps_user_data_t *w = (gps_user_data_t *)user_data;
+	bool get_waypoints = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w->get_waypoints_b));
+	if (w->direction == GPS_DOWN) {
+		a_settings_set_boolean(VIK_SETTINGS_GPS_GET_WAYPOINTS, get_waypoints);
+	}
+	return get_waypoints;
 }
 
-static void datasource_gps_get_process_options ( void * user_data, ProcessOptions *po, void * not_used, const char *not_used2, const char *not_used3 )
+static void datasource_gps_get_process_options(void * user_data, ProcessOptions *po, void * not_used, const char *not_used2, const char *not_used3)
 {
-  char *device = NULL;
-  char *tracks = NULL;
-  char *routes = NULL;
-  char *waypoints = NULL;
+	char *device = NULL;
+	char *tracks = NULL;
+	char *routes = NULL;
+	char *waypoints = NULL;
 
-  if (gps_acquire_in_progress) {
-    po->babelargs = po->filename = NULL;
-  }
+	if (gps_acquire_in_progress) {
+		po->babelargs = po->filename = NULL;
+	}
 
-  gps_acquire_in_progress = true;
+	gps_acquire_in_progress = true;
 
-  device = datasource_gps_get_protocol ( user_data );
+	device = datasource_gps_get_protocol (user_data);
 
-  if ( datasource_gps_get_do_tracks ( user_data ) )
-    tracks = (char *) "-t";
-  else
-    tracks = (char *) "";
+	if (datasource_gps_get_do_tracks (user_data)) {
+		tracks = (char *) "-t";
+	} else {
+		tracks = (char *) "";
+	}
 
-  if ( datasource_gps_get_do_routes ( user_data ) )
-    routes = (char *) "-r";
-  else
-    routes = (char *) "";
+	if (datasource_gps_get_do_routes (user_data)) {
+		routes = (char *) "-r";
+	} else {
+		routes = (char *) "";
+	}
 
-  if ( datasource_gps_get_do_waypoints ( user_data ) )
-    waypoints = (char *) "-w";
-  else
-    waypoints = (char *) "";
+	if (datasource_gps_get_do_waypoints (user_data)) {
+		waypoints = (char *) "-w";
+	} else {
+		waypoints = (char *) "";
+	}
 
-  po->babelargs = g_strdup_printf("-D 9 %s %s %s -i %s", tracks, routes, waypoints, device);
-  /* device points to static content => no free */
-  device = NULL;
-  tracks = NULL;
-  routes = NULL;
-  waypoints = NULL;
+	po->babelargs = g_strdup_printf("-D 9 %s %s %s -i %s", tracks, routes, waypoints, device);
+	/* device points to static content => no free */
+	device = NULL;
+	tracks = NULL;
+	routes = NULL;
+	waypoints = NULL;
 
-  po->filename = g_strdup(datasource_gps_get_descriptor(user_data));
+	po->filename = g_strdup(datasource_gps_get_descriptor(user_data));
 
-  fprintf(stderr, _("DEBUG: using cmd '%s' and file '%s'\n"), po->babelargs, po->filename);
+	fprintf(stderr, _("DEBUG: using cmd '%s' and file '%s'\n"), po->babelargs, po->filename);
 }
 
 /**
@@ -272,61 +278,61 @@ static void datasource_gps_get_process_options ( void * user_data, ProcessOption
  *
  * Method to get the off behaviour from the widget structure
  */
-bool datasource_gps_get_off ( void * user_data )
+bool datasource_gps_get_off(void * user_data)
 {
-  gps_user_data_t *w = (gps_user_data_t *)user_data;
-  bool power_off = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w->off_request_b));
-  a_settings_set_boolean ( VIK_SETTINGS_GPS_POWER_OFF, power_off );
-  return power_off;
+	gps_user_data_t *w = (gps_user_data_t *)user_data;
+	bool power_off = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w->off_request_b));
+	a_settings_set_boolean(VIK_SETTINGS_GPS_POWER_OFF, power_off);
+	return power_off;
 }
 
-static void datasource_gps_off ( void * user_data, char **babelargs, char **file_descriptor )
+static void datasource_gps_off(void * user_data, char **babelargs, char **file_descriptor)
 {
-  char *ser = NULL;
-  char *device = NULL;
-  gps_user_data_t *w = (gps_user_data_t *)user_data;
+	char *ser = NULL;
+	char *device = NULL;
+	gps_user_data_t *w = (gps_user_data_t *)user_data;
 
-  if (gps_acquire_in_progress) {
-    *babelargs = *file_descriptor = NULL;
-  }
+	if (gps_acquire_in_progress) {
+		*babelargs = *file_descriptor = NULL;
+	}
 
-  /* See if we should turn off the device */
-  if (!datasource_gps_get_off ( user_data )){
-    return;
-  }
+	/* See if we should turn off the device */
+	if (!datasource_gps_get_off (user_data)){
+		return;
+	}
 
-  if (a_babel_device_list.empty())
-    return;
-  last_active = gtk_combo_box_get_active(GTK_COMBO_BOX(w->proto_b));
-  device = a_babel_device_list[last_active]->name;
-  fprintf(stderr, "%s:%d: last active device: '%s'\n", __FUNCTION__, __LINE__, device);
-  if (!strcmp(device, "garmin")) {
-    device = (char *) "garmin,power_off";
-  }
-  else if (!strcmp(device, "navilink")) {
-    device = (char *) "navilink,power_off";
-  }
-  else {
-    return;
-  }
+	if (a_babel_device_list.empty()) {
+		return;
+	}
 
-  *babelargs = g_strdup_printf("-i %s", device);
-  /* device points to static content => no free */
-  device = NULL;
+	last_active = gtk_combo_box_get_active(GTK_COMBO_BOX(w->proto_b));
+	device = a_babel_device_list[last_active]->name;
+	fprintf(stderr, "%s:%d: last active device: '%s'\n", __FUNCTION__, __LINE__, device);
+	if (!strcmp(device, "garmin")) {
+		device = (char *) "garmin,power_off";
+	} else if (!strcmp(device, "navilink")) {
+		device = (char *) "navilink,power_off";
+	} else {
+		return;
+	}
+
+	*babelargs = g_strdup_printf("-i %s", device);
+	/* device points to static content => no free */
+	device = NULL;
 
 #if GTK_CHECK_VERSION (2, 24, 0)
-  ser = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(w->ser_b));
+	ser = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(w->ser_b));
 #else
-  ser = gtk_combo_box_get_active_text(GTK_COMBO_BOX(w->ser_b));
+	ser = gtk_combo_box_get_active_text(GTK_COMBO_BOX(w->ser_b));
 #endif
-  *file_descriptor = g_strdup(ser);
+	*file_descriptor = g_strdup(ser);
 }
 
 
-static void datasource_gps_cleanup ( void * user_data )
+static void datasource_gps_cleanup(void * user_data)
 {
-  free( user_data );
-  gps_acquire_in_progress = false;
+	free(user_data);
+	gps_acquire_in_progress = false;
 }
 
 /**
@@ -334,74 +340,92 @@ static void datasource_gps_cleanup ( void * user_data )
  *
  * External method to tidy up
  */
-void datasource_gps_clean_up ( void * user_data )
+void datasource_gps_clean_up(void * user_data)
 {
-  datasource_gps_cleanup ( user_data );
+	datasource_gps_cleanup(user_data);
 }
 
 static void set_total_count(int cnt, acq_dialog_widgets_t *w)
 {
-  char *s = NULL;
-  gdk_threads_enter();
-  if (w->running) {
-    gps_user_data_t *gps_data = (gps_user_data_t *)w->user_data;
-    const char *tmp_str;
-    switch (gps_data->progress_type) {
-    case WPT: tmp_str = ngettext("Downloading %d waypoint...", "Downloading %d waypoints...", cnt); gps_data->total_count = cnt; break;
-    case TRK: tmp_str = ngettext("Downloading %d trackpoint...", "Downloading %d trackpoints...", cnt); gps_data->total_count = cnt; break;
-    default:
-      {
-        // Maybe a gpsbabel bug/feature (upto at least v1.4.3 or maybe my Garmin device) but the count always seems x2 too many for routepoints
-        int mycnt = (cnt / 2) + 1;
-        tmp_str = ngettext("Downloading %d routepoint...", "Downloading %d routepoints...", mycnt);
-        gps_data->total_count = mycnt;
-        break;
-      }
-    }
-    s = g_strdup_printf(tmp_str, cnt);
-    gtk_label_set_text ( GTK_LABEL(gps_data->progress_label), s );
-    gtk_widget_show ( gps_data->progress_label );
-  }
-  free(s); s = NULL;
-  gdk_threads_leave();
+	char *s = NULL;
+	gdk_threads_enter();
+	if (w->running) {
+		gps_user_data_t *gps_data = (gps_user_data_t *)w->user_data;
+		const char *tmp_str;
+		switch (gps_data->progress_type) {
+		case WPT:
+			tmp_str = ngettext("Downloading %d waypoint...", "Downloading %d waypoints...", cnt);
+			gps_data->total_count = cnt;
+			break;
+		case TRK:
+			tmp_str = ngettext("Downloading %d trackpoint...", "Downloading %d trackpoints...", cnt);
+			gps_data->total_count = cnt;
+			break;
+		default: {
+			// Maybe a gpsbabel bug/feature (upto at least v1.4.3 or maybe my Garmin device) but the count always seems x2 too many for routepoints
+			int mycnt = (cnt / 2) + 1;
+			tmp_str = ngettext("Downloading %d routepoint...", "Downloading %d routepoints...", mycnt);
+			gps_data->total_count = mycnt;
+			break;
+		}
+		}
+		s = g_strdup_printf(tmp_str, cnt);
+		gtk_label_set_text(GTK_LABEL(gps_data->progress_label), s);
+		gtk_widget_show(gps_data->progress_label);
+	}
+	free(s); s = NULL;
+	gdk_threads_leave();
 }
 
 static void set_current_count(int cnt, acq_dialog_widgets_t *w)
 {
-  char *s = NULL;
-  gdk_threads_enter();
-  if (w->running) {
-    gps_user_data_t *gps_data = (gps_user_data_t *)w->user_data;
+	char *s = NULL;
+	gdk_threads_enter();
+	if (w->running) {
+		gps_user_data_t *gps_data = (gps_user_data_t *)w->user_data;
 
-    if (cnt < gps_data->total_count) {
-      switch (gps_data->progress_type) {
-      case WPT: s = g_strdup_printf(_("Downloaded %d out of %d %s..."), cnt, gps_data->total_count, "waypoints"); break;
-      case TRK: s = g_strdup_printf(_("Downloaded %d out of %d %s..."), cnt, gps_data->total_count, "trackpoints"); break;
-      default: s = g_strdup_printf(_("Downloaded %d out of %d %s..."), cnt, gps_data->total_count, "routepoints"); break;
-      }
-    } else {
-      switch (gps_data->progress_type) {
-      case WPT: s = g_strdup_printf(_("Downloaded %d %s."), cnt, "waypoints"); break;
-      case TRK: s = g_strdup_printf(_("Downloaded %d %s."), cnt, "trackpoints"); break;
-      default: s = g_strdup_printf(_("Downloaded %d %s."), cnt, "routepoints"); break;
-      }
-    }
-    gtk_label_set_text ( GTK_LABEL(gps_data->progress_label), s );
-  }
-  free(s); s = NULL;
-  gdk_threads_leave();
+		if (cnt < gps_data->total_count) {
+			switch (gps_data->progress_type) {
+			case WPT:
+				s = g_strdup_printf(_("Downloaded %d out of %d %s..."), cnt, gps_data->total_count, "waypoints");
+				break;
+			case TRK:
+				s = g_strdup_printf(_("Downloaded %d out of %d %s..."), cnt, gps_data->total_count, "trackpoints");
+				break;
+			default:
+				s = g_strdup_printf(_("Downloaded %d out of %d %s..."), cnt, gps_data->total_count, "routepoints");
+				break;
+			}
+		} else {
+			switch (gps_data->progress_type) {
+			case WPT:
+				s = g_strdup_printf(_("Downloaded %d %s."), cnt, "waypoints");
+				break;
+			case TRK:
+				s = g_strdup_printf(_("Downloaded %d %s."), cnt, "trackpoints");
+				break;
+			default:
+				s = g_strdup_printf(_("Downloaded %d %s."), cnt, "routepoints");
+				break;
+			}
+		}
+		gtk_label_set_text (GTK_LABEL(gps_data->progress_label), s);
+	}
+	free(s);
+	s = NULL;
+	gdk_threads_leave();
 }
 
 static void set_gps_info(const char *info, acq_dialog_widgets_t *w)
 {
-  char *s = NULL;
-  gdk_threads_enter();
-  if (w->running) {
-    s = g_strdup_printf(_("GPS Device: %s"), info);
-    gtk_label_set_text ( GTK_LABEL(((gps_user_data_t *)w->user_data)->gps_label), s );
-  }
-  free(s); s = NULL;
-  gdk_threads_leave();
+	char *s = NULL;
+	gdk_threads_enter();
+	if (w->running) {
+		s = g_strdup_printf(_("GPS Device: %s"), info);
+		gtk_label_set_text(GTK_LABEL(((gps_user_data_t *)w->user_data)->gps_label), s);
+	}
+	free(s); s = NULL;
+	gdk_threads_leave();
 }
 
 /*
@@ -409,244 +433,245 @@ static void set_gps_info(const char *info, acq_dialog_widgets_t *w)
  * These outputs differ when different GPS devices are used, so we will need to test
  * them on several and add the corresponding support.
  */
-static void datasource_gps_progress ( BabelProgressCode c, void * data, acq_dialog_widgets_t *w )
+static void datasource_gps_progress(BabelProgressCode c, void * data, acq_dialog_widgets_t *w)
 {
-  char *line;
-  gps_user_data_t *gps_data = (gps_user_data_t *)w->user_data;
+	char *line;
+	gps_user_data_t *gps_data = (gps_user_data_t *)w->user_data;
 
-  switch(c) {
-  case BABEL_DIAG_OUTPUT:
-    line = (char *)data;
+	switch(c) {
+	case BABEL_DIAG_OUTPUT:
+		line = (char *)data;
 
-    gdk_threads_enter();
-    if (w->running) {
-      gtk_label_set_text ( GTK_LABEL(w->status), _("Status: Working...") );
-    }
-    gdk_threads_leave();
+		gdk_threads_enter();
+		if (w->running) {
+			gtk_label_set_text (GTK_LABEL(w->status), _("Status: Working..."));
+		}
+		gdk_threads_leave();
 
-    /* tells us the type of items that will follow */
-    if (strstr(line, "Xfer Wpt")) {
-      gps_data->progress_label = gps_data->wp_label;
-      gps_data->progress_type = WPT;
-    }
-    if (strstr(line, "Xfer Trk")) {
-      gps_data->progress_label = gps_data->trk_label;
-      gps_data->progress_type = TRK;
-    }
-    if (strstr(line, "Xfer Rte")) {
-      gps_data->progress_label = gps_data->rte_label;
-      gps_data->progress_type = RTE;
-    }
+		/* tells us the type of items that will follow */
+		if (strstr(line, "Xfer Wpt")) {
+			gps_data->progress_label = gps_data->wp_label;
+			gps_data->progress_type = WPT;
+		}
+		if (strstr(line, "Xfer Trk")) {
+			gps_data->progress_label = gps_data->trk_label;
+			gps_data->progress_type = TRK;
+		}
+		if (strstr(line, "Xfer Rte")) {
+			gps_data->progress_label = gps_data->rte_label;
+			gps_data->progress_type = RTE;
+		}
 
-    if (strstr(line, "PRDDAT")) {
-      char **tokens = g_strsplit(line, " ", 0);
-      char info[128];
-      int ilen = 0;
-      int i;
-      int n_tokens = 0;
+		if (strstr(line, "PRDDAT")) {
+			char **tokens = g_strsplit(line, " ", 0);
+			char info[128];
+			int ilen = 0;
+			int i;
+			int n_tokens = 0;
 
-      while (tokens[n_tokens])
-        n_tokens++;
+			while (tokens[n_tokens]) {
+				n_tokens++;
+			}
 
-      if (n_tokens > 8) {
-        for (i=8; tokens[i] && ilen < sizeof(info)-2 && strcmp(tokens[i], "00"); i++) {
-	  unsigned int ch;
-	  sscanf(tokens[i], "%x", &ch);
-	  info[ilen++] = ch;
-        }
-        info[ilen++] = 0;
-        set_gps_info(info, w);
-      }
-      g_strfreev(tokens);
-    }
-    /* eg: "Unit:\teTrex Legend HCx Software Version 2.90\n" */
-    if (strstr(line, "Unit:")) {
-      char **tokens = g_strsplit(line, "\t", 0);
-      int n_tokens = 0;
-      while (tokens[n_tokens])
-        n_tokens++;
+			if (n_tokens > 8) {
+				for (i=8; tokens[i] && ilen < sizeof(info)-2 && strcmp(tokens[i], "00"); i++) {
+					unsigned int ch;
+					sscanf(tokens[i], "%x", &ch);
+					info[ilen++] = ch;
+				}
+				info[ilen++] = 0;
+				set_gps_info(info, w);
+			}
+			g_strfreev(tokens);
+		}
+		/* eg: "Unit:\teTrex Legend HCx Software Version 2.90\n" */
+		if (strstr(line, "Unit:")) {
+			char **tokens = g_strsplit(line, "\t", 0);
+			int n_tokens = 0;
+			while (tokens[n_tokens]) {
+				n_tokens++;
+			}
 
-      if (n_tokens > 1) {
-        set_gps_info(tokens[1], w);
-      }
-      g_strfreev(tokens);
-    }
-    /* tells us how many items there will be */
-    if (strstr(line, "RECORD")) {
-      int lsb, msb, cnt;
+			if (n_tokens > 1) {
+				set_gps_info(tokens[1], w);
+			}
+			g_strfreev(tokens);
+		}
+		/* tells us how many items there will be */
+		if (strstr(line, "RECORD")) {
+			int lsb, msb, cnt;
 
-      if (strlen(line) > 20) {
-       sscanf(line+17, "%x", &lsb);
-       sscanf(line+20, "%x", &msb);
-       cnt = lsb + msb * 256;
-       set_total_count(cnt, w);
-       gps_data->count = 0;
-      }
-    }
-    if ( strstr(line, "WPTDAT") || strstr(line, "TRKHDR") || strstr(line, "TRKDAT") || strstr(line, "RTEHDR") || strstr(line, "RTEWPT") ) {
-      gps_data->count++;
-      set_current_count(gps_data->count, w);
-    }
-    break;
-  case BABEL_DONE:
-    break;
-  default:
-    break;
-  }
+			if (strlen(line) > 20) {
+				sscanf(line+17, "%x", &lsb);
+				sscanf(line+20, "%x", &msb);
+				cnt = lsb + msb * 256;
+				set_total_count(cnt, w);
+				gps_data->count = 0;
+			}
+		}
+		if (strstr(line, "WPTDAT") || strstr(line, "TRKHDR") || strstr(line, "TRKDAT") || strstr(line, "RTEHDR") || strstr(line, "RTEWPT")) {
+			gps_data->count++;
+			set_current_count(gps_data->count, w);
+		}
+		break;
+	case BABEL_DONE:
+		break;
+	default:
+		break;
+	}
 }
 
-void append_element (void * elem, void * user_data)
+void append_element(void * elem, void * user_data)
 {
-  const char *text = ((BabelDevice*)elem)->label;
-  vik_combo_box_text_append (GTK_WIDGET(user_data), text);
+	const char *text = ((BabelDevice*)elem)->label;
+	vik_combo_box_text_append(GTK_WIDGET(user_data), text);
 }
 
 static int find_entry = -1;
 static int wanted_entry = -1;
 
-static void find_protocol (void * elem, void * user_data)
+static void find_protocol(void * elem, void * user_data)
 {
-  const char *name = ((BabelDevice*)elem)->name;
-  const char *protocol = (const char *) user_data;
-  find_entry++;
-  if (!strcmp(name, protocol)) {
-    wanted_entry = find_entry;
-  }
+	const char *name = ((BabelDevice*)elem)->name;
+	const char *protocol = (const char *) user_data;
+	find_entry++;
+	if (!strcmp(name, protocol)) {
+		wanted_entry = find_entry;
+	}
 }
 
-static void datasource_gps_add_setup_widgets ( GtkWidget *dialog, Viewport * viewport, void * user_data )
+static void datasource_gps_add_setup_widgets(GtkWidget *dialog, Viewport * viewport, void * user_data)
 {
-  gps_user_data_t *w = (gps_user_data_t *)user_data;
-  GtkTable *box, *data_type_box;
+	gps_user_data_t *w = (gps_user_data_t *)user_data;
+	GtkTable *box, *data_type_box;
 
-  w->proto_l = gtk_label_new (_("GPS Protocol:"));
-  w->proto_b = vik_combo_box_text_new ();
-  for (auto iter = a_babel_device_list.begin(); iter != a_babel_device_list.end(); iter++) {
-	  append_element(*iter, w->proto_b);
-  }
-
-  if ( last_active < 0 ) {
-    find_entry = -1;
-    wanted_entry = -1;
-    char *protocol = NULL;
-    if ( a_settings_get_string ( VIK_SETTINGS_GPS_PROTOCOL, &protocol ) ) {
-      // Use setting
-	    if ( protocol ) {
-		    for (auto iter = a_babel_device_list.begin(); iter != a_babel_device_list.end(); iter++) {
-			    find_protocol(*iter, protocol);
-		    }
-	    }
-    }
-    else {
-      // Attempt to maintain default to Garmin devices (assumed most popular/numerous device)
-	    for (auto iter = a_babel_device_list.begin(); iter != a_babel_device_list.end(); iter++) {
-		    find_protocol(*iter, (void *) "garmin");
-	    }
-    }
-    // If not found set it to the first entry, otherwise use the entry
-    last_active = ( wanted_entry < 0 ) ? 0 : wanted_entry;
-  }
-
-  gtk_combo_box_set_active (GTK_COMBO_BOX(w->proto_b), last_active);
-  g_object_ref(w->proto_b);
-
-  w->ser_l = gtk_label_new (_("Serial Port:"));
-#if GTK_CHECK_VERSION (2, 24, 0)
-  w->ser_b = gtk_combo_box_text_new_with_entry ();
-#else
-  w->ser_b = gtk_combo_box_entry_new_text ();
-#endif
-  // Value from the settings is promoted to the top
-  char *gps_port = NULL;
-  if ( a_settings_get_string ( VIK_SETTINGS_GPS_PORT, &gps_port ) ) {
-    // Use setting if available
-    if ( gps_port ) {
-#ifndef WINDOWS
-      if ( !strncmp (gps_port, "/dev/tty", 6) ) {
-        if (g_access (gps_port, R_OK) == 0) {
-          vik_combo_box_text_append (w->ser_b, gps_port);
+	w->proto_l = gtk_label_new (_("GPS Protocol:"));
+	w->proto_b = vik_combo_box_text_new ();
+	for (auto iter = a_babel_device_list.begin(); iter != a_babel_device_list.end(); iter++) {
+		append_element(*iter, w->proto_b);
 	}
-      }
-      else
-#endif
-        vik_combo_box_text_append (w->ser_b, gps_port);
-    }
-  }
 
-  // Note avoid appending the port selected from the settings
-#ifdef WINDOWS
-  if ( gps_port && strcmp (gps_port, "com1") )
-    vik_combo_box_text_append (w->ser_b, "com1");
+	if (last_active < 0) {
+		find_entry = -1;
+		wanted_entry = -1;
+		char *protocol = NULL;
+		if (a_settings_get_string (VIK_SETTINGS_GPS_PROTOCOL, &protocol)) {
+			// Use setting
+			if (protocol) {
+				for (auto iter = a_babel_device_list.begin(); iter != a_babel_device_list.end(); iter++) {
+					find_protocol(*iter, protocol);
+				}
+			}
+		} else {
+			// Attempt to maintain default to Garmin devices (assumed most popular/numerous device)
+			for (auto iter = a_babel_device_list.begin(); iter != a_babel_device_list.end(); iter++) {
+				find_protocol(*iter, (void *) "garmin");
+			}
+		}
+		// If not found set it to the first entry, otherwise use the entry
+		last_active = (wanted_entry < 0) ? 0 : wanted_entry;
+	}
+
+	gtk_combo_box_set_active(GTK_COMBO_BOX(w->proto_b), last_active);
+	g_object_ref(w->proto_b);
+
+	w->ser_l = gtk_label_new(_("Serial Port:"));
+#if GTK_CHECK_VERSION (2, 24, 0)
+	w->ser_b = gtk_combo_box_text_new_with_entry();
 #else
-  /* Here just try to see if the device is available which gets passed onto gpsbabel
-     List USB devices first as these will generally only be present if autogenerated by udev or similar
-     User is still able to set their own free text entry */
-  if ( gps_port && strcmp (gps_port, "/dev/ttyUSB0") )
-    if (g_access ("/dev/ttyUSB0", R_OK) == 0)
-      vik_combo_box_text_append (w->ser_b, "/dev/ttyUSB0");
-  if ( gps_port && strcmp (gps_port, "/dev/ttyUSB1") )
-    if (g_access ("/dev/ttyUSB1", R_OK) == 0)
-      vik_combo_box_text_append (w->ser_b, "/dev/ttyUSB1");
-  if ( gps_port && strcmp (gps_port, "/dev/ttyS0") )
-    if (g_access ("/dev/ttyS0", R_OK) == 0)
-      vik_combo_box_text_append (w->ser_b, "/dev/ttyS0");
-  if ( gps_port && strcmp (gps_port, "/dev/ttyS1") )
-    if (g_access ("/dev/ttyS1", R_OK) == 0)
-      vik_combo_box_text_append (w->ser_b, "/dev/ttyS1");
+	w->ser_b = gtk_combo_box_entry_new_text();
 #endif
-  if ( gps_port && strcmp (gps_port, "usb:") )
-    vik_combo_box_text_append (w->ser_b, "usb:");
+	// Value from the settings is promoted to the top
+	char *gps_port = NULL;
+	if (a_settings_get_string(VIK_SETTINGS_GPS_PORT, &gps_port)) {
+		// Use setting if available
+		if (gps_port) {
+#ifndef WINDOWS
+			if (!strncmp (gps_port, "/dev/tty", 6)) {
+				if (g_access (gps_port, R_OK) == 0) {
+					vik_combo_box_text_append (w->ser_b, gps_port);
+				}
+			} else
+#endif
+				vik_combo_box_text_append (w->ser_b, gps_port);
+		}
+	}
 
-  gtk_combo_box_set_active (GTK_COMBO_BOX(w->ser_b), 0);
-  g_object_ref(w->ser_b);
+	// Note avoid appending the port selected from the settings
+#ifdef WINDOWS
+	if (gps_port && strcmp(gps_port, "com1")) {
+		vik_combo_box_text_append(w->ser_b, "com1");
+	}
+#else
+	/* Here just try to see if the device is available which gets passed onto gpsbabel
+	   List USB devices first as these will generally only be present if autogenerated by udev or similar
+	   User is still able to set their own free text entry */
+	if (gps_port && strcmp (gps_port, "/dev/ttyUSB0"))
+		if (g_access ("/dev/ttyUSB0", R_OK) == 0)
+			vik_combo_box_text_append (w->ser_b, "/dev/ttyUSB0");
+	if (gps_port && strcmp (gps_port, "/dev/ttyUSB1"))
+		if (g_access ("/dev/ttyUSB1", R_OK) == 0)
+			vik_combo_box_text_append (w->ser_b, "/dev/ttyUSB1");
+	if (gps_port && strcmp (gps_port, "/dev/ttyS0"))
+		if (g_access ("/dev/ttyS0", R_OK) == 0)
+			vik_combo_box_text_append (w->ser_b, "/dev/ttyS0");
+	if (gps_port && strcmp (gps_port, "/dev/ttyS1"))
+		if (g_access ("/dev/ttyS1", R_OK) == 0)
+			vik_combo_box_text_append (w->ser_b, "/dev/ttyS1");
+#endif
+	if (gps_port && strcmp (gps_port, "usb:"))
+		vik_combo_box_text_append (w->ser_b, "usb:");
 
-  w->off_request_l = gtk_label_new (_("Turn Off After Transfer\n(Garmin/NAViLink Only)"));
-  w->off_request_b = GTK_CHECK_BUTTON ( gtk_check_button_new () );
-  bool power_off;
-  if ( ! a_settings_get_boolean ( VIK_SETTINGS_GPS_POWER_OFF, &power_off ) )
-    power_off = false;
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w->off_request_b), power_off);
+	gtk_combo_box_set_active (GTK_COMBO_BOX(w->ser_b), 0);
+	g_object_ref(w->ser_b);
 
-  w->get_tracks_l = gtk_label_new (_("Tracks:"));
-  w->get_tracks_b = GTK_CHECK_BUTTON ( gtk_check_button_new () );
-  bool get_tracks;
-  if ( ! a_settings_get_boolean ( VIK_SETTINGS_GPS_GET_TRACKS, &get_tracks ) )
-    get_tracks = true;
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w->get_tracks_b), get_tracks);
+	w->off_request_l = gtk_label_new (_("Turn Off After Transfer\n(Garmin/NAViLink Only)"));
+	w->off_request_b = GTK_CHECK_BUTTON (gtk_check_button_new ());
+	bool power_off;
+	if (! a_settings_get_boolean (VIK_SETTINGS_GPS_POWER_OFF, &power_off))
+		power_off = false;
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w->off_request_b), power_off);
 
-  w->get_routes_l = gtk_label_new (_("Routes:"));
-  w->get_routes_b = GTK_CHECK_BUTTON ( gtk_check_button_new () );
-  bool get_routes;
-  if ( ! a_settings_get_boolean ( VIK_SETTINGS_GPS_GET_ROUTES, &get_routes ) )
-    get_routes = false;
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w->get_routes_b), get_routes);
+	w->get_tracks_l = gtk_label_new (_("Tracks:"));
+	w->get_tracks_b = GTK_CHECK_BUTTON (gtk_check_button_new ());
+	bool get_tracks;
+	if (! a_settings_get_boolean (VIK_SETTINGS_GPS_GET_TRACKS, &get_tracks))
+		get_tracks = true;
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w->get_tracks_b), get_tracks);
 
-  w->get_waypoints_l = gtk_label_new (_("Waypoints:"));
-  w->get_waypoints_b = GTK_CHECK_BUTTON ( gtk_check_button_new () );
-  bool get_waypoints;
-  if ( ! a_settings_get_boolean ( VIK_SETTINGS_GPS_GET_WAYPOINTS, &get_waypoints ) )
-    get_waypoints = true;
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w->get_waypoints_b), get_waypoints);
+	w->get_routes_l = gtk_label_new (_("Routes:"));
+	w->get_routes_b = GTK_CHECK_BUTTON (gtk_check_button_new ());
+	bool get_routes;
+	if (! a_settings_get_boolean (VIK_SETTINGS_GPS_GET_ROUTES, &get_routes))
+		get_routes = false;
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w->get_routes_b), get_routes);
 
-  box = GTK_TABLE(gtk_table_new(2, 4, false));
-  data_type_box = GTK_TABLE(gtk_table_new(4, 1, false));
+	w->get_waypoints_l = gtk_label_new (_("Waypoints:"));
+	w->get_waypoints_b = GTK_CHECK_BUTTON (gtk_check_button_new ());
+	bool get_waypoints;
+	if (! a_settings_get_boolean (VIK_SETTINGS_GPS_GET_WAYPOINTS, &get_waypoints))
+		get_waypoints = true;
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w->get_waypoints_b), get_waypoints);
 
-  gtk_table_attach_defaults(box, GTK_WIDGET(w->proto_l), 0, 1, 0, 1);
-  gtk_table_attach_defaults(box, GTK_WIDGET(w->proto_b), 1, 2, 0, 1);
-  gtk_table_attach_defaults(box, GTK_WIDGET(w->ser_l), 0, 1, 1, 2);
-  gtk_table_attach_defaults(box, GTK_WIDGET(w->ser_b), 1, 2, 1, 2);
-  gtk_table_attach_defaults(data_type_box, GTK_WIDGET(w->get_tracks_l), 0, 1, 0, 1);
-  gtk_table_attach_defaults(data_type_box, GTK_WIDGET(w->get_tracks_b), 1, 2, 0, 1);
-  gtk_table_attach_defaults(data_type_box, GTK_WIDGET(w->get_routes_l), 2, 3, 0, 1);
-  gtk_table_attach_defaults(data_type_box, GTK_WIDGET(w->get_routes_b), 3, 4, 0, 1);
-  gtk_table_attach_defaults(data_type_box, GTK_WIDGET(w->get_waypoints_l), 4, 5, 0, 1);
-  gtk_table_attach_defaults(data_type_box, GTK_WIDGET(w->get_waypoints_b), 5, 6, 0, 1);
-  gtk_table_attach_defaults(box, GTK_WIDGET(data_type_box), 0, 2, 2, 3);
-  gtk_table_attach_defaults(box, GTK_WIDGET(w->off_request_l), 0, 1, 3, 4);
-  gtk_table_attach_defaults(box, GTK_WIDGET(w->off_request_b), 1, 3, 3, 4);
-  gtk_box_pack_start ( GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), GTK_WIDGET(box), false, false, 5 );
+	box = GTK_TABLE(gtk_table_new(2, 4, false));
+	data_type_box = GTK_TABLE(gtk_table_new(4, 1, false));
 
-  gtk_widget_show_all ( dialog );
+	gtk_table_attach_defaults(box, GTK_WIDGET(w->proto_l), 0, 1, 0, 1);
+	gtk_table_attach_defaults(box, GTK_WIDGET(w->proto_b), 1, 2, 0, 1);
+	gtk_table_attach_defaults(box, GTK_WIDGET(w->ser_l), 0, 1, 1, 2);
+	gtk_table_attach_defaults(box, GTK_WIDGET(w->ser_b), 1, 2, 1, 2);
+	gtk_table_attach_defaults(data_type_box, GTK_WIDGET(w->get_tracks_l), 0, 1, 0, 1);
+	gtk_table_attach_defaults(data_type_box, GTK_WIDGET(w->get_tracks_b), 1, 2, 0, 1);
+	gtk_table_attach_defaults(data_type_box, GTK_WIDGET(w->get_routes_l), 2, 3, 0, 1);
+	gtk_table_attach_defaults(data_type_box, GTK_WIDGET(w->get_routes_b), 3, 4, 0, 1);
+	gtk_table_attach_defaults(data_type_box, GTK_WIDGET(w->get_waypoints_l), 4, 5, 0, 1);
+	gtk_table_attach_defaults(data_type_box, GTK_WIDGET(w->get_waypoints_b), 5, 6, 0, 1);
+	gtk_table_attach_defaults(box, GTK_WIDGET(data_type_box), 0, 2, 2, 3);
+	gtk_table_attach_defaults(box, GTK_WIDGET(w->off_request_l), 0, 1, 3, 4);
+	gtk_table_attach_defaults(box, GTK_WIDGET(w->off_request_b), 1, 3, 3, 4);
+	gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), GTK_WIDGET(box), false, false, 5);
+
+	gtk_widget_show_all (dialog);
 }
 
 /**
@@ -658,66 +683,72 @@ static void datasource_gps_add_setup_widgets ( GtkWidget *dialog, Viewport * vie
  * Returns: A void * to the private structure for GPS progress/information widgets
  *          Pass this pointer back into the other exposed datasource_gps_X functions
  */
-void * datasource_gps_setup ( GtkWidget *dialog, vik_gps_xfer_type xfer, bool xfer_all )
+void * datasource_gps_setup(GtkWidget *dialog, vik_gps_xfer_type xfer, bool xfer_all)
 {
-  gps_user_data_t *w_gps = (gps_user_data_t *)datasource_gps_init_func ( NULL );
-  w_gps->direction = GPS_UP;
-  datasource_gps_add_setup_widgets ( dialog, NULL, w_gps );
+	gps_user_data_t *w_gps = (gps_user_data_t *)datasource_gps_init_func(NULL);
+	w_gps->direction = GPS_UP;
+	datasource_gps_add_setup_widgets(dialog, NULL, w_gps);
 
-  bool way = xfer_all;
-  bool trk = xfer_all;
-  bool rte = xfer_all;
+	bool way = xfer_all;
+	bool trk = xfer_all;
+	bool rte = xfer_all;
 
-  // Selectively turn bits on
-  if ( !xfer_all ) {
-    switch (xfer) {
-    case WPT: way = true; break;
-    case RTE: rte = true; break;
-    default: trk = true; break;
-    }
-  }
+	// Selectively turn bits on
+	if (!xfer_all) {
+		switch (xfer) {
+		case WPT:
+			way = true;
+			break;
+		case RTE:
+			rte = true;
+			break;
+		default:
+			trk = true;
+			break;
+		}
+	}
 
-  // Apply
-  gtk_toggle_button_set_active ( GTK_TOGGLE_BUTTON(w_gps->get_tracks_b), trk );
-  gtk_widget_set_sensitive ( GTK_WIDGET(w_gps->get_tracks_l), trk );
-  gtk_widget_set_sensitive ( GTK_WIDGET(w_gps->get_tracks_b), trk );
+	// Apply
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w_gps->get_tracks_b), trk);
+	gtk_widget_set_sensitive(GTK_WIDGET(w_gps->get_tracks_l), trk);
+	gtk_widget_set_sensitive(GTK_WIDGET(w_gps->get_tracks_b), trk);
 
-  gtk_toggle_button_set_active ( GTK_TOGGLE_BUTTON(w_gps->get_routes_b), rte );
-  gtk_widget_set_sensitive ( GTK_WIDGET(w_gps->get_routes_l), rte );
-  gtk_widget_set_sensitive ( GTK_WIDGET(w_gps->get_routes_b), rte );
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w_gps->get_routes_b), rte);
+	gtk_widget_set_sensitive(GTK_WIDGET(w_gps->get_routes_l), rte);
+	gtk_widget_set_sensitive(GTK_WIDGET(w_gps->get_routes_b), rte);
 
-  gtk_toggle_button_set_active ( GTK_TOGGLE_BUTTON(w_gps->get_waypoints_b), way );
-  gtk_widget_set_sensitive ( GTK_WIDGET(w_gps->get_waypoints_l), way );
-  gtk_widget_set_sensitive ( GTK_WIDGET(w_gps->get_waypoints_b), way );
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w_gps->get_waypoints_b), way);
+	gtk_widget_set_sensitive(GTK_WIDGET(w_gps->get_waypoints_l), way);
+	gtk_widget_set_sensitive(GTK_WIDGET(w_gps->get_waypoints_b), way);
 
-  return (void *)w_gps;
+	return (void *)w_gps;
 }
 
-void datasource_gps_add_progress_widgets ( GtkWidget *dialog, void * user_data )
+void datasource_gps_add_progress_widgets(GtkWidget *dialog, void * user_data)
 {
-  GtkWidget *gpslabel, *verlabel, *idlabel, *wplabel, *trklabel, *rtelabel;
+	GtkWidget *gpslabel, *verlabel, *idlabel, *wplabel, *trklabel, *rtelabel;
 
-  gps_user_data_t *w_gps = (gps_user_data_t *)user_data;
+	gps_user_data_t *w_gps = (gps_user_data_t *)user_data;
 
-  gpslabel = gtk_label_new (_("GPS device: N/A"));
-  verlabel = gtk_label_new ("");
-  idlabel = gtk_label_new ("");
-  wplabel = gtk_label_new ("");
-  trklabel = gtk_label_new ("");
-  rtelabel = gtk_label_new ("");
+	gpslabel = gtk_label_new(_("GPS device: N/A"));
+	verlabel = gtk_label_new("");
+	idlabel = gtk_label_new("");
+	wplabel = gtk_label_new("");
+	trklabel = gtk_label_new("");
+	rtelabel = gtk_label_new("");
 
-  gtk_box_pack_start ( GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), gpslabel, false, false, 5 );
-  gtk_box_pack_start ( GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), wplabel, false, false, 5 );
-  gtk_box_pack_start ( GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), trklabel, false, false, 5 );
-  gtk_box_pack_start ( GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), rtelabel, false, false, 5 );
+	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), gpslabel, false, false, 5);
+	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), wplabel, false, false, 5);
+	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), trklabel, false, false, 5);
+	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), rtelabel, false, false, 5);
 
-  gtk_widget_show_all ( dialog );
+	gtk_widget_show_all(dialog);
 
-  w_gps->gps_label = gpslabel;
-  w_gps->id_label = idlabel;
-  w_gps->ver_label = verlabel;
-  w_gps->progress_label = w_gps->wp_label = wplabel;
-  w_gps->trk_label = trklabel;
-  w_gps->rte_label = rtelabel;
-  w_gps->total_count = -1;
+	w_gps->gps_label = gpslabel;
+	w_gps->id_label = idlabel;
+	w_gps->ver_label = verlabel;
+	w_gps->progress_label = w_gps->wp_label = wplabel;
+	w_gps->trk_label = trklabel;
+	w_gps->rte_label = rtelabel;
+	w_gps->total_count = -1;
 }

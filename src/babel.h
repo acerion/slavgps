@@ -25,7 +25,6 @@
 #define _VIKING_BABEL_H
 
 #include <glib.h>
-#include <stdbool.h>
 #include <stdint.h>
 
 
@@ -46,8 +45,8 @@ extern "C" {
  * Used when calling #BabelStatusFunc.
  */
 typedef enum {
-  BABEL_DIAG_OUTPUT,
-  BABEL_DONE,
+	BABEL_DIAG_OUTPUT,
+	BABEL_DONE,
 } BabelProgressCode;
 
 /**
@@ -65,12 +64,12 @@ typedef void (*BabelStatusFunc)(BabelProgressCode, void *, void *);
  * Need to specify at least one of babelargs, URL or shell_command
  */
 typedef struct {
-  char* babelargs; // The standard initial arguments to gpsbabel (if gpsbabel is to be used) - normally should include the input file type (-i) option.
-  char* filename; // Input filename (or device port e.g. /dev/ttyS0)
-  char* input_file_type; // If NULL then uses internal file format handler (GPX only ATM), otherwise specify gpsbabel input type like "kml","tcx", etc...
-  char* url; // URL input rather than a filename
-  char* babel_filters; // Optional filter arguments to gpsbabel
-  char* shell_command; // Optional shell command to run instead of gpsbabel - but will be (Unix) platform specific
+	char* babelargs; // The standard initial arguments to gpsbabel (if gpsbabel is to be used) - normally should include the input file type (-i) option.
+	char* filename; // Input filename (or device port e.g. /dev/ttyS0)
+	char* input_file_type; // If NULL then uses internal file format handler (GPX only ATM), otherwise specify gpsbabel input type like "kml","tcx", etc...
+	char* url; // URL input rather than a filename
+	char* babel_filters; // Optional filter arguments to gpsbabel
+	char* shell_command; // Optional shell command to run instead of gpsbabel - but will be (Unix) platform specific
 } ProcessOptions;
 
 /**
@@ -79,12 +78,12 @@ typedef struct {
  * Store the Read/Write support offered by gpsbabel for a given format.
  */
 typedef struct {
-    unsigned waypointsRead : 1;
-    unsigned waypointsWrite : 1;
-    unsigned tracksRead : 1;
-    unsigned tracksWrite : 1;
-    unsigned routesRead : 1;
-    unsigned routesWrite : 1;
+	unsigned waypointsRead : 1;
+	unsigned waypointsWrite : 1;
+	unsigned tracksRead : 1;
+	unsigned tracksWrite : 1;
+	unsigned routesRead : 1;
+	unsigned routesWrite : 1;
 } BabelMode;
 
 /**
@@ -95,9 +94,9 @@ typedef struct {
  * Representation of a supported device.
  */
 typedef struct {
-    BabelMode mode;
-    char *name;
-    char *label;
+	BabelMode mode;
+	char *name;
+	char *label;
 } BabelDevice;
 
 /**
@@ -109,10 +108,10 @@ typedef struct {
  * Representation of a supported file format.
  */
 typedef struct {
-    BabelMode mode;
-    char *name;
-    char *ext;
-    char *label;
+	BabelMode mode;
+	char *name;
+	char *ext;
+	char *label;
 } BabelFile;
 
 void a_babel_foreach_file_with_mode (BabelMode mode, GFunc func, void * user_data);
@@ -123,11 +122,11 @@ bool a_babel_convert_from(SlavGPS::LayerTRW * trw, ProcessOptions *process_optio
 
 bool a_babel_convert_to(SlavGPS::LayerTRW * trw, SlavGPS::Track * trk, const char *babelargs, const char *file, BabelStatusFunc cb, void * user_data );
 
-void a_babel_init ();
-void a_babel_post_init ();
-void a_babel_uninit ();
+void a_babel_init();
+void a_babel_post_init();
+void a_babel_uninit();
 
-bool a_babel_available ();
+bool a_babel_available();
 
 #ifdef __cplusplus
 }

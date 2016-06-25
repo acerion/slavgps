@@ -800,8 +800,10 @@ double Track::get_max_speed()
 			     (! ((Trackpoint *) iter->data)->newsegment)) {
 				speed =  vik_coord_diff (&(((Trackpoint *) iter->data)->coord), &(((Trackpoint *) iter->prev->data)->coord))
 					/ ABS(((Trackpoint *) iter->data)->timestamp - ((Trackpoint *) iter->prev->data)->timestamp);
-				if (speed > maxspeed)
+
+				if (speed > maxspeed) {
 					maxspeed = speed;
+				}
 			}
 			iter = iter->next;
 		}
@@ -833,8 +835,9 @@ double * Track::make_elevation_map(uint16_t num_chunks)
 
 	GList *iter = trackpoints;
 
-	if (!iter || !iter->next) /* zero- or one-point track */
+	if (!iter || !iter->next) { /* zero- or one-point track */
 		return NULL;
+	}
 
 	{ /* test if there's anything worth calculating */
 		bool okay = false;
@@ -909,8 +912,9 @@ double * Track::make_elevation_map(uint16_t num_chunks)
 				double altitude_at_dist_along_seg = altitude1 + (altitude2-altitude1)/(current_seg_length)*dist_along_seg;
 				current_dist = current_seg_length - dist_along_seg;
 				current_area_under_curve = current_dist*(altitude_at_dist_along_seg + altitude2)*0.5;
-			} else { current_dist = current_area_under_curve = 0; } /* should only happen if first current_seg_length == 0 */
-
+			} else {
+				current_dist = current_area_under_curve = 0;  /* should only happen if first current_seg_length == 0 */
+			}
 			/* get intervening segs */
 			iter = iter->next;
 			while (iter && iter->next) {
@@ -1738,8 +1742,9 @@ Track * Track::unmarshall(uint8_t *data, size_t datalen)
 		vtu_get(new_tp->name);
 		new_trk->trackpoints = g_list_prepend(new_trk->trackpoints, new_tp);
 	}
-	if (new_trk->trackpoints)
+	if (new_trk->trackpoints) {
 		new_trk->trackpoints = g_list_reverse(new_trk->trackpoints);
+	}
 
 	vtu_get(new_trk->name);
 	vtu_get(new_trk->comment);
@@ -1990,11 +1995,12 @@ unsigned long Track::smooth_missing_elevation_data(bool flat)
 			// Altitude available (maybe again!)
 			// If this marks the end of a section of altitude-less points
 			//  then apply smoothing for that section of points
-			if (points > 0 && elev != VIK_DEFAULT_ALTITUDE)
+			if (points > 0 && elev != VIK_DEFAULT_ALTITUDE) {
 				if (!flat) {
 					smoothie(iter_first, tp_iter, elev, tp->altitude, points);
 					num = num + points;
 				}
+			}
 
 			// reset
 			points = 0;
