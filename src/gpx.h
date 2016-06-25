@@ -22,7 +22,6 @@
 #ifndef _VIKING_GPX_H
 #define _VIKING_GPX_H
 
-#include <stdbool.h>
 #include <stdint.h>
 
 #include "viktrwlayer.h"

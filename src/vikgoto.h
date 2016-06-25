@@ -22,7 +22,6 @@
 #ifndef __VIK_SEARCH_H
 #define __VIK_SEARCH_H
 
-#include <stdbool.h>
 #include <stdint.h>
 
 #include "vikwindow.h"

@@ -19,7 +19,6 @@
 #ifndef __VIK_PRINT_PREVIEW_H__
 #define __VIK_PRINT_PREVIEW_H__
 
-#include <stdbool.h>
 #include <stdint.h>
 
 

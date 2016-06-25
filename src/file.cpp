@@ -614,7 +614,7 @@ static FILE * xfopen(char const * fn)
 	if (strcmp(fn,"-") == 0) {
 		return stdin;
 	} else {
-		return g_fopen(fn, "r");
+		return fopen(fn, "r");
 	}
 }
 
@@ -683,7 +683,9 @@ char * append_file_ext(char const * filename, VikFileType_t type)
 
 VikLoadType_t a_file_load(LayerAggregate * top, Viewport * viewport, char const * filename_or_uri)
 {
-	g_return_val_if_fail(viewport != NULL, LOAD_TYPE_READ_FAILURE);
+	if (!viewport) {
+		return LOAD_TYPE_READ_FAILURE;
+	}
 
 	char * filename = (char *) filename_or_uri;
 	if (strncmp(filename, "file://", 7) == 0) {
@@ -767,7 +769,7 @@ bool a_file_save(LayerAggregate * top, Viewport * viewport, char const * filenam
 		filename = filename + 7;
 	}
 
-	f = g_fopen(filename, "w");
+	f = fopen(filename, "w");
 
 	if (!f) {
 		return false;
@@ -805,8 +807,14 @@ bool a_file_save(LayerAggregate * top, Viewport * viewport, char const * filenam
 */
 bool a_file_check_ext(char const * filename, char const * fileext)
 {
-	g_return_val_if_fail(filename != NULL, false);
-	g_return_val_if_fail(fileext && fileext[0]=='.', false);
+	if (!filename) {
+		return false;
+	}
+
+	if (!fileext || fileext[0] != '.') {
+		return false;
+	}
+
 	char const * basename = a_file_basename(filename);
 	if (!basename) {
 		return false;
@@ -834,7 +842,7 @@ bool a_file_check_ext(char const * filename, char const * fileext)
 bool a_file_export(LayerTRW * trw, char const * filename, VikFileType_t file_type, Track * trk, bool write_hidden)
 {
 	GpxWritingOptions options = { false, false, write_hidden, false };
-	FILE * f = g_fopen(filename, "w");
+	FILE * f = fopen(filename, "w");
 	if (f) {
 		bool result = true;
 
@@ -921,7 +929,9 @@ char * file_realpath_dup(char const * path)
 {
 	char real[MAXPATHLEN];
 
-	g_return_val_if_fail(path != NULL, NULL);
+	if (!path) {
+		return NULL;
+	}
 
 	if (file_realpath(path, real)) {
 		return g_strdup(real);

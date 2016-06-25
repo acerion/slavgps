@@ -23,7 +23,6 @@
 #define _VIKING_CURL_DOWNLOAD_H
 
 #include <stdio.h>
-#include <stdbool.h>
 #include <stdint.h>
 
 

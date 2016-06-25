@@ -27,7 +27,6 @@
 #endif
 
 
-#include <stdbool.h>
 #include <stdint.h>
 
 #include "vikcoord.h"

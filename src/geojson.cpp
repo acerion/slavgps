@@ -62,8 +62,8 @@ bool a_geojson_write_file(LayerTRW * trw, FILE * ff)
 	char ** argv;
 	argv = (char **) malloc(5 * sizeof (char *));
 	argv[0] = g_strdup(a_geojson_program_export());
-	argv[1] = g_strdup("-f");
-	argv[2] = g_strdup("gpx");
+	argv[1] = strdup("-f");
+	argv[2] = strdup("gpx");
 	argv[3] = g_strdup(tmp_filename);
 	argv[4] = NULL;
 
@@ -99,7 +99,7 @@ bool a_geojson_write_file(LayerTRW * trw, FILE * ff)
 	g_strfreev(argv);
 
 	// Delete the temporary file
-	(void) g_remove(tmp_filename);
+	(void) remove(tmp_filename);
 	free(tmp_filename);
 
 	return result;

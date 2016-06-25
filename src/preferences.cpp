@@ -84,7 +84,7 @@ static int16_t preferences_groups_key_to_index( const char *key )
 static bool preferences_load_from_file()
 {
   char *fn = g_build_filename(a_get_viking_dir(), VIKING_PREFS_FILE, NULL);
-  FILE *f = g_fopen(fn, "r");
+  FILE *f = fopen(fn, "r");
   free( fn );
 
   if ( f ) {
@@ -158,11 +158,11 @@ bool a_preferences_save_to_file()
 {
   char *fn = g_build_filename(a_get_viking_dir(), VIKING_PREFS_FILE, NULL);
 
-  FILE *f = g_fopen(fn, "w");
+  FILE *f = fopen(fn, "w");
   /* Since preferences files saves OSM login credentials,
    * it'll be better to store it in secret.
    */
-  if ( g_chmod(fn, 0600) != 0 )
+  if (chmod(fn, 0600) != 0)
     fprintf(stderr, "WARNING: %s: Failed to set permissions on %s\n", __FUNCTION__, fn );
   free( fn );
 

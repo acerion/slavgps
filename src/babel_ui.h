@@ -23,7 +23,6 @@
 #define _VIKING_BABEL_UI_H
 
 #include <gtk/gtk.h>
-#include <stdbool.h>
 #include <stdint.h>
 
 

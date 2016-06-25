@@ -22,7 +22,6 @@
 #ifndef _VIKING_WAYPOINT_H
 #define _VIKING_WAYPOINT_H
 
-#include <stdbool.h>
 #include <stdint.h>
 
 #include "vikcoord.h"

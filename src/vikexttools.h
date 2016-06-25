@@ -22,7 +22,6 @@
 #define _VIKING_EXT_TOOLS_H
 
 #include <gtk/gtk.h>
-#include <stdbool.h>
 #include <stdint.h>
 
 

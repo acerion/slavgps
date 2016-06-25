@@ -22,7 +22,6 @@
 #ifndef _VIKING_CLIPBOARD_H
 #define _VIKING_CLIPBOARD_H
 
-#include <stdbool.h>
 #include <stdint.h>
 
 #include "viklayerspanel.h"

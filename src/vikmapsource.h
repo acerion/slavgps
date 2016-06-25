@@ -25,9 +25,6 @@
 
 #include <gdk-pixbuf/gdk-pixdata.h>
 #include <gdk-pixbuf/gdk-pixbuf-core.h>
-//#include <glib-object.h>
-#include <stdbool.h>
-#include <stdint.h>
 
 #include "vikviewport.h"
 #include "vikcoord.h"

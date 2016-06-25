@@ -172,17 +172,17 @@ static VikLayerParamData plugins_default(void)
 {
 	VikLayerParamData data;
 #ifdef WINDOWS
-	data.s = g_strdup("input");
+	data.s = strdup("input");
 #else
 	if (g_file_test("/usr/lib/mapnik/input", G_FILE_TEST_EXISTS)) {
-		data.s = g_strdup("/usr/lib/mapnik/input");
+		data.s = strdup("/usr/lib/mapnik/input");
 		// Current Debian locations
 	} else if (g_file_test("/usr/lib/mapnik/3.0/input", G_FILE_TEST_EXISTS)) {
-		data.s = g_strdup("/usr/lib/mapnik/3.0/input");
+		data.s = strdup("/usr/lib/mapnik/3.0/input");
 	} else if (g_file_test("/usr/lib/mapnik/2.2/input", G_FILE_TEST_EXISTS)) {
-		data.s = g_strdup("/usr/lib/mapnik/2.2/input");
+		data.s = strdup("/usr/lib/mapnik/2.2/input");
 	} else {
-		data.s = g_strdup("");
+		data.s = strdup("");
 	}
 #endif
 	return data;
@@ -193,11 +193,11 @@ static VikLayerParamData fonts_default(void)
 	// Possibly should be string list to allow loading from multiple directories
 	VikLayerParamData data;
 #ifdef WINDOWS
-	data.s = g_strdup("C:\\Windows\\Fonts");
+	data.s = strdup("C:\\Windows\\Fonts");
 #elif defined __APPLE__
-	data.s = g_strdup("/Library/Fonts");
+	data.s = strdup("/Library/Fonts");
 #else
-	data.s = g_strdup("/usr/share/fonts");
+	data.s = strdup("/usr/share/fonts");
 #endif
 	return data;
 }
@@ -326,7 +326,7 @@ void LayerMapnik::set_file_xml(char const * name)
 		free(this->filename_xml);
 	}
 	// Mapnik doesn't seem to cope with relative filenames
-	if (g_strcmp0(name, "")) {
+	if (strcmp(name, "")) {
 		this->filename_xml = vu_get_canonical_filename(this->vl, name);
 	} else {
 		this->filename_xml = g_strdup(name);
@@ -1040,7 +1040,7 @@ void LayerMapnik::add_menu_items(GtkMenu * menu, void * panel_)
 	gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
 	gtk_widget_show(item);
 
-	if (g_strcmp0("", this->filename_css)) {
+	if (strcmp("", this->filename_css)) {
 		item = gtk_image_menu_item_new_with_mnemonic(_("_Run Carto Command"));
 		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_EXECUTE, GTK_ICON_SIZE_MENU));
 		g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(mapnik_layer_carto), values);
@@ -1116,11 +1116,11 @@ void LayerMapnik::tile_info()
 			strftime(time_buf, sizeof(time_buf), "%c", gmtime((const time_t *)&stat_buf.st_mtime));
 			timemsg = g_strdup_printf(_("Tile File Timestamp: %s"), time_buf);
 		} else {
-			timemsg = g_strdup(_("Tile File Timestamp: Not Available"));
+			timemsg = strdup(_("Tile File Timestamp: Not Available"));
 		}
 	} else {
 		filemsg = g_strdup_printf("Tile File: %s [Not Available]", filename);
-		timemsg = g_strdup("");
+		timemsg = strdup("");
 	}
 
 	GArray *array = g_array_new(false, true, sizeof(char*));

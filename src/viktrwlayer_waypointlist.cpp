@@ -248,8 +248,9 @@ static void copy_selection (GtkTreeModel *model,
 	char* name; gtk_tree_model_get ( model, iter, 1, &name, -1 );
 	char* date; gtk_tree_model_get ( model, iter, 2, &date, -1 );
 	char* comment; gtk_tree_model_get ( model, iter, 4, &comment, -1 );
-	if ( comment == NULL )
-		comment = g_strdup( "" );
+	if ( comment == NULL ) {
+		comment = strdup( "" );
+	}
 	int hh; gtk_tree_model_get ( model, iter, 5, &hh, -1 );
 
 	Waypoint * wp;

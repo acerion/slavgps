@@ -24,7 +24,6 @@
 #define _VIKING_ACQUIRE_H
 
 #include <gtk/gtk.h>
-#include <stdbool.h>
 #include <stdint.h>
 
 

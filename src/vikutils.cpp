@@ -82,26 +82,26 @@ char* vu_trackpoint_formatted_message ( char *format_code, Trackpoint *tp, Track
 	vik_units_speed_t speed_units = a_vik_get_units_speed ();
 	switch (speed_units) {
 	case VIK_UNITS_SPEED_MILES_PER_HOUR:
-		speed_units_str = g_strdup( _("mph") );
+		speed_units_str = strdup( _("mph") );
 		break;
 	case VIK_UNITS_SPEED_METRES_PER_SECOND:
-		speed_units_str = g_strdup( _("m/s") );
+		speed_units_str = strdup( _("m/s") );
 		break;
 	case VIK_UNITS_SPEED_KNOTS:
-		speed_units_str = g_strdup( _("knots") );
+		speed_units_str = strdup( _("knots") );
 		break;
 	default:
 		// VIK_UNITS_SPEED_KILOMETRES_PER_HOUR:
-		speed_units_str = g_strdup( _("km/h") );
+		speed_units_str = strdup( _("km/h") );
 		break;
 	}
 
-	char *separator = g_strdup( " | " );
+	char *separator = strdup( " | " );
 
 	for ( i = 0; i < len; i++ ) {
 		switch ( g_ascii_toupper ( format_code[i] ) ) {
-		case 'G': values[i] = g_strdup( _("GPSD") ); break; // GPS Preamble
-		case 'K': values[i] = g_strdup( _("Trkpt") ); break; // Trkpt Preamble
+		case 'G': values[i] = strdup( _("GPSD") ); break; // GPS Preamble
+		case 'K': values[i] = strdup( _("Trkpt") ); break; // Trkpt Preamble
 
 		case 'S': {
 			double speed = 0.0;
@@ -112,17 +112,17 @@ char* vu_trackpoint_formatted_message ( char *format_code, Trackpoint *tp, Track
 
 						// Work out from previous trackpoint location and time difference
 						speed = vik_coord_diff(&(tp->coord), &(tp_prev->coord)) / ABS(tp->timestamp - tp_prev->timestamp);
-						speedtype = g_strdup( "*" ); // Interpolated
+						speedtype = strdup( "*" ); // Interpolated
 					}
 					else
-						speedtype = g_strdup( "**" );
+						speedtype = strdup( "**" );
 				}
 				else
-					speedtype = g_strdup( "**" );
+					speedtype = strdup( "**" );
 			}
 			else {
 				speed = tp->speed;
-				speedtype = g_strdup( "" );
+				speedtype = strdup( "" );
 			}
 			switch (speed_units) {
 			case VIK_UNITS_SPEED_KILOMETRES_PER_HOUR:
@@ -154,17 +154,17 @@ char* vu_trackpoint_formatted_message ( char *format_code, Trackpoint *tp, Track
 						// Work out from previous trackpoint altitudes and time difference
 						// 'speed' can be negative if going downhill
 						speed = (tp->altitude - tp_prev->altitude) / ABS(tp->timestamp - tp_prev->timestamp);
-						speedtype = g_strdup( "*" ); // Interpolated
+						speedtype = strdup( "*" ); // Interpolated
 					}
 					else
-						speedtype = g_strdup( "**" ); // Unavailable
+						speedtype = strdup( "**" ); // Unavailable
 				}
 				else
-					speedtype = g_strdup( "**" );
+					speedtype = strdup( "**" );
 			}
 			else {
 				speed = climb;
-				speedtype = g_strdup( "" );
+				speedtype = strdup( "" );
 			}
 			switch (speed_units) {
 			case VIK_UNITS_SPEED_KILOMETRES_PER_HOUR:
@@ -217,11 +217,11 @@ char* vu_trackpoint_formatted_message ( char *format_code, Trackpoint *tp, Track
 				switch (dist_units) {
 				case VIK_UNITS_DISTANCE_MILES:
 				case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
-					dist_units_str = g_strdup( _("yards") );
+					dist_units_str = strdup( _("yards") );
 					break;
 				default:
 					// VIK_UNITS_DISTANCE_KILOMETRES:
-					dist_units_str = g_strdup( _("m") );
+					dist_units_str = strdup( _("m") );
 					break;
 				}
 
@@ -239,7 +239,7 @@ char* vu_trackpoint_formatted_message ( char *format_code, Trackpoint *tp, Track
 				msg = vu_get_time_string ( &(tp->timestamp), "%x %X", &(tp->coord), NULL );
 			}
 			else
-				msg = g_strdup("--");
+				msg = strdup("--");
 			values[i] = g_strdup_printf ( _("%sTime %s"), separator, msg );
 			free( msg );
 			break;
@@ -267,16 +267,16 @@ char* vu_trackpoint_formatted_message ( char *format_code, Trackpoint *tp, Track
 				vik_units_distance_t dist_units = a_vik_get_units_distance ();
 				switch (dist_units) {
 				case VIK_UNITS_DISTANCE_MILES:
-					dist_units_str = g_strdup( _("miles") );
+					dist_units_str = strdup( _("miles") );
 					dist = VIK_METERS_TO_MILES(dist);
 					break;
 				case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
-					dist_units_str = g_strdup( _("NM") );
+					dist_units_str = strdup( _("NM") );
 					dist = VIK_METERS_TO_NAUTICAL_MILES(dist);
 					break;
 				default:
 					// VIK_UNITS_DISTANCE_KILOMETRES:
-					dist_units_str = g_strdup( _("km") );
+					dist_units_str = strdup( _("km") );
 					dist = dist / 1000.0;
 					break;
 				}
@@ -294,16 +294,16 @@ char* vu_trackpoint_formatted_message ( char *format_code, Trackpoint *tp, Track
 				vik_units_distance_t dist_units = a_vik_get_units_distance ();
 				switch (dist_units) {
 				case VIK_UNITS_DISTANCE_MILES:
-					dist_units_str = g_strdup( _("miles") );
+					dist_units_str = strdup( _("miles") );
 					distd = VIK_METERS_TO_MILES(distd);
 					break;
 				case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
-					dist_units_str = g_strdup( _("NM") );
+					dist_units_str = strdup( _("NM") );
 					distd = VIK_METERS_TO_NAUTICAL_MILES(distd);
 					break;
 				default:
 					// VIK_UNITS_DISTANCE_KILOMETRES:
-					dist_units_str = g_strdup( _("km") );
+					dist_units_str = strdup( _("km") );
 					distd = distd / 1000.0;
 					break;
 				}
@@ -334,7 +334,7 @@ char* vu_trackpoint_formatted_message ( char *format_code, Trackpoint *tp, Track
 			if ( tp->name )
 				values[i] = g_strdup_printf ( "%s%s", separator, tp->name );
 			else
-				values[i] = g_strdup( "" );
+				values[i] = strdup( "" );
 			break;
 
 		default:
@@ -381,7 +381,7 @@ static void latest_version_thread ( GtkWindow *window )
 	// Need to allow a few redirects, as SF file is often served from different server
 	DownloadFileOptions options = { false, false, NULL, 5, NULL, NULL, NULL };
 	char *filename = a_download_uri_to_tmp_file ( "http://sourceforge.net/projects/viking/files/VERSION", &options );
-	//char *filename = g_strdup( "VERSION" );
+	//char *filename = strdup( "VERSION" );
 	if ( !filename ) {
 		return;
 	}
@@ -408,7 +408,7 @@ static void latest_version_thread ( GtkWindow *window )
 
 	g_mapped_file_unref ( mf );
 	if ( filename ) {
-		g_remove ( filename );
+		remove(filename);
 		free( filename );
 	}
 
@@ -591,10 +591,10 @@ static int load_ll_tz_dir ( const char *dir )
 {
 	int inserted = 0;
 	char *lltz = g_build_filename ( dir, "latlontz.txt", NULL );
-	if ( g_access(lltz, R_OK) == 0 ) {
+	if (access(lltz, R_OK) == 0) {
 		char buffer[4096];
 		long line_num = 0;
-		FILE *ff = g_fopen ( lltz, "r" );
+		FILE *ff = fopen(lltz, "r");
 		if ( ff ) {
 			while ( fgets ( buffer, 4096, ff ) ) {
 				line_num++;

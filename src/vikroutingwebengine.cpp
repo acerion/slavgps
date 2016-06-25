@@ -374,7 +374,9 @@ static void vik_routing_web_engine_finalize(GObject * gob)
 
 static DownloadFileOptions * vik_routing_web_engine_get_download_options(VikRoutingEngine * self)
 {
-	g_return_val_if_fail(VIK_IS_ROUTING_WEB_ENGINE(self), NULL);
+	if (!VIK_IS_ROUTING_WEB_ENGINE (self)) {
+		return NULL;
+	}
 
 	VikRoutingWebEnginePrivate * priv = VIK_ROUTING_WEB_ENGINE_PRIVATE(self);
 
@@ -396,13 +398,15 @@ static char * vik_routing_web_engine_get_url_for_coords(VikRoutingEngine * self,
 	char * endURL;
 	char * url;
 
-	g_return_val_if_fail(VIK_IS_ROUTING_WEB_ENGINE (self), NULL);
+	if (!VIK_IS_ROUTING_WEB_ENGINE (self)) {
+		return NULL;
+	}
 
 	VikRoutingWebEnginePrivate * priv = VIK_ROUTING_WEB_ENGINE_PRIVATE (self);
 
-	g_return_val_if_fail(priv->url_base != NULL, NULL);
-	g_return_val_if_fail(priv->url_start_ll_fmt != NULL, NULL);
-	g_return_val_if_fail(priv->url_stop_ll_fmt != NULL, NULL);
+	if (!priv->url_base || !priv->url_start_ll_fmt || !priv->url_stop_ll_fmt) {
+		return NULL;
+	}
 
 	startURL = substitute_latlon(priv->url_start_ll_fmt, start);
 	endURL = substitute_latlon(priv->url_stop_ll_fmt, end);
@@ -432,13 +436,15 @@ static bool vik_routing_web_engine_find(VikRoutingEngine * self, VikLayer * vtl,
 
 static char * vik_routing_web_engine_get_url_from_directions(VikRoutingEngine * self, const char * start, const char * end)
 {
-	g_return_val_if_fail(VIK_IS_ROUTING_WEB_ENGINE (self), NULL);
+	if (!VIK_IS_ROUTING_WEB_ENGINE (self)) {
+		return NULL;
+	}
 
 	VikRoutingWebEnginePrivate * priv = VIK_ROUTING_WEB_ENGINE_PRIVATE (self);
 
-	g_return_val_if_fail(priv->url_base != NULL, NULL);
-	g_return_val_if_fail(priv->url_start_dir_fmt != NULL, NULL);
-	g_return_val_if_fail(priv->url_stop_dir_fmt != NULL, NULL);
+	if (!priv->url_base || !priv->url_start_dir_fmt || !priv->url_stop_dir_fmt) {
+		return NULL;
+	}
 
 	char *from_quoted, *to_quoted;
 	char **from_split, **to_split;
@@ -466,7 +472,9 @@ static char * vik_routing_web_engine_get_url_from_directions(VikRoutingEngine * 
 
 static bool vik_routing_web_engine_supports_direction(VikRoutingEngine * self)
 {
-	g_return_val_if_fail (VIK_IS_ROUTING_WEB_ENGINE (self), false);
+	if (!VIK_IS_ROUTING_WEB_ENGINE (self)) {
+		return false;
+	}
 
 	VikRoutingWebEnginePrivate * priv = VIK_ROUTING_WEB_ENGINE_PRIVATE (self);
 
@@ -501,10 +509,9 @@ static char * vik_routing_web_engine_get_url_for_track(VikRoutingEngine * self, 
 
 	VikRoutingWebEnginePrivate * priv = VIK_ROUTING_WEB_ENGINE_PRIVATE (self);
 
-	g_return_val_if_fail(priv->url_base != NULL, NULL);
-	g_return_val_if_fail(priv->url_start_ll_fmt != NULL, NULL);
-	g_return_val_if_fail(priv->url_stop_ll_fmt != NULL, NULL);
-	g_return_val_if_fail(priv->url_via_ll_fmt != NULL, NULL);
+	if (!priv->url_base || !priv->url_start_ll_fmt || !priv->url_stop_ll_fmt || !priv->url_via_ll_fmt) {
+		return NULL;
+	}
 
 	/* Init temporary storage */
 	size_t len = 1 + g_list_length(trk->trackpoints) + 1; /* base + trackpoints + NULL */
@@ -561,7 +568,9 @@ static bool vik_routing_web_engine_refine(VikRoutingEngine * self, VikLayer * vt
 
 static bool vik_routing_web_engine_supports_refine(VikRoutingEngine * self)
 {
-	g_return_val_if_fail (VIK_IS_ROUTING_WEB_ENGINE (self), false);
+	if (!VIK_IS_ROUTING_WEB_ENGINE (self)) {
+		return false;
+	}
 
 	VikRoutingWebEnginePrivate * priv = VIK_ROUTING_WEB_ENGINE_PRIVATE (self);
 

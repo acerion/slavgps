@@ -280,14 +280,14 @@ static void trw_layer_draw_dist_labels (DrawingParams * dp, Track * trk, bool dr
       char *units;
       switch (dist_units) {
       case VIK_UNITS_DISTANCE_MILES:
-        units = g_strdup( _("miles") );
+        units = strdup( _("miles") );
         break;
       case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
-        units = g_strdup( _("NM") );
+        units = strdup( _("NM") );
         break;
         // VIK_UNITS_DISTANCE_KILOMETRES:
       default:
-        units = g_strdup( _("km") );
+        units = strdup( _("km") );
         break;
       }
 

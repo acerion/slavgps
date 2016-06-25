@@ -188,28 +188,28 @@ enum {
 static VikLayerParamData gps_protocol_default(void)
 {
 	VikLayerParamData data;
-	data.s = g_strdup("garmin");
+	data.s = strdup("garmin");
 	return data;
 }
 
 static VikLayerParamData gps_port_default(void)
 {
 	VikLayerParamData data;
-	data.s = g_strdup("usb:");
+	data.s = strdup("usb:");
 #ifndef WINDOWS
 	/* Attempt to auto set default USB serial port entry */
 	/* Ordered to make lowest device favourite if available */
-	if (g_access("/dev/ttyUSB1", R_OK) == 0) {
+	if (access("/dev/ttyUSB1", R_OK) == 0) {
 		if (data.s) {
 			free((char *)data.s);
 		}
-		data.s = g_strdup("/dev/ttyUSB1");
+		data.s = strdup("/dev/ttyUSB1");
 	}
-	if (g_access("/dev/ttyUSB0", R_OK) == 0) {
+	if (access("/dev/ttyUSB0", R_OK) == 0) {
 		if (data.s) {
 			free((char *)data.s);
 		}
-		data.s = g_strdup("/dev/ttyUSB0");
+		data.s = strdup("/dev/ttyUSB0");
 	}
 #endif
 	return data;
@@ -233,7 +233,7 @@ static VikLayerParamData moving_map_method_default(void) { return VIK_LPD_UINT (
 static VikLayerParamData gpsd_host_default(void)
 {
 	VikLayerParamData data;
-	data.s = g_strdup("localhost");
+	data.s = strdup("localhost");
 	return data;
 }
 
@@ -247,7 +247,7 @@ static VikLayerParamData gpsd_port_default(void)
 static VikLayerParamData gpsd_retry_interval_default(void)
 {
 	VikLayerParamData data;
-	data.s = g_strdup("10");
+	data.s = strdup("10");
 	return data;
 }
 
@@ -1654,7 +1654,7 @@ void LayerGPS::update_statusbar(Window * window)
 	bool need2free = false;
 	if (!a_settings_get_string(VIK_SETTINGS_GPS_STATUSBAR_FORMAT, &statusbar_format_code)) {
 		// Otherwise use default
-		statusbar_format_code = g_strdup("GSA");
+		statusbar_format_code = strdup("GSA");
 		need2free = true;
 	}
 

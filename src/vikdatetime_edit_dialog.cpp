@@ -1,4 +1,3 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
@@ -19,7 +18,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-#include <stdbool.h>
 #include <stdlib.h>
 #include "vikdatetime_edit_dialog.h"
 
@@ -48,7 +46,9 @@ static bool on_output ( GtkSpinButton *spin, void * data )
  */
 time_t vik_datetime_edit_dialog ( GtkWindow *parent, const char *title, time_t initial_time, GTimeZone *tz )
 {
-	g_return_val_if_fail ( tz, 0 );
+	if (!tz) {
+		return 0;
+	}
 
 	GtkWidget *dialog = gtk_dialog_new_with_buttons ( title,
 	                                                  parent,

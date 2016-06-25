@@ -168,7 +168,7 @@ void util_add_to_deletion_list(char const * filename)
 void util_remove_all_in_deletion_list(void)
 {
 	while (deletion_list) {
-		if (g_remove((const char*)deletion_list->data)) {
+		if (remove((const char*)deletion_list->data)) {
 			fprintf(stderr, "WARNING: %s: Failed to remove %s\n", __FUNCTION__, (char*) deletion_list->data);
 		}
 		free(deletion_list->data);
@@ -192,7 +192,10 @@ char * util_str_remove_chars(char * string, char const * chars)
 	const char * r;
 	char * w = string;
 
-	g_return_val_if_fail(string, NULL);
+	if (!string) {
+		return NULL;
+	}
+
 	if (G_UNLIKELY(EMPTY(chars))) {
 		return string;
 	}
@@ -219,7 +222,7 @@ int util_remove(char const * filename)
 		fprintf(stderr, "WARNING: Not removing file: %s\n", filename);
 		return 0;
 	} else {
-		return g_remove(filename);
+		return remove(filename);
 	}
 }
 

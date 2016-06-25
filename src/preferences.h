@@ -21,7 +21,6 @@
 #ifndef __VIKING_PREFERENCES_H
 #define __VIKING_PREFERENCES_H
 
-#include <stdbool.h>
 #include <stdint.h>
 
 #include "uibuilder.h"

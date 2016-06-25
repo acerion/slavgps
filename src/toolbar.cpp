@@ -1,4 +1,3 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
  *      toolbar.c - this file was part of Geany (v1.24.1), a fast and lightweight IDE
  *
@@ -196,8 +195,12 @@ GtkWidget *toolbar_get_widget_by_name(VikToolbar *vtb, const char *name)
 	GtkWidget *widget;
 	char *path;
 
-	g_return_val_if_fail(name != NULL, NULL);
-	g_return_val_if_fail(VIK_IS_TOOLBAR(vtb), NULL);
+	if (!name) {
+		return NULL;
+	}
+	if (!VIK_IS_TOOLBAR (vtb)) {
+		return NULL;
+	}
 
 	path = g_strconcat("/ui/MainToolbar/", name, NULL);
 	widget = gtk_ui_manager_get_widget(vtb->uim, path);
@@ -226,8 +229,12 @@ static GtkAction *get_action ( VikToolbar *vtb, const char *name )
  */
 GtkAction *toolbar_get_action_by_name(VikToolbar *vtb, const char *name)
 {
-	g_return_val_if_fail(name != NULL, NULL);
-	g_return_val_if_fail(VIK_IS_TOOLBAR(vtb), NULL);
+	if (!name) {
+		return NULL;
+	}
+	if (!VIK_IS_TOOLBAR (vtb)) {
+		return NULL;
+	}
 
 	return get_action(vtb,name);
 }
@@ -240,8 +247,12 @@ GtkAction *toolbar_get_action_by_name(VikToolbar *vtb, const char *name)
  */
 void toolbar_action_tool_entry_register(VikToolbar *vtb, GtkRadioActionEntry *action)
 {
-	g_return_if_fail(VIK_IS_TOOLBAR(vtb));
-	g_return_if_fail(action != NULL);
+	if (!VIK_IS_TOOLBAR (vtb)) {
+		return;
+	}
+	if (!action) {
+		return;
+	}
 	vtb->list_of_tools = g_slist_append(vtb->list_of_tools, action);
 }
 
@@ -253,8 +264,12 @@ void toolbar_action_tool_entry_register(VikToolbar *vtb, GtkRadioActionEntry *ac
  */
 void toolbar_action_mode_entry_register(VikToolbar *vtb, GtkRadioActionEntry *action)
 {
-	g_return_if_fail(VIK_IS_TOOLBAR(vtb));
-	g_return_if_fail(action != NULL);
+	if (!VIK_IS_TOOLBAR (vtb)) {
+		return;
+	}
+	if (!action) {
+		return;
+	}
 	vtb->list_of_modes = g_slist_append(vtb->list_of_modes, action);
 }
 
@@ -269,8 +284,12 @@ void toolbar_action_mode_entry_register(VikToolbar *vtb, GtkRadioActionEntry *ac
  */
 void toolbar_action_toggle_entry_register(VikToolbar *vtb, GtkToggleActionEntry *action, void * callback)
 {
-	g_return_if_fail(VIK_IS_TOOLBAR(vtb));
-	g_return_if_fail(action != NULL);
+	if (!VIK_IS_TOOLBAR (vtb)) {
+		return;
+	}
+	if (!action) {
+		return;
+	}
 
 	GtkToggleActionEntry *myaction = (GtkToggleActionEntry *) malloc(sizeof (GtkToggleActionEntry) );
 	memcpy ( myaction, action, sizeof (GtkToggleActionEntry) );
@@ -289,8 +308,12 @@ void toolbar_action_toggle_entry_register(VikToolbar *vtb, GtkToggleActionEntry 
  */
 void toolbar_action_entry_register(VikToolbar *vtb, GtkActionEntry *action)
 {
-	g_return_if_fail(VIK_IS_TOOLBAR(vtb));
-	g_return_if_fail(action != NULL);
+	if (!VIK_IS_TOOLBAR (vtb)) {
+		return;
+	}
+	if (!action) {
+		return;
+	}
 	vtb->list_of_actions = g_slist_append(vtb->list_of_actions, action);
 }
 
@@ -366,7 +389,9 @@ void toolbar_apply_settings(VikToolbar *vtb,
                             GtkWidget *hbox,
                             bool reset)
 {
-	g_return_if_fail(VIK_IS_TOOLBAR(vtb));
+	if (!VIK_IS_TOOLBAR (vtb)) {
+		return;
+	}
 
 	if ( reset ) {
 		g_object_ref (vtb->widget); // ensure not deleted when removed
@@ -404,7 +429,9 @@ void toolbar_apply_settings(VikToolbar *vtb,
  */
 GtkWidget* toolbar_get_widget(VikToolbar *vtb)
 {
-	g_return_val_if_fail(VIK_IS_TOOLBAR(vtb), NULL);
+	if (!VIK_IS_TOOLBAR (vtb)) {
+		return NULL;
+	}
 	return vtb->widget;
 }
 
@@ -491,13 +518,13 @@ static void toolbar_notify_style_cb(GObject *object, GParamSpec *arg1, void * da
 	const char *arg_name = g_param_spec_get_name(arg1);
 	int value;
 
-	if (prefs_get_icon_style() == 0 && !g_strcmp0(arg_name, "gtk-toolbar-style"))
+	if (prefs_get_icon_style() == 0 && !strcmp(arg_name, "gtk-toolbar-style"))
 	{
 		value = ui_get_gtk_settings_integer(arg_name, GTK_TOOLBAR_ICONS);
 		if ( GTK_IS_TOOLBAR (data) )
 			gtk_toolbar_set_style(GTK_TOOLBAR(data), (GtkToolbarStyle) value);
 	}
-	else if (prefs_get_icon_size() == 0 && !g_strcmp0(arg_name, "gtk-toolbar-size"))
+	else if (prefs_get_icon_size() == 0 && !strcmp(arg_name, "gtk-toolbar-size"))
 	{
 		value = ui_get_gtk_settings_integer(arg_name, GTK_ICON_SIZE_SMALL_TOOLBAR);
 		if ( GTK_IS_TOOLBAR (data) )
@@ -604,8 +631,12 @@ void toolbar_init (VikToolbar *vtb,
  */
 void toolbar_action_set_sensitive (VikToolbar *vtb, const char *name, bool sensitive)
 {
-	g_return_if_fail(VIK_IS_TOOLBAR(vtb));
-	g_return_if_fail(name != NULL);
+	if (!VIK_IS_TOOLBAR (vtb)) {
+		return;
+	}
+	if (!name) {
+		return;
+	}
 	// Try all groups
 	GtkAction *action = get_action ( vtb, name );
 	if ( action )
@@ -678,12 +709,12 @@ static void tb_editor_handler_start_element(GMarkupParseContext *context, const 
 	GSList **actions = (GSList **) data;
 
 	/* This is very basic parsing, stripped down any error checking, requires a valid UI markup. */
-	if (!g_strcmp0(element_name, "separator"))
+	if (!strcmp(element_name, "separator"))
 		*actions = g_slist_append(*actions, g_strdup(TB_EDITOR_SEPARATOR));
 
 	for (i = 0; attribute_names[i] != NULL; i++)
 	{
-		if (!g_strcmp0(attribute_names[i], "action"))
+		if (!strcmp(attribute_names[i], "action"))
 		{
 			*actions = g_slist_append(*actions, g_strdup(attribute_values[i]));
 		}

@@ -24,7 +24,6 @@
 
 #include <glib.h>
 #include <gtk/gtk.h>
-#include <stdbool.h>
 #include <stdint.h>
 
 

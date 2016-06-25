@@ -150,7 +150,7 @@ bool a_babel_convert(LayerTRW * trw, const char * babelargs, BabelStatusFunc cb,
 	if (name_src) {
 		ProcessOptions po = { bargs, name_src, NULL, NULL, NULL };
 		ret = a_babel_convert_from(trw, &po, cb, user_data, (DownloadFileOptions *) not_used);
-		(void)g_remove(name_src);
+		(void) remove(name_src);
 		free(name_src);
 	}
 
@@ -250,7 +250,7 @@ static bool babel_general_convert_from(LayerTRW * trw, BabelStatusFunc cb, char 
 			return true;
 		}
 
-		f = g_fopen(name_dst, "r");
+		f = fopen(name_dst, "r");
 		if (f) {
 			ret = a_gpx_read_file(trw, f);
 			fclose(f);
@@ -331,7 +331,7 @@ bool a_babel_convert_from_filter(LayerTRW * trw, const char *babelargs, const ch
 		} else {
 			fprintf(stderr, "CRITICAL: gpsbabel not found in PATH\n");
 		}
-		(void)g_remove(name_dst);
+		(void) remove(name_dst);
 		free(name_dst);
 	}
 
@@ -382,7 +382,7 @@ bool a_babel_convert_from_shellcommand(LayerTRW * trw, const char *input_cmd, co
 		ret = babel_general_convert_from(trw, cb, args, name_dst, user_data);
 		free(args);
 		free(shell_command);
-		(void)g_remove(name_dst);
+		(void) remove(name_dst);
 		free(name_dst);
 	}
 
@@ -423,7 +423,7 @@ bool a_babel_convert_from_url_filter(LayerTRW * trw, const char *url, const char
 	if ((fd_src = g_file_open_tmp("tmp-viking.XXXXXX", &name_src, NULL)) >= 0) {
 		fprintf(stderr, "DEBUG: %s: temporary file: %s\n", __FUNCTION__, name_src);
 		close(fd_src);
-		(void)g_remove(name_src);
+		(void) remove(name_src);
 
 		fetch_ret = a_http_download_get_url(url, "", name_src, &myoptions, NULL);
 		if (fetch_ret == DOWNLOAD_SUCCESS) {
@@ -433,7 +433,7 @@ bool a_babel_convert_from_url_filter(LayerTRW * trw, const char *url, const char
 			} else {
 				/* Process directly the retrieved file */
 				fprintf(stderr, "DEBUG: %s: directly read GPX file %s\n", __FUNCTION__, name_src);
-				FILE *f = g_fopen(name_src, "r");
+				FILE *f = fopen(name_src, "r");
 				if (f) {
 					ret = a_gpx_read_file(trw, f);
 					fclose(f);
@@ -550,7 +550,7 @@ bool a_babel_convert_to(LayerTRW * trw, Track * trk, const char *babelargs, cons
 		} else {
 			fprintf(stderr, "CRITICAL: gpsbabel not found in PATH\n");
 		}
-		(void)g_remove(name_src);
+		(void) remove(name_src);
 		free(name_src);
 	}
 
@@ -695,7 +695,7 @@ void a_babel_post_init()
 	// Read the current preference
 	const char *gpsbabel = a_preferences_get(VIKING_PREFERENCES_IO_NAMESPACE "gpsbabel")->s;
 	// If setting is still the UNIX default then lookup in the path - otherwise attempt to use the specified value directly.
-	if (g_strcmp0 (gpsbabel, "gpsbabel") == 0) {
+	if (strcmp(gpsbabel, "gpsbabel") == 0) {
 		gpsbabel_loc = g_find_program_in_path("gpsbabel");
 		if (!gpsbabel_loc) {
 			fprintf(stderr, "CRITICAL: gpsbabel not found in PATH\n");

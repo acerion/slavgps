@@ -23,7 +23,6 @@
 #ifndef _VIKING_DIR_H
 #define _VIKING_DIR_H
 
-//#include <glib.h>
 
 #ifdef __cplusplus
 extern "C" {

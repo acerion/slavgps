@@ -23,7 +23,6 @@
 
 #include <stdlib.h>
 
-//#include "viking.h"
 #include "acquire.h"
 #include "geonamessearch.h"
 

@@ -84,7 +84,9 @@ marshal_VOID__DOUBLE_DOUBLE (GClosure     *closure,
   register GCClosure *cc = (GCClosure*) closure;
   register void * data1, *data2;
 
-  g_return_if_fail (n_param_values == 3);
+  if (n_param_values != 3) {
+	  return;
+  }
 
   if (G_CCLOSURE_SWAP_DATA (closure))
     {
@@ -237,7 +239,9 @@ vik_print_preview_set_image_dpi (VikPrintPreview *preview,
                                   double           xres,
                                   double           yres)
 {
-  g_return_if_fail (VIK_IS_PRINT_PREVIEW (preview));
+	if (!VIK_IS_PRINT_PREVIEW (preview)) {
+		return;
+	}
 
   if (preview->image_xres != xres || preview->image_yres != yres)
     {
@@ -288,7 +292,9 @@ vik_print_preview_set_image_offsets (VikPrintPreview *preview,
                                       double           offset_x,
                                       double           offset_y)
 {
-  g_return_if_fail (VIK_IS_PRINT_PREVIEW (preview));
+	if (!VIK_IS_PRINT_PREVIEW (preview)) {
+		return;
+	}
 
   preview->image_offset_x = offset_x;
   preview->image_offset_y = offset_y;
@@ -310,7 +316,9 @@ vik_print_preview_set_image_offsets_max (VikPrintPreview *preview,
                                           double           offset_x_max,
                                           double           offset_y_max)
 {
-  g_return_if_fail (VIK_IS_PRINT_PREVIEW (preview));
+	if (!VIK_IS_PRINT_PREVIEW (preview)){
+		return;
+	}
 
   preview->image_offset_x_max = offset_x_max;
   preview->image_offset_y_max = offset_y_max;
@@ -330,7 +338,9 @@ void
 vik_print_preview_set_use_full_page (VikPrintPreview *preview,
                                       bool          full_page)
 {
-  g_return_if_fail (VIK_IS_PRINT_PREVIEW (preview));
+	if (!VIK_IS_PRINT_PREVIEW (preview)) {
+		return;
+	}
 
   preview->use_full_page = full_page;
 

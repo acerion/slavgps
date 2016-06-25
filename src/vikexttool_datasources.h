@@ -1,4 +1,3 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
@@ -23,7 +22,6 @@
 #define _VIKING_EXT_TOOL_DATASOURCES_H
 
 #include <gtk/gtk.h>
-//#include <stdint.h>
 
 
 #include "vikwindow.h"

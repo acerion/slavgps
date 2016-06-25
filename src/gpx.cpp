@@ -847,7 +847,7 @@ static void gpx_write_waypoint(Waypoint * wp, GpxWritingContext * context)
 	if (wp->name) {
 		tmp = entitize(wp->name);
 	} else {
-		tmp = g_strdup("waypoint");
+		tmp = strdup("waypoint");
 	}
 
 	fprintf(f, "  <name>%s</name>\n", tmp);
@@ -1043,7 +1043,7 @@ static void gpx_write_track(Track * trk, GpxWritingContext * context)
 	if (trk->name) {
 		tmp = entitize(trk->name);
 	} else {
-		tmp = g_strdup("track");
+		tmp = strdup("track");
 	}
 
 	// NB 'hidden' is not part of any GPX standard - this appears to be a made up Viking 'extension'

@@ -24,7 +24,6 @@
 #define _VIKING_DOWNLOAD_H
 
 #include <stdio.h>
-#include <stdbool.h>
 #include <stdint.h>
 
 

@@ -22,7 +22,6 @@
 #define _VIKING_GOTO_TOOL_H
 
 #include <glib.h>
-#include <stdbool.h>
 #include <stdint.h>
 
 

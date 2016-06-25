@@ -22,12 +22,10 @@
 #ifndef _VIKING_MAPSLAYER_COMPAT_H
 #define _VIKING_MAPSLAYER_COMPAT_H
 
-//#include <stdbool.h>
 #include <stdint.h>
 
 
 #include "vikcoord.h"
-//#include "vikviewport.h"
 #include "mapcoord.h"
 
 

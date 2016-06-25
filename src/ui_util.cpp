@@ -1,4 +1,3 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
  *    Viking - GPS data editor
  *    Copyright (C) 2007, Guilhem Bonnefille <guilhem.bonnefille@gmail.com>
@@ -149,8 +148,12 @@ GtkWidget *ui_lookup_widget(GtkWidget *widget, const char *widget_name)
 {
 	GtkWidget *parent, *found_widget;
 
-	g_return_val_if_fail(widget != NULL, NULL);
-	g_return_val_if_fail(widget_name != NULL, NULL);
+	if (!widget) {
+		return NULL;
+	}
+	if (!widget_name) {
+		return NULL;
+	}
 
 	for (;;)
 	{

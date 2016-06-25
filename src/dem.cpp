@@ -206,7 +206,7 @@ static void dem_parse_block_as_header ( char *buffer, VikDEM *dem, int *cur_colu
     fprintf(stderr, _("WARNING: Incorrect DEM Class B record: expected 1\n"));
     return;
   }
-  
+
   if ( !get_double_and_continue(&buffer, &east_west, true) )
     return;
   if ( !get_double_and_continue(&buffer, &south, true) )
@@ -295,7 +295,7 @@ static VikDEM *vik_dem_read_srtm_hgt(const char *file_name, const char *basename
   }
   file_size = g_mapped_file_get_length(mf);
   dem_file = g_mapped_file_get_contents(mf);
-  
+
   if (zip) {
     void *unzip_mem = NULL;
     unsigned long ucsize;
@@ -365,7 +365,7 @@ VikDEM *vik_dem_new_from_file(const char *file)
   int cur_row = -1;
   const char *basename = a_file_basename(file);
 
-  if ( g_access ( file, R_OK ) != 0 )
+  if (g_access(file, R_OK) != 0 )
     return NULL;
 
   if ( (strlen(basename)==11 || ((strlen(basename) == 15) && (basename[11] == '.' && basename[12] == 'z' && basename[13] == 'i' && basename[14] == 'p'))) &&
@@ -380,7 +380,7 @@ VikDEM *vik_dem_new_from_file(const char *file)
   rv = (VikDEM *) malloc(sizeof(VikDEM));
 
       /* Header */
-  f = g_fopen(file, "r");
+  f = fopen(file, "r");
   if ( !f ) {
     free( rv );
     return NULL;
@@ -584,4 +584,3 @@ void vik_dem_east_north_to_xy ( VikDEM *dem, double east, double north, unsigned
   *col = (unsigned int) floor((east - dem->min_east) / dem->east_scale);
   *row = (unsigned int) floor((north - dem->min_north) / dem->north_scale);
 }
-

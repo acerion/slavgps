@@ -644,7 +644,7 @@ static void drag_data_received_cb(GtkWidget * widget,
 			int entry_runner = 0;
 			char * entry = entries[entry_runner];
 			while (entry) {
-				if (g_strcmp0(entry, "")) {
+				if (strcmp(entry, "")) {
 					// Drag+Drop gives URIs. And so in particular, %20 in place of spaces in filenames
 					//  thus need to convert the text into a plain string
 					char *filename = g_filename_from_uri(entry, NULL, NULL);
@@ -2352,7 +2352,7 @@ GtkWidget * get_show_widget_by_name(Window * window, char const * name)
 
 	// ATM only FullScreen is *not* in SetShow path
 	char *path;
-	if (g_strcmp0("FullScreen", name)) {
+	if (strcmp("FullScreen", name)) {
 		path = g_strconcat("/ui/MainMenu/View/SetShow/", name, NULL);
 	} else {
 		path = g_strconcat("/ui/MainMenu/View/", name, NULL);
@@ -2750,13 +2750,13 @@ static void menu_cb(GtkAction *old, GtkAction * a, Window * window)
 		/* We set cursor, even if it is NULL: it resets to default */
 		gdk_window_set_cursor(gtk_widget_get_window(GTK_WIDGET(window->viewport->vvp)), window->viewport_cursor);
 
-	if (!g_strcmp0(name, "Pan")) {
+	if (!strcmp(name, "Pan")) {
 		window->current_tool = TOOL_PAN;
-	} else if (!g_strcmp0(name, "Zoom")) {
+	} else if (!strcmp(name, "Zoom")) {
 		window->current_tool = TOOL_ZOOM;
-	} else if (!g_strcmp0(name, "Ruler")) {
+	} else if (!strcmp(name, "Ruler")) {
 		window->current_tool = TOOL_RULER;
-	} else if (!g_strcmp0(name, "Select")) {
+	} else if (!strcmp(name, "Select")) {
 		window->current_tool = TOOL_SELECT;
 	} else {
 		int layer_id;
@@ -3369,10 +3369,10 @@ static void file_properties_cb(GtkAction * a, Window * window)
 				free(size);
 			}
 		} else {
-			message = g_strdup(_("File not accessible"));
+			message = strdup(_("File not accessible"));
 		}
 	} else {
-		message = g_strdup(_("No Viking File"));
+		message = strdup(_("No Viking File"));
 	}
 
 	// Show the info
@@ -4207,13 +4207,13 @@ static void window_change_coord_mode_cb(GtkAction * old_a, GtkAction * a, Window
 	}
 
 	VikViewportDrawMode drawmode;
-	if (!g_strcmp0(name, "ModeUTM")) {
+	if (!strcmp(name, "ModeUTM")) {
 		drawmode = VIK_VIEWPORT_DRAWMODE_UTM;
-	} else if (!g_strcmp0(name, "ModeLatLon")) {
+	} else if (!strcmp(name, "ModeLatLon")) {
 		drawmode = VIK_VIEWPORT_DRAWMODE_LATLON;
-	} else if (!g_strcmp0(name, "ModeExpedia")) {
+	} else if (!strcmp(name, "ModeExpedia")) {
 		drawmode = VIK_VIEWPORT_DRAWMODE_EXPEDIA;
-	} else if (!g_strcmp0(name, "ModeMercator")) {
+	} else if (!strcmp(name, "ModeMercator")) {
 		drawmode = VIK_VIEWPORT_DRAWMODE_MERCATOR;
 	} else {
 		fprintf(stderr, "CRITICAL: Houston, we've had a problem.\n");

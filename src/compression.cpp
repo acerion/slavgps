@@ -1,4 +1,3 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
@@ -163,7 +162,7 @@ char* uncompress_bzip2 ( char *name )
 #ifdef HAVE_BZLIB_H
 	fprintf(stderr, "DEBUG: %s: bzip2 %s\n", __FUNCTION__, BZ2_bzlibVersion() );
 
-	FILE *ff = g_fopen ( name, "rb" );
+	FILE *ff = fopen(name, "rb");
 	if ( !ff )
 		return NULL;
 

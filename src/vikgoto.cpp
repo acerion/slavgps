@@ -310,7 +310,7 @@ int a_vik_goto_where_am_i(Viewport * viewport, struct LatLon *ll, char **name )
   *name = NULL;
 
   char *tmpname = a_download_uri_to_tmp_file ( "http://api.hostip.info/get_json.php?position=true", NULL );
-  //char *tmpname = g_strdup("../test/hostip2.json");
+  //char *tmpname = strdup("../test/hostip2.json");
   if (!tmpname) {
     return result;
   }
@@ -332,7 +332,7 @@ int a_vik_goto_where_am_i(Viewport * viewport, struct LatLon *ll, char **name )
     fprintf(stderr, _("CRITICAL: couldn't map temp file\n"));
 
     g_mapped_file_unref ( mf );
-    (void)g_remove ( tmpname );
+    (void) remove(tmpname);
     free( tmpname );
     return result;
   }
@@ -390,7 +390,7 @@ int a_vik_goto_where_am_i(Viewport * viewport, struct LatLon *ll, char **name )
     if ( ll->lat > -90.0 && ll->lat < 90.0 && ll->lon > -180.0 && ll->lon < 180.0 ) {
       // Found a 'sensible' & 'precise' location
       result = 1;
-      *name = g_strdup( _("Locality") ); //Albeit maybe not known by an actual name!
+      *name = strdup( _("Locality") ); //Albeit maybe not known by an actual name!
     }
   }
   else {
@@ -434,7 +434,7 @@ int a_vik_goto_where_am_i(Viewport * viewport, struct LatLon *ll, char **name )
 
  tidy:
   g_mapped_file_unref ( mf );
-  (void)g_remove ( tmpname );
+  (void) remove(tmpname);
   free( tmpname );
   return result;
 }

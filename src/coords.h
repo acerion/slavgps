@@ -36,7 +36,6 @@ renaming functions and defining LatLon and UTM structs.
 #define _VIKING_COORDS_H
 
 #include <glib.h>
-#include <stdbool.h>
 #include <stdint.h>
 
 

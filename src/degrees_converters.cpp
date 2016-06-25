@@ -26,7 +26,6 @@
 #include <math.h>
 #endif
 #include <string.h>
-#include <stdbool.h>
 #include <stdlib.h>
 #include <glib.h>
 #include "degrees_converters.h"

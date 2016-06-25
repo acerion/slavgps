@@ -1,4 +1,3 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
  * viking
  * Copyright (C) 2009, Guilhem Bonnefille <guilhem.bonnefille@gmail.com>
@@ -20,7 +19,6 @@
 #ifndef _TERRASERVER_MAP_SOURCE_H
 #define _TERRASERVER_MAP_SOURCE_H
 
-#include <stdbool.h>
 #include <stdint.h>
 
 #include "vikcoord.h"

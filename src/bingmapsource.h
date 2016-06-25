@@ -19,7 +19,6 @@
 #ifndef _BING_MAP_SOURCE_H
 #define _BING_MAP_SOURCE_H
 
-#include <stdbool.h>
 #include <stdint.h>
 
 #include "vikcoord.h"

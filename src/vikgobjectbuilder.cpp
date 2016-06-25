@@ -1,18 +1,17 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
  * viking
  * Copyright (C) 2009, Guilhem Bonnefille <guilhem.bonnefille@gmail.com>
- * 
+ *
  * viking is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * viking is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License along
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -171,7 +170,7 @@ _end_element (GMarkupParseContext *context,
 static void
 _text (GMarkupParseContext *context,
        const char         *text,
-       size_t                text_len,  
+       size_t                text_len,
        void *             user_data,
        GError             **error)
 {
@@ -182,7 +181,7 @@ _text (GMarkupParseContext *context,
 		if (gtype != 0 && property_name != NULL)
 		{
 			/* parameter value */
-			/* We have to retrieve the expected type of the value 
+			/* We have to retrieve the expected type of the value
 			 * in order to do the correct transformation */
 			GObjectClass *oclass;
 			oclass = (GObjectClass *) g_type_class_ref (gtype);
@@ -226,20 +225,20 @@ vik_gobject_builder_parse (VikGobjectBuilder *self, const char *filename)
 	GMarkupParseContext *xml_context;
 	GError *error = NULL;
 
-	FILE *file = g_fopen (filename, "r");
+	FILE *file = fopen(filename, "r");
 	if (file == NULL)
 		/* TODO emit warning */
 		return;
-	
+
 	/* setup context parse (ie callbacks) */
 	xml_parser.start_element = &_start_element;
 	xml_parser.end_element = &_end_element;
 	xml_parser.text = &_text;
 	xml_parser.passthrough = NULL;
 	xml_parser.error = NULL;
-	
+
 	xml_context = g_markup_parse_context_new(&xml_parser, (GMarkupParseFlags) 0, self, NULL);
-	
+
 	char buff[BUFSIZ];
 	size_t nb;
 	while ((nb = fread (buff, sizeof(char), BUFSIZ, file)) > 0)
@@ -252,7 +251,7 @@ vik_gobject_builder_parse (VikGobjectBuilder *self, const char *filename)
 	if (!g_markup_parse_context_end_parse(xml_context, &error))
 		fprintf(stderr, "WARNING: %s: errors occurred reading file '%s': %s\n", __FUNCTION__, filename,
 		          error != NULL ? error->message : "???");
-	
+
 	g_markup_parse_context_free(xml_context);
 	fclose (file);
 }

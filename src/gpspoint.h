@@ -22,7 +22,6 @@
 #ifndef _VIKING_GPSPOINT_H
 #define _VIKING_GPSPOINT_H
 
-#include <stdbool.h>
 #include <stdint.h>
 
 #include "viktrwlayer.h"

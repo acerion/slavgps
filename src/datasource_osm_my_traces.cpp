@@ -361,7 +361,7 @@ static void gpx_meta_data_cdata(xml_data *xd, const XML_Char *s, int len)
 
 static bool read_gpx_files_metadata_xml(char *tmpname, xml_data *xd)
 {
-	FILE *ff = g_fopen(tmpname, "r");
+	FILE *ff = fopen(tmpname, "r");
 	if (!ff) {
 		return false;
 	}

@@ -1260,7 +1260,7 @@ static void dem_layer_file_info(GtkWidget *widget, struct LatLon *ll)
 					   ABS(intlon));
 	} else {
 		// Probably not over any land...
-		source = g_strdup(_("No DEM File Available"));
+		source = strdup(_("No DEM File Available"));
 	}
 
 	char *filename = NULL;

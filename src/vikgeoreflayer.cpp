@@ -54,7 +54,7 @@ using namespace SlavGPS;
 static VikLayerParamData image_default (void)
 {
   VikLayerParamData data;
-  data.s = g_strdup("");
+  data.s = strdup("");
   return data;
 }
 */
@@ -502,7 +502,7 @@ void LayerGeoref::set_image(char const * image)
 		this->image = NULL;
 	}
 
-	if (g_strcmp0(image, "") != 0) {
+	if (strcmp(image, "") != 0) {
 		this->image = vu_get_canonical_filename(this->vl, image);
 	} else {
 		this->image = g_strdup(image);
@@ -549,7 +549,7 @@ static int world_file_read_file(const char* filename, double values[4])
 {
 	fprintf(stderr, "DEBUG: %s - trying world file %s\n", __FUNCTION__, filename);
 
-	FILE *f = g_fopen(filename, "r");
+	FILE *f = fopen(filename, "r");
 	if (!f) {
 		return 1;
 	} else {
@@ -608,7 +608,7 @@ static void georef_layer_export_params(georef_data_t * data)
 								GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
 								NULL);
 	if (gtk_dialog_run(GTK_DIALOG (file_selector)) == GTK_RESPONSE_ACCEPT) {
-		FILE * f = g_fopen(gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(file_selector)), "w");
+		FILE * f = fopen(gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(file_selector)), "w");
 
 		gtk_widget_destroy(file_selector);
 		if (!f) {

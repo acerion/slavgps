@@ -1,4 +1,3 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
  * viking
  * Copyright (C) 2009, Guilhem Bonnefille <guilhem.bonnefille@gmail.com>
@@ -194,7 +193,9 @@ static double scale_to_mpp ( int scale )
 static bool
 _coord_to_tile(VikMapSource *self, const VikCoord *src, double xmpp, double ympp, TileInfo *dest )
 {
-	g_return_val_if_fail(TERRASERVER_IS_MAP_SOURCE(self), false);
+	if (!TERRASERVER_IS_MAP_SOURCE(self)) {
+		return false;
+	}
 
 	TerraserverMapSourcePrivate *priv = TERRASERVER_MAP_SOURCE_PRIVATE(self);
 	int type = priv->type;
@@ -240,7 +241,9 @@ _tile_to_center_coord ( VikMapSource *self, TileInfo *src, VikCoord *dest )
 static char *
 _get_uri( VikMapSourceDefault *self, TileInfo *src )
 {
-	g_return_val_if_fail (TERRASERVER_IS_MAP_SOURCE(self), NULL);
+	if (!TERRASERVER_IS_MAP_SOURCE(self)) {
+		return NULL;
+	}
 
 	TerraserverMapSourcePrivate *priv = TERRASERVER_MAP_SOURCE_PRIVATE(self);
 	int type = priv->type;
@@ -252,7 +255,9 @@ _get_uri( VikMapSourceDefault *self, TileInfo *src )
 static char *
 _get_hostname( VikMapSourceDefault *self )
 {
-	g_return_val_if_fail (TERRASERVER_IS_MAP_SOURCE(self), NULL);
+	if (!TERRASERVER_IS_MAP_SOURCE(self)) {
+		return NULL;
+	}
 
 	return g_strdup( TERRASERVER_SITE );
 }
@@ -260,7 +265,9 @@ _get_hostname( VikMapSourceDefault *self )
 static DownloadFileOptions *
 _get_download_options( VikMapSourceDefault *self )
 {
-	g_return_val_if_fail (TERRASERVER_IS_MAP_SOURCE(self), NULL);
+	if (!TERRASERVER_IS_MAP_SOURCE(self)) {
+		return NULL;
+	}
 
 	return &terraserver_options;
 }

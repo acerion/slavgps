@@ -22,7 +22,6 @@
 #ifndef _VIKING_TRWLAYER_EXPORT_H
 #define _VIKING_TRWLAYER_EXPORT_H
 
-//#include <stdint.h>
 
 #include "viktrwlayer.h"
 #include "file.h"

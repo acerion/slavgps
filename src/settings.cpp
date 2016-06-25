@@ -1,4 +1,3 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
@@ -32,7 +31,6 @@
   * Indeed even the internal settings themselves can be liable to change.
   */
 #include <glib.h>
-#include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include "dir.h"

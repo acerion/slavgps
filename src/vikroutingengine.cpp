@@ -220,9 +220,13 @@ vik_routing_engine_find ( VikRoutingEngine *self, VikLayer *vtl, struct LatLon s
 {
 	VikRoutingEngineClass *klass;
 
-	g_return_val_if_fail ( VIK_IS_ROUTING_ENGINE (self), 0 );
+	if (!VIK_IS_ROUTING_ENGINE (self)) {
+		return 0;
+	}
 	klass = VIK_ROUTING_ENGINE_GET_CLASS( self );
-	g_return_val_if_fail ( klass->find != NULL, 0 );
+	if (!klass->find) {
+		return 0;
+	}
 
 	return klass->find( self, vtl, start, end );
 }
@@ -278,9 +282,14 @@ vik_routing_engine_supports_direction ( VikRoutingEngine *self )
 {
   VikRoutingEngineClass *klass;
 
-  g_return_val_if_fail ( VIK_IS_ROUTING_ENGINE (self), false );
+  if (!VIK_IS_ROUTING_ENGINE (self)) {
+	  return false;
+  }
+
   klass = VIK_ROUTING_ENGINE_GET_CLASS( self );
-  g_return_val_if_fail ( klass->supports_direction != NULL, false );
+  if (!klass->supports_direction) {
+	  return false;
+  }
 
   return klass->supports_direction( self );
 }
@@ -300,9 +309,13 @@ vik_routing_engine_get_url_from_directions ( VikRoutingEngine *self, const char 
 {
   VikRoutingEngineClass *klass;
 
-  g_return_val_if_fail ( VIK_IS_ROUTING_ENGINE (self), NULL );
+  if (!VIK_IS_ROUTING_ENGINE (self)) {
+	  return NULL;
+  }
   klass = VIK_ROUTING_ENGINE_GET_CLASS( self );
-  g_return_val_if_fail ( klass->get_url_from_directions != NULL, NULL );
+  if (!klass->get_url_from_directions) {
+	  return NULL;
+  }
 
   return klass->get_url_from_directions( self, start, end );
 }
@@ -326,9 +339,14 @@ vik_routing_engine_refine ( VikRoutingEngine *self, VikLayer *vtl, Track * trk)
 {
   VikRoutingEngineClass *klass;
 
-  g_return_val_if_fail ( VIK_IS_ROUTING_ENGINE (self), 0 );
+  if (!VIK_IS_ROUTING_ENGINE (self)) {
+	  return 0;
+  }
+
   klass = VIK_ROUTING_ENGINE_GET_CLASS ( self );
-  g_return_val_if_fail ( klass->refine != NULL, 0 );
+  if (!klass->refine) {
+	  return 0;
+  }
 
   return klass->refine ( self, vtl, trk);
 }
@@ -344,9 +362,13 @@ vik_routing_engine_supports_refine ( VikRoutingEngine *self )
 {
   VikRoutingEngineClass *klass;
 
-  g_return_val_if_fail ( VIK_IS_ROUTING_ENGINE (self), false );
+  if (!VIK_IS_ROUTING_ENGINE (self)) {
+	  return false;
+  }
   klass = VIK_ROUTING_ENGINE_GET_CLASS ( self );
-  g_return_val_if_fail ( klass->supports_refine != NULL, false );
+  if (!klass->supports_refine) {
+	  return false;
+  }
 
   return klass->supports_refine ( self );
 }

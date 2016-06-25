@@ -352,7 +352,7 @@ void clip_receive_targets(GtkClipboard * c, GdkAtom * a, int n, void * p)
 		char * name = gdk_atom_name(a[i]);
 		//fprintf(stdout, "  ""%s""\n", name);
 		bool breaktime = false;
-		if (!g_strcmp0(name, "text/html")) {
+		if (!strcmp(name, "text/html")) {
 			gtk_clipboard_request_contents(c, gdk_atom_intern("text/html", true), clip_receive_html, panel);
 			breaktime = true;
 		}
@@ -360,7 +360,7 @@ void clip_receive_targets(GtkClipboard * c, GdkAtom * a, int n, void * p)
 			gtk_clipboard_request_text(c, clip_receive_text, panel);
 			breaktime = true;
 		}
-		if (!g_strcmp0(name, "application/viking")) {
+		if (!strcmp(name, "application/viking")) {
 			gtk_clipboard_request_contents(c, gdk_atom_intern("application/viking", true), clip_receive_viking, panel);
 			breaktime = true;
 		}
@@ -502,7 +502,7 @@ static void clip_determine_type(GtkClipboard * c, GdkAtom * a, int n, void * p)
 		char *name = gdk_atom_name(a[i]);
 		// fprintf(stdout, "  ""%s""\n", name);
 		bool breaktime = false;
-		if (!g_strcmp0(name, "application/viking")) {
+		if (!strcmp(name, "application/viking")) {
 			gtk_clipboard_request_contents (c, gdk_atom_intern("application/viking", true), clip_determine_viking_type, p);
 			breaktime = true;
 		}

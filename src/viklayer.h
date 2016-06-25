@@ -25,12 +25,10 @@
 #include <glib.h>
 #include <gtk/gtk.h>
 #include <gdk-pixbuf/gdk-pixdata.h>
-#include <stdbool.h>
 #include <stdint.h>
 
 
 #include "uibuilder.h"
-//#include "vikwindow.h"
 #include "viktreeview.h"
 #include "vikviewport.h"
 

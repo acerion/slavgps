@@ -1,4 +1,3 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
@@ -24,7 +23,6 @@
 #define _VIKING_COMPRESSION_H
 
 #include <glib.h>
-#include <stdbool.h>
 #include <stdint.h>
 
 
@@ -42,4 +40,3 @@ char* uncompress_bzip2 ( char *name );
 #endif
 
 #endif
-

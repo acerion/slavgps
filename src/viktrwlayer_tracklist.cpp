@@ -642,11 +642,11 @@ static void vik_trw_layer_track_list_internal ( GtkWidget *dialog,
 
 	char *spd_units = NULL;
 	switch (speed_units) {
-	case VIK_UNITS_SPEED_KILOMETRES_PER_HOUR: spd_units = g_strdup(_("km/h")); break;
-	case VIK_UNITS_SPEED_MILES_PER_HOUR:      spd_units = g_strdup(_("mph")); break;
-	case VIK_UNITS_SPEED_KNOTS:               spd_units = g_strdup(_("knots")); break;
+	case VIK_UNITS_SPEED_KILOMETRES_PER_HOUR: spd_units = strdup(_("km/h")); break;
+	case VIK_UNITS_SPEED_MILES_PER_HOUR:      spd_units = strdup(_("mph")); break;
+	case VIK_UNITS_SPEED_KNOTS:               spd_units = strdup(_("knots")); break;
 	// VIK_UNITS_SPEED_METRES_PER_SECOND:
-	default:                                  spd_units = g_strdup(_("m/s")); break;
+	default:                                  spd_units = strdup(_("m/s")); break;
 	}
 
 	char *title = g_strdup_printf ( _("Av. Speed\n(%s)"), spd_units );

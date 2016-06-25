@@ -147,10 +147,10 @@ static void defaults_run_setparam ( void * index_ptr, uint16_t i, VikLayerParamD
 	set_default_data ( data, vik_layer_get_interface(vlp->layer)->fixed_layer_name, vlp->name, vlp->type );
 }
 
-static VikLayerParamData defaults_run_getparam ( gpointer index_ptr, uint16_t i, bool notused2 )
+static VikLayerParamData defaults_run_getparam(void * index_ptr, uint16_t i, bool notused2 )
 {
 	// Index is only an index into values from this layer
-	int index = KPOINTER_TO_INT ( index_ptr );
+	int index = (int) (long) (index_ptr);
 	VikLayerParam *vlp = (VikLayerParam *)g_ptr_array_index(paramsVD,index+i);
 
 	return get_default_data ( vik_layer_get_interface(vlp->layer)->fixed_layer_name, vlp->name, vlp->type );
@@ -235,13 +235,13 @@ static bool layer_defaults_save_to_file()
 	// }
 
 	FILE *ff;
-	if ( !(ff = g_fopen ( fn, "w")) ) {
+	if ( !(ff = fopen(fn, "w")) ) {
 		fprintf(stderr, _("WARNING: Could not open file: %s\n"), fn );
 		answer = false;
 		goto tidy;
 	}
 	// Layer defaults not that secret, but just incase...
-	if ( g_chmod ( fn, 0600 ) != 0 )
+	if (chmod(fn, 0600) != 0)
 		fprintf(stderr, "WARNING: %s: Failed to set permissions on %s\n", __FUNCTION__, fn );
 
 	fputs ( keyfilestr, ff );
@@ -317,10 +317,10 @@ bool a_layer_defaults_show_window ( GtkWindow *parent, const char *layername )
 	                                      vik_layer_get_interface(layer)->params_groups,
 	                                      vik_layer_get_interface(layer)->params_groups_count,
 	                                      (bool (*) (void *,uint16_t,VikLayerParamData,void *,bool)) defaults_run_setparam,
-	                                      KINT_TO_POINTER ( index ),
+	                                      ((void *) (long) (index)),
 	                                      params,
 	                                      defaults_run_getparam,
-	                                      KINT_TO_POINTER ( index ),
+	                                      ((void *) (long) (index)),
 	                                      NULL ) ) {
 		// Save
 		layer_defaults_save_to_file();

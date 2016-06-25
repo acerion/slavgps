@@ -300,7 +300,7 @@ bool a_gpspoint_read_file(LayerTRW * trw, FILE *f, const char *dirpath) {
 
 			/* Thanks to Peter Jones for this Fix */
 			if (!line_name) {
-				line_name = g_strdup("UNK");
+				line_name = strdup("UNK");
 			}
 
 			trk->visible = line_visible;

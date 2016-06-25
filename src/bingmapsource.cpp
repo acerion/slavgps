@@ -146,7 +146,7 @@ void MapSourceBing::get_copyright(LatLonBBox bbox, double zoom, void (*fct)(View
 
 	/* Loop over all known attributions */
 	GList * attribution = priv->attributions;
-	if (attribution == NULL && g_strcmp0 ("<no-set>", priv->api_key)) {
+	if (attribution == NULL && strcmp("<no-set>", priv->api_key)) {
 		if ( ! priv->loading_attributions )
 			_async_load_attributions (BING_MAP_SOURCE (self));
 		else
@@ -239,9 +239,11 @@ bool MapSourceBing::parse_file_for_attributions(char *filename)
 	GMarkupParseContext *xml_context = NULL;
 	GError *error = NULL;
 	BingMapSourcePrivate *priv = BING_MAP_SOURCE_GET_PRIVATE (self);
-	g_return_val_if_fail(priv != NULL, false);
+	if (!priv) {
+		return false;
+	}
 
-	FILE *file = g_fopen (filename, "r");
+	FILE *file = fopen(filename, "r");
 	if (file == NULL)
 		/* TODO emit warning */
 		return false;
@@ -320,7 +322,7 @@ int MapSourceBing::load_attributions()
 		ret = -1;
 	}
 
-	(void)g_remove(tmpname);
+	(void) remove(tmpname);
 	free(tmpname);
 done:
 	priv->loading_attributions = false;

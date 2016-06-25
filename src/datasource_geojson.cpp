@@ -133,7 +133,7 @@ static void datasource_geojson_get_process_options(datasource_geojson_user_data_
 	//GtkFileFilter *filter = gtk_file_chooser_get_filter (GTK_FILE_CHOOSER(userdata->files));
 
 	// return some value so *thread* processing will continue
-	po->babelargs = g_strdup("fake command"); // Not really used, thus no translations
+	po->babelargs = strdup("fake command"); // Not really used, thus no translations
 }
 
 /**
@@ -153,7 +153,7 @@ static bool datasource_geojson_process(LayerTRW * trw, ProcessOptions * process_
 			// Important that this process is run in the main thread
 			adw->window->open_file(gpx_filename, false);
 			// Delete the temporary file
-			(void) g_remove(gpx_filename);
+			(void) remove(gpx_filename);
 			free(gpx_filename);
 		} else {
 			char * msg = g_strdup_printf(_("Unable to import from: %s"), filename);

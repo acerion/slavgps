@@ -43,17 +43,17 @@ char * a_get_viking_dir_no_create()
 	// TODO: use g_get_user_config_dir ?
 
 	char const * home = g_getenv("HOME");
-	if (!home || g_access(home, W_OK)) {
+	if (!home || access(home, W_OK)) {
 		home = g_get_home_dir();
 	}
 
 #ifdef HAVE_MKDTEMP
-	if (!home || g_access(home, W_OK)) {
+	if (!home || access(home, W_OK)) {
 		static char temp[] = {"/tmp/vikXXXXXX"};
 		home = mkdtemp(temp);
 	}
 #endif
-	if (!home || g_access(home, W_OK)) {
+	if (!home || access(home, W_OK)) {
 		/* Fatal error */
 		fprintf(stderr, "CRITICAL: Unable to find a base directory\n");
 	}

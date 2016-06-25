@@ -51,7 +51,7 @@ struct _VikGotoXmlToolPrivate
   char *lat_attr;
   char *lon_path;
   char *lon_attr;
-  
+
   struct LatLon ll;
 };
 
@@ -266,7 +266,7 @@ vik_goto_xml_tool_init ( VikGotoXmlTool *self )
   priv->lat_attr = NULL;
   priv->lon_path = NULL;
   priv->lon_attr = NULL;
-  // 
+  //
   priv->ll.lat = NAN;
   priv->ll.lon = NAN;
 }
@@ -351,7 +351,7 @@ _start_element (GMarkupParseContext *context,
 static void
 _text (GMarkupParseContext *context,
        const char         *text,
-       size_t                text_len,  
+       size_t                text_len,
        void *             user_data,
        GError             **error)
 {
@@ -378,18 +378,20 @@ vik_goto_xml_tool_parse_file_for_latlon(VikGotoTool *self, char *filename, struc
 	GMarkupParseContext *xml_context = NULL;
 	GError *error = NULL;
 	VikGotoXmlToolPrivate *priv = GOTO_XML_TOOL_GET_PRIVATE (self);
-  g_return_val_if_fail(priv != NULL, false);
+	if (!priv) {
+		return false;
+	}
 
   fprintf(stderr, "DEBUG: %s: %s@%s, %s@%s\n",
            __FUNCTION__,
            priv->lat_path, priv->lat_attr,
            priv->lon_path, priv->lon_attr);
 
-	FILE *file = g_fopen (filename, "r");
+	FILE *file = fopen(filename, "r");
 	if (file == NULL)
 		/* TODO emit warning */
 		return false;
-	
+
 	/* setup context parse (ie callbacks) */
 	if (priv->lat_attr != NULL || priv->lon_attr != NULL)
     // At least one coordinate uses an attribute
@@ -404,13 +406,13 @@ vik_goto_xml_tool_parse_file_for_latlon(VikGotoTool *self, char *filename, struc
     xml_parser.text = NULL;
 	xml_parser.passthrough = NULL;
 	xml_parser.error = NULL;
-	
+
 	xml_context = g_markup_parse_context_new(&xml_parser, (GMarkupParseFlags) 0, self, NULL);
 
 	/* setup result */
 	priv->ll.lat = NAN;
 	priv->ll.lon = NAN;
-	
+
 	char buff[BUFSIZ];
 	size_t nb;
 	while (xml_context &&
@@ -431,17 +433,17 @@ vik_goto_xml_tool_parse_file_for_latlon(VikGotoTool *self, char *filename, struc
 		fprintf(stderr, "%s: errors occurred while reading file: %s.\n",
 			__FUNCTION__, error->message);
 	g_clear_error (&error);
-	
+
 	if (xml_context)
 		g_markup_parse_context_free(xml_context);
 	xml_context = NULL;
 	fclose (file);
-  
+
   if (ll != NULL)
   {
     *ll = priv->ll;
   }
-  
+
   if (isnan(priv->ll.lat) || isnan(priv->ll.lat))
 		/* At least one coordinate not found */
 		return false;
@@ -453,6 +455,8 @@ static char *
 vik_goto_xml_tool_get_url_format ( VikGotoTool *self )
 {
   VikGotoXmlToolPrivate *priv = GOTO_XML_TOOL_GET_PRIVATE (self);
-  g_return_val_if_fail(priv != NULL, NULL);
+  if (!priv) {
+	  return NULL;
+  }
   return priv->url_format;
 }

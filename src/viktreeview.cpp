@@ -94,7 +94,9 @@ static void vik_cclosure_marshal_VOID__POINTER_POINTER(GClosure     *closure,
 	register GCClosure* cc = (GCClosure*) closure;
 	register void * data1, * data2;
 
-	g_return_if_fail(n_param_vals == 3);
+	if (n_param_vals != 3) {
+		return;
+	}
 
 	if (G_CCLOSURE_SWAP_DATA(closure)) {
 		data1 = closure->data;
@@ -627,25 +629,33 @@ void TreeView::delete_(GtkTreeIter *iter)
 
 void TreeView::set_icon(GtkTreeIter * iter, const GdkPixbuf * icon)
 {
-	g_return_if_fail(iter != NULL);
+	if (!iter) {
+		return;
+	}
 	gtk_tree_store_set(GTK_TREE_STORE(this->model), iter, ICON_COLUMN, icon, -1);
 }
 
 void TreeView::set_name(GtkTreeIter *iter, char const * name)
 {
-	g_return_if_fail(iter != NULL && name != NULL);
+	if (!iter || !name) {
+		return;
+	}
 	gtk_tree_store_set(GTK_TREE_STORE(this->model), iter, NAME_COLUMN, name, -1);
 }
 
 void TreeView::set_visibility(GtkTreeIter *iter, bool visible)
 {
-	g_return_if_fail(iter != NULL);
+	if (!iter) {
+		return;
+	}
 	gtk_tree_store_set(GTK_TREE_STORE(this->model), iter, VISIBLE_COLUMN, visible, -1);
 }
 
 void TreeView::toggle_visibility(GtkTreeIter *iter)
 {
-	g_return_if_fail(iter != NULL);
+	if (!iter) {
+		return;
+	}
 	bool visibility;
 	TREEVIEW_GET(this->model, iter, VISIBLE_COLUMN, &visibility);
 	gtk_tree_store_set(GTK_TREE_STORE(this->model), iter, VISIBLE_COLUMN, !visibility, -1);
@@ -892,7 +902,9 @@ static int vik_treeview_drag_data_received(GtkTreeDragDest *drag_dest, GtkTreePa
 	VikTreeview *vt;
 	VikLayer *vl;
 
-	g_return_val_if_fail(GTK_IS_TREE_STORE (drag_dest), false);
+	if (!GTK_IS_TREE_STORE (drag_dest)) {
+		return false;
+	}
 
 	tree_model = GTK_TREE_MODEL(drag_dest);
 

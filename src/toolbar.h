@@ -1,4 +1,3 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
  *      toolbar.h - this file was part of Geany (v1.24.1), a fast and lightweight IDE
  *
@@ -25,7 +24,6 @@
 #define VIKING_TOOLBAR_H 1
 
 #include <gtk/gtk.h>
-#include <stdbool.h>
 #include <stdint.h>
 
 

@@ -254,7 +254,7 @@ void a_try_decompress_file(char * name)
 	} else if (bzip2) {
 		char* bz2_name = uncompress_bzip2 (name);
 		if (bz2_name) {
-			if (g_remove (name)) {
+			if (remove(name)) {
 				fprintf(stderr, "CRITICAL: %s: remove file failed [%s]\n", __FUNCTION__, name);
 			}
 			if (g_rename (bz2_name, name)) {
@@ -421,7 +421,7 @@ static DownloadResult_t download(char const * hostname, char const * uri, char c
 		}
 		return DOWNLOAD_FILE_WRITE_ERROR;
 	}
-	f = g_fopen(tmpfilename, "w+b");  /* truncate file and open it */
+	f = fopen(tmpfilename, "w+b");  /* truncate file and open it */
 	if (! f) {
 		fprintf(stderr, "WARNING: Couldn't open temporary file \"%s\": %s\n", tmpfilename, g_strerror(errno));
 		free(tmpfilename);
@@ -453,7 +453,7 @@ static DownloadResult_t download(char const * hostname, char const * uri, char c
 
 	if (failure) {
 		fprintf(stderr, _("WARNING: Download error: %s\n"), fn);
-		if (g_remove (tmpfilename) != 0) {
+		if (remove(tmpfilename) != 0) {
 			fprintf(stderr, _("WARNING: Failed to remove: %s\n"), tmpfilename);
 		}
 		unlock_file (tmpfilename);
@@ -466,7 +466,7 @@ static DownloadResult_t download(char const * hostname, char const * uri, char c
 	}
 
 	if (ret == CURL_DOWNLOAD_NO_NEWER_FILE)  {
-		(void)g_remove (tmpfilename);
+		(void) remove(tmpfilename);
 		// update mtime of local copy
 		// Not security critical, thus potential Time of Check Time of Use race condition is not bad
 		// coverity[toctou]
@@ -551,7 +551,7 @@ char * a_download_uri_to_tmp_file(char const * uri, DownloadFileOptions * option
 	if (curl_download_uri (uri, tmp_file, options, NULL, NULL)) {
 		// error
 		fclose (tmp_file);
-		(void)g_remove (tmpname);
+		(void) remove(tmpname);
 		free(tmpname);
 		return NULL;
 	}

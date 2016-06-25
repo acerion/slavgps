@@ -144,7 +144,7 @@ static void datasource_geotag_get_process_options(void * user_data, ProcessOptio
 	//GtkFileFilter *filter = gtk_file_chooser_get_filter (GTK_FILE_CHOOSER(userdata->files));
 
 	// return some value so *thread* processing will continue
-	po->babelargs = g_strdup("fake command"); // Not really used, thus no translations
+	po->babelargs = strdup("fake command"); // Not really used, thus no translations
 }
 
 /**

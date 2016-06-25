@@ -23,7 +23,6 @@
 #ifndef _VIKING_TRWLAYER_H
 #define _VIKING_TRWLAYER_H
 
-#include <stdbool.h>
 #include <stdint.h>
 
 #include <unordered_map>

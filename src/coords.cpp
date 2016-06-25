@@ -258,7 +258,10 @@ void a_coords_latlon_to_string ( const struct LatLon *latlon,
 				 char **lat,
 				 char **lon )
 {
-  g_return_if_fail ( latlon != NULL );
+	if (!latlon) {
+		return;
+	}
+
 #ifdef HAVE_VIKING
   vik_degree_format_t format = a_vik_get_degree_format ();
 

@@ -22,7 +22,6 @@
 #ifndef _VIKING_VIKCOORD_H
 #define _VIKING_VIKCOORD_H
 
-//#include <stdint.h>
 
 #include "coords.h"
 

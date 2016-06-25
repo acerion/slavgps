@@ -120,7 +120,7 @@ modules_load_config_dir(const char *dir)
 
   /* Maps sources */
   char *maps = g_build_filename(dir, VIKING_MAPS_FILE, NULL);
-  if (g_access (maps, R_OK) == 0)
+  if (access(maps, R_OK) == 0)
   {
 	VikGobjectBuilder *builder = vik_gobject_builder_new ();
 	g_signal_connect (builder, "new-object", G_CALLBACK (modules_register_map_source), NULL);
@@ -131,7 +131,7 @@ modules_load_config_dir(const char *dir)
 
   /* External tools */
   char *tools = g_build_filename(dir, VIKING_EXTTOOLS_FILE, NULL);
-  if (g_access (tools, R_OK) == 0)
+  if (access(tools, R_OK) == 0)
   {
 	VikGobjectBuilder *builder = vik_gobject_builder_new ();
 	g_signal_connect (builder, "new-object", G_CALLBACK (modules_register_exttools), NULL);
@@ -141,7 +141,7 @@ modules_load_config_dir(const char *dir)
   free( tools );
 
   char *datasources = g_build_filename(dir, VIKING_DATASOURCES_FILE, NULL);
-  if (g_access (datasources, R_OK) == 0)
+  if (access(datasources, R_OK) == 0)
   {
 	VikGobjectBuilder *builder = vik_gobject_builder_new ();
 	g_signal_connect (builder, "new-object", G_CALLBACK (modules_register_datasources), NULL);
@@ -152,7 +152,7 @@ modules_load_config_dir(const char *dir)
 
   /* Go-to search engines */
   char *go_to = g_build_filename(dir, VIKING_GOTOTOOLS_FILE, NULL);
-  if (g_access (go_to, R_OK) == 0)
+  if (access(go_to, R_OK) == 0)
   {
 	VikGobjectBuilder *builder = vik_gobject_builder_new ();
 	g_signal_connect (builder, "new-object", G_CALLBACK (modules_register_gototools), NULL);
@@ -163,7 +163,7 @@ modules_load_config_dir(const char *dir)
 
   /* Routing engines */
   char *routing = g_build_filename(dir, VIKING_ROUTING_FILE, NULL);
-  if (g_access (routing, R_OK) == 0)
+  if (access(routing, R_OK) == 0)
   {
 	VikGobjectBuilder *builder = vik_gobject_builder_new ();
 	g_signal_connect (builder, "new-object", G_CALLBACK (modules_register_routing_engine), NULL);

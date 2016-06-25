@@ -1,4 +1,3 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
@@ -28,7 +27,6 @@ extern "C" {
 
 #include <glib.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
-#include <stdbool.h>
 #include <stdint.h>
 
 

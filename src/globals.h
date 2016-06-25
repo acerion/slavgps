@@ -24,7 +24,6 @@
 #define __VIKING_GLOBALS_H
 
 #include <glib.h>
-#include <stdbool.h>
 #include <stdint.h>
 
 

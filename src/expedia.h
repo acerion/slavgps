@@ -22,8 +22,6 @@
 #ifndef __VIKING_EXPEDIA_H
 #define __VIKING_EXPEDIA_H
 
-//#include "vikcoord.h"
-//#include "mapcoord.h"
 
 #ifdef __cplusplus
 extern "C" {

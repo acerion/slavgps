@@ -484,10 +484,10 @@ static void vik_trwlayer_class_init(VikTrwLayerClass *klass)
 {
 	if (! a_settings_get_string(VIK_SETTINGS_EXTERNAL_DIARY_PROGRAM, &diary_program)) {
 #ifdef WINDOWS
-		//diary_program = g_strdup("C:\\Program Files\\Rednotebook\\rednotebook.exe");
-		diary_program = g_strdup("C:/Progra~1/Rednotebook/rednotebook.exe");
+		//diary_program = strdup("C:\\Program Files\\Rednotebook\\rednotebook.exe");
+		diary_program = strdup("C:/Progra~1/Rednotebook/rednotebook.exe");
 #else
-		diary_program = g_strdup("rednotebook");
+		diary_program = strdup("rednotebook");
 #endif
 	}
 	else {
@@ -508,7 +508,7 @@ static void vik_trwlayer_class_init(VikTrwLayerClass *klass)
 				fprintf(stderr, "WARNING: Diary: stderr: %s\n", mystderr);
 
 			char **tokens = NULL;
-			if (mystdout && g_strcmp0(mystdout, ""))
+			if (mystdout && strcmp(mystdout, ""))
 				tokens = g_strsplit(mystdout, " ", 0);
 			else if (mystderr)
 				tokens = g_strsplit(mystderr, " ", 0);
@@ -539,10 +539,10 @@ static void vik_trwlayer_class_init(VikTrwLayerClass *klass)
 	// Astronomy Domain
 	if (! a_settings_get_string(VIK_SETTINGS_EXTERNAL_ASTRO_PROGRAM, &astro_program)) {
 #ifdef WINDOWS
-		//astro_program = g_strdup("C:\\Program Files\\Stellarium\\stellarium.exe");
-		astro_program = g_strdup("C:/Progra~1/Stellarium/stellarium.exe");
+		//astro_program = strdup("C:\\Program Files\\Stellarium\\stellarium.exe");
+		astro_program = strdup("C:/Progra~1/Stellarium/stellarium.exe");
 #else
-		astro_program = g_strdup("stellarium");
+		astro_program = strdup("stellarium");
 #endif
 	}
 	else {
@@ -853,13 +853,13 @@ bool LayerTRW::set_param(uint16_t id, VikLayerParamData data, Viewport * viewpor
 			this->track_font_size = (font_size_t) data.u;
 			free(this->track_fsize_str);
 			switch (this->track_font_size) {
-			case FS_XX_SMALL: this->track_fsize_str = g_strdup("xx-small"); break;
-			case FS_X_SMALL: this->track_fsize_str = g_strdup("x-small"); break;
-			case FS_SMALL: this->track_fsize_str = g_strdup("small"); break;
-			case FS_LARGE: this->track_fsize_str = g_strdup("large"); break;
-			case FS_X_LARGE: this->track_fsize_str = g_strdup("x-large"); break;
-			case FS_XX_LARGE: this->track_fsize_str = g_strdup("xx-large"); break;
-			default: this->track_fsize_str = g_strdup("medium"); break;
+			case FS_XX_SMALL: this->track_fsize_str = strdup("xx-small"); break;
+			case FS_X_SMALL: this->track_fsize_str = strdup("x-small"); break;
+			case FS_SMALL: this->track_fsize_str = strdup("small"); break;
+			case FS_LARGE: this->track_fsize_str = strdup("large"); break;
+			case FS_X_LARGE: this->track_fsize_str = strdup("x-large"); break;
+			case FS_XX_LARGE: this->track_fsize_str = strdup("xx-large"); break;
+			default: this->track_fsize_str = strdup("medium"); break;
 			}
 		}
 		break;
@@ -985,13 +985,13 @@ bool LayerTRW::set_param(uint16_t id, VikLayerParamData data, Viewport * viewpor
 			this->wp_font_size = (font_size_t) data.u;
 			free(this->wp_fsize_str);
 			switch (this->wp_font_size) {
-			case FS_XX_SMALL: this->wp_fsize_str = g_strdup("xx-small"); break;
-			case FS_X_SMALL: this->wp_fsize_str = g_strdup("x-small"); break;
-			case FS_SMALL: this->wp_fsize_str = g_strdup("small"); break;
-			case FS_LARGE: this->wp_fsize_str = g_strdup("large"); break;
-			case FS_X_LARGE: this->wp_fsize_str = g_strdup("x-large"); break;
-			case FS_XX_LARGE: this->wp_fsize_str = g_strdup("xx-large"); break;
-			default: this->wp_fsize_str = g_strdup("medium"); break;
+			case FS_XX_SMALL: this->wp_fsize_str = strdup("xx-small"); break;
+			case FS_X_SMALL: this->wp_fsize_str = strdup("x-small"); break;
+			case FS_SMALL: this->wp_fsize_str = strdup("small"); break;
+			case FS_LARGE: this->wp_fsize_str = strdup("large"); break;
+			case FS_X_LARGE: this->wp_fsize_str = strdup("x-large"); break;
+			case FS_XX_LARGE: this->wp_fsize_str = strdup("xx-large"); break;
+			default: this->wp_fsize_str = strdup("medium"); break;
 			}
 		}
 		break;
@@ -8637,7 +8637,7 @@ void LayerTRW::post_read(Viewport * viewport, bool from_file)
 		bool need_to_set_time = true;
 		if (this->metadata->timestamp) {
 			need_to_set_time = false;
-			if (!g_strcmp0(this->metadata->timestamp, "")) {
+			if (!strcmp(this->metadata->timestamp, "")) {
 				need_to_set_time = true;
 			}
 		}

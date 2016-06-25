@@ -1,4 +1,3 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
@@ -178,7 +177,7 @@ gchar* mapnik_interface_load_map_file ( MapnikInterface* mi,
                                         guint height )
 {
 	gchar *msg = NULL;
-	if ( !mi ) return g_strdup ("Internal Error");
+	if ( !mi ) return strdup("Internal Error");
 	try {
 		mi->myMap->remove_all(); // Support reloading
 		mapnik::load_map(*mi->myMap, filename);
@@ -204,7 +203,7 @@ gchar* mapnik_interface_load_map_file ( MapnikInterface* mi,
 	} catch (std::exception const& ex) {
 		msg = g_strdup ( ex.what() );
 	} catch (...) {
-		msg = g_strdup ("unknown error");
+		msg = strdup("unknown error");
 	}
 	return msg;
 }

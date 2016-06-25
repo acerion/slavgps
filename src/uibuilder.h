@@ -22,7 +22,6 @@
 #define _VIKING_UIBUILDER_H
 
 #include <gtk/gtk.h>
-#include <stdbool.h>
 #include <stdint.h>
 
 #include "vik_compat.h"

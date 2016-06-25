@@ -447,11 +447,11 @@ char *maps_layer_default_dir ()
 		const char *mapdir = g_getenv("VIKING_MAPS");
 		if (mapdir) {
 			defaultdir = g_strdup(mapdir);
-		} else if (g_access(GLOBAL_MAPS_DIR, W_OK) == 0) {
+		} else if (access(GLOBAL_MAPS_DIR, W_OK) == 0) {
 			defaultdir = g_strdup(GLOBAL_MAPS_DIR);
 		} else {
 			const char *home = g_get_home_dir();
-			if (!home || g_access(home, W_OK)) {
+			if (!home || access(home, W_OK)) {
 				home = g_get_home_dir();
 			}
 
@@ -1638,7 +1638,7 @@ static int map_download_thread(MapDownloadInfo *mdi, void * threaddata)
 							GError *gx = NULL;
 							GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(mdi->filename_buf, &gx);
 							if (gx || (!pixbuf)) {
-								if (g_remove(mdi->filename_buf)) {
+								if (remove(mdi->filename_buf)) {
 									fprintf(stderr, "WARNING: REDOWNLOAD failed to remove: %s", mdi->filename_buf);
 								}
 								need_download = true;
@@ -1658,7 +1658,7 @@ static int map_download_thread(MapDownloadInfo *mdi, void * threaddata)
 
 					case REDOWNLOAD_ALL:
 						/* FIXME: need a better way than to erase file in case of server/network problem */
-						if (g_remove(mdi->filename_buf)) {
+						if (remove(mdi->filename_buf)) {
 							fprintf(stderr, "WARNING: REDOWNLOAD failed to remove: %s", mdi->filename_buf);
 						}
 						need_download = true;
@@ -1734,7 +1734,7 @@ static void mdi_cancel_cleanup(MapDownloadInfo *mdi)
 				   &mdi->mapcoord, mdi->filename_buf, mdi->maxlen,
 				   map_sources[mdi->map_index]->get_file_extension());
 		if (g_file_test(mdi->filename_buf, G_FILE_TEST_EXISTS) == true) {
-			if (g_remove(mdi->filename_buf)) {
+			if (remove(mdi->filename_buf)) {
 				fprintf(stderr, "WARNING: Cleanup failed to remove: %s", mdi->filename_buf);
 			}
 		}
@@ -1895,13 +1895,13 @@ static void maps_layer_tile_info(VikLayer *vml)
 			if (layer->mbtiles) {
 				GdkPixbuf *pixbuf = get_pixbuf_sql_exec(layer->mbtiles, ulm.x, ulm.y, zoom);
 				if (pixbuf) {
-					exists = g_strdup(_("YES"));
+					exists = strdup(_("YES"));
 					g_object_unref(G_OBJECT(pixbuf));
 				} else {
-					exists = g_strdup(_("NO"));
+					exists = strdup(_("NO"));
 				}
 			} else {
-				exists = g_strdup(_("NO"));
+				exists = strdup(_("NO"));
 			}
 
 			int flip_y = (int) pow(2, zoom)-1 - ulm.y;
@@ -1909,7 +1909,7 @@ static void maps_layer_tile_info(VikLayer *vml)
 			source = g_strdup_printf("Source: %s (%d%s%d%s%d.%s %s)", filename, zoom, G_DIR_SEPARATOR_S, ulm.x, G_DIR_SEPARATOR_S, flip_y, "png", exists);
 			free(exists);
 #else
-			source = g_strdup(_("Source: Not available"));
+			source = strdup(_("Source: Not available"));
 #endif
 		} else if (map->is_osm_meta_tiles()) {
 			char path[PATH_MAX];
@@ -1954,7 +1954,7 @@ static void maps_layer_tile_info(VikLayer *vml)
 			strftime(time_buf, sizeof(time_buf), "%c", gmtime((const time_t *)&stat_buf.st_mtime));
 			timemsg = g_strdup_printf(_("Tile File Timestamp: %s"), time_buf);
 		} else {
-			timemsg = g_strdup(_("Tile File Timestamp: Not Available"));
+			timemsg = strdup(_("Tile File Timestamp: Not Available"));
 		}
 		g_array_append_val(array, filemsg);
 		g_array_append_val(array, timemsg);
