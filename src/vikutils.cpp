@@ -892,48 +892,63 @@ void vu_copy_label_menu ( GtkWidget *widget, unsigned int button )
 /**
  * Work out the best zoom level for the LatLon area and set the viewport to that zoom level
  */
-void vu_zoom_to_show_latlons ( VikCoordMode mode, Viewport * viewport, struct LatLon maxmin[2] )
+void vu_zoom_to_show_latlons(VikCoordMode mode, Viewport * viewport, struct LatLon maxmin[2])
+{
+	vu_zoom_to_show_latlons_common(mode, viewport, maxmin, 1.0, true);
+	return;
+}
+
+
+
+/**
+ * Work out the best zoom level for the LatLon area and set the viewport to that zoom level
+ */
+void vu_zoom_to_show_latlons_common(VikCoordMode mode, Viewport * viewport, struct LatLon maxmin[2], double zoom, bool save_position)
 {
 	/* First set the center [in case previously viewing from elsewhere] */
 	/* Then loop through zoom levels until provided positions are in view */
 	/* This method is not particularly fast - but should work well enough */
-	struct LatLon average = { (maxmin[0].lat+maxmin[1].lat)/2, (maxmin[0].lon+maxmin[1].lon)/2 };
+	struct LatLon average = { (maxmin[0].lat + maxmin[1].lat)/2, (maxmin[0].lon + maxmin[1].lon)/2 };
+
 	VikCoord coord;
-	vik_coord_load_from_latlon ( &coord, mode, &average );
-	viewport->set_center_coord(&coord, true );
+	vik_coord_load_from_latlon(&coord, mode, &average);
+	viewport->set_center_coord(&coord, save_position);
 
 	/* Convert into definite 'smallest' and 'largest' positions */
 	struct LatLon minmin;
-	if ( maxmin[0].lat < maxmin[1].lat )
+	if (maxmin[0].lat < maxmin[1].lat) {
 		minmin.lat = maxmin[0].lat;
-	else
+	} else {
 		minmin.lat = maxmin[1].lat;
+	}
 
 	struct LatLon maxmax;
-	if ( maxmin[0].lon > maxmin[1].lon )
+	if (maxmin[0].lon > maxmin[1].lon) {
 		maxmax.lon = maxmin[0].lon;
-	else
+	} else {
 		maxmax.lon = maxmin[1].lon;
+	}
 
 	/* Never zoom in too far - generally not that useful, as too close ! */
 	/* Always recalculate the 'best' zoom level */
-	double zoom = 1.0;
 	viewport->set_zoom(zoom);
 
 	double min_lat, max_lat, min_lon, max_lon;
 	/* Should only be a maximum of about 18 iterations from min to max zoom levels */
-	while ( zoom <= VIK_VIEWPORT_MAX_ZOOM ) {
-		viewport->get_min_max_lat_lon(&min_lat, &max_lat, &min_lon, &max_lon );
+	while (zoom <= VIK_VIEWPORT_MAX_ZOOM) {
+		viewport->get_min_max_lat_lon(&min_lat, &max_lat, &min_lon, &max_lon);
 		/* NB I think the logic used in this test to determine if the bounds is within view
 		   fails if track goes across 180 degrees longitude.
 		   Hopefully that situation is not too common...
 		   Mind you viking doesn't really do edge locations to well anyway */
-		if ( min_lat < minmin.lat &&
-		     max_lat > minmin.lat &&
-		     min_lon < maxmax.lon &&
-		     max_lon > maxmax.lon )
+		if (min_lat < minmin.lat
+		    && max_lat > minmin.lat
+		    && min_lon < maxmax.lon
+		    && max_lon > maxmax.lon) {
+
 			/* Found within zoom level */
 			break;
+		}
 
 		/* Try next */
 		zoom = zoom * 2;

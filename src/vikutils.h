@@ -52,7 +52,8 @@ void vu_command_line(SlavGPS::Window * window, double latitude, double longitude
 
 void vu_copy_label_menu ( GtkWidget *widget, unsigned int button );
 
-void vu_zoom_to_show_latlons ( VikCoordMode mode, SlavGPS::Viewport * viewport, struct LatLon maxmin[2] );
+void vu_zoom_to_show_latlons(VikCoordMode mode, SlavGPS::Viewport * viewport, struct LatLon maxmin[2]);
+void vu_zoom_to_show_latlons_common(VikCoordMode mode, SlavGPS::Viewport * viewport, struct LatLon maxmin[2], double zoom, bool save_position);
 
 #ifdef __cplusplus
 }

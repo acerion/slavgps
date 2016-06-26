@@ -1781,56 +1781,11 @@ static VikLayerToolFuncStatus zoomtool_release(Layer * layer, GdkEventButton * e
 		// From the extend of the bounds pick the best zoom level
 		// c.f. trw_layer_zoom_to_show_latlons()
 		// Maybe refactor...
-		struct LatLon ll1, ll2;
-		vik_coord_to_latlon(&coord1, &ll1);
-		vik_coord_to_latlon(&coord2, &ll2);
-		struct LatLon average = { (ll1.lat+ll2.lat)/2,
-					  (ll1.lon+ll2.lon)/2 };
+		struct LatLon maxmin[2];
+		vik_coord_to_latlon(&coord1, &maxmin[0]);
+		vik_coord_to_latlon(&coord2, &maxmin[1]);
 
-		VikCoord new_center;
-		vik_coord_load_from_latlon(&new_center, zts->window->viewport->get_coord_mode(), &average);
-		zts->window->viewport->set_center_coord(&new_center, false);
-
-		/* Convert into definite 'smallest' and 'largest' positions */
-		struct LatLon minmin;
-		if (ll1.lat < ll2.lat) {
-			minmin.lat = ll1.lat;
-		} else {
-			minmin.lat = ll2.lat;
-		}
-
-		struct LatLon maxmax;
-		if (ll1.lon > ll2.lon) {
-			maxmax.lon = ll1.lon;
-		} else {
-			maxmax.lon = ll2.lon;
-		}
-
-		/* Always recalculate the 'best' zoom level */
-		double zoom = VIK_VIEWPORT_MIN_ZOOM;
-		zts->window->viewport->set_zoom(zoom);
-
-		double min_lat, max_lat, min_lon, max_lon;
-		/* Should only be a maximum of about 18 iterations from min to max zoom levels */
-		while (zoom <= VIK_VIEWPORT_MAX_ZOOM) {
-			zts->window->viewport->get_min_max_lat_lon(&min_lat, &max_lat, &min_lon, &max_lon);
-			/* NB I think the logic used in this test to determine if the bounds is within view
-			   fails if track goes across 180 degrees longitude.
-			   Hopefully that situation is not too common...
-			   Mind you viking doesn't really do edge locations to well anyway */
-			if (min_lat < minmin.lat &&
-			    max_lat > minmin.lat &&
-			    min_lon < maxmax.lon &&
-			    max_lon > maxmax.lon) {
-
-				/* Found within zoom level */
-				break;
-			}
-
-			/* Try next */
-			zoom = zoom * 2;
-			zts->window->viewport->set_zoom(zoom);
-		}
+		vu_zoom_to_show_latlons_common(zts->window->viewport->get_coord_mode(), zts->window->viewport, maxmin, VIK_VIEWPORT_MIN_ZOOM, false);
 	} else {
 		// When pressing shift and clicking for zoom, then jump three levels
 		if (modifiers == GDK_SHIFT_MASK) {
@@ -1855,6 +1810,10 @@ static VikLayerToolFuncStatus zoomtool_release(Layer * layer, GdkEventButton * e
 
 	return VIK_LAYER_TOOL_ACK;
 }
+
+
+
+
 
 static VikToolInterface zoom_tool =
 	{ { "Zoom", "vik-icon-zoom", N_("_Zoom"), "<control><shift>Z", N_("Zoom Tool"), 1 },
