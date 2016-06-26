@@ -548,15 +548,9 @@ static void none_found(GtkWindow *gw)
  */
 static void set_in_current_view_property(LayerTRW * trw, datasource_osm_my_traces_t *data, GList *gl)
 {
-	double min_lat, max_lat, min_lon, max_lon;
-	/* get Viewport bounding box */
-	data->viewport->get_min_max_lat_lon(&min_lat, &max_lat, &min_lon, &max_lon);
-
 	LatLonBBox bbox;
-	bbox.north = max_lat;
-	bbox.east = max_lon;
-	bbox.south = min_lat;
-	bbox.west = min_lon;
+	/* get Viewport bounding box */
+	data->viewport->get_bbox(&bbox);
 
 	GList *iterator = gl;
 	while (iterator) {

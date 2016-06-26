@@ -1508,7 +1508,7 @@ void LayerMaps::draw(Viewport * viewport)
 		/* Copyright */
 		double level = viewport->get_zoom();
 		LatLonBBox bbox;
-		viewport->get_min_max_lat_lon(&bbox.south, &bbox.north, &bbox.west, &bbox.east);
+		viewport->get_bbox(&bbox);
 		map_sources[this->map_index]->get_copyright(bbox, level, vik_viewport_add_copyright_cb, viewport);
 
 		/* Logo */

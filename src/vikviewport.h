@@ -30,6 +30,7 @@
 #include <stdint.h>
 
 #include "vikcoord.h"
+#include "bbox.h"
 
 
 
@@ -112,6 +113,8 @@ namespace SlavGPS {
 		void set_center_latlon(const struct LatLon * ll, bool save_position);
 		void corners_for_zonen(int zone, VikCoord * ul, VikCoord * br);
 		void get_min_max_lat_lon(double * min_lat, double * max_lat, double * min_lon, double * max_lon);
+		void get_bbox(LatLonBBox * bbox);
+		void get_bbox_strings(LatLonBBoxStrings * bbox_strings);
 
 		int get_width();
 		int get_height();

@@ -339,21 +339,6 @@ char * WebToolDatasource::get_url(Window * window)
 {
 	Viewport * viewport = window->get_viewport();
 
-	// Get top left and bottom right lat/lon pairs from the viewport
-	double min_lat, max_lat, min_lon, max_lon;
-	char sminlon[G_ASCII_DTOSTR_BUF_SIZE];
-	char smaxlon[G_ASCII_DTOSTR_BUF_SIZE];
-	char sminlat[G_ASCII_DTOSTR_BUF_SIZE];
-	char smaxlat[G_ASCII_DTOSTR_BUF_SIZE];
-	viewport->get_min_max_lat_lon(&min_lat, &max_lat, &min_lon, &max_lon);
-
-	// Cannot simply use g_strdup_printf and double due to locale.
-	// As we compute an URL, we have to think in C locale.
-	g_ascii_dtostr(sminlon, G_ASCII_DTOSTR_BUF_SIZE, min_lon);
-	g_ascii_dtostr(smaxlon, G_ASCII_DTOSTR_BUF_SIZE, max_lon);
-	g_ascii_dtostr(sminlat, G_ASCII_DTOSTR_BUF_SIZE, min_lat);
-	g_ascii_dtostr(smaxlat, G_ASCII_DTOSTR_BUF_SIZE, max_lat);
-
 	// Center values
 	const VikCoord *coord = viewport->get_center();
 	struct LatLon ll;
@@ -387,12 +372,15 @@ char * WebToolDatasource::get_url(Window * window)
 		values[i] = '\0';
 	}
 
+	LatLonBBoxStrings bbox_strings;
+	viewport->get_bbox_strings(&bbox_strings);
+
 	for (int i = 0; i < len; i++) {
 		switch (g_ascii_toupper (this->url_format_code[i])) {
-		case 'L': values[i] = g_strdup(sminlon); break;
-		case 'R': values[i] = g_strdup(smaxlon); break;
-		case 'B': values[i] = g_strdup(sminlat); break;
-		case 'T': values[i] = g_strdup(smaxlat); break;
+		case 'L': values[i] = g_strdup(bbox_strings.sminlon); break;
+		case 'R': values[i] = g_strdup(bbox_strings.smaxlon); break;
+		case 'B': values[i] = g_strdup(bbox_strings.sminlat); break;
+		case 'T': values[i] = g_strdup(bbox_strings.smaxlat); break;
 		case 'A': values[i] = g_strdup(scenterlat); break;
 		case 'O': values[i] = g_strdup(scenterlon); break;
 		case 'Z': values[i] = g_strdup(szoom); break;

@@ -108,27 +108,16 @@ static void datasource_osm_add_setup_widgets(GtkWidget * dialog, Viewport * view
 static void datasource_osm_get_process_options(datasource_osm_widgets_t * widgets, ProcessOptions * po, DownloadFileOptions * options, char const * notused1, char const * notused2)
 {
 	int page = 0;
-	double min_lat, max_lat, min_lon, max_lon;
-	char sminlon[G_ASCII_DTOSTR_BUF_SIZE];
-	char smaxlon[G_ASCII_DTOSTR_BUF_SIZE];
-	char sminlat[G_ASCII_DTOSTR_BUF_SIZE];
-	char smaxlat[G_ASCII_DTOSTR_BUF_SIZE];
 
-	/* get Viewport bounding box */
-	widgets->viewport->get_min_max_lat_lon(&min_lat, &max_lat, &min_lon, &max_lon);
-
-	/* Convert as LANG=C double representation */
-	g_ascii_dtostr (sminlon, G_ASCII_DTOSTR_BUF_SIZE, min_lon);
-	g_ascii_dtostr (smaxlon, G_ASCII_DTOSTR_BUF_SIZE, max_lon);
-	g_ascii_dtostr (sminlat, G_ASCII_DTOSTR_BUF_SIZE, min_lat);
-	g_ascii_dtostr (smaxlat, G_ASCII_DTOSTR_BUF_SIZE, max_lat);
+	LatLonBBoxStrings bbox_strings;
+	widgets->viewport->get_bbox_strings(&bbox_strings);
 
 	/* Retrieve the specified page number */
 	last_page_number = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widgets->page_number));
 	page = last_page_number;
 
 	// NB Download is of GPX type
-	po->url = g_strdup_printf(DOWNLOAD_URL_FMT, sminlon, sminlat, smaxlon, smaxlat, page);
+	po->url = g_strdup_printf(DOWNLOAD_URL_FMT, bbox_strings.sminlon, bbox_strings.sminlat, bbox_strings.smaxlon, bbox_strings.smaxlat, page);
 	options = NULL; // i.e. use the default download settings
 }
 

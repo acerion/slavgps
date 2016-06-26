@@ -6828,7 +6828,7 @@ Trackpoint * LayerTRW::closest_tp_in_five_pixel_interval(Viewport * viewport, in
 	params.closest_track_uid = 0;
 	params.closest_tp = NULL;
 
-	params.viewport->get_min_max_lat_lon(&(params.bbox.south), &(params.bbox.north), &(params.bbox.west), &(params.bbox.east));
+	params.viewport->get_bbox(&params.bbox);
 
 	LayerTRWc::track_search_closest_tp(this->tracks, &params);
 
@@ -6986,7 +6986,7 @@ bool LayerTRW::select_click(GdkEventButton * event, Viewport * viewport, tool_ed
 	}
 
 	LatLonBBox bbox;
-	viewport->get_min_max_lat_lon(&(bbox.south), &(bbox.north), &(bbox.west), &(bbox.east));
+	viewport->get_bbox(&bbox);
 
 	// Go for waypoints first as these often will be near a track, but it's likely the wp is wanted rather then the track
 
@@ -7955,7 +7955,7 @@ bool LayerTRW::tool_edit_trackpoint_click(GdkEventButton * event, void * data)
 	params.closest_track_uid = 0;
 	params.closest_tp = NULL;
 	params.closest_tpl = NULL;
-	t->viewport->get_min_max_lat_lon(&(params.bbox.south), &(params.bbox.north), &(params.bbox.west), &(params.bbox.east));
+	t->viewport->get_bbox(&params.bbox);
 
 	if (event->button != 1) {
 		return false;

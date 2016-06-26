@@ -70,23 +70,10 @@ char * WebToolBounds::get_url(Window * window)
 	fprintf(stderr, "%s:%d: called\n", __PRETTY_FUNCTION__, __LINE__);
 
 	Viewport * viewport = window->get_viewport();
+	LatLonBBoxStrings bbox_strings;
+	viewport->get_bbox_strings(&bbox_strings);
 
-	// Get top left and bottom right lat/lon pairs from the viewport
-	double min_lat, max_lat, min_lon, max_lon;
-	char sminlon[G_ASCII_DTOSTR_BUF_SIZE];
-	char smaxlon[G_ASCII_DTOSTR_BUF_SIZE];
-	char sminlat[G_ASCII_DTOSTR_BUF_SIZE];
-	char smaxlat[G_ASCII_DTOSTR_BUF_SIZE];
-	viewport->get_min_max_lat_lon(&min_lat, &max_lat, &min_lon, &max_lon );
-
-	// Cannot simply use g_strdup_printf and double due to locale.
-	// As we compute an URL, we have to think in C locale.
-	g_ascii_dtostr (sminlon, G_ASCII_DTOSTR_BUF_SIZE, min_lon);
-	g_ascii_dtostr (smaxlon, G_ASCII_DTOSTR_BUF_SIZE, max_lon);
-	g_ascii_dtostr (sminlat, G_ASCII_DTOSTR_BUF_SIZE, min_lat);
-	g_ascii_dtostr (smaxlat, G_ASCII_DTOSTR_BUF_SIZE, max_lat);
-
-	return g_strdup_printf(this->url_format, sminlon, smaxlon, sminlat, smaxlat );
+	return g_strdup_printf(this->url_format, bbox_strings.sminlon, bbox_strings.smaxlon, bbox_strings.sminlat, bbox_strings.smaxlat);
 }
 
 

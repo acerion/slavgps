@@ -22,10 +22,31 @@
 #ifndef __BOUNDING_BOX_H
 #define __BOUNDING_BOX_H
 
+
+
+
+
 typedef struct {
-  double south, north;
-  double east, west;
+	double north; /* max_lat */
+	double south; /* min_lat */
+	double east;  /* max_lon */
+	double west;  /* min_lon */
 } LatLonBBox;
+
+
+
+
+
+typedef struct {
+	char sminlon[G_ASCII_DTOSTR_BUF_SIZE];
+	char smaxlon[G_ASCII_DTOSTR_BUF_SIZE];
+	char sminlat[G_ASCII_DTOSTR_BUF_SIZE];
+	char smaxlat[G_ASCII_DTOSTR_BUF_SIZE];
+} LatLonBBoxStrings;
+
+
+
+
 
 /**
  * +--------+
@@ -38,5 +59,8 @@ typedef struct {
  */
 #define BBOX_INTERSECT(a,b) ((a).south < (b).north && (a).north > (b).south && (a).east > (b).west && (a).west < (b).east)
 
-#endif
 
+
+
+
+#endif

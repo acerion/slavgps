@@ -107,7 +107,7 @@ void init_drawing_params(DrawingParams * dp, LayerTRW * trw, Viewport * viewport
 		;
 	}
 
-	viewport->get_min_max_lat_lon(&(dp->bbox.south), &(dp->bbox.north), &(dp->bbox.west), &(dp->bbox.east));
+	viewport->get_bbox(&dp->bbox);
 }
 
 

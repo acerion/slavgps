@@ -1892,7 +1892,6 @@ char const * Viewport::get_drawmode_name(VikViewportDrawMode mode)
 
 
 
-/* kamilTODO: perhaps make the method accept bounding box? */
 void Viewport::get_min_max_lat_lon(double * min_lat, double * max_lat, double * min_lon, double * max_lon)
 {
 	VikCoord tleft, tright, bleft, bright;
@@ -1911,6 +1910,50 @@ void Viewport::get_min_max_lat_lon(double * min_lat, double * max_lat, double * 
 	*min_lat = MIN(bleft.north_south, bright.north_south);
 	*max_lon = MAX(tright.east_west, bright.east_west);
 	*min_lon = MIN(tleft.east_west, bleft.east_west);
+}
+
+
+
+
+
+void Viewport::get_bbox(LatLonBBox * bbox)
+{
+	VikCoord tleft, tright, bleft, bright;
+
+	this->screen_to_coord(0, 0, &tleft);
+	this->screen_to_coord(this->get_width(), 0, &tright);
+	this->screen_to_coord(0, this->get_height(), &bleft);
+	this->screen_to_coord(width, height, &bright);
+
+	vik_coord_convert(&tleft, VIK_COORD_LATLON);
+	vik_coord_convert(&tright, VIK_COORD_LATLON);
+	vik_coord_convert(&bleft, VIK_COORD_LATLON);
+	vik_coord_convert(&bright, VIK_COORD_LATLON);
+
+	bbox->north = MAX(tleft.north_south, tright.north_south);
+	bbox->south = MIN(bleft.north_south, bright.north_south);
+	bbox->east  = MAX(tright.east_west, bright.east_west);
+	bbox->west  = MIN(tleft.east_west, bleft.east_west);
+}
+
+
+
+
+
+void Viewport::get_bbox_strings(LatLonBBoxStrings * bbox_strings)
+{
+	LatLonBBox bbox;
+	/* Get Viewport bounding box. */
+	this->get_bbox(&bbox);
+
+	/* Cannot simply use g_strdup_printf and double due to locale.
+	   As we compute an URL, we have to work in C locale. */
+	g_ascii_dtostr(bbox_strings->sminlon, G_ASCII_DTOSTR_BUF_SIZE, bbox.west);
+	g_ascii_dtostr(bbox_strings->smaxlon, G_ASCII_DTOSTR_BUF_SIZE, bbox.east);
+	g_ascii_dtostr(bbox_strings->sminlat, G_ASCII_DTOSTR_BUF_SIZE, bbox.south);
+	g_ascii_dtostr(bbox_strings->smaxlat, G_ASCII_DTOSTR_BUF_SIZE, bbox.north);
+
+	return;
 }
 
 
