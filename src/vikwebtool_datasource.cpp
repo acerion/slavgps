@@ -38,123 +38,35 @@
 
 
 
+
+
 using namespace SlavGPS;
 
 
 
-static GObjectClass *parent_class;
+
+
+#define MAX_NUMBER_CODES 7
+
+
+
+
+
 static GHashTable *last_user_strings = NULL;
 
-static void webtool_datasource_finalize(GObject *gob);
 
-static char *webtool_datasource_get_url(VikWebtool *self, Window * window);
 
-static bool webtool_needs_user_string(VikWebtool *self);
 
-typedef struct _VikWebtoolDatasourcePrivate VikWebtoolDatasourcePrivate;
-
-struct _VikWebtoolDatasourcePrivate
-{
-	char *url;
-	char *url_format_code;
-	char *file_type;
-	char *babel_filter_args;
-	char *input_label;
-	char *user_string;
-};
-
-#define WEBTOOL_DATASOURCE_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), \
-                                           VIK_WEBTOOL_DATASOURCE_TYPE,      \
-                                           VikWebtoolDatasourcePrivate))
-
-G_DEFINE_TYPE (VikWebtoolDatasource, vik_webtool_datasource, VIK_WEBTOOL_TYPE)
-
-enum
-{
-	PROP_0,
-	PROP_URL,
-	PROP_URL_FORMAT_CODE,
-	PROP_FILE_TYPE,
-	PROP_BABEL_FILTER_ARGS,
-	PROP_INPUT_LABEL
-};
-
-static void webtool_datasource_set_property(GObject      *object,
-					    unsigned int         property_id,
-					    const GValue *value,
-					    GParamSpec   *pspec)
-{
-	VikWebtoolDatasource *self = VIK_WEBTOOL_DATASOURCE (object);
-	VikWebtoolDatasourcePrivate *priv = WEBTOOL_DATASOURCE_GET_PRIVATE (self);
-
-	switch (property_id) {
-
-	case PROP_URL:
-		free(priv->url);
-		priv->url = g_value_dup_string(value);
-		fprintf(stderr, "DEBUG: VikWebtoolDatasource.url: %s\n", priv->url);
-		break;
-
-	case PROP_URL_FORMAT_CODE:
-		free(priv->url_format_code);
-		priv->url_format_code = g_value_dup_string(value);
-		fprintf(stderr, "DEBUG: VikWebtoolDatasource.url_format_code: %s\n", priv->url_format_code);
-		break;
-
-	case PROP_FILE_TYPE:
-		free(priv->file_type);
-		priv->file_type = g_value_dup_string(value);
-		fprintf(stderr, "DEBUG: VikWebtoolDatasource.file_type: %s\n", priv->url_format_code);
-		break;
-
-	case PROP_BABEL_FILTER_ARGS:
-		free(priv->babel_filter_args);
-		priv->babel_filter_args = g_value_dup_string(value);
-		fprintf(stderr, "DEBUG: VikWebtoolDatasource.babel_filter_args: %s\n", priv->babel_filter_args);
-		break;
-
-    case PROP_INPUT_LABEL:
-		free(priv->input_label);
-		priv->input_label = g_value_dup_string(value);
-		fprintf(stderr, "DEBUG: VikWebtoolDatasource.input_label: %s\n", priv->input_label);
-		break;
-
-	default:
-		/* We don't have any other property... */
-		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
-		break;
-	}
-}
-
-static void webtool_datasource_get_property(GObject    *object,
-					    unsigned int       property_id,
-					    GValue     *value,
-					    GParamSpec *pspec)
-{
-	VikWebtoolDatasource *self = VIK_WEBTOOL_DATASOURCE (object);
-	VikWebtoolDatasourcePrivate *priv = WEBTOOL_DATASOURCE_GET_PRIVATE (self);
-
-	switch (property_id) {
-
-	case PROP_URL:               g_value_set_string(value, priv->url); break;
-	case PROP_URL_FORMAT_CODE:   g_value_set_string(value, priv->url_format_code); break;
-	case PROP_FILE_TYPE:         g_value_set_string(value, priv->url); break;
-	case PROP_BABEL_FILTER_ARGS: g_value_set_string(value, priv->babel_filter_args); break;
-	case PROP_INPUT_LABEL:       g_value_set_string(value, priv->input_label); break;
-
-	default:
-		/* We don't have any other property... */
-		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
-		break;
-	}
-}
 
 typedef struct {
-	VikExtTool *self;
+	WebToolDatasource * web_tool_datasource;
 	Window * window;
 	Viewport * viewport;
-	GtkWidget *user_string;
+	GtkWidget * user_string;
 } datasource_t;
+
+
+
 
 
 static void ensure_last_user_strings_hash()
@@ -168,40 +80,54 @@ static void ensure_last_user_strings_hash()
 }
 
 
-static char *get_last_user_string(const datasource_t *source)
+
+
+
+static char * get_last_user_string(const datasource_t *source)
 {
 	ensure_last_user_strings_hash();
-	char *label = vik_ext_tool_get_label(source->self);
+	char * label = source->web_tool_datasource->get_label();
 	char *last_str = (char *) g_hash_table_lookup(last_user_strings, label);
 	free(label);
 	return last_str;
 }
 
 
+
+
+
 static void set_last_user_string(const datasource_t *source, const char *s)
 {
 	ensure_last_user_strings_hash();
 	g_hash_table_insert(last_user_strings,
-			    vik_ext_tool_get_label(source->self),
+			    source->web_tool_datasource->get_label(),
 			    g_strdup(s));
 }
+
+
+
+
 
 static void * datasource_init(acq_vik_t *avt)
 {
 	datasource_t *data = (datasource_t *) malloc(sizeof(*data));
-	data->self = (VikExtTool *) avt->userdata;
+	data->web_tool_datasource = (WebToolDatasource *) avt->userdata;
 	data->window = avt->window;
 	data->viewport = avt->viewport;
 	data->user_string = NULL;
 	return data;
 }
 
+
+
+
+
 static void datasource_add_setup_widgets(GtkWidget *dialog, Viewport * viewport, void * user_data)
 {
 	datasource_t *widgets = (datasource_t *)user_data;
-	VikWebtoolDatasourcePrivate *priv = WEBTOOL_DATASOURCE_GET_PRIVATE (widgets->self);
+	WebToolDatasource * ext_tool = widgets->web_tool_datasource;
 	GtkWidget *user_string_label;
-	char *label = g_strdup_printf("%s:", priv->input_label);
+	char *label = g_strdup_printf("%s:", ext_tool->input_label);
 	user_string_label = gtk_label_new (label);
 	widgets->user_string = gtk_entry_new();
 
@@ -227,23 +153,24 @@ static void datasource_add_setup_widgets(GtkWidget *dialog, Viewport * viewport,
 
 
 
+
+
 static void datasource_get_process_options(void * user_data, ProcessOptions *po, DownloadFileOptions *options, const char *notused1, const char *notused2)
 {
 	datasource_t *data = (datasource_t*) user_data;
 
-	VikWebtool *vwd = VIK_WEBTOOL (data->self);
-	VikWebtoolDatasourcePrivate *priv = WEBTOOL_DATASOURCE_GET_PRIVATE (data->self);
+	WebToolDatasource * web_tool_datasource = (WebToolDatasource *) data->web_tool_datasource;
 
-	if (webtool_needs_user_string (vwd)) {
-		priv->user_string = g_strdup(gtk_entry_get_text (GTK_ENTRY (data->user_string)));
+	if (web_tool_datasource->webtool_needs_user_string()) {
+		web_tool_datasource->user_string = g_strdup(gtk_entry_get_text (GTK_ENTRY (data->user_string)));
 
-		if (priv->user_string[0] != '\0') {
-			set_last_user_string (data, priv->user_string);
+		if (web_tool_datasource->user_string[0] != '\0') {
+			set_last_user_string(data, web_tool_datasource->user_string);
 		}
 	}
 
-	char *url = vik_webtool_get_url(vwd, data->window);
-	fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, url);
+	char *url = web_tool_datasource->get_url(data->window);
+	fprintf(stderr, "DEBUG: %s: %s\n", __PRETTY_FUNCTION__, url);
 
 	po->url = g_strdup(url);
 
@@ -252,8 +179,8 @@ static void datasource_get_process_options(void * user_data, ProcessOptions *po,
 	//  since it won't be in the right order for the overall GPSBabel command
 	// So prevent any potentially dangerous behaviour
 	char **parts = NULL;
-	if (priv->file_type) {
-		parts = g_strsplit(priv->file_type, " ", 0);
+	if (web_tool_datasource->file_type) {
+		parts = g_strsplit(web_tool_datasource->file_type, " ", 0);
 	}
 
 	if (parts) {
@@ -264,17 +191,25 @@ static void datasource_get_process_options(void * user_data, ProcessOptions *po,
 	g_strfreev(parts);
 
 	options = NULL;
-	po->babel_filters = priv->babel_filter_args;
+	po->babel_filters = web_tool_datasource->babel_filter_args;
 }
+
+
+
+
 
 static void cleanup(void * data)
 {
 	free(data);
 }
 
-static void webtool_datasource_open(VikExtTool * self, Window * window)
+
+
+
+
+void WebToolDatasource::open(Window * window)
 {
-	bool search = webtool_needs_user_string (VIK_WEBTOOL (self));
+	bool search = this->webtool_needs_user_string();
 
 	// Use VikDataSourceInterface to give thready goodness controls of downloading stuff (i.e. can cancel the request)
 
@@ -283,8 +218,8 @@ static void webtool_datasource_open(VikExtTool * self, Window * window)
 
 	// An 'easy' way of assigning values
 	VikDataSourceInterface data = {
-		vik_ext_tool_get_label (self),
-		vik_ext_tool_get_label (self),
+		this->get_label(),
+		this->get_label(),
 		VIK_DATASOURCE_ADDTOLAYER,
 		VIK_DATASOURCE_INPUTTYPE_NONE,
 		false, // Maintain current view - rather than setting it to the acquired points
@@ -307,146 +242,101 @@ static void webtool_datasource_open(VikExtTool * self, Window * window)
 	};
 	memcpy(vik_datasource_interface, &data, sizeof(VikDataSourceInterface));
 
-	a_acquire(window, window->get_layers_panel(), window->get_viewport(), data.mode, vik_datasource_interface, self, cleanup);
+	a_acquire(window, window->get_layers_panel(), window->get_viewport(), data.mode, vik_datasource_interface, this, cleanup);
 }
 
-static void vik_webtool_datasource_class_init(VikWebtoolDatasourceClass *klass)
+
+
+
+
+WebToolDatasource::WebToolDatasource()
 {
-	GObjectClass *gobject_class;
-	VikWebtoolClass *base_class;
-	GParamSpec *pspec;
+	fprintf(stderr, "%s:%d\n", __PRETTY_FUNCTION__, __LINE__);
 
-	gobject_class = G_OBJECT_CLASS (klass);
-
-	gobject_class->finalize = webtool_datasource_finalize;
-	gobject_class->set_property = webtool_datasource_set_property;
-	gobject_class->get_property = webtool_datasource_get_property;
-
-	pspec = g_param_spec_string("url",
-				    "Template URL",
-				    "Set the template URL",
-				    VIKING_URL /* default value */,
-				    (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
-	g_object_class_install_property(gobject_class,
-					PROP_URL,
-					pspec);
-
-	pspec = g_param_spec_string("url_format_code",
-				    "Template URL Format Code",
-				    "Set the template URL format code",
-				    "LRBT", // default value
-				    (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
-	g_object_class_install_property(gobject_class,
-					PROP_URL_FORMAT_CODE,
-					pspec);
-
-	pspec = g_param_spec_string("file_type",
-				    "The file type expected",
-				    "Set the file type",
-				    NULL, // default value ~ equates to internal GPX reading
-				    (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
-	g_object_class_install_property(gobject_class,
-					PROP_FILE_TYPE,
-					pspec);
-
-	pspec = g_param_spec_string("babel_filter_args",
-				    "The command line filter options to pass to gpsbabel",
-				    "Set the command line filter options for gpsbabel",
-				    NULL, // default value
-				    (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
-	g_object_class_install_property(gobject_class,
-					PROP_BABEL_FILTER_ARGS,
-					pspec);
-
-	pspec = g_param_spec_string("input_label",
-				    "The label for the user input box if input is required.",
-				    "Set the label to be shown next to the user input box if an input term is required",
-				    _("Search Term"),
-				    (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
-	g_object_class_install_property(gobject_class,
-					PROP_INPUT_LABEL,
-					pspec);
-
-	parent_class = (GObjectClass *) g_type_class_peek_parent(klass);
-
-	base_class = VIK_WEBTOOL_CLASS (klass);
-	base_class->get_url = webtool_datasource_get_url;
-
-	// Override default open function here:
-	VikExtToolClass *ext_tool_class = VIK_EXT_TOOL_CLASS (klass);
-	ext_tool_class->open = webtool_datasource_open;
-
-	g_type_class_add_private(klass, sizeof (VikWebtoolDatasourcePrivate));
+	this->url_format_code = strdup("LRBT");
+	this->file_type = NULL;
+	this->babel_filter_args = NULL;
+	this->input_label = strdup(_("Search Term"));
+	this->user_string = NULL;
 }
 
-VikWebtoolDatasource *vik_webtool_datasource_new()
+
+
+
+
+WebToolDatasource::WebToolDatasource(const char * new_label,
+				     const char * new_url_format,
+				     const char * new_url_format_code,
+				     const char * new_file_type,
+				     const char * new_babel_filter_args,
+				     const char * new_input_label)
 {
-	return VIK_WEBTOOL_DATASOURCE (g_object_new(VIK_WEBTOOL_DATASOURCE_TYPE, NULL));
+	fprintf(stderr, "%s:%d, label = \n", __PRETTY_FUNCTION__, __LINE__, new_label);
+
+	if (new_label) {
+		this->label = strdup(new_label);
+	}
+	if (new_url_format) {
+		this->url_format = strdup(new_url_format);
+	}
+	if (new_url_format_code) {
+		this->url_format_code = strdup(new_url_format_code);
+	}
+	if (new_file_type) {
+		this->file_type = strdup(new_file_type);
+	}
+	if (new_babel_filter_args) {
+		this->babel_filter_args = strdup(new_babel_filter_args);
+	}
+	if (new_input_label) {
+		this->input_label = strdup(new_input_label);
+	}
 }
 
-VikWebtoolDatasource *vik_webtool_datasource_new_with_members(const char *label,
-							      const char *url,
-							      const char *url_format_code,
-							      const char *file_type,
-							      const char *babel_filter_args,
-							      const char *input_label)
+
+
+
+
+WebToolDatasource::~WebToolDatasource()
 {
-	VikWebtoolDatasource *result = VIK_WEBTOOL_DATASOURCE (g_object_new(VIK_WEBTOOL_DATASOURCE_TYPE,
-									    "label", label,
-									    "url", url,
-									    "url_format_code", url_format_code,
-									    "file_type", file_type,
-									    "babel_filter_args", babel_filter_args,
-									    "input_label", input_label,
-									    NULL));
+	fprintf(stderr, "%s:%d, label = %s\n", __PRETTY_FUNCTION__, __LINE__, this->label);
 
-	return result;
+	if (this->url_format_code) {
+		free(this->url_format_code);
+		this->url_format_code = NULL;
+	}
+
+	if (this->file_type) {
+		free(this->file_type);
+		this->file_type = NULL;
+	}
+
+	if (this->babel_filter_args) {
+		free(this->babel_filter_args);
+		this->babel_filter_args = NULL;
+	}
+
+	if (this->input_label) {
+		free(this->input_label);
+		this->input_label = NULL;
+	}
+
+	if (this->user_string) {
+		free(this->user_string);
+		this->user_string = NULL;
+	}
 }
 
-static void vik_webtool_datasource_init(VikWebtoolDatasource *self)
-{
-	VikWebtoolDatasourcePrivate *priv = WEBTOOL_DATASOURCE_GET_PRIVATE (self);
-	priv->url = NULL;
-	priv->url_format_code = NULL;
-	priv->file_type = NULL;
-	priv->babel_filter_args = NULL;
-	priv->input_label = NULL;
-	priv->user_string = NULL;
-}
 
-static void webtool_datasource_finalize(GObject *gob)
-{
-	VikWebtoolDatasourcePrivate *priv = WEBTOOL_DATASOURCE_GET_PRIVATE (gob);
-	free(priv->url);
-	priv->url = NULL;
 
-	free(priv->url_format_code);
-	priv->url_format_code = NULL;
 
-	free(priv->file_type);
-	priv->file_type = NULL;
-
-	free(priv->babel_filter_args);
-	priv->babel_filter_args = NULL;
-
-	free(priv->input_label);
-	priv->input_label = NULL;
-
-	free(priv->user_string);
-	priv->user_string = NULL;
-
-	G_OBJECT_CLASS(parent_class)->finalize(gob);
-}
-
-#define MAX_NUMBER_CODES 7
 
 /**
  * Calculate individual elements (similarly to the VikWebtool Bounds & Center) for *all* potential values
  * Then only values specified by the URL format are used in parameterizing the URL
  */
-static char *webtool_datasource_get_url(VikWebtool *self, Window * window)
+char * WebToolDatasource::get_url(Window * window)
 {
-	VikWebtoolDatasourcePrivate *priv = WEBTOOL_DATASOURCE_GET_PRIVATE (self);
 	Viewport * viewport = window->get_viewport();
 
 	// Get top left and bottom right lat/lon pairs from the viewport
@@ -484,8 +374,8 @@ static char *webtool_datasource_get_url(VikWebtool *self, Window * window)
 	snprintf(szoom, G_ASCII_DTOSTR_BUF_SIZE, "%d", zoom);
 
 	int len = 0;
-	if (priv->url_format_code) {
-		len = strlen(priv->url_format_code);
+	if (this->url_format_code) {
+		len = strlen(this->url_format_code);
 	}
 
 	if (len > MAX_NUMBER_CODES) {
@@ -493,13 +383,12 @@ static char *webtool_datasource_get_url(VikWebtool *self, Window * window)
 	}
 
 	char* values[MAX_NUMBER_CODES];
-	int i;
-	for (i = 0; i < MAX_NUMBER_CODES; i++) {
+	for (int i = 0; i < MAX_NUMBER_CODES; i++) {
 		values[i] = '\0';
 	}
 
-	for (i = 0; i < len; i++) {
-		switch (g_ascii_toupper (priv->url_format_code[i])) {
+	for (int i = 0; i < len; i++) {
+		switch (g_ascii_toupper (this->url_format_code[i])) {
 		case 'L': values[i] = g_strdup(sminlon); break;
 		case 'R': values[i] = g_strdup(smaxlon); break;
 		case 'B': values[i] = g_strdup(sminlat); break;
@@ -507,14 +396,14 @@ static char *webtool_datasource_get_url(VikWebtool *self, Window * window)
 		case 'A': values[i] = g_strdup(scenterlat); break;
 		case 'O': values[i] = g_strdup(scenterlon); break;
 		case 'Z': values[i] = g_strdup(szoom); break;
-		case 'S': values[i] = g_strdup(priv->user_string); break;
+		case 'S': values[i] = g_strdup(this->user_string); break;
 		default: break;
 		}
 	}
 
-	char *url = g_strdup_printf(priv->url, values[0], values[1], values[2], values[3], values[4], values[5], values[6]);
+	char * url = g_strdup_printf(this->url_format, values[0], values[1], values[2], values[3], values[4], values[5], values[6]);
 
-	for (i = 0; i < MAX_NUMBER_CODES; i++) {
+	for (int i = 0; i < MAX_NUMBER_CODES; i++) {
 		if (values[i] != '\0') {
 			free(values[i]);
 		}
@@ -522,6 +411,19 @@ static char *webtool_datasource_get_url(VikWebtool *self, Window * window)
 
 	return url;
 }
+
+
+
+
+
+char * WebToolDatasource::get_url_at_position(Window * window, VikCoord * vc)
+{
+	return this->get_url(window);
+}
+
+
+
+
 
 // NB Only works for ascii strings
 char* strcasestr2(const char *dst, const char *src)
@@ -536,27 +438,30 @@ char* strcasestr2(const char *dst, const char *src)
 
 	int len = strlen(src) - 1;
 	char sc = tolower(src[0]);
-	for(char dc = *dst; (dc = *dst); dst++) {
+	for (char dc = *dst; (dc = *dst); dst++) {
 		dc = tolower(dc);
 		if (sc == dc && (len == 0 || !strncasecmp(dst+1, src+1, len))) {
-			return (char*)dst;
+			return (char *) dst;
 		}
 	}
 
 	return NULL;
 }
 
+
+
+
+
 /**
  * Returns true if the URL format contains 'S' -- that is, a search term entry
  * box needs to be displayed
  */
-static bool webtool_needs_user_string (VikWebtool *self)
+bool WebToolDatasource::webtool_needs_user_string()
 {
-	VikWebtoolDatasourcePrivate *priv = WEBTOOL_DATASOURCE_GET_PRIVATE (self);
 	// For some reason (my) Windows build gets built with -D_GNU_SOURCE
 #if (_GNU_SOURCE && !WINDOWS)
-	return (strcasestr(priv->url_format_code, "S") != NULL);
+	return (strcasestr(this->url_format_code, "S") != NULL);
 #else
-	return (strcasestr2(priv->url_format_code, "S") != NULL);
+	return (strcasestr2(this->url_format_code, "S") != NULL);
 #endif
 }

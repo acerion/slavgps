@@ -18,8 +18,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-#ifndef _VIKING_WEBTOOL_DATASOURCE_H
-#define _VIKING_WEBTOOL_DATASOURCE_H
+#ifndef _SG_WEBTOOL_DATASOURCE_H
+#define _SG_WEBTOOL_DATASOURCE_H
 
 #include <glib.h>
 #include <stdint.h>
@@ -27,43 +27,55 @@
 
 #include "vikwebtool.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
-#define VIK_WEBTOOL_DATASOURCE_TYPE            (vik_webtool_datasource_get_type ())
-#define VIK_WEBTOOL_DATASOURCE(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_WEBTOOL_DATASOURCE_TYPE, VikWebtoolDatasource))
-#define VIK_WEBTOOL_DATASOURCE_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), VIK_WEBTOOL_DATASOURCE_TYPE, VikWebtoolDatasourceClass))
-#define IS_VIK_WEBTOOL_DATASOURCE(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), VIK_WEBTOOL_DATASOURCE_TYPE))
-#define IS_VIK_WEBTOOL_DATASOURCE_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), VIK_WEBTOOL_DATASOURCE_TYPE))
-#define VIK_WEBTOOL_DATASOURCE_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), VIK_WEBTOOL_DATASOURCE_TYPE, VikWebtoolDatasourceClass))
 
 
-typedef struct _VikWebtoolDatasource VikWebtoolDatasource;
-typedef struct _VikWebtoolDatasourceClass VikWebtoolDatasourceClass;
+namespace SlavGPS {
 
-struct _VikWebtoolDatasourceClass
-{
-  VikWebtoolClass object_class;
-};
 
-GType vik_webtool_datasource_get_type ();
 
-struct _VikWebtoolDatasource {
-  VikWebtool obj;
-};
 
-VikWebtoolDatasource *vik_webtool_datasource_new ( );
-VikWebtoolDatasource *vik_webtool_datasource_new_with_members ( const char *label,
-                                                                const char *url,
-                                                                const char *url_format_code,
-                                                                const char *file_type,
-                                                                const char *babel_filter_args,
-                                                                const char *input_label);
 
-#ifdef __cplusplus
-}
-#endif
+	class WebToolDatasource : public WebTool {
 
-#endif
+	public:
+		WebToolDatasource();
+		WebToolDatasource(const char * label,
+				  const char * url,
+				  const char * url_format_code,
+				  const char * file_type,
+				  const char * babel_filter_args,
+				  const char * input_label);
+		~WebToolDatasource();
+
+		void open(Window * window);
+		char * get_url(Window * window);
+		char * get_url_at_position(Window * window, VikCoord * vc);
+
+
+
+
+		/* This should be private. */
+
+		bool webtool_needs_user_string();
+
+		char * url_format_code;
+		char * file_type; /* default value NULL equates to internal GPX reading */
+		char * babel_filter_args; /* command line filter options for gpsbabel */
+		char * input_label; /* label to be shown next to the user input box if an input term is required */
+		char * user_string;
+
+	}; /* class WebToolDatasource */
+
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
+
+#endif /* #ifndef _SG_WEBTOOL_DATASOURCE_H */

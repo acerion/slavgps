@@ -23,57 +23,79 @@
 #include "config.h"
 #endif
 
-#include "vikexttools.h"
-#include "vikexttool_datasources.h"
+#include <list>
 
 #include <string.h>
 #include <stdlib.h>
 
 #include <glib/gi18n.h>
 
+#include "vikexttools.h"
+#include "vikexttool_datasources.h"
+
+
+
+
 
 using namespace SlavGPS;
 
 
+
+
+
 #define VIK_TOOL_DATASOURCE_KEY "vik-datasource-tool"
 
-static GList *ext_tool_datasources_list = NULL;
+static std::list<External *> ext_tool_datasources;
 
-void vik_ext_tool_datasources_register(VikExtTool * tool)
+
+
+
+
+void SlavGPS::vik_ext_tool_datasources_register(External * ext_tool)
 {
-	if (IS_VIK_EXT_TOOL (tool)) {
-		ext_tool_datasources_list = g_list_append(ext_tool_datasources_list, g_object_ref(tool));
-	}
+	ext_tool_datasources.push_back(ext_tool);
 }
+
+
+
+
 
 void vik_ext_tool_datasources_unregister_all()
 {
-	g_list_foreach(ext_tool_datasources_list, (GFunc) g_object_unref, NULL);
+	for (auto iter = ext_tool_datasources.begin(); iter != ext_tool_datasources.end(); iter++) {
+		/* kamilFIXME: do something here. */
+		// g_object_unref(*iter);
+	}
 }
+
+
+
+
 
 static void ext_tool_datasources_open_cb(GtkWidget * widget, Window * window)
 {
 	void * ptr = g_object_get_data(G_OBJECT (widget), VIK_TOOL_DATASOURCE_KEY);
-	VikExtTool * ext_tool = VIK_EXT_TOOL(ptr);
-	vik_ext_tool_open(ext_tool, window);
+	External * ext_tool = (External *) ptr;
+	ext_tool->open(window);
 }
+
+
+
+
 
 /**
  * Add to any menu
  *  mostly for allowing to assign for TrackWaypoint layer menus
  */
-void vik_ext_tool_datasources_add_menu_items_to_menu(Window * window, GtkMenu * menu)
+void SlavGPS::vik_ext_tool_datasources_add_menu_items_to_menu(Window * window, GtkMenu * menu)
 {
-	GList * iter;
-	for (iter = ext_tool_datasources_list; iter; iter = iter->next) {
-		VikExtTool * ext_tool = NULL;
-		char * label = NULL;
-		ext_tool = VIK_EXT_TOOL(iter->data);
-		label = vik_ext_tool_get_label(ext_tool);
+	for (auto iter = ext_tool_datasources.begin(); iter != ext_tool_datasources.end(); iter++) {
+		External * ext_tool = *iter;
+		char * label = ext_tool->get_label();
 		if (label) {
-			GtkWidget * item = NULL;
-			item = gtk_menu_item_new_with_label(_(label));
-			free(label); label = NULL;
+			GtkWidget * item = gtk_menu_item_new_with_label(_(label));
+			free(label);
+			label = NULL;
 			// Store tool's ref into the menu entry
 			g_object_set_data(G_OBJECT(item), VIK_TOOL_DATASOURCE_KEY, ext_tool);
 			g_signal_connect(G_OBJECT(item), "activate", G_CALLBACK(ext_tool_datasources_open_cb), window);
@@ -83,13 +105,17 @@ void vik_ext_tool_datasources_add_menu_items_to_menu(Window * window, GtkMenu * 
 	}
 }
 
+
+
+
+
 /**
  * Adds to the File->Acquire menu only
  */
-void vik_ext_tool_datasources_add_menu_items(Window * window, GtkUIManager * uim)
+void SlavGPS::vik_ext_tool_datasources_add_menu_items(Window * window, GtkUIManager * uim)
 {
 	GtkWidget * widget = gtk_ui_manager_get_widget(uim, "/MainMenu/File/Acquire/");
 	GtkMenu * menu = GTK_MENU (gtk_menu_item_get_submenu(GTK_MENU_ITEM(widget)));
-	vik_ext_tool_datasources_add_menu_items_to_menu(window, menu);
+	SlavGPS::vik_ext_tool_datasources_add_menu_items_to_menu(window, menu);
 	gtk_widget_show(widget);
 }

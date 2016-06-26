@@ -18,51 +18,48 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-#ifndef _VIKING_WEBTOOL_FORMAT_H
-#define _VIKING_WEBTOOL_FORMAT_H
+#ifndef _SG_WEBTOOL_FORMAT_H
+#define _SG_WEBTOOL_FORMAT_H
 
-#include <glib.h>
 #include <stdint.h>
-
 
 #include "vikwebtool.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
-#define VIK_WEBTOOL_FORMAT_TYPE            (vik_webtool_format_get_type ())
-#define VIK_WEBTOOL_FORMAT(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_WEBTOOL_FORMAT_TYPE, VikWebtoolFormat))
-#define VIK_WEBTOOL_FORMAT_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), VIK_WEBTOOL_FORMAT_TYPE, VikWebtoolFormatClass))
-#define IS_VIK_WEBTOOL_FORMAT(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), VIK_WEBTOOL_FORMAT_TYPE))
-#define IS_VIK_WEBTOOL_FORMAT_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), VIK_WEBTOOL_FORMAT_TYPE))
-#define VIK_WEBTOOL_FORMAT_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), VIK_WEBTOOL_FORMAT_TYPE, VikWebtoolFormatClass))
 
-typedef struct _VikWebtoolFormat VikWebtoolFormat;
-typedef struct _VikWebtoolFormatClass VikWebtoolFormatClass;
 
-struct _VikWebtoolFormatClass
-{
-	VikWebtoolClass object_class;
-	uint8_t (* mpp_to_zoom) (VikWebtool *self, double mpp);
-};
+namespace SlavGPS {
 
-GType vik_webtool_format_get_type ();
 
-struct _VikWebtoolFormat {
-	VikWebtool obj;
-};
 
-uint8_t vik_webtool_format_mpp_to_zoom (VikWebtool *self, double mpp);
 
-VikWebtoolFormat* vik_webtool_format_new ( );
-VikWebtoolFormat* vik_webtool_format_new_with_members ( const char *label,
-                                                        const char *url,
-                                                        const char *url_format_code );
 
-#ifdef __cplusplus
-}
-#endif
+	class WebToolFormat : public WebTool {
+	public:
 
-#endif
+		WebToolFormat();
+		WebToolFormat(const char * label, const char * url_format, const char * url_format_code);
+		~WebToolFormat();
+
+		uint8_t mpp_to_zoom(double mpp);
+		char * get_url(Window * window);
+		char * get_url_at_position(Window * window, VikCoord * vc);
+
+
+	private:
+		char * url_format_code;  /* Template URL format code, "AOZ" -  default value Lat, Long, Zoom */
+
+	}; /* class WebToolFormat */
+
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
+
+#endif /* #ifndef _SG_WEBTOOL_FORMAT_H */

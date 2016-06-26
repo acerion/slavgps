@@ -135,39 +135,37 @@ void osm_init (void)
 	maps_layer_register_map_source(metatiles_type);
 
 	// Webtools
-	VikWebtoolCenter * webtool = vik_webtool_center_new_with_members ( _("OSM (view)"), "http://www.openstreetmap.org/?lat=%s&lon=%s&zoom=%d" );
-	vik_ext_tools_register ( VIK_EXT_TOOL ( webtool ) );
-	g_object_unref ( webtool );
+	WebToolCenter * web_tool = new WebToolCenter(_("OSM (view)"), "http://www.openstreetmap.org/?lat=%s&lon=%s&zoom=%d");
+	vik_ext_tools_register(web_tool);
+	//g_object_unref ( webtool );
 
-	webtool = vik_webtool_center_new_with_members ( _("OSM (edit)"), "http://www.openstreetmap.org/edit?lat=%s&lon=%s&zoom=%d" );
-	vik_ext_tools_register ( VIK_EXT_TOOL ( webtool ) );
-	g_object_unref ( webtool );
+	web_tool = new WebToolCenter(_("OSM (edit)"), "http://www.openstreetmap.org/edit?lat=%s&lon=%s&zoom=%d");
+	vik_ext_tools_register(web_tool);
+	//g_object_unref ( webtool );
 
 	// Note the use of positional parameters
-	webtool = vik_webtool_center_new_with_members ( _("OSM (query)"), "http://www.openstreetmap.org/query?lat=%1$s&lon=%2$s#map=%3$d/%1$s/%2$s" );
-	vik_ext_tools_register ( VIK_EXT_TOOL ( webtool ) );
-	g_object_unref ( webtool );
+	web_tool = new WebToolCenter(_("OSM (query)"), "http://www.openstreetmap.org/query?lat=%1$s&lon=%2$s#map=%3$d/%1$s/%2$s");
+	vik_ext_tools_register(web_tool);
+	//g_object_unref ( webtool );
 
-	webtool = vik_webtool_center_new_with_members ( _("OSM (render)"), "http://www.informationfreeway.org/?lat=%s&lon=%s&zoom=%d&layers=B0000F000F" );
-	vik_ext_tools_register ( VIK_EXT_TOOL ( webtool ) );
-	g_object_unref ( webtool );
+	web_tool = new WebToolCenter(_("OSM (render)"), "http://www.informationfreeway.org/?lat=%s&lon=%s&zoom=%d&layers=B0000F000F");
+	vik_ext_tools_register(web_tool);
+	//g_object_unref ( webtool );
 
 	// Example: http://127.0.0.1:8111/load_and_zoom?left=8.19&right=8.20&top=48.605&bottom=48.590&select=node413602999
 	// JOSM or merkaartor must already be running with remote interface enabled
-	VikWebtoolBounds *webtoolbounds = vik_webtool_bounds_new_with_members ( _("Local port 8111 (eg JOSM)"), "http://localhost:8111/load_and_zoom?left=%s&right=%s&bottom=%s&top=%s" );
-	vik_ext_tools_register ( VIK_EXT_TOOL ( webtoolbounds ) );
-	g_object_unref ( webtoolbounds );
+	WebToolBounds * web_tool_bounds = new WebToolBounds(_("Local port 8111 (eg JOSM)"), "http://localhost:8111/load_and_zoom?left=%s&right=%s&bottom=%s&top=%s");
+	vik_ext_tools_register(web_tool_bounds);
+	//g_object_unref ( webtoolbounds );
 
-	VikWebtoolFormat *vwtf = vik_webtool_format_new_with_members ( _("Geofabrik Map Compare"),
-								       "http://tools.geofabrik.de/mc/#%s/%s/%s",
-								       "ZAO" );
-	vik_ext_tools_register ( VIK_EXT_TOOL ( vwtf ) );
-	g_object_unref ( vwtf );
+	WebToolFormat * web_tool_format = new WebToolFormat(_("Geofabrik Map Compare"), "http://tools.geofabrik.de/mc/#%s/%s/%s", "ZAO");
+	vik_ext_tools_register(web_tool_format);
+	//g_object_unref ( vwtf );
 
 	// Datasource
-	VikWebtoolDatasource *vwtds = vik_webtool_datasource_new_with_members ( _("OpenStreetMap Notes"), "http://api.openstreetmap.org/api/0.6/notes.gpx?bbox=%s,%s,%s,%s&amp;closed=0", "LBRT", NULL, NULL, NULL );
-	vik_ext_tool_datasources_register ( VIK_EXT_TOOL ( vwtds ) );
-	g_object_unref ( vwtds );
+	WebToolDatasource * web_tool_datasource = new WebToolDatasource(_("OpenStreetMap Notes"), "http://api.openstreetmap.org/api/0.6/notes.gpx?bbox=%s,%s,%s,%s&amp;closed=0", "LBRT", NULL, NULL, NULL);
+	vik_ext_tool_datasources_register(web_tool_datasource);
+	//g_object_unref ( vwtds );
 
 	// Goto
 	VikGotoXmlTool *nominatim = VIK_GOTO_XML_TOOL ( g_object_new ( VIK_GOTO_XML_TOOL_TYPE, "label", "OSM Nominatim",
@@ -191,9 +189,9 @@ void osm_init (void)
 	g_object_unref ( namefinder );
 
 	// Not really OSM but can't be bothered to create somewhere else to put it...
-	webtool = vik_webtool_center_new_with_members ( _("Wikimedia Toolserver GeoHack"), "http://tools.wmflabs.org/geohack/geohack.php?params=%s;%s" );
-	vik_ext_tools_register ( VIK_EXT_TOOL ( webtool ) );
-	g_object_unref ( webtool );
+	web_tool = new WebToolCenter(_("Wikimedia Toolserver GeoHack"), "http://tools.wmflabs.org/geohack/geohack.php?params=%s;%s");
+	vik_ext_tools_register(web_tool);
+	//g_object_unref ( webtool );
 
 	/* See API references: https://github.com/DennisOSRM/Project-OSRM/wiki/Server-api */
 	VikRoutingEngine *osrm = (VikRoutingEngine *) g_object_new ( VIK_ROUTING_WEB_ENGINE_TYPE,

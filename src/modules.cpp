@@ -81,20 +81,20 @@ modules_register_map_source(VikGobjectBuilder *self, MapSource * mapsource)
   maps_layer_register_map_source (mapsource);
 }
 
-static void
-modules_register_exttools(VikGobjectBuilder *self, GObject *object)
+static void modules_register_exttools(VikGobjectBuilder *self, GObject *object)
 {
-  fprintf(stderr, "DEBUG: %s\n", __FUNCTION__);
-  VikExtTool *tool = VIK_EXT_TOOL (object);
-  vik_ext_tools_register (tool);
+	/* kamilFIXME: I think that this no longer works. */
+	fprintf(stderr, "DEBUG: %s\n", __FUNCTION__);
+	External * ext_tool = (External *) object;
+	vik_ext_tools_register(ext_tool);
 }
 
-static void
-modules_register_datasources(VikGobjectBuilder *self, GObject *object)
+static void modules_register_datasources(VikGobjectBuilder *self, GObject *object)
 {
-  fprintf(stderr, "DEBUG: %s\n", __FUNCTION__);
-  VikExtTool *tool = VIK_EXT_TOOL (object);
-  vik_ext_tool_datasources_register (tool);
+	/* kamilFIXME: I think that this no longer works. */
+	fprintf(stderr, "DEBUG: %s\n", __FUNCTION__);
+	External * ext_tool = (External *) object;
+	vik_ext_tool_datasources_register(ext_tool);
 }
 
 static void
@@ -214,17 +214,17 @@ register_loadable_types(void)
     //VIK_TYPE_WMSC_MAP_SOURCE,
 
     /* Goto */
-    VIK_GOTO_XML_TOOL_TYPE,
+    //VIK_GOTO_XML_TOOL_TYPE,
 
     /* Tools */
-    VIK_WEBTOOL_CENTER_TYPE,
-    VIK_WEBTOOL_BOUNDS_TYPE,
+    //VIK_WEBTOOL_CENTER_TYPE,
+    //VIK_WEBTOOL_BOUNDS_TYPE,
 
     /* Datasource */
-    VIK_WEBTOOL_DATASOURCE_TYPE,
+    //VIK_WEBTOOL_DATASOURCE_TYPE,
 
     /* Routing */
-    VIK_ROUTING_WEB_ENGINE_TYPE
+    //VIK_ROUTING_WEB_ENGINE_TYPE
   };
 
   /* kill 'unused variable' + argument type warnings */

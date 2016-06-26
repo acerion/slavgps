@@ -35,11 +35,22 @@
 #include "vikroutingwebengine.h"
 #include "babel.h"
 
-void google_init () {
-  // Webtools
-  VikWebtoolCenter *webtool = vik_webtool_center_new_with_members ( _("Google"), "http://maps.google.com/maps/@%s,%s,%dz" );
-  vik_ext_tools_register ( VIK_EXT_TOOL ( webtool ) );
-  g_object_unref ( webtool );
+
+
+
+
+using namespace SlavGPS;
+
+
+
+
+
+void google_init ()
+{
+	// Webtools
+	WebToolCenter * web_tool = new WebToolCenter(_("Google"), "http://maps.google.com/maps/@%s,%s,%dz");
+	vik_ext_tools_register(web_tool);
+	//g_object_unref(web_tool);
 
   // Goto
   /*
@@ -58,7 +69,7 @@ void google_post_init ()
 {
   // Routing
   /* Google Directions service as routing engine.
-   * 
+   *
    * Technical details are available here:
    * https://developers.google.com/maps/documentation/directions/#DirectionsResponses
    *

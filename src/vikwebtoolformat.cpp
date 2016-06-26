@@ -19,19 +19,16 @@
  *
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#include "vikwebtoolformat.h"
 
 #include <string.h>
 #include <stdlib.h>
-#include <glib.h>
 
+#include "vikwebtoolformat.h"
 #include "util.h"
 #include "globals.h"
 #include "maputils.h"
+
+
 
 
 
@@ -39,175 +36,70 @@ using namespace SlavGPS;
 
 
 
-static GObjectClass *parent_class;
 
-static void webtool_format_finalize ( GObject *gob );
-
-static uint8_t webtool_format_mpp_to_zoom ( VikWebtool *self, double mpp );
-static char *webtool_format_get_url ( VikWebtool *vw, Window * window);
-static char *webtool_format_get_url_at_position ( VikWebtool *vw, Window * window, VikCoord *vc );
-
-typedef struct _VikWebtoolFormatPrivate VikWebtoolFormatPrivate;
-
-struct _VikWebtoolFormatPrivate
-{
-	char *url;
-	char *url_format_code;
-};
-
-#define WEBTOOL_FORMAT_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), \
-                                       VIK_WEBTOOL_FORMAT_TYPE,          \
-                                       VikWebtoolFormatPrivate))
-
-G_DEFINE_TYPE (VikWebtoolFormat, vik_webtool_format, VIK_WEBTOOL_TYPE)
-
-enum
-{
-	PROP_0,
-
-	PROP_URL,
-	PROP_URL_FORMAT_CODE,
-};
-
-static void
-webtool_format_set_property (GObject      *object,
-                             unsigned int         property_id,
-                             const GValue *value,
-                             GParamSpec   *pspec)
-{
-	VikWebtoolFormat *self = VIK_WEBTOOL_FORMAT (object);
-	VikWebtoolFormatPrivate *priv = WEBTOOL_FORMAT_GET_PRIVATE (self);
-
-	switch (property_id) {
-	case PROP_URL:
-		free(priv->url);
-		priv->url = g_value_dup_string (value);
-		fprintf(stderr, "DEBUG: VikWebtoolFormat.url: %s\n", priv->url);
-		break;
-	case PROP_URL_FORMAT_CODE:
-		free( priv->url_format_code );
-		priv->url_format_code = g_value_dup_string ( value );
-		fprintf(stderr, "DEBUG: VikWebtoolFormat.url_format_code: %s\n", priv->url_format_code );
-		break;
-
-	default:
-		/* We don't have any other property... */
-		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
-		break;
-	}
-}
-
-static void
-webtool_format_get_property (GObject    *object,
-                             unsigned int       property_id,
-                             GValue     *value,
-                             GParamSpec *pspec)
-{
-	VikWebtoolFormat *self = VIK_WEBTOOL_FORMAT (object);
-	VikWebtoolFormatPrivate *priv = WEBTOOL_FORMAT_GET_PRIVATE (self);
-
-	switch (property_id) {
-	case PROP_URL:
-		g_value_set_string (value, priv->url);
-		break;
-
-	case PROP_URL_FORMAT_CODE:
-		g_value_set_string ( value, priv->url_format_code );
-		break;
-
-	default:
-		/* We don't have any other property... */
-		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
-		break;
-	}
-}
-
-static void
-vik_webtool_format_class_init ( VikWebtoolFormatClass *klass )
-{
-	GObjectClass *gobject_class;
-	VikWebtoolClass *base_class;
-	GParamSpec *pspec;
-
-	gobject_class = G_OBJECT_CLASS (klass);
-
-	gobject_class->finalize = webtool_format_finalize;
-	gobject_class->set_property = webtool_format_set_property;
-	gobject_class->get_property = webtool_format_get_property;
-
-	pspec = g_param_spec_string ("url",
-	                             "Template Url",
-	                             "Set the template url",
-	                             VIKING_URL /* default value */,
-	                             (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
-	g_object_class_install_property (gobject_class,
-	                                 PROP_URL,
-	                                 pspec);
-
-	pspec = g_param_spec_string ("url_format_code",
-	                             "Template URL Format Code",
-	                             "Set the template URL format code",
-	                             "AOZ", // default value Lat, Long, Zoom
-	                             (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
-	g_object_class_install_property (gobject_class,
-	                                 PROP_URL_FORMAT_CODE,
-	                                 pspec);
-
-	parent_class = (GObjectClass *) g_type_class_peek_parent (klass);
-
-	base_class = VIK_WEBTOOL_CLASS ( klass );
-	base_class->get_url = webtool_format_get_url;
-	base_class->get_url_at_position = webtool_format_get_url_at_position;
-
-	klass->mpp_to_zoom = webtool_format_mpp_to_zoom;
-
-	g_type_class_add_private (klass, sizeof (VikWebtoolFormatPrivate));
-}
-
-VikWebtoolFormat *vik_webtool_format_new ()
-{
-	return VIK_WEBTOOL_FORMAT ( g_object_new ( VIK_WEBTOOL_FORMAT_TYPE, NULL ) );
-}
-
-VikWebtoolFormat *vik_webtool_format_new_with_members ( const char *label,
-                                                        const char *url,
-                                                        const char *url_format_code )
-{
-	VikWebtoolFormat *result = VIK_WEBTOOL_FORMAT ( g_object_new ( VIK_WEBTOOL_FORMAT_TYPE,
-	                                                               "label", label,
-	                                                               "url", url,
-	                                                               "url_format_code", url_format_code,
-	                                                               NULL ) );
-
-	return result;
-}
-
-static void
-vik_webtool_format_init ( VikWebtoolFormat *self )
-{
-	VikWebtoolFormatPrivate *priv = WEBTOOL_FORMAT_GET_PRIVATE (self);
-	priv->url = NULL;
-	priv->url_format_code = NULL;
-}
-
-static void webtool_format_finalize ( GObject *gob )
-{
-	VikWebtoolFormatPrivate *priv = WEBTOOL_FORMAT_GET_PRIVATE ( gob );
-	free( priv->url ); priv->url = NULL;
-	free( priv->url_format_code ); priv->url_format_code = NULL;
-	G_OBJECT_CLASS(parent_class)->finalize(gob);
-}
-
-static uint8_t webtool_format_mpp_to_zoom ( VikWebtool *self, double mpp ) {
-	return map_utils_mpp_to_zoom_level ( mpp );
-}
 
 #define MAX_NUMBER_CODES 9
 
-static char *webtool_format_get_url_at_position ( VikWebtool *self, Window * window, VikCoord *vc )
+
+
+
+
+WebToolFormat::WebToolFormat()
 {
-	VikWebtoolFormatPrivate *priv = NULL;
-	priv = WEBTOOL_FORMAT_GET_PRIVATE (self);
+	fprintf(stderr, "%s:%d\n", __PRETTY_FUNCTION__, __LINE__);
+
+	this->url_format_code = NULL;
+}
+
+
+
+
+
+WebToolFormat::WebToolFormat(const char * new_label, const char * new_url_format, const char * new_url_format_code)
+{
+	fprintf(stderr, "%s:%d, label = %s\n", __PRETTY_FUNCTION__, __LINE__, new_label);
+
+	if (new_label) {
+		this->label = strdup(new_label);
+	}
+	if (new_url_format) {
+		this->url_format = strdup(new_url_format);
+	}
+	if (new_url_format_code) {
+		this->url_format_code = strdup(new_url_format_code);
+	}
+}
+
+
+
+
+
+WebToolFormat::~WebToolFormat()
+{
+	fprintf(stderr, "%s:%d, label = %s\n", __PRETTY_FUNCTION__, __LINE__, this->label);
+
+	if (this->url_format_code) {
+		free(this->url_format_code);
+		this->url_format_code = NULL;
+	}
+}
+
+
+
+
+
+uint8_t WebToolFormat::mpp_to_zoom(double mpp)
+{
+	return map_utils_mpp_to_zoom_level(mpp);
+}
+
+
+
+
+
+char * WebToolFormat::get_url_at_position(Window * window, VikCoord *vc)
+{
+	fprintf(stderr, "%s:%d: called\n", __PRETTY_FUNCTION__, __LINE__);
 
 	Viewport * viewport = window->get_viewport();
 
@@ -217,87 +109,90 @@ static char *webtool_format_get_url_at_position ( VikWebtool *self, Window * win
 	char smaxlon[G_ASCII_DTOSTR_BUF_SIZE];
 	char sminlat[G_ASCII_DTOSTR_BUF_SIZE];
 	char smaxlat[G_ASCII_DTOSTR_BUF_SIZE];
-	viewport->get_min_max_lat_lon(&min_lat, &max_lat, &min_lon, &max_lon );
+	viewport->get_min_max_lat_lon(&min_lat, &max_lat, &min_lon, &max_lon);
 
 	// Cannot simply use g_strdup_printf and double due to locale.
 	// As we compute an URL, we have to think in C locale.
-	g_ascii_dtostr (sminlon, G_ASCII_DTOSTR_BUF_SIZE, min_lon);
-	g_ascii_dtostr (smaxlon, G_ASCII_DTOSTR_BUF_SIZE, max_lon);
-	g_ascii_dtostr (sminlat, G_ASCII_DTOSTR_BUF_SIZE, min_lat);
-	g_ascii_dtostr (smaxlat, G_ASCII_DTOSTR_BUF_SIZE, max_lat);
+	g_ascii_dtostr(sminlon, G_ASCII_DTOSTR_BUF_SIZE, min_lon);
+	g_ascii_dtostr(smaxlon, G_ASCII_DTOSTR_BUF_SIZE, max_lon);
+	g_ascii_dtostr(sminlat, G_ASCII_DTOSTR_BUF_SIZE, min_lat);
+	g_ascii_dtostr(smaxlat, G_ASCII_DTOSTR_BUF_SIZE, max_lat);
 
 	// Center values
 	const VikCoord *coord = viewport->get_center();
 	struct LatLon ll;
-	vik_coord_to_latlon ( coord, &ll );
+	vik_coord_to_latlon(coord, &ll);
 
 	char scenterlat[G_ASCII_DTOSTR_BUF_SIZE];
 	char scenterlon[G_ASCII_DTOSTR_BUF_SIZE];
-	g_ascii_dtostr (scenterlat, G_ASCII_DTOSTR_BUF_SIZE, ll.lat);
-	g_ascii_dtostr (scenterlon, G_ASCII_DTOSTR_BUF_SIZE, ll.lon);
+	g_ascii_dtostr(scenterlat, G_ASCII_DTOSTR_BUF_SIZE, ll.lat);
+	g_ascii_dtostr(scenterlon, G_ASCII_DTOSTR_BUF_SIZE, ll.lon);
 
 	struct LatLon llpt;
 	llpt.lat = 0.0;
 	llpt.lon = 0.0;
-	if ( vc )
-	  vik_coord_to_latlon ( vc, &ll );
+	if (vc) {
+		vik_coord_to_latlon(vc, &ll);
+	}
 	char spointlat[G_ASCII_DTOSTR_BUF_SIZE];
 	char spointlon[G_ASCII_DTOSTR_BUF_SIZE];
-	g_ascii_dtostr (spointlat, G_ASCII_DTOSTR_BUF_SIZE, llpt.lat);
-	g_ascii_dtostr (spointlon, G_ASCII_DTOSTR_BUF_SIZE, llpt.lon);
+	g_ascii_dtostr(spointlat, G_ASCII_DTOSTR_BUF_SIZE, llpt.lat);
+	g_ascii_dtostr(spointlon, G_ASCII_DTOSTR_BUF_SIZE, llpt.lon);
 
 	uint8_t zoom = 17; // A zoomed in default
 	// zoom - ideally x & y factors need to be the same otherwise use the default
-	if ( viewport->get_xmpp() == viewport->get_ympp() )
-		zoom = map_utils_mpp_to_zoom_level ( viewport->get_zoom() );
+	if (viewport->get_xmpp() == viewport->get_ympp()) {
+		zoom = map_utils_mpp_to_zoom_level(viewport->get_zoom());
+	}
 
 	char szoom[G_ASCII_DTOSTR_BUF_SIZE];
-	snprintf( szoom, G_ASCII_DTOSTR_BUF_SIZE, "%d", zoom );
+	snprintf(szoom, G_ASCII_DTOSTR_BUF_SIZE, "%d", zoom);
 
 	int len = 0;
-	if ( priv->url_format_code )
-		len = strlen ( priv->url_format_code );
-	if ( len > MAX_NUMBER_CODES )
+	if (this->url_format_code) {
+		len = strlen (this->url_format_code);
+	}
+	if (len > MAX_NUMBER_CODES) {
 		len = MAX_NUMBER_CODES;
+	}
 
-	char* values[MAX_NUMBER_CODES];
-	int i;
-	for ( i = 0; i < MAX_NUMBER_CODES; i++ ) {
+	char * values[MAX_NUMBER_CODES];
+	for (int i = 0; i < MAX_NUMBER_CODES; i++) {
 		values[i] = '\0';
 	}
 
-	for ( i = 0; i < len; i++ ) {
-		switch ( g_ascii_toupper ( priv->url_format_code[i] ) ) {
-		case 'L': values[i] = g_strdup( sminlon ); break;
-		case 'R': values[i] = g_strdup( smaxlon ); break;
-		case 'B': values[i] = g_strdup( sminlat ); break;
-		case 'T': values[i] = g_strdup( smaxlat ); break;
-		case 'A': values[i] = g_strdup( scenterlat ); break;
-		case 'O': values[i] = g_strdup( scenterlon ); break;
-		case 'Z': values[i] = g_strdup( szoom ); break;
-		case 'P': values[i] = g_strdup( spointlat ); break;
-		case 'N': values[i] = g_strdup( spointlon ); break;
+	for (int i = 0; i < len; i++) {
+		switch (g_ascii_toupper(this->url_format_code[i])) {
+		case 'L': values[i] = g_strdup(sminlon); break;
+		case 'R': values[i] = g_strdup(smaxlon); break;
+		case 'B': values[i] = g_strdup(sminlat); break;
+		case 'T': values[i] = g_strdup(smaxlat); break;
+		case 'A': values[i] = g_strdup(scenterlat); break;
+		case 'O': values[i] = g_strdup(scenterlon); break;
+		case 'Z': values[i] = g_strdup(szoom); break;
+		case 'P': values[i] = g_strdup(spointlat); break;
+		case 'N': values[i] = g_strdup(spointlon); break;
 		default: break;
 		}
 	}
 
-	char *url = g_strdup_printf ( priv->url, values[0], values[1], values[2], values[3], values[4], values[5], values[6], values[7], values[8] );
+	char * url = g_strdup_printf(this->url_format, values[0], values[1], values[2], values[3], values[4], values[5], values[6], values[7], values[8]);
 
-	for ( i = 0; i < MAX_NUMBER_CODES; i++ ) {
-		if ( values[i] != '\0' )
-			free( values[i] );
+	for (int i = 0; i < MAX_NUMBER_CODES; i++) {
+		if (values[i] != '\0') {
+			free(values[i]);
+		}
 	}
 
-	fprintf(stderr, "DEBUG: %s %s\n", __FUNCTION__, url);
+	fprintf(stderr, "DEBUG: %s %s\n", __PRETTY_FUNCTION__, url);
 	return url;
 }
 
-static char *webtool_format_get_url ( VikWebtool *self, Window * window)
-{
-  return webtool_format_get_url_at_position ( self, window, NULL );
-}
 
-uint8_t vik_webtool_format_mpp_to_zoom (VikWebtool *self, double mpp)
+
+
+
+char * WebToolFormat::get_url(Window * window)
 {
-	return VIK_WEBTOOL_FORMAT_GET_CLASS( self )->mpp_to_zoom( self, mpp );
+	return this->get_url_at_position(window, NULL);
 }

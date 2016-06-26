@@ -18,50 +18,55 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-#ifndef _VIKING_WEBTOOL_H
-#define _VIKING_WEBTOOL_H
+#ifndef _SG_WEBTOOL_H
+#define _SG_WEBTOOL_H
 
-#include <glib.h>
+
+
+
 #include <stdint.h>
 
-
 #include "vikwindow.h"
-
 #include "vikexttool.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
-#define VIK_WEBTOOL_TYPE            (vik_webtool_get_type ())
-#define VIK_WEBTOOL(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_WEBTOOL_TYPE, VikWebtool))
-#define VIK_WEBTOOL_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), VIK_WEBTOOL_TYPE, VikWebtoolClass))
-#define IS_VIK_WEBTOOL(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), VIK_WEBTOOL_TYPE))
-#define IS_VIK_WEBTOOL_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), VIK_WEBTOOL_TYPE))
-#define VIK_WEBTOOL_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), VIK_WEBTOOL_TYPE, VikWebtoolClass))
 
 
-typedef struct _VikWebtool VikWebtool;
-typedef struct _VikWebtoolClass VikWebtoolClass;
+namespace SlavGPS {
 
-struct _VikWebtoolClass {
-	VikExtToolClass object_class;
-	char *(* get_url) (VikWebtool * self, SlavGPS::Window * window);
-	char *(* get_url_at_position) (VikWebtool * self, SlavGPS::Window * window, VikCoord * vc);
-};
 
-GType vik_webtool_get_type();
 
-struct _VikWebtool {
-	VikExtTool obj;
-};
 
-char * vik_webtool_get_url(VikWebtool * self, SlavGPS::Window * vwindow);
-char * vik_webtool_get_url_at_position(VikWebtool *self, SlavGPS::Window * window, VikCoord * vc);
 
-#ifdef __cplusplus
-}
-#endif
+	class WebTool : public External {
 
-#endif
+	public:
+		WebTool();
+		~WebTool();
+
+		void open(Window * window);
+		void open_at_position(Window * window, VikCoord * vc);
+
+		void set_url_format(char const * new_url_format);
+		virtual char * get_url(Window * window) = 0;
+		virtual char * get_url_at_position(Window * window, VikCoord * vc) = 0;
+
+		uint8_t mpp_to_zoom(double mpp);
+
+	protected:
+		char * url_format;
+
+	}; /* class WebTool */
+
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
+
+#endif /* #ifndef _SG_WEBTOOL_H */

@@ -18,47 +18,45 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-#ifndef _VIKING_WEBTOOL_BOUNDS_H
-#define _VIKING_WEBTOOL_BOUNDS_H
+#ifndef _SG_WEBTOOL_BOUNDS_H
+#define _SG_WEBTOOL_BOUNDS_H
 
-#include <glib.h>
-#include <stdint.h>
+
+
 
 
 #include "vikwebtool.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
-#define VIK_WEBTOOL_BOUNDS_TYPE            (vik_webtool_bounds_get_type ())
-#define VIK_WEBTOOL_BOUNDS(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_WEBTOOL_BOUNDS_TYPE, VikWebtoolBounds))
-#define VIK_WEBTOOL_BOUNDS_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), VIK_WEBTOOL_BOUNDS_TYPE, VikWebtoolBoundsClass))
-#define IS_VIK_WEBTOOL_BOUNDS(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), VIK_WEBTOOL_BOUNDS_TYPE))
-#define IS_VIK_WEBTOOL_BOUNDS_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), VIK_WEBTOOL_BOUNDS_TYPE))
-#define VIK_WEBTOOL_BOUNDS_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), VIK_WEBTOOL_BOUNDS_TYPE, VikWebtoolBoundsClass))
 
 
-typedef struct _VikWebtoolBounds VikWebtoolBounds;
-typedef struct _VikWebtoolBoundsClass VikWebtoolBoundsClass;
+namespace SlavGPS {
 
-struct _VikWebtoolBoundsClass
-{
-  VikWebtoolClass object_class;
-};
 
-GType vik_webtool_bounds_get_type ();
 
-struct _VikWebtoolBounds {
-  VikWebtool obj;
-};
 
-VikWebtoolBounds* vik_webtool_bounds_new ( );
-VikWebtoolBounds* vik_webtool_bounds_new_with_members ( const char *label, const char *url );
 
-#ifdef __cplusplus
-}
-#endif
+	class WebToolBounds : public WebTool {
 
-#endif
+	public:
+		WebToolBounds();
+		WebToolBounds(const char * label, const char * url_format);
+		~WebToolBounds();
+
+		char * get_url(Window * window);
+		char * get_url_at_position(Window * window, VikCoord * vc);
+
+	}; /* class WebToolBounds */
+
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
+
+#endif /* #ifndef _SG_WEBTOOL_BOUNDS_H */

@@ -19,93 +19,84 @@
  *
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#include "vikwebtool.h"
-
 #include <string.h>
 #include <stdlib.h>
 
-#include <glib/gi18n.h>
-
 #include "ui_util.h"
+#include "vikwebtool.h"
+#include "maputils.h"
+
+
+
 
 
 using namespace SlavGPS;
 
 
 
-static GObjectClass * parent_class;
 
-static void webtool_finalize(GObject * gob);
 
-static void webtool_open(VikExtTool * self, Window * window);
-static void webtool_open_at_position(VikExtTool * self, Window * window, VikCoord * vc);
-
-G_DEFINE_ABSTRACT_TYPE (VikWebtool, vik_webtool, VIK_EXT_TOOL_TYPE)
-
-static void vik_webtool_class_init(VikWebtoolClass * klass)
+WebTool::WebTool()
 {
-	GObjectClass *object_class;
-	VikExtToolClass *ext_tool_class;
-
-	object_class = G_OBJECT_CLASS (klass);
-
-	object_class->finalize = webtool_finalize;
-
-	parent_class = (GObjectClass *) g_type_class_peek_parent(klass);
-
-	ext_tool_class = VIK_EXT_TOOL_CLASS(klass);
-	ext_tool_class->open = webtool_open;
-	ext_tool_class->open_at_position = webtool_open_at_position;
+	fprintf(stderr, "%s:%d\n", __PRETTY_FUNCTION__, __LINE__);
+	this->url_format = NULL;
 }
 
-VikWebtool * vik_webtool_new()
+
+
+
+
+WebTool::~WebTool()
 {
-	return VIK_WEBTOOL (g_object_new(VIK_WEBTOOL_TYPE, NULL));
+	fprintf(stderr, "%s:%d\n", __PRETTY_FUNCTION__, __LINE__);
+	if (this->url_format) {
+		free(this->url_format);
+		this->url_format = NULL;
+	}
 }
 
-static void vik_webtool_init(VikWebtool * vlp)
-{
-	// NOTHING
-}
 
-static void webtool_finalize(GObject * gob)
-{
-	// VikWebtool * w = VIK_WEBTOOL(gob);
-	G_OBJECT_CLASS(parent_class)->finalize(gob);
-}
 
-static void webtool_open(VikExtTool * self, Window * window)
+
+
+void WebTool::open(Window * window)
 {
-	VikWebtool * vwd = VIK_WEBTOOL(self);
-	char * url = vik_webtool_get_url(vwd, window);
+	char * url = this->get_url(window);
 	open_url(GTK_WINDOW(window->vw), url);
 	free(url);
 }
 
-static void webtool_open_at_position(VikExtTool * self, Window * window, VikCoord * vc)
+
+
+
+
+void WebTool::open_at_position(Window * window, VikCoord * vc)
 {
-	VikWebtool * vwd = VIK_WEBTOOL(self);
-	char * url = vik_webtool_get_url_at_position(vwd, window, vc);
+	char * url = this->get_url_at_position(window, vc);
 	if (url) {
 		open_url(GTK_WINDOW(window->vw), url);
 		free(url);
 	}
 }
 
-char * vik_webtool_get_url(VikWebtool * self, Window * window)
+
+
+
+
+void WebTool::set_url_format(char const * new_url_format)
 {
-	return VIK_WEBTOOL_GET_CLASS( self )->get_url(self, window);
+	if (new_url_format) {
+		free(this->url_format);
+		this->url_format = strdup(new_url_format);
+	}
+	return;
 }
 
-char * vik_webtool_get_url_at_position(VikWebtool * self, Window * window, VikCoord * vc)
+
+
+
+
+uint8_t WebTool::mpp_to_zoom(double mpp)
 {
-	if (VIK_WEBTOOL_GET_CLASS( self )->get_url_at_position) {
-		return VIK_WEBTOOL_GET_CLASS( self )->get_url_at_position(self, window, vc);
-	} else {
-		return NULL;
-	}
+	return map_utils_mpp_to_zoom_level(mpp);
 }

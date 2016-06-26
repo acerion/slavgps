@@ -18,28 +18,37 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-#ifndef _VIKING_EXT_TOOL_DATASOURCES_H
-#define _VIKING_EXT_TOOL_DATASOURCES_H
+#ifndef _SG_EXTERNAL_DATASOURCES_H
+#define _SG_EXTERNAL_DATASOURCES_H
 
 #include <gtk/gtk.h>
 
-
 #include "vikwindow.h"
-
 #include "vikexttool.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
-void vik_ext_tool_datasources_register(VikExtTool * tool);
-void vik_ext_tool_datasources_unregister_all();
-void vik_ext_tool_datasources_add_menu_items_to_menu(SlavGPS::Window * window, GtkMenu * menu);
-void vik_ext_tool_datasources_add_menu_items(SlavGPS::Window * window, GtkUIManager * uim);
 
-#ifdef __cplusplus
-}
-#endif
 
-#endif
+namespace SlavGPS {
+
+
+
+
+
+	void vik_ext_tool_datasources_register(External * ext_tool);
+	void vik_ext_tool_datasources_unregister_all();
+	void vik_ext_tool_datasources_add_menu_items_to_menu(Window * window, GtkMenu * menu);
+	void vik_ext_tool_datasources_add_menu_items(Window * window, GtkUIManager * uim);
+
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
+
+#endif /* #ifndef _SG_EXTERNAL_DATASOURCES_H */

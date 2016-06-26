@@ -23,12 +23,17 @@
 #include "config.h"
 #endif
 
-#include "vikexttools.h"
+
+#include <list>
 
 #include <string.h>
 #include <stdlib.h>
 
 #include <glib/gi18n.h>
+
+#include "vikexttools.h"
+
+
 
 
 
@@ -36,38 +41,55 @@ using namespace SlavGPS;
 
 
 
+
+
 #define VIK_TOOL_DATA_KEY "vik-tool-data"
 #define VIK_TOOL_WIN_KEY "vik-tool-win"
 
-static GList * ext_tools_list = NULL;
+static std::list<External *> ext_tools;
 
-void vik_ext_tools_register(VikExtTool * tool)
+
+
+
+
+void SlavGPS::vik_ext_tools_register(External * ext_tool)
 {
-	if (IS_VIK_EXT_TOOL(tool)) {
-		ext_tools_list = g_list_append(ext_tools_list, g_object_ref(tool));
-	}
+	ext_tools.push_back(ext_tool);
+
 }
+
+
+
+
 
 void vik_ext_tools_unregister_all()
 {
-	g_list_foreach(ext_tools_list, (GFunc) g_object_unref, NULL);
+	for (auto iter = ext_tools.begin(); iter != ext_tools.end(); iter++) {
+		/* kamilFIXME: do something here. */
+		//g_object_unref(*iter);
+	}
 }
+
+
+
+
 
 static void ext_tools_open_cb(GtkWidget * widget, Window * window)
 {
 	void * ptr = g_object_get_data(G_OBJECT(widget), VIK_TOOL_DATA_KEY);
-	VikExtTool * ext_tool = VIK_EXT_TOOL (ptr);
-	vik_ext_tool_open(ext_tool, window);
+	External * ext_tool = (External *) ptr;
+	ext_tool->open(window);
 }
 
-void vik_ext_tools_add_action_items(Window * window, GtkUIManager * uim, GtkActionGroup * action_group, unsigned int mid)
+
+
+
+
+void SlavGPS::vik_ext_tools_add_action_items(Window * window, GtkUIManager * uim, GtkActionGroup * action_group, unsigned int mid)
 {
-	GList *iter;
-	for (iter = ext_tools_list; iter; iter = iter->next) {
-		VikExtTool *ext_tool = NULL;
-		char *label = NULL;
-		ext_tool = VIK_EXT_TOOL (iter->data);
-		label = vik_ext_tool_get_label (ext_tool);
+	for (auto iter = ext_tools.begin(); iter != ext_tools.end(); iter++) {
+		External * ext_tool = *iter;
+		char * label = ext_tool->get_label();
 		if (label) {
 			gtk_ui_manager_add_ui(uim, mid, "/ui/MainMenu/Tools/Exttools",
 					      _(label),
@@ -88,31 +110,36 @@ void vik_ext_tools_add_action_items(Window * window, GtkUIManager * uim, GtkActi
 	}
 }
 
+
+
+
+
 static void ext_tool_open_at_position_cb(GtkWidget * widget, VikCoord * vc)
 {
 	void * ptr = g_object_get_data(G_OBJECT(widget), VIK_TOOL_DATA_KEY);
-	VikExtTool *ext_tool = VIK_EXT_TOOL (ptr);
+	External * ext_tool = (External *) ptr;
 
 	void * wptr = g_object_get_data(G_OBJECT(widget), VIK_TOOL_WIN_KEY);
 	Window * window = (Window *) wptr;
 
-	vik_ext_tool_open_at_position(ext_tool, window, vc);
+	ext_tool->open_at_position(window, vc);
 }
+
+
+
+
 
 /**
  * Add to any menu
  *  mostly for allowing to assign for TrackWaypoint layer menus
  */
-void vik_ext_tools_add_menu_items_to_menu(Window * window, GtkMenu * menu, VikCoord * vc)
+void SlavGPS::vik_ext_tools_add_menu_items_to_menu(Window * window, GtkMenu * menu, VikCoord * vc)
 {
-	for (GList * iter = ext_tools_list; iter; iter = iter->next)  {
-		VikExtTool *ext_tool = NULL;
-		char *label = NULL;
-		ext_tool = VIK_EXT_TOOL (iter->data);
-		label = vik_ext_tool_get_label(ext_tool);
+	for (auto iter = ext_tools.begin(); iter != ext_tools.end(); iter++)  {
+		External * ext_tool = *iter;
+		char * label = ext_tool->get_label();
 		if (label) {
-			GtkWidget * item = NULL;
-			item = gtk_menu_item_new_with_label(_(label));
+			GtkWidget * item = gtk_menu_item_new_with_label(_(label));
 			free(label);
 			label = NULL;
 			// Store some data into the menu entry

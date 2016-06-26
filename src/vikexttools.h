@@ -18,29 +18,39 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-#ifndef _VIKING_EXT_TOOLS_H
-#define _VIKING_EXT_TOOLS_H
+#ifndef _SG_EXTERNAL_TOOLS_H
+#define _SG_EXTERNAL_TOOLS_H
 
-#include <gtk/gtk.h>
 #include <stdint.h>
 
+#include <gtk/gtk.h>
 
 #include "vikwindow.h"
-
 #include "vikexttool.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
-void vik_ext_tools_register(VikExtTool * tool);
-void vik_ext_tools_unregister_all();
-void vik_ext_tools_add_action_items(SlavGPS::Window * window, GtkUIManager * uim, GtkActionGroup * action_group, unsigned int mid);
-void vik_ext_tools_add_menu_items_to_menu(SlavGPS::Window * window, GtkMenu * menu, VikCoord * vc);
 
-#ifdef __cplusplus
-}
-#endif
 
-#endif
+namespace SlavGPS {
+
+
+
+
+
+	void vik_ext_tools_register(External * ext_tool);
+	void vik_ext_tools_unregister_all();
+	void vik_ext_tools_add_action_items(Window * window, GtkUIManager * uim, GtkActionGroup * action_group, unsigned int mid);
+	void vik_ext_tools_add_menu_items_to_menu(Window * window, GtkMenu * menu, VikCoord * vc);
+
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
+
+#endif /* #ifndef _SG_EXTERNAL_TOOLS_H */

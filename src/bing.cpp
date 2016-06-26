@@ -45,8 +45,7 @@ void bing_init () {
 	maps_layer_register_map_source (bing_aerial);
 
 	// Allow opening web location
-	VikWebtoolCenter *webtool = NULL;
-	webtool = vik_webtool_center_new_with_members ( _("Bing"), "http://www.bing.com/maps/?v=2&cp=%s~%s&lvl=%d" );
-	vik_ext_tools_register ( VIK_EXT_TOOL ( webtool ) );
-	g_object_unref ( webtool );
+	WebToolCenter * web_tool = WebToolCenter(_("Bing"), "http://www.bing.com/maps/?v=2&cp=%s~%s&lvl=%d");
+	vik_ext_tools_register(web_tool);
+	//g_object_unref ( webtool );
 }

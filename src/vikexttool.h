@@ -18,50 +18,50 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-#ifndef _VIKING_EXT_TOOL_H
-#define _VIKING_EXT_TOOL_H
-
-#include <glib.h>
+#ifndef _SG_EXTERNAL_H
+#define _SG_EXTERNAL_H
 
 
 #include "vikwindow.h"
 #include "vikcoord.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
-#define VIK_EXT_TOOL_TYPE            (vik_ext_tool_get_type ())
-#define VIK_EXT_TOOL(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_EXT_TOOL_TYPE, VikExtTool))
-#define VIK_EXT_TOOL_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), VIK_EXT_TOOL_TYPE, VikExtToolClass))
-#define IS_VIK_EXT_TOOL(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), VIK_EXT_TOOL_TYPE))
-#define IS_VIK_EXT_TOOL_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), VIK_EXT_TOOL_TYPE))
-#define VIK_EXT_TOOL_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), VIK_EXT_TOOL_TYPE, VikExtToolClass))
 
 
-typedef struct _VikExtTool VikExtTool;
-typedef struct _VikExtToolClass VikExtToolClass;
+namespace SlavGPS {
 
-struct _VikExtToolClass {
-	GObjectClass object_class;
-	char *(* get_label) (VikExtTool * self);
-	void (* open) (VikExtTool *self, SlavGPS::Window * window);
-	void (* open_at_position) (VikExtTool * self, SlavGPS::Window * window, VikCoord * vc);
-};
 
-GType vik_ext_tool_get_type();
 
-struct _VikExtTool {
-	GObject obj;
-};
 
-char * vik_ext_tool_get_label(VikExtTool * self);
-void vik_ext_tool_open(VikExtTool * self, SlavGPS::Window * window);
-void vik_ext_tool_open_at_position(VikExtTool * self, SlavGPS::Window * window, VikCoord * vc);
 
-#ifdef __cplusplus
-}
-#endif
+	class External {
+	public:
+		External();
+		~External();
 
-#endif
+		char * get_label();
+		void set_label(char const * new_label);
+
+		void set_id(int new_id);
+		int get_id();
+
+		virtual void open(Window * window) = 0;
+		virtual void open_at_position(Window * window, VikCoord * vc) = 0;
+
+	protected:
+		int id;
+		char * label;
+	};
+
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
+
+#endif /* #ifndef _SG_EXTERNAL_H */

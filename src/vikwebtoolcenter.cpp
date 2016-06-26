@@ -19,21 +19,20 @@
  *
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 
-#include "vikwebtoolcenter.h"
+
+
 
 #include <string.h>
 #include <stdlib.h>
 
 #include <glib.h>
-#include <glib/gi18n.h>
 
+#include "vikwebtoolcenter.h"
 #include "util.h"
 #include "globals.h"
-#include "maputils.h"
+//#include "maputils.h"
+
 
 
 
@@ -43,155 +42,52 @@ using namespace SlavGPS;
 
 
 
-static GObjectClass *parent_class;
 
-static void webtool_center_finalize(GObject * gob);
-
-static uint8_t webtool_center_mpp_to_zoom(VikWebtool * self, double mpp);
-static char *webtool_center_get_url(VikWebtool * vw, Window * window);
-static char *webtool_center_get_url_at_position(VikWebtool * vw, Window * window, VikCoord * vc);
-
-typedef struct _VikWebtoolCenterPrivate VikWebtoolCenterPrivate;
-
-struct _VikWebtoolCenterPrivate
+WebToolCenter::WebToolCenter()
 {
-	char * url;
-};
+	fprintf(stderr, "%s:%d\n", __PRETTY_FUNCTION__, __LINE__);
 
-#define WEBTOOL_CENTER_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), \
-                                       VIK_WEBTOOL_CENTER_TYPE,          \
-                                       VikWebtoolCenterPrivate))
+	this->url_format = NULL;
+}
 
-G_DEFINE_TYPE (VikWebtoolCenter, vik_webtool_center, VIK_WEBTOOL_TYPE)
 
-enum
+
+
+WebToolCenter::WebToolCenter(char const * new_label, char const * new_url_format)
 {
-	PROP_0,
+	fprintf(stderr, "%s:%d, label = %s\n", __PRETTY_FUNCTION__, __LINE__, new_label);
 
-	PROP_URL,
-};
+	this->label = strdup(new_label);
+	this->url_format = strdup(new_url_format);
+}
 
-static void
-webtool_center_set_property(GObject      * object,
-			    unsigned int   property_id,
-			    const GValue * value,
-			    GParamSpec   * pspec)
+
+
+
+
+WebToolCenter::~WebToolCenter()
 {
-	VikWebtoolCenter * self = VIK_WEBTOOL_CENTER (object);
-	VikWebtoolCenterPrivate * priv = WEBTOOL_CENTER_GET_PRIVATE (self);
+	fprintf(stderr, "%s:%d, label = %s\n", __PRETTY_FUNCTION__, __LINE__, this->label);
 
-	switch (property_id) {
-	case PROP_URL:
-		free(priv->url);
-		priv->url = g_value_dup_string (value);
-		fprintf(stderr, "DEBUG: VikWebtoolCenter.url: %s\n", priv->url);
-		break;
-
-	default:
-		/* We don't have any other property... */
-		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
-		break;
+	if (this->url_format) {
+		free(this->url_format);
+		this->url_format = NULL;
 	}
 }
 
-static void
-webtool_center_get_property(GObject      * object,
-			    unsigned int   property_id,
-			    GValue       * value,
-			    GParamSpec   * pspec)
+
+
+
+
+char * WebToolCenter::get_url_at_position(Window * window, VikCoord * vc)
 {
-	VikWebtoolCenter * self = VIK_WEBTOOL_CENTER (object);
-	VikWebtoolCenterPrivate * priv = WEBTOOL_CENTER_GET_PRIVATE (self);
+	fprintf(stderr, "%s:%d: called()\n", __PRETTY_FUNCTION__, __LINE__);
 
-	switch (property_id) {
-	case PROP_URL:
-		g_value_set_string(value, priv->url);
-		break;
-
-	default:
-		/* We don't have any other property... */
-		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
-		break;
-	}
-}
-
-static void
-vik_webtool_center_class_init(VikWebtoolCenterClass * klass)
-{
-	GObjectClass * gobject_class;
-	VikWebtoolClass * base_class;
-	GParamSpec * pspec;
-
-	gobject_class = G_OBJECT_CLASS (klass);
-
-	gobject_class->finalize = webtool_center_finalize;
-	gobject_class->set_property = webtool_center_set_property;
-	gobject_class->get_property = webtool_center_get_property;
-
-	pspec = g_param_spec_string("url",
-				    "Template Url",
-				    "Set the template url",
-				    VIKING_URL /* default value */,
-				    (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
-	g_object_class_install_property(gobject_class,
-					PROP_URL,
-					pspec);
-
-	parent_class = (GObjectClass *) g_type_class_peek_parent (klass);
-
-	base_class = VIK_WEBTOOL_CLASS (klass);
-	base_class->get_url = webtool_center_get_url;
-	base_class->get_url_at_position = webtool_center_get_url_at_position;
-
-	klass->mpp_to_zoom = webtool_center_mpp_to_zoom;
-
-	g_type_class_add_private(klass, sizeof (VikWebtoolCenterPrivate));
-}
-
-VikWebtoolCenter * vik_webtool_center_new()
-{
-	return VIK_WEBTOOL_CENTER (g_object_new(VIK_WEBTOOL_CENTER_TYPE, NULL));
-}
-
-VikWebtoolCenter * vik_webtool_center_new_with_members(char const * label, char const * url)
-{
-	VikWebtoolCenter *result = VIK_WEBTOOL_CENTER (g_object_new(VIK_WEBTOOL_CENTER_TYPE,
-								    "label", label,
-								    "url", url,
-								    NULL));
-
-	return result;
-}
-
-static void
-vik_webtool_center_init(VikWebtoolCenter * self)
-{
-	VikWebtoolCenterPrivate * priv = WEBTOOL_CENTER_GET_PRIVATE (self);
-	priv->url = NULL;
-}
-
-static void webtool_center_finalize(GObject * gob)
-{
-	VikWebtoolCenterPrivate * priv = WEBTOOL_CENTER_GET_PRIVATE (gob);
-	free(priv->url); priv->url = NULL;
-	G_OBJECT_CLASS(parent_class)->finalize(gob);
-}
-
-static uint8_t webtool_center_mpp_to_zoom(VikWebtool * self, double mpp)
-{
-	return map_utils_mpp_to_zoom_level(mpp);
-}
-
-static char * webtool_center_get_url_at_position(VikWebtool * self, Window * window, VikCoord * vc)
-{
-	VikWebtoolCenterPrivate * priv = NULL;
-	Viewport * viewport = NULL;
 	uint8_t zoom = 17;
 	struct LatLon ll;
 	char strlat[G_ASCII_DTOSTR_BUF_SIZE], strlon[G_ASCII_DTOSTR_BUF_SIZE];
 
-	priv = WEBTOOL_CENTER_GET_PRIVATE (self);
-	viewport = window->get_viewport();
+	Viewport * viewport = window->get_viewport();
 	// Coords
 	// Use the provided position otherwise use center of the viewport
 	if (vc) {
@@ -204,7 +100,7 @@ static char * webtool_center_get_url_at_position(VikWebtool * self, Window * win
 
 	// zoom - ideally x & y factors need to be the same otherwise use the default
 	if (viewport->get_xmpp() == viewport->get_ympp()) {
-		zoom = vik_webtool_center_mpp_to_zoom(self, viewport->get_zoom());
+		zoom = this->mpp_to_zoom(viewport->get_zoom());
 	}
 
 	// Cannot simply use g_strdup_printf and double due to locale.
@@ -212,15 +108,14 @@ static char * webtool_center_get_url_at_position(VikWebtool * self, Window * win
 	g_ascii_dtostr(strlat, G_ASCII_DTOSTR_BUF_SIZE, ll.lat);
 	g_ascii_dtostr(strlon, G_ASCII_DTOSTR_BUF_SIZE, ll.lon);
 
-	return g_strdup_printf(priv->url, strlat, strlon, zoom);
+	return g_strdup_printf(this->url_format, strlat, strlon, zoom);
 }
 
-static char * webtool_center_get_url(VikWebtool * self, Window * window)
-{
-	return webtool_center_get_url_at_position(self, window, NULL);
-}
 
-uint8_t vik_webtool_center_mpp_to_zoom(VikWebtool * self, double mpp)
+
+
+
+char * WebToolCenter::get_url(Window * window)
 {
-	return VIK_WEBTOOL_CENTER_GET_CLASS(self)->mpp_to_zoom(self, mpp);
+	return this->get_url_at_position(window, NULL);
 }

@@ -19,16 +19,13 @@
  *
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#include "vikexttool.h"
 
 #include <string.h>
 #include <stdlib.h>
 
-#include <glib/gi18n.h>
+#include "vikexttool.h"
+
+
 
 
 
@@ -36,155 +33,65 @@ using namespace SlavGPS;
 
 
 
-static GObjectClass * parent_class;
 
-static void ext_tool_finalize(GObject * gob);
-static char *ext_tool_get_label(VikExtTool * vw);
 
-typedef struct _VikExtToolPrivate VikExtToolPrivate;
-
-struct _VikExtToolPrivate
+External::External()
 {
-	int   id;
-	char *label;
-};
+	this->label = strdup("<no-set>");
+	this->id = 0;
 
-#define EXT_TOOL_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), \
-							      VIK_EXT_TOOL_TYPE, \
-							      VikExtToolPrivate))
+	fprintf(stderr, "%s:%d, label = %s\n", __PRETTY_FUNCTION__, __LINE__, this->label);
+}
 
-G_DEFINE_ABSTRACT_TYPE (VikExtTool, vik_ext_tool, G_TYPE_OBJECT)
 
-enum {
-	PROP_0,
 
-	PROP_ID,
-	PROP_LABEL,
-};
 
-static void
-ext_tool_set_property(GObject      * object,
-                      unsigned int   property_id,
-                      const GValue * value,
-                      GParamSpec   * pspec)
+
+External::~External()
 {
-	VikExtTool *self = VIK_EXT_TOOL (object);
-	VikExtToolPrivate *priv = EXT_TOOL_GET_PRIVATE (self);
+	fprintf(stderr, "%s:%d, label = %s\n", __PRETTY_FUNCTION__, __LINE__, this->label);
 
-	switch (property_id) {
-	case PROP_ID:
-		priv->id = g_value_get_uint(value);
-		fprintf(stderr, "DEBUG: VikExtTool.id: %d\n", priv->id);
-		break;
+	free(this->label);
+	this->label = NULL;
+}
 
-	case PROP_LABEL:
-		free(priv->label);
-		priv->label = g_value_dup_string(value);
-		fprintf(stderr, "DEBUG: VikExtTool.label: %s\n", priv->label);
-		break;
 
-	default:
-		/* We don't have any other property... */
-		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
-		break;
+
+
+
+char * External::get_label()
+{
+	return g_strdup(this->label);
+}
+
+
+
+
+
+void External::set_label(char const * new_label)
+{
+	if (new_label) {
+		free(this->label);
+		this->label = strdup(new_label);
 	}
+	return;
 }
 
-static void
-ext_tool_get_property(GObject      * object,
-                      unsigned int   property_id,
-                      GValue       * value,
-                      GParamSpec   * pspec)
+
+
+
+
+void External::set_id(int new_id)
 {
-	VikExtTool * self = VIK_EXT_TOOL (object);
-	VikExtToolPrivate * priv = EXT_TOOL_GET_PRIVATE (self);
-
-	switch (property_id) {
-	case PROP_ID:
-		g_value_set_uint(value, priv->id);
-		break;
-
-	case PROP_LABEL:
-		g_value_set_string(value, priv->label);
-		break;
-
-	default:
-		/* We don't have any other property... */
-		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
-		break;
-    }
+	this->id = new_id;
+	return;
 }
 
-static void vik_ext_tool_class_init(VikExtToolClass * klass)
+
+
+
+
+int External::get_id()
 {
-	GObjectClass * gobject_class;
-	GParamSpec *pspec;
-
-	gobject_class = G_OBJECT_CLASS (klass);
-	gobject_class->finalize = ext_tool_finalize;
-	gobject_class->set_property = ext_tool_set_property;
-	gobject_class->get_property = ext_tool_get_property;
-
-	pspec = g_param_spec_string("label",
-				    "Label",
-				    "Set the label",
-				    "<no-set>" /* default value */,
-				    (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
-	g_object_class_install_property(gobject_class,
-					PROP_LABEL,
-					pspec);
-
-	pspec = g_param_spec_uint("id",
-				  "Id of the tool",
-				  "Set the id",
-				  0  /* minimum value */,
-				  G_MAXUINT16 /* maximum value */,
-				  0  /* default value */,
-				  (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
-	g_object_class_install_property(gobject_class,
-					PROP_ID,
-					pspec);
-
-	klass->get_label = ext_tool_get_label;
-
-	parent_class = (GObjectClass *) g_type_class_peek_parent(klass);
-
-	g_type_class_add_private(klass, sizeof (VikExtToolPrivate));
-}
-
-static void vik_ext_tool_init(VikExtTool * self)
-{
-	VikExtToolPrivate * priv = EXT_TOOL_GET_PRIVATE (self);
-	priv->label = NULL;
-}
-
-static void ext_tool_finalize(GObject * gob)
-{
-	VikExtToolPrivate * priv = EXT_TOOL_GET_PRIVATE (gob);
-	free(priv->label); priv->label = NULL;
-	G_OBJECT_CLASS(parent_class)->finalize(gob);
-}
-
-static char * ext_tool_get_label(VikExtTool * self)
-{
-	VikExtToolPrivate * priv = NULL;
-	priv = EXT_TOOL_GET_PRIVATE (self);
-	return g_strdup(priv->label);
-}
-
-char * vik_ext_tool_get_label(VikExtTool * w)
-{
-	return VIK_EXT_TOOL_GET_CLASS(w)->get_label(w);
-}
-
-void vik_ext_tool_open(VikExtTool * self, Window * window)
-{
-	VIK_EXT_TOOL_GET_CLASS(self)->open(self, window);
-}
-
-void vik_ext_tool_open_at_position(VikExtTool * self, Window * window, VikCoord * vc)
-{
-	if (VIK_EXT_TOOL_GET_CLASS(self)->open_at_position) {
-		VIK_EXT_TOOL_GET_CLASS(self)->open_at_position(self, window, vc);
-	}
+	return this->id;
 }
