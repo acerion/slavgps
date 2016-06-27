@@ -18,55 +18,59 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-#ifndef _VIKING_GOTO_TOOL_H
-#define _VIKING_GOTO_TOOL_H
+#ifndef _SG_GOTO_TOOL_H
+#define _SG_GOTO_TOOL_H
 
-#include <glib.h>
+
+
+
+
 #include <stdint.h>
 
-
+#include "coords.h"
+#include "vikviewport.h"
 #include "vikwindow.h"
 #include "download.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
-#define VIK_GOTO_TOOL_TYPE            (vik_goto_tool_get_type ())
-#define VIK_GOTO_TOOL(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_GOTO_TOOL_TYPE, VikGotoTool))
-#define VIK_GOTO_TOOL_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), VIK_GOTO_TOOL_TYPE, VikGotoToolClass))
-#define IS_VIK_GOTO_TOOL(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), VIK_GOTO_TOOL_TYPE))
-#define IS_VIK_GOTO_TOOL_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), VIK_GOTO_TOOL_TYPE))
-#define VIK_GOTO_TOOL_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), VIK_GOTO_TOOL_TYPE, VikGotoToolClass))
 
 
-typedef struct _VikGotoTool VikGotoTool;
-typedef struct _VikGotoToolClass VikGotoToolClass;
+namespace SlavGPS {
 
-struct _VikGotoToolClass
-{
-  GObjectClass object_class;
-  char *(* get_label) (VikGotoTool *self);
-  char *(* get_url_format) (VikGotoTool *self);
-  DownloadFileOptions *(* get_download_options) (VikGotoTool *self);
-  bool (* parse_file_for_latlon) (VikGotoTool *self, char *filename, struct LatLon *ll);
-};
 
-GType vik_goto_tool_get_type ();
 
-struct _VikGotoTool {
-  GObject obj;
-};
 
-char *vik_goto_tool_get_label ( VikGotoTool *self );
-char *vik_goto_tool_get_url_format ( VikGotoTool *self );
-DownloadFileOptions *vik_goto_tool_get_download_options ( VikGotoTool *self );
-bool vik_goto_tool_parse_file_for_latlon ( VikGotoTool *self, char *filename, struct LatLon *ll );
-int vik_goto_tool_get_coord ( VikGotoTool *self, SlavGPS::Window * window, SlavGPS::Viewport * viewport, char *srch_str, VikCoord *coord );
 
-#ifdef __cplusplus
-}
-#endif
+	class GotoTool {
 
-#endif
+	public:
+		GotoTool();
+		GotoTool(char const * label);
+		~GotoTool();
+
+		virtual char * get_label();
+		virtual char * get_url_format() = 0;
+		virtual DownloadFileOptions * get_download_options();
+		virtual bool parse_file_for_latlon(char * filename, struct LatLon * ll) = 0;
+
+		int get_coord(Window * window, Viewport * viewport, char * srch_str, VikCoord * coord);
+
+	protected:
+
+		int id;
+		char * label;
+
+	}; /* class GotoTool */
+
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
+
+#endif /* #ifndef _SG_GOTO_TOOL_H */

@@ -22,26 +22,45 @@
 #ifndef __VIK_SEARCH_H
 #define __VIK_SEARCH_H
 
+
+
+
+
 #include <stdint.h>
 
 #include "vikwindow.h"
 #include "vikviewport.h"
 #include "vikgototool.h"
 
+
+
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 
-void vik_goto_register (VikGotoTool *tool);
-void vik_goto_unregister_all (void);
 
-int a_vik_goto_where_am_i(SlavGPS::Viewport * viewport, struct LatLon *ll, char **name );
+
+
+void vik_goto_register(SlavGPS::GotoTool * tool);
+void vik_goto_unregister_all(void);
+
+int a_vik_goto_where_am_i(SlavGPS::Viewport * viewport, struct LatLon * ll, char ** name);
 void a_vik_goto(SlavGPS::Window * window, SlavGPS::Viewport * viewport);
 char * a_vik_goto_get_search_string_for_this_place(SlavGPS::Window * window);
+
+
+
+
 
 #ifdef __cplusplus
 }
 #endif
+
+
+
+
 
 #endif

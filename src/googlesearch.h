@@ -18,48 +18,45 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-#ifndef __VIK_GOOGLEGOTO_H
-#define __VIK_GOOGLEGOTO_H
-
-#include <glib.h>
-#include <stdint.h>
+#ifndef __SG_GOTO_TOOL_GOOGLE_H
+#define __SG_GOTO_TOOL_GOOGLE_H
 
 
-#include "vikwindow.h"
+
+
 
 #include "vikgototool.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
-#define GOOGLE_GOTO_TOOL_TYPE            (google_goto_tool_get_type ())
-#define GOOGLE_GOTO_TOOL(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GOOGLE_GOTO_TOOL_TYPE, GoogleGotoTool))
-#define GOOGLE_GOTO_TOOL_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GOOGLE_GOTO_TOOL_TYPE, GoogleGotoToolClass))
-#define IS_GOOGLE_GOTO_TOOL(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GOOGLE_GOTO_TOOL_TYPE))
-#define IS_GOOGLE_GOTO_TOOL_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GOOGLE_GOTO_TOOL_TYPE))
-#define GOOGLE_GOTO_TOOL_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GOOGLE_GOTO_TOOL_TYPE, GoogleGotoToolClass))
 
 
-typedef struct _GoogleGotoTool GoogleGotoTool;
-typedef struct _GoogleGotoToolClass GoogleGotoToolClass;
+namespace SlavGPS {
 
-struct _GoogleGotoToolClass
-{
-	VikGotoToolClass object_class;
-};
 
-GType google_goto_tool_get_type();
 
-struct _GoogleGotoTool {
-	VikGotoTool obj;
-};
 
-GoogleGotoTool * google_goto_tool_new();
 
-#ifdef __cplusplus
-}
-#endif
+	class GotoToolGoogle : public GotoTool {
 
-#endif
+	public:
+		GotoToolGoogle();
+		~GotoToolGoogle();
+
+		bool parse_file_for_latlon(char * file_name, struct LatLon * ll);
+		char * get_url_format();
+		DownloadFileOptions * get_download_options();
+
+	}; /* class GotoToolGoogle */
+
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
+
+#endif /* #ifndef __SG_GOTO_TOOL_GOOGLE_H */

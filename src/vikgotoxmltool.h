@@ -19,48 +19,64 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-#ifndef __VIK_GOTO_XML_TOOL_H
-#define __VIK_GOTO_XML_TOOL_H
-
-#include <glib.h>
-#include <stdint.h>
+#ifndef __SG_GOTO_TOOL_XML_H
+#define __SG_GOTO_TOOL_XML_H
 
 
-#include "vikwindow.h"
+
+
 
 #include "vikgototool.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "coords.h"
 
 
-#define VIK_GOTO_XML_TOOL_TYPE            (vik_goto_xml_tool_get_type ())
-#define VIK_GOTO_XML_TOOL(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_GOTO_XML_TOOL_TYPE, VikGotoXmlTool))
-#define VIK_GOTO_XML_TOOL_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), VIK_GOTO_XML_TOOL_TYPE, VikGotoXmlToolClass))
-#define IS_VIK_GOTO_XML_TOOL(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), VIK_GOTO_XML_TOOL_TYPE))
-#define IS_VIK_GOTO_XML_TOOL_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), VIK_GOTO_XML_TOOL_TYPE))
-#define VIK_GOTO_XML_TOOL_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), VIK_GOTO_XML_TOOL_TYPE, VikGotoXmlToolClass))
 
 
-typedef struct _VikGotoXmlTool VikGotoXmlTool;
-typedef struct _VikGotoXmlToolClass VikGotoXmlToolClass;
+namespace SlavGPS {
 
-struct _VikGotoXmlToolClass
-{
-  VikGotoToolClass object_class;
-};
 
-GType vik_goto_xml_tool_get_type ();
 
-struct _VikGotoXmlTool {
-  VikGotoTool obj;
-};
 
-VikGotoXmlTool *vik_goto_xml_tool_new ();
 
-#ifdef __cplusplus
-}
-#endif
+	class GotoToolXML : public GotoTool {
 
-#endif
+	public:
+
+		GotoToolXML();
+		GotoToolXML(char const * new_label, char const * new_url_format, char const * new_lan_path, char const * new_lon_path);
+		GotoToolXML(char const * new_label, char const * new_url_format, char const * new_lat_path, char const * new_lat_attr, char const * new_lon_path, char const * new_lon_attr);
+		~GotoToolXML();
+
+		char * get_url_format();
+		bool parse_file_for_latlon(char * filename, struct LatLon * ll);
+
+
+		void set_url_format(char const * new_format);
+		void set_lat_path(char const * new_value);
+		void set_lat_attr(char const * new_value);
+		void set_lon_path(char const * new_value);
+		void set_lon_attr(char const * new_value);
+
+
+		/* This should be private. */
+		char * url_format; /* The format of the URL */
+		char * lat_path;   /* XPath of the latitude */
+		char * lat_attr;   /* XML attribute of the latitude. */
+		char * lon_path;   /* XPath of the longitude. */
+		char * lon_attr;   /* XML attribute of the longitude. */
+
+		struct LatLon ll;
+
+	}; /* class GotoToolXML */
+
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
+
+#endif /* #ifndef __SG_GOTO_TOOL_XML_H */

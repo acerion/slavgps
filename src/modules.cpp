@@ -97,12 +97,11 @@ static void modules_register_datasources(VikGobjectBuilder *self, GObject *objec
 	vik_ext_tool_datasources_register(ext_tool);
 }
 
-static void
-modules_register_gototools(VikGobjectBuilder *self, GObject *object)
+static void modules_register_gototools(VikGobjectBuilder * self, GObject * object)
 {
-  fprintf(stderr, "DEBUG: %s\n", __FUNCTION__);
-  VikGotoTool *tool = VIK_GOTO_TOOL (object);
-  vik_goto_register (tool);
+	fprintf(stderr, "DEBUG: %s\n", __FUNCTION__);
+	GotoTool * goto_tool = (GotoTool *) object;
+	vik_goto_register(goto_tool);
 }
 
 static void
