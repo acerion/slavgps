@@ -43,43 +43,43 @@ extern "C" {
 
 
 typedef struct {
-  unsigned int n_columns;
-  GPtrArray *columns;
+	unsigned int n_columns;
+	GPtrArray * columns;
 
-  uint8_t horiz_units;
-  uint8_t orig_vert_units; /* original, always converted to meters when loading. */
-  double east_scale; /* gap between samples */
-  double north_scale;
+	uint8_t horiz_units;
+	uint8_t orig_vert_units; /* original, always converted to meters when loading. */
+	double east_scale; /* gap between samples */
+	double north_scale;
 
-  double min_east, min_north, max_east, max_north;
+	double min_east, min_north, max_east, max_north;
 
-  uint8_t utm_zone;
-  char utm_letter;
+	uint8_t utm_zone;
+	char utm_letter;
 } VikDEM;
 
 typedef struct {
-  /* east-west coordinate for ALL items in the column */
-  double east_west;
+	/* east-west coordinate for ALL items in the column */
+	double east_west;
 
-  /* coordinate of northern and southern boundaries */
-  double south;
-//  double north;
+	/* coordinate of northern and southern boundaries */
+	double south;
+	//  double north;
 
-  unsigned int n_points;
-  int16_t *points;
+	unsigned int n_points;
+	int16_t * points;
 } VikDEMColumn;
 
 
-VikDEM *vik_dem_new_from_file(const char *file);
-void vik_dem_free ( VikDEM *dem );
-int16_t vik_dem_get_xy ( VikDEM *dem, unsigned int x, unsigned int y );
+VikDEM * vik_dem_new_from_file(const char * file);
+void vik_dem_free(VikDEM * dem);
+int16_t vik_dem_get_xy(VikDEM * dem, unsigned int x, unsigned int y);
 
-int16_t vik_dem_get_east_north ( VikDEM *dem, double east, double north );
-int16_t vik_dem_get_simple_interpol ( VikDEM *dem, double east, double north );
-int16_t vik_dem_get_shepard_interpol ( VikDEM *dem, double east, double north );
-int16_t vik_dem_get_best_interpol ( VikDEM *dem, double east, double north );
+int16_t vik_dem_get_east_north(VikDEM * dem, double east, double north);
+int16_t vik_dem_get_simple_interpol(VikDEM * dem, double east, double north);
+int16_t vik_dem_get_shepard_interpol(VikDEM * dem, double east, double north);
+int16_t vik_dem_get_best_interpol(VikDEM * dem, double east, double north);
 
-void vik_dem_east_north_to_xy ( VikDEM *dem, double east, double north, unsigned int *col, unsigned int *row );
+void vik_dem_east_north_to_xy(VikDEM * dem, double east, double north, unsigned int * col, unsigned int * row);
 
 #ifdef __cplusplus
 }

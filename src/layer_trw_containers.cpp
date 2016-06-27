@@ -287,8 +287,7 @@ GList * LayerTRWc::find_tracks_with_timestamp_type(std::unordered_map<sg_uid_t, 
 				if (!p1->has_timestamp || !p2->has_timestamp) {
 					continue;
 				}
-			}
-			else {
+			} else {
 				// Don't add tracks with timestamps when getting non timestamp tracks
 				if (p1->has_timestamp || p2->has_timestamp) {
 					continue;

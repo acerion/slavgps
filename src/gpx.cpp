@@ -441,12 +441,12 @@ static void gpx_end(LayerTRW * trw, char const * el)
 		break;
 
 	case tt_wpt_ele:
-		c_wp->altitude = g_ascii_strtod (c_cdata->str, NULL);
+		c_wp->altitude = g_ascii_strtod(c_cdata->str, NULL);
 		g_string_erase(c_cdata, 0, -1);
 		break;
 
 	case tt_trk_trkseg_trkpt_ele:
-		c_tp->altitude = g_ascii_strtod (c_cdata->str, NULL);
+		c_tp->altitude = g_ascii_strtod(c_cdata->str, NULL);
 		g_string_erase(c_cdata, 0, -1);
 		break;
 
@@ -529,12 +529,12 @@ static void gpx_end(LayerTRW * trw, char const * el)
 		break;
 
 	case tt_trk_trkseg_trkpt_course:
-		c_tp->course = g_ascii_strtod (c_cdata->str, NULL);
+		c_tp->course = g_ascii_strtod(c_cdata->str, NULL);
 		g_string_erase(c_cdata, 0, -1);
 		break;
 
 	case tt_trk_trkseg_trkpt_speed:
-		c_tp->speed = g_ascii_strtod (c_cdata->str, NULL);
+		c_tp->speed = g_ascii_strtod(c_cdata->str, NULL);
 		g_string_erase(c_cdata, 0, -1);
 		break;
 
@@ -554,29 +554,29 @@ static void gpx_end(LayerTRW * trw, char const * el)
 		break;
 
 	case tt_trk_trkseg_trkpt_sat:
-		c_tp->nsats = atoi (c_cdata->str);
+		c_tp->nsats = atoi(c_cdata->str);
 		g_string_erase(c_cdata, 0, -1);
 		break;
 
 	case tt_trk_trkseg_trkpt_hdop:
-		c_tp->hdop = g_strtod (c_cdata->str, NULL);
+		c_tp->hdop = g_strtod(c_cdata->str, NULL);
 		g_string_erase(c_cdata, 0, -1);
 		break;
 
 	case tt_trk_trkseg_trkpt_vdop:
-		c_tp->vdop = g_strtod (c_cdata->str, NULL);
+		c_tp->vdop = g_strtod(c_cdata->str, NULL);
 		g_string_erase(c_cdata, 0, -1);
 		break;
 
 	case tt_trk_trkseg_trkpt_pdop:
-		c_tp->pdop = g_strtod (c_cdata->str, NULL);
+		c_tp->pdop = g_strtod(c_cdata->str, NULL);
 		g_string_erase(c_cdata, 0, -1);
 		break;
 
 	default: break;
 	}
 
-	current_tag = get_tag (xpath->str);
+	current_tag = get_tag(xpath->str);
 }
 
 static void gpx_cdata(void * dta, const XML_Char * s, int len)
@@ -833,7 +833,7 @@ static void gpx_write_waypoint(Waypoint * wp, GpxWritingContext * context)
 	static struct LatLon ll;
 	char *s_lat,*s_lon;
 	char *tmp;
-	vik_coord_to_latlon (&(wp->coord), &ll);
+	vik_coord_to_latlon(&(wp->coord), &ll);
 	s_lat = a_coords_dtostr(ll.lat);
 	s_lon = a_coords_dtostr(ll.lon);
 	// NB 'hidden' is not part of any GPX standard - this appears to be a made up Viking 'extension'
@@ -1000,7 +1000,7 @@ static void gpx_write_trackpoint(Trackpoint * tp, GpxWritingContext * context)
 
 	s_dop = NULL;
 	if (tp->hdop != VIK_DEFAULT_DOP) {
-		s_dop = a_coords_dtostr (tp->hdop);
+		s_dop = a_coords_dtostr(tp->hdop);
 	}
 	if (s_dop != NULL) {
 		fprintf(f, "    <hdop>%s</hdop>\n", s_dop);
@@ -1008,7 +1008,7 @@ static void gpx_write_trackpoint(Trackpoint * tp, GpxWritingContext * context)
 	free(s_dop); s_dop = NULL;
 
 	if (tp->vdop != VIK_DEFAULT_DOP) {
-		s_dop = a_coords_dtostr (tp->vdop);
+		s_dop = a_coords_dtostr(tp->vdop);
 	}
 	if (s_dop != NULL) {
 		fprintf(f, "    <vdop>%s</vdop>\n", s_dop);
@@ -1055,25 +1055,25 @@ static void gpx_write_track(Track * trk, GpxWritingContext * context)
 	free(tmp);
 
 	if (trk->comment) {
-		tmp = entitize (trk->comment);
+		tmp = entitize(trk->comment);
 		fprintf(f, "  <cmt>%s</cmt>\n", tmp);
 		free(tmp);
 	}
 
 	if (trk->description) {
-		tmp = entitize (trk->description);
+		tmp = entitize(trk->description);
 		fprintf(f, "  <desc>%s</desc>\n", tmp);
 		free(tmp);
 	}
 
 	if (trk->source) {
-		tmp = entitize (trk->source);
+		tmp = entitize(trk->source);
 		fprintf(f, "  <src>%s</src>\n", tmp);
 		free(tmp);
 	}
 
 	if (trk->type) {
-		tmp = entitize (trk->type);
+		tmp = entitize(trk->type);
 		fprintf(f, "  <type>%s</type>\n", tmp);
 		free(tmp);
 	}
@@ -1195,9 +1195,9 @@ void a_gpx_write_file(LayerTRW * trw, FILE * f, GpxWritingOptions * options)
 
 		// Sort method determined by preference
 		if (a_vik_get_gpx_export_trk_sort() == VIK_GPX_EXPORT_TRK_SORT_TIME) {
-			gl = g_list_sort (gl, Track::compare_timestamp);
+			gl = g_list_sort(gl, Track::compare_timestamp);
 		} else if (a_vik_get_gpx_export_trk_sort() == VIK_GPX_EXPORT_TRK_SORT_ALPHA) {
-			gl = g_list_sort (gl, gpx_track_compare_name);
+			gl = g_list_sort(gl, gpx_track_compare_name);
 		} else {
 			;
 		}
@@ -1303,7 +1303,7 @@ char * a_gpx_write_tmp_file(LayerTRW * trw, GpxWritingOptions * options)
  *          This file should be removed once used and the string freed.
  *          If NULL then the process failed.
  */
-char * a_gpx_write_track_tmp_file (Track * trk, GpxWritingOptions * options)
+char * a_gpx_write_track_tmp_file(Track * trk, GpxWritingOptions * options)
 {
 	return write_tmp_file(NULL, trk, options);
 }

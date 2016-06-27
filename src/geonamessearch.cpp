@@ -68,421 +68,429 @@ using namespace SlavGPS;
 /* found_geoname: Type to contain data returned from GeoNames.org */
 
 typedef struct {
-  char *name;
-  char *feature;
-  struct LatLon ll;
-  double elevation;
-  char *cmt;
-  char *desc;
+	char * name;
+	char * feature;
+	struct LatLon ll;
+	double elevation;
+	char * cmt;
+	char * desc;
 } found_geoname;
 
-static found_geoname *new_found_geoname()
+static found_geoname * new_found_geoname()
 {
-  found_geoname *ret;
+	found_geoname * ret;
 
-  ret = (found_geoname *)malloc(sizeof(found_geoname));
-  ret->name = NULL;
-  ret->feature = NULL;
-  ret->cmt = NULL;
-  ret->desc = NULL;
-  ret->ll.lat = 0.0;
-  ret->ll.lon = 0.0;
-  ret->elevation = VIK_DEFAULT_ALTITUDE;
-  return ret;
+	ret = (found_geoname *)malloc(sizeof(found_geoname));
+	ret->name = NULL;
+	ret->feature = NULL;
+	ret->cmt = NULL;
+	ret->desc = NULL;
+	ret->ll.lat = 0.0;
+	ret->ll.lon = 0.0;
+	ret->elevation = VIK_DEFAULT_ALTITUDE;
+	return ret;
 }
 
-static found_geoname *copy_found_geoname(found_geoname *src)
+static found_geoname * copy_found_geoname(found_geoname * src)
 {
-  found_geoname *dest = new_found_geoname();
-  dest->name = g_strdup(src->name);
-  dest->feature = g_strdup(src->feature);
-  dest->ll.lat = src->ll.lat;
-  dest->ll.lon = src->ll.lon;
-  dest->elevation = src->elevation;
-  dest->cmt = g_strdup(src->cmt);
-  dest->desc = g_strdup(src->desc);
-  return(dest);
+	found_geoname * dest = new_found_geoname();
+	dest->name = g_strdup(src->name);
+	dest->feature = g_strdup(src->feature);
+	dest->ll.lat = src->ll.lat;
+	dest->ll.lon = src->ll.lon;
+	dest->elevation = src->elevation;
+	dest->cmt = g_strdup(src->cmt);
+	dest->desc = g_strdup(src->desc);
+	return(dest);
 }
 
-static void free_list_geonames(found_geoname *geoname, void * userdata)
+static void free_list_geonames(found_geoname * geoname, void * userdata)
 {
-  free(geoname->name);
-  free(geoname->feature);
-  free(geoname->cmt);
-  free(geoname->desc);
+	free(geoname->name);
+	free(geoname->feature);
+	free(geoname->cmt);
+	free(geoname->desc);
 }
 
-static void free_geoname_list(GList *found_places)
+static void free_geoname_list(GList * found_places)
 {
-  g_list_foreach(found_places, (GFunc)free_list_geonames, NULL);
-  g_list_free(found_places);
+	g_list_foreach(found_places, (GFunc)free_list_geonames, NULL);
+	g_list_free(found_places);
 }
 
 static void none_found(Window * window)
 {
-  GtkWidget *dialog = NULL;
+	GtkWidget *dialog = NULL;
 
-  dialog = gtk_dialog_new_with_buttons ( "", GTK_WINDOW(window->vw), (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, NULL );
-  gtk_window_set_title(GTK_WINDOW(dialog), _("Search"));
+	dialog = gtk_dialog_new_with_buttons("", GTK_WINDOW(window->vw), (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, NULL);
+	gtk_window_set_title(GTK_WINDOW(dialog), _("Search"));
 
-  GtkWidget *search_label = gtk_label_new(_("No entries found!"));
-  gtk_box_pack_start ( GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), search_label, false, false, 5 );
-  gtk_dialog_set_default_response ( GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT );
-  gtk_widget_show_all(dialog);
+	GtkWidget *search_label = gtk_label_new(_("No entries found!"));
+	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), search_label, false, false, 5);
+	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
+	gtk_widget_show_all(dialog);
 
-  gtk_dialog_run ( GTK_DIALOG(dialog) );
-  gtk_widget_destroy(dialog);
+	gtk_dialog_run(GTK_DIALOG(dialog));
+	gtk_widget_destroy(dialog);
 }
 
-static GList *a_select_geoname_from_list(GtkWindow *parent, GList *geonames, bool multiple_selection_allowed, const char *title, const char *msg)
+static GList * a_select_geoname_from_list(GtkWindow * parent, GList * geonames, bool multiple_selection_allowed, const char * title, const char * msg)
 {
-  GtkTreeIter iter;
-  GtkCellRenderer *renderer;
-  GtkWidget *view;
-  found_geoname *geoname;
-  char *latlon_string;
-  int column_runner;
+	GtkTreeIter iter;
+	GtkCellRenderer * renderer;
+	GtkWidget *view;
+	found_geoname * geoname;
+	char * latlon_string;
+	int column_runner;
 
-  GtkWidget *dialog = gtk_dialog_new_with_buttons (title,
-                                                  parent,
-						   (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
-                                                  GTK_STOCK_CANCEL,
-                                                  GTK_RESPONSE_REJECT,
-                                                  GTK_STOCK_OK,
-                                                  GTK_RESPONSE_ACCEPT,
-                                                  NULL);
-  /* When something is selected then OK */
-  gtk_dialog_set_default_response ( GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT );
-  GtkWidget *response_w = NULL;
+	GtkWidget *dialog = gtk_dialog_new_with_buttons(title,
+							parent,
+							(GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
+							GTK_STOCK_CANCEL,
+							GTK_RESPONSE_REJECT,
+							GTK_STOCK_OK,
+							GTK_RESPONSE_ACCEPT,
+							NULL);
+	/* When something is selected then OK */
+	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
+	GtkWidget *response_w = NULL;
 #if GTK_CHECK_VERSION (2, 20, 0)
-  /* Default to not apply - as initially nothing is selected! */
-  response_w = gtk_dialog_get_widget_for_response ( GTK_DIALOG(dialog), GTK_RESPONSE_REJECT );
+	/* Default to not apply - as initially nothing is selected! */
+	response_w = gtk_dialog_get_widget_for_response(GTK_DIALOG(dialog), GTK_RESPONSE_REJECT);
 #endif
-  GtkWidget *label = gtk_label_new ( msg );
-  GtkTreeStore *store = gtk_tree_store_new(3, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
+	GtkWidget *label = gtk_label_new(msg);
+	GtkTreeStore *store = gtk_tree_store_new(3, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
 
-  GList *geoname_runner = geonames;
-  while (geoname_runner)
-  {
-    geoname = (found_geoname *)geoname_runner->data;
-    latlon_string = g_strdup_printf("(%f,%f)", geoname->ll.lat, geoname->ll.lon);
-    gtk_tree_store_append(store, &iter, NULL);
-    gtk_tree_store_set(store, &iter, 0, geoname->name, 1, geoname->feature, 2, latlon_string, -1);
-    geoname_runner = g_list_next(geoname_runner);
-    free(latlon_string);
-  }
+	GList *geoname_runner = geonames;
+	while (geoname_runner) {
+		geoname = (found_geoname *)geoname_runner->data;
+		latlon_string = g_strdup_printf("(%f,%f)", geoname->ll.lat, geoname->ll.lon);
+		gtk_tree_store_append(store, &iter, NULL);
+		gtk_tree_store_set(store, &iter, 0, geoname->name, 1, geoname->feature, 2, latlon_string, -1);
+		geoname_runner = g_list_next(geoname_runner);
+		free(latlon_string);
+	}
 
-  view = gtk_tree_view_new();
-  renderer = gtk_cell_renderer_text_new();
-  column_runner = 0;
-  GtkTreeViewColumn *column;
-  // NB could allow columns to be shifted around by doing this after each new
-  // gtk_tree_view_column_set_reorderable ( column, true );
-  // However I don't think is that useful, so I haven't put it in
-  column = gtk_tree_view_column_new_with_attributes( _("Name"), renderer, "text", column_runner, NULL);
-  gtk_tree_view_column_set_sort_column_id (column, column_runner);
-  gtk_tree_view_append_column (GTK_TREE_VIEW (view), column);
+	view = gtk_tree_view_new();
+	renderer = gtk_cell_renderer_text_new();
+	column_runner = 0;
+	GtkTreeViewColumn *column;
+	// NB could allow columns to be shifted around by doing this after each new
+	// gtk_tree_view_column_set_reorderable(column, true);
+	// However I don't think is that useful, so I haven't put it in
+	column = gtk_tree_view_column_new_with_attributes(_("Name"), renderer, "text", column_runner, NULL);
+	gtk_tree_view_column_set_sort_column_id(column, column_runner);
+	gtk_tree_view_append_column(GTK_TREE_VIEW (view), column);
 
-  column_runner++;
-  column = gtk_tree_view_column_new_with_attributes( _("Feature"), renderer, "text", column_runner, NULL);
-  gtk_tree_view_column_set_sort_column_id (column, column_runner);
-  gtk_tree_view_append_column (GTK_TREE_VIEW (view), column);
+	column_runner++;
+	column = gtk_tree_view_column_new_with_attributes(_("Feature"), renderer, "text", column_runner, NULL);
+	gtk_tree_view_column_set_sort_column_id(column, column_runner);
+	gtk_tree_view_append_column(GTK_TREE_VIEW (view), column);
 
-  column_runner++;
-  column = gtk_tree_view_column_new_with_attributes( _("Lat/Lon"), renderer, "text", column_runner, NULL);
-  gtk_tree_view_column_set_sort_column_id (column, column_runner);
-  gtk_tree_view_append_column (GTK_TREE_VIEW (view), column);
+	column_runner++;
+	column = gtk_tree_view_column_new_with_attributes(_("Lat/Lon"), renderer, "text", column_runner, NULL);
+	gtk_tree_view_column_set_sort_column_id(column, column_runner);
+	gtk_tree_view_append_column(GTK_TREE_VIEW (view), column);
 
-  gtk_tree_view_set_model(GTK_TREE_VIEW(view), GTK_TREE_MODEL(store));
-  gtk_tree_selection_set_mode( gtk_tree_view_get_selection(GTK_TREE_VIEW(view)),
-      multiple_selection_allowed ? GTK_SELECTION_MULTIPLE : GTK_SELECTION_BROWSE );
-  g_object_unref(store);
+	gtk_tree_view_set_model(GTK_TREE_VIEW(view), GTK_TREE_MODEL(store));
+	gtk_tree_selection_set_mode(gtk_tree_view_get_selection(GTK_TREE_VIEW(view)),
+				    multiple_selection_allowed ? GTK_SELECTION_MULTIPLE : GTK_SELECTION_BROWSE);
+	g_object_unref(store);
 
-  GtkWidget *scrolledwindow = gtk_scrolled_window_new ( NULL, NULL );
-  gtk_scrolled_window_set_policy ( GTK_SCROLLED_WINDOW(scrolledwindow), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC );
-  gtk_container_add ( GTK_CONTAINER(scrolledwindow), view );
+	GtkWidget *scrolledwindow = gtk_scrolled_window_new(NULL, NULL);
+	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolledwindow), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+	gtk_container_add(GTK_CONTAINER(scrolledwindow), view);
 
-  gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), label, false, false, 0);
-  gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), scrolledwindow, true, true, 0);
+	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), label, false, false, 0);
+	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), scrolledwindow, true, true, 0);
 
-  // Ensure a reasonable number of items are shown, but let the width be automatically sized
-  gtk_widget_set_size_request ( dialog, -1, 400) ;
-  gtk_widget_show_all ( dialog );
+	// Ensure a reasonable number of items are shown, but let the width be automatically sized
+	gtk_widget_set_size_request(dialog, -1, 400) ;
+	gtk_widget_show_all(dialog);
 
-  if ( response_w )
-    gtk_widget_grab_focus ( response_w );
+	if (response_w) {
+		gtk_widget_grab_focus(response_w);
+	}
 
-  while ( gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT )
-  {
-    GtkTreeSelection *selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(view));
-    GList *selected_geonames = NULL;
+	while (gtk_dialog_run(GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT) {
+		GtkTreeSelection *selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(view));
+		GList *selected_geonames = NULL;
 
-    // Possibily not the fastest method but we don't have thousands of entries to process...
-    if ( gtk_tree_model_get_iter_first( GTK_TREE_MODEL(store), &iter) ) {
-      do {
-        if ( gtk_tree_selection_iter_is_selected ( selection, &iter ) ) {
-          // For every selected item,
-          // compare the name from the displayed view to every geoname entry to find the geoname this selection represents
-          char* name;
-          gtk_tree_model_get (GTK_TREE_MODEL(store), &iter, 0, &name, -1 );
-	  // I believe the name of these items to be always unique
-          geoname_runner = geonames;
-          while ( geoname_runner ) {
-            if ( !strcmp ( ((found_geoname*)geoname_runner->data)->name, name ) ) {
-              found_geoname *copied = copy_found_geoname((found_geoname *) geoname_runner->data);
-              selected_geonames = g_list_prepend(selected_geonames, copied);
-              break;
-            }
-            geoname_runner = g_list_next(geoname_runner);
-          }
-	  free( name );
-        }
-      }
-      while ( gtk_tree_model_iter_next ( GTK_TREE_MODEL(store), &iter ) );
-    }
+		// Possibily not the fastest method but we don't have thousands of entries to process...
+		if (gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter)) {
+			do {
+				if (gtk_tree_selection_iter_is_selected(selection, &iter)) {
+					// For every selected item,
+					// compare the name from the displayed view to every geoname entry to find the geoname this selection represents
+					char* name;
+					gtk_tree_model_get(GTK_TREE_MODEL(store), &iter, 0, &name, -1);
+					// I believe the name of these items to be always unique
+					geoname_runner = geonames;
+					while (geoname_runner) {
+						if (!strcmp (((found_geoname*)geoname_runner->data)->name, name)) {
+							found_geoname *copied = copy_found_geoname((found_geoname *) geoname_runner->data);
+							selected_geonames = g_list_prepend(selected_geonames, copied);
+							break;
+						}
+						geoname_runner = g_list_next(geoname_runner);
+					}
+					free(name);
+				}
+			}
+			while (gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter));
+		}
 
-    if (selected_geonames)
-    {
-      gtk_widget_destroy ( dialog );
-      return selected_geonames;
-    }
-    a_dialog_error_msg(parent, _("Nothing was selected"));
-  }
-  gtk_widget_destroy ( dialog );
-  return NULL;
+		if (selected_geonames) {
+			gtk_widget_destroy(dialog);
+			return selected_geonames;
+		}
+		a_dialog_error_msg(parent, _("Nothing was selected"));
+	}
+	gtk_widget_destroy(dialog);
+	return NULL;
 }
 
 static GList *get_entries_from_file(char *file_name)
 {
-  char *text, *pat;
-  GMappedFile *mf;
-  size_t len;
-  bool more = true;
-  char lat_buf[32], lon_buf[32], elev_buf[32];
-  char *s;
-  int fragment_len;
-  GList *found_places = NULL;
-  found_geoname *geoname = NULL;
-  char **found_entries;
-  char *entry;
-  int entry_runner;
-  char *wikipedia_url = NULL;
-  char *thumbnail_url = NULL;
+	char *text, *pat;
+	GMappedFile *mf;
+	size_t len;
+	bool more = true;
+	char lat_buf[32], lon_buf[32], elev_buf[32];
+	char *s;
+	int fragment_len;
+	GList *found_places = NULL;
+	found_geoname *geoname = NULL;
+	char **found_entries;
+	char *entry;
+	int entry_runner;
+	char *wikipedia_url = NULL;
+	char *thumbnail_url = NULL;
 
-  lat_buf[0] = lon_buf[0] = elev_buf[0] = '\0';
+	lat_buf[0] = lon_buf[0] = elev_buf[0] = '\0';
 
-  if ((mf = g_mapped_file_new(file_name, false, NULL)) == NULL) {
-    fprintf(stderr, _("CRITICAL: couldn't map temp file\n"));
-    return NULL;
-  }
-  len = g_mapped_file_get_length(mf);
-  text = g_mapped_file_get_contents(mf);
+	if ((mf = g_mapped_file_new(file_name, false, NULL)) == NULL) {
+		fprintf(stderr, _("CRITICAL: couldn't map temp file\n"));
+		return NULL;
+	}
+	len = g_mapped_file_get_length(mf);
+	text = g_mapped_file_get_contents(mf);
 
-  if (g_strstr_len(text, len, GEONAMES_SEARCH_NOT_FOUND) != NULL) {
-    more = false;
-  }
-  found_entries = g_strsplit(text, "},", 0);
-  entry_runner = 0;
-  entry = found_entries[entry_runner];
-  while (entry)
-  {
-    more = true;
-    geoname = new_found_geoname();
-    if ((pat = g_strstr_len(entry, strlen(entry), GEONAMES_FEATURE_PATTERN))) {
-      pat += strlen(GEONAMES_FEATURE_PATTERN);
-      fragment_len = 0;
-      s = pat;
-      while (*pat != '"') {
-        fragment_len++;
-        pat++;
-      }
-      geoname->feature = g_strndup(s, fragment_len);
-    }
-    if ((pat = g_strstr_len(entry, strlen(entry), GEONAMES_LONGITUDE_PATTERN)) == NULL) {
-      more = false;
-    }
-    else {
-      pat += strlen(GEONAMES_LONGITUDE_PATTERN);
-      s = lon_buf;
-      if (*pat == '-')
-        *s++ = *pat++;
-      while ((s < (lon_buf + sizeof(lon_buf))) && (pat < (text + len)) &&
-              (g_ascii_isdigit(*pat) || (*pat == '.')))
-        *s++ = *pat++;
-      *s = '\0';
-      if ((pat >= (text + len)) || (lon_buf[0] == '\0')) {
-        more = false;
-      }
-      geoname->ll.lon = g_ascii_strtod(lon_buf, NULL);
-    }
-    if ((pat = g_strstr_len(entry, strlen(entry), GEONAMES_ELEVATION_PATTERN))) {
-      pat += strlen(GEONAMES_ELEVATION_PATTERN);
-      s = elev_buf;
-      if (*pat == '-')
-        *s++ = *pat++;
-      while ((s < (elev_buf + sizeof(elev_buf))) && (pat < (text + len)) &&
-              (g_ascii_isdigit(*pat) || (*pat == '.')))
-        *s++ = *pat++;
-      *s = '\0';
-      geoname->elevation = g_ascii_strtod(elev_buf, NULL);
-    }
-    if ((pat = g_strstr_len(entry, strlen(entry), GEONAMES_NAME_PATTERN))) {
-      pat += strlen(GEONAMES_NAME_PATTERN);
-      fragment_len = 0;
-      s = pat;
-      while (*pat != '"') {
-        fragment_len++;
-        pat++;
-      }
-      geoname -> name = g_strndup(s, fragment_len);
-    }
-    if ((pat = g_strstr_len(entry, strlen(entry), GEONAMES_TITLE_PATTERN))) {
-      pat += strlen(GEONAMES_TITLE_PATTERN);
-      fragment_len = 0;
-      s = pat;
-      while (*pat != '"') {
-        fragment_len++;
-        pat++;
-      }
-      geoname -> name = g_strndup(s, fragment_len);
-    }
-    if ((pat = g_strstr_len(entry, strlen(entry), GEONAMES_WIKIPEDIAURL_PATTERN))) {
-      pat += strlen(GEONAMES_WIKIPEDIAURL_PATTERN);
-      fragment_len = 0;
-      s = pat;
-      while (*pat != '"') {
-        fragment_len++;
-        pat++;
-      }
-      wikipedia_url = g_strndup(s, fragment_len);
-    }
-    if ((pat = g_strstr_len(entry, strlen(entry), GEONAMES_THUMBNAILIMG_PATTERN))) {
-      pat += strlen(GEONAMES_THUMBNAILIMG_PATTERN);
-      fragment_len = 0;
-      s = pat;
-      while (*pat != '"') {
-        fragment_len++;
-        pat++;
-      }
-      thumbnail_url = g_strndup(s, fragment_len);
-    }
-    if ((pat = g_strstr_len(entry, strlen(entry), GEONAMES_LATITUDE_PATTERN)) == NULL) {
-      more = false;
-    }
-    else {
-      pat += strlen(GEONAMES_LATITUDE_PATTERN);
-      s = lat_buf;
-      if (*pat == '-')
-        *s++ = *pat++;
-      while ((s < (lat_buf + sizeof(lat_buf))) && (pat < (text + len)) &&
-              (g_ascii_isdigit(*pat) || (*pat == '.')))
-        *s++ = *pat++;
-      *s = '\0';
-      if ((pat >= (text + len)) || (lat_buf[0] == '\0')) {
-        more = false;
-      }
-      geoname->ll.lat = g_ascii_strtod(lat_buf, NULL);
-    }
-    if (!more) {
-      if (geoname) {
-        free(geoname);
-      }
-    }
-    else {
-      if (wikipedia_url) {
-        // Really we should support the GPX URL tag and then put that in there...
-        geoname->cmt = g_strdup_printf("http://%s", wikipedia_url);
-        if (thumbnail_url) {
-          geoname -> desc = g_strdup_printf("<a href=\"http://%s\" target=\"_blank\"><img src=\"%s\" border=\"0\"/></a>", wikipedia_url, thumbnail_url);
-        }
-        else {
-          geoname -> desc = g_strdup_printf("<a href=\"http://%s\" target=\"_blank\">%s</a>", wikipedia_url, geoname->name);
-        }
-      }
-      if (wikipedia_url) {
-        free(wikipedia_url);
-        wikipedia_url = NULL;
-      }
-      if (thumbnail_url) {
-        free(thumbnail_url);
-        thumbnail_url = NULL;
-      }
-      found_places = g_list_prepend(found_places, geoname);
-    }
-    entry_runner++;
-    entry = found_entries[entry_runner];
-  }
-  g_strfreev(found_entries);
-  found_places = g_list_reverse(found_places);
-  g_mapped_file_unref(mf);
-  return(found_places);
+	if (g_strstr_len(text, len, GEONAMES_SEARCH_NOT_FOUND) != NULL) {
+		more = false;
+	}
+	found_entries = g_strsplit(text, "},", 0);
+	entry_runner = 0;
+	entry = found_entries[entry_runner];
+	while (entry) {
+		more = true;
+		geoname = new_found_geoname();
+		if ((pat = g_strstr_len(entry, strlen(entry), GEONAMES_FEATURE_PATTERN))) {
+			pat += strlen(GEONAMES_FEATURE_PATTERN);
+			fragment_len = 0;
+			s = pat;
+			while (*pat != '"') {
+				fragment_len++;
+				pat++;
+			}
+			geoname->feature = g_strndup(s, fragment_len);
+		}
+		if ((pat = g_strstr_len(entry, strlen(entry), GEONAMES_LONGITUDE_PATTERN)) == NULL) {
+			more = false;
+		} else {
+			pat += strlen(GEONAMES_LONGITUDE_PATTERN);
+			s = lon_buf;
+			if (*pat == '-')
+				*s++ = *pat++;
+			while ((s < (lon_buf + sizeof(lon_buf))) && (pat < (text + len)) &&
+			       (g_ascii_isdigit(*pat) || (*pat == '.'))) {
+				*s++ = *pat++;
+			}
+			*s = '\0';
+			if ((pat >= (text + len)) || (lon_buf[0] == '\0')) {
+				more = false;
+			}
+			geoname->ll.lon = g_ascii_strtod(lon_buf, NULL);
+		}
+		if ((pat = g_strstr_len(entry, strlen(entry), GEONAMES_ELEVATION_PATTERN))) {
+			pat += strlen(GEONAMES_ELEVATION_PATTERN);
+			s = elev_buf;
+			if (*pat == '-') {
+				*s++ = *pat++;
+			}
+			while ((s < (elev_buf + sizeof(elev_buf))) && (pat < (text + len)) &&
+			       (g_ascii_isdigit(*pat) || (*pat == '.'))) {
+				*s++ = *pat++;
+			}
+			*s = '\0';
+			geoname->elevation = g_ascii_strtod(elev_buf, NULL);
+		}
+		if ((pat = g_strstr_len(entry, strlen(entry), GEONAMES_NAME_PATTERN))) {
+			pat += strlen(GEONAMES_NAME_PATTERN);
+			fragment_len = 0;
+			s = pat;
+			while (*pat != '"') {
+				fragment_len++;
+				pat++;
+			}
+			geoname -> name = g_strndup(s, fragment_len);
+		}
+		if ((pat = g_strstr_len(entry, strlen(entry), GEONAMES_TITLE_PATTERN))) {
+			pat += strlen(GEONAMES_TITLE_PATTERN);
+			fragment_len = 0;
+			s = pat;
+			while (*pat != '"') {
+				fragment_len++;
+				pat++;
+			}
+			geoname -> name = g_strndup(s, fragment_len);
+		}
+		if ((pat = g_strstr_len(entry, strlen(entry), GEONAMES_WIKIPEDIAURL_PATTERN))) {
+			pat += strlen(GEONAMES_WIKIPEDIAURL_PATTERN);
+			fragment_len = 0;
+			s = pat;
+			while (*pat != '"') {
+				fragment_len++;
+				pat++;
+			}
+			wikipedia_url = g_strndup(s, fragment_len);
+		}
+		if ((pat = g_strstr_len(entry, strlen(entry), GEONAMES_THUMBNAILIMG_PATTERN))) {
+			pat += strlen(GEONAMES_THUMBNAILIMG_PATTERN);
+			fragment_len = 0;
+			s = pat;
+			while (*pat != '"') {
+				fragment_len++;
+				pat++;
+			}
+			thumbnail_url = g_strndup(s, fragment_len);
+		}
+		if ((pat = g_strstr_len(entry, strlen(entry), GEONAMES_LATITUDE_PATTERN)) == NULL) {
+			more = false;
+		} else {
+			pat += strlen(GEONAMES_LATITUDE_PATTERN);
+			s = lat_buf;
+			if (*pat == '-') {
+				*s++ = *pat++;
+			}
+
+			while ((s < (lat_buf + sizeof(lat_buf))) && (pat < (text + len)) &&
+			       (g_ascii_isdigit(*pat) || (*pat == '.'))) {
+				*s++ = *pat++;
+			}
+
+			*s = '\0';
+			if ((pat >= (text + len)) || (lat_buf[0] == '\0')) {
+				more = false;
+			}
+			geoname->ll.lat = g_ascii_strtod(lat_buf, NULL);
+		}
+		if (!more) {
+			if (geoname) {
+				free(geoname);
+			}
+		} else {
+			if (wikipedia_url) {
+				// Really we should support the GPX URL tag and then put that in there...
+				geoname->cmt = g_strdup_printf("http://%s", wikipedia_url);
+				if (thumbnail_url) {
+					geoname -> desc = g_strdup_printf("<a href=\"http://%s\" target=\"_blank\"><img src=\"%s\" border=\"0\"/></a>", wikipedia_url, thumbnail_url);
+				} else {
+					geoname -> desc = g_strdup_printf("<a href=\"http://%s\" target=\"_blank\">%s</a>", wikipedia_url, geoname->name);
+				}
+			}
+			if (wikipedia_url) {
+				free(wikipedia_url);
+				wikipedia_url = NULL;
+			}
+			if (thumbnail_url) {
+				free(thumbnail_url);
+				thumbnail_url = NULL;
+			}
+			found_places = g_list_prepend(found_places, geoname);
+		}
+		entry_runner++;
+		entry = found_entries[entry_runner];
+	}
+	g_strfreev(found_entries);
+	found_places = g_list_reverse(found_places);
+	g_mapped_file_unref(mf);
+	return(found_places);
 }
 
 
-void a_geonames_wikipedia_box(Window * window, LayerTRW * trw, struct LatLon maxmin[2] )
+void a_geonames_wikipedia_box(Window * window, LayerTRW * trw, struct LatLon maxmin[2])
 {
-  char *uri;
-  char *tmpname;
-  GList *wiki_places;
-  GList *selected;
-  GList *wp_runner;
-  Waypoint * wiki_wp;
-  found_geoname *wiki_geoname;
+	char *uri;
+	char *tmpname;
+	GList *wiki_places;
+	GList *selected;
+	GList *wp_runner;
+	Waypoint * wiki_wp;
+	found_geoname *wiki_geoname;
 
-  /* encode doubles in a C locale */
-  char *north = a_coords_dtostr(maxmin[0].lat);
-  char *south = a_coords_dtostr(maxmin[1].lat);
-  char *east = a_coords_dtostr(maxmin[0].lon);
-  char *west = a_coords_dtostr(maxmin[1].lon);
-  uri = g_strdup_printf ( GEONAMES_WIKIPEDIA_URL_FMT, north, south, east, west, GEONAMES_LANG, GEONAMES_MAX_ENTRIES );
-  free(north); north = NULL;
-  free(south); south = NULL;
-  free(east);  east = NULL;
-  free(west);  west = NULL;
-  tmpname = a_download_uri_to_tmp_file ( uri, NULL );
-  if (!tmpname) {
-    none_found(window);
-    return;
-  }
-  wiki_places = get_entries_from_file(tmpname);
-  if (g_list_length(wiki_places) == 0) {
-    none_found(window);
-    goto done;
-  }
-  selected = a_select_geoname_from_list(VIK_GTK_WINDOW_FROM_WIDGET(window->vw), wiki_places, true, "Select articles", "Select the articles you want to add.");
-  wp_runner = selected;
-  while (wp_runner) {
-    wiki_geoname = (found_geoname *)wp_runner->data;
-    wiki_wp = new Waypoint();
-    wiki_wp->visible = true;
-    vik_coord_load_from_latlon(&(wiki_wp->coord),
-			       trw->get_coord_mode(),
-			       &(wiki_geoname->ll));
-    wiki_wp->altitude = wiki_geoname->elevation;
-    wiki_wp->set_comment(wiki_geoname->cmt);
-    wiki_wp->set_description(wiki_geoname->desc);
-    // Use the featue type to generate a suitable waypoint icon
-    //  http://www.geonames.org/wikipedia/wikipedia_features.html
-    // Only a few values supported as only a few symbols make sense
-    if ( wiki_geoname->feature ) {
-      if ( !strcmp (wiki_geoname->feature, "city") )
-        wiki_wp->set_symbol("city (medium)");
-      if ( !strcmp (wiki_geoname->feature, "edu") )
-        wiki_wp->set_symbol("school");
-      if ( !strcmp (wiki_geoname->feature, "airport") )
-        wiki_wp->set_symbol("airport");
-      if ( !strcmp (wiki_geoname->feature, "mountain") )
-	wiki_wp->set_symbol("summit");
-      if ( !strcmp (wiki_geoname->feature, "forest") )
-        wiki_wp->set_symbol("forest");
-    }
-    trw->filein_add_waypoint(wiki_geoname->name, wiki_wp);
-    wp_runner = g_list_next(wp_runner);
-  }
-  free_geoname_list(wiki_places);
-  free_geoname_list(selected);
-  free(uri);
-done:
-  (void)util_remove(tmpname);
-  free(tmpname);
+	/* encode doubles in a C locale */
+	char *north = a_coords_dtostr(maxmin[0].lat);
+	char *south = a_coords_dtostr(maxmin[1].lat);
+	char *east = a_coords_dtostr(maxmin[0].lon);
+	char *west = a_coords_dtostr(maxmin[1].lon);
+	uri = g_strdup_printf(GEONAMES_WIKIPEDIA_URL_FMT, north, south, east, west, GEONAMES_LANG, GEONAMES_MAX_ENTRIES);
+	free(north); north = NULL;
+	free(south); south = NULL;
+	free(east);  east = NULL;
+	free(west);  west = NULL;
+	tmpname = a_download_uri_to_tmp_file(uri, NULL);
+	if (!tmpname) {
+		none_found(window);
+		return;
+	}
+	wiki_places = get_entries_from_file(tmpname);
+	if (g_list_length(wiki_places) == 0) {
+		none_found(window);
+		goto done;
+	}
+	selected = a_select_geoname_from_list(VIK_GTK_WINDOW_FROM_WIDGET(window->vw), wiki_places, true, "Select articles", "Select the articles you want to add.");
+	wp_runner = selected;
+	while (wp_runner) {
+		wiki_geoname = (found_geoname *)wp_runner->data;
+		wiki_wp = new Waypoint();
+		wiki_wp->visible = true;
+		vik_coord_load_from_latlon(&(wiki_wp->coord),
+					   trw->get_coord_mode(),
+					   &(wiki_geoname->ll));
+		wiki_wp->altitude = wiki_geoname->elevation;
+		wiki_wp->set_comment(wiki_geoname->cmt);
+		wiki_wp->set_description(wiki_geoname->desc);
+		// Use the featue type to generate a suitable waypoint icon
+		//  http://www.geonames.org/wikipedia/wikipedia_features.html
+		// Only a few values supported as only a few symbols make sense
+		if (wiki_geoname->feature) {
+			if (!strcmp(wiki_geoname->feature, "city")) {
+				wiki_wp->set_symbol("city (medium)");
+			}
+
+			if (!strcmp(wiki_geoname->feature, "edu")) {
+				wiki_wp->set_symbol("school");
+			}
+
+			if (!strcmp(wiki_geoname->feature, "airport")) {
+				wiki_wp->set_symbol("airport");
+			}
+
+			if (!strcmp(wiki_geoname->feature, "mountain")) {
+				wiki_wp->set_symbol("summit");
+			}
+			if (!strcmp(wiki_geoname->feature, "forest")) {
+				wiki_wp->set_symbol("forest");
+			}
+		}
+		trw->filein_add_waypoint(wiki_geoname->name, wiki_wp);
+		wp_runner = g_list_next(wp_runner);
+	}
+	free_geoname_list(wiki_places);
+	free_geoname_list(selected);
+	free(uri);
+ done:
+	(void)util_remove(tmpname);
+	free(tmpname);
 }
