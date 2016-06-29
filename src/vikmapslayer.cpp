@@ -1145,7 +1145,7 @@ static GdkPixbuf * get_pixbuf(VikLayer *vml, MapTypeID map_type, const char* map
 {
 	LayerMaps * layer = (LayerMaps *) vml->layer;
 	/* get the thing */
-	GdkPixbuf * pixbuf = a_mapcache_get(mapcoord, map_type, layer->alpha, xshrinkfactor, yshrinkfactor, layer->filename);
+	GdkPixbuf * pixbuf = map_cache_get(mapcoord, map_type, layer->alpha, xshrinkfactor, yshrinkfactor, layer->filename);
 	if (pixbuf) {
 		//fprintf(stderr, "MapsLayer: MAP CACHE HIT\n");
 	} else {
@@ -1173,8 +1173,8 @@ static GdkPixbuf * get_pixbuf(VikLayer *vml, MapTypeID map_type, const char* map
 		if (pixbuf) {
 			pixbuf = pixbuf_apply_settings(pixbuf, vml, xshrinkfactor, yshrinkfactor);
 
-			a_mapcache_add(pixbuf,(mapcache_extra_t) {0.0}, mapcoord, map_sources[layer->map_index]->map_type,
-				       layer->alpha, xshrinkfactor, yshrinkfactor, layer->filename);
+			map_cache_add(pixbuf, (map_cache_extra_t) {0.0}, mapcoord, map_sources[layer->map_index]->map_type,
+				      layer->alpha, xshrinkfactor, yshrinkfactor, layer->filename);
 		}
 	}
 	return pixbuf;
@@ -1704,7 +1704,7 @@ static int map_download_thread(MapDownloadInfo *mdi, void * threaddata)
 
 				g_mutex_lock(mdi->mutex);
 				if (remove_mem_cache) {
-					a_mapcache_remove_all_shrinkfactors(&mcoord, map_sources[mdi->map_index]->map_type, mdi->layer->filename);
+					map_cache_remove_all_shrinkfactors(&mcoord, map_sources[mdi->map_index]->map_type, mdi->layer->filename);
 				}
 
 				if (mdi->refresh_display && mdi->map_layer_alive) {
@@ -2346,7 +2346,7 @@ static void maps_layer_download_all(menu_array_values values)
 static void maps_layer_flush(menu_array_values values)
 {
 	LayerMaps * layer = (LayerMaps *) values[MA_VML];
-	a_mapcache_flush_type(map_sources[layer->map_index]->map_type);
+	map_cache_flush_type(map_sources[layer->map_index]->map_type);
 }
 
 void LayerMaps::add_menu_items(GtkMenu * menu, void * panel_)

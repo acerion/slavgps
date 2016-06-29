@@ -206,7 +206,7 @@ int main(int argc, char *argv[])
 
 	vik_georef_layer_init();
 	maps_layer_init();
-	a_mapcache_init();
+	map_cache_init();
 	a_background_init();
 
 	a_toolbar_init();
@@ -267,7 +267,7 @@ int main(int argc, char *argv[])
 	a_babel_uninit();
 	a_toolbar_uninit();
 	a_background_uninit();
-	a_mapcache_uninit();
+	map_cache_uninit();
 	a_dems_uninit();
 	a_layer_defaults_uninit();
 	a_preferences_uninit();

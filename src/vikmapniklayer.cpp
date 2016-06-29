@@ -663,7 +663,7 @@ void LayerMapnik::render(VikCoord * ul, VikCoord * br, TileInfo * ulm)
 	if (this->alpha < 255) {
 		pixbuf = ui_pixbuf_scale_alpha(pixbuf, this->alpha);
 	}
-	a_mapcache_add(pixbuf, (mapcache_extra_t){ tt }, ulm, MAP_ID_MAPNIK_RENDER, this->alpha, 0.0, 0.0, this->filename_xml);
+	map_cache_add(pixbuf, (map_cache_extra_t){ tt }, ulm, MAP_ID_MAPNIK_RENDER, this->alpha, 0.0, 0.0, this->filename_xml);
 	g_object_unref(pixbuf);
 }
 
@@ -769,7 +769,7 @@ GdkPixbuf * LayerMapnik::load_pixbuf(TileInfo * ulm, TileInfo * brm, bool * rere
 			if (this->alpha < 255) {
 				pixbuf = ui_pixbuf_set_alpha(pixbuf, this->alpha);
 			}
-			a_mapcache_add(pixbuf, (mapcache_extra_t) { -42.0 }, ulm, MAP_ID_MAPNIK_RENDER, this->alpha, 0.0, 0.0, this->filename_xml);
+			map_cache_add(pixbuf, (map_cache_extra_t) { -42.0 }, ulm, MAP_ID_MAPNIK_RENDER, this->alpha, 0.0, 0.0, this->filename_xml);
 		}
 		// If file is too old mark for rerendering
 		if (planet_import_time < gsb.st_mtime) {
@@ -792,7 +792,7 @@ GdkPixbuf * LayerMapnik::get_pixbuf(TileInfo * ulm, TileInfo * brm)
 	map_utils_iTMS_to_vikcoord(ulm, &ul);
 	map_utils_iTMS_to_vikcoord(brm, &br);
 
-	GdkPixbuf * pixbuf = a_mapcache_get(ulm, MAP_ID_MAPNIK_RENDER, this->alpha, 0.0, 0.0, this->filename_xml);
+	GdkPixbuf * pixbuf = map_cache_get(ulm, MAP_ID_MAPNIK_RENDER, this->alpha, 0.0, 0.0, this->filename_xml);
 	if (pixbuf) {
 		fprintf(stderr, "MapnikLayer: MAP CACHE HIT\n");
 	} else {
@@ -932,7 +932,7 @@ typedef void * menu_array_values[MA_LAST];
  */
 static void mapnik_layer_flush_memory(menu_array_values values)
 {
-	a_mapcache_flush_type(MAP_ID_MAPNIK_RENDER);
+	map_cache_flush_type(MAP_ID_MAPNIK_RENDER);
 }
 
 /**
@@ -1101,7 +1101,7 @@ void LayerMapnik::tile_info()
 	// Requested position to map coord
 	map_utils_vikcoord_to_iTMS(&this->rerender_ul, this->rerender_zoom, this->rerender_zoom, &ulm);
 
-	mapcache_extra_t extra = a_mapcache_get_extra(&ulm, MAP_ID_MAPNIK_RENDER, this->alpha, 0.0, 0.0, this->filename_xml);
+	map_cache_extra_t extra = map_cache_get_extra(&ulm, MAP_ID_MAPNIK_RENDER, this->alpha, 0.0, 0.0, this->filename_xml);
 
 	char *filename = get_filename(this->file_cache_dir, ulm.x, ulm.y, ulm.scale);
 	char *filemsg = NULL;

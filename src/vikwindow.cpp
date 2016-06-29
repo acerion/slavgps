@@ -2430,14 +2430,14 @@ static void help_about_cb(GtkAction * a, Window * window)
 static void help_cache_info_cb(GtkAction * a, Window * window)
 {
 	// NB: No i18n as this is just for debug
-	int byte_size = a_mapcache_get_size();
+	int byte_size = map_cache_get_size();
 	char *msg_sz = NULL;
 #if GLIB_CHECK_VERSION(2,30,0)
 	msg_sz = g_format_size_full(byte_size, G_FORMAT_SIZE_LONG_FORMAT);
 #else
 	msg_sz = g_format_size_for_display(byte_size);
 #endif
-	char * msg = g_strdup_printf("Map Cache size is %s with %d items", msg_sz, a_mapcache_get_count());
+	char * msg = g_strdup_printf("Map Cache size is %s with %d items", msg_sz, map_cache_get_count());
 	a_dialog_info_msg_extra(GTK_WINDOW(window->vw), "%s", msg);
 	free(msg_sz);
 	free(msg);
@@ -3423,7 +3423,7 @@ static void goto_address(GtkAction * a, Window * window)
 
 static void mapcache_flush_cb(GtkAction * a, Window * window)
 {
-	a_mapcache_flush();
+	map_cache_flush();
 }
 
 static void menu_copy_centre_cb(GtkAction * a, Window * window)

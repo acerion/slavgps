@@ -18,49 +18,57 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+
+#include <unordered_map>
+#include <string>
+#include <list>
+#include <iostream>
 
 #include <glib.h>
 #include <glib/gi18n.h>
 #include <string.h>
 #include <stdlib.h>
+
 #include "globals.h"
 #include "mapcache.h"
 #include "preferences.h"
 #include "vik_compat.h"
 
+
+
+
+
 using namespace SlavGPS;
+
+
+
 
 
 #define MC_KEY_SIZE 64
 
-typedef struct _List {
-	struct _List *next;
-	char * key;
-} List;
-
-/* a circular linked list, a pointer to the tail, and the tail points to the head */
-/* this is so we can free the last */
-static List * queue_tail = NULL;
-static int queue_count = 0;
-
-static uint32_t cache_size = 0;
-static uint32_t max_cache_size = VIK_CONFIG_MAPCACHE_SIZE * 1024 * 1024;
-
-static GHashTable * cache = NULL;
-
-typedef struct {
-	GdkPixbuf * pixbuf;
-	mapcache_extra_t extra;
-} cache_item_t;
-
-static GMutex * mc_mutex = NULL;
-
 #define HASHKEY_FORMAT_STRING "%d-%d-%d-%d-%d-%d-%d-%.3f-%.3f"
 #define HASHKEY_FORMAT_STRING_NOSHRINK_NOR_ALPHA "%d-%d-%d-%d-%d-%d-"
 #define HASHKEY_FORMAT_STRING_TYPE "%d-"
+
+
+
+
+
+typedef struct {
+	GdkPixbuf * pixbuf;
+	map_cache_extra_t extra;
+} cache_item_t;
+
+
+
+
+
+static std::unordered_map<std::string, cache_item_t *> maps_cache;
+static std::list<std::string> keys_list;
+static size_t cache_size = 0;
+static size_t max_cache_size = VIK_CONFIG_MAPCACHE_SIZE * 1024 * 1024;
+
+static GMutex * mc_mutex = NULL;
 
 static VikLayerParamScale params_scales[] = {
 	/* min, max, step, digits (decimal places) */
@@ -71,278 +79,316 @@ static VikLayerParam prefs[] = {
 	{ VIK_LAYER_NUM_TYPES, VIKING_PREFERENCES_NAMESPACE "mapcache_size", VIK_LAYER_PARAM_UINT, VIK_LAYER_GROUP_NONE, N_("Map cache memory size (MB):"), VIK_LAYER_WIDGET_HSCALE, params_scales, NULL, NULL, NULL, NULL, NULL },
 };
 
+
+
+
+
+static void cache_add(std::string & key, GdkPixbuf *pixbuf, map_cache_extra_t extra);
+static void cache_remove(std::string & key);
+static void cache_remove_oldest();
+static void flush_matching(std::string & key_part);
+
+
+
+
+
 static void cache_item_free(cache_item_t * ci)
 {
 	g_object_unref(ci->pixbuf);
 	free(ci);
 }
 
-void a_mapcache_init()
+
+
+
+
+void SlavGPS::map_cache_init()
 {
 	VikLayerParamData tmp;
 	tmp.u = VIK_CONFIG_MAPCACHE_SIZE;
 	a_preferences_register(prefs, tmp, VIKING_PREFERENCES_GROUP_KEY);
 
 	mc_mutex = vik_mutex_new();
-	cache = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, (GDestroyNotify) cache_item_free);
 }
 
-static void cache_add(char *key, GdkPixbuf *pixbuf, mapcache_extra_t extra)
+
+
+
+
+void cache_add(std::string & key, GdkPixbuf *pixbuf, map_cache_extra_t extra)
 {
 	cache_item_t * ci = (cache_item_t *) malloc(sizeof (cache_item_t));
 	ci->pixbuf = pixbuf;
 	ci->extra = extra;
-#if !GLIB_CHECK_VERSION(2,26,0)
-	// Only later versions of GLib actually return a value for this function
-	// Annoyingly the documentation doesn't say anything about this interface change :(
-	if (g_hash_table_insert(cache, key, ci))
-#else
-		g_hash_table_insert(cache, key, ci);
-#endif
-	{
+
+	size_t before = maps_cache.size();
+
+	/* Insert new or overwrite existing. */
+	maps_cache[key] = ci;
+
+	size_t after = maps_cache.size();
+
+	if (after != before) {
 		cache_size += gdk_pixbuf_get_rowstride(pixbuf) * gdk_pixbuf_get_height(pixbuf);
-		// ATM size of 'extra' data hardly worth trying to count (compared to pixbuf sizes)
-		// Not sure what this 100 represents anyway - probably a guess at an average pixbuf metadata size
+		/* ATM size of 'extra' data hardly worth trying to count (compared to pixbuf sizes)
+		   Not sure what this 100 represents anyway - probably a guess at an average pixbuf metadata size */
 		cache_size += 100;
 	}
+
+	keys_list.push_back(key);
+
+	if (maps_cache.size() != keys_list.size()) {
+		fprintf(stderr, "%s;%d: ERROR: size mismatch: %zd != %zd\n", __FUNCTION__, __LINE__, maps_cache.size(), keys_list.size());
+		exit(EXIT_FAILURE);
+	}
 }
 
-static void cache_remove(char const * key)
+
+
+
+
+void cache_remove(std::string & key)
 {
-	cache_item_t * ci = (cache_item_t *) g_hash_table_lookup(cache, key);
-	if (ci && ci->pixbuf) {
-		cache_size -= gdk_pixbuf_get_rowstride(ci->pixbuf) * gdk_pixbuf_get_height(ci->pixbuf);
+	auto iter = maps_cache.find(key);
+	if (iter != maps_cache.end() && iter->second && iter->second->pixbuf){
+		cache_size -= gdk_pixbuf_get_rowstride(iter->second->pixbuf) * gdk_pixbuf_get_height(iter->second->pixbuf);
 		cache_size -= 100;
-		g_hash_table_remove(cache, key);
+		maps_cache.erase(key);
 	}
 }
 
-/* returns key from head, adds on newtailkey to tail. */
-static char * list_shift_add_entry(char * newtailkey)
-{
-	char * oldheadkey = queue_tail->next->key;
-	queue_tail->next->key = newtailkey;
-	queue_tail = queue_tail->next;
-	return oldheadkey;
-}
 
-static char * list_shift()
-{
-	char * oldheadkey = queue_tail->next->key;
-	List * oldhead = queue_tail->next;
-	queue_tail->next = queue_tail->next->next;
-	free(oldhead);
-	queue_count--;
-	return oldheadkey;
-}
 
-/* adds key to tail */
-static void list_add_entry(char * key)
+
+
+void cache_remove_oldest()
 {
-	List * newlist = (List *) malloc(sizeof (List));
-	newlist->key = key;
-	if (queue_tail) {
-		newlist->next = queue_tail->next;
-		queue_tail->next = newlist;
-		queue_tail = newlist;
-	} else {
-		newlist->next = newlist;
-		queue_tail = newlist;
+	std::string old_key = keys_list.front();
+	cache_remove(old_key);
+	keys_list.pop_front();
+
+	if (maps_cache.size() != keys_list.size()) {
+		fprintf(stderr, "%s;%d: ERROR: size mismatch: %zd != %zd\n", __FUNCTION__, __LINE__, maps_cache.size(), keys_list.size());
+		exit(EXIT_FAILURE);
 	}
-	queue_count++;
 }
+
+
+
+
 
 /**
  * Function increments reference counter of pixbuf.
  * Caller may (and should) decrease it's reference.
  */
-void a_mapcache_add(GdkPixbuf * pixbuf, mapcache_extra_t extra, TileInfo * mapcoord, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, char const * name)
+void SlavGPS::map_cache_add(GdkPixbuf * pixbuf, map_cache_extra_t extra, TileInfo * mapcoord, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, char const * name)
 {
-	if (! GDK_IS_PIXBUF(pixbuf)) {
+	if (!GDK_IS_PIXBUF(pixbuf)) {
 		fprintf(stderr, "DEBUG: Not caching corrupt pixbuf for maptype %d at %d %d %d %d\n", map_type, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale);
 		return;
 	}
 
-	unsigned int nn = name ? g_str_hash(name) : 0;
-	char * key = g_strdup_printf(HASHKEY_FORMAT_STRING, map_type, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale, nn, alpha, xshrinkfactor, yshrinkfactor);
+	static char key_[MC_KEY_SIZE];
+
+	std::size_t nn = name ? std::hash<std::string>{}(name) : 0;
+	snprintf(key_, sizeof(key_), HASHKEY_FORMAT_STRING, map_type, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale, nn, alpha, xshrinkfactor, yshrinkfactor);
+	std::string key(key_);
 
 	g_mutex_lock(mc_mutex);
 	g_object_ref(pixbuf);
+
 	cache_add(key, pixbuf, extra);
 
-	// TODO: that should be done on preference change only...
+	/* TODO: that should be done on preference change only... */
 	max_cache_size = a_preferences_get(VIKING_PREFERENCES_NAMESPACE "mapcache_size")->u * 1024 * 1024;
 
-	if (cache_size > max_cache_size) {
-		if (queue_tail) {
-			char * oldkey = list_shift_add_entry(key);
-			cache_remove(oldkey);
-
-			while (cache_size > max_cache_size &&
-				(queue_tail->next != queue_tail)) { /* make sure there's more than one thing to delete */
-				oldkey = list_shift();
-				cache_remove(oldkey);
-			}
-		}
-		/* chop off 'start' etc */
-	} else {
-		list_add_entry(key);
-		/* business as usual */
+	while (cache_size > max_cache_size && maps_cache.size()) {
+		cache_remove_oldest();
 	}
 	g_mutex_unlock(mc_mutex);
 
 	static int tmp = 0;
-	if ((++tmp == 100)) {
-		fprintf(stderr, "DEBUG: DEBUG: cache count=%d size=%u list count=%d\n", g_hash_table_size(cache), cache_size, queue_count);
-		tmp=0;
+	if ((++tmp == 20)) {
+		fprintf(stderr, "DEBUG: keys count = %d, cache count = %d, cache size = %u, max cache size = %u\n", keys_list.size(), maps_cache.size(), cache_size, max_cache_size);
+		tmp = 0;
 	}
 }
+
+
+
+
 
 /**
  * Function increases reference counter of pixels buffer in behalf of caller.
  * Caller have to decrease references counter, when buffer is no longer needed.
  */
-GdkPixbuf * a_mapcache_get(TileInfo * mapcoord, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, char const * name)
+GdkPixbuf * SlavGPS::map_cache_get(TileInfo * mapcoord, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, char const * name)
 {
-	static char key[MC_KEY_SIZE];
-	unsigned int nn = name ? g_str_hash(name) : 0;
-	snprintf(key, sizeof(key), HASHKEY_FORMAT_STRING, map_type, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale, nn, alpha, xshrinkfactor, yshrinkfactor);
+	static char key_[MC_KEY_SIZE];
+	std::size_t nn = name ? std::hash<std::string>{}(name) : 0;
+	snprintf(key_, sizeof (key_), HASHKEY_FORMAT_STRING, map_type, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale, nn, alpha, xshrinkfactor, yshrinkfactor);
+	std::string key(key_);
+
 	g_mutex_lock(mc_mutex); /* prevent returning pixbuf when cache is being cleared */
-	cache_item_t *ci = (cache_item_t *) g_hash_table_lookup(cache, key);
-	if (ci) {
-		g_object_ref(ci->pixbuf);
+
+	auto iter = maps_cache.find(key);
+	if (iter != maps_cache.end()) {
+		g_object_ref(iter->second->pixbuf);
 		g_mutex_unlock(mc_mutex);
-		return ci->pixbuf;
+		return iter->second->pixbuf;
 	} else {
 		g_mutex_unlock(mc_mutex);
 		return NULL;
 	}
 }
 
-mapcache_extra_t a_mapcache_get_extra(TileInfo * mapcoord, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, char const * name)
+
+
+
+
+map_cache_extra_t SlavGPS::map_cache_get_extra(TileInfo * mapcoord, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, char const * name)
 {
-	static char key[MC_KEY_SIZE];
-	unsigned int nn = name ? g_str_hash(name) : 0;
-	snprintf(key, sizeof(key), HASHKEY_FORMAT_STRING, map_type, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale, nn, alpha, xshrinkfactor, yshrinkfactor);
-	cache_item_t *ci = (cache_item_t *) g_hash_table_lookup(cache, key);
-	if (ci) {
-		return ci->extra;
+	static char key_[MC_KEY_SIZE];
+	std::size_t nn = name ? std::hash<std::string>{}(name) : 0;
+	snprintf(key_, sizeof(key_), HASHKEY_FORMAT_STRING, map_type, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale, nn, alpha, xshrinkfactor, yshrinkfactor);
+	std::string key(key_);
+
+	auto iter = maps_cache.find(key);
+	if (iter != maps_cache.end() && iter->second) {
+		return iter->second->extra;
 	} else {
-		return (mapcache_extra_t) { 0.0 };
+		return (map_cache_extra_t) { 0.0 };
 	}
 }
+
+
+
+
 
 /**
  * Common function to remove cache items for keys starting with the specified string
  */
-static void flush_matching(char * str)
+void flush_matching(std::string & key_part)
 {
 	g_mutex_lock(mc_mutex);
 
-	if (queue_tail == NULL) {
+	if (keys_list.empty()) {
 		g_mutex_unlock(mc_mutex);
 		return;
 	}
 
-	// The 'loop' variable must be assigned within the mutex lock section,
-	//  otherwise where it points to might not be valid anymore when the actual processing occurs
-	List *loop = queue_tail;
-	List *tmp;
-	int len = strlen(str);
+	size_t len = key_part.length();
 
-	do {
-		tmp = loop->next;
-		if (tmp) {
-			if (strncmp(tmp->key, str, len) == 0)	{
-				cache_remove(tmp->key);
-				if (tmp == loop) { /* we deleted the last thing in the queue! */
-					loop = queue_tail = NULL;
-				} else {
-					loop->next = tmp->next;
-					if (tmp == queue_tail) {
-						queue_tail = tmp->next;
-					}
-				}
-				free(tmp);
-				tmp = NULL;
-				queue_count--;
-			} else {
-				loop = tmp;
-			}
-		} else {
-			loop = NULL;
+	int i = 0;
+	for (auto iter = keys_list.begin(); iter != keys_list.end(); ) {
+		std::string key = *iter;
+
+		auto erase_iter = keys_list.end();
+		if (0 == key.compare(0, len, key_part)) {
+			cache_remove(key);
+			erase_iter = iter;
 		}
-	} while (loop && (loop != queue_tail || tmp == NULL));
-	/* loop thru list, looking for the one, compare first whatever chars */
+		iter++;
 
-	cache_remove(str);
-	g_mutex_unlock(mc_mutex);
-}
-
-/**
- * Appears this is only used when redownloading tiles (i.e. to invalidate old images)
- */
-void a_mapcache_remove_all_shrinkfactors(TileInfo * mapcoord, MapTypeID map_type, char const * name)
-{
-	char key[MC_KEY_SIZE];
-	unsigned int nn = name ? g_str_hash(name) : 0;
-	snprintf(key, sizeof(key), HASHKEY_FORMAT_STRING_NOSHRINK_NOR_ALPHA, map_type, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale, nn);
-	flush_matching(key);
-}
-
-void a_mapcache_flush()
-{
-	// Everything happens within the mutex lock section
-	g_mutex_lock(mc_mutex);
-
-	List * loop = queue_tail;
-	List * tmp;
-
-	while (loop) {
-		tmp = loop->next;
-		cache_remove(tmp->key);
-		if (tmp == queue_tail) { /* we deleted the last thing in the queue */
-			loop = queue_tail = NULL;
-		} else {
-			loop->next = tmp->next;
+		if (erase_iter != keys_list.end()) {
+			keys_list.erase(erase_iter);
 		}
-		free(tmp);
-		tmp = NULL;
+
+		if (maps_cache.size() != keys_list.size()) {
+			fprintf(stderr, "%s;%d: ERROR: size mismatch: %zd != %zd\n", __FUNCTION__, __LINE__, maps_cache.size(), keys_list.size());
+			exit(EXIT_FAILURE);
+		}
 	}
 
 	g_mutex_unlock(mc_mutex);
 }
 
+
+
+
+
 /**
- * a_mapcache_flush_type:
- *  @map_type: Specified map type
- *
- * Just remove cache items for the specified map type
- *  i.e. all related xyz+zoom+alpha+etc...
+ * Appears this is only used when redownloading tiles (i.e. to invalidate old images)
  */
-void a_mapcache_flush_type(MapTypeID map_type)
+void SlavGPS::map_cache_remove_all_shrinkfactors(TileInfo * mapcoord, MapTypeID map_type, char const * name)
 {
-	char key[MC_KEY_SIZE];
-	snprintf(key, sizeof(key), HASHKEY_FORMAT_STRING_TYPE, map_type);
+	char key_[MC_KEY_SIZE];
+	std::size_t nn = name ? std::hash<std::string>{}(name) : 0;
+	snprintf(key_, sizeof(key_), HASHKEY_FORMAT_STRING_NOSHRINK_NOR_ALPHA, map_type, mapcoord->x, mapcoord->y, mapcoord->z, mapcoord->scale, nn);
+	std::string key(key_);
+
 	flush_matching(key);
 }
 
-void a_mapcache_uninit()
+
+
+
+
+void SlavGPS::map_cache_flush()
 {
-	g_hash_table_destroy(cache);
+	/* Everything happens within the mutex lock section. */
+	g_mutex_lock(mc_mutex);
+
+	for (auto iter = keys_list.begin(); iter != keys_list.end(); iter++) {
+		std::string key = *iter;
+		cache_remove(key);
+		keys_list.erase(iter);
+	}
+
+	if (maps_cache.size() != keys_list.size()) {
+		fprintf(stderr, "%s;%d: ERROR: size mismatch: %zd != %zd\n", __FUNCTION__, __LINE__, maps_cache.size(), keys_list.size());
+		exit(EXIT_FAILURE);
+	}
+
+	g_mutex_unlock(mc_mutex);
+}
+
+
+
+
+
+/**
+ *  map_cache_flush_type:
+ *  @map_type: Specified map type
+ *
+ * Just remove cache items for the specified map type
+ * i.e. all related xyz+zoom+alpha+etc...
+ */
+void SlavGPS::map_cache_flush_type(MapTypeID map_type)
+{
+	char key_[MC_KEY_SIZE];
+	snprintf(key_, sizeof (key_), HASHKEY_FORMAT_STRING_TYPE, map_type);
+	std::string key(key_);
+	flush_matching(key);
+}
+
+
+
+
+
+void SlavGPS::map_cache_uninit()
+{
+	maps_cache.clear();
 	/* free list */
-	cache = NULL;
 	vik_mutex_free(mc_mutex);
 }
 
-// Size of mapcache in memory
-int a_mapcache_get_size()
+
+
+
+
+/* Size of mapcache in memory. */
+size_t SlavGPS::map_cache_get_size()
 {
 	return cache_size;
 }
 
-// Count of items in the mapcache
-int a_mapcache_get_count()
+
+
+
+
+/* Count of items in the mapcache. */
+int SlavGPS::map_cache_get_count()
 {
-	return g_hash_table_size(cache);
+	return maps_cache.size();
 }

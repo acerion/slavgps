@@ -19,10 +19,13 @@
  *
  */
 
-#ifndef __VIKING_MAPCACHE_H
-#define __VIKING_MAPCACHE_H
+#ifndef __SG_MAP_CACHE_H
+#define __SG_MAP_CACHE_H
 
-#include <glib.h>
+
+
+
+
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <stdint.h>
 
@@ -30,29 +33,45 @@
 #include "map_ids.h"
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
-typedef struct {
-	double duration; // Mostly for Mapnik Rendering duration - negative values indicate not rendered(i.e. read from disk)
-} mapcache_extra_t;
 
-void a_mapcache_init();
-void a_mapcache_add(GdkPixbuf * pixbuf, mapcache_extra_t extra, SlavGPS::TileInfo * tile_info, SlavGPS::MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, char const * name);
-GdkPixbuf * a_mapcache_get(SlavGPS::TileInfo * tile_info, SlavGPS::MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, char const * name);
-mapcache_extra_t a_mapcache_get_extra(SlavGPS::TileInfo * tile_info, SlavGPS::MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, char const * name);
-void a_mapcache_remove_all_shrinkfactors(SlavGPS::TileInfo * tile_info, SlavGPS::MapTypeID map_type, char const * name);
-void a_mapcache_flush();
-void a_mapcache_flush_type(SlavGPS::MapTypeID map_type);
-void a_mapcache_uninit();
+namespace SlavGPS {
 
-int a_mapcache_get_size();
-int a_mapcache_get_count();
 
-#ifdef __cplusplus
-}
-#endif
 
-#endif
+
+
+	typedef struct {
+		double duration; // Mostly for Mapnik Rendering duration - negative values indicate not rendered(i.e. read from disk)
+	} map_cache_extra_t;
+
+
+
+
+
+	void map_cache_init();
+	void map_cache_uninit();
+
+	void map_cache_add(GdkPixbuf * pixbuf, map_cache_extra_t extra, TileInfo * tile_info, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, char const * name);
+	GdkPixbuf * map_cache_get(TileInfo * tile_info, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, char const * name);
+	map_cache_extra_t map_cache_get_extra(TileInfo * tile_info, MapTypeID map_type, uint8_t alpha, double xshrinkfactor, double yshrinkfactor, char const * name);
+
+	void map_cache_remove_all_shrinkfactors(TileInfo * tile_info, MapTypeID map_type, char const * name);
+	void map_cache_flush();
+	void map_cache_flush_type(MapTypeID map_type);
+
+	size_t map_cache_get_size();
+	int map_cache_get_count();
+
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
+
+#endif /* #ifndef __SG_MAP_CACHE_H */
