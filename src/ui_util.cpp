@@ -41,19 +41,19 @@
 /*
 #ifndef WINDOWS
 static bool spawn_command_line_async(const char * cmd,
-                                         const char * arg)
+				     const char * arg)
 {
-  char *cmdline = NULL;
-  bool status;
+	char * cmdline = NULL;
+	bool status;
 
-  cmdline = g_strdup_printf("%s '%s'", cmd, arg);
-  fprintf(stderr, "DEBUG: Running: %s\n", cmdline);
+	cmdline = g_strdup_printf("%s '%s'", cmd, arg);
+	fprintf(stderr, "DEBUG: Running: %s\n", cmdline);
 
-  status = g_spawn_command_line_async(cmdline, NULL);
+	status = g_spawn_command_line_async(cmdline, NULL);
 
-  free(cmdline);
+	free(cmdline);
 
-  return status;
+	return status;
 }
 #endif
 */
@@ -61,39 +61,39 @@ static bool spawn_command_line_async(const char * cmd,
 // Annoyingly gtk_show_uri() doesn't work so resort to ShellExecute method
 //   (non working at least in our Windows build with GTK+2.24.10 on Windows 7)
 
-void open_url(GtkWindow *parent, const char * url)
+void open_url(GtkWindow * parent, const char * url)
 {
 #ifdef WINDOWS
-  ShellExecute(NULL, NULL, (char *) url, NULL, ".\\", 0);
+	ShellExecute(NULL, NULL, (char *) url, NULL, ".\\", 0);
 #else
-  GError *error = NULL;
-  gtk_show_uri ( gtk_widget_get_screen (GTK_WIDGET(parent)), url, GDK_CURRENT_TIME, &error );
-  if ( error ) {
-    a_dialog_error_msg_extra ( parent, _("Could not launch web browser. %s"), error->message );
-    g_error_free ( error );
-  }
+	GError * error = NULL;
+	gtk_show_uri(gtk_widget_get_screen(GTK_WIDGET(parent)), url, GDK_CURRENT_TIME, &error);
+	if (error) {
+		a_dialog_error_msg_extra(parent, _("Could not launch web browser. %s"), error->message);
+		g_error_free(error);
+	}
 #endif
 }
 
-void new_email(GtkWindow *parent, const char * address)
+void new_email(GtkWindow * parent, const char * address)
 {
-  char *uri = g_strdup_printf("mailto:%s", address);
-  GError *error = NULL;
-  gtk_show_uri ( gtk_widget_get_screen (GTK_WIDGET(parent)), uri, GDK_CURRENT_TIME, &error );
-  if ( error ) {
-    a_dialog_error_msg_extra ( parent, _("Could not create new email. %s"), error->message );
-    g_error_free ( error );
-  }
-  /*
-#ifdef WINDOWS
-  ShellExecute(NULL, NULL, (char *) uri, NULL, ".\\", 0);
-#else
-  if (!spawn_command_line_async("xdg-email", uri))
-    a_dialog_error_msg ( parent, _("Could not create new email.") );
-#endif
-  */
-  free(uri);
-  uri = NULL;
+	char * uri = g_strdup_printf("mailto:%s", address);
+	GError *error = NULL;
+	gtk_show_uri(gtk_widget_get_screen(GTK_WIDGET(parent)), uri, GDK_CURRENT_TIME, &error);
+	if (error) {
+		a_dialog_error_msg_extra(parent, _("Could not create new email. %s"), error->message);
+		g_error_free(error);
+	}
+	/*
+	  #ifdef WINDOWS
+	  ShellExecute(NULL, NULL, (char *) uri, NULL, ".\\", 0);
+	  #else
+	  if (!spawn_command_line_async("xdg-email", uri))
+	  a_dialog_error_msg (parent, _("Could not create new email."));
+	  #endif
+	*/
+	free(uri);
+	uri = NULL;
 }
 
 /** Creates a @c GtkButton with custom text and a stock image similar to
@@ -102,7 +102,7 @@ void new_email(GtkWindow *parent, const char * address)
  * @param text Button label text, can include mnemonics.
  * @return The new @c GtkButton.
  */
-GtkWidget *ui_button_new_with_image(const char *stock_id, const char *text)
+GtkWidget * ui_button_new_with_image(const char * stock_id, const char * text)
 {
 	GtkWidget *image, *button;
 
@@ -120,17 +120,17 @@ GtkWidget *ui_button_new_with_image(const char *stock_id, const char *text)
  * @param default_value The default value in case the value could not be read.
  * @return The value for the property if it exists, otherwise the @a default_value.
  */
-int ui_get_gtk_settings_integer(const char *property_name, int default_value)
+int ui_get_gtk_settings_integer(const char * property_name, int default_value)
 {
 	if (g_object_class_find_property(G_OBJECT_GET_CLASS(G_OBJECT(
-		gtk_settings_get_default())), property_name))
-	{
+		gtk_settings_get_default())), property_name)) {
+
 		int value;
 		g_object_get(G_OBJECT(gtk_settings_get_default()), property_name, &value, NULL);
 		return value;
-	}
-	else
+	} else {
 		return default_value;
+	}
 }
 
 
@@ -144,7 +144,7 @@ int ui_get_gtk_settings_integer(const char *property_name, int default_value)
  * @see ui_hookup_widget().
  *
  */
-GtkWidget *ui_lookup_widget(GtkWidget *widget, const char *widget_name)
+GtkWidget * ui_lookup_widget(GtkWidget * widget, const char * widget_name)
 {
 	GtkWidget *parent, *found_widget;
 
@@ -155,22 +155,27 @@ GtkWidget *ui_lookup_widget(GtkWidget *widget, const char *widget_name)
 		return NULL;
 	}
 
-	for (;;)
-	{
-		if (GTK_IS_MENU(widget))
+	for (;;) {
+		if (GTK_IS_MENU(widget)) {
 			parent = gtk_menu_get_attach_widget(GTK_MENU(widget));
-		else
+		} else {
 			parent = gtk_widget_get_parent(widget);
-		if (parent == NULL)
+		}
+
+		if (parent == NULL) {
 			parent = (GtkWidget*) g_object_get_data(G_OBJECT(widget), "GladeParentKey");
-		if (parent == NULL)
+		}
+
+		if (parent == NULL) {
 			break;
+		}
 		widget = parent;
 	}
 
 	found_widget = (GtkWidget*) g_object_get_data(G_OBJECT(widget), widget_name);
-	if (G_UNLIKELY(found_widget == NULL))
+	if (G_UNLIKELY(found_widget == NULL)) {
 		fprintf(stderr, "WARNING: Widget not found: %s\n", widget_name);
+	}
 	return found_widget;
 }
 
@@ -179,76 +184,79 @@ GtkWidget *ui_lookup_widget(GtkWidget *widget, const char *widget_name)
  * @param text String to display - maybe NULL
  * @return The label widget
  */
-GtkWidget* ui_label_new_selectable ( const char* text )
+GtkWidget * ui_label_new_selectable(const char * text)
 {
-	GtkWidget *widget = gtk_label_new ( text );
-	gtk_label_set_selectable ( GTK_LABEL(widget), true );
+	GtkWidget * widget = gtk_label_new(text);
+	gtk_label_set_selectable (GTK_LABEL(widget), true);
 	return widget;
 }
 
 /**
  * Apply the alpha value to the specified pixbuf
  */
-GdkPixbuf *ui_pixbuf_set_alpha ( GdkPixbuf *pixbuf, uint8_t alpha )
+GdkPixbuf * ui_pixbuf_set_alpha(GdkPixbuf * pixbuf, uint8_t alpha)
 {
-  unsigned char *pixels;
-  int width, height, iii, jjj;
+	unsigned char *pixels;
+	int width, height, iii, jjj;
 
-  if ( ! gdk_pixbuf_get_has_alpha ( pixbuf ) )
-  {
-    GdkPixbuf *tmp = gdk_pixbuf_add_alpha(pixbuf,false,0,0,0);
-    g_object_unref(G_OBJECT(pixbuf));
-    pixbuf = tmp;
-    if ( !pixbuf )
-      return NULL;
-  }
+	if (!gdk_pixbuf_get_has_alpha (pixbuf)) {
+		GdkPixbuf *tmp = gdk_pixbuf_add_alpha(pixbuf,false,0,0,0);
+		g_object_unref(G_OBJECT(pixbuf));
+		pixbuf = tmp;
+	 	if (!pixbuf) {
+			return NULL;
+		}
+	}
 
-  pixels = gdk_pixbuf_get_pixels(pixbuf);
-  width = gdk_pixbuf_get_width(pixbuf);
-  height = gdk_pixbuf_get_height(pixbuf);
+	pixels = gdk_pixbuf_get_pixels(pixbuf);
+	width = gdk_pixbuf_get_width(pixbuf);
+	height = gdk_pixbuf_get_height(pixbuf);
 
-  /* r,g,b,a,r,g,b,a.... */
-  for (iii = 0; iii < width; iii++) for (jjj = 0; jjj < height; jjj++)
-  {
-    pixels += 3;
-    if ( *pixels != 0 )
-      *pixels = alpha;
-    pixels++;
-  }
-  return pixbuf;
+	/* r,g,b,a,r,g,b,a.... */
+	for (iii = 0; iii < width; iii++) {
+		for (jjj = 0; jjj < height; jjj++) {
+			pixels += 3;
+			if (*pixels != 0) {
+				*pixels = alpha;
+			}
+			pixels++;
+		}
+	}
+	return pixbuf;
 }
 
 
 /**
  * Reduce the alpha value of the specified pixbuf by alpha / 255
  */
-GdkPixbuf *ui_pixbuf_scale_alpha ( GdkPixbuf *pixbuf, uint8_t alpha )
+GdkPixbuf * ui_pixbuf_scale_alpha(GdkPixbuf * pixbuf, uint8_t alpha)
 {
-  unsigned char *pixels;
-  int width, height, iii, jjj;
+	unsigned char *pixels;
+	int width, height, iii, jjj;
 
-  if ( ! gdk_pixbuf_get_has_alpha ( pixbuf ) )
-  {
-    GdkPixbuf *tmp = gdk_pixbuf_add_alpha(pixbuf,false,0,0,0);
-    g_object_unref(G_OBJECT(pixbuf));
-    pixbuf = tmp;
-    if ( !pixbuf )
-      return NULL;
-  }
+	if (!gdk_pixbuf_get_has_alpha(pixbuf)) {
+		GdkPixbuf * tmp = gdk_pixbuf_add_alpha(pixbuf,false,0,0,0);
+		g_object_unref(G_OBJECT(pixbuf));
+		pixbuf = tmp;
+		if (!pixbuf) {
+			return NULL;
+		}
+	}
 
-  pixels = gdk_pixbuf_get_pixels(pixbuf);
-  width = gdk_pixbuf_get_width(pixbuf);
-  height = gdk_pixbuf_get_height(pixbuf);
+	pixels = gdk_pixbuf_get_pixels(pixbuf);
+	width = gdk_pixbuf_get_width(pixbuf);
+	height = gdk_pixbuf_get_height(pixbuf);
 
-  /* r,g,b,a,r,g,b,a.... */
-  for (iii = 0; iii < width; iii++) for (jjj = 0; jjj < height; jjj++)
-  {
-    pixels += 3;
-    if ( *pixels != 0 )
-      *pixels = (uint8_t)(((uint16_t)*pixels * (uint16_t)alpha) / 255);
-    pixels++;
-  }
-  return pixbuf;
+	/* r,g,b,a,r,g,b,a.... */
+	for (iii = 0; iii < width; iii++)
+		for (jjj = 0; jjj < height; jjj++) {
+			pixels += 3;
+			if (*pixels != 0) {
+				*pixels = (uint8_t)(((uint16_t)*pixels * (uint16_t)alpha) / 255);
+			}
+			pixels++;
+		}
+	return pixbuf;
 }
 
 
@@ -256,15 +264,16 @@ GdkPixbuf *ui_pixbuf_scale_alpha ( GdkPixbuf *pixbuf, uint8_t alpha )
 /**
  *
  */
-void ui_add_recent_file ( const char *filename )
+void ui_add_recent_file(const char * filename)
 {
-	if ( filename ) {
-		GtkRecentManager *manager = gtk_recent_manager_get_default();
-		GFile *file = g_file_new_for_commandline_arg ( filename );
-		char *uri = g_file_get_uri ( file );
-		if ( uri && manager )
-			gtk_recent_manager_add_item ( manager, uri );
-		g_object_unref( file );
+	if (filename) {
+		GtkRecentManager * manager = gtk_recent_manager_get_default();
+		GFile * file = g_file_new_for_commandline_arg(filename);
+		char * uri = g_file_get_uri (file);
+		if (uri && manager) {
+			gtk_recent_manager_add_item(manager, uri);
+		}
+		g_object_unref(file);
 		free(uri);
 	}
 }

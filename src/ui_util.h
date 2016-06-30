@@ -33,17 +33,17 @@ extern "C" {
 #endif
 
 
-void open_url(GtkWindow *parent, const char * url);
-void new_email(GtkWindow *parent, const char * address);
+void open_url(GtkWindow * parent, const char * url);
+void new_email(GtkWindow * parent, const char * address);
 
-GtkWidget *ui_button_new_with_image(const char *stock_id, const char *text);
+GtkWidget * ui_button_new_with_image(const char * stock_id, const char * text);
 int ui_get_gtk_settings_integer(const char *property_name, int default_value);
-GtkWidget *ui_lookup_widget(GtkWidget *widget, const char *widget_name);
-GtkWidget* ui_label_new_selectable ( const char* text );
+GtkWidget * ui_lookup_widget(GtkWidget * widget, const char * widget_name);
+GtkWidget* ui_label_new_selectable(const char * text);
 
-GdkPixbuf *ui_pixbuf_set_alpha ( GdkPixbuf *pixbuf, uint8_t alpha );
-GdkPixbuf *ui_pixbuf_scale_alpha ( GdkPixbuf *pixbuf, uint8_t alpha );
-void ui_add_recent_file ( const char *filename );
+GdkPixbuf * ui_pixbuf_set_alpha(GdkPixbuf * pixbuf, uint8_t alpha);
+GdkPixbuf * ui_pixbuf_scale_alpha(GdkPixbuf * pixbuf, uint8_t alpha);
+void ui_add_recent_file(const char * filename);
 
 #ifdef __cplusplus
 }

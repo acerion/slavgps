@@ -26,7 +26,7 @@
 extern "C" {
 #endif
 
-void osm_init ();
+void osm_init();
 
 #ifdef __cplusplus
 }

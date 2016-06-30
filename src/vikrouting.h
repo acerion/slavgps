@@ -33,21 +33,21 @@ extern "C" {
 
 
 /* Default */
-bool vik_routing_default_find ( VikLayer *vt, struct LatLon start, struct LatLon end );
+bool vik_routing_default_find(VikLayer * vt, struct LatLon start, struct LatLon end);
 
 /* Routing engines management */
 void vik_routing_prefs_init();
-void vik_routing_register( VikRoutingEngine *engine );
-void vik_routing_unregister_all ();
-void vik_routing_foreach_engine ( GFunc func, void * user_data );
+void vik_routing_register(VikRoutingEngine * engine);
+void vik_routing_unregister_all();
+void vik_routing_foreach_engine(GFunc func, void * user_data);
 
 /* UI */
-typedef bool (*Predicate)( void * data, void * user_data );
-GtkWidget *vik_routing_ui_selector_new ( Predicate func, void * user_data );
-VikRoutingEngine *vik_routing_ui_selector_get_nth ( GtkWidget *combo, int pos );
+typedef bool (* Predicate)(void * data, void * user_data);
+GtkWidget * vik_routing_ui_selector_new(Predicate func, void * user_data);
+VikRoutingEngine * vik_routing_ui_selector_get_nth(GtkWidget * combo, int pos);
 
 /* Needs to be visible to display info about which routing engine is getting the route in viktrwlayer.c  */
-VikRoutingEngine * vik_routing_default_engine ( void );
+VikRoutingEngine * vik_routing_default_engine(void);
 
 
 #ifdef __cplusplus

@@ -32,10 +32,10 @@ extern "C" {
 
 
 void vik_trw_layer_track_list_show_dialog(char * title,
-										  SlavGPS::Layer * vl,
-                                            void * user_data,
-                                            VikTrwlayerGetTracksAndLayersFunc get_tracks_and_layers_cb,
-                                            bool is_aggregate );
+					  SlavGPS::Layer * vl,
+					  void * user_data,
+					  VikTrwlayerGetTracksAndLayersFunc get_tracks_and_layers_cb,
+					  bool is_aggregate);
 
 #ifdef __cplusplus
 }

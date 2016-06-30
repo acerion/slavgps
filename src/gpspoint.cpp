@@ -486,22 +486,27 @@ static void gpspoint_process_key_and_value(const char *key, unsigned int key_len
 			line_name = deslashndup(value, value_len);
 		}
 	} else if (key_len == 7 && strncasecmp(key, "comment", key_len) == 0 && value != NULL) {
-		if (line_comment == NULL)
+		if (line_comment == NULL) {
 			line_comment = deslashndup(value, value_len);
+		}
 	} else if (key_len == 11 && strncasecmp(key, "description", key_len) == 0 && value != NULL) {
-		if (line_description == NULL)
+		if (line_description == NULL) {
 			line_description = deslashndup(value, value_len);
+		}
 	} else if (key_len == 6 && strncasecmp(key, "source", key_len) == 0 && value != NULL) {
-		if (line_source == NULL)
+		if (line_source == NULL) {
 			line_source = deslashndup(value, value_len);
+		}
 	}
 	// NB using 'xtype' to differentiate from our own 'type' key
 	else if (key_len == 5 && strncasecmp(key, "xtype", key_len) == 0 && value != NULL) {
-		if (line_xtype == NULL)
+		if (line_xtype == NULL) {
 			line_xtype = deslashndup(value, value_len);
+		}
 	} else if (key_len == 5 && strncasecmp(key, "color", key_len) == 0 && value != NULL) {
-		if (line_color == NULL)
+		if (line_color == NULL) {
 			line_color = deslashndup(value, value_len);
+		}
 	} else if (key_len == 14 && strncasecmp(key, "draw_name_mode", key_len) == 0 && value != NULL) {
 		line_name_label = atoi(value);
 	} else if (key_len == 18 && strncasecmp(key, "number_dist_labels", key_len) == 0 && value != NULL) {
@@ -780,7 +785,7 @@ static void a_gpspoint_write_track(FILE * f, std::unordered_map<sg_uid_t, Track 
 			fprintf(f, " number_dist_labels=\"%d\"", trk->max_number_dist_labels);
 		}
 
-		if (! trk->visible) {
+		if (!trk->visible) {
 			fprintf(f, " visible=\"n\"");
 		}
 		fprintf(f, "\n");

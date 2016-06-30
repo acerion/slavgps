@@ -67,11 +67,11 @@ MapSourceBing::MapSourceBing()
 	priv->loading_attributions = false;
 
 #if 0
-	pspec = g_param_spec_string ("api-key",
-                                     "API key",
-                                     "The API key to access Bing",
+	pspec = g_param_spec_string("api-key",
+				    "API key",
+				    "The API key to access Bing",
                                      "<no-set>" /* default value */,
-				     (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
+				    (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
 #endif
 	logo = gdk_pixbuf_from_pixdata(&bing_maps_pixbuf, true, NULL);
 }
@@ -114,8 +114,7 @@ char * MapSourceBing::compute_quad_tree(int zoom, int tilex, int tiley)
 	char k[20];
 	int ik = 0;
 	int i = 0;
-	for(i = zoom; i > 0; i--)
-	{
+	for (i = zoom; i > 0; i--) {
 		char digit = 48;
 		int mask = 1 << (i - 1);
 		if ((tilex & mask) != 0) {
@@ -130,7 +129,7 @@ char * MapSourceBing::compute_quad_tree(int zoom, int tilex, int tiley)
 	return g_strdup(k);
 }
 
-char * MapSourceBing::get_server_path(TileInfo *src)
+char * MapSourceBing::get_server_path(TileInfo * src)
 {
 	char * quadtree = compute_quad_tree(17 - src->scale, src->x, src->y);
 	char * path = g_strdup_printf(server_path_format, quadtree);
@@ -142,16 +141,17 @@ void MapSourceBing::get_copyright(LatLonBBox bbox, double zoom, void (*fct)(View
 {
 	fprintf(stderr, "DEBUG: %s: looking for %g %g %g %g at %g\n", __FUNCTION__, bbox.south, bbox.north, bbox.east, bbox.west, zoom);
 
-	int level = map_utils_mpp_to_scale (zoom);
+	int level = map_utils_mpp_to_scale(zoom);
 
 	/* Loop over all known attributions */
 	GList * attribution = priv->attributions;
 	if (attribution == NULL && strcmp("<no-set>", priv->api_key)) {
-		if ( ! priv->loading_attributions )
-			_async_load_attributions (BING_MAP_SOURCE (self));
-		else
-			// Wait until attributions loaded before processing them
+		if (! priv->loading_attributions) {
+			_async_load_attributions(BING_MAP_SOURCE (self));
+		} else {
+			/* Wait until attributions loaded before processing them. */
 			return;
+		}
 	}
 	while (attribution != NULL) {
 		struct _Attribution *current = (struct _Attribution*)attribution->data;
@@ -159,6 +159,7 @@ void MapSourceBing::get_copyright(LatLonBBox bbox, double zoom, void (*fct)(View
 		if (BBOX_INTERSECT(bbox, current->bounds) &&
 		    (17 - level) > current->minZoom &&
 		    (17 - level) < current->maxZoom) {
+
 			(*fct)((Viewport *) data, current->attribution);
 			fprintf(stderr, "DEBUG: %s: found match %s\n", __FUNCTION__, current->attribution);
 		}
@@ -167,22 +168,22 @@ void MapSourceBing::get_copyright(LatLonBBox bbox, double zoom, void (*fct)(View
 }
 
 /* Called for open tags <foo bar="baz"> */
-void MapSourceBing::bstart_element(GMarkupParseContext *context,
-					  const char         *element_name,
-					  const char        **attribute_names,
-					  const char        **attribute_values,
-					  void *             user_data,
-					  GError             **error)
+void MapSourceBing::bstart_element(GMarkupParseContext * context,
+				   const char          * element_name,
+				   const char         ** attribute_names,
+				   const char         ** attribute_values,
+				   void                * user_data,
+				   GError             ** error)
 {
-	BingMapSource *self = BING_MAP_SOURCE (user_data);
-	BingMapSourcePrivate *priv = BING_MAP_SOURCE_GET_PRIVATE (self);
-	const char *element = g_markup_parse_context_get_element (context);
+	BingMapSource * self = BING_MAP_SOURCE (user_data);
+	BingMapSourcePrivate * priv = BING_MAP_SOURCE_GET_PRIVATE (self);
+	const char *element = g_markup_parse_context_get_element(context);
 	if (strcmp (element, "CoverageArea") == 0) {
 		/* New Attribution */
 		struct _Attribution * attribution = (struct _Attribution *) malloc(sizeof (struct _Attribution));
 		memset(attribution, 0, sizeof (struct _Attribution));
 
-		priv->attributions = g_list_append (priv->attributions, attribution);
+		priv->attributions = g_list_append(priv->attributions, attribution);
 		attribution->attribution = g_strdup(priv->attribution);
 	}
 }
@@ -199,33 +200,32 @@ void MapSourceBing::btext(GMarkupParseContext * context,
 	BingMapSourcePrivate *priv = BING_MAP_SOURCE_GET_PRIVATE (self);
 
 	struct _Attribution *attribution = (_Attribution *) (priv->attributions == NULL ? NULL : g_list_last (priv->attributions)->data);
-	const char *element = g_markup_parse_context_get_element (context);
-	char *textl = g_strndup (text, text_len);
-	const GSList *stack = g_markup_parse_context_get_element_stack (context);
-	int len = g_slist_length ((GSList *)stack);
+	const char *element = g_markup_parse_context_get_element(context);
+	char *textl = g_strndup(text, text_len);
+	const GSList *stack = g_markup_parse_context_get_element_stack(context);
+	int len = g_slist_length((GSList *)stack);
 
-	const char *parent = len > 1 ? (const char *) g_slist_nth_data ((GSList *)stack, 1) : (const char *) NULL;
-	if (strcmp (element, "Attribution") == 0) {
+	const char *parent = len > 1 ? (const char *) g_slist_nth_data((GSList *)stack, 1) : (const char *) NULL;
+	if (strcmp(element, "Attribution") == 0) {
 		free(priv->attribution);
 		priv->attribution = g_strdup(textl);
-	}
-	else {
-		if ( attribution ) {
-			if (parent != NULL && strcmp (parent, "CoverageArea") == 0) {
+	} else {
+		if (attribution) {
+			if (parent != NULL && strcmp(parent, "CoverageArea") == 0) {
 				if (strcmp (element, "ZoomMin") == 0) {
-					attribution->minZoom = atoi (textl);
+					attribution->minZoom = atoi(textl);
 				} else if (strcmp (element, "ZoomMax") == 0) {
-					attribution->maxZoom = atoi (textl);
+					attribution->maxZoom = atoi(textl);
 				}
-			} else if (parent != NULL && strcmp (parent, "BoundingBox") == 0) {
-				if (strcmp (element, "SouthLatitude") == 0) {
-					attribution->bounds.south = g_ascii_strtod (textl, NULL);
-				} else if (strcmp (element, "WestLongitude") == 0) {
-					attribution->bounds.west = g_ascii_strtod (textl, NULL);
-				} else if (strcmp (element, "NorthLatitude") == 0) {
-					attribution->bounds.north = g_ascii_strtod (textl, NULL);
-				} else if (strcmp (element, "EastLongitude") == 0) {
-					attribution->bounds.east = g_ascii_strtod (textl, NULL);
+			} else if (parent != NULL && strcmp(parent, "BoundingBox") == 0) {
+				if (strcmp(element, "SouthLatitude") == 0) {
+					attribution->bounds.south = g_ascii_strtod(textl, NULL);
+				} else if (strcmp(element, "WestLongitude") == 0) {
+					attribution->bounds.west = g_ascii_strtod(textl, NULL);
+				} else if (strcmp(element, "NorthLatitude") == 0) {
+					attribution->bounds.north = g_ascii_strtod(textl, NULL);
+				} else if (strcmp(element, "EastLongitude") == 0) {
+					attribution->bounds.east = g_ascii_strtod(textl, NULL);
 				}
 			}
 		}
@@ -244,9 +244,10 @@ bool MapSourceBing::parse_file_for_attributions(char *filename)
 	}
 
 	FILE *file = fopen(filename, "r");
-	if (file == NULL)
+	if (file == NULL) {
 		/* TODO emit warning */
 		return false;
+	}
 
 	/* setup context parse (ie callbacks) */
 	xml_parser.start_element = &bstart_element;
@@ -261,38 +262,40 @@ bool MapSourceBing::parse_file_for_attributions(char *filename)
 	size_t nb;
 	size_t offset = -1;
 	while (xml_context &&
-	       (nb = fread (buff, sizeof(char), BUFSIZ, file)) > 0)
-	{
-		if (offset == -1)
+	       (nb = fread(buff, sizeof(char), BUFSIZ, file)) > 0) {
+		if (offset == -1) {
 			/* first run */
 			/* Avoid possible BOM at begining of the file */
 			offset = buff[0] == '<' ? 0 : 3;
-		else
+		} else {
 			/* reset offset */
 			offset = 0;
-		if (!g_markup_parse_context_parse(xml_context, buff+offset, nb-offset, &error))
-		{
+		}
+
+		if (!g_markup_parse_context_parse(xml_context, buff+offset, nb-offset, &error)) {
 			fprintf(stderr, "%s: parsing error: %s.\n",
 				__FUNCTION__, error->message);
 			g_markup_parse_context_free(xml_context);
 			xml_context = NULL;
 		}
-		g_clear_error (&error);
+		g_clear_error(&error);
 	}
 	/* cleanup */
 	if (xml_context &&
-	    !g_markup_parse_context_end_parse(xml_context, &error))
-		fprintf(stderr, "%s: errors occurred while reading file: %s.\n",
-			__FUNCTION__, error->message);
-	g_clear_error (&error);
+	    !g_markup_parse_context_end_parse(xml_context, &error)) {
+		fprintf(stderr, "%s: errors occurred while reading file: %s.\n", __FUNCTION__, error->message);
+	}
 
-	if (xml_context)
+	g_clear_error(&error);
+
+	if (xml_context) {
 		g_markup_parse_context_free(xml_context);
+	}
 	xml_context = NULL;
-	fclose (file);
+	fclose(file);
 
 	if (vik_debug) {
-		GList *attribution = priv->attributions;
+		GList * attribution = priv->attributions;
 		while (attribution != NULL) {
 			struct _Attribution *aa = (struct _Attribution*)attribution->data;
 			fprintf(stderr, "DEBUG: Bing Attribution: %s from %d to %d %g %g %g %g\n", aa->attribution, aa->minZoom, aa->maxZoom, aa->bounds.south, aa->bounds.north, aa->bounds.east, aa->bounds.west);
@@ -309,10 +312,10 @@ int MapSourceBing::load_attributions()
 
 	BingMapSourcePrivate *priv = BING_MAP_SOURCE_GET_PRIVATE (self);
 	priv->loading_attributions = true;
-	char *uri = g_strdup_printf(URL_ATTR_FMT, priv->api_key);
+	char * uri = g_strdup_printf(URL_ATTR_FMT, priv->api_key);
 
-	char *tmpname = a_download_uri_to_tmp_file ( uri, vik_map_source_default_get_download_options(VIK_MAP_SOURCE_DEFAULT(self)) );
-	if ( !tmpname ) {
+	char * tmpname = a_download_uri_to_tmp_file(uri, vik_map_source_default_get_download_options(VIK_MAP_SOURCE_DEFAULT(self)));
+	if (!tmpname) {
 		ret = -1;
 		goto done;
 	}
@@ -334,7 +337,7 @@ int MapSourceBing::emit_update(void * data)
 {
 	gdk_threads_enter();
 	/* TODO
-	vik_layers_panel_emit_update ( VIK_LAYERS_PANEL (data) );
+	vik_layers_panel_emit_update(VIK_LAYERS_PANEL (data));
 	*/
 	gdk_threads_leave();
 	return 0;
@@ -342,28 +345,29 @@ int MapSourceBing::emit_update(void * data)
 
 int MapSourceBing::load_attributions_thread(void * threaddata)
 {
-	_load_attributions ( self );
-	int result = a_background_thread_progress ( threaddata, 1.0 );
-	if ( result != 0 )
+	_load_attributions (self);
+	int result = a_background_thread_progress(threaddata, 1.0);
+	if (result != 0) {
 		return -1; /* Abort thread */
+	}
 
 	/* Emit update */
 	/* As we are on a download thread,
 	 * it's better to fire the update from the main loop.
 	 */
-	g_idle_add ( (GSourceFunc)_emit_update, NULL /* FIXME */ );
+	g_idle_add((GSourceFunc)_emit_update, NULL /* FIXME */);
 
 	return 0;
 }
 
 void MapSourceBing::async_load_attributions()
 {
-	a_background_thread ( BACKGROUND_POOL_REMOTE,
-	                      /*VIK_GTK_WINDOW_FROM_WIDGET(vp)*/NULL,
-	                      _("Bing attribution Loading"),
-	                      (vik_thr_func) _load_attributions_thread,
-	                      self,
-	                      NULL,
-	                      NULL,
-	                      1);
+	a_background_thread(BACKGROUND_POOL_REMOTE,
+			    /*VIK_GTK_WINDOW_FROM_WIDGET(vp)*/NULL,
+			    _("Bing attribution Loading"),
+			    (vik_thr_func) _load_attributions_thread,
+			    self,
+			    NULL,
+			    NULL,
+			    1);
 }

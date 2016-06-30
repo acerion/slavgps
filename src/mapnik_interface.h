@@ -32,23 +32,23 @@ extern "C" {
 
 typedef struct _MapnikInterface MapnikInterface;
 
-void mapnik_interface_initialize (const char *plugins_dir, const char* font_dir, int font_dir_recurse);
+void mapnik_interface_initialize(const char * plugins_dir, const char * font_dir, int font_dir_recurse);
 
-MapnikInterface* mapnik_interface_new ();
-void mapnik_interface_free (MapnikInterface* mi);
+MapnikInterface* mapnik_interface_new();
+void mapnik_interface_free(MapnikInterface * mi);
 
-char* mapnik_interface_load_map_file ( MapnikInterface* mi,
-                                        const char *filename,
-                                        unsigned int width,
-                                        unsigned int height );
+char * mapnik_interface_load_map_file(MapnikInterface * mi,
+				      const char * filename,
+				      unsigned int width,
+				      unsigned int height);
 
-GdkPixbuf* mapnik_interface_render ( MapnikInterface* mi, double lat_tl, double lon_tl, double lat_br, double lon_br );
+GdkPixbuf * mapnik_interface_render(MapnikInterface * mi, double lat_tl, double lon_tl, double lat_br, double lon_br);
 
-char* mapnik_interface_get_copyright ( MapnikInterface* mi );
+char * mapnik_interface_get_copyright(MapnikInterface * mi);
 
-GArray* mapnik_interface_get_parameters ( MapnikInterface* mi );
+GArray * mapnik_interface_get_parameters(MapnikInterface * mi);
 
-char * mapnik_interface_about ( void );
+char * mapnik_interface_about(void);
 
 #ifdef __cplusplus
 }

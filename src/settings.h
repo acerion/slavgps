@@ -32,30 +32,30 @@ void a_settings_init();
 
 void a_settings_uninit();
 
-bool a_settings_get_boolean ( const char *name, bool *val );
+bool a_settings_get_boolean(const char * name, bool * val);
 
-void a_settings_set_boolean ( const char *name, bool val );
+void a_settings_set_boolean(const char * name, bool val);
 
-bool a_settings_get_string ( const char *name, char **val );
+bool a_settings_get_string(const char * name, char ** val);
 
-void a_settings_set_string ( const char *name, const char *val );
+void a_settings_set_string(const char * name, const char * val);
 
-bool a_settings_get_integer ( const char *name, int *val );
+bool a_settings_get_integer(const char * name, int * val);
 
-void a_settings_set_integer ( const char *name, int val );
+void a_settings_set_integer(const char * name, int val);
 
-bool a_settings_get_double ( const char *name, double *val );
+bool a_settings_get_double(const char * name, double * val);
 
-void a_settings_set_double ( const char *name, double val );
+void a_settings_set_double(const char * name, double val);
 
 /*
-bool a_settings_get_integer_list ( const char *name, int *vals, size_t* length );
+bool a_settings_get_integer_list(const char * name, int * vals, size_t * length);
 
-void a_settings_set_integer_list ( const char *name, int vals[], size_t length );
+void a_settings_set_integer_list(const char * name, int vals[], size_t length);
 */
-bool a_settings_get_integer_list_contains ( const char *name, int val );
+bool a_settings_get_integer_list_contains(const char * name, int val);
 
-void a_settings_set_integer_list_containing ( const char *name, int val );
+void a_settings_set_integer_list_containing(const char * name, int val);
 
 #ifdef __cplusplus
 }

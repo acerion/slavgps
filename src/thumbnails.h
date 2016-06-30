@@ -32,11 +32,11 @@ extern "C" {
 #endif
 
 
-bool a_thumbnails_exists ( const char *filename );
-void a_thumbnails_create ( const char *filename );
-GdkPixbuf *a_thumbnails_get(const char *filename);
-GdkPixbuf *a_thumbnails_get_default ();
-GdkPixbuf *a_thumbnails_scale_pixbuf(GdkPixbuf *src, int max_w, int max_h);
+bool a_thumbnails_exists(const char * filename);
+void a_thumbnails_create(const char * filename);
+GdkPixbuf * a_thumbnails_get(const char * filename);
+GdkPixbuf * a_thumbnails_get_default();
+GdkPixbuf * a_thumbnails_scale_pixbuf(GdkPixbuf * src, int max_w, int max_h);
 
 #ifdef __cplusplus
 }

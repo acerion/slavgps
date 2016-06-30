@@ -75,53 +75,49 @@
 
 #define PIXMAP_THUMB_SIZE  128
 
-static char *md5_hash(const char *message);
-static GdkPixbuf *save_thumbnail(const char *pathname, GdkPixbuf *full);
-static GdkPixbuf *child_create_thumbnail(const char *path);
+static char *md5_hash(const char * message);
+static GdkPixbuf *save_thumbnail(const char * pathname, GdkPixbuf * full);
+static GdkPixbuf *child_create_thumbnail(const char * path);
 
-bool a_thumbnails_exists ( const char *filename )
+bool a_thumbnails_exists(const char * filename)
 {
-  GdkPixbuf *pixbuf = a_thumbnails_get(filename);
-  if ( pixbuf )
-  {
-    g_object_unref ( G_OBJECT ( pixbuf ) );
-    return true;
-  }
-  return false;
+	GdkPixbuf * pixbuf = a_thumbnails_get(filename);
+	if (pixbuf) {
+		g_object_unref(G_OBJECT (pixbuf));
+		return true;
+	}
+	return false;
 }
 
-GdkPixbuf *a_thumbnails_get_default ()
+GdkPixbuf * a_thumbnails_get_default()
 {
-  return gdk_pixbuf_from_pixdata ( &thumbnails_pixbuf, false, NULL );
+	return gdk_pixbuf_from_pixdata(&thumbnails_pixbuf, false, NULL);
 }
 
 /* filename must be absolute. you could have a function to make sure it exists and absolutize it */
 
-void a_thumbnails_create(const char *filename)
+void a_thumbnails_create(const char * filename)
 {
-  GdkPixbuf *pixbuf = a_thumbnails_get(filename);
+	GdkPixbuf * pixbuf = a_thumbnails_get(filename);
 
-  if ( ! pixbuf )
-    pixbuf = child_create_thumbnail(filename);
+	if (!pixbuf) {
+		pixbuf = child_create_thumbnail(filename);
+	}
 
-  if ( pixbuf )
-    g_object_unref (  G_OBJECT ( pixbuf ) );
+	if (pixbuf) {
+		g_object_unref(G_OBJECT (pixbuf));
+	}
 }
 
-GdkPixbuf *a_thumbnails_scale_pixbuf(GdkPixbuf *src, int max_w, int max_h)
+GdkPixbuf * a_thumbnails_scale_pixbuf(GdkPixbuf * src, int max_w, int max_h)
 {
-	int	w, h;
+	int w = gdk_pixbuf_get_width(src);
+	int h = gdk_pixbuf_get_height(src);
 
-	w = gdk_pixbuf_get_width(src);
-	h = gdk_pixbuf_get_height(src);
-
-	if (w <= max_w && h <= max_h)
-	{
-		g_object_ref ( G_OBJECT ( src ) );
+	if (w <= max_w && h <= max_h) {
+		g_object_ref(G_OBJECT (src));
 		return src;
-	}
-	else
-	{
+	} else {
 		float scale_x = ((float) w) / max_w;
 		float scale_y = ((float) h) / max_h;
 		float scale = MAX(scale_x, scale_y);
@@ -129,35 +125,35 @@ GdkPixbuf *a_thumbnails_scale_pixbuf(GdkPixbuf *src, int max_w, int max_h)
 		int dest_h = h / scale;
 
 		return gdk_pixbuf_scale_simple(src,
-						MAX(dest_w, 1),
-						MAX(dest_h, 1),
-						GDK_INTERP_BILINEAR);
+					       MAX(dest_w, 1),
+					       MAX(dest_h, 1),
+					       GDK_INTERP_BILINEAR);
 	}
 }
 
-static GdkPixbuf *child_create_thumbnail(const char *path)
+static GdkPixbuf * child_create_thumbnail(const char * path)
 {
 	GdkPixbuf *image, *tmpbuf;
 
 	image = gdk_pixbuf_new_from_file(path, NULL);
-	if (!image)
+	if (!image) {
 		return NULL;
+	}
 
 	tmpbuf = gdk_pixbuf_apply_embedded_orientation(image);
 	g_object_unref(G_OBJECT(image));
 	image = tmpbuf;
 
-	if (image)
-	{
-		GdkPixbuf *thumb = save_thumbnail(path, image);
-		g_object_unref ( G_OBJECT ( image ) );
+	if (image) {
+		GdkPixbuf * thumb = save_thumbnail(path, image);
+		g_object_unref(G_OBJECT (image));
 		return thumb;
 	}
 
 	return NULL;
 }
 
-static GdkPixbuf *save_thumbnail(const char *pathname, GdkPixbuf *full)
+static GdkPixbuf * save_thumbnail(const char * pathname, GdkPixbuf * full)
 {
 	struct stat info;
 	char *path;
@@ -169,8 +165,9 @@ static GdkPixbuf *save_thumbnail(const char *pathname, GdkPixbuf *full)
 	int name_len;
 	GdkPixbuf *thumb;
 
-	if (stat(pathname, &info) != 0)
+	if (stat(pathname, &info) != 0) {
 		return NULL;
+	}
 
 	thumb = a_thumbnails_scale_pixbuf(full, PIXMAP_THUMB_SIZE, PIXMAP_THUMB_SIZE);
 
@@ -193,8 +190,10 @@ static GdkPixbuf *save_thumbnail(const char *pathname, GdkPixbuf *full)
 	to = g_string_new(HOME_DIR);
 	g_string_append(to, THUMB_DIR);
 	g_string_append(to, THUMB_SUB_DIR);
-	if ( g_mkdir_with_parents(to->str, 0700) != 0 )
-		fprintf(stderr, "WARNING: %s: Failed to mkdir %s\n", __FUNCTION__, to->str );
+	if (g_mkdir_with_parents(to->str, 0700) != 0) {
+		fprintf(stderr, "WARNING: %s: Failed to mkdir %s\n", __FUNCTION__, to->str);
+	}
+
 	g_string_append(to, md5);
 	name_len = to->len + 4; /* Truncate to this length when renaming */
 #ifdef WINDOWS
@@ -211,9 +210,9 @@ static GdkPixbuf *save_thumbnail(const char *pathname, GdkPixbuf *full)
 	// ATM GLIB Manual doesn't specify in which version this function became available
 	//  find out that it's fairly recent so may break builds without this test
 #if GLIB_CHECK_VERSION(2,40,0)
-	char *thumb_uri = g_str_to_ascii ( uri, NULL );
+	char *thumb_uri = g_str_to_ascii (uri, NULL);
 #else
-	char *thumb_uri = g_strdup( uri );
+	char *thumb_uri = g_strdup(uri);
 #endif
 	old_mask = umask(0077);
 	GError *error = NULL;
@@ -230,25 +229,22 @@ static GdkPixbuf *save_thumbnail(const char *pathname, GdkPixbuf *full)
 	free(thumb_uri);
 
 	if (error) {
-		fprintf(stderr, "WARNING: %s::%s\n", __FUNCTION__, error->message );
-		g_error_free ( error );
-		g_object_unref ( G_OBJECT(thumb) );
+		fprintf(stderr, "WARNING: %s::%s\n", __FUNCTION__, error->message);
+		g_error_free(error);
+		g_object_unref(G_OBJECT(thumb));
 		thumb = NULL; /* return NULL */
-	}
-	else
-	/* We create the file ###.png.Viking-PID and rename it to avoid
-	 * a race condition if two programs create the same thumb at
-	 * once.
-	 */
-	{
+	} else {
+		/* We create the file ###.png.Viking-PID and rename it to avoid
+		 * a race condition if two programs create the same thumb at
+		 * once.
+		 */
 		char *final;
 
 		final = g_strndup(to->str, name_len);
-		if (rename(to->str, final))
-		{
+		if (rename(to->str, final)) {
 			fprintf(stderr, "WARNING: Failed to rename '%s' to '%s': %s\n",
-				  to->str, final, g_strerror(errno));
-			g_object_unref ( G_OBJECT(thumb) );
+				to->str, final, g_strerror(errno));
+			g_object_unref(G_OBJECT(thumb));
 			thumb = NULL; /* return NULL */
 		}
 
@@ -266,7 +262,7 @@ static GdkPixbuf *save_thumbnail(const char *pathname, GdkPixbuf *full)
 }
 
 
-GdkPixbuf *a_thumbnails_get(const char *pathname)
+GdkPixbuf * a_thumbnails_get(const char * pathname)
 {
 	GdkPixbuf *thumb = NULL;
 	char *thumb_path, *md5, *uri, *path;
@@ -283,28 +279,34 @@ GdkPixbuf *a_thumbnails_get(const char *pathname)
 	free(md5);
 
 	thumb = gdk_pixbuf_new_from_file(thumb_path, NULL);
-	if (!thumb)
+	if (!thumb) {
 		goto err;
+	}
 
 	/* Note that these don't need freeing... */
 	ssize = gdk_pixbuf_get_option(thumb, "tEXt::Thumb::Size");
-	if (!ssize)
+	if (!ssize) {
 		goto err;
+	}
 
 	smtime = gdk_pixbuf_get_option(thumb, "tEXt::Thumb::MTime");
-	if (!smtime)
+	if (!smtime) {
 		goto err;
+	}
 
-	if (stat(path, &info) != 0)
+	if (stat(path, &info) != 0) {
 		goto err;
+	}
 
-	if (info.st_mtime != atol(smtime) || info.st_size != atol(ssize))
+	if (info.st_mtime != atol(smtime) || info.st_size != atol(ssize)) {
 		goto err;
+	}
 
 	goto out;
 err:
-	if (thumb)
-		g_object_unref ( G_OBJECT ( thumb ) );
+	if (thumb) {
+		g_object_unref(G_OBJECT (thumb));
+	}
 	thumb = NULL;
 out:
 	free(path);
@@ -338,9 +340,9 @@ static char *MD5Final(MD5Context *ctx);
 static void MD5Transform(uint32_t buf[4], uint32_t const in[16]);
 
 #if G_BYTE_ORDER == G_BIG_ENDIAN
-static void byteSwap(uint32_t *buf, unsigned words)
+static void byteSwap(uint32_t * buf, unsigned words)
 {
-	md5byte *p = (md5byte *)buf;
+	md5byte *p = (md5byte *) buf;
 
 	do {
 		*buf++ = (uint32_t)((unsigned)p[3] << 8 | p[2]) << 16 |
@@ -356,7 +358,7 @@ static void byteSwap(uint32_t *buf, unsigned words)
  * Start MD5 accumulation. Set bit count to 0 and buffer to mysterious
  * initialization constants.
  */
-static void MD5Init(MD5Context *ctx)
+static void MD5Init(MD5Context * ctx)
 {
 	ctx->buf[0] = 0x67452301;
 	ctx->buf[1] = 0xefcdab89;
@@ -371,15 +373,16 @@ static void MD5Init(MD5Context *ctx)
  * Update context to reflect the concatenation of another buffer full
  * of bytes.
  */
-static void MD5Update(MD5Context *ctx, md5byte const *buf, unsigned len)
+static void MD5Update(MD5Context * ctx, md5byte const * buf, unsigned len)
 {
 	uint32_t t;
 
 	/* Update byte count */
 
 	t = ctx->bytes[0];
-	if ((ctx->bytes[0] = t + len) < t)
+	if ((ctx->bytes[0] = t + len) < t) {
 		ctx->bytes[1]++;	/* Carry from low to high */
+	}
 
 	t = 64 - (t & 0x3f);	/* Space available in ctx->in (at least 1) */
 	if (t > len) {
@@ -411,12 +414,12 @@ static void MD5Update(MD5Context *ctx, md5byte const *buf, unsigned len)
  * 1 0* (64-bit count of bits processed, MSB-first)
  * Returns the newly allocated string of the hash.
  */
-static char *MD5Final(MD5Context *ctx)
+static char * MD5Final(MD5Context * ctx)
 {
 	char *retval;
 	int i;
 	int count = ctx->bytes[0] & 0x3f;	/* Number of bytes in ctx->in */
-	md5byte *p = (md5byte *)ctx->in + count;
+	md5byte *p = (md5byte *) ctx->in + count;
 	uint8_t	*bytes;
 
 	/* Set the first char of padding to 0x80.  There is always room. */
@@ -444,8 +447,9 @@ static char *MD5Final(MD5Context *ctx)
 
 	retval = (char *) malloc(33);
 	bytes = (uint8_t *) ctx->buf;
-	for (i = 0; i < 16; i++)
+	for (i = 0; i < 16; i++) {
 		sprintf(retval + (i * 2), "%02x", bytes[i]);
+	}
 	retval[32] = '\0';
 
 	return retval;
@@ -555,7 +559,7 @@ static void MD5Transform(uint32_t buf[4], uint32_t const in[16])
 
 # endif /* ASM_MD5 */
 
-static char *md5_hash(const char *message)
+static char * md5_hash(const char * message)
 {
 	MD5Context ctx;
 

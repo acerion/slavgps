@@ -199,15 +199,15 @@ void osm_init (void)
 	//g_object_unref ( webtool );
 
 	/* See API references: https://github.com/DennisOSRM/Project-OSRM/wiki/Server-api */
-	VikRoutingEngine *osrm = (VikRoutingEngine *) g_object_new ( VIK_ROUTING_WEB_ENGINE_TYPE,
-								     "id", "osrm",
-								     "label", "OSRM",
-								     "format", "gpx",
-								     "url-base", "http://router.project-osrm.org/viaroute?output=gpx",
-								     "url-start-ll", "&loc=%s,%s",
-								     "url-stop-ll", "&loc=%s,%s",
-								     "url-via-ll", "&loc=%s,%s",
-								     NULL);
-	vik_routing_register ( VIK_ROUTING_ENGINE ( osrm ) );
-	g_object_unref ( osrm );
+	VikRoutingEngine * osrm = (VikRoutingEngine *) g_object_new(VIK_ROUTING_WEB_ENGINE_TYPE,
+								    "id", "osrm",
+								    "label", "OSRM",
+								    "format", "gpx",
+								    "url-base", "http://router.project-osrm.org/viaroute?output=gpx",
+								    "url-start-ll", "&loc=%s,%s",
+								    "url-stop-ll", "&loc=%s,%s",
+								    "url-via-ll", "&loc=%s,%s",
+								    NULL);
+	vik_routing_register(VIK_ROUTING_ENGINE (osrm));
+	g_object_unref(osrm);
 }

@@ -69,17 +69,17 @@
 typedef struct _MapnikInterfaceClass MapnikInterfaceClass;
 typedef struct _MapnikInterface MapnikInterface;
 
-GType mapnik_interface_get_type ();
+GType mapnik_interface_get_type();
 struct _MapnikInterfaceClass
 {
 	GObjectClass object_class;
 };
 
-static void mapnik_interface_class_init ( MapnikInterfaceClass *mic )
+static void mapnik_interface_class_init(MapnikInterfaceClass * mic)
 {
 }
 
-static void mapnik_interface_init ( MapnikInterface *mi )
+static void mapnik_interface_init(MapnikInterface * mi)
 {
 }
 
@@ -92,74 +92,80 @@ struct _MapnikInterface {
 G_DEFINE_TYPE (MapnikInterface, mapnik_interface, G_TYPE_OBJECT)
 
 // Can't change prj after init - but ATM only support drawing in Spherical Mercator
-static mapnik::projection prj( mapnik::MAPNIK_GMERC_PROJ );
+static mapnik::projection prj(mapnik::MAPNIK_GMERC_PROJ);
 
-MapnikInterface* mapnik_interface_new ()
+MapnikInterface * mapnik_interface_new()
 {
-	MapnikInterface* mi = MAPNIK_INTERFACE ( g_object_new ( MAPNIK_INTERFACE_TYPE, NULL ) );
+	MapnikInterface * mi = MAPNIK_INTERFACE (g_object_new(MAPNIK_INTERFACE_TYPE, NULL));
 	mi->myMap = new mapnik::Map;
 	mi->copyright = NULL;
 	return mi;
 }
 
-void mapnik_interface_free (MapnikInterface* mi)
+void mapnik_interface_free(MapnikInterface * mi)
 {
-	if ( mi ) {
-		g_free ( mi->copyright );
+	if (mi) {
+		g_free(mi->copyright);
 		delete mi->myMap;
 	}
-	g_object_unref ( G_OBJECT(mi) );
+	g_object_unref(G_OBJECT(mi));
 }
 
 /**
  * mapnik_interface_initialize:
  */
-void mapnik_interface_initialize (const char *plugins_dir, const char* font_dir, int font_dir_recurse)
+void mapnik_interface_initialize(const char * plugins_dir, const char * font_dir, int font_dir_recurse)
 {
-	g_debug ("using mapnik version %s", MAPNIK_VERSION_STRING );
+	g_debug ("using mapnik version %s", MAPNIK_VERSION_STRING);
 	try {
-		if ( plugins_dir )
+		if (plugins_dir) {
 #if MAPNIK_VERSION >= 200200
 			mapnik::datasource_cache::instance().register_datasources(plugins_dir);
 #else
 			mapnik::datasource_cache::instance()->register_datasources(plugins_dir);
 #endif
-		if ( font_dir )
-			if ( ! mapnik::freetype_engine::register_fonts(font_dir, font_dir_recurse ? true : false) )
-				g_warning ("%s: No fonts found", __FUNCTION__);
+		}
+		if (font_dir) {
+			if (!mapnik::freetype_engine::register_fonts(font_dir, font_dir_recurse ? true : false)) {
+				g_warning("%s: No fonts found", __FUNCTION__);
+			}
+		}
 	} catch (std::exception const& ex) {
-		g_warning ("An error occurred while initialising mapnik: %s", ex.what());
+		g_warning("An error occurred while initialising mapnik: %s", ex.what());
 	} catch (...) {
-		g_warning ("An unknown error occurred while initialising mapnik");
+		g_warning("An unknown error occurred while initialising mapnik");
 	}
 }
 
 /**
  *  caching this answer instead of looking it up each time
  */
-static void set_copyright ( MapnikInterface* mi )
+static void set_copyright(MapnikInterface * mi)
 {
-	g_free ( mi->copyright );
+	g_free(mi->copyright);
 	mi->copyright = NULL;
 
 	mapnik::parameters pmts = mi->myMap->get_extra_parameters();
 #if MAPNIK_VERSION < 300000
 	for (mapnik::parameters::const_iterator ii = pmts.begin(); ii != pmts.end(); ii++) {
-		if ( ii->first == "attribution" || ii->first == "copyright" ) {
+		if (ii->first == "attribution" || ii->first == "copyright") {
 			std::stringstream ss;
 			ss << ii->second;
 			// Copy it
-			mi->copyright = g_strdup ( (gchar*)ss.str().c_str() );
+			mi->copyright = g_strdup((gchar*)ss.str().c_str());
 			break;
 		}
 	}
 #else
-	if ( pmts.get<std::string>("attribution") )
-		mi->copyright = g_strdup ( (*pmts.get<std::string>("attribution")).c_str() );
+	if (pmts.get<std::string>("attribution")) {
+		mi->copyright = g_strdup((*pmts.get<std::string>("attribution")).c_str());
+	}
 
-	if ( !mi->copyright )
-		if ( pmts.get<std::string>("copyright") )
-			mi->copyright = g_strdup ( (*pmts.get<std::string>("copyright")).c_str() );
+	if (!mi->copyright) {
+		if (pmts.get<std::string>("copyright")) {
+			mi->copyright = g_strdup((*pmts.get<std::string>("copyright")).c_str());
+		}
+	}
 #endif
 }
 
@@ -171,19 +177,22 @@ static void set_copyright ( MapnikInterface* mi )
  * Returns NULL on success otherwise a string about what went wrong.
  *  This string should be freed once it has been used.
  */
-gchar* mapnik_interface_load_map_file ( MapnikInterface* mi,
-                                        const gchar *filename,
-                                        guint width,
-                                        guint height )
+gchar * mapnik_interface_load_map_file(MapnikInterface * mi,
+				       const gchar * filename,
+				       guint width,
+				       guint height)
 {
 	gchar *msg = NULL;
-	if ( !mi ) return strdup("Internal Error");
+	if (!mi) {
+		return strdup("Internal Error");
+	}
+
 	try {
 		mi->myMap->remove_all(); // Support reloading
 		mapnik::load_map(*mi->myMap, filename);
 
 		mi->myMap->resize(width,height);
-		mi->myMap->set_srs ( mapnik::MAPNIK_GMERC_PROJ ); // ONLY WEB MERCATOR output supported ATM
+		mi->myMap->set_srs(mapnik::MAPNIK_GMERC_PROJ); // ONLY WEB MERCATOR output supported ATM
 
 		// IIRC This size is the number of pixels outside the tile to be considered so stuff is shown (i.e. particularly labels)
 		// Only set buffer size if the buffer size isn't explicitly set in the mapnik stylesheet.
@@ -191,17 +200,17 @@ gchar* mapnik_interface_load_map_file ( MapnikInterface* mi,
 		if (mi->myMap->buffer_size() == 0) {
 			gint buffer_size = (width+height/4); // e.g. 128 for a 256x256 image.
 			gint tmp;
-			if ( a_settings_get_integer ( VIK_SETTINGS_MAPNIK_BUFFER_SIZE, &tmp ) )
+			if (a_settings_get_integer(VIK_SETTINGS_MAPNIK_BUFFER_SIZE, &tmp))
 				buffer_size = tmp;
 
 			mi->myMap->set_buffer_size(buffer_size);
 		}
 
-		set_copyright ( mi );
+		set_copyright(mi);
 
-		g_debug ("%s layers: %d", __FUNCTION__, (guint)mi->myMap->layer_count() );
+		g_debug("%s layers: %d", __FUNCTION__, (guint)mi->myMap->layer_count());
 	} catch (std::exception const& ex) {
-		msg = g_strdup ( ex.what() );
+		msg = g_strdup(ex.what());
 	} catch (...) {
 		msg = strdup("unknown error");
 	}
@@ -214,9 +223,11 @@ gchar* mapnik_interface_load_map_file ( MapnikInterface* mi,
  *
  * Returns a #GdkPixbuf of the specified area. #GdkPixbuf may be NULL
  */
-GdkPixbuf* mapnik_interface_render ( MapnikInterface* mi, double lat_tl, double lon_tl, double lat_br, double lon_br )
+GdkPixbuf * mapnik_interface_render(MapnikInterface * mi, double lat_tl, double lon_tl, double lat_br, double lon_br)
 {
-	if ( !mi ) return NULL;
+	if (!mi) {
+		return NULL;
+	}
 
 	// Copy main object to local map variable
 	//  This enables rendering to work when this function is called from different threads
@@ -243,20 +254,20 @@ GdkPixbuf* mapnik_interface_render ( MapnikInterface* mi, double lat_tl, double 
 		mapnik::agg_renderer<mapnik::image_32> render(myMap,image);
 		render.apply();
 
-		if ( image.painted() ) {
+		if (image.painted()) {
 			unsigned char *ImageRawDataPtr = (unsigned char *) g_malloc(width * 4 * height);
 			if (!ImageRawDataPtr)
 				return NULL;
 			memcpy(ImageRawDataPtr, image.raw_data(), width * height * 4);
 			pixbuf = gdk_pixbuf_new_from_data(ImageRawDataPtr, GDK_COLORSPACE_RGB, TRUE, 8, width, height, width * 4, NULL, NULL);
+		} else {
+			g_warning("%s not rendered", __FUNCTION__);
 		}
-		else
-			g_warning ("%s not rendered", __FUNCTION__ );
 	}
 	catch (const std::exception & ex) {
-		g_warning ("An error occurred while rendering: %s", ex.what());
+		g_warning("An error occurred while rendering: %s", ex.what());
 	} catch (...) {
-		g_warning ("An unknown error occurred while rendering");
+		g_warning("An unknown error occurred while rendering");
 	}
 
 	return pixbuf;
@@ -267,9 +278,11 @@ GdkPixbuf* mapnik_interface_render ( MapnikInterface* mi, double lat_tl, double 
  *
  * Free returned string  after use
  */
-gchar* mapnik_interface_get_copyright ( MapnikInterface* mi )
+gchar * mapnik_interface_get_copyright(MapnikInterface * mi)
 {
-	if ( !mi ) return NULL;
+	if (!mi) {
+		return NULL;
+	}
 	return mi->copyright;
 }
 
@@ -278,9 +291,9 @@ gchar* mapnik_interface_get_copyright ( MapnikInterface* mi )
  *
  * Free every string element and the returned GArray itself after use
  */
-GArray* mapnik_interface_get_parameters ( MapnikInterface* mi )
+GArray * mapnik_interface_get_parameters(MapnikInterface * mi)
 {
-	GArray *array = g_array_new (FALSE, TRUE, sizeof(gchar*));
+	GArray * array = g_array_new(FALSE, TRUE, sizeof (gchar *));
 
 	mapnik::parameters pmts = mi->myMap->get_extra_parameters();
 	// Simply want the strings of each parameter so we can display something...
@@ -294,8 +307,8 @@ GArray* mapnik_interface_get_parameters ( MapnikInterface* mi )
 		ss << pmt.first << ": " << *(pmts.get<std::string>(pmt.first,"empty"));
 #endif
 		// Copy - otherwise ss goes output scope and junk memory would be referenced.
-		gchar *str2 = g_strdup ( (gchar*)ss.str().c_str() );
-		g_array_append_val ( array, str2 );
+		gchar *str2 = g_strdup((gchar*)ss.str().c_str());
+		g_array_append_val(array, str2);
 	}
 
 	return array;
@@ -306,7 +319,7 @@ GArray* mapnik_interface_get_parameters ( MapnikInterface* mi )
  *
  * Free the returned string after use
  */
-gchar * mapnik_interface_about ( void )
+gchar * mapnik_interface_about(void)
 {
 	// Normally about 10 plugins so list them all
 #if MAPNIK_VERSION >= 200200
@@ -315,15 +328,16 @@ gchar * mapnik_interface_about ( void )
 	std::vector<std::string> plugins = mapnik::datasource_cache::instance()->plugin_names();
 #endif
 	std::string str;
-	for (int nn = 0; nn < plugins.size(); nn++ )
+	for (int nn = 0; nn < plugins.size(); nn++) {
 		str += plugins[nn] + ',';
+	}
 	str += '\n';
 	// NB Can have a couple hundred fonts loaded when using system directories
 	//  So ATM don't list them all - otherwise need better GUI feedback display.
-	gchar *msg = g_strdup_printf ( _("%s %s\nPlugins=%sFonts loaded=%d"),
-	                               _("Mapnik"),
-	                               MAPNIK_VERSION_STRING,
-	                               str.c_str(),
-	                               (guint)mapnik::freetype_engine::face_names().size() );
+	gchar * msg = g_strdup_printf(_("%s %s\nPlugins=%sFonts loaded=%d"),
+				      _("Mapnik"),
+				      MAPNIK_VERSION_STRING,
+				      str.c_str(),
+				      (guint)mapnik::freetype_engine::face_names().size());
 	return msg;
 }

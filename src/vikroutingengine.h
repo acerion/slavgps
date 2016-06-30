@@ -47,33 +47,32 @@ extern "C" {
 typedef struct _VikRoutingEngine VikRoutingEngine;
 typedef struct _VikRoutingEngineClass VikRoutingEngineClass;
 
-struct _VikRoutingEngineClass
-{
-  GObjectClass object_class;
-  bool (*find)(VikRoutingEngine *self, VikLayer *vtl, struct LatLon start, struct LatLon end);
-  char *(*get_url_from_directions)(VikRoutingEngine *self, const char *start, const char *end);
-  bool (*supports_direction)(VikRoutingEngine *self);
-  bool (*refine)(VikRoutingEngine *self, VikLayer *vtl, SlavGPS::Track * trk);
-  bool (*supports_refine)(VikRoutingEngine *self);
+struct _VikRoutingEngineClass {
+	GObjectClass object_class;
+	bool (* find)(VikRoutingEngine * self, VikLayer * vtl, struct LatLon start, struct LatLon end);
+	char * (* get_url_from_directions)(VikRoutingEngine * self, const char * start, const char * end);
+	bool (* supports_direction)(VikRoutingEngine *self);
+	bool (* refine)(VikRoutingEngine * self, VikLayer * vtl, SlavGPS::Track * trk);
+	bool (* supports_refine)(VikRoutingEngine * self);
 };
 
-GType vik_routing_engine_get_type ();
+GType vik_routing_engine_get_type();
 
 struct _VikRoutingEngine {
-  GObject obj;
+	GObject obj;
 };
 
-bool vik_routing_engine_find ( VikRoutingEngine *self, VikLayer *vtl, struct LatLon start, struct LatLon end );
-bool vik_routing_engine_refine ( VikRoutingEngine *self, VikLayer *vtl, SlavGPS::Track * trk);
-char *vik_routing_engine_get_url_from_directions ( VikRoutingEngine *self, const char *start, const char *end );
+bool vik_routing_engine_find(VikRoutingEngine * self, VikLayer * vtl, struct LatLon start, struct LatLon end);
+bool vik_routing_engine_refine(VikRoutingEngine * self, VikLayer * vtl, SlavGPS::Track * trk);
+char *vik_routing_engine_get_url_from_directions(VikRoutingEngine * self, const char * start, const char * end);
 
 /* Acessors */
-char *vik_routing_engine_get_id ( VikRoutingEngine *self );
-char *vik_routing_engine_get_label ( VikRoutingEngine *self );
-char *vik_routing_engine_get_format ( VikRoutingEngine *self );
+char * vik_routing_engine_get_id(VikRoutingEngine * self);
+char * vik_routing_engine_get_label(VikRoutingEngine * self);
+char * vik_routing_engine_get_format(VikRoutingEngine * self);
 
-bool vik_routing_engine_supports_direction ( VikRoutingEngine *self );
-bool vik_routing_engine_supports_refine ( VikRoutingEngine *self );
+bool vik_routing_engine_supports_direction(VikRoutingEngine * self);
+bool vik_routing_engine_supports_refine(VikRoutingEngine * self);
 
 #ifdef __cplusplus
 }

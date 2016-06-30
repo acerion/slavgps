@@ -45,12 +45,12 @@ using namespace SlavGPS;
  * track_close_cb:
  *
  */
-static void track_close_cb ( GtkWidget *dialog, int resp, GList *data )
+static void track_close_cb(GtkWidget * dialog, int resp, GList * data)
 {
-	g_list_foreach ( data, (GFunc) g_free, NULL );
-	g_list_free ( data );
+	g_list_foreach(data, (GFunc) g_free, NULL);
+	g_list_free(data);
 
-	gtk_widget_destroy (dialog);
+	gtk_widget_destroy(dialog);
 }
 
 /**
@@ -59,18 +59,18 @@ static void track_close_cb ( GtkWidget *dialog, int resp, GList *data )
  * General purpose column double formatting
  *
  */
-static void format_1f_cell_data_func ( GtkTreeViewColumn *col,
-                                       GtkCellRenderer   *renderer,
-                                       GtkTreeModel      *model,
-                                       GtkTreeIter       *iter,
-                                       void *           user_data )
+static void format_1f_cell_data_func(GtkTreeViewColumn * col,
+                                       GtkCellRenderer * renderer,
+                                       GtkTreeModel    * model,
+                                       GtkTreeIter     * iter,
+                                       void            * user_data)
 {
 	double value;
 	char buf[20];
 	int column = KPOINTER_TO_INT (user_data);
-	gtk_tree_model_get ( model, iter, column, &value, -1 );
-	snprintf ( buf, sizeof(buf), "%.1f", value );
-	g_object_set ( renderer, "text", buf, NULL );
+	gtk_tree_model_get(model, iter, column, &value, -1);
+	snprintf(buf, sizeof(buf), "%.1f", value);
+	g_object_set(renderer, "text", buf, NULL);
 }
 
 #define TRK_LIST_COLS 11
@@ -83,121 +83,133 @@ static void format_1f_cell_data_func ( GtkTreeViewColumn *col,
  * Show a tooltip when the mouse is over a track list entry.
  * The tooltip contains the comment or description.
  */
-static bool trw_layer_track_tooltip_cb ( GtkWidget  *widget,
-                                             int        x,
-                                             int        y,
-                                             bool    keyboard_tip,
-                                             GtkTooltip *tooltip,
-                                             void *    data )
+static bool trw_layer_track_tooltip_cb(GtkWidget        * widget,
+                                             int          x,
+                                             int          y,
+                                             bool         keyboard_tip,
+                                             GtkTooltip * tooltip,
+                                             void       * data)
 {
 	GtkTreeIter iter;
-	GtkTreePath *path = NULL;
-	GtkTreeView *tree_view = GTK_TREE_VIEW (widget);
-	GtkTreeModel *model = gtk_tree_view_get_model (tree_view);
+	GtkTreePath * path = NULL;
+	GtkTreeView * tree_view = GTK_TREE_VIEW (widget);
+	GtkTreeModel * model = gtk_tree_view_get_model(tree_view);
 
-	if ( !gtk_tree_view_get_tooltip_context ( tree_view, &x, &y,
-	                                          keyboard_tip,
-	                                          &model, &path, &iter ) )
+	if (!gtk_tree_view_get_tooltip_context(tree_view, &x, &y,
+					       keyboard_tip,
+					       &model, &path, &iter)) {
 		return false;
+	}
 
 	Track * trk;
-	gtk_tree_model_get ( model, &iter, TRK_COL_NUM, &trk, -1 );
-	if ( !trk ) return false;
+	gtk_tree_model_get(model, &iter, TRK_COL_NUM, &trk, -1);
+	if (!trk) {
+		return false;
+	}
 
 	bool tooltip_set = true;
-	if ( trk->comment )
-		gtk_tooltip_set_text ( tooltip, trk->comment );
-	else if ( trk->description )
-		gtk_tooltip_set_text ( tooltip, trk->description );
-	else
+	if (trk->comment) {
+		gtk_tooltip_set_text(tooltip, trk->comment);
+	} else if (trk->description) {
+		gtk_tooltip_set_text(tooltip, trk->description);
+	} else {
 		tooltip_set = false;
+	}
 
-	if ( tooltip_set )
-		gtk_tree_view_set_tooltip_row ( tree_view, tooltip, path );
+	if (tooltip_set) {
+		gtk_tree_view_set_tooltip_row(tree_view, tooltip, path);
+	}
 
-	gtk_tree_path_free ( path );
+	gtk_tree_path_free(path);
 
 	return tooltip_set;
 }
 
 /*
-static void trw_layer_track_select_cb ( GtkTreeSelection *selection, void * data )
+static void trw_layer_track_select_cb(GtkTreeSelection * selection, void * data)
 {
 	GtkTreeIter iter;
-	if ( !gtk_tree_selection_get_selected (selection, NULL, &iter) )
+	if (!gtk_tree_selection_get_selected(selection, NULL, &iter)) {
 		return;
+	}
 
-	GtkTreeView *tree_view = GTK_TREE_VIEW ( data );
-	GtkTreeModel *model = gtk_tree_view_get_model (tree_view);
+	GtkTreeView * tree_view = GTK_TREE_VIEW (data);
+	GtkTreeModel * model = gtk_tree_view_get_model(tree_view);
 
 	Track * trk;
-	gtk_tree_model_get ( model, &iter, TRK_COL_NUM, &trk, -1 );
-	if ( !trk ) return;
+	gtk_tree_model_get(model, &iter, TRK_COL_NUM, &trk, -1);
+	if (!trk) {
+		return;
+	}
 
 	LayerTRW * trw;
-	gtk_tree_model_get ( model, &iter, TRW_COL_NUM, &trw->vl, -1 );
-	if ( !IS_VIK_TRW_LAYER(trw->vl) ) return;
+	gtk_tree_model_get(model, &iter, TRW_COL_NUM, &trw->vl, -1);
+	if (!IS_VIK_TRW_LAYER(trw->vl)) {
+		return;
+	}
 
-	//vik_treeview_select_iter(trw->vt, g_hash_table_lookup ( trw->track_iters, uuid ), true );
+	//vik_treeview_select_iter(trw->vt, g_hash_table_lookup(trw->track_iters, uuid), true);
 }
 */
 
 // A slightly better way of defining the menu callback information
 // This should be much easier to extend/rework compared to the current trw_layer menus
 typedef enum {
-  MA_VTL = 0,
-  MA_TRK,
-  MA_TRK_UUID,
-  MA_VVP,
-  MA_TREEVIEW,
-  MA_TRKS_LIST,
-  MA_LAST
+	MA_VTL = 0,
+	MA_TRK,
+	MA_TRK_UUID,
+	MA_VVP,
+	MA_TREEVIEW,
+	MA_TRKS_LIST,
+	MA_LAST
 } menu_array_index;
 
 typedef void * menu_array_values[MA_LAST];
 
 // Instead of hooking automatically on treeview item selection
 // This is performed on demand via the specific menu request
-static void trw_layer_track_select ( menu_array_values values )
+static void trw_layer_track_select(menu_array_values values)
 {
 	LayerTRW * trw = (LayerTRW *) values[MA_VTL];
 	Track * trk = ((Track *) values[MA_TRK]);
 	sg_uid_t uid = (sg_uid_t) ((long) values[MA_TRK_UUID]);
 
-	if ( values[MA_TRK_UUID] ) {
+	if (values[MA_TRK_UUID]) {
 		GtkTreeIter *iter = NULL;
-		if ( trk->is_route )
+		if (trk->is_route) {
 			iter = trw->get_routes_iters().at(uid);
-		else
+		} else {
 			iter = trw->get_tracks_iters().at(uid);
+		}
 
-		if ( iter )
+		if (iter) {
 			trw->vt->tree->select_iter(iter, true);
+		}
 	}
 }
 
-static void trw_layer_track_stats ( menu_array_values values )
+static void trw_layer_track_stats(menu_array_values values)
 {
 	LayerTRW * trw = (LayerTRW *) values[MA_VTL];
 	Track * trk = ((Track *) values[MA_TRK]);
 	Viewport * viewport = (Viewport *) values[MA_VVP];
 
-	if ( trk && trk->name ) {
+	if (trk && trk->name) {
 		// Kill off this dialog to allow interaction with properties window
 		//  since the properties also allows track manipulations it won't cause conflicts here.
-		GtkWidget *gw = gtk_widget_get_toplevel ( (GtkWidget *) values[MA_TREEVIEW] );
-		track_close_cb ( gw, 0, (GList *) values[MA_TRKS_LIST] );
+		GtkWidget * gw = gtk_widget_get_toplevel((GtkWidget *) values[MA_TREEVIEW]);
+		track_close_cb(gw, 0, (GList *) values[MA_TRKS_LIST]);
 
 		vik_trw_layer_propwin_run(gtk_window_from_layer(trw),
-								  trw,
-								  trk,
-								  NULL, // panel
-								  viewport,
-								  true );
-    }
+					  trw,
+					  trk,
+					  NULL, // panel
+					  viewport,
+					  true);
+	}
 }
 
-static void trw_layer_track_view ( menu_array_values values )
+static void trw_layer_track_view(menu_array_values values)
 {
 	LayerTRW * trw = (LayerTRW *) values[MA_VTL];
 	Track * trk = ((Track *) values[MA_TRK]);
@@ -210,71 +222,88 @@ static void trw_layer_track_view ( menu_array_values values )
 	maxmin[0].lon = trk->bbox.east;
 	maxmin[1].lon = trk->bbox.west;
 
-    trw->zoom_to_show_latlons(viewport, maxmin);
+	trw->zoom_to_show_latlons(viewport, maxmin);
 
 	trw_layer_track_select(values);
 }
 
 typedef struct {
-  bool has_layer_names;
-  GString *str;
+	bool has_layer_names;
+	GString * str;
 } copy_data_t;
 
-static void copy_selection (GtkTreeModel *model,
-                            GtkTreePath *path,
-                            GtkTreeIter *iter,
-                            void * data)
+static void copy_selection(GtkTreeModel * model,
+			   GtkTreePath  * path,
+			   GtkTreeIter  * iter,
+			   void         * data)
 {
-	copy_data_t *cd = (copy_data_t*) data;
+	copy_data_t * cd = (copy_data_t *) data;
 
-	char* layername; gtk_tree_model_get ( model, iter, 0, &layername, -1 );
-	char* name; gtk_tree_model_get ( model, iter, 1, &name, -1 );
-	char* date; gtk_tree_model_get ( model, iter, 2, &date, -1 );
-	double d1; gtk_tree_model_get ( model, iter, 4, &d1, -1 );
-	unsigned int d2; gtk_tree_model_get ( model, iter, 5, &d2, -1 );
-	double d3; gtk_tree_model_get ( model, iter, 6, &d3, -1 );
-	double d4; gtk_tree_model_get ( model, iter, 7, &d4, -1 );
-	int d5; gtk_tree_model_get ( model, iter, 8, &d5, -1 );
+	char * layername;
+	gtk_tree_model_get(model, iter, 0, &layername, -1);
+
+	char * name;
+	gtk_tree_model_get(model, iter, 1, &name, -1);
+
+	char * date;
+	gtk_tree_model_get(model, iter, 2, &date, -1);
+
+	double d1;
+	gtk_tree_model_get(model, iter, 4, &d1, -1);
+
+	unsigned int d2;
+	gtk_tree_model_get(model, iter, 5, &d2, -1);
+
+	double d3;
+	gtk_tree_model_get(model, iter, 6, &d3, -1);
+
+	double d4;
+	gtk_tree_model_get(model, iter, 7, &d4, -1);
+
+	int d5;
+	gtk_tree_model_get(model, iter, 8, &d5, -1);
+
 	char sep = '\t'; // Could make this configurable - but simply always make it a tab character for now
 	// NB Even if the columns have been reordered - this copies it out only in the original default order
 	// if col 0 is displayed then also copy the layername
-	if ( cd->has_layer_names )
-		g_string_append_printf ( cd->str, "%s%c%s%c%s%c%.1f%c%d%c%.1f%c%.1f%c%d\n", layername, sep, name, sep, date, sep, d1, sep, d2, sep, d3, sep, d4, sep, d5 );
-	else
-		g_string_append_printf ( cd->str, "%s%c%s%c%.1f%c%d%c%.1f%c%.1f%c%d\n", name, sep, date, sep, d1, sep, d2, sep, d3, sep, d4, sep, d5 );
-	free( layername );
-	free( name );
-	free( date );
+	if (cd->has_layer_names) {
+		g_string_append_printf(cd->str, "%s%c%s%c%s%c%.1f%c%d%c%.1f%c%.1f%c%d\n", layername, sep, name, sep, date, sep, d1, sep, d2, sep, d3, sep, d4, sep, d5);
+	} else {
+		g_string_append_printf(cd->str, "%s%c%s%c%.1f%c%d%c%.1f%c%.1f%c%d\n", name, sep, date, sep, d1, sep, d2, sep, d3, sep, d4, sep, d5);
+	}
+	free(layername);
+	free(name);
+	free(date);
 }
 
-static void trw_layer_copy_selected ( GtkWidget *tree_view )
+static void trw_layer_copy_selected(GtkWidget * tree_view)
 {
-	GtkTreeSelection *selection = gtk_tree_view_get_selection ( GTK_TREE_VIEW(tree_view) );
+	GtkTreeSelection * selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(tree_view));
 	// NB GTK3 has gtk_tree_view_get_n_columns() but we're GTK2 ATM
-	GList *gl = gtk_tree_view_get_columns ( GTK_TREE_VIEW(tree_view) );
-	unsigned int count = g_list_length ( gl );
-	g_list_free ( gl );
+	GList * gl = gtk_tree_view_get_columns(GTK_TREE_VIEW(tree_view));
+	unsigned int count = g_list_length(gl);
+	g_list_free(gl);
 	copy_data_t cd;
 	cd.has_layer_names = (count > TRK_LIST_COLS-3);
 	// Or use gtk_tree_view_column_get_visible()?
-	cd.str = g_string_new ( NULL );
-	gtk_tree_selection_selected_foreach ( selection, copy_selection, &cd );
+	cd.str = g_string_new(NULL);
+	gtk_tree_selection_selected_foreach(selection, copy_selection, &cd);
 
-	a_clipboard_copy ( VIK_CLIPBOARD_DATA_TEXT, 0, 0, 0, cd.str->str, NULL );
+	a_clipboard_copy(VIK_CLIPBOARD_DATA_TEXT, 0, 0, 0, cd.str->str, NULL);
 
-	g_string_free( cd.str, true );
+	g_string_free(cd.str, true);
 }
 
-static void add_copy_menu_item ( GtkMenu *menu, GtkWidget *tree_view )
+static void add_copy_menu_item(GtkMenu * menu, GtkWidget * tree_view)
 {
-	GtkWidget *item = gtk_image_menu_item_new_with_mnemonic ( _("_Copy Data") );
-	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_COPY, GTK_ICON_SIZE_MENU) );
-	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_copy_selected), tree_view );
-	gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-	gtk_widget_show ( item );
+	GtkWidget * item = gtk_image_menu_item_new_with_mnemonic(_("_Copy Data"));
+	gtk_image_menu_item_set_image((GtkImageMenuItem *) item, gtk_image_new_from_stock(GTK_STOCK_COPY, GTK_ICON_SIZE_MENU));
+	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(trw_layer_copy_selected), tree_view);
+	gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
+	gtk_widget_show(item);
 }
 
-static bool add_menu_items ( GtkMenu *menu, LayerTRW * trw, Track * trk, void * trk_uuid, Viewport * viewport, GtkWidget *tree_view, void * data )
+static bool add_menu_items(GtkMenu * menu, LayerTRW * trw, Track * trk, void * trk_uuid, Viewport * viewport, GtkWidget * tree_view, void * data)
 {
 	static menu_array_values values;
 	GtkWidget *item;
@@ -287,142 +316,150 @@ static bool add_menu_items ( GtkMenu *menu, LayerTRW * trw, Track * trk, void * 
 	values[MA_TRKS_LIST] = data;
 
 	/*
-	item = gtk_image_menu_item_new_with_mnemonic ( _("_Select") );
-	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_FIND, GTK_ICON_SIZE_MENU) );
-	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_track_select), values );
-	gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-	gtk_widget_show ( item );
+	item = gtk_image_menu_item_new_with_mnemonic(_("_Select"));
+	gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_FIND, GTK_ICON_SIZE_MENU));
+	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(trw_layer_track_select), values);
+	gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
+	gtk_widget_show(item);
 	*/
 
 	// ATM view auto selects, so don't bother with separate select menu entry
-	item = gtk_image_menu_item_new_with_mnemonic ( _("_View") );
-	gtk_image_menu_item_set_image ( (GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_ZOOM_FIT, GTK_ICON_SIZE_MENU) );
-	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_track_view), values );
-	gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-	gtk_widget_show ( item );
+	item = gtk_image_menu_item_new_with_mnemonic(_("_View"));
+	gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_ZOOM_FIT, GTK_ICON_SIZE_MENU));
+	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(trw_layer_track_view), values);
+	gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
+	gtk_widget_show(item);
 
-	item = gtk_menu_item_new_with_mnemonic ( _("_Statistics") );
-	g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_track_stats), values );
-	gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );
-	gtk_widget_show ( item );
+	item = gtk_menu_item_new_with_mnemonic(_("_Statistics"));
+	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(trw_layer_track_stats), values);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+	gtk_widget_show(item);
 
-	add_copy_menu_item ( menu, tree_view );
+	add_copy_menu_item(menu, tree_view);
 
 	return true;
 }
 
-static bool trw_layer_track_menu_popup_multi  ( GtkWidget *tree_view,
-                                                    GdkEventButton *event,
-                                                    void * data )
+static bool trw_layer_track_menu_popup_multi(GtkWidget * tree_view,
+					     GdkEventButton * event,
+					     void * data)
 {
-	GtkWidget *menu = gtk_menu_new();
+	GtkWidget * menu = gtk_menu_new();
 
-	add_copy_menu_item ( GTK_MENU(menu), tree_view );
+	add_copy_menu_item(GTK_MENU(menu), tree_view);
 
-	gtk_menu_popup ( GTK_MENU(menu), NULL, NULL, NULL, NULL, event->button, gtk_get_current_event_time() );
+	gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL, event->button, gtk_get_current_event_time());
 
 	return true;
 }
 
-static bool trw_layer_track_menu_popup ( GtkWidget *tree_view,
-                                             GdkEventButton *event,
-                                             void * data )
+static bool trw_layer_track_menu_popup(GtkWidget * tree_view,
+				       GdkEventButton * event,
+				       void * data)
 {
 	static GtkTreeIter iter;
 
 	// Use selected item to get a single iterator ref
 	// This relies on an row being selected as part of the right click
-	GtkTreeSelection *selection = gtk_tree_view_get_selection ( GTK_TREE_VIEW(tree_view) );
-	if ( gtk_tree_selection_count_selected_rows (selection) != 1 )
-		return trw_layer_track_menu_popup_multi ( tree_view, event, data );
+	GtkTreeSelection *selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(tree_view));
+	if (gtk_tree_selection_count_selected_rows(selection) != 1) {
+		return trw_layer_track_menu_popup_multi(tree_view, event, data);
+	}
 
-	GtkTreePath *path;
-	GtkTreeModel *model = gtk_tree_view_get_model ( GTK_TREE_VIEW(tree_view) );
+	GtkTreePath * path;
+	GtkTreeModel * model = gtk_tree_view_get_model(GTK_TREE_VIEW(tree_view));
 
 	// All this just to get the iter
-	if ( gtk_tree_view_get_path_at_pos ( GTK_TREE_VIEW(tree_view),
-	                                     (int) event->x,
-	                                     (int) event->y,
-	                                     &path, NULL, NULL, NULL)) {
-		gtk_tree_model_get_iter_from_string ( model, &iter, gtk_tree_path_to_string (path) );
-		gtk_tree_path_free ( path );
-	}
-	else
+	if (gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(tree_view),
+					  (int) event->x,
+					  (int) event->y,
+					  &path, NULL, NULL, NULL)) {
+		gtk_tree_model_get_iter_from_string(model, &iter, gtk_tree_path_to_string (path));
+		gtk_tree_path_free(path);
+	} else {
 		return false;
+	}
 
 	Track * trk;
-	gtk_tree_model_get ( model, &iter, TRK_COL_NUM, &trk, -1 );
-	if ( !trk ) return false;
+	gtk_tree_model_get(model, &iter, TRK_COL_NUM, &trk, -1);
+	if (!trk) {
+		return false;
+	}
 
-	VikLayer *vtl;
-	gtk_tree_model_get ( model, &iter, TRW_COL_NUM, &vtl, -1 );
+	VikLayer * vtl;
+	gtk_tree_model_get(model, &iter, TRW_COL_NUM, &vtl, -1);
 	LayerTRW * trw = (LayerTRW *) vtl->layer;
-	if (trw->type != VIK_LAYER_TRW) return false;
+	if (trw->type != VIK_LAYER_TRW) {
+		return false;
+	}
 
 	sg_uid_t uid = 0;;
-	if ( trk->is_route )
+	if (trk->is_route) {
 		uid = LayerTRWc::find_uid_of_track(trw->get_routes(), trk);
-	else
+	} else {
 		uid = LayerTRWc::find_uid_of_track(trw->get_tracks(), trk);
+	}
 
 	if (uid) {
 		Viewport * viewport = window_from_layer(trw)->get_viewport();
 
-		GtkWidget *menu = gtk_menu_new();
+		GtkWidget * menu = gtk_menu_new();
 
 		// Originally started to reuse the trw_layer menu items
 		//  however these offer too many ways to edit the track data
 		//  so without an easy way to distinguish read only operations,
 		//  create a very minimal new set of operations
-		add_menu_items ( GTK_MENU(menu),
-		                 trw,
-		                 trk,
-		                 (void *) ((long) uid),
-		                 viewport,
-		                 tree_view,
-		                 data );
+		add_menu_items(GTK_MENU(menu),
+			       trw,
+			       trk,
+			       (void *) ((long) uid),
+			       viewport,
+			       tree_view,
+			       data);
 
-		gtk_menu_popup ( GTK_MENU(menu), NULL, NULL, NULL, NULL, event->button, gtk_get_current_event_time() );
+		gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL, event->button, gtk_get_current_event_time());
 		return true;
 	}
 	return false;
 }
 
-static bool trw_layer_track_button_pressed ( GtkWidget *tree_view,
-                                                 GdkEventButton *event,
-                                                 void * data )
+static bool trw_layer_track_button_pressed(GtkWidget * tree_view,
+					   GdkEventButton * event,
+					   void * data)
 {
 	// Only on right clicks...
-	if ( ! (event->type == GDK_BUTTON_PRESS && event->button == 3) )
+	if (!(event->type == GDK_BUTTON_PRESS && event->button == 3)) {
 		return false;
+	}
 
 	// ATM Force a selection...
-	GtkTreeSelection *selection = gtk_tree_view_get_selection ( GTK_TREE_VIEW(tree_view) );
-	if ( gtk_tree_selection_count_selected_rows (selection) <= 1 ) {
-		GtkTreePath *path;
+	GtkTreeSelection * selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(tree_view));
+	if (gtk_tree_selection_count_selected_rows(selection) <= 1) {
+		GtkTreePath * path;
 		/* Get tree path for row that was clicked */
-		if ( gtk_tree_view_get_path_at_pos ( GTK_TREE_VIEW(tree_view),
-		                                     (int) event->x,
-	                                         (int) event->y,
-		                                     &path, NULL, NULL, NULL)) {
-			gtk_tree_selection_unselect_all ( selection );
-			gtk_tree_selection_select_path ( selection, path );
-			gtk_tree_path_free ( path );
+		if (gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(tree_view),
+						  (int) event->x,
+						  (int) event->y,
+						  &path, NULL, NULL, NULL)) {
+
+			gtk_tree_selection_unselect_all(selection);
+			gtk_tree_selection_select_path(selection, path);
+			gtk_tree_path_free(path);
 		}
 	}
-	return trw_layer_track_menu_popup ( tree_view, event, data );
+	return trw_layer_track_menu_popup(tree_view, event, data);
 }
 
 /*
  * Foreach entry we copy the various individual track properties into the tree store
  *  formatting & converting the internal values into something for display
  */
-static void trw_layer_track_list_add ( vik_trw_track_list_t *vtdl,
-                                       GtkTreeStore *store,
-                                       vik_units_distance_t dist_units,
-                                       vik_units_speed_t speed_units,
-                                       vik_units_height_t height_units,
-                                       const char* date_format )
+static void trw_layer_track_list_add(vik_trw_track_list_t * vtdl,
+				     GtkTreeStore * store,
+				     vik_units_distance_t dist_units,
+				     vik_units_speed_t speed_units,
+				     vik_units_height_t height_units,
+				     const char * date_format)
 {
 	GtkTreeIter t_iter;
 	Track * trk = vtdl->trk;
@@ -430,7 +467,7 @@ static void trw_layer_track_list_add ( vik_trw_track_list_t *vtdl,
 
 	double trk_dist = trk->get_length();
 	// Store unit converted value
-	switch ( dist_units ) {
+	switch (dist_units) {
 	case VIK_UNITS_DISTANCE_MILES:
 		trk_dist = VIK_METERS_TO_MILES(trk_dist);
 		break;
@@ -442,19 +479,19 @@ static void trw_layer_track_list_add ( vik_trw_track_list_t *vtdl,
 	// Get start date
 	char time_buf[32];
 	time_buf[0] = '\0';
-	if ( trk->trackpoints && ((Trackpoint *) trk->trackpoints->data)->has_timestamp ) {
+	if (trk->trackpoints && ((Trackpoint *) trk->trackpoints->data)->has_timestamp) {
 
 #if GLIB_CHECK_VERSION(2,26,0)
-		GDateTime* gdt = g_date_time_new_from_unix_utc ( ((Trackpoint *) trk->trackpoints->data)->timestamp );
-		char *time = g_date_time_format ( gdt, date_format );
-		g_strlcpy ( time_buf, time, sizeof(time_buf) );
-		free( time );
-		g_date_time_unref ( gdt);
+		GDateTime * gdt = g_date_time_new_from_unix_utc(((Trackpoint *) trk->trackpoints->data)->timestamp);
+		char * time = g_date_time_format(gdt, date_format);
+		g_strlcpy(time_buf, time, sizeof(time_buf));
+		free(time);
+		g_date_time_unref(gdt);
 #else
-		GDate* gdate_start = g_date_new ();
-		g_date_set_time_t ( gdate_start, ((Trackpoint *) trk->trackpoints->data)->timestamp );
-		g_date_strftime ( time_buf, sizeof(time_buf), date_format, gdate_start );
-		g_date_free ( gdate_start );
+		GDate * gdate_start = g_date_new();
+		g_date_set_time_t(gdate_start, ((Trackpoint *) trk->trackpoints->data)->timestamp);
+		g_date_strftime(time_buf, sizeof(time_buf), date_format, gdate_start);
+		g_date_free(gdate_start);
 #endif
 	}
 
@@ -463,11 +500,11 @@ static void trw_layer_track_list_add ( vik_trw_track_list_t *vtdl,
 	visible = visible && (trk->is_route ? trw->get_routes_visibility() : trw->get_tracks_visibility());
 
 	unsigned int trk_len_time = 0; // In minutes
-	if ( trk->trackpoints ) {
+	if (trk->trackpoints) {
 		time_t t1, t2;
 		t1 = ((Trackpoint *) g_list_first(trk->trackpoints)->data)->timestamp;
 		t2 = ((Trackpoint *) g_list_last(trk->trackpoints)->data)->timestamp;
-		trk_len_time = (int)round(labs(t2-t1)/60.0);
+		trk_len_time = (int) round(labs(t2-t1)/60.0);
 	}
 
 	double av_speed = 0.0;
@@ -493,19 +530,20 @@ static void trw_layer_track_list_add ( vik_trw_track_list_t *vtdl,
 	}
 
 	// TODO - make this a function to get min / max values?
-	double *altitudes = NULL;
+	double * altitudes = NULL;
 	altitudes = trk->make_elevation_map(500);
-	if ( altitudes ) {
+	if (altitudes) {
 		max_alt = -1000;
 		unsigned int i;
-		for ( i=0; i < 500; i++ ) {
-			if ( altitudes[i] != VIK_DEFAULT_ALTITUDE ) {
-				if ( altitudes[i] > max_alt )
+		for (i = 0; i < 500; i++) {
+			if (altitudes[i] != VIK_DEFAULT_ALTITUDE) {
+				if (altitudes[i] > max_alt) {
 					max_alt = altitudes[i];
+				}
 			}
 		}
 	}
-	free( altitudes );
+	free(altitudes);
 
 	switch (height_units) {
 	case VIK_UNITS_HEIGHT_FEET: max_alt = VIK_METERS_TO_FEET(max_alt); break;
@@ -514,29 +552,29 @@ static void trw_layer_track_list_add ( vik_trw_track_list_t *vtdl,
 		break;
 	}
 
-	gtk_tree_store_append ( store, &t_iter, NULL );
-	gtk_tree_store_set ( store, &t_iter,
-	                     0, trw->name,
-	                     1, trk->name,
-	                     2, time_buf,
-	                     3, visible,
-	                     4, trk_dist,
-	                     5, trk_len_time,
-	                     6, av_speed,
-	                     7, max_speed,
-	                     8, (int)round(max_alt),
-	                     TRW_COL_NUM, trw->vl,
-	                     TRK_COL_NUM, trk,
-	                     -1 );
+	gtk_tree_store_append(store, &t_iter, NULL);
+	gtk_tree_store_set(store, &t_iter,
+			   0, trw->name,
+			   1, trk->name,
+			   2, time_buf,
+			   3, visible,
+			   4, trk_dist,
+			   5, trk_len_time,
+			   6, av_speed,
+			   7, max_speed,
+			   8, (int) round(max_alt),
+			   TRW_COL_NUM, trw->vl,
+			   TRK_COL_NUM, trk,
+			   -1);
 }
 
-static GtkTreeViewColumn *my_new_column_text ( const char *title, GtkCellRenderer *renderer, GtkWidget *view, int column_runner )
+static GtkTreeViewColumn * my_new_column_text(const char * title, GtkCellRenderer * renderer, GtkWidget *view, int column_runner)
 {
-	GtkTreeViewColumn *column = gtk_tree_view_column_new_with_attributes ( title, renderer, "text", column_runner, NULL );
-	gtk_tree_view_column_set_sort_column_id ( column, column_runner );
-	gtk_tree_view_append_column ( GTK_TREE_VIEW(view), column );
-	gtk_tree_view_column_set_reorderable ( column, true );
-	gtk_tree_view_column_set_resizable ( column, true );
+	GtkTreeViewColumn * column = gtk_tree_view_column_new_with_attributes(title, renderer, "text", column_runner, NULL);
+	gtk_tree_view_column_set_sort_column_id(column, column_runner);
+	gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);
+	gtk_tree_view_column_set_reorderable(column, true);
+	gtk_tree_view_column_set_resizable(column, true);
 	return column;
 }
 
@@ -549,96 +587,99 @@ static GtkTreeViewColumn *my_new_column_text ( const char *title, GtkCellRendere
  * Create a table of tracks with corresponding track information
  * This table does not support being actively updated
  */
-static void vik_trw_layer_track_list_internal ( GtkWidget *dialog,
-                                                GList *tracks_and_layers,
-                                                bool show_layer_names )
+static void vik_trw_layer_track_list_internal(GtkWidget * dialog,
+					      GList * tracks_and_layers,
+					      bool show_layer_names)
 {
-	if ( !tracks_and_layers )
+	if (!tracks_and_layers) {
 		return;
+	}
 
 	// It's simple storing the double values in the tree store as the sort works automatically
-	// Then apply specific cell data formatting (rather default double is to 6 decimal places!)
-	GtkTreeStore *store = gtk_tree_store_new ( TRK_LIST_COLS,
-	                                           G_TYPE_STRING,    // 0: Layer Name
-	                                           G_TYPE_STRING,    // 1: Track Name
-	                                           G_TYPE_STRING,    // 2: Date
-	                                           G_TYPE_BOOLEAN,   // 3: Visible
-	                                           G_TYPE_DOUBLE,    // 4: Distance
-	                                           G_TYPE_UINT,      // 5: Length in time
-	                                           G_TYPE_DOUBLE,    // 6: Av. Speed
-	                                           G_TYPE_DOUBLE,    // 7: Max Speed
-	                                           G_TYPE_INT,       // 8: Max Height
-	                                           G_TYPE_POINTER,   // 9: TrackWaypoint Layer pointer
-	                                           G_TYPE_POINTER ); // 10: Track pointer
+	// Then apply specific cell data formatting(rather default double is to 6 decimal places!)
+	GtkTreeStore *store = gtk_tree_store_new(TRK_LIST_COLS,
+						 G_TYPE_STRING,    // 0: Layer Name
+						 G_TYPE_STRING,    // 1: Track Name
+						 G_TYPE_STRING,    // 2: Date
+						 G_TYPE_BOOLEAN,   // 3: Visible
+						 G_TYPE_DOUBLE,    // 4: Distance
+						 G_TYPE_UINT,      // 5: Length in time
+						 G_TYPE_DOUBLE,    // 6: Av. Speed
+						 G_TYPE_DOUBLE,    // 7: Max Speed
+						 G_TYPE_INT,       // 8: Max Height
+						 G_TYPE_POINTER,   // 9: TrackWaypoint Layer pointer
+						 G_TYPE_POINTER);  // 10: Track pointer
 
-	//gtk_tree_selection_set_select_function ( gtk_tree_view_get_selection (GTK_TREE_VIEW(vt)), vik_treeview_selection_filter, vt, NULL );
+	//gtk_tree_selection_set_select_function(gtk_tree_view_get_selection (GTK_TREE_VIEW(vt)), vik_treeview_selection_filter, vt, NULL);
 
-	vik_units_distance_t dist_units = a_vik_get_units_distance ();
-	vik_units_speed_t speed_units = a_vik_get_units_speed ();
-	vik_units_height_t height_units = a_vik_get_units_height ();
+	vik_units_distance_t dist_units = a_vik_get_units_distance();
+	vik_units_speed_t speed_units = a_vik_get_units_speed();
+	vik_units_height_t height_units = a_vik_get_units_height();
 
-	//GList *gl = get_tracks_and_layers_cb ( vl, user_data );
-	//g_list_foreach ( tracks_and_layers, (GFunc) trw_layer_track_list_add, store );
+	//GList *gl = get_tracks_and_layers_cb(vl, user_data);
+	//g_list_foreach (tracks_and_layers, (GFunc) trw_layer_track_list_add, store);
 	char *date_format = NULL;
-	if ( !a_settings_get_string ( VIK_SETTINGS_LIST_DATE_FORMAT, &date_format ) )
-		date_format = g_strdup( TRACK_LIST_DATE_FORMAT );
-
-	GList *gl = tracks_and_layers;
-	while ( gl ) {
-		trw_layer_track_list_add ( (vik_trw_track_list_t*)gl->data, store, dist_units, speed_units, height_units, date_format );
-		gl = g_list_next ( gl );
+	if (!a_settings_get_string(VIK_SETTINGS_LIST_DATE_FORMAT, &date_format)) {
+		date_format = g_strdup(TRACK_LIST_DATE_FORMAT);
 	}
-	free( date_format );
 
-	GtkWidget *view = gtk_tree_view_new();
+	GList * gl = tracks_and_layers;
+	while (gl) {
+		trw_layer_track_list_add((vik_trw_track_list_t *) gl->data, store, dist_units, speed_units, height_units, date_format);
+		gl = g_list_next(gl);
+	}
+	free(date_format);
+
+	GtkWidget * view = gtk_tree_view_new();
 	GtkCellRenderer *renderer = gtk_cell_renderer_text_new();
-	g_object_set (G_OBJECT (renderer),
-	              "xalign", 0.0,
-	              "ellipsize", PANGO_ELLIPSIZE_END,
-	              NULL);
+	g_object_set(G_OBJECT (renderer),
+		     "xalign", 0.0,
+		     "ellipsize", PANGO_ELLIPSIZE_END,
+		     NULL);
 
-	GtkTreeViewColumn *column;
-	GtkTreeViewColumn *sort_by_column;
+	GtkTreeViewColumn * column;
+	GtkTreeViewColumn * sort_by_column;
 
 	int column_runner = 0;
-	if ( show_layer_names ) {
+	if (show_layer_names) {
 		// Insert column for the layer name when viewing multi layers
-		column = my_new_column_text ( _("Layer"), renderer, view, column_runner++ );
-		gtk_tree_view_column_set_expand ( column, true );
+		column = my_new_column_text(_("Layer"), renderer, view, column_runner++);
+		gtk_tree_view_column_set_expand(column, true);
 		// remember the layer column so we can sort by it later
 		sort_by_column = column;
-	}
-	else
+	} else {
 		column_runner++;
+	}
 
-	column = my_new_column_text ( _("Name"), renderer, view, column_runner++ );
-	gtk_tree_view_column_set_expand ( column, true );
-	if ( !show_layer_names )
+	column = my_new_column_text(_("Name"), renderer, view, column_runner++);
+	gtk_tree_view_column_set_expand(column, true);
+	if (!show_layer_names) {
 		// remember the name column so we can sort by it later
 		sort_by_column = column;
+	}
 
-	column = my_new_column_text ( _("Date"), renderer, view, column_runner++ );
-	gtk_tree_view_column_set_expand ( column, true );
+	column = my_new_column_text(_("Date"), renderer, view, column_runner++);
+	gtk_tree_view_column_set_expand(column, true);
 
-	GtkCellRenderer *renderer_toggle = gtk_cell_renderer_toggle_new ();
-	column = gtk_tree_view_column_new_with_attributes ( _("Visible"), renderer_toggle, "active", column_runner, NULL );
-	gtk_tree_view_column_set_reorderable ( column, true );
-	gtk_tree_view_column_set_sort_column_id ( column, column_runner );
-	gtk_tree_view_append_column ( GTK_TREE_VIEW(view), column );
+	GtkCellRenderer *renderer_toggle = gtk_cell_renderer_toggle_new();
+	column = gtk_tree_view_column_new_with_attributes(_("Visible"), renderer_toggle, "active", column_runner, NULL);
+	gtk_tree_view_column_set_reorderable(column, true);
+	gtk_tree_view_column_set_sort_column_id(column, column_runner);
+	gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);
 	column_runner++;
 
-	switch ( dist_units ) {
+	switch (dist_units) {
 	case VIK_UNITS_DISTANCE_MILES:
-		column = my_new_column_text ( _("Distance\n(miles)"), renderer, view, column_runner++ );
+		column = my_new_column_text(_("Distance\n(miles)"), renderer, view, column_runner++);
 		break;
 	default:
-		column = my_new_column_text ( _("Distance\n(km)"), renderer, view, column_runner++ );
+		column = my_new_column_text(_("Distance\n(km)"), renderer, view, column_runner++);
 		break;
 	}
 	// Apply own formatting of the data
-	gtk_tree_view_column_set_cell_data_func ( column, renderer, format_1f_cell_data_func, KINT_TO_POINTER(column_runner-1), NULL);
+	gtk_tree_view_column_set_cell_data_func(column, renderer, format_1f_cell_data_func, KINT_TO_POINTER(column_runner-1), NULL);
 
-	(void)my_new_column_text ( _("Length\n(minutes)"), renderer, view, column_runner++ );
+	(void) my_new_column_text(_("Length\n(minutes)"), renderer, view, column_runner++);
 
 	char *spd_units = NULL;
 	switch (speed_units) {
@@ -649,50 +690,51 @@ static void vik_trw_layer_track_list_internal ( GtkWidget *dialog,
 	default:                                  spd_units = strdup(_("m/s")); break;
 	}
 
-	char *title = g_strdup_printf ( _("Av. Speed\n(%s)"), spd_units );
-	column = my_new_column_text ( title, renderer, view, column_runner++ );
-	free( title );
-	gtk_tree_view_column_set_cell_data_func ( column, renderer, format_1f_cell_data_func, KINT_TO_POINTER(column_runner-1), NULL); // Apply own formatting of the data
+	char * title = g_strdup_printf(_("Av. Speed\n(%s)"), spd_units);
+	column = my_new_column_text(title, renderer, view, column_runner++);
+	free(title);
+	gtk_tree_view_column_set_cell_data_func(column, renderer, format_1f_cell_data_func, KINT_TO_POINTER(column_runner-1), NULL); // Apply own formatting of the data
 
-	title = g_strdup_printf ( _("Max Speed\n(%s)"), spd_units );
-	column = my_new_column_text ( title, renderer, view, column_runner++ );
-	gtk_tree_view_column_set_cell_data_func ( column, renderer, format_1f_cell_data_func, KINT_TO_POINTER(column_runner-1), NULL); // Apply own formatting of the data
+	title = g_strdup_printf(_("Max Speed\n(%s)"), spd_units);
+	column = my_new_column_text(title, renderer, view, column_runner++);
+	gtk_tree_view_column_set_cell_data_func(column, renderer, format_1f_cell_data_func, KINT_TO_POINTER(column_runner-1), NULL); // Apply own formatting of the data
 
-	free( title );
-	free( spd_units );
+	free(title);
+	free(spd_units);
 
-	if ( height_units == VIK_UNITS_HEIGHT_FEET )
-		(void)my_new_column_text ( _("Max Height\n(Feet)"), renderer, view, column_runner++ );
-	else
-		(void)my_new_column_text ( _("Max Height\n(Metres)"), renderer, view, column_runner++ );
+	if (height_units == VIK_UNITS_HEIGHT_FEET) {
+		(void) my_new_column_text(_("Max Height\n(Feet)"), renderer, view, column_runner++);
+	} else {
+		(void) my_new_column_text(_("Max Height\n(Metres)"), renderer, view, column_runner++);
+	}
 
-	gtk_tree_view_set_model ( GTK_TREE_VIEW(view), GTK_TREE_MODEL(store) );
-	gtk_tree_selection_set_mode ( gtk_tree_view_get_selection(GTK_TREE_VIEW(view)), GTK_SELECTION_MULTIPLE );
-	gtk_tree_view_set_rules_hint ( GTK_TREE_VIEW(view), true );
+	gtk_tree_view_set_model(GTK_TREE_VIEW(view), GTK_TREE_MODEL(store));
+	gtk_tree_selection_set_mode(gtk_tree_view_get_selection(GTK_TREE_VIEW(view)), GTK_SELECTION_MULTIPLE);
+	gtk_tree_view_set_rules_hint(GTK_TREE_VIEW(view), true);
 
 	g_object_unref(store);
 
-	GtkWidget *scrolledwindow = gtk_scrolled_window_new ( NULL, NULL );
-	gtk_scrolled_window_set_policy ( GTK_SCROLLED_WINDOW(scrolledwindow), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC );
-	gtk_container_add ( GTK_CONTAINER(scrolledwindow), view );
+	GtkWidget *scrolledwindow = gtk_scrolled_window_new(NULL, NULL);
+	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolledwindow), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+	gtk_container_add(GTK_CONTAINER(scrolledwindow), view);
 
-	g_object_set ( view, "has-tooltip", true, NULL);
+	g_object_set(view, "has-tooltip", true, NULL);
 
-	g_signal_connect ( view, "query-tooltip", G_CALLBACK (trw_layer_track_tooltip_cb), NULL );
-	//g_signal_connect ( gtk_tree_view_get_selection (GTK_TREE_VIEW(view)), "changed", G_CALLBACK(trw_layer_track_select_cb), view );
+	g_signal_connect(view, "query-tooltip", G_CALLBACK (trw_layer_track_tooltip_cb), NULL);
+	//g_signal_connect (gtk_tree_view_get_selection (GTK_TREE_VIEW(view)), "changed", G_CALLBACK(trw_layer_track_select_cb), view);
 
-	g_signal_connect ( view, "popup-menu", G_CALLBACK(trw_layer_track_menu_popup), tracks_and_layers );
-	g_signal_connect ( view, "button-press-event", G_CALLBACK(trw_layer_track_button_pressed), tracks_and_layers );
+	g_signal_connect(view, "popup-menu", G_CALLBACK(trw_layer_track_menu_popup), tracks_and_layers);
+	g_signal_connect(view, "button-press-event", G_CALLBACK(trw_layer_track_button_pressed), tracks_and_layers);
 
-	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), scrolledwindow, true, true, 0);
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), scrolledwindow, true, true, 0);
 
 	// Set ordering of the initial view by one of the name columns
-	gtk_tree_view_column_clicked ( sort_by_column );
+	gtk_tree_view_column_clicked(sort_by_column);
 
 	// Ensure a reasonable number of items are shown
 	//  TODO: may be save window size, column order, sorted by between invocations.
 	// Gtk too stupid to work out best size so need to tell it.
-	gtk_window_set_default_size ( GTK_WINDOW(dialog), show_layer_names ? 900 : 700, 400 );
+	gtk_window_set_default_size(GTK_WINDOW(dialog), show_layer_names ? 900 : 700, 400);
 }
 
 
@@ -708,31 +750,31 @@ static void vik_trw_layer_track_list_internal ( GtkWidget *dialog,
  *
  */
 void vik_trw_layer_track_list_show_dialog(char * title,
-                                            Layer * layer,
-                                            void * user_data,
-                                            VikTrwlayerGetTracksAndLayersFunc get_tracks_and_layers_cb,
-                                            bool show_layer_names )
+					  Layer * layer,
+					  void * user_data,
+					  VikTrwlayerGetTracksAndLayersFunc get_tracks_and_layers_cb,
+					  bool show_layer_names)
 {
-	GtkWidget *dialog = gtk_dialog_new_with_buttons ( title,
-	                                                  gtk_window_from_layer(layer),
-	                                                  GTK_DIALOG_DESTROY_WITH_PARENT,
-	                                                  GTK_STOCK_CLOSE,
-	                                                  GTK_RESPONSE_CLOSE,
-	                                                  NULL );
+	GtkWidget * dialog = gtk_dialog_new_with_buttons(title,
+							 gtk_window_from_layer(layer),
+							 GTK_DIALOG_DESTROY_WITH_PARENT,
+							 GTK_STOCK_CLOSE,
+							 GTK_RESPONSE_CLOSE,
+							 NULL);
 
-	GList *gl = get_tracks_and_layers_cb ( layer->vl, user_data );
+	GList * gl = get_tracks_and_layers_cb(layer->vl, user_data);
 
-	vik_trw_layer_track_list_internal ( dialog, gl, show_layer_names );
+	vik_trw_layer_track_list_internal(dialog, gl, show_layer_names);
 
 	// Use response to close the dialog with tidy up
-	g_signal_connect ( G_OBJECT(dialog), "response", G_CALLBACK(track_close_cb), gl );
+	g_signal_connect(G_OBJECT(dialog), "response", G_CALLBACK(track_close_cb), gl);
 
-	gtk_widget_show_all ( dialog );
+	gtk_widget_show_all(dialog);
 	// Yes - set the size *AGAIN* - this time widgets are expanded nicely
-	gtk_window_resize ( GTK_WINDOW(dialog), show_layer_names ? 1000 : 800, 400 );
+	gtk_window_resize(GTK_WINDOW(dialog), show_layer_names ? 1000 : 800, 400);
 
 	// ATM lock out on dialog run - to prevent list contents being manipulated in other parts of the GUI whilst shown here.
-	gtk_dialog_run (GTK_DIALOG (dialog));
+	gtk_dialog_run(GTK_DIALOG (dialog));
 	// Unfortunately seems subsequently opening the Track Properties we can't interact with it until this dialog is closed
 	// Thus this dialog is then forcibly closed when opening the properties.
 
