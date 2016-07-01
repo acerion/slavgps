@@ -97,7 +97,7 @@ void init_drawing_params(DrawingParams * dp, LayerTRW * trw, Viewport * viewport
 		VikCoord upperleft, bottomright;
 		/* quick & dirty calculation; really want to check all corners due to lat/lon smaller at top in northern hemisphere */
 		/* this also DOESN'T WORK if you are crossing 180/-180 lon. I don't plan to in the near future...  */
-		viewport->screen_to_coord(-500, -500, &upperleft );
+		viewport->screen_to_coord(-500, -500, &upperleft);
 		viewport->screen_to_coord(dp->width + 500, dp->height + 500, &bottomright);
 		dp->ce1 = upperleft.east_west;
 		dp->ce2 = bottomright.east_west;
@@ -146,7 +146,7 @@ static int track_section_colour_by_speed(Layer * trw, Trackpoint * tp1, Trackpoi
 static void draw_utm_skip_insignia(Viewport * viewport, GdkGC * gc, int x, int y)
 {
 	/* First draw '+'. */
-	viewport->draw_line(gc, x+5, y,   x-5, y  );
+	viewport->draw_line(gc, x+5, y,   x-5, y );
 	viewport->draw_line(gc, x,   y+5, x,   y-5);
 
 	/* And now draw 'x' on top of it. */
@@ -158,24 +158,25 @@ static void draw_utm_skip_insignia(Viewport * viewport, GdkGC * gc, int x, int y
 
 
 
-static void trw_layer_draw_track_label ( char *name, char *fgcolour, char *bgcolour, DrawingParams * dp, VikCoord *coord )
+static void trw_layer_draw_track_label(char * name, char * fgcolour, char * bgcolour, DrawingParams * dp, VikCoord * coord)
 {
-  char *label_markup = g_strdup_printf ( "<span foreground=\"%s\" background=\"%s\" size=\"%s\">%s</span>", fgcolour, bgcolour, dp->trw->track_fsize_str, name );
+	char *label_markup = g_strdup_printf("<span foreground=\"%s\" background=\"%s\" size=\"%s\">%s</span>", fgcolour, bgcolour, dp->trw->track_fsize_str, name);
 
-  if ( pango_parse_markup ( label_markup, -1, 0, NULL, NULL, NULL, NULL ) )
-    pango_layout_set_markup ( dp->trw->tracklabellayout, label_markup, -1 );
-  else
-    // Fallback if parse failure
-    pango_layout_set_text ( dp->trw->tracklabellayout, name, -1 );
+	if (pango_parse_markup(label_markup, -1, 0, NULL, NULL, NULL, NULL)) {
+		pango_layout_set_markup(dp->trw->tracklabellayout, label_markup, -1);
+	} else {
+		// Fallback if parse failure
+		pango_layout_set_text(dp->trw->tracklabellayout, name, -1);
+	}
 
-  free( label_markup );
+	free(label_markup);
 
-  int label_x, label_y;
-  int width, height;
-  pango_layout_get_pixel_size ( dp->trw->tracklabellayout, &width, &height );
+	int label_x, label_y;
+	int width, height;
+	pango_layout_get_pixel_size(dp->trw->tracklabellayout, &width, &height);
 
-  dp->viewport->coord_to_screen(coord, &label_x, &label_y);
-  dp->viewport->draw_layout(dp->trw->track_bg_gc, label_x-width/2, label_y-height/2, dp->trw->tracklabellayout);
+	dp->viewport->coord_to_screen(coord, &label_x, &label_y);
+	dp->viewport->draw_layout(dp->trw->track_bg_gc, label_x-width/2, label_y-height/2, dp->trw->tracklabellayout);
 }
 
 
@@ -194,23 +195,23 @@ static void trw_layer_draw_track_label ( char *name, char *fgcolour, char *bgcol
  *
  * Returns: The distance in the units as specified by the preferences
  */
-static double distance_in_preferred_units ( double dist )
+static double distance_in_preferred_units(double dist)
 {
-  double mydist;
-  vik_units_distance_t dist_units = a_vik_get_units_distance ();
-  switch (dist_units) {
-  case VIK_UNITS_DISTANCE_MILES:
-    mydist = VIK_METERS_TO_MILES(dist);
-    break;
-  case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
-    mydist = VIK_METERS_TO_NAUTICAL_MILES(dist);
-    break;
-  // VIK_UNITS_DISTANCE_KILOMETRES:
-  default:
-    mydist = dist/1000.0;
-    break;
-  }
-  return mydist;
+	double mydist;
+	vik_units_distance_t dist_units = a_vik_get_units_distance();
+	switch (dist_units) {
+	case VIK_UNITS_DISTANCE_MILES:
+		mydist = VIK_METERS_TO_MILES(dist);
+		break;
+	case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
+		mydist = VIK_METERS_TO_NAUTICAL_MILES(dist);
+		break;
+		// VIK_UNITS_DISTANCE_KILOMETRES:
+	default:
+		mydist = dist/1000.0;
+		break;
+	}
+	return mydist;
 }
 
 
@@ -223,118 +224,122 @@ static double distance_in_preferred_units ( double dist )
  * Draw a few labels along a track at nicely seperated distances
  * This might slow things down if there's many tracks being displayed with this on.
  */
-static void trw_layer_draw_dist_labels (DrawingParams * dp, Track * trk, bool drawing_highlight )
+static void trw_layer_draw_dist_labels(DrawingParams * dp, Track * trk, bool drawing_highlight)
 {
-  static const double chunksd[] = {0.25, 0.5, 1.0, 2.0, 5.0, 10.0, 15.0, 20.0,
-                                    25.0, 40.0, 50.0, 75.0, 100.0,
-                                    150.0, 200.0, 250.0, 500.0, 1000.0};
+	static const double chunksd[] = {0.25, 0.5, 1.0, 2.0, 5.0, 10.0, 15.0, 20.0,
+					 25.0, 40.0, 50.0, 75.0, 100.0,
+					 150.0, 200.0, 250.0, 500.0, 1000.0};
 
-  double dist = trk->get_length_including_gaps() / (trk->max_number_dist_labels+1);
+	double dist = trk->get_length_including_gaps() / (trk->max_number_dist_labels+1);
 
-  // Convert to specified unit to find the friendly breakdown value
-  dist = distance_in_preferred_units ( dist );
+	// Convert to specified unit to find the friendly breakdown value
+	dist = distance_in_preferred_units(dist);
 
-  int index = 0;
-  int i=0;
-  for ( i = 0; i < G_N_ELEMENTS(chunksd); i++ ) {
-    if ( chunksd[i] > dist ) {
-      index = i;
-      dist = chunksd[index];
-      break;
-    }
-  }
+	int index = 0;
+	int i=0;
+	for (i = 0; i < G_N_ELEMENTS(chunksd); i++) {
+		if (chunksd[i] > dist) {
+			index = i;
+			dist = chunksd[index];
+			break;
+		}
+	}
 
-  vik_units_distance_t dist_units = a_vik_get_units_distance ();
+	vik_units_distance_t dist_units = a_vik_get_units_distance();
 
-  for ( i = 1; i < trk->max_number_dist_labels+1; i++ ) {
-    double dist_i = dist * i;
+	for (i = 1; i < trk->max_number_dist_labels+1; i++) {
+		double dist_i = dist * i;
 
-    // Convert distance back into metres for use in finding a trackpoint
-    switch (dist_units) {
-    case VIK_UNITS_DISTANCE_MILES:
-      dist_i = VIK_MILES_TO_METERS(dist_i);
-      break;
-    case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
-      dist_i = VIK_NAUTICAL_MILES_TO_METERS(dist_i);
-      break;
-      // VIK_UNITS_DISTANCE_KILOMETRES:
-    default:
-      dist_i = dist_i*1000.0;
-      break;
-    }
+		// Convert distance back into metres for use in finding a trackpoint
+		switch (dist_units) {
+		case VIK_UNITS_DISTANCE_MILES:
+			dist_i = VIK_MILES_TO_METERS(dist_i);
+			break;
+		case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
+			dist_i = VIK_NAUTICAL_MILES_TO_METERS(dist_i);
+			break;
+			// VIK_UNITS_DISTANCE_KILOMETRES:
+		default:
+			dist_i = dist_i*1000.0;
+			break;
+		}
 
-    double dist_current = 0.0;
-    Trackpoint * tp_current = trk->get_tp_by_dist(dist_i, false, &dist_current );
-    double dist_next = 0.0;
-    Trackpoint * tp_next = trk->get_tp_by_dist(dist_i, true, &dist_next );
+		double dist_current = 0.0;
+		Trackpoint * tp_current = trk->get_tp_by_dist(dist_i, false, &dist_current);
+		double dist_next = 0.0;
+		Trackpoint * tp_next = trk->get_tp_by_dist(dist_i, true, &dist_next);
 
-    double dist_between_tps = fabs (dist_next - dist_current);
-    double ratio = 0.0;
-    // Prevent division by 0 errors
-    if ( dist_between_tps > 0.0 )
-      ratio = fabs(dist_i-dist_current)/dist_between_tps;
+		double dist_between_tps = fabs(dist_next - dist_current);
+		double ratio = 0.0;
+		// Prevent division by 0 errors
+		if (dist_between_tps > 0.0) {
+			ratio = fabs(dist_i-dist_current) / dist_between_tps;
+		}
 
-    if ( tp_current && tp_next ) {
-      // Construct the name based on the distance value
-      char *name;
-      char *units;
-      switch (dist_units) {
-      case VIK_UNITS_DISTANCE_MILES:
-        units = strdup( _("miles") );
-        break;
-      case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
-        units = strdup( _("NM") );
-        break;
-        // VIK_UNITS_DISTANCE_KILOMETRES:
-      default:
-        units = strdup( _("km") );
-        break;
-      }
+		if (tp_current && tp_next) {
+			// Construct the name based on the distance value
+			char *name;
+			char *units;
+			switch (dist_units) {
+			case VIK_UNITS_DISTANCE_MILES:
+				units = strdup(_("miles"));
+				break;
+			case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
+				units = strdup(_("NM"));
+				break;
+				// VIK_UNITS_DISTANCE_KILOMETRES:
+			default:
+				units = strdup(_("km"));
+				break;
+			}
 
-      // Convert for display
-      dist_i = distance_in_preferred_units ( dist_i );
+			// Convert for display
+			dist_i = distance_in_preferred_units(dist_i);
 
-      // Make the precision of the output related to the unit size.
-      if ( index == 0 )
-        name = g_strdup_printf ( "%.2f %s", dist_i, units);
-      else if ( index == 1 )
-        name = g_strdup_printf ( "%.1f %s", dist_i, units);
-      else
-        name = g_strdup_printf ( "%d %s", (int)round(dist_i), units); // TODO single vs plurals
-      free( units );
+			// Make the precision of the output related to the unit size.
+			if (index == 0) {
+				name = g_strdup_printf("%.2f %s", dist_i, units);
+			} else if (index == 1) {
+				name = g_strdup_printf("%.1f %s", dist_i, units);
+			} else {
+				name = g_strdup_printf("%d %s", (int) round(dist_i), units); // TODO single vs plurals
+			}
+			free(units);
 
-      struct LatLon ll_current, ll_next;
-      vik_coord_to_latlon ( &tp_current->coord, &ll_current );
-      vik_coord_to_latlon ( &tp_next->coord, &ll_next );
+			struct LatLon ll_current, ll_next;
+			vik_coord_to_latlon(&tp_current->coord, &ll_current);
+			vik_coord_to_latlon(&tp_next->coord, &ll_next);
 
-      // positional interpolation
-      // Using a simple ratio - may not be perfectly correct due to lat/long projections
-      //  but should be good enough over the small scale that I anticipate usage on
-      struct LatLon ll_new = { ll_current.lat + (ll_next.lat-ll_current.lat)*ratio,
-			       ll_current.lon + (ll_next.lon-ll_current.lon)*ratio };
-      VikCoord coord;
-      vik_coord_load_from_latlon ( &coord, dp->trw->coord_mode, &ll_new );
+			// positional interpolation
+			// Using a simple ratio - may not be perfectly correct due to lat/long projections
+			//  but should be good enough over the small scale that I anticipate usage on
+			struct LatLon ll_new = { ll_current.lat + (ll_next.lat-ll_current.lat)*ratio,
+						 ll_current.lon + (ll_next.lon-ll_current.lon)*ratio };
+			VikCoord coord;
+			vik_coord_load_from_latlon(&coord, dp->trw->coord_mode, &ll_new);
 
-      char *fgcolour;
-      if ( dp->trw->drawmode == DRAWMODE_BY_TRACK )
-        fgcolour = gdk_color_to_string ( &(trk->color) );
-      else
-        fgcolour = gdk_color_to_string ( &(dp->trw->track_color) );
+			char *fgcolour;
+			if (dp->trw->drawmode == DRAWMODE_BY_TRACK) {
+				fgcolour = gdk_color_to_string(&(trk->color));
+			} else {
+				fgcolour = gdk_color_to_string(&(dp->trw->track_color));
+			}
 
-      // if highlight mode on, then colour the background in the highlight colour
-      char *bgcolour;
-      if ( drawing_highlight )
-	bgcolour = g_strdup( dp->viewport->get_highlight_color() );
-      else
-        bgcolour = gdk_color_to_string ( &(dp->trw->track_bg_color) );
+			// if highlight mode on, then colour the background in the highlight colour
+			char *bgcolour;
+			if (drawing_highlight) {
+				bgcolour = g_strdup(dp->viewport->get_highlight_color());
+			} else {
+				bgcolour = gdk_color_to_string(&(dp->trw->track_bg_color));
+			}
 
-      trw_layer_draw_track_label ( name, fgcolour, bgcolour, dp, &coord );
+			trw_layer_draw_track_label(name, fgcolour, bgcolour, dp, &coord);
 
-      free( fgcolour );
-      free( bgcolour );
-      free( name );
-    }
-  }
+			free(fgcolour);
+			free(bgcolour);
+			free(name);
+		}
+	}
 }
 
 
@@ -346,97 +351,103 @@ static void trw_layer_draw_dist_labels (DrawingParams * dp, Track * trk, bool dr
  *
  * Draw a label (or labels) for the track name somewhere depending on the track's properties
  */
-static void trw_layer_draw_track_name_labels (DrawingParams * dp, Track * trk, bool drawing_highlight )
+static void trw_layer_draw_track_name_labels(DrawingParams * dp, Track * trk, bool drawing_highlight)
 {
-  char *fgcolour;
-  if ( dp->trw->drawmode == DRAWMODE_BY_TRACK )
-    fgcolour = gdk_color_to_string ( &(trk->color) );
-  else
-    fgcolour = gdk_color_to_string ( &(dp->trw->track_color) );
+	char *fgcolour;
+	if (dp->trw->drawmode == DRAWMODE_BY_TRACK) {
+		fgcolour = gdk_color_to_string(&(trk->color));
+	} else {
+		fgcolour = gdk_color_to_string(&(dp->trw->track_color));
+	}
 
-  // if highlight mode on, then colour the background in the highlight colour
-  char *bgcolour;
-  if ( drawing_highlight )
-    bgcolour = g_strdup( dp->viewport->get_highlight_color() );
-  else
-    bgcolour = gdk_color_to_string ( &(dp->trw->track_bg_color) );
+	// if highlight mode on, then colour the background in the highlight colour
+	char *bgcolour;
+	if (drawing_highlight) {
+		bgcolour = g_strdup(dp->viewport->get_highlight_color());
+	} else {
+		bgcolour = gdk_color_to_string(&(dp->trw->track_bg_color));
+	}
 
-  char *ename = g_markup_escape_text ( trk->name, -1 );
+	char *ename = g_markup_escape_text(trk->name, -1);
 
-  if ( trk->draw_name_mode == TRACK_DRAWNAME_START_END_CENTRE ||
-       trk->draw_name_mode == TRACK_DRAWNAME_CENTRE ) {
-    struct LatLon average, maxmin[2] = { {0,0}, {0,0} };
-    LayerTRW::find_maxmin_in_track(trk, maxmin);
-    average.lat = (maxmin[0].lat+maxmin[1].lat)/2;
-    average.lon = (maxmin[0].lon+maxmin[1].lon)/2;
-    VikCoord coord;
-    vik_coord_load_from_latlon ( &coord, dp->trw->coord_mode, &average );
+	if (trk->draw_name_mode == TRACK_DRAWNAME_START_END_CENTRE ||
+	    trk->draw_name_mode == TRACK_DRAWNAME_CENTRE) {
+		struct LatLon average, maxmin[2] = { {0,0}, {0,0} };
+		LayerTRW::find_maxmin_in_track(trk, maxmin);
+		average.lat = (maxmin[0].lat+maxmin[1].lat)/2;
+		average.lon = (maxmin[0].lon+maxmin[1].lon)/2;
+		VikCoord coord;
+		vik_coord_load_from_latlon(&coord, dp->trw->coord_mode, &average);
 
-    trw_layer_draw_track_label ( ename, fgcolour, bgcolour, dp, &coord );
-  }
+		trw_layer_draw_track_label(ename, fgcolour, bgcolour, dp, &coord);
+	}
 
-  if ( trk->draw_name_mode == TRACK_DRAWNAME_CENTRE )
-    // No other labels to draw
-    return;
+	if (trk->draw_name_mode == TRACK_DRAWNAME_CENTRE) {
+		// No other labels to draw
+		return;
+	}
 
-  Trackpoint * tp_end = trk->get_tp_last();
-  if ( !tp_end )
-    return;
-  Trackpoint * tp_begin = trk->get_tp_first();
-  if ( !tp_begin )
-    return;
-  VikCoord begin_coord = tp_begin->coord;
-  VikCoord end_coord = tp_end->coord;
+	Trackpoint * tp_end = trk->get_tp_last();
+	if (!tp_end) {
+		return;
+	}
+	Trackpoint * tp_begin = trk->get_tp_first();
+	if (!tp_begin) {
+		return;
+	}
+	VikCoord begin_coord = tp_begin->coord;
+	VikCoord end_coord = tp_end->coord;
 
-  bool done_start_end = false;
+	bool done_start_end = false;
 
-  if ( trk->draw_name_mode == TRACK_DRAWNAME_START_END ||
-       trk->draw_name_mode == TRACK_DRAWNAME_START_END_CENTRE ) {
+	if (trk->draw_name_mode == TRACK_DRAWNAME_START_END ||
+	    trk->draw_name_mode == TRACK_DRAWNAME_START_END_CENTRE) {
 
-    // This number can be configured via the settings if you really want to change it
-    double distance_diff;
-    if ( ! a_settings_get_double ( "trackwaypoint_start_end_distance_diff", &distance_diff ) )
-      distance_diff = 100.0; // Metres
+		// This number can be configured via the settings if you really want to change it
+		double distance_diff;
+		if (! a_settings_get_double("trackwaypoint_start_end_distance_diff", &distance_diff)) {
+			distance_diff = 100.0; // Metres
+		}
 
-    if ( vik_coord_diff ( &begin_coord, &end_coord ) < distance_diff ) {
-      // Start and end 'close' together so only draw one label at an average location
-      int x1, x2, y1, y2;
-      dp->viewport->coord_to_screen(&begin_coord, &x1, &y1);
-      dp->viewport->coord_to_screen(&end_coord, &x2, &y2);
-      VikCoord av_coord;
-      dp->viewport->screen_to_coord((x1 + x2) / 2, (y1 + y2) / 2, &av_coord );
+		if (vik_coord_diff(&begin_coord, &end_coord) < distance_diff) {
+			// Start and end 'close' together so only draw one label at an average location
+			int x1, x2, y1, y2;
+			dp->viewport->coord_to_screen(&begin_coord, &x1, &y1);
+			dp->viewport->coord_to_screen(&end_coord, &x2, &y2);
+			VikCoord av_coord;
+			dp->viewport->screen_to_coord((x1 + x2) / 2, (y1 + y2) / 2, &av_coord);
 
-      char *name = g_strdup_printf ( "%s: %s", ename, _("start/end") );
-      trw_layer_draw_track_label ( name, fgcolour, bgcolour, dp, &av_coord );
-      free( name );
+			char *name = g_strdup_printf("%s: %s", ename, _("start/end"));
+			trw_layer_draw_track_label(name, fgcolour, bgcolour, dp, &av_coord);
+			free(name);
 
-      done_start_end = true;
-    }
-  }
+			done_start_end = true;
+		}
+	}
 
-  if ( ! done_start_end ) {
-    if ( trk->draw_name_mode == TRACK_DRAWNAME_START ||
-         trk->draw_name_mode == TRACK_DRAWNAME_START_END ||
-         trk->draw_name_mode == TRACK_DRAWNAME_START_END_CENTRE ) {
-      char *name_start = g_strdup_printf ( "%s: %s", ename, _("start") );
-      trw_layer_draw_track_label ( name_start, fgcolour, bgcolour, dp, &begin_coord );
-      free( name_start );
-    }
-    // Don't draw end label if this is the one being created
-    if ( trk != dp->trw->current_track ) {
-      if ( trk->draw_name_mode == TRACK_DRAWNAME_END ||
-           trk->draw_name_mode == TRACK_DRAWNAME_START_END ||
-           trk->draw_name_mode == TRACK_DRAWNAME_START_END_CENTRE ) {
-        char *name_end = g_strdup_printf ( "%s: %s", ename, _("end") );
-        trw_layer_draw_track_label ( name_end, fgcolour, bgcolour, dp, &end_coord );
-        free( name_end );
-      }
-    }
-  }
+	if (! done_start_end) {
+		if (trk->draw_name_mode == TRACK_DRAWNAME_START ||
+		    trk->draw_name_mode == TRACK_DRAWNAME_START_END ||
+		    trk->draw_name_mode == TRACK_DRAWNAME_START_END_CENTRE) {
+			char *name_start = g_strdup_printf("%s: %s", ename, _("start"));
+			trw_layer_draw_track_label(name_start, fgcolour, bgcolour, dp, &begin_coord);
+			free(name_start);
+		}
+		// Don't draw end label if this is the one being created
+		if (trk != dp->trw->current_track) {
+			if (trk->draw_name_mode == TRACK_DRAWNAME_END ||
+			    trk->draw_name_mode == TRACK_DRAWNAME_START_END ||
+			    trk->draw_name_mode == TRACK_DRAWNAME_START_END_CENTRE) {
+				char *name_end = g_strdup_printf("%s: %s", ename, _("end"));
+				trw_layer_draw_track_label(name_end, fgcolour, bgcolour, dp, &end_coord);
+				free(name_end);
+			}
+		}
+	}
 
-  free( fgcolour );
-  free( bgcolour );
-  free( ename );
+	free(fgcolour);
+	free(bgcolour);
+	free(ename);
 }
 
 
@@ -449,31 +460,34 @@ static void trw_layer_draw_track_name_labels (DrawingParams * dp, Track * trk, b
  * Draw a point labels along a track
  * This might slow things down if there's many tracks being displayed with this on.
  */
-static void trw_layer_draw_point_names (DrawingParams * dp, Track * trk, bool drawing_highlight )
+static void trw_layer_draw_point_names(DrawingParams * dp, Track * trk, bool drawing_highlight)
 {
-  GList *list = trk->trackpoints;
-  if (!list) return;
-  Trackpoint * tp = ((Trackpoint *) list->data);
-  char *fgcolour;
-  if ( dp->trw->drawmode == DRAWMODE_BY_TRACK )
-    fgcolour = gdk_color_to_string ( &(trk->color) );
-  else
-    fgcolour = gdk_color_to_string ( &(dp->trw->track_color) );
-  char *bgcolour;
-  if ( drawing_highlight )
-    bgcolour = g_strdup( dp->viewport->get_highlight_color() );
-  else
-    bgcolour = gdk_color_to_string ( &(dp->trw->track_bg_color) );
-  if ( tp->name )
-    trw_layer_draw_track_label ( tp->name, fgcolour, bgcolour, dp, &tp->coord );
-  while ((list = g_list_next(list)))
-  {
-    tp = ((Trackpoint *) list->data);
-    if ( tp->name )
-      trw_layer_draw_track_label ( tp->name, fgcolour, bgcolour, dp, &tp->coord );
-  };
-  free( fgcolour );
-  free( bgcolour );
+	GList *list = trk->trackpoints;
+	if (!list) return;
+	Trackpoint * tp = ((Trackpoint *) list->data);
+	char *fgcolour;
+	if (dp->trw->drawmode == DRAWMODE_BY_TRACK) {
+		fgcolour = gdk_color_to_string(&(trk->color));
+	} else {
+		fgcolour = gdk_color_to_string(&(dp->trw->track_color));
+	}
+	char *bgcolour;
+	if (drawing_highlight) {
+		bgcolour = g_strdup(dp->viewport->get_highlight_color());
+	} else {
+		bgcolour = gdk_color_to_string(&(dp->trw->track_bg_color));
+	}
+	if (tp->name) {
+		trw_layer_draw_track_label(tp->name, fgcolour, bgcolour, dp, &tp->coord);
+	}
+	while ((list = g_list_next(list))) {
+		tp = ((Trackpoint *) list->data);
+		if (tp->name) {
+			trw_layer_draw_track_label(tp->name, fgcolour, bgcolour, dp, &tp->coord);
+		}
+	}
+	free(fgcolour);
+	free(bgcolour);
 }
 
 
@@ -857,12 +871,12 @@ int trw_layer_draw_image(Waypoint * wp, int x, int y, DrawingParams * dp)
 	}
 
 	GdkPixbuf * pixbuf = NULL;
-	GList * l = g_list_find_custom (dp->trw->image_cache->head, wp->image, (GCompareFunc) cached_pixbuf_cmp);
+	GList * l = g_list_find_custom(dp->trw->image_cache->head, wp->image, (GCompareFunc) cached_pixbuf_cmp);
 	if (l) {
 		pixbuf = ((CachedPixbuf *) l->data)->pixbuf;
 	} else {
 		char * image = wp->image;
-		GdkPixbuf * regularthumb = a_thumbnails_get (wp->image);
+		GdkPixbuf * regularthumb = a_thumbnails_get(wp->image);
 		if (!regularthumb) {
 			regularthumb = a_thumbnails_get_default(); /* cache one 'not yet loaded' for all thumbs not loaded */
 			image = (char *) "\x12\x00"; /* this shouldn't occur naturally. */
@@ -890,7 +904,7 @@ int trw_layer_draw_image(Waypoint * wp, int x, int y, DrawingParams * dp)
 
 			g_queue_push_head(dp->trw->image_cache, cp);
 			if (dp->trw->image_cache->length > dp->trw->image_cache_size) {
-				cached_pixbuf_free ((CachedPixbuf *) g_queue_pop_tail(dp->trw->image_cache));
+				cached_pixbuf_free((CachedPixbuf *) g_queue_pop_tail(dp->trw->image_cache));
 			}
 
 			pixbuf = cp->pixbuf;
@@ -1039,17 +1053,17 @@ void trw_layer_draw_waypoints_cb(std::unordered_map<sg_uid_t, Waypoint *> * wayp
 
 
 
-void cached_pixbuf_free ( CachedPixbuf *cp )
+void cached_pixbuf_free(CachedPixbuf * cp)
 {
-  g_object_unref ( G_OBJECT(cp->pixbuf) );
-  free( cp->image );
+	g_object_unref(G_OBJECT(cp->pixbuf));
+	free(cp->image);
 }
 
 
 
 
 
-int cached_pixbuf_cmp ( CachedPixbuf *cp, const char *name )
+int cached_pixbuf_cmp(CachedPixbuf * cp, const char * name)
 {
-  return strcmp ( cp->image, name );
+	return strcmp(cp->image, name);
 }
