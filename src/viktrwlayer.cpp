@@ -6150,19 +6150,19 @@ void trw_layer_routes_visibility_toggle(trw_menu_layer_t * data)
 
 
 /**
- * Helper function to construct a list of #vik_trw_waypoint_list_t
+ * Helper function to construct a list of #waypoint_layer_t
  */
-GList * LayerTRW::build_waypoint_list_t(GList * waypoints)
+std::list<waypoint_layer_t *> * LayerTRW::create_waypoints_and_layers_list(std::list<Waypoint *> * waypoints)
 {
-	GList * waypoints_and_layers = NULL;
+	std::list<waypoint_layer_t *> * waypoints_and_layers = new std::list<waypoint_layer_t *>;
 	// build waypoints_and_layers list
-	while (waypoints) {
-		vik_trw_waypoint_list_t * vtdl = (vik_trw_waypoint_list_t *) malloc(sizeof (vik_trw_waypoint_list_t));
-		vtdl->wp = (Waypoint *) waypoints->data;
-		vtdl->trw = this;
-		waypoints_and_layers = g_list_prepend(waypoints_and_layers, vtdl);
-		waypoints = g_list_next(waypoints);
+	for (auto iter = waypoints->begin(); iter != waypoints->end(); iter++) {
+		waypoint_layer_t * element = (waypoint_layer_t *) malloc(sizeof (waypoint_layer_t));
+		element->wp = *iter;
+		element->trw = this;
+		waypoints_and_layers->push_back(element);
 	}
+
 	return waypoints_and_layers;
 }
 
@@ -6171,22 +6171,21 @@ GList * LayerTRW::build_waypoint_list_t(GList * waypoints)
 
 
 /**
- * trw_layer_create_waypoint_list:
+ * trw_layer_create_waypoints_and_layers_list:
  *
  * Create the latest list of waypoints with the associated layer(s)
  *  Although this will always be from a single layer here
  */
-static GList * trw_layer_create_waypoint_list(VikLayer * vl, void * user_data)
+static std::list<SlavGPS::waypoint_layer_t *> * trw_layer_create_waypoints_and_layers_list(Layer * layer, void * user_data)
 {
-	LayerTRW * layer = (LayerTRW *) vl->layer;
+	LayerTRW * trw = (LayerTRW *) layer;
+	std::list<Waypoint *> pure_waypoints;
 
-	GList * waypoints = NULL;
-	int index = 0;
-	for (auto i = layer->waypoints.begin(); i != layer->waypoints.end(); i++) {
-		waypoints = g_list_insert(waypoints, i->second, index++);
+	for (auto iter = trw->waypoints.begin(); iter != trw->waypoints.end(); iter++) {
+		pure_waypoints.push_back((*iter).second);
 	}
 
-	return layer->build_waypoint_list_t(waypoints);
+	return trw->create_waypoints_and_layers_list(&pure_waypoints);
 }
 
 
@@ -9088,7 +9087,7 @@ void trw_layer_waypoint_list_dialog(trw_menu_layer_t * data)
 	LayerTRW * layer = data->layer;
 
 	char * title = g_strdup_printf(_("%s: Waypoint List"), layer->name);
-	vik_trw_layer_waypoint_list_show_dialog(title, layer, NULL, trw_layer_create_waypoint_list, false);
+	vik_trw_layer_waypoint_list_show_dialog(title, layer, NULL, trw_layer_create_waypoints_and_layers_list, false);
 	free(title);
 }
 

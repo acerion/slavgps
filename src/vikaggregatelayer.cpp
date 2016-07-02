@@ -482,36 +482,36 @@ static void aggregate_layer_sort_timestamp_descend(menu_array_values values)
 }
 
 /**
- * aggregate_layer_waypoint_create_list:
+ * aggregate_layer_create_waypoints_and_layers_list:
  * @vl:        The layer that should create the waypoint and layers list
  * @user_data: Not used in this function
  *
- * Returns: A list of #vik_trw_waypoint_list_t
+ * Returns: A list of #waypoint_layer_t
  */
-static GList * aggregate_layer_waypoint_create_list(VikLayer *vl, void * user_data)
+static std::list<waypoint_layer_t *> * aggregate_layer_create_waypoints_and_layers_list(Layer * layer, void * user_data)
 {
-	LayerAggregate * layer = (LayerAggregate *) (vl->layer);
-	return layer->waypoint_create_list();
+	LayerAggregate * aggregate = (LayerAggregate *) layer;
+	return aggregate->create_waypoints_and_layers_list();
 }
 
-GList * LayerAggregate::waypoint_create_list()
+std::list<waypoint_layer_t *> * LayerAggregate::create_waypoints_and_layers_list()
 {
 	// Get all TRW layers
 	std::list<Layer *> * layers = new std::list<Layer *>;
 	layers = this->get_all_layers_of_type(layers, VIK_LAYER_TRW, true);
 
 	// For each TRW layers keep adding the waypoints to build a list of all of them
-	GList *waypoints_and_layers = NULL;
+	std::list<waypoint_layer_t *> * waypoints_and_layers = new std::list<waypoint_layer_t *>;
 	int index = 0;
 	for (auto iter = layers->begin(); iter != layers->end(); iter++) {
-		GList * waypoints = NULL;
+		std::list<Waypoint *> * waypoints = new std::list<Waypoint *>;
 
 		std::unordered_map<sg_uid_t, Waypoint *> & wps = ((LayerTRW *) (*iter))->get_waypoints();
 		for (auto i = wps.begin(); i != wps.end(); i++) {
-			waypoints = g_list_insert(waypoints, i->second, index++);
+			waypoints->push_back(i->second);
 		}
 
-		waypoints_and_layers = g_list_concat(waypoints_and_layers, ((LayerTRW *) (*iter))->build_waypoint_list_t(waypoints));
+		waypoints_and_layers->splice(waypoints_and_layers->begin(), *((LayerTRW *) (*iter))->create_waypoints_and_layers_list(waypoints));
 	}
 	delete layers;
 
@@ -522,7 +522,7 @@ static void aggregate_layer_waypoint_list_dialog(menu_array_values values)
 {
 	LayerAggregate * aggregate = (LayerAggregate *) values[MA_VAL];
 	char *title = g_strdup_printf(_("%s: Waypoint List"), aggregate->name);
-	vik_trw_layer_waypoint_list_show_dialog(title, aggregate, NULL, aggregate_layer_waypoint_create_list, true);
+	vik_trw_layer_waypoint_list_show_dialog(title, aggregate, NULL, aggregate_layer_create_waypoints_and_layers_list, true);
 	free(title);
 }
 

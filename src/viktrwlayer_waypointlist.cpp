@@ -44,10 +44,9 @@ using namespace SlavGPS;
  * waypoint_close_cb:
  *
  */
-static void waypoint_close_cb(GtkWidget * dialog, int resp, GList * data)
+static void waypoint_close_cb(GtkWidget * dialog, int resp, std::list<waypoint_layer_t *> * waypoints_and_layers)
 {
-	g_list_foreach(data, (GFunc) g_free, NULL);
-	g_list_free(data);
+	/* kamilTODO: free waypoints_and_layers */
 
 	gtk_widget_destroy(dialog);
 }
@@ -150,28 +149,25 @@ static void trw_layer_waypoint_select_cb(GtkTreeSelection * selection, void * da
 }
 */
 
-// A slightly better way of defining the menu callback information
-// This should be much easier to extend/rework compared to the current trw_layer menus
-typedef enum {
-	MA_VTL = 0,
-	MA_WPT,
-	MA_WPT_UUID,
-	MA_VVP,
-	MA_TREEVIEW,
-	MA_WPTS_LIST,
-	MA_LAST
-} menu_array_index;
 
-typedef void * menu_array_values[MA_LAST];
+typedef struct {
+	LayerTRW * trw;
+	Waypoint * waypoint;
+	sg_uid_t waypoint_uid;
+	Viewport * viewport;
+	GtkWidget * gtk_tree_view;
+	std::list<waypoint_layer_t *> * waypoints_and_layers;
+} waypointlist_data_t;
+
 
 // Instead of hooking automatically on treeview item selection
 // This is performed on demand via the specific menu request
-static void trw_layer_waypoint_select(menu_array_values values)
+static void trw_layer_waypoint_select(waypointlist_data_t * values)
 {
-	LayerTRW * trw = (LayerTRW *) values[MA_VTL];
+	LayerTRW * trw = values->trw;
 
-	if (values[MA_WPT_UUID]) {
-		sg_uid_t uid = (sg_uid_t) ((long) values[MA_WPT_UUID]);
+	if (values->waypoint_uid) {
+		sg_uid_t uid = values->waypoint_uid;
 		GtkTreeIter * iter = trw->get_waypoints_iters().at(uid);
 
 		if (iter) {
@@ -180,16 +176,16 @@ static void trw_layer_waypoint_select(menu_array_values values)
 	}
 }
 
-static void trw_layer_waypoint_properties(menu_array_values values)
+static void trw_layer_waypoint_properties(waypointlist_data_t * values)
 {
-	LayerTRW * trw = (LayerTRW *) values[MA_VTL];
-	Waypoint * wp = (Waypoint *) (values[MA_WPT]);
+	LayerTRW * trw = values->trw;
+	Waypoint * wp = values->waypoint;
 
 	if (wp && wp->name) {
 		// Kill off this dialog to allow interaction with properties window
 		//  since the properties also allows waypoint manipulations it won't cause conflicts here.
-		GtkWidget *gw = gtk_widget_get_toplevel((GtkWidget *) values[MA_TREEVIEW]);
-		waypoint_close_cb(gw, 0, (GList *) values[MA_WPTS_LIST]);
+		GtkWidget *gw = gtk_widget_get_toplevel(values->gtk_tree_view);
+		waypoint_close_cb(gw, 0, values->waypoints_and_layers);
 
 		bool updated = false;
 		char * new_name = a_dialog_waypoint(gtk_window_from_layer(trw), wp->name, trw, wp, trw->get_coord_mode(), false, &updated);
@@ -207,11 +203,11 @@ static void trw_layer_waypoint_properties(menu_array_values values)
 	}
 }
 
-static void trw_layer_waypoint_view(menu_array_values values)
+static void trw_layer_waypoint_view(waypointlist_data_t * values)
 {
-	LayerTRW * trw = (LayerTRW *) values[MA_VTL];
-	Waypoint * wp = (Waypoint *) (values[MA_WPT]);
-	Viewport * viewport = (Viewport *) values[MA_VVP];
+	LayerTRW * trw = values->trw;
+	Waypoint * wp = values->waypoint;
+	Viewport * viewport = values->viewport;
 
 	viewport->set_center_coord(&(wp->coord), true);
 
@@ -220,13 +216,13 @@ static void trw_layer_waypoint_view(menu_array_values values)
 	trw->emit_update();
 }
 
-static void trw_layer_show_picture_wp(menu_array_values values)
+static void trw_layer_show_picture_wp(waypointlist_data_t * values)
 {
-	Waypoint * wp = (Waypoint *) (values[MA_WPT]);
+	Waypoint * wp = values->waypoint;
 #ifdef WINDOWS
 	ShellExecute(NULL, "open", wp->image, NULL, NULL, SW_SHOWNORMAL);
 #else
-	LayerTRW * trw = (LayerTRW *) values[MA_VTL];
+	LayerTRW * trw = values->trw;
 	GError * err = NULL;
 	char * quoted_file = g_shell_quote(wp->image);
 	char * cmd = g_strdup_printf("%s %s", a_vik_get_image_viewer(), quoted_file);
@@ -349,22 +345,22 @@ static void add_copy_menu_items(GtkMenu * menu, GtkWidget * tree_view)
 	gtk_widget_show(item);
 }
 
-static bool add_menu_items(GtkMenu *menu, LayerTRW * trw, Waypoint * wp, void * wp_uuid, Viewport * viewport, GtkWidget * tree_view, void * data)
+static bool add_menu_items(GtkMenu * menu, LayerTRW * trw, Waypoint * wp, sg_uid_t wp_uid, Viewport * viewport, GtkWidget * gtk_tree_view, std::list<waypoint_layer_t *> * waypoints_and_layers)
 {
-	static menu_array_values values;
 	GtkWidget * item;
 
-	values[MA_VTL]       = trw;
-	values[MA_WPT]       = wp;
-	values[MA_WPT_UUID]  = wp_uuid;
-	values[MA_VVP]       = viewport;
-	values[MA_TREEVIEW]  = tree_view;
-	values[MA_WPTS_LIST] = data;
+	static waypointlist_data_t values;
+	values.trw                  = trw;
+	values.waypoint             = wp;
+	values.waypoint_uid         = wp_uid;
+	values.viewport             = viewport;
+	values.gtk_tree_view        = gtk_tree_view;
+	values.waypoints_and_layers = waypoints_and_layers;
 
 	/*
 	item = gtk_image_menu_item_new_with_mnemonic(_("_Select"));
 	gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_FIND, GTK_ICON_SIZE_MENU));
-	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(trw_layer_waypoint_select), values);
+	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(trw_layer_waypoint_select), &values);
 	gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
 	gtk_widget_show(item);
 	*/
@@ -373,30 +369,30 @@ static bool add_menu_items(GtkMenu *menu, LayerTRW * trw, Waypoint * wp, void * 
 	// ATM view auto selects, so don't bother with separate select menu entry
 	item = gtk_image_menu_item_new_with_mnemonic(_("_View"));
 	gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_ZOOM_FIT, GTK_ICON_SIZE_MENU));
-	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(trw_layer_waypoint_view), values);
+	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(trw_layer_waypoint_view), &values);
 	gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
 	gtk_widget_show(item);
 
 	item = gtk_image_menu_item_new_from_stock(GTK_STOCK_PROPERTIES, NULL);
-	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(trw_layer_waypoint_properties), values);
+	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(trw_layer_waypoint_properties), &values);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
 	gtk_widget_show(item);
 
 	item = gtk_image_menu_item_new_with_mnemonic(_("_Show Picture..."));
 	gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock ("vik-icon-Show Picture", GTK_ICON_SIZE_MENU)); // Own icon - see stock_icons in vikwindow.c
-	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(trw_layer_show_picture_wp), values);
+	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(trw_layer_show_picture_wp), &values);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
 	gtk_widget_show(item);
 	gtk_widget_set_sensitive(item, KPOINTER_TO_INT(wp->image));
 
-	add_copy_menu_items(menu, tree_view);
+	add_copy_menu_items(menu, gtk_tree_view);
 
 	return true;
 }
 
 static bool trw_layer_waypoint_menu_popup_multi(GtkWidget * tree_view,
 						GdkEventButton * event,
-						void * data)
+						void * waypoints_and_layers)
 {
 	GtkWidget * menu = gtk_menu_new();
 
@@ -409,7 +405,7 @@ static bool trw_layer_waypoint_menu_popup_multi(GtkWidget * tree_view,
 
 static bool trw_layer_waypoint_menu_popup(GtkWidget * tree_view,
 					  GdkEventButton * event,
-					  void * data)
+					  void * waypoints_and_layers)
 {
 	static GtkTreeIter iter;
 
@@ -417,7 +413,7 @@ static bool trw_layer_waypoint_menu_popup(GtkWidget * tree_view,
 	// This relies on an row being selected as part of the right click
 	GtkTreeSelection *selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(tree_view));
 	if (gtk_tree_selection_count_selected_rows(selection) != 1) {
-		return trw_layer_waypoint_menu_popup_multi(tree_view, event, data);
+		return trw_layer_waypoint_menu_popup_multi(tree_view, event, waypoints_and_layers);
 	}
 
 	GtkTreePath * path;
@@ -460,10 +456,10 @@ static bool trw_layer_waypoint_menu_popup(GtkWidget * tree_view,
 		add_menu_items(GTK_MENU(menu),
 			       trw,
 			       wp,
-			       (void *) ((long) wp_uuid),
+			       wp_uuid,
 			       viewport,
 			       tree_view,
-			       data);
+			       (std::list<SlavGPS::waypoint_layer_t*> *) waypoints_and_layers);
 
 		gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL, event->button, gtk_get_current_event_time());
 		return true;
@@ -473,7 +469,7 @@ static bool trw_layer_waypoint_menu_popup(GtkWidget * tree_view,
 
 static bool trw_layer_waypoint_button_pressed(GtkWidget * tree_view,
 					      GdkEventButton * event,
-					      void * data)
+					      void * waypoints_and_layers)
 {
 	// Only on right clicks...
 	if (! (event->type == GDK_BUTTON_PRESS && event->button == 3)) {
@@ -495,21 +491,21 @@ static bool trw_layer_waypoint_button_pressed(GtkWidget * tree_view,
 			gtk_tree_path_free(path);
 		}
 	}
-	return trw_layer_waypoint_menu_popup(tree_view, event, data);
+	return trw_layer_waypoint_menu_popup(tree_view, event, waypoints_and_layers);
 }
 
 /*
  * Foreach entry we copy the various individual waypoint properties into the tree store
  *  formatting & converting the internal values into something for display
  */
-static void trw_layer_waypoint_list_add(vik_trw_waypoint_list_t * vtdl,
+static void trw_layer_waypoint_list_add(waypoint_layer_t * element,
 					GtkTreeStore * store,
 					vik_units_height_t height_units,
 					const char * date_format)
 {
 	GtkTreeIter t_iter;
-	Waypoint * wp = vtdl->wp;
-	LayerTRW * trw = vtdl->trw;
+	Waypoint * wp = element->wp;
+	LayerTRW * trw = element->trw;
 
 	// Get start date
 	char time_buf[32];
@@ -600,10 +596,10 @@ static GtkTreeViewColumn * my_new_column_text(const char * title, GtkCellRendere
  * This table does not support being actively updated
  */
 static void vik_trw_layer_waypoint_list_internal(GtkWidget * dialog,
-						 GList * waypoints_and_layers,
+						 std::list<waypoint_layer_t *> * waypoints_and_layers,
 						 bool show_layer_names)
 {
-	if (!waypoints_and_layers) {
+	if (!waypoints_and_layers || waypoints_and_layers->empty()) {
 		return;
 	}
 
@@ -626,17 +622,15 @@ static void vik_trw_layer_waypoint_list_internal(GtkWidget * dialog,
 
 	vik_units_height_t height_units = a_vik_get_units_height();
 
-	//GList *gl = get_waypoints_and_layers_cb(vl, user_data);
+	//GList *gl = create_waypoints_and_layers_cb(vl, user_data);
 	//g_list_foreach(waypoints_and_layers, (GFunc) trw_layer_waypoint_list_add, store);
 	char *date_format = NULL;
 	if (!a_settings_get_string(VIK_SETTINGS_LIST_DATE_FORMAT, &date_format)) {
 		date_format = g_strdup(WAYPOINT_LIST_DATE_FORMAT);
 	}
 
-	GList * gl = waypoints_and_layers;
-	while (gl) {
-		trw_layer_waypoint_list_add((vik_trw_waypoint_list_t *) gl->data, store, height_units, date_format);
-		gl = g_list_next(gl);
+	for (auto iter = waypoints_and_layers->begin(); iter != waypoints_and_layers->end(); iter++) {
+		trw_layer_waypoint_list_add(*iter, store, height_units, date_format);
 	}
 	free(date_format);
 
@@ -723,9 +717,9 @@ static void vik_trw_layer_waypoint_list_internal(GtkWidget * dialog,
 /**
  * vik_trw_layer_waypoint_list_show_dialog:
  * @title:                    The title for the dialog
- * @vl:                       The #VikLayer passed on into get_waypoints_and_layers_cb()
- * @user_data:                Data passed on into get_waypoints_and_layers_cb()
- * @get_waypoints_and_layers_cb: The function to call to construct items to be analysed
+ * @vl:                       The #VikLayer passed on into create_waypoints_and_layers_cb()
+ * @user_data:                Data passed on into create_waypoints_and_layers_cb()
+ * @create_waypoints_and_layers_cb: The function to call to construct items to be analysed
  * @show_layer_names:         Normally only set when called from an aggregate level
  *
  * Common method for showing a list of waypoints with extended information
@@ -734,7 +728,7 @@ static void vik_trw_layer_waypoint_list_internal(GtkWidget * dialog,
 void vik_trw_layer_waypoint_list_show_dialog(char * title,
 					     Layer * layer,
 					     void * user_data,
-					     VikTrwlayerGetWaypointsAndLayersFunc get_waypoints_and_layers_cb,
+					     create_waypoints_and_layers_list_t create_waypoints_and_layers_cb,
 					     bool show_layer_names)
 {
 	GtkWidget * dialog = gtk_dialog_new_with_buttons(title,
@@ -744,12 +738,12 @@ void vik_trw_layer_waypoint_list_show_dialog(char * title,
 							 GTK_RESPONSE_CLOSE,
 							 NULL);
 
-	GList * gl = get_waypoints_and_layers_cb(layer->vl, user_data);
+	std::list<waypoint_layer_t *> * waypoints_and_layers = create_waypoints_and_layers_cb(layer, user_data);
 
-	vik_trw_layer_waypoint_list_internal(dialog, gl, show_layer_names);
+	vik_trw_layer_waypoint_list_internal(dialog, waypoints_and_layers, show_layer_names);
 
 	// Use response to close the dialog with tidy up
-	g_signal_connect(G_OBJECT(dialog), "response", G_CALLBACK(waypoint_close_cb), gl);
+	g_signal_connect(G_OBJECT(dialog), "response", G_CALLBACK(waypoint_close_cb), waypoints_and_layers);
 
 	gtk_widget_show_all(dialog);
 	// Yes - set the size *AGAIN* - this time widgets are expanded nicely
