@@ -554,13 +554,13 @@ void LayerTRWc::tracks_toggle_visibility(std::unordered_map<sg_uid_t, Track *> &
 
 
 
-GList * LayerTRWc::get_track_values(GList ** list, std::unordered_map<sg_uid_t, Track *> & tracks)
+std::list<Track *> * LayerTRWc::get_track_values(std::list<Track *> * target, std::unordered_map<sg_uid_t, Track *> & tracks)
 {
 	for (auto i = tracks.begin(); i != tracks.end(); i++) {
-		*list = g_list_append(*list, i->second);
+		target->push_back(i->second);
 	}
 
-	return *list;
+	return target;
 }
 
 

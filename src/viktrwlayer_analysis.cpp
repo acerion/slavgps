@@ -418,9 +418,8 @@ static void table_output(track_stats ts, GtkWidget * content[])
  * Analyse this particular track
  *  considering whether it should be included depending on it's visibility
  */
-static void val_analyse_item_maybe(vik_trw_track_list_t * trwlist, const void * data)
+static void val_analyse_item_maybe(track_layer_t * trwlist, bool include_invisible)
 {
-	bool include_invisible = KPOINTER_TO_INT(data);
 	Track * trk = trwlist->trk;
 	LayerTRW * trw = trwlist->trw;
 
@@ -449,19 +448,18 @@ static void val_analyse_item_maybe(vik_trw_track_list_t * trwlist, const void * 
 /**
  * val_analyse:
  * @widgets:           The widget layout
- * @tracks_and_layers: A list of #vik_trw_track_list_t
+ * @tracks_and_layers: A list of #track_layer_t
  * @include_invisible: Whether to include invisible layers and tracks
  *
  * Analyse each item in the @tracks_and_layers list
  *
  */
-void val_analyse(GtkWidget * widgets[], GList * tracks_and_layers, bool include_invisible)
+void val_analyse(GtkWidget * widgets[], std::list<track_layer_t *> * tracks_and_layers, bool include_invisible)
 {
 	val_reset (TS_TRACKS);
 
-	GList * gl = g_list_first(tracks_and_layers);
-	if (gl) {
-		g_list_foreach(gl, (GFunc) val_analyse_item_maybe, KINT_TO_POINTER(include_invisible));
+	for (auto iter = tracks_and_layers->begin(); iter != tracks_and_layers->end(); iter++) {
+		val_analyse_item_maybe(*iter, include_invisible);
 	}
 
 	table_output(tracks_stats[TS_TRACKS], widgets);
@@ -471,8 +469,8 @@ typedef struct {
 	GtkWidget ** widgets;
 	GtkWidget * layout;
 	GtkWidget * check_button;
-	GList * tracks_and_layers;
-	VikLayer * vl;
+	std::list<track_layer_t *> * tracks_and_layers;
+	Layer * layer;
 	void * user_data;
 	VikTrwlayerGetTracksAndLayersFunc get_tracks_and_layers_cb;
 	VikTrwlayerAnalyseCloseFunc on_close_cb;
@@ -487,12 +485,11 @@ static void include_invisible_toggled_cb(GtkToggleButton * togglebutton, analyse
 
 	// Delete old list of items
 	if (acb->tracks_and_layers) {
-		g_list_foreach(acb->tracks_and_layers, (GFunc) g_free, NULL);
-		g_list_free(acb->tracks_and_layers);
+		/* kamilTODO: delete acb->tracks_and_layers */
 	}
 
 	// Get the latest list of items to analyse
-	acb->tracks_and_layers = acb->get_tracks_and_layers_cb(acb->vl, acb->user_data);
+	acb->tracks_and_layers = acb->get_tracks_and_layers_cb(acb->layer, acb->user_data);
 
 	val_analyse(acb->widgets, acb->tracks_and_layers, value);
 	gtk_widget_show_all(acb->layout);
@@ -514,11 +511,11 @@ static void analyse_close(GtkWidget * dialog, int resp, analyse_cb_t * data)
 
 	//free(data->layout);
 	free(data->widgets);
-	g_list_foreach(data->tracks_and_layers, (GFunc) g_free, NULL);
-	g_list_free(data->tracks_and_layers);
+
+	/* kamilTODO: delete data->tracks_and_layers here? */
 
 	if (data->on_close_cb) {
-		data->on_close_cb(dialog, resp, data->vl);
+		data->on_close_cb(dialog, resp, data->layer);
 	}
 
 	free(data);
@@ -528,7 +525,7 @@ static void analyse_close(GtkWidget * dialog, int resp, analyse_cb_t * data)
  * vik_trw_layer_analyse_this:
  * @window:                   A window from which the dialog will be derived
  * @name:                     The name to be shown
- * @vl:                       The #VikLayer passed on into get_tracks_and_layers_cb()
+ * @layer:                    The #Layer passed on into get_tracks_and_layers_cb()
  * @user_data:                Data passed on into get_tracks_and_layers_cb()
  * @get_tracks_and_layers_cb: The function to call to construct items to be analysed
  *
@@ -538,7 +535,7 @@ static void analyse_close(GtkWidget * dialog, int resp, analyse_cb_t * data)
  */
 GtkWidget * vik_trw_layer_analyse_this(GtkWindow * window,
 				       const char * name,
-				       VikLayer * vl,
+				       Layer * layer,
 				       void * user_data,
 				       VikTrwlayerGetTracksAndLayersFunc get_tracks_and_layers_cb,
 				       VikTrwlayerAnalyseCloseFunc on_close_cb)
@@ -567,11 +564,11 @@ GtkWidget * vik_trw_layer_analyse_this(GtkWindow * window,
 	}
 
 	analyse_cb_t *acb = (analyse_cb_t *) malloc(sizeof(analyse_cb_t));
-	acb->vl = vl;
+	acb->layer = layer;
 	acb->user_data = user_data;
 	acb->get_tracks_and_layers_cb = get_tracks_and_layers_cb;
 	acb->on_close_cb = on_close_cb;
-	acb->tracks_and_layers = get_tracks_and_layers_cb (vl, user_data);
+	acb->tracks_and_layers = get_tracks_and_layers_cb(layer, user_data);
 	acb->widgets = (GtkWidget **) malloc(sizeof(GtkWidget*) * G_N_ELEMENTS(label_texts));
 	acb->layout = create_layout(acb->widgets);
 

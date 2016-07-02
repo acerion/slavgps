@@ -21,7 +21,6 @@
 #ifndef _VIKING_TRWLAYER_TRACKLIST_H
 #define _VIKING_TRWLAYER_TRACKLIST_H
 
-#include <stdint.h>
 
 #include "viktrack.h"
 #include "viktrwlayer.h"
@@ -32,7 +31,7 @@ extern "C" {
 
 
 void vik_trw_layer_track_list_show_dialog(char * title,
-					  SlavGPS::Layer * vl,
+					  SlavGPS::Layer * layer,
 					  void * user_data,
 					  VikTrwlayerGetTracksAndLayersFunc get_tracks_and_layers_cb,
 					  bool is_aggregate);

@@ -583,32 +583,35 @@ void LayerAggregate::search_date()
 	free(date_str);
 }
 
-static GList* aggregate_layer_track_create_list(VikLayer *vl, void * user_data)
+std::list<SlavGPS::track_layer_t *> * aggregate_layer_create_tracks_and_layers_list(Layer * layer, void * user_data)
 {
-	LayerAggregate * aggregate  = (LayerAggregate *) vl->layer;
-	return aggregate->track_create_list();
+	return ((LayerAggregate *) layer)->create_tracks_and_layers_list();
 }
 
 
 /**
- * Returns: A list of #vik_trw_track_list_t
+ * Returns: A list of #track_layer_t
  */
-GList * LayerAggregate::track_create_list()
+std::list<track_layer_t *> * LayerAggregate::create_tracks_and_layers_list()
 {
 	// Get all TRW layers
 	std::list<Layer *> * layers = new std::list<Layer *>;
 	layers = this->get_all_layers_of_type(layers, VIK_LAYER_TRW, true);
 
 	// For each TRW layers keep adding the tracks and routes to build a list of all of them
-	GList *tracks_and_layers = NULL;
+	std::list<track_layer_t *> * tracks_and_layers = new std::list<track_layer_t *>;
 
+	std::list<Track *> * tracks = new std::list<Track *>;
 	for (auto iter = layers->begin(); iter != layers->end(); iter++) {
-		GList *tracks = NULL;
-		LayerTRWc::get_track_values(&tracks, ((LayerTRW *) (*iter))->get_tracks());
-		LayerTRWc::get_track_values(&tracks, ((LayerTRW *) (*iter))->get_routes());
 
-		tracks_and_layers = g_list_concat(tracks_and_layers, ((LayerTRW *) (*iter))->build_track_list_t(tracks));
+		LayerTRWc::get_track_values(tracks, ((LayerTRW *) (*iter))->get_tracks());
+		LayerTRWc::get_track_values(tracks, ((LayerTRW *) (*iter))->get_routes());
+
+		tracks_and_layers->splice(tracks_and_layers->begin(), *((LayerTRW *) (*iter))->create_tracks_and_layers_list(tracks));
+
+		tracks->clear();
 	}
+	delete tracks;
 	delete layers;
 
 	return tracks_and_layers;
@@ -618,7 +621,7 @@ static void aggregate_layer_track_list_dialog(menu_array_values values)
 {
 	LayerAggregate * aggregate = (LayerAggregate *) values[MA_VAL];
 	char *title = g_strdup_printf(_("%s: Track and Route List"), aggregate->name);
-	vik_trw_layer_track_list_show_dialog(title, aggregate, NULL, aggregate_layer_track_create_list, true);
+	vik_trw_layer_track_list_show_dialog(title, aggregate, NULL, aggregate_layer_create_tracks_and_layers_list, true);
 	free(title);
 }
 
@@ -627,10 +630,9 @@ static void aggregate_layer_track_list_dialog(menu_array_values values)
  *
  * Stuff to do on dialog closure
  */
-static void aggregate_layer_analyse_close(GtkWidget *dialog, int resp, VikLayer* vl)
+static void aggregate_layer_analyse_close(GtkWidget *dialog, int resp, Layer * layer)
 {
-	VikLayer *val = vl;
-	LayerAggregate * aggregate = (LayerAggregate *) val->layer;
+	LayerAggregate * aggregate = (LayerAggregate *) layer;
 	gtk_widget_destroy(dialog);
 	aggregate->tracks_analysis_dialog = NULL;
 }
@@ -646,9 +648,9 @@ static void aggregate_layer_analyse(menu_array_values values)
 
 	aggregate->tracks_analysis_dialog = vik_trw_layer_analyse_this(gtk_window_from_layer(aggregate),
 								       aggregate->name,
-								       aggregate->vl,
+								       aggregate,
 								       NULL,
-								       aggregate_layer_track_create_list,
+								       aggregate_layer_create_tracks_and_layers_list,
 								       aggregate_layer_analyse_close);
 }
 

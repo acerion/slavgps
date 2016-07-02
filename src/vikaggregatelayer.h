@@ -74,7 +74,11 @@ namespace SlavGPS {
 
 
 
+	/* Forward declarations. */
 	class LayersPanel;
+	class Track;
+	struct track_layer_t;
+
 
 
 
@@ -109,7 +113,7 @@ namespace SlavGPS {
 
 		Layer * get_top_visible_layer_of_type(VikLayerTypeEnum type);
 		GList * waypoint_create_list();
-		GList * track_create_list();
+		std::list<track_layer_t *> * create_tracks_and_layers_list();
 		std::list<Layer *> * get_all_layers_of_type(std::list<Layer *> * layers, VikLayerTypeEnum type, bool include_invisible);
 		bool is_empty();
 		const std::list<Layer *> * get_children();

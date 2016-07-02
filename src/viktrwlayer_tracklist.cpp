@@ -45,10 +45,9 @@ using namespace SlavGPS;
  * track_close_cb:
  *
  */
-static void track_close_cb(GtkWidget * dialog, int resp, GList * data)
+static void track_close_cb(GtkWidget * dialog, int resp, std::list<track_layer_t *> * tracks_and_layers)
 {
-	g_list_foreach(data, (GFunc) g_free, NULL);
-	g_list_free(data);
+	/* kamilTODO: should we delete tracks_and_layers here? */
 
 	gtk_widget_destroy(dialog);
 }
@@ -152,29 +151,26 @@ static void trw_layer_track_select_cb(GtkTreeSelection * selection, void * data)
 }
 */
 
-// A slightly better way of defining the menu callback information
-// This should be much easier to extend/rework compared to the current trw_layer menus
-typedef enum {
-	MA_VTL = 0,
-	MA_TRK,
-	MA_TRK_UUID,
-	MA_VVP,
-	MA_TREEVIEW,
-	MA_TRKS_LIST,
-	MA_LAST
-} menu_array_index;
 
-typedef void * menu_array_values[MA_LAST];
+typedef struct {
+	LayerTRW * trw;
+	Track * track;
+	sg_uid_t track_uid;
+	Viewport * viewport;
+	GtkWidget * gtk_tree_view;
+	std::list<track_layer_t *> * tracks_and_layers;
+} tracklist_data_t;
+
 
 // Instead of hooking automatically on treeview item selection
 // This is performed on demand via the specific menu request
-static void trw_layer_track_select(menu_array_values values)
+static void trw_layer_track_select(tracklist_data_t * values)
 {
-	LayerTRW * trw = (LayerTRW *) values[MA_VTL];
-	Track * trk = ((Track *) values[MA_TRK]);
-	sg_uid_t uid = (sg_uid_t) ((long) values[MA_TRK_UUID]);
+	LayerTRW * trw = values->trw;
+	Track * trk = values->track;
+	sg_uid_t uid = values->track_uid;
 
-	if (values[MA_TRK_UUID]) {
+	if (uid) {
 		GtkTreeIter *iter = NULL;
 		if (trk->is_route) {
 			iter = trw->get_routes_iters().at(uid);
@@ -188,17 +184,17 @@ static void trw_layer_track_select(menu_array_values values)
 	}
 }
 
-static void trw_layer_track_stats(menu_array_values values)
+static void trw_layer_track_stats_cb(tracklist_data_t * values)
 {
-	LayerTRW * trw = (LayerTRW *) values[MA_VTL];
-	Track * trk = ((Track *) values[MA_TRK]);
-	Viewport * viewport = (Viewport *) values[MA_VVP];
+	LayerTRW * trw = values->trw;
+	Track * trk = values->track;
+	Viewport * viewport = values->viewport;
 
 	if (trk && trk->name) {
 		// Kill off this dialog to allow interaction with properties window
 		//  since the properties also allows track manipulations it won't cause conflicts here.
-		GtkWidget * gw = gtk_widget_get_toplevel((GtkWidget *) values[MA_TREEVIEW]);
-		track_close_cb(gw, 0, (GList *) values[MA_TRKS_LIST]);
+		GtkWidget * gw = gtk_widget_get_toplevel(values->gtk_tree_view);
+		track_close_cb(gw, 0, values->tracks_and_layers);
 
 		vik_trw_layer_propwin_run(gtk_window_from_layer(trw),
 					  trw,
@@ -209,11 +205,11 @@ static void trw_layer_track_stats(menu_array_values values)
 	}
 }
 
-static void trw_layer_track_view(menu_array_values values)
+static void trw_layer_track_view_cb(tracklist_data_t * values)
 {
-	LayerTRW * trw = (LayerTRW *) values[MA_VTL];
-	Track * trk = ((Track *) values[MA_TRK]);
-	Viewport * viewport = (Viewport *) values[MA_VVP];
+	LayerTRW * trw = values->trw;
+	Track * trk = values->track;
+	Viewport * viewport = values->viewport;
 
 	// TODO create common function to convert between LatLon[2] and LatLonBBox or even change LatLonBBox to be 2 LatLons!
 	struct LatLon maxmin[2];
@@ -303,17 +299,17 @@ static void add_copy_menu_item(GtkMenu * menu, GtkWidget * tree_view)
 	gtk_widget_show(item);
 }
 
-static bool add_menu_items(GtkMenu * menu, LayerTRW * trw, Track * trk, void * trk_uuid, Viewport * viewport, GtkWidget * tree_view, void * data)
+static bool add_menu_items(GtkMenu * menu, LayerTRW * trw, Track * trk, sg_uid_t track_uid, Viewport * viewport, GtkWidget * gtk_tree_view, std::list<track_layer_t *> * tracks_and_layers)
 {
-	static menu_array_values values;
+	static tracklist_data_t values;
 	GtkWidget *item;
 
-	values[MA_VTL]       = trw;
-	values[MA_TRK]       = trk;
-	values[MA_TRK_UUID]  = trk_uuid;
-	values[MA_VVP]       = viewport;
-	values[MA_TREEVIEW]  = tree_view;
-	values[MA_TRKS_LIST] = data;
+	values.trw               = trw;
+	values.track             = trk;
+	values.track_uid         = track_uid;
+	values.viewport          = viewport;
+	values.gtk_tree_view     = gtk_tree_view;
+	values.tracks_and_layers = tracks_and_layers;
 
 	/*
 	item = gtk_image_menu_item_new_with_mnemonic(_("_Select"));
@@ -325,28 +321,28 @@ static bool add_menu_items(GtkMenu * menu, LayerTRW * trw, Track * trk, void * t
 
 	// ATM view auto selects, so don't bother with separate select menu entry
 	item = gtk_image_menu_item_new_with_mnemonic(_("_View"));
-	gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_ZOOM_FIT, GTK_ICON_SIZE_MENU));
-	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(trw_layer_track_view), values);
+	gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_ZOOM_FIT, GTK_ICON_SIZE_MENU));
+	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK (trw_layer_track_view_cb), &values);
 	gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
 	gtk_widget_show(item);
 
 	item = gtk_menu_item_new_with_mnemonic(_("_Statistics"));
-	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(trw_layer_track_stats), values);
+	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK (trw_layer_track_stats_cb), &values);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
 	gtk_widget_show(item);
 
-	add_copy_menu_item(menu, tree_view);
+	add_copy_menu_item(menu, gtk_tree_view);
 
 	return true;
 }
 
-static bool trw_layer_track_menu_popup_multi(GtkWidget * tree_view,
+static bool trw_layer_track_menu_popup_multi(GtkWidget * gtk_tree_view,
 					     GdkEventButton * event,
 					     void * data)
 {
 	GtkWidget * menu = gtk_menu_new();
 
-	add_copy_menu_item(GTK_MENU(menu), tree_view);
+	add_copy_menu_item(GTK_MENU(menu), gtk_tree_view);
 
 	gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL, event->button, gtk_get_current_event_time());
 
@@ -355,7 +351,7 @@ static bool trw_layer_track_menu_popup_multi(GtkWidget * tree_view,
 
 static bool trw_layer_track_menu_popup(GtkWidget * tree_view,
 				       GdkEventButton * event,
-				       void * data)
+				       void * tracks_and_layers)
 {
 	static GtkTreeIter iter;
 
@@ -363,7 +359,7 @@ static bool trw_layer_track_menu_popup(GtkWidget * tree_view,
 	// This relies on an row being selected as part of the right click
 	GtkTreeSelection *selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(tree_view));
 	if (gtk_tree_selection_count_selected_rows(selection) != 1) {
-		return trw_layer_track_menu_popup_multi(tree_view, event, data);
+		return trw_layer_track_menu_popup_multi(tree_view, event, tracks_and_layers);
 	}
 
 	GtkTreePath * path;
@@ -412,10 +408,10 @@ static bool trw_layer_track_menu_popup(GtkWidget * tree_view,
 		add_menu_items(GTK_MENU(menu),
 			       trw,
 			       trk,
-			       (void *) ((long) uid),
+			       uid,
 			       viewport,
 			       tree_view,
-			       data);
+			       (std::list<track_layer_t *> * ) tracks_and_layers);
 
 		gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL, event->button, gtk_get_current_event_time());
 		return true;
@@ -423,9 +419,9 @@ static bool trw_layer_track_menu_popup(GtkWidget * tree_view,
 	return false;
 }
 
-static bool trw_layer_track_button_pressed(GtkWidget * tree_view,
-					   GdkEventButton * event,
-					   void * data)
+static bool trw_layer_track_button_pressed_cb(GtkWidget * tree_view,
+					      GdkEventButton * event,
+					      void * tracks_and_layers)
 {
 	// Only on right clicks...
 	if (!(event->type == GDK_BUTTON_PRESS && event->button == 3)) {
@@ -447,14 +443,14 @@ static bool trw_layer_track_button_pressed(GtkWidget * tree_view,
 			gtk_tree_path_free(path);
 		}
 	}
-	return trw_layer_track_menu_popup(tree_view, event, data);
+	return trw_layer_track_menu_popup(tree_view, event, tracks_and_layers);
 }
 
 /*
  * Foreach entry we copy the various individual track properties into the tree store
  *  formatting & converting the internal values into something for display
  */
-static void trw_layer_track_list_add(vik_trw_track_list_t * vtdl,
+static void trw_layer_track_list_add(track_layer_t * element,
 				     GtkTreeStore * store,
 				     vik_units_distance_t dist_units,
 				     vik_units_speed_t speed_units,
@@ -462,8 +458,8 @@ static void trw_layer_track_list_add(vik_trw_track_list_t * vtdl,
 				     const char * date_format)
 {
 	GtkTreeIter t_iter;
-	Track * trk = vtdl->trk;
-	LayerTRW * trw = vtdl->trw;
+	Track * trk = element->trk;
+	LayerTRW * trw = element->trw;
 
 	double trk_dist = trk->get_length();
 	// Store unit converted value
@@ -588,13 +584,13 @@ static GtkTreeViewColumn * my_new_column_text(const char * title, GtkCellRendere
  * This table does not support being actively updated
  */
 static void vik_trw_layer_track_list_internal(GtkWidget * dialog,
-					      GList * tracks_and_layers,
+					      std::list<track_layer_t *> * tracks_and_layers,
 					      bool show_layer_names)
 {
-	if (!tracks_and_layers) {
+	if (!tracks_and_layers || tracks_and_layers->empty()) {
 		return;
 	}
-
+	
 	// It's simple storing the double values in the tree store as the sort works automatically
 	// Then apply specific cell data formatting(rather default double is to 6 decimal places!)
 	GtkTreeStore *store = gtk_tree_store_new(TRK_LIST_COLS,
@@ -623,10 +619,8 @@ static void vik_trw_layer_track_list_internal(GtkWidget * dialog,
 		date_format = g_strdup(TRACK_LIST_DATE_FORMAT);
 	}
 
-	GList * gl = tracks_and_layers;
-	while (gl) {
-		trw_layer_track_list_add((vik_trw_track_list_t *) gl->data, store, dist_units, speed_units, height_units, date_format);
-		gl = g_list_next(gl);
+	for (auto iter = tracks_and_layers->begin(); iter != tracks_and_layers->end(); iter++) {
+		trw_layer_track_list_add(*iter, store, dist_units, speed_units, height_units, date_format);
 	}
 	free(date_format);
 
@@ -724,7 +718,7 @@ static void vik_trw_layer_track_list_internal(GtkWidget * dialog,
 	//g_signal_connect (gtk_tree_view_get_selection (GTK_TREE_VIEW(view)), "changed", G_CALLBACK(trw_layer_track_select_cb), view);
 
 	g_signal_connect(view, "popup-menu", G_CALLBACK(trw_layer_track_menu_popup), tracks_and_layers);
-	g_signal_connect(view, "button-press-event", G_CALLBACK(trw_layer_track_button_pressed), tracks_and_layers);
+	g_signal_connect(view, "button-press-event", G_CALLBACK(trw_layer_track_button_pressed_cb), tracks_and_layers);
 
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), scrolledwindow, true, true, 0);
 
@@ -762,12 +756,13 @@ void vik_trw_layer_track_list_show_dialog(char * title,
 							 GTK_RESPONSE_CLOSE,
 							 NULL);
 
-	GList * gl = get_tracks_and_layers_cb(layer->vl, user_data);
 
-	vik_trw_layer_track_list_internal(dialog, gl, show_layer_names);
+	std::list<track_layer_t *> * tracks_and_layers = get_tracks_and_layers_cb(layer, user_data);
+
+	vik_trw_layer_track_list_internal(dialog, tracks_and_layers, show_layer_names);
 
 	// Use response to close the dialog with tidy up
-	g_signal_connect(G_OBJECT(dialog), "response", G_CALLBACK(track_close_cb), gl);
+	g_signal_connect(G_OBJECT(dialog), "response", G_CALLBACK(track_close_cb), tracks_and_layers);
 
 	gtk_widget_show_all(dialog);
 	// Yes - set the size *AGAIN* - this time widgets are expanded nicely

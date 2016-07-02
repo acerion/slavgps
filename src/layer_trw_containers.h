@@ -30,6 +30,8 @@
 
 
 
+#include <list>
+
 #include "vikwaypoint.h"
 #include "viktrack.h"
 
@@ -134,7 +136,7 @@ namespace SlavGPS {
 		static void set_tracks_visibility(std::unordered_map<sg_uid_t, Track *> & tracks, bool on_off); /* static void trw_layer_tracks_visibility(std::unordered_map<sg_uid_t, Track *> & tracks, bool on_off). */
 		static void tracks_toggle_visibility(std::unordered_map<sg_uid_t, Track *> & tracks); /* static void trw_layer_tracks_toggle_visibility(std::unordered_map<sg_uid_t, Track *> & tracks). */
 
-		static GList * get_track_values(GList ** list, std::unordered_map<sg_uid_t, Track *> & tracks); /* GList * vik_trw_layer_get_track_values(GList ** list, std::unordered_map<sg_uid_t, Track *> & tracks). */
+		static std::list<Track *> * get_track_values(std::list<Track *> * target, std::unordered_map<sg_uid_t, Track *> & tracks); /* GList * vik_trw_layer_get_track_values(GList ** list, std::unordered_map<sg_uid_t, Track *> & tracks). */
 		static void waypoint_search_closest_tp(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, WPSearchParams * params);
 		static void track_search_closest_tp(std::unordered_map<sg_uid_t, Track *> & tracks, TPSearchParams * params);
 

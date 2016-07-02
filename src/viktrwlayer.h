@@ -25,6 +25,7 @@
 
 #include <stdint.h>
 
+#include <list>
 #include <unordered_map>
 
 #include "viklayer.h"
@@ -43,6 +44,12 @@ struct _trw_menu_sublayer_t;
 
 
 namespace SlavGPS {
+
+
+
+
+
+	class LayerTRW;
 
 
 
@@ -82,6 +89,18 @@ namespace SlavGPS {
 		FS_XX_LARGE,
 		FS_NUM_SIZES
 	} font_size_t;
+
+
+
+
+
+	// For creating a list of tracks with the corresponding layer it is in
+	//  (thus a selection of tracks may be from differing layers)
+	struct track_layer_t {
+		Track * trk;
+		LayerTRW * trw;
+	};
+	typedef struct track_layer_t track_layer_t;
 
 
 
@@ -265,7 +284,7 @@ namespace SlavGPS {
 
 
 		GList * build_waypoint_list_t(GList * waypoints);
-		GList * build_track_list_t(GList * tracks);
+		std::list<track_layer_t *> * create_tracks_and_layers_list(std::list<Track *> * tracks);
 
 
 
@@ -585,15 +604,8 @@ typedef struct _VikTrwLayer VikTrwLayer;
 
 
 
-// For creating a list of tracks with the corresponding layer it is in
-//  (thus a selection of tracks may be from differing layers)
-typedef struct {
-	SlavGPS::Track * trk;
-	SlavGPS::LayerTRW * trw;
-} vik_trw_track_list_t;
 
-typedef GList* (*VikTrwlayerGetTracksAndLayersFunc) (VikLayer*, void *);
-GList *vik_trw_layer_build_track_list_t(VikLayer *vtl, GList *tracks);
+typedef std::list<SlavGPS::track_layer_t *> * (*VikTrwlayerGetTracksAndLayersFunc) (SlavGPS::Layer *, void *);
 
 // For creating a list of waypoints with the corresponding layer it is in
 //  (thus a selection of waypoints may be from differing layers)
@@ -603,7 +615,6 @@ typedef struct {
 } vik_trw_waypoint_list_t;
 
 typedef GList* (*VikTrwlayerGetWaypointsAndLayersFunc) (VikLayer*, void *);
-GList *vik_trw_layer_build_waypoint_list_t (VikLayer *vtl, GList *waypoints);
 
 GdkPixbuf* get_wp_sym_small(char *symbol);
 
