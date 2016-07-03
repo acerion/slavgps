@@ -59,7 +59,7 @@ namespace SlavGPS {
 		GtkTreeIter * path_iter;
 		GtkTreeIter * iter2;
 		Layer * layer;
-		TreeView * tree;
+		TreeView * tree_view;
 	} trw_data4_t;
 
 
@@ -158,7 +158,7 @@ namespace SlavGPS {
 		char const * sublayer_rename_request(const char * newname, void * panel, int subtype, void * sublayer, GtkTreeIter * iter);
 		bool sublayer_toggle_visible(int subtype, void * sublayer);
 
-		void realize(VikTreeview * vt, GtkTreeIter * layer_iter);
+		void realize(TreeView * tree_view, GtkTreeIter * layer_iter);
 		void free_();
 		bool set_param(uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
 		VikLayerParamData get_param(uint16_t id, bool is_file_operation);
@@ -204,9 +204,9 @@ namespace SlavGPS {
 		void realize_waypoints(std::unordered_map<sg_uid_t, Waypoint *> & data, trw_data4_t * pass_along, int sublayer_id);
 
 
-		void add_sublayer_tracks(VikTreeview * vt, GtkTreeIter * layer_iter);
-		void add_sublayer_waypoints(VikTreeview * vt, GtkTreeIter * layer_iter);
-		void add_sublayer_routes(VikTreeview * vt, GtkTreeIter * layer_iter);
+		void add_sublayer_tracks(TreeView * tree_view, GtkTreeIter * layer_iter);
+		void add_sublayer_waypoints(TreeView * tree_view, GtkTreeIter * layer_iter);
+		void add_sublayer_routes(TreeView * tree_view, GtkTreeIter * layer_iter);
 
 
 		static void find_maxmin_in_track(const Track * trk, struct LatLon maxmin[2]);

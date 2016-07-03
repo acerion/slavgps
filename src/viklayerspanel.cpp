@@ -145,13 +145,12 @@ LayersPanel::LayersPanel()
 {
 	this->toplayer = NULL;
 	memset(&this->toplayer_iter, 0, sizeof (GtkTreeIter));
-	this->vt = NULL;
 	this->viewport = NULL; /* reference */
 
 	this->gob = g_object_new(VIK_LAYERS_PANEL_TYPE, NULL);
 
 	GtkWidget * hbox = gtk_hbox_new(true, 2);
-	this->vt = vik_treeview_new();
+	this->tree_view = new TreeView();
 
 
 	/* All this stuff has been moved here from
@@ -163,14 +162,14 @@ LayersPanel::LayersPanel()
 	this->toplayer->rename(_("Top Layer"));
 	int a = g_signal_connect_swapped(G_OBJECT(this->toplayer->vl), "update", G_CALLBACK(vik_layers_panel_emit_update_cb), this);
 
-	this->vt->tree->add_layer(NULL, &(this->toplayer_iter), this->toplayer->name, NULL, true, this->toplayer, VIK_LAYER_AGGREGATE, VIK_LAYER_AGGREGATE, 0);
-	this->toplayer->realize(this->vt, &(this->toplayer_iter));
+	this->tree_view->add_layer(NULL, &(this->toplayer_iter), this->toplayer->name, NULL, true, this->toplayer, VIK_LAYER_AGGREGATE, VIK_LAYER_AGGREGATE, 0);
+	this->toplayer->realize(this->tree_view, &(this->toplayer_iter));
 
-	a = g_signal_connect_swapped (this->vt, "popup_menu", G_CALLBACK(menu_popup_cb), this);
-	a = g_signal_connect_swapped (this->vt, "button_press_event", G_CALLBACK(layers_button_press_cb), this);
-	a = g_signal_connect_swapped (this->vt, "item_toggled", G_CALLBACK(layers_item_toggled_cb), this);
-	a = g_signal_connect_swapped (this->vt, "item_edited", G_CALLBACK(layers_item_edited_cb), this);
-	a = g_signal_connect_swapped (this->vt, "key_press_event", G_CALLBACK(layers_key_press_cb), this);
+	a = g_signal_connect_swapped (this->tree_view->vt, "popup_menu", G_CALLBACK(menu_popup_cb), this);
+	a = g_signal_connect_swapped (this->tree_view->vt, "button_press_event", G_CALLBACK(layers_button_press_cb), this);
+	a = g_signal_connect_swapped (this->tree_view->vt, "item_toggled", G_CALLBACK(layers_item_toggled_cb), this);
+	a = g_signal_connect_swapped (this->tree_view->vt, "item_edited", G_CALLBACK(layers_item_edited_cb), this);
+	a = g_signal_connect_swapped (this->tree_view->vt, "key_press_event", G_CALLBACK(layers_key_press_cb), this);
 
 	/* Add button */
 	GtkWidget * addimage = gtk_image_new_from_stock (GTK_STOCK_ADD, GTK_ICON_SIZE_SMALL_TOOLBAR);
@@ -224,7 +223,7 @@ LayersPanel::LayersPanel()
 
 	GtkWidget * scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
 	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW(scrolledwindow), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
-	gtk_container_add (GTK_CONTAINER(scrolledwindow), GTK_WIDGET(this->vt));
+	gtk_container_add (GTK_CONTAINER(scrolledwindow), GTK_WIDGET(this->tree_view->vt));
 
 	gtk_box_pack_start(GTK_BOX(this->gob), scrolledwindow, true, true, 0);
 	gtk_box_pack_start(GTK_BOX(this->gob), hbox, false, false, 0);
@@ -397,8 +396,8 @@ static void layers_item_toggled_cb(LayersPanel * panel, GtkTreeIter * iter)
 void LayersPanel::item_toggled(GtkTreeIter * iter)
 {
 	/* get type and data */
-	int type = this->vt->tree->get_type(iter);
-	void * p = this->vt->tree->get_pointer(iter);
+	int type = this->tree_view->get_type(iter);
+	void * p = this->tree_view->get_pointer(iter);
 
 	bool visible;
 	switch (type) {
@@ -410,8 +409,8 @@ void LayersPanel::item_toggled(GtkTreeIter * iter)
 		break;
 		}
 	case VIK_TREEVIEW_TYPE_SUBLAYER: {
-		Layer * parent = (Layer *) this->vt->tree->get_parent(iter);
-		visible = parent->sublayer_toggle_visible(this->vt->tree->get_data(iter), p);
+		Layer * parent = (Layer *) this->tree_view->get_parent(iter);
+		visible = parent->sublayer_toggle_visible(this->tree_view->get_data(iter), p);
 		vik_layer_emit_update_although_invisible(parent->vl);
 		break;
 	}
@@ -419,7 +418,7 @@ void LayersPanel::item_toggled(GtkTreeIter * iter)
 		return;
 	}
 
-	this->vt->tree->set_visibility(iter, visible);
+	this->tree_view->set_visibility(iter, visible);
 }
 
 
@@ -446,20 +445,20 @@ void LayersPanel::item_edited(GtkTreeIter * iter, char const * new_text)
 		return;
 	}
 
-	if (this->vt->tree->get_type(iter) == VIK_TREEVIEW_TYPE_LAYER) {
+	if (this->tree_view->get_type(iter) == VIK_TREEVIEW_TYPE_LAYER) {
 
 		/* get iter and layer */
-		Layer * layer = (Layer *) this->vt->tree->get_layer(iter);
+		Layer * layer = (Layer *) this->tree_view->get_layer(iter);
 
 		if (strcmp(layer->name, new_text) != 0) {
 			layer->rename(new_text);
-			this->vt->tree->set_name(iter, layer->name);
+			this->tree_view->set_name(iter, layer->name);
 		}
 	} else {
-		Layer * parent = (Layer *) this->vt->tree->get_parent(iter);
-		const char *name = parent->sublayer_rename_request(new_text, this, this->vt->tree->get_data(iter), this->vt->tree->get_pointer(iter), iter);
+		Layer * parent = (Layer *) this->tree_view->get_parent(iter);
+		const char *name = parent->sublayer_rename_request(new_text, this, this->tree_view->get_data(iter), this->tree_view->get_pointer(iter), iter);
 		if (name) {
-			this->vt->tree->set_name(iter, name);
+			this->tree_view->set_name(iter, name);
 		}
 	}
 }
@@ -481,9 +480,9 @@ bool LayersPanel::button_press(GdkEventButton * event)
 {
 	if (event->button == 3) {
 		static GtkTreeIter iter;
-		if (this->vt->tree->get_iter_at_pos(&iter, event->x, event->y)) {
+		if (this->tree_view->get_iter_at_pos(&iter, event->x, event->y)) {
 			this->popup(&iter, 3);
-			this->vt->tree->select(&iter);
+			this->tree_view->select(&iter);
 		} else {
 			this->popup(NULL, 3);
 		}
@@ -524,8 +523,8 @@ void LayersPanel::popup(GtkTreeIter * iter, int mouse_button)
 	GtkMenu * menu = NULL;
 
 	if (iter) {
-		if (this->vt->tree->get_type(iter) == VIK_TREEVIEW_TYPE_LAYER) {
-			Layer * layer = (Layer *) this->vt->tree->get_layer(iter);
+		if (this->tree_view->get_type(iter) == VIK_TREEVIEW_TYPE_LAYER) {
+			Layer * layer = (Layer *) this->tree_view->get_layer(iter);
 
 			if (layer->type == VIK_LAYER_AGGREGATE) {
 				menu = GTK_MENU (layers_panel_create_popup(this, true));
@@ -575,8 +574,8 @@ void LayersPanel::popup(GtkTreeIter * iter, int mouse_button)
 			layer->add_menu_items(menu, this);
 		} else {
 			menu = GTK_MENU (gtk_menu_new());
-			Layer * parent = (Layer *) this->vt->tree->get_parent(iter);
-			if (! parent->sublayer_add_menu_items(menu, this, this->vt->tree->get_data(iter), this->vt->tree->get_pointer(iter), iter, this->viewport)) { // kamil
+			Layer * parent = (Layer *) this->tree_view->get_parent(iter);
+			if (! parent->sublayer_add_menu_items(menu, this, this->tree_view->get_data(iter), this->tree_view->get_pointer(iter), iter, this->viewport)) { // kamil
 				gtk_widget_destroy (GTK_WIDGET(menu));
 				return;
 			}
@@ -595,7 +594,7 @@ void LayersPanel::popup(GtkTreeIter * iter, int mouse_button)
 static void menu_popup_cb(LayersPanel * panel)
 {
 	GtkTreeIter iter;
-	panel->popup(panel->vt->tree->get_selected_iter(&iter) ? &iter : NULL, 0);
+	panel->popup(panel->tree_view->get_selected_iter(&iter) ? &iter : NULL, 0);
 }
 
 
@@ -654,7 +653,7 @@ void LayersPanel::add_layer(Layer * layer)
 	layer->change_coord_mode(this->viewport->get_coord_mode());
 	fprintf(stderr, "INFO: %s:%d: attempting to add layer '%s'\n", __FUNCTION__, __LINE__, layer->type_string);
 
-	if (!this->vt->tree->get_selected_iter(&iter)) {
+	if (!this->tree_view->get_selected_iter(&iter)) {
 
 		/* No particular layer is selected in panel, so the
 		   layer to be added goes directly under top level
@@ -670,12 +669,12 @@ void LayersPanel::add_layer(Layer * layer)
 		GtkTreeIter * replace_iter = NULL;
 		Layer * current = NULL;
 
-		if (this->vt->tree->get_type(&iter) == VIK_TREEVIEW_TYPE_SUBLAYER) {
-			current = (Layer *) this->vt->tree->get_parent(&iter);
+		if (this->tree_view->get_type(&iter) == VIK_TREEVIEW_TYPE_SUBLAYER) {
+			current = (Layer *) this->tree_view->get_parent(&iter);
 			fprintf(stderr, "INFO: %s:%d: Capturing parent layer '%s' as current layer\n",
 				__FUNCTION__, __LINE__, current->type_string);
 		} else {
-			current = (Layer *) this->vt->tree->get_layer(&iter);
+			current = (Layer *) this->tree_view->get_layer(&iter);
 			fprintf(stderr, "INFO: %s:%d: Capturing selected layer '%s' as current layer\n",
 				__FUNCTION__, __LINE__, current->type_string);
 		}
@@ -683,7 +682,7 @@ void LayersPanel::add_layer(Layer * layer)
 
 		/* Go further up until you find first aggregate layer. */
 		while (current->type != VIK_LAYER_AGGREGATE) {
-			current = (Layer *) this->vt->tree->get_parent(&iter);
+			current = (Layer *) this->tree_view->get_parent(&iter);
 			iter = current->iter;
 			assert (current->realized);
 		}
@@ -708,14 +707,14 @@ void LayersPanel::move_item(bool up)
 	GtkTreeIter iter;
 
 	/* TODO: deactivate the buttons and stuff */
-	if (!this->vt->tree->get_selected_iter(&iter)) {
+	if (!this->tree_view->get_selected_iter(&iter)) {
 		return;
 	}
 
-	this->vt->tree->select_iter(&iter, false); /* cancel any layer-name editing going on... */
+	this->tree_view->select_iter(&iter, false); /* cancel any layer-name editing going on... */
 
-	if (this->vt->tree->get_type(&iter) == VIK_TREEVIEW_TYPE_LAYER) {
-		LayerAggregate * parent = (LayerAggregate *) this->vt->tree->get_parent(&iter);
+	if (this->tree_view->get_type(&iter) == VIK_TREEVIEW_TYPE_LAYER) {
+		LayerAggregate * parent = (LayerAggregate *) this->tree_view->get_parent(&iter);
 		if (parent) {/* not toplevel */
 			parent->move_layer(&iter, up);
 			this->emit_update();
@@ -741,11 +740,11 @@ bool LayersPanel::properties()
 	GtkTreeIter iter;
 	assert (this->viewport);
 
-	if (this->vt->tree->get_selected_iter(&iter) && this->vt->tree->get_type(&iter) == VIK_TREEVIEW_TYPE_LAYER) {
-		if (this->vt->tree->get_data(&iter) == VIK_LAYER_AGGREGATE) {
+	if (this->tree_view->get_selected_iter(&iter) && this->tree_view->get_type(&iter) == VIK_TREEVIEW_TYPE_LAYER) {
+		if (this->tree_view->get_data(&iter) == VIK_LAYER_AGGREGATE) {
 			a_dialog_info_msg(VIK_GTK_WINDOW_FROM_WIDGET(this->gob), _("Aggregate Layers have no settable properties."));
 		}
-		Layer * layer = (Layer *) this->vt->tree->get_layer(&iter);
+		Layer * layer = (Layer *) this->tree_view->get_layer(&iter);
 		if (vik_layer_properties(layer->vl, this->viewport)) {
 			layer->emit_update();
 		}
@@ -784,15 +783,15 @@ void LayersPanel::cut_selected()
 {
 	GtkTreeIter iter;
 
-	if (!this->vt->tree->get_selected_iter(&iter)) {
+	if (!this->tree_view->get_selected_iter(&iter)) {
 		/* Nothing to do */
 		return;
 	}
 
-	int type = this->vt->tree->get_type(&iter);
+	int type = this->tree_view->get_type(&iter);
 
 	if (type == VIK_TREEVIEW_TYPE_LAYER) {
-		LayerAggregate * parent = (LayerAggregate *) this->vt->tree->get_parent(&iter);
+		LayerAggregate * parent = (LayerAggregate *) this->tree_view->get_parent(&iter);
 		if (parent){
 			/* reset trigger if trigger deleted */
 			if (this->get_selected()->vl == this->viewport->get_trigger()) {
@@ -814,8 +813,8 @@ void LayersPanel::cut_selected()
 		}
 	} else if (type == VIK_TREEVIEW_TYPE_SUBLAYER) {
 		Layer * selected = this->get_selected();
-		int subtype = this->vt->tree->get_data(&iter);
-		selected->cut_item(subtype, selected->vt->tree->get_pointer(&iter));
+		int subtype = this->tree_view->get_data(&iter);
+		selected->cut_item(subtype, selected->tree_view->get_pointer(&iter));
 	}
 }
 
@@ -835,7 +834,7 @@ void vik_layers_panel_copy_selected_cb(LayersPanel * panel)
 void LayersPanel::copy_selected()
 {
 	GtkTreeIter iter;
-	if (!this->vt->tree->get_selected_iter(&iter)) {
+	if (!this->tree_view->get_selected_iter(&iter)) {
 		/* Nothing to do */
 		return;
 	}
@@ -859,7 +858,7 @@ bool vik_layers_panel_paste_selected_cb(LayersPanel * panel)
 bool LayersPanel::paste_selected()
 {
 	GtkTreeIter iter;
-	if (!this->vt->tree->get_selected_iter(&iter)) {
+	if (!this->tree_view->get_selected_iter(&iter)) {
 		/* Nothing to do */
 		return false;
 	}
@@ -883,15 +882,15 @@ void LayersPanel::delete_selected()
 {
 	GtkTreeIter iter;
 
-	if (!this->vt->tree->get_selected_iter(&iter)) {
+	if (!this->tree_view->get_selected_iter(&iter)) {
 		/* Nothing to do */
 		return;
 	}
 
-	int type = this->vt->tree->get_type(&iter);
+	int type = this->tree_view->get_type(&iter);
 
 	if (type == VIK_TREEVIEW_TYPE_LAYER) {
-		Layer * layer = (Layer *) this->vt->tree->get_layer(&iter);
+		Layer * layer = (Layer *) this->tree_view->get_layer(&iter);
 		// Get confirmation from the user
 		if (! a_dialog_yes_or_no(VIK_GTK_WINDOW_FROM_WIDGET(this->gob),
 					 _("Are you sure you want to delete %s?"),
@@ -899,7 +898,7 @@ void LayersPanel::delete_selected()
 			return;
 		}
 
-		LayerAggregate * parent = (LayerAggregate *) this->vt->tree->get_parent(&iter);
+		LayerAggregate * parent = (LayerAggregate *) this->tree_view->get_parent(&iter);
 		if (parent) {
 			/* reset trigger if trigger deleted */
 			if (this->get_selected()->vl == this->viewport->get_trigger()) {
@@ -919,8 +918,8 @@ void LayersPanel::delete_selected()
 		}
 	} else if (type == VIK_TREEVIEW_TYPE_SUBLAYER) {
 		Layer * selected = this->get_selected();
-		int subtype = this->vt->tree->get_data(&iter);
-		selected->delete_item(subtype, selected->vt->tree->get_pointer(&iter));
+		int subtype = this->tree_view->get_data(&iter);
+		selected->delete_item(subtype, selected->tree_view->get_pointer(&iter));
 	}
 }
 
@@ -933,21 +932,21 @@ Layer * LayersPanel::get_selected()
 	GtkTreeIter iter, parent;
 	memset(&iter, 0, sizeof (GtkTreeIter));
 
-	if (!this->vt->tree->get_selected_iter(&iter)) {
+	if (!this->tree_view->get_selected_iter(&iter)) {
 		return NULL;
 	}
 
-	int type = this->vt->tree->get_type(&iter);
+	int type = this->tree_view->get_type(&iter);
 
 	while (type != VIK_TREEVIEW_TYPE_LAYER) {
-		if (!this->vt->tree->get_parent_iter(&iter, &parent)) {
+		if (!this->tree_view->get_parent_iter(&iter, &parent)) {
 			return NULL;
 		}
 		iter = parent;
-		type = this->vt->tree->get_type(&iter);
+		type = this->tree_view->get_type(&iter);
 	}
 
-	return (Layer *) this->vt->tree->get_layer(&iter);
+	return (Layer *) this->tree_view->get_layer(&iter);
 }
 
 
@@ -1052,7 +1051,7 @@ void LayersPanel::change_coord_mode(VikCoordMode mode)
 
 
 
-VikTreeview * LayersPanel::get_treeview()
+TreeView * LayersPanel::get_treeview()
 {
-	return this->vt;
+	return this->tree_view;
 }

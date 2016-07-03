@@ -1970,15 +1970,15 @@ static VikLayerToolFuncStatus selecttool_click(Layer * layer, GdkEventButton * e
 			// If nothing found then deselect & redraw screen if necessary to remove the highlight
 			if (ck.cont) {
 				GtkTreeIter iter;
-				VikTreeview *vtv = t->window->layers_panel->get_treeview();
+				TreeView * tree_view = t->window->layers_panel->get_treeview();
 
-				if (vtv->tree->get_selected_iter(&iter)) {
+				if (tree_view->get_selected_iter(&iter)) {
 					// Only clear if selected thing is a TrackWaypoint layer or a sublayer
-					int type = vtv->tree->get_type(&iter);
+					int type = tree_view->get_type(&iter);
 					if (type == VIK_TREEVIEW_TYPE_SUBLAYER ||
-					    ((Layer *) vtv->tree->get_pointer(&iter))->type == VIK_LAYER_TRW) { /* kamil: get_layer() ? */
+					    ((Layer *) tree_view->get_pointer(&iter))->type == VIK_LAYER_TRW) { /* kamil: get_layer() ? */
 
-						vtv->tree->unselect(&iter);
+						tree_view->unselect(&iter);
 						if (t->window->clear_highlight()) {
 							t->window->draw_update();
 						}
@@ -2062,7 +2062,7 @@ static void draw_pan_cb(GtkAction * a, Window * window)
 	// Since the treeview cell editting intercepts standard keyboard handlers, it means we can receive events here
 	// Thus if currently editting, ensure we don't move the viewport when Ctrl+<arrow> is received
 	Layer * sel = window->layers_panel->get_selected();
-	if (sel && sel->vt->tree->get_editing()) {
+	if (sel && sel->tree_view->get_editing()) {
 		return;
 	}
 
@@ -5001,7 +5001,7 @@ Window::~Window()
 
 VikWindow * vik_window_from_layer(Layer * layer)
 {
-	return (VikWindow *) GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(layer->vt)));
+	return (VikWindow *) GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(layer->tree_view->vt)));
 }
 
 Window * window_from_layer(Layer * layer)

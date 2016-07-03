@@ -179,7 +179,7 @@ static void trw_layer_track_select(tracklist_data_t * values)
 		}
 
 		if (iter) {
-			trw->vt->tree->select_iter(iter, true);
+			trw->tree_view->select_iter(iter, true);
 		}
 	}
 }
@@ -590,7 +590,7 @@ static void vik_trw_layer_track_list_internal(GtkWidget * dialog,
 	if (!tracks_and_layers || tracks_and_layers->empty()) {
 		return;
 	}
-	
+
 	// It's simple storing the double values in the tree store as the sort works automatically
 	// Then apply specific cell data formatting(rather default double is to 6 decimal places!)
 	GtkTreeStore *store = gtk_tree_store_new(TRK_LIST_COLS,

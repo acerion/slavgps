@@ -687,7 +687,7 @@ Layer::Layer()
 	this->visible = true;
 	this->realized = false;
 
-	this->vt = NULL;
+	this->tree_view = NULL;
 
 	fprintf(stderr, "setting iter\n");
 	memset(&this->iter, 0, sizeof (this->iter));
@@ -849,9 +849,9 @@ bool Layer::properties(void * viewport)
 }
 
 
-void Layer::realize(VikTreeview * vt, GtkTreeIter * layer_iter)
+void Layer::realize(TreeView * tree_view_, GtkTreeIter * layer_iter)
 {
-	this->vt = vt;
+	this->tree_view = tree_view_;
 	this->iter = *layer_iter;
 	this->realized = true;
 
@@ -872,5 +872,5 @@ bool Layer::set_param(uint16_t id, VikLayerParamData data, Viewport * viewport, 
 
 GtkWindow * gtk_window_from_layer(Layer * layer)
 {
-	return GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(layer->vt)));
+	return GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(layer->tree_view->vt)));
 }

@@ -178,20 +178,20 @@ void LayerAggregate::insert_layer(Layer * layer, GtkTreeIter *replace_iter)
 	}
 
 	if (this->realized) {
-		this->vt->tree->insert_layer(&this->iter, &iter, layer->name, this, put_above, layer, layer->type, layer->type, replace_iter, layer->get_timestamp());
+		this->tree_view->insert_layer(&this->iter, &iter, layer->name, this, put_above, layer, layer->type, layer->type, replace_iter, layer->get_timestamp());
 		if (! layer->visible) {
-			this->vt->tree->set_visibility(&iter, false);
+			this->tree_view->set_visibility(&iter, false);
 		}
 
-		layer->realize(this->vt, &iter);
+		layer->realize(this->tree_view, &iter);
 
 		if (this->children->empty()) {
-			this->vt->tree->expand(&this->iter);
+			this->tree_view->expand(&this->iter);
 		}
 	}
 
 	if (replace_iter) {
-		Layer * existing_layer = (Layer *) this->vt->tree->get_layer(replace_iter);
+		Layer * existing_layer = (Layer *) this->tree_view->get_layer(replace_iter);
 
 		auto theone = this->children->end();
 		for (auto i = this->children->begin(); i != this->children->end(); i++) {
@@ -238,15 +238,15 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 	}
 
 	if (this->realized) {
-		this->vt->tree->add_layer(&this->iter, &iter, layer->name, this, put_above, layer, layer->type, layer->type, layer->get_timestamp());
+		this->tree_view->add_layer(&this->iter, &iter, layer->name, this, put_above, layer, layer->type, layer->type, layer->get_timestamp());
 		if (!layer->visible) {
-			this->vt->tree->set_visibility(&iter, false);
+			this->tree_view->set_visibility(&iter, false);
 		}
 
-		layer->realize(this->vt, &iter);
+		layer->realize(this->tree_view, &iter);
 
 		if (this->children->empty()) {
-			this->vt->tree->expand(&this->iter);
+			this->tree_view->expand(&this->iter);
 		}
 	}
 
@@ -263,9 +263,9 @@ void LayerAggregate::move_layer(GtkTreeIter *child_iter, bool up)
 {
 	auto theone = this->children->end();
 
-	this->vt->tree->move(child_iter, up);
+	this->tree_view->move(child_iter, up);
 
-	Layer * layer = (Layer *) this->vt->tree->get_layer(child_iter);
+	Layer * layer = (Layer *) this->tree_view->get_layer(child_iter);
 
 	for (auto i = this->children->begin(); i != this->children->end(); i++) {
 		if ((*i)->vl == layer->vl) {
@@ -357,7 +357,7 @@ static void aggregate_layer_child_visible_toggle(menu_array_values values)
 
 void LayerAggregate::child_visible_toggle(LayersPanel * panel)
 {
-	TreeView * tree = panel->get_treeview()->tree;
+	TreeView * tree = panel->get_treeview();
 
 	// Loop around all (child) layers applying visibility setting
 	// This does not descend the tree if there are aggregates within aggregrate - just the first level of layers held
@@ -379,7 +379,7 @@ void LayerAggregate::child_visible_set(LayersPanel * panel, bool on_off)
 		Layer * layer = *child;
 		layer->visible = on_off;
 		// Also set checkbox on_off
-		panel->get_treeview()->tree->set_visibility(&layer->iter, on_off);
+		panel->get_treeview()->set_visibility(&layer->iter, on_off);
 	}
 
 	// Redraw as view may have changed
@@ -776,7 +776,7 @@ static void delete_layer_iter(VikLayer *vl)
 {
 	Layer * layer = (Layer *) vl->layer;
 	if (layer->realized) {
-		layer->vt->tree->delete_(&layer->iter);
+		layer->tree_view->delete_(&layer->iter);
 	}
 }
 
@@ -793,10 +793,10 @@ void LayerAggregate::clear()
 /* Delete a layer specified by \p iter. */
 bool LayerAggregate::delete_layer(GtkTreeIter * iter)
 {
-	Layer * layer = (Layer *) this->vt->tree->get_layer(iter);
+	Layer * layer = (Layer *) this->tree_view->get_layer(iter);
 	bool was_visible = layer->visible;
 
-	this->vt->tree->delete_(iter);
+	this->tree_view->delete_(iter);
 
 	for (auto i = this->children->begin(); i != this->children->end(); i++) {
 		if ((*i)->vl = layer->vl) {
@@ -923,9 +923,9 @@ std::list<Layer *> * LayerAggregate::get_all_layers_of_type(std::list<Layer *> *
 
 
 
-void LayerAggregate::realize(VikTreeview *vt, GtkTreeIter *layer_iter)
+void LayerAggregate::realize(TreeView * tree_view_, GtkTreeIter *layer_iter)
 {
-	this->vt = vt;
+	this->tree_view = tree_view_;
 	this->iter = *layer_iter;
 	this->realized = true;
 
@@ -937,12 +937,12 @@ void LayerAggregate::realize(VikTreeview *vt, GtkTreeIter *layer_iter)
 
 	for (auto child = this->children->begin(); child != this->children->end(); child++) {
 		Layer * layer = *child;
-		this->vt->tree->add_layer(layer_iter, &iter, layer->name, this, true,
+		this->tree_view->add_layer(layer_iter, &iter, layer->name, this, true,
 					  layer, layer->type, layer->type, layer->get_timestamp());
 		if (! layer->visible) {
-			this->vt->tree->set_visibility(&iter, false);
+			this->tree_view->set_visibility(&iter, false);
 		}
-		layer->realize(this->vt, &iter);
+		layer->realize(this->tree_view, &iter);
 	}
 }
 
@@ -958,14 +958,13 @@ bool LayerAggregate::is_empty()
 
 void LayerAggregate::drag_drop_request(Layer * src, GtkTreeIter *src_item_iter, GtkTreePath *dest_path)
 {
-	VikTreeview * vt = src->vt;
-	Layer * layer = (Layer *) vt->tree->get_layer(src_item_iter);
+	Layer * layer = (Layer *) src->tree_view->get_layer(src_item_iter);
 	GtkTreeIter dest_iter;
 	char *dp;
 	bool target_exists;
 
 	dp = gtk_tree_path_to_string(dest_path);
-	target_exists = vt->tree->get_iter_from_path_str(&dest_iter, dp);
+	target_exists = src->tree_view->get_iter_from_path_str(&dest_iter, dp);
 
 	/* LayerAggregate::delete_layer unrefs, but we don't want that here.
 	 * we're still using the layer. */

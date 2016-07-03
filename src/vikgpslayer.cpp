@@ -809,11 +809,11 @@ void LayerGPS::free_()
 #endif /* VIK_CONFIG_REALTIME_GPS_TRACKING */
 }
 
-void LayerGPS::realize(VikTreeview *vt, GtkTreeIter *layer_iter)
+void LayerGPS::realize(TreeView * tree_view_, GtkTreeIter *layer_iter)
 {
 	GtkTreeIter iter;
 
-	this->vt = vt;
+	this->tree_view = tree_view_;
 	this->iter = *layer_iter;
 	this->realized = true;
 
@@ -824,13 +824,13 @@ void LayerGPS::realize(VikTreeview *vt, GtkTreeIter *layer_iter)
 
 	for (int ix = 0; ix < NUM_TRW; ix++) {
 		LayerTRW * trw = this->trw_children[ix];
-		this->vt->tree->add_layer(layer_iter, &iter,
-					  _(trw_names[ix]), this, true,
+		this->tree_view->add_layer(layer_iter, &iter,
+					   _(trw_names[ix]), this, true,
 					  trw, trw->type, trw->type, trw->get_timestamp());
 		if (!trw->visible) {
-			this->vt->tree->set_visibility(&iter, false);
+			this->tree_view->set_visibility(&iter, false);
 		}
-		trw->realize(this->vt, &iter);
+		trw->realize(this->tree_view, &iter);
 		g_signal_connect_swapped(G_OBJECT(trw->vl), "update", G_CALLBACK(vik_layer_emit_update_secondary), this->vl);
 	}
 }

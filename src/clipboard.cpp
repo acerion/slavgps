@@ -275,14 +275,14 @@ static void clip_receive_text(GtkClipboard * c, const char * text, void * p)
 
 	Layer * selected = panel->get_selected();
 
-	if (selected && selected->vt->tree->get_editing()) {
+	if (selected && selected->tree_view->get_editing()) {
 		GtkTreeIter iter;
-		if (selected->vt->tree->get_selected_iter(&iter)) {
+		if (selected->tree_view->get_selected_iter(&iter)) {
 			// Try to sanitize input:
-			char *name = g_strescape (text, NULL);
+			char *name = g_strescape(text, NULL);
 
 			selected->rename(name);
-			selected->vt->tree->set_name(&iter, name);
+			selected->tree_view->set_name(&iter, name);
 			free(name);
 		}
 		return;
@@ -397,32 +397,32 @@ void a_clipboard_copy_selected(LayersPanel * panel)
 		return;
 	}
 
-	if (!selected->vt->tree->get_selected_iter(&iter)) {
+	if (!selected->tree_view->get_selected_iter(&iter)) {
 		return;
 	}
 	layer_type = selected->type;
 
 	// Since we intercept copy and paste keyboard operations, this is called even when a cell is being edited
-	if (selected->vt->tree->get_editing()) {
+	if (selected->tree_view->get_editing()) {
 		type = VIK_CLIPBOARD_DATA_TEXT;
 		//  I don't think we can access what is actually selected (internal to GTK) so we go for the name of the item
 		// At least this is better than copying the layer data - which is even further away from what the user would be expecting...
-		name = selected->vt->tree->get_name(&iter);
+		name = selected->tree_view->get_name(&iter);
 		len = 0;
 	} else {
-		if (selected->vt->tree->get_type(&iter) == VIK_TREEVIEW_TYPE_SUBLAYER) {
+		if (selected->tree_view->get_type(&iter) == VIK_TREEVIEW_TYPE_SUBLAYER) {
 			type = VIK_CLIPBOARD_DATA_SUBLAYER;
-			subtype = selected->vt->tree->get_data(&iter);
+			subtype = selected->tree_view->get_data(&iter);
 
-			selected->copy_item(subtype, selected->vt->tree->get_pointer(&iter), &data, &len);
+			selected->copy_item(subtype, selected->tree_view->get_pointer(&iter), &data, &len);
 			// This name is used in setting the text representation of the item on the clipboard.
-			name = selected->vt->tree->get_name(&iter);
+			name = selected->tree_view->get_name(&iter);
 		} else {
 			int ilen;
 			type = VIK_CLIPBOARD_DATA_LAYER;
 			vik_layer_marshall(selected->vl, &data, &ilen);
 			len = ilen;
-			name = ((Layer *) selected->vt->tree->get_layer(&iter))->get_name();
+			name = ((Layer *) selected->tree_view->get_layer(&iter))->get_name();
 		}
 	}
 	a_clipboard_copy(type, layer_type, subtype, len, name, data);

@@ -32,48 +32,22 @@
 #include <glib-object.h>
 #include <gtk/gtk.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
-#define VIK_TREEVIEW_TYPE            (vik_treeview_get_type ())
-#define VIK_TREEVIEW(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_TREEVIEW_TYPE, VikTreeview))
-#define VIK_TREEVIEW_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), VIK_TREEVIEW_TYPE, VikTreeviewClass))
-#define IS_VIK_TREEVIEW(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), VIK_TREEVIEW_TYPE))
-#define IS_VIK_TREEVIEW_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), VIK_TREEVIEW_TYPE))
 
-typedef struct _VikTreeview VikTreeview;
-typedef struct _VikTreeviewClass VikTreeviewClass;
 
-struct _VikTreeviewClass
-{
-	GtkTreeViewClass vbox_class;
-	void (* item_edited) (VikTreeview *vt, GtkTreeIter *iter, const char *new_name);
-	void (* item_toggled) (VikTreeview *vt,GtkTreeIter *iter);
+struct _VikTreeview {
+	GtkTreeView treeview;
 };
+typedef struct _VikTreeview VikTreeview;
+
+
+
 
 enum {
 	VIK_TREEVIEW_TYPE_LAYER = 0,
 	VIK_TREEVIEW_TYPE_SUBLAYER
 };
-
-GType vik_treeview_get_type();
-
-
-VikTreeview * vik_treeview_new();
-
-//GtkWidget * vik_treeview_get_widget(VikTreeview * vt);
-
-
-
-
-
-
-
-#ifdef __cplusplus
-}
-#endif
 
 
 
@@ -87,7 +61,8 @@ namespace SlavGPS {
 
 	class TreeView {
 	public:
-		TreeView(VikTreeview *);
+		TreeView();
+		~TreeView();
 
 		void add_layer(GtkTreeIter *parent_iter, GtkTreeIter *iter, const char *name, void * parent, bool above, void * item, int data, VikLayerTypeEnum layer_type, time_t timestamp);
 		void insert_layer(GtkTreeIter *parent_iter, GtkTreeIter *iter, const char *name, void * parent, bool above, void * item, int data, VikLayerTypeEnum layer_type, GtkTreeIter *sibling, time_t timestamp);
@@ -137,6 +112,9 @@ namespace SlavGPS {
 		GdkPixbuf * layer_type_icons[VIK_LAYER_NUM_TYPES];
 
 		VikTreeview * vt;
+
+	private:
+		void add_columns();
 	};
 
 
@@ -144,15 +122,6 @@ namespace SlavGPS {
 
 
 } /* namespace SlavGPS */
-
-
-
-
-
-struct _VikTreeview {
-	GtkTreeView treeview;
-	SlavGPS::TreeView * tree;
-};
 
 
 

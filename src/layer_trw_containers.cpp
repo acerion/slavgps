@@ -258,10 +258,10 @@ Track * LayerTRWc::find_track_by_name(std::unordered_map<sg_uid_t, Track *> & in
 
 
 
-void LayerTRWc::remove_item_from_treeview(std::unordered_map<sg_uid_t, TreeIndex *> & items, VikTreeview * vt)
+void LayerTRWc::remove_item_from_treeview(std::unordered_map<sg_uid_t, TreeIndex *> & items, TreeView * tree_view)
 {
 	for (auto i = items.begin(); i != items.end(); i++) {
-		vt->tree->delete_(i->second);
+		tree_view->delete_(i->second);
 	}
 }
 
@@ -473,10 +473,10 @@ bool LayerTRWc::has_same_track_names(std::unordered_map<sg_uid_t, Track *> & ht_
 /**
  *
  */
-void LayerTRWc::iter_visibility_toggle(std::unordered_map<sg_uid_t, TreeIndex *> & items, VikTreeview * vt)
+void LayerTRWc::iter_visibility_toggle(std::unordered_map<sg_uid_t, TreeIndex *> & items, TreeView * tree_view)
 {
 	for (auto i = items.begin(); i != items.end(); i++) {
-		vt->tree->toggle_visibility(i->second);
+		tree_view->toggle_visibility(i->second);
 	}
 }
 
@@ -487,10 +487,10 @@ void LayerTRWc::iter_visibility_toggle(std::unordered_map<sg_uid_t, TreeIndex *>
 /**
  *
  */
-void LayerTRWc::set_iter_visibility(std::unordered_map<sg_uid_t, TreeIndex *> & items, VikTreeview * vt, bool on_off)
+void LayerTRWc::set_iter_visibility(std::unordered_map<sg_uid_t, TreeIndex *> & items, TreeView * tree_view, bool on_off)
 {
 	for (auto i = items.begin(); i != items.end(); i++) {
-		vt->tree->set_visibility(i->second, on_off);
+		tree_view->set_visibility(i->second, on_off);
 	}
 }
 
