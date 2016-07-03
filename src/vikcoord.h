@@ -44,6 +44,9 @@ typedef struct {
 
 	VikCoordMode mode;
 } VikCoord;
+
+typedef VikCoord Coord;
+
 /* notice we can cast to either UTM or LatLon */
 /* possible more modes to come? xy? we'll leave that as an option */
 
