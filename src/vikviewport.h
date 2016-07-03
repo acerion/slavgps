@@ -26,6 +26,8 @@
 
 
 
+#include <list>
+
 #include <gtk/gtk.h>
 #include <stdint.h>
 
@@ -101,6 +103,7 @@ namespace SlavGPS {
 		bool back_available(); // const
 		bool forward_available();
 		void show_centers(GtkWindow *parent);
+		void print_centers(char * label);
 
 
 		/* viewport position */
@@ -232,9 +235,12 @@ namespace SlavGPS {
 
 		VikCoordMode coord_mode;
 		VikCoord center;
-		GList * centers;         // The history of requested positions (of VikCoord type)
 
-		unsigned int centers_index;    // current position within the history list
+		/* centers_iter++ means moving forward in history. Thus prev(centers->end()) is the newest item.
+		   centers_iter-- means moving backward in history. Thus centers->begin() is the oldest item (in the beginning of history). */
+		std::list<Coord *> * centers;  /* The history of requested positions. */
+		std::list<Coord *>::iterator centers_iter; /* Current position within the history list. */
+
 		unsigned int centers_max;      // configurable maximum size of the history list
 		unsigned int centers_radius;   // Metres
 
@@ -246,8 +252,6 @@ namespace SlavGPS {
 		int height_2;
 
 		void update_centers();
-		void free_centers(unsigned int start);
-		void free_center(unsigned int index);
 
 
 		double utm_zone_width;
@@ -273,6 +277,10 @@ namespace SlavGPS {
 		void * vvp; /* Related VikViewport. */
 
 		char type_string[30];
+
+	private:
+		void free_center(std::list<Coord *>::iterator iter);
+
 	};
 
 

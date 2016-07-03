@@ -243,8 +243,9 @@ Viewport::Viewport()
 	copyrights = NULL;
 	logos = NULL;
 	scr_buffer = NULL;
-	centers = NULL;
-	centers_index = 0;
+
+	centers = new std::list<Coord *>;
+	centers_iter = centers->begin();
 	centers_max = 20;
 	int tmp = centers_max;
 	if (a_settings_get_integer(VIK_SETTINGS_VIEW_HISTORY_SIZE, &tmp)) {
@@ -266,7 +267,6 @@ Viewport::Viewport()
 	half_drawn = false;
 
 	this->vvp = (VikViewport *) g_object_new(VIK_VIEWPORT_TYPE, NULL);
-	fprintf(stderr, "%s:%d: %x\n", __FUNCTION__, __LINE__, this->vvp);
 	((VikViewport *) this->vvp)->viewport = this;
 
 	// Initiate center history
@@ -292,7 +292,7 @@ Viewport::~Viewport()
 	}
 
 	if (this->centers) {
-		this->free_centers(0);
+		delete this->centers;
 	}
 
 	if (this->scr_buffer) {
@@ -1034,33 +1034,24 @@ void Viewport::utm_zone_check()
 /**
  * Free an individual center position in the history list
  */
-void Viewport::free_center(unsigned int index)
+void Viewport::free_center(std::list<Coord *>::iterator iter)
 {
-	VikCoord * coord = (VikCoord *) g_list_nth_data(centers, index);
+	VikCoord * coord = *iter;
 	if (coord) {
 		free(coord);
 	}
 
-	GList * gl = g_list_nth(centers, index);
-	if (gl) {
-		centers = g_list_delete_link(centers, gl);
-	}
-}
-
-
-
-
-
-/**
- * Free a set of center positions in the history list,
- *  from the indicated start index to the end of the list
- */
-void Viewport::free_centers(unsigned int start)
-{
-	// Have to work backward since we delete items referenced by the '_nth()' values,
-	//  otherwise if processed forward - removing the lower nth index entries would change the subsequent indexing
-	for (unsigned int i = g_list_length(centers) - 1; i > start; i--) {
-		this->free_center(i);
+	if (iter == centers_iter) {
+		centers_iter = centers->erase(iter);
+		if (centers_iter == centers->end()) {
+			if (centers->empty()) {
+				centers_iter = centers->begin();
+			} else {
+				centers_iter--;
+			}
+		}
+	} else {
+		centers->erase(iter);
 	}
 }
 
@@ -1077,26 +1068,26 @@ void Viewport::update_centers()
 	VikCoord * new_center = (VikCoord *) malloc(sizeof (VikCoord));
 	*new_center = center; /* kamilFIXME: what does this assignment do? */
 
-	if (centers_index) {
-
-		if (centers_index == centers_max - 1) {
-			// List is full, so drop the oldest value to make room for the new one
-			this->free_center(0);
-			centers_index--;
-		} else {
-			// Reset the now unused section of the list
-			// Free from the index to the end
-			this->free_centers(centers_index + 1);
+	if (centers_iter == prev(centers->end())) {
+		/* We are at most recent element of history. */
+		if (centers->size() == centers_max) {
+			/* List is full, so drop the oldest value to make room for the new one. */
+			this->free_center(centers->begin());
 		}
-
+	} else {
+		/* We are somewhere in the middle of history list, possibly at the beginning.
+		   Every center visited after current one must be discarded. */
+		centers->erase(next(centers_iter), centers->end());
+		assert (std::next(centers_iter) == centers->end());
 	}
 
-	// Store new position
-	// NB ATM this can be the same location as the last one in the list
-	centers = g_list_append(centers, new_center);
+	/* Store new position. */
+	/* push_back() puts at the end. By convention end == newest. */
+	centers->push_back(new_center);
+	centers_iter++;
+	assert (std::next(centers_iter) == centers->end());
 
-	// Reset to the end (NB should be same as centers_index++)
-	centers_index = g_list_length(centers) - 1;
+	this->print_centers((char *) "update_centers");
 
 	// Inform interested subscribers that this change has occurred
 	g_signal_emit(G_OBJECT(this->vvp), viewport_signals[VW_UPDATED_CENTER_SIGNAL], 0);
@@ -1113,25 +1104,24 @@ void Viewport::update_centers()
 void Viewport::show_centers(GtkWindow * parent)
 {
 	GList * texts = NULL;
-	int index = 0;
-	for (GList * node = centers; node != NULL; node = g_list_next(node)) {
+	for (auto iter = centers->begin(); iter != centers->end(); iter++) {
 		char *lat = NULL, *lon = NULL;
 		struct LatLon ll;
-		vik_coord_to_latlon ((const VikCoord *) node->data, &ll);
-		a_coords_latlon_to_string (&ll, &lat, &lon);
+		vik_coord_to_latlon(*iter, &ll);
+		a_coords_latlon_to_string(&ll, &lat, &lon);
 		char *extra = NULL;
-		if (index == centers_index - 1) {
+		if (iter == next(centers_iter)) {
 			extra = strdup(" [Back]");
-		} else if (index == centers_index + 1) {
+		} else if (iter == prev(centers_iter)) {
 			extra = strdup(" [Forward]");
 		} else {
 			extra = strdup("");
 		}
+
 		texts = g_list_prepend(texts, g_strdup_printf("%s %s%s", lat, lon, extra));
 		free(lat);
 		free(lon);
 		free(extra);
-		index++;
 	}
 
 	// NB: No i18n as this is just for debug
@@ -1157,19 +1147,50 @@ void Viewport::show_centers(GtkWindow * parent)
 
 
 
+void Viewport::print_centers(char * label)
+{
+	for (auto iter = centers->begin(); iter != centers->end(); iter++) {
+		char *lat = NULL, *lon = NULL;
+		struct LatLon ll;
+		vik_coord_to_latlon(*iter, &ll);
+		a_coords_latlon_to_string(&ll, &lat, &lon);
+		char * extra = NULL;
+		if (iter == prev(centers_iter)) {
+			extra = (char *) "[Back]";
+		} else if (iter == next(centers_iter)) {
+			extra = (char *) "[Forward]";
+		} else if (iter == centers_iter) {
+			extra = (char *) "[Current]";
+		} else {
+			extra = (char *) "";
+		}
+
+		fprintf(stderr, "*** centers (%s): %s %s %s\n", label, lat, lon, extra);
+
+		free(lat);
+		free(lon);
+	}
+
+	return;
+}
+
+
+
+
+
 /**
- * Returns: %true one success
+ * Returns: %true on success
  */
 bool Viewport::go_back()
 {
 	// see if the current position is different from the last saved center position within a certain radius
-	VikCoord * last_center = (VikCoord *) g_list_nth_data(centers, centers_index);
+	VikCoord * last_center = *centers_iter;
 	if (last_center) {
 		// Consider an exclusion size (should it zoom level dependent, rather than a fixed value?)
 		// When still near to the last saved position we'll jump over it to the one before
 		if (vik_coord_diff(last_center, &center) > centers_radius) {
 
-			if (centers_index == g_list_length(centers) - 1) {
+			if (centers_iter == prev(centers->end())) {
 				// Only when we haven't already moved back in the list
 				// Remember where this request came from
 				//   (alternatively we could insert in the list on every back attempt)
@@ -1180,14 +1201,14 @@ bool Viewport::go_back()
 		// 'Go back' if possible
 		// NB if we inserted a position above, then this will then move to the last saved position
 		//  otherwise this will skip to the previous saved position, as it's probably somewhere else.
-		if (centers_index > 0) {
-			centers_index--;
+		if (back_available()) {
+			centers_iter--;
 		}
 	} else {
 		return false;
 	}
 
-	VikCoord * new_center = (VikCoord *) g_list_nth_data(centers, centers_index);
+	VikCoord * new_center = *centers_iter;
 	if (new_center) {
 		set_center_coord(new_center, false);
 		return true;
@@ -1206,18 +1227,18 @@ bool Viewport::go_back()
  */
 bool Viewport::go_forward()
 {
-	if (centers_index == centers_max - 1) {
+	if (centers_iter == prev(centers->end())) {
+		/* Already at the latest center. */
 		return false;
 	}
 
-	centers_index++;
-	VikCoord * new_center = (VikCoord *) g_list_nth_data(centers, centers_index);
+	centers_iter++;
+	VikCoord * new_center = *centers_iter;
 	if (new_center) {
 		set_center_coord(new_center, false);
 		return true;
 	} else {
-		// Set to end of list
-		centers_index = g_list_length(centers) - 1;
+		centers_iter = prev(centers->end());
 	}
 
 	return false;
@@ -1232,7 +1253,7 @@ bool Viewport::go_forward()
  */
 bool Viewport::back_available()
 {
-	return (centers_index > 0);
+	return (centers->size() > 1 && centers_iter != centers->begin());
 }
 
 
@@ -1244,7 +1265,7 @@ bool Viewport::back_available()
  */
 bool Viewport::forward_available()
 {
-	return (centers_index < g_list_length(centers) - 1);
+	return (centers->size() > 1 && centers_iter != prev(centers->end()));
 }
 
 
