@@ -31,9 +31,9 @@ extern "C" {
 #endif
 
 
-void *unzip_file(char *zip_file, unsigned long *unzip_size);
+void * unzip_file(char * zip_file, unsigned long * unzip_size);
 
-char* uncompress_bzip2 ( char *name );
+char * uncompress_bzip2(char * name);
 
 #ifdef __cplusplus
 }

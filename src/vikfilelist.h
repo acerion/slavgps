@@ -44,15 +44,15 @@ typedef struct _VikFileListClass VikFileListClass;
 
 struct _VikFileListClass
 {
-  GtkVBoxClass vbox_class;
+	GtkVBoxClass vbox_class;
 };
 
-GType vik_file_list_get_type ();
+GType vik_file_list_get_type();
 
-GtkWidget *vik_file_list_new ( const char *title, GtkFileFilter *filter );
+GtkWidget * vik_file_list_new(const char * title, GtkFileFilter * filter);
 /* result must be freed */
-GList *vik_file_list_get_files ( VikFileList *vfl );
-void vik_file_list_set_files ( VikFileList *vfl, GList * );
+GList * vik_file_list_get_files(VikFileList * vfl);
+void vik_file_list_set_files(VikFileList * vfl, GList *);
 
 #ifdef __cplusplus
 }

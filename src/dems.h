@@ -30,25 +30,23 @@ extern "C" {
 
 
 typedef enum {
-  VIK_DEM_INTERPOL_NONE = 0,
-  VIK_DEM_INTERPOL_SIMPLE,
-  VIK_DEM_INTERPOL_BEST,
+	VIK_DEM_INTERPOL_NONE = 0,
+	VIK_DEM_INTERPOL_SIMPLE,
+	VIK_DEM_INTERPOL_BEST,
 } VikDemInterpol;
 
-void a_dems_uninit ();
-VikDEM *a_dems_load(const char *filename);
-void a_dems_unref(const char *filename);
-VikDEM *a_dems_get(const char *filename);
-int a_dems_load_list ( GList **dems, void * threaddata );
-void a_dems_list_free ( GList *dems );
-GList *a_dems_list_copy ( GList *dems );
-int16_t a_dems_list_get_elev_by_coord ( GList *dems, const VikCoord *coord );
-int16_t a_dems_get_elev_by_coord ( const VikCoord *coord, VikDemInterpol method);
+void a_dems_uninit();
+VikDEM * a_dems_load(const char * filename);
+void a_dems_unref(const char * filename);
+VikDEM * a_dems_get(const char * filename);
+int a_dems_load_list( GList ** dems, void * threaddata);
+void a_dems_list_free(GList * dems);
+GList * a_dems_list_copy(GList * dems);
+int16_t a_dems_list_get_elev_by_coord(GList * dems, const VikCoord * coord);
+int16_t a_dems_get_elev_by_coord(const VikCoord * coord, VikDemInterpol method);
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif
-
-

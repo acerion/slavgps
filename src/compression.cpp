@@ -42,7 +42,7 @@
 
 #ifdef HAVE_LIBZ
 /* return size of unzip data or 0 if failed */
-static unsigned int uncompress_data(void *uncompressed_buffer, unsigned int uncompressed_size, void *compressed_data, unsigned int compressed_size)
+static unsigned int uncompress_data(void * uncompressed_buffer, unsigned int uncompressed_size, void * compressed_data, unsigned int compressed_size)
 {
 	z_stream stream;
 	int err;
@@ -80,13 +80,13 @@ static unsigned int uncompress_data(void *uncompressed_buffer, unsigned int unco
  *
  * Returns a pointer to uncompressed data (maybe NULL)
  */
-void *unzip_file(char *zip_file, unsigned long *unzip_size)
+void * unzip_file(char * zip_file, unsigned long * unzip_size)
 {
-	void *unzip_data = NULL;
+	void * unzip_data = NULL;
 #ifndef HAVE_LIBZ
 	goto end;
 #else
-	char *zip_data;
+	char * zip_data;
 	// See http://en.wikipedia.org/wiki/Zip_(file_format)
 	struct _lfh {
 		uint32_t sig;
@@ -102,8 +102,8 @@ void *unzip_file(char *zip_file, unsigned long *unzip_size)
 		uint16_t extra_field_len;
 	}  __attribute__ ((gcc_struct,__packed__)) *local_file_header = NULL;
 
-	if ( sizeof(struct _lfh) != 30 ) {
-		fprintf(stderr, "CRITICAL: Incorrect internal zip header size, should be 30 but is %zd\n", sizeof(struct _lfh) );
+	if (sizeof(struct _lfh) != 30) {
+		fprintf(stderr, "CRITICAL: Incorrect internal zip header size, should be 30 but is %zd\n", sizeof(struct _lfh));
 		return(unzip_data);
 	}
 
@@ -123,16 +123,16 @@ void *unzip_file(char *zip_file, unsigned long *unzip_size)
 	// Protection against malloc failures
 	// ATM not normally been checking malloc failures in Viking but sometimes using zip files can be quite large
 	//  (e.g. when using DEMs) so more potential for failure.
-	if ( !unzip_data )
+	if (!unzip_data)
 		goto end;
 
 	fprintf(stderr, "DEBUG: %s: method %d: from size %d to %ld\n", __FUNCTION__, GUINT16_FROM_LE(local_file_header->comp_method), GUINT32_FROM_LE(local_file_header->compressed_size), uncompressed_size);
 
-	if ( GUINT16_FROM_LE(local_file_header->comp_method) == 0 &&
-		(uncompressed_size == GUINT32_FROM_LE(local_file_header->compressed_size)) ) {
+	if (GUINT16_FROM_LE(local_file_header->comp_method) == 0 &&
+		(uncompressed_size == GUINT32_FROM_LE(local_file_header->compressed_size))) {
 		// Stored only - no need to 'uncompress'
 		// Thus just copy
-		memcpy ( unzip_data, zip_data, uncompressed_size );
+		memcpy(unzip_data, zip_data, uncompressed_size);
 		*unzip_size = uncompressed_size;
 		goto end;
 	}
@@ -157,74 +157,75 @@ end:
  *
  * Also see: http://www.bzip.org/1.0.5/bzip2-manual-1.0.5.html
  */
-char* uncompress_bzip2 ( char *name )
+char * uncompress_bzip2(char * name)
 {
 #ifdef HAVE_BZLIB_H
-	fprintf(stderr, "DEBUG: %s: bzip2 %s\n", __FUNCTION__, BZ2_bzlibVersion() );
+	fprintf(stderr, "DEBUG: %s: bzip2 %s\n", __FUNCTION__, BZ2_bzlibVersion());
 
 	FILE *ff = fopen(name, "rb");
-	if ( !ff )
+	if (!ff) {
 		return NULL;
+	}
 
 	int     bzerror;
-	BZFILE* bf = BZ2_bzReadOpen ( &bzerror, ff, 0, 0, NULL, 0 ); // This should take care of the bz2 file header
-	if ( bzerror != BZ_OK ) {
-		BZ2_bzReadClose ( &bzerror, bf );
+	BZFILE * bf = BZ2_bzReadOpen(&bzerror, ff, 0, 0, NULL, 0); // This should take care of the bz2 file header
+	if (bzerror != BZ_OK) {
+		BZ2_bzReadClose(&bzerror, bf);
 		// handle error
-		fprintf(stderr, "WARNING: %s: BZ ReadOpen error on %s\n", __FUNCTION__, name );
+		fprintf(stderr, "WARNING: %s: BZ ReadOpen error on %s\n", __FUNCTION__, name);
 		return NULL;
 	}
 
-	GFileIOStream *gios;
-	GError *error = NULL;
-	char *tmpname = NULL;
+	GFileIOStream * gios;
+	GError * error = NULL;
+	char * tmpname = NULL;
 #if GLIB_CHECK_VERSION(2,32,0)
-	GFile *gf = g_file_new_tmp ( "vik-bz2-tmp.XXXXXX", &gios, &error );
-	tmpname = g_file_get_path (gf);
+	GFile * gf = g_file_new_tmp("vik-bz2-tmp.XXXXXX", &gios, &error);
+	tmpname = g_file_get_path(gf);
 #else
-	int fd = g_file_open_tmp ( "vik-bz2-tmp.XXXXXX", &tmpname, &error );
-	if ( error ) {
-		fprintf(stderr, "WARNING: %s\n", error->message );
-		g_error_free ( error );
+	int fd = g_file_open_tmp("vik-bz2-tmp.XXXXXX", &tmpname, &error);
+	if (error) {
+		fprintf(stderr, "WARNING: %s\n", error->message);
+		g_error_free(error);
 		return NULL;
 	}
-	gios = g_file_open_readwrite ( g_file_new_for_path (tmpname), NULL, &error );
-	if ( error ) {
-		fprintf(stderr, "WARNING: %s\n", error->message );
-		g_error_free ( error );
+	gios = g_file_open_readwrite(g_file_new_for_path (tmpname), NULL, &error);
+	if (error) {
+		fprintf(stderr, "WARNING: %s\n", error->message);
+		g_error_free(error);
 		return NULL;
 	}
 #endif
 
-	GOutputStream *gos = g_io_stream_get_output_stream ( G_IO_STREAM(gios) );
+	GOutputStream *gos = g_io_stream_get_output_stream(G_IO_STREAM(gios));
 
 	// Process in arbitary sized chunks
 	char buf[4096];
 	bzerror = BZ_OK;
 	int nBuf = 0;
 	// Now process the actual compression data
-	while ( bzerror == BZ_OK ) {
-		nBuf = BZ2_bzRead ( &bzerror, bf, buf, 4096 );
-		if ( bzerror == BZ_OK || bzerror == BZ_STREAM_END) {
+	while (bzerror == BZ_OK) {
+		nBuf = BZ2_bzRead(&bzerror, bf, buf, 4096);
+		if (bzerror == BZ_OK || bzerror == BZ_STREAM_END) {
 			// do something with buf[0 .. nBuf-1]
-			if ( g_output_stream_write ( gos, buf, nBuf, NULL, &error ) < 0 ) {
-				fprintf(stderr, "CRITICAL: Couldn't write bz2 tmp %s file due to %s\n", tmpname, error->message );
-				g_error_free (error);
-				BZ2_bzReadClose ( &bzerror, bf );
+			if (g_output_stream_write(gos, buf, nBuf, NULL, &error) < 0) {
+				fprintf(stderr, "CRITICAL: Couldn't write bz2 tmp %s file due to %s\n", tmpname, error->message);
+				g_error_free(error);
+				BZ2_bzReadClose(&bzerror, bf);
 				goto end;
 			}
 		}
 	}
-	if ( bzerror != BZ_STREAM_END ) {
+	if (bzerror != BZ_STREAM_END) {
 		// handle error...
-		fprintf(stderr, "WARNING: %s: BZ error :( %d. read %d\n", __FUNCTION__, bzerror, nBuf );
+		fprintf(stderr, "WARNING: %s: BZ error :(%d. read %d\n", __FUNCTION__, bzerror, nBuf);
 	}
-	BZ2_bzReadClose ( &bzerror, bf );
-	g_output_stream_close ( gos, NULL, &error );
+	BZ2_bzReadClose(&bzerror, bf);
+	g_output_stream_close(gos, NULL, &error);
 
  end:
-	g_object_unref ( gios );
-	fclose ( ff );
+	g_object_unref(gios);
+	fclose(ff);
 
 	return tmpname;
 #else

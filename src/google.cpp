@@ -45,53 +45,57 @@ using namespace SlavGPS;
 
 
 
-void google_init ()
+void google_init()
 {
 	// Webtools
 	WebToolCenter * web_tool = new WebToolCenter(_("Google"), "http://maps.google.com/maps/@%s,%s,%dz");
 	vik_ext_tools_register(web_tool);
 	//g_object_unref(web_tool);
 
-  // Goto
-  /*
-   * Google no longer supports the API we used
-   *
-  GoogleGotoTool *gototool = google_goto_tool_new (  );
-  vik_goto_register ( VIK_GOTO_TOOL ( gototool ) );
-  g_object_unref ( gototool );
-  */
+	// Goto
+	/*
+	 * Google no longer supports the API we used
+	 *
+	 GoogleGotoTool *gototool = google_goto_tool_new (  );
+	 vik_goto_register ( VIK_GOTO_TOOL ( gototool ) );
+	 g_object_unref ( gototool );
+	*/
 }
+
+
+
+
 
 /**
  * Delayed initialization part as the check for gpsbabel availability needs to have been performed
  */
-void google_post_init ()
+void google_post_init()
 {
-  // Routing
-  /* Google Directions service as routing engine.
-   *
-   * Technical details are available here:
-   * https://developers.google.com/maps/documentation/directions/#DirectionsResponses
-   *
-   * gpsbabel supports this format.
-   */
-  /*
-   * Google no longer supports the API we used
-   *
-  if ( a_babel_available() ) {
-    VikRoutingEngine *routing = g_object_new ( VIK_ROUTING_WEB_ENGINE_TYPE,
-      "id", "google",
-      "label", "Google",
-      "format", "google",
-      "url-base", "http://maps.google.com/maps?output=js&q=",
-      "url-start-ll", "from:%s,%s",
-      "url-stop-ll", "+to:%s,%s",
-      "url-start-dir", "from:%s",
-      "url-stop-dir", "+to:%s",
-      "referer", "http://maps.google.com/",
-      NULL);
-    vik_routing_register ( VIK_ROUTING_ENGINE ( routing ) );
-    g_object_unref ( routing );
-  }
-  */
+	// Routing
+	/* Google Directions service as routing engine.
+	 *
+	 * Technical details are available here:
+	 * https://developers.google.com/maps/documentation/directions/#DirectionsResponses
+	 *
+	 * gpsbabel supports this format.
+	 */
+	/*
+	 * Google no longer supports the API we used
+	 *
+	 if ( a_babel_available() ) {
+	 VikRoutingEngine *routing = g_object_new ( VIK_ROUTING_WEB_ENGINE_TYPE,
+	 "id", "google",
+	 "label", "Google",
+	 "format", "google",
+	 "url-base", "http://maps.google.com/maps?output=js&q=",
+	 "url-start-ll", "from:%s,%s",
+	 "url-stop-ll", "+to:%s,%s",
+	 "url-start-dir", "from:%s",
+	 "url-stop-dir", "+to:%s",
+	 "referer", "http://maps.google.com/",
+	 NULL);
+	 vik_routing_register ( VIK_ROUTING_ENGINE ( routing ) );
+	 g_object_unref ( routing );
+	 }
+	*/
 }
