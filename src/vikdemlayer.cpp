@@ -286,7 +286,16 @@ static int dem_layer_load_list_thread(dem_load_thread_data * dltd, void * thread
 {
 	int result = 0; // Default to good
 	// Actual Load
-	if (a_dems_load_list(&(dltd->layer->files), threaddata)) {
+
+	std::list<std::string> dem_filenames;
+	GList * iter = dltd->layer->files;
+	while (iter) {
+		std::string dem_filename = std::string((const char *) (iter->data));
+		dem_filenames.push_front(dem_filename);
+		iter = iter->next;
+	}
+
+	if (a_dems_load_list(dem_filenames, threaddata)) {
 		// Thread cancelled
 		result = -1;
 	}
@@ -390,7 +399,7 @@ bool LayerDEM::set_param(uint16_t id, VikLayerParamData data, Viewport * viewpor
 	case PARAM_FILES:
 		{
 			// Clear out old settings - if any commonalities with new settings they will have to be read again
-			a_dems_list_free (this->files);
+			// a_dems_list_free (this->files); // kamilFIXME: re-enable this line in future.
 			// Set file list so any other intermediate screen drawing updates will show currently loaded DEMs by the working thread
 			this->files = data.sl;
 			// No need for thread if no files
@@ -904,7 +913,8 @@ void LayerDEM::draw(Viewport * viewport)
 	}
 
 	while (dems_iter) {
-		dem = a_dems_get((const char *) (dems_iter->data));
+		std::string dem_filename = std::string((const char *) (dems_iter->data));
+		dem = a_dems_get(dem_filename);
 		if (dem) {
 			this->draw_dem(viewport, dem);
 		}
@@ -930,7 +940,7 @@ void LayerDEM::free_()
 	}
 	free(this->gcsgradient);
 
-	a_dems_list_free(this->files);
+	// a_dems_list_free(this->files); // kamilFIXME: re-enable this line in future
 }
 
 /**************************************************************
@@ -1188,7 +1198,8 @@ bool LayerDEM::add_file(char const * filename)
 		if (sb.st_size) {
 			char * duped_path = g_strdup(filename);
 			this->files = g_list_prepend(this->files, duped_path);
-			a_dems_load(duped_path);
+			std::string dem_fullpath = std::string(duped_path);
+			a_dems_load(dem_fullpath);
 			fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, duped_path);
 		}
 		return true;

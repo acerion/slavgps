@@ -21,6 +21,9 @@
 #ifndef __VIKING_DEMS_H
 #define __VIKING_DEMS_H
 
+#include <list>
+#include <string>
+
 #include "dem.h"
 #include "vikcoord.h"
 
@@ -36,14 +39,16 @@ typedef enum {
 } VikDemInterpol;
 
 void a_dems_uninit();
-VikDEM * a_dems_load(const char * filename);
-void a_dems_unref(const char * filename);
-VikDEM * a_dems_get(const char * filename);
-int a_dems_load_list( GList ** dems, void * threaddata);
-void a_dems_list_free(GList * dems);
-GList * a_dems_list_copy(GList * dems);
-int16_t a_dems_list_get_elev_by_coord(GList * dems, const VikCoord * coord);
+VikDEM * a_dems_load(std::string& filename);
+void a_dems_unref(std::string& filename);
+VikDEM * a_dems_get(std::string& filename);
+int a_dems_load_list(std::list<std::string>& filenames, void * threaddata);
+void a_dems_list_free(std::list<std::string>& filenames);
 int16_t a_dems_get_elev_by_coord(const VikCoord * coord, VikDemInterpol method);
+
+//GList * a_dems_list_copy(GList * dems);
+//int16_t a_dems_list_get_elev_by_coord(GList * dems, const VikCoord * coord);
+
 
 #ifdef __cplusplus
 }
