@@ -1115,7 +1115,7 @@ static void draw_mouse_motion_cb(Window * window, GdkEventMotion * event)
 	}
 
 
-	if ((alt = a_dems_get_elev_by_coord(&coord, interpol_method)) != VIK_DEM_INVALID_ELEVATION) {
+	if ((alt = dem_cache_get_elev_by_coord(&coord, interpol_method)) != VIK_DEM_INVALID_ELEVATION) {
 		if (a_vik_get_units_height() == VIK_UNITS_HEIGHT_METRES) {
 			snprintf(pointer_buf, BUFFER_SIZE, _("%s %s %dm"), lat, lon, alt);
 		} else {

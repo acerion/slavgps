@@ -1280,7 +1280,7 @@ static void draw_dem_alt_speed_dist(Track * trk,
 				       &(((Trackpoint *) iter->prev->data)->coord));
 		x = (width * dist)/total_length + margin;
 		if (do_dem) {
-			int16_t elev = a_dems_get_elev_by_coord(&(((Trackpoint *) iter->data)->coord), VIK_DEM_INTERPOL_BEST);
+			int16_t elev = dem_cache_get_elev_by_coord(&(((Trackpoint *) iter->data)->coord), VIK_DEM_INTERPOL_BEST);
 			if (elev != VIK_DEM_INVALID_ELEVATION) {
 				// Convert into height units
 				if (a_vik_get_units_height() == VIK_UNITS_HEIGHT_FEET) {
@@ -2109,7 +2109,7 @@ static void draw_et(GtkWidget * image, Track * trk, PropWidgets * widgets)
 			// This could be slow doing this each time...
 			Trackpoint * tp = widgets->trk->get_closest_tp_by_percentage_time(((double)i/(double)widgets->profile_width), NULL);
 			if (tp) {
-				int16_t elev = a_dems_get_elev_by_coord(&(tp->coord), VIK_DEM_INTERPOL_SIMPLE);
+				int16_t elev = dem_cache_get_elev_by_coord(&(tp->coord), VIK_DEM_INTERPOL_SIMPLE);
 				if (elev != VIK_DEM_INVALID_ELEVATION) {
 					// Convert into height units
 					if (a_vik_get_units_height() == VIK_UNITS_HEIGHT_FEET) {

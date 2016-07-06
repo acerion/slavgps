@@ -7638,7 +7638,7 @@ VikLayerToolFuncStatus LayerTRW::tool_new_track_move(GdkEventMotion * event, Vie
 
 		// Adjust elevation data (if available) for the current pointer position
 		double elev_new;
-		elev_new = (double) a_dems_get_elev_by_coord(&coord, VIK_DEM_INTERPOL_BEST);
+		elev_new = (double) dem_cache_get_elev_by_coord(&coord, VIK_DEM_INTERPOL_BEST);
 		if (elev_new != VIK_DEM_INVALID_ELEVATION) {
 			if (last_tpt->altitude != VIK_DEFAULT_ALTITUDE) {
 				// Adjust elevation of last track point

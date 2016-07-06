@@ -1846,7 +1846,7 @@ unsigned long Track::apply_dem_data(bool skip_existing)
 			/* TODO: of the 4 possible choices we have for choosing an elevation
 			 * (trackpoint in between samples), choose the one with the least elevation change
 			 * as the last */
-			int16_t elev = a_dems_get_elev_by_coord (&(((Trackpoint *) iter->data)->coord), VIK_DEM_INTERPOL_BEST);
+			int16_t elev = dem_cache_get_elev_by_coord (&(((Trackpoint *) iter->data)->coord), VIK_DEM_INTERPOL_BEST);
 
 			if (elev != VIK_DEM_INVALID_ELEVATION) {
 				((Trackpoint *) iter->data)->altitude = elev;
@@ -1866,7 +1866,7 @@ void Track::apply_dem_data_last_trackpoint()
 {
 	if (trackpoints) {
 		/* As in vik_track_apply_dem_data above - use 'best' interpolation method */
-		int16_t elev = a_dems_get_elev_by_coord (&(((Trackpoint *) g_list_last(trackpoints)->data)->coord), VIK_DEM_INTERPOL_BEST);
+		int16_t elev = dem_cache_get_elev_by_coord (&(((Trackpoint *) g_list_last(trackpoints)->data)->coord), VIK_DEM_INTERPOL_BEST);
 		if (elev != VIK_DEM_INVALID_ELEVATION) {
 			((Trackpoint *) g_list_last(trackpoints)->data)->altitude = elev;
 		}

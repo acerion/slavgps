@@ -268,7 +268,7 @@ int main(int argc, char *argv[])
 	a_toolbar_uninit();
 	a_background_uninit();
 	map_cache_uninit();
-	a_dems_uninit();
+	dem_cache_uninit();
 	a_layer_defaults_uninit();
 	a_preferences_uninit();
 	a_settings_uninit();
