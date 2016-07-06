@@ -21,20 +21,45 @@
  */
 
 #include <unordered_map>
-#include <string>
 
 #include <stdlib.h>
 
 #include "dems.h"
 #include "background.h"
 
+
+
+
+
 typedef struct {
 	VikDEM * dem;
 	unsigned int ref_count;
 } LoadedDEM;
 
+typedef struct {
+	const Coord * coord;
+	VikDemInterpol method;
+	int elev;
+} CoordElev;
+
+
+
+
+
 /* filename -> DEM */
 static std::unordered_map<std::string, LoadedDEM *> loaded_dems;
+
+
+
+
+
+static void dem_cache_unref(std::string& filename);
+static bool get_elev_by_coord(std::string key, LoadedDEM * ldem, CoordElev * ce);
+//static GList * a_dems_list_copy(GList * dems);
+//static int16_t a_dems_list_get_elev_by_coord(GList * dems, const Coord * coord);
+
+
+
 
 
 static void loaded_dem_free(LoadedDEM *ldem)
@@ -43,7 +68,11 @@ static void loaded_dem_free(LoadedDEM *ldem)
 	free(ldem);
 }
 
-void a_dems_uninit()
+
+
+
+
+void dem_cache_uninit()
 {
 	if (loaded_dems.size()) {
 		loaded_dems.clear();
@@ -51,25 +80,17 @@ void a_dems_uninit()
 }
 
 
+
+
+
 /* Called when DEM tile clicked in DEM layer is available on disc.
    The time may been sitting on disc before, or may have been just
-   downloaded - the function gets called just the same.
-
-   . area clicking in DEM layer on area already downloaded to disc. */
+   downloaded - the function gets called just the same. */
 /* To load a dem. if it was already loaded, will simply
  * reference the one already loaded and return it.
  */
-VikDEM * a_dems_load(std::string& filename)
+VikDEM * dem_cache_load(std::string& filename)
 {
-	LoadedDEM *ldem;
-
-#if 0
-	/* dems init hash table */
-	if (!loaded_dems) {
-		loaded_dems = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, (GDestroyNotify) loaded_dem_free);
-	}
-#endif
-
 	auto iter = loaded_dems.find(filename);
 	if (iter != loaded_dems.end()) { /* Found. */
 		(*iter).second->ref_count++;
@@ -79,7 +100,7 @@ VikDEM * a_dems_load(std::string& filename)
 		if (!dem) {
 			return NULL;
 		}
-		ldem = (LoadedDEM *) malloc(sizeof (LoadedDEM));
+		LoadedDEM * ldem = (LoadedDEM *) malloc(sizeof (LoadedDEM));
 		ldem->ref_count = 1;
 		ldem->dem = dem;
 		loaded_dems[filename] = ldem;
@@ -87,7 +108,11 @@ VikDEM * a_dems_load(std::string& filename)
 	}
 }
 
-void a_dems_unref(std::string& filename)
+
+
+
+
+static void dem_cache_unref(std::string& filename)
 {
 	auto iter = loaded_dems.find(filename);
 	if (iter == loaded_dems.end()) {
@@ -100,6 +125,10 @@ void a_dems_unref(std::string& filename)
 	}
 }
 
+
+
+
+
 /* Probably gets called whenever DEM layer is moved in viewport.
    Probably called with tile names that are - or can be - in current viewport.
 
@@ -107,7 +136,7 @@ void a_dems_unref(std::string& filename)
  * assumes that its in there already,
  * although it could not be if earlier load failed.
  */
-VikDEM *a_dems_get(std::string& filename)
+VikDEM * dem_cache_get(std::string& filename)
 {
 	auto iter = loaded_dems.find(filename);
 	if (iter != loaded_dems.end()) {
@@ -115,6 +144,9 @@ VikDEM *a_dems_get(std::string& filename)
 	}
 	return NULL;
 }
+
+
+
 
 
 /* Load a string list (GList of strings) of dems. You have to use get to at them later.
@@ -126,16 +158,16 @@ VikDEM *a_dems_get(std::string& filename)
 /* TODO: don't delete them when they don't exist.
  * we need to warn the user, but we should keep them in the GList.
  * we need to know that they weren't referenced though when we
- * do the a_dems_list_free().
+ * do the dem_cache_list_free().
  */
-int a_dems_load_list(std::list<std::string>& filenames, void * threaddata)
+int dem_cache_load_list(std::list<std::string>& filenames, void * threaddata)
 {
 	auto iter = filenames.begin();
 	unsigned int dem_count = 0;
 	const unsigned int dem_total = filenames.size();
 	while (iter != filenames.end()) {
 		std::string dem_filename = *iter;
-		if (!a_dems_load(dem_filename)) {
+		if (!dem_cache_load(dem_filename)) {
 			iter = filenames.erase(iter);
 		} else {
 			iter++;
@@ -153,78 +185,27 @@ int a_dems_load_list(std::list<std::string>& filenames, void * threaddata)
 	return 0;
 }
 
+
+
+
+
 /* Takes a string list of dem filenames .
  * Unrefs all the dems (i.e. "unloads" them), then frees the
  * strings, the frees the list.
  */
-void a_dems_list_free(std::list<std::string>& filenames)
+void dem_cache_list_free(std::list<std::string>& filenames)
 {
 	for (auto iter = filenames.begin(); iter != filenames.end(); iter++) {
-		a_dems_unref(*iter);
+		dem_cache_unref(*iter);
 		/* kamilTODO: "delete (*iter)" ? */
 	}
 
 	filenames.clear();
 }
 
-#if 0
-GList * a_dems_list_copy(GList * dems)
-{
-	GList * rv = g_list_copy(dems);
-	GList * iter = rv;
-	while (iter) {
-		std::string dem_filename = std::string((const char *) (iter->data));
-		if (! a_dems_load(dem_filename)) {
-			GList *iter_temp = iter->next; /* delete link, don't bother strdup'ing and free'ing string */
-			rv = g_list_remove_link(rv, iter);
-			iter = iter_temp;
-		} else {
-			iter->data = g_strdup((char *)iter->data); /* copy the string too. */
-			iter = iter->next;
-		}
-	}
-	return rv;
-}
 
-int16_t a_dems_list_get_elev_by_coord(std::list<std::string> * filenames, const VikCoord * coord)
-{
-	static struct UTM utm_tmp;
-	static struct LatLon ll_tmp;
-	auto iter = filenames->begin();
-	VikDEM * dem;
-	int elev;
 
-	while (iter != filenames->end()) {
-		dem = a_dems_get(*iter);
-		if (dem) {
-			if (dem->horiz_units == VIK_DEM_HORIZ_LL_ARCSECONDS) {
-				vik_coord_to_latlon(coord, &ll_tmp);
-				ll_tmp.lat *= 3600;
-				ll_tmp.lon *= 3600;
-				elev = vik_dem_get_east_north(dem, ll_tmp.lon, ll_tmp.lat);
-				if (elev != VIK_DEM_INVALID_ELEVATION) {
-					return elev;
-				}
-			} else if (dem->horiz_units == VIK_DEM_HORIZ_UTM_METERS) {
-				vik_coord_to_utm(coord, &utm_tmp);
-				if (utm_tmp.zone == dem->utm_zone
-				    && (elev = vik_dem_get_east_north(dem, utm_tmp.easting, utm_tmp.northing)) != VIK_DEM_INVALID_ELEVATION) {
 
-					return elev;
-				}
-			}
-		}
-		iter++;
-	}
-	return VIK_DEM_INVALID_ELEVATION;
-}
-#endif
-
-typedef struct {
-	const VikCoord * coord;
-	VikDemInterpol method;
-	int elev;
-} CoordElev;
 
 static bool get_elev_by_coord(std::string key, LoadedDEM * ldem, CoordElev * ce)
 {
@@ -263,15 +244,18 @@ static bool get_elev_by_coord(std::string key, LoadedDEM * ldem, CoordElev * ce)
 	return (ce->elev != VIK_DEM_INVALID_ELEVATION);
 }
 
-/* TODO: keep a (sorted) linked list of DEMs and select the best resolution one */
-int16_t a_dems_get_elev_by_coord(const VikCoord *coord, VikDemInterpol method)
-{
-	CoordElev ce;
 
+
+
+
+/* TODO: keep a (sorted) linked list of DEMs and select the best resolution one */
+int16_t dem_cache_get_elev_by_coord(const Coord * coord, VikDemInterpol method)
+{
 	if (loaded_dems.empty()) {
 		return VIK_DEM_INVALID_ELEVATION;
 	}
 
+	CoordElev ce;
 	ce.coord = coord;
 	ce.method = method;
 	ce.elev = VIK_DEM_INVALID_ELEVATION;
@@ -284,3 +268,69 @@ int16_t a_dems_get_elev_by_coord(const VikCoord *coord, VikDemInterpol method)
 
 	return VIK_DEM_INVALID_ELEVATION;
 }
+
+
+
+
+
+#if 0
+GList * a_dems_list_copy(GList * dems)
+{
+	GList * rv = g_list_copy(dems);
+	GList * iter = rv;
+	while (iter) {
+		std::string dem_filename = std::string((const char *) (iter->data));
+		if (!dem_cache_load(dem_filename)) {
+			GList *iter_temp = iter->next; /* delete link, don't bother strdup'ing and free'ing string */
+			rv = g_list_remove_link(rv, iter);
+			iter = iter_temp;
+		} else {
+			iter->data = g_strdup((char *)iter->data); /* copy the string too. */
+			iter = iter->next;
+		}
+	}
+	return rv;
+}
+
+
+
+
+
+int16_t a_dems_list_get_elev_by_coord(std::list<std::string> * filenames, const Coord * coord)
+{
+	static struct UTM utm_tmp;
+	static struct LatLon ll_tmp;
+	auto iter = filenames->begin();
+	VikDEM * dem;
+	int elev;
+
+	while (iter != filenames->end()) {
+		dem = dem_cache_get(*iter);
+		if (dem) {
+			if (dem->horiz_units == VIK_DEM_HORIZ_LL_ARCSECONDS) {
+				vik_coord_to_latlon(coord, &ll_tmp);
+				ll_tmp.lat *= 3600;
+				ll_tmp.lon *= 3600;
+				elev = vik_dem_get_east_north(dem, ll_tmp.lon, ll_tmp.lat);
+				if (elev != VIK_DEM_INVALID_ELEVATION) {
+					return elev;
+				}
+			} else if (dem->horiz_units == VIK_DEM_HORIZ_UTM_METERS) {
+				vik_coord_to_utm(coord, &utm_tmp);
+				if (utm_tmp.zone == dem->utm_zone
+				    && (elev = vik_dem_get_east_north(dem, utm_tmp.easting, utm_tmp.northing)) != VIK_DEM_INVALID_ELEVATION) {
+
+					return elev;
+				}
+			}
+		}
+		iter++;
+	}
+	return VIK_DEM_INVALID_ELEVATION;
+}
+
+
+
+
+
+#endif

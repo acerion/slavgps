@@ -18,18 +18,23 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-#ifndef __VIKING_DEMS_H
-#define __VIKING_DEMS_H
+#ifndef _SG_DEM_CACHE_H
+#define _SG_DEM_CACHE_H
+
+
+
+
 
 #include <list>
 #include <string>
 
+#include <stdint.h>
+
 #include "dem.h"
 #include "vikcoord.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+
+
 
 
 typedef enum {
@@ -38,20 +43,19 @@ typedef enum {
 	VIK_DEM_INTERPOL_BEST,
 } VikDemInterpol;
 
-void a_dems_uninit();
-VikDEM * a_dems_load(std::string& filename);
-void a_dems_unref(std::string& filename);
-VikDEM * a_dems_get(std::string& filename);
-int a_dems_load_list(std::list<std::string>& filenames, void * threaddata);
-void a_dems_list_free(std::list<std::string>& filenames);
-int16_t a_dems_get_elev_by_coord(const VikCoord * coord, VikDemInterpol method);
-
-//GList * a_dems_list_copy(GList * dems);
-//int16_t a_dems_list_get_elev_by_coord(GList * dems, const VikCoord * coord);
 
 
-#ifdef __cplusplus
-}
-#endif
 
-#endif
+
+void     dem_cache_uninit();
+VikDEM * dem_cache_load(std::string& filename);
+VikDEM * dem_cache_get(std::string& filename);
+int      dem_cache_load_list(std::list<std::string>& filenames, void * threaddata);
+void     dem_cache_list_free(std::list<std::string>& filenames);
+int16_t  dem_cache_get_elev_by_coord(const Coord * coord, VikDemInterpol method);
+
+
+
+
+
+#endif /* #ifndef _SG_DEM_CACHE_H */
