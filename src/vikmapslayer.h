@@ -26,6 +26,7 @@
 #include "config.h"
 #endif
 
+#include <string>
 
 #include <stdint.h>
 
@@ -165,6 +166,12 @@ namespace SlavGPS {
 
 
 }
+
+
+
+
+
+std::string& maps_layer_default_dir_2();
 
 
 

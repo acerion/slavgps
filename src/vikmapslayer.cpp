@@ -472,6 +472,18 @@ char *maps_layer_default_dir ()
 	return defaultdir;
 }
 
+std::string& maps_layer_default_dir_2()
+{
+	static char *defaultdir = NULL;
+	static std::string default_dir;
+	if (!defaultdir) {
+		defaultdir = maps_layer_default_dir();
+		default_dir = std::string(defaultdir);
+	}
+
+	return default_dir;
+}
+
 void LayerMaps::mkdir_if_default_dir()
 {
 	if (this->cache_dir && strcmp(this->cache_dir, MAPS_CACHE_DIR) == 0 && g_file_test(this->cache_dir, G_FILE_TEST_EXISTS) == false) {
