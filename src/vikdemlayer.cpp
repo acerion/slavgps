@@ -56,6 +56,7 @@ using namespace SlavGPS;
 
 
 #define MAPS_CACHE_DIR maps_layer_default_dir()
+#define MAPS_CACHE_DIR_2 maps_layer_default_dir_2()
 
 #define SRTM_CACHE_TEMPLATE "%ssrtm3-%s%s%c%02d%c%03d.hgt.zip"
 #define SRTM_HTTP_SITE "dds.cr.usgs.gov"
@@ -67,7 +68,6 @@ using namespace SlavGPS;
 
 #define UNUSED_LINE_THICKNESS 3
 
-static VikLayer *dem_layer_new(Viewport * viewport);
 static VikLayer *dem_layer_unmarshall(uint8_t *data, int len, Viewport * viewport);
 static bool dem_layer_set_param(VikLayer *vdl, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
 static VikLayerParamData dem_layer_get_param(VikLayer *vdl, uint16_t id, bool is_file_operation);
@@ -76,6 +76,8 @@ static void srtm_draw_existence(Viewport * viewport);
 #ifdef VIK_CONFIG_DEM24K
 static void dem24k_draw_existence(Viewport * viewport);
 #endif
+
+static void weak_ref_cb(void * ptr, GObject * dead_vdl);
 
 /* Upped upper limit incase units are feet */
 static VikLayerParamScale param_scales[] = {
@@ -196,7 +198,7 @@ VikLayerInterface vik_dem_layer_interface = {
 	&vikdemlayer_pixbuf,
 
 	dem_tools,
-	sizeof(dem_tools) / sizeof(dem_tools[0]),
+	sizeof (dem_tools) / sizeof (dem_tools[0]),
 
 	dem_layer_params,
 	NUM_PARAMS,
@@ -212,31 +214,9 @@ VikLayerInterface vik_dem_layer_interface = {
 	(VikLayerFuncChangeParam)             NULL,
 };
 
-struct _VikDEMLayer {
-	VikLayer vl;
-};
 
-GType vik_dem_layer_get_type()
-{
-	static GType vdl_type = 0;
 
-	if (!vdl_type) {
-		static const GTypeInfo vdl_info = {
-			sizeof (VikDEMLayerClass),
-			NULL, /* base_init */
-			NULL, /* base_finalize */
-			NULL, /* class init */
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (VikDEMLayer),
-			0,
-			NULL /* instance init */
-		};
-		vdl_type = g_type_register_static(VIK_LAYER_TYPE, "VikDEMLayer", &vdl_info, (GTypeFlags) 0);
-	}
 
-	return vdl_type;
-}
 
 char const * LayerDEM::tooltip()
 {
@@ -254,24 +234,22 @@ void LayerDEM::marshall(uint8_t **data, int *len)
 
 static VikLayer * dem_layer_unmarshall(uint8_t *data, int len, Viewport * viewport)
 {
-	VikLayer *rv = dem_layer_new(viewport);
-	LayerDEM * layer = (LayerDEM *) rv->layer;
-	int i;
+	LayerDEM * layer = new LayerDEM(viewport);
 
 	/* TODO: share GCS between layers */
-	for (i = 0; i < DEM_N_HEIGHT_COLORS; i++) {
+	for (int i = 0; i < DEM_N_HEIGHT_COLORS; i++) {
 		if (i == 0) {
 			layer->gcs[i] = viewport->new_gc_from_color(&layer->color, UNUSED_LINE_THICKNESS);
 		} else {
 			layer->gcs[i] = viewport->new_gc(dem_height_colors[i], UNUSED_LINE_THICKNESS);
 		}
 	}
-	for (i = 0; i < DEM_N_GRADIENT_COLORS; i++) {
+	for (int i = 0; i < DEM_N_GRADIENT_COLORS; i++) {
 		layer->gcsgradient[i] = viewport->new_gc(dem_gradient_colors[i], UNUSED_LINE_THICKNESS);
 	}
 
 	vik_layer_unmarshall_params(layer->vl, data, len, viewport);
-	return rv;
+	return layer->vl;
 }
 
 /* Structure for DEM data used in background thread */
@@ -290,17 +268,18 @@ static int dem_layer_load_list_thread(dem_load_thread_data * dltd, void * thread
 	std::list<std::string> dem_filenames;
 	GList * iter = dltd->layer->files;
 	while (iter) {
-		std::string dem_filename = std::string((const char *) (iter->data));
+		std::string * a_string = (std::string *) iter->data;
+		std::string dem_filename = std::string(*a_string);
 		dem_filenames.push_front(dem_filename);
 		iter = iter->next;
 	}
 
-	if (a_dems_load_list(dem_filenames, threaddata)) {
+	if (dem_cache_load_list(dem_filenames, threaddata)) {
 		// Thread cancelled
 		result = -1;
 	}
 
-	// ATM as each file is processed the screen is not updated (no mechanism exposed to a_dems_load_list)
+	// ATM as each file is processed the screen is not updated (no mechanism exposed to dem_cache_load_list)
 	// Thus force draw only at the end, as loading is complete/aborted
 	//gdk_threads_enter();
 	// Test is helpful to prevent Gtk-CRITICAL warnings if the program is exitted whilst loading
@@ -399,7 +378,7 @@ bool LayerDEM::set_param(uint16_t id, VikLayerParamData data, Viewport * viewpor
 	case PARAM_FILES:
 		{
 			// Clear out old settings - if any commonalities with new settings they will have to be read again
-			// a_dems_list_free (this->files); // kamilFIXME: re-enable this line in future.
+			// dem_cache_list_free (this->files); // kamilFIXME: re-enable this line in future.
 			// Set file list so any other intermediate screen drawing updates will show currently loaded DEMs by the working thread
 			this->files = data.sl;
 			// No need for thread if no files
@@ -477,25 +456,6 @@ VikLayerParamData LayerDEM::get_param(uint16_t id, bool is_file_operation)
 	return rv;
 }
 
-static VikLayer * dem_layer_new(Viewport * viewport)
-{
-	LayerDEM * layer = new LayerDEM((VikLayer *) NULL);
-
-	layer->files = NULL;
-
-	layer->gcs = (GdkGC **) malloc(sizeof(GdkGC *) * DEM_N_HEIGHT_COLORS);
-	layer->gcsgradient = (GdkGC **) malloc(sizeof(GdkGC *) * DEM_N_GRADIENT_COLORS);
-	/* make new gcs only if we need it (copy layer -> use old) */
-
-	// Ensure the base GC is available so the default colour can be applied
-	if (viewport) {
-		layer->gcs[0] = viewport->new_gc("#0000FF", 1);
-	}
-
-	return layer->vl;
-}
-
-
 static inline uint16_t get_height_difference(int16_t elev, int16_t new_elev)
 {
 	if (new_elev == VIK_DEM_INVALID_ELEVATION) {
@@ -564,7 +524,7 @@ void LayerDEM::draw_dem(Viewport * viewport, VikDEM * dem)
 	 * this is useful if we want to see what areas we have dem for but don't want to
 	 * cover the map (or maybe we just need translucent DEM?) */
 	{
-		VikCoord demne, demsw;
+		Coord demne, demsw;
 		int x1, y1, x2, y2;
 		vik_coord_load_from_latlon(&demne, viewport->get_coord_mode(), &dem_northeast);
 		vik_coord_load_from_latlon(&demsw, viewport->get_coord_mode(), &dem_southwest);
@@ -595,7 +555,7 @@ void LayerDEM::draw_dem(Viewport * viewport, VikDEM * dem)
 #endif
 
 	if (dem->horiz_units == VIK_DEM_HORIZ_LL_ARCSECONDS) {
-		VikCoord tmp; /* TODO: don't use coord_load_from_latlon, especially if in latlon drawing mode */
+		Coord tmp; /* TODO: don't use coord_load_from_latlon, especially if in latlon drawing mode */
 
 		double max_lat_as, max_lon_as, min_lat_as, min_lon_as;
 		double start_lat_as, end_lat_as, start_lon_as, end_lon_as;
@@ -775,12 +735,12 @@ void LayerDEM::draw_dem(Viewport * viewport, VikDEM * dem)
 
 		unsigned int x, y, start_x, start_y;
 
-		VikCoord tmp; /* TODO: don't use coord_load_from_latlon, especially if in latlon drawing mode */
+		Coord tmp; /* TODO: don't use coord_load_from_latlon, especially if in latlon drawing mode */
 		struct UTM counter;
 
 		unsigned int skip_factor = ceil(viewport->get_xmpp() / 10); /* todo: smarter calculation. */
 
-		VikCoord tleft, tright, bleft, bright;
+		Coord tleft, tright, bleft, bright;
 
 		viewport->screen_to_coord(0,                     0,                      &tleft);
 		viewport->screen_to_coord(viewport->get_width(), 0,                      &tright);
@@ -898,23 +858,20 @@ static const char *srtm_continent_dir(int lat, int lon)
 
 void LayerDEM::draw(Viewport * viewport)
 {
-	GList *dems_iter = this->files;
-	VikDEM *dem;
-
-
-	/* search for SRTM3 90m */
-
+	/* Draw rectangles around areas, for which DEM tiles are already downloaded. */
 	if (this->source == DEM_SOURCE_SRTM) {
 		srtm_draw_existence(viewport);
 #ifdef VIK_CONFIG_DEM24K
 	} else if (this->source == DEM_SOURCE_DEM24K) {
-		dem24k_draw_existence(vp);
+		dem24k_draw_existence(viewport);
 #endif
 	}
 
+	GList * dems_iter = this->files;
 	while (dems_iter) {
-		std::string dem_filename = std::string((const char *) (dems_iter->data));
-		dem = a_dems_get(dem_filename);
+		std::string * a_string = (std::string *) dems_iter->data;
+		std::string dem_filename = std::string(*a_string);
+		VikDEM * dem = dem_cache_get(dem_filename);
 		if (dem) {
 			this->draw_dem(viewport, dem);
 		}
@@ -924,9 +881,8 @@ void LayerDEM::draw(Viewport * viewport)
 
 void LayerDEM::free_()
 {
-	int i;
 	if (this->gcs) {
-		for (i = 0; i < DEM_N_HEIGHT_COLORS; i++) {
+		for (int i = 0; i < DEM_N_HEIGHT_COLORS; i++) {
 			g_object_unref(this->gcs[i]);
 		}
 	}
@@ -934,28 +890,48 @@ void LayerDEM::free_()
 	free(this->gcs);
 
 	if (this->gcsgradient) {
-		for (i = 0; i < DEM_N_GRADIENT_COLORS; i++) {
+		for (int i = 0; i < DEM_N_GRADIENT_COLORS; i++) {
 			g_object_unref(this->gcsgradient[i]);
 		}
 	}
 	free(this->gcsgradient);
 
-	// a_dems_list_free(this->files); // kamilFIXME: re-enable this line in future
+	// dem_cache_list_free(this->files); // kamilFIXME: re-enable this line in future
 }
 
 /**************************************************************
  **** SOURCES & DOWNLOADING
  **************************************************************/
-typedef struct {
-	char *dest;
+class DEMDownloadParams {
+public:
+	DEMDownloadParams(std::string& full_path, struct LatLon * ll, LayerDEM * layer);
+	~DEMDownloadParams();
+
+	std::string dest;
 	double lat, lon;
 
-	GMutex *mutex;
+	GMutex * mutex;
 	LayerDEM * layer; /* NULL if not alive */
 
 	unsigned int source;
-} DEMDownloadParams;
+};
 
+
+DEMDownloadParams::DEMDownloadParams(std::string& full_path, struct LatLon * ll, LayerDEM * layer)
+{
+	this->dest = std::string(full_path);
+	this->lat = ll->lat;
+	this->lon = ll->lon;
+	this->layer = layer;
+	this->mutex = vik_mutex_new();
+	this->source = layer->source;
+	g_object_weak_ref(G_OBJECT(this->layer->vl), weak_ref_cb, this);
+}
+
+DEMDownloadParams::~DEMDownloadParams()
+{
+	vik_mutex_free(this->mutex);
+}
 
 /**************************************************
  *  SOURCE: SRTM                                  *
@@ -988,7 +964,7 @@ static void srtm_dem_download_thread(DEMDownloadParams * p, void * threaddata)
 				       ABS(intlon));
 
 	static DownloadFileOptions options = { false, false, NULL, 0, a_check_map_file, NULL, NULL };
-	DownloadResult_t result = a_http_download_get_url(SRTM_HTTP_SITE, src_fn, p->dest, &options, NULL);
+	DownloadResult_t result = a_http_download_get_url(SRTM_HTTP_SITE, src_fn, p->dest.c_str(), &options, NULL);
 	switch (result) {
 	case DOWNLOAD_CONTENT_ERROR:
 	case DOWNLOAD_HTTP_ERROR: {
@@ -998,7 +974,7 @@ static void srtm_dem_download_thread(DEMDownloadParams * p, void * threaddata)
 		break;
 	}
 	case DOWNLOAD_FILE_WRITE_ERROR: {
-		char *msg = g_strdup_printf(_("DEM write failure for %s"), p->dest);
+		char *msg = g_strdup_printf(_("DEM write failure for %s"), p->dest.c_str());
 		window_from_layer(p->layer)->statusbar_update(msg, VIK_STATUSBAR_INFO);
 		free(msg);
 		break;
@@ -1039,12 +1015,11 @@ static void srtm_draw_existence(Viewport * viewport)
 {
 	double max_lat, max_lon, min_lat, min_lon;
 	char buf[strlen(MAPS_CACHE_DIR)+strlen(SRTM_CACHE_TEMPLATE)+30];
-	int i, j;
 
 	viewport->get_min_max_lat_lon(&min_lat, &max_lat, &min_lon, &max_lon);
 
-	for (i = floor(min_lat); i <= floor(max_lat); i++) {
-		for (j = floor(min_lon); j <= floor(max_lon); j++) {
+	for (int i = floor(min_lat); i <= floor(max_lat); i++) {
+		for (int j = floor(min_lon); j <= floor(max_lon); j++) {
 			const char *continent_dir;
 			if ((continent_dir = srtm_continent_dir(i, j)) == NULL) {
 				continue;
@@ -1059,7 +1034,7 @@ static void srtm_draw_existence(Viewport * viewport)
 				 (j >= 0) ? 'E' : 'W',
 				 ABS(j));
 			if (g_file_test(buf, G_FILE_TEST_EXISTS) == true) {
-				VikCoord ne, sw;
+				Coord ne, sw;
 				int x1, y1, x2, y2;
 				sw.north_south = i;
 				sw.east_west = j;
@@ -1145,7 +1120,7 @@ static void dem24k_draw_existence(Viewport * viewport)
 				 floor(j*8)/8);
 
 			if (g_file_test(buf, G_FILE_TEST_EXISTS) == true) {
-				VikCoord ne, sw;
+				Coord ne, sw;
 				int x1, y1, x2, y2;
 				sw.north_south = i;
 				sw.east_west = j-0.125;
@@ -1189,18 +1164,18 @@ static void weak_ref_cb(void * ptr, GObject * dead_vdl)
  * filename will be copied.
  * returns false if file does not exists, true otherwise.
  */
-bool LayerDEM::add_file(char const * filename)
+bool LayerDEM::add_file(std::string& dem_filename)
 {
-	if (g_file_test(filename, G_FILE_TEST_EXISTS) == true) {
+	if (g_file_test(dem_filename.c_str(), G_FILE_TEST_EXISTS) == true) {
 		/* only load if file size is not 0 (not in progress) */
 		GStatBuf sb;
-		(void) stat(filename, &sb);
+		(void) stat(dem_filename.c_str(), &sb);
 		if (sb.st_size) {
-			char * duped_path = g_strdup(filename);
+			std::string * duped_path = new std::string(dem_filename);
 			this->files = g_list_prepend(this->files, duped_path);
-			std::string dem_fullpath = std::string(duped_path);
-			a_dems_load(dem_fullpath);
-			fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, duped_path);
+			std::string dem_fullpath = std::string(*duped_path);
+			dem_cache_load(dem_fullpath);
+			fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, duped_path->c_str());
 		}
 		return true;
 	} else {
@@ -1236,9 +1211,7 @@ static void dem_download_thread(DEMDownloadParams * p, void * threaddata)
 
 static void free_dem_download_params(DEMDownloadParams * p)
 {
-	vik_mutex_free(p->mutex);
-	free(p->dest);
-	free(p);
+	delete p;
 }
 
 static void * dem_layer_download_create(Window * window, Viewport * viewport)
@@ -1252,14 +1225,11 @@ static void * dem_layer_download_create(Window * window, Viewport * viewport)
  */
 static void dem_layer_file_info(GtkWidget *widget, struct LatLon *ll)
 {
-	int intlat, intlon;
-	const char *continent_dir;
+	int intlat = (int)floor(ll->lat);
+	int intlon = (int)floor(ll->lon);
+	const char * continent_dir = srtm_continent_dir(intlat, intlon);
 
-	intlat = (int)floor(ll->lat);
-	intlon = (int)floor(ll->lon);
-	continent_dir = srtm_continent_dir(intlat, intlon);
-
-	char *source = NULL;
+	char * source = NULL;
 	if (continent_dir) {
 		source = g_strdup_printf("http://%s%s%s/%c%02d%c%03d.hgt.zip",
 					   SRTM_HTTP_SITE,
@@ -1274,16 +1244,13 @@ static void dem_layer_file_info(GtkWidget *widget, struct LatLon *ll)
 		source = strdup(_("No DEM File Available"));
 	}
 
-	char *filename = NULL;
-	char *dem_file = NULL;
 #ifdef VIK_CONFIG_DEM24K
-	dem_file = dem24k_lat_lon_to_dest_fn(ll->lat, ll->lon);
+	char * dem_file = dem24k_lat_lon_to_dest_fn(ll->lat, ll->lon);
 #else
-	dem_file = srtm_lat_lon_to_dest_fn(ll->lat, ll->lon);
+	char * dem_file = srtm_lat_lon_to_dest_fn(ll->lat, ll->lon);
 #endif
-	char *message = NULL;
-
-	filename = g_strdup_printf("%s%s", MAPS_CACHE_DIR, dem_file);
+	char * message = NULL;
+	char * filename = g_strdup_printf("%s%s", MAPS_CACHE_DIR, dem_file);
 
 	if (g_file_test(filename, G_FILE_TEST_EXISTS)) {
 		// Get some timestamp information of the file
@@ -1314,16 +1281,14 @@ static bool dem_layer_download_release(Layer * vdl, GdkEventButton * event, View
 
 bool LayerDEM::download_release(GdkEventButton * event, Viewport * viewport)
 {
-	VikCoord coord;
+	Coord coord;
 	static struct LatLon ll;
-
-	char *full_path;
-	char *dem_file = NULL;
 
 	viewport->screen_to_coord(event->x, event->y, &coord);
 	vik_coord_to_latlon(&coord, &ll);
 
 
+	char * dem_file = NULL;
 	if (this->source == DEM_SOURCE_SRTM) {
 		dem_file = srtm_lat_lon_to_dest_fn(ll.lat, ll.lon);
 #ifdef VIK_CONFIG_DEM24K
@@ -1336,22 +1301,14 @@ bool LayerDEM::download_release(GdkEventButton * event, Viewport * viewport)
 		return true;
 	}
 
-	full_path = g_strdup_printf("%s%s", MAPS_CACHE_DIR, dem_file);
-
-	fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, full_path);
-
 	if (event->button == 1) {
+		std::string dem_full_path = std::string(MAPS_CACHE_DIR_2 + std::string(dem_file));
+		fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, dem_full_path.c_str());
+
 		// TODO: check if already in filelist
-		if (!this->add_file(full_path)) {
+		if (!this->add_file(dem_full_path)) {
 			char * tmp = g_strdup_printf(_("Downloading DEM %s"), dem_file);
-			DEMDownloadParams * p = (DEMDownloadParams *) malloc(sizeof(DEMDownloadParams));
-			p->dest = g_strdup(full_path);
-			p->lat = ll.lat;
-			p->lon = ll.lon;
-			p->layer = this;
-			p->mutex = vik_mutex_new();
-			p->source = this->source;
-			g_object_weak_ref(G_OBJECT(p->layer->vl), weak_ref_cb, p);
+			DEMDownloadParams * p = new DEMDownloadParams(dem_full_path, &ll, this);
 
 			a_background_thread(BACKGROUND_POOL_REMOTE,
 					    gtk_window_from_layer(this), tmp,
@@ -1364,10 +1321,9 @@ bool LayerDEM::download_release(GdkEventButton * event, Viewport * viewport)
 		}
 	} else {
 		if (!this->right_click_menu) {
-			GtkWidget *item;
 			this->right_click_menu = GTK_MENU (gtk_menu_new());
 
-			item = gtk_image_menu_item_new_with_mnemonic(_("_Show DEM File Information"));
+			GtkWidget * item = gtk_image_menu_item_new_with_mnemonic(_("_Show DEM File Information"));
 			gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_INFO, GTK_ICON_SIZE_MENU));
 			g_signal_connect(G_OBJECT(item), "activate", G_CALLBACK(dem_layer_file_info), &ll);
 			gtk_menu_shell_append(GTK_MENU_SHELL(this->right_click_menu), item);
@@ -1378,7 +1334,6 @@ bool LayerDEM::download_release(GdkEventButton * event, Viewport * viewport)
 	}
 
 	free(dem_file);
-	free(full_path);
 
 	return true;
 }

@@ -19,36 +19,15 @@
  *
  */
 
-#ifndef _VIKING_DEMLAYER_H
-#define _VIKING_DEMLAYER_H
+#ifndef _SG_LAYER_DEM_H
+#define _SG_LAYER_DEM_H
+
+
+
+
 
 #include "viklayer.h"
 #include "dem.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
-#define VIK_DEM_LAYER_TYPE            (vik_dem_layer_get_type ())
-#define VIK_DEM_LAYER(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_DEM_LAYER_TYPE, VikDEMLayer))
-#define VIK_DEM_LAYER_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), VIK_DEM_LAYER_TYPE, VikDEMLayerClass))
-#define IS_VIK_DEM_LAYER(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), VIK_DEM_LAYER_TYPE))
-#define IS_VIK_DEM_LAYER_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), VIK_DEM_LAYER_TYPE))
-
-typedef struct _VikDEMLayerClass VikDEMLayerClass;
-struct _VikDEMLayerClass
-{
-  VikLayerClass object_class;
-};
-
-GType vik_dem_layer_get_type ();
-
-typedef struct _VikDEMLayer VikDEMLayer;
-
-#ifdef __cplusplus
-}
-#endif
 
 
 
@@ -72,7 +51,7 @@ namespace SlavGPS {
 		void marshall(uint8_t ** data, int * len);
 		void free_();
 		bool download_release(GdkEventButton * event, Viewport * viewport);
-		bool add_file(char const * filename);
+		bool add_file(std::string& dem_filename);
 		void draw_dem(Viewport * viewport, VikDEM * dem);
 		bool set_param(uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
 		VikLayerParamData get_param(uint16_t id, bool is_file_operation);
@@ -101,4 +80,4 @@ namespace SlavGPS {
 
 
 
-#endif
+#endif /* #ifndef _SG_LAYER_DEM_H */
