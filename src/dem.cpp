@@ -632,3 +632,51 @@ void vik_dem_east_north_to_xy(VikDEM *dem, double east, double north, unsigned i
 	*col = (unsigned int) floor((east - dem->min_east) / dem->east_scale);
 	*row = (unsigned int) floor((north - dem->min_north) / dem->north_scale);
 }
+
+
+
+bool vik_dem_overlap(VikDEM * dem, LatLonBBox * bbox)
+{
+	struct LatLon dem_northeast, dem_southwest;
+
+	/* get min, max lat/lon of DEM data */
+	if (dem->horiz_units == VIK_DEM_HORIZ_LL_ARCSECONDS) {
+		dem_northeast.lat = dem->max_north / 3600.0;
+		dem_northeast.lon = dem->max_east / 3600.0;
+		dem_southwest.lat = dem->min_north / 3600.0;
+		dem_southwest.lon = dem->min_east / 3600.0;
+	} else if (dem->horiz_units == VIK_DEM_HORIZ_UTM_METERS) {
+		struct UTM dem_northeast_utm, dem_southwest_utm;
+		dem_northeast_utm.northing = dem->max_north;
+		dem_northeast_utm.easting = dem->max_east;
+		dem_southwest_utm.northing = dem->min_north;
+		dem_southwest_utm.easting = dem->min_east;
+		dem_northeast_utm.zone = dem_southwest_utm.zone = dem->utm_zone;
+		dem_northeast_utm.letter = dem_southwest_utm.letter = dem->utm_letter;
+
+		a_coords_utm_to_latlon(&dem_northeast_utm, &dem_northeast);
+		a_coords_utm_to_latlon(&dem_southwest_utm, &dem_southwest);
+	} else {
+		// Unknown horiz_units - this shouldn't normally happen
+		// Thus can't work out positions to use
+		return false;
+	}
+
+	/* I wish we could use BBOX_INTERSECT() here. */
+
+	if ((bbox->north > dem_northeast.lat && bbox->south > dem_northeast.lat) ||
+	    (bbox->north < dem_southwest.lat && bbox->south < dem_southwest.lat)) {
+
+		fprintf(stderr, "no overlap 1\n");
+		return false;
+
+	} else if ((bbox->east > dem_northeast.lon && bbox->west > dem_northeast.lon) ||
+		   (bbox->east < dem_southwest.lon && bbox->west < dem_southwest.lon)) {
+
+		fprintf(stderr, "no overlap 2\n");
+		return false;
+	} else {
+		fprintf(stderr, "overlap\n");
+		return true;
+	}
+}

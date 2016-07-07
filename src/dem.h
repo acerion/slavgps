@@ -25,6 +25,8 @@
 #include <glib.h>
 #include <stdint.h>
 
+#include "bbox.h"
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -80,6 +82,8 @@ int16_t vik_dem_get_shepard_interpol(VikDEM * dem, double east, double north);
 int16_t vik_dem_get_best_interpol(VikDEM * dem, double east, double north);
 
 void vik_dem_east_north_to_xy(VikDEM * dem, double east, double north, unsigned int * col, unsigned int * row);
+
+bool vik_dem_overlap(VikDEM * dem, LatLonBBox * bbox);
 
 #ifdef __cplusplus
 }
