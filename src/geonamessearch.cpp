@@ -429,7 +429,7 @@ void a_geonames_wikipedia_box(Window * window, LayerTRW * trw, struct LatLon max
 	Waypoint * wiki_wp;
 	found_geoname *wiki_geoname;
 
-	/* encode doubles in a C locale */
+	/* encode doubles in a C locale; kamilTODO: see viewport->get_bbox_strings(). */
 	char *north = a_coords_dtostr(maxmin[0].lat);
 	char *south = a_coords_dtostr(maxmin[1].lat);
 	char *east = a_coords_dtostr(maxmin[0].lon);
