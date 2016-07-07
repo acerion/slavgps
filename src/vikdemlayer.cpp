@@ -468,126 +468,55 @@ static inline uint16_t get_height_difference(int16_t elev, int16_t new_elev)
 
 void LayerDEM::draw_dem(Viewport * viewport, VikDEM * dem)
 {
-	VikDEMColumn *column, *prevcolumn, *nextcolumn;
-
-	struct LatLon dem_northeast, dem_southwest;
 	double max_lat, max_lon, min_lat, min_lon;
-
-	/**** Check if viewport and DEM data overlap ****/
-
-	/* get min, max lat/lon of viewport */
 	viewport->get_min_max_lat_lon(&min_lat, &max_lat, &min_lon, &max_lon);
 
-	/* get min, max lat/lon of DEM data */
-	if (dem->horiz_units == VIK_DEM_HORIZ_LL_ARCSECONDS) {
-		dem_northeast.lat = dem->max_north / 3600.0;
-		dem_northeast.lon = dem->max_east / 3600.0;
-		dem_southwest.lat = dem->min_north / 3600.0;
-		dem_southwest.lon = dem->min_east / 3600.0;
-	} else if (dem->horiz_units == VIK_DEM_HORIZ_UTM_METERS) {
-		struct UTM dem_northeast_utm, dem_southwest_utm;
-		dem_northeast_utm.northing = dem->max_north;
-		dem_northeast_utm.easting = dem->max_east;
-		dem_southwest_utm.northing = dem->min_north;
-		dem_southwest_utm.easting = dem->min_east;
-		dem_northeast_utm.zone = dem_southwest_utm.zone = dem->utm_zone;
-		dem_northeast_utm.letter = dem_southwest_utm.letter = dem->utm_letter;
-
-		a_coords_utm_to_latlon(&dem_northeast_utm, &dem_northeast);
-		a_coords_utm_to_latlon(&dem_southwest_utm, &dem_southwest);
-	} else {
-		// Unknown horiz_units - this shouldn't normally happen
-		// Thus can't work out positions to use
+	/* If given DEM is loaded into application, we want to know whether the DEM and
+	   current viewport overlap, so that we know whether we should draw it in
+	   viewport or not. We do this check every time a viewport has been changed
+	   (moved or re-zoomed). */
+	LatLonBBox viewport_bbox;
+	viewport->get_bbox(&viewport_bbox);
+	if (!vik_dem_overlap(dem, &viewport_bbox)) {
 		return;
 	}
 
-	if ((max_lat > dem_northeast.lat && min_lat > dem_northeast.lat) ||
-	    (max_lat < dem_southwest.lat && min_lat < dem_southwest.lat)) {
-
-		return;
-
-	} else if ((max_lon > dem_northeast.lon && min_lon > dem_northeast.lon) ||
-		   (max_lon < dem_southwest.lon && min_lon < dem_southwest.lon)) {
-
-		return;
-	}
-	/* else they overlap */
-
-	/**** End Overlap Check ****/
+#if 0
 	/* boxes to show where we have DEM instead of actually drawing the DEM.
 	 * useful if we want to see what areas we have coverage for (if we want
 	 * to get elevation data for a track) but don't want to cover the map.
 	 */
 
-#if 0
 	/* draw a box if a DEM is loaded. in future I'd like to add an option for this
 	 * this is useful if we want to see what areas we have dem for but don't want to
 	 * cover the map (or maybe we just need translucent DEM?) */
-	{
-		Coord demne, demsw;
-		int x1, y1, x2, y2;
-		vik_coord_load_from_latlon(&demne, viewport->get_coord_mode(), &dem_northeast);
-		vik_coord_load_from_latlon(&demsw, viewport->get_coord_mode(), &dem_southwest);
-
-		viewport->coord_to_screen(&demne, &x1, &y1);
-		viewport->coord_to_screen(&demsw, &x2, &y2);
-
-		if (x1 > viewport->get_width()) {
-			x1 = viewport->get_width();
-		}
-
-		if (y2 > viewport->get_height()) {
-			y2 = viewport->get_height();
-		}
-
-		if (x2 < 0) {
-			x2 = 0;
-		}
-
-		if (y1 < 0) {
-			y1 = 0;
-		}
-
-		viewport->draw_rectangle(gtk_widget_get_style(GTK_WIDGET(viewport->vvp))->black_gc,
-					 false, x2, y1, x1-x2, y2-y1);
-		return;
-	}
+	draw_loaded_dem_box(viewport);
 #endif
 
 	if (dem->horiz_units == VIK_DEM_HORIZ_LL_ARCSECONDS) {
 		Coord tmp; /* TODO: don't use coord_load_from_latlon, especially if in latlon drawing mode */
-
-		double max_lat_as, max_lon_as, min_lat_as, min_lon_as;
-		double start_lat_as, end_lat_as, start_lon_as, end_lon_as;
-
-		double start_lat, end_lat, start_lon, end_lon;
-
-		struct LatLon counter;
-
-		unsigned int x, y, start_x, start_y;
-
-		int16_t elev;
 
 		unsigned int skip_factor = ceil(viewport->get_xmpp() / 80); /* todo: smarter calculation. */
 
 		double nscale_deg = dem->north_scale / ((double) 3600);
 		double escale_deg = dem->east_scale / ((double) 3600);
 
-		max_lat_as = max_lat * 3600;
-		min_lat_as = min_lat * 3600;
-		max_lon_as = max_lon * 3600;
-		min_lon_as = min_lon * 3600;
+		double max_lat_as = max_lat * 3600;
+		double min_lat_as = min_lat * 3600;
+		double max_lon_as = max_lon * 3600;
+		double min_lon_as = min_lon * 3600;
 
-		start_lat_as = MAX(min_lat_as, dem->min_north);
-		end_lat_as   = MIN(max_lat_as, dem->max_north);
-		start_lon_as = MAX(min_lon_as, dem->min_east);
-		end_lon_as   = MIN(max_lon_as, dem->max_east);
+		double start_lat_as = MAX(min_lat_as, dem->min_north);
+		double end_lat_as   = MIN(max_lat_as, dem->max_north);
+		double start_lon_as = MAX(min_lon_as, dem->min_east);
+		double end_lon_as   = MIN(max_lon_as, dem->max_east);
 
-		start_lat = floor(start_lat_as / dem->north_scale) * nscale_deg;
-		end_lat   = ceil(end_lat_as / dem->north_scale) * nscale_deg;
-		start_lon = floor(start_lon_as / dem->east_scale) * escale_deg;
-		end_lon   = ceil(end_lon_as / dem->east_scale) * escale_deg;
+		double start_lat = floor(start_lat_as / dem->north_scale) * nscale_deg;
+		double end_lat   = ceil(end_lat_as / dem->north_scale) * nscale_deg;
+		double start_lon = floor(start_lon_as / dem->east_scale) * escale_deg;
+		double end_lon   = ceil(end_lon_as / dem->east_scale) * escale_deg;
 
+		unsigned int start_x, start_y;
 		vik_dem_east_north_to_xy(dem, start_lon_as, start_lat_as, &start_x, &start_y);
 		unsigned int gradient_skip_factor = 1;
 		if (this->dem_type == DEM_TYPE_GRADIENT) {
@@ -599,144 +528,139 @@ void LayerDEM::draw_dem(Viewport * viewport, VikDEM * dem)
 			this->max_elev = this->min_elev + 1;
 		}
 
-		for (x=start_x, counter.lon = start_lon; counter.lon <= end_lon+escale_deg*skip_factor; counter.lon += escale_deg * skip_factor, x += skip_factor) {
+		struct LatLon counter;
+		unsigned int x;
+		for (x = start_x, counter.lon = start_lon; counter.lon <= end_lon+escale_deg*skip_factor; counter.lon += escale_deg * skip_factor, x += skip_factor) {
 			// NOTE: (counter.lon <= end_lon + ESCALE_DEG*SKIP_FACTOR) is neccessary so in high zoom modes,
 			// the leftmost column does also get drawn, if the center point is out of viewport.
-			if (x < dem->n_columns) {
-				column = (VikDEMColumn *) g_ptr_array_index(dem->columns, x);
-				// get previous and next column. catch out-of-bound.
-				int32_t new_x = x;
-				new_x -= gradient_skip_factor;
-				if(new_x < 1) {
-					prevcolumn = (VikDEMColumn *) g_ptr_array_index(dem->columns, x+1);
-				} else {
-					prevcolumn = (VikDEMColumn *) g_ptr_array_index(dem->columns, new_x);
-				}
-				new_x = x;
-				new_x += gradient_skip_factor;
-				if (new_x >= dem->n_columns) {
-					nextcolumn = (VikDEMColumn *) g_ptr_array_index(dem->columns, x-1);
-				} else {
-					nextcolumn = (VikDEMColumn *) g_ptr_array_index(dem->columns, new_x);
-				}
-
-				for (y=start_y, counter.lat = start_lat; counter.lat <= end_lat; counter.lat += nscale_deg * skip_factor, y += skip_factor) {
-					if (y > column->n_points) {
-						break;
-					}
-
-					elev = column->points[y];
-
-					// calculate bounding box for drawing
-					int box_x, box_y, box_width, box_height;
-					struct LatLon box_c;
-					box_c = counter;
-					box_c.lat += (nscale_deg * skip_factor)/2;
-					box_c.lon -= (escale_deg * skip_factor)/2;
-					vik_coord_load_from_latlon(&tmp, viewport->get_coord_mode(), &box_c);
-					viewport->coord_to_screen(&tmp, &box_x, &box_y);
-					// catch box at borders
-					if(box_x < 0) {
-						box_x = 0;
-					}
-
-					if(box_y < 0) {
-						box_y = 0;
-					}
-
-					box_c.lat -= nscale_deg * skip_factor;
-					box_c.lon += escale_deg * skip_factor;
-					vik_coord_load_from_latlon(&tmp, viewport->get_coord_mode(), &box_c);
-					viewport->coord_to_screen(&tmp, &box_width, &box_height);
-					box_width -= box_x;
-					box_height -= box_y;
-					// catch box at borders
-					if(box_width < 0 || box_height < 0) {
-						// skip this as is out of the viewport (e.g. zoomed in so this point is way off screen)
-						continue;
-					}
-
-					bool below_minimum = false;
-					if (this->dem_type == DEM_TYPE_HEIGHT) {
-						if (elev != VIK_DEM_INVALID_ELEVATION && elev < this->min_elev) {
-							// Prevent 'elev - this->min_elev' from being negative so can safely use as array index
-							elev = ceil(this->min_elev);
-							below_minimum = true;
-						}
-						if (elev != VIK_DEM_INVALID_ELEVATION && elev > this->max_elev) {
-							elev = this->max_elev;
-						}
-					}
-
-					{
-						if (this->dem_type == DEM_TYPE_GRADIENT) {
-							if(elev == VIK_DEM_INVALID_ELEVATION) {
-								/* don't draw it */
-							} else {
-								// calculate and sum gradient in all directions
-								int16_t change = 0;
-								int32_t new_y;
-
-								// calculate gradient from height points all around the current one
-								new_y = y - gradient_skip_factor;
-								if (new_y < 0) {
-									new_y = y;
-								}
-								change += get_height_difference(elev, prevcolumn->points[new_y]);
-								change += get_height_difference(elev, column->points[new_y]);
-								change += get_height_difference(elev, nextcolumn->points[new_y]);
-
-								change += get_height_difference(elev, prevcolumn->points[y]);
-								change += get_height_difference(elev, nextcolumn->points[y]);
-
-								new_y = y + gradient_skip_factor;
-								if (new_y >= column->n_points) {
-									new_y = y;
-								}
-								change += get_height_difference(elev, prevcolumn->points[new_y]);
-								change += get_height_difference(elev, column->points[new_y]);
-								change += get_height_difference(elev, nextcolumn->points[new_y]);
-
-								change = change / ((skip_factor > 1) ? log(skip_factor) : 0.55); // FIXME: better calc.
-
-								if (change < this->min_elev) {
-									// Prevent 'change - this->min_elev' from being negative so can safely use as array index
-									change = ceil(this->min_elev);
-								}
-
-								if (change > this->max_elev) {
-									change = this->max_elev;
-								}
-
-								// void Viewport::draw_rectangle(Viewport * viewport, GdkGC *gc, bool filled, int x1, int y1, int x2, int y2);
-								viewport->draw_rectangle(this->gcsgradient[(int)floor(((change - this->min_elev)/(this->max_elev - this->min_elev))*(DEM_N_GRADIENT_COLORS-2))+1], true, box_x, box_y, box_width, box_height);
-							}
-						} else {
-							if (this->dem_type == DEM_TYPE_HEIGHT) {
-								if (elev == VIK_DEM_INVALID_ELEVATION) {
-									; /* don't draw it */
-								} else if (elev <= 0 || below_minimum) {
-									/* If 'sea' colour or below the defined mininum draw in the configurable colour */
-									viewport->draw_rectangle(this->gcs[0], true, box_x, box_y, box_width, box_height);
-								} else {
-									viewport->draw_rectangle(this->gcs[(int)floor(((elev - this->min_elev)/(this->max_elev - this->min_elev))*(DEM_N_HEIGHT_COLORS-2))+1], true, box_x, box_y, box_width, box_height);
-								}
-							}
-						}
-					}
-				} /* for y= */
+			if (x >= dem->n_columns) {
+				break;
 			}
+
+			/* Get previous and next column. Catch out-of-bound. */
+			VikDEMColumn *column, *prevcolumn, *nextcolumn;
+			{
+				column = (VikDEMColumn *) g_ptr_array_index(dem->columns, x);
+
+				int32_t new_x = x - gradient_skip_factor;
+				if (new_x < 1) {
+					new_x = x + 1;
+				}
+				prevcolumn = (VikDEMColumn *) g_ptr_array_index(dem->columns, new_x);
+
+				new_x = x + gradient_skip_factor;
+				if (new_x >= dem->n_columns) {
+					new_x = x - 1;
+				}
+				nextcolumn = (VikDEMColumn *) g_ptr_array_index(dem->columns, new_x);
+			}
+
+			unsigned int y;
+			for (y = start_y, counter.lat = start_lat; counter.lat <= end_lat; counter.lat += nscale_deg * skip_factor, y += skip_factor) {
+				if (y > column->n_points) {
+					break;
+				}
+
+				int16_t elev = column->points[y];
+				if (elev == VIK_DEM_INVALID_ELEVATION) {
+					continue; /* don't draw it */
+				}
+
+				// calculate bounding box for drawing
+				int box_x, box_y, box_width, box_height;
+				struct LatLon box_c;
+				box_c = counter;
+				box_c.lat += (nscale_deg * skip_factor)/2;
+				box_c.lon -= (escale_deg * skip_factor)/2;
+				vik_coord_load_from_latlon(&tmp, viewport->get_coord_mode(), &box_c);
+				viewport->coord_to_screen(&tmp, &box_x, &box_y);
+				// catch box at borders
+				if (box_x < 0) {
+					box_x = 0;
+				}
+
+				if (box_y < 0) {
+					box_y = 0;
+				}
+
+				box_c.lat -= nscale_deg * skip_factor;
+				box_c.lon += escale_deg * skip_factor;
+				vik_coord_load_from_latlon(&tmp, viewport->get_coord_mode(), &box_c);
+				viewport->coord_to_screen(&tmp, &box_width, &box_height);
+				box_width -= box_x;
+				box_height -= box_y;
+				// catch box at borders
+				if (box_width < 0 || box_height < 0) {
+					// skip this as is out of the viewport (e.g. zoomed in so this point is way off screen)
+					continue;
+				}
+
+				bool below_minimum = false;
+				if (this->dem_type == DEM_TYPE_HEIGHT) {
+					if (elev < this->min_elev) {
+						// Prevent 'elev - this->min_elev' from being negative so can safely use as array index
+						elev = ceil(this->min_elev);
+						below_minimum = true;
+					}
+					if (elev > this->max_elev) {
+						elev = this->max_elev;
+					}
+				}
+
+				if (this->dem_type == DEM_TYPE_GRADIENT) {
+					// calculate and sum gradient in all directions
+					int16_t change = 0;
+					int32_t new_y;
+
+					// calculate gradient from height points all around the current one
+					new_y = y - gradient_skip_factor;
+					if (new_y < 0) {
+						new_y = y;
+					}
+					change += get_height_difference(elev, prevcolumn->points[new_y]);
+					change += get_height_difference(elev, column->points[new_y]);
+					change += get_height_difference(elev, nextcolumn->points[new_y]);
+
+					change += get_height_difference(elev, prevcolumn->points[y]);
+					change += get_height_difference(elev, nextcolumn->points[y]);
+
+					new_y = y + gradient_skip_factor;
+					if (new_y >= column->n_points) {
+						new_y = y;
+					}
+					change += get_height_difference(elev, prevcolumn->points[new_y]);
+					change += get_height_difference(elev, column->points[new_y]);
+					change += get_height_difference(elev, nextcolumn->points[new_y]);
+
+					change = change / ((skip_factor > 1) ? log(skip_factor) : 0.55); // FIXME: better calc.
+
+					if (change < this->min_elev) {
+						// Prevent 'change - this->min_elev' from being negative so can safely use as array index
+						change = ceil(this->min_elev);
+					}
+
+					if (change > this->max_elev) {
+						change = this->max_elev;
+					}
+
+					// void Viewport::draw_rectangle(Viewport * viewport, GdkGC *gc, bool filled, int x1, int y1, int x2, int y2);
+					int idx = (int)floor(((change - this->min_elev)/(this->max_elev - this->min_elev))*(DEM_N_GRADIENT_COLORS-2))+1;
+					viewport->draw_rectangle(this->gcsgradient[idx], true, box_x, box_y, box_width, box_height);
+
+				} else if (this->dem_type == DEM_TYPE_HEIGHT) {
+					int idx = 0; /* Default index for colour of 'sea' or for places below the defined mininum. */
+					if (elev > 0 && !below_minimum) {
+						idx = (int)floor(((elev - this->min_elev)/(this->max_elev - this->min_elev))*(DEM_N_HEIGHT_COLORS-2))+1;
+					}
+					viewport->draw_rectangle(this->gcs[idx], true, box_x, box_y, box_width, box_height);
+				} else {
+					; /* No other dem type to process. */
+				}
+			} /* for y= */
 		} /* for x= */
 	} else if (dem->horiz_units == VIK_DEM_HORIZ_UTM_METERS) {
-		double max_nor, max_eas, min_nor, min_eas;
-		double start_nor, start_eas, end_nor, end_eas;
-
-		int16_t elev;
-
-		unsigned int x, y, start_x, start_y;
 
 		Coord tmp; /* TODO: don't use coord_load_from_latlon, especially if in latlon drawing mode */
-		struct UTM counter;
 
 		unsigned int skip_factor = ceil(viewport->get_xmpp() / 10); /* todo: smarter calculation. */
 
@@ -747,19 +671,19 @@ void LayerDEM::draw_dem(Viewport * viewport, VikDEM * dem)
 		viewport->screen_to_coord(0,                     viewport->get_height(), &bleft);
 		viewport->screen_to_coord(viewport->get_width(), viewport->get_height(), &bright);
 
-
 		vik_coord_convert(&tleft, VIK_COORD_UTM);
 		vik_coord_convert(&tright, VIK_COORD_UTM);
 		vik_coord_convert(&bleft, VIK_COORD_UTM);
 		vik_coord_convert(&bright, VIK_COORD_UTM);
 
-		max_nor = MAX(tleft.north_south, tright.north_south);
-		min_nor = MIN(bleft.north_south, bright.north_south);
-		max_eas = MAX(bright.east_west, tright.east_west);
-		min_eas = MIN(bleft.east_west, tleft.east_west);
+		double max_nor = MAX(tleft.north_south, tright.north_south);
+		double min_nor = MIN(bleft.north_south, bright.north_south);
+		double max_eas = MAX(bright.east_west, tright.east_west);
+		double min_eas = MIN(bleft.east_west, tleft.east_west);
 
-		start_nor = MAX(min_nor, dem->min_north);
-		end_nor   = MIN(max_nor, dem->max_north);
+		double start_eas, end_eas;
+		double start_nor = MAX(min_nor, dem->min_north);
+		double end_nor   = MIN(max_nor, dem->max_north);
 		if (tleft.utm_zone == dem->utm_zone && bleft.utm_zone == dem->utm_zone
 		    && (tleft.utm_letter >= 'N') == (dem->utm_letter >= 'N')
 		    && (bleft.utm_letter >= 'N') == (dem->utm_letter >= 'N')) { /* if the utm zones/hemispheres are different, min_eas will be bogus */
@@ -783,48 +707,91 @@ void LayerDEM::draw_dem(Viewport * viewport, VikDEM * dem)
 		start_eas = floor(start_eas / dem->east_scale) * dem->east_scale;
 		end_eas   = ceil(end_eas / dem->east_scale) * dem->east_scale;
 
+		unsigned int start_x, start_y;
 		vik_dem_east_north_to_xy(dem, start_eas, start_nor, &start_x, &start_y);
 
 		/* TODO: why start_x and start_y are -1 -- rounding error from above? */
 
+		struct UTM counter;
 		counter.zone = dem->utm_zone;
 		counter.letter = dem->utm_letter;
 
-		for (x=start_x, counter.easting = start_eas; counter.easting <= end_eas; counter.easting += dem->east_scale * skip_factor, x += skip_factor) {
-			if (x > 0 && x < dem->n_columns) {
-				column = (VikDEMColumn *) g_ptr_array_index(dem->columns, x);
-				for (y=start_y, counter.northing = start_nor; counter.northing <= end_nor; counter.northing += dem->north_scale * skip_factor, y += skip_factor) {
-					if (y > column->n_points) {
-						continue;
-					}
-
-					elev = column->points[y];
-					if (elev != VIK_DEM_INVALID_ELEVATION && elev < this->min_elev) {
-						elev = this->min_elev;
-					}
-
-					if (elev != VIK_DEM_INVALID_ELEVATION && elev > this->max_elev) {
-						elev = this->max_elev;
-					}
-
-
-					{
-						int a, b;
-						vik_coord_load_from_utm(&tmp, viewport->get_coord_mode(), &counter);
-						viewport->coord_to_screen(&tmp, &a, &b);
-						if (elev == VIK_DEM_INVALID_ELEVATION) {
-							; /* don't draw it */
-						} else if (elev <= 0) {
-							viewport->draw_rectangle(this->gcs[0], true, a-1, b-1, 2, 2);
-						} else {
-							viewport->draw_rectangle(this->gcs[(int)floor((elev - this->min_elev)/(this->max_elev - this->min_elev)*(DEM_N_HEIGHT_COLORS-2))+1], true, a-1, b-1, 2, 2);
-						}
-					}
-				} /* for y= */
+		unsigned int x;
+		for (x = start_x, counter.easting = start_eas; counter.easting <= end_eas; counter.easting += dem->east_scale * skip_factor, x += skip_factor) {
+			if (x <= 0 || x >= dem->n_columns) { /* kamilTODO: verify this condition, shouldn't it be "if (x < 0 || x >= dem->n_columns)"? */
+				continue;
 			}
+
+			VikDEMColumn * column = (VikDEMColumn *) g_ptr_array_index(dem->columns, x);
+			unsigned int y;
+			for (y = start_y, counter.northing = start_nor; counter.northing <= end_nor; counter.northing += dem->north_scale * skip_factor, y += skip_factor) {
+				if (y > column->n_points) {
+					continue;
+				}
+
+				int16_t elev = column->points[y];
+				if (elev == VIK_DEM_INVALID_ELEVATION) {
+					continue; /* don't draw it */
+				}
+
+
+				if (elev < this->min_elev) {
+					elev = this->min_elev;
+				}
+				if (elev > this->max_elev) {
+					elev = this->max_elev;
+				}
+
+
+				{
+					int a, b;
+					vik_coord_load_from_utm(&tmp, viewport->get_coord_mode(), &counter);
+					viewport->coord_to_screen(&tmp, &a, &b);
+
+					int idx = 0; /* Default index for colour of 'sea'. */
+					if (elev > 0) {
+						idx = (int)floor((elev - this->min_elev)/(this->max_elev - this->min_elev)*(DEM_N_HEIGHT_COLORS-2))+1;
+					}
+					viewport->draw_rectangle(this->gcs[idx], true, a-1, b-1, 2, 2);
+				}
+			} /* for y= */
 		} /* for x= */
 	}
 }
+
+#if 0
+void draw_loaded_dem_box(Viewport * viewport)
+{
+	/* For getting values of dem_northeast and dem_southwest see vik_dem_overlap(). */
+	Coord demne, demsw;
+	int x1, y1, x2, y2;
+	vik_coord_load_from_latlon(&demne, viewport->get_coord_mode(), &dem_northeast);
+	vik_coord_load_from_latlon(&demsw, viewport->get_coord_mode(), &dem_southwest);
+
+	viewport->coord_to_screen(&demne, &x1, &y1);
+	viewport->coord_to_screen(&demsw, &x2, &y2);
+
+	if (x1 > viewport->get_width()) {
+		x1 = viewport->get_width();
+	}
+
+	if (y2 > viewport->get_height()) {
+		y2 = viewport->get_height();
+	}
+
+	if (x2 < 0) {
+		x2 = 0;
+	}
+
+	if (y1 < 0) {
+		y1 = 0;
+	}
+
+	viewport->draw_rectangle(gtk_widget_get_style(GTK_WIDGET(viewport->vvp))->black_gc,
+					 false, x2, y1, x1-x2, y2-y1);
+	return;
+}
+#endif
 
 /* return the continent for the specified lat, lon */
 /* TODO */
@@ -1013,13 +980,13 @@ static char *srtm_lat_lon_to_dest_fn(double lat, double lon)
 /* TODO: generalize */
 static void srtm_draw_existence(Viewport * viewport)
 {
-	double max_lat, max_lon, min_lat, min_lon;
 	char buf[strlen(MAPS_CACHE_DIR)+strlen(SRTM_CACHE_TEMPLATE)+30];
 
-	viewport->get_min_max_lat_lon(&min_lat, &max_lat, &min_lon, &max_lon);
+	LatLonBBox bbox;
+	viewport->get_bbox(&bbox);
 
-	for (int i = floor(min_lat); i <= floor(max_lat); i++) {
-		for (int j = floor(min_lon); j <= floor(max_lon); j++) {
+	for (int i = floor(bbox.south); i <= floor(bbox.north); i++) {
+		for (int j = floor(bbox.west); j <= floor(bbox.east); j++) {
 			const char *continent_dir;
 			if ((continent_dir = srtm_continent_dir(i, j)) == NULL) {
 				continue;
@@ -1033,7 +1000,7 @@ static void srtm_draw_existence(Viewport * viewport)
 				 ABS(i),
 				 (j >= 0) ? 'E' : 'W',
 				 ABS(j));
-			if (g_file_test(buf, G_FILE_TEST_EXISTS) == true) {
+			if (0 == access(buf, F_OK)) {
 				Coord ne, sw;
 				int x1, y1, x2, y2;
 				sw.north_south = i;
@@ -1071,7 +1038,7 @@ static void dem24k_dem_download_thread(DEMDownloadParams * p, void * threaddata)
 {
 	/* TODO: dest dir */
 	char *cmdline = g_strdup_printf("%s %.03f %.03f",
-	DEM24K_DOWNLOAD_SCRIPT,
+					DEM24K_DOWNLOAD_SCRIPT,
 					floor(p->lat*8)/8,
 					ceil(p->lon*8)/8);
 	/* FIX: don't use system, use execv or something. check for existence */
@@ -1101,14 +1068,14 @@ static void dem24k_draw_existence(Viewport * viewport)
 		/* check lat dir first -- faster */
 		snprintf(buf, sizeof(buf), "%sdem24k/%d/", MAPS_CACHE_DIR, (int) i);
 
-		if (g_file_test(buf, G_FILE_TEST_EXISTS) == false) {
+		if (0 != access(buf, F_OK)) {
 			continue;
 		}
 
 		for (j = floor(min_lon*8)/8; j <= floor(max_lon*8)/8; j+=0.125) {
 			/* check lon dir first -- faster */
 			snprintf(buf, sizeof(buf), "%sdem24k/%d/%d/", MAPS_CACHE_DIR, (int) i, (int) j);
-			if (g_file_test(buf, G_FILE_TEST_EXISTS) == false) {
+			if (0 != access(buf, F_OK)) {
 				continue;
 			}
 
@@ -1119,7 +1086,7 @@ static void dem24k_draw_existence(Viewport * viewport)
 				 floor(i*8)/8,
 				 floor(j*8)/8);
 
-			if (g_file_test(buf, G_FILE_TEST_EXISTS) == true) {
+			if (0 == access(buf, F_OK)) {
 				Coord ne, sw;
 				int x1, y1, x2, y2;
 				sw.north_south = i;
@@ -1166,7 +1133,7 @@ static void weak_ref_cb(void * ptr, GObject * dead_vdl)
  */
 bool LayerDEM::add_file(std::string& dem_filename)
 {
-	if (g_file_test(dem_filename.c_str(), G_FILE_TEST_EXISTS) == true) {
+	if (0 == access(dem_filename.c_str(), F_OK)) {
 		/* only load if file size is not 0 (not in progress) */
 		GStatBuf sb;
 		(void) stat(dem_filename.c_str(), &sb);
@@ -1216,7 +1183,6 @@ static void free_dem_download_params(DEMDownloadParams * p)
 
 static void * dem_layer_download_create(Window * window, Viewport * viewport)
 {
-	fprintf(stderr, "%s:%d: %x / %x\n", __FUNCTION__, __LINE__, viewport, viewport->vvp);
 	return viewport;
 }
 
@@ -1252,7 +1218,7 @@ static void dem_layer_file_info(GtkWidget *widget, struct LatLon *ll)
 	char * message = NULL;
 	char * filename = g_strdup_printf("%s%s", MAPS_CACHE_DIR, dem_file);
 
-	if (g_file_test(filename, G_FILE_TEST_EXISTS)) {
+	if (0 == access(filename, F_OK)) {
 		// Get some timestamp information of the file
 		GStatBuf stat_buf;
 		if (g_stat(filename, &stat_buf) == 0) {
