@@ -333,7 +333,7 @@ VikLayerParamData LayerGeoref::get_param(uint16_t id, bool is_file_operation)
 
 static VikLayer * georef_layer_new(Viewport * viewport)
 {
-	LayerGeoref * layer = new LayerGeoref((VikLayer *) NULL);
+	LayerGeoref * layer = new LayerGeoref();
 
 	// Make these defaults based on the current view
 	layer->mpp_northing = viewport->get_ympp();
@@ -437,7 +437,7 @@ void LayerGeoref::draw(Viewport * viewport)
 	}
 }
 
-void LayerGeoref::free_()
+LayerGeoref::~LayerGeoref()
 {
 	if (this->image != NULL) {
 		free(this->image);
@@ -1196,7 +1196,7 @@ VikLayer * vik_georef_layer_create(Viewport * viewport,
 	}
 
 	// Bad image
-	layer->free_();
+	delete layer;
 	return NULL;
 }
 
@@ -1222,32 +1222,6 @@ LayerGeoref::LayerGeoref()
 
 	this->click_x = -1;
 	this->click_y = -1;
-}
-
-
-
-
-
-LayerGeoref::LayerGeoref(VikLayer * vl) : Layer(vl)
-{
-	this->type = VIK_LAYER_GEOREF;
-	strcpy(this->type_string, "GEOREF");
-
-	this->image = NULL;
-	this->pixbuf = NULL;
-	this->alpha = 255;
-
-	this->ll_br.lat = 0.0;
-	this->ll_br.lon = 0.0;
-
-	this->scaled = NULL;
-	this->scaled_width = 0;
-	this->scaled_height = 0;
-
-	this->click_x = -1;
-	this->click_y = -1;
-
-	this->set_defaults(viewport);
 }
 
 

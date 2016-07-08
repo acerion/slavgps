@@ -135,8 +135,8 @@ namespace SlavGPS {
 	class LayerGPS : public Layer {
 	public:
 		LayerGPS();
-		LayerGPS(VikLayer * vl);
 		LayerGPS(Viewport * viewport);
+		~LayerGPS();
 
 		/* Layer interface methods. */
 		void draw(Viewport * viewport);
@@ -145,7 +145,6 @@ namespace SlavGPS {
 		void change_coord_mode(VikCoordMode mode);
 		void add_menu_items(GtkMenu * menu, void * panel);
 		void realize(TreeView * tree_view, GtkTreeIter * layer_iter);
-		void free_();
 		bool set_param(uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
 		VikLayerParamData get_param(uint16_t id, bool is_file_operation);
 

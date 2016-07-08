@@ -846,7 +846,7 @@ void LayerDEM::draw(Viewport * viewport)
 	}
 }
 
-void LayerDEM::free_()
+LayerDEM::~LayerDEM()
 {
 	if (this->gcs) {
 		for (int i = 0; i < DEM_N_HEIGHT_COLORS; i++) {
@@ -1327,50 +1327,33 @@ LayerDEM::LayerDEM()
 
 
 
-LayerDEM::LayerDEM(VikLayer * vl) : Layer(vl)
-{
-	this->type = VIK_LAYER_DEM;
-	this->dem_type = 0;
-	strcpy(this->type_string, "DEM");
-	this->set_defaults(viewport);
-}
-
-
-
-
-
 LayerDEM::LayerDEM(Viewport * viewport) : LayerDEM()
 {
-	/* dem_layer_new(Viewport * viewport) */
-	{
-		this->files = NULL;
+	this->files = NULL;
 
-		this->gcs = (GdkGC **) malloc(sizeof(GdkGC *) * DEM_N_HEIGHT_COLORS);
-		this->gcsgradient = (GdkGC **) malloc(sizeof(GdkGC *) * DEM_N_GRADIENT_COLORS);
-		/* make new gcs only if we need it (copy layer -> use old) */
+	this->gcs = (GdkGC **) malloc(sizeof(GdkGC *) * DEM_N_HEIGHT_COLORS);
+	this->gcsgradient = (GdkGC **) malloc(sizeof(GdkGC *) * DEM_N_GRADIENT_COLORS);
+	/* make new gcs only if we need it (copy layer -> use old) */
 
-		// Ensure the base GC is available so the default colour can be applied
-		if (viewport) {
-			this->gcs[0] = viewport->new_gc("#0000FF", 1);
-		}
-
-		this->set_defaults(viewport);
-
+	// Ensure the base GC is available so the default colour can be applied
+	if (viewport) {
+		this->gcs[0] = viewport->new_gc("#0000FF", 1);
 	}
 
-	/* dem_layer_create() */
-	{
-		if (viewport) {
-			/* TODO: share GCS between layers */
-			for (int i = 0; i < DEM_N_HEIGHT_COLORS; i++) {
-				if (i > 0) {
-					this->gcs[i] = viewport->new_gc(dem_height_colors[i], UNUSED_LINE_THICKNESS);
-				}
-			}
+	this->set_defaults(viewport);
 
-			for (int i = 0; i < DEM_N_GRADIENT_COLORS; i++) {
-				this->gcsgradient[i] = viewport->new_gc(dem_gradient_colors[i], UNUSED_LINE_THICKNESS);
+
+
+	if (viewport) {
+		/* TODO: share GCS between layers */
+		for (int i = 0; i < DEM_N_HEIGHT_COLORS; i++) {
+			if (i > 0) {
+				this->gcs[i] = viewport->new_gc(dem_height_colors[i], UNUSED_LINE_THICKNESS);
 			}
+		}
+
+		for (int i = 0; i < DEM_N_GRADIENT_COLORS; i++) {
+				this->gcsgradient[i] = viewport->new_gc(dem_gradient_colors[i], UNUSED_LINE_THICKNESS);
 		}
 	}
 }

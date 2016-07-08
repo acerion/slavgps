@@ -89,8 +89,8 @@ namespace SlavGPS {
 
 	public:
 		LayerAggregate();
-		LayerAggregate(VikLayer * vl);
 		LayerAggregate(Viewport * viewport);
+		~LayerAggregate();
 
 
 		/* Layer interface methods. */
@@ -102,7 +102,6 @@ namespace SlavGPS {
 		void drag_drop_request(Layer * src, GtkTreeIter * src_item_iter, GtkTreePath * dest_path);
 		void add_menu_items(GtkMenu * menu, void * panel);
 		void realize(TreeView * tree_view, GtkTreeIter * layer_iter);
-		void free_();
 
 
 		void add_layer(Layer * layer, bool allow_reordering);

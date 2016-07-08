@@ -206,7 +206,6 @@ namespace SlavGPS {
 		/* Normally only needed for layers with sublayers. This is called when they
 		   are added to the treeview so they can add sublayers to the treeview. */
 		virtual void realize(TreeView * tree_view, GtkTreeIter * layer_iter);
-		virtual void free_();
 		virtual bool set_param(uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
 
 

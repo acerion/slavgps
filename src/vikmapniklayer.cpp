@@ -456,7 +456,7 @@ VikLayerParamData LayerMapnik::get_param(uint16_t id, bool is_file_operation)
  */
 static VikLayer * mapnik_layer_new(Viewport * viewport)
 {
-	LayerMapnik * layer = new LayerMapnik((VikLayer *) NULL);
+	LayerMapnik * layer = new LayerMapnik();
 
 	layer->tile_size_x = size_default().u; // FUTURE: Is there any use in this being configurable?
 	layer->loaded = false;
@@ -907,7 +907,7 @@ void LayerMapnik::draw(Viewport * viewport)
 /**
  *
  */
-void LayerMapnik::free_()
+LayerMapnik::~LayerMapnik()
 {
 	mapnik_interface_free(this->mi);
 	if (this->filename_css) {
@@ -1206,35 +1206,6 @@ LayerMapnik::LayerMapnik()
 	//this->rerender_br;
 	this->rerender_zoom = 0;
 	this->right_click_menu = NULL;
-}
-
-
-
-
-
-LayerMapnik::LayerMapnik(VikLayer * vl) : Layer(vl)
-{
-	this->type = VIK_LAYER_MAPNIK;
-	strcpy(this->type_string, "MAPNIK");
-
-	this->filename_css = NULL;
-	this->filename_xml = NULL;
-	this->alpha = 0;
-
-	this->tile_size_x = 0; // Y is the same as X ATM
-	this->loaded = false;
-	this->mi = NULL;
-	this->rerender_timeout = 0;
-
-	this->use_file_cache = false;
-	this->file_cache_dir = NULL;
-
-	//this->rerender_ul;
-	//this->rerender_br;
-	this->rerender_zoom = 0;
-	this->right_click_menu = NULL;
-
-	this->set_defaults(viewport);
 }
 
 

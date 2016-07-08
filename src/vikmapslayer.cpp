@@ -124,7 +124,6 @@ static VikLayer * maps_layer_unmarshall(uint8_t *data, int len, Viewport * viewp
 static bool maps_layer_set_param(VikLayer *vml, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
 static VikLayerParamData maps_layer_get_param(VikLayer *vml, uint16_t id, bool is_file_operation);
 static void maps_layer_change_param(GtkWidget *widget, ui_change_values values);
-static VikLayer * maps_layer_new(Viewport * viewport);
 static bool maps_layer_download_release(Layer * vml, GdkEventButton *event, Viewport * viewport);
 static bool maps_layer_download_click(Layer * vml, GdkEventButton *event, Viewport * viewport);
 static void * maps_layer_download_create(Window * window, Viewport * viewport);
@@ -825,22 +824,15 @@ static void maps_layer_change_param(GtkWidget *widget, ui_change_values values)
 
 static VikLayer * maps_layer_new(Viewport * viewport)
 {
-	LayerMaps * layer = new LayerMaps((VikLayer *) NULL);
+	LayerMaps * layer = new LayerMaps();
 
 	layer->dl_tool_x = layer->dl_tool_y = -1;
-	layer->last_center = NULL;
-	layer->last_xmpp = 0.0;
-	layer->last_ympp = 0.0;
-
-	layer->dl_right_click_menu = NULL;
-	layer->filename = NULL;
-
 
 
 	return layer->vl;
 }
 
-void LayerMaps::free_()
+LayerMaps::~LayerMaps()
 {
 	free(this->cache_dir);
 	this->cache_dir = NULL;
@@ -927,10 +919,12 @@ void LayerMaps::marshall(uint8_t **data, int *len)
 
 static VikLayer * maps_layer_unmarshall(uint8_t *data, int len, Viewport * viewport)
 {
-	VikLayer *rv = maps_layer_new(viewport);
-	vik_layer_unmarshall_params(rv, data, len, viewport);
-	((Layer *) rv->layer)->post_read(viewport, false);
-	return rv;
+	LayerMaps * layer = new LayerMaps();
+	VikLayer * vl = (VikLayer *) layer->vl;
+
+	vik_layer_unmarshall_params(vl, data, len, viewport);
+	layer->post_read(viewport, false);
+	return vl;
 }
 
 /*********************/
@@ -2568,50 +2562,6 @@ char * redownload_mode_message(int redownload_mode, int mapstoget, char * label)
 
 
 
-LayerMaps::LayerMaps(VikLayer * vl) : Layer(vl)
-{
-	this->type = VIK_LAYER_MAPS;
-
-	strcpy(this->type_string, "MAPS");
-
-	map_index = 0;
-	cache_dir = NULL;
-	cache_layout = VIK_MAPS_CACHE_LAYOUT_VIKING;
-	alpha = 0;
-
-
-	mapzoom_id = 0;
-	xmapzoom = 0;
-	ymapzoom = 0;
-
-	autodownload = 0;
-	adl_only_missing = 0;
-
-
-	last_center = NULL;
-	last_xmpp = 0;
-	last_ympp = 0;
-
-
-	dl_tool_x = 0;
-	dl_tool_y = 0;
-
-	dl_right_click_menu = NULL;
-
-	memset(&redownload_ul, 0, sizeof (VikCoord));
-	memset(&redownload_br, 0, sizeof (VikCoord));
-
-	redownload_viewport = NULL;
-	filename = NULL;
-#ifdef HAVE_SQLITE3_H
-	mbtiles = NULL;
-#endif
-	this->set_defaults(viewport);
-}
-
-
-
-
 LayerMaps::LayerMaps()
 {
 	fprintf(stderr, "LayerMaps::LayerMaps()\n");
@@ -2639,6 +2589,7 @@ LayerMaps::LayerMaps()
 	last_ympp = 0;
 
 
+	/* Should this be 0 or -1? */
 	dl_tool_x = 0;
 	dl_tool_y = 0;
 

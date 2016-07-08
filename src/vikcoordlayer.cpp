@@ -34,7 +34,6 @@
 
 using namespace SlavGPS;
 
-static VikLayer *coord_layer_new(Viewport * viewport);
 static VikLayer *coord_layer_unmarshall(uint8_t *data, int len, Viewport * viewport);
 static bool coord_layer_set_param(VikLayer *vcl, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
 static VikLayerParamData coord_layer_get_param(VikLayer *vcl, uint16_t id, bool is_file_operation);
@@ -118,12 +117,13 @@ void LayerCoord::marshall(uint8_t ** data, int * len)
 
 static VikLayer * coord_layer_unmarshall(uint8_t * data, int len, Viewport * viewport)
 {
-	VikLayer * rv = coord_layer_new(viewport);
-	vik_layer_unmarshall_params((VikLayer *) rv, data, len, viewport);
+	LayerCoord * layer = new LayerCoord();
+	VikLayer * rv = (VikLayer *) layer->vl;
 
-	LayerCoord * layer = (LayerCoord *) ((VikLayer * ) rv)->layer;
+	vik_layer_unmarshall_params((VikLayer *) layer->vl, data, len, viewport);
+
 	layer->update_gc(viewport);
-	return rv;
+	return layer->vl;
 }
 
 // NB Viewport can be null as it's not used ATM
@@ -188,13 +188,6 @@ void LayerCoord::post_read(Viewport * viewport, bool from_file)
 	this->gc = viewport->new_gc_from_color(&(this->color), this->line_thickness);
 }
 
-static VikLayer * coord_layer_new(Viewport * viewport)
-{
-	LayerCoord * layer = new LayerCoord((VikLayer *) NULL);
-	layer->gc = NULL;
-
-	return layer->vl;
-}
 
 void LayerCoord::draw(Viewport * viewport)
 {
@@ -373,7 +366,7 @@ void LayerCoord::draw(Viewport * viewport)
 	}
 }
 
-void LayerCoord::free_()
+LayerCoord::~LayerCoord()
 {
 	if (this->gc) {
 		g_object_unref(G_OBJECT(this->gc));
@@ -396,18 +389,6 @@ LayerCoord::LayerCoord()
 	this->type = VIK_LAYER_COORD;
 	strcpy(this->type_string, "COORD");
 }
-
-
-LayerCoord::LayerCoord(VikLayer * vl) : Layer(vl)
-{
-	fprintf(stderr, "LayerCoord(vl)\n");
-	this->gc = NULL;
-	this->type = VIK_LAYER_COORD;
-	strcpy(this->type_string, "COORD");
-
-	this->set_defaults(viewport);
-}
-
 
 
 LayerCoord::LayerCoord(Viewport * viewport)

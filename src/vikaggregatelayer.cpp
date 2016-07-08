@@ -38,7 +38,6 @@
 
 using namespace SlavGPS;
 
-static VikLayer *vik_aggregate_layer_new();
 static VikLayer *aggregate_layer_unmarshall(uint8_t *data, int len, Viewport * viewport);
 
 VikLayerInterface vik_aggregate_layer_interface = {
@@ -133,10 +132,9 @@ static VikLayer * aggregate_layer_unmarshall(uint8_t *data, int len, Viewport * 
 	len -= sizeof(int) + alm_size;		\
 	data += sizeof(int) + alm_size;
 
-	VikLayer *rv = vik_aggregate_layer_new();
-	LayerAggregate * aggregate = (LayerAggregate *) rv->layer;
+	LayerAggregate * aggregate = new LayerAggregate();
+	VikLayer * vl = (VikLayer *) aggregate->vl;
 
-	VikLayer * vl = rv;
 	vik_layer_unmarshall_params(vl, data+sizeof(int), alm_size, viewport);
 	alm_next;
 
@@ -146,23 +144,16 @@ static VikLayer * aggregate_layer_unmarshall(uint8_t *data, int len, Viewport * 
 			/* kamilFIXME: shouldn't we put "new LayerXYZ" in every _unmarshall() function? */
 			Layer * new_layer = new Layer(child_layer);
 			aggregate->children->push_front(new_layer);
-			g_signal_connect_swapped(G_OBJECT(child_layer), "update", G_CALLBACK(vik_layer_emit_update_secondary), rv);
+			g_signal_connect_swapped(G_OBJECT(child_layer), "update", G_CALLBACK(vik_layer_emit_update_secondary), vl);
 		}
 		alm_next;
 	}
 	//  fprintf(stdout, "aggregate_layer_unmarshall ended with len=%d\n", len);
-	return rv;
+	return vl;
 #undef alm_size
 #undef alm_next
 
 #endif
-}
-
-VikLayer *vik_aggregate_layer_new()
-{
-	LayerAggregate * layer = new LayerAggregate((VikLayer *) NULL);
-
-	return layer->vl;
 }
 
 void LayerAggregate::insert_layer(Layer * layer, GtkTreeIter *replace_iter)
@@ -759,7 +750,7 @@ static void disconnect_layer_signal(VikLayer *vl, VikLayer *val)
 	}
 }
 
-void LayerAggregate::free_()
+LayerAggregate::~LayerAggregate()
 {
 	for (auto child = this->children->begin(); child != this->children->end(); child++) {
 		disconnect_layer_signal((*child)->vl, this->vl);
@@ -1004,18 +995,6 @@ LayerAggregate::LayerAggregate()
 {
 	this->type = VIK_LAYER_AGGREGATE;
 	this->rename(vik_aggregate_layer_interface.name);
-	this->children = new std::list<Layer *>;
-	this->tracks_analysis_dialog = NULL;
-	strcpy(this->type_string, "AGGREGATE");
-}
-
-
-
-
-
-LayerAggregate::LayerAggregate(VikLayer * vl) : Layer(vl)
-{
-	this->type = VIK_LAYER_AGGREGATE;
 	this->children = new std::list<Layer *>;
 	this->tracks_analysis_dialog = NULL;
 	strcpy(this->type_string, "AGGREGATE");

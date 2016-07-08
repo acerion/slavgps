@@ -117,8 +117,8 @@ namespace SlavGPS {
 
 	public:
 		LayerTRW();
-		LayerTRW(VikLayer * vl);
 		LayerTRW(Viewport * viewport);
+		~LayerTRW();
 
 
 		/* Layer interface methods. */
@@ -159,7 +159,6 @@ namespace SlavGPS {
 		bool sublayer_toggle_visible(int subtype, void * sublayer);
 
 		void realize(TreeView * tree_view, GtkTreeIter * layer_iter);
-		void free_();
 		bool set_param(uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
 		VikLayerParamData get_param(uint16_t id, bool is_file_operation);
 

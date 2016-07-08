@@ -66,7 +66,6 @@ using namespace SlavGPS;
 extern std::vector<BabelDevice *> a_babel_device_list;
 
 
-static VikLayer * vik_gps_layer_new(Viewport * viewport);
 static VikLayer * gps_layer_unmarshall(uint8_t *data, int len, Viewport * viewport);
 static bool gps_layer_set_param(VikLayer *vgl, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
 static VikLayerParamData gps_layer_get_param(VikLayer *vgl, uint16_t id, bool is_file_operation);
@@ -370,22 +369,6 @@ GType vik_gps_layer_get_type()
 	return val_type;
 }
 
-#if 0
-VikLayer * vik_gps_layer_create(Viewport * viewport)
-{
-	VikLayer *rv = vik_gps_layer_new(viewport);
-	LayerGPS * layer = (LayerGPS *) rv->layer;
-	layer->rename(vik_gps_layer_interface.name);
-
-	for (int i = 0; i < NUM_TRW; i++) {
-		layer->trw_children[i] = new LayerTRW(viewport);
-		vik_layer_set_menu_items_selection(layer->trw_children[i]->vl, VIK_MENU_ITEM_ALL & ~(VIK_MENU_ITEM_CUT|VIK_MENU_ITEM_DELETE));
-	}
-
-	return rv;
-}
-#endif
-
 char const * LayerGPS::tooltip()
 {
 	return this->protocol;
@@ -429,8 +412,8 @@ static VikLayer * gps_layer_unmarshall(uint8_t *data, int len, Viewport * viewpo
 	len -= sizeof(int) + alm_size;		\
 	data += sizeof(int) + alm_size;
 
-	VikLayer * rv = vik_gps_layer_new(viewport);
-	LayerGPS * layer = (LayerGPS *) rv->layer;
+	LayerGPS * layer = new LayerGPS(viewport);
+	VikLayer * rv = (VikLayer *) layer->vl;
 
 	vik_layer_unmarshall_params((VikLayer *) rv, data+sizeof(int), alm_size, viewport);
 	alm_next;
@@ -625,46 +608,6 @@ VikLayerParamData LayerGPS::get_param(uint16_t id, bool is_file_operation)
 	return rv;
 }
 
-VikLayer *vik_gps_layer_new(Viewport * viewport)
-{
-	LayerGPS * layer = new LayerGPS((VikLayer *) NULL);
-
-	for (int i = 0; i < NUM_TRW; i++) {
-		layer->trw_children[i] = NULL;
-	}
-	layer->children = NULL;
-	layer->cur_read_child = 0;
-
-#if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
-	layer->vgpsd = NULL;
-	layer->first_realtime_trackpoint = false;
-	layer->realtime_track = NULL;
-
-	layer->realtime_io_channel = NULL;
-	layer->realtime_io_watch_id = 0;
-	layer->realtime_retry_timer = 0;
-	if (viewport) {
-		layer->realtime_track_gc = viewport->new_gc("#203070", 2);
-		layer->realtime_track_bg_gc = viewport->new_gc("grey", 2);
-		layer->realtime_track_pt1_gc = viewport->new_gc("red", 2);
-		layer->realtime_track_pt2_gc = viewport->new_gc("green", 2);
-		layer->realtime_track_pt_gc = layer->realtime_track_pt1_gc;
-	}
-
-	layer->gpsd_host = NULL;
-	layer->gpsd_port = NULL;
-
-	layer->tp = NULL;
-	layer->tp_prev = NULL;
-
-#endif // VIK_CONFIG_REALTIME_GPS_TRACKING
-
-	layer->protocol = NULL;
-	layer->serial_port = NULL;
-
-	return layer->vl;
-}
-
 void LayerGPS::draw(Viewport * viewport)
 {
 	VikLayer *trigger = (VikLayer *) viewport->get_trigger();
@@ -781,7 +724,7 @@ void LayerGPS::disconnect_layer_signal(VikLayer * vl)
 	}
 }
 
-void LayerGPS::free_()
+LayerGPS::~LayerGPS()
 {
 	for (int i = 0; i < NUM_TRW; i++) {
 		if (this->realized) {
@@ -1948,23 +1891,8 @@ LayerGPS::LayerGPS()
 
 
 
-LayerGPS::LayerGPS(VikLayer * vl) : Layer(vl)
-{
-	this->type = VIK_LAYER_GPS;
-
-	strcpy(this->type_string, "GPS");
-	this->set_defaults(viewport);
-};
-
-
-
-
-
 LayerGPS::LayerGPS(Viewport * viewport) : LayerGPS()
 {
-
-	/* vik_gps_layer_new() */
-
 	for (int i = 0; i < NUM_TRW; i++) {
 		this->trw_children[i] = NULL;
 	}
@@ -2006,8 +1934,6 @@ LayerGPS::LayerGPS(Viewport * viewport) : LayerGPS()
 	this->set_defaults(viewport);
 
 
-
-	/* vik_gps_layer_create() */
 
 	this->rename(vik_gps_layer_interface.name);
 

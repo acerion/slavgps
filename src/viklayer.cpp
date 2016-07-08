@@ -483,7 +483,7 @@ static void vik_layer_finalize(VikLayer * vl)
 		free(layer->name);
 	}
 
-	layer->free_();
+	delete layer;
 
 	G_OBJECT_CLASS(parent_class)->finalize(G_OBJECT(vl));
 }
@@ -855,12 +855,6 @@ void Layer::realize(TreeView * tree_view_, GtkTreeIter * layer_iter)
 	this->iter = *layer_iter;
 	this->realized = true;
 
-	return;
-}
-
-
-void Layer::free_()
-{
 	return;
 }
 

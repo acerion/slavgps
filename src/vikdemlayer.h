@@ -42,14 +42,13 @@ namespace SlavGPS {
 	class LayerDEM : public Layer {
 	public:
 		LayerDEM();
-		LayerDEM(VikLayer * vl);
 		LayerDEM(Viewport * viewport);
+		~LayerDEM();
 
 		/* Layer interface methods. */
 		void draw(Viewport * viewport);
 		char const * tooltip();
 		void marshall(uint8_t ** data, int * len);
-		void free_();
 		bool download_release(GdkEventButton * event, Viewport * viewport);
 		bool add_file(std::string& dem_filename);
 		void draw_dem(Viewport * viewport, VikDEM * dem);
