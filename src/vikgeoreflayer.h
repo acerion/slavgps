@@ -122,9 +122,9 @@ namespace SlavGPS {
 		void check_br_is_good_or_msg_user();
 		void calculate_mpp_from_coords(GtkWidget * ww);
 		bool dialog(Viewport * viewport, GtkWindow * w);
-		bool move_release(GdkEventButton * event, Viewport * viewport);
-		bool zoom_press(GdkEventButton * event, Viewport * viewport);
-		bool move_press(GdkEventButton * event, Viewport * viewport);
+		bool move_release(GdkEventButton * event, LayerTool * tool);
+		bool zoom_press(GdkEventButton * event, LayerTool * tool);
+		bool move_press(GdkEventButton * event, LayerTool * tool);
 
 
 

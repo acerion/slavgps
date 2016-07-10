@@ -49,7 +49,7 @@ namespace SlavGPS {
 		void draw(Viewport * viewport);
 		char const * tooltip();
 		void marshall(uint8_t ** data, int * len);
-		bool download_release(GdkEventButton * event, Viewport * viewport);
+		bool download_release(GdkEventButton * event, LayerTool * tool);
 		bool add_file(std::string& dem_filename);
 		void draw_dem(Viewport * viewport, VikDEM * dem);
 		bool set_param(uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);

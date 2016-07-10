@@ -117,14 +117,19 @@ namespace SlavGPS {
 
 	class Window;
 	class LayerTRW;
+	class LayerTool;
+
+
+	typedef struct {
+		bool has_oldcoord;
+		VikCoord oldcoord;
+	} ruler_tool_state_t;
 
 
 
 
 
 	typedef struct {
-		Window * window;
-		Viewport * viewport;
 		LayerTRW * trw; // LayerTRW
 		bool holding;
 		bool moving;
@@ -135,6 +140,13 @@ namespace SlavGPS {
 
 
 
+	typedef struct {
+		GdkPixmap *pixmap;
+		// Track zoom bounds for zoom tool with shift modifier:
+		bool bounds_active;
+		int start_x;
+		int start_y;
+	} zoom_tool_state_t;
 
 
 
@@ -166,9 +178,9 @@ namespace SlavGPS {
 
 		virtual bool show_selected_viewport_menu(GdkEventButton * event, Viewport * viewport);
 
-		virtual bool select_click(GdkEventButton * event, Viewport * viewport, tool_ed_t * tet);
-		virtual bool select_move(GdkEventMotion * event, Viewport * viewport, tool_ed_t * t);
-		virtual bool select_release(GdkEventButton * event, Viewport * viewport, tool_ed_t * t);
+		virtual bool select_click(GdkEventButton * event, Viewport * viewport, LayerTool * tool);
+		virtual bool select_move(GdkEventMotion * event, Viewport * viewport, LayerTool * tool);
+		virtual bool select_release(GdkEventButton * event, Viewport * viewport, LayerTool * tool);
 
 		/* kamilTODO: consider removing them from Layer. They are overriden only in LayerTRW. */
 		virtual void set_menu_selection(uint16_t selection);
@@ -247,15 +259,18 @@ namespace SlavGPS {
 
 
 	/* void * is tool-specific state created in the constructor */
-	typedef void * (*VikToolConstructorFunc) (SlavGPS::Window *, SlavGPS::Viewport *);
-	typedef void (*VikToolDestructorFunc) (void *);
-	typedef VikLayerToolFuncStatus (*VikToolMouseFunc) (SlavGPS::Layer *, GdkEventButton *, void *);
-	typedef VikLayerToolFuncStatus (*VikToolMouseMoveFunc) (SlavGPS::Layer *, GdkEventMotion *, void *);
-	typedef void (*VikToolActivationFunc) (SlavGPS::Layer *, void *);
-	typedef bool (*VikToolKeyFunc) (SlavGPS::Layer *, GdkEventKey *, void *);
+	typedef LayerTool * (*VikToolConstructorFunc) (SlavGPS::Window *, SlavGPS::Viewport *);
+	typedef void (*VikToolDestructorFunc) (LayerTool *);
+	typedef VikLayerToolFuncStatus (*VikToolMouseFunc) (SlavGPS::Layer *, GdkEventButton *, LayerTool *);
+	typedef VikLayerToolFuncStatus (*VikToolMouseMoveFunc) (SlavGPS::Layer *, GdkEventMotion *, LayerTool *);
+	typedef void (*VikToolActivationFunc) (SlavGPS::Layer *, LayerTool *);
+	typedef bool (*VikToolKeyFunc) (SlavGPS::Layer *, GdkEventKey *, LayerTool *);
 
-	typedef struct _VikToolInterface VikToolInterface;
-	struct _VikToolInterface {
+	class LayerTool {
+
+	public:
+
+
 		GtkRadioActionEntry radioActionEntry;
 
 		VikToolConstructorFunc create;
@@ -271,6 +286,14 @@ namespace SlavGPS {
 		GdkCursorType cursor_type;
 		const GdkPixdata *cursor_data;
 		const GdkCursor *cursor;
+
+
+		Viewport * viewport;
+		Window * window;
+		tool_ed_t * ed;
+		ruler_tool_state_t * ruler;
+		zoom_tool_state_t * zoom;
+		int layer_type;
 	};
 
 
@@ -301,7 +324,7 @@ struct _VikLayerInterface {
 	const char *                     accelerator;
 	const GdkPixdata *                icon;
 
-	SlavGPS::VikToolInterface *                tools;
+	SlavGPS::LayerTool *               layer_tools;
 	uint16_t                           tools_count;
 
 	/* for I/O reading to and from .vik files -- params like coordline width, color, etc. */

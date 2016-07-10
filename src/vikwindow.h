@@ -102,28 +102,18 @@ namespace SlavGPS {
 	class LayerTRW;
 	class LayersPanel;
 	class Window;
-	struct _VikToolInterface;
+	class LayerTool;
 
 
 
 
 
-	/* tool management */
-	typedef struct {
-		struct _VikToolInterface ti;
-		void * state;
-		int layer_type;
-	} toolbox_tool_t;
 #define TOOL_LAYER_TYPE_NONE -1
 
-
-
-
-
 	typedef struct {
-		int active_tool;
+		LayerTool * active_tool;
 		int n_tools;
-		toolbox_tool_t * tools;
+		LayerTool ** tools;
 		Window * window;
 	} toolbox_tools_t;
 

@@ -87,14 +87,15 @@ static VikLayerParamData georef_layer_get_param(VikLayer *vgl, uint16_t id, bool
 static VikLayer *georef_layer_new(Viewport * viewport);
 
 /* tools */
-static void * georef_layer_move_create(Window * window, Viewport * viewport);
-static bool georef_layer_move_release_cb(Layer * vgl, GdkEventButton *event, Viewport * viewport);
-static bool georef_layer_move_press_cb(Layer * vgl, GdkEventButton *event, Viewport * viewport);
-static void * georef_layer_zoom_create(Window * window, Viewport * viewport);
-static bool georef_layer_zoom_press_cb(Layer * vgl, GdkEventButton *event, Viewport * viewport);
+static LayerTool * georef_layer_move_create(Window * window, Viewport * viewport);
+static bool georef_layer_move_release_cb(Layer * vgl, GdkEventButton *event, LayerTool * tool);
+static bool georef_layer_move_press_cb(Layer * vgl, GdkEventButton *event, LayerTool * tool);
+
+static LayerTool * georef_layer_zoom_create(Window * window, Viewport * viewport);
+static bool georef_layer_zoom_press_cb(Layer * vgl, GdkEventButton *event, LayerTool * tool);
 
 // See comment in viktrwlayer.c for advice on values used
-static VikToolInterface georef_tools[] = {
+static LayerTool georef_tools[] = {
 	{ { "GeorefMoveMap", "vik-icon-Georef Move Map",  N_("_Georef Move Map"), NULL,  N_("Georef Move Map"), 0 },
 	  georef_layer_move_create, /* (VikToolConstructorFunc) */
 	  NULL,
@@ -103,7 +104,7 @@ static VikToolInterface georef_tools[] = {
 	  (VikToolMouseFunc) georef_layer_move_press_cb,
 	  NULL,
 	  (VikToolMouseFunc) georef_layer_move_release_cb,
-	  (VikToolKeyFunc) NULL,
+	  NULL,
 	  false,
 	  GDK_CURSOR_IS_PIXMAP,
 	  &cursor_geomove_pixbuf,
@@ -116,7 +117,7 @@ static VikToolInterface georef_tools[] = {
 	  NULL,
 	  (VikToolMouseFunc) georef_layer_zoom_press_cb,
 	  NULL, NULL,
-	  (VikToolKeyFunc) NULL,
+	  NULL,
 	  false,
 	  GDK_CURSOR_IS_PIXMAP,
 	  &cursor_geozoom_pixbuf,
@@ -130,7 +131,7 @@ VikLayerInterface vik_georef_layer_interface = {
 	&vikgeoreflayer_pixbuf, /*icon */
 
 	georef_tools,
-	sizeof(georef_tools) / sizeof(VikToolInterface),
+	sizeof(georef_tools) / sizeof(LayerTool),
 
 	georef_layer_params,
 	NUM_PARAMS,
@@ -1060,17 +1061,19 @@ void LayerGeoref::add_menu_items(GtkMenu *menu, void * panel)
 }
 
 
-static void * georef_layer_move_create(Window * window, Viewport * viewport)
+static LayerTool * georef_layer_move_create(Window * window, Viewport * viewport)
 {
-	return viewport;
+	georef_tools[0].layer_type = VIK_LAYER_GEOREF;
+	georef_tools[0].viewport = viewport;
+	return &georef_tools[0];
 }
 
-static bool georef_layer_move_release_cb(Layer * vgl, GdkEventButton * event, Viewport * viewport)
+static bool georef_layer_move_release_cb(Layer * vgl, GdkEventButton * event, LayerTool * tool)
 {
-	return ((LayerGeoref *) vgl)->move_release(event, viewport);
+	return ((LayerGeoref *) vgl)->move_release(event, tool);
 }
 
-bool LayerGeoref::move_release(GdkEventButton * event, Viewport * viewport)
+bool LayerGeoref::move_release(GdkEventButton * event, LayerTool * tool)
 {
 	if (this->type != VIK_LAYER_GEOREF) {
 		/* kamilFIXME: this shouldn't happen, right? */
@@ -1086,17 +1089,19 @@ bool LayerGeoref::move_release(GdkEventButton * event, Viewport * viewport)
 	return false; /* I didn't move anything on this layer! */
 }
 
-static void * georef_layer_zoom_create(Window * window, Viewport * viewport)
+static LayerTool * georef_layer_zoom_create(Window * window, Viewport * viewport)
 {
-	return viewport;
+	georef_tools[1].layer_type = VIK_LAYER_GEOREF;
+	georef_tools[1].viewport = viewport;
+	return &georef_tools[1];
 }
 
-static bool georef_layer_zoom_press_cb(Layer * vgl, GdkEventButton * event, Viewport * viewport)
+static bool georef_layer_zoom_press_cb(Layer * vgl, GdkEventButton * event, LayerTool * tool)
 {
-	return ((LayerGeoref *) vgl)->zoom_press(event, viewport);
+	return ((LayerGeoref *) vgl)->zoom_press(event, tool);
 }
 
-bool LayerGeoref::zoom_press(GdkEventButton * event, Viewport * viewport)
+bool LayerGeoref::zoom_press(GdkEventButton * event, LayerTool * tool)
 {
 	if (this->type != VIK_LAYER_GEOREF) {
 		/* kamilFIXME: this shouldn't happen, right? */
@@ -1114,19 +1119,19 @@ bool LayerGeoref::zoom_press(GdkEventButton * event, Viewport * viewport)
 			this->mpp_northing /= 1.01;
 		}
 	}
-	viewport->set_xmpp(this->mpp_easting);
-	viewport->set_ympp(this->mpp_northing);
+	tool->viewport->set_xmpp(this->mpp_easting);
+	tool->viewport->set_ympp(this->mpp_northing);
 	this->emit_update();
 	return true;
 }
 
 
-static bool georef_layer_move_press_cb(Layer * vgl, GdkEventButton *event, Viewport * viewport)
+static bool georef_layer_move_press_cb(Layer * vgl, GdkEventButton *event, LayerTool * tool)
 {
-	return ((LayerGeoref *) vgl)->move_press(event, viewport);
+	return ((LayerGeoref *) vgl)->move_press(event, tool);
 }
 
-bool LayerGeoref::move_press(GdkEventButton * event, Viewport * viewport)
+bool LayerGeoref::move_press(GdkEventButton * event, LayerTool * tool)
 {
 	if (this->type != VIK_LAYER_GEOREF) {
 		/* kamilFIXME: this shouldn't happen, right? */

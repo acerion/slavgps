@@ -112,16 +112,12 @@ static bool mapnik_layer_set_param(VikLayer *vml, uint16_t id, VikLayerParamData
 static VikLayerParamData mapnik_layer_get_param(VikLayer *vml, uint16_t id, bool is_file_operation);
 static VikLayer * mapnik_layer_new(Viewport * viewport);
 
-static void * mapnik_feature_create(Window * window, Viewport * viewport)
-{
-	return viewport;
-}
-
-static bool mapnik_feature_release_cb(Layer * vml, GdkEventButton *event, Viewport * viewport);
+static LayerTool * mapnik_feature_create(Window * window, Viewport * viewport);
+static bool mapnik_feature_release_cb(Layer * vml, GdkEventButton *event, LayerTool * tool);
 
 // See comment in viktrwlayer.c for advice on values used
 // FUTURE:
-static VikToolInterface mapnik_tools[] = {
+static LayerTool mapnik_tools[] = {
 	// Layer Info
 	// Zoom All?
   { { "MapnikFeatures", GTK_STOCK_INFO, N_("_Mapnik Features"), NULL, N_("Mapnik Features"), 0 },
@@ -145,7 +141,7 @@ VikLayerInterface vik_mapnik_layer_interface = {
 	&vikmapniklayer_pixbuf, // icon
 
 	mapnik_tools,
-	sizeof(mapnik_tools) / sizeof(VikToolInterface),
+	sizeof(mapnik_tools) / sizeof(LayerTool),
 
 	mapnik_layer_params,
 	NUM_PARAMS,
@@ -1143,20 +1139,27 @@ void LayerMapnik::tile_info()
 	free(filename);
 }
 
-static bool mapnik_feature_release_cb(Layer * vml, GdkEventButton *event, Viewport * viewport)
+static LayerTool * mapnik_feature_create(Window * window, Viewport * viewport)
+{
+	mapnik_tools[0].layer_type = VIK_LAYER_MAPNIK;
+	mapnik_tools[0].viewport = viewport;
+	return &mapnik_tools[0];
+}
+
+static bool mapnik_feature_release_cb(Layer * vml, GdkEventButton *event, LayerTool * tool)
 {
 	if (!vml) {
 		return false;
 	}
 
-	return ((LayerMapnik *) vml)->feature_release(event, viewport);
+	return ((LayerMapnik *) vml)->feature_release(event, tool);
 }
 
-bool LayerMapnik::feature_release(GdkEventButton * event, Viewport * viewport)
+bool LayerMapnik::feature_release(GdkEventButton * event, LayerTool * tool)
 {
 	if (event->button == 3) {
-		viewport->screen_to_coord(MAX(0, event->x), MAX(0, event->y), &this->rerender_ul);
-		this->rerender_zoom = viewport->get_zoom();
+		tool->viewport->screen_to_coord(MAX(0, event->x), MAX(0, event->y), &this->rerender_ul);
+		this->rerender_zoom = tool->viewport->get_zoom();
 
 		if (!this->right_click_menu) {
 			GtkWidget *item;

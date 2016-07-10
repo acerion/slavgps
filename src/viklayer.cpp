@@ -706,12 +706,12 @@ Layer::Layer(VikLayer * vl_) : Layer()
 	fprintf(stderr, "Layer::Layer(vl)\n");
 }
 
-bool Layer::select_click(GdkEventButton * event, Viewport * viewport, tool_ed_t * tet)
+bool Layer::select_click(GdkEventButton * event, Viewport * viewport, LayerTool * tool)
 {
 	return false;
 }
 
-bool Layer::select_move(GdkEventMotion * event, Viewport * viewport, tool_ed_t * t)
+bool Layer::select_move(GdkEventMotion * event, Viewport * viewport, LayerTool * tool)
 {
 	return false;
 }
@@ -721,7 +721,7 @@ void Layer::post_read(Viewport * viewport, bool from_file)
 	return;
 }
 
-bool Layer::select_release(GdkEventButton * event, Viewport * viewport, tool_ed_t * t)
+bool Layer::select_release(GdkEventButton * event, Viewport * viewport, LayerTool * tool)
 {
 	return false;
 }
@@ -868,3 +868,5 @@ GtkWindow * gtk_window_from_layer(Layer * layer)
 {
 	return GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(layer->tree_view->vt)));
 }
+
+

@@ -124,11 +124,13 @@ static VikLayer * maps_layer_unmarshall(uint8_t *data, int len, Viewport * viewp
 static bool maps_layer_set_param(VikLayer *vml, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
 static VikLayerParamData maps_layer_get_param(VikLayer *vml, uint16_t id, bool is_file_operation);
 static void maps_layer_change_param(GtkWidget *widget, ui_change_values values);
-static bool maps_layer_download_release(Layer * vml, GdkEventButton *event, Viewport * viewport);
-static bool maps_layer_download_click(Layer * vml, GdkEventButton *event, Viewport * viewport);
-static void * maps_layer_download_create(Window * window, Viewport * viewport);
 static void start_download_thread(LayerMaps * layer, Viewport * viewport, const VikCoord *ul, const VikCoord *br, int redownload_mode);
 static int map_type_to_map_index(MapTypeID map_type);
+
+
+static LayerTool * maps_layer_download_create(Window * window, Viewport * viewport);
+static bool maps_layer_download_release(Layer * vml, GdkEventButton *event, LayerTool * toolx);
+static bool maps_layer_download_click(Layer * vml, GdkEventButton *event, LayerTool * tool);
 
 
 static VikLayerParamScale params_scales[] = {
@@ -201,7 +203,7 @@ void maps_layer_set_cache_default (VikMapsCacheLayout layout)
 	cache_layout_default_value = layout;
 }
 
-static VikToolInterface maps_tools[] = {
+static LayerTool maps_tools[] = {
 	{ { "MapsDownload", "vik-icon-Maps Download", N_("_Maps Download"), NULL, N_("Maps Download"), 0 },
 	  maps_layer_download_create, /* (VikToolConstructorFunc) */
 	  NULL,
@@ -1978,7 +1980,7 @@ static void maps_layer_tile_info(VikLayer *vml)
 	free(filename);
 }
 
-static bool maps_layer_download_release(Layer * vml, GdkEventButton *event, Viewport * viewport)
+static bool maps_layer_download_release(Layer * vml, GdkEventButton *event, LayerTool * tool)
 {
 	if (!vml || vml->type != VIK_LAYER_MAPS) {
 		return false;
@@ -1989,16 +1991,16 @@ static bool maps_layer_download_release(Layer * vml, GdkEventButton *event, View
 	if (layer->dl_tool_x != -1 && layer->dl_tool_y != -1) {
 		if (event->button == 1) {
 			VikCoord ul, br;
-			viewport->screen_to_coord(MAX(0, MIN(event->x, layer->dl_tool_x)), MAX(0, MIN(event->y, layer->dl_tool_y)), &ul);
-			viewport->screen_to_coord(MIN(viewport->get_width(), MAX(event->x, layer->dl_tool_x)), MIN(viewport->get_height(), MAX (event->y, layer->dl_tool_y)), &br);
-			start_download_thread(layer, viewport, &ul, &br, DOWNLOAD_OR_REFRESH);
+			tool->viewport->screen_to_coord(MAX(0, MIN(event->x, layer->dl_tool_x)), MAX(0, MIN(event->y, layer->dl_tool_y)), &ul);
+			tool->viewport->screen_to_coord(MIN(tool->viewport->get_width(), MAX(event->x, layer->dl_tool_x)), MIN(tool->viewport->get_height(), MAX (event->y, layer->dl_tool_y)), &br);
+			start_download_thread(layer, tool->viewport, &ul, &br, DOWNLOAD_OR_REFRESH);
 			layer->dl_tool_x = layer->dl_tool_y = -1;
 			return true;
 		} else {
-			viewport->screen_to_coord(MAX(0, MIN(event->x, layer->dl_tool_x)), MAX(0, MIN(event->y, layer->dl_tool_y)), &(layer->redownload_ul));
-			viewport->screen_to_coord(MIN(viewport->get_width(), MAX(event->x, layer->dl_tool_x)), MIN(viewport->get_height(), MAX (event->y, layer->dl_tool_y)), &(layer->redownload_br));
+			tool->viewport->screen_to_coord(MAX(0, MIN(event->x, layer->dl_tool_x)), MAX(0, MIN(event->y, layer->dl_tool_y)), &(layer->redownload_ul));
+			tool->viewport->screen_to_coord(MIN(tool->viewport->get_width(), MAX(event->x, layer->dl_tool_x)), MIN(tool->viewport->get_height(), MAX (event->y, layer->dl_tool_y)), &(layer->redownload_br));
 
-			layer->redownload_viewport = viewport;
+			layer->redownload_viewport = tool->viewport;
 
 			layer->dl_tool_x = layer->dl_tool_y = -1;
 
@@ -2031,12 +2033,14 @@ static bool maps_layer_download_release(Layer * vml, GdkEventButton *event, View
 	return false;
 }
 
-static void * maps_layer_download_create(Window * window, Viewport * viewport)
+static LayerTool * maps_layer_download_create(Window * window, Viewport * viewport)
 {
-	return viewport;
+	maps_tools[0].layer_type = VIK_LAYER_MAPS;
+	maps_tools[0].viewport = viewport;
+	return &maps_tools[0];
 }
 
-static bool maps_layer_download_click(Layer * vml, GdkEventButton *event, Viewport * viewport)
+static bool maps_layer_download_click(Layer * vml, GdkEventButton *event, LayerTool * tool)
 {
 	TileInfo tmp;
 	if (!vml || vml->type != VIK_LAYER_MAPS) {
@@ -2046,10 +2050,10 @@ static bool maps_layer_download_click(Layer * vml, GdkEventButton *event, Viewpo
 	LayerMaps * layer = (LayerMaps *) vml;
 
 	MapSource *map = map_sources[layer->map_index];
-	if (map->get_drawmode() == viewport->get_drawmode() &&
-	     map->coord_to_tile(viewport->get_center(),
-				layer->xmapzoom ? layer->xmapzoom : viewport->get_xmpp(),
-				layer->ymapzoom ? layer->ymapzoom : viewport->get_ympp(),
+	if (map->get_drawmode() == tool->viewport->get_drawmode() &&
+	     map->coord_to_tile(tool->viewport->get_center(),
+				layer->xmapzoom ? layer->xmapzoom : tool->viewport->get_xmpp(),
+				layer->ymapzoom ? layer->ymapzoom : tool->viewport->get_ympp(),
 				&tmp)) {
 		layer->dl_tool_x = event->x, layer->dl_tool_y = event->y;
 		return true;

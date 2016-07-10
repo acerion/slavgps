@@ -92,7 +92,7 @@ namespace SlavGPS {
 		GdkPixbuf * get_pixbuf(TileInfo * ulm, TileInfo * brm);
 		void rerender();
 		void tile_info();
-		bool feature_release(GdkEventButton * event, Viewport * viewport);
+		bool feature_release(GdkEventButton * event, LayerTool * tool);
 
 
 
