@@ -269,30 +269,30 @@ namespace SlavGPS {
 	class LayerTool {
 
 	public:
+		LayerTool(Window * window, Viewport * viewport, int layer_type);
+		~LayerTool();
 
+		VikToolActivationFunc activate = NULL;
+		VikToolActivationFunc deactivate = NULL;
+		VikToolMouseFunc click = NULL;
+		VikToolMouseMoveFunc move = NULL;
+		VikToolMouseFunc release = NULL;
+		VikToolKeyFunc key_press = NULL; /* return false if we don't use the key press -- should return false most of the time if we want any shortcuts / UI keybindings to work! use sparingly. */
 
-		GtkRadioActionEntry radioActionEntry;
+		GtkRadioActionEntry radioActionEntry = { NULL, NULL, NULL, NULL, NULL, 0 };
 
-		VikToolConstructorFunc create;
-		VikToolDestructorFunc destroy;
-		VikToolActivationFunc activate;
-		VikToolActivationFunc deactivate;
-		VikToolMouseFunc click;
-		VikToolMouseMoveFunc move;
-		VikToolMouseFunc release;
-		VikToolKeyFunc key_press; /* return false if we don't use the key press -- should return false most of the time if we want any shortcuts / UI keybindings to work! use sparingly. */
+		bool pan_handler = false; // Call click & release funtions even when 'Pan Mode' is on
+		GdkCursorType cursor_type = GDK_CURSOR_IS_PIXMAP;
+		GdkPixdata const * cursor_data = NULL;
+		GdkCursor const * cursor = NULL;
 
-		bool pan_handler; // Call click & release funtions even when 'Pan Mode' is on
-		GdkCursorType cursor_type;
-		const GdkPixdata *cursor_data;
-		const GdkCursor *cursor;
+		Window * window = NULL;
+		Viewport * viewport = NULL;
 
+		tool_ed_t * ed = NULL;
+		ruler_tool_state_t * ruler = NULL;
+		zoom_tool_state_t * zoom = NULL;
 
-		Viewport * viewport;
-		Window * window;
-		tool_ed_t * ed;
-		ruler_tool_state_t * ruler;
-		zoom_tool_state_t * zoom;
 		int layer_type;
 	};
 
@@ -324,7 +324,9 @@ struct _VikLayerInterface {
 	const char *                     accelerator;
 	const GdkPixdata *                icon;
 
-	SlavGPS::LayerTool *               layer_tools;
+	SlavGPS::VikToolConstructorFunc layer_tool_constructors[7];
+	SlavGPS::LayerTool **              layer_tools;
+
 	uint16_t                           tools_count;
 
 	/* for I/O reading to and from .vik files -- params like coordline width, color, etc. */

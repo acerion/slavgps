@@ -46,6 +46,7 @@ VikLayerInterface vik_aggregate_layer_interface = {
 	"<control><shift>A",
 	&vikaggregatelayer_pixbuf,
 
+	{ NULL, NULL, NULL, NULL, NULL, NULL, NULL },
 	NULL,
 	0,
 

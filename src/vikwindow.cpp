@@ -143,7 +143,7 @@ static void menu_delete_layer_cb(GtkAction * a, Window * window);
 static void menu_cb(GtkAction * old, GtkAction * a, Window * window);
 static void window_change_coord_mode_cb(GtkAction * old, GtkAction * a, Window * window);
 static toolbox_tools_t* toolbox_create(Window * window);
-static void toolbox_add_tool(toolbox_tools_t * vt, LayerTool * layer_tool, int layer_type);
+static LayerTool const * toolbox_add_tool(toolbox_tools_t * vt, VikToolConstructorFunc create_fn, int layer_type);
 static int toolbox_get_tool(toolbox_tools_t * vt, char const * tool_name);
 static void toolbox_activate(toolbox_tools_t * vt, char const * tool_name);
 static const GdkCursor *toolbox_get_cursor(toolbox_tools_t * vt, char const * tool_name);
@@ -488,9 +488,9 @@ void Window::selected_layer(Layer * layer)
 
 		for (int tool = 0; tool < tool_count; tool++) {
 			GtkAction * action = gtk_action_group_get_action(this->action_group,
-									 layer_interface->layer_tools[tool].radioActionEntry.name);
+									 layer_interface->layer_tools[tool]->radioActionEntry.name);
 			g_object_set(action, "sensitive", type == layer->type, NULL);
-			toolbar_action_set_sensitive(this->viking_vtb, vik_layer_get_interface((VikLayerTypeEnum) type)->layer_tools[tool].radioActionEntry.name, type == layer->type);
+			toolbar_action_set_sensitive(this->viking_vtb, vik_layer_get_interface((VikLayerTypeEnum) type)->layer_tools[tool]->radioActionEntry.name, type == layer->type);
 		}
 	}
 }
@@ -908,7 +908,7 @@ static void draw_status_tool(Window * window)
 {
 	if (window->current_tool == TOOL_LAYER) {
 		// Use tooltip rather than the internal name as the tooltip is i8n
-		vik_statusbar_set_message(window->viking_vs, VIK_STATUSBAR_TOOL, vik_layer_get_interface((VikLayerTypeEnum) window->tool_layer_id)->layer_tools[window->tool_tool_id].radioActionEntry.tooltip);
+		vik_statusbar_set_message(window->viking_vs, VIK_STATUSBAR_TOOL, vik_layer_get_interface((VikLayerTypeEnum) window->tool_layer_id)->layer_tools[window->tool_tool_id]->radioActionEntry.tooltip);
 	} else {
 		vik_statusbar_set_message(window->viking_vs, VIK_STATUSBAR_TOOL, _(tool_names[window->current_tool]));
 	}
@@ -1274,7 +1274,6 @@ void Window::draw_scroll(GdkEventScroll * event)
 
 
 static LayerTool * ruler_create(Window * window, Viewport * viewport);
-static void ruler_destroy(LayerTool * tool);
 static VikLayerToolFuncStatus ruler_click(Layer * layer, GdkEventButton * event, LayerTool * tool);
 static VikLayerToolFuncStatus ruler_move(Layer * layer, GdkEventMotion * event, LayerTool * tool);
 static VikLayerToolFuncStatus ruler_release(Layer * layer, GdkEventButton * event, LayerTool * tool);
@@ -1284,21 +1283,8 @@ static bool ruler_key_press(Layer * layer, GdkEventKey *event, LayerTool * tool)
 
 
 
-static LayerTool ruler_tool =
-	// NB Ctrl+Shift+R is used for Refresh (deemed more important), so use 'U' instead
-	{ { "Ruler", "vik-icon-ruler", N_("_Ruler"), "<control><shift>U", N_("Ruler Tool"), 2 },
-	  ruler_create,  /* (VikToolConstructorFunc) */
-	  ruler_destroy, /* (VikToolDestructorFunc) */
-	  (VikToolActivationFunc) NULL,
-	  ruler_deactivate, /* (VikToolActivationFunc) */
-	  (VikToolMouseFunc) ruler_click,
-	  (VikToolMouseMoveFunc) ruler_move,
-	  (VikToolMouseFunc) ruler_release,
-	  ruler_key_press,
-	  false,
-	  GDK_CURSOR_IS_PIXMAP,
-	  &cursor_ruler_pixbuf,
-	  NULL };
+static LayerTool * ruler_tool = NULL;
+//VikToolConstructorFunc ruler_create;  /* (VikToolConstructorFunc) */
 
 
 
@@ -1469,23 +1455,32 @@ static void draw_ruler(Viewport * viewport, GdkDrawable *d, GdkGC *gc, int x1, i
 
 static LayerTool * ruler_create(Window * window, Viewport * viewport)
 {
-	ruler_tool.layer_type = TOOL_LAYER_TYPE_NONE;
-	ruler_tool.viewport = viewport;
-	ruler_tool.window = window;
+	LayerTool * layer_tool = new LayerTool(window, viewport, TOOL_LAYER_TYPE_NONE);
 
-	ruler_tool.ruler = (ruler_tool_state_t *) malloc(1 * sizeof (ruler_tool_state_t));
-	memset(ruler_tool.ruler, 0, sizeof (ruler_tool_state_t));
+	ruler_tool = layer_tool;
 
-	return &ruler_tool;
+	layer_tool->radioActionEntry.name = strdup("Ruler");
+	layer_tool->radioActionEntry.stock_id = strdup("vik-icon-ruler");
+	layer_tool->radioActionEntry.label = strdup(N_("_Ruler"));
+	layer_tool->radioActionEntry.accelerator = strdup("<control><shift>U"); /* Ctrl+Shift+R is used for Refresh (deemed more important), so use 'U' instead. */
+	layer_tool->radioActionEntry.tooltip = strdup(N_("Ruler Tool"));
+	layer_tool->radioActionEntry.value = 2;
+
+	layer_tool->deactivate = ruler_deactivate;
+	layer_tool->click = (VikToolMouseFunc) ruler_click;
+	layer_tool->move = (VikToolMouseMoveFunc) ruler_move;
+	layer_tool->release = (VikToolMouseFunc) ruler_release;
+	layer_tool->key_press = ruler_key_press;
+
+	layer_tool->cursor_type = GDK_CURSOR_IS_PIXMAP;
+	layer_tool->cursor_data = &cursor_ruler_pixbuf;
+
+	layer_tool->ruler = (ruler_tool_state_t *) malloc(1 * sizeof (ruler_tool_state_t));
+	memset(layer_tool->ruler, 0, sizeof (ruler_tool_state_t));
+
+	return layer_tool;
 }
 
-static void ruler_destroy(LayerTool * tool)
-{
-	if (tool->ruler) {
-		free(tool->ruler);
-		tool->ruler = NULL;
-	}
-}
 static VikLayerToolFuncStatus ruler_click(Layer * layer, GdkEventButton * event, LayerTool * tool)
 {
 	struct LatLon ll;
@@ -1625,7 +1620,6 @@ static bool ruler_key_press(Layer * layer, GdkEventKey *event, LayerTool * tool)
 
 
 static LayerTool * zoomtool_create(Window * window, Viewport * viewport);
-static void zoomtool_destroy(LayerTool * tool);
 static VikLayerToolFuncStatus zoomtool_click(Layer * layer, GdkEventButton * event, LayerTool * tool);
 static VikLayerToolFuncStatus zoomtool_move(Layer * layer, GdkEventMotion * event, LayerTool * tool);
 static VikLayerToolFuncStatus zoomtool_release(Layer * layer, GdkEventButton * event, LayerTool * tool);
@@ -1633,20 +1627,9 @@ static VikLayerToolFuncStatus zoomtool_release(Layer * layer, GdkEventButton * e
 
 
 
-static LayerTool zoom_tool =
-	{ { "Zoom", "vik-icon-zoom", N_("_Zoom"), "<control><shift>Z", N_("Zoom Tool"), 1 },
-	  zoomtool_create,  /* (VikToolConstructorFunc) */
-	  zoomtool_destroy, /* (VikToolDestructorFunc) */
-	  (VikToolActivationFunc) NULL,
-	  (VikToolActivationFunc) NULL,
-	  (VikToolMouseFunc) zoomtool_click,
-	  (VikToolMouseMoveFunc) zoomtool_move,
-	  (VikToolMouseFunc) zoomtool_release,
-	  NULL,
-	  false,
-	  GDK_CURSOR_IS_PIXMAP,
-	  &cursor_zoom_pixbuf,
-	  NULL };
+static LayerTool * zoom_tool = NULL;
+//VikToolConstructorFunc zoomtool_create;  /* (VikToolConstructorFunc) */
+
 
 
 
@@ -1678,22 +1661,30 @@ static void zoomtool_resize_pixmap(LayerTool * tool)
 
 static LayerTool * zoomtool_create(Window * window, Viewport * viewport)
 {
-	zoom_tool.layer_type = TOOL_LAYER_TYPE_NONE;
-	zoom_tool.viewport = viewport;
-	zoom_tool.window = window;
+	LayerTool * layer_tool = new LayerTool(window, viewport, TOOL_LAYER_TYPE_NONE);
 
-	zoom_tool.zoom = (zoom_tool_state_t *) malloc(1 * sizeof (zoom_tool_state_t));
-	memset(zoom_tool.zoom, 0, sizeof (zoom_tool_state_t));
+	zoom_tool = layer_tool;
 
-	return &zoom_tool;
+	layer_tool->radioActionEntry.name = strdup("Zoom");
+	layer_tool->radioActionEntry.stock_id = strdup("vik-icon-zoom");
+	layer_tool->radioActionEntry.label = strdup(N_("_Zoom"));
+	layer_tool->radioActionEntry.accelerator = strdup("<control><shift>Z");
+	layer_tool->radioActionEntry.tooltip = strdup(N_("Zoom Tool"));
+	layer_tool->radioActionEntry.value = 1;
+
+	layer_tool->click = (VikToolMouseFunc) zoomtool_click;
+	layer_tool->move = (VikToolMouseMoveFunc) zoomtool_move;
+	layer_tool->release = (VikToolMouseFunc) zoomtool_release;
+
+	layer_tool->cursor_type = GDK_CURSOR_IS_PIXMAP;
+	layer_tool->cursor_data = &cursor_zoom_pixbuf;
+
+	layer_tool->zoom = (zoom_tool_state_t *) malloc(1 * sizeof (zoom_tool_state_t));
+	memset(layer_tool->zoom, 0, sizeof (zoom_tool_state_t));
+
+	return layer_tool;
 }
 
-static void zoomtool_destroy(LayerTool * tool)
-{
-	if (tool->zoom->pixmap) {
-		g_object_unref(G_OBJECT (tool->zoom->pixmap));
-	}
-}
 static VikLayerToolFuncStatus zoomtool_click(Layer * layer, GdkEventButton * event, LayerTool * tool)
 {
 	tool->window->modified = true;
@@ -1868,20 +1859,9 @@ static VikLayerToolFuncStatus pantool_release(Layer * layer, GdkEventButton * ev
 
 
 
-static LayerTool pan_tool =
-	{ { "Pan", "vik-icon-pan", N_("_Pan"), "<control><shift>P", N_("Pan Tool"), 0 },
-	  pantool_create, /* (VikToolConstructorFunc) */
-	  (VikToolDestructorFunc) NULL,
-	  (VikToolActivationFunc) NULL,
-	  (VikToolActivationFunc) NULL,
-	  (VikToolMouseFunc) pantool_click,
-	  (VikToolMouseMoveFunc) pantool_move,
-	  (VikToolMouseFunc) pantool_release,
-	  NULL,
-	  false,
-	  GDK_FLEUR,
-	  NULL,
-	  NULL };
+static LayerTool * pan_tool = NULL;
+//VikToolConstructorFunc pantool_create; /* (VikToolConstructorFunc) */
+
 
 
 
@@ -1889,11 +1869,25 @@ static LayerTool pan_tool =
 
 static LayerTool * pantool_create(Window * window, Viewport * viewport)
 {
-	pan_tool.layer_type = TOOL_LAYER_TYPE_NONE;
-	pan_tool.viewport = viewport;
-	pan_tool.window = window;
+	LayerTool * layer_tool = new LayerTool(window, viewport, TOOL_LAYER_TYPE_NONE);
 
-	return &pan_tool;
+	pan_tool = layer_tool;
+
+	layer_tool->radioActionEntry.name = strdup("Pan");
+	layer_tool->radioActionEntry.stock_id = strdup("vik-icon-pan");
+	layer_tool->radioActionEntry.label = strdup(N_("_Pan"));
+	layer_tool->radioActionEntry.accelerator = strdup("<control><shift>P");
+	layer_tool->radioActionEntry.tooltip = strdup(N_("Pan Tool"));
+	layer_tool->radioActionEntry.value = 0;
+
+	layer_tool->click = (VikToolMouseFunc) pantool_click;
+	layer_tool->move = (VikToolMouseMoveFunc) pantool_move;
+	layer_tool->release = (VikToolMouseFunc) pantool_release;
+
+	layer_tool->cursor_type = GDK_FLEUR;
+	layer_tool->cursor_data = NULL;
+
+	return layer_tool;
 }
 
 // NB Double clicking means this gets called THREE times!!!
@@ -1948,46 +1942,38 @@ static VikLayerToolFuncStatus pantool_release(Layer * layer, GdkEventButton * ev
  ********************************************************************************/
 
 static LayerTool * selecttool_create(Window * window, Viewport * viewport);
-static void selecttool_destroy(LayerTool * tool);
 static VikLayerToolFuncStatus selecttool_click(Layer * layer, GdkEventButton * event, LayerTool * tool);
 static VikLayerToolFuncStatus selecttool_move(Layer * layer, GdkEventMotion * event, LayerTool * tool);
 static VikLayerToolFuncStatus selecttool_release(Layer * layer, GdkEventButton * event, LayerTool * tool);
 
 
-static LayerTool select_tool =
-	{ { "Select", "vik-icon-select", N_("_Select"), "<control><shift>S", N_("Select Tool"), 3 },
-	  selecttool_create,  /* (VikToolConstructorFunc) */
-	  selecttool_destroy, /* (VikToolDestructorFunc) */
-	  (VikToolActivationFunc) NULL,
-	  (VikToolActivationFunc) NULL,
-	  (VikToolMouseFunc) selecttool_click,
-	  (VikToolMouseMoveFunc) selecttool_move,
-	  (VikToolMouseFunc) selecttool_release,
-	  NULL,
-	  false,
-	  GDK_LEFT_PTR,
-	  NULL,
-	  NULL };
+static LayerTool * select_tool = NULL;
 
 
 static LayerTool * selecttool_create(Window * window, Viewport * viewport)
 {
-	select_tool.layer_type = TOOL_LAYER_TYPE_NONE;
-	select_tool.viewport = viewport;
-	select_tool.window = window;
+	LayerTool * layer_tool = new LayerTool(window, viewport, TOOL_LAYER_TYPE_NONE);
 
-	select_tool.ed  = (tool_ed_t *) malloc(1 * sizeof (tool_ed_t));
-	memset(select_tool.ed, 0, sizeof (tool_ed_t));
+	select_tool = layer_tool;
 
-	return &select_tool;
-}
+	layer_tool->radioActionEntry.name = strdup("Select");
+	layer_tool->radioActionEntry.stock_id = strdup("vik-icon-select");
+	layer_tool->radioActionEntry.label = strdup(N_("_Select"));
+	layer_tool->radioActionEntry.accelerator = strdup("<control><shift>S");
+	layer_tool->radioActionEntry.tooltip = strdup(N_("Select Tool"));
+	layer_tool->radioActionEntry.value = 3;
 
-static void selecttool_destroy(LayerTool * tool)
-{
-	if (tool->ed) {
-		free(tool->ed);
-		tool->ed = NULL;
-	}
+	layer_tool->click = (VikToolMouseFunc) selecttool_click;
+	layer_tool->move = (VikToolMouseMoveFunc) selecttool_move;
+	layer_tool->release = (VikToolMouseFunc) selecttool_release;
+
+	layer_tool->cursor_type = GDK_LEFT_PTR;
+	layer_tool->cursor_data = NULL;
+
+	layer_tool->ed  = (tool_ed_t *) malloc(1 * sizeof (tool_ed_t));
+	memset(layer_tool->ed, 0, sizeof (tool_ed_t));
+
+	return layer_tool;
 }
 
 typedef struct {
@@ -2613,15 +2599,18 @@ static toolbox_tools_t * toolbox_create(Window * window)
 	return vt;
 }
 
-static void toolbox_add_tool(toolbox_tools_t *vt, LayerTool * layer_tool, int layer_type)
+static LayerTool const * toolbox_add_tool(toolbox_tools_t * vt, VikToolConstructorFunc create_fn, int layer_type)
 {
 	vt->tools = (LayerTool **) realloc(vt->tools, (vt->n_tools + 1) * (sizeof (LayerTool *)));
+	LayerTool * layer_tool = create_fn(vt->window, vt->window->viewport);
 	vt->tools[vt->n_tools] = layer_tool;
 	vt->tools[vt->n_tools]->layer_type = layer_type;
 
-	vt->tools[vt->n_tools]->create(vt->window, vt->window->viewport);
+	toolbar_action_tool_entry_register(vt->window->viking_vtb, &vt->tools[vt->n_tools]->radioActionEntry);
 
 	vt->n_tools++;
+
+	return layer_tool;
 }
 
 static int toolbox_get_tool(toolbox_tools_t *vt, char const *tool_name)
@@ -2739,7 +2728,7 @@ static void toolbox_release(toolbox_tools_t *vt, GdkEventButton * event)
 
 void Window::enable_layer_tool(int layer_id, int tool_id)
 {
-	gtk_action_activate(gtk_action_group_get_action(this->action_group, vik_layer_get_interface((VikLayerTypeEnum) layer_id)->layer_tools[tool_id].radioActionEntry.name));
+	gtk_action_activate(gtk_action_group_get_action(this->action_group, vik_layer_get_interface((VikLayerTypeEnum) layer_id)->layer_tools[tool_id]->radioActionEntry.name));
 }
 
 // Be careful with usage - as it may trigger actions being continually alternately by the menu and toolbar items
@@ -2783,7 +2772,7 @@ static void menu_cb(GtkAction *old, GtkAction * a, Window * window)
 		int layer_id;
 		for (layer_id=0; ((VikLayerTypeEnum) layer_id) < VIK_LAYER_NUM_TYPES; layer_id++) {
 			for (tool_id = 0; tool_id < vik_layer_get_interface((VikLayerTypeEnum) layer_id)->tools_count; tool_id++) {
-				if (!g_strcmp0(vik_layer_get_interface((VikLayerTypeEnum) layer_id)->layer_tools[tool_id].radioActionEntry.name, name)) {
+				if (!g_strcmp0(vik_layer_get_interface((VikLayerTypeEnum) layer_id)->layer_tools[tool_id]->radioActionEntry.name, name)) {
 					window->current_tool = TOOL_LAYER;
 					window->tool_layer_id = (VikLayerTypeEnum) layer_id;
 					window->tool_tool_id = tool_id;
@@ -4478,15 +4467,10 @@ static void window_create_ui(Window * window)
 	GtkUIManager * uim = gtk_ui_manager_new();
 	window->uim = uim;
 
-	toolbox_add_tool(window->vt, &ruler_tool, TOOL_LAYER_TYPE_NONE);
-	toolbox_add_tool(window->vt, &zoom_tool, TOOL_LAYER_TYPE_NONE);
-	toolbox_add_tool(window->vt, &pan_tool, TOOL_LAYER_TYPE_NONE);
-	toolbox_add_tool(window->vt, &select_tool, TOOL_LAYER_TYPE_NONE);
-
-	toolbar_action_tool_entry_register(window->viking_vtb, &pan_tool.radioActionEntry);
-	toolbar_action_tool_entry_register(window->viking_vtb, &zoom_tool.radioActionEntry);
-	toolbar_action_tool_entry_register(window->viking_vtb, &ruler_tool.radioActionEntry);
-	toolbar_action_tool_entry_register(window->viking_vtb, &select_tool.radioActionEntry);
+	toolbox_add_tool(window->vt, ruler_create, TOOL_LAYER_TYPE_NONE);
+	toolbox_add_tool(window->vt, zoomtool_create, TOOL_LAYER_TYPE_NONE);
+	toolbox_add_tool(window->vt, pantool_create, TOOL_LAYER_TYPE_NONE);
+	toolbox_add_tool(window->vt, selecttool_create, TOOL_LAYER_TYPE_NONE);
 
 	GError * error = NULL;
 	unsigned int mid;
@@ -4597,15 +4581,16 @@ static void window_create_ui(Window * window)
 			radio = &tools[ntools];
 			ntools++;
 
+			LayerTool const * layer_tool = toolbox_add_tool(window->vt, vik_layer_get_interface((VikLayerTypeEnum) i)->layer_tool_constructors[j], i);
+
 			gtk_ui_manager_add_ui(uim, mid,  "/ui/MainMenu/Tools",
-					      vik_layer_get_interface((VikLayerTypeEnum) i)->layer_tools[j].radioActionEntry.label,
-					      vik_layer_get_interface((VikLayerTypeEnum) i)->layer_tools[j].radioActionEntry.name,
+					      layer_tool->radioActionEntry.label,
+					      layer_tool->radioActionEntry.name,
 					      GTK_UI_MANAGER_MENUITEM, false);
 
-			toolbox_add_tool(window->vt, &(vik_layer_get_interface((VikLayerTypeEnum) i)->layer_tools[j]), i);
-			toolbar_action_tool_entry_register(window->viking_vtb, &(vik_layer_get_interface((VikLayerTypeEnum) i)->layer_tools[j].radioActionEntry));
 
-			*radio = vik_layer_get_interface((VikLayerTypeEnum) i)->layer_tools[j].radioActionEntry;
+
+			*radio = layer_tool->radioActionEntry;
 			// Overwrite with actual number to use
 			radio->value = ntools;
 		}
@@ -4640,7 +4625,7 @@ static void window_create_ui(Window * window)
 	for (unsigned int i = 0; i<VIK_LAYER_NUM_TYPES; i++) {
 		for (unsigned int j = 0; j < vik_layer_get_interface((VikLayerTypeEnum) i)->tools_count; j++) {
 			GtkAction *action = gtk_action_group_get_action(action_group,
-									vik_layer_get_interface((VikLayerTypeEnum) i)->layer_tools[j].radioActionEntry.name);
+									vik_layer_get_interface((VikLayerTypeEnum) i)->layer_tools[j]->radioActionEntry.name);
 			g_object_set(action, "sensitive", false, NULL);
 		}
 	}
@@ -4904,7 +4889,7 @@ Window::Window()
 	// Must be performed post toolbar init
 	for (int i = 0; i < VIK_LAYER_NUM_TYPES; i++) {
 		for (int j = 0; j < vik_layer_get_interface((VikLayerTypeEnum) i)->tools_count; j++) {
-			toolbar_action_set_sensitive(this->viking_vtb, vik_layer_get_interface((VikLayerTypeEnum) i)->layer_tools[j].radioActionEntry.name, false);
+			toolbar_action_set_sensitive(this->viking_vtb, vik_layer_get_interface((VikLayerTypeEnum) i)->layer_tools[j]->radioActionEntry.name, false);
 		}
 	}
 
@@ -5041,9 +5026,7 @@ Window::~Window()
 
 	gdk_cursor_unref(this->busy_cursor);
 	for (int tt = 0; tt < this->vt->n_tools; tt++) {
-		if (this->vt->tools[tt]->destroy) {
-			this->vt->tools[tt]->destroy(this->vt->tools[tt]);
-		}
+		delete this->vt->tools[tt];
 	}
 	free(this->vt->tools);
 	free(this->vt);

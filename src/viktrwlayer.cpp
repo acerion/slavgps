@@ -120,7 +120,6 @@ static void trw_layer_tpwin_response_cb(LayerTRW * layer, int response);
 
 
 static LayerTool * tool_edit_trackpoint_create(Window * window, Viewport * viewport);
-static void   tool_edit_trackpoint_destroy(LayerTool * tool);
 static bool   tool_edit_trackpoint_click_cb(Layer * trw, GdkEventButton *event, LayerTool * tool);
 static bool   tool_edit_trackpoint_move_cb(Layer * trw, GdkEventMotion *event, LayerTool * tool);
 static bool   tool_edit_trackpoint_release_cb(Layer * trw, GdkEventButton *event, LayerTool * tool);
@@ -129,7 +128,6 @@ static LayerTool * tool_show_picture_create(Window * window, Viewport * viewport
 static bool   tool_show_picture_click_cb(Layer * trw, GdkEventButton *event, LayerTool * tool);
 
 static LayerTool * tool_edit_waypoint_create(Window * window, Viewport * viewport);
-static void   tool_edit_waypoint_destroy(LayerTool * tool);
 static bool   tool_edit_waypoint_click_cb(Layer * trw, GdkEventButton *event, LayerTool * tool);
 static bool   tool_edit_waypoint_move_cb(Layer * trw, GdkEventMotion *event, LayerTool * tool);
 static bool   tool_edit_waypoint_release_cb(Layer * trw, GdkEventButton *event, LayerTool * tool);
@@ -160,89 +158,14 @@ static void waypoint_convert(Waypoint * wp, VikCoordMode * dest_mode);
 //    * remember not to clash with the values used for VikWindow level tools (Pan, Zoom, Ruler + Select)
 //  the second N_ text value is used for the button tooltip (i.e. generally don't want an underscore here)
 //  the value is always set to 0 and the tool loader in VikWindow will set the actual appropriate value used
-static LayerTool trw_layer_tools[] = {
-	{ { "CreateWaypoint", "vik-icon-Create Waypoint", N_("Create _Waypoint"), "<control><shift>W", N_("Create Waypoint"), 0 },
-	  tool_new_waypoint_create, /* (VikToolConstructorFunc) */
-	  NULL,
-	  NULL,
-	  NULL,
-	  (VikToolMouseFunc) tool_new_waypoint_click_cb,
-	  NULL,
-	  NULL,
-	  NULL,
-	  false,
-	  GDK_CURSOR_IS_PIXMAP, &cursor_addwp_pixbuf, NULL },
-
-	{ { "CreateTrack", "vik-icon-Create Track", N_("Create _Track"), "<control><shift>T", N_("Create Track"), 0 },
-	  tool_new_track_create, /* (VikToolConstructorFunc) */
-	  NULL,
-	  NULL,
-	  NULL,
-	  (VikToolMouseFunc) tool_new_track_click_cb,
-	  (VikToolMouseMoveFunc) tool_new_track_move_cb,
-	  (VikToolMouseFunc) tool_new_track_release_cb,
-	  tool_new_track_key_press_cb,
-	  true, // Still need to handle clicks when in PAN mode to disable the potential trackpoint drawing
-	  GDK_CURSOR_IS_PIXMAP, &cursor_addtr_pixbuf, NULL },
-
-	{ { "CreateRoute", "vik-icon-Create Route", N_("Create _Route"), "<control><shift>B", N_("Create Route"), 0 },
-	  tool_new_route_create, /* (VikToolConstructorFunc) */
-	  NULL,
-	  NULL,
-	  NULL,
-	  (VikToolMouseFunc) tool_new_route_click_cb,
-	  (VikToolMouseMoveFunc) tool_new_track_move_cb, // -\#
-	  (VikToolMouseFunc) tool_new_track_release_cb,  //   -> Reuse these track methods on a route
-	  tool_new_track_key_press_cb,  // -/#
-	  true, // Still need to handle clicks when in PAN mode to disable the potential trackpoint drawing
-	  GDK_CURSOR_IS_PIXMAP, &cursor_new_route_pixbuf, NULL },
-
-	{ { "ExtendedRouteFinder", "vik-icon-Route Finder", N_("Route _Finder"), "<control><shift>F", N_("Route Finder"), 0 },
-	  tool_extended_route_finder_create, /* (VikToolConstructorFunc) */
-	  NULL,
-	  NULL,
-	  NULL,
-	  (VikToolMouseFunc) tool_extended_route_finder_click_cb,
-	  (VikToolMouseMoveFunc) tool_new_track_move_cb, // -\#
-	  (VikToolMouseFunc) tool_new_track_release_cb,  //   -> Reuse these track methods on a route
-	  tool_extended_route_finder_key_press_cb,
-	  true, // Still need to handle clicks when in PAN mode to disable the potential trackpoint drawing
-	  GDK_CURSOR_IS_PIXMAP, &cursor_route_finder_pixbuf, NULL },
-
-	{ { "EditWaypoint", "vik-icon-Edit Waypoint", N_("_Edit Waypoint"), "<control><shift>E", N_("Edit Waypoint"), 0 },
-	  tool_edit_waypoint_create,  /* (VikToolConstructorFunc) */
-	  tool_edit_waypoint_destroy, /* (VikToolDestructorFunc) */
-	  NULL, NULL,
-	  (VikToolMouseFunc) tool_edit_waypoint_click_cb,
-	  (VikToolMouseMoveFunc) tool_edit_waypoint_move_cb,
-	  (VikToolMouseFunc) tool_edit_waypoint_release_cb,
-	  NULL,
-	  false,
-	  GDK_CURSOR_IS_PIXMAP, &cursor_edwp_pixbuf, NULL },
-
-	{ { "EditTrackpoint", "vik-icon-Edit Trackpoint", N_("Edit Trac_kpoint"), "<control><shift>K", N_("Edit Trackpoint"), 0 },
-	  tool_edit_trackpoint_create, /* (VikToolConstructorFunc) */
-	  tool_edit_trackpoint_destroy, /* (VikToolDestructorFunc) */
-	  NULL, NULL,
-	  (VikToolMouseFunc) tool_edit_trackpoint_click_cb,
-	  (VikToolMouseMoveFunc) tool_edit_trackpoint_move_cb,
-	  (VikToolMouseFunc) tool_edit_trackpoint_release_cb,
-	  NULL,
-	  false,
-	  GDK_CURSOR_IS_PIXMAP, &cursor_edtr_pixbuf, NULL },
-
-	{ { "ShowPicture", "vik-icon-Show Picture", N_("Show P_icture"), "<control><shift>I", N_("Show Picture"), 0 },
-	  tool_show_picture_create, /* (VikToolConstructorFunc) */
-	  NULL,
-	  NULL,
-	  NULL,
-	  (VikToolMouseFunc) tool_show_picture_click_cb,
-	  NULL,
-	  NULL,
-	  NULL,
-	  false,
-	  GDK_CURSOR_IS_PIXMAP, &cursor_showpic_pixbuf, NULL },
-
+static LayerTool * trw_layer_tools[] = {
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL
 };
 
 enum {
@@ -466,8 +389,16 @@ VikLayerInterface vik_trw_layer_interface = {
 	"<control><shift>Y",
 	&viktrwlayer_pixbuf,
 
+	{ tool_new_waypoint_create,          /* (VikToolConstructorFunc) */
+	  tool_new_track_create,             /* (VikToolConstructorFunc) */
+	  tool_new_route_create,             /* (VikToolConstructorFunc) */
+	  tool_extended_route_finder_create, /* (VikToolConstructorFunc) */
+	  tool_edit_waypoint_create,         /* (VikToolConstructorFunc) */
+	  tool_edit_trackpoint_create,       /* (VikToolConstructorFunc) */
+	  tool_show_picture_create },        /* (VikToolConstructorFunc) */
+
 	trw_layer_tools,
-	sizeof(trw_layer_tools) / sizeof(SlavGPS::LayerTool),
+	7,
 
 	trw_layer_params,
 	NUM_PARAMS,
@@ -7214,23 +7145,30 @@ static void marker_end_move(LayerTool * tool)
 
 static LayerTool * tool_edit_waypoint_create(Window * window, Viewport * viewport)
 {
-	trw_layer_tools[4].layer_type = VIK_LAYER_TRW;
-	trw_layer_tools[4].viewport = viewport;
-	trw_layer_tools[4].window = window;
+	LayerTool * layer_tool = new LayerTool(window, viewport, VIK_LAYER_TRW);
 
-	trw_layer_tools[4].ed = (tool_ed_t *) malloc(1 * sizeof (tool_ed_t));
-	memset(trw_layer_tools[4].ed, 0, sizeof (tool_ed_t));
+	trw_layer_tools[4] = layer_tool;
 
-	return &trw_layer_tools[4];
+	layer_tool->radioActionEntry.name = strdup("EditWaypoint");
+	layer_tool->radioActionEntry.stock_id = strdup("vik-icon-Edit Waypoint");
+	layer_tool->radioActionEntry.label = strdup(N_("_Edit Waypoint"));
+	layer_tool->radioActionEntry.accelerator = strdup("<control><shift>E");
+	layer_tool->radioActionEntry.tooltip = strdup(N_("Edit Waypoint"));
+	layer_tool->radioActionEntry.value = 0;
+
+	layer_tool->click = (VikToolMouseFunc) tool_edit_waypoint_click_cb;
+	layer_tool->move = (VikToolMouseMoveFunc) tool_edit_waypoint_move_cb;
+	layer_tool->release = (VikToolMouseFunc) tool_edit_waypoint_release_cb;
+
+	layer_tool->cursor_type = GDK_CURSOR_IS_PIXMAP;
+	layer_tool->cursor_data = &cursor_edwp_pixbuf;
+
+	layer_tool->ed = (tool_ed_t *) malloc(1 * sizeof (tool_ed_t));
+	memset(layer_tool->ed, 0, sizeof (tool_ed_t));
+
+	return layer_tool;
 }
 
-static void tool_edit_waypoint_destroy(LayerTool * tool)
-{
-	if (tool->ed) {
-		free(tool->ed);
-		tool->ed = NULL;
-	}
-}
 static bool tool_edit_waypoint_click_cb(Layer * trw, GdkEventButton *event, LayerTool * tool)
 {
 	 return ((LayerTRW *) trw)->tool_edit_waypoint_click(event, tool);
@@ -7407,14 +7345,30 @@ bool LayerTRW::tool_edit_waypoint_release(GdkEventButton * event, LayerTool * to
 
 static LayerTool * tool_new_track_create(Window * window, Viewport * viewport)
 {
-	trw_layer_tools[1].layer_type = VIK_LAYER_TRW;
-	trw_layer_tools[1].viewport = viewport;
-	trw_layer_tools[1].window = window;
+	LayerTool * layer_tool = new LayerTool(window, viewport, VIK_LAYER_TRW);
 
-	trw_layer_tools[1].ed = (tool_ed_t *) malloc(sizeof (tool_ed_t));
-	memset(trw_layer_tools[1].ed, 0, sizeof (tool_ed_t));
+	trw_layer_tools[1] = layer_tool;
 
-	return &trw_layer_tools[1];
+	layer_tool->radioActionEntry.name = strdup("CreateTrack");
+	layer_tool->radioActionEntry.stock_id = strdup("vik-icon-Create Track");
+	layer_tool->radioActionEntry.label = strdup(N_("Create _Track"));
+	layer_tool->radioActionEntry.accelerator = strdup("<control><shift>T");
+	layer_tool->radioActionEntry.tooltip = strdup(N_("Create Track"));
+	layer_tool->radioActionEntry.value = 0;
+
+	layer_tool->click = (VikToolMouseFunc) tool_new_track_click_cb;
+	layer_tool->move = (VikToolMouseMoveFunc) tool_new_track_move_cb;
+	layer_tool->release = (VikToolMouseFunc) tool_new_track_release_cb;
+	layer_tool->key_press = tool_new_track_key_press_cb;
+
+	layer_tool->pan_handler = true;  /* Still need to handle clicks when in PAN mode to disable the potential trackpoint drawing. */
+	layer_tool->cursor_type = GDK_CURSOR_IS_PIXMAP;
+	layer_tool->cursor_data = &cursor_addtr_pixbuf;
+
+	layer_tool->ed = (tool_ed_t *) malloc(sizeof (tool_ed_t));
+	memset(layer_tool->ed, 0, sizeof (tool_ed_t));
+
+	return layer_tool;
 }
 
 typedef struct {
@@ -7812,14 +7766,31 @@ void LayerTRW::tool_new_track_release(GdkEventButton *event, LayerTool * tool)
 
 static LayerTool * tool_new_route_create(Window * window, Viewport * viewport)
 {
-	trw_layer_tools[2].layer_type = VIK_LAYER_TRW;
-	trw_layer_tools[2].viewport = viewport;
-	trw_layer_tools[2].window = window;
+	LayerTool * layer_tool = new LayerTool(window, viewport, VIK_LAYER_TRW);
 
-	trw_layer_tools[2].ed = (tool_ed_t *) malloc(sizeof (tool_ed_t));
-	memset(trw_layer_tools[2].ed, 0, sizeof (tool_ed_t));
+	trw_layer_tools[2] = layer_tool;
 
-	return &trw_layer_tools[2];
+	layer_tool->radioActionEntry.name = strdup("CreateRoute");
+	layer_tool->radioActionEntry.stock_id = strdup("vik-icon-Create Route");
+	layer_tool->radioActionEntry.label = strdup(N_("Create _Route"));
+	layer_tool->radioActionEntry.accelerator = strdup("<control><shift>B");
+	layer_tool->radioActionEntry.tooltip = strdup(N_("Create Route"));
+	layer_tool->radioActionEntry.value = 0;
+
+	layer_tool->click = (VikToolMouseFunc) tool_new_route_click_cb;
+	layer_tool->move = (VikToolMouseMoveFunc) tool_new_track_move_cb;    /* Reuse this track method for a route. */
+	layer_tool->release = (VikToolMouseFunc) tool_new_track_release_cb;  /* Reuse this track method for a route. */
+	layer_tool->key_press = tool_new_track_key_press_cb;                 /* Reuse this track method for a route. */
+
+	layer_tool->pan_handler = true;  /* Still need to handle clicks when in PAN mode to disable the potential trackpoint drawing. */
+	layer_tool->cursor_type = GDK_CURSOR_IS_PIXMAP;
+	layer_tool->cursor_data = &cursor_new_route_pixbuf;
+	layer_tool->cursor = NULL;
+
+	layer_tool->ed = (tool_ed_t *) malloc(sizeof (tool_ed_t));
+	memset(layer_tool->ed, 0, sizeof (tool_ed_t));
+
+	return layer_tool;
 }
 
 static bool tool_new_route_click_cb(Layer * trw, GdkEventButton *event, LayerTool * tool)
@@ -7852,14 +7823,26 @@ bool LayerTRW::tool_new_route_click(GdkEventButton * event, LayerTool * tool)
 
 static LayerTool * tool_new_waypoint_create(Window * window, Viewport * viewport)
 {
-	trw_layer_tools[0].layer_type = VIK_LAYER_TRW;
-	trw_layer_tools[0].viewport = viewport;
-	trw_layer_tools[0].window = window;
+	LayerTool * layer_tool = new LayerTool(window, viewport, VIK_LAYER_TRW);
 
-	trw_layer_tools[0].ed = (tool_ed_t *) malloc(sizeof (tool_ed_t));
-	memset(trw_layer_tools[0].ed, 0, sizeof (tool_ed_t));
+	trw_layer_tools[0] = layer_tool;
 
-	return &trw_layer_tools[0];
+	layer_tool->radioActionEntry.name = strdup("CreateWaypoint");
+	layer_tool->radioActionEntry.stock_id = strdup("vik-icon-Create Waypoint");
+	layer_tool->radioActionEntry.label = strdup(N_("Create _Waypoint"));
+	layer_tool->radioActionEntry.accelerator = strdup("<control><shift>W");
+	layer_tool->radioActionEntry.tooltip = strdup(N_("Create Waypoint"));
+	layer_tool->radioActionEntry.value = 0;
+
+	layer_tool->click = (VikToolMouseFunc) tool_new_waypoint_click_cb;
+
+	layer_tool->cursor_type = GDK_CURSOR_IS_PIXMAP;
+	layer_tool->cursor_data = &cursor_addwp_pixbuf;
+
+	layer_tool->ed = (tool_ed_t *) malloc(sizeof (tool_ed_t));;
+	memset(layer_tool->ed, 0, sizeof (tool_ed_t));
+
+	return layer_tool;
 }
 
 static bool tool_new_waypoint_click_cb(Layer * trw, GdkEventButton *event, LayerTool * tool)
@@ -7889,23 +7872,30 @@ bool LayerTRW::tool_new_waypoint_click(GdkEventButton * event, LayerTool * tool)
 
 static LayerTool * tool_edit_trackpoint_create(Window * window, Viewport * viewport)
 {
-	trw_layer_tools[5].layer_type = VIK_LAYER_TRW;
-	trw_layer_tools[5].viewport = viewport;
-	trw_layer_tools[5].window = window;
+	LayerTool * layer_tool = new LayerTool(window, viewport, VIK_LAYER_TRW);
 
-	trw_layer_tools[5].ed = (tool_ed_t *) malloc(1 * sizeof (tool_ed_t));
-	memset(trw_layer_tools[5].ed, 0, sizeof (tool_ed_t));
+	trw_layer_tools[5] = layer_tool;
 
-	return &trw_layer_tools[5];
+	layer_tool->radioActionEntry.name = strdup("EditTrackpoint");
+	layer_tool->radioActionEntry.stock_id = strdup("vik-icon-Edit Trackpoint");
+	layer_tool->radioActionEntry.label = strdup(N_("Edit Trac_kpoint"));
+	layer_tool->radioActionEntry.accelerator = strdup("<control><shift>K");
+	layer_tool->radioActionEntry.tooltip = strdup(N_("Edit Trackpoint"));
+	layer_tool->radioActionEntry.value = 0;
+
+	layer_tool->click = (VikToolMouseFunc) tool_edit_trackpoint_click_cb;
+	layer_tool->move = (VikToolMouseMoveFunc) tool_edit_trackpoint_move_cb;
+	layer_tool->release = (VikToolMouseFunc) tool_edit_trackpoint_release_cb;
+
+	layer_tool->cursor_type = GDK_CURSOR_IS_PIXMAP;
+	layer_tool->cursor_data = &cursor_edtr_pixbuf;
+
+	layer_tool->ed = (tool_ed_t *) malloc(1 * sizeof (tool_ed_t));
+	memset(layer_tool->ed, 0, sizeof (tool_ed_t));
+
+	return layer_tool;
 }
 
-static void tool_edit_trackpoint_destroy(LayerTool * tool)
-{
-	if (tool->ed) {
-		free(tool->ed);
-		tool->ed = NULL;
-	}
-}
 static bool tool_edit_trackpoint_click_cb(Layer * trw, GdkEventButton * event, LayerTool * tool)
 {
 	return ((LayerTRW *) trw)->tool_edit_trackpoint_click(event, tool);
@@ -8088,14 +8078,30 @@ bool LayerTRW::tool_edit_trackpoint_release(GdkEventButton * event, LayerTool * 
 
 static LayerTool * tool_extended_route_finder_create(Window * window, Viewport * viewport)
 {
-	trw_layer_tools[3].layer_type = VIK_LAYER_TRW;
-	trw_layer_tools[3].viewport = viewport;
-	trw_layer_tools[3].window = window;
+	LayerTool * layer_tool = new LayerTool(window, viewport, VIK_LAYER_TRW);
 
-	trw_layer_tools[3].ed = (tool_ed_t *) malloc(sizeof (tool_ed_t));
-	memset(trw_layer_tools[3].ed, 0, sizeof (tool_ed_t));
+	trw_layer_tools[3] = layer_tool;
 
-	return &trw_layer_tools[3];
+	layer_tool->radioActionEntry.name = strdup("ExtendedRouteFinder");
+	layer_tool->radioActionEntry.stock_id = strdup("vik-icon-Route Finder");
+	layer_tool->radioActionEntry.label = strdup(N_("Route _Finder"));
+	layer_tool->radioActionEntry.accelerator = strdup("<control><shift>F");
+	layer_tool->radioActionEntry.tooltip = strdup(N_("Route Finder"));
+	layer_tool->radioActionEntry.value = 0;
+
+	layer_tool->click = (VikToolMouseFunc) tool_extended_route_finder_click_cb;
+	layer_tool->move = (VikToolMouseMoveFunc) tool_new_track_move_cb;   /* Reuse these track methods on a route. */
+	layer_tool->release = (VikToolMouseFunc) tool_new_track_release_cb; /* Reuse these track methods on a route. */
+	layer_tool->key_press = tool_extended_route_finder_key_press_cb;
+
+	layer_tool->pan_handler = true;  /* Still need to handle clicks when in PAN mode to disable the potential trackpoint drawing. */
+	layer_tool->cursor_type = GDK_CURSOR_IS_PIXMAP;
+	layer_tool->cursor_data = &cursor_route_finder_pixbuf;
+
+	layer_tool->ed = (tool_ed_t *) malloc(sizeof (tool_ed_t));
+	memset(layer_tool->ed, 0, sizeof (tool_ed_t));
+
+	return layer_tool;
 }
 
 void LayerTRW::tool_extended_route_finder_undo()
@@ -8219,14 +8225,26 @@ bool LayerTRW::tool_extended_route_finder_key_press(GdkEventKey * event, LayerTo
 
 static LayerTool * tool_show_picture_create(Window * window, Viewport * viewport)
 {
-	trw_layer_tools[6].layer_type = VIK_LAYER_TRW;
-	trw_layer_tools[6].viewport = viewport;
-	trw_layer_tools[6].window = window;
+	LayerTool * layer_tool = new LayerTool(window, viewport, VIK_LAYER_TRW);
 
-	trw_layer_tools[6].ed = (tool_ed_t *) malloc(sizeof (tool_ed_t));
-	memset(trw_layer_tools[6].ed, 0, sizeof (tool_ed_t));
+	trw_layer_tools[6] = layer_tool;
 
-	return &trw_layer_tools[6];
+	layer_tool->radioActionEntry.name = strdup("ShowPicture");
+	layer_tool->radioActionEntry.stock_id = strdup("vik-icon-Show Picture");
+	layer_tool->radioActionEntry.label = strdup(N_("Show P_icture"));
+	layer_tool->radioActionEntry.accelerator = strdup("<control><shift>I");
+	layer_tool->radioActionEntry.tooltip = strdup(N_("Show Picture"));
+	layer_tool->radioActionEntry.value = 0;
+
+	layer_tool->click = (VikToolMouseFunc) tool_show_picture_click_cb;
+
+	layer_tool->cursor_type = GDK_CURSOR_IS_PIXMAP;
+	layer_tool->cursor_data = &cursor_showpic_pixbuf;
+
+	layer_tool->ed = (tool_ed_t *) malloc(sizeof (tool_ed_t));
+	memset(layer_tool->ed, 0, sizeof (tool_ed_t));
+
+	return layer_tool;
 }
 
 

@@ -70,6 +70,7 @@ VikLayerInterface vik_coord_layer_interface = {
 	NULL,
 	&vikcoordlayer_pixbuf,
 
+	{ NULL, NULL, NULL, NULL, NULL, NULL, NULL },
 	NULL,
 	0,
 

@@ -95,33 +95,14 @@ static LayerTool * georef_layer_zoom_create(Window * window, Viewport * viewport
 static bool georef_layer_zoom_press_cb(Layer * vgl, GdkEventButton *event, LayerTool * tool);
 
 // See comment in viktrwlayer.c for advice on values used
-static LayerTool georef_tools[] = {
-	{ { "GeorefMoveMap", "vik-icon-Georef Move Map",  N_("_Georef Move Map"), NULL,  N_("Georef Move Map"), 0 },
-	  georef_layer_move_create, /* (VikToolConstructorFunc) */
-	  NULL,
-	  NULL,
-	  NULL,
-	  (VikToolMouseFunc) georef_layer_move_press_cb,
-	  NULL,
-	  (VikToolMouseFunc) georef_layer_move_release_cb,
-	  NULL,
-	  false,
-	  GDK_CURSOR_IS_PIXMAP,
-	  &cursor_geomove_pixbuf,
-	  NULL },
-
-	{ { "GeorefZoomTool", "vik-icon-Georef Zoom Tool",  N_("Georef Z_oom Tool"), NULL,  N_("Georef Zoom Tool"), 0 },
-	  georef_layer_zoom_create, /* (VikToolConstructorFunc) */
-	  NULL,
-	  NULL,
-	  NULL,
-	  (VikToolMouseFunc) georef_layer_zoom_press_cb,
-	  NULL, NULL,
-	  NULL,
-	  false,
-	  GDK_CURSOR_IS_PIXMAP,
-	  &cursor_geozoom_pixbuf,
-	  NULL },
+static LayerTool * georef_tools[] = {
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL
 };
 
 VikLayerInterface vik_georef_layer_interface = {
@@ -130,8 +111,17 @@ VikLayerInterface vik_georef_layer_interface = {
 	NULL,
 	&vikgeoreflayer_pixbuf, /*icon */
 
+	{ georef_layer_move_create,   /* (VikToolConstructorFunc) */
+	  georef_layer_zoom_create,   /* (VikToolConstructorFunc) */
+	  NULL,
+	  NULL,
+	  NULL,
+	  NULL,
+	  NULL,
+	},
+
 	georef_tools,
-	sizeof(georef_tools) / sizeof(LayerTool),
+	2,
 
 	georef_layer_params,
 	NUM_PARAMS,
@@ -1063,9 +1053,24 @@ void LayerGeoref::add_menu_items(GtkMenu *menu, void * panel)
 
 static LayerTool * georef_layer_move_create(Window * window, Viewport * viewport)
 {
-	georef_tools[0].layer_type = VIK_LAYER_GEOREF;
-	georef_tools[0].viewport = viewport;
-	return &georef_tools[0];
+	LayerTool * layer_tool = new LayerTool(window, viewport, VIK_LAYER_GEOREF);
+
+	georef_tools[0] = layer_tool;
+
+	layer_tool->radioActionEntry.name        = strdup("GeorefMoveMap");
+	layer_tool->radioActionEntry.stock_id    = strdup("vik-icon-Georef Move Map");
+	layer_tool->radioActionEntry.label       = strdup(N_("_Georef Move Map"));
+	layer_tool->radioActionEntry.accelerator = NULL;
+	layer_tool->radioActionEntry.tooltip     = strdup(N_("Georef Move Map"));
+	layer_tool->radioActionEntry.value       = 0;
+
+	layer_tool->click = (VikToolMouseFunc) georef_layer_move_press_cb;
+	layer_tool->release = (VikToolMouseFunc) georef_layer_move_release_cb;
+
+	layer_tool->cursor_type = GDK_CURSOR_IS_PIXMAP;
+	layer_tool->cursor_data = &cursor_geomove_pixbuf;
+
+	return layer_tool;
 }
 
 static bool georef_layer_move_release_cb(Layer * vgl, GdkEventButton * event, LayerTool * tool)
@@ -1091,9 +1096,23 @@ bool LayerGeoref::move_release(GdkEventButton * event, LayerTool * tool)
 
 static LayerTool * georef_layer_zoom_create(Window * window, Viewport * viewport)
 {
-	georef_tools[1].layer_type = VIK_LAYER_GEOREF;
-	georef_tools[1].viewport = viewport;
-	return &georef_tools[1];
+	LayerTool * layer_tool = new LayerTool(window, viewport, VIK_LAYER_GEOREF);
+
+	georef_tools[1] = layer_tool;
+
+	layer_tool->radioActionEntry.name        = strdup("GeorefZoomTool");
+	layer_tool->radioActionEntry.stock_id    = strdup("vik-icon-Georef Zoom Tool");
+	layer_tool->radioActionEntry.label       = strdup(N_("Georef Z_oom Tool"));
+	layer_tool->radioActionEntry.accelerator = NULL;
+	layer_tool->radioActionEntry.tooltip     = strdup(N_("Georef Zoom Tool"));
+	layer_tool->radioActionEntry.value       = 0;
+
+	layer_tool->click = (VikToolMouseFunc) georef_layer_zoom_press_cb;
+
+	layer_tool->cursor_type = GDK_CURSOR_IS_PIXMAP;
+	layer_tool->cursor_data = &cursor_geozoom_pixbuf;
+
+	return layer_tool;
 }
 
 static bool georef_layer_zoom_press_cb(Layer * vgl, GdkEventButton * event, LayerTool * tool)

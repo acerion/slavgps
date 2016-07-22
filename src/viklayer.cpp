@@ -870,3 +870,58 @@ GtkWindow * gtk_window_from_layer(Layer * layer)
 }
 
 
+
+
+
+LayerTool::LayerTool(Window * window, Viewport * viewport, int layer_type)
+{
+	this->window = window;
+	this->viewport = viewport;
+	this->layer_type = layer_type;
+}
+
+
+
+
+
+LayerTool::~LayerTool()
+{
+	if (radioActionEntry.name) {
+		free((void *) radioActionEntry.name);
+		radioActionEntry.name = NULL;
+	}
+	if (radioActionEntry.stock_id) {
+		free((void *) radioActionEntry.stock_id);
+		radioActionEntry.stock_id = NULL;
+	}
+	if (radioActionEntry.label) {
+		free((void *) radioActionEntry.label);
+		radioActionEntry.label = NULL;
+	}
+	if (radioActionEntry.accelerator) {
+		free((void *) radioActionEntry.accelerator);
+		radioActionEntry.accelerator = NULL;
+	}
+	if (radioActionEntry.tooltip) {
+		free((void *) radioActionEntry.tooltip);
+		radioActionEntry.tooltip = NULL;
+	}
+
+	if (ruler) {
+		free(ruler);
+		ruler = NULL;
+	}
+	if (zoom) {
+		if (zoom->pixmap) {
+			g_object_unref(G_OBJECT (zoom->pixmap));
+		}
+
+		free(zoom);
+		zoom = NULL;
+	}
+	if (ed) {
+		free(ed);
+		ed = NULL;
+	}
+
+}

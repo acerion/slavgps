@@ -203,19 +203,7 @@ void maps_layer_set_cache_default (VikMapsCacheLayout layout)
 	cache_layout_default_value = layout;
 }
 
-static LayerTool maps_tools[] = {
-	{ { "MapsDownload", "vik-icon-Maps Download", N_("_Maps Download"), NULL, N_("Maps Download"), 0 },
-	  maps_layer_download_create, /* (VikToolConstructorFunc) */
-	  NULL,
-	  NULL,
-	  NULL,
-	  (VikToolMouseFunc) maps_layer_download_click,
-	  NULL,
-	  (VikToolMouseFunc) maps_layer_download_release,
-	  NULL,
-	  false,
-	  GDK_CURSOR_IS_PIXMAP, &cursor_mapdl_pixbuf, NULL },
-};
+static LayerTool * maps_tools[] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL } ; /* (VikToolConstructorFunc) */
 
 VikLayerInterface vik_maps_layer_interface = {
 	"Map",
@@ -223,8 +211,9 @@ VikLayerInterface vik_maps_layer_interface = {
 	"<control><shift>M",
 	&vikmapslayer_pixbuf,
 
+	{ maps_layer_download_create, NULL, NULL, NULL, NULL, NULL, NULL },
 	maps_tools,
-	sizeof(maps_tools) / sizeof(maps_tools[0]),
+	1,
 
 	maps_layer_params,
 	NUM_PARAMS,
@@ -2035,9 +2024,24 @@ static bool maps_layer_download_release(Layer * vml, GdkEventButton *event, Laye
 
 static LayerTool * maps_layer_download_create(Window * window, Viewport * viewport)
 {
-	maps_tools[0].layer_type = VIK_LAYER_MAPS;
-	maps_tools[0].viewport = viewport;
-	return &maps_tools[0];
+	LayerTool * layer_tool = new LayerTool(window, viewport, VIK_LAYER_MAPS);
+
+	maps_tools[0] = layer_tool;
+
+	layer_tool->radioActionEntry.name = strdup("MapsDownload");
+	layer_tool->radioActionEntry.stock_id = strdup("vik-icon-Maps Download");
+	layer_tool->radioActionEntry.label = strdup(N_("_Maps Download"));
+	layer_tool->radioActionEntry.accelerator = NULL;
+	layer_tool->radioActionEntry.tooltip = strdup(N_("Maps Download"));
+	layer_tool->radioActionEntry.value = 0;
+
+	layer_tool->click = (VikToolMouseFunc) maps_layer_download_click;
+	layer_tool->release = (VikToolMouseFunc) maps_layer_download_release;
+
+	layer_tool->cursor_type = GDK_CURSOR_IS_PIXMAP;
+	layer_tool->cursor_data = &cursor_mapdl_pixbuf;
+
+	return layer_tool;
 }
 
 static bool maps_layer_download_click(Layer * vml, GdkEventButton *event, LayerTool * tool)

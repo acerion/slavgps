@@ -300,6 +300,7 @@ VikLayerInterface vik_gps_layer_interface = {
 	NULL,
 	&vikgpslayer_pixbuf,
 
+	{ NULL, NULL, NULL, NULL, NULL, NULL, NULL },
 	NULL,
 	0,
 

@@ -135,20 +135,9 @@ static LayerTool * dem_layer_download_create(Window * window, Viewport * viewpor
 static bool dem_layer_download_release(Layer * vdl, GdkEventButton *event, LayerTool * tool);
 static bool dem_layer_download_click(Layer * vdl, GdkEventButton *event, LayerTool * tool);
 
-static LayerTool dem_tools[] = {
-	{ { "DEMDownload", "vik-icon-DEM Download", N_("_DEM Download"), NULL, N_("DEM Download"), 0 },
-	  dem_layer_download_create, /* (VikToolConstructorFunc)  */
-	  NULL,
-	  NULL,
-	  NULL,
-	  (VikToolMouseFunc) dem_layer_download_click,
-	  NULL,
-	  (VikToolMouseFunc) dem_layer_download_release,
-	  NULL,
-	  false,
-	  GDK_CURSOR_IS_PIXMAP, &cursor_demdl_pixbuf,
-	  NULL },
-};
+static LayerTool * dem_tools[] = { NULL };
+
+
 
 
 /* HEIGHT COLORS
@@ -200,8 +189,9 @@ VikLayerInterface vik_dem_layer_interface = {
 	"<control><shift>D",
 	&vikdemlayer_pixbuf,
 
+	{ dem_layer_download_create, NULL, NULL, NULL, NULL, NULL, NULL }, /* (VikToolConstructorFunc)  */
 	dem_tools,
-	sizeof (dem_tools) / sizeof (dem_tools[0]),
+	1,
 
 	dem_layer_params,
 	NUM_PARAMS,
@@ -1186,9 +1176,24 @@ static void free_dem_download_params(DEMDownloadParams * p)
 
 static LayerTool * dem_layer_download_create(Window * window, Viewport * viewport)
 {
-	vik_dem_layer_interface.layer_tools[0].layer_type = VIK_LAYER_DEM;
-	vik_dem_layer_interface.layer_tools[0].viewport = viewport;
-	return &vik_dem_layer_interface.layer_tools[0];
+	LayerTool * layer_tool = new LayerTool(window, viewport, VIK_LAYER_DEM);
+
+	dem_tools[0] = layer_tool;
+
+	layer_tool->radioActionEntry.name        = strdup("DEMDownload");
+	layer_tool->radioActionEntry.stock_id    = strdup("vik-icon-DEM Download");
+	layer_tool->radioActionEntry.label       = strdup(N_("_DEM Download"));
+	layer_tool->radioActionEntry.accelerator = NULL;
+	layer_tool->radioActionEntry.tooltip     = strdup(N_("DEM Download"));
+	layer_tool->radioActionEntry.value       = 0;
+
+	layer_tool->click = (VikToolMouseFunc) dem_layer_download_click;
+	layer_tool->release = (VikToolMouseFunc) dem_layer_download_release;
+
+	layer_tool->cursor_type = GDK_CURSOR_IS_PIXMAP;
+	layer_tool->cursor_data = &cursor_demdl_pixbuf;
+
+	return layer_tool;
 }
 
 /**

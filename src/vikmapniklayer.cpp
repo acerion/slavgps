@@ -117,21 +117,10 @@ static bool mapnik_feature_release_cb(Layer * vml, GdkEventButton *event, LayerT
 
 // See comment in viktrwlayer.c for advice on values used
 // FUTURE:
-static LayerTool mapnik_tools[] = {
+static LayerTool * mapnik_tools[] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL };
 	// Layer Info
 	// Zoom All?
-  { { "MapnikFeatures", GTK_STOCK_INFO, N_("_Mapnik Features"), NULL, N_("Mapnik Features"), 0 },
-    mapnik_feature_create, /* (VikToolConstructorFunc) */
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    (VikToolMouseFunc) mapnik_feature_release_cb,
-    NULL,
-    false,
-    GDK_LEFT_PTR, NULL, NULL },
-};
+
 
 
 VikLayerInterface vik_mapnik_layer_interface = {
@@ -140,8 +129,9 @@ VikLayerInterface vik_mapnik_layer_interface = {
 	NULL,
 	&vikmapniklayer_pixbuf, // icon
 
+	{ mapnik_feature_create, NULL, NULL, NULL, NULL, NULL, NULL }, /* (VikToolConstructorFunc) */
 	mapnik_tools,
-	sizeof(mapnik_tools) / sizeof(LayerTool),
+	1,
 
 	mapnik_layer_params,
 	NUM_PARAMS,
@@ -1141,9 +1131,23 @@ void LayerMapnik::tile_info()
 
 static LayerTool * mapnik_feature_create(Window * window, Viewport * viewport)
 {
-	mapnik_tools[0].layer_type = VIK_LAYER_MAPNIK;
-	mapnik_tools[0].viewport = viewport;
-	return &mapnik_tools[0];
+	LayerTool * layer_tool = new LayerTool(window, viewport, VIK_LAYER_MAPNIK);
+
+	mapnik_tools[0] = layer_tool;
+
+	layer_tool->radioActionEntry.name = strdup("MapnikFeatures");
+	layer_tool->radioActionEntry.stock_id = strdup(GTK_STOCK_INFO);
+	layer_tool->radioActionEntry.label = strdup(N_("_Mapnik Features"));
+	layer_tool->radioActionEntry.accelerator = NULL;
+	layer_tool->radioActionEntry.tooltip = strdup(N_("Mapnik Features"));
+	layer_tool->radioActionEntry.value = 0;
+
+	layer_tool->release = (VikToolMouseFunc) mapnik_feature_release_cb;
+
+	layer_tool->cursor_type = GDK_LEFT_PTR;
+	layer_tool->cursor_data = NULL;
+
+	return layer_tool;
 }
 
 static bool mapnik_feature_release_cb(Layer * vml, GdkEventButton *event, LayerTool * tool)
