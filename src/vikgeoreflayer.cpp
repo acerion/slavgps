@@ -60,14 +60,14 @@ static VikLayerParamData image_default (void)
 */
 
 VikLayerParam georef_layer_params[] = {
-	{ VIK_LAYER_GEOREF, "image",                VIK_LAYER_PARAM_STRING, VIK_LAYER_NOT_IN_PROPERTIES, NULL, (VikLayerWidgetType) 0, NULL, NULL, NULL, NULL, NULL, NULL },
-	{ VIK_LAYER_GEOREF, "corner_easting",       VIK_LAYER_PARAM_DOUBLE, VIK_LAYER_NOT_IN_PROPERTIES, NULL, (VikLayerWidgetType) 0, NULL, NULL, NULL, NULL, NULL, NULL },
-	{ VIK_LAYER_GEOREF, "corner_northing",      VIK_LAYER_PARAM_DOUBLE, VIK_LAYER_NOT_IN_PROPERTIES, NULL, (VikLayerWidgetType) 0, NULL, NULL, NULL, NULL, NULL, NULL },
-	{ VIK_LAYER_GEOREF, "mpp_easting",          VIK_LAYER_PARAM_DOUBLE, VIK_LAYER_NOT_IN_PROPERTIES, NULL, (VikLayerWidgetType) 0, NULL, NULL, NULL, NULL, NULL, NULL },
-	{ VIK_LAYER_GEOREF, "mpp_northing",         VIK_LAYER_PARAM_DOUBLE, VIK_LAYER_NOT_IN_PROPERTIES, NULL, (VikLayerWidgetType) 0, NULL, NULL, NULL, NULL, NULL, NULL },
-	{ VIK_LAYER_GEOREF, "corner_zone",          VIK_LAYER_PARAM_UINT,   VIK_LAYER_NOT_IN_PROPERTIES, NULL, (VikLayerWidgetType) 0, NULL, NULL, NULL, NULL, NULL, NULL },
-	{ VIK_LAYER_GEOREF, "corner_letter_as_int", VIK_LAYER_PARAM_UINT,   VIK_LAYER_NOT_IN_PROPERTIES, NULL, (VikLayerWidgetType) 0, NULL, NULL, NULL, NULL, NULL, NULL },
-	{ VIK_LAYER_GEOREF, "alpha",                VIK_LAYER_PARAM_UINT,   VIK_LAYER_NOT_IN_PROPERTIES, NULL, (VikLayerWidgetType) 0, NULL, NULL, NULL, NULL, NULL, NULL },
+	{ LayerType::GEOREF, "image",                VIK_LAYER_PARAM_STRING, VIK_LAYER_NOT_IN_PROPERTIES, NULL, (VikLayerWidgetType) 0, NULL, NULL, NULL, NULL, NULL, NULL },
+	{ LayerType::GEOREF, "corner_easting",       VIK_LAYER_PARAM_DOUBLE, VIK_LAYER_NOT_IN_PROPERTIES, NULL, (VikLayerWidgetType) 0, NULL, NULL, NULL, NULL, NULL, NULL },
+	{ LayerType::GEOREF, "corner_northing",      VIK_LAYER_PARAM_DOUBLE, VIK_LAYER_NOT_IN_PROPERTIES, NULL, (VikLayerWidgetType) 0, NULL, NULL, NULL, NULL, NULL, NULL },
+	{ LayerType::GEOREF, "mpp_easting",          VIK_LAYER_PARAM_DOUBLE, VIK_LAYER_NOT_IN_PROPERTIES, NULL, (VikLayerWidgetType) 0, NULL, NULL, NULL, NULL, NULL, NULL },
+	{ LayerType::GEOREF, "mpp_northing",         VIK_LAYER_PARAM_DOUBLE, VIK_LAYER_NOT_IN_PROPERTIES, NULL, (VikLayerWidgetType) 0, NULL, NULL, NULL, NULL, NULL, NULL },
+	{ LayerType::GEOREF, "corner_zone",          VIK_LAYER_PARAM_UINT,   VIK_LAYER_NOT_IN_PROPERTIES, NULL, (VikLayerWidgetType) 0, NULL, NULL, NULL, NULL, NULL, NULL },
+	{ LayerType::GEOREF, "corner_letter_as_int", VIK_LAYER_PARAM_UINT,   VIK_LAYER_NOT_IN_PROPERTIES, NULL, (VikLayerWidgetType) 0, NULL, NULL, NULL, NULL, NULL, NULL },
+	{ LayerType::GEOREF, "alpha",                VIK_LAYER_PARAM_UINT,   VIK_LAYER_NOT_IN_PROPERTIES, NULL, (VikLayerWidgetType) 0, NULL, NULL, NULL, NULL, NULL, NULL },
 };
 
 enum {
@@ -143,7 +143,7 @@ struct _VikGeorefLayer {
 };
 
 static VikLayerParam io_prefs[] = {
-	{ VIK_LAYER_NUM_TYPES, VIKING_PREFERENCES_IO_NAMESPACE "georef_auto_read_world_file", VIK_LAYER_PARAM_BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Auto Read World Files:"), VIK_LAYER_WIDGET_CHECKBUTTON, NULL, NULL,
+	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_IO_NAMESPACE "georef_auto_read_world_file", VIK_LAYER_PARAM_BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Auto Read World Files:"), VIK_LAYER_WIDGET_CHECKBUTTON, NULL, NULL,
 	  N_("Automatically attempt to read associated world file of a new image for a GeoRef layer"), NULL, NULL, NULL}
 };
 
@@ -1053,7 +1053,7 @@ void LayerGeoref::add_menu_items(GtkMenu *menu, void * panel)
 
 static LayerTool * georef_layer_move_create(Window * window, Viewport * viewport)
 {
-	LayerTool * layer_tool = new LayerTool(window, viewport, VIK_LAYER_GEOREF);
+	LayerTool * layer_tool = new LayerTool(window, viewport, LayerType::GEOREF);
 
 	georef_tools[0] = layer_tool;
 
@@ -1080,7 +1080,7 @@ static bool georef_layer_move_release_cb(Layer * vgl, GdkEventButton * event, La
 
 bool LayerGeoref::move_release(GdkEventButton * event, LayerTool * tool)
 {
-	if (this->type != VIK_LAYER_GEOREF) {
+	if (this->type != LayerType::GEOREF) {
 		/* kamilFIXME: this shouldn't happen, right? */
 		return false;
 	}
@@ -1096,7 +1096,7 @@ bool LayerGeoref::move_release(GdkEventButton * event, LayerTool * tool)
 
 static LayerTool * georef_layer_zoom_create(Window * window, Viewport * viewport)
 {
-	LayerTool * layer_tool = new LayerTool(window, viewport, VIK_LAYER_GEOREF);
+	LayerTool * layer_tool = new LayerTool(window, viewport, LayerType::GEOREF);
 
 	georef_tools[1] = layer_tool;
 
@@ -1122,7 +1122,7 @@ static bool georef_layer_zoom_press_cb(Layer * vgl, GdkEventButton * event, Laye
 
 bool LayerGeoref::zoom_press(GdkEventButton * event, LayerTool * tool)
 {
-	if (this->type != VIK_LAYER_GEOREF) {
+	if (this->type != LayerType::GEOREF) {
 		/* kamilFIXME: this shouldn't happen, right? */
 		return false;
 	}
@@ -1152,7 +1152,7 @@ static bool georef_layer_move_press_cb(Layer * vgl, GdkEventButton *event, Layer
 
 bool LayerGeoref::move_press(GdkEventButton * event, LayerTool * tool)
 {
-	if (this->type != VIK_LAYER_GEOREF) {
+	if (this->type != LayerType::GEOREF) {
 		/* kamilFIXME: this shouldn't happen, right? */
 		return false;
 	}
@@ -1230,7 +1230,7 @@ VikLayer * vik_georef_layer_create(Viewport * viewport,
 
 LayerGeoref::LayerGeoref()
 {
-	this->type = VIK_LAYER_GEOREF;
+	this->type = LayerType::GEOREF;
 	strcpy(this->type_string, "GEOREF");
 
 	this->image = NULL;

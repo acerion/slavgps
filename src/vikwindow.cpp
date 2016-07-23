@@ -143,7 +143,7 @@ static void menu_delete_layer_cb(GtkAction * a, Window * window);
 static void menu_cb(GtkAction * old, GtkAction * a, Window * window);
 static void window_change_coord_mode_cb(GtkAction * old, GtkAction * a, Window * window);
 static toolbox_tools_t* toolbox_create(Window * window);
-static LayerTool const * toolbox_add_tool(toolbox_tools_t * vt, VikToolConstructorFunc create_fn, int layer_type);
+static LayerTool const * toolbox_add_tool(toolbox_tools_t * vt, VikToolConstructorFunc create_fn, LayerType layer_type);
 static int toolbox_get_tool(toolbox_tools_t * vt, char const * tool_name);
 static void toolbox_activate(toolbox_tools_t * vt, char const * tool_name);
 static const GdkCursor *toolbox_get_cursor(toolbox_tools_t * vt, char const * tool_name);
@@ -482,15 +482,15 @@ void Window::selected_layer(Layer * layer)
 		return;
 	}
 
-	for (int type = VIK_LAYER_AGGREGATE; type < VIK_LAYER_NUM_TYPES; type++) {
-		VikLayerInterface * layer_interface = vik_layer_get_interface((VikLayerTypeEnum) type);
+	for (LayerType type = LayerType::AGGREGATE; type < LayerType::NUM_TYPES; ++type) {
+		VikLayerInterface * layer_interface = vik_layer_get_interface(type);
 		int tool_count = layer_interface->tools_count;
 
 		for (int tool = 0; tool < tool_count; tool++) {
 			GtkAction * action = gtk_action_group_get_action(this->action_group,
 									 layer_interface->layer_tools[tool]->radioActionEntry.name);
 			g_object_set(action, "sensitive", type == layer->type, NULL);
-			toolbar_action_set_sensitive(this->viking_vtb, vik_layer_get_interface((VikLayerTypeEnum) type)->layer_tools[tool]->radioActionEntry.name, type == layer->type);
+			toolbar_action_set_sensitive(this->viking_vtb, vik_layer_get_interface(type)->layer_tools[tool]->radioActionEntry.name, type == layer->type);
 		}
 	}
 }
@@ -715,7 +715,7 @@ static void vik_window_init(VikWindow * vw)
 void Window::simple_map_update(bool only_new)
 {
 	// Find the most relevent single map layer to operate on
-	Layer * layer = this->layers_panel->get_top_layer()->get_top_visible_layer_of_type(VIK_LAYER_MAPS);
+	Layer * layer = this->layers_panel->get_top_layer()->get_top_visible_layer_of_type(LayerType::MAPS);
 	if (layer) {
 		vik_maps_layer_download(layer->vl, this->viewport, only_new);
 	}
@@ -772,7 +772,7 @@ static bool key_press_event_cb(Window * window, GdkEventKey * event, void * data
 
 	Layer * layer = window->layers_panel->get_selected();
 	if (layer && window->vt->active_tool && window->vt->active_tool->key_press) {
-		int ltype = window->vt->active_tool->layer_type;
+		LayerType ltype = window->vt->active_tool->layer_type;
 		if (layer && ltype == layer->type) {
 			return window->vt->active_tool->key_press(layer, event, window->vt->active_tool);
 		}
@@ -908,7 +908,7 @@ static void draw_status_tool(Window * window)
 {
 	if (window->current_tool == TOOL_LAYER) {
 		// Use tooltip rather than the internal name as the tooltip is i8n
-		vik_statusbar_set_message(window->viking_vs, VIK_STATUSBAR_TOOL, vik_layer_get_interface((VikLayerTypeEnum) window->tool_layer_id)->layer_tools[window->tool_tool_id]->radioActionEntry.tooltip);
+		vik_statusbar_set_message(window->viking_vs, VIK_STATUSBAR_TOOL, vik_layer_get_interface(window->tool_layer_type)->layer_tools[window->tool_tool_id]->radioActionEntry.tooltip);
 	} else {
 		vik_statusbar_set_message(window->viking_vs, VIK_STATUSBAR_TOOL, _(tool_names[window->current_tool]));
 	}
@@ -968,7 +968,7 @@ void Window::draw_redraw()
 
 	if (!new_trigger) {
 		; /* do nothing -- have to redraw everything. */
-	} else if ((old_trigger != new_trigger) || !vik_coord_equals(&old_center, &this->trigger_center) || (((Layer *) new_trigger->layer)->type == VIK_LAYER_AGGREGATE)) {
+	} else if ((old_trigger != new_trigger) || !vik_coord_equals(&old_center, &this->trigger_center) || (((Layer *) new_trigger->layer)->type == LayerType::AGGREGATE)) {
 		this->viewport->set_trigger(new_trigger); /* todo: set to half_drawn mode if new trigger is above old */
 	} else {
 		this->viewport->set_half_drawn(true);
@@ -1455,7 +1455,7 @@ static void draw_ruler(Viewport * viewport, GdkDrawable *d, GdkGC *gc, int x1, i
 
 static LayerTool * ruler_create(Window * window, Viewport * viewport)
 {
-	LayerTool * layer_tool = new LayerTool(window, viewport, TOOL_LAYER_TYPE_NONE);
+	LayerTool * layer_tool = new LayerTool(window, viewport, LayerType::NUM_TYPES);
 
 	ruler_tool = layer_tool;
 
@@ -1661,7 +1661,7 @@ static void zoomtool_resize_pixmap(LayerTool * tool)
 
 static LayerTool * zoomtool_create(Window * window, Viewport * viewport)
 {
-	LayerTool * layer_tool = new LayerTool(window, viewport, TOOL_LAYER_TYPE_NONE);
+	LayerTool * layer_tool = new LayerTool(window, viewport, LayerType::NUM_TYPES);
 
 	zoom_tool = layer_tool;
 
@@ -1869,7 +1869,7 @@ static LayerTool * pan_tool = NULL;
 
 static LayerTool * pantool_create(Window * window, Viewport * viewport)
 {
-	LayerTool * layer_tool = new LayerTool(window, viewport, TOOL_LAYER_TYPE_NONE);
+	LayerTool * layer_tool = new LayerTool(window, viewport, LayerType::NUM_TYPES);
 
 	pan_tool = layer_tool;
 
@@ -1952,7 +1952,7 @@ static LayerTool * select_tool = NULL;
 
 static LayerTool * selecttool_create(Window * window, Viewport * viewport)
 {
-	LayerTool * layer_tool = new LayerTool(window, viewport, TOOL_LAYER_TYPE_NONE);
+	LayerTool * layer_tool = new LayerTool(window, viewport, LayerType::NUM_TYPES);
 
 	select_tool = layer_tool;
 
@@ -2014,7 +2014,7 @@ static VikLayerToolFuncStatus selecttool_click(Layer * layer, GdkEventButton * e
 		} else {
 			/* Enable click to apply callback to potentially all track/waypoint layers */
 			/* Useful as we can find things that aren't necessarily in the currently selected layer */
-			std::list<Layer *> * layers = tool->window->layers_panel->get_all_layers_of_type(VIK_LAYER_TRW, false); // Don't get invisible layers
+			std::list<Layer *> * layers = tool->window->layers_panel->get_all_layers_of_type(LayerType::TRW, false); // Don't get invisible layers
 			clicker ck;
 			ck.cont = true;
 			ck.viewport = tool->window->viewport;
@@ -2035,7 +2035,7 @@ static VikLayerToolFuncStatus selecttool_click(Layer * layer, GdkEventButton * e
 					// Only clear if selected thing is a TrackWaypoint layer or a sublayer
 					int type = tree_view->get_type(&iter);
 					if (type == VIK_TREEVIEW_TYPE_SUBLAYER ||
-					    ((Layer *) tree_view->get_pointer(&iter))->type == VIK_LAYER_TRW) { /* kamil: get_layer() ? */
+					    ((Layer *) tree_view->get_pointer(&iter))->type == LayerType::TRW) { /* kamil: get_layer() ? */
 
 						tree_view->unselect(&iter);
 						if (tool->window->clear_highlight()) {
@@ -2048,7 +2048,7 @@ static VikLayerToolFuncStatus selecttool_click(Layer * layer, GdkEventButton * e
 				tool->window->select_move = true;
 			}
 		}
-	} else if ((event->button == 3) && (layer && layer->type == VIK_LAYER_TRW)) {
+	} else if ((event->button == 3) && (layer && layer->type == LayerType::TRW)) {
 		if (layer->visible) {
 			/* Act on currently selected item to show menu */
 			if (tool->window->selected_track || tool->window->selected_waypoint) {
@@ -2243,9 +2243,9 @@ static void draw_refresh_cb(GtkAction * a, Window * window)
 
 static void menu_addlayer_cb(GtkAction * a, Window * window)
 {
-	for (int type = 0; ((VikLayerTypeEnum) type) < VIK_LAYER_NUM_TYPES; type++) {
-		if (!strcmp(vik_layer_get_interface((VikLayerTypeEnum) type)->name, gtk_action_get_name(a))) {
-			if (window->layers_panel->new_layer((VikLayerTypeEnum) type)) {
+	for (LayerType type = LayerType::AGGREGATE; type < LayerType::NUM_TYPES; ++type) {
+		if (!strcmp(vik_layer_get_interface(type)->name, gtk_action_get_name(a))) {
+			if (window->layers_panel->new_layer(type)) {
 				window->draw_update();
 				window->modified = true;
 			}
@@ -2599,7 +2599,7 @@ static toolbox_tools_t * toolbox_create(Window * window)
 	return vt;
 }
 
-static LayerTool const * toolbox_add_tool(toolbox_tools_t * vt, VikToolConstructorFunc create_fn, int layer_type)
+static LayerTool const * toolbox_add_tool(toolbox_tools_t * vt, VikToolConstructorFunc create_fn, LayerType layer_type)
 {
 	vt->tools = (LayerTool **) realloc(vt->tools, (vt->n_tools + 1) * (sizeof (LayerTool *)));
 	LayerTool * layer_tool = create_fn(vt->window, vt->window->viewport);
@@ -2682,8 +2682,8 @@ static void toolbox_click(toolbox_tools_t *vt, GdkEventButton * event)
 #endif
 
 	if (vt->active_tool && vt->active_tool->click) {
-		int ltype = vt->active_tool->layer_type;
-		if (ltype == TOOL_LAYER_TYPE_NONE || (layer && ltype == layer->type)) {
+		LayerType ltype = vt->active_tool->layer_type;
+		if (ltype == LayerType::NUM_TYPES || (layer && ltype == layer->type)) {
 			vt->active_tool->click(layer, event, vt->active_tool);
 		}
 	}
@@ -2699,8 +2699,8 @@ static void toolbox_move(toolbox_tools_t *vt, GdkEventMotion * event)
 #endif
 
 	if (vt->active_tool && vt->active_tool->move) {
-		int ltype = vt->active_tool->layer_type;
-		if (ltype == TOOL_LAYER_TYPE_NONE || (layer && ltype == layer->type)) {
+		LayerType ltype = vt->active_tool->layer_type;
+		if (ltype == LayerType::NUM_TYPES || (layer && ltype == layer->type)) {
 			if (VIK_LAYER_TOOL_ACK_GRAB_FOCUS == vt->active_tool->move(layer, event, vt->active_tool)) {
 				gtk_widget_grab_focus(GTK_WIDGET(vt->window->viewport->vvp));
 			}
@@ -2718,17 +2718,17 @@ static void toolbox_release(toolbox_tools_t *vt, GdkEventButton * event)
 #endif
 
 	if (vt->active_tool && vt->active_tool->release) {
-		int ltype = vt->active_tool->layer_type;
-		if (ltype == TOOL_LAYER_TYPE_NONE || (layer && ltype == layer->type)) {
+		LayerType ltype = vt->active_tool->layer_type;
+		if (ltype == LayerType::NUM_TYPES || (layer && ltype == layer->type)) {
 			vt->active_tool->release(layer, event, vt->active_tool);
 		}
 	}
 }
 /** End tool management ************************************/
 
-void Window::enable_layer_tool(int layer_id, int tool_id)
+void Window::enable_layer_tool(LayerType layer_type, int tool_id)
 {
-	gtk_action_activate(gtk_action_group_get_action(this->action_group, vik_layer_get_interface((VikLayerTypeEnum) layer_id)->layer_tools[tool_id]->radioActionEntry.name));
+	gtk_action_activate(gtk_action_group_get_action(this->action_group, vik_layer_get_interface(layer_type)->layer_tools[tool_id]->radioActionEntry.name));
 }
 
 // Be careful with usage - as it may trigger actions being continually alternately by the menu and toolbar items
@@ -2769,12 +2769,11 @@ static void menu_cb(GtkAction *old, GtkAction * a, Window * window)
 	} else if (!strcmp(name, "Select")) {
 		window->current_tool = TOOL_SELECT;
 	} else {
-		int layer_id;
-		for (layer_id=0; ((VikLayerTypeEnum) layer_id) < VIK_LAYER_NUM_TYPES; layer_id++) {
-			for (tool_id = 0; tool_id < vik_layer_get_interface((VikLayerTypeEnum) layer_id)->tools_count; tool_id++) {
-				if (!g_strcmp0(vik_layer_get_interface((VikLayerTypeEnum) layer_id)->layer_tools[tool_id]->radioActionEntry.name, name)) {
+		for (LayerType layer_type = LayerType::AGGREGATE; layer_type < LayerType::NUM_TYPES; ++layer_type) {
+			for (tool_id = 0; tool_id < vik_layer_get_interface(layer_type)->tools_count; tool_id++) {
+				if (!g_strcmp0(vik_layer_get_interface(layer_type)->layer_tools[tool_id]->radioActionEntry.name, name)) {
 					window->current_tool = TOOL_LAYER;
-					window->tool_layer_id = (VikLayerTypeEnum) layer_id;
+					window->tool_layer_type = layer_type;
 					window->tool_tool_id = tool_id;
 				}
 			}
@@ -3310,7 +3309,7 @@ bool Window::export_to(std::list<Layer *> * layers, VikFileType_t vft, char cons
 
 void Window::export_to_common(VikFileType_t vft, char const * extension)
 {
-	std::list<Layer *> * layers = this->layers_panel->get_all_layers_of_type(VIK_LAYER_TRW, true);
+	std::list<Layer *> * layers = this->layers_panel->get_all_layers_of_type(LayerType::TRW, true);
 
 	if (!layers || layers->empty()) {
 		a_dialog_info_msg(GTK_WINDOW(this->vw), _("Nothing to Export!"));
@@ -3503,7 +3502,7 @@ static void menu_copy_centre_cb(GtkAction * a, Window * window)
 	free(lat);
 	free(lon);
 
-	a_clipboard_copy(VIK_CLIPBOARD_DATA_TEXT, 0, 0, 0, msg, NULL);
+	a_clipboard_copy(VIK_CLIPBOARD_DATA_TEXT, LayerType::AGGREGATE, 0, 0, msg, NULL);
 
 	free(msg);
 }
@@ -3527,7 +3526,7 @@ static void layer_defaults_cb(GtkAction * a, Window * window)
 static void preferences_change_update(Window * window)
 {
 	// Want to update all TrackWaypoint layers
-	std::list<Layer *> * layers = window->layers_panel->get_all_layers_of_type(VIK_LAYER_TRW, true);
+	std::list<Layer *> * layers = window->layers_panel->get_all_layers_of_type(LayerType::TRW, true);
 	if (!layers || layers->empty()) {
 		return;
 	}
@@ -3573,7 +3572,7 @@ static void default_location_cb(GtkAction * a, Window * window)
 	/* Simplistic repeat of preference setting
 	   Only the name & type are important for setting the preference via this 'external' way */
 	VikLayerParam pref_lat[] = {
-		{ VIK_LAYER_NUM_TYPES,
+		{ LayerType::NUM_TYPES,
 		  VIKING_PREFERENCES_NAMESPACE "default_latitude",
 		  VIK_LAYER_PARAM_DOUBLE,
 		  VIK_LAYER_GROUP_NONE,
@@ -3588,7 +3587,7 @@ static void default_location_cb(GtkAction * a, Window * window)
 		},
 	};
 	VikLayerParam pref_lon[] = {
-		{ VIK_LAYER_NUM_TYPES,
+		{ LayerType::NUM_TYPES,
 		  VIKING_PREFERENCES_NAMESPACE "default_longitude",
 		  VIK_LAYER_PARAM_DOUBLE,
 		  VIK_LAYER_GROUP_NONE,
@@ -4467,10 +4466,10 @@ static void window_create_ui(Window * window)
 	GtkUIManager * uim = gtk_ui_manager_new();
 	window->uim = uim;
 
-	toolbox_add_tool(window->vt, ruler_create, TOOL_LAYER_TYPE_NONE);
-	toolbox_add_tool(window->vt, zoomtool_create, TOOL_LAYER_TYPE_NONE);
-	toolbox_add_tool(window->vt, pantool_create, TOOL_LAYER_TYPE_NONE);
-	toolbox_add_tool(window->vt, selecttool_create, TOOL_LAYER_TYPE_NONE);
+	toolbox_add_tool(window->vt, ruler_create,      LayerType::NUM_TYPES);
+	toolbox_add_tool(window->vt, zoomtool_create,   LayerType::NUM_TYPES);
+	toolbox_add_tool(window->vt, pantool_create,    LayerType::NUM_TYPES);
+	toolbox_add_tool(window->vt, selecttool_create, LayerType::NUM_TYPES);
 
 	GError * error = NULL;
 	unsigned int mid;
@@ -4550,38 +4549,38 @@ static void window_create_ui(Window * window)
 		radio->value = ntools;
 	}
 
-	for (int i = 0; i<VIK_LAYER_NUM_TYPES; i++) {
+	for (LayerType i = LayerType::AGGREGATE; i < LayerType::NUM_TYPES; ++i) {
 		GtkActionEntry action;
 		gtk_ui_manager_add_ui(uim, mid,  "/ui/MainMenu/Layers/",
-				      vik_layer_get_interface((VikLayerTypeEnum) i)->name,
-				      vik_layer_get_interface((VikLayerTypeEnum) i)->name,
+				      vik_layer_get_interface(i)->name,
+				      vik_layer_get_interface(i)->name,
 				      GTK_UI_MANAGER_MENUITEM, false);
 
-		icon_set = gtk_icon_set_new_from_pixbuf(gdk_pixbuf_from_pixdata(vik_layer_get_interface((VikLayerTypeEnum) i)->icon, false, NULL));
-		gtk_icon_factory_add(icon_factory, vik_layer_get_interface((VikLayerTypeEnum) i)->name, icon_set);
+		icon_set = gtk_icon_set_new_from_pixbuf(gdk_pixbuf_from_pixdata(vik_layer_get_interface(i)->icon, false, NULL));
+		gtk_icon_factory_add(icon_factory, vik_layer_get_interface(i)->name, icon_set);
 		gtk_icon_set_unref(icon_set);
 
-		action.name = vik_layer_get_interface((VikLayerTypeEnum) i)->name;
-		action.stock_id = vik_layer_get_interface((VikLayerTypeEnum) i)->name;
-		action.label = g_strdup_printf(_("New _%s Layer"), vik_layer_get_interface((VikLayerTypeEnum) i)->name);
-		action.accelerator = vik_layer_get_interface((VikLayerTypeEnum) i)->accelerator;
+		action.name = vik_layer_get_interface(i)->name;
+		action.stock_id = vik_layer_get_interface(i)->name;
+		action.label = g_strdup_printf(_("New _%s Layer"), vik_layer_get_interface(i)->name);
+		action.accelerator = vik_layer_get_interface(i)->accelerator;
 		action.tooltip = NULL;
 		action.callback = (GCallback)menu_addlayer_cb;
 		gtk_action_group_add_actions(action_group, &action, 1, window);
 
 		free((char*)action.label);
 
-		if (vik_layer_get_interface((VikLayerTypeEnum) i)->tools_count) {
-			gtk_ui_manager_add_ui(uim, mid,  "/ui/MainMenu/Tools/", vik_layer_get_interface((VikLayerTypeEnum) i)->name, NULL, GTK_UI_MANAGER_SEPARATOR, false);
+		if (vik_layer_get_interface(i)->tools_count) {
+			gtk_ui_manager_add_ui(uim, mid,  "/ui/MainMenu/Tools/", vik_layer_get_interface(i)->name, NULL, GTK_UI_MANAGER_SEPARATOR, false);
 		}
 
 		// Further tool copying for to apply to the UI, also apply menu UI setup
-		for (unsigned int j = 0; j < vik_layer_get_interface((VikLayerTypeEnum) i)->tools_count; j++) {
+		for (unsigned int j = 0; j < vik_layer_get_interface(i)->tools_count; j++) {
 			tools = g_renew(GtkRadioActionEntry, tools, ntools+1);
 			radio = &tools[ntools];
 			ntools++;
 
-			LayerTool const * layer_tool = toolbox_add_tool(window->vt, vik_layer_get_interface((VikLayerTypeEnum) i)->layer_tool_constructors[j], i);
+			LayerTool const * layer_tool = toolbox_add_tool(window->vt, vik_layer_get_interface(i)->layer_tool_constructors[j], i);
 
 			gtk_ui_manager_add_ui(uim, mid,  "/ui/MainMenu/Tools",
 					      layer_tool->radioActionEntry.label,
@@ -4596,18 +4595,18 @@ static void window_create_ui(Window * window)
 		}
 
 		GtkActionEntry action_dl;
-		char *layername = g_strdup_printf("Layer%s", vik_layer_get_interface((VikLayerTypeEnum) i)->fixed_layer_name);
+		char *layername = g_strdup_printf("Layer%s", vik_layer_get_interface(i)->fixed_layer_name);
 		gtk_ui_manager_add_ui(uim, mid,  "/ui/MainMenu/Edit/LayerDefaults",
-				      vik_layer_get_interface((VikLayerTypeEnum) i)->name,
+				      vik_layer_get_interface(i)->name,
 				      layername,
 				      GTK_UI_MANAGER_MENUITEM, false);
 		free(layername);
 
 		// For default layers use action names of the form 'Layer<LayerName>'
 		// This is to avoid clashing with just the layer name used above for the tool actions
-		action_dl.name = g_strconcat("Layer", vik_layer_get_interface((VikLayerTypeEnum) i)->fixed_layer_name, NULL);
+		action_dl.name = g_strconcat("Layer", vik_layer_get_interface(i)->fixed_layer_name, NULL);
 		action_dl.stock_id = NULL;
-		action_dl.label = g_strconcat("_", vik_layer_get_interface((VikLayerTypeEnum) i)->name, "...", NULL); // Prepend marker for keyboard accelerator
+		action_dl.label = g_strconcat("_", vik_layer_get_interface(i)->name, "...", NULL); // Prepend marker for keyboard accelerator
 		action_dl.accelerator = NULL;
 		action_dl.tooltip = NULL;
 		action_dl.callback = (GCallback)layer_defaults_cb;
@@ -4622,10 +4621,10 @@ static void window_create_ui(Window * window)
 
 	gtk_ui_manager_insert_action_group(uim, action_group, 0);
 
-	for (unsigned int i = 0; i<VIK_LAYER_NUM_TYPES; i++) {
-		for (unsigned int j = 0; j < vik_layer_get_interface((VikLayerTypeEnum) i)->tools_count; j++) {
-			GtkAction *action = gtk_action_group_get_action(action_group,
-									vik_layer_get_interface((VikLayerTypeEnum) i)->layer_tools[j]->radioActionEntry.name);
+	for (LayerType i = LayerType::AGGREGATE; i < LayerType::NUM_TYPES; ++i) {
+		for (unsigned int j = 0; j < vik_layer_get_interface(i)->tools_count; j++) {
+			GtkAction * action = gtk_action_group_get_action(action_group,
+									 vik_layer_get_interface(i)->layer_tools[j]->radioActionEntry.name);
 			g_object_set(action, "sensitive", false, NULL);
 		}
 	}
@@ -4887,9 +4886,9 @@ Window::Window()
 		     toolbar_reload_cb,
 		     (void *) this); // This auto packs toolbar into the vbox
 	// Must be performed post toolbar init
-	for (int i = 0; i < VIK_LAYER_NUM_TYPES; i++) {
-		for (int j = 0; j < vik_layer_get_interface((VikLayerTypeEnum) i)->tools_count; j++) {
-			toolbar_action_set_sensitive(this->viking_vtb, vik_layer_get_interface((VikLayerTypeEnum) i)->layer_tools[j]->radioActionEntry.name, false);
+	for (LayerType i = LayerType::AGGREGATE; i < LayerType::NUM_TYPES; ++i) {
+		for (int j = 0; j < vik_layer_get_interface(i)->tools_count; j++) {
+			toolbar_action_set_sensitive(this->viking_vtb, vik_layer_get_interface(i)->layer_tools[j]->radioActionEntry.name, false);
 		}
 	}
 

@@ -38,6 +38,8 @@
 #include "viktreeview.h"
 #include "viklayerspanel.h"
 #include "globals.h"
+#include "uibuilder.h"
+
 
 using namespace SlavGPS;
 
@@ -662,7 +664,7 @@ void TreeView::add_layer(GtkTreeIter * parent_iter,
 			 bool above,
 			 void * layer,        /* Layer * layer */
 			 int data,
-			 VikLayerTypeEnum layer_type,
+			 LayerType layer_type,
 			 time_t timestamp)
 {
 	assert (iter);
@@ -679,7 +681,7 @@ void TreeView::add_layer(GtkTreeIter * parent_iter,
 			   ITEM_POINTER_COLUMN, layer,
 			   ITEM_DATA_COLUMN, data,
 			   EDITABLE_COLUMN, parent_layer == NULL ? false : true,
-			   ICON_COLUMN, layer_type >= 0 ? this->layer_type_icons[layer_type] : NULL,
+			   ICON_COLUMN, layer_type == LayerType::NUM_TYPES ? 0 : this->layer_type_icons[(int) layer_type],
 			   ITEM_TIMESTAMP_COLUMN, (int64_t) timestamp,
 			   -1);
 }
@@ -691,7 +693,7 @@ void TreeView::insert_layer(GtkTreeIter * parent_iter,
 			    bool above,
 			    void * layer,        /* Layer * layer */
 			    int data,
-			    VikLayerTypeEnum layer_type,
+			    LayerType layer_type,
 			    GtkTreeIter * sibling,
 			    time_t timestamp)
 {
@@ -718,7 +720,7 @@ void TreeView::insert_layer(GtkTreeIter * parent_iter,
 			   ITEM_POINTER_COLUMN, layer,
 			   ITEM_DATA_COLUMN, data,
 			   EDITABLE_COLUMN, true,
-			   ICON_COLUMN, layer_type >= 0 ? this->layer_type_icons[layer_type] : NULL,
+			   ICON_COLUMN, layer_type == LayerType::NUM_TYPES ? NULL : this->layer_type_icons[(int) layer_type],
 			   ITEM_TIMESTAMP_COLUMN, (int64_t) timestamp,
 			   -1);
 }
@@ -1003,8 +1005,8 @@ TreeView::TreeView()
 		idest->drag_data_received = vik_treeview_drag_data_received;
 	}
 
-	for (int i = 0; ((VikLayerTypeEnum) i) < VIK_LAYER_NUM_TYPES; i++) {
-		this->layer_type_icons[i] = vik_layer_load_icon((VikLayerTypeEnum) i); /* if icon can't be loaded, it will be null and simply not be shown. */
+	for (LayerType i = LayerType::AGGREGATE; i < LayerType::NUM_TYPES; ++i) {
+		this->layer_type_icons[(int) i] = vik_layer_load_icon(i); /* if icon can't be loaded, it will be null and simply not be shown. */
 	}
 
 	gtk_tree_view_set_reorderable(GTK_TREE_VIEW(this->vt), true);
@@ -1019,9 +1021,9 @@ TreeView::TreeView()
 
 TreeView::~TreeView()
 {
-	for (int i = 0; ((VikLayerTypeEnum) i) < VIK_LAYER_NUM_TYPES; i++) {
-		if (this->layer_type_icons[i] != NULL) {
-			g_object_unref(G_OBJECT(this->layer_type_icons[i]));
+	for (LayerType i = LayerType::AGGREGATE; i < LayerType::NUM_TYPES; ++i) {
+		if (this->layer_type_icons[(int) i] != NULL) {
+			g_object_unref(G_OBJECT(this->layer_type_icons[(int) i]));
 		}
 	}
 

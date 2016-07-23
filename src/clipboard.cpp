@@ -50,7 +50,7 @@ typedef struct {
 	int pid;
 	VikClipboardDataType type;
 	int subtype;
-	uint16_t layer_type;
+	LayerType layer_type;
 	unsigned int len;
 	char *text;
 	uint8_t data[0];
@@ -125,7 +125,7 @@ static void clip_receive_viking(GtkClipboard * c, GtkSelectionData * sd, void * 
 			a_dialog_error_msg_extra(VIK_GTK_WINDOW_FROM_WIDGET(GTK_WIDGET(panel->gob)),
 						 _("The clipboard contains sublayer data for %s layers. "
 						   "You must select a layer of this type to paste the clipboard data."),
-						 vik_layer_get_interface((VikLayerTypeEnum) vc->layer_type)->name);
+						 vik_layer_get_interface(vc->layer_type)->name);
 		}
 	}
 }
@@ -258,7 +258,7 @@ static void clip_add_wp(LayersPanel * panel, struct LatLon * coord)
 
 	vik_coord_load_from_latlon (&vc, VIK_COORD_LATLON, coord);
 
-	if (selected && selected->type == VIK_LAYER_TRW) {
+	if (selected && selected->type == LayerType::TRW) {
 		((LayerTRW *) selected)->new_waypoint(gtk_window_from_layer(selected), &vc);
 		((LayerTRW *) selected)->calculate_bounds_waypoints();
 		selected->emit_update();
@@ -387,7 +387,7 @@ void a_clipboard_copy_selected(LayersPanel * panel)
 	Layer * selected = panel->get_selected();
 	GtkTreeIter iter;
 	VikClipboardDataType type = VIK_CLIPBOARD_DATA_NONE;
-	uint16_t layer_type = 0;
+	LayerType layer_type = LayerType::AGGREGATE;
 	int subtype = 0;
 	uint8_t *data = NULL;
 	unsigned int len = 0;
@@ -428,7 +428,7 @@ void a_clipboard_copy_selected(LayersPanel * panel)
 	a_clipboard_copy(type, layer_type, subtype, len, name, data);
 }
 
-void a_clipboard_copy(VikClipboardDataType type, uint16_t layer_type, int subtype, unsigned int len, const char * text, uint8_t * data)
+void a_clipboard_copy(VikClipboardDataType type, LayerType layer_type, int subtype, unsigned int len, const char * text, uint8_t * data)
 {
 	vik_clipboard_t * vc = (vik_clipboard_t *) malloc(sizeof(*vc) + len); /* kamil: + len? */
 	GtkClipboard * c = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);

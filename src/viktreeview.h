@@ -64,8 +64,8 @@ namespace SlavGPS {
 		TreeView();
 		~TreeView();
 
-		void add_layer(GtkTreeIter *parent_iter, GtkTreeIter *iter, const char *name, void * parent, bool above, void * item, int data, VikLayerTypeEnum layer_type, time_t timestamp);
-		void insert_layer(GtkTreeIter *parent_iter, GtkTreeIter *iter, const char *name, void * parent, bool above, void * item, int data, VikLayerTypeEnum layer_type, GtkTreeIter *sibling, time_t timestamp);
+		void add_layer(GtkTreeIter *parent_iter, GtkTreeIter *iter, const char *name, void * parent, bool above, void * item, int data, LayerType layer_type, time_t timestamp);
+		void insert_layer(GtkTreeIter *parent_iter, GtkTreeIter *iter, const char *name, void * parent, bool above, void * item, int data, LayerType layer_type, GtkTreeIter *sibling, time_t timestamp);
 		void add_sublayer(GtkTreeIter *parent_iter, GtkTreeIter *iter, const char *name, void * parent, void * item, int data, GdkPixbuf *icon, bool editable, time_t timestamp);
 
 
@@ -109,7 +109,7 @@ namespace SlavGPS {
 		GtkTreeModel * model;
 		bool editing;
 		bool was_a_toggle;
-		GdkPixbuf * layer_type_icons[VIK_LAYER_NUM_TYPES];
+		GdkPixbuf * layer_type_icons[(int) LayerType::NUM_TYPES];
 
 		VikTreeview * vt;
 

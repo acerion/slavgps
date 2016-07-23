@@ -45,7 +45,7 @@ using namespace SlavGPS;
 
 typedef struct {
 	LayersPanel * panel;
-	VikLayerTypeEnum type;
+	LayerType layer_type;
 } new_layer_data_t;
 
 enum {
@@ -162,7 +162,7 @@ LayersPanel::LayersPanel()
 	this->toplayer->rename(_("Top Layer"));
 	int a = g_signal_connect_swapped(G_OBJECT(this->toplayer->vl), "update", G_CALLBACK(vik_layers_panel_emit_update_cb), this);
 
-	this->tree_view->add_layer(NULL, &(this->toplayer_iter), this->toplayer->name, NULL, true, this->toplayer, VIK_LAYER_AGGREGATE, VIK_LAYER_AGGREGATE, 0);
+	this->tree_view->add_layer(NULL, &(this->toplayer_iter), this->toplayer->name, NULL, true, this->toplayer, (int) LayerType::AGGREGATE, LayerType::AGGREGATE, 0);
 	this->toplayer->realize(this->tree_view, &(this->toplayer_iter));
 
 	a = g_signal_connect_swapped (this->tree_view->vt, "popup_menu", G_CALLBACK(menu_popup_cb), this);
@@ -270,7 +270,7 @@ static bool layers_panel_new_layer(void * data)
 {
 	new_layer_data_t * layer_data = (new_layer_data_t *) data;
 
-	return layer_data->panel->new_layer((VikLayerTypeEnum) layer_data->type);
+	return layer_data->panel->new_layer(layer_data->layer_type);
 }
 
 
@@ -308,22 +308,22 @@ static GtkWidget* layers_panel_create_popup(LayersPanel * panel, bool full)
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM (menuitem), submenu);
 
 	// Static: so memory accessible yet not continually allocated
-	static new_layer_data_t lpnl[VIK_LAYER_NUM_TYPES];
+	static new_layer_data_t lpnl[(int) LayerType::NUM_TYPES];
 
-	for (unsigned int ii = 0; ii < VIK_LAYER_NUM_TYPES; ii++) {
-		if (vik_layer_get_interface((VikLayerTypeEnum) ii)->icon) {
-			menuitem = gtk_image_menu_item_new_with_mnemonic(vik_layer_get_interface((VikLayerTypeEnum) ii)->name);
-			gtk_image_menu_item_set_image((GtkImageMenuItem*)menuitem, gtk_image_new_from_pixbuf(vik_layer_load_icon ((VikLayerTypeEnum) ii)));
+	for (LayerType ii = LayerType::AGGREGATE; ii < LayerType::NUM_TYPES; ++ii) {
+		if (vik_layer_get_interface(ii)->icon) {
+			menuitem = gtk_image_menu_item_new_with_mnemonic(vik_layer_get_interface(ii)->name);
+			gtk_image_menu_item_set_image((GtkImageMenuItem*)menuitem, gtk_image_new_from_pixbuf(vik_layer_load_icon(ii)));
 		} else {
-			menuitem = gtk_menu_item_new_with_mnemonic (vik_layer_get_interface((VikLayerTypeEnum) ii)->name);
+			menuitem = gtk_menu_item_new_with_mnemonic (vik_layer_get_interface(ii)->name);
 		}
 
-		lpnl[ii].panel = panel;
-		lpnl[ii].type = (VikLayerTypeEnum) ii;
+		lpnl[(int) ii].panel = panel;
+		lpnl[(int) ii].layer_type = ii;
 
-		g_signal_connect_swapped (G_OBJECT(menuitem), "activate", G_CALLBACK(layers_panel_new_layer), &(lpnl[ii]));
+		g_signal_connect_swapped (G_OBJECT(menuitem), "activate", G_CALLBACK(layers_panel_new_layer), &(lpnl[(int) ii]));
 		gtk_menu_shell_append (GTK_MENU_SHELL (submenu), menuitem);
-		gtk_widget_show (menuitem);
+		gtk_widget_show(menuitem);
 	}
 
 	return menu;
@@ -526,7 +526,7 @@ void LayersPanel::popup(GtkTreeIter * iter, int mouse_button)
 		if (this->tree_view->get_type(iter) == VIK_TREEVIEW_TYPE_LAYER) {
 			Layer * layer = (Layer *) this->tree_view->get_layer(iter);
 
-			if (layer->type == VIK_LAYER_AGGREGATE) {
+			if (layer->type == LayerType::AGGREGATE) {
 				menu = GTK_MENU (layers_panel_create_popup(this, true));
 			} else {
 				GtkWidget *del, *prop;
@@ -616,18 +616,18 @@ static void layers_popup_cb(LayersPanel * panel)
  *
  * Create a new layer and add to panel.
  */
-bool LayersPanel::new_layer(VikLayerTypeEnum type)
+bool LayersPanel::new_layer(LayerType layer_type)
 {
 	assert (this->viewport);
 	bool ask_user = false;
-	if (type == VIK_LAYER_TRW) {
+	if (layer_type == LayerType::TRW) {
 		(void)a_settings_get_boolean(VIK_SETTINGS_LAYERS_TRW_CREATE_DEFAULT, &ask_user);
 	}
 	ask_user = !ask_user;
 
-	assert (type != VIK_LAYER_NUM_TYPES);
+	assert (layer_type != LayerType::NUM_TYPES);
 
-	Layer * layer = Layer::new_(type, this->viewport, ask_user);
+	Layer * layer = Layer::new_(layer_type, this->viewport, ask_user);
 	if (layer) {
 		this->add_layer(layer);
 		return true;
@@ -681,7 +681,7 @@ void LayersPanel::add_layer(Layer * layer)
 		assert (current->realized);
 
 		/* Go further up until you find first aggregate layer. */
-		while (current->type != VIK_LAYER_AGGREGATE) {
+		while (current->type != LayerType::AGGREGATE) {
 			current = (Layer *) this->tree_view->get_parent(&iter);
 			iter = current->iter;
 			assert (current->realized);
@@ -741,7 +741,7 @@ bool LayersPanel::properties()
 	assert (this->viewport);
 
 	if (this->tree_view->get_selected_iter(&iter) && this->tree_view->get_type(&iter) == VIK_TREEVIEW_TYPE_LAYER) {
-		if (this->tree_view->get_data(&iter) == VIK_LAYER_AGGREGATE) {
+		if ((LayerType) this->tree_view->get_data(&iter) == LayerType::AGGREGATE) {
 			a_dialog_info_msg(VIK_GTK_WINDOW_FROM_WIDGET(this->gob), _("Aggregate Layers have no settable properties."));
 		}
 		Layer * layer = (Layer *) this->tree_view->get_layer(&iter);
@@ -800,7 +800,7 @@ void LayersPanel::cut_selected()
 
 			a_clipboard_copy_selected(this);
 
-			if (parent->type == VIK_LAYER_AGGREGATE) {
+			if (parent->type == LayerType::AGGREGATE) {
 
 				g_signal_emit(G_OBJECT(this->gob), layers_panel_signals[VLP_DELETE_LAYER_SIGNAL], 0);
 
@@ -905,7 +905,7 @@ void LayersPanel::delete_selected()
 				this->viewport->set_trigger(NULL);
 			}
 
-			if (parent->type == VIK_LAYER_AGGREGATE) {
+			if (parent->type == LayerType::AGGREGATE) {
 
 				g_signal_emit(G_OBJECT(this->gob), layers_panel_signals[VLP_DELETE_LAYER_SIGNAL], 0);
 
@@ -990,12 +990,12 @@ bool vik_layers_panel_tool(LayersPanel * panel, uint16_t layer_type, VikToolInte
 
 
 
-Layer * LayersPanel::get_layer_of_type(VikLayerTypeEnum type)
+Layer * LayersPanel::get_layer_of_type(LayerType layer_type)
 {
 	Layer * layer = this->get_selected();
-	if (layer == NULL || layer->type != type) {
+	if (layer == NULL || layer->type != layer_type) {
 		if (this->toplayer->visible) {
-			return this->toplayer->get_top_visible_layer_of_type(type);
+			return this->toplayer->get_top_visible_layer_of_type(layer_type);
 		} else {
 			return NULL;
 		}
@@ -1008,10 +1008,10 @@ Layer * LayersPanel::get_layer_of_type(VikLayerTypeEnum type)
 
 
 
-std::list<Layer *> * LayersPanel::get_all_layers_of_type(int type, bool include_invisible)
+std::list<Layer *> * LayersPanel::get_all_layers_of_type(LayerType layer_type, bool include_invisible)
 {
 	std::list<Layer *> * layers = new std::list<Layer *>;
-	return this->toplayer->get_all_layers_of_type(layers, (VikLayerTypeEnum) type, include_invisible);
+	return this->toplayer->get_all_layers_of_type(layers, layer_type, include_invisible);
 }
 
 

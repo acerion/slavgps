@@ -43,6 +43,16 @@
 #include "vikrouting.h"
 #include "vikroutingengine.h"
 
+
+
+
+
+using namespace SlavGPS;
+
+
+
+
+
 /* params will be routing.default */
 /* we have to make sure these don't collide. */
 #define VIKING_ROUTING_PARAMS_GROUP_KEY "routing"
@@ -52,7 +62,7 @@
 static GList * routing_engine_list = NULL;
 
 static VikLayerParam prefs[] = {
-	{ VIK_LAYER_NUM_TYPES, VIKING_ROUTING_PARAMS_NAMESPACE "default", VIK_LAYER_PARAM_STRING, VIK_LAYER_GROUP_NONE, N_("Default engine:"), VIK_LAYER_WIDGET_COMBOBOX, NULL, NULL, NULL, NULL, NULL, NULL },
+	{ LayerType::NUM_TYPES, VIKING_ROUTING_PARAMS_NAMESPACE "default", VIK_LAYER_PARAM_STRING, VIK_LAYER_GROUP_NONE, N_("Default engine:"), VIK_LAYER_WIDGET_COMBOBOX, NULL, NULL, NULL, NULL, NULL, NULL },
 };
 
 char ** routing_engine_labels = NULL;

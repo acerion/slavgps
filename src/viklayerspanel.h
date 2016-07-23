@@ -59,16 +59,16 @@ namespace SlavGPS {
 		void copy_selected();
 		bool paste_selected();
 		void delete_selected();
-		Layer * get_layer_of_type(VikLayerTypeEnum type);
+		Layer * get_layer_of_type(LayerType layer_type);
 		void set_viewport(Viewport * viewport);
 		Viewport * get_viewport();
 		void emit_update();
 		bool properties();
-		bool new_layer(VikLayerTypeEnum type);
+		bool new_layer(LayerType layer_type);
 		void clear();
 		LayerAggregate * get_top_layer();
 		void change_coord_mode(VikCoordMode mode);
-		std::list<Layer *> * get_all_layers_of_type(int type, bool include_invisible);
+		std::list<Layer *> * get_all_layers_of_type(LayerType type, bool include_invisible);
 		TreeView * get_treeview();
 
 

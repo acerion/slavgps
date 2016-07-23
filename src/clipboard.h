@@ -38,7 +38,7 @@ typedef enum {
 	VIK_CLIPBOARD_DATA_TEXT,
 } VikClipboardDataType;
 
-void a_clipboard_copy(VikClipboardDataType  type, uint16_t layer_type, int subtype, unsigned int len, const char * text, uint8_t * data);
+void a_clipboard_copy(VikClipboardDataType  type, SlavGPS::LayerType layer_type, int subtype, unsigned int len, const char * text, uint8_t * data);
 void a_clipboard_copy_selected(SlavGPS::LayersPanel * panel);
 bool a_clipboard_paste(SlavGPS::LayersPanel * panel);
 VikClipboardDataType a_clipboard_type();

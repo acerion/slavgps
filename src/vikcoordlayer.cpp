@@ -52,9 +52,9 @@ static VikLayerParamData min_inc_default(void) { return VIK_LPD_DOUBLE(1.0); }
 static VikLayerParamData line_thickness_default(void) { return VIK_LPD_UINT(3); }
 
 static VikLayerParam coord_layer_params[] = {
-	{ VIK_LAYER_COORD, "color",          VIK_LAYER_PARAM_COLOR,  VIK_LAYER_GROUP_NONE, N_("Color:"),          VIK_LAYER_WIDGET_COLOR,      NULL,             NULL, NULL, color_default,          NULL, NULL },
-	{ VIK_LAYER_COORD, "min_inc",        VIK_LAYER_PARAM_DOUBLE, VIK_LAYER_GROUP_NONE, N_("Minutes Width:"),  VIK_LAYER_WIDGET_SPINBUTTON, &param_scales[0], NULL, NULL, min_inc_default,        NULL, NULL },
-	{ VIK_LAYER_COORD, "line_thickness", VIK_LAYER_PARAM_UINT,   VIK_LAYER_GROUP_NONE, N_("Line Thickness:"), VIK_LAYER_WIDGET_SPINBUTTON, &param_scales[1], NULL, NULL, line_thickness_default, NULL, NULL },
+	{ LayerType::COORD, "color",          VIK_LAYER_PARAM_COLOR,  VIK_LAYER_GROUP_NONE, N_("Color:"),          VIK_LAYER_WIDGET_COLOR,      NULL,             NULL, NULL, color_default,          NULL, NULL },
+	{ LayerType::COORD, "min_inc",        VIK_LAYER_PARAM_DOUBLE, VIK_LAYER_GROUP_NONE, N_("Minutes Width:"),  VIK_LAYER_WIDGET_SPINBUTTON, &param_scales[0], NULL, NULL, min_inc_default,        NULL, NULL },
+	{ LayerType::COORD, "line_thickness", VIK_LAYER_PARAM_UINT,   VIK_LAYER_GROUP_NONE, N_("Line Thickness:"), VIK_LAYER_WIDGET_SPINBUTTON, &param_scales[1], NULL, NULL, line_thickness_default, NULL, NULL },
 };
 
 enum {
@@ -387,7 +387,7 @@ LayerCoord::LayerCoord()
 {
 	fprintf(stderr, "LayerCoord()\n");
 	this->gc = NULL;
-	this->type = VIK_LAYER_COORD;
+	this->type = LayerType::COORD;
 	strcpy(this->type_string, "COORD");
 }
 
@@ -397,7 +397,7 @@ LayerCoord::LayerCoord(Viewport * viewport)
 	fprintf(stderr, "LayerCoord()\n");
 
 	this->gc = NULL;
-	this->type = VIK_LAYER_COORD;
+	this->type = LayerType::COORD;
 	strcpy(this->type_string, "COORD");
 
 

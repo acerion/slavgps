@@ -157,7 +157,7 @@ namespace SlavGPS {
 		Layer(VikLayer * vl);
 		~Layer() {};
 
-		static Layer * new_(VikLayerTypeEnum type, Viewport * viewport, bool interactive);
+		static Layer * new_(LayerType layer_type, Viewport * viewport, bool interactive);
 
 		void emit_update();
 
@@ -222,7 +222,7 @@ namespace SlavGPS {
 
 
 
-		static VikLayerTypeEnum type_from_string(char const * str);
+		static LayerType type_from_string(char const * str);
 
 
 
@@ -245,7 +245,7 @@ namespace SlavGPS {
 		GtkTreeIter iter;
 
 		/* for explicit "polymorphism" (function type switching) */
-		VikLayerTypeEnum type;
+		LayerType type;
 
 
 
@@ -269,7 +269,7 @@ namespace SlavGPS {
 	class LayerTool {
 
 	public:
-		LayerTool(Window * window, Viewport * viewport, int layer_type);
+		LayerTool(Window * window, Viewport * viewport, LayerType layer_type);
 		~LayerTool();
 
 		VikToolActivationFunc activate = NULL;
@@ -293,7 +293,7 @@ namespace SlavGPS {
 		ruler_tool_state_t * ruler = NULL;
 		zoom_tool_state_t * zoom = NULL;
 
-		int layer_type;
+		LayerType layer_type;
 	};
 
 
@@ -346,7 +346,7 @@ struct _VikLayerInterface {
 	VikLayerFuncChangeParam           change_param;
 };
 
-VikLayerInterface * vik_layer_get_interface(VikLayerTypeEnum type);
+VikLayerInterface * vik_layer_get_interface(SlavGPS::LayerType layer_type);
 bool vik_layer_set_param(VikLayer * layer, uint16_t id, VikLayerParamData data, SlavGPS::Viewport * viewport, bool is_file_operation);
 
 
@@ -363,7 +363,7 @@ void      vik_layer_unmarshall_params(VikLayer * vl, uint8_t * data, int len, Sl
 bool vik_layer_selected(VikLayer * l, int subtype, void * sublayer, int type, void * panel);
 
 /* TODO: put in layerspanel */
-GdkPixbuf * vik_layer_load_icon(VikLayerTypeEnum type);
+GdkPixbuf * vik_layer_load_icon(SlavGPS::LayerType layer_type);
 
 void vik_layer_emit_update_secondary(VikLayer * vl); /* to be called by aggregate layer only. doesn't set the trigger */
 void vik_layer_emit_update_although_invisible(VikLayer * vl);

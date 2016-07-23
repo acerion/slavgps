@@ -424,7 +424,7 @@ static void val_analyse_item_maybe(track_layer_t * trwlist, bool include_invisib
 	LayerTRW * trw = trwlist->trw;
 
 	// Safety first - items shouldn't be deleted...
-	if (trw->type != VIK_LAYER_TRW) return;
+	if (trw->type != LayerType::TRW) return;
 	if (!trk) return;
 
 	if (!include_invisible) {

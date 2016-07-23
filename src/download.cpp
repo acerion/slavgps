@@ -52,6 +52,16 @@
 #include "globals.h"
 #include "vik_compat.h"
 
+
+
+
+
+using namespace SlavGPS;
+
+
+
+
+
 static bool check_file_first_line(FILE * f, char * patterns[])
 {
 	char **s;
@@ -135,7 +145,7 @@ static VikLayerParamData convert_to_internal(VikLayerParamData value)
 }
 
 static VikLayerParam prefs[] = {
-	{ VIK_LAYER_NUM_TYPES, VIKING_PREFERENCES_NAMESPACE "download_tile_age", VIK_LAYER_PARAM_UINT, VIK_LAYER_GROUP_NONE, N_("Tile age (days):"), VIK_LAYER_WIDGET_SPINBUTTON, &params_scales[0], NULL, NULL, NULL, convert_to_display, convert_to_internal },
+	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_NAMESPACE "download_tile_age", VIK_LAYER_PARAM_UINT, VIK_LAYER_GROUP_NONE, N_("Tile age (days):"), VIK_LAYER_WIDGET_SPINBUTTON, &params_scales[0], NULL, NULL, NULL, convert_to_display, convert_to_internal },
 };
 
 void a_download_init(void)

@@ -71,7 +71,7 @@ static GObjectClass * parent_class;
 
 static void vik_layer_finalize(VikLayer * vl);
 static bool vik_layer_properties_factory(VikLayer * vl, Viewport * viewport);
-static bool layer_defaults_register(VikLayerTypeEnum type);
+static bool layer_defaults_register(LayerType layer_type);
 
 G_DEFINE_TYPE (VikLayer, vik_layer, G_TYPE_OBJECT)
 
@@ -90,10 +90,9 @@ static void vik_layer_class_init(VikLayerClass * klass)
 						       g_cclosure_marshal_VOID__VOID, G_TYPE_NONE, 0);
 
 	// Register all parameter defaults, early in the start up sequence
-	int layer;
-	for (layer = 0; ((VikLayerTypeEnum) layer) < VIK_LAYER_NUM_TYPES; layer++) {
+	for (LayerType layer_type = LayerType::AGGREGATE; layer_type < LayerType::NUM_TYPES; ++layer_type) {
 		// ATM ignore the returned value
-		layer_defaults_register((VikLayerTypeEnum) layer);
+		layer_defaults_register(layer_type);
 	}
 }
 
@@ -160,7 +159,7 @@ void vik_layer_emit_update_secondary(VikLayer * vl)
 	}
 }
 
-static VikLayerInterface * vik_layer_interfaces[VIK_LAYER_NUM_TYPES] = {
+static VikLayerInterface * vik_layer_interfaces[(int) LayerType::NUM_TYPES] = {
 	&vik_aggregate_layer_interface,
 	&vik_trw_layer_interface,
 	&vik_coord_layer_interface,
@@ -173,10 +172,10 @@ static VikLayerInterface * vik_layer_interfaces[VIK_LAYER_NUM_TYPES] = {
 #endif
 };
 
-VikLayerInterface * vik_layer_get_interface(VikLayerTypeEnum type)
+VikLayerInterface * vik_layer_get_interface(LayerType layer_type)
 {
-	assert (type < VIK_LAYER_NUM_TYPES);
-	return vik_layer_interfaces[type];
+	assert (layer_type < LayerType::NUM_TYPES);
+	return vik_layer_interfaces[(int) layer_type];
 }
 
 /**
@@ -184,23 +183,23 @@ VikLayerInterface * vik_layer_get_interface(VikLayerTypeEnum type)
  *
  * Returns whether any parameters where registered
  */
-static bool layer_defaults_register(VikLayerTypeEnum type)
+static bool layer_defaults_register(LayerType layer_type)
 {
 	// See if any parameters
-	VikLayerParam *params = vik_layer_interfaces[type]->params;
+	VikLayerParam *params = vik_layer_interfaces[(int) layer_type]->params;
 	if (!params) {
 		return false;
 	}
 
 	bool answer = false; // Incase all parameters are 'not in properties'
-	uint16_t params_count = vik_layer_interfaces[type]->params_count;
+	uint16_t params_count = vik_layer_interfaces[(int) layer_type]->params_count;
 	uint16_t i;
 	// Process each parameter
 	for (i = 0; i < params_count; i++) {
 		if (params[i].group != VIK_LAYER_NOT_IN_PROPERTIES) {
 			if (params[i].default_value) {
 				VikLayerParamData paramd = params[i].default_value();
-				a_layer_defaults_register(&params[i], paramd, vik_layer_interfaces[type]->fixed_layer_name);
+				a_layer_defaults_register(&params[i], paramd, vik_layer_interfaces[(int) layer_type]->fixed_layer_name);
 				answer = true;
 			}
 		}
@@ -235,40 +234,42 @@ char const * Layer::get_name()
 }
 
 
-Layer * Layer::new_(VikLayerTypeEnum type, Viewport * viewport, bool interactive)
+Layer * Layer::new_(LayerType layer_type, Viewport * viewport, bool interactive)
 {
-	assert (type != VIK_LAYER_NUM_TYPES);
+	assert (layer_type != LayerType::NUM_TYPES);
 
 	Layer * layer = NULL;
-	if (type == VIK_LAYER_AGGREGATE) {
+	if (layer_type == LayerType::AGGREGATE) {
 		fprintf(stderr, "\n\n\n NEW AGGREGATE\n\n\n");
 		layer = new LayerAggregate(viewport);
 
-	} else if (type == VIK_LAYER_TRW) {
+	} else if (layer_type == LayerType::TRW) {
 		fprintf(stderr, "\n\n\n NEW TRW\n\n\n");
 		layer = new LayerTRW(viewport);
 
-	} else if (type == VIK_LAYER_COORD) {
+	} else if (layer_type == LayerType::COORD) {
 		fprintf(stderr, "\n\n\n NEW COORD\n\n\n");
 		layer = new LayerCoord(viewport);
 
-	} else if (type == VIK_LAYER_MAPS) {
+	} else if (layer_type == LayerType::MAPS) {
 		fprintf(stderr, "\n\n\n NEW MAPS\n\n\n");
 		layer = new LayerMaps(viewport);
 
-	} else if (type == VIK_LAYER_DEM) {
+	} else if (layer_type == LayerType::DEM) {
 		fprintf(stderr, "\n\n\n NEW DEM\n\n\n");
 		layer = new LayerDEM(viewport);
 
-	} else if (type == VIK_LAYER_GEOREF) {
+	} else if (layer_type == LayerType::GEOREF) {
 		fprintf(stderr, "\n\n\n NEW GEOREF\n\n\n");
 		layer = new LayerGeoref(viewport);
 
-	} else if (type == VIK_LAYER_MAPNIK) {
+#ifdef HAVE_LIBMAPNIK
+	} else if (layer_type == LayerType::MAPNIK) {
 		fprintf(stderr, "\n\n\n NEW MAPNIK\n\n\n");
 		layer = new LayerMapnik(viewport);
+#endif
 
-	} else if (type == VIK_LAYER_GPS) {
+	} else if (layer_type == LayerType::GPS) {
 		fprintf(stderr, "\n\n\n NEW GPS\n\n\n");
 		layer = new LayerGPS(viewport);
 	} else {
@@ -281,7 +282,7 @@ Layer * Layer::new_(VikLayerTypeEnum type, Viewport * viewport, bool interactive
 		if (vik_layer_properties(layer->vl, viewport)) {
 			/* We translate the name here */
 			/* in order to avoid translating name set by user */
-			layer->rename(_(vik_layer_interfaces[type]->name));
+			layer->rename(_(vik_layer_interfaces[(int) layer_type]->name));
 		} else {
 			g_object_unref(G_OBJECT(layer->vl)); /* cancel that */
 			delete layer;
@@ -295,7 +296,7 @@ Layer * Layer::new_(VikLayerTypeEnum type, Viewport * viewport, bool interactive
 bool vik_layer_properties(VikLayer * vl, Viewport * viewport)
 {
 	Layer * layer = (Layer *) vl->layer;
-	if (layer->type == VIK_LAYER_GEOREF) {
+	if (layer->type == LayerType::GEOREF) {
 		return layer->properties(viewport);
 	}
 
@@ -311,7 +312,7 @@ void Layer::draw_visible(Viewport * viewport)
 
 
 typedef struct {
-	VikLayerTypeEnum layer_type;
+	LayerType layer_type;
 	int len;
 	uint8_t data[0];
 } header_t;
@@ -467,8 +468,8 @@ VikLayer * vik_layer_unmarshall(uint8_t * data, int len, Viewport * viewport)
 
 	header = (header_t *) data;
 
-	if (vik_layer_interfaces[header->layer_type]->unmarshall) {
-		return vik_layer_interfaces[header->layer_type]->unmarshall(header->data, header->len, viewport);
+	if (vik_layer_interfaces[(int) header->layer_type]->unmarshall) {
+		return vik_layer_interfaces[(int) header->layer_type]->unmarshall(header->data, header->len, viewport);
 	} else {
 		return NULL;
 	}
@@ -506,7 +507,7 @@ uint16_t vik_layer_get_menu_items_selection(VikLayer *l)
 	uint16_t rv = layer->get_menu_selection();
 	if (rv == (uint16_t) -1) {
 		/* Perhaps this line could go to base class. */
-		return vik_layer_interfaces[layer->type]->menu_items_selection;
+		return vik_layer_interfaces[(int) layer->type]->menu_items_selection;
 	} else {
 		return rv;
 	}
@@ -514,11 +515,11 @@ uint16_t vik_layer_get_menu_items_selection(VikLayer *l)
 
 
 
-GdkPixbuf * vik_layer_load_icon(VikLayerTypeEnum type)
+GdkPixbuf * vik_layer_load_icon(LayerType layer_type)
 {
-	assert (type < VIK_LAYER_NUM_TYPES);
-	if (vik_layer_interfaces[type]->icon) {
-		return gdk_pixbuf_from_pixdata(vik_layer_interfaces[type]->icon, false, NULL);
+	assert (layer_type < LayerType::NUM_TYPES);
+	if (vik_layer_interfaces[(int) layer_type]->icon) {
+		return gdk_pixbuf_from_pixdata(vik_layer_interfaces[(int) layer_type]->icon, false, NULL);
 	}
 	return NULL;
 }
@@ -535,16 +536,16 @@ static bool vik_layer_properties_factory (VikLayer *vl, Viewport * viewport)
 	Layer * layer = (Layer *) vl->layer;
 	switch (a_uibuilder_properties_factory(_("Layer Properties"),
 					       VIK_GTK_WINDOW_FROM_WIDGET(viewport->vvp),
-					       vik_layer_interfaces[layer->type]->params,
-					       vik_layer_interfaces[layer->type]->params_count,
-					       vik_layer_interfaces[layer->type]->params_groups,
-					       vik_layer_interfaces[layer->type]->params_groups_count,
-					       (bool (*)(void*, uint16_t, VikLayerParamData, void*, bool)) vik_layer_interfaces[layer->type]->set_param,
+					       vik_layer_interfaces[(int) layer->type]->params,
+					       vik_layer_interfaces[(int) layer->type]->params_count,
+					       vik_layer_interfaces[(int) layer->type]->params_groups,
+					       vik_layer_interfaces[(int) layer->type]->params_groups_count,
+					       (bool (*)(void*, uint16_t, VikLayerParamData, void*, bool)) vik_layer_interfaces[(int) layer->type]->set_param,
 					       vl,
 					       viewport,
-					       (VikLayerParamData (*)(void*, uint16_t, bool)) vik_layer_interfaces[layer->type]->get_param,
+					       (VikLayerParamData (*)(void*, uint16_t, bool)) vik_layer_interfaces[(int) layer->type]->get_param,
 					       vl,
-					       (void (*)(GtkWidget*, void**)) vik_layer_interfaces[layer->type]->change_param)) {
+					       (void (*)(GtkWidget*, void**)) vik_layer_interfaces[(int) layer->type]->change_param)) {
 	case 0:
 	case 3:
 		return false;
@@ -558,14 +559,14 @@ static bool vik_layer_properties_factory (VikLayer *vl, Viewport * viewport)
 	}
 }
 
-VikLayerTypeEnum Layer::type_from_string(char const * str)
+LayerType Layer::type_from_string(char const * str)
 {
-	for (int i = 0; ((VikLayerTypeEnum) i) < VIK_LAYER_NUM_TYPES; i++) {
-		if (strcasecmp(str, vik_layer_get_interface((VikLayerTypeEnum) i)->fixed_layer_name) == 0) {
-			return (VikLayerTypeEnum) i;
+	for (LayerType i = LayerType::AGGREGATE; i < LayerType::NUM_TYPES; ++i) {
+		if (strcasecmp(str, vik_layer_get_interface(i)->fixed_layer_name) == 0) {
+			return i;
 		}
 	}
-	return VIK_LAYER_NUM_TYPES;
+	return LayerType::NUM_TYPES;
 }
 
 void vik_layer_typed_param_data_free(void * gp)
@@ -873,7 +874,7 @@ GtkWindow * gtk_window_from_layer(Layer * layer)
 
 
 
-LayerTool::LayerTool(Window * window, Viewport * viewport, int layer_type)
+LayerTool::LayerTool(Window * window, Viewport * viewport, LayerType layer_type)
 {
 	this->window = window;
 	this->viewport = viewport;

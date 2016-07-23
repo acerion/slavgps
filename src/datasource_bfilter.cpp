@@ -35,6 +35,15 @@
 #include "globals.h"
 
 
+
+
+
+using namespace SlavGPS;
+
+
+
+
+
 /************************************ Simplify (Count) *****************************/
 
 /* spin button scales */
@@ -43,7 +52,7 @@ VikLayerParamScale simplify_params_scales[] = {
 };
 
 VikLayerParam bfilter_simplify_params[] = {
-	{ VIK_LAYER_NUM_TYPES, "numberofpoints", VIK_LAYER_PARAM_UINT, VIK_LAYER_GROUP_NONE, N_("Max number of points:"), VIK_LAYER_WIDGET_SPINBUTTON, simplify_params_scales, NULL, NULL, NULL, NULL, NULL },
+	{ LayerType::NUM_TYPES, "numberofpoints", VIK_LAYER_PARAM_UINT, VIK_LAYER_GROUP_NONE, N_("Max number of points:"), VIK_LAYER_WIDGET_SPINBUTTON, simplify_params_scales, NULL, NULL, NULL, NULL, NULL },
 };
 
 VikLayerParamData bfilter_simplify_params_defaults[] = {
@@ -111,8 +120,8 @@ VikDataSourceInterface vik_datasource_bfilter_simplify_interface = {
 static VikLayerParamScale compress_spin_scales[] = { {0.0, 1.000, 0.001, 3} };
 
 VikLayerParam bfilter_compress_params[] = {
-	//{ VIK_LAYER_NUM_TYPES, "compressmethod", VIK_LAYER_PARAM_UINT, VIK_LAYER_GROUP_NONE, N_("Simplify Method:"), VIK_LAYER_WIDGET_COMBOBOX, compress_method, NULL, NULL, NULL, NULL, NULL },
-	{ VIK_LAYER_NUM_TYPES, "compressfactor", VIK_LAYER_PARAM_DOUBLE, VIK_LAYER_GROUP_NONE, N_("Error Factor:"), VIK_LAYER_WIDGET_SPINBUTTON, compress_spin_scales, NULL,
+	//{ LayerType::NUM_TYPES, "compressmethod", VIK_LAYER_PARAM_UINT, VIK_LAYER_GROUP_NONE, N_("Simplify Method:"), VIK_LAYER_WIDGET_COMBOBOX, compress_method, NULL, NULL, NULL, NULL, NULL },
+	{ LayerType::NUM_TYPES, "compressfactor", VIK_LAYER_PARAM_DOUBLE, VIK_LAYER_GROUP_NONE, N_("Error Factor:"), VIK_LAYER_WIDGET_SPINBUTTON, compress_spin_scales, NULL,
 	  N_("Specifies the maximum allowable error that may be introduced by removing a single point by the crosstrack method. See the manual or GPSBabel Simplify Filter documentation for more detail."), NULL, NULL, NULL },
 };
 
@@ -223,7 +232,7 @@ VikLayerParamData bfilter_manual_params_defaults[] = {
 };
 
 VikLayerParam bfilter_manual_params[] = {
-	{ VIK_LAYER_NUM_TYPES, "manual", VIK_LAYER_PARAM_STRING, VIK_LAYER_GROUP_NONE, N_("Manual filter:"), VIK_LAYER_WIDGET_ENTRY, NULL, NULL,
+	{ LayerType::NUM_TYPES, "manual", VIK_LAYER_PARAM_STRING, VIK_LAYER_GROUP_NONE, N_("Manual filter:"), VIK_LAYER_WIDGET_ENTRY, NULL, NULL,
 	  N_("Manual filter command: e.g. 'swap'."), NULL, NULL, NULL },
 };
 

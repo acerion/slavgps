@@ -108,8 +108,6 @@ namespace SlavGPS {
 
 
 
-#define TOOL_LAYER_TYPE_NONE -1
-
 	typedef struct {
 		LayerTool * active_tool;
 		int n_tools;
@@ -197,7 +195,7 @@ namespace SlavGPS {
 
 		static void set_redraw_trigger(Layer * layer);
 
-		void enable_layer_tool(int layer_id, int tool_id);
+		void enable_layer_tool(LayerType layer_type, int tool_id);
 		GThread * get_thread();
 
 
@@ -254,7 +252,7 @@ namespace SlavGPS {
 
 		/* tool management state */
 		unsigned int current_tool;
-		uint16_t tool_layer_id;
+		LayerType tool_layer_type;
 		uint16_t tool_tool_id;
 		toolbox_tools_t * vt;
 

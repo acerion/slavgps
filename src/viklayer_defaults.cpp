@@ -144,7 +144,7 @@ static void defaults_run_setparam ( void * index_ptr, uint16_t i, VikLayerParamD
 	int index = KPOINTER_TO_INT ( index_ptr );
 	VikLayerParam *vlp = (VikLayerParam *)g_ptr_array_index(paramsVD,index+i);
 
-	set_default_data ( data, vik_layer_get_interface(vlp->layer)->fixed_layer_name, vlp->name, vlp->type );
+	set_default_data(data, vik_layer_get_interface(vlp->layer_type)->fixed_layer_name, vlp->name, vlp->type);
 }
 
 static VikLayerParamData defaults_run_getparam(void * index_ptr, uint16_t i, bool notused2 )
@@ -153,29 +153,29 @@ static VikLayerParamData defaults_run_getparam(void * index_ptr, uint16_t i, boo
 	int index = (int) (long) (index_ptr);
 	VikLayerParam *vlp = (VikLayerParam *)g_ptr_array_index(paramsVD,index+i);
 
-	return get_default_data ( vik_layer_get_interface(vlp->layer)->fixed_layer_name, vlp->name, vlp->type );
+	return get_default_data ( vik_layer_get_interface(vlp->layer_type)->fixed_layer_name, vlp->name, vlp->type );
 }
 
-static void use_internal_defaults_if_missing_default ( VikLayerTypeEnum type )
+static void use_internal_defaults_if_missing_default(LayerType layer_type)
 {
-	VikLayerParam *params = vik_layer_get_interface(type)->params;
+	VikLayerParam *params = vik_layer_get_interface(layer_type)->params;
 	if ( ! params )
 		return;
 
-	uint16_t params_count = vik_layer_get_interface(type)->params_count;
+	uint16_t params_count = vik_layer_get_interface(layer_type)->params_count;
 	uint16_t i;
 	// Process each parameter
 	for ( i = 0; i < params_count; i++ ) {
 		if ( params[i].group != VIK_LAYER_NOT_IN_PROPERTIES ) {
 			void * success = KINT_TO_POINTER (false);
 			// Check current default is available
-			get_default_data_answer ( vik_layer_get_interface(type)->fixed_layer_name, params[i].name, params[i].type, &success );
+			get_default_data_answer ( vik_layer_get_interface(layer_type)->fixed_layer_name, params[i].name, params[i].type, &success );
 			// If no longer have a viable default
 			if ( ! KPOINTER_TO_INT (success) ) {
 				// Reset value
 				if ( params[i].default_value ) {
 					VikLayerParamData paramd = params[i].default_value();
-					set_default_data ( paramd, vik_layer_get_interface(type)->fixed_layer_name, params[i].name, params[i].type );
+					set_default_data ( paramd, vik_layer_get_interface(layer_type)->fixed_layer_name, params[i].name, params[i].type );
 				}
 			}
 		}
@@ -200,9 +200,8 @@ static bool defaults_load_from_file()
 	free( fn );
 
 	// Ensure if have a key file, then any missing values are set from the internal defaults
-	int layer;
-	for ( layer = 0; ((VikLayerTypeEnum) layer) < VIK_LAYER_NUM_TYPES; layer++ ) {
-		use_internal_defaults_if_missing_default ( (VikLayerTypeEnum) layer );
+	for (LayerType layer_type = LayerType::AGGREGATE; layer_type < LayerType::NUM_TYPES; ++layer_type) {
+		use_internal_defaults_if_missing_default(layer_type);
 	}
 
 	return true;
@@ -273,7 +272,7 @@ bool a_layer_defaults_show_window ( GtkWindow *parent, const char *layername )
 		loaded = true;
 	}
 
-    VikLayerTypeEnum layer = Layer::type_from_string(layername);
+    LayerType layer_type = Layer::type_from_string(layername);
 
     // Need to know where the params start and they finish for this layer
 
@@ -290,9 +289,9 @@ bool a_layer_defaults_show_window ( GtkWindow *parent, const char *layername )
     int i;
     for ( i = 0; i < paramsVD->len; i++ ) {
 		VikLayerParam *param = (VikLayerParam*)(g_ptr_array_index(paramsVD,i));
-		if ( param->layer == layer ) {
+		if (param->layer_type == layer_type) {
 			layer_params_count++;
-			if ( !found_first ) {
+			if (!found_first) {
 				index = i;
 				found_first = true;
 			}
@@ -314,8 +313,8 @@ bool a_layer_defaults_show_window ( GtkWindow *parent, const char *layername )
 	                                      parent,
 	                                      params,
 	                                      layer_params_count,
-	                                      vik_layer_get_interface(layer)->params_groups,
-	                                      vik_layer_get_interface(layer)->params_groups_count,
+	                                      vik_layer_get_interface(layer_type)->params_groups,
+	                                      vik_layer_get_interface(layer_type)->params_groups_count,
 	                                      (bool (*) (void *,uint16_t,VikLayerParamData,void *,bool)) defaults_run_setparam,
 	                                      ((void *) (long) (index)),
 	                                      params,
@@ -409,12 +408,11 @@ VikLayerParamData a_layer_defaults_get ( const char *layername, const char *para
  *
  * Returns: %true if saving was successful
  */
-bool a_layer_defaults_save ()
+bool a_layer_defaults_save()
 {
 	// Generate defaults
-	int layer;
-	for ( layer = 0; (VikLayerTypeEnum) layer < VIK_LAYER_NUM_TYPES; layer++ ) {
-		use_internal_defaults_if_missing_default ( (VikLayerTypeEnum) layer );
+	for (LayerType layer_type = LayerType::AGGREGATE; layer_type < LayerType::NUM_TYPES; ++layer_type) {
+		use_internal_defaults_if_missing_default(layer_type);
 	}
 
 	return layer_defaults_save_to_file();

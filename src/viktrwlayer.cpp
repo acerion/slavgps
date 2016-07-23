@@ -270,54 +270,54 @@ static VikLayerParamData string_default(void)
 }
 
 VikLayerParam trw_layer_params[] = {
-	{ VIK_LAYER_TRW, "tracks_visible", VIK_LAYER_PARAM_BOOLEAN, VIK_LAYER_NOT_IN_PROPERTIES, NULL, (VikLayerWidgetType) 0, NULL, NULL, NULL, vik_lpd_true_default, NULL, NULL },
-	{ VIK_LAYER_TRW, "waypoints_visible", VIK_LAYER_PARAM_BOOLEAN, VIK_LAYER_NOT_IN_PROPERTIES, NULL, (VikLayerWidgetType) 0, NULL, NULL, NULL, vik_lpd_true_default, NULL, NULL },
-	{ VIK_LAYER_TRW, "routes_visible", VIK_LAYER_PARAM_BOOLEAN, VIK_LAYER_NOT_IN_PROPERTIES, NULL, (VikLayerWidgetType) 0, NULL, NULL, NULL, vik_lpd_true_default, NULL, NULL },
+	{ LayerType::TRW, "tracks_visible", VIK_LAYER_PARAM_BOOLEAN, VIK_LAYER_NOT_IN_PROPERTIES, NULL, (VikLayerWidgetType) 0, NULL, NULL, NULL, vik_lpd_true_default, NULL, NULL },
+	{ LayerType::TRW, "waypoints_visible", VIK_LAYER_PARAM_BOOLEAN, VIK_LAYER_NOT_IN_PROPERTIES, NULL, (VikLayerWidgetType) 0, NULL, NULL, NULL, vik_lpd_true_default, NULL, NULL },
+	{ LayerType::TRW, "routes_visible", VIK_LAYER_PARAM_BOOLEAN, VIK_LAYER_NOT_IN_PROPERTIES, NULL, (VikLayerWidgetType) 0, NULL, NULL, NULL, vik_lpd_true_default, NULL, NULL },
 
-	{ VIK_LAYER_TRW, "trackdrawlabels", VIK_LAYER_PARAM_BOOLEAN, GROUP_TRACKS, N_("Draw Labels"), VIK_LAYER_WIDGET_CHECKBUTTON, NULL, NULL,
+	{ LayerType::TRW, "trackdrawlabels", VIK_LAYER_PARAM_BOOLEAN, GROUP_TRACKS, N_("Draw Labels"), VIK_LAYER_WIDGET_CHECKBUTTON, NULL, NULL,
 	  N_("Note: the individual track controls what labels may be displayed"), vik_lpd_true_default, NULL, NULL },
-	{ VIK_LAYER_TRW, "trackfontsize", VIK_LAYER_PARAM_UINT, GROUP_TRACKS_ADV, N_("Track Labels Font Size:"), VIK_LAYER_WIDGET_COMBOBOX, params_font_sizes, NULL, NULL, tnfontsize_default, NULL, NULL },
-	{ VIK_LAYER_TRW, "drawmode", VIK_LAYER_PARAM_UINT, GROUP_TRACKS, N_("Track Drawing Mode:"), VIK_LAYER_WIDGET_COMBOBOX, params_drawmodes, NULL, NULL, drawmode_default, NULL, NULL },
-	{ VIK_LAYER_TRW, "trackcolor", VIK_LAYER_PARAM_COLOR, GROUP_TRACKS, N_("All Tracks Color:"), VIK_LAYER_WIDGET_COLOR, NULL, NULL,
+	{ LayerType::TRW, "trackfontsize", VIK_LAYER_PARAM_UINT, GROUP_TRACKS_ADV, N_("Track Labels Font Size:"), VIK_LAYER_WIDGET_COMBOBOX, params_font_sizes, NULL, NULL, tnfontsize_default, NULL, NULL },
+	{ LayerType::TRW, "drawmode", VIK_LAYER_PARAM_UINT, GROUP_TRACKS, N_("Track Drawing Mode:"), VIK_LAYER_WIDGET_COMBOBOX, params_drawmodes, NULL, NULL, drawmode_default, NULL, NULL },
+	{ LayerType::TRW, "trackcolor", VIK_LAYER_PARAM_COLOR, GROUP_TRACKS, N_("All Tracks Color:"), VIK_LAYER_WIDGET_COLOR, NULL, NULL,
 	  N_("The color used when 'All Tracks Same Color' drawing mode is selected"), black_color_default, NULL, NULL },
-	{ VIK_LAYER_TRW, "drawlines", VIK_LAYER_PARAM_BOOLEAN, GROUP_TRACKS, N_("Draw Track Lines"), VIK_LAYER_WIDGET_CHECKBUTTON, NULL, NULL, NULL, vik_lpd_true_default, NULL, NULL },
-	{ VIK_LAYER_TRW, "line_thickness", VIK_LAYER_PARAM_UINT, GROUP_TRACKS_ADV, N_("Track Thickness:"), VIK_LAYER_WIDGET_SPINBUTTON, &params_scales[0], NULL, NULL, line_thickness_default, NULL, NULL },
-	{ VIK_LAYER_TRW, "drawdirections", VIK_LAYER_PARAM_BOOLEAN, GROUP_TRACKS, N_("Draw Track Direction"), VIK_LAYER_WIDGET_CHECKBUTTON, NULL, NULL, NULL, vik_lpd_false_default, NULL, NULL },
-	{ VIK_LAYER_TRW, "trkdirectionsize", VIK_LAYER_PARAM_UINT, GROUP_TRACKS_ADV, N_("Direction Size:"), VIK_LAYER_WIDGET_SPINBUTTON, &params_scales[11], NULL, NULL, trkdirectionsize_default, NULL, NULL },
-	{ VIK_LAYER_TRW, "drawpoints", VIK_LAYER_PARAM_BOOLEAN, GROUP_TRACKS, N_("Draw Trackpoints"), VIK_LAYER_WIDGET_CHECKBUTTON, NULL, NULL, NULL, vik_lpd_true_default, NULL, NULL },
-	{ VIK_LAYER_TRW, "trkpointsize", VIK_LAYER_PARAM_UINT, GROUP_TRACKS_ADV, N_("Trackpoint Size:"), VIK_LAYER_WIDGET_SPINBUTTON, &params_scales[10], NULL, NULL, trkpointsize_default, NULL, NULL },
-	{ VIK_LAYER_TRW, "drawelevation", VIK_LAYER_PARAM_BOOLEAN, GROUP_TRACKS, N_("Draw Elevation"), VIK_LAYER_WIDGET_CHECKBUTTON, NULL, NULL, NULL, vik_lpd_false_default, NULL, NULL },
-	{ VIK_LAYER_TRW, "elevation_factor", VIK_LAYER_PARAM_UINT, GROUP_TRACKS_ADV, N_("Draw Elevation Height %:"), VIK_LAYER_WIDGET_HSCALE, &params_scales[9], NULL, NULL, elevation_factor_default, NULL, NULL },
-	{ VIK_LAYER_TRW, "drawstops", VIK_LAYER_PARAM_BOOLEAN, GROUP_TRACKS, N_("Draw Stops"), VIK_LAYER_WIDGET_CHECKBUTTON, NULL, NULL,
+	{ LayerType::TRW, "drawlines", VIK_LAYER_PARAM_BOOLEAN, GROUP_TRACKS, N_("Draw Track Lines"), VIK_LAYER_WIDGET_CHECKBUTTON, NULL, NULL, NULL, vik_lpd_true_default, NULL, NULL },
+	{ LayerType::TRW, "line_thickness", VIK_LAYER_PARAM_UINT, GROUP_TRACKS_ADV, N_("Track Thickness:"), VIK_LAYER_WIDGET_SPINBUTTON, &params_scales[0], NULL, NULL, line_thickness_default, NULL, NULL },
+	{ LayerType::TRW, "drawdirections", VIK_LAYER_PARAM_BOOLEAN, GROUP_TRACKS, N_("Draw Track Direction"), VIK_LAYER_WIDGET_CHECKBUTTON, NULL, NULL, NULL, vik_lpd_false_default, NULL, NULL },
+	{ LayerType::TRW, "trkdirectionsize", VIK_LAYER_PARAM_UINT, GROUP_TRACKS_ADV, N_("Direction Size:"), VIK_LAYER_WIDGET_SPINBUTTON, &params_scales[11], NULL, NULL, trkdirectionsize_default, NULL, NULL },
+	{ LayerType::TRW, "drawpoints", VIK_LAYER_PARAM_BOOLEAN, GROUP_TRACKS, N_("Draw Trackpoints"), VIK_LAYER_WIDGET_CHECKBUTTON, NULL, NULL, NULL, vik_lpd_true_default, NULL, NULL },
+	{ LayerType::TRW, "trkpointsize", VIK_LAYER_PARAM_UINT, GROUP_TRACKS_ADV, N_("Trackpoint Size:"), VIK_LAYER_WIDGET_SPINBUTTON, &params_scales[10], NULL, NULL, trkpointsize_default, NULL, NULL },
+	{ LayerType::TRW, "drawelevation", VIK_LAYER_PARAM_BOOLEAN, GROUP_TRACKS, N_("Draw Elevation"), VIK_LAYER_WIDGET_CHECKBUTTON, NULL, NULL, NULL, vik_lpd_false_default, NULL, NULL },
+	{ LayerType::TRW, "elevation_factor", VIK_LAYER_PARAM_UINT, GROUP_TRACKS_ADV, N_("Draw Elevation Height %:"), VIK_LAYER_WIDGET_HSCALE, &params_scales[9], NULL, NULL, elevation_factor_default, NULL, NULL },
+	{ LayerType::TRW, "drawstops", VIK_LAYER_PARAM_BOOLEAN, GROUP_TRACKS, N_("Draw Stops"), VIK_LAYER_WIDGET_CHECKBUTTON, NULL, NULL,
 	  N_("Whether to draw a marker when trackpoints are at the same position but over the minimum stop length apart in time"), vik_lpd_false_default, NULL, NULL },
-	{ VIK_LAYER_TRW, "stop_length", VIK_LAYER_PARAM_UINT, GROUP_TRACKS_ADV, N_("Min Stop Length (seconds):"), VIK_LAYER_WIDGET_SPINBUTTON, &params_scales[8], NULL, NULL, stop_length_default, NULL, NULL },
+	{ LayerType::TRW, "stop_length", VIK_LAYER_PARAM_UINT, GROUP_TRACKS_ADV, N_("Min Stop Length (seconds):"), VIK_LAYER_WIDGET_SPINBUTTON, &params_scales[8], NULL, NULL, stop_length_default, NULL, NULL },
 
-	{ VIK_LAYER_TRW, "bg_line_thickness", VIK_LAYER_PARAM_UINT, GROUP_TRACKS_ADV, N_("Track BG Thickness:"), VIK_LAYER_WIDGET_SPINBUTTON, &params_scales[6], NULL, NULL, bg_line_thickness_default, NULL, NULL },
-	{ VIK_LAYER_TRW, "trackbgcolor", VIK_LAYER_PARAM_COLOR, GROUP_TRACKS_ADV, N_("Track Background Color"), VIK_LAYER_WIDGET_COLOR, NULL, NULL, NULL, trackbgcolor_default, NULL, NULL },
-	{ VIK_LAYER_TRW, "speed_factor", VIK_LAYER_PARAM_DOUBLE, GROUP_TRACKS_ADV, N_("Draw by Speed Factor (%):"), VIK_LAYER_WIDGET_HSCALE, &params_scales[1], NULL,
+	{ LayerType::TRW, "bg_line_thickness", VIK_LAYER_PARAM_UINT, GROUP_TRACKS_ADV, N_("Track BG Thickness:"), VIK_LAYER_WIDGET_SPINBUTTON, &params_scales[6], NULL, NULL, bg_line_thickness_default, NULL, NULL },
+	{ LayerType::TRW, "trackbgcolor", VIK_LAYER_PARAM_COLOR, GROUP_TRACKS_ADV, N_("Track Background Color"), VIK_LAYER_WIDGET_COLOR, NULL, NULL, NULL, trackbgcolor_default, NULL, NULL },
+	{ LayerType::TRW, "speed_factor", VIK_LAYER_PARAM_DOUBLE, GROUP_TRACKS_ADV, N_("Draw by Speed Factor (%):"), VIK_LAYER_WIDGET_HSCALE, &params_scales[1], NULL,
 	  N_("The percentage factor away from the average speed determining the color used"), speed_factor_default, NULL, NULL },
-	{ VIK_LAYER_TRW, "tracksortorder", VIK_LAYER_PARAM_UINT, GROUP_TRACKS_ADV, N_("Track Sort Order:"), VIK_LAYER_WIDGET_COMBOBOX, params_sort_order, NULL, NULL, sort_order_default, NULL, NULL },
+	{ LayerType::TRW, "tracksortorder", VIK_LAYER_PARAM_UINT, GROUP_TRACKS_ADV, N_("Track Sort Order:"), VIK_LAYER_WIDGET_COMBOBOX, params_sort_order, NULL, NULL, sort_order_default, NULL, NULL },
 
-	{ VIK_LAYER_TRW, "drawlabels", VIK_LAYER_PARAM_BOOLEAN, GROUP_WAYPOINTS, N_("Draw Labels"), VIK_LAYER_WIDGET_CHECKBUTTON, NULL, NULL, NULL, vik_lpd_true_default, NULL, NULL },
-	{ VIK_LAYER_TRW, "wpfontsize", VIK_LAYER_PARAM_UINT, GROUP_WAYPOINTS, N_("Waypoint Font Size:"), VIK_LAYER_WIDGET_COMBOBOX, params_font_sizes, NULL, NULL, wpfontsize_default, NULL, NULL },
-	{ VIK_LAYER_TRW, "wpcolor", VIK_LAYER_PARAM_COLOR, GROUP_WAYPOINTS, N_("Waypoint Color:"), VIK_LAYER_WIDGET_COLOR, NULL, NULL, NULL, black_color_default, NULL, NULL },
-	{ VIK_LAYER_TRW, "wptextcolor", VIK_LAYER_PARAM_COLOR, GROUP_WAYPOINTS, N_("Waypoint Text:"), VIK_LAYER_WIDGET_COLOR, NULL, NULL, NULL, wptextcolor_default, NULL, NULL },
-	{ VIK_LAYER_TRW, "wpbgcolor", VIK_LAYER_PARAM_COLOR, GROUP_WAYPOINTS, N_("Background:"), VIK_LAYER_WIDGET_COLOR, NULL, NULL, NULL, wpbgcolor_default, NULL, NULL },
-	{ VIK_LAYER_TRW, "wpbgand", VIK_LAYER_PARAM_BOOLEAN, GROUP_WAYPOINTS, N_("Fake BG Color Translucency:"), VIK_LAYER_WIDGET_CHECKBUTTON, NULL, NULL, NULL, vik_lpd_false_default, NULL, NULL },
-	{ VIK_LAYER_TRW, "wpsymbol", VIK_LAYER_PARAM_UINT, GROUP_WAYPOINTS, N_("Waypoint marker:"), VIK_LAYER_WIDGET_COMBOBOX, params_wpsymbols, NULL, NULL, wpsymbol_default, NULL, NULL },
-	{ VIK_LAYER_TRW, "wpsize", VIK_LAYER_PARAM_UINT, GROUP_WAYPOINTS, N_("Waypoint size:"), VIK_LAYER_WIDGET_SPINBUTTON, &params_scales[7], NULL, NULL, wpsize_default, NULL, NULL },
-	{ VIK_LAYER_TRW, "wpsyms", VIK_LAYER_PARAM_BOOLEAN, GROUP_WAYPOINTS, N_("Draw Waypoint Symbols:"), VIK_LAYER_WIDGET_CHECKBUTTON, NULL, NULL, NULL, vik_lpd_true_default, NULL, NULL },
-	{ VIK_LAYER_TRW, "wpsortorder", VIK_LAYER_PARAM_UINT, GROUP_WAYPOINTS, N_("Waypoint Sort Order:"), VIK_LAYER_WIDGET_COMBOBOX, params_sort_order, NULL, NULL, sort_order_default, NULL, NULL },
+	{ LayerType::TRW, "drawlabels", VIK_LAYER_PARAM_BOOLEAN, GROUP_WAYPOINTS, N_("Draw Labels"), VIK_LAYER_WIDGET_CHECKBUTTON, NULL, NULL, NULL, vik_lpd_true_default, NULL, NULL },
+	{ LayerType::TRW, "wpfontsize", VIK_LAYER_PARAM_UINT, GROUP_WAYPOINTS, N_("Waypoint Font Size:"), VIK_LAYER_WIDGET_COMBOBOX, params_font_sizes, NULL, NULL, wpfontsize_default, NULL, NULL },
+	{ LayerType::TRW, "wpcolor", VIK_LAYER_PARAM_COLOR, GROUP_WAYPOINTS, N_("Waypoint Color:"), VIK_LAYER_WIDGET_COLOR, NULL, NULL, NULL, black_color_default, NULL, NULL },
+	{ LayerType::TRW, "wptextcolor", VIK_LAYER_PARAM_COLOR, GROUP_WAYPOINTS, N_("Waypoint Text:"), VIK_LAYER_WIDGET_COLOR, NULL, NULL, NULL, wptextcolor_default, NULL, NULL },
+	{ LayerType::TRW, "wpbgcolor", VIK_LAYER_PARAM_COLOR, GROUP_WAYPOINTS, N_("Background:"), VIK_LAYER_WIDGET_COLOR, NULL, NULL, NULL, wpbgcolor_default, NULL, NULL },
+	{ LayerType::TRW, "wpbgand", VIK_LAYER_PARAM_BOOLEAN, GROUP_WAYPOINTS, N_("Fake BG Color Translucency:"), VIK_LAYER_WIDGET_CHECKBUTTON, NULL, NULL, NULL, vik_lpd_false_default, NULL, NULL },
+	{ LayerType::TRW, "wpsymbol", VIK_LAYER_PARAM_UINT, GROUP_WAYPOINTS, N_("Waypoint marker:"), VIK_LAYER_WIDGET_COMBOBOX, params_wpsymbols, NULL, NULL, wpsymbol_default, NULL, NULL },
+	{ LayerType::TRW, "wpsize", VIK_LAYER_PARAM_UINT, GROUP_WAYPOINTS, N_("Waypoint size:"), VIK_LAYER_WIDGET_SPINBUTTON, &params_scales[7], NULL, NULL, wpsize_default, NULL, NULL },
+	{ LayerType::TRW, "wpsyms", VIK_LAYER_PARAM_BOOLEAN, GROUP_WAYPOINTS, N_("Draw Waypoint Symbols:"), VIK_LAYER_WIDGET_CHECKBUTTON, NULL, NULL, NULL, vik_lpd_true_default, NULL, NULL },
+	{ LayerType::TRW, "wpsortorder", VIK_LAYER_PARAM_UINT, GROUP_WAYPOINTS, N_("Waypoint Sort Order:"), VIK_LAYER_WIDGET_COMBOBOX, params_sort_order, NULL, NULL, sort_order_default, NULL, NULL },
 
-	{ VIK_LAYER_TRW, "drawimages", VIK_LAYER_PARAM_BOOLEAN, GROUP_IMAGES, N_("Draw Waypoint Images"), VIK_LAYER_WIDGET_CHECKBUTTON, NULL, NULL, NULL, vik_lpd_true_default, NULL, NULL },
-	{ VIK_LAYER_TRW, "image_size", VIK_LAYER_PARAM_UINT, GROUP_IMAGES, N_("Image Size (pixels):"), VIK_LAYER_WIDGET_HSCALE, &params_scales[3], NULL, NULL, image_size_default, NULL, NULL },
-	{ VIK_LAYER_TRW, "image_alpha", VIK_LAYER_PARAM_UINT, GROUP_IMAGES, N_("Image Alpha:"), VIK_LAYER_WIDGET_HSCALE, &params_scales[4], NULL, NULL, image_alpha_default, NULL, NULL },
-	{ VIK_LAYER_TRW, "image_cache_size", VIK_LAYER_PARAM_UINT, GROUP_IMAGES, N_("Image Memory Cache Size:"), VIK_LAYER_WIDGET_HSCALE, &params_scales[5], NULL, NULL, image_cache_size_default, NULL, NULL },
+	{ LayerType::TRW, "drawimages", VIK_LAYER_PARAM_BOOLEAN, GROUP_IMAGES, N_("Draw Waypoint Images"), VIK_LAYER_WIDGET_CHECKBUTTON, NULL, NULL, NULL, vik_lpd_true_default, NULL, NULL },
+	{ LayerType::TRW, "image_size", VIK_LAYER_PARAM_UINT, GROUP_IMAGES, N_("Image Size (pixels):"), VIK_LAYER_WIDGET_HSCALE, &params_scales[3], NULL, NULL, image_size_default, NULL, NULL },
+	{ LayerType::TRW, "image_alpha", VIK_LAYER_PARAM_UINT, GROUP_IMAGES, N_("Image Alpha:"), VIK_LAYER_WIDGET_HSCALE, &params_scales[4], NULL, NULL, image_alpha_default, NULL, NULL },
+	{ LayerType::TRW, "image_cache_size", VIK_LAYER_PARAM_UINT, GROUP_IMAGES, N_("Image Memory Cache Size:"), VIK_LAYER_WIDGET_HSCALE, &params_scales[5], NULL, NULL, image_cache_size_default, NULL, NULL },
 
-	{ VIK_LAYER_TRW, "metadatadesc", VIK_LAYER_PARAM_STRING, GROUP_METADATA, N_("Description"), VIK_LAYER_WIDGET_ENTRY, NULL, NULL, NULL, string_default, NULL, NULL },
-	{ VIK_LAYER_TRW, "metadataauthor", VIK_LAYER_PARAM_STRING, GROUP_METADATA, N_("Author"), VIK_LAYER_WIDGET_ENTRY, NULL, NULL, NULL, string_default, NULL, NULL },
-	{ VIK_LAYER_TRW, "metadatatime", VIK_LAYER_PARAM_STRING, GROUP_METADATA, N_("Creation Time"), VIK_LAYER_WIDGET_ENTRY, NULL, NULL, NULL, string_default, NULL, NULL },
-	{ VIK_LAYER_TRW, "metadatakeywords", VIK_LAYER_PARAM_STRING, GROUP_METADATA, N_("Keywords"), VIK_LAYER_WIDGET_ENTRY, NULL, NULL, NULL, string_default, NULL, NULL },
+	{ LayerType::TRW, "metadatadesc", VIK_LAYER_PARAM_STRING, GROUP_METADATA, N_("Description"), VIK_LAYER_WIDGET_ENTRY, NULL, NULL, NULL, string_default, NULL, NULL },
+	{ LayerType::TRW, "metadataauthor", VIK_LAYER_PARAM_STRING, GROUP_METADATA, N_("Author"), VIK_LAYER_WIDGET_ENTRY, NULL, NULL, NULL, string_default, NULL, NULL },
+	{ LayerType::TRW, "metadatatime", VIK_LAYER_PARAM_STRING, GROUP_METADATA, N_("Creation Time"), VIK_LAYER_WIDGET_ENTRY, NULL, NULL, NULL, string_default, NULL, NULL },
+	{ LayerType::TRW, "metadatakeywords", VIK_LAYER_PARAM_STRING, GROUP_METADATA, N_("Keywords"), VIK_LAYER_WIDGET_ENTRY, NULL, NULL, NULL, string_default, NULL, NULL },
 };
 
 // ENUMERATION MUST BE IN THE SAME ORDER AS THE NAMED PARAMS ABOVE
@@ -666,7 +666,7 @@ void trw_layer_copy_item_cb(trw_menu_sublayer_t * data)
 				name = NULL; // Broken :(
 		}
 
-		a_clipboard_copy(VIK_CLIPBOARD_DATA_SUBLAYER, VIK_LAYER_TRW,
+		a_clipboard_copy(VIK_CLIPBOARD_DATA_SUBLAYER, LayerType::TRW,
 				 subtype, len, name, data_);
 	}
 }
@@ -2894,7 +2894,7 @@ void trw_layer_new_track(trw_menu_layer_t * data)
 		layer->new_track_create_common(name);
 		free(name);
 
-		window_from_layer(layer)->enable_layer_tool(VIK_LAYER_TRW, TOOL_CREATE_TRACK);
+		window_from_layer(layer)->enable_layer_tool(LayerType::TRW, TOOL_CREATE_TRACK);
 	}
 }
 
@@ -2925,7 +2925,7 @@ void trw_layer_new_route(trw_menu_layer_t * data)
 		char *name = layer->new_unique_sublayer_name(VIK_TRW_LAYER_SUBLAYER_ROUTE, _("Route")) ;
 		layer->new_route_create_common(name);
 		free(name);
-		window_from_layer(layer)->enable_layer_tool(VIK_LAYER_TRW, TOOL_CREATE_ROUTE);
+		window_from_layer(layer)->enable_layer_tool(LayerType::TRW, TOOL_CREATE_ROUTE);
 	}
 }
 
@@ -3993,7 +3993,7 @@ void trw_layer_extend_track_end(trw_menu_sublayer_t * data)
 	}
 
 	layer->current_track = trk;
-	window_from_layer(layer)->enable_layer_tool(VIK_LAYER_TRW, trk->is_route ? TOOL_CREATE_ROUTE : TOOL_CREATE_TRACK);
+	window_from_layer(layer)->enable_layer_tool(LayerType::TRW, trk->is_route ? TOOL_CREATE_ROUTE : TOOL_CREATE_TRACK);
 
 	if (trk->trackpoints) {
 		goto_coord(data->panel, data->layer, data->viewport, &(trk->get_tp_last()->coord));
@@ -4012,7 +4012,7 @@ void trw_layer_extend_track_end_route_finder(trw_menu_sublayer_t * data)
 		return;
 	}
 
-	window_from_layer(layer)->enable_layer_tool(VIK_LAYER_TRW, TOOL_ROUTE_FINDER);
+	window_from_layer(layer)->enable_layer_tool(LayerType::TRW, TOOL_ROUTE_FINDER);
 	layer->current_track = trk;
 	layer->route_finder_started = true;
 
@@ -4032,7 +4032,7 @@ bool LayerTRW::dem_test(LayersPanel * panel)
 {
 	// If have a panel then perform a basic test to see if any DEM info available...
 	if (panel) {
-		std::list<Layer *> * dems = panel->get_all_layers_of_type(VIK_LAYER_DEM, true); // Includes hidden DEM layer types
+		std::list<Layer *> * dems = panel->get_all_layers_of_type(LayerType::DEM, true); // Includes hidden DEM layer types
 		if (dems->empty()) {
 			a_dialog_error_msg(gtk_window_from_layer(this), _("No DEM layers available, thus no DEM values can be applied."));
 			return false;
@@ -6854,7 +6854,7 @@ bool LayerTRW::select_click(GdkEventButton * event, Viewport * viewport, LayerTo
 		return false;
 	}
 
-	if (this->type != VIK_LAYER_TRW) {
+	if (this->type != LayerType::TRW) {
 		return false;
 	}
 
@@ -7011,7 +7011,7 @@ bool LayerTRW::show_selected_viewport_menu(GdkEventButton * event, Viewport * vi
 		return false;
 	}
 
-	if (this->type != VIK_LAYER_TRW) {
+	if (this->type != LayerType::TRW) {
 		return false;
 	}
 
@@ -7145,7 +7145,7 @@ static void marker_end_move(LayerTool * tool)
 
 static LayerTool * tool_edit_waypoint_create(Window * window, Viewport * viewport)
 {
-	LayerTool * layer_tool = new LayerTool(window, viewport, VIK_LAYER_TRW);
+	LayerTool * layer_tool = new LayerTool(window, viewport, LayerType::TRW);
 
 	trw_layer_tools[4] = layer_tool;
 
@@ -7176,7 +7176,7 @@ static bool tool_edit_waypoint_click_cb(Layer * trw, GdkEventButton *event, Laye
 
 bool LayerTRW::tool_edit_waypoint_click(GdkEventButton * event, LayerTool * tool)
 {
-	if (this->type != VIK_LAYER_TRW) {
+	if (this->type != LayerType::TRW) {
 		return false;
 	}
 
@@ -7252,7 +7252,7 @@ static bool tool_edit_waypoint_move_cb(Layer * trw, GdkEventMotion *event, Layer
 
 bool LayerTRW::tool_edit_waypoint_move(GdkEventMotion * event, LayerTool * tool)
 {
-	if (this->type != VIK_LAYER_TRW) {
+	if (this->type != LayerType::TRW) {
 		return false;
 	}
 
@@ -7294,7 +7294,7 @@ static bool tool_edit_waypoint_release_cb(Layer * trw, GdkEventButton * event, L
 
 bool LayerTRW::tool_edit_waypoint_release(GdkEventButton * event, LayerTool * tool)
 {
-	if (this->type != VIK_LAYER_TRW) {
+	if (this->type != LayerType::TRW) {
 		return false;
 	}
 
@@ -7345,7 +7345,7 @@ bool LayerTRW::tool_edit_waypoint_release(GdkEventButton * event, LayerTool * to
 
 static LayerTool * tool_new_track_create(Window * window, Viewport * viewport)
 {
-	LayerTool * layer_tool = new LayerTool(window, viewport, VIK_LAYER_TRW);
+	LayerTool * layer_tool = new LayerTool(window, viewport, LayerType::TRW);
 
 	trw_layer_tools[1] = layer_tool;
 
@@ -7662,7 +7662,7 @@ bool LayerTRW::tool_new_track_key_press(GdkEventKey *event, LayerTool * tool)
  */
 bool LayerTRW::tool_new_track_or_route_click(GdkEventButton * event, Viewport * viewport)
 {
-	if (this->type != VIK_LAYER_TRW)
+	if (this->type != LayerType::TRW)
 		return false;
 
 	if (event->button == 2) {
@@ -7766,7 +7766,7 @@ void LayerTRW::tool_new_track_release(GdkEventButton *event, LayerTool * tool)
 
 static LayerTool * tool_new_route_create(Window * window, Viewport * viewport)
 {
-	LayerTool * layer_tool = new LayerTool(window, viewport, VIK_LAYER_TRW);
+	LayerTool * layer_tool = new LayerTool(window, viewport, LayerType::TRW);
 
 	trw_layer_tools[2] = layer_tool;
 
@@ -7823,7 +7823,7 @@ bool LayerTRW::tool_new_route_click(GdkEventButton * event, LayerTool * tool)
 
 static LayerTool * tool_new_waypoint_create(Window * window, Viewport * viewport)
 {
-	LayerTool * layer_tool = new LayerTool(window, viewport, VIK_LAYER_TRW);
+	LayerTool * layer_tool = new LayerTool(window, viewport, LayerType::TRW);
 
 	trw_layer_tools[0] = layer_tool;
 
@@ -7853,7 +7853,7 @@ static bool tool_new_waypoint_click_cb(Layer * trw, GdkEventButton *event, Layer
 bool LayerTRW::tool_new_waypoint_click(GdkEventButton * event, LayerTool * tool)
 {
 	VikCoord coord;
-	if (this->type != VIK_LAYER_TRW) {
+	if (this->type != LayerType::TRW) {
 		return false;
 	}
 
@@ -7872,7 +7872,7 @@ bool LayerTRW::tool_new_waypoint_click(GdkEventButton * event, LayerTool * tool)
 
 static LayerTool * tool_edit_trackpoint_create(Window * window, Viewport * viewport)
 {
-	LayerTool * layer_tool = new LayerTool(window, viewport, VIK_LAYER_TRW);
+	LayerTool * layer_tool = new LayerTool(window, viewport, LayerType::TRW);
 
 	trw_layer_tools[5] = layer_tool;
 
@@ -7925,7 +7925,7 @@ bool LayerTRW::tool_edit_trackpoint_click(GdkEventButton * event, LayerTool * to
 		return false;
 	}
 
-	if (this->type != VIK_LAYER_TRW) {
+	if (this->type != LayerType::TRW) {
 		return false;
 	}
 
@@ -7999,7 +7999,7 @@ static bool tool_edit_trackpoint_move_cb(Layer * trw, GdkEventMotion *event, Lay
 
 bool LayerTRW::tool_edit_trackpoint_move(GdkEventMotion *event, LayerTool * tool)
 {
-	if (this->type != VIK_LAYER_TRW) {
+	if (this->type != LayerType::TRW) {
 		return false;
 	}
 
@@ -8033,7 +8033,7 @@ static bool tool_edit_trackpoint_release_cb(Layer * trw, GdkEventButton *event, 
 
 bool LayerTRW::tool_edit_trackpoint_release(GdkEventButton * event, LayerTool * tool)
 {
-	if (this->type != VIK_LAYER_TRW) {
+	if (this->type != LayerType::TRW) {
 		return false;
 	}
 
@@ -8078,7 +8078,7 @@ bool LayerTRW::tool_edit_trackpoint_release(GdkEventButton * event, LayerTool * 
 
 static LayerTool * tool_extended_route_finder_create(Window * window, Viewport * viewport)
 {
-	LayerTool * layer_tool = new LayerTool(window, viewport, VIK_LAYER_TRW);
+	LayerTool * layer_tool = new LayerTool(window, viewport, LayerType::TRW);
 
 	trw_layer_tools[3] = layer_tool;
 
@@ -8225,7 +8225,7 @@ bool LayerTRW::tool_extended_route_finder_key_press(GdkEventKey * event, LayerTo
 
 static LayerTool * tool_show_picture_create(Window * window, Viewport * viewport)
 {
-	LayerTool * layer_tool = new LayerTool(window, viewport, VIK_LAYER_TRW);
+	LayerTool * layer_tool = new LayerTool(window, viewport, LayerType::TRW);
 
 	trw_layer_tools[6] = layer_tool;
 
@@ -8278,7 +8278,7 @@ static bool tool_show_picture_click_cb(Layer * trw, GdkEventButton * event, Laye
 
 bool LayerTRW::tool_show_picture_click(GdkEventButton * event, LayerTool * tool)
 {
-	if (this->type != VIK_LAYER_TRW) {
+	if (this->type != LayerType::TRW) {
 		return false;
 	}
 
@@ -8919,7 +8919,7 @@ void trw_layer_download_map_along_track_cb(trw_menu_sublayer_t * data)
 
 	Viewport * viewport = window_from_layer(layer)->get_viewport();
 
-	std::list<Layer *> * vmls = panel->get_all_layers_of_type(VIK_LAYER_MAPS, true); // Includes hidden map layer types
+	std::list<Layer *> * vmls = panel->get_all_layers_of_type(LayerType::MAPS, true); // Includes hidden map layer types
 	int num_maps = vmls->size();
 
 	if (!num_maps) {
@@ -9126,7 +9126,7 @@ void LayerTRW::write_file(FILE * f)
 
 LayerTRW::LayerTRW() : Layer()
 {
-	this->type = VIK_LAYER_TRW;
+	this->type = LayerType::TRW;
 
 	strcpy(this->type_string, "TRW");
 
@@ -9173,7 +9173,7 @@ LayerTRW::LayerTRW() : Layer()
 
 LayerTRW::LayerTRW(Viewport * viewport) : Layer()
 {
-	this->type = VIK_LAYER_TRW;
+	this->type = LayerType::TRW;
 
 	strcpy(this->type_string, "TRW");
 

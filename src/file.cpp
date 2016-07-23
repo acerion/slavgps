@@ -238,11 +238,11 @@ static void file_write(LayerAggregate * top, FILE * f, Viewport * viewport)
 		Layer * current = (Layer *) current_layer->layer;
 		fprintf(f, "\n~Layer %s\n", vik_layer_get_interface(current->type)->fixed_layer_name);
 		write_layer_params_and_data(current_layer, f);
-		if (current->type == VIK_LAYER_AGGREGATE && !((LayerAggregate *) current)->is_empty()) {
+		if (current->type == LayerType::AGGREGATE && !((LayerAggregate *) current)->is_empty()) {
 			push(&stack);
 			const std::list<Layer *> * children = ((LayerAggregate *) current)->get_children();
 			// stack->data = children; /* kamilFIXME: fix the assignment. */
-		} else if (current->type == VIK_LAYER_GPS && !((LayerGPS *) current)->is_empty()) {
+		} else if (current->type == LayerType::GPS && !((LayerGPS *) current)->is_empty()) {
 			push(&stack);
 			stack->data = (void *) ((LayerGPS *) current)->get_children();
 		} else {
@@ -350,31 +350,31 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 			if (*line == '\0') {
 				continue;
 			} else if (str_starts_with(line, "Layer ", 6, true)) {
-				int parent_type = ((Layer *) ((VikLayer *) stack->data)->layer)->type;
-				if ((! stack->data) || ((parent_type != VIK_LAYER_AGGREGATE) && (parent_type != VIK_LAYER_GPS))) {
+				LayerType parent_type = ((Layer *) ((VikLayer *) stack->data)->layer)->type;
+				if ((! stack->data) || ((parent_type != LayerType::AGGREGATE) && (parent_type != LayerType::GPS))) {
 					successful_read = false;
 					fprintf(stderr, "WARNING: Line %ld: Layer command inside non-Aggregate Layer (type %d)\n", line_num, parent_type);
 					push(&stack); /* inside INVALID layer */
 					stack->data = NULL;
 					continue;
 				} else {
-					VikLayerTypeEnum type = Layer::type_from_string(line + 6);
+					LayerType layer_type = Layer::type_from_string(line + 6);
 					push(&stack);
-					if (type == VIK_LAYER_NUM_TYPES) {
+					if (layer_type == LayerType::NUM_TYPES) {
 						successful_read = false;
 						fprintf(stderr, "WARNING: Line %ld: Unknown type %s\n", line_num, line+6);
 						stack->data = NULL;
-					} else if (parent_type == VIK_LAYER_GPS) {
+					} else if (parent_type == LayerType::GPS) {
 						LayerGPS * g = (LayerGPS *) ((VikLayer *) stack->under->data)->layer;
 						stack->data = (void *) g->get_a_child()->vl;
-						params = vik_layer_get_interface(type)->params;
-						params_count = vik_layer_get_interface(type)->params_count;
+						params = vik_layer_get_interface(layer_type)->params;
+						params_count = vik_layer_get_interface(layer_type)->params_count;
 
-					} else { /* Any other VIK_LAYER_x type. */
-						Layer * layer = Layer::new_(type, viewport, false);
+					} else { /* Any other LayerType::X type. */
+						Layer * layer = Layer::new_(layer_type, viewport, false);
 						stack->data = (void *) layer->vl;
-						params = vik_layer_get_interface(type)->params;
-						params_count = vik_layer_get_interface(type)->params_count;
+						params = vik_layer_get_interface(layer_type)->params;
+						params_count = vik_layer_get_interface(layer_type)->params_count;
 					}
 				}
 			} else if (str_starts_with(line, "EndLayer", 8, false)) {
@@ -390,11 +390,11 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 					g_hash_table_remove_all(string_lists);
 
 					if (stack->data && stack->under->data) {
-						if (((Layer *) ((VikLayer *) stack->under->data)->layer)->type == VIK_LAYER_AGGREGATE) {
+						if (((Layer *) ((VikLayer *) stack->under->data)->layer)->type == LayerType::AGGREGATE) {
 							Layer * layer = (Layer *) ((VikLayer *) stack->data)->layer;
 							((LayerAggregate *) ((VikLayer *) stack->under->data)->layer)->add_layer(layer, false);
 							layer->post_read(viewport, true);
-						} else if (((Layer *) ((VikLayer *) stack->under->data)->layer)->type == VIK_LAYER_GPS) {
+						} else if (((Layer *) ((VikLayer *) stack->under->data)->layer)->type == LayerType::GPS) {
 							/* TODO: anything else needs to be done here ? */
 						} else {
 							successful_read = false;

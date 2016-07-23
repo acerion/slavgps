@@ -530,8 +530,8 @@ void vu_set_auto_features_on_first_run(void)
 
 		// Enable auto add map +
 		// Enable IP lookup
-		VikLayerParam pref_add_map[] = { { VIK_LAYER_NUM_TYPES, VIKING_PREFERENCES_STARTUP_NAMESPACE "add_default_map_layer", VIK_LAYER_PARAM_BOOLEAN, VIK_LAYER_GROUP_NONE, NULL, VIK_LAYER_WIDGET_CHECKBUTTON, NULL, NULL, NULL, NULL, NULL, NULL, }, };
-		VikLayerParam pref_startup_method[] = { { VIK_LAYER_NUM_TYPES, VIKING_PREFERENCES_STARTUP_NAMESPACE "startup_method", VIK_LAYER_PARAM_UINT, VIK_LAYER_GROUP_NONE, NULL, VIK_LAYER_WIDGET_COMBOBOX, NULL, NULL, NULL, NULL, NULL, NULL}, };
+		VikLayerParam pref_add_map[] = { { LayerType::NUM_TYPES, VIKING_PREFERENCES_STARTUP_NAMESPACE "add_default_map_layer", VIK_LAYER_PARAM_BOOLEAN, VIK_LAYER_GROUP_NONE, NULL, VIK_LAYER_WIDGET_CHECKBUTTON, NULL, NULL, NULL, NULL, NULL, NULL, }, };
+		VikLayerParam pref_startup_method[] = { { LayerType::NUM_TYPES, VIKING_PREFERENCES_STARTUP_NAMESPACE "startup_method", VIK_LAYER_PARAM_UINT, VIK_LAYER_GROUP_NONE, NULL, VIK_LAYER_WIDGET_COMBOBOX, NULL, NULL, NULL, NULL, NULL, NULL}, };
 
 		VikLayerParamData vlp_data;
 		vlp_data.b = true;
@@ -543,7 +543,7 @@ void vu_set_auto_features_on_first_run(void)
 		// Only on Windows make checking for the latest version on by default
 		// For other systems it's expected a Package manager or similar controls the installation, so leave it off
 #ifdef WINDOWS
-		VikLayerParam pref_startup_version_check[] = { { VIK_LAYER_NUM_TYPES, VIKING_PREFERENCES_STARTUP_NAMESPACE "check_version", VIK_LAYER_PARAM_BOOLEAN, VIK_LAYER_GROUP_NONE, NULL, VIK_LAYER_WIDGET_CHECKBUTTON, NULL, NULL, NULL, NULL, }, };
+		VikLayerParam pref_startup_version_check[] = { { LayerType::NUM_TYPES, VIKING_PREFERENCES_STARTUP_NAMESPACE "check_version", VIK_LAYER_PARAM_BOOLEAN, VIK_LAYER_GROUP_NONE, NULL, VIK_LAYER_WIDGET_CHECKBUTTON, NULL, NULL, NULL, NULL, }, };
 		vlp_data.b = true;
 		a_preferences_run_setparam(vlp_data, pref_startup_version_check);
 #endif
@@ -868,7 +868,7 @@ void vu_command_line(Window * window, double latitude, double longitude, int zoo
 		}
 
 		// Don't add map layer if one already exists
-		std::list<Layer *> * vmls = window->get_layers_panel()->get_all_layers_of_type(VIK_LAYER_MAPS, true);
+		std::list<Layer *> * vmls = window->get_layers_panel()->get_all_layers_of_type(LayerType::MAPS, true);
 		int num_maps = vmls->size();
 		bool add_map = true;
 
@@ -899,7 +899,7 @@ void vu_command_line(Window * window, double latitude, double longitude, int zoo
  */
 static void vu_copy_label(GtkWidget * widget)
 {
-	a_clipboard_copy(VIK_CLIPBOARD_DATA_TEXT, 0, 0, 0, gtk_button_get_label(GTK_BUTTON(widget)), NULL);
+	a_clipboard_copy(VIK_CLIPBOARD_DATA_TEXT, LayerType::AGGREGATE, 0, 0, gtk_button_get_label(GTK_BUTTON(widget)), NULL);
 }
 
 /**

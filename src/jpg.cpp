@@ -99,7 +99,7 @@ bool a_jpg_load_file(LayerAggregate * top, char const * filename, Viewport * vie
 	Layer * trw = window_from_layer(top)->get_layers_panel()->get_selected();
 
 	bool create_layer = false;
-	if (trw == NULL || trw->type != VIK_LAYER_TRW) {
+	if (trw == NULL || trw->type != LayerType::TRW) {
 		// Create layer if necessary
 
 		trw = (LayerTRW *) new LayerTRW(viewport);

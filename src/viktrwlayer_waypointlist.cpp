@@ -141,7 +141,7 @@ static void trw_layer_waypoint_select_cb(GtkTreeSelection * selection, void * da
 
 	VikLayer * trw;
 	gtk_tree_model_get(model, &iter, TRW_COL_NUM, &trw->vl, -1);
-	if (trw->type != VIK_LAYER_TRW) {
+	if (trw->type != LayerTRW::TRW) {
 		return;
 	}
 
@@ -315,7 +315,7 @@ static void trw_layer_copy_selected(GtkWidget * tree_view, bool include_position
 	cd.include_positions = include_positions;
 	gtk_tree_selection_selected_foreach(selection, copy_selection, &cd);
 
-	a_clipboard_copy(VIK_CLIPBOARD_DATA_TEXT, 0, 0, 0, cd.str->str, NULL);
+	a_clipboard_copy(VIK_CLIPBOARD_DATA_TEXT, LayerType::AGGREGATE, 0, 0, cd.str->str, NULL);
 
 	g_string_free(cd.str, true);
 }
@@ -439,7 +439,7 @@ static bool trw_layer_waypoint_menu_popup(GtkWidget * tree_view,
 	VikLayer * vtl;
 	gtk_tree_model_get(model, &iter, TRW_COL_NUM, &vtl, -1);
 	LayerTRW * trw = (LayerTRW *) vtl->layer;
-	if (trw->type != VIK_LAYER_TRW) {
+	if (trw->type != LayerType::TRW) {
 		return false;
 	}
 

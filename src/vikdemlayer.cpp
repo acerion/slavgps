@@ -120,12 +120,12 @@ static VikLayerParamData min_elev_default(void) { return VIK_LPD_DOUBLE (0.0); }
 static VikLayerParamData max_elev_default(void) { return VIK_LPD_DOUBLE (1000.0); }
 
 static VikLayerParam dem_layer_params[] = {
-	{ VIK_LAYER_DEM, "files",    VIK_LAYER_PARAM_STRING_LIST, VIK_LAYER_GROUP_NONE, N_("DEM Files:"),       VIK_LAYER_WIDGET_FILELIST,          NULL,             NULL, NULL, NULL, NULL, NULL },
-	{ VIK_LAYER_DEM, "source",   VIK_LAYER_PARAM_UINT,        VIK_LAYER_GROUP_NONE, N_("Download Source:"), VIK_LAYER_WIDGET_RADIOGROUP_STATIC, params_source,    NULL, NULL, source_default, NULL, NULL },
-	{ VIK_LAYER_DEM, "color",    VIK_LAYER_PARAM_COLOR,       VIK_LAYER_GROUP_NONE, N_("Min Elev Color:"),  VIK_LAYER_WIDGET_COLOR,             NULL,             NULL, NULL, color_default, NULL, NULL },
-	{ VIK_LAYER_DEM, "type",     VIK_LAYER_PARAM_UINT,        VIK_LAYER_GROUP_NONE, N_("Type:"),            VIK_LAYER_WIDGET_RADIOGROUP_STATIC, params_type,      NULL, NULL, type_default, NULL, NULL },
-	{ VIK_LAYER_DEM, "min_elev", VIK_LAYER_PARAM_DOUBLE,      VIK_LAYER_GROUP_NONE, N_("Min Elev:"),        VIK_LAYER_WIDGET_SPINBUTTON,        param_scales + 0, NULL, NULL, min_elev_default, NULL, NULL },
-	{ VIK_LAYER_DEM, "max_elev", VIK_LAYER_PARAM_DOUBLE,      VIK_LAYER_GROUP_NONE, N_("Max Elev:"),        VIK_LAYER_WIDGET_SPINBUTTON,        param_scales + 0, NULL, NULL, max_elev_default, NULL, NULL },
+	{ LayerType::DEM, "files",    VIK_LAYER_PARAM_STRING_LIST, VIK_LAYER_GROUP_NONE, N_("DEM Files:"),       VIK_LAYER_WIDGET_FILELIST,          NULL,             NULL, NULL, NULL, NULL, NULL },
+	{ LayerType::DEM, "source",   VIK_LAYER_PARAM_UINT,        VIK_LAYER_GROUP_NONE, N_("Download Source:"), VIK_LAYER_WIDGET_RADIOGROUP_STATIC, params_source,    NULL, NULL, source_default, NULL, NULL },
+	{ LayerType::DEM, "color",    VIK_LAYER_PARAM_COLOR,       VIK_LAYER_GROUP_NONE, N_("Min Elev Color:"),  VIK_LAYER_WIDGET_COLOR,             NULL,             NULL, NULL, color_default, NULL, NULL },
+	{ LayerType::DEM, "type",     VIK_LAYER_PARAM_UINT,        VIK_LAYER_GROUP_NONE, N_("Type:"),            VIK_LAYER_WIDGET_RADIOGROUP_STATIC, params_type,      NULL, NULL, type_default, NULL, NULL },
+	{ LayerType::DEM, "min_elev", VIK_LAYER_PARAM_DOUBLE,      VIK_LAYER_GROUP_NONE, N_("Min Elev:"),        VIK_LAYER_WIDGET_SPINBUTTON,        param_scales + 0, NULL, NULL, min_elev_default, NULL, NULL },
+	{ LayerType::DEM, "max_elev", VIK_LAYER_PARAM_DOUBLE,      VIK_LAYER_GROUP_NONE, N_("Max Elev:"),        VIK_LAYER_WIDGET_SPINBUTTON,        param_scales + 0, NULL, NULL, max_elev_default, NULL, NULL },
 };
 
 
@@ -1176,7 +1176,7 @@ static void free_dem_download_params(DEMDownloadParams * p)
 
 static LayerTool * dem_layer_download_create(Window * window, Viewport * viewport)
 {
-	LayerTool * layer_tool = new LayerTool(window, viewport, VIK_LAYER_DEM);
+	LayerTool * layer_tool = new LayerTool(window, viewport, LayerType::DEM);
 
 	dem_tools[0] = layer_tool;
 
@@ -1328,7 +1328,7 @@ static bool dem_layer_download_click(Layer * vdl, GdkEventButton * event, LayerT
 
 LayerDEM::LayerDEM()
 {
-	this->type = VIK_LAYER_DEM;
+	this->type = LayerType::DEM;
 	this->dem_type = 0;
 	strcpy(this->type_string, "DEM");
 }

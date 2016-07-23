@@ -27,6 +27,46 @@
 #include "vik_compat.h"
 #include "config.h"
 
+
+
+
+
+namespace SlavGPS {
+
+
+
+
+
+	enum class LayerType {
+		AGGREGATE = 0,
+		TRW,
+		COORD,
+		GEOREF,
+		GPS,
+		MAPS,
+		DEM,
+#ifdef HAVE_LIBMAPNIK
+		MAPNIK,
+#endif
+		NUM_TYPES // Also use this value to indicate no layer association
+	};
+
+
+
+
+
+	LayerType& operator++(LayerType& layer_type);
+
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -83,19 +123,6 @@ typedef enum {
 	VIK_LAYER_PARAM_PTR, // Not really a 'parameter' but useful to route to extended configuration (e.g. toolbar order)
 } VikLayerParamType;
 
-typedef enum {
-	VIK_LAYER_AGGREGATE = 0,
-	VIK_LAYER_TRW,
-	VIK_LAYER_COORD,
-	VIK_LAYER_GEOREF,
-	VIK_LAYER_GPS,
-	VIK_LAYER_MAPS,
-	VIK_LAYER_DEM,
-#ifdef HAVE_LIBMAPNIK
-	VIK_LAYER_MAPNIK,
-#endif
-	VIK_LAYER_NUM_TYPES // Also use this value to indicate no layer association
-} VikLayerTypeEnum;
 
 // Default value has to be returned via a function
 //  because certain types value are can not be statically allocated
@@ -108,7 +135,7 @@ typedef VikLayerParamData (*VikLayerDefaultFunc) (void);
 typedef VikLayerParamData (*VikLayerConvertFunc) (VikLayerParamData);
 
 typedef struct {
-	VikLayerTypeEnum layer;
+	SlavGPS::LayerType layer_type;
 	const char *name;
 	VikLayerParamType type;
 	int16_t group;

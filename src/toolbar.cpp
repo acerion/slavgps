@@ -43,6 +43,15 @@
 #include "preferences.h"
 
 
+
+
+
+using namespace SlavGPS;
+
+
+
+
+
 struct _VikToolbarClass
 {
   GObjectClass object_class;
@@ -103,10 +112,10 @@ typedef struct {
 static config_t extra_widget_data;
 
 static VikLayerParam prefs[] = {
-	{ VIK_LAYER_NUM_TYPES, TOOLBAR_PARAMS_NAMESPACE "append_to_menu", VIK_LAYER_PARAM_BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Append to Menu:"), VIK_LAYER_WIDGET_CHECKBUTTON, NULL,                    NULL, N_("Pack the toolbar to the main menu to save vertical space"), NULL, NULL, NULL },
-	{ VIK_LAYER_NUM_TYPES, TOOLBAR_PARAMS_NAMESPACE "icon_size",      VIK_LAYER_PARAM_UINT,    VIK_LAYER_GROUP_NONE, N_("Icon Size:"),      VIK_LAYER_WIDGET_COMBOBOX,    params_icon_size,        NULL, NULL, NULL, NULL, NULL },
-	{ VIK_LAYER_NUM_TYPES, TOOLBAR_PARAMS_NAMESPACE "icon_style",     VIK_LAYER_PARAM_UINT,    VIK_LAYER_GROUP_NONE, N_("Icon Style:"),     VIK_LAYER_WIDGET_COMBOBOX,    params_icon_style,       NULL, NULL, NULL, NULL, NULL },
-	{ VIK_LAYER_NUM_TYPES, TOOLBAR_PARAMS_NAMESPACE "NOTSAVED1",      VIK_LAYER_PARAM_PTR,     VIK_LAYER_GROUP_NONE, N_("Customize:"),      VIK_LAYER_WIDGET_BUTTON,      (void *) N_("Customize Buttons"), NULL, NULL, NULL, NULL, NULL },
+	{ LayerType::NUM_TYPES, TOOLBAR_PARAMS_NAMESPACE "append_to_menu", VIK_LAYER_PARAM_BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Append to Menu:"), VIK_LAYER_WIDGET_CHECKBUTTON, NULL,                    NULL, N_("Pack the toolbar to the main menu to save vertical space"), NULL, NULL, NULL },
+	{ LayerType::NUM_TYPES, TOOLBAR_PARAMS_NAMESPACE "icon_size",      VIK_LAYER_PARAM_UINT,    VIK_LAYER_GROUP_NONE, N_("Icon Size:"),      VIK_LAYER_WIDGET_COMBOBOX,    params_icon_size,        NULL, NULL, NULL, NULL, NULL },
+	{ LayerType::NUM_TYPES, TOOLBAR_PARAMS_NAMESPACE "icon_style",     VIK_LAYER_PARAM_UINT,    VIK_LAYER_GROUP_NONE, N_("Icon Style:"),     VIK_LAYER_WIDGET_COMBOBOX,    params_icon_style,       NULL, NULL, NULL, NULL, NULL },
+	{ LayerType::NUM_TYPES, TOOLBAR_PARAMS_NAMESPACE "NOTSAVED1",      VIK_LAYER_PARAM_PTR,     VIK_LAYER_GROUP_NONE, N_("Customize:"),      VIK_LAYER_WIDGET_BUTTON,      (void *) N_("Customize Buttons"), NULL, NULL, NULL, NULL, NULL },
 };
 
 // Global storage to enable freeing upon closure

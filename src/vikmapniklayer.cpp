@@ -87,15 +87,15 @@ static VikLayerParamScale scales[] = {
 };
 
 VikLayerParam mapnik_layer_params[] = {
-  { VIK_LAYER_MAPNIK, "config-file-mml", VIK_LAYER_PARAM_STRING, VIK_LAYER_GROUP_NONE, N_("CSS (MML) Config File:"), VIK_LAYER_WIDGET_FILEENTRY, KINT_TO_POINTER(VF_FILTER_CARTO), NULL,
+  { LayerType::MAPNIK, "config-file-mml", VIK_LAYER_PARAM_STRING, VIK_LAYER_GROUP_NONE, N_("CSS (MML) Config File:"), VIK_LAYER_WIDGET_FILEENTRY, KINT_TO_POINTER(VF_FILTER_CARTO), NULL,
     N_("CartoCSS configuration file"), file_default, NULL, NULL },
-  { VIK_LAYER_MAPNIK, "config-file-xml", VIK_LAYER_PARAM_STRING, VIK_LAYER_GROUP_NONE, N_("XML Config File:"), VIK_LAYER_WIDGET_FILEENTRY, KINT_TO_POINTER(VF_FILTER_XML), NULL,
+  { LayerType::MAPNIK, "config-file-xml", VIK_LAYER_PARAM_STRING, VIK_LAYER_GROUP_NONE, N_("XML Config File:"), VIK_LAYER_WIDGET_FILEENTRY, KINT_TO_POINTER(VF_FILTER_XML), NULL,
     N_("Mapnik XML configuration file"), file_default, NULL, NULL },
-  { VIK_LAYER_MAPNIK, "alpha", VIK_LAYER_PARAM_UINT, VIK_LAYER_GROUP_NONE, N_("Alpha:"), VIK_LAYER_WIDGET_HSCALE, &scales[0], NULL,
+  { LayerType::MAPNIK, "alpha", VIK_LAYER_PARAM_UINT, VIK_LAYER_GROUP_NONE, N_("Alpha:"), VIK_LAYER_WIDGET_HSCALE, &scales[0], NULL,
     NULL, alpha_default, NULL, NULL },
-  { VIK_LAYER_MAPNIK, "use-file-cache", VIK_LAYER_PARAM_BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Use File Cache:"), VIK_LAYER_WIDGET_CHECKBUTTON, NULL, NULL,
+  { LayerType::MAPNIK, "use-file-cache", VIK_LAYER_PARAM_BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Use File Cache:"), VIK_LAYER_WIDGET_CHECKBUTTON, NULL, NULL,
     NULL, vik_lpd_true_default, NULL, NULL },
-  { VIK_LAYER_MAPNIK, "file-cache-dir", VIK_LAYER_PARAM_STRING, VIK_LAYER_GROUP_NONE, N_("File Cache Directory:"), VIK_LAYER_WIDGET_FOLDERENTRY, NULL, NULL,
+  { LayerType::MAPNIK, "file-cache-dir", VIK_LAYER_PARAM_STRING, VIK_LAYER_GROUP_NONE, N_("File Cache Directory:"), VIK_LAYER_WIDGET_FOLDERENTRY, NULL, NULL,
     NULL, cache_dir_default, NULL, NULL },
 };
 
@@ -190,12 +190,12 @@ static VikLayerParamData fonts_default(void)
 
 static VikLayerParam prefs[] = {
 	// Changing these values only applies before first mapnik layer is 'created'
-	{ VIK_LAYER_NUM_TYPES, MAPNIK_PREFS_NAMESPACE"plugins_directory", VIK_LAYER_PARAM_STRING, VIK_LAYER_GROUP_NONE, N_("Plugins Directory:"), VIK_LAYER_WIDGET_FOLDERENTRY, NULL, NULL, N_("You need to restart Viking for a change to this value to be used"), plugins_default, NULL, NULL },
-	{ VIK_LAYER_NUM_TYPES, MAPNIK_PREFS_NAMESPACE"fonts_directory", VIK_LAYER_PARAM_STRING, VIK_LAYER_GROUP_NONE, N_("Fonts Directory:"), VIK_LAYER_WIDGET_FOLDERENTRY, NULL, NULL, N_("You need to restart Viking for a change to this value to be used"), fonts_default, NULL, NULL },
-	{ VIK_LAYER_NUM_TYPES, MAPNIK_PREFS_NAMESPACE"recurse_fonts_directory", VIK_LAYER_PARAM_BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Recurse Fonts Directory:"), VIK_LAYER_WIDGET_CHECKBUTTON, NULL, NULL, N_("You need to restart Viking for a change to this value to be used"), vik_lpd_true_default, NULL, NULL },
-	{ VIK_LAYER_NUM_TYPES, MAPNIK_PREFS_NAMESPACE"rerender_after", VIK_LAYER_PARAM_UINT, VIK_LAYER_GROUP_NONE, N_("Rerender Timeout (hours):"), VIK_LAYER_WIDGET_SPINBUTTON, &scales[2], NULL, N_("You need to restart Viking for a change to this value to be used"), NULL, NULL, NULL },
+	{ LayerType::NUM_TYPES, MAPNIK_PREFS_NAMESPACE"plugins_directory", VIK_LAYER_PARAM_STRING, VIK_LAYER_GROUP_NONE, N_("Plugins Directory:"), VIK_LAYER_WIDGET_FOLDERENTRY, NULL, NULL, N_("You need to restart Viking for a change to this value to be used"), plugins_default, NULL, NULL },
+	{ LayerType::NUM_TYPES, MAPNIK_PREFS_NAMESPACE"fonts_directory", VIK_LAYER_PARAM_STRING, VIK_LAYER_GROUP_NONE, N_("Fonts Directory:"), VIK_LAYER_WIDGET_FOLDERENTRY, NULL, NULL, N_("You need to restart Viking for a change to this value to be used"), fonts_default, NULL, NULL },
+	{ LayerType::NUM_TYPES, MAPNIK_PREFS_NAMESPACE"recurse_fonts_directory", VIK_LAYER_PARAM_BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Recurse Fonts Directory:"), VIK_LAYER_WIDGET_CHECKBUTTON, NULL, NULL, N_("You need to restart Viking for a change to this value to be used"), vik_lpd_true_default, NULL, NULL },
+	{ LayerType::NUM_TYPES, MAPNIK_PREFS_NAMESPACE"rerender_after", VIK_LAYER_PARAM_UINT, VIK_LAYER_GROUP_NONE, N_("Rerender Timeout (hours):"), VIK_LAYER_WIDGET_SPINBUTTON, &scales[2], NULL, N_("You need to restart Viking for a change to this value to be used"), NULL, NULL, NULL },
 	// Changeable any time
-	{ VIK_LAYER_NUM_TYPES, MAPNIK_PREFS_NAMESPACE"carto", VIK_LAYER_PARAM_STRING, VIK_LAYER_GROUP_NONE, N_("CartoCSS:"), VIK_LAYER_WIDGET_FILEENTRY, NULL, NULL,  N_("The program to convert CartoCSS files into Mapnik XML"), NULL, NULL, NULL },
+	{ LayerType::NUM_TYPES, MAPNIK_PREFS_NAMESPACE"carto", VIK_LAYER_PARAM_STRING, VIK_LAYER_GROUP_NONE, N_("CartoCSS:"), VIK_LAYER_WIDGET_FILEENTRY, NULL, NULL,  N_("The program to convert CartoCSS files into Mapnik XML"), NULL, NULL, NULL },
 };
 
 static time_t planet_import_time;
@@ -1131,7 +1131,7 @@ void LayerMapnik::tile_info()
 
 static LayerTool * mapnik_feature_create(Window * window, Viewport * viewport)
 {
-	LayerTool * layer_tool = new LayerTool(window, viewport, VIK_LAYER_MAPNIK);
+	LayerTool * layer_tool = new LayerTool(window, viewport, LayerType::MAPNIK);
 
 	mapnik_tools[0] = layer_tool;
 
@@ -1193,7 +1193,7 @@ bool LayerMapnik::feature_release(GdkEventButton * event, LayerTool * tool)
 
 LayerMapnik::LayerMapnik()
 {
-	this->type = VIK_LAYER_MAPNIK;
+	this->type = LayerType::MAPNIK;
 	strcpy(this->type_string, "MAPNIK");
 
 

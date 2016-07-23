@@ -165,12 +165,12 @@ void LayerAggregate::insert_layer(Layer * layer, GtkTreeIter *replace_iter)
 	bool put_above = true;
 
 	// These types are 'base' types in that you what other information on top
-	if (layer->type == VIK_LAYER_MAPS || layer->type == VIK_LAYER_DEM || layer->type == VIK_LAYER_GEOREF) {
+	if (layer->type == LayerType::MAPS || layer->type == LayerType::DEM || layer->type == LayerType::GEOREF) {
 		put_above = false;
 	}
 
 	if (this->realized) {
-		this->tree_view->insert_layer(&this->iter, &iter, layer->name, this, put_above, layer, layer->type, layer->type, replace_iter, layer->get_timestamp());
+		this->tree_view->insert_layer(&this->iter, &iter, layer->name, this, put_above, layer, (int) layer->type, layer->type, replace_iter, layer->get_timestamp());
 		if (! layer->visible) {
 			this->tree_view->set_visibility(&iter, false);
 		}
@@ -224,13 +224,13 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 
 	if (allow_reordering) {
 		// These types are 'base' types in that you what other information on top
-		if (layer->type == VIK_LAYER_MAPS || layer->type == VIK_LAYER_DEM || layer->type == VIK_LAYER_GEOREF) {
+		if (layer->type == LayerType::MAPS || layer->type == LayerType::DEM || layer->type == LayerType::GEOREF) {
 			put_above = false;
 		}
 	}
 
 	if (this->realized) {
-		this->tree_view->add_layer(&this->iter, &iter, layer->name, this, put_above, layer, layer->type, layer->type, layer->get_timestamp());
+		this->tree_view->add_layer(&this->iter, &iter, layer->name, this, put_above, layer, (int) layer->type, layer->type, layer->get_timestamp());
 		if (!layer->visible) {
 			this->tree_view->set_visibility(&iter, false);
 		}
@@ -314,7 +314,7 @@ void LayerAggregate::draw(Viewport * viewport)
 				viewport->snapshot_save();
 			}
 		}
-		if (layer->type == VIK_LAYER_AGGREGATE || layer->type == VIK_LAYER_GPS || ! viewport->get_half_drawn()) {
+		if (layer->type == LayerType::AGGREGATE || layer->type == LayerType::GPS || ! viewport->get_half_drawn()) {
 			layer->draw_visible(viewport);
 		}
 	}
@@ -490,7 +490,7 @@ std::list<waypoint_layer_t *> * LayerAggregate::create_waypoints_and_layers_list
 {
 	// Get all TRW layers
 	std::list<Layer *> * layers = new std::list<Layer *>;
-	layers = this->get_all_layers_of_type(layers, VIK_LAYER_TRW, true);
+	layers = this->get_all_layers_of_type(layers, LayerType::TRW, true);
 
 	// For each TRW layers keep adding the waypoints to build a list of all of them
 	std::list<waypoint_layer_t *> * waypoints_and_layers = new std::list<waypoint_layer_t *>;
@@ -541,7 +541,7 @@ void LayerAggregate::search_date()
 
 	bool found = false;
 	std::list<Layer *> * layers = new std::list<Layer *>;
-	layers = this->get_all_layers_of_type(layers, VIK_LAYER_TRW, true);
+	layers = this->get_all_layers_of_type(layers, LayerType::TRW, true);
 
 
 	// Search tracks first
@@ -557,7 +557,7 @@ void LayerAggregate::search_date()
 	if (!found) {
 		// Reset and try on Waypoints; /* kamilTODO: do we need to reset the list? Did it change? */
 		layers = new std::list<Layer *>;
-		layers = this->get_all_layers_of_type(layers, VIK_LAYER_TRW, true);
+		layers = this->get_all_layers_of_type(layers, LayerType::TRW, true);
 
 		for (auto iter = layers->begin(); iter != layers->end(); iter++) {
 			// Make it auto select the item if found
@@ -588,7 +588,7 @@ std::list<track_layer_t *> * LayerAggregate::create_tracks_and_layers_list()
 {
 	// Get all TRW layers
 	std::list<Layer *> * layers = new std::list<Layer *>;
-	layers = this->get_all_layers_of_type(layers, VIK_LAYER_TRW, true);
+	layers = this->get_all_layers_of_type(layers, LayerType::TRW, true);
 
 	// For each TRW layers keep adding the tracks and routes to build a list of all of them
 	std::list<track_layer_t *> * tracks_and_layers = new std::list<track_layer_t *>;
@@ -827,7 +827,7 @@ unsigned int vik_aggregate_layer_tool(VikLayer *val, VikLayerTypeEnum layer_type
 		}
 
 		/* recursive -- try the same for the child aggregate layer. */
-		else if (vl->visible && vl->type == VIK_LAYER_AGGREGATE) {
+		else if (vl->visible && vl->type == LayerType::AGGREGATE) {
 			int rv = vik_aggregate_layer_tool((VikLayer *) iter->data, layer_type, tool_func, event, viewport);
 			if (rv == 0) {
 				return 0;
@@ -841,7 +841,7 @@ unsigned int vik_aggregate_layer_tool(VikLayer *val, VikLayerTypeEnum layer_type
 }
 #endif
 
-Layer * LayerAggregate::get_top_visible_layer_of_type(VikLayerTypeEnum type)
+Layer * LayerAggregate::get_top_visible_layer_of_type(LayerType layer_type)
 {
 	if (this->children->empty()) {
 		return NULL;
@@ -851,10 +851,10 @@ Layer * LayerAggregate::get_top_visible_layer_of_type(VikLayerTypeEnum type)
 	do {
 		child--;
 		Layer * layer = *child;
-		if (layer->visible && layer->type == type) {
+		if (layer->visible && layer->type == layer_type) {
 			return layer;
-		} else if (layer->visible && layer->type == VIK_LAYER_AGGREGATE) {
-			Layer * rv = ((LayerAggregate *) layer)->get_top_visible_layer_of_type(type);
+		} else if (layer->visible && layer->type == LayerType::AGGREGATE) {
+			Layer * rv = ((LayerAggregate *) layer)->get_top_visible_layer_of_type(layer_type);
 			if (rv) {
 				return rv;
 			}
@@ -864,7 +864,7 @@ Layer * LayerAggregate::get_top_visible_layer_of_type(VikLayerTypeEnum type)
 	return NULL;
 }
 
-std::list<Layer *> * LayerAggregate::get_all_layers_of_type(std::list<Layer *> * layers, VikLayerTypeEnum type, bool include_invisible)
+std::list<Layer *> * LayerAggregate::get_all_layers_of_type(std::list<Layer *> * layers, LayerType layer_type, bool include_invisible)
 {
 	if (this->children->empty()) {
 		return layers;
@@ -874,19 +874,19 @@ std::list<Layer *> * LayerAggregate::get_all_layers_of_type(std::list<Layer *> *
 	// Where appropriate *don't* include non-visible layers
 	while (child != this->children->end()) {
 		Layer * layer = *child;
-		if (layer->type == VIK_LAYER_AGGREGATE) {
+		if (layer->type == LayerType::AGGREGATE) {
 			// Don't even consider invisible aggregrates, unless told to
 			if (layer->visible || include_invisible) {
 				LayerAggregate * aggregate = (LayerAggregate *) layer;
 				layers = aggregate->get_all_layers_of_type(layers, type, include_invisible);
 			}
-		} else if (layer->type == type) {
+		} else if (layer->type == layer_type) {
 			if (layer->visible || include_invisible) {
 				layers->push_back(layer); /* now in top down order */
 			}
-		} else if (type == VIK_LAYER_TRW) {
+		} else if (layer_type == LayerType::TRW) {
 			/* GPS layers contain TRW layers. cf with usage in file.c */
-			if (layer->type == VIK_LAYER_GPS) {
+			if (layer->type == LayerType::GPS) {
 				if (layer->visible || include_invisible) {
 					if (!((LayerGPS *) layer)->is_empty()) {
 						/*
@@ -930,7 +930,7 @@ void LayerAggregate::realize(TreeView * tree_view_, GtkTreeIter *layer_iter)
 	for (auto child = this->children->begin(); child != this->children->end(); child++) {
 		Layer * layer = *child;
 		this->tree_view->add_layer(layer_iter, &iter, layer->name, this, true,
-					  layer, layer->type, layer->type, layer->get_timestamp());
+					   layer, (int) layer->type, layer->type, layer->get_timestamp());
 		if (! layer->visible) {
 			this->tree_view->set_visibility(&iter, false);
 		}
@@ -994,7 +994,7 @@ char const * LayerAggregate::tooltip()
 
 LayerAggregate::LayerAggregate()
 {
-	this->type = VIK_LAYER_AGGREGATE;
+	this->type = LayerType::AGGREGATE;
 	this->rename(vik_aggregate_layer_interface.name);
 	this->children = new std::list<Layer *>;
 	this->tracks_analysis_dialog = NULL;

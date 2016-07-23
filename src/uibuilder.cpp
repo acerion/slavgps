@@ -32,6 +32,16 @@
 #include "viking.h"
 #include "globals.h"
 
+
+
+
+
+using namespace SlavGPS;
+
+
+
+
+
 VikLayerParamData vik_lpd_true_default(void)
 {
 	return VIK_LPD_BOOLEAN (true);
@@ -578,4 +588,14 @@ void a_uibuilder_free_paramdatas(VikLayerParamData *paramdatas, VikLayerParam *p
 		}
 	}
 	free(paramdatas);
+}
+
+
+
+
+
+LayerType& SlavGPS::operator++(LayerType& layer_type)
+{
+	layer_type = static_cast<LayerType>(static_cast<int>(layer_type) + 1);
+	return layer_type;
 }
