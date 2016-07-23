@@ -26,6 +26,12 @@
 
 
 
+#include <glib.h>
+
+
+
+
+
 typedef struct {
 	double north; /* max_lat */
 	double south; /* min_lat */
