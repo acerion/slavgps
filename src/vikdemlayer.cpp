@@ -533,19 +533,19 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 			/* Get previous and next column. Catch out-of-bound. */
 			DEMColumn *column, *prevcolumn, *nextcolumn;
 			{
-				column = (DEMColumn *) g_ptr_array_index(dem->columns, x);
+				column = dem->columns[x];
 
 				int32_t new_x = x - gradient_skip_factor;
 				if (new_x < 1) {
 					new_x = x + 1;
 				}
-				prevcolumn = (DEMColumn *) g_ptr_array_index(dem->columns, new_x);
+				prevcolumn = dem->columns[new_x];
 
 				new_x = x + gradient_skip_factor;
 				if (new_x >= dem->n_columns) {
 					new_x = x - 1;
 				}
-				nextcolumn = (DEMColumn *) g_ptr_array_index(dem->columns, new_x);
+				nextcolumn = dem->columns[new_x];
 			}
 
 			unsigned int y;
@@ -715,7 +715,7 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 				continue;
 			}
 
-			DEMColumn * column = (DEMColumn *) g_ptr_array_index(dem->columns, x);
+			DEMColumn * column = dem->columns[x];
 			unsigned int y;
 			for (y = start_y, counter.northing = start_nor; counter.northing <= end_nor; counter.northing += dem->north_scale * skip_factor, y += skip_factor) {
 				if (y > column->n_points) {
@@ -1328,6 +1328,7 @@ static bool dem_layer_download_click(Layer * vdl, GdkEventButton * event, LayerT
 
 LayerDEM::LayerDEM()
 {
+	this->files = NULL;
 	this->type = LayerType::DEM;
 	this->dem_type = 0;
 	strcpy(this->type_string, "DEM");
@@ -1339,8 +1340,6 @@ LayerDEM::LayerDEM()
 
 LayerDEM::LayerDEM(Viewport * viewport) : LayerDEM()
 {
-	this->files = NULL;
-
 	this->gcs = (GdkGC **) malloc(sizeof(GdkGC *) * DEM_N_HEIGHT_COLORS);
 	this->gcsgradient = (GdkGC **) malloc(sizeof(GdkGC *) * DEM_N_GRADIENT_COLORS);
 	/* make new gcs only if we need it (copy layer -> use old) */

@@ -67,7 +67,6 @@ using namespace SlavGPS;
 #endif
 
 #define DEM_BLOCK_SIZE 1024
-#define GET_COLUMN(dem,n) ((DEMColumn *)g_ptr_array_index((dem)->columns, (n)))
 
 
 
@@ -212,12 +211,12 @@ bool DEM::parse_header(char * buffer)
 void DEM::parse_block_as_cont(char * buffer, int * cur_column, int * cur_row)
 {
 	int tmp;
-	while (*cur_row < GET_COLUMN (this, *cur_column)->n_points) {
+	while (*cur_row < this->columns[*cur_column]->n_points) {
 		if (get_int_and_continue(&buffer, &tmp, false)) {
 			if (this->orig_vert_units == VIK_DEM_VERT_DECIMETERS) {
-				GET_COLUMN (this, *cur_column)->points[*cur_row] = (int16_t) (tmp / 10);
+				this->columns[*cur_column]->points[*cur_row] = (int16_t) (tmp / 10);
 			} else {
-				GET_COLUMN (this, *cur_column)->points[*cur_row] = (int16_t) tmp;
+				this->columns[*cur_column]->points[*cur_row] = (int16_t) tmp;
 			}
 		} else {
 			return;
@@ -292,15 +291,16 @@ void DEM::parse_block_as_header(char * buffer, int * cur_column, int * cur_row)
 
 	n_rows += *cur_row;
 
-	g_ptr_array_add(this->columns, malloc(sizeof (DEMColumn)));
-	GET_COLUMN (this, *cur_column)->east_west = east_west;
-	GET_COLUMN (this, *cur_column)->south = south;
-	GET_COLUMN (this, *cur_column)->n_points = n_rows;
-	GET_COLUMN (this, *cur_column)->points = (int16_t *) malloc(sizeof (int16_t) * n_rows);
+	DEMColumn * new_column = (DEMColumn *) malloc(sizeof (DEMColumn));
+	this->columns[*cur_column] = new_column; /* kamilFIXME: this may cause crash if index is out of range. */
+	this->columns[*cur_column]->east_west = east_west;
+	this->columns[*cur_column]->south = south;
+	this->columns[*cur_column]->n_points = n_rows;
+	this->columns[*cur_column]->points = (int16_t *) malloc(sizeof (int16_t) * n_rows);
 
 	/* no information for things before that */
 	for (int i = 0; i < (*cur_row); i++) {
-		GET_COLUMN (this, *cur_column)->points[i] = VIK_DEM_INVALID_ELEVATION;
+		this->columns[*cur_column]->points[i] = VIK_DEM_INVALID_ELEVATION;
 	}
 
 	/* now just continue */
@@ -347,7 +347,6 @@ bool DEM::read_srtm_hgt(char const * file_name, char const * basename, bool zip)
 	this->max_north = 3600 + this->min_north;
 	this->max_east = 3600 + this->min_east;
 
-	this->columns = g_ptr_array_new();
 	this->n_columns = 0;
 
 	GError * error = NULL;
@@ -367,8 +366,6 @@ bool DEM::read_srtm_hgt(char const * file_name, char const * basename, bool zip)
 
 		if ((unzip_mem = unzip_file(dem_file, &ucsize)) == NULL) {
 			g_mapped_file_unref(mf);
-			g_ptr_array_foreach(this->columns, (GFunc)g_free, NULL);
-			g_ptr_array_free(this->columns, true);
 			return false;
 		}
 
@@ -394,17 +391,18 @@ bool DEM::read_srtm_hgt(char const * file_name, char const * basename, bool zip)
 
 	for (int i = 0; i < num_rows; i++) {
 		this->n_columns++;
-		g_ptr_array_add(this->columns, malloc(sizeof (DEMColumn)));
-		GET_COLUMN (this, i)->east_west = this->min_east + arcsec * i;
-		GET_COLUMN (this, i)->south = this->min_north;
-		GET_COLUMN (this, i)->n_points = num_rows;
-		GET_COLUMN (this, i)->points = (int16_t *) malloc(sizeof (int16_t) * num_rows);
+		DEMColumn * new_column = (DEMColumn *) malloc(sizeof (DEMColumn));
+		this->columns.push_back(new_column);
+		this->columns[i]->east_west = this->min_east + arcsec * i;
+		this->columns[i]->south = this->min_north;
+		this->columns[i]->n_points = num_rows;
+		this->columns[i]->points = (int16_t *) malloc(sizeof (int16_t) * num_rows);
 	}
 
 	int ent = 0;
 	for (int i = (num_rows - 1); i >= 0; i--) {
 		for (int j = 0; j < num_rows; j++) {
-			GET_COLUMN (this, j)->points[i] = GINT16_FROM_BE(dem_mem[ent]);
+			this->columns[j]->points[i] = GINT16_FROM_BE(dem_mem[ent]);
 			ent++;
 		}
 	}
@@ -482,7 +480,6 @@ bool DEM::read_other(char const * file_name)
 	}
 	/* TODO: actually use header -- i.e. GET # OF COLUMNS EXPECTED */
 
-	this->columns = g_ptr_array_new();
 	this->n_columns = 0;
 
 	/* Column -- Data */
@@ -506,7 +503,7 @@ bool DEM::read_other(char const * file_name)
 
 	/* 24k scale */
 	if (this->horiz_units == VIK_DEM_HORIZ_UTM_METERS && this->n_columns >= 2) {
-		this->north_scale = this->east_scale = GET_COLUMN (this, 1)->east_west - GET_COLUMN (this, 0)->east_west;
+		this->north_scale = this->east_scale = this->columns[1]->east_west - this->columns[0]->east_west;
 	}
 
 	/* FIXME bug in 10m DEM's */
@@ -525,10 +522,9 @@ bool DEM::read_other(char const * file_name)
 DEM::~DEM()
 {
 	for (unsigned int i = 0; i < this->n_columns; i++) {
-		free(GET_COLUMN (this, i)->points);
+		free(this->columns[i]->points);
+		free(this->columns[i]);
 	}
-	g_ptr_array_foreach(this->columns, (GFunc) g_free, NULL);
-	g_ptr_array_free(this->columns, true);
 }
 
 
@@ -538,8 +534,8 @@ DEM::~DEM()
 int16_t DEM::get_xy(unsigned int col, unsigned int row)
 {
 	if (col < this->n_columns) {
-		if (row < GET_COLUMN (this, col)->n_points) {
-			return GET_COLUMN (this, col)->points[row];
+		if (row < this->columns[col]->n_points) {
+			return this->columns[col]->points[row];
 		}
 	}
 	return VIK_DEM_INVALID_ELEVATION;

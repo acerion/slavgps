@@ -22,7 +22,8 @@
 #ifndef _SG_DEM_H
 #define _SG_DEM_H
 
-#include <glib.h>
+#include <vector>
+
 #include <stdint.h>
 
 #include "bbox.h"
@@ -51,6 +52,24 @@ namespace SlavGPS {
 
 
 
+	class DEMColumn {
+
+	public:
+		/* East-West coordinate for ALL items in the column. */
+		double east_west;
+
+		/* Coordinate of northern and southern boundaries. */
+		double south;
+		// double north;
+
+		unsigned int n_points;
+		int16_t * points;
+	};
+
+
+
+
+
 	class DEM {
 	public:
 		~DEM();
@@ -71,7 +90,7 @@ namespace SlavGPS {
 		bool overlap(LatLonBBox * bbox);
 
 		unsigned int n_columns;
-		GPtrArray * columns;
+		std::vector<DEMColumn *> columns;
 
 		uint8_t horiz_units;
 		uint8_t orig_vert_units; /* Original, always converted to meters when loading. */
@@ -86,6 +105,8 @@ namespace SlavGPS {
 		uint8_t utm_zone;
 		char utm_letter;
 
+		char const type_string[30] = "DEM object";
+
 
 	private:
 		bool read_srtm_hgt(char const * file_name, char const * basename, bool zip);
@@ -94,24 +115,6 @@ namespace SlavGPS {
 		void parse_block(char * buffer, int * cur_column, int * cur_row);
 		void parse_block_as_header(char * buffer, int * cur_column, int * cur_row);
 		void parse_block_as_cont(char * buffer, int * cur_column, int * cur_row);
-	};
-
-
-
-
-
-	class DEMColumn {
-
-	public:
-		/* East-West coordinate for ALL items in the column. */
-		double east_west;
-
-		/* Coordinate of northern and southern boundaries. */
-		double south;
-		// double north;
-
-		unsigned int n_points;
-		int16_t * points;
 	};
 
 
