@@ -31,8 +31,14 @@
 
 
 
+using namespace SlavGPS;
+
+
+
+
+
 typedef struct {
-	VikDEM * dem;
+	DEM * dem;
 	unsigned int ref_count;
 } LoadedDEM;
 
@@ -64,7 +70,7 @@ static bool get_elev_by_coord(std::string key, LoadedDEM * ldem, CoordElev * ce)
 
 static void loaded_dem_free(LoadedDEM *ldem)
 {
-	vik_dem_free(ldem->dem);
+	delete ldem->dem;
 	free(ldem);
 }
 
@@ -89,15 +95,16 @@ void dem_cache_uninit()
 /* To load a dem. if it was already loaded, will simply
  * reference the one already loaded and return it.
  */
-VikDEM * dem_cache_load(std::string& filename)
+DEM * dem_cache_load(std::string& filename)
 {
 	auto iter = loaded_dems.find(filename);
 	if (iter != loaded_dems.end()) { /* Found. */
 		(*iter).second->ref_count++;
 		return (*iter).second->dem;
 	} else {
-		VikDEM * dem = vik_dem_new_from_file(filename.c_str());
-		if (!dem) {
+		DEM * dem = new DEM();
+		if (!dem->read(filename.c_str())) {
+			delete dem;
 			return NULL;
 		}
 		LoadedDEM * ldem = (LoadedDEM *) malloc(sizeof (LoadedDEM));
@@ -136,7 +143,7 @@ static void dem_cache_unref(std::string& filename)
  * assumes that its in there already,
  * although it could not be if earlier load failed.
  */
-VikDEM * dem_cache_get(std::string& filename)
+DEM * dem_cache_get(std::string& filename)
 {
 	auto iter = loaded_dems.find(filename);
 	if (iter != loaded_dems.end()) {
@@ -209,7 +216,7 @@ void dem_cache_list_free(std::list<std::string>& filenames)
 
 static bool get_elev_by_coord(std::string key, LoadedDEM * ldem, CoordElev * ce)
 {
-	VikDEM * dem = ldem->dem;
+	DEM * dem = ldem->dem;
 	double lat, lon;
 
 	if (dem->horiz_units == VIK_DEM_HORIZ_LL_ARCSECONDS) {
@@ -231,13 +238,13 @@ static bool get_elev_by_coord(std::string key, LoadedDEM * ldem, CoordElev * ce)
 
 	switch (ce->method) {
 	case VIK_DEM_INTERPOL_NONE:
-		ce->elev = vik_dem_get_east_north(dem, lon, lat);
+		ce->elev = dem->get_east_north(lon, lat);
 		break;
 	case VIK_DEM_INTERPOL_SIMPLE:
-		ce->elev = vik_dem_get_simple_interpol(dem, lon, lat);
+		ce->elev = dem->get_simple_interpol(lon, lat);
 		break;
 	case VIK_DEM_INTERPOL_BEST:
-		ce->elev = vik_dem_get_shepard_interpol(dem, lon, lat);
+		ce->elev = dem->get_shepard_interpol(lon, lat);
 		break;
 	default: break;
 	}
@@ -301,7 +308,7 @@ int16_t a_dems_list_get_elev_by_coord(std::list<std::string> * filenames, const 
 	static struct UTM utm_tmp;
 	static struct LatLon ll_tmp;
 	auto iter = filenames->begin();
-	VikDEM * dem;
+	DEM * dem;
 	int elev;
 
 	while (iter != filenames->end()) {
@@ -311,14 +318,14 @@ int16_t a_dems_list_get_elev_by_coord(std::list<std::string> * filenames, const 
 				vik_coord_to_latlon(coord, &ll_tmp);
 				ll_tmp.lat *= 3600;
 				ll_tmp.lon *= 3600;
-				elev = vik_dem_get_east_north(dem, ll_tmp.lon, ll_tmp.lat);
+				elev = dem->get_east_north(ll_tmp.lon, ll_tmp.lat);
 				if (elev != VIK_DEM_INVALID_ELEVATION) {
 					return elev;
 				}
 			} else if (dem->horiz_units == VIK_DEM_HORIZ_UTM_METERS) {
 				vik_coord_to_utm(coord, &utm_tmp);
 				if (utm_tmp.zone == dem->utm_zone
-				    && (elev = vik_dem_get_east_north(dem, utm_tmp.easting, utm_tmp.northing)) != VIK_DEM_INVALID_ELEVATION) {
+				    && (elev = dem->get_east_north(utm_tmp.easting, utm_tmp.northing)) != VIK_DEM_INVALID_ELEVATION) {
 
 					return elev;
 				}

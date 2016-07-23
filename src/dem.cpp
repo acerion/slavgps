@@ -51,66 +51,93 @@
 #include "coords.h"
 #include "fileutils.h"
 
+
+
+
+
+using namespace SlavGPS;
+
+
+
+
+
 /* Compatibility */
 #if ! GLIB_CHECK_VERSION(2,22,0)
 #define g_mapped_file_unref g_mapped_file_free
 #endif
 
 #define DEM_BLOCK_SIZE 1024
-#define GET_COLUMN(dem,n) ((VikDEMColumn *)g_ptr_array_index((dem)->columns, (n)))
+#define GET_COLUMN(dem,n) ((DEMColumn *)g_ptr_array_index((dem)->columns, (n)))
 
-static bool get_double_and_continue(char **buffer, double *tmp, bool warn)
+
+
+
+
+static bool get_double_and_continue(char ** buffer, double * tmp, bool warn)
 {
-	char *endptr;
+	char * endptr;
 	*tmp = g_strtod(*buffer, &endptr);
-	if (endptr == NULL|| endptr == *buffer) {
+	if (endptr == NULL || endptr == *buffer) {
 		if (warn) {
 			fprintf(stderr, _("WARNING: Invalid DEM\n"));
 		}
 		return false;
 	}
-	*buffer=endptr;
+	*buffer = endptr;
 	return true;
 }
 
 
-static bool get_int_and_continue(char **buffer, int *tmp, bool warn)
+
+
+
+static bool get_int_and_continue(char ** buffer, int * tmp, bool warn)
 {
-	char *endptr;
+	char * endptr;
 	*tmp = strtol(*buffer, &endptr, 10);
-	if (endptr == NULL|| endptr == *buffer) {
+	if (endptr == NULL || endptr == *buffer) {
 		if (warn) {
 			fprintf(stderr, _("WARNING: Invalid DEM\n"));
 		}
 		return false;
 	}
-	*buffer=endptr;
+	*buffer = endptr;
 	return true;
 }
 
-static bool dem_parse_header(char *buffer, VikDEM *dem)
-{
-	double val;
-	int int_val;
-	unsigned int i;
-	char *tmp = buffer;
 
-	/* incomplete header */
+
+
+
+/* Fix Fortran-style exponentiation 1.0D5 -> 1.0E5. */
+static void fix_exponentiation(char * buffer)
+{
+	while (*buffer) {
+		if (*buffer == 'D') {
+			*buffer = 'E';
+		}
+		buffer++;
+	}
+	return;
+}
+
+
+
+
+
+bool DEM::parse_header(char * buffer)
+{
 	if (strlen(buffer) != 1024) {
+		/* Incomplete header. */
 		return false;
 	}
 
-	/* fix Fortran-style exponentiation 1.0D5 -> 1.0E5 */
-	while (*tmp) {
-		if (*tmp == 'D') {
-			*tmp = 'E';
-		}
-		tmp++;
-	}
+	fix_exponentiation(buffer);
 
 	/* skip name */
 	buffer += 149;
 
+	int int_val;
 	/* "DEM level code, pattern code, palaimetric reference system code" -- skip */
 	get_int_and_continue(&buffer, &int_val, true);
 	get_int_and_continue(&buffer, &int_val, true);
@@ -118,13 +145,14 @@ static bool dem_parse_header(char *buffer, VikDEM *dem)
 
 	/* zone */
 	get_int_and_continue(&buffer, &int_val, true);
-	dem->utm_zone = int_val;
+	this->utm_zone = int_val;
 	/* TODO -- southern or northern hemisphere?! */
-	dem->utm_letter = 'N';
+	this->utm_letter = 'N';
 
+	double val;
 	/* skip numbers 5-19  */
-	for (i = 0; i < 15; i++) {
-		if (! get_double_and_continue(&buffer, &val, false)) {
+	for (int i = 0; i < 15; i++) {
+		if (!get_double_and_continue(&buffer, &val, false)) {
 			fprintf(stderr, _("WARNING: Invalid DEM header\n"));
 			return false;
 		}
@@ -132,19 +160,19 @@ static bool dem_parse_header(char *buffer, VikDEM *dem)
 
 	/* number 20 -- horizontal unit code (utm/ll) */
 	get_double_and_continue(&buffer, &val, true);
-	dem->horiz_units = val;
+	this->horiz_units = val;
 	get_double_and_continue(&buffer, &val, true);
-	/* dem->orig_vert_units = val; now done below */
+	/* this->orig_vert_units = val; now done below */
 
 	/* TODO: do this for real. these are only for 1:24k and 1:250k USGS */
-	if (dem->horiz_units == VIK_DEM_HORIZ_UTM_METERS) {
-		dem->east_scale = 10.0; /* meters */
-		dem->north_scale = 10.0;
-		dem->orig_vert_units = VIK_DEM_VERT_DECIMETERS;
+	if (this->horiz_units == VIK_DEM_HORIZ_UTM_METERS) {
+		this->east_scale = 10.0; /* meters */
+		this->north_scale = 10.0;
+		this->orig_vert_units = VIK_DEM_VERT_DECIMETERS;
 	} else {
-		dem->east_scale = 3.0; /* arcseconds */
-		dem->north_scale = 3.0;
-		dem->orig_vert_units = VIK_DEM_VERT_METERS;
+		this->east_scale = 3.0; /* arcseconds */
+		this->north_scale = 3.0;
+		this->orig_vert_units = VIK_DEM_VERT_METERS;
 	}
 
 	/* skip next */
@@ -152,40 +180,44 @@ static bool dem_parse_header(char *buffer, VikDEM *dem)
 
 	/* now we get the four corner points. record the min and max. */
 	get_double_and_continue(&buffer, &val, true);
-	dem->min_east = dem->max_east = val;
+	this->min_east = this->max_east = val;
 	get_double_and_continue(&buffer, &val, true);
-	dem->min_north = dem->max_north = val;
+	this->min_north = this->max_north = val;
 
-	for (i = 0; i < 3; i++) {
+	for (int i = 0; i < 3; i++) {
 		get_double_and_continue(&buffer, &val, true);
-		if (val < dem->min_east) {
-			dem->min_east = val;
+		if (val < this->min_east) {
+			this->min_east = val;
 		}
 
-		if (val > dem->max_east) {
-			dem->max_east = val;
+		if (val > this->max_east) {
+			this->max_east = val;
 		}
 		get_double_and_continue(&buffer, &val, true);
-		if (val < dem->min_north) {
-			dem->min_north = val;
+		if (val < this->min_north) {
+			this->min_north = val;
 		}
-		if (val > dem->max_north) {
-			dem->max_north = val;
+		if (val > this->max_north) {
+			this->max_north = val;
 		}
 	}
 
 	return true;
 }
 
-static void dem_parse_block_as_cont(char *buffer, VikDEM *dem, int *cur_column, int *cur_row)
+
+
+
+
+void DEM::parse_block_as_cont(char * buffer, int * cur_column, int * cur_row)
 {
 	int tmp;
-	while (*cur_row < GET_COLUMN(dem, *cur_column)->n_points) {
-		if (get_int_and_continue(&buffer, &tmp,false)) {
-			if (dem->orig_vert_units == VIK_DEM_VERT_DECIMETERS) {
-				GET_COLUMN(dem, *cur_column)->points[*cur_row] = (int16_t) (tmp / 10);
+	while (*cur_row < GET_COLUMN (this, *cur_column)->n_points) {
+		if (get_int_and_continue(&buffer, &tmp, false)) {
+			if (this->orig_vert_units == VIK_DEM_VERT_DECIMETERS) {
+				GET_COLUMN (this, *cur_column)->points[*cur_row] = (int16_t) (tmp / 10);
 			} else {
-				GET_COLUMN(dem, *cur_column)->points[*cur_row] = (int16_t) tmp;
+				GET_COLUMN (this, *cur_column)->points[*cur_row] = (int16_t) tmp;
 			}
 		} else {
 			return;
@@ -195,15 +227,15 @@ static void dem_parse_block_as_cont(char *buffer, VikDEM *dem, int *cur_column, 
 	*cur_row = -1; /* expecting new column */
 }
 
-static void dem_parse_block_as_header(char *buffer, VikDEM *dem, int *cur_column, int *cur_row)
-{
-	unsigned int n_rows;
-	int i;
-	double east_west, south;
-	double tmp;
 
+
+
+
+void DEM::parse_block_as_header(char * buffer, int * cur_column, int * cur_row)
+{
 	/* 1 x n_rows 1 east_west south x x x DATA */
 
+	double tmp;
 	if ((!get_double_and_continue(&buffer, &tmp, true)) || tmp != 1) {
 		fprintf(stderr, _("WARNING: Incorrect DEM Class B record: expected 1\n"));
 		return;
@@ -218,17 +250,19 @@ static void dem_parse_block_as_header(char *buffer, VikDEM *dem, int *cur_column
 	if (!get_double_and_continue(&buffer, &tmp, true)) {
 		return;
 	}
-	n_rows = (unsigned int) tmp;
+	unsigned int n_rows = (unsigned int) tmp;
 
 	if ((!get_double_and_continue(&buffer, &tmp, true)) || tmp != 1) {
 		fprintf(stderr, _("WARNING: Incorrect DEM Class B record: expected 1\n"));
 		return;
 	}
 
+	double east_west;
 	if (!get_double_and_continue(&buffer, &east_west, true)) {
 		return;
 	}
 
+	double south;
 	if (!get_double_and_continue(&buffer, &south, true)) {
 		return;
 	}
@@ -247,132 +281,130 @@ static void dem_parse_block_as_header(char *buffer, VikDEM *dem, int *cur_column
 	}
 
 
-	dem->n_columns ++;
-	(*cur_column) ++;
+	this->n_columns++;
+	(*cur_column)++;
 
 	/* empty spaces for things before that were skipped */
-	(*cur_row) = (south - dem->min_north) / dem->north_scale;
-	if (south > dem->max_north || (*cur_row) < 0) {
+	(*cur_row) = (south - this->min_north) / this->north_scale;
+	if (south > this->max_north || (*cur_row) < 0) {
 		(*cur_row) = 0;
 	}
 
 	n_rows += *cur_row;
 
-	g_ptr_array_add(dem->columns, malloc(sizeof(VikDEMColumn)));
-	GET_COLUMN(dem,*cur_column)->east_west = east_west;
-	GET_COLUMN(dem,*cur_column)->south = south;
-	GET_COLUMN(dem,*cur_column)->n_points = n_rows;
-	GET_COLUMN(dem,*cur_column)->points = (int16_t *) malloc(sizeof(int16_t)*n_rows);
+	g_ptr_array_add(this->columns, malloc(sizeof (DEMColumn)));
+	GET_COLUMN (this, *cur_column)->east_west = east_west;
+	GET_COLUMN (this, *cur_column)->south = south;
+	GET_COLUMN (this, *cur_column)->n_points = n_rows;
+	GET_COLUMN (this, *cur_column)->points = (int16_t *) malloc(sizeof (int16_t) * n_rows);
 
 	/* no information for things before that */
-	for (i = 0; i < (*cur_row); i++) {
-		GET_COLUMN(dem,*cur_column)->points[i] = VIK_DEM_INVALID_ELEVATION;
+	for (int i = 0; i < (*cur_row); i++) {
+		GET_COLUMN (this, *cur_column)->points[i] = VIK_DEM_INVALID_ELEVATION;
 	}
 
 	/* now just continue */
-	dem_parse_block_as_cont(buffer, dem, cur_column, cur_row);
+	this->parse_block_as_cont(buffer, cur_column, cur_row);
 }
 
-static void dem_parse_block(char *buffer, VikDEM *dem, int *cur_column, int *cur_row)
+
+
+
+
+void DEM::parse_block(char * buffer, int * cur_column, int * cur_row)
 {
 	/* if haven't read anything or have read all items in a columns and are expecting a new column */
 	if (*cur_column == -1 || *cur_row == -1) {
-		dem_parse_block_as_header(buffer, dem, cur_column, cur_row);
+		this->parse_block_as_header(buffer, cur_column, cur_row);
 	} else {
-		dem_parse_block_as_cont(buffer, dem, cur_column, cur_row);
+		this->parse_block_as_cont(buffer, cur_column, cur_row);
 	}
 }
 
-static VikDEM *vik_dem_read_srtm_hgt(const char *file_name, const char *basename, bool zip)
+
+
+
+
+bool DEM::read_srtm_hgt(char const * file_name, char const * basename, bool zip)
 {
-	int i, j;
-	VikDEM *dem;
-	off_t file_size;
-	int16_t *dem_mem = NULL;
-	char *dem_file = NULL;
 	const int num_rows_3sec = 1201;
 	const int num_rows_1sec = 3601;
-	int num_rows;
-	GMappedFile *mf;
-	int arcsec;
-	GError *error = NULL;
 
-	dem = (VikDEM *) malloc(sizeof(VikDEM));
-
-	dem->horiz_units = VIK_DEM_HORIZ_LL_ARCSECONDS;
-	dem->orig_vert_units = VIK_DEM_VERT_DECIMETERS;
+	this->horiz_units = VIK_DEM_HORIZ_LL_ARCSECONDS;
+	this->orig_vert_units = VIK_DEM_VERT_DECIMETERS;
 
 	/* TODO */
-	dem->min_north = atoi(basename+1) * 3600;
-	dem->min_east = atoi(basename+4) * 3600;
+	this->min_north = atoi(basename + 1) * 3600;
+	this->min_east = atoi(basename + 4) * 3600;
 	if (basename[0] == 'S') {
-		dem->min_north = -dem->min_north;
+		this->min_north = -this->min_north;
 	}
 
 	if (basename[3] == 'W') {
-		dem->min_east = -dem->min_east;
+		this->min_east = -this->min_east;
 	}
 
-	dem->max_north = 3600 + dem->min_north;
-	dem->max_east = 3600 + dem->min_east;
+	this->max_north = 3600 + this->min_north;
+	this->max_east = 3600 + this->min_east;
 
-	dem->columns = g_ptr_array_new();
-	dem->n_columns = 0;
+	this->columns = g_ptr_array_new();
+	this->n_columns = 0;
 
+	GError * error = NULL;
+	GMappedFile * mf;
 	if ((mf = g_mapped_file_new(file_name, false, &error)) == NULL) {
 		fprintf(stderr, _("CRITICAL: Couldn't map file %s: %s\n"), file_name, error->message);
 		g_error_free(error);
-		free(dem);
-		return NULL;
+		return false;
 	}
-	file_size = g_mapped_file_get_length(mf);
-	dem_file = g_mapped_file_get_contents(mf);
+	off_t file_size = g_mapped_file_get_length(mf);
+	char * dem_file = g_mapped_file_get_contents(mf);
 
+	int16_t * dem_mem = NULL;
 	if (zip) {
-		void *unzip_mem = NULL;
+		void * unzip_mem = NULL;
 		unsigned long ucsize;
 
 		if ((unzip_mem = unzip_file(dem_file, &ucsize)) == NULL) {
 			g_mapped_file_unref(mf);
-			g_ptr_array_foreach(dem->columns, (GFunc)g_free, NULL);
-			g_ptr_array_free(dem->columns, true);
-			free(dem);
-			return NULL;
+			g_ptr_array_foreach(this->columns, (GFunc)g_free, NULL);
+			g_ptr_array_free(this->columns, true);
+			return false;
 		}
 
 		dem_mem = (int16_t *) unzip_mem;
 		file_size = ucsize;
 	} else {
-		dem_mem = (int16_t *)dem_file;
+		dem_mem = (int16_t *) dem_file;
 	}
 
-	if (file_size == (num_rows_3sec * num_rows_3sec * sizeof(int16_t))) {
+	int arcsec;
+	if (file_size == (num_rows_3sec * num_rows_3sec * sizeof (int16_t))) {
 		arcsec = 3;
-	} else if (file_size == (num_rows_1sec * num_rows_1sec * sizeof(int16_t))) {
+	} else if (file_size == (num_rows_1sec * num_rows_1sec * sizeof (int16_t))) {
 		arcsec = 1;
 	} else {
 		fprintf(stderr, "WARNING: %s(): file %s does not have right size\n", __PRETTY_FUNCTION__, basename);
 		g_mapped_file_unref(mf);
-		free(dem);
-		return NULL;
+		return false;
 	}
 
-	num_rows = (arcsec == 3) ? num_rows_3sec : num_rows_1sec;
-	dem->east_scale = dem->north_scale = arcsec;
+	int num_rows = (arcsec == 3) ? num_rows_3sec : num_rows_1sec;
+	this->east_scale = this->north_scale = arcsec;
 
-	for (i = 0; i < num_rows; i++) {
-		dem->n_columns++;
-		g_ptr_array_add(dem->columns, malloc(sizeof(VikDEMColumn)));
-		GET_COLUMN(dem,i)->east_west = dem->min_east + arcsec*i;
-		GET_COLUMN(dem,i)->south = dem->min_north;
-		GET_COLUMN(dem,i)->n_points = num_rows;
-		GET_COLUMN(dem,i)->points = (int16_t *) malloc(sizeof(int16_t)*num_rows);
+	for (int i = 0; i < num_rows; i++) {
+		this->n_columns++;
+		g_ptr_array_add(this->columns, malloc(sizeof (DEMColumn)));
+		GET_COLUMN (this, i)->east_west = this->min_east + arcsec * i;
+		GET_COLUMN (this, i)->south = this->min_north;
+		GET_COLUMN (this, i)->n_points = num_rows;
+		GET_COLUMN (this, i)->points = (int16_t *) malloc(sizeof (int16_t) * num_rows);
 	}
 
 	int ent = 0;
-	for (i = (num_rows - 1); i >= 0; i--) {
-		for (j = 0; j < num_rows; j++) {
-			GET_COLUMN(dem,j)->points[i] = GINT16_FROM_BE(dem_mem[ent]);
+	for (int i = (num_rows - 1); i >= 0; i--) {
+		for (int j = 0; j < num_rows; j++) {
+			GET_COLUMN (this, j)->points[i] = GINT16_FROM_BE(dem_mem[ent]);
 			ent++;
 		}
 	}
@@ -381,72 +413,90 @@ static VikDEM *vik_dem_read_srtm_hgt(const char *file_name, const char *basename
 		free(dem_mem);
 	}
 	g_mapped_file_unref(mf);
-	return dem;
+	return true;
 }
+
+
+
+
 
 #define IS_SRTM_HGT(fn) (strlen((fn))==11 && (fn)[7]=='.' && (fn)[8]=='h' && (fn)[9]=='g' && (fn)[10]=='t' && ((fn)[0]=='N' || (fn)[0]=='S') && ((fn)[3]=='E' || (fn)[3]=='W'))
 
-VikDEM *vik_dem_new_from_file(const char *file)
+
+
+
+
+static bool is_strm_hgt(char const * basename)
 {
-	FILE *f=NULL;
-	VikDEM *rv;
-	char buffer[DEM_BLOCK_SIZE+1];
+	return (strlen(basename) == 11 || ((strlen(basename) == 15) && (basename[11] == '.' && basename[12] == 'z' && basename[13] == 'i' && basename[14] == 'p')))
+		&& basename[7] == '.' && basename[8] == 'h' && basename[9] == 'g' && basename[10] == 't'
+		&& (basename[0] == 'N' || basename[0] == 'S') && (basename[3] == 'E' || basename[3] == 'W');
+}
 
-	/* use to record state for dem_parse_block */
-	int cur_column = -1;
-	int cur_row = -1;
-	const char *basename = a_file_basename(file);
 
-	if (g_access(file, R_OK) != 0) {
-		return NULL;
+
+
+
+static bool is_zip_file(char const * basename)
+{
+	size_t len = strlen(basename);
+	return len == 15 && basename[len - 3] == 'z' && basename[len - 2] == 'i' && basename[len - 1] == 'p';
+}
+
+
+
+
+
+bool DEM::read(char const * file)
+{
+	if (access(file, R_OK) != 0) {
+		return false;
 	}
 
-	if ((strlen(basename)==11 || ((strlen(basename) == 15) && (basename[11] == '.' && basename[12] == 'z' && basename[13] == 'i' && basename[14] == 'p'))) &&
-	    basename[7]=='.' && basename[8]=='h' && basename[9]=='g' && basename[10]=='t' &&
-	    (basename[0] == 'N' || basename[0] == 'S') && (basename[3] == 'E' || basename[3] =='W')) {
+	const char * basename = a_file_basename(file);
 
-		bool is_zip_file = (strlen(basename) == 15);
-		rv = vik_dem_read_srtm_hgt(file, basename, is_zip_file);
-		return(rv);
+	if (is_strm_hgt(basename)) {
+		return this->read_srtm_hgt(file, basename, is_zip_file(basename));
+	} else {
+		return this->read_other(file);
 	}
+}
 
-	/* Create Structure */
-	rv = (VikDEM *) malloc(sizeof(VikDEM));
 
+
+
+
+bool DEM::read_other(char const * file_name)
+{
 	/* Header */
-	f = fopen(file, "r");
+	FILE * f = fopen(file_name, "r");
 	if (!f) {
-		free(rv);
-		return NULL;
+		return false;
 	}
+
+	char buffer[DEM_BLOCK_SIZE + 1];
 	buffer[fread(buffer, 1, DEM_BLOCK_SIZE, f)] = '\0';
-	if (! dem_parse_header(buffer, rv)) {
-		free(rv);
+	if (!this->parse_header(buffer)) {
 		fclose(f);
-		return NULL;
+		return false;
 	}
 	/* TODO: actually use header -- i.e. GET # OF COLUMNS EXPECTED */
 
-	rv->columns = g_ptr_array_new();
-	rv->n_columns = 0;
+	this->columns = g_ptr_array_new();
+	this->n_columns = 0;
 
 	/* Column -- Data */
-	while (! feof(f)) {
-		char *tmp;
-
+	while (!feof(f)) {
 		/* read block */
 		buffer[fread(buffer, 1, DEM_BLOCK_SIZE, f)] = '\0';
 
-		/* Fix Fortran-style exponentiation */
-		tmp = buffer;
-		while (*tmp) {
-			if (*tmp == 'D') {
-				*tmp = 'E';
-			}
-			tmp++;
-		}
+		fix_exponentiation(buffer);
 
-		dem_parse_block(buffer, rv, &cur_column, &cur_row);
+		/* Use the two variables to record state for ->parse_block(). */
+		int cur_column = -1;
+		int cur_row = -1;
+
+		this->parse_block(buffer, &cur_column, &cur_row);
 	}
 
 	/* TODO - class C records (right now says 'Invalid' and dies) */
@@ -455,151 +505,161 @@ VikDEM *vik_dem_new_from_file(const char *file)
 	f = NULL;
 
 	/* 24k scale */
-	if (rv->horiz_units == VIK_DEM_HORIZ_UTM_METERS && rv->n_columns >= 2) {
-		rv->north_scale = rv->east_scale = GET_COLUMN(rv, 1)->east_west - GET_COLUMN(rv,0)->east_west;
+	if (this->horiz_units == VIK_DEM_HORIZ_UTM_METERS && this->n_columns >= 2) {
+		this->north_scale = this->east_scale = GET_COLUMN (this, 1)->east_west - GET_COLUMN (this, 0)->east_west;
 	}
 
 	/* FIXME bug in 10m DEM's */
-	if (rv->horiz_units == VIK_DEM_HORIZ_UTM_METERS && rv->north_scale == 10) {
-		rv->min_east -= 100;
-		rv->min_north += 200;
+	if (this->horiz_units == VIK_DEM_HORIZ_UTM_METERS && this->north_scale == 10) {
+		this->min_east -= 100;
+		this->min_north += 200;
 	}
 
-
-	return rv;
+	return true;
 }
 
-void vik_dem_free(VikDEM *dem)
+
+
+
+
+DEM::~DEM()
 {
-	unsigned int i;
-	for (i = 0; i < dem->n_columns; i++) {
-		free(GET_COLUMN(dem, i)->points);
+	for (unsigned int i = 0; i < this->n_columns; i++) {
+		free(GET_COLUMN (this, i)->points);
 	}
-	g_ptr_array_foreach(dem->columns, (GFunc)g_free, NULL);
-	g_ptr_array_free(dem->columns, true);
-	free(dem);
+	g_ptr_array_foreach(this->columns, (GFunc) g_free, NULL);
+	g_ptr_array_free(this->columns, true);
 }
 
-int16_t vik_dem_get_xy(VikDEM *dem, unsigned int col, unsigned int row)
+
+
+
+
+int16_t DEM::get_xy(unsigned int col, unsigned int row)
 {
-	if (col < dem->n_columns) {
-		if (row < GET_COLUMN(dem, col)->n_points) {
-			return GET_COLUMN(dem, col)->points[row];
+	if (col < this->n_columns) {
+		if (row < GET_COLUMN (this, col)->n_points) {
+			return GET_COLUMN (this, col)->points[row];
 		}
 	}
 	return VIK_DEM_INVALID_ELEVATION;
 }
 
-int16_t vik_dem_get_east_north(VikDEM *dem, double east, double north)
-{
-	int col, row;
 
-	if (east > dem->max_east || east < dem->min_east ||
-	    north > dem->max_north || north < dem->min_north) {
+
+
+
+int16_t DEM::get_east_north(double east, double north)
+{
+	if (east > this->max_east || east < this->min_east ||
+	    north > this->max_north || north < this->min_north) {
 
 		return VIK_DEM_INVALID_ELEVATION;
 	}
 
-	col = (int) floor((east - dem->min_east) / dem->east_scale);
-	row = (int) floor((north - dem->min_north) / dem->north_scale);
+	int col = (int) floor((east - this->min_east) / this->east_scale);
+	int row = (int) floor((north - this->min_north) / this->north_scale);
 
-	return vik_dem_get_xy(dem, col, row);
+	return this->get_xy(col, row);
 }
 
-static bool dem_get_ref_points_elev_dist(VikDEM *dem,
-					 double east, double north, /* in seconds */
-					 int16_t *elevs, int16_t *dists)
+
+
+
+
+bool DEM::get_ref_points_elev_dist(double east, double north, /* in seconds */
+				      int16_t * elevs, int16_t * dists)
 {
-	int i;
 	int cols[4], rows[4];
 	struct LatLon ll[4];
 	struct LatLon pos;
 
-	if (east > dem->max_east || east < dem->min_east ||
-	    north > dem->max_north || north < dem->min_north) {
+	if (east > this->max_east || east < this->min_east ||
+	    north > this->max_north || north < this->min_north) {
 
 		return false;  /* got nothing */
 	}
 
-	pos.lon = east/3600;
-	pos.lat = north/3600;
+	pos.lon = east / 3600;
+	pos.lat = north / 3600;
 
 	/* order of the data: sw, nw, ne, se */
 	/* sw */
-	cols[0] = (int) floor((east - dem->min_east) / dem->east_scale);
-	rows[0] = (int) floor((north - dem->min_north) / dem->north_scale);
-	ll[0].lon = (dem->min_east + dem->east_scale*cols[0])/3600;
-	ll[0].lat = (dem->min_north + dem->north_scale*rows[0])/3600;
+	cols[0] = (int) floor((east - this->min_east) / this->east_scale);
+	rows[0] = (int) floor((north - this->min_north) / this->north_scale);
+	ll[0].lon = (this->min_east + this->east_scale*cols[0]) / 3600;
+	ll[0].lat = (this->min_north + this->north_scale*rows[0]) / 3600;
 	/* nw */
 	cols[1] = cols[0];
 	rows[1] = rows[0] + 1;
 	ll[1].lon = ll[0].lon;
-	ll[1].lat = ll[0].lat + (double)dem->north_scale/3600;
+	ll[1].lat = ll[0].lat + (double) this->north_scale / 3600;
 	/* ne */
 	cols[2] = cols[0] + 1;
 	rows[2] = rows[0] + 1;
-	ll[2].lon = ll[0].lon + (double)dem->east_scale/3600;
-	ll[2].lat = ll[0].lat + (double)dem->north_scale/3600;
+	ll[2].lon = ll[0].lon + (double) this->east_scale / 3600;
+	ll[2].lat = ll[0].lat + (double) this->north_scale / 3600;
 	/* se */
 	cols[3] = cols[0] + 1;
 	rows[3] = rows[0];
-	ll[3].lon = ll[0].lon + (double)dem->east_scale/3600;
+	ll[3].lon = ll[0].lon + (double) this->east_scale / 3600;
 	ll[3].lat = ll[0].lat;
 
-	for (i = 0; i < 4; i++) {
-		if ((elevs[i] = vik_dem_get_xy(dem, cols[i], rows[i])) == VIK_DEM_INVALID_ELEVATION) {
+	for (int i = 0; i < 4; i++) {
+		if ((elevs[i] = this->get_xy(cols[i], rows[i])) == VIK_DEM_INVALID_ELEVATION) {
 			return false;
 		}
 		dists[i] = a_coords_latlon_diff(&pos, &ll[i]);
 	}
 
 #if 0  /* debug */
-	for (i = 0; i < 4; i++) {
+	for (int i = 0; i < 4; i++) {
 		fprintf(stderr, "%f:%f:%d:%d  \n", ll[i].lat, ll[i].lon, dists[i], elevs[i]);
 	}
-	fprintf(stderr, "   north_scale=%f\n", dem->north_scale);
+	fprintf(stderr, "   north_scale=%f\n", this->north_scale);
 #endif
 
 	return true;  /* all OK */
 }
 
-int16_t vik_dem_get_simple_interpol(VikDEM *dem, double east, double north)
-{
-	int i;
-	int16_t elevs[4], dists[4];
 
-	if (!dem_get_ref_points_elev_dist(dem, east, north, elevs, dists)) {
+
+
+
+int16_t DEM::get_simple_interpol(double east, double north)
+{
+	int16_t elevs[4], dists[4];
+	if (!this->get_ref_points_elev_dist(east, north, elevs, dists)) {
 		return VIK_DEM_INVALID_ELEVATION;
 	}
 
-	for (i = 0; i < 4; i++) {
+	for (int i = 0; i < 4; i++) {
 		if (dists[i] < 1) {
-			return(elevs[i]);
+			return elevs[i];
 		}
 	}
 
-	double t = (double)elevs[0]/dists[0] + (double)elevs[1]/dists[1] + (double)elevs[2]/dists[2] + (double)elevs[3]/dists[3];
-	double b = 1.0/dists[0] + 1.0/dists[1] + 1.0/dists[2] + 1.0/dists[3];
+	double t = (double) elevs[0] / dists[0] + (double) elevs[1] / dists[1] + (double) elevs[2] / dists[2] + (double) elevs[3] / dists[3];
+	double b = 1.0 / dists[0] + 1.0 / dists[1] + 1.0 / dists[2] + 1.0 / dists[3];
 
-	return(t/b);
+	return (t/b);
 }
 
-int16_t vik_dem_get_shepard_interpol(VikDEM *dem, double east, double north)
-{
-	int i;
-	int16_t elevs[4], dists[4];
-	int16_t max_dist;
-	double t = 0.0;
-	double b = 0.0;
 
-	if (!dem_get_ref_points_elev_dist(dem, east, north, elevs, dists)) {
+
+
+
+int16_t DEM::get_shepard_interpol(double east, double north)
+{
+	int16_t elevs[4], dists[4];
+	if (!this->get_ref_points_elev_dist(east, north, elevs, dists)) {
 		return VIK_DEM_INVALID_ELEVATION;
 	}
 
-	max_dist = 0;
-	for (i = 0; i < 4; i++) {
+	int16_t max_dist = 0;
+	for (int i = 0; i < 4; i++) {
 		if (dists[i] < 1) {
-			return(elevs[i]);
+			return elevs[i];
 		}
 		if (dists[i] > max_dist) {
 			max_dist = dists[i];
@@ -607,52 +667,61 @@ int16_t vik_dem_get_shepard_interpol(VikDEM *dem, double east, double north)
 	}
 
 	double tmp;
+	double t = 0.0;
+	double b = 0.0;
+
 #if 0 /* derived method by Franke & Nielson. Does not seem to work too well here */
-	for (i = 0; i < 4; i++) {
-		tmp = pow((1.0*(max_dist - dists[i])/max_dist*dists[i]), 2);
-		t += tmp*elevs[i];
+	for (int i = 0; i < 4; i++) {
+		tmp = pow((1.0 * (max_dist - dists[i]) / max_dist * dists[i]), 2);
+		t += tmp * elevs[i];
 		b += tmp;
 	}
 #endif
 
-	for (i = 0; i < 4; i++) {
-		tmp = pow((1.0/dists[i]), 2);
-		t += tmp*elevs[i];
+	for (int i = 0; i < 4; i++) {
+		tmp = pow((1.0 / dists[i]), 2);
+		t += tmp * elevs[i];
 		b += tmp;
 	}
 
 	// fprintf(stderr, "DEBUG: tmp=%f t=%f b=%f %f\n", tmp, t, b, t/b);
 
-	return(t/b);
+	return (t/b);
 
 }
 
-void vik_dem_east_north_to_xy(VikDEM *dem, double east, double north, unsigned int *col, unsigned int *row)
+
+
+
+
+void DEM::east_north_to_xy(double east, double north, unsigned int * col, unsigned int * row)
 {
-	*col = (unsigned int) floor((east - dem->min_east) / dem->east_scale);
-	*row = (unsigned int) floor((north - dem->min_north) / dem->north_scale);
+	*col = (unsigned int) floor((east - this->min_east) / this->east_scale);
+	*row = (unsigned int) floor((north - this->min_north) / this->north_scale);
 }
 
 
 
-bool vik_dem_overlap(VikDEM * dem, LatLonBBox * bbox)
+
+
+bool DEM::overlap(LatLonBBox * bbox)
 {
 	struct LatLon dem_northeast, dem_southwest;
 
 	/* get min, max lat/lon of DEM data */
-	if (dem->horiz_units == VIK_DEM_HORIZ_LL_ARCSECONDS) {
-		dem_northeast.lat = dem->max_north / 3600.0;
-		dem_northeast.lon = dem->max_east / 3600.0;
-		dem_southwest.lat = dem->min_north / 3600.0;
-		dem_southwest.lon = dem->min_east / 3600.0;
-	} else if (dem->horiz_units == VIK_DEM_HORIZ_UTM_METERS) {
+	if (this->horiz_units == VIK_DEM_HORIZ_LL_ARCSECONDS) {
+		dem_northeast.lat = this->max_north / 3600.0;
+		dem_northeast.lon = this->max_east / 3600.0;
+		dem_southwest.lat = this->min_north / 3600.0;
+		dem_southwest.lon = this->min_east / 3600.0;
+	} else if (this->horiz_units == VIK_DEM_HORIZ_UTM_METERS) {
 		struct UTM dem_northeast_utm, dem_southwest_utm;
-		dem_northeast_utm.northing = dem->max_north;
-		dem_northeast_utm.easting = dem->max_east;
-		dem_southwest_utm.northing = dem->min_north;
-		dem_southwest_utm.easting = dem->min_east;
-		dem_northeast_utm.zone = dem_southwest_utm.zone = dem->utm_zone;
-		dem_northeast_utm.letter = dem_southwest_utm.letter = dem->utm_letter;
+		dem_northeast_utm.northing = this->max_north;
+		dem_northeast_utm.easting = this->max_east;
+		dem_southwest_utm.northing = this->min_north;
+		dem_southwest_utm.easting = this->min_east;
+		dem_northeast_utm.zone = dem_southwest_utm.zone = this->utm_zone;
+		dem_northeast_utm.letter = dem_southwest_utm.letter = this->utm_letter;
 
 		a_coords_utm_to_latlon(&dem_northeast_utm, &dem_northeast);
 		a_coords_utm_to_latlon(&dem_southwest_utm, &dem_southwest);

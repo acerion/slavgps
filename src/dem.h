@@ -19,8 +19,8 @@
  *
  */
 
-#ifndef __VIKING_DEM_H
-#define __VIKING_DEM_H
+#ifndef _SG_DEM_H
+#define _SG_DEM_H
 
 #include <glib.h>
 #include <stdint.h>
@@ -28,65 +28,100 @@
 #include "bbox.h"
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+
+
+
+namespace SlavGPS {
+
+
+
 
 
 #define VIK_DEM_INVALID_ELEVATION -32768
 
-/* unit codes */
+/* Unit codes. */
 #define VIK_DEM_HORIZ_UTM_METERS 2
 #define VIK_DEM_HORIZ_LL_ARCSECONDS  3
 
 #define VIK_DEM_VERT_DECIMETERS 2
 
-#define VIK_DEM_VERT_METERS 1 /* wrong in 250k?	 */
+#define VIK_DEM_VERT_METERS 1 /* Wrong in 250k? */
 
 
-typedef struct {
-	unsigned int n_columns;
-	GPtrArray * columns;
-
-	uint8_t horiz_units;
-	uint8_t orig_vert_units; /* original, always converted to meters when loading. */
-	double east_scale; /* gap between samples */
-	double north_scale;
-
-	double min_east, min_north, max_east, max_north;
-
-	uint8_t utm_zone;
-	char utm_letter;
-} VikDEM;
-
-typedef struct {
-	/* east-west coordinate for ALL items in the column */
-	double east_west;
-
-	/* coordinate of northern and southern boundaries */
-	double south;
-	//  double north;
-
-	unsigned int n_points;
-	int16_t * points;
-} VikDEMColumn;
 
 
-VikDEM * vik_dem_new_from_file(const char * file);
-void vik_dem_free(VikDEM * dem);
-int16_t vik_dem_get_xy(VikDEM * dem, unsigned int x, unsigned int y);
 
-int16_t vik_dem_get_east_north(VikDEM * dem, double east, double north);
-int16_t vik_dem_get_simple_interpol(VikDEM * dem, double east, double north);
-int16_t vik_dem_get_shepard_interpol(VikDEM * dem, double east, double north);
-int16_t vik_dem_get_best_interpol(VikDEM * dem, double east, double north);
+	class DEM {
+	public:
+		~DEM();
 
-void vik_dem_east_north_to_xy(VikDEM * dem, double east, double north, unsigned int * col, unsigned int * row);
+		bool read(const char * file);
 
-bool vik_dem_overlap(VikDEM * dem, LatLonBBox * bbox);
+		int16_t get_xy(unsigned int x, unsigned int y);
+		int16_t get_east_north(double east, double north);
+		int16_t get_simple_interpol(double east, double north);
+		int16_t get_shepard_interpol(double east, double north);
+		// int16_t vik_dem_get_best_interpol(DEM * dem, double east, double north);
 
-#ifdef __cplusplus
-}
-#endif
+		void east_north_to_xy(double east, double north, unsigned int * col, unsigned int * row);
 
-#endif
+		bool get_ref_points_elev_dist(double east, double north, /* in seconds */
+					      int16_t * elevs, int16_t * dists);
+
+		bool overlap(LatLonBBox * bbox);
+
+		unsigned int n_columns;
+		GPtrArray * columns;
+
+		uint8_t horiz_units;
+		uint8_t orig_vert_units; /* Original, always converted to meters when loading. */
+		double east_scale; /* Gap between samples. */
+		double north_scale;
+
+		double min_east;
+		double min_north;
+		double max_east;
+		double max_north;
+
+		uint8_t utm_zone;
+		char utm_letter;
+
+
+	private:
+		bool read_srtm_hgt(char const * file_name, char const * basename, bool zip);
+		bool read_other(char const * file_name);
+		bool parse_header(char * buffer);
+		void parse_block(char * buffer, int * cur_column, int * cur_row);
+		void parse_block_as_header(char * buffer, int * cur_column, int * cur_row);
+		void parse_block_as_cont(char * buffer, int * cur_column, int * cur_row);
+	};
+
+
+
+
+
+	class DEMColumn {
+
+	public:
+		/* East-West coordinate for ALL items in the column. */
+		double east_west;
+
+		/* Coordinate of northern and southern boundaries. */
+		double south;
+		// double north;
+
+		unsigned int n_points;
+		int16_t * points;
+	};
+
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
+
+#endif /* #ifndef _SG_DEM_H */

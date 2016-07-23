@@ -459,7 +459,7 @@ static inline uint16_t get_height_difference(int16_t elev, int16_t new_elev)
 }
 
 
-void LayerDEM::draw_dem(Viewport * viewport, VikDEM * dem)
+void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 {
 	double max_lat, max_lon, min_lat, min_lon;
 	viewport->get_min_max_lat_lon(&min_lat, &max_lat, &min_lon, &max_lon);
@@ -470,7 +470,7 @@ void LayerDEM::draw_dem(Viewport * viewport, VikDEM * dem)
 	   (moved or re-zoomed). */
 	LatLonBBox viewport_bbox;
 	viewport->get_bbox(&viewport_bbox);
-	if (!vik_dem_overlap(dem, &viewport_bbox)) {
+	if (!dem->overlap(&viewport_bbox)) {
 		return;
 	}
 
@@ -510,7 +510,7 @@ void LayerDEM::draw_dem(Viewport * viewport, VikDEM * dem)
 		double end_lon   = ceil(end_lon_as / dem->east_scale) * escale_deg;
 
 		unsigned int start_x, start_y;
-		vik_dem_east_north_to_xy(dem, start_lon_as, start_lat_as, &start_x, &start_y);
+		dem->east_north_to_xy(start_lon_as, start_lat_as, &start_x, &start_y);
 		unsigned int gradient_skip_factor = 1;
 		if (this->dem_type == DEM_TYPE_GRADIENT) {
 			gradient_skip_factor = skip_factor;
@@ -531,21 +531,21 @@ void LayerDEM::draw_dem(Viewport * viewport, VikDEM * dem)
 			}
 
 			/* Get previous and next column. Catch out-of-bound. */
-			VikDEMColumn *column, *prevcolumn, *nextcolumn;
+			DEMColumn *column, *prevcolumn, *nextcolumn;
 			{
-				column = (VikDEMColumn *) g_ptr_array_index(dem->columns, x);
+				column = (DEMColumn *) g_ptr_array_index(dem->columns, x);
 
 				int32_t new_x = x - gradient_skip_factor;
 				if (new_x < 1) {
 					new_x = x + 1;
 				}
-				prevcolumn = (VikDEMColumn *) g_ptr_array_index(dem->columns, new_x);
+				prevcolumn = (DEMColumn *) g_ptr_array_index(dem->columns, new_x);
 
 				new_x = x + gradient_skip_factor;
 				if (new_x >= dem->n_columns) {
 					new_x = x - 1;
 				}
-				nextcolumn = (VikDEMColumn *) g_ptr_array_index(dem->columns, new_x);
+				nextcolumn = (DEMColumn *) g_ptr_array_index(dem->columns, new_x);
 			}
 
 			unsigned int y;
@@ -701,7 +701,7 @@ void LayerDEM::draw_dem(Viewport * viewport, VikDEM * dem)
 		end_eas   = ceil(end_eas / dem->east_scale) * dem->east_scale;
 
 		unsigned int start_x, start_y;
-		vik_dem_east_north_to_xy(dem, start_eas, start_nor, &start_x, &start_y);
+		dem->east_north_to_xy(start_eas, start_nor, &start_x, &start_y);
 
 		/* TODO: why start_x and start_y are -1 -- rounding error from above? */
 
@@ -715,7 +715,7 @@ void LayerDEM::draw_dem(Viewport * viewport, VikDEM * dem)
 				continue;
 			}
 
-			VikDEMColumn * column = (VikDEMColumn *) g_ptr_array_index(dem->columns, x);
+			DEMColumn * column = (DEMColumn *) g_ptr_array_index(dem->columns, x);
 			unsigned int y;
 			for (y = start_y, counter.northing = start_nor; counter.northing <= end_nor; counter.northing += dem->north_scale * skip_factor, y += skip_factor) {
 				if (y > column->n_points) {
@@ -831,7 +831,7 @@ void LayerDEM::draw(Viewport * viewport)
 	while (dems_iter) {
 		std::string * a_string = (std::string *) dems_iter->data;
 		std::string dem_filename = std::string(*a_string);
-		VikDEM * dem = dem_cache_get(dem_filename);
+		DEM * dem = dem_cache_get(dem_filename);
 		if (dem) {
 			this->draw_dem(viewport, dem);
 		}

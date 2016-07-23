@@ -48,8 +48,8 @@ typedef enum {
 
 
 void     dem_cache_uninit();
-VikDEM * dem_cache_load(std::string& filename);
-VikDEM * dem_cache_get(std::string& filename);
+SlavGPS::DEM * dem_cache_load(std::string& filename);
+SlavGPS::DEM * dem_cache_get(std::string& filename);
 int      dem_cache_load_list(std::list<std::string>& filenames, void * threaddata);
 void     dem_cache_list_free(std::list<std::string>& filenames);
 int16_t  dem_cache_get_elev_by_coord(const Coord * coord, VikDemInterpol method);
