@@ -107,8 +107,7 @@ enum {
   PARAM_FILE_CACHE_DIR,
   NUM_PARAMS };
 
-static VikLayer *mapnik_layer_unmarshall(uint8_t *data, int len, Viewport * viewport);
-static VikLayer * mapnik_layer_new(Viewport * viewport);
+static Layer * mapnik_layer_unmarshall(uint8_t *data, int len, Viewport * viewport);
 
 static LayerTool * mapnik_feature_create(Window * window, Viewport * viewport);
 static bool mapnik_feature_release_cb(Layer * vml, GdkEventButton *event, LayerTool * tool);
@@ -138,11 +137,11 @@ VikLayerInterface vik_mapnik_layer_interface = {
 
 	VIK_MENU_ITEM_ALL,
 
-	(VikLayerFuncUnmarshall)              mapnik_layer_unmarshall,
+	/* (VikLayerFuncUnmarshall) */    mapnik_layer_unmarshall,
 
-	/* (VikLayerFuncSetParam) */          layer_set_param,
-	/* (VikLayerFuncGetParam) */          layer_get_param,
-	/* (VikLayerFuncChangeParam) */       NULL,
+	/* (VikLayerFuncSetParam) */      layer_set_param,
+	/* (VikLayerFuncGetParam) */      layer_get_param,
+	/* (VikLayerFuncChangeParam) */   NULL,
 };
 
 struct _VikMapnikLayer {
@@ -333,16 +332,16 @@ void LayerMapnik::set_cache_dir(char const * name)
 	this->file_cache_dir = g_strdup(name);
 }
 
-void LayerMapnik::marshall(uint8_t **data, int *len)
+static Layer * mapnik_layer_unmarshall(uint8_t * data, int len, Viewport * viewport)
 {
-	vik_layer_marshall_params(this->vl, data, len);
-}
+	LayerMapnik * layer = new LayerMapnik();
 
-static VikLayer * mapnik_layer_unmarshall(uint8_t *data, int len, Viewport * viewport)
-{
-	VikLayer *rv = mapnik_layer_new(viewport);
-	vik_layer_unmarshall_params(rv, data, len, viewport);
-	return rv;
+	layer->tile_size_x = size_default().u; // FUTURE: Is there any use in this being configurable?
+	layer->loaded = false;
+	layer->mi = mapnik_interface_new();
+	layer->unmarshall_params(data, len, viewport);
+
+	return layer;
 }
 
 bool LayerMapnik::set_param(uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
@@ -422,20 +421,6 @@ VikLayerParamData LayerMapnik::get_param(uint16_t id, bool is_file_operation)
 		default: break;
 	}
 	return data;
-}
-
-/**
- *
- */
-static VikLayer * mapnik_layer_new(Viewport * viewport)
-{
-	LayerMapnik * layer = new LayerMapnik();
-
-	layer->tile_size_x = size_default().u; // FUTURE: Is there any use in this being configurable?
-	layer->loaded = false;
-	layer->mi = mapnik_interface_new();
-
-	return layer->vl;
 }
 
 /**

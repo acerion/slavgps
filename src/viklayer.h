@@ -148,6 +148,11 @@ namespace SlavGPS {
 		Layer(VikLayer * vl);
 		~Layer() {};
 
+		static void    marshall(Layer * layer, uint8_t ** data, int * len);
+		void           marshall_params(uint8_t ** data, int * datalen);
+		static Layer * unmarshall(uint8_t * data, int len, Viewport * viewport);
+		void           unmarshall_params(uint8_t * data, int len, Viewport * viewport);
+
 		static Layer * new_(LayerType layer_type, Viewport * viewport, bool interactive);
 
 		void emit_update();
@@ -176,8 +181,6 @@ namespace SlavGPS {
 		/* kamilTODO: consider removing them from Layer. They are overriden only in LayerTRW. */
 		virtual void set_menu_selection(uint16_t selection);
 		virtual uint16_t get_menu_selection();
-
-		virtual void marshall(uint8_t ** data, int * len);
 
 		virtual void cut_item(int subtype, void * sublayer);
 		virtual void copy_item(int subtype, void * sublayer, uint8_t ** item, unsigned int * len);
@@ -215,6 +218,7 @@ namespace SlavGPS {
 
 
 
+
 		static LayerType type_from_string(char const * str);
 
 
@@ -241,13 +245,12 @@ namespace SlavGPS {
 		LayerType type;
 
 
-
-
 		VikLayer * vl;
 
 		char type_string[10];
 
-
+	protected:
+		virtual void marshall(uint8_t ** data, int * len);
 	};
 
 
@@ -311,7 +314,7 @@ extern "C" {
 
 /* layer interface functions */
 
-typedef VikLayer *               (* VikLayerFuncUnmarshall)    (uint8_t *, int, SlavGPS::Viewport *);
+typedef SlavGPS::Layer *         (* VikLayerFuncUnmarshall)    (uint8_t *, int, SlavGPS::Viewport *);
 /* returns true if needs to redraw due to changed param */
 /* in parameter bool denotes if for file I/O, as opposed to display/cut/copy etc... operations */
 typedef bool                     (* VikLayerFuncSetParam)      (SlavGPS::Layer *, uint16_t, VikLayerParamData, SlavGPS::Viewport *, bool);
@@ -356,22 +359,22 @@ VikLayerParamData layer_get_param(SlavGPS::Layer * layer, uint16_t id, bool is_f
 
 
 /* GUI */
-uint16_t vik_layer_get_menu_items_selection(VikLayer * l);
-bool vik_layer_properties(VikLayer * layer, SlavGPS::Viewport * viewport);
+uint16_t vik_layer_get_menu_items_selection(SlavGPS::Layer * layer);
+bool vik_layer_properties(SlavGPS::Layer * layer, SlavGPS::Viewport * viewport);
 
-VikLayer *vik_layer_copy(VikLayer * vl, void * viewport);
-void      vik_layer_marshall(VikLayer * vl, uint8_t ** data, int * len);
-VikLayer *vik_layer_unmarshall(uint8_t * data, int len, SlavGPS::Viewport * viewport);
-void      vik_layer_marshall_params(VikLayer * vl, uint8_t ** data, int * len);
-void      vik_layer_unmarshall_params(VikLayer * vl, uint8_t * data, int len, SlavGPS::Viewport * viewport);
+//VikLayer *vik_layer_copy(VikLayer * vl, void * viewport);
 
-bool vik_layer_selected(VikLayer * l, int subtype, void * sublayer, int type, void * panel);
+
+//void      vik_layer_marshall_params(VikLayer * vl, uint8_t ** data, int * len);
+
+
+bool vik_layer_selected(SlavGPS::Layer * layer, int subtype, void * sublayer, int type, void * panel);
 
 /* TODO: put in layerspanel */
 GdkPixbuf * vik_layer_load_icon(SlavGPS::LayerType layer_type);
 
-void vik_layer_emit_update_secondary(VikLayer * vl); /* to be called by aggregate layer only. doesn't set the trigger */
-void vik_layer_emit_update_although_invisible(VikLayer * vl);
+void vik_layer_emit_update_secondary(SlavGPS::Layer * layer); /* To be called by aggregate layer only. Doesn't set the trigger. */
+void vik_layer_emit_update_although_invisible(SlavGPS::Layer * layer);
 
 
 typedef struct {

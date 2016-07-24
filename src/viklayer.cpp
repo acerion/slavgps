@@ -99,9 +99,9 @@ static void vik_layer_class_init(VikLayerClass * klass)
 /**
  * Invoke the actual drawing via signal method
  */
-static bool idle_draw(VikLayer * vl)
+static bool idle_draw(Layer * layer)
 {
-	g_signal_emit(G_OBJECT(vl), layer_signals[VL_UPDATE_SIGNAL], 0);
+	g_signal_emit(G_OBJECT (layer->vl), layer_signals[VL_UPDATE_SIGNAL], 0);
 	return false; // Nothing else to do
 }
 
@@ -126,9 +126,9 @@ void Layer::emit_update()
 		// Only ever draw when there is time to do so
 		if (g_thread_self() != thread) {
 			// Drawing requested from another (background) thread, so handle via the gdk thread method
-			gdk_threads_add_idle((GSourceFunc) idle_draw, this->vl);
+			gdk_threads_add_idle((GSourceFunc) idle_draw, this);
 		} else {
-			g_idle_add((GSourceFunc) idle_draw, this->vl);
+			g_idle_add((GSourceFunc) idle_draw, this);
 		}
 	}
 }
@@ -141,21 +141,19 @@ void Layer::emit_update()
  * should only be done by LayersPanel (hence never used from the background)
  * need to redraw and record trigger when we make a layer invisible.
  */
-void vik_layer_emit_update_although_invisible(VikLayer * vl)
+void vik_layer_emit_update_although_invisible(Layer * layer)
 {
-	Window::set_redraw_trigger((Layer *) vl->layer);
-	g_idle_add((GSourceFunc) idle_draw, vl);
+	Window::set_redraw_trigger(layer);
+	g_idle_add((GSourceFunc) idle_draw, layer);
 }
 
 /* doesn't set the trigger. should be done by aggregate layer when child emits update. */
-void vik_layer_emit_update_secondary(VikLayer * vl)
+void vik_layer_emit_update_secondary(Layer * layer)
 {
-	Layer * layer = (Layer *) vl->layer;
-
 	if (layer->visible) {
 		// TODO: this can used from the background - eg in acquire
 		//       so will need to flow background update status through too
-		g_idle_add((GSourceFunc) idle_draw, vl);
+		g_idle_add((GSourceFunc) idle_draw, layer);
 	}
 }
 
@@ -279,7 +277,7 @@ Layer * Layer::new_(LayerType layer_type, Viewport * viewport, bool interactive)
 	assert (layer);
 
 	if (interactive) {
-		if (vik_layer_properties(layer->vl, viewport)) {
+		if (vik_layer_properties(layer, viewport)) {
 			/* We translate the name here */
 			/* in order to avoid translating name set by user */
 			layer->rename(_(vik_layer_interfaces[(int) layer_type]->name));
@@ -293,9 +291,8 @@ Layer * Layer::new_(LayerType layer_type, Viewport * viewport, bool interactive)
 }
 
 /* returns true if OK was pressed */
-bool vik_layer_properties(VikLayer * vl, Viewport * viewport)
+bool vik_layer_properties(Layer * layer, Viewport * viewport)
 {
-	Layer * layer = (Layer *) vl->layer;
 	if (layer->type == LayerType::GEOREF) {
 		return layer->properties(viewport);
 	}
@@ -317,47 +314,50 @@ typedef struct {
 	uint8_t data[0];
 } header_t;
 
-void vik_layer_marshall(VikLayer * vl, uint8_t ** data, int * len)
+void Layer::marshall(Layer * layer, uint8_t ** data, int * len)
 {
-	header_t *header;
-	Layer * layer = (Layer *) vl->layer;
 	layer->marshall(data, len);
 	if (*data) {
-		header = (header_t *) malloc(*len + sizeof(*header));
+		header_t * header = (header_t *) malloc(*len + sizeof (*header));
 		header->layer_type = layer->type;
 		header->len = *len;
 		memcpy(header->data, *data, *len);
 		free(*data);
-		*data = (uint8_t *)header;
-		*len = *len + sizeof(*header);
+		*data = (uint8_t *) header;
+		*len = *len + sizeof (*header);
 	}
 }
 
-void vik_layer_marshall_params(VikLayer * vl, uint8_t ** data, int * datalen)
+void Layer::marshall(uint8_t ** data, int * len)
 {
-	Layer * layer = (Layer *) vl->layer;
-	VikLayerParam * params = vik_layer_get_interface(layer->type)->params;
-	VikLayerFuncGetParam get_param = vik_layer_get_interface(layer->type)->get_param;
+	this->marshall_params(data, len);
+	return;
+}
+
+void Layer::marshall_params(uint8_t ** data, int * datalen)
+{
+	VikLayerParam * params = vik_layer_get_interface(this->type)->params;
+	VikLayerFuncGetParam get_param = vik_layer_get_interface(this->type)->get_param;
 
 	GByteArray* b = g_byte_array_new();
 	int len;
 
 #define vlm_append(obj, sz) 	\
 	len = (sz);					\
-	g_byte_array_append(b, (uint8_t *)&len, sizeof(len));	\
-	g_byte_array_append(b, (uint8_t *)(obj), len);
+	g_byte_array_append(b, (uint8_t *) &len, sizeof(len));	\
+	g_byte_array_append(b, (uint8_t *) (obj), len);
 
 	// Store the internal properties first
-	vlm_append(&layer->visible, sizeof(layer->visible));
-	vlm_append(layer->name, strlen(layer->name));
+	vlm_append(&this->visible, sizeof (this->visible));
+	vlm_append(this->name, strlen(this->name));
 
 	// Now the actual parameters
 	if (params && get_param) {
 		VikLayerParamData d;
-		uint16_t i, params_count = vik_layer_get_interface(layer->type)->params_count;
+		uint16_t i, params_count = vik_layer_get_interface(this->type)->params_count;
 		for (i = 0; i < params_count; i++) {
 			fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, params[i].name);
-			d = get_param(layer, i, false);
+			d = get_param(this, i, false);
 			switch (params[i].type) {
 			case VIK_LAYER_PARAM_STRING:
 				// Remember need braces as these are macro calls, not single statement functions!
@@ -374,11 +374,11 @@ void vik_layer_marshall_params(VikLayer * vl, uint8_t ** data, int * datalen)
 
 				/* write length of list (# of strings) */
 				int listlen = g_list_length(list);
-				g_byte_array_append(b, (uint8_t *)&listlen, sizeof(listlen));
+				g_byte_array_append(b, (uint8_t *) &listlen, sizeof (listlen));
 
 				/* write each string */
 				while (list) {
-					char *s = (char *) list->data;
+					char * s = (char *) list->data;
 					vlm_append(s, strlen(s));
 					list = list->next;
 				}
@@ -386,7 +386,7 @@ void vik_layer_marshall_params(VikLayer * vl, uint8_t ** data, int * datalen)
 				break;
 			}
 			default:
-				vlm_append(&d, sizeof(d));
+				vlm_append(&d, sizeof (d));
 				break;
 			}
 		}
@@ -399,11 +399,10 @@ void vik_layer_marshall_params(VikLayer * vl, uint8_t ** data, int * datalen)
 #undef vlm_append
 }
 
-void vik_layer_unmarshall_params(VikLayer * vl, uint8_t * data, int datalen, Viewport * viewport)
+void Layer::unmarshall_params(uint8_t * data, int datalen, Viewport * viewport)
 {
-	Layer * layer = (Layer *) vl->layer;
-	VikLayerParam *params = vik_layer_get_interface(layer->type)->params;
-	VikLayerFuncSetParam set_param = vik_layer_get_interface(layer->type)->set_param;
+	VikLayerParam *params = vik_layer_get_interface(this->type)->params;
+	VikLayerFuncSetParam set_param = vik_layer_get_interface(this->type)->set_param;
 
 	char *s;
 	uint8_t *b = (uint8_t *) data;
@@ -413,18 +412,18 @@ void vik_layer_unmarshall_params(VikLayer * vl, uint8_t * data, int datalen, Vie
 	memcpy((obj), b+sizeof(int), vlm_size);	\
 	b += sizeof(int) + vlm_size;
 
-	vlm_read(&layer->visible);
+	vlm_read(&this->visible);
 
 	s = (char *) malloc(vlm_size + 1);
 	s[vlm_size]=0;
 	vlm_read(s);
-	layer->rename(s);
+	this->rename(s);
 	free(s);
 
 	if (params && set_param) {
 		VikLayerParamData d;
-		uint16_t i, params_count = vik_layer_get_interface(layer->type)->params_count;
-		for (i = 0; i < params_count; i++){
+		uint16_t params_count = vik_layer_get_interface(this->type)->params_count;
+		for (uint16_t i = 0; i < params_count; i++){
 			fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, params[i].name);
 			switch (params[i].type) {
 			case VIK_LAYER_PARAM_STRING:
@@ -432,7 +431,7 @@ void vik_layer_unmarshall_params(VikLayer * vl, uint8_t * data, int datalen, Vie
 				s[vlm_size] = 0;
 				vlm_read(s);
 				d.s = s;
-				set_param(layer, i, d, viewport, false);
+				set_param(this, i, d, viewport, false);
 				free(s);
 				break;
 			case VIK_LAYER_PARAM_STRING_LIST: {
@@ -448,25 +447,23 @@ void vik_layer_unmarshall_params(VikLayer * vl, uint8_t * data, int datalen, Vie
 					list = g_list_append(list, s);
 				}
 				d.sl = list;
-				set_param(layer, i, d, viewport, false);
+				set_param(this, i, d, viewport, false);
 				/* don't free -- string list is responsibility of the layer */
 
 				break;
 			}
 			default:
 				vlm_read(&d);
-				set_param(layer, i, d, viewport, false);
+				set_param(this, i, d, viewport, false);
 				break;
 			}
 		}
 	}
 }
 
-VikLayer * vik_layer_unmarshall(uint8_t * data, int len, Viewport * viewport)
+Layer * Layer::unmarshall(uint8_t * data, int len, Viewport * viewport)
 {
-	header_t * header;
-
-	header = (header_t *) data;
+	header_t * header = (header_t *) data;
 
 	if (vik_layer_interfaces[(int) header->layer_type]->unmarshall) {
 		return vik_layer_interfaces[(int) header->layer_type]->unmarshall(header->data, header->len, viewport);
@@ -489,10 +486,8 @@ static void vik_layer_finalize(VikLayer * vl)
 	G_OBJECT_CLASS(parent_class)->finalize(G_OBJECT(vl));
 }
 
-
-bool vik_layer_selected(VikLayer * l, int subtype, void * sublayer, int type, void * panel)
+bool vik_layer_selected(Layer * layer, int subtype, void * sublayer, int type, void * panel)
 {
-	Layer * layer = (Layer *) l->layer;
 	bool result = layer->selected(subtype, sublayer, type, panel);
 	if (result) {
 		return result;
@@ -501,9 +496,8 @@ bool vik_layer_selected(VikLayer * l, int subtype, void * sublayer, int type, vo
 	}
 }
 
-uint16_t vik_layer_get_menu_items_selection(VikLayer *l)
+uint16_t vik_layer_get_menu_items_selection(Layer * layer)
 {
-	Layer * layer = (Layer *) l->layer;
 	uint16_t rv = layer->get_menu_selection();
 	if (rv == (uint16_t) -1) {
 		/* Perhaps this line could go to base class. */
@@ -769,11 +763,6 @@ void Layer::set_menu_selection(uint16_t selection)
 uint16_t Layer::get_menu_selection()
 {
 	return (uint16_t) -1;
-}
-
-void Layer::marshall(uint8_t ** data, int * len)
-{
-	return;
 }
 
 void Layer::cut_item(int subtype, void * sublayer)

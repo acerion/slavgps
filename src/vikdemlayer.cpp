@@ -68,7 +68,7 @@ using namespace SlavGPS;
 
 #define UNUSED_LINE_THICKNESS 3
 
-static VikLayer *dem_layer_unmarshall(uint8_t *data, int len, Viewport * viewport);
+static Layer * dem_layer_unmarshall(uint8_t * data, int len, Viewport * viewport);
 static void srtm_draw_existence(Viewport * viewport);
 
 #ifdef VIK_CONFIG_DEM24K
@@ -198,11 +198,11 @@ VikLayerInterface vik_dem_layer_interface = {
 
 	VIK_MENU_ITEM_ALL,
 
-	(VikLayerFuncUnmarshall)	      dem_layer_unmarshall,
+	/* (VikLayerFuncUnmarshall) */   dem_layer_unmarshall,
 
-	/* (VikLayerFuncSetParam) */          layer_set_param,
-	/* (VikLayerFuncGetParam) */          layer_get_param,
-	/* (VikLayerFuncChangeParam) */       NULL,
+	/* (VikLayerFuncSetParam) */     layer_set_param,
+	/* (VikLayerFuncGetParam) */     layer_get_param,
+	/* (VikLayerFuncChangeParam) */  NULL,
 };
 
 
@@ -217,13 +217,7 @@ char const * LayerDEM::tooltip()
 	return tmp_buf;
 }
 
-void LayerDEM::marshall(uint8_t **data, int *len)
-{
-	VikLayer * vdl = this->vl;
-	vik_layer_marshall_params(vdl, data, len);
-}
-
-static VikLayer * dem_layer_unmarshall(uint8_t *data, int len, Viewport * viewport)
+static Layer * dem_layer_unmarshall(uint8_t * data, int len, Viewport * viewport)
 {
 	LayerDEM * layer = new LayerDEM(viewport);
 
@@ -239,8 +233,8 @@ static VikLayer * dem_layer_unmarshall(uint8_t *data, int len, Viewport * viewpo
 		layer->gcsgradient[i] = viewport->new_gc(dem_gradient_colors[i], UNUSED_LINE_THICKNESS);
 	}
 
-	vik_layer_unmarshall_params(layer->vl, data, len, viewport);
-	return layer->vl;
+	layer->unmarshall_params(data, len, viewport);
+	return layer;
 }
 
 /* Structure for DEM data used in background thread */

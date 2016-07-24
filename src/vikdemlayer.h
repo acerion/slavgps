@@ -48,7 +48,6 @@ namespace SlavGPS {
 		/* Layer interface methods. */
 		void draw(Viewport * viewport);
 		char const * tooltip();
-		void marshall(uint8_t ** data, int * len);
 		bool download_release(GdkEventButton * event, LayerTool * tool);
 		bool add_file(std::string& dem_filename);
 		void draw_dem(Viewport * viewport, DEM * dem);

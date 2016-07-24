@@ -405,13 +405,13 @@ void LayersPanel::item_toggled(GtkTreeIter * iter)
 		{
 		Layer * layer = (Layer *) p;
 		visible = (layer->visible ^= 1);
-		vik_layer_emit_update_although_invisible(layer->vl); /* set trigger for half-drawn */
+		vik_layer_emit_update_although_invisible(layer); /* set trigger for half-drawn */
 		break;
 		}
 	case VIK_TREEVIEW_TYPE_SUBLAYER: {
 		Layer * parent = (Layer *) this->tree_view->get_parent(iter);
 		visible = parent->sublayer_toggle_visible(this->tree_view->get_data(iter), p);
-		vik_layer_emit_update_although_invisible(parent->vl);
+		vik_layer_emit_update_although_invisible(parent);
 		break;
 	}
 	default:
@@ -532,7 +532,7 @@ void LayersPanel::popup(GtkTreeIter * iter, int mouse_button)
 				GtkWidget *del, *prop;
 				/* kamilFIXME: this doesn't work for Map in treeview. Why?*/
 				fprintf(stderr, "will call get_menu_items_selection.\n");
-				VikStdLayerMenuItem menu_selection = (VikStdLayerMenuItem) vik_layer_get_menu_items_selection(layer->vl);
+				VikStdLayerMenuItem menu_selection = (VikStdLayerMenuItem) vik_layer_get_menu_items_selection(layer);
 
 				menu = GTK_MENU (gtk_menu_new());
 
@@ -745,7 +745,7 @@ bool LayersPanel::properties()
 			a_dialog_info_msg(VIK_GTK_WINDOW_FROM_WIDGET(this->gob), _("Aggregate Layers have no settable properties."));
 		}
 		Layer * layer = (Layer *) this->tree_view->get_layer(&iter);
-		if (vik_layer_properties(layer->vl, this->viewport)) {
+		if (vik_layer_properties(layer, this->viewport)) {
 			layer->emit_update();
 		}
 		return true;

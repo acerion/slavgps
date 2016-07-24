@@ -102,7 +102,6 @@ namespace SlavGPS {
 		void load_image(Viewport * viewport, bool from_file);
 		void draw(Viewport * viewport);
 		char const * tooltip();
-		void marshall(uint8_t ** data, int * len);
 		void add_menu_items(GtkMenu * menu, void * panel);
 		bool properties(void * vp);
 		bool set_param(uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);

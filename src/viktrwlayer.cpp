@@ -377,7 +377,7 @@ enum {
 /****** END PARAMETERS ******/
 
 /* Layer Interface function definitions */
-static VikLayer *trw_layer_unmarshall(uint8_t *data, int len, Viewport * viewport);
+static Layer * trw_layer_unmarshall(uint8_t * data, int len, Viewport * viewport);
 static void trw_layer_change_param(GtkWidget * widget, ui_change_values * values);
 /* End Layer Interface function definitions */
 
@@ -405,11 +405,11 @@ VikLayerInterface vik_trw_layer_interface = {
 
 	VIK_MENU_ITEM_ALL,
 
-	(VikLayerFuncUnmarshall)              trw_layer_unmarshall,
+	/* (VikLayerFuncUnmarshall) */   trw_layer_unmarshall,
 
-	/* (VikLayerFuncSetParam) */          layer_set_param,
-	/* (VikLayerFuncGetParam) */          layer_get_param,
-	/* (VikLayerFuncChangeParam) */       trw_layer_change_param,
+	/* (VikLayerFuncSetParam) */     layer_set_param,
+	/* (VikLayerFuncGetParam) */     layer_get_param,
+	/* (VikLayerFuncChangeParam) */  trw_layer_change_param,
 };
 
 
@@ -1110,7 +1110,7 @@ void LayerTRW::marshall(uint8_t **data, int *len)
 	*data = NULL;
 
 	// Use byte arrays to store sublayer data
-	// much like done elsewhere e.g. vik_layer_marshall_params()
+	// much like done elsewhere e.g. Layer::marshall_params()
 	GByteArray *ba = g_byte_array_new();
 
 	uint8_t *sl_data;
@@ -1130,7 +1130,7 @@ void LayerTRW::marshall(uint8_t **data, int *len)
 	g_byte_array_append(ba, (object_pointer), object_length);
 
 	// Layer parameters first
-	vik_layer_marshall_params(this->vl, &pd, &pl);
+	this->marshall_params(&pd, &pl);
 	g_byte_array_append(ba, (uint8_t *)&pl, sizeof(pl)); \
 	g_byte_array_append(ba, pd, pl);
 	std::free(pd);
@@ -1166,10 +1166,9 @@ void LayerTRW::marshall(uint8_t **data, int *len)
 	*len = ba->len;
 }
 
-static VikLayer * trw_layer_unmarshall(uint8_t *data, int len, Viewport * viewport)
+static Layer * trw_layer_unmarshall(uint8_t * data, int len, Viewport * viewport)
 {
 	LayerTRW * trw = new LayerTRW(viewport);
-	VikLayer * vtl = (VikLayer *) trw->vl;
 
 	int pl;
 	int consumed_length;
@@ -1177,7 +1176,7 @@ static VikLayer * trw_layer_unmarshall(uint8_t *data, int len, Viewport * viewpo
 	// First the overall layer parameters
 	memcpy(&pl, data, sizeof(pl));
 	data += sizeof(pl);
-	vik_layer_unmarshall_params(vtl, data, pl, viewport);
+	trw->unmarshall_params(data, pl, viewport);
 	data += pl;
 
 	consumed_length = pl;
@@ -1230,7 +1229,7 @@ static VikLayer * trw_layer_unmarshall(uint8_t *data, int len, Viewport * viewpo
 	// Not stored anywhere else so need to regenerate
 	trw->calculate_bounds_waypoints();
 
-	return vtl;
+	return trw;
 }
 
 // Keep interesting hash function at least visible

@@ -66,7 +66,7 @@ using namespace SlavGPS;
 extern std::vector<BabelDevice *> a_babel_device_list;
 
 
-static VikLayer * gps_layer_unmarshall(uint8_t *data, int len, Viewport * viewport);
+static Layer * gps_layer_unmarshall(uint8_t * data, int len, Viewport * viewport);
 
 
 typedef struct {
@@ -309,11 +309,11 @@ VikLayerInterface vik_gps_layer_interface = {
 
 	VIK_MENU_ITEM_ALL,
 
-	(VikLayerFuncUnmarshall)		gps_layer_unmarshall,
+	/* (VikLayerFuncUnmarshall) */    gps_layer_unmarshall,
 
-	/* (VikLayerFuncSetParam) */          layer_set_param,
-	/* (VikLayerFuncGetParam) */          layer_get_param,
-	/* (VikLayerFuncChangeParam) */       NULL,
+	/* (VikLayerFuncSetParam) */      layer_set_param,
+	/* (VikLayerFuncGetParam) */      layer_get_param,
+	/* (VikLayerFuncChangeParam) */   NULL,
 };
 
 static char * trw_names[] = {
@@ -385,13 +385,12 @@ void LayerGPS::marshall(uint8_t **data, int *datalen)
 	g_byte_array_append(b, (uint8_t *)&len, sizeof(len));	\
 	g_byte_array_append(b, (uint8_t *)(obj), len);
 
-	vik_layer_marshall_params(this->vl, &ld, &ll);
+	this->marshall_params(&ld, &ll);
 	alm_append(ld, ll);
 	free(ld);
 
 	for (int i = 0; i < NUM_TRW; i++) {
-		VikLayer * child_layer = this->trw_children[i]->vl;
-		vik_layer_marshall(child_layer, &ld, &ll);
+		Layer::marshall(this->trw_children[i], &ld, &ll);
 		if (ld) {
 			alm_append(ld, ll);
 			free(ld);
@@ -404,7 +403,7 @@ void LayerGPS::marshall(uint8_t **data, int *datalen)
 }
 
 /* "Paste" */
-static VikLayer * gps_layer_unmarshall(uint8_t *data, int len, Viewport * viewport)
+static Layer * gps_layer_unmarshall(uint8_t * data, int len, Viewport * viewport)
 {
 #define alm_size (*(int *)data)
 #define alm_next		 \
@@ -412,16 +411,15 @@ static VikLayer * gps_layer_unmarshall(uint8_t *data, int len, Viewport * viewpo
 	data += sizeof(int) + alm_size;
 
 	LayerGPS * layer = new LayerGPS(viewport);
-	VikLayer * rv = (VikLayer *) layer->vl;
 
-	vik_layer_unmarshall_params((VikLayer *) rv, data+sizeof(int), alm_size, viewport);
+	layer->unmarshall_params(data + sizeof (int), alm_size, viewport);
 	alm_next;
 
 	int i = 0;
 	while (len>0 && i < NUM_TRW) {
-		VikLayer * child_layer = vik_layer_unmarshall(data + sizeof(int), alm_size, viewport);
+		Layer * child_layer = Layer::unmarshall(data + sizeof (int), alm_size, viewport);
 		if (child_layer) {
-			layer->trw_children[i++] = (LayerTRW *) child_layer->layer;
+			layer->trw_children[i++] = (LayerTRW *) child_layer;
 			// NB no need to attach signal update handler here
 			//  as this will always be performed later on in vik_gps_layer_realize()
 		}
@@ -429,7 +427,7 @@ static VikLayer * gps_layer_unmarshall(uint8_t *data, int len, Viewport * viewpo
 	}
 	//  fprintf(stdout, "gps_layer_unmarshall ended with len=%d\n", len);
 	assert (len == 0);
-	return rv;
+	return layer;
 #undef alm_size
 #undef alm_next
 }
@@ -762,7 +760,7 @@ void LayerGPS::realize(TreeView * tree_view_, GtkTreeIter *layer_iter)
 			this->tree_view->set_visibility(&iter, false);
 		}
 		trw->realize(this->tree_view, &iter);
-		g_signal_connect_swapped(G_OBJECT(trw->vl), "update", G_CALLBACK(vik_layer_emit_update_secondary), this->vl);
+		g_signal_connect_swapped(G_OBJECT(trw->vl), "update", G_CALLBACK(vik_layer_emit_update_secondary), (Layer *) this);
 	}
 }
 

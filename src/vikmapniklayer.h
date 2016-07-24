@@ -73,7 +73,6 @@ namespace SlavGPS {
 		void post_read(Viewport * viewport, bool from_file);
 		void draw(Viewport * viewport);
 		char const * tooltip();
-		void marshall(uint8_t ** data, int * len);
 		void add_menu_items(GtkMenu * menu, void * panel);
 		bool set_param(uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
 		VikLayerParamData get_param(uint16_t id, bool is_file_operation);

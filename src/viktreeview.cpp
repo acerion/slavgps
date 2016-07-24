@@ -491,7 +491,7 @@ static void select_cb(GtkTreeSelection *selection, void * data)
 		tmp_vl = layer;
 	}
 	/* Apply settings now we have the all details  */
-	if (vik_layer_selected(tmp_vl->vl,
+	if (vik_layer_selected(tmp_vl,
 			       tmp_subtype,
 			       tmp_layer,
 			       tmp_type,

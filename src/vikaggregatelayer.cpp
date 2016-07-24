@@ -38,7 +38,7 @@
 
 using namespace SlavGPS;
 
-static VikLayer *aggregate_layer_unmarshall(uint8_t *data, int len, Viewport * viewport);
+static Layer * aggregate_layer_unmarshall(uint8_t * data, int len, Viewport * viewport);
 
 VikLayerInterface vik_aggregate_layer_interface = {
 	"Aggregate",
@@ -57,11 +57,11 @@ VikLayerInterface vik_aggregate_layer_interface = {
 
 	VIK_MENU_ITEM_ALL,
 
-	(VikLayerFuncUnmarshall)	      aggregate_layer_unmarshall,
+	/* (VikLayerFuncUnmarshall) */   aggregate_layer_unmarshall,
 
-	/* (VikLayerFuncSetParam) */          NULL,
-	/* (VikLayerFuncGetParam) */          NULL,
-	/* (VikLayerFuncChangeParam) */       NULL,
+	/* (VikLayerFuncSetParam) */     NULL,
+	/* (VikLayerFuncGetParam) */     NULL,
+	/* (VikLayerFuncChangeParam) */  NULL,
 };
 
 GType vik_aggregate_layer_get_type()
@@ -104,13 +104,12 @@ void LayerAggregate::marshall(uint8_t **data, int *datalen)
 	g_byte_array_append(b, (uint8_t *)&len, sizeof(len));	\
 	g_byte_array_append(b, (uint8_t *)(obj), len);
 
-	VikLayer * vl = this->vl;
-	vik_layer_marshall_params(vl, &ld, &ll);
+	this->marshall_params(&ld, &ll);
 	alm_append(ld, ll);
 	free(ld);
 
 	for (auto child = this->children->begin(); child != this->children->end(); child++) {
-		vik_layer_marshall((*child)->vl, &ld, &ll);
+		Layer::marshall((*child), &ld, &ll);
 		if (ld) {
 			alm_append(ld, ll);
 			free(ld);
@@ -124,7 +123,7 @@ void LayerAggregate::marshall(uint8_t **data, int *datalen)
 #endif
 }
 
-static VikLayer * aggregate_layer_unmarshall(uint8_t *data, int len, Viewport * viewport)
+static Layer * aggregate_layer_unmarshall(uint8_t *data, int len, Viewport * viewport)
 {
 #if 1
 
@@ -134,23 +133,20 @@ static VikLayer * aggregate_layer_unmarshall(uint8_t *data, int len, Viewport * 
 	data += sizeof(int) + alm_size;
 
 	LayerAggregate * aggregate = new LayerAggregate();
-	VikLayer * vl = (VikLayer *) aggregate->vl;
 
-	vik_layer_unmarshall_params(vl, data+sizeof(int), alm_size, viewport);
+	aggregate->unmarshall_params(data + sizeof (int), alm_size, viewport);
 	alm_next;
 
-	while (len>0) {
-		VikLayer * child_layer = vik_layer_unmarshall(data + sizeof(int), alm_size, viewport);
+	while (len > 0) {
+		Layer * child_layer = Layer::unmarshall(data + sizeof (int), alm_size, viewport);
 		if (child_layer) {
-			/* kamilFIXME: shouldn't we put "new LayerXYZ" in every _unmarshall() function? */
-			Layer * new_layer = new Layer(child_layer);
-			aggregate->children->push_front(new_layer);
-			g_signal_connect_swapped(G_OBJECT(child_layer), "update", G_CALLBACK(vik_layer_emit_update_secondary), vl);
+			aggregate->children->push_front(child_layer);
+			g_signal_connect_swapped(G_OBJECT (child_layer->vl), "update", G_CALLBACK(vik_layer_emit_update_secondary), (Layer *) aggregate);
 		}
 		alm_next;
 	}
 	//  fprintf(stdout, "aggregate_layer_unmarshall ended with len=%d\n", len);
-	return vl;
+	return aggregate;
 #undef alm_size
 #undef alm_next
 
@@ -207,7 +203,7 @@ void LayerAggregate::insert_layer(Layer * layer, GtkTreeIter *replace_iter)
 		this->children->push_back(layer);
 	}
 
-	g_signal_connect_swapped(G_OBJECT(layer->vl), "update", G_CALLBACK(vik_layer_emit_update_secondary), this->vl);
+	g_signal_connect_swapped(G_OBJECT(layer->vl), "update", G_CALLBACK(vik_layer_emit_update_secondary), (Layer *) this);
 }
 
 /**
@@ -248,7 +244,7 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 		this->children->push_front(layer);
 	}
 
-	g_signal_connect_swapped(G_OBJECT(layer->vl), "update", G_CALLBACK(vik_layer_emit_update_secondary), this->vl);
+	g_signal_connect_swapped(G_OBJECT(layer->vl), "update", G_CALLBACK(vik_layer_emit_update_secondary), (Layer *) this);
 }
 
 void LayerAggregate::move_layer(GtkTreeIter *child_iter, bool up)

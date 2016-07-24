@@ -146,7 +146,7 @@ static double __mapzooms_y[] = { 0.0, 0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0, 32.0,
 /**************************/
 
 
-static VikLayer * maps_layer_unmarshall(uint8_t *data, int len, Viewport * viewport);
+static Layer * maps_layer_unmarshall(uint8_t * data, int len, Viewport * viewport);
 static void maps_layer_change_param(GtkWidget *widget, ui_change_values * values);
 static void start_download_thread(LayerMaps * layer, Viewport * viewport, const VikCoord *ul, const VikCoord *br, int redownload_mode);
 static int map_type_to_map_index(MapTypeID map_type);
@@ -246,11 +246,11 @@ VikLayerInterface vik_maps_layer_interface = {
 
 	VIK_MENU_ITEM_ALL,
 
-	(VikLayerFuncUnmarshall)	      maps_layer_unmarshall,
+	/* (VikLayerFuncUnmarshall) */   maps_layer_unmarshall,
 
-	/* (VikLayerFuncSetParam) */          layer_set_param,
-	/* (VikLayerFuncGetParam) */          layer_get_param,
-	/* (VikLayerFuncChangeParam) */       maps_layer_change_param,
+	/* (VikLayerFuncSetParam) */     layer_set_param,
+	/* (VikLayerFuncGetParam) */     layer_get_param,
+	/* (VikLayerFuncChangeParam) */  maps_layer_change_param,
 };
 
 
@@ -915,19 +915,13 @@ char const * LayerMaps::tooltip()
 	return this->get_map_label();
 }
 
-void LayerMaps::marshall(uint8_t **data, int *len)
-{
-	vik_layer_marshall_params(this->vl, data, len);
-}
-
-static VikLayer * maps_layer_unmarshall(uint8_t *data, int len, Viewport * viewport)
+static Layer * maps_layer_unmarshall(uint8_t * data, int len, Viewport * viewport)
 {
 	LayerMaps * layer = new LayerMaps();
-	VikLayer * vl = (VikLayer *) layer->vl;
 
-	vik_layer_unmarshall_params(vl, data, len, viewport);
+	layer->unmarshall_params(data, len, viewport);
 	layer->post_read(viewport, false);
-	return vl;
+	return layer;
 }
 
 /*********************/

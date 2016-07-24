@@ -34,7 +34,7 @@
 
 using namespace SlavGPS;
 
-static VikLayer *coord_layer_unmarshall(uint8_t *data, int len, Viewport * viewport);
+static Layer * coord_layer_unmarshall(uint8_t * data, int len, Viewport * viewport);
 
 
 static VikLayerParamScale param_scales[] = {
@@ -79,11 +79,11 @@ VikLayerInterface vik_coord_layer_interface = {
 
 	VIK_MENU_ITEM_ALL,
 
-	(VikLayerFuncUnmarshall)		coord_layer_unmarshall,
+	/* (VikLayerFuncUnmarshall) */    coord_layer_unmarshall,
 
-	/* (VikLayerFuncSetParam) */          layer_set_param,
-	/* (VikLayerFuncGetParam) */          layer_get_param,
-	/* (VikLayerFuncChangeParam) */       NULL,
+	/* (VikLayerFuncSetParam) */      layer_set_param,
+	/* (VikLayerFuncGetParam) */      layer_get_param,
+	/* (VikLayerFuncChangeParam) */   NULL,
 };
 
 GType vik_coord_layer_get_type()
@@ -108,21 +108,14 @@ GType vik_coord_layer_get_type()
 	return vcl_type;
 }
 
-void LayerCoord::marshall(uint8_t ** data, int * len)
-{
-	VikLayer * vcl = this->vl;
-	vik_layer_marshall_params(vcl, data, len);
-}
-
-static VikLayer * coord_layer_unmarshall(uint8_t * data, int len, Viewport * viewport)
+static Layer * coord_layer_unmarshall(uint8_t * data, int len, Viewport * viewport)
 {
 	LayerCoord * layer = new LayerCoord();
-	VikLayer * rv = (VikLayer *) layer->vl;
 
-	vik_layer_unmarshall_params((VikLayer *) layer->vl, data, len, viewport);
-
+	layer->unmarshall_params(data, len, viewport);
 	layer->update_gc(viewport);
-	return layer->vl;
+
+	return layer;
 }
 
 // NB Viewport can be null as it's not used ATM

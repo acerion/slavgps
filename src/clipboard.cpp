@@ -115,8 +115,8 @@ static void clip_receive_viking(GtkClipboard * c, GtkSelectionData * sd, void * 
 	}
 
 	if (vc->type == VIK_CLIPBOARD_DATA_LAYER) {
-		VikLayer *new_layer = vik_layer_unmarshall(vc->data, vc->len, panel->get_viewport());
-		panel->add_layer((Layer *) new_layer->layer);
+		Layer * new_layer = Layer::unmarshall(vc->data, vc->len, panel->get_viewport());
+		panel->add_layer(new_layer);
 	} else if (vc->type == VIK_CLIPBOARD_DATA_SUBLAYER) {
 		Layer * selected = panel->get_selected();
 		if (selected && selected->type == vc->layer_type) {
@@ -420,7 +420,7 @@ void a_clipboard_copy_selected(LayersPanel * panel)
 		} else {
 			int ilen;
 			type = VIK_CLIPBOARD_DATA_LAYER;
-			vik_layer_marshall(selected->vl, &data, &ilen);
+			Layer::marshall(selected, &data, &ilen);
 			len = ilen;
 			name = ((Layer *) selected->tree_view->get_layer(&iter))->get_name();
 		}

@@ -72,7 +72,6 @@ namespace SlavGPS {
 		/* Layer interface methods. */
 		void post_read(Viewport * viewport, bool from_file);
 		void draw(Viewport * viewport);
-		void marshall(uint8_t ** data, int * len);
 		bool set_param(uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
 		VikLayerParamData get_param(uint16_t id, bool is_file_operation);
 
