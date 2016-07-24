@@ -22,6 +22,8 @@
 #ifndef _VIKING_FILELIST_H
 #define _VIKING_FILELIST_H
 
+#include <list>
+
 #include <glib.h>
 #include <glib-object.h>
 #include <gtk/gtk.h>
@@ -51,8 +53,8 @@ GType vik_file_list_get_type();
 
 GtkWidget * vik_file_list_new(const char * title, GtkFileFilter * filter);
 /* result must be freed */
-GList * vik_file_list_get_files(VikFileList * vfl);
-void vik_file_list_set_files(VikFileList * vfl, GList *);
+std::list<char *> * vik_file_list_get_files(VikFileList * vfl);
+void vik_file_list_set_files(VikFileList * vfl, std::list<char *> * files);
 
 #ifdef __cplusplus
 }

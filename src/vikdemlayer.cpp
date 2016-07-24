@@ -213,7 +213,7 @@ char const * LayerDEM::tooltip()
 {
 	static char tmp_buf[100];
 
-	snprintf(tmp_buf, sizeof(tmp_buf), _("Number of files: %d"), g_list_length(this->files));
+	snprintf(tmp_buf, sizeof(tmp_buf), _("Number of files: %d"), this->files->size());
 	return tmp_buf;
 }
 
@@ -251,12 +251,9 @@ static int dem_layer_load_list_thread(dem_load_thread_data * dltd, void * thread
 	// Actual Load
 
 	std::list<std::string> dem_filenames;
-	GList * iter = dltd->layer->files;
-	while (iter) {
-		std::string * a_string = (std::string *) iter->data;
-		std::string dem_filename = std::string(*a_string);
+	for (auto iter = dltd->layer->files->begin(); iter != dltd->layer->files->end(); iter++) {
+		std::string dem_filename = std::string(*iter);
 		dem_filenames.push_front(dem_filename);
-		iter = iter->next;
 	}
 
 	if (dem_cache_load_list(dem_filenames, threaddata)) {
@@ -292,35 +289,32 @@ static void dem_layer_thread_cancel(dem_load_thread_data * data)
 /**
  * Process the list of DEM files and convert each one to a relative path
  */
-static GList *dem_layer_convert_to_relative_filenaming(GList *files)
+static std::list<char *> * dem_layer_convert_to_relative_filenaming(std::list<char *> * files)
 {
 	char *cwd = g_get_current_dir();
 	if (!cwd)
 		return files;
 
-	GList *relfiles = NULL;
+	std::list<char *> * relfiles = new std::list<char *>;
 
-	while (files) {
-		char *file = (char *) g_strdup(file_GetRelativeFilename(cwd, (char *) files->data));
-		relfiles = g_list_prepend(relfiles, file);
-		files = files->next;
+	for (auto iter = files->begin(); iter != files->end(); iter++) {
+		char * file = (char *) g_strdup(file_GetRelativeFilename(cwd, *iter));
+		relfiles->push_front(file);
 	}
 
 	free(cwd);
 
-	if (relfiles) {
+	if (relfiles->empty()) {
+		return files;
+	} else {
 		// Replacing current list, so delete old values first.
-		GList *iter = files;
-		while (iter) {
-			free(iter->data);
-			iter = iter->next;
+		for (auto iter = files->begin(); iter != files->end(); iter++) {
+			free(*iter);
 		}
-		g_list_free(files);
-
+		delete files;
 		return relfiles;
 	}
 
-	return files;
 }
 
 bool LayerDEM::set_param(uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
@@ -361,7 +355,7 @@ bool LayerDEM::set_param(uint16_t id, VikLayerParamData data, Viewport * viewpor
 			// Set file list so any other intermediate screen drawing updates will show currently loaded DEMs by the working thread
 			this->files = data.sl;
 			// No need for thread if no files
-			if (this->files) {
+			if (this->files && !this->files->empty()) {
 				// Thread Load
 				dem_load_thread_data * dltd = (dem_load_thread_data *) malloc(sizeof(dem_load_thread_data));
 				dltd->layer = this;
@@ -374,7 +368,7 @@ bool LayerDEM::set_param(uint16_t id, VikLayerParamData data, Viewport * viewpor
 						    dltd,
 						    (vik_thr_free_func) dem_layer_thread_data_free,
 						    (vik_thr_free_func) dem_layer_thread_cancel,
-						    g_list_length(data.sl)); // Number of DEM files
+						    data.sl->size()); // Number of DEM files
 			}
 			break;
 		}
@@ -807,15 +801,12 @@ void LayerDEM::draw(Viewport * viewport)
 #endif
 	}
 
-	GList * dems_iter = this->files;
-	while (dems_iter) {
-		std::string * a_string = (std::string *) dems_iter->data;
-		std::string dem_filename = std::string(*a_string);
+	for (auto iter = this->files->begin(); iter != this->files->end(); iter++) {
+		std::string dem_filename = std::string(*iter);
 		DEM * dem = dem_cache_get(dem_filename);
 		if (dem) {
 			this->draw_dem(viewport, dem);
 		}
-		dems_iter = dems_iter->next;
 	}
 }
 
@@ -1112,7 +1103,7 @@ bool LayerDEM::add_file(std::string& dem_filename)
 		(void) stat(dem_filename.c_str(), &sb);
 		if (sb.st_size) {
 			std::string * duped_path = new std::string(dem_filename);
-			this->files = g_list_prepend(this->files, duped_path);
+			this->files->push_front((char *) duped_path->c_str());
 			std::string dem_fullpath = std::string(*duped_path);
 			dem_cache_load(dem_fullpath);
 			fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, duped_path->c_str());
@@ -1308,7 +1299,7 @@ static bool dem_layer_download_click(Layer * vdl, GdkEventButton * event, LayerT
 
 LayerDEM::LayerDEM()
 {
-	this->files = NULL;
+	this->files = new std::list<char *>;
 	this->type = LayerType::DEM;
 	this->dem_type = 0;
 	strcpy(this->type_string, "DEM");

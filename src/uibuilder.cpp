@@ -560,12 +560,12 @@ VikLayerParamData *a_uibuilder_run_dialog(const char *dialog_name, GtkWindow *pa
 static void a_uibuilder_free_paramdatas_sub(VikLayerParamData *paramdatas, int i)
 {
         /* should make a util function out of this */
-        GList *iter = paramdatas[i].sl;
-        while (iter) {
-		free(iter->data);
-		iter = iter->next;
+	std::list<char *> * a_list = paramdatas[i].sl;
+	for (auto iter = a_list->begin(); iter != a_list->end(); iter++) {
+		free(*iter);
         }
-        g_list_free (paramdatas[i].sl);
+        delete paramdatas[i].sl;
+	paramdatas[i].sl = NULL;
 }
 
 

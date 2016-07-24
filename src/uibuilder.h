@@ -21,6 +21,8 @@
 #ifndef _VIKING_UIBUILDER_H
 #define _VIKING_UIBUILDER_H
 
+#include <list>
+
 #include <gtk/gtk.h>
 #include <stdint.h>
 
@@ -81,7 +83,7 @@ typedef union {
 	bool b;
 	const char *s;
 	GdkColor c;
-	GList *sl;
+	std::list<char *> * sl;
 	void * ptr; // For internal usage - don't save this value in a file!
 } VikLayerParamData;
 

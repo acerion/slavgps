@@ -111,18 +111,16 @@ static bool str_starts_with(char const * haystack, char const * needle, uint16_t
 
 void file_write_layer_param(FILE * f, char const * name, VikLayerParamType type, VikLayerParamData data)
 {
-	/* string lists are handled differently. We get a GList (that shouldn't
+	/* string lists are handled differently. We get a std::list<char *> (that shouldn't
 	 * be freed) back for get_param and if it is null we shouldn't write
 	 * anything at all (otherwise we'd read in a list with an empty string,
 	 * not an empty string list.
 	 */
 	if (type == VIK_LAYER_PARAM_STRING_LIST) {
 		if (data.sl) {
-			GList * iter = (GList *) data.sl;
-			while (iter) {
+			for (auto iter = data.sl->begin(); iter != data.sl->end(); iter++) {
 				fprintf(f, "%s=", name);
-				fprintf(f, "%s\n", (char *) (iter->data));
-				iter = iter->next;
+				fprintf(f, "%s\n", *iter);
 			}
 		}
 	} else {
@@ -280,7 +278,7 @@ static void string_list_delete(void * key, void * l, void * user_data)
 	g_list_free ((GList *) l);
 }
 
-static void string_list_set_param(int i, GList * list, void ** layer_and_vp)
+static void string_list_set_param(int i, std::list<char *> * list, void ** layer_and_vp)
 {
 	VikLayerParamData x;
 	x.sl = list;

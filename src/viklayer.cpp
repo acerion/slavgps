@@ -370,17 +370,16 @@ void Layer::marshall_params(uint8_t ** data, int * datalen)
 				break;
 				/* print out the string list in the array */
 			case VIK_LAYER_PARAM_STRING_LIST: {
-				GList *list = d.sl;
+				std::list<char *> * a_list = d.sl;
 
 				/* write length of list (# of strings) */
-				int listlen = g_list_length(list);
+				int listlen = a_list->size();
 				g_byte_array_append(b, (uint8_t *) &listlen, sizeof (listlen));
 
 				/* write each string */
-				while (list) {
-					char * s = (char *) list->data;
+				for (auto iter = a_list->begin(); iter != a_list->end(); iter++) {
+					char * s = *iter;
 					vlm_append(s, strlen(s));
-					list = list->next;
 				}
 
 				break;
@@ -435,16 +434,16 @@ void Layer::unmarshall_params(uint8_t * data, int datalen, Viewport * viewport)
 				free(s);
 				break;
 			case VIK_LAYER_PARAM_STRING_LIST: {
-				int listlen = vlm_size, j;
-				GList * list = NULL;
+				int listlen = vlm_size;
+				std::list<char *> * list = new std::list<char *>;
 				b += sizeof(int); /* skip listlen */;
 
-				for (j = 0; j < listlen; j++) {
+				for (int j = 0; j < listlen; j++) {
 					/* get a string */
 					s = (char *) malloc(vlm_size + 1);
 					s[vlm_size]=0;
 					vlm_read(s);
-					list = g_list_append(list, s);
+					list->push_back(s);
 				}
 				d.sl = list;
 				set_param(this, i, d, viewport, false);

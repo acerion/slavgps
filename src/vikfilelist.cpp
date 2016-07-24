@@ -204,28 +204,27 @@ GtkWidget * vik_file_list_new(const char * title, GtkFileFilter * filter)
 	return GTK_WIDGET(vfl);
 }
 
-static bool get_file_name(GtkTreeModel * model, GtkTreePath * path, GtkTreeIter * iter, GList ** list)
+static bool get_file_name(GtkTreeModel * model, GtkTreePath * path, GtkTreeIter * iter, std::list<char *> * list)
 {
 	char *str;
 	gtk_tree_model_get(model, iter, 0, &str, -1);
 	fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, str);
-	(*list) = g_list_append((*list), str); // NB str is already a copy
+	list->push_back(str); // NB str is already a copy
 	return false;
 }
 
-GList * vik_file_list_get_files(VikFileList * vfl)
+std::list<char *> * vik_file_list_get_files(VikFileList * vfl)
 {
-	GList *list = NULL;
-	gtk_tree_model_foreach(vfl->model, (GtkTreeModelForeachFunc) get_file_name, &list);
+	std::list<char *> * list = new std::list<char *>;
+	gtk_tree_model_foreach(vfl->model, (GtkTreeModelForeachFunc) get_file_name, list);
 	return list;
 }
 
-void vik_file_list_set_files(VikFileList * vfl, GList * files)
+void vik_file_list_set_files(VikFileList * vfl, std::list<char *> * files)
 {
-	while (files) {
+	for (auto f = files->begin(); f != files->end(); f++) {
 		GtkTreeIter iter;
 		gtk_list_store_append(GTK_LIST_STORE (vfl->model), &iter);
-		gtk_list_store_set(GTK_LIST_STORE (vfl->model), &iter, 0, files->data, -1);
-		files = files->next;
+		gtk_list_store_set(GTK_LIST_STORE (vfl->model), &iter, 0, *f, -1);
 	}
 }

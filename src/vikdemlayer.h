@@ -57,7 +57,7 @@ namespace SlavGPS {
 
 		GdkGC ** gcs;
 		GdkGC ** gcsgradient;
-		GList * files;
+		std::list<char *> * files;
 		double min_elev;
 		double max_elev;
 		GdkColor color;

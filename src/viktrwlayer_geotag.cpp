@@ -144,7 +144,7 @@ typedef struct {
 	Track * trk;     // Use specified track or all tracks if NULL
 	// User options...
 	option_values_t ov;
-	GList *files;
+	std::list<char *> * files;
 	time_t PhotoTime;
 	// Store answer from interpolation for an image
 	bool found_match;
@@ -442,11 +442,13 @@ static void trw_layer_geotag_process ( geotag_options_t *options )
 /*
  * Tidy up
  */
-static void trw_layer_geotag_thread_free ( geotag_options_t *gtd )
+static void trw_layer_geotag_thread_free(geotag_options_t * gtd)
 {
-	if ( gtd->files )
-		g_list_free ( gtd->files );
-	free( gtd );
+	if (!gtd->files->empty()) {
+		/* kamilFIXME: is that all that we need to clean up? */
+		delete gtd->files;
+	}
+	free(gtd);
 }
 
 /**
@@ -454,20 +456,21 @@ static void trw_layer_geotag_thread_free ( geotag_options_t *gtd )
  */
 static int trw_layer_geotag_thread ( geotag_options_t *options, void * threaddata )
 {
-	unsigned int total = g_list_length(options->files), done = 0;
+	unsigned int total = options->files->size();
+	unsigned int done = 0;
 
 	// TODO decide how to report any issues to the user ...
 
-	// Foreach file attempt to geotag it
-	while ( options->files ) {
-		options->image = (char *) ( options->files->data );
-		trw_layer_geotag_process ( options );
-		options->files = options->files->next;
+	for (auto iter = options->files->begin(); iter != options->files->end(); iter++) {
+		// Foreach file attempt to geotag it
+		options->image = *iter;
+		trw_layer_geotag_process(options);
 
 		// Update thread progress and detect stop requests
-		int result = a_background_thread_progress ( threaddata, ((double) ++done) / total );
-		if ( result != 0 )
+		int result = a_background_thread_progress(threaddata, ((double) ++done) / total);
+		if (result != 0) {
 			return -1; /* Abort thread */
+		}
 	}
 
 	if ( options->redraw ) {
@@ -528,9 +531,11 @@ static void trw_layer_geotag_response_cb ( GtkDialog *dialog, int resp, GeoTagWi
 		// Save settings for reuse
 		save_default_values ( options->ov );
 
-		options->files = g_list_copy ( vik_file_list_get_files ( widgets->files ) );
+		options->files->clear();
+		std::list<char *> * a_list = vik_file_list_get_files(widgets->files);
+		options->files->insert(options->files->begin(), a_list->begin(), a_list->end());
 
-		int len = g_list_length ( options->files );
+		int len = options->files->size();
 		char *tmp = g_strdup_printf ( _("Geotagging %d Images..."), len );
 
 		// Processing lots of files can take time - so run a background effort
