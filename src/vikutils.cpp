@@ -515,7 +515,7 @@ void vu_set_auto_features_on_first_run(void)
 		}
 
 		// Default to more standard cache layout for new users (well new installs at least)
-		maps_layer_set_cache_default(VIK_MAPS_CACHE_LAYOUT_OSM);
+		maps_layer_set_cache_default(MapsCacheLayout::OSM);
 		set_defaults = true;
 	}
 
@@ -864,7 +864,7 @@ void vu_command_line(Window * window, double latitude, double longitude, int zoo
 
 		MapTypeID the_type_id = cmdline_type_id;
 		if (the_type_id == MAP_TYPE_ID_DEFAULT) {
-			the_type_id = vik_maps_layer_get_default_map_type();
+			the_type_id = maps_layer_get_default_map_type();
 		}
 
 		// Don't add map layer if one already exists
@@ -873,9 +873,8 @@ void vu_command_line(Window * window, double latitude, double longitude, int zoo
 		bool add_map = true;
 
 		for (auto iter = vmls->begin(); iter != vmls->end(); iter++) {
-			/* kamilFIXME: this should be "Layer * vml = (Layer *) *iter;" */
-			VikLayer *vml = (VikLayer*) *iter;
-			MapTypeID type_id = vik_maps_layer_get_map_type(vml);
+			Layer * vml = (Layer *) *iter;
+			MapTypeID type_id = ((LayerMaps *) vml)->get_map_type();
 			if (the_type_id == type_id) {
 				add_map = false;
 				break;
@@ -885,7 +884,7 @@ void vu_command_line(Window * window, double latitude, double longitude, int zoo
 		if (add_map) {
 			LayerMaps * layer = new LayerMaps(viewport);
 
-			vik_maps_layer_set_map_type(layer->vl, the_type_id);
+			layer->set_map_type(the_type_id);
 			layer->rename(_("Map"));
 
 			window->get_layers_panel()->get_top_layer()->add_layer(layer, true);

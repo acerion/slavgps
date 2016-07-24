@@ -8884,7 +8884,7 @@ void vik_track_download_map(Track *tr, VikLayer *vml, Viewport * viewport, doubl
 	}
 
 	for (rect_iter = rects_to_download; rect_iter; rect_iter = rect_iter->next) {
-		vik_maps_layer_download_section(vml, &(((Rect *)(rect_iter->data))->tl), &(((Rect *)(rect_iter->data))->br), zoom_level);
+		((LayerMaps *) vml->layer)->download_section(&(((Rect *)(rect_iter->data))->tl), &(((Rect *)(rect_iter->data))->br), zoom_level);
 	}
 
 	if (fillins) {

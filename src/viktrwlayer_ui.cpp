@@ -31,7 +31,6 @@
 #endif
 
 #include "viking.h"
-#include "vikmapslayer.h"
 #include "vikgpslayer.h"
 #include "viktrwlayer_export.h"
 #include "viktrwlayer_wpwin.h"

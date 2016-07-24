@@ -717,7 +717,7 @@ void Window::simple_map_update(bool only_new)
 	// Find the most relevent single map layer to operate on
 	Layer * layer = this->layers_panel->get_top_layer()->get_top_visible_layer_of_type(LayerType::MAPS);
 	if (layer) {
-		vik_maps_layer_download(layer->vl, this->viewport, only_new);
+		((LayerMaps *) layer)->download(this->viewport, only_new);
 	}
 }
 

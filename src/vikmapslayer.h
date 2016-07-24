@@ -19,8 +19,12 @@
  *
  */
 
-#ifndef _VIKING_MAPSLAYER_H
-#define _VIKING_MAPSLAYER_H
+#ifndef _SG_LAYER_MAPS_H
+#define _SG_LAYER_MAPS_H
+
+
+
+
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -44,60 +48,19 @@
 
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
-#define VIK_MAPS_LAYER_TYPE            (vik_maps_layer_get_type ())
-#define VIK_MAPS_LAYER(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_MAPS_LAYER_TYPE, VikMapsLayer))
-#define VIK_MAPS_LAYER_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), VIK_MAPS_LAYER_TYPE, VikMapsLayerClass))
-#define IS_VIK_MAPS_LAYER(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), VIK_MAPS_LAYER_TYPE))
-#define IS_VIK_MAPS_LAYER_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), VIK_MAPS_LAYER_TYPE))
-
-typedef struct _VikMapsLayerClass VikMapsLayerClass;
-struct _VikMapsLayerClass
-{
-  VikLayerClass object_class;
-};
-
-GType vik_maps_layer_get_type ();
-
-typedef struct {
-	VikLayer vl;
-} VikMapsLayer;
-
-typedef enum {
-  VIK_MAPS_CACHE_LAYOUT_VIKING=0, // CacheDir/t<MapId>s<VikingZoom>z0/X/Y (NB no file extension) - Legacy default layout
-  VIK_MAPS_CACHE_LAYOUT_OSM,      // CacheDir/<OptionalMapName>/OSMZoomLevel/X/Y.ext (Default ext=png)
-  VIK_MAPS_CACHE_LAYOUT_NUM       // Last enum
-} VikMapsCacheLayout;
-
-// OSM definition is a TMS derivative, (Global Mercator profile with Flipped Y)
-//  http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
-//  http://wiki.openstreetmap.org/wiki/TMS
-//  http://wiki.osgeo.org/wiki/Tile_Map_Service_Specification
-
-void maps_layer_init();
-void maps_layer_set_autodownload_default( bool autodownload);
-void maps_layer_set_cache_default(VikMapsCacheLayout layout);
-SlavGPS::MapTypeID vik_maps_layer_get_default_map_type();
-void maps_layer_register_map_source(SlavGPS::MapSource *map);
-void vik_maps_layer_download_section(VikLayer *vml, VikCoord *ul, VikCoord *br, double zoom);
-SlavGPS::MapTypeID vik_maps_layer_get_map_type(VikLayer *vml);
-void vik_maps_layer_set_map_type(VikLayer *vml, SlavGPS::MapTypeID type_id);
-char *maps_layer_default_dir();
-void vik_maps_layer_download(VikLayer *vml, SlavGPS::Viewport * viewport, bool only_new);
-
-#ifdef __cplusplus
-}
-#endif
-
-
-
 
 
 namespace SlavGPS {
+
+
+
+
+
+	enum class MapsCacheLayout {
+		VIKING = 0, /* CacheDir/t<MapId>s<VikingZoom>z0/X/Y (NB no file extension) - Legacy default layout. */
+		OSM,        /* CacheDir/<OptionalMapName>/OSMZoomLevel/X/Y.ext (Default ext=png). */
+		NUM         /* Last enum. */
+	};
 
 
 
@@ -120,19 +83,23 @@ namespace SlavGPS {
 		bool set_param(uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
 		VikLayerParamData get_param(uint16_t id, bool is_file_operation);
 
-
-
 		char * get_map_label();
 		int how_many_maps(Viewport * viewport, VikCoord *ul, VikCoord *br, double zoom, int redownload_mode);
-		void download_section_sub(VikCoord *ul, VikCoord *br, double zoom, int redownload_mode);
+
 		void set_cache_dir(char const * dir);
 		void mkdir_if_default_dir();
 		void set_file(char const * name);
 
+		void set_map_type(MapTypeID type_id);
+		MapTypeID get_map_type();
+
+		void download(Viewport * viewport, bool only_new);
+		void download_section(VikCoord * ul, VikCoord * br, double zoom);
+		void download_section_sub(VikCoord *ul, VikCoord *br, double zoom, int redownload_mode);
 
 		int map_index;
 		char * cache_dir;
-		VikMapsCacheLayout cache_layout;
+		MapsCacheLayout cache_layout;
 		uint8_t alpha;
 
 
@@ -143,15 +110,16 @@ namespace SlavGPS {
 		bool adl_only_missing;
 
 
-		VikCoord *last_center;
+		VikCoord * last_center;
 		double last_xmpp;
 		double last_ympp;
 
 
-		int dl_tool_x, dl_tool_y;
+		int dl_tool_x;
+		int dl_tool_y;
 
 		GtkMenu * dl_right_click_menu;
-		VikCoord redownload_ul, redownload_br; /* right click menu only */
+		VikCoord redownload_ul, redownload_br; /* Right click menu only. */
 		Viewport * redownload_viewport;
 		char *filename;
 #ifdef HAVE_SQLITE3_H
@@ -164,16 +132,29 @@ namespace SlavGPS {
 
 
 
-}
+} /* namespace SlavGPS */
 
 
 
 
 
+// OSM definition is a TMS derivative, (Global Mercator profile with Flipped Y)
+//  http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
+//  http://wiki.openstreetmap.org/wiki/TMS
+//  http://wiki.osgeo.org/wiki/Tile_Map_Service_Specification
+
+void maps_layer_init();
+void maps_layer_set_autodownload_default(bool autodownload);
+void maps_layer_set_cache_default(SlavGPS::MapsCacheLayout layout);
+SlavGPS::MapTypeID maps_layer_get_default_map_type();
+void maps_layer_register_map_source(SlavGPS::MapSource * map);
+
+
+char * maps_layer_default_dir();
 std::string& maps_layer_default_dir_2();
 
 
 
 
 
-#endif
+#endif /* #ifndef _SG_LAYER_MAPS_H */
