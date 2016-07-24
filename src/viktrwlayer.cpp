@@ -378,9 +378,7 @@ enum {
 
 /* Layer Interface function definitions */
 static VikLayer *trw_layer_unmarshall(uint8_t *data, int len, Viewport * viewport);
-static bool trw_layer_set_param(VikLayer *vtl, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
-static VikLayerParamData trw_layer_get_param(VikLayer *vtl, uint16_t id, bool is_file_operation);
-static void trw_layer_change_param(GtkWidget *widget, ui_change_values values);
+static void trw_layer_change_param(GtkWidget * widget, ui_change_values * values);
 /* End Layer Interface function definitions */
 
 VikLayerInterface vik_trw_layer_interface = {
@@ -409,9 +407,9 @@ VikLayerInterface vik_trw_layer_interface = {
 
 	(VikLayerFuncUnmarshall)              trw_layer_unmarshall,
 
-	(VikLayerFuncSetParam)                trw_layer_set_param,
-	(VikLayerFuncGetParam)                trw_layer_get_param,
-	(VikLayerFuncChangeParam)             trw_layer_change_param,
+	/* (VikLayerFuncSetParam) */          layer_set_param,
+	/* (VikLayerFuncGetParam) */          layer_get_param,
+	/* (VikLayerFuncChangeParam) */       trw_layer_change_param,
 };
 
 
@@ -783,12 +781,6 @@ void LayerTRW::image_cache_free()
 	g_queue_free(this->image_cache);
 }
 
-static bool trw_layer_set_param(VikLayer *vtl, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
-{
-	LayerTRW * layer = (LayerTRW *) vtl->layer;
-	return layer->set_param(id, data, viewport, is_file_operation);
-}
-
 bool LayerTRW::set_param(uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
 {
 	switch (id) {
@@ -970,12 +962,6 @@ bool LayerTRW::set_param(uint16_t id, VikLayerParamData data, Viewport * viewpor
 	return true;
 }
 
-static VikLayerParamData trw_layer_get_param(VikLayer *vtl, uint16_t id, bool is_file_operation)
-{
-	LayerTRW * layer = (LayerTRW *) vtl->layer;
-	return layer->get_param(id, is_file_operation);
-}
-
 VikLayerParamData LayerTRW::get_param(uint16_t id, bool is_file_operation)
 {
 	VikLayerParamData rv;
@@ -1041,18 +1027,18 @@ VikLayerParamData LayerTRW::get_param(uint16_t id, bool is_file_operation)
 	return rv;
 }
 
-static void trw_layer_change_param(GtkWidget *widget, ui_change_values values)
+static void trw_layer_change_param(GtkWidget * widget, ui_change_values * values)
 {
 	// This '-3' is to account for the first few parameters not in the properties
 	const int OFFSET = -3;
 
-	switch (KPOINTER_TO_INT(values[UI_CHG_PARAM_ID])) {
+	switch (values->param_id) {
 		// Alter sensitivity of waypoint draw image related widgets according to the draw image setting.
 	case PARAM_DI: {
 		// Get new value
-		VikLayerParamData vlpd = a_uibuilder_widget_get_value(widget, (VikLayerParam *) values[UI_CHG_PARAM]);
-		GtkWidget **ww1 = (GtkWidget **) &values[UI_CHG_WIDGETS];
-		GtkWidget **ww2 = (GtkWidget **) &values[UI_CHG_LABELS];
+		VikLayerParamData vlpd = a_uibuilder_widget_get_value(widget, values->param);
+		GtkWidget **ww1 = values->widgets;
+		GtkWidget **ww2 = values->labels;
 		GtkWidget *w1 = ww1[OFFSET + PARAM_IS];
 		GtkWidget *w2 = ww2[OFFSET + PARAM_IS];
 		GtkWidget *w3 = ww1[OFFSET + PARAM_IA];
@@ -1070,9 +1056,9 @@ static void trw_layer_change_param(GtkWidget *widget, ui_change_values values)
 		// Alter sensitivity of waypoint label related widgets according to the draw label setting.
 	case PARAM_DLA: {
 		// Get new value
-		VikLayerParamData vlpd = a_uibuilder_widget_get_value(widget, (VikLayerParam *) values[UI_CHG_PARAM]);
-		GtkWidget **ww1 = (GtkWidget **) &values[UI_CHG_WIDGETS];
-		GtkWidget **ww2 = (GtkWidget **) &values[UI_CHG_LABELS];
+		VikLayerParamData vlpd = a_uibuilder_widget_get_value(widget, values->param);
+		GtkWidget **ww1 = values->widgets;
+		GtkWidget **ww2 = values->labels;
 		GtkWidget *w1 = ww1[OFFSET + PARAM_WPTC];
 		GtkWidget *w2 = ww2[OFFSET + PARAM_WPTC];
 		GtkWidget *w3 = ww1[OFFSET + PARAM_WPBC];
@@ -1094,10 +1080,10 @@ static void trw_layer_change_param(GtkWidget *widget, ui_change_values values)
 		// Alter sensitivity of all track colours according to the draw track mode.
 	case PARAM_DM: {
 		// Get new value
-		VikLayerParamData vlpd = a_uibuilder_widget_get_value(widget, (VikLayerParam *) values[UI_CHG_PARAM]);
+		VikLayerParamData vlpd = a_uibuilder_widget_get_value(widget, values->param);
 		bool sensitive = (vlpd.u == DRAWMODE_ALL_SAME_COLOR);
-		GtkWidget **ww1 = (GtkWidget **) &values[UI_CHG_WIDGETS];
-		GtkWidget **ww2 = (GtkWidget **) &values[UI_CHG_LABELS];
+		GtkWidget **ww1 = values->widgets;
+		GtkWidget **ww2 = values->labels;
 		GtkWidget *w1 = ww1[OFFSET + PARAM_TC];
 		GtkWidget *w2 = ww2[OFFSET + PARAM_TC];
 		if (w1) gtk_widget_set_sensitive(w1, sensitive);
@@ -1106,7 +1092,7 @@ static void trw_layer_change_param(GtkWidget *widget, ui_change_values values)
 	}
 	case PARAM_MDTIME: {
 		// Force metadata->timestamp to be always read-only for now.
-		GtkWidget **ww = (GtkWidget **) &values[UI_CHG_WIDGETS];
+		GtkWidget **ww = values->widgets;
 		GtkWidget *w1 = ww[OFFSET + PARAM_MDTIME];
 		if (w1) gtk_widget_set_sensitive(w1, false);
 	}

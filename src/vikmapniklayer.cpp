@@ -108,8 +108,6 @@ enum {
   NUM_PARAMS };
 
 static VikLayer *mapnik_layer_unmarshall(uint8_t *data, int len, Viewport * viewport);
-static bool mapnik_layer_set_param(VikLayer *vml, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
-static VikLayerParamData mapnik_layer_get_param(VikLayer *vml, uint16_t id, bool is_file_operation);
 static VikLayer * mapnik_layer_new(Viewport * viewport);
 
 static LayerTool * mapnik_feature_create(Window * window, Viewport * viewport);
@@ -142,9 +140,9 @@ VikLayerInterface vik_mapnik_layer_interface = {
 
 	(VikLayerFuncUnmarshall)              mapnik_layer_unmarshall,
 
-	(VikLayerFuncSetParam)                mapnik_layer_set_param,
-	(VikLayerFuncGetParam)                mapnik_layer_get_param,
-	(VikLayerFuncChangeParam)             NULL,
+	/* (VikLayerFuncSetParam) */          layer_set_param,
+	/* (VikLayerFuncGetParam) */          layer_get_param,
+	/* (VikLayerFuncChangeParam) */       NULL,
 };
 
 struct _VikMapnikLayer {
@@ -346,11 +344,6 @@ static VikLayer * mapnik_layer_unmarshall(uint8_t *data, int len, Viewport * vie
 	vik_layer_unmarshall_params(rv, data, len, viewport);
 	return rv;
 }
-static bool mapnik_layer_set_param(VikLayer *vml, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
-{
-	LayerMapnik * layer = (LayerMapnik *) vml->layer;
-	return layer->set_param(id, data, viewport, is_file_operation);
-}
 
 bool LayerMapnik::set_param(uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
 {
@@ -375,12 +368,6 @@ bool LayerMapnik::set_param(uint16_t id, VikLayerParamData data, Viewport * view
 		default: break;
 	}
 	return true;
-}
-
-static VikLayerParamData mapnik_layer_get_param(VikLayer *vml, uint16_t id, bool is_file_operation)
-{
-	LayerMapnik * layer = (LayerMapnik *) vml->layer;
-	return layer->get_param(id, is_file_operation);
 }
 
 VikLayerParamData LayerMapnik::get_param(uint16_t id, bool is_file_operation)

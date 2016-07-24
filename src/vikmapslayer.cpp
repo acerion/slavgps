@@ -147,9 +147,7 @@ static double __mapzooms_y[] = { 0.0, 0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0, 32.0,
 
 
 static VikLayer * maps_layer_unmarshall(uint8_t *data, int len, Viewport * viewport);
-static bool maps_layer_set_param(VikLayer *vml, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
-static VikLayerParamData maps_layer_get_param(VikLayer *vml, uint16_t id, bool is_file_operation);
-static void maps_layer_change_param(GtkWidget *widget, ui_change_values values);
+static void maps_layer_change_param(GtkWidget *widget, ui_change_values * values);
 static void start_download_thread(LayerMaps * layer, Viewport * viewport, const VikCoord *ul, const VikCoord *br, int redownload_mode);
 static int map_type_to_map_index(MapTypeID map_type);
 
@@ -250,9 +248,9 @@ VikLayerInterface vik_maps_layer_interface = {
 
 	(VikLayerFuncUnmarshall)	      maps_layer_unmarshall,
 
-	(VikLayerFuncSetParam)                maps_layer_set_param,
-	(VikLayerFuncGetParam)                maps_layer_get_param,
-	(VikLayerFuncChangeParam)             maps_layer_change_param,
+	/* (VikLayerFuncSetParam) */          layer_set_param,
+	/* (VikLayerFuncGetParam) */          layer_get_param,
+	/* (VikLayerFuncChangeParam) */       maps_layer_change_param,
 };
 
 
@@ -604,12 +602,6 @@ static void maps_show_license(GtkWindow *parent, MapSource *map)
 			 map->get_license_url());
 }
 
-static bool maps_layer_set_param(VikLayer *vml, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
-{
-	LayerMaps * layer = (LayerMaps *) vml->layer;
-	return layer->set_param(id, data, viewport, is_file_operation);
-}
-
 bool LayerMaps::set_param(uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
 {
 	switch (id) {
@@ -676,12 +668,6 @@ bool LayerMaps::set_param(uint16_t id, VikLayerParamData data, Viewport * viewpo
 	return true;
 }
 
-static VikLayerParamData maps_layer_get_param(VikLayer *vml, uint16_t id, bool is_file_operation)
-{
-	LayerMaps * layer = (LayerMaps *) vml->layer;
-	return layer->get_param(id, is_file_operation);
-}
-
 VikLayerParamData LayerMaps::get_param(uint16_t id, bool is_file_operation)
 {
 	VikLayerParamData rv;
@@ -737,26 +723,26 @@ VikLayerParamData LayerMaps::get_param(uint16_t id, bool is_file_operation)
 	return rv;
 }
 
-static void maps_layer_change_param(GtkWidget *widget, ui_change_values values)
+static void maps_layer_change_param(GtkWidget *widget, ui_change_values * values)
 {
-	switch (KPOINTER_TO_INT(values[UI_CHG_PARAM_ID])) {
+	switch (values->param_id) {
 		// Alter sensitivity of download option widgets according to the map_index setting.
 	case PARAM_MAPTYPE:
 		{
 			// Get new value
-			VikLayerParamData vlpd = a_uibuilder_widget_get_value(widget, (VikLayerParam *) values[UI_CHG_PARAM]);
+			VikLayerParamData vlpd = a_uibuilder_widget_get_value(widget, values->param);
 			// Is it *not* the OSM On Disk Tile Layout or the MBTiles type or the OSM Metatiles type
 			bool sensitive = (MAP_ID_OSM_ON_DISK != vlpd.u &&
 					  MAP_ID_MBTILES != vlpd.u &&
 					  MAP_ID_OSM_METATILES != vlpd.u);
-			GtkWidget **ww1 = (GtkWidget **) values[UI_CHG_WIDGETS];
-			GtkWidget **ww2 = (GtkWidget **) values[UI_CHG_LABELS];
+			GtkWidget **ww1 = values->widgets;
+			GtkWidget **ww2 = values->labels;
 			GtkWidget *w1 = ww1[PARAM_ONLYMISSING];
 			GtkWidget *w2 = ww2[PARAM_ONLYMISSING];
 			GtkWidget *w3 = ww1[PARAM_AUTODOWNLOAD];
 			GtkWidget *w4 = ww2[PARAM_AUTODOWNLOAD];
 			// Depends on autodownload value
-			LayerMaps * layer = (LayerMaps *) ((VikLayer *) values[UI_CHG_LAYER])->layer;
+			LayerMaps * layer = (LayerMaps *) values->layer;
 			bool missing_sense = sensitive && layer->autodownload;
 			if (w1) {
 				gtk_widget_set_sensitive(w1, missing_sense);
@@ -815,9 +801,9 @@ static void maps_layer_change_param(GtkWidget *widget, ui_change_values values)
 	case PARAM_AUTODOWNLOAD:
 		{
 			// Get new value
-			VikLayerParamData vlpd = a_uibuilder_widget_get_value(widget, (VikLayerParam *) values[UI_CHG_PARAM]);
-			GtkWidget **ww1 = (GtkWidget **) values[UI_CHG_WIDGETS];
-			GtkWidget **ww2 = (GtkWidget **) values[UI_CHG_LABELS];
+			VikLayerParamData vlpd = a_uibuilder_widget_get_value(widget, values->param);
+			GtkWidget **ww1 = values->widgets;
+			GtkWidget **ww2 = values->labels;
 			GtkWidget *w1 = ww1[PARAM_ONLYMISSING];
 			GtkWidget *w2 = ww2[PARAM_ONLYMISSING];
 			if (w1) {

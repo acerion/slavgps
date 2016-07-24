@@ -77,15 +77,6 @@ typedef enum {
 
 
 
-/* layer interface functions */
-
-typedef VikLayer *               (* VikLayerFuncUnmarshall)    (uint8_t *, int, SlavGPS::Viewport *);
-/* returns true if needs to redraw due to changed param */
-/* in parameter bool denotes if for file I/O, as opposed to display/cut/copy etc... operations */
-typedef bool                     (* VikLayerFuncSetParam)      (VikLayer *, uint16_t, VikLayerParamData, SlavGPS::Viewport *, bool);
-/* in parameter bool denotes if for file I/O, as opposed to display/cut/copy etc... operations */
-typedef VikLayerParamData        (* VikLayerFuncGetParam)      (VikLayer *, uint16_t, bool);
-typedef void                     (* VikLayerFuncChangeParam)   (GtkWidget *, ui_change_values);
 
 
 
@@ -218,6 +209,8 @@ namespace SlavGPS {
 		/* Normally only needed for layers with sublayers. This is called when they
 		   are added to the treeview so they can add sublayers to the treeview. */
 		virtual void realize(TreeView * tree_view, GtkTreeIter * layer_iter);
+
+		virtual VikLayerParamData get_param(uint16_t id, bool is_file_operation);
 		virtual bool set_param(uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
 
 
@@ -316,6 +309,17 @@ extern "C" {
 
 
 
+/* layer interface functions */
+
+typedef VikLayer *               (* VikLayerFuncUnmarshall)    (uint8_t *, int, SlavGPS::Viewport *);
+/* returns true if needs to redraw due to changed param */
+/* in parameter bool denotes if for file I/O, as opposed to display/cut/copy etc... operations */
+typedef bool                     (* VikLayerFuncSetParam)      (SlavGPS::Layer *, uint16_t, VikLayerParamData, SlavGPS::Viewport *, bool);
+/* in parameter bool denotes if for file I/O, as opposed to display/cut/copy etc... operations */
+typedef VikLayerParamData        (* VikLayerFuncGetParam)      (SlavGPS::Layer *, uint16_t, bool);
+typedef void                     (* VikLayerFuncChangeParam)   (GtkWidget *, ui_change_values *);
+
+
 
 /* See vik_layer_* for function parameter names */
 struct _VikLayerInterface {
@@ -347,7 +351,8 @@ struct _VikLayerInterface {
 };
 
 VikLayerInterface * vik_layer_get_interface(SlavGPS::LayerType layer_type);
-bool vik_layer_set_param(VikLayer * layer, uint16_t id, VikLayerParamData data, SlavGPS::Viewport * viewport, bool is_file_operation);
+bool layer_set_param(SlavGPS::Layer * layer, uint16_t id, VikLayerParamData data, SlavGPS::Viewport * viewport, bool is_file_operation);
+VikLayerParamData layer_get_param(SlavGPS::Layer * layer, uint16_t id, bool is_file_operation);
 
 
 /* GUI */

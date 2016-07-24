@@ -67,8 +67,6 @@ extern std::vector<BabelDevice *> a_babel_device_list;
 
 
 static VikLayer * gps_layer_unmarshall(uint8_t *data, int len, Viewport * viewport);
-static bool gps_layer_set_param(VikLayer *vgl, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
-static VikLayerParamData gps_layer_get_param(VikLayer *vgl, uint16_t id, bool is_file_operation);
 
 
 typedef struct {
@@ -313,9 +311,9 @@ VikLayerInterface vik_gps_layer_interface = {
 
 	(VikLayerFuncUnmarshall)		gps_layer_unmarshall,
 
-	(VikLayerFuncSetParam)                gps_layer_set_param,
-	(VikLayerFuncGetParam)                gps_layer_get_param,
-	(VikLayerFuncChangeParam)             NULL,
+	/* (VikLayerFuncSetParam) */          layer_set_param,
+	/* (VikLayerFuncGetParam) */          layer_get_param,
+	/* (VikLayerFuncChangeParam) */       NULL,
 };
 
 static char * trw_names[] = {
@@ -435,11 +433,6 @@ static VikLayer * gps_layer_unmarshall(uint8_t *data, int len, Viewport * viewpo
 #undef alm_size
 #undef alm_next
 }
-static bool gps_layer_set_param(VikLayer *vgl, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
-{
-	LayerGPS * layer = (LayerGPS *) vgl->layer;
-	return layer->set_param(id, data, viewport, is_file_operation);
-}
 
 bool LayerGPS::set_param(uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
 {
@@ -541,12 +534,6 @@ bool LayerGPS::set_param(uint16_t id, VikLayerParamData data, Viewport * viewpor
 	}
 
 	return true;
-}
-
-static VikLayerParamData gps_layer_get_param(VikLayer *vgl, uint16_t id, bool is_file_operation)
-{
-	LayerGPS * layer = (LayerGPS *) vgl->layer;
-	return layer->get_param(id, is_file_operation);
 }
 
 VikLayerParamData LayerGPS::get_param(uint16_t id, bool is_file_operation)

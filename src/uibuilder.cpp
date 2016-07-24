@@ -349,7 +349,7 @@ int a_uibuilder_properties_factory(const char *dialog_name,
 				   void * pass_along2,
 				   VikLayerParamData (*getparam) (void *,uint16_t,bool),
 				   void * pass_along_getparam,
-				   void (*changeparam) (GtkWidget*, ui_change_values))
+				   void (*changeparam) (GtkWidget*, ui_change_values *))
 /* pass_along1 and pass_along2 are for set_param first and last params */
 {
 	uint16_t i, j, widget_count = 0;
@@ -387,7 +387,7 @@ int a_uibuilder_properties_factory(const char *dialog_name,
 		GtkWidget *notebook = NULL;
 		GtkWidget **labels = (GtkWidget **) malloc(sizeof(GtkWidget *) * widget_count);
 		GtkWidget **widgets = (GtkWidget **) malloc(sizeof(GtkWidget *) * widget_count);
-		ui_change_values *change_values = (void* (*)[5]) malloc(sizeof(ui_change_values) * widget_count);
+		ui_change_values * change_values = (ui_change_values *) malloc(sizeof (ui_change_values) * widget_count);
 
 		if (groups && groups_count > 1) {
 			uint8_t current_group;
@@ -423,7 +423,7 @@ int a_uibuilder_properties_factory(const char *dialog_name,
 					table = tables[MAX(0, params[i].group)]; /* round up NOT_IN_GROUP, that's not reasonable here */
 				}
 
-				widgets[j] = a_uibuilder_new_widget (&(params[i]), getparam (pass_along_getparam, i, false));
+				widgets[j] = a_uibuilder_new_widget (&(params[i]), getparam(pass_along_getparam, i, false));
 
 				if (widgets[j]) {
 					labels[j] = gtk_label_new(_(params[i].title));
@@ -431,19 +431,19 @@ int a_uibuilder_properties_factory(const char *dialog_name,
 					gtk_table_attach(GTK_TABLE(table), widgets[j], 1, 2, j, j+1, (GtkAttachOptions) (GTK_EXPAND | GTK_FILL), (GtkAttachOptions) 0, 2, 2);
 
 					if (changeparam) {
-						change_values[j][UI_CHG_LAYER] = pass_along1;
-						change_values[j][UI_CHG_PARAM] = &params[i];
-						change_values[j][UI_CHG_PARAM_ID] = KINT_TO_POINTER((int)i);
-						change_values[j][UI_CHG_WIDGETS] = widgets;
-						change_values[j][UI_CHG_LABELS] = labels;
+						change_values[j].layer = pass_along1;
+						change_values[j].param = &params[i];
+						change_values[j].param_id = (int) i;
+						change_values[j].widgets = widgets;
+						change_values[j].labels = labels;
 
 						switch (params[i].widget_type) {
 							// Change conditions for other widget types can be added when needed
 						case VIK_LAYER_WIDGET_COMBOBOX:
-							g_signal_connect(G_OBJECT(widgets[j]), "changed", G_CALLBACK(changeparam), change_values[j]);
+							g_signal_connect(G_OBJECT(widgets[j]), "changed", G_CALLBACK(changeparam), &change_values[j]);
 							break;
 						case VIK_LAYER_WIDGET_CHECKBUTTON:
-							g_signal_connect(G_OBJECT(widgets[j]), "toggled", G_CALLBACK(changeparam), change_values[j]);
+							g_signal_connect(G_OBJECT(widgets[j]), "toggled", G_CALLBACK(changeparam), &change_values[j]);
 							break;
 						default:
 							break;
@@ -460,7 +460,7 @@ int a_uibuilder_properties_factory(const char *dialog_name,
 			for (i = 0, j = 0; i < params_count; i++) {
 				if (params[i].group != VIK_LAYER_NOT_IN_PROPERTIES) {
 					if (widgets[j]) {
-						changeparam(widgets[j], change_values[j]);
+						changeparam(widgets[j], &change_values[j]);
 					}
 					j++;
 				}

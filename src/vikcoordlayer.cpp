@@ -35,8 +35,6 @@
 using namespace SlavGPS;
 
 static VikLayer *coord_layer_unmarshall(uint8_t *data, int len, Viewport * viewport);
-static bool coord_layer_set_param(VikLayer *vcl, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
-static VikLayerParamData coord_layer_get_param(VikLayer *vcl, uint16_t id, bool is_file_operation);
 
 
 static VikLayerParamScale param_scales[] = {
@@ -83,9 +81,9 @@ VikLayerInterface vik_coord_layer_interface = {
 
 	(VikLayerFuncUnmarshall)		coord_layer_unmarshall,
 
-	(VikLayerFuncSetParam)                coord_layer_set_param,
-	(VikLayerFuncGetParam)                coord_layer_get_param,
-	(VikLayerFuncChangeParam)             NULL,
+	/* (VikLayerFuncSetParam) */          layer_set_param,
+	/* (VikLayerFuncGetParam) */          layer_get_param,
+	/* (VikLayerFuncChangeParam) */       NULL,
 };
 
 GType vik_coord_layer_get_type()
@@ -128,13 +126,6 @@ static VikLayer * coord_layer_unmarshall(uint8_t * data, int len, Viewport * vie
 }
 
 // NB Viewport can be null as it's not used ATM
-bool coord_layer_set_param(VikLayer *vcl, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
-{
-	LayerCoord * layer = (LayerCoord *) vcl->layer;
-	return layer->set_param(id, data, viewport, is_file_operation);
-}
-
-// NB Viewport can be null as it's not used ATM
 bool LayerCoord::set_param(uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
 {
 	switch (id) {
@@ -153,12 +144,6 @@ bool LayerCoord::set_param(uint16_t id, VikLayerParamData data, Viewport * viewp
 		break;
 	}
 	return true;
-}
-
-static VikLayerParamData coord_layer_get_param(VikLayer *vcl, uint16_t id, bool is_file_operation)
-{
-	LayerCoord * layer = (LayerCoord *) vcl->layer;
-	return layer->get_param(id, is_file_operation);
 }
 
 VikLayerParamData LayerCoord::get_param(uint16_t id, bool is_file_operation)

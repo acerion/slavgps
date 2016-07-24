@@ -59,9 +59,9 @@ VikLayerInterface vik_aggregate_layer_interface = {
 
 	(VikLayerFuncUnmarshall)	      aggregate_layer_unmarshall,
 
-	(VikLayerFuncSetParam)                NULL,
-	(VikLayerFuncGetParam)                NULL,
-	(VikLayerFuncChangeParam)             NULL,
+	/* (VikLayerFuncSetParam) */          NULL,
+	/* (VikLayerFuncGetParam) */          NULL,
+	/* (VikLayerFuncChangeParam) */       NULL,
 };
 
 GType vik_aggregate_layer_get_type()

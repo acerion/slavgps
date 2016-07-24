@@ -154,9 +154,8 @@ void file_write_layer_param(FILE * f, char const * name, VikLayerParamType type,
 	}
 }
 
-static void write_layer_params_and_data(VikLayer * l, FILE * f)
+static void write_layer_params_and_data(Layer * layer, FILE * f)
 {
-	Layer * layer = (Layer *) l->layer;
 	VikLayerParam *params = vik_layer_get_interface(layer->type)->params;
 	VikLayerFuncGetParam get_param = vik_layer_get_interface(layer->type)->get_param;
 
@@ -168,9 +167,9 @@ static void write_layer_params_and_data(VikLayer * l, FILE * f)
 
 	if (params && get_param) {
 		VikLayerParamData data;
-		uint16_t i, params_count = vik_layer_get_interface(layer->type)->params_count;
-		for (i = 0; i < params_count; i++) {
-			data = get_param(l, i, true);
+		uint16_t params_count = vik_layer_get_interface(layer->type)->params_count;
+		for (uint16_t i = 0; i < params_count; i++) {
+			data = get_param(layer, i, true);
 			file_write_layer_param(f, params[i].name, params[i].type, data);
 		}
 	}
@@ -237,7 +236,7 @@ static void file_write(LayerAggregate * top, FILE * f, Viewport * viewport)
 		current_layer = (VikLayer *) ((GList *)stack->data)->data;
 		Layer * current = (Layer *) current_layer->layer;
 		fprintf(f, "\n~Layer %s\n", vik_layer_get_interface(current->type)->fixed_layer_name);
-		write_layer_params_and_data(current_layer, f);
+		write_layer_params_and_data(current, f);
 		if (current->type == LayerType::AGGREGATE && !((LayerAggregate *) current)->is_empty()) {
 			push(&stack);
 			const std::list<Layer *> * children = ((LayerAggregate *) current)->get_children();

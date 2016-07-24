@@ -82,8 +82,6 @@ enum {
 	NUM_PARAMS };
 
 static VikLayer *georef_layer_unmarshall(uint8_t *data, int len, Viewport * viewport);
-static bool georef_layer_set_param(VikLayer *vgl, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
-static VikLayerParamData georef_layer_get_param(VikLayer *vgl, uint16_t id, bool is_file_operation);
 static VikLayer *georef_layer_new(Viewport * viewport);
 
 /* tools */
@@ -132,9 +130,9 @@ VikLayerInterface vik_georef_layer_interface = {
 
 	(VikLayerFuncUnmarshall)	      georef_layer_unmarshall,
 
-	(VikLayerFuncSetParam)                georef_layer_set_param,
-	(VikLayerFuncGetParam)                georef_layer_get_param,
-	(VikLayerFuncChangeParam)             NULL,
+	/* (VikLayerFuncSetParam) */          layer_set_param,
+	/* (VikLayerFuncGetParam) */          layer_get_param,
+	/* (VikLayerFuncChangeParam) */       NULL,
 };
 
 
@@ -203,12 +201,6 @@ static VikLayer * georef_layer_unmarshall(uint8_t *data, int len, Viewport * vie
 	return rv;
 }
 
-static bool georef_layer_set_param(VikLayer *vgl, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
-{
-	LayerGeoref * layer = (LayerGeoref *) vgl->layer;
-	return layer->set_param(id, data, viewport, is_file_operation);
-}
-
 bool LayerGeoref::set_param(uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
 {
 	switch (id) {
@@ -262,12 +254,6 @@ void LayerGeoref::create_image_file()
 	}
 
 	free(filename);
-}
-
-static VikLayerParamData georef_layer_get_param(VikLayer * vgl, uint16_t id, bool is_file_operation)
-{
-	LayerGeoref * layer = (LayerGeoref *) vgl->layer;
-	return layer->get_param(id, is_file_operation);
 }
 
 VikLayerParamData LayerGeoref::get_param(uint16_t id, bool is_file_operation)

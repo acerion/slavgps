@@ -70,7 +70,7 @@ static unsigned int layer_signals[VL_LAST_SIGNAL] = { 0 };
 static GObjectClass * parent_class;
 
 static void vik_layer_finalize(VikLayer * vl);
-static bool vik_layer_properties_factory(VikLayer * vl, Viewport * viewport);
+static bool vik_layer_properties_factory(Layer * layer, Viewport * viewport);
 static bool layer_defaults_register(LayerType layer_type);
 
 G_DEFINE_TYPE (VikLayer, vik_layer, G_TYPE_OBJECT)
@@ -300,7 +300,7 @@ bool vik_layer_properties(VikLayer * vl, Viewport * viewport)
 		return layer->properties(viewport);
 	}
 
-	return vik_layer_properties_factory(vl, viewport);
+	return vik_layer_properties_factory(layer, viewport);
 }
 
 void Layer::draw_visible(Viewport * viewport)
@@ -357,7 +357,7 @@ void vik_layer_marshall_params(VikLayer * vl, uint8_t ** data, int * datalen)
 		uint16_t i, params_count = vik_layer_get_interface(layer->type)->params_count;
 		for (i = 0; i < params_count; i++) {
 			fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, params[i].name);
-			d = get_param(vl, i, false);
+			d = get_param(layer, i, false);
 			switch (params[i].type) {
 			case VIK_LAYER_PARAM_STRING:
 				// Remember need braces as these are macro calls, not single statement functions!
@@ -432,7 +432,7 @@ void vik_layer_unmarshall_params(VikLayer * vl, uint8_t * data, int datalen, Vie
 				s[vlm_size] = 0;
 				vlm_read(s);
 				d.s = s;
-				set_param(vl, i, d, viewport, false);
+				set_param(layer, i, d, viewport, false);
 				free(s);
 				break;
 			case VIK_LAYER_PARAM_STRING_LIST: {
@@ -448,14 +448,14 @@ void vik_layer_unmarshall_params(VikLayer * vl, uint8_t * data, int datalen, Vie
 					list = g_list_append(list, s);
 				}
 				d.sl = list;
-				set_param(vl, i, d, viewport, false);
+				set_param(layer, i, d, viewport, false);
 				/* don't free -- string list is responsibility of the layer */
 
 				break;
 			}
 			default:
 				vlm_read(&d);
-				set_param(vl, i, d, viewport, false);
+				set_param(layer, i, d, viewport, false);
 				break;
 			}
 		}
@@ -524,16 +524,18 @@ GdkPixbuf * vik_layer_load_icon(LayerType layer_type)
 	return NULL;
 }
 
-bool vik_layer_set_param(VikLayer * vl, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
+bool layer_set_param(Layer * layer, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
 {
-	Layer * layer = (Layer *) vl->layer;
 	return layer->set_param(id, data, viewport, is_file_operation);
 }
 
-
-static bool vik_layer_properties_factory (VikLayer *vl, Viewport * viewport)
+VikLayerParamData layer_get_param(Layer * layer, uint16_t id, bool is_file_operation)
 {
-	Layer * layer = (Layer *) vl->layer;
+	return layer->get_param(id, is_file_operation);
+}
+
+static bool vik_layer_properties_factory(Layer * layer, Viewport * viewport)
+{
 	switch (a_uibuilder_properties_factory(_("Layer Properties"),
 					       VIK_GTK_WINDOW_FROM_WIDGET(viewport->vvp),
 					       vik_layer_interfaces[(int) layer->type]->params,
@@ -541,17 +543,16 @@ static bool vik_layer_properties_factory (VikLayer *vl, Viewport * viewport)
 					       vik_layer_interfaces[(int) layer->type]->params_groups,
 					       vik_layer_interfaces[(int) layer->type]->params_groups_count,
 					       (bool (*)(void*, uint16_t, VikLayerParamData, void*, bool)) vik_layer_interfaces[(int) layer->type]->set_param,
-					       vl,
+					       layer,
 					       viewport,
 					       (VikLayerParamData (*)(void*, uint16_t, bool)) vik_layer_interfaces[(int) layer->type]->get_param,
-					       vl,
-					       (void (*)(GtkWidget*, void**)) vik_layer_interfaces[(int) layer->type]->change_param)) {
+					       layer,
+					       vik_layer_interfaces[(int) layer->type]->change_param)) {
 	case 0:
 	case 3:
 		return false;
 		/* redraw (?) */
 	case 2: {
-		Layer * layer = (Layer *) vl->layer;
 		layer->post_read(viewport, false); /* update any gc's */
 	}
 	default:
@@ -859,6 +860,11 @@ void Layer::realize(TreeView * tree_view_, GtkTreeIter * layer_iter)
 	return;
 }
 
+VikLayerParamData Layer::get_param(uint16_t id, bool is_file_operation)
+{
+	VikLayerParamData data;
+	return data;
+}
 
 bool Layer::set_param(uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
 {
