@@ -19,38 +19,14 @@
  *
  */
 
-#ifndef _VIKING_COORDLAYER_H
-#define _VIKING_COORDLAYER_H
+#ifndef _SG_LAYER_COORD_H
+#define _SG_LAYER_COORD_H
+
+
+
+
 
 #include "viklayer.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
-#define VIK_COORD_LAYER_TYPE            (vik_coord_layer_get_type ())
-#define VIK_COORD_LAYER(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_COORD_LAYER_TYPE, VikCoordLayer))
-#define VIK_COORD_LAYER_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), VIK_COORD_LAYER_TYPE, VikCoordLayerClass))
-#define IS_VIK_COORD_LAYER(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), VIK_COORD_LAYER_TYPE))
-#define IS_VIK_COORD_LAYER_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), VIK_COORD_LAYER_TYPE))
-
-typedef struct _VikCoordLayerClass VikCoordLayerClass;
-struct _VikCoordLayerClass
-{
-	VikLayerClass object_class;
-};
-
-GType vik_coord_layer_get_type();
-
-typedef struct  {
-	VikLayer vl;
-} VikCoordLayer;
-
-
-#ifdef __cplusplus
-}
-#endif
 
 
 
@@ -68,36 +44,33 @@ namespace SlavGPS {
 		LayerCoord(Viewport * viewport);
 		~LayerCoord();
 
-
 		/* Layer interface methods. */
 		void post_read(Viewport * viewport, bool from_file);
 		void draw(Viewport * viewport);
 		bool set_param(uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
 		VikLayerParamData get_param(uint16_t id, bool is_file_operation);
 
-
-
 		void update_gc(Viewport * viewport);
 
+	private:
+		void draw_latlon(Viewport * viewport);
+		void draw_utm(Viewport * viewport);
 
-		GdkGC * gc;
+		GdkGC * gc = NULL;
 		GdkColor color;
 
 		double deg_inc;
 		uint8_t line_thickness;
-
-
-
 	};
 
 
 
 
 
-}
+} /* namespace SlavGPS */
 
 
 
 
 
-#endif
+#endif /* #ifndef _SG_LAYER_COORD_H */
