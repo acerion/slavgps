@@ -63,6 +63,11 @@ using namespace SlavGPS;
 
 #define VIKING_FILE_VERSION 1
 
+typedef struct {
+	Layer * layer;
+	Viewport * viewport;
+} LayerAndVp;
+
 typedef struct _Stack Stack;
 
 struct _Stack {
@@ -183,17 +188,9 @@ static void write_layer_params_and_data(Layer * layer, FILE * f)
 static void file_write(LayerAggregate * top, FILE * f, Viewport * viewport)
 {
 	LayerAggregate * aggregate = top;
-	Stack *stack = NULL;
-	VikLayer *current_layer;
 	struct LatLon ll;
 	VikViewportDrawMode mode;
 	char *modestring = NULL;
-
-	const std::list<Layer *> * children = aggregate->get_children();
-
-	push(&stack);
-	//stack->data = children; /* kamilFIXME: fix the assignment. */
-	stack->under = NULL;
 
 	/* crazhy CRAZHY */
 	vik_coord_to_latlon(viewport->get_center(), &ll);
@@ -230,25 +227,31 @@ static void file_write(LayerAggregate * top, FILE * f, Viewport * viewport)
 		fprintf(f, "visible=f\n");
 	}
 
-	while (stack && stack->data) {
-		current_layer = (VikLayer *) ((GList *)stack->data)->data;
-		Layer * current = (Layer *) current_layer->layer;
+
+	const std::list<Layer *> * children = aggregate->get_children();
+	Stack * aggregates = NULL;
+	push(&aggregates);
+	//aggregates->data = children; /* kamilFIXME: fix the assignment. */
+	aggregates->under = NULL;
+
+	while (aggregates && aggregates->data) {
+		Layer * current = (Layer *) ((GList *) aggregates->data)->data;
 		fprintf(f, "\n~Layer %s\n", vik_layer_get_interface(current->type)->fixed_layer_name);
 		write_layer_params_and_data(current, f);
 		if (current->type == LayerType::AGGREGATE && !((LayerAggregate *) current)->is_empty()) {
-			push(&stack);
+			push(&aggregates);
 			const std::list<Layer *> * children = ((LayerAggregate *) current)->get_children();
-			// stack->data = children; /* kamilFIXME: fix the assignment. */
+			// aggregates->data = children; /* kamilFIXME: fix the assignment. */
 		} else if (current->type == LayerType::GPS && !((LayerGPS *) current)->is_empty()) {
-			push(&stack);
-			stack->data = (void *) ((LayerGPS *) current)->get_children();
+			push(&aggregates);
+			aggregates->data = (void *) ((LayerGPS *) current)->get_children();
 		} else {
-			stack->data = (void *) ((GList *)stack->data)->next;
+			aggregates->data = (void *) ((GList *) aggregates->data)->next;
 			fprintf(f, "~EndLayer\n\n");
-			while (stack && (!stack->data)) {
-				pop(&stack);
-				if (stack) {
-					stack->data = (void *) ((GList *)stack->data)->next;
+			while (aggregates && (!aggregates->data)) {
+				pop(&aggregates);
+				if (aggregates) {
+					aggregates->data = (void *) ((GList *) aggregates->data)->next;
 					fprintf(f, "~EndLayer\n\n");
 				}
 			}
@@ -278,12 +281,11 @@ static void string_list_delete(void * key, void * l, void * user_data)
 	g_list_free ((GList *) l);
 }
 
-static void string_list_set_param(int i, std::list<char *> * list, void ** layer_and_vp)
+static void string_list_set_param(int i, std::list<char *> * list, LayerAndVp * layer_and_vp)
 {
 	VikLayerParamData x;
 	x.sl = list;
-	Layer * layer = (Layer *) ((VikLayer *) layer_and_vp[0])->layer;
-	layer->set_param(i, x, (Viewport *) layer_and_vp[1], true);
+	layer_and_vp->layer->set_param(i, x, layer_and_vp->viewport, true);
 }
 
 /**
@@ -296,7 +298,6 @@ static void string_list_set_param(int i, std::list<char *> * list, void ** layer
  */
 static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, Viewport * viewport)
 {
-	Stack *stack = NULL;
 	struct LatLon ll = { 0.0, 0.0 };
 	char buffer[4096];
 	char *line;
@@ -311,9 +312,10 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 
 	bool successful_read = true;
 
+	Stack *stack = NULL;
 	push(&stack);
 	stack->under = NULL;
-	stack->data = (void *) top->vl;
+	stack->data = (void *) top;
 
 	while (fgets (buffer, 4096, f))  {
 		line_num++;
@@ -347,7 +349,7 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 			if (*line == '\0') {
 				continue;
 			} else if (str_starts_with(line, "Layer ", 6, true)) {
-				LayerType parent_type = ((Layer *) ((VikLayer *) stack->data)->layer)->type;
+				LayerType parent_type = ((Layer *) stack->data)->type;
 				if ((! stack->data) || ((parent_type != LayerType::AGGREGATE) && (parent_type != LayerType::GPS))) {
 					successful_read = false;
 					fprintf(stderr, "WARNING: Line %ld: Layer command inside non-Aggregate Layer (type %d)\n", line_num, parent_type);
@@ -362,14 +364,14 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 						fprintf(stderr, "WARNING: Line %ld: Unknown type %s\n", line_num, line+6);
 						stack->data = NULL;
 					} else if (parent_type == LayerType::GPS) {
-						LayerGPS * g = (LayerGPS *) ((VikLayer *) stack->under->data)->layer;
-						stack->data = (void *) g->get_a_child()->vl;
+						LayerGPS * g = (LayerGPS *) stack->under->data;
+						stack->data = (void *) g->get_a_child();
 						params = vik_layer_get_interface(layer_type)->params;
 						params_count = vik_layer_get_interface(layer_type)->params_count;
 
 					} else { /* Any other LayerType::X type. */
 						Layer * layer = Layer::new_(layer_type, viewport, false);
-						stack->data = (void *) layer->vl;
+						stack->data = (void *) layer;
 						params = vik_layer_get_interface(layer_type)->params;
 						params_count = vik_layer_get_interface(layer_type)->params_count;
 					}
@@ -380,29 +382,28 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 					fprintf(stderr, "WARNING: Line %ld: Mismatched ~EndLayer command\n", line_num);
 				} else {
 					/* add any string lists we've accumulated */
-					void * layer_and_vp[2];
-					layer_and_vp[0] = stack->data;
-					layer_and_vp[1] = viewport;
-					g_hash_table_foreach(string_lists, (GHFunc) string_list_set_param, layer_and_vp);
+					LayerAndVp layer_and_vp;
+					layer_and_vp.layer = (Layer *) stack->data;
+					layer_and_vp.viewport = viewport;
+					g_hash_table_foreach(string_lists, (GHFunc) string_list_set_param, &layer_and_vp);
 					g_hash_table_remove_all(string_lists);
 
 					if (stack->data && stack->under->data) {
-						if (((Layer *) ((VikLayer *) stack->under->data)->layer)->type == LayerType::AGGREGATE) {
-							Layer * layer = (Layer *) ((VikLayer *) stack->data)->layer;
-							((LayerAggregate *) ((VikLayer *) stack->under->data)->layer)->add_layer(layer, false);
+						if (((Layer *) stack->under->data)->type == LayerType::AGGREGATE) {
+							Layer * layer = (Layer *) stack->data;
+							((LayerAggregate *) stack->under->data)->add_layer(layer, false);
 							layer->post_read(viewport, true);
-						} else if (((Layer *) ((VikLayer *) stack->under->data)->layer)->type == LayerType::GPS) {
+						} else if (((Layer *) stack->under->data)->type == LayerType::GPS) {
 							/* TODO: anything else needs to be done here ? */
 						} else {
 							successful_read = false;
-							fprintf(stderr, "WARNING: Line %ld: EndLayer command inside non-Aggregate Layer (type %d)\n", line_num, ((Layer *) ((VikLayer *) stack->data)->layer)->type);
+							fprintf(stderr, "WARNING: Line %ld: EndLayer command inside non-Aggregate Layer (type %d)\n", line_num, ((Layer *) stack->data)->type);
 						}
 					}
 					pop(&stack);
 				}
 			} else if (str_starts_with(line, "LayerData", 9, false)) {
-				VikLayer * vl = (VikLayer *) stack->data;
-				Layer * layer = (Layer *) vl->layer;
+				Layer * layer = (Layer *) stack->data;
 				int rv = layer->read_file(f, dirpath);
 				if (rv == 0) {
 					successful_read = false;
@@ -446,7 +447,7 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 				}
 			}
 
-			Layer * layer = (Layer *) ((VikLayer *) stack->data)->layer;
+			Layer * layer = (Layer *) stack->data;
 
 			if (stack->under == NULL && eq_pos == 12 && strncasecmp(line, "FILE_VERSION", eq_pos) == 0) {
 				int version = strtol(line+13, NULL, 10);
@@ -537,7 +538,7 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 								/* STRING or STRING_LIST -- if STRING_LIST, just set param to add a STRING */
 							default: x.s = line;
 							}
-							Layer * l_a_y_e_r = (Layer *) ((VikLayer *) stack->data)->layer;
+							Layer * l_a_y_e_r = (Layer *) stack->data;
 							l_a_y_e_r->set_param(i, x, viewport, true);
 						}
 						found_match = true;
@@ -568,8 +569,8 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 
 	while (stack) {
 		if (stack->under && stack->under->data && stack->data){
-			Layer * layer = (Layer *) ((VikLayer *) stack->data)->layer;
-			((LayerAggregate *) ((VikLayer *) stack->under->data)->layer)->add_layer(layer, false);
+			Layer * layer = (Layer *) stack->data;
+			((LayerAggregate *) stack->under->data)->add_layer(layer, false);
 			layer->post_read(viewport, true);
 		}
 		pop(&stack);
