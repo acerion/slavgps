@@ -20,8 +20,14 @@
  *
  */
 
-#ifndef _VIKING_GPSLAYER_H
-#define _VIKING_GPSLAYER_H
+#ifndef _SG_LAYER_GPS_H
+#define _SG_LAYER_GPS_H
+
+
+
+
+
+#include <list>
 
 #include <stdint.h>
 
@@ -30,79 +36,42 @@
 #include "viktrwlayer.h"
 #include "vikwindow.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
-#define VIK_GPS_LAYER_TYPE            (vik_gps_layer_get_type ())
-#define VIK_GPS_LAYER(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_GPS_LAYER_TYPE, VikGpsLayer))
-#define VIK_GPS_LAYER_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), VIK_GPS_LAYER_TYPE, VikGpsLayerClass))
-#define IS_VIK_GPS_LAYER(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), VIK_GPS_LAYER_TYPE))
-#define IS_VIK_GPS_LAYER_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), VIK_GPS_LAYER_TYPE))
-
-typedef struct _VikGpsLayerClass VikGpsLayerClass;
-struct _VikGpsLayerClass
-{
-	VikLayerClass vik_layer_class;
-};
-
-struct _VikGpsLayer {
-	VikLayer vl;
-};
-
-typedef struct _VikGpsLayer VikGpsLayer;
-
-
-GType vik_gps_layer_get_type();
-
-enum {
-	TRW_DOWNLOAD = 0,
-	TRW_UPLOAD,
-#if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
-	TRW_REALTIME,
-#endif
-	NUM_TRW
-};
-
-
-typedef enum {
-	GPS_DOWN = 0,
-	GPS_UP
-} vik_gps_dir;
-
-typedef enum {
-	WPT = 0,
-	TRK = 1,
-	RTE = 2
-} vik_gps_xfer_type;
-
-
-
-
-// Non layer specific but expose communal method
-int vik_gps_comm(SlavGPS::LayerTRW * trw_layer,
-		 SlavGPS::Track * trk,
-		 vik_gps_dir dir,
-		 char *protocol,
-		 char *port,
-		 bool tracking,
-		 SlavGPS::Viewport * viewport,
-		 SlavGPS::LayersPanel * panel,
-		 bool do_tracks,
-		 bool do_routes,
-		 bool do_waypoints,
-		 bool turn_off);
-
-#ifdef __cplusplus
-}
-#endif
-
 
 
 
 
 namespace SlavGPS {
+
+
+
+	enum class GPSDirection {
+		DOWN = 0,
+		UP
+	};
+
+	enum class GPSTransferType {
+		WPT = 0,
+		TRK = 1,
+		RTE = 2
+	};
+
+
+
+
+
+	/* Non layer specific but exposes common method. */
+	int vik_gps_comm(LayerTRW * trw_layer,
+			 Track * trk,
+			 GPSDirection dir,
+			 char * protocol,
+			 char * port,
+			 bool tracking,
+			 Viewport * viewport,
+			 LayersPanel * panel,
+			 bool do_tracks,
+			 bool do_routes,
+			 bool do_waypoints,
+			 bool turn_off);
 
 
 
@@ -131,6 +100,18 @@ namespace SlavGPS {
 
 
 
+	enum {
+		TRW_DOWNLOAD = 0,
+		TRW_UPLOAD,
+#if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
+		TRW_REALTIME,
+#endif
+		NUM_TRW
+	};
+
+
+
+
 
 	class LayerGPS : public Layer {
 	public:
@@ -150,7 +131,7 @@ namespace SlavGPS {
 
 
 		void disconnect_layer_signal(VikLayer * vl);
-		const GList * get_children();
+		std::list<Layer const * > * get_children();
 		LayerTRW * get_a_child();
 		bool is_empty();
 		void realtime_tracking_draw(Viewport * viewport);
@@ -161,15 +142,14 @@ namespace SlavGPS {
 
 
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
-		void rt_gpsd_disconnect();
 		bool rt_gpsd_connect(bool ask_if_failed);
+		void rt_gpsd_disconnect();
 #endif
 
 
 
 
 		LayerTRW * trw_children[NUM_TRW];
-		GList * children;	/* used only for writing file */
 		int cur_read_child;   /* used only for reading file */
 
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
@@ -215,10 +195,10 @@ namespace SlavGPS {
 
 
 
-}
+} /* namespace SlavGPS */
 
 
 
 
 
-#endif
+#endif /* #ifndef _SG_LAYER_GPS_H */
