@@ -22,13 +22,14 @@
 #ifndef __VIKING_BACKGROUND_H
 #define __VIKING_BACKGROUND_H
 
-#include <glib.h>
+
 #include <gtk/gtk.h>
 #include <stdint.h>
 
-
 #include "vikwindow.h"
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -46,7 +47,7 @@ typedef enum {
 #endif
 } Background_Pool_Type;
 
-void a_background_thread(Background_Pool_Type bp, GtkWindow * parent, const char * message, vik_thr_func func, void * userdata, vik_thr_free_func userdata_free_func, vik_thr_free_func userdata_cancel_cleanup_func, int number_items);
+void a_background_thread(Background_Pool_Type bp, GtkWindow * parent, char const * message, vik_thr_func func, void * userdata, vik_thr_free_func userdata_free_func, vik_thr_free_func userdata_cancel_cleanup_func, int number_items);
 int a_background_thread_progress(void * callbackdata, double fraction);
 int a_background_testcancel(void * callbackdata);
 void a_background_show_window();
@@ -59,5 +60,9 @@ void a_background_remove_window(SlavGPS::Window * window);
 #ifdef __cplusplus
 }
 #endif
+
+
+
+
 
 #endif
