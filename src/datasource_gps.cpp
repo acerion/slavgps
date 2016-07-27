@@ -120,13 +120,13 @@ typedef struct {
 	GtkWidget *trk_label;
 	GtkWidget *rte_label;
 	GtkWidget *progress_label;
-	vik_gps_xfer_type progress_type;
+	GPSTransferType progress_type;
 
 	/* state */
 	int total_count;
 	int count;
 	// Know which way xfer is so xfer setting types are only stored for download
-	vik_gps_dir direction;
+	GPSDirection direction;
 } gps_user_data_t;
 
 #define VIK_SETTINGS_GPS_GET_TRACKS "gps_download_tracks"
@@ -139,7 +139,7 @@ typedef struct {
 static void * datasource_gps_init_func(acq_vik_t *avt)
 {
 	gps_user_data_t *gps_ud = (gps_user_data_t *) malloc(sizeof (gps_user_data_t));
-	gps_ud->direction = GPS_DOWN;
+	gps_ud->direction = GPSDirection::DOWN;
 	return gps_ud;
 }
 
@@ -192,7 +192,7 @@ bool datasource_gps_get_do_tracks(void * user_data)
 {
 	gps_user_data_t *w = (gps_user_data_t *)user_data;
 	bool get_tracks = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w->get_tracks_b));
-	if (w->direction == GPS_DOWN) {
+	if (w->direction == GPSDirection::DOWN) {
 		a_settings_set_boolean(VIK_SETTINGS_GPS_GET_TRACKS, get_tracks);
 	}
 	return get_tracks;
@@ -207,7 +207,7 @@ bool datasource_gps_get_do_routes(void * user_data)
 {
 	gps_user_data_t *w = (gps_user_data_t *)user_data;
 	bool get_routes = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w->get_routes_b));
-	if (w->direction == GPS_DOWN) {
+	if (w->direction == GPSDirection::DOWN) {
 		a_settings_set_boolean(VIK_SETTINGS_GPS_GET_ROUTES, get_routes);
 	}
 	return get_routes;
@@ -222,7 +222,7 @@ bool datasource_gps_get_do_waypoints(void * user_data)
 {
 	gps_user_data_t *w = (gps_user_data_t *)user_data;
 	bool get_waypoints = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w->get_waypoints_b));
-	if (w->direction == GPS_DOWN) {
+	if (w->direction == GPSDirection::DOWN) {
 		a_settings_set_boolean(VIK_SETTINGS_GPS_GET_WAYPOINTS, get_waypoints);
 	}
 	return get_waypoints;
@@ -353,11 +353,11 @@ static void set_total_count(int cnt, acq_dialog_widgets_t *w)
 		gps_user_data_t *gps_data = (gps_user_data_t *)w->user_data;
 		const char *tmp_str;
 		switch (gps_data->progress_type) {
-		case WPT:
+		case GPSTransferType::WPT:
 			tmp_str = ngettext("Downloading %d waypoint...", "Downloading %d waypoints...", cnt);
 			gps_data->total_count = cnt;
 			break;
-		case TRK:
+		case GPSTransferType::TRK:
 			tmp_str = ngettext("Downloading %d trackpoint...", "Downloading %d trackpoints...", cnt);
 			gps_data->total_count = cnt;
 			break;
@@ -386,10 +386,10 @@ static void set_current_count(int cnt, acq_dialog_widgets_t *w)
 
 		if (cnt < gps_data->total_count) {
 			switch (gps_data->progress_type) {
-			case WPT:
+			case GPSTransferType::WPT:
 				s = g_strdup_printf(_("Downloaded %d out of %d %s..."), cnt, gps_data->total_count, "waypoints");
 				break;
-			case TRK:
+			case GPSTransferType::TRK:
 				s = g_strdup_printf(_("Downloaded %d out of %d %s..."), cnt, gps_data->total_count, "trackpoints");
 				break;
 			default:
@@ -398,10 +398,10 @@ static void set_current_count(int cnt, acq_dialog_widgets_t *w)
 			}
 		} else {
 			switch (gps_data->progress_type) {
-			case WPT:
+			case GPSTransferType::WPT:
 				s = g_strdup_printf(_("Downloaded %d %s."), cnt, "waypoints");
 				break;
-			case TRK:
+			case GPSTransferType::TRK:
 				s = g_strdup_printf(_("Downloaded %d %s."), cnt, "trackpoints");
 				break;
 			default:
@@ -451,15 +451,15 @@ static void datasource_gps_progress(BabelProgressCode c, void * data, acq_dialog
 		/* tells us the type of items that will follow */
 		if (strstr(line, "Xfer Wpt")) {
 			gps_data->progress_label = gps_data->wp_label;
-			gps_data->progress_type = WPT;
+			gps_data->progress_type = GPSTransferType::WPT;
 		}
 		if (strstr(line, "Xfer Trk")) {
 			gps_data->progress_label = gps_data->trk_label;
-			gps_data->progress_type = TRK;
+			gps_data->progress_type = GPSTransferType::TRK;
 		}
 		if (strstr(line, "Xfer Rte")) {
 			gps_data->progress_label = gps_data->rte_label;
-			gps_data->progress_type = RTE;
+			gps_data->progress_type = GPSTransferType::RTE;
 		}
 
 		if (strstr(line, "PRDDAT")) {
@@ -683,10 +683,10 @@ static void datasource_gps_add_setup_widgets(GtkWidget *dialog, Viewport * viewp
  * Returns: A void * to the private structure for GPS progress/information widgets
  *          Pass this pointer back into the other exposed datasource_gps_X functions
  */
-void * datasource_gps_setup(GtkWidget *dialog, vik_gps_xfer_type xfer, bool xfer_all)
+void * datasource_gps_setup(GtkWidget *dialog, GPSTransferType xfer, bool xfer_all)
 {
 	gps_user_data_t *w_gps = (gps_user_data_t *)datasource_gps_init_func(NULL);
-	w_gps->direction = GPS_UP;
+	w_gps->direction = GPSDirection::UP;
 	datasource_gps_add_setup_widgets(dialog, NULL, w_gps);
 
 	bool way = xfer_all;
@@ -696,10 +696,10 @@ void * datasource_gps_setup(GtkWidget *dialog, vik_gps_xfer_type xfer, bool xfer
 	// Selectively turn bits on
 	if (!xfer_all) {
 		switch (xfer) {
-		case WPT:
+		case GPSTransferType::WPT:
 			way = true;
 			break;
-		case RTE:
+		case GPSTransferType::RTE:
 			rte = true;
 			break;
 		default:

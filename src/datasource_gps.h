@@ -33,7 +33,7 @@ extern "C" {
 #endif
 
 
-void * datasource_gps_setup(GtkWidget *dialog, vik_gps_xfer_type xfer, bool xfer_all);
+void * datasource_gps_setup(GtkWidget *dialog, SlavGPS::GPSTransferType xfer, bool xfer_all);
 void datasource_gps_clean_up(void * user_data);
 
 char* datasource_gps_get_protocol(void * user_data);

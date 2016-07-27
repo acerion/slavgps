@@ -2748,24 +2748,24 @@ void trw_layer_gps_upload_any(trw_menu_sublayer_t * data)
 
 	// May not actually get a track here as values[2&3] can be null
 	Track * trk = NULL;
-	vik_gps_xfer_type xfer_type = TRK; // VIK_TRW_LAYER_SUBLAYER_TRACKS = 0 so hard to test different from NULL!
+	GPSTransferType xfer_type = GPSTransferType::TRK; // VIK_TRW_LAYER_SUBLAYER_TRACKS = 0 so hard to test different from NULL!
 	bool xfer_all = false;
 
 	if (data->subtype) {
 		xfer_all = false;
 		if (data->subtype == VIK_TRW_LAYER_SUBLAYER_ROUTE) {
 			trk = layer->routes.at(uid);
-			xfer_type = RTE;
+			xfer_type = GPSTransferType::RTE;
 		}
 		else if (data->subtype == VIK_TRW_LAYER_SUBLAYER_TRACK) {
 			trk = layer->tracks.at(uid);
-			xfer_type = TRK;
+			xfer_type = GPSTransferType::TRK;
 		}
 		else if (data->subtype == VIK_TRW_LAYER_SUBLAYER_WAYPOINTS) {
-			xfer_type = WPT;
+			xfer_type = GPSTransferType::WPT;
 		}
 		else if (data->subtype == VIK_TRW_LAYER_SUBLAYER_ROUTES) {
-			xfer_type = RTE;
+			xfer_type = GPSTransferType::RTE;
 		}
 	}
 	else if (!data->confirm)
@@ -2821,7 +2821,7 @@ void trw_layer_gps_upload_any(trw_menu_sublayer_t * data)
 	// Apply settings to transfer to the GPS device
 	vik_gps_comm(layer,
 		     trk,
-		     GPS_UP,
+		     GPSDirection::UP,
 		     protocol,
 		     port,
 		     false,
