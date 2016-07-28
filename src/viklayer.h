@@ -198,7 +198,7 @@ namespace SlavGPS {
 		virtual void drag_drop_request(Layer * src, GtkTreeIter * src_item_iter, GtkTreePath * dest_path);
 
 		virtual int read_file(FILE * f, char const * dirpath);
-		virtual void write_file(FILE * f);
+		virtual void write_file(FILE * f) const;
 
 		virtual void add_menu_items(GtkMenu * menu, void * panel);
 		virtual bool sublayer_add_menu_items(GtkMenu * menu, void * panel, int subtype, void * sublayer, GtkTreeIter * iter, Viewport * viewport);
@@ -213,7 +213,7 @@ namespace SlavGPS {
 		   are added to the treeview so they can add sublayers to the treeview. */
 		virtual void realize(TreeView * tree_view, GtkTreeIter * layer_iter);
 
-		virtual VikLayerParamData get_param(uint16_t id, bool is_file_operation);
+		virtual VikLayerParamData get_param(uint16_t id, bool is_file_operation) const;
 		virtual bool set_param(uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
 
 
@@ -319,7 +319,7 @@ typedef SlavGPS::Layer *         (* VikLayerFuncUnmarshall)    (uint8_t *, int, 
 /* in parameter bool denotes if for file I/O, as opposed to display/cut/copy etc... operations */
 typedef bool                     (* VikLayerFuncSetParam)      (SlavGPS::Layer *, uint16_t, VikLayerParamData, SlavGPS::Viewport *, bool);
 /* in parameter bool denotes if for file I/O, as opposed to display/cut/copy etc... operations */
-typedef VikLayerParamData        (* VikLayerFuncGetParam)      (SlavGPS::Layer *, uint16_t, bool);
+typedef VikLayerParamData        (* VikLayerFuncGetParam)      (SlavGPS::Layer const *, uint16_t, bool);
 typedef void                     (* VikLayerFuncChangeParam)   (GtkWidget *, ui_change_values *);
 
 
@@ -355,7 +355,7 @@ struct _VikLayerInterface {
 
 VikLayerInterface * vik_layer_get_interface(SlavGPS::LayerType layer_type);
 bool layer_set_param(SlavGPS::Layer * layer, uint16_t id, VikLayerParamData data, SlavGPS::Viewport * viewport, bool is_file_operation);
-VikLayerParamData layer_get_param(SlavGPS::Layer * layer, uint16_t id, bool is_file_operation);
+VikLayerParamData layer_get_param(SlavGPS::Layer const * layer, uint16_t id, bool is_file_operation);
 
 
 /* GUI */

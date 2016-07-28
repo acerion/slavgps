@@ -31,7 +31,7 @@
 
 
 bool a_gpspoint_read_file(SlavGPS::LayerTRW * trw, FILE * f, char const * dirpath);
-void a_gpspoint_write_file(SlavGPS::LayerTRW * trw, FILE * f);
+void a_gpspoint_write_file(SlavGPS::LayerTRW const * trw, FILE * f);
 
 
 

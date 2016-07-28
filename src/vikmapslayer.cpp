@@ -668,7 +668,7 @@ bool LayerMaps::set_param(uint16_t id, VikLayerParamData data, Viewport * viewpo
 	return true;
 }
 
-VikLayerParamData LayerMaps::get_param(uint16_t id, bool is_file_operation)
+VikLayerParamData LayerMaps::get_param(uint16_t id, bool is_file_operation) const
 {
 	VikLayerParamData rv;
 	switch (id) {

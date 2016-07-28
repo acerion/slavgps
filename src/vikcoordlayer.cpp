@@ -203,7 +203,7 @@ bool LayerCoord::set_param(uint16_t id, VikLayerParamData data, Viewport * viewp
 
 
 
-VikLayerParamData LayerCoord::get_param(uint16_t id, bool is_file_operation)
+VikLayerParamData LayerCoord::get_param(uint16_t id, bool is_file_operation) const
 {
 	VikLayerParamData rv;
 	switch (id) {

@@ -369,7 +369,7 @@ bool LayerMapnik::set_param(uint16_t id, VikLayerParamData data, Viewport * view
 	return true;
 }
 
-VikLayerParamData LayerMapnik::get_param(uint16_t id, bool is_file_operation)
+VikLayerParamData LayerMapnik::get_param(uint16_t id, bool is_file_operation) const
 {
 	VikLayerParamData data;
 	switch (id) {

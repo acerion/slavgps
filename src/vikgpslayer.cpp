@@ -621,7 +621,7 @@ bool LayerGPS::set_param(uint16_t id, VikLayerParamData data, Viewport * viewpor
 
 
 
-VikLayerParamData LayerGPS::get_param(uint16_t id, bool is_file_operation)
+VikLayerParamData LayerGPS::get_param(uint16_t id, bool is_file_operation) const
 {
 	VikLayerParamData rv;
 	switch (id) {

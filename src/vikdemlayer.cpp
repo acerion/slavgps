@@ -377,7 +377,7 @@ bool LayerDEM::set_param(uint16_t id, VikLayerParamData data, Viewport * viewpor
 	return true;
 }
 
-VikLayerParamData LayerDEM::get_param(uint16_t id, bool is_file_operation)
+VikLayerParamData LayerDEM::get_param(uint16_t id, bool is_file_operation) const
 {
 	VikLayerParamData rv;
 

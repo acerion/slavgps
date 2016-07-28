@@ -252,7 +252,7 @@ void LayerGeoref::create_image_file()
 	free(filename);
 }
 
-VikLayerParamData LayerGeoref::get_param(uint16_t id, bool is_file_operation)
+VikLayerParamData LayerGeoref::get_param(uint16_t id, bool is_file_operation) const
 {
 	VikLayerParamData rv;
 	switch (id) {
@@ -261,7 +261,7 @@ VikLayerParamData LayerGeoref::get_param(uint16_t id, bool is_file_operation)
 		if (is_file_operation) {
 			if (this->pixbuf && !this->image) {
 				// Force creation of image file
-				this->create_image_file();
+				((LayerGeoref *) this)->create_image_file();
 			}
 			if (a_vik_get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE) {
 				char *cwd = g_get_current_dir();

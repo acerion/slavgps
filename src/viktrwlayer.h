@@ -152,7 +152,7 @@ namespace SlavGPS {
 		void drag_drop_request(Layer * src, GtkTreeIter * src_item_iter, GtkTreePath * dest_path);
 
 		int read_file(FILE * f, char const * dirpath);
-		void write_file(FILE * f);
+		void write_file(FILE * f) const;
 		void add_menu_items(GtkMenu * menu, void * panel);
 		bool sublayer_add_menu_items(GtkMenu * menu, void * panel, int subtype, void * sublayer, GtkTreeIter * iter, Viewport * viewport);
 		char const * sublayer_rename_request(const char * newname, void * panel, int subtype, void * sublayer, GtkTreeIter * iter);
@@ -160,7 +160,7 @@ namespace SlavGPS {
 
 		void realize(TreeView * tree_view, GtkTreeIter * layer_iter);
 		bool set_param(uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
-		VikLayerParamData get_param(uint16_t id, bool is_file_operation);
+		VikLayerParamData get_param(uint16_t id, bool is_file_operation) const;
 
 
 

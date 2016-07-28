@@ -522,7 +522,7 @@ bool layer_set_param(Layer * layer, uint16_t id, VikLayerParamData data, Viewpor
 	return layer->set_param(id, data, viewport, is_file_operation);
 }
 
-VikLayerParamData layer_get_param(Layer * layer, uint16_t id, bool is_file_operation)
+VikLayerParamData layer_get_param(Layer const * layer, uint16_t id, bool is_file_operation)
 {
 	return layer->get_param(id, is_file_operation);
 }
@@ -806,7 +806,7 @@ int Layer::read_file(FILE * f, char const * dirpath)
 	return -5;
 }
 
-void Layer::write_file(FILE * f)
+void Layer::write_file(FILE * f) const
 {
 	return;
 }
@@ -848,7 +848,7 @@ void Layer::realize(TreeView * tree_view_, GtkTreeIter * layer_iter)
 	return;
 }
 
-VikLayerParamData Layer::get_param(uint16_t id, bool is_file_operation)
+VikLayerParamData Layer::get_param(uint16_t id, bool is_file_operation) const
 {
 	VikLayerParamData data;
 	return data;

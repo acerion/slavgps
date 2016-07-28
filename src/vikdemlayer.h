@@ -52,7 +52,7 @@ namespace SlavGPS {
 		bool add_file(std::string& dem_filename);
 		void draw_dem(Viewport * viewport, DEM * dem);
 		bool set_param(uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
-		VikLayerParamData get_param(uint16_t id, bool is_file_operation);
+		VikLayerParamData get_param(uint16_t id, bool is_file_operation) const;
 
 
 		GdkGC ** gcs;

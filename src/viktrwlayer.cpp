@@ -962,7 +962,7 @@ bool LayerTRW::set_param(uint16_t id, VikLayerParamData data, Viewport * viewpor
 	return true;
 }
 
-VikLayerParamData LayerTRW::get_param(uint16_t id, bool is_file_operation)
+VikLayerParamData LayerTRW::get_param(uint16_t id, bool is_file_operation) const
 {
 	VikLayerParamData rv;
 	switch (id) {
@@ -9100,7 +9100,7 @@ int LayerTRW::read_file(FILE * f, char const * dirpath)
 }
 
 
-void LayerTRW::write_file(FILE * f)
+void LayerTRW::write_file(FILE * f) const
 {
 	fprintf(f, "\n\n~LayerData\n");
 	a_gpspoint_write_file(this, f);
