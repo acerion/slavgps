@@ -934,9 +934,15 @@ void LayerAggregate::realize(TreeView * tree_view_, GtkTreeIter *layer_iter)
 	}
 }
 
-const std::list<Layer *> * LayerAggregate::get_children()
+std::list<Layer const *> * LayerAggregate::get_children()
 {
-	return this->children;
+	std::list<Layer const *> * result = new std::list<Layer const *>;
+	for (auto iter = this->children->begin(); iter != this->children->end(); iter++) {
+		fprintf(stderr, "pushing child from aggregate\n");
+		result->push_back(*iter);
+	}
+	fprintf(stderr, "returning %d items in %x\n", result->size(), (void *) result);
+	return result;
 }
 
 bool LayerAggregate::is_empty()
