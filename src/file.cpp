@@ -157,7 +157,7 @@ void file_write_layer_param(FILE * f, char const * name, VikLayerParamType type,
 	}
 }
 
-static void write_layer_params_and_data(Layer * layer, FILE * f)
+static void write_layer_params_and_data(Layer const * layer, FILE * f)
 {
 	VikLayerParam *params = vik_layer_get_interface(layer->type)->params;
 	VikLayerFuncGetParam get_param = vik_layer_get_interface(layer->type)->get_param;
@@ -228,30 +228,31 @@ static void file_write(LayerAggregate * top, FILE * f, Viewport * viewport)
 	}
 
 
-	const std::list<Layer *> * children = aggregate->get_children();
+	std::list<Layer const *> * children = aggregate->get_children();
 	Stack * aggregates = NULL;
 	push(&aggregates);
-	//aggregates->data = children; /* kamilFIXME: fix the assignment. */
+	aggregates->data = (void *) children;
 	aggregates->under = NULL;
 
-	while (aggregates && aggregates->data) {
-		Layer * current = (Layer *) ((GList *) aggregates->data)->data;
+	while (aggregates && aggregates->data && ((std::list<Layer const *> *) aggregates->data)->size()) {
+		Layer const * current = ((std::list<Layer const *> *) aggregates->data)->front();
 		fprintf(f, "\n~Layer %s\n", vik_layer_get_interface(current->type)->fixed_layer_name);
 		write_layer_params_and_data(current, f);
 		if (current->type == LayerType::AGGREGATE && !((LayerAggregate *) current)->is_empty()) {
 			push(&aggregates);
-			const std::list<Layer *> * children = ((LayerAggregate *) current)->get_children();
-			// aggregates->data = children; /* kamilFIXME: fix the assignment. */
+			std::list<Layer const *> * children = ((LayerAggregate *) current)->get_children();
+			aggregates->data = (void *) children;
 		} else if (current->type == LayerType::GPS && !((LayerGPS *) current)->is_empty()) {
 			push(&aggregates);
-			aggregates->data = (void *) ((LayerGPS *) current)->get_children();
+			std::list<Layer const *> * children = ((LayerGPS *) current)->get_children();
+			aggregates->data = (void *) children;
 		} else {
-			aggregates->data = (void *) ((GList *) aggregates->data)->next;
+			((std::list<Layer const *> *) aggregates->data)->pop_front();
 			fprintf(f, "~EndLayer\n\n");
 			while (aggregates && (!aggregates->data)) {
 				pop(&aggregates);
 				if (aggregates) {
-					aggregates->data = (void *) ((GList *) aggregates->data)->next;
+					((std::list<Layer const *> *) aggregates->data)->pop_front();
 					fprintf(f, "~EndLayer\n\n");
 				}
 			}
