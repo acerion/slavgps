@@ -202,7 +202,7 @@ namespace SlavGPS {
 		GdkColor color;
 		LatLonBBox bbox;
 	private:
-		static void smoothie(GList *tp1, GList *tp2, double elev1, double elev2, unsigned int points);
+		static void smoothie(GList * start, GList * stop, double elev1, double elev2, unsigned int points);
 		void recalculate_bounds_last_tp();
 	};
 
