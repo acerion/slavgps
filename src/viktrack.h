@@ -19,12 +19,13 @@
  *
  */
 
-#ifndef _VIKING_TRACK_H
-#define _VIKING_TRACK_H
+#ifndef _SG_TRACK_H
+#define _SG_TRACK_H
 
 
 
 
+#include <list>
 
 #include <time.h>
 #include <glib.h>
@@ -33,7 +34,6 @@
 
 #include "vikcoord.h"
 #include "bbox.h"
-
 
 
 
@@ -51,7 +51,6 @@ namespace SlavGPS {
 		VIK_GPS_MODE_DGPS     = 4,
 		VIK_GPS_MODE_PPS      = 5      /* military signal used */
 	};
-
 
 
 
@@ -87,7 +86,6 @@ namespace SlavGPS {
 
 
 
-
 	enum TrackDrawnameType {
 		TRACK_DRAWNAME_NO=0,
 		TRACK_DRAWNAME_CENTRE,
@@ -97,6 +95,10 @@ namespace SlavGPS {
 		TRACK_DRAWNAME_START_END_CENTRE,
 		NUM_TRACK_DRAWNAMES
 	};
+
+
+
+
 
 	// Instead of having a separate VikRoute type, routes are considered tracks
 	//  Thus all track operations must cope with a 'route' version
@@ -202,18 +204,18 @@ namespace SlavGPS {
 		GdkColor color;
 		LatLonBBox bbox;
 	private:
-		static void smoothie(GList * start, GList * stop, double elev1, double elev2, unsigned int points);
+		static void smoothie(std::list<Trackpoint *>::iterator start, std::list<Trackpoint *>::iterator stop, double elev1, double elev2, unsigned int points);
 		void recalculate_bounds_last_tp();
+
+		std::list<Trackpoint *> * trackpointsB;
 	};
 
 
 
 
-
-} /* namespace */
-
+} /* namespace SlavGPS */
 
 
 
 
-#endif /* #ifndef _VIKING_TRACK_H */
+#endif /* #ifndef _SG_TRACK_H */

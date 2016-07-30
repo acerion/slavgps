@@ -42,7 +42,19 @@
 #include "settings.h"
 #include "util.h"
 
+
+
+
 using namespace SlavGPS;
+
+
+
+
+std::list<Trackpoint *> * get_list(GList * trkpts);
+GList * get_glist(std::list<Trackpoint *> * trkpts);
+
+
+
 
 Track::Track()
 {
@@ -65,8 +77,14 @@ Track::Track()
 	ref_count = 1;
 }
 
+
+
+
 #define VIK_SETTINGS_TRACK_NAME_MODE "track_draw_name_mode"
 #define VIK_SETTINGS_TRACK_NUM_DIST_LABELS "track_number_dist_labels"
+
+
+
 
 /**
  * vik_track_set_defaults:
@@ -87,12 +105,17 @@ void Track::set_defaults()
 	}
 }
 
+
+
+
 void Track::set_comment_no_copy(char * comment_)
 {
 	free_string(&comment);
 
 	comment = comment_;
 }
+
+
 
 
 void Track::set_name(const char * name_)
@@ -104,6 +127,9 @@ void Track::set_name(const char * name_)
 	}
 }
 
+
+
+
 void Track::set_comment(const char * comment_)
 {
 	free_string(&comment);
@@ -112,6 +138,9 @@ void Track::set_comment(const char * comment_)
 		comment = g_strdup(comment_);
 	}
 }
+
+
+
 
 void Track::set_description(const char * description_)
 {
@@ -122,6 +151,9 @@ void Track::set_description(const char * description_)
 	}
 }
 
+
+
+
 void Track::set_source(const char * source_)
 {
 	free_string(&source);
@@ -130,6 +162,9 @@ void Track::set_source(const char * source_)
 		source = g_strdup(source_);
 	}
 }
+
+
+
 
 void Track::set_type(const char * type_)
 {
@@ -140,10 +175,16 @@ void Track::set_type(const char * type_)
 	}
 }
 
+
+
+
 void Track::ref()
 {
 	ref_count++;
 }
+
+
+
 
 void Track::set_property_dialog(GtkWidget * dialog)
 {
@@ -151,10 +192,16 @@ void Track::set_property_dialog(GtkWidget * dialog)
 	property_dialog = dialog;
 }
 
+
+
+
 void Track::clear_property_dialog()
 {
 	property_dialog = NULL;
 }
+
+
+
 
 void Track::free()
 {
@@ -177,6 +224,9 @@ void Track::free()
 	}
 	delete this;
 }
+
+
+
 
 /**
  * vik_track_copy:
@@ -231,6 +281,9 @@ Track::Track(const Track & from, const bool copy_points)
 	this->set_source(from.source);
 }
 
+
+
+
 Trackpoint::Trackpoint()
 {
 	name = NULL;
@@ -254,10 +307,16 @@ Trackpoint::Trackpoint()
 
 }
 
+
+
+
 Trackpoint::~Trackpoint()
 {
 	free_string(&name);
 }
+
+
+
 
 void Trackpoint::set_name(char const * name_)
 {
@@ -272,6 +331,9 @@ void Trackpoint::set_name(char const * name_)
 		name = NULL;
 	}
 }
+
+
+
 
 Trackpoint::Trackpoint(const Trackpoint & tp)
 {
@@ -298,12 +360,10 @@ Trackpoint::Trackpoint(const Trackpoint & tp)
 
 
 
-
 void Trackpoint::vik_trackpoint_free(Trackpoint *tp)
 {
 	delete tp;
 }
-
 
 
 
@@ -340,6 +400,9 @@ void Track::recalculate_bounds_last_tp()
 	}
 }
 
+
+
+
 /**
  * vik_track_add_trackpoint:
  * @tr:          The track to which the trackpoint will be added
@@ -362,85 +425,130 @@ void Track::add_trackpoint(Trackpoint * tp, bool recalculate)
 	}
 }
 
+
+
+
 /**
  * vik_track_get_length_to_trackpoint:
  *
  */
 double Track::get_length_to_trackpoint(const Trackpoint * tp)
 {
+	this->trackpointsB = get_list(this->trackpoints); //REMOVE
+
 	double len = 0.0;
-	if (!this->trackpoints) {
+	if (this->trackpointsB->empty()) {
+		delete this->trackpointsB; //REMOVE
 		return len;
 	}
 
-	// Is it the very first track point?
-	if (((Trackpoint *) this->trackpoints->data) == tp) {
+	auto iter = this->trackpointsB->begin();
+	/* Is it the very first track point? */
+	if (*iter == tp) {
 		return len;
 	}
+	iter++;
 
-	for (GList * iter = this->trackpoints->next; iter; iter = iter->next) {
-		Trackpoint * tp1 = ((Trackpoint *) iter->data);
-		if (! tp1->newsegment) {
-			len += vik_coord_diff(&(tp1->coord),
-					      &(((Trackpoint *) iter->prev->data)->coord));
+	for (; iter != this->trackpointsB->end(); iter++) {
+		Trackpoint * tp1 = *iter;
+		if (!tp1->newsegment) {
+			len += vik_coord_diff(&tp1->coord,
+					      &(*std::prev(iter))->coord);
 		}
 
-		// Exit when we reach the desired point
+		/* Exit when we reach the desired point. */
 		if (tp1 == tp) {
 			break;
 		}
 	}
+	delete this->trackpointsB; //REMOVE
 	return len;
 }
+
+
+
 
 double Track::get_length()
 {
+	this->trackpointsB = get_list(this->trackpoints); //REMOVE
+
 	double len = 0.0;
-	if (!this->trackpoints) {
+	if (this->trackpointsB->empty()) {
+		delete this->trackpointsB; //REMOVE
 		return len;
 	}
 
-	for (GList * iter = this->trackpoints->next; iter; iter = iter->next) {
-		Trackpoint * tp1 = ((Trackpoint *) iter->data);
-		if (! tp1->newsegment) {
-			len += vik_coord_diff(&(tp1->coord),
-					      &(((Trackpoint *) iter->prev->data)->coord));
+	for (auto iter = std::next(this->trackpointsB->begin()); iter != this->trackpointsB->end(); iter++) {
+		Trackpoint * tp1 = *iter;
+		if (!tp1->newsegment) {
+			len += vik_coord_diff(&tp1->coord,
+					      &(*std::prev(iter))->coord);
 		}
 	}
+	delete this->trackpointsB; //REMOVE
 	return len;
 }
+
+
+
 
 double Track::get_length_including_gaps()
 {
+	this->trackpointsB = get_list(this->trackpoints); //REMOVE
+
 	double len = 0.0;
-	if (!this->trackpoints) {
+	if (this->trackpointsB->empty()) {
+		delete this->trackpointsB; //REMOVE
 		return len;
 	}
 
-	for (GList * iter = this->trackpoints->next; iter; iter = iter->next) {
-		len += vik_coord_diff(&(((Trackpoint *) iter->data)->coord),
-				      &(((Trackpoint *) iter->prev->data)->coord));
+	for (auto iter = std::next(this->trackpointsB->begin()); iter != this->trackpointsB->end(); iter++) {
+		len += vik_coord_diff(&(*iter)->coord,
+				      &(*std::prev(iter))->coord);
 	}
+	delete this->trackpointsB; //REMOVE
 	return len;
 }
 
+
+
+
 unsigned long Track::get_tp_count()
 {
-	return g_list_length(this->trackpoints);
+	this->trackpointsB = get_list(this->trackpoints); //REMOVE
+
+	unsigned long num = 0;
+	if (this->trackpointsB) {
+		num = this->trackpointsB->size();
+	}
+
+	delete this->trackpointsB; //REMOVE
+	return num;
 }
+
+
+
 
 unsigned long Track::get_dup_point_count()
 {
+	this->trackpointsB = get_list(this->trackpoints); //REMOVE
+
 	unsigned long num = 0;
 
-	for (GList * iter = this->trackpoints; iter; iter = iter->next) {
-		if (iter->next && vik_coord_equals(&(((Trackpoint *) iter->data)->coord),
-						   &(((Trackpoint *) iter->next->data)->coord))) {
+	for (auto iter = this->trackpointsB->begin(); iter != this->trackpointsB->end(); iter++) {
+		if (std::next(iter) != this->trackpointsB->end()
+		    && vik_coord_equals(&(*iter)->coord,
+					&(*std::next(iter))->coord)) {
 			num++;
 		}
 	}
+
+	delete this->trackpointsB; //REMOVE
 	return num;
 }
+
+
+
 
 /*
  * Deletes adjacent points that have the same position
@@ -472,6 +580,9 @@ unsigned long Track::remove_dup_points()
 	return num;
 }
 
+
+
+
 /*
  * Get a count of trackpoints with the same defined timestamp
  * Note is using timestamps with a resolution with 1 second
@@ -491,38 +602,48 @@ unsigned long Track::get_same_time_point_count()
 	return num;
 }
 
+
+
+
 /*
  * Deletes adjacent points that have the same defined timestamp
  * Returns the number of points that were deleted
  */
 unsigned long Track::remove_same_time_points()
 {
+	this->trackpointsB = get_list(this->trackpoints); //REMOVE
+
 	unsigned long num = 0;
-	GList *iter = this->trackpoints;
-	while (iter) {
-		if (iter->next &&
-		    (((Trackpoint *) iter->data)->has_timestamp && ((Trackpoint *) iter->next->data)->has_timestamp)
-		    && (((Trackpoint *) iter->data)->timestamp == ((Trackpoint *) iter->next->data)->timestamp)) {
+	auto iter = this->trackpointsB->begin();
+	while (iter != this->trackpointsB->end()) {
+		if (std::next(iter) != this->trackpointsB->end()
+		    && ((*iter)->has_timestamp && (*std::next(iter))->has_timestamp)
+		    && ((*iter)->timestamp == (*std::next(iter))->timestamp)) {
 
 			num++;
 
 			/* Maintain track segments. */
-			if (((Trackpoint *) iter->next->data)->newsegment && (iter->next)->next) {
-				((Trackpoint *) ((iter->next)->next)->data)->newsegment = true;
+			if ((*std::next(iter))->newsegment
+			    && std::next(std::next(iter)) != this->trackpointsB->end()) {
+
+				(*std::next(std::next(iter)))->newsegment = true;
 			}
 
-			delete ((Trackpoint *) iter->next->data);
-			this->trackpoints = g_list_delete_link(this->trackpoints, iter->next);
+			delete *std::next(iter);
+			this->trackpointsB->erase(std::next(iter));
 		} else {
-			iter = iter->next;
+			iter++;
 		}
 	}
 
 	this->calculate_bounds();
 
+	g_list_free(this->trackpoints); //REMOVE
+	this->trackpoints = get_glist(this->trackpointsB); //REMOVE
+	delete this->trackpointsB; //REMOVE
+
 	return num;
 }
-
 
 
 
@@ -533,42 +654,52 @@ unsigned long Track::remove_same_time_points()
  */
 void Track::to_routepoints(void)
 {
-	for (GList * iter = this->trackpoints; iter; iter = iter->next) {
+	this->trackpointsB = get_list(this->trackpoints); //REMOVE
 
-		// c.f. with vik_trackpoint_new()
+	for (auto iter = this->trackpointsB->begin(); iter != this->trackpointsB->end(); iter++) {
 
-		((Trackpoint *) iter->data)->has_timestamp = false;
-		((Trackpoint *) iter->data)->timestamp = 0;
-		((Trackpoint *) iter->data)->speed = NAN;
-		((Trackpoint *) iter->data)->course = NAN;
-		((Trackpoint *) iter->data)->hdop = VIK_DEFAULT_DOP;
-		((Trackpoint *) iter->data)->vdop = VIK_DEFAULT_DOP;
-		((Trackpoint *) iter->data)->pdop = VIK_DEFAULT_DOP;
-		((Trackpoint *) iter->data)->nsats = 0;
-		((Trackpoint *) iter->data)->fix_mode = VIK_GPS_MODE_NOT_SEEN;
+		/* c.f. with vik_trackpoint_new(). */
+
+		(*iter)->has_timestamp = false;
+		(*iter)->timestamp = 0;
+		(*iter)->speed = NAN;
+		(*iter)->course = NAN;
+		(*iter)->hdop = VIK_DEFAULT_DOP;
+		(*iter)->vdop = VIK_DEFAULT_DOP;
+		(*iter)->pdop = VIK_DEFAULT_DOP;
+		(*iter)->nsats = 0;
+		(*iter)->fix_mode = VIK_GPS_MODE_NOT_SEEN;
 	}
-}
 
+	delete this->trackpointsB; //REMOVE
+}
 
 
 
 
 unsigned int Track::get_segment_count()
 {
-	unsigned int num = 1;
+	this->trackpointsB = get_list(this->trackpoints); //REMOVE
 
-	if (!this->trackpoints) {
-		return 0;
+	unsigned int num = 0;
+
+	if (this->trackpointsB->empty()) {
+		delete this->trackpointsB; //REMOVE
+		return num;
 	}
 
-	GList *iter = this->trackpoints;
-	while ((iter = iter->next)) {
-		if (((Trackpoint *) iter->data)->newsegment) {
+	for (auto iter = this->trackpointsB->begin(); iter != this->trackpointsB->end(); iter++) {
+		if ((*iter)->newsegment) {
 			num++;
 		}
 	}
+
+	delete this->trackpointsB; //REMOVE
 	return num;
 }
+
+
+
 
 /* kamilTODO: revisit this function and compare with original. */
 Track ** Track::split_into_segments(unsigned int *ret_len)
@@ -606,66 +737,70 @@ Track ** Track::split_into_segments(unsigned int *ret_len)
 
 
 
-
 /*
  * Simply remove any subsequent segment markers in a track to form one continuous track
  * Return the number of segments merged
  */
 unsigned int Track::merge_segments(void)
 {
-	if (!this->trackpoints) {
+	this->trackpointsB = get_list(this->trackpoints); //REMOVE
+
+	if (this->trackpointsB->empty()) {
+		delete this->trackpointsB; //REMOVE
 		return 0;
 	}
 
 	unsigned int num = 0;
-	GList *iter = this->trackpoints;
 
 	/* Always skip the first point as this should be the first segment. */
-	iter = iter->next;
 
-	while ((iter = iter->next)) {
-		if (((Trackpoint *) iter->data)->newsegment) {
-			((Trackpoint *) iter->data)->newsegment = false;
+	for (auto iter = std::next(this->trackpointsB->begin()); iter != this->trackpointsB->end(); iter++) {
+		if ((*iter)->newsegment) {
+			(*iter)->newsegment = false;
 			num++;
 		}
 	}
 
+	delete this->trackpointsB; //REMOVE
 	return num;
 }
 
 
 
 
-
 void Track::reverse(void)
 {
-	if (!this->trackpoints) {
+	this->trackpointsB = get_list(this->trackpoints); //REMOVE
+
+	if (this->trackpointsB->empty()) {
+		delete this->trackpointsB; //REMOVE
 		return;
 	}
 
-	this->trackpoints = g_list_reverse(this->trackpoints);
+	this->trackpointsB->reverse();
 
-	/* fix 'newsegment' */
-	GList *iter = g_list_last(this->trackpoints);
-	while (iter) {
-		if (!iter->next) { /* last segment, was first, cancel newsegment. */
-			((Trackpoint *) iter->data)->newsegment = false;
-		}
+	/* Fix 'newsegment' flags. */
 
-		if (! iter->prev) { /* first segment by convention has newsegment flag. */
-			((Trackpoint *) iter->data)->newsegment = true;
-		} else if (((Trackpoint *) iter->data)->newsegment && iter->next) {
-			((Trackpoint *) iter->next->data)->newsegment = true;
-			((Trackpoint *) iter->data)->newsegment = false;
-		} else {
-			;
+	auto iter = this->trackpointsB->end();
+	iter--;
+
+	/* Last point that was previously a first one and had newsegment flag set. Last point should have this flag cleared. */
+	(*iter)->newsegment;
+
+	while (--iter != this->trackpointsB->begin()) {
+		if ((*iter)->newsegment && std::next(iter) != this->trackpointsB->end()) {
+			(*std::next(iter))->newsegment = true;
+			(*iter)->newsegment = false;
 		}
-		iter = iter->prev;
 	}
 
+	assert (iter == this->trackpointsB->begin());
+	/* First segment by convention has newsegment flag set. */
+	(*iter)->newsegment = true;
+
+	delete this->trackpointsB; //REMOVE
 	return;
 }
-
 
 
 
@@ -679,13 +814,16 @@ void Track::reverse(void)
  */
 time_t Track::get_duration(bool segment_gaps)
 {
-	if (!this->trackpoints) {
+	this->trackpointsB = get_list(this->trackpoints); //REMOVE
+
+	if (this->trackpointsB->empty()) {
+		delete this->trackpointsB; //REMOVE
 		return 0;
 	}
 
 	time_t duration = 0;
 
-	// Ensure times are available
+	/* Ensure times are available. */
 	if (this->get_tp_first()->has_timestamp) {
 		// Get trkpt only once - as using vik_track_get_tp_last() iterates whole track each time
 		if (segment_gaps) {
@@ -698,19 +836,20 @@ time_t Track::get_duration(bool segment_gaps)
 			}
 		} else {
 			/* Total within segments. */
-			for (GList * iter = this->trackpoints->next; iter; iter = iter->next) {
-				if (((Trackpoint *) iter->data)->has_timestamp && ((Trackpoint *) iter->prev->data)->has_timestamp
-				    && (!((Trackpoint *) (Trackpoint *) iter->data)->newsegment)) {
+			for (auto iter = std::next(this->trackpointsB->begin()); iter != this->trackpointsB->end(); iter++) {
+				if ((*iter)->has_timestamp
+				    && (*std::prev(iter))->has_timestamp
+				    && !(*iter)->newsegment) {
 
-					duration += ABS (((Trackpoint *) iter->data)->timestamp - ((Trackpoint *) iter->prev->data)->timestamp);
+					duration += ABS ((*iter)->timestamp - (*std::prev(iter))->timestamp);
 				}
 			}
 		}
 	}
 
+	delete this->trackpointsB; //REMOVE
 	return duration;
 }
-
 
 
 
@@ -718,13 +857,18 @@ time_t Track::get_duration(bool segment_gaps)
 /* Code extracted from make_speed_map() and similar functions. */
 double Track::get_duration()
 {
-	if (!this->trackpoints) {
+	this->trackpointsB = get_list(this->trackpoints); //REMOVE
+
+	if (this->trackpointsB->empty()) {
+		delete this->trackpointsB; //REMOVE
 		return 0.0;
 	}
 
-	time_t t1 = ((Trackpoint *) this->trackpoints->data)->timestamp;
-	time_t t2 = ((Trackpoint *) g_list_last(this->trackpoints)->data)->timestamp;
+	time_t t1 = (*this->trackpointsB->begin())->timestamp;
+	time_t t2 = (*std::prev(this->trackpointsB->end()))->timestamp;
 	double duration = t2 - t1;
+
+	delete this->trackpointsB; //REMOVE
 
 	if (!t1 || !t2 || !duration) {
 		return 0.0;
@@ -741,29 +885,33 @@ double Track::get_duration()
 
 
 
-
 double Track::get_average_speed()
 {
-	if (!this->trackpoints) {
+	this->trackpointsB = get_list(this->trackpoints); //REMOVE
+
+	if (this->trackpointsB->empty()) {
+		delete this->trackpointsB; //REMOVE
 		return 0.0;
 	}
 
 	double len = 0.0;
 	uint32_t time = 0;
 
-	for (GList * iter = this->trackpoints->next; iter; iter = iter->next) {
+	for (auto iter = std::next(this->trackpointsB->begin()); iter != this->trackpointsB->end(); iter++) {
 
-		if (((Trackpoint *) iter->data)->has_timestamp && ((Trackpoint *) iter->prev->data)->has_timestamp
-		    && (! ((Trackpoint *) iter->data)->newsegment)) {
+		if ((*iter)->has_timestamp
+		    && (*std::prev(iter))->has_timestamp
+		    && !(*iter)->newsegment) {
 
-			len += vik_coord_diff(&(((Trackpoint *) iter->data)->coord),
-					      &(((Trackpoint *) iter->prev->data)->coord));
-			time += ABS (((Trackpoint *) iter->data)->timestamp - ((Trackpoint *) iter->prev->data)->timestamp);
+			len += vik_coord_diff(&(*iter)->coord,
+					      &(*std::prev(iter))->coord);
+			time += ABS ((*iter)->timestamp - (*std::prev(iter))->timestamp);
 		}
 	}
+
+	delete this->trackpointsB; //REMOVE
 	return (time == 0) ? 0 : ABS(len/time);
 }
-
 
 
 
@@ -780,68 +928,82 @@ double Track::get_average_speed()
  */
 double Track::get_average_speed_moving(int stop_length_seconds)
 {
+	this->trackpointsB = get_list(this->trackpoints); //REMOVE
+
 	if (!this->trackpoints) {
+		delete this->trackpointsB; //REMOVE
 		return 0.0;
 	}
 
 	double len = 0.0;
 	uint32_t time = 0;
 
-	for (GList * iter = this->trackpoints->next; iter; iter = iter->next) {
-		if (((Trackpoint *) iter->data)->has_timestamp
-		    && ((Trackpoint *) iter->prev->data)->has_timestamp
-		    && (!((Trackpoint *) iter->data)->newsegment)) {
+	for (auto iter = std::next(this->trackpointsB->begin()); iter != this->trackpointsB->end(); iter++) {
+		if ((*iter)->has_timestamp
+		    && (*std::prev(iter))->has_timestamp
+		    && !(*iter)->newsegment) {
 
-			if ((((Trackpoint *) iter->data)->timestamp - ((Trackpoint *) iter->prev->data)->timestamp) < stop_length_seconds) {
-				len += vik_coord_diff(&(((Trackpoint *) iter->data)->coord),
-						      &(((Trackpoint *) iter->prev->data)->coord));
+			if (((*iter)->timestamp - (*std::prev(iter))->timestamp) < stop_length_seconds) {
+				len += vik_coord_diff(&(*iter)->coord,
+						      &(*std::prev(iter))->coord);
 
-				time += ABS (((Trackpoint *) iter->data)->timestamp - ((Trackpoint *) iter->prev->data)->timestamp);
+				time += ABS ((*iter)->timestamp - (*std::prev(iter))->timestamp);
 			}
 		}
 	}
+
+	delete this->trackpointsB; //REMOVE
 	return (time == 0) ? 0 : ABS(len / time);
 }
 
 
 
 
-
 double Track::get_max_speed()
 {
-	if (!this->trackpoints) {
+	this->trackpointsB = get_list(this->trackpoints); //REMOVE
+
+	if (this->trackpointsB->empty()) {
 		return 0.0;
 	}
 
 	double maxspeed = 0.0;
 	double speed = 0.0;
 
-	for (GList * iter = this->trackpoints->next; iter; iter = iter->next) {
-		if (((Trackpoint *) iter->data)->has_timestamp
-		    && ((Trackpoint *) iter->prev->data)->has_timestamp
-		    && (! ((Trackpoint *) iter->data)->newsegment)) {
+	for (auto iter = std::next(this->trackpointsB->begin()); iter != this->trackpointsB->end(); iter++) {
+		if ((*iter)->has_timestamp
+		    && (*std::prev(iter))->has_timestamp
+		    && (!(*iter)->newsegment)) {
 
-			speed = vik_coord_diff(&(((Trackpoint *) iter->data)->coord), &(((Trackpoint *) iter->prev->data)->coord))
-				/ ABS (((Trackpoint *) iter->data)->timestamp - ((Trackpoint *) iter->prev->data)->timestamp);
+			speed = vik_coord_diff(&(*iter)->coord, &(*std::prev(iter))->coord)
+				/ ABS ((*iter)->timestamp - (*std::prev(iter))->timestamp);
 
 			if (speed > maxspeed) {
 				maxspeed = speed;
 			}
 		}
 	}
+
+	delete this->trackpointsB; //REMOVE
 	return maxspeed;
 }
 
 
 
 
-
 void Track::convert(VikCoordMode dest_mode)
 {
-	for (GList * iter = this->trackpoints; iter; iter = iter->next) {
-		vik_coord_convert(&(((Trackpoint *) iter->data)->coord), dest_mode);
+	this->trackpointsB = get_list(this->trackpoints); //REMOVE
+
+	for (auto iter = this->trackpointsB->begin(); iter != this->trackpointsB->end(); iter++) {
+		vik_coord_convert(&(*iter)->coord, dest_mode);
 	}
+
+	delete this->trackpointsB; //REMOVE
 }
+
+
+
 
 /* I understood this when I wrote it ... maybe ... Basically it eats up the
  * proper amounts of length on the track and averages elevation over that. */
@@ -974,27 +1136,38 @@ double * Track::make_elevation_map(uint16_t num_chunks)
 
 
 
-
 void Track::get_total_elevation_gain(double *up, double *down)
 {
-	if (this->trackpoints && ((Trackpoint *) this->trackpoints->data)->altitude != VIK_DEFAULT_ALTITUDE) {
+	this->trackpointsB = get_list(this->trackpoints); //REMOVE
+
+	if (this->trackpointsB->empty()) {
+		delete this->trackpointsB;
+		return;
+	}
+
+	auto iter = this->trackpointsB->begin();
+
+	if ((*iter)->altitude == VIK_DEFAULT_ALTITUDE) {
+		*up = VIK_DEFAULT_ALTITUDE;
+		*down = VIK_DEFAULT_ALTITUDE;
+	} else {
 		*up = 0;
 		*down = 0;
 
-		for (GList * iter = this->trackpoints->next; iter; iter = iter->next) {
-			double diff = ((Trackpoint *) iter->data)->altitude - ((Trackpoint *) iter->prev->data)->altitude;
+		iter++;
+
+		for (; iter != this->trackpointsB->end(); iter++) {
+			double diff = (*iter)->altitude - (*std::prev(iter))->altitude;
 			if (diff > 0) {
 				*up += diff;
 			} else {
 				*down -= diff;
 			}
 		}
-	} else {
-		*up = VIK_DEFAULT_ALTITUDE;
-		*down = VIK_DEFAULT_ALTITUDE;
 	}
-}
 
+	delete this->trackpointsB;
+}
 
 
 
@@ -1034,6 +1207,8 @@ double * Track::make_gradient_map(const uint16_t num_chunks)
 
 	return pts;
 }
+
+
 
 
 /* by Alex Foobarian */
@@ -1093,6 +1268,9 @@ double * Track::make_speed_map(const uint16_t num_chunks)
 	return out;
 }
 
+
+
+
 /**
  * Make a distance/time map, heavily based on the vik_track_make_speed_map method
  */
@@ -1149,6 +1327,9 @@ double * Track::make_distance_map(const uint16_t num_chunks)
 	std::free(t);
 	return out;
 }
+
+
+
 
 /**
  * This uses the 'time' based method to make the graph, (which is a simpler compared to the elevation/distance)
@@ -1226,6 +1407,9 @@ double * Track::make_elevation_time_map(const uint16_t num_chunks)
 	return out;
 }
 
+
+
+
 /**
  * Make a speed/distance map
  */
@@ -1283,6 +1467,9 @@ double * Track::make_speed_dist_map(const uint16_t num_chunks)
 	return out;
 }
 
+
+
+
 /**
  * vik_track_get_tp_by_dist:
  * @trk:                  The Track on which to find a Trackpoint
@@ -1337,6 +1524,9 @@ Trackpoint * Track::get_tp_by_dist(double meters_from_start, bool get_next_point
 	return ((Trackpoint *) iter->data);
 }
 
+
+
+
 /* by Alex Foobarian */
 Trackpoint * Track::get_closest_tp_by_percentage_dist(double reldist, double *meters_from_start)
 {
@@ -1388,7 +1578,10 @@ Trackpoint * Track::get_closest_tp_by_percentage_dist(double reldist, double *me
 	return ((Trackpoint *) iter->data);
 }
 
-Trackpoint * Track::get_closest_tp_by_percentage_time (double reltime, time_t *seconds_from_start)
+
+
+
+Trackpoint * Track::get_closest_tp_by_percentage_time(double reltime, time_t *seconds_from_start)
 {
 	if (!this->trackpoints) {
 		return NULL;
@@ -1437,10 +1630,12 @@ Trackpoint * Track::get_closest_tp_by_percentage_time (double reltime, time_t *s
 
 
 
-
 Trackpoint * Track::get_tp_by_max_speed()
 {
-	if (!this->trackpoints) {
+	this->trackpointsB = get_list(this->trackpoints); //REMOVE
+
+	if (this->trackpointsB->empty()) {
+		delete this->trackpointsB; //REMOVE
 		return NULL;
 	}
 
@@ -1448,22 +1643,22 @@ Trackpoint * Track::get_tp_by_max_speed()
 	double maxspeed = 0.0;
 	double speed = 0.0;
 
-	for (GList * iter = this->trackpoints; iter; iter = iter->next) {
-		if (iter->prev) {
-			if (((Trackpoint *) iter->data)->has_timestamp
-			    && ((Trackpoint *) iter->prev->data)->has_timestamp
-			    && (!((Trackpoint *) iter->data)->newsegment)) {
+	for (auto iter = std::next(this->trackpointsB->begin()); iter != this->trackpointsB->end(); iter++) {
+		if ((*iter)->has_timestamp
+		    && (*std::prev(iter))->has_timestamp
+		    && !(*iter)->newsegment) {
 
-				speed = vik_coord_diff(&(((Trackpoint *) iter->data)->coord), &(((Trackpoint *) iter->prev->data)->coord))
-					/ ABS (((Trackpoint *) iter->data)->timestamp - ((Trackpoint *) iter->prev->data)->timestamp);
+			speed = vik_coord_diff(&(*iter)->coord, &(*std::prev(iter))->coord)
+				/ ABS ((*iter)->timestamp - (*std::prev(iter))->timestamp);
 
-				if (speed > maxspeed) {
-					maxspeed = speed;
-					max_speed_tp = ((Trackpoint *) iter->data);
-				}
+			if (speed > maxspeed) {
+				maxspeed = speed;
+				max_speed_tp = *iter;
 			}
 		}
 	}
+
+	delete this->trackpointsB; //REMOVE
 
 	if (!max_speed_tp) {
 		return NULL;
@@ -1475,22 +1670,26 @@ Trackpoint * Track::get_tp_by_max_speed()
 
 
 
-
 Trackpoint * Track::get_tp_by_max_alt()
 {
-	if (!this->trackpoints) {
+	this->trackpointsB = get_list(this->trackpoints); //REMOVE
+
+	if (this->trackpointsB->empty()) {
+		delete this->trackpointsB; //REMOVE
 		return NULL;
 	}
 
 	Trackpoint * max_alt_tp = NULL;
 	double maxalt = -5000.0;
 
-	for (GList * iter = this->trackpoints; iter; iter = iter->next) {
-		if (((Trackpoint *) iter->data)->altitude > maxalt) {
-			maxalt = ((Trackpoint *) iter->data)->altitude;
-			max_alt_tp = ((Trackpoint *) iter->data);
+	for (auto iter = this->trackpointsB->begin(); iter != this->trackpointsB->end(); iter++) {
+		if ((*iter)->altitude > maxalt) {
+			maxalt = (*iter)->altitude;
+			max_alt_tp = *iter;
 		}
 	}
+
+	delete this->trackpointsB; //REMOVE
 
 	if (!max_alt_tp) {
 		return NULL;
@@ -1502,22 +1701,26 @@ Trackpoint * Track::get_tp_by_max_alt()
 
 
 
-
 Trackpoint * Track::get_tp_by_min_alt()
 {
-	if (!this->trackpoints) {
+	this->trackpointsB = get_list(this->trackpoints); //REMOVE
+
+	if (this->trackpointsB->empty()) {
+		delete this->trackpointsB; //REMOVE
 		return NULL;
 	}
 
 	Trackpoint * min_alt_tp = NULL;
 	double minalt = 25000.0;
 
-	for (GList * iter = this->trackpoints; iter; iter = iter->next) {
-		if (((Trackpoint *) iter->data)->altitude < minalt) {
-			minalt = ((Trackpoint *) iter->data)->altitude;
-			min_alt_tp = ((Trackpoint *) iter->data);
+	for (auto iter = this->trackpointsB->begin(); iter != this->trackpointsB->end(); iter++) {
+		if ((*iter)->altitude < minalt) {
+			minalt = (*iter)->altitude;
+			min_alt_tp = *iter;
 		}
 	}
+
+	delete this->trackpointsB; //REMOVE
 
 	if (!min_alt_tp) {
 		return NULL;
@@ -1529,73 +1732,98 @@ Trackpoint * Track::get_tp_by_min_alt()
 
 
 
-
 Trackpoint * Track::get_tp_first()
 {
-	if (!this->trackpoints) {
+	this->trackpointsB = get_list(this->trackpoints); //REMOVE
+
+	if (this->trackpointsB->empty()) {
+		delete this->trackpointsB; //REMOVE
 		return NULL;
 	}
 
-	return (Trackpoint *) g_list_first(this->trackpoints)->data;
+	return *this->trackpointsB->begin();
 }
-
 
 
 
 
 Trackpoint * Track::get_tp_last()
 {
-	if (!this->trackpoints) {
+	this->trackpointsB = get_list(this->trackpoints); //REMOVE
+
+	if (this->trackpointsB->empty()) {
+		delete this->trackpointsB; //REMOVE
 		return NULL;
 	}
 
-	return (Trackpoint *) g_list_last(this->trackpoints)->data;
+	return *std::prev(this->trackpointsB->end());
 }
-
 
 
 
 
 Trackpoint * Track::get_tp_prev(Trackpoint * tp)
 {
-	if (!this->trackpoints) {
+	this->trackpointsB = get_list(this->trackpoints); //REMOVE
+
+	if (this->trackpointsB->empty()) {
+		delete this->trackpointsB; //REMOVE
 		return NULL;
 	}
 
 	Trackpoint * tp_prev = NULL;
 
-	for (GList * iter = this->trackpoints; iter; iter = iter->next) {
-		if (iter->prev) {
-			if (((Trackpoint *) iter->data) == tp) {
-				tp_prev = ((Trackpoint *) iter->prev->data);
-				break;
-			}
+	for (auto iter = std::prev(this->trackpointsB->begin()); iter != this->trackpointsB->end(); iter++) {
+		if (*iter == tp) {
+			tp_prev = *std::prev(iter);
+			break;
 		}
 	}
+
+	delete this->trackpointsB; //REMOVE
 
 	return tp_prev;
 }
 
+
+
+
 bool Track::get_minmax_alt(double * min_alt, double * max_alt)
 {
+	this->trackpointsB = get_list(this->trackpoints); //REMOVE
+
 	*min_alt = 25000;
 	*max_alt = -5000;
-	if (this->trackpoints && this->trackpoints->data && (((Trackpoint *) this->trackpoints->data)->altitude != VIK_DEFAULT_ALTITUDE)) {
-		double tmp_alt;
-		for (GList * iter = this->trackpoints->next; iter; iter = iter->next) {
-			tmp_alt = ((Trackpoint *) iter->data)->altitude;
-			if (tmp_alt > *max_alt) {
-				*max_alt = tmp_alt;
-			}
 
-			if (tmp_alt < *min_alt) {
-				*min_alt = tmp_alt;
-			}
-		}
-		return true;
+	if (this->trackpointsB->empty()) {
+		delete this->trackpointsB; //REMOVE
+		return false;
 	}
-	return false;
+
+	auto iter = this->trackpointsB->begin();
+	if ((*iter)->altitude == VIK_DEFAULT_ALTITUDE) {
+		delete this->trackpointsB; //REMOVE
+		return false;
+	}
+	iter++;
+
+	double tmp_alt;
+	for (; iter != this->trackpointsB->end(); iter++) {
+		tmp_alt = (*iter)->altitude;
+		if (tmp_alt > *max_alt) {
+			*max_alt = tmp_alt;
+		}
+
+		if (tmp_alt < *min_alt) {
+			*min_alt = tmp_alt;
+		}
+	}
+	delete this->trackpointsB; //REMOVE
+	return true;
 }
+
+
+
 
 void Track::marshall(uint8_t **data, size_t *datalen)
 {
@@ -1634,6 +1862,9 @@ void Track::marshall(uint8_t **data, size_t *datalen)
 	*datalen = b->len;
 	g_byte_array_free(b, false);
 }
+
+
+
 
 /*
  * Take a byte array and convert it into a Track
@@ -1687,6 +1918,9 @@ Track * Track::unmarshall(uint8_t *data, size_t datalen)
 	return new_trk;
 }
 
+
+
+
 /**
  * (Re)Calculate the bounds of the given track,
  *  updating the track's bounds data.
@@ -1694,20 +1928,22 @@ Track * Track::unmarshall(uint8_t *data, size_t datalen)
  */
 void Track::calculate_bounds()
 {
+	this->trackpointsB = get_list(this->trackpoints); //REMOVE
+
 	struct LatLon topleft, bottomright, ll;
 
 	/* Set bounds to first point. */
-	GList * iter = this->trackpoints;
-	if (iter) {
-		vik_coord_to_latlon (&(((Trackpoint *) iter->data)->coord), &topleft);
-		vik_coord_to_latlon (&(((Trackpoint *) iter->data)->coord), &bottomright);
+	auto iter = this->trackpointsB->begin();
+	if (iter != this->trackpointsB->end()) {
+		vik_coord_to_latlon(&(*iter)->coord, &topleft);
+		vik_coord_to_latlon(&(*iter)->coord, &bottomright);
 	}
 
-	for (; iter; iter = iter->next) {
+	for (; iter != this->trackpointsB->end(); iter++) {
 
 		/* See if this trackpoint increases the track bounds. */
 
-		vik_coord_to_latlon(&(((Trackpoint *) iter->data)->coord), &ll);
+		vik_coord_to_latlon(&(*iter)->coord, &ll);
 
 		if (ll.lat > topleft.lat) {
 			topleft.lat = ll.lat;
@@ -1732,7 +1968,12 @@ void Track::calculate_bounds()
 	bbox.east = bottomright.lon;
 	bbox.south = bottomright.lat;
 	bbox.west = topleft.lon;
+
+	delete this->trackpointsB; //REMOVE
 }
+
+
+
 
 /**
  * vik_track_anonymize_times:
@@ -1741,18 +1982,26 @@ void Track::calculate_bounds()
  */
 void Track::anonymize_times()
 {
+	this->trackpointsB = get_list(this->trackpoints); //REMOVE
+
+	if (this->trackpointsB->empty()) {
+		delete this->trackpointsB; //REMOVE
+		return;
+	}
+
 	GTimeVal gtv;
 	// Check result just to please Coverity - even though it shouldn't fail as it's a hard coded value here!
 	if (!g_time_val_from_iso8601 ("1901-01-01T00:00:00Z", &gtv)) {
 		fprintf(stderr, "CRITICAL: Calendar time value failure\n");
+		delete this->trackpointsB; //REMOVE
 		return;
 	}
 
 	time_t anon_timestamp = gtv.tv_sec;
 	time_t offset = 0;
 
-	for (GList * iter = this->trackpoints; iter; iter = iter->next) {
-		Trackpoint * tp = (Trackpoint *) (iter->data);
+	for (auto iter = this->trackpointsB->begin(); iter != this->trackpointsB->end(); iter++) {
+		Trackpoint * tp = *iter;
 		if (tp->has_timestamp) {
 			// Calculate an offset in time using the first available timestamp
 			if (offset == 0) {
@@ -1764,7 +2013,12 @@ void Track::anonymize_times()
 			tp->timestamp = tp->timestamp - offset;
 		}
 	}
+
+	delete this->trackpointsB; //REMOVE
 }
+
+
+
 
 /**
  * vik_track_interpolate_times:
@@ -1777,19 +2031,26 @@ void Track::anonymize_times()
  */
 void Track::interpolate_times()
 {
-	GList * iter = this->trackpoints;
-	Trackpoint * tp = (Trackpoint *) (iter->data);
+	this->trackpointsB = get_list(this->trackpoints); //REMOVE
+
+	if (this->trackpointsB->empty()) {
+		delete this->trackpointsB; //REMOVE
+		return;
+	}
+
+	auto iter = this->trackpointsB->begin();
+	Trackpoint * tp = *iter;
 	if (!tp->has_timestamp) {
+		delete this->trackpointsB; //REMOVE
 		return;
 	}
 
 	time_t tsfirst = tp->timestamp;
 
 	/* Find the end of the track and the last timestamp. */
-	while (iter->next) {
-		iter = iter->next;
-	}
-	tp = ((Trackpoint *) iter->data);
+	iter = prev(this->trackpointsB->end());
+
+	tp = *iter;
 	if (tp->has_timestamp) {
 		time_t tsdiff = tp->timestamp - tsfirst;
 
@@ -1797,21 +2058,27 @@ void Track::interpolate_times()
 		double cur_dist = 0.0;
 
 		if (tr_dist > 0) {
-			iter = this->trackpoints;
+			iter = this->trackpointsB->begin();
 			/* Apply the calculated timestamp to all trackpoints except the first and last ones. */
-			while (iter->next && iter->next->next) {
-				iter = iter->next;
-				tp = ((Trackpoint *) iter->data);
-				cur_dist += vik_coord_diff(&(tp->coord), &(((Trackpoint *) iter->prev->data)->coord));
+			while (std::next(iter) != this->trackpointsB->end()
+			       && std::next(std::next(iter)) != this->trackpointsB->end()) {
 
-				tp->timestamp = (cur_dist / tr_dist) * tsdiff + tsfirst;
-				tp->has_timestamp = true;
+				iter++;
+				cur_dist += vik_coord_diff(&(*iter)->coord, &(*std::prev(iter))->coord);
+
+				(*iter)->timestamp = (cur_dist / tr_dist) * tsdiff + tsfirst;
+				(*iter)->has_timestamp = true;
 			}
 			/* Some points may now have the same time so remove them. */
 			this->remove_same_time_points();
 		}
 	}
+
+	delete this->trackpointsB; //REMOVE
 }
+
+
+
 
 /**
  * vik_track_apply_dem_data:
@@ -1821,23 +2088,30 @@ void Track::interpolate_times()
  */
 unsigned long Track::apply_dem_data(bool skip_existing)
 {
+	this->trackpointsB = get_list(this->trackpoints); //REMOVE
+
 	unsigned long num = 0;
 
-	for (GList * iter = this->trackpoints; iter; iter = iter->next) {
+	for (auto iter = this->trackpointsB->begin(); iter != this->trackpointsB->end(); iter++) {
 		/* Don't apply if the point already has a value and the overwrite is off. */
-		if (!(skip_existing && ((Trackpoint *) iter->data)->altitude != VIK_DEFAULT_ALTITUDE)) {
+		if (!(skip_existing && (*iter)->altitude != VIK_DEFAULT_ALTITUDE)) {
 			/* TODO: of the 4 possible choices we have for choosing an
 			   elevation (trackpoint in between samples), choose the one
 			   with the least elevation change as the last. */
-			int16_t elev = dem_cache_get_elev_by_coord (&(((Trackpoint *) iter->data)->coord), VIK_DEM_INTERPOL_BEST);
+			int16_t elev = dem_cache_get_elev_by_coord(&(*iter)->coord, VIK_DEM_INTERPOL_BEST);
 			if (elev != VIK_DEM_INVALID_ELEVATION) {
-				((Trackpoint *) iter->data)->altitude = elev;
+				(*iter)->altitude = elev;
 				num++;
 			}
 		}
 	}
+
+	delete this->trackpointsB; //REMOVE
 	return num;
 }
+
+
+
 
 /**
  * vik_track_apply_dem_data_last_trackpoint:
@@ -1845,14 +2119,24 @@ unsigned long Track::apply_dem_data(bool skip_existing)
  */
 void Track::apply_dem_data_last_trackpoint()
 {
-	if (this->trackpoints) {
-		/* As in vik_track_apply_dem_data above - use 'best' interpolation method */
-		int16_t elev = dem_cache_get_elev_by_coord (&(((Trackpoint *) g_list_last(this->trackpoints)->data)->coord), VIK_DEM_INTERPOL_BEST);
-		if (elev != VIK_DEM_INVALID_ELEVATION) {
-			((Trackpoint *) g_list_last(this->trackpoints)->data)->altitude = elev;
-		}
+	this->trackpointsB = get_list(this->trackpoints); //REMOVE
+
+	if (this->trackpointsB->empty()) {
+		delete this->trackpointsB; //REMOVE
+		return;
 	}
+
+	/* As in vik_track_apply_dem_data above - use 'best' interpolation method */
+	auto last = std::prev(this->trackpointsB->end());
+	int16_t elev = dem_cache_get_elev_by_coord(&(*last)->coord, VIK_DEM_INTERPOL_BEST);
+	if (elev != VIK_DEM_INVALID_ELEVATION) {
+		(*last)->altitude = elev;
+	}
+
+	delete this->trackpointsB; //REMOVE
 }
+
+
 
 
 /**
@@ -1860,22 +2144,25 @@ void Track::apply_dem_data_last_trackpoint()
  *
  * Apply elevation smoothing over range of trackpoints between the list start and end points
  */
-void Track::smoothie(GList * start, GList * stop, double elev1, double elev2, unsigned int points)
+void Track::smoothie(std::list<Trackpoint *>::iterator start, std::list<Trackpoint *>::iterator stop, double elev1, double elev2, unsigned int points)
 {
 	/* If was really clever could try and weigh interpolation according to the distance between trackpoints somehow.
 	   Instead a simple average interpolation for the number of points given. */
-	double change = (elev2 - elev1)/(points+1);
+	double change = (elev2 - elev1) / (points + 1);
 	int count = 1;
-	GList *iter = start;
-	while (iter != stop && iter) {
-		Trackpoint * tp = (Trackpoint *) (iter->data);
+	auto iter = start;
+	while (iter != stop) {
+		Trackpoint * tp = *iter;
 
 		tp->altitude = elev1 + (change * count);
 
 		count++;
-		iter = iter->next;
+		iter++;
 	}
 }
+
+
+
 
 /**
  * vik_track_smooth_missing_elevation_data:
@@ -1891,15 +2178,17 @@ void Track::smoothie(GList * start, GList * stop, double elev1, double elev2, un
  */
 unsigned long Track::smooth_missing_elevation_data(bool flat)
 {
+	this->trackpointsB = get_list(this->trackpoints); //REMOVE
+
 	unsigned long num = 0;
 	double elev = VIK_DEFAULT_ALTITUDE;
 
 	Trackpoint * tp_missing = NULL;
-	GList *iter_first = NULL;
+	auto iter_first = this->trackpointsB->end();;
 	unsigned int points = 0;
 
-	for (GList * iter = this->trackpoints; iter; iter = iter->next) {
-		Trackpoint * tp = (Trackpoint *) (iter->data);
+	for (auto iter = this->trackpointsB->begin(); iter != this->trackpointsB->end(); iter++) {
+		Trackpoint * tp = *iter;
 
 		if (VIK_DEFAULT_ALTITUDE == tp->altitude) {
 			if (flat) {
@@ -1924,8 +2213,8 @@ unsigned long Track::smooth_missing_elevation_data(bool flat)
 			// If this marks the end of a section of altitude-less points
 			//  then apply smoothing for that section of points
 			if (points > 0 && elev != VIK_DEFAULT_ALTITUDE) {
-				if (!flat) {
-					smoothie(iter_first, iter, elev, tp->altitude, points);
+				if (!flat && iter_first != this->trackpointsB->end()) {
+					this->smoothie(iter_first, iter, elev, tp->altitude, points);
 					num = num + points;
 				}
 			}
@@ -1939,8 +2228,12 @@ unsigned long Track::smooth_missing_elevation_data(bool flat)
 		}
 	}
 
+	delete this->trackpointsB; //REMOVE
 	return num;
 }
+
+
+
 
 /**
  * vik_track_steal_and_append_trackpoints:
@@ -1959,6 +2252,9 @@ void Track::steal_and_append_trackpoints(Track * from)
 	// Trackpoints updated - so update the bounds
 	this->calculate_bounds();
 }
+
+
+
 
 /**
  * vik_track_cut_back_to_double_point:
@@ -2010,6 +2306,9 @@ VikCoord * Track::cut_back_to_double_point()
 	return rv;
 }
 
+
+
+
 /**
  * Function to compare two tracks by their first timestamp
  **/
@@ -2052,9 +2351,40 @@ int Track::compare_timestamp(const void * x, const void * y)
 
 
 
-
 void Track::delete_track(Track * trk)
 {
 	trk->free();
 	return;
+}
+
+
+
+
+std::list<Trackpoint *> * get_list(GList * trkpts)
+{
+	if (trkpts == NULL) {
+		return NULL;
+	}
+
+	std::list<Trackpoint *> * list = new std::list<Trackpoint *>;
+	for (GList * iter = trkpts; iter; iter = iter->next) {
+		list->push_back((Trackpoint *) iter->data);
+	}
+	return list;
+}
+
+
+
+
+GList * get_glist(std::list<Trackpoint *> * trkpts)
+{
+	if (trkpts == NULL) {
+		return NULL;
+	}
+
+	GList * list = NULL;
+	for (auto iter = trkpts->begin(); iter != trkpts->end(); iter++) {
+		list = g_list_append(list, *iter);
+	}
+	return list;
 }
