@@ -291,7 +291,7 @@ static void osm_traces_upload_thread(OsmTracesInfo *oti, void * threaddata)
 	if (oti->trk != NULL) {
 		/* Upload only the selected track */
 		if (oti->anonymize_times) {
-			Track * trk = new Track(*oti->trk, true);
+			Track * trk = new Track(*oti->trk);
 			trk->anonymize_times();
 			filename = a_gpx_write_track_tmp_file(trk, &options);
 			trk->free();
