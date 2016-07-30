@@ -166,6 +166,8 @@ namespace SlavGPS {
 
 
 
+		bool create_new_tracks(Track * orig, GList * tracks_data);
+
 		void add_track(Track * trk, char const * name);
 		void add_route(Track * trk, char const * name);
 		void add_waypoint(Waypoint * wp, char const * name);
@@ -416,8 +418,8 @@ namespace SlavGPS {
 		bool waypoint_rightclick;
 
 		/* track editing tool */
-		GList * current_tpl;       /* List of trackpoints, to which belongs currently selected trackpoint (tp)?. The list would be a member of current track current_tp_track. */
-		Track * current_tp_track;  /* Track, to which belongs currently selected trackpoint (tp)? */
+		GList * current_tpl;       /* List of trackpoints, to which belongs currently selected trackpoint (tp)?. The list would be a member of current track selected_track. */
+		Track * selected_track;  /* Track, to which belongs currently selected trackpoint (tp)? */
 		sg_uid_t current_tp_uid;   /* uid of track, to which belongs currently selected trackpoint (tp)? */
 		VikTrwLayerTpwin *tpwin;
 

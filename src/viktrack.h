@@ -110,7 +110,8 @@ namespace SlavGPS {
 	public:
 
 		Track();
-		Track(const Track & trk, bool copy_points);
+		Track(const Track & from);
+		Track(const Track & from, GList * new_trackpoints);
 
 		void set_defaults();
 		void set_name(const char *name);
@@ -120,6 +121,9 @@ namespace SlavGPS {
 		void set_type(const char *type);
 		void ref();
 		void free();
+
+		bool empty();
+		void sort(GCompareFunc compare_func);
 
 		void set_comment_no_copy(char * comment);
 
@@ -186,6 +190,13 @@ namespace SlavGPS {
 		void clear_property_dialog();
 
 		static void delete_track(Track *);
+		void erase_trackpoint(GList * iter);
+		GList * delete_trackpoint(GList * iter);
+		void insert(Trackpoint * tp_at, Trackpoint * tp_new, bool before);
+
+		GList * get_last();
+		GList * get_rectangles(LatLon * wh);
+		VikCoordMode get_coord_mode();
 
 
 		GList *trackpoints;

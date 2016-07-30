@@ -238,7 +238,7 @@ void Track::free()
  *
  * Returns: the copied Track
  */
-Track::Track(const Track & from, const bool copy_points)
+Track::Track(const Track & from)
 {
 	this->trackpoints = NULL;
 	visible = false;
@@ -264,21 +264,32 @@ Track::Track(const Track & from, const bool copy_points)
 	this->has_color = from.has_color;
 	this->color = from.color;
 	this->bbox = from.bbox;
-	if (copy_points) {
 
-		for (GList * iter = from.trackpoints; iter; iter = iter->next) {
-			Trackpoint * tp = (Trackpoint *) iter->data;
-			Trackpoint * new_tp = new Trackpoint(*tp);
-			this->trackpoints = g_list_prepend(this->trackpoints, new_tp);
-		}
-		if (this->trackpoints) {
-			this->trackpoints = g_list_reverse(this->trackpoints);
-		}
+
+	/* Copy points. */
+	for (GList * iter = from.trackpoints; iter; iter = iter->next) {
+		Trackpoint * tp = (Trackpoint *) iter->data;
+		Trackpoint * new_tp = new Trackpoint(*tp);
+		this->trackpoints = g_list_prepend(this->trackpoints, new_tp);
 	}
+	if (this->trackpoints) {
+		this->trackpoints = g_list_reverse(this->trackpoints);
+	}
+
+
 	this->set_name(from.name);
 	this->set_comment(from.comment);
 	this->set_description(from.description);
 	this->set_source(from.source);
+}
+
+
+
+
+
+Track::Track(const Track & from, GList * new_trackpoints) : Track(from)
+{
+	this->trackpoints = new_trackpoints;
 }
 
 
@@ -713,7 +724,7 @@ Track ** Track::split_into_segments(unsigned int *ret_len)
 	}
 
 	Track ** rv = (Track **) malloc(segs * sizeof (Track *));
-	Track * trk_copy = new Track(*this, true);
+	Track * trk_copy = new Track(*this);
 	rv[0] = trk_copy;
 	GList *iter = trk_copy->trackpoints;
 
@@ -722,8 +733,7 @@ Track ** Track::split_into_segments(unsigned int *ret_len)
 		if (((Trackpoint *) iter->data)->newsegment) {
 			iter->prev->next = NULL;
 			iter->prev = NULL;
-			rv[i] = new Track(*trk_copy, false);
-			rv[i]->trackpoints = iter;
+			rv[i] = new Track(*trk_copy, iter);
 
 			rv[i]->calculate_bounds();
 
@@ -2387,4 +2397,124 @@ GList * get_glist(std::list<Trackpoint *> * trkpts)
 		list = g_list_append(list, *iter);
 	}
 	return list;
+}
+
+
+
+
+bool Track::empty()
+{
+	return this->trackpoints == NULL;
+}
+
+
+
+
+void Track::sort(GCompareFunc compare_func)
+{
+	this->trackpoints = g_list_sort(this->trackpoints, compare_func);
+}
+
+
+
+
+GList * Track::delete_trackpoint(GList * iter)
+{
+	GList * new_iter;
+
+	if ((new_iter = iter->next) || (new_iter = iter->prev)) {
+		if (((Trackpoint *) iter->data)->newsegment && iter->next) {
+			((Trackpoint *) iter->next->data)->newsegment = true; /* don't concat segments on del */
+		}
+
+		/* Delete current trackpoint. */
+		this->erase_trackpoint(iter);
+		return new_iter;
+	} else {
+		/* Delete current trackpoint. */
+		this->erase_trackpoint(iter);
+		return NULL;
+	}
+}
+
+
+
+
+void Track::erase_trackpoint(GList * iter)
+{
+	delete (Trackpoint *) iter->data;
+	this->trackpoints = g_list_delete_link(this->trackpoints, iter);
+}
+
+
+
+
+void Track::insert(Trackpoint * tp_at, Trackpoint * tp_new, bool before)
+{
+	int index =  g_list_index(this->trackpoints, tp_at);
+	if (index > -1) {
+		if (!before) {
+			index = index + 1;
+		}
+		// NB no recalculation of bounds since it is inserted between points
+		this->trackpoints = g_list_insert(this->trackpoints, tp_new, index);
+	}
+}
+
+
+
+GList * Track::get_last()
+{
+	return g_list_last(this->trackpoints);
+}
+
+
+
+
+GList * Track::get_rectangles(LatLon * wh)
+{
+	GList *rectangles = NULL;
+
+	bool new_map = true;
+	VikCoord tl, br;
+	Rect *rect;
+	GList *iter = this->trackpoints;
+	while (iter) {
+		VikCoord * cur_coord = &(((Trackpoint *) iter->data))->coord;
+		if (new_map) {
+			vik_coord_set_area(cur_coord, wh, &tl, &br);
+			Rect * rect = (Rect *) malloc(sizeof (Rect));
+			rect->tl = tl;
+			rect->br = br;
+			rect->center = *cur_coord;
+			rectangles = g_list_prepend(rectangles, rect);
+			new_map = false;
+			iter = iter->next;
+			continue;
+		}
+		bool found = false;
+		for (GList * rect_iter = rectangles; rect_iter; rect_iter = rect_iter->next) {
+			if (vik_coord_inside(cur_coord, &GLRECT(rect_iter)->tl, &GLRECT(rect_iter)->br)) {
+				found = true;
+				break;
+			}
+		}
+		if (found) {
+			iter = iter->next;
+		} else {
+			new_map = true;
+		}
+	}
+
+	return rectangles;
+}
+
+
+
+
+VikCoordMode Track::get_coord_mode()
+{
+	assert (this->trackpoints);
+
+	return ((Trackpoint *) this->trackpoints->data)->coord.mode;
 }
