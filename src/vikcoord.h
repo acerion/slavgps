@@ -47,6 +47,14 @@ typedef struct {
 
 typedef VikCoord Coord;
 
+typedef struct _Rect {
+	VikCoord tl;
+	VikCoord br;
+	VikCoord center;
+} Rect;
+#define GLRECT(iter) ((Rect *)((iter)->data))
+
+
 /* notice we can cast to either UTM or LatLon */
 /* possible more modes to come? xy? we'll leave that as an option */
 
