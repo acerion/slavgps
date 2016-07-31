@@ -514,7 +514,7 @@ static char * vik_routing_web_engine_get_url_for_track(VikRoutingEngine * self, 
 	}
 
 	/* Init temporary storage */
-	size_t len = 1 + g_list_length(trk->trackpoints) + 1; /* base + trackpoints + NULL */
+	size_t len = 1 + trk->trackpointsB->size() + 1; /* base + trackpoints + NULL */
 	urlParts = (char **) malloc(sizeof(char*)*len);
 	urlParts[0] = g_strdup(priv->url_base);
 	urlParts[len-1] = NULL;
@@ -525,17 +525,22 @@ static char * vik_routing_web_engine_get_url_for_track(VikRoutingEngine * self, 
 	ctx.nb = 1; /* First cell available, previous used for base URL */
 
 	/* Append all trackpoints to URL */
-	g_list_foreach(trk->trackpoints, _append_stringified_coords, &ctx);
+	for (auto iter = trk->trackpointsB->begin(); iter != trk->trackpointsB->end(); iter++) {
+		_append_stringified_coords(*iter, &ctx);
+	}
 
 	/* Override first and last positions with associated formats */
 	struct LatLon position;
 	free(urlParts[1]);
-	Trackpoint * tp = (Trackpoint *) g_list_first(trk->trackpoints)->data;
-	vik_coord_to_latlon(&(tp->coord), &position);
+
+	Trackpoint * tp = *trk->trackpointsB->begin();
+	vik_coord_to_latlon(&tp->coord, &position);
 	urlParts[1] = substitute_latlon(priv->url_start_ll_fmt, position);
+
 	free(urlParts[len-2]);
-	tp = (Trackpoint *) g_list_last(trk->trackpoints)->data;
-	vik_coord_to_latlon (&(tp->coord), &position);
+
+	tp = *std::prev(trk->trackpointsB->end());
+	vik_coord_to_latlon(&tp->coord, &position);
 	urlParts[len-2] = substitute_latlon(priv->url_stop_ll_fmt, position);
 
 	/* Concat */

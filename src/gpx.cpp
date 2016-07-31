@@ -293,7 +293,7 @@ static void gpx_start(LayerTRW * trw, char const * el, char const * *attr)
 				c_tp->newsegment = true;
 				f_tr_newseg = false;
 			}
-			c_tr->trackpoints = g_list_append(c_tr->trackpoints, c_tp);
+			c_tr->trackpointsB->push_back(c_tp);
 		}
 		break;
 
@@ -1037,7 +1037,6 @@ static void gpx_write_track(Track * trk, GpxWritingContext * context)
 
 	FILE * f = context->file;
 	char * tmp;
-	bool first_tp_is_newsegment = false; /* must temporarily make it not so, but we want to restore state. not that it matters. */
 
 	// Sanity clause
 	if (trk->name) {
@@ -1083,11 +1082,17 @@ static void gpx_write_track(Track * trk, GpxWritingContext * context)
 		fprintf(f, "  <trkseg>\n");
 	}
 
-	if (trk->trackpoints && trk->trackpoints->data) {
-		first_tp_is_newsegment = ((Trackpoint *) trk->trackpoints->data)->newsegment;
-		((Trackpoint *) trk->trackpoints->data)->newsegment = false; /* so we won't write </trkseg><trkseg> already */
-		g_list_foreach (trk->trackpoints, (GFunc) gpx_write_trackpoint, context);
-		((Trackpoint *) trk->trackpoints->data)->newsegment = first_tp_is_newsegment; /* restore state */
+	if (!trk->empty()) {
+
+		auto first = trk->trackpointsB->begin();
+		bool first_tp_is_newsegment = (*first)->newsegment;
+		(*first)->newsegment = false; /* so we won't write </trkseg><trkseg> already */
+
+		for (auto iter = trk->trackpointsB->begin(); iter != trk->trackpointsB->end(); iter++) {
+			gpx_write_trackpoint(*iter, context);
+		}
+
+		(*first)->newsegment = first_tp_is_newsegment; /* restore state */
 	}
 
 	/* NB apparently no such thing as a rteseg! */

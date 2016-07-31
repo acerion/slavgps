@@ -500,11 +500,10 @@ static double tp_percentage_by_time(Track * trk, Trackpoint * tp)
 	if (tp == NULL) {
 		return pc;
 	}
-	time_t t_start, t_end, t_total;
-	t_start = ((Trackpoint *) trk->trackpoints->data)->timestamp;
-	t_end = ((Trackpoint *) g_list_last(trk->trackpoints)->data)->timestamp;
-	t_total = t_end - t_start;
-	pc = (double)(tp->timestamp - t_start)/t_total;
+	time_t t_start = (*trk->trackpointsB->begin())->timestamp;
+	time_t t_end = (*std::prev(trk->trackpointsB->end()))->timestamp;
+	time_t t_total = t_end - t_start;
+	pc = (double) (tp->timestamp - t_start) / t_total;
 	return pc;
 }
 
@@ -518,17 +517,18 @@ static double tp_percentage_by_distance(Track * trk, Trackpoint * tp, double tra
 		return pc;
 	}
 	double dist = 0.0;
-	GList *iter;
-	for (iter = trk->trackpoints->next; iter != NULL; iter = iter->next) {
-		dist += vik_coord_diff(&(((Trackpoint *) iter->data)->coord),
-				       &(((Trackpoint *) iter->prev->data)->coord));
+
+	auto iter = std::next(trk->trackpointsB->begin());
+	for (; iter != trk->trackpointsB->end(); iter++) {
+		dist += vik_coord_diff(&(*iter)->coord,
+				       &(*std::prev(iter))->coord);
 		/* Assuming trackpoint is not a copy */
-		if (tp == ((Trackpoint *) iter->data)) {
+		if (tp == *iter) {
 			break;
 		}
 	}
-	if (iter != NULL) {
-		pc = dist/track_length;
+	if (iter != trk->trackpointsB->end()) {
+		pc = dist / track_length;
 	}
 	return pc;
 }
@@ -1261,7 +1261,6 @@ static void draw_dem_alt_speed_dist(Track * trk,
 				    bool do_dem,
 				    bool do_speed)
 {
-	GList * iter;
 	double max_speed = 0;
 	double total_length = trk->get_length_including_gaps();
 
@@ -1274,13 +1273,13 @@ static void draw_dem_alt_speed_dist(Track * trk,
 	int h2 = height + MARGIN_Y; // Adjust height for x axis labelling offset
 	int achunk = chunksa[cia]*LINES;
 
-	for (iter = trk->trackpoints->next; iter; iter = iter->next) {
+	for (auto iter = std::next(trk->trackpointsB->begin()); iter != trk->trackpointsB->end(); iter++) {
 		int x;
-		dist += vik_coord_diff(&(((Trackpoint *) iter->data)->coord),
-				       &(((Trackpoint *) iter->prev->data)->coord));
-		x = (width * dist)/total_length + margin;
+		dist += vik_coord_diff(&(*iter)->coord,
+				       &(*std::prev(iter))->coord);
+		x = (width * dist) / total_length + margin;
 		if (do_dem) {
-			int16_t elev = dem_cache_get_elev_by_coord(&(((Trackpoint *) iter->data)->coord), VIK_DEM_INTERPOL_BEST);
+			int16_t elev = dem_cache_get_elev_by_coord(&(*iter)->coord, VIK_DEM_INTERPOL_BEST);
 			if (elev != VIK_DEM_INVALID_ELEVATION) {
 				// Convert into height units
 				if (a_vik_get_units_height() == VIK_UNITS_HEIGHT_FEET) {
@@ -1293,14 +1292,14 @@ static void draw_dem_alt_speed_dist(Track * trk,
 
 				// consider chunk size
 				int y_alt = h2 - ((height * elev)/achunk);
-				gdk_draw_rectangle(GDK_DRAWABLE(pix), alt_gc, true, x-2, y_alt-2, 4, 4);
+				gdk_draw_rectangle(GDK_DRAWABLE (pix), alt_gc, true, x - 2, y_alt - 2, 4, 4);
 			}
 		}
 		if (do_speed) {
 			// This is just a speed indicator - no actual values can be inferred by user
-			if (!isnan(((Trackpoint *) iter->data)->speed)) {
-				int y_speed = h2 - (height * ((Trackpoint *) iter->data)->speed)/max_speed;
-				gdk_draw_rectangle(GDK_DRAWABLE(pix), speed_gc, true, x-2, y_speed-2, 4, 4);
+			if (!isnan((*iter)->speed)) {
+				int y_speed = h2 - (height * (*iter)->speed) / max_speed;
+				gdk_draw_rectangle(GDK_DRAWABLE (pix), speed_gc, true, x - 2, y_speed - 2, 4, 4);
 			}
 		}
 	}
@@ -1627,7 +1626,6 @@ static void draw_speed_dist(Track * trk,
 			    int margin,
 			    bool do_speed)
 {
-	GList * iter;
 	double max_speed = 0;
 	double total_length = trk->get_length_including_gaps();
 
@@ -1637,16 +1635,16 @@ static void draw_speed_dist(Track * trk,
 	}
 
 	double dist = 0;
-	for (iter = trk->trackpoints->next; iter; iter = iter->next) {
+	for (auto iter = std::next(trk->trackpointsB->begin()); iter != trk->trackpointsB->end(); iter++) {
 		int x;
-		dist += vik_coord_diff(&(((Trackpoint *) iter->data)->coord),
-				       &(((Trackpoint *) iter->prev->data)->coord));
-		x = (width * dist)/total_length + MARGIN_X;
+		dist += vik_coord_diff(&(*iter)->coord,
+				       &(*std::prev(iter))->coord);
+		x = (width * dist) / total_length + MARGIN_X;
 		if (do_speed) {
 			// This is just a speed indicator - no actual values can be inferred by user
-			if (!isnan(((Trackpoint *) iter->data)->speed)) {
-				int y_speed = height - (height * ((Trackpoint *) iter->data)->speed)/max_speed;
-				gdk_draw_rectangle(GDK_DRAWABLE(pix), speed_gc, true, x-2, y_speed-2, 4, 4);
+			if (!isnan((*iter)->speed)) {
+				int y_speed = height - (height * (*iter)->speed) / max_speed;
+				gdk_draw_rectangle(GDK_DRAWABLE(pix), speed_gc, true, x - 2, y_speed - 2, 4, 4);
 			}
 		}
 	}
@@ -1856,14 +1854,15 @@ static void draw_vt(GtkWidget * image, Track * trk, PropWidgets * widgets)
 		gdk_color_parse("red", &color);
 		gdk_gc_set_rgb_fg_color(gps_speed_gc, &color);
 
-		time_t beg_time = ((Trackpoint *) trk->trackpoints->data)->timestamp;
-		time_t dur = ((Trackpoint *) g_list_last(trk->trackpoints)->data)->timestamp - beg_time;
+		time_t beg_time = (*trk->trackpointsB->begin())->timestamp;
+		time_t dur = (*std::prev(trk->trackpointsB->end()))->timestamp - beg_time;
 
-		GList *iter;
-		for (iter = trk->trackpoints; iter; iter = iter->next) {
-			double gps_speed = ((Trackpoint *) iter->data)->speed;
-			if (isnan(gps_speed))
+		for (auto iter = trk->trackpointsB->begin(); iter != trk->trackpointsB->end(); iter++) {
+			double gps_speed = (*iter)->speed;
+			if (isnan(gps_speed)) {
 				continue;
+			}
+
 			switch (speed_units) {
 			case VIK_UNITS_SPEED_KILOMETRES_PER_HOUR:
 				gps_speed = VIK_MPS_TO_KPH(gps_speed);
@@ -1879,9 +1878,9 @@ static void draw_vt(GtkWidget * image, Track * trk, PropWidgets * widgets)
 				// No need to convert as already in m/s
 				break;
 			}
-			int x = MARGIN_X + widgets->profile_width * (((Trackpoint *) iter->data)->timestamp - beg_time) / dur;
-			int y = height - widgets->profile_height*(gps_speed - mins)/(chunkss[widgets->cis]*LINES);
-			gdk_draw_rectangle(GDK_DRAWABLE(pix), gps_speed_gc, true, x-2, y-2, 4, 4);
+			int x = MARGIN_X + widgets->profile_width * ((*iter)->timestamp - beg_time) / dur;
+			int y = height - widgets->profile_height * (gps_speed - mins) / (chunkss[widgets->cis] * LINES);
+			gdk_draw_rectangle(GDK_DRAWABLE(pix), gps_speed_gc, true, x - 2, y - 2, 4, 4);
 		}
 		g_object_unref(G_OBJECT(gps_speed_gc));
 	}
@@ -2261,11 +2260,13 @@ static void draw_sd(GtkWidget * image, Track * trk, PropWidgets * widgets)
 		double dist = trk->get_length_including_gaps();
 		double dist_tp = 0.0;
 
-		GList *iter = trk->trackpoints;
-		for (iter = iter->next; iter; iter = iter->next) {
-			double gps_speed = ((Trackpoint *) iter->data)->speed;
-			if (isnan(gps_speed))
+
+		for (auto iter = std::next(trk->trackpointsB->begin()); iter != trk->trackpointsB->end(); iter++) {
+			double gps_speed = (*iter)->speed;
+			if (isnan(gps_speed)) {
 				continue;
+			}
+
 			switch (speed_units) {
 			case VIK_UNITS_SPEED_KILOMETRES_PER_HOUR:
 				gps_speed = VIK_MPS_TO_KPH(gps_speed);
@@ -2281,10 +2282,10 @@ static void draw_sd(GtkWidget * image, Track * trk, PropWidgets * widgets)
 				// No need to convert as already in m/s
 				break;
 			}
-			dist_tp += vik_coord_diff(&(((Trackpoint *) iter->data)->coord), &(((Trackpoint *) iter->prev->data)->coord));
+			dist_tp += vik_coord_diff(&(*iter)->coord, &(*std::prev(iter))->coord);
 			int x = MARGIN_X + (widgets->profile_width * dist_tp / dist);
-			int y = height - widgets->profile_height*(gps_speed - mins)/(chunkss[widgets->cisd]*LINES);
-			gdk_draw_rectangle(GDK_DRAWABLE(pix), gps_speed_gc, true, x-2, y-2, 4, 4);
+			int y = height - widgets->profile_height * (gps_speed - mins)/(chunkss[widgets->cisd] * LINES);
+			gdk_draw_rectangle(GDK_DRAWABLE (pix), gps_speed_gc, true, x - 2, y - 2, 4, 4);
 		}
 		g_object_unref(G_OBJECT(gps_speed_gc));
 	}
@@ -3211,10 +3212,11 @@ void vik_trw_layer_propwin_run(GtkWindow *parent,
 #undef PACK;
 #endif
 
-	if (trk->trackpoints && ((Trackpoint *) trk->trackpoints->data)->timestamp) {
-		time_t t1, t2;
-		t1 = ((Trackpoint *) trk->trackpoints->data)->timestamp;
-		t2 = ((Trackpoint *) g_list_last(trk->trackpoints)->data)->timestamp;
+	if (!trk->empty()
+	    && (*trk->trackpointsB->begin())->timestamp) {
+
+		time_t t1 = (*trk->trackpointsB->begin())->timestamp;
+		time_t t2 = (*std::prev(trk->trackpointsB->end()))->timestamp;
 
 		VikCoord vc;
 		// Notional center of a track is simply an average of the bounding box extremities

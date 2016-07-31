@@ -137,7 +137,9 @@ static void write_track(FILE * f, std::unordered_map<sg_uid_t, Track *> & tracks
 		unsigned int len = print_rgn_stuff(i->second->comment, f);
 		if (len) {
 			fprintf(f, "Data0=");
-			g_list_foreach(i->second->trackpoints,(GFunc) write_trackpoint, f);
+			for (auto iter = i->second->trackpointsB->begin(); iter != i->second->trackpointsB->end(); iter++) {
+				write_trackpoint(*iter, f);
+			}
 			fprintf(f, "\n[END-%.5s]\n\n", i->second->comment + len + 1);
 		}
 	}

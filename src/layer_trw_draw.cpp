@@ -462,9 +462,10 @@ static void trw_layer_draw_track_name_labels(DrawingParams * dp, Track * trk, bo
  */
 static void trw_layer_draw_point_names(DrawingParams * dp, Track * trk, bool drawing_highlight)
 {
-	GList *list = trk->trackpoints;
-	if (!list) return;
-	Trackpoint * tp = ((Trackpoint *) list->data);
+	if (trk->empty()) {
+		return;
+	}
+
 	char *fgcolour;
 	if (dp->trw->drawmode == DRAWMODE_BY_TRACK) {
 		fgcolour = gdk_color_to_string(&(trk->color));
@@ -477,15 +478,13 @@ static void trw_layer_draw_point_names(DrawingParams * dp, Track * trk, bool dra
 	} else {
 		bgcolour = gdk_color_to_string(&(dp->trw->track_bg_color));
 	}
-	if (tp->name) {
-		trw_layer_draw_track_label(tp->name, fgcolour, bgcolour, dp, &tp->coord);
-	}
-	while ((list = g_list_next(list))) {
-		tp = ((Trackpoint *) list->data);
-		if (tp->name) {
-			trw_layer_draw_track_label(tp->name, fgcolour, bgcolour, dp, &tp->coord);
+
+	for (auto iter = trk->trackpointsB->begin(); iter != trk->trackpointsB->end(); iter++) {
+		if ((*iter)->name) {
+			trw_layer_draw_track_label((*iter)->name, fgcolour, bgcolour, dp, &(*iter)->coord);
 		}
 	}
+
 	free(fgcolour);
 	free(bgcolour);
 }
@@ -513,7 +512,7 @@ void trw_layer_draw_track_draw_midarrow(DrawingParams * dp, int x, int y, int ol
 
 
 
-void trw_layer_draw_track_draw_something(DrawingParams * dp, int x, int y, int oldx, int oldy, GdkGC * main_gc, GList * list, double min_alt, double alt_diff)
+void trw_layer_draw_track_draw_something(DrawingParams * dp, int x, int y, int oldx, int oldy, GdkGC * main_gc, Trackpoint * tp, Trackpoint * tp_next, double min_alt, double alt_diff)
 {
 	GdkPoint tmp[4];
 #define FIXALTITUDE(what) \
@@ -522,9 +521,9 @@ void trw_layer_draw_track_draw_something(DrawingParams * dp, int x, int y, int o
 	tmp[0].x = oldx;
 	tmp[0].y = oldy;
 	tmp[1].x = oldx;
-	tmp[1].y = oldy-FIXALTITUDE(list->data);
+	tmp[1].y = oldy - FIXALTITUDE (tp);
 	tmp[2].x = x;
-	tmp[2].y = y-FIXALTITUDE(list->next->data);
+	tmp[2].y = y - FIXALTITUDE (tp_next);
 	tmp[3].x = x;
 	tmp[3].y = y;
 
@@ -536,7 +535,7 @@ void trw_layer_draw_track_draw_something(DrawingParams * dp, int x, int y, int o
 	}
 	dp->viewport->draw_polygon(tmp_gc, true, tmp, 4);
 
-	dp->viewport->draw_line(main_gc, oldx, oldy-FIXALTITUDE(list->data), x, y-FIXALTITUDE(list->next->data));
+	dp->viewport->draw_line(main_gc, oldx, oldy - FIXALTITUDE (tp), x, y - FIXALTITUDE (tp_next));
 }
 
 
@@ -613,20 +612,19 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 	}
 
 
-	GList * list = trk->trackpoints;
-	if (!list) {
+	if (trk->empty()) {
 		return;
 	}
 
-
-	Trackpoint * tp = (Trackpoint *) list->data;
-
 	const uint8_t tp_size_reg = dp->trw->drawpoints_size;
 	const uint8_t tp_size_cur = dp->trw->drawpoints_size * 2;
-	uint8_t tp_size = (list == dp->trw->current_tpl) ? tp_size_cur : tp_size_reg;
+
+	// kamilFIXME:
+	// uint8_t tp_size = (list == dp->trw->current_tpl) ? tp_size_cur : tp_size_reg;
+	uint8_t tp_size = tp_size_reg;
 
 	int x, y;
-	dp->viewport->coord_to_screen(&(tp->coord), &x, &y);
+	dp->viewport->coord_to_screen(&(*trk->trackpointsB->begin())->coord, &x, &y);
 
 	// Draw the first point as something a bit different from the normal points
 	// ATM it's slightly bigger and a triangle
@@ -634,8 +632,6 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 		GdkPoint trian[3] = { { x, y-(3*tp_size) }, { x-(2*tp_size), y+(2*tp_size) }, {x+(2*tp_size), y+(2*tp_size)} };
 		dp->viewport->draw_polygon(main_gc, true, trian, 3);
 	}
-
-
 
 	double average_speed = 0.0;
 	double low_speed = 0.0;
@@ -652,11 +648,14 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 	int prev_y = y;
 	bool use_prev_xy = true; /* prev_x/prev_y contain valid coordinates of previous point. */
 
-	while ((list = g_list_next(list))) {
-		tp = ((Trackpoint *) list->data);
-		tp_size = (list == dp->trw->current_tpl) ? tp_size_cur : tp_size_reg;
+	for (auto iter = std::next(trk->trackpointsB->begin()); iter != trk->trackpointsB->end(); iter++) {
+		Trackpoint * tp = *iter;
 
-		Trackpoint * prev_tp = (Trackpoint *) list->prev->data;
+		// kamilFIXME
+		// tp_size = (list == dp->trw->current_tpl) ? tp_size_cur : tp_size_reg;
+		tp_size = tp_size_reg;
+
+		Trackpoint * prev_tp = (Trackpoint *) *std::prev(iter);
 		// See if in a different lat/lon 'quadrant' so don't draw massively long lines (presumably wrong way around the Earth)
 		//  Mainly to prevent wrong lines drawn when a track crosses the 180 degrees East-West longitude boundary
 		//  (since Viewport::draw_line() only copes with pixel value and has no concept of the globe)
@@ -697,8 +696,11 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 			   timestamp far into the future, we draw a circle of 6x trackpoint
 			   size, instead of a rectangle of 2x trackpoint size. Stop is drawn
 			   first so the trackpoint will be drawn on top. */
-			if (drawstops && drawpoints && ! draw_track_outline && list->next
-			    && (((Trackpoint *) list->next->data)->timestamp - ((Trackpoint *) list->data)->timestamp > dp->trw->stop_length)) {
+			if (drawstops
+			    && drawpoints
+			    && ! draw_track_outline
+			    && std::next(iter) != trk->trackpointsB->end()
+			    && (*std::next(iter))->timestamp - (*iter)->timestamp > dp->trw->stop_length) {
 
 				dp->viewport->draw_arc(g_array_index(dp->trw->track_gc, GdkGC *, VIK_TRW_LAYER_TRACK_GC_STOP), true, x-(3*tp_size), y-(3*tp_size), 6*tp_size, 6*tp_size, 0, 360*64);
 			}
@@ -718,7 +720,7 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 			}
 
 			if (drawpoints && !draw_track_outline) {
-				if (list->next) {
+				if (std::next(iter) != trk->trackpointsB->end()) {
 					/* Regular point - draw 2x square. */
 					dp->viewport->draw_rectangle(main_gc, true, x-tp_size, y-tp_size, 2*tp_size, 2*tp_size);
 				} else {
@@ -743,8 +745,11 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 				} else {
 					dp->viewport->draw_line(main_gc, prev_x, prev_y, x, y);
 
-					if (dp->trw->drawelevation && list->next && ((Trackpoint *) list->next->data)->altitude != VIK_DEFAULT_ALTITUDE) {
-						trw_layer_draw_track_draw_something(dp, x, y, prev_x, prev_y, main_gc, list, min_alt, alt_diff);
+					if (dp->trw->drawelevation
+					    && std::next(iter) != trk->trackpointsB->end()
+					    && (*std::next(iter))->altitude != VIK_DEFAULT_ALTITUDE) {
+
+						trw_layer_draw_track_draw_something(dp, x, y, prev_x, prev_y, main_gc, *iter, *std::next(iter), min_alt, alt_diff);
 					}
 				}
 			}

@@ -148,12 +148,13 @@ static void val_analyse_track(Track * trk)
 		tracks_stats[ii].elev_loss += down;
 	}
 
-	if (trk->trackpoints && ((Trackpoint *) trk->trackpoints->data)->timestamp) {
-		time_t t1, t2;
-		t1 = ((Trackpoint *) g_list_first(trk->trackpoints)->data)->timestamp;
-		t2 = ((Trackpoint *) g_list_last(trk->trackpoints)->data)->timestamp;
+	if (!trk->empty()
+	    && (*trk->trackpointsB->begin())->timestamp) {
 
-		// Assume never actually have a track with a time of 0 (1st Jan 1970)
+		time_t t1 = (*trk->trackpointsB->begin())->timestamp;
+		time_t t2 = (*std::prev(trk->trackpointsB->end()))->timestamp;
+
+		/* Assume never actually have a track with a time of 0 (1st Jan 1970). */
 		for (ii = 0; ii < G_N_ELEMENTS(tracks_stats); ii++) {
 			if (tracks_stats[ii].start_time == 0) {
 				tracks_stats[ii].start_time = t1;

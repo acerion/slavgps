@@ -475,17 +475,18 @@ static void trw_layer_track_list_add(track_layer_t * element,
 	// Get start date
 	char time_buf[32];
 	time_buf[0] = '\0';
-	if (trk->trackpoints && ((Trackpoint *) trk->trackpoints->data)->has_timestamp) {
+	if (!trk->empty()
+	    && (*trk->trackpointsB->begin())->has_timestamp) {
 
 #if GLIB_CHECK_VERSION(2,26,0)
-		GDateTime * gdt = g_date_time_new_from_unix_utc(((Trackpoint *) trk->trackpoints->data)->timestamp);
+		GDateTime * gdt = g_date_time_new_from_unix_utc((*trk->trackpointsB->begin())->timestamp);
 		char * time = g_date_time_format(gdt, date_format);
 		g_strlcpy(time_buf, time, sizeof(time_buf));
 		free(time);
 		g_date_time_unref(gdt);
 #else
 		GDate * gdate_start = g_date_new();
-		g_date_set_time_t(gdate_start, ((Trackpoint *) trk->trackpoints->data)->timestamp);
+		g_date_set_time_t(gdate_start, (*trk->trackpointsB->begin())->timestamp);
 		g_date_strftime(time_buf, sizeof(time_buf), date_format, gdate_start);
 		g_date_free(gdate_start);
 #endif
@@ -496,11 +497,11 @@ static void trw_layer_track_list_add(track_layer_t * element,
 	visible = visible && (trk->is_route ? trw->get_routes_visibility() : trw->get_tracks_visibility());
 
 	unsigned int trk_len_time = 0; // In minutes
-	if (trk->trackpoints) {
+	if (!trk->empty()) {
 		time_t t1, t2;
-		t1 = ((Trackpoint *) g_list_first(trk->trackpoints)->data)->timestamp;
-		t2 = ((Trackpoint *) g_list_last(trk->trackpoints)->data)->timestamp;
-		trk_len_time = (int) round(labs(t2-t1)/60.0);
+		t1 = (*trk->trackpointsB->begin())->timestamp;
+		t2 = (*std::prev(trk->trackpointsB->end()))->timestamp;
+		trk_len_time = (int) round(labs(t2 - t1) / 60.0);
 	}
 
 	double av_speed = 0.0;

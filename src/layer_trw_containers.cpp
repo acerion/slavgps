@@ -72,8 +72,10 @@ bool LayerTRWc::find_track_by_date(std::unordered_map<sg_uid_t, Track *> & track
 		trk = i->second;
 
 		// Might be an easier way to compare dates rather than converting the strings all the time...
-		if (trk->trackpoints && ((Trackpoint *) trk->trackpoints->data)->has_timestamp) {
-			strftime(date_buf, sizeof(date_buf), "%Y-%m-%d", gmtime(&(((Trackpoint *) trk->trackpoints->data)->timestamp)));
+		if (!trk->empty()
+		    && (*trk->trackpointsB->begin())->has_timestamp) {
+
+			strftime(date_buf, sizeof(date_buf), "%Y-%m-%d", gmtime(&(*trk->trackpointsB->begin())->timestamp));
 
 			if (!g_strcmp0(df->date_str, date_buf)) {
 				df->found = true;
@@ -279,7 +281,7 @@ GList * LayerTRWc::find_tracks_with_timestamp_type(std::unordered_map<sg_uid_t, 
 			continue;
 		}
 
-		if (trk->trackpoints) {
+		if (!trk->empty()) {
 			p1 = trk->get_tp_first();
 			p2 = trk->get_tp_last();
 
@@ -316,7 +318,7 @@ GList * LayerTRWc::find_nearby_tracks_by_time(std::unordered_map<sg_uid_t, Track
 {
 	GList * nearby_tracks = NULL;
 
-	if (!orig_trk || !orig_trk->trackpoints) {
+	if (!orig_trk || orig_trk->empty()) {
 		return NULL;
 	}
 
@@ -336,7 +338,7 @@ GList * LayerTRWc::find_nearby_tracks_by_time(std::unordered_map<sg_uid_t, Track
 		time_t t1 = orig_trk->get_tp_first()->timestamp;
 		time_t t2 = orig_trk->get_tp_last()->timestamp;
 
-		if (trk->trackpoints) {
+		if (!trk->empty()) {
 
 			Trackpoint * p1 = trk->get_tp_first();
 			Trackpoint * p2 = trk->get_tp_last();

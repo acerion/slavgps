@@ -4863,13 +4863,13 @@ void trw_layer_split_by_timestamp(trw_menu_sublayer_t * data)
 	}
 
 	/* iterate through trackpoints, and copy them into new lists without touching original list */
-	GList * iter = trk->trackpoints;
-	time_t prev_ts = ((Trackpoint *) iter->data)->timestamp;
+	auto iter = trk->trackpointsB->begin();
+	time_t prev_ts = (*iter)->timestamp;
 	GList * newtps = NULL;
 	GList * newlists = NULL;
 
-	for (; iter; iter = iter->next) {
-		time_t ts = ((Trackpoint *) iter->data)->timestamp;
+	for (; iter != trk->trackpointsB->end(); iter++) {
+		time_t ts = (*iter)->timestamp;
 
 		// Check for unordered time points - this is quite a rare occurence - unless one has reversed a track.
 		if (ts < prev_ts) {
@@ -4878,7 +4878,7 @@ void trw_layer_split_by_timestamp(trw_menu_sublayer_t * data)
 			if (a_dialog_yes_or_no(gtk_window_from_layer(layer),
 					       _("Can not split track due to trackpoints not ordered in time - such as at %s.\n\nGoto this trackpoint?"),
 					       tmp_str)) {
-				goto_coord(data->panel, data->layer, data->viewport, &(((Trackpoint *) iter->data)->coord));
+				goto_coord(data->panel, data->layer, data->viewport, &(*iter)->coord);
 			}
 			return;
 		}
@@ -4890,7 +4890,7 @@ void trw_layer_split_by_timestamp(trw_menu_sublayer_t * data)
 		}
 
 		/* accumulate trackpoint copies in newtps, in reverse order */
-		newtps = g_list_prepend(newtps, new Trackpoint(*((Trackpoint *) iter->data)));
+		newtps = g_list_prepend(newtps, new Trackpoint(**iter));
 		prev_ts = ts;
 	}
 	if (newtps) {
@@ -4937,9 +4937,9 @@ void trw_layer_split_by_n_points(trw_menu_sublayer_t * data)
 	GList *newtps = NULL;
 	int count = 0;
 
-	for (GList * iter = trk->trackpoints; iter; iter = iter->next) {
+	for (auto iter = trk->trackpointsB->begin(); iter != trk->trackpointsB->end(); iter++) {
 		/* Accumulate trackpoint copies in newtps, in reverse order */
-		newtps = g_list_prepend(newtps, new Trackpoint(*((Trackpoint *) iter->data)));
+		newtps = g_list_prepend(newtps, new Trackpoint(**iter));
 		count++;
 		if (count >= points) {
 			/* flush accumulated trackpoints into new list */
@@ -5239,8 +5239,8 @@ void trw_layer_diary(trw_menu_sublayer_t * data)
 
 		char date_buf[20];
 		date_buf[0] = '\0';
-		if (!trk->empty() && ((Trackpoint *) trk->trackpoints->data)->has_timestamp) {
-			strftime(date_buf, sizeof(date_buf), "%Y-%m-%d", gmtime(&(((Trackpoint *) trk->trackpoints->data)->timestamp)));
+		if (!trk->empty() && (*trk->trackpointsB->begin())->has_timestamp) {
+			strftime(date_buf, sizeof(date_buf), "%Y-%m-%d", gmtime(&(*trk->trackpointsB->begin())->timestamp));
 			layer->diary_open(date_buf);
 		} else {
 			a_dialog_info_msg(gtk_window_from_layer(layer), _("This track has no date information."));
@@ -5352,7 +5352,7 @@ void trw_layer_astro(trw_menu_sublayer_t * data)
 			tp = ((Trackpoint *) layer->current_tpl->data);
 		} else if (!trk->empty()) {
 			// Otherwise first trackpoint
-			tp = ((Trackpoint *) trk->trackpoints->data);
+			tp = *trk->trackpointsB->begin();
 		} else {
 			// Give up
 			return;

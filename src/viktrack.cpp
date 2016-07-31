@@ -59,6 +59,8 @@ GList * get_glist(std::list<Trackpoint *> * trkpts);
 Track::Track()
 {
 	this->trackpoints = NULL;
+	this->trackpointsB = new std::list<Trackpoint *>;
+
 	visible = false;
 	is_route = false;
 	draw_name_mode = TRACK_DRAWNAME_NO;
@@ -396,7 +398,7 @@ void Track::recalculate_bounds_last_tp()
 		return;
 	}
 
-	Trackpoint * tp = *this->trackpointsB->end();
+	Trackpoint * tp = *std::prev(this->trackpointsB->end());
 	if (tp) {
 		struct LatLon ll;
 		// See if this trackpoint increases the track bounds and update if so

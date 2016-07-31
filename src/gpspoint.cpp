@@ -460,7 +460,7 @@ bool a_gpspoint_read_file(LayerTRW * trw, FILE * f, char const * dirpath)
 				tp->pdop = line_pdop;
 			}
 
-			current_track->trackpoints = g_list_append(current_track->trackpoints, tp);
+			current_track->trackpointsB->push_back(tp);
 		}
 
 		reset_line();
@@ -874,7 +874,9 @@ static void a_gpspoint_write_track(FILE * f, std::unordered_map<sg_uid_t, Track 
 		fprintf(f, "\n");
 
 		TP_write_info_type tp_write_info = { f, trk->is_route };
-		g_list_foreach(trk->trackpoints, (GFunc) a_gpspoint_write_trackpoint, &tp_write_info);
+		for (auto iter = trk->trackpointsB->begin(); iter != trk->trackpointsB->end(); iter++) {
+			a_gpspoint_write_trackpoint(*iter, &tp_write_info);
+		}
 		fprintf(f, "type=\"%send\"\n", trk->is_route ? "route" : "track");
 	}
 }
