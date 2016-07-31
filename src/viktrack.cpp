@@ -219,8 +219,11 @@ void Track::free()
 	free_string(&source);
 	free_string(&type);
 
-	g_list_foreach (this->trackpoints, (GFunc) (Trackpoint::vik_trackpoint_free), NULL);
-	g_list_free(this->trackpoints);
+	for (auto iter = this->trackpointsB->begin(); iter != this->trackpointsB->end(); iter++) {
+		delete *iter;
+	}
+	this->trackpointsB->clear();
+
 	if (property_dialog) {
 		if (GTK_IS_WIDGET(property_dialog)) {
 			gtk_widget_destroy(GTK_WIDGET(property_dialog));
@@ -1786,7 +1789,7 @@ void Track::marshall(uint8_t **data, size_t *datalen)
 	g_byte_array_append(b, (uint8_t *) &len, sizeof(len));	\
 	if (s) g_byte_array_append(b, (uint8_t *) s, len);
 
-	GList * tps = this->trackpoints;
+	GList * tps = get_glist(this->trackpointsB);
 	unsigned int ntp = 0;
 	while (tps) {
 		g_byte_array_append(b, (uint8_t *)tps->data, sizeof(Trackpoint));
@@ -1847,10 +1850,7 @@ Track * Track::unmarshall(uint8_t *data, size_t datalen)
 		memcpy(new_tp, data, sizeof(*new_tp));
 		data += sizeof(*new_tp);
 		vtu_get(new_tp->name);
-		new_trk->trackpoints = g_list_prepend(new_trk->trackpoints, new_tp);
-	}
-	if (new_trk->trackpoints) {
-		new_trk->trackpoints = g_list_reverse(new_trk->trackpoints);
+		new_trk->trackpointsB->push_back(new_tp);
 	}
 
 	vtu_get(new_trk->name);

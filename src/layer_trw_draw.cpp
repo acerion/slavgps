@@ -619,12 +619,12 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 	const uint8_t tp_size_reg = dp->trw->drawpoints_size;
 	const uint8_t tp_size_cur = dp->trw->drawpoints_size * 2;
 
-	// kamilFIXME:
-	// uint8_t tp_size = (list == dp->trw->current_tpl) ? tp_size_cur : tp_size_reg;
-	uint8_t tp_size = tp_size_reg;
+	auto iter = trk->trackpointsB->begin();
+
+	uint8_t tp_size = (*iter == dp->trw->selected_tp.tp) ? tp_size_cur : tp_size_reg;
 
 	int x, y;
-	dp->viewport->coord_to_screen(&(*trk->trackpointsB->begin())->coord, &x, &y);
+	dp->viewport->coord_to_screen(&(*iter)->coord, &x, &y);
 
 	// Draw the first point as something a bit different from the normal points
 	// ATM it's slightly bigger and a triangle
@@ -648,12 +648,12 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 	int prev_y = y;
 	bool use_prev_xy = true; /* prev_x/prev_y contain valid coordinates of previous point. */
 
-	for (auto iter = std::next(trk->trackpointsB->begin()); iter != trk->trackpointsB->end(); iter++) {
+	iter++; /* Because first Trackpoint has been drawn above. */
+
+	for (; iter != trk->trackpointsB->end(); iter++) {
 		Trackpoint * tp = *iter;
 
-		// kamilFIXME
-		// tp_size = (list == dp->trw->current_tpl) ? tp_size_cur : tp_size_reg;
-		tp_size = tp_size_reg;
+		tp_size = (tp == dp->trw->selected_tp.tp) ? tp_size_cur : tp_size_reg;
 
 		Trackpoint * prev_tp = (Trackpoint *) *std::prev(iter);
 		// See if in a different lat/lon 'quadrant' so don't draw massively long lines (presumably wrong way around the Earth)

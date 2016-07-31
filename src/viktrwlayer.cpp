@@ -2525,7 +2525,7 @@ bool LayerTRW::new_waypoint(GtkWindow * w, const VikCoord * def_coord)
 	Waypoint * wp = new Waypoint();
 	char * returned_name = NULL;
 	bool updated;
-	wp->coord = *def_coord; /* kamilFIXME: what? */
+	wp->coord = *def_coord;
 
 	// Attempt to auto set height if DEM data is available
 	wp->apply_dem_data(true);
@@ -4784,7 +4784,7 @@ void trw_layer_merge_by_timestamp(trw_menu_sublayer_t * data)
  */
 void LayerTRW::split_at_selected_trackpoint(int subtype)
 {
-	if (!this->current_tpl) {
+	if (!this->selected_tp.valid) {
 		return;
 	}
 
@@ -4795,7 +4795,7 @@ void LayerTRW::split_at_selected_trackpoint(int subtype)
 			GList * newglist = g_list_alloc();
 			newglist->prev = NULL;
 			newglist->next = this->current_tpl->next;
-			newglist->data = new Trackpoint(*((Trackpoint *) this->current_tpl->data));
+			newglist->data = new Trackpoint(*this->selected_tp.tp);
 			Track * new_trk = new Track(*this->selected_track, newglist);
 
 			this->current_tpl->next->prev = newglist; /* end old track here */
@@ -5043,14 +5043,12 @@ void LayerTRW::trackpoint_selected_delete(Track * trk)
 
 	std::list<Trackpoint *>::iterator dummy;
 
-	std::list<Trackpoint *>::iterator new_tp_iter = trk->delete_trackpoint(dummy); /* kamilFIXME passing this argument is invalid, this is temporary. */
-	//std::list<Trackpoint *>::iterator new_tp_iter = trk->delete_trackpoint(this->current_tpl); /* kamilFIXME passing this argument is invalid, this is temporary. */
+	std::list<Trackpoint *>::iterator new_tp_iter = trk->delete_trackpoint(this->selected_tp.iter); /* kamilFIXME passing this argument is invalid, this is temporary. */
 
 	//if ((bool) new_tp_iter) { // kamilFIXME
 	if (true) {
 		/* Set to current to the available adjacent trackpoint. */
-		//this->current_tpl = (void *) new_tp_iter; /* kamilFIXME this is invalid, this is temporary. */
-		this->current_tpl = NULL; /* kamilFIXME this is invalid, this is temporary. */
+		this->selected_tp.iter = new_tp_iter;
 
 		if (this->selected_track) {
 			this->selected_track->calculate_bounds();
@@ -5075,7 +5073,7 @@ void trw_layer_delete_point_selected(trw_menu_sublayer_t * data)
 		return;
 	}
 
-	if (!layer->current_tpl) {
+	if (!layer->selected_tp.valid) {
 		return;
 	}
 
@@ -5337,14 +5335,15 @@ void trw_layer_astro(trw_menu_sublayer_t * data)
 		}
 
 		Trackpoint * tp = NULL;
-		if (layer->current_tpl) {
-			// Current Trackpoint
-			tp = ((Trackpoint *) layer->current_tpl->data);
+		if (layer->selected_tp.valid) {
+			/* Current trackpoint. */
+			tp = layer->selected_tp.tp;
+
 		} else if (!trk->empty()) {
-			// Otherwise first trackpoint
-			tp = *trk->trackpointsB->begin();
+			/* Otherwise first trackpoint. */
+			tp = *trk->begin();
 		} else {
-			// Give up
+			/* Give up. */
 			return;
 		}
 
@@ -6325,12 +6324,12 @@ void trw_layer_google_route_webpage(trw_menu_sublayer_t * data)
 // TODO: Probably better to rework this track manipulation in viktrack.c
 void LayerTRW::insert_tp_beside_current_tp(bool before)
 {
-	// sanity check
-	if (!this->current_tpl) {
+	/* Sanity check. */
+	if (!this->selected_tp.valid) {
 		return;
 	}
 
-	Trackpoint * tp_current = (Trackpoint *) this->current_tpl->data;
+	Trackpoint * tp_current = this->selected_tp.tp;
 	Trackpoint * tp_other = NULL;
 
 	if (before) {
@@ -6416,8 +6415,10 @@ void LayerTRW::cancel_current_tp(bool destroy)
 		}
 	}
 
-	if (this->current_tpl) {
-		this->current_tpl = NULL;
+	if (this->selected_tp.valid) {
+		this->selected_tp.valid = false;
+		this->selected_tp.tp = NULL;
+
 		this->selected_track = NULL;
 		this->current_tp_uid = 0;
 		this->emit_update();
@@ -6455,7 +6456,7 @@ void LayerTRW::tpwin_response(int response)
 		this->cancel_current_tp(true);
 	}
 
-	if (this->current_tpl == NULL) {
+	if (!this->selected_tp.valid) {
 		return;
 	}
 
@@ -6472,9 +6473,10 @@ void LayerTRW::tpwin_response(int response)
 
 		this->trackpoint_selected_delete(tr);
 
-		if (this->current_tpl)
-			// Reset dialog with the available adjacent trackpoint
+		if (this->selected_tp.valid) {
+			/* Reset dialog with the available adjacent trackpoint. */
 			this->my_tpwin_set_tp();
+		}
 
 		this->emit_update();
 
@@ -6610,16 +6612,16 @@ void LayerTRW::tpwin_init()
 
 		gtk_widget_show_all(GTK_WIDGET(this->tpwin));
 
-		if (this->current_tpl) {
-			// get tp pixel position
-			Trackpoint * tp = (Trackpoint *) this->current_tpl->data;
+		if (this->selected_tp.valid) {
+			/* Get tp pixel position. */
+			Trackpoint * tp = this->selected_tp.tp;
 
 			// Shift up<->down to try not to obscure the trackpoint.
 			this->dialog_shift(GTK_WINDOW(this->tpwin), &(tp->coord), true);
 		}
 	}
 
-	if (this->current_tpl) {
+	if (this->selected_tp.valid) {
 		if (this->selected_track) {
 			this->my_tpwin_set_tp();
 		}
@@ -6719,6 +6721,7 @@ bool LayerTRW::select_move(GdkEventMotion * event, Viewport * viewport, LayerToo
 		int x, y;
 		viewport->coord_to_screen(&new_coord, &x, &y);
 
+		fprintf(stderr, "%s:%d: calling marker_moveto\n", __FUNCTION__, __LINE__);
 		marker_moveto(tool, x, y);
 
 		return true;
@@ -6754,6 +6757,7 @@ bool LayerTRW::select_release(GdkEventButton * event, Viewport * viewport, Layer
 			}
 		}
 
+		fprintf(stderr, "%s:%d: calling marker_end_move\n", __FUNCTION__, __LINE__);
 		marker_end_move(tool);
 
 		// Determine if working on a waypoint or a trackpoint
@@ -6765,8 +6769,8 @@ bool LayerTRW::select_release(GdkEventButton * event, Viewport * viewport, Layer
 			this->current_wp    = NULL;
 			this->current_wp_uid = 0;
 		} else {
-			if (this->current_tpl) {
-				((Trackpoint *) this->current_tpl->data)->coord = new_coord;
+			if (this->selected_tp.valid) {
+				this->selected_tp.tp->coord = new_coord;
 
 				if (this->selected_track) {
 					this->selected_track->calculate_bounds();
@@ -6868,7 +6872,7 @@ bool LayerTRW::select_click(GdkEventButton * event, Viewport * viewport, LayerTo
 	tp_params.y = event->y;
 	tp_params.closest_track_uid = 0;
 	tp_params.closest_tp = NULL;
-	tp_params.closest_tpl = NULL;
+	//tp_params.closest_tp_iter = NULL;
 	tp_params.bbox = bbox;
 
 	if (this->tracks_visible) {
@@ -6884,14 +6888,18 @@ bool LayerTRW::select_click(GdkEventButton * event, Viewport * viewport, LayerTo
 			// Select the Trackpoint
 			// Can move it immediately when control held or it's the previously selected tp
 			if (event->state & GDK_CONTROL_MASK
-			     || this->current_tpl == tp_params.closest_tpl) {
+			    || this->selected_tp.iter == tp_params.closest_tp_iter) {
+
 				// Put into 'move buffer'
 				// NB viewport & window already set in tool
 				tool->ed->trw = this;
 				marker_begin_move(tool, event->x, event->y);
 			}
 
-			this->current_tpl = tp_params.closest_tpl;
+			this->selected_tp.tp = tp_params.closest_tp;
+			this->selected_tp.iter = tp_params.closest_tp_iter;
+			this->selected_tp.valid = true;
+
 			this->current_tp_uid = tp_params.closest_track_uid;
 			this->selected_track = this->tracks.at(tp_params.closest_track_uid);
 
@@ -6919,15 +6927,19 @@ bool LayerTRW::select_click(GdkEventButton * event, Viewport * viewport, LayerTo
 
 			// Select the Trackpoint
 			// Can move it immediately when control held or it's the previously selected tp
-			if (event->state & GDK_CONTROL_MASK ||
-			     this->current_tpl == tp_params.closest_tpl) {
+			if (event->state & GDK_CONTROL_MASK
+			    || this->selected_tp.iter == tp_params.closest_tp_iter) {
+
 				// Put into 'move buffer'
 				// NB viewport & window already set in tool
 				tool->ed->trw = this;
 				marker_begin_move(tool, event->x, event->y);
 			}
 
-			this->current_tpl = tp_params.closest_tpl;
+			this->selected_tp.tp = tp_params.closest_tp;
+			this->selected_tp.iter = tp_params.closest_tp_iter;
+			this->selected_tp.valid = true;
+
 			this->current_tp_uid = tp_params.closest_track_uid;
 			this->selected_track = this->routes.at(tp_params.closest_track_uid);
 
@@ -7864,13 +7876,16 @@ static bool tool_edit_trackpoint_click_cb(Layer * trw, GdkEventButton * event, L
  */
 bool LayerTRW::tool_edit_trackpoint_click(GdkEventButton * event, LayerTool * tool)
 {
+	fprintf(stderr, "%s:%d\n", __FUNCTION__, __LINE__);
+
 	TPSearchParams params;
 	params.viewport = tool->viewport;
 	params.x = event->x;
 	params.y = event->y;
 	params.closest_track_uid = 0;
 	params.closest_tp = NULL;
-	params.closest_tpl = NULL;
+	//params.closest_tp_iter = NULL;
+
 	tool->viewport->get_bbox(&params.bbox);
 
 	if (event->button != 1) {
@@ -7885,9 +7900,9 @@ bool LayerTRW::tool_edit_trackpoint_click(GdkEventButton * event, LayerTool * to
 		return false;
 	}
 
-	if (this->current_tpl) {
-		/* first check if it is within range of prev. tp. and if current_tp track is shown. (if it is, we are moving that trackpoint.) */
-		Trackpoint * tp = ((Trackpoint *) this->current_tpl->data);
+	if (this->selected_tp.valid) {
+		/* First check if it is within range of prev. tp. and if current_tp track is shown. (if it is, we are moving that trackpoint.) */
+		Trackpoint * tp = this->selected_tp.tp;
 		Track *current_tr = this->tracks.at(this->current_tp_uid);
 		if (!current_tr) {
 			current_tr = this->routes.at(this->current_tp_uid);
@@ -7916,8 +7931,13 @@ bool LayerTRW::tool_edit_trackpoint_click(GdkEventButton * event, LayerTool * to
 
 	if (params.closest_tp) {
 		this->tree_view->select_iter(this->tracks_iters.at(params.closest_track_uid), true);
-		this->current_tpl = params.closest_tpl;
+
+		this->selected_tp.tp = params.closest_tp;
+		this->selected_tp.iter = params.closest_tp_iter;
+		this->selected_tp.valid = true;
+
 		this->current_tp_uid = params.closest_track_uid;
+
 		this->selected_track = this->tracks.at(params.closest_track_uid);
 		this->tpwin_init();
 		this->set_statusbar_msg_info_trkpt(params.closest_tp);
@@ -7931,7 +7951,11 @@ bool LayerTRW::tool_edit_trackpoint_click(GdkEventButton * event, LayerTool * to
 
 	if (params.closest_tp) {
 		this->tree_view->select_iter(this->routes_iters.at(params.closest_track_uid), true);
-		this->current_tpl = params.closest_tpl;
+
+		this->selected_tp.iter = params.closest_tp_iter;
+		this->selected_tp.iter = params.closest_tp_iter;
+		this->selected_tp.valid = true;
+
 		this->current_tp_uid = params.closest_track_uid;
 		this->selected_track = this->routes.at(params.closest_track_uid);
 		this->tpwin_init();
@@ -7951,6 +7975,7 @@ static bool tool_edit_trackpoint_move_cb(Layer * trw, GdkEventMotion *event, Lay
 
 bool LayerTRW::tool_edit_trackpoint_move(GdkEventMotion *event, LayerTool * tool)
 {
+	fprintf(stderr, "%s:%d\n", __FUNCTION__, __LINE__);
 	if (this->type != LayerType::TRW) {
 		return false;
 	}
@@ -7962,11 +7987,11 @@ bool LayerTRW::tool_edit_trackpoint_move(GdkEventMotion *event, LayerTool * tool
 		/* snap to TP */
 		if (event->state & GDK_CONTROL_MASK) {
 			Trackpoint * tp = this->closest_tp_in_five_pixel_interval(tool->viewport, event->x, event->y);
-			if (tp && tp != this->current_tpl->data) {
+			if (tp && tp != this->selected_tp.tp) {
 				new_coord = tp->coord;
 			}
 		}
-		//    ((Trackpoint *) this->current_tpl->data)->coord = new_coord;
+		// this->selected_tp.tp->coord = new_coord;
 		{
 			int x, y;
 			tool->viewport->coord_to_screen(&new_coord, &x, &y);
@@ -7985,6 +8010,7 @@ static bool tool_edit_trackpoint_release_cb(Layer * trw, GdkEventButton *event, 
 
 bool LayerTRW::tool_edit_trackpoint_release(GdkEventButton * event, LayerTool * tool)
 {
+	fprintf(stderr, "%s:%d\n", __FUNCTION__, __LINE__);
 	if (this->type != LayerType::TRW) {
 		return false;
 	}
@@ -8000,12 +8026,12 @@ bool LayerTRW::tool_edit_trackpoint_release(GdkEventButton * event, LayerTool * 
 		/* snap to TP */
 		if (event->state & GDK_CONTROL_MASK) {
 			Trackpoint * tp = this->closest_tp_in_five_pixel_interval(tool->viewport, event->x, event->y);
-			if (tp && tp != this->current_tpl->data) {
+			if (tp && tp != this->selected_tp.tp) {
 				new_coord = tp->coord;
 			}
 		}
 
-		((Trackpoint *) this->current_tpl->data)->coord = new_coord;
+		this->selected_tp.tp->coord = new_coord;
 		if (this->selected_track) {
 			this->selected_track->calculate_bounds();
 		}

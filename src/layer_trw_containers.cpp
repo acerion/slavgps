@@ -626,25 +626,23 @@ void LayerTRWc::track_search_closest_tp(std::unordered_map<sg_uid_t, Track *> & 
 			continue;
 		}
 
-		GList * tpl = trk->trackpoints;
-		while (tpl) {
 
-			Trackpoint * tp = ((Trackpoint *) tpl->data);
+		for (auto iter = trk->trackpointsB->begin(); iter != trk->trackpointsB->end(); iter++) {
 
 			int x, y;
-			params->viewport->coord_to_screen(&(tp->coord), &x, &y);
+			params->viewport->coord_to_screen(&(*iter)->coord, &x, &y);
 
-			if (abs(x - params->x) <= TRACKPOINT_SIZE_APPROX && abs(y - params->y) <= TRACKPOINT_SIZE_APPROX &&
-			    ((!params->closest_tp) ||        /* was the old trackpoint we already found closer than this one? */
-			     abs(x - params->x)+abs(y - params->y) < abs(x - params->closest_x)+abs(y - params->closest_y))) {
+			if (abs(x - params->x) <= TRACKPOINT_SIZE_APPROX && abs(y - params->y) <= TRACKPOINT_SIZE_APPROX
+			    && ((!params->closest_tp)        /* was the old trackpoint we already found closer than this one? */
+				|| abs(x - params->x) + abs(y - params->y) < abs(x - params->closest_x) + abs(y - params->closest_y))) {
 
 				params->closest_track_uid = (sg_uid_t) ((long) i->first);
-				params->closest_tp = tp;
-				params->closest_tpl = tpl;
+				params->closest_tp = *iter;
+				params->closest_tp_iter = iter;
 				params->closest_x = x;
 				params->closest_y = y;
 			}
-			tpl = tpl->next;
+
 		}
 	}
 }

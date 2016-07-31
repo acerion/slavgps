@@ -95,7 +95,7 @@ namespace SlavGPS {
 		sg_uid_t closest_track_uid;
 		Trackpoint * closest_tp;
 		Viewport * viewport;
-		GList * closest_tpl;
+		std::list<Trackpoint *>::iterator closest_tp_iter;
 		LatLonBBox bbox;
 	} TPSearchParams;
 

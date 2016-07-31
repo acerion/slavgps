@@ -1707,7 +1707,6 @@ void LayerGPS::realtime_tracking_draw(Viewport * viewport)
 Trackpoint * LayerGPS::create_realtime_trackpoint(bool forced)
 {
 	struct LatLon ll;
-	GList *last_tp;
 
 	/* Note that fix.time is a double, but it should not affect the precision
 	   for most GPS */
@@ -1724,20 +1723,24 @@ Trackpoint * LayerGPS::create_realtime_trackpoint(bool forced)
 		int last_heading = isnan(this->last_fix.fix.track) ? 0 : (int)floor(this->last_fix.fix.track);
 		int alt = isnan(this->realtime_fix.fix.altitude) ? VIK_DEFAULT_ALTITUDE : floor(this->realtime_fix.fix.altitude);
 		int last_alt = isnan(this->last_fix.fix.altitude) ? VIK_DEFAULT_ALTITUDE : floor(this->last_fix.fix.altitude);
-		if (((last_tp = g_list_last(this->realtime_track->trackpoints)) != NULL) &&
-		    (this->realtime_fix.fix.mode > MODE_2D) &&
-		    (this->last_fix.fix.mode <= MODE_2D) &&
-		    ((cur_timestamp - last_timestamp) < 2)) {
-			free(last_tp->data);
-			this->realtime_track->trackpoints = g_list_delete_link(this->realtime_track->trackpoints, last_tp);
+
+		if (!this->realtime_track->empty()
+		    && this->realtime_fix.fix.mode > MODE_2D
+		    && this->last_fix.fix.mode <= MODE_2D
+		    && (cur_timestamp - last_timestamp) < 2) {
+
+			auto last_tp = std::prev(this->realtime_track->end());
+			delete *last_tp;
+			this->realtime_track->trackpointsB->erase(last_tp);
 			replace = true;
 		}
-		if (replace ||
-		    ((cur_timestamp != last_timestamp) &&
-		     ((forced ||
-		       ((heading < last_heading) && (heading < (last_heading - 3))) ||
-		       ((heading > last_heading) && (heading > (last_heading + 3))) ||
-		       ((alt != VIK_DEFAULT_ALTITUDE) && (alt != last_alt)))))) {
+
+		if (replace || ((cur_timestamp != last_timestamp)
+				&& ((forced
+				     || ((heading < last_heading) && (heading < (last_heading - 3)))
+				     || ((heading > last_heading) && (heading > (last_heading + 3)))
+				     || ((alt != VIK_DEFAULT_ALTITUDE) && (alt != last_alt)))))) {
+
 			/* TODO: check for new segments */
 			Trackpoint * tp = new Trackpoint();
 			tp->newsegment = false;
@@ -2054,7 +2057,7 @@ void LayerGPS::rt_gpsd_disconnect()
 	}
 
 	if (this->realtime_record && this->realtime_track) {
-		if ((this->realtime_track->trackpoints == NULL) || (this->realtime_track->trackpoints->next == NULL)) {
+		if (!this->realtime_track->empty()) {
 			this->trw_children[TRW_REALTIME]->delete_track(this->realtime_track);
 		}
 		this->realtime_track = NULL;
