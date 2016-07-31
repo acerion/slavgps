@@ -4395,16 +4395,6 @@ static int track_compare(gconstpointer a, gconstpointer b, void * user_data)
 }
 */
 
-/* comparison function used to sort trackpoints */
-static int trackpoint_compare(gconstpointer a, gconstpointer b)
-{
-	time_t t1 = ((Trackpoint *) a)->timestamp, t2 = ((Trackpoint *) b)->timestamp;
-
-	if (t1 < t2) return -1;
-	if (t1 > t2) return 1;
-	return 0;
-}
-
 /**
  * comparison function which can be used to sort tracks or waypoints by name
  */
@@ -4502,7 +4492,7 @@ void trw_layer_merge_with_other(trw_menu_sublayer_t * data)
 				} else {
 					layer->delete_track(merge_track);
 				}
-				trk->sort(trackpoint_compare);
+				trk->sort(Trackpoint::compare_timestamps);
 			}
 		}
 		for (l = merge_list; l != NULL; l = g_list_next(l)) {
@@ -4777,7 +4767,7 @@ void trw_layer_merge_by_timestamp(trw_menu_sublayer_t * data)
 			l = g_list_next(l);
 		}
 
-		orig_trk->sort(trackpoint_compare);
+		orig_trk->sort(Trackpoint::compare_timestamps);
 	}
 
 	g_list_free(nearby_tracks);

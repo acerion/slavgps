@@ -55,6 +55,12 @@ namespace SlavGPS {
 
 
 
+	class Trackpoint;
+	typedef bool (* compare_trackpoints_t)(const Trackpoint * a, const Trackpoint * b);
+
+
+
+
 	class Trackpoint {
 	public:
 
@@ -64,6 +70,8 @@ namespace SlavGPS {
 		void set_name(char const * name);
 
 		static void vik_trackpoint_free(Trackpoint *tp);
+
+		static bool compare_timestamps(const Trackpoint * a, const Trackpoint * b); /* compare_trackpoints_t */
 
 		char * name;
 		VikCoord coord;
@@ -122,8 +130,14 @@ namespace SlavGPS {
 		void ref();
 		void free();
 
+
+		/* STL-like container interface. */
+		std::list<Trackpoint *>::iterator begin();
+		std::list<Trackpoint *>::iterator end();
 		bool empty();
-		void sort(GCompareFunc compare_func);
+
+
+		void sort(compare_trackpoints_t compare_function);
 
 		void set_comment_no_copy(char * comment);
 
