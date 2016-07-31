@@ -133,7 +133,7 @@ namespace SlavGPS {
 		double get_length_including_gaps();  // const
 		unsigned long get_tp_count();  // const
 		unsigned int get_segment_count();  // const
-		Track ** split_into_segments(unsigned int *ret_len);
+		std::list<Track *> * split_into_segments();
 
 		unsigned int merge_segments(void);
 		void reverse(void);
@@ -190,16 +190,17 @@ namespace SlavGPS {
 		void clear_property_dialog();
 
 		static void delete_track(Track *);
-		void erase_trackpoint(GList * iter);
-		GList * delete_trackpoint(GList * iter);
+		std::list<Trackpoint *>::iterator erase_trackpoint(std::list<Trackpoint *>::iterator iter);
+		std::list<Trackpoint *>::iterator delete_trackpoint(std::list<Trackpoint *>::iterator iter);
 		void insert(Trackpoint * tp_at, Trackpoint * tp_new, bool before);
 
-		GList * get_last();
-		GList * get_rectangles(LatLon * wh);
+		std::list<Trackpoint *>::iterator get_last();
+		std::list<Rect *> * get_rectangles(LatLon * wh);
 		VikCoordMode get_coord_mode();
 
 
 		GList *trackpoints;
+		std::list<Trackpoint *> * trackpointsB;
 		bool visible;
 		bool is_route;
 		TrackDrawnameType draw_name_mode;
@@ -218,7 +219,7 @@ namespace SlavGPS {
 		static void smoothie(std::list<Trackpoint *>::iterator start, std::list<Trackpoint *>::iterator stop, double elev1, double elev2, unsigned int points);
 		void recalculate_bounds_last_tp();
 
-		std::list<Trackpoint *> * trackpointsB;
+
 	};
 
 

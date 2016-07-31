@@ -5025,20 +5025,16 @@ void trw_layer_split_segments(trw_menu_sublayer_t * data)
 		return;
 	}
 
-	unsigned int ntracks;
-
-	Track **tracks = trk->split_into_segments(&ntracks);
-	char *new_tr_name;
-	unsigned int i;
-	for (i = 0; i < ntracks; i++) {
-		if (tracks[i]) {
-			new_tr_name = layer->new_unique_sublayer_name(VIK_TRW_LAYER_SUBLAYER_TRACK, trk->name);
-			layer->add_track(tracks[i], new_tr_name);
+	std::list<Track *> * tracks = trk->split_into_segments();
+	for (auto iter = tracks->begin(); iter != tracks->end(); iter++) {
+		if (*iter) {
+			char * new_tr_name = layer->new_unique_sublayer_name(VIK_TRW_LAYER_SUBLAYER_TRACK, trk->name);
+			layer->add_track(*iter, new_tr_name);
 			free(new_tr_name);
 		}
 	}
 	if (tracks) {
-		free(tracks);
+		delete tracks;
 		// Remove original track
 		layer->delete_track(trk);
 		layer->emit_update();
@@ -5054,10 +5050,17 @@ void trw_layer_split_segments(trw_menu_sublayer_t * data)
 
 void LayerTRW::trackpoint_selected_delete(Track * trk)
 {
-	GList * new_tp_iter = trk->delete_trackpoint(this->current_tpl);
-	if (new_tp_iter) {
+
+	std::list<Trackpoint *>::iterator dummy;
+
+	std::list<Trackpoint *>::iterator new_tp_iter = trk->delete_trackpoint(dummy); /* kamilFIXME passing this argument is invalid, this is temporary. */
+	//std::list<Trackpoint *>::iterator new_tp_iter = trk->delete_trackpoint(this->current_tpl); /* kamilFIXME passing this argument is invalid, this is temporary. */
+
+	//if ((bool) new_tp_iter) { // kamilFIXME
+	if (true) {
 		/* Set to current to the available adjacent trackpoint. */
-		this->current_tpl = new_tp_iter;
+		//this->current_tpl = (void *) new_tp_iter; /* kamilFIXME this is invalid, this is temporary. */
+		this->current_tpl = NULL; /* kamilFIXME this is invalid, this is temporary. */
 
 		if (this->selected_track) {
 			this->selected_track->calculate_bounds();
@@ -7576,7 +7579,7 @@ void LayerTRW::undo_trackpoint_add()
 		return;
 	}
 
-	GList * iter = this->current_track->get_last();
+	auto iter = this->current_track->get_last();
 	this->current_track->erase_trackpoint(iter);
 
 	this->current_track->calculate_bounds();
@@ -8771,23 +8774,26 @@ void vik_track_download_map(Track *tr, VikLayer *vml, Viewport * viewport, doubl
 		return;
 	}
 
-	GList * rects_to_download = tr->get_rectangles(&wh);
+	std::list<Rect *> * rects_to_download = tr->get_rectangles(&wh);
 
 	GList * fillins = NULL;
 
 	/* 'fillin' doesn't work in UTM mode - potentially ending up in massive loop continually allocating memory - hence don't do it */
 	/* seems that ATM the function get_next_coord works only for LATLON */
 	if (tr->get_coord_mode() == VIK_COORD_LATLON) {
+
 		/* fill-ins for far apart points */
-		GList *cur_rect, *next_rect;
-		for (cur_rect = rects_to_download;
-		     (next_rect = cur_rect->next) != NULL;
-		     cur_rect = cur_rect->next) {
+		std::list<Rect *>::iterator cur_rect;
+		std::list<Rect *>::iterator next_rect;
 
-			if ((wh.lon < ABS(GLRECT(cur_rect)->center.east_west - GLRECT(next_rect)->center.east_west)) ||
-			    (wh.lat < ABS(GLRECT(cur_rect)->center.north_south - GLRECT(next_rect)->center.north_south))) {
+		for (cur_rect = rects_to_download->begin();
+		     (next_rect = std::next(cur_rect)) != rects_to_download->end();
+		     cur_rect++) {
 
-				fillins = add_fillins(fillins, &GLRECT(cur_rect)->center, &GLRECT(next_rect)->center, &wh);
+			if ((wh.lon < ABS ((*cur_rect)->center.east_west - (*next_rect)->center.east_west)) ||
+			    (wh.lat < ABS ((*cur_rect)->center.north_south - (*next_rect)->center.north_south))) {
+
+				fillins = add_fillins(fillins, &(*cur_rect)->center, &(*next_rect)->center, &wh);
 			}
 		}
 	} else {
@@ -8803,12 +8809,12 @@ void vik_track_download_map(Track *tr, VikLayer *vml, Viewport * viewport, doubl
 			rect->tl = tl;
 			rect->br = br;
 			rect->center = *cur_coord;
-			rects_to_download = g_list_prepend(rects_to_download, rect);
+			rects_to_download->push_front(rect);
 		}
 	}
 
-	for (GList * rect_iter = rects_to_download; rect_iter; rect_iter = rect_iter->next) {
-		((LayerMaps *) vml->layer)->download_section(&(((Rect *)(rect_iter->data))->tl), &(((Rect *)(rect_iter->data))->br), zoom_level);
+	for (auto rect_iter = rects_to_download->begin(); rect_iter != rects_to_download->end(); rect_iter++) {
+		((LayerMaps *) vml->layer)->download_section(&(*rect_iter)->tl, &(*rect_iter)->br, zoom_level);
 	}
 
 	if (fillins) {
@@ -8818,10 +8824,10 @@ void vik_track_download_map(Track *tr, VikLayer *vml, Viewport * viewport, doubl
 		g_list_free(fillins);
 	}
 	if (rects_to_download) {
-		for (GList * rect_iter = rects_to_download; rect_iter; rect_iter = rect_iter->next) {
-			free(rect_iter->data);
+		for (auto rect_iter = rects_to_download->begin(); rect_iter != rects_to_download->end(); rect_iter++) {
+			free(*rect_iter);
 		}
-		g_list_free(rects_to_download);
+		delete rects_to_download;
 	}
 }
 

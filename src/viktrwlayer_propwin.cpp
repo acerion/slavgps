@@ -2724,27 +2724,25 @@ static void propwin_response_cb(GtkDialog * dialog, int resp, PropWidgets * widg
 		break;
 	case VIK_TRW_LAYER_PROPWIN_SPLIT: {
 		/* get new tracks, add them and then the delete old one. old can still exist on clipboard. */
-		unsigned int ntracks;
-
-		Track **tracks = trk->split_into_segments(&ntracks);
+		std::list<Track *> * tracks = trk->split_into_segments();
 		char *new_tr_name;
 		unsigned int i;
-		for (i = 0; i < ntracks; i++) {
-			if (tracks[i]) {
+		for (auto iter = tracks->begin(); iter != tracks->end(); iter++) {
+			if (*iter) {
 				new_tr_name = trw->new_unique_sublayer_name(widgets->trk->is_route ? VIK_TRW_LAYER_SUBLAYER_ROUTE : VIK_TRW_LAYER_SUBLAYER_TRACK,
 									    widgets->trk->name);
 				if (widgets->trk->is_route) {
-					trw->add_route(tracks[i], new_tr_name);
+					trw->add_route(*iter, new_tr_name);
 				} else {
-					trw->add_track(tracks[i], new_tr_name);
+					trw->add_track(*iter, new_tr_name);
 				}
-				tracks[i]->calculate_bounds();
+				(*iter)->calculate_bounds();
 
 				free(new_tr_name);
 			}
 		}
 		if (tracks) {
-			free(tracks);
+			delete tracks;
 			/* Don't let track destroy this dialog */
 			trk->clear_property_dialog();
 			if (widgets->trk->is_route) {
