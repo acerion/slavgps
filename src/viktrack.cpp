@@ -60,7 +60,6 @@ GList * get_glist(std::list<Trackpoint *> * trkpts);
 
 Track::Track()
 {
-	this->trackpoints = NULL;
 	this->trackpointsB = new std::list<Trackpoint *>;
 
 	visible = false;
@@ -247,7 +246,6 @@ void Track::free()
  */
 Track::Track(const Track & from)
 {
-	this->trackpoints = NULL;
 	this->trackpointsB = new std::list<Trackpoint *>;
 
 	visible = false;
@@ -280,11 +278,6 @@ Track::Track(const Track & from)
 		Trackpoint * tp = *iter;
 		Trackpoint * new_tp = new Trackpoint(*tp);
 		this->trackpointsB->push_back(new_tp);
-
-		this->trackpoints = g_list_prepend(this->trackpoints, new_tp);
-	}
-	if (this->trackpoints) {
-		this->trackpoints = g_list_reverse(this->trackpoints);
 	}
 
 
@@ -298,10 +291,10 @@ Track::Track(const Track & from)
 
 
 
-Track::Track(const Track & from, GList * new_trackpoints) : Track(from)
+/* kamilFIXME: parent constructor first copies all trackpoints from 'from', this constructor does ->assign(). Copying in parent constructor is unnecessary. */
+Track::Track(const Track & from, std::list<Trackpoint *>::iterator first, std::list<Trackpoint *>::iterator last) : Track(from)
 {
-	this->trackpoints = new_trackpoints;
-	this->trackpointsB = get_list(this->trackpoints);
+	this->trackpointsB->assign(first, last);
 }
 
 
@@ -720,6 +713,7 @@ std::list<Track *> * Track::split_into_segments()
 				last++;
 			}
 
+			/* kamilFIXME: first constructor of new_track copies all trackpoints from *this, and then we do new_track->assign(). Copying in constructor is unnecessary. */
 			Track * new_track = new Track(*this);
 			new_track->trackpointsB->assign(first, last);
 			new_track->calculate_bounds();
@@ -2324,6 +2318,22 @@ std::list<Trackpoint *>::iterator Track::end()
 bool Track::empty()
 {
 	return this->trackpointsB->empty();
+}
+
+
+
+
+void Track::push_front(Trackpoint * tp)
+{
+	this->trackpointsB->push_front(tp);
+}
+
+
+
+
+std::list<Trackpoint *>::iterator Track::erase(std::list<Trackpoint *>::iterator first, std::list<Trackpoint *>::iterator last)
+{
+	return this->trackpointsB->erase(first, last);
 }
 
 

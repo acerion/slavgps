@@ -166,7 +166,7 @@ namespace SlavGPS {
 
 
 
-		bool create_new_tracks(Track * orig, GList * tracks_data);
+		bool create_new_tracks(Track * orig, std::list<std::list<Trackpoint *> *> * tracks_data);
 
 		void add_track(Track * trk, char const * name);
 		void add_route(Track * trk, char const * name);
@@ -420,13 +420,9 @@ namespace SlavGPS {
 		/* track editing tool */
 		struct {
 			bool valid = false;
-			std::list<Trackpoint *>::iterator iter_prev;
 			std::list<Trackpoint *>::iterator iter;
-			std::list<Trackpoint *>::iterator iter_next;
-			Trackpoint * tp;
 		} selected_tp;
 
-		GList * current_tpl;       /* List of trackpoints, to which belongs currently selected trackpoint (tp)?. The list would be a member of current track selected_track. */
 		Track * selected_track;  /* Track, to which belongs currently selected trackpoint (tp)? */
 		sg_uid_t current_tp_uid;   /* uid of track, to which belongs currently selected trackpoint (tp)? */
 

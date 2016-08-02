@@ -375,18 +375,19 @@ void vik_trw_layer_tpwin_set_empty(VikTrwLayerTpwin * tpwin)
 /**
  * vik_trw_layer_tpwin_set_tp:
  * @tpwin:      The Trackpoint Edit Window
- * @tpl:        The #Glist of trackpoints pointing at the current trackpoint
+ * @track:      A Track
+ * @iter:       Iterator to given Track
  * @track_name: The name of the track in which the trackpoint belongs
  * @is_route:   Is the track of the trackpoint actually a route?
  *
  * Sets the Trackpoint Edit Window to the values of the current trackpoint given in @tpl.
  *
  */
-void vik_trw_layer_tpwin_set_tp(VikTrwLayerTpwin * tpwin, GList * tpl, const char * track_name, bool is_route)
+void vik_trw_layer_tpwin_set_tp(VikTrwLayerTpwin * tpwin, Track * track, std::list<Trackpoint *>::iterator * iter, const char * track_name, bool is_route)
 {
 	static char tmp_str[64];
 	static struct LatLon ll;
-	Trackpoint * tp = (Trackpoint *) tpl->data;
+	Trackpoint * tp = **iter;
 
 	if (tp->name) {
 		gtk_entry_set_text(GTK_ENTRY(tpwin->trkpt_name), tp->name);
@@ -396,14 +397,14 @@ void vik_trw_layer_tpwin_set_tp(VikTrwLayerTpwin * tpwin, GList * tpl, const cha
 	gtk_widget_set_sensitive(tpwin->trkpt_name, true);
 
 	/* Only can insert if not at the end (otherwise use extend track) */
-	gtk_widget_set_sensitive(tpwin->button_insert, (bool) KPOINTER_TO_INT (tpl->next));
+	gtk_widget_set_sensitive(tpwin->button_insert, std::next(*iter) != track->end());
 	gtk_widget_set_sensitive(tpwin->button_delete, true);
 
 	/* We can only split up a track if it's not an endpoint. Makes sense to me. */
-	gtk_widget_set_sensitive(tpwin->button_split, tpl->next && tpl->prev);
+	gtk_widget_set_sensitive(tpwin->button_split, std::next(*iter) != track->end() && *iter != track->begin());
 
-	gtk_widget_set_sensitive(tpwin->button_forward, (bool) KPOINTER_TO_INT (tpl->next));
-	gtk_widget_set_sensitive(tpwin->button_back, (bool) KPOINTER_TO_INT (tpl->prev));
+	gtk_widget_set_sensitive(tpwin->button_forward, std::next(*iter) != track->end());
+	gtk_widget_set_sensitive(tpwin->button_back, *iter != track->begin());
 
 	gtk_widget_set_sensitive(GTK_WIDGET(tpwin->lat), true);
 	gtk_widget_set_sensitive(GTK_WIDGET(tpwin->lon), true);

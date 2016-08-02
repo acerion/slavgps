@@ -4788,35 +4788,32 @@ void LayerTRW::split_at_selected_trackpoint(int subtype)
 		return;
 	}
 
-	if (this->current_tpl->next && this->current_tpl->prev) {
+	if (this->selected_tp.iter != this->selected_track->begin()
+	    && this->selected_tp.iter != std::prev(this->selected_track->end())) {
+
 		char * name = this->new_unique_sublayer_name(subtype, this->selected_track->name);
 		if (name) {
 
-			GList * newglist = g_list_alloc();
-			newglist->prev = NULL;
-			newglist->next = this->current_tpl->next;
-			newglist->data = new Trackpoint(*this->selected_tp.tp);
-			Track * new_trk = new Track(*this->selected_track, newglist);
+			/* Selected Trackpoint stays in old track, but its copy goes to new track too. */
+			Trackpoint * selected = new Trackpoint(**this->selected_tp.iter);
 
-			this->current_tpl->next->prev = newglist; /* end old track here */
-			this->current_tpl->next = NULL;
+			Track * new_track = new Track(*this->selected_track, std::next(this->selected_tp.iter), this->selected_track->end());
+			new_track->push_front(selected);
 
-			// Bounds of the selected track changed due to the split
+			this->selected_track->erase(std::next(this->selected_tp.iter), this->selected_track->end());
+			this->selected_track->calculate_bounds(); /* Bounds of the selected track changed due to the split. */
+
+			this->selected_tp.iter = new_track->begin();
+			this->selected_track = new_track;
 			this->selected_track->calculate_bounds();
 
-			this->current_tpl = newglist; /* change tp to first of new track. */
-			this->selected_track = new_trk;
-
-			// Bounds of the new track created by the split
-			new_trk->calculate_bounds();
-
 			sg_uid_t uid = 0;
-			if (new_trk->is_route) {
-				this->add_route(new_trk, name);
-				uid = LayerTRWc::find_uid_of_track(this->routes, new_trk);
+			if (new_track->is_route) {
+				this->add_route(new_track, name);
+				uid = LayerTRWc::find_uid_of_track(this->routes, new_track);
 			} else {
-				this->add_track(new_trk, name);
-				uid = LayerTRWc::find_uid_of_track(this->tracks, new_trk);
+				this->add_track(new_track, name);
+				uid = LayerTRWc::find_uid_of_track(this->tracks, new_track);
 			}
 			/* kamilTODO: how it's possible that a new track will already have an uid? */
 			fprintf(stderr, "uid of new track is %u\n", uid);
@@ -4855,8 +4852,9 @@ void trw_layer_split_by_timestamp(trw_menu_sublayer_t * data)
 	/* iterate through trackpoints, and copy them into new lists without touching original list */
 	auto iter = trk->trackpointsB->begin();
 	time_t prev_ts = (*iter)->timestamp;
-	GList * newtps = NULL;
-	GList * newlists = NULL;
+
+	std::list<Trackpoint *> * newtps = new std::list<Trackpoint *>;
+	std::list<std::list<Trackpoint *> *> points;
 
 	for (; iter != trk->trackpointsB->end(); iter++) {
 		time_t ts = (*iter)->timestamp;
@@ -4873,26 +4871,31 @@ void trw_layer_split_by_timestamp(trw_menu_sublayer_t * data)
 			return;
 		}
 
-		if (ts - prev_ts > thr*60) {
+		if (ts - prev_ts > thr * 60) {
 			/* flush accumulated trackpoints into new list */
-			newlists = g_list_append(newlists, g_list_reverse(newtps));
-			newtps = NULL;
+			points.push_back(newtps);
+			newtps = new std::list<Trackpoint *>;
 		}
 
-		/* accumulate trackpoint copies in newtps, in reverse order */
-		newtps = g_list_prepend(newtps, new Trackpoint(**iter));
+		/* Accumulate trackpoint copies in newtps. */
+		newtps->push_back(new Trackpoint(**iter));
 		prev_ts = ts;
 	}
-	if (newtps) {
-		newlists = g_list_append(newlists, g_list_reverse(newtps));
+	if (!newtps->empty()) {
+		points.push_back(newtps);
 	}
 
 	/* Only bother updating if the split results in new tracks. */
-	if (g_list_length(newlists) > 1) {
-		layer->create_new_tracks(trk, newlists);
+	if (points.size() > 1) {
+		layer->create_new_tracks(trk, &points);
 	}
 
-	g_list_free(newlists);
+	/* Trackpoints are copied to new tracks, but lists of the Trackpoints need to be deallocated. */
+	for (auto iter = points.begin(); iter != points.end(); iter++) {
+		delete *iter;
+	}
+
+	return;
 }
 
 
@@ -4910,47 +4913,51 @@ void trw_layer_split_by_n_points(trw_menu_sublayer_t * data)
 		return;
 	}
 
-	int points = a_dialog_get_positive_number(gtk_window_from_layer(layer),
-						  _("Split Every Nth Point"),
-						  _("Split on every Nth point:"),
-						  250,   // Default value as per typical limited track capacity of various GPS devices
-						  2,     // Min
-						  65536, // Max
-						  5);    // Step
+	int n_points = a_dialog_get_positive_number(gtk_window_from_layer(layer),
+						    _("Split Every Nth Point"),
+						    _("Split on every Nth point:"),
+						    250,   // Default value as per typical limited track capacity of various GPS devices
+						    2,     // Min
+						    65536, // Max
+						    5);    // Step
 	// Was a valid number returned?
-	if (!points) {
+	if (!n_points) {
 		return;
 	}
 
 	// Now split...
-	GList *newlists = NULL;
-	GList *newtps = NULL;
+	std::list<Trackpoint *> * newtps = new std::list<Trackpoint *>;
+	std::list<std::list<Trackpoint *> *> points;
+
 	int count = 0;
 
 	for (auto iter = trk->trackpointsB->begin(); iter != trk->trackpointsB->end(); iter++) {
 		/* Accumulate trackpoint copies in newtps, in reverse order */
-		newtps = g_list_prepend(newtps, new Trackpoint(**iter));
+		newtps->push_back(new Trackpoint(**iter));
 		count++;
-		if (count >= points) {
+		if (count >= n_points) {
 			/* flush accumulated trackpoints into new list */
-			newlists = g_list_append(newlists, g_list_reverse(newtps));
-			newtps = NULL;
+			points.push_back(newtps);
+			newtps = new std::list<Trackpoint *>;
 			count = 0;
 		}
 	}
 
 	/* If there is a remaining chunk put that into the new split list.
 	   This may well be the whole track if no split points were encountered. */
-	if (newtps) {
-		newlists = g_list_append(newlists, g_list_reverse(newtps));
+	if (newtps->size()) {
+		points.push_back(newtps);
 	}
 
 	/* Only bother updating if the split results in new tracks. */
-	if (g_list_length(newlists) > 1) {
-		layer->create_new_tracks(trk, newlists);
+	if (points.size() > 1) {
+		layer->create_new_tracks(trk, &points);
 	}
 
-	g_list_free(newlists);
+	/* Trackpoints are copied to new tracks, but lists of the Trackpoints need to be deallocated. */
+	for (auto iter = points.begin(); iter != points.end(); iter++) {
+		delete *iter;
+	}
 }
 
 
@@ -4958,13 +4965,13 @@ void trw_layer_split_by_n_points(trw_menu_sublayer_t * data)
 
 /*
   orig - original track
-  tracks_data - list of trackpoint lists
+  points- list of trackpoint lists
 */
-bool LayerTRW::create_new_tracks(Track * orig, GList * tracks_data)
+bool LayerTRW::create_new_tracks(Track * orig, std::list<std::list<Trackpoint *> *> * points)
 {
-	for (GList * iter = tracks_data; iter; iter = iter->next) {
+	for (auto iter = points->begin(); iter != points->end(); iter++) {
 
-		Track * copy = new Track(*orig, (GList *) iter->data);
+		Track * copy = new Track(*orig, (*iter)->begin(), (*iter)->end());
 
 		char * new_tr_name = NULL;
 		if (orig->is_route) {
@@ -5043,10 +5050,9 @@ void LayerTRW::trackpoint_selected_delete(Track * trk)
 
 	std::list<Trackpoint *>::iterator dummy;
 
-	std::list<Trackpoint *>::iterator new_tp_iter = trk->delete_trackpoint(this->selected_tp.iter); /* kamilFIXME passing this argument is invalid, this is temporary. */
+	std::list<Trackpoint *>::iterator new_tp_iter = trk->delete_trackpoint(this->selected_tp.iter);
 
-	//if ((bool) new_tp_iter) { // kamilFIXME
-	if (true) {
+	if (new_tp_iter != trk->end()) {
 		/* Set to current to the available adjacent trackpoint. */
 		this->selected_tp.iter = new_tp_iter;
 
@@ -5337,7 +5343,7 @@ void trw_layer_astro(trw_menu_sublayer_t * data)
 		Trackpoint * tp = NULL;
 		if (layer->selected_tp.valid) {
 			/* Current trackpoint. */
-			tp = layer->selected_tp.tp;
+			tp = *layer->selected_tp.iter;
 
 		} else if (!trk->empty()) {
 			/* Otherwise first trackpoint. */
@@ -6329,23 +6335,23 @@ void LayerTRW::insert_tp_beside_current_tp(bool before)
 		return;
 	}
 
-	Trackpoint * tp_current = this->selected_tp.tp;
+	Trackpoint * tp_current = *this->selected_tp.iter;
 	Trackpoint * tp_other = NULL;
 
 	if (before) {
-		if (!this->current_tpl->prev) {
+		if (this->selected_tp.iter == this->selected_track->begin()) {
 			return;
 		}
-		tp_other = ((Trackpoint *) this->current_tpl->prev->data);
+		tp_other = *std::prev(this->selected_tp.iter);
 	} else {
-		if (!this->current_tpl->next) {
+		if (std::next(this->selected_tp.iter) == this->selected_track->end()) {
 			return;
 		}
-		tp_other = ((Trackpoint *) this->current_tpl->next->data);
+		tp_other = *std::next(this->selected_tp.iter);
 	}
 
 	// kamil
-	// Use current and other trackpoints to form a new track point which is inserted into the tracklist
+	/* Use current and other trackpoints to form a new track point which is inserted into the tracklist. */
 	if (tp_other) {
 
 		Trackpoint * tp_new = new Trackpoint();
@@ -6417,7 +6423,6 @@ void LayerTRW::cancel_current_tp(bool destroy)
 
 	if (this->selected_tp.valid) {
 		this->selected_tp.valid = false;
-		this->selected_tp.tp = NULL;
 
 		this->selected_track = NULL;
 		this->current_tp_uid = 0;
@@ -6436,7 +6441,7 @@ void LayerTRW::my_tpwin_set_tp()
 	// Notional center of a track is simply an average of the bounding box extremities
 	struct LatLon center = { (trk->bbox.north+trk->bbox.south)/2, (trk->bbox.east+trk->bbox.west)/2 };
 	vik_coord_load_from_latlon(&vc, this->coord_mode, &center);
-	vik_trw_layer_tpwin_set_tp(this->tpwin, this->current_tpl, trk->name, this->selected_track->is_route);
+	vik_trw_layer_tpwin_set_tp(this->tpwin, this->selected_track, &this->selected_tp.iter, trk->name, this->selected_track->is_route);
 }
 
 
@@ -6460,16 +6465,22 @@ void LayerTRW::tpwin_response(int response)
 		return;
 	}
 
-	if (response == VIK_TRW_LAYER_TPWIN_SPLIT && this->current_tpl->next && this->current_tpl->prev) {
+	if (response == VIK_TRW_LAYER_TPWIN_SPLIT
+	    && this->selected_tp.iter != this->selected_track->begin()
+	    && std::next(this->selected_tp.iter) != this->selected_track->end()) {
+
 		this->split_at_selected_trackpoint(this->selected_track->is_route ? VIK_TRW_LAYER_SUBLAYER_ROUTE : VIK_TRW_LAYER_SUBLAYER_TRACK);
 		this->my_tpwin_set_tp();
 
 	} else if (response == VIK_TRW_LAYER_TPWIN_DELETE) {
-		Track *tr = this->tracks.at(this->current_tp_uid);
-		if (tr == NULL)
+
+		Track * tr = this->tracks.at(this->current_tp_uid);
+		if (tr == NULL) {
 			tr = this->routes.at(this->current_tp_uid);
-		if (tr == NULL)
+		}
+		if (tr == NULL) {
 			return;
+		}
 
 		this->trackpoint_selected_delete(tr);
 
@@ -6480,21 +6491,26 @@ void LayerTRW::tpwin_response(int response)
 
 		this->emit_update();
 
-	} else if (response == VIK_TRW_LAYER_TPWIN_FORWARD && this->current_tpl->next) {
-		if (this->selected_track) {
-			this->current_tpl = this->current_tpl->next;
-			this->my_tpwin_set_tp();
-		}
+	} else if (response == VIK_TRW_LAYER_TPWIN_FORWARD
+		   && this->selected_track
+		   && std::next(this->selected_tp.iter) != this->selected_track->end()) {
+
+		this->selected_tp.iter++;
+		this->my_tpwin_set_tp();
 		this->emit_update(); /* TODO longone: either move or only update if tp is inside drawing window */
 
-	} else if (response == VIK_TRW_LAYER_TPWIN_BACK && this->current_tpl->prev) {
-		if (this->selected_track) {
-			this->current_tpl = this->current_tpl->prev;
-			this->my_tpwin_set_tp();
-		}
+	} else if (response == VIK_TRW_LAYER_TPWIN_BACK
+		   && this->selected_track
+		   && this->selected_tp.iter != this->selected_track->begin()) {
+
+		this->selected_tp.iter--;
+		this->my_tpwin_set_tp();
 		this->emit_update();
 
-	} else if (response == VIK_TRW_LAYER_TPWIN_INSERT && this->current_tpl->next) {
+	} else if (response == VIK_TRW_LAYER_TPWIN_INSERT
+		   && this->selected_track
+		   && std::next(this->selected_tp.iter) != this->selected_track->end()) {
+
 		this->insert_tp_beside_current_tp(false);
 		this->emit_update();
 
@@ -6614,7 +6630,7 @@ void LayerTRW::tpwin_init()
 
 		if (this->selected_tp.valid) {
 			/* Get tp pixel position. */
-			Trackpoint * tp = this->selected_tp.tp;
+			Trackpoint * tp = *this->selected_tp.iter;
 
 			// Shift up<->down to try not to obscure the trackpoint.
 			this->dialog_shift(GTK_WINDOW(this->tpwin), &(tp->coord), true);
@@ -6770,7 +6786,7 @@ bool LayerTRW::select_release(GdkEventButton * event, Viewport * viewport, Layer
 			this->current_wp_uid = 0;
 		} else {
 			if (this->selected_tp.valid) {
-				this->selected_tp.tp->coord = new_coord;
+				(*this->selected_tp.iter)->coord = new_coord;
 
 				if (this->selected_track) {
 					this->selected_track->calculate_bounds();
@@ -6896,7 +6912,6 @@ bool LayerTRW::select_click(GdkEventButton * event, Viewport * viewport, LayerTo
 				marker_begin_move(tool, event->x, event->y);
 			}
 
-			this->selected_tp.tp = tp_params.closest_tp;
 			this->selected_tp.iter = tp_params.closest_tp_iter;
 			this->selected_tp.valid = true;
 
@@ -6936,7 +6951,6 @@ bool LayerTRW::select_click(GdkEventButton * event, Viewport * viewport, LayerTo
 				marker_begin_move(tool, event->x, event->y);
 			}
 
-			this->selected_tp.tp = tp_params.closest_tp;
 			this->selected_tp.iter = tp_params.closest_tp_iter;
 			this->selected_tp.valid = true;
 
@@ -7902,7 +7916,7 @@ bool LayerTRW::tool_edit_trackpoint_click(GdkEventButton * event, LayerTool * to
 
 	if (this->selected_tp.valid) {
 		/* First check if it is within range of prev. tp. and if current_tp track is shown. (if it is, we are moving that trackpoint.) */
-		Trackpoint * tp = this->selected_tp.tp;
+		Trackpoint * tp = *this->selected_tp.iter;
 		Track *current_tr = this->tracks.at(this->current_tp_uid);
 		if (!current_tr) {
 			current_tr = this->routes.at(this->current_tp_uid);
@@ -7932,7 +7946,6 @@ bool LayerTRW::tool_edit_trackpoint_click(GdkEventButton * event, LayerTool * to
 	if (params.closest_tp) {
 		this->tree_view->select_iter(this->tracks_iters.at(params.closest_track_uid), true);
 
-		this->selected_tp.tp = params.closest_tp;
 		this->selected_tp.iter = params.closest_tp_iter;
 		this->selected_tp.valid = true;
 
@@ -7987,7 +8000,7 @@ bool LayerTRW::tool_edit_trackpoint_move(GdkEventMotion *event, LayerTool * tool
 		/* snap to TP */
 		if (event->state & GDK_CONTROL_MASK) {
 			Trackpoint * tp = this->closest_tp_in_five_pixel_interval(tool->viewport, event->x, event->y);
-			if (tp && tp != this->selected_tp.tp) {
+			if (tp && tp != *this->selected_tp.iter) {
 				new_coord = tp->coord;
 			}
 		}
@@ -8026,12 +8039,12 @@ bool LayerTRW::tool_edit_trackpoint_release(GdkEventButton * event, LayerTool * 
 		/* snap to TP */
 		if (event->state & GDK_CONTROL_MASK) {
 			Trackpoint * tp = this->closest_tp_in_five_pixel_interval(tool->viewport, event->x, event->y);
-			if (tp && tp != this->selected_tp.tp) {
+			if (tp && tp != *this->selected_tp.iter) {
 				new_coord = tp->coord;
 			}
 		}
 
-		this->selected_tp.tp->coord = new_coord;
+		(*this->selected_tp.iter)->coord = new_coord;
 		if (this->selected_track) {
 			this->selected_track->calculate_bounds();
 		}
@@ -9084,7 +9097,6 @@ LayerTRW::LayerTRW() : Layer()
 	moving_wp = false;
 	waypoint_rightclick = false;
 
-	current_tpl = NULL;
 	selected_track = NULL;
 	current_tp_uid = 0;
 	tpwin = NULL;
@@ -9131,7 +9143,6 @@ LayerTRW::LayerTRW(Viewport * viewport) : Layer()
 	moving_wp = false;
 	waypoint_rightclick = false;
 
-	current_tpl = NULL;
 	selected_track = NULL;
 	current_tp_uid = 0;
 	tpwin = NULL;

@@ -228,15 +228,11 @@ static void trw_layer_geotag_track(const void * id, Track * trk, geotag_options_
 		return;
 	}
 
-	Trackpoint * tp;
 	Trackpoint * tp_next;
 
-	GList *mytp;
-	for (mytp = trk->trackpoints; mytp; mytp = mytp->next) {
+	for (auto iter = trk->begin(); iter != trk->end(); iter++) {
 
-		// Do something for this trackpoint...
-
-		tp = ((Trackpoint *) mytp->data);
+		Trackpoint * tp = *iter;
 
 		// is it exactly this point?
 		if (options->PhotoTime == tp->timestamp) {
@@ -247,11 +243,11 @@ static void trw_layer_geotag_track(const void * id, Track * trk, geotag_options_
 		}
 
 		// Now need two trackpoints, hence check next is available
-		if (!mytp->next) {
+		if (std::next(iter) == trk->end()) {
 			break;
 		}
 
-		tp_next = ((Trackpoint *) mytp->next->data);
+		Trackpoint * tp_next = *std::next(iter);
 
 		// TODO need to use 'has_timestamp' property
 		if (tp->timestamp == tp_next->timestamp) {

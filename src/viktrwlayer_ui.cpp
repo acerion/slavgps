@@ -1031,7 +1031,7 @@ bool LayerTRW::sublayer_add_menu_items(GtkMenu * menu, void * panel, int subtype
     gtk_menu_shell_append ( GTK_MENU_SHELL(split_submenu), item );
     gtk_widget_show ( item );
     // Make it available only when a trackpoint is selected.
-    gtk_widget_set_sensitive ( item, (bool)KPOINTER_TO_INT(this->current_tpl) );
+    gtk_widget_set_sensitive(item, this->selected_tp.valid);
 
     GtkWidget *insert_submenu = gtk_menu_new ();
     item = gtk_image_menu_item_new_with_mnemonic ( _("_Insert Points") );
@@ -1045,14 +1045,14 @@ bool LayerTRW::sublayer_add_menu_items(GtkMenu * menu, void * panel, int subtype
     gtk_menu_shell_append ( GTK_MENU_SHELL(insert_submenu), item );
     gtk_widget_show ( item );
     // Make it available only when a point is selected
-    gtk_widget_set_sensitive ( item, (bool)KPOINTER_TO_INT(this->current_tpl) );
+    gtk_widget_set_sensitive(item, this->selected_tp.valid);
 
     item = gtk_menu_item_new_with_mnemonic ( _("Insert Point _After Selected Point") );
     g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_insert_point_after), &pass_along );
     gtk_menu_shell_append ( GTK_MENU_SHELL(insert_submenu), item );
     gtk_widget_show ( item );
     // Make it available only when a point is selected
-    gtk_widget_set_sensitive ( item, (bool)KPOINTER_TO_INT(this->current_tpl) );
+    gtk_widget_set_sensitive(item, this->selected_tp.valid);
 
     GtkWidget *delete_submenu;
     delete_submenu = gtk_menu_new ();
@@ -1068,7 +1068,7 @@ bool LayerTRW::sublayer_add_menu_items(GtkMenu * menu, void * panel, int subtype
     gtk_menu_shell_append ( GTK_MENU_SHELL(delete_submenu), item );
     gtk_widget_show ( item );
     // Make it available only when a point is selected
-    gtk_widget_set_sensitive ( item, (bool)KPOINTER_TO_INT(this->current_tpl) );
+    gtk_widget_set_sensitive(item, this->selected_tp.valid);
 
     item = gtk_menu_item_new_with_mnemonic ( _("Delete Points With The Same _Position") );
     g_signal_connect_swapped ( G_OBJECT(item), "activate", G_CALLBACK(trw_layer_delete_points_same_position), &pass_along );
@@ -1245,11 +1245,11 @@ bool LayerTRW::sublayer_add_menu_items(GtkMenu * menu, void * panel, int subtype
     }
   }
 
-  if (this->current_tpl || this->current_wp ) {
+  if (this->selected_tp.valid || this->current_wp ) {
     // For the selected point
     VikCoord *vc;
-    if (this->current_tpl )
-      vc = &(((Trackpoint *) this->current_tpl->data)->coord);
+    if (this->selected_tp.valid)
+      vc = &(*this->selected_tp.iter)->coord;
     else
       vc = &(this->current_wp->coord);
     vik_ext_tools_add_menu_items_to_menu(window_from_layer(this), GTK_MENU (external_submenu), vc );
@@ -1316,7 +1316,7 @@ bool LayerTRW::sublayer_add_menu_items(GtkMenu * menu, void * panel, int subtype
 
   if ( subtype == VIK_TRW_LAYER_SUBLAYER_TRACK || subtype == VIK_TRW_LAYER_SUBLAYER_ROUTE ) {
     // Only show on viewport popmenu when a trackpoint is selected
-    if ( ! panel && this->current_tpl ) {
+    if ( ! panel && this->selected_tp.valid) {
       // Add separator
       item = gtk_menu_item_new ();
       gtk_menu_shell_append ( GTK_MENU_SHELL(menu), item );

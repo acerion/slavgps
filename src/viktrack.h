@@ -119,7 +119,7 @@ namespace SlavGPS {
 
 		Track();
 		Track(const Track & from);
-		Track(const Track & from, GList * new_trackpoints);
+		Track(const Track & from, std::list<Trackpoint *>::iterator first, std::list<Trackpoint *>::iterator last);
 
 		void set_defaults();
 		void set_name(const char *name);
@@ -135,6 +135,8 @@ namespace SlavGPS {
 		std::list<Trackpoint *>::iterator begin();
 		std::list<Trackpoint *>::iterator end();
 		bool empty();
+		std::list<Trackpoint *>::iterator erase(std::list<Trackpoint *>::iterator first, std::list<Trackpoint *>::iterator last);
+		void push_front(Trackpoint * tp);
 
 
 		void sort(compare_trackpoints_t compare_function);
@@ -213,7 +215,6 @@ namespace SlavGPS {
 		VikCoordMode get_coord_mode();
 
 
-		GList *trackpoints;
 		std::list<Trackpoint *> * trackpointsB;
 		bool visible;
 		bool is_route;

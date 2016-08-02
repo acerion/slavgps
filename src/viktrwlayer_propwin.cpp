@@ -2756,13 +2756,14 @@ static void propwin_response_cb(GtkDialog * dialog, int resp, PropWidgets * widg
 	}
 		break;
 	case VIK_TRW_LAYER_PROPWIN_SPLIT_MARKER: {
-		GList *iter = trk->trackpoints;
-		while ((iter = iter->next)) {
-			if (widgets->marker_tp == ((Trackpoint *) iter->data)) {
+		auto iter = std::next(trk->begin());
+		while (iter != trk->end()) {
+			if (widgets->marker_tp == *iter) {
 				break;
 			}
+			iter++;
 		}
-		if (iter == NULL) {
+		if (iter == trk->end()) {
 			a_dialog_msg(gtk_window_from_layer(trw), GTK_MESSAGE_ERROR,
 				     _("Failed spliting track. Track unchanged"), NULL);
 			keep_dialog = true;
@@ -2771,15 +2772,18 @@ static void propwin_response_cb(GtkDialog * dialog, int resp, PropWidgets * widg
 
 		char *r_name = trw->new_unique_sublayer_name(widgets->trk->is_route ? VIK_TRW_LAYER_SUBLAYER_ROUTE : VIK_TRW_LAYER_SUBLAYER_TRACK,
 							     widgets->trk->name);
-		iter->prev->next = NULL;
-		iter->prev = NULL;
-		Track * trk_right = new Track();
+
+
+		/* Notice that here Trackpoint pointed to by iter is moved to new track. */
+		/* kamilTODO: originally the constructor was just Track(). Should we really pass original trk to constructor? */
+		Track * trk_right = new Track(*trk, iter, trk->end());
+		trk->erase(iter, trk->end());
+
 		if (trk->comment) {
 			trk_right->set_comment(trk->comment);
 		}
 		trk_right->visible = trk->visible;
 		trk_right->is_route = trk->is_route;
-		trk_right->trackpoints = iter;
 
 		if (widgets->trk->is_route) {
 			trw->add_route(trk_right, r_name);
