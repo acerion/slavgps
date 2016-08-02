@@ -39,7 +39,6 @@
 #include "coords.h"
 #include "vikcoord.h"
 #include "viktrack.h"
-#include "globals.h"
 #include "dems.h"
 #include "settings.h"
 #include "util.h"
@@ -48,37 +47,6 @@
 
 
 using namespace SlavGPS;
-
-
-
-
-std::list<Trackpoint *> * get_list(GList * trkpts);
-GList * get_glist(std::list<Trackpoint *> * trkpts);
-
-
-
-
-Track::Track()
-{
-	this->trackpointsB = new std::list<Trackpoint *>;
-
-	visible = false;
-	is_route = false;
-	draw_name_mode = TRACK_DRAWNAME_NO;
-	max_number_dist_labels = 0;
-	comment = NULL;
-	description = NULL;
-	source = NULL;
-	type = NULL;
-	ref_count = 0;
-	name = NULL;
-	property_dialog = NULL;
-	has_color = 0;
-	memset(&color, 0, sizeof (GdkColor));
-	memset(&bbox, 0, sizeof (LatLonBBox));
-
-	ref_count = 1;
-}
 
 
 
@@ -212,30 +180,26 @@ void Track::free()
 		return;
 	}
 
-	free_string(&name);
-	free_string(&comment);
-	free_string(&description);
-	free_string(&source);
-	free_string(&type);
-
-	for (auto iter = this->trackpointsB->begin(); iter != this->trackpointsB->end(); iter++) {
-		delete *iter;
-	}
-	this->trackpointsB->clear();
-
-	if (property_dialog) {
-		if (GTK_IS_WIDGET(property_dialog)) {
-			gtk_widget_destroy(GTK_WIDGET(property_dialog));
-		}
-	}
 	delete this;
 }
 
 
 
 
+Track::Track()
+{
+	this->trackpointsB = new TrackPoints;
+
+	memset(&color, 0, sizeof (GdkColor));
+	memset(&bbox, 0, sizeof (LatLonBBox));
+
+	ref_count = 1;
+}
+
+
+
+
 /**
- * vik_track_copy:
  * @from: The Track to copy
  * @copy_points: Whether to copy the track points or not
  *
@@ -244,55 +208,36 @@ void Track::free()
  *
  * Returns: the copied Track
  */
-Track::Track(const Track & from)
+Track::Track(const Track & from) : Track()
 {
-	this->trackpointsB = new std::list<Trackpoint *>;
-
-	visible = false;
-	is_route = false;
-	draw_name_mode = TRACK_DRAWNAME_NO;
-	max_number_dist_labels = 0;
-	comment = NULL;
-	description = NULL;
-	source = NULL;
-	type = NULL;
-	ref_count = 0;
-	name = NULL;
-	property_dialog = NULL;
-	has_color = 0;
-	memset(&color, 0, sizeof (GdkColor));
-	memset(&bbox, 0, sizeof (LatLonBBox));
+	/* Copy points. */
+	for (auto iter = from.trackpointsB->begin(); iter != from.trackpointsB->end(); iter++) {
+		Trackpoint * new_tp = new Trackpoint(**iter);
+		this->trackpointsB->push_back(new_tp);
+	}
 
 	//this->name = g_strdup(from.name); /* kamilFIXME: in original code initialization of name is duplicated. */
 	this->visible = from.visible;
 	this->is_route = from.is_route;
 	this->draw_name_mode = from.draw_name_mode;
 	this->max_number_dist_labels = from.max_number_dist_labels;
-	this->has_color = from.has_color;
-	this->color = from.color;
-	this->bbox = from.bbox;
 
-
-	/* Copy points. */
-	for (auto iter = from.trackpointsB->begin(); iter != from.trackpointsB->end(); iter++) {
-		Trackpoint * tp = *iter;
-		Trackpoint * new_tp = new Trackpoint(*tp);
-		this->trackpointsB->push_back(new_tp);
-	}
-
-
-	this->set_name(from.name);
 	this->set_comment(from.comment);
 	this->set_description(from.description);
 	this->set_source(from.source);
+	/* kamilFIXME: where is ->type? */
+	this->set_name(from.name);
+
+	this->has_color = from.has_color;
+	this->color = from.color;
+	this->bbox = from.bbox;
 }
 
 
 
 
-
 /* kamilFIXME: parent constructor first copies all trackpoints from 'from', this constructor does ->assign(). Copying in parent constructor is unnecessary. */
-Track::Track(const Track & from, std::list<Trackpoint *>::iterator first, std::list<Trackpoint *>::iterator last) : Track(from)
+Track::Track(const Track & from, TrackPoints::iterator first, TrackPoints::iterator last) : Track(from)
 {
 	this->trackpointsB->assign(first, last);
 }
@@ -300,26 +245,56 @@ Track::Track(const Track & from, std::list<Trackpoint *>::iterator first, std::l
 
 
 
+Track::~Track()
+{
+	for (auto iter = this->trackpointsB->begin(); iter != this->trackpointsB->end(); iter++) {
+		delete *iter;
+	}
+	this->trackpointsB->clear();
+
+	free_string(&comment);
+	free_string(&description);
+	free_string(&source);
+	free_string(&type);
+	free_string(&name);
+
+	if (property_dialog) {
+		if (GTK_IS_WIDGET (property_dialog)) {
+			gtk_widget_destroy(GTK_WIDGET (property_dialog));
+		}
+	}
+}
+
+
+
+
 Trackpoint::Trackpoint()
 {
-	name = NULL;
-
 	memset(&coord, 0, sizeof (VikCoord));
-	newsegment = false;
-	has_timestamp = false;
-	timestamp = 0;
+}
 
-	altitude = VIK_DEFAULT_ALTITUDE;
-	speed = NAN;
-	course = NAN;
 
-	nsats = 0;
 
-	fix_mode = VIK_GPS_MODE_NOT_SEEN;
-	hdop = VIK_DEFAULT_DOP;
-	vdop = VIK_DEFAULT_DOP;
-	pdop = VIK_DEFAULT_DOP;
 
+Trackpoint::Trackpoint(const Trackpoint & tp)
+{
+	if (tp.name) {
+		this->name = g_strdup(tp.name);
+	}
+
+	memcpy((void *) &(this->coord), (void *) &(tp.coord), sizeof (VikCoord));
+	this->newsegment = tp.newsegment;
+	this->has_timestamp = tp.has_timestamp;
+	this->timestamp = tp.timestamp;
+	this->altitude = tp.altitude;
+	this->speed = tp.speed;
+	this->course = tp.course;
+	this->nsats = tp.nsats;
+
+	this->fix_mode = tp.fix_mode;
+	this->hdop = tp.hdop;
+	this->vdop = tp.vdop;
+	this->pdop = tp.pdop;
 
 }
 
@@ -346,39 +321,6 @@ void Trackpoint::set_name(char const * name_)
 	} else {
 		name = NULL;
 	}
-}
-
-
-
-
-Trackpoint::Trackpoint(const Trackpoint & tp)
-{
-	if (this->name) {
-		this->name = g_strdup(tp.name);
-	}
-
-	memcpy((void *) &(this->coord), (void *) &(tp.coord), sizeof (VikCoord));
-	this->newsegment = tp.newsegment;
-	this->has_timestamp = tp.has_timestamp;
-	this->timestamp = tp.timestamp;
-	this->altitude = tp.altitude;
-	this->speed = tp.speed;
-	this->course = tp.course;
-	this->nsats = tp.nsats;
-
-	this->fix_mode = tp.fix_mode;
-	this->hdop = tp.hdop;
-	this->vdop = tp.vdop;
-	this->pdop = tp.pdop;
-
-}
-
-
-
-
-void Trackpoint::vik_trackpoint_free(Trackpoint *tp)
-{
-	delete tp;
 }
 
 
@@ -1505,7 +1447,7 @@ Trackpoint * Track::get_closest_tp_by_percentage_dist(double reldist, double *me
 	double current_dist = 0.0;
 	double current_inc = 0.0;
 
-	std::list<Trackpoint *>::iterator last_iter = this->trackpointsB->end();
+	TrackPoints::iterator last_iter = this->trackpointsB->end();
 	double last_dist = 0.0;
 
 	auto iter = std::next(this->trackpointsB->begin());
@@ -1783,12 +1725,12 @@ void Track::marshall(uint8_t **data, size_t *datalen)
 	g_byte_array_append(b, (uint8_t *) &len, sizeof(len));	\
 	if (s) g_byte_array_append(b, (uint8_t *) s, len);
 
-	GList * tps = get_glist(this->trackpointsB);
+	auto iter = this->trackpointsB->begin();
 	unsigned int ntp = 0;
-	while (tps) {
-		g_byte_array_append(b, (uint8_t *)tps->data, sizeof(Trackpoint));
-		vtm_append(((Trackpoint *) tps->data)->name);
-		tps = tps->next;
+	while (iter != this->trackpointsB->end()) {
+		g_byte_array_append(b, (uint8_t *) *iter, sizeof (Trackpoint));
+		vtm_append((*iter)->name);
+		iter++;
 		ntp++;
 	}
 	*(unsigned int *)(b->data + intp) = ntp;
@@ -2058,7 +2000,7 @@ void Track::apply_dem_data_last_trackpoint()
  *
  * Apply elevation smoothing over range of trackpoints between the list start and end points
  */
-void Track::smoothie(std::list<Trackpoint *>::iterator start, std::list<Trackpoint *>::iterator stop, double elev1, double elev2, unsigned int points)
+void Track::smoothie(TrackPoints::iterator start, TrackPoints::iterator stop, double elev1, double elev2, unsigned int points)
 {
 	/* If was really clever could try and weigh interpolation according to the distance between trackpoints somehow.
 	   Instead a simple average interpolation for the number of points given. */
@@ -2258,48 +2200,7 @@ int Track::compare_timestamp(const void * x, const void * y)
 
 
 
-void Track::delete_track(Track * trk)
-{
-	trk->free();
-	return;
-}
-
-
-
-
-std::list<Trackpoint *> * get_list(GList * trkpts)
-{
-	if (trkpts == NULL) {
-		return NULL;
-	}
-
-	std::list<Trackpoint *> * list = new std::list<Trackpoint *>;
-	for (GList * iter = trkpts; iter; iter = iter->next) {
-		list->push_back((Trackpoint *) iter->data);
-	}
-	return list;
-}
-
-
-
-
-GList * get_glist(std::list<Trackpoint *> * trkpts)
-{
-	if (trkpts == NULL) {
-		return NULL;
-	}
-
-	GList * list = NULL;
-	for (auto iter = trkpts->begin(); iter != trkpts->end(); iter++) {
-		list = g_list_append(list, *iter);
-	}
-	return list;
-}
-
-
-
-
-std::list<Trackpoint *>::iterator Track::begin()
+TrackPoints::iterator Track::begin()
 {
 	return this->trackpointsB->begin();
 }
@@ -2307,7 +2208,7 @@ std::list<Trackpoint *>::iterator Track::begin()
 
 
 
-std::list<Trackpoint *>::iterator Track::end()
+TrackPoints::iterator Track::end()
 {
 	return this->trackpointsB->end();
 }
@@ -2331,7 +2232,7 @@ void Track::push_front(Trackpoint * tp)
 
 
 
-std::list<Trackpoint *>::iterator Track::erase(std::list<Trackpoint *>::iterator first, std::list<Trackpoint *>::iterator last)
+TrackPoints::iterator Track::erase(TrackPoints::iterator first, TrackPoints::iterator last)
 {
 	return this->trackpointsB->erase(first, last);
 }
@@ -2347,9 +2248,9 @@ void Track::sort(compare_trackpoints_t compare_func)
 
 
 
-std::list<Trackpoint *>::iterator Track::delete_trackpoint(std::list<Trackpoint *>::iterator iter)
+TrackPoints::iterator Track::delete_trackpoint(TrackPoints::iterator iter)
 {
-	std::list<Trackpoint *>::iterator new_iter;
+	TrackPoints::iterator new_iter;
 
 	if ((new_iter = std::next(iter)) != this->trackpointsB->end()
 	    || (new_iter = std::next(iter)) != this->trackpointsB->end()) {
@@ -2373,7 +2274,7 @@ std::list<Trackpoint *>::iterator Track::delete_trackpoint(std::list<Trackpoint 
 
 
 
-std::list<Trackpoint *>::iterator Track::erase_trackpoint(std::list<Trackpoint *>::iterator iter)
+TrackPoints::iterator Track::erase_trackpoint(TrackPoints::iterator iter)
 {
 	delete *iter;
 	return this->trackpointsB->erase(iter);
@@ -2384,7 +2285,7 @@ std::list<Trackpoint *>::iterator Track::erase_trackpoint(std::list<Trackpoint *
 
 void Track::insert(Trackpoint * tp_at, Trackpoint * tp_new, bool before)
 {
-	std::list<Trackpoint *>::iterator iter = std::find(this->trackpointsB->begin(), this->trackpointsB->end(), tp_at);
+	TrackPoints::iterator iter = std::find(this->trackpointsB->begin(), this->trackpointsB->end(), tp_at);
 	if (iter == this->trackpointsB->end()) {
 		/* kamilTODO: report some error. */
 		return;
@@ -2406,7 +2307,7 @@ void Track::insert(Trackpoint * tp_at, Trackpoint * tp_new, bool before)
 
 
 /* kamilFIXME: this assumes that trackpoints is non-NULL and has some elements. */
-std::list<Trackpoint *>::iterator Track::get_last()
+TrackPoints::iterator Track::get_last()
 {
 	return std::prev(this->trackpointsB->end());
 }

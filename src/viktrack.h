@@ -25,15 +25,24 @@
 
 
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <list>
 
 #include <time.h>
-#include <glib.h>
 #include <gtk/gtk.h>
 #include <stdint.h>
 
+#ifdef HAVE_MATH_H
+#include <math.h>
+#endif
+
+
 #include "vikcoord.h"
 #include "bbox.h"
+#include "globals.h"
 
 
 
@@ -65,30 +74,31 @@ namespace SlavGPS {
 	public:
 
 		Trackpoint();
+		Trackpoint(const Trackpoint& tp);
 		~Trackpoint();
-		Trackpoint(const Trackpoint & tp);
+
+
 		void set_name(char const * name);
-
-		static void vik_trackpoint_free(Trackpoint *tp);
-
 		static bool compare_timestamps(const Trackpoint * a, const Trackpoint * b); /* compare_trackpoints_t */
 
-		char * name;
+
+
+		char * name = NULL;
 		VikCoord coord;
-		bool newsegment;
-		bool has_timestamp;
-		time_t timestamp;
+		bool newsegment = false;
+		bool has_timestamp = false;
+		time_t timestamp = 0;
 
-		double altitude;	/* VIK_DEFAULT_ALTITUDE if data unavailable */
-		double speed;  	        /* NAN if data unavailable */
-		double course;          /* NAN if data unavailable */
+		double altitude = VIK_DEFAULT_ALTITUDE; /* VIK_DEFAULT_ALTITUDE if data unavailable */
+		double speed = NAN;  	                /* NAN if data unavailable */
+		double course = NAN;                    /* NAN if data unavailable */
 
-		unsigned int nsats;     /* number of satellites used. 0 if data unavailable */
+		unsigned int nsats = 0;     /* Number of satellites used. 0 if data unavailable. */
 
-		enum FixMode fix_mode;  /* VIK_GPS_MODE_NOT_SEEN if data unavailable */
-		double hdop;            /* VIK_DEFAULT_DOP if data unavailable */
-		double vdop;            /* VIK_DEFAULT_DOP if data unavailable */
-		double pdop;            /* VIK_DEFAULT_DOP if data unavailable */
+		enum FixMode fix_mode = VIK_GPS_MODE_NOT_SEEN; /* VIK_GPS_MODE_NOT_SEEN if data unavailable */
+		double hdop = VIK_DEFAULT_DOP;                 /* VIK_DEFAULT_DOP if data unavailable */
+		double vdop = VIK_DEFAULT_DOP;                 /* VIK_DEFAULT_DOP if data unavailable */
+		double pdop = VIK_DEFAULT_DOP;                 /* VIK_DEFAULT_DOP if data unavailable */
 	};
 
 
@@ -107,19 +117,35 @@ namespace SlavGPS {
 
 
 
+	typedef std::list<Trackpoint *> TrackPoints;
 
-	// Instead of having a separate VikRoute type, routes are considered tracks
-	//  Thus all track operations must cope with a 'route' version
-	//  [track functions handle having no timestamps anyway - so there is no practical difference in most cases]
-	//  This is simpler than having to rewrite particularly every track function for route version
-	//   given that they do the same things
-	//  Mostly this matters in the display in deciding where and how they are shown
+
+
+
+	/*
+	  Instead of having a separate VikRoute type, routes are
+	  considered tracks.  Thus all track operations must cope with
+	  a 'route' version.
+
+	  Track functions handle having no timestamps anyway - so
+	  there is no practical difference in most cases.
+
+	  This is simpler than having to rewrite particularly every
+	  track function for route version, given that they do the
+	  same things.
+
+	  Mostly this matters in the display in deciding where and how
+	  they are shown.
+	*/
+
 	class Track {
 	public:
 
 		Track();
-		Track(const Track & from);
-		Track(const Track & from, std::list<Trackpoint *>::iterator first, std::list<Trackpoint *>::iterator last);
+		Track(const Track& from);
+		Track(const Track& from, TrackPoints::iterator first, TrackPoints::iterator last);
+		~Track();
+
 
 		void set_defaults();
 		void set_name(const char *name);
@@ -132,10 +158,10 @@ namespace SlavGPS {
 
 
 		/* STL-like container interface. */
-		std::list<Trackpoint *>::iterator begin();
-		std::list<Trackpoint *>::iterator end();
+		TrackPoints::iterator begin();
+		TrackPoints::iterator end();
 		bool empty();
-		std::list<Trackpoint *>::iterator erase(std::list<Trackpoint *>::iterator first, std::list<Trackpoint *>::iterator last);
+		TrackPoints::iterator erase(TrackPoints::iterator first, TrackPoints::iterator last);
 		void push_front(Trackpoint * tp);
 
 
@@ -205,36 +231,33 @@ namespace SlavGPS {
 		void set_property_dialog(GtkWidget *dialog);
 		void clear_property_dialog();
 
-		static void delete_track(Track *);
-		std::list<Trackpoint *>::iterator erase_trackpoint(std::list<Trackpoint *>::iterator iter);
-		std::list<Trackpoint *>::iterator delete_trackpoint(std::list<Trackpoint *>::iterator iter);
+		TrackPoints::iterator erase_trackpoint(TrackPoints::iterator iter);
+		TrackPoints::iterator delete_trackpoint(TrackPoints::iterator iter);
 		void insert(Trackpoint * tp_at, Trackpoint * tp_new, bool before);
 
-		std::list<Trackpoint *>::iterator get_last();
+		TrackPoints::iterator get_last();
 		std::list<Rect *> * get_rectangles(LatLon * wh);
 		VikCoordMode get_coord_mode();
 
 
-		std::list<Trackpoint *> * trackpointsB;
-		bool visible;
-		bool is_route;
-		TrackDrawnameType draw_name_mode;
-		uint8_t max_number_dist_labels;
-		char *comment;
-		char *description;
-		char *source;
-		char *type;
-		uint8_t ref_count;
-		char *name;
-		GtkWidget *property_dialog;
-		bool has_color;
+		TrackPoints * trackpointsB = NULL;
+		bool visible = false;
+		bool is_route = false;
+		TrackDrawnameType draw_name_mode = TRACK_DRAWNAME_NO;
+		uint8_t max_number_dist_labels = 0;
+		char * comment = NULL;
+		char * description = NULL;
+		char * source = NULL;
+		char * type = NULL;
+		uint8_t ref_count = 0;
+		char * name = NULL;
+		GtkWidget * property_dialog = NULL;
+		bool has_color = false;
 		GdkColor color;
 		LatLonBBox bbox;
 	private:
-		static void smoothie(std::list<Trackpoint *>::iterator start, std::list<Trackpoint *>::iterator stop, double elev1, double elev2, unsigned int points);
+		static void smoothie(TrackPoints::iterator start, TrackPoints::iterator stop, double elev1, double elev2, unsigned int points);
 		void recalculate_bounds_last_tp();
-
-
 	};
 
 

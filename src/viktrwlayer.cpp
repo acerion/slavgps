@@ -4853,8 +4853,8 @@ void trw_layer_split_by_timestamp(trw_menu_sublayer_t * data)
 	auto iter = trk->trackpointsB->begin();
 	time_t prev_ts = (*iter)->timestamp;
 
-	std::list<Trackpoint *> * newtps = new std::list<Trackpoint *>;
-	std::list<std::list<Trackpoint *> *> points;
+	TrackPoints * newtps = new TrackPoints;
+	std::list<TrackPoints *> points;
 
 	for (; iter != trk->trackpointsB->end(); iter++) {
 		time_t ts = (*iter)->timestamp;
@@ -4874,7 +4874,7 @@ void trw_layer_split_by_timestamp(trw_menu_sublayer_t * data)
 		if (ts - prev_ts > thr * 60) {
 			/* flush accumulated trackpoints into new list */
 			points.push_back(newtps);
-			newtps = new std::list<Trackpoint *>;
+			newtps = new TrackPoints;
 		}
 
 		/* Accumulate trackpoint copies in newtps. */
@@ -4926,8 +4926,8 @@ void trw_layer_split_by_n_points(trw_menu_sublayer_t * data)
 	}
 
 	// Now split...
-	std::list<Trackpoint *> * newtps = new std::list<Trackpoint *>;
-	std::list<std::list<Trackpoint *> *> points;
+	TrackPoints * newtps = new TrackPoints;
+	std::list<TrackPoints *> points;
 
 	int count = 0;
 
@@ -4938,7 +4938,7 @@ void trw_layer_split_by_n_points(trw_menu_sublayer_t * data)
 		if (count >= n_points) {
 			/* flush accumulated trackpoints into new list */
 			points.push_back(newtps);
-			newtps = new std::list<Trackpoint *>;
+			newtps = new TrackPoints;
 			count = 0;
 		}
 	}
@@ -4967,7 +4967,7 @@ void trw_layer_split_by_n_points(trw_menu_sublayer_t * data)
   orig - original track
   points- list of trackpoint lists
 */
-bool LayerTRW::create_new_tracks(Track * orig, std::list<std::list<Trackpoint *> *> * points)
+bool LayerTRW::create_new_tracks(Track * orig, std::list<TrackPoints *> * points)
 {
 	for (auto iter = points->begin(); iter != points->end(); iter++) {
 
@@ -5047,10 +5047,7 @@ void trw_layer_split_segments(trw_menu_sublayer_t * data)
 
 void LayerTRW::trackpoint_selected_delete(Track * trk)
 {
-
-	std::list<Trackpoint *>::iterator dummy;
-
-	std::list<Trackpoint *>::iterator new_tp_iter = trk->delete_trackpoint(this->selected_tp.iter);
+	TrackPoints::iterator new_tp_iter = trk->delete_trackpoint(this->selected_tp.iter);
 
 	if (new_tp_iter != trk->end()) {
 		/* Set to current to the available adjacent trackpoint. */

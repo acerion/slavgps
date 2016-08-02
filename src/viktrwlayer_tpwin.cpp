@@ -383,7 +383,7 @@ void vik_trw_layer_tpwin_set_empty(VikTrwLayerTpwin * tpwin)
  * Sets the Trackpoint Edit Window to the values of the current trackpoint given in @tpl.
  *
  */
-void vik_trw_layer_tpwin_set_tp(VikTrwLayerTpwin * tpwin, Track * track, std::list<Trackpoint *>::iterator * iter, const char * track_name, bool is_route)
+void vik_trw_layer_tpwin_set_tp(VikTrwLayerTpwin * tpwin, Track * track, TrackPoints::iterator * iter, const char * track_name, bool is_route)
 {
 	static char tmp_str[64];
 	static struct LatLon ll;
