@@ -621,7 +621,7 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 
 	auto iter = trk->trackpointsB->begin();
 
-	uint8_t tp_size = (*iter == dp->trw->selected_tp.tp) ? tp_size_cur : tp_size_reg;
+	uint8_t tp_size = (dp->trw->selected_tp.valid && *iter == *dp->trw->selected_tp.iter) ? tp_size_cur : tp_size_reg;
 
 	int x, y;
 	dp->viewport->coord_to_screen(&(*iter)->coord, &x, &y);
@@ -653,7 +653,7 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 	for (; iter != trk->trackpointsB->end(); iter++) {
 		Trackpoint * tp = *iter;
 
-		tp_size = (tp == dp->trw->selected_tp.tp) ? tp_size_cur : tp_size_reg;
+		tp_size = (dp->trw->selected_tp.valid && tp == *dp->trw->selected_tp.iter) ? tp_size_cur : tp_size_reg;
 
 		Trackpoint * prev_tp = (Trackpoint *) *std::prev(iter);
 		// See if in a different lat/lon 'quadrant' so don't draw massively long lines (presumably wrong way around the Earth)
