@@ -42,10 +42,10 @@ extern "C" {
 typedef struct _VikToolbarClass VikToolbarClass;
 typedef struct _VikToolbar VikToolbar;
 
-GType vik_toolbar_get_type ();
+GType vik_toolbar_get_type();
 
-VikToolbar *vik_toolbar_new (void);
-void vik_toolbar_finalize ( VikToolbar *vtb );
+VikToolbar *vik_toolbar_new(void);
+void vik_toolbar_finalize(VikToolbar *vtb);
 
 GtkWidget *toolbar_get_widget_by_name(VikToolbar *vtb, const char *name);
 GtkAction *toolbar_get_action_by_name(VikToolbar *vtb, const char *name);
@@ -55,7 +55,7 @@ void toolbar_action_mode_entry_register(VikToolbar *vtb, GtkRadioActionEntry *ac
 void toolbar_action_toggle_entry_register(VikToolbar *vtb, GtkToggleActionEntry *action, void * callback);
 void toolbar_action_entry_register(VikToolbar *vtb, GtkActionEntry *action);
 
-void toolbar_action_set_sensitive (VikToolbar *vtb, const char *name, bool sensitive);
+void toolbar_action_set_sensitive(VikToolbar *vtb, const char *name, bool sensitive);
 
 typedef void (ToolCB) (GtkAction *, GtkAction *, void *); // void * is actually a VikWindow
 typedef void (ReloadCB) (GtkActionGroup *, void *); // void * is actually a VikWindow
@@ -75,9 +75,9 @@ void toolbar_apply_settings(VikToolbar *vtb,
 
 GtkWidget* toolbar_get_widget(VikToolbar *vtb);
 
-void a_toolbar_init (void);
+void a_toolbar_init(void);
 
-void a_toolbar_uninit (void);
+void a_toolbar_uninit(void);
 
 #ifdef __cplusplus
 }

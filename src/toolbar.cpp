@@ -54,31 +54,31 @@ using namespace SlavGPS;
 
 struct _VikToolbarClass
 {
-  GObjectClass object_class;
+	GObjectClass object_class;
 };
 
 struct _VikToolbar {
-  GObject obj;
-  GtkWidget *widget;
-  GtkUIManager *uim;
-  unsigned int merge_id;
-  GtkActionGroup *group_actions;
-  GtkActionGroup *group_toggles;
-  GtkActionGroup *group_tools;
-  GtkActionGroup *group_modes;
-  GSList *list_of_actions;
-  GSList *list_of_toggles;
-  GSList *list_of_tools;
-  GSList *list_of_modes;
+	GObject obj;
+	GtkWidget *widget;
+	GtkUIManager *uim;
+	unsigned int merge_id;
+	GtkActionGroup *group_actions;
+	GtkActionGroup *group_toggles;
+	GtkActionGroup *group_tools;
+	GtkActionGroup *group_modes;
+	GSList *list_of_actions;
+	GSList *list_of_toggles;
+	GSList *list_of_tools;
+	GSList *list_of_modes;
 };
 
 G_DEFINE_TYPE (VikToolbar, vik_toolbar, G_TYPE_OBJECT)
 
-static void vik_toolbar_class_init (VikToolbarClass *klass)
+static void vik_toolbar_class_init(VikToolbarClass *klass)
 {
 }
 
-static void vik_toolbar_init (VikToolbar *vtb)
+static void vik_toolbar_init(VikToolbar *vtb)
 {
 	vtb->widget = NULL;
 	vtb->merge_id = 0;
@@ -88,7 +88,7 @@ static void vik_toolbar_init (VikToolbar *vtb)
 	vtb->list_of_modes = NULL;
 }
 
-VikToolbar *vik_toolbar_new ()
+VikToolbar *vik_toolbar_new()
 {
 	VikToolbar *vtb = (VikToolbar *)g_object_new(vik_toolbar_get_type(), NULL);
 	return vtb;
@@ -123,20 +123,20 @@ static GHashTable *signal_data;
 static GSList *toggle_overrides = NULL;
 
 // Forward declaration
-void toolbar_configure (VikToolbar *vtb, GtkWidget *toolbar, GtkWindow *parent, GtkWidget *vbox, GtkWidget *hbox, ReloadCB reload_cb, void * user_data);
+void toolbar_configure(VikToolbar *vtb, GtkWidget *toolbar, GtkWindow *parent, GtkWidget *vbox, GtkWidget *hbox, ReloadCB reload_cb, void * user_data);
 
 void toolbar_configure_cb(void)
 {
 	// Values not known at prefs initialization.
 	// So trying to pass these values via the UI builder is not possible currently.
 	// ATM cheat via internal values - although this doesn't work properly for multiple Windows...
-	toolbar_configure ( extra_widget_data.vtb,
-	                    extra_widget_data.vtb->widget,
-	                    extra_widget_data.parent,
-	                    extra_widget_data.vbox,
-	                    extra_widget_data.hbox,
-	                    extra_widget_data.reload_cb,
-	                    extra_widget_data.user_data );
+	toolbar_configure(extra_widget_data.vtb,
+			  extra_widget_data.vtb->widget,
+			  extra_widget_data.parent,
+			  extra_widget_data.vbox,
+			  extra_widget_data.hbox,
+			  extra_widget_data.reload_cb,
+			  extra_widget_data.user_data);
 }
 
 /**
@@ -144,28 +144,28 @@ void toolbar_configure_cb(void)
  *
  * Initialize stuff for the toolbar.
  */
-void a_toolbar_init (void)
+void a_toolbar_init(void)
 {
 	// Preferences
-	a_preferences_register_group ( TOOLBAR_PARAMS_GROUP_KEY, _("Toolbar") );
+	a_preferences_register_group(TOOLBAR_PARAMS_GROUP_KEY, _("Toolbar"));
 
 	unsigned int i = 0;
 	VikLayerParamData tmp;
 	tmp.b = false;
-	a_preferences_register (&prefs[i++], tmp, TOOLBAR_PARAMS_GROUP_KEY);
+	a_preferences_register(&prefs[i++], tmp, TOOLBAR_PARAMS_GROUP_KEY);
 	tmp.u = 0;
-	a_preferences_register (&prefs[i++], tmp, TOOLBAR_PARAMS_GROUP_KEY);
+	a_preferences_register(&prefs[i++], tmp, TOOLBAR_PARAMS_GROUP_KEY);
 #ifdef WINDOWS
 	tmp.u = 1; // Small Icons for Windows by default as 'System Defaults' is more GNOME Theme driven.
 #else
 	tmp.u = 0;
 #endif
-	a_preferences_register (&prefs[i++], tmp, TOOLBAR_PARAMS_GROUP_KEY);
+	a_preferences_register(&prefs[i++], tmp, TOOLBAR_PARAMS_GROUP_KEY);
 	tmp.ptr = (void *) toolbar_configure_cb;
-	a_preferences_register (&prefs[i++], tmp, TOOLBAR_PARAMS_GROUP_KEY);
+	a_preferences_register(&prefs[i++], tmp, TOOLBAR_PARAMS_GROUP_KEY);
 
 	// Signal data hash
-	signal_data = g_hash_table_new_full ( g_direct_hash, g_direct_equal, NULL, g_free );
+	signal_data = g_hash_table_new_full(g_direct_hash, g_direct_equal, NULL, g_free);
 }
 
 /**
@@ -173,26 +173,26 @@ void a_toolbar_init (void)
  *
  * Uninitialize toolbar related stuff.
  */
-void a_toolbar_uninit ( void )
+void a_toolbar_uninit(void)
 {
-	g_hash_table_destroy ( signal_data );
-	g_slist_foreach ( toggle_overrides, (GFunc)g_free, NULL );
-	g_slist_free ( toggle_overrides );
+	g_hash_table_destroy(signal_data);
+	g_slist_foreach(toggle_overrides, (GFunc)g_free, NULL);
+	g_slist_free(toggle_overrides);
 }
 
-static bool prefs_get_append_to_menu (void)
+static bool prefs_get_append_to_menu(void)
 {
   return a_preferences_get(TOOLBAR_PARAMS_NAMESPACE "append_to_menu")->b;
 }
 
-static unsigned int prefs_get_icon_size (void)
+static unsigned int prefs_get_icon_size(void)
 {
-  return a_preferences_get(TOOLBAR_PARAMS_NAMESPACE "icon_size")->u;
+	return a_preferences_get(TOOLBAR_PARAMS_NAMESPACE "icon_size")->u;
 }
 
-static unsigned int prefs_get_icon_style (void)
+static unsigned int prefs_get_icon_style(void)
 {
-  return a_preferences_get(TOOLBAR_PARAMS_NAMESPACE "icon_style")->u;
+	return a_preferences_get(TOOLBAR_PARAMS_NAMESPACE "icon_style")->u;
 }
 
 /* Note: The returned widget pointer is only valid until the toolbar is reloaded. So, either
@@ -218,16 +218,19 @@ GtkWidget *toolbar_get_widget_by_name(VikToolbar *vtb, const char *name)
 	return widget;
 }
 
-static GtkAction *get_action ( VikToolbar *vtb, const char *name )
+static GtkAction *get_action(VikToolbar *vtb, const char *name)
 {
 	// Try all groups
-	GtkAction *action = gtk_action_group_get_action (vtb->group_actions, name);
-	if ( !action )
-		action = gtk_action_group_get_action (vtb->group_tools, name);
-	if ( !action )
-		action = gtk_action_group_get_action (vtb->group_toggles, name);
-	if ( !action )
-		action = gtk_action_group_get_action (vtb->group_modes, name);
+	GtkAction *action = gtk_action_group_get_action(vtb->group_actions, name);
+	if (!action) {
+		action = gtk_action_group_get_action(vtb->group_tools, name);
+	}
+	if (!action) {
+		action = gtk_action_group_get_action(vtb->group_toggles, name);
+	}
+	if (!action) {
+		action = gtk_action_group_get_action(vtb->group_modes, name);
+	}
 	return action;
 }
 
@@ -300,14 +303,14 @@ void toolbar_action_toggle_entry_register(VikToolbar *vtb, GtkToggleActionEntry 
 		return;
 	}
 
-	GtkToggleActionEntry *myaction = (GtkToggleActionEntry *) malloc(sizeof (GtkToggleActionEntry) );
-	memcpy ( myaction, action, sizeof (GtkToggleActionEntry) );
+	GtkToggleActionEntry *myaction = (GtkToggleActionEntry *) malloc(sizeof (GtkToggleActionEntry));
+	memcpy (myaction, action, sizeof (GtkToggleActionEntry));
 	// Overwrite with specific callback
 	myaction->callback = (void (*)()) callback;
 	vtb->list_of_toggles = g_slist_append(vtb->list_of_toggles, myaction);
 
 	// Store override so it can be freed upon toolbar destruction
-	toggle_overrides = g_slist_append ( toggle_overrides, myaction );
+	toggle_overrides = g_slist_append(toggle_overrides, myaction);
 }
 
 /**
@@ -329,56 +332,58 @@ void toolbar_action_entry_register(VikToolbar *vtb, GtkActionEntry *action)
 static void configure_cb (GtkWidget *widget, void * user_data)
 {
 	config_t *data = (config_t*)user_data;
-	toolbar_configure ( data->vtb, data->vtb->widget, data->parent, data->vbox, data->hbox, data->reload_cb, data->user_data);
+	toolbar_configure (data->vtb, data->vtb->widget, data->parent, data->vbox, data->hbox, data->reload_cb, data->user_data);
 }
 
-static bool toolbar_popup_menu (GtkWidget *widget, GdkEventButton *event, void * user_data)
+static bool toolbar_popup_menu(GtkWidget *widget, GdkEventButton *event, void * user_data)
 {
 	// Only display menu on right button clicks
 	if (event->button == 3) {
 		GtkWidget *tmenu;
 		tmenu = gtk_menu_new();
-		GtkWidget *item = gtk_menu_item_new_with_mnemonic ( _("_Customize") );
-		g_signal_connect ( G_OBJECT(item), "activate", G_CALLBACK(configure_cb), user_data );
-		gtk_menu_shell_append ( GTK_MENU_SHELL(tmenu), item );
-		gtk_menu_popup ( GTK_MENU(tmenu), NULL, NULL, NULL, NULL, event->button, event->time );
-		gtk_widget_show_all ( GTK_WIDGET(tmenu) );
-		g_object_ref_sink (tmenu);
+		GtkWidget *item = gtk_menu_item_new_with_mnemonic(_("_Customize"));
+		g_signal_connect(G_OBJECT(item), "activate", G_CALLBACK(configure_cb), user_data);
+		gtk_menu_shell_append(GTK_MENU_SHELL(tmenu), item);
+		gtk_menu_popup(GTK_MENU(tmenu), NULL, NULL, NULL, NULL, event->button, event->time);
+		gtk_widget_show_all(GTK_WIDGET(tmenu));
+		g_object_ref_sink(tmenu);
 		return true;
 	}
 	return false;
 }
 
 /* sets the icon style of the toolbar */
-static void toolbar_set_icon_style (GtkWidget *toolbar)
+static void toolbar_set_icon_style(GtkWidget *toolbar)
 {
 	int icon_style = prefs_get_icon_style();
 
-	if (icon_style == 0)
+	if (icon_style == 0) {
 		icon_style = ui_get_gtk_settings_integer("gtk-toolbar-style", GTK_TOOLBAR_ICONS);
-	else
+	} else {
 		// Adjust to enum GtkToolbarStyle
 		icon_style--;
+	}
 
 	gtk_toolbar_set_style(GTK_TOOLBAR(toolbar), (GtkToolbarStyle) icon_style);
 }
 
 
 /* sets the icon size of the toolbar */
-static void toolbar_set_icon_size (GtkWidget *toolbar)
+static void toolbar_set_icon_size(GtkWidget *toolbar)
 {
 	int icon_size = prefs_get_icon_size();
 
-	if ( icon_size == 0 )
+	if (icon_size == 0) {
 		icon_size = ui_get_gtk_settings_integer("gtk-toolbar-icon-size", GTK_ICON_SIZE_SMALL_TOOLBAR);
-	else {
+	} else {
 		// Adjust to enum GtkIconSize
-		if ( icon_size == 1 )
+		if (icon_size == 1) {
 			icon_size = GTK_ICON_SIZE_SMALL_TOOLBAR;
-		else if ( icon_size == 2 )
+		} else if (icon_size == 2) {
 			icon_size = GTK_ICON_SIZE_LARGE_TOOLBAR;
-		else if ( icon_size == 3 )
+		} else if (icon_size == 3) {
 			icon_size = GTK_ICON_SIZE_DND;
+		}
 	}
 
 	gtk_toolbar_set_icon_size(GTK_TOOLBAR(toolbar), (GtkIconSize) icon_size);
@@ -402,13 +407,15 @@ void toolbar_apply_settings(VikToolbar *vtb,
 		return;
 	}
 
-	if ( reset ) {
-		g_object_ref (vtb->widget); // ensure not deleted when removed
+	if (reset) {
+		g_object_ref(vtb->widget); // ensure not deleted when removed
 		// Try both places it could be
-		if ( gtk_widget_get_parent (vtb->widget) == hbox )
-			gtk_container_remove(GTK_CONTAINER(hbox), vtb->widget );
-		if ( gtk_widget_get_parent (vtb->widget) == vbox )
-			gtk_container_remove(GTK_CONTAINER(vbox), vtb->widget );
+		if (gtk_widget_get_parent(vtb->widget) == hbox) {
+			gtk_container_remove(GTK_CONTAINER(hbox), vtb->widget);
+		}
+		if (gtk_widget_get_parent(vtb->widget) == vbox) {
+			gtk_container_remove(GTK_CONTAINER(vbox), vtb->widget);
+		}
 	}
 
 	toolbar_set_icon_style(vtb->widget);
@@ -416,16 +423,13 @@ void toolbar_apply_settings(VikToolbar *vtb,
 
 	/* add the toolbar again to the main window */
 	// Use reorder to ensure toolbar always comes after the menu
-	if (prefs_get_append_to_menu())
-	{
-		if ( hbox ) {
+	if (prefs_get_append_to_menu()) {
+		if (hbox) {
 			gtk_box_pack_start(GTK_BOX(hbox), vtb->widget, true, true, 0);
 			gtk_box_reorder_child(GTK_BOX(hbox), vtb->widget, 1);
 		}
-	}
-	else
-	{
-		if ( vbox ) {
+	} else {
+		if (vbox) {
 			gtk_box_pack_start(GTK_BOX(vbox), vtb->widget, false, true, 0);
 			gtk_box_reorder_child(GTK_BOX(vbox), vtb->widget, 1);
 		}
@@ -445,44 +449,40 @@ GtkWidget* toolbar_get_widget(VikToolbar *vtb)
 }
 
 #include "toolbar.xml.h"
-static void toolbar_reload ( VikToolbar *vtb,
-                             const char *markup,
-                             GtkWindow *parent,
-                             GtkWidget *vbox,
-                             GtkWidget *hbox,
-                             ReloadCB reload_cb,
-                             void * user_data )
+static void toolbar_reload(VikToolbar *vtb,
+			   const char *markup,
+			   GtkWindow *parent,
+			   GtkWidget *vbox,
+			   GtkWidget *hbox,
+			   ReloadCB reload_cb,
+			   void * user_data)
 {
 	GError *error = NULL;
-	fprintf(stderr, "DEBUG: %s: %d\n", __FUNCTION__, g_hash_table_size(signal_data) );
+	fprintf(stderr, "DEBUG: %s: %d\n", __FUNCTION__, g_hash_table_size(signal_data));
 
 	/* Cleanup old toolbar */
-	if (vtb->merge_id > 0)
-	{
+	if (vtb->merge_id > 0) {
 		/* Get rid of it! */
 		gtk_widget_destroy(vtb->widget);
 
 		gtk_ui_manager_remove_ui(vtb->uim, vtb->merge_id);
 		gtk_ui_manager_ensure_update(vtb->uim);
 
-		g_hash_table_remove ( signal_data, vtb );
+		g_hash_table_remove(signal_data, vtb);
 	}
 
 	if (markup != NULL)
 	{
 		vtb->merge_id = gtk_ui_manager_add_ui_from_string(vtb->uim, markup, -1, &error);
-	}
-	else
-	{
+	} else {
 		char *filename = NULL;
 		/* Load the toolbar UI XML file from disk */
 		// Consider using a_get_viking_data_path() first
-		filename = g_build_filename (a_get_viking_dir(), "ui_toolbar.xml", NULL);
+		filename = g_build_filename(a_get_viking_dir(), "ui_toolbar.xml", NULL);
 		vtb->merge_id = gtk_ui_manager_add_ui_from_file(vtb->uim, filename, &error);
 		free(filename);
 	}
-	if (error != NULL)
-	{
+	if (error != NULL) {
 		fprintf(stderr, "DEBUG: UI creation failed, using internal fallback definition. Error message: %s\n", error->message);
 		g_error_free(error);
 		error = NULL;
@@ -498,7 +498,7 @@ static void toolbar_reload ( VikToolbar *vtb,
 	vtb->widget = gtk_ui_manager_get_widget(vtb->uim, "/ui/MainToolbar");
 
 	/* update button states */
-	reload_cb ( vtb->group_actions, user_data );
+	reload_cb(vtb->group_actions, user_data);
 
 	toolbar_apply_settings(vtb, vbox, hbox, false);
 
@@ -514,7 +514,7 @@ static void toolbar_reload ( VikToolbar *vtb,
 	data->user_data = user_data;
 
 	// Store data in a hash so it can be freed when the toolbar is reconfigured
-	g_hash_table_insert (signal_data, vtb, data);
+	g_hash_table_insert(signal_data, vtb, data);
 
 	g_signal_connect(vtb->widget, "button-press-event", G_CALLBACK(toolbar_popup_menu), data);
 
@@ -527,16 +527,14 @@ static void toolbar_notify_style_cb(GObject *object, GParamSpec *arg1, void * da
 	const char *arg_name = g_param_spec_get_name(arg1);
 	int value;
 
-	if (prefs_get_icon_style() == 0 && !strcmp(arg_name, "gtk-toolbar-style"))
-	{
+	if (prefs_get_icon_style() == 0 && !strcmp(arg_name, "gtk-toolbar-style")) {
 		value = ui_get_gtk_settings_integer(arg_name, GTK_TOOLBAR_ICONS);
-		if ( GTK_IS_TOOLBAR (data) )
+		if (GTK_IS_TOOLBAR(data))
 			gtk_toolbar_set_style(GTK_TOOLBAR(data), (GtkToolbarStyle) value);
-	}
-	else if (prefs_get_icon_size() == 0 && !strcmp(arg_name, "gtk-toolbar-size"))
-	{
+
+	} else if (prefs_get_icon_size() == 0 && !strcmp(arg_name, "gtk-toolbar-size")) {
 		value = ui_get_gtk_settings_integer(arg_name, GTK_ICON_SIZE_SMALL_TOOLBAR);
-		if ( GTK_IS_TOOLBAR (data) )
+		if (GTK_IS_TOOLBAR (data))
 			gtk_toolbar_set_icon_size(GTK_TOOLBAR(data), (GtkIconSize) value);
 	}
 }
@@ -546,13 +544,13 @@ static void toolbar_notify_style_cb(GObject *object, GParamSpec *arg1, void * da
  *
  * Initialize the specified toolbar using the given values
  */
-void toolbar_init (VikToolbar *vtb,
-                   GtkWindow *parent,
-                   GtkWidget *vbox,
-                   GtkWidget *hbox,
-                   ToolCB tool_cb,
-                   ReloadCB reload_cb,
-                   void * user_data)
+void toolbar_init(VikToolbar *vtb,
+		  GtkWindow *parent,
+		  GtkWidget *vbox,
+		  GtkWidget *hbox,
+		  ToolCB tool_cb,
+		  ReloadCB reload_cb,
+		  void * user_data)
 {
 	vtb->uim = gtk_ui_manager_new();
 
@@ -623,7 +621,7 @@ void toolbar_init (VikToolbar *vtb,
 	if (gtk_settings != NULL)
 	{
 		g_signal_connect(gtk_settings, "notify::gtk-toolbar-style",
-			G_CALLBACK(toolbar_notify_style_cb), vtb->widget);
+				 G_CALLBACK(toolbar_notify_style_cb), vtb->widget);
 	}
 
 	extra_widget_data.vtb = vtb;
@@ -638,7 +636,7 @@ void toolbar_init (VikToolbar *vtb,
  *
  * Set sensitivity of a particular action
  */
-void toolbar_action_set_sensitive (VikToolbar *vtb, const char *name, bool sensitive)
+void toolbar_action_set_sensitive(VikToolbar *vtb, const char *name, bool sensitive)
 {
 	if (!VIK_IS_TOOLBAR (vtb)) {
 		return;
@@ -647,9 +645,10 @@ void toolbar_action_set_sensitive (VikToolbar *vtb, const char *name, bool sensi
 		return;
 	}
 	// Try all groups
-	GtkAction *action = get_action ( vtb, name );
-	if ( action )
-		g_object_set ( action, "sensitive", sensitive, NULL);
+	GtkAction * action = get_action(vtb, name);
+	if (action) {
+		g_object_set(action, "sensitive", sensitive, NULL);
+	}
 }
 
 /**
@@ -657,9 +656,9 @@ void toolbar_action_set_sensitive (VikToolbar *vtb, const char *name, bool sensi
  *
  * Memory cleanups upon toolbar destruction
  */
-void vik_toolbar_finalize ( VikToolbar *vtb )
+void vik_toolbar_finalize(VikToolbar *vtb)
 {
-	g_hash_table_remove ( signal_data, vtb );
+	g_hash_table_remove(signal_data, vtb);
 
 	/* unref'ing the GtkUIManager object will destroy all its widgets unless they were ref'ed */
 	g_object_unref(vtb->uim);
@@ -710,21 +709,20 @@ enum
 };
 
 static void tb_editor_handler_start_element(GMarkupParseContext *context, const char *element_name,
-											const char **attribute_names,
-											const char **attribute_values, void * data,
-											GError **error)
+					    const char **attribute_names,
+					    const char **attribute_values, void * data,
+					    GError **error)
 {
 	int i;
 	GSList **actions = (GSList **) data;
 
 	/* This is very basic parsing, stripped down any error checking, requires a valid UI markup. */
-	if (!strcmp(element_name, "separator"))
+	if (!strcmp(element_name, "separator")) {
 		*actions = g_slist_append(*actions, g_strdup(TB_EDITOR_SEPARATOR));
+	}
 
-	for (i = 0; attribute_names[i] != NULL; i++)
-	{
-		if (!strcmp(attribute_names[i], "action"))
-		{
+	for (i = 0; attribute_names[i] != NULL; i++) {
+		if (!strcmp(attribute_names[i], "action")) {
 			*actions = g_slist_append(*actions, g_strdup(attribute_values[i]));
 		}
 	}
@@ -757,29 +755,32 @@ static void tb_editor_set_item_values(VikToolbar *vtb, const char *name, GtkList
 	char *label_clean = NULL;
 
 	// Tries all action groups
-	GtkAction *action = get_action ( vtb, name );
+	GtkAction *action = get_action(vtb, name);
 
 	if (action == NULL) {
-		if (!g_strcmp0(name, TB_EDITOR_SEPARATOR))
+		if (!g_strcmp0(name, TB_EDITOR_SEPARATOR)) {
 			label_clean = g_strdup(TB_EDITOR_SEPARATOR_LABEL);
-		else
+		} else {
 			return;
+		}
 	}
 	if (action != NULL) {
 		g_object_get(action, "icon-name", &icon, NULL);
-		if (icon == NULL)
+		if (icon == NULL) {
 			g_object_get(action, "stock-id", &icon, NULL);
+		}
 
 		g_object_get(action, "label", &label, NULL);
-		if (label != NULL)
+		if (label != NULL) {
 			label_clean = util_str_remove_chars(strdup(label), "_");
+		}
 	}
 
 	gtk_list_store_set(store, iter,
-		TB_EDITOR_COL_ACTION, name,
-		TB_EDITOR_COL_LABEL, label_clean,
-		TB_EDITOR_COL_ICON, icon,
-		-1);
+			   TB_EDITOR_COL_ACTION, name,
+			   TB_EDITOR_COL_LABEL, label_clean,
+			   TB_EDITOR_COL_ICON, icon,
+			   -1);
 
 	free(icon);
 	free(label);
@@ -797,8 +798,7 @@ static void tb_editor_scroll_to_iter(GtkTreeView *treeview, GtkTreeIter *iter)
 
 static void tb_editor_free_path(TBEditorWidget *tbw)
 {
-	if (tbw->last_drag_path != NULL)
-	{
+	if (tbw->last_drag_path != NULL) {
 		gtk_tree_path_free(tbw->last_drag_path);
 		tbw->last_drag_path = NULL;
 	}
@@ -813,14 +813,13 @@ static void tb_editor_btn_remove_clicked_cb(GtkWidget *button, TBEditorWidget *t
 	char *action_name;
 
 	selection_used = gtk_tree_view_get_selection(tbw->tree_used);
-	if (gtk_tree_selection_get_selected(selection_used, &model_used, &iter_used))
-	{
+	if (gtk_tree_selection_get_selected(selection_used, &model_used, &iter_used)) {
 		gtk_tree_model_get(model_used, &iter_used, TB_EDITOR_COL_ACTION, &action_name, -1);
-		if (gtk_list_store_remove(tbw->store_used, &iter_used))
+		if (gtk_list_store_remove(tbw->store_used, &iter_used)) {
 			gtk_tree_selection_select_iter(selection_used, &iter_used);
+		}
 
-		if (g_strcmp0(action_name, TB_EDITOR_SEPARATOR))
-		{
+		if (g_strcmp0(action_name, TB_EDITOR_SEPARATOR)) {
 			gtk_list_store_append(tbw->store_available, &iter_new);
 			tb_editor_set_item_values(tbw->config.vtb, action_name, tbw->store_available, &iter_new);
 			tb_editor_scroll_to_iter(tbw->tree_available, &iter_new);
@@ -839,21 +838,22 @@ static void tb_editor_btn_add_clicked_cb(GtkWidget *button, TBEditorWidget *tbw)
 	char *action_name;
 
 	selection_available = gtk_tree_view_get_selection(tbw->tree_available);
-	if (gtk_tree_selection_get_selected(selection_available, &model_available, &iter_available))
-	{
+	if (gtk_tree_selection_get_selected(selection_available, &model_available, &iter_available)) {
 		gtk_tree_model_get(model_available, &iter_available,
-			TB_EDITOR_COL_ACTION, &action_name, -1);
-		if (g_strcmp0(action_name, TB_EDITOR_SEPARATOR))
-		{
-			if (gtk_list_store_remove(tbw->store_available, &iter_available))
+				   TB_EDITOR_COL_ACTION, &action_name, -1);
+
+		if (g_strcmp0(action_name, TB_EDITOR_SEPARATOR)) {
+			if (gtk_list_store_remove(tbw->store_available, &iter_available)) {
 				gtk_tree_selection_select_iter(selection_available, &iter_available);
+			}
 		}
 
 		selection_used = gtk_tree_view_get_selection(tbw->tree_used);
-		if (gtk_tree_selection_get_selected(selection_used, NULL, &iter_selected))
+		if (gtk_tree_selection_get_selected(selection_used, NULL, &iter_selected)) {
 			gtk_list_store_insert_before(tbw->store_used, &iter_new, &iter_selected);
-		else
+		} else {
 			gtk_list_store_append(tbw->store_used, &iter_new);
+		}
 
 		tb_editor_set_item_values(tbw->config.vtb, action_name, tbw->store_used, &iter_new);
 		tb_editor_scroll_to_iter(tbw->tree_used, &iter_new);
@@ -866,10 +866,12 @@ static void tb_editor_btn_add_clicked_cb(GtkWidget *button, TBEditorWidget *tbw)
 static bool tb_editor_drag_motion_cb(GtkWidget *widget, GdkDragContext *drag_context,
                                          int x, int y, unsigned int ltime, TBEditorWidget *tbw)
 {
-	if (tbw->last_drag_path != NULL)
+	if (tbw->last_drag_path != NULL) {
 		gtk_tree_path_free(tbw->last_drag_path);
+	}
+
 	gtk_tree_view_get_drag_dest_row(GTK_TREE_VIEW(widget),
-		&(tbw->last_drag_path), &(tbw->last_drag_pos));
+					&(tbw->last_drag_path), &(tbw->last_drag_pos));
 
 	return false;
 }
@@ -886,12 +888,12 @@ static void tb_editor_drag_data_get_cb(GtkWidget *widget, GdkDragContext *contex
 	char *name;
 
 	selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(widget));
-	if (! gtk_tree_selection_get_selected(selection, &model, &iter))
+	if (! gtk_tree_selection_get_selected(selection, &model, &iter)) {
 		return;
+	}
 
 	gtk_tree_model_get(model, &iter, TB_EDITOR_COL_ACTION, &name, -1);
-	if (G_UNLIKELY(EMPTY(name)))
-	{
+	if (G_UNLIKELY(EMPTY(name))) {
 		free(name);
 		return;
 	}
@@ -906,14 +908,13 @@ static void tb_editor_drag_data_get_cb(GtkWidget *widget, GdkDragContext *contex
 
 
 static void tb_editor_drag_data_rcvd_cb(GtkWidget *widget, GdkDragContext *context,
-										int x, int y, GtkSelectionData *data, unsigned int info,
-										unsigned int ltime, TBEditorWidget *tbw)
+					int x, int y, GtkSelectionData *data, unsigned int info,
+					unsigned int ltime, TBEditorWidget *tbw)
 {
 	GtkTreeView *tree = GTK_TREE_VIEW(widget);
 	bool del = false;
 
-	if (gtk_selection_data_get_length(data) >= 0 && gtk_selection_data_get_format(data) == 8)
-	{
+	if (gtk_selection_data_get_length(data) >= 0 && gtk_selection_data_get_format(data) == 8) {
 		bool is_sep;
 		char *text = NULL;
 
@@ -921,37 +922,40 @@ static void tb_editor_drag_data_rcvd_cb(GtkWidget *widget, GdkDragContext *conte
 		is_sep = !g_strcmp0(text, TB_EDITOR_SEPARATOR);
 		/* If the source of the action is equal to the target, we do just re-order and so need
 		 * to delete the separator to get it moved, not just copied. */
-		if (is_sep && widget == tbw->drag_source)
+		if (is_sep && widget == tbw->drag_source) {
 			is_sep = false;
+		}
 
-		if (tree != tbw->tree_available || ! is_sep)
-		{
+		if (tree != tbw->tree_available || ! is_sep) {
 			GtkTreeIter iter, iter_before, *iter_before_ptr;
 			GtkListStore *store = GTK_LIST_STORE(gtk_tree_view_get_model(tree));
 
-			if (tbw->last_drag_path != NULL)
-			{
+			if (tbw->last_drag_path != NULL) {
 				gtk_tree_model_get_iter(GTK_TREE_MODEL(store), &iter_before, tbw->last_drag_path);
 
-				if (gtk_list_store_iter_is_valid(store, &iter_before))
+				if (gtk_list_store_iter_is_valid(store, &iter_before)) {
 					iter_before_ptr = &iter_before;
-				else
+				} else {
 					iter_before_ptr = NULL;
+				}
 
 				if (tbw->last_drag_pos == GTK_TREE_VIEW_DROP_BEFORE ||
-					tbw->last_drag_pos == GTK_TREE_VIEW_DROP_INTO_OR_BEFORE)
+				    tbw->last_drag_pos == GTK_TREE_VIEW_DROP_INTO_OR_BEFORE) {
+
 					gtk_list_store_insert_before(store, &iter, iter_before_ptr);
-				else
+				} else {
 					gtk_list_store_insert_after(store, &iter, iter_before_ptr);
-			}
-			else
+				}
+			} else {
 				gtk_list_store_append(store, &iter);
+			}
 
 			tb_editor_set_item_values(tbw->config.vtb, text, store, &iter);
 			tb_editor_scroll_to_iter(tree, &iter);
 		}
-		if (tree != tbw->tree_used || ! is_sep)
+		if (tree != tbw->tree_used || ! is_sep) {
 			del = true;
+		}
 	}
 
 	tbw->drag_source = NULL; /* reset the value just to be sure */
@@ -967,10 +971,11 @@ static int tb_editor_foreach_used(GtkTreeModel *model, GtkTreePath *path,
 
 	gtk_tree_model_get(model, iter, TB_EDITOR_COL_ACTION, &action_name, -1);
 
-	if (!g_strcmp0(action_name, TB_EDITOR_SEPARATOR))
+	if (!g_strcmp0(action_name, TB_EDITOR_SEPARATOR)) {
 		g_string_append_printf((GString *) data, "\t\t<separator/>\n");
-	else if (G_LIKELY(!EMPTY(action_name)))
+	} else if (G_LIKELY(!EMPTY(action_name))) {
 		g_string_append_printf((GString *) data, "\t\t<toolitem action='%s' />\n", action_name);
+	}
 
 	free(action_name);
 	return false;
@@ -982,8 +987,8 @@ static void tb_editor_write_markup(TBEditorWidget *tbw)
 	/* <ui> must be the first tag, otherwise gtk_ui_manager_add_ui_from_string() will fail. */
 	const char *template_ = "<ui>\n<!--\n\
 This is Viking's toolbar UI definition.\nThe DTD can be found at \n\
-http://library.gnome.org/devel/gtk/stable/GtkUIManager.html#GtkUIManager.description.\n\n\
-Generally one should use the toolbar editor in Viking rather than editing this file.\n\n\
+http://library.gnome.org/devel/gtk/stable/GtkUIManager.html#GtkUIManager.description.\n\n \
+Generally one should use the toolbar editor in Viking rather than editing this file.\n\n \
 For manual changes to this file to take effect, you need to restart Viking.\n-->\n\
 \t<toolbar name='MainToolbar'>\n";
 	GString *str = g_string_new(template_);
@@ -1001,7 +1006,7 @@ For manual changes to this file to take effect, you need to restart Viking.\n-->
 	               tbw->config.user_data);
 
 	// ATM always save the toolbar when changed
-	char *filename = g_build_filename(a_get_viking_dir (), "ui_toolbar.xml", NULL);
+	char *filename = g_build_filename(a_get_viking_dir(), "ui_toolbar.xml", NULL);
 	GError *error = NULL;
 	if (! g_file_set_contents(filename, str->str, -1, &error)) {
 		fprintf(stderr, "WARNING: %s: could not write to file %s (%s)\n", __FUNCTION__, filename, error->message);
@@ -1014,14 +1019,14 @@ For manual changes to this file to take effect, you need to restart Viking.\n-->
 
 
 static void tb_editor_available_items_changed_cb(GtkTreeModel *model, GtkTreePath *arg1,
-												 GtkTreeIter *arg2, TBEditorWidget *tbw)
+						 GtkTreeIter *arg2, TBEditorWidget *tbw)
 {
 	tb_editor_write_markup(tbw);
 }
 
 
 static void tb_editor_available_items_deleted_cb(GtkTreeModel *model, GtkTreePath *arg1,
-												 TBEditorWidget *tbw)
+						 TBEditorWidget *tbw)
 {
 	tb_editor_write_markup(tbw);
 }
@@ -1035,7 +1040,7 @@ static TBEditorWidget *tb_editor_create_dialog(VikToolbar *vtb, GtkWindow *paren
 	GtkTreeViewColumn *column;
 
 	if (parent == NULL) {
-		fprintf(stderr, "WARNING: No parent\n" );
+		fprintf(stderr, "WARNING: No parent\n");
 		return NULL;
 	}
 
@@ -1050,9 +1055,9 @@ static TBEditorWidget *tb_editor_create_dialog(VikToolbar *vtb, GtkWindow *paren
 	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_CLOSE);
 
 	tbw->store_available = gtk_list_store_new(TB_EDITOR_COLS_MAX,
-		G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
+						  G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
 	tbw->store_used = gtk_list_store_new(TB_EDITOR_COLS_MAX,
-		G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
+					     G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
 
 	tbw->config.vtb = vtb;
 	tbw->config.parent = parent;
@@ -1061,15 +1066,13 @@ static TBEditorWidget *tb_editor_create_dialog(VikToolbar *vtb, GtkWindow *paren
 	tbw->config.reload_cb = reload_cb;
 	tbw->config.user_data = user_data;
 
-	label = gtk_label_new(
-		_("Select items to be displayed on the toolbar. Items can be reordered by drag and drop."));
+	label = gtk_label_new(_("Select items to be displayed on the toolbar. Items can be reordered by drag and drop."));
 	gtk_misc_set_alignment(GTK_MISC(label), 0.0, 0.5);
 
 	tree_available = gtk_tree_view_new();
 	gtk_tree_view_set_model(GTK_TREE_VIEW(tree_available), GTK_TREE_MODEL(tbw->store_available));
 	gtk_tree_view_set_rules_hint(GTK_TREE_VIEW(tree_available), true);
-	gtk_tree_sortable_set_sort_column_id(
-		GTK_TREE_SORTABLE(tbw->store_available), TB_EDITOR_COL_LABEL, GTK_SORT_ASCENDING);
+	gtk_tree_sortable_set_sort_column_id(GTK_TREE_SORTABLE(tbw->store_available), TB_EDITOR_COL_LABEL, GTK_SORT_ASCENDING);
 
 	icon_renderer = gtk_cell_renderer_pixbuf_new();
 	column = gtk_tree_view_column_new_with_attributes(
@@ -1077,13 +1080,11 @@ static TBEditorWidget *tb_editor_create_dialog(VikToolbar *vtb, GtkWindow *paren
 	gtk_tree_view_append_column(GTK_TREE_VIEW(tree_available), column);
 
 	text_renderer = gtk_cell_renderer_text_new();
-	column = gtk_tree_view_column_new_with_attributes(
-		_("Available Items"), text_renderer, "text", TB_EDITOR_COL_LABEL, NULL);
+	column = gtk_tree_view_column_new_with_attributes(_("Available Items"), text_renderer, "text", TB_EDITOR_COL_LABEL, NULL);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(tree_available), column);
 
 	swin_available = gtk_scrolled_window_new(NULL, NULL);
-	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(swin_available),
-		GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(swin_available), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
 	gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(swin_available), GTK_SHADOW_ETCHED_IN);
 	gtk_container_add(GTK_CONTAINER(swin_available), tree_available);
 
@@ -1093,43 +1094,30 @@ static TBEditorWidget *tb_editor_create_dialog(VikToolbar *vtb, GtkWindow *paren
 	gtk_tree_view_set_reorderable(GTK_TREE_VIEW(tree_used), true);
 
 	icon_renderer = gtk_cell_renderer_pixbuf_new();
-	column = gtk_tree_view_column_new_with_attributes(
-		NULL, icon_renderer, "stock-id", TB_EDITOR_COL_ICON, NULL);
+	column = gtk_tree_view_column_new_with_attributes(NULL, icon_renderer, "stock-id", TB_EDITOR_COL_ICON, NULL);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(tree_used), column);
 
 	text_renderer = gtk_cell_renderer_text_new();
-	column = gtk_tree_view_column_new_with_attributes(
-		_("Displayed Items"), text_renderer, "text", TB_EDITOR_COL_LABEL, NULL);
+	column = gtk_tree_view_column_new_with_attributes(_("Displayed Items"), text_renderer, "text", TB_EDITOR_COL_LABEL, NULL);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(tree_used), column);
 
 	swin_used = gtk_scrolled_window_new(NULL, NULL);
-	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(swin_used),
-		GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(swin_used), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
 	gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(swin_used), GTK_SHADOW_ETCHED_IN);
 	gtk_container_add(GTK_CONTAINER(swin_used), tree_used);
 
 	/* drag'n'drop */
-	gtk_tree_view_enable_model_drag_source(GTK_TREE_VIEW(tree_available), GDK_BUTTON1_MASK,
-		tb_editor_dnd_targets, tb_editor_dnd_targets_len, GDK_ACTION_MOVE);
-	gtk_tree_view_enable_model_drag_dest(GTK_TREE_VIEW(tree_available),
-		tb_editor_dnd_targets, tb_editor_dnd_targets_len, GDK_ACTION_MOVE);
-	g_signal_connect(tree_available, "drag-data-get",
-		G_CALLBACK(tb_editor_drag_data_get_cb), tbw);
-	g_signal_connect(tree_available, "drag-data-received",
-		G_CALLBACK(tb_editor_drag_data_rcvd_cb), tbw);
-	g_signal_connect(tree_available, "drag-motion",
-		G_CALLBACK(tb_editor_drag_motion_cb), tbw);
+	gtk_tree_view_enable_model_drag_source(GTK_TREE_VIEW(tree_available), GDK_BUTTON1_MASK, tb_editor_dnd_targets, tb_editor_dnd_targets_len, GDK_ACTION_MOVE);
+	gtk_tree_view_enable_model_drag_dest(GTK_TREE_VIEW(tree_available), tb_editor_dnd_targets, tb_editor_dnd_targets_len, GDK_ACTION_MOVE);
+	g_signal_connect(tree_available, "drag-data-get", G_CALLBACK(tb_editor_drag_data_get_cb), tbw);
+	g_signal_connect(tree_available, "drag-data-received", G_CALLBACK(tb_editor_drag_data_rcvd_cb), tbw);
+	g_signal_connect(tree_available, "drag-motion", G_CALLBACK(tb_editor_drag_motion_cb), tbw);
 
-	gtk_tree_view_enable_model_drag_source(GTK_TREE_VIEW(tree_used), GDK_BUTTON1_MASK,
-		tb_editor_dnd_targets, tb_editor_dnd_targets_len, GDK_ACTION_MOVE);
-	gtk_tree_view_enable_model_drag_dest(GTK_TREE_VIEW(tree_used),
-		tb_editor_dnd_targets, tb_editor_dnd_targets_len, GDK_ACTION_MOVE);
-	g_signal_connect(tree_used, "drag-data-get",
-		G_CALLBACK(tb_editor_drag_data_get_cb), tbw);
-	g_signal_connect(tree_used, "drag-data-received",
-		G_CALLBACK(tb_editor_drag_data_rcvd_cb), tbw);
-	g_signal_connect(tree_used, "drag-motion",
-		G_CALLBACK(tb_editor_drag_motion_cb), tbw);
+	gtk_tree_view_enable_model_drag_source(GTK_TREE_VIEW(tree_used), GDK_BUTTON1_MASK, tb_editor_dnd_targets, tb_editor_dnd_targets_len, GDK_ACTION_MOVE);
+	gtk_tree_view_enable_model_drag_dest(GTK_TREE_VIEW(tree_used), tb_editor_dnd_targets, tb_editor_dnd_targets_len, GDK_ACTION_MOVE);
+	g_signal_connect(tree_used, "drag-data-get", G_CALLBACK(tb_editor_drag_data_get_cb), tbw);
+	g_signal_connect(tree_used, "drag-data-received", G_CALLBACK(tb_editor_drag_data_rcvd_cb), tbw);
+	g_signal_connect(tree_used, "drag-motion", G_CALLBACK(tb_editor_drag_motion_cb), tbw);
 
 
 	button_add = ui_button_new_with_image(GTK_STOCK_GO_FORWARD, NULL);
@@ -1170,7 +1158,7 @@ static TBEditorWidget *tb_editor_create_dialog(VikToolbar *vtb, GtkWindow *paren
  * toolbar_configure:
  *
  */
-void toolbar_configure (VikToolbar *vtb, GtkWidget *toolbar, GtkWindow *parent, GtkWidget *vbox, GtkWidget *hbox, ReloadCB reload_cb, void * user_data)
+void toolbar_configure(VikToolbar *vtb, GtkWidget *toolbar, GtkWindow *parent, GtkWidget *vbox, GtkWidget *hbox, ReloadCB reload_cb, void * user_data)
 {
 	char *markup;
 	const char *name;
@@ -1187,29 +1175,27 @@ void toolbar_configure (VikToolbar *vtb, GtkWidget *toolbar, GtkWindow *parent, 
 
 	/* get all available actions */
 	all_items = gtk_action_group_list_actions(vtb->group_actions);
-	all_items = g_list_concat ( all_items, gtk_action_group_list_actions(vtb->group_toggles) );
-	all_items = g_list_concat ( all_items, gtk_action_group_list_actions(vtb->group_tools) );
-	all_items = g_list_concat ( all_items, gtk_action_group_list_actions(vtb->group_modes) );
+	all_items = g_list_concat(all_items, gtk_action_group_list_actions(vtb->group_toggles));
+	all_items = g_list_concat(all_items, gtk_action_group_list_actions(vtb->group_tools));
+	all_items = g_list_concat(all_items, gtk_action_group_list_actions(vtb->group_modes));
 
 	/* create the GUI */
 	tbw = tb_editor_create_dialog(vtb, parent, toolbar, vbox, hbox, reload_cb, user_data);
 
 	/* fill the stores */
 	gtk_list_store_insert_with_values(tbw->store_available, NULL, -1,
-		TB_EDITOR_COL_ACTION, TB_EDITOR_SEPARATOR,
-		TB_EDITOR_COL_LABEL, TB_EDITOR_SEPARATOR_LABEL,
-		-1);
-	foreach_list(l, all_items)
-	{
+					  TB_EDITOR_COL_ACTION, TB_EDITOR_SEPARATOR,
+					  TB_EDITOR_COL_LABEL, TB_EDITOR_SEPARATOR_LABEL,
+					  -1);
+
+	foreach_list(l, all_items) {
 		name = gtk_action_get_name((GtkAction *) l->data);
-		if (g_slist_find_custom(used_items, name, (GCompareFunc) strcmp) == NULL)
-		{
+		if (g_slist_find_custom(used_items, name, (GCompareFunc) strcmp) == NULL) {
 			gtk_list_store_append(tbw->store_available, &iter);
 			tb_editor_set_item_values(vtb, name, tbw->store_available, &iter);
 		}
 	}
-	foreach_slist(sl, used_items)
-	{
+	foreach_slist(sl, used_items) {
 		gtk_list_store_append(tbw->store_used, &iter);
 		tb_editor_set_item_values(vtb, (const char *) sl->data, tbw->store_used, &iter);
 	}
@@ -1220,9 +1206,9 @@ void toolbar_configure (VikToolbar *vtb, GtkWidget *toolbar, GtkWindow *parent, 
 
 	/* connect the changed signals after populating the store */
 	g_signal_connect(tbw->store_used, "row-changed",
-		G_CALLBACK(tb_editor_available_items_changed_cb), tbw);
+			 G_CALLBACK(tb_editor_available_items_changed_cb), tbw);
 	g_signal_connect(tbw->store_used, "row-deleted",
-		G_CALLBACK(tb_editor_available_items_deleted_cb), tbw);
+			 G_CALLBACK(tb_editor_available_items_deleted_cb), tbw);
 
 	/* run it */
 	gtk_dialog_run(GTK_DIALOG(tbw->dialog));

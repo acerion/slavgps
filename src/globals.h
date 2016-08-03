@@ -86,135 +86,135 @@ extern bool vik_verbose;
 extern bool vik_version;
 
 /* Allow comparing versions */
-int viking_version_to_number ( char *version );
+int viking_version_to_number(char *version);
 
 /* Very first run */
-bool a_vik_very_first_run ();
+bool a_vik_very_first_run();
 
 /* Global preferences */
-void a_vik_preferences_init ();
+void a_vik_preferences_init();
 
 /* Coord display preferences */
 typedef enum {
-  VIK_DEGREE_FORMAT_DDD,
-  VIK_DEGREE_FORMAT_DMM,
-  VIK_DEGREE_FORMAT_DMS,
-  VIK_DEGREE_FORMAT_RAW,
+	VIK_DEGREE_FORMAT_DDD,
+	VIK_DEGREE_FORMAT_DMM,
+	VIK_DEGREE_FORMAT_DMS,
+	VIK_DEGREE_FORMAT_RAW,
 } vik_degree_format_t;
 
-vik_degree_format_t a_vik_get_degree_format ( );
+vik_degree_format_t a_vik_get_degree_format();
 
 /* Distance preferences */
 typedef enum {
-  VIK_UNITS_DISTANCE_KILOMETRES,
-  VIK_UNITS_DISTANCE_MILES,
-  VIK_UNITS_DISTANCE_NAUTICAL_MILES,
+	VIK_UNITS_DISTANCE_KILOMETRES,
+	VIK_UNITS_DISTANCE_MILES,
+	VIK_UNITS_DISTANCE_NAUTICAL_MILES,
 } vik_units_distance_t;
 
-vik_units_distance_t a_vik_get_units_distance ( );
+vik_units_distance_t a_vik_get_units_distance();
 
 /* Speed preferences */
 typedef enum {
-  VIK_UNITS_SPEED_KILOMETRES_PER_HOUR,
-  VIK_UNITS_SPEED_MILES_PER_HOUR,
-  VIK_UNITS_SPEED_METRES_PER_SECOND,
-  VIK_UNITS_SPEED_KNOTS,
+	VIK_UNITS_SPEED_KILOMETRES_PER_HOUR,
+	VIK_UNITS_SPEED_MILES_PER_HOUR,
+	VIK_UNITS_SPEED_METRES_PER_SECOND,
+	VIK_UNITS_SPEED_KNOTS,
 } vik_units_speed_t;
 
-vik_units_speed_t a_vik_get_units_speed ( );
+vik_units_speed_t a_vik_get_units_speed();
 
 /* Height (Depth) preferences */
 typedef enum {
-  VIK_UNITS_HEIGHT_METRES,
-  VIK_UNITS_HEIGHT_FEET,
+	VIK_UNITS_HEIGHT_METRES,
+	VIK_UNITS_HEIGHT_FEET,
 } vik_units_height_t;
 
-vik_units_height_t a_vik_get_units_height ( );
+vik_units_height_t a_vik_get_units_height();
 
-bool a_vik_get_use_large_waypoint_icons ( );
+bool a_vik_get_use_large_waypoint_icons();
 
 /* Location preferences */
 typedef enum {
-  VIK_LOCATION_LAT,
-  VIK_LOCATION_LONG,
+	VIK_LOCATION_LAT,
+	VIK_LOCATION_LONG,
 } vik_location_t;
 
-double a_vik_get_default_lat ( );
-double a_vik_get_default_long ( );
+double a_vik_get_default_lat();
+double a_vik_get_default_long();
 
 // Time display format
 typedef enum {
-  VIK_TIME_REF_LOCALE, // User's locale
-  VIK_TIME_REF_WORLD,  // Derive the local timezone at the object's position
-  VIK_TIME_REF_UTC,
+	VIK_TIME_REF_LOCALE, // User's locale
+	VIK_TIME_REF_WORLD,  // Derive the local timezone at the object's position
+	VIK_TIME_REF_UTC,
 } vik_time_ref_frame_t;
 
-vik_time_ref_frame_t a_vik_get_time_ref_frame ( );
+vik_time_ref_frame_t a_vik_get_time_ref_frame();
 
 /* KML export preferences */
 typedef enum {
-  VIK_KML_EXPORT_UNITS_METRIC,
-  VIK_KML_EXPORT_UNITS_STATUTE,
-  VIK_KML_EXPORT_UNITS_NAUTICAL,
+	VIK_KML_EXPORT_UNITS_METRIC,
+	VIK_KML_EXPORT_UNITS_STATUTE,
+	VIK_KML_EXPORT_UNITS_NAUTICAL,
 } vik_kml_export_units_t;
 
-vik_kml_export_units_t a_vik_get_kml_export_units ( );
+vik_kml_export_units_t a_vik_get_kml_export_units();
 
 typedef enum {
-  VIK_GPX_EXPORT_TRK_SORT_ALPHA,
-  VIK_GPX_EXPORT_TRK_SORT_TIME,
-  VIK_GPX_EXPORT_TRK_SORT_CREATION,
+	VIK_GPX_EXPORT_TRK_SORT_ALPHA,
+	VIK_GPX_EXPORT_TRK_SORT_TIME,
+	VIK_GPX_EXPORT_TRK_SORT_CREATION,
 } vik_gpx_export_trk_sort_t;
 
-vik_gpx_export_trk_sort_t a_vik_get_gpx_export_trk_sort ( );
+vik_gpx_export_trk_sort_t a_vik_get_gpx_export_trk_sort();
 
 typedef enum {
-  VIK_GPX_EXPORT_WPT_SYM_NAME_TITLECASE,
-  VIK_GPX_EXPORT_WPT_SYM_NAME_LOWERCASE,
+	VIK_GPX_EXPORT_WPT_SYM_NAME_TITLECASE,
+	VIK_GPX_EXPORT_WPT_SYM_NAME_LOWERCASE,
 } vik_gpx_export_wpt_sym_name_t;
 
-vik_gpx_export_wpt_sym_name_t a_vik_gpx_export_wpt_sym_name ( );
+vik_gpx_export_wpt_sym_name_t a_vik_gpx_export_wpt_sym_name();
 
 #ifndef WINDOWS
 /* Windows automatically uses the system defined viewer
    ATM for other systems need to specify the program to use */
-const char* a_vik_get_image_viewer ( );
+const char* a_vik_get_image_viewer();
 #endif
 
-const char* a_vik_get_external_gpx_program_1 ( );
+const char* a_vik_get_external_gpx_program_1();
 
-const char* a_vik_get_external_gpx_program_2 ( );
+const char* a_vik_get_external_gpx_program_2();
 
 /* File reference preferences - mainly in saving of a viking file */
 typedef enum {
-  VIK_FILE_REF_FORMAT_ABSOLUTE,
-  VIK_FILE_REF_FORMAT_RELATIVE,
+	VIK_FILE_REF_FORMAT_ABSOLUTE,
+	VIK_FILE_REF_FORMAT_RELATIVE,
 } vik_file_ref_format_t;
 
-vik_file_ref_format_t a_vik_get_file_ref_format ( );
+vik_file_ref_format_t a_vik_get_file_ref_format();
 
-bool a_vik_get_ask_for_create_track_name ( );
+bool a_vik_get_ask_for_create_track_name();
 
-bool a_vik_get_create_track_tooltip ( );
+bool a_vik_get_create_track_tooltip();
 
-bool a_vik_get_restore_window_state ( );
+bool a_vik_get_restore_window_state();
 
-bool a_vik_get_add_default_map_layer ( );
+bool a_vik_get_add_default_map_layer();
 
 typedef enum {
-  VIK_STARTUP_METHOD_HOME_LOCATION,
-  VIK_STARTUP_METHOD_LAST_LOCATION,
-  VIK_STARTUP_METHOD_SPECIFIED_FILE,
-  VIK_STARTUP_METHOD_AUTO_LOCATION,
+	VIK_STARTUP_METHOD_HOME_LOCATION,
+	VIK_STARTUP_METHOD_LAST_LOCATION,
+	VIK_STARTUP_METHOD_SPECIFIED_FILE,
+	VIK_STARTUP_METHOD_AUTO_LOCATION,
 } vik_startup_method_t;
 
-vik_startup_method_t a_vik_get_startup_method ( );
+vik_startup_method_t a_vik_get_startup_method();
 
-const char *a_vik_get_startup_file ( );
+const char *a_vik_get_startup_file();
 
-bool a_vik_get_check_version ( );
+bool a_vik_get_check_version();
 
-int a_vik_get_recent_number_files ( );
+int a_vik_get_recent_number_files();
 
 /* Group for global preferences */
 #define VIKING_PREFERENCES_GROUP_KEY "viking.globals"

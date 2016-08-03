@@ -31,11 +31,11 @@ extern "C" {
 #endif
 
 
-GdkPixbuf *a_get_wp_sym ( const char *sym );
-const char *a_get_hashed_sym ( const char *sym );
-void a_populate_sym_list ( GtkListStore *list );
+GdkPixbuf * a_get_wp_sym(const char *sym);
+const char *a_get_hashed_sym(const char *sym);
+void a_populate_sym_list(GtkListStore *list);
 /* Use when preferences have changed to reload icons*/
-void clear_garmin_icon_syms ();
+void clear_garmin_icon_syms();
 
 #ifdef __cplusplus
 }
