@@ -207,7 +207,7 @@ GString * c_cdata = NULL;
 Trackpoint * c_tp = NULL;
 Waypoint * c_wp = NULL;
 Track * c_tr = NULL;
-VikTRWMetadata * c_md = NULL;
+TRWMetadata * c_md = NULL;
 
 char * c_wp_name = NULL;
 char * c_tr_name = NULL;
@@ -254,7 +254,7 @@ static void gpx_start(LayerTRW * trw, char const * el, char const * *attr)
 	switch (current_tag) {
 
 	case tt_gpx:
-		c_md = LayerTRW::metadata_new();
+		c_md = new TRWMetadata();
 		break;
 
 	case tt_wpt:
@@ -367,34 +367,22 @@ static void gpx_end(LayerTRW * trw, char const * el)
 		break;
 
 	case tt_gpx_author:
-		if (c_md->author) {
-			free(c_md->author);
-		}
-		c_md->author = g_strdup(c_cdata->str);
+		c_md->set_author(c_cdata->str);
 		g_string_erase(c_cdata, 0, -1);
 		break;
 
 	case tt_gpx_desc:
-		if (c_md->description) {
-			free(c_md->description);
-		}
-		c_md->description = g_strdup(c_cdata->str);
+		c_md->set_description(c_cdata->str);
 		g_string_erase(c_cdata, 0, -1);
 		break;
 
 	case tt_gpx_keywords:
-		if (c_md->keywords) {
-			free(c_md->keywords);
-		}
-		c_md->keywords = g_strdup(c_cdata->str);
+		c_md->set_keywords(c_cdata->str);
 		g_string_erase(c_cdata, 0, -1);
 		break;
 
 	case tt_gpx_time:
-		if (c_md->timestamp) {
-			free(c_md->timestamp);
-		}
-		c_md->timestamp = g_strdup(c_cdata->str);
+		c_md->set_timestamp(c_cdata->str);
 		g_string_erase(c_cdata, 0, -1);
 		break;
 
@@ -1145,7 +1133,7 @@ void a_gpx_write_file(LayerTRW * trw, FILE * f, GpxWritingOptions * options)
 		free(tmp);
 	}
 
-	VikTRWMetadata *md = trw->get_metadata();
+	TRWMetadata * md = trw->get_metadata();
 	if (md) {
 		if (md->author) {
 			tmp = entitize(md->author);

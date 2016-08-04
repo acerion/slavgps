@@ -66,13 +66,20 @@ namespace SlavGPS {
 
 
 
-	typedef struct {
-		char * description;
-		char * author;
+	class TRWMetadata {
+
+	public:
+		void set_author(char const * new_author);
+		void set_description(char const * new_description);
+		void set_keywords(char const * new_keywords);
+		void set_timestamp(char const * timestamp);
+
+		char * description = NULL;
+		char * author = NULL;
 		//bool has_time;
-		char * timestamp; // TODO: Consider storing as proper time_t.
-		char * keywords; // TODO: handling/storing a GList of individual tags?
-	} VikTRWMetadata;
+		char * timestamp = NULL; // TODO: Consider storing as proper time_t.
+		char * keywords = NULL; // TODO: handling/storing a GList of individual tags?
+	};
 
 
 
@@ -347,10 +354,10 @@ namespace SlavGPS {
 
 		int get_property_tracks_line_thickness();
 
-		static VikTRWMetadata * metadata_new();
-		static void metadata_free(VikTRWMetadata * metadata);
-		VikTRWMetadata * get_metadata();
-		void set_metadata(VikTRWMetadata * metadata);
+		static TRWMetadata * metadata_new();
+		static void metadata_free(TRWMetadata * metadata);
+		TRWMetadata * get_metadata();
+		void set_metadata(TRWMetadata * metadata);
 
 		/* Intended only for use by other trw_layer subwindows. */
 		void verify_thumbnails(Viewport * viewport);
@@ -454,8 +461,7 @@ namespace SlavGPS {
 		uint8_t bg_line_thickness;
 		vik_layer_sort_order_t track_sort_order;
 
-		// Metadata
-		VikTRWMetadata * metadata;
+		TRWMetadata * metadata;
 
 		PangoLayout * tracklabellayout;
 		font_size_t track_font_size;

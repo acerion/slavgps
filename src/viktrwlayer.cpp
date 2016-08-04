@@ -521,25 +521,28 @@ GType vik_trw_layer_get_type()
 	return vtl_type;
 }
 
-VikTRWMetadata * LayerTRW::metadata_new()
+TRWMetadata * LayerTRW::metadata_new()
 {
-	VikTRWMetadata * data = (VikTRWMetadata *) malloc(sizeof (VikTRWMetadata));
-	memset(data, 0, sizeof (VikTRWMetadata));
+	TRWMetadata * data = (TRWMetadata *) malloc(sizeof (TRWMetadata));
+	memset(data, 0, sizeof (TRWMetadata));
 
 	return data;
 }
 
-void LayerTRW::metadata_free(VikTRWMetadata *metadata)
+void LayerTRW::metadata_free(TRWMetadata *metadata)
 {
 	free(metadata);
 }
 
-VikTRWMetadata * LayerTRW::get_metadata()
+TRWMetadata * LayerTRW::get_metadata()
 {
 	return this->metadata;
 }
 
-void LayerTRW::set_metadata(VikTRWMetadata * metadata)
+
+
+
+void LayerTRW::set_metadata(TRWMetadata * metadata)
 {
 	if (this->metadata) {
 		LayerTRW::metadata_free(this->metadata);
@@ -547,6 +550,65 @@ void LayerTRW::set_metadata(VikTRWMetadata * metadata)
 	this->metadata = metadata;
 }
 
+
+
+
+void TRWMetadata::set_author(char const * new_author)
+{
+	if (this->author) {
+		free(this->author);
+		this->author = NULL;
+	}
+	if (new_author) {
+		this->author = strdup(new_author);
+	}
+	return;
+}
+
+
+
+
+void TRWMetadata::set_description(char const * new_description)
+{
+	if (this->description) {
+		free(this->description);
+		this->description = NULL;
+	}
+	if (new_description) {
+		this->description = strdup(new_description);
+	}
+	return;
+}
+
+
+
+
+void TRWMetadata::set_keywords(char const * new_keywords)
+{
+	if (this->keywords) {
+		free(this->keywords);
+		this->keywords = NULL;
+	}
+	if (new_keywords) {
+		this->keywords = strdup(new_keywords);
+	}
+	return;
+}
+
+
+
+
+void TRWMetadata::set_timestamp(char const * new_timestamp)
+{
+	if (this->timestamp) {
+		free(this->timestamp);
+		this->timestamp = NULL;
+	}
+	if (new_timestamp) {
+		this->timestamp = strdup(new_timestamp);
+	}
+	return;
+}
 
 
 
@@ -939,22 +1001,22 @@ bool LayerTRW::set_param(uint16_t id, VikLayerParamData data, Viewport * viewpor
 		// Metadata
 	case PARAM_MDDESC:
 		if (data.s && this->metadata) {
-			this->metadata->description = g_strdup(data.s);
+			this->metadata->set_description(data.s);
 		}
 		break;
 	case PARAM_MDAUTH:
 		if (data.s && this->metadata) {
-			this->metadata->author = g_strdup(data.s);
+			this->metadata->set_author(data.s);
 		}
 		break;
 	case PARAM_MDTIME:
 		if (data.s && this->metadata) {
-			this->metadata->timestamp = g_strdup(data.s);
+			this->metadata->set_timestamp(data.s);
 		}
 		break;
 	case PARAM_MDKEYS:
 		if (data.s && this->metadata) {
-			this->metadata->keywords = g_strdup(data.s);
+			this->metadata->set_keywords(data.s);
 		}
 		break;
 	default: break;
@@ -9203,7 +9265,7 @@ LayerTRW::LayerTRW(Viewport * viewport) : Layer()
 	// Force to on after processing params (which defaults them to off with a zero value)
 	this->waypoints_visible = this->tracks_visible = this->routes_visible = true;
 
-	this->metadata = LayerTRW::metadata_new();
+	this->metadata = new TRWMetadata();
 	this->draw_sync_done = true;
 	this->draw_sync_do = true;
 	// Everything else is 0, false or NULL
