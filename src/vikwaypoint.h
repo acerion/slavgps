@@ -25,6 +25,7 @@
 #include <stdint.h>
 
 #include "vikcoord.h"
+#include "globals.h"
 
 #include <gdk-pixbuf/gdk-pixdata.h>
 
@@ -32,15 +33,19 @@ typedef uint32_t sg_uid_t;
 
 
 
+
 namespace SlavGPS {
+
+
+
 
 	class Waypoint {
 
 	public:
 		Waypoint();
+		Waypoint(const Waypoint& other);
 		~Waypoint();
 
-		Waypoint(const Waypoint& other);
 
 		void set_name(char const * name);
 		void set_comment(char const * comment);
@@ -62,25 +67,26 @@ namespace SlavGPS {
 
 
 		VikCoord coord;
-		bool visible;
-		bool has_timestamp;
-		time_t timestamp;
-		double altitude;
-		char * name;
-		char * comment;
-		char * description;
-		char * source;
-		char * type;
-		char * url;
-		char * image;
+		bool visible = true;
+		bool has_timestamp = false;
+		time_t timestamp = 0;
+		double altitude = VIK_DEFAULT_ALTITUDE;
+		char * name = NULL;
+		char * comment = NULL;
+		char * description = NULL;
+		char * source = NULL;
+		char * type = NULL;
+		char * url = NULL;
+		char * image = NULL;
 		/* a rather misleading, ugly hack needed for trwlayer's click image.
 		 * these are the height at which the thumbnail is being drawn, not the
 		 * dimensions of the original image. */
 		uint8_t image_width;
 		uint8_t image_height;
-		char * symbol;
-		// Only for GUI display
-		GdkPixbuf * symbol_pixbuf;
+
+		char * symbol = NULL;
+		/* Only for GUI display. */
+		GdkPixbuf * symbol_pixbuf = NULL;
 	};
 
 

@@ -35,39 +35,56 @@
 
 
 
-
 using namespace SlavGPS;
-
 
 
 
 
 Waypoint::Waypoint()
 {
-	altitude = VIK_DEFAULT_ALTITUDE;
-
-	this->name = NULL;
-	this->comment = NULL;
-	this->description = NULL;
-	this->source = NULL;
-	this->type = NULL;
-	this->url = NULL;
-	this->image = NULL;
-	this->symbol = NULL;
-
 	name = strdup(_("Waypoint"));
 
-	comment = NULL;
-	description = NULL;
-	source = NULL;
-	type = NULL;
-	url = NULL;
-	image = NULL;
-	symbol = NULL;
-
-	symbol_pixbuf = NULL;
+	/* kamilTODO: what about image_width / image_height? */
 }
 
+
+
+
+/* Copy constructor. */
+Waypoint::Waypoint(const Waypoint & wp) : Waypoint()
+{
+	this->coord = wp.coord;
+	this->visible = wp.visible;
+	this->has_timestamp = wp.has_timestamp;
+	this->timestamp = wp.timestamp;
+	this->altitude = wp.altitude;
+
+	this->set_name(wp.name);
+	this->set_comment(wp.comment);
+	this->set_description(wp.description);
+	this->set_source(wp.source);
+	this->set_type(wp.type);
+	this->set_url(wp.url);
+	this->set_image(wp.image);
+	this->set_symbol(wp.symbol);
+
+	/* kamilTODO: what about image_width / image_height? */
+}
+
+
+
+
+Waypoint::~Waypoint()
+{
+	free_string(&name);  /* kamilFIXME: I had to add free()ing of name. */
+	free_string(&comment);
+	free_string(&description);
+	free_string(&source);
+	free_string(&type);
+	free_string(&url);
+	free_string(&image);
+	free_string(&symbol);
+}
 
 
 
@@ -173,54 +190,6 @@ void Waypoint::set_symbol(char const * symname_)
 		symbol_pixbuf = NULL;
 	}
 }
-
-
-
-
-
-Waypoint::~Waypoint()
-{
-	free_string(&name);  /* kamilFIXME: I had to add free()ing of name. */
-	free_string(&comment);
-	free_string(&description);
-	free_string(&source);
-	free_string(&type);
-	free_string(&url);
-	free_string(&image);
-	free_string(&symbol);
-}
-
-
-
-
-
-/* Copy constructor. */
-Waypoint::Waypoint(const Waypoint & wp)
-{
-	this->name = NULL;
-	this->comment = NULL;
-	this->description = NULL;
-	this->source = NULL;
-	this->type = NULL;
-	this->url = NULL;
-	this->image = NULL;
-	this->symbol = NULL;
-
-	this->coord = wp.coord;
-	this->visible = wp.visible;
-	this->altitude = wp.altitude;
-	this->has_timestamp = wp.has_timestamp;
-	this->timestamp = wp.timestamp;
-	this->set_name(wp.name);
-	this->set_comment(wp.comment);
-	this->set_description(wp.description);
-	this->set_source(wp.source);
-	this->set_type(wp.type);
-	this->set_url(wp.url);
-	this->set_image(wp.image);
-	this->set_symbol(wp.symbol);
-}
-
 
 
 
