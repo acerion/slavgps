@@ -23,6 +23,12 @@
 #ifndef _VIKING_TRWLAYER_H
 #define _VIKING_TRWLAYER_H
 
+
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdint.h>
 
 #include <list>
@@ -43,14 +49,14 @@ struct _VikTrwLayer;
 struct _trw_menu_sublayer_t;
 
 
+
+
 namespace SlavGPS {
 
 
 
 
-
 	class LayerTRW;
-
 
 
 
@@ -61,7 +67,6 @@ namespace SlavGPS {
 		Layer * layer;
 		TreeView * tree_view;
 	} trw_data4_t;
-
 
 
 
@@ -87,7 +92,7 @@ namespace SlavGPS {
 
 	// See http://developer.gnome.org/pango/stable/PangoMarkupFormat.html
 	typedef enum {
-		FS_XX_SMALL = 0, // 'xx-small'
+		FS_XX_SMALL = 0,
 		FS_X_SMALL,
 		FS_SMALL,
 		FS_MEDIUM, // DEFAULT
@@ -418,29 +423,29 @@ namespace SlavGPS {
 		bool waypoints_visible;
 
 
-		/* Waypoint editing tool */
-		Waypoint * current_wp;
-		sg_uid_t current_wp_uid;
-		bool moving_wp;
-		bool waypoint_rightclick;
+		/* Waypoint editing tool. */
+		Waypoint * current_wp = NULL;
+		sg_uid_t current_wp_uid = 0;
+		bool moving_wp = false;
+		bool waypoint_rightclick = false;
 
-		/* track editing tool */
+		/* Track editing tool. */
 		struct {
 			bool valid = false;
 			TrackPoints::iterator iter;
 		} selected_tp;
 
-		Track * selected_track;  /* Track, to which belongs currently selected trackpoint (tp)? */
-		sg_uid_t current_tp_uid;   /* uid of track, to which belongs currently selected trackpoint (tp)? */
+		Track * selected_track = NULL;  /* Track, to which belongs currently selected trackpoint (tp)? */
+		sg_uid_t current_tp_uid = 0;   /* uid of track, to which belongs currently selected trackpoint (tp)? */
 
-		VikTrwLayerTpwin *tpwin;
+		VikTrwLayerTpwin * tpwin = NULL;
 
-		/* track editing tool -- more specifically, moving tps */
-		bool moving_tp;
+		/* Track editing tool -- more specifically, moving tps. */
+		bool moving_tp = false;
 
 		VikCoordMode coord_mode;
 
-		int highest_wp_number;
+		int highest_wp_number = 0;
 
 
 
@@ -461,46 +466,46 @@ namespace SlavGPS {
 		uint8_t bg_line_thickness;
 		vik_layer_sort_order_t track_sort_order;
 
-		TRWMetadata * metadata;
+		TRWMetadata * metadata = NULL;
 
-		PangoLayout * tracklabellayout;
+		PangoLayout * tracklabellayout = NULL;
 		font_size_t track_font_size;
-		char * track_fsize_str;
+		char * track_fsize_str = NULL;
 
 		uint8_t wp_symbol;
 		uint8_t wp_size;
 		bool wp_draw_symbols;
 		font_size_t wp_font_size;
-		char * wp_fsize_str;
+		char * wp_fsize_str = NULL;
 		vik_layer_sort_order_t wp_sort_order;
 
 
 		double track_draw_speed_factor;
-		GArray * track_gc;
-		GdkGC * track_1color_gc;
+		GArray * track_gc = NULL;
+		GdkGC * track_1color_gc = NULL;
 		GdkColor track_color;
-		GdkGC * current_track_gc;
+		GdkGC * current_track_gc = NULL;
 		// Separate GC for a track's potential new point as drawn via separate method
 		//  (compared to the actual track points drawn in the main trw_layer_draw_track function)
-		GdkGC * current_track_newpoint_gc;
+		GdkGC * current_track_newpoint_gc = NULL;
 
-		GdkGC * track_bg_gc;
+		GdkGC * track_bg_gc = NULL;
 		GdkColor track_bg_color;
 
-		GdkGC * waypoint_gc;
+		GdkGC * waypoint_gc = NULL;
 		GdkColor waypoint_color;
 
-		GdkGC * waypoint_text_gc;
+		GdkGC * waypoint_text_gc = NULL;
 		GdkColor waypoint_text_color;
 
-		GdkGC * waypoint_bg_gc;
+		GdkGC * waypoint_bg_gc = NULL;
 		GdkColor waypoint_bg_color;
 
 		GdkFunction wpbgand;
 
 
 
-		Track * current_track; // ATM shared between new tracks and new routes
+		Track * current_track = NULL; // ATM shared between new tracks and new routes
 		uint16_t ct_x1;
 		uint16_t ct_y1;
 		uint16_t ct_x2;
@@ -508,37 +513,37 @@ namespace SlavGPS {
 		bool draw_sync_done;
 		bool draw_sync_do;
 
-		/* route finder tool */
+		/* Route finder tool. */
 		bool route_finder_started;
 		bool route_finder_check_added_track;
-		Track * route_finder_added_track;
+		Track * route_finder_added_track = NULL;
 		bool route_finder_append;
 
 
 		bool drawlabels;
 		bool drawimages;
 		uint8_t image_alpha;
-		GQueue * image_cache;
+		GQueue * image_cache = NULL;
 		uint8_t image_size;
 		uint16_t image_cache_size;
 
 
 
 
-		/* for waypoint text */
-		PangoLayout * wplabellayout;
+		/* For waypoint text. */
+		PangoLayout * wplabellayout = NULL;
 
 		bool has_verified_thumbnails;
 
-		GtkMenu * wp_right_click_menu;
-		GtkMenu * track_right_click_menu;
+		GtkMenu * wp_right_click_menu = NULL;
+		GtkMenu * track_right_click_menu = NULL;
 
-		/* menu */
+		/* Menu. */
 		VikStdLayerMenuItem menu_selection;
 
 
-		// One per layer
-		GtkWidget * tracks_analysis_dialog;
+		/* One per layer. */
+		GtkWidget * tracks_analysis_dialog = NULL;
 
 
 	};
@@ -782,16 +787,9 @@ void trw_layer_cut_item_cb(trw_menu_sublayer_t * data);
 
 
 
-
-
 #ifdef __cplusplus
 }
 #endif
-
-
-
-
-//GList * vik_trw_layer_get_track_values(GList ** list, std::unordered_map<sg_uid_t, SlavGPS::Track *> & tracks);
 
 
 
