@@ -301,6 +301,45 @@ Trackpoint::Trackpoint(const Trackpoint & tp)
 
 
 
+Trackpoint::Trackpoint(Trackpoint const& tp_a, Trackpoint const& tp_b, VikCoordMode coord_mode)
+{
+	struct LatLon ll_a, ll_b;
+	vik_coord_to_latlon(&tp_a.coord, &ll_a);
+	vik_coord_to_latlon(&tp_b.coord, &ll_b);
+
+	/* Main positional interpolation. */
+	struct LatLon ll_new = { (ll_a.lat + ll_b.lat) / 2, (ll_a.lon + ll_b.lon) / 2 };
+	vik_coord_load_from_latlon(&this->coord, coord_mode, &ll_new);
+
+	/* Now other properties that can be interpolated. */
+	this->altitude = (tp_a.altitude + tp_b.altitude) / 2;
+
+	if (tp_a.has_timestamp && tp_b.has_timestamp) {
+		/* Note here the division is applied to each part, then added
+		   This is to avoid potential overflow issues with a 32 time_t for
+		   dates after midpoint of this Unix time on 2004/01/04. */
+		this->timestamp = (tp_a.timestamp / 2) + (tp_b.timestamp / 2);
+		this->has_timestamp = true;
+	}
+
+	if (tp_a.speed != NAN && tp_b.speed != NAN) {
+		this->speed = (tp_a.speed + tp_b.speed) / 2;
+	}
+
+	/* TODO - improve interpolation of course, as it may not be correct.
+	   if courses in degrees are 350 + 020, the mid course more likely to be 005 (not 185)
+	   [similar applies if value is in radians] */
+	if (tp_a.course != NAN && tp_b.course != NAN) {
+		this->course = (tp_a.course + tp_b.course) / 2;
+	}
+
+	/* DOP / sat values remain at defaults as not
+	   they do not seem applicable to a dreamt up point. */
+}
+
+
+
+
 Trackpoint::~Trackpoint()
 {
 	free_string(&name);

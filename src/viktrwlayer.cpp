@@ -6409,45 +6409,17 @@ void LayerTRW::insert_tp_beside_current_tp(bool before)
 		tp_other = *std::next(this->selected_tp.iter);
 	}
 
-	// kamil
-	/* Use current and other trackpoints to form a new track point which is inserted into the tracklist. */
+	/* Use current and other trackpoints to form a new
+	   track point which is inserted into the tracklist. */
 	if (tp_other) {
 
-		Trackpoint * tp_new = new Trackpoint();
-		struct LatLon ll_current, ll_other;
-		vik_coord_to_latlon(&tp_current->coord, &ll_current);
-		vik_coord_to_latlon(&tp_other->coord, &ll_other);
+		Trackpoint * tp_new = new Trackpoint(*tp_current, *tp_other, this->coord_mode);
+		/* Insert new point into the appropriate trackpoint list,
+		   either before or after the current trackpoint as directed. */
 
-		/* main positional interpolation */
-		struct LatLon ll_new = { (ll_current.lat + ll_other.lat)/2, (ll_current.lon + ll_other.lon)/2 };
-		vik_coord_load_from_latlon(&(tp_new->coord), this->coord_mode, &ll_new);
-
-		/* Now other properties that can be interpolated */
-		tp_new->altitude = (tp_current->altitude + tp_other->altitude) / 2;
-
-		if (tp_current->has_timestamp && tp_other->has_timestamp) {
-			/* Note here the division is applied to each part, then added
-			   This is to avoid potential overflow issues with a 32 time_t for dates after midpoint of this Unix time on 2004/01/04 */
-			tp_new->timestamp = (tp_current->timestamp/2) + (tp_other->timestamp/2);
-			tp_new->has_timestamp = true;
-		}
-
-		if (tp_current->speed != NAN && tp_other->speed != NAN)
-			tp_new->speed = (tp_current->speed + tp_other->speed)/2;
-
-		/* TODO - improve interpolation of course, as it may not be correct.
-		   if courses in degrees are 350 + 020, the mid course more likely to be 005 (not 185)
-		   [similar applies if value is in radians] */
-		if (tp_current->course != NAN && tp_other->course != NAN) {
-			tp_new->course = (tp_current->course + tp_other->course)/2;
-		}
-
-		/* DOP / sat values remain at defaults as not they do not seem applicable to a dreamt up point */
-
-		// Insert new point into the appropriate trackpoint list, either before or after the current trackpoint as directed
 		Track * trk = this->tracks.at(this->current_tp_uid);
 		if (!trk) {
-			// Otherwise try routes
+			/* Otherwise try routes. */
 			trk = this->routes.at(this->current_tp_uid);
 		}
 

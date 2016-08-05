@@ -75,6 +75,7 @@ namespace SlavGPS {
 
 		Trackpoint();
 		Trackpoint(const Trackpoint& tp);
+		Trackpoint(Trackpoint const& tp_a, Trackpoint const& tp_b, VikCoordMode coord_mode);
 		~Trackpoint();
 
 
