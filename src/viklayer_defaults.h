@@ -1,12 +1,12 @@
 /*
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
- * Copyright (C) 2013, Rob Norris <rw_norris@hotmail.com>
+ * Copyright(C) 2013, Rob Norris <rw_norris@hotmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ *(at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -33,13 +33,13 @@ extern "C" {
 void a_layer_defaults_init();
 void a_layer_defaults_uninit();
 
-void a_layer_defaults_register ( VikLayerParam *vlp, VikLayerParamData defaultval, const char *layername );
+void a_layer_defaults_register(VikLayerParam *vlp, VikLayerParamData defaultval, const char *layername);
 
-bool a_layer_defaults_show_window ( GtkWindow *parent, const char *layername );
+bool a_layer_defaults_show_window(GtkWindow *parent, const char *layername);
 
-VikLayerParamData a_layer_defaults_get ( const char *layername, const char *param_name, VikLayerParamType param_type );
+VikLayerParamData a_layer_defaults_get(const char *layername, const char *param_name, VikLayerParamType param_type);
 
-bool a_layer_defaults_save ();
+bool a_layer_defaults_save();
 
 #ifdef __cplusplus
 }

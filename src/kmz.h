@@ -31,7 +31,7 @@ extern "C" {
 #endif
 
 
-int kmz_save_file ( GdkPixbuf *pixbuf, const char* filename, double north, double east, double south, double west );
+int kmz_save_file(GdkPixbuf *pixbuf, const char* filename, double north, double east, double south, double west);
 
 int kmz_open_file(const char* filename, SlavGPS::Viewport * viewport, SlavGPS::LayersPanel * panel);
 

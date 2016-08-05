@@ -45,137 +45,148 @@ static GKeyFile *keyfile;
 
 static bool loaded;
 
-static VikLayerParamData get_default_data_answer ( const char *group, const char *name, VikLayerParamType ptype, void * *success )
+static VikLayerParamData get_default_data_answer(const char *group, const char *name, VikLayerParamType ptype, void * *success)
 {
-	VikLayerParamData data = VIK_LPD_BOOLEAN ( false );
+	VikLayerParamData data = VIK_LPD_BOOLEAN (false);
 
 	GError *error = NULL;
 
-	switch ( ptype ) {
+	switch (ptype) {
 	case VIK_LAYER_PARAM_DOUBLE: {
-		double dd = g_key_file_get_double ( keyfile, group, name, &error );
-		if ( !error ) data.d = dd;
+		double dd = g_key_file_get_double(keyfile, group, name, &error);
+		if (!error) {
+			data.d = dd;
+		}
 		break;
 	}
 	case VIK_LAYER_PARAM_UINT: {
-		uint32_t uu = g_key_file_get_integer ( keyfile, group, name, &error );
-		if ( !error ) data.u = uu;
+		uint32_t uu = g_key_file_get_integer(keyfile, group, name, &error);
+		if (!error) {
+			data.u = uu;
+		}
 		break;
 	}
 	case VIK_LAYER_PARAM_INT: {
-		int32_t ii = g_key_file_get_integer ( keyfile, group, name, &error );
-		if ( !error ) data.i = ii;
+		int32_t ii = g_key_file_get_integer(keyfile, group, name, &error);
+		if (!error) {
+			data.i = ii;
+		}
 		break;
 	}
 	case VIK_LAYER_PARAM_BOOLEAN: {
-		bool bb = g_key_file_get_boolean ( keyfile, group, name, &error );
-		if ( !error ) data.b = bb;
+		bool bb = g_key_file_get_boolean(keyfile, group, name, &error);
+		if (!error) {
+			data.b = bb;
+		}
 		break;
 	}
 	case VIK_LAYER_PARAM_STRING: {
-		char *str = g_key_file_get_string ( keyfile, group, name, &error );
-		if ( !error ) data.s = str;
+		char *str = g_key_file_get_string(keyfile, group, name, &error);
+		if (!error) {
+			data.s = str;
+		}
 		break;
 	}
 	//case VIK_LAYER_PARAM_STRING_LIST: {
-	//	char **str = g_key_file_get_string_list ( keyfile, group, name, &error );
-	//	data.sl = str_to_glist (str); //TODO convert
+	//	char **str = g_key_file_get_string_list(keyfile, group, name, &error);
+	//	data.sl = str_to_glist(str); //TODO convert
 	//	break;
 	//}
 	case VIK_LAYER_PARAM_COLOR: {
-		char *str = g_key_file_get_string ( keyfile, group, name, &error );
-		if ( !error ) {
+		char *str = g_key_file_get_string(keyfile, group, name, &error);
+		if (!error) {
 			memset(&(data.c), 0, sizeof(data.c));
-			gdk_color_parse ( str, &(data.c) );
+			gdk_color_parse(str, &(data.c));
 		}
-		free( str );
+		free(str);
 		break;
 	}
 	default: break;
 	}
 	*success = KINT_TO_POINTER (true);
-	if ( error ) {
-		fprintf(stderr, "WARNING: %s\n", error->message );
-		g_error_free ( error );
+	if (error) {
+		fprintf(stderr, "WARNING: %s\n", error->message);
+		g_error_free(error);
 		*success = KINT_TO_POINTER (false);
 	}
 
 	return data;
 }
 
-static VikLayerParamData get_default_data ( const char *group, const char *name, VikLayerParamType ptype )
+static VikLayerParamData get_default_data(const char *group, const char *name, VikLayerParamType ptype)
 {
 	void * success = KINT_TO_POINTER (true);
 	// NB This should always succeed - don't worry about 'success'
-	return get_default_data_answer ( group, name, ptype, &success );
+	return get_default_data_answer(group, name, ptype, &success);
 }
 
-static void set_default_data ( VikLayerParamData data, const char *group, const char *name, VikLayerParamType ptype )
+static void set_default_data(VikLayerParamData data, const char *group, const char *name, VikLayerParamType ptype)
 {
-	switch ( ptype ) {
+	switch (ptype) {
 	case VIK_LAYER_PARAM_DOUBLE:
-		g_key_file_set_double ( keyfile, group, name, data.d );
+		g_key_file_set_double(keyfile, group, name, data.d);
 		break;
 	case VIK_LAYER_PARAM_UINT:
-		g_key_file_set_integer ( keyfile, group, name, data.u );
+		g_key_file_set_integer(keyfile, group, name, data.u);
 		break;
 	case VIK_LAYER_PARAM_INT:
-		g_key_file_set_integer ( keyfile, group, name, data.i );
+		g_key_file_set_integer(keyfile, group, name, data.i);
 		break;
 	case VIK_LAYER_PARAM_BOOLEAN:
-		g_key_file_set_boolean ( keyfile, group, name, data.b );
+		g_key_file_set_boolean(keyfile, group, name, data.b);
 		break;
 	case VIK_LAYER_PARAM_STRING:
-		g_key_file_set_string ( keyfile, group, name, data.s );
+		g_key_file_set_string(keyfile, group, name, data.s);
 		break;
 	case VIK_LAYER_PARAM_COLOR: {
-		char *str = g_strdup_printf ( "#%.2x%.2x%.2x", (int)(data.c.red/256),(int)(data.c.green/256),(int)(data.c.blue/256));
-		g_key_file_set_string ( keyfile, group, name, str );
-		free( str );
+		char *str = g_strdup_printf("#%.2x%.2x%.2x", (int)(data.c.red/256),(int)(data.c.green/256),(int)(data.c.blue/256));
+		g_key_file_set_string(keyfile, group, name, str);
+		free(str);
 		break;
 	}
 	default: break;
 	}
 }
 
-static void defaults_run_setparam ( void * index_ptr, uint16_t i, VikLayerParamData data, VikLayerParam *params )
+static void defaults_run_setparam(void * index_ptr, uint16_t i, VikLayerParamData data, VikLayerParam *params)
 {
 	// Index is only an index into values from this layer
-	int index = KPOINTER_TO_INT ( index_ptr );
-	VikLayerParam *vlp = (VikLayerParam *)g_ptr_array_index(paramsVD,index+i);
+	int index = KPOINTER_TO_INT (index_ptr);
+	VikLayerParam *vlp = (VikLayerParam *) g_ptr_array_index(paramsVD,index+i);
 
 	set_default_data(data, vik_layer_get_interface(vlp->layer_type)->fixed_layer_name, vlp->name, vlp->type);
 }
 
-static VikLayerParamData defaults_run_getparam(void * index_ptr, uint16_t i, bool notused2 )
+static VikLayerParamData defaults_run_getparam(void * index_ptr, uint16_t i, bool notused2)
 {
 	// Index is only an index into values from this layer
 	int index = (int) (long) (index_ptr);
-	VikLayerParam *vlp = (VikLayerParam *)g_ptr_array_index(paramsVD,index+i);
+	VikLayerParam *vlp = (VikLayerParam *) g_ptr_array_index(paramsVD,index+i);
 
-	return get_default_data ( vik_layer_get_interface(vlp->layer_type)->fixed_layer_name, vlp->name, vlp->type );
+	return get_default_data(vik_layer_get_interface(vlp->layer_type)->fixed_layer_name, vlp->name, vlp->type);
 }
 
 static void use_internal_defaults_if_missing_default(LayerType layer_type)
 {
-	VikLayerParam *params = vik_layer_get_interface(layer_type)->params;
-	if ( ! params )
+	VikLayerParam * params = vik_layer_get_interface(layer_type)->params;
+	if (!params) {
 		return;
+	}
 
 	uint16_t params_count = vik_layer_get_interface(layer_type)->params_count;
 	uint16_t i;
 	// Process each parameter
-	for ( i = 0; i < params_count; i++ ) {
-		if ( params[i].group != VIK_LAYER_NOT_IN_PROPERTIES ) {
+	for (i = 0; i < params_count; i++) {
+		if (params[i].group != VIK_LAYER_NOT_IN_PROPERTIES) {
 			void * success = KINT_TO_POINTER (false);
 			// Check current default is available
-			get_default_data_answer ( vik_layer_get_interface(layer_type)->fixed_layer_name, params[i].name, params[i].type, &success );
+			get_default_data_answer(vik_layer_get_interface(layer_type)->fixed_layer_name, params[i].name, params[i].type, &success);
 			// If no longer have a viable default
-			if ( ! KPOINTER_TO_INT (success) ) {
+			if (! KPOINTER_TO_INT (success)) {
 				// Reset value
-				if ( params[i].default_value ) {
+				if (params[i].default_value) {
 					VikLayerParamData paramd = params[i].default_value();
-					set_default_data ( paramd, vik_layer_get_interface(layer_type)->fixed_layer_name, params[i].name, params[i].type );
+					set_default_data(paramd, vik_layer_get_interface(layer_type)->fixed_layer_name, params[i].name, params[i].type);
 				}
 			}
 		}
@@ -188,16 +199,16 @@ static bool defaults_load_from_file()
 
 	GError *error = NULL;
 
-	char *fn = g_build_filename ( a_get_viking_dir(), VIKING_LAYER_DEFAULTS_INI_FILE, NULL );
+	char *fn = g_build_filename(a_get_viking_dir(), VIKING_LAYER_DEFAULTS_INI_FILE, NULL);
 
-	if ( !g_key_file_load_from_file ( keyfile, fn, flags, &error ) ) {
-		fprintf(stderr, "WARNING: %s: %s\n", error->message, fn );
-		free( fn );
-		g_error_free ( error );
+	if (!g_key_file_load_from_file(keyfile, fn, flags, &error)) {
+		fprintf(stderr, "WARNING: %s: %s\n", error->message, fn);
+		free(fn);
+		g_error_free(error);
 		return false;
 	}
 
-	free( fn );
+	free(fn);
 
 	// Ensure if have a key file, then any missing values are set from the internal defaults
 	for (LayerType layer_type = LayerType::AGGREGATE; layer_type < LayerType::NUM_TYPES; ++layer_type) {
@@ -212,43 +223,44 @@ static bool layer_defaults_save_to_file()
 {
 	bool answer = true;
 	GError *error = NULL;
-	char *fn = g_build_filename ( a_get_viking_dir(), VIKING_LAYER_DEFAULTS_INI_FILE, NULL );
+	char *fn = g_build_filename(a_get_viking_dir(), VIKING_LAYER_DEFAULTS_INI_FILE, NULL);
 	size_t size;
 
-    char *keyfilestr = g_key_file_to_data ( keyfile, &size, &error );
+	char *keyfilestr = g_key_file_to_data(keyfile, &size, &error);
 
-    if ( error ) {
-		fprintf(stderr, "WARNING: %s\n", error->message );
-		g_error_free ( error );
+	if (error) {
+		fprintf(stderr, "WARNING: %s\n", error->message);
+		g_error_free(error);
 		answer = false;
 		goto tidy;
 	}
 
 	// optionally could do:
-	// g_file_set_contents ( fn, keyfilestr, size, &error );
-    // if ( error ) {
-	//	fprintf(stderr, "WARNING: %s: %s\n", error->message, fn );
-	//	 g_error_free ( error );
+	// g_file_set_contents(fn, keyfilestr, size, &error);
+	// if (error) {
+	//	fprintf(stderr, "WARNING: %s: %s\n", error->message, fn);
+	//	 g_error_free(error);
 	//  answer = false;
 	//	goto tidy;
 	// }
 
 	FILE *ff;
-	if ( !(ff = fopen(fn, "w")) ) {
-		fprintf(stderr, _("WARNING: Could not open file: %s\n"), fn );
+	if (!(ff = fopen(fn, "w"))) {
+		fprintf(stderr, _("WARNING: Could not open file: %s\n"), fn);
 		answer = false;
 		goto tidy;
 	}
 	// Layer defaults not that secret, but just incase...
-	if (chmod(fn, 0600) != 0)
-		fprintf(stderr, "WARNING: %s: Failed to set permissions on %s\n", __FUNCTION__, fn );
+	if (chmod(fn, 0600) != 0) {
+		fprintf(stderr, "WARNING: %s: Failed to set permissions on %s\n", __FUNCTION__, fn);
+	}
 
-	fputs ( keyfilestr, ff );
-	fclose ( ff );
+	fputs(keyfilestr, ff);
+	fclose(ff);
 
 tidy:
-	free( keyfilestr );
-	free( fn );
+	free(keyfilestr);
+	free(fn);
 
 	return answer;
 }
@@ -263,31 +275,31 @@ tidy:
  *
  * Returns: %true if the window is displayed (because there are parameters to view)
  */
-bool a_layer_defaults_show_window ( GtkWindow *parent, const char *layername )
+bool a_layer_defaults_show_window(GtkWindow *parent, const char *layername)
 {
-	if ( ! loaded ) {
+	if (! loaded) {
 		// since we can't load the file in a_defaults_init (no params registered yet),
 		// do it once before we display the params.
 		defaults_load_from_file();
 		loaded = true;
 	}
 
-    LayerType layer_type = Layer::type_from_string(layername);
+	LayerType layer_type = Layer::type_from_string(layername);
 
-    // Need to know where the params start and they finish for this layer
+	// Need to know where the params start and they finish for this layer
 
-    // 1. inspect every registered param - see if it has the layer value required to determine overall size
-    //    [they are contiguous from the start index]
-    // 2. copy the these params from the main list into a tmp struct
-    //
-    // Then pass this tmp struct to uibuilder for display
+	// 1. inspect every registered param - see if it has the layer value required to determine overall size
+	//    [they are contiguous from the start index]
+	// 2. copy the these params from the main list into a tmp struct
+	//
+	// Then pass this tmp struct to uibuilder for display
 
-    unsigned int layer_params_count = 0;
+	unsigned int layer_params_count = 0;
 
-    bool found_first = false;
-    int index = 0;
-    int i;
-    for ( i = 0; i < paramsVD->len; i++ ) {
+	bool found_first = false;
+	int index = 0;
+	int i;
+	for (i = 0; i < paramsVD->len; i++) {
 		VikLayerParam *param = (VikLayerParam*)(g_ptr_array_index(paramsVD,i));
 		if (param->layer_type == layer_type) {
 			layer_params_count++;
@@ -296,39 +308,40 @@ bool a_layer_defaults_show_window ( GtkWindow *parent, const char *layername )
 				found_first = true;
 			}
 		}
-    }
+	}
 
 	// Have we any parameters to show!
-    if ( !layer_params_count )
+	if (!layer_params_count) {
 		return false;
+	}
 
-    VikLayerParam *params = (VikLayerParam *) malloc(layer_params_count * sizeof (VikLayerParam));
-    for ( i = 0; i < layer_params_count; i++ ) {
-      params[i] = *((VikLayerParam*)(g_ptr_array_index(paramsVD,i+index)));
-    }
+	VikLayerParam *params = (VikLayerParam *) malloc(layer_params_count * sizeof (VikLayerParam));
+	for (i = 0; i < layer_params_count; i++) {
+		params[i] = *((VikLayerParam*)(g_ptr_array_index(paramsVD,i+index)));
+	}
 
-    char *title = g_strconcat ( layername, ": ", _("Layer Defaults"), NULL );
+	char *title = g_strconcat(layername, ": ", _("Layer Defaults"), NULL);
 
-	if ( a_uibuilder_properties_factory ( title,
-	                                      parent,
-	                                      params,
-	                                      layer_params_count,
-	                                      vik_layer_get_interface(layer_type)->params_groups,
-	                                      vik_layer_get_interface(layer_type)->params_groups_count,
-	                                      (bool (*) (void *,uint16_t,VikLayerParamData,void *,bool)) defaults_run_setparam,
-	                                      ((void *) (long) (index)),
-	                                      params,
-	                                      defaults_run_getparam,
-	                                      ((void *) (long) (index)),
-	                                      NULL ) ) {
+	if (a_uibuilder_properties_factory(title,
+					   parent,
+					   params,
+					   layer_params_count,
+					   vik_layer_get_interface(layer_type)->params_groups,
+					   vik_layer_get_interface(layer_type)->params_groups_count,
+					   (bool (*) (void *,uint16_t,VikLayerParamData,void *,bool)) defaults_run_setparam,
+					   ((void *) (long) (index)),
+					   params,
+					   defaults_run_getparam,
+					   ((void *) (long) (index)),
+					   NULL)) {
 		// Save
 		layer_defaults_save_to_file();
-    }
+	}
 
-    free( title );
-    free( params );
+	free(title);
+	free(params);
 
-    return true;
+	return true;
 }
 
 /**
@@ -339,15 +352,15 @@ bool a_layer_defaults_show_window ( GtkWindow *parent, const char *layername )
  *
  * Call this function on to set the default value for the particular parameter
  */
-void a_layer_defaults_register (VikLayerParam *vlp, VikLayerParamData defaultval, const char *layername )
+void a_layer_defaults_register(VikLayerParam *vlp, VikLayerParamData defaultval, const char *layername)
 {
 	/* copy value */
 	VikLayerParam *newvlp = (VikLayerParam *) malloc(1 * sizeof (VikLayerParam));
 	*newvlp = *vlp;
 
-	g_ptr_array_add ( paramsVD, newvlp );
+	g_ptr_array_add(paramsVD, newvlp);
 
-	set_default_data ( defaultval, layername, vlp->name, vlp->type );
+	set_default_data(defaultval, layername, vlp->name, vlp->type);
 }
 
 /**
@@ -360,7 +373,7 @@ void a_layer_defaults_init()
 	keyfile = g_key_file_new();
 
 	/* not copied */
-	paramsVD = g_ptr_array_new ();
+	paramsVD = g_ptr_array_new();
 
 	loaded = false;
 }
@@ -372,9 +385,9 @@ void a_layer_defaults_init()
  */
 void a_layer_defaults_uninit()
 {
-	g_key_file_free ( keyfile );
-	g_ptr_array_foreach ( paramsVD, (GFunc)g_free, NULL );
-	g_ptr_array_free ( paramsVD, true );
+	g_key_file_free(keyfile);
+	g_ptr_array_foreach(paramsVD, (GFunc)g_free, NULL);
+	g_ptr_array_free(paramsVD, true);
 }
 
 /**
@@ -385,16 +398,16 @@ void a_layer_defaults_uninit()
  *
  * Call this function to get the default value for the parameter requested
  */
-VikLayerParamData a_layer_defaults_get ( const char *layername, const char *param_name, VikLayerParamType param_type )
+VikLayerParamData a_layer_defaults_get(const char *layername, const char *param_name, VikLayerParamType param_type)
 {
-	if ( ! loaded ) {
+	if (!loaded) {
 		// since we can't load the file in a_defaults_init (no params registered yet),
 		// do it once before we get the first key.
 		defaults_load_from_file();
 		loaded = true;
 	}
 
-	return get_default_data ( layername, param_name, param_type );
+	return get_default_data(layername, param_name, param_type);
 }
 
 /**
