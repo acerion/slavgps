@@ -408,7 +408,7 @@ void LayersPanel::item_toggled(GtkTreeIter * iter)
 		}
 	case TreeItemType::SUBLAYER: {
 		sg_uid_t sublayer_uid = this->tree_view->get_sublayer_uid(iter);
-		Layer * parent = this->tree_view->get_parent(iter);
+		Layer * parent = this->tree_view->get_parent_layer(iter);
 
 		visible = parent->sublayer_toggle_visible(this->tree_view->get_sublayer_type(iter), sublayer_uid);
 		vik_layer_emit_update_although_invisible(parent);
@@ -455,7 +455,7 @@ void LayersPanel::item_edited(GtkTreeIter * iter, char const * new_text)
 			this->tree_view->set_name(iter, layer->name);
 		}
 	} else {
-		Layer * parent = this->tree_view->get_parent(iter);
+		Layer * parent = this->tree_view->get_parent_layer(iter);
 		const char *name = parent->sublayer_rename_request(new_text, this, this->tree_view->get_sublayer_type(iter), this->tree_view->get_sublayer_uid(iter), iter);
 		if (name) {
 			this->tree_view->set_name(iter, name);
@@ -574,7 +574,7 @@ void LayersPanel::popup(GtkTreeIter * iter, int mouse_button)
 			layer->add_menu_items(menu, this);
 		} else {
 			menu = GTK_MENU (gtk_menu_new());
-			Layer * parent = this->tree_view->get_parent(iter);
+			Layer * parent = this->tree_view->get_parent_layer(iter);
 			if (!parent->sublayer_add_menu_items(menu, this, this->tree_view->get_sublayer_type(iter), this->tree_view->get_sublayer_uid(iter), iter, this->viewport)) { // kamil
 				gtk_widget_destroy (GTK_WIDGET(menu));
 				return;
@@ -670,7 +670,7 @@ void LayersPanel::add_layer(Layer * layer)
 		Layer * current = NULL;
 
 		if (this->tree_view->get_item_type(&iter) == TreeItemType::SUBLAYER) {
-			current = this->tree_view->get_parent(&iter);
+			current = this->tree_view->get_parent_layer(&iter);
 			fprintf(stderr, "INFO: %s:%d: Capturing parent layer '%s' as current layer\n",
 				__FUNCTION__, __LINE__, current->type_string);
 		} else {
@@ -682,7 +682,7 @@ void LayersPanel::add_layer(Layer * layer)
 
 		/* Go further up until you find first aggregate layer. */
 		while (current->type != LayerType::AGGREGATE) {
-			current = this->tree_view->get_parent(&iter);
+			current = this->tree_view->get_parent_layer(&iter);
 			iter = current->iter;
 			assert (current->realized);
 		}
@@ -711,10 +711,10 @@ void LayersPanel::move_item(bool up)
 		return;
 	}
 
-	this->tree_view->select_iter(&iter, false); /* cancel any layer-name editing going on... */
+	this->tree_view->select(&iter); /* cancel any layer-name editing going on... */
 
 	if (this->tree_view->get_item_type(&iter) == TreeItemType::LAYER) {
-		LayerAggregate * parent = (LayerAggregate *) this->tree_view->get_parent(&iter);
+		LayerAggregate * parent = (LayerAggregate *) this->tree_view->get_parent_layer(&iter);
 		if (parent) {/* not toplevel */
 			parent->move_layer(&iter, up);
 			this->emit_update();
@@ -741,7 +741,7 @@ bool LayersPanel::properties()
 	assert (this->viewport);
 
 	if (this->tree_view->get_selected_iter(&iter) && this->tree_view->get_item_type(&iter) == TreeItemType::LAYER) {
-		if (this->tree_view->get_layer_type(&iter) == LayerType::AGGREGATE) {
+		if (this->tree_view->get_layer(&iter)->type == LayerType::AGGREGATE) {
 			a_dialog_info_msg(VIK_GTK_WINDOW_FROM_WIDGET(this->gob), _("Aggregate Layers have no settable properties."));
 		}
 		Layer * layer = this->tree_view->get_layer(&iter);
@@ -791,7 +791,7 @@ void LayersPanel::cut_selected()
 	TreeItemType type = this->tree_view->get_item_type(&iter);
 
 	if (type == TreeItemType::LAYER) {
-		LayerAggregate * parent = (LayerAggregate *) this->tree_view->get_parent(&iter);
+		LayerAggregate * parent = (LayerAggregate *) this->tree_view->get_parent_layer(&iter);
 		if (parent){
 			/* reset trigger if trigger deleted */
 			if (this->get_selected()->vl == this->viewport->get_trigger()) {
@@ -898,7 +898,7 @@ void LayersPanel::delete_selected()
 			return;
 		}
 
-		LayerAggregate * parent = (LayerAggregate *) this->tree_view->get_parent(&iter);
+		LayerAggregate * parent = (LayerAggregate *) this->tree_view->get_parent_layer(&iter);
 		if (parent) {
 			/* reset trigger if trigger deleted */
 			if (this->get_selected()->vl == this->viewport->get_trigger()) {

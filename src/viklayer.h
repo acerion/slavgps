@@ -368,7 +368,7 @@ bool vik_layer_properties(SlavGPS::Layer * layer, SlavGPS::Viewport * viewport);
 //void      vik_layer_marshall_params(VikLayer * vl, uint8_t ** data, int * len);
 
 
-bool vik_layer_selected(SlavGPS::Layer * layer, SlavGPS::SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeItemType type, void * panel);
+bool vik_layer_selected(SlavGPS::Layer * layer, SlavGPS::SublayerType sublayer_type, sg_uid_t sublayer_uid, SlavGPS::TreeItemType type, void * panel);
 
 /* TODO: put in layerspanel */
 GdkPixbuf * vik_layer_load_icon(SlavGPS::LayerType layer_type);

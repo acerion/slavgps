@@ -646,10 +646,10 @@ bool LayerTRW::find_by_date(char const * date_str, VikCoord * position, Viewport
 			struct LatLon maxmin[2] = { {0,0}, {0,0} };
 			LayerTRW::find_maxmin_in_track(df.trk, maxmin);
 			this->zoom_to_show_latlons(viewport, maxmin);
-			this->tree_view->select_iter(tracks_iters.at(df.trk_uid), true);
+			this->tree_view->select_and_expose(tracks_iters.at(df.trk_uid));
 		} else if (df.wp) {
 			viewport->set_center_coord(&df.wp->coord, true);
-			this->tree_view->select_iter(waypoints_iters.at(df.wp_uid), true);
+			this->tree_view->select_and_expose(waypoints_iters.at(df.wp_uid));
 		}
 		this->emit_update();
 	}
@@ -662,7 +662,7 @@ bool LayerTRW::find_by_date(char const * date_str, VikCoord * position, Viewport
 
 void LayerTRW::delete_sublayer(SublayerType sublayer_type, sg_uid_t sublayer_uid)
 {
-	if (sublayer_uid == (sg_uid_t) -1) {
+	if (sublayer_uid == SG_UID_NONE) {
 		return;
 	}
 
@@ -683,7 +683,7 @@ void LayerTRW::delete_sublayer(SublayerType sublayer_type, sg_uid_t sublayer_uid
 
 void LayerTRW::cut_sublayer(SublayerType sublayer_type, sg_uid_t sublayer_uid)
 {
-	if (sublayer_uid == (sg_uid_t) -1) {
+	if (sublayer_uid == SG_UID_NONE) {
 		return;
 	}
 
@@ -768,7 +768,7 @@ void trw_layer_paste_item_cb(trw_menu_sublayer_t * data)
 
 void LayerTRW::copy_sublayer(SublayerType sublayer_type, sg_uid_t sublayer_uid, uint8_t **item, unsigned int *len)
 {
-	if (sublayer_uid == (sg_uid_t) -1) { /* kamilFIXME: decide 'invalid' value for sg_uid_t data type. */
+	if (sublayer_uid == SG_UID_NONE) {
 		*item = NULL;
 		return;
 	}
@@ -2716,7 +2716,7 @@ void trw_layer_goto_wp(trw_menu_layer_t * data)
 			sg_uid_t wp_uid = LayerTRWc::find_uid_of_waypoint(layer->waypoints, wp);
 			if (wp_uid) {
 				GtkTreeIter * it = layer->waypoints_iters.at(wp_uid);
-				layer->tree_view->select_iter(it, true);
+				layer->tree_view->select_and_expose(it);
 			}
 
 			break;
@@ -3282,7 +3282,7 @@ GtkWidget* create_external_submenu(GtkMenu *menu)
 
 
 // Fake Waypoint UUIDs vith simple increasing integer
-static sg_uid_t global_wp_uid = 0;
+static sg_uid_t global_wp_uid = SG_UID_INITIAL;
 
 void LayerTRW::add_waypoint(Waypoint * wp, char const * name)
 {
@@ -3323,7 +3323,7 @@ void LayerTRW::add_waypoint(Waypoint * wp, char const * name)
 
 
 // Fake Track UUIDs vi simple increasing integer
-static unsigned int global_tr_uuid = 0;
+static sg_uid_t global_tr_uuid = SG_UID_INITIAL;
 
 void LayerTRW::add_track(Track * trk, char const * name)
 {
@@ -3367,7 +3367,7 @@ void LayerTRW::add_track(Track * trk, char const * name)
 
 
 // Fake Route UUIDs vi simple increasing integer
-static unsigned int global_rt_uuid = 0;
+static sg_uid_t global_rt_uuid = SG_UID_INITIAL;
 
 void LayerTRW::add_route(Track * trk, char const * name)
 {
@@ -3659,13 +3659,13 @@ bool LayerTRW::delete_track(Track * trk)
 
 			TreeIndex * it = tracks_iters.at(uid);
 			if (it) {
-				this->tree_view->delete_(it);
+				this->tree_view->erase(it);
 				tracks_iters.erase(uid);
 				tracks.erase(uid); /* kamilTODO: should this line be inside of "if (it)"? */
 
 				// If last sublayer, then remove sublayer container
 				if (tracks.size() == 0) {
-					this->tree_view->delete_(&track_iter);
+					this->tree_view->erase(&track_iter);
 				}
 			}
 			// In case it was selected (no item delete signal ATM)
@@ -3707,13 +3707,13 @@ bool LayerTRW::delete_route(Track * trk)
 			GtkTreeIter * it = routes_iters.at(uid);
 
 			if (it) {
-				this->tree_view->delete_(it);
+				this->tree_view->erase(it);
 				routes_iters.erase(uid);
 				routes.erase(uid); /* kamilTODO: should this line be inside of "if (it)"? */
 
 				// If last sublayer, then remove sublayer container
 				if (routes.size() == 0) {
-					this->tree_view->delete_(&route_iter);
+					this->tree_view->erase(&route_iter);
 				}
 			}
 			// Incase it was selected (no item delete signal ATM)
@@ -3746,7 +3746,7 @@ bool LayerTRW::delete_waypoint(Waypoint * wp)
 			TreeIndex * it = waypoints_iters.at(uid);
 
 			if (it) {
-				this->tree_view->delete_(it);
+				this->tree_view->erase(it);
 				waypoints_iters.erase(uid);
 
 				this->highest_wp_number_remove_wp(wp->name);
@@ -3756,7 +3756,7 @@ bool LayerTRW::delete_waypoint(Waypoint * wp)
 
 				// If last sublayer, then remove sublayer container
 				if (waypoints.size() == 0) {
-					this->tree_view->delete_(&waypoint_iter);
+					this->tree_view->erase(&waypoint_iter);
 				}
 			}
 			// Incase it was selected (no item delete signal ATM)
@@ -3826,7 +3826,7 @@ void LayerTRW::delete_all_routes()
 	this->routes_iters.clear(); /* kamilTODO: call destructors of route iters. */
 	this->routes.clear(); /* kamilTODO: call destructors of routes. */
 
-	this->tree_view->delete_(&this->route_iter);
+	this->tree_view->erase(&this->route_iter);
 
 	this->emit_update();
 }
@@ -3846,7 +3846,7 @@ void LayerTRW::delete_all_tracks()
 	this->tracks_iters.clear();
 	this->tracks.clear(); /* kamilTODO: call destructors of tracks. */
 
-	this->tree_view->delete_(&this->track_iter);
+	this->tree_view->erase(&this->track_iter);
 
 	this->emit_update();
 }
@@ -3866,7 +3866,7 @@ void LayerTRW::delete_all_waypoints()
 	this->waypoints_iters.clear();
 	this->waypoints.clear(); /* kamilTODO: does this really call destructors of Waypoints? */
 
-	this->tree_view->delete_(&this->waypoint_iter);
+	this->tree_view->erase(&this->waypoint_iter);
 
 	this->emit_update();
 }
@@ -7169,7 +7169,7 @@ bool LayerTRW::select_click(GdkEventButton * event, Viewport * viewport, LayerTo
 		if (wp_params.closest_wp) {
 
 			// Select
-			this->tree_view->select_iter(this->waypoints_iters.at(wp_params.closest_wp_uid), true);
+			this->tree_view->select_and_expose(this->waypoints_iters.at(wp_params.closest_wp_uid));
 
 			// Too easy to move it so must be holding shift to start immediately moving it
 			//   or otherwise be previously selected but not have an image (otherwise clicking within image bounds (again) moves it)
@@ -7217,7 +7217,7 @@ bool LayerTRW::select_click(GdkEventButton * event, Viewport * viewport, LayerTo
 		if (tp_params.closest_tp) {
 
 			// Always select + highlight the track
-			this->tree_view->select_iter(this->tracks_iters.at(tp_params.closest_track_uid), true);
+			this->tree_view->select_and_expose(this->tracks_iters.at(tp_params.closest_track_uid));
 
 			tool->ed->is_waypoint = false;
 
@@ -7256,7 +7256,7 @@ bool LayerTRW::select_click(GdkEventButton * event, Viewport * viewport, LayerTo
 		if (tp_params.closest_tp)  {
 
 			// Always select + highlight the track
-			this->tree_view->select_iter(this->routes_iters.at(tp_params.closest_track_uid), true);
+			this->tree_view->select_and_expose(this->routes_iters.at(tp_params.closest_track_uid));
 
 			tool->ed->is_waypoint = false;
 
@@ -7544,7 +7544,7 @@ bool LayerTRW::tool_edit_waypoint_click(GdkEventButton * event, LayerTool * tool
 			this->waypoint_rightclick = false;
 		}
 
-		this->tree_view->select_iter(this->waypoints_iters.at(params.closest_wp_uid), true);
+		this->tree_view->select_and_expose(this->waypoints_iters.at(params.closest_wp_uid));
 
 		this->current_wp = params.closest_wp;
 		this->current_wp_uid = params.closest_wp_uid;
@@ -8368,7 +8368,7 @@ bool LayerTRW::tool_edit_trackpoint_click(GdkEventButton * event, LayerTool * to
 	}
 
 	if (params.closest_tp) {
-		this->tree_view->select_iter(this->tracks_iters.at(params.closest_track_uid), true);
+		this->tree_view->select_and_expose(this->tracks_iters.at(params.closest_track_uid));
 
 		this->selected_tp.iter = params.closest_tp_iter;
 		this->selected_tp.valid = true;
@@ -8387,7 +8387,7 @@ bool LayerTRW::tool_edit_trackpoint_click(GdkEventButton * event, LayerTool * to
 	}
 
 	if (params.closest_tp) {
-		this->tree_view->select_iter(this->routes_iters.at(params.closest_track_uid), true);
+		this->tree_view->select_and_expose(this->routes_iters.at(params.closest_track_uid));
 
 		this->selected_tp.iter = params.closest_tp_iter;
 		this->selected_tp.iter = params.closest_tp_iter;

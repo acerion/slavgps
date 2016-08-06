@@ -764,7 +764,7 @@ static void delete_layer_iter(VikLayer *vl)
 {
 	Layer * layer = (Layer *) vl->layer;
 	if (layer->realized) {
-		layer->tree_view->delete_(&layer->iter);
+		layer->tree_view->erase(&layer->iter);
 	}
 }
 
@@ -784,7 +784,7 @@ bool LayerAggregate::delete_layer(GtkTreeIter * iter)
 	Layer * layer = this->tree_view->get_layer(iter);
 	bool was_visible = layer->visible;
 
-	this->tree_view->delete_(iter);
+	this->tree_view->erase(iter);
 
 	for (auto i = this->children->begin(); i != this->children->end(); i++) {
 		if ((*i)->vl = layer->vl) {

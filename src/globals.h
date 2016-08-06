@@ -30,7 +30,8 @@
 
 
 typedef uint32_t sg_uid_t;
-
+#define SG_UID_INITIAL  1
+#define SG_UID_NONE     0
 
 
 

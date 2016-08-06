@@ -179,7 +179,7 @@ static void trw_layer_track_select(tracklist_data_t * values)
 		}
 
 		if (iter) {
-			trw->tree_view->select_iter(iter, true);
+			trw->tree_view->select_and_expose(iter);
 		}
 	}
 }

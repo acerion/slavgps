@@ -171,7 +171,7 @@ static void trw_layer_waypoint_select(waypointlist_data_t * values)
 		GtkTreeIter * iter = trw->get_waypoints_iters().at(uid);
 
 		if (iter) {
-			trw->tree_view->select_iter(iter, true);
+			trw->tree_view->select_and_expose(iter);
 		}
 	}
 }

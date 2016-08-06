@@ -263,7 +263,7 @@ Track * LayerTRWc::find_track_by_name(std::unordered_map<sg_uid_t, Track *> & in
 void LayerTRWc::remove_item_from_treeview(std::unordered_map<sg_uid_t, TreeIndex *> & items, TreeView * tree_view)
 {
 	for (auto i = items.begin(); i != items.end(); i++) {
-		tree_view->delete_(i->second);
+		tree_view->erase(i->second);
 	}
 }
 
