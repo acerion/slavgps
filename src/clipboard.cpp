@@ -412,7 +412,7 @@ void a_clipboard_copy_selected(LayersPanel * panel)
 	} else {
 		if (selected->tree_view->get_type(&iter) == VIK_TREEVIEW_TYPE_SUBLAYER) {
 			type = VIK_CLIPBOARD_DATA_SUBLAYER;
-			subtype = selected->tree_view->get_data(&iter);
+			subtype = selected->tree_view->get_sublayer_type(&iter);
 
 			selected->copy_item(subtype, selected->tree_view->get_pointer(&iter), &data, &len);
 			// This name is used in setting the text representation of the item on the clipboard.

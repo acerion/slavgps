@@ -3595,26 +3595,25 @@ void LayerTRW::drag_drop_request(Layer * src, GtkTreeIter * src_item_iter, GtkTr
 	LayerTRW * trw_dest = this;
 	LayerTRW * trw_src = (LayerTRW *) src;
 
-	int type = trw_src->tree_view->get_data(src_item_iter);
-
 	if (!trw_src->tree_view->get_pointer(src_item_iter)) {
 		GList *items = NULL;
+		int sublayer_type = trw_src->tree_view->get_sublayer_type(src_item_iter);
 
-		if (type==VIK_TRW_LAYER_SUBLAYER_TRACKS) {
+		if (sublayer_type == VIK_TRW_LAYER_SUBLAYER_TRACKS) {
 			LayerTRWc::list_trk_uids(trw_src->tracks, &items);
 		}
-		if (type==VIK_TRW_LAYER_SUBLAYER_WAYPOINTS) {
+		if (sublayer_type == VIK_TRW_LAYER_SUBLAYER_WAYPOINTS) {
 			LayerTRWc::list_wp_uids(trw_src->waypoints, &items);
 		}
-		if (type==VIK_TRW_LAYER_SUBLAYER_ROUTES) {
+		if (sublayer_type == VIK_TRW_LAYER_SUBLAYER_ROUTES) {
 			LayerTRWc::list_trk_uids(trw_src->routes, &items);
 		}
 
 		GList * iter = items;
 		while (iter) {
-			if (type==VIK_TRW_LAYER_SUBLAYER_TRACKS) {
+			if (sublayer_type == VIK_TRW_LAYER_SUBLAYER_TRACKS) {
 				trw_src->move_item(trw_dest, iter->data, VIK_TRW_LAYER_SUBLAYER_TRACK);
-			} else if (type==VIK_TRW_LAYER_SUBLAYER_ROUTES) {
+			} else if (sublayer_type == VIK_TRW_LAYER_SUBLAYER_ROUTES) {
 				trw_src->move_item(trw_dest, iter->data, VIK_TRW_LAYER_SUBLAYER_ROUTE);
 			} else {
 				trw_src->move_item(trw_dest, iter->data, VIK_TRW_LAYER_SUBLAYER_WAYPOINT);
@@ -3625,6 +3624,7 @@ void LayerTRW::drag_drop_request(Layer * src, GtkTreeIter * src_item_iter, GtkTr
 			g_list_free(items);
 		}
 	} else {
+		int type = trw_src->tree_view->get_data(src_item_iter);
 		char *name = (char *) trw_src->tree_view->get_pointer(src_item_iter);
 		trw_src->move_item(trw_dest, name, type);
 	}

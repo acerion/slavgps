@@ -71,6 +71,9 @@ namespace SlavGPS {
 
 		void * get_layer(GtkTreeIter * iter);
 		int    get_data(GtkTreeIter * iter);
+		int    get_layer_type(GtkTreeIter * iter);
+		int    get_sublayer_type(GtkTreeIter * iter);
+		void * get_sublayer_uid(GtkTreeIter * iter);
 		int    get_type(GtkTreeIter * iter);
 		char * get_name(GtkTreeIter * iter);
 		void * get_pointer(GtkTreeIter * iter);

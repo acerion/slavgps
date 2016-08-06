@@ -397,20 +397,21 @@ void LayersPanel::item_toggled(GtkTreeIter * iter)
 {
 	/* get type and data */
 	int type = this->tree_view->get_type(iter);
-	void * p = this->tree_view->get_pointer(iter);
+
 
 	bool visible;
 	switch (type) {
 	case VIK_TREEVIEW_TYPE_LAYER:
 		{
-		Layer * layer = (Layer *) p;
+		Layer * layer = (Layer *) this->tree_view->get_layer(iter);
 		visible = (layer->visible ^= 1);
 		vik_layer_emit_update_although_invisible(layer); /* set trigger for half-drawn */
 		break;
 		}
 	case VIK_TREEVIEW_TYPE_SUBLAYER: {
+		void * p = this->tree_view->get_sublayer_uid(iter);
 		Layer * parent = (Layer *) this->tree_view->get_parent(iter);
-		visible = parent->sublayer_toggle_visible(this->tree_view->get_data(iter), p);
+		visible = parent->sublayer_toggle_visible(this->tree_view->get_sublayer_type(iter), p);
 		vik_layer_emit_update_although_invisible(parent);
 		break;
 	}
@@ -456,7 +457,7 @@ void LayersPanel::item_edited(GtkTreeIter * iter, char const * new_text)
 		}
 	} else {
 		Layer * parent = (Layer *) this->tree_view->get_parent(iter);
-		const char *name = parent->sublayer_rename_request(new_text, this, this->tree_view->get_data(iter), this->tree_view->get_pointer(iter), iter);
+		const char *name = parent->sublayer_rename_request(new_text, this, this->tree_view->get_sublayer_type(iter), this->tree_view->get_sublayer_uid(iter), iter);
 		if (name) {
 			this->tree_view->set_name(iter, name);
 		}
@@ -575,7 +576,7 @@ void LayersPanel::popup(GtkTreeIter * iter, int mouse_button)
 		} else {
 			menu = GTK_MENU (gtk_menu_new());
 			Layer * parent = (Layer *) this->tree_view->get_parent(iter);
-			if (! parent->sublayer_add_menu_items(menu, this, this->tree_view->get_data(iter), this->tree_view->get_pointer(iter), iter, this->viewport)) { // kamil
+			if (!parent->sublayer_add_menu_items(menu, this, this->tree_view->get_sublayer_type(iter), this->tree_view->get_sublayer_uid(iter), iter, this->viewport)) { // kamil
 				gtk_widget_destroy (GTK_WIDGET(menu));
 				return;
 			}
@@ -741,7 +742,7 @@ bool LayersPanel::properties()
 	assert (this->viewport);
 
 	if (this->tree_view->get_selected_iter(&iter) && this->tree_view->get_type(&iter) == VIK_TREEVIEW_TYPE_LAYER) {
-		if ((LayerType) this->tree_view->get_data(&iter) == LayerType::AGGREGATE) {
+		if ((LayerType) this->tree_view->get_layer_type(&iter) == LayerType::AGGREGATE) {
 			a_dialog_info_msg(VIK_GTK_WINDOW_FROM_WIDGET(this->gob), _("Aggregate Layers have no settable properties."));
 		}
 		Layer * layer = (Layer *) this->tree_view->get_layer(&iter);
@@ -813,8 +814,8 @@ void LayersPanel::cut_selected()
 		}
 	} else if (type == VIK_TREEVIEW_TYPE_SUBLAYER) {
 		Layer * selected = this->get_selected();
-		int subtype = this->tree_view->get_data(&iter);
-		selected->cut_item(subtype, selected->tree_view->get_pointer(&iter));
+		int sublayer_type = this->tree_view->get_sublayer_type(&iter);
+		selected->cut_item(sublayer_type, selected->tree_view->get_sublayer_uid(&iter));
 	}
 }
 
@@ -918,8 +919,8 @@ void LayersPanel::delete_selected()
 		}
 	} else if (type == VIK_TREEVIEW_TYPE_SUBLAYER) {
 		Layer * selected = this->get_selected();
-		int subtype = this->tree_view->get_data(&iter);
-		selected->delete_item(subtype, selected->tree_view->get_pointer(&iter));
+		int sublayer_type = this->tree_view->get_sublayer_type(&iter);
+		selected->delete_item(sublayer_type, selected->tree_view->get_sublayer_uid(&iter));
 	}
 }
 
