@@ -27,6 +27,59 @@
 #include <stdint.h>
 
 
+
+
+typedef uint32_t sg_uid_t;
+
+
+
+
+namespace SlavGPS {
+
+
+
+
+	enum class SublayerType {
+		NONE,
+		TRACKS,
+		WAYPOINTS,
+		TRACK,
+		WAYPOINT,
+		ROUTES,
+		ROUTE
+	};
+
+
+
+
+	enum class LayerType {
+		AGGREGATE = 0,
+		TRW,
+		COORD,
+		GEOREF,
+		GPS,
+		MAPS,
+		DEM,
+#ifdef HAVE_LIBMAPNIK
+		MAPNIK,
+#endif
+		NUM_TYPES // Also use this value to indicate no layer association
+	};
+
+
+
+
+
+	LayerType& operator++(LayerType& layer_type);
+
+
+
+
+} /* namespace */
+
+
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif

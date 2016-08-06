@@ -898,7 +898,7 @@ void vu_command_line(Window * window, double latitude, double longitude, int zoo
  */
 static void vu_copy_label(GtkWidget * widget)
 {
-	a_clipboard_copy(VIK_CLIPBOARD_DATA_TEXT, LayerType::AGGREGATE, 0, 0, gtk_button_get_label(GTK_BUTTON(widget)), NULL);
+	a_clipboard_copy(VIK_CLIPBOARD_DATA_TEXT, LayerType::AGGREGATE, SublayerType::NONE, 0, gtk_button_get_label(GTK_BUTTON(widget)), NULL);
 }
 
 /**

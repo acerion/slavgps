@@ -29,42 +29,7 @@
 #include "vik_compat.h"
 #include "config.h"
 
-
-
-
-
-namespace SlavGPS {
-
-
-
-
-
-	enum class LayerType {
-		AGGREGATE = 0,
-		TRW,
-		COORD,
-		GEOREF,
-		GPS,
-		MAPS,
-		DEM,
-#ifdef HAVE_LIBMAPNIK
-		MAPNIK,
-#endif
-		NUM_TYPES // Also use this value to indicate no layer association
-	};
-
-
-
-
-
-	LayerType& operator++(LayerType& layer_type);
-
-
-
-
-
-} /* namespace SlavGPS */
-
+#include "globals.h"
 
 
 

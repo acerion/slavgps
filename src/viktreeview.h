@@ -27,6 +27,7 @@
 
 #include "config.h"
 #include "uibuilder.h"
+#include "globals.h"
 
 #include <glib.h>
 #include <glib-object.h>
@@ -44,9 +45,9 @@ typedef struct _VikTreeview VikTreeview;
 
 
 
-enum {
-	VIK_TREEVIEW_TYPE_LAYER = 0,
-	VIK_TREEVIEW_TYPE_SUBLAYER
+enum class TreeItemType {
+	LAYER = 0,
+	SUBLAYER
 };
 
 
@@ -58,26 +59,32 @@ namespace SlavGPS {
 
 
 
+	class Layer;
+
 
 	class TreeView {
 	public:
 		TreeView();
 		~TreeView();
 
-		void add_layer(GtkTreeIter *parent_iter, GtkTreeIter *iter, const char *name, void * parent, bool above, void * item, int data, LayerType layer_type, time_t timestamp);
-		void insert_layer(GtkTreeIter *parent_iter, GtkTreeIter *iter, const char *name, void * parent, bool above, void * item, int data, LayerType layer_type, GtkTreeIter *sibling, time_t timestamp);
-		void add_sublayer(GtkTreeIter *parent_iter, GtkTreeIter *iter, const char *name, void * parent, void * item, int data, GdkPixbuf *icon, bool editable, time_t timestamp);
+		void add_layer(GtkTreeIter *parent_iter, GtkTreeIter *iter, const char *name, Layer * parent_layer, bool above, Layer * layer, int data, LayerType layer_type, time_t timestamp);
+		void insert_layer(GtkTreeIter *parent_iter, GtkTreeIter *iter, const char *name, Layer * parent_layer, bool above, Layer * layer, int data, LayerType layer_type, GtkTreeIter *sibling, time_t timestamp);
+		void add_sublayer(GtkTreeIter *parent_iter, GtkTreeIter *iter, const char *name, Layer * parent_layer, sg_uid_t sublayer_uid, SublayerType sublayer_type, GdkPixbuf *icon, bool editable, time_t timestamp);
 
 
-		void * get_layer(GtkTreeIter * iter);
-		int    get_data(GtkTreeIter * iter);
-		int    get_layer_type(GtkTreeIter * iter);
-		int    get_sublayer_type(GtkTreeIter * iter);
-		void * get_sublayer_uid(GtkTreeIter * iter);
+		Layer * get_layer(GtkTreeIter * iter);
+		int     get_data(GtkTreeIter * iter);
+		LayerType get_layer_type(GtkTreeIter * iter);
+		SublayerType get_sublayer_type(GtkTreeIter * iter);
+		void * get_sublayer_uid_pointer(GtkTreeIter * iter);
+		sg_uid_t get_sublayer_uid(GtkTreeIter * iter);
 		int    get_type(GtkTreeIter * iter);
 		char * get_name(GtkTreeIter * iter);
 		void * get_pointer(GtkTreeIter * iter);
-		void * get_parent(GtkTreeIter * iter);
+		Layer * get_parent(GtkTreeIter * iter);
+
+		TreeItemType get_item_type(GtkTreeIter * iter);
+
 
 
 

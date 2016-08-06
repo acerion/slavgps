@@ -49,7 +49,7 @@ typedef struct {
 	void * clipboard;
 	int pid;
 	VikClipboardDataType type;
-	int subtype;
+	SublayerType sublayer_type;
 	LayerType layer_type;
 	unsigned int len;
 	char *text;
@@ -120,7 +120,7 @@ static void clip_receive_viking(GtkClipboard * c, GtkSelectionData * sd, void * 
 	} else if (vc->type == VIK_CLIPBOARD_DATA_SUBLAYER) {
 		Layer * selected = panel->get_selected();
 		if (selected && selected->type == vc->layer_type) {
-			selected->paste_item(vc->subtype, vc->data, vc->len);
+			selected->paste_sublayer(vc->sublayer_type, vc->data, vc->len);
 		} else {
 			a_dialog_error_msg_extra(VIK_GTK_WINDOW_FROM_WIDGET(GTK_WIDGET(panel->gob)),
 						 _("The clipboard contains sublayer data for %s layers. "
@@ -388,7 +388,7 @@ void a_clipboard_copy_selected(LayersPanel * panel)
 	GtkTreeIter iter;
 	VikClipboardDataType type = VIK_CLIPBOARD_DATA_NONE;
 	LayerType layer_type = LayerType::AGGREGATE;
-	int subtype = 0;
+	SublayerType sublayer_type = (SublayerType ) 0; /* kamilFIXME: don't cast. */
 	uint8_t *data = NULL;
 	unsigned int len = 0;
 	const char *name = NULL;
@@ -410,11 +410,11 @@ void a_clipboard_copy_selected(LayersPanel * panel)
 		name = selected->tree_view->get_name(&iter);
 		len = 0;
 	} else {
-		if (selected->tree_view->get_type(&iter) == VIK_TREEVIEW_TYPE_SUBLAYER) {
+		if (selected->tree_view->get_item_type(&iter) == TreeItemType::SUBLAYER) {
 			type = VIK_CLIPBOARD_DATA_SUBLAYER;
-			subtype = selected->tree_view->get_sublayer_type(&iter);
+			SublayerType sublayer_type = selected->tree_view->get_sublayer_type(&iter);
 
-			selected->copy_item(subtype, selected->tree_view->get_pointer(&iter), &data, &len);
+			selected->copy_sublayer(sublayer_type, selected->tree_view->get_sublayer_uid(&iter), &data, &len);
 			// This name is used in setting the text representation of the item on the clipboard.
 			name = selected->tree_view->get_name(&iter);
 		} else {
@@ -422,20 +422,20 @@ void a_clipboard_copy_selected(LayersPanel * panel)
 			type = VIK_CLIPBOARD_DATA_LAYER;
 			Layer::marshall(selected, &data, &ilen);
 			len = ilen;
-			name = ((Layer *) selected->tree_view->get_layer(&iter))->get_name();
+			name = selected->tree_view->get_layer(&iter)->get_name();
 		}
 	}
-	a_clipboard_copy(type, layer_type, subtype, len, name, data);
+	a_clipboard_copy(type, layer_type, sublayer_type, len, name, data);
 }
 
-void a_clipboard_copy(VikClipboardDataType type, LayerType layer_type, int subtype, unsigned int len, const char * text, uint8_t * data)
+void a_clipboard_copy(VikClipboardDataType type, LayerType layer_type, SublayerType sublayer_type, unsigned int len, const char * text, uint8_t * data)
 {
 	vik_clipboard_t * vc = (vik_clipboard_t *) malloc(sizeof(*vc) + len); /* kamil: + len? */
 	GtkClipboard * c = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
 
 	vc->type = type;
 	vc->layer_type = layer_type;
-	vc->subtype = subtype;
+	vc->sublayer_type = sublayer_type;
 	vc->len = len;
 	vc->text = g_strdup(text);
 	if (data) {

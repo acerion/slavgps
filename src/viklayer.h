@@ -168,9 +168,9 @@ namespace SlavGPS {
 
 		virtual void draw(Viewport * viewport);
 		virtual char const * tooltip();
-		virtual char const * sublayer_tooltip(int subtype, void * sublayer);
+		virtual char const * sublayer_tooltip(SublayerType sublayer_type, sg_uid_t sublayer_uid);
 
-		virtual bool selected(int subtype, void * sublayer, int type, void * panel);
+		virtual bool selected(SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeItemType type, void * panel);
 
 		virtual bool show_selected_viewport_menu(GdkEventButton * event, Viewport * viewport);
 
@@ -182,10 +182,10 @@ namespace SlavGPS {
 		virtual void set_menu_selection(uint16_t selection);
 		virtual uint16_t get_menu_selection();
 
-		virtual void cut_item(int subtype, void * sublayer);
-		virtual void copy_item(int subtype, void * sublayer, uint8_t ** item, unsigned int * len);
-		virtual bool paste_item(int subtype, uint8_t * item, size_t len);
-		virtual void delete_item(int subtype, void * sublayer);
+		virtual void cut_sublayer(SublayerType sublayer_type, sg_uid_t sublayer_uid);
+		virtual void copy_sublayer(SublayerType sublayer_type, sg_uid_t sublayer_uid, uint8_t ** item, unsigned int * len);
+		virtual bool paste_sublayer(SublayerType sublayer_type, uint8_t * item, size_t len);
+		virtual void delete_sublayer(SublayerType sublayer_type, sg_uid_t sublayer_uid);
 
 		virtual void change_coord_mode(VikCoordMode dest_mode);
 
@@ -201,9 +201,9 @@ namespace SlavGPS {
 		virtual void write_file(FILE * f) const;
 
 		virtual void add_menu_items(GtkMenu * menu, void * panel);
-		virtual bool sublayer_add_menu_items(GtkMenu * menu, void * panel, int subtype, void * sublayer, GtkTreeIter * iter, Viewport * viewport);
-		virtual char const * sublayer_rename_request(const char * newname, void * panel, int subtype, void * sublayer, GtkTreeIter * iter);
-		virtual bool sublayer_toggle_visible(int subtype, void * sublayer);
+		virtual bool sublayer_add_menu_items(GtkMenu * menu, void * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, GtkTreeIter * iter, Viewport * viewport);
+		virtual char const * sublayer_rename_request(const char * newname, void * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, GtkTreeIter * iter);
+		virtual bool sublayer_toggle_visible(SublayerType sublayer_type, sg_uid_t sublayer_uid);
 
 		/* Do _not_ use this unless absolutely neccesary. Use the dynamic properties (see coordlayer for example)
 		   returns true if OK was pressed. */
@@ -368,7 +368,7 @@ bool vik_layer_properties(SlavGPS::Layer * layer, SlavGPS::Viewport * viewport);
 //void      vik_layer_marshall_params(VikLayer * vl, uint8_t ** data, int * len);
 
 
-bool vik_layer_selected(SlavGPS::Layer * layer, int subtype, void * sublayer, int type, void * panel);
+bool vik_layer_selected(SlavGPS::Layer * layer, SlavGPS::SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeItemType type, void * panel);
 
 /* TODO: put in layerspanel */
 GdkPixbuf * vik_layer_load_icon(SlavGPS::LayerType layer_type);

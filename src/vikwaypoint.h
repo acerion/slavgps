@@ -29,7 +29,7 @@
 
 #include <gdk-pixbuf/gdk-pixdata.h>
 
-typedef uint32_t sg_uid_t;
+
 
 
 

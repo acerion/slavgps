@@ -239,20 +239,21 @@ vik_treeview_tooltip_cb(GtkWidget  *widget,
 	}
 
 	/* ATM normally treeview doesn't call into layers - maybe another level of redirection required? */
-	int rv;
-	gtk_tree_model_get(model, &iter, COLUMN_TYPE, &rv, -1);
-	if (rv == VIK_TREEVIEW_TYPE_SUBLAYER) {
+	TreeItemType tree_item_type;
+	gtk_tree_model_get(model, &iter, COLUMN_TYPE, &tree_item_type, -1);
+	if (tree_item_type == TreeItemType::SUBLAYER) {
 
+		SublayerType rv = SublayerType::NONE;
 		gtk_tree_model_get(model, &iter, COLUMN_DATA, &rv, -1);
 
-		void * sublayer;
-		gtk_tree_model_get(model, &iter, COLUMN_UID, &sublayer, -1);
+		sg_uid_t * sublayer_uid;
+		gtk_tree_model_get(model, &iter, COLUMN_UID, &sublayer_uid, -1);
 
 		void * parent;
 		gtk_tree_model_get(model, &iter, COLUMN_PARENT, &parent, -1);
 
-		snprintf(buffer, sizeof(buffer), "%s", ((Layer *) parent)->sublayer_tooltip(rv, sublayer));
-	} else if (rv == VIK_TREEVIEW_TYPE_LAYER) {
+		snprintf(buffer, sizeof(buffer), "%s", ((Layer *) parent)->sublayer_tooltip(rv, (sg_uid_t) KPOINTER_TO_UINT (sublayer_uid)));
+	} else if (tree_item_type == TreeItemType::LAYER) {
 		void * layer;
 		gtk_tree_model_get(model, &iter, COLUMN_ITEM, &layer, -1);
 		snprintf(buffer, sizeof(buffer), "%s", ((Layer *) layer)->tooltip());
@@ -292,6 +293,13 @@ int TreeView::get_type(GtkTreeIter *iter)
 	return rv;
 }
 
+TreeItemType TreeView::get_item_type(GtkTreeIter *iter)
+{
+	TreeItemType rv;
+	TREEVIEW_GET (this->model, iter, COLUMN_TYPE, &rv);
+	return rv;
+}
+
 char* TreeView::get_name(GtkTreeIter * iter)
 {
 	char *rv;
@@ -306,16 +314,16 @@ int TreeView::get_data(GtkTreeIter * iter)
 	return rv;
 }
 
-int TreeView::get_layer_type(GtkTreeIter * iter)
+LayerType TreeView::get_layer_type(GtkTreeIter * iter)
 {
-	int rv;
+	LayerType rv;
 	TREEVIEW_GET (this->model, iter, COLUMN_DATA, &rv);
 	return rv;
 }
 
-int TreeView::get_sublayer_type(GtkTreeIter * iter)
+SublayerType TreeView::get_sublayer_type(GtkTreeIter * iter)
 {
-	int rv;
+	SublayerType rv;
 	TREEVIEW_GET (this->model, iter, COLUMN_DATA, &rv);
 	return rv;
 }
@@ -327,18 +335,24 @@ void * TreeView::get_pointer(GtkTreeIter * iter)
 	return rv;
 }
 
-void * TreeView::get_sublayer_uid(GtkTreeIter * iter)
+void * TreeView::get_sublayer_uid_pointer(GtkTreeIter * iter)
 {
 	sg_uid_t * uid;
 	TREEVIEW_GET (this->model, iter, COLUMN_UID, &uid);
 	return uid;
 }
 
-void * TreeView::get_layer(GtkTreeIter * iter)
+sg_uid_t TreeView::get_sublayer_uid(GtkTreeIter * iter)
 {
-	void * rv;
-	TREEVIEW_GET (this->model, iter, COLUMN_ITEM, &rv);
-	return rv;
+	void * uid = this->get_sublayer_uid_pointer(iter);
+	return (sg_uid_t) KPOINTER_TO_UINT (uid);
+}
+
+Layer * TreeView::get_layer(GtkTreeIter * iter)
+{
+	Layer * layer;
+	TREEVIEW_GET (this->model, iter, COLUMN_ITEM, &layer);
+	return layer;
 }
 
 #if 0
@@ -353,11 +367,11 @@ void TreeView::set_timestamp(GtkTreeIter *iter, time_t timestamp)
 	gtk_tree_store_set (GTK_TREE_STORE(this->model), iter, COLUMN_TIMESTAMP, (int64_t) timestamp, -1);
 }
 
-void * TreeView::get_parent(GtkTreeIter *iter)
+Layer * TreeView::get_parent(GtkTreeIter *iter)
 {
-	void * rv;
-	TREEVIEW_GET (this->model, iter, COLUMN_PARENT, &rv);
-	return rv;
+	Layer * parent_layer;
+	TREEVIEW_GET (this->model, iter, COLUMN_PARENT, &parent_layer);
+	return parent_layer;
 }
 
 bool TreeView::get_iter_from_path_str(GtkTreeIter * iter, char const * path_str)
@@ -471,41 +485,44 @@ static void select_cb(GtkTreeSelection * selection, void * data)
 	TreeView * tree_view = (TreeView *) data;
 	GtkTreeIter iter;
 
-	int tmp_subtype = 0;
-	int tmp_type = VIK_TREEVIEW_TYPE_LAYER;
+	SublayerType tmp_subtype = SublayerType::NONE;
+	TreeItemType tree_item_type = TreeItemType::LAYER;
 
 	if (!gtk_tree_selection_get_selected(selection, NULL, &iter)) {
 		return;
 	}
-	int type = tree_view->get_type(&iter);
+	TreeItemType type = tree_view->get_item_type(&iter);
 
 	/* Find the Sublayer type if possible */
-	void * tmp_layer = tree_view->get_sublayer_uid(&iter);
+	void * tmp_layer = tree_view->get_sublayer_uid_pointer(&iter);
 	if (tmp_layer) {
-		if (type == VIK_TREEVIEW_TYPE_SUBLAYER) {
+
+		if (type == TreeItemType::SUBLAYER) {
 			tmp_subtype = tree_view->get_sublayer_type(&iter);
-			tmp_type = VIK_TREEVIEW_TYPE_SUBLAYER;
-			tmp_layer = tree_view->get_sublayer_uid(&iter);
+			tree_item_type = TreeItemType::SUBLAYER;
+			tmp_layer = tree_view->get_sublayer_uid_pointer(&iter);
 
 			/* Go up the tree to find the Vik Layer */
 			GtkTreeIter parent;
-			while (type != VIK_TREEVIEW_TYPE_LAYER) {
+			while (type != TreeItemType::LAYER) {
 				if (!tree_view->get_parent_iter(&iter, &parent)) {
 					return;
 				}
 				iter = parent;
-				type = tree_view->get_type(&iter);
+				type = tree_view->get_item_type(&iter);
 			}
 
 		} else {
 			tmp_layer = (Layer *) tmp_layer;
 		}
 	} else {
-		tmp_subtype = tree_view->get_data(&iter);
-		tmp_type = VIK_TREEVIEW_TYPE_SUBLAYER;
+		fprintf(stderr, "%s:%d: tmp_layer == false\n", __FUNCTION__, __LINE__);
+
+		tmp_subtype = tree_view->get_sublayer_type(&iter);
+		tree_item_type = TreeItemType::SUBLAYER;
 	}
 
-	Layer * layer = (Layer *) tree_view->get_layer(&iter);
+	Layer * layer = tree_view->get_layer(&iter);
 
 	Window * window = window_from_layer(layer);
 	window->selected_layer(layer);
@@ -513,11 +530,11 @@ static void select_cb(GtkTreeSelection * selection, void * data)
 	/* Apply settings now we have the all details  */
 	if (vik_layer_selected(layer,
 			       tmp_subtype,
-			       tmp_layer,
-			       tmp_type,
+			       KPOINTER_TO_UINT (tmp_layer),
+			       tree_item_type,
 			       window->get_layers_panel())) {
 
-		/* Redraw required */
+		/* Redraw required. */
 		window->get_layers_panel()->emit_update();
 	}
 
@@ -549,8 +566,8 @@ bool TreeView::get_parent_iter(GtkTreeIter * iter, GtkTreeIter * parent)
 
 bool TreeView::move(GtkTreeIter * iter, bool up)
 {
-	int t = this->get_type(iter);
-	if (t == VIK_TREEVIEW_TYPE_LAYER) {
+	TreeItemType t = this->get_item_type(iter);
+	if (t == TreeItemType::LAYER) {
 		GtkTreeIter switch_iter;
 		if (up) {
 			/* iter to path to iter */
@@ -684,9 +701,9 @@ void TreeView::unselect(GtkTreeIter *iter)
 void TreeView::add_layer(GtkTreeIter * parent_iter,
 			 GtkTreeIter *iter,
 			 const char * name,
-			 void * parent_layer, /* Layer * parent_layer */
+			 Layer * parent_layer,
 			 bool above,
-			 void * layer,        /* Layer * layer */
+			 Layer * layer,
 			 int data,
 			 LayerType layer_type,
 			 time_t timestamp)
@@ -700,7 +717,7 @@ void TreeView::add_layer(GtkTreeIter * parent_iter,
 	gtk_tree_store_set(GTK_TREE_STORE (this->model), iter,
 			   COLUMN_NAME, name,
 			   COLUMN_VISIBLE, true,
-			   COLUMN_TYPE, VIK_TREEVIEW_TYPE_LAYER,
+			   COLUMN_TYPE, TreeItemType::LAYER,
 			   COLUMN_PARENT, parent_layer,
 			   COLUMN_ITEM, layer,
 			   COLUMN_DATA, data,
@@ -713,9 +730,9 @@ void TreeView::add_layer(GtkTreeIter * parent_iter,
 void TreeView::insert_layer(GtkTreeIter * parent_iter,
 			    GtkTreeIter * iter,
 			    const char * name,
-			    void * parent_layer, /* Layer * parent_layer */
+			    Layer * parent_layer,
 			    bool above,
-			    void * layer,        /* Layer * layer */
+			    Layer * layer,        /* Layer * layer */
 			    int data,
 			    LayerType layer_type,
 			    GtkTreeIter * sibling,
@@ -739,7 +756,7 @@ void TreeView::insert_layer(GtkTreeIter * parent_iter,
 	gtk_tree_store_set(GTK_TREE_STORE (this->model), iter,
 			   COLUMN_NAME, name,
 			   COLUMN_VISIBLE, true,
-			   COLUMN_TYPE, VIK_TREEVIEW_TYPE_LAYER,
+			   COLUMN_TYPE, TreeItemType::LAYER,
 			   COLUMN_PARENT, parent_layer,
 			   COLUMN_ITEM, layer,
 			   COLUMN_DATA, data,
@@ -752,9 +769,9 @@ void TreeView::insert_layer(GtkTreeIter * parent_iter,
 void TreeView::add_sublayer(GtkTreeIter * parent_iter,
 			    GtkTreeIter * iter,
 			    const char * name,
-			    void * parent_layer, /* Layer * parent_layer */
-			    void * sublayer,
-			    int data,
+			    Layer * parent_layer,
+			    sg_uid_t sublayer_uid,
+			    SublayerType sublayer_type,
 			    GdkPixbuf * icon,
 			    bool editable,
 			    time_t timestamp)
@@ -765,10 +782,10 @@ void TreeView::add_sublayer(GtkTreeIter * parent_iter,
 	gtk_tree_store_set(GTK_TREE_STORE(this->model), iter,
 			   COLUMN_NAME, name,
 			   COLUMN_VISIBLE, true,
-			   COLUMN_TYPE, VIK_TREEVIEW_TYPE_SUBLAYER,
+			   COLUMN_TYPE, TreeItemType::SUBLAYER,
 			   COLUMN_PARENT, parent_layer,
-			   COLUMN_UID, sublayer,
-			   COLUMN_DATA, data,
+			   COLUMN_UID, KUINT_TO_POINTER (sublayer_uid),
+			   COLUMN_DATA, sublayer_type,
 			   COLUMN_EDITABLE, editable,
 			   COLUMN_ICON, icon,
 			   COLUMN_TIMESTAMP, (int64_t)timestamp,
@@ -935,13 +952,13 @@ static int vik_treeview_drag_data_received(GtkTreeDragDest *drag_dest, GtkTreePa
 			do {
 				gtk_tree_path_up(dest_cp);
 				gtk_tree_model_get_iter(src_model, &dest_parent, dest_cp);
-			} while (gtk_tree_path_get_depth(dest_cp)>1 &&
-				 layer->tree_view->get_type(&dest_parent) != VIK_TREEVIEW_TYPE_LAYER);
+			} while (gtk_tree_path_get_depth(dest_cp) > 1
+				 && layer->tree_view->get_item_type(&dest_parent) != TreeItemType::LAYER);
 
 
-			Layer * layer_source  = (Layer *) layer->tree_view->get_parent(&src_iter);
+			Layer * layer_source  = layer->tree_view->get_parent(&src_iter);
 			assert (layer_source);
-			Layer * layer_dest = (Layer *) layer->tree_view->get_layer(&dest_parent);
+			Layer * layer_dest = layer->tree_view->get_layer(&dest_parent);
 
 			/* TODO: might want to allow different types, and let the clients handle how they want */
 			layer_dest->drag_drop_request(layer_source, &src_iter, dest);
@@ -995,7 +1012,7 @@ TreeView::TreeView()
 							G_TYPE_POINTER, // pointer to TV parent
 							G_TYPE_POINTER, // pointer to the layer or sublayer
 							G_TYPE_INT,     // type of the sublayer
-							G_TYPE_POINTER, /* sg_uid_t. */
+							G_TYPE_POINTER, /* sg_uid_t *. */
 							G_TYPE_BOOLEAN, // Editable
 							G_TYPE_INT64)); // Timestamp
 

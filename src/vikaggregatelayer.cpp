@@ -179,7 +179,7 @@ void LayerAggregate::insert_layer(Layer * layer, GtkTreeIter *replace_iter)
 	}
 
 	if (replace_iter) {
-		Layer * existing_layer = (Layer *) this->tree_view->get_layer(replace_iter);
+		Layer * existing_layer = this->tree_view->get_layer(replace_iter);
 
 		auto theone = this->children->end();
 		for (auto i = this->children->begin(); i != this->children->end(); i++) {
@@ -253,7 +253,7 @@ void LayerAggregate::move_layer(GtkTreeIter *child_iter, bool up)
 
 	this->tree_view->move(child_iter, up);
 
-	Layer * layer = (Layer *) this->tree_view->get_layer(child_iter);
+	Layer * layer = this->tree_view->get_layer(child_iter);
 
 	for (auto i = this->children->begin(); i != this->children->end(); i++) {
 		if ((*i)->vl == layer->vl) {
@@ -781,7 +781,7 @@ void LayerAggregate::clear()
 /* Delete a layer specified by \p iter. */
 bool LayerAggregate::delete_layer(GtkTreeIter * iter)
 {
-	Layer * layer = (Layer *) this->tree_view->get_layer(iter);
+	Layer * layer = this->tree_view->get_layer(iter);
 	bool was_visible = layer->visible;
 
 	this->tree_view->delete_(iter);
@@ -952,7 +952,7 @@ bool LayerAggregate::is_empty()
 
 void LayerAggregate::drag_drop_request(Layer * src, GtkTreeIter *src_item_iter, GtkTreePath *dest_path)
 {
-	Layer * layer = (Layer *) src->tree_view->get_layer(src_item_iter);
+	Layer * layer = src->tree_view->get_layer(src_item_iter);
 	GtkTreeIter dest_iter;
 	char *dp;
 	bool target_exists;

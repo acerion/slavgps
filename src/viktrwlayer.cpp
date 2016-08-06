@@ -660,7 +660,7 @@ bool LayerTRW::find_by_date(char const * date_str, VikCoord * position, Viewport
 
 
 
-void LayerTRW::delete_item(int subtype, sg_uid_t sublayer_uid)
+void LayerTRW::delete_sublayer(SublayerType sublayer_type, sg_uid_t sublayer_uid)
 {
 	if (sublayer_uid == (sg_uid_t) -1) {
 		return;
@@ -670,8 +670,8 @@ void LayerTRW::delete_item(int subtype, sg_uid_t sublayer_uid)
 	memset(&data, 0, sizeof (trw_menu_sublayer_t));
 
 	data.layer       = this;
-	data.subtype     = subtype;
-	data.sublayer_id = sublayer_uid;
+	data.sublayer_type = sublayer_type;
+	data.sublayer_uid = sublayer_uid;
 	data.confirm     = true;  // Confirm delete request
 
 	trw_layer_delete_item(&data);
@@ -681,7 +681,7 @@ void LayerTRW::delete_item(int subtype, sg_uid_t sublayer_uid)
 
 
 
-void LayerTRW::cut_item(int subtype, sg_uid_t sublayer_uid)
+void LayerTRW::cut_sublayer(SublayerType sublayer_type, sg_uid_t sublayer_uid)
 {
 	if (sublayer_uid == (sg_uid_t) -1) {
 		return;
@@ -691,8 +691,8 @@ void LayerTRW::cut_item(int subtype, sg_uid_t sublayer_uid)
 	memset(&data, 0, sizeof (trw_menu_sublayer_t));
 
 	data.layer       = this;
-	data.subtype     = subtype;
-	data.sublayer_id = sublayer_uid;
+	data.sublayer_type = sublayer_type;
+	data.sublayer_uid = sublayer_uid;
 	data.confirm     = true; // Confirm delete request
 
 	trw_layer_copy_item_cb(&data);
@@ -706,31 +706,32 @@ void LayerTRW::cut_item(int subtype, sg_uid_t sublayer_uid)
 void trw_layer_copy_item_cb(trw_menu_sublayer_t * data)
 {
 	LayerTRW * layer = data->layer;
-	int subtype = data->subtype;
-	sg_uid_t uid = data->sublayer_id;
+	SublayerType sublayer_type = data->sublayer_type;
+	sg_uid_t sublayer_uid = data->sublayer_uid;
+
 	uint8_t *data_ = NULL;
 	unsigned int len;
 
-	data->layer->copy_item(subtype, uid, &data_, &len);
+	data->layer->copy_sublayer(sublayer_type, sublayer_uid, &data_, &len);
 
 	if (data_) {
 		const char* name = NULL;
-		if (subtype == VIK_TRW_LAYER_SUBLAYER_WAYPOINT) {
-			Waypoint * wp = layer->waypoints.at(uid);
+		if (sublayer_type == SublayerType::WAYPOINT) {
+			Waypoint * wp = layer->waypoints.at(sublayer_uid);
 			if (wp && wp->name) {
 				name = wp->name;
 			} else {
 				name = NULL; // Broken :(
 			}
-		} else if (subtype == VIK_TRW_LAYER_SUBLAYER_TRACK) {
-			Track * trk = layer->tracks.at(uid);
+		} else if (sublayer_type == SublayerType::TRACK) {
+			Track * trk = layer->tracks.at(sublayer_uid);
 			if (trk && trk->name) {
 				name = trk->name;
 			} else {
 				name = NULL; // Broken :(
 			}
 		} else {
-			Track * trk = layer->routes.at(uid);
+			Track * trk = layer->routes.at(sublayer_uid);
 			if (trk && trk->name) {
 				name = trk->name;
 			} else {
@@ -739,7 +740,7 @@ void trw_layer_copy_item_cb(trw_menu_sublayer_t * data)
 		}
 
 		a_clipboard_copy(VIK_CLIPBOARD_DATA_SUBLAYER, LayerType::TRW,
-				 subtype, len, name, data_);
+				 sublayer_type, len, name, data_);
 	}
 }
 
@@ -765,7 +766,7 @@ void trw_layer_paste_item_cb(trw_menu_sublayer_t * data)
 
 
 
-void LayerTRW::copy_item(int subtype, sg_uid_t sublayer_uid, uint8_t **item, unsigned int *len)
+void LayerTRW::copy_sublayer(SublayerType sublayer_type, sg_uid_t sublayer_uid, uint8_t **item, unsigned int *len)
 {
 	if (sublayer_uid == (sg_uid_t) -1) { /* kamilFIXME: decide 'invalid' value for sg_uid_t data type. */
 		*item = NULL;
@@ -778,9 +779,9 @@ void LayerTRW::copy_item(int subtype, sg_uid_t sublayer_uid, uint8_t **item, uns
 	GByteArray *ba = g_byte_array_new();
 	sg_uid_t uid = sublayer_uid;
 
-	if (subtype == VIK_TRW_LAYER_SUBLAYER_WAYPOINT) {
+	if (sublayer_type == SublayerType::WAYPOINT) {
 		this->waypoints.at(uid)->marshall(&id, &il);
-	} else if (subtype == VIK_TRW_LAYER_SUBLAYER_TRACK) {
+	} else if (sublayer_type == SublayerType::TRACK) {
 		this->tracks.at(uid)->marshall(&id, &il);
 	} else {
 		this->routes.at(uid)->marshall(&id, &il);
@@ -797,7 +798,7 @@ void LayerTRW::copy_item(int subtype, sg_uid_t sublayer_uid, uint8_t **item, uns
 
 
 
-bool LayerTRW::paste_item(int subtype, uint8_t * item, size_t len)
+bool LayerTRW::paste_sublayer(SublayerType sublayer_type, uint8_t * item, size_t len)
 {
 	if (!item) {
 		return false;
@@ -805,10 +806,10 @@ bool LayerTRW::paste_item(int subtype, uint8_t * item, size_t len)
 
 	char *name;
 
-	if (subtype == VIK_TRW_LAYER_SUBLAYER_WAYPOINT) {
+	if (sublayer_type == SublayerType::WAYPOINT) {
 		Waypoint * wp = Waypoint::unmarshall(item, len);
 		// When copying - we'll create a new name based on the original
-		name = this->new_unique_sublayer_name(VIK_TRW_LAYER_SUBLAYER_WAYPOINT, wp->name);
+		name = this->new_unique_sublayer_name(SublayerType::WAYPOINT, wp->name);
 		this->add_waypoint(wp, name);
 		waypoint_convert(wp, &this->coord_mode);
 		std::free(name);
@@ -821,10 +822,10 @@ bool LayerTRW::paste_item(int subtype, uint8_t * item, size_t len)
 		}
 		return true;
 	}
-	if (subtype == VIK_TRW_LAYER_SUBLAYER_TRACK) {
+	if (sublayer_type == SublayerType::TRACK) {
 		Track * trk = Track::unmarshall(item, len);
 		// When copying - we'll create a new name based on the original
-		name = this->new_unique_sublayer_name(VIK_TRW_LAYER_SUBLAYER_TRACK, trk->name);
+		name = this->new_unique_sublayer_name(SublayerType::TRACK, trk->name);
 		this->add_track(trk, name);
 		trk->convert(this->coord_mode);
 		std::free(name);
@@ -835,10 +836,10 @@ bool LayerTRW::paste_item(int subtype, uint8_t * item, size_t len)
 		}
 		return true;
 	}
-	if (subtype == VIK_TRW_LAYER_SUBLAYER_ROUTE) {
+	if (sublayer_type == SublayerType::ROUTE) {
 		Track * trk = Track::unmarshall(item, len);
 		// When copying - we'll create a new name based on the original
-		name = this->new_unique_sublayer_name(VIK_TRW_LAYER_SUBLAYER_ROUTE, trk->name);
+		name = this->new_unique_sublayer_name(SublayerType::ROUTE, trk->name);
 		this->add_route(trk, name);
 		trk->convert(this->coord_mode);
 		std::free(name);
@@ -1276,7 +1277,7 @@ void LayerTRW::marshall(uint8_t **data, int *len)
 	// the sublayer type of item
 	// the the actual item
 #define tlm_append(object_pointer, size, type)				\
-	subtype = (type);						\
+	subtype = (int) (type);						\
 	object_length = (size);						\
 	g_byte_array_append(ba, (uint8_t *)&object_length, sizeof(object_length)); \
 	g_byte_array_append(ba, (uint8_t *)&subtype, sizeof(subtype));	\
@@ -1291,21 +1292,21 @@ void LayerTRW::marshall(uint8_t **data, int *len)
 	// Waypoints
 	for (auto i = this->waypoints.begin(); i != this->waypoints.end(); i++) {
 		i->second->marshall(&sl_data, &sl_len);
-		tlm_append(sl_data, sl_len, VIK_TRW_LAYER_SUBLAYER_WAYPOINT);
+		tlm_append(sl_data, sl_len, SublayerType::WAYPOINT);
 		std::free(sl_data);
 	}
 
 	// Tracks
 	for (auto i = this->tracks.begin(); i != this->tracks.end(); i++) {
 		i->second->marshall(&sl_data, &sl_len);
-		tlm_append(sl_data, sl_len, VIK_TRW_LAYER_SUBLAYER_TRACK);
+		tlm_append(sl_data, sl_len, SublayerType::TRACK);
 		std::free(sl_data);
 	}
 
 	// Routes
 	for (auto i = this->routes.begin(); i != this->routes.end(); i++) {
 		i->second->marshall(&sl_data, &sl_len);
-		tlm_append(sl_data, sl_len, VIK_TRW_LAYER_SUBLAYER_ROUTE);
+		tlm_append(sl_data, sl_len, SublayerType::ROUTE);
 		std::free(sl_data);
 	}
 
@@ -1349,22 +1350,24 @@ static Layer * trw_layer_unmarshall(uint8_t * data, int len, Viewport * viewport
 			// Reuse pl to read the subtype from the data stream
 			memcpy(&pl, data+sizeof(int), sizeof(pl));
 
+			SublayerType sublayer_type = (SublayerType) pl;
+
 			// Also remember to (attempt to) convert each coordinate in case this is pasted into a different drawmode
-			if (pl == VIK_TRW_LAYER_SUBLAYER_TRACK) {
+			if (sublayer_type == SublayerType::TRACK) {
 				Track * trk = Track::unmarshall(data + sizeof_len_and_subtype, 0);
 				char *name = g_strdup(trk->name);
 				trw->add_track(trk, name);
 				std::free(name);
 				trk->convert(trw->coord_mode);
 			}
-			if (pl == VIK_TRW_LAYER_SUBLAYER_WAYPOINT) {
+			if (sublayer_type == SublayerType::WAYPOINT) {
 				Waypoint * wp = Waypoint::unmarshall(data + sizeof_len_and_subtype, 0);
 				char *name = g_strdup(wp->name);
 				trw->add_waypoint(wp, name);
 				std::free(name);
 				waypoint_convert(wp, &trw->coord_mode);
 			}
-			if (pl == VIK_TRW_LAYER_SUBLAYER_ROUTE) {
+			if (sublayer_type == SublayerType::ROUTE) {
 				Track * trk = Track::unmarshall(data + sizeof_len_and_subtype, 0);
 				char *name = g_strdup(trk->name);
 				trw->add_route(trk, name);
@@ -1691,7 +1694,7 @@ GdkPixbuf* get_wp_sym_small(char *symbol)
 
 
 
-void LayerTRW::realize_track(std::unordered_map<sg_uid_t, Track *> & tracks, trw_data4_t * pass_along, int sublayer_id)
+void LayerTRW::realize_track(std::unordered_map<sg_uid_t, Track *> & tracks, trw_data4_t * pass_along, SublayerType sublayer_type)
 {
 	for (auto i = tracks.begin(); i != tracks.end(); i++) {
 		GtkTreeIter * new_iter = (GtkTreeIter *) malloc(sizeof(GtkTreeIter));
@@ -1719,7 +1722,7 @@ void LayerTRW::realize_track(std::unordered_map<sg_uid_t, Track *> & tracks, trw
 
 		Layer * parent = pass_along->layer;
 		TreeView * tree_view = pass_along->tree_view;
-		tree_view->add_sublayer(pass_along->path_iter, pass_along->iter2, trk->name, parent, (void *) ((long) i->first), sublayer_id, pixbuf, true, timestamp);
+		tree_view->add_sublayer(pass_along->path_iter, pass_along->iter2, trk->name, parent, i->first, sublayer_type, pixbuf, true, timestamp);
 
 		if (pixbuf) {
 			g_object_unref(pixbuf);
@@ -1741,7 +1744,7 @@ void LayerTRW::realize_track(std::unordered_map<sg_uid_t, Track *> & tracks, trw
 
 
 
-void LayerTRW::realize_waypoints(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, trw_data4_t * pass_along, int sublayer_id)
+void LayerTRW::realize_waypoints(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, trw_data4_t * pass_along, SublayerType sublayer_type)
 {
 	for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
 		GtkTreeIter *new_iter = (GtkTreeIter *) malloc(sizeof (GtkTreeIter));
@@ -1753,7 +1756,7 @@ void LayerTRW::realize_waypoints(std::unordered_map<sg_uid_t, Waypoint *> & wayp
 
 		Layer * parent = pass_along->layer;
 
-		pass_along->tree_view->add_sublayer(pass_along->path_iter, pass_along->iter2, i->second->name, parent, (void *) ((long) i->first), sublayer_id, get_wp_sym_small(i->second->symbol), true, timestamp);
+		pass_along->tree_view->add_sublayer(pass_along->path_iter, pass_along->iter2, i->second->name, parent, i->first, sublayer_type, get_wp_sym_small(i->second->symbol), true, timestamp);
 
 		*new_iter = *(pass_along->iter2);
 		this->waypoints_iters.insert({{ i->first, new_iter }});
@@ -1769,7 +1772,7 @@ void LayerTRW::realize_waypoints(std::unordered_map<sg_uid_t, Waypoint *> & wayp
 
 void LayerTRW::add_sublayer_tracks(TreeView * tree_view_, GtkTreeIter * layer_iter)
 {
-	tree_view_->add_sublayer(layer_iter, &(track_iter), _("Tracks"), this, NULL, VIK_TRW_LAYER_SUBLAYER_TRACKS, NULL, false, 0);
+	tree_view_->add_sublayer(layer_iter, &(track_iter), _("Tracks"), this, (sg_uid_t) -1, SublayerType::TRACKS, NULL, false, 0);
 }
 
 
@@ -1777,7 +1780,7 @@ void LayerTRW::add_sublayer_tracks(TreeView * tree_view_, GtkTreeIter * layer_it
 
 void LayerTRW::add_sublayer_waypoints(TreeView * tree_view_, GtkTreeIter * layer_iter)
 {
-	tree_view_->add_sublayer(layer_iter, &(waypoint_iter), _("Waypoints"), this, NULL, VIK_TRW_LAYER_SUBLAYER_WAYPOINTS, NULL, false, 0);
+	tree_view_->add_sublayer(layer_iter, &(waypoint_iter), _("Waypoints"), this, (sg_uid_t) -1, SublayerType::WAYPOINTS, NULL, false, 0);
 }
 
 
@@ -1785,7 +1788,7 @@ void LayerTRW::add_sublayer_waypoints(TreeView * tree_view_, GtkTreeIter * layer
 
 void LayerTRW::add_sublayer_routes(TreeView * tree_view_, GtkTreeIter * layer_iter)
 {
-	tree_view_->add_sublayer(layer_iter, &(route_iter), _("Routes"), this, NULL, VIK_TRW_LAYER_SUBLAYER_ROUTES, NULL, false, 0);
+	tree_view_->add_sublayer(layer_iter, &(route_iter), _("Routes"), this, (sg_uid_t) -1, SublayerType::ROUTES, NULL, false, 0);
 }
 
 
@@ -1806,7 +1809,7 @@ void LayerTRW::realize(TreeView * tree_view_, GtkTreeIter * layer_iter)
 
 	if (this->tracks.size() > 0) {
 		this->add_sublayer_tracks(this->tree_view, layer_iter);
-		this->realize_track(this->tracks, &pass_along, VIK_TRW_LAYER_SUBLAYER_TRACK);
+		this->realize_track(this->tracks, &pass_along, SublayerType::TRACK);
 		this->tree_view->set_visibility(&(this->track_iter), this->tracks_visible);
 	}
 
@@ -1814,7 +1817,7 @@ void LayerTRW::realize(TreeView * tree_view_, GtkTreeIter * layer_iter)
 		pass_along.path_iter = &(this->route_iter);
 
 		this->add_sublayer_routes(this->tree_view, layer_iter);
-		this->realize_track(this->routes, &pass_along, VIK_TRW_LAYER_SUBLAYER_ROUTE);
+		this->realize_track(this->routes, &pass_along, SublayerType::ROUTE);
 		this->tree_view->set_visibility(&(this->route_iter), this->routes_visible);
 	}
 
@@ -1822,7 +1825,7 @@ void LayerTRW::realize(TreeView * tree_view_, GtkTreeIter * layer_iter)
 		pass_along.path_iter = &(this->waypoint_iter);
 
 		this->add_sublayer_waypoints(this->tree_view, layer_iter);
-		this->realize_waypoints(this->waypoints, &pass_along, VIK_TRW_LAYER_SUBLAYER_WAYPOINT);
+		this->realize_waypoints(this->waypoints, &pass_along, SublayerType::WAYPOINT);
 		this->tree_view->set_visibility(&(this->waypoint_iter), this->waypoints_visible);
 	}
 
@@ -1834,38 +1837,37 @@ void LayerTRW::realize(TreeView * tree_view_, GtkTreeIter * layer_iter)
 
 
 
-bool LayerTRW::sublayer_toggle_visible(int subtype, void * sublayer)
+bool LayerTRW::sublayer_toggle_visible(SublayerType sublayer_type, sg_uid_t sublayer_uid)
 {
-	sg_uid_t uid = (sg_uid_t) ((long) sublayer);
-	switch (subtype) {
-	case VIK_TRW_LAYER_SUBLAYER_TRACKS:
+	switch (sublayer_type) {
+	case SublayerType::TRACKS:
 		return (this->tracks_visible ^= 1);
-	case VIK_TRW_LAYER_SUBLAYER_WAYPOINTS:
+	case SublayerType::WAYPOINTS:
 		return (this->waypoints_visible ^= 1);
-	case VIK_TRW_LAYER_SUBLAYER_ROUTES:
+	case SublayerType::ROUTES:
 		return (this->routes_visible ^= 1);
-	case VIK_TRW_LAYER_SUBLAYER_TRACK:
+	case SublayerType::TRACK:
 		{
-			Track * trk = this->tracks.at(uid);
+			Track * trk = this->tracks.at(sublayer_uid);
 			if (trk) {
 				return (trk->visible ^= 1);
 			} else {
 				return true;
 			}
 		}
-	case VIK_TRW_LAYER_SUBLAYER_WAYPOINT:
+	case SublayerType::WAYPOINT:
 		{
 
-			Waypoint * wp = this->waypoints.at(uid);
+			Waypoint * wp = this->waypoints.at(sublayer_uid);
 			if (wp) {
 				return (wp->visible ^= 1);
 			} else {
 				return true;
 			}
 		}
-	case VIK_TRW_LAYER_SUBLAYER_ROUTE:
+	case SublayerType::ROUTE:
 		{
-			Track * trk = this->routes.at(uid);
+			Track * trk = this->routes.at(sublayer_uid);
 			if (trk) {
 				return (trk->visible ^= 1);
 			} else {
@@ -2072,10 +2074,10 @@ char const * LayerTRW::tooltip()
 
 
 
-char const * LayerTRW::sublayer_tooltip(int subtype, void * sublayer)
+char const * LayerTRW::sublayer_tooltip(SublayerType sublayer_type, sg_uid_t sublayer_uid)
 {
-	switch (subtype) {
-	case VIK_TRW_LAYER_SUBLAYER_TRACKS:
+	switch (sublayer_type) {
+	case SublayerType::TRACKS:
 		{
 			// Very simple tooltip - may expand detail in the future...
 			static char tmp_buf[32];
@@ -2083,7 +2085,7 @@ char const * LayerTRW::sublayer_tooltip(int subtype, void * sublayer)
 			return tmp_buf;
 		}
 		break;
-	case VIK_TRW_LAYER_SUBLAYER_ROUTES:
+	case SublayerType::ROUTES:
 		{
 			// Very simple tooltip - may expand detail in the future...
 			static char tmp_buf[32];
@@ -2092,16 +2094,15 @@ char const * LayerTRW::sublayer_tooltip(int subtype, void * sublayer)
 		}
 		break;
 
-	case VIK_TRW_LAYER_SUBLAYER_ROUTE:
-		// Same tooltip for a route
-	case VIK_TRW_LAYER_SUBLAYER_TRACK:
+	/* Same tooltip for route and track. */
+	case SublayerType::ROUTE:
+	case SublayerType::TRACK:
 		{
 			Track * trk = NULL;
-			sg_uid_t uid = (sg_uid_t) ((long) sublayer);
-			if (subtype == VIK_TRW_LAYER_SUBLAYER_TRACK) {
-				trk = this->tracks.at(uid);
+			if (sublayer_type == SublayerType::TRACK) {
+				trk = this->tracks.at(sublayer_uid);
 			} else {
-				trk = this->routes.at(uid);
+				trk = this->routes.at(sublayer_uid);
 			}
 
 			if (trk) {
@@ -2140,7 +2141,7 @@ char const * LayerTRW::sublayer_tooltip(int subtype, void * sublayer)
 			}
 		}
 		break;
-	case VIK_TRW_LAYER_SUBLAYER_WAYPOINTS:
+	case SublayerType::WAYPOINTS:
 		{
 			// Very simple tooltip - may expand detail in the future...
 			static char tmp_buf[32];
@@ -2148,10 +2149,9 @@ char const * LayerTRW::sublayer_tooltip(int subtype, void * sublayer)
 			return tmp_buf;
 		}
 		break;
-	case VIK_TRW_LAYER_SUBLAYER_WAYPOINT:
+	case SublayerType::WAYPOINT:
 		{
-			sg_uid_t wp_uid = (sg_uid_t) ((long) sublayer);
-			Waypoint * wp = this->waypoints.at(wp_uid);
+			Waypoint * wp = this->waypoints.at(sublayer_uid);
 			// NB It's OK to return NULL
 			if (wp) {
 				if (wp->comment) {
@@ -2162,7 +2162,8 @@ char const * LayerTRW::sublayer_tooltip(int subtype, void * sublayer)
 			}
 		}
 		break;
-	default: break;
+	default:
+		break;
 	}
 	return NULL;
 }
@@ -2247,7 +2248,7 @@ void LayerTRW::set_statusbar_msg_info_wpt(Waypoint * wp)
 /**
  * General layer selection function, find out which bit is selected and take appropriate action
  */
-bool LayerTRW::selected(int subtype, void * sublayer, int type, void * panel)
+bool LayerTRW::selected(SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeItemType type, void * panel)
 {
 	// Reset
 	this->current_wp = NULL;
@@ -2258,7 +2259,7 @@ bool LayerTRW::selected(int subtype, void * sublayer, int type, void * panel)
 	vik_statusbar_set_message(window_from_layer(this)->get_statusbar(), VIK_STATUSBAR_INFO, "");
 
 	switch (type)	{
-	case VIK_TREEVIEW_TYPE_LAYER:
+	case TreeItemType::LAYER:
 		{
 			window_from_layer(this)->set_selected_trw_layer(this);
 			/* Mark for redraw */
@@ -2266,52 +2267,49 @@ bool LayerTRW::selected(int subtype, void * sublayer, int type, void * panel)
 		}
 		break;
 
-	case VIK_TREEVIEW_TYPE_SUBLAYER:
+	case TreeItemType::SUBLAYER:
 		{
-			switch (subtype) {
-			case VIK_TRW_LAYER_SUBLAYER_TRACKS:
+			switch (sublayer_type) {
+			case SublayerType::TRACKS:
 				{
 					window_from_layer(this)->set_selected_tracks(&this->tracks, this);
 					/* Mark for redraw */
 					return true;
 				}
 				break;
-			case VIK_TRW_LAYER_SUBLAYER_TRACK:
+			case SublayerType::TRACK:
 				{
-					sg_uid_t uid = (sg_uid_t) ((long) sublayer);
-					Track * trk = this->tracks.at(uid);
+					Track * trk = this->tracks.at(sublayer_uid);
 					window_from_layer(this)->set_selected_track(trk, this);
 					/* Mark for redraw */
 					return true;
 				}
 				break;
-			case VIK_TRW_LAYER_SUBLAYER_ROUTES:
+			case SublayerType::ROUTES:
 				{
 					window_from_layer(this)->set_selected_tracks(&this->routes, this);
 					/* Mark for redraw */
 					return true;
 				}
 				break;
-			case VIK_TRW_LAYER_SUBLAYER_ROUTE:
+			case SublayerType::ROUTE:
 				{
-					sg_uid_t uid = (sg_uid_t) ((long) sublayer);
-					Track * trk = this->routes.at(uid);
+					Track * trk = this->routes.at(sublayer_uid);
 					window_from_layer(this)->set_selected_track(trk, this);
 					/* Mark for redraw */
 					return true;
 				}
 				break;
-			case VIK_TRW_LAYER_SUBLAYER_WAYPOINTS:
+			case SublayerType::WAYPOINTS:
 				{
 					window_from_layer(this)->set_selected_waypoints(&this->waypoints, this);
 					/* Mark for redraw */
 					return true;
 				}
 				break;
-			case VIK_TRW_LAYER_SUBLAYER_WAYPOINT:
+			case SublayerType::WAYPOINT:
 				{
-					sg_uid_t wp_uid = (sg_uid_t) ((long) sublayer);
-					Waypoint * wp = this->waypoints.at(wp_uid);
+					Waypoint * wp = this->waypoints.at(sublayer_uid);
 					if (wp) {
 						window_from_layer(this)->set_selected_waypoint(wp, this);
 						// Show some waypoint info
@@ -2667,7 +2665,7 @@ void trw_layer_export_gpx_track(trw_menu_sublayer_t * data)
 	char * auto_save_name = append_file_ext(trk->name, FILE_TYPE_GPX);
 
 	char * label = NULL;
-	if (data->subtype == VIK_TRW_LAYER_SUBLAYER_ROUTE) {
+	if (data->sublayer_type == SublayerType::ROUTE) {
 		label = _("Export Route as GPX");
 	} else {
 		label = _("Export Track as GPX");
@@ -2796,7 +2794,7 @@ void trw_layer_new_wikipedia_wp_layer(trw_menu_layer_t * data)
 #ifdef VIK_CONFIG_GEOTAG
 void trw_layer_geotagging_waypoint_mtime_keep(trw_menu_sublayer_t * data)
 {
-	sg_uid_t wp_uid = data->sublayer_id;
+	sg_uid_t wp_uid = data->sublayer_uid;
 	Waypoint * wp = data->layer->waypoints.at(wp_uid);
 	if (wp) {
 		// Update directly - not changing the mtime
@@ -2809,7 +2807,7 @@ void trw_layer_geotagging_waypoint_mtime_keep(trw_menu_sublayer_t * data)
 
 void trw_layer_geotagging_waypoint_mtime_update(trw_menu_sublayer_t * data)
 {
-	sg_uid_t wp_uid = data->sublayer_id;
+	sg_uid_t wp_uid = data->sublayer_uid;
 	Waypoint * wp = data->layer->waypoints.at(wp_uid);
 	if (wp) {
 		// Update directly
@@ -2826,7 +2824,7 @@ void trw_layer_geotagging_waypoint_mtime_update(trw_menu_sublayer_t * data)
 void trw_layer_geotagging_track(trw_menu_sublayer_t * data)
 {
 	LayerTRW * layer = data->layer;
-	sg_uid_t uid = data->sublayer_id;
+	sg_uid_t uid = data->sublayer_uid;
 	Track * trk = layer->tracks.at(uid);
 	// Unset so can be reverified later if necessary
 	layer->has_verified_thumbnails = false;
@@ -2843,7 +2841,7 @@ void trw_layer_geotagging_track(trw_menu_sublayer_t * data)
 void trw_layer_geotagging_waypoint(trw_menu_sublayer_t * data)
 {
 	LayerTRW * layer = data->layer;
-	sg_uid_t wp_uid = data->sublayer_id;
+	sg_uid_t wp_uid = data->sublayer_uid;
 	Waypoint * wp = layer->waypoints.at(wp_uid);
 
 	trw_layer_geotag_dialog(gtk_window_from_layer(layer),
@@ -3008,24 +3006,24 @@ void trw_layer_gps_upload_any(trw_menu_sublayer_t * data)
 {
 	LayerTRW * layer = data->layer;
 	LayersPanel * panel = data->panel;
-	sg_uid_t uid = data->sublayer_id;
+	sg_uid_t uid = data->sublayer_uid;
 
 	// May not actually get a track here as values[2&3] can be null
 	Track * trk = NULL;
-	GPSTransferType xfer_type = GPSTransferType::TRK; // VIK_TRW_LAYER_SUBLAYER_TRACKS = 0 so hard to test different from NULL!
+	GPSTransferType xfer_type = GPSTransferType::TRK; // SublayerType::TRACKS = 0 so hard to test different from NULL!
 	bool xfer_all = false;
 
-	if (data->subtype) {
+	if ((bool) data->sublayer_type) { /* kamilFIXME: don't cast. */
 		xfer_all = false;
-		if (data->subtype == VIK_TRW_LAYER_SUBLAYER_ROUTE) {
+		if (data->sublayer_type == SublayerType::ROUTE) {
 			trk = layer->routes.at(uid);
 			xfer_type = GPSTransferType::RTE;
-		} else if (data->subtype == VIK_TRW_LAYER_SUBLAYER_TRACK) {
+		} else if (data->sublayer_type == SublayerType::TRACK) {
 			trk = layer->tracks.at(uid);
 			xfer_type = GPSTransferType::TRK;
-		} else if (data->subtype == VIK_TRW_LAYER_SUBLAYER_WAYPOINTS) {
+		} else if (data->sublayer_type == SublayerType::WAYPOINTS) {
 			xfer_type = GPSTransferType::WPT;
-		} else if (data->subtype == VIK_TRW_LAYER_SUBLAYER_ROUTES) {
+		} else if (data->sublayer_type == SublayerType::ROUTES) {
 			xfer_type = GPSTransferType::RTE;
 		}
 	} else if (!data->confirm) {
@@ -3140,7 +3138,7 @@ void trw_layer_new_track(trw_menu_layer_t * data)
 	LayerTRW * layer = data->layer;
 
 	if (!layer->current_track) {
-		char *name = layer->new_unique_sublayer_name(VIK_TRW_LAYER_SUBLAYER_TRACK, _("Track")) ;
+		char *name = layer->new_unique_sublayer_name(SublayerType::TRACK, _("Track")) ;
 		layer->new_track_create_common(name);
 		free(name);
 
@@ -3171,7 +3169,7 @@ void trw_layer_new_route(trw_menu_layer_t * data)
 	LayerTRW * layer = data->layer;
 
 	if (!layer->current_track) {
-		char *name = layer->new_unique_sublayer_name(VIK_TRW_LAYER_SUBLAYER_ROUTE, _("Route")) ;
+		char *name = layer->new_unique_sublayer_name(SublayerType::ROUTE, _("Route")) ;
 		layer->new_route_create_common(name);
 		free(name);
 		window_from_layer(layer)->enable_layer_tool(LayerType::TRW, TOOL_CREATE_ROUTE);
@@ -3306,7 +3304,7 @@ void LayerTRW::add_waypoint(Waypoint * wp, char const * name)
 		}
 
 		// Visibility column always needed for waypoints
-		this->tree_view->add_sublayer(&(waypoint_iter), iter, name, this, KUINT_TO_POINTER(global_wp_uid), VIK_TRW_LAYER_SUBLAYER_WAYPOINT, get_wp_sym_small(wp->symbol), true, timestamp);
+		this->tree_view->add_sublayer(&waypoint_iter, iter, name, this, global_wp_uid, SublayerType::WAYPOINT, get_wp_sym_small(wp->symbol), true, timestamp);
 
 		// Actual setting of visibility dependent on the waypoint
 		this->tree_view->set_visibility(iter, wp->visible);
@@ -3348,7 +3346,7 @@ void LayerTRW::add_track(Track * trk, char const * name)
 		}
 
 		// Visibility column always needed for tracks
-		this->tree_view->add_sublayer(&(track_iter), iter, name, this, KUINT_TO_POINTER(global_tr_uuid), VIK_TRW_LAYER_SUBLAYER_TRACK, NULL, true, timestamp);
+		this->tree_view->add_sublayer(&track_iter, iter, name, this, global_tr_uuid, SublayerType::TRACK, NULL, true, timestamp);
 
 		// Actual setting of visibility dependent on the track
 		this->tree_view->set_visibility(iter, trk->visible);
@@ -3385,7 +3383,7 @@ void LayerTRW::add_route(Track * trk, char const * name)
 
 		GtkTreeIter *iter = (GtkTreeIter *) malloc(sizeof(GtkTreeIter));
 		// Visibility column always needed for routes
-		this->tree_view->add_sublayer(&(route_iter), iter, name, this, KUINT_TO_POINTER(global_rt_uuid), VIK_TRW_LAYER_SUBLAYER_ROUTE, NULL, true, 0); // Routes don't have times
+		this->tree_view->add_sublayer(&route_iter, iter, name, this, global_rt_uuid, SublayerType::ROUTE, NULL, true, 0); // Routes don't have times
 		// Actual setting of visibility dependent on the route
 		this->tree_view->set_visibility(iter, trk->visible);
 
@@ -3438,7 +3436,7 @@ void LayerTRW::reset_waypoints()
  *
  * Allocates a unique new name
  */
-char * LayerTRW::new_unique_sublayer_name(int sublayer_type, const char * name)
+char * LayerTRW::new_unique_sublayer_name(SublayerType sublayer_type, const char * name)
 {
 	int i = 2; /* kamilTODO: static? */
 	char * newname = g_strdup(name);
@@ -3447,10 +3445,10 @@ char * LayerTRW::new_unique_sublayer_name(int sublayer_type, const char * name)
 	do {
 		id = NULL;
 		switch (sublayer_type) {
-		case VIK_TRW_LAYER_SUBLAYER_TRACK:
+		case SublayerType::TRACK:
 			id = (void *) this->get_track((const char *) newname);
 			break;
-		case VIK_TRW_LAYER_SUBLAYER_WAYPOINT:
+		case SublayerType::WAYPOINT:
 			id = (void *) this->get_waypoint((const char *) newname);
 			break;
 		default:
@@ -3531,7 +3529,7 @@ static void trw_layer_enum_item(void * id, GList **tr, GList **l)
 /*
  * Move an item from one TRW layer to another TRW layer
  */
-void LayerTRW::move_item(LayerTRW * trw_dest, void * id, int type)
+void LayerTRW::move_item(LayerTRW * trw_dest, void * id, SublayerType sublayer_type)
 {
 	LayerTRW * trw_src = this;
 	// When an item is moved the name is checked to see if it clashes with an existing name
@@ -3543,10 +3541,10 @@ void LayerTRW::move_item(LayerTRW * trw_dest, void * id, int type)
 	}
 
 	sg_uid_t uid = (sg_uid_t) ((long) id);
-	if (type == VIK_TRW_LAYER_SUBLAYER_TRACK) {
+	if (sublayer_type == SublayerType::TRACK) {
 		Track * trk = this->tracks.at(uid);
 
-		char * newname = trw_dest->new_unique_sublayer_name(type, trk->name);
+		char * newname = trw_dest->new_unique_sublayer_name(sublayer_type, trk->name);
 
 		Track * trk2 = new Track(*trk);
 		trw_dest->add_track(trk2, newname);
@@ -3557,10 +3555,10 @@ void LayerTRW::move_item(LayerTRW * trw_dest, void * id, int type)
 		trw_src->tree_view->set_timestamp(&trw_src->iter, trw_src->get_timestamp());
 	}
 
-	if (type == VIK_TRW_LAYER_SUBLAYER_ROUTE) {
+	if (sublayer_type == SublayerType::ROUTE) {
 		Track * trk = this->routes.at(uid);
 
-		char * newname = trw_dest->new_unique_sublayer_name(type, trk->name);
+		char * newname = trw_dest->new_unique_sublayer_name(sublayer_type, trk->name);
 
 		Track * trk2 = new Track(*trk);
 		trw_dest->add_route(trk2, newname);
@@ -3568,10 +3566,10 @@ void LayerTRW::move_item(LayerTRW * trw_dest, void * id, int type)
 		this->delete_route(trk);
 	}
 
-	if (type == VIK_TRW_LAYER_SUBLAYER_WAYPOINT) {
+	if (sublayer_type == SublayerType::WAYPOINT) {
 		Waypoint * wp = this->waypoints.at(uid);
 
-		char *newname = trw_dest->new_unique_sublayer_name(type, wp->name);
+		char *newname = trw_dest->new_unique_sublayer_name(sublayer_type, wp->name);
 
 		Waypoint * wp2 = new Waypoint(*wp);
 		trw_dest->add_waypoint(wp2, newname);
@@ -3595,28 +3593,29 @@ void LayerTRW::drag_drop_request(Layer * src, GtkTreeIter * src_item_iter, GtkTr
 	LayerTRW * trw_dest = this;
 	LayerTRW * trw_src = (LayerTRW *) src;
 
-	if (!trw_src->tree_view->get_pointer(src_item_iter)) {
-		GList *items = NULL;
-		int sublayer_type = trw_src->tree_view->get_sublayer_type(src_item_iter);
+	SublayerType sublayer_type = trw_src->tree_view->get_sublayer_type(src_item_iter);
 
-		if (sublayer_type == VIK_TRW_LAYER_SUBLAYER_TRACKS) {
+	if (!trw_src->tree_view->get_name(src_item_iter)) {
+		GList *items = NULL;
+
+		if (sublayer_type == SublayerType::TRACKS) {
 			LayerTRWc::list_trk_uids(trw_src->tracks, &items);
 		}
-		if (sublayer_type == VIK_TRW_LAYER_SUBLAYER_WAYPOINTS) {
+		if (sublayer_type == SublayerType::WAYPOINTS) {
 			LayerTRWc::list_wp_uids(trw_src->waypoints, &items);
 		}
-		if (sublayer_type == VIK_TRW_LAYER_SUBLAYER_ROUTES) {
+		if (sublayer_type == SublayerType::ROUTES) {
 			LayerTRWc::list_trk_uids(trw_src->routes, &items);
 		}
 
 		GList * iter = items;
 		while (iter) {
-			if (sublayer_type == VIK_TRW_LAYER_SUBLAYER_TRACKS) {
-				trw_src->move_item(trw_dest, iter->data, VIK_TRW_LAYER_SUBLAYER_TRACK);
-			} else if (sublayer_type == VIK_TRW_LAYER_SUBLAYER_ROUTES) {
-				trw_src->move_item(trw_dest, iter->data, VIK_TRW_LAYER_SUBLAYER_ROUTE);
+			if (sublayer_type == SublayerType::TRACKS) {
+				trw_src->move_item(trw_dest, iter->data, SublayerType::TRACK);
+			} else if (sublayer_type == SublayerType::ROUTES) {
+				trw_src->move_item(trw_dest, iter->data, SublayerType::ROUTE);
 			} else {
-				trw_src->move_item(trw_dest, iter->data, VIK_TRW_LAYER_SUBLAYER_WAYPOINT);
+				trw_src->move_item(trw_dest, iter->data, SublayerType::WAYPOINT);
 			}
 			iter = iter->next;
 		}
@@ -3624,9 +3623,8 @@ void LayerTRW::drag_drop_request(Layer * src, GtkTreeIter * src_item_iter, GtkTr
 			g_list_free(items);
 		}
 	} else {
-		int type = trw_src->tree_view->get_data(src_item_iter);
-		char *name = (char *) trw_src->tree_view->get_pointer(src_item_iter);
-		trw_src->move_item(trw_dest, name, type);
+		char * name = trw_src->tree_view->get_name(src_item_iter);
+		trw_src->move_item(trw_dest, name, sublayer_type);
 	}
 }
 
@@ -3924,9 +3922,10 @@ void trw_layer_delete_all_waypoints(trw_menu_layer_t * data)
 void trw_layer_delete_item(trw_menu_sublayer_t * data)
 {
 	LayerTRW * layer = data->layer;
-	sg_uid_t uid = data->sublayer_id;
+	sg_uid_t uid = data->sublayer_uid;
 	bool was_visible = false;
-	if (data->subtype == VIK_TRW_LAYER_SUBLAYER_WAYPOINT) {
+
+	if (data->sublayer_type == SublayerType::WAYPOINT) {
 		Waypoint * wp = layer->waypoints.at(uid);
 		if (wp && wp->name) {
 			if (data->confirm) {
@@ -3944,7 +3943,7 @@ void trw_layer_delete_item(trw_menu_sublayer_t * data)
 			// Reset layer timestamp in case it has now changed
 			layer->tree_view->set_timestamp(&layer->iter, layer->get_timestamp());
 		}
-	} else if (data->subtype == VIK_TRW_LAYER_SUBLAYER_TRACK) {
+	} else if (data->sublayer_type == SublayerType::TRACK) {
 		Track * trk = layer->tracks.at(uid);
 		if (trk && trk->name) {
 			if (data->confirm) {
@@ -4027,8 +4026,8 @@ void trw_layer_properties_item(trw_menu_sublayer_t * data)
 {
 	LayerTRW * layer = data->layer;
 
-	if (data->subtype == VIK_TRW_LAYER_SUBLAYER_WAYPOINT) {
-		sg_uid_t wp_uid = data->sublayer_id;
+	if (data->sublayer_type == SublayerType::WAYPOINT) {
+		sg_uid_t wp_uid = data->sublayer_uid;
 		Waypoint * wp = layer->waypoints.at(wp_uid);
 
 		if (wp && wp->name) {
@@ -4283,7 +4282,7 @@ void trw_layer_extend_track_end(trw_menu_sublayer_t * data)
 void trw_layer_extend_track_end_route_finder(trw_menu_sublayer_t * data)
 {
 	LayerTRW * layer = data->layer;
-	sg_uid_t uid = data->sublayer_id;
+	sg_uid_t uid = data->sublayer_uid;
 	Track * trk = layer->routes.at(uid);
 	if (!trk) {
 		return;
@@ -4443,9 +4442,9 @@ void trw_layer_apply_dem_data_wpt_all(trw_menu_sublayer_t * data)
 	}
 
 	int changed = 0;
-	if (data->subtype == VIK_TRW_LAYER_SUBLAYER_WAYPOINT) {
+	if (data->sublayer_type == SublayerType::WAYPOINT) {
 		// Single Waypoint
-		sg_uid_t wp_uid = data->sublayer_id;
+		sg_uid_t wp_uid = data->sublayer_uid;
 		Waypoint * wp = layer->waypoints.at(wp_uid);
 		if (wp) {
 			changed = (int) wp->apply_dem_data(false);
@@ -4472,9 +4471,9 @@ void trw_layer_apply_dem_data_wpt_only_missing(trw_menu_sublayer_t * data)
 	}
 
 	int changed = 0;
-	if (data->subtype == VIK_TRW_LAYER_SUBLAYER_WAYPOINT) {
+	if (data->sublayer_type == SublayerType::WAYPOINT) {
 		// Single Waypoint
-		sg_uid_t wp_uid = data->sublayer_id;
+		sg_uid_t wp_uid = data->sublayer_uid;
 		Waypoint * wp = layer->waypoints.at(wp_uid);
 		if (wp) {
 			changed = (int) wp->apply_dem_data(true);
@@ -4742,9 +4741,9 @@ int sort_alphabetically(gconstpointer a, gconstpointer b, void * user_data)
 void trw_layer_merge_with_other(trw_menu_sublayer_t * data)
 {
 	LayerTRW * layer = data->layer;
-	sg_uid_t uid = data->sublayer_id;
+	sg_uid_t uid = data->sublayer_uid;
 	std::unordered_map<sg_uid_t, SlavGPS::Track*> * ght_tracks = NULL;
-	if (data->subtype == VIK_TRW_LAYER_SUBLAYER_ROUTE) {
+	if (data->sublayer_type == SublayerType::ROUTE) {
 		ght_tracks = &layer->routes;
 	} else {
 		ght_tracks = &layer->tracks;
@@ -4837,13 +4836,13 @@ void trw_layer_append_track(trw_menu_sublayer_t * data)
 	LayerTRW * layer = data->layer;
 	Track *trk;
 	std::unordered_map<sg_uid_t, SlavGPS::Track*> * ght_tracks = NULL;
-	if (data->subtype == VIK_TRW_LAYER_SUBLAYER_ROUTE) {
+	if (data->sublayer_type == SublayerType::ROUTE) {
 		ght_tracks = &layer->routes;
 	} else {
 		ght_tracks = &layer->tracks;
 	}
 
-	sg_uid_t uid = data->sublayer_id;
+	sg_uid_t uid = data->sublayer_uid;
 	trk = ght_tracks->at(uid);
 
 	if (!trk) {
@@ -4916,11 +4915,11 @@ void trw_layer_append_track(trw_menu_sublayer_t * data)
 void trw_layer_append_other(trw_menu_sublayer_t * data)
 {
 	LayerTRW * layer = data->layer;
-	sg_uid_t uid = data->sublayer_id;
+	sg_uid_t uid = data->sublayer_uid;
 
 	std::unordered_map<sg_uid_t, SlavGPS::Track*> * ght_mykind;
 	std::unordered_map<sg_uid_t, SlavGPS::Track*> * ght_others;
-	if (data->subtype == VIK_TRW_LAYER_SUBLAYER_ROUTE) {
+	if (data->sublayer_type == SublayerType::ROUTE) {
 		ght_mykind = &layer->routes;
 		ght_others = &layer->tracks;
 	} else {
@@ -5011,7 +5010,7 @@ void trw_layer_append_other(trw_menu_sublayer_t * data)
 void trw_layer_merge_by_segment(trw_menu_sublayer_t * data)
 {
 	LayerTRW * layer = data->layer;
-	sg_uid_t uid = data->sublayer_id;
+	sg_uid_t uid = data->sublayer_uid;
 	Track * trk = layer->tracks.at(uid);
 	unsigned int segments = trk->merge_segments();
 	// NB currently no need to redraw as segments not actually shown on the display
@@ -5029,7 +5028,7 @@ void trw_layer_merge_by_segment(trw_menu_sublayer_t * data)
 void trw_layer_merge_by_timestamp(trw_menu_sublayer_t * data)
 {
 	LayerTRW * layer = data->layer;
-	sg_uid_t uid = data->sublayer_id;
+	sg_uid_t uid = data->sublayer_uid;
 
 	//time_t t1, t2;
 
@@ -5105,7 +5104,7 @@ void trw_layer_merge_by_timestamp(trw_menu_sublayer_t * data)
 /**
  * Split a track at the currently selected trackpoint
  */
-void LayerTRW::split_at_selected_trackpoint(int subtype)
+void LayerTRW::split_at_selected_trackpoint(SublayerType sublayer_type)
 {
 	if (!this->selected_tp.valid) {
 		return;
@@ -5114,7 +5113,7 @@ void LayerTRW::split_at_selected_trackpoint(int subtype)
 	if (this->selected_tp.iter != this->selected_track->begin()
 	    && this->selected_tp.iter != std::prev(this->selected_track->end())) {
 
-		char * name = this->new_unique_sublayer_name(subtype, this->selected_track->name);
+		char * name = this->new_unique_sublayer_name(sublayer_type, this->selected_track->name);
 		if (name) {
 
 			/* Selected Trackpoint stays in old track, but its copy goes to new track too. */
@@ -5156,7 +5155,7 @@ void LayerTRW::split_at_selected_trackpoint(int subtype)
 void trw_layer_split_by_timestamp(trw_menu_sublayer_t * data)
 {
 	LayerTRW * layer = data->layer;
-	sg_uid_t uid = data->sublayer_id;
+	sg_uid_t uid = data->sublayer_uid;
 	Track * trk = layer->tracks.at(uid);
 
 	static unsigned int thr = 1;
@@ -5298,10 +5297,10 @@ bool LayerTRW::create_new_tracks(Track * orig, std::list<TrackPoints *> * points
 
 		char * new_tr_name = NULL;
 		if (orig->is_route) {
-			new_tr_name = this->new_unique_sublayer_name(VIK_TRW_LAYER_SUBLAYER_ROUTE, orig->name);
+			new_tr_name = this->new_unique_sublayer_name(SublayerType::ROUTE, orig->name);
 			this->add_route(copy, new_tr_name);
 		} else {
-			new_tr_name = this->new_unique_sublayer_name(VIK_TRW_LAYER_SUBLAYER_TRACK, orig->name);
+			new_tr_name = this->new_unique_sublayer_name(SublayerType::TRACK, orig->name);
 			this->add_track(copy, new_tr_name);
 		}
 		free(new_tr_name);
@@ -5328,7 +5327,7 @@ bool LayerTRW::create_new_tracks(Track * orig, std::list<TrackPoints *> * points
 void trw_layer_split_at_trackpoint(trw_menu_sublayer_t * data)
 {
 	LayerTRW * layer = data->layer;
-	layer->split_at_selected_trackpoint(data->subtype);
+	layer->split_at_selected_trackpoint(data->sublayer_type);
 }
 
 
@@ -5341,7 +5340,7 @@ void trw_layer_split_at_trackpoint(trw_menu_sublayer_t * data)
 void trw_layer_split_segments(trw_menu_sublayer_t * data)
 {
 	LayerTRW * layer = data->layer;
-	sg_uid_t uid = data->sublayer_id;
+	sg_uid_t uid = data->sublayer_uid;
 	Track *trk = layer->tracks.at(uid);
 
 	if (!trk) {
@@ -5351,7 +5350,7 @@ void trw_layer_split_segments(trw_menu_sublayer_t * data)
 	std::list<Track *> * tracks = trk->split_into_segments();
 	for (auto iter = tracks->begin(); iter != tracks->end(); iter++) {
 		if (*iter) {
-			char * new_tr_name = layer->new_unique_sublayer_name(VIK_TRW_LAYER_SUBLAYER_TRACK, trk->name);
+			char * new_tr_name = layer->new_unique_sublayer_name(SublayerType::TRACK, trk->name);
 			layer->add_track(*iter, new_tr_name);
 			free(new_tr_name);
 		}
@@ -5559,9 +5558,9 @@ void LayerTRW::diary_open(char const * date_str)
 void trw_layer_diary(trw_menu_sublayer_t * data)
 {
 	LayerTRW * layer = data->layer;
-	sg_uid_t uid = data->sublayer_id;
+	sg_uid_t uid = data->sublayer_uid;
 
-	if (data->subtype == VIK_TRW_LAYER_SUBLAYER_TRACK) {
+	if (data->sublayer_type == SublayerType::TRACK) {
 		Track * trk = layer->tracks.at(uid);
 		if (!trk) {
 			return;
@@ -5575,7 +5574,7 @@ void trw_layer_diary(trw_menu_sublayer_t * data)
 		} else {
 			a_dialog_info_msg(gtk_window_from_layer(layer), _("This track has no date information."));
 		}
-	} else if (data->subtype == VIK_TRW_LAYER_SUBLAYER_WAYPOINT) {
+	} else if (data->sublayer_type == SublayerType::WAYPOINT) {
 		Waypoint * wp = layer->waypoints.at(uid);
 		if (!wp) {
 			return;
@@ -5667,9 +5666,9 @@ static char *convert_to_dms(double dec)
 void trw_layer_astro(trw_menu_sublayer_t * data)
 {
 	LayerTRW * layer = data->layer;
-	sg_uid_t uid = data->sublayer_id;
+	sg_uid_t uid = data->sublayer_uid;
 
-	if (data->subtype == VIK_TRW_LAYER_SUBLAYER_TRACK) {
+	if (data->sublayer_type == SublayerType::TRACK) {
 		Track * trk = layer->tracks.at(uid);
 		if (!trk) {
 			return;
@@ -5705,8 +5704,8 @@ void trw_layer_astro(trw_menu_sublayer_t * data)
 		} else {
 			a_dialog_info_msg(gtk_window_from_layer(layer), _("This track has no date information."));
 		}
-	} else if (data->subtype == VIK_TRW_LAYER_SUBLAYER_WAYPOINT) {
-		sg_uid_t wp_uid = data->sublayer_id;
+	} else if (data->sublayer_type == SublayerType::WAYPOINT) {
+		sg_uid_t wp_uid = data->sublayer_uid;
 		Waypoint * wp = layer->waypoints.at(wp_uid);
 		if (!wp) {
 			return;
@@ -5809,7 +5808,7 @@ void LayerTRW::uniquify_tracks(LayersPanel * panel, std::unordered_map<sg_uid_t,
 		}
 
 		// Rename it
-		char * newname = this->new_unique_sublayer_name(VIK_TRW_LAYER_SUBLAYER_TRACK, udata.same_track_name);
+		char * newname = this->new_unique_sublayer_name(SublayerType::TRACK, udata.same_track_name);
 		trk->set_name(newname);
 
 		// Need want key of it for treeview update
@@ -5852,20 +5851,20 @@ void LayerTRW::uniquify_tracks(LayersPanel * panel, std::unordered_map<sg_uid_t,
 
 
 
-void LayerTRW::sort_order_specified(unsigned int sublayer_type, vik_layer_sort_order_t order)
+void LayerTRW::sort_order_specified(SublayerType sublayer_type, vik_layer_sort_order_t order)
 {
 	GtkTreeIter * iter = NULL;
 
 	switch (sublayer_type) {
-	case VIK_TRW_LAYER_SUBLAYER_TRACKS:
+	case SublayerType::TRACKS:
 		iter = &(this->track_iter);
 		this->track_sort_order = order;
 		break;
-	case VIK_TRW_LAYER_SUBLAYER_ROUTES:
+	case SublayerType::ROUTES:
 		iter = &(this->route_iter);
 		this->track_sort_order = order;
 		break;
-	default: // VIK_TRW_LAYER_SUBLAYER_WAYPOINTS:
+	default: // SublayerType::WAYPOINTS:
 		iter = &(this->waypoint_iter);
 		this->wp_sort_order = order;
 		break;
@@ -5879,7 +5878,7 @@ void LayerTRW::sort_order_specified(unsigned int sublayer_type, vik_layer_sort_o
 
 void trw_layer_sort_order_a2z(trw_menu_sublayer_t * data)
 {
-	data->layer->sort_order_specified(data->subtype, VL_SO_ALPHABETICAL_ASCENDING);
+	data->layer->sort_order_specified(data->sublayer_type, VL_SO_ALPHABETICAL_ASCENDING);
 }
 
 
@@ -5887,7 +5886,7 @@ void trw_layer_sort_order_a2z(trw_menu_sublayer_t * data)
 
 void trw_layer_sort_order_z2a(trw_menu_sublayer_t * data)
 {
-	data->layer->sort_order_specified(data->subtype, VL_SO_ALPHABETICAL_DESCENDING);
+	data->layer->sort_order_specified(data->sublayer_type, VL_SO_ALPHABETICAL_DESCENDING);
 }
 
 
@@ -5895,7 +5894,7 @@ void trw_layer_sort_order_z2a(trw_menu_sublayer_t * data)
 
 void trw_layer_sort_order_timestamp_ascend(trw_menu_sublayer_t * data)
 {
-	data->layer->sort_order_specified(data->subtype, VL_SO_DATE_ASCENDING);
+	data->layer->sort_order_specified(data->sublayer_type, VL_SO_DATE_ASCENDING);
 }
 
 
@@ -5903,7 +5902,7 @@ void trw_layer_sort_order_timestamp_ascend(trw_menu_sublayer_t * data)
 
 void trw_layer_sort_order_timestamp_descend(trw_menu_sublayer_t * data)
 {
-	data->layer->sort_order_specified(data->subtype, VL_SO_DATE_DESCENDING);
+	data->layer->sort_order_specified(data->sublayer_type, VL_SO_DATE_DESCENDING);
 }
 
 
@@ -6111,7 +6110,7 @@ void LayerTRW::uniquify_waypoints(LayersPanel * panel)
 		}
 
 		// Rename it
-		char * newname = this->new_unique_sublayer_name(VIK_TRW_LAYER_SUBLAYER_WAYPOINT, udata.same_waypoint_name);
+		char * newname = this->new_unique_sublayer_name(SublayerType::WAYPOINT, udata.same_waypoint_name);
 
 		this->waypoint_rename(wp, newname);
 
@@ -6407,8 +6406,8 @@ std::list<track_layer_t *> * LayerTRW::create_tracks_and_layers_list(std::list<T
 static std::list<track_layer_t *> * trw_layer_create_tracks_and_layers_list(Layer * layer, void * user_data)
 {
 	std::list<Track *> * tracks = new std::list<Track *>;
-	sg_uid_t sublayer_type = KPOINTER_TO_INT(user_data);
-	if (sublayer_type == VIK_TRW_LAYER_SUBLAYER_TRACKS) {
+	SublayerType sublayer_type = (SublayerType) KPOINTER_TO_INT(user_data);
+	if (sublayer_type == SublayerType::TRACKS) {
 		tracks = LayerTRWc::get_track_values(tracks, ((LayerTRW *) layer)->get_tracks());
 	} else {
 		tracks = LayerTRWc::get_track_values(tracks, ((LayerTRW *) layer)->get_routes());
@@ -6431,7 +6430,7 @@ void trw_layer_tracks_stats(trw_menu_layer_t * data)
 	trw->tracks_analysis_dialog = vik_trw_layer_analyse_this(gtk_window_from_layer(trw),
 								 trw->name,
 								 trw,
-								 KINT_TO_POINTER(VIK_TRW_LAYER_SUBLAYER_TRACKS),
+								 KINT_TO_POINTER(SublayerType::TRACKS),
 								 trw_layer_create_tracks_and_layers_list,
 								 trw_layer_analyse_close);
 }
@@ -6453,7 +6452,7 @@ void trw_layer_routes_stats(trw_menu_layer_t * data)
 	layer->tracks_analysis_dialog = vik_trw_layer_analyse_this(gtk_window_from_layer(layer),
 								   layer->name,
 								   layer,
-								   KINT_TO_POINTER(VIK_TRW_LAYER_SUBLAYER_ROUTES),
+								   KINT_TO_POINTER(SublayerType::ROUTES),
 								   trw_layer_create_tracks_and_layers_list,
 								   trw_layer_analyse_close);
 }
@@ -6463,7 +6462,7 @@ void trw_layer_routes_stats(trw_menu_layer_t * data)
 
 void trw_layer_goto_waypoint(trw_menu_sublayer_t * data)
 {
-	sg_uid_t wp_uid = data->sublayer_id;
+	sg_uid_t wp_uid = data->sublayer_uid;
 	Waypoint * wp = data->layer->waypoints.at(wp_uid);
 	if (wp) {
 		goto_coord(data->panel, data->layer, data->viewport, &wp->coord);
@@ -6475,7 +6474,7 @@ void trw_layer_goto_waypoint(trw_menu_sublayer_t * data)
 
 void trw_layer_waypoint_gc_webpage(trw_menu_sublayer_t * data)
 {
-	sg_uid_t wp_uid = data->sublayer_id;
+	sg_uid_t wp_uid = data->sublayer_uid;
 	Waypoint * wp = data->layer->waypoints.at(wp_uid);
 	if (!wp) {
 		return;
@@ -6491,7 +6490,7 @@ void trw_layer_waypoint_gc_webpage(trw_menu_sublayer_t * data)
 void trw_layer_waypoint_webpage(trw_menu_sublayer_t * data)
 {
 	LayerTRW * layer = data->layer;
-	sg_uid_t wp_uid = data->sublayer_id;
+	sg_uid_t wp_uid = data->sublayer_uid;
 	Waypoint * wp = layer->waypoints.at(wp_uid);
 	if (!wp) {
 		return;
@@ -6509,11 +6508,10 @@ void trw_layer_waypoint_webpage(trw_menu_sublayer_t * data)
 
 
 
-char const * LayerTRW::sublayer_rename_request(const char * newname, void * panel, int subtype, void * sublayer, GtkTreeIter * iter)
+char const * LayerTRW::sublayer_rename_request(const char * newname, void * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, GtkTreeIter * iter)
 {
-	sg_uid_t uid = (sg_uid_t) ((long) sublayer);
-	if (subtype == VIK_TRW_LAYER_SUBLAYER_WAYPOINT) {
-		Waypoint * wp = this->waypoints.at(uid);
+	if (sublayer_type == SublayerType::WAYPOINT) {
+		Waypoint * wp = this->waypoints.at(sublayer_uid);
 
 		// No actual change to the name supplied
 		if (wp->name) {
@@ -6544,8 +6542,8 @@ char const * LayerTRW::sublayer_rename_request(const char * newname, void * pane
 		return newname;
 	}
 
-	if (subtype == VIK_TRW_LAYER_SUBLAYER_TRACK) {
-		Track * trk = this->tracks.at(uid);
+	if (sublayer_type == SublayerType::TRACK) {
+		Track * trk = this->tracks.at(sublayer_uid);
 
 		// No actual change to the name supplied
 		if (trk->name) {
@@ -6583,8 +6581,8 @@ char const * LayerTRW::sublayer_rename_request(const char * newname, void * pane
 		return newname;
 	}
 
-	if (subtype == VIK_TRW_LAYER_SUBLAYER_ROUTE) {
-		Track * trk = this->routes.at(uid);
+	if (sublayer_type == SublayerType::ROUTE) {
+		Track * trk = this->routes.at(sublayer_uid);
 
 		// No actual change to the name supplied
 		if (trk->name) {
@@ -6639,7 +6637,7 @@ bool is_valid_geocache_name(char *str)
 #ifndef WINDOWS
 void trw_layer_track_use_with_filter(trw_menu_sublayer_t * data)
 {
-	sg_uid_t uid = data->sublayer_id;
+	sg_uid_t uid = data->sublayer_uid;
 	Track * trk = data->layer->tracks.at(uid);
 	a_acquire_set_filter_track(trk);
 }
@@ -6662,7 +6660,7 @@ bool LayerTRW::is_valid_google_route(sg_uid_t track_uid)
 
 void trw_layer_google_route_webpage(trw_menu_sublayer_t * data)
 {
-	sg_uid_t uid = data->sublayer_id;
+	sg_uid_t uid = data->sublayer_uid;
 	Track * trk = data->layer->routes.at(uid);
 	if (trk) {
 		char *escaped = uri_escape(trk->comment);
@@ -6793,7 +6791,7 @@ void LayerTRW::tpwin_response(int response)
 	    && this->selected_tp.iter != this->selected_track->begin()
 	    && std::next(this->selected_tp.iter) != this->selected_track->end()) {
 
-		this->split_at_selected_trackpoint(this->selected_track->is_route ? VIK_TRW_LAYER_SUBLAYER_ROUTE : VIK_TRW_LAYER_SUBLAYER_TRACK);
+		this->split_at_selected_trackpoint(this->selected_track->is_route ? SublayerType::ROUTE : SublayerType::TRACK);
 		this->my_tpwin_set_tp();
 
 	} else if (response == VIK_TRW_LAYER_TPWIN_DELETE) {
@@ -7058,7 +7056,6 @@ bool LayerTRW::select_move(GdkEventMotion * event, Viewport * viewport, LayerToo
 		int x, y;
 		viewport->coord_to_screen(&new_coord, &x, &y);
 
-		fprintf(stderr, "%s:%d: calling marker_moveto\n", __FUNCTION__, __LINE__);
 		marker_moveto(tool, x, y);
 
 		return true;
@@ -7351,8 +7348,8 @@ bool LayerTRW::show_selected_viewport_menu(GdkEventButton * event, Viewport * vi
 
 				this->sublayer_add_menu_items(this->track_right_click_menu,
 							      NULL,
-							      trk->is_route ? VIK_TRW_LAYER_SUBLAYER_ROUTE : VIK_TRW_LAYER_SUBLAYER_TRACK,
-							      (void *) ((long) uid),
+							      trk->is_route ? SublayerType::ROUTE : SublayerType::TRACK,
+							      uid,
 							      iter,
 							      viewport);
 			}
@@ -7380,8 +7377,8 @@ bool LayerTRW::show_selected_viewport_menu(GdkEventButton * event, Viewport * vi
 
 				this->sublayer_add_menu_items(this->wp_right_click_menu,
 							      NULL,
-							      VIK_TRW_LAYER_SUBLAYER_WAYPOINT,
-							      (void *) ((long) wp_uid),
+							      SublayerType::WAYPOINT,
+							      wp_uid,
 							      iter,
 							      viewport);
 			}
@@ -7664,7 +7661,7 @@ bool LayerTRW::tool_edit_waypoint_release(GdkEventButton * event, LayerTool * to
 		}
 		if (this->current_wp) {
 			this->wp_right_click_menu = GTK_MENU (gtk_menu_new());
-			this->sublayer_add_menu_items(this->wp_right_click_menu, NULL, VIK_TRW_LAYER_SUBLAYER_WAYPOINT, (void *) ((long) this->current_wp_uid), this->waypoints_iters.at(this->current_wp_uid), tool->viewport);
+			this->sublayer_add_menu_items(this->wp_right_click_menu, NULL, SublayerType::WAYPOINT, this->current_wp_uid, this->waypoints_iters.at(this->current_wp_uid), tool->viewport);
 			gtk_menu_popup(this->wp_right_click_menu, NULL, NULL, NULL, NULL, event->button, gtk_get_current_event_time());
 		}
 		this->waypoint_rightclick = false;
@@ -8107,7 +8104,7 @@ bool LayerTRW::tool_new_track_click(GdkEventButton * event, LayerTool * tool)
 
 	// ----------------------------------------------------- if current is a route - switch to new track
 	if (event->button == 1 && (!this->current_track || (this->current_track && this->current_track->is_route))) {
-		char *name = this->new_unique_sublayer_name(VIK_TRW_LAYER_SUBLAYER_TRACK, _("Track"));
+		char *name = this->new_unique_sublayer_name(SublayerType::TRACK, _("Track"));
 		if (a_vik_get_ask_for_create_track_name()) {
 			name = a_dialog_new_track(gtk_window_from_layer(this), name, false);
 			if (!name) {
@@ -8195,7 +8192,7 @@ bool LayerTRW::tool_new_route_click(GdkEventButton * event, LayerTool * tool)
 	    && (!this->current_track
 		|| (this->current_track && !this->current_track->is_route))) {
 
-		char *name = this->new_unique_sublayer_name(VIK_TRW_LAYER_SUBLAYER_ROUTE, _("Route"));
+		char *name = this->new_unique_sublayer_name(SublayerType::ROUTE, _("Route"));
 		if (a_vik_get_ask_for_create_track_name()) {
 			name = a_dialog_new_track(gtk_window_from_layer(this), name, true);
 			if (!name) {
@@ -9490,13 +9487,13 @@ void trw_layer_track_list_dialog_single(trw_menu_sublayer_t * data)
 	LayerTRW * layer = data->layer;
 
 	char *title = NULL;
-	if (data->subtype == VIK_TRW_LAYER_SUBLAYER_TRACKS) {
+	if (data->sublayer_type == SublayerType::TRACKS) {
 		title = g_strdup_printf(_("%s: Track List"), layer->name);
 	} else {
 		title = g_strdup_printf(_("%s: Route List"), layer->name);
 	}
 
-	vik_trw_layer_track_list_show_dialog(title, layer, KINT_TO_POINTER(data->subtype), trw_layer_create_tracks_and_layers_list, false);
+	vik_trw_layer_track_list_show_dialog(title, layer, KINT_TO_POINTER(data->sublayer_type), trw_layer_create_tracks_and_layers_list, false);
 	free(title);
 }
 
@@ -9529,8 +9526,8 @@ void trw_layer_waypoint_list_dialog(trw_menu_layer_t * data)
 
 Track * LayerTRW::get_track_helper(trw_menu_sublayer_t * data)
 {
-	sg_uid_t uid = data->sublayer_id;
-	if (data->subtype == VIK_TRW_LAYER_SUBLAYER_ROUTE) {
+	sg_uid_t uid = data->sublayer_uid;
+	if (data->sublayer_type == SublayerType::ROUTE) {
 		return this->routes.at(uid);
 	} else {
 		return this->tracks.at(uid);

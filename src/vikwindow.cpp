@@ -2033,9 +2033,9 @@ static VikLayerToolFuncStatus selecttool_click(Layer * layer, GdkEventButton * e
 
 				if (tree_view->get_selected_iter(&iter)) {
 					// Only clear if selected thing is a TrackWaypoint layer or a sublayer
-					int type = tree_view->get_type(&iter);
-					if (type == VIK_TREEVIEW_TYPE_SUBLAYER
-					    || ((Layer *) tree_view->get_layer(&iter))->type == LayerType::TRW) {
+					TreeItemType type = tree_view->get_item_type(&iter);
+					if (type == TreeItemType::SUBLAYER
+					    || tree_view->get_layer(&iter)->type == LayerType::TRW) {
 
 						tree_view->unselect(&iter);
 						if (tool->window->clear_highlight()) {
@@ -3502,7 +3502,7 @@ static void menu_copy_centre_cb(GtkAction * a, Window * window)
 	free(lat);
 	free(lon);
 
-	a_clipboard_copy(VIK_CLIPBOARD_DATA_TEXT, LayerType::AGGREGATE, 0, 0, msg, NULL);
+	a_clipboard_copy(VIK_CLIPBOARD_DATA_TEXT, LayerType::AGGREGATE, SublayerType::NONE, 0, msg, NULL);
 
 	free(msg);
 }

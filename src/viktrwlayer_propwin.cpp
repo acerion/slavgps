@@ -2730,7 +2730,7 @@ static void propwin_response_cb(GtkDialog * dialog, int resp, PropWidgets * widg
 		unsigned int i;
 		for (auto iter = tracks->begin(); iter != tracks->end(); iter++) {
 			if (*iter) {
-				new_tr_name = trw->new_unique_sublayer_name(widgets->trk->is_route ? VIK_TRW_LAYER_SUBLAYER_ROUTE : VIK_TRW_LAYER_SUBLAYER_TRACK,
+				new_tr_name = trw->new_unique_sublayer_name(widgets->trk->is_route ? SublayerType::ROUTE : SublayerType::TRACK,
 									    widgets->trk->name);
 				if (widgets->trk->is_route) {
 					trw->add_route(*iter, new_tr_name);
@@ -2770,7 +2770,7 @@ static void propwin_response_cb(GtkDialog * dialog, int resp, PropWidgets * widg
 			break;
 		}
 
-		char *r_name = trw->new_unique_sublayer_name(widgets->trk->is_route ? VIK_TRW_LAYER_SUBLAYER_ROUTE : VIK_TRW_LAYER_SUBLAYER_TRACK,
+		char *r_name = trw->new_unique_sublayer_name(widgets->trk->is_route ? SublayerType::ROUTE : SublayerType::TRACK,
 							     widgets->trk->name);
 
 

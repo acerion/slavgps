@@ -137,9 +137,9 @@ namespace SlavGPS {
 		void draw(Viewport * viewport);
 		void post_read(Viewport * viewport, bool from_file);
 		char const * tooltip();
-		char const * sublayer_tooltip(int subtype, void * sublayer);
+		char const * sublayer_tooltip(SublayerType sublayer_type, sg_uid_t sublayer_uid);
 
-		bool selected(int subtype, void * sublayer, int type, void * panel);
+		bool selected(SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeItemType type, void * panel);
 
 		bool show_selected_viewport_menu(GdkEventButton * event, Viewport * viewport);
 
@@ -152,10 +152,10 @@ namespace SlavGPS {
 
 		void marshall(uint8_t ** data, int * len);
 
-		void cut_item(int subtype, sg_uid_t sublayer_uid);
-		void copy_item(int subtype, sg_uid_t sublayer_uid, uint8_t ** item, unsigned int * len);
-		bool paste_item(int subtype, uint8_t * item, size_t len);
-		void delete_item(int subtype, sg_uid_t sublayer_uid);
+		void cut_sublayer(SublayerType sublayer_type, sg_uid_t sublayer_uid);
+		void copy_sublayer(SublayerType sublayer_type, sg_uid_t sublayer_uid, uint8_t ** item, unsigned int * len);
+		bool paste_sublayer(SublayerType sublayer_type, uint8_t * item, size_t len);
+		void delete_sublayer(SublayerType sublayer_type, sg_uid_t sublayer_uid);
 
 		void change_coord_mode(VikCoordMode dest_mode);
 
@@ -166,9 +166,9 @@ namespace SlavGPS {
 		int read_file(FILE * f, char const * dirpath);
 		void write_file(FILE * f) const;
 		void add_menu_items(GtkMenu * menu, void * panel);
-		bool sublayer_add_menu_items(GtkMenu * menu, void * panel, int subtype, void * sublayer, GtkTreeIter * iter, Viewport * viewport);
-		char const * sublayer_rename_request(const char * newname, void * panel, int subtype, void * sublayer, GtkTreeIter * iter);
-		bool sublayer_toggle_visible(int subtype, void * sublayer);
+		bool sublayer_add_menu_items(GtkMenu * menu, void * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, GtkTreeIter * iter, Viewport * viewport);
+		char const * sublayer_rename_request(const char * newname, void * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, GtkTreeIter * iter);
+		bool sublayer_toggle_visible(SublayerType sublayer_type, sg_uid_t sublayer_uid);
 
 		void realize(TreeView * tree_view, GtkTreeIter * layer_iter);
 		bool set_param(uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
@@ -213,8 +213,8 @@ namespace SlavGPS {
 		void draw_highlight_items(std::unordered_map<sg_uid_t, Track *> * tracks, std::unordered_map<sg_uid_t, Waypoint *> * waypoints, Viewport * viewport);
 
 
-		void realize_track(std::unordered_map<sg_uid_t, Track *> & tracks, trw_data4_t * pass_along, int sublayer_id);
-		void realize_waypoints(std::unordered_map<sg_uid_t, Waypoint *> & data, trw_data4_t * pass_along, int sublayer_id);
+		void realize_track(std::unordered_map<sg_uid_t, Track *> & tracks, trw_data4_t * pass_along, SublayerType sublayer_type);
+		void realize_waypoints(std::unordered_map<sg_uid_t, Waypoint *> & data, trw_data4_t * pass_along, SublayerType sublayer_type);
 
 
 		void add_sublayer_tracks(TreeView * tree_view, GtkTreeIter * layer_iter);
@@ -248,7 +248,7 @@ namespace SlavGPS {
 
 		void reset_waypoints();
 
-		char * new_unique_sublayer_name(int sublayer_type, const char * name);
+		char * new_unique_sublayer_name(SublayerType sublayer_type, const char * name);
 
 
 		/* These are meant for use in file loaders (gpspoint.c, gpx.c, etc).
@@ -259,7 +259,7 @@ namespace SlavGPS {
 
 
 
-		void move_item(LayerTRW * vtl_dest, void * id, int type);
+		void move_item(LayerTRW * vtl_dest, void * id, SublayerType sublayer_type);
 
 
 
@@ -286,7 +286,7 @@ namespace SlavGPS {
 
 
 
-		void split_at_selected_trackpoint(int subtype);
+		void split_at_selected_trackpoint(SublayerType sublayer_type);
 		void trackpoint_selected_delete(Track * trk);
 
 
@@ -296,7 +296,7 @@ namespace SlavGPS {
 
 
 		void uniquify_tracks(LayersPanel * panel, std::unordered_map<sg_uid_t, Track *> & track_table, bool ontrack);
-		void sort_order_specified(unsigned int sublayer_type, vik_layer_sort_order_t order);
+		void sort_order_specified(SublayerType sublayer_type, vik_layer_sort_order_t order);
 
 		bool has_same_waypoint_names();
 		void uniquify_waypoints(LayersPanel * panel);
@@ -569,8 +569,8 @@ typedef struct {
 typedef struct _trw_menu_sublayer_t {
 	SlavGPS::LayerTRW * layer;
 	SlavGPS::LayersPanel * panel;
-	int subtype;
-	sg_uid_t sublayer_id;
+	SlavGPS::SublayerType sublayer_type;
+	sg_uid_t sublayer_uid;
 	bool confirm;
 	SlavGPS::Viewport * viewport;
 	GtkTreeIter * tv_iter;
@@ -605,14 +605,7 @@ extern "C" {
 #define IS_VIK_TRW_LAYER(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), VIK_TRW_LAYER_TYPE))
 #define IS_VIK_TRW_LAYER_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), VIK_TRW_LAYER_TYPE))
 
-enum {
-	VIK_TRW_LAYER_SUBLAYER_TRACKS,
-	VIK_TRW_LAYER_SUBLAYER_WAYPOINTS,
-	VIK_TRW_LAYER_SUBLAYER_TRACK,
-	VIK_TRW_LAYER_SUBLAYER_WAYPOINT,
-	VIK_TRW_LAYER_SUBLAYER_ROUTES,
-	VIK_TRW_LAYER_SUBLAYER_ROUTE
-};
+
 
 typedef struct _VikTrwLayerClass VikTrwLayerClass;
 struct _VikTrwLayerClass

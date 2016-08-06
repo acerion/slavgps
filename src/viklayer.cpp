@@ -485,9 +485,9 @@ static void vik_layer_finalize(VikLayer * vl)
 	G_OBJECT_CLASS(parent_class)->finalize(G_OBJECT(vl));
 }
 
-bool vik_layer_selected(Layer * layer, int subtype, void * sublayer, int type, void * panel)
+bool vik_layer_selected(Layer * layer, SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeItemType type, void * panel)
 {
-	bool result = layer->selected(subtype, sublayer, type, panel);
+	bool result = layer->selected(sublayer_type, sublayer_uid, type, panel);
 	if (result) {
 		return result;
 	} else {
@@ -736,14 +736,14 @@ char const * Layer::tooltip()
 
 
 
-char const * Layer::sublayer_tooltip(int subtype, void * sublayer)
+char const * Layer::sublayer_tooltip(SublayerType sublayer_type, sg_uid_t sublayer_uid)
 {
       static char tmp_buf[32];
       snprintf(tmp_buf, sizeof(tmp_buf), _("Layer::sublayer_tooltip"));
       return tmp_buf;
 }
 
-bool Layer::selected(int subtype, void * sublayer, int type, void * panel)
+bool Layer::selected(SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeItemType type, void * panel)
 {
 	return false;
 }
@@ -764,22 +764,22 @@ uint16_t Layer::get_menu_selection()
 	return (uint16_t) -1;
 }
 
-void Layer::cut_item(int subtype, void * sublayer)
+void Layer::cut_sublayer(SublayerType sublayer_type, sg_uid_t sublayer_uid)
 {
 	return;
 }
 
-void Layer::copy_item(int subtype, void * sublayer, uint8_t ** item, unsigned int * len)
+void Layer::copy_sublayer(SublayerType sublayer_type, sg_uid_t sublayer_uid, uint8_t ** item, unsigned int * len)
 {
 	return;
 }
 
-bool Layer::paste_item(int subtype, uint8_t * item, size_t len)
+bool Layer::paste_sublayer(SublayerType sublayer_type, uint8_t * item, size_t len)
 {
 	return false;
 }
 
-void Layer::delete_item(int subtype, void * sublayer)
+void Layer::delete_sublayer(SublayerType sublayer_type, sg_uid_t sublayer_uid)
 {
 	return;
 }
@@ -817,17 +817,17 @@ void Layer::add_menu_items(GtkMenu * menu, void * panel)
 	return;
 }
 
-bool Layer::sublayer_add_menu_items(GtkMenu * menu, void * panel, int subtype, void * sublayer, GtkTreeIter * iter, Viewport * viewport)
+bool Layer::sublayer_add_menu_items(GtkMenu * menu, void * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, GtkTreeIter * iter, Viewport * viewport)
 {
 	return false;
 }
 
-char const * Layer::sublayer_rename_request(const char * newname, void * panel, int subtype, void * sublayer, GtkTreeIter * iter)
+char const * Layer::sublayer_rename_request(const char * newname, void * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, GtkTreeIter * iter)
 {
 	return NULL;
 }
 
-bool Layer::sublayer_toggle_visible(int subtype, void * sublayer)
+bool Layer::sublayer_toggle_visible(SublayerType sublayer_type, sg_uid_t sublayer_uid)
 {
 	/* if unknown, will always be visible */
 	return true;
