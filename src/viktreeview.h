@@ -105,6 +105,9 @@ namespace SlavGPS {
 		void expand(GtkTreeIter * iter);
 		void sort_children(GtkTreeIter * parent, vik_layer_sort_order_t order);
 
+		bool go_up_to_layer(GtkTreeIter * iter);
+
+
 
 		GtkTreeModel * model;
 		bool editing;

@@ -484,7 +484,6 @@ void TreeView::add_columns()
 
 
 
-/* I still don't quite get some aspects of this function. */
 static void select_cb(GtkTreeSelection * selection, void * data)
 {
 	GtkTreeIter iter;
@@ -495,25 +494,12 @@ static void select_cb(GtkTreeSelection * selection, void * data)
 	TreeView * tree_view = (TreeView *) data;
 	SublayerType sublayer_type = tree_view->get_sublayer_type(&iter);
 	TreeItemType tree_item_type = tree_view->get_item_type(&iter);
-
-	/* Find the Sublayer type if possible. */
 	sg_uid_t sublayer_uid = tree_view->get_sublayer_uid(&iter);
-	if (sublayer_uid) {
-		if (tree_item_type == TreeItemType::SUBLAYER) {
 
-			/* Go up the tree to find a Layer. */
-			GtkTreeIter parent_iter;
-			TreeItemType tmp_type = tree_item_type;
-			while (tmp_type != TreeItemType::LAYER) {
-				if (!tree_view->get_parent_iter(&iter, &parent_iter)) {
-					return;
-				}
-				iter = parent_iter;
-				tmp_type = tree_view->get_item_type(&iter);
-			}
+	if (tree_item_type == TreeItemType::SUBLAYER) {
+		if (!tree_view->go_up_to_layer(&iter)) {
+			return;
 		}
-	} else {
-		tree_item_type = TreeItemType::SUBLAYER;
 	}
 
 	Layer * layer = tree_view->get_layer(&iter);
@@ -530,6 +516,26 @@ static void select_cb(GtkTreeSelection * selection, void * data)
 		/* Redraw required. */
 		window->get_layers_panel()->emit_update();
 	}
+}
+
+
+
+
+/* Go up the tree to find a Layer. */
+bool TreeView::go_up_to_layer(GtkTreeIter * iter)
+{
+	GtkTreeIter this_iter = *iter;
+	GtkTreeIter parent_iter;
+
+	while (TreeItemType::LAYER != this->get_item_type(&this_iter)) {
+		if (!this->get_parent_iter(&this_iter, &parent_iter)) {
+			return false;
+		}
+		this_iter = parent_iter;
+	}
+
+	*iter = this_iter; /* Don't use parent_iter. If while() loop executes zero times, parent_iter is invalid. */
+	return true;
 }
 
 
