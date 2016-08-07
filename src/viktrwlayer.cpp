@@ -1514,10 +1514,13 @@ void LayerTRW::draw(Viewport * viewport)
 
 void LayerTRW::draw_highlight(Viewport * viewport)
 {
+	/* kamilFIXME: enabling this code and then compiling it with -O0 results in crash when selecting trackpoint in viewport. */
+#if 0
 	// Check the layer for visibility (including all the parents visibilities)
 	if (!this->tree_view->is_visible_in_tree(&this->iter)) {
 		return;
 	}
+#endif
 	this->draw_with_highlight(viewport, true);
 }
 
@@ -1772,7 +1775,7 @@ void LayerTRW::realize_waypoints(std::unordered_map<sg_uid_t, Waypoint *> & wayp
 
 void LayerTRW::add_sublayer_tracks(TreeView * tree_view_, GtkTreeIter * layer_iter)
 {
-	tree_view_->add_sublayer(layer_iter, &(track_iter), _("Tracks"), this, (sg_uid_t) -1, SublayerType::TRACKS, NULL, false, 0);
+	tree_view_->add_sublayer(layer_iter, &(track_iter), _("Tracks"), this, SG_UID_NONE, SublayerType::TRACKS, NULL, false, 0);
 }
 
 
@@ -1780,7 +1783,7 @@ void LayerTRW::add_sublayer_tracks(TreeView * tree_view_, GtkTreeIter * layer_it
 
 void LayerTRW::add_sublayer_waypoints(TreeView * tree_view_, GtkTreeIter * layer_iter)
 {
-	tree_view_->add_sublayer(layer_iter, &(waypoint_iter), _("Waypoints"), this, (sg_uid_t) -1, SublayerType::WAYPOINTS, NULL, false, 0);
+	tree_view_->add_sublayer(layer_iter, &(waypoint_iter), _("Waypoints"), this, SG_UID_NONE, SublayerType::WAYPOINTS, NULL, false, 0);
 }
 
 
@@ -1788,7 +1791,7 @@ void LayerTRW::add_sublayer_waypoints(TreeView * tree_view_, GtkTreeIter * layer
 
 void LayerTRW::add_sublayer_routes(TreeView * tree_view_, GtkTreeIter * layer_iter)
 {
-	tree_view_->add_sublayer(layer_iter, &(route_iter), _("Routes"), this, (sg_uid_t) -1, SublayerType::ROUTES, NULL, false, 0);
+	tree_view_->add_sublayer(layer_iter, &(route_iter), _("Routes"), this, SG_UID_NONE, SublayerType::ROUTES, NULL, false, 0);
 }
 
 
