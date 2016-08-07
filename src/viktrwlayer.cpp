@@ -7071,7 +7071,7 @@ bool LayerTRW::select_move(GdkEventMotion * event, Viewport * viewport, LayerToo
 
 bool LayerTRW::select_release(GdkEventButton * event, Viewport * viewport, LayerTool * tool)
 {
-	if (tool->ed->holding && event->button == 1) {
+	if (tool->ed->holding && event->button == MouseButton::LEFT) {
 		// Prevent accidental (small) shifts when specific movement has not been requested
 		//  (as the click release has occurred within the click object detection area)
 		if (!tool->ed->moving) {
@@ -7141,7 +7141,7 @@ bool LayerTRW::select_release(GdkEventButton * event, Viewport * viewport, Layer
  */
 bool LayerTRW::select_click(GdkEventButton * event, Viewport * viewport, LayerTool * tool)
 {
-	if (event->button != 1) {
+	if (event->button != MouseButton::LEFT) {
 		return false;
 	}
 
@@ -7307,7 +7307,7 @@ bool LayerTRW::select_click(GdkEventButton * event, Viewport * viewport, LayerTo
 
 bool LayerTRW::show_selected_viewport_menu(GdkEventButton * event, Viewport * viewport)
 {
-	if (event->button != 3) {
+	if (event->button != MouseButton::RIGHT) {
 		return false;
 	}
 
@@ -7516,7 +7516,7 @@ bool LayerTRW::tool_edit_waypoint_click(GdkEventButton * event, LayerTool * tool
 
 		if (abs(x - (int)round(event->x)) <= WAYPOINT_SIZE_APPROX
 		    && abs(y - (int)round(event->y)) <= WAYPOINT_SIZE_APPROX) {
-			if (event->button == 3) {
+			if (event->button == MouseButton::RIGHT) {
 				this->waypoint_rightclick = true; /* remember that we're clicking; other layers will ignore release signal */
 			} else {
 				marker_begin_move(tool, event->x, event->y);
@@ -7534,14 +7534,14 @@ bool LayerTRW::tool_edit_waypoint_click(GdkEventButton * event, LayerTool * tool
 	params.closest_wp = NULL;
 	LayerTRWc::waypoint_search_closest_tp(this->waypoints, &params);
 	if (this->current_wp && (this->current_wp == params.closest_wp)) {
-		if (event->button == 3) {
+		if (event->button == MouseButton::RIGHT) {
 			this->waypoint_rightclick = true; /* remember that we're clicking; other layers will ignore release signal */
 		} else {
 			marker_begin_move(tool, event->x, event->y);
 		}
 		return false;
 	} else if (params.closest_wp) {
-		if (event->button == 3) {
+		if (event->button == MouseButton::RIGHT) {
 			this->waypoint_rightclick = true; /* remember that we're clicking; other layers will ignore release signal */
 		} else {
 			this->waypoint_rightclick = false;
@@ -7629,7 +7629,7 @@ bool LayerTRW::tool_edit_waypoint_release(GdkEventButton * event, LayerTool * to
 		return false;
 	}
 
-	if (tool->ed->holding && event->button == 1) {
+	if (tool->ed->holding && event->button == MouseButton::LEFT) {
 		VikCoord new_coord;
 		tool->viewport->screen_to_coord(event->x, event->y, &new_coord);
 
@@ -7658,7 +7658,7 @@ bool LayerTRW::tool_edit_waypoint_release(GdkEventButton * event, LayerTool * to
 		return true;
 	}
 	/* PUT IN RIGHT PLACE!!! */
-	if (event->button == 3 && this->waypoint_rightclick) {
+	if (event->button == MouseButton::RIGHT && this->waypoint_rightclick) {
 		if (this->wp_right_click_menu) {
 			g_object_ref_sink(G_OBJECT(this->wp_right_click_menu));
 		}
@@ -8031,14 +8031,14 @@ bool LayerTRW::tool_new_track_or_route_click(GdkEventButton * event, Viewport * 
 		return false;
 	}
 
-	if (event->button == 2) {
+	if (event->button == MouseButton::MIDDLE) {
 		// As the display is panning, the new track pixmap is now invalid so don't draw it
 		//  otherwise this drawing done results in flickering back to an old image
 		this->draw_sync_do = false;
 		return false;
 	}
 
-	if (event->button == 3) {
+	if (event->button == MouseButton::RIGHT) {
 		if (!this->current_track) {
 			return false;
 		}
@@ -8106,7 +8106,7 @@ bool LayerTRW::tool_new_track_click(GdkEventButton * event, LayerTool * tool)
 	this->route_finder_started = false;
 
 	// ----------------------------------------------------- if current is a route - switch to new track
-	if (event->button == 1 && (!this->current_track || (this->current_track && this->current_track->is_route))) {
+	if (event->button == MouseButton::LEFT && (!this->current_track || (this->current_track && this->current_track->is_route))) {
 		char *name = this->new_unique_sublayer_name(SublayerType::TRACK, _("Track"));
 		if (a_vik_get_ask_for_create_track_name()) {
 			name = a_dialog_new_track(gtk_window_from_layer(this), name, false);
@@ -8133,7 +8133,7 @@ static void tool_new_track_release_cb(Layer * trw, GdkEventButton *event, LayerT
 
 void LayerTRW::tool_new_track_release(GdkEventButton *event, LayerTool * tool)
 {
-	if (event->button == 2) {
+	if (event->button == MouseButton::MIDDLE) {
 		// Pan moving ended - enable potential point drawing again
 		this->draw_sync_do = true;
 		this->draw_sync_done = true;
@@ -8191,7 +8191,7 @@ bool LayerTRW::tool_new_route_click(GdkEventButton * event, LayerTool * tool)
 	this->route_finder_started = false;
 
 	// -------------------------- if current is a track - switch to new route,
-	if (event->button == 1
+	if (event->button == MouseButton::LEFT
 	    && (!this->current_track
 		|| (this->current_track && !this->current_track->is_route))) {
 
@@ -8329,7 +8329,7 @@ bool LayerTRW::tool_edit_trackpoint_click(GdkEventButton * event, LayerTool * to
 
 	tool->viewport->get_bbox(&params.bbox);
 
-	if (event->button != 1) {
+	if (event->button != MouseButton::LEFT) {
 		return false;
 	}
 
@@ -8465,7 +8465,7 @@ bool LayerTRW::tool_edit_trackpoint_release(GdkEventButton * event, LayerTool * 
 		return false;
 	}
 
-	if (event->button != 1) {
+	if (event->button != MouseButton::LEFT) {
 		return false;
 	}
 
@@ -8572,10 +8572,10 @@ bool LayerTRW::tool_extended_route_finder_click(GdkEventButton * event, LayerToo
 	VikCoord tmp;
 
 	tool->viewport->screen_to_coord(event->x, event->y, &tmp);
-	if (event->button == 3 && this->current_track) {
+	if (event->button == MouseButton::RIGHT && this->current_track) {
 		this->tool_extended_route_finder_undo();
 
-	} else if (event->button == 2) {
+	} else if (event->button == MouseButton::MIDDLE) {
 		this->draw_sync_do = false;
 		return false;
 	}

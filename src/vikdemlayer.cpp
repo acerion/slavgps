@@ -1248,7 +1248,7 @@ bool LayerDEM::download_release(GdkEventButton * event, LayerTool * tool)
 		return true;
 	}
 
-	if (event->button == 1) {
+	if (event->button == MouseButton::LEFT) {
 		std::string dem_full_path = std::string(MAPS_CACHE_DIR_2 + std::string(dem_file));
 		fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, dem_full_path.c_str());
 

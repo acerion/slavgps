@@ -1973,7 +1973,7 @@ static bool maps_layer_download_release(Layer * _layer, GdkEventButton *event, L
 	LayerMaps * layer = (LayerMaps *) _layer;
 
 	if (layer->dl_tool_x != -1 && layer->dl_tool_y != -1) {
-		if (event->button == 1) {
+		if (event->button == MouseButton::LEFT) {
 			VikCoord ul, br;
 			tool->viewport->screen_to_coord(MAX(0, MIN(event->x, layer->dl_tool_x)), MAX(0, MIN(event->y, layer->dl_tool_y)), &ul);
 			tool->viewport->screen_to_coord(MIN(tool->viewport->get_width(), MAX(event->x, layer->dl_tool_x)), MIN(tool->viewport->get_height(), MAX (event->y, layer->dl_tool_y)), &br);

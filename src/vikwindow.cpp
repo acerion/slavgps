@@ -1035,7 +1035,7 @@ static void draw_click_cb(Window * window, GdkEventButton * event)
 	/* middle button pressed.  we reserve all middle button and scroll events
 	 * for panning and zooming; tools only get left/right/movement
 	 */
-	if (event->button == 2) {
+	if (event->button == MouseButton::MIDDLE) {
 		if (window->vt->active_tool->pan_handler) {
 			// Tool still may need to do something (such as disable something)
 			toolbox_click(window->vt, event);
@@ -1200,7 +1200,7 @@ static void draw_release_cb(Window * window, GdkEventButton * event)
 {
 	gtk_widget_grab_focus(GTK_WIDGET(window->viewport->vvp));
 
-	if (event->button == 2) {  /* move / pan */
+	if (event->button == MouseButton::MIDDLE) {  /* move / pan */
 		if (window->vt->active_tool->pan_handler) {
 			// Tool still may need to do something (such as reenable something)
 			toolbox_release(window->vt, event);
@@ -1486,7 +1486,7 @@ static VikLayerToolFuncStatus ruler_click(Layer * layer, GdkEventButton * event,
 	struct LatLon ll;
 	VikCoord coord;
 	char *temp;
-	if (event->button == 1) {
+	if (event->button == MouseButton::LEFT) {
 		char *lat = NULL, *lon = NULL;
 		tool->viewport->screen_to_coord((int) event->x, (int) event->y, &coord);
 		vik_coord_to_latlon(&coord, &ll);
@@ -1701,22 +1701,22 @@ static VikLayerToolFuncStatus zoomtool_click(Layer * layer, GdkEventButton * eve
 	if (modifiers == (GDK_CONTROL_MASK | GDK_SHIFT_MASK)) {
 		// This zoom is on the center position
 		tool->window->viewport->set_center_screen(center_x, center_y);
-		if (event->button == 1) {
+		if (event->button == MouseButton::LEFT) {
 			tool->window->viewport->zoom_in();
-		} else if (event->button == 3) {
+		} else if (event->button == MouseButton::RIGHT) {
 			tool->window->viewport->zoom_out();
 		}
 	} else if (modifiers == GDK_CONTROL_MASK) {
 		// This zoom is to recenter on the mouse position
 		tool->window->viewport->set_center_screen((int) event->x, (int) event->y);
-		if (event->button == 1) {
+		if (event->button == MouseButton::LEFT) {
 			tool->window->viewport->zoom_in();
-		} else if (event->button == 3) {
+		} else if (event->button == MouseButton::RIGHT) {
 			tool->window->viewport->zoom_out();
 		}
 	} else if (modifiers == GDK_SHIFT_MASK) {
 		// Get start of new zoom bounds
-		if (event->button == 1) {
+		if (event->button == MouseButton::LEFT) {
 			tool->zoom->bounds_active = true;
 			tool->zoom->start_x = (int) event->x;
 			tool->zoom->start_y = (int) event->y;
@@ -1725,9 +1725,9 @@ static VikLayerToolFuncStatus zoomtool_click(Layer * layer, GdkEventButton * eve
 	} else {
 		/* make sure mouse is still over the same point on the map when we zoom */
 		tool->window->viewport->screen_to_coord(event->x, event->y, &coord);
-		if (event->button == 1) {
+		if (event->button == MouseButton::LEFT) {
 			tool->window->viewport->zoom_in();
-		} else if (event->button == 3) {
+		} else if (event->button == MouseButton::RIGHT) {
 			tool->window->viewport->zoom_out();
 		}
 		int x, y;
@@ -1819,11 +1819,11 @@ static VikLayerToolFuncStatus zoomtool_release(Layer * layer, GdkEventButton * e
 		if (modifiers == GDK_SHIFT_MASK) {
 			// Zoom in/out by three if possible
 			tool->window->viewport->set_center_screen(event->x, event->y);
-			if (event->button == 1) {
+			if (event->button == MouseButton::LEFT) {
 				tool->window->viewport->zoom_in();
 				tool->window->viewport->zoom_in();
 				tool->window->viewport->zoom_in();
-			} else if (event->button == 3) {
+			} else if (event->button == MouseButton::RIGHT) {
 				tool->window->viewport->zoom_out();
 				tool->window->viewport->zoom_out();
 				tool->window->viewport->zoom_out();
@@ -1898,21 +1898,21 @@ static VikLayerToolFuncStatus pantool_click(Layer * layer, GdkEventButton * even
 	if (event->type == GDK_2BUTTON_PRESS) {
 		// Zoom in / out on double click
 		// No need to change the center as that has already occurred in the first click of a double click occurrence
-		if (event->button == 1) {
+		if (event->button == MouseButton::LEFT) {
 			unsigned int modifier = event->state & GDK_SHIFT_MASK;
 			if (modifier) {
 				tool->window->viewport->zoom_out();
 			} else {
 				tool->window->viewport->zoom_in();
 			}
-		} else if (event->button == 3) {
+		} else if (event->button == MouseButton::RIGHT) {
 			tool->window->viewport->zoom_out();
 		}
 
 		tool->window->draw_update();
 	} else {
 		// Standard pan click
-		if (event->button == 1) {
+		if (event->button == MouseButton::LEFT) {
 			vik_window_pan_click(tool->window, event);
 		}
 	}
@@ -1928,7 +1928,7 @@ static VikLayerToolFuncStatus pantool_move(Layer * layer, GdkEventMotion * event
 
 static VikLayerToolFuncStatus pantool_release(Layer * layer, GdkEventButton * event, LayerTool * tool)
 {
-	if (event->button == 1) {
+	if (event->button == MouseButton::LEFT) {
 		vik_window_pan_release(tool->window, event);
 	}
 	return VIK_LAYER_TOOL_ACK;
@@ -2007,7 +2007,7 @@ static VikLayerToolFuncStatus selecttool_click(Layer * layer, GdkEventButton * e
 {
 	tool->window->select_move = false;
 	/* Only allow selection on primary button */
-	if (event->button == 1) {
+	if (event->button == MouseButton::LEFT) {
 
 		if (event->state & VIK_MOVE_MODIFIER) {
 			vik_window_pan_click(tool->window, event);
@@ -2048,7 +2048,7 @@ static VikLayerToolFuncStatus selecttool_click(Layer * layer, GdkEventButton * e
 				tool->window->select_move = true;
 			}
 		}
-	} else if ((event->button == 3) && (layer && layer->type == LayerType::TRW)) {
+	} else if ((event->button == MouseButton::RIGHT) && (layer && layer->type == LayerType::TRW)) {
 		if (layer->visible) {
 			/* Act on currently selected item to show menu */
 			if (tool->window->selected_track || tool->window->selected_waypoint) {
@@ -2086,7 +2086,7 @@ static VikLayerToolFuncStatus selecttool_release(Layer * layer, GdkEventButton *
 		}
 	}
 
-	if (event->button == 1 && (event->state & VIK_MOVE_MODIFIER)) {
+	if (event->button == MouseButton::LEFT && (event->state & VIK_MOVE_MODIFIER)) {
 		vik_window_pan_release(tool->window, event);
 	}
 

@@ -1133,7 +1133,7 @@ static bool mapnik_feature_release_cb(Layer * vml, GdkEventButton *event, LayerT
 
 bool LayerMapnik::feature_release(GdkEventButton * event, LayerTool * tool)
 {
-	if (event->button == 3) {
+	if (event->button == MouseButton::RIGHT) {
 		tool->viewport->screen_to_coord(MAX(0, event->x), MAX(0, event->y), &this->rerender_ul);
 		this->rerender_zoom = tool->viewport->get_zoom();
 

@@ -472,7 +472,7 @@ static bool trw_layer_waypoint_button_pressed(GtkWidget * tree_view,
 					      void * waypoints_and_layers)
 {
 	// Only on right clicks...
-	if (! (event->type == GDK_BUTTON_PRESS && event->button == 3)) {
+	if (! (event->type == GDK_BUTTON_PRESS && event->button == MouseButton::RIGHT)) {
 		return false;
 	}
 

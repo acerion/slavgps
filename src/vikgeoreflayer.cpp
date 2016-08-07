@@ -1109,7 +1109,7 @@ bool LayerGeoref::zoom_press(GdkEventButton * event, LayerTool * tool)
 		return false;
 	}
 
-	if (event->button == 1) {
+	if (event->button == MouseButton::LEFT) {
 		if (this->mpp_easting < (VIK_VIEWPORT_MAX_ZOOM / 1.05) && this->mpp_northing < (VIK_VIEWPORT_MAX_ZOOM / 1.05)) {
 			this->mpp_easting *= 1.01;
 			this->mpp_northing *= 1.01;

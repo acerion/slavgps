@@ -478,7 +478,7 @@ static bool layers_button_press_cb(LayersPanel * panel, GdkEventButton * event)
 
 bool LayersPanel::button_press(GdkEventButton * event)
 {
-	if (event->button == 3) {
+	if (event->button == MouseButton::RIGHT) {
 		static GtkTreeIter iter;
 		if (this->tree_view->get_iter_at_pos(&iter, event->x, event->y)) {
 			this->popup(&iter, 3);

@@ -424,7 +424,7 @@ static bool trw_layer_track_button_pressed_cb(GtkWidget * tree_view,
 					      void * tracks_and_layers)
 {
 	// Only on right clicks...
-	if (!(event->type == GDK_BUTTON_PRESS && event->button == 3)) {
+	if (!(event->type == GDK_BUTTON_PRESS && event->button == MouseButton::RIGHT)) {
 		return false;
 	}
 

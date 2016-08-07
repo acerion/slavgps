@@ -163,13 +163,13 @@ static void tpwin_sync_time_to_tp(GtkWidget * widget, GdkEventButton * event, Vi
 		return;
 	}
 
-	if (event->button == 3) {
+	if (event->button == MouseButton::RIGHT) {
 		// On right click and when a time is available, allow a method to copy the displayed time as text
 		if (!gtk_button_get_image(GTK_BUTTON(widget))) {
 			vu_copy_label_menu(widget, event->button);
 		}
 		return;
-	} else if (event->button == 2) {
+	} else if (event->button == MouseButton::MIDDLE) {
 		return;
 	}
 

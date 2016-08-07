@@ -67,11 +67,21 @@ namespace SlavGPS {
 		NUM_TYPES // Also use this value to indicate no layer association
 	};
 
-
-
-
-
 	LayerType& operator++(LayerType& layer_type);
+
+
+
+
+	enum class MouseButton {
+		LEFT   = 1,
+		MIDDLE = 2,
+		RIGHT  = 3
+	};
+
+	bool operator==(unsigned int event_button, MouseButton button);
+	bool operator!=(unsigned int event_button, MouseButton button);
+	bool operator==(MouseButton button, unsigned int event_button);
+	bool operator!=(MouseButton button, unsigned int event_button);
 
 
 

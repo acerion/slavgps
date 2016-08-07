@@ -338,7 +338,7 @@ static void configure_cb (GtkWidget *widget, void * user_data)
 static bool toolbar_popup_menu(GtkWidget *widget, GdkEventButton *event, void * user_data)
 {
 	// Only display menu on right button clicks
-	if (event->button == 3) {
+	if (event->button == MouseButton::RIGHT) {
 		GtkWidget *tmenu;
 		tmenu = gtk_menu_new();
 		GtkWidget *item = gtk_menu_item_new_with_mnemonic(_("_Customize"));
