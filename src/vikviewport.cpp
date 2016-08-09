@@ -590,122 +590,167 @@ bool Viewport::get_draw_scale()
 
 
 
+/* Return length of scale bar, in pixels. */
+int rescale_unit(double * base_distance, double * scale_unit, int maximum_width)
+{
+	double ratio = *base_distance / *scale_unit;
+
+	int n = 0;
+	if (ratio > 1) {
+		n = (int) floor(log10(ratio));
+	} else {
+		n = (int) floor(log10(1.0 / ratio));
+	}
+
+
+	*scale_unit = pow(10.0, n); /* scale_unit is still a unit (1 km, 10 miles, 100 km, etc. ), only 10^n times larger. */
+	ratio = *base_distance / *scale_unit;
+	double len = maximum_width / ratio; /* [px] */
+
+
+	/* I don't want the scale unit to be always 10^n.
+
+	   Let's say that at this point we have a scale of length 10km
+	   = 344 px. Let's see what actually happens as we zoom out:
+	   zoom  0: 10 km / 344 px
+	   zoom -1: 10 km / 172 px
+	   zoom -2: 10 km /  86 px
+	   zoom -3: 10 km /  43 px
+
+	   At zoom -3 the scale is small and not very useful. With the code
+	   below enabled we get:
+
+	   zoom  0: 10 km / 345 px
+	   zoom -1: 20 km / 345 px
+	   zoom -2: 20 km / 172 px
+	   zoom -3: 50 km / 216 px
+
+	   We can see that the scale doesn't become very short, and keeps being usable. */
+
+	if (maximum_width / len > 5) {
+		*scale_unit *= 5;
+		ratio = *base_distance / *scale_unit;
+		len = maximum_width / ratio;
+
+	} else if (maximum_width / len > 2) {
+		*scale_unit *= 2;
+		ratio = *base_distance / *scale_unit;
+		len = maximum_width / ratio;
+
+	} else {
+		;
+	}
+
+	return (int) len;
+}
+
+
+
 
 void Viewport::draw_scale()
 {
+	if (!this->do_draw_scale) {
+		return;
+	}
+
 	VikViewport * vvp = (VikViewport *) this->vvp;
 
-	if (this->do_draw_scale) {
-		VikCoord left, right;
-		double base;
-		int SCSIZE = 5, HEIGHT=10;
+	VikCoord left, right;
+	double base_distance;       /* Physical (real world) distance corresponding to full width of drawn scale. Physical units (miles, meters). */
+	int HEIGHT = 20;            /* Height of scale in pixels. */
+	float RELATIVE_WIDTH = 0.5; /* Width of scale, relative to width of viewport. */
+	int MAXIMUM_WIDTH = this->width * RELATIVE_WIDTH;
 
+	this->screen_to_coord(0,                      height / 2, &left);
+	this->screen_to_coord(width * RELATIVE_WIDTH, height / 2, &right);
 
-		this->screen_to_coord(0, height / 2, &left);
-		this->screen_to_coord(width / SCSIZE, height / 2, &right);
-
-		vik_units_distance_t dist_units = a_vik_get_units_distance();
-		switch (dist_units) {
-		case VIK_UNITS_DISTANCE_KILOMETRES:
-			base = vik_coord_diff (&left, &right); // in meters
-			break;
-		case VIK_UNITS_DISTANCE_MILES:
-			// in 0.1 miles (copes better when zoomed in as 1 mile can be too big)
-			base = VIK_METERS_TO_MILES(vik_coord_diff (&left, &right)) * 10.0;
-			break;
-		case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
-			// in 0.1 NM (copes better when zoomed in as 1 NM can be too big)
-			base = VIK_METERS_TO_NAUTICAL_MILES(vik_coord_diff (&left, &right)) * 10.0;
-			break;
-		default:
-			base = 1; // Keep the compiler happy
-			fprintf(stderr, "CRITICAL: Houston, we've had a problem. distance=%d\n", dist_units);
-		}
-		double ratio = (width / SCSIZE) / base;
-
-		double unit = 1;
-		double diff = fabs(base-unit);
-		double old_unit = unit;
-		double old_diff = diff;
-		int odd = 1;
-		while (diff <= old_diff) {
-			old_unit = unit;
-			old_diff = diff;
-			unit = unit * (odd%2 ? 5 : 2);
-			diff = fabs(base-unit);
-			odd++;
-		}
-		unit = old_unit;
-		int len = unit * ratio;
-
-		/* white background */
-		this->draw_line(scale_bg_gc, PAD, height-PAD, PAD + len, height-PAD);
-		this->draw_line(scale_bg_gc, PAD, height-PAD, PAD, height-PAD-HEIGHT);
-		this->draw_line(scale_bg_gc, PAD + len, height-PAD, PAD + len, height-PAD-HEIGHT);
-		/* black scale */
-		this->draw_line(gtk_widget_get_style(GTK_WIDGET(&vvp->drawing_area))->black_gc, PAD, height-PAD, PAD + len, height-PAD);
-		this->draw_line(gtk_widget_get_style(GTK_WIDGET(&vvp->drawing_area))->black_gc, PAD, height-PAD, PAD, height-PAD-HEIGHT);
-		this->draw_line(gtk_widget_get_style(GTK_WIDGET(&vvp->drawing_area))->black_gc, PAD + len, height-PAD, PAD + len, height-PAD-HEIGHT);
-		if (odd%2) {
-			int i;
-			for (i=1; i<5; i++) {
-				this->draw_line(scale_bg_gc,
-						PAD+i*len/5, height-PAD, PAD+i*len/5, height-PAD-(HEIGHT/2));
-				this->draw_line(gtk_widget_get_style(GTK_WIDGET(&vvp->drawing_area))->black_gc,
-						PAD+i*len/5, height-PAD, PAD+i*len/5, height-PAD-(HEIGHT/2));
-			}
-		} else {
-			int i;
-			for (i=1; i<10; i++) {
-				this->draw_line(scale_bg_gc,
-						PAD+i*len/10, height-PAD, PAD+i*len/10, height-PAD-((i==5)?(2*HEIGHT/3):(HEIGHT/2)));
-				this->draw_line(gtk_widget_get_style(GTK_WIDGET(&vvp->drawing_area))->black_gc,
-						PAD+i*len/10, height-PAD, PAD+i*len/10, height-PAD-((i==5)?(2*HEIGHT/3):(HEIGHT/2)));
-			}
-		}
-		PangoLayout * pl = gtk_widget_create_pango_layout(GTK_WIDGET(&vvp->drawing_area), NULL);
-		pango_layout_set_font_description(pl, gtk_widget_get_style(GTK_WIDGET(&vvp->drawing_area))->font_desc);
-
-		char s[128];
-		switch (dist_units) {
-		case VIK_UNITS_DISTANCE_KILOMETRES:
-			if (unit >= 1000) {
-				sprintf(s, "%d km", (int)unit/1000);
-			} else {
-				sprintf(s, "%d m", (int)unit);
-			}
-			break;
-		case VIK_UNITS_DISTANCE_MILES:
-			// Handle units in 0.1 miles
-			if (unit < 10.0) {
-				sprintf(s, "%0.1f miles", unit/10.0);
-			} else if ((int)unit == 10.0) {
-				sprintf(s, "1 mile");
-			} else {
-				sprintf(s, "%d miles", (int)(unit/10.0));
-			}
-			break;
-		case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
-			// Handle units in 0.1 NM
-			if (unit < 10.0) {
-				sprintf(s, "%0.1f NM", unit/10.0);
-			} else if ((int)unit == 10.0) {
-				sprintf(s, "1 NM");
-			} else {
-				sprintf(s, "%d NMs", (int)(unit/10.0));
-			}
-			break;
-		default:
-			fprintf(stderr, "CRITICAL: Houston, we've had a problem. distance=%d\n", dist_units);
-		}
-		pango_layout_set_text(pl, s, -1);
-		this->draw_layout(gtk_widget_get_style(GTK_WIDGET(&vvp->drawing_area))->black_gc,
-				  PAD + len + PAD, height - PAD - 10, pl);
-		g_object_unref(pl);
-		pl = NULL;
+	vik_units_distance_t dist_units = a_vik_get_units_distance();
+	switch (dist_units) {
+	case VIK_UNITS_DISTANCE_KILOMETRES:
+		base_distance = vik_coord_diff(&left, &right); /* In meters. */
+		break;
+	case VIK_UNITS_DISTANCE_MILES:
+		/* In 0.1 miles (copes better when zoomed in as 1 mile can be too big). */
+		base_distance = VIK_METERS_TO_MILES(vik_coord_diff(&left, &right)) * 10.0;
+		break;
+	case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
+		/* In 0.1 NM (copes better when zoomed in as 1 NM can be too big). */
+		base_distance = VIK_METERS_TO_NAUTICAL_MILES(vik_coord_diff(&left, &right)) * 10.0;
+		break;
+	default:
+		base_distance = 1; /* Keep the compiler happy. */
+		fprintf(stderr, "CRITICAL: failed to get correct units of distance, got %d\n", dist_units);
 	}
-}
 
+	/* At this point "base_distance" is a distance between "left" and "right" in physical units.
+	   But a scale can't have an arbitrary length (e.g. 3.07 miles, or 23.2 km),
+	   it should be something like 1.00 mile or 10.00 km - a unit. */
+	double scale_unit = 1; /* [km, miles, nautical miles] */
+
+	int len = rescale_unit(&base_distance, &scale_unit, MAXIMUM_WIDTH);
+
+	GdkGC * paint_bg = scale_bg_gc;
+	GdkGC * paint_fg = gtk_widget_get_style(GTK_WIDGET(&vvp->drawing_area))->black_gc;
+
+	/* White background. */
+	this->draw_line(paint_bg, PAD,       height - PAD, PAD + len, height - PAD);
+	this->draw_line(paint_bg, PAD,       height - PAD, PAD,       height - PAD - HEIGHT);
+	this->draw_line(paint_bg, PAD + len, height - PAD, PAD + len, height - PAD - HEIGHT);
+
+	/* Black scale. */
+	this->draw_line(paint_fg, PAD,       height - PAD, PAD + len, height - PAD);
+	this->draw_line(paint_fg, PAD,       height - PAD, PAD,       height - PAD - HEIGHT);
+	this->draw_line(paint_fg, PAD + len, height - PAD, PAD + len, height - PAD - HEIGHT);
+
+
+	int y1 = height - PAD;
+	for (int i = 1; i < 10; i++) {
+		int x1 = PAD + i * len / 10;
+		int diff = ((i == 5) ? (2 * HEIGHT / 3) : (1 * HEIGHT / 3));
+		this->draw_line(paint_bg, x1, y1, x1, y1 - diff);
+		this->draw_line(paint_fg, x1, y1, x1, y1 - diff);
+	}
+
+	PangoLayout * pl = gtk_widget_create_pango_layout(GTK_WIDGET(&vvp->drawing_area), NULL);
+	pango_layout_set_font_description(pl, gtk_widget_get_style(GTK_WIDGET(&vvp->drawing_area))->font_desc);
+
+	char s[128];
+	switch (dist_units) {
+	case VIK_UNITS_DISTANCE_KILOMETRES:
+		if (scale_unit >= 1000) {
+			sprintf(s, "%d km", (int) scale_unit / 1000);
+		} else {
+			sprintf(s, "%d m", (int) scale_unit);
+		}
+		break;
+	case VIK_UNITS_DISTANCE_MILES:
+		/* Handle units in 0.1 miles. */
+		if (scale_unit < 10.0) {
+			sprintf(s, "%0.1f miles", scale_unit / 10.0);
+		} else if ((int) scale_unit == 10.0) {
+			sprintf(s, "1 mile");
+		} else {
+			sprintf(s, "%d miles", (int) (scale_unit / 10.0));
+		}
+		break;
+	case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
+		/* Handle units in 0.1 NM. */
+		if (scale_unit < 10.0) {
+			sprintf(s, "%0.1f NM", scale_unit / 10.0);
+		} else if ((int) scale_unit == 10.0) {
+			sprintf(s, "1 NM");
+		} else {
+			sprintf(s, "%d NMs", (int) (scale_unit / 10.0));
+		}
+		break;
+	default:
+		fprintf(stderr, "CRITICAL: failed to get correct units of distance, got %d\n", dist_units);
+	}
+	pango_layout_set_text(pl, s, -1);
+	this->draw_layout(paint_fg, PAD + len + PAD, height - PAD - 10, pl);
+	g_object_unref(pl);
+	pl = NULL;
+}
 
 
 
