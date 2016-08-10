@@ -47,6 +47,13 @@
 
 
 
+/* cf with vik_track_get_minmax_alt internals. */
+#define VIK_VAL_MIN_ALT 25000.0
+#define VIK_VAL_MAX_ALT -5000.0
+
+
+
+
 namespace SlavGPS {
 
 
@@ -196,7 +203,7 @@ namespace SlavGPS {
 
 		void convert(VikCoordMode dest_mode);
 		double * make_elevation_map(uint16_t num_chunks);  // const
-		void get_total_elevation_gain(double *up, double *down);  // const
+		bool get_total_elevation_gain(double *up, double *down);  // const
 		Trackpoint * get_tp_by_dist(double meters_from_start, bool get_next_point, double *tp_metres_from_start);
 		Trackpoint * get_closest_tp_by_percentage_dist(double reldist, double *meters_from_start);
 		Trackpoint * get_closest_tp_by_percentage_time(double reldist, time_t *seconds_from_start);

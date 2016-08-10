@@ -1089,10 +1089,10 @@ double * Track::make_elevation_map(uint16_t num_chunks)
 
 
 
-void Track::get_total_elevation_gain(double *up, double *down)
+bool Track::get_total_elevation_gain(double *up, double *down)
 {
 	if (this->trackpointsB->empty()) {
-		return;
+		return false;
 	}
 
 	auto iter = this->trackpointsB->begin();
@@ -1116,6 +1116,7 @@ void Track::get_total_elevation_gain(double *up, double *down)
 		}
 	}
 
+	return true;
 }
 
 

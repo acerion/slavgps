@@ -25,6 +25,7 @@
 #include <time.h>
 #include <string.h>
 #include <stdlib.h>
+#include <cassert>
 #include <glib/gprintf.h>
 #include <glib/gi18n.h>
 
@@ -33,152 +34,15 @@
 #include "ui_util.h"
 #include "settings.h"
 #include "globals.h"
+#include "track_statistics.h"
+
+
 
 
 using namespace SlavGPS;
 
 
 
-// Units of each item are in SI Units
-// (as returned by the appropriate internal viking track functions)
-typedef struct {
-	double min_alt;
-	double max_alt;
-	double elev_gain;
-	double elev_loss;
-	double length;
-	double length_gaps;
-	double max_speed;
-	unsigned long trackpoints;
-	unsigned int segments;
-	int duration;
-	time_t start_time;
-	time_t end_time;
-	int count;
-} track_stats;
-
-// Early incarnations of the code had facilities to print output for multiple files
-//  but has been rescoped to work on a single list of tracks for the GUI
-typedef enum {
-	//TS_TRACK,
-	TS_TRACKS,
-	//TS_FILES,
-} track_stat_block;
-static track_stats tracks_stats[1];
-
-// cf with vik_track_get_minmax_alt internals
-#define VIK_VAL_MIN_ALT 25000.0
-#define VIK_VAL_MAX_ALT -5000.0
-
-/**
- * Reset the specified block
- * Call this when starting to processing multiple items
- */
-static void val_reset(track_stat_block block)
-{
-	tracks_stats[block].min_alt     = VIK_VAL_MIN_ALT;
-	tracks_stats[block].max_alt     = VIK_VAL_MAX_ALT;
-	tracks_stats[block].elev_gain   = 0.0;
-	tracks_stats[block].elev_loss   = 0.0;
-	tracks_stats[block].length      = 0.0;
-	tracks_stats[block].length_gaps = 0.0;
-	tracks_stats[block].max_speed   = 0.0;
-	tracks_stats[block].trackpoints = 0;
-	tracks_stats[block].segments    = 0;
-	tracks_stats[block].duration    = 0;
-	tracks_stats[block].start_time  = 0;
-	tracks_stats[block].end_time    = 0;
-	tracks_stats[block].count       = 0;
-}
-
-/**
- * @val_analyse_track:
- * @trk: The track to be analyse
- *
- * Function to collect statistics, using the internal track functions
- */
-static void val_analyse_track(Track * trk)
-{
-	//val_reset (TS_TRACK);
-	double min_alt;
-	double max_alt;
-	double up;
-	double down;
-
-	double  length      = 0.0;
-	double  length_gaps = 0.0;
-	double  max_speed   = 0.0;
-	unsigned long   trackpoints = 0;
-	unsigned int    segments    = 0;
-
-	tracks_stats[TS_TRACKS].count++;
-
-	trackpoints = trk->get_tp_count();
-	segments    = trk->get_segment_count();
-	length      = trk->get_length();
-	length_gaps = trk->get_length_including_gaps();
-	max_speed   = trk->get_max_speed();
-
-	int ii;
-	for (ii = 0; ii < G_N_ELEMENTS(tracks_stats); ii++) {
-		tracks_stats[ii].trackpoints += trackpoints;
-		tracks_stats[ii].segments    += segments;
-		tracks_stats[ii].length      += length;
-		tracks_stats[ii].length_gaps += length_gaps;
-		if (max_speed > tracks_stats[ii].max_speed) {
-			tracks_stats[ii].max_speed = max_speed;
-		}
-	}
-
-	if (trk->get_minmax_alt(&min_alt, &max_alt)) {
-		for (ii = 0; ii < G_N_ELEMENTS(tracks_stats); ii++) {
-			if (min_alt < tracks_stats[ii].min_alt) {
-				tracks_stats[ii].min_alt = min_alt;
-			}
-			if (max_alt > tracks_stats[ii].max_alt) {
-				tracks_stats[ii].max_alt = max_alt;
-			}
-		}
-	}
-
-	trk->get_total_elevation_gain(&up, &down);
-
-	for (ii = 0; ii < G_N_ELEMENTS(tracks_stats); ii++) {
-		tracks_stats[ii].elev_gain += up;
-		tracks_stats[ii].elev_loss += down;
-	}
-
-	if (!trk->empty()
-	    && (*trk->trackpointsB->begin())->timestamp) {
-
-		time_t t1 = (*trk->trackpointsB->begin())->timestamp;
-		time_t t2 = (*std::prev(trk->trackpointsB->end()))->timestamp;
-
-		/* Assume never actually have a track with a time of 0 (1st Jan 1970). */
-		for (ii = 0; ii < G_N_ELEMENTS(tracks_stats); ii++) {
-			if (tracks_stats[ii].start_time == 0) {
-				tracks_stats[ii].start_time = t1;
-			}
-			if (tracks_stats[ii].end_time == 0) {
-				tracks_stats[ii].end_time = t2;
-			}
-		}
-
-		// Initialize to the first value
-		for (ii = 0; ii < G_N_ELEMENTS(tracks_stats); ii++) {
-			if (t1 < tracks_stats[ii].start_time) {
-				tracks_stats[ii].start_time = t1;
-			}
-			if (t2 > tracks_stats[ii].end_time) {
-				tracks_stats[ii].end_time = t2;
-			}
-		}
-
-		for (ii = 0; ii < G_N_ELEMENTS(tracks_stats); ii++) {
-			tracks_stats[ii].duration = tracks_stats[ii].duration + (int)(t2-t1);
-		}
-	}
-}
 
 // Could use GtkGrids but that is Gtk3+
 static GtkWidget * create_table(int cnt, char * labels[], GtkWidget * contents[])
@@ -240,7 +104,7 @@ static GtkWidget * create_layout(GtkWidget * content[])
  *
  * Update the given widgets table with the values from the track stats
  */
-static void table_output(track_stats ts, GtkWidget * content[])
+static void table_output(TrackStatistics& ts, GtkWidget * content[])
 {
 	int cnt = 0;
 
@@ -279,7 +143,10 @@ static void table_output(track_stats ts, GtkWidget * content[])
 		snprintf(tmp_buf, sizeof(tmp_buf), "%s", time_start);
 	}
 
+	fprintf(stderr, "ts.max_speed = %d\n", ts.max_speed);
+
 	gtk_label_set_text(GTK_LABEL(content[cnt++]), tmp_buf);
+	fprintf(stderr, "%d: %s, cnt = %d\n", __LINE__, tmp_buf, cnt);
 
 	switch (a_vik_get_units_distance ()) {
 	case VIK_UNITS_DISTANCE_MILES:
@@ -291,6 +158,7 @@ static void table_output(track_stats ts, GtkWidget * content[])
 		break;
 	}
 	gtk_label_set_text(GTK_LABEL(content[cnt++]), tmp_buf);
+	fprintf(stderr, "%d: %s, cnt = %d\n", __LINE__, tmp_buf, cnt);
 
 	switch (a_vik_get_units_distance ()) {
 	case VIK_UNITS_DISTANCE_MILES:
@@ -302,12 +170,14 @@ static void table_output(track_stats ts, GtkWidget * content[])
 		break;
 	}
 	gtk_label_set_text(GTK_LABEL(content[cnt++]), tmp_buf);
+	fprintf(stderr, "%d: %s, cnt = %d\n", __LINE__, tmp_buf, cnt);
 
 	// I'm sure this could be cleaner...
 	switch (a_vik_get_units_speed()) {
 	case VIK_UNITS_SPEED_MILES_PER_HOUR:
 		snprintf(tmp_buf, sizeof(tmp_buf), _("%.1f mph"), (double)VIK_MPS_TO_MPH(ts.max_speed));
 		gtk_label_set_text (GTK_LABEL(content[cnt++]), tmp_buf);
+		fprintf(stderr, "%d: %s, cnt = %d\n", __LINE__, tmp_buf, cnt);
 		if (ts.duration > 0) {
 			snprintf(tmp_buf, sizeof(tmp_buf), ("%.1f mph"), (double)VIK_MPS_TO_MPH(ts.length/ts.duration));
 		}
@@ -317,6 +187,7 @@ static void table_output(track_stats ts, GtkWidget * content[])
 			snprintf(tmp_buf, sizeof(tmp_buf), _("%.2f m/s"), (double)ts.max_speed);
 		}
 		gtk_label_set_text (GTK_LABEL(content[cnt++]), tmp_buf);
+		fprintf(stderr, "%d: %s, cnt = %d\n", __LINE__, tmp_buf, cnt);
 		if (ts.duration > 0) {
 			snprintf(tmp_buf, sizeof(tmp_buf), ("%.2f m/s"), (double)(ts.length/ts.duration));
 		} else {
@@ -328,6 +199,7 @@ static void table_output(track_stats ts, GtkWidget * content[])
 			snprintf(tmp_buf, sizeof(tmp_buf), _("%.2f knots\n"), (double)VIK_MPS_TO_KNOTS(ts.max_speed));
 		}
 		gtk_label_set_text (GTK_LABEL(content[cnt++]), tmp_buf);
+		fprintf(stderr, "%d: %s, cnt = %d\n", __LINE__, tmp_buf, cnt);
 		if (ts.duration > 0) {
 			snprintf(tmp_buf, sizeof(tmp_buf), _("%.2f knots"), (double)VIK_MPS_TO_KNOTS(ts.length/ts.duration));
 		} else {
@@ -340,6 +212,7 @@ static void table_output(track_stats ts, GtkWidget * content[])
 			snprintf(tmp_buf, sizeof(tmp_buf), _("%.2f km/h"), (double)VIK_MPS_TO_KPH(ts.max_speed));
 		}
 		gtk_label_set_text (GTK_LABEL(content[cnt++]), tmp_buf);
+		fprintf(stderr, "%d: %s, cnt = %d\n", __LINE__, tmp_buf, cnt);
 		if (ts.duration > 0) {
 			snprintf(tmp_buf, sizeof(tmp_buf), _("%.2f km/h"), (double)VIK_MPS_TO_KPH(ts.length/ts.duration));
 		} else {
@@ -348,6 +221,7 @@ static void table_output(track_stats ts, GtkWidget * content[])
 		break;
 	}
 	gtk_label_set_text(GTK_LABEL(content[cnt++]), tmp_buf);
+	fprintf(stderr, "%d: %s, cnt = %d\n", __LINE__, tmp_buf, cnt);
 
 	switch (a_vik_get_units_height()) {
 		// Note always round off height value output since sub unit accuracy is overkill
@@ -358,6 +232,7 @@ static void table_output(track_stats ts, GtkWidget * content[])
 			snprintf(tmp_buf, sizeof(tmp_buf), "--");
 		}
 		gtk_label_set_text(GTK_LABEL(content[cnt++]), tmp_buf);
+		fprintf(stderr, "%d: %s, cnt = %d\n", __LINE__, tmp_buf, cnt);
 
 		if (ts.max_alt != VIK_VAL_MAX_ALT) {
 			snprintf(tmp_buf, sizeof(tmp_buf), _("%d feet"), (int)round(VIK_METERS_TO_FEET(ts.max_alt)));
@@ -365,9 +240,11 @@ static void table_output(track_stats ts, GtkWidget * content[])
 			snprintf(tmp_buf, sizeof(tmp_buf), "--");
 		}
 		gtk_label_set_text(GTK_LABEL(content[cnt++]), tmp_buf);
+		fprintf(stderr, "%d: %s, cnt = %d\n", __LINE__, tmp_buf, cnt);
 
 		snprintf(tmp_buf, sizeof(tmp_buf), _("%d feet / %d feet"), (int)round(VIK_METERS_TO_FEET(ts.elev_gain)), (int)round(VIK_METERS_TO_FEET(ts.elev_loss)));
 		gtk_label_set_text (GTK_LABEL(content[cnt++]), tmp_buf);
+		fprintf(stderr, "%d: %s, cnt = %d\n", __LINE__, tmp_buf, cnt);
 		snprintf(tmp_buf, sizeof(tmp_buf), _("%d feet / %d feet"), (int)round(VIK_METERS_TO_FEET(ts.elev_gain/ts.count)), (int)round(VIK_METERS_TO_FEET(ts.elev_loss/ts.count)));
 		break;
 	default:
@@ -378,6 +255,7 @@ static void table_output(track_stats ts, GtkWidget * content[])
 			snprintf(tmp_buf, sizeof(tmp_buf), "--");
 		}
 		gtk_label_set_text (GTK_LABEL(content[cnt++]), tmp_buf);
+		fprintf(stderr, "%d: %s, cnt = %d\n", __LINE__, tmp_buf, cnt);
 
 		if (ts.max_alt != VIK_VAL_MAX_ALT) {
 			snprintf(tmp_buf, sizeof(tmp_buf), _("%d m"), (int)round(ts.max_alt));
@@ -385,13 +263,16 @@ static void table_output(track_stats ts, GtkWidget * content[])
 			snprintf(tmp_buf, sizeof(tmp_buf), "--");
 		}
 		gtk_label_set_text (GTK_LABEL(content[cnt++]), tmp_buf);
+		fprintf(stderr, "%d: %s, cnt = %d\n", __LINE__, tmp_buf, cnt);
 
 		snprintf(tmp_buf, sizeof(tmp_buf), _("%d m / %d m"), (int)round(ts.elev_gain), (int)round(ts.elev_loss));
 		gtk_label_set_text (GTK_LABEL(content[cnt++]), tmp_buf);
+		fprintf(stderr, "%d: %s, cnt = %d\n", __LINE__, tmp_buf, cnt);
 		snprintf(tmp_buf, sizeof(tmp_buf), _("%d m / %d m"), (int)round(ts.elev_gain/ts.count), (int)round(ts.elev_loss/ts.count));
 		break;
 	}
 	gtk_label_set_text(GTK_LABEL(content[cnt++]), tmp_buf);
+	fprintf(stderr, "%d: %s, cnt = %d\n", __LINE__, tmp_buf, cnt);
 
 	int hours;
 	int minutes;
@@ -402,6 +283,7 @@ static void table_output(track_stats ts, GtkWidget * content[])
 	minutes = (int)((ts.duration - (days*60*60*24) - (hours*60*60)) / 60);
 	snprintf(tmp_buf, sizeof(tmp_buf), _("%d:%02d:%02d days:hrs:mins"), days, hours, minutes);
 	gtk_label_set_text (GTK_LABEL(content[cnt++]), tmp_buf);
+	fprintf(stderr, "%d: %s, cnt = %d\n", __LINE__, tmp_buf, cnt);
 
 	// Average Duration
 	int avg_dur = ts.duration / ts.count;
@@ -409,42 +291,9 @@ static void table_output(track_stats ts, GtkWidget * content[])
 	minutes = (int)((avg_dur - (hours*60*60)) / 60);
 	snprintf(tmp_buf, sizeof(tmp_buf), _("%d:%02d hrs:mins"), hours, minutes);
 	gtk_label_set_text(GTK_LABEL(content[cnt++]), tmp_buf);
+	fprintf(stderr, "%d: %s, cnt = %d\n", __LINE__, tmp_buf, cnt);
 }
 
-/**
- * val_analyse_item_maybe:
- * @trwlist: A track and the associated layer to consider for analysis
- * @data:   Whether to include invisible items
- *
- * Analyse this particular track
- *  considering whether it should be included depending on it's visibility
- */
-static void val_analyse_item_maybe(track_layer_t * trwlist, bool include_invisible)
-{
-	Track * trk = trwlist->trk;
-	LayerTRW * trw = trwlist->trw;
-
-	// Safety first - items shouldn't be deleted...
-	if (trw->type != LayerType::TRW) return;
-	if (!trk) return;
-
-	if (!include_invisible) {
-		// Skip invisible layers or sublayers
-		if (!trw->visible ||
-			 (trk->is_route && !trw->get_routes_visibility()) ||
-		    (!trk->is_route && !trw->get_tracks_visibility())) {
-
-			return;
-		}
-
-		// Skip invisible tracks
-		if (!trk->visible) {
-			return;
-		}
-	}
-
-	val_analyse_track(trk);
-}
 
 /**
  * val_analyse:
@@ -457,14 +306,19 @@ static void val_analyse_item_maybe(track_layer_t * trwlist, bool include_invisib
  */
 void val_analyse(GtkWidget * widgets[], std::list<track_layer_t *> * tracks_and_layers, bool include_invisible)
 {
-	val_reset (TS_TRACKS);
+	TrackStatistics stats;
 
 	for (auto iter = tracks_and_layers->begin(); iter != tracks_and_layers->end(); iter++) {
-		val_analyse_item_maybe(*iter, include_invisible);
+		LayerTRW * trw = (*iter)->trw;
+		assert (trw->type == LayerType::TRW);
+		stats.add_track_maybe((*iter)->trk, trw->visible, trw->get_tracks_visibility(), trw->get_routes_visibility(), include_invisible);
 	}
 
-	table_output(tracks_stats[TS_TRACKS], widgets);
+	table_output(stats, widgets);
 }
+
+
+
 
 typedef struct {
 	GtkWidget ** widgets;

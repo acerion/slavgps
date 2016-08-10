@@ -57,6 +57,7 @@ libviking_a_SOURCES = \
 	viking.h mapcoord.h config.h \
 	vik_compat.cpp vik_compat.h \
 	viktrack.cpp viktrack.h \
+	track_statistics.cpp track_statistics.h \
 	vikwaypoint.cpp vikwaypoint.h \
 	clipboard.cpp clipboard.h \
 	coords.cpp coords.h \
