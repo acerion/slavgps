@@ -277,7 +277,7 @@ VikTrwLayerTpwin * vik_trw_layer_tpwin_new(GtkWindow * parent)
 	g_signal_connect_swapped (G_OBJECT(tpwin->lat), "value-changed", G_CALLBACK(tpwin_sync_ll_to_tp), tpwin);
 	g_signal_connect_swapped (G_OBJECT(tpwin->lon), "value-changed", G_CALLBACK(tpwin_sync_ll_to_tp), tpwin);
 
-	tpwin->alt = GTK_SPIN_BUTTON(gtk_spin_button_new(GTK_ADJUSTMENT(gtk_adjustment_new (0, -1000, 25000, 10, 100, 0)), 10, 2));
+	tpwin->alt = GTK_SPIN_BUTTON(gtk_spin_button_new(GTK_ADJUSTMENT(gtk_adjustment_new (0, (int) VIK_VAL_MAX_ALT, (int) VIK_VAL_MIN_ALT, 10, 100, 0)), 10, 2));
 
 	g_signal_connect_swapped (G_OBJECT(tpwin->alt), "value-changed", G_CALLBACK(tpwin_sync_alt_to_tp), tpwin);
 

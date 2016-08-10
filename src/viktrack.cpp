@@ -1625,11 +1625,11 @@ Trackpoint * Track::get_tp_by_max_alt()
 	}
 
 	Trackpoint * max_alt_tp = NULL;
-	double maxalt = -5000.0;
+	double max_alt = VIK_VAL_MAX_ALT;
 
 	for (auto iter = this->trackpointsB->begin(); iter != this->trackpointsB->end(); iter++) {
-		if ((*iter)->altitude > maxalt) {
-			maxalt = (*iter)->altitude;
+		if ((*iter)->altitude > max_alt) {
+			max_alt = (*iter)->altitude;
 			max_alt_tp = *iter;
 		}
 	}
@@ -1651,7 +1651,7 @@ Trackpoint * Track::get_tp_by_min_alt()
 	}
 
 	Trackpoint * min_alt_tp = NULL;
-	double minalt = 25000.0;
+	double minalt = VIK_VAL_MIN_ALT;
 
 	for (auto iter = this->trackpointsB->begin(); iter != this->trackpointsB->end(); iter++) {
 		if ((*iter)->altitude < minalt) {
@@ -1717,8 +1717,8 @@ Trackpoint * Track::get_tp_prev(Trackpoint * tp)
 
 bool Track::get_minmax_alt(double * min_alt, double * max_alt)
 {
-	*min_alt = 25000;
-	*max_alt = -5000;
+	*min_alt = VIK_VAL_MIN_ALT;
+	*max_alt = VIK_VAL_MAX_ALT;
 
 	if (this->trackpointsB->empty()) {
 		return false;
