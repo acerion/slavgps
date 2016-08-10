@@ -47,27 +47,26 @@ using namespace SlavGPS;
 // Could use GtkGrids but that is Gtk3+
 static GtkWidget * create_table(int cnt, char * labels[], GtkWidget * contents[])
 {
-	GtkTable * table;
-	int i;
-
-	table = GTK_TABLE(gtk_table_new (cnt, 2, false));
+	GtkTable * table = GTK_TABLE(gtk_table_new (cnt, 2, false));
 	gtk_table_set_col_spacing(table, 0, 10);
-	for (i=0; i<cnt; i++) {
-		GtkWidget *label;
-		label = gtk_label_new(NULL);
+	for (int i = 0; i < cnt; i++) {
+		GtkWidget * label = gtk_label_new(NULL);
 		gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5); // Position text centrally in vertical plane
 		// All text labels are set to be in bold
-		char *markup = g_markup_printf_escaped("<b>%s:</b>", _(labels[i]));
+		char * markup = g_markup_printf_escaped("<b>%s:</b>", _(labels[i]));
 		gtk_label_set_markup(GTK_LABEL(label), markup);
 		free(markup);
 		gtk_table_attach(table, label, 0, 1, i, i+1, GTK_FILL, GTK_EXPAND, 4, 2);
 		if (GTK_IS_MISC(contents[i])) {
-			gtk_misc_set_alignment(GTK_MISC(contents[i]), 0, 0.5);
+			gtk_misc_set_alignment(GTK_MISC (contents[i]), 0, 0.5);
 		}
 		gtk_table_attach_defaults(table, contents[i], 1, 2, i, i+1);
 	}
 	return GTK_WIDGET (table);
 }
+
+
+
 
 static char * label_texts[] = {
 	(char *) N_("Number of Tracks"),
@@ -84,6 +83,9 @@ static char * label_texts[] = {
 	(char *) N_("Avg. Duration"),
 };
 
+
+
+
 /**
  * create_layout:
  *
@@ -98,6 +100,9 @@ static GtkWidget * create_layout(GtkWidget * content[])
 
 	return create_table(cnt, label_texts, content);
 }
+
+
+
 
 /**
  * table_output:
@@ -115,7 +120,7 @@ static void table_output(TrackStatistics& ts, GtkWidget * content[])
 	if (ts.count == 0) {
 		// Blank all other fields
 		snprintf(tmp_buf, sizeof(tmp_buf), "--");
-		for (cnt = 1; cnt < G_N_ELEMENTS(label_texts); cnt++) {
+		for (int cnt = 1; cnt < G_N_ELEMENTS(label_texts); cnt++) {
 			gtk_label_set_text(GTK_LABEL(content[cnt]), tmp_buf);
 		}
 		return;
@@ -274,25 +279,24 @@ static void table_output(TrackStatistics& ts, GtkWidget * content[])
 	gtk_label_set_text(GTK_LABEL(content[cnt++]), tmp_buf);
 	fprintf(stderr, "%d: %s, cnt = %d\n", __LINE__, tmp_buf, cnt);
 
-	int hours;
-	int minutes;
-	int days;
 	// Total Duration
-	days    = (int)(ts.duration / (60*60*24));
-	hours   = (int)floor((ts.duration - (days*60*60*24)) / (60*60));
-	minutes = (int)((ts.duration - (days*60*60*24) - (hours*60*60)) / 60);
+	int days    = (int) (ts.duration / (60*60*24));
+	int hours   = (int) floor((ts.duration - (days * 60 * 60 * 24)) / (60 * 60));
+	int minutes = (int) ((ts.duration - (days * 60 * 60 * 24) - (hours * 60 * 60)) / 60);
 	snprintf(tmp_buf, sizeof(tmp_buf), _("%d:%02d:%02d days:hrs:mins"), days, hours, minutes);
 	gtk_label_set_text (GTK_LABEL(content[cnt++]), tmp_buf);
 	fprintf(stderr, "%d: %s, cnt = %d\n", __LINE__, tmp_buf, cnt);
 
 	// Average Duration
 	int avg_dur = ts.duration / ts.count;
-	hours   = (int)floor(avg_dur / (60*60));
-	minutes = (int)((avg_dur - (hours*60*60)) / 60);
+	hours   = (int) floor(avg_dur / (60*60));
+	minutes = (int) ((avg_dur - (hours * 60 * 60)) / 60);
 	snprintf(tmp_buf, sizeof(tmp_buf), _("%d:%02d hrs:mins"), hours, minutes);
 	gtk_label_set_text(GTK_LABEL(content[cnt++]), tmp_buf);
 	fprintf(stderr, "%d: %s, cnt = %d\n", __LINE__, tmp_buf, cnt);
 }
+
+
 
 
 /**
@@ -350,6 +354,9 @@ static void include_invisible_toggled_cb(GtkToggleButton * togglebutton, analyse
 	gtk_widget_show_all(acb->layout);
 }
 
+
+
+
 #define VIK_SETTINGS_ANALYSIS_DO_INVISIBLE "track_analysis_do_invisible"
 
 /**
@@ -375,6 +382,9 @@ static void analyse_close(GtkWidget * dialog, int resp, analyse_cb_t * data)
 
 	free(data);
 }
+
+
+
 
 /**
  * vik_trw_layer_analyse_this:
@@ -414,7 +424,7 @@ GtkWidget * vik_trw_layer_analyse_this(GtkWindow * window,
 
 	// Get previous value (if any) from the settings
 	bool include_invisible;
-	if (! a_settings_get_boolean (VIK_SETTINGS_ANALYSIS_DO_INVISIBLE, &include_invisible)) {
+	if (!a_settings_get_boolean (VIK_SETTINGS_ANALYSIS_DO_INVISIBLE, &include_invisible)) {
 		include_invisible = true;
 	}
 
