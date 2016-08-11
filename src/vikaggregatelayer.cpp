@@ -469,18 +469,8 @@ static void aggregate_layer_sort_timestamp_descend(menu_array_values values)
 #endif
 }
 
-/**
- * aggregate_layer_create_waypoints_and_layers_list:
- * @vl:        The layer that should create the waypoint and layers list
- * @user_data: Not used in this function
- *
- * Returns: A list of #waypoint_layer_t
- */
-static std::list<waypoint_layer_t *> * aggregate_layer_create_waypoints_and_layers_list(Layer * layer, void * user_data)
-{
-	LayerAggregate * aggregate = (LayerAggregate *) layer;
-	return aggregate->create_waypoints_and_layers_list();
-}
+
+
 
 std::list<waypoint_layer_t *> * LayerAggregate::create_waypoints_and_layers_list()
 {
@@ -499,7 +489,7 @@ std::list<waypoint_layer_t *> * LayerAggregate::create_waypoints_and_layers_list
 			waypoints->push_back(i->second);
 		}
 
-		waypoints_and_layers->splice(waypoints_and_layers->begin(), *((LayerTRW *) (*iter))->create_waypoints_and_layers_list(waypoints));
+		waypoints_and_layers->splice(waypoints_and_layers->begin(), *((LayerTRW *) (*iter))->create_waypoints_and_layers_list_helper(waypoints));
 	}
 	delete layers;
 
@@ -509,8 +499,9 @@ std::list<waypoint_layer_t *> * LayerAggregate::create_waypoints_and_layers_list
 static void aggregate_layer_waypoint_list_dialog(menu_array_values values)
 {
 	LayerAggregate * aggregate = (LayerAggregate *) values[MA_VAL];
+
 	char *title = g_strdup_printf(_("%s: Waypoint List"), aggregate->name);
-	vik_trw_layer_waypoint_list_show_dialog(title, aggregate, NULL, aggregate_layer_create_waypoints_and_layers_list, true);
+	vik_trw_layer_waypoint_list_show_dialog(title, aggregate, true);
 	free(title);
 }
 
@@ -571,10 +562,23 @@ void LayerAggregate::search_date()
 	free(date_str);
 }
 
-std::list<SlavGPS::track_layer_t *> * aggregate_layer_create_tracks_and_layers_list(Layer * layer, void * user_data)
+
+
+
+std::list<SlavGPS::track_layer_t *> * aggregate_layer_create_tracks_and_layers_list(Layer * layer, SublayerType sublayer_type)
 {
 	return ((LayerAggregate *) layer)->create_tracks_and_layers_list();
 }
+
+
+
+
+std::list<SlavGPS::track_layer_t *> * LayerAggregate::create_tracks_and_layers_list(SublayerType sublayer_type)
+{
+	return this->create_tracks_and_layers_list();
+}
+
+
 
 
 /**
@@ -595,7 +599,7 @@ std::list<track_layer_t *> * LayerAggregate::create_tracks_and_layers_list()
 		LayerTRWc::get_track_values(tracks, ((LayerTRW *) (*iter))->get_tracks());
 		LayerTRWc::get_track_values(tracks, ((LayerTRW *) (*iter))->get_routes());
 
-		tracks_and_layers->splice(tracks_and_layers->begin(), *((LayerTRW *) (*iter))->create_tracks_and_layers_list(tracks));
+		tracks_and_layers->splice(tracks_and_layers->begin(), *((LayerTRW *) (*iter))->create_tracks_and_layers_list_helper(tracks));
 
 		tracks->clear();
 	}
@@ -609,7 +613,7 @@ static void aggregate_layer_track_list_dialog(menu_array_values values)
 {
 	LayerAggregate * aggregate = (LayerAggregate *) values[MA_VAL];
 	char *title = g_strdup_printf(_("%s: Track and Route List"), aggregate->name);
-	vik_trw_layer_track_list_show_dialog(title, aggregate, NULL, aggregate_layer_create_tracks_and_layers_list, true);
+	vik_trw_layer_track_list_show_dialog(title, aggregate, SublayerType::NONE, true);
 	free(title);
 }
 
@@ -637,8 +641,7 @@ static void aggregate_layer_analyse(menu_array_values values)
 	aggregate->tracks_analysis_dialog = vik_trw_layer_analyse_this(gtk_window_from_layer(aggregate),
 								       aggregate->name,
 								       aggregate,
-								       NULL,
-								       aggregate_layer_create_tracks_and_layers_list,
+								       SublayerType::NONE,
 								       aggregate_layer_analyse_close);
 }
 

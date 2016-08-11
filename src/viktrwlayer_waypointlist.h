@@ -18,27 +18,30 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-#ifndef _VIKING_TRWLAYER_WAYPOINTLIST_H
-#define _VIKING_TRWLAYER_WAYPOINTLIST_H
-
-#include <stdint.h>
-
-#include "vikwaypoint.h"
-#include "viktrwlayer.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#ifndef _SG_WAYPOINT_LIST_H_
+#define _SG_WAYPOINT_LIST_H_
 
 
-void vik_trw_layer_waypoint_list_show_dialog(char * title,
-					     SlavGPS::Layer * layer,
-					     void * user_data,
-					     create_waypoints_and_layers_list_t create_waypoints_and_layers_cb,
-					     bool is_aggregate);
 
-#ifdef __cplusplus
-}
-#endif
 
-#endif
+#include "viklayer.h"
+
+
+
+
+namespace SlavGPS {
+
+
+
+
+	void vik_trw_layer_waypoint_list_show_dialog(char * title, Layer * layer, bool is_aggregate);
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
+#endif /* #ifndef _SG_WAYPOINT_LIST_H_ */

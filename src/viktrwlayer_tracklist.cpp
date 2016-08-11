@@ -22,6 +22,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <cassert>
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <glib/gi18n.h>
@@ -35,7 +36,11 @@
 #include "vikwindow.h"
 
 
+
+
 using namespace SlavGPS;
+
+
 
 
 // Long formatted date+basic time - listing this way ensures the string comparison sort works - so no local type format %x or %c here!
@@ -735,20 +740,18 @@ static void vik_trw_layer_track_list_internal(GtkWidget * dialog,
 
 /**
  * vik_trw_layer_track_list_show_dialog:
- * @title:                    The title for the dialog
- * @vl:                       The #VikLayer passed on into get_tracks_and_layers_cb()
- * @user_data:                Data passed on into get_tracks_and_layers_cb()
- * @get_tracks_and_layers_cb: The function to call to construct items to be analysed
- * @show_layer_names:         Normally only set when called from an aggregate level
+ * @title:               The title for the dialog
+ * @layer:               The #Layer passed on into get_tracks_and_layers_cb()
+ * @sublayer_typea:      Sublayer type to be show in list (NONE for both TRACKS and LAYER)
+ * @show_layer_names:    Normally only set when called from an aggregate level
  *
  * Common method for showing a list of tracks with extended information
  *
  */
-void vik_trw_layer_track_list_show_dialog(char * title,
-					  Layer * layer,
-					  void * user_data,
-					  VikTrwlayerGetTracksAndLayersFunc get_tracks_and_layers_cb,
-					  bool show_layer_names)
+void SlavGPS::vik_trw_layer_track_list_show_dialog(char * title,
+						   Layer * layer,
+						   SublayerType sublayer_type,
+						   bool show_layer_names)
 {
 	GtkWidget * dialog = gtk_dialog_new_with_buttons(title,
 							 gtk_window_from_layer(layer),
@@ -758,7 +761,23 @@ void vik_trw_layer_track_list_show_dialog(char * title,
 							 NULL);
 
 
-	std::list<track_layer_t *> * tracks_and_layers = get_tracks_and_layers_cb(layer, user_data);
+	std::list<track_layer_t *> * tracks_and_layers = NULL;
+	if (layer->type == LayerType::AGGREGATE) {
+		if (sublayer_type == SublayerType::NONE) { /* No particular sublayer type means both tracks and layers. */
+			tracks_and_layers = ((LayerAggregate *) layer)->create_tracks_and_layers_list();
+		} else {
+			tracks_and_layers = ((LayerAggregate *) layer)->create_tracks_and_layers_list(sublayer_type);
+		}
+	} else if (layer->type == LayerType::TRW) {
+		if (sublayer_type == SublayerType::NONE) { /* No particular sublayer type means both tracks and layers. */
+			tracks_and_layers = ((LayerTRW *) layer)->create_tracks_and_layers_list();
+		} else {
+			tracks_and_layers = ((LayerTRW *) layer)->create_tracks_and_layers_list(sublayer_type);
+		}
+	} else {
+		assert (0);
+	}
+
 
 	vik_trw_layer_track_list_internal(dialog, tracks_and_layers, show_layer_names);
 

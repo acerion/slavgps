@@ -6329,7 +6329,7 @@ void trw_layer_routes_visibility_toggle(trw_menu_layer_t * data)
 /**
  * Helper function to construct a list of #waypoint_layer_t
  */
-std::list<waypoint_layer_t *> * LayerTRW::create_waypoints_and_layers_list(std::list<Waypoint *> * waypoints)
+std::list<waypoint_layer_t *> * LayerTRW::create_waypoints_and_layers_list_helper(std::list<Waypoint *> * waypoints)
 {
 	std::list<waypoint_layer_t *> * waypoints_and_layers = new std::list<waypoint_layer_t *>;
 	// build waypoints_and_layers list
@@ -6352,16 +6352,15 @@ std::list<waypoint_layer_t *> * LayerTRW::create_waypoints_and_layers_list(std::
  * Create the latest list of waypoints with the associated layer(s)
  *  Although this will always be from a single layer here
  */
-static std::list<SlavGPS::waypoint_layer_t *> * trw_layer_create_waypoints_and_layers_list(Layer * layer, void * user_data)
+std::list<SlavGPS::waypoint_layer_t *> * LayerTRW::create_waypoints_and_layers_list()
 {
-	LayerTRW * trw = (LayerTRW *) layer;
 	std::list<Waypoint *> pure_waypoints;
 
-	for (auto iter = trw->waypoints.begin(); iter != trw->waypoints.end(); iter++) {
+	for (auto iter = this->waypoints.begin(); iter != this->waypoints.end(); iter++) {
 		pure_waypoints.push_back((*iter).second);
 	}
 
-	return trw->create_waypoints_and_layers_list(&pure_waypoints);
+	return this->create_waypoints_and_layers_list_helper(&pure_waypoints);
 }
 
 
@@ -6384,7 +6383,7 @@ static void trw_layer_analyse_close(GtkWidget *dialog, int resp, Layer * layer)
 /**
  * Helper function to construct a list of #track_layer_t
  */
-std::list<track_layer_t *> * LayerTRW::create_tracks_and_layers_list(std::list<Track *> * tracks)
+std::list<track_layer_t *> * LayerTRW::create_tracks_and_layers_list_helper(std::list<Track *> * tracks)
 {
 	// build tracks_and_layers list
 	std::list<track_layer_t *> * tracks_and_layers = new std::list<track_layer_t *>;
@@ -6406,17 +6405,36 @@ std::list<track_layer_t *> * LayerTRW::create_tracks_and_layers_list(std::list<T
  * Create the latest list of tracks with the associated layer(s)
  *  Although this will always be from a single layer here
  */
-static std::list<track_layer_t *> * trw_layer_create_tracks_and_layers_list(Layer * layer, void * user_data)
+static std::list<track_layer_t *> * trw_layer_create_tracks_and_layers_list(Layer * layer, SublayerType sublayer_type)
 {
 	std::list<Track *> * tracks = new std::list<Track *>;
-	SublayerType sublayer_type = (SublayerType) KPOINTER_TO_INT(user_data);
 	if (sublayer_type == SublayerType::TRACKS) {
 		tracks = LayerTRWc::get_track_values(tracks, ((LayerTRW *) layer)->get_tracks());
 	} else {
 		tracks = LayerTRWc::get_track_values(tracks, ((LayerTRW *) layer)->get_routes());
 	}
 
-	return ((LayerTRW *) layer)->create_tracks_and_layers_list(tracks);
+	return ((LayerTRW *) layer)->create_tracks_and_layers_list_helper(tracks);
+}
+
+
+
+/**
+ * trw_layer_create_track_list:
+ *
+ * Create the latest list of tracks with the associated layer(s)
+ *  Although this will always be from a single layer here
+ */
+std::list<track_layer_t *> * LayerTRW::create_tracks_and_layers_list(SublayerType sublayer_type)
+{
+	std::list<Track *> * tracks = new std::list<Track *>;
+	if (sublayer_type == SublayerType::TRACKS) {
+		tracks = LayerTRWc::get_track_values(tracks, this->get_tracks());
+	} else {
+		tracks = LayerTRWc::get_track_values(tracks, this->get_routes());
+	}
+
+	return this->create_tracks_and_layers_list_helper(tracks);
 }
 
 
@@ -6433,8 +6451,7 @@ void trw_layer_tracks_stats(trw_menu_layer_t * data)
 	trw->tracks_analysis_dialog = vik_trw_layer_analyse_this(gtk_window_from_layer(trw),
 								 trw->name,
 								 trw,
-								 KINT_TO_POINTER(SublayerType::TRACKS),
-								 trw_layer_create_tracks_and_layers_list,
+								 SublayerType::TRACKS,
 								 trw_layer_analyse_close);
 }
 
@@ -6455,8 +6472,7 @@ void trw_layer_routes_stats(trw_menu_layer_t * data)
 	layer->tracks_analysis_dialog = vik_trw_layer_analyse_this(gtk_window_from_layer(layer),
 								   layer->name,
 								   layer,
-								   KINT_TO_POINTER(SublayerType::ROUTES),
-								   trw_layer_create_tracks_and_layers_list,
+								   SublayerType::ROUTES,
 								   trw_layer_analyse_close);
 }
 
@@ -9473,13 +9489,30 @@ char * LayerTRW::highest_wp_number_get()
  *
  * Create the latest list of tracks and routes
  */
-static std::list<track_layer_t *> * trw_layer_create_tracks_and_layers_list_both(Layer * layer, void * user_data)
+static std::list<track_layer_t *> * trw_layer_create_tracks_and_layers_list_both(Layer * layer, SublayerType sublayer_type)
 {
 	std::list<Track *> * tracks = new std::list<Track *>;
 	tracks = LayerTRWc::get_track_values(tracks, ((LayerTRW *) layer)->get_tracks());
 	tracks = LayerTRWc::get_track_values(tracks, ((LayerTRW *) layer)->get_routes());
 
-	return ((LayerTRW *) layer)->create_tracks_and_layers_list(tracks);
+	return ((LayerTRW *) layer)->create_tracks_and_layers_list_helper(tracks);
+}
+
+
+
+
+/**
+ * trw_layer_create_track_list_both:
+ *
+ * Create the latest list of tracks and routes
+ */
+std::list<track_layer_t *> * LayerTRW::create_tracks_and_layers_list()
+{
+	std::list<Track *> * tracks = new std::list<Track *>;
+	tracks = LayerTRWc::get_track_values(tracks, this->get_tracks());
+	tracks = LayerTRWc::get_track_values(tracks, this->get_routes());
+
+	return this->create_tracks_and_layers_list_helper(tracks);
 }
 
 
@@ -9496,7 +9529,7 @@ void trw_layer_track_list_dialog_single(trw_menu_sublayer_t * data)
 		title = g_strdup_printf(_("%s: Route List"), layer->name);
 	}
 
-	vik_trw_layer_track_list_show_dialog(title, layer, KINT_TO_POINTER(data->sublayer_type), trw_layer_create_tracks_and_layers_list, false);
+	vik_trw_layer_track_list_show_dialog(title, layer, data->sublayer_type, false);
 	free(title);
 }
 
@@ -9508,7 +9541,7 @@ void trw_layer_track_list_dialog(trw_menu_layer_t * data)
 	LayerTRW * layer = data->layer;
 
 	char *title = g_strdup_printf(_("%s: Track and Route List"), layer->name);
-	vik_trw_layer_track_list_show_dialog(title, layer, NULL, trw_layer_create_tracks_and_layers_list_both, false);
+	vik_trw_layer_track_list_show_dialog(title, layer, SublayerType::NONE, false);
 	free(title);
 }
 
@@ -9520,7 +9553,7 @@ void trw_layer_waypoint_list_dialog(trw_menu_layer_t * data)
 	LayerTRW * layer = data->layer;
 
 	char * title = g_strdup_printf(_("%s: Waypoint List"), layer->name);
-	vik_trw_layer_waypoint_list_show_dialog(title, layer, NULL, trw_layer_create_waypoints_and_layers_list, false);
+	vik_trw_layer_waypoint_list_show_dialog(title, layer, false);
 	free(title);
 }
 

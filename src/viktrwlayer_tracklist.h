@@ -18,26 +18,30 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-#ifndef _VIKING_TRWLAYER_TRACKLIST_H
-#define _VIKING_TRWLAYER_TRACKLIST_H
+#ifndef _SG_TRACK_LIST_H_
+#define _SG_TRACK_LIST_H_
 
 
-#include "viktrack.h"
-#include "viktrwlayer.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
-void vik_trw_layer_track_list_show_dialog(char * title,
-					  SlavGPS::Layer * layer,
-					  void * user_data,
-					  VikTrwlayerGetTracksAndLayersFunc get_tracks_and_layers_cb,
-					  bool is_aggregate);
+#include "viklayer.h"
 
-#ifdef __cplusplus
-}
-#endif
 
-#endif
+
+
+namespace SlavGPS {
+
+
+
+
+	void vik_trw_layer_track_list_show_dialog(char * title, Layer * layer, SublayerType sublayer_type, bool is_aggregate);
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
+#endif /* #ifndef _SG_TRACK_LIST_H_ */

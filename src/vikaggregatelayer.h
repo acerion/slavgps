@@ -114,9 +114,14 @@ namespace SlavGPS {
 		Layer * get_top_visible_layer_of_type(LayerType layer_type);
 		std::list<waypoint_layer_t *> * create_waypoints_and_layers_list();
 		std::list<track_layer_t *> * create_tracks_and_layers_list();
+		std::list<track_layer_t *> * create_tracks_and_layers_list(SublayerType sublayer_type);
 		std::list<Layer *> * get_all_layers_of_type(std::list<Layer *> * layers, LayerType layer_type, bool include_invisible);
 		bool is_empty();
 		std::list<Layer const *> * get_children();
+
+
+
+
 
 		void search_date();
 

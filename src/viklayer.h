@@ -111,6 +111,8 @@ namespace SlavGPS {
 	class LayerTool;
 
 
+
+
 	typedef struct {
 		bool has_oldcoord;
 		VikCoord oldcoord;
@@ -217,11 +219,7 @@ namespace SlavGPS {
 		virtual bool set_param(uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
 
 
-
-
 		static LayerType type_from_string(char const * str);
-
-
 
 
 		char const * get_name();

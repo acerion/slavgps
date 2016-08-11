@@ -330,8 +330,7 @@ typedef struct {
 	GtkWidget * check_button;
 	std::list<track_layer_t *> * tracks_and_layers;
 	Layer * layer;
-	void * user_data;
-	VikTrwlayerGetTracksAndLayersFunc get_tracks_and_layers_cb;
+	SublayerType user_data;
 	VikTrwlayerAnalyseCloseFunc on_close_cb;
 } analyse_cb_t;
 
@@ -348,7 +347,15 @@ static void include_invisible_toggled_cb(GtkToggleButton * togglebutton, analyse
 	}
 
 	// Get the latest list of items to analyse
-	acb->tracks_and_layers = acb->get_tracks_and_layers_cb(acb->layer, acb->user_data);
+	/* kamilTODO: why do we need to get the latest list on checkbox toggle? */
+	Layer * layer = acb->layer;
+	if (acb->layer->type == LayerType::TRW) {
+		acb->tracks_and_layers = ((LayerTRW *) layer)->create_tracks_and_layers_list(acb->user_data);
+	} else if (layer->type == LayerType::AGGREGATE) {
+		acb->tracks_and_layers = ((LayerAggregate *) layer)->create_tracks_and_layers_list(acb->user_data);
+	} else {
+		assert (0);
+	}
 
 	val_analyse(acb->widgets, acb->tracks_and_layers, value);
 	gtk_widget_show_all(acb->layout);
@@ -401,8 +408,7 @@ static void analyse_close(GtkWidget * dialog, int resp, analyse_cb_t * data)
 GtkWidget * vik_trw_layer_analyse_this(GtkWindow * window,
 				       const char * name,
 				       Layer * layer,
-				       void * user_data,
-				       VikTrwlayerGetTracksAndLayersFunc get_tracks_and_layers_cb,
+				       SublayerType sublayer_type,
 				       VikTrwlayerAnalyseCloseFunc on_close_cb)
 {
 	//VikWindow *vw = VIK_WINDOW(window);
@@ -430,10 +436,15 @@ GtkWidget * vik_trw_layer_analyse_this(GtkWindow * window,
 
 	analyse_cb_t *acb = (analyse_cb_t *) malloc(sizeof(analyse_cb_t));
 	acb->layer = layer;
-	acb->user_data = user_data;
-	acb->get_tracks_and_layers_cb = get_tracks_and_layers_cb;
+	acb->user_data = sublayer_type;
 	acb->on_close_cb = on_close_cb;
-	acb->tracks_and_layers = get_tracks_and_layers_cb(layer, user_data);
+	if (layer->type == LayerType::TRW) {
+		acb->tracks_and_layers = ((LayerTRW *) layer)->create_tracks_and_layers_list(acb->user_data);
+	} else if (layer->type == LayerType::AGGREGATE) {
+		acb->tracks_and_layers = ((LayerAggregate *) layer)->create_tracks_and_layers_list(acb->user_data);
+	} else {
+		assert (0);
+	}
 	acb->widgets = (GtkWidget **) malloc(sizeof(GtkWidget*) * G_N_ELEMENTS(label_texts));
 	acb->layout = create_layout(acb->widgets);
 

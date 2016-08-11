@@ -303,10 +303,13 @@ namespace SlavGPS {
 
 
 
-		std::list<waypoint_layer_t *> * create_waypoints_and_layers_list(std::list<Waypoint *> * waypoints);
-		std::list<track_layer_t *> * create_tracks_and_layers_list(std::list<Track *> * tracks);
+		std::list<waypoint_layer_t *> * create_waypoints_and_layers_list();
+		std::list<waypoint_layer_t *> * create_waypoints_and_layers_list_helper(std::list<Waypoint *> * waypoints);
 
 
+		std::list<track_layer_t *> * create_tracks_and_layers_list();
+		std::list<track_layer_t *> * create_tracks_and_layers_list(SublayerType sublayer_type);
+		std::list<track_layer_t *> * create_tracks_and_layers_list_helper(std::list<Track *> * tracks);
 
 
 		void tpwin_init();
@@ -621,9 +624,6 @@ typedef struct _VikTrwLayer VikTrwLayer;
 
 
 
-
-typedef std::list<SlavGPS::track_layer_t *> * (* VikTrwlayerGetTracksAndLayersFunc) (SlavGPS::Layer *, void *);
-typedef std::list<SlavGPS::waypoint_layer_t *> * (* create_waypoints_and_layers_list_t) (SlavGPS::Layer *, void *);
 
 GdkPixbuf* get_wp_sym_small(char *symbol);
 

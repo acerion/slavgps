@@ -22,6 +22,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <cassert>
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <glib/gi18n.h>
@@ -35,7 +36,13 @@
 #include "globals.h"
 #include "vikwindow.h"
 
+
+
+
 using namespace SlavGPS;
+
+
+
 
 // Long formatted date+basic time - listing this way ensures the string comparison sort works - so no local type format %x or %c here!
 #define WAYPOINT_LIST_DATE_FORMAT "%Y-%m-%d %H:%M"
@@ -718,18 +725,14 @@ static void vik_trw_layer_waypoint_list_internal(GtkWidget * dialog,
  * vik_trw_layer_waypoint_list_show_dialog:
  * @title:                    The title for the dialog
  * @vl:                       The #VikLayer passed on into create_waypoints_and_layers_cb()
- * @user_data:                Data passed on into create_waypoints_and_layers_cb()
- * @create_waypoints_and_layers_cb: The function to call to construct items to be analysed
  * @show_layer_names:         Normally only set when called from an aggregate level
  *
  * Common method for showing a list of waypoints with extended information
  *
  */
-void vik_trw_layer_waypoint_list_show_dialog(char * title,
-					     Layer * layer,
-					     void * user_data,
-					     create_waypoints_and_layers_list_t create_waypoints_and_layers_cb,
-					     bool show_layer_names)
+void SlavGPS::vik_trw_layer_waypoint_list_show_dialog(char * title,
+						      Layer * layer,
+						      bool show_layer_names)
 {
 	GtkWidget * dialog = gtk_dialog_new_with_buttons(title,
 							 gtk_window_from_layer(layer),
@@ -738,7 +741,14 @@ void vik_trw_layer_waypoint_list_show_dialog(char * title,
 							 GTK_RESPONSE_CLOSE,
 							 NULL);
 
-	std::list<waypoint_layer_t *> * waypoints_and_layers = create_waypoints_and_layers_cb(layer, user_data);
+	std::list<waypoint_layer_t *> * waypoints_and_layers = NULL;
+	if (layer->type == LayerType::TRW) {
+		waypoints_and_layers = ((LayerTRW *) layer)->create_waypoints_and_layers_list();
+	} else if (layer->type == LayerType::AGGREGATE) {
+		waypoints_and_layers = ((LayerAggregate *) layer)->create_waypoints_and_layers_list();
+	} else {
+		assert (0);
+	}
 
 	vik_trw_layer_waypoint_list_internal(dialog, waypoints_and_layers, show_layer_names);
 

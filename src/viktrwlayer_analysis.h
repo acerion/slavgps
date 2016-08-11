@@ -34,8 +34,7 @@ typedef void (* VikTrwlayerAnalyseCloseFunc) (GtkWidget *, int, SlavGPS::Layer *
 GtkWidget * vik_trw_layer_analyse_this(GtkWindow * window,
 				       const char * name,
 				       SlavGPS::Layer * layer,
-				       void * user_data,
-				       VikTrwlayerGetTracksAndLayersFunc get_tracks_and_layers_cb,
+				       SlavGPS::SublayerType sublayer_type,
 				       VikTrwlayerAnalyseCloseFunc on_close_cb);
 
 #ifdef __cplusplus
