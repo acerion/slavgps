@@ -47,6 +47,9 @@ using namespace SlavGPS;
 // Long formatted date+basic time - listing this way ensures the string comparison sort works - so no local type format %x or %c here!
 #define WAYPOINT_LIST_DATE_FORMAT "%Y-%m-%d %H:%M"
 
+
+
+
 /**
  * waypoint_close_cb:
  *
@@ -57,6 +60,9 @@ static void waypoint_close_cb(GtkWidget * dialog, int resp, std::list<waypoint_l
 
 	gtk_widget_destroy(dialog);
 }
+
+
+
 
 /**
  * format_1f_cell_data_func:
@@ -78,9 +84,15 @@ static void format_1f_cell_data_func(GtkTreeViewColumn * col,
 }
  */
 
+
+
+
 #define WPT_LIST_COLS 9
 #define WPT_COL_NUM WPT_LIST_COLS-1
 #define TRW_COL_NUM WPT_COL_NUM-1
+
+
+
 
 /*
  * trw_layer_waypoint_tooltip_cb:
@@ -129,6 +141,9 @@ static bool trw_layer_waypoint_tooltip_cb(GtkWidget  * widget,
 	return tooltip_set;
 }
 
+
+
+
 /*
 static void trw_layer_waypoint_select_cb(GtkTreeSelection * selection, void * data)
 {
@@ -146,8 +161,8 @@ static void trw_layer_waypoint_select_cb(GtkTreeSelection * selection, void * da
 		return;
 	}
 
-	VikLayer * trw;
-	gtk_tree_model_get(model, &iter, TRW_COL_NUM, &trw->vl, -1);
+	LayerTRW * trw;
+	gtk_tree_model_get(model, &iter, TRW_COL_NUM, &trw-, -1);
 	if (trw->type != LayerTRW::TRW) {
 		return;
 	}
@@ -155,6 +170,8 @@ static void trw_layer_waypoint_select_cb(GtkTreeSelection * selection, void * da
 	//vik_treeview_select_iter(trw->vt, g_hash_table_lookup(trw->waypoint_iters, uuid), true);
 }
 */
+
+
 
 
 typedef struct {
@@ -165,6 +182,8 @@ typedef struct {
 	GtkWidget * gtk_tree_view;
 	std::list<waypoint_layer_t *> * waypoints_and_layers;
 } waypointlist_data_t;
+
+
 
 
 // Instead of hooking automatically on treeview item selection
@@ -183,6 +202,9 @@ static void trw_layer_waypoint_select(waypointlist_data_t * values)
 	}
 }
 
+
+
+
 static void trw_layer_waypoint_properties(waypointlist_data_t * values)
 {
 	LayerTRW * trw = values->trw;
@@ -191,7 +213,7 @@ static void trw_layer_waypoint_properties(waypointlist_data_t * values)
 	if (wp && wp->name) {
 		// Kill off this dialog to allow interaction with properties window
 		//  since the properties also allows waypoint manipulations it won't cause conflicts here.
-		GtkWidget *gw = gtk_widget_get_toplevel(values->gtk_tree_view);
+		GtkWidget * gw = gtk_widget_get_toplevel(values->gtk_tree_view);
 		waypoint_close_cb(gw, 0, values->waypoints_and_layers);
 
 		bool updated = false;
@@ -210,6 +232,9 @@ static void trw_layer_waypoint_properties(waypointlist_data_t * values)
 	}
 }
 
+
+
+
 static void trw_layer_waypoint_view(waypointlist_data_t * values)
 {
 	LayerTRW * trw = values->trw;
@@ -222,6 +247,9 @@ static void trw_layer_waypoint_view(waypointlist_data_t * values)
 
 	trw->emit_update();
 }
+
+
+
 
 static void trw_layer_show_picture_wp(waypointlist_data_t * values)
 {
@@ -243,11 +271,16 @@ static void trw_layer_show_picture_wp(waypointlist_data_t * values)
 }
 
 
+
+
 typedef struct {
 	bool has_layer_names;
 	bool include_positions;
 	GString * str;
 } copy_data_t;
+
+
+
 
 /**
  * At the moment allow copying the data displayed** with or without the positions
@@ -309,6 +342,9 @@ static void copy_selection(GtkTreeModel * model,
 	free(comment);
 }
 
+
+
+
 static void trw_layer_copy_selected(GtkWidget * tree_view, bool include_positions)
 {
 	GtkTreeSelection * selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(tree_view));
@@ -327,15 +363,24 @@ static void trw_layer_copy_selected(GtkWidget * tree_view, bool include_position
 	g_string_free(cd.str, true);
 }
 
+
+
+
 static void trw_layer_copy_selected_only_visible_columns(GtkWidget * tree_view)
 {
 	trw_layer_copy_selected(tree_view, false);
 }
 
+
+
+
 static void trw_layer_copy_selected_with_position(GtkWidget * tree_view)
 {
 	trw_layer_copy_selected(tree_view, true);
 }
+
+
+
 
 static void add_copy_menu_items(GtkMenu * menu, GtkWidget * tree_view)
 {
@@ -351,6 +396,9 @@ static void add_copy_menu_items(GtkMenu * menu, GtkWidget * tree_view)
 	gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
 	gtk_widget_show(item);
 }
+
+
+
 
 static bool add_menu_items(GtkMenu * menu, LayerTRW * trw, Waypoint * wp, sg_uid_t wp_uid, Viewport * viewport, GtkWidget * gtk_tree_view, std::list<waypoint_layer_t *> * waypoints_and_layers)
 {
@@ -397,6 +445,9 @@ static bool add_menu_items(GtkMenu * menu, LayerTRW * trw, Waypoint * wp, sg_uid
 	return true;
 }
 
+
+
+
 static bool trw_layer_waypoint_menu_popup_multi(GtkWidget * tree_view,
 						GdkEventButton * event,
 						void * waypoints_and_layers)
@@ -409,6 +460,9 @@ static bool trw_layer_waypoint_menu_popup_multi(GtkWidget * tree_view,
 
 	return true;
 }
+
+
+
 
 static bool trw_layer_waypoint_menu_popup(GtkWidget * tree_view,
 					  GdkEventButton * event,
@@ -443,9 +497,8 @@ static bool trw_layer_waypoint_menu_popup(GtkWidget * tree_view,
 		return false;
 	}
 
-	VikLayer * vtl;
-	gtk_tree_model_get(model, &iter, TRW_COL_NUM, &vtl, -1);
-	LayerTRW * trw = (LayerTRW *) vtl->layer;
+	LayerTRW * trw;
+	gtk_tree_model_get(model, &iter, TRW_COL_NUM, &trw, -1);
 	if (trw->type != LayerType::TRW) {
 		return false;
 	}
@@ -474,6 +527,9 @@ static bool trw_layer_waypoint_menu_popup(GtkWidget * tree_view,
 	return false;
 }
 
+
+
+
 static bool trw_layer_waypoint_button_pressed(GtkWidget * tree_view,
 					      GdkEventButton * event,
 					      void * waypoints_and_layers)
@@ -500,6 +556,9 @@ static bool trw_layer_waypoint_button_pressed(GtkWidget * tree_view,
 	}
 	return trw_layer_waypoint_menu_popup(tree_view, event, waypoints_and_layers);
 }
+
+
+
 
 /*
  * Foreach entry we copy the various individual waypoint properties into the tree store
@@ -556,10 +615,13 @@ static void trw_layer_waypoint_list_add(waypoint_layer_t * element,
 			   4, wp->comment,
 			   5, (int) round(alt),
 			   6, get_wp_sym_small(wp->symbol),
-			   TRW_COL_NUM, trw->vl,
+			   TRW_COL_NUM, trw,
 			   WPT_COL_NUM, wp,
 			   -1);
 }
+
+
+
 
 /*
  * Instead of comparing the pixbufs,
@@ -583,6 +645,9 @@ int sort_pixbuf_compare_func(GtkTreeModel * model,
 	return g_strcmp0(wp1->symbol, wp2->symbol);
 }
 
+
+
+
 static GtkTreeViewColumn * my_new_column_text(const char * title, GtkCellRenderer * renderer, GtkWidget * view, int column_runner)
 {
 	GtkTreeViewColumn * column = gtk_tree_view_column_new_with_attributes(title, renderer, "text", column_runner, NULL);
@@ -592,6 +657,9 @@ static GtkTreeViewColumn * my_new_column_text(const char * title, GtkCellRendere
 	gtk_tree_view_column_set_resizable(column, true);
 	return column;
 }
+
+
+
 
 /**
  * vik_trw_layer_waypoint_list_internal:
@@ -719,6 +787,8 @@ static void vik_trw_layer_waypoint_list_internal(GtkWidget * dialog,
 	//  TODO: may be save window size, column order, sorted by between invocations.
 	gtk_window_set_default_size(GTK_WINDOW(dialog), show_layer_names ? 700 : 500, 400);
 }
+
+
 
 
 /**
