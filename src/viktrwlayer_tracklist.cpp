@@ -510,9 +510,9 @@ static bool trw_layer_track_button_pressed_cb(GtkWidget * tree_view,
  */
 static void trw_layer_track_list_add(track_layer_t * element,
 				     GtkTreeStore * store,
-				     vik_units_distance_t dist_units,
-				     vik_units_speed_t speed_units,
-				     vik_units_height_t height_units,
+				     DistanceUnit dist_units,
+				     SpeedUnit speed_units,
+				     HeightUnit height_units,
 				     const char * date_format)
 {
 	GtkTreeIter t_iter;
@@ -522,10 +522,10 @@ static void trw_layer_track_list_add(track_layer_t * element,
 	double trk_dist = trk->get_length();
 	// Store unit converted value
 	switch (dist_units) {
-	case VIK_UNITS_DISTANCE_MILES:
+	case DistanceUnit::MILES:
 		trk_dist = VIK_METERS_TO_MILES(trk_dist);
 		break;
-	default:
+	default: /* kamilTODO: where NM are handled? */
 		trk_dist = trk_dist/1000.0;
 		break;
 	}
@@ -583,9 +583,11 @@ static void trw_layer_track_list_add(track_layer_t * element,
 	free(altitudes);
 
 	switch (height_units) {
-	case VIK_UNITS_HEIGHT_FEET: max_alt = VIK_METERS_TO_FEET(max_alt); break;
+	case HeightUnit::FEET:
+		max_alt = VIK_METERS_TO_FEET(max_alt);
+		break;
 	default:
-		// VIK_UNITS_HEIGHT_METRES: no need to convert
+		// HeightUnit::METRES: no need to convert
 		break;
 	}
 
@@ -655,9 +657,9 @@ static void vik_trw_layer_track_list_internal(GtkWidget * dialog,
 
 	//gtk_tree_selection_set_select_function(gtk_tree_view_get_selection (GTK_TREE_VIEW(vt)), vik_treeview_selection_filter, vt, NULL);
 
-	vik_units_distance_t dist_units = a_vik_get_units_distance();
-	vik_units_speed_t speed_units = a_vik_get_units_speed();
-	vik_units_height_t height_units = a_vik_get_units_height();
+	DistanceUnit dist_units = a_vik_get_units_distance();
+	SpeedUnit speed_units = a_vik_get_units_speed();
+	HeightUnit height_units = a_vik_get_units_height();
 
 	//GList *gl = get_tracks_and_layers_cb(vl, user_data);
 	//g_list_foreach (tracks_and_layers, (GFunc) trw_layer_track_list_add, store);
@@ -710,10 +712,10 @@ static void vik_trw_layer_track_list_internal(GtkWidget * dialog,
 	column_runner++;
 
 	switch (dist_units) {
-	case VIK_UNITS_DISTANCE_MILES:
+	case DistanceUnit::MILES:
 		column = my_new_column_text(_("Distance\n(miles)"), renderer, view, column_runner++);
 		break;
-	default:
+	default: /* kamilTODO: where NM are handled? */
 		column = my_new_column_text(_("Distance\n(km)"), renderer, view, column_runner++);
 		break;
 	}
@@ -737,7 +739,7 @@ static void vik_trw_layer_track_list_internal(GtkWidget * dialog,
 	free(title);
 	free(spd_units);
 
-	if (height_units == VIK_UNITS_HEIGHT_FEET) {
+	if (height_units == HeightUnit::FEET) {
 		(void) my_new_column_text(_("Max Height\n(Feet)"), renderer, view, column_runner++);
 	} else {
 		(void) my_new_column_text(_("Max Height\n(Metres)"), renderer, view, column_runner++);

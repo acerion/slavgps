@@ -168,32 +168,44 @@ typedef enum {
 
 vik_degree_format_t a_vik_get_degree_format();
 
-/* Distance preferences */
-typedef enum {
-	VIK_UNITS_DISTANCE_KILOMETRES,
-	VIK_UNITS_DISTANCE_MILES,
-	VIK_UNITS_DISTANCE_NAUTICAL_MILES,
-} vik_units_distance_t;
 
-vik_units_distance_t a_vik_get_units_distance();
+
+
+/* Distance preferences */
+enum class DistanceUnit {
+	KILOMETRES,
+	MILES,
+	NAUTICAL_MILES,
+};
+
+DistanceUnit a_vik_get_units_distance();
+
+
+
 
 /* Speed preferences */
-typedef enum {
-	VIK_UNITS_SPEED_KILOMETRES_PER_HOUR,
-	VIK_UNITS_SPEED_MILES_PER_HOUR,
-	VIK_UNITS_SPEED_METRES_PER_SECOND,
-	VIK_UNITS_SPEED_KNOTS,
-} vik_units_speed_t;
+enum class SpeedUnit {
+	KILOMETRES_PER_HOUR,
+	MILES_PER_HOUR,
+	METRES_PER_SECOND,
+	KNOTS
+};
 
-vik_units_speed_t a_vik_get_units_speed();
+SpeedUnit a_vik_get_units_speed();
+
+
+
 
 /* Height (Depth) preferences */
-typedef enum {
-	VIK_UNITS_HEIGHT_METRES,
-	VIK_UNITS_HEIGHT_FEET,
-} vik_units_height_t;
+enum class HeightUnit {
+	METRES,
+	FEET,
+};
 
-vik_units_height_t a_vik_get_units_height();
+HeightUnit a_vik_get_units_height();
+
+
+
 
 bool a_vik_get_use_large_waypoint_icons();
 

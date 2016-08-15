@@ -566,7 +566,7 @@ static bool trw_layer_waypoint_button_pressed(GtkWidget * tree_view,
  */
 static void trw_layer_waypoint_list_add(waypoint_layer_t * element,
 					GtkTreeStore * store,
-					vik_units_height_t height_units,
+					HeightUnit height_units,
 					const char * date_format)
 {
 	GtkTreeIter t_iter;
@@ -598,11 +598,11 @@ static void trw_layer_waypoint_list_add(waypoint_layer_t * element,
 
 	double alt = wp->altitude;
 	switch (height_units) {
-	case VIK_UNITS_HEIGHT_FEET:
+	case HeightUnit::FEET:
 		alt = VIK_METERS_TO_FEET(alt);
 		break;
 	default:
-		// VIK_UNITS_HEIGHT_METRES: no need to convert
+		// HeightUnit::METRES: no need to convert
 		break;
 	}
 
@@ -695,7 +695,7 @@ static void vik_trw_layer_waypoint_list_internal(GtkWidget * dialog,
 
 	//gtk_tree_selection_set_select_function(gtk_tree_view_get_selection (GTK_TREE_VIEW(vt)), vik_treeview_selection_filter, vt, NULL);
 
-	vik_units_height_t height_units = a_vik_get_units_height();
+	HeightUnit height_units = a_vik_get_units_height();
 
 	//GList *gl = create_waypoints_and_layers_cb(vl, user_data);
 	//g_list_foreach(waypoints_and_layers, (GFunc) trw_layer_waypoint_list_add, store);
@@ -746,7 +746,7 @@ static void vik_trw_layer_waypoint_list_internal(GtkWidget * dialog,
 	column = my_new_column_text(_("Comment"), renderer, view, column_runner++);
 	gtk_tree_view_column_set_expand(column, true);
 
-	if (height_units == VIK_UNITS_HEIGHT_FEET) {
+	if (height_units == HeightUnit::FEET) {
 		(void) my_new_column_text(_("Max Height\n(Feet)"), renderer, view, column_runner++);
 	} else {
 		(void) my_new_column_text(_("Max Height\n(Metres)"), renderer, view, column_runner++);

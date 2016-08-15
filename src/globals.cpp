@@ -177,13 +177,13 @@ void a_vik_preferences_init()
 	tmp.u = VIK_DEGREE_FORMAT_DMS;
 	a_preferences_register(&general_prefs[0], tmp, VIKING_PREFERENCES_GROUP_KEY);
 
-	tmp.u = VIK_UNITS_DISTANCE_KILOMETRES;
+	tmp.u = (uint32_t) DistanceUnit::KILOMETRES;
 	a_preferences_register(&general_prefs[1], tmp, VIKING_PREFERENCES_GROUP_KEY);
 
-	tmp.u = VIK_UNITS_SPEED_KILOMETRES_PER_HOUR;
+	tmp.u = (uint32_t) SpeedUnit::KILOMETRES_PER_HOUR;
 	a_preferences_register(&general_prefs[2], tmp, VIKING_PREFERENCES_GROUP_KEY);
 
-	tmp.u = VIK_UNITS_HEIGHT_METRES;
+	tmp.u = (uint32_t) HeightUnit::METRES;
 	a_preferences_register(&general_prefs[3], tmp, VIKING_PREFERENCES_GROUP_KEY);
 
 	tmp.b = true;
@@ -263,25 +263,22 @@ vik_degree_format_t a_vik_get_degree_format()
 	return format;
 }
 
-vik_units_distance_t a_vik_get_units_distance()
+DistanceUnit a_vik_get_units_distance()
 {
-	vik_units_distance_t units;
-	units = (vik_units_distance_t) a_preferences_get(VIKING_PREFERENCES_NAMESPACE "units_distance")->u;
-	return units;
+	DistanceUnit unit = (DistanceUnit) a_preferences_get(VIKING_PREFERENCES_NAMESPACE "units_distance")->u;
+	return unit;
 }
 
-vik_units_speed_t a_vik_get_units_speed()
+SpeedUnit a_vik_get_units_speed()
 {
-	vik_units_speed_t units;
-	units = (vik_units_speed_t) a_preferences_get(VIKING_PREFERENCES_NAMESPACE "units_speed")->u;
-	return units;
+	SpeedUnit unit = (SpeedUnit) a_preferences_get(VIKING_PREFERENCES_NAMESPACE "units_speed")->u;
+	return unit;
 }
 
-vik_units_height_t a_vik_get_units_height()
+HeightUnit a_vik_get_units_height()
 {
-	vik_units_height_t units;
-	units = (vik_units_height_t) a_preferences_get(VIKING_PREFERENCES_NAMESPACE "units_height")->u;
-	return units;
+	HeightUnit unit = (HeightUnit) a_preferences_get(VIKING_PREFERENCES_NAMESPACE "units_height")->u;
+	return unit;
 }
 
 bool a_vik_get_use_large_waypoint_icons()

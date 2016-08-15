@@ -124,12 +124,12 @@ static void tpwin_sync_alt_to_tp(VikTrwLayerTpwin * tpwin)
 {
 	if (tpwin->cur_tp && (!tpwin->sync_to_tp_block)) {
 		// Always store internally in metres
-		vik_units_height_t height_units = a_vik_get_units_height();
+		HeightUnit height_units = a_vik_get_units_height();
 		switch (height_units) {
-		case VIK_UNITS_HEIGHT_METRES:
+		case HeightUnit::METRES:
 			tpwin->cur_tp->altitude = gtk_spin_button_get_value(tpwin->alt);
 			break;
-		case VIK_UNITS_HEIGHT_FEET:
+		case HeightUnit::FEET:
 			tpwin->cur_tp->altitude = VIK_FEET_TO_METERS(gtk_spin_button_get_value(tpwin->alt));
 			break;
 		default:
@@ -425,12 +425,12 @@ void vik_trw_layer_tpwin_set_tp(VikTrwLayerTpwin * tpwin, Track * track, TrackPo
 	vik_coord_to_latlon(&(tp->coord), &ll);
 	gtk_spin_button_set_value(tpwin->lat, ll.lat);
 	gtk_spin_button_set_value(tpwin->lon, ll.lon);
-	vik_units_height_t height_units = a_vik_get_units_height();
+	HeightUnit height_units = a_vik_get_units_height();
 	switch (height_units) {
-	case VIK_UNITS_HEIGHT_METRES:
+	case HeightUnit::METRES:
 		gtk_spin_button_set_value(tpwin->alt, tp->altitude);
 		break;
-	case VIK_UNITS_HEIGHT_FEET:
+	case HeightUnit::FEET:
 		gtk_spin_button_set_value(tpwin->alt, VIK_METERS_TO_FEET(tp->altitude));
 		break;
 	default:
@@ -442,19 +442,19 @@ void vik_trw_layer_tpwin_set_tp(VikTrwLayerTpwin * tpwin, Track * track, TrackPo
 
 	tpwin->sync_to_tp_block = false; // don't update while setting data.
 
-	vik_units_speed_t speed_units = a_vik_get_units_speed();
-	vik_units_distance_t dist_units = a_vik_get_units_distance();
+	SpeedUnit speed_units = a_vik_get_units_speed();
+	DistanceUnit dist_units = a_vik_get_units_distance();
 	if (tpwin->cur_tp) {
 		switch (dist_units) {
-		case VIK_UNITS_DISTANCE_KILOMETRES:
+		case DistanceUnit::KILOMETRES:
 			snprintf(tmp_str, sizeof(tmp_str), "%.2f m", vik_coord_diff(&(tp->coord), &(tpwin->cur_tp->coord)));
 			break;
-		case VIK_UNITS_DISTANCE_MILES:
-		case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
+		case DistanceUnit::MILES:
+		case DistanceUnit::NAUTICAL_MILES:
 			snprintf(tmp_str, sizeof(tmp_str), "%.2f yards", vik_coord_diff(&(tp->coord), &(tpwin->cur_tp->coord))*1.0936133);
 			break;
 		default:
-			fprintf(stderr, "CRITICAL: Houston, we've had a problem. distance=%d\n", dist_units);
+			fprintf(stderr, "CRITICAL: invalid distance unit %d\n", dist_units);
 		}
 
 		gtk_label_set_text (tpwin->diff_dist, tmp_str);
@@ -489,27 +489,27 @@ void vik_trw_layer_tpwin_set_tp(VikTrwLayerTpwin * tpwin, Track * track, TrackPo
 	gtk_label_set_text(tpwin->speed, tmp_str);
 
 	switch (dist_units) {
-	case VIK_UNITS_DISTANCE_KILOMETRES:
+	case DistanceUnit::KILOMETRES:
 		snprintf(tmp_str, sizeof(tmp_str), "%.5f m", tp->hdop);
 		gtk_label_set_text(tpwin->hdop, tmp_str);
 		snprintf(tmp_str, sizeof(tmp_str), "%.5f m", tp->pdop);
 		gtk_label_set_text(tpwin->pdop, tmp_str);
 		break;
-	case VIK_UNITS_DISTANCE_MILES:
+	case DistanceUnit::MILES:
 		snprintf(tmp_str, sizeof(tmp_str), "%.5f yards", tp->hdop*1.0936133);
 		gtk_label_set_text(tpwin->hdop, tmp_str);
 		snprintf(tmp_str, sizeof(tmp_str), "%.5f yards", tp->pdop*1.0936133);
 		gtk_label_set_text(tpwin->pdop, tmp_str);
 		break;
-	default:
-		fprintf(stderr, "CRITICAL: Houston, we've had a problem. distance=%d\n", dist_units);
+	default: /* kamilTODO: where NM are handled? */
+		fprintf(stderr, "CRITICAL: invalid distance unit %d\n", dist_units);
 	}
 
 	switch (height_units) {
-	case VIK_UNITS_HEIGHT_METRES:
+	case HeightUnit::METRES:
 		snprintf(tmp_str, sizeof(tmp_str), "%.5f m", tp->vdop);
 		break;
-	case VIK_UNITS_HEIGHT_FEET:
+	case HeightUnit::FEET:
 		snprintf(tmp_str, sizeof(tmp_str), "%.5f feet", VIK_METERS_TO_FEET(tp->vdop));
 		break;
 	default:

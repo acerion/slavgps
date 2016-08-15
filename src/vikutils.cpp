@@ -82,7 +82,7 @@ char * vu_trackpoint_formatted_message(char * format_code, Trackpoint * tp, Trac
 		values[i] = '\0';
 	}
 
-	vik_units_speed_t speed_units = a_vik_get_units_speed();
+	SpeedUnit speed_units = a_vik_get_units_speed();
 	char * speed_units_str = get_speed_unit_string(speed_units);
 
 	char * separator = strdup(" | ");
@@ -152,13 +152,13 @@ char * vu_trackpoint_formatted_message(char * format_code, Trackpoint * tp, Trac
 		}
 
 		case 'A': {
-			vik_units_height_t height_units = a_vik_get_units_height();
+			HeightUnit height_units = a_vik_get_units_height();
 			switch (height_units) {
-			case VIK_UNITS_HEIGHT_FEET:
+			case HeightUnit::FEET:
 				values[i] = g_strdup_printf(_("%sAlt %dfeet"), separator, (int)round(VIK_METERS_TO_FEET(tp->altitude)));
 				break;
 			default:
-				//VIK_UNITS_HEIGHT_METRES:
+				// HeightUnit::METRES:
 				values[i] = g_strdup_printf(_("%sAlt %dm"), separator, (int)round(tp->altitude));
 				break;
 			}
@@ -176,15 +176,15 @@ char * vu_trackpoint_formatted_message(char * format_code, Trackpoint * tp, Trac
 				int diff = (int) round(vik_coord_diff(&(tp->coord), &(tp_prev->coord)));
 
 				char * dist_units_str = NULL;
-				vik_units_distance_t dist_units = a_vik_get_units_distance();
+				DistanceUnit dist_units = a_vik_get_units_distance();
 				// expect the difference between track points to be small hence use metres or yards
 				switch (dist_units) {
-				case VIK_UNITS_DISTANCE_MILES:
-				case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
+				case DistanceUnit::MILES:
+				case DistanceUnit::NAUTICAL_MILES:
 					dist_units_str = strdup(_("yards"));
 					break;
 				default:
-					// VIK_UNITS_DISTANCE_KILOMETRES:
+					// DistanceUnit::KILOMETRES:
 					dist_units_str = strdup(_("m"));
 					break;
 				}
@@ -230,18 +230,18 @@ char * vu_trackpoint_formatted_message(char * format_code, Trackpoint * tp, Trac
 				double diste = trk->get_length_including_gaps();
 				double dist = diste - distd;
 				char * dist_units_str = NULL;
-				vik_units_distance_t dist_units = a_vik_get_units_distance();
+				DistanceUnit dist_units = a_vik_get_units_distance();
 				switch (dist_units) {
-				case VIK_UNITS_DISTANCE_MILES:
+				case DistanceUnit::MILES:
 					dist_units_str = strdup(_("miles"));
 					dist = VIK_METERS_TO_MILES(dist);
 					break;
-				case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
+				case DistanceUnit::NAUTICAL_MILES:
 					dist_units_str = strdup(_("NM"));
 					dist = VIK_METERS_TO_NAUTICAL_MILES(dist);
 					break;
 				default:
-					// VIK_UNITS_DISTANCE_KILOMETRES:
+					// DistanceUnit::KILOMETRES:
 					dist_units_str = strdup(_("km"));
 					dist = dist / 1000.0;
 					break;
@@ -257,18 +257,18 @@ char * vu_trackpoint_formatted_message(char * format_code, Trackpoint * tp, Trac
 				// Distance from start (along the track)
 				double distd = trk->get_length_to_trackpoint(tp);
 				char * dist_units_str = NULL;
-				vik_units_distance_t dist_units = a_vik_get_units_distance();
+				DistanceUnit dist_units = a_vik_get_units_distance();
 				switch (dist_units) {
-				case VIK_UNITS_DISTANCE_MILES:
+				case DistanceUnit::MILES:
 					dist_units_str = strdup(_("miles"));
 					distd = VIK_METERS_TO_MILES(distd);
 					break;
-				case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
+				case DistanceUnit::NAUTICAL_MILES:
 					dist_units_str = strdup(_("NM"));
 					distd = VIK_METERS_TO_NAUTICAL_MILES(distd);
 					break;
 				default:
-					// VIK_UNITS_DISTANCE_KILOMETRES:
+					// DistanceUnit::KILOMETRES:
 					dist_units_str = strdup(_("km"));
 					distd = distd / 1000.0;
 					break;
@@ -326,20 +326,20 @@ char * vu_trackpoint_formatted_message(char * format_code, Trackpoint * tp, Trac
 
 
 
-double convert_speed_mps_to(vik_units_speed_t speed_units, double speed)
+double convert_speed_mps_to(SpeedUnit speed_units, double speed)
 {
 	switch (speed_units) {
-	case VIK_UNITS_SPEED_KILOMETRES_PER_HOUR:
+	case SpeedUnit::KILOMETRES_PER_HOUR:
 		speed = VIK_MPS_TO_KPH(speed);
 		break;
-	case VIK_UNITS_SPEED_MILES_PER_HOUR:
+	case SpeedUnit::MILES_PER_HOUR:
 		speed = VIK_MPS_TO_MPH(speed);
 		break;
-	case VIK_UNITS_SPEED_KNOTS:
+	case SpeedUnit::KNOTS:
 		speed = VIK_MPS_TO_KNOTS(speed);
 		break;
 	default:
-		// VIK_UNITS_SPEED_METRES_PER_SECOND:
+		// SpeedUnit::METRES_PER_SECOND:
 		// Already in m/s so nothing to do
 		break;
 	}
@@ -350,21 +350,21 @@ double convert_speed_mps_to(vik_units_speed_t speed_units, double speed)
 
 
 
-char * get_speed_unit_string(vik_units_speed_t speed_unit)
+char * get_speed_unit_string(SpeedUnit speed_unit)
 {
 	char * speed_unit_str = NULL;
 	switch (speed_unit) {
-	case VIK_UNITS_SPEED_MILES_PER_HOUR:
+	case SpeedUnit::MILES_PER_HOUR:
 		speed_unit_str = strdup(_("mph"));
 		break;
-	case VIK_UNITS_SPEED_METRES_PER_SECOND:
+	case SpeedUnit::METRES_PER_SECOND:
 		speed_unit_str = strdup(_("m/s"));
 		break;
-	case VIK_UNITS_SPEED_KNOTS:
+	case SpeedUnit::KNOTS:
 		speed_unit_str = strdup(_("knots"));
 		break;
 	default:
-		// VIK_UNITS_SPEED_KILOMETRES_PER_HOUR:
+		// SpeedUnit::KILOMETRES_PER_HOUR:
 		speed_unit_str = strdup(_("km/h"));
 		break;
 	}
@@ -375,19 +375,19 @@ char * get_speed_unit_string(vik_units_speed_t speed_unit)
 
 
 
-char * get_speed_string(char * buf, size_t size, vik_units_speed_t speed_unit, double speed)
+char * get_speed_string(char * buf, size_t size, SpeedUnit speed_unit, double speed)
 {
 	switch (speed_unit) {
-	case VIK_UNITS_SPEED_KILOMETRES_PER_HOUR:
+	case SpeedUnit::KILOMETRES_PER_HOUR:
 		snprintf(buf, size, _("%.2f km/h"), VIK_MPS_TO_KPH (speed));
 		break;
-	case VIK_UNITS_SPEED_MILES_PER_HOUR:
+	case SpeedUnit::MILES_PER_HOUR:
 		snprintf(buf, size, _("%.2f mph"), VIK_MPS_TO_MPH (speed));
 		break;
-	case VIK_UNITS_SPEED_KNOTS:
+	case SpeedUnit::KNOTS:
 		snprintf(buf, size, _("%.2f knots"), VIK_MPS_TO_KNOTS (speed));
 		break;
-	case VIK_UNITS_SPEED_METRES_PER_SECOND:
+	case SpeedUnit::METRES_PER_SECOND:
 		snprintf(buf, size, _("%.2f m/s"), speed);
 		break;
 	default:

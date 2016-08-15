@@ -134,17 +134,17 @@ char * a_dialog_waypoint(GtkWindow * parent, char * default_name, LayerTRW * trw
 
 	lat = g_strdup_printf("%f", ll.lat);
 	lon = g_strdup_printf("%f", ll.lon);
-	vik_units_height_t height_units = a_vik_get_units_height();
+	HeightUnit height_units = a_vik_get_units_height();
 	switch (height_units) {
-	case VIK_UNITS_HEIGHT_METRES:
+	case HeightUnit::METRES:
 		alt = g_strdup_printf("%f", wp->altitude);
 		break;
-	case VIK_UNITS_HEIGHT_FEET:
+	case HeightUnit::FEET:
 		alt = g_strdup_printf("%f", VIK_METERS_TO_FEET(wp->altitude));
 		break;
 	default:
 		alt = g_strdup_printf("%f", wp->altitude);
-		fprintf(stderr, "CRITICAL: Houston, we've had a problem. height=%d\n", height_units);
+		fprintf(stderr, "CRITICAL: invalid height unit %d\n", height_units);
 	}
 
 	*updated = false;
@@ -359,10 +359,10 @@ char * a_dialog_waypoint(GtkWindow * parent, char * default_name, LayerTRW * trw
 			vik_coord_load_from_latlon(&(wp->coord), coord_mode, &ll);
 			// Always store in metres
 			switch (height_units) {
-			case VIK_UNITS_HEIGHT_METRES:
+			case HeightUnit::METRES:
 				wp->altitude = atof(gtk_entry_get_text(GTK_ENTRY(altentry)));
 				break;
-			case VIK_UNITS_HEIGHT_FEET:
+			case HeightUnit::FEET:
 				wp->altitude = VIK_FEET_TO_METERS(atof(gtk_entry_get_text(GTK_ENTRY(altentry))));
 				break;
 			default:

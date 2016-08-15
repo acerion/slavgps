@@ -153,11 +153,11 @@ static void table_output(TrackStatistics& ts, GtkWidget * content[])
 
 
 	switch (a_vik_get_units_distance ()) {
-	case VIK_UNITS_DISTANCE_MILES:
+	case DistanceUnit::MILES:
 		snprintf(tmp_buf, sizeof(tmp_buf), _("%.1f miles"), VIK_METERS_TO_MILES(ts.length));
 		break;
 	default:
-		//VIK_UNITS_DISTANCE_KILOMETRES
+		// DistanceUnit::KILOMETRES /* kamilTODO: where NM are handled? */
 		snprintf(tmp_buf, sizeof(tmp_buf), _("%.1f km"), ts.length/1000.0);
 		break;
 	}
@@ -165,18 +165,18 @@ static void table_output(TrackStatistics& ts, GtkWidget * content[])
 
 
 	switch (a_vik_get_units_distance ()) {
-	case VIK_UNITS_DISTANCE_MILES:
+	case DistanceUnit::MILES:
 		snprintf(tmp_buf, sizeof(tmp_buf), _("%.2f miles"), (VIK_METERS_TO_MILES(ts.length)/ts.count));
 		break;
 	default:
-		//VIK_UNITS_DISTANCE_KILOMETRES
+		// DistanceUnit::KILOMETRES /* kamilTODO: where NM are handled? */
 		snprintf(tmp_buf, sizeof(tmp_buf), _("%.2f km"), ts.length/(1000.0*ts.count));
 		break;
 	}
 	gtk_label_set_text(GTK_LABEL(content[cnt++]), tmp_buf);
 
 
-	vik_units_speed_t speed_unit = a_vik_get_units_speed();
+	SpeedUnit speed_unit = a_vik_get_units_speed();
 	if (ts.max_speed > 0) {
 		get_speed_string(tmp_buf, sizeof (tmp_buf), speed_unit, ts.max_speed);
 	} else {
@@ -195,7 +195,7 @@ static void table_output(TrackStatistics& ts, GtkWidget * content[])
 
 	switch (a_vik_get_units_height()) {
 		// Note always round off height value output since sub unit accuracy is overkill
-	case VIK_UNITS_HEIGHT_FEET:
+	case HeightUnit::FEET:
 		if (ts.min_alt != VIK_VAL_MIN_ALT) {
 			snprintf(tmp_buf, sizeof(tmp_buf), _("%d feet"), (int)round(VIK_METERS_TO_FEET(ts.min_alt)));
 		} else {
@@ -218,7 +218,7 @@ static void table_output(TrackStatistics& ts, GtkWidget * content[])
 		snprintf(tmp_buf, sizeof(tmp_buf), _("%d feet / %d feet"), (int)round(VIK_METERS_TO_FEET(ts.elev_gain/ts.count)), (int)round(VIK_METERS_TO_FEET(ts.elev_loss/ts.count)));
 		break;
 	default:
-		//VIK_UNITS_HEIGHT_METRES
+		//HeightUnit::METRES
 		if (ts.min_alt != VIK_VAL_MIN_ALT) {
 			snprintf(tmp_buf, sizeof(tmp_buf), _("%d m"), (int)round(ts.min_alt));
 		} else {

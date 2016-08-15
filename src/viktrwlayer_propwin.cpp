@@ -901,19 +901,19 @@ void speed_label_update(GtkWidget * widget, double value)
 	static char tmp_buf[20];
 	// Even if GPS speed available (tp->speed), the text will correspond to the speed map shown
 	// No conversions needed as already in appropriate units
-	vik_units_speed_t speed_units = a_vik_get_units_speed();
+	SpeedUnit speed_units = a_vik_get_units_speed();
 	switch (speed_units) {
-	case VIK_UNITS_SPEED_KILOMETRES_PER_HOUR:
+	case SpeedUnit::KILOMETRES_PER_HOUR:
 		snprintf(tmp_buf, sizeof(tmp_buf), _("%.1f kph"), value);
 		break;
-	case VIK_UNITS_SPEED_MILES_PER_HOUR:
+	case SpeedUnit::MILES_PER_HOUR:
 		snprintf(tmp_buf, sizeof(tmp_buf), _("%.1f mph"), value);
 		break;
-	case VIK_UNITS_SPEED_KNOTS:
+	case SpeedUnit::KNOTS:
 		snprintf(tmp_buf, sizeof(tmp_buf), _("%.1f knots"), value);
 		break;
 	default:
-		// VIK_UNITS_SPEED_METRES_PER_SECOND:
+		// SpeedUnit::METRES_PER_SECOND:
 		snprintf(tmp_buf, sizeof(tmp_buf), _("%.1f m/s"), value);
 		break;
 	}
@@ -1190,19 +1190,19 @@ void get_mouse_event_x(GtkWidget * event_box, GdkEventMotion * event, PropWidget
 void distance_label_update(GtkWidget * widget, double meters_from_start)
 {
 	static char tmp_buf[20];
-	vik_units_distance_t dist_units = a_vik_get_units_distance();
+	DistanceUnit dist_units = a_vik_get_units_distance();
 	switch (dist_units) {
-	case VIK_UNITS_DISTANCE_KILOMETRES:
+	case DistanceUnit::KILOMETRES:
 		snprintf(tmp_buf, sizeof(tmp_buf), "%.2f km", meters_from_start/1000.0);
 		break;
-	case VIK_UNITS_DISTANCE_MILES:
+	case DistanceUnit::MILES:
 		snprintf(tmp_buf, sizeof(tmp_buf), "%.2f miles", VIK_METERS_TO_MILES(meters_from_start));
 		break;
-	case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
+	case DistanceUnit::NAUTICAL_MILES:
 		snprintf(tmp_buf, sizeof(tmp_buf), "%.2f NM", VIK_METERS_TO_NAUTICAL_MILES(meters_from_start));
 		break;
 	default:
-		fprintf(stderr, "CRITICAL: Houston, we've had a problem. distance=%d\n", dist_units);
+		fprintf(stderr, "CRITICAL: invalid distance unit %d\n", dist_units);
 	}
 	gtk_label_set_text(GTK_LABEL(widget), tmp_buf);
 
@@ -1213,7 +1213,7 @@ void distance_label_update(GtkWidget * widget, double meters_from_start)
 void elevation_label_update(GtkWidget * widget, Trackpoint * tp)
 {
 	static char tmp_buf[20];
-	if (a_vik_get_units_height() == VIK_UNITS_HEIGHT_FEET) {
+	if (a_vik_get_units_height() == HeightUnit::FEET) {
 		snprintf(tmp_buf, sizeof(tmp_buf), "%d ft", (int)VIK_METERS_TO_FEET(tp->altitude));
 	} else {
 		snprintf(tmp_buf, sizeof(tmp_buf), "%d m", (int) tp->altitude);
@@ -1227,10 +1227,10 @@ void dist_dist_label_update(GtkWidget * widget, double distance)
 {
 	static char tmp_buf[20];
 	switch (a_vik_get_units_distance()) {
-	case VIK_UNITS_DISTANCE_MILES:
+	case DistanceUnit::MILES:
 		snprintf(tmp_buf, sizeof(tmp_buf), "%.2f miles", distance);
 		break;
-	case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
+	case DistanceUnit::NAUTICAL_MILES:
 		snprintf(tmp_buf, sizeof(tmp_buf), "%.2f NM", distance);
 		break;
 	default:
@@ -1282,7 +1282,7 @@ static void draw_dem_alt_speed_dist(Track * trk,
 			int16_t elev = dem_cache_get_elev_by_coord(&(*iter)->coord, VIK_DEM_INTERPOL_BEST);
 			if (elev != VIK_DEM_INVALID_ELEVATION) {
 				// Convert into height units
-				if (a_vik_get_units_height() == VIK_UNITS_HEIGHT_FEET) {
+				if (a_vik_get_units_height() == HeightUnit::FEET) {
 					elev = VIK_METERS_TO_FEET(elev);
 				}
 				// No conversion needed if already in metres
@@ -1403,18 +1403,18 @@ static void draw_grid_x_time(GtkWidget * window, GtkWidget * image, PropWidgets 
  * A common way to draw the grid with x axis labels for distance graphs
  *
  */
-static void draw_grid_x_distance(GtkWidget * window, GtkWidget * image, PropWidgets * widgets, GdkPixmap * pix, unsigned int ii, double dd, unsigned int xx, vik_units_distance_t dist_units)
+static void draw_grid_x_distance(GtkWidget * window, GtkWidget * image, PropWidgets * widgets, GdkPixmap * pix, unsigned int ii, double dd, unsigned int xx, DistanceUnit dist_units)
 {
 	char *label_markup = NULL;
 	switch (dist_units) {
-	case VIK_UNITS_DISTANCE_MILES:
+	case DistanceUnit::MILES:
 		if (ii > 4) {
 			label_markup = g_strdup_printf("<span size=\"small\">%d %s</span>", (unsigned int)dd, _("miles"));
 		} else {
 			label_markup = g_strdup_printf("<span size=\"small\">%.1f %s</span>", dd, _("miles"));
 		}
 		break;
-	case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
+	case DistanceUnit::NAUTICAL_MILES:
 		if (ii > 4) {
 			label_markup = g_strdup_printf("<span size=\"small\">%d %s</span>", (unsigned int)dd, _("NM"));
 		} else {
@@ -1422,7 +1422,7 @@ static void draw_grid_x_distance(GtkWidget * window, GtkWidget * image, PropWidg
 		}
 		break;
 	default:
-		// VIK_UNITS_DISTANCE_KILOMETRES:
+		// DistanceUnit::KILOMETRES:
 		if (ii > 4) {
 			label_markup = g_strdup_printf("<span size=\"small\">%d %s</span>", (unsigned int)dd, _("km"));
 		} else {
@@ -1463,19 +1463,19 @@ static void clear_images(GdkPixmap *pix, GtkWidget *window, PropWidgets *widgets
 /**
  *
  */
-static void draw_distance_divisions(GtkWidget * window, GtkWidget * image, GdkPixmap * pix, PropWidgets * widgets, vik_units_distance_t dist_units)
+static void draw_distance_divisions(GtkWidget * window, GtkWidget * image, GdkPixmap * pix, PropWidgets * widgets, DistanceUnit dist_units)
 {
 	// Set to display units from length in metres.
 	double length = widgets->track_length_inc_gaps;
 	switch (dist_units) {
-	case VIK_UNITS_DISTANCE_MILES:
+	case DistanceUnit::MILES:
 		length = VIK_METERS_TO_MILES(length);
 		break;
-	case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
+	case DistanceUnit::NAUTICAL_MILES:
 		length = VIK_METERS_TO_NAUTICAL_MILES(length);
 		break;
 	default:
-		// KM
+		// DistanceUnit::KILOMETRES
 		length = length/1000.0;
 		break;
 	}
@@ -1509,8 +1509,8 @@ static void draw_elevations(GtkWidget * image, Track * trk, PropWidgets * widget
 	}
 
 	// Convert into appropriate units
-	vik_units_height_t height_units = a_vik_get_units_height();
-	if (height_units == VIK_UNITS_HEIGHT_FEET) {
+	HeightUnit height_units = a_vik_get_units_height();
+	if (height_units == HeightUnit::FEET) {
 		// Convert altitudes into feet units
 		for (i = 0; i < widgets->profile_width; i++) {
 			widgets->altitudes[i] = VIK_METERS_TO_FEET(widgets->altitudes[i]);
@@ -1542,10 +1542,10 @@ static void draw_elevations(GtkWidget * image, Track * trk, PropWidgets * widget
 		char s[32];
 
 		switch (height_units) {
-		case VIK_UNITS_HEIGHT_METRES:
+		case HeightUnit::METRES:
 			sprintf(s, "%8dm", (int)(mina + (LINES-i)*chunksa[widgets->cia]));
 			break;
-		case VIK_UNITS_HEIGHT_FEET:
+		case HeightUnit::FEET:
 			// NB values already converted into feet
 			sprintf(s, "%8dft", (int)(mina + (LINES-i)*chunksa[widgets->cia]));
 			break;
@@ -1770,7 +1770,7 @@ static void draw_vt(GtkWidget * image, Track * trk, PropWidgets * widgets)
 	}
 
 	/* Convert into appropriate units. */
-	vik_units_speed_t speed_units = a_vik_get_units_speed();
+	SpeedUnit speed_units = a_vik_get_units_speed();
 	for (i = 0; i < widgets->profile_width; i++) {
 		widgets->speeds[i] = convert_speed_mps_to(speed_units, widgets->speeds[i]);
 	}
@@ -1800,16 +1800,16 @@ static void draw_vt(GtkWidget * image, Track * trk, PropWidgets * widgets)
 
 		// NB: No need to convert here anymore as numbers are in the appropriate units
 		switch (speed_units) {
-		case VIK_UNITS_SPEED_KILOMETRES_PER_HOUR:
+		case SpeedUnit::KILOMETRES_PER_HOUR:
 			sprintf(s, "%8dkm/h", (int)(mins + (LINES-i)*chunkss[widgets->cis]));
 			break;
-		case VIK_UNITS_SPEED_MILES_PER_HOUR:
+		case SpeedUnit::MILES_PER_HOUR:
 			sprintf(s, "%8dmph", (int)(mins + (LINES-i)*chunkss[widgets->cis]));
 			break;
-		case VIK_UNITS_SPEED_METRES_PER_SECOND:
+		case SpeedUnit::METRES_PER_SECOND:
 			sprintf(s, "%8dm/s", (int)(mins + (LINES-i)*chunkss[widgets->cis]));
 			break;
-		case VIK_UNITS_SPEED_KNOTS:
+		case SpeedUnit::KNOTS:
 			sprintf(s, "%8dknots", (int)(mins + (LINES-i)*chunkss[widgets->cis]));
 			break;
 		default:
@@ -1878,22 +1878,22 @@ static void draw_dt(GtkWidget * image, Track * trk, PropWidgets * widgets)
 	}
 
 	// Convert into appropriate units
-	vik_units_distance_t dist_units = a_vik_get_units_distance();
+	DistanceUnit dist_units = a_vik_get_units_distance();
 	switch (dist_units) {
-	case VIK_UNITS_DISTANCE_MILES:
+	case DistanceUnit::MILES:
 		for (i = 0; i < widgets->profile_width; i++) {
 			widgets->distances[i] = VIK_METERS_TO_MILES(widgets->distances[i]);
 		}
 		break;
-	case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
+	case DistanceUnit::NAUTICAL_MILES:
 		for (i = 0; i < widgets->profile_width; i++) {
 			widgets->distances[i] = VIK_METERS_TO_NAUTICAL_MILES(widgets->distances[i]);
 		}
 		break;
 	default:
-		// Metres - but want in kms
+		// DistanceUnit::KILOMETRES
 		for (i = 0; i < widgets->profile_width; i++) {
-			widgets->distances[i] = widgets->distances[i]/1000.0;
+			widgets->distances[i] = widgets->distances[i]/1000.0; /* kamilTODO: why divide by 1000 if unit is already km? */
 		}
 		break;
 	}
@@ -1914,10 +1914,10 @@ static void draw_dt(GtkWidget * image, Track * trk, PropWidgets * widgets)
 	// mind = 0.0; - Thus not used
 	double maxd;
 	switch (dist_units) {
-	case VIK_UNITS_DISTANCE_MILES:
+	case DistanceUnit::MILES:
 		maxd = VIK_METERS_TO_MILES(trk->get_length_including_gaps());
 		break;
-	case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
+	case DistanceUnit::NAUTICAL_MILES:
 		maxd = VIK_METERS_TO_NAUTICAL_MILES(trk->get_length_including_gaps());
 		break;
 	default:
@@ -1937,10 +1937,10 @@ static void draw_dt(GtkWidget * image, Track * trk, PropWidgets * widgets)
 		char s[32];
 
 		switch (dist_units) {
-		case VIK_UNITS_DISTANCE_MILES:
+		case DistanceUnit::MILES:
 			sprintf(s, _("%.1f miles"), ((LINES-i)*chunksd[widgets->cid]));
 			break;
-		case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
+		case DistanceUnit::NAUTICAL_MILES:
 			sprintf(s, _("%.1f NM"), ((LINES-i)*chunksd[widgets->cid]));
 			break;
 		default:
@@ -2004,8 +2004,8 @@ static void draw_et(GtkWidget * image, Track * trk, PropWidgets * widgets)
 	}
 
 	// Convert into appropriate units
-	vik_units_height_t height_units = a_vik_get_units_height();
-	if (height_units == VIK_UNITS_HEIGHT_FEET) {
+	HeightUnit height_units = a_vik_get_units_height();
+	if (height_units == HeightUnit::FEET) {
 		// Convert altitudes into feet units
 		for (i = 0; i < widgets->profile_width; i++) {
 			widgets->ats[i] = VIK_METERS_TO_FEET(widgets->ats[i]);
@@ -2039,10 +2039,10 @@ static void draw_et(GtkWidget * image, Track * trk, PropWidgets * widgets)
 		char s[32];
 
 		switch (height_units) {
-		case VIK_UNITS_HEIGHT_METRES:
+		case HeightUnit::METRES:
 			sprintf(s, "%8dm", (int)(mina + (LINES-i)*chunksa[widgets->ciat]));
 			break;
-		case VIK_UNITS_HEIGHT_FEET:
+		case HeightUnit::FEET:
 			// NB values already converted into feet
 			sprintf(s, "%8dft", (int)(mina + (LINES-i)*chunksa[widgets->ciat]));
 			break;
@@ -2080,7 +2080,7 @@ static void draw_et(GtkWidget * image, Track * trk, PropWidgets * widgets)
 				int16_t elev = dem_cache_get_elev_by_coord(&(tp->coord), VIK_DEM_INTERPOL_SIMPLE);
 				if (elev != VIK_DEM_INVALID_ELEVATION) {
 					// Convert into height units
-					if (a_vik_get_units_height() == VIK_UNITS_HEIGHT_FEET) {
+					if (a_vik_get_units_height() == HeightUnit::FEET) {
 						elev = VIK_METERS_TO_FEET(elev);
 					}
 					// No conversion needed if already in metres
@@ -2140,7 +2140,7 @@ static void draw_sd(GtkWidget * image, Track * trk, PropWidgets * widgets)
 	}
 
 	// Convert into appropriate units
-	vik_units_speed_t speed_units = a_vik_get_units_speed();
+	SpeedUnit speed_units = a_vik_get_units_speed();
 	for (i = 0; i < widgets->profile_width; i++) {
 		widgets->speeds_dist[i] = convert_speed_mps_to(speed_units, widgets->speeds_dist[i]);
 	}
@@ -2172,16 +2172,16 @@ static void draw_sd(GtkWidget * image, Track * trk, PropWidgets * widgets)
 
 		// NB: No need to convert here anymore as numbers are in the appropriate units
 		switch (speed_units) {
-		case VIK_UNITS_SPEED_KILOMETRES_PER_HOUR:
+		case SpeedUnit::KILOMETRES_PER_HOUR:
 			sprintf(s, "%8dkm/h", (int)(mins + (LINES-i)*chunkss[widgets->cisd]));
 			break;
-		case VIK_UNITS_SPEED_MILES_PER_HOUR:
+		case SpeedUnit::MILES_PER_HOUR:
 			sprintf(s, "%8dmph", (int)(mins + (LINES-i)*chunkss[widgets->cisd]));
 			break;
-		case VIK_UNITS_SPEED_METRES_PER_SECOND:
+		case SpeedUnit::METRES_PER_SECOND:
 			sprintf(s, "%8dm/s", (int)(mins + (LINES-i)*chunkss[widgets->cisd]));
 			break;
-		case VIK_UNITS_SPEED_KNOTS:
+		case SpeedUnit::KNOTS:
 			sprintf(s, "%8dknots", (int)(mins + (LINES-i)*chunkss[widgets->cisd]));
 			break;
 		default:
@@ -2979,24 +2979,24 @@ void vik_trw_layer_propwin_run(GtkWindow *parent,
 	GtkWidget *content[20];
 	int cnt = 0;
 
-	vik_units_distance_t dist_units = a_vik_get_units_distance();
+	DistanceUnit dist_units = a_vik_get_units_distance();
 
 	// NB This value not shown yet - but is used by internal calculations
 	widgets->track_length_inc_gaps = trk->get_length_including_gaps();
 
 	tr_len = widgets->track_length = trk->get_length();
 	switch (dist_units) {
-	case VIK_UNITS_DISTANCE_KILOMETRES:
+	case DistanceUnit::KILOMETRES:
 		snprintf(tmp_buf, sizeof(tmp_buf), "%.2f km", tr_len/1000.0);
 		break;
-	case VIK_UNITS_DISTANCE_MILES:
+	case DistanceUnit::MILES:
 		snprintf(tmp_buf, sizeof(tmp_buf), "%.2f miles", VIK_METERS_TO_MILES(tr_len));
 		break;
-	case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
+	case DistanceUnit::NAUTICAL_MILES:
 		snprintf(tmp_buf, sizeof(tmp_buf), "%.2f NM", VIK_METERS_TO_NAUTICAL_MILES(tr_len));
 		break;
 	default:
-		fprintf(stderr, "CRITICAL: Houston, we've had a problem. distance=%d\n", dist_units);
+		fprintf(stderr, "CRITICAL: invalid distance unit %d\n", dist_units);
 	}
 	widgets->w_track_length = content[cnt++] = ui_label_new_selectable(tmp_buf);
 
@@ -3011,7 +3011,7 @@ void vik_trw_layer_propwin_run(GtkWindow *parent,
 	snprintf(tmp_buf, sizeof(tmp_buf), "%lu", trk->get_dup_point_count());
 	widgets->w_duptp_count = content[cnt++] = ui_label_new_selectable(tmp_buf);
 
-	vik_units_speed_t speed_units = a_vik_get_units_speed();
+	SpeedUnit speed_units = a_vik_get_units_speed();
 	tmp_speed = trk->get_max_speed();
 	if (tmp_speed == 0) {
 		snprintf(tmp_buf, sizeof(tmp_buf), _("No Data"));
@@ -3041,14 +3041,14 @@ void vik_trw_layer_propwin_run(GtkWindow *parent,
 	widgets->w_mvg_speed = content[cnt++] = ui_label_new_selectable(tmp_buf);
 
 	switch (dist_units) {
-	case VIK_UNITS_DISTANCE_KILOMETRES:
+	case DistanceUnit::KILOMETRES:
 		// Even though kilometres, the average distance between points is going to be quite small so keep in metres
 		snprintf(tmp_buf, sizeof(tmp_buf), "%.2f m", (tp_count - seg_count) == 0 ? 0 : tr_len / (tp_count - seg_count));
 		break;
-	case VIK_UNITS_DISTANCE_MILES:
+	case DistanceUnit::MILES:
 		snprintf(tmp_buf, sizeof(tmp_buf), "%.3f miles", (tp_count - seg_count) == 0 ? 0 : VIK_METERS_TO_MILES(tr_len / (tp_count - seg_count)));
 		break;
-	case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
+	case DistanceUnit::NAUTICAL_MILES:
 		snprintf(tmp_buf, sizeof(tmp_buf), "%.3f NM", (tp_count - seg_count) == 0 ? 0 : VIK_METERS_TO_NAUTICAL_MILES(tr_len / (tp_count - seg_count)));
 		break;
 	default:
@@ -3056,15 +3056,15 @@ void vik_trw_layer_propwin_run(GtkWindow *parent,
 	}
 	widgets->w_avg_dist = content[cnt++] = ui_label_new_selectable(tmp_buf);
 
-	vik_units_height_t height_units = a_vik_get_units_height();
+	HeightUnit height_units = a_vik_get_units_height();
 	if (min_alt == VIK_DEFAULT_ALTITUDE) {
 		snprintf(tmp_buf, sizeof(tmp_buf), _("No Data"));
 	} else {
 		switch (height_units) {
-		case VIK_UNITS_HEIGHT_METRES:
+		case HeightUnit::METRES:
 			snprintf(tmp_buf, sizeof(tmp_buf), "%.0f m - %.0f m", min_alt, max_alt);
 			break;
-		case VIK_UNITS_HEIGHT_FEET:
+		case HeightUnit::FEET:
 			snprintf(tmp_buf, sizeof(tmp_buf), "%.0f feet - %.0f feet", VIK_METERS_TO_FEET(min_alt), VIK_METERS_TO_FEET(max_alt));
 			break;
 		default:
@@ -3079,10 +3079,10 @@ void vik_trw_layer_propwin_run(GtkWindow *parent,
 		snprintf(tmp_buf, sizeof(tmp_buf), _("No Data"));
 	} else {
 		switch (height_units) {
-		case VIK_UNITS_HEIGHT_METRES:
+		case HeightUnit::METRES:
 			snprintf(tmp_buf, sizeof(tmp_buf), "%.0f m / %.0f m", max_alt, min_alt);
 			break;
-		case VIK_UNITS_HEIGHT_FEET:
+		case HeightUnit::FEET:
 			snprintf(tmp_buf, sizeof(tmp_buf), "%.0f feet / %.0f feet", VIK_METERS_TO_FEET(max_alt), VIK_METERS_TO_FEET(min_alt));
 			break;
 		default:

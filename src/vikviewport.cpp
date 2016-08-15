@@ -664,16 +664,16 @@ void Viewport::draw_scale()
 	this->screen_to_coord(0,                      height / 2, &left);
 	this->screen_to_coord(width * RELATIVE_WIDTH, height / 2, &right);
 
-	vik_units_distance_t dist_units = a_vik_get_units_distance();
+	DistanceUnit dist_units = a_vik_get_units_distance();
 	switch (dist_units) {
-	case VIK_UNITS_DISTANCE_KILOMETRES:
+	case DistanceUnit::KILOMETRES:
 		base_distance = vik_coord_diff(&left, &right); /* In meters. */
 		break;
-	case VIK_UNITS_DISTANCE_MILES:
+	case DistanceUnit::MILES:
 		/* In 0.1 miles (copes better when zoomed in as 1 mile can be too big). */
 		base_distance = VIK_METERS_TO_MILES(vik_coord_diff(&left, &right)) * 10.0;
 		break;
-	case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
+	case DistanceUnit::NAUTICAL_MILES:
 		/* In 0.1 NM (copes better when zoomed in as 1 NM can be too big). */
 		base_distance = VIK_METERS_TO_NAUTICAL_MILES(vik_coord_diff(&left, &right)) * 10.0;
 		break;
@@ -716,14 +716,14 @@ void Viewport::draw_scale()
 
 	char s[128];
 	switch (dist_units) {
-	case VIK_UNITS_DISTANCE_KILOMETRES:
+	case DistanceUnit::KILOMETRES:
 		if (scale_unit >= 1000) {
 			sprintf(s, "%d km", (int) scale_unit / 1000);
 		} else {
 			sprintf(s, "%d m", (int) scale_unit);
 		}
 		break;
-	case VIK_UNITS_DISTANCE_MILES:
+	case DistanceUnit::MILES:
 		/* Handle units in 0.1 miles. */
 		if (scale_unit < 10.0) {
 			sprintf(s, "%0.1f miles", scale_unit / 10.0);
@@ -733,7 +733,7 @@ void Viewport::draw_scale()
 			sprintf(s, "%d miles", (int) (scale_unit / 10.0));
 		}
 		break;
-	case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
+	case DistanceUnit::NAUTICAL_MILES:
 		/* Handle units in 0.1 NM. */
 		if (scale_unit < 10.0) {
 			sprintf(s, "%0.1f NM", scale_unit / 10.0);

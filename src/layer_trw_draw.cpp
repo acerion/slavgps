@@ -198,15 +198,15 @@ static void trw_layer_draw_track_label(char * name, char * fgcolour, char * bgco
 static double distance_in_preferred_units(double dist)
 {
 	double mydist;
-	vik_units_distance_t dist_units = a_vik_get_units_distance();
+	DistanceUnit dist_units = a_vik_get_units_distance();
 	switch (dist_units) {
-	case VIK_UNITS_DISTANCE_MILES:
+	case DistanceUnit::MILES:
 		mydist = VIK_METERS_TO_MILES(dist);
 		break;
-	case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
+	case DistanceUnit::NAUTICAL_MILES:
 		mydist = VIK_METERS_TO_NAUTICAL_MILES(dist);
 		break;
-		// VIK_UNITS_DISTANCE_KILOMETRES:
+		// DistanceUnit::KILOMETRES:
 	default:
 		mydist = dist/1000.0;
 		break;
@@ -245,21 +245,21 @@ static void trw_layer_draw_dist_labels(DrawingParams * dp, Track * trk, bool dra
 		}
 	}
 
-	vik_units_distance_t dist_units = a_vik_get_units_distance();
+	DistanceUnit dist_units = a_vik_get_units_distance();
 
 	for (i = 1; i < trk->max_number_dist_labels+1; i++) {
 		double dist_i = dist * i;
 
 		// Convert distance back into metres for use in finding a trackpoint
 		switch (dist_units) {
-		case VIK_UNITS_DISTANCE_MILES:
+		case DistanceUnit::MILES:
 			dist_i = VIK_MILES_TO_METERS(dist_i);
 			break;
-		case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
+		case DistanceUnit::NAUTICAL_MILES:
 			dist_i = VIK_NAUTICAL_MILES_TO_METERS(dist_i);
 			break;
-			// VIK_UNITS_DISTANCE_KILOMETRES:
 		default:
+			// DistanceUnit::KILOMETRES:
 			dist_i = dist_i*1000.0;
 			break;
 		}
@@ -281,14 +281,14 @@ static void trw_layer_draw_dist_labels(DrawingParams * dp, Track * trk, bool dra
 			char *name;
 			char *units;
 			switch (dist_units) {
-			case VIK_UNITS_DISTANCE_MILES:
+			case DistanceUnit::MILES:
 				units = strdup(_("miles"));
 				break;
-			case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
+			case DistanceUnit::NAUTICAL_MILES:
 				units = strdup(_("NM"));
 				break;
-				// VIK_UNITS_DISTANCE_KILOMETRES:
 			default:
+				// DistanceUnit::KILOMETRES:
 				units = strdup(_("km"));
 				break;
 			}

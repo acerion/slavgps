@@ -2013,11 +2013,11 @@ char const * LayerTRW::tooltip()
 
 			// Setup info dependent on distance units
 			switch (a_vik_get_units_distance()) {
-			case VIK_UNITS_DISTANCE_MILES:
+			case DistanceUnit::MILES:
 				snprintf(tbuf4, sizeof(tbuf4), "miles");
 				len_in_units = VIK_METERS_TO_MILES(tt.length);
 				break;
-			case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
+			case DistanceUnit::NAUTICAL_MILES:
 				snprintf(tbuf4, sizeof(tbuf4), "NM");
 				len_in_units = VIK_METERS_TO_NAUTICAL_MILES(tt.length);
 				break;
@@ -2046,11 +2046,11 @@ char const * LayerTRW::tooltip()
 			double len_in_units;
 			// Setup info dependent on distance units
 			switch (a_vik_get_units_distance()) {
-			case VIK_UNITS_DISTANCE_MILES:
+			case DistanceUnit::MILES:
 				snprintf(tbuf4, sizeof(tbuf4), "miles");
 				len_in_units = VIK_METERS_TO_MILES(rlength);
 				break;
-			case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
+			case DistanceUnit::NAUTICAL_MILES:
 				snprintf(tbuf4, sizeof(tbuf4), "NM");
 				len_in_units = VIK_METERS_TO_NAUTICAL_MILES(rlength);
 				break;
@@ -2126,15 +2126,15 @@ char const * LayerTRW::sublayer_tooltip(SublayerType sublayer_type, sg_uid_t sub
 				}
 				// Get length and consider the appropriate distance units
 				double tr_len = trk->get_length();
-				vik_units_distance_t dist_units = a_vik_get_units_distance();
+				DistanceUnit dist_units = a_vik_get_units_distance();
 				switch (dist_units) {
-				case VIK_UNITS_DISTANCE_KILOMETRES:
+				case DistanceUnit::KILOMETRES:
 					snprintf(tmp_buf, sizeof(tmp_buf), _("%s%.1f km %s"), time_buf1, tr_len/1000.0, time_buf2);
 					break;
-				case VIK_UNITS_DISTANCE_MILES:
+				case DistanceUnit::MILES:
 					snprintf(tmp_buf, sizeof(tmp_buf), _("%s%.1f miles %s"), time_buf1, VIK_METERS_TO_MILES(tr_len), time_buf2);
 					break;
-				case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
+				case DistanceUnit::NAUTICAL_MILES:
 					snprintf(tmp_buf, sizeof(tmp_buf), _("%s%.1f NM %s"), time_buf1, VIK_METERS_TO_NAUTICAL_MILES(tr_len), time_buf2);
 					break;
 				default:
@@ -2215,11 +2215,11 @@ void LayerTRW::set_statusbar_msg_info_wpt(Waypoint * wp)
 {
 	char tmp_buf1[64];
 	switch (a_vik_get_units_height()) {
-	case VIK_UNITS_HEIGHT_FEET:
+	case HeightUnit::FEET:
 		snprintf(tmp_buf1, sizeof(tmp_buf1), _("Wpt: Alt %dft"), (int) round(VIK_METERS_TO_FEET(wp->altitude)));
 		break;
 	default:
-		//VIK_UNITS_HEIGHT_METRES:
+		//HeightUnit::METRES:
 		snprintf(tmp_buf1, sizeof(tmp_buf1), _("Wpt: Alt %dm"), (int) round(wp->altitude));
 	}
 
@@ -7764,9 +7764,9 @@ static char* distance_string(double distance)
 	char str[128];
 
 	/* draw label with distance */
-	vik_units_distance_t dist_units = a_vik_get_units_distance();
+	DistanceUnit dist_units = a_vik_get_units_distance();
 	switch (dist_units) {
-	case VIK_UNITS_DISTANCE_MILES:
+	case DistanceUnit::MILES:
 		if (distance >= VIK_MILES_TO_METERS(1) && distance < VIK_MILES_TO_METERS(100)) {
 			g_sprintf(str, "%3.2f miles", VIK_METERS_TO_MILES(distance));
 		} else if (distance < 1609.4) {
@@ -7775,7 +7775,7 @@ static char* distance_string(double distance)
 			g_sprintf(str, "%d miles", (int)VIK_METERS_TO_MILES(distance));
 		}
 		break;
-	case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
+	case DistanceUnit::NAUTICAL_MILES:
 		if (distance >= VIK_NAUTICAL_MILES_TO_METERS(1) && distance < VIK_NAUTICAL_MILES_TO_METERS(100)) {
 			g_sprintf(str, "%3.2f NM", VIK_METERS_TO_NAUTICAL_MILES(distance));
 		} else if (distance < VIK_NAUTICAL_MILES_TO_METERS(1)) {
@@ -7785,7 +7785,7 @@ static char* distance_string(double distance)
 		}
 		break;
 	default:
-		// VIK_UNITS_DISTANCE_KILOMETRES
+		// DistanceUnit::KILOMETRES
 		if (distance >= 1000 && distance < 100000) {
 			g_sprintf(str, "%3.2f km", distance/1000.0);
 		} else if (distance < 1000) {
@@ -7814,7 +7814,7 @@ static void statusbar_write(double distance, double elev_gain, double elev_loss,
 	char *str_total = distance_string(distance);
 
 	if ((elev_gain > 0.1) || (elev_loss > 0.1)) {
-		if (a_vik_get_units_height() == VIK_UNITS_HEIGHT_METRES) {
+		if (a_vik_get_units_height() == HeightUnit::METRES) {
 			g_sprintf(str_gain_loss, _(" - Gain %dm:Loss %dm"), (int)elev_gain, (int)elev_loss);
 		} else {
 			g_sprintf(str_gain_loss, _(" - Gain %dft:Loss %dft"), (int)VIK_METERS_TO_FEET(elev_gain), (int)VIK_METERS_TO_FEET(elev_loss));

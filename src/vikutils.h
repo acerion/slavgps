@@ -32,9 +32,9 @@
 extern "C" {
 #endif
 
-char * get_speed_unit_string(vik_units_speed_t speed_unit);
-double convert_speed_mps_to(vik_units_speed_t speed_units, double speed);
-char * get_speed_string(char * buf, size_t size, vik_units_speed_t speed_unit, double speed);
+char * get_speed_unit_string(SpeedUnit speed_unit);
+double convert_speed_mps_to(SpeedUnit speed_units, double speed);
+char * get_speed_string(char * buf, size_t size, SpeedUnit speed_unit, double speed);
 
 char * vu_trackpoint_formatted_message(char * format_code, SlavGPS::Trackpoint * tp, SlavGPS::Trackpoint * tp_prev, SlavGPS::Track * trk, double climb);
 

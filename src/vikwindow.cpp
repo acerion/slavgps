@@ -1116,7 +1116,7 @@ static void draw_mouse_motion_cb(Window * window, GdkEventMotion * event)
 
 
 	if ((alt = dem_cache_get_elev_by_coord(&coord, interpol_method)) != VIK_DEM_INVALID_ELEVATION) {
-		if (a_vik_get_units_height() == VIK_UNITS_HEIGHT_METRES) {
+		if (a_vik_get_units_height() == HeightUnit::METRES) {
 			snprintf(pointer_buf, BUFFER_SIZE, _("%s %s %dm"), lat, lon, alt);
 		} else {
 			snprintf(pointer_buf, BUFFER_SIZE, _("%s %s %dft"), lat, lon, (int)VIK_METERS_TO_FEET(alt));
@@ -1375,9 +1375,9 @@ static void draw_ruler(Viewport * viewport, GdkDrawable *d, GdkGC *gc, int x1, i
 		gdk_draw_layout(d, gc, x1-5, y1-CR-3*CW-8, pl);
 
 		/* draw label with distance */
-		vik_units_distance_t dist_units = a_vik_get_units_distance();
+		DistanceUnit dist_units = a_vik_get_units_distance();
 		switch (dist_units) {
-		case VIK_UNITS_DISTANCE_KILOMETRES:
+		case DistanceUnit::KILOMETRES:
 			if (distance >= 1000 && distance < 100000) {
 				g_sprintf(str, "%3.2f km", distance/1000.0);
 			} else if (distance < 1000) {
@@ -1386,7 +1386,7 @@ static void draw_ruler(Viewport * viewport, GdkDrawable *d, GdkGC *gc, int x1, i
 				g_sprintf(str, "%d km", (int)distance/1000);
 			}
 			break;
-		case VIK_UNITS_DISTANCE_MILES:
+		case DistanceUnit::MILES:
 			if (distance >= VIK_MILES_TO_METERS(1) && distance < VIK_MILES_TO_METERS(100)) {
 				g_sprintf(str, "%3.2f miles", VIK_METERS_TO_MILES(distance));
 			} else if (distance < VIK_MILES_TO_METERS(1)) {
@@ -1395,7 +1395,7 @@ static void draw_ruler(Viewport * viewport, GdkDrawable *d, GdkGC *gc, int x1, i
 				g_sprintf(str, "%d miles", (int)VIK_METERS_TO_MILES(distance));
 			}
 			break;
-		case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
+		case DistanceUnit::NAUTICAL_MILES:
 			if (distance >= VIK_NAUTICAL_MILES_TO_METERS(1) && distance < VIK_NAUTICAL_MILES_TO_METERS(100)) {
 				g_sprintf(str, "%3.2f NM", VIK_METERS_TO_NAUTICAL_MILES(distance));
 			} else if (distance < VIK_NAUTICAL_MILES_TO_METERS(1)) {
@@ -1405,7 +1405,7 @@ static void draw_ruler(Viewport * viewport, GdkDrawable *d, GdkGC *gc, int x1, i
 			}
 			break;
 		default:
-			fprintf(stderr, "CRITICAL: Houston, we've had a problem. distance=%d\n", dist_units);
+			fprintf(stderr, "CRITICAL: invalid distance unit %d\n", dist_units);
 		}
 
 		pango_layout_set_text(pl, str, -1);
@@ -1492,15 +1492,15 @@ static VikLayerToolFuncStatus ruler_click(Layer * layer, GdkEventButton * event,
 		vik_coord_to_latlon(&coord, &ll);
 		a_coords_latlon_to_string(&ll, &lat, &lon);
 		if (tool->ruler->has_oldcoord) {
-			vik_units_distance_t dist_units = a_vik_get_units_distance();
+			DistanceUnit dist_units = a_vik_get_units_distance();
 			switch (dist_units) {
-			case VIK_UNITS_DISTANCE_KILOMETRES:
+			case DistanceUnit::KILOMETRES:
 				temp = g_strdup_printf("%s %s DIFF %f meters", lat, lon, vik_coord_diff(&coord, &(tool->ruler->oldcoord)));
 				break;
-			case VIK_UNITS_DISTANCE_MILES:
+			case DistanceUnit::MILES:
 				temp = g_strdup_printf("%s %s DIFF %f miles", lat, lon, VIK_METERS_TO_MILES(vik_coord_diff(&coord, &(tool->ruler->oldcoord))));
 				break;
-			case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
+			case DistanceUnit::NAUTICAL_MILES:
 				temp = g_strdup_printf("%s %s DIFF %f NM", lat, lon, VIK_METERS_TO_NAUTICAL_MILES(vik_coord_diff(&coord, &(tool->ruler->oldcoord))));
 				break;
 			default:
@@ -1566,15 +1566,15 @@ static VikLayerToolFuncStatus ruler_move(Layer * layer, GdkEventMotion * event, 
 			draw_buf_done = false;
 		}
 		a_coords_latlon_to_string(&ll, &lat, &lon);
-		vik_units_distance_t dist_units = a_vik_get_units_distance();
+		DistanceUnit dist_units = a_vik_get_units_distance();
 		switch (dist_units) {
-		case VIK_UNITS_DISTANCE_KILOMETRES:
+		case DistanceUnit::KILOMETRES:
 			temp = g_strdup_printf("%s %s DIFF %f meters", lat, lon, vik_coord_diff(&coord, &(tool->ruler->oldcoord)));
 			break;
-		case VIK_UNITS_DISTANCE_MILES:
+		case DistanceUnit::MILES:
 			temp = g_strdup_printf("%s %s DIFF %f miles", lat, lon, VIK_METERS_TO_MILES (vik_coord_diff(&coord, &(tool->ruler->oldcoord))));
 			break;
-		case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
+		case DistanceUnit::NAUTICAL_MILES:
 			temp = g_strdup_printf("%s %s DIFF %f NM", lat, lon, VIK_METERS_TO_NAUTICAL_MILES (vik_coord_diff(&coord, &(tool->ruler->oldcoord))));
 			break;
 		default:
@@ -3859,15 +3859,15 @@ static void draw_to_image_file_total_area_cb(GtkSpinButton *spinbutton, void ** 
 		w *= gtk_spin_button_get_value(GTK_SPIN_BUTTON(pass_along[4]));
 		h *= gtk_spin_button_get_value(GTK_SPIN_BUTTON(pass_along[5]));
 	}
-	vik_units_distance_t dist_units = a_vik_get_units_distance();
+	DistanceUnit dist_units = a_vik_get_units_distance();
 	switch (dist_units) {
-	case VIK_UNITS_DISTANCE_KILOMETRES:
+	case DistanceUnit::KILOMETRES:
 		label_text = g_strdup_printf(_("Total area: %ldm x %ldm (%.3f sq. km)"), (glong)w, (glong)h, (w*h/1000000));
 		break;
-	case VIK_UNITS_DISTANCE_MILES:
+	case DistanceUnit::MILES:
 		label_text = g_strdup_printf(_("Total area: %ldm x %ldm (%.3f sq. miles)"), (glong)w, (glong)h, (w*h/2589988.11));
 		break;
-	case VIK_UNITS_DISTANCE_NAUTICAL_MILES:
+	case DistanceUnit::NAUTICAL_MILES:
 		label_text = g_strdup_printf(_("Total area: %ldm x %ldm (%.3f sq. NM)"), (glong)w, (glong)h, (w*h/(1852.0*1852.0)));
 		break;
 	default:

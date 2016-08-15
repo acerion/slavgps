@@ -333,7 +333,7 @@ bool LayerDEM::set_param(uint16_t id, VikLayerParamData data, Viewport * viewpor
 	case PARAM_MIN_ELEV:
 		/* Convert to store internally
 		   NB file operation always in internal units (metres) */
-		if (!is_file_operation && a_vik_get_units_height() == VIK_UNITS_HEIGHT_FEET) {
+		if (!is_file_operation && a_vik_get_units_height() == HeightUnit::FEET) {
 			this->min_elev = VIK_FEET_TO_METERS(data.d);
 		} else {
 			this->min_elev = data.d;
@@ -342,7 +342,7 @@ bool LayerDEM::set_param(uint16_t id, VikLayerParamData data, Viewport * viewpor
 	case PARAM_MAX_ELEV:
 		/* Convert to store internally
 		   NB file operation always in internal units (metres) */
-		if (!is_file_operation && a_vik_get_units_height() == VIK_UNITS_HEIGHT_FEET) {
+		if (!is_file_operation && a_vik_get_units_height() == HeightUnit::FEET) {
 			this->max_elev = VIK_FEET_TO_METERS(data.d);
 		} else {
 			this->max_elev = data.d;
@@ -403,7 +403,7 @@ VikLayerParamData LayerDEM::get_param(uint16_t id, bool is_file_operation) const
 	case PARAM_MIN_ELEV:
 		/* Convert for display in desired units
 		   NB file operation always in internal units (metres) */
-		if (!is_file_operation && a_vik_get_units_height() == VIK_UNITS_HEIGHT_FEET) {
+		if (!is_file_operation && a_vik_get_units_height() == HeightUnit::FEET) {
 			rv.d = VIK_METERS_TO_FEET(this->min_elev);
 		} else {
 			rv.d = this->min_elev;
@@ -412,7 +412,7 @@ VikLayerParamData LayerDEM::get_param(uint16_t id, bool is_file_operation) const
 	case PARAM_MAX_ELEV:
 		/* Convert for display in desired units
 		   NB file operation always in internal units (metres) */
-		if (!is_file_operation && a_vik_get_units_height() == VIK_UNITS_HEIGHT_FEET) {
+		if (!is_file_operation && a_vik_get_units_height() == HeightUnit::FEET) {
 			rv.d = VIK_METERS_TO_FEET(this->max_elev);
 		} else {
 			rv.d = this->max_elev;
