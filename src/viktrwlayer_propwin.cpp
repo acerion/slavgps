@@ -1769,28 +1769,10 @@ static void draw_vt(GtkWidget * image, Track * trk, PropWidgets * widgets)
 		return;
 	}
 
-	// Convert into appropriate units
+	/* Convert into appropriate units. */
 	vik_units_speed_t speed_units = a_vik_get_units_speed();
-	switch (speed_units) {
-	case VIK_UNITS_SPEED_KILOMETRES_PER_HOUR:
-		for (i = 0; i < widgets->profile_width; i++) {
-			widgets->speeds[i] = VIK_MPS_TO_KPH(widgets->speeds[i]);
-		}
-		break;
-	case VIK_UNITS_SPEED_MILES_PER_HOUR:
-		for (i = 0; i < widgets->profile_width; i++) {
-			widgets->speeds[i] = VIK_MPS_TO_MPH(widgets->speeds[i]);
-		}
-		break;
-	case VIK_UNITS_SPEED_KNOTS:
-		for (i = 0; i < widgets->profile_width; i++) {
-			widgets->speeds[i] = VIK_MPS_TO_KNOTS(widgets->speeds[i]);
-		}
-		break;
-	default:
-		// VIK_UNITS_SPEED_METRES_PER_SECOND:
-		// No need to convert as already in m/s
-		break;
+	for (i = 0; i < widgets->profile_width; i++) {
+		widgets->speeds[i] = convert_speed_mps_to(speed_units, widgets->speeds[i]);
 	}
 
 	GtkWidget *window = gtk_widget_get_toplevel(widgets->speed_box);
@@ -1863,21 +1845,8 @@ static void draw_vt(GtkWidget * image, Track * trk, PropWidgets * widgets)
 				continue;
 			}
 
-			switch (speed_units) {
-			case VIK_UNITS_SPEED_KILOMETRES_PER_HOUR:
-				gps_speed = VIK_MPS_TO_KPH(gps_speed);
-				break;
-			case VIK_UNITS_SPEED_MILES_PER_HOUR:
-				gps_speed = VIK_MPS_TO_MPH(gps_speed);
-				break;
-			case VIK_UNITS_SPEED_KNOTS:
-				gps_speed = VIK_MPS_TO_KNOTS(gps_speed);
-				break;
-			default:
-				// VIK_UNITS_SPEED_METRES_PER_SECOND:
-				// No need to convert as already in m/s
-				break;
-			}
+			gps_speed = convert_speed_mps_to(speed_units, gps_speed);
+
 			int x = MARGIN_X + widgets->profile_width * ((*iter)->timestamp - beg_time) / dur;
 			int y = height - widgets->profile_height * (gps_speed - mins) / (chunkss[widgets->cis] * LINES);
 			gdk_draw_rectangle(GDK_DRAWABLE(pix), gps_speed_gc, true, x - 2, y - 2, 4, 4);
@@ -2172,27 +2141,10 @@ static void draw_sd(GtkWidget * image, Track * trk, PropWidgets * widgets)
 
 	// Convert into appropriate units
 	vik_units_speed_t speed_units = a_vik_get_units_speed();
-	switch (speed_units) {
-	case VIK_UNITS_SPEED_KILOMETRES_PER_HOUR:
-		for (i = 0; i < widgets->profile_width; i++) {
-			widgets->speeds_dist[i] = VIK_MPS_TO_KPH(widgets->speeds_dist[i]);
-		}
-		break;
-	case VIK_UNITS_SPEED_MILES_PER_HOUR:
-		for (i = 0; i < widgets->profile_width; i++) {
-			widgets->speeds_dist[i] = VIK_MPS_TO_MPH(widgets->speeds_dist[i]);
-		}
-		break;
-	case VIK_UNITS_SPEED_KNOTS:
-		for (i = 0; i < widgets->profile_width; i++) {
-			widgets->speeds_dist[i] = VIK_MPS_TO_KNOTS(widgets->speeds_dist[i]);
-		}
-		break;
-	default:
-		// VIK_UNITS_SPEED_METRES_PER_SECOND:
-		// No need to convert as already in m/s
-		break;
+	for (i = 0; i < widgets->profile_width; i++) {
+		widgets->speeds_dist[i] = convert_speed_mps_to(speed_units, widgets->speeds_dist[i]);
 	}
+
 
 	GtkWidget *window = gtk_widget_get_toplevel(widgets->speed_dist_box);
 	GdkPixmap *pix = gdk_pixmap_new(gtk_widget_get_window(window), widgets->profile_width+MARGIN_X, widgets->profile_height+MARGIN_Y, -1);
@@ -2267,21 +2219,8 @@ static void draw_sd(GtkWidget * image, Track * trk, PropWidgets * widgets)
 				continue;
 			}
 
-			switch (speed_units) {
-			case VIK_UNITS_SPEED_KILOMETRES_PER_HOUR:
-				gps_speed = VIK_MPS_TO_KPH(gps_speed);
-				break;
-			case VIK_UNITS_SPEED_MILES_PER_HOUR:
-				gps_speed = VIK_MPS_TO_MPH(gps_speed);
-				break;
-			case VIK_UNITS_SPEED_KNOTS:
-				gps_speed = VIK_MPS_TO_KNOTS(gps_speed);
-				break;
-			default:
-				// VIK_UNITS_SPEED_METRES_PER_SECOND:
-				// No need to convert as already in m/s
-				break;
-			}
+			gps_speed = convert_speed_mps_to(speed_units, gps_speed);
+
 			dist_tp += vik_coord_diff(&(*iter)->coord, &(*std::prev(iter))->coord);
 			int x = MARGIN_X + (widgets->profile_width * dist_tp / dist);
 			int y = height - widgets->profile_height * (gps_speed - mins)/(chunkss[widgets->cisd] * LINES);
@@ -3077,23 +3016,7 @@ void vik_trw_layer_propwin_run(GtkWindow *parent,
 	if (tmp_speed == 0) {
 		snprintf(tmp_buf, sizeof(tmp_buf), _("No Data"));
 	} else {
-		switch (speed_units) {
-		case VIK_UNITS_SPEED_KILOMETRES_PER_HOUR:
-			snprintf(tmp_buf, sizeof(tmp_buf), "%.2f km/h", VIK_MPS_TO_KPH(tmp_speed));
-			break;
-		case VIK_UNITS_SPEED_MILES_PER_HOUR:
-			snprintf(tmp_buf, sizeof(tmp_buf), "%.2f mph", VIK_MPS_TO_MPH(tmp_speed));
-			break;
-		case VIK_UNITS_SPEED_METRES_PER_SECOND:
-			snprintf(tmp_buf, sizeof(tmp_buf), "%.2f m/s", tmp_speed);
-			break;
-		case VIK_UNITS_SPEED_KNOTS:
-			snprintf(tmp_buf, sizeof(tmp_buf), "%.2f knots", VIK_MPS_TO_KNOTS(tmp_speed));
-			break;
-		default:
-			snprintf(tmp_buf, sizeof(tmp_buf), "--");
-			fprintf(stderr, "CRITICAL: Houston, we've had a problem. speed=%d\n", speed_units);
-		}
+		get_speed_string(tmp_buf, sizeof (tmp_buf), speed_units, tmp_speed);
 	}
 	widgets->w_max_speed = content[cnt++] = ui_label_new_selectable(tmp_buf);
 
@@ -3101,23 +3024,7 @@ void vik_trw_layer_propwin_run(GtkWindow *parent,
 	if (tmp_speed == 0) {
 		snprintf(tmp_buf, sizeof(tmp_buf), _("No Data"));
 	} else {
-		switch (speed_units) {
-		case VIK_UNITS_SPEED_KILOMETRES_PER_HOUR:
-			snprintf(tmp_buf, sizeof(tmp_buf), "%.2f km/h", VIK_MPS_TO_KPH(tmp_speed));
-			break;
-		case VIK_UNITS_SPEED_MILES_PER_HOUR:
-			snprintf(tmp_buf, sizeof(tmp_buf), "%.2f mph", VIK_MPS_TO_MPH(tmp_speed));
-			break;
-		case VIK_UNITS_SPEED_METRES_PER_SECOND:
-			snprintf(tmp_buf, sizeof(tmp_buf), "%.2f m/s", tmp_speed);
-			break;
-		case VIK_UNITS_SPEED_KNOTS:
-			snprintf(tmp_buf, sizeof(tmp_buf), "%.2f knots", VIK_MPS_TO_KNOTS(tmp_speed));
-			break;
-		default:
-			snprintf(tmp_buf, sizeof(tmp_buf), "--");
-			fprintf(stderr, "CRITICAL: Houston, we've had a problem. speed=%d\n", speed_units);
-		}
+		get_speed_string(tmp_buf, sizeof (tmp_buf), speed_units, tmp_speed);
 	}
 	widgets->w_avg_speed = content[cnt++] = ui_label_new_selectable(tmp_buf);
 
@@ -3129,23 +3036,7 @@ void vik_trw_layer_propwin_run(GtkWindow *parent,
 	if (tmp_speed == 0) {
 		snprintf(tmp_buf, sizeof(tmp_buf), _("No Data"));
 	} else {
-		switch (speed_units) {
-		case VIK_UNITS_SPEED_KILOMETRES_PER_HOUR:
-			snprintf(tmp_buf, sizeof(tmp_buf), "%.2f km/h", VIK_MPS_TO_KPH(tmp_speed));
-			break;
-		case VIK_UNITS_SPEED_MILES_PER_HOUR:
-			snprintf(tmp_buf, sizeof(tmp_buf), "%.2f mph", VIK_MPS_TO_MPH(tmp_speed));
-			break;
-		case VIK_UNITS_SPEED_METRES_PER_SECOND:
-			snprintf(tmp_buf, sizeof(tmp_buf), "%.2f m/s", tmp_speed);
-			break;
-		case VIK_UNITS_SPEED_KNOTS:
-			snprintf(tmp_buf, sizeof(tmp_buf), "%.2f knots", VIK_MPS_TO_KNOTS(tmp_speed));
-			break;
-		default:
-			snprintf(tmp_buf, sizeof(tmp_buf), "--");
-			fprintf(stderr, "CRITICAL: Houston, we've had a problem. speed=%d\n", speed_units);
-		}
+		get_speed_string(tmp_buf, sizeof (tmp_buf), speed_units, tmp_speed);
 	}
 	widgets->w_mvg_speed = content[cnt++] = ui_label_new_selectable(tmp_buf);
 

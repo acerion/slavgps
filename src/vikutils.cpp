@@ -82,23 +82,8 @@ char * vu_trackpoint_formatted_message(char * format_code, Trackpoint * tp, Trac
 		values[i] = '\0';
 	}
 
-	char * speed_units_str = NULL;
 	vik_units_speed_t speed_units = a_vik_get_units_speed();
-	switch (speed_units) {
-	case VIK_UNITS_SPEED_MILES_PER_HOUR:
-		speed_units_str = strdup(_("mph"));
-		break;
-	case VIK_UNITS_SPEED_METRES_PER_SECOND:
-		speed_units_str = strdup(_("m/s"));
-		break;
-	case VIK_UNITS_SPEED_KNOTS:
-		speed_units_str = strdup(_("knots"));
-		break;
-	default:
-		// VIK_UNITS_SPEED_KILOMETRES_PER_HOUR:
-		speed_units_str = strdup(_("km/h"));
-		break;
-	}
+	char * speed_units_str = get_speed_unit_string(speed_units);
 
 	char * separator = strdup(" | ");
 
@@ -131,21 +116,7 @@ char * vu_trackpoint_formatted_message(char * format_code, Trackpoint * tp, Trac
 				speed = tp->speed;
 				speedtype = strdup("");
 			}
-			switch (speed_units) {
-			case VIK_UNITS_SPEED_KILOMETRES_PER_HOUR:
-				speed = VIK_MPS_TO_KPH(speed);
-				break;
-			case VIK_UNITS_SPEED_MILES_PER_HOUR:
-				speed = VIK_MPS_TO_MPH(speed);
-				break;
-			case VIK_UNITS_SPEED_KNOTS:
-				speed = VIK_MPS_TO_KNOTS(speed);
-				break;
-			default:
-				// VIK_UNITS_SPEED_METRES_PER_SECOND:
-				// Already in m/s so nothing to do
-				break;
-			}
+			speed = convert_speed_mps_to(speed_units, speed);
 
 			values[i] = g_strdup_printf(_("%sSpeed%s %.1f%s"), separator, speedtype, speed, speed_units_str);
 			free(speedtype);
@@ -172,21 +143,8 @@ char * vu_trackpoint_formatted_message(char * format_code, Trackpoint * tp, Trac
 				speed = climb;
 				speedtype = strdup("");
 			}
-			switch (speed_units) {
-			case VIK_UNITS_SPEED_KILOMETRES_PER_HOUR:
-				speed = VIK_MPS_TO_KPH(speed);
-				break;
-			case VIK_UNITS_SPEED_MILES_PER_HOUR:
-				speed = VIK_MPS_TO_MPH(speed);
-				break;
-			case VIK_UNITS_SPEED_KNOTS:
-				speed = VIK_MPS_TO_KNOTS(speed);
-				break;
-			default:
-				// VIK_UNITS_SPEED_METRES_PER_SECOND:
-				// Already in m/s so nothing to do
-				break;
-			}
+			speed = convert_speed_mps_to(speed_units, speed);
+
 			// Go for 2dp as expect low values for vertical speeds
 			values[i] = g_strdup_printf(_("%sClimb%s %.2f%s"), separator, speedtype, speed, speed_units_str);
 			free(speedtype);
@@ -364,6 +322,84 @@ char * vu_trackpoint_formatted_message(char * format_code, Trackpoint * tp, Trac
 
 	return msg;
 }
+
+
+
+
+double convert_speed_mps_to(vik_units_speed_t speed_units, double speed)
+{
+	switch (speed_units) {
+	case VIK_UNITS_SPEED_KILOMETRES_PER_HOUR:
+		speed = VIK_MPS_TO_KPH(speed);
+		break;
+	case VIK_UNITS_SPEED_MILES_PER_HOUR:
+		speed = VIK_MPS_TO_MPH(speed);
+		break;
+	case VIK_UNITS_SPEED_KNOTS:
+		speed = VIK_MPS_TO_KNOTS(speed);
+		break;
+	default:
+		// VIK_UNITS_SPEED_METRES_PER_SECOND:
+		// Already in m/s so nothing to do
+		break;
+	}
+
+	return speed;
+}
+
+
+
+
+char * get_speed_unit_string(vik_units_speed_t speed_unit)
+{
+	char * speed_unit_str = NULL;
+	switch (speed_unit) {
+	case VIK_UNITS_SPEED_MILES_PER_HOUR:
+		speed_unit_str = strdup(_("mph"));
+		break;
+	case VIK_UNITS_SPEED_METRES_PER_SECOND:
+		speed_unit_str = strdup(_("m/s"));
+		break;
+	case VIK_UNITS_SPEED_KNOTS:
+		speed_unit_str = strdup(_("knots"));
+		break;
+	default:
+		// VIK_UNITS_SPEED_KILOMETRES_PER_HOUR:
+		speed_unit_str = strdup(_("km/h"));
+		break;
+	}
+
+	return speed_unit_str;
+}
+
+
+
+
+char * get_speed_string(char * buf, size_t size, vik_units_speed_t speed_unit, double speed)
+{
+	switch (speed_unit) {
+	case VIK_UNITS_SPEED_KILOMETRES_PER_HOUR:
+		snprintf(buf, size, _("%.2f km/h"), VIK_MPS_TO_KPH (speed));
+		break;
+	case VIK_UNITS_SPEED_MILES_PER_HOUR:
+		snprintf(buf, size, _("%.2f mph"), VIK_MPS_TO_MPH (speed));
+		break;
+	case VIK_UNITS_SPEED_KNOTS:
+		snprintf(buf, size, _("%.2f knots"), VIK_MPS_TO_KNOTS (speed));
+		break;
+	case VIK_UNITS_SPEED_METRES_PER_SECOND:
+		snprintf(buf, size, _("%.2f m/s"), speed);
+		break;
+	default:
+		snprintf(buf, size, "--");
+		fprintf(stderr, "CRITICAL: invalid speed unit: %d\n", speed_unit);
+	}
+
+	return buf;
+}
+
+
+
 
 typedef struct {
 	GtkWindow * window; // Layer needed for redrawing

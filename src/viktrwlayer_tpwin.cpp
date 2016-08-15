@@ -464,23 +464,8 @@ void vik_trw_layer_tpwin_set_tp(VikTrwLayerTpwin * tpwin, Track * track, TrackPo
 			if (tp->timestamp == tpwin->cur_tp->timestamp) {
 				gtk_label_set_text (tpwin->diff_speed, "--");
 			} else {
-				switch (speed_units) {
-				case VIK_UNITS_SPEED_KILOMETRES_PER_HOUR:
-					snprintf(tmp_str, sizeof(tmp_str), "%.2f km/h", VIK_MPS_TO_KPH(vik_coord_diff(&(tp->coord), &(tpwin->cur_tp->coord)) / (ABS(tp->timestamp - tpwin->cur_tp->timestamp))));
-					break;
-				case VIK_UNITS_SPEED_MILES_PER_HOUR:
-					snprintf(tmp_str, sizeof(tmp_str), "%.2f mph", VIK_MPS_TO_MPH(vik_coord_diff(&(tp->coord), &(tpwin->cur_tp->coord)) / (ABS(tp->timestamp - tpwin->cur_tp->timestamp))));
-					break;
-				case VIK_UNITS_SPEED_METRES_PER_SECOND:
-					snprintf(tmp_str, sizeof(tmp_str), "%.2f m/s", vik_coord_diff(&(tp->coord), &(tpwin->cur_tp->coord)) / ABS(tp->timestamp - tpwin->cur_tp->timestamp));
-					break;
-				case VIK_UNITS_SPEED_KNOTS:
-					snprintf(tmp_str, sizeof(tmp_str), "%.2f knots", VIK_MPS_TO_KNOTS(vik_coord_diff(&(tp->coord), &(tpwin->cur_tp->coord)) / (ABS(tp->timestamp - tpwin->cur_tp->timestamp))));
-					break;
-				default:
-					snprintf(tmp_str, sizeof(tmp_str), "--");
-					fprintf(stderr, "CRITICAL: Houston, we've had a problem. speed=%d\n", speed_units);
-				}
+				double tmp_speed = vik_coord_diff(&tp->coord, &tpwin->cur_tp->coord) / (ABS(tp->timestamp - tpwin->cur_tp->timestamp));
+				get_speed_string(tmp_str, sizeof (tmp_str), speed_units, tmp_speed);
 				gtk_label_set_text(tpwin->diff_speed, tmp_str);
 			}
 		} else {
@@ -499,21 +484,7 @@ void vik_trw_layer_tpwin_set_tp(VikTrwLayerTpwin * tpwin, Track * track, TrackPo
 	if (isnan(tp->speed)) {
 		snprintf(tmp_str, sizeof(tmp_str), "--");
 	} else {
-		switch (speed_units) {
-		case VIK_UNITS_SPEED_MILES_PER_HOUR:
-			snprintf(tmp_str, sizeof(tmp_str), "%.2f mph", VIK_MPS_TO_MPH(tp->speed));
-			break;
-		case VIK_UNITS_SPEED_METRES_PER_SECOND:
-			snprintf(tmp_str, sizeof(tmp_str), "%.2f m/s", tp->speed);
-			break;
-		case VIK_UNITS_SPEED_KNOTS:
-			snprintf(tmp_str, sizeof(tmp_str), "%.2f knots", VIK_MPS_TO_KNOTS(tp->speed));
-			break;
-		default:
-			// VIK_UNITS_SPEED_KILOMETRES_PER_HOUR:
-			snprintf(tmp_str, sizeof(tmp_str), "%.2f km/h", VIK_MPS_TO_KPH(tp->speed));
-			break;
-		}
+		get_speed_string(tmp_str, sizeof (tmp_str), speed_units, tp->speed);
 	}
 	gtk_label_set_text(tpwin->speed, tmp_str);
 

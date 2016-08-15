@@ -35,6 +35,7 @@
 #include "settings.h"
 #include "globals.h"
 #include "track_statistics.h"
+#include "vikutils.h"
 
 
 
@@ -140,6 +141,7 @@ static void table_output(TrackStatistics& ts, GtkWidget * content[])
 	g_date_strftime(time_end, sizeof(time_end), "%x", gdate_end);
 	g_date_free(gdate_end);
 
+
 	if (ts.start_time == ts.end_time) {
 		snprintf(tmp_buf, sizeof(tmp_buf), _("No Data"));
 	} else if (strncmp(time_start, time_end, 32)) {
@@ -147,11 +149,8 @@ static void table_output(TrackStatistics& ts, GtkWidget * content[])
 	} else {
 		snprintf(tmp_buf, sizeof(tmp_buf), "%s", time_start);
 	}
-
-	fprintf(stderr, "ts.max_speed = %d\n", ts.max_speed);
-
 	gtk_label_set_text(GTK_LABEL(content[cnt++]), tmp_buf);
-	fprintf(stderr, "%d: %s, cnt = %d\n", __LINE__, tmp_buf, cnt);
+
 
 	switch (a_vik_get_units_distance ()) {
 	case VIK_UNITS_DISTANCE_MILES:
@@ -163,7 +162,7 @@ static void table_output(TrackStatistics& ts, GtkWidget * content[])
 		break;
 	}
 	gtk_label_set_text(GTK_LABEL(content[cnt++]), tmp_buf);
-	fprintf(stderr, "%d: %s, cnt = %d\n", __LINE__, tmp_buf, cnt);
+
 
 	switch (a_vik_get_units_distance ()) {
 	case VIK_UNITS_DISTANCE_MILES:
@@ -175,58 +174,24 @@ static void table_output(TrackStatistics& ts, GtkWidget * content[])
 		break;
 	}
 	gtk_label_set_text(GTK_LABEL(content[cnt++]), tmp_buf);
-	fprintf(stderr, "%d: %s, cnt = %d\n", __LINE__, tmp_buf, cnt);
 
-	// I'm sure this could be cleaner...
-	switch (a_vik_get_units_speed()) {
-	case VIK_UNITS_SPEED_MILES_PER_HOUR:
-		snprintf(tmp_buf, sizeof(tmp_buf), _("%.1f mph"), (double)VIK_MPS_TO_MPH(ts.max_speed));
-		gtk_label_set_text (GTK_LABEL(content[cnt++]), tmp_buf);
-		fprintf(stderr, "%d: %s, cnt = %d\n", __LINE__, tmp_buf, cnt);
-		if (ts.duration > 0) {
-			snprintf(tmp_buf, sizeof(tmp_buf), ("%.1f mph"), (double)VIK_MPS_TO_MPH(ts.length/ts.duration));
-		}
-		break;
-	case VIK_UNITS_SPEED_METRES_PER_SECOND:
-		if (ts.max_speed > 0) {
-			snprintf(tmp_buf, sizeof(tmp_buf), _("%.2f m/s"), (double)ts.max_speed);
-		}
-		gtk_label_set_text (GTK_LABEL(content[cnt++]), tmp_buf);
-		fprintf(stderr, "%d: %s, cnt = %d\n", __LINE__, tmp_buf, cnt);
-		if (ts.duration > 0) {
-			snprintf(tmp_buf, sizeof(tmp_buf), ("%.2f m/s"), (double)(ts.length/ts.duration));
-		} else {
-			snprintf(tmp_buf, sizeof(tmp_buf), "--");
-		}
-		break;
-	case VIK_UNITS_SPEED_KNOTS:
-		if (ts.max_speed > 0) {
-			snprintf(tmp_buf, sizeof(tmp_buf), _("%.2f knots\n"), (double)VIK_MPS_TO_KNOTS(ts.max_speed));
-		}
-		gtk_label_set_text (GTK_LABEL(content[cnt++]), tmp_buf);
-		fprintf(stderr, "%d: %s, cnt = %d\n", __LINE__, tmp_buf, cnt);
-		if (ts.duration > 0) {
-			snprintf(tmp_buf, sizeof(tmp_buf), _("%.2f knots"), (double)VIK_MPS_TO_KNOTS(ts.length/ts.duration));
-		} else {
-			snprintf(tmp_buf, sizeof(tmp_buf), "--");
-		}
-		break;
-	default:
-		//VIK_UNITS_SPEED_KILOMETRES_PER_HOUR:
-		if (ts.max_speed > 0) {
-			snprintf(tmp_buf, sizeof(tmp_buf), _("%.2f km/h"), (double)VIK_MPS_TO_KPH(ts.max_speed));
-		}
-		gtk_label_set_text (GTK_LABEL(content[cnt++]), tmp_buf);
-		fprintf(stderr, "%d: %s, cnt = %d\n", __LINE__, tmp_buf, cnt);
-		if (ts.duration > 0) {
-			snprintf(tmp_buf, sizeof(tmp_buf), _("%.2f km/h"), (double)VIK_MPS_TO_KPH(ts.length/ts.duration));
-		} else {
-			snprintf(tmp_buf, sizeof(tmp_buf), "--");
-		}
-		break;
+
+	vik_units_speed_t speed_unit = a_vik_get_units_speed();
+	if (ts.max_speed > 0) {
+		get_speed_string(tmp_buf, sizeof (tmp_buf), speed_unit, ts.max_speed);
+	} else {
+		snprintf(tmp_buf, sizeof (tmp_buf), "--");
 	}
-	gtk_label_set_text(GTK_LABEL(content[cnt++]), tmp_buf);
-	fprintf(stderr, "%d: %s, cnt = %d\n", __LINE__, tmp_buf, cnt);
+	gtk_label_set_text(GTK_LABEL (content[cnt++]), tmp_buf);
+
+
+	if (ts.duration > 0) {
+		get_speed_string(tmp_buf, sizeof (tmp_buf), speed_unit, ts.length / ts.duration);
+	} else {
+		snprintf(tmp_buf, sizeof (tmp_buf), "--");
+	}
+	gtk_label_set_text(GTK_LABEL (content[cnt++]), tmp_buf);
+
 
 	switch (a_vik_get_units_height()) {
 		// Note always round off height value output since sub unit accuracy is overkill
