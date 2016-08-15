@@ -1190,20 +1190,8 @@ void get_mouse_event_x(GtkWidget * event_box, GdkEventMotion * event, PropWidget
 void distance_label_update(GtkWidget * widget, double meters_from_start)
 {
 	static char tmp_buf[20];
-	DistanceUnit dist_units = a_vik_get_units_distance();
-	switch (dist_units) {
-	case DistanceUnit::KILOMETRES:
-		snprintf(tmp_buf, sizeof(tmp_buf), "%.2f km", meters_from_start/1000.0);
-		break;
-	case DistanceUnit::MILES:
-		snprintf(tmp_buf, sizeof(tmp_buf), "%.2f miles", VIK_METERS_TO_MILES(meters_from_start));
-		break;
-	case DistanceUnit::NAUTICAL_MILES:
-		snprintf(tmp_buf, sizeof(tmp_buf), "%.2f NM", VIK_METERS_TO_NAUTICAL_MILES(meters_from_start));
-		break;
-	default:
-		fprintf(stderr, "CRITICAL: invalid distance unit %d\n", dist_units);
-	}
+	DistanceUnit distance_unit = a_vik_get_units_distance();
+	get_distance_string(tmp_buf, sizeof (tmp_buf), distance_unit, meters_from_start);
 	gtk_label_set_text(GTK_LABEL(widget), tmp_buf);
 
 	return;
@@ -1234,7 +1222,7 @@ void dist_dist_label_update(GtkWidget * widget, double distance)
 		snprintf(tmp_buf, sizeof(tmp_buf), "%.2f NM", distance);
 		break;
 	default:
-		snprintf(tmp_buf, sizeof(tmp_buf), "%.2f km", distance);
+		snprintf(tmp_buf, sizeof(tmp_buf), "%.2f km", distance); /* kamilTODO: why not distance/1000? */
 		break;
 	}
 	gtk_label_set_text(GTK_LABEL(widget), tmp_buf);
@@ -1403,32 +1391,17 @@ static void draw_grid_x_time(GtkWidget * window, GtkWidget * image, PropWidgets 
  * A common way to draw the grid with x axis labels for distance graphs
  *
  */
-static void draw_grid_x_distance(GtkWidget * window, GtkWidget * image, PropWidgets * widgets, GdkPixmap * pix, unsigned int ii, double dd, unsigned int xx, DistanceUnit dist_units)
+static void draw_grid_x_distance(GtkWidget * window, GtkWidget * image, PropWidgets * widgets, GdkPixmap * pix, unsigned int ii, double dd, unsigned int xx, DistanceUnit distance_unit)
 {
 	char *label_markup = NULL;
-	switch (dist_units) {
-	case DistanceUnit::MILES:
-		if (ii > 4) {
-			label_markup = g_strdup_printf("<span size=\"small\">%d %s</span>", (unsigned int)dd, _("miles"));
-		} else {
-			label_markup = g_strdup_printf("<span size=\"small\">%.1f %s</span>", dd, _("miles"));
-		}
-		break;
-	case DistanceUnit::NAUTICAL_MILES:
-		if (ii > 4) {
-			label_markup = g_strdup_printf("<span size=\"small\">%d %s</span>", (unsigned int)dd, _("NM"));
-		} else {
-			label_markup = g_strdup_printf("<span size=\"small\">%.1f %s</span>", dd, _("NM"));
-		}
-		break;
-	default:
-		// DistanceUnit::KILOMETRES:
-		if (ii > 4) {
-			label_markup = g_strdup_printf("<span size=\"small\">%d %s</span>", (unsigned int)dd, _("km"));
-		} else {
-			label_markup = g_strdup_printf("<span size=\"small\">%.1f %s</span>", dd, _("km"));
-		}
-		break;
+
+	char distance_unit_string[16] = { 0 };
+	get_distance_unit_string(distance_unit_string, sizeof (distance_unit_string), distance_unit);
+
+	if (ii > 4) {
+		label_markup = g_strdup_printf("<span size=\"small\">%d %s</span>", (unsigned int)dd, distance_unit_string);
+	} else {
+		label_markup = g_strdup_printf("<span size=\"small\">%.1f %s</span>", dd, distance_unit_string);
 	}
 
 	if (label_markup) {
@@ -1463,27 +1436,17 @@ static void clear_images(GdkPixmap *pix, GtkWidget *window, PropWidgets *widgets
 /**
  *
  */
-static void draw_distance_divisions(GtkWidget * window, GtkWidget * image, GdkPixmap * pix, PropWidgets * widgets, DistanceUnit dist_units)
+static void draw_distance_divisions(GtkWidget * window, GtkWidget * image, GdkPixmap * pix, PropWidgets * widgets, DistanceUnit distance_unit)
 {
-	// Set to display units from length in metres.
+	/* Set to display units from length in metres. */
 	double length = widgets->track_length_inc_gaps;
-	switch (dist_units) {
-	case DistanceUnit::MILES:
-		length = VIK_METERS_TO_MILES(length);
-		break;
-	case DistanceUnit::NAUTICAL_MILES:
-		length = VIK_METERS_TO_NAUTICAL_MILES(length);
-		break;
-	default:
-		// DistanceUnit::KILOMETRES
-		length = length/1000.0;
-		break;
-	}
+	length = convert_distance_meters_to(distance_unit, length);
+
 	unsigned int index = get_distance_chunk_index(length);
 	double dist_per_pixel = length/widgets->profile_width;
 
 	for (unsigned int i = 1; chunksd[index] * i <= length; i++) {
-		draw_grid_x_distance(window, image, widgets, pix, index, chunksd[index] * i, (unsigned int) (chunksd[index] * i / dist_per_pixel), dist_units);
+		draw_grid_x_distance(window, image, widgets, pix, index, chunksd[index] * i, (unsigned int) (chunksd[index] * i / dist_per_pixel), distance_unit);
 	}
 }
 
@@ -1878,24 +1841,9 @@ static void draw_dt(GtkWidget * image, Track * trk, PropWidgets * widgets)
 	}
 
 	// Convert into appropriate units
-	DistanceUnit dist_units = a_vik_get_units_distance();
-	switch (dist_units) {
-	case DistanceUnit::MILES:
-		for (i = 0; i < widgets->profile_width; i++) {
-			widgets->distances[i] = VIK_METERS_TO_MILES(widgets->distances[i]);
-		}
-		break;
-	case DistanceUnit::NAUTICAL_MILES:
-		for (i = 0; i < widgets->profile_width; i++) {
-			widgets->distances[i] = VIK_METERS_TO_NAUTICAL_MILES(widgets->distances[i]);
-		}
-		break;
-	default:
-		// DistanceUnit::KILOMETRES
-		for (i = 0; i < widgets->profile_width; i++) {
-			widgets->distances[i] = widgets->distances[i]/1000.0; /* kamilTODO: why divide by 1000 if unit is already km? */
-		}
-		break;
+	DistanceUnit distance_unit = a_vik_get_units_distance();
+	for (i = 0; i < widgets->profile_width; i++) {
+		widgets->distances[i] = convert_distance_meters_to(distance_unit, widgets->distances[i]);
 	}
 
 	widgets->duration = widgets->trk->get_duration(true);
@@ -1912,18 +1860,7 @@ static void draw_dt(GtkWidget * image, Track * trk, PropWidgets * widgets)
 	// easy to work out min / max of distance!
 	// Assign locally
 	// mind = 0.0; - Thus not used
-	double maxd;
-	switch (dist_units) {
-	case DistanceUnit::MILES:
-		maxd = VIK_METERS_TO_MILES(trk->get_length_including_gaps());
-		break;
-	case DistanceUnit::NAUTICAL_MILES:
-		maxd = VIK_METERS_TO_NAUTICAL_MILES(trk->get_length_including_gaps());
-		break;
-	default:
-		maxd = trk->get_length_including_gaps() / 1000.0;
-		break;
-	}
+	double maxd = convert_distance_meters_to(distance_unit, trk->get_length_including_gaps());
 
 	/* Find suitable chunk index */
 	double dummy = 0.0; // expect this to remain the same! (not that it's used)
@@ -1936,7 +1873,7 @@ static void draw_dt(GtkWidget * image, Track * trk, PropWidgets * widgets)
 	for (i = 0; i <= LINES; i++) {
 		char s[32];
 
-		switch (dist_units) {
+		switch (distance_unit) {
 		case DistanceUnit::MILES:
 			sprintf(s, _("%.1f miles"), ((LINES-i)*chunksd[widgets->cid]));
 			break;
@@ -2979,25 +2916,14 @@ void vik_trw_layer_propwin_run(GtkWindow *parent,
 	GtkWidget *content[20];
 	int cnt = 0;
 
-	DistanceUnit dist_units = a_vik_get_units_distance();
+	DistanceUnit distance_unit = a_vik_get_units_distance();
 
 	// NB This value not shown yet - but is used by internal calculations
 	widgets->track_length_inc_gaps = trk->get_length_including_gaps();
 
 	tr_len = widgets->track_length = trk->get_length();
-	switch (dist_units) {
-	case DistanceUnit::KILOMETRES:
-		snprintf(tmp_buf, sizeof(tmp_buf), "%.2f km", tr_len/1000.0);
-		break;
-	case DistanceUnit::MILES:
-		snprintf(tmp_buf, sizeof(tmp_buf), "%.2f miles", VIK_METERS_TO_MILES(tr_len));
-		break;
-	case DistanceUnit::NAUTICAL_MILES:
-		snprintf(tmp_buf, sizeof(tmp_buf), "%.2f NM", VIK_METERS_TO_NAUTICAL_MILES(tr_len));
-		break;
-	default:
-		fprintf(stderr, "CRITICAL: invalid distance unit %d\n", dist_units);
-	}
+
+	get_distance_string(tmp_buf, sizeof (tmp_buf), distance_unit, tr_len);
 	widgets->w_track_length = content[cnt++] = ui_label_new_selectable(tmp_buf);
 
 	tp_count = trk->get_tp_count();
@@ -3040,7 +2966,7 @@ void vik_trw_layer_propwin_run(GtkWindow *parent,
 	}
 	widgets->w_mvg_speed = content[cnt++] = ui_label_new_selectable(tmp_buf);
 
-	switch (dist_units) {
+	switch (distance_unit) {
 	case DistanceUnit::KILOMETRES:
 		// Even though kilometres, the average distance between points is going to be quite small so keep in metres
 		snprintf(tmp_buf, sizeof(tmp_buf), "%.2f m", (tp_count - seg_count) == 0 ? 0 : tr_len / (tp_count - seg_count));
@@ -3052,7 +2978,7 @@ void vik_trw_layer_propwin_run(GtkWindow *parent,
 		snprintf(tmp_buf, sizeof(tmp_buf), "%.3f NM", (tp_count - seg_count) == 0 ? 0 : VIK_METERS_TO_NAUTICAL_MILES(tr_len / (tp_count - seg_count)));
 		break;
 	default:
-		fprintf(stderr, "CRITICAL: Houston, we've had a problem. distance=%d\n", dist_units);
+		fprintf(stderr, "CRITICAL: Houston, we've had a problem. distance=%d\n", distance_unit);
 	}
 	widgets->w_avg_dist = content[cnt++] = ui_label_new_selectable(tmp_buf);
 

@@ -1375,8 +1375,8 @@ static void draw_ruler(Viewport * viewport, GdkDrawable *d, GdkGC *gc, int x1, i
 		gdk_draw_layout(d, gc, x1-5, y1-CR-3*CW-8, pl);
 
 		/* draw label with distance */
-		DistanceUnit dist_units = a_vik_get_units_distance();
-		switch (dist_units) {
+		DistanceUnit distance_unit = a_vik_get_units_distance();
+		switch (distance_unit) {
 		case DistanceUnit::KILOMETRES:
 			if (distance >= 1000 && distance < 100000) {
 				g_sprintf(str, "%3.2f km", distance/1000.0);
@@ -1405,7 +1405,7 @@ static void draw_ruler(Viewport * viewport, GdkDrawable *d, GdkGC *gc, int x1, i
 			}
 			break;
 		default:
-			fprintf(stderr, "CRITICAL: invalid distance unit %d\n", dist_units);
+			fprintf(stderr, "CRITICAL: invalid distance unit %d\n", distance_unit);
 		}
 
 		pango_layout_set_text(pl, str, -1);
@@ -1492,8 +1492,8 @@ static VikLayerToolFuncStatus ruler_click(Layer * layer, GdkEventButton * event,
 		vik_coord_to_latlon(&coord, &ll);
 		a_coords_latlon_to_string(&ll, &lat, &lon);
 		if (tool->ruler->has_oldcoord) {
-			DistanceUnit dist_units = a_vik_get_units_distance();
-			switch (dist_units) {
+			DistanceUnit distance_unit = a_vik_get_units_distance();
+			switch (distance_unit) {
 			case DistanceUnit::KILOMETRES:
 				temp = g_strdup_printf("%s %s DIFF %f meters", lat, lon, vik_coord_diff(&coord, &(tool->ruler->oldcoord)));
 				break;
@@ -1505,7 +1505,7 @@ static VikLayerToolFuncStatus ruler_click(Layer * layer, GdkEventButton * event,
 				break;
 			default:
 				temp = g_strdup_printf("Just to keep the compiler happy");
-				fprintf(stderr, "CRITICAL: Houston, we've had a problem. distance=%d\n", dist_units);
+				fprintf(stderr, "CRITICAL: Houston, we've had a problem. distance=%d\n", distance_unit);
 			}
 
 			tool->ruler->has_oldcoord = false;
@@ -1566,8 +1566,8 @@ static VikLayerToolFuncStatus ruler_move(Layer * layer, GdkEventMotion * event, 
 			draw_buf_done = false;
 		}
 		a_coords_latlon_to_string(&ll, &lat, &lon);
-		DistanceUnit dist_units = a_vik_get_units_distance();
-		switch (dist_units) {
+		DistanceUnit distance_unit = a_vik_get_units_distance();
+		switch (distance_unit) {
 		case DistanceUnit::KILOMETRES:
 			temp = g_strdup_printf("%s %s DIFF %f meters", lat, lon, vik_coord_diff(&coord, &(tool->ruler->oldcoord)));
 			break;
@@ -1579,7 +1579,7 @@ static VikLayerToolFuncStatus ruler_move(Layer * layer, GdkEventMotion * event, 
 			break;
 		default:
 			temp = g_strdup_printf("Just to keep the compiler happy");
-			fprintf(stderr, "CRITICAL: Houston, we've had a problem. distance=%d\n", dist_units);
+			fprintf(stderr, "CRITICAL: Houston, we've had a problem. distance=%d\n", distance_unit);
 		}
 		vik_statusbar_set_message(window->viking_vs, VIK_STATUSBAR_INFO, temp);
 		free(temp);
@@ -3859,8 +3859,8 @@ static void draw_to_image_file_total_area_cb(GtkSpinButton *spinbutton, void ** 
 		w *= gtk_spin_button_get_value(GTK_SPIN_BUTTON(pass_along[4]));
 		h *= gtk_spin_button_get_value(GTK_SPIN_BUTTON(pass_along[5]));
 	}
-	DistanceUnit dist_units = a_vik_get_units_distance();
-	switch (dist_units) {
+	DistanceUnit distance_unit = a_vik_get_units_distance();
+	switch (distance_unit) {
 	case DistanceUnit::KILOMETRES:
 		label_text = g_strdup_printf(_("Total area: %ldm x %ldm (%.3f sq. km)"), (glong)w, (glong)h, (w*h/1000000));
 		break;
@@ -3872,7 +3872,7 @@ static void draw_to_image_file_total_area_cb(GtkSpinButton *spinbutton, void ** 
 		break;
 	default:
 		label_text = g_strdup_printf("Just to keep the compiler happy");
-		fprintf(stderr, "CRITICAL: Houston, we've had a problem. distance=%d\n", dist_units);
+		fprintf(stderr, "CRITICAL: Houston, we've had a problem. distance=%d\n", distance_unit);
 	}
 
 	gtk_label_set_text(GTK_LABEL(pass_along[6]), label_text);

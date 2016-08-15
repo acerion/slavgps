@@ -443,9 +443,9 @@ void vik_trw_layer_tpwin_set_tp(VikTrwLayerTpwin * tpwin, Track * track, TrackPo
 	tpwin->sync_to_tp_block = false; // don't update while setting data.
 
 	SpeedUnit speed_units = a_vik_get_units_speed();
-	DistanceUnit dist_units = a_vik_get_units_distance();
+	DistanceUnit distance_unit = a_vik_get_units_distance();
 	if (tpwin->cur_tp) {
-		switch (dist_units) {
+		switch (distance_unit) {
 		case DistanceUnit::KILOMETRES:
 			snprintf(tmp_str, sizeof(tmp_str), "%.2f m", vik_coord_diff(&(tp->coord), &(tpwin->cur_tp->coord)));
 			break;
@@ -454,7 +454,7 @@ void vik_trw_layer_tpwin_set_tp(VikTrwLayerTpwin * tpwin, Track * track, TrackPo
 			snprintf(tmp_str, sizeof(tmp_str), "%.2f yards", vik_coord_diff(&(tp->coord), &(tpwin->cur_tp->coord))*1.0936133);
 			break;
 		default:
-			fprintf(stderr, "CRITICAL: invalid distance unit %d\n", dist_units);
+			fprintf(stderr, "CRITICAL: invalid distance unit %d\n", distance_unit);
 		}
 
 		gtk_label_set_text (tpwin->diff_dist, tmp_str);
@@ -488,7 +488,7 @@ void vik_trw_layer_tpwin_set_tp(VikTrwLayerTpwin * tpwin, Track * track, TrackPo
 	}
 	gtk_label_set_text(tpwin->speed, tmp_str);
 
-	switch (dist_units) {
+	switch (distance_unit) {
 	case DistanceUnit::KILOMETRES:
 		snprintf(tmp_str, sizeof(tmp_str), "%.5f m", tp->hdop);
 		gtk_label_set_text(tpwin->hdop, tmp_str);
@@ -502,7 +502,7 @@ void vik_trw_layer_tpwin_set_tp(VikTrwLayerTpwin * tpwin, Track * track, TrackPo
 		gtk_label_set_text(tpwin->pdop, tmp_str);
 		break;
 	default: /* kamilTODO: where NM are handled? */
-		fprintf(stderr, "CRITICAL: invalid distance unit %d\n", dist_units);
+		fprintf(stderr, "CRITICAL: invalid distance unit %d\n", distance_unit);
 	}
 
 	switch (height_units) {

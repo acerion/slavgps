@@ -152,27 +152,11 @@ static void table_output(TrackStatistics& ts, GtkWidget * content[])
 	gtk_label_set_text(GTK_LABEL(content[cnt++]), tmp_buf);
 
 
-	switch (a_vik_get_units_distance ()) {
-	case DistanceUnit::MILES:
-		snprintf(tmp_buf, sizeof(tmp_buf), _("%.1f miles"), VIK_METERS_TO_MILES(ts.length));
-		break;
-	default:
-		// DistanceUnit::KILOMETRES /* kamilTODO: where NM are handled? */
-		snprintf(tmp_buf, sizeof(tmp_buf), _("%.1f km"), ts.length/1000.0);
-		break;
-	}
+	get_distance_string(tmp_buf, sizeof (tmp_buf), a_vik_get_units_distance(), ts.length);
 	gtk_label_set_text(GTK_LABEL(content[cnt++]), tmp_buf);
 
 
-	switch (a_vik_get_units_distance ()) {
-	case DistanceUnit::MILES:
-		snprintf(tmp_buf, sizeof(tmp_buf), _("%.2f miles"), (VIK_METERS_TO_MILES(ts.length)/ts.count));
-		break;
-	default:
-		// DistanceUnit::KILOMETRES /* kamilTODO: where NM are handled? */
-		snprintf(tmp_buf, sizeof(tmp_buf), _("%.2f km"), ts.length/(1000.0*ts.count));
-		break;
-	}
+	get_distance_string(tmp_buf, sizeof (tmp_buf), a_vik_get_units_distance(), ts.length / ts.count);
 	gtk_label_set_text(GTK_LABEL(content[cnt++]), tmp_buf);
 
 

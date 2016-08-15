@@ -2009,23 +2009,11 @@ char const * LayerTRW::tooltip()
 
 		tbuf2[0] = '\0';
 		if (tt.length > 0.0) {
-			double len_in_units;
 
-			// Setup info dependent on distance units
-			switch (a_vik_get_units_distance()) {
-			case DistanceUnit::MILES:
-				snprintf(tbuf4, sizeof(tbuf4), "miles");
-				len_in_units = VIK_METERS_TO_MILES(tt.length);
-				break;
-			case DistanceUnit::NAUTICAL_MILES:
-				snprintf(tbuf4, sizeof(tbuf4), "NM");
-				len_in_units = VIK_METERS_TO_NAUTICAL_MILES(tt.length);
-				break;
-			default:
-				snprintf(tbuf4, sizeof(tbuf4), "kms");
-				len_in_units = tt.length/1000.0;
-				break;
-			}
+			/* Setup info dependent on distance units. */
+			DistanceUnit distance_unit = a_vik_get_units_distance();
+			get_distance_unit_string(tbuf4, sizeof (tbuf4), distance_unit);
+			double len_in_units = convert_distance_meters_to(distance_unit, tt.length);
 
 			// Timing information if available
 			tbuf1[0] = '\0';
@@ -2043,22 +2031,13 @@ char const * LayerTRW::tooltip()
 		double rlength = 0.0;
 		trw_layer_routes_tooltip(this->routes, &rlength);
 		if (rlength > 0.0) {
-			double len_in_units;
-			// Setup info dependent on distance units
-			switch (a_vik_get_units_distance()) {
-			case DistanceUnit::MILES:
-				snprintf(tbuf4, sizeof(tbuf4), "miles");
-				len_in_units = VIK_METERS_TO_MILES(rlength);
-				break;
-			case DistanceUnit::NAUTICAL_MILES:
-				snprintf(tbuf4, sizeof(tbuf4), "NM");
-				len_in_units = VIK_METERS_TO_NAUTICAL_MILES(rlength);
-				break;
-			default:
-				snprintf(tbuf4, sizeof(tbuf4), "kms");
-				len_in_units = rlength/1000.0;
-				break;
-			}
+
+
+
+			/* Setup info dependent on distance units. */
+			DistanceUnit distance_unit = a_vik_get_units_distance();
+			get_distance_unit_string(tbuf4, sizeof (tbuf4), distance_unit);
+			double len_in_units = convert_distance_meters_to(distance_unit, rlength);
 			snprintf(tbuf1, sizeof(tbuf1), _("\nTotal route length %.1f %s"), len_in_units, tbuf4);
 		}
 
@@ -2126,8 +2105,8 @@ char const * LayerTRW::sublayer_tooltip(SublayerType sublayer_type, sg_uid_t sub
 				}
 				// Get length and consider the appropriate distance units
 				double tr_len = trk->get_length();
-				DistanceUnit dist_units = a_vik_get_units_distance();
-				switch (dist_units) {
+				DistanceUnit distance_unit = a_vik_get_units_distance();
+				switch (distance_unit) {
 				case DistanceUnit::KILOMETRES:
 					snprintf(tmp_buf, sizeof(tmp_buf), _("%s%.1f km %s"), time_buf1, tr_len/1000.0, time_buf2);
 					break;
@@ -7764,8 +7743,8 @@ static char* distance_string(double distance)
 	char str[128];
 
 	/* draw label with distance */
-	DistanceUnit dist_units = a_vik_get_units_distance();
-	switch (dist_units) {
+	DistanceUnit distance_unit = a_vik_get_units_distance();
+	switch (distance_unit) {
 	case DistanceUnit::MILES:
 		if (distance >= VIK_MILES_TO_METERS(1) && distance < VIK_MILES_TO_METERS(100)) {
 			g_sprintf(str, "%3.2f miles", VIK_METERS_TO_MILES(distance));

@@ -53,9 +53,15 @@
 #include "layer_trw_draw.h"
 #include "settings.h"
 #include "globals.h"
+#include "vikutils.h"
+
+
 
 
 using namespace SlavGPS;
+
+
+
 
 static void trw_layer_draw_symbol(Waypoint * wp, int x, int y, DrawingParams * dp);
 static void trw_layer_draw_label(Waypoint * wp, int x, int y, DrawingParams * dp);
@@ -184,41 +190,6 @@ static void trw_layer_draw_track_label(char * name, char * fgcolour, char * bgco
 
 
 /**
- * distance_in_preferred_units:
- * @dist: The source distance in standard SI Units (i.e. metres)
- *
- * TODO: This is a generic function that could be moved into globals.c or utils.c
- *
- * Probably best used if you have a only few conversions to perform.
- * However if doing many points (such as on all points along a track) then this may be a bit slow,
- *  since it will be doing the preference check on each call
- *
- * Returns: The distance in the units as specified by the preferences
- */
-static double distance_in_preferred_units(double dist)
-{
-	double mydist;
-	DistanceUnit dist_units = a_vik_get_units_distance();
-	switch (dist_units) {
-	case DistanceUnit::MILES:
-		mydist = VIK_METERS_TO_MILES(dist);
-		break;
-	case DistanceUnit::NAUTICAL_MILES:
-		mydist = VIK_METERS_TO_NAUTICAL_MILES(dist);
-		break;
-		// DistanceUnit::KILOMETRES:
-	default:
-		mydist = dist/1000.0;
-		break;
-	}
-	return mydist;
-}
-
-
-
-
-
-/**
  * trw_layer_draw_dist_labels:
  *
  * Draw a few labels along a track at nicely seperated distances
@@ -230,14 +201,14 @@ static void trw_layer_draw_dist_labels(DrawingParams * dp, Track * trk, bool dra
 					 25.0, 40.0, 50.0, 75.0, 100.0,
 					 150.0, 200.0, 250.0, 500.0, 1000.0};
 
-	double dist = trk->get_length_including_gaps() / (trk->max_number_dist_labels+1);
+	double dist = trk->get_length_including_gaps() / (trk->max_number_dist_labels + 1);
+	DistanceUnit distance_unit = a_vik_get_units_distance();
 
-	// Convert to specified unit to find the friendly breakdown value
-	dist = distance_in_preferred_units(dist);
+	/* Convert to specified unit to find the friendly breakdown value. */
+	dist = convert_distance_meters_to(distance_unit, dist);
 
 	int index = 0;
-	int i=0;
-	for (i = 0; i < G_N_ELEMENTS(chunksd); i++) {
+	for (int i = 0; i < G_N_ELEMENTS(chunksd); i++) {
 		if (chunksd[i] > dist) {
 			index = i;
 			dist = chunksd[index];
@@ -245,13 +216,12 @@ static void trw_layer_draw_dist_labels(DrawingParams * dp, Track * trk, bool dra
 		}
 	}
 
-	DistanceUnit dist_units = a_vik_get_units_distance();
 
-	for (i = 1; i < trk->max_number_dist_labels+1; i++) {
+	for (int i = 1; i < trk->max_number_dist_labels+1; i++) {
 		double dist_i = dist * i;
 
 		// Convert distance back into metres for use in finding a trackpoint
-		switch (dist_units) {
+		switch (distance_unit) {
 		case DistanceUnit::MILES:
 			dist_i = VIK_MILES_TO_METERS(dist_i);
 			break;
@@ -278,33 +248,24 @@ static void trw_layer_draw_dist_labels(DrawingParams * dp, Track * trk, bool dra
 
 		if (tp_current && tp_next) {
 			// Construct the name based on the distance value
+
+
 			char *name;
-			char *units;
-			switch (dist_units) {
-			case DistanceUnit::MILES:
-				units = strdup(_("miles"));
-				break;
-			case DistanceUnit::NAUTICAL_MILES:
-				units = strdup(_("NM"));
-				break;
-			default:
-				// DistanceUnit::KILOMETRES:
-				units = strdup(_("km"));
-				break;
-			}
+			char unit_string[16];
+			get_distance_unit_string(unit_string, sizeof (unit_string), distance_unit);
 
 			// Convert for display
-			dist_i = distance_in_preferred_units(dist_i);
+			dist_i = convert_distance_meters_to(distance_unit, dist_i);
 
 			// Make the precision of the output related to the unit size.
 			if (index == 0) {
-				name = g_strdup_printf("%.2f %s", dist_i, units);
+				name = g_strdup_printf("%.2f %s", dist_i, unit_string);
 			} else if (index == 1) {
-				name = g_strdup_printf("%.1f %s", dist_i, units);
+				name = g_strdup_printf("%.1f %s", dist_i, unit_string);
 			} else {
-				name = g_strdup_printf("%d %s", (int) round(dist_i), units); // TODO single vs plurals
+				name = g_strdup_printf("%d %s", (int) round(dist_i), unit_string); // TODO single vs plurals
 			}
-			free(units);
+
 
 			struct LatLon ll_current, ll_next;
 			vik_coord_to_latlon(&tp_current->coord, &ll_current);

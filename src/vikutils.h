@@ -36,6 +36,11 @@ char * get_speed_unit_string(SpeedUnit speed_unit);
 double convert_speed_mps_to(SpeedUnit speed_units, double speed);
 char * get_speed_string(char * buf, size_t size, SpeedUnit speed_unit, double speed);
 
+bool get_distance_unit_string(char * buf, size_t size, DistanceUnit distance_unit);
+char * get_distance_string(char * buf, size_t size, DistanceUnit distance_unit, double distance);
+double convert_distance_meters_to(DistanceUnit distance_unit, double distance);
+
+
 char * vu_trackpoint_formatted_message(char * format_code, SlavGPS::Trackpoint * tp, SlavGPS::Trackpoint * tp_prev, SlavGPS::Track * trk, double climb);
 
 void vu_check_latest_version(GtkWindow * window);

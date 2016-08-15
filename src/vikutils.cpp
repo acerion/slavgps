@@ -176,9 +176,9 @@ char * vu_trackpoint_formatted_message(char * format_code, Trackpoint * tp, Trac
 				int diff = (int) round(vik_coord_diff(&(tp->coord), &(tp_prev->coord)));
 
 				char * dist_units_str = NULL;
-				DistanceUnit dist_units = a_vik_get_units_distance();
+				DistanceUnit distance_unit = a_vik_get_units_distance();
 				// expect the difference between track points to be small hence use metres or yards
-				switch (dist_units) {
+				switch (distance_unit) {
 				case DistanceUnit::MILES:
 				case DistanceUnit::NAUTICAL_MILES:
 					dist_units_str = strdup(_("yards"));
@@ -229,52 +229,26 @@ char * vu_trackpoint_formatted_message(char * format_code, Trackpoint * tp, Trac
 				double distd = trk->get_length_to_trackpoint(tp);
 				double diste = trk->get_length_including_gaps();
 				double dist = diste - distd;
-				char * dist_units_str = NULL;
-				DistanceUnit dist_units = a_vik_get_units_distance();
-				switch (dist_units) {
-				case DistanceUnit::MILES:
-					dist_units_str = strdup(_("miles"));
-					dist = VIK_METERS_TO_MILES(dist);
-					break;
-				case DistanceUnit::NAUTICAL_MILES:
-					dist_units_str = strdup(_("NM"));
-					dist = VIK_METERS_TO_NAUTICAL_MILES(dist);
-					break;
-				default:
-					// DistanceUnit::KILOMETRES:
-					dist_units_str = strdup(_("km"));
-					dist = dist / 1000.0;
-					break;
-				}
-				values[i] = g_strdup_printf(_("%sTo End %.2f%s"), separator, dist, dist_units_str);
-				free(dist_units_str);
+				char dist_unit_str[16] = { 0 };
+
+				DistanceUnit distance_unit = a_vik_get_units_distance();
+				get_distance_unit_string(dist_unit_str, sizeof (dist_unit_str), distance_unit);
+				dist = convert_distance_meters_to(distance_unit, dist);
+				values[i] = g_strdup_printf(_("%sTo End %.2f%s"), separator, dist, dist_unit_str);
 			}
 			break;
 		}
 
 		case 'D': {
 			if (trk) {
-				// Distance from start (along the track)
+				/* Distance from start (along the track). */
 				double distd = trk->get_length_to_trackpoint(tp);
-				char * dist_units_str = NULL;
-				DistanceUnit dist_units = a_vik_get_units_distance();
-				switch (dist_units) {
-				case DistanceUnit::MILES:
-					dist_units_str = strdup(_("miles"));
-					distd = VIK_METERS_TO_MILES(distd);
-					break;
-				case DistanceUnit::NAUTICAL_MILES:
-					dist_units_str = strdup(_("NM"));
-					distd = VIK_METERS_TO_NAUTICAL_MILES(distd);
-					break;
-				default:
-					// DistanceUnit::KILOMETRES:
-					dist_units_str = strdup(_("km"));
-					distd = distd / 1000.0;
-					break;
-				}
-				values[i] = g_strdup_printf(_("%sDistance along %.2f%s"), separator, distd, dist_units_str);
-				free(dist_units_str);
+				char dist_unit_str[16] = { 0 };
+
+				DistanceUnit distance_unit = a_vik_get_units_distance();
+				get_distance_unit_string(dist_unit_str, sizeof (dist_unit_str), distance_unit);
+				distd = convert_distance_meters_to(distance_unit, distd);
+				values[i] = g_strdup_printf(_("%sDistance along %.2f%s"), separator, distd, dist_unit_str);
 			}
 			break;
 		}
@@ -396,6 +370,70 @@ char * get_speed_string(char * buf, size_t size, SpeedUnit speed_unit, double sp
 	}
 
 	return buf;
+}
+
+
+
+
+bool get_distance_unit_string(char * buf, size_t size, DistanceUnit distance_unit)
+{
+	switch (distance_unit) {
+	case DistanceUnit::KILOMETRES:
+		snprintf(buf, size, "%s", _("km"));
+		return true;
+	case DistanceUnit::MILES:
+		snprintf(buf, size, "%s", _("miles"));
+		return true;
+	case DistanceUnit::NAUTICAL_MILES:
+		snprintf(buf, size, "%s", _("NM"));
+		return true;
+	default:
+		fprintf(stderr, "CRITICAL: invalid distance unit %d\n", distance_unit);
+		return false;
+	}
+}
+
+
+
+
+char * get_distance_string(char * buf, size_t size, DistanceUnit distance_unit, double distance)
+{
+	switch (distance_unit) {
+	case DistanceUnit::KILOMETRES:
+		snprintf(buf, size, _("%.2f km"), distance / 1000.0);
+		break;
+	case DistanceUnit::MILES:
+		snprintf(buf, size, _("%.2f miles"), VIK_METERS_TO_MILES (distance));
+		break;
+	case DistanceUnit::NAUTICAL_MILES:
+		snprintf(buf, size, _("%.2f NM"), VIK_METERS_TO_NAUTICAL_MILES (distance));
+		break;
+	default:
+		fprintf(stderr, "CRITICAL: invalid distance unit %d\n", distance_unit);
+	}
+
+	return buf;
+}
+
+
+
+
+double convert_distance_meters_to(DistanceUnit distance_unit, double distance)
+{
+	switch (distance_unit) {
+	case DistanceUnit::MILES:
+		return VIK_METERS_TO_MILES(distance);
+
+	case DistanceUnit::NAUTICAL_MILES:
+		return VIK_METERS_TO_NAUTICAL_MILES(distance);
+
+	case DistanceUnit::KILOMETRES:
+		return distance / 1000.0;
+
+	default:
+		fprintf(stderr, "CRITICAL: invalid distance unit %d\n", distance_unit);
+		return distance;
+	}
 }
 
 

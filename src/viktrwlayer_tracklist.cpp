@@ -510,7 +510,7 @@ static bool trw_layer_track_button_pressed_cb(GtkWidget * tree_view,
  */
 static void trw_layer_track_list_add(track_layer_t * element,
 				     GtkTreeStore * store,
-				     DistanceUnit dist_units,
+				     DistanceUnit distance_unit,
 				     SpeedUnit speed_units,
 				     HeightUnit height_units,
 				     const char * date_format)
@@ -521,14 +521,7 @@ static void trw_layer_track_list_add(track_layer_t * element,
 
 	double trk_dist = trk->get_length();
 	// Store unit converted value
-	switch (dist_units) {
-	case DistanceUnit::MILES:
-		trk_dist = VIK_METERS_TO_MILES(trk_dist);
-		break;
-	default: /* kamilTODO: where NM are handled? */
-		trk_dist = trk_dist/1000.0;
-		break;
-	}
+	trk_dist = convert_distance_meters_to(distance_unit, trk_dist);
 
 	// Get start date
 	char time_buf[32];
@@ -657,7 +650,7 @@ static void vik_trw_layer_track_list_internal(GtkWidget * dialog,
 
 	//gtk_tree_selection_set_select_function(gtk_tree_view_get_selection (GTK_TREE_VIEW(vt)), vik_treeview_selection_filter, vt, NULL);
 
-	DistanceUnit dist_units = a_vik_get_units_distance();
+	DistanceUnit distance_unit = a_vik_get_units_distance();
 	SpeedUnit speed_units = a_vik_get_units_speed();
 	HeightUnit height_units = a_vik_get_units_height();
 
@@ -669,7 +662,7 @@ static void vik_trw_layer_track_list_internal(GtkWidget * dialog,
 	}
 
 	for (auto iter = tracks_and_layers->begin(); iter != tracks_and_layers->end(); iter++) {
-		trw_layer_track_list_add(*iter, store, dist_units, speed_units, height_units, date_format);
+		trw_layer_track_list_add(*iter, store, distance_unit, speed_units, height_units, date_format);
 	}
 	free(date_format);
 
@@ -711,7 +704,7 @@ static void vik_trw_layer_track_list_internal(GtkWidget * dialog,
 	gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);
 	column_runner++;
 
-	switch (dist_units) {
+	switch (distance_unit) {
 	case DistanceUnit::MILES:
 		column = my_new_column_text(_("Distance\n(miles)"), renderer, view, column_runner++);
 		break;

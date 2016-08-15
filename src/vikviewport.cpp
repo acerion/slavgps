@@ -664,8 +664,8 @@ void Viewport::draw_scale()
 	this->screen_to_coord(0,                      height / 2, &left);
 	this->screen_to_coord(width * RELATIVE_WIDTH, height / 2, &right);
 
-	DistanceUnit dist_units = a_vik_get_units_distance();
-	switch (dist_units) {
+	DistanceUnit distance_unit = a_vik_get_units_distance();
+	switch (distance_unit) {
 	case DistanceUnit::KILOMETRES:
 		base_distance = vik_coord_diff(&left, &right); /* In meters. */
 		break;
@@ -679,7 +679,7 @@ void Viewport::draw_scale()
 		break;
 	default:
 		base_distance = 1; /* Keep the compiler happy. */
-		fprintf(stderr, "CRITICAL: failed to get correct units of distance, got %d\n", dist_units);
+		fprintf(stderr, "CRITICAL: failed to get correct units of distance, got %d\n", distance_unit);
 	}
 
 	/* At this point "base_distance" is a distance between "left" and "right" in physical units.
@@ -715,7 +715,7 @@ void Viewport::draw_scale()
 	pango_layout_set_font_description(pl, gtk_widget_get_style(GTK_WIDGET(&vvp->drawing_area))->font_desc);
 
 	char s[128];
-	switch (dist_units) {
+	switch (distance_unit) {
 	case DistanceUnit::KILOMETRES:
 		if (scale_unit >= 1000) {
 			sprintf(s, "%d km", (int) scale_unit / 1000);
@@ -744,7 +744,7 @@ void Viewport::draw_scale()
 		}
 		break;
 	default:
-		fprintf(stderr, "CRITICAL: failed to get correct units of distance, got %d\n", dist_units);
+		fprintf(stderr, "CRITICAL: failed to get correct units of distance, got %d\n", distance_unit);
 	}
 	pango_layout_set_text(pl, s, -1);
 	this->draw_layout(paint_fg, PAD + len + PAD, height - PAD - 10, pl);

@@ -265,8 +265,8 @@ vik_degree_format_t a_vik_get_degree_format()
 
 DistanceUnit a_vik_get_units_distance()
 {
-	DistanceUnit unit = (DistanceUnit) a_preferences_get(VIKING_PREFERENCES_NAMESPACE "units_distance")->u;
-	return unit;
+	DistanceUnit distance_unit = (DistanceUnit) a_preferences_get(VIKING_PREFERENCES_NAMESPACE "units_distance")->u;
+	return distance_unit;
 }
 
 SpeedUnit a_vik_get_units_speed()
