@@ -46,8 +46,9 @@ void TrackStatistics::add_track(Track * trk)
 	this->length      += trk->get_length();
 	this->length_gaps += trk->get_length_including_gaps();
 
-	if (max_speed > this->max_speed) {
-		this->max_speed = trk->get_max_speed();
+	double ms = trk->get_max_speed();
+	if (ms > this->max_speed) {
+		this->max_speed = ms;
 	}
 
 	double min_alt;
