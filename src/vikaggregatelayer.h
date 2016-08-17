@@ -38,14 +38,11 @@ namespace SlavGPS {
 
 
 
-
 	/* Forward declarations. */
 	class LayersPanel;
 	class Track;
 	struct track_layer_t;
 	struct waypoint_layer_t;
-
-
 
 
 
@@ -83,9 +80,6 @@ namespace SlavGPS {
 		std::list<Layer *> * get_all_layers_of_type(std::list<Layer *> * layers, LayerType layer_type, bool include_invisible);
 		bool is_empty();
 		std::list<Layer const *> * get_children();
-
-
-
 
 
 		void search_date();

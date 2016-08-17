@@ -222,6 +222,16 @@ namespace SlavGPS {
 		static LayerType type_from_string(char const * str);
 
 
+
+		static bool compare_timestamp_descending(Layer * first, Layer * second); /* kamilTODO: make arguments const. */
+		static bool compare_timestamp_ascending(Layer * first, Layer * second);
+
+		static bool compare_name_descending(Layer * first, Layer * second); /* kamilTODO: make arguments const. */
+		static bool compare_name_ascending(Layer * first, Layer * second);
+
+
+
+
 		char const * get_name();
 		void rename(char const * new_name);
 		void rename_no_copy(char * new_name);

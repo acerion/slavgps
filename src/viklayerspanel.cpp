@@ -972,22 +972,20 @@ static void layers_move_item_down_cb(LayersPanel * panel)
 
 
 
-
 #if 0
-bool vik_layers_panel_tool(LayersPanel * panel, uint16_t layer_type, VikToolInterfaceFunc tool_func, GdkEventButton * event, Viewport * viewport)
+bool vik_layers_panel_tool(LayersPanel * panel, LayerType layer_type, VikToolInterfaceFunc tool_func, GdkEventButton * event, Viewport * viewport)
 {
-	VikLayer *vl = panel->get_selected();
-	if (vl && vl->type == layer_type) {
-		tool_func(vl, event, viewport);
+	Layer * layer = panel->get_selected();
+	if (layer && layer->type == layer_type) {
+		tool_func(layer, event, viewport);
 		return true;
-	} else if (panel->toplayer->vl->visible &&
-		   vik_aggregate_layer_tool(panel->toplayer->vl, layer_type, tool_func, event, viewport) != 1) { /* either accepted or rejected, but a layer was found */
+	} else if (panel->toplayer->visible &&
+		   panel->toplayer->layer_tool(layer_type, tool_func, event, viewport) != 1) { /* either accepted or rejected, but a layer was found */
 		return true;
 	}
 	return false;
 }
 #endif
-
 
 
 

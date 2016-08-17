@@ -30,15 +30,24 @@
 #include "globals.h"
 
 #include <list>
+#include <cstring>
+#include <cstdlib>
+#include <cassert>
 
-#include <string.h>
-#include <stdlib.h>
-#include <assert.h>
 #include <glib/gi18n.h>
+
+
+
 
 using namespace SlavGPS;
 
+
+
+
 static Layer * aggregate_layer_unmarshall(uint8_t * data, int len, Viewport * viewport);
+
+
+
 
 VikLayerInterface vik_aggregate_layer_interface = {
 	"Aggregate",
@@ -69,8 +78,6 @@ VikLayerInterface vik_aggregate_layer_interface = {
 
 void LayerAggregate::marshall(uint8_t **data, int *datalen)
 {
-#if 1
-
 	uint8_t *ld;
 	int ll;
 	GByteArray* b = g_byte_array_new();
@@ -96,14 +103,13 @@ void LayerAggregate::marshall(uint8_t **data, int *datalen)
 	*datalen = b->len;
 	g_byte_array_free(b, false);
 #undef alm_append
-
-#endif
 }
+
+
+
 
 static Layer * aggregate_layer_unmarshall(uint8_t *data, int len, Viewport * viewport)
 {
-#if 1
-
 #define alm_size (*(int *)data)
 #define alm_next		 \
 	len -= sizeof(int) + alm_size;		\
@@ -122,22 +128,23 @@ static Layer * aggregate_layer_unmarshall(uint8_t *data, int len, Viewport * vie
 		}
 		alm_next;
 	}
-	//  fprintf(stdout, "aggregate_layer_unmarshall ended with len=%d\n", len);
+	// fprintf(stdout, "aggregate_layer_unmarshall ended with len=%d\n", len);
 	return aggregate;
 #undef alm_size
 #undef alm_next
-
-#endif
 }
+
+
+
 
 void LayerAggregate::insert_layer(Layer * layer, GtkTreeIter *replace_iter)
 {
 	GtkTreeIter iter;
 
-	// By default layers are inserted above the selected layer
+	/* By default layers are inserted above the selected layer. */
 	bool put_above = true;
 
-	// These types are 'base' types in that you what other information on top
+	/* These types are 'base' types in that you what other information on top. */
 	if (layer->type == LayerType::MAPS || layer->type == LayerType::DEM || layer->type == LayerType::GEOREF) {
 		put_above = false;
 	}
@@ -168,23 +175,25 @@ void LayerAggregate::insert_layer(Layer * layer, GtkTreeIter *replace_iter)
 		if (put_above) {
 			this->children->insert(std::next(theone), layer);
 		} else {
-			// Thus insert 'here' (so don't add 1)
+			/* Thus insert 'here' (so don't add 1). */
 			this->children->insert(theone, layer);
 		}
 	} else {
-		// Effectively insert at 'end' of the list to match how displayed in the treeview
-		//  - but since it is drawn from 'bottom first' it is actually the first in the child list
-		// This ordering is especially important if it is a map or similar type,
-		//  which needs be drawn first for the layering draw method to work properly.
-		// ATM this only happens when a layer is drag/dropped to the end of an aggregate layer
+		/* Effectively insert at 'end' of the list to match how displayed in the treeview
+		   - but since it is drawn from 'bottom first' it is actually the first in the child list.
+		   This ordering is especially important if it is a map or similar type,
+		   which needs be drawn first for the layering draw method to work properly.
+		   ATM this only happens when a layer is drag/dropped to the end of an aggregate layer. */
 		this->children->push_back(layer);
 	}
 
 	g_signal_connect_swapped(G_OBJECT(layer->vl), "update", G_CALLBACK(vik_layer_emit_update_secondary), (Layer *) this);
 }
 
+
+
+
 /**
- * vik_aggregate_layer_add_layer:
  * @allow_reordering: should be set for GUI interactions,
  *                    whereas loading from a file needs strict ordering and so should be false
  */
@@ -192,11 +201,11 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 {
 	GtkTreeIter iter;
 
-	// By default layers go to the top
+	/* By default layers go to the top. */
 	bool put_above = true;
 
 	if (allow_reordering) {
-		// These types are 'base' types in that you what other information on top
+		/* These types are 'base' types in that you what other information on top. */
 		if (layer->type == LayerType::MAPS || layer->type == LayerType::DEM || layer->type == LayerType::GEOREF) {
 			put_above = false;
 		}
@@ -223,6 +232,9 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 
 	g_signal_connect_swapped(G_OBJECT(layer->vl), "update", G_CALLBACK(vik_layer_emit_update_secondary), (Layer *) this);
 }
+
+
+
 
 void LayerAggregate::move_layer(GtkTreeIter *child_iter, bool up)
 {
@@ -264,6 +276,9 @@ void LayerAggregate::move_layer(GtkTreeIter *child_iter, bool up)
 #endif
 }
 
+
+
+
 /* Draw the aggregate layer. If vik viewport is in half_drawn mode, this means we are only
  * to draw the layers above and including the trigger layer.
  * To do this we don't draw any layers if in half drawn mode, unless we find the
@@ -293,6 +308,9 @@ void LayerAggregate::draw(Viewport * viewport)
 	}
 }
 
+
+
+
 void LayerAggregate::change_coord_mode(VikCoordMode mode)
 {
 	for (auto child = this->children->begin(); child != this->children->end(); child++) {
@@ -301,149 +319,126 @@ void LayerAggregate::change_coord_mode(VikCoordMode mode)
 	}
 }
 
-// A slightly better way of defining the menu callback information
-// This should be easier to extend/rework compared to previously
-typedef enum {
-	MA_VAL = 0,
-	MA_VLP,
-	MA_LAST
-} menu_array_index;
 
-typedef void * menu_array_values[MA_LAST];
 
-static void aggregate_layer_child_visible_toggle(menu_array_values values)
+
+typedef struct {
+	LayerAggregate * aggregate;
+	LayersPanel * panel;
+} menu_array_values;
+
+
+
+
+static void aggregate_layer_child_visible_toggle(menu_array_values * values)
 {
-	LayerAggregate * aggregate = (LayerAggregate *) values[MA_VAL];
-	LayersPanel * panel = (LayersPanel *) values[MA_VLP];
+	LayerAggregate * aggregate = (LayerAggregate *) values->aggregate;
+	LayersPanel * panel = values->panel;
 
 	aggregate->child_visible_toggle(panel);
 }
+
+
 
 
 void LayerAggregate::child_visible_toggle(LayersPanel * panel)
 {
 	TreeView * tree = panel->get_treeview();
 
-	// Loop around all (child) layers applying visibility setting
-	// This does not descend the tree if there are aggregates within aggregrate - just the first level of layers held
+	/* Loop around all (child) layers applying visibility setting.
+	   This does not descend the tree if there are aggregates within aggregrate - just the first level of layers held. */
 	for (auto child = this->children->begin(); child != this->children->end(); child++) {
 		Layer * layer = *child;
 		layer->visible = !layer->visible;
-		// Also set checkbox on/off
+		/* Also set checkbox on/off. */
 		tree->toggle_visibility(&layer->iter);
 	}
-	// Redraw as view may have changed
+	/* Redraw as view may have changed. */
 	this->emit_update();
 }
+
+
+
 
 void LayerAggregate::child_visible_set(LayersPanel * panel, bool on_off)
 {
-	// Loop around all (child) layers applying visibility setting
-	// This does not descend the tree if there are aggregates within aggregrate - just the first level of layers held
+	/* Loop around all (child) layers applying visibility setting.
+	   This does not descend the tree if there are aggregates within aggregrate - just the first level of layers held. */
 	for (auto child = this->children->begin(); child != this->children->end(); child++) {
 		Layer * layer = *child;
 		layer->visible = on_off;
-		// Also set checkbox on_off
+		/* Also set checkbox on_off. */
 		panel->get_treeview()->set_visibility(&layer->iter, on_off);
 	}
 
-	// Redraw as view may have changed
+	/* Redraw as view may have changed. */
 	this->emit_update();
 }
 
-static void aggregate_layer_child_visible_on(menu_array_values values)
+
+
+
+static void aggregate_layer_child_visible_on(menu_array_values * values)
 {
-	LayerAggregate * aggregate = (LayerAggregate *) values[MA_VAL];
-	LayersPanel * panel = (LayersPanel *) values[MA_VLP];
+	LayerAggregate * aggregate = values->aggregate;
+	LayersPanel * panel = values->panel;
 
 	aggregate->child_visible_set(panel, true);
 }
 
-static void aggregate_layer_child_visible_off(menu_array_values values)
+
+
+
+static void aggregate_layer_child_visible_off(menu_array_values * values)
 {
-	LayerAggregate * aggregate = (LayerAggregate *) values[MA_VAL];
-	LayersPanel * panel = (LayersPanel *) values[MA_VLP];
+	LayerAggregate * aggregate = values->aggregate;
+	LayersPanel * panel = values->panel;
 
 	aggregate->child_visible_set(panel, false);
 }
 
-/**
- * If order is true sort ascending, otherwise a descending sort
- */
-static int sort_layer_compare(gconstpointer a, gconstpointer b, void * order)
+
+
+
+static void aggregate_layer_sort_a2z(menu_array_values * values)
 {
-	Layer * sa = (Layer *) ((VikLayer *) a)->layer;
-	Layer * sb = (Layer *) ((VikLayer *) b)->layer;
+	LayerAggregate * aggregate = values->aggregate;
 
-	// Default ascending order
-	int answer = g_strcmp0(sa->name, sb->name);
-
-	if (KPOINTER_TO_INT(order)) {
-		// Invert sort order for ascending order
-		answer = -answer;
-	}
-
-	return answer;
+	aggregate->tree_view->sort_children(&aggregate->iter, VL_SO_ALPHABETICAL_ASCENDING);
+	aggregate->children->sort(Layer::compare_name_ascending);
 }
 
-static void aggregate_layer_sort_a2z(menu_array_values values)
+
+
+
+static void aggregate_layer_sort_z2a(menu_array_values * values)
 {
-#if 0
-	LayerAggregate * aggregate = (LayerAggregate *) values[MA_VAL];
-	VikLayer * vl = aggregate->vl;
-	vik_treeview_sort_children(vl->vt, &vl->iter, VL_SO_ALPHABETICAL_ASCENDING);
-	g_list_sort_with_data(aggregate->children, sort_layer_compare, KINT_TO_POINTER(true));
-#endif
+	LayerAggregate * aggregate = values->aggregate;
+
+	aggregate->tree_view->sort_children(&aggregate->iter, VL_SO_ALPHABETICAL_DESCENDING);
+	aggregate->children->sort(Layer::compare_name_descending);
 }
 
-static void aggregate_layer_sort_z2a(menu_array_values values)
+
+
+
+static void aggregate_layer_sort_timestamp_ascend(menu_array_values * values)
 {
-#if 0
-	LayerAggregate * aggregate = (LayerAggregate *) values[MA_VAL];
-	VikLayer * vl = aggregate->vl;
-	vik_treeview_sort_children(vl->vt, &vl->iter, VL_SO_ALPHABETICAL_DESCENDING);
-	g_list_sort_with_data(aggregate->children, sort_layer_compare, KINT_TO_POINTER(false));
-#endif
+	LayerAggregate * aggregate = values->aggregate;
+
+	aggregate->tree_view->sort_children(&aggregate->iter, VL_SO_DATE_ASCENDING);
+	aggregate->children->sort(Layer::compare_timestamp_ascending);
 }
 
-/**
- * If order is true sort ascending, otherwise a descending sort
- */
-static int sort_layer_compare_timestamp(gconstpointer a, gconstpointer b, void * order)
+
+
+
+static void aggregate_layer_sort_timestamp_descend(menu_array_values * values)
 {
-	VikLayer *sa = (VikLayer *)a;
-	VikLayer *sb = (VikLayer *)b;
+	LayerAggregate * aggregate = values->aggregate;
 
-	// Default ascending order
-	// NB This might be relatively slow...
-	int answer = (((Layer *) sa->layer)->get_timestamp() > ((Layer *) sb->layer)->get_timestamp());
-
-	if (KPOINTER_TO_INT(order)) {
-		// Invert sort order for ascending order
-		answer = !answer;
-	}
-
-	return answer;
-}
-
-static void aggregate_layer_sort_timestamp_ascend(menu_array_values values)
-{
-#if 0
-	LayerAggregate * aggregate = (LayerAggregate *) values[MA_VAL];
-	VikLayer * vl = aggregate->vl;
-	vik_treeview_sort_children(vl->vt, &vl->iter, VL_SO_DATE_ASCENDING);
-	g_list_sort_with_data(aggregate->children, sort_layer_compare_timestamp, KINT_TO_POINTER(true));
-#endif
-}
-
-static void aggregate_layer_sort_timestamp_descend(menu_array_values values)
-{
-#if 0
-	LayerAggregate * aggregate = (LayerAggregate *) values[MA_VAL];
-	VikLayer * vl = aggregate->vl;
-	vik_treeview_sort_children(vl->vt, &vl->iter, VL_SO_DATE_DESCENDING);
-	g_list_sort_with_data(aggregate->children, sort_layer_compare_timestamp, KINT_TO_POINTER(false));
-#endif
+	aggregate->tree_view->sort_children(&aggregate->iter, VL_SO_DATE_DESCENDING);
+	aggregate->children->sort(Layer::compare_timestamp_descending);
 }
 
 
@@ -451,11 +446,10 @@ static void aggregate_layer_sort_timestamp_descend(menu_array_values values)
 
 std::list<waypoint_layer_t *> * LayerAggregate::create_waypoints_and_layers_list()
 {
-	// Get all TRW layers
 	std::list<Layer *> * layers = new std::list<Layer *>;
 	layers = this->get_all_layers_of_type(layers, LayerType::TRW, true);
 
-	// For each TRW layers keep adding the waypoints to build a list of all of them
+	/* For each TRW layers keep adding the waypoints to build a list of all of them. */
 	std::list<waypoint_layer_t *> * waypoints_and_layers = new std::list<waypoint_layer_t *>;
 	int index = 0;
 	for (auto iter = layers->begin(); iter != layers->end(); iter++) {
@@ -473,9 +467,12 @@ std::list<waypoint_layer_t *> * LayerAggregate::create_waypoints_and_layers_list
 	return waypoints_and_layers;
 }
 
-static void aggregate_layer_waypoint_list_dialog(menu_array_values values)
+
+
+
+static void aggregate_layer_waypoint_list_dialog(menu_array_values * values)
 {
-	LayerAggregate * aggregate = (LayerAggregate *) values[MA_VAL];
+	LayerAggregate * aggregate = values->aggregate;
 
 	char *title = g_strdup_printf(_("%s: Waypoint List"), aggregate->name);
 	vik_trw_layer_waypoint_list_show_dialog(title, aggregate, true);
@@ -483,11 +480,17 @@ static void aggregate_layer_waypoint_list_dialog(menu_array_values values)
 }
 
 
-static void aggregate_layer_search_date(menu_array_values values)
+
+
+static void aggregate_layer_search_date(menu_array_values * values)
 {
-	LayerAggregate * aggregate = (LayerAggregate *) values[MA_VAL];
+	LayerAggregate * aggregate = values->aggregate;
+
 	aggregate->search_date();
 }
+
+
+
 
 /**
  * Search all TrackWaypoint layers in this aggregate layer for an item on the user specified date
@@ -508,9 +511,9 @@ void LayerAggregate::search_date()
 	layers = this->get_all_layers_of_type(layers, LayerType::TRW, true);
 
 
-	// Search tracks first
+	/* Search tracks first. */
 	for (auto iter = layers->begin(); iter != layers->end(); iter++) {
-		// Make it auto select the item if found
+		/* Make it auto select the item if found. */
 		found = ((LayerTRW *) (*iter))->find_by_date(date_str, &position, viewport, true, true);
 		if (found) {
 			break;
@@ -519,12 +522,12 @@ void LayerAggregate::search_date()
 	delete layers;
 
 	if (!found) {
-		// Reset and try on Waypoints; /* kamilTODO: do we need to reset the list? Did it change? */
+		/* Reset and try on Waypoints. */ /* kamilTODO: do we need to reset the list? Did it change? */
 		layers = new std::list<Layer *>;
 		layers = this->get_all_layers_of_type(layers, LayerType::TRW, true);
 
 		for (auto iter = layers->begin(); iter != layers->end(); iter++) {
-			// Make it auto select the item if found
+			/* Make it auto select the item if found. */
 			found = ((LayerTRW *) (*iter))->find_by_date(date_str, &position, viewport, false, true);
 			if (found) {
 				break;
@@ -558,16 +561,12 @@ std::list<SlavGPS::track_layer_t *> * LayerAggregate::create_tracks_and_layers_l
 
 
 
-/**
- * Returns: A list of #track_layer_t
- */
 std::list<track_layer_t *> * LayerAggregate::create_tracks_and_layers_list()
 {
-	// Get all TRW layers
 	std::list<Layer *> * layers = new std::list<Layer *>;
 	layers = this->get_all_layers_of_type(layers, LayerType::TRW, true);
 
-	// For each TRW layers keep adding the tracks and routes to build a list of all of them
+	/* For each TRW layers keep adding the tracks and routes to build a list of all of them. */
 	std::list<track_layer_t *> * tracks_and_layers = new std::list<track_layer_t *>;
 
 	std::list<Track *> * tracks = new std::list<Track *>;
@@ -586,17 +585,22 @@ std::list<track_layer_t *> * LayerAggregate::create_tracks_and_layers_list()
 	return tracks_and_layers;
 }
 
-static void aggregate_layer_track_list_dialog(menu_array_values values)
+
+
+
+static void aggregate_layer_track_list_dialog(menu_array_values * values)
 {
-	LayerAggregate * aggregate = (LayerAggregate *) values[MA_VAL];
+	LayerAggregate * aggregate = values->aggregate;
+
 	char *title = g_strdup_printf(_("%s: Track and Route List"), aggregate->name);
 	vik_trw_layer_track_list_show_dialog(title, aggregate, SublayerType::NONE, true);
 	free(title);
 }
 
+
+
+
 /**
- * aggregate_layer_analyse_close:
- *
  * Stuff to do on dialog closure
  */
 static void aggregate_layer_analyse_close(GtkWidget *dialog, int resp, Layer * layer)
@@ -606,11 +610,14 @@ static void aggregate_layer_analyse_close(GtkWidget *dialog, int resp, Layer * l
 	aggregate->tracks_analysis_dialog = NULL;
 }
 
-static void aggregate_layer_analyse(menu_array_values values)
-{
-	LayerAggregate * aggregate = (LayerAggregate *) values[MA_VAL];
 
-	// There can only be one!
+
+
+static void aggregate_layer_analyse(menu_array_values * values)
+{
+	LayerAggregate * aggregate = values->aggregate;
+
+	/* There can only be one! */
 	if (aggregate->tracks_analysis_dialog) {
 		return;
 	}
@@ -622,12 +629,13 @@ static void aggregate_layer_analyse(menu_array_values values)
 								       aggregate_layer_analyse_close);
 }
 
+
+
+
 void LayerAggregate::add_menu_items(GtkMenu * menu, void * panel)
 {
-	// Data to pass on in menu functions
-	static menu_array_values values;
-	values[MA_VAL] = this;
-	values[MA_VLP] = panel;
+	/* Data to pass on in menu functions. */
+	static menu_array_values values { .aggregate = this, .panel = (LayersPanel *) panel };
 
 	GtkWidget *item = gtk_menu_item_new();
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
@@ -641,19 +649,19 @@ void LayerAggregate::add_menu_items(GtkMenu * menu, void * panel)
 
 	item = gtk_image_menu_item_new_with_mnemonic(_("_Show All"));
 	gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_APPLY, GTK_ICON_SIZE_MENU));
-	g_signal_connect_swapped (G_OBJECT(item), "activate", G_CALLBACK(aggregate_layer_child_visible_on), values);
+	g_signal_connect_swapped (G_OBJECT(item), "activate", G_CALLBACK(aggregate_layer_child_visible_on), &values);
 	gtk_menu_shell_append (GTK_MENU_SHELL (vis_submenu), item);
 	gtk_widget_show (item);
 
 	item = gtk_image_menu_item_new_with_mnemonic (_("_Hide All"));
 	gtk_image_menu_item_set_image ((GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_CLEAR, GTK_ICON_SIZE_MENU));
-	g_signal_connect_swapped (G_OBJECT(item), "activate", G_CALLBACK(aggregate_layer_child_visible_off), values);
+	g_signal_connect_swapped (G_OBJECT(item), "activate", G_CALLBACK(aggregate_layer_child_visible_off), &values);
 	gtk_menu_shell_append (GTK_MENU_SHELL (vis_submenu), item);
 	gtk_widget_show (item);
 
 	item = gtk_image_menu_item_new_with_mnemonic (_("_Toggle"));
 	gtk_image_menu_item_set_image ((GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_REFRESH, GTK_ICON_SIZE_MENU));
-	g_signal_connect_swapped (G_OBJECT(item), "activate", G_CALLBACK(aggregate_layer_child_visible_toggle), values);
+	g_signal_connect_swapped (G_OBJECT(item), "activate", G_CALLBACK(aggregate_layer_child_visible_toggle), &values);
 	gtk_menu_shell_append (GTK_MENU_SHELL (vis_submenu), item);
 	gtk_widget_show (item);
 
@@ -666,42 +674,42 @@ void LayerAggregate::add_menu_items(GtkMenu * menu, void * panel)
 
 	item = gtk_image_menu_item_new_with_mnemonic (_("Name _Ascending"));
 	gtk_image_menu_item_set_image ((GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_SORT_ASCENDING, GTK_ICON_SIZE_MENU));
-	g_signal_connect_swapped (G_OBJECT(item), "activate", G_CALLBACK(aggregate_layer_sort_a2z), values);
+	g_signal_connect_swapped (G_OBJECT(item), "activate", G_CALLBACK(aggregate_layer_sort_a2z), &values);
 	gtk_menu_shell_append (GTK_MENU_SHELL(submenu_sort), item);
 	gtk_widget_show (item);
 
 	item = gtk_image_menu_item_new_with_mnemonic (_("Name _Descending"));
 	gtk_image_menu_item_set_image ((GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_SORT_DESCENDING, GTK_ICON_SIZE_MENU));
-	g_signal_connect_swapped (G_OBJECT(item), "activate", G_CALLBACK(aggregate_layer_sort_z2a), values);
+	g_signal_connect_swapped (G_OBJECT(item), "activate", G_CALLBACK(aggregate_layer_sort_z2a), &values);
 	gtk_menu_shell_append (GTK_MENU_SHELL(submenu_sort), item);
 	gtk_widget_show (item);
 
 	item = gtk_image_menu_item_new_with_mnemonic (_("Date Ascending"));
 	gtk_image_menu_item_set_image ((GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_SORT_ASCENDING, GTK_ICON_SIZE_MENU));
-	g_signal_connect_swapped (G_OBJECT(item), "activate", G_CALLBACK(aggregate_layer_sort_timestamp_ascend), values);
+	g_signal_connect_swapped (G_OBJECT(item), "activate", G_CALLBACK(aggregate_layer_sort_timestamp_ascend), &values);
 	gtk_menu_shell_append (GTK_MENU_SHELL(submenu_sort), item);
 	gtk_widget_show (item);
 
 	item = gtk_image_menu_item_new_with_mnemonic (_("Date Descending"));
 	gtk_image_menu_item_set_image ((GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_SORT_DESCENDING, GTK_ICON_SIZE_MENU));
-	g_signal_connect_swapped (G_OBJECT(item), "activate", G_CALLBACK(aggregate_layer_sort_timestamp_descend), values);
+	g_signal_connect_swapped (G_OBJECT(item), "activate", G_CALLBACK(aggregate_layer_sort_timestamp_descend), &values);
 	gtk_menu_shell_append (GTK_MENU_SHELL(submenu_sort), item);
 	gtk_widget_show (item);
 
 	item = gtk_menu_item_new_with_mnemonic (_("_Statistics"));
-	g_signal_connect_swapped (G_OBJECT(item), "activate", G_CALLBACK(aggregate_layer_analyse), values);
+	g_signal_connect_swapped (G_OBJECT(item), "activate", G_CALLBACK(aggregate_layer_analyse), &values);
 	gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
 	gtk_widget_show (item);
 
 	item = gtk_image_menu_item_new_with_mnemonic (_("Track _List..."));
 	gtk_image_menu_item_set_image ((GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_INDEX, GTK_ICON_SIZE_MENU));
-	g_signal_connect_swapped (G_OBJECT(item), "activate", G_CALLBACK(aggregate_layer_track_list_dialog), values);
+	g_signal_connect_swapped (G_OBJECT(item), "activate", G_CALLBACK(aggregate_layer_track_list_dialog), &values);
 	gtk_menu_shell_append (GTK_MENU_SHELL(menu), item);
 	gtk_widget_show (item);
 
 	item = gtk_image_menu_item_new_with_mnemonic (_("_Waypoint List..."));
 	gtk_image_menu_item_set_image ((GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_INDEX, GTK_ICON_SIZE_MENU));
-	g_signal_connect_swapped (G_OBJECT(item), "activate", G_CALLBACK(aggregate_layer_waypoint_list_dialog), values);
+	g_signal_connect_swapped (G_OBJECT(item), "activate", G_CALLBACK(aggregate_layer_waypoint_list_dialog), &values);
 	gtk_menu_shell_append (GTK_MENU_SHELL(menu), item);
 	gtk_widget_show (item);
 
@@ -713,11 +721,14 @@ void LayerAggregate::add_menu_items(GtkMenu * menu, void * panel)
 	gtk_menu_item_set_submenu (GTK_MENU_ITEM (item), search_submenu);
 
 	item = gtk_menu_item_new_with_mnemonic (_("By _Date..."));
-	g_signal_connect_swapped (G_OBJECT(item), "activate", G_CALLBACK(aggregate_layer_search_date), values);
+	g_signal_connect_swapped (G_OBJECT(item), "activate", G_CALLBACK(aggregate_layer_search_date), &values);
 	gtk_menu_shell_append (GTK_MENU_SHELL(search_submenu), item);
 	gtk_widget_set_tooltip_text (item, _("Find the first item with a specified date"));
 	gtk_widget_show (item);
 }
+
+
+
 
 static void disconnect_layer_signal(VikLayer *vl, VikLayer *val)
 {
@@ -726,6 +737,9 @@ static void disconnect_layer_signal(VikLayer *vl, VikLayer *val)
 		fprintf(stderr, "CRITICAL: %s: Unexpected number of disconnect handlers: %d\n", __FUNCTION__, number_handlers);
 	}
 }
+
+
+
 
 LayerAggregate::~LayerAggregate()
 {
@@ -740,6 +754,9 @@ LayerAggregate::~LayerAggregate()
 	}
 }
 
+
+
+
 static void delete_layer_iter(VikLayer *vl)
 {
 	Layer * layer = (Layer *) vl->layer;
@@ -747,6 +764,9 @@ static void delete_layer_iter(VikLayer *vl)
 		layer->tree_view->erase(&layer->iter);
 	}
 }
+
+
+
 
 void LayerAggregate::clear()
 {
@@ -757,6 +777,9 @@ void LayerAggregate::clear()
 	}
 	// g_list_free(val->children); // kamilFIXME: clean up the list
 }
+
+
+
 
 /* Delete a layer specified by \p iter. */
 bool LayerAggregate::delete_layer(GtkTreeIter * iter)
@@ -778,44 +801,56 @@ bool LayerAggregate::delete_layer(GtkTreeIter * iter)
 	return was_visible;
 }
 
+
+
+
 #if 0
 /* returns: 0 = success, 1 = none appl. found, 2 = found but rejected */
-unsigned int vik_aggregate_layer_tool(VikLayer *val, VikLayerTypeEnum layer_type, VikToolInterfaceFunc tool_func, GdkEventButton *event, Viewport * viewport)
+unsigned int LayerAggregate::layer_tool(LayerType layer_type, VikToolInterfaceFunc tool_func, GdkEventButton * event, Viewport * viewport)
 {
-	GList *iter = val->children;
-	bool found_rej = false;
-	if (!iter) {
+	if (this->children->empty()) {
 		return false;
 	}
-	while (iter->next) {
-		iter = iter->next;
-	}
 
-	while (iter) {
-		/* if this layer "accepts" the tool call */
-		VikLayer * vl = (VikLayer *) iter->data;
-		if (vl->visible && vl->type == layer_type) {
-			if (tool_func(vl, event, viewport)) {
+	bool found_rej = false;
+
+	auto iter = std::prev(this->children->end());
+	while (1) {
+
+		Layer * layer = *iter;
+
+		/* If this layer "accepts" the tool call. */
+		if (layer->visible && layer->type == layer_type) {
+			if (tool_func(layer, event, viewport)) {
 				return 0;
 			} else {
 				found_rej = true;
 			}
 		}
 
-		/* recursive -- try the same for the child aggregate layer. */
-		else if (vl->visible && vl->type == LayerType::AGGREGATE) {
-			int rv = vik_aggregate_layer_tool((VikLayer *) iter->data, layer_type, tool_func, event, viewport);
+		/* Recursive -- try the same for the child aggregate layer. */
+		else if (layer->visible && layer->type == LayerType::AGGREGATE) {
+			int rv = ((LayerAggregate *) layer)->layer_tool(layer_type, tool_func, event, viewport);
 			if (rv == 0) {
 				return 0;
 			} else if (rv == 2) {
 				found_rej = true;
 			}
 		}
-		iter = iter->prev;
+
+		if (iter == this->children->begin()) {
+			break;
+		} else {
+			iter--;
+		}
 	}
-	return found_rej ? 2 : 1; /* no one wanted to accept the tool call in this layer */
+
+	return found_rej ? 2 : 1; /* No one wanted to accept the tool call in this layer. */
 }
 #endif
+
+
+
 
 Layer * LayerAggregate::get_top_visible_layer_of_type(LayerType layer_type)
 {
@@ -840,6 +875,9 @@ Layer * LayerAggregate::get_top_visible_layer_of_type(LayerType layer_type)
 	return NULL;
 }
 
+
+
+
 std::list<Layer *> * LayerAggregate::get_all_layers_of_type(std::list<Layer *> * layers, LayerType layer_type, bool include_invisible)
 {
 	if (this->children->empty()) {
@@ -847,11 +885,11 @@ std::list<Layer *> * LayerAggregate::get_all_layers_of_type(std::list<Layer *> *
 	}
 
 	auto child = this->children->begin();
-	// Where appropriate *don't* include non-visible layers
+	/* Where appropriate *don't* include non-visible layers. */
 	while (child != this->children->end()) {
 		Layer * layer = *child;
 		if (layer->type == LayerType::AGGREGATE) {
-			// Don't even consider invisible aggregrates, unless told to
+			/* Don't even consider invisible aggregrates, unless told to. */
 			if (layer->visible || include_invisible) {
 				LayerAggregate * aggregate = (LayerAggregate *) layer;
 				layers = aggregate->get_all_layers_of_type(layers, type, include_invisible);
@@ -890,7 +928,6 @@ std::list<Layer *> * LayerAggregate::get_all_layers_of_type(std::list<Layer *> *
 
 
 
-
 void LayerAggregate::realize(TreeView * tree_view_, GtkTreeIter *layer_iter)
 {
 	this->tree_view = tree_view_;
@@ -914,6 +951,9 @@ void LayerAggregate::realize(TreeView * tree_view_, GtkTreeIter *layer_iter)
 	}
 }
 
+
+
+
 std::list<Layer const *> * LayerAggregate::get_children()
 {
 	std::list<Layer const *> * result = new std::list<Layer const *>;
@@ -925,10 +965,16 @@ std::list<Layer const *> * LayerAggregate::get_children()
 	return result;
 }
 
+
+
+
 bool LayerAggregate::is_empty()
 {
 	return this->children->empty();
 }
+
+
+
 
 void LayerAggregate::drag_drop_request(Layer * src, GtkTreeIter *src_item_iter, GtkTreePath *dest_path)
 {
@@ -941,17 +987,20 @@ void LayerAggregate::drag_drop_request(Layer * src, GtkTreeIter *src_item_iter, 
 	target_exists = src->tree_view->get_iter_from_path_str(&dest_iter, dp);
 
 	/* LayerAggregate::delete_layer unrefs, but we don't want that here.
-	 * we're still using the layer. */
+	   We're still using the layer. */
 	g_object_ref(layer->vl);
 	((LayerAggregate *) src)->delete_layer(src_item_iter);
 
 	if (target_exists) {
 		this->insert_layer(layer, &dest_iter);
 	} else {
-		this->insert_layer(layer, NULL); /* append */
+		this->insert_layer(layer, NULL); /* Append. */
 	}
 	free(dp);
 }
+
+
+
 
 /**
  * Generate tooltip text for the layer.
@@ -963,13 +1012,12 @@ char const * LayerAggregate::tooltip()
 
 	size_t size = this->children->size();
 	if (size) {
-		// Could have a more complicated tooltip that numbers each type of layers,
-		//  but for now a simple overall count
+		/* Could have a more complicated tooltip that numbers each
+		   type of layers, but for now a simple overall count. */
 		snprintf(tmp_buf, sizeof(tmp_buf), ngettext("One layer", "%d layers", size), size);
 	}
 	return tmp_buf;
 }
-
 
 
 
@@ -982,7 +1030,6 @@ LayerAggregate::LayerAggregate()
 	this->tracks_analysis_dialog = NULL;
 	strcpy(this->type_string, "AGGREGATE");
 }
-
 
 
 

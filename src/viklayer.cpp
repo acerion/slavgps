@@ -920,3 +920,35 @@ LayerTool::~LayerTool()
 	}
 
 }
+
+
+
+
+bool Layer::compare_timestamp_descending(Layer * first, Layer * second)
+{
+	return first->get_timestamp() > second->get_timestamp();
+}
+
+
+
+
+bool Layer::compare_timestamp_ascending(Layer * first, Layer * second)
+{
+	return !Layer::compare_timestamp_descending(first, second);
+}
+
+
+
+
+bool Layer::compare_name_descending(Layer * first, Layer * second)
+{
+	return 0 > g_strcmp0(first->name, second->name);
+}
+
+
+
+
+bool Layer::compare_name_ascending(Layer * first, Layer * second)
+{
+	return !Layer::compare_name_descending(first, second);
+}
