@@ -83,7 +83,7 @@ namespace SlavGPS {
 		/* This should be somehow private. */
 		void item_toggled(GtkTreeIter * iter);
 		void item_edited(GtkTreeIter * iter, char const * new_text);
-		void popup(GtkTreeIter * iter, int mouse_button);
+		void popup(GtkTreeIter * iter, MouseButton mouse_button);
 		bool button_press(GdkEventButton * event);
 		bool key_press(GdkEventKey * event);
 		void move_item(bool up);

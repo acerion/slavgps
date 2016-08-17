@@ -478,13 +478,15 @@ static bool layers_button_press_cb(LayersPanel * panel, GdkEventButton * event)
 
 bool LayersPanel::button_press(GdkEventButton * event)
 {
-	if (event->button == MouseButton::RIGHT) {
+	/* I don't understand what's going on with mouse buttons in this function. */
+
+	if (event->button == 3) {
 		static GtkTreeIter iter;
 		if (this->tree_view->get_iter_at_pos(&iter, event->x, event->y)) {
-			this->popup(&iter, 3);
+			this->popup(&iter, (MouseButton) event->button);
 			this->tree_view->select(&iter);
 		} else {
-			this->popup(NULL, 3);
+			this->popup(NULL, (MouseButton) event->button);
 		}
 		return true;
 	}
@@ -518,7 +520,7 @@ bool LayersPanel::key_press(GdkEventKey * event)
 
 
 
-void LayersPanel::popup(GtkTreeIter * iter, int mouse_button)
+void LayersPanel::popup(GtkTreeIter * iter, MouseButton mouse_button)
 {
 	GtkMenu * menu = NULL;
 
@@ -584,7 +586,7 @@ void LayersPanel::popup(GtkTreeIter * iter, int mouse_button)
 	} else {
 		menu = GTK_MENU (layers_panel_create_popup(this, false));
 	}
-	gtk_menu_popup(menu, NULL, NULL, NULL, NULL, mouse_button, gtk_get_current_event_time());
+	gtk_menu_popup(menu, NULL, NULL, NULL, NULL, (unsigned int) mouse_button, gtk_get_current_event_time());
 }
 
 
@@ -594,7 +596,7 @@ void LayersPanel::popup(GtkTreeIter * iter, int mouse_button)
 static void menu_popup_cb(LayersPanel * panel)
 {
 	GtkTreeIter iter;
-	panel->popup(panel->tree_view->get_selected_iter(&iter) ? &iter : NULL, 0);
+	panel->popup(panel->tree_view->get_selected_iter(&iter) ? &iter : NULL, MouseButton::OTHER);
 }
 
 
@@ -603,7 +605,7 @@ static void menu_popup_cb(LayersPanel * panel)
 
 static void layers_popup_cb(LayersPanel * panel)
 {
-	panel->popup(NULL, 0);
+	panel->popup(NULL, MouseButton::OTHER);
 }
 
 
