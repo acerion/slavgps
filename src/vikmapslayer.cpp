@@ -494,7 +494,7 @@ void LayerMaps::set_cache_dir(char const * dir)
 		}
 	}
 
-	char * canonical_dir = vu_get_canonical_filename(this->vl, mydir);
+	char * canonical_dir = vu_get_canonical_filename(this, mydir);
 
 	// Ensure cache_dir always ends with a separator
 	unsigned int len = strlen(canonical_dir);

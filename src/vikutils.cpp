@@ -640,9 +640,8 @@ void vu_set_auto_features_on_first_run(void)
  * Any time a path may contain a relative component, so need to prepend that directory it is relative to
  * Then resolve the full path to get the normal canonical filename
  */
-char * vu_get_canonical_filename(VikLayer * vl, const char * filename)
+char * vu_get_canonical_filename(Layer * layer, const char * filename)
 {
-	Layer * layer = (Layer *) vl->layer;
 	char * canonical = NULL;
 	if (!filename) {
 		return NULL;

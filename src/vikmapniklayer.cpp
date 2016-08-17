@@ -310,7 +310,7 @@ void LayerMapnik::set_file_xml(char const * name)
 	}
 	// Mapnik doesn't seem to cope with relative filenames
 	if (strcmp(name, "")) {
-		this->filename_xml = vu_get_canonical_filename(this->vl, name);
+		this->filename_xml = vu_get_canonical_filename(this, name);
 	} else {
 		this->filename_xml = g_strdup(name);
 	}

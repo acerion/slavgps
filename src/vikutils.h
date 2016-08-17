@@ -47,7 +47,7 @@ void vu_check_latest_version(GtkWindow * window);
 
 void vu_set_auto_features_on_first_run(void);
 
-char * vu_get_canonical_filename(VikLayer * vl, const char * filename);
+char * vu_get_canonical_filename(SlavGPS::Layer * layer, const char * filename);
 
 char * vu_get_time_string(time_t * time, const char * format, const VikCoord * vc, const char * gtz);
 

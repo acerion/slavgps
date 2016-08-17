@@ -476,7 +476,7 @@ void LayerGeoref::set_image(char const * image)
 	}
 
 	if (strcmp(image, "") != 0) {
-		this->image = vu_get_canonical_filename(this->vl, image);
+		this->image = vu_get_canonical_filename(this, image);
 	} else {
 		this->image = g_strdup(image);
 	}
