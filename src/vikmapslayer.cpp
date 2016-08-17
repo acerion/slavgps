@@ -83,29 +83,6 @@ using namespace SlavGPS;
 
 
 
-
-#define VIK_MAPS_LAYER_TYPE            (vik_maps_layer_get_type ())
-#define VIK_MAPS_LAYER(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_MAPS_LAYER_TYPE, VikMapsLayer))
-#define VIK_MAPS_LAYER_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), VIK_MAPS_LAYER_TYPE, VikMapsLayerClass))
-#define IS_VIK_MAPS_LAYER(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), VIK_MAPS_LAYER_TYPE))
-#define IS_VIK_MAPS_LAYER_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), VIK_MAPS_LAYER_TYPE))
-
-typedef struct _VikMapsLayerClass VikMapsLayerClass;
-struct _VikMapsLayerClass
-{
-	VikLayerClass object_class;
-};
-
-GType vik_maps_layer_get_type();
-
-typedef struct {
-	VikLayer vl;
-} VikMapsLayer;
-
-
-
-
-
 #define VIK_SETTINGS_MAP_MAX_TILES "maps_max_tiles"
 static int MAX_TILES = 1000;
 
@@ -543,31 +520,8 @@ void LayerMaps::set_file(char const * name)
 	this->filename = g_strdup(name);
 }
 
-/****************************************/
-/******** GOBJECT STUFF *****************/
-/****************************************/
 
-GType vik_maps_layer_get_type()
-{
-	static GType vml_type = 0;
 
-	if (!vml_type) {
-		static const GTypeInfo vml_info = {
-			sizeof (VikMapsLayerClass),
-			NULL, /* base_init */
-			NULL, /* base_finalize */
-			NULL, /* class init */
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (VikMapsLayer),
-			0,
-			NULL /* instance init */
-		};
-		vml_type = g_type_register_static(VIK_LAYER_TYPE, "VikMapsLayer", &vml_info, (GTypeFlags) 0);
-	}
-
-	return vml_type;
-}
 
 /****************************************/
 /************** PARAMETERS **************/

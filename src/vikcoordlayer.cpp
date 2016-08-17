@@ -87,29 +87,6 @@ enum {
 
 
 
-
-#define VIK_COORD_LAYER_TYPE            (vik_coord_layer_get_type ())
-#define VIK_COORD_LAYER(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_COORD_LAYER_TYPE, VikCoordLayer))
-#define VIK_COORD_LAYER_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), VIK_COORD_LAYER_TYPE, VikCoordLayerClass))
-#define IS_VIK_COORD_LAYER(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), VIK_COORD_LAYER_TYPE))
-#define IS_VIK_COORD_LAYER_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), VIK_COORD_LAYER_TYPE))
-
-typedef struct _VikCoordLayerClass VikCoordLayerClass;
-struct _VikCoordLayerClass
-{
-	VikLayerClass object_class;
-};
-
-GType vik_coord_layer_get_type();
-
-typedef struct  {
-	VikLayer vl;
-} VikCoordLayer;
-
-
-
-
-
 VikLayerInterface vik_coord_layer_interface = {
 	"Coord",
 	N_("Coordinate"),
@@ -133,33 +110,6 @@ VikLayerInterface vik_coord_layer_interface = {
 	/* (VikLayerFuncGetParam) */      layer_get_param,
 	/* (VikLayerFuncChangeParam) */   NULL,
 };
-
-
-
-
-
-GType vik_coord_layer_get_type()
-{
-	static GType vcl_type = 0;
-
-	if (!vcl_type) {
-		static const GTypeInfo vcl_info = {
-			sizeof (VikCoordLayerClass),
-			NULL, /* base_init */
-			NULL, /* base_finalize */
-			NULL, /* class init */
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (VikCoordLayer),
-			0,
-			NULL /* instance init */
-		};
-		vcl_type = g_type_register_static(VIK_LAYER_TYPE, "VikCoordLayer", &vcl_info, (GTypeFlags) 0);
-	}
-
-	return vcl_type;
-}
-
 
 
 

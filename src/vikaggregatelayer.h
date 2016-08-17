@@ -19,51 +19,16 @@
  *
  */
 
-#ifndef _VIKING_AGGREGATELAYER_H
-#define _VIKING_AGGREGATELAYER_H
+#ifndef _SG_LAYER_AGGREGATE_H_
+#define _SG_LAYER_AGGREGATE_H_
 
-#include <glib.h>
-#include <stdint.h>
 
+
+
+#include <cstdint>
 #include <list>
 
-
 #include "viklayer.h"
-#include "viklayerspanel.h"
-
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
-#define VIK_AGGREGATE_LAYER_TYPE            (vik_aggregate_layer_get_type ())
-#define VIK_AGGREGATE_LAYER(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_AGGREGATE_LAYER_TYPE, VikAggregateLayer))
-#define VIK_AGGREGATE_LAYER_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), VIK_AGGREGATE_LAYER_TYPE, VikAggregateLayerClass))
-#define IS_VIK_AGGREGATE_LAYER(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), VIK_AGGREGATE_LAYER_TYPE))
-#define IS_VIK_AGGREGATE_LAYER_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), VIK_AGGREGATE_LAYER_TYPE))
-
-typedef struct _VikAggregateLayerClass VikAggregateLayerClass;
-struct _VikAggregateLayerClass
-{
-	VikLayerClass vik_layer_class;
-};
-
-GType vik_aggregate_layer_get_type();
-
-typedef struct {
-	VikLayer vl;
-} VikAggregateLayer;
-
-
-
-
-
-#ifdef __cplusplus
-}
-#endif
-
-
 
 
 
@@ -130,18 +95,16 @@ namespace SlavGPS {
 
 		std::list<Layer *> * children;
 
-		// One per layer
+		/* One per layer. */
 		GtkWidget * tracks_analysis_dialog;
 	};
 
 
 
 
-
-}
-
+} /* namespace SlavGPS */
 
 
 
 
-#endif
+#endif /* #ifndef _SG_LAYER_AGGREGATE_H_ */

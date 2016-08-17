@@ -64,29 +64,6 @@ VikLayerInterface vik_aggregate_layer_interface = {
 	/* (VikLayerFuncChangeParam) */  NULL,
 };
 
-GType vik_aggregate_layer_get_type()
-{
-	static GType val_type = 0;
-
-	if (!val_type) {
-		static const GTypeInfo val_info = {
-			sizeof (VikAggregateLayerClass),
-			NULL, /* base_init */
-			NULL, /* base_finalize */
-			NULL, /* class init */
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (VikAggregateLayer),
-			0,
-			NULL /* instance init */
-		};
-		val_type = g_type_register_static (VIK_LAYER_TYPE, "VikAggregateLayer", &val_info, (GTypeFlags) 0);
-	}
-
-	return val_type;
-}
-
-
 
 
 
