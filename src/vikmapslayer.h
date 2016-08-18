@@ -25,7 +25,6 @@
 
 
 
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -49,9 +48,7 @@
 
 
 
-
 namespace SlavGPS {
-
 
 
 
@@ -61,7 +58,6 @@ namespace SlavGPS {
 		OSM,        /* CacheDir/<OptionalMapName>/OSMZoomLevel/X/Y.ext (Default ext=png). */
 		NUM         /* Last enum. */
 	};
-
 
 
 
@@ -96,37 +92,39 @@ namespace SlavGPS {
 		void download_section(VikCoord * ul, VikCoord * br, double zoom);
 		void download_section_sub(VikCoord *ul, VikCoord *br, double zoom, int redownload_mode);
 
-		int map_index;
-		char * cache_dir;
-		MapsCacheLayout cache_layout;
-		uint8_t alpha;
 
 
-		unsigned int mapzoom_id;
-		double xmapzoom, ymapzoom;
 
-		bool autodownload;
-		bool adl_only_missing;
+		int map_index = 0;
+		char * cache_dir = NULL;
+		MapsCacheLayout cache_layout = MapsCacheLayout::VIKING;
+		uint8_t alpha = 0;
 
+		unsigned int mapzoom_id = 0;
+		double xmapzoom = 0.0;
+		double ymapzoom = 0.0;
 
-		VikCoord * last_center;
-		double last_xmpp;
-		double last_ympp;
+		bool autodownload = false;
+		bool adl_only_missing = false;
 
+		VikCoord * last_center = NULL;
+		double last_xmpp = 0.0;
+		double last_ympp = 0.0;
 
-		int dl_tool_x;
-		int dl_tool_y;
+		/* Should this be 0 or -1? */
+		int dl_tool_x = -1;
+		int dl_tool_y = -1;
 
-		GtkMenu * dl_right_click_menu;
+		GtkMenu * dl_right_click_menu = NULL;
 		VikCoord redownload_ul, redownload_br; /* Right click menu only. */
-		Viewport * redownload_viewport;
-		char *filename;
+		Viewport * redownload_viewport = NULL;
+		char * filename = NULL;
+
 #ifdef HAVE_SQLITE3_H
-		sqlite3 * mbtiles;
+		sqlite3 * mbtiles = NULL;
 #endif
 
 	};
-
 
 
 
@@ -136,11 +134,12 @@ namespace SlavGPS {
 
 
 
-
-// OSM definition is a TMS derivative, (Global Mercator profile with Flipped Y)
-//  http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
-//  http://wiki.openstreetmap.org/wiki/TMS
-//  http://wiki.osgeo.org/wiki/Tile_Map_Service_Specification
+/*
+  OSM definition is a TMS derivative, (Global Mercator profile with Flipped Y)
+  http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
+  http://wiki.openstreetmap.org/wiki/TMS
+  http://wiki.osgeo.org/wiki/Tile_Map_Service_Specification
+*/
 
 void maps_layer_init();
 void maps_layer_set_autodownload_default(bool autodownload);
@@ -151,7 +150,6 @@ void maps_layer_register_map_source(SlavGPS::MapSource * map);
 
 char * maps_layer_default_dir();
 std::string& maps_layer_default_dir_2();
-
 
 
 

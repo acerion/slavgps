@@ -34,9 +34,8 @@
 #include <glib/gi18n.h>
 
 #include <deque>
-
-#include <stdlib.h>
-#include <assert.h>
+#include <cstdlib>
+#include <cassert>
 
 #ifdef HAVE_STRING_H
 #include <string.h>
@@ -77,7 +76,6 @@
 
 
 
-
 using namespace SlavGPS;
 
 
@@ -88,11 +86,11 @@ static int MAX_TILES = 1000;
 
 #define VIK_SETTINGS_MAP_MIN_SHRINKFACTOR "maps_min_shrinkfactor"
 #define VIK_SETTINGS_MAP_MAX_SHRINKFACTOR "maps_max_shrinkfactor"
-static double MAX_SHRINKFACTOR = 8.0000001; /* zoom 1 viewing 8-tiles */
-static double MIN_SHRINKFACTOR = 0.0312499; /* zoom 32 viewing 1-tiles */
+static double MAX_SHRINKFACTOR = 8.0000001; /* zoom 1 viewing 8-tiles. */
+static double MIN_SHRINKFACTOR = 0.0312499; /* zoom 32 viewing 1-tiles. */
 
 #define VIK_SETTINGS_MAP_REAL_MIN_SHRINKFACTOR "maps_real_min_shrinkfactor"
-static double REAL_MIN_SHRINKFACTOR = 0.0039062499; /* if shrinkfactor is between MAX and REAL_MAX, will only check for existence */
+static double REAL_MIN_SHRINKFACTOR = 0.0039062499; /* If shrinkfactor is between MAX and REAL_MAX, will only check for existence. */
 
 #define VIK_SETTINGS_MAP_SCALE_INC_UP "maps_scale_inc_up"
 static unsigned int SCALE_INC_UP = 2;
@@ -106,10 +104,10 @@ static bool SCALE_SMALLER_ZOOM_FIRST = true;
 static std::deque<MapSource *> map_sources;
 
 
-/* List of label for each map type */
+/* List of label for each map type. */
 static char ** map_type_labels = NULL;
 
-/* Corresponding IDs. (Cf. field map_type in MapSource class) */
+/* Corresponding IDs. (Cf. field map_type in MapSource class). */
 static MapTypeID * map_type_ids = NULL;
 
 /******** MAPZOOMS *********/
@@ -134,13 +132,25 @@ static bool maps_layer_download_release(Layer * layer, GdkEventButton *event, La
 static bool maps_layer_download_click(Layer * layer, GdkEventButton *event, LayerTool * tool);
 
 
+
+
 static VikLayerParamScale params_scales[] = {
-	/* min, max, step, digits (decimal places) */
+	/* min, max, step, digits (decimal places). */
 	{ 0, 255, 3, 0 }, /* alpha */
 };
 
-static VikLayerParamData id_default(void) { return VIK_LPD_UINT(MAP_ID_MAPQUEST_OSM); }
-static VikLayerParamData directory_default (void)
+
+
+
+static VikLayerParamData id_default(void)
+{
+	return VIK_LPD_UINT(MAP_ID_MAPQUEST_OSM);
+}
+
+
+
+
+static VikLayerParamData directory_default(void)
 {
 	VikLayerParamData data;
 	VikLayerParamData *pref = a_preferences_get(VIKING_PREFERENCES_NAMESPACE "maplayer_default_dir");
@@ -151,18 +161,49 @@ static VikLayerParamData directory_default (void)
 	}
 	return data;
 }
+
+
+
+
 static VikLayerParamData file_default(void)
 {
 	VikLayerParamData data;
 	data.s = "";
 	return data;
 }
-static VikLayerParamData alpha_default(void) { return VIK_LPD_UINT (255); }
-static VikLayerParamData mapzoom_default(void) { return VIK_LPD_UINT (0); }
 
-static char *cache_types[] = { (char *) "Viking", (char *) N_("OSM"), NULL };
+
+
+
+static VikLayerParamData alpha_default(void)
+{
+	return VIK_LPD_UINT (255);
+}
+
+
+
+
+static VikLayerParamData mapzoom_default(void)
+{
+	return VIK_LPD_UINT (0);
+}
+
+
+
+
+static char * cache_types[] = { (char *) "Viking", (char *) N_("OSM"), NULL };
 static MapsCacheLayout cache_layout_default_value = MapsCacheLayout::VIKING;
-static VikLayerParamData cache_layout_default(void) { return VIK_LPD_UINT ((int32_t) cache_layout_default_value); }
+
+
+
+
+static VikLayerParamData cache_layout_default(void)
+{
+	return VIK_LPD_UINT ((int32_t) cache_layout_default_value);
+}
+
+
+
 
 VikLayerParam maps_layer_params[] = {
 	// NB mode => map source type id - But can't break file format just to rename something better
@@ -176,6 +217,9 @@ VikLayerParam maps_layer_params[] = {
 	{ LayerType::MAPS, "mapzoom",        VIK_LAYER_PARAM_UINT,    VIK_LAYER_GROUP_NONE, N_("Zoom Level:"),                          VIK_LAYER_WIDGET_COMBOBOX,    params_mapzooms,                    NULL, N_("Determines the method of displaying map tiles for the current zoom level. 'Viking Zoom Level' uses the best matching level, otherwise setting a fixed value will always use map tiles of the specified value regardless of the actual zoom level."),	  mapzoom_default, NULL, NULL },
 };
 
+
+
+
 enum {
 	PARAM_MAPTYPE=0,
 	PARAM_CACHE_DIR,
@@ -188,9 +232,12 @@ enum {
 	NUM_PARAMS
 };
 
+
+
+
 void maps_layer_set_autodownload_default(bool autodownload)
 {
-	// Set appropriate function
+	/* Set appropriate function. */
 	if(autodownload) {
 		maps_layer_params[PARAM_AUTODOWNLOAD].default_value = vik_lpd_true_default;
 	} else {
@@ -198,11 +245,17 @@ void maps_layer_set_autodownload_default(bool autodownload)
 	}
 }
 
+
+
+
 void maps_layer_set_cache_default(MapsCacheLayout layout)
 {
-	// Override default value returned by the default param function
+	/* Override default value returned by the default param function. */
 	cache_layout_default_value = layout;
 }
+
+
+
 
 static LayerTool * maps_tools[] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL } ; /* (VikToolConstructorFunc) */
 
@@ -231,15 +284,23 @@ VikLayerInterface vik_maps_layer_interface = {
 };
 
 
-enum { REDOWNLOAD_NONE = 0,    /* download only missing maps */
-       REDOWNLOAD_BAD,         /* download missing and bad maps */
-       REDOWNLOAD_NEW,         /* download missing maps that are newer on server only */
-       REDOWNLOAD_ALL,         /* download all maps */
-       DOWNLOAD_OR_REFRESH };  /* download missing maps and refresh cache */
+
+
+enum { REDOWNLOAD_NONE = 0,    /* Download only missing maps. */
+       REDOWNLOAD_BAD,         /* Download missing and bad maps. */
+       REDOWNLOAD_NEW,         /* Download missing maps that are newer on server only. */
+       REDOWNLOAD_ALL,         /* Download all maps. */
+       DOWNLOAD_OR_REFRESH };  /* Download missing maps and refresh cache. */
+
+
+
 
 static VikLayerParam prefs[] = {
 	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_NAMESPACE "maplayer_default_dir", VIK_LAYER_PARAM_STRING, VIK_LAYER_GROUP_NONE, N_("Default map layer directory:"), VIK_LAYER_WIDGET_FOLDERENTRY, NULL, NULL, N_("Choose a directory to store cached Map tiles for this layer"), NULL, NULL, NULL },
 };
+
+
+
 
 void maps_layer_init()
 {
@@ -281,6 +342,9 @@ void maps_layer_init()
 
 }
 
+
+
+
 /****************************************/
 /******** MAPS LAYER TYPES **************/
 /****************************************/
@@ -291,24 +355,23 @@ void _add_map_source(MapSource * map, const char * label, MapTypeID map_type)
 	if (map_type_labels) {
 		len = g_strv_length(map_type_labels);
 	}
-	/* Add the label */
+	/* Add the label. */
 	map_type_labels = (char **) g_realloc(map_type_labels, (len + 2) * sizeof (char *));
 	map_type_labels[len] = g_strdup(label);
 	map_type_labels[len+1] = NULL;
 
-	/* Add the id */
+	/* Add the id. */
 	map_type_ids = (MapTypeID *) g_realloc(map_type_ids, (len + 2) * sizeof (MapTypeID));
 	map_type_ids[len] = map_type;
 	map_type_ids[len+1] = (MapTypeID) 0; /* Guard. */
 
-	/* We have to clone */
+	/* We have to clone. */
 	MapSource clone = *map; /* FIXME: to clone or not to clone? */
 	/* Register the clone in the list */
 	map_sources.push_back(map);
 
-	/* Hack
-	   We have to ensure the mode LayerParam references the up-to-date
-	   GLists.
+	/* Hack.
+	   We have to ensure the mode LayerParam references the up-to-date GLists.
 	*/
 	/*
 	  memcpy(&maps_layer_params[0].widget_data, &map_type_labels, sizeof(void *));
@@ -317,6 +380,9 @@ void _add_map_source(MapSource * map, const char * label, MapTypeID map_type)
 	maps_layer_params[0].widget_data = map_type_labels;
 	maps_layer_params[0].extra_widget_data = map_type_ids;
 }
+
+
+
 
 void _update_map_source(MapSource *map, const char *label, int index)
 {
@@ -331,13 +397,15 @@ void _update_map_source(MapSource *map, const char *label, int index)
 	}
 
 
-	/* Change previous data */
+	/* Change previous data. */
 	free(map_type_labels[index]);
 	map_type_labels[index] = g_strdup(label);
 }
 
+
+
+
 /**
- * maps_layer_register_map_source:
  * @map: the new MapSource
  *
  * Register a new MapSource.
@@ -359,23 +427,23 @@ void maps_layer_register_map_source(MapSource * map)
 	}
 }
 
+
+
+
 #define MAPS_LAYER_NTH_LABEL(n) (map_type_labels[n])
 #define MAPS_LAYER_NTH_ID(n) (map_type_ids[n])
 
 /**
- * vik_maps_layer_get_map_type:
- *
- * Returns the actual map id (rather than the internal type index value)
+ * Returns the actual map id (rather than the internal type index value).
  */
 MapTypeID LayerMaps::get_map_type()
 {
 	return MAPS_LAYER_NTH_ID(this->map_index);
 }
 
-/**
- * vik_maps_layer_set_map_type:
- *
- */
+
+
+
 void LayerMaps::set_map_type(MapTypeID map_type)
 {
 	int map_index = map_type_to_map_index(map_type);
@@ -386,10 +454,9 @@ void LayerMaps::set_map_type(MapTypeID map_type)
 	}
 }
 
-/**
- * maps_layer_get_default_map_type:
- *
- */
+
+
+
 MapTypeID maps_layer_get_default_map_type()
 {
 	VikLayerInterface *vli = vik_layer_get_interface(LayerType::MAPS);
@@ -400,10 +467,16 @@ MapTypeID maps_layer_get_default_map_type()
 	return (MapTypeID) vlpd.u;
 }
 
+
+
+
 char * LayerMaps::get_map_label()
 {
 	return strdup(MAPS_LAYER_NTH_LABEL(this->map_index));
 }
+
+
+
 
 /****************************************/
 /******** CACHE DIR STUFF ***************/
@@ -428,11 +501,14 @@ char * LayerMaps::get_map_label()
 #define LOCAL_MAPS_DIR ".viking-maps"
 #endif
 
+
+
+
 char * maps_layer_default_dir()
 {
 	static char * defaultdir = NULL;
 	if (!defaultdir) {
-		/* Thanks to Mike Davison for the $VIKING_MAPS usage */
+		/* Thanks to Mike Davison for the $VIKING_MAPS usage. */
 		const char * mapdir = g_getenv("VIKING_MAPS");
 		if (mapdir) {
 			defaultdir = g_strdup(mapdir);
@@ -451,7 +527,7 @@ char * maps_layer_default_dir()
 			}
 		}
 		if (defaultdir && (defaultdir[strlen(defaultdir)-1] != G_DIR_SEPARATOR)) {
-			/* Add the separator at the end */
+			/* Add the separator at the end. */
 			char *tmp = defaultdir;
 			defaultdir = g_strconcat(tmp, G_DIR_SEPARATOR_S, NULL);
 			free(tmp);
@@ -460,6 +536,9 @@ char * maps_layer_default_dir()
 	}
 	return defaultdir;
 }
+
+
+
 
 std::string& maps_layer_default_dir_2()
 {
@@ -473,6 +552,9 @@ std::string& maps_layer_default_dir_2()
 	return default_dir;
 }
 
+
+
+
 void LayerMaps::mkdir_if_default_dir()
 {
 	if (this->cache_dir && strcmp(this->cache_dir, MAPS_CACHE_DIR) == 0 && g_file_test(this->cache_dir, G_FILE_TEST_EXISTS) == false) {
@@ -481,6 +563,9 @@ void LayerMaps::mkdir_if_default_dir()
 		}
 	}
 }
+
+
+
 
 void LayerMaps::set_cache_dir(char const * dir)
 {
@@ -496,9 +581,9 @@ void LayerMaps::set_cache_dir(char const * dir)
 
 	char * canonical_dir = vu_get_canonical_filename(this, mydir);
 
-	// Ensure cache_dir always ends with a separator
+	/* Ensure cache_dir always ends with a separator. */
 	unsigned int len = strlen(canonical_dir);
-	// Unless the dir is not valid
+	/* Unless the dir is not valid. */
 	if (len > 0) {
 		if (canonical_dir[len-1] != G_DIR_SEPARATOR) {
 			this->cache_dir = g_strconcat(canonical_dir, G_DIR_SEPARATOR_S, NULL);
@@ -510,6 +595,9 @@ void LayerMaps::set_cache_dir(char const * dir)
 		this->mkdir_if_default_dir();
 	}
 }
+
+
+
 
 void LayerMaps::set_file(char const * name)
 {
@@ -533,6 +621,9 @@ static MapTypeID map_index_to_map_type(int index)
 	return map_sources[index]->map_type;
 }
 
+
+
+
 static int map_type_to_map_index(MapTypeID map_type)
 {
 	for (int i = 0; i < map_sources.size(); i++) {
@@ -543,10 +634,13 @@ static int map_type_to_map_index(MapTypeID map_type)
 	return map_sources.size(); /* no such thing */
 }
 
+
+
+
 #define VIK_SETTINGS_MAP_LICENSE_SHOWN "map_license_shown"
 
 /**
- * Convenience function to display the license
+ * Convenience function to display the license.
  */
 static void maps_show_license(GtkWindow *parent, MapSource *map)
 {
@@ -555,6 +649,9 @@ static void maps_show_license(GtkWindow *parent, MapSource *map)
 			 map->get_license(),
 			 map->get_license_url());
 }
+
+
+
 
 bool LayerMaps::set_param(uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
 {
@@ -570,32 +667,31 @@ bool LayerMaps::set_param(uint16_t id, VikLayerParamData data, Viewport * viewpo
 	case PARAM_FILE:
 		this->set_file(data.s);
 		break;
-	case PARAM_MAPTYPE:
-		{
-			int map_index = map_type_to_map_index((MapTypeID) data.u);
-			if (map_index == map_sources.size()) {
-				fprintf(stderr, _("WARNING: Unknown map type\n"));
-			} else {
-				this->map_index = map_index;
+	case PARAM_MAPTYPE: {
+		int map_index = map_type_to_map_index((MapTypeID) data.u);
+		if (map_index == map_sources.size()) {
+			fprintf(stderr, _("WARNING: Unknown map type\n"));
+		} else {
+			this->map_index = map_index;
 
-				// When loading from a file don't need the license reminder - ensure it's saved into the 'seen' list
-				if (is_file_operation) {
-					a_settings_set_integer_list_containing(VIK_SETTINGS_MAP_LICENSE_SHOWN, data.u);
-				} else {
-					MapSource *map = map_sources[this->map_index];
-					if (map->get_license() != NULL) {
-						// Check if licence for this map type has been shown before
-						if (! a_settings_get_integer_list_contains(VIK_SETTINGS_MAP_LICENSE_SHOWN, data.u)) {
-							if (viewport) {
-								maps_show_license(VIK_GTK_WINDOW_FROM_WIDGET(viewport->vvp), map);
-							}
-							a_settings_set_integer_list_containing(VIK_SETTINGS_MAP_LICENSE_SHOWN, data.u);
+			/* When loading from a file don't need the license reminder - ensure it's saved into the 'seen' list. */
+			if (is_file_operation) {
+				a_settings_set_integer_list_containing(VIK_SETTINGS_MAP_LICENSE_SHOWN, data.u);
+			} else {
+				MapSource * map = map_sources[this->map_index];
+				if (map->get_license() != NULL) {
+					/* Check if licence for this map type has been shown before. */
+					if (! a_settings_get_integer_list_contains(VIK_SETTINGS_MAP_LICENSE_SHOWN, data.u)) {
+						if (viewport) {
+							maps_show_license(VIK_GTK_WINDOW_FROM_WIDGET(viewport->vvp), map);
 						}
+						a_settings_set_integer_list_containing(VIK_SETTINGS_MAP_LICENSE_SHOWN, data.u);
 					}
 				}
 			}
-			break;
-		}
+			}
+		break;
+	}
 	case PARAM_ALPHA:
 		if (data.u <= 255) {
 			this->alpha = data.u;
@@ -610,8 +706,8 @@ bool LayerMaps::set_param(uint16_t id, VikLayerParamData data, Viewport * viewpo
 	case PARAM_MAPZOOM:
 		if (data.u < NUM_MAPZOOMS) {
 			this->mapzoom_id = data.u;
-			this->xmapzoom = __mapzooms_x [data.u];
-			this->ymapzoom = __mapzooms_y [data.u];
+			this->xmapzoom = __mapzooms_x[data.u];
+			this->ymapzoom = __mapzooms_y[data.u];
 		} else {
 			fprintf(stderr, _("WARNING: Unknown Map Zoom\n"));
 		}
@@ -622,35 +718,37 @@ bool LayerMaps::set_param(uint16_t id, VikLayerParamData data, Viewport * viewpo
 	return true;
 }
 
+
+
+
 VikLayerParamData LayerMaps::get_param(uint16_t id, bool is_file_operation) const
 {
 	VikLayerParamData rv;
 	switch (id) {
-	case PARAM_CACHE_DIR:
-		{
-			bool set = false;
-			/* Only save a blank when the map cache location equals the default
-			   On reading in, when it is blank then the default is reconstructed
-			   Since the default changes dependent on the user and OS, it means the resultant file is more portable */
-			if (is_file_operation && this->cache_dir && strcmp(this->cache_dir, MAPS_CACHE_DIR) == 0) {
-				rv.s = "";
-				set = true;
-			} else if (is_file_operation && this->cache_dir) {
-				if (a_vik_get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE) {
-					char *cwd = g_get_current_dir();
-					if (cwd) {
-						rv.s = file_GetRelativeFilename(cwd, this->cache_dir);
-						if (!rv.s) rv.s = "";
-						set = true;
-					}
+	case PARAM_CACHE_DIR: {
+		bool set = false;
+		/* Only save a blank when the map cache location equals the default.
+		   On reading in, when it is blank then the default is reconstructed.
+		   Since the default changes dependent on the user and OS, it means the resultant file is more portable. */
+		if (is_file_operation && this->cache_dir && strcmp(this->cache_dir, MAPS_CACHE_DIR) == 0) {
+			rv.s = "";
+			set = true;
+		} else if (is_file_operation && this->cache_dir) {
+			if (a_vik_get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE) {
+				char *cwd = g_get_current_dir();
+				if (cwd) {
+					rv.s = file_GetRelativeFilename(cwd, this->cache_dir);
+					if (!rv.s) rv.s = "";
+					set = true;
 				}
 			}
-
-			if (!set) {
-				rv.s = this->cache_dir ? this->cache_dir : "";
-			}
-			break;
 		}
+
+		if (!set) {
+			rv.s = this->cache_dir ? this->cache_dir : "";
+		}
+		break;
+	}
 	case PARAM_CACHE_LAYOUT:
 		rv.u = (int32_t) this->cache_layout;
 		break;
@@ -677,118 +775,109 @@ VikLayerParamData LayerMaps::get_param(uint16_t id, bool is_file_operation) cons
 	return rv;
 }
 
+
+
+
 static void maps_layer_change_param(GtkWidget *widget, ui_change_values * values)
 {
 	switch (values->param_id) {
-		// Alter sensitivity of download option widgets according to the map_index setting.
-	case PARAM_MAPTYPE:
-		{
-			// Get new value
-			VikLayerParamData vlpd = a_uibuilder_widget_get_value(widget, values->param);
-			// Is it *not* the OSM On Disk Tile Layout or the MBTiles type or the OSM Metatiles type
-			bool sensitive = (MAP_ID_OSM_ON_DISK != vlpd.u &&
-					  MAP_ID_MBTILES != vlpd.u &&
-					  MAP_ID_OSM_METATILES != vlpd.u);
-			GtkWidget **ww1 = values->widgets;
-			GtkWidget **ww2 = values->labels;
-			GtkWidget *w1 = ww1[PARAM_ONLYMISSING];
-			GtkWidget *w2 = ww2[PARAM_ONLYMISSING];
-			GtkWidget *w3 = ww1[PARAM_AUTODOWNLOAD];
-			GtkWidget *w4 = ww2[PARAM_AUTODOWNLOAD];
-			// Depends on autodownload value
-			LayerMaps * layer = (LayerMaps *) values->layer;
-			bool missing_sense = sensitive && layer->autodownload;
-			if (w1) {
-				gtk_widget_set_sensitive(w1, missing_sense);
-			}
-
-			if (w2) {
-				gtk_widget_set_sensitive(w2, missing_sense);
-			}
-
-			if (w3) {
-				gtk_widget_set_sensitive(w3, sensitive);
-			}
-
-			if (w4) {
-				gtk_widget_set_sensitive(w4, sensitive);
-			}
-
-			// Cache type not applicable either
-			GtkWidget *w9 = ww1[PARAM_CACHE_LAYOUT];
-			GtkWidget *w10 = ww2[PARAM_CACHE_LAYOUT];
-			if (w9) {
-				gtk_widget_set_sensitive(w9, sensitive);
-			}
-
-			if (w10) {
-				gtk_widget_set_sensitive(w10, sensitive);
-			}
-
-			// File only applicable for MBTiles type
-			// Directory for all other types
-			sensitive = (MAP_ID_MBTILES == vlpd.u);
-			GtkWidget *w5 = ww1[PARAM_FILE];
-			GtkWidget *w6 = ww2[PARAM_FILE];
-			GtkWidget *w7 = ww1[PARAM_CACHE_DIR];
-			GtkWidget *w8 = ww2[PARAM_CACHE_DIR];
-			if (w5) {
-				gtk_widget_set_sensitive(w5, sensitive);
-			}
-
-			if (w6) {
-				gtk_widget_set_sensitive(w6, sensitive);
-			}
-
-			if (w7) {
-				gtk_widget_set_sensitive(w7, !sensitive);
-			}
-
-			if (w8) {
-				gtk_widget_set_sensitive(w8, !sensitive);
-			}
-
-			break;
+		/* Alter sensitivity of download option widgets according to the map_index setting. */
+	case PARAM_MAPTYPE: {
+		/* Get new value. */
+		VikLayerParamData vlpd = a_uibuilder_widget_get_value(widget, values->param);
+		/* Is it *not* the OSM On Disk Tile Layout or the MBTiles type or the OSM Metatiles type. */
+		bool sensitive = (MAP_ID_OSM_ON_DISK != vlpd.u &&
+				  MAP_ID_MBTILES != vlpd.u &&
+				  MAP_ID_OSM_METATILES != vlpd.u);
+		GtkWidget **ww1 = values->widgets;
+		GtkWidget **ww2 = values->labels;
+		GtkWidget *w1 = ww1[PARAM_ONLYMISSING];
+		GtkWidget *w2 = ww2[PARAM_ONLYMISSING];
+		GtkWidget *w3 = ww1[PARAM_AUTODOWNLOAD];
+		GtkWidget *w4 = ww2[PARAM_AUTODOWNLOAD];
+		/* Depends on autodownload value. */
+		LayerMaps * layer = (LayerMaps *) values->layer;
+		bool missing_sense = sensitive && layer->autodownload;
+		if (w1) {
+			gtk_widget_set_sensitive(w1, missing_sense);
 		}
 
-		// Alter sensitivity of 'download only missing' widgets according to the autodownload setting.
-	case PARAM_AUTODOWNLOAD:
-		{
-			// Get new value
-			VikLayerParamData vlpd = a_uibuilder_widget_get_value(widget, values->param);
-			GtkWidget **ww1 = values->widgets;
-			GtkWidget **ww2 = values->labels;
-			GtkWidget *w1 = ww1[PARAM_ONLYMISSING];
-			GtkWidget *w2 = ww2[PARAM_ONLYMISSING];
-			if (w1) {
-				gtk_widget_set_sensitive(w1, vlpd.b);
-			}
-
-			if (w2) {
-				gtk_widget_set_sensitive(w2, vlpd.b);
-			}
-			break;
+		if (w2) {
+			gtk_widget_set_sensitive(w2, missing_sense);
 		}
+
+		if (w3) {
+			gtk_widget_set_sensitive(w3, sensitive);
+		}
+
+		if (w4) {
+			gtk_widget_set_sensitive(w4, sensitive);
+		}
+
+		/* Cache type not applicable either. */
+		GtkWidget *w9 = ww1[PARAM_CACHE_LAYOUT];
+		GtkWidget *w10 = ww2[PARAM_CACHE_LAYOUT];
+		if (w9) {
+			gtk_widget_set_sensitive(w9, sensitive);
+		}
+
+		if (w10) {
+			gtk_widget_set_sensitive(w10, sensitive);
+		}
+
+		/* File only applicable for MBTiles type.
+		   Directory for all other types. */
+		sensitive = (MAP_ID_MBTILES == vlpd.u);
+		GtkWidget *w5 = ww1[PARAM_FILE];
+		GtkWidget *w6 = ww2[PARAM_FILE];
+		GtkWidget *w7 = ww1[PARAM_CACHE_DIR];
+		GtkWidget *w8 = ww2[PARAM_CACHE_DIR];
+		if (w5) {
+			gtk_widget_set_sensitive(w5, sensitive);
+		}
+
+		if (w6) {
+			gtk_widget_set_sensitive(w6, sensitive);
+		}
+
+		if (w7) {
+			gtk_widget_set_sensitive(w7, !sensitive);
+		}
+
+		if (w8) {
+			gtk_widget_set_sensitive(w8, !sensitive);
+		}
+
+		break;
+	}
+
+		/* Alter sensitivity of 'download only missing' widgets according to the autodownload setting. */
+	case PARAM_AUTODOWNLOAD: {
+		/* Get new value. */
+		VikLayerParamData vlpd = a_uibuilder_widget_get_value(widget, values->param);
+		GtkWidget **ww1 = values->widgets;
+		GtkWidget **ww2 = values->labels;
+		GtkWidget *w1 = ww1[PARAM_ONLYMISSING];
+		GtkWidget *w2 = ww2[PARAM_ONLYMISSING];
+		if (w1) {
+			gtk_widget_set_sensitive(w1, vlpd.b);
+		}
+
+		if (w2) {
+			gtk_widget_set_sensitive(w2, vlpd.b);
+		}
+		break;
+	}
 	default: break;
 	}
 }
 
+
+
+
 /****************************************/
 /****** CREATING, COPYING, FREEING ******/
 /****************************************/
-
-#if 0
-static VikLayer * maps_layer_new(Viewport * viewport)
-{
-	LayerMaps * layer = new LayerMaps();
-
-	layer->dl_tool_x = layer->dl_tool_y = -1;
-
-
-	return layer->vl;
-}
-#endif
-
 LayerMaps::~LayerMaps()
 {
 	free(this->cache_dir);
@@ -808,7 +897,7 @@ LayerMaps::~LayerMaps()
 		if (this->mbtiles) {
 			int ans = sqlite3_close(this->mbtiles);
 			if (ans != SQLITE_OK) {
-				// Only to console for information purposes only
+				/* Only to console for information purposes only. */
 				fprintf(stderr, "WARNING: SQL Close problem: %d\n", ans);
 			}
 		}
@@ -816,14 +905,16 @@ LayerMaps::~LayerMaps()
 #endif
 }
 
+
+
+
 void LayerMaps::post_read(Viewport * viewport, bool from_file)
 {
 	MapSource * map = map_sources[this->map_index];
 
 	if (!from_file) {
-		/* If this method is not called in file reading context
-		 * it is called in GUI context.
-		 * So, we can check if we have to inform the user about inconsistency */
+		/* If this method is not called in file reading context it is called in GUI context.
+		   So, we can check if we have to inform the user about inconsistency. */
 		VikViewportDrawMode vp_drawmode;
 		vp_drawmode = viewport->get_drawmode();
 
@@ -835,16 +926,16 @@ void LayerMaps::post_read(Viewport * viewport, bool from_file)
 		}
 	}
 
-	// Performed in post read as we now know the map type
+	/* Performed in post read as we now know the map type. */
 #ifdef HAVE_SQLITE3_H
-	// Do some SQL stuff
+	/* Do some SQL stuff. */
 	if (map->is_mbtiles()) {
 		int ans = sqlite3_open_v2(this->filename,
 					  &(this->mbtiles),
 					  SQLITE_OPEN_READONLY,
 					  NULL);
 		if (ans != SQLITE_OK) {
-			// That didn't work, so here's why:
+			/* That didn't work, so here's why: */
 			fprintf(stderr, "WARNING: %s: %s\n", __FUNCTION__, sqlite3_errmsg(this->mbtiles));
 
 			a_dialog_error_msg_extra(VIK_GTK_WINDOW_FROM_WIDGET(viewport->vvp),
@@ -855,19 +946,25 @@ void LayerMaps::post_read(Viewport * viewport, bool from_file)
 	}
 #endif
 
-	// If the on Disk OSM Tile Layout type
+	/* If the on Disk OSM Tile Layout type. */
 	if (map->map_type == MAP_ID_OSM_ON_DISK) {
-		// Copy the directory into filename
-		//  thus the mapcache look up will be unique when using more than one of these map types
+		/* Copy the directory into filename.
+		   Thus the mapcache look up will be unique when using more than one of these map types. */
 		free(this->filename);
 		this->filename = g_strdup(this->cache_dir);
 	}
 }
 
+
+
+
 char const * LayerMaps::tooltip()
 {
 	return this->get_map_label();
 }
+
+
+
 
 static Layer * maps_layer_unmarshall(uint8_t * data, int len, Viewport * viewport)
 {
@@ -877,6 +974,9 @@ static Layer * maps_layer_unmarshall(uint8_t * data, int len, Viewport * viewpor
 	layer->post_read(viewport, false);
 	return layer;
 }
+
+
+
 
 /*********************/
 /****** DRAWING ******/
@@ -892,27 +992,29 @@ static GdkPixbuf *pixbuf_shrink(GdkPixbuf *pixbuf, double xshrinkfactor, double 
 	return tmp;
 }
 
+
+
+
 #ifdef HAVE_SQLITE3_H
-/*
+#if 0
 static int sql_select_tile_dump_cb(void *data, int cols, char **fields, char **col_names)
 {
 	fprintf(stderr, "WARNING: Found %d columns\n", cols);
-	int i;
-	for (i = 0; i < cols; i++) {
+	for (int i = 0; i < cols; i++) {
 		fprintf(stderr, "WARNING: SQL processing %s = %s\n", col_names[i], fields[i]);
 	}
 	return 0;
 }
-*/
+#endif
 
-/**
- *
- */
+
+
+
 static GdkPixbuf *get_pixbuf_sql_exec(sqlite3 *sql, int xx, int yy, int zoom)
 {
 	GdkPixbuf *pixbuf = NULL;
 
-	// MBTiles stored internally with the flipping y thingy (i.e. TMS scheme).
+	/* MBTiles stored internally with the flipping y thingy (i.e. TMS scheme). */
 	int flip_y = (int) pow(2, zoom)-1 - yy;
 	char *statement = g_strdup_printf("SELECT tile_data FROM tiles WHERE zoom_level=%d AND tile_column=%d AND tile_row=%d;", zoom, xx, flip_y);
 
@@ -928,37 +1030,35 @@ static GdkPixbuf *get_pixbuf_sql_exec(sqlite3 *sql, int xx, int yy, int zoom)
 	while (!finished) {
 		ans = sqlite3_step(sql_stmt);
 		switch (ans) {
-		case SQLITE_ROW:
-			{
-				// Get tile_data blob
-				int count = sqlite3_column_count(sql_stmt);
-				if (count != 1)  {
-					fprintf(stderr, "WARNING: %s: %s - %d\n", __FUNCTION__, "count not one", count);
+		case SQLITE_ROW: {
+			/* Get tile_data blob. */
+			int count = sqlite3_column_count(sql_stmt);
+			if (count != 1)  {
+				fprintf(stderr, "WARNING: %s: %s - %d\n", __FUNCTION__, "count not one", count);
+				finished = true;
+			} else {
+				const void *data = sqlite3_column_blob(sql_stmt, 0);
+				int bytes = sqlite3_column_bytes(sql_stmt, 0);
+				if (bytes < 1)  {
+					fprintf(stderr, "WARNING: %s: %s (%d)\n", __FUNCTION__, "not enough bytes", bytes);
 					finished = true;
 				} else {
-					const void *data = sqlite3_column_blob(sql_stmt, 0);
-					int bytes = sqlite3_column_bytes(sql_stmt, 0);
-					if (bytes < 1)  {
-						fprintf(stderr, "WARNING: %s: %s (%d)\n", __FUNCTION__, "not enough bytes", bytes);
-						finished = true;
-					} else {
-						// Convert these blob bytes into a pixbuf via these streaming operations
-						GInputStream *stream = g_memory_input_stream_new_from_data(data, bytes, NULL);
-						GError *error = NULL;
-						pixbuf = gdk_pixbuf_new_from_stream(stream, NULL, &error);
-						if (error) {
-							fprintf(stderr, "WARNING: %s: %s\n", __FUNCTION__, error->message);
-							g_error_free(error);
-						}
-						g_input_stream_close(stream, NULL, NULL);
+					/* Convert these blob bytes into a pixbuf via these streaming operations. */
+					GInputStream *stream = g_memory_input_stream_new_from_data(data, bytes, NULL);
+					GError *error = NULL;
+					pixbuf = gdk_pixbuf_new_from_stream(stream, NULL, &error);
+					if (error) {
+						fprintf(stderr, "WARNING: %s: %s\n", __FUNCTION__, error->message);
+						g_error_free(error);
 					}
+					g_input_stream_close(stream, NULL, NULL);
 				}
-				break;
 			}
+			break;
+		}
 		default:
-			// e.g. SQLITE_DONE | SQLITE_ERROR | SQLITE_MISUSE | etc...
-			// Finished normally
-			//  and give up on any errors
+			/* e.g. SQLITE_DONE | SQLITE_ERROR | SQLITE_MISUSE | etc...
+			   Finished normally and give up on any errors. */
 			if (ans != SQLITE_DONE) {
 				fprintf(stderr, "WARNING: %s: %s - %d\n", __FUNCTION__, "step issue", ans);
 			}
@@ -973,6 +1073,9 @@ static GdkPixbuf *get_pixbuf_sql_exec(sqlite3 *sql, int xx, int yy, int zoom)
 	return pixbuf;
 }
 #endif
+
+
+
 
 static GdkPixbuf *get_mbtiles_pixbuf(LayerMaps * layer, int xx, int yy, int zoom)
 {
@@ -992,14 +1095,17 @@ static GdkPixbuf *get_mbtiles_pixbuf(LayerMaps * layer, int xx, int yy, int zoom
 		  free(statement);
 		*/
 
-		// Reading BLOBS is a bit more involved and so can't use the simpler sqlite3_exec()
-		// Hence this specific function
+		/* Reading BLOBS is a bit more involved and so can't use the simpler sqlite3_exec().
+		   Hence this specific function. */
 		pixbuf = get_pixbuf_sql_exec(layer->mbtiles, xx, yy, zoom);
 	}
 #endif
 
 	return pixbuf;
 }
+
+
+
 
 static GdkPixbuf *get_pixbuf_from_metatile(LayerMaps * layer, int xx, int yy, int zz)
 {
@@ -1017,13 +1123,13 @@ static GdkPixbuf *get_pixbuf_from_metatile(LayerMaps * layer, int xx, int yy, in
 
 	if (len > 0) {
 		if (compressed) {
-			// Not handled yet - I don't think this is used often - so implement later if necessary
+			/* Not handled yet - I don't think this is used often - so implement later if necessary. */
 			fprintf(stderr, "WARNING: Compressed metatiles not implemented:%s\n", __FUNCTION__);
 			free(buf);
 			return NULL;
 		}
 
-		// Convert these buf bytes into a pixbuf via these streaming operations
+		/* Convert these buf bytes into a pixbuf via these streaming operations. */
 		GdkPixbuf *pixbuf = NULL;
 
 		GInputStream *stream = g_memory_input_stream_new_from_data(buf, len, NULL);
@@ -1044,13 +1150,16 @@ static GdkPixbuf *get_pixbuf_from_metatile(LayerMaps * layer, int xx, int yy, in
 	}
 }
 
+
+
+
 /**
- * Caller has to decrease reference counter of returned
+ * Caller has to decrease reference counter of returned.
  * GdkPixbuf, when buffer is no longer needed.
  */
 static GdkPixbuf * pixbuf_apply_settings(GdkPixbuf * pixbuf, uint8_t alpha, double xshrinkfactor, double yshrinkfactor)
 {
-	// Apply alpha setting
+	/* Apply alpha setting. */
 	if (pixbuf && alpha < 255) {
 		pixbuf = ui_pixbuf_set_alpha(pixbuf, alpha);
 	}
@@ -1061,6 +1170,9 @@ static GdkPixbuf * pixbuf_apply_settings(GdkPixbuf * pixbuf, uint8_t alpha, doub
 
 	return pixbuf;
 }
+
+
+
 
 static void get_cache_filename(const char *cache_dir,
 			       MapsCacheLayout cl,
@@ -1075,10 +1187,10 @@ static void get_cache_filename(const char *cache_dir,
 	case MapsCacheLayout::OSM:
 		if (name) {
 			if (g_strcmp0(cache_dir, MAPS_CACHE_DIR)) {
-				// Cache dir not the default - assume it's been directed somewhere specific
+				/* Cache dir not the default - assume it's been directed somewhere specific. */
 				snprintf(filename_buf, buf_len, DIRECTDIRACCESS, cache_dir, (17 - coord->scale), coord->x, coord->y, file_extension);
 			} else {
-				// Using default cache - so use the map name in the directory path
+				/* Using default cache - so use the map name in the directory path. */
 				snprintf(filename_buf, buf_len, DIRECTDIRACCESS_WITH_NAME, cache_dir, name, (17 - coord->scale), coord->x, coord->y, file_extension);
 			}
 		} else {
@@ -1091,13 +1203,16 @@ static void get_cache_filename(const char *cache_dir,
 	}
 }
 
+
+
+
 /**
- * Caller has to decrease reference counter of returned
+ * Caller has to decrease reference counter of returned.
  * GdkPixbuf, when buffer is no longer needed.
  */
 static GdkPixbuf * get_pixbuf(LayerMaps * layer, MapTypeID map_type, const char* mapname, TileInfo *mapcoord, char *filename_buf, int buf_len, double xshrinkfactor, double yshrinkfactor)
 {
-	/* get the thing */
+	/* Get the thing. */
 	GdkPixbuf * pixbuf = map_cache_get(mapcoord, map_type, layer->alpha, xshrinkfactor, yshrinkfactor, layer->filename);
 	if (pixbuf) {
 		//fprintf(stderr, "MapsLayer: MAP CACHE HIT\n");
@@ -1105,7 +1220,7 @@ static GdkPixbuf * get_pixbuf(LayerMaps * layer, MapTypeID map_type, const char*
 		//fprintf(stderr, "MapsLayer: MAP CACHE MISS\n");
 		MapSource * map = map_sources[layer->map_index];
 		if (map->is_direct_file_access()) {
-			// ATM MBTiles must be 'a direct access type'
+			/* ATM MBTiles must be 'a direct access type'. */
 			if (map->is_mbtiles()) {
 				pixbuf = get_mbtiles_pixbuf(layer, mapcoord->x, mapcoord->y, (17 - mapcoord->scale));
 			} else if (map->is_osm_meta_tiles()) {
@@ -1133,6 +1248,9 @@ static GdkPixbuf * get_pixbuf(LayerMaps * layer, MapTypeID map_type, const char*
 	return pixbuf;
 }
 
+
+
+
 static GdkPixbuf * get_pixbuf_from_file(LayerMaps * layer, TileInfo * mapcoord, char * filename_buf)
 {
 	GdkPixbuf * pixbuf = NULL;
@@ -1141,10 +1259,10 @@ static GdkPixbuf * get_pixbuf_from_file(LayerMaps * layer, TileInfo * mapcoord, 
 		GError * gx = NULL;
 		pixbuf = gdk_pixbuf_new_from_file(filename_buf, &gx);
 
-		/* free the pixbuf on error */
+		/* Free the pixbuf on error. */
 		if (gx) {
 			if (gx->domain != GDK_PIXBUF_ERROR || gx->code != GDK_PIXBUF_ERROR_CORRUPT_IMAGE) {
-				// Report a warning
+				/* Report a warning. */
 				if (IS_VIK_WINDOW (vik_window_from_layer((Layer *) layer))) {
 					char* msg = g_strdup_printf(_("Couldn't open image file: %s"), gx->message);
 					window_from_layer((Layer *) layer)->statusbar_update(msg, VIK_STATUSBAR_INFO);
@@ -1163,16 +1281,20 @@ static GdkPixbuf * get_pixbuf_from_file(LayerMaps * layer, TileInfo * mapcoord, 
 	return pixbuf;
 }
 
+
+
+
+
 static bool should_start_autodownload(LayerMaps * layer, Viewport * viewport)
 {
 	const VikCoord *center = viewport->get_center();
 
 	if (window_from_widget(viewport->vvp)->get_pan_move()) {
-		/* D'n'D pan in action: do not download */
+		/* D'n'D pan in action: do not download. */
 		return false;
 	}
 
-	// Don't attempt to download unsupported zoom levels
+	/* Don't attempt to download unsupported zoom levels. */
 	double xzoom = viewport->get_xmpp();
 	MapSource *map = map_sources[layer->map_index];
 	uint8_t zl = map_utils_mpp_to_zoom_level(xzoom);
@@ -1202,15 +1324,15 @@ static bool should_start_autodownload(LayerMaps * layer, Viewport * viewport)
 	return true;
 }
 
-/**
- *
- */
+
+
+
 bool try_draw_scale_down(LayerMaps * layer, Viewport * viewport, TileInfo ulm, int xx, int yy, int tilesize_x_ceil, int tilesize_y_ceil,
 			 double xshrinkfactor, double yshrinkfactor, MapTypeID map_type, const char *mapname, char *path_buf, unsigned int max_path_len)
 {
 	for (int scale_inc = 1; scale_inc < SCALE_INC_DOWN; scale_inc++) {
-		// Try with smaller zooms
-		int scale_factor = 1 << scale_inc;  /*  2^scale_inc */
+		/* Try with smaller zooms. */
+		int scale_factor = 1 << scale_inc;  /* 2^scale_inc */
 		TileInfo ulm2 = ulm;
 		ulm2.x = ulm.x / scale_factor;
 		ulm2.y = ulm.y / scale_factor;
@@ -1227,15 +1349,15 @@ bool try_draw_scale_down(LayerMaps * layer, Viewport * viewport, TileInfo ulm, i
 	return false;
 }
 
-/**
- *
- */
+
+
+
 bool try_draw_scale_up(LayerMaps * layer, Viewport * viewport, TileInfo ulm, int xx, int yy, int tilesize_x_ceil, int tilesize_y_ceil,
 		       double xshrinkfactor, double yshrinkfactor, MapTypeID map_type, const char *mapname, char *path_buf, unsigned int max_path_len)
 {
-	// Try with bigger zooms
+	/* Try with bigger zooms. */
 	for (int scale_dec = 1; scale_dec < SCALE_INC_UP; scale_dec++) {
-		int scale_factor = 1 << scale_dec;  /*  2^scale_dec */
+		int scale_factor = 1 << scale_dec;  /* 2^scale_dec */
 		TileInfo ulm2 = ulm;
 		ulm2.x = ulm.x * scale_factor;
 		ulm2.y = ulm.y * scale_factor;
@@ -1261,6 +1383,9 @@ bool try_draw_scale_up(LayerMaps * layer, Viewport * viewport, TileInfo ulm, int
 	return false;
 }
 
+
+
+
 void LayerMaps::draw_section(Viewport * viewport, VikCoord *ul, VikCoord *br)
 {
 	double xzoom = viewport->get_xmpp();
@@ -1279,9 +1404,9 @@ void LayerMaps::draw_section(Viewport * viewport, VikCoord *ul, VikCoord *br)
 				fprintf(stderr, "DEBUG: %s: existence_only due to SHRINKFACTORS", __FUNCTION__);
 				existence_only = true;
 			} else {
-				// Report the reason for not drawing
+				/* Report the reason for not drawing. */
 				if (IS_VIK_WINDOW (vik_window_from_layer(this))) {
-					char* msg = g_strdup_printf(_("Cowardly refusing to draw tiles or existence of tiles beyond %d zoom out factor"), (int)(1.0/REAL_MIN_SHRINKFACTOR));
+					char * msg = g_strdup_printf(_("Cowardly refusing to draw tiles or existence of tiles beyond %d zoom out factor"), (int)(1.0/REAL_MIN_SHRINKFACTOR));
 					window_from_layer(this)->statusbar_update(msg, VIK_STATUSBAR_INFO);
 					free(msg);
 				}
@@ -1296,7 +1421,7 @@ void LayerMaps::draw_section(Viewport * viewport, VikCoord *ul, VikCoord *br)
 	if (map->coord_to_tile(ul, xzoom, yzoom, &ulm) &&
 	     map->coord_to_tile(br, xzoom, yzoom, &brm)) {
 
-		/* loop & draw */
+		/* Loop & draw. */
 		//int x, y;
 		int xmin = MIN(ulm.x, brm.x), xmax = MAX(ulm.x, brm.x);
 		int ymin = MIN(ulm.y, brm.y), ymax = MAX(ulm.y, brm.y);
@@ -1307,9 +1432,9 @@ void LayerMaps::draw_section(Viewport * viewport, VikCoord *ul, VikCoord *br)
 		int xx, yy, width, height;
 		GdkPixbuf *pixbuf;
 
-		// Prevent the program grinding to a halt if trying to deal with thousands of tiles
-		//  which can happen when using a small fixed zoom level and viewing large areas.
-		// Also prevents very large number of tile download requests
+		/* Prevent the program grinding to a halt if trying to deal with thousands of tiles
+		   which can happen when using a small fixed zoom level and viewing large areas.
+		   Also prevents very large number of tile download requests. */
 		int tiles = (xmax-xmin) * (ymax-ymin);
 		if (tiles > MAX_TILES) {
 			fprintf(stderr, "DEBUG: %s: existence_only due to wanting too many tiles (%d)", __FUNCTION__, tiles);
@@ -1322,10 +1447,10 @@ void LayerMaps::draw_section(Viewport * viewport, VikCoord *ul, VikCoord *br)
 		if ((!existence_only) && this->autodownload  && should_start_autodownload(this, viewport)) {
 			fprintf(stderr, "DEBUG: %s: Starting autodownload", __FUNCTION__);
 			if (!this->adl_only_missing && map->supports_download_only_new()) {
-				// Try to download newer tiles
+				/* Try to download newer tiles. */
 				start_download_thread(this, viewport, ul, br, REDOWNLOAD_NEW);
 			} else {
-				// Download only missing tiles
+				/* Download only missing tiles. */
 				start_download_thread(this, viewport, ul, br, REDOWNLOAD_NONE);
 			}
 		}
@@ -1350,10 +1475,10 @@ void LayerMaps::draw_section(Viewport * viewport, VikCoord *ul, VikCoord *br)
 					}
 				}
 			}
-		} else { /* tilesize is known, don't have to keep converting coords */
+		} else { /* tilesize is known, don't have to keep converting coords. */
 			double tilesize_x = map->get_tilesize_x() * xshrinkfactor;
 			double tilesize_y = map->get_tilesize_y() * yshrinkfactor;
-			/* ceiled so tiles will be maximum size in the case of funky shrinkfactor */
+			/* ceiled so tiles will be maximum size in the case of funky shrinkfactor. */
 			int tilesize_x_ceil = ceil (tilesize_x);
 			int tilesize_y_ceil = ceil(tilesize_y);
 			int8_t xinc = (ulm.x == xmin) ? 1 : -1;
@@ -1366,8 +1491,8 @@ void LayerMaps::draw_section(Viewport * viewport, VikCoord *ul, VikCoord *br)
 			map->tile_to_center_coord(&ulm, &coord);
 			viewport->coord_to_screen(&coord, &xx_tmp, &yy_tmp);
 			xx = xx_tmp; yy = yy_tmp;
-			/* above trick so xx,yy doubles. this is so shrinkfactors aren't rounded off
-			 * eg if tile size 128, shrinkfactor 0.333 */
+			/* Above trick so xx,yy doubles. this is so shrinkfactors aren't rounded off
+			   e.g. if tile size 128, shrinkfactor 0.333. */
 			xx -= (tilesize_x/2);
 			int base_yy = yy - (tilesize_y/2);
 
@@ -1391,7 +1516,7 @@ void LayerMaps::draw_section(Viewport * viewport, VikCoord *ul, VikCoord *br)
 							viewport->draw_line(black_gc, xx+tilesize_x_ceil, yy, xx, yy+tilesize_y_ceil);
 						}
 					} else {
-						// Try correct scale first
+						/* Try correct scale first. */
 						int scale_factor = 1;
 						pixbuf = get_pixbuf(this, map_type, mapname, &ulm, path_buf, max_path_len, xshrinkfactor * scale_factor, yshrinkfactor * scale_factor);
 						if (pixbuf) {
@@ -1400,7 +1525,7 @@ void LayerMaps::draw_section(Viewport * viewport, VikCoord *ul, VikCoord *br)
 							viewport->draw_pixbuf(pixbuf, src_x, src_y, xx, yy, tilesize_x_ceil, tilesize_y_ceil);
 							g_object_unref(pixbuf);
 						} else {
-							// Otherwise try different scales
+							/* Otherwise try different scales. */
 							if (SCALE_SMALLER_ZOOM_FIRST) {
 								if (!try_draw_scale_down(this, viewport ,ulm,xx,yy,tilesize_x_ceil,tilesize_y_ceil,xshrinkfactor,yshrinkfactor, map_type, mapname,path_buf,max_path_len)) {
 									try_draw_scale_up(this, viewport ,ulm,xx,yy,tilesize_x_ceil,tilesize_y_ceil,xshrinkfactor,yshrinkfactor, map_type, mapname,path_buf,max_path_len);
@@ -1418,13 +1543,13 @@ void LayerMaps::draw_section(Viewport * viewport, VikCoord *ul, VikCoord *br)
 				xx += tilesize_x;
 			}
 
-			// ATM Only show tile grid lines in extreme debug mode
+			/* ATM Only show tile grid lines in extreme debug mode. */
 			if (vik_debug && vik_verbose) {
-				/* Grid drawing here so it gets drawn on top of the map */
-				/* Thus loop around x & y again, but this time separately */
-				/* Only showing grid for the current scale */
+				/* Grid drawing here so it gets drawn on top of the map.
+				   Thus loop around x & y again, but this time separately.
+				   Only showing grid for the current scale */
 				GdkGC *black_gc = GTK_WIDGET(viewport->vvp)->style->black_gc;
-				/* Draw single grid lines across the whole screen */
+				/* Draw single grid lines across the whole screen. */
 				int width = viewport->get_width();
 				int height = viewport->get_height();
 				xx = xx_tmp; yy = yy_tmp;
@@ -1449,28 +1574,30 @@ void LayerMaps::draw_section(Viewport * viewport, VikCoord *ul, VikCoord *br)
 	}
 }
 
+
+
+
 void LayerMaps::draw(Viewport * viewport)
 {
 	if (map_sources[this->map_index]->get_drawmode() == viewport->get_drawmode()) {
 		VikCoord ul, br;
 
-		/* Copyright */
+		/* Copyright. */
 		double level = viewport->get_zoom();
 		LatLonBBox bbox;
 		viewport->get_bbox(&bbox);
 		map_sources[this->map_index]->get_copyright(bbox, level, vik_viewport_add_copyright_cb, viewport);
 
-		/* Logo */
+		/* Logo. */
 		const GdkPixbuf *logo = map_sources[this->map_index]->get_logo();
 		viewport->add_logo(logo);
 
-		/* get corner coords */
+		/* Get corner coords. */
 		if (viewport->get_coord_mode() == VIK_COORD_UTM && ! viewport->is_one_zone()) {
-			/* UTM multi-zone stuff by Kit Transue */
-			char leftmost_zone, rightmost_zone, i;
-			leftmost_zone = viewport->leftmost_zone();
-			rightmost_zone = viewport->rightmost_zone();
-			for (i = leftmost_zone; i <= rightmost_zone; ++i) {
+			/* UTM multi-zone stuff by Kit Transue. */
+			char leftmost_zone = viewport->leftmost_zone();
+			char rightmost_zone = viewport->rightmost_zone();
+			for (char i = leftmost_zone; i <= rightmost_zone; ++i) {
 				viewport->corners_for_zonen(i, &ul, &br);
 				this->draw_section(viewport, &ul, &br);
 			}
@@ -1483,11 +1610,14 @@ void LayerMaps::draw(Viewport * viewport)
 	}
 }
 
+
+
+
 /*************************/
 /****** DOWNLOADING ******/
 /*************************/
 
-/* pass along data to thread, exists even if layer is deleted. */
+/* Pass along data to thread, exists even if layer is deleted. */
 typedef struct {
 	char *cache_dir;
 	char *filename_buf;
@@ -1509,6 +1639,9 @@ static char * redownload_mode_message(int redownload_mode, int mapstoget, char *
 static void mdi_calculate_mapstoget(MapDownloadInfo * mdi, MapSource * map, TileInfo * ulm);
 static void mdi_calculate_mapstoget_other(MapDownloadInfo * mdi, MapSource * map, TileInfo * ulm);
 
+
+
+
 static void mdi_free(MapDownloadInfo *mdi)
 {
 	vik_mutex_free(mdi->mutex);
@@ -1519,6 +1652,9 @@ static void mdi_free(MapDownloadInfo *mdi)
 	free(mdi);
 }
 
+
+
+
 static void weak_ref_cb(void * ptr, GObject * dead_vml)
 {
 	MapDownloadInfo *mdi = (MapDownloadInfo *) ptr;
@@ -1526,6 +1662,9 @@ static void weak_ref_cb(void * ptr, GObject * dead_vml)
 	mdi->map_layer_alive = false;
 	g_mutex_unlock(mdi->mutex);
 }
+
+
+
 
 static bool is_in_area(MapSource * map, TileInfo * mc)
 {
@@ -1546,6 +1685,9 @@ static bool is_in_area(MapSource * map, TileInfo * mc)
 	return vik_coord_inside(&vc, &vctl, &vcbr);
 }
 
+
+
+
 static int map_download_thread(MapDownloadInfo *mdi, void * threaddata)
 {
 	void *handle = map_sources[mdi->map_index]->download_handle_init();
@@ -1554,7 +1696,7 @@ static int map_download_thread(MapDownloadInfo *mdi, void * threaddata)
 
 	for (mcoord.x = mdi->x0; mcoord.x <= mdi->xf; mcoord.x++) {
 		for (mcoord.y = mdi->y0; mcoord.y <= mdi->yf; mcoord.y++) {
-			// Only attempt to download a tile from supported areas
+			/* Only attempt to download a tile from supported areas. */
 			if (is_in_area(map_sources[mdi->map_index], &mcoord)) {
 				bool remove_mem_cache = false;
 				bool need_download = false;
@@ -1576,29 +1718,28 @@ static int map_download_thread(MapDownloadInfo *mdi, void * threaddata)
 					need_download = true;
 					remove_mem_cache = true;
 
-				} else {  /* in case map file already exists */
+				} else {  /* In case map file already exists. */
 					switch (mdi->redownload_mode) {
 					case REDOWNLOAD_NONE:
 						continue;
 
-					case REDOWNLOAD_BAD:
-						{
-							/* see if this one is bad or what */
-							GError *gx = NULL;
-							GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(mdi->filename_buf, &gx);
-							if (gx || (!pixbuf)) {
-								if (remove(mdi->filename_buf)) {
-									fprintf(stderr, "WARNING: REDOWNLOAD failed to remove: %s", mdi->filename_buf);
-								}
-								need_download = true;
-								remove_mem_cache = true;
-								g_error_free(gx);
-
-							} else {
-								g_object_unref(pixbuf);
+					case REDOWNLOAD_BAD: {
+						/* See if this one is bad or what. */
+						GError *gx = NULL;
+						GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(mdi->filename_buf, &gx);
+						if (gx || (!pixbuf)) {
+							if (remove(mdi->filename_buf)) {
+								fprintf(stderr, "WARNING: REDOWNLOAD failed to remove: %s", mdi->filename_buf);
 							}
-							break;
+							need_download = true;
+							remove_mem_cache = true;
+							g_error_free(gx);
+
+						} else {
+							g_object_unref(pixbuf);
 						}
+						break;
+					}
 
 					case REDOWNLOAD_NEW:
 						need_download = true;
@@ -1606,7 +1747,7 @@ static int map_download_thread(MapDownloadInfo *mdi, void * threaddata)
 						break;
 
 					case REDOWNLOAD_ALL:
-						/* FIXME: need a better way than to erase file in case of server/network problem */
+						/* FIXME: need a better way than to erase file in case of server/network problem. */
 						if (remove(mdi->filename_buf)) {
 							fprintf(stderr, "WARNING: REDOWNLOAD failed to remove: %s", mdi->filename_buf);
 						}
@@ -1630,16 +1771,15 @@ static int map_download_thread(MapDownloadInfo *mdi, void * threaddata)
 					DownloadResult_t dr = map_sources[mdi->map_index]->download(&(mdi->mapcoord), mdi->filename_buf, handle);
 					switch (dr) {
 					case DOWNLOAD_HTTP_ERROR:
-					case DOWNLOAD_CONTENT_ERROR:
-						{
-							// TODO: ?? count up the number of download errors somehow...
-							char* msg = g_strdup_printf("%s: %s", mdi->layer->get_map_label(), _("Failed to download tile"));
-							window_from_layer(mdi->layer)->statusbar_update(msg, VIK_STATUSBAR_INFO);
-							free(msg);
-							break;
-						}
+					case DOWNLOAD_CONTENT_ERROR: {
+						/* TODO: ?? count up the number of download errors somehow... */
+						char* msg = g_strdup_printf("%s: %s", mdi->layer->get_map_label(), _("Failed to download tile"));
+						window_from_layer(mdi->layer)->statusbar_update(msg, VIK_STATUSBAR_INFO);
+						free(msg);
+						break;
+					}
 					case DOWNLOAD_FILE_WRITE_ERROR: {
-						char* msg = g_strdup_printf("%s: %s", mdi->layer->get_map_label(), _("Unable to save tile"));
+						char * msg = g_strdup_printf("%s: %s", mdi->layer->get_map_label(), _("Unable to save tile"));
 						window_from_layer(mdi->layer)->statusbar_update(msg, VIK_STATUSBAR_INFO);
 						free(msg);
 						break;
@@ -1657,11 +1797,11 @@ static int map_download_thread(MapDownloadInfo *mdi, void * threaddata)
 				}
 
 				if (mdi->refresh_display && mdi->map_layer_alive) {
-					/* TODO: check if it's on visible area */
-					mdi->layer->emit_update(); // NB update display from background
+					/* TODO: check if it's on visible area. */
+					mdi->layer->emit_update(); /* NB update display from background. */
 				}
 				g_mutex_unlock(mdi->mutex);
-				mdi->mapcoord.x = mdi->mapcoord.y = 0; /* we're temporarily between downloads */
+				mdi->mapcoord.x = mdi->mapcoord.y = 0; /* We're temporarily between downloads. */
 			}
 		}
 	}
@@ -1673,6 +1813,9 @@ static int map_download_thread(MapDownloadInfo *mdi, void * threaddata)
 	g_mutex_unlock(mdi->mutex);
 	return 0;
 }
+
+
+
 
 static void mdi_cancel_cleanup(MapDownloadInfo *mdi)
 {
@@ -1690,6 +1833,9 @@ static void mdi_cancel_cleanup(MapDownloadInfo *mdi)
 	}
 }
 
+
+
+
 static void start_download_thread(LayerMaps * layer, Viewport * viewport, const VikCoord *ul, const VikCoord *br, int redownload_mode)
 {
 	double xzoom = layer->xmapzoom ? layer->xmapzoom : viewport->get_xmpp();
@@ -1697,7 +1843,7 @@ static void start_download_thread(LayerMaps * layer, Viewport * viewport, const 
 	TileInfo ulm, brm;
 	MapSource *map = map_sources[layer->map_index];
 
-	// Don't ever attempt download on direct access
+	/* Don't ever attempt download on direct access. */
 	if (map->is_direct_file_access()) {
 		return;
 	}
@@ -1721,15 +1867,15 @@ static void start_download_thread(LayerMaps * layer, Viewport * viewport, const 
 			char * msg = redownload_mode_message(redownload_mode, mdi->mapstoget, MAPS_LAYER_NTH_LABEL(layer->map_index));
 
 			g_object_weak_ref(G_OBJECT(mdi->layer->vl), weak_ref_cb, mdi);
-			/* launch the thread */
+			/* Launch the thread */
 			a_background_thread(BACKGROUND_POOL_REMOTE,
-					    gtk_window_from_layer(layer), /* parent window */
-					      msg,                                              /* description string */
-					      (vik_thr_func) map_download_thread,               /* function to call within thread */
-					      mdi,                                              /* pass along data */
-					      (vik_thr_free_func) mdi_free,                     /* function to free pass along data */
-					      (vik_thr_free_func) mdi_cancel_cleanup,
-					      mdi->mapstoget);
+					    gtk_window_from_layer(layer),           /* Parent window. */
+					    msg,                                    /* Description string. */
+					    (vik_thr_func) map_download_thread,     /* Function to call within thread. */
+					    mdi,                                    /* Pass along data. */
+					    (vik_thr_free_func) mdi_free,           /* Function to free pass along data. */
+					    (vik_thr_free_func) mdi_cancel_cleanup,
+					    mdi->mapstoget);
 			free(msg);
 		} else {
 			mdi_free(mdi);
@@ -1737,12 +1883,15 @@ static void start_download_thread(LayerMaps * layer, Viewport * viewport, const 
 	}
 }
 
+
+
+
 void LayerMaps::download_section_sub(VikCoord *ul, VikCoord *br, double zoom, int redownload_mode)
 {
 	TileInfo ulm, brm;
 	MapSource *map = map_sources[this->map_index];
 
-	// Don't ever attempt download on direct access
+	/* Don't ever attempt download on direct access. */
 	if (map->is_direct_file_access()) {
 		return;
 	}
@@ -1766,13 +1915,13 @@ void LayerMaps::download_section_sub(VikCoord *ul, VikCoord *br, double zoom, in
 
 		g_object_weak_ref(G_OBJECT(mdi->layer->vl), weak_ref_cb, mdi);
 
-		// launch the thread
+		/* Launch the thread. */
 		a_background_thread(BACKGROUND_POOL_REMOTE,
-				    gtk_window_from_layer(this), /* parent window */
-				    msg,                                /* description string */
-				    (vik_thr_func) map_download_thread, /* function to call within thread */
-				    mdi,                                /* pass along data */
-				    (vik_thr_free_func) mdi_free,       /* function to free pass along data */
+				    gtk_window_from_layer(this),            /* Parent window. */
+				    msg,                                    /* Description string. */
+				    (vik_thr_func) map_download_thread,     /* Function to call within thread. */
+				    mdi,                                    /* Pass along data. */
+				    (vik_thr_free_func) mdi_free,           /* Function to free pass along data. */
 				    (vik_thr_free_func) mdi_cancel_cleanup,
 				    mdi->mapstoget);
 		free(msg);
@@ -1781,8 +1930,10 @@ void LayerMaps::download_section_sub(VikCoord *ul, VikCoord *br, double zoom, in
 	}
 }
 
+
+
+
 /**
- * vik_maps_layer_download_section:
  * @ul:   Upper left coordinate of the area to be downloaded
  * @br:   Bottom right coordinate of the area to be downloaded
  * @zoom: The zoom level at which the maps are to be download
@@ -1794,20 +1945,32 @@ void LayerMaps::download_section(VikCoord * ul, VikCoord * br, double zoom)
 	this->download_section_sub(ul, br, zoom, REDOWNLOAD_NONE);
 }
 
+
+
+
 static void maps_layer_redownload_bad(LayerMaps * layer)
 {
 	start_download_thread(layer, layer->redownload_viewport, &(layer->redownload_ul), &(layer->redownload_br), REDOWNLOAD_BAD);
 }
+
+
+
 
 static void maps_layer_redownload_all(LayerMaps * layer)
 {
 	start_download_thread(layer, layer->redownload_viewport, &(layer->redownload_ul), &(layer->redownload_br), REDOWNLOAD_ALL);
 }
 
+
+
+
 static void maps_layer_redownload_new(LayerMaps * layer)
 {
 	start_download_thread(layer, layer->redownload_viewport, &(layer->redownload_ul), &(layer->redownload_br), REDOWNLOAD_NEW);
 }
+
+
+
 
 #if !GLIB_CHECK_VERSION(2,26,0)
 typedef struct stat GStatBuf;
@@ -1835,7 +1998,7 @@ static void maps_layer_tile_info(LayerMaps * layer)
 		if (map->is_mbtiles()) {
 			filename = g_strdup(layer->filename);
 #ifdef HAVE_SQLITE3_H
-			// And whether to bother going into the SQL to check it's really there or not...
+			/* And whether to bother going into the SQL to check it's really there or not... */
 			char *exists = NULL;
 			int zoom = 17 - ulm.scale;
 			if (layer->mbtiles) {
@@ -1851,7 +2014,7 @@ static void maps_layer_tile_info(LayerMaps * layer)
 			}
 
 			int flip_y = (int) pow(2, zoom)-1 - ulm.y;
-			// NB Also handles .jpg automatically due to pixbuf_new_from() support - although just print png for now.
+			/* NB Also handles .jpg automatically due to pixbuf_new_from() support - although just print png for now. */
 			source = g_strdup_printf("Source: %s (%d%s%d%s%d.%s %s)", filename, zoom, G_DIR_SEPARATOR_S, ulm.x, G_DIR_SEPARATOR_S, flip_y, "png", exists);
 			free(exists);
 #else
@@ -1893,7 +2056,7 @@ static void maps_layer_tile_info(LayerMaps * layer)
 
 	if (g_file_test(filename, G_FILE_TEST_EXISTS)) {
 		filemsg = g_strconcat("Tile File: ", filename, NULL);
-		// Get some timestamp information of the tile
+		/* Get some timestamp information of the tile. */
 		GStatBuf stat_buf;
 		if (g_stat(filename, &stat_buf) == 0) {
 			char time_buf[64];
@@ -1917,6 +2080,9 @@ static void maps_layer_tile_info(LayerMaps * layer)
 	free(source);
 	free(filename);
 }
+
+
+
 
 static bool maps_layer_download_release(Layer * _layer, GdkEventButton *event, LayerTool * tool)
 {
@@ -1942,7 +2108,7 @@ static bool maps_layer_download_release(Layer * _layer, GdkEventButton *event, L
 
 			layer->dl_tool_x = layer->dl_tool_y = -1;
 
-			if (! layer->dl_right_click_menu) {
+			if (!layer->dl_right_click_menu) {
 				GtkWidget *item;
 				layer->dl_right_click_menu = GTK_MENU (gtk_menu_new());
 
@@ -1971,6 +2137,9 @@ static bool maps_layer_download_release(Layer * _layer, GdkEventButton *event, L
 	return false;
 }
 
+
+
+
 static LayerTool * maps_layer_download_create(Window * window, Viewport * viewport)
 {
 	LayerTool * layer_tool = new LayerTool(window, viewport, LayerType::MAPS);
@@ -1993,6 +2162,9 @@ static LayerTool * maps_layer_download_create(Window * window, Viewport * viewpo
 	return layer_tool;
 }
 
+
+
+
 static bool maps_layer_download_click(Layer * _layer, GdkEventButton *event, LayerTool * tool)
 {
 	TileInfo tmp;
@@ -2003,16 +2175,21 @@ static bool maps_layer_download_click(Layer * _layer, GdkEventButton *event, Lay
 	LayerMaps * layer = (LayerMaps *) _layer;
 
 	MapSource *map = map_sources[layer->map_index];
-	if (map->get_drawmode() == tool->viewport->get_drawmode() &&
-	     map->coord_to_tile(tool->viewport->get_center(),
-				layer->xmapzoom ? layer->xmapzoom : tool->viewport->get_xmpp(),
-				layer->ymapzoom ? layer->ymapzoom : tool->viewport->get_ympp(),
-				&tmp)) {
-		layer->dl_tool_x = event->x, layer->dl_tool_y = event->y;
+	if (map->get_drawmode() == tool->viewport->get_drawmode()
+	    && map->coord_to_tile(tool->viewport->get_center(),
+				  layer->xmapzoom ? layer->xmapzoom : tool->viewport->get_xmpp(),
+				  layer->ymapzoom ? layer->ymapzoom : tool->viewport->get_ympp(),
+				  &tmp)) {
+
+		layer->dl_tool_x = event->x;
+		layer->dl_tool_y = event->y;
 		return true;
 	}
 	return false;
 }
+
+
+
 
 typedef struct {
 	LayerMaps * layer;
@@ -2035,9 +2212,9 @@ static void download_onscreen_maps(menu_array_values * values, int redownload_mo
 	viewport->screen_to_coord(viewport->get_width(), viewport->get_height(), &br);
 
 	MapSource *map = map_sources[layer->map_index];
-	if (map->get_drawmode() == vp_drawmode &&
-	    map->coord_to_tile(&ul, xzoom, yzoom, &ulm) &&
-	    map->coord_to_tile(&br, xzoom, yzoom, &brm)) {
+	if (map->get_drawmode() == vp_drawmode
+	    && map->coord_to_tile(&ul, xzoom, yzoom, &ulm)
+	    && map->coord_to_tile(&br, xzoom, yzoom, &brm)) {
 
 		start_download_thread(layer, viewport, &ul, &br, redownload_mode);
 
@@ -2052,34 +2229,47 @@ static void download_onscreen_maps(menu_array_values * values, int redownload_mo
 
 }
 
+
+
+
 static void maps_layer_download_missing_onscreen_maps(menu_array_values * values)
 {
 	download_onscreen_maps(values, REDOWNLOAD_NONE);
 }
+
+
+
 
 static void maps_layer_download_new_onscreen_maps(menu_array_values * values)
 {
 	download_onscreen_maps(values, REDOWNLOAD_NEW);
 }
 
+
+
+
 static void maps_layer_redownload_all_onscreen_maps(menu_array_values * values)
 {
 	download_onscreen_maps(values, REDOWNLOAD_ALL);
 }
 
-static void maps_layer_about(void * vml_vvp[2])
-{
-	VikLayer *vml = (VikLayer *) vml_vvp[0];
-	LayerMaps * layer = (LayerMaps *) vml->layer;
-	MapSource *map = map_sources[layer->map_index];
 
+
+
+static void maps_layer_about(menu_array_values * values)
+{
+	LayerMaps * layer = (LayerMaps *) values->layer;
+
+	MapSource * map = map_sources[layer->map_index];
 	if (map->get_license()) {
 		maps_show_license(gtk_window_from_layer(layer), map);
 	} else {
-		a_dialog_info_msg(gtk_window_from_layer(layer),
-				  map->get_label());
+		a_dialog_info_msg(gtk_window_from_layer(layer), map->get_label());
 	}
 }
+
+
+
 
 /**
  * Copied from maps_layer_download_section but without the actual download and this returns a value
@@ -2114,27 +2304,29 @@ int LayerMaps::how_many_maps(Viewport * viewport, VikCoord *ul, VikCoord *br, do
 	return rv;
 }
 
+
+
+
 /**
- * maps_dialog_zoom_between:
  * This dialog is specific to the map layer, so it's here rather than in dialog.c
  */
 bool maps_dialog_zoom_between(GtkWindow *parent,
-				char *title,
-				char *zoom_list[],
-				int default_zoom1,
-				int default_zoom2,
-				int *selected_zoom1,
-				int *selected_zoom2,
-				char *download_list[],
-				int default_download,
-				int *selected_download)
+			      char *title,
+			      char *zoom_list[],
+			      int default_zoom1,
+			      int default_zoom2,
+			      int *selected_zoom1,
+			      int *selected_zoom2,
+			      char *download_list[],
+			      int default_download,
+			      int *selected_download)
 {
 	GtkWidget *dialog = gtk_dialog_new_with_buttons(title,
-							  parent,
-							  (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
-							  GTK_STOCK_OK, GTK_RESPONSE_ACCEPT,
-							  GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT,
-							  NULL);
+							parent,
+							(GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
+							GTK_STOCK_OK, GTK_RESPONSE_ACCEPT,
+							GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT,
+							NULL);
 	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
 	GtkWidget *response_w = NULL;
 #if GTK_CHECK_VERSION (2, 20, 0)
@@ -2185,7 +2377,7 @@ bool maps_dialog_zoom_between(GtkWindow *parent,
 		return false;
 	}
 
-	// Return selected options
+	/* Return selected options. */
 	*selected_zoom1 = gtk_combo_box_get_active(GTK_COMBO_BOX(zoom_combo1));
 	*selected_zoom2 = gtk_combo_box_get_active(GTK_COMBO_BOX(zoom_combo2));
 	*selected_download = gtk_combo_box_get_active(GTK_COMBO_BOX(download_combo));
@@ -2194,7 +2386,10 @@ bool maps_dialog_zoom_between(GtkWindow *parent,
 	return true;
 }
 
-// My best guess of sensible limits
+
+
+
+/* My best guess of sensible limits. */
 #define REALLY_LARGE_AMOUNT_OF_TILES 5000
 #define CONFIRM_LARGE_AMOUNT_OF_TILES 500
 
@@ -2207,10 +2402,10 @@ static void maps_layer_download_all(menu_array_values * values)
 	LayerMaps * layer = values->layer;
 	Viewport * viewport = values->viewport;
 
-	// I don't think we should allow users to hammer the servers too much...
-	// Delibrately not allowing lowest zoom levels
-	// Still can give massive numbers to download
-	// A screen size of 1600x1200 gives around 300,000 tiles between 1..128 when none exist before !!
+	/* I don't think we should allow users to hammer the servers too much...
+	   Deliberately not allowing lowest zoom levels.
+	   Still can give massive numbers to download.
+	   A screen size of 1600x1200 gives around 300,000 tiles between 1..128 when none exist before!! */
 	char *zoom_list[] = {(char *) "1", (char *) "2", (char *) "4", (char *) "8", (char *) "16", (char *) "32", (char *) "64", (char *) "128", (char *) "256", (char *) "512", (char *) "1024", NULL };
 	double zoom_vals[] = {1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024};
 
@@ -2226,36 +2421,36 @@ static void maps_layer_download_all(menu_array_values * values)
 	}
 	default_zoom = (default_zoom == sizeof(zoom_vals)/sizeof(double)) ? sizeof(zoom_vals)/sizeof(double) - 1 : default_zoom;
 
-	// Default to only 2 zoom levels below the current one
+	/* Default to only 2 zoom levels below the current one/ */
 	if (default_zoom > 1) {
 		lower_zoom = default_zoom - 2;
 	} else {
 		lower_zoom = default_zoom;
 	}
 
-	// redownload method - needs to align with REDOWNLOAD* macro values
+	/* Redownload method - needs to align with REDOWNLOAD* macro values. */
 	char *download_list[] = { _("Missing"), _("Bad"), _("New"), _("Reload All"), NULL };
 
 
 	char *title = g_strdup_printf (("%s: %s"), layer->get_map_label(), _("Download for Zoom Levels"));
 
-	if (! maps_dialog_zoom_between(gtk_window_from_layer(layer),
-					  title,
-					  zoom_list,
-					  lower_zoom,
-					  default_zoom,
-					  &selected_zoom1,
-					  &selected_zoom2,
-					  download_list,
-					  REDOWNLOAD_NONE, // AKA Missing
-					  &selected_download_method)) {
-		// Cancelled
+	if (!maps_dialog_zoom_between(gtk_window_from_layer(layer),
+				      title,
+				      zoom_list,
+				      lower_zoom,
+				      default_zoom,
+				      &selected_zoom1,
+				      &selected_zoom2,
+				      download_list,
+				      REDOWNLOAD_NONE, /* AKA Missing. */
+				      &selected_download_method)) {
+		/* Cancelled. */
 		free(title);
 		return;
 	}
 	free(title);
 
-	// Find out new current positions
+	/* Find out new current positions. */
 	double min_lat, max_lat, min_lon, max_lon;
 	VikCoord vc_ul, vc_br;
 	viewport->get_min_max_lat_lon(&min_lat, &max_lat, &min_lon, &max_lon);
@@ -2264,9 +2459,9 @@ static void maps_layer_download_all(menu_array_values * values)
 	vik_coord_load_from_latlon(&vc_ul, viewport->get_coord_mode(), &ll_ul);
 	vik_coord_load_from_latlon(&vc_br, viewport->get_coord_mode(), &ll_br);
 
-	// Get Maps Count - call for each zoom level (in reverse)
-	// With REDOWNLOAD_NEW this is a possible maximum
-	// With REDOWNLOAD_NONE this only missing ones - however still has a server lookup per tile
+	/* Get Maps Count - call for each zoom level (in reverse).
+	   With REDOWNLOAD_NEW this is a possible maximum.
+	   With REDOWNLOAD_NONE this only missing ones - however still has a server lookup per tile. */
 	int map_count = 0;
 	for (int zz = selected_zoom2; zz >= selected_zoom1; zz--) {
 		map_count = map_count + layer->how_many_maps(viewport, &vc_ul, &vc_br, zoom_vals[zz], selected_download_method);
@@ -2274,7 +2469,7 @@ static void maps_layer_download_all(menu_array_values * values)
 
 	fprintf(stderr, "DEBUG: vikmapslayer: download request map count %d for method %d", map_count, selected_download_method);
 
-	// Absolute protection of hammering a map server
+	/* Absolute protection of hammering a map server. */
 	if (map_count > REALLY_LARGE_AMOUNT_OF_TILES) {
 		char *str = g_strdup_printf(_("You are not allowed to download more than %d tiles in one go (requested %d)"), REALLY_LARGE_AMOUNT_OF_TILES, map_count);
 		a_dialog_error_msg(gtk_window_from_layer(layer), str);
@@ -2282,29 +2477,32 @@ static void maps_layer_download_all(menu_array_values * values)
 		return;
 	}
 
-	// Confirm really want to do this
+	/* Confirm really want to do this. */
 	if (map_count > CONFIRM_LARGE_AMOUNT_OF_TILES) {
 		char *str = g_strdup_printf(_("Do you really want to download %d tiles?"), map_count);
 		bool ans = a_dialog_yes_or_no(gtk_window_from_layer(layer), str, NULL);
 		free(str);
-		if (! ans) {
+		if (!ans) {
 			return;
 		}
 	}
 
-	// Get Maps - call for each zoom level (in reverse)
+	/* Get Maps - call for each zoom level (in reverse). */
 	for (int zz = selected_zoom2; zz >= selected_zoom1; zz--) {
 		layer->download_section_sub(&vc_ul, &vc_br, zoom_vals[zz], selected_download_method);
 	}
 }
 
-/**
- *
- */
+
+
+
 static void maps_layer_flush(menu_array_values * values)
 {
 	map_cache_flush_type(map_sources[values->layer->map_index]->map_type);
 }
+
+
+
 
 void LayerMaps::add_menu_items(GtkMenu * menu, void * panel_)
 {
@@ -2318,7 +2516,7 @@ void LayerMaps::add_menu_items(GtkMenu * menu, void * panel_)
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
 	gtk_widget_show(item);
 
-	/* Now with icons */
+	/* Now with icons. */
 	item = gtk_image_menu_item_new_with_mnemonic(_("Download _Missing Onscreen Maps"));
 	gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_ADD, GTK_ICON_SIZE_MENU));
 	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(maps_layer_download_missing_onscreen_maps), &values);
@@ -2350,7 +2548,7 @@ void LayerMaps::add_menu_items(GtkMenu * menu, void * panel_)
 	gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
 	gtk_widget_show(item);
 
-	// Typical users shouldn't need to use this functionality - so debug only ATM
+	/* Typical users shouldn't need to use this functionality - so debug only ATM. */
 	if (vik_debug) {
 		item = gtk_image_menu_item_new_with_mnemonic(_("Flush Map Cache"));
 		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_REMOVE, GTK_ICON_SIZE_MENU));
@@ -2360,8 +2558,11 @@ void LayerMaps::add_menu_items(GtkMenu * menu, void * panel_)
 	}
 }
 
+
+
+
 /**
- * Enable downloading maps of the current screen area either 'new' or 'everything'
+ * Enable downloading maps of the current screen area either 'new' or 'everything'.
  */
 void LayerMaps::download(Viewport * viewport, bool only_new)
 {
@@ -2374,13 +2575,14 @@ void LayerMaps::download(Viewport * viewport, bool only_new)
 	values.viewport = viewport;
 
 	if (only_new) {
-		// Get only new maps
+		/* Get only new maps. */
 		maps_layer_download_new_onscreen_maps(&values);
 	} else {
-		// Redownload everything
+		/* Redownload everything. */
 		maps_layer_redownload_all_onscreen_maps(&values);
 	}
 }
+
 
 
 
@@ -2392,13 +2594,13 @@ void mdi_calculate_mapstoget(MapDownloadInfo * mdi, MapSource * map, TileInfo * 
 
 	for (mcoord.x = mdi->x0; mcoord.x <= mdi->xf; mcoord.x++) {
 		for (mcoord.y = mdi->y0; mcoord.y <= mdi->yf; mcoord.y++) {
-			// Only count tiles from supported areas
+			/* Only count tiles from supported areas. */
 			if (is_in_area(map, &mcoord)) {
 				get_cache_filename(mdi->cache_dir, mdi->cache_layout,
-					     map->map_type,
-					     map->get_name(),
-					     &mcoord, mdi->filename_buf, mdi->maxlen,
-					     map->get_file_extension());
+						   map->map_type,
+						   map->get_name(),
+						   &mcoord, mdi->filename_buf, mdi->maxlen,
+						   map->get_file_extension());
 
 				if (g_file_test(mdi->filename_buf, G_FILE_TEST_EXISTS) == false) {
 					mdi->mapstoget++;
@@ -2411,29 +2613,31 @@ void mdi_calculate_mapstoget(MapDownloadInfo * mdi, MapSource * map, TileInfo * 
 }
 
 
+
+
 void mdi_calculate_mapstoget_other(MapDownloadInfo * mdi, MapSource * map, TileInfo * ulm)
 {
 	TileInfo mcoord = mdi->mapcoord;
 	mcoord.z = ulm->z;
 	mcoord.scale = ulm->scale;
 
-	/* calculate how many we need */
+	/* Calculate how many we need. */
 	for (mcoord.x = mdi->x0; mcoord.x <= mdi->xf; mcoord.x++) {
 		for (mcoord.y = mdi->y0; mcoord.y <= mdi->yf; mcoord.y++) {
-			// Only count tiles from supported areas
+			/* Only count tiles from supported areas. */
 			if (is_in_area(map, &mcoord)) {
 				get_cache_filename(mdi->cache_dir, mdi->cache_layout,
-					     map->map_type,
-					     map->get_name(),
-					     &mcoord, mdi->filename_buf, mdi->maxlen,
-					     map->get_file_extension());
+						   map->map_type,
+						   map->get_name(),
+						   &mcoord, mdi->filename_buf, mdi->maxlen,
+						   map->get_file_extension());
 				if (mdi->redownload_mode == REDOWNLOAD_NEW) {
-					// Assume the worst - always a new file
-					// Absolute value would require a server lookup - but that is too slow
+					/* Assume the worst - always a new file.
+					   Absolute value would require a server lookup - but that is too slow. */
 					mdi->mapstoget++;
 				} else {
 					if (g_file_test(mdi->filename_buf, G_FILE_TEST_EXISTS) == false) {
-						// Missing
+						/* Missing. */
 						mdi->mapstoget++;
 					} else {
 						if (mdi->redownload_mode == REDOWNLOAD_BAD) {
@@ -2444,7 +2648,7 @@ void mdi_calculate_mapstoget_other(MapDownloadInfo * mdi, MapSource * map, TileI
 								mdi->mapstoget++;
 							}
 							break;
-							// Other download cases already considered or just ignored
+							/* Other download cases already considered or just ignored. */
 						}
 					}
 				}
@@ -2455,6 +2659,9 @@ void mdi_calculate_mapstoget_other(MapDownloadInfo * mdi, MapSource * map, TileI
 	return;
 }
 
+
+
+
 MapDownloadInfo * mdi_new(LayerMaps * layer, TileInfo * ulm, TileInfo * brm, bool refresh_display, int redownload_mode)
 {
 	MapDownloadInfo * mdi = (MapDownloadInfo *) malloc(sizeof(MapDownloadInfo));
@@ -2464,7 +2671,7 @@ MapDownloadInfo * mdi_new(LayerMaps * layer, TileInfo * ulm, TileInfo * brm, boo
 	mdi->mutex = vik_mutex_new();
 	mdi->refresh_display = refresh_display;
 
-	/* cache_dir and buffer for dest filename */
+	/* cache_dir and buffer for dest filename. */
 	mdi->cache_dir = g_strdup(layer->cache_dir);
 	mdi->maxlen = strlen(layer->cache_dir) + 40;
 	mdi->filename_buf = (char *) malloc(mdi->maxlen * sizeof(char));
@@ -2487,6 +2694,8 @@ MapDownloadInfo * mdi_new(LayerMaps * layer, TileInfo * ulm, TileInfo * brm, boo
 }
 
 
+
+
 char * redownload_mode_message(int redownload_mode, int mapstoget, char * label)
 {
 	char * format = NULL;
@@ -2507,62 +2716,23 @@ char * redownload_mode_message(int redownload_mode, int mapstoget, char * label)
 
 
 
-
 LayerMaps::LayerMaps()
 {
 	fprintf(stderr, "LayerMaps::LayerMaps()\n");
 
 	this->type = LayerType::MAPS;
-
 	strcpy(this->type_string, "MAPS");
-
-	map_index = 0;
-	cache_dir = NULL;
-	cache_layout = MapsCacheLayout::VIKING;
-	alpha = 0;
-
-
-	mapzoom_id = 0;
-	xmapzoom = 0;
-	ymapzoom = 0;
-
-	autodownload = 0;
-	adl_only_missing = 0;
-
-
-	last_center = NULL;
-	last_xmpp = 0;
-	last_ympp = 0;
-
-
-	/* Should this be 0 or -1? */
-	dl_tool_x = 0;
-	dl_tool_y = 0;
-
-	dl_right_click_menu = NULL;
 
 	memset(&redownload_ul, 0, sizeof (VikCoord));
 	memset(&redownload_br, 0, sizeof (VikCoord));
-
-	redownload_viewport = NULL;
-	filename = NULL;
-#ifdef HAVE_SQLITE3_H
-	mbtiles = NULL;
-#endif
 }
+
+
+
 
 LayerMaps::LayerMaps(Viewport * viewport) : LayerMaps()
 {
 	fprintf(stderr, "LayerMaps::LayerMaps(viewport)\n");
 
 	this->set_defaults(viewport);
-
-	this->dl_tool_x = this->dl_tool_y = -1;
-	this->last_center = NULL;
-	this->last_xmpp = 0.0;
-	this->last_ympp = 0.0;
-
-	this->dl_right_click_menu = NULL;
-	this->filename = NULL;
-
 }
