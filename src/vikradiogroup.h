@@ -22,15 +22,20 @@
 #ifndef _VIKING_RADIOGROUP_H
 #define _VIKING_RADIOGROUP_H
 
+#include <cstdint>
+
 #include <glib.h>
 #include <glib-object.h>
 #include <gtk/gtk.h>
-#include <stdint.h>
+
+
 
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+
 
 
 #define VIK_RADIO_GROUP_TYPE            (vik_radio_group_get_type ())
@@ -42,20 +47,28 @@ extern "C" {
 typedef struct _VikRadioGroup VikRadioGroup;
 typedef struct _VikRadioGroupClass VikRadioGroupClass;
 
-struct _VikRadioGroupClass
-{
-  GtkVBoxClass vbox_class;
+struct _VikRadioGroupClass {
+	GtkVBoxClass vbox_class;
 };
 
-GType vik_radio_group_get_type ();
+GType vik_radio_group_get_type();
 
-GtkWidget *vik_radio_group_new ( GList *options );
-void vik_radio_group_set_selected ( VikRadioGroup *vrg, uint8_t i );
-uint8_t vik_radio_group_get_selected ( VikRadioGroup *vrg );
-GtkWidget *vik_radio_group_new_static ( const char **options );
+
+
+
+GtkWidget * vik_radio_group_new(GList * options);
+void vik_radio_group_set_selected(VikRadioGroup * vrg, uint8_t i);
+uint8_t vik_radio_group_get_selected(VikRadioGroup * vrg);
+GtkWidget * vik_radio_group_new_static(char const ** options);
+
+
+
 
 #ifdef __cplusplus
 }
 #endif
+
+
+
 
 #endif

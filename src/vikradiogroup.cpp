@@ -25,140 +25,158 @@
 
 #include "vikradiogroup.h"
 
-static GObjectClass *parent_class;
 
-static void radio_group_finalize ( GObject *gob );
-static void radio_group_class_init ( VikRadioGroupClass *klass );
+
+
+
+static GObjectClass * parent_class;
+
+static void radio_group_finalize(GObject * gob);
+static void radio_group_class_init(VikRadioGroupClass * klass);
+
+
+
 
 struct _VikRadioGroup {
-  GtkVBox parent;
-  GSList *radios;
-  unsigned int options_count;
+	GtkVBox parent;
+	GSList * radios;
+	unsigned int options_count;
 };
 
-GType vik_radio_group_get_type (void)
+
+
+
+GType vik_radio_group_get_type(void)
 {
-  static GType vrg_type = 0;
+	static GType vrg_type = 0;
 
-  if (!vrg_type)
-  {
-    static const GTypeInfo vrg_info = 
-    {
-      sizeof (VikRadioGroupClass),
-      NULL, /* base_init */
-      NULL, /* base_finalize */
-      (GClassInitFunc) radio_group_class_init, /* class init */
-      NULL, /* class_finalize */
-      NULL, /* class_data */
-      sizeof (VikRadioGroup),
-      0,
-      NULL /* instance init */
-    };
-    vrg_type = g_type_register_static ( GTK_TYPE_VBOX, "VikRadioGroup", &vrg_info, (GTypeFlags) 0 );
-  }
+	if (!vrg_type) {
+		static const GTypeInfo vrg_info = {
+			sizeof (VikRadioGroupClass),
+			NULL, /* base_init */
+			NULL, /* base_finalize */
+			(GClassInitFunc) radio_group_class_init, /* class init */
+			NULL, /* class_finalize */
+			NULL, /* class_data */
+			sizeof (VikRadioGroup),
+			0,
+			NULL /* instance init */
+		};
+		vrg_type = g_type_register_static(GTK_TYPE_VBOX, "VikRadioGroup", &vrg_info, (GTypeFlags) 0);
+	}
 
-  return vrg_type;
-}
-
-static void radio_group_class_init ( VikRadioGroupClass *klass )
-{
-  /* Destructor */
-  GObjectClass *object_class;
-
-  object_class = G_OBJECT_CLASS (klass);
-
-  object_class->finalize = radio_group_finalize;
-
-  parent_class = (GObjectClass *) g_type_class_peek_parent (klass);
-}
-
-GtkWidget *vik_radio_group_new ( GList *options )
-{
-  VikRadioGroup *vrg;
-  GtkWidget *t;
-  char *label;
-  GList *option = options;
-
-  if ( ! options )
-    return NULL;
-
-  vrg = VIK_RADIO_GROUP ( g_object_new ( VIK_RADIO_GROUP_TYPE, NULL ) );
-
-  label = (char *) g_list_nth_data(options, 0);
-  t = gtk_radio_button_new_with_label ( NULL, gettext(label) );
-  gtk_toggle_button_set_active ( GTK_TOGGLE_BUTTON(t), true );
-  gtk_box_pack_start ( GTK_BOX(vrg), t, false, false, 0 );
-
-  vrg->radios = g_slist_append ( NULL, t );
-  vrg->options_count = 1;
-
-  while ( ( option = g_list_next(option) ) != NULL )
-  {
-    label = (char *) option->data;
-    t = gtk_radio_button_new_with_label_from_widget (
-            GTK_RADIO_BUTTON(vrg->radios->data), gettext(label));
-    vrg->radios = g_slist_append( vrg->radios, t );
-    gtk_box_pack_start ( GTK_BOX(vrg), GTK_WIDGET(t), false, false, 0 );
-    vrg->options_count++;
-  }
-
-  return GTK_WIDGET(vrg);
-}
-
-GtkWidget *vik_radio_group_new_static ( const char **options )
-{
-  VikRadioGroup *vrg;
-  GtkWidget *t;
-
-  if ( ! *options )
-    return NULL;
-
-  vrg = VIK_RADIO_GROUP ( g_object_new ( VIK_RADIO_GROUP_TYPE, NULL ) );
-
-  t = gtk_radio_button_new_with_label ( NULL, options[0] );
-  gtk_toggle_button_set_active ( GTK_TOGGLE_BUTTON(t), true );
-  gtk_box_pack_start ( GTK_BOX(vrg), t, false, false, 0 );
-
-  vrg->radios = g_slist_append ( NULL, t );
-  vrg->options_count = 1;
-
-  for ( options++ ; *options ; options++ )
-  {
-    t = gtk_radio_button_new_with_label_from_widget ( GTK_RADIO_BUTTON(vrg->radios->data), *options );
-    vrg->radios = g_slist_append( vrg->radios, t );
-    gtk_box_pack_start ( GTK_BOX(vrg), GTK_WIDGET(t), false, false, 0 );
-    vrg->options_count++;
-  }
-
-  return GTK_WIDGET(vrg);
+	return vrg_type;
 }
 
 
-void vik_radio_group_set_selected ( VikRadioGroup *vrg, uint8_t i )
+
+
+static void radio_group_class_init(VikRadioGroupClass * klass)
 {
-  if ( i < vrg->options_count )
-    gtk_toggle_button_set_active ( GTK_TOGGLE_BUTTON(g_slist_nth_data(vrg->radios,i)), true );
+	/* Destructor */
+	GObjectClass * object_class;
+
+	object_class = G_OBJECT_CLASS (klass);
+
+	object_class->finalize = radio_group_finalize;
+
+	parent_class = (GObjectClass *) g_type_class_peek_parent(klass);
 }
 
-uint8_t vik_radio_group_get_selected ( VikRadioGroup *vrg )
+
+
+
+GtkWidget * vik_radio_group_new(GList * options)
 {
-  uint8_t i = 0;
-  GSList *iter = vrg->radios;
-  while ( iter )
-  {
-    if ( gtk_toggle_button_get_active ( GTK_TOGGLE_BUTTON(iter->data) ) )
-      return i;
-    iter = iter->next;
-    i++;
-  }
-  return 0;
+	if (!options) {
+		return NULL;
+	}
+
+	VikRadioGroup * vrg = VIK_RADIO_GROUP (g_object_new(VIK_RADIO_GROUP_TYPE, NULL));
+
+	char * label = (char *) g_list_nth_data(options, 0);
+	GtkWidget * t = gtk_radio_button_new_with_label(NULL, gettext(label));
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(t), true);
+	gtk_box_pack_start(GTK_BOX(vrg), t, false, false, 0);
+
+	vrg->radios = g_slist_append(NULL, t);
+	vrg->options_count = 1;
+
+	GList * option = options;
+	while ((option = g_list_next(option)) != NULL) {
+		label = (char *) option->data;
+		t = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON (vrg->radios->data), gettext(label));
+		vrg->radios = g_slist_append(vrg->radios, t);
+		gtk_box_pack_start(GTK_BOX(vrg), GTK_WIDGET(t), false, false, 0);
+		vrg->options_count++;
+	}
+
+	return GTK_WIDGET(vrg);
 }
 
-static void radio_group_finalize ( GObject *gob )
+
+
+
+GtkWidget * vik_radio_group_new_static(const char ** options)
 {
-  VikRadioGroup *vrg = VIK_RADIO_GROUP ( gob );
-  if ( vrg->radios )
-    g_slist_free ( vrg->radios );
-  G_OBJECT_CLASS(parent_class)->finalize(gob);
+	if (!*options) {
+		return NULL;
+	}
+
+	VikRadioGroup * vrg = VIK_RADIO_GROUP (g_object_new(VIK_RADIO_GROUP_TYPE, NULL));
+
+	GtkWidget * t = gtk_radio_button_new_with_label(NULL, options[0]);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(t), true);
+	gtk_box_pack_start(GTK_BOX(vrg), t, false, false, 0);
+
+	vrg->radios = g_slist_append(NULL, t);
+	vrg->options_count = 1;
+
+	for (options++; *options; options++) {
+		t = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON (vrg->radios->data), *options);
+		vrg->radios = g_slist_append(vrg->radios, t);
+		gtk_box_pack_start(GTK_BOX(vrg), GTK_WIDGET(t), false, false, 0);
+		vrg->options_count++;
+	}
+
+	return GTK_WIDGET(vrg);
 }
 
+
+
+
+void vik_radio_group_set_selected(VikRadioGroup * vrg, uint8_t i)
+{
+	if (i < vrg->options_count) {
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (g_slist_nth_data(vrg->radios, i)), true);
+	}
+}
+
+
+
+
+uint8_t vik_radio_group_get_selected(VikRadioGroup * vrg)
+{
+	uint8_t i = 0;
+	GSList * iter = vrg->radios;
+	while (iter) {
+		if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON(iter->data))) {
+			return i;
+		}
+		iter = iter->next;
+		i++;
+	}
+	return 0;
+}
+
+
+
+
+static void radio_group_finalize(GObject * gob)
+{
+	VikRadioGroup * vrg = VIK_RADIO_GROUP (gob);
+	if (vrg->radios) {
+		g_slist_free(vrg->radios);
+	}
+	G_OBJECT_CLASS(parent_class)->finalize(gob);
+}
