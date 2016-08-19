@@ -35,7 +35,7 @@ using namespace SlavGPS;
 
 
 /* initialisation */
-void geonames_init()
+void SlavGPS::geonames_init()
 {
 	/* Goto */
 

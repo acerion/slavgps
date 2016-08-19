@@ -164,7 +164,7 @@ static bool datasource_geotag_process(LayerTRW * trw, ProcessOptions * po, Babel
 		if (wp) {
 			// Create name if geotag method didn't return one
 			if (!name) {
-				name = g_strdup(a_file_basename (filename));
+				name = strdup(file_basename(filename));
 			}
 			trw->filein_add_waypoint(name, wp);
 			free(name);

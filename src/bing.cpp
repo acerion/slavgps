@@ -32,20 +32,29 @@
 #include "vikexttools.h"
 #include "map_ids.h"
 
+
+
+
 using namespace SlavGPS;
+
+
+
 
 /** API key registered by Guilhem Bonnefille */
 #define API_KEY "AqsTAipaBBpKLXhcaGgP8kceYukatmtDLS1x0CXEhRZnpl1RELF9hlI8j4mNIkrE"
 
-/* initialisation */
-void bing_init () {
-	VikMapSource *bing_aerial = VIK_MAP_SOURCE
-	  (bing_map_source_new_with_id (MAP_ID_BING_AERIAL, _("Bing Aerial"), API_KEY));
 
-	maps_layer_register_map_source (bing_aerial);
 
-	// Allow opening web location
+
+/* Initialization. */
+void SlavGPS::bing_init()
+{
+	MapSource * bing_aerial = (MapSource *) bing_map_source_new_with_id(MAP_ID_BING_AERIAL, _("Bing Aerial"), API_KEY);
+
+	maps_layer_register_map_source(bing_aerial);
+
+	/* Allow opening web location. */
 	WebToolCenter * web_tool = WebToolCenter(_("Bing"), "http://www.bing.com/maps/?v=2&cp=%s~%s&lvl=%d");
 	vik_ext_tools_register(web_tool);
-	//g_object_unref ( webtool );
+	// g_object_unref(webtool);
 }

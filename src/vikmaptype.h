@@ -16,14 +16,11 @@
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _VIK_MAP_TYPE_H_
-#define _VIK_MAP_TYPE_H_
-
-#include <glib-object.h>
+#ifndef _SG_MAP_TYPE_H_
+#define _SG_MAP_TYPE_H_
 
 #include "vikmapsource.h"
 #include "vikmapslayer_compat.h"
-
 
 
 
@@ -33,16 +30,11 @@ namespace SlavGPS {
 
 
 
-
 	class VikMapType : public MapSource {
 	public:
 		VikMapType();
-		VikMapType(VikMapsLayer_MapType map_type, const char *label);
+		VikMapType(VikMapsLayer_MapType map_type, char const * label);
 		~VikMapType();
-
-		char *label;
-		char *name;
-		VikMapsLayer_MapType map_type;
 
 
 		const char * get_name();
@@ -54,15 +46,17 @@ namespace SlavGPS {
 		VikViewportDrawMode get_drawmode();
 
 
+		char * label = NULL;
+		char * name = NULL;
+		VikMapsLayer_MapType map_type;
 	};
 
 
 
 
-} /* namespace */
+} /* namespace SlavGPS */
 
 
 
 
-
-#endif /* _VIK_MAP_TYPE_H_ */
+#endif /* #ifndef _SG_MAP_TYPE_H_ */

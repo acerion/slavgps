@@ -148,7 +148,7 @@ static bool datasource_geojson_process(LayerTRW * trw, ProcessOptions * process_
 	while (cur_file) {
 		char * filename = (char *) cur_file->data;
 
-		char * gpx_filename = a_geojson_import_to_gpx(filename);
+		char * gpx_filename = geojson_import_to_gpx(filename);
 		if (gpx_filename) {
 			// Important that this process is run in the main thread
 			adw->window->open_file(gpx_filename, false);

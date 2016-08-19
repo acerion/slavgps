@@ -22,7 +22,13 @@
 #include "coords.h"
 #include "vikcoord.h"
 
-/* all coord operations MUST BE ABSTRACTED!!! */
+
+
+
+/* All coord operations MUST BE ABSTRACTED!!! */
+
+
+
 
 void vik_coord_convert(VikCoord * coord, VikCoordMode dest_mode)
 {
@@ -39,6 +45,9 @@ void vik_coord_convert(VikCoord * coord, VikCoordMode dest_mode)
 	}
 }
 
+
+
+
 void vik_coord_copy_convert(const VikCoord * coord, VikCoordMode dest_mode, VikCoord * dest)
 {
 	if (coord->mode == dest_mode) {
@@ -53,13 +62,19 @@ void vik_coord_copy_convert(const VikCoord * coord, VikCoordMode dest_mode, VikC
 	}
 }
 
+
+
+
 static double vik_coord_diff_safe(const VikCoord * c1, const VikCoord * c2)
 {
 	struct LatLon a, b;
 	vik_coord_to_latlon(c1, &a);
 	vik_coord_to_latlon(c2, &b);
-	return a_coords_latlon_diff (&a, &b);
+	return a_coords_latlon_diff(&a, &b);
 }
+
+
+
 
 double vik_coord_diff(const VikCoord * c1, const VikCoord * c2)
 {
@@ -74,6 +89,9 @@ double vik_coord_diff(const VikCoord * c1, const VikCoord * c2)
 	}
 }
 
+
+
+
 void vik_coord_load_from_latlon(VikCoord * coord, VikCoordMode mode, const struct LatLon * ll)
 {
 	if (mode == VIK_COORD_LATLON) {
@@ -83,6 +101,9 @@ void vik_coord_load_from_latlon(VikCoord * coord, VikCoordMode mode, const struc
 	}
 	coord->mode = mode;
 }
+
+
+
 
 void vik_coord_load_from_utm(VikCoord * coord, VikCoordMode mode, const struct UTM * utm)
 {
@@ -94,14 +115,20 @@ void vik_coord_load_from_utm(VikCoord * coord, VikCoordMode mode, const struct U
 	coord->mode = mode;
 }
 
+
+
+
 void vik_coord_to_latlon(const VikCoord * coord, struct LatLon * dest)
 {
 	if (coord->mode == VIK_COORD_LATLON) {
-		*dest = *((const struct LatLon *)coord);
+		*dest = *((const struct LatLon *) coord);
 	} else {
 		a_coords_utm_to_latlon((const struct UTM *) coord, dest);
 	}
 }
+
+
+
 
 void vik_coord_to_utm(const VikCoord * coord, struct UTM * dest)
 {
@@ -111,6 +138,9 @@ void vik_coord_to_utm(const VikCoord * coord, struct UTM * dest)
 		a_coords_latlon_to_utm((const struct LatLon *) coord, dest);
 	}
 }
+
+
+
 
 bool vik_coord_equals(const VikCoord * coord1, const VikCoord * coord2)
 {
@@ -125,6 +155,9 @@ bool vik_coord_equals(const VikCoord * coord1, const VikCoord * coord2)
 	}
 }
 
+
+
+
 static void get_north_west(struct LatLon * center, struct LatLon * dist, struct LatLon * nw)
 {
 	nw->lat = center->lat + dist->lat;
@@ -133,11 +166,14 @@ static void get_north_west(struct LatLon * center, struct LatLon * dist, struct 
 		nw->lon += 360.0;
 	}
 
-	if (nw->lat > 90.0) {  /* over north pole */
+	if (nw->lat > 90.0) {  /* Over north pole. */
 		nw->lat = 180 - nw->lat;
 		nw->lon = nw->lon - 180;
 	}
 }
+
+
+
 
 static void get_south_east(struct LatLon * center, struct LatLon * dist, struct LatLon * se)
 {
@@ -147,28 +183,35 @@ static void get_south_east(struct LatLon * center, struct LatLon * dist, struct 
 		se->lon -= 360.0;
 	}
 
-	if (se->lat < -90.0) {  /* over south pole */
+	if (se->lat < -90.0) {  /* Over south pole. */
 		se->lat += 180;
 		se->lon = se->lon - 180;
 	}
 }
+
+
+
 
 void vik_coord_set_area(const VikCoord * coord, const struct LatLon * wh, VikCoord * tl, VikCoord * br)
 {
 	struct LatLon center, nw, se;
 	struct LatLon dist;
 
-	dist.lat = wh->lat/2;
-	dist.lon = wh->lon/2;
+	dist.lat = wh->lat / 2;
+	dist.lon = wh->lon / 2;
 
 	vik_coord_to_latlon(coord, &center);
 	get_north_west(&center, &dist, &nw);
 	get_south_east(&center, &dist, &se);
 
-	*((struct LatLon *)tl) = nw;
-	*((struct LatLon *)br) = se;
-	tl->mode = br->mode = VIK_COORD_LATLON;
+	*((struct LatLon *) tl) = nw;
+	*((struct LatLon *) br) = se;
+	tl->mode = VIK_COORD_LATLON;
+	br->mode = VIK_COORD_LATLON;
 }
+
+
+
 
 bool vik_coord_inside(const VikCoord * coord, const VikCoord * tl, const VikCoord * br)
 {

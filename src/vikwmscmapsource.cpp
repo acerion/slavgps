@@ -33,14 +33,18 @@
 #include <math.h>
 #endif
 
-#include <stdlib.h>
-#include <assert.h>
+#include <cstdlib>
+#include <cassert>
 
 #include "globals.h"
 #include "vikwmscmapsource.h"
 #include "maputils.h"
 
+
+
+
 using namespace SlavGPS;
+
 
 
 
@@ -51,11 +55,17 @@ MapSourceWmsc::MapSourceWmsc()
 	fprintf(stderr, "MapSourceWmsc constructor end\n");
 }
 
+
+
+
 MapSourceWmsc::~MapSourceWmsc()
 {
 	fprintf(stderr, "MapSourceWmsc destructor start\n");
 	fprintf(stderr, "MapSourceWmsc destructor end\n");
 }
+
+
+
 
 MapSourceWmsc::MapSourceWmsc(MapTypeID map_type_, char const * label_, char const * hostname_, char const * url_)
 {
@@ -65,25 +75,40 @@ MapSourceWmsc::MapSourceWmsc(MapTypeID map_type_, char const * label_, char cons
 	server_path_format = g_strdup(url_);
 }
 
+
+
+
 bool MapSourceWmsc::is_direct_file_access()
 {
 	return false;
 }
+
+
+
 
 bool MapSourceWmsc::is_mbtiles()
 {
 	return false;
 }
 
+
+
+
 bool MapSourceWmsc::is_osm_meta_tiles()
 {
 	return false;
 }
 
+
+
+
 bool MapSourceWmsc::supports_download_only_new()
 {
 	return download_options.check_file_server_time;
 }
+
+
+
 
 bool MapSourceWmsc::coord_to_tile(const VikCoord * src, double xzoom, double yzoom, TileInfo * dest)
 {
@@ -98,19 +123,21 @@ bool MapSourceWmsc::coord_to_tile(const VikCoord * src, double xzoom, double yzo
 		return false;
 	}
 
-	/* Note : VIK_GZ(17) / xzoom / 2 = number of tile on Y axis */
+	/* Note: VIK_GZ(17) / xzoom / 2 = number of tile on Y axis. */
 	fprintf(stderr, "DEBUG: %s: xzoom=%f yzoom=%f -> %f\n", __FUNCTION__,
 		xzoom, yzoom, VIK_GZ(17) / xzoom / 2);
 	dest->x = floor((src->east_west + 180) / 180 * VIK_GZ(17) / xzoom / 2);
 	/* We should restore logic of viking:
-	 * tile index on Y axis follow a screen logic (top -> down)
-	 */
+	   tile index on Y axis follow a screen logic (top -> down). */
 	dest->y = floor((180 - (src->north_south + 90)) / 180 * VIK_GZ(17) / xzoom / 2);
 	dest->z = 0;
 	fprintf(stderr, "DEBUG: %s: %f,%f -> %d,%d\n", __FUNCTION__,
 		src->east_west, src->north_south, dest->x, dest->y);
 	return true;
 }
+
+
+
 
 void MapSourceWmsc::tile_to_center_coord(TileInfo *src, VikCoord *dest)
 {
@@ -123,12 +150,14 @@ void MapSourceWmsc::tile_to_center_coord(TileInfo *src, VikCoord *dest)
 	dest->mode = VIK_COORD_LATLON;
 	dest->east_west = (src->x+0.5) * 180 / VIK_GZ(17) * socalled_mpp * 2 - 180;
 	/* We should restore logic of viking:
-	 * tile index on Y axis follow a screen logic (top -> down)
-	 */
+	   tile index on Y axis follow a screen logic (top -> down). */
 	dest->north_south = -((src->y+0.5) * 180 / VIK_GZ(17) * socalled_mpp * 2 - 90);
 	fprintf(stderr, "DEBUG: %s: %d,%d -> %f,%f\n", __FUNCTION__,
 		src->x, src->y, dest->east_west, dest->north_south);
 }
+
+
+
 
 char * MapSourceWmsc::get_server_path(TileInfo *src)
 {
@@ -141,8 +170,7 @@ char * MapSourceWmsc::get_server_path(TileInfo *src)
 	double minx = (double)src->x * 180 / VIK_GZ(17) * socalled_mpp * 2 - 180;
 	double maxx = (double)(src->x + 1) * 180 / VIK_GZ(17) * socalled_mpp * 2 - 180;
 	/* We should restore logic of viking:
-     * tile index on Y axis follow a screen logic (top -> down)
-     */
+	   tile index on Y axis follow a screen logic (top -> down). */
 	double miny = -((double)(src->y + 1) * 180 / VIK_GZ(17) * socalled_mpp * 2 - 90);
 	double maxy = -((double)(src->y) * 180 / VIK_GZ(17) * socalled_mpp * 2 - 90);
 
@@ -151,10 +179,10 @@ char * MapSourceWmsc::get_server_path(TileInfo *src)
 	char sminy[G_ASCII_DTOSTR_BUF_SIZE];
 	char smaxy[G_ASCII_DTOSTR_BUF_SIZE];
 
-	g_ascii_dtostr (sminx, G_ASCII_DTOSTR_BUF_SIZE, minx);
-	g_ascii_dtostr (smaxx, G_ASCII_DTOSTR_BUF_SIZE, maxx);
-	g_ascii_dtostr (sminy, G_ASCII_DTOSTR_BUF_SIZE, miny);
-	g_ascii_dtostr (smaxy, G_ASCII_DTOSTR_BUF_SIZE, maxy);
+	g_ascii_dtostr(sminx, G_ASCII_DTOSTR_BUF_SIZE, minx);
+	g_ascii_dtostr(smaxx, G_ASCII_DTOSTR_BUF_SIZE, maxx);
+	g_ascii_dtostr(sminy, G_ASCII_DTOSTR_BUF_SIZE, miny);
+	g_ascii_dtostr(smaxy, G_ASCII_DTOSTR_BUF_SIZE, maxy);
 
 	char * uri = g_strdup_printf(server_path_format, sminx, sminy, smaxx, smaxy);
 

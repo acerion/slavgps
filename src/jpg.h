@@ -19,23 +19,31 @@
  *
  */
 
-#ifndef _VIKING_JPG_H
-#define _VIKING_JPG_H
+#ifndef _SG_JPG_H_
+#define _SG_JPG_H_
 
-#include <stdint.h>
+
+
 
 #include "vikaggregatelayer.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
-bool a_jpg_magic_check(char const * filename);
-bool a_jpg_load_file(SlavGPS::LayerAggregate * top, char const * filename, SlavGPS::Viewport * viewport);
 
-#ifdef __cplusplus
-}
-#endif
+namespace SlavGPS {
 
-#endif
+
+
+
+	bool jpg_magic_check(char const * filename);
+	bool jpg_load_file(LayerAggregate * top, char const * filename, Viewport * viewport);
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
+#endif /* #ifndef _SG_JPG_H_ */

@@ -478,7 +478,7 @@ static void vik_trwlayer_class_init(VikTrwLayerClass *klass)
 		free(cmd);
 	}
 
-	if (g_find_program_in_path(a_geojson_program_export())) {
+	if (g_find_program_in_path(geojson_program_export())) {
 		have_geojson_export = true;
 	}
 

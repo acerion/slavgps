@@ -735,7 +735,7 @@ void vu_setup_lat_lon_tz_lookup()
 	kd = kd_create(2);
 
 	// Look in the directories of data path
-	char **data_dirs = a_get_viking_data_path();
+	char **data_dirs = get_viking_data_path();
 	unsigned int loaded = 0;
 	// Process directories in reverse order for priority
 	unsigned int n_data_dirs = g_strv_length(data_dirs);

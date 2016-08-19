@@ -451,7 +451,7 @@ bool DEM::read(char const * file)
 		return false;
 	}
 
-	const char * basename = a_file_basename(file);
+	const char * basename = file_basename(file);
 
 	if (is_strm_hgt(basename)) {
 		return this->read_srtm_hgt(file, basename, is_zip_file(basename));

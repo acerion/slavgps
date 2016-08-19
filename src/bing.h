@@ -19,19 +19,25 @@
  *
  */
 
-#ifndef __VIKING_BING_H
-#define __VIKING_BING_H
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#ifndef _SG_BING_H_
+#define _SG_BING_H_
 
 
-void bing_init ();
-
-#ifdef __cplusplus
-}
-#endif
 
 
-#endif
+namespace SlavGPS {
+
+
+
+
+	void bing_init();
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
+#endif /* #ifndef _SG_BING_H_ */

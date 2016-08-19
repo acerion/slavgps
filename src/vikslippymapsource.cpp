@@ -45,11 +45,14 @@
 #endif
 
 #include <glib.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdlib>
+#include <cstring>
 
 #include "vikslippymapsource.h"
 #include "maputils.h"
+
+
+
 
 using namespace SlavGPS;
 
@@ -60,6 +63,9 @@ MapSourceSlippy::MapSourceSlippy()
 {
 	fprintf(stderr, "MapSourceSlippy constructor called\n");
 }
+
+
+
 
 MapSourceSlippy & MapSourceSlippy::operator=(MapSourceSlippy map)
 {
@@ -101,6 +107,9 @@ MapSourceSlippy & MapSourceSlippy::operator=(MapSourceSlippy map)
         return *this;
 }
 
+
+
+
 MapSourceSlippy::MapSourceSlippy(MapTypeID map_type_, char const * label_, char const * hostname_, char const * path_format_)
 {
 	map_type = map_type_;
@@ -110,30 +119,48 @@ MapSourceSlippy::MapSourceSlippy(MapTypeID map_type_, char const * label_, char 
 	server_path_format = g_strdup(path_format_);
 }
 
+
+
+
 MapSourceSlippy::~MapSourceSlippy()
 {
 	fprintf(stderr, "MapSourceSlippy destructor called\n");
 }
+
+
+
 
 bool MapSourceSlippy::is_direct_file_access()
 {
 	return is_direct_file_access_flag;
 }
 
+
+
+
 bool MapSourceSlippy::is_mbtiles()
 {
 	return is_mbtiles_flag;
 }
+
+
+
 
 bool MapSourceSlippy::is_osm_meta_tiles()
 {
 	return is_osm_meta_tiles_flag;
 }
 
+
+
+
 bool MapSourceSlippy::supports_download_only_new()
 {
 	return download_options.check_file_server_time || download_options.use_etag;
 }
+
+
+
 
 bool MapSourceSlippy::coord_to_tile(const VikCoord * src, double xzoom, double yzoom, TileInfo * dest)
 {
@@ -141,21 +168,30 @@ bool MapSourceSlippy::coord_to_tile(const VikCoord * src, double xzoom, double y
 	return result;
 }
 
+
+
+
 void MapSourceSlippy::tile_to_center_coord(TileInfo *src, VikCoord *dest)
 {
 	map_utils_iTMS_to_center_vikcoord(src, dest);
 }
 
+
+
+
 char * MapSourceSlippy::get_server_path(TileInfo * src)
 {
 	if (switch_xy) {
-		// 'ARC GIS' Tile Server layout ordering
+		/* 'ARC GIS' Tile Server layout ordering. */
 		return g_strdup_printf(server_path_format, 17 - src->scale, src->y, src->x);
 	} else {
-		// (Default) Standard OSM Tile Server layout ordering
+		/* (Default) Standard OSM Tile Server layout ordering. */
 		return g_strdup_printf(server_path_format, 17 - src->scale, src->x, src->y);
 	}
 }
+
+
+
 
 DownloadResult_t MapSourceSlippy::download(TileInfo * src, const char * dest_fn, void * handle)
 {

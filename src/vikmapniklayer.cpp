@@ -247,7 +247,7 @@ void vik_mapnik_layer_post_init(void)
 
 	GStatBuf gsb;
 	// Similar to mod_tile method to mark DB has been imported/significantly changed to cause a rerendering of all tiles
-	char *import_time_file = g_strconcat(a_get_viking_dir(), G_DIR_SEPARATOR_S, "planet-import-complete", NULL);
+	char *import_time_file = g_strconcat(get_viking_dir(), G_DIR_SEPARATOR_S, "planet-import-complete", NULL);
 	if (g_stat(import_time_file, &gsb) == 0) {
 		// Only update if newer
 		if (planet_import_time > gsb.st_mtime) {

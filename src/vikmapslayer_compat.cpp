@@ -23,23 +23,23 @@
  *
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#include <assert.h>
+#include <cassert>
 
 #include "vikmapslayer.h"
 #include "vikmapslayer_compat.h"
 #include "vikmaptype.h"
 
 
+
+
 using namespace SlavGPS;
 
 
-void maps_layer_register_type ( const char *label, unsigned int id, VikMapsLayer_MapType *map_type )
+
+
+void SlavGPS::maps_layer_register_type(char const * label, unsigned int id, VikMapsLayer_MapType * map_type)
 {
-    assert (id == map_type->uniq_id);
-    VikMapType * object = new VikMapType(*map_type, label);
-    maps_layer_register_map_source((MapSource *) object);
+	assert (id == map_type->uniq_id);
+	VikMapType * object = new VikMapType(*map_type, label);
+	maps_layer_register_map_source((MapSource *) object);
 }

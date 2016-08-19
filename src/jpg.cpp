@@ -22,44 +22,51 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
 #include "jpg.h"
 #include "file.h"
 #include "fileutils.h"
 #include "viktrwlayer.h"
 #include "vikwindow.h"
-#include "viklayerspanel.h"
 #include "globals.h"
 #ifdef VIK_CONFIG_GEOTAG
 #include "geotag_exif.h"
 #endif
+
 #ifdef HAVE_MAGIC_H
 #include <magic.h>
 #endif
 
-#include <stdlib.h>
+#include <cstdlib>
+#include <cstring>
+
+
+
 
 using namespace SlavGPS;
 
+
+
+
 /**
- * a_jpg_magic_check:
  * @filename: The file
  *
  * Returns: Whether the file is a JPG.
- *  Uses Magic library if available to determine the jpgness.
- *  Otherwise uses a rudimentary extension name check.
+ * Uses Magic library if available to determine the jpgness.
+ * Otherwise uses a rudimentary extension name check.
  */
-bool a_jpg_magic_check(char const * filename)
+bool SlavGPS::jpg_magic_check(char const * filename)
 {
 	bool is_jpg = false;
 #ifdef HAVE_MAGIC_H
 	magic_t myt = magic_open(MAGIC_CONTINUE|MAGIC_ERROR|MAGIC_MIME);
 	if (myt) {
 #ifdef WINDOWS
-		// We have to 'package' the magic database ourselves :(
-		//  --> %PROGRAM FILES%\Viking\magic.mgc
+		/* We have to 'package' the magic database ourselves :(
+		   --> %PROGRAM FILES%\Viking\magic.mgc */
 		magic_load(myt, "magic.mgc");
 #else
-		// Use system default
+		/* Use system default. */
 		magic_load(myt, NULL);
 #endif
 		char const * magic = magic_file(myt, filename);
@@ -79,31 +86,34 @@ bool a_jpg_magic_check(char const * filename)
 	return is_jpg;
 }
 
+
+
+
 /**
- * Load a single JPG into a Trackwaypoint Layer as a waypoint
+ * Load a single JPG into a Trackwaypoint Layer as a waypoint.
  *
  * @top:      The Aggregate layer that a new TRW layer may be created in
  * @filename: The JPG filename
  * @viewport: The viewport
  *
- * Returns: Whether the loading was a success or not
+ * Returns: Whether the loading was a success or not.
  *
  * If the JPG has geotag information then the waypoint will be created with the appropriate position.
- *  Otherwise the waypoint will be positioned at the current screen center.
+ * Otherwise the waypoint will be positioned at the current screen center.
  * If a TRW layer is already selected the waypoint will be created in that layer.
  */
-bool a_jpg_load_file(LayerAggregate * top, char const * filename, Viewport * viewport)
+bool SlavGPS::jpg_load_file(LayerAggregate * top, char const * filename, Viewport * viewport)
 {
 	bool auto_zoom = true;
-	// Auto load into TrackWaypoint layer if one is selected
+	/* Auto load into TrackWaypoint layer if one is selected. */
 	Layer * trw = window_from_layer(top)->get_layers_panel()->get_selected();
 
 	bool create_layer = false;
 	if (trw == NULL || trw->type != LayerType::TRW) {
-		// Create layer if necessary
+		/* Create layer if necessary. */
 
 		trw = (LayerTRW *) new LayerTRW(viewport);
-		trw->rename(a_file_basename(filename));
+		trw->rename(file_basename(filename));
 		create_layer = true;
 	}
 
@@ -113,23 +123,23 @@ bool a_jpg_load_file(LayerAggregate * top, char const * filename, Viewport * vie
 	wp = a_geotag_create_waypoint_from_file(filename, viewport->get_coord_mode(), &name);
 #endif
 	if (wp) {
-		// Create name if geotag method didn't return one
+		/* Create name if geotag method didn't return one. */
 		if (!name) {
-			name = g_strdup(a_file_basename(filename));
+			name = strdup(file_basename(filename));
 		}
 		((LayerTRW *) trw)->filein_add_waypoint(name, wp);
 		free(name);
 	} else {
 		wp = new Waypoint();
 		wp->visible = true;
-		((LayerTRW *) trw)->filein_add_waypoint((char *) a_file_basename(filename), wp);
+		((LayerTRW *) trw)->filein_add_waypoint((char *) file_basename(filename), wp);
 		wp->set_image(filename);
-		// Simply set position to the current center
+		/* Simply set position to the current center. */
 		wp->coord = *(viewport->get_center());
 		auto_zoom = false;
 	}
 
-	// Complete the setup
+	/* Complete the setup. */
 	trw->post_read(viewport, true);
 	if (create_layer) {
 		top->add_layer(trw, false);
@@ -139,6 +149,6 @@ bool a_jpg_load_file(LayerAggregate * top, char const * filename, Viewport * vie
 		((LayerTRW *) trw)->auto_set_view(viewport);
 	}
 
-	// ATM This routine can't fail
+	/* ATM This routine can't fail. */
 	return true;
 }

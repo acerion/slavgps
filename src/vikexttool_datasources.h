@@ -29,9 +29,7 @@
 
 
 
-
 namespace SlavGPS {
-
 
 
 
@@ -44,9 +42,7 @@ namespace SlavGPS {
 
 
 
-
 } /* namespace SlavGPS */
-
 
 
 

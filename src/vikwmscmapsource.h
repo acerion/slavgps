@@ -16,14 +16,13 @@
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _SLAVGPS_MAP_SOURCE_WMSC_H
-#define _SLAVGPS_MAP_SOURCE_WMSC_H
+#ifndef _SG_MAP_SOURCE_WMSC_H_
+#define _SG_MAP_SOURCE_WMSC_H_
 
 
 
 
-
-#include <stdint.h>
+#include <cstdint>
 
 #include "vikcoord.h"
 #include "mapcoord.h"
@@ -32,9 +31,7 @@
 
 
 
-
 namespace SlavGPS {
-
 
 
 
@@ -61,11 +58,9 @@ namespace SlavGPS {
 
 
 
-
-} /* namespace */
-
+} /* namespace SlavGPS */
 
 
 
 
-#endif /* _SLAVGPS_MAP_SOURCE_WMSC_H */
+#endif /* _SG_MAP_SOURCE_WMSC_H_ */

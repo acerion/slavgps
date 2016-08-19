@@ -43,6 +43,14 @@
 #include <string.h>
 #include <ctype.h>
 
+
+
+
+using namespace SlavGPS;
+
+
+
+
 void a_dialog_msg(GtkWindow *parent, int type, const char *info, const char *extra)
 {
 	GtkWidget *msgbox = gtk_message_dialog_new(parent, GTK_DIALOG_DESTROY_WITH_PARENT, (GtkMessageType) type, GTK_BUTTONS_OK, info, extra);

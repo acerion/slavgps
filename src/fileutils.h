@@ -18,19 +18,25 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-#ifndef __FILE_UTILS_H
-#define __FILE_UTILS_H
+#ifndef _SG_FILE_UTILS_H_
+#define _SG_FILE_UTILS_H_
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
-char const * a_file_basename(char const * filename);
+namespace SlavGPS {
 
-#ifdef __cplusplus
-}
-#endif
 
-#endif
+
+
+	char const * file_basename(char const * filename);
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
+#endif /* #ifndef _SG_FILE_UTILS_H_ */

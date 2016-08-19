@@ -22,8 +22,8 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include <string.h>
-#include <stdlib.h>
+#include <cstring>
+#include <cstdlib>
 
 #include <glib/gprintf.h>
 #include <glib/gi18n.h>
@@ -32,6 +32,7 @@
 #include "babel.h"
 #include "gpx.h"
 #include "acquire.h"
+
 
 
 
@@ -45,10 +46,16 @@ using namespace SlavGPS;
  */
 #define DOWNLOAD_URL_FMT "api.openstreetmap.org/api/0.6/trackpoints?bbox=%s,%s,%s,%s&page=%d"
 
+
+
+
 typedef struct {
 	GtkWidget * page_number;
 	Viewport * viewport;
 } datasource_osm_widgets_t;
+
+
+
 
 static double last_page_number = 0;
 
@@ -56,6 +63,9 @@ static void * datasource_osm_init(acq_vik_t * avt);
 static void datasource_osm_add_setup_widgets(GtkWidget * dialog, Viewport * viewport, void * user_data);
 static void datasource_osm_get_process_options(datasource_osm_widgets_t * widgets, ProcessOptions * po, DownloadFileOptions * options, char const * notused1, char const * notused2);
 static void datasource_osm_cleanup(void * data);
+
+
+
 
 VikDataSourceInterface vik_datasource_osm_interface = {
 	N_("OSM traces"),
@@ -82,18 +92,24 @@ VikDataSourceInterface vik_datasource_osm_interface = {
 	0
 };
 
+
+
+
 static void * datasource_osm_init(acq_vik_t * avt)
 {
 	datasource_osm_widgets_t *widgets = (datasource_osm_widgets_t *) malloc(sizeof (datasource_osm_widgets_t));
-	/* Keep reference to viewport */
+	/* Keep reference to viewport. */
 	widgets->viewport = avt->viewport;
 	return widgets;
 }
 
+
+
+
 static void datasource_osm_add_setup_widgets(GtkWidget * dialog, Viewport * viewport, void * user_data)
 {
-	datasource_osm_widgets_t *widgets = (datasource_osm_widgets_t *)user_data;
-	GtkWidget *page_number_label;
+	datasource_osm_widgets_t * widgets = (datasource_osm_widgets_t *) user_data;
+	GtkWidget * page_number_label;
 	page_number_label = gtk_label_new (_("Page number:"));
 	widgets->page_number = gtk_spin_button_new_with_range(0, 100, 1);
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(widgets->page_number), last_page_number);
@@ -105,6 +121,9 @@ static void datasource_osm_add_setup_widgets(GtkWidget * dialog, Viewport * view
 	gtk_widget_show_all(dialog);
 }
 
+
+
+
 static void datasource_osm_get_process_options(datasource_osm_widgets_t * widgets, ProcessOptions * po, DownloadFileOptions * options, char const * notused1, char const * notused2)
 {
 	int page = 0;
@@ -112,14 +131,17 @@ static void datasource_osm_get_process_options(datasource_osm_widgets_t * widget
 	LatLonBBoxStrings bbox_strings;
 	widgets->viewport->get_bbox_strings(&bbox_strings);
 
-	/* Retrieve the specified page number */
+	/* Retrieve the specified page number. */
 	last_page_number = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widgets->page_number));
 	page = last_page_number;
 
-	// NB Download is of GPX type
+	/* NB Download is of GPX type. */
 	po->url = g_strdup_printf(DOWNLOAD_URL_FMT, bbox_strings.sminlon, bbox_strings.sminlat, bbox_strings.smaxlon, bbox_strings.smaxlat, page);
-	options = NULL; // i.e. use the default download settings
+	options = NULL; /* i.e. use the default download settings. */
 }
+
+
+
 
 static void datasource_osm_cleanup(void * data)
 {

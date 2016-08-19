@@ -61,8 +61,8 @@ void vik_trw_layer_export(LayerTRW * layer, char const * title, char const * def
 
 	while (gtk_dialog_run(GTK_DIALOG(file_selector)) == GTK_RESPONSE_ACCEPT) {
 		fn = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER(file_selector));
-		if (g_file_test (fn, G_FILE_TEST_EXISTS) == false ||
-		    a_dialog_yes_or_no (GTK_WINDOW(file_selector), _("The file \"%s\" exists, do you wish to overwrite it?"), a_file_basename (fn))) {
+		if (g_file_test (fn, G_FILE_TEST_EXISTS) == false
+		    || a_dialog_yes_or_no(GTK_WINDOW(file_selector), _("The file \"%s\" exists, do you wish to overwrite it?"), file_basename (fn))) {
 
 			free(last_folder_uri);
 			last_folder_uri = gtk_file_chooser_get_current_folder_uri(GTK_FILE_CHOOSER(file_selector));
@@ -174,8 +174,8 @@ void vik_trw_layer_export_gpsbabel(LayerTRW * trw, char const *title, char const
 
 	while (gtk_dialog_run(GTK_DIALOG(file_selector)) == GTK_RESPONSE_ACCEPT) {
 		fn = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(file_selector));
-		if (g_file_test (fn, G_FILE_TEST_EXISTS) == false ||
-		    a_dialog_yes_or_no (GTK_WINDOW(file_selector), _("The file \"%s\" exists, do you wish to overwrite it?"), a_file_basename (fn))) {
+		if (g_file_test (fn, G_FILE_TEST_EXISTS) == false
+		    || a_dialog_yes_or_no (GTK_WINDOW(file_selector), _("The file \"%s\" exists, do you wish to overwrite it?"), file_basename (fn))) {
 
 			BabelFile * active = a_babel_ui_file_type_selector_get(babel_selector);
 			if (active == NULL) {

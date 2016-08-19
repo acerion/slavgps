@@ -27,12 +27,21 @@
 #include "vikmapslayer.h"
 #include "map_ids.h"
 
-void terraserver_init () {
-  VikMapSource *map_type_1 = VIK_MAP_SOURCE(terraserver_map_source_new_with_id( MAP_ID_TERRASERVER_TOPO, "Terraserver Topos", MAP_ID_TERRASERVER_TOPO ));
-  VikMapSource *map_type_2 = VIK_MAP_SOURCE(terraserver_map_source_new_with_id( MAP_ID_TERRASERVER_AERIAL, "Terraserver Aerials", MAP_ID_TERRASERVER_AERIAL ));
-  VikMapSource *map_type_3 = VIK_MAP_SOURCE(terraserver_map_source_new_with_id( MAP_ID_TERRASERVER_URBAN, "Terraserver Urban Areas", MAP_ID_TERRASERVER_URBAN ));
 
-  maps_layer_register_map_source (map_type_1);
-  maps_layer_register_map_source (map_type_2);
-  maps_layer_register_map_source (map_type_3);
+
+
+using namespace SlavGPS;
+
+
+
+
+void SlavGPS::terraserver_init()
+{
+	MapSource * map_type_1 = (MapSource *) terraserver_map_source_new_with_id(MAP_ID_TERRASERVER_TOPO, "Terraserver Topos", MAP_ID_TERRASERVER_TOPO);
+	MapSource * map_type_2 = (MapSource *) terraserver_map_source_new_with_id(MAP_ID_TERRASERVER_AERIAL, "Terraserver Aerials", MAP_ID_TERRASERVER_AERIAL);
+	MapSource * map_type_3 = (MapSource *) terraserver_map_source_new_with_id(MAP_ID_TERRASERVER_URBAN, "Terraserver Urban Areas", MAP_ID_TERRASERVER_URBAN);
+
+	maps_layer_register_map_source(map_type_1);
+	maps_layer_register_map_source(map_type_2);
+	maps_layer_register_map_source(map_type_3);
 }

@@ -18,25 +18,37 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-#ifndef _VIKING_GEOJSON_H
-#define _VIKING_GEOJSON_H
+#ifndef _SG_GEOJSON_H_
+#define _SG_GEOJSON_H_
+
+
+
+
+#include <cstdio>
 
 #include "viktrwlayer.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
-bool a_geojson_write_file(SlavGPS::LayerTRW * trw, FILE * ff);
 
-const char * a_geojson_program_export(void);
-const char * a_geojson_program_import(void);
+namespace SlavGPS {
 
-char * a_geojson_import_to_gpx(const char * filename);
 
-#ifdef __cplusplus
-}
-#endif
 
-#endif
+
+	bool geojson_write_file(LayerTRW * trw, FILE * ff);
+
+	char const * geojson_program_export(void);
+	char const * geojson_program_import(void);
+
+	char * geojson_import_to_gpx(char const * filename);
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
+#endif /* #ifndef _SG_GEOJSON_H_ */

@@ -864,7 +864,7 @@ static bool delete_event(VikWindow * vw)
 		a_settings_set_integer(VIK_SETTINGS_WIN_SAVE_IMAGE_HEIGHT, window->draw_image_height);
 		a_settings_set_boolean(VIK_SETTINGS_WIN_SAVE_IMAGE_PNG, window->draw_image_save_as_png);
 
-		char *accel_file_name = g_build_filename(a_get_viking_dir(), VIKING_ACCELERATOR_KEY_FILE, NULL);
+		char *accel_file_name = g_build_filename(get_viking_dir(), VIKING_ACCELERATOR_KEY_FILE, NULL);
 		gtk_accel_map_save(accel_file_name);
 		free(accel_file_name);
 	}
@@ -2802,7 +2802,7 @@ void Window::set_filename(char const * filename)
 
 char const * Window::get_filename()
 {
-	return this->filename ? a_file_basename(this->filename) : _("Untitled");
+	return this->filename ? file_basename(this->filename) : _("Untitled");
 }
 
 GtkWidget * Window::get_drawmode_button(VikViewportDrawMode mode)
@@ -2975,7 +2975,7 @@ void Window::open_file(char const * filename, bool change_filename)
 		{
 			// Since we can process .vik files with issues just show a warning in the status bar
 			// Not that a user can do much about it... or tells them what this issue is yet...
-			char *msg = g_strdup_printf(_("WARNING: issues encountered loading %s"), a_file_basename(filename));
+			char *msg = g_strdup_printf(_("WARNING: issues encountered loading %s"), file_basename(filename));
 			vik_statusbar_set_message(this->viking_vs, VIK_STATUSBAR_INFO, msg);
 			free(msg);
 		}
@@ -3196,7 +3196,7 @@ static bool save_file_as(GtkAction * a, Window * window)
 
 	while (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
 		fn = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
-		if (g_file_test(fn, G_FILE_TEST_EXISTS) == false || a_dialog_yes_or_no(GTK_WINDOW(dialog), _("The file \"%s\" exists, do you wish to overwrite it?"), a_file_basename(fn))) {
+		if (g_file_test(fn, G_FILE_TEST_EXISTS) == false || a_dialog_yes_or_no(GTK_WINDOW(dialog), _("The file \"%s\" exists, do you wish to overwrite it?"), file_basename(fn))) {
 			window->set_filename(fn);
 			rv = window->window_save();
 			if (rv) {
@@ -3941,7 +3941,7 @@ static char * draw_image_filename(Window * window, img_generation_t img_gen)
 
 			fn = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
 			if (g_file_test(fn, G_FILE_TEST_EXISTS)) {
-				if (! a_dialog_yes_or_no(GTK_WINDOW(dialog), _("The file \"%s\" exists, do you wish to overwrite it?"), a_file_basename(fn))) {
+				if (! a_dialog_yes_or_no(GTK_WINDOW(dialog), _("The file \"%s\" exists, do you wish to overwrite it?"), file_basename(fn))) {
 					fn = NULL;
 				}
 			}
@@ -4524,8 +4524,8 @@ static void window_create_ui(Window * window)
 		}
 	}
 
-	// GeoJSON import capability
-	if (g_find_program_in_path(a_geojson_program_import())) {
+	/* GeoJSON import capability. */
+	if (g_find_program_in_path(geojson_program_import())) {
 		if (gtk_ui_manager_add_ui_from_string(uim,
 						      "<ui><menubar name='MainMenu'><menu action='File'><menu action='Acquire'><menuitem action='AcquireGeoJSON'/></menu></menu></menubar></ui>",
 						      -1, &error)) {
@@ -5006,7 +5006,7 @@ Window::Window()
 	gtk_action_activate(gtk_action_group_get_action(this->action_group, "Pan"));
 	gtk_action_activate(gtk_action_group_get_action(this->action_group, "ModeMercator"));
 
-	char *accel_file_name = g_build_filename(a_get_viking_dir(), VIKING_ACCELERATOR_KEY_FILE, NULL);
+	char *accel_file_name = g_build_filename(get_viking_dir(), VIKING_ACCELERATOR_KEY_FILE, NULL);
 	gtk_accel_map_load(accel_file_name);
 	free(accel_file_name);
 

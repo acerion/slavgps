@@ -19,17 +19,24 @@
  *
  */
 
-#ifndef __GEONAMES_H
-#define __GEONAMES_H
+#ifndef _SG_GEONAMES_H_
+#define _SG_GEONAMES_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
-void geonames_init();
 
-#ifdef __cplusplus
-}
-#endif
 
-#endif
+namespace SlavGPS {
+
+
+
+	void geonames_init();
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
+#endif /* #ifndef _SG_GEONAMES_H_ */

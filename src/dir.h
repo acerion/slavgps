@@ -20,22 +20,28 @@
  *
  */
 
-#ifndef _VIKING_DIR_H
-#define _VIKING_DIR_H
+#ifndef _SG_DIR_H_
+#define _SG_DIR_H_
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
-char const * a_get_viking_dir();
-char * a_get_viking_dir_no_create();
-char ** a_get_viking_data_path();
-char * a_get_viking_data_home();
+namespace SlavGPS {
 
-#ifdef __cplusplus
-}
-#endif
 
-#endif
+
+
+	char const * get_viking_dir();
+	char * get_viking_dir_no_create();
+	char ** get_viking_data_path();
+	char * get_viking_data_home();
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
+#endif /* #ifndef _SG_DIR_H_ */

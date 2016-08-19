@@ -24,17 +24,19 @@
   * old map source (see #VikMapsLayer_MapType).
   */
 
-#include <stdlib.h>
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <cstdlib>
 
 #include "vikmaptype.h"
 #include "vikmapslayer_compat.h"
 #include "download.h"
 
+
+
+
 using namespace SlavGPS;
+
+
+
 
 VikMapType::VikMapType()
 {
@@ -42,12 +44,17 @@ VikMapType::VikMapType()
 	name = NULL;
 }
 
-VikMapType::VikMapType(VikMapsLayer_MapType map_type, const char *label)
+
+
+
+VikMapType::VikMapType(VikMapsLayer_MapType map_type, const char * label)
 {
 	map_type = map_type;
 	label = g_strdup(label);
 	name = NULL;
 }
+
+
 
 
 VikMapType::~VikMapType()
@@ -59,30 +66,48 @@ VikMapType::~VikMapType()
 	name = NULL;
 }
 
+
+
+
 const char * VikMapType::get_name()
 {
 	return name;
 }
+
+
+
 
 uint16_t VikMapType::get_uniq_id()
 {
 	return map_type.uniq_id;
 }
 
+
+
+
 char * VikMapType::map_type_get_label()
 {
 	return label;
 }
+
+
+
 
 uint16_t VikMapType::get_tilesize_x()
 {
 	return tilesize_x;
 }
 
+
+
+
 uint16_t VikMapType::get_tilesize_y()
 {
 	return tilesize_y;
 }
+
+
+
 
 VikViewportDrawMode VikMapType::get_drawmode()
 {

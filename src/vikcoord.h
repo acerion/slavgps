@@ -19,11 +19,16 @@
  *
  */
 
-#ifndef _VIKING_VIKCOORD_H
-#define _VIKING_VIKCOORD_H
+#ifndef _SG_COORD_H_
+#define _SG_COORD_H_
+
+
 
 
 #include "coords.h"
+
+
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -37,8 +42,8 @@ enum VikCoordMode {
 
 
 typedef struct {
-	double north_south; /* northing or lat */
-	double east_west;   /* easting or lon */
+	double north_south; /* Northing or lat. */
+	double east_west;   /* Easting or lon. */
 	char utm_zone;
 	char utm_letter;
 
@@ -55,8 +60,10 @@ typedef struct _Rect {
 #define GLRECT(iter) ((Rect *)((iter)->data))
 
 
-/* notice we can cast to either UTM or LatLon */
-/* possible more modes to come? xy? we'll leave that as an option */
+
+
+/* Notice we can cast to either UTM or LatLon .*/
+/* Possible more modes to come? xy? We'll leave that as an option. */
 
 void vik_coord_convert(VikCoord * coord, VikCoordMode dest_mode);
 void vik_coord_copy_convert(const VikCoord * coord, VikCoordMode dest_mode, VikCoord * dest);
@@ -72,10 +79,16 @@ bool vik_coord_equals(const VikCoord * coord1, const VikCoord * coord2);
 
 void vik_coord_set_area(const VikCoord * coord, const struct LatLon * wh, VikCoord * tl, VikCoord * br);
 bool vik_coord_inside(const VikCoord * coord, const VikCoord * tl, const VikCoord * br);
-/* all coord operations MUST BE ABSTRACTED!!! */
+/* All coord operations MUST BE ABSTRACTED!!! */
+
+
+
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif
+
+
+
+#endif /* #ifndef _SG_COORD_H_ */

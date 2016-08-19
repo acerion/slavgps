@@ -34,13 +34,26 @@
 
 #include "dir.h"
 
+
+
+
+using namespace SlavGPS;
+
+
+
+
+static char * viking_dir = NULL;
+
+
+
+
 /**
- * For external use, free the result
- * Made externally available primarily to detect when Viking is first run
+ * For external use. Free the result.
+ * Made externally available primarily to detect when Viking is first run.
  */
-char * a_get_viking_dir_no_create()
+char * SlavGPS::get_viking_dir_no_create()
 {
-	// TODO: use g_get_user_config_dir ?
+	/* TODO: use g_get_user_config_dir? */
 
 	char const * home = g_getenv("HOME");
 	if (!home || access(home, W_OK)) {
@@ -54,11 +67,11 @@ char * a_get_viking_dir_no_create()
 	}
 #endif
 	if (!home || access(home, W_OK)) {
-		/* Fatal error */
+		/* Fatal error. */
 		fprintf(stderr, "CRITICAL: Unable to find a base directory\n");
 	}
 
-	/* Build the name of the directory */
+	/* Build the name of the directory. */
 #ifdef __APPLE__
 	return g_build_filename(home, "/Library/Application Support/Viking", NULL);
 #else
@@ -66,20 +79,25 @@ char * a_get_viking_dir_no_create()
 #endif
 }
 
-static char * viking_dir = NULL;
 
-const char * a_get_viking_dir(void)
+
+
+char const * SlavGPS::get_viking_dir(void)
 {
 	if (!viking_dir) {
-		viking_dir = a_get_viking_dir_no_create();
+		viking_dir = get_viking_dir_no_create();
 		if (g_file_test(viking_dir, G_FILE_TEST_EXISTS) == false) {
-			if( g_mkdir(viking_dir, 0755) != 0) {
+			if (g_mkdir(viking_dir, 0755) != 0) {
 				fprintf(stderr, "WARNING: %s: Failed to create directory %s\n", __FUNCTION__, viking_dir);
 			}
 		}
 	}
 	return viking_dir;
 }
+
+
+
+
 
 /**
  * a_get_viking_data_home:
@@ -88,7 +106,7 @@ const char * a_get_viking_dir(void)
  *
  * Retuns: the directory(can be NULL). Should be freed with g_free.
  */
-char * a_get_viking_data_home()
+char * SlavGPS::get_viking_data_home()
 {
 	char const * xdg_data_home = g_getenv("XDG_DATA_HOME");
 	if (xdg_data_home) {
@@ -98,6 +116,9 @@ char * a_get_viking_data_home()
 	}
 }
 
+
+
+
 /**
  * a_get_viking_data_path:
  *
@@ -105,10 +126,10 @@ char * a_get_viking_data_home()
  *
  * Returns: list of directories to scan for data. Should be freed with g_strfreev.
  */
-char ** a_get_viking_data_path()
+char ** SlavGPS::get_viking_data_path()
 {
 #ifdef WINDOWS
-	// Try to use from the install directory - normally the working directory of Viking is where ever it's install location is
+	/* Try to use from the install directory - normally the working directory of Viking is where ever it's install location is. */
 	char const * xdg_data_dirs = "./data";
 	//const char *xdg_data_dirs = g_strdup( "%s/%s/data", g_getenv("ProgramFiles"), PACKAGE);
 #else
@@ -124,9 +145,8 @@ char ** a_get_viking_data_path()
 	char ** data_path = g_strsplit(xdg_data_dirs, G_SEARCHPATH_SEPARATOR_S, 0);
 
 #ifndef WINDOWS
-	/* Append the viking dir */
-	char ** path;
-	for (path = data_path ; *path != NULL ; path++) {
+	/* Append the viking dir. */
+	for (char ** path = data_path ; *path != NULL ; path++) {
 		char * dir = *path;
 		*path = g_build_filename(dir, PACKAGE, NULL);
 		free(dir);

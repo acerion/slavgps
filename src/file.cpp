@@ -710,8 +710,8 @@ VikLoadType_t a_file_load(LayerAggregate * top, Viewport * viewport, char const 
 		} else {
 			load_answer = LOAD_TYPE_VIK_FAILURE_NON_FATAL;
 		}
-	} else if (a_jpg_magic_check(filename)) {
-		if (! a_jpg_load_file(top, filename, viewport)) {
+	} else if (jpg_magic_check(filename)) {
+		if (!jpg_load_file(top, filename, viewport)) {
 			load_answer = LOAD_TYPE_UNSUPPORTED_FAILURE;
 		}
 	} else {
@@ -720,7 +720,7 @@ VikLoadType_t a_file_load(LayerAggregate * top, Viewport * viewport, char const 
 		bool success = true; // Detect load failures - mainly to remove the layer created as it's not required
 
 		LayerTRW * layer = new LayerTRW(viewport);
-		layer->rename(a_file_basename(filename));
+		layer->rename(file_basename(filename));
 
 		// In fact both kml & gpx files start the same as they are in xml
 		if (a_file_check_ext(filename, ".kml") && check_magic(f, GPX_MAGIC, GPX_MAGIC_LEN)) {
@@ -814,7 +814,7 @@ bool a_file_check_ext(char const * filename, char const * fileext)
 		return false;
 	}
 
-	char const * basename = a_file_basename(filename);
+	char const * basename = file_basename(filename);
 	if (!basename) {
 		return false;
 	}
@@ -858,7 +858,7 @@ bool a_file_export(LayerTRW * trw, char const * filename, VikFileType_t file_typ
 		} else {
 			switch (file_type) {
 			case FILE_TYPE_GPSMAPPER:
-				a_gpsmapper_write_file(f, trw);
+				gpsmapper_write_file(f, trw);
 				break;
 			case FILE_TYPE_GPX:
 				a_gpx_write_file(trw, f, &options);
@@ -867,7 +867,7 @@ bool a_file_export(LayerTRW * trw, char const * filename, VikFileType_t file_typ
 				a_gpspoint_write_file(trw, f);
 				break;
 			case FILE_TYPE_GEOJSON:
-				result = a_geojson_write_file(trw, f);
+				result = geojson_write_file(trw, f);
 				break;
 			case FILE_TYPE_KML:
 				fclose(f);

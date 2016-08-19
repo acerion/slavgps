@@ -19,20 +19,32 @@
  *
  */
 
-#ifndef __GPSMAPPER_H
-#define __GPSMAPPER_H
+#ifndef _SG_GPSMAPPER_H_
+#define _SG_GPSMAPPER_H_
+
+
+
+
+#include <cstdio>
 
 #include "viktrwlayer.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
-void a_gpsmapper_write_file(FILE * f, SlavGPS::LayerTRW * layer);
 
-#ifdef __cplusplus
-}
-#endif
+namespace SlavGPS {
 
-#endif
+
+
+
+	void gpsmapper_write_file(FILE * f, LayerTRW * trw);
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
+#endif /* #ifndef _SG_GPSMAPPER_H_ */

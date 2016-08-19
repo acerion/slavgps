@@ -31,22 +31,29 @@
 #include <glib/gi18n.h>
 #include <stdlib.h>
 
+
+
+
 using namespace SlavGPS;
 
+
+
+
 /**
- * Perform any cleanup actions once program has completed running
+ * Perform any cleanup actions once program has completed running.
  */
 static void my_watch(GPid pid, int status, void * user_data)
 {
 	g_spawn_close_pid(pid);
 }
 
+
+
+
 /**
- * a_geojson_write_file:
- *
- * Returns true if successfully written
+ * Returns true if successfully written.
  */
-bool a_geojson_write_file(LayerTRW * trw, FILE * ff)
+bool SlavGPS::geojson_write_file(LayerTRW * trw, FILE * ff)
 {
 	bool result = false;
 
@@ -58,21 +65,21 @@ bool a_geojson_write_file(LayerTRW * trw, FILE * ff)
 	GPid pid;
 	int mystdout;
 
-	// geojson program should be on the $PATH
+	/* geojson program should be on the $PATH. */
 	char ** argv;
 	argv = (char **) malloc(5 * sizeof (char *));
-	argv[0] = g_strdup(a_geojson_program_export());
+	argv[0] = g_strdup(geojson_program_export());
 	argv[1] = strdup("-f");
 	argv[2] = strdup("gpx");
 	argv[3] = g_strdup(tmp_filename);
 	argv[4] = NULL;
 
 	GError * error = NULL;
-	// TODO: monitor stderr?
+	/* TODO: monitor stderr? */
 	if (!g_spawn_async_with_pipes(NULL, argv, NULL, (GSpawnFlags) (G_SPAWN_SEARCH_PATH | G_SPAWN_DO_NOT_REAP_CHILD), NULL, NULL, &pid, NULL, &mystdout, NULL, &error)) {
 
 		if (IS_VIK_WINDOW (vik_window_from_layer(trw))) {
-			char* msg = g_strdup_printf(_("%s command failed: %s"), argv[0], error->message);
+			char * msg = g_strdup_printf(_("%s command failed: %s"), argv[0], error->message);
 			window_from_layer(trw)->statusbar_update(msg, VIK_STATUSBAR_INFO);
 			free(msg);
 		} else {
@@ -81,7 +88,7 @@ bool a_geojson_write_file(LayerTRW * trw, FILE * ff)
 
 		g_error_free(error);
 	} else {
-		// Probably should use GIOChannels...
+		/* Probably should use GIOChannels... */
 		char line[512];
 		FILE * fout = fdopen(mystdout, "r");
 		setvbuf(fout, NULL, _IONBF, 0);
@@ -98,49 +105,57 @@ bool a_geojson_write_file(LayerTRW * trw, FILE * ff)
 
 	g_strfreev(argv);
 
-	// Delete the temporary file
+	/* Delete the temporary file. */
 	(void) remove(tmp_filename);
 	free(tmp_filename);
 
 	return result;
 }
 
-//
-// https://github.com/mapbox/togeojson
-//
-// https://www.npmjs.org/package/togeojson
-//
-// Tested with version 0.7.0
-const char * a_geojson_program_export(void)
+
+
+
+/*
+   https://github.com/mapbox/togeojson
+
+   https://www.npmjs.org/package/togeojson
+
+   Tested with version 0.7.0.
+*/
+const char * SlavGPS::geojson_program_export(void)
 {
 	return "togeojson";
 }
 
-//
-// https://github.com/tyrasd/togpx
-//
-// https://www.npmjs.org/package/togpx
-//
-// Tested with version 0.3.1
-const char * a_geojson_program_import(void)
+
+
+/*
+  https://github.com/tyrasd/togpx
+
+  https://www.npmjs.org/package/togpx
+
+  Tested with version 0.3.1.
+*/
+const char * SlavGPS::geojson_program_import(void)
 {
 	return "togpx";
 }
 
+
+
+
 /**
- * a_geojson_import_to_gpx:
- *
  * @filename: The source GeoJSON file
  *
- * Returns: The name of newly created temporary GPX file
+ * Returns: The name of newly created temporary GPX file.
  *          This file should be removed once used and the string freed.
  *          If NULL then the process failed.
  */
-char * a_geojson_import_to_gpx(const char * filename)
+char * SlavGPS::geojson_import_to_gpx(const char * filename)
 {
 	char * gpx_filename = NULL;
 	GError * error = NULL;
-	// Opening temporary file
+	/* Opening temporary file. */
 	int fd = g_file_open_tmp("vik_geojson_XXXXXX.gpx", &gpx_filename, &error);
 	if (fd < 0) {
 		fprintf(stderr, _("WARNING: failed to open temporary file: %s\n"), error->message);
@@ -152,21 +167,21 @@ char * a_geojson_import_to_gpx(const char * filename)
 	GPid pid;
 	int mystdout;
 
-	// geojson program should be on the $PATH
+	/* geojson program should be on the $PATH. */
 	char ** argv;
 	argv = (char **) malloc(3 * sizeof (char *));
-	argv[0] = g_strdup(a_geojson_program_import());
+	argv[0] = g_strdup(geojson_program_import());
 	argv[1] = g_strdup(filename);
 	argv[2] = NULL;
 
 	FILE * gpxfile = fdopen(fd, "w");
 
-	// TODO: monitor stderr?
+	/* TODO: monitor stderr? */
 	if (!g_spawn_async_with_pipes(NULL, argv, NULL, (GSpawnFlags) (G_SPAWN_SEARCH_PATH | G_SPAWN_DO_NOT_REAP_CHILD), NULL, NULL, &pid, NULL, &mystdout, NULL, &error)) {
 		fprintf(stderr, "WARNING: Async command failed: %s\n", error->message);
 		g_error_free(error);
 	} else {
-		// Probably should use GIOChannels...
+		/* Probably should use GIOChannels... */
 		char line[512];
 		FILE * fout = fdopen(mystdout, "r");
 		setvbuf(fout, NULL, _IONBF, 0);

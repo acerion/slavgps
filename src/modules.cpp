@@ -167,7 +167,7 @@ static void modules_load_config_dir(const char * dir)
 static void modules_load_config(void)
 {
 	/* Look in the directories of data path */
-	char ** data_dirs = a_get_viking_data_path();
+	char ** data_dirs = get_viking_data_path();
 	/* Priority is standard one:
 	   left element is more important than right one.
 	   But our logic is to load all existing files and overwrite
@@ -182,13 +182,13 @@ static void modules_load_config(void)
 	/* Check if system config is set */
 	modules_load_config_dir(VIKING_SYSCONFDIR);
 
-	const char * data_home = a_get_viking_data_home();
+	const char * data_home = get_viking_data_home();
 	if (data_home) {
 		modules_load_config_dir(data_home);
 	}
 
 	/* Check user's home config */
-	modules_load_config_dir(a_get_viking_dir());
+	modules_load_config_dir(get_viking_dir());
 }
 
 static void register_loadable_types(void)

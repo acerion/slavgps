@@ -478,7 +478,7 @@ static void toolbar_reload(VikToolbar *vtb,
 		char *filename = NULL;
 		/* Load the toolbar UI XML file from disk */
 		// Consider using a_get_viking_data_path() first
-		filename = g_build_filename(a_get_viking_dir(), "ui_toolbar.xml", NULL);
+		filename = g_build_filename(get_viking_dir(), "ui_toolbar.xml", NULL);
 		vtb->merge_id = gtk_ui_manager_add_ui_from_file(vtb->uim, filename, &error);
 		free(filename);
 	}
@@ -1006,7 +1006,7 @@ For manual changes to this file to take effect, you need to restart Viking.\n-->
 	               tbw->config.user_data);
 
 	// ATM always save the toolbar when changed
-	char *filename = g_build_filename(a_get_viking_dir(), "ui_toolbar.xml", NULL);
+	char *filename = g_build_filename(get_viking_dir(), "ui_toolbar.xml", NULL);
 	GError *error = NULL;
 	if (! g_file_set_contents(filename, str->str, -1, &error)) {
 		fprintf(stderr, "WARNING: %s: could not write to file %s (%s)\n", __FUNCTION__, filename, error->message);

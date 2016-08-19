@@ -32,6 +32,14 @@
 #include "viking.h"
 #include "globals.h"
 
+
+
+
+using namespace SlavGPS;
+
+
+
+
 // TODO: STRING_LIST
 // TODO: share code in file reading
 // TODO: remove hackaround in show_window
@@ -84,7 +92,7 @@ static int16_t preferences_groups_key_to_index(const char * key)
 
 static bool preferences_load_from_file()
 {
-	char * fn = g_build_filename(a_get_viking_dir(), VIKING_PREFS_FILE, NULL);
+	char * fn = g_build_filename(get_viking_dir(), VIKING_PREFS_FILE, NULL);
 	FILE * f = fopen(fn, "r");
 	free(fn);
 
@@ -161,7 +169,7 @@ static VikLayerParamData preferences_run_getparam(void * notused, uint16_t i, bo
  */
 bool a_preferences_save_to_file()
 {
-	char * fn = g_build_filename(a_get_viking_dir(), VIKING_PREFS_FILE, NULL);
+	char * fn = g_build_filename(get_viking_dir(), VIKING_PREFS_FILE, NULL);
 
 	FILE * f = fopen(fn, "w");
 	/* Since preferences files saves OSM login credentials,

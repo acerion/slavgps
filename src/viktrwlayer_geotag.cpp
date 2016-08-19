@@ -370,7 +370,7 @@ static void trw_layer_geotag_process(geotag_options_t *options)
 					return;
 				}
 				if (!name) {
-					name = g_strdup(a_file_basename(options->image));
+					name = strdup(file_basename(options->image));
 				}
 
 				bool updated_waypoint = false;
@@ -428,8 +428,7 @@ static void trw_layer_geotag_process(geotag_options_t *options)
 
 					// Update existing WP
 					// Find a WP with current name
-					char *name = NULL;
-					name = g_strdup(a_file_basename(options->image));
+					char * name = strdup(file_basename(options->image));
 					Waypoint * wp = options->trw->get_waypoint(name);
 					if (wp) {
 						// Found, so set new position, comment and image
@@ -444,7 +443,7 @@ static void trw_layer_geotag_process(geotag_options_t *options)
 					char *name = NULL;
 					Waypoint * wp = a_geotag_waypoint_positioned(options->image, options->coord, options->altitude, &name, NULL);
 					if (!name) {
-						name = g_strdup(a_file_basename(options->image));
+						name = strdup(file_basename(options->image));
 					}
 					options->trw->filein_add_waypoint(name, wp);
 					free(name);

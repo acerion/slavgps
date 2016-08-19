@@ -26,13 +26,24 @@
 
 #include "fileutils.h"
 
+
+
+
 #ifdef WINDOWS
 #define FILE_SEP '\\'
 #else
 #define FILE_SEP '/'
 #endif
 
-char const * a_file_basename(char const * filename)
+
+
+
+using namespace SlavGPS;
+
+
+
+
+char const * SlavGPS::file_basename(char const * filename)
 {
 	char const * t = filename + strlen(filename) - 1;
 	while (--t > filename) {

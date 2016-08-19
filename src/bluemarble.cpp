@@ -31,8 +31,8 @@ using namespace SlavGPS;
 
 
 
-/* initialisation */
-void bluemarble_init ()
+/* Initialization. */
+void SlavGPS::bluemarble_init()
 {
 	MapSource * bluemarble_type = new MapSourceSlippy(MAP_ID_BLUE_MARBLE, "BlueMarble", "s3.amazonaws.com", "/com.modestmaps.bluemarble/%d-r%3$d-c%2$d.jpg");
 	bluemarble_type->set_name((char *) "BlueMarble");

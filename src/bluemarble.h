@@ -20,17 +20,25 @@
  *
  */
 
-#ifndef __VIKING_BLUEMARBLE_H
-#define __VIKING_BLUEMARBLE_H
+#ifndef _SG_BLUEMARBLE_H_
+#define _SG_BLUEMARBLE_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
-void bluemarble_init ();
 
-#ifdef __cplusplus
-}
-#endif
 
-#endif
+namespace SlavGPS {
+
+
+
+
+	void bluemarble_init();
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
+#endif /* #ifndef _SG_BLUEMARBLE_H_ */

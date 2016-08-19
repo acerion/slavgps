@@ -19,38 +19,42 @@
  *
  */
 
-#ifndef _VIKING_MAPSLAYER_COMPAT_H
-#define _VIKING_MAPSLAYER_COMPAT_H
+#ifndef _SG_MAPSLAYER_COMPAT_H
+#define _SG_MAPSLAYER_COMPAT_H
 
-#include <stdint.h>
-
+#include <cstdint>
 
 #include "vikcoord.h"
 #include "mapcoord.h"
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
-typedef struct {
-  uint16_t uniq_id;
-  uint16_t tilesize_x;
-  uint16_t tilesize_y;
-  unsigned int drawmode;
-  bool (*coord_to_tile) ( const VikCoord *src, double xzoom, double yzoom, SlavGPS::TileInfo * dest);
-  void (*tile_to_center_coord) (SlavGPS::TileInfo * src, VikCoord *dest );
-  DownloadResult_t (*download) (SlavGPS::TileInfo * src, const char *dest_fn, void *handle );
-  void *(*download_handle_init) ( );
-  void (*download_handle_cleanup) ( void *handle );
-  /* TODO: constant size (yay!) */
-} VikMapsLayer_MapType;
+namespace SlavGPS {
 
-void maps_layer_register_type ( const char *label, unsigned int id, VikMapsLayer_MapType *map_type );
 
-#ifdef __cplusplus
-}
-#endif
 
-#endif
+	typedef struct {
+		uint16_t uniq_id;
+		uint16_t tilesize_x;
+		uint16_t tilesize_y;
+		unsigned int drawmode;
+		bool (*coord_to_tile) (const VikCoord * src, double xzoom, double yzoom, SlavGPS::TileInfo * dest);
+		void (*tile_to_center_coord) (TileInfo * src, VikCoord * dest);
+		DownloadResult_t (*download) (TileInfo * src, char const * dest_fn, void * handle);
+		void *(*download_handle_init) ();
+		void (*download_handle_cleanup) (void * handle);
+		/* TODO: constant size (yay!) */
+	} VikMapsLayer_MapType;
+
+	void maps_layer_register_type(char const * label, unsigned int id, VikMapsLayer_MapType * map_type);
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
+#endif /* #ifndef _SG_MAPSLAYER_COMPAT_H */

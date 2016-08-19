@@ -18,13 +18,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-#include <glib/gprintf.h>
 #include <glib/gi18n.h>
 
-#include <stdlib.h>
+#include <cstdlib>
 
 #include "acquire.h"
 #include "geonamessearch.h"
+
 
 
 
@@ -32,7 +32,11 @@ using namespace SlavGPS;
 
 
 
+
 static bool datasource_wikipedia_process(LayerTRW * trw, ProcessOptions * po, BabelStatusFunc status_cb, acq_dialog_widgets_t * adw);
+
+
+
 
 VikDataSourceInterface vik_datasource_wikipedia_interface = {
 	N_("Create Waypoints from Wikipedia Articles"),
@@ -40,10 +44,10 @@ VikDataSourceInterface vik_datasource_wikipedia_interface = {
 	VIK_DATASOURCE_AUTO_LAYER_MANAGEMENT,
 	VIK_DATASOURCE_INPUTTYPE_NONE,
 	false,
-	false, // Not even using the dialog
-	false, // Own method for getting data - does not fit encapsulation with current thread logic
+	false, /* Not even using the dialog. */
+	false, /* Own method for getting data - does not fit encapsulation with current thread logic. */
 	(VikDataSourceInitFunc)               NULL,
-	(VikDataSourceCheckExistenceFunc)    NULL,
+	(VikDataSourceCheckExistenceFunc)     NULL,
 	(VikDataSourceAddSetupWidgetsFunc)    NULL,
 	(VikDataSourceGetProcessOptionsFunc)  NULL,
 	(VikDataSourceProcessFunc)            datasource_wikipedia_process,
@@ -59,14 +63,17 @@ VikDataSourceInterface vik_datasource_wikipedia_interface = {
 	0
 };
 
+
+
+
 /**
- * Process selected files and try to generate waypoints storing them in the given vtl
+ * Process selected files and try to generate waypoints storing them in the given trw.
  */
 static bool datasource_wikipedia_process(LayerTRW * trw, ProcessOptions * po, BabelStatusFunc status_cb, acq_dialog_widgets_t * adw)
 {
 	struct LatLon maxmin[2] = { {0.0,0.0}, {0.0,0.0} };
 
-	// Note the order is max part first then min part - thus reverse order of use in min_max function:
+	/* Note the order is max part first then min part - thus reverse order of use in min_max function:. */
 	adw->viewport->get_min_max_lat_lon(&maxmin[1].lat, &maxmin[0].lat, &maxmin[1].lon, &maxmin[0].lon);
 
 	if (trw) {

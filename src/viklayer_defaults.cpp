@@ -199,7 +199,7 @@ static bool defaults_load_from_file()
 
 	GError *error = NULL;
 
-	char *fn = g_build_filename(a_get_viking_dir(), VIKING_LAYER_DEFAULTS_INI_FILE, NULL);
+	char *fn = g_build_filename(get_viking_dir(), VIKING_LAYER_DEFAULTS_INI_FILE, NULL);
 
 	if (!g_key_file_load_from_file(keyfile, fn, flags, &error)) {
 		fprintf(stderr, "WARNING: %s: %s\n", error->message, fn);
@@ -223,7 +223,7 @@ static bool layer_defaults_save_to_file()
 {
 	bool answer = true;
 	GError *error = NULL;
-	char *fn = g_build_filename(a_get_viking_dir(), VIKING_LAYER_DEFAULTS_INI_FILE, NULL);
+	char * fn = g_build_filename(get_viking_dir(), VIKING_LAYER_DEFAULTS_INI_FILE, NULL);
 	size_t size;
 
 	char *keyfilestr = g_key_file_to_data(keyfile, &size, &error);

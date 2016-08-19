@@ -19,18 +19,26 @@
  *
  */
 
-#ifndef __VIKING_GOOGLE_H
-#define __VIKING_GOOGLE_H
+#ifndef _SG_GOOGLE_H_
+#define _SG_GOOGLE_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
-void google_init();
-void google_post_init();
 
-#ifdef __cplusplus
-}
-#endif
 
-#endif
+namespace SlavGPS {
+
+
+
+
+	void google_init();
+	void google_post_init();
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
+#endif /* #ifndef _SG_GOOGLE_H_ */

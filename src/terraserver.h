@@ -19,23 +19,25 @@
  *
  */
 
-#ifndef __VIKING_TERRASERVER_H
-#define __VIKING_TERRASERVER_H
-
-#include <glib.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#ifndef _SG_TERRASERVER_H_
+#define _SG_TERRASERVER_H_
 
 
-#include "vikcoord.h"
-#include "mapcoord.h"
 
-void terraserver_init();
 
-#ifdef __cplusplus
-}
-#endif
+namespace SlavGPS {
 
-#endif
+
+
+
+	void terraserver_init();
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
+#endif /* #ifndef _SG_TERRASERVER_H_ */

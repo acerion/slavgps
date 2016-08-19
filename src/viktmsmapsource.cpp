@@ -40,14 +40,19 @@
 #include <math.h>
 #endif
 
-#include <stdlib.h>
-#include <assert.h>
+#include <cstdlib>
+#include <cassert>
 
 #include "globals.h"
 #include "viktmsmapsource.h"
 #include "maputils.h"
 
+
+
+
 using namespace SlavGPS;
+
+
 
 
 MapSourceTms::MapSourceTms()
@@ -57,11 +62,17 @@ MapSourceTms::MapSourceTms()
 	fprintf(stderr, "MapSourceTms constructor end\n");
 }
 
+
+
+
 MapSourceTms::~MapSourceTms()
 {
 	fprintf(stderr, "MapSourceTms destructor start\n");
 	fprintf(stderr, "MapSourceTms destructor end\n");
 }
+
+
+
 
 MapSourceTms::MapSourceTms(MapTypeID map_type_, char const * label_, char const * hostname_, char const * url_)
 {
@@ -71,25 +82,40 @@ MapSourceTms::MapSourceTms(MapTypeID map_type_, char const * label_, char const 
 	server_path_format = g_strdup(url_);
 }
 
+
+
+
 bool MapSourceTms::is_direct_file_access()
 {
 	return false;
 }
+
+
+
 
 bool MapSourceTms::is_mbtiles()
 {
 	return false;
 }
 
+
+
+
 bool MapSourceTms::is_osm_meta_tiles()
 {
 	return false;
 }
 
+
+
+
 bool MapSourceTms::supports_download_only_new()
 {
 	return download_options.check_file_server_time;
 }
+
+
+
 
 bool MapSourceTms::coord_to_tile(const VikCoord * src, double xzoom, double yzoom, TileInfo * dest)
 {
@@ -118,6 +144,9 @@ bool MapSourceTms::coord_to_tile(const VikCoord * src, double xzoom, double yzoo
 	return true;
 }
 
+
+
+
 void MapSourceTms::tile_to_center_coord(TileInfo * src, VikCoord * dest)
 {
 	double socalled_mpp;
@@ -135,6 +164,9 @@ void MapSourceTms::tile_to_center_coord(TileInfo * src, VikCoord * dest)
 	fprintf(stderr, "DEBUG: %s: %d,%d -> %f,%f\n", __FUNCTION__,
 		src->x, src->y, dest->east_west, dest->north_south);
 }
+
+
+
 
 char * MapSourceTms::get_server_path(TileInfo * src)
 {

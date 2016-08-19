@@ -18,43 +18,46 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-#include "gpsmapper.h"
 
-#include <string.h>
-#include <stdlib.h>
 
 #include <algorithm>
+#include <cstring>
+#include <cstdlib>
+
+#include "gpsmapper.h"
+
+
+
 
 using namespace SlavGPS;
 
-/* Name of layer -> RGN type and Type
-   format: Name RGN40 0x40
-   or:     Name RGN10 0x2f06
-*/
-/* returns 0 if invalid/no rgn stuff, else returns len of */
-static unsigned int print_rgn_stuff(const char * nm, FILE * f)
-{
-	unsigned int len;
-	char *layers;
-	char *name;
 
+
+
+/*
+  Name of layer -> RGN type and Type.
+  format: Name RGN40 0x40
+  or:     Name RGN10 0x2f06
+
+  Returns 0 if invalid/no rgn stuff, else returns len of.
+*/
+static unsigned int print_rgn_stuff(char const * nm, FILE * f)
+{
 	if (!nm) {
 		return 0;
 	}
 
-	name = g_strdup(nm);
-
-	len = strlen(name);
-
-
+	char * name = strdup(nm);
+	unsigned int len = strlen(name);
 
 	/* --------------------------------------------- */
 	/* added by oddgeir@oddgeirkvien.com, 2005.02.02 */
 	/* Format may also be: Name RGN40 0x40 Layers=1  */
 	/* or: Name RGN10 0x2f06 Layers=1                */
 
-	if (len > 20 && strncasecmp(name + len - 8, "LAYERS=", 7) == 0) { /* Layers is added to the description */
-		layers=name + len - 8;
+	char * layers = NULL;
+	if (len > 20 && strncasecmp(name + len - 8, "LAYERS=", 7) == 0) { /* Layers is added to the description. */
+		layers = name + len - 8;
 		*(name + len - 9) = 0;
 		len = strlen(name);
 	} else {
@@ -63,15 +66,14 @@ static unsigned int print_rgn_stuff(const char * nm, FILE * f)
 	/* --------------------------------------------- */
 
 
-
-	if (len > 11 && strncasecmp(name + len - 10, "RGN", 3) == 0 &&
-	     strncasecmp(name + len - 4, "0x", 2) == 0) {
+	if (len > 11 && strncasecmp(name + len - 10, "RGN", 3) == 0
+	    && strncasecmp(name + len - 4, "0x", 2) == 0) {
 
 		fprintf(f, "[%.5s]\nType=%.4s\nLabel=", name + len - 10, name + len - 4);
 		fwrite(name, sizeof(char), len - 11, f);
 		fprintf(f, "\n");
 
-		/* added by oddgeir@oddgeirkvien.com, 2005.02.02 */
+		/* Added by oddgeir@oddgeirkvien.com, 2005.02.02 */
 		if (layers) {
 			fprintf(f, "%s\n", layers);
 		}
@@ -80,16 +82,16 @@ static unsigned int print_rgn_stuff(const char * nm, FILE * f)
 
 		return len - 11;
 
-	} else if (len > 13 && strncasecmp(name + len - 12, "RGN", 3) == 0 &&
-		    strncasecmp(name + len - 6, "0x", 2) == 0) {
+	} else if (len > 13 && strncasecmp(name + len - 12, "RGN", 3) == 0
+		   && strncasecmp(name + len - 6, "0x", 2) == 0) {
 
 		fprintf(f, "[%.5s]\nType=%.6s\nLabel=", name + len - 12, name + len - 6);
 		fwrite(name, sizeof(char), len - 13, f);
 		fprintf(f, "\n");
 
-		/* added by oddgeir@oddgeirkvien.com, 2005.02.02 */
+		/* Added by oddgeir@oddgeirkvien.com, 2005.02.02 */
 		if (layers) {
-			fprintf(f, "%s\n",layers);
+			fprintf(f, "%s\n", layers);
 		}
 
 		free(name);
@@ -100,6 +102,9 @@ static unsigned int print_rgn_stuff(const char * nm, FILE * f)
 		return 0;
 	}
 }
+
+
+
 
 static void write_waypoints(FILE * f, std::unordered_map<sg_uid_t, Waypoint *> & waypoints)
 {
@@ -119,7 +124,10 @@ static void write_waypoints(FILE * f, std::unordered_map<sg_uid_t, Waypoint *> &
 	}
 }
 
-static void write_trackpoint(Trackpoint * tp, FILE *f)
+
+
+
+static void write_trackpoint(Trackpoint * tp, FILE * f)
 {
 	static struct LatLon ll;
 	char *s_lat, *s_lon;
@@ -130,6 +138,9 @@ static void write_trackpoint(Trackpoint * tp, FILE *f)
 	free(s_lat);
 	free(s_lon);
 }
+
+
+
 
 static void write_track(FILE * f, std::unordered_map<sg_uid_t, Track *> & tracks)
 {
@@ -145,13 +156,16 @@ static void write_track(FILE * f, std::unordered_map<sg_uid_t, Track *> & tracks
 	}
 }
 
-void a_gpsmapper_write_file(FILE * f, LayerTRW * layer)
+
+
+
+void SlavGPS::gpsmapper_write_file(FILE * f, LayerTRW * trw)
 {
-	std::unordered_map<sg_uid_t, Track *> & tracks = layer->get_tracks();
-	auto waypoints = layer->get_waypoints();
+	std::unordered_map<sg_uid_t, Track *> & tracks = trw->get_tracks();
+	auto waypoints = trw->get_waypoints();
 
 	fprintf(f, "[IMG ID]\nID=%s\nName=%s\nTreSize=1000\nRgnLimit=700\nLevels=2\nLevel0=22\nLevel1=18\nZoom0=0\nZoom1=1\n[END-IMG ID]\n\n",
-		layer->name, layer->name);
+		trw->name, trw->name);
 
 	write_waypoints(f, waypoints);
 	write_track(f, tracks);

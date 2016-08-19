@@ -60,6 +60,14 @@ renaming functions and defining LatLon and UTM structs.
 #endif
 #include "degrees_converters.h"
 
+
+
+
+using namespace SlavGPS;
+
+
+
+
 /**
  * Convert a double to a string WITHOUT LOCALE.
  *

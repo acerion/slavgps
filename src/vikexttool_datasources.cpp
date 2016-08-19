@@ -24,9 +24,8 @@
 #endif
 
 #include <list>
-
-#include <string.h>
-#include <stdlib.h>
+#include <cstring>
+#include <cstdlib>
 
 #include <glib/gi18n.h>
 
@@ -36,9 +35,7 @@
 
 
 
-
 using namespace SlavGPS;
-
 
 
 
@@ -59,7 +56,6 @@ void SlavGPS::vik_ext_tool_datasources_register(External * ext_tool)
 
 
 
-
 void vik_ext_tool_datasources_unregister_all()
 {
 	for (auto iter = ext_tool_datasources.begin(); iter != ext_tool_datasources.end(); iter++) {
@@ -67,7 +63,6 @@ void vik_ext_tool_datasources_unregister_all()
 		// g_object_unref(*iter);
 	}
 }
-
 
 
 
@@ -82,10 +77,9 @@ static void ext_tool_datasources_open_cb(GtkWidget * widget, Window * window)
 
 
 
-
 /**
- * Add to any menu
- *  mostly for allowing to assign for TrackWaypoint layer menus
+ * Add to any menu.
+ * Mostly for allowing to assign for TrackWaypoint layer menus.
  */
 void SlavGPS::vik_ext_tool_datasources_add_menu_items_to_menu(Window * window, GtkMenu * menu)
 {
@@ -96,7 +90,7 @@ void SlavGPS::vik_ext_tool_datasources_add_menu_items_to_menu(Window * window, G
 			GtkWidget * item = gtk_menu_item_new_with_label(_(label));
 			free(label);
 			label = NULL;
-			// Store tool's ref into the menu entry
+			/* Store tool's ref into the menu entry. */
 			g_object_set_data(G_OBJECT(item), VIK_TOOL_DATASOURCE_KEY, ext_tool);
 			g_signal_connect(G_OBJECT(item), "activate", G_CALLBACK(ext_tool_datasources_open_cb), window);
 			gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
@@ -108,9 +102,8 @@ void SlavGPS::vik_ext_tool_datasources_add_menu_items_to_menu(Window * window, G
 
 
 
-
 /**
- * Adds to the File->Acquire menu only
+ * Adds to the File->Acquire menu only.
  */
 void SlavGPS::vik_ext_tool_datasources_add_menu_items(Window * window, GtkUIManager * uim)
 {

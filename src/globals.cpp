@@ -147,15 +147,15 @@ bool a_vik_very_first_run()
 	static bool vik_very_first_run_known = false;
 	static bool vik_very_first_run = false;
 
-	// use cached result if available
+	/* Use cached result if available. */
 	if (vik_very_first_run_known) {
 		return vik_very_first_run;
 	}
 
-	char *dir = a_get_viking_dir_no_create();
-	// NB: will need extra logic if default dir gets changed e.g. from ~/.viking to ~/.config/viking
+	char * dir = get_viking_dir_no_create();
+	/* NB: will need extra logic if default dir gets changed e.g. from ~/.viking to ~/.config/viking. */
 	if (dir) {
-		// If directory exists - Viking has been run before
+		/* If directory exists - Viking has been run before. */
 		vik_very_first_run = ! g_file_test(dir, G_FILE_TEST_EXISTS);
 		free(dir);
 	} else {

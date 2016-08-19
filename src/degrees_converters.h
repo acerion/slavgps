@@ -19,28 +19,34 @@
  *
  */
 
-#ifndef _VIKING_CONVERTER_H
-#define _VIKING_CONVERTER_H
+#ifndef _SG_CONVERTER_H
+#define _SG_CONVERTER_H
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
-char * convert_lat_dec_to_ddd(double lat);
-char * convert_lon_dec_to_ddd(double lon);
+namespace SlavGPS {
 
-char * convert_lat_dec_to_dmm(double lat);
-char * convert_lon_dec_to_dmm(double lon);
 
-char * convert_lat_dec_to_dms(double lat);
-char * convert_lon_dec_to_dms(double lon);
 
-double convert_dms_to_dec(char const * dms);
 
-#ifdef __cplusplus
-}
-#endif
+	char * convert_lat_dec_to_ddd(double lat);
+	char * convert_lon_dec_to_ddd(double lon);
 
-#endif
+	char * convert_lat_dec_to_dmm(double lat);
+	char * convert_lon_dec_to_dmm(double lon);
+
+	char * convert_lat_dec_to_dms(double lat);
+	char * convert_lon_dec_to_dms(double lon);
+
+	double convert_dms_to_dec(char const * dms);
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
+#endif /* #ifndef _SG_CONVERTER_H */
