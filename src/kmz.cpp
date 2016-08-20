@@ -19,6 +19,11 @@
  *
  */
 
+#include <cstring>
+#include <cstdio>
+
+#include <stdlib.h>
+
 #include "kmz.h"
 
 #ifdef HAVE_CONFIG_H
@@ -27,10 +32,9 @@
 #ifdef HAVE_ZIP_H
 #include <zip.h>
 #endif
-#include "viking.h"
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
+
+//#include "viking.h"
+
 #include <glib/gstdio.h>
 #ifdef HAVE_EXPAT_H
 #include <expat.h>
@@ -39,21 +43,23 @@
 
 
 
+
 using namespace SlavGPS;
+
 
 
 
 #ifdef HAVE_ZIP_H
 /**
- * Simple KML 'file' with a Ground Overlay
+ * Simple KML 'file' with a Ground Overlay.
  *
  * See https://developers.google.com/kml/documentation/kmlreference
  *
- * AFAIK the projection is always in Web Mercator
+ * AFAIK the projection is always in Web Mercator.
  * Probably for normal use case of not too large an area coverage (on a Garmin device) the projection is near enough...
  */
-// Hopefully image_filename will not break the XML file tag structure
-static char* doc_kml_str(const char *name, const char *image_filename, double north, double south, double east, double west)
+/* Hopefully image_filename will not break the XML file tag structure. */
+static char * doc_kml_str(const char * name, const char * image_filename, double north, double south, double east, double west)
 {
 	char *tmp_n = a_coords_dtostr(north);
 	char *tmp_s = a_coords_dtostr(south);
@@ -88,6 +94,9 @@ static char* doc_kml_str(const char *name, const char *image_filename, double no
 }
 #endif
 
+
+
+
 /**
  * kmz_save_file:
  *
@@ -103,16 +112,16 @@ static char* doc_kml_str(const char *name, const char *image_filename, double no
  *   0 on success
  *   >0 some kind of error
  *
- * Mostly intended for use with as a Custom Map on a Garmin
+ * Mostly intended for use with as a Custom Map on a Garmin.
  *
  * See http://garminbasecamp.wikispaces.com/Custom+Maps
  *
- * The KMZ is a zipped file containing a KML file with the associated image
+ * The KMZ is a zipped file containing a KML file with the associated image.
  */
-int kmz_save_file(GdkPixbuf *pixbuf, const char* filename, double north, double east, double south, double west)
+int SlavGPS::kmz_save_file(GdkPixbuf * pixbuf, const char * filename, double north, double east, double south, double west)
 {
 #ifdef HAVE_ZIP_H
-// Older libzip compatibility:
+/* Older libzip compatibility: */
 #ifndef zip_source_t
 typedef struct zip_source zip_source_t;
 #endif
@@ -120,18 +129,18 @@ typedef struct zip_source zip_source_t;
 	int ans = ZIP_ER_OK;
 	char *image_filename = "image.jpg";
 
-	// Generate KMZ file (a zip file)
+	/* Generate KMZ file (a zip file). */
 	struct zip* archive = zip_open(filename, ZIP_CREATE | ZIP_TRUNCATE, &ans);
 	if (!archive) {
 		fprintf(stderr, "WARNING: Unable to create archive: '%s' Error code %d\n", filename, ans);
 		return ans;
 	}
 
-	// Generate KML file
+	/* Generate KML file. */
 	char *dk = doc_kml_str(a_file_basename(filename), image_filename, north, south, east, west);
 	int dkl = strlen(dk);
 
-	// KML must be named doc.kml in the kmz file
+	/* KML must be named doc.kml in the kmz file. */
 	zip_source_t *src_kml = zip_source_buffer(archive, dk, dkl, 0);
 	zip_file_add(archive, "doc.kml", src_kml, ZIP_FL_OVERWRITE);
 
@@ -151,7 +160,7 @@ typedef struct zip_source zip_source_t;
 
 	zip_source_t *src_img = zip_source_buffer(archive, buffer, (int)blen, 0);
 	zip_file_add(archive, image_filename, src_img, ZIP_FL_OVERWRITE);
-	// NB Only store as limited use trying to (further) compress a JPG
+	/* NB Only store as limited use trying to (further) compress a JPG. */
 	zip_set_file_compression(archive, 1, ZIP_CM_STORE, 0);
 
 	ans = zip_close(archive);
@@ -167,6 +176,9 @@ typedef struct zip_source zip_source_t;
 #endif
 }
 
+
+
+
 typedef enum {
 	tt_unknown = 0,
 	tt_kml,
@@ -181,8 +193,8 @@ typedef enum {
 } xtag_type;
 
 typedef struct {
-	xtag_type tag_type;              /* enum from above for this tag */
-	const char *tag_name;           /* xpath-ish tag name */
+	xtag_type tag_type;             /* Enum from above for this tag. */
+	const char *tag_name;           /* xpath-ish tag name. */
 } xtag_mapping;
 
 typedef struct {
@@ -197,9 +209,12 @@ typedef struct {
 	double west;
 } xml_data;
 
+
+
+
 #ifdef HAVE_ZIP_H
 #ifdef HAVE_EXPAT_H
-// NB No support for orientation ATM
+/* NB No support for orientation ATM. */
 static xtag_mapping xtag_path_map[] = {
 	{ tt_kml,                "/kml" },
 	{ tt_kml_go,             "/kml/GroundOverlay" },
@@ -212,7 +227,10 @@ static xtag_mapping xtag_path_map[] = {
 	{ tt_kml_go_latlonbox_w, "/kml/GroundOverlay/LatLonBox/west" },
 };
 
-// NB Don't be pedantic about matching case of strings for tags
+
+
+
+/* NB Don't be pedantic about matching case of strings for tags. */
 static xtag_type get_tag(const char *t)
 {
 	xtag_mapping *tm;
@@ -223,6 +241,9 @@ static xtag_type get_tag(const char *t)
 	}
 	return tt_unknown;
 }
+
+
+
 
 static void kml_start(xml_data *xd, const char *el, const char **attr)
 {
@@ -239,9 +260,12 @@ static void kml_start(xml_data *xd, const char *el, const char **attr)
 	case tt_kml_go_latlonbox_w:
 		g_string_erase(xd->c_cdata, 0, -1);
 		break;
-	default: break;  // ignore cdata from other things
+	default: break;  /* Ignore cdata from other things. */
 	}
 }
+
+
+
 
 static void kml_end(xml_data *xd, const char *el)
 {
@@ -279,6 +303,9 @@ static void kml_end(xml_data *xd, const char *el)
 	xd->current_tag = get_tag(xd->xpath->str);
 }
 
+
+
+
 static void kml_cdata(xml_data *xd, const XML_Char *s, int len)
 {
 	switch (xd->current_tag) {
@@ -290,22 +317,22 @@ static void kml_cdata(xml_data *xd, const XML_Char *s, int len)
 	case tt_kml_go_latlonbox_w:
 		g_string_append_len(xd->c_cdata, s, len);
 		break;
-	default: break;  // ignore cdata from other things
+	default: break;  /* ignore cdata from other things. */
 	}
 }
 #endif
 
-/**
- *
- */
-static bool parse_kml(const char* buffer, int len, char **name, char **image, double *north, double *south, double *east, double *west)
+
+
+
+static bool parse_kml(const char * buffer, int len, char ** name, char ** image, double * north, double * south, double * east, double * west)
 {
 #ifdef HAVE_EXPAT_H
 	XML_Parser parser = XML_ParserCreate(NULL);
 	enum XML_Status status = XML_STATUS_ERROR;
 
-	xml_data *xd = (xml_data *) malloc(sizeof (xml_data));
-	// Set default (invalid) values;
+	xml_data * xd = (xml_data *) malloc(sizeof (xml_data));
+	/* Set default (invalid) values. */
 	xd->xpath = g_string_new("");
 	xd->c_cdata = g_string_new("");
 	xd->current_tag = tt_unknown;
@@ -328,8 +355,8 @@ static bool parse_kml(const char* buffer, int len, char **name, char **image, do
 	*south = xd->south;
 	*east = xd->east;
 	*west = xd->west;
-	*name = xd->name; // NB don't free xd->name
-	*image = xd->image; // NB don't free xd->image
+	*name = xd->name; /* NB don't free xd->name. */
+	*image = xd->image; /* NB don't free xd->image. */
 
 	g_string_free(xd->xpath, true);
 	g_string_free(xd->c_cdata, true);
@@ -342,8 +369,10 @@ static bool parse_kml(const char* buffer, int len, char **name, char **image, do
 }
 #endif
 
+
+
+
 /**
- * kmz_open_file:
  * @filename:   The KMZ file to open
  * @viewport:   The #Viewport
  * @panel:      The #LayersPanel that the converted KMZ will be stored in
@@ -359,11 +388,11 @@ static bool parse_kml(const char* buffer, int len, char **name, char **image, do
  *  132 - Couldn't get image from KML
  *  133 - Image file problem
  */
-int kmz_open_file(const char * filename, Viewport * viewport, LayersPanel * panel)
+int SlavGPS::kmz_open_file(const char * filename, Viewport * viewport, LayersPanel * panel)
 {
-	// Unzip
+/* Unzip. */
 #ifdef HAVE_ZIP_H
-// Older libzip compatibility:
+/* Older libzip compatibility: */
 #ifndef zip_t
 typedef struct zip zip_t;
 typedef struct zip_file zip_file_t;
@@ -373,7 +402,7 @@ typedef struct zip_file zip_file_t;
 #endif
 
 	int ans = ZIP_ER_OK;
-	zip_t *archive = zip_open(filename, ZIP_RDONLY, &ans);
+	zip_t * archive = zip_open(filename, ZIP_RDONLY, &ans);
 	if (!archive) {
 		fprintf(stderr, "WARNING: Unable to open archive: '%s' Error code %d\n", filename, ans);
 		return ans;
@@ -406,13 +435,13 @@ typedef struct zip_file zip_file_t;
 		GdkPixbuf *pixbuf = NULL;
 
 		if (parsed) {
-			// Read zip for image...
+			/* Read zip for image... */
 			if (image) {
 				if (zip_stat(archive, image, ZIP_FL_NOCASE | ZIP_FL_ENC_GUESS, &zs) == 0) {
 					zip_file_t *zfi = zip_fopen_index(archive, zs.index, 0);
-					// Don't know a way to create a pixbuf using streams.
-					// Thus write out to file
-					// Could read in chunks rather than one big buffer, but don't expect images to be that big
+					/* Don't know a way to create a pixbuf using streams.
+					   Thus write out to file.
+					   Could read in chunks rather than one big buffer, but don't expect images to be that big. */
 					char *ibuffer = (char *) malloc(zs.size);
 					int ilen = zip_fread(zfi, ibuffer, zs.size);
 					if (ilen != zs.size) {
@@ -442,9 +471,8 @@ typedef struct zip_file zip_file_t;
 		}
 
 		if (pixbuf) {
-			// Some simple detection of broken position values ??
-			//if (xd->north > 90.0 || xd->north < -90.0 ||
-			//     xd->south > 90.0 || xd->south < -90.0 ||)
+			/* Some simple detection of broken position values ?? */
+			//if (xd->north > 90.0 || xd->north < -90.0 || xd->south > 90.0 || xd->south < -90.0)
 			VikCoord vc_tl, vc_br;
 			struct LatLon ll_tl, ll_br;
 			ll_tl.lat = north;
@@ -463,7 +491,7 @@ typedef struct zip_file zip_file_t;
 	}
 
 kmz_cleanup:
-	zip_discard(archive); // Close and ensure unchanged
+	zip_discard(archive); /* Close and ensure unchanged. */
  cleanup:
 	return ans;
 #else

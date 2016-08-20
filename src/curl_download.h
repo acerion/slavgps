@@ -19,46 +19,49 @@
  *
  */
 
-#ifndef _VIKING_CURL_DOWNLOAD_H
-#define _VIKING_CURL_DOWNLOAD_H
+#ifndef _SG_CURL_DOWNLOAD_H_
+#define _SG_CURL_DOWNLOAD_H_
 
-#include <stdio.h>
-#include <stdint.h>
 
+
+
+#include <cstdio>
+#include <cstdint>
 
 #include "download.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
-/* Error messages returned by download functions */
+
+/* Error messages returned by download functions. */
 enum {
 	CURL_DOWNLOAD_NO_ERROR = 0,
 	CURL_DOWNLOAD_NO_NEWER_FILE,
-	CURL_DOWNLOAD_ERROR };
+	CURL_DOWNLOAD_ERROR
+};
 
 typedef struct {
-	/* Time sent to server on header If-Modified-Since */
+	/* Time sent to server on header If-Modified-Since. */
 	time_t time_condition;
 
-	/* Etag sent by server on previous download */
+	/* Etag sent by server on previous download. */
 	char * etag;
 
-	/* Etag sent by server on this download */
+	/* Etag sent by server on this download. */
 	char * new_etag;
 } CurlDownloadOptions;
 
-	void curl_download_init();
-	void curl_download_uninit();
-	int curl_download_get_url(const char * hostname, const char * uri, FILE * f, DownloadFileOptions * options, bool ftp, CurlDownloadOptions * curl_options, void * handle);
-	int curl_download_uri(const char * uri, FILE * f, DownloadFileOptions * options, CurlDownloadOptions * curl_options, void * handle);
-	void * curl_download_handle_init();
-	void curl_download_handle_cleanup(void * handle);
 
-#ifdef __cplusplus
-}
-#endif
 
-#endif
+
+void curl_download_init();
+void curl_download_uninit();
+int curl_download_get_url(const char * hostname, const char * uri, FILE * f, DownloadFileOptions * options, bool ftp, CurlDownloadOptions * curl_options, void * handle);
+int curl_download_uri(const char * uri, FILE * f, DownloadFileOptions * options, CurlDownloadOptions * curl_options, void * handle);
+void * curl_download_handle_init();
+void curl_download_handle_cleanup(void * handle);
+
+
+
+
+#endif /* #ifndef _SG_CURL_DOWNLOAD_H_ */

@@ -19,18 +19,19 @@
  *
  */
 
-#ifndef _VIKING_STATUS_H
-#define _VIKING_STATUS_H
+#ifndef _SG_STATUSBAR_H_
+#define _SG_STATUSBAR_H_
+
+
+
+
+#include <cstdint>
 
 #include <glib.h>
 #include <glib-object.h>
 #include <gtk/gtk.h>
-#include <stdint.h>
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
 #define VIK_STATUSBAR_TYPE            (vik_statusbar_get_type ())
@@ -51,6 +52,8 @@ struct _VikStatusbarClass {
 GType vik_statusbar_get_type();
 
 
+
+
 typedef enum {
 	VIK_STATUSBAR_TOOL,
 	VIK_STATUSBAR_ITEMS,
@@ -60,11 +63,13 @@ typedef enum {
 	VIK_STATUSBAR_NUM_TYPES
 } vik_statusbar_type_t;
 
+
+
+
 VikStatusbar * vik_statusbar_new();
 void vik_statusbar_set_message(VikStatusbar * vs, vik_statusbar_type_t field, const char * message);
 
-#ifdef __cplusplus
-}
-#endif
 
-#endif
+
+
+#endif /* #ifndef _SG_STATUSBAR_H_ */

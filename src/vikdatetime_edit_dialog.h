@@ -18,22 +18,29 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-#ifndef _VIK_DATE_TIME_EDIT_H
-#define _VIK_DATE_TIME_EDIT_H
+#ifndef _SG_DATE_TIME_EDIT_H_
+#define _SG_DATE_TIME_EDIT_H_
 
 #include <time.h>
 #include <glib.h>
 #include <gtk/gtk.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
-time_t vik_datetime_edit_dialog ( GtkWindow *parent, const char *title, time_t initial_time, GTimeZone *tz );
 
-#ifdef __cplusplus
-}
-#endif
+namespace SlavGPS {
 
-#endif
+
+
+
+	time_t vik_datetime_edit_dialog(GtkWindow * parent, const char * title, time_t initial_time, GTimeZone * tz);
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
+#endif /* #ifndef _SG_DATE_TIME_EDIT_H_ */

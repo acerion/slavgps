@@ -18,25 +18,35 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-#ifndef _VIKING_KMZ_H
-#define _VIKING_KMZ_H
+#ifndef _SG_KMZ_H_
+#define _SG_KMZ_H_
+
+
+
 
 #include <glib.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
+
 #include "vikviewport.h"
 #include "viklayerspanel.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
-int kmz_save_file(GdkPixbuf *pixbuf, const char* filename, double north, double east, double south, double west);
 
-int kmz_open_file(const char* filename, SlavGPS::Viewport * viewport, SlavGPS::LayersPanel * panel);
+namespace SlavGPS {
 
-#ifdef __cplusplus
-}
-#endif
 
-#endif
+
+
+	int kmz_save_file(GdkPixbuf *pixbuf, const char* filename, double north, double east, double south, double west);
+	int kmz_open_file(const char* filename, Viewport * viewport, LayersPanel * panel);
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
+#endif /* #ifndef _SG_KMZ_H_ */

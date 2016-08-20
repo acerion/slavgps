@@ -18,31 +18,31 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-#ifndef __VIKING_LAYER_DEFAULTS_H
-#define __VIKING_LAYER_DEFAULTS_H
+#ifndef _SG_LAYER_DEFAULTS_H_
+#define _SG_LAYER_DEFAULTS_H_
+
+
+
 
 #include <stdint.h>
 
 #include "uibuilder.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+
 
 
 void a_layer_defaults_init();
 void a_layer_defaults_uninit();
 
-void a_layer_defaults_register(VikLayerParam *vlp, VikLayerParamData defaultval, const char *layername);
+void a_layer_defaults_register(VikLayerParam * vlp, VikLayerParamData defaultval, const char * layername);
 
-bool a_layer_defaults_show_window(GtkWindow *parent, const char *layername);
+bool a_layer_defaults_show_window(GtkWindow * parent, const char * layername);
 
-VikLayerParamData a_layer_defaults_get(const char *layername, const char *param_name, VikLayerParamType param_type);
+VikLayerParamData a_layer_defaults_get(const char * layername, const char * param_name, VikLayerParamType param_type);
 
 bool a_layer_defaults_save();
 
-#ifdef __cplusplus
-}
-#endif
 
-#endif
+
+
+#endif /* #ifndef _SG_LAYER_DEFAULTS_H_ */

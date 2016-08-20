@@ -25,6 +25,10 @@
 #include "config.h"
 #endif
 
+#include <cstring>
+#include <cstdlib>
+#include <cstdint>
+
 #ifdef HAVE_LIBZ
 #include <zlib.h>
 #endif
@@ -34,14 +38,15 @@
 #endif
 
 #include "compression.h"
-#include "string.h"
+
 #include <gio/gio.h>
 #include <glib/gstdio.h>
 
-#include <stdlib.h>
+
+
 
 #ifdef HAVE_LIBZ
-/* return size of unzip data or 0 if failed */
+/* Return size of unzip data or 0 if failed. */
 static unsigned int uncompress_data(void * uncompressed_buffer, unsigned int uncompressed_size, void * compressed_data, unsigned int compressed_size)
 {
 	z_stream stream;
@@ -55,7 +60,7 @@ static unsigned int uncompress_data(void * uncompressed_buffer, unsigned int unc
 	stream.zfree = (free_func)0;
 	stream.opaque = (voidpf)0;
 
-	/* negative windowBits to inflateInit2 means "no header" */
+	/* Negative windowBits to inflateInit2 means "no header". */
 	if ((err = inflateInit2(&stream, -MAX_WBITS)) != Z_OK) {
 		fprintf(stderr, "WARNING: %s(): inflateInit2 failed\n", __PRETTY_FUNCTION__);
 		return 0;
@@ -73,21 +78,23 @@ static unsigned int uncompress_data(void * uncompressed_buffer, unsigned int unc
 }
 #endif
 
+
+
+
 /**
- * unzip_file:
  * @zip_file:   pointer to start of compressed data
  * @unzip_size: the size of the compressed data block
  *
- * Returns a pointer to uncompressed data (maybe NULL)
+ * Returns a pointer to uncompressed data (maybe NULL).
  */
-void * unzip_file(char * zip_file, unsigned long * unzip_size)
+void * SlavGPS::unzip_file(char * zip_file, unsigned long * unzip_size)
 {
 	void * unzip_data = NULL;
 #ifndef HAVE_LIBZ
 	goto end;
 #else
 	char * zip_data;
-	// See http://en.wikipedia.org/wiki/Zip_(file_format)
+	/* See http://en.wikipedia.org/wiki/Zip_(file_format) */
 	struct _lfh {
 		uint32_t sig;
 		uint16_t extract_version;
@@ -111,7 +118,7 @@ void * unzip_file(char * zip_file, unsigned long * unzip_size)
 	if (GUINT32_FROM_LE(local_file_header->sig) != 0x04034b50) {
 		fprintf(stderr, "WARNING: %s(): wrong format (%d)\n", __PRETTY_FUNCTION__, GUINT32_FROM_LE(local_file_header->sig));
 		free(unzip_data);
-		return(unzip_data); // kamil: shouldn't we NULL it first?
+		return (unzip_data); // kamil: shouldn't we NULL it first?
 	}
 
 	zip_data = zip_file + sizeof(struct _lfh)
@@ -120,18 +127,18 @@ void * unzip_file(char * zip_file, unsigned long * unzip_size)
 	unsigned long uncompressed_size = GUINT32_FROM_LE(local_file_header->uncompressed_size);
 	unzip_data = malloc(uncompressed_size);
 
-	// Protection against malloc failures
-	// ATM not normally been checking malloc failures in Viking but sometimes using zip files can be quite large
-	//  (e.g. when using DEMs) so more potential for failure.
-	if (!unzip_data)
+	/* Protection against malloc failures.
+	   ATM not normally been checking malloc failures in Viking but sometimes using zip files can be quite large
+	   (e.g. when using DEMs) so more potential for failure. */
+	if (!unzip_data) {
 		goto end;
+	}
 
 	fprintf(stderr, "DEBUG: %s: method %d: from size %d to %ld\n", __FUNCTION__, GUINT16_FROM_LE(local_file_header->comp_method), GUINT32_FROM_LE(local_file_header->compressed_size), uncompressed_size);
 
 	if (GUINT16_FROM_LE(local_file_header->comp_method) == 0 &&
 		(uncompressed_size == GUINT32_FROM_LE(local_file_header->compressed_size))) {
-		// Stored only - no need to 'uncompress'
-		// Thus just copy
+		/* Stored only - no need to 'uncompress'. Thus just copy. */
 		memcpy(unzip_data, zip_data, uncompressed_size);
 		*unzip_size = uncompressed_size;
 		goto end;
@@ -148,16 +155,18 @@ end:
 	return(unzip_data);
 }
 
+
+
+
 /**
- * uncompress_bzip2:
  * @name: The name of the file to attempt to decompress
  *
- * Returns: The name of the uncompressed file (in a temporary location) or NULL
- *   free the returned name after use.
+ * Returns: The name of the uncompressed file (in a temporary location) or NULL.
+ * Free the returned name after use.
  *
  * Also see: http://www.bzip.org/1.0.5/bzip2-manual-1.0.5.html
  */
-char * uncompress_bzip2(char * name)
+char * SlavGPS::uncompress_bzip2(char * name)
 {
 #ifdef HAVE_BZLIB_H
 	fprintf(stderr, "DEBUG: %s: bzip2 %s\n", __FUNCTION__, BZ2_bzlibVersion());
@@ -167,11 +176,11 @@ char * uncompress_bzip2(char * name)
 		return NULL;
 	}
 
-	int     bzerror;
-	BZFILE * bf = BZ2_bzReadOpen(&bzerror, ff, 0, 0, NULL, 0); // This should take care of the bz2 file header
+	int bzerror;
+	BZFILE * bf = BZ2_bzReadOpen(&bzerror, ff, 0, 0, NULL, 0); /* This should take care of the bz2 file header. */
 	if (bzerror != BZ_OK) {
 		BZ2_bzReadClose(&bzerror, bf);
-		// handle error
+		/* Handle error. */
 		fprintf(stderr, "WARNING: %s: BZ ReadOpen error on %s\n", __FUNCTION__, name);
 		return NULL;
 	}
@@ -199,15 +208,15 @@ char * uncompress_bzip2(char * name)
 
 	GOutputStream *gos = g_io_stream_get_output_stream(G_IO_STREAM(gios));
 
-	// Process in arbitary sized chunks
+	/* Process in arbitary sized chunks. */
 	char buf[4096];
 	bzerror = BZ_OK;
 	int nBuf = 0;
-	// Now process the actual compression data
+	/* Now process the actual compression data. */
 	while (bzerror == BZ_OK) {
 		nBuf = BZ2_bzRead(&bzerror, bf, buf, 4096);
 		if (bzerror == BZ_OK || bzerror == BZ_STREAM_END) {
-			// do something with buf[0 .. nBuf-1]
+			/* Do something with buf[0 .. nBuf-1] */
 			if (g_output_stream_write(gos, buf, nBuf, NULL, &error) < 0) {
 				fprintf(stderr, "CRITICAL: Couldn't write bz2 tmp %s file due to %s\n", tmpname, error->message);
 				g_error_free(error);
@@ -217,7 +226,7 @@ char * uncompress_bzip2(char * name)
 		}
 	}
 	if (bzerror != BZ_STREAM_END) {
-		// handle error...
+		/* Handle error... */
 		fprintf(stderr, "WARNING: %s: BZ error :(%d. read %d\n", __FUNCTION__, bzerror, nBuf);
 	}
 	BZ2_bzReadClose(&bzerror, bf);

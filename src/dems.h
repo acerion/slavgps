@@ -18,17 +18,15 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-#ifndef _SG_DEM_CACHE_H
-#define _SG_DEM_CACHE_H
-
+#ifndef _SG_DEM_CACHE_H_
+#define _SG_DEM_CACHE_H_
 
 
 
 
 #include <list>
 #include <string>
-
-#include <stdint.h>
+#include <cstdint>
 
 #include "dem.h"
 #include "vikcoord.h"
@@ -36,26 +34,33 @@
 
 
 
-
-typedef enum {
-	VIK_DEM_INTERPOL_NONE = 0,
-	VIK_DEM_INTERPOL_SIMPLE,
-	VIK_DEM_INTERPOL_BEST,
-} VikDemInterpol;
+namespace SlavGPS {
 
 
 
 
-
-void     dem_cache_uninit();
-SlavGPS::DEM * dem_cache_load(std::string& filename);
-SlavGPS::DEM * dem_cache_get(std::string& filename);
-int      dem_cache_load_list(std::list<std::string>& filenames, void * threaddata);
-void     dem_cache_list_free(std::list<std::string>& filenames);
-int16_t  dem_cache_get_elev_by_coord(const Coord * coord, VikDemInterpol method);
+	typedef enum {
+		VIK_DEM_INTERPOL_NONE = 0,
+		VIK_DEM_INTERPOL_SIMPLE,
+		VIK_DEM_INTERPOL_BEST,
+	} VikDemInterpol;
 
 
 
 
+	void    dem_cache_uninit();
+	DEM   * dem_cache_load(std::string& filename);
+	DEM   * dem_cache_get(std::string& filename);
+	int     dem_cache_load_list(std::list<std::string>& filenames, void * threaddata);
+	void    dem_cache_list_free(std::list<std::string>& filenames);
+	int16_t dem_cache_get_elev_by_coord(const Coord * coord, VikDemInterpol method);
 
-#endif /* #ifndef _SG_DEM_CACHE_H */
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
+#endif /* #ifndef _SG_DEM_CACHE_H_ */

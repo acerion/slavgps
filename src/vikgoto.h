@@ -19,9 +19,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-#ifndef __VIK_SEARCH_H
-#define __VIK_SEARCH_H
-
+#ifndef _SG_SEARCH_H_
+#define _SG_SEARCH_H_
 
 
 
@@ -35,32 +34,24 @@
 
 
 
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+namespace SlavGPS {
 
 
 
 
+	void vik_goto_register(GotoTool * tool);
+	void vik_goto_unregister_all(void);
 
-void vik_goto_register(SlavGPS::GotoTool * tool);
-void vik_goto_unregister_all(void);
-
-int a_vik_goto_where_am_i(SlavGPS::Viewport * viewport, struct LatLon * ll, char ** name);
-void a_vik_goto(SlavGPS::Window * window, SlavGPS::Viewport * viewport);
-char * a_vik_goto_get_search_string_for_this_place(SlavGPS::Window * window);
-
+	int a_vik_goto_where_am_i(Viewport * viewport, struct LatLon * ll, char ** name);
+	void a_vik_goto(Window * window, Viewport * viewport);
+	char * a_vik_goto_get_search_string_for_this_place(Window * window);
 
 
 
 
-#ifdef __cplusplus
-}
-#endif
+} /* namespace SlavGPS */
 
 
 
 
-
-#endif
+#endif /* #ifndef _SG_SEARCH_H_ */

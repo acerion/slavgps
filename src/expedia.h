@@ -19,19 +19,25 @@
  *
  */
 
-#ifndef __VIKING_EXPEDIA_H
-#define __VIKING_EXPEDIA_H
+#ifndef _SG_EXPEDIA_H_
+#define _SG_EXPEDIA_H_
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
-void expedia_init();
+namespace SlavGPS {
 
-#ifdef __cplusplus
-}
-#endif
 
-#endif
+
+
+	void expedia_init();
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
+#endif /* #ifndef _SG_EXPEDIA_H_ */

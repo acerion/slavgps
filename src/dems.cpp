@@ -21,8 +21,7 @@
  */
 
 #include <unordered_map>
-
-#include <stdlib.h>
+#include <cstdlib>
 
 #include "dems.h"
 #include "background.h"
@@ -30,9 +29,7 @@
 
 
 
-
 using namespace SlavGPS;
-
 
 
 
@@ -51,10 +48,8 @@ typedef struct {
 
 
 
-
-/* filename -> DEM */
+/* Filename -> DEM. */
 static std::unordered_map<std::string, LoadedDEM *> loaded_dems;
-
 
 
 
@@ -63,7 +58,6 @@ static void dem_cache_unref(std::string& filename);
 static bool get_elev_by_coord(std::string key, LoadedDEM * ldem, CoordElev * ce);
 //static GList * a_dems_list_copy(GList * dems);
 //static int16_t a_dems_list_get_elev_by_coord(GList * dems, const Coord * coord);
-
 
 
 
@@ -77,8 +71,7 @@ static void loaded_dem_free(LoadedDEM *ldem)
 
 
 
-
-void dem_cache_uninit()
+void SlavGPS::dem_cache_uninit()
 {
 	if (loaded_dems.size()) {
 		loaded_dems.clear();
@@ -95,7 +88,7 @@ void dem_cache_uninit()
 /* To load a dem. if it was already loaded, will simply
  * reference the one already loaded and return it.
  */
-DEM * dem_cache_load(std::string& filename)
+DEM * SlavGPS::dem_cache_load(std::string& filename)
 {
 	auto iter = loaded_dems.find(filename);
 	if (iter != loaded_dems.end()) { /* Found. */
@@ -118,12 +111,11 @@ DEM * dem_cache_load(std::string& filename)
 
 
 
-
 static void dem_cache_unref(std::string& filename)
 {
 	auto iter = loaded_dems.find(filename);
 	if (iter == loaded_dems.end()) {
-		/* This is fine - probably means the loaded list was aborted / not completed for some reason */
+		/* This is fine - probably means the loaded list was aborted / not completed for some reason. */
 		return;
 	}
 	(*iter).second->ref_count--;
@@ -139,11 +131,11 @@ static void dem_cache_unref(std::string& filename)
 /* Probably gets called whenever DEM layer is moved in viewport.
    Probably called with tile names that are - or can be - in current viewport.
 
-/* to get a DEM that was already loaded.
- * assumes that its in there already,
+/* To get a DEM that was already loaded.
+ * Assumes that its in there already,
  * although it could not be if earlier load failed.
  */
-DEM * dem_cache_get(std::string& filename)
+DEM * SlavGPS::dem_cache_get(std::string& filename)
 {
 	auto iter = loaded_dems.find(filename);
 	if (iter != loaded_dems.end()) {
@@ -155,7 +147,6 @@ DEM * dem_cache_get(std::string& filename)
 
 
 
-
 /* Load a string list (GList of strings) of dems. You have to use get to at them later.
  * When updating a list as a parameter, this should be bfore freeing the list so
  * the same DEMs won't be loaded & unloaded.
@@ -163,11 +154,11 @@ DEM * dem_cache_get(std::string& filename)
  */
 
 /* TODO: don't delete them when they don't exist.
- * we need to warn the user, but we should keep them in the GList.
- * we need to know that they weren't referenced though when we
+ * We need to warn the user, but we should keep them in the GList.
+ * We need to know that they weren't referenced though when we
  * do the dem_cache_list_free().
  */
-int dem_cache_load_list(std::list<std::string>& filenames, void * threaddata)
+int SlavGPS::dem_cache_load_list(std::list<std::string>& filenames, void * threaddata)
 {
 	auto iter = filenames.begin();
 	unsigned int dem_count = 0;
@@ -182,10 +173,10 @@ int dem_cache_load_list(std::list<std::string>& filenames, void * threaddata)
 		/* When running a thread - inform of progress. */
 		if (threaddata) {
 			dem_count++;
-			/* NB Progress also detects abort request via the returned value */
+			/* NB Progress also detects abort request via the returned value. */
 			int result = a_background_thread_progress(threaddata, ((double) dem_count) / dem_total);
 			if (result != 0) {
-				return -1; /* Abort thread */
+				return -1; /* Abort thread. */
 			}
 		}
 	}
@@ -195,12 +186,11 @@ int dem_cache_load_list(std::list<std::string>& filenames, void * threaddata)
 
 
 
-
-/* Takes a string list of dem filenames .
+/* Takes a string list of dem filenames.
  * Unrefs all the dems (i.e. "unloads" them), then frees the
  * strings, the frees the list.
  */
-void dem_cache_list_free(std::list<std::string>& filenames)
+void SlavGPS::dem_cache_list_free(std::list<std::string>& filenames)
 {
 	for (auto iter = filenames.begin(); iter != filenames.end(); iter++) {
 		dem_cache_unref(*iter);
@@ -209,7 +199,6 @@ void dem_cache_list_free(std::list<std::string>& filenames)
 
 	filenames.clear();
 }
-
 
 
 
@@ -254,9 +243,8 @@ static bool get_elev_by_coord(std::string key, LoadedDEM * ldem, CoordElev * ce)
 
 
 
-
-/* TODO: keep a (sorted) linked list of DEMs and select the best resolution one */
-int16_t dem_cache_get_elev_by_coord(const Coord * coord, VikDemInterpol method)
+/* TODO: keep a (sorted) linked list of DEMs and select the best resolution one. */
+int16_t SlavGPS::dem_cache_get_elev_by_coord(const Coord * coord, VikDemInterpol method)
 {
 	if (loaded_dems.empty()) {
 		return VIK_DEM_INVALID_ELEVATION;
@@ -288,17 +276,16 @@ GList * a_dems_list_copy(GList * dems)
 	while (iter) {
 		std::string dem_filename = std::string((const char *) (iter->data));
 		if (!dem_cache_load(dem_filename)) {
-			GList *iter_temp = iter->next; /* delete link, don't bother strdup'ing and free'ing string */
+			GList *iter_temp = iter->next; /* Delete link, don't bother strdup'ing and free'ing string. */
 			rv = g_list_remove_link(rv, iter);
 			iter = iter_temp;
 		} else {
-			iter->data = g_strdup((char *)iter->data); /* copy the string too. */
+			iter->data = g_strdup((char *)iter->data); /* Copy the string too. */
 			iter = iter->next;
 		}
 	}
 	return rv;
 }
-
 
 
 

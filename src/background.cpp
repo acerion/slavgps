@@ -20,12 +20,13 @@
  *
  */
 
+
+#include <cstdlib>
+#include <list>
+
 #include <gtk/gtk.h>
 #include <glib.h>
 #include <glib/gi18n.h>
-#include <stdlib.h>
-
-#include <list>
 
 #include "background.h"
 #include "settings.h"
@@ -34,15 +35,13 @@
 #include "uibuilder.h"
 #include "globals.h"
 #include "preferences.h"
-#include "viking.h"
+//#include "viking.h"
 #include "vikwindow.h"
 
 
 
 
-
 using namespace SlavGPS;
-
 
 
 
@@ -58,10 +57,13 @@ static GtkWidget *bgwindow = NULL;
 static GtkWidget *bgtreeview = NULL;
 static GtkListStore *bgstore = NULL;
 
-// Still only actually updating the statusbar though
+/* Still only actually updating the statusbar though. */
 static std::list<Window *> windows_to_update;
 
 static int bgitemcount = 0;
+
+
+
 
 typedef struct {
 	bool some_arg;
@@ -81,6 +83,9 @@ enum {
 	N_COLUMNS,
 };
 
+
+
+
 static void background_thread_update()
 {
 	static char buf[20];
@@ -92,8 +97,10 @@ static void background_thread_update()
 	return;
 }
 
+
+
+
 /**
- * a_background_thread_progress:
  * @callbackdata: Thread data
  * @fraction:     The value should be between 0.0 and 1.0 indicating percentage of the task complete
  */
@@ -118,6 +125,9 @@ int a_background_thread_progress(void * callbackdata, double fraction)
 	return res;
 }
 
+
+
+
 static void thread_die(thread_args * args)
 {
 	if (args->userdata_free_func) {
@@ -132,6 +142,9 @@ static void thread_die(thread_args * args)
 	free(args->iter);
 	free(args);
 }
+
+
+
 
 int a_background_testcancel(void * callbackdata)
 {
@@ -149,6 +162,9 @@ int a_background_testcancel(void * callbackdata)
 	}
 	return 0;
 }
+
+
+
 
 static void thread_helper(void * args_, void * user_data)
 {
@@ -168,7 +184,6 @@ static void thread_helper(void * args_, void * user_data)
 }
 
 /**
- * a_background_thread:
  * @bp:      Which pool this thread should run in
  * @parent:
  * @message:
@@ -204,7 +219,7 @@ void a_background_thread(Background_Pool_Type bp, GtkWindow *parent, const char 
 			   DATA_COLUMN, args,
 			   -1);
 
-	/* run the thread in the background */
+	/* Run the thread in the background. */
 	if (bp == BACKGROUND_POOL_REMOTE) {
 		g_thread_pool_push(thread_pool_remote, args, NULL);
 #ifdef HAVE_LIBMAPNIK
@@ -217,9 +232,10 @@ void a_background_thread(Background_Pool_Type bp, GtkWindow *parent, const char 
 	}
 }
 
+
+
+
 /**
- * a_background_show_window:
- *
  * Display the background window.
  */
 void a_background_show_window()
@@ -227,27 +243,33 @@ void a_background_show_window()
 	gtk_widget_show_all(bgwindow);
 }
 
+
+
+
 static void cancel_job_with_iter(GtkTreeIter * iter)
 {
 	thread_args * args = NULL;
 
-    fprintf(stderr, "DEBUG: %s\n", __FUNCTION__);
+	fprintf(stderr, "DEBUG: %s\n", __FUNCTION__);
 
 	gtk_tree_model_get(GTK_TREE_MODEL(bgstore), iter, DATA_COLUMN, &args, -1);
 
 	/* We know args still exists because it is free _after_ the list item is destroyed. */
 	/* Need MUTEX? */
-	args->some_arg = 1; /* set killswitch */
+	args->some_arg = 1; /* Set killswitch. */
 
 	gtk_list_store_remove(bgstore, iter);
 	args->iter = NULL;
 }
 
+
+
+
 static void bgwindow_response(GtkDialog * dialog, int arg1)
 {
-	/* Note this function is a signal handler called back from the GTK main loop,
-	   so GDK is already locked.  We need to release the lock before calling
-	   thread-safe routines. */
+	/* Note this function is a signal handler called back from the
+	   GTK main loop, so GDK is already locked.  We need to
+	   release the lock before calling thread-safe routines. */
 	if (arg1 == 1) { /* Cancel. */
 		GtkTreeIter iter;
 		if (gtk_tree_selection_get_selected(gtk_tree_view_get_selection (GTK_TREE_VIEW(bgtreeview)), NULL, &iter)) {
@@ -256,7 +278,7 @@ static void bgwindow_response(GtkDialog * dialog, int arg1)
 		gdk_threads_leave();
 		background_thread_update();
 		gdk_threads_enter();
-	} else if (arg1 == 2) { /* clear */
+	} else if (arg1 == 2) { /* Clear. */
 		GtkTreeIter iter;
 		while (gtk_tree_model_get_iter_first(GTK_TREE_MODEL(bgstore), &iter)) {
 			cancel_job_with_iter(&iter);
@@ -264,47 +286,52 @@ static void bgwindow_response(GtkDialog * dialog, int arg1)
 		gdk_threads_leave();
 		background_thread_update();
 		gdk_threads_enter();
-	} else { /* OK */
+	} else { /* OK. */
 		gtk_widget_hide(bgwindow);
 	}
 }
+
+
+
 
 #define VIK_SETTINGS_BACKGROUND_MAX_THREADS "background_max_threads"
 #define VIK_SETTINGS_BACKGROUND_MAX_THREADS_LOCAL "background_max_threads_local"
 
 #ifdef HAVE_LIBMAPNIK
-VikLayerParamScale params_threads[] = { {1, 64, 1, 0} }; // 64 threads should be enough for anyone...
-// implicit use of 'MAPNIK_PREFS_NAMESPACE' to avoid dependency issues
+VikLayerParamScale params_threads[] = { {1, 64, 1, 0} }; /* 64 threads should be enough for anyone... */
+/* Implicit use of 'MAPNIK_PREFS_NAMESPACE' to avoid dependency issues. */
 static VikLayerParam prefs_mapnik[] = {
 	{ LayerType::NUM_TYPES, "mapnik.background_max_threads_local_mapnik", VIK_LAYER_PARAM_UINT, VIK_LAYER_GROUP_NONE, N_("Threads:"), VIK_LAYER_WIDGET_SPINBUTTON, params_threads, NULL,
 	  N_("Number of threads to use for Mapnik tasks. You need to restart Viking for a change to this value to be used"), NULL, NULL, NULL },
 };
 #endif
 
+
+
+
 /**
- * a_background_init:
- *
  * Just setup any preferences.
  */
 void a_background_init()
 {
 #ifdef HAVE_LIBMAPNIK
 	VikLayerParamData tmp;
-	// implicit use of 'MAPNIK_PREFS_NAMESPACE' to avoid dependency issues
-	tmp.u = 1; // Default to 1 thread due to potential crashing issues
+	/* Implicit use of 'MAPNIK_PREFS_NAMESPACE' to avoid dependency issues. */
+	tmp.u = 1; /* Default to 1 thread due to potential crashing issues. */
 	a_preferences_register(&prefs_mapnik[0], tmp, "mapnik");
 #endif
 }
 
+
+
+
 /**
- * a_background_post_init:
- *
  * Initialize background feature.
  */
 void a_background_post_init()
 {
-	// initialize thread pools
-	int max_threads = 10;  /* limit maximum number of threads running at one time */
+	/* Initialize thread pools. */
+	int max_threads = 10;  /* Limit maximum number of threads running at one time. */
 	int maxt;
 	if (a_settings_get_integer(VIK_SETTINGS_BACKGROUND_MAX_THREADS, &maxt)) {
 		max_threads = maxt;
@@ -316,13 +343,13 @@ void a_background_post_init()
 		max_threads = maxt;
 	} else {
 		unsigned int cpus = util_get_number_of_cpus();
-		max_threads = cpus > 1 ? cpus-1 : 1; // Don't use all available CPUs!
+		max_threads = cpus > 1 ? cpus-1 : 1; /* Don't use all available CPUs! */
 	}
 
 	thread_pool_local = g_thread_pool_new((GFunc) thread_helper, NULL, max_threads, false, NULL);
 
 #ifdef HAVE_LIBMAPNIK
-	// implicit use of 'MAPNIK_PREFS_NAMESPACE' to avoid dependency issues
+	/* Implicit use of 'MAPNIK_PREFS_NAMESPACE' to avoid dependency issues. */
 	unsigned int mapnik_threads = a_preferences_get("mapnik.background_max_threads_local_mapnik")->u;
 	thread_pool_local_mapnik = g_thread_pool_new((GFunc) thread_helper, NULL, mapnik_threads, false, NULL);
 #endif
@@ -333,14 +360,14 @@ void a_background_post_init()
 
 	fprintf(stderr, "DEBUG: %s\n", __FUNCTION__);
 
-	/* store & treeview */
+	/* Store & treeview. */
 	bgstore = gtk_list_store_new(N_COLUMNS, G_TYPE_STRING, G_TYPE_DOUBLE, G_TYPE_POINTER);
 	bgtreeview = gtk_tree_view_new_with_model(GTK_TREE_MODEL(bgstore));
 	gtk_tree_view_set_rules_hint(GTK_TREE_VIEW (bgtreeview), true);
 	gtk_tree_selection_set_mode(gtk_tree_view_get_selection(GTK_TREE_VIEW (bgtreeview)),
 				    GTK_SELECTION_SINGLE);
 
-	/* add columns */
+	/* Add columns. */
 	renderer = gtk_cell_renderer_text_new();
 	column = gtk_tree_view_column_new_with_attributes(_("Job"), renderer, "text", TITLE_COLUMN, NULL);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(bgtreeview), column);
@@ -349,7 +376,7 @@ void a_background_post_init()
 	column = gtk_tree_view_column_new_with_attributes(_("Progress"), renderer, "value", PROGRESS_COLUMN, NULL);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(bgtreeview), column);
 
-	/* setup window */
+	/* Setup window. */
 	scrolled_window = gtk_scrolled_window_new(NULL, NULL);
 	gtk_container_add(GTK_CONTAINER(scrolled_window), bgtreeview);
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_window), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
@@ -366,24 +393,25 @@ void a_background_post_init()
 	if (response_w) {
 		gtk_widget_grab_focus(response_w);
 	}
-	/* don't destroy win */
+	/* Don't destroy win. */
 	g_signal_connect(G_OBJECT(bgwindow), "delete-event", G_CALLBACK(gtk_widget_hide_on_delete), NULL);
 
 	g_signal_connect(G_OBJECT(bgwindow), "response", G_CALLBACK(bgwindow_response), 0);
 
 }
 
+
+
+
 /**
- * a_background_uninit:
- *
  * Uninitialize background feature.
  */
 void a_background_uninit()
 {
 	stop_all_threads = true;
-	// wait until these threads stop
+	/* Wait until these threads stop. */
 	g_thread_pool_free(thread_pool_remote, true, true);
-	// Don't wait for these
+	/* Don't wait for these. */
 	g_thread_pool_free(thread_pool_local, true, false);
 #ifdef HAVE_LIBMAPNIK
 	g_thread_pool_free(thread_pool_local_mapnik, true, false);
@@ -395,10 +423,16 @@ void a_background_uninit()
 	gtk_widget_destroy(bgwindow);
 }
 
+
+
+
 void a_background_add_window(Window * window)
 {
 	windows_to_update.push_front(window);
 }
+
+
+
 
 void a_background_remove_window(Window * window)
 {

@@ -31,7 +31,8 @@
 #include <glib/gi18n.h>
 #include <glib/gprintf.h>
 #include <gio/gio.h>
-#include <stdlib.h>
+
+#include <cstdlib>
 
 #include "util.h"
 #include "globals.h"
@@ -41,6 +42,9 @@
 #else
 #include <unistd.h>
 #endif
+
+
+
 
 unsigned int util_get_number_of_cpus()
 {
@@ -64,6 +68,9 @@ unsigned int util_get_number_of_cpus()
 #endif
 }
 
+
+
+
 char * uri_escape(char * str)
 {
 	char * esc_str = (char *) malloc(3 * strlen(str));
@@ -85,6 +92,9 @@ char * uri_escape(char * str)
 	return esc_str;
 }
 
+
+
+
 #if 0
 GList * str_array_to_glist(char* data[])
 {
@@ -97,16 +107,17 @@ GList * str_array_to_glist(char* data[])
 }
 #endif
 
+
+
+
 /**
- * split_string_from_file_on_equals:
- *
  * @buf: the input string
  * @key: newly allocated string that is before the '='
  * @val: newly allocated string after the '='
  *
  * Designed for file line processing, so it ignores strings beginning with special
- *  characters, such as '#'; returns false in such situations.
- * Also returns false if no equals character is found
+ * characters, such as '#'; returns false in such situations.
+ * Also returns false if no equals character is found.
  *
  * e.g. if buf = "GPS.parameter=42"
  *   key = "GPS.parameter"
@@ -114,7 +125,7 @@ GList * str_array_to_glist(char* data[])
  */
 bool split_string_from_file_on_equals(char const * buf, char ** key, char ** val)
 {
-	// comments, special characters in viking file format
+	/* comments, special characters in viking file format. */
 	if (buf == NULL || buf[0] == '\0' || buf[0] == '~' || buf[0] == '=' || buf[0] == '#') {
 		return false;
 	}
@@ -139,31 +150,36 @@ bool split_string_from_file_on_equals(char const * buf, char ** key, char ** val
 
 	g_strfreev(strv);
 
-	// Remove newline from val and also any other whitespace
+	/* Remove newline from val and also any other whitespace. */
 	*key = g_strstrip(*key);
 	*val = g_strstrip(*val);
 	return true;
 }
 
+
+
+
 static GSList * deletion_list = NULL;
 
+
+
+
 /**
- * util_add_to_deletion_list:
- *
- * Add a name of a file into the list that is to be deleted on program exit
+ * Add a name of a file into the list that is to be deleted on program exit.
  * Normally this is for files that get used asynchronously,
- *  so we don't know when it's time to delete them - other than at this program's end
+ * so we don't know when it's time to delete them - other than at this program's end.
  */
 void util_add_to_deletion_list(char const * filename)
 {
 	deletion_list = g_slist_append(deletion_list, g_strdup(filename));
 }
 
+
+
+
 /**
- * util_remove_all_in_deletion_list:
- *
- * Delete all the files in the deletion list
- * This should only be called on program exit
+ * Delete all the files in the deletion list.
+ * This should only be called on program exit.
  */
 void util_remove_all_in_deletion_list(void)
 {
@@ -175,6 +191,9 @@ void util_remove_all_in_deletion_list(void)
 		deletion_list = g_slist_delete_link (deletion_list, deletion_list);
 	}
 }
+
+
+
 
 /**
  *  Removes characters from a string, in place.
@@ -209,12 +228,17 @@ char * util_str_remove_chars(char * string, char const * chars)
 	return string;
 }
 
+
+
+
 /**
- * In 'extreme' debug mode don't remove temporary files
- *  thus the contents can be inspected if things go wrong
- *  with the trade off the user may need to delete tmp files manually
- * Only use this for 'occasional' downloaded temporary files that need interpretation,
- *  rather than large volume items such as Bing attributions.
+ * In 'extreme' debug mode don't remove temporary files thus the
+ * contents can be inspected if things go wrong, with the trade off
+ * the user may need to delete tmp files manually
+ *
+ * Only use this for 'occasional' downloaded temporary files that need
+ * interpretation, rather than large volume items such as Bing
+ * attributions.
  */
 int util_remove(char const * filename)
 {
@@ -226,8 +250,11 @@ int util_remove(char const * filename)
 	}
 }
 
+
+
+
 /**
- * Stream write buffer to a temporary file (in one go)
+ * Stream write buffer to a temporary file (in one go).
  *
  * @param buffer The buffer to write
  * @param count Size of the buffer to write
@@ -277,7 +304,6 @@ char * util_write_tmp_file_from_bytes(const void * buffer, size_t count)
 
 	return tmpname;
 }
-
 
 
 

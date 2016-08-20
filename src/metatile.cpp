@@ -20,24 +20,32 @@
  */
 /*
  * Mostly imported from https://github.com/openstreetmap/mod_tile/
- *  Release 0.4
+ * Release 0.4
  */
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
+#include <climits>
+#include <cstring>
+
 #include <unistd.h>
-#include <limits.h>
-#include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>
 #include <fcntl.h>
 
 #include "metatile.h"
+
+
+
+
 /**
  * metatile.h
  */
 #define META_MAGIC "META"
 #define META_MAGIC_COMPRESSED "METZ"
+
+
+
 
 struct entry {
 	int offset;
@@ -53,28 +61,29 @@ struct meta_layout {
 	// The index offsets are measured from the start of the file
 };
 
-// Use this to enable meta-tiles which will render NxN tiles at once
-// Note: This should be a power of 2 (2, 4, 8, 16 ...)
+
+
+
+/* Use this to enable meta-tiles which will render NxN tiles at once.
+   Note: This should be a power of 2 (2, 4, 8, 16 ...). */
 #define METATILE (8)
 
 /**
- * xyz_to_meta:
  * Based on function from mod_tile/src/store_file_utils.c
  *
- * Returns the path to the meta-tile and the offset within the meta-tile
+ * Returns the path to the meta-tile and the offset within the meta-tile.
  */
-int xyz_to_meta(char * path, size_t len, char const * dir, int x, int y, int z)
+int SlavGPS::xyz_to_meta(char * path, size_t len, char const * dir, int x, int y, int z)
 {
-	unsigned char i, hash[5], offset, mask;
-
-	// Each meta tile winds up in its own file, with several in each leaf directory
-	// the .meta tile name is based on the sub-tile at (0,0)
-	mask = METATILE - 1;
-	offset = (x & mask) * METATILE + (y & mask);
+	/* Each meta tile winds up in its own file, with several in each leaf directory
+	   the .meta tile name is based on the sub-tile at (0,0). */
+	unsigned char mask = METATILE - 1;
+	unsigned char offset = (x & mask) * METATILE + (y & mask);
 	x &= ~mask;
 	y &= ~mask;
 
-	for (i = 0; i < 5; i++) {
+	unsigned char hash[5];
+	for (unsigned char i = 0; i < 5; i++) {
 		hash[i] = ((x & 0x0f) << 4) | (y & 0x0f);
 		x >>= 4;
 		y >>= 4;
@@ -84,36 +93,34 @@ int xyz_to_meta(char * path, size_t len, char const * dir, int x, int y, int z)
 	return offset;
 }
 
+
+
+
 /**
- * metatile_read:
- * From function in mod_tile/src/store_file.c
- * Slightly reworked to use simplified xyz_to_meta() above
+ * Slightly reworked to use simplified xyz_to_meta() above.
  *
- * Reads into buf upto size specified by sz
+ * Reads into buf upto size specified by sz.
  *
- * Returns whether the file is in a compressed format (possibly only gzip)
+ * Returns whether the file is in a compressed format (possibly only gzip).
  *
- * Error messages returned in log_msg
+ * Error messages returned in log_msg.
  */
-int metatile_read(char const * dir, int x, int y, int z, char * buf, size_t sz, int * compressed, char * log_msg)
+int SlavGPS::metatile_read(char const * dir, int x, int y, int z, char * buf, size_t sz, int * compressed, char * log_msg)
 {
 	char path[PATH_MAX];
-	int meta_offset, fd;
-	unsigned int pos;
-	unsigned int header_len = sizeof(struct meta_layout) + METATILE*METATILE*sizeof(struct entry);
+	unsigned int header_len = sizeof(struct meta_layout) + METATILE * METATILE * sizeof (struct entry);
 	struct meta_layout * meta = (struct meta_layout *) malloc(header_len);
-	size_t file_offset, tile_size;
 
-	meta_offset = xyz_to_meta(path, sizeof(path), dir, x, y, z);
+	int meta_offset = xyz_to_meta(path, sizeof (path), dir, x, y, z);
 
-	fd = open(path, O_RDONLY);
+	int fd = open(path, O_RDONLY);
 	if (fd < 0) {
 		snprintf(log_msg,PATH_MAX - 1, "Could not open metatile %s. Reason: %s\n", path, strerror(errno));
 		free(meta);
 		return -1;
 	}
 
-	pos = 0;
+	unsigned int pos = 0;
 	while (pos < header_len) {
 		size_t len = header_len - pos;
 		int got = read(fd, ((unsigned char *) meta) + pos, len);
@@ -147,7 +154,7 @@ int metatile_read(char const * dir, int x, int y, int z, char * buf, size_t sz, 
 		*compressed = 0;
 	}
 
-	// Currently this code only works with fixed metatile sizes (due to xyz_to_meta above)
+	/* Currently this code only works with fixed metatile sizes (due to xyz_to_meta above). */
 	if (meta->count != (METATILE * METATILE)) {
 		snprintf(log_msg, PATH_MAX - 1, "Meta file %s header bad count %d != %d\n", path, meta->count, METATILE * METATILE);
 		free(meta);
@@ -155,8 +162,8 @@ int metatile_read(char const * dir, int x, int y, int z, char * buf, size_t sz, 
 		return -5;
 	}
 
-	file_offset = meta->index[meta_offset].offset;
-	tile_size   = meta->index[meta_offset].size;
+	size_t file_offset = meta->index[meta_offset].offset;
+	size_t tile_size   = meta->index[meta_offset].size;
 
 	free(meta);
 

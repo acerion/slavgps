@@ -19,20 +19,17 @@
  *
  */
 
-#ifndef _VIKING_FILELIST_H
-#define _VIKING_FILELIST_H
+#ifndef _SG_FILELIST_H_
+#define _SG_FILELIST_H_
 
 #include <list>
+#include <cstdint>
 
 #include <glib.h>
 #include <glib-object.h>
 #include <gtk/gtk.h>
-#include <stdint.h>
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
 #define VIK_FILE_LIST_TYPE            (vik_file_list_get_type ())
@@ -51,13 +48,15 @@ struct _VikFileListClass
 
 GType vik_file_list_get_type();
 
+
+
+
 GtkWidget * vik_file_list_new(const char * title, GtkFileFilter * filter);
-/* result must be freed */
+/* Result must be freed. */
 std::list<char *> * vik_file_list_get_files(VikFileList * vfl);
 void vik_file_list_set_files(VikFileList * vfl, std::list<char *> * files);
 
-#ifdef __cplusplus
-}
-#endif
 
-#endif
+
+
+#endif /* #ifndef _SG_FILELIST_H_ */

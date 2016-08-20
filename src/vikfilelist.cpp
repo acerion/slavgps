@@ -24,12 +24,16 @@
 #include "config.h"
 #endif
 
+#include <cstdlib>
+#include <cassert>
+
 #include <gtk/gtk.h>
 #include <glib/gi18n.h>
-#include <stdlib.h>
-#include <assert.h>
 
 #include "vikfilelist.h"
+
+
+
 
 struct _VikFileList {
 	GtkVBox parent;
@@ -39,12 +43,15 @@ struct _VikFileList {
 	GtkFileFilter * filter;
 };
 
-static void file_list_add(VikFileList *vfl)
+
+
+
+static void file_list_add(VikFileList * vfl)
 {
 	GSList *files = NULL;
 	GSList *fiter = NULL;
 
-	if (! vfl->file_selector) {
+	if (!vfl->file_selector) {
 		GtkWidget *win = gtk_widget_get_toplevel(GTK_WIDGET(vfl));
 		assert (win);
 		vfl->file_selector = gtk_file_chooser_dialog_new(_("Choose file(s)"),
@@ -82,16 +89,14 @@ static void file_list_add(VikFileList *vfl)
 }
 
 
-static GtkTreeRowReference ** file_list_get_selected_refs(GtkTreeModel * model,
-							  GList * list)
-{
-	GtkTreeRowReference **arr;
-	GList *iter;
 
-	arr = (GtkTreeRowReference **) malloc((g_list_length (list) + 1) * sizeof (GtkTreeRowReference *));
+
+static GtkTreeRowReference ** file_list_get_selected_refs(GtkTreeModel * model, GList * list)
+{
+	GtkTreeRowReference ** arr = (GtkTreeRowReference **) malloc((g_list_length (list) + 1) * sizeof (GtkTreeRowReference *));
 
 	int pos = 0;
-	for (iter = g_list_first (list); iter != NULL; iter = g_list_next(iter)) {
+	for (GList * iter = g_list_first (list); iter != NULL; iter = g_list_next(iter)) {
 		GtkTreePath *path = (GtkTreePath *)(iter->data);
 		arr[pos] = gtk_tree_row_reference_new(model, path);
 		pos++;
@@ -101,14 +106,15 @@ static GtkTreeRowReference ** file_list_get_selected_refs(GtkTreeModel * model,
 	return arr;
 }
 
-static void file_list_store_delete_refs(GtkTreeModel * model,
-					GtkTreeRowReference * const * rrefs)
+
+
+
+static void file_list_store_delete_refs(GtkTreeModel * model, GtkTreeRowReference * const * rrefs)
 {
 	GtkTreePath * path;
 	GtkTreeIter iter;
 
-	int rr;
-	for (rr = 0; rrefs[rr] != NULL; rr++) {
+	for (int rr = 0; rrefs[rr] != NULL; rr++) {
 		path = gtk_tree_row_reference_get_path(rrefs[rr]);
 		gtk_tree_model_get_iter(model, &iter, path);
 		gtk_list_store_remove(GTK_LIST_STORE (model), &iter);
@@ -116,21 +122,26 @@ static void file_list_store_delete_refs(GtkTreeModel * model,
 }
 
 
+
+
 static void file_list_del(VikFileList * vfl)
 {
-	GtkTreeSelection *ts = gtk_tree_view_get_selection(GTK_TREE_VIEW(vfl->treeview));
-	GList *list = gtk_tree_selection_get_selected_rows(ts, &(vfl->model));
+	GtkTreeSelection * ts = gtk_tree_view_get_selection(GTK_TREE_VIEW(vfl->treeview));
+	GList * list = gtk_tree_selection_get_selected_rows(ts, &(vfl->model));
 
-	// For multi delete need to store references to selected rows
+	/* For multi delete need to store references to selected rows. */
 	GtkTreeRowReference **rrefs = file_list_get_selected_refs(vfl->model, list);
-	// And then delete each one individually as the path will have changed
+	/* And then delete each one individually as the path will have changed. */
 	file_list_store_delete_refs(vfl->model, rrefs);
 
-	// Cleanup
+	/* Cleanup. */
 	g_list_foreach(list, (GFunc) gtk_tree_path_free, NULL);
 	g_list_free(list);
 	free(rrefs);
 }
+
+
+
 
 GType vik_file_list_get_type(void)
 {
@@ -154,9 +165,12 @@ GType vik_file_list_get_type(void)
 	return vs_type;
 }
 
+
+
+
 /**
- * Support just one filter, as that's all that's needed ATM
- * Probably need to use a GList of them if more than one is required
+ * Support just one filter, as that's all that's needed ATM.
+ * Probably need to use a GList of them if more than one is required.
  */
 GtkWidget * vik_file_list_new(const char * title, GtkFileFilter * filter)
 {
@@ -204,14 +218,20 @@ GtkWidget * vik_file_list_new(const char * title, GtkFileFilter * filter)
 	return GTK_WIDGET(vfl);
 }
 
+
+
+
 static bool get_file_name(GtkTreeModel * model, GtkTreePath * path, GtkTreeIter * iter, std::list<char *> * list)
 {
 	char *str;
 	gtk_tree_model_get(model, iter, 0, &str, -1);
 	fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, str);
-	list->push_back(str); // NB str is already a copy
+	list->push_back(str); /* NB str is already a copy. */
 	return false;
 }
+
+
+
 
 std::list<char *> * vik_file_list_get_files(VikFileList * vfl)
 {
@@ -219,6 +239,9 @@ std::list<char *> * vik_file_list_get_files(VikFileList * vfl)
 	gtk_tree_model_foreach(vfl->model, (GtkTreeModelForeachFunc) get_file_name, list);
 	return list;
 }
+
+
+
 
 void vik_file_list_set_files(VikFileList * vfl, std::list<char *> * files)
 {

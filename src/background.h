@@ -19,33 +19,38 @@
  *
  */
 
-#ifndef __VIKING_BACKGROUND_H
-#define __VIKING_BACKGROUND_H
+#ifndef _SG_BACKGROUND_H_
+#define _SG_BACKGROUND_H_
 
+
+
+
+#include <stdint.h>
 
 #include <gtk/gtk.h>
-#include <stdint.h>
+
 
 #include "vikwindow.h"
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+
 
 
 typedef void(* vik_thr_free_func)(void *);
 typedef void(* vik_thr_func)(void *,void *);
 
 typedef enum {
-	BACKGROUND_POOL_REMOTE, // i.e. Network requests - can have an arbitary large pool
-	BACKGROUND_POOL_LOCAL,  // i.e. CPU bound tasks - pool should be no larger than available CPUs for best performance
+	BACKGROUND_POOL_REMOTE, /* i.e. Network requests - can have an arbitary large pool. */
+	BACKGROUND_POOL_LOCAL,  /* i.e. CPU bound tasks - pool should be no larger than available CPUs for best performance. */
 #ifdef HAVE_LIBMAPNIK
-	BACKGROUND_POOL_LOCAL_MAPNIK,  // Due to potential issues with multi-threading a separate configurable pool for Mapnik
+	BACKGROUND_POOL_LOCAL_MAPNIK,  /* Due to potential issues with multi-threading a separate configurable pool for Mapnik. */
 #endif
 } Background_Pool_Type;
+
+
+
 
 void a_background_thread(Background_Pool_Type bp, GtkWindow * parent, char const * message, vik_thr_func func, void * userdata, vik_thr_free_func userdata_free_func, vik_thr_free_func userdata_cancel_cleanup_func, int number_items);
 int a_background_thread_progress(void * callbackdata, double fraction);
@@ -57,12 +62,7 @@ void a_background_uninit();
 void a_background_add_window(SlavGPS::Window * window);
 void a_background_remove_window(SlavGPS::Window * window);
 
-#ifdef __cplusplus
-}
-#endif
 
 
 
-
-
-#endif
+#endif /* #ifndef _SG_BACKGROUND_H_ */

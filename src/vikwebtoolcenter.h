@@ -24,15 +24,12 @@
 
 
 
-
 #include "vikwebtool.h"
 
 
 
 
-
 namespace SlavGPS {
-
 
 
 
@@ -52,11 +49,9 @@ namespace SlavGPS {
 
 
 
-
 } /* namespace SlavGPS */
 
 
 
 
-
-#endif
+#endif /* #ifndef _SG_WEBTOOL_CENTER_H */

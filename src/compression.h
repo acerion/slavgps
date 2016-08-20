@@ -19,24 +19,26 @@
  *
  */
 
-#ifndef _VIKING_COMPRESSION_H
-#define _VIKING_COMPRESSION_H
-
-#include <glib.h>
-#include <stdint.h>
+#ifndef _SG_COMPRESSION_H_
+#define _SG_COMPRESSION_H_
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
-void * unzip_file(char * zip_file, unsigned long * unzip_size);
+namespace SlavGPS {
 
-char * uncompress_bzip2(char * name);
 
-#ifdef __cplusplus
-}
-#endif
 
-#endif
+
+	void * unzip_file(char * zip_file, unsigned long * unzip_size);
+	char * uncompress_bzip2(char * name);
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
+#endif /* #ifndef _SG_COMPRESSION_H_ */

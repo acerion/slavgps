@@ -23,22 +23,28 @@
 
 /* gtk status bars: just plain dumb. this file shouldn't have to exist.
    NB as of gtk 2.18 there are 'info bars' that could be useful... */
-#include <gtk/gtk.h>
 
+#include <gtk/gtk.h>
 #include <glib/gi18n.h>
 
 #include <math.h>
-#include <stdlib.h>
+#include <cstdlib>
 
-#include "viking.h"
+//#include "viking.h"
 #include "vikstatus.h"
 #include "background.h"
 #include "globals.h"
+
+
+
 
 enum {
 	CLICKED,
 	LAST_SIGNAL
 };
+
+
+
 
 struct _VikStatusbar {
 	GtkHBox hbox;
@@ -50,16 +56,19 @@ G_DEFINE_TYPE (VikStatusbar, vik_statusbar, GTK_TYPE_HBOX)
 
 static unsigned int vik_statusbar_signals[LAST_SIGNAL] = { 0 };
 
+
+
+
 static int forward_signal(GObject * object, void * user_data)
 {
 	int item = KPOINTER_TO_INT (g_object_get_data(object, "type"));
 	VikStatusbar *vs = VIK_STATUSBAR (user_data);
 
-	// Clicking on the items field will bring up the background jobs window
+	/* Clicking on the items field will bring up the background jobs window. */
 	if (item == VIK_STATUSBAR_ITEMS) {
 		a_background_show_window();
 	} else if (item == VIK_STATUSBAR_INFO) {
-		// Clear current info message
+		/* Clear current info message. */
 		vik_statusbar_set_message(vs, VIK_STATUSBAR_INFO, "");
 	} else {
 		g_signal_emit(G_OBJECT (vs),
@@ -69,6 +78,9 @@ static int forward_signal(GObject * object, void * user_data)
 
 	return true;
 }
+
+
+
 
 static void vik_statusbar_class_init(VikStatusbarClass * klass)
 {
@@ -85,12 +97,15 @@ static void vik_statusbar_class_init(VikStatusbarClass * klass)
 	klass->clicked = NULL;
 }
 
+
+
+
 static bool button_release_event(GtkWidget * widget, GdkEvent * event, void ** user_data)
 {
 	if (((GdkEventButton *) event)->button == 3) {
 		int type = KPOINTER_TO_INT (g_object_get_data(G_OBJECT(widget), "type"));
 		VikStatusbar * vs = VIK_STATUSBAR (user_data);
-		// Right Click: so copy the text in the INFO buffer only ATM
+		/* Right Click: so copy the text in the INFO buffer only ATM. */
 		if (type == VIK_STATUSBAR_INFO) {
 			const char* msg = gtk_button_get_label(GTK_BUTTON(vs->status[VIK_STATUSBAR_INFO]));
 			if (msg) {
@@ -98,12 +113,15 @@ static bool button_release_event(GtkWidget * widget, GdkEvent * event, void ** u
 				gtk_clipboard_set_text(clipboard, msg, -1);
 			}
 		}
-		// We've handled the event
+		/* We've handled the event. */
 		return true;
 	}
-	// Otherwise carry on with other event handlers - i.e. ensure forward_signal() is called
+	/* Otherwise carry on with other event handlers - i.e. ensure forward_signal() is called. */
 	return false;
 }
+
+
+
 
 static void vik_statusbar_init(VikStatusbar * vs)
 {
@@ -143,15 +161,16 @@ static void vik_statusbar_init(VikStatusbar * vs)
 	gtk_button_set_alignment(GTK_BUTTON(vs->status[VIK_STATUSBAR_INFO]), 0.0, 0.5); // Left align the text
 	gtk_box_pack_end(GTK_BOX(vs), vs->status[VIK_STATUSBAR_INFO], true, true, 1);
 
-	// Set minimum overall size
-	//  otherwise the individual size_requests above create an implicit overall size,
-	//  and so one can't downsize horizontally as much as may be desired when the statusbar is on
+	/* Set minimum overall size.
+	   Otherwise the individual size_requests above create an implicit overall size,
+	   and so one can't downsize horizontally as much as may be desired when the statusbar is on. */
 	gtk_widget_set_size_request(GTK_WIDGET(vs), 50, -1);
 }
 
+
+
+
 /**
- * vik_statusbar_new:
- *
  * Creates a new #VikStatusbar widget.
  *
  * Return value: the new #VikStatusbar widget.
@@ -163,8 +182,10 @@ VikStatusbar * vik_statusbar_new()
 	return vs;
 }
 
+
+
+
 /**
- * vik_statusbar_set_message:
  * @vs: the #VikStatusbar itself
  * @field: the field to update
  * @message: the message to use

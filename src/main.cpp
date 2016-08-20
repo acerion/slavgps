@@ -23,10 +23,22 @@
 #include "config.h"
 #endif /* HAVE_CONFIG */
 
+#ifdef HAVE_STDLIB_H
+#include <stdlib.h>
+#endif
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
+
+#include <cstdlib>
+
+#include <glib/gprintf.h>
+#include <glib/gi18n.h>
+
 #include <gtk/gtk.h>
 #include <gdk-pixbuf/gdk-pixdata.h>
 
-#include "viking.h"
+//#include "viking.h"
 #include "icons/icons.h"
 #include "mapcache.h"
 #include "background.h"
@@ -46,19 +58,6 @@
 #include "file.h"
 #include "settings.h"
 #include "vikwindow.h"
-
-#ifdef HAVE_STDLIB_H
-#include <stdlib.h>
-#endif
-#ifdef HAVE_STRING_H
-#include <string.h>
-#endif
-
-#include <glib/gprintf.h>
-#include <glib/gi18n.h>
-
-#include <stdlib.h>
-
 #include "modules.h"
 
 /* FIXME LOCALEDIR must be configured by ./configure --localedir */
@@ -75,23 +74,28 @@
 
 
 
+
 using namespace SlavGPS;
 
 
 
+
 #if GLIB_CHECK_VERSION (2, 32, 0)
-/* Callback to log message */
+/* Callback to log message. */
 static void log_debug(const char * log_domain, GLogLevelFlags log_level, const char * message, void * user_data)
 {
 	fprintf(stdout, "** (viking): DEBUG: %s\n", message);
 }
 #else
-/* Callback to mute log message */
+/* Callback to mute log message. */
 static void mute_log(const char * log_domain, GLogLevelFlags log_level, const char * message, void * user_data)
 {
-	/* Nothing to do, we just want to mute */
+	/* Nothing to do, we just want to mute. */
 }
 #endif
+
+
+
 
 #if HAVE_X11_XLIB_H
 static int myXErrorHandler(Display * display, XErrorEvent * theEvent)
@@ -100,20 +104,26 @@ static int myXErrorHandler(Display * display, XErrorEvent * theEvent)
 		_("Ignoring Xlib error: error code %d request code %d\n"),
 		theEvent->error_code,
 		theEvent->request_code);
-	// No exit on X errors!
-	//  mainly to handle out of memory error when requesting large pixbuf from user request
-	//  see vikwindow.c::save_image_file ()
+	/* No exit on X errors!
+	   Mainly to handle out of memory error when requesting large pixbuf from user request.
+	   See vikwindow.c::save_image_file() */
 	return 0;
 }
 #endif
 
-// Default values that won't actually get applied unless changed by command line parameter values
+
+
+
+/* Default values that won't actually get applied unless changed by command line parameter values. */
 static double latitude = 0.0;
 static double longitude = 0.0;
 static int zoom_level_osm = -1;
 static MapTypeID map_type_id = MAP_TYPE_ID_INITIAL;
 
-/* Options */
+
+
+
+/* Options. */
 static GOptionEntry entries[] = {
 	{ "debug",     'd', 0, G_OPTION_ARG_NONE,   &vik_debug,      N_("Enable debug output"), NULL },
 	{ "verbose",   'V', 0, G_OPTION_ARG_NONE,   &vik_verbose,    N_("Enable verbose output"), NULL },
@@ -125,14 +135,11 @@ static GOptionEntry entries[] = {
 	{ NULL }
 };
 
+
+
+
 int main(int argc, char *argv[])
 {
-	GdkPixbuf *main_icon;
-	bool dashdash_already = false;
-	int i = 0;
-	GError *error = NULL;
-	bool gui_initialized;
-
 	bindtextdomain(GETTEXT_PACKAGE, LOCALEDIR);
 	bind_textdomain_codeset(GETTEXT_PACKAGE, "UTF-8");
 	textdomain(GETTEXT_PACKAGE);
@@ -142,15 +149,16 @@ int main(int argc, char *argv[])
 #endif
 	gdk_threads_init();
 
-	gui_initialized = gtk_init_with_args(&argc, &argv, "files+", entries, NULL, &error);
+	GError *error = NULL;
+	bool gui_initialized = gtk_init_with_args(&argc, &argv, "files+", entries, NULL, &error);
 	if (!gui_initialized) {
-		/* check if we have an error message */
+		/* Check if we have an error message. */
 		if (error == NULL) {
-			/* no error message, the GUI initialization failed */
+			/* No error message, the GUI initialization failed. */
 			const char *display_name = gdk_get_display_arg_name();
 			fprintf(stderr, "Failed to open display: %s\n", (display_name != NULL) ? display_name : " ");
 		} else {
-			/* yep, there's an error, so print it */
+			/* Yep, there's an error, so print it. */
 			fprintf(stderr, "Parsing command line options failed: %s\n", error->message);
 			g_error_free(error);
 			fprintf(stderr, "Run \"%s --help\" to see the list of recognized options.\n",argv[0]);
@@ -177,21 +185,23 @@ int main(int argc, char *argv[])
 	XSetErrorHandler(myXErrorHandler);
 #endif
 
-	// Discover if this is the very first run
+	/* Discover if this is the very first run. */
 	a_vik_very_first_run();
 
 	a_settings_init();
 	a_preferences_init();
 
 	/*
-	 * First stage initialization
-	 *
-	 * Should not use a_preferences_get() yet
-	 *
-	 * Since the first time a_preferences_get() is called it loads any preferences values from disk,
-	 *  but of course for preferences not registered yet it can't actually understand them
-	 *  so subsequent initial attempts to get those preferences return the default value, until the values have changed
-	 */
+	  First stage initialization.
+
+	  Should not use a_preferences_get() yet.
+
+	  Since the first time a_preferences_get() is called it loads
+	  any preferences values from disk, but of course for
+	  preferences not registered yet it can't actually understand
+	  them so subsequent initial attempts to get those preferences
+	  return the default value, until the values have changed.
+	*/
 	a_vik_preferences_init();
 
 	a_layer_defaults_init();
@@ -201,7 +211,7 @@ int main(int argc, char *argv[])
 
 	a_babel_init();
 
-	/* Init modules/plugins */
+	/* Init modules/plugins. */
 	modules_init();
 
 	vik_georef_layer_init();
@@ -213,41 +223,43 @@ int main(int argc, char *argv[])
 	vik_routing_prefs_init();
 
 	/*
-	 * Second stage initialization
-	 *
-	 * Can now use a_preferences_get()
-	 */
+	  Second stage initialization.
+
+	  Can now use a_preferences_get()
+	*/
 	a_background_post_init();
 	a_babel_post_init();
 	modules_post_init();
 
-	// May need to initialize the Positonal TimeZone lookup
+	/* May need to initialize the Positonal TimeZone lookup. */
 	if (a_vik_get_time_ref_frame() == VIK_TIME_REF_WORLD) {
 		vu_setup_lat_lon_tz_lookup();
 	}
 
-	/* Set the icon */
-	main_icon = gdk_pixbuf_from_pixdata(&viking_pixbuf, false, NULL);
+	/* Set the icon. */
+	GdkPixbuf * main_icon = gdk_pixbuf_from_pixdata(&viking_pixbuf, false, NULL);
 	gtk_window_set_default_icon(main_icon);
 
 	gdk_threads_enter();
 
-	// Ask for confirmation of default settings on first run
+	/* Ask for confirmation of default settings on first run. */
 	vu_set_auto_features_on_first_run();
 
-	/* Create the first window */
+	/* Create the first window. */
 	SlavGPS::Window * first_window = SlavGPS::Window::new_window();
 
 	vu_check_latest_version(GTK_WINDOW(first_window->vw));
 
+	int i = 0;
+	bool dashdash_already = false;
 	while (++i < argc) {
 		if (strcmp(argv[i],"--") == 0 && !dashdash_already) {
-			dashdash_already = true; /* hack to open '-' */
+			dashdash_already = true; /* Hack to open '-' */
 		} else {
 			SlavGPS::Window * new_window = first_window;
 			bool change_filename = (i == 1);
 
-			// Open any subsequent .vik files in their own window
+			/* Open any subsequent .vik files in their own window. */
 			if (i > 1 && check_file_magic_vik(argv[i])) {
 				new_window = SlavGPS::Window::new_window();
 				change_filename = true;
@@ -279,7 +291,7 @@ int main(int argc, char *argv[])
 
 	vu_finalize_lat_lon_tz_lookup();
 
-	// Clean up any temporary files
+	/* Clean up any temporary files. */
 	util_remove_all_in_deletion_list();
 
 	delete first_window;

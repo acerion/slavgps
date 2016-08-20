@@ -26,9 +26,9 @@
 #include "config.h"
 #endif
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstring>
+#include <cstdlib>
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -48,7 +48,13 @@
 #include "globals.h"
 #include "curl_download.h"
 
+
+
+
 char * curl_download_user_agent = NULL;
+
+
+
 
 /*
  * Even if writing to FILE* is supported by libcurl by default,
@@ -60,6 +66,9 @@ static size_t curl_write_func(void * ptr, size_t size, size_t nmemb, FILE * stre
 {
 	return fwrite(ptr, size, nmemb, stream);
 }
+
+
+
 
 static size_t curl_get_etag_func(void * ptr, size_t size, size_t nmemb, void * stream)
 {
@@ -79,23 +88,35 @@ static size_t curl_get_etag_func(void * ptr, size_t size, size_t nmemb, void * s
 	return nmemb;
 }
 
+
+
+
 static int curl_progress_func(void * clientp, double dltotal, double dlnow, double ultotal, double ulnow)
 {
 	return a_background_testcancel(NULL);
 }
 
-/* This should to be called from main() to make sure thread safe */
+
+
+
+/* This should to be called from main() to make sure thread safe. */
 void curl_download_init()
 {
 	curl_global_init(CURL_GLOBAL_ALL);
 	curl_download_user_agent = g_strdup_printf ("%s/%s %s", PACKAGE, VERSION, curl_version());
 }
 
-/* This should to be called from main() to make sure thread safe */
+
+
+
+/* This should to be called from main() to make sure thread safe. */
 void curl_download_uninit()
 {
 	curl_global_cleanup();
 }
+
+
+
 
 int curl_download_uri(const char * uri, FILE * f, DownloadFileOptions * options, CurlDownloadOptions * cdo, void * handle)
 {
@@ -112,7 +133,7 @@ int curl_download_uri(const char * uri, FILE * f, DownloadFileOptions * options,
 	if (vik_verbose) {
 		curl_easy_setopt (curl, CURLOPT_VERBOSE, 1);
 	}
-	curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1); // Yep, we're a multi-threaded program so don't let signals mess it up!
+	curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1); /* Yep, we're a multi-threaded program so don't let signals mess it up! */
 	if (options != NULL && options->user_pass) {
 		curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_ANY);
 		curl_easy_setopt(curl, CURLOPT_USERPWD, options->user_pass);
@@ -134,19 +155,19 @@ int curl_download_uri(const char * uri, FILE * f, DownloadFileOptions * options,
 		}
 		if (cdo != NULL) {
 			if (options->check_file_server_time && cdo->time_condition != 0) {
-				/* if file exists, check against server if file is recent enough */
+				/* If file exists, check against server if file is recent enough. */
 				curl_easy_setopt(curl, CURLOPT_TIMECONDITION, CURL_TIMECOND_IFMODSINCE);
 				curl_easy_setopt(curl, CURLOPT_TIMEVALUE, cdo->time_condition);
 			}
 			if (options->use_etag) {
 				if (cdo->etag != NULL) {
-					/* add an header on the HTTP request */
+					/* Add an header on the HTTP request. */
 					char str[60];
 					snprintf(str, 60, "If-None-Match: %s", cdo->etag);
 					curl_send_headers = curl_slist_append(curl_send_headers, str);
 					curl_easy_setopt(curl, CURLOPT_HTTPHEADER , curl_send_headers);
 				}
-				/* store the new etag from the server in an option value */
+				/* Store the new etag from the server in an option value. */
 				curl_easy_setopt(curl, CURLOPT_WRITEHEADER, cdo);
 				curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, curl_get_etag_func);
 			}
@@ -161,11 +182,11 @@ int curl_download_uri(const char * uri, FILE * f, DownloadFileOptions * options,
 		if (response == 304) {         // 304 = Not Modified
 			res = (CURLcode) CURL_DOWNLOAD_NO_NEWER_FILE;
 
-		} else if (response == 200 ||  // http: 200 = Ok
-			   response == 226) {  // ftp:  226 = sucess
+		} else if (response == 200        /* http: 200 = Ok */
+			   || response == 226) {  /* ftp:  226 = success */
 			double size;
-      /* verify if curl sends us any data - this is a workaround on using CURLOPT_TIMECONDITION
-         when the server has a (incorrect) time earlier than the time on the file we already have */
+			/* Verify if curl sends us any data - this is a workaround on using CURLOPT_TIMECONDITION
+			   when the server has a (incorrect) time earlier than the time on the file we already have. */
 			curl_easy_getinfo(curl, CURLINFO_SIZE_DOWNLOAD, &size);
 			if (size == 0) {
 				res = (CURLcode) CURL_DOWNLOAD_ERROR;
@@ -190,23 +211,26 @@ int curl_download_uri(const char * uri, FILE * f, DownloadFileOptions * options,
 	return res;
 }
 
+
+
+
 int curl_download_get_url(const char * hostname, const char * uri, FILE * f, DownloadFileOptions * options, bool ftp, CurlDownloadOptions * cdo, void * handle)
 {
 	int ret;
 	char * full = NULL;
 
 	if (strstr(hostname, "://") != NULL) {
-		/* Already full url */
+		/* Already full url. */
 		full = (char *) hostname;
 	} else if (strstr(uri, "://") != NULL) {
-		/* Already full url */
+		/* Already full url. */
 		full = (char *) uri;
 	} else {
-		/* Compose the full url */
+		/* Compose the full url. */
 		full = g_strdup_printf("%s://%s%s", (ftp?"ftp":"http"), hostname, uri);
 	}
 	ret = curl_download_uri(full, f, options, cdo, handle);
-	/* Free newly allocated memory, but do not free uri */
+	/* Free newly allocated memory, but do not free uri. */
 	if (hostname != full && uri != full) {
 		free(full);
 	}
@@ -215,10 +239,16 @@ int curl_download_get_url(const char * hostname, const char * uri, FILE * f, Dow
 	return ret;
 }
 
+
+
+
 void * curl_download_handle_init()
 {
 	return curl_easy_init();
 }
+
+
+
 
 void curl_download_handle_cleanup(void * handle)
 {

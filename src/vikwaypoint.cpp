@@ -89,7 +89,7 @@ Waypoint::~Waypoint()
 
 
 
-// Hmmm tempted to put in new constructor
+/* Hmmm tempted to put in new constructor. */
 void Waypoint::set_name(char const * name_)
 {
 	free_string(&name);
@@ -101,6 +101,9 @@ void Waypoint::set_name(char const * name_)
 	return;
 }
 
+
+
+
 void Waypoint::set_comment_no_copy(char * comment_)
 {
 	free_string(&comment); /* kamilTODO: should we free() string in _no_copy? */
@@ -109,6 +112,9 @@ void Waypoint::set_comment_no_copy(char * comment_)
 		comment = comment_;
 	}
 }
+
+
+
 
 void Waypoint::set_comment(char const * comment_)
 {
@@ -121,6 +127,9 @@ void Waypoint::set_comment(char const * comment_)
 	return;
 }
 
+
+
+
 void Waypoint::set_description(char const * description_)
 {
 	free_string(&description);
@@ -130,6 +139,9 @@ void Waypoint::set_description(char const * description_)
 	}
 
 }
+
+
+
 
 void Waypoint::set_source(char const * source_)
 {
@@ -141,6 +153,9 @@ void Waypoint::set_source(char const * source_)
 
 }
 
+
+
+
 void Waypoint::set_type(char const * type_)
 {
 	free_string(&type);
@@ -150,6 +165,9 @@ void Waypoint::set_type(char const * type_)
 	}
 
 }
+
+
+
 
 void Waypoint::set_url(char const * url_)
 {
@@ -161,6 +179,9 @@ void Waypoint::set_url(char const * url_)
 
 }
 
+
+
+
 void Waypoint::set_image(char const * image_)
 {
 	free_string(&image);
@@ -171,6 +192,9 @@ void Waypoint::set_image(char const * image_)
 
 	/* NOTE - ATM the image (thumbnail) size is calculated on demand when needed to be first drawn. */
 }
+
+
+
 
 void Waypoint::set_symbol(char const * symname_)
 {
@@ -195,11 +219,9 @@ void Waypoint::set_symbol(char const * symname_)
 
 
 /**
- * Waypoint::apply_dem_data:
- * @wp:            The Waypoint to operate on
  * @skip_existing: When true, don't change the elevation if the waypoint already has a value
  *
- * Set elevation data for a waypoint using available DEM information
+ * Set elevation data for a waypoint using available DEM information.
  *
  * Returns: true if the waypoint was updated
  */
@@ -216,20 +238,23 @@ bool Waypoint::apply_dem_data(bool skip_existing)
 	return updated;
 }
 
+
+
+
 /*
- * Take a Waypoint and convert it into a byte array
+ * Take a Waypoint and convert it into a byte array.
  */
 void Waypoint::marshall(uint8_t **data, size_t * datalen)
 {
 	GByteArray *b = g_byte_array_new();
 	size_t len;
 
-	// This creates space for fixed sized members like ints and whatnot
-	//  and copies that amount of data from the waypoint to byte array
+	/* This creates space for fixed sized members like ints and whatnot
+	   and copies that amount of data from the waypoint to byte array. */
 	g_byte_array_append(b, (uint8_t *) this, sizeof(Waypoint));
 
-	// This allocates space for variant sized strings
-	//  and copies that amount of data from the waypoint to byte array
+	/* This allocates space for variant sized strings
+	   and copies that amount of data from the waypoint to byte array. */
 #define vwm_append(s)						\
 	len = (s) ? strlen(s) + 1 : 0;				\
 	g_byte_array_append(b, (uint8_t *) &len, sizeof(len));	\
@@ -253,20 +278,19 @@ void Waypoint::marshall(uint8_t **data, size_t * datalen)
 
 
 
-
 /*
- * Take a byte array and convert it into a Waypoint
+ * Take a byte array and convert it into a Waypoint.
  */
 Waypoint *Waypoint::unmarshall(uint8_t * data, size_t datalen)
 {
 	size_t len;
 	Waypoint *wp = new Waypoint();
 
-	// This copies the fixed sized elements (i.e. visibility, altitude, image_width, etc...)
+	/* This copies the fixed sized elements (i.e. visibility, altitude, image_width, etc...). */
 	memcpy(wp, data, sizeof(Waypoint));
 	data += sizeof (Waypoint);
 
-	// Now the variant sized strings...
+	/* Now the variant sized strings... */
 #define vwu_get(s)				\
 	len = *(size_t *)data;			\
 	data += sizeof (len);			\

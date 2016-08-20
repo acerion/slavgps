@@ -18,19 +18,26 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
+
+#include <cmath>
+#include <cstdlib>
+
 #include "maputils.h"
 #include "globals.h"
-#include <math.h>
-#include <stdlib.h>
+
+
+
 
 using namespace SlavGPS;
 
 
 
-// World Scale: VIK_GZ(17)
-//  down to
-// Submeter scale: 1/VIK_GZ(5)
-// No map provider is going to have tiles at the highest zoom in level - but we can interpolate to that.
+
+/* World Scale:
+   VIK_GZ(17) down to submeter scale: 1/VIK_GZ(5)
+
+   No map provider is going to have tiles at the highest zoom in level - but we can interpolate to that. */
+
 
 static const double scale_mpps[] = { VIK_GZ(0), VIK_GZ(1), VIK_GZ(2), VIK_GZ(3), VIK_GZ(4), VIK_GZ(5),
 				     VIK_GZ(6), VIK_GZ(7), VIK_GZ(8), VIK_GZ(9), VIK_GZ(10), VIK_GZ(11),
@@ -41,21 +48,27 @@ static const double scale_neg_mpps[] = { 1.0/VIK_GZ(0), 1.0/VIK_GZ(1), 1.0/VIK_G
 					 1.0/VIK_GZ(3), 1.0/VIK_GZ(4), 1.0/VIK_GZ(5) };
 static const int num_scales_neg = (sizeof(scale_neg_mpps) / sizeof(scale_neg_mpps[0]));
 
+
+
+
 #define ERROR_MARGIN 0.01
+
+
+
+
 /**
- * map_utils_mpp_to_scale:
  * @mpp: The so called 'mpp'
  *
  * Returns: the zoom scale value which may be negative.
  */
-int map_utils_mpp_to_scale(double mpp) {
-	int i;
-	for (i = 0; i < num_scales; i++) {
+int SlavGPS::map_utils_mpp_to_scale(double mpp)
+{
+	for (int i = 0; i < num_scales; i++) {
 		if (ABS(scale_mpps[i] - mpp) < ERROR_MARGIN) {
 			return i;
 		}
 	}
-	for (i = 0; i < num_scales_neg; i++) {
+	for (int i = 0; i < num_scales_neg; i++) {
 		if (ABS(scale_neg_mpps[i] - mpp) < 0.000001) {
 			return -i;
 		}
@@ -64,14 +77,16 @@ int map_utils_mpp_to_scale(double mpp) {
 	return 255;
 }
 
+
+
+
 /**
- * map_utils_mpp_to_zoom_level:
  * @mpp: The so called 'mpp'
  *
- * Returns: a Zoom Level
- *  See: http://wiki.openstreetmap.org/wiki/Zoom_levels
+ * Returns: a Zoom Level.
+ * See: http://wiki.openstreetmap.org/wiki/Zoom_levels
  */
-uint8_t map_utils_mpp_to_zoom_level(double mpp)
+uint8_t SlavGPS::map_utils_mpp_to_zoom_level(double mpp)
 {
 	int answer = 17 - map_utils_mpp_to_scale(mpp);
 	if (answer < 0) {
@@ -79,6 +94,9 @@ uint8_t map_utils_mpp_to_zoom_level(double mpp)
 	}
 	return answer;
 }
+
+
+
 
 /**
  * SECTION:maputils
@@ -92,18 +110,20 @@ uint8_t map_utils_mpp_to_zoom_level(double mpp)
  * NB: the Y axis is inverted, ie the origin is at top-left corner.
  */
 
+
+
+
 /**
- * map_utils_vikcoord_to_iTMS:
  * @src:   Original #VikCoord in #VIK_COORD_LATLON format
  * @xzoom: Viking zoom level in x direction
  * @yzoom: Viking zoom level in y direction (actually needs to be same as xzoom)
  * @dest:  The resulting Inverse TMS coordinates in #TileInfo
  *
- * Convert a #VikCoord in VIK_COORD_LATLON format into Inverse TMS coordinates
+ * Convert a #VikCoord in VIK_COORD_LATLON format into Inverse TMS coordinates.
  *
  * Returns: whether the conversion was performed
  */
-bool map_utils_vikcoord_to_iTMS(const VikCoord * src, double xzoom, double yzoom, TileInfo * dest)
+bool SlavGPS::map_utils_vikcoord_to_iTMS(const VikCoord * src, double xzoom, double yzoom, TileInfo * dest)
 {
 	if (src->mode != VIK_COORD_LATLON) {
 		return false;
@@ -125,7 +145,10 @@ bool map_utils_vikcoord_to_iTMS(const VikCoord * src, double xzoom, double yzoom
 	return true;
 }
 
-// Internal convenience function
+
+
+
+/* Internal convenience function. */
 static void _to_vikcoord_with_offset(const TileInfo * src, VikCoord * dest, double offset)
 {
 	double socalled_mpp;
@@ -139,31 +162,36 @@ static void _to_vikcoord_with_offset(const TileInfo * src, VikCoord * dest, doub
 	dest->north_south = DEMERCLAT(180 - ((src->y+offset) / VIK_GZ(17) * socalled_mpp * 360));
 }
 
+
+
+
 /**
- * map_utils_iTMS_to_center_vikcoord:
  * @src:   Original #TileInfo in Inverse TMS format
  * @dest:  The resulting Spherical Mercator coordinates in #VikCoord
  *
- * Convert a #TileInfo in Inverse TMS format into Spherical Mercator coordinates for the center of the TMS area
+ * Convert a #TileInfo in Inverse TMS format into Spherical Mercator
+ * coordinates for the center of the TMS area.
  *
  * Returns: whether the conversion was performed
  */
-void map_utils_iTMS_to_center_vikcoord(const TileInfo * src, VikCoord * dest)
+void SlavGPS::map_utils_iTMS_to_center_vikcoord(const TileInfo * src, VikCoord * dest)
 {
 	_to_vikcoord_with_offset(src, dest, 0.5);
 }
 
+
+
+
 /**
- * map_utils_iTMS_to_vikcoord:
  * @src:   Original #TileInfo in Inverse TMS format
  * @dest:  The resulting Spherical Mercator coordinates in #VikCoord
  *
- * Convert a #TileInfo in Inverse TMS format into Spherical Mercator coordinates
- *  (for the top left corner of the Inverse TMS area)
+ * Convert a #TileInfo in Inverse TMS format into Spherical Mercator
+ * coordinates (for the top left corner of the Inverse TMS area).
  *
  * Returns: whether the conversion was performed
  */
-void map_utils_iTMS_to_vikcoord(const TileInfo * src, VikCoord * dest)
+void SlavGPS::map_utils_iTMS_to_vikcoord(const TileInfo * src, VikCoord * dest)
 {
 	_to_vikcoord_with_offset(src, dest, 0.0);
 }

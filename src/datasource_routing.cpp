@@ -24,8 +24,8 @@
 #include "config.h"
 #endif
 
-#include <string.h>
-#include <stdlib.h>
+#include <cstring>
+#include <cstdlib>
 
 #include <glib/gprintf.h>
 #include <glib/gi18n.h>
@@ -38,7 +38,9 @@
 
 
 
+
 using namespace SlavGPS;
+
 
 
 
@@ -46,6 +48,9 @@ typedef struct {
 	GtkWidget * engines_combo;
 	GtkWidget * from_entry, * to_entry;
 } datasource_routing_widgets_t;
+
+
+
 
 /* Memory of previous selection */
 static int last_engine = 0;
@@ -56,6 +61,9 @@ static void * datasource_routing_init(acq_vik_t * avt);
 static void datasource_routing_add_setup_widgets(GtkWidget * dialog, Viewport * viewport, void * user_data);
 static void datasource_routing_get_process_options(datasource_routing_widgets_t * widgets, ProcessOptions * po, DownloadFileOptions * options, char const * not_used2, char const * not_used3);
 static void datasource_routing_cleanup(void * data);
+
+
+
 
 VikDataSourceInterface vik_datasource_routing_interface = {
 	N_("Directions"),
@@ -82,26 +90,31 @@ VikDataSourceInterface vik_datasource_routing_interface = {
 	0
 };
 
+
+
+
 static void * datasource_routing_init(acq_vik_t * avt)
 {
 	datasource_routing_widgets_t * widgets = (datasource_routing_widgets_t *) malloc(sizeof (datasource_routing_widgets_t));
 	return widgets;
 }
 
+
+
+
 static void datasource_routing_add_setup_widgets(GtkWidget * dialog, Viewport * viewport, void * user_data)
 {
 	datasource_routing_widgets_t *widgets = (datasource_routing_widgets_t *)user_data;
-	GtkWidget *engine_label, *from_label, *to_label;
 
-	/* Engine selector */
-	engine_label = gtk_label_new(_("Engine:"));
+	/* Engine selector. */
+	GtkWidget * engine_label = gtk_label_new(_("Engine:"));
 	widgets->engines_combo = vik_routing_ui_selector_new((Predicate)vik_routing_engine_supports_direction, NULL);
 	gtk_combo_box_set_active(GTK_COMBO_BOX (widgets->engines_combo), last_engine);
 
-	/* From and To entries */
-	from_label = gtk_label_new(_("From:"));
+	/* From and To entries. */
+	GtkWidget * from_label = gtk_label_new(_("From:"));
 	widgets->from_entry = gtk_entry_new();
-	to_label = gtk_label_new(_("To:"));
+	GtkWidget * to_label = gtk_label_new(_("To:"));
 	widgets->to_entry = gtk_entry_new();
 	if (last_from_str) {
 		gtk_entry_set_text(GTK_ENTRY(widgets->from_entry), last_from_str);
@@ -111,7 +124,7 @@ static void datasource_routing_add_setup_widgets(GtkWidget * dialog, Viewport * 
 		gtk_entry_set_text(GTK_ENTRY(widgets->to_entry), last_to_str);
 	}
 
-	/* Packing all these widgets */
+	/* Packing all these widgets. */
 	GtkBox *box = GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog)));
 	gtk_box_pack_start(box, engine_label, false, false, 5);
 	gtk_box_pack_start(box, widgets->engines_combo, false, false, 5);
@@ -122,30 +135,36 @@ static void datasource_routing_add_setup_widgets(GtkWidget * dialog, Viewport * 
 	gtk_widget_show_all(dialog);
 }
 
+
+
+
 static void datasource_routing_get_process_options(datasource_routing_widgets_t * widgets, ProcessOptions * po, DownloadFileOptions * options, char const * not_used2, char const * not_used3)
 {
-	const char *from, *to;
+	/* Retrieve directions. */
+	char const * from = gtk_entry_get_text(GTK_ENTRY(widgets->from_entry));
+	char const * to = gtk_entry_get_text(GTK_ENTRY(widgets->to_entry));
 
-	/* Retrieve directions */
-	from = gtk_entry_get_text(GTK_ENTRY(widgets->from_entry));
-	to = gtk_entry_get_text(GTK_ENTRY(widgets->to_entry));
-
-	/* Retrieve engine */
+	/* Retrieve engine. */
 	last_engine = gtk_combo_box_get_active(GTK_COMBO_BOX(widgets->engines_combo));
-	VikRoutingEngine *engine = vik_routing_ui_selector_get_nth(widgets->engines_combo, last_engine);
-	if (!engine) return;
+	VikRoutingEngine * engine = vik_routing_ui_selector_get_nth(widgets->engines_combo, last_engine);
+	if (!engine) {
+		return;
+	}
 
 	po->url = vik_routing_engine_get_url_from_directions(engine, from, to);
 	po->input_file_type = g_strdup(vik_routing_engine_get_format(engine));
-	options = NULL; // i.e. use the default download settings
+	options = NULL; /* i.e. use the default download settings. */
 
-	/* Save last selection */
+	/* Save last selection. */
 	free(last_from_str);
 	free(last_to_str);
 
 	last_from_str = g_strdup(from);
 	last_to_str = g_strdup(to);
 }
+
+
+
 
 static void datasource_routing_cleanup(void * data)
 {

@@ -22,16 +22,17 @@
  *
  */
 
-#ifndef _VIKING_UTIL_H
-#define _VIKING_UTIL_H
+#ifndef _SG_UTIL_H_
+#define _SG_UTIL_H_
+
+
+
+
+#include <cstdint>
 
 #include <glib.h>
-#include <stdint.h>
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
 unsigned int util_get_number_of_cpus(void);
@@ -76,8 +77,7 @@ char * util_write_tmp_file_from_bytes(const void * buffer, size_t count);
 
 void free_string(char ** s);
 
-#ifdef __cplusplus
-}
-#endif
 
-#endif
+
+
+#endif /* #ifndef _SG_UTIL_H_ */

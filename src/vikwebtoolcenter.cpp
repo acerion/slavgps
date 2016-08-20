@@ -22,23 +22,19 @@
 
 
 
-
-#include <string.h>
-#include <stdlib.h>
+#include <cstring>
+#include <cstdlib>
 
 #include <glib.h>
 
 #include "vikwebtoolcenter.h"
 #include "util.h"
 #include "globals.h"
-//#include "maputils.h"
-
 
 
 
 
 using namespace SlavGPS;
-
 
 
 
@@ -64,7 +60,6 @@ WebToolCenter::WebToolCenter(char const * new_label, char const * new_url_format
 
 
 
-
 WebToolCenter::~WebToolCenter()
 {
 	fprintf(stderr, "%s:%d, label = %s\n", __PRETTY_FUNCTION__, __LINE__, this->label);
@@ -78,7 +73,6 @@ WebToolCenter::~WebToolCenter()
 
 
 
-
 char * WebToolCenter::get_url_at_position(Window * window, VikCoord * vc)
 {
 	fprintf(stderr, "%s:%d: called()\n", __PRETTY_FUNCTION__, __LINE__);
@@ -88,8 +82,8 @@ char * WebToolCenter::get_url_at_position(Window * window, VikCoord * vc)
 	char strlat[G_ASCII_DTOSTR_BUF_SIZE], strlon[G_ASCII_DTOSTR_BUF_SIZE];
 
 	Viewport * viewport = window->get_viewport();
-	// Coords
-	// Use the provided position otherwise use center of the viewport
+	/* Coords.
+	   Use the provided position otherwise use center of the viewport. */
 	if (vc) {
 		vik_coord_to_latlon(vc, &ll);
 	} else {
@@ -98,19 +92,18 @@ char * WebToolCenter::get_url_at_position(Window * window, VikCoord * vc)
 		vik_coord_to_latlon(coord, &ll);
 	}
 
-	// zoom - ideally x & y factors need to be the same otherwise use the default
+	/* Zoom - ideally x & y factors need to be the same otherwise use the default. */
 	if (viewport->get_xmpp() == viewport->get_ympp()) {
 		zoom = this->mpp_to_zoom(viewport->get_zoom());
 	}
 
-	// Cannot simply use g_strdup_printf and double due to locale.
-	// As we compute an URL, we have to think in C locale.
+	/* Cannot simply use g_strdup_printf and double due to locale.
+	   As we compute an URL, we have to think in C locale. */
 	g_ascii_dtostr(strlat, G_ASCII_DTOSTR_BUF_SIZE, ll.lat);
 	g_ascii_dtostr(strlon, G_ASCII_DTOSTR_BUF_SIZE, ll.lon);
 
 	return g_strdup_printf(this->url_format, strlat, strlon, zoom);
 }
-
 
 
 

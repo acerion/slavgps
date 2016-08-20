@@ -24,30 +24,37 @@
 #endif
 
 #include <vector>
+#include <cstdlib>
+#include <cstdio>
+#include <cstring>
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <glib/gprintf.h>
 #include <glib/gi18n.h>
 
-#include "viking.h"
+//#include "viking.h"
 #include "vikgototool.h"
 #include "vikgoto.h"
 #include "dialog.h"
 #include "vik_compat.h"
 #include "settings.h"
 
+
+
+
 using namespace SlavGPS;
 
 
 
-/* Compatibility */
+
+/* Compatibility. */
 #if ! GLIB_CHECK_VERSION(2,22,0)
 #define g_mapped_file_unref g_mapped_file_free
 #endif
+
+
+
 
 static char *last_goto_str = NULL;
 static VikCoord *last_coord = NULL;
@@ -58,19 +65,28 @@ std::vector<GotoTool *> goto_tools;
 #define VIK_SETTINGS_GOTO_PROVIDER "goto_provider"
 int last_goto_tool = -1;
 
-void vik_goto_register(GotoTool * goto_tool)
+
+
+
+void SlavGPS::vik_goto_register(GotoTool * goto_tool)
 {
 	goto_tools.push_back(goto_tool); /* , g_object_ref(tool); */
 }
 
-void vik_goto_unregister_all()
+
+
+
+void SlavGPS::vik_goto_unregister_all()
 {
 	for (auto iter = goto_tools.begin(); iter != goto_tools.end(); iter++) {
 		/* kamilFIXME: delete objects? */
 	}
 }
 
-char * a_vik_goto_get_search_string_for_this_place(Window * window)
+
+
+
+char * SlavGPS::a_vik_goto_get_search_string_for_this_place(Window * window)
 {
 	if (!last_coord) {
 		return NULL;
@@ -84,6 +100,9 @@ char * a_vik_goto_get_search_string_for_this_place(Window * window)
 	}
 }
 
+
+
+
 static void display_no_tool(Window * window)
 {
 	GtkWidget *dialog = NULL;
@@ -94,6 +113,9 @@ static void display_no_tool(Window * window)
 
 	gtk_widget_destroy(dialog);
 }
+
+
+
 
 static bool prompt_try_again(Window * window, const char *msg)
 {
@@ -116,6 +138,9 @@ static bool prompt_try_again(Window * window, const char *msg)
 	return ret;
 }
 
+
+
+
 static int find_entry = -1;
 static int wanted_entry = -1;
 
@@ -127,25 +152,28 @@ static void find_provider(GotoTool * goto_tool, char * provider)
 	}
 }
 
+
+
+
 /**
- * Setup last_goto_tool value
+ * Setup last_goto_tool value.
  */
 static void get_provider()
 {
-	// Use setting for the provider if available
+	/* Use setting for the provider if available. */
 	if (last_goto_tool < 0) {
 		find_entry = -1;
 		wanted_entry = -1;
 		char *provider = NULL;
 		if (a_settings_get_string(VIK_SETTINGS_GOTO_PROVIDER, &provider)) {
-			// Use setting
+			/* Use setting. */
 			if (provider) {
 				for (auto iter = goto_tools.begin(); iter != goto_tools.end(); iter++) {
 					find_provider(*iter, provider);
 				}
 
 			}
-			// If not found set it to the first entry, otherwise use the entry
+			/* If not found set it to the first entry, otherwise use the entry. */
 			last_goto_tool = (wanted_entry < 0) ? 0 : wanted_entry;
 		} else {
 			last_goto_tool = 0;
@@ -153,14 +181,18 @@ static void get_provider()
 	}
 }
 
-static void text_changed_cb(GtkEntry   *entry,
-			    GParamSpec *pspec,
-			    GtkWidget  *button)
+
+
+
+static void text_changed_cb(GtkEntry * entry, GParamSpec * pspec, GtkWidget * button)
 {
 	bool has_text = gtk_entry_get_text_length(entry) > 0;
 	gtk_entry_set_icon_sensitive(entry, GTK_ENTRY_ICON_SECONDARY, has_text);
 	gtk_widget_set_sensitive(button, has_text);
 }
+
+
+
 
 static char *a_prompt_for_goto_string(Window * window)
 {
@@ -186,7 +218,7 @@ static char *a_prompt_for_goto_string(Window * window)
 		gtk_entry_set_text(GTK_ENTRY(goto_entry), last_goto_str);
 	}
 
-	// 'ok' when press return in the entry
+	/* 'ok' when press return in the entry. */
 	g_signal_connect_swapped(goto_entry, "activate", G_CALLBACK(a_dialog_response_accept), dialog);
 
 #if GTK_CHECK_VERSION (2,20,0)
@@ -201,7 +233,7 @@ static char *a_prompt_for_goto_string(Window * window)
 	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
 	gtk_widget_show_all(dialog);
 
-	// Ensure the text field has focus so we can start typing straight away
+	/* Ensure the text field has focus so we can start typing straight away. */
 	gtk_widget_grab_focus(goto_entry);
 
 	if (gtk_dialog_run(GTK_DIALOG(dialog)) != GTK_RESPONSE_ACCEPT) {
@@ -209,7 +241,7 @@ static char *a_prompt_for_goto_string(Window * window)
 		return NULL;
 	}
 
-	// TODO check if list is empty
+	/* TODO check if list is empty. */
 	last_goto_tool = gtk_combo_box_get_active(GTK_COMBO_BOX(tool_list));
 	char * provider = goto_tools[last_goto_tool]->get_label();
 	a_settings_set_string(VIK_SETTINGS_GOTO_PROVIDER, provider);
@@ -225,17 +257,20 @@ static char *a_prompt_for_goto_string(Window * window)
 		last_goto_str = g_strdup(goto_str);
 	}
 
-	return(goto_str);   /* goto_str needs to be freed by caller */
+	return(goto_str);   /* goto_str needs to be freed by caller. */
 }
 
+
+
+
 /**
- * Goto a place when we already have a string to search on
+ * Goto a place when we already have a string to search on.
  *
  * Returns: %true if a successful lookup
  */
 static bool vik_goto_place(Window * window, Viewport * viewport, char* name, VikCoord *vcoord)
 {
-	// Ensure last_goto_tool is given a value
+	/* Ensure last_goto_tool is given a value. */
 	get_provider();
 
 	if (!goto_tools.empty() && last_goto_tool >= 0) {
@@ -249,7 +284,10 @@ static bool vik_goto_place(Window * window, Viewport * viewport, char* name, Vik
 	return false;
 }
 
-void a_vik_goto(Window * window, Viewport * viewport)
+
+
+
+void SlavGPS::a_vik_goto(Window * window, Viewport * viewport)
 {
 	VikCoord new_center;
 	char *s_str;
@@ -290,10 +328,16 @@ void a_vik_goto(Window * window, Viewport * viewport)
 	} while (more);
 }
 
+
+
+
 #define HOSTIP_LATITUDE_PATTERN "\"lat\":\""
 #define HOSTIP_LONGITUDE_PATTERN "\"lng\":\""
 #define HOSTIP_CITY_PATTERN "\"city\":\""
 #define HOSTIP_COUNTRY_PATTERN "\"country_name\":\""
+
+
+
 
 /**
  * Automatic attempt to find out where you are using:
@@ -309,7 +353,7 @@ void a_vik_goto(Window * window, Viewport * viewport)
  *   3 if position only as precise as a country
  * @name: Contains the name of place found. Free this string after use.
  */
-int a_vik_goto_where_am_i(Viewport * viewport, struct LatLon *ll, char **name)
+int SlavGPS::a_vik_goto_where_am_i(Viewport * viewport, struct LatLon *ll, char **name)
 {
 	int result = 0;
 	*name = NULL;
@@ -323,16 +367,7 @@ int a_vik_goto_where_am_i(Viewport * viewport, struct LatLon *ll, char **name)
 	ll->lat = 0.0;
 	ll->lon = 0.0;
 
-	char *pat;
 	GMappedFile *mf;
-	char *ss;
-	int fragment_len;
-
-	char lat_buf[32], lon_buf[32];
-	lat_buf[0] = lon_buf[0] = '\0';
-	char *country = NULL;
-	char *city = NULL;
-
 	if ((mf = g_mapped_file_new(tmpname, false, NULL)) == NULL) {
 		fprintf(stderr, _("CRITICAL: couldn't map temp file\n"));
 
@@ -345,6 +380,10 @@ int a_vik_goto_where_am_i(Viewport * viewport, struct LatLon *ll, char **name)
 	size_t len = g_mapped_file_get_length(mf);
 	char *text = g_mapped_file_get_contents(mf);
 
+	char *pat;
+	char *ss;
+	int fragment_len;
+	char *country = NULL;
 	if ((pat = g_strstr_len(text, len, HOSTIP_COUNTRY_PATTERN))) {
 		pat += strlen(HOSTIP_COUNTRY_PATTERN);
 		fragment_len = 0;
@@ -356,6 +395,7 @@ int a_vik_goto_where_am_i(Viewport * viewport, struct LatLon *ll, char **name)
 		country = g_strndup(ss, fragment_len);
 	}
 
+	char *city = NULL;
 	if ((pat = g_strstr_len(text, len, HOSTIP_CITY_PATTERN))) {
 		pat += strlen(HOSTIP_CITY_PATTERN);
 		fragment_len = 0;
@@ -366,6 +406,9 @@ int a_vik_goto_where_am_i(Viewport * viewport, struct LatLon *ll, char **name)
 		}
 		city = g_strndup(ss, fragment_len);
 	}
+
+	char lat_buf[32] = { 0 };
+	char lon_buf[32] = { 0 };
 
 	if ((pat = g_strstr_len(text, len, HOSTIP_LATITUDE_PATTERN))) {
 		pat += strlen(HOSTIP_LATITUDE_PATTERN);
@@ -406,20 +449,20 @@ int a_vik_goto_where_am_i(Viewport * viewport, struct LatLon *ll, char **name)
 			*name = strdup(_("Locality")); //Albeit maybe not known by an actual name!
 		}
 	} else {
-		// Hopefully city name is unique enough to lookup position on
-		// Maybe for American places where hostip appends the State code on the end
-		// But if the country code is not appended if could easily get confused
-		//  e.g. 'Portsmouth' could be at least
-		//   Portsmouth, Hampshire, UK or
-		//   Portsmouth, Viginia, USA.
+		/* Hopefully city name is unique enough to lookup position on.
+		   Maybe for American places where hostip appends the State code on the end.
+		   But if the country code is not appended if could easily get confused.
+		   e.g. 'Portsmouth' could be at least
+		   Portsmouth, Hampshire, UK or
+		   Portsmouth, Viginia, USA. */
 
-		// Try city name lookup
+		/* Try city name lookup. */
 		if (city) {
 			fprintf(stderr, "DEBUG: %s: found city %s\n", __FUNCTION__, city);
 			if (strcmp(city, "(Unknown city)") != 0) {
 				VikCoord new_center;
 				if (vik_goto_place(NULL, viewport, city, &new_center)) {
-					// Got something
+					/* Got something. */
 					vik_coord_to_latlon(&new_center, ll);
 					result = 2;
 					*name = city;
@@ -428,13 +471,13 @@ int a_vik_goto_where_am_i(Viewport * viewport, struct LatLon *ll, char **name)
 			}
 		}
 
-		// Try country name lookup
+		/* Try country name lookup. */
 		if (country) {
 			fprintf(stderr, "DEBUG: %s: found country %s\n", __FUNCTION__, country);
 			if (strcmp(country, "(Unknown Country)") != 0) {
 				VikCoord new_center;
 				if (vik_goto_place(NULL, viewport, country, &new_center)) {
-					// Finally got something
+					/* Finally got something. */
 					vik_coord_to_latlon(&new_center, ll);
 					result = 3;
 					*name = country;

@@ -19,17 +19,20 @@
  *
  */
 
-#ifndef _VIKING_WAYPOINT_H
-#define _VIKING_WAYPOINT_H
+#ifndef _SG_WAYPOINT_H_
+#define _SG_WAYPOINT_H_
+
+
+
 
 #include <stdint.h>
+
+#include <time.h>
 
 #include "vikcoord.h"
 #include "globals.h"
 
 #include <gdk-pixbuf/gdk-pixdata.h>
-
-
 
 
 
@@ -78,9 +81,9 @@ namespace SlavGPS {
 		char * type = NULL;
 		char * url = NULL;
 		char * image = NULL;
-		/* a rather misleading, ugly hack needed for trwlayer's click image.
-		 * these are the height at which the thumbnail is being drawn, not the
-		 * dimensions of the original image. */
+		/* A rather misleading, ugly hack needed for trwlayer's click image.
+		   These are the height at which the thumbnail is being drawn, not the
+		   dimensions of the original image. */
 		uint8_t image_width;
 		uint8_t image_height;
 
@@ -92,11 +95,9 @@ namespace SlavGPS {
 
 
 
-
-} /* namespace */
-
+} /* namespace SlavGPS */
 
 
 
 
-#endif /* #ifndef _VIKING_WAYPOINT_H */
+#endif /* #ifndef _SG_WAYPOINT_H_ */
