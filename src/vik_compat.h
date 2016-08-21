@@ -18,31 +18,32 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-#ifndef __VIKING_COMPAT_H
-#define __VIKING_COMPAT_H
+#ifndef _SG_COMPAT_H_
+#define _SG_COMPAT_H_
+
+
+
+
+#include <cstdint>
 
 #include <glib.h>
 #include <gtk/gtk.h>
-#include <stdint.h>
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
 #if !GLIB_CHECK_VERSION(2,26,0)
 typedef struct stat GStatBuf;
 #endif
 
-// Hide ifdef complexities of function variants here
+/* Hide ifdef complexities of function variants here. */
 
-GMutex * vik_mutex_new ();
+GMutex * vik_mutex_new();
 void vik_mutex_free (GMutex *mutex);
 
 /*
  * Since combo boxes are used in various places
- * keep the code reasonably tidy and only have one ifdef to cater for the naming variances
+ * keep the code reasonably tidy and only have one ifdef to cater for the naming variances.
  */
 #if GTK_CHECK_VERSION (2, 24, 0)
 #define vik_combo_box_text_new gtk_combo_box_text_new
@@ -52,8 +53,7 @@ void vik_mutex_free (GMutex *mutex);
 #define vik_combo_box_text_append(X,Y) gtk_combo_box_append_text(GTK_COMBO_BOX(X),Y)
 #endif
 
-#ifdef __cplusplus
-}
-#endif
 
-#endif
+
+
+#endif /* #ifndef _SG_COMPAT_H_ */

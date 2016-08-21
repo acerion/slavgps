@@ -18,9 +18,14 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <cstring>
+#include <cstdlib>
+#include <cstdio>
+
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <glib/gi18n.h>
@@ -36,13 +41,20 @@
 #include "globals.h"
 #include "vikwindow.h"
 
+
+
+
 using namespace SlavGPS;
+
 
 
 
 static char * last_folder_uri = NULL;
 
-void vik_trw_layer_export(LayerTRW * layer, char const * title, char const * default_name, Track * trk, VikFileType_t file_type)
+
+
+
+void SlavGPS::vik_trw_layer_export(LayerTRW * layer, char const * title, char const * default_name, Track * trk, VikFileType_t file_type)
 {
 	GtkWidget * file_selector;
 	char const * fn;
@@ -69,7 +81,7 @@ void vik_trw_layer_export(LayerTRW * layer, char const * title, char const * def
 
 			gtk_widget_hide(file_selector);
 			window_from_layer(layer)->set_busy_cursor();
-			// Don't Export invisible items - unless requested on this specific track
+			/* Don't Export invisible items - unless requested on this specific track. */
 			failed = ! a_file_export(layer, fn, file_type, trk, trk ? true : false);
 			window_from_layer(layer)->clear_busy_cursor();
 			break;
@@ -82,13 +94,14 @@ void vik_trw_layer_export(LayerTRW * layer, char const * title, char const * def
 }
 
 
+
+
 /**
- * Convert the given TRW layer into a temporary GPX file and open it with the specified program
- *
+ * Convert the given TRW layer into a temporary GPX file and open it with the specified program.
  */
-void vik_trw_layer_export_external_gpx(LayerTRW * trw, char const * external_program)
+void SlavGPS::vik_trw_layer_export_external_gpx(LayerTRW * trw, char const * external_program)
 {
-	// Don't Export invisible items
+	/* Don't Export invisible items. */
 	static GpxWritingOptions options = { true, true, false, false };
 	char *name_used = a_gpx_write_tmp_file(trw, &options);
 
@@ -110,7 +123,9 @@ void vik_trw_layer_export_external_gpx(LayerTRW * trw, char const * external_pro
 }
 
 
-void vik_trw_layer_export_gpsbabel(LayerTRW * trw, char const *title, char const * default_name)
+
+
+void SlavGPS::vik_trw_layer_export_gpsbabel(LayerTRW * trw, char const *title, char const * default_name)
 {
 	BabelMode mode = { 0, 0, 0, 0, 0, 0 };
 	if (trw->get_routes().size()) {
@@ -138,7 +153,7 @@ void vik_trw_layer_export_gpsbabel(LayerTRW * trw, char const *title, char const
 		free(cwd);
 	}
 
-	/* Build the extra part of the widget */
+	/* Build the extra part of the widget. */
 	GtkWidget * babel_selector = a_babel_ui_file_type_selector_new(mode);
 	GtkWidget * label = gtk_label_new(_("File format:"));
 	GtkWidget * hbox = gtk_hbox_new(false, 0);
@@ -164,12 +179,12 @@ void vik_trw_layer_export_gpsbabel(LayerTRW * trw, char const *title, char const
 
 	gtk_file_chooser_set_extra_widget(GTK_FILE_CHOOSER(file_selector), vbox);
 
-	/* Add some dynamic: only allow dialog's validation when format selection is done */
+	/* Add some dynamic: only allow dialog's validation when format selection is done. */
 	g_signal_connect(babel_selector, "changed", G_CALLBACK(a_babel_ui_type_selector_dialog_sensitivity_cb), file_selector);
-	/* Manually call the callback to fix the state */
+	/* Manually call the callback to fix the state. */
 	a_babel_ui_type_selector_dialog_sensitivity_cb(GTK_COMBO_BOX(babel_selector), file_selector);
 
-	/* Set possible name of the file */
+	/* Set possible name of the file. */
 	gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(file_selector), default_name);
 
 	while (gtk_dialog_run(GTK_DIALOG(file_selector)) == GTK_RESPONSE_ACCEPT) {

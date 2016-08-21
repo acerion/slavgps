@@ -21,9 +21,10 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
+#include <cstdlib>
+#include <cstdio>
+#include <cstring>
+
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <glib/gprintf.h>
@@ -34,9 +35,7 @@
 
 
 
-
 using namespace SlavGPS;
-
 
 
 
@@ -68,7 +67,6 @@ static DownloadFileOptions googlesearch_options = {
 
 
 
-
 GotoToolGoogle::GotoToolGoogle() : GotoTool("Google")
 {
 }
@@ -76,11 +74,9 @@ GotoToolGoogle::GotoToolGoogle() : GotoTool("Google")
 
 
 
-
 GotoToolGoogle::~GotoToolGoogle()
 {
 }
-
 
 
 
@@ -162,12 +158,10 @@ bool GotoToolGoogle::parse_file_for_latlon(char * file_name, struct LatLon * ll)
 
 
 
-
 char * GotoToolGoogle::get_url_format()
 {
 	return (char *) GOOGLE_GOTO_URL_FMT;
 }
-
 
 
 

@@ -19,17 +19,17 @@
  *
  */
 
-#ifndef __VIKING_THUMBNAILS_H
-#define __VIKING_THUMBNAILS_H
+#ifndef _SG_THUMBNAILS_H_
+#define _SG_THUMBNAILS_H_
 
-#include <glib.h>
+
+
+
+//#include <glib.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <stdint.h>
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
 bool a_thumbnails_exists(const char * filename);
@@ -38,8 +38,7 @@ GdkPixbuf * a_thumbnails_get(const char * filename);
 GdkPixbuf * a_thumbnails_get_default();
 GdkPixbuf * a_thumbnails_scale_pixbuf(GdkPixbuf * src, int max_w, int max_h);
 
-#ifdef __cplusplus
-}
-#endif
+
+
 
 #endif

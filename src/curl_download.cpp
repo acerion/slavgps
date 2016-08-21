@@ -38,7 +38,7 @@
 #include <glib/gstdio.h>
 #include <glib/gi18n.h>
 #include <glib/gprintf.h>
-#include <gtk/gtk.h>
+//#include <gtk/gtk.h>
 
 #include <curl/curl.h>
 

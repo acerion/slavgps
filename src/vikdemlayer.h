@@ -19,9 +19,8 @@
  *
  */
 
-#ifndef _SG_LAYER_DEM_H
-#define _SG_LAYER_DEM_H
-
+#ifndef _SG_LAYER_DEM_H_
+#define _SG_LAYER_DEM_H_
 
 
 
@@ -32,9 +31,7 @@
 
 
 
-
 namespace SlavGPS {
-
 
 
 
@@ -64,10 +61,9 @@ namespace SlavGPS {
 		unsigned int source;
 		unsigned int dem_type;
 
-		// right click menu only stuff - similar to mapslayer
+		/* right click menu only stuff - similar to LayerMaps. */
 		GtkMenu * right_click_menu;
 	};
-
 
 
 
@@ -77,5 +73,4 @@ namespace SlavGPS {
 
 
 
-
-#endif /* #ifndef _SG_LAYER_DEM_H */
+#endif /* #ifndef _SG_LAYER_DEM_H_ */

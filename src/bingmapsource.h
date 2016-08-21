@@ -16,10 +16,10 @@
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _BING_MAP_SOURCE_H
-#define _BING_MAP_SOURCE_H
+#ifndef _SG_BING_MAP_SOURCE_H_
+#define _SG_BING_MAP_SOURCE_H_
 
-#include <stdint.h>
+#include <cstdint>
 
 #include "vikcoord.h"
 #include "mapcoord.h"
@@ -29,9 +29,7 @@
 
 
 
-
 namespace SlavGPS {
-
 
 
 
@@ -42,7 +40,6 @@ namespace SlavGPS {
 		int maxZoom;
 		LatLonBBox bounds;
 	};
-
 
 
 
@@ -60,7 +57,7 @@ namespace SlavGPS {
 		char * bing_api_key;
 
 		GList *attributions;
-		/* Current attribution, when parsing */
+		/* Current attribution, when parsing. */
 		char *attribution;
 		bool loading_attributions;
 
@@ -90,11 +87,9 @@ namespace SlavGPS {
 
 
 
-
 } /* namespace SlavGPS */
 
 
 
 
-
-#endif /* _BING_MAP_SOURCE_H_ */
+#endif /* _SG_BING_MAP_SOURCE_H_ */

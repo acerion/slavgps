@@ -19,9 +19,11 @@
  *
  */
 
+#include <cstdlib>
+
 #include <gtk/gtk.h>
 #include <glib/gi18n.h>
-#include <stdlib.h>
+
 
 #include "vikradiogroup.h"
 
@@ -73,7 +75,7 @@ GType vik_radio_group_get_type(void)
 
 static void radio_group_class_init(VikRadioGroupClass * klass)
 {
-	/* Destructor */
+	/* Destructor. */
 	GObjectClass * object_class;
 
 	object_class = G_OBJECT_CLASS (klass);

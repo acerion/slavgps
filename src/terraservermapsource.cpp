@@ -23,12 +23,20 @@
 #include <math.h>
 #endif
 
-#include <stdlib.h>
+#include <cstdlib>
 
 #include "globals.h"
 #include "terraservermapsource.h"
+#include "vikcoord.h"
+#include "mapcoord.h"
+
+
+
 
 using namespace SlavGPS;
+
+
+
 
 static bool _coord_to_tile(VikMapSource * self, const VikCoord * src, double xzoom, double yzoom, TileInfo *dest);
 static void _tile_to_center_coord(VikMapSource * self, TileInfo * src, VikCoord *dest);
@@ -39,7 +47,7 @@ static char * _get_uri(VikMapSourceDefault * self, TileInfo * src);
 static char * _get_hostname(VikMapSourceDefault * self);
 static DownloadFileOptions * _get_download_options(VikMapSourceDefault * self);
 
-/* FIXME Huge gruik */
+/* FIXME Huge gruik. */
 static DownloadFileOptions terraserver_options = { false, false, NULL, 0, a_check_map_file, NULL, NULL };
 
 typedef struct _TerraserverMapSourcePrivate TerraserverMapSourcePrivate;
@@ -49,19 +57,24 @@ struct _TerraserverMapSourcePrivate
 };
 
 #define TERRASERVER_MAP_SOURCE_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), TERRASERVER_TYPE_MAP_SOURCE, TerraserverMapSourcePrivate))
+G_DEFINE_TYPE (TerraserverMapSource, terraserver_map_source, VIK_TYPE_MAP_SOURCE_DEFAULT);
 
-/* properties */
+
+
+
+/* Properties. */
 enum {
 	PROP_0,
 
 	PROP_TYPE,
 };
 
-G_DEFINE_TYPE (TerraserverMapSource, terraserver_map_source, VIK_TYPE_MAP_SOURCE_DEFAULT);
+
+
 
 static void terraserver_map_source_init(TerraserverMapSource * self)
 {
-	/* initialize the object here */
+	/* Initialize the object here. */
 	g_object_set(G_OBJECT (self),
 		     "tilesize-x", 200,
 		     "tilesize-y", 200,
@@ -69,12 +82,18 @@ static void terraserver_map_source_init(TerraserverMapSource * self)
 		     NULL);
 }
 
+
+
+
 static void terraserver_map_source_finalize(GObject * object)
 {
-	/* TODO: Add deinitalization code here */
+	/* TODO: Add deinitalization code here. */
 
 	G_OBJECT_CLASS (terraserver_map_source_parent_class)->finalize (object);
 }
+
+
+
 
 static void terraserver_map_source_set_property(GObject      * object,
 						unsigned int   property_id,
@@ -96,6 +115,9 @@ static void terraserver_map_source_set_property(GObject      * object,
 	}
 }
 
+
+
+
 static void terraserver_map_source_get_property(GObject      * object,
 						unsigned int   property_id,
 						GValue       * value,
@@ -116,6 +138,9 @@ static void terraserver_map_source_get_property(GObject      * object,
 	}
 }
 
+
+
+
 static void terraserver_map_source_class_init(TerraserverMapSourceClass * klass)
 {
 	GObjectClass * object_class = G_OBJECT_CLASS (klass);
@@ -126,7 +151,7 @@ static void terraserver_map_source_class_init(TerraserverMapSourceClass * klass)
 	object_class->set_property = terraserver_map_source_set_property;
 	object_class->get_property = terraserver_map_source_get_property;
 
-	/* Overiding methods */
+	/* Overiding methods. */
 	grandparent_class->coord_to_tile = _coord_to_tile;
 	grandparent_class->tile_to_center_coord = _tile_to_center_coord;
 	grandparent_class->is_direct_file_access = _is_direct_file_access;
@@ -139,9 +164,9 @@ static void terraserver_map_source_class_init(TerraserverMapSourceClass * klass)
 	pspec = g_param_spec_uint("type",
 				  "Type",
 				  "Type of Terraserver map",
-				  0  /* minimum value */,
-				  G_MAXUINT8 /* maximum value */,
-				  0  /* default value */,
+				  0, /* Minimum value. */
+				  G_MAXUINT8, /* Maximum value. */
+				  0,  /* Default value. */
 				  (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
 	g_object_class_install_property(object_class, PROP_TYPE, pspec);
 
@@ -150,8 +175,14 @@ static void terraserver_map_source_class_init(TerraserverMapSourceClass * klass)
 	object_class->finalize = terraserver_map_source_finalize;
 }
 
+
+
+
 #define TERRASERVER_SITE "msrmaps.com"
 #define MARGIN_OF_ERROR 0.001
+
+
+
 
 static int mpp_to_scale(double mpp, uint8_t type)
 {
@@ -178,10 +209,16 @@ static int mpp_to_scale(double mpp, uint8_t type)
 	}
 }
 
+
+
+
 static double scale_to_mpp(int scale)
 {
 	return pow(2,scale - 10);
 }
+
+
+
 
 static bool _coord_to_tile(VikMapSource * self, const VikCoord * src, double xmpp, double ympp, TileInfo * dest)
 {
@@ -210,25 +247,37 @@ static bool _coord_to_tile(VikMapSource * self, const VikCoord * src, double xmp
 	return true;
 }
 
+
+
+
 static bool _is_direct_file_access(VikMapSource * self)
 {
 	return false;
 }
+
+
+
 
 static bool _is_mbtiles(VikMapSource * self)
 {
 	return false;
 }
 
+
+
+
 static void _tile_to_center_coord(VikMapSource * self, TileInfo * src, VikCoord * dest)
 {
-	// FIXME: slowdown here!
+	/* FIXME: slowdown here! */
 	double mpp = scale_to_mpp (src->scale);
 	dest->mode = VIK_COORD_UTM;
 	dest->utm_zone = src->z;
 	dest->east_west = ((src->x * 200) + 100) * mpp;
 	dest->north_south = ((src->y * 200) + 100) * mpp;
 }
+
+
+
 
 static char * _get_uri(VikMapSourceDefault * self, TileInfo * src)
 {
@@ -243,6 +292,9 @@ static char * _get_uri(VikMapSourceDefault * self, TileInfo * src)
 	return uri;
 }
 
+
+
+
 static char * _get_hostname(VikMapSourceDefault * self)
 {
 	if (!TERRASERVER_IS_MAP_SOURCE(self)) {
@@ -252,6 +304,9 @@ static char * _get_hostname(VikMapSourceDefault * self)
 	return g_strdup(TERRASERVER_SITE);
 }
 
+
+
+
 static DownloadFileOptions * _get_download_options(VikMapSourceDefault * self)
 {
 	if (!TERRASERVER_IS_MAP_SOURCE(self)) {
@@ -260,6 +315,9 @@ static DownloadFileOptions * _get_download_options(VikMapSourceDefault * self)
 
 	return &terraserver_options;
 }
+
+
+
 
 TerraserverMapSource * terraserver_map_source_new_with_id(uint16_t id, const char * label, int type)
 {

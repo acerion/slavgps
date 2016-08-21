@@ -19,8 +19,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-#include <stdlib.h>
-#include <stdlib.h>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <cstdlib>
+
 #include <glib/gi18n.h>
 
 #include "viktrwlayer_wpwin.h"
@@ -30,7 +34,7 @@
 #include "geotag_exif.h"
 #endif
 #include "thumbnails.h"
-#include "viking.h"
+//#include "viking.h"
 #include "vikdatetime_edit_dialog.h"
 #include "vikgoto.h"
 #include "vikutils.h"
@@ -38,7 +42,13 @@
 #include "dialog.h"
 #include "globals.h"
 
+
+
+
 using namespace SlavGPS;
+
+
+
 
 static void update_time(GtkWidget * widget, Waypoint * wp)
 {
@@ -47,15 +57,18 @@ static void update_time(GtkWidget * widget, Waypoint * wp)
 	free(msg);
 }
 
+
+
+
 static Waypoint * edit_wp;
 
-/**
- * time_edit_click:
- */
+
+
+
 static void time_edit_click(GtkWidget * widget, GdkEventButton * event, Waypoint * wp)
 {
 	if (event->button == MouseButton::RIGHT) {
-		// On right click and when a time is available, allow a method to copy the displayed time as text
+		/* On right click and when a time is available, allow a method to copy the displayed time as text. */
 		if (!gtk_button_get_image(GTK_BUTTON(widget))) {
 			vu_copy_label_menu(widget, event->button);
 		}
@@ -71,21 +84,24 @@ static void time_edit_click(GtkWidget * widget, GdkEventButton * event, Waypoint
 						 gtz);
 	g_time_zone_unref(gtz);
 
-	// Was the dialog cancelled?
+	/* Was the dialog cancelled?. */
 	if (mytime == 0) {
 		return;
 	}
 
-	// Otherwise use new value in the edit buffer
+	/* Otherwise use new value in the edit buffer. */
 	edit_wp->timestamp = mytime;
 
-	// Clear the previous 'Add' image as now a time is set
+	/* Clear the previous 'Add' image as now a time is set. */
 	if (gtk_button_get_image(GTK_BUTTON(widget))) {
 		gtk_button_set_image(GTK_BUTTON(widget), NULL);
 	}
 
 	update_time(widget, edit_wp);
 }
+
+
+
 
 static void symbol_entry_changed_cb(GtkWidget * combo, GtkListStore * store)
 {
@@ -97,17 +113,20 @@ static void symbol_entry_changed_cb(GtkWidget * combo, GtkListStore * store)
 	}
 
 	gtk_tree_model_get(GTK_TREE_MODEL(store), &iter, 0, (void *)&sym, -1);
-	/* Note: symm is NULL when "(none)" is select (first cell is empty) */
+	/* Note: symm is NULL when "(none)" is select (first cell is empty). */
 	gtk_widget_set_tooltip_text(combo, sym);
 	free(sym);
 }
 
-/* Specify if a new waypoint or not */
+
+
+
+/* Specify if a new waypoint or not. */
 /* If a new waypoint then it uses the default_name for the suggested name allowing the user to change it.
-    The name to use is returned
- */
-/* todo: less on this side, like add track */
-char * a_dialog_waypoint(GtkWindow * parent, char * default_name, LayerTRW * trw, Waypoint * wp, VikCoordMode coord_mode, bool is_new, bool * updated)
+   The name to use is returned.
+*/
+/* TODO: less on this side, like add track. */
+char * SlavGPS::a_dialog_waypoint(GtkWindow * parent, char * default_name, LayerTRW * trw, Waypoint * wp, VikCoordMode coord_mode, bool is_new, bool * updated)
 {
 	GtkWidget * dialog = gtk_dialog_new_with_buttons(_("Waypoint Properties"),
 							 parent,
@@ -151,7 +170,7 @@ char * a_dialog_waypoint(GtkWindow * parent, char * default_name, LayerTRW * trw
 
 	namelabel = gtk_label_new(_("Name:"));
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), namelabel, false, false, 0);
-	// Name is now always changeable
+	/* Name is now always changeable. */
 	nameentry = gtk_entry_new();
 	if (default_name) {
 		gtk_entry_set_text(GTK_ENTRY(nameentry), default_name);
@@ -181,7 +200,7 @@ char * a_dialog_waypoint(GtkWindow * parent, char * default_name, LayerTRW * trw
 	}
 	commententry = gtk_entry_new();
 	char *cmt =  NULL;
-	// Auto put in some kind of 'name' as a comment if one previously 'goto'ed this exact location
+	/* Auto put in some kind of 'name' as a comment if one previously 'goto'ed this exact location. */
 	cmt = a_vik_goto_get_search_string_for_this_place(window_from_layer(trw));
 	if (cmt) {
 		gtk_entry_set_text(GTK_ENTRY(commententry), cmt);
@@ -243,9 +262,9 @@ char * a_dialog_waypoint(GtkWindow * parent, char * default_name, LayerTRW * trw
 					free(sym);
 				}
 			}
-			// Ensure is it a valid symbol in the given symbol set (large vs small)
-			// Not all symbols are available in both
-			// The check prevents a Gtk Critical message
+			/* Ensure is it a valid symbol in the given symbol set (large vs small).
+			   Not all symbols are available in both.
+			   The check prevents a Gtk Critical message. */
 			if (iter.stamp)
 				gtk_combo_box_set_active_iter(GTK_COMBO_BOX(symbolentry), &iter);
 		}
@@ -263,7 +282,7 @@ char * a_dialog_waypoint(GtkWindow * parent, char * default_name, LayerTRW * trw
 		vik_file_entry_set_filename(VIK_FILE_ENTRY(imageentry), wp->image);
 
 #ifdef VIK_CONFIG_GEOTAG
-		// Geotag Info [readonly]
+		/* Geotag Info [readonly]. */
 		hasGeotagCB = gtk_check_button_new_with_label(_("Has Geotag"));
 		gtk_widget_set_sensitive(hasGeotagCB, false);
 		bool hasGeotag;
@@ -292,14 +311,14 @@ char * a_dialog_waypoint(GtkWindow * parent, char * default_name, LayerTRW * trw
 	}
 	edit_wp = new Waypoint(*wp);
 
-	// TODO: Consider if there should be a remove time button...
+	/* TODO: Consider if there should be a remove time button... */
 
 	if (!is_new && wp->has_timestamp) {
 		update_time(timevaluebutton, wp);
 	} else {
 		GtkWidget *img = gtk_image_new_from_stock(GTK_STOCK_ADD, GTK_ICON_SIZE_MENU);
 		gtk_button_set_image(GTK_BUTTON(timevaluebutton), img);
-		// Initially use current time or otherwise whatever the last value used was
+		/* Initially use current time or otherwise whatever the last value used was. */
 		if (edit_wp->timestamp == 0) {
 			time(&edit_wp->timestamp);
 		}
@@ -342,22 +361,22 @@ char * a_dialog_waypoint(GtkWindow * parent, char * default_name, LayerTRW * trw
 	gtk_widget_show_all(gtk_dialog_get_content_area(GTK_DIALOG(dialog)));
 
 	if (!is_new) {
-		// Shift left<->right to try not to obscure the waypoint.
+		/* Shift left<->right to try not to obscure the waypoint. */
 		trw->dialog_shift(GTK_WINDOW(dialog), &(wp->coord), false);
 	}
 
 	while (gtk_dialog_run (GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
-		if (strlen((char*)gtk_entry_get_text (GTK_ENTRY(nameentry))) == 0) {  /* TODO: other checks (isalpha or whatever) */
+		if (strlen((char*)gtk_entry_get_text (GTK_ENTRY(nameentry))) == 0) {  /* TODO: other checks (isalpha or whatever). */
 			a_dialog_info_msg(parent, _("Please enter a name for the waypoint."));
 		} else {
-			// NB: No check for unique names - this allows generation of same named entries.
+			/* NB: No check for unique names - this allows generation of same named entries. */
 			char *entered_name = g_strdup((char*)gtk_entry_get_text (GTK_ENTRY(nameentry)));
 
-			/* Do It */
+			/* Do It. */
 			ll.lat = convert_dms_to_dec(gtk_entry_get_text (GTK_ENTRY(latentry)));
 			ll.lon = convert_dms_to_dec(gtk_entry_get_text (GTK_ENTRY(lonentry)));
 			vik_coord_load_from_latlon(&(wp->coord), coord_mode, &ll);
-			// Always store in metres
+			/* Always store in metres. */
 			switch (height_units) {
 			case HeightUnit::METRES:
 				wp->altitude = atof(gtk_entry_get_text(GTK_ENTRY(altentry)));
@@ -402,7 +421,7 @@ char * a_dialog_waypoint(GtkWindow * parent, char * default_name, LayerTRW * trw
 				return entered_name;
 			} else {
 				*updated = true;
-				// See if name has been changed
+				/* See if name has been changed. */
 				if (g_strcmp0(default_name, entered_name)) {
 					return entered_name;
 				} else {

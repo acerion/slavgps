@@ -20,25 +20,36 @@
  ***********************************************************
  */
 
-#ifndef _VIKING_TRWLAYER_ANALYSIS_H
-#define _VIKING_TRWLAYER_ANALYSIS_H
+#ifndef _SG_LAYER_TRW_ANALYSIS_H_
+#define _SG_LAYER_TRW_ANALYSIS_H_
+
+
+
 
 #include "viktrwlayer.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
-typedef void (* VikTrwlayerAnalyseCloseFunc) (GtkWidget *, int, SlavGPS::Layer *);
 
-GtkWidget * vik_trw_layer_analyse_this(GtkWindow * window,
-				       const char * name,
-				       SlavGPS::Layer * layer,
-				       SlavGPS::SublayerType sublayer_type,
-				       VikTrwlayerAnalyseCloseFunc on_close_cb);
 
-#ifdef __cplusplus
-}
-#endif
+namespace SlavGPS {
 
-#endif
+
+
+
+	typedef void (* VikTrwlayerAnalyseCloseFunc) (GtkWidget *, int, Layer *);
+
+	GtkWidget * vik_trw_layer_analyse_this(GtkWindow * window,
+					       const char * name,
+					       Layer * layer,
+					       SublayerType sublayer_type,
+					       VikTrwlayerAnalyseCloseFunc on_close_cb);
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
+#endif /* #ifndef _SG_LAYER_TRW_ANALYSIS_H_ */

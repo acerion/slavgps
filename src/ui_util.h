@@ -20,17 +20,15 @@
  *
  */
 
-#ifndef _VIKING_UI_UTIL_H
-#define _VIKING_UI_UTIL_H
+#ifndef _SG_UI_UTIL_H_
+#define _SG_UI_UTIL_H_
+
+#include <cstdint>
 
 #include <glib.h>
 #include <gtk/gtk.h>
-#include <stdint.h>
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
 void open_url(GtkWindow * parent, const char * url);
@@ -45,8 +43,7 @@ GdkPixbuf * ui_pixbuf_set_alpha(GdkPixbuf * pixbuf, uint8_t alpha);
 GdkPixbuf * ui_pixbuf_scale_alpha(GdkPixbuf * pixbuf, uint8_t alpha);
 void ui_add_recent_file(const char * filename);
 
-#ifdef __cplusplus
-}
-#endif
 
-#endif
+
+
+#endif /* #ifndef _SG_UI_UTIL_H_ */

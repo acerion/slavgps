@@ -18,31 +18,37 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-#ifndef _VIKING_TRWLAYER_WPWIN_H
-#define _VIKING_TRWLAYER_WPWIN_H
+#ifndef _SG_LAYER_TRW_WPWIN_H_
+#define _SG_LAYER_TRW_WPWIN_H_
 
-#include <glib.h>
+
+
+
 #include <gtk/gtk.h>
-#include <stdint.h>
 
 #include "viktrwlayer.h"
+#include "vikwaypoint.h"
 
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+
+namespace SlavGPS {
 
 
-/* Specify if a new waypoint or not */
-/* If a new waypoint then it uses the default_name for the suggested name allowing the user to change it.
-    The name to use is returned
-   When an existing waypoint the name is shown but is not allowed to be changed and NULL is returned
- */
-char * a_dialog_waypoint(GtkWindow * parent, char * default_name, SlavGPS::LayerTRW * trw, SlavGPS::Waypoint * wp, VikCoordMode coord_mode, bool is_new, bool * updated);
 
-#ifdef __cplusplus
-}
-#endif
 
-#endif
+	/* Specify if a new waypoint or not. */
+	/* If a new waypoint then it uses the default_name for the suggested name allowing the user to change it.
+	   The name to use is returned.
+	   When an existing waypoint the name is shown but is not allowed to be changed and NULL is returned. */
+	char * a_dialog_waypoint(GtkWindow * parent, char * default_name, LayerTRW * trw, Waypoint * wp, VikCoordMode coord_mode, bool is_new, bool * updated);
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
+#endif /* #ifndef _SG_LAYER_TRW_WPWIN_H_ */

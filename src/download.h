@@ -20,36 +20,37 @@
  *
  */
 
-#ifndef _VIKING_DOWNLOAD_H
-#define _VIKING_DOWNLOAD_H
-
-#include <stdio.h>
-#include <stdint.h>
+#ifndef _SG_DOWNLOAD_H_
+#define _SG_DOWNLOAD_H_
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
-/* File content check */
+#include <cstdio>
+#include <cstdint>
+
+
+
+
+/* File content check. */
 typedef bool (* VikFileContentCheckerFunc) (FILE *);
 bool a_check_map_file(FILE *);
 bool a_check_html_file(FILE *);
 bool a_check_kml_file(FILE *);
-// Convert
+
+/* Convert. */
 void a_try_decompress_file(char * name);
-typedef void (* VikFileContentConvertFunc) (char *); // filename (temporary)
+typedef void (* VikFileContentConvertFunc) (char *); /* filename (temporary). */
 
 typedef struct {
 	/**
-	 * Check if the server has a more recent file than the one we have before downloading it
-	 * This uses http header If-Modified-Since
+	 * Check if the server has a more recent file than the one we have before downloading it.
+	 * This uses http header If-Modified-Since.
 	 */
 	bool check_file_server_time;
 
 	/**
-	 * Set if the server handle ETag
+	 * Set if the server handle ETag.
 	 */
 	bool use_etag;
 
@@ -71,7 +72,7 @@ typedef struct {
 	VikFileContentCheckerFunc check_file;
 
 	/**
-	 * If need to authenticate on download
+	 * If need to authenticate on download.
 	 *  format: 'username:password'
 	 */
 	char * user_pass;
@@ -87,14 +88,16 @@ void a_download_init(void);
 void a_download_uninit(void);
 
 typedef enum {
-	DOWNLOAD_FILE_WRITE_ERROR = -4, // Can't write downloaded file :(
+	DOWNLOAD_FILE_WRITE_ERROR = -4, /* Can't write downloaded file :( */
 	DOWNLOAD_HTTP_ERROR       = -2,
 	DOWNLOAD_CONTENT_ERROR    = -1,
 	DOWNLOAD_SUCCESS          =  0,
-	DOWNLOAD_NOT_REQUIRED     =  1, // Also 'successful'. e.g. Because file already exists and no time checks used
+	DOWNLOAD_NOT_REQUIRED     =  1, /* Also 'successful'. e.g. because file already exists and no time checks used. */
 } DownloadResult_t;
 
-/* TODO: convert to Glib */
+
+
+
 DownloadResult_t a_http_download_get_url(char const * hostname, char const * uri, char const * fn, DownloadFileOptions * opt, void * handle);
 DownloadResult_t a_ftp_download_get_url(char const * hostname, char const * uri, char const * fn, DownloadFileOptions * opt, void * handle);
 void * a_download_handle_init();
@@ -102,8 +105,7 @@ void a_download_handle_cleanup(void * handle);
 
 char * a_download_uri_to_tmp_file(char const * uri, DownloadFileOptions * options);
 
-#ifdef __cplusplus
-}
-#endif
 
-#endif
+
+
+#endif /* #ifndef _SG_DOWNLOAD_H_ */

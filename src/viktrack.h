@@ -19,8 +19,8 @@
  *
  */
 
-#ifndef _SG_TRACK_H
-#define _SG_TRACK_H
+#ifndef _SG_TRACK_H_
+#define _SG_TRACK_H_
 
 
 
@@ -30,15 +30,14 @@
 #endif
 
 #include <list>
+#include <cstdint>
 
 #include <time.h>
 #include <gtk/gtk.h>
-#include <stdint.h>
 
 #ifdef HAVE_MATH_H
 #include <math.h>
 #endif
-
 
 #include "vikcoord.h"
 #include "bbox.h"
@@ -60,12 +59,12 @@ namespace SlavGPS {
 
 
 	enum FixMode {
-		VIK_GPS_MODE_NOT_SEEN = 0,     /* mode update not seen yet */
-		VIK_GPS_MODE_NO_FIX   = 1,     /* none */
-		VIK_GPS_MODE_2D       = 2,     /* good for latitude/longitude */
-		VIK_GPS_MODE_3D       = 3,     /* good for altitude/climb too */
+		VIK_GPS_MODE_NOT_SEEN = 0,     /* Mode update not seen yet. */
+		VIK_GPS_MODE_NO_FIX   = 1,     /* None. */
+		VIK_GPS_MODE_2D       = 2,     /* Good for latitude/longitude. */
+		VIK_GPS_MODE_3D       = 3,     /* Good for altitude/climb too. */
 		VIK_GPS_MODE_DGPS     = 4,
-		VIK_GPS_MODE_PPS      = 5      /* military signal used */
+		VIK_GPS_MODE_PPS      = 5      /* Military signal used. */
 	};
 
 
@@ -97,16 +96,16 @@ namespace SlavGPS {
 		bool has_timestamp = false;
 		time_t timestamp = 0;
 
-		double altitude = VIK_DEFAULT_ALTITUDE; /* VIK_DEFAULT_ALTITUDE if data unavailable */
-		double speed = NAN;  	                /* NAN if data unavailable */
-		double course = NAN;                    /* NAN if data unavailable */
+		double altitude = VIK_DEFAULT_ALTITUDE; /* VIK_DEFAULT_ALTITUDE if data unavailable. */
+		double speed = NAN;  	                /* NAN if data unavailable. */
+		double course = NAN;                    /* NAN if data unavailable. */
 
 		unsigned int nsats = 0;     /* Number of satellites used. 0 if data unavailable. */
 
-		enum FixMode fix_mode = VIK_GPS_MODE_NOT_SEEN; /* VIK_GPS_MODE_NOT_SEEN if data unavailable */
-		double hdop = VIK_DEFAULT_DOP;                 /* VIK_DEFAULT_DOP if data unavailable */
-		double vdop = VIK_DEFAULT_DOP;                 /* VIK_DEFAULT_DOP if data unavailable */
-		double pdop = VIK_DEFAULT_DOP;                 /* VIK_DEFAULT_DOP if data unavailable */
+		enum FixMode fix_mode = VIK_GPS_MODE_NOT_SEEN; /* VIK_GPS_MODE_NOT_SEEN if data unavailable. */
+		double hdop = VIK_DEFAULT_DOP;                 /* VIK_DEFAULT_DOP if data unavailable. */
+		double vdop = VIK_DEFAULT_DOP;                 /* VIK_DEFAULT_DOP if data unavailable. */
+		double pdop = VIK_DEFAULT_DOP;                 /* VIK_DEFAULT_DOP if data unavailable. */
 	};
 
 
@@ -276,4 +275,4 @@ namespace SlavGPS {
 
 
 
-#endif /* #ifndef _SG_TRACK_H */
+#endif /* #ifndef _SG_TRACK_H_ */

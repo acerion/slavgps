@@ -20,66 +20,75 @@
  *
  */
 
-#ifndef _VIKING_FILE_H
-#define _VIKING_FILE_H
+#ifndef _SG_FILE_H_
+#define _SG_FILE_H_
 
-#include <glib.h>
-#include <stdint.h>
 
+
+#include <cstdio>
+#include <cstdint>
 
 #include "vikaggregatelayer.h"
 #include "viktrwlayer.h"
 #include "vikviewport.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
-typedef enum {
-	FILE_TYPE_GPSPOINT  = 1,
-	FILE_TYPE_GPSMAPPER = 2,
-	FILE_TYPE_GPX       = 3,
-	FILE_TYPE_KML       = 4,
-	FILE_TYPE_GEOJSON   = 5
-} VikFileType_t;
 
-bool a_file_check_ext(char const * filename, char const * fileext);
+namespace SlavGPS {
 
-	/*
- * Function to determine if a filename is a 'viking' type file
- */
-bool check_file_magic_vik(char const * filename);
 
-typedef enum {
-	LOAD_TYPE_READ_FAILURE,
-	LOAD_TYPE_GPSBABEL_FAILURE,
-	LOAD_TYPE_GPX_FAILURE,
-	LOAD_TYPE_UNSUPPORTED_FAILURE,
-	LOAD_TYPE_VIK_FAILURE_NON_FATAL,
-	LOAD_TYPE_VIK_SUCCESS,
-	LOAD_TYPE_OTHER_SUCCESS,
-} VikLoadType_t;
 
-char * append_file_ext(char const * filename, VikFileType_t type);
 
-VikLoadType_t a_file_load(SlavGPS::LayerAggregate * top, SlavGPS::Viewport * viewport, char const * filename);
-bool a_file_save(SlavGPS::LayerAggregate * top, SlavGPS::Viewport * viewport, char const * filename);
-/* Only need to define Track if the file type is FILE_TYPE_GPX_TRACK */
-bool a_file_export(SlavGPS::LayerTRW * trw, char const * filename, VikFileType_t file_type, SlavGPS::Track * trk, bool write_hidden);
-bool a_file_export_babel(SlavGPS::LayerTRW * trw, char const * filename, char const * format,
-			 bool tracks, bool routes, bool waypoints);
+	typedef enum {
+		FILE_TYPE_GPSPOINT  = 1,
+		FILE_TYPE_GPSMAPPER = 2,
+		FILE_TYPE_GPX       = 3,
+		FILE_TYPE_KML       = 4,
+		FILE_TYPE_GEOJSON   = 5
+	} VikFileType_t;
 
-void file_write_layer_param(FILE * f, char const * name, VikLayerParamType type, VikLayerParamData data);
+	typedef enum {
+		LOAD_TYPE_READ_FAILURE,
+		LOAD_TYPE_GPSBABEL_FAILURE,
+		LOAD_TYPE_GPX_FAILURE,
+		LOAD_TYPE_UNSUPPORTED_FAILURE,
+		LOAD_TYPE_VIK_FAILURE_NON_FATAL,
+		LOAD_TYPE_VIK_SUCCESS,
+		LOAD_TYPE_OTHER_SUCCESS,
+	} VikLoadType_t;
 
-char * file_realpath(char const * path, char * real);
 
-char * file_realpath_dup(char const * path);
 
-char const * file_GetRelativeFilename(char * currentDirectory, char * absoluteFilename);
 
-#ifdef __cplusplus
-}
-#endif
+	bool a_file_check_ext(char const * filename, char const * fileext);
 
-#endif
+	/* Function to determine if a filename is a 'viking' type file. */
+	bool check_file_magic_vik(char const * filename);
+
+	char * append_file_ext(char const * filename, VikFileType_t type);
+
+	VikLoadType_t a_file_load(LayerAggregate * top, Viewport * viewport, char const * filename);
+	bool a_file_save(LayerAggregate * top, Viewport * viewport, char const * filename);
+	/* Only need to define Track if the file type is FILE_TYPE_GPX_TRACK. */
+	bool a_file_export(LayerTRW * trw, char const * filename, VikFileType_t file_type, Track * trk, bool write_hidden);
+	bool a_file_export_babel(LayerTRW * trw, char const * filename, char const * format,
+				 bool tracks, bool routes, bool waypoints);
+
+	void file_write_layer_param(FILE * f, char const * name, VikLayerParamType type, VikLayerParamData data);
+
+	char * file_realpath(char const * path, char * real);
+
+	char * file_realpath_dup(char const * path);
+
+	char const * file_GetRelativeFilename(char * currentDirectory, char * absoluteFilename);
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
+#endif /* #ifndef _SG_FILE_H_ */

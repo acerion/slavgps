@@ -18,29 +18,39 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-#ifndef _VIKING_TRWLAYER_GEOTAG_H
-#define _VIKING_TRWLAYER_GEOTAG_H
+#ifndef _SG_TRWLAYER_GEOTAG_H_
+#define _SG_TRWLAYER_GEOTAG_H_
+
+
+
+
+#include <cstdint>
 
 #include <glib.h>
 #include <gtk/gtk.h>
-#include <stdint.h>
 
 #include "viktrwlayer.h"
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
-// To be only called from within viktrwlayer
-void trw_layer_geotag_dialog(GtkWindow * parent,
-			     SlavGPS::LayerTRW * layer,
-			     SlavGPS::Waypoint * wp,
-			     SlavGPS::Track * trk);
+namespace SlavGPS {
 
-#ifdef __cplusplus
-}
-#endif
 
-#endif
+
+
+	/* To be only called from within LayerTRW. */
+	void trw_layer_geotag_dialog(GtkWindow * parent,
+				     LayerTRW * layer,
+				     Waypoint * wp,
+				     Track * trk);
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
+#endif /* #ifndef _SG_TRWLAYER_GEOTAG_H_ */

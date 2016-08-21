@@ -19,18 +19,16 @@
  *
  */
 
-#ifndef _DATASOURCE_GPS_H
-#define _DATASOURCE_GPS_H
+#ifndef _SG_DATASOURCE_GPS_H_
+#define _SG_DATASOURCE_GPS_H_
 
-#include <stdint.h>
+#include <cstdint>
 
-#include "viking.h"
+#include <gtk/gtk.h>
+
 #include "vikgpslayer.h"
-#include "gtk/gtk.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+
 
 
 void * datasource_gps_setup(GtkWidget *dialog, SlavGPS::GPSTransferType xfer, bool xfer_all);
@@ -45,8 +43,7 @@ bool datasource_gps_get_do_waypoints(void * user_data);
 
 bool datasource_gps_get_off(void * user_data);
 
-#ifdef __cplusplus
-}
-#endif
+
+
 
 #endif

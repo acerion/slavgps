@@ -38,7 +38,6 @@
 #include <gtk/gtk.h>
 #include <gdk-pixbuf/gdk-pixdata.h>
 
-//#include "viking.h"
 #include "icons/icons.h"
 #include "mapcache.h"
 #include "background.h"

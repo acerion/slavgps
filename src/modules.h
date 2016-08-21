@@ -19,19 +19,27 @@
  *
  */
 
-#ifndef __VIKING_MODULES_H
-#define __VIKING_MODULES_H
+#ifndef _SG_MODULES_H_
+#define _SG_MODULES_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
-void modules_init();
-void modules_post_init();
-void modules_uninit();
 
-#ifdef __cplusplus
-}
-#endif
 
-#endif
+namespace SlavGPS {
+
+
+
+
+	void modules_init();
+	void modules_post_init();
+	void modules_uninit();
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
+#endif /* #ifndef _SG_MODULES_H_ */

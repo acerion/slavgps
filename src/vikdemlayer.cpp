@@ -34,12 +34,13 @@
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif
-#include <stdlib.h>
+#include <cstdlib>
+
 #include <glib/gstdio.h>
 #include <glib/gi18n.h>
 
 #include "background.h"
-#include "viking.h"
+//#include "viking.h"
 #include "vikmapslayer.h"
 #include "vikdemlayer.h"
 #include "dem.h"
@@ -51,7 +52,9 @@
 
 
 
+
 using namespace SlavGPS;
+
 
 
 
@@ -108,14 +111,50 @@ enum { DEM_TYPE_HEIGHT = 0,
        DEM_TYPE_NONE,
 };
 
-static VikLayerParamData color_default(void) {
-	VikLayerParamData data; gdk_color_parse("blue", &data.c); return data;
+
+
+
+static VikLayerParamData color_default(void)
+{
+	VikLayerParamData data;
+	gdk_color_parse("blue", &data.c);
+	return data;
 }
 
-static VikLayerParamData source_default(void) { return VIK_LPD_UINT (DEM_SOURCE_SRTM); }
-static VikLayerParamData type_default(void) { return VIK_LPD_UINT (DEM_TYPE_HEIGHT); }
-static VikLayerParamData min_elev_default(void) { return VIK_LPD_DOUBLE (0.0); }
-static VikLayerParamData max_elev_default(void) { return VIK_LPD_DOUBLE (1000.0); }
+
+
+
+static VikLayerParamData source_default(void)
+{
+	return VIK_LPD_UINT (DEM_SOURCE_SRTM);
+}
+
+
+
+
+static VikLayerParamData type_default(void)
+{
+	return VIK_LPD_UINT (DEM_TYPE_HEIGHT);
+}
+
+
+
+
+static VikLayerParamData min_elev_default(void)
+{
+	return VIK_LPD_DOUBLE (0.0);
+}
+
+
+
+
+static VikLayerParamData max_elev_default(void)
+{
+	return VIK_LPD_DOUBLE (1000.0);
+}
+
+
+
 
 static VikLayerParam dem_layer_params[] = {
 	{ LayerType::DEM, "files",    VIK_LAYER_PARAM_STRING_LIST, VIK_LAYER_GROUP_NONE, N_("DEM Files:"),       VIK_LAYER_WIDGET_FILELIST,          NULL,             NULL, NULL, NULL, NULL, NULL },
@@ -127,7 +166,20 @@ static VikLayerParam dem_layer_params[] = {
 };
 
 
-enum { PARAM_FILES=0, PARAM_SOURCE, PARAM_COLOR, PARAM_TYPE, PARAM_MIN_ELEV, PARAM_MAX_ELEV, NUM_PARAMS };
+
+
+enum {
+	PARAM_FILES = 0,
+	PARAM_SOURCE,
+	PARAM_COLOR,
+	PARAM_TYPE,
+	PARAM_MIN_ELEV,
+	PARAM_MAX_ELEV,
+	NUM_PARAMS
+};
+
+
+
 
 static LayerTool * dem_layer_download_create(Window * window, Viewport * viewport);
 static bool dem_layer_download_release(Layer * vdl, GdkEventButton *event, LayerTool * tool);
@@ -181,6 +233,8 @@ static char *dem_gradient_colors[] = {
 static const unsigned int DEM_N_GRADIENT_COLORS = sizeof(dem_gradient_colors)/sizeof(dem_gradient_colors[0]);
 
 
+
+
 VikLayerInterface vik_dem_layer_interface = {
 	"DEM",
 	N_("DEM"),
@@ -208,7 +262,6 @@ VikLayerInterface vik_dem_layer_interface = {
 
 
 
-
 char const * LayerDEM::tooltip()
 {
 	static char tmp_buf[100];
@@ -221,7 +274,7 @@ static Layer * dem_layer_unmarshall(uint8_t * data, int len, Viewport * viewport
 {
 	LayerDEM * layer = new LayerDEM(viewport);
 
-	/* TODO: share GCS between layers */
+	/* TODO: share GCS between layers. */
 	for (int i = 0; i < DEM_N_HEIGHT_COLORS; i++) {
 		if (i == 0) {
 			layer->gcs[i] = viewport->new_gc_from_color(&layer->color, UNUSED_LINE_THICKNESS);
@@ -237,18 +290,24 @@ static Layer * dem_layer_unmarshall(uint8_t * data, int len, Viewport * viewport
 	return layer;
 }
 
-/* Structure for DEM data used in background thread */
+
+
+
+/* Structure for DEM data used in background thread. */
 typedef struct {
 	LayerDEM * layer;
 } dem_load_thread_data;
 
+
+
+
 /*
- * Function for starting the DEM file loading as a background thread
+ * Function for starting the DEM file loading as a background thread/
  */
 static int dem_layer_load_list_thread(dem_load_thread_data * dltd, void * threaddata)
 {
-	int result = 0; // Default to good
-	// Actual Load
+	int result = 0; /* Default to good. */
+	/* Actual Load. */
 
 	std::list<std::string> dem_filenames;
 	for (auto iter = dltd->layer->files->begin(); iter != dltd->layer->files->end(); iter++) {
@@ -257,43 +316,53 @@ static int dem_layer_load_list_thread(dem_load_thread_data * dltd, void * thread
 	}
 
 	if (dem_cache_load_list(dem_filenames, threaddata)) {
-		// Thread cancelled
+		/* Thread cancelled. */
 		result = -1;
 	}
 
-	// ATM as each file is processed the screen is not updated (no mechanism exposed to dem_cache_load_list)
-	// Thus force draw only at the end, as loading is complete/aborted
+	/* ATM as each file is processed the screen is not updated (no mechanism exposed to dem_cache_load_list).
+	   Thus force draw only at the end, as loading is complete/aborted. */
 	//gdk_threads_enter();
-	// Test is helpful to prevent Gtk-CRITICAL warnings if the program is exitted whilst loading
+	/* Test is helpful to prevent Gtk-CRITICAL warnings if the program is exitted whilst loading. */
 	if (IS_VIK_LAYER(dltd->layer->vl)) {
-		dltd->layer->emit_update(); // NB update from background thread
+		dltd->layer->emit_update(); /* NB update from background thread. */
 	}
 	//gdk_threads_leave();
 
 	return result;
 }
 
+
+
+
 static void dem_layer_thread_data_free(dem_load_thread_data * data)
 {
-	// Simple release
+	/* Simple release. */
 	free(data);
 }
 
+
+
+
 static void dem_layer_thread_cancel(dem_load_thread_data * data)
 {
-	// Abort loading
-	// Instead of freeing the list, leave it as partially processed
-	// Thus we can see/use what was done
+	/* Abort loading.
+	   Instead of freeing the list, leave it as partially processed.
+	   Thus we can see/use what was done. */
 }
 
+
+
+
 /**
- * Process the list of DEM files and convert each one to a relative path
+ * Process the list of DEM files and convert each one to a relative path.
  */
 static std::list<char *> * dem_layer_convert_to_relative_filenaming(std::list<char *> * files)
 {
 	char *cwd = g_get_current_dir();
-	if (!cwd)
+	if (!cwd) {
 		return files;
+	}
 
 	std::list<char *> * relfiles = new std::list<char *>;
 
@@ -307,15 +376,17 @@ static std::list<char *> * dem_layer_convert_to_relative_filenaming(std::list<ch
 	if (relfiles->empty()) {
 		return files;
 	} else {
-		// Replacing current list, so delete old values first.
+		/* Replacing current list, so delete old values first. */
 		for (auto iter = files->begin(); iter != files->end(); iter++) {
 			free(*iter);
 		}
 		delete files;
 		return relfiles;
 	}
-
 }
+
+
+
 
 bool LayerDEM::set_param(uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
 {
@@ -331,8 +402,8 @@ bool LayerDEM::set_param(uint16_t id, VikLayerParamData data, Viewport * viewpor
 		this->dem_type = data.u;
 		break;
 	case PARAM_MIN_ELEV:
-		/* Convert to store internally
-		   NB file operation always in internal units (metres) */
+		/* Convert to store internally.
+		   NB file operation always in internal units (metres). */
 		if (!is_file_operation && a_vik_get_units_height() == HeightUnit::FEET) {
 			this->min_elev = VIK_FEET_TO_METERS(data.d);
 		} else {
@@ -340,8 +411,8 @@ bool LayerDEM::set_param(uint16_t id, VikLayerParamData data, Viewport * viewpor
 		}
 		break;
 	case PARAM_MAX_ELEV:
-		/* Convert to store internally
-		   NB file operation always in internal units (metres) */
+		/* Convert to store internally.
+		   NB file operation always in internal units (metres). */
 		if (!is_file_operation && a_vik_get_units_height() == HeightUnit::FEET) {
 			this->max_elev = VIK_FEET_TO_METERS(data.d);
 		} else {
@@ -350,13 +421,13 @@ bool LayerDEM::set_param(uint16_t id, VikLayerParamData data, Viewport * viewpor
 		break;
 	case PARAM_FILES:
 		{
-			// Clear out old settings - if any commonalities with new settings they will have to be read again
+			/* Clear out old settings - if any commonalities with new settings they will have to be read again. */
 			// dem_cache_list_free (this->files); // kamilFIXME: re-enable this line in future.
-			// Set file list so any other intermediate screen drawing updates will show currently loaded DEMs by the working thread
+			/* Set file list so any other intermediate screen drawing updates will show currently loaded DEMs by the working thread. */
 			this->files = data.sl;
-			// No need for thread if no files
+			/* No need for thread if no files. */
 			if (this->files && !this->files->empty()) {
-				// Thread Load
+				/* Thread Load. */
 				dem_load_thread_data * dltd = (dem_load_thread_data *) malloc(sizeof(dem_load_thread_data));
 				dltd->layer = this;
 				dltd->layer->files = data.sl;
@@ -368,7 +439,7 @@ bool LayerDEM::set_param(uint16_t id, VikLayerParamData data, Viewport * viewpor
 						    dltd,
 						    (vik_thr_free_func) dem_layer_thread_data_free,
 						    (vik_thr_free_func) dem_layer_thread_cancel,
-						    data.sl->size()); // Number of DEM files
+						    data.sl->size()); /* Number of DEM files. */
 			}
 			break;
 		}
@@ -376,6 +447,9 @@ bool LayerDEM::set_param(uint16_t id, VikLayerParamData data, Viewport * viewpor
 	}
 	return true;
 }
+
+
+
 
 VikLayerParamData LayerDEM::get_param(uint16_t id, bool is_file_operation) const
 {
@@ -385,7 +459,7 @@ VikLayerParamData LayerDEM::get_param(uint16_t id, bool is_file_operation) const
 	case PARAM_FILES:
 		rv.sl = this->files;
 		if (is_file_operation) {
-			// Save in relative format if necessary
+			/* Save in relative format if necessary. */
 			if (a_vik_get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE) {
 				rv.sl = dem_layer_convert_to_relative_filenaming(rv.sl);
 			}
@@ -401,8 +475,8 @@ VikLayerParamData LayerDEM::get_param(uint16_t id, bool is_file_operation) const
 		rv.c = this->color;
 		break;
 	case PARAM_MIN_ELEV:
-		/* Convert for display in desired units
-		   NB file operation always in internal units (metres) */
+		/* Convert for display in desired units.
+		   NB file operation always in internal units (metres). */
 		if (!is_file_operation && a_vik_get_units_height() == HeightUnit::FEET) {
 			rv.d = VIK_METERS_TO_FEET(this->min_elev);
 		} else {
@@ -410,8 +484,8 @@ VikLayerParamData LayerDEM::get_param(uint16_t id, bool is_file_operation) const
 		}
 		break;
 	case PARAM_MAX_ELEV:
-		/* Convert for display in desired units
-		   NB file operation always in internal units (metres) */
+		/* Convert for display in desired units.
+		   NB file operation always in internal units (metres). */
 		if (!is_file_operation && a_vik_get_units_height() == HeightUnit::FEET) {
 			rv.d = VIK_METERS_TO_FEET(this->max_elev);
 		} else {
@@ -423,6 +497,9 @@ VikLayerParamData LayerDEM::get_param(uint16_t id, bool is_file_operation) const
 	return rv;
 }
 
+
+
+
 static inline uint16_t get_height_difference(int16_t elev, int16_t new_elev)
 {
 	if (new_elev == VIK_DEM_INVALID_ELEVATION) {
@@ -431,6 +508,8 @@ static inline uint16_t get_height_difference(int16_t elev, int16_t new_elev)
 		return abs(new_elev - elev);
 	}
 }
+
+
 
 
 void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
@@ -449,21 +528,21 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 	}
 
 #if 0
-	/* boxes to show where we have DEM instead of actually drawing the DEM.
+	/* Boxes to show where we have DEM instead of actually drawing the DEM.
 	 * useful if we want to see what areas we have coverage for (if we want
 	 * to get elevation data for a track) but don't want to cover the map.
 	 */
 
-	/* draw a box if a DEM is loaded. in future I'd like to add an option for this
+	/* Draw a box if a DEM is loaded. in future I'd like to add an option for this
 	 * this is useful if we want to see what areas we have dem for but don't want to
-	 * cover the map (or maybe we just need translucent DEM?) */
+	 * cover the map (or maybe we just need translucent DEM?). */
 	draw_loaded_dem_box(viewport);
 #endif
 
 	if (dem->horiz_units == VIK_DEM_HORIZ_LL_ARCSECONDS) {
-		Coord tmp; /* TODO: don't use coord_load_from_latlon, especially if in latlon drawing mode */
+		Coord tmp; /* TODO: don't use coord_load_from_latlon, especially if in latlon drawing mode. */
 
-		unsigned int skip_factor = ceil(viewport->get_xmpp() / 80); /* todo: smarter calculation. */
+		unsigned int skip_factor = ceil(viewport->get_xmpp() / 80); /* TODO: smarter calculation. */
 
 		double nscale_deg = dem->north_scale / ((double) 3600);
 		double escale_deg = dem->east_scale / ((double) 3600);
@@ -490,7 +569,7 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 			gradient_skip_factor = skip_factor;
 		}
 
-		/* verify sane elev interval */
+		/* Verify sane elev interval. */
 		if (this->max_elev <= this->min_elev) {
 			this->max_elev = this->min_elev + 1;
 		}
@@ -498,8 +577,8 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 		struct LatLon counter;
 		unsigned int x;
 		for (x = start_x, counter.lon = start_lon; counter.lon <= end_lon+escale_deg*skip_factor; counter.lon += escale_deg * skip_factor, x += skip_factor) {
-			// NOTE: (counter.lon <= end_lon + ESCALE_DEG*SKIP_FACTOR) is neccessary so in high zoom modes,
-			// the leftmost column does also get drawn, if the center point is out of viewport.
+			/* NOTE: (counter.lon <= end_lon + ESCALE_DEG*SKIP_FACTOR) is neccessary so in high zoom modes,
+			   the leftmost column does also get drawn, if the center point is out of viewport. */
 			if (x >= dem->n_columns) {
 				break;
 			}
@@ -530,10 +609,10 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 
 				int16_t elev = column->points[y];
 				if (elev == VIK_DEM_INVALID_ELEVATION) {
-					continue; /* don't draw it */
+					continue; /* Don't draw it. */
 				}
 
-				// calculate bounding box for drawing
+				/* Calculate bounding box for drawing. */
 				int box_x, box_y, box_width, box_height;
 				struct LatLon box_c;
 				box_c = counter;
@@ -541,7 +620,7 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 				box_c.lon -= (escale_deg * skip_factor)/2;
 				vik_coord_load_from_latlon(&tmp, viewport->get_coord_mode(), &box_c);
 				viewport->coord_to_screen(&tmp, &box_x, &box_y);
-				// catch box at borders
+				/* Catch box at borders. */
 				if (box_x < 0) {
 					box_x = 0;
 				}
@@ -556,16 +635,16 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 				viewport->coord_to_screen(&tmp, &box_width, &box_height);
 				box_width -= box_x;
 				box_height -= box_y;
-				// catch box at borders
+				/* Catch box at borders. */
 				if (box_width < 0 || box_height < 0) {
-					// skip this as is out of the viewport (e.g. zoomed in so this point is way off screen)
+					/* Skip this as is out of the viewport (e.g. zoomed in so this point is way off screen). */
 					continue;
 				}
 
 				bool below_minimum = false;
 				if (this->dem_type == DEM_TYPE_HEIGHT) {
 					if (elev < this->min_elev) {
-						// Prevent 'elev - this->min_elev' from being negative so can safely use as array index
+						/* Prevent 'elev - this->min_elev' from being negative so can safely use as array index. */
 						elev = ceil(this->min_elev);
 						below_minimum = true;
 					}
@@ -575,11 +654,11 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 				}
 
 				if (this->dem_type == DEM_TYPE_GRADIENT) {
-					// calculate and sum gradient in all directions
+					/* Calculate and sum gradient in all directions. */
 					int16_t change = 0;
 					int32_t new_y;
 
-					// calculate gradient from height points all around the current one
+					/* Calculate gradient from height points all around the current one. */
 					new_y = y - gradient_skip_factor;
 					if (new_y < 0) {
 						new_y = y;
@@ -599,10 +678,10 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 					change += get_height_difference(elev, column->points[new_y]);
 					change += get_height_difference(elev, nextcolumn->points[new_y]);
 
-					change = change / ((skip_factor > 1) ? log(skip_factor) : 0.55); // FIXME: better calc.
+					change = change / ((skip_factor > 1) ? log(skip_factor) : 0.55); /* FIXME: better calc. */
 
 					if (change < this->min_elev) {
-						// Prevent 'change - this->min_elev' from being negative so can safely use as array index
+						/* Prevent 'change - this->min_elev' from being negative so can safely use as array index. */
 						change = ceil(this->min_elev);
 					}
 
@@ -627,9 +706,9 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 		} /* for x= */
 	} else if (dem->horiz_units == VIK_DEM_HORIZ_UTM_METERS) {
 
-		Coord tmp; /* TODO: don't use coord_load_from_latlon, especially if in latlon drawing mode */
+		Coord tmp; /* TODO: don't use coord_load_from_latlon, especially if in latlon drawing mode. */
 
-		unsigned int skip_factor = ceil(viewport->get_xmpp() / 10); /* todo: smarter calculation. */
+		unsigned int skip_factor = ceil(viewport->get_xmpp() / 10); /* TODO: smarter calculation. */
 
 		Coord tleft, tright, bleft, bright;
 
@@ -653,7 +732,7 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 		double end_nor   = MIN(max_nor, dem->max_north);
 		if (tleft.utm_zone == dem->utm_zone && bleft.utm_zone == dem->utm_zone
 		    && (tleft.utm_letter >= 'N') == (dem->utm_letter >= 'N')
-		    && (bleft.utm_letter >= 'N') == (dem->utm_letter >= 'N')) { /* if the utm zones/hemispheres are different, min_eas will be bogus */
+		    && (bleft.utm_letter >= 'N') == (dem->utm_letter >= 'N')) { /* If the utm zones/hemispheres are different, min_eas will be bogus. */
 
 			start_eas = MAX(min_eas, dem->min_east);
 		} else {
@@ -662,7 +741,7 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 
 		if (tright.utm_zone == dem->utm_zone && bright.utm_zone == dem->utm_zone
 		    && (tright.utm_letter >= 'N') == (dem->utm_letter >= 'N')
-		    && (bright.utm_letter >= 'N') == (dem->utm_letter >= 'N')) {/* if the utm zones/hemispheres are different, min_eas will be bogus */
+		    && (bright.utm_letter >= 'N') == (dem->utm_letter >= 'N')) { /* If the utm zones/hemispheres are different, min_eas will be bogus. */
 
 			end_eas = MIN(max_eas, dem->max_east);
 		} else {
@@ -726,6 +805,9 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 	}
 }
 
+
+
+
 #if 0
 void draw_loaded_dem_box(Viewport * viewport)
 {
@@ -760,7 +842,10 @@ void draw_loaded_dem_box(Viewport * viewport)
 }
 #endif
 
-/* return the continent for the specified lat, lon */
+
+
+
+/* Return the continent for the specified lat, lon. */
 /* TODO */
 static const char *srtm_continent_dir(int lat, int lon)
 {
@@ -790,6 +875,9 @@ static const char *srtm_continent_dir(int lat, int lon)
 	return ((const char *) g_hash_table_lookup(srtm_continent, name));
 }
 
+
+
+
 void LayerDEM::draw(Viewport * viewport)
 {
 	/* Draw rectangles around areas, for which DEM tiles are already downloaded. */
@@ -809,6 +897,9 @@ void LayerDEM::draw(Viewport * viewport)
 		}
 	}
 }
+
+
+
 
 LayerDEM::~LayerDEM()
 {
@@ -830,6 +921,9 @@ LayerDEM::~LayerDEM()
 	// dem_cache_list_free(this->files); // kamilFIXME: re-enable this line in future
 }
 
+
+
+
 /**************************************************************
  **** SOURCES & DOWNLOADING
  **************************************************************/
@@ -842,10 +936,13 @@ public:
 	double lat, lon;
 
 	GMutex * mutex;
-	LayerDEM * layer; /* NULL if not alive */
+	LayerDEM * layer; /* NULL if not alive. */
 
 	unsigned int source;
 };
+
+
+
 
 
 DEMDownloadParams::DEMDownloadParams(std::string& full_path, struct LatLon * ll, LayerDEM * layer)
@@ -859,10 +956,16 @@ DEMDownloadParams::DEMDownloadParams(std::string& full_path, struct LatLon * ll,
 	g_object_weak_ref(G_OBJECT(this->layer->vl), weak_ref_cb, this);
 }
 
+
+
+
 DEMDownloadParams::~DEMDownloadParams()
 {
 	vik_mutex_free(this->mutex);
 }
+
+
+
 
 /**************************************************
  *  SOURCE: SRTM                                  *
@@ -918,6 +1021,9 @@ static void srtm_dem_download_thread(DEMDownloadParams * p, void * threaddata)
 	free(src_fn);
 }
 
+
+
+
 static char *srtm_lat_lon_to_dest_fn(double lat, double lon)
 {
 	int intlat, intlon;
@@ -941,7 +1047,10 @@ static char *srtm_lat_lon_to_dest_fn(double lat, double lon)
 
 }
 
-/* TODO: generalize */
+
+
+
+/* TODO: generalize. */
 static void srtm_draw_existence(Viewport * viewport)
 {
 	char buf[strlen(MAPS_CACHE_DIR)+strlen(SRTM_CACHE_TEMPLATE)+30];
@@ -992,6 +1101,8 @@ static void srtm_draw_existence(Viewport * viewport)
 }
 
 
+
+
 /**************************************************
  *  SOURCE: USGS 24K                              *
  **************************************************/
@@ -1000,15 +1111,18 @@ static void srtm_draw_existence(Viewport * viewport)
 
 static void dem24k_dem_download_thread(DEMDownloadParams * p, void * threaddata)
 {
-	/* TODO: dest dir */
+	/* TODO: dest dir. */
 	char *cmdline = g_strdup_printf("%s %.03f %.03f",
 					DEM24K_DOWNLOAD_SCRIPT,
 					floor(p->lat*8)/8,
 					ceil(p->lon*8)/8);
-	/* FIX: don't use system, use execv or something. check for existence */
+	/* FIXME: don't use system, use execv or something. check for existence. */
 	system(cmdline);
 	free(cmdline);
 }
+
+
+
 
 static char *dem24k_lat_lon_to_dest_fn(double lat, double lon)
 {
@@ -1019,7 +1133,10 @@ static char *dem24k_lat_lon_to_dest_fn(double lat, double lon)
 			       ceil(lon*8)/8);
 }
 
-/* TODO: generalize */
+
+
+
+/* TODO: generalize. */
 static void dem24k_draw_existence(Viewport * viewport)
 {
 	double max_lat, max_lon, min_lat, min_lon;
@@ -1029,7 +1146,7 @@ static void dem24k_draw_existence(Viewport * viewport)
 	viewport->get_min_max_lat_lon(&min_lat, &max_lat, &min_lon, &max_lon);
 
 	for (i = floor(min_lat*8)/8; i <= floor(max_lat*8)/8; i+=0.125) {
-		/* check lat dir first -- faster */
+		/* Check lat dir first -- faster. */
 		snprintf(buf, sizeof(buf), "%sdem24k/%d/", MAPS_CACHE_DIR, (int) i);
 
 		if (0 != access(buf, F_OK)) {
@@ -1037,7 +1154,7 @@ static void dem24k_draw_existence(Viewport * viewport)
 		}
 
 		for (j = floor(min_lon*8)/8; j <= floor(max_lon*8)/8; j+=0.125) {
-			/* check lon dir first -- faster */
+			/* Check lon dir first -- faster. */
 			snprintf(buf, sizeof(buf), "%sdem24k/%d/%d/", MAPS_CACHE_DIR, (int) i, (int) j);
 			if (0 != access(buf, F_OK)) {
 				continue;
@@ -1078,10 +1195,15 @@ static void dem24k_draw_existence(Viewport * viewport)
 }
 #endif
 
+
+
+
 /**************************************************
  *   SOURCES -- DOWNLOADING & IMPORTING TOOL      *
- **************************************************
- */
+ ***************************************************/
+
+
+
 
 static void weak_ref_cb(void * ptr, GObject * dead_vdl)
 {
@@ -1093,12 +1215,12 @@ static void weak_ref_cb(void * ptr, GObject * dead_vdl)
 
 /* Try to add file full_path.
  * filename will be copied.
- * returns false if file does not exists, true otherwise.
+ * Returns false if file does not exists, true otherwise.
  */
 bool LayerDEM::add_file(std::string& dem_filename)
 {
 	if (0 == access(dem_filename.c_str(), F_OK)) {
-		/* only load if file size is not 0 (not in progress) */
+		/* Only load if file size is not 0 (not in progress). */
 		GStatBuf sb;
 		(void) stat(dem_filename.c_str(), &sb);
 		if (sb.st_size) {
@@ -1113,6 +1235,9 @@ bool LayerDEM::add_file(std::string& dem_filename)
 		return false;
 	}
 }
+
+
+
 
 static void dem_download_thread(DEMDownloadParams * p, void * threaddata)
 {
@@ -1132,7 +1257,7 @@ static void dem_download_thread(DEMDownloadParams * p, void * threaddata)
 		g_object_weak_unref(G_OBJECT(p->layer->vl), weak_ref_cb, p);
 
 		if (p->layer->add_file(p->dest)) {
-			p->layer->emit_update(); // NB update from background thread
+			p->layer->emit_update(); /* NB update from background thread. */
 		}
 	}
 	g_mutex_unlock(p->mutex);
@@ -1140,10 +1265,15 @@ static void dem_download_thread(DEMDownloadParams * p, void * threaddata)
 }
 
 
+
+
 static void free_dem_download_params(DEMDownloadParams * p)
 {
 	delete p;
 }
+
+
+
 
 static LayerTool * dem_layer_download_create(Window * window, Viewport * viewport)
 {
@@ -1167,8 +1297,11 @@ static LayerTool * dem_layer_download_create(Window * window, Viewport * viewpor
 	return layer_tool;
 }
 
+
+
+
 /**
- * Display a simple dialog with information about the DEM file at this location
+ * Display a simple dialog with information about the DEM file at this location.
  */
 static void dem_layer_file_info(GtkWidget *widget, struct LatLon *ll)
 {
@@ -1187,7 +1320,7 @@ static void dem_layer_file_info(GtkWidget *widget, struct LatLon *ll)
 					   (intlon >= 0) ? 'E' : 'W',
 					   ABS(intlon));
 	} else {
-		// Probably not over any land...
+		/* Probably not over any land... */
 		source = strdup(_("No DEM File Available"));
 	}
 
@@ -1200,7 +1333,7 @@ static void dem_layer_file_info(GtkWidget *widget, struct LatLon *ll)
 	char * filename = g_strdup_printf("%s%s", MAPS_CACHE_DIR, dem_file);
 
 	if (0 == access(filename, F_OK)) {
-		// Get some timestamp information of the file
+		/* Get some timestamp information of the file. */
 		GStatBuf stat_buf;
 		if (g_stat(filename, &stat_buf) == 0) {
 			char time_buf[64];
@@ -1211,7 +1344,7 @@ static void dem_layer_file_info(GtkWidget *widget, struct LatLon *ll)
 		message = g_strdup_printf(_("Source: %s\n\nNo DEM File!"), source);
 	}
 
-	// Show the info
+	/* Show the info. */
 	a_dialog_info_msg(GTK_WINDOW(gtk_widget_get_toplevel(widget)), message);
 
 	free(message);
@@ -1220,10 +1353,15 @@ static void dem_layer_file_info(GtkWidget *widget, struct LatLon *ll)
 	free(filename);
 }
 
+
+
+
 static bool dem_layer_download_release(Layer * vdl, GdkEventButton * event, LayerTool * tool)
 {
 	return ((LayerDEM *) vdl)->download_release(event, tool);
 }
+
+
 
 
 bool LayerDEM::download_release(GdkEventButton * event, LayerTool * tool)
@@ -1252,7 +1390,7 @@ bool LayerDEM::download_release(GdkEventButton * event, LayerTool * tool)
 		std::string dem_full_path = std::string(MAPS_CACHE_DIR_2 + std::string(dem_file));
 		fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, dem_full_path.c_str());
 
-		// TODO: check if already in filelist
+		/* TODO: check if already in filelist. */
 		if (!this->add_file(dem_full_path)) {
 			char * tmp = g_strdup_printf(_("Downloading DEM %s"), dem_file);
 			DEMDownloadParams * p = new DEMDownloadParams(dem_full_path, &ll, this);
@@ -1285,14 +1423,16 @@ bool LayerDEM::download_release(GdkEventButton * event, LayerTool * tool)
 	return true;
 }
 
+
+
+
 static bool dem_layer_download_click(Layer * vdl, GdkEventButton * event, LayerTool * tool)
 {
-	/* choose & keep track of cache dir
-	 * download in background thread
-	 * download over area */
+	/* Choose & keep track of cache dir.
+	 * Download in background thread.
+	 * Download over area. */
 	return true;
 }
-
 
 
 
@@ -1308,14 +1448,13 @@ LayerDEM::LayerDEM()
 
 
 
-
 LayerDEM::LayerDEM(Viewport * viewport) : LayerDEM()
 {
 	this->gcs = (GdkGC **) malloc(sizeof(GdkGC *) * DEM_N_HEIGHT_COLORS);
 	this->gcsgradient = (GdkGC **) malloc(sizeof(GdkGC *) * DEM_N_GRADIENT_COLORS);
-	/* make new gcs only if we need it (copy layer -> use old) */
+	/* Make new gcs only if we need it (copy layer -> use old). */
 
-	// Ensure the base GC is available so the default colour can be applied
+	/* Ensure the base GC is available so the default colour can be applied. */
 	if (viewport) {
 		this->gcs[0] = viewport->new_gc("#0000FF", 1);
 	}
@@ -1323,9 +1462,8 @@ LayerDEM::LayerDEM(Viewport * viewport) : LayerDEM()
 	this->set_defaults(viewport);
 
 
-
 	if (viewport) {
-		/* TODO: share GCS between layers */
+		/* TODO: share GCS between layers. */
 		for (int i = 0; i < DEM_N_HEIGHT_COLORS; i++) {
 			if (i > 0) {
 				this->gcs[i] = viewport->new_gc(dem_height_colors[i], UNUSED_LINE_THICKNESS);

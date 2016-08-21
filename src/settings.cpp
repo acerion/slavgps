@@ -30,11 +30,13 @@
   *  between various Viking versions, should one switch to different API/storage methods.
   * Indeed even the internal settings themselves can be liable to change.
   */
-#include <glib.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include "dir.h"
 
+#include <cstdlib>
+#include <cstdio>
+
+#include <glib.h>
+
+#include "dir.h"
 #include "settings.h"
 
 
@@ -48,6 +50,9 @@ using namespace SlavGPS;
 static GKeyFile *keyfile;
 
 #define VIKING_INI_FILE "viking.ini"
+
+
+
 
 static bool settings_load_from_file()
 {
@@ -69,17 +74,21 @@ static bool settings_load_from_file()
 	return true;
 }
 
+
+
+
 void a_settings_init()
 {
 	keyfile = g_key_file_new();
 	settings_load_from_file();
 }
 
+
+
+
 /**
- * a_settings_uninit:
- *
- *  ATM: The only time settings are saved is on program exit
- *   Could change this to occur on window exit or dialog exit or have memory hash of values...?
+ *  ATM: The only time settings are saved is on program exit.
+ *  Could change this to occur on window exit or dialog exit or have memory hash of values...?
  */
 void a_settings_uninit()
 {
@@ -107,8 +116,14 @@ void a_settings_uninit()
 	free(fn);
 }
 
-// ATM, can't see a point in having any more than one group for various settings
+
+
+
+/* ATM, can't see a point in having any more than one group for various settings. */
 #define VIKING_SETTINGS_GROUP "viking"
+
+
+
 
 static bool settings_get_boolean(const char * group, const char * name, bool * val)
 {
@@ -116,7 +131,7 @@ static bool settings_get_boolean(const char * group, const char * name, bool * v
 	bool success = true;
 	bool bb = g_key_file_get_boolean(keyfile, group, name, &error);
 	if (error) {
-		// Only print on debug - as often may have requests for keys not in the file
+		/* Only print on debug - as often may have requests for keys not in the file. */
 		fprintf(stderr, "DEBUG: %s\n", error->message);
 		g_error_free(error);
 		success = false;
@@ -125,15 +140,24 @@ static bool settings_get_boolean(const char * group, const char * name, bool * v
 	return success;
 }
 
+
+
+
 bool a_settings_get_boolean(const char * name, bool * val)
 {
 	return settings_get_boolean(VIKING_SETTINGS_GROUP, name, val);
 }
 
+
+
+
 void a_settings_set_boolean(const char * name, bool val)
 {
 	g_key_file_set_boolean(keyfile, VIKING_SETTINGS_GROUP, name, val);
 }
+
+
+
 
 static bool settings_get_string(const char * group, const char * name, char ** val)
 {
@@ -141,7 +165,7 @@ static bool settings_get_string(const char * group, const char * name, char ** v
 	bool success = true;
 	char * str = g_key_file_get_string(keyfile, group, name, &error);
 	if (error) {
-		// Only print on debug - as often may have requests for keys not in the file
+		/* Only print on debug - as often may have requests for keys not in the file. */
 		fprintf(stderr, "DEBUG: %s\n", error->message);
 		g_error_free(error);
 		success = false;
@@ -150,15 +174,24 @@ static bool settings_get_string(const char * group, const char * name, char ** v
 	return success;
 }
 
+
+
+
 bool a_settings_get_string(const char * name, char ** val)
 {
 	return settings_get_string(VIKING_SETTINGS_GROUP, name, val);
 }
 
+
+
+
 void a_settings_set_string(const char * name, const char * val)
 {
 	g_key_file_set_string(keyfile, VIKING_SETTINGS_GROUP, name, val);
 }
+
+
+
 
 static bool settings_get_integer(const char * group, const char * name, int * val)
 {
@@ -166,7 +199,7 @@ static bool settings_get_integer(const char * group, const char * name, int * va
 	bool success = true;
 	int ii = g_key_file_get_integer(keyfile, group, name, &error);
 	if (error) {
-		// Only print on debug - as often may have requests for keys not in the file
+		/* Only print on debug - as often may have requests for keys not in the file. */
 		fprintf(stderr, "DEBUG: %s\n", error->message);
 		g_error_free(error);
 		success = false;
@@ -175,15 +208,24 @@ static bool settings_get_integer(const char * group, const char * name, int * va
 	return success;
 }
 
+
+
+
 bool a_settings_get_integer(const char * name, int * val)
 {
 	return settings_get_integer(VIKING_SETTINGS_GROUP, name, val);
 }
 
+
+
+
 void a_settings_set_integer(const char * name, int val)
 {
 	g_key_file_set_integer(keyfile, VIKING_SETTINGS_GROUP, name, val);
 }
+
+
+
 
 static bool settings_get_double(const char * group, const char * name, double * val)
 {
@@ -191,7 +233,7 @@ static bool settings_get_double(const char * group, const char * name, double * 
 	bool success = true;
 	double dd = g_key_file_get_double(keyfile, group, name, &error);
 	if (error) {
-		// Only print on debug - as often may have requests for keys not in the file
+		/* Only print on debug - as often may have requests for keys not in the file. */
 		fprintf(stderr, "DEBUG: %s\n", error->message);
 		g_error_free(error);
 		success = false;
@@ -200,15 +242,24 @@ static bool settings_get_double(const char * group, const char * name, double * 
 	return success;
 }
 
+
+
+
 bool a_settings_get_double(const char * name, double * val)
 {
 	return settings_get_double(VIKING_SETTINGS_GROUP, name, val);
 }
 
+
+
+
 void a_settings_set_double(const char * name, double val)
 {
 	g_key_file_set_double(keyfile, VIKING_SETTINGS_GROUP, name, val);
 }
+
+
+
 
 static bool settings_get_integer_list(const char * group, const char * name, int ** vals, size_t * length)
 {
@@ -216,7 +267,7 @@ static bool settings_get_integer_list(const char * group, const char * name, int
 	bool success = true;
 	int * ints = g_key_file_get_integer_list(keyfile, group, name, length, &error);
 	if (error) {
-		// Only print on debug - as often may have requests for keys not in the file
+		/* Only print on debug - as often may have requests for keys not in the file. */
 		fprintf(stderr, "DEBUG: %s\n", error->message);
 		g_error_free(error);
 		success = false;
@@ -225,28 +276,37 @@ static bool settings_get_integer_list(const char * group, const char * name, int
 	return success;
 }
 
+
+
+
 /*
- * The returned list of integers should be freed when no longer needed
+ * The returned list of integers should be freed when no longer needed.
  */
 static bool a_settings_get_integer_list(const char * name, int ** vals, size_t * length)
 {
 	return settings_get_integer_list(VIKING_SETTINGS_GROUP, name, vals, length);
 }
 
+
+
+
 static void a_settings_set_integer_list(const char * name, int vals[], size_t length)
 {
 	g_key_file_set_integer_list(keyfile, VIKING_SETTINGS_GROUP, name, vals, length);
 }
 
+
+
+
 bool a_settings_get_integer_list_contains(const char * name, int val)
 {
 	int * vals = NULL;
 	size_t length;
-	// Get current list and see if the value supplied is in the list
+	/* Get current list and see if the value supplied is in the list. */
 	bool contains = false;
-	// Get current list
+	/* Get current list. */
 	if (a_settings_get_integer_list(name, &vals, &length)) {
-		// See if it's not already there
+		/* See if it's not already there. */
 		int ii = 0;
 		if (vals && length) {
 			while (ii < length) {
@@ -256,23 +316,27 @@ bool a_settings_get_integer_list_contains(const char * name, int val)
 				}
 				ii++;
 			}
-			// Free old array
+			/* Free old array. */
 			free(vals);
 		}
 	}
 	return contains;
 }
 
+
+
+
 void a_settings_set_integer_list_containing(const char * name, int val)
 {
 	int * vals = NULL;
 	size_t length = 0;
 	bool need_to_add = true;
-	int ii = 0;
-	// Get current list
+
+	/* Get current list. */
 	if (a_settings_get_integer_list(name, &vals, &length)) {
-		// See if it's not already there
+		/* See if it's not already there. */
 		if (vals) {
+			int ii = 0;
 			while (ii < length) {
 				if (vals[ii] == val) {
 					need_to_add = false;
@@ -282,19 +346,19 @@ void a_settings_set_integer_list_containing(const char * name, int val)
 			}
 		}
 	}
-	// Add value into array if necessary
+	/* Add value into array if necessary. */
 	if (vals && need_to_add) {
-		// NB not bothering to sort this 'list' ATM as there is not much to be gained
+		/* NB not bothering to sort this 'list' ATM as there is not much to be gained. */
 		unsigned int new_length = length + 1;
 		int new_vals[new_length];
-		// Copy array
-		for (ii = 0; ii < length; ii++) {
+		/* Copy array. */
+		for (int ii = 0; ii < length; ii++) {
 			new_vals[ii] = vals[ii];
 		}
-		new_vals[length] = val; // Set the new value
-		// Apply
+		new_vals[length] = val; /* Set the new value. */
+		/* Apply. */
 		a_settings_set_integer_list(name, new_vals, new_length);
-		// Free old array
+		/* Free old array. */
 		free(vals);
 	}
 }

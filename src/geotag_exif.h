@@ -19,33 +19,41 @@
  *
  */
 
-#ifndef _VIKING_GEOTAG_EXIF_H
-#define _VIKING_GEOTAG_EXIF_H
+#ifndef _SG_GEOTAG_EXIF_H_
+#define _SG_GEOTAG_EXIF_H_
 
-#include <stdint.h>
+
+
+
+#include <cstdint>
 
 #include "vikwaypoint.h"
 #include "vikcoord.h"
 
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+
+namespace SlavGPS {
 
 
-SlavGPS::Waypoint * a_geotag_create_waypoint_from_file ( const char *filename, VikCoordMode vcmode, char **name );
 
-SlavGPS::Waypoint * a_geotag_waypoint_positioned ( const char *filename, VikCoord coord, double alt, char **name, SlavGPS::Waypoint *wp );
 
-char* a_geotag_get_exif_date_from_file ( const char *filename, bool *has_GPS_info );
+	Waypoint * a_geotag_create_waypoint_from_file(const char * filename, VikCoordMode vcmode, char ** name);
 
-struct LatLon a_geotag_get_position ( const char *filename );
+	Waypoint * a_geotag_waypoint_positioned(const char * filename, VikCoord coord, double alt, char ** name, Waypoint * wp);
 
-int a_geotag_write_exif_gps ( const char *filename, VikCoord coord, double alt, bool no_change_mtime );
+	char * a_geotag_get_exif_date_from_file(const char * filename, bool * has_GPS_info);
 
-#ifdef __cplusplus
-}
-#endif
+	struct LatLon a_geotag_get_position(const char * filename);
 
-#endif // _VIKING_GEOTAG_EXIF_H
+	int a_geotag_write_exif_gps(const char * filename, VikCoord coord, double alt, bool no_change_mtime);
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
+#endif /* _SG_GEOTAG_EXIF_H_ */

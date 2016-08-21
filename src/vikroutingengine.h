@@ -18,22 +18,22 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-#ifndef _VIKING_ROUTING_ENGINE_H
-#define _VIKING_ROUTING_ENGINE_H
+#ifndef _SG_ROUTING_ENGINE_H_
+#define _SG_ROUTING_ENGINE_H_
+
+
+
+
+#include <cstdint>
 
 #include <glib.h>
-#include <stdint.h>
-
 
 #include "viktrwlayer.h"
 #include "coords.h"
 #include "download.h"
-
 #include "vikwindow.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+
 
 
 #define VIK_ROUTING_ENGINE_TYPE            (vik_routing_engine_get_type ())
@@ -42,6 +42,8 @@ extern "C" {
 #define VIK_IS_ROUTING_ENGINE(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), VIK_ROUTING_ENGINE_TYPE))
 #define VIK_IS_ROUTING_ENGINE_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), VIK_ROUTING_ENGINE_TYPE))
 #define VIK_ROUTING_ENGINE_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), VIK_ROUTING_ENGINE_TYPE, VikRoutingEngineClass))
+
+
 
 
 typedef struct _VikRoutingEngine VikRoutingEngine;
@@ -66,7 +68,7 @@ bool vik_routing_engine_find(VikRoutingEngine * self, VikLayer * vtl, struct Lat
 bool vik_routing_engine_refine(VikRoutingEngine * self, VikLayer * vtl, SlavGPS::Track * trk);
 char *vik_routing_engine_get_url_from_directions(VikRoutingEngine * self, const char * start, const char * end);
 
-/* Acessors */
+/* Accessors. */
 char * vik_routing_engine_get_id(VikRoutingEngine * self);
 char * vik_routing_engine_get_label(VikRoutingEngine * self);
 char * vik_routing_engine_get_format(VikRoutingEngine * self);
@@ -74,8 +76,7 @@ char * vik_routing_engine_get_format(VikRoutingEngine * self);
 bool vik_routing_engine_supports_direction(VikRoutingEngine * self);
 bool vik_routing_engine_supports_refine(VikRoutingEngine * self);
 
-#ifdef __cplusplus
-}
-#endif
 
-#endif
+
+
+#endif /* #ifndef _SG_ROUTING_ENGINE_H_ */

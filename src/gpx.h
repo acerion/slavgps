@@ -19,38 +19,51 @@
  *
  */
 
-#ifndef _VIKING_GPX_H
-#define _VIKING_GPX_H
+#ifndef _SG_GPX_H_
+#define _SG_GPX_H_
 
-#include <stdint.h>
+
+
+
+#include <cstdint>
 
 #include "viktrwlayer.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
-/**
- * Options adapting GPX writing.
- */
-typedef struct {
-	// NB force options only apply to trackpoints
-	bool force_ele; /// Force ele field
-	bool force_time; /// Force time field
-	bool hidden; /// Write invisible tracks/waypoints (default is yes)
-	bool is_route; /// For internal convience
-} GpxWritingOptions;
 
-bool a_gpx_read_file(SlavGPS::LayerTRW * trw, FILE *f );
-void a_gpx_write_file(SlavGPS::LayerTRW * trw, FILE *f, GpxWritingOptions * options);
-void a_gpx_write_track_file(SlavGPS::Track * trk, FILE *f, GpxWritingOptions * options);
+namespace SlavGPS {
 
-char * a_gpx_write_tmp_file(SlavGPS::LayerTRW * trw, GpxWritingOptions * options);
-char * a_gpx_write_track_tmp_file(SlavGPS::Track * trk, GpxWritingOptions * options);
 
-#ifdef __cplusplus
-}
-#endif
 
-#endif
+
+	/**
+	 * Options adapting GPX writing.
+	 */
+	typedef struct {
+		/* NB force options only apply to trackpoints. */
+		bool force_ele;  /* Force ele field. */
+		bool force_time; /* Force time field. */
+		bool hidden;     /* Write invisible tracks/waypoints (default is yes). */
+		bool is_route;   /* For internal convience. */
+	} GpxWritingOptions;
+
+
+
+
+	bool a_gpx_read_file(LayerTRW * trw, FILE *f );
+	void a_gpx_write_file(LayerTRW * trw, FILE *f, GpxWritingOptions * options);
+	void a_gpx_write_track_file(Track * trk, FILE *f, GpxWritingOptions * options);
+
+	char * a_gpx_write_tmp_file(LayerTRW * trw, GpxWritingOptions * options);
+	char * a_gpx_write_track_tmp_file(Track * trk, GpxWritingOptions * options);
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
+#endif /* #ifndef _SG_GPX_H_ */

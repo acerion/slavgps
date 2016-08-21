@@ -23,10 +23,31 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-/* WARNING: If you go beyond this point, we are NOT responsible for any ill effects on your sanity */
-/* viktrwlayer.c -- 8000+ lines can make a difference in the state of things */
+/* WARNING: If you go beyond this point, we are NOT responsible for any ill effects on your sanity. */
+/* viktrwlayer.c -- 8000+ lines can make a difference in the state of things. */
 
-#include "viking.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#ifdef HAVE_MATH_H
+#include <math.h>
+#endif
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
+#ifdef HAVE_STDLIB_H
+#include <stdlib.h>
+#endif
+#include <cstdio>
+#include <cctype>
+#include <cassert>
+
+#include <gdk/gdkkeysyms.h>
+#include <glib.h>
+#include <glib/gstdio.h>
+#include <glib/gi18n.h>
+
 #include "vikmapslayer.h"
 #include "vikgpslayer.h"
 #include "viktrwlayer_export.h"
@@ -72,29 +93,13 @@
 
 #include "layer_trw_draw.h"
 
-#ifdef HAVE_MATH_H
-#include <math.h>
-#endif
-#ifdef HAVE_STRING_H
-#include <string.h>
-#endif
-#ifdef HAVE_STDLIB_H
-#include <stdlib.h>
-#endif
-#include <stdio.h>
-#include <ctype.h>
-#include <assert.h>
 
-#include <gdk/gdkkeysyms.h>
-#include <glib.h>
-#include <glib/gstdio.h>
-#include <glib/gi18n.h>
 
 
 #define POINTS 1
 #define LINES 2
 
-/* this is how it knows when you click if you are clicking close to a trackpoint. */
+/* This is how it knows when you click if you are clicking close to a trackpoint. */
 #define TRACKPOINT_SIZE_APPROX 5
 #define WAYPOINT_SIZE_APPROX 5
 
@@ -625,7 +630,7 @@ void TRWMetadata::set_timestamp(char const * new_timestamp)
 
 
 /**
- * Find an item by date
+ * Find an item by date.
  */
 bool LayerTRW::find_by_date(char const * date_str, VikCoord * position, Viewport * viewport, bool do_tracks, bool select)
 {
@@ -659,7 +664,6 @@ bool LayerTRW::find_by_date(char const * date_str, VikCoord * position, Viewport
 
 
 
-
 void LayerTRW::delete_sublayer(SublayerType sublayer_type, sg_uid_t sublayer_uid)
 {
 	if (sublayer_uid == SG_UID_NONE) {
@@ -676,7 +680,6 @@ void LayerTRW::delete_sublayer(SublayerType sublayer_type, sg_uid_t sublayer_uid
 
 	trw_layer_delete_item(&data);
 }
-
 
 
 
@@ -698,7 +701,6 @@ void LayerTRW::cut_sublayer(SublayerType sublayer_type, sg_uid_t sublayer_uid)
 	trw_layer_copy_item_cb(&data);
 	trw_layer_cut_item_cb(&data);
 }
-
 
 
 
@@ -1887,7 +1889,7 @@ bool LayerTRW::sublayer_toggle_visible(SublayerType sublayer_type, sg_uid_t subl
 
 
 /*
- * Return a property about tracks for this layer
+ * Return a property about tracks for this layer.
  */
 int LayerTRW::get_property_tracks_line_thickness()
 {
@@ -1898,7 +1900,7 @@ int LayerTRW::get_property_tracks_line_thickness()
 
 
 /*
- * Build up multiple routes information
+ * Build up multiple routes information.
  */
 static void trw_layer_routes_tooltip(std::unordered_map<sg_uid_t, Track *> & tracks, double * length)
 {
@@ -1919,7 +1921,7 @@ typedef struct {
 } tooltip_tracks;
 
 /*
- * Build up layer multiple track information via updating the tooltip_tracks structure
+ * Build up layer multiple track information via updating the tooltip_tracks structure.
  */
 static void trw_layer_tracks_tooltip(std::unordered_map<sg_uid_t, Track *> & tracks, tooltip_tracks * tt)
 {
@@ -2188,7 +2190,7 @@ void LayerTRW::set_statusbar_msg_info_trkpt(Trackpoint * tp)
 
 
 /*
- * Function to show basic waypoint information on the statusbar
+ * Function to show basic waypoint information on the statusbar.
  */
 void LayerTRW::set_statusbar_msg_info_wpt(Waypoint * wp)
 {
@@ -2228,7 +2230,7 @@ void LayerTRW::set_statusbar_msg_info_wpt(Waypoint * wp)
 
 
 /**
- * General layer selection function, find out which bit is selected and take appropriate action
+ * General layer selection function, find out which bit is selected and take appropriate action.
  */
 bool LayerTRW::selected(SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeItemType type, void * panel)
 {
@@ -2713,7 +2715,6 @@ void trw_layer_goto_wp(trw_menu_layer_t * data)
 
 
 
-
 bool LayerTRW::new_waypoint(GtkWindow * w, const VikCoord * def_coord)
 {
 	char * default_name = this->highest_wp_number_get();
@@ -2801,7 +2802,7 @@ void trw_layer_geotagging_waypoint_mtime_update(trw_menu_sublayer_t * data)
 
 
 /*
- * Use code in separate file for this feature as reasonably complex
+ * Use code in separate file for this feature as reasonably complex.
  */
 void trw_layer_geotagging_track(trw_menu_sublayer_t * data)
 {
@@ -2871,7 +2872,7 @@ static void trw_layer_acquire(trw_menu_layer_t * data, VikDataSourceInterface *d
 
 
 /*
- * Acquire into this TRW Layer straight from GPS Device
+ * Acquire into this TRW Layer straight from GPS Device.
  */
 void trw_layer_acquire_gps_cb(trw_menu_layer_t * data)
 {
@@ -2882,7 +2883,7 @@ void trw_layer_acquire_gps_cb(trw_menu_layer_t * data)
 
 
 /*
- * Acquire into this TRW Layer from Directions
+ * Acquire into this TRW Layer from Directions.
  */
 void trw_layer_acquire_routing_cb(trw_menu_layer_t * data)
 {
@@ -2893,7 +2894,7 @@ void trw_layer_acquire_routing_cb(trw_menu_layer_t * data)
 
 
 /*
- * Acquire into this TRW Layer from an entered URL
+ * Acquire into this TRW Layer from an entered URL.
  */
 void trw_layer_acquire_url_cb(trw_menu_layer_t * data)
 {
@@ -2905,7 +2906,7 @@ void trw_layer_acquire_url_cb(trw_menu_layer_t * data)
 
 #ifdef VIK_CONFIG_OPENSTREETMAP
 /*
- * Acquire into this TRW Layer from OSM
+ * Acquire into this TRW Layer from OSM.
  */
 void trw_layer_acquire_osm_cb(trw_menu_layer_t * data)
 {
@@ -2916,7 +2917,7 @@ void trw_layer_acquire_osm_cb(trw_menu_layer_t * data)
 
 
 /**
- * Acquire into this TRW Layer from OSM for 'My' Traces
+ * Acquire into this TRW Layer from OSM for 'My' Traces.
  */
 void trw_layer_acquire_osm_my_traces_cb(trw_menu_layer_t * data)
 {
@@ -2942,7 +2943,7 @@ void trw_layer_acquire_geocache_cb(trw_menu_layer_t * data)
 
 #ifdef VIK_CONFIG_GEOTAG
 /*
- * Acquire into this TRW Layer from images
+ * Acquire into this TRW Layer from images.
  */
 void trw_layer_acquire_geotagged_cb(trw_menu_layer_t * data)
 {
@@ -2960,12 +2961,15 @@ void trw_layer_acquire_geotagged_cb(trw_menu_layer_t * data)
 
 
 /*
- * Acquire into this TRW Layer from any GPS Babel supported file
+ * Acquire into this TRW Layer from any GPS Babel supported file.
  */
 void trw_layer_acquire_file_cb(trw_menu_layer_t * data)
 {
 	trw_layer_acquire(data, &vik_datasource_file_interface);
 }
+
+
+
 
 void trw_layer_gps_upload(trw_menu_layer_t * data)
 {
@@ -2982,7 +2986,7 @@ void trw_layer_gps_upload(trw_menu_layer_t * data)
 
 
 /**
- * If pass_along->tree is defined that this will upload just that track
+ * If pass_along->tree is defined that this will upload just that track.
  */
 void trw_layer_gps_upload_any(trw_menu_sublayer_t * data)
 {
@@ -3347,7 +3351,6 @@ void LayerTRW::add_track(Track * trk, char const * name)
 
 
 
-
 // Fake Route UUIDs vi simple increasing integer
 static sg_uid_t global_rt_uuid = SG_UID_INITIAL;
 
@@ -3395,7 +3398,7 @@ void LayerTRW::cancel_tps_of_track(Track * trk)
 
 
 /**
- * Normally this is done to due the waypoint size preference having changed
+ * Normally this is done to due the waypoint size preference having changed.
  */
 void LayerTRW::reset_waypoints()
 {
@@ -3414,9 +3417,7 @@ void LayerTRW::reset_waypoints()
 
 
 /**
- * trw_layer_new_unique_sublayer_name:
- *
- * Allocates a unique new name
+ * Allocates a unique new name.
  */
 char * LayerTRW::new_unique_sublayer_name(SublayerType sublayer_type, const char * name)
 {
@@ -3509,7 +3510,7 @@ static void trw_layer_enum_item(void * id, GList **tr, GList **l)
 
 
 /*
- * Move an item from one TRW layer to another TRW layer
+ * Move an item from one TRW layer to another TRW layer.
  */
 void LayerTRW::move_item(LayerTRW * trw_dest, void * id, SublayerType sublayer_type)
 {
@@ -3964,7 +3965,7 @@ void trw_layer_delete_item(trw_menu_sublayer_t * data)
 
 
 /**
- *  Rename waypoint and maintain corresponding name of waypoint in the treeview
+ *  Rename waypoint and maintain corresponding name of waypoint in the treeview.
  */
 void LayerTRW::waypoint_rename(Waypoint * wp, char const * new_name)
 {
@@ -3986,7 +3987,7 @@ void LayerTRW::waypoint_rename(Waypoint * wp, char const * new_name)
 
 
 /**
- *  Maintain icon of waypoint in the treeview
+ *  Maintain icon of waypoint in the treeview.
  */
 void LayerTRW::waypoint_reset_icon(Waypoint * wp)
 {
@@ -4045,8 +4046,6 @@ void trw_layer_properties_item(trw_menu_sublayer_t * data)
 
 
 /**
- * trw_layer_track_statistics:
- *
  * Show track statistics.
  * ATM jump to the stats page in the properties
  * TODO: consider separating the stats into an individual dialog?
@@ -4070,7 +4069,7 @@ void trw_layer_track_statistics(trw_menu_sublayer_t * data)
 
 
 /*
- * Update the treeview of the track id - primarily to update the icon
+ * Update the treeview of the track id - primarily to update the icon.
  */
 void LayerTRW::update_treeview(Track * trk)
 {
@@ -4259,7 +4258,7 @@ void trw_layer_extend_track_end(trw_menu_sublayer_t * data)
 
 
 /**
- * extend a track using route finder
+ * Extend a track using route finder.
  */
 void trw_layer_extend_track_end_route_finder(trw_menu_sublayer_t * data)
 {
@@ -4282,9 +4281,6 @@ void trw_layer_extend_track_end_route_finder(trw_menu_sublayer_t * data)
 
 
 
-/**
- *
- */
 bool LayerTRW::dem_test(LayersPanel * panel)
 {
 	// If have a panel then perform a basic test to see if any DEM info available...
@@ -4302,8 +4298,6 @@ bool LayerTRW::dem_test(LayersPanel * panel)
 
 
 /**
- * apply_dem_data_common:
- *
  * A common function for applying the DEM values and reporting the results.
  */
 void LayerTRW::apply_dem_data_common(LayersPanel * panel, Track * trk, bool skip_existing_elevations)
@@ -4350,8 +4344,6 @@ void trw_layer_apply_dem_data_only_missing(trw_menu_sublayer_t * data)
 
 
 /**
- * smooth_it:
- *
  * A common function for applying the elevation smoothing and reporting the results.
  */
 void LayerTRW::smooth_it(Track * trk, bool flat)
@@ -4367,9 +4359,6 @@ void LayerTRW::smooth_it(Track * trk, bool flat)
 
 
 
-/**
- *
- */
 void trw_layer_missing_elevation_data_interp(trw_menu_sublayer_t * data)
 {
 	LayerTRW * layer = data->layer;
@@ -4401,7 +4390,7 @@ void trw_layer_missing_elevation_data_flat(trw_menu_sublayer_t * data)
 
 
 /**
- * Commonal helper function
+ * Commonal helper function.
  */
 void LayerTRW::wp_changed_message(int changed)
 {
@@ -4548,7 +4537,7 @@ void trw_layer_goto_track_min_alt(trw_menu_sublayer_t * data)
 
 
 /*
- * Automatically change the viewport to center on the track and zoom to see the extent of the track
+ * Automatically change the viewport to center on the track and zoom to see the extent of the track.
  */
 void trw_layer_auto_track_view(trw_menu_sublayer_t * data)
 {
@@ -4679,26 +4668,26 @@ void trw_layer_edit_trackpoint(trw_menu_sublayer_t * data)
 
 
 /* comparison function used to sort tracks; a and b are hash table keys */
-/* Not actively used - can be restored if needed
+/* Not actively used - can be restored if needed. */
+#if 0
 static int track_compare(gconstpointer a, gconstpointer b, void * user_data)
 {
-  GHashTable *tracks = user_data;
-  time_t t1, t2;
+	GHashTable *tracks = user_data;
 
-  t1 = ((Trackpoint *) ((Track *) g_hash_table_lookup(tracks, a))->trackpoints->data)->timestamp;
-  t2 = ((Trackpoint *) ((Track *) g_hash_table_lookup(tracks, b))->trackpoints->data)->timestamp;
+	time_t t1 = ((Trackpoint *) ((Track *) g_hash_table_lookup(tracks, a))->trackpoints->data)->timestamp;
+	time_t t2 = ((Trackpoint *) ((Track *) g_hash_table_lookup(tracks, b))->trackpoints->data)->timestamp;
 
-  if (t1 < t2) return -1;
-  if (t1 > t2) return 1;
-  return 0;
+	if (t1 < t2) return -1;
+	if (t1 > t2) return 1;
+	return 0;
 }
-*/
+#endif
 
 
 
 
 /**
- * comparison function which can be used to sort tracks or waypoints by name
+ * Comparison function which can be used to sort tracks or waypoints by name.
  */
 int sort_alphabetically(gconstpointer a, gconstpointer b, void * user_data)
 {
@@ -5890,9 +5879,6 @@ void trw_layer_sort_order_timestamp_descend(trw_menu_sublayer_t * data)
 
 
 
-/**
- *
- */
 void trw_layer_delete_tracks_from_selection(trw_menu_layer_t * data)
 {
 	LayerTRW * layer = data->layer;
@@ -5941,9 +5927,6 @@ void trw_layer_delete_tracks_from_selection(trw_menu_layer_t * data)
 
 
 
-/**
- *
- */
 void trw_layer_delete_routes_from_selection(trw_menu_layer_t * data)
 {
 	LayerTRW * layer = data->layer;
@@ -6017,7 +6000,7 @@ static int check_waypoints_for_same_name(gconstpointer aa, gconstpointer bb, voi
 
 
 /**
- * Find out if any waypoints have the same name in this layer
+ * Find out if any waypoints have the same name in this layer.
  */
 bool LayerTRW::has_same_waypoint_names()
 {
@@ -6049,8 +6032,8 @@ bool LayerTRW::has_same_waypoint_names()
 
 
 /**
- * Force unqiue waypoint names for this layer
- * Note the panel is a required parameter to enable the update of the names displayed
+ * Force unqiue waypoint names for this layer.
+ * Note the panel is a required parameter to enable the update of the names displayed.
  */
 void LayerTRW::uniquify_waypoints(LayersPanel * panel)
 {
@@ -6115,9 +6098,6 @@ void LayerTRW::uniquify_waypoints(LayersPanel * panel)
 
 
 
-/**
- *
- */
 void trw_layer_delete_waypoints_from_selection(trw_menu_layer_t * data)
 {
 	LayerTRW * layer = data->layer;
@@ -6170,9 +6150,6 @@ void trw_layer_delete_waypoints_from_selection(trw_menu_layer_t * data)
 
 
 
-/**
- *
- */
 void trw_layer_waypoints_visibility_off(trw_menu_layer_t * data)
 {
 	LayerTRW * layer = data->layer;
@@ -6185,9 +6162,6 @@ void trw_layer_waypoints_visibility_off(trw_menu_layer_t * data)
 
 
 
-/**
- *
- */
 void trw_layer_waypoints_visibility_on(trw_menu_layer_t * data)
 {
 	LayerTRW * layer = data->layer;
@@ -6200,9 +6174,6 @@ void trw_layer_waypoints_visibility_on(trw_menu_layer_t * data)
 
 
 
-/**
- *
- */
 void trw_layer_waypoints_visibility_toggle(trw_menu_layer_t * data)
 {
 	LayerTRW * layer = data->layer;
@@ -6215,9 +6186,6 @@ void trw_layer_waypoints_visibility_toggle(trw_menu_layer_t * data)
 
 
 
-/**
- *
- */
 void trw_layer_tracks_visibility_off(trw_menu_layer_t * data)
 {
 	LayerTRW * layer = data->layer;
@@ -6230,9 +6198,6 @@ void trw_layer_tracks_visibility_off(trw_menu_layer_t * data)
 
 
 
-/**
- *
- */
 void trw_layer_tracks_visibility_on(trw_menu_layer_t * data)
 {
 	LayerTRW * layer = data->layer;
@@ -6245,9 +6210,6 @@ void trw_layer_tracks_visibility_on(trw_menu_layer_t * data)
 
 
 
-/**
- *
- */
 void trw_layer_tracks_visibility_toggle(trw_menu_layer_t * data)
 {
 	LayerTRW * layer = data->layer;
@@ -6260,9 +6222,6 @@ void trw_layer_tracks_visibility_toggle(trw_menu_layer_t * data)
 
 
 
-/**
- *
- */
 void trw_layer_routes_visibility_off(trw_menu_layer_t * data)
 {
 	LayerTRW * layer = data->layer;
@@ -6275,9 +6234,6 @@ void trw_layer_routes_visibility_off(trw_menu_layer_t * data)
 
 
 
-/**
- *
- */
 void trw_layer_routes_visibility_on(trw_menu_layer_t * data)
 {
 	LayerTRW * layer = data->layer;
@@ -6290,9 +6246,6 @@ void trw_layer_routes_visibility_on(trw_menu_layer_t * data)
 
 
 
-/**
- *
- */
 void trw_layer_routes_visibility_toggle(trw_menu_layer_t * data)
 {
 	LayerTRW * layer = data->layer;
@@ -6306,7 +6259,7 @@ void trw_layer_routes_visibility_toggle(trw_menu_layer_t * data)
 
 
 /**
- * Helper function to construct a list of #waypoint_layer_t
+ * Helper function to construct a list of #waypoint_layer_t.
  */
 std::list<waypoint_layer_t *> * LayerTRW::create_waypoints_and_layers_list_helper(std::list<Waypoint *> * waypoints)
 {
@@ -6326,10 +6279,8 @@ std::list<waypoint_layer_t *> * LayerTRW::create_waypoints_and_layers_list_helpe
 
 
 /**
- * trw_layer_create_waypoints_and_layers_list:
- *
- * Create the latest list of waypoints with the associated layer(s)
- *  Although this will always be from a single layer here
+ * Create the latest list of waypoints with the associated layer(s).
+ * Although this will always be from a single layer here.
  */
 std::list<SlavGPS::waypoint_layer_t *> * LayerTRW::create_waypoints_and_layers_list()
 {
@@ -6346,9 +6297,7 @@ std::list<SlavGPS::waypoint_layer_t *> * LayerTRW::create_waypoints_and_layers_l
 
 
 /**
- * trw_layer_analyse_close:
- *
- * Stuff to do on dialog closure
+ * Stuff to do on dialog closure.
  */
 static void trw_layer_analyse_close(GtkWidget *dialog, int resp, Layer * layer)
 {
@@ -6360,7 +6309,7 @@ static void trw_layer_analyse_close(GtkWidget *dialog, int resp, Layer * layer)
 
 
 /**
- * Helper function to construct a list of #track_layer_t
+ * Helper function to construct a list of #track_layer_t.
  */
 std::list<track_layer_t *> * LayerTRW::create_tracks_and_layers_list_helper(std::list<Track *> * tracks)
 {
@@ -6379,10 +6328,8 @@ std::list<track_layer_t *> * LayerTRW::create_tracks_and_layers_list_helper(std:
 
 
 /**
- * trw_layer_create_track_list:
- *
- * Create the latest list of tracks with the associated layer(s)
- *  Although this will always be from a single layer here
+ * Create the latest list of tracks with the associated layer(s).
+ * Although this will always be from a single layer here.
  */
 static std::list<track_layer_t *> * trw_layer_create_tracks_and_layers_list(Layer * layer, SublayerType sublayer_type)
 {
@@ -6399,10 +6346,8 @@ static std::list<track_layer_t *> * trw_layer_create_tracks_and_layers_list(Laye
 
 
 /**
- * trw_layer_create_track_list:
- *
- * Create the latest list of tracks with the associated layer(s)
- *  Although this will always be from a single layer here
+ * Create the latest list of tracks with the associated layer(s).
+ * Although this will always be from a single layer here.
  */
 std::list<track_layer_t *> * LayerTRW::create_tracks_and_layers_list(SublayerType sublayer_type)
 {
@@ -6437,9 +6382,6 @@ void trw_layer_tracks_stats(trw_menu_layer_t * data)
 
 
 
-/**
- *
- */
 void trw_layer_routes_stats(trw_menu_layer_t * data)
 {
 	LayerTRW * layer = data->layer;
@@ -6843,7 +6785,6 @@ void LayerTRW::tpwin_response(int response)
 
 
 /**
- * trw_layer_dialog_shift:
  * @vertical: The reposition strategy. If Vertical moves dialog vertically, otherwise moves it horizontally
  *
  * Try to reposition a dialog if it's over the specified coord
@@ -7505,14 +7446,14 @@ bool LayerTRW::tool_edit_waypoint_click(GdkEventButton * event, LayerTool * tool
 	}
 
 	if (this->current_wp && this->current_wp->visible) {
-		/* first check if current WP is within area (other may be 'closer', but we want to move the current) */
+		/* First check if current WP is within area (other may be 'closer', but we want to move the current). */
 		int x, y;
 		tool->viewport->coord_to_screen(&this->current_wp->coord, &x, &y);
 
 		if (abs(x - (int)round(event->x)) <= WAYPOINT_SIZE_APPROX
 		    && abs(y - (int)round(event->y)) <= WAYPOINT_SIZE_APPROX) {
 			if (event->button == MouseButton::RIGHT) {
-				this->waypoint_rightclick = true; /* remember that we're clicking; other layers will ignore release signal */
+				this->waypoint_rightclick = true; /* Remember that we're clicking; other layers will ignore release signal. */
 			} else {
 				marker_begin_move(tool, event->x, event->y);
 			}
@@ -7530,14 +7471,14 @@ bool LayerTRW::tool_edit_waypoint_click(GdkEventButton * event, LayerTool * tool
 	LayerTRWc::waypoint_search_closest_tp(this->waypoints, &params);
 	if (this->current_wp && (this->current_wp == params.closest_wp)) {
 		if (event->button == MouseButton::RIGHT) {
-			this->waypoint_rightclick = true; /* remember that we're clicking; other layers will ignore release signal */
+			this->waypoint_rightclick = true; /* Remember that we're clicking; other layers will ignore release signal. */
 		} else {
 			marker_begin_move(tool, event->x, event->y);
 		}
 		return false;
 	} else if (params.closest_wp) {
 		if (event->button == MouseButton::RIGHT) {
-			this->waypoint_rightclick = true; /* remember that we're clicking; other layers will ignore release signal */
+			this->waypoint_rightclick = true; /* Remember that we're clicking; other layers will ignore release signal. */
 		} else {
 			this->waypoint_rightclick = false;
 		}
@@ -7547,7 +7488,7 @@ bool LayerTRW::tool_edit_waypoint_click(GdkEventButton * event, LayerTool * tool
 		this->current_wp = params.closest_wp;
 		this->current_wp_uid = params.closest_wp_uid;
 
-		/* could make it so don't update if old WP is off screen and new is null but oh well */
+		/* Could make it so don't update if old WP is off screen and new is null but oh well. */
 		this->emit_update();
 		return true;
 	}
@@ -7580,7 +7521,7 @@ bool LayerTRW::tool_edit_waypoint_move(GdkEventMotion * event, LayerTool * tool)
 		VikCoord new_coord;
 		tool->viewport->screen_to_coord(event->x, event->y, &new_coord);
 
-		/* snap to TP */
+		/* Snap to TP. */
 		if (event->state & GDK_CONTROL_MASK) {
 			Trackpoint * tp = this->closest_tp_in_five_pixel_interval(tool->viewport, event->x, event->y);
 			if (tp) {
@@ -7588,7 +7529,7 @@ bool LayerTRW::tool_edit_waypoint_move(GdkEventMotion * event, LayerTool * tool)
 			}
 		}
 
-		/* snap to WP */
+		/* Snap to WP. */
 		if (event->state & GDK_SHIFT_MASK) {
 			Waypoint * wp = this->closest_wp_in_five_pixel_interval(tool->viewport, event->x, event->y);
 			if (wp && wp != this->current_wp) {
@@ -7628,7 +7569,7 @@ bool LayerTRW::tool_edit_waypoint_release(GdkEventButton * event, LayerTool * to
 		VikCoord new_coord;
 		tool->viewport->screen_to_coord(event->x, event->y, &new_coord);
 
-		/* snap to TP */
+		/* Snap to TP. */
 		if (event->state & GDK_CONTROL_MASK) {
 			Trackpoint * tp = this->closest_tp_in_five_pixel_interval(tool->viewport, event->x, event->y);
 			if (tp) {
@@ -7636,7 +7577,7 @@ bool LayerTRW::tool_edit_waypoint_release(GdkEventButton * event, LayerTool * to
 			}
 		}
 
-		/* snap to WP */
+		/* Snap to WP. */
 		if (event->state & GDK_SHIFT_MASK) {
 			Waypoint * wp = this->closest_wp_in_five_pixel_interval(tool->viewport, event->x, event->y);
 			if (wp && wp != this->current_wp) {
@@ -7714,14 +7655,14 @@ typedef struct {
 
 
 /*
- * Draw specified pixmap
+ * Draw specified pixmap.
  */
 static int draw_sync(void * data)
 {
 	draw_sync_t * ds = (draw_sync_t *) data;
-	// Sometimes don't want to draw
-	//  normally because another update has taken precedent such as panning the display
-	//   which means this pixmap is no longer valid
+	/* Sometimes don't want to draw normally because another
+	   update has taken precedent such as panning the display
+	   which means this pixmap is no longer valid. */
 	if (ds->layer->draw_sync_do) {
 		gdk_threads_enter();
 		gdk_draw_drawable(ds->drawable,
@@ -7742,7 +7683,7 @@ static char* distance_string(double distance)
 {
 	char str[128];
 
-	/* draw label with distance */
+	/* Draw label with distance. */
 	DistanceUnit distance_unit = a_vik_get_units_distance();
 	switch (distance_unit) {
 	case DistanceUnit::MILES:
@@ -7764,7 +7705,7 @@ static char* distance_string(double distance)
 		}
 		break;
 	default:
-		// DistanceUnit::KILOMETRES
+		/* DistanceUnit::KILOMETRES */
 		if (distance >= 1000 && distance < 100000) {
 			g_sprintf(str, "%3.2f km", distance/1000.0);
 		} else if (distance < 1000) {
@@ -7781,11 +7722,11 @@ static char* distance_string(double distance)
 
 
 /*
- * Actually set the message in statusbar
+ * Actually set the message in statusbar.
  */
 static void statusbar_write(double distance, double elev_gain, double elev_loss, double last_step, double angle, LayerTRW * layer)
 {
-	// Only show elevation data when track has some elevation properties
+	/* Only show elevation data when track has some elevation properties. */
 	char str_gain_loss[64];
 	str_gain_loss[0] = '\0';
 	char str_last_step[64];
@@ -7806,7 +7747,7 @@ static void statusbar_write(double distance, double elev_gain, double elev_loss,
 		free(tmp);
 	}
 
-	// Write with full gain/loss information
+	/* Write with full gain/loss information. */
 	char *msg = g_strdup_printf("Total %s%s%s", str_total, str_last_step, str_gain_loss);
 	vik_statusbar_set_message(window_from_layer(layer)->get_statusbar(), VIK_STATUSBAR_INFO, msg);
 	free(msg);
@@ -7817,15 +7758,15 @@ static void statusbar_write(double distance, double elev_gain, double elev_loss,
 
 
 /*
- * Figure out what information should be set in the statusbar and then write it
+ * Figure out what information should be set in the statusbar and then write it.
  */
 void LayerTRW::update_statusbar()
 {
-	// Get elevation data
+	/* Get elevation data. */
 	double elev_gain, elev_loss;
 	this->current_track->get_total_elevation_gain(&elev_gain, &elev_loss);
 
-	/* Find out actual distance of current track */
+	/* Find out actual distance of current track. */
 	double distance = this->current_track->get_length();
 
 	statusbar_write(distance, elev_gain, elev_loss, 0, 0, this);
@@ -7844,13 +7785,13 @@ static VikLayerToolFuncStatus tool_new_track_move_cb(Layer * trw, GdkEventMotion
 
 VikLayerToolFuncStatus LayerTRW::tool_new_track_move(GdkEventMotion * event, LayerTool * tool)
 {
-	/* if we haven't sync'ed yet, we don't have time to do more. */
+	/* If we haven't sync'ed yet, we don't have time to do more. */
 	if (this->draw_sync_done && this->current_track && !this->current_track->empty()) {
 		Trackpoint * last_tpt = this->current_track->get_tp_last();
 
 		static GdkPixmap *pixmap = NULL;
 		int w1, h1, w2, h2;
-		// Need to check in case window has been resized
+		/* Need to check in case window has been resized. */
 		w1 = tool->viewport->get_width();
 		h1 = tool->viewport->get_height();
 		if (!pixmap) {
@@ -7862,7 +7803,7 @@ VikLayerToolFuncStatus LayerTRW::tool_new_track_move(GdkEventMotion * event, Lay
 			pixmap = gdk_pixmap_new(gtk_widget_get_window(GTK_WIDGET(tool->viewport->vvp)), w1, h1, -1);
 		}
 
-		// Reset to background
+		/* Reset to background. */
 		gdk_draw_drawable(pixmap,
 				  this->current_track_newpoint_gc,
 				  tool->viewport->get_pixmap(),
@@ -7873,18 +7814,18 @@ VikLayerToolFuncStatus LayerTRW::tool_new_track_move(GdkEventMotion * event, Lay
 
 		tool->viewport->coord_to_screen(&last_tpt->coord, &x1, &y1);
 
-		// FOR SCREEN OVERLAYS WE MUST DRAW INTO THIS PIXMAP (when using the reset method)
-		//  otherwise using Viewport::draw_* functions puts the data into the base pixmap,
-		//  thus when we come to reset to the background it would include what we have already drawn!!
+		/* FOR SCREEN OVERLAYS WE MUST DRAW INTO THIS PIXMAP (when using the reset method)
+		   otherwise using Viewport::draw_* functions puts the data into the base pixmap,
+		   thus when we come to reset to the background it would include what we have already drawn!! */
 		gdk_draw_line(pixmap,
 			      this->current_track_newpoint_gc,
 			      x1, y1, event->x, event->y);
-		// Using this reset method is more reliable than trying to undraw previous efforts via the GDK_INVERT method
+		/* Using this reset method is more reliable than trying to undraw previous efforts via the GDK_INVERT method. */
 
-		/* Find out actual distance of current track */
+		/* Find out actual distance of current track. */
 		double distance = this->current_track->get_length();
 
-		// Now add distance to where the pointer is //
+		/* Now add distance to where the pointer is. */
 		VikCoord coord;
 		struct LatLon ll;
 		tool->viewport->screen_to_coord((int) event->x, (int) event->y, &coord);
@@ -7892,29 +7833,27 @@ VikLayerToolFuncStatus LayerTRW::tool_new_track_move(GdkEventMotion * event, Lay
 		double last_step = vik_coord_diff(&coord, &last_tpt->coord);
 		distance = distance + last_step;
 
-		// Get elevation data
+		/* Get elevation data. */
 		double elev_gain, elev_loss;
 		this->current_track->get_total_elevation_gain(&elev_gain, &elev_loss);
 
-		// Adjust elevation data (if available) for the current pointer position
+		/* Adjust elevation data (if available) for the current pointer position. */
 		double elev_new;
 		elev_new = (double) dem_cache_get_elev_by_coord(&coord, VIK_DEM_INTERPOL_BEST);
 		if (elev_new != VIK_DEM_INVALID_ELEVATION) {
 			if (last_tpt->altitude != VIK_DEFAULT_ALTITUDE) {
-				// Adjust elevation of last track point
+				/* Adjust elevation of last track point. */
 				if (elev_new > last_tpt->altitude) {
-					// Going up
+					/* Going up. */
 					elev_gain += elev_new - last_tpt->altitude;
 				} else {
-					// Going down
+					/* Going down. */
 					elev_loss += last_tpt->altitude - elev_new;
 				}
 			}
 		}
 
-		//
-		// Display of the distance 'tooltip' during track creation is controlled by a preference
-		//
+		/* Display of the distance 'tooltip' during track creation is controlled by a preference. */
 		if (a_vik_get_create_track_tooltip()) {
 
 			char *str = distance_string(distance);
@@ -7926,11 +7865,11 @@ VikLayerToolFuncStatus LayerTRW::tool_new_track_move(GdkEventMotion * event, Lay
 			pango_layout_get_pixel_size(pl, &wd, &hd);
 
 			int xd,yd;
-			// offset from cursor a bit depending on font size
+			/* Offset from cursor a bit depending on font size. */
 			xd = event->x + 10;
 			yd = event->y - hd;
 
-			// Create a background block to make the text easier to read over the background map
+			/* Create a background block to make the text easier to read over the background map. */
 			GdkGC *background_block_gc = tool->viewport->new_gc("#cccccc", 1);
 			gdk_draw_rectangle(pixmap, background_block_gc, true, xd-2, yd-2, wd+4, hd+2);
 			gdk_draw_layout(pixmap, this->current_track_newpoint_gc, xd, yd, pl);
@@ -7940,7 +7879,7 @@ VikLayerToolFuncStatus LayerTRW::tool_new_track_move(GdkEventMotion * event, Lay
 			free(str);
 		}
 
-		passalong = (draw_sync_t *) malloc(1 * sizeof (draw_sync_t)); // freed by draw_sync()
+		passalong = (draw_sync_t *) malloc(1 * sizeof (draw_sync_t)); /* Freed by draw_sync(). */
 		passalong->layer = this;
 		passalong->pixmap = pixmap;
 		passalong->drawable = gtk_widget_get_window(GTK_WIDGET(tool->viewport->vvp));
@@ -7950,10 +7889,10 @@ VikLayerToolFuncStatus LayerTRW::tool_new_track_move(GdkEventMotion * event, Lay
 		double baseangle;
 		tool->viewport->compute_bearing(x1, y1, event->x, event->y, &angle, &baseangle);
 
-		// Update statusbar with full gain/loss information
+		/* Update statusbar with full gain/loss information. */
 		statusbar_write(distance, elev_gain, elev_loss, last_step, angle, this);
 
-		// draw pixmap when we have time to
+		/* Draw pixmap when we have time to. */
 		g_idle_add_full(G_PRIORITY_HIGH_IDLE + 10, draw_sync, passalong, NULL);
 		this->draw_sync_done = false;
 		return VIK_LAYER_TOOL_ACK_GRAB_FOCUS;
@@ -7991,7 +7930,7 @@ static bool tool_new_track_key_press_cb(Layer * trw, GdkEventKey *event, LayerTo
 bool LayerTRW::tool_new_track_key_press(GdkEventKey *event, LayerTool * tool)
 {
 	if (this->current_track && event->keyval == GDK_Escape) {
-		// Bin track if only one point as it's not very useful
+		/* Bin track if only one point as it's not very useful. */
 		if (this->current_track->get_tp_count() == 1) {
 			if (this->current_track->is_route) {
 				this->delete_route(this->current_track);
@@ -8027,8 +7966,8 @@ bool LayerTRW::tool_new_track_or_route_click(GdkEventButton * event, Viewport * 
 	}
 
 	if (event->button == MouseButton::MIDDLE) {
-		// As the display is panning, the new track pixmap is now invalid so don't draw it
-		//  otherwise this drawing done results in flickering back to an old image
+		/* As the display is panning, the new track pixmap is now invalid so don't draw it
+		   otherwise this drawing done results in flickering back to an old image. */
 		this->draw_sync_do = false;
 		return false;
 	}
@@ -8044,9 +7983,9 @@ bool LayerTRW::tool_new_track_or_route_click(GdkEventButton * event, Viewport * 
 	}
 
 	if (event->type == GDK_2BUTTON_PRESS) {
-		/* subtract last (duplicate from double click) tp then end */
+		/* Subtract last (duplicate from double click) tp then end. */
 		if (this->current_track && !this->current_track->empty() && this->ct_x1 == this->ct_x2 && this->ct_y1 == this->ct_y2) {
-			/* undo last, then end */
+			/* Undo last, then end. */
 			this->undo_trackpoint_add();
 			this->current_track = NULL;
 		}
@@ -8057,7 +7996,7 @@ bool LayerTRW::tool_new_track_or_route_click(GdkEventButton * event, Viewport * 
 	Trackpoint * tp = new Trackpoint();
 	viewport->screen_to_coord(event->x, event->y, &tp->coord);
 
-	/* snap to other TP */
+	/* Snap to other TP. */
 	if (event->state & GDK_CONTROL_MASK) {
 		Trackpoint * other_tp = this->closest_tp_in_five_pixel_interval(viewport, event->x, event->y);
 		if (other_tp) {
@@ -8070,8 +8009,8 @@ bool LayerTRW::tool_new_track_or_route_click(GdkEventButton * event, Viewport * 
 	tp->timestamp = 0;
 
 	if (this->current_track) {
-		this->current_track->add_trackpoint(tp, true); // Ensure bounds is updated
-		/* Auto attempt to get elevation from DEM data (if it's available) */
+		this->current_track->add_trackpoint(tp, true); /* Ensure bounds is updated. */
+		/* Auto attempt to get elevation from DEM data (if it's available). */
 		this->current_track->apply_dem_data_last_trackpoint();
 	}
 
@@ -8097,10 +8036,10 @@ static bool tool_new_track_click_cb(Layer * trw, GdkEventButton *event, LayerToo
 
 bool LayerTRW::tool_new_track_click(GdkEventButton * event, LayerTool * tool)
 {
-	// if we were running the route finder, cancel it
+	/* If we were running the route finder, cancel it. */
 	this->route_finder_started = false;
 
-	// ----------------------------------------------------- if current is a route - switch to new track
+	/* If current is a route - switch to new track. */
 	if (event->button == MouseButton::LEFT && (!this->current_track || (this->current_track && this->current_track->is_route))) {
 		char *name = this->new_unique_sublayer_name(SublayerType::TRACK, _("Track"));
 		if (a_vik_get_ask_for_create_track_name()) {
@@ -8129,7 +8068,7 @@ static void tool_new_track_release_cb(Layer * trw, GdkEventButton *event, LayerT
 void LayerTRW::tool_new_track_release(GdkEventButton *event, LayerTool * tool)
 {
 	if (event->button == MouseButton::MIDDLE) {
-		// Pan moving ended - enable potential point drawing again
+		/* Pan moving ended - enable potential point drawing again. */
 		this->draw_sync_do = true;
 		this->draw_sync_done = true;
 	}
@@ -8182,10 +8121,10 @@ static bool tool_new_route_click_cb(Layer * trw, GdkEventButton *event, LayerToo
 
 bool LayerTRW::tool_new_route_click(GdkEventButton * event, LayerTool * tool)
 {
-	// if we were running the route finder, cancel it
+	/* If we were running the route finder, cancel it. */
 	this->route_finder_started = false;
 
-	// -------------------------- if current is a track - switch to new route,
+	/* If current is a track - switch to new route */
 	if (event->button == MouseButton::LEFT
 	    && (!this->current_track
 		|| (this->current_track && !this->current_track->is_route))) {
@@ -8304,12 +8243,10 @@ static bool tool_edit_trackpoint_click_cb(Layer * trw, GdkEventButton * event, L
 
 
 /**
- * tool_edit_trackpoint_click:
- *
- * On 'initial' click: search for the nearest trackpoint or routepoint and store it as the current trackpoint
+ * On 'initial' click: search for the nearest trackpoint or routepoint and store it as the current trackpoint.
  * Then update the viewport, statusbar and edit dialog to draw the point as being selected and it's information.
  * On subsequent clicks: (as the current trackpoint is defined) and the click is very near the same point
- *  then initiate the move operation to drag the point to a new destination.
+ * then initiate the move operation to drag the point to a new destination.
  * NB The current trackpoint will get reset elsewhere.
  */
 bool LayerTRW::tool_edit_trackpoint_click(GdkEventButton * event, LayerTool * tool)
@@ -8337,7 +8274,7 @@ bool LayerTRW::tool_edit_trackpoint_click(GdkEventButton * event, LayerTool * to
 	}
 
 	if (this->selected_tp.valid) {
-		/* First check if it is within range of prev. tp. and if current_tp track is shown. (if it is, we are moving that trackpoint.) */
+		/* First check if it is within range of prev. tp. and if current_tp track is shown. (if it is, we are moving that trackpoint). */
 		Trackpoint * tp = *this->selected_tp.iter;
 		Track *current_tr = this->tracks.at(this->current_tp_uid);
 		if (!current_tr) {
@@ -8399,7 +8336,7 @@ bool LayerTRW::tool_edit_trackpoint_click(GdkEventButton * event, LayerTool * to
 		return true;
 	}
 
-	/* these aren't the droids you're looking for */
+	/* These aren't the droids you're looking for. */
 	return false;
 }
 
@@ -8424,7 +8361,7 @@ bool LayerTRW::tool_edit_trackpoint_move(GdkEventMotion *event, LayerTool * tool
 		VikCoord new_coord;
 		tool->viewport->screen_to_coord(event->x, event->y, &new_coord);
 
-		/* snap to TP */
+		/* Snap to TP. */
 		if (event->state & GDK_CONTROL_MASK) {
 			Trackpoint * tp = this->closest_tp_in_five_pixel_interval(tool->viewport, event->x, event->y);
 			if (tp && tp != *this->selected_tp.iter) {
@@ -8483,7 +8420,7 @@ bool LayerTRW::tool_edit_trackpoint_release(GdkEventButton * event, LayerTool * 
 
 		marker_end_move(tool);
 
-		/* diff dist is diff from orig */
+		/* Diff dist is diff from orig. */
 		if (this->tpwin) {
 			if (this->selected_track) {
 				this->my_tpwin_set_tp();
@@ -8539,7 +8476,7 @@ void LayerTRW::tool_extended_route_finder_undo()
 		free(new_end);
 		this->emit_update();
 
-		/* remove last ' to:...' */
+		/* Remove last ' to:...' */
 		if (this->current_track->comment) {
 			char *last_to = strrchr(this->current_track->comment, 't');
 			if (last_to && (last_to - this->current_track->comment > 1)) {
@@ -8574,7 +8511,7 @@ bool LayerTRW::tool_extended_route_finder_click(GdkEventButton * event, LayerToo
 		this->draw_sync_do = false;
 		return false;
 	}
-	// if we started the track but via undo deleted all the track points, begin again
+	/* If we started the track but via undo deleted all the track points, begin again. */
 	else if (this->current_track && this->current_track->is_route && ! this->current_track->get_tp_first()) {
 		return this->tool_new_track_or_route_click(event, tool->viewport);
 
@@ -8588,9 +8525,9 @@ bool LayerTRW::tool_extended_route_finder_click(GdkEventButton * event, LayerToo
 		vik_coord_to_latlon(&tmp, &end);
 
 		this->route_finder_started = true;
-		this->route_finder_append = true;  // merge tracks. keep started true.
+		this->route_finder_append = true;  /* Merge tracks. Keep started true. */
 
-		// update UI to let user know what's going on
+		/* Update UI to let user know what's going on. */
 		VikStatusbar *sb = window_from_layer(this)->get_statusbar();
 		VikRoutingEngine *engine = vik_routing_default_engine();
 		if (!engine) {
@@ -8605,14 +8542,14 @@ bool LayerTRW::tool_extended_route_finder_click(GdkEventButton * event, LayerToo
 		window_from_layer(this)->set_busy_cursor();
 
 
-		/* Give GTK a change to display the new status bar before querying the web */
+		/* Give GTK a change to display the new status bar before querying the web. */
 		while (gtk_events_pending()) {
 			gtk_main_iteration();
 		}
 
 		bool find_status = vik_routing_default_find(this->vl, start, end);
 
-		/* Update UI to say we're done */
+		/* Update UI to say we're done. */
 		window_from_layer(this)->clear_busy_cursor();
 		msg = (find_status)
 			? g_strdup_printf(_("%s returned route between (%.3f, %.3f) and (%.3f, %.3f)."), vik_routing_engine_get_label(engine), start.lat, start.lon, end.lat, end.lon)
@@ -8625,7 +8562,7 @@ bool LayerTRW::tool_extended_route_finder_click(GdkEventButton * event, LayerToo
 	} else {
 		this->current_track = NULL;
 
-		// create a new route where we will add the planned route to
+		/* create a new route where we will add the planned route to. */
 		bool ret = this->tool_new_route_click(event, tool);
 
 		this->route_finder_started = true;
@@ -8693,7 +8630,7 @@ static LayerTool * tool_show_picture_create(Window * window, Viewport * viewport
 
 void trw_layer_show_picture(trw_menu_sublayer_t * data)
 {
-	/* thanks to the Gaim people for showing me ShellExecute and g_spawn_command_line_async */
+	/* Thanks to the Gaim people for showing me ShellExecute and g_spawn_command_line_async. */
 #ifdef WINDOWS
 	ShellExecute(NULL, "open", (char *) data->misc, NULL, NULL, SW_SHOWNORMAL);
 #else /* WINDOWS */
@@ -8749,7 +8686,7 @@ bool LayerTRW::tool_show_picture_click(GdkEventButton * event, LayerTool * tool)
 
 
 
-/* Structure for thumbnail creating data used in the background thread */
+/* Structure for thumbnail creating data used in the background thread. */
 typedef struct {
 	LayerTRW * layer;  /* Layer needed for redrawing. */
 	GSList * pics;     /* Image list. */
@@ -8762,14 +8699,14 @@ static int create_thumbnails_thread(thumbnail_create_thread_data * tctd, void * 
 		a_thumbnails_create((char *) tctd->pics->data);
 		int result = a_background_thread_progress(threaddata, ((double) ++done) / total);
 		if (result != 0)
-			return -1; /* Abort thread */
+			return -1; /* Abort thread. */
 
 		tctd->pics = tctd->pics->next;
 	}
 
-	// Redraw to show the thumbnails as they are now created
+	/* Redraw to show the thumbnails as they are now created. */
 	if (IS_VIK_LAYER(tctd->layer->vl)) {
-		tctd->layer->emit_update(); // NB update from background thread
+		tctd->layer->emit_update(); /* NB update from background thread. */
 	}
 
 	return 0;
@@ -8830,19 +8767,22 @@ static const char* my_track_colors(int ii)
 		"#5A171A",
 		"#96059f"
 	};
-	// Fast and reliable way of returning a colour
+	/* Fast and reliable way of returning a colour. */
 	return colors[(ii % VIK_TRW_LAYER_TRACK_GCS)];
 }
 
+
+
+
 void LayerTRW::track_alloc_colors()
 {
-	// Tracks
+	/* Tracks. */
 	int ii = 0;
 	for (auto i = this->tracks.begin(); i != this->tracks.end(); i++) {
 
 		Track * trk = i->second;
 
-		// Tracks get a random spread of colours if not already assigned
+		/* Tracks get a random spread of colours if not already assigned. */
 		if (!trk->has_color) {
 			if (this->drawmode == DRAWMODE_ALL_SAME_COLOR) {
 				trk->color = this->track_color;
@@ -8860,18 +8800,18 @@ void LayerTRW::track_alloc_colors()
 		}
 	}
 
-	// Routes
+	/* Routes. */
 	ii = 0;
 	for (auto i = this->routes.begin(); i != this->routes.end(); i++) {
 
 		Track * trk = i->second;
 
-		// Routes get an intermix of reds
+		/* Routes get an intermix of reds. */
 		if (!trk->has_color) {
 			if (ii) {
-				gdk_color_parse("#FF0000", &trk->color); // Red
+				gdk_color_parse("#FF0000", &trk->color); /* Red. */
 			} else {
-				gdk_color_parse("#B40916", &trk->color); // Dark Red
+				gdk_color_parse("#B40916", &trk->color); /* Dark Red. */
 			}
 			trk->has_color = true;
 		}
@@ -8886,8 +8826,8 @@ void LayerTRW::track_alloc_colors()
 
 
 /*
- * (Re)Calculate the bounds of the waypoints in this layer,
- * This should be called whenever waypoints are changed
+ * (Re)Calculate the bounds of the waypoints in this layer.
+ * This should be called whenever waypoints are changed.
  */
 void LayerTRW::calculate_bounds_waypoints()
 {
@@ -8901,20 +8841,20 @@ void LayerTRW::calculate_bounds_waypoints()
 		return;
 	}
 	Waypoint * wp = i->second;
-	// Set bounds to first point
+	/* Set bounds to first point. */
 	if (wp) {
 		vik_coord_to_latlon(&wp->coord, &topleft);
 		vik_coord_to_latlon(&wp->coord, &bottomright);
 	}
 
-	// Ensure there is another point...
+	/* Ensure there is another point... */
 	if (this->waypoints.size() > 1) {
 
 		while (++i != this->waypoints.end()) { /* kamilTODO: check the conditon. */
 
 			wp = i->second;
 
-			// See if this point increases the bounds.
+			/* See if this point increases the bounds. */
 			vik_coord_to_latlon(&wp->coord, &ll);
 
 			if (ll.lat > topleft.lat) {
@@ -8966,7 +8906,7 @@ void LayerTRW::sort_all()
 		return;
 	}
 
-	// Obviously need 2 to tango - sorting with only 1 (or less) is a lonely activity!
+	/* Obviously need 2 to tango - sorting with only 1 (or less) is a lonely activity! */
 	if (this->tracks.size() > 1) {
 		this->tree_view->sort_children(&(this->track_iter), this->track_sort_order);
 	}
@@ -8984,7 +8924,7 @@ void LayerTRW::sort_all()
 
 
 /**
- * Get the earliest timestamp available from all tracks
+ * Get the earliest timestamp available from all tracks.
  */
 time_t LayerTRW::get_timestamp_tracks()
 {
@@ -8995,9 +8935,9 @@ time_t LayerTRW::get_timestamp_tracks()
 	if (!tracks->empty()) {
 		tracks->sort(Track::compare_timestamp);
 
-		// Only need to check the first track as they have been sorted by time
+		/* Only need to check the first track as they have been sorted by time. */
 		Track * trk = *(tracks->begin());
-		// Assume trackpoints already sorted by time
+		/* Assume trackpoints already sorted by time. */
 		Trackpoint * tpt = trk->get_tp_first();
 		if (tpt && tpt->has_timestamp) {
 			timestamp = tpt->timestamp;
@@ -9011,7 +8951,7 @@ time_t LayerTRW::get_timestamp_tracks()
 
 
 /**
- * Get the earliest timestamp available from all waypoints
+ * Get the earliest timestamp available from all waypoints.
  */
 time_t LayerTRW::get_timestamp_waypoints()
 {
@@ -9020,7 +8960,7 @@ time_t LayerTRW::get_timestamp_waypoints()
 	for (auto i = this->waypoints.begin(); i != this->waypoints.end(); i++) {
 		Waypoint * wp = i->second;
 		if (wp->has_timestamp) {
-			// When timestamp not set yet - use the first value encountered
+			/* When timestamp not set yet - use the first value encountered. */
 			if (timestamp == 0) {
 				timestamp = wp->timestamp;
 			} else if (timestamp > wp->timestamp) {
@@ -9038,16 +8978,16 @@ time_t LayerTRW::get_timestamp_waypoints()
 
 
 /**
- * Get the earliest timestamp available for this layer
+ * Get the earliest timestamp available for this layer.
  */
 time_t LayerTRW::get_timestamp()
 {
 	time_t timestamp_tracks = this->get_timestamp_tracks();
 	time_t timestamp_waypoints = this->get_timestamp_waypoints();
-	// NB routes don't have timestamps - hence they are not considered
+	/* NB routes don't have timestamps - hence they are not considered. */
 
 	if (!timestamp_tracks && !timestamp_waypoints) {
-		// Fallback to get time from the metadata when no other timestamps available
+		/* Fallback to get time from the metadata when no other timestamps available. */
 		GTimeVal gtv;
 		if (this->metadata && this->metadata->timestamp && g_time_val_from_iso8601(this->metadata->timestamp, &gtv)) {
 			return gtv.tv_sec;
@@ -9075,14 +9015,18 @@ void LayerTRW::post_read(Viewport * viewport, bool from_file)
 	this->calculate_bounds_waypoints();
 	this->calculate_bounds_tracks();
 
-	// Apply treeview sort after loading all the tracks for this layer
-	//  (rather than sorted insert on each individual track additional)
-	//  and after subsequent changes to the properties as the specified order may have changed.
-	//  since the sorting of a treeview section is now very quick
-	// NB sorting is also performed after every name change as well to maintain the list order
+	/*
+	  Apply treeview sort after loading all the tracks for this
+	  layer (rather than sorted insert on each individual track
+	  additional) and after subsequent changes to the properties
+	  as the specified order may have changed.  since the sorting
+	  of a treeview section is now very quick.  NB sorting is also
+	  performed after every name change as well to maintain the
+	  list order.
+	*/
 	this->sort_all();
 
-	// Setting metadata time if not otherwise set
+	/* Setting metadata time if not otherwise set. */
 	if (this->metadata) {
 
 		bool need_to_set_time = true;
@@ -9098,7 +9042,7 @@ void LayerTRW::post_read(Viewport * viewport, bool from_file)
 			timestamp.tv_usec = 0;
 			timestamp.tv_sec = this->get_timestamp();
 
-			// No time found - so use 'now' for the metadata time
+			/* No time found - so use 'now' for the metadata time. */
 			if (timestamp.tv_sec == 0) {
 				g_get_current_time(&timestamp);
 			}
@@ -9120,9 +9064,9 @@ VikCoordMode LayerTRW::get_coord_mode()
 
 
 /**
- * Uniquify the whole layer
- * Also requires the layers panel as the names shown there need updating too
- * Returns whether the operation was successful or not
+ * Uniquify the whole layer.
+ * Also requires the layers panel as the names shown there need updating too.
+ * Returns whether the operation was successful or not.
  */
 bool LayerTRW::uniquify(LayersPanel * panel)
 {
@@ -9181,7 +9125,7 @@ uint16_t LayerTRW::get_menu_selection()
 
 static int get_download_area_width(Viewport * viewport, double zoom_level, struct LatLon *wh) /* kamilFIXME: viewport is unused, why? */
 {
-	/* TODO: calculating based on current size of viewport */
+	/* TODO: calculating based on current size of viewport. */
 	const double w_at_zoom_0_125 = 0.0013;
 	const double h_at_zoom_0_125 = 0.0011;
 	double zoom_factor = zoom_level/0.125;
@@ -9189,7 +9133,7 @@ static int get_download_area_width(Viewport * viewport, double zoom_level, struc
 	wh->lat = h_at_zoom_0_125 * zoom_factor;
 	wh->lon = w_at_zoom_0_125 * zoom_factor;
 
-	return 0;   /* all OK */
+	return 0;   /* All OK. */
 }
 
 
@@ -9230,7 +9174,7 @@ static VikCoord *get_next_coord(VikCoord *from, VikCoord *to, struct LatLon *dis
 
 static GList *add_fillins(GList *list, VikCoord *from, VikCoord *to, struct LatLon *dist)
 {
-	/* TODO: handle virtical track (to->east_west - from->east_west == 0) */
+	/* TODO: handle virtical track (to->east_west - from->east_west == 0). */
 	double gradient = (to->north_south - from->north_south)/(to->east_west - from->east_west);
 
 	VikCoord *next = from;
@@ -9262,11 +9206,11 @@ void vik_track_download_map(Track *tr, VikLayer *vml, Viewport * viewport, doubl
 
 	GList * fillins = NULL;
 
-	/* 'fillin' doesn't work in UTM mode - potentially ending up in massive loop continually allocating memory - hence don't do it */
-	/* seems that ATM the function get_next_coord works only for LATLON */
+	/* 'fillin' doesn't work in UTM mode - potentially ending up in massive loop continually allocating memory - hence don't do it. */
+	/* Seems that ATM the function get_next_coord works only for LATLON. */
 	if (tr->get_coord_mode() == VIK_COORD_LATLON) {
 
-		/* fill-ins for far apart points */
+		/* Fill-ins for far apart points. */
 		std::list<Rect *>::iterator cur_rect;
 		std::list<Rect *>::iterator next_rect;
 
@@ -9274,8 +9218,8 @@ void vik_track_download_map(Track *tr, VikLayer *vml, Viewport * viewport, doubl
 		     (next_rect = std::next(cur_rect)) != rects_to_download->end();
 		     cur_rect++) {
 
-			if ((wh.lon < ABS ((*cur_rect)->center.east_west - (*next_rect)->center.east_west)) ||
-			    (wh.lat < ABS ((*cur_rect)->center.north_south - (*next_rect)->center.north_south))) {
+			if ((wh.lon < ABS ((*cur_rect)->center.east_west - (*next_rect)->center.east_west))
+			    || (wh.lat < ABS ((*cur_rect)->center.north_south - (*next_rect)->center.north_south))) {
 
 				fillins = add_fillins(fillins, &(*cur_rect)->center, &(*next_rect)->center, &wh);
 			}
@@ -9336,7 +9280,7 @@ void trw_layer_download_map_along_track_cb(trw_menu_sublayer_t * data)
 
 	Viewport * viewport = window_from_layer(layer)->get_viewport();
 
-	std::list<Layer *> * vmls = panel->get_all_layers_of_type(LayerType::MAPS, true); // Includes hidden map layer types
+	std::list<Layer *> * vmls = panel->get_all_layers_of_type(LayerType::MAPS, true); /* Includes hidden map layer types. */
 	int num_maps = vmls->size();
 
 	if (!num_maps) {
@@ -9344,7 +9288,7 @@ void trw_layer_download_map_along_track_cb(trw_menu_sublayer_t * data)
 		return;
 	}
 
-	// Convert from list of vmls to list of names. Allowing the user to select one of them
+	/* Convert from list of vmls to list of names. Allowing the user to select one of them. */
 	char **map_names = (char **) g_malloc_n(1 + num_maps, sizeof (char *));
 	VikLayer **map_layers = (VikLayer **) g_malloc_n(1 + num_maps, sizeof(VikLayer *));
 
@@ -9356,7 +9300,7 @@ void trw_layer_download_map_along_track_cb(trw_menu_sublayer_t * data)
 		LayerMaps * lm = (LayerMaps *) vml->layer;
 		*np++ = lm->get_map_label();
 	}
-	// Mark end of the array lists
+	/* Mark end of the array lists. */
 	*lp = NULL;
 	*np = NULL;
 
@@ -9388,7 +9332,7 @@ void trw_layer_download_map_along_track_cb(trw_menu_sublayer_t * data)
 
 
 
-/**** lowest waypoint number calculation ***/
+/* Lowest waypoint number calculation. */
 static int highest_wp_number_name_to_number(const char *name)
 {
 	if (strlen(name) == 3) {
@@ -9418,7 +9362,7 @@ void LayerTRW::highest_wp_number_reset()
 
 void LayerTRW::highest_wp_number_add_wp(const char * new_wp_name)
 {
-	/* if is bigger that top, add it */
+	/* If is bigger that top, add it. */
 	int new_wp_num = highest_wp_number_name_to_number(new_wp_name);
 	if (new_wp_num > this->highest_wp_number) {
 		this->highest_wp_number = new_wp_num;
@@ -9430,14 +9374,14 @@ void LayerTRW::highest_wp_number_add_wp(const char * new_wp_name)
 
 void LayerTRW::highest_wp_number_remove_wp(char const * old_wp_name)
 {
-	/* if wasn't top, do nothing. if was top, count backwards until we find one used */
+	/* If wasn't top, do nothing. if was top, count backwards until we find one used. */
 	int old_wp_num = highest_wp_number_name_to_number(old_wp_name);
 	if (this->highest_wp_number == old_wp_num) {
 		char buf[4];
 		this->highest_wp_number--;
 
 		snprintf(buf,4,"%03d", this->highest_wp_number);
-		/* search down until we find something that *does* exist */
+		/* Search down until we find something that *does* exist. */
 
 		while (this->highest_wp_number > 0 && !this->get_waypoint((const char *) buf)) {
 		       this->highest_wp_number--;
@@ -9449,7 +9393,7 @@ void LayerTRW::highest_wp_number_remove_wp(char const * old_wp_name)
 
 
 
-/* get lowest unused number */
+/* Get lowest unused number. */
 char * LayerTRW::highest_wp_number_get()
 {
 	char buf[4];
@@ -9464,9 +9408,7 @@ char * LayerTRW::highest_wp_number_get()
 
 
 /**
- * trw_layer_create_track_list_both:
- *
- * Create the latest list of tracks and routes
+ * Create the latest list of tracks and routes.
  */
 static std::list<track_layer_t *> * trw_layer_create_tracks_and_layers_list_both(Layer * layer, SublayerType sublayer_type)
 {
@@ -9481,9 +9423,7 @@ static std::list<track_layer_t *> * trw_layer_create_tracks_and_layers_list_both
 
 
 /**
- * trw_layer_create_track_list_both:
- *
- * Create the latest list of tracks and routes
+ * Create the latest list of tracks and routes.
  */
 std::list<track_layer_t *> * LayerTRW::create_tracks_and_layers_list()
 {
@@ -9590,37 +9530,50 @@ LayerTRW::LayerTRW(Viewport * viewport) : Layer()
 
 	memset(&coord_mode, 0, sizeof (VikCoordMode));
 
-	// It's not entirely clear the benefits of hash tables usage here - possibly the simplicity of first implementation for unique names
-	// Now with the name of the item stored as part of the item - these tables are effectively straightforward lists
+	/*
+	 It's not entirely clear the benefits of hash tables usage
+	 here - possibly the simplicity of first implementation for
+	 unique names.  Now with the name of the item stored as part
+	 of the item - these tables are effectively straightforward
+	 lists.
 
-	// For this reworking I've choosen to keep the use of hash tables since for the expected data sizes
-	// - even many hundreds of waypoints and tracks is quite small in the grand scheme of things,
-	//  and with normal PC processing capabilities - it has negligibile performance impact
-	// This also minimized the amount of rework - as the management of the hash tables already exists.
+	 For this reworking I've choosen to keep the use of hash
+	 tables since for the expected data sizes - even many hundreds
+	 of waypoints and tracks is quite small in the grand scheme of
+	 things, and with normal PC processing capabilities - it has
+	 negligibile performance impact.  This also minimized the
+	 amount of rework - as the management of the hash tables
+	 already exists.
 
-	// The hash tables are indexed by simple integers acting as a UUID hash, which again shouldn't affect performance much
-	//   we have to maintain a uniqueness (as before when multiple names where not allowed),
-	//   this is to ensure it refers to the same item in the data structures used on the viewport and on the layers panel
+	 The hash tables are indexed by simple integers acting as a
+	 UUID hash, which again shouldn't affect performance much we
+	 have to maintain a uniqueness (as before when multiple names
+	 where not allowed), this is to ensure it refers to the same
+	 item in the data structures used on the viewport and on the
+	 layers panel.
+	*/
 
-	//rv->waypoints = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, (GDestroyNotify) Waypoint::delete_waypoint);
-	//rv->waypoints_iters = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, g_free);
-	//rv->tracks = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, (GDestroyNotify) Track::delete_track);
-	//rv->tracks_iters = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, g_free);
-	//rv->routes = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, (GDestroyNotify) Track::delete_track);
-	//rv->routes_iters = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, g_free);
+	#if 0
+	rv->waypoints = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, (GDestroyNotify) Waypoint::delete_waypoint);
+	rv->waypoints_iters = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, g_free);
+	rv->tracks = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, (GDestroyNotify) Track::delete_track);
+	rv->tracks_iters = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, g_free);
+	rv->routes = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, (GDestroyNotify) Track::delete_track);
+	rv->routes_iters = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, g_free);
+	#endif
 
-	this->image_cache = g_queue_new(); // Must be performed before set_params via set_defaults
+	this->image_cache = g_queue_new(); /* Must be performed before set_params via set_defaults. */
 
 	this->set_defaults(viewport);
 
-	// Param settings that are not available via the GUI
-	// Force to on after processing params (which defaults them to off with a zero value)
+	/* Param settings that are not available via the GUI. */
+	/* Force to on after processing params (which defaults them to off with a zero value). */
 	this->waypoints_visible = this->tracks_visible = this->routes_visible = true;
 
 	this->metadata = new TRWMetadata();
 	this->draw_sync_done = true;
 	this->draw_sync_do = true;
-	// Everything else is 0, false or NULL
+	/* Everything else is 0, false or NULL. */
 
 
 

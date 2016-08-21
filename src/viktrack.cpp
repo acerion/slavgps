@@ -24,11 +24,12 @@
 #endif
 
 #include <algorithm>
+#include <cstdlib>
+#include <cassert>
 
 #include <glib.h>
 #include <time.h>
-#include <cstdlib>
-#include <assert.h>
+
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif
@@ -58,11 +59,9 @@ using namespace SlavGPS;
 
 
 /**
- * vik_track_set_defaults:
- *
  * Set some default values for a track.
  * ATM This uses the 'settings' method to get values,
- *  so there is no GUI way to control these yet...
+ * so there is no GUI way to control these yet...
  */
 void Track::set_defaults()
 {
@@ -203,10 +202,10 @@ Track::Track()
  * @from: The Track to copy
  * @copy_points: Whether to copy the track points or not
  *
- * Normally for copying the track it's best to copy all the trackpoints
+ * Normally for copying the track it's best to copy all the trackpoints.
  * However for some operations such as splitting tracks the trackpoints will be managed separately, so no need to copy them.
  *
- * Returns: the copied Track
+ * Returns: the copied Track.
  */
 Track::Track(const Track & from) : Track()
 {
@@ -352,7 +351,7 @@ void Trackpoint::set_name(char const * name_)
 {
 	free_string(&name);
 
-	// If the name is blank then completely remove it
+	/* If the name is blank then completely remove it. */
 	if (name_ && name_[0] == '\0') {
 		name = NULL;
 	} else if (name_) {
@@ -366,10 +365,9 @@ void Trackpoint::set_name(char const * name_)
 
 
 /**
- * track_recalculate_bounds_last_tp:
- * @trk:   The track to consider the recalculation on
+ * @trk:   The track to consider the recalculation on.
  *
- * A faster bounds check, since it only considers the last track point
+ * A faster bounds check, since it only considers the last track point.
  */
 void Track::recalculate_bounds_last_tp()
 {
@@ -380,7 +378,7 @@ void Track::recalculate_bounds_last_tp()
 	Trackpoint * tp = *std::prev(this->trackpointsB->end());
 	if (tp) {
 		struct LatLon ll;
-		// See if this trackpoint increases the track bounds and update if so
+		/* See if this trackpoint increases the track bounds and update if so. */
 		vik_coord_to_latlon (&tp->coord, &ll);
 		if (ll.lat > bbox.north) {
 			bbox.north = ll.lat;
@@ -404,18 +402,17 @@ void Track::recalculate_bounds_last_tp()
 
 
 /**
- * vik_track_add_trackpoint:
  * @tr:          The track to which the trackpoint will be added
  * @tp:          The trackpoint to add
  * @recalculate: Whether to perform any associated properties recalculations
  *               Generally one should avoid recalculation via this method if adding lots of points
  *               (But ensure calculate_bounds() is called after adding all points!!)
  *
- * The trackpoint is added to the end of the existing trackpoint list
+ * The trackpoint is added to the end of the existing trackpoint list.
  */
 void Track::add_trackpoint(Trackpoint * tp, bool recalculate)
 {
-	// When it's the first trackpoint need to ensure the bounding box is initialized correctly
+	/* When it's the first trackpoint need to ensure the bounding box is initialized correctly. */
 	bool adding_first_point = this->trackpointsB->empty();
 	this->trackpointsB->push_back(tp);
 	if (adding_first_point) {
@@ -428,10 +425,6 @@ void Track::add_trackpoint(Trackpoint * tp, bool recalculate)
 
 
 
-/**
- * vik_track_get_length_to_trackpoint:
- *
- */
 double Track::get_length_to_trackpoint(const Trackpoint * tp)
 {
 	double len = 0.0;
@@ -533,8 +526,8 @@ unsigned long Track::get_dup_point_count()
 
 
 /*
- * Deletes adjacent points that have the same position
- * Returns the number of points that were deleted
+ * Deletes adjacent points that have the same position.
+ * Returns the number of points that were deleted.
  */
 unsigned long Track::remove_dup_points()
 {
@@ -561,7 +554,7 @@ unsigned long Track::remove_dup_points()
 		}
 	}
 
-	// NB isn't really be necessary as removing duplicate points shouldn't alter the bounds!
+	/* NB isn't really be necessary as removing duplicate points shouldn't alter the bounds! */
 	this->calculate_bounds();
 
 	return num;
@@ -571,8 +564,8 @@ unsigned long Track::remove_dup_points()
 
 
 /*
- * Get a count of trackpoints with the same defined timestamp
- * Note is using timestamps with a resolution with 1 second
+ * Get a count of trackpoints with the same defined timestamp.
+ * Note is using timestamps with a resolution with 1 second.
  */
 unsigned long Track::get_same_time_point_count()
 {
@@ -593,8 +586,8 @@ unsigned long Track::get_same_time_point_count()
 
 
 /*
- * Deletes adjacent points that have the same defined timestamp
- * Returns the number of points that were deleted
+ * Deletes adjacent points that have the same defined timestamp.
+ * Returns the number of points that were deleted.
  */
 unsigned long Track::remove_same_time_points()
 {
@@ -631,7 +624,7 @@ unsigned long Track::remove_same_time_points()
 
 /*
  * Deletes all 'extra' trackpoint information
- *  such as time stamps, speed, course etc...
+ * such as time stamps, speed, course etc...
  */
 void Track::to_routepoints(void)
 {
@@ -700,7 +693,7 @@ std::list<Track *> * Track::split_into_segments()
 			new_track->calculate_bounds();
 			tracks->push_back(new_track);
 
-			/* first will now point at either ->end() or beginning of next segment. */
+			/* First will now point at either ->end() or beginning of next segment. */
 			first = last;
 		} else {
 			/* I think that this branch of if/else will never be executed
@@ -719,8 +712,8 @@ std::list<Track *> * Track::split_into_segments()
 
 
 /*
- * Simply remove any subsequent segment markers in a track to form one continuous track
- * Return the number of segments merged
+ * Simply remove any subsequent segment markers in a track to form one continuous track.
+ * Return the number of segments merged.
  */
 unsigned int Track::merge_segments(void)
 {
@@ -779,11 +772,10 @@ void Track::reverse(void)
 
 
 /**
- * get_duration:
- * @segment_gaps: Whether the duration should include gaps between segments
+ * @segment_gaps: Whether the duration should include gaps between segments.
  *
- * Returns: The time in seconds
- *  NB this may be negative particularly if the track has been reversed
+ * Returns: The time in seconds.
+ * NB this may be negative particularly if the track has been reversed.
  */
 time_t Track::get_duration(bool segment_gaps)
 {
@@ -795,7 +787,7 @@ time_t Track::get_duration(bool segment_gaps)
 
 	/* Ensure times are available. */
 	if (this->get_tp_first()->has_timestamp) {
-		// Get trkpt only once - as using vik_track_get_tp_last() iterates whole track each time
+		/* Get trkpt only once - as using vik_track_get_tp_last() iterates whole track each time. */
 		if (segment_gaps) {
 			// Simple duration
 			Trackpoint * tp_last = this->get_tp_last();
@@ -881,10 +873,10 @@ double Track::get_average_speed()
  *  . GPSs often report a moving average in their statistics output
  *  . bicycle speedos often don't factor in time when stopped - hence reporting a moving average for speed
  *
- * Often GPS track will record every second but not when stationary
- * This method doesn't use samples that differ over the specified time limit - effectively skipping that time chunk from the total time
+ * Often GPS track will record every second but not when stationary.
+ * This method doesn't use samples that differ over the specified time limit - effectively skipping that time chunk from the total time.
  *
- * Suggest to use 60 seconds as the stop length (as the default used in the TrackWaypoint draw stops factor)
+ * Suggest to use 60 seconds as the stop length (as the default used in the TrackWaypoint draw stops factor).
  */
 double Track::get_average_speed_moving(int stop_length_seconds)
 {
@@ -1010,7 +1002,7 @@ double * Track::make_elevation_map(uint16_t num_chunks)
 	bool ignore_it = false;
 	while (current_chunk < num_chunks) {
 
-		/* go along current seg */
+		/* Go along current seg. */
 		if (current_seg_length && (current_seg_length - dist_along_seg) > chunk_length) {
 			dist_along_seg += chunk_length;
 
@@ -1024,7 +1016,7 @@ double * Track::make_elevation_map(uint16_t num_chunks)
 			 **/
 
 			if (ignore_it) {
-				// Seemly can't determine average for this section - so use last known good value (much better than just sticking in zero)
+				/* Seemly can't determine average for this section - so use last known good value (much better than just sticking in zero). */
 				pts[current_chunk] = altitude1;
 			} else {
 				pts[current_chunk] = altitude1 + (altitude2 - altitude1) * ((dist_along_seg - (chunk_length / 2)) / current_seg_length);
@@ -1032,15 +1024,15 @@ double * Track::make_elevation_map(uint16_t num_chunks)
 
 			current_chunk++;
 		} else {
-			/* finish current seg */
+			/* Finish current seg. */
 			if (current_seg_length) {
 				double altitude_at_dist_along_seg = altitude1 + (altitude2 - altitude1) / (current_seg_length) * dist_along_seg;
 				current_dist = current_seg_length - dist_along_seg;
 				current_area_under_curve = current_dist * (altitude_at_dist_along_seg + altitude2) * 0.5;
 			} else {
-				current_dist = current_area_under_curve = 0;  /* should only happen if first current_seg_length == 0 */
+				current_dist = current_area_under_curve = 0;  /* Should only happen if first current_seg_length == 0. */
 			}
-			/* get intervening segs */
+			/* Get intervening segs. */
 			iter++;
 			while (iter != this->trackpointsB->end()
 			       && std::next(iter) != this->trackpointsB->end()) {
@@ -1060,7 +1052,7 @@ double * Track::make_elevation_map(uint16_t num_chunks)
 				}
 			}
 
-			/* final seg */
+			/* Final seg. */
 			dist_along_seg = chunk_length - current_dist;
 			if (ignore_it
 			    || (iter != this->trackpointsB->end()
@@ -1129,7 +1121,7 @@ double * Track::make_gradient_map(const uint16_t num_chunks)
 	double total_length = this->get_length_including_gaps();
 	double chunk_length = total_length / num_chunks;
 
-	/* Zero chunk_length (eg, track of 2 tp with the same loc) will cause crash */
+	/* Zero chunk_length (eg, track of 2 tp with the same loc) will cause crash. */
 	if (chunk_length <= 0) {
 		return NULL;
 	}
@@ -1161,7 +1153,7 @@ double * Track::make_gradient_map(const uint16_t num_chunks)
 
 
 
-/* by Alex Foobarian */
+/* By Alex Foobarian. */
 double * Track::make_speed_map(const uint16_t num_chunks)
 {
 	assert (num_chunks < 16000);
@@ -1197,7 +1189,7 @@ double * Track::make_speed_map(const uint16_t num_chunks)
 	int index = 0; /* index of the current trackpoint. */
 	for (int i = 0; i < num_chunks; i++) {
 		/* We are now covering the interval from t[0] + i * chunk_size to t[0] + (i + 1) * chunk_size.
-		   find the first trackpoint outside the current interval, averaging the speeds between intermediate trackpoints. */
+		   Find the first trackpoint outside the current interval, averaging the speeds between intermediate trackpoints. */
 		if (t[0] + i * chunk_size >= t[index]) {
 			double acc_t = 0;
 			double acc_s = 0;
@@ -1222,7 +1214,7 @@ double * Track::make_speed_map(const uint16_t num_chunks)
 
 
 /**
- * Make a distance/time map, heavily based on the vik_track_make_speed_map method
+ * Make a distance/time map, heavily based on the vik_track_make_speed_map method.
  */
 double * Track::make_distance_map(const uint16_t num_chunks)
 {
@@ -1265,7 +1257,7 @@ double * Track::make_distance_map(const uint16_t num_chunks)
 				acc_s += (s[index + 1] - s[index]);
 				index++;
 			}
-			// The only bit that's really different from the speed map - just keep an accululative record distance
+			/* The only bit that's really different from the speed map - just keep an accululative record distance. */
 			out[i] = i ? out[i - 1] + acc_s : acc_s;
 		} else if (i) {
 			out[i] = out[i - 1];
@@ -1282,10 +1274,10 @@ double * Track::make_distance_map(const uint16_t num_chunks)
 
 
 /**
- * This uses the 'time' based method to make the graph, (which is a simpler compared to the elevation/distance)
- * This results in a slightly blocky graph when it does not have many trackpoints: <60
+ * This uses the 'time' based method to make the graph, (which is a simpler compared to the elevation/distance).
+ * This results in a slightly blocky graph when it does not have many trackpoints: <60.
  * NB Somehow the elevation/distance applies some kind of smoothing algorithm,
- *   but I don't think any one understands it any more (I certainly don't ATM)
+ * but I don't think any one understands it any more (I certainly don't ATM).
  */
 double * Track::make_elevation_time_map(const uint16_t num_chunks)
 {
@@ -1313,7 +1305,7 @@ double * Track::make_elevation_time_map(const uint16_t num_chunks)
 	double chunk_size = duration / num_chunks;
 	int pt_count = this->get_tp_count();
 
-	double * out = (double *) malloc(sizeof (double) * num_chunks); // The return altitude values
+	double * out = (double *) malloc(sizeof (double) * num_chunks); /* The return altitude values. */
 	double * s = (double *) malloc(sizeof (double) * pt_count); // calculation altitudes
 	double * t = (double *) malloc(sizeof (double) * pt_count); // calculation times
 
@@ -1338,7 +1330,7 @@ double * Track::make_elevation_time_map(const uint16_t num_chunks)
 		/* We are now covering the interval from t[0] + i * chunk_size to t[0] + (i + 1) * chunk_size.
 		   find the first trackpoint outside the current interval, averaging the heights between intermediate trackpoints. */
 		if (t[0] + i * chunk_size >= t[index]) {
-			double acc_s = s[index]; // initialise to first point
+			double acc_s = s[index]; /* Initialise to first point. */
 
 			while (t[0] + i * chunk_size >= t[index]) {
 				acc_s += (s[index + 1] - s[index]);
@@ -1361,7 +1353,7 @@ double * Track::make_elevation_time_map(const uint16_t num_chunks)
 
 
 /**
- * Make a speed/distance map
+ * Make a speed/distance map.
  */
 double * Track::make_speed_dist_map(const uint16_t num_chunks)
 {
@@ -1377,7 +1369,7 @@ double * Track::make_speed_dist_map(const uint16_t num_chunks)
 	double * s = (double *) malloc(sizeof (double) * pt_count);
 	double * t = (double *) malloc(sizeof (double) * pt_count);
 
-	// No special handling of segments ATM...
+	/* No special handling of segments ATM... */
 	int numpts = 0;
 	auto iter = this->trackpointsB->begin();
 	s[numpts] = 0;
@@ -1391,12 +1383,11 @@ double * Track::make_speed_dist_map(const uint16_t num_chunks)
 		iter++;
 	}
 
-	/* Iterate through a portion of the track to get an average speed for that part
+	/* Iterate through a portion of the track to get an average speed for that part.
 	   This will essentially interpolate between segments, which I think is right given the usage of 'get_length_including_gaps'. */
-	int index = 0; /* index of the current trackpoint. */
+	int index = 0; /* Index of the current trackpoint. */
 	for (int i = 0; i < num_chunks; i++) {
-		/* Similar to the make_speed_map, but instead of using a time chunk, use a distance chunk.
-		 */
+		/* Similar to the make_speed_map, but instead of using a time chunk, use a distance chunk. */
 		if (s[0] + i * chunk_size >= s[index]) {
 			double acc_t = 0;
 			double acc_s = 0;
@@ -1420,7 +1411,6 @@ double * Track::make_speed_dist_map(const uint16_t num_chunks)
 
 
 /**
- * vik_track_get_tp_by_dist:
  * @trk:                  The Track on which to find a Trackpoint
  * @meters_from_start:    The distance along a track that the trackpoint returned is near
  * @get_next_point:       Since there is a choice of trackpoints, this determines which one to return
@@ -1428,7 +1418,7 @@ double * Track::make_speed_dist_map(const uint16_t num_chunks)
  *
  * TODO: Consider changing the boolean get_next_point into an enum with these options PREVIOUS, NEXT, NEAREST
  *
- * Returns: The #Trackpoint fitting the criteria or NULL
+ * Returns: The #Trackpoint fitting the criteria or NULL.
  */
 Trackpoint * Track::get_tp_by_dist(double meters_from_start, bool get_next_point, double *tp_metres_from_start)
 {
@@ -1476,7 +1466,7 @@ Trackpoint * Track::get_tp_by_dist(double meters_from_start, bool get_next_point
 
 
 
-/* by Alex Foobarian */
+/* By Alex Foobarian. */
 Trackpoint * Track::get_closest_tp_by_percentage_dist(double reldist, double *meters_from_start)
 {
 	if (this->trackpointsB->empty()) {
@@ -1513,8 +1503,8 @@ Trackpoint * Track::get_closest_tp_by_percentage_dist(double reldist, double *me
 		}
 	}
 
-	/* we've gone past the dist already, was prev trackpoint closer? */
-	/* should do a vik_coord_average_weighted() thingy. */
+	/* We've gone past the dist already, was prev trackpoint closer? */
+	/* Should do a vik_coord_average_weighted() thingy. */
 	if (iter != this->trackpointsB->begin()
 	    && fabs(current_dist-current_inc-dist) < fabs(current_dist - dist)) {
 		if (meters_from_start) {
@@ -1746,7 +1736,7 @@ bool Track::get_minmax_alt(double * min_alt, double * max_alt)
 
 
 
-//G
+
 void Track::marshall(uint8_t **data, size_t *datalen)
 {
 	GByteArray * b = g_byte_array_new();
@@ -1758,8 +1748,8 @@ void Track::marshall(uint8_t **data, size_t *datalen)
 	g_byte_array_append(b, (uint8_t *)&len, sizeof(len));
 
 
-	// This allocates space for variant sized strings
-	//  and copies that amount of data from the track to byte array
+	/* This allocates space for variant sized strings
+	   and copies that amount of data from the track to byte array. */
 #define vtm_append(s)	       \
 	len = (s) ? strlen(s)+1 : 0;			\
 	g_byte_array_append(b, (uint8_t *) &len, sizeof(len));	\
@@ -1787,14 +1777,14 @@ void Track::marshall(uint8_t **data, size_t *datalen)
 
 
 
-//G
+
 /*
- * Take a byte array and convert it into a Track
+ * Take a byte array and convert it into a Track.
  */
 Track * Track::unmarshall(uint8_t *data, size_t datalen)
 {
 	Track * new_trk = new Track();
-	/* basic properties: */
+	/* Basic properties: */
 	new_trk->visible = ((Track *)data)->visible;
 	new_trk->is_route = ((Track *)data)->is_route;
 	new_trk->draw_name_mode = ((Track *)data)->draw_name_mode;
@@ -1842,8 +1832,8 @@ Track * Track::unmarshall(uint8_t *data, size_t datalen)
 
 /**
  * (Re)Calculate the bounds of the given track,
- *  updating the track's bounds data.
- * This should be called whenever a track's trackpoints are changed
+ * updating the track's bounds data.
+ * This should be called whenever a track's trackpoints are changed.
  */
 void Track::calculate_bounds()
 {
@@ -1892,9 +1882,7 @@ void Track::calculate_bounds()
 
 
 /**
- * vik_track_anonymize_times:
- *
- * Shift all timestamps to be relatively offset from 1901-01-01
+ * Shift all timestamps to be relatively offset from 1901-01-01.
  */
 void Track::anonymize_times()
 {
@@ -1903,7 +1891,7 @@ void Track::anonymize_times()
 	}
 
 	GTimeVal gtv;
-	// Check result just to please Coverity - even though it shouldn't fail as it's a hard coded value here!
+	/* Check result just to please Coverity - even though it shouldn't fail as it's a hard coded value here! */
 	if (!g_time_val_from_iso8601 ("1901-01-01T00:00:00Z", &gtv)) {
 		fprintf(stderr, "CRITICAL: Calendar time value failure\n");
 		return;
@@ -1915,13 +1903,13 @@ void Track::anonymize_times()
 	for (auto iter = this->trackpointsB->begin(); iter != this->trackpointsB->end(); iter++) {
 		Trackpoint * tp = *iter;
 		if (tp->has_timestamp) {
-			// Calculate an offset in time using the first available timestamp
+			/* Calculate an offset in time using the first available timestamp. */
 			if (offset == 0) {
 				offset = tp->timestamp - anon_timestamp;
 			}
 
-			// Apply this offset to shift all timestamps towards 1901 & hence anonymising the time
-			// Note that the relative difference between timestamps is kept - thus calculating speeds will still work
+			/* Apply this offset to shift all timestamps towards 1901 & hence anonymising the time.
+			   Note that the relative difference between timestamps is kept - thus calculating speeds will still work. */
 			tp->timestamp = tp->timestamp - offset;
 		}
 	}
@@ -1931,13 +1919,11 @@ void Track::anonymize_times()
 
 
 /**
- * vik_track_interpolate_times:
- *
  * Interpolate the timestamps between first and last trackpoint,
  * so that the track is driven at equal speed, regardless of the
  * distance between individual trackpoints.
  *
- * NB This will overwrite any existing trackpoint timestamps
+ * NB This will overwrite any existing trackpoint timestamps.
  */
 void Track::interpolate_times()
 {
@@ -1985,10 +1971,9 @@ void Track::interpolate_times()
 
 
 /**
- * vik_track_apply_dem_data:
- * @skip_existing: When true, don't change the elevation if the trackpoint already has a value
+ * @skip_existing: When true, don't change the elevation if the trackpoint already has a value.
  *
- * Set elevation data for a track using any available DEM information
+ * Set elevation data for a track using any available DEM information.
  */
 unsigned long Track::apply_dem_data(bool skip_existing)
 {
@@ -2015,8 +2000,7 @@ unsigned long Track::apply_dem_data(bool skip_existing)
 
 
 /**
- * vik_track_apply_dem_data_last_trackpoint:
- * Apply DEM data (if available) - to only the last trackpoint
+ * Apply DEM data (if available) - to only the last trackpoint.
  */
 void Track::apply_dem_data_last_trackpoint()
 {
@@ -2024,7 +2008,7 @@ void Track::apply_dem_data_last_trackpoint()
 		return;
 	}
 
-	/* As in vik_track_apply_dem_data above - use 'best' interpolation method */
+	/* As in vik_track_apply_dem_data above - use 'best' interpolation method. */
 	auto last = std::prev(this->trackpointsB->end());
 	int16_t elev = dem_cache_get_elev_by_coord(&(*last)->coord, VIK_DEM_INTERPOL_BEST);
 	if (elev != VIK_DEM_INVALID_ELEVATION) {
@@ -2036,9 +2020,7 @@ void Track::apply_dem_data_last_trackpoint()
 
 
 /**
- * smoothie:
- *
- * Apply elevation smoothing over range of trackpoints between the list start and end points
+ * Apply elevation smoothing over range of trackpoints between the list start and end points.
  */
 void Track::smoothie(TrackPoints::iterator start, TrackPoints::iterator stop, double elev1, double elev2, unsigned int points)
 {
@@ -2061,16 +2043,15 @@ void Track::smoothie(TrackPoints::iterator start, TrackPoints::iterator stop, do
 
 
 /**
- * vik_track_smooth_missing_elevation_data:
  * @flat: Specify how the missing elevations will be set.
  *        When true it uses a simple flat method, using the last known elevation
  *        When false is uses an interpolation method to the next known elevation
  *
  * For each point with a missing elevation, set it to use the last known available elevation value.
  * Primarily of use for smallish DEM holes where it is missing elevation data.
- * Eg see Austria: around N47.3 & E13.8
+ * Eg see Austria: around N47.3 & E13.8.
  *
- * Returns: The number of points that were adjusted
+ * Returns: The number of points that were adjusted.
  */
 unsigned long Track::smooth_missing_elevation_data(bool flat)
 {
@@ -2086,26 +2067,26 @@ unsigned long Track::smooth_missing_elevation_data(bool flat)
 
 		if (VIK_DEFAULT_ALTITUDE == tp->altitude) {
 			if (flat) {
-				// Simply assign to last known value
+				/* Simply assign to last known value. */
 				if (elev != VIK_DEFAULT_ALTITUDE) {
 					tp->altitude = elev;
 					num++;
 				}
 			} else {
 				if (!tp_missing) {
-					// Remember the first trackpoint (and the list pointer to it) of a section of no altitudes
+					/* Remember the first trackpoint (and the list pointer to it) of a section of no altitudes. */
 					tp_missing = tp;
 					iter_first = iter;
 					points = 1;
 				} else {
-					// More missing altitudes
+					/* More missing altitudes. */
 					points++;
 				}
 			}
 		} else {
-			// Altitude available (maybe again!)
-			// If this marks the end of a section of altitude-less points
-			//  then apply smoothing for that section of points
+			/* Altitude available (maybe again!).
+			   If this marks the end of a section of altitude-less points
+			   then apply smoothing for that section of points. */
 			if (points > 0 && elev != VIK_DEFAULT_ALTITUDE) {
 				if (!flat && iter_first != this->trackpointsB->end()) {
 					this->smoothie(iter_first, iter, elev, tp->altitude, points);
@@ -2113,11 +2094,11 @@ unsigned long Track::smooth_missing_elevation_data(bool flat)
 				}
 			}
 
-			// reset
+			/* Reset. */
 			points = 0;
 			tp_missing = NULL;
 
-			// Store for reuse as the last known good value
+			/* Store for reuse as the last known good value. */
 			elev = tp->altitude;
 		}
 	}
@@ -2129,9 +2110,7 @@ unsigned long Track::smooth_missing_elevation_data(bool flat)
 
 
 /**
- * vik_track_steal_and_append_trackpoints:
- *
- * appends 'from' to track, leaving 'from' with no trackpoints
+ * Appends 'from' to track, leaving 'from' with no trackpoints.
  */
 void Track::steal_and_append_trackpoints(Track * from)
 {
@@ -2146,12 +2125,10 @@ void Track::steal_and_append_trackpoints(Track * from)
 
 
 /**
- * vik_track_cut_back_to_double_point:
- *
- * starting at the end, looks backwards for the last "double point", a duplicate trackpoint.
+ * Starting at the end, looks backwards for the last "double point", a duplicate trackpoint.
  * If there is no double point, deletes all the trackpoints.
  *
- * Returns: the new end of the track (or the start if there are no double points)
+ * Returns: the new end of the track (or the start if there are no double points).
  */
 VikCoord * Track::cut_back_to_double_point()
 {
@@ -2199,7 +2176,7 @@ VikCoord * Track::cut_back_to_double_point()
 
 
 /**
- * Function to compare two tracks by their first timestamp
+ * Function to compare two tracks by their first timestamp.
  **/
 int Track::compare_timestamp(const void * x, const void * y)
 {

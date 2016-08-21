@@ -23,31 +23,29 @@
 #include "config.h"
 #endif
 
+#include <cstdlib>
+#include <cassert>
+#include <cctype>
+
 #ifdef HAVE_MATH_H
 #include <math.h>
 #endif
 
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
+
+#include "gpspoint.h"
 #include "viktrack.h"
 #include "vikwaypoint.h"
 #include "viktrwlayer.h"
 #include "file.h"
 #include "globals.h"
 
-#include <ctype.h>
-#ifdef HAVE_STRING_H
-#include <string.h>
-#endif
-
-#include <stdlib.h>
-#include <assert.h>
-/* strtod */
-
-
 
 
 
 using namespace SlavGPS;
-
 
 
 
@@ -61,9 +59,12 @@ static void a_gpspoint_write_track(const void * id, const Track * trk, FILE * f)
 static void a_gpspoint_write_trackpoint(Trackpoint * tp, TP_write_info_type * write_info);
 static void a_gpspoint_write_waypoint(const void * id, const Waypoint * wp, FILE * f);
 
-/* outline for file gpspoint.c
 
-reading file:
+
+
+/* Outline for file gpspoint.c
+
+Reading file:
 
 take a line.
 get first tag, if not type, skip it.
@@ -72,6 +73,9 @@ if waypoint, read on and store to the waypoint.
 if trackpoint, make trackpoint, store to current track (error / skip if none)
 
 */
+
+
+
 
 /* Thanks to etrex-cache's gpsbabel's gpspoint.c for starting me off! */
 #define VIKING_LINE_SIZE 4096
@@ -84,7 +88,7 @@ static char line_buffer[VIKING_LINE_SIZE];
 #define GPSPOINT_TYPE_TRACK 4
 #define GPSPOINT_TYPE_ROUTE 5
 
-static Track * current_track; /* pointer to pointer to first GList */
+static Track * current_track;
 
 static int line_type = GPSPOINT_TYPE_NONE;
 static struct LatLon line_latlon;
@@ -118,12 +122,11 @@ static double line_hdop = VIK_DEFAULT_DOP;
 static double line_vdop = VIK_DEFAULT_DOP;
 static double line_pdop = VIK_DEFAULT_DOP;
 
-/* other possible properties go here */
+/* Other possible properties go here. */
 
 
 static void gpspoint_process_tag(const char *tag, unsigned int len);
 static void gpspoint_process_key_and_value(const char *key, unsigned int key_len, const char *value, unsigned int value_len);
-
 
 
 
@@ -145,8 +148,8 @@ static char * slashdup(char const * str)
 			rv[j++] = '\\';
 		}
 		rv[j] = str[i];
-		// Basic normalization of strings - replace Linefeed and Carriage returns as blanks.
-		//  although allowed in GPX Spec - Viking file format can't handle multi-line strings yet...
+		/* Basic normalization of strings - replace Linefeed and Carriage returns as blanks.
+		   Although allowed in GPX Spec - Viking file format can't handle multi-line strings yet... */
 		if (str[i] == '\n' || str[i] == '\r') {
 			rv[j] = ' ';
 		}
@@ -154,7 +157,6 @@ static char * slashdup(char const * str)
 	rv[j] = '\0';
 	return rv;
 }
-
 
 
 
@@ -193,7 +195,6 @@ static char * deslashndup(char const * str, uint16_t len)
 	rv[new_len] = '\0';
 	return rv;
 }
-
 
 
 
@@ -271,13 +272,12 @@ static void reset_line(void)
 
 
 
-
 /*
- * Returns whether file read was a success
+ * Returns whether file read was a success.
  * No obvious way to test for a 'gpspoint' file,
- *  thus set a flag if any actual tag found during processing of the file
+ * thus set a flag if any actual tag found during processing of the file.
  */
-bool a_gpspoint_read_file(LayerTRW * trw, FILE * f, char const * dirpath)
+bool SlavGPS::a_gpspoint_read_file(LayerTRW * trw, FILE * f, char const * dirpath)
 {
 	VikCoordMode coord_mode = trw->get_coord_mode();
 	char *tag_start, *tag_end;
@@ -294,19 +294,19 @@ bool a_gpspoint_read_file(LayerTRW * trw, FILE * f, char const * dirpath)
 		bool inside_quote = 0;
 		bool backslash = 0;
 
-		line_buffer[strlen(line_buffer) - 1] = '\0'; /* chop off newline */
+		line_buffer[strlen(line_buffer) - 1] = '\0'; /* Chop off newline. */
 
-		/* for gpspoint files wrapped inside */
+		/* For gpspoint files wrapped inside. */
 		if (strlen(line_buffer) >= 13 && strncmp(line_buffer, "~EndLayerData", 13) == 0) {
-			// Even just a blank TRW is ok when in a .vik file
+			/* Even just a blank TRW is ok when in a .vik file. */
 			have_read_something = true;
 			break;
 		}
 
-		/* each line: nullify stuff, make thing if nes, free name if ness */
+		/* Each line: nullify stuff, make thing if nes, free name if necessary. */
 		tag_start = line_buffer;
 		for (;;) {
-			/* my addition: find first non-whitespace character. if the null, skip line. */
+			/* My addition: find first non-whitespace character. if the null, skip line. */
 			while (*tag_start != '\0' && isspace(*tag_start)) {
 				tag_start++;
 			}
@@ -334,7 +334,7 @@ bool a_gpspoint_read_file(LayerTRW * trw, FILE * f, char const * dirpath)
 				}
 			}
 
-			// Won't have super massively long strings, so potential truncation in cast is acceptable.
+			/* Won't have super massively long strings, so potential truncation in cast is acceptable. */
 			unsigned int len = (unsigned int)(tag_end - tag_start);
 			gpspoint_process_tag(tag_start, len);
 
@@ -377,11 +377,11 @@ bool a_gpspoint_read_file(LayerTRW * trw, FILE * f, char const * dirpath)
 			}
 
 			if (line_image) {
-				// Ensure the filename is absolute
+				/* Ensure the filename is absolute. */
 				if (g_path_is_absolute(line_image)) {
 					wp->set_image(line_image);
 				} else {
-					// Otherwise create the absolute filename from the directory of the .vik file & and the relative filename
+					/* Otherwise create the absolute filename from the directory of the .vik file & and the relative filename. */
 					char *full = g_strconcat(dirpath, G_DIR_SEPARATOR_S, line_image, NULL);
 					char *absolute = file_realpath_dup(full); // resolved into the canonical name
 					wp->set_image(absolute);
@@ -396,10 +396,10 @@ bool a_gpspoint_read_file(LayerTRW * trw, FILE * f, char const * dirpath)
 		} else if ((line_type == GPSPOINT_TYPE_TRACK || line_type == GPSPOINT_TYPE_ROUTE) && line_name) {
 			have_read_something = true;
 			Track * trk = new Track();
-			// NB don't set defaults here as all properties are stored in the GPS_POINT format
-			//vik_track_set_defaults (pl);
+			/* NB don't set defaults here as all properties are stored in the GPS_POINT format. */
+			// vik_track_set_defaults (pl);
 
-			/* Thanks to Peter Jones for this Fix */
+			/* Thanks to Peter Jones for this Fix. */
 			if (!line_name) {
 				line_name = strdup("UNK");
 			}
@@ -472,21 +472,20 @@ bool a_gpspoint_read_file(LayerTRW * trw, FILE * f, char const * dirpath)
 
 
 
-
 /* Tag will be of a few defined forms:
    ^[:alpha:]*=".*"$
    ^[:alpha:]*=.*$
 
    <invalid tag>
 
-So we must determine end of tag name, start of value, end of value.
+   So we must determine end of tag name, start of value, end of value.
 */
 static void gpspoint_process_tag(char const * tag, unsigned int len)
 {
 	char const * value_start = NULL;
 	char const * value_end = NULL;
 
-	/* Searching for key end */
+	/* Searching for key end. */
 	char const * key_end = tag;
 
 	while (++key_end - tag < len) {
@@ -496,13 +495,13 @@ static void gpspoint_process_tag(char const * tag, unsigned int len)
 	}
 
 	if (key_end - tag == len) {
-		return; /* no good */
+		return; /* No good. */
 	}
 
 	if (key_end - tag == len + 1) {
 		value_start = value_end = 0; /* size = 0 */
 	} else {
-		value_start = key_end + 1; /* equal_sign plus one */
+		value_start = key_end + 1; /* equal_sign plus one. */
 
 		if (*value_start == '"') {
 			value_start++;
@@ -512,14 +511,14 @@ static void gpspoint_process_tag(char const * tag, unsigned int len)
 				if (*(tag+len-1) == '"') {
 					value_end = tag + len - 1;
 				} else {
-					return; /* bogus */
+					return; /* Bogus. */
 				}
 			}
 		} else {
-			value_end = tag + len; /* value start really IS value start. */
+			value_end = tag + len; /* Value start really IS value start. */
 		}
 
-		// Detect broken lines which end without any text or the enclosing ". i.e. like: comment="
+		/* Detect broken lines which end without any text or the enclosing ". i.e. like: comment=" */
 		if ((value_end - value_start) < 0) {
 			return;
 		}
@@ -531,9 +530,8 @@ static void gpspoint_process_tag(char const * tag, unsigned int len)
 
 
 
-
 /*
-  value = NULL for none
+  value = NULL for none.
 */
 static void gpspoint_process_key_and_value(char const * key, unsigned int key_len, char const * value, unsigned int value_len)
 {
@@ -638,15 +636,13 @@ static void gpspoint_process_key_and_value(char const * key, unsigned int key_le
 
 
 
-
 static void a_gpspoint_write_waypoints(FILE * f, std::unordered_map<sg_uid_t, Waypoint *> & data)
 {
 	for (auto i = data.begin(); i != data.end(); i++) {
 
 		Waypoint * wp = i->second;
 
-
-		// Sanity clauses
+		/* Sanity clauses. */
 		if (!wp) {
 			continue;
 		}
@@ -704,8 +700,8 @@ static void a_gpspoint_write_waypoints(FILE * f, std::unordered_map<sg_uid_t, Wa
 				}
 			}
 
-			// if cwd not available - use image filename as is
-			// this should be an absolute path as set in thumbnails
+			/* If cwd not available - use image filename as is.
+			   This should be an absolute path as set in thumbnails. */
 			if (!cwd) {
 				tmp_image = slashdup(wp->image);
 			}
@@ -718,9 +714,9 @@ static void a_gpspoint_write_waypoints(FILE * f, std::unordered_map<sg_uid_t, Wa
 			free(tmp_image);
 		}
 		if (wp->symbol) {
-			// Due to changes in garminsymbols - the symbol name is now in Title Case
-			// However to keep newly generated .vik files better compatible with older Viking versions
-			//   The symbol names will always be lowercase
+			/* Due to changes in garminsymbols - the symbol name is now in Title Case.
+			   However to keep newly generated .vik files better compatible with older Viking versions.
+			   The symbol names will always be lowercase. */
 			char * tmp_symbol = g_utf8_strdown(wp->symbol, -1);
 			fprintf(f, " symbol=\"%s\"", tmp_symbol);
 			free(tmp_symbol);
@@ -735,7 +731,6 @@ static void a_gpspoint_write_waypoints(FILE * f, std::unordered_map<sg_uid_t, Wa
 
 
 
-
 static void a_gpspoint_write_trackpoint(Trackpoint * tp, TP_write_info_type * write_info)
 {
 	static struct LatLon ll;
@@ -744,7 +739,7 @@ static void a_gpspoint_write_trackpoint(Trackpoint * tp, TP_write_info_type * wr
 	FILE * f = write_info->f;
 
 	/* TODO: modify a_coords_dtostr() to accept (optional) buffer
-	 * instead of doing malloc/free everytime */
+	   instead of doing malloc/free every time. */
 	char * s_lat = a_coords_dtostr(ll.lat);
 	char * s_lon = a_coords_dtostr(ll.lon);
 	fprintf(f, "type=\"%spoint\" latitude=\"%s\" longitude=\"%s\"", write_info->is_route ? "route" : "track", s_lat, s_lon);
@@ -812,14 +807,13 @@ static void a_gpspoint_write_trackpoint(Trackpoint * tp, TP_write_info_type * wr
 
 
 
-
 static void a_gpspoint_write_track(FILE * f, std::unordered_map<sg_uid_t, Track *> & tracks)
 {
 	for (auto i = tracks.begin(); i != tracks.end(); i++) {
 
 		Track * trk = i->second;
 
-		// Sanity clauses
+		/* Sanity clauses. */
 		if (!trk) {
 			continue;
 		}
@@ -884,8 +878,7 @@ static void a_gpspoint_write_track(FILE * f, std::unordered_map<sg_uid_t, Track 
 
 
 
-
-void a_gpspoint_write_file(LayerTRW const * trw, FILE *f)
+void SlavGPS::a_gpspoint_write_file(LayerTRW const * trw, FILE *f)
 {
 	auto tracks = ((LayerTRW *) trw)->get_tracks();
 	auto routes = ((LayerTRW *) trw)->get_routes();

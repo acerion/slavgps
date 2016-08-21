@@ -19,22 +19,23 @@
  *
  */
 
-#ifndef _VIKING_DIALOG_H
-#define _VIKING_DIALOG_H
+#ifndef _SG_DIALOG_H_
+#define _SG_DIALOG_H_
+
+
+
+
+#include <cstdint>
 
 #include <glib.h>
 #include <gtk/gtk.h>
-#include <stdint.h>
-
 
 #include "coords.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
-/* most of this file is an architechtural flaw. */
+
+/* Most of this file is an architechtural flaw. */
 
 #define a_dialog_info_msg(win,info) a_dialog_msg(win,GTK_MESSAGE_INFO,info,NULL)
 #define a_dialog_warning_msg(win,info) a_dialog_msg(win,GTK_MESSAGE_WARNING,info,NULL)
@@ -53,7 +54,7 @@ void a_dialog_list(GtkWindow *parent, const char *title, GArray *array, int padd
 
 void a_dialog_about(GtkWindow *parent);
 
-/* okay, everthing below here is an architechtural flaw. */
+/* Okay, everthing below here is an architechtural flaw. */
 bool a_dialog_goto_latlon(GtkWindow *parent, struct LatLon *ll, const struct LatLon *old);
 bool a_dialog_goto_utm(GtkWindow *parent, struct UTM *utm, const struct UTM *old);
 
@@ -74,8 +75,7 @@ GList *a_dialog_select_from_list(GtkWindow *parent, GList *names, bool multiple_
 
 void a_dialog_license(GtkWindow *parent, const char *map, const char *license, const char *url);
 
-#ifdef __cplusplus
-}
-#endif
 
-#endif
+
+
+#endif /* #ifndef _SG_DIALOG_H_ */

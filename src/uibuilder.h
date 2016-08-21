@@ -18,13 +18,14 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-#ifndef _VIKING_UIBUILDER_H
-#define _VIKING_UIBUILDER_H
+#ifndef _SG_UIBUILDER_H_
+#define _SG_UIBUILDER_H_
+
 
 #include <list>
+#include <cstdint>
 
 #include <gtk/gtk.h>
-#include <stdint.h>
 
 #include "vik_compat.h"
 #include "config.h"
@@ -32,11 +33,6 @@
 #include "globals.h"
 
 
-
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
 /* Parameters (for I/O and Properties) */
@@ -68,14 +64,14 @@ typedef enum {
 	VIK_LAYER_WIDGET_BUTTON,
 } VikLayerWidgetType;
 
-	/* id is index */
+/* id is index. */
 typedef enum {
 	VIK_LAYER_PARAM_DOUBLE=1,
 	VIK_LAYER_PARAM_UINT,
 	VIK_LAYER_PARAM_INT,
 
-	/* in my_layer_set_param, if you want to use the string, you should dup it
-	 * in my_layer_get_param, the string returned will NOT be free'd, you are responsible for managing it (I think) */
+	/* In my_layer_set_param, if you want to use the string, you should dup it.
+	 * In my_layer_get_param, the string returned will NOT be free'd, you are responsible for managing it (I think). */
 	VIK_LAYER_PARAM_STRING,
 	VIK_LAYER_PARAM_BOOLEAN,
 	VIK_LAYER_PARAM_COLOR,
@@ -84,21 +80,21 @@ typedef enum {
 	 * the internals call get_param -- i.e. it should be managed w/in the layer.
 	 * The value passed by the internals into set_param should also be managed
 	 * by the layer -- i.e. free'd by the layer.
- */
+	 */
 
 	VIK_LAYER_PARAM_STRING_LIST,
-	VIK_LAYER_PARAM_PTR, // Not really a 'parameter' but useful to route to extended configuration (e.g. toolbar order)
+	VIK_LAYER_PARAM_PTR, /* Not really a 'parameter' but useful to route to extended configuration (e.g. toolbar order). */
 } VikLayerParamType;
 
 
-// Default value has to be returned via a function
-//  because certain types value are can not be statically allocated
-//  (i.e. a string value that is dependent on other functions)
-// Also easier for colours to be set via a function call rather than a static assignment
+/* Default value has to be returned via a function
+   because certain types value are can not be statically allocated
+   (i.e. a string value that is dependent on other functions).
+   Also easier for colours to be set via a function call rather than a static assignment. */
 typedef VikLayerParamData (*VikLayerDefaultFunc) (void);
 
-// Convert between the value held internally and the value used for display
-//  e.g. keep the internal value in seconds yet use days in the display
+/* Convert between the value held internally and the value used for display
+   e.g. keep the internal value in seconds yet use days in the display. */
 typedef VikLayerParamData (*VikLayerConvertFunc) (VikLayerParamData);
 
 typedef struct {
@@ -129,8 +125,8 @@ typedef struct {
 } VikLayerParamScale;
 
 
-  /* Annoyingly 'C' cannot initialize unions properly */
-  /* It's dependent on the standard used or the compiler support... */
+/* Annoyingly 'C' cannot initialize unions properly. */
+/* It's dependent on the standard used or the compiler support... */
 #if defined __STDC_VERSION__ && __STDC_VERSION__ >= 199901L || __GNUC__
 #define VIK_LPD_BOOLEAN(X)     (VikLayerParamData) { .b = (X) }
 #define VIK_LPD_INT(X)         (VikLayerParamData) { .u = (X) }
@@ -167,19 +163,19 @@ int a_uibuilder_properties_factory(const char *dialog_name,
 				   uint16_t params_count,
 				   char **groups,
 				   uint8_t groups_count,
-				   bool (*setparam) (void *,uint16_t,VikLayerParamData,void *,bool), // AKA VikLayerFuncSetParam in viklayer.h
+				   bool (*setparam) (void *,uint16_t,VikLayerParamData,void *,bool), /* AKA VikLayerFuncSetParam in viklayer.h. */
 				   void * pass_along1,
 				   void * pass_along2,
-				   VikLayerParamData (*getparam) (void *,uint16_t,bool),  // AKA VikLayerFuncGetParam in viklayer.h
+				   VikLayerParamData (*getparam) (void *,uint16_t,bool),  /* AKA VikLayerFuncGetParam in viklayer.h. */
 				   void * pass_along_getparam,
-				   void (*changeparam) (GtkWidget*, ui_change_values *)); // AKA VikLayerFuncChangeParam in viklayer.h
-	/* pass_along1 and pass_along2 are for set_param first and last params */
+				   void (*changeparam) (GtkWidget*, ui_change_values *)); /* AKA VikLayerFuncChangeParam in viklayer.h. */
+	/* pass_along1 and pass_along2 are for set_param first and last params. */
 
 VikLayerParamData *a_uibuilder_run_dialog(const char *dialog_name, GtkWindow *parent, VikLayerParam *params,
 					  uint16_t params_count, char **groups, uint8_t groups_count,
 					  VikLayerParamData *params_defaults);
 
-/* frees data from last (if ness) */
+/* Frees data from last (if necessary). */
 void a_uibuilder_free_paramdatas(VikLayerParamData *paramdatas, VikLayerParam *params, uint16_t params_count);
 
 typedef enum {
@@ -191,8 +187,7 @@ typedef enum {
 	VL_SO_LAST
 } vik_layer_sort_order_t;
 
-#ifdef __cplusplus
-}
-#endif
 
-#endif
+
+
+#endif /* #ifndef _SG_UIBUILDER_H_ */

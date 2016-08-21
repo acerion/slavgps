@@ -31,7 +31,8 @@
 #include <stdlib.h>
 #include <gtk/gtk.h>
 #include <glib/gi18n.h>
-#include "viking.h"
+
+//#include "viking.h"
 #include "vikfilelist.h"
 #include "geotag_exif.h"
 #include "thumbnails.h"
@@ -41,20 +42,25 @@
 #include "settings.h"
 #include "globals.h"
 
+
+
+
 using namespace SlavGPS;
 
-// Function taken from GPSCorrelate 1.6.1
-// ConvertToUnixTime Copyright 2005 Daniel Foote. GPL2+
+
+
+
+/* Function taken from GPSCorrelate 1.6.1.
+   ConvertToUnixTime Copyright 2005 Daniel Foote. GPL2+. */
 
 #define EXIF_DATE_FORMAT "%d:%d:%d %d:%d:%d"
 
 time_t ConvertToUnixTime(char* StringTime, char* Format, int TZOffsetHours, int TZOffsetMinutes)
 {
-	/* Read the time using the specified format.
-	 * The format and string being read from must
-	 * have the most significant time on the left,
-	 * and the least significant on the right:
-	 * ie, Year on the left, seconds on the right. */
+	/* Read the time using the specified format.  The format and
+	  string being read from must have the most significant time
+	  on the left, and the least significant on the right: ie,
+	  Year on the left, seconds on the right. */
 
 	/* Sanity check... */
 	if (StringTime == NULL || Format == NULL) {
@@ -76,11 +82,11 @@ time_t ConvertToUnixTime(char* StringTime, char* Format, int TZOffsetHours, int 
 	Time.tm_year -= 1900;
 	Time.tm_mon  -= 1;
 
-	/* Add our timezone offset to the time.
-	 * We don't check to see if it overflowed anything;
-	 * mktime does this and fixes it for us. */
-	/* Note also that we SUBTRACT these times. We want the
-	 * result to be in UTC. */
+	/* Add our timezone offset to the time.  We don't check to see
+	   if it overflowed anything; mktime does this and fixes it
+	   for us. */
+	/* Note also that we SUBTRACT these times. We want the result
+	   to be in UTC. */
 
 	Time.tm_hour -= TZOffsetHours;
 	Time.tm_min  -= TZOffsetMinutes;
@@ -88,27 +94,32 @@ time_t ConvertToUnixTime(char* StringTime, char* Format, int TZOffsetHours, int 
 	/* Calculate and return the unix time. */
 	return mktime(&Time);
 }
+/* GPSCorrelate END */
 
-// GPSCorrelate END
+
+
 
 typedef struct {
 	GtkWidget *dialog;
 	VikFileList *files;
-	LayerTRW * trw;    // to pass on
-	Waypoint * wp;    // Use specified waypoint or otherwise the track(s) if NULL
-	Track * trk;     // Use specified track or all tracks if NULL
+	LayerTRW * trw;      /* To pass on. */
+	Waypoint * wp;       /* Use specified waypoint or otherwise the track(s) if NULL. */
+	Track * trk;         /* Use specified track or all tracks if NULL. */
 	GtkCheckButton *create_waypoints_b;
-	GtkLabel *overwrite_waypoints_l; // Referenced so the sensitivity can be changed
+	GtkLabel *overwrite_waypoints_l;    /* Referenced so the sensitivity can be changed. */
 	GtkCheckButton *overwrite_waypoints_b;
 	GtkCheckButton *write_exif_b;
-	GtkLabel *overwrite_gps_exif_l; // Referenced so the sensitivity can be changed
+	GtkLabel *overwrite_gps_exif_l;   /* Referenced so the sensitivity can be changed. */
 	GtkCheckButton *overwrite_gps_exif_b;
-	GtkLabel *no_change_mtime_l; // Referenced so the sensitivity can be changed
+	GtkLabel *no_change_mtime_l;    /* Referenced so the sensitivity can be changed. */
 	GtkCheckButton *no_change_mtime_b;
 	GtkCheckButton *interpolate_segments_b;
-	GtkEntry *time_zone_b; // TODO consider a more user friendly tz widget eg libtimezonemap or similar
+	GtkEntry *time_zone_b;    /* TODO consider a more user friendly tz widget eg libtimezonemap or similar. */
 	GtkEntry *time_offset_b;
 } GeoTagWidgets;
+
+
+
 
 static GeoTagWidgets *geotag_widgets_new()
 {
@@ -118,11 +129,17 @@ static GeoTagWidgets *geotag_widgets_new()
 	return widgets;
 }
 
+
+
+
 static void geotag_widgets_free(GeoTagWidgets *widgets)
 {
-	// Need to free VikFileList??
+	/* Need to free VikFileList?? */
 	free(widgets);
 }
+
+
+
 
 typedef struct {
 	bool create_waypoints;
@@ -136,22 +153,28 @@ typedef struct {
 	int TimeZoneMins;
 } option_values_t;
 
+
+
+
 typedef struct {
 	LayerTRW * trw;
 	char *image;
-	Waypoint * wp;    // Use specified waypoint or otherwise the track(s) if NULL
-	Track * trk;     // Use specified track or all tracks if NULL
-	// User options...
+	Waypoint * wp;    /* Use specified waypoint or otherwise the track(s) if NULL. */
+	Track * trk;      /* Use specified track or all tracks if NULL. */
+	/* User options... */
 	option_values_t ov;
 	std::list<char *> * files;
 	time_t PhotoTime;
-	// Store answer from interpolation for an image
+	/* Store answer from interpolation for an image. */
 	bool found_match;
 	VikCoord coord;
 	double altitude;
-	// If anything has changed
+	/* If anything has changed. */
 	bool redraw;
 } geotag_options_t;
+
+
+
 
 #define VIK_SETTINGS_GEOTAG_CREATE_WAYPOINT      "geotag_create_waypoints"
 #define VIK_SETTINGS_GEOTAG_OVERWRITE_WAYPOINTS  "geotag_overwrite_waypoints"
@@ -162,6 +185,9 @@ typedef struct {
 #define VIK_SETTINGS_GEOTAG_TIME_OFFSET          "geotag_time_offset"
 #define VIK_SETTINGS_GEOTAG_TIME_OFFSET_HOURS    "geotag_time_offset_hours"
 #define VIK_SETTINGS_GEOTAG_TIME_OFFSET_MINS     "geotag_time_offset_mins"
+
+
+
 
 static void save_default_values(option_values_t default_values)
 {
@@ -175,6 +201,9 @@ static void save_default_values(option_values_t default_values)
 	a_settings_set_integer(VIK_SETTINGS_GEOTAG_TIME_OFFSET_HOURS, default_values.TimeZoneHours);
 	a_settings_set_integer(VIK_SETTINGS_GEOTAG_TIME_OFFSET_MINS, default_values.TimeZoneMins);
 }
+
+
+
 
 static option_values_t get_default_values()
 {
@@ -218,12 +247,15 @@ static option_values_t get_default_values()
 	return default_values;
 }
 
+
+
+
 /**
- * Correlate the image against the specified track
+ * Correlate the image against the specified track.
  */
 static void trw_layer_geotag_track(const void * id, Track * trk, geotag_options_t *options)
 {
-	// If already found match then don't need to check this track
+	/* If already found match then don't need to check this track. */
 	if (options->found_match) {
 		return;
 	}
@@ -234,7 +266,7 @@ static void trw_layer_geotag_track(const void * id, Track * trk, geotag_options_
 
 		Trackpoint * tp = *iter;
 
-		// is it exactly this point?
+		/* Is it exactly this point? */
 		if (options->PhotoTime == tp->timestamp) {
 			options->coord = tp->coord;
 			options->altitude = tp->altitude;
@@ -242,14 +274,14 @@ static void trw_layer_geotag_track(const void * id, Track * trk, geotag_options_
 			break;
 		}
 
-		// Now need two trackpoints, hence check next is available
+		/* Now need two trackpoints, hence check next is available. */
 		if (std::next(iter) == trk->end()) {
 			break;
 		}
 
 		Trackpoint * tp_next = *std::next(iter);
 
-		// TODO need to use 'has_timestamp' property
+		/* TODO need to use 'has_timestamp' property. */
 		if (tp->timestamp == tp_next->timestamp) {
 			continue;
 		}
@@ -257,24 +289,24 @@ static void trw_layer_geotag_track(const void * id, Track * trk, geotag_options_
 			continue;
 		}
 
-		// When interpolating between segments, no need for any special segment handling
+		/* When interpolating between segments, no need for any special segment handling. */
 		if (!options->ov.interpolate_segments) {
-			// Don't check between segments
+			/* Don't check between segments. */
 			if (tp_next->newsegment) {
-				// Simply move on to consider next point
+				/* Simply move on to consider next point. */
 				continue;
 			}
 		}
 
-		// Too far
+		/* Too far. */
 		if (tp->timestamp > options->PhotoTime) {
 			break;
 		}
 
-		// Is is between this and the next point?
+		/* Is is between this and the next point? */
 		if ((options->PhotoTime > tp->timestamp) && (options->PhotoTime < tp_next->timestamp)) {
 			options->found_match = true;
-			// Interpolate
+			/* Interpolate. */
 			/* Calculate the "scale": a decimal giving the relative distance
 			 * in time between the two points. Ie, a number between 0 and 1 -
 			 * 0 is the first point, 1 is the next point, and 0.5 would be
@@ -289,13 +321,13 @@ static void trw_layer_geotag_track(const void * id, Track * trk, geotag_options_
 
 			ll_result.lat = ll1.lat + ((ll2.lat - ll1.lat) * scale);
 
-			// NB This won't cope with going over the 180 degrees longitude boundary
+			/* NB This won't cope with going over the 180 degrees longitude boundary. */
 			ll_result.lon = ll1.lon + ((ll2.lon - ll1.lon) * scale);
 
-			// set coord
-			vik_coord_load_from_latlon (&(options->coord), VIK_COORD_LATLON, &ll_result);
+			/* Set coord. */
+			vik_coord_load_from_latlon(&(options->coord), VIK_COORD_LATLON, &ll_result);
 
-			// Interpolate elevation
+			/* Interpolate elevation. */
 			options->altitude = tp->altitude + ((tp_next->altitude - tp->altitude) * scale);
 			break;
 		}
@@ -303,24 +335,28 @@ static void trw_layer_geotag_track(const void * id, Track * trk, geotag_options_
 }
 
 
+
+
 static void trw_layer_geotag_tracks(std::unordered_map<sg_uid_t, Track *> & tracks, geotag_options_t *options)
 {
 	for (auto i = tracks.begin(); i != tracks.end(); i++) {
 		trw_layer_geotag_track((void *) ((long) i->first), i->second, options);
 	}
-
 }
 
+
+
+
 /**
- * Simply align the images the waypoint position
+ * Simply align the images the waypoint position.
  */
 static void trw_layer_geotag_waypoint(geotag_options_t *options)
 {
-	// Write EXIF if specified - although a fairly useless process if you've turned it off!
+	/* Write EXIF if specified - although a fairly useless process if you've turned it off! */
 	if (options->ov.write_exif) {
 		bool has_gps_exif = false;
-		char* datetime = a_geotag_get_exif_date_from_file(options->image, &has_gps_exif);
-		// If image already has gps info - don't attempt to change it unless forced
+		char * datetime = a_geotag_get_exif_date_from_file(options->image, &has_gps_exif);
+		/* If image already has gps info - don't attempt to change it unless forced. */
 		if (options->ov.overwrite_gps_exif || !has_gps_exif) {
 			int ans = a_geotag_write_exif_gps(options->image, options->wp->coord, options->wp->altitude, options->ov.no_change_mtime);
 			if (ans != 0) {
@@ -333,8 +369,11 @@ static void trw_layer_geotag_waypoint(geotag_options_t *options)
 	}
 }
 
+
+
+
 /**
- * Correlate the image to any track within the TrackWaypoint layer
+ * Correlate the image to any track within the TrackWaypoint layer.
  */
 static void trw_layer_geotag_process(geotag_options_t *options)
 {
@@ -356,16 +395,16 @@ static void trw_layer_geotag_process(geotag_options_t *options)
 
 	if (datetime) {
 
-		// If image already has gps info - don't attempt to change it.
+		/* If image already has gps info - don't attempt to change it. */
 		if (!options->ov.overwrite_gps_exif && has_gps_exif) {
 			if (options->ov.create_waypoints) {
-				// Create waypoint with file information
+				/* Create waypoint with file information. */
 				char *name = NULL;
 				Waypoint * wp = a_geotag_create_waypoint_from_file(options->image,
 										   options->trw->get_coord_mode(),
 										   &name);
 				if (!wp) {
-					// Couldn't create Waypoint
+					/* Couldn't create Waypoint. */
 					free(datetime);
 					return;
 				}
@@ -378,7 +417,7 @@ static void trw_layer_geotag_process(geotag_options_t *options)
 				if (options->ov.overwrite_waypoints) {
 					Waypoint * current_wp = options->trw->get_waypoint(name);
 					if (current_wp) {
-						// Existing wp found, so set new position, comment and image
+						/* Existing wp found, so set new position, comment and image. */
 						(void)a_geotag_waypoint_positioned(options->image, wp->coord, wp->altitude, &name, current_wp);
 						updated_waypoint = true;
 					}
@@ -390,7 +429,7 @@ static void trw_layer_geotag_process(geotag_options_t *options)
 
 				free(name);
 
-				// Mark for redraw
+				/* Mark for redraw. */
 				options->redraw = true;
 			}
 			free(datetime);
@@ -400,24 +439,24 @@ static void trw_layer_geotag_process(geotag_options_t *options)
 		options->PhotoTime = ConvertToUnixTime(datetime, (char *) EXIF_DATE_FORMAT, options->ov.TimeZoneHours, options->ov.TimeZoneMins);
 		free(datetime);
 
-		// Apply any offset
+		/* Apply any offset. */
 		options->PhotoTime = options->PhotoTime + options->ov.time_offset;
 
 		options->found_match = false;
 
 		if (options->trk) {
-			// Single specified track
-			// NB Doesn't care about track id
+			/* Single specified track. */
+			/* NB Doesn't care about track id. */
 			trw_layer_geotag_track(NULL, options->trk, options);
 		} else {
-			// Try all tracks
+			/* Try all tracks. */
 			std::unordered_map<unsigned int, SlavGPS::Track*> & tracks = options->trw->get_tracks();
 			if (tracks.size() > 0) {
 				trw_layer_geotag_tracks(tracks, options);
 			}
 		}
 
-		// Match found ?
+		/* Match found? */
 		if (options->found_match) {
 
 			if (options->ov.create_waypoints) {
@@ -426,12 +465,12 @@ static void trw_layer_geotag_process(geotag_options_t *options)
 
 				if (options->ov.overwrite_waypoints) {
 
-					// Update existing WP
-					// Find a WP with current name
+					/* Update existing WP. */
+					/* Find a WP with current name. */
 					char * name = strdup(file_basename(options->image));
 					Waypoint * wp = options->trw->get_waypoint(name);
 					if (wp) {
-						// Found, so set new position, comment and image
+						/* Found, so set new position, comment and image. */
 						(void)a_geotag_waypoint_positioned(options->image, options->coord, options->altitude, &name, wp);
 						updated_waypoint = true;
 					}
@@ -439,7 +478,7 @@ static void trw_layer_geotag_process(geotag_options_t *options)
 				}
 
 				if (!updated_waypoint) {
-					// Create waypoint with found position
+					/* Create waypoint with found position. */
 					char *name = NULL;
 					Waypoint * wp = a_geotag_waypoint_positioned(options->image, options->coord, options->altitude, &name, NULL);
 					if (!name) {
@@ -449,11 +488,11 @@ static void trw_layer_geotag_process(geotag_options_t *options)
 					free(name);
 				}
 
-				// Mark for redraw
+				/* Mark for redraw. */
 				options->redraw = true;
 			}
 
-			// Write EXIF if specified
+			/* Write EXIF if specified. */
 			if (options->ov.write_exif) {
 				int ans = a_geotag_write_exif_gps(options->image, options->coord, options->altitude, options->ov.no_change_mtime);
 				if (ans != 0) {
@@ -466,8 +505,11 @@ static void trw_layer_geotag_process(geotag_options_t *options)
 	}
 }
 
+
+
+
 /*
- * Tidy up
+ * Tidy up.
  */
 static void trw_layer_geotag_thread_free(geotag_options_t * gtd)
 {
@@ -478,22 +520,25 @@ static void trw_layer_geotag_thread_free(geotag_options_t * gtd)
 	free(gtd);
 }
 
+
+
+
 /**
- * Run geotagging process in a separate thread
+ * Run geotagging process in a separate thread.
  */
 static int trw_layer_geotag_thread(geotag_options_t *options, void * threaddata)
 {
 	unsigned int total = options->files->size();
 	unsigned int done = 0;
 
-	// TODO decide how to report any issues to the user ...
+	/* TODO decide how to report any issues to the user... */
 
 	for (auto iter = options->files->begin(); iter != options->files->end(); iter++) {
-		// Foreach file attempt to geotag it
+		/* Foreach file attempt to geotag it. */
 		options->image = *iter;
 		trw_layer_geotag_process(options);
 
-		// Update thread progress and detect stop requests
+		/* Update thread progress and detect stop requests. */
 		int result = a_background_thread_progress(threaddata, ((double) ++done) / total);
 		if (result != 0) {
 			return -1; /* Abort thread */
@@ -503,33 +548,36 @@ static int trw_layer_geotag_thread(geotag_options_t *options, void * threaddata)
 	if (options->redraw) {
 		if (IS_VIK_LAYER(options->trw->vl)) {
 			options->trw->calculate_bounds_waypoints();
-			// Ensure any new images get shown
+			/* Ensure any new images get show. */
 			options->trw->verify_thumbnails(NULL); // NB second parameter not used ATM
-			// Force redraw as verify only redraws if there are new thumbnails (they may already exist)
-			options->trw->emit_update(); // NB Update from background
+			/* Force redraw as verify only redraws if there are new thumbnails (they may already exist). */
+			options->trw->emit_update(); /* NB Update from background. */
 		}
 	}
 
 	return 0;
 }
 
+
+
+
 /**
- * Parse user input from dialog response
+ * Parse user input from dialog response.
  */
 static void trw_layer_geotag_response_cb(GtkDialog *dialog, int resp, GeoTagWidgets *widgets)
 {
 	switch (resp) {
-	case GTK_RESPONSE_DELETE_EVENT: /* received delete event (not from buttons) */
+	case GTK_RESPONSE_DELETE_EVENT: /* Received delete event (not from buttons). */
 	case GTK_RESPONSE_REJECT:
 		break;
 	default: {
-		//GTK_RESPONSE_ACCEPT:
-		// Get options
+		/* GTK_RESPONSE_ACCEPT: */
+		/* Get options. */
 		geotag_options_t * options = (geotag_options_t *) malloc(sizeof (geotag_options_t));
 		options->trw = widgets->trw;
 		options->wp = widgets->wp;
 		options->trk = widgets->trk;
-		// Values extracted from the widgets:
+		/* Values extracted from the widgets: */
 		options->ov.create_waypoints = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widgets->create_waypoints_b));
 		options->ov.overwrite_waypoints = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widgets->overwrite_waypoints_b));
 		options->ov.write_exif = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widgets->write_exif_b));
@@ -556,7 +604,7 @@ static void trw_layer_geotag_response_cb(GtkDialog *dialog, int resp, GeoTagWidg
 
 		options->redraw = false;
 
-		// Save settings for reuse
+		/* Save settings for reuse. */
 		save_default_values(options->ov);
 
 		options->files->clear();
@@ -566,7 +614,7 @@ static void trw_layer_geotag_response_cb(GtkDialog *dialog, int resp, GeoTagWidg
 		int len = options->files->size();
 		char *tmp = g_strdup_printf(_("Geotagging %d Images..."), len);
 
-		// Processing lots of files can take time - so run a background effort
+		/* Processing lots of files can take time - so run a background effort. */
 		a_background_thread(BACKGROUND_POOL_LOCAL,
 				    gtk_window_from_layer(options->trw),
 				    tmp,
@@ -585,12 +633,15 @@ static void trw_layer_geotag_response_cb(GtkDialog *dialog, int resp, GeoTagWidg
 	gtk_widget_destroy(GTK_WIDGET(dialog));
 }
 
+
+
+
 /**
- * Handle widget sensitivities
+ * Handle widget sensitivities.
  */
 static void write_exif_b_cb(GtkWidget *gw, GeoTagWidgets *gtw)
 {
-	// Overwriting & file modification times are irrelevant if not going to write EXIF!
+	/* Overwriting & file modification times are irrelevant if not going to write EXIF! */
 	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(gtw->write_exif_b))) {
 		gtk_widget_set_sensitive(GTK_WIDGET(gtw->overwrite_gps_exif_b), true);
 		gtk_widget_set_sensitive(GTK_WIDGET(gtw->overwrite_gps_exif_l), true);
@@ -604,9 +655,12 @@ static void write_exif_b_cb(GtkWidget *gw, GeoTagWidgets *gtw)
 	}
 }
 
+
+
+
 static void create_waypoints_b_cb(GtkWidget *gw, GeoTagWidgets *gtw)
 {
-	// Overwriting waypoints are irrelevant if not going to create them!
+	/* Overwriting waypoints are irrelevant if not going to create them! */
 	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(gtw->create_waypoints_b))) {
 		gtk_widget_set_sensitive(GTK_WIDGET(gtw->overwrite_waypoints_b), true);
 		gtk_widget_set_sensitive(GTK_WIDGET(gtw->overwrite_waypoints_l), true);
@@ -616,17 +670,19 @@ static void create_waypoints_b_cb(GtkWidget *gw, GeoTagWidgets *gtw)
 	}
 }
 
+
+
+
 /**
- * trw_layer_geotag_dialog:
  * @parent: The Window of the calling process
  * @layer: The LayerTrw to use for correlating images to tracks
  * @track: Optional - The particular track to use (if specified) for correlating images
  * @track_name: Optional - The name of specified track to use
  */
-void trw_layer_geotag_dialog(GtkWindow * parent,
-			     LayerTRW * trw,
-			     Waypoint * wp,
-			     Track * trk)
+void SlavGPS::trw_layer_geotag_dialog(GtkWindow * parent,
+				      LayerTRW * trw,
+				      Waypoint * wp,
+				      Track * trk)
 {
 	GeoTagWidgets *widgets = geotag_widgets_new();
 
@@ -660,7 +716,7 @@ void trw_layer_geotag_dialog(GtkWindow * parent,
 	gtk_entry_set_width_chars(widgets->time_zone_b, 7);
 	gtk_entry_set_width_chars(widgets->time_offset_b, 7);
 
-	// Defaults
+	/* Defaults. */
 	option_values_t default_values = get_default_values();
 
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widgets->create_waypoints_b), default_values.create_waypoints);
@@ -675,7 +731,7 @@ void trw_layer_geotag_dialog(GtkWindow * parent,
 	snprintf(tmp_string, 7, "%d", default_values.time_offset);
 	gtk_entry_set_text(widgets->time_offset_b, tmp_string);
 
-	// Ensure sensitivities setup
+	/* Ensure sensitivities setup. */
 	write_exif_b_cb(GTK_WIDGET(widgets->write_exif_b), widgets);
 	g_signal_connect(G_OBJECT(widgets->write_exif_b), "toggled", G_CALLBACK(write_exif_b_cb), widgets);
 
@@ -723,7 +779,7 @@ void trw_layer_geotag_dialog(GtkWindow * parent,
 	char *track_string = NULL;
 	if (widgets->wp) {
 		track_string = g_strdup_printf(_("Using waypoint: %s"), wp->name);
-		// Control sensitivities
+		/* Control sensitivities. */
 		gtk_widget_set_sensitive(GTK_WIDGET(widgets->create_waypoints_b), false);
 		gtk_widget_set_sensitive(GTK_WIDGET(create_waypoints_l), false);
 		gtk_widget_set_sensitive(GTK_WIDGET(widgets->overwrite_waypoints_b), false);

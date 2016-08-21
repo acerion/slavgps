@@ -19,23 +19,23 @@
  *
  */
 
-#ifndef _VIKING_TRWLAYER_TPWIN_H
-#define _VIKING_TRWLAYER_TPWIN_H
+#ifndef _SG_LAYER_TRW_TPWIN_H_
+#define _SG_LAYER_TRW_TPWIN_H_
+
+
+
 
 #include <list>
+#include <cstdint>
 
 #include <glib.h>
 #include <glib-object.h>
 #include <gtk/gtk.h>
-#include <stdint.h>
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
-/* response codes */
+/* Response codes. */
 #define VIK_TRW_LAYER_TPWIN_CLOSE    6
 #define VIK_TRW_LAYER_TPWIN_INSERT   5
 #define VIK_TRW_LAYER_TPWIN_DELETE   4
@@ -67,8 +67,7 @@ void vik_trw_layer_tpwin_disable_join(VikTrwLayerTpwin * tpwin);
 void vik_trw_layer_tpwin_set_tp(VikTrwLayerTpwin * tpwin, SlavGPS::Track * list, std::list<SlavGPS::Trackpoint *>::iterator * iter, const char * track_name, bool is_route);
 void vik_trw_layer_tpwin_set_track_name(VikTrwLayerTpwin * tpwin, const char * track_name);
 
-#ifdef __cplusplus
-}
-#endif
 
-#endif
+
+
+#endif /* #ifndef _SG_LAYER_TRW_TPWIN_H_ */

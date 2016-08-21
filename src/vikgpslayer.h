@@ -20,16 +20,14 @@
  *
  */
 
-#ifndef _SG_LAYER_GPS_H
-#define _SG_LAYER_GPS_H
-
+#ifndef _SG_LAYER_GPS_H_
+#define _SG_LAYER_GPS_H_
 
 
 
 
 #include <list>
-
-#include <stdint.h>
+#include <cstdint>
 
 #include "viklayer.h"
 #include "viktrack.h"
@@ -39,8 +37,8 @@
 
 
 
-
 namespace SlavGPS {
+
 
 
 
@@ -54,7 +52,6 @@ namespace SlavGPS {
 		TRK = 1,
 		RTE = 2
 	};
-
 
 
 
@@ -76,9 +73,7 @@ namespace SlavGPS {
 
 
 
-
 	class LayerGPS;
-
 
 
 
@@ -92,10 +87,9 @@ namespace SlavGPS {
 	typedef struct {
 		struct gps_fix_t fix;
 		int satellites_used;
-		bool dirty;   /* needs to be saved */
+		bool dirty;   /* Needs to be saved. */
 	} GpsFix;
 #endif /* VIK_CONFIG_REALTIME_GPS_TRACKING */
-
 
 
 
@@ -108,7 +102,6 @@ namespace SlavGPS {
 #endif
 		NUM_TRW
 	};
-
 
 
 
@@ -150,11 +143,11 @@ namespace SlavGPS {
 
 
 		LayerTRW * trw_children[NUM_TRW];
-		int cur_read_child;   /* used only for reading file */
+		int cur_read_child;   /* Used only for reading file. */
 
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
 		VglGpsd * vgpsd;
-		bool realtime_tracking;  /* set/reset only by the callback */
+		bool realtime_tracking;  /* Set/reset only by the callback. */
 		bool first_realtime_trackpoint;
 		GpsFix realtime_fix;
 		GpsFix last_fix;
@@ -170,7 +163,7 @@ namespace SlavGPS {
 		GdkGC * realtime_track_pt1_gc;
 		GdkGC * realtime_track_pt2_gc;
 
-		/* params */
+		/* Params. */
 		char * gpsd_host;
 		char * gpsd_port;
 		int gpsd_retry_interval;
@@ -194,11 +187,9 @@ namespace SlavGPS {
 
 
 
-
 } /* namespace SlavGPS */
 
 
 
 
-
-#endif /* #ifndef _SG_LAYER_GPS_H */
+#endif /* #ifndef _SG_LAYER_GPS_H_ */

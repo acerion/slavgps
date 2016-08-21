@@ -19,21 +19,17 @@
  *
  */
 
-#ifndef _VIKING_RADIOGROUP_H
-#define _VIKING_RADIOGROUP_H
+#ifndef _SG_RADIOGROUP_H_
+#define _SG_RADIOGROUP_H_
+
+
+
 
 #include <cstdint>
 
 #include <glib.h>
 #include <glib-object.h>
 #include <gtk/gtk.h>
-
-
-
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
 
@@ -64,11 +60,4 @@ GtkWidget * vik_radio_group_new_static(char const ** options);
 
 
 
-#ifdef __cplusplus
-}
-#endif
-
-
-
-
-#endif
+#endif /* #ifndef _SG_RADIOGROUP_H_ */

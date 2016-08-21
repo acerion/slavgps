@@ -23,15 +23,15 @@
 #include "config.h"
 #endif
 
+#include <cstdlib>
+
 #include <glib.h>
 #include <glib/gstdio.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#include <stdlib.h>
 
 #include "modules.h"
-
 #include "bing.h"
 #include "google.h"
 #include "terraserver.h"
@@ -64,7 +64,12 @@
 #include "vikmapniklayer.h"
 #endif
 
+
+
+
 using namespace SlavGPS;
+
+
 
 
 #define VIKING_MAPS_FILE "maps.xml"
@@ -73,12 +78,18 @@ using namespace SlavGPS;
 #define VIKING_GOTOTOOLS_FILE "goto_tools.xml"
 #define VIKING_ROUTING_FILE "routing.xml"
 
+
+
+
 static void modules_register_map_source(VikGobjectBuilder * self, MapSource * mapsource)
 {
 	fprintf(stderr, "DEBUG: %s\n", __FUNCTION__);
-	/* FIXME label should be hosted by object */
+	/* FIXME label should be hosted by object. */
 	maps_layer_register_map_source(mapsource);
 }
+
+
+
 
 static void modules_register_exttools(VikGobjectBuilder * self, GObject * object)
 {
@@ -88,6 +99,9 @@ static void modules_register_exttools(VikGobjectBuilder * self, GObject * object
 	vik_ext_tools_register(ext_tool);
 }
 
+
+
+
 static void modules_register_datasources(VikGobjectBuilder * self, GObject * object)
 {
 	/* kamilFIXME: I think that this no longer works. */
@@ -96,12 +110,18 @@ static void modules_register_datasources(VikGobjectBuilder * self, GObject * obj
 	vik_ext_tool_datasources_register(ext_tool);
 }
 
+
+
+
 static void modules_register_gototools(VikGobjectBuilder * self, GObject * object)
 {
 	fprintf(stderr, "DEBUG: %s\n", __FUNCTION__);
 	GotoTool * goto_tool = (GotoTool *) object;
 	vik_goto_register(goto_tool);
 }
+
+
+
 
 static void modules_register_routing_engine(VikGobjectBuilder * self, GObject * object)
 {
@@ -110,11 +130,14 @@ static void modules_register_routing_engine(VikGobjectBuilder * self, GObject * 
 	vik_routing_register(engine);
 }
 
+
+
+
 static void modules_load_config_dir(const char * dir)
 {
 	fprintf(stderr, "DEBUG: Loading configurations from directory %s\n", dir);
 
-	/* Maps sources */
+	/* Maps sources. */
 	char * maps = g_build_filename(dir, VIKING_MAPS_FILE, NULL);
 	if (access(maps, R_OK) == 0) {
 		VikGobjectBuilder *builder = vik_gobject_builder_new();
@@ -124,7 +147,7 @@ static void modules_load_config_dir(const char * dir)
 	}
 	free(maps);
 
-	/* External tools */
+	/* External tools. */
 	char * tools = g_build_filename(dir, VIKING_EXTTOOLS_FILE, NULL);
 	if (access(tools, R_OK) == 0) {
 		VikGobjectBuilder *builder = vik_gobject_builder_new();
@@ -143,7 +166,7 @@ static void modules_load_config_dir(const char * dir)
 	}
 	free(datasources);
 
-	/* Go-to search engines */
+	/* Go-to search engines. */
 	char * go_to = g_build_filename(dir, VIKING_GOTOTOOLS_FILE, NULL);
 	if (access(go_to, R_OK) == 0) {
 		VikGobjectBuilder * builder = vik_gobject_builder_new();
@@ -153,7 +176,7 @@ static void modules_load_config_dir(const char * dir)
 	}
 	free(go_to);
 
-	/* Routing engines */
+	/* Routing engines. */
 	char * routing = g_build_filename(dir, VIKING_ROUTING_FILE, NULL);
 	if (access(routing, R_OK) == 0) {
 		VikGobjectBuilder *builder = vik_gobject_builder_new();
@@ -164,9 +187,12 @@ static void modules_load_config_dir(const char * dir)
 	free(routing);
 }
 
+
+
+
 static void modules_load_config(void)
 {
-	/* Look in the directories of data path */
+	/* Look in the directories of data path. */
 	char ** data_dirs = get_viking_data_path();
 	/* Priority is standard one:
 	   left element is more important than right one.
@@ -179,7 +205,7 @@ static void modules_load_config(void)
 	}
 	g_strfreev(data_dirs);
 
-	/* Check if system config is set */
+	/* Check if system config is set. */
 	modules_load_config_dir(VIKING_SYSCONFDIR);
 
 	const char * data_home = get_viking_data_home();
@@ -187,13 +213,16 @@ static void modules_load_config(void)
 		modules_load_config_dir(data_home);
 	}
 
-	/* Check user's home config */
+	/* Check user's home config. */
 	modules_load_config_dir(get_viking_dir());
 }
 
+
+
+
 static void register_loadable_types(void)
 {
-	/* Force registering of loadable types */
+	/* Force registering of loadable types. */
 	volatile GType types[] = {
 		/* Maps */
 		//VIK_TYPE_SLIPPY_MAP_SOURCE,
@@ -214,18 +243,21 @@ static void register_loadable_types(void)
 		//VIK_ROUTING_WEB_ENGINE_TYPE
 	};
 
-	/* kill 'unused variable' + argument type warnings */
+	/* Kill 'unused variable' + argument type warnings. */
 	fprintf(stderr, "DEBUG: %d types loaded\n", (int)sizeof(types)/(int)sizeof(GType));
 }
 
+
+
+
 /**
- * First stage initialization
+ * First stage initialization.
  * Can not use a_get_preferences() yet...
- * See comment in main.c
+ * See comment in main.c.
  */
-void modules_init()
+void SlavGPS::modules_init()
 {
-// OSM done first so this will be the default service for searching/routing/etc...
+	/* OSM done first so this will be the default service for searching/routing/etc... */
 #ifdef VIK_CONFIG_OPENSTREETMAP
 	osm_init();
 	osm_traces_init();
@@ -258,17 +290,18 @@ void modules_init()
 
 	register_loadable_types();
 
-	/* As modules are loaded, we can load configuration files */
+	/* As modules are loaded, we can load configuration files. */
 	modules_load_config();
 }
 
+
+
+
 /**
- * modules_post_init:
- *
- * Secondary stage initialization
- * Can now use a_get_preferences() and a_babel_available()
+ * Secondary stage initialization.
+ * Can now use a_get_preferences() and a_babel_available().
  */
-void modules_post_init()
+void SlavGPS::modules_post_init()
 {
 #ifdef VIK_CONFIG_GOOGLE
 	google_post_init();
@@ -278,10 +311,10 @@ void modules_post_init()
 #endif
 }
 
-/**
- *
- */
-void modules_uninit()
+
+
+
+void SlavGPS::modules_uninit()
 {
 #ifdef VIK_CONFIG_OPENSTREETMAP
 	osm_traces_uninit();

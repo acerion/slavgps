@@ -22,11 +22,11 @@
 #include "config.h"
 #endif
 
-#include <stdio.h>
-#include <string.h>
+#include <cstdio>
+#include <cstring>
+#include <cstdlib>
 #include <errno.h>
 #include <time.h>
-#include <stdlib.h>
 
 #include <curl/curl.h>
 #include <curl/easy.h>
@@ -35,7 +35,6 @@
 #include <glib/gstdio.h>
 #include <glib/gi18n.h>
 
-#include "viking.h"
 #include "viktrwlayer.h"
 #include "osm-traces.h"
 #include "gpx.h"
@@ -46,12 +45,14 @@
 
 
 
+
 using namespace SlavGPS;
 
 
 
-/* params will be osm_traces.username, osm_traces.password */
-/* we have to make sure these don't collide. */
+
+/* Params will be osm_traces.username, osm_traces.password */
+/* We have to make sure these don't collide. */
 #define VIKING_OSM_TRACES_PARAMS_GROUP_KEY "osm_traces"
 #define VIKING_OSM_TRACES_PARAMS_NAMESPACE "osm_traces."
 
@@ -96,7 +97,7 @@ typedef struct _OsmTracesInfo {
 	char * name;
 	char * description;
 	char * tags;
-	bool anonymize_times; // ATM only available on a single track.
+	bool anonymize_times; /* ATM only available on a single track. */
 	const OsmTraceVis_t * vistype;
 	LayerTRW * trw;
 	Track * trk;
@@ -107,13 +108,16 @@ static VikLayerParam prefs[] = {
 	{ LayerType::NUM_TYPES, VIKING_OSM_TRACES_PARAMS_NAMESPACE "password", VIK_LAYER_PARAM_STRING, VIK_LAYER_GROUP_NONE, N_("OSM password:"), VIK_LAYER_WIDGET_PASSWORD, NULL, NULL, NULL, NULL, NULL, NULL },
 };
 
+
+
+
 /**
  * Free an OsmTracesInfo struct.
  */
 static void oti_free(OsmTracesInfo *oti)
 {
 	if (oti) {
-		/* Fields have been g_strdup'ed */
+		/* Fields have been g_strdup'ed. */
 		free(oti->name); oti->name = NULL;
 		free(oti->description); oti->description = NULL;
 		free(oti->tags); oti->tags = NULL;
@@ -121,21 +125,27 @@ static void oti_free(OsmTracesInfo *oti)
 		g_object_unref(oti->trw->vl);
 		oti->trw = NULL;
 	}
-	/* Main struct has been g_malloc'ed */
+	/* Main struct has been g_malloc'ed. */
 	free(oti);
 }
+
+
+
 
 static const char *get_default_user()
 {
 	const char *default_user = NULL;
 
-	/* Retrieve "standard" EMAIL varenv */
+	/* Retrieve "standard" EMAIL varenv. */
 	default_user = g_getenv("EMAIL");
 
 	return default_user;
 }
 
-void osm_set_login(const char *user, const char *password)
+
+
+
+void SlavGPS::osm_set_login(const char *user, const char *password)
 {
 	g_mutex_lock(login_mutex);
 
@@ -151,7 +161,9 @@ void osm_set_login(const char *user, const char *password)
 	g_mutex_unlock(login_mutex);
 }
 
-char *osm_get_login()
+
+
+char * SlavGPS::osm_get_login()
 {
 	char * user_pass = NULL;
 	g_mutex_lock(login_mutex);
@@ -160,10 +172,13 @@ char *osm_get_login()
 	return user_pass;
 }
 
-/* initialisation */
-void osm_traces_init()
+
+
+
+/* Initialization. */
+void SlavGPS::osm_traces_init()
 {
-	/* Preferences */
+	/* Preferences. */
 	a_preferences_register_group(VIKING_OSM_TRACES_PARAMS_GROUP_KEY, _("OpenStreetMap Traces"));
 
 	VikLayerParamData tmp;
@@ -175,14 +190,20 @@ void osm_traces_init()
 	login_mutex = vik_mutex_new();
 }
 
-void osm_traces_uninit()
+
+
+
+void SlavGPS::osm_traces_uninit()
 {
 	vik_mutex_free(login_mutex);
 }
 
+
+
+
 /*
- * Upload a file
- * returns a basic status:
+ * Upload a file.
+ * Returns a basic status:
  *   < 0  : curl error
  *   == 0 : OK
  *   > 0  : HTTP error
@@ -206,15 +227,15 @@ static int osm_traces_upload_file(const char *user,
 
 	char *user_pass = osm_get_login();
 
-	int result = 0; // Default to it worked!
+	int result = 0; /* Default to it worked! */
 
 	fprintf(stderr, "DEBUG: %s: %s %s %s %s %s %s\n", __FUNCTION__,
 		user, password, file, filename, description, tags);
 
-	/* Init CURL */
+	/* Init CURL. */
 	curl = curl_easy_init();
 
-	/* Filling the form */
+	/* Filling the form. */
 	curl_formadd(&post, &last,
 		     CURLFORM_COPYNAME, "description",
 		     CURLFORM_COPYCONTENTS, description, CURLFORM_END);
@@ -230,9 +251,9 @@ static int osm_traces_upload_file(const char *user,
 		     CURLFORM_FILENAME, filename,
 		     CURLFORM_CONTENTTYPE, "text/xml", CURLFORM_END);
 
-	/* Prepare request */
+	/* Prepare request. */
 	/* As explained in http://wiki.openstreetmap.org/index.php/User:LA2 */
-	/* Expect: header seems to produce incompatibilites between curl and httpd */
+	/* Expect: header seems to produce incompatibilites between curl and httpd. */
 	headers = curl_slist_append(headers, "Expect: ");
 	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
 	curl_easy_setopt(curl, CURLOPT_HTTPPOST, post);
@@ -244,7 +265,7 @@ static int osm_traces_upload_file(const char *user,
 		curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
 	}
 
-	/* Execute request */
+	/* Execute request. */
 	res = curl_easy_perform(curl);
 	if (res == CURLE_OK) {
 		long code;
@@ -264,7 +285,7 @@ static int osm_traces_upload_file(const char *user,
 		result = -2;
 	}
 
-	/* Memory */
+	/* Memory. */
 	free(user_pass); user_pass = NULL;
 
 	curl_formfree(post);
@@ -272,13 +293,16 @@ static int osm_traces_upload_file(const char *user,
 	return result;
 }
 
+
+
+
 /**
- * uploading function executed by the background" thread
+ * Uploading function executed by the background" thread.
  */
 static void osm_traces_upload_thread(OsmTracesInfo *oti, void * threaddata)
 {
 	/* Due to OSM limits, we have to enforce ele and time fields
-	   also don't upload invisible tracks */
+	   also don't upload invisible tracks. */
 	static GpxWritingOptions options = { true, true, false, false };
 
 	if (!oti) {
@@ -287,9 +311,9 @@ static void osm_traces_upload_thread(OsmTracesInfo *oti, void * threaddata)
 
 	char *filename = NULL;
 
-	/* writing gpx file */
+	/* Writing gpx file. */
 	if (oti->trk != NULL) {
-		/* Upload only the selected track */
+		/* Upload only the selected track. */
 		if (oti->anonymize_times) {
 			Track * trk = new Track(*oti->trk);
 			trk->anonymize_times();
@@ -299,7 +323,7 @@ static void osm_traces_upload_thread(OsmTracesInfo *oti, void * threaddata)
 			filename = a_gpx_write_track_tmp_file (oti->trk, &options);
 		}
 	} else {
-		/* Upload the whole LayerTRW */
+		/* Upload the whole LayerTRW. */
 		filename = a_gpx_write_tmp_file(oti->trw, &options);
 	}
 
@@ -307,36 +331,32 @@ static void osm_traces_upload_thread(OsmTracesInfo *oti, void * threaddata)
 		return;
 	}
 
-	/* finally, upload it */
+	/* Finally, upload it. */
 	int ans = osm_traces_upload_file(osm_user, osm_password, filename,
 					 oti->name, oti->description, oti->tags, oti->vistype);
 
-	//
-	// Show result in statusbar or failure in dialog for user feedback
-	//
+	/* Show result in statusbar or failure in dialog for user feedback. */
 
-	// Get current time to put into message to show when result was generated
-	//  since need to show difference between operations (when displayed on statusbar)
-	// NB If on dialog then don't need time.
+	/* Get current time to put into message to show when result was generated
+	   since need to show difference between operations (when displayed on statusbar).
+	   NB If on dialog then don't need time. */
 	time_t timenow;
 	struct tm* timeinfo;
 	time(&timenow);
 	timeinfo = localtime(&timenow);
 	char timestr[80];
-	// Compact time only - as days/date isn't very useful here
+	/* Compact time only - as days/date isn't very useful here. */
 	strftime(timestr, sizeof(timestr), "%X)", timeinfo);
 
-	//
-	// Test to see if window it was invoked on is still valid
-	// Not sure if this test really works! (i.e. if the window was closed in the mean time)
-	//
+	/* Test to see if window it was invoked on is still valid.
+	   Not sure if this test really works! (i.e. if the window was closed in the mean time). */
 	if (IS_VIK_WINDOW (vik_window_from_layer(oti->trw))) {
 		char* msg;
 		if (ans == 0) {
-			// Success
+			/* Success. */
 			msg = g_strdup_printf("%s (@%s)", _("Uploaded to OSM"), timestr);
 		}
-		// Use UPPER CASE for bad news :(
+		/* Use UPPER CASE for bad news :( */
 		else if (ans < 0) {
 			msg = g_strdup_printf("%s (@%s)", _("FAILED TO UPLOAD DATA TO OSM - CURL PROBLEM"), timestr);
 		} else {
@@ -345,17 +365,17 @@ static void osm_traces_upload_thread(OsmTracesInfo *oti, void * threaddata)
 		window_from_layer(oti->trw)->statusbar_update(msg, VIK_STATUSBAR_INFO);
 		free(msg);
 	}
-	/* Removing temporary file */
+	/* Removing temporary file. */
 	int ret = g_unlink(filename);
 	if (ret != 0) {
 		fprintf(stderr, _("CRITICAL: failed to unlink temporary file: %s\n"), strerror(errno));
 	}
 }
 
-/**
- *
- */
-void osm_login_widgets(GtkWidget *user_entry, GtkWidget *password_entry)
+
+
+
+void SlavGPS::osm_login_widgets(GtkWidget *user_entry, GtkWidget *password_entry)
 {
 	if (!user_entry || !password_entry) {
 		return;
@@ -378,17 +398,20 @@ void osm_login_widgets(GtkWidget *user_entry, GtkWidget *password_entry)
 	} else if (pref_password != NULL) {
 		gtk_entry_set_text(GTK_ENTRY(password_entry), pref_password);
 	}
-	/* This is a password -> invisible */
+	/* This is a password -> invisible. */
 	gtk_entry_set_visibility(GTK_ENTRY(password_entry), false);
 }
 
+
+
+
 /**
- * Uploading a LayerTRW
+ * Uploading a LayerTRW.
  *
  * @param trw LayerTRW
  * @param trk if not null, the track to upload
  */
-void osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
+void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 {
 	GtkWidget *dia = gtk_dialog_new_with_buttons(_("OSM upload"),
 						     gtk_window_from_layer(trw),
@@ -485,13 +508,13 @@ void osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 		vik_combo_box_text_append(visibility, vis_t->combostr);
 	}
 
-	// Set identifiable by default or use the settings for the value
+	/* Set identifiable by default or use the settings for the value. */
 	if (last_active < 0) {
 		int find_entry = -1;
 		int wanted_entry = -1;
 		char *vis = NULL;
 		if (a_settings_get_string(VIK_SETTINGS_OSM_TRACE_VIS, &vis)) {
-			// Use setting
+			/* Use setting. */
 			if (vis) {
 				for (vis_t = OsmTraceVis; vis_t->apistr != NULL; vis_t++) {
 					find_entry++;
@@ -500,7 +523,7 @@ void osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 					}
 				}
 			}
-			// If not found set it to the first entry, otherwise use the entry
+			/* If not found set it to the first entry, otherwise use the entry. */
 			last_active = (wanted_entry < 0) ? 0 : wanted_entry;
 		} else {
 			last_active = 0;
@@ -518,18 +541,18 @@ void osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 	if (gtk_dialog_run(GTK_DIALOG(dia)) == GTK_RESPONSE_ACCEPT) {
 		char * title = NULL;
 
-		/* overwrite authentication info */
+		/* Overwrite authentication info. */
 		osm_set_login(gtk_entry_get_text(GTK_ENTRY(user_entry)),
 			      gtk_entry_get_text(GTK_ENTRY(password_entry)));
 
-		/* Storing data for the future thread */
+		/* Storing data for the future thread. */
 		OsmTracesInfo *info = (OsmTracesInfo *) malloc(sizeof (OsmTracesInfo));
 		info->name        = g_strdup(gtk_entry_get_text(GTK_ENTRY(name_entry)));
 		info->description = g_strdup(gtk_entry_get_text(GTK_ENTRY(description_entry)));
-		/* TODO Normalize tags: they will be used as URL part */
+		/* TODO Normalize tags: they will be used as URL part. */
 		info->tags        = g_strdup(gtk_entry_get_text(GTK_ENTRY(tags_entry)));
 		info->vistype     = &OsmTraceVis[gtk_combo_box_get_active(GTK_COMBO_BOX(visibility))];
-		info->trw         = trw; // kamilFIXME: it was: VIK_TRW_LAYER(g_object_ref(vtl));
+		info->trw         = trw; /* kamilFIXME: it was: VIK_TRW_LAYER(g_object_ref(vtl)); */
 		info->trk         = trk;
 		if (trk != NULL && anonymize_checkbutton != NULL) {
 			info->anonymize_times = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(anonymize_checkbutton));
@@ -537,19 +560,19 @@ void osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 			info->anonymize_times = false;
 		}
 
-		// Save visibility value for default reuse
+		/* Save visibility value for default reuse. */
 		last_active = gtk_combo_box_get_active(GTK_COMBO_BOX(visibility));
 		a_settings_set_string(VIK_SETTINGS_OSM_TRACE_VIS, OsmTraceVis[last_active].apistr);
 
 		title = g_strdup_printf(_("Uploading %s to OSM"), info->name);
 
-		// launch the thread
+		/* Launch the thread. */
 		a_background_thread(BACKGROUND_POOL_REMOTE,
-				    gtk_window_from_layer(trw),          /* parent window */
-				    title,                                   /* description string */
-				    (vik_thr_func) osm_traces_upload_thread, /* function to call within thread */
-				    info,                                    /* pass along data */
-				    (vik_thr_free_func) oti_free,            /* function to free pass along data */
+				    gtk_window_from_layer(trw),              /* Parent window. */
+				    title,                                   /* Description string. */
+				    (vik_thr_func) osm_traces_upload_thread, /* Function to call within thread. */
+				    info,                                    /* Pass along data. */
+				    (vik_thr_free_func) oti_free,            /* Function to free pass along data. */
 				    (vik_thr_free_func) NULL,
 				    1);
 		free(title); title = NULL;

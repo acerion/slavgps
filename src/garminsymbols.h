@@ -19,26 +19,26 @@
  *
  */
 
-#ifndef __VIKING_GARMINSYMBOLS_H
-#define __VIKING_GARMINSYMBOLS_H
+#ifndef _SG_GARMINSYMBOLS_H_
+#define _SG_GARMINSYMBOLS_H_
+
+
+
 
 #include <glib.h>
 #include <gtk/gtk.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
-GdkPixbuf * a_get_wp_sym(const char *sym);
-const char *a_get_hashed_sym(const char *sym);
-void a_populate_sym_list(GtkListStore *list);
-/* Use when preferences have changed to reload icons*/
+
+GdkPixbuf * a_get_wp_sym(const char * sym);
+const char *a_get_hashed_sym(const char * sym);
+void a_populate_sym_list(GtkListStore * list);
+/* Use when preferences have changed to reload icons. */
 void clear_garmin_icon_syms();
 
-#ifdef __cplusplus
-}
-#endif
 
-#endif
+
+
+#endif /* #ifndef _SG_GARMINSYMBOLS_H_ */

@@ -19,17 +19,17 @@
  *
  */
 
-#ifndef _SG_VIEWPORT_H
-#define _SG_VIEWPORT_H
-
+#ifndef _SG_VIEWPORT_H_
+#define _SG_VIEWPORT_H_
 
 
 
 
 #include <list>
+#include <cstdint>
 
 #include <gtk/gtk.h>
-#include <stdint.h>
+
 
 #include "vikcoord.h"
 #include "bbox.h"
@@ -37,19 +37,17 @@
 
 
 
-
 #define VIK_VIEWPORT_MAX_ZOOM 32768.0
 #define VIK_VIEWPORT_MIN_ZOOM (1 / 32.0)
 
-/* used for coord to screen etc, screen to coord */
+/* Used for coord to screen etc, screen to coord. */
 #define VIK_VIEWPORT_UTM_WRONG_ZONE -9999999
 #define VIK_VIEWPORT_OFF_SCREEN_DOUBLE -9999999.9
 
 
 
 
-
-/* drawmode management */
+/* Drawmode management. */
 typedef enum {
 	VIK_VIEWPORT_DRAWMODE_UTM = 0,
 	VIK_VIEWPORT_DRAWMODE_EXPEDIA,
@@ -61,9 +59,7 @@ typedef enum {
 
 
 
-
 namespace SlavGPS {
-
 
 
 
@@ -74,11 +70,11 @@ namespace SlavGPS {
 		Viewport();
 		~Viewport();
 
-		/* Viking initialization */
+		/* Viking initialization. */
 		bool configure();
 		void configure_manually(int width, unsigned int height); /* for off-screen viewports */
 
-		/* Drawing primitives */
+		/* Drawing primitives. */
 
 		void draw_line(GdkGC * gc, int x1, int y1, int x2, int y2);
 		void draw_rectangle(GdkGC * gc, bool filled, int x1, int y1, int x2, int y2);
@@ -89,7 +85,7 @@ namespace SlavGPS {
 
 		void draw_pixbuf(GdkPixbuf * pixbuf, int src_x, int src_y, int dest_x, int dest_y, int region_width, int region_height);
 
-		/* run this before drawing a line. Viewport::draw_line() runs it for you */
+		/* Run this before drawing a line. Viewport::draw_line() runs it for you. */
 		static void clip_line(int * x1, int * y1, int * x2, int * y2);
 
 		VikCoordMode get_coord_mode(); // const
@@ -122,11 +118,11 @@ namespace SlavGPS {
 		int get_width();
 		int get_height();
 
-		/* coordinate transformations */
+		/* Coordinate transformations. */
 		void screen_to_coord(int x, int y, VikCoord * coord);
 		void coord_to_screen(const VikCoord * coord, int * x, int * y);
 
-		/* viewport scale */
+		/* Viewport scale. */
 		void set_ympp(double ympp);
 		void set_xmpp(double xmpp);
 		double get_ympp();
@@ -153,7 +149,7 @@ namespace SlavGPS {
 
 
 
-		/* Color/graphics context management */
+		/* Color/graphics context management. */
 		void set_background_color(char const * color);
 		const char *get_background_color();
 		GdkColor *get_background_gdkcolor();
@@ -164,7 +160,7 @@ namespace SlavGPS {
 		void utm_zone_check(); // private
 
 
-		/* Viewport features */
+		/* Viewport features. */
 		void draw_scale();
 		void set_draw_scale(bool draw_scale);
 		bool get_draw_scale();
@@ -184,7 +180,7 @@ namespace SlavGPS {
 		char const * get_drawmode_name(VikViewportDrawMode mode);
 		void set_drawmode(VikViewportDrawMode drawmode);
 		VikViewportDrawMode get_drawmode();
-		/* Do not forget to update Viewport::get_drawmode_name() if you modify VikViewportDrawMode */
+		/* Do not forget to update Viewport::get_drawmode_name() if you modify VikViewportDrawMode. */
 
 
 
@@ -194,14 +190,14 @@ namespace SlavGPS {
 
 
 
-		/* Viewport buffer management/drawing to screen */
-		GdkPixmap * get_pixmap(); /* get pointer to drawing buffer */
-		void sync();             /* draw buffer to window */
+		/* Viewport buffer management/drawing to screen. */
+		GdkPixmap * get_pixmap(); /* Get pointer to drawing buffer. */
+		void sync();              /* Draw buffer to window. */
 		void pan_sync(int x_off, int y_off);
 
 
 
-		/* Utilities */
+		/* Utilities. */
 		void compute_bearing(int x1, int y1, int x2, int y2, double *angle, double *baseangle);
 
 
@@ -220,13 +216,13 @@ namespace SlavGPS {
 
 
 
-		/* Wether or not display OSD info */
-		bool do_draw_scale;
-		bool do_draw_centermark;
-		bool do_draw_highlight;
+		/* Wether or not display OSD info. */
+		bool do_draw_scale = true;
+		bool do_draw_centermark = true;
+		bool do_draw_highlight = true;
 
-		GSList * copyrights;
-		GSList * logos;
+		GSList * copyrights = NULL;
+		GSList * logos = NULL;
 
 
 		double xmpp, ympp;
@@ -241,15 +237,15 @@ namespace SlavGPS {
 		std::list<Coord *> * centers;  /* The history of requested positions. */
 		std::list<Coord *>::iterator centers_iter; /* Current position within the history list. */
 
-		unsigned int centers_max;      // configurable maximum size of the history list
-		unsigned int centers_radius;   // Metres
+		unsigned int centers_max;      /* configurable maximum size of the history list. */
+		unsigned int centers_radius;   /* Metres. */
 
-		GdkPixmap * scr_buffer;
-		int width;
-		int height;
-		// Half of the normal width and height
-		int width_2;
-		int height_2;
+		GdkPixmap * scr_buffer = NULL;
+		int width = 0;
+		int height = 0;
+		/* Half of the normal width and height. */
+		int width_2 = 0;
+		int height_2 = 0;
 
 		void update_centers();
 
@@ -257,21 +253,21 @@ namespace SlavGPS {
 		double utm_zone_width;
 		bool one_utm_zone;
 
-		/* subset of coord types. lat lon can be plotted in 2 ways, google or exp. */
+		/* Subset of coord types. lat lon can be plotted in 2 ways, google or exp. */
 		VikViewportDrawMode drawmode;
 
 
-		GdkGC * background_gc;
+		GdkGC * background_gc = NULL;
 		GdkColor background_color;
-		GdkGC * scale_bg_gc;
-		GdkGC * highlight_gc;
+		GdkGC * scale_bg_gc = NULL;
+		GdkGC * highlight_gc = NULL;
 		GdkColor highlight_color;
 
 
-		/* trigger stuff */
-		void * trigger; /* Usually pointer to VikLayer. */
-		GdkPixmap * snapshot_buffer;
-		bool half_drawn;
+		/* Trigger stuff. */
+		void * trigger = NULL; /* Usually pointer to Layer. */
+		GdkPixmap * snapshot_buffer = NULL;
+		bool half_drawn = false;
 
 
 		void * vvp; /* Related VikViewport. */
@@ -287,9 +283,8 @@ namespace SlavGPS {
 
 
 
-	void vik_gc_get_fg_color(GdkGC * gc, GdkColor * dest); /* warning: could be slow, don't use obsessively */
+	void vik_gc_get_fg_color(GdkGC * gc, GdkColor * dest); /* Warning: could be slow, don't use obsessively. */
 	GdkFunction vik_gc_get_function(GdkGC * gc);
-
 
 
 
@@ -299,11 +294,9 @@ namespace SlavGPS {
 
 
 
-
 void vik_viewport_add_copyright_cb(SlavGPS::Viewport * viewport, char const * copyright);
 
 
 
 
-
-#endif /* _SG_VIEWPORT_H */
+#endif /* _SG_VIEWPORT_H_ */

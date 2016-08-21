@@ -18,21 +18,22 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-#ifndef _SG_WEBTOOL_DATASOURCE_H
-#define _SG_WEBTOOL_DATASOURCE_H
+#ifndef _SG_WEBTOOL_DATASOURCE_H_
+#define _SG_WEBTOOL_DATASOURCE_H_
+
+
+
+
+#include <cstdint>
 
 #include <glib.h>
-#include <stdint.h>
-
 
 #include "vikwebtool.h"
 
 
 
 
-
 namespace SlavGPS {
-
 
 
 
@@ -61,13 +62,12 @@ namespace SlavGPS {
 		bool webtool_needs_user_string();
 
 		char * url_format_code;
-		char * file_type; /* default value NULL equates to internal GPX reading */
-		char * babel_filter_args; /* command line filter options for gpsbabel */
-		char * input_label; /* label to be shown next to the user input box if an input term is required */
+		char * file_type;         /* Default value NULL equates to internal GPX reading. */
+		char * babel_filter_args; /* Command line filter options for gpsbabel. */
+		char * input_label;       /* Label to be shown next to the user input box if an input term is required. */
 		char * user_string;
 
 	}; /* class WebToolDatasource */
-
 
 
 
@@ -77,5 +77,4 @@ namespace SlavGPS {
 
 
 
-
-#endif /* #ifndef _SG_WEBTOOL_DATASOURCE_H */
+#endif /* #ifndef _SG_WEBTOOL_DATASOURCE_H_ */

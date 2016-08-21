@@ -22,32 +22,44 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
+
+
+
 #ifdef VIK_CONFIG_GEOCACHES
-#include <string.h>
-#include <stdlib.h>
+
+
+
+
+#include <cstring>
+#include <cstdlib>
 
 #include <glib/gi18n.h>
 
-#include "viking.h"
 #include "babel.h"
 #include "gpx.h"
 #include "acquire.h"
 #include "preferences.h"
 #include "datasources.h"
 
-// Could have an array of programs instead...
+
+
+
+/* Could have an array of programs instead... */
 #define GC_PROGRAM1 "geo-nearest"
 #define GC_PROGRAM2 "geo-html2gpx"
 
-/* params will be geocaching.username, geocaching.password */
-/* we have to make sure these don't collide. */
+/* Params will be geocaching.username, geocaching.password
+   We have to make sure these don't collide. */
 #define VIKING_GC_PARAMS_GROUP_KEY "geocaching"
 #define VIKING_GC_PARAMS_NAMESPACE "geocaching."
 
 
+
+
 typedef struct {
 	GtkWidget *num_spin;
-	GtkWidget *center_entry; // TODO make separate widgets for lat/lon
+	GtkWidget *center_entry; /* TODO make separate widgets for lat/lon. */
 	GtkWidget *miles_radius_spin;
 
 	GdkGC *circle_gc;
@@ -57,37 +69,51 @@ typedef struct {
 } datasource_gc_widgets_t;
 
 
+
+
 static void * datasource_gc_init(acq_vik_t *avt);
 static void datasource_gc_add_setup_widgets(GtkWidget *dialog, Viewport * viewport, void * user_data);
 static void datasource_gc_get_process_options(datasource_gc_widgets_t *widgets, ProcessOptions *po, void * not_used, const char *not_used2, const char *not_used3);
 static void datasource_gc_cleanup(datasource_gc_widgets_t *widgets);
 static char *datasource_gc_check_existence();
 
+
+
+
 #define METERSPERMILE 1609.344
+
+
+
 
 VikDataSourceInterface vik_datasource_gc_interface = {
 	N_("Download Geocaches"),
 	N_("Geocaching.com Caches"),
 	VIK_DATASOURCE_AUTO_LAYER_MANAGEMENT,
 	VIK_DATASOURCE_INPUTTYPE_NONE,
-	true, // Yes automatically update the display - otherwise we won't see the geocache waypoints!
+	true, /* Yes automatically update the display - otherwise we won't see the geocache waypoints! */
 	true,
 	true,
-	(VikDataSourceInitFunc)		datasource_gc_init,
+	(VikDataSourceInitFunc)		        datasource_gc_init,
 	(VikDataSourceCheckExistenceFunc)	datasource_gc_check_existence,
 	(VikDataSourceAddSetupWidgetsFunc)	datasource_gc_add_setup_widgets,
-	(VikDataSourceGetProcessOptionsFunc)  datasource_gc_get_process_options,
-	(VikDataSourceProcessFunc)            a_babel_convert_from,
+	(VikDataSourceGetProcessOptionsFunc)    datasource_gc_get_process_options,
+	(VikDataSourceProcessFunc)              a_babel_convert_from,
 	(VikDataSourceProgressFunc)		NULL,
 	(VikDataSourceAddProgressWidgetsFunc)	NULL,
 	(VikDataSourceCleanupFunc)		datasource_gc_cleanup,
-	(VikDataSourceOffFunc)                NULL,
+	(VikDataSourceOffFunc)                  NULL,
 };
+
+
+
 
 static VikLayerParam prefs[] = {
 	{ LayerType::NUM_TYPES, VIKING_GC_PARAMS_NAMESPACE "username", VIK_LAYER_PARAM_STRING, VIK_LAYER_GROUP_NONE, N_("geocaching.com username:"), VIK_LAYER_WIDGET_ENTRY, NULL, NULL, NULL, NULL, NULL },
 	{ LayerType::NUM_TYPES, VIKING_GC_PARAMS_NAMESPACE "password", VIK_LAYER_PARAM_STRING, VIK_LAYER_GROUP_NONE, N_("geocaching.com password:"), VIK_LAYER_WIDGET_ENTRY, NULL, NULL, NULL, NULL, NULL },
 };
+
+
+
 
 void a_datasource_gc_init()
 {
@@ -101,11 +127,16 @@ void a_datasource_gc_init()
 }
 
 
+
+
 static void * datasource_gc_init(acq_vik_t *avt)
 {
 	datasource_gc_widgets_t *widgets = (datasource_gc_widgets_t *) malloc(sizeof(*widgets));
 	return widgets;
 }
+
+
+
 
 static char *datasource_gc_check_existence()
 {
@@ -131,6 +162,9 @@ static char *datasource_gc_check_existence()
 	return g_strdup_printf(_("Can't find %s or %s in path! Check that you have installed it correctly."), GC_PROGRAM1, GC_PROGRAM2);
 }
 
+
+
+
 static void datasource_gc_draw_circle(datasource_gc_widgets_t *widgets)
 {
 	double lat, lon;
@@ -140,8 +174,8 @@ static void datasource_gc_draw_circle(datasource_gc_widgets_t *widgets)
 					    widgets->circle_y - widgets->circle_width/2,
 					    widgets->circle_width, widgets->circle_width, 0, 360*64);
 	}
-	/* calculate widgets circle_x and circle_y */
-	/* split up lat,lon into lat and lon */
+	/* Calculate widgets circle_x and circle_y. */
+	/* Split up lat,lon into lat and lon. */
 	if (2 == sscanf(gtk_entry_get_text(GTK_ENTRY(widgets->center_entry)), "%lf,%lf", &lat, &lon)) {
 		struct LatLon ll;
 		VikCoord c;
@@ -150,7 +184,7 @@ static void datasource_gc_draw_circle(datasource_gc_widgets_t *widgets)
 		ll.lat = lat; ll.lon = lon;
 		vik_coord_load_from_latlon (&c, widgets->viewport->get_coord_mode(), &ll);
 		widgets->viewport->coord_to_screen(&c, &x, &y);
-		/* TODO: real calculation */
+		/* TODO: real calculation. */
 		if (x > -1000 && y > -1000 && x < (widgets->viewport->get_width() + 1000) &&
 		    y < (widgets->viewport->get_width() + 1000)) {
 
@@ -160,12 +194,12 @@ static void datasource_gc_draw_circle(datasource_gc_widgets_t *widgets)
 			widgets->circle_x = x;
 			widgets->circle_y = y;
 
-			/* determine miles per pixel */
+			/* Determine miles per pixel. */
 			widgets->viewport->screen_to_coord(0, widgets->viewport->get_height()/2, &c1);
 			widgets->viewport->screen_to_coord(widgets->viewport->get_width(), widgets->viewport->get_height()/2, &c2);
 			pixels_per_meter = ((double)widgets->viewport->get_width()) / vik_coord_diff(&c1, &c2);
 
-			/* this is approximate */
+			/* This is approximate. */
 			widgets->circle_width = gtk_spin_button_get_value_as_float (GTK_SPIN_BUTTON(widgets->miles_radius_spin))
 				* METERSPERMILE * pixels_per_meter * 2;
 
@@ -180,10 +214,13 @@ static void datasource_gc_draw_circle(datasource_gc_widgets_t *widgets)
 		}
 	}
 
-	/* see if onscreen */
-	/* okay */
+	/* See if onscreen. */
+	/* Okay. */
 	widgets->viewport->sync();
 }
+
+
+
 
 static void datasource_gc_add_setup_widgets(GtkWidget *dialog, Viewport * viewport, void * user_data)
 {
@@ -225,6 +262,9 @@ static void datasource_gc_add_setup_widgets(GtkWidget *dialog, Viewport * viewpo
 	gtk_widget_show_all(dialog);
 }
 
+
+
+
 static void datasource_gc_get_process_options(datasource_gc_widgets_t *widgets, ProcessOptions *po, void * not_used, const char *not_used2, const char *not_used3)
 {
 	//char *safe_string = g_shell_quote (gtk_entry_get_text (GTK_ENTRY(widgets->center_entry)));
@@ -237,16 +277,16 @@ static void datasource_gc_get_process_options(datasource_gc_widgets_t *widgets, 
 		lat = a_vik_get_default_lat();
 		lon = a_vik_get_default_long();
 	}
-	// Convert double as string in C locale
+	/* Convert double as string in C locale. */
 	slat = a_coords_dtostr(lat);
 	slon = a_coords_dtostr(lon);
 
-	// Unix specific shell commands
-	// 1. Remove geocache webpages (maybe be from different location)
-	// 2, Gets upto n geocaches as webpages for the specified user in radius r Miles
-	// 3. Converts webpages into a single waypoint file, ignoring zero location waypoints '-z'
-	//       Probably as they are premium member only geocaches and user is only a basic member
-	//  Final output is piped into GPSbabel - hence removal of *html is done at beginning of the command sequence
+	/* Unix specific shell commands
+	   1. Remove geocache webpages (maybe be from different location).
+	   2, Gets upto n geocaches as webpages for the specified user in radius r Miles.
+	   3. Converts webpages into a single waypoint file, ignoring zero location waypoints '-z'.
+	      Probably as they are premium member only geocaches and user is only a basic member.
+	   Final output is piped into GPSbabel - hence removal of *html is done at beginning of the command sequence. */
 	po->shell_command = g_strdup_printf("rm -f ~/.geo/caches/*.html ; %s -H ~/.geo/caches -P -n%d -r%.1fM -u %s -p %s %s %s ; %s -z ~/.geo/caches/*.html ",
 					    GC_PROGRAM1,
 					    gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(widgets->num_spin)),
@@ -262,6 +302,9 @@ static void datasource_gc_get_process_options(datasource_gc_widgets_t *widgets, 
 	free(slon);
 }
 
+
+
+
 static void datasource_gc_cleanup(datasource_gc_widgets_t *widgets)
 {
 	if (widgets->circle_onscreen) {
@@ -273,4 +316,8 @@ static void datasource_gc_cleanup(datasource_gc_widgets_t *widgets)
 	}
 	free(widgets);
 }
-#endif /* VIK_CONFIG_GEOCACHES */
+
+
+
+
+#endif /* #ifdef VIK_CONFIG_GEOCACHES */

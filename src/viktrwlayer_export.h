@@ -19,24 +19,33 @@
  *
  */
 
-#ifndef _VIKING_TRWLAYER_EXPORT_H
-#define _VIKING_TRWLAYER_EXPORT_H
+#ifndef _SG_LAYER_TRW_EXPORT_H_
+#define _SG_LAYER_TRW_EXPORT_H_
+
+
 
 
 #include "viktrwlayer.h"
 #include "file.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
-void vik_trw_layer_export(SlavGPS::LayerTRW * layer, char const * title, char const * default_name, SlavGPS::Track * trk, VikFileType_t file_type);
-void vik_trw_layer_export_external_gpx(SlavGPS::LayerTRW * trw, char const * external_program);
-void vik_trw_layer_export_gpsbabel(SlavGPS::LayerTRW * trw, char const * title, char const * default_name);
 
-#ifdef __cplusplus
-}
-#endif
+namespace SlavGPS {
 
-#endif
+
+
+
+	void vik_trw_layer_export(LayerTRW * layer, char const * title, char const * default_name, Track * trk, VikFileType_t file_type);
+	void vik_trw_layer_export_external_gpx(LayerTRW * trw, char const * external_program);
+	void vik_trw_layer_export_gpsbabel(LayerTRW * trw, char const * title, char const * default_name);
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
+#endif /* #ifndef _SG_LAYER_TRW_EXPORT_H_ */

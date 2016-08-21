@@ -52,11 +52,17 @@
 #include "icons/icons.h"
 
 
+
+
 using namespace SlavGPS;
 
 
-/* Format for URL */
+
+
+/* Format for URL. */
 #define URL_ATTR_FMT "http://dev.virtualearth.net/REST/v1/Imagery/Metadata/Aerial/0,0?zl=1&mapVersion=v1&key=%s&include=ImageryProviders&output=xml"
+
+
 
 
 MapSourceBing::MapSourceBing()
@@ -76,6 +82,9 @@ MapSourceBing::MapSourceBing()
 	logo = gdk_pixbuf_from_pixdata(&bing_maps_pixbuf, true, NULL);
 }
 
+
+
+
 /**
  * @id: internal identifier.
  * @label: the label to display in map provider selector.
@@ -83,7 +92,7 @@ MapSourceBing::MapSourceBing()
  *
  * Constructor for Bing map source.
  *
- * Returns: a newly allocated MapSourceBing object
+ * Returns: a newly allocated MapSourceBing object.
  */
 MapSourceBing::MapSourceBing(MapTypeID map_type_, const char * label_, const char * key_)
 {
@@ -101,6 +110,9 @@ MapSourceBing::MapSourceBing(MapTypeID map_type_, const char * label_, const cha
 	license_url = "http://www.microsoft.com/maps/assets/docs/terms.aspx");
 }
 
+
+
+
 MapSourceBing::~MapSourceBing()
 {
 	free(priv->api_key);
@@ -108,13 +120,14 @@ MapSourceBing::~MapSourceBing()
 }
 
 
+
+
 char * MapSourceBing::compute_quad_tree(int zoom, int tilex, int tiley)
 {
 	/* Picked from http://trac.openstreetmap.org/browser/applications/editors/josm/plugins/slippymap/src/org/openstreetmap/josm/plugins/slippymap/SlippyMapPreferences.java?rev=24486 */
 	char k[20];
 	int ik = 0;
-	int i = 0;
-	for (i = zoom; i > 0; i--) {
+	for (int i = zoom; i > 0; i--) {
 		char digit = 48;
 		int mask = 1 << (i - 1);
 		if ((tilex & mask) != 0) {
@@ -129,6 +142,8 @@ char * MapSourceBing::compute_quad_tree(int zoom, int tilex, int tiley)
 	return g_strdup(k);
 }
 
+
+
 char * MapSourceBing::get_server_path(TileInfo * src)
 {
 	char * quadtree = compute_quad_tree(17 - src->scale, src->x, src->y);
@@ -137,13 +152,16 @@ char * MapSourceBing::get_server_path(TileInfo * src)
 	return path;
 }
 
+
+
+
 void MapSourceBing::get_copyright(LatLonBBox bbox, double zoom, void (*fct)(Viewport *, const char *), void * data)
 {
 	fprintf(stderr, "DEBUG: %s: looking for %g %g %g %g at %g\n", __FUNCTION__, bbox.south, bbox.north, bbox.east, bbox.west, zoom);
 
 	int level = map_utils_mpp_to_scale(zoom);
 
-	/* Loop over all known attributions */
+	/* Loop over all known attributions. */
 	GList * attribution = priv->attributions;
 	if (attribution == NULL && strcmp("<no-set>", priv->api_key)) {
 		if (! priv->loading_attributions) {
@@ -167,7 +185,10 @@ void MapSourceBing::get_copyright(LatLonBBox bbox, double zoom, void (*fct)(View
 	}
 }
 
-/* Called for open tags <foo bar="baz"> */
+
+
+
+/* Called for open tags <foo bar="baz">. */
 void MapSourceBing::bstart_element(GMarkupParseContext * context,
 				   const char          * element_name,
 				   const char         ** attribute_names,
@@ -179,7 +200,7 @@ void MapSourceBing::bstart_element(GMarkupParseContext * context,
 	BingMapSourcePrivate * priv = BING_MAP_SOURCE_GET_PRIVATE (self);
 	const char *element = g_markup_parse_context_get_element(context);
 	if (strcmp (element, "CoverageArea") == 0) {
-		/* New Attribution */
+		/* New Attribution. */
 		struct _Attribution * attribution = (struct _Attribution *) malloc(sizeof (struct _Attribution));
 		memset(attribution, 0, sizeof (struct _Attribution));
 
@@ -188,8 +209,11 @@ void MapSourceBing::bstart_element(GMarkupParseContext * context,
 	}
 }
 
-/* Called for character data */
-/* text is not nul-terminated */
+
+
+
+/* Called for character data. */
+/* Text is not nul-terminated. */
 void MapSourceBing::btext(GMarkupParseContext * context,
 			  const char          * text,
 			  size_t                text_len,
@@ -233,6 +257,9 @@ void MapSourceBing::btext(GMarkupParseContext * context,
 	free(textl);
 }
 
+
+
+
 bool MapSourceBing::parse_file_for_attributions(char *filename)
 {
 	GMarkupParser xml_parser;
@@ -245,11 +272,11 @@ bool MapSourceBing::parse_file_for_attributions(char *filename)
 
 	FILE *file = fopen(filename, "r");
 	if (file == NULL) {
-		/* TODO emit warning */
+		/* TODO emit warning. */
 		return false;
 	}
 
-	/* setup context parse (ie callbacks) */
+	/* Setup context parse (i.e. callbacks). */
 	xml_parser.start_element = &bstart_element;
 	xml_parser.end_element = NULL;
 	xml_parser.text = &btext;
@@ -264,11 +291,11 @@ bool MapSourceBing::parse_file_for_attributions(char *filename)
 	while (xml_context &&
 	       (nb = fread(buff, sizeof(char), BUFSIZ, file)) > 0) {
 		if (offset == -1) {
-			/* first run */
-			/* Avoid possible BOM at begining of the file */
+			/* First run. */
+			/* Avoid possible BOM at begining of the file. */
 			offset = buff[0] == '<' ? 0 : 3;
 		} else {
-			/* reset offset */
+			/* Reset offset. */
 			offset = 0;
 		}
 
@@ -280,7 +307,7 @@ bool MapSourceBing::parse_file_for_attributions(char *filename)
 		}
 		g_clear_error(&error);
 	}
-	/* cleanup */
+	/* Cleanup. */
 	if (xml_context &&
 	    !g_markup_parse_context_end_parse(xml_context, &error)) {
 		fprintf(stderr, "%s: errors occurred while reading file: %s.\n", __FUNCTION__, error->message);
@@ -306,9 +333,12 @@ bool MapSourceBing::parse_file_for_attributions(char *filename)
 	return true;
 }
 
+
+
+
 int MapSourceBing::load_attributions()
 {
-	int ret = 0;  /* OK */
+	int ret = 0;  /* OK. */
 
 	BingMapSourcePrivate *priv = BING_MAP_SOURCE_GET_PRIVATE (self);
 	priv->loading_attributions = true;
@@ -333,6 +363,9 @@ done:
 	return ret;
 }
 
+
+
+
 int MapSourceBing::emit_update(void * data)
 {
 	gdk_threads_enter();
@@ -343,27 +376,31 @@ int MapSourceBing::emit_update(void * data)
 	return 0;
 }
 
+
+
+
 int MapSourceBing::load_attributions_thread(void * threaddata)
 {
 	_load_attributions (self);
 	int result = a_background_thread_progress(threaddata, 1.0);
 	if (result != 0) {
-		return -1; /* Abort thread */
+		return -1; /* Abort thread. */
 	}
 
-	/* Emit update */
-	/* As we are on a download thread,
-	 * it's better to fire the update from the main loop.
-	 */
+	/* Emit update. */
+	/* As we are on a download thread, it's better to fire the update from the main loop. */
 	g_idle_add((GSourceFunc)_emit_update, NULL /* FIXME */);
 
 	return 0;
 }
 
+
+
+
 void MapSourceBing::async_load_attributions()
 {
 	a_background_thread(BACKGROUND_POOL_REMOTE,
-			    /*VIK_GTK_WINDOW_FROM_WIDGET(vp)*/NULL,
+			    /* VIK_GTK_WINDOW_FROM_WIDGET(vp) */ NULL,
 			    _("Bing attribution Loading"),
 			    (vik_thr_func) _load_attributions_thread,
 			    self,

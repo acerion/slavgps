@@ -16,16 +16,17 @@
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _VIK_GOBJECT_BUILDER_H_
-#define _VIK_GOBJECT_BUILDER_H_
+#ifndef _SG_GOBJECT_BUILDER_H_
+#define _SG_GOBJECT_BUILDER_H_
+
+
+
+
+#include <cstdint>
 
 #include <glib-object.h>
-#include <stdint.h>
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
 #define VIK_TYPE_GOBJECT_BUILDER             (vik_gobject_builder_get_type ())
@@ -42,7 +43,7 @@ struct _VikGobjectBuilderClass
 {
 	GObjectClass parent_class;
 
-	/* Signals */
+	/* Signals. */
 	void(* new_object) (VikGobjectBuilder *self, GObject *object);
 };
 
@@ -52,12 +53,11 @@ struct _VikGobjectBuilder
 };
 
 GType vik_gobject_builder_get_type (void) G_GNUC_CONST;
-VikGobjectBuilder *vik_gobject_builder_new (void);
+VikGobjectBuilder *vik_gobject_builder_new(void);
 
-void vik_gobject_builder_parse (VikGobjectBuilder *self, const char *filename);
+void vik_gobject_builder_parse(VikGobjectBuilder * self, const char * filename);
 
-#ifdef __cplusplus
-}
-#endif
 
-#endif /* _VIK_GOBJECT_BUILDER_H_ */
+
+
+#endif /* #ifndef _SG_GOBJECT_BUILDER_H_ */

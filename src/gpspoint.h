@@ -19,22 +19,33 @@
  *
  */
 
-#ifndef _VIKING_GPSPOINT_H
-#define _VIKING_GPSPOINT_H
+#ifndef _SG_GPSPOINT_H_
+#define _SG_GPSPOINT_H_
 
-#include <stdint.h>
+
+
+
+#include <cstdint>
 
 #include "viktrwlayer.h"
 
 
 
 
-
-bool a_gpspoint_read_file(SlavGPS::LayerTRW * trw, FILE * f, char const * dirpath);
-void a_gpspoint_write_file(SlavGPS::LayerTRW const * trw, FILE * f);
+namespace SlavGPS {
 
 
 
 
+	bool a_gpspoint_read_file(LayerTRW * trw, FILE * f, char const * dirpath);
+	void a_gpspoint_write_file(LayerTRW const * trw, FILE * f);
 
-#endif
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
+#endif /* #ifndef _SG_GPSPOINT_H_ */

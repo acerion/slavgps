@@ -18,15 +18,16 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-#ifndef __SETTINGS_H
-#define __SETTINGS_H
-
-#include <stdint.h>
+#ifndef _SG_SETTINGS_H_
+#define _SG_SETTINGS_H_
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+
+
+#include <cstdint>
+
+
+
 
 void a_settings_init();
 
@@ -57,8 +58,7 @@ bool a_settings_get_integer_list_contains(const char * name, int val);
 
 void a_settings_set_integer_list_containing(const char * name, int val);
 
-#ifdef __cplusplus
-}
-#endif
 
-#endif
+
+
+#endif /* #ifndef _SG_SETTINGS_H_ */

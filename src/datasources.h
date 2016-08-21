@@ -28,25 +28,25 @@ extern "C" {
 #endif
 
 
-extern VikDataSourceInterface vik_datasource_gps_interface;
-extern VikDataSourceInterface vik_datasource_file_interface;
-extern VikDataSourceInterface vik_datasource_routing_interface;
+extern SlavGPS::VikDataSourceInterface vik_datasource_gps_interface;
+extern SlavGPS::VikDataSourceInterface vik_datasource_file_interface;
+extern SlavGPS::VikDataSourceInterface vik_datasource_routing_interface;
 #ifdef VIK_CONFIG_OPENSTREETMAP
-extern VikDataSourceInterface vik_datasource_osm_interface;
-extern VikDataSourceInterface vik_datasource_osm_my_traces_interface;
+extern SlavGPS::VikDataSourceInterface vik_datasource_osm_interface;
+extern SlavGPS::VikDataSourceInterface vik_datasource_osm_my_traces_interface;
 #endif
 #ifdef VIK_CONFIG_GEOCACHES
 void a_datasource_gc_init();
-extern VikDataSourceInterface vik_datasource_gc_interface;
+extern SlavGPS::VikDataSourceInterface vik_datasource_gc_interface;
 #endif
 #ifdef VIK_CONFIG_GEOTAG
-extern VikDataSourceInterface vik_datasource_geotag_interface;
+extern SlavGPS::VikDataSourceInterface vik_datasource_geotag_interface;
 #endif
 #ifdef VIK_CONFIG_GEONAMES
-extern VikDataSourceInterface vik_datasource_wikipedia_interface;
+extern SlavGPS::VikDataSourceInterface vik_datasource_wikipedia_interface;
 #endif
-extern VikDataSourceInterface vik_datasource_url_interface;
-extern VikDataSourceInterface vik_datasource_geojson_interface;
+extern SlavGPS::VikDataSourceInterface vik_datasource_url_interface;
+extern SlavGPS::VikDataSourceInterface vik_datasource_geojson_interface;
 
 #ifdef __cplusplus
 }

@@ -19,47 +19,15 @@
  *
  */
 
-#ifndef _VIKING_GEOREFLAYER_H
-#define _VIKING_GEOREFLAYER_H
+#ifndef _SG_GEOREFLAYER_H_
+#define _SG_GEOREFLAYER_H_
 
-#include <stdint.h>
+
+
+
+#include <cstdint>
 
 #include "viklayer.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
-#define VIK_GEOREF_LAYER_TYPE            (vik_georef_layer_get_type())
-#define VIK_GEOREF_LAYER(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_GEOREF_LAYER_TYPE, VikGeorefLayer))
-#define VIK_GEOREF_LAYER_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), VIK_GEOREF_LAYER_TYPE, VikGeorefLayerClass))
-#define IS_VIK_GEOREF_LAYER(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), VIK_GEOREF_LAYER_TYPE))
-#define IS_VIK_GEOREF_LAYER_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), VIK_GEOREF_LAYER_TYPE))
-
-typedef struct _VikGeorefLayerClass VikGeorefLayerClass;
-struct _VikGeorefLayerClass
-{
-	VikLayerClass object_class;
-};
-
-GType vik_georef_layer_get_type();
-
-typedef struct _VikGeorefLayer VikGeorefLayer;
-
-void vik_georef_layer_init(void);
-
-VikLayer *vik_georef_layer_create(SlavGPS::Viewport * viewport,
-				  SlavGPS::LayersPanel * panel,
-				  const char *name,
-				  GdkPixbuf *pibxbuf,
-				  VikCoord *coord_tr,
-				  VikCoord *coord_br );
-
-#ifdef __cplusplus
-}
-#endif
-
 
 
 
@@ -69,12 +37,23 @@ namespace SlavGPS {
 
 
 
+	void vik_georef_layer_init(void);
+
+	VikLayer * vik_georef_layer_create(Viewport * viewport,
+					   LayersPanel * panel,
+					   const char *name,
+					   GdkPixbuf *pibxbuf,
+					   VikCoord *coord_tr,
+					   VikCoord *coord_br );
+
+
+
 	typedef struct {
 		GtkWidget * x_spin;
 		GtkWidget * y_spin;
-		// UTM widgets
-		GtkWidget * ce_spin; // top left
-		GtkWidget * cn_spin; //    "
+		/* UTM widgets. */
+		GtkWidget * ce_spin; /* Top left. */
+		GtkWidget * cn_spin;
 		GtkWidget * utm_zone_spin;
 		GtkWidget * utm_letter_entry;
 
@@ -82,7 +61,7 @@ namespace SlavGPS {
 		GtkWidget * lon_tl_spin;
 		GtkWidget * lat_br_spin;
 		GtkWidget * lon_br_spin;
-		//
+
 		GtkWidget * tabs;
 		GtkWidget * imageentry;
 	} changeable_widgets;
@@ -129,27 +108,25 @@ namespace SlavGPS {
 
 
 
-		char * image;
-		GdkPixbuf * pixbuf;
-		uint8_t alpha;
+		char * image = NULL;
+		GdkPixbuf * pixbuf = NULL;
+		uint8_t alpha = 255;
 
-		struct UTM corner; // Top Left
-		double mpp_easting;
-		double mpp_northing;
-		struct LatLon ll_br; // Bottom Right
-		unsigned int width;
-		unsigned int height;
+		struct UTM corner; /* Top Left. */
+		double mpp_easting = 0.0;
+		double mpp_northing = 0.0;
+		struct LatLon ll_br = { 0.0, 0.0 }; /* Bottom Right. */
+		unsigned int width = 0;
+		unsigned int height = 0;
 
-		GdkPixbuf * scaled;
-		uint32_t scaled_width;
-		uint32_t scaled_height;
+		GdkPixbuf * scaled = NULL;
+		uint32_t scaled_width = 0;
+		uint32_t scaled_height = 0;
 
-		int click_x;
-		int click_y;
+		int click_x = -1;
+		int click_y = -1;
 		changeable_widgets cw;
-
 	};
-
 
 
 
@@ -159,5 +136,4 @@ namespace SlavGPS {
 
 
 
-
-#endif
+#endif /* #ifndef _SG_GEOREFLAYER_H_ */

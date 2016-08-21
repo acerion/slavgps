@@ -45,13 +45,13 @@ typedef struct _VikRoutingWebEngineClass VikRoutingWebEngineClass;
 
 struct _VikRoutingWebEngineClass
 {
-  VikRoutingEngineClass object_class;
+	VikRoutingEngineClass object_class;
 };
 
 GType vik_routing_web_engine_get_type ();
 
 struct _VikRoutingWebEngine {
-  VikRoutingEngine obj;
+	VikRoutingEngine obj;
 };
 
 #ifdef __cplusplus

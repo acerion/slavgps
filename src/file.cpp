@@ -24,16 +24,12 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include "viking.h"
+//#include "viking.h"
 
-#include "jpg.h"
-#include "gpx.h"
-#include "geojson.h"
-#include "babel.h"
+#include <cstring>
+#include <cstdlib>
+#include <cstdio>
 
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -44,6 +40,10 @@
 #include <glib/gstdio.h>
 #include <glib/gi18n.h>
 
+#include "jpg.h"
+#include "gpx.h"
+#include "geojson.h"
+#include "babel.h"
 #include "vikgpslayer.h"
 #include "file.h"
 #include "misc/strtod.h"
@@ -52,7 +52,12 @@
 #include "fileutils.h"
 #include "globals.h"
 
+
+
+
 using namespace SlavGPS;
+
+
 
 
 #define TEST_BOOLEAN(str) (! ((str)[0] == '\0' || (str)[0] == '0' || (str)[0] == 'n' || (str)[0] == 'N' || (str)[0] == 'f' || (str)[0] == 'F'))
@@ -62,6 +67,9 @@ using namespace SlavGPS;
 #define GPX_MAGIC_LEN 4
 
 #define VIKING_FILE_VERSION 1
+
+
+
 
 typedef struct {
 	Layer * layer;
@@ -75,6 +83,9 @@ struct _Stack {
 	void * data;
 };
 
+
+
+
 static void pop(Stack **stack)
 {
 	Stack * tmp = (*stack)->under;
@@ -82,12 +93,18 @@ static void pop(Stack **stack)
 	*stack = tmp;
 }
 
+
+
+
 static void push(Stack ** stack)
 {
 	Stack * tmp = (Stack *) malloc(sizeof (Stack));
 	tmp->under = *stack;
 	*stack = tmp;
 }
+
+
+
 
 static bool check_magic(FILE * f, char const * magic_number, unsigned int magic_length)
 {
@@ -99,11 +116,13 @@ static bool check_magic(FILE * f, char const * magic_number, unsigned int magic_
 		rv = true;
 	}
 
-	for (i = sizeof(magic)-1; i >= 0; i--) { /* the ol' pushback */
+	for (i = sizeof(magic)-1; i >= 0; i--) { /* The ol' pushback. */
 		ungetc(magic[i],f);
 	}
 	return rv;
 }
+
+
 
 
 static bool str_starts_with(char const * haystack, char const * needle, uint16_t len_needle, bool must_be_longer)
@@ -114,9 +133,12 @@ static bool str_starts_with(char const * haystack, char const * needle, uint16_t
 	return false;
 }
 
-void file_write_layer_param(FILE * f, char const * name, VikLayerParamType type, VikLayerParamData data)
+
+
+
+void SlavGPS::file_write_layer_param(FILE * f, char const * name, VikLayerParamType type, VikLayerParamData data)
 {
-	/* string lists are handled differently. We get a std::list<char *> (that shouldn't
+	/* String lists are handled differently. We get a std::list<char *> (that shouldn't
 	 * be freed) back for get_param and if it is null we shouldn't write
 	 * anything at all (otherwise we'd read in a list with an empty string,
 	 * not an empty string list.
@@ -132,8 +154,8 @@ void file_write_layer_param(FILE * f, char const * name, VikLayerParamType type,
 		fprintf(f, "%s=", name);
 		switch (type)	{
 		case VIK_LAYER_PARAM_DOUBLE: {
-			//          char buf[15]; /* locale independent */
-			//          fprintf(f, "%s\n", (char *) g_dtostr (data.d, buf, sizeof (buf))); break;
+			// char buf[15]; /* Locale independent. */
+			// fprintf(f, "%s\n", (char *) g_dtostr (data.d, buf, sizeof (buf))); break;
 			fprintf(f, "%f\n", data.d);
 			break;
 		}
@@ -157,11 +179,13 @@ void file_write_layer_param(FILE * f, char const * name, VikLayerParamType type,
 	}
 }
 
+
+
+
 static void write_layer_params_and_data(Layer const * layer, FILE * f)
 {
 	VikLayerParam *params = vik_layer_get_interface(layer->type)->params;
 	VikLayerFuncGetParam get_param = vik_layer_get_interface(layer->type)->get_param;
-
 
 	fprintf(f, "name=%s\n", layer->name ? layer->name : "");
 	if (!layer->visible) {
@@ -185,6 +209,9 @@ static void write_layer_params_and_data(Layer const * layer, FILE * f)
 	*/
 }
 
+
+
+
 static void file_write(LayerAggregate * top, FILE * f, Viewport * viewport)
 {
 	LayerAggregate * aggregate = top;
@@ -192,7 +219,7 @@ static void file_write(LayerAggregate * top, FILE * f, Viewport * viewport)
 	VikViewportDrawMode mode;
 	char *modestring = NULL;
 
-	/* crazhy CRAZHY */
+	/* Crazhy CRAZHY. */
 	vik_coord_to_latlon(viewport->get_center(), &ll);
 
 	mode = viewport->get_drawmode();
@@ -271,6 +298,9 @@ static void file_write(LayerAggregate * top, FILE * f, Viewport * viewport)
 	*/
 }
 
+
+
+
 static void string_list_delete(void * key, void * l, void * user_data)
 {
 	/* 20071021 bugfix */
@@ -282,6 +312,9 @@ static void string_list_delete(void * key, void * l, void * user_data)
 	g_list_free ((GList *) l);
 }
 
+
+
+
 static void string_list_set_param(int i, std::list<char *> * list, LayerAndVp * layer_and_vp)
 {
 	VikLayerParamData x;
@@ -289,13 +322,15 @@ static void string_list_set_param(int i, std::list<char *> * list, LayerAndVp * 
 	layer_and_vp->layer->set_param(i, x, layer_and_vp->viewport, true);
 }
 
+
+
+
 /**
- * Read in a Viking file and return how successful the parsing was
+ * Read in a Viking file and return how successful the parsing was.
  * ATM this will always work, in that even if there are parsing problems
- *  then there will be no new values to override the defaults
+ * then there will be no new values to override the defaults.
  *
  * TODO flow up line number(s) / error messages of problems encountered...
- *
  */
 static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, Viewport * viewport)
 {
@@ -305,7 +340,7 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 	uint16_t len;
 	long line_num = 0;
 
-	VikLayerParam *params = NULL; /* for current layer, so we don't have to keep on looking up interface */
+	VikLayerParam *params = NULL; /* For current layer, so we don't have to keep on looking up interface. */
 	uint8_t params_count = 0;
 
 	GHashTable *string_lists = g_hash_table_new(g_direct_hash,g_direct_equal);
@@ -354,7 +389,7 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 				if ((! stack->data) || ((parent_type != LayerType::AGGREGATE) && (parent_type != LayerType::GPS))) {
 					successful_read = false;
 					fprintf(stderr, "WARNING: Line %ld: Layer command inside non-Aggregate Layer (type %d)\n", line_num, parent_type);
-					push(&stack); /* inside INVALID layer */
+					push(&stack); /* Inside INVALID layer. */
 					stack->data = NULL;
 					continue;
 				} else {
@@ -382,7 +417,7 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 					successful_read = false;
 					fprintf(stderr, "WARNING: Line %ld: Mismatched ~EndLayer command\n", line_num);
 				} else {
-					/* add any string lists we've accumulated */
+					/* Add any string lists we've accumulated. */
 					LayerAndVp layer_and_vp;
 					layer_and_vp.layer = (Layer *) stack->data;
 					layer_and_vp.viewport = viewport;
@@ -395,7 +430,7 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 							((LayerAggregate *) stack->under->data)->add_layer(layer, false);
 							layer->post_read(viewport, true);
 						} else if (((Layer *) stack->under->data)->type == LayerType::GPS) {
-							/* TODO: anything else needs to be done here ? */
+							/* TODO: anything else needs to be done here? */
 						} else {
 							successful_read = false;
 							fprintf(stderr, "WARNING: Line %ld: EndLayer command inside non-Aggregate Layer (type %d)\n", line_num, ((Layer *) stack->data)->type);
@@ -410,7 +445,7 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 					successful_read = false;
 				} else if (rv > 0) {
 					/* Success, pass. */
-				} else { /* simply skip layer data over */
+				} else { /* Simply skip layer data over. */
 					while (fgets(buffer, 4096, f)) {
 						line_num++;
 
@@ -456,7 +491,7 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 				if (version > VIKING_FILE_VERSION) {
 					successful_read = false;
 				}
-				// However we'll still carry and attempt to read whatever we can
+				/* However we'll still carry and attempt to read whatever we can. */
 			} else if (stack->under == NULL && eq_pos == 4 && strncasecmp(line, "xmpp", eq_pos) == 0) { /* "hard coded" params: global & for all layer-types */
 				viewport->set_xmpp(strtod_i8n(line+5, NULL));
 			} else if (stack->under == NULL && eq_pos == 4 && strncasecmp(line, "ympp", eq_pos) == 0) {
@@ -499,8 +534,8 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 			} else if (eq_pos != -1 && stack->under) {
 				bool found_match = false;
 
-				/* go thru layer params. if len == eq_pos && starts_with jazz, set it. */
-				/* also got to check for name and visible. */
+				/* Go though layer params. If len == eq_pos && starts_with jazz, set it. */
+				/* Also got to check for name and visible. */
 
 				if (! params) {
 					successful_read = false;
@@ -516,8 +551,8 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 							GList *l = g_list_append((GList *) g_hash_table_lookup(string_lists, KINT_TO_POINTER ((int) i)),
 										   g_strdup(line));
 							g_hash_table_replace(string_lists, KINT_TO_POINTER ((int)i), l);
-							/* add the value to a list, possibly making a new list.
-							 * this will be passed to the layer when we read an ~EndLayer */
+							/* Aadd the value to a list, possibly making a new list.
+							   This will be passed to the layer when we read an ~EndLayer. */
 						} else {
 							switch (params[i].type) {
 							case VIK_LAYER_PARAM_DOUBLE:
@@ -536,7 +571,7 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 								memset(&(x.c), 0, sizeof(x.c)); /* default: black */
 								gdk_color_parse(line, &(x.c));
 								break;
-								/* STRING or STRING_LIST -- if STRING_LIST, just set param to add a STRING */
+								/* STRING or STRING_LIST -- if STRING_LIST, just set param to add a STRING. */
 							default: x.s = line;
 							}
 							Layer * l_a_y_e_r = (Layer *) stack->data;
@@ -547,10 +582,10 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 					}
 				}
 				if (! found_match) {
-					// ATM don't flow up this issue because at least one internal parameter has changed from version 1.3
-					//   and don't what to worry users about raising such issues
-					// TODO Maybe hold old values here - compare the line value against them and if a match
-					//       generate a different style of message in the GUI...
+					/* ATM don't flow up this issue because at least one internal parameter has changed from version 1.3
+					   and don't what to worry users about raising such issues.
+					   TODO Maybe hold old values here - compare the line value against them and if a match
+					   generate a different style of message in the GUI... */
 					// successful_read = false;
 					fprintf(stderr, "WARNING: Line %ld: Unknown parameter. Line:\n%s\n", line_num, line);
 				}
@@ -585,7 +620,7 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 		aggregate->tree_view->set_visibility(&aggregate->iter, false);
 	}
 
-	/* delete anything we've forgotten about -- should only happen when file ends before an EndLayer */
+	/* Delete anything we've forgotten about -- should only happen when file ends before an EndLayer. */
 	g_hash_table_foreach(string_lists, string_list_delete, NULL);
 	g_hash_table_destroy(string_lists);
 
@@ -617,6 +652,9 @@ static FILE * xfopen(char const * fn)
 	}
 }
 
+
+
+
 static void xfclose(FILE * f)
 {
 	if (f != stdin && f != stdout) {
@@ -625,10 +663,13 @@ static void xfclose(FILE * f)
 	}
 }
 
+
+
+
 /*
- * Function to determine if a filename is a 'viking' type file
+ * Function to determine if a filename is a 'viking' type file.
  */
-bool check_file_magic_vik(char const * filename)
+bool SlavGPS::check_file_magic_vik(char const * filename)
 {
 	bool result = false;
 	FILE * ff = xfopen(filename);
@@ -639,19 +680,20 @@ bool check_file_magic_vik(char const * filename)
 	return result;
 }
 
+
+
+
 /**
- * append_file_ext:
- *
  * Append a file extension, if not already present.
  *
- * Returns: a newly allocated string
+ * Returns: a newly allocated string.
  */
-char * append_file_ext(char const * filename, VikFileType_t type)
+char * SlavGPS::append_file_ext(char const * filename, VikFileType_t type)
 {
 	char * new_name = NULL;
 	const char *ext = NULL;
 
-	/* Select an extension */
+	/* Select an extension. */
 	switch (type) {
 	case FILE_TYPE_GPX:
 		ext = ".gpx";
@@ -665,22 +707,25 @@ char * append_file_ext(char const * filename, VikFileType_t type)
 	case FILE_TYPE_GPSMAPPER:
 	case FILE_TYPE_GPSPOINT:
 	default:
-		/* Do nothing, ext already set to NULL */
+		/* Do nothing, ext already set to NULL. */
 		break;
 	}
 
-	/* Do */
+	/* Do. */
 	if (ext != NULL && ! a_file_check_ext(filename, ext)) {
 		new_name = g_strconcat(filename, ext, NULL);
 	} else {
-		/* Simply duplicate */
+		/* Simply duplicate. */
 		new_name = g_strdup(filename);
 	}
 
 	return new_name;
 }
 
-VikLoadType_t a_file_load(LayerAggregate * top, Viewport * viewport, char const * filename_or_uri)
+
+
+
+VikLoadType_t SlavGPS::a_file_load(LayerAggregate * top, Viewport * viewport, char const * filename_or_uri)
 {
 	if (!viewport) {
 		return LOAD_TYPE_READ_FAILURE;
@@ -688,9 +733,9 @@ VikLoadType_t a_file_load(LayerAggregate * top, Viewport * viewport, char const 
 
 	char * filename = (char *) filename_or_uri;
 	if (strncmp(filename, "file://", 7) == 0) {
-		// Consider replacing this with:
-		// filename = g_filename_from_uri (entry, NULL, NULL);
-		// Since this doesn't support URIs properly (i.e. will failure if is it has %20 characters in it)
+		/* Consider replacing this with:
+		   filename = g_filename_from_uri (entry, NULL, NULL);
+		   Since this doesn't support URIs properly (i.e. will failure if is it has %20 characters in it). */
 		filename = filename + 7;
 		fprintf(stderr, "DEBUG: Loading file %s from URI %s\n", filename, filename_or_uri);
 	}
@@ -703,7 +748,7 @@ VikLoadType_t a_file_load(LayerAggregate * top, Viewport * viewport, char const 
 	VikLoadType_t load_answer = LOAD_TYPE_OTHER_SUCCESS;
 
 	char * dirpath = g_path_get_dirname(filename);
-	// Attempt loading the primary file type first - our internal .vik file:
+	/* Attempt loading the primary file type first - our internal .vik file: */
 	if (check_magic(f, VIK_MAGIC, VIK_MAGIC_LEN)) {
 		if (file_read(top, f, dirpath, viewport)) {
 			load_answer = LOAD_TYPE_VIK_SUCCESS;
@@ -715,42 +760,42 @@ VikLoadType_t a_file_load(LayerAggregate * top, Viewport * viewport, char const 
 			load_answer = LOAD_TYPE_UNSUPPORTED_FAILURE;
 		}
 	} else {
-		// For all other file types which consist of tracks, routes and/or waypoints,
-		//  must be loaded into a new TrackWaypoint layer (hence it be created)
-		bool success = true; // Detect load failures - mainly to remove the layer created as it's not required
+		/* For all other file types which consist of tracks, routes and/or waypoints,
+		   must be loaded into a new TrackWaypoint layer (hence it be created). */
+		bool success = true; /* Detect load failures - mainly to remove the layer created as it's not required. */
 
 		LayerTRW * layer = new LayerTRW(viewport);
 		layer->rename(file_basename(filename));
 
-		// In fact both kml & gpx files start the same as they are in xml
+		/* In fact both kml & gpx files start the same as they are in xml. */
 		if (a_file_check_ext(filename, ".kml") && check_magic(f, GPX_MAGIC, GPX_MAGIC_LEN)) {
-			// Implicit Conversion
+			/* Implicit Conversion. */
 			ProcessOptions po = { (char *) "-i kml", filename, NULL, NULL, NULL, NULL };
 			if (! (success = a_babel_convert_from(layer, &po, NULL, NULL, NULL))) {
 				load_answer = LOAD_TYPE_GPSBABEL_FAILURE;
 			}
 		}
-		// NB use a extension check first, as a GPX file header may have a Byte Order Mark (BOM) in it
-		//    - which currently confuses our check_magic function
+		/* NB use a extension check first, as a GPX file header may have a Byte Order Mark (BOM) in it
+		   - which currently confuses our check_magic function. */
 		else if (a_file_check_ext(filename, ".gpx") || check_magic(f, GPX_MAGIC, GPX_MAGIC_LEN)) {
 			if (! (success = a_gpx_read_file(layer, f))) {
 				load_answer = LOAD_TYPE_GPX_FAILURE;
 			}
 		} else {
-			// Try final supported file type
+			/* Try final supported file type. */
 			if (! (success = a_gpspoint_read_file(layer, f, dirpath))) {
-				// Failure here means we don't know how to handle the file
+				/* Failure here means we don't know how to handle the file. */
 				load_answer = LOAD_TYPE_UNSUPPORTED_FAILURE;
 			}
 		}
 		free(dirpath);
 
-		// Clean up when we can't handle the file
+		/* Clean up when we can't handle the file. */
 		if (! success) {
-			// free up layer
+			/* free up layer. */
 			g_object_unref(layer->vl);
 		} else {
-			// Complete the setup from the successful load
+			/* Complete the setup from the successful load. */
 			layer->post_read(viewport, true);
 			top->add_layer(layer, false);
 			layer->auto_set_view(viewport);
@@ -760,7 +805,10 @@ VikLoadType_t a_file_load(LayerAggregate * top, Viewport * viewport, char const 
 	return load_answer;
 }
 
-bool a_file_save(LayerAggregate * top, Viewport * viewport, char const * filename)
+
+
+
+bool SlavGPS::a_file_save(LayerAggregate * top, Viewport * viewport, char const * filename)
 {
 	FILE * f;
 
@@ -774,7 +822,7 @@ bool a_file_save(LayerAggregate * top, Viewport * viewport, char const * filenam
 		return false;
 	}
 
-	// Enable relative paths in .vik files to work
+	/* Enable relative paths in .vik files to work. */
 	char * cwd = g_get_current_dir();
 	char * dir = g_path_get_dirname(filename);
 	if (dir) {
@@ -786,7 +834,7 @@ bool a_file_save(LayerAggregate * top, Viewport * viewport, char const * filenam
 
 	file_write(top, f, viewport);
 
-	// Restore previous working directory
+	/* Restore previous working directory. */
 	if (cwd) {
 		if (g_chdir(cwd)) {
 			fprintf(stderr, "WARNING: Could not return to directory %s\n", cwd);
@@ -801,10 +849,12 @@ bool a_file_save(LayerAggregate * top, Viewport * viewport, char const * filenam
 }
 
 
-/* example:
-     bool is_gpx = a_file_check_ext ("a/b/c.gpx", ".gpx");
+
+
+/* Example:
+   bool is_gpx = a_file_check_ext ("a/b/c.gpx", ".gpx");
 */
-bool a_file_check_ext(char const * filename, char const * fileext)
+bool SlavGPS::a_file_check_ext(char const * filename, char const * fileext)
 {
 	if (!filename) {
 		return false;
@@ -827,18 +877,19 @@ bool a_file_check_ext(char const * filename, char const * fileext)
 	return false;
 }
 
+
+
+
 /**
- * a_file_export:
- * @vtl: The TrackWaypoint to export data from
  * @filename: The name of the file to be written
  * @file_type: Choose one of the supported file types for the export
  * @trk: If specified then only export this track rather than the whole layer
  * @write_hidden: Whether to write invisible items
  *
  * A general export command to convert from Viking TRW layer data to an external supported format.
- * The write_hidden option is provided mainly to be able to transfer selected items when uploading to a GPS
+ * The write_hidden option is provided mainly to be able to transfer selected items when uploading to a GPS.
  */
-bool a_file_export(LayerTRW * trw, char const * filename, VikFileType_t file_type, Track * trk, bool write_hidden)
+bool SlavGPS::a_file_export(LayerTRW * trw, char const * filename, VikFileType_t file_type, Track * trk, bool write_hidden)
 {
 	GpxWritingOptions options = { false, false, write_hidden, false };
 	FILE * f = fopen(filename, "w");
@@ -848,7 +899,7 @@ bool a_file_export(LayerTRW * trw, char const * filename, VikFileType_t file_typ
 		if (trk) {
 			switch (file_type) {
 			case FILE_TYPE_GPX:
-				// trk defined so can set the option
+				/* trk defined so can set the option. */
 				options.is_route = trk->is_route;
 				a_gpx_write_track_file(trk, f, &options);
 				break;
@@ -879,7 +930,7 @@ bool a_file_export(LayerTRW * trw, char const * filename, VikFileType_t file_typ
 					return a_babel_convert_to(trw, NULL, "-o kml,units=n", filename, NULL, NULL);
 					break;
 				default:
-					// VIK_KML_EXPORT_UNITS_METRIC:
+					/* VIK_KML_EXPORT_UNITS_METRIC: */
 					return a_babel_convert_to(trw, NULL, "-o kml,units=m", filename, NULL, NULL);
 					break;
 				}
@@ -894,11 +945,11 @@ bool a_file_export(LayerTRW * trw, char const * filename, VikFileType_t file_typ
 	return false;
 }
 
-/**
- * a_file_export_babel:
- */
-bool a_file_export_babel(LayerTRW * trw, char const * filename, char const * format,
-			 bool tracks, bool routes, bool waypoints)
+
+
+
+bool SlavGPS::a_file_export_babel(LayerTRW * trw, char const * filename, char const * format,
+				  bool tracks, bool routes, bool waypoints)
 {
 	char * args = g_strdup_printf("%s %s %s -o %s",
 				      tracks ? "-t" : "",
@@ -910,21 +961,31 @@ bool a_file_export_babel(LayerTRW * trw, char const * filename, char const * for
 	return result;
 }
 
+
+
+
 /**
- * Just a wrapper around realpath, which itself is platform dependent
+ * Just a wrapper around realpath, which itself is platform dependent.
  */
-char * file_realpath(char const * path, char * real)
+char * SlavGPS::file_realpath(char const * path, char * real)
 {
 	return realpath(path, real);
 }
 
+
+
+
 #ifndef MAXPATHLEN
 #define MAXPATHLEN 1024
 #endif
+
+
+
+
 /**
- * Always return the canonical filename in a newly allocated string
+ * Always return the canonical filename in a newly allocated string.
  */
-char * file_realpath_dup(char const * path)
+char * SlavGPS::file_realpath_dup(char const * path)
 {
 	char real[MAXPATHLEN];
 
@@ -939,9 +1000,12 @@ char * file_realpath_dup(char const * path)
 	return g_strdup(path);
 }
 
+
+
+
 /**
- * Permission granted to use this code after personal correspondance
- * Slightly reworked for better cross platform use, glibisms, function rename and a compacter format
+ * Permission granted to use this code after personal correspondance.
+ * Slightly reworked for better cross platform use, glibisms, function rename and a compacter format.
  *
  * FROM http://www.codeguru.com/cpp/misc/misc/fileanddirectorynaming/article.php/c263
  */
@@ -950,57 +1014,52 @@ char * file_realpath_dup(char const * path)
 // rfisher@iee.org
 // http://come.to/robfisher
 
-// The number of characters at the start of an absolute filename.  e.g. in DOS,
-// absolute filenames start with "X:\" so this value should be 3, in UNIX they start
-// with "\" so this value should be 1.
+/* The number of characters at the start of an absolute filename.  e.g. in DOS,
+   absolute filenames start with "X:\" so this value should be 3, in UNIX they start
+   / with "\" so this value should be 1. */
 #ifdef WINDOWS
 #define ABSOLUTE_NAME_START 3
 #else
 #define ABSOLUTE_NAME_START 1
 #endif
 
-// Given the absolute current directory and an absolute file name, returns a relative file name.
-// For example, if the current directory is C:\foo\bar and the filename C:\foo\whee\text.txt is given,
-// GetRelativeFilename will return ..\whee\text.txt.
+/* Given the absolute current directory and an absolute file name, returns a relative file name.
+   For example, if the current directory is C:\foo\bar and the filename C:\foo\whee\text.txt is given,
+   GetRelativeFilename will return ..\whee\text.txt. */
 
-char const * file_GetRelativeFilename(char * currentDirectory, char * absoluteFilename)
+char const * SlavGPS::file_GetRelativeFilename(char * currentDirectory, char * absoluteFilename)
 {
-	int afMarker = 0, rfMarker = 0;
-	int cdLen = 0, afLen = 0;
-	int i = 0;
-	int levels = 0;
-	static char relativeFilename[MAXPATHLEN+1];
+	int cdLen = strlen(currentDirectory);
+	int afLen = strlen(absoluteFilename);
 
-	cdLen = strlen(currentDirectory);
-	afLen = strlen(absoluteFilename);
-
-	// make sure the names are not too long or too short
-	if (cdLen > MAXPATHLEN || cdLen < ABSOLUTE_NAME_START+1 ||
-	    afLen > MAXPATHLEN || afLen < ABSOLUTE_NAME_START+1) {
+	/* Make sure the names are not too long or too short */
+	if (cdLen > MAXPATHLEN || cdLen < ABSOLUTE_NAME_START+1
+	    || afLen > MAXPATHLEN || afLen < ABSOLUTE_NAME_START+1) {
 		return NULL;
 	}
 
-	// Handle DOS names that are on different drives:
+	static char relativeFilename[MAXPATHLEN+1];
+	/* Handle DOS names that are on different drives: */
 	if (currentDirectory[0] != absoluteFilename[0]) {
-		// not on the same drive, so only absolute filename will do
+		/* Not on the same drive, so only absolute filename will do. */
 		g_strlcpy(relativeFilename, absoluteFilename, MAXPATHLEN+1);
 		return relativeFilename;
 	}
 
-	// they are on the same drive, find out how much of the current directory
-	// is in the absolute filename
-	i = ABSOLUTE_NAME_START;
+	/* They are on the same drive, find out how much of the current directory
+	   is in the absolute filename. */
+	int i = ABSOLUTE_NAME_START;
 	while (i < afLen && i < cdLen && currentDirectory[i] == absoluteFilename[i]) {
 		i++;
 	}
 
 	if (i == cdLen && (absoluteFilename[i] == G_DIR_SEPARATOR || absoluteFilename[i-1] == G_DIR_SEPARATOR)) {
-		// the whole current directory name is in the file name,
-		// so we just trim off the current directory name to get the
-		// current file name.
+		/* The whole current directory name is in the file name,
+		   so we just trim off the current directory name to get the
+		   current file name. */
 		if (absoluteFilename[i] == G_DIR_SEPARATOR) {
-			// a directory name might have a trailing slash but a relative
-			// file name should not have a leading one...
+			/* A directory name might have a trailing slash but a relative
+			   file name should not have a leading one... */
 			i++;
 		}
 
@@ -1008,19 +1067,19 @@ char const * file_GetRelativeFilename(char * currentDirectory, char * absoluteFi
 		return relativeFilename;
 	}
 
-	// The file is not in a child directory of the current directory, so we
-	// need to step back the appropriate number of parent directories by
-	// using "..\"s.  First find out how many levels deeper we are than the
-	// common directory
-	afMarker = i;
-	levels = 1;
+	/* The file is not in a child directory of the current directory, so we
+	   need to step back the appropriate number of parent directories by
+	   using "..\"s.  First find out how many levels deeper we are than the
+	   common directory. */
+	int afMarker = i;
+	int levels = 1;
 
-	// count the number of directory levels we have to go up to get to the
-	// common directory
+	/* Count the number of directory levels we have to go up to get to the
+	   common directory. */
 	while (i < cdLen) {
 		i++;
 		if (currentDirectory[i] == G_DIR_SEPARATOR) {
-			// make sure it's not a trailing slash
+			/* Make sure it's not a trailing slash. */
 			i++;
 			if (currentDirectory[i] != '\0') {
 				levels++;
@@ -1028,26 +1087,26 @@ char const * file_GetRelativeFilename(char * currentDirectory, char * absoluteFi
 		}
 	}
 
-	// move the absolute filename marker back to the start of the directory name
-	// that it has stopped in.
+	/* Move the absolute filename marker back to the start of the directory name
+	   that it has stopped in. */
 	while (afMarker > 0 && absoluteFilename[afMarker-1] != G_DIR_SEPARATOR) {
 		afMarker--;
 	}
 
-	// check that the result will not be too long
+	/* Check that the result will not be too long. */
 	if (levels * 3 + afLen - afMarker > MAXPATHLEN) {
 		return NULL;
 	}
 
-	// add the appropriate number of "..\"s.
-	rfMarker = 0;
+	/* Add the appropriate number of "..\"s. */
+	int rfMarker = 0;
 	for (i = 0; i < levels; i++) {
 		relativeFilename[rfMarker++] = '.';
 		relativeFilename[rfMarker++] = '.';
 		relativeFilename[rfMarker++] = G_DIR_SEPARATOR;
 	}
 
-	// copy the rest of the filename into the result string
+	/* Copy the rest of the filename into the result string. */
 	strcpy(&relativeFilename[rfMarker], &absoluteFilename[afMarker]);
 
 	return relativeFilename;

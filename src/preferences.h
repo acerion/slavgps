@@ -18,47 +18,47 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-#ifndef __VIKING_PREFERENCES_H
-#define __VIKING_PREFERENCES_H
+#ifndef _SG_PREFERENCES_H_
+#define _SG_PREFERENCES_H_
 
-#include <stdint.h>
+
+
+
+#include <cstdint>
 
 #include "uibuilder.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
-// TODO IMPORTANT!!!! add REGISTER_GROUP !!! OR SOMETHING!!! CURRENTLY GROUPLESS!!!
+/* TODO IMPORTANT!!!! add REGISTER_GROUP !!! OR SOMETHING!!! CURRENTLY GROUPLESS!!! */
+
+
+
 
 void a_preferences_init();
 void a_preferences_uninit();
 
-/* pref should be persistent thruout the life of the preference. */
+/* Pref should be persistent thruout the life of the preference. */
 
 
-/* must call FIRST */
+/* Must call FIRST. */
 void a_preferences_register_group(const char * key, const char * name);
 
-/* nothing in pref is copied neither but pref itself is copied. (TODO: COPY EVERYTHING IN PREF WE NEED, IF ANYTHING),
+/* Nothing in pref is copied neither but pref itself is copied. (TODO: COPY EVERYTHING IN PREF WE NEED, IF ANYTHING),
    so pref key is not copied. default param data IS copied. */
-/* group field (integer) will be overwritten */
+/* Group field (integer) will be overwritten. */
 void a_preferences_register(VikLayerParam * pref, VikLayerParamData defaultval, const char * group_key);
-
 
 void a_preferences_show_window(GtkWindow * parent);
 
 VikLayerParamData * a_preferences_get(const char * key);
 
-/* Allow preferences to be manipulated externally */
+/* Allow preferences to be manipulated externally. */
 void a_preferences_run_setparam(VikLayerParamData data, VikLayerParam * vlparams);
 
 bool a_preferences_save_to_file();
 
 
-#ifdef __cplusplus
-}
-#endif
+
 
 #endif

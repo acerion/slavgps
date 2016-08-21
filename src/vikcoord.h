@@ -30,11 +30,6 @@
 
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
 enum VikCoordMode {
 	VIK_COORD_UTM     = 0,
 	VIK_COORD_LATLON  = 1
@@ -80,13 +75,6 @@ bool vik_coord_equals(const VikCoord * coord1, const VikCoord * coord2);
 void vik_coord_set_area(const VikCoord * coord, const struct LatLon * wh, VikCoord * tl, VikCoord * br);
 bool vik_coord_inside(const VikCoord * coord, const VikCoord * tl, const VikCoord * br);
 /* All coord operations MUST BE ABSTRACTED!!! */
-
-
-
-
-#ifdef __cplusplus
-}
-#endif
 
 
 

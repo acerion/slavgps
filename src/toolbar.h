@@ -20,16 +20,17 @@
  *      51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef VIKING_TOOLBAR_H
-#define VIKING_TOOLBAR_H 1
+#ifndef _SG_TOOLBAR_H_
+#define _SG_TOOLBAR_H_
+
+
+
+
+#include <cstdint>
 
 #include <gtk/gtk.h>
-#include <stdint.h>
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
 #define VIK_TOOLBAR_TYPE             (vik_toolbar_get_type ())
@@ -57,8 +58,8 @@ void toolbar_action_entry_register(VikToolbar *vtb, GtkActionEntry *action);
 
 void toolbar_action_set_sensitive(VikToolbar *vtb, const char *name, bool sensitive);
 
-typedef void (ToolCB) (GtkAction *, GtkAction *, void *); // void * is actually a VikWindow
-typedef void (ReloadCB) (GtkActionGroup *, void *); // void * is actually a VikWindow
+typedef void (ToolCB) (GtkAction *, GtkAction *, void *); /* void * is actually a Window. */
+typedef void (ReloadCB) (GtkActionGroup *, void *); /* void * is actually a Window. */
 
 void toolbar_init(VikToolbar *vtb,
                   GtkWindow *parent,
@@ -79,8 +80,7 @@ void a_toolbar_init(void);
 
 void a_toolbar_uninit(void);
 
-#ifdef __cplusplus
-}
-#endif
 
-#endif
+
+
+#endif /* #ifndef _SG_TOOLBAR_H_ */

@@ -23,19 +23,18 @@
 #include "config.h"
 #endif
 
-#include "vikwebtool_datasource.h"
-#include <ctype.h>
-#include <string.h>
-#include <stdlib.h>
+#include <cctype>
+#include <cstring>
+#include <cstdlib>
 
 #include <glib.h>
 #include <glib/gi18n.h>
 
+#include "vikwebtool_datasource.h"
 #include "globals.h"
 #include "acquire.h"
 #include "maputils.h"
 #include "dialog.h"
-
 
 
 
@@ -45,15 +44,12 @@ using namespace SlavGPS;
 
 
 
-
 #define MAX_NUMBER_CODES 7
 
 
 
 
-
 static GHashTable *last_user_strings = NULL;
-
 
 
 
@@ -64,7 +60,6 @@ typedef struct {
 	Viewport * viewport;
 	GtkWidget * user_string;
 } datasource_t;
-
 
 
 
@@ -82,7 +77,6 @@ static void ensure_last_user_strings_hash()
 
 
 
-
 static char * get_last_user_string(const datasource_t *source)
 {
 	ensure_last_user_strings_hash();
@@ -91,7 +85,6 @@ static char * get_last_user_string(const datasource_t *source)
 	free(label);
 	return last_str;
 }
-
 
 
 
@@ -107,7 +100,6 @@ static void set_last_user_string(const datasource_t *source, const char *s)
 
 
 
-
 static void * datasource_init(acq_vik_t *avt)
 {
 	datasource_t *data = (datasource_t *) malloc(sizeof(*data));
@@ -117,7 +109,6 @@ static void * datasource_init(acq_vik_t *avt)
 	data->user_string = NULL;
 	return data;
 }
-
 
 
 
@@ -136,21 +127,20 @@ static void datasource_add_setup_widgets(GtkWidget *dialog, Viewport * viewport,
 		gtk_entry_set_text(GTK_ENTRY(widgets->user_string), last_str);
 	}
 
-	// 'ok' when press return in the entry
+	/* 'ok' when press return in the entry. */
 	g_signal_connect_swapped(widgets->user_string, "activate", G_CALLBACK(a_dialog_response_accept), dialog);
 
-	/* Packing all widgets */
+	/* Packing all widgets. */
 	GtkBox *box = GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog)));
 	gtk_box_pack_start(box, user_string_label, false, false, 5);
 	gtk_box_pack_start(box, widgets->user_string, false, false, 5);
 	gtk_widget_show_all(dialog);
 	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
-	// NB presently the focus is overridden later on by the acquire.c code.
+	/* NB presently the focus is overridden later on by the acquire.c code. */
 	gtk_widget_grab_focus(widgets->user_string);
 
 	free(label);
 }
-
 
 
 
@@ -174,10 +164,10 @@ static void datasource_get_process_options(void * user_data, ProcessOptions *po,
 
 	po->url = g_strdup(url);
 
-	// Only use first section of the file_type string
-	// One can't use values like 'kml -x transform,rte=wpt' in order to do fancy things
-	//  since it won't be in the right order for the overall GPSBabel command
-	// So prevent any potentially dangerous behaviour
+	/* Only use first section of the file_type string.
+	   One can't use values like 'kml -x transform,rte=wpt' in order to do fancy things
+	   since it won't be in the right order for the overall GPSBabel command.
+	   So prevent any potentially dangerous behaviour. */
 	char **parts = NULL;
 	if (web_tool_datasource->file_type) {
 		parts = g_strsplit(web_tool_datasource->file_type, " ", 0);
@@ -197,7 +187,6 @@ static void datasource_get_process_options(void * user_data, ProcessOptions *po,
 
 
 
-
 static void cleanup(void * data)
 {
 	free(data);
@@ -206,23 +195,22 @@ static void cleanup(void * data)
 
 
 
-
 void WebToolDatasource::open(Window * window)
 {
 	bool search = this->webtool_needs_user_string();
 
-	// Use VikDataSourceInterface to give thready goodness controls of downloading stuff (i.e. can cancel the request)
+	/* Use VikDataSourceInterface to give thready goodness controls of downloading stuff (i.e. can cancel the request). */
 
-	// Can now create a 'VikDataSourceInterface' on the fly...
+	/* Can now create a 'VikDataSourceInterface' on the fly... */
 	VikDataSourceInterface *vik_datasource_interface = (VikDataSourceInterface *) malloc(sizeof(VikDataSourceInterface));
 
-	// An 'easy' way of assigning values
+	/* An 'easy' way of assigning values. */
 	VikDataSourceInterface data = {
 		this->get_label(),
 		this->get_label(),
 		VIK_DATASOURCE_ADDTOLAYER,
 		VIK_DATASOURCE_INPUTTYPE_NONE,
-		false, // Maintain current view - rather than setting it to the acquired points
+		false, /* Maintain current view - rather than setting it to the acquired points. */
 		true,
 		true,
 		(VikDataSourceInitFunc)               datasource_init,
@@ -248,7 +236,6 @@ void WebToolDatasource::open(Window * window)
 
 
 
-
 WebToolDatasource::WebToolDatasource()
 {
 	fprintf(stderr, "%s:%d\n", __PRETTY_FUNCTION__, __LINE__);
@@ -259,7 +246,6 @@ WebToolDatasource::WebToolDatasource()
 	this->input_label = strdup(_("Search Term"));
 	this->user_string = NULL;
 }
-
 
 
 
@@ -292,7 +278,6 @@ WebToolDatasource::WebToolDatasource(const char * new_label,
 		this->input_label = strdup(new_input_label);
 	}
 }
-
 
 
 
@@ -330,16 +315,15 @@ WebToolDatasource::~WebToolDatasource()
 
 
 
-
 /**
- * Calculate individual elements (similarly to the VikWebtool Bounds & Center) for *all* potential values
- * Then only values specified by the URL format are used in parameterizing the URL
+ * Calculate individual elements (similarly to the VikWebtool Bounds & Center) for *all* potential values.
+ * Then only values specified by the URL format are used in parameterizing the URL.
  */
 char * WebToolDatasource::get_url(Window * window)
 {
 	Viewport * viewport = window->get_viewport();
 
-	// Center values
+	/* Center values. */
 	const VikCoord *coord = viewport->get_center();
 	struct LatLon ll;
 	vik_coord_to_latlon(coord, &ll);
@@ -349,8 +333,8 @@ char * WebToolDatasource::get_url(Window * window)
 	g_ascii_dtostr(scenterlat, G_ASCII_DTOSTR_BUF_SIZE, ll.lat);
 	g_ascii_dtostr(scenterlon, G_ASCII_DTOSTR_BUF_SIZE, ll.lon);
 
-	uint8_t zoom = 17; // A zoomed in default
-	// zoom - ideally x & y factors need to be the same otherwise use the default
+	uint8_t zoom = 17; /* A zoomed in default. */
+	/* Zoom - ideally x & y factors need to be the same otherwise use the default. */
 	if (viewport->get_xmpp() == viewport->get_ympp()) {
 		zoom = map_utils_mpp_to_zoom_level(viewport->get_zoom());
 	}
@@ -403,7 +387,6 @@ char * WebToolDatasource::get_url(Window * window)
 
 
 
-
 char * WebToolDatasource::get_url_at_position(Window * window, VikCoord * vc)
 {
 	return this->get_url(window);
@@ -412,8 +395,7 @@ char * WebToolDatasource::get_url_at_position(Window * window, VikCoord * vc)
 
 
 
-
-// NB Only works for ascii strings
+/* NB Only works for ascii strings. */
 char* strcasestr2(const char *dst, const char *src)
 {
 	if (!dst || !src) {
@@ -439,14 +421,13 @@ char* strcasestr2(const char *dst, const char *src)
 
 
 
-
 /**
  * Returns true if the URL format contains 'S' -- that is, a search term entry
- * box needs to be displayed
+ * box needs to be displayed.
  */
 bool WebToolDatasource::webtool_needs_user_string()
 {
-	// For some reason (my) Windows build gets built with -D_GNU_SOURCE
+	/* For some reason (my) Windows build gets built with -D_GNU_SOURCE. */
 #if (_GNU_SOURCE && !WINDOWS)
 	return (strcasestr(this->url_format_code, "S") != NULL);
 #else

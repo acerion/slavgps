@@ -23,15 +23,13 @@
  *
  */
 
-#ifndef _SG_LAYER_TRW_DRAW_H
-#define _SG_LAYER_TRW_DRAW_H
+#ifndef _SG_LAYER_TRW_DRAW_H_
+#define _SG_LAYER_TRW_DRAW_H_
 
 
 
 
-
-#include <stdint.h>
-
+#include <cstdint>
 #include <unordered_map>
 
 #include "vikviewport.h"
@@ -39,7 +37,6 @@
 #include "viktrack.h"
 #include "viktrwlayer.h"
 #include "vikwindow.h"
-
 
 
 
@@ -56,17 +53,25 @@
 #define DRAWMODE_BY_TRACK 0
 #define DRAWMODE_BY_SPEED 1
 #define DRAWMODE_ALL_SAME_COLOR 2
-// Note using DRAWMODE_BY_SPEED may be slow especially for vast numbers of trackpoints
-//  as we are (re)calculating the colour for every point
+/* Note using DRAWMODE_BY_SPEED may be slow especially for vast numbers of trackpoints
+   as we are (re)calculating the colour for every point. */
 
 
 
-#define DRAW_ELEVATION_FACTOR 30 /* height of elevation plotting, sort of relative to zoom level ("mpp" that isn't mpp necessarily) */
-                                 /* this is multiplied by user-inputted value from 1-100. */
+
+#define DRAW_ELEVATION_FACTOR 30 /* Height of elevation plotting, sort of relative to zoom level ("mpp" that isn't mpp necessarily). */
+                                 /* This is multiplied by user-inputted value from 1-100. */
 
 
-enum { WP_SYMBOL_FILLED_SQUARE, WP_SYMBOL_SQUARE, WP_SYMBOL_CIRCLE, WP_SYMBOL_X, WP_NUM_SYMBOLS };
 
+
+enum {
+	WP_SYMBOL_FILLED_SQUARE,
+	WP_SYMBOL_SQUARE,
+	WP_SYMBOL_CIRCLE,
+	WP_SYMBOL_X,
+	WP_NUM_SYMBOLS
+};
 
 
 
@@ -77,8 +82,8 @@ typedef struct {
 	SlavGPS::Window * window;
 	double xmpp, ympp;
 	uint16_t width, height;
-	double cc; // Cosine factor in track directions
-	double ss; // Sine factor in track directions
+	double cc;      /* Cosine factor in track directions. */
+	double ss;      /* Sine factor in track directions. */
 	const VikCoord * center;
 	VikCoordMode coord_mode; /* UTM or Lat/Lon. */
 	bool one_utm_zone;       /* Viewport shows only one UTM zone. */
@@ -86,7 +91,6 @@ typedef struct {
 	LatLonBBox bbox;
 	bool highlight;
 } DrawingParams;
-
 
 
 
@@ -105,7 +109,7 @@ void trw_layer_draw_track_cb(std::unordered_map<sg_uid_t, SlavGPS::Track *> & tr
 /* This data structure probably should be put somewhere else. */
 typedef struct {
 	GdkPixbuf * pixbuf;
-	char * image; /* filename */
+	char * image; /* Filename. */
 } CachedPixbuf;
 
 /* These two functions probably should be put somewhere else. */
@@ -115,5 +119,4 @@ int cached_pixbuf_cmp(CachedPixbuf * cp, const char * name);
 
 
 
-
-#endif /* #ifndef _SG_LAYER_TRW_DRAW_H */
+#endif /* #ifndef _SG_LAYER_TRW_DRAW_H_ */

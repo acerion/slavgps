@@ -18,40 +18,53 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-#ifndef __VIKING_MAPNIK_IF_H
-#define __VIKING_MAPNIK_IF_H
+#ifndef _SG_MAPNIK_INTERFACE_H_
+#define _SG_MAPNIK_INTERFACE_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+
+
+
+#include <cstdint>
 
 #include <glib.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
-#include <stdint.h>
+
+
 
 
 typedef struct _MapnikInterface MapnikInterface;
 
-void mapnik_interface_initialize(const char * plugins_dir, const char * font_dir, int font_dir_recurse);
 
-MapnikInterface* mapnik_interface_new();
-void mapnik_interface_free(MapnikInterface * mi);
 
-char * mapnik_interface_load_map_file(MapnikInterface * mi,
-				      const char * filename,
-				      unsigned int width,
-				      unsigned int height);
 
-GdkPixbuf * mapnik_interface_render(MapnikInterface * mi, double lat_tl, double lon_tl, double lat_br, double lon_br);
+namespace SlavGPS {
 
-char * mapnik_interface_get_copyright(MapnikInterface * mi);
 
-GArray * mapnik_interface_get_parameters(MapnikInterface * mi);
 
-char * mapnik_interface_about(void);
+	void mapnik_interface_initialize(const char * plugins_dir, const char * font_dir, int font_dir_recurse);
 
-#ifdef __cplusplus
-}
-#endif
+	MapnikInterface * mapnik_interface_new();
+	void mapnik_interface_free(MapnikInterface * mi);
 
-#endif
+	char * mapnik_interface_load_map_file(MapnikInterface * mi,
+					      const char * filename,
+					      unsigned int width,
+					      unsigned int height);
+
+	GdkPixbuf * mapnik_interface_render(MapnikInterface * mi, double lat_tl, double lon_tl, double lat_br, double lon_br);
+
+	char * mapnik_interface_get_copyright(MapnikInterface * mi);
+
+	GArray * mapnik_interface_get_parameters(MapnikInterface * mi);
+
+	char * mapnik_interface_about(void);
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
+#endif /* #ifndef _SG_MAPNIK_INTERFACE_H_ */

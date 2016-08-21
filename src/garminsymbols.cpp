@@ -21,24 +21,23 @@
  *
  */
 
+#include <cstring>
+#include <cstdlib>
 
 #include <gtk/gtk.h>
 #include <gdk-pixbuf/gdk-pixdata.h>
 
-#include "viking.h"
+//#include "viking.h"
 #include "garminsymbols.h"
 #include "icons/icons.h"
 #include "globals.h"
-
-#include <string.h>
-#include <stdlib.h>
 
 
 
 
 static struct {
-	char * sym;     /* icon names used by gpsbabel, garmin */
-	char * old_sym; /* keep backward compatible */
+	char * sym;     /* Icon names used by gpsbabel, garmin. */
+	char * old_sym; /* Keep backward compatible. */
 	int num;
 	char * desc;
 	GdkPixdata const * data;
@@ -141,14 +140,14 @@ static struct {
 	{ (char *) "Stump",                           (char *) "stump",              193,  (char *) "U stump symbol",                    NULL,                       NULL,                             NULL },
 	{ (char *) "Ground Transportation",           (char *) "grnd_trans",         229,  (char *) "ground transportation",             NULL,                       &wp_grnd_trans_large_pixbuf,      NULL },
 	/*---------------------------------------------------------------
-	  User customizable symbols
+	  User customizable symbols.
 	  The values from begin_custom to end_custom inclusive are
 	  reserved for the identification of user customizable symbols.
 	  ---------------------------------------------------------------*/
 	{ (char *) "custom begin placeholder",        (char *) "begin_custom",      7680,  (char *) "first user customizable symbol",    NULL,                       NULL,                             NULL },
 	{ (char *) "custom end placeholder",          (char *) "end_custom",        8191,  (char *) "last user customizable symbol",     NULL,                       NULL,                             NULL },
 	/*---------------------------------------------------------------
-	  Land symbols
+	  Land symbols.
 	  ---------------------------------------------------------------*/
 	{ (char *) "Interstate Highway",              (char *) "is_hwy",            8192,  (char *) "interstate hwy symbol",             NULL,                       NULL,                             NULL },   /* TODO: check symbol name */
 	{ (char *) "US hwy",                          (char *) "us_hwy",            8193,  (char *) "us hwy symbol",                     NULL,                       NULL,                             NULL },
@@ -301,7 +300,7 @@ static struct {
 	{ (char *) "Triangle, Green",                 (char *) "triangle_green",    8352,  (char *) "green triangle symbol",             NULL,                       NULL,                             NULL },
 	{ (char *) "Triangle, Red",                   (char *) "triangle_red",      8353,  (char *) "red triangle symbol",               NULL,                       NULL,                             NULL },
 	/*---------------------------------------------------------------
-	  Aviation symbols
+	  Aviation symbols.
 	  ---------------------------------------------------------------*/
 	{ (char *) "Airport",                         (char *) "airport",          16384,  (char *) "airport symbol",                    &wp_airplane_pixbuf,        &wp_airplane_large_pixbuf,        NULL },
 	{ (char *) "Intersection",                    (char *) "int",              16385,  (char *) "intersection symbol",               NULL,                       NULL,                             NULL },
@@ -335,21 +334,18 @@ static GHashTable *old_icons = NULL;
 
 static int str_equal_casefold(gconstpointer v1, gconstpointer v2)
 {
-	bool equal;
-	char *v1_lower;
-	char *v2_lower;
-
-	v1_lower = g_utf8_casefold((const char *) v1, -1);
+	char * v1_lower = g_utf8_casefold((const char *) v1, -1);
 	if (!v1_lower) {
 		return false;
 	}
-	v2_lower = g_utf8_casefold((const char *) v2, -1);
+
+	char * v2_lower = g_utf8_casefold((const char *) v2, -1);
 	if (!v2_lower) {
 		free(v1_lower);
 		return false;
 	}
 
-	equal = g_str_equal(v1_lower, v2_lower);
+	bool equal = g_str_equal(v1_lower, v2_lower);
 
 	free(v1_lower);
 	free(v2_lower);
@@ -362,15 +358,12 @@ static int str_equal_casefold(gconstpointer v1, gconstpointer v2)
 
 static unsigned int str_hash_casefold(gconstpointer key)
 {
-	unsigned int h;
-	char *key_lower;
-
-	key_lower = g_utf8_casefold((const char *) key, -1);
+	char * key_lower = g_utf8_casefold((const char *) key, -1);
 	if (!key_lower) {
 		return 0;
 	}
 
-	h = g_str_hash(key_lower);
+	unsigned int h = g_str_hash(key_lower);
 
 	free(key_lower);
 
@@ -384,8 +377,8 @@ static void init_icons()
 {
 	icons = g_hash_table_new_full(str_hash_casefold, str_equal_casefold, NULL, NULL);
 	old_icons = g_hash_table_new_full(str_hash_casefold, str_equal_casefold, NULL, NULL);
-	int i;
-	for (i = 0; i < G_N_ELEMENTS(garmin_syms); i++) {
+
+	for (int i = 0; i < G_N_ELEMENTS(garmin_syms); i++) {
 		g_hash_table_insert(icons, garmin_syms[i].sym, KINT_TO_POINTER (i));
 		g_hash_table_insert(old_icons, garmin_syms[i].old_sym, KINT_TO_POINTER (i));
 	}
@@ -396,22 +389,22 @@ static void init_icons()
 
 static GdkPixbuf * get_wp_sym_from_index(int i)
 {
-	// Ensure data exists to either directly load icon or scale from the other set
+	/* Ensure data exists to either directly load icon or scale from the other set. */
 	if (!garmin_syms[i].icon && (garmin_syms[i].data || garmin_syms[i].data_large)) {
 		if (a_vik_get_use_large_waypoint_icons()) {
 			if (garmin_syms[i].data_large) {
-				// Directly load icon
+				/* Directly load icon. */
 				garmin_syms[i].icon = gdk_pixbuf_from_pixdata(garmin_syms[i].data_large, false, NULL);
 			} else {
-				// Up sample from small image
+				/* Up sample from small image. */
 				garmin_syms[i].icon = gdk_pixbuf_scale_simple(gdk_pixbuf_from_pixdata(garmin_syms[i].data, false, NULL), 30, 30, GDK_INTERP_BILINEAR);
 			}
 		} else {
 			if (garmin_syms[i].data) {
-				// Directly use small symbol
+				/* Directly use small symbol. */
 				garmin_syms[i].icon = gdk_pixbuf_from_pixdata(garmin_syms[i].data, false, NULL);
 			} else {
-				// Down size large image
+				/* Down size large image. */
 				garmin_syms[i].icon = gdk_pixbuf_scale_simple(gdk_pixbuf_from_pixdata(garmin_syms[i].data_large, false, NULL), 18, 18, GDK_INTERP_BILINEAR);
 			}
 		}
@@ -424,15 +417,15 @@ static GdkPixbuf * get_wp_sym_from_index(int i)
 
 GdkPixbuf *a_get_wp_sym(const char *sym)
 {
-	void * gp;
-	void * x;
-
 	if (!sym) {
 		return NULL;
 	}
 	if (!icons) {
 		init_icons();
 	}
+
+	void * gp;
+	void * x;
 	if (g_hash_table_lookup_extended(icons, sym, &x, &gp)) {
 		return get_wp_sym_from_index(KPOINTER_TO_INT(gp));
 	} else if (g_hash_table_lookup_extended(old_icons, sym, &x, &gp)) {
@@ -447,15 +440,15 @@ GdkPixbuf *a_get_wp_sym(const char *sym)
 
 const char *a_get_hashed_sym(const char *sym)
 {
-	void * gp;
-	void * x;
-
 	if (!sym) {
 		return NULL;
 	}
 	if (!icons) {
 		init_icons();
 	}
+
+	void * gp;
+	void * x;
 	if (g_hash_table_lookup_extended(icons, sym, &x, &gp)) {
 		return garmin_syms[KPOINTER_TO_INT(gp)].sym;
 	} else if (g_hash_table_lookup_extended(old_icons, sym, &x, &gp)) {
@@ -470,9 +463,8 @@ const char *a_get_hashed_sym(const char *sym)
 
 void a_populate_sym_list(GtkListStore *list)
 {
-	int i;
-	for (i = 0; i < G_N_ELEMENTS (garmin_syms); i++) {
-		// Ensure at least one symbol available - the other can be auto generated
+	for (int i = 0; i < G_N_ELEMENTS (garmin_syms); i++) {
+		/* Ensure at least one symbol available - the other can be auto generated. */
 		if (garmin_syms[i].data || garmin_syms[i].data_large) {
 			GtkTreeIter iter;
 			gtk_list_store_append(list, &iter);
@@ -484,13 +476,11 @@ void a_populate_sym_list(GtkListStore *list)
 
 
 
-
-/* Use when preferences have changed to reset icons*/
+/* Use when preferences have changed to reset icons. */
 void clear_garmin_icon_syms()
 {
 	fprintf(stderr, "DEBUG: garminsymbols: clear_garmin_icon_syms\n");
-	int i;
-	for (i = 0; i < G_N_ELEMENTS (garmin_syms); i++) {
+	for (int i = 0; i < G_N_ELEMENTS (garmin_syms); i++) {
 		if (garmin_syms[i].icon) {
 			g_object_unref(garmin_syms[i].icon);
 			garmin_syms[i].icon = NULL;

@@ -20,8 +20,9 @@
  *
  */
 
-#ifndef _VIKING_TRWLAYER_H
-#define _VIKING_TRWLAYER_H
+#ifndef _SG_LAYER_TRW_H_
+#define _SG_LAYER_TRW_H_
+
 
 
 
@@ -29,8 +30,7 @@
 #include "config.h"
 #endif
 
-#include <stdint.h>
-
+#include <cstdint>
 #include <list>
 #include <unordered_map>
 
@@ -82,15 +82,15 @@ namespace SlavGPS {
 		char * description = NULL;
 		char * author = NULL;
 		//bool has_time;
-		char * timestamp = NULL; // TODO: Consider storing as proper time_t.
-		char * keywords = NULL; // TODO: handling/storing a GList of individual tags?
+		char * timestamp = NULL; /* TODO: Consider storing as proper time_t. */
+		char * keywords = NULL;  /* TODO: handling/storing a GList of individual tags? */
 	};
 
 
 
 
 
-	// See http://developer.gnome.org/pango/stable/PangoMarkupFormat.html
+	/* See http://developer.gnome.org/pango/stable/PangoMarkupFormat.html */
 	typedef enum {
 		FS_XX_SMALL = 0,
 		FS_X_SMALL,
@@ -106,16 +106,16 @@ namespace SlavGPS {
 
 
 
-	// For creating a list of tracks with the corresponding layer it is in
-	//  (thus a selection of tracks may be from differing layers)
+	/* For creating a list of tracks with the corresponding layer it is in
+	   (thus a selection of tracks may be from differing layers). */
 	struct track_layer_t {
 		Track * trk;
 		LayerTRW * trw;
 	};
 	typedef struct track_layer_t track_layer_t;
 
-	// For creating a list of waypoints with the corresponding layer it is in
-	//  (thus a selection of waypoints may be from differing layers)
+	/* For creating a list of waypoints with the corresponding layer it is in
+	   (thus a selection of waypoints may be from differing layers). */
 	struct waypoint_layer_t {
 		Waypoint * wp;
 		LayerTRW * trw;
@@ -488,8 +488,8 @@ namespace SlavGPS {
 		GdkGC * track_1color_gc = NULL;
 		GdkColor track_color;
 		GdkGC * current_track_gc = NULL;
-		// Separate GC for a track's potential new point as drawn via separate method
-		//  (compared to the actual track points drawn in the main trw_layer_draw_track function)
+		/* Separate GC for a track's potential new point as drawn via separate method
+		   (compared to the actual track points drawn in the main trw_layer_draw_track function). */
 		GdkGC * current_track_newpoint_gc = NULL;
 
 		GdkGC * track_bg_gc = NULL;
@@ -508,7 +508,7 @@ namespace SlavGPS {
 
 
 
-		Track * current_track = NULL; // ATM shared between new tracks and new routes
+		Track * current_track = NULL; /* ATM shared between new tracks and new routes. */
 		uint16_t ct_x1;
 		uint16_t ct_y1;
 		uint16_t ct_x2;
@@ -547,18 +547,12 @@ namespace SlavGPS {
 
 		/* One per layer. */
 		GtkWidget * tracks_analysis_dialog = NULL;
-
-
 	};
 
 
 
 
-
 }
-
-
-
 
 
 
@@ -582,13 +576,6 @@ typedef struct _trw_menu_sublayer_t {
 
 
 
-//typedef void * menu_array_layer[2];
-//typedef void * menu_array_sublayer[8];
-
-
-
-
-
 
 struct _VikTrwLayer {
 	VikLayer vl;
@@ -600,6 +587,8 @@ struct _VikTrwLayer {
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+
 
 
 #define VIK_TRW_LAYER_TYPE            (vik_trw_layer_get_type ())
@@ -627,8 +616,8 @@ typedef struct _VikTrwLayer VikTrwLayer;
 
 GdkPixbuf* get_wp_sym_small(char *symbol);
 
-/* Exposed Layer Interface function definitions */
-// Intended only for use by other trw_layer subwindows
+/* Exposed Layer Interface function definitions.
+   Intended only for use by other trw_layer subwindows. */
 //void trw_layer_verify_thumbnails(VikLayer * vtl, Viewport * viewport);
 void trw_layer_calculate_bounds_waypoints(VikLayer *vtl);
 
@@ -709,14 +698,14 @@ void trw_layer_gps_upload(trw_menu_layer_t * data);
 void trw_layer_track_list_dialog_single(trw_menu_sublayer_t * data);
 void trw_layer_track_list_dialog(trw_menu_layer_t * data);
 void trw_layer_waypoint_list_dialog(trw_menu_layer_t * data);
-// Specific route versions:
-//  Most track handling functions can handle operating on the route list
-//  However these ones are easier in separate functions
+/* Specific route versions:
+   Most track handling functions can handle operating on the route list.
+   However these ones are easier in separate functions. */
 void trw_layer_auto_routes_view(trw_menu_layer_t * data);
 void trw_layer_delete_all_routes(trw_menu_layer_t * data);
 void trw_layer_delete_routes_from_selection(trw_menu_layer_t * data);
-/* pop-up items */
-void trw_layer_properties_item(trw_menu_sublayer_t * data); //TODO??
+/* Pop-up items. */
+void trw_layer_properties_item(trw_menu_sublayer_t * data); /* TODO?? */
 void trw_layer_goto_waypoint(trw_menu_sublayer_t * data);
 void trw_layer_waypoint_gc_webpage(trw_menu_sublayer_t * data);
 void trw_layer_waypoint_webpage(trw_menu_sublayer_t * data);
@@ -787,4 +776,4 @@ void trw_layer_cut_item_cb(trw_menu_sublayer_t * data);
 
 
 
-#endif
+#endif /* #ifndef _SG_LAYER_TRW_H_ */

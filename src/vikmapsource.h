@@ -16,9 +16,8 @@
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _SLAVGPS_MAP_SOURCE_H
-#define _SLAVGPS_MAP_SOURCE_H
-
+#ifndef _SLAVGPS_MAP_SOURCE_H_
+#define _SLAVGPS_MAP_SOURCE_H_
 
 
 
@@ -36,9 +35,7 @@
 
 
 
-
 namespace SlavGPS {
-
 
 
 
@@ -133,20 +130,18 @@ namespace SlavGPS {
 
 		bool is_direct_file_access_flag;
 		bool is_mbtiles_flag;
-		bool is_osm_meta_tiles_flag; // http://wiki.openstreetmap.org/wiki/Meta_tiles as used by tirex or renderd
+		bool is_osm_meta_tiles_flag; /* http://wiki.openstreetmap.org/wiki/Meta_tiles as used by tirex or renderd. */
 
-		// Mainly for ARCGIS Tile Server URL Layout // http://help.arcgis.com/EN/arcgisserver/10.0/apis/rest/tile.html
+		/* Mainly for ARCGIS Tile Server URL Layout // http://help.arcgis.com/EN/arcgisserver/10.0/apis/rest/tile.html */
 		bool switch_xy;
 	};
 
 
 
 
-
-} /* namespace */
-
+} /* namespace SlavGPS */
 
 
 
 
-#endif /* _SLAVGPS_MAP_SOURCE_H */
+#endif /* _SLAVGPS_MAP_SOURCE_H_ */

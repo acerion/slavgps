@@ -18,23 +18,33 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-#ifndef __VIK_GEONAMESSEARCH_H
-#define __VIK_GEONAMESSEARCH_H
+#ifndef _SG_GEONAMESSEARCH_H_
+#define _SG_GEONAMESSEARCH_H_
+
+
+
 
 #include "vikwindow.h"
 #include "viktrwlayer.h"
 #include "coords.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
-/* Finding Wikipedia entries within a certain box */
-void a_geonames_wikipedia_box(SlavGPS::Window * window, SlavGPS::LayerTRW * trw, struct LatLon maxmin[2]);
 
-#ifdef __cplusplus
-}
-#endif
+namespace SlavGPS {
 
-#endif
+
+
+
+	/* Finding Wikipedia entries within a certain box. */
+	void a_geonames_wikipedia_box(Window * window, LayerTRW * trw, struct LatLon maxmin[2]);
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
+#endif /* #ifndef _SG_GEONAMESSEARCH_H_ */

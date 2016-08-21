@@ -22,24 +22,32 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
+
+#include <cstdlib>
+#include <cstdio>
+#include <cstring>
+
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <glib/gprintf.h>
 #include <glib/gi18n.h>
 
-#include "viking.h"
+//#include "viking.h"
 #include "dialog.h"
 #include "geonamessearch.h"
 #include "download.h"
 #include "util.h"
 #include "globals.h"
 
+
+
+
 using namespace SlavGPS;
 
-/* Compatibility */
+
+
+
+/* Compatibility. */
 #if ! GLIB_CHECK_VERSION(2,22,0)
 #define g_mapped_file_unref g_mapped_file_free
 #endif
@@ -47,10 +55,10 @@ using namespace SlavGPS;
 /**
  * See http://www.geonames.org/export/wikipedia-webservice.html#wikipediaBoundingBox
  */
-// Translators may wish to change this setting as appropriate to get Wikipedia articles in that language
+/* Translators may wish to change this setting as appropriate to get Wikipedia articles in that language. */
 #define GEONAMES_LANG N_("en")
-// TODO - offer configuration of this value somewhere
-//  ATM decided it's not essential enough to warrant putting in the preferences
+/* TODO - offer configuration of this value somewhere.
+   ATM decided it's not essential enough to warrant putting in the preferences. */
 #define GEONAMES_MAX_ENTRIES 20
 
 #define GEONAMES_WIKIPEDIA_URL_FMT "http://api.geonames.org/wikipediaBoundingBoxJSON?formatted=true&north=%s&south=%s&east=%s&west=%s&lang=%s&maxRows=%d&username=viking"
@@ -76,11 +84,12 @@ typedef struct {
 	char * desc;
 } found_geoname;
 
+
+
+
 static found_geoname * new_found_geoname()
 {
-	found_geoname * ret;
-
-	ret = (found_geoname *)malloc(sizeof(found_geoname));
+	found_geoname * ret = (found_geoname *)malloc(sizeof(found_geoname));
 	ret->name = NULL;
 	ret->feature = NULL;
 	ret->cmt = NULL;
@@ -90,6 +99,9 @@ static found_geoname * new_found_geoname()
 	ret->elevation = VIK_DEFAULT_ALTITUDE;
 	return ret;
 }
+
+
+
 
 static found_geoname * copy_found_geoname(found_geoname * src)
 {
@@ -104,6 +116,9 @@ static found_geoname * copy_found_geoname(found_geoname * src)
 	return(dest);
 }
 
+
+
+
 static void free_list_geonames(found_geoname * geoname, void * userdata)
 {
 	free(geoname->name);
@@ -112,11 +127,17 @@ static void free_list_geonames(found_geoname * geoname, void * userdata)
 	free(geoname->desc);
 }
 
+
+
+
 static void free_geoname_list(GList * found_places)
 {
 	g_list_foreach(found_places, (GFunc)free_list_geonames, NULL);
 	g_list_free(found_places);
 }
+
+
+
 
 static void none_found(Window * window)
 {
@@ -133,6 +154,9 @@ static void none_found(Window * window)
 	gtk_dialog_run(GTK_DIALOG(dialog));
 	gtk_widget_destroy(dialog);
 }
+
+
+
 
 static GList * a_select_geoname_from_list(GtkWindow * parent, GList * geonames, bool multiple_selection_allowed, const char * title, const char * msg)
 {
@@ -151,7 +175,7 @@ static GList * a_select_geoname_from_list(GtkWindow * parent, GList * geonames, 
 							GTK_STOCK_OK,
 							GTK_RESPONSE_ACCEPT,
 							NULL);
-	/* When something is selected then OK */
+	/* When something is selected then OK. */
 	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
 	GtkWidget *response_w = NULL;
 #if GTK_CHECK_VERSION (2, 20, 0)
@@ -175,9 +199,9 @@ static GList * a_select_geoname_from_list(GtkWindow * parent, GList * geonames, 
 	renderer = gtk_cell_renderer_text_new();
 	column_runner = 0;
 	GtkTreeViewColumn *column;
-	// NB could allow columns to be shifted around by doing this after each new
-	// gtk_tree_view_column_set_reorderable(column, true);
-	// However I don't think is that useful, so I haven't put it in
+	/* NB could allow columns to be shifted around by doing this after each new
+	   gtk_tree_view_column_set_reorderable(column, true);
+	   However I don't think is that useful, so I haven't put it in. */
 	column = gtk_tree_view_column_new_with_attributes(_("Name"), renderer, "text", column_runner, NULL);
 	gtk_tree_view_column_set_sort_column_id(column, column_runner);
 	gtk_tree_view_append_column(GTK_TREE_VIEW (view), column);
@@ -204,7 +228,7 @@ static GList * a_select_geoname_from_list(GtkWindow * parent, GList * geonames, 
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), label, false, false, 0);
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), scrolledwindow, true, true, 0);
 
-	// Ensure a reasonable number of items are shown, but let the width be automatically sized
+	/* Ensure a reasonable number of items are shown, but let the width be automatically sized. */
 	gtk_widget_set_size_request(dialog, -1, 400) ;
 	gtk_widget_show_all(dialog);
 
@@ -216,15 +240,15 @@ static GList * a_select_geoname_from_list(GtkWindow * parent, GList * geonames, 
 		GtkTreeSelection *selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(view));
 		GList *selected_geonames = NULL;
 
-		// Possibily not the fastest method but we don't have thousands of entries to process...
+		/* Possibily not the fastest method but we don't have thousands of entries to process... */
 		if (gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter)) {
 			do {
 				if (gtk_tree_selection_iter_is_selected(selection, &iter)) {
-					// For every selected item,
-					// compare the name from the displayed view to every geoname entry to find the geoname this selection represents
+					/* For every selected item,
+					   compare the name from the displayed view to every geoname entry to find the geoname this selection represents. */
 					char* name;
 					gtk_tree_model_get(GTK_TREE_MODEL(store), &iter, 0, &name, -1);
-					// I believe the name of these items to be always unique
+					/* I believe the name of these items to be always unique. */
 					geoname_runner = geonames;
 					while (geoname_runner) {
 						if (!strcmp (((found_geoname*)geoname_runner->data)->name, name)) {
@@ -249,6 +273,9 @@ static GList * a_select_geoname_from_list(GtkWindow * parent, GList * geonames, 
 	gtk_widget_destroy(dialog);
 	return NULL;
 }
+
+
+
 
 static GList *get_entries_from_file(char *file_name)
 {
@@ -391,7 +418,7 @@ static GList *get_entries_from_file(char *file_name)
 			}
 		} else {
 			if (wikipedia_url) {
-				// Really we should support the GPX URL tag and then put that in there...
+				/* Really we should support the GPX URL tag and then put that in there... */
 				geoname->cmt = g_strdup_printf("http://%s", wikipedia_url);
 				if (thumbnail_url) {
 					geoname -> desc = g_strdup_printf("<a href=\"http://%s\" target=\"_blank\"><img src=\"%s\" border=\"0\"/></a>", wikipedia_url, thumbnail_url);
@@ -419,32 +446,32 @@ static GList *get_entries_from_file(char *file_name)
 }
 
 
-void a_geonames_wikipedia_box(Window * window, LayerTRW * trw, struct LatLon maxmin[2])
+
+
+void SlavGPS::a_geonames_wikipedia_box(Window * window, LayerTRW * trw, struct LatLon maxmin[2])
 {
-	char *uri;
-	char *tmpname;
-	GList *wiki_places;
-	GList *selected;
-	GList *wp_runner;
 	Waypoint * wiki_wp;
 	found_geoname *wiki_geoname;
+	GList * wp_runner;
+	GList * selected;
 
-	/* encode doubles in a C locale; kamilTODO: see viewport->get_bbox_strings(). */
+	/* Encode doubles in a C locale; kamilTODO: see viewport->get_bbox_strings(). */
 	char *north = a_coords_dtostr(maxmin[0].lat);
 	char *south = a_coords_dtostr(maxmin[1].lat);
 	char *east = a_coords_dtostr(maxmin[0].lon);
 	char *west = a_coords_dtostr(maxmin[1].lon);
-	uri = g_strdup_printf(GEONAMES_WIKIPEDIA_URL_FMT, north, south, east, west, GEONAMES_LANG, GEONAMES_MAX_ENTRIES);
+	char * uri = g_strdup_printf(GEONAMES_WIKIPEDIA_URL_FMT, north, south, east, west, GEONAMES_LANG, GEONAMES_MAX_ENTRIES);
 	free(north); north = NULL;
 	free(south); south = NULL;
 	free(east);  east = NULL;
 	free(west);  west = NULL;
-	tmpname = a_download_uri_to_tmp_file(uri, NULL);
+
+	char * tmpname = a_download_uri_to_tmp_file(uri, NULL);
 	if (!tmpname) {
 		none_found(window);
 		return;
 	}
-	wiki_places = get_entries_from_file(tmpname);
+	GList * wiki_places = get_entries_from_file(tmpname);
 	if (g_list_length(wiki_places) == 0) {
 		none_found(window);
 		goto done;
@@ -461,9 +488,9 @@ void a_geonames_wikipedia_box(Window * window, LayerTRW * trw, struct LatLon max
 		wiki_wp->altitude = wiki_geoname->elevation;
 		wiki_wp->set_comment(wiki_geoname->cmt);
 		wiki_wp->set_description(wiki_geoname->desc);
-		// Use the featue type to generate a suitable waypoint icon
-		//  http://www.geonames.org/wikipedia/wikipedia_features.html
-		// Only a few values supported as only a few symbols make sense
+		/* Use the featue type to generate a suitable waypoint icon
+		   http://www.geonames.org/wikipedia/wikipedia_features.html
+		   Only a few values supported as only a few symbols make sense. */
 		if (wiki_geoname->feature) {
 			if (!strcmp(wiki_geoname->feature, "city")) {
 				wiki_wp->set_symbol("city (medium)");

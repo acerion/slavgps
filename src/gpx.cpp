@@ -32,24 +32,34 @@
 
 #define _XOPEN_SOURCE /* glibc2 needs this */
 
-#include "gpx.h"
-#include "viking.h"
-#include "globals.h"
-#include <expat.h>
+#include <cstdlib>
+#include <cassert>
+
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif
-#include <stdlib.h>
-#include <assert.h>
-#include <glib.h>
-#include <glib/gstdio.h>
-#include <glib/gi18n.h>
+
 #ifdef HAVE_MATH_H
 #include <math.h>
 #endif
 #include <time.h>
 
+#include <glib.h>
+#include <glib/gstdio.h>
+#include <glib/gi18n.h>
+
+#include "gpx.h"
+#include "viking.h"
+#include "globals.h"
+#include <expat.h>
+
+
+
+
 using namespace SlavGPS;
+
+
+
 
 typedef enum {
         tt_unknown = 0,
@@ -103,8 +113,8 @@ typedef enum {
 } tag_type_t;
 
 typedef struct tag_mapping {
-        tag_type_t tag_type;              /* enum from above for this tag */
-        const char *tag_name;           /* xpath-ish tag name */
+        tag_type_t tag_type;              /* Enum from above for this tag. */
+        const char *tag_name;             /* xpath-ish tag name. */
 } tag_mapping;
 
 typedef struct {
@@ -112,12 +122,14 @@ typedef struct {
 	FILE *file;
 } GpxWritingContext;
 
+
+
+
 /*
  * xpath(ish) mappings between full tag paths and internal identifiers.
  * These appear in the order they appear in the GPX specification.
  * If it's not a tag we explicitly handle, it doesn't go here.
  */
-
 tag_mapping tag_path_map[] = {
 
         { tt_gpx,          "/gpx"          },
@@ -127,7 +139,7 @@ tag_mapping tag_path_map[] = {
         { tt_gpx_author,   "/gpx/author"   },
         { tt_gpx_keywords, "/gpx/keywords" },
 
-        // GPX 1.1 variant - basic properties moved into metadata namespace
+        /* GPX 1.1 variant - basic properties moved into metadata namespace. */
         { tt_gpx_name,     "/gpx/metadata/name"     },
         { tt_gpx_desc,     "/gpx/metadata/desc"     },
         { tt_gpx_time,     "/gpx/metadata/time"     },
@@ -163,7 +175,7 @@ tag_mapping tag_path_map[] = {
         { tt_trk_trkseg_trkpt_ele,  "/gpx/trk/trkseg/trkpt/ele"  },
         { tt_trk_trkseg_trkpt_time, "/gpx/trk/trkseg/trkpt/time" },
         { tt_trk_trkseg_trkpt_name, "/gpx/trk/trkseg/trkpt/name" },
-        /* extended */
+        /* Extended. */
         { tt_trk_trkseg_trkpt_course, "/gpx/trk/trkseg/trkpt/course" },
         { tt_trk_trkseg_trkpt_speed,  "/gpx/trk/trkseg/trkpt/speed"  },
         { tt_trk_trkseg_trkpt_fix,    "/gpx/trk/trkseg/trkpt/fix"    },
@@ -174,7 +186,7 @@ tag_mapping tag_path_map[] = {
         { tt_trk_trkseg_trkpt_pdop, "/gpx/trk/trkseg/trkpt/pdop" },
 
         { tt_rte,                   "/gpx/rte" },
-        // NB Route reuses track point feature tags
+        /* NB Route reuses track point feature tags. */
         { tt_trk_name,              "/gpx/rte/name"       },
         { tt_trk_cmt,               "/gpx/rte/cmt"        },
         { tt_trk_desc,              "/gpx/rte/desc"       },
@@ -186,10 +198,12 @@ tag_mapping tag_path_map[] = {
         {(tag_type_t) 0}
 };
 
+
+
+
 static tag_type_t get_tag(const char *t)
 {
-        tag_mapping * tm;
-        for (tm = tag_path_map; tm->tag_type != 0; tm++) {
+        for (tag_mapping * tm = tag_path_map; tm->tag_type != 0; tm++) {
                 if (0 == strcmp(tm->tag_name, t)) {
                         return tm->tag_type;
 		}
@@ -197,13 +211,17 @@ static tag_type_t get_tag(const char *t)
         return tt_unknown;
 }
 
+
+
 /******************************************/
+
+
 
 tag_type_t current_tag = tt_unknown;
 GString * xpath = NULL;
 GString * c_cdata = NULL;
 
-/* current ("c_") objects */
+/* Current ("c_") objects. */
 Trackpoint * c_tp = NULL;
 Waypoint * c_wp = NULL;
 Track * c_tr = NULL;
@@ -212,15 +230,18 @@ TRWMetadata * c_md = NULL;
 char * c_wp_name = NULL;
 char * c_tr_name = NULL;
 
-/* temporary things so we don't have to create them lots of times */
+/* Temporary things so we don't have to create them lots of times. */
 const char * c_slat, * c_slon;
 struct LatLon c_ll;
 
-/* specialty flags / etc */
+/* Specialty flags / etc. */
 bool f_tr_newseg;
 unsigned int unnamed_waypoints = 0;
 unsigned int unnamed_tracks = 0;
 unsigned int unnamed_routes = 0;
+
+
+
 
 static char const * get_attr(char const ** attr, char const * key)
 {
@@ -233,6 +254,9 @@ static char const * get_attr(char const ** attr, char const * key)
 	return NULL;
 }
 
+
+
+
 static bool set_c_ll(char const ** attr)
 {
 	if ((c_slat = get_attr(attr, "lat")) && (c_slon = get_attr(attr, "lon"))) {
@@ -242,6 +266,9 @@ static bool set_c_ll(char const ** attr)
 	}
 	return false;
 }
+
+
+
 
 static void gpx_start(LayerTRW * trw, char const * el, char const * *attr)
 {
@@ -319,7 +346,7 @@ static void gpx_start(LayerTRW * trw, char const * el, char const * *attr)
 	case tt_trk_src:
 	case tt_trk_type:
 	case tt_trk_name:
-		g_string_erase(c_cdata, 0, -1); /* clear the cdata buffer */
+		g_string_erase(c_cdata, 0, -1); /* Clear the cdata buffer. */
 		break;
 
 	case tt_waypoint:
@@ -340,12 +367,15 @@ static void gpx_start(LayerTRW * trw, char const * el, char const * *attr)
 			}
 			c_wp_name = g_strdup(tmp);
 		}
-		g_string_erase(c_cdata, 0, -1); /* clear the cdata buffer for description */
+		g_string_erase(c_cdata, 0, -1); /* Clear the cdata buffer for description. */
 		break;
 
 	default: break;
 	}
 }
+
+
+
 
 static void gpx_end(LayerTRW * trw, char const * el)
 {
@@ -401,7 +431,7 @@ static void gpx_end(LayerTRW * trw, char const * el)
 		if (!c_tr_name) {
 			c_tr_name = g_strdup_printf("VIKING_TR%03d", unnamed_tracks++);
 		}
-		// Delibrate fall through
+		/* Delibrate fall through. */
 	case tt_rte:
 		if (!c_tr_name) {
 			c_tr_name = g_strdup_printf("VIKING_RT%03d", unnamed_routes++);
@@ -567,6 +597,9 @@ static void gpx_end(LayerTRW * trw, char const * el)
 	current_tag = get_tag(xpath->str);
 }
 
+
+
+
 static void gpx_cdata(void * dta, const XML_Char * s, int len)
 {
 	switch (current_tag) {
@@ -604,26 +637,29 @@ static void gpx_cdata(void * dta, const XML_Char * s, int len)
 		g_string_append_len(c_cdata, s, len);
 		break;
 
-	default: break;  /* ignore cdata from other things */
+	default: break;  /* Ignore cdata from other things. */
 	}
 }
 
-// make like a "stack" of tag names
-// like gpspoint's separated like /gpx/wpt/whatever
 
-bool a_gpx_read_file(LayerTRW * trw, FILE * f)
+
+
+/* Make like a "stack" of tag names like gpspoint's separated like /gpx/wpt/whatever. */
+
+bool SlavGPS::a_gpx_read_file(LayerTRW * trw, FILE * f)
 {
+	assert (f != NULL && trw != NULL);
+
 	XML_Parser parser = XML_ParserCreate(NULL);
-	int done=0, len;
+	int done = 0;
+	int len;
 	enum XML_Status status = XML_STATUS_ERROR;
 
 	XML_SetElementHandler(parser, (XML_StartElementHandler) gpx_start, (XML_EndElementHandler) gpx_end);
-	XML_SetUserData(parser, trw); /* in the future we could remove all global variables */
+	XML_SetUserData(parser, trw); /* In the future we could remove all global variables. */
 	XML_SetCharacterDataHandler(parser, (XML_CharacterDataHandler) gpx_cdata);
 
 	char buf[4096];
-
-	assert (f != NULL && trw != NULL);
 
 	xpath = g_string_new("");
 	c_cdata = g_string_new("");
@@ -645,15 +681,16 @@ bool a_gpx_read_file(LayerTRW * trw, FILE * f)
 	return status != XML_STATUS_ERROR;
 }
 
-/**** entitize from GPSBabel ****/
+
+
+/**** Entitize from GPSBabel ****/
 typedef struct {
         const char * text;
         const char * entity;
         int  not_html;
 } entity_types;
 
-static
-entity_types stdentities[] = {
+static entity_types stdentities[] = {
         { "&",  "&amp;",  0 },
         { "'",  "&apos;", 1 },
         { "<",  "&lt;",   0 },
@@ -661,6 +698,9 @@ entity_types stdentities[] = {
         { "\"", "&quot;", 0 },
         { NULL, NULL,     0 }
 };
+
+
+
 
 void utf8_to_int(const char *cp, int *bytes, int *value)
 {
@@ -721,20 +761,23 @@ dodefault:
         }
 }
 
+
+
+
 static char * entitize(char const * str)
 {
-        int elen, ecount, nsecount;
-        entity_types * ep;
         char const * cp;
-        char * p, * tmp, * xstr;
+        char * p, * xstr;
 
         char tmpsub[20];
         int bytes = 0;
         int value = 0;
-        ep = stdentities;
-        elen = ecount = nsecount = 0;
+        entity_types * ep = stdentities;
+        int elen = 0;
+	int ecount = 0;
+	int nsecount = 0;
 
-        /* figure # of entity replacements and additional size. */
+        /* Figure # of entity replacements and additional size. */
         while (ep->text) {
                 cp = str;
                 while ((cp = strstr(cp, ep->text)) != NULL) {
@@ -758,7 +801,7 @@ static char * entitize(char const * str)
         }
 
         /* enough space for the whole string plus entity replacements, if any */
-        tmp = (char *) malloc((strlen(str) + elen + 1));
+        char * tmp = (char *) malloc((strlen(str) + elen + 1));
         strcpy(tmp, str);
 
         /* no entity replacements */
@@ -807,15 +850,19 @@ static char * entitize(char const * str)
         }
         return (tmp);
 }
-/**** end GPSBabel code ****/
+/**** End GPSBabel code. ****/
 
-/* export GPX */
+
+
+
+/* Export GPX. */
 
 static void gpx_write_waypoint(Waypoint * wp, GpxWritingContext * context)
 {
-	// Don't write invisible waypoints when specified
-	if (context->options && !context->options->hidden && !wp->visible)
+	/* Don't write invisible waypoints when specified. */
+	if (context->options && !context->options->hidden && !wp->visible) {
 		return;
+	}
 
 	FILE *f = context->file;
 	static struct LatLon ll;
@@ -824,14 +871,14 @@ static void gpx_write_waypoint(Waypoint * wp, GpxWritingContext * context)
 	vik_coord_to_latlon(&(wp->coord), &ll);
 	s_lat = a_coords_dtostr(ll.lat);
 	s_lon = a_coords_dtostr(ll.lon);
-	// NB 'hidden' is not part of any GPX standard - this appears to be a made up Viking 'extension'
-	//  luckily most other GPX processing software ignores things they don't understand
+	/* NB 'hidden' is not part of any GPX standard - this appears to be a made up Viking 'extension'.
+	   Luckily most other GPX processing software ignores things they don't understand. */
 	fprintf(f, "<wpt lat=\"%s\" lon=\"%s\"%s>\n",
 		 s_lat, s_lon, wp->visible ? "" : " hidden=\"hidden\"");
 	free(s_lat);
 	free(s_lon);
 
-	// Sanity clause
+	/* Sanity clause. */
 	if (wp->name) {
 		tmp = entitize(wp->name);
 	} else {
@@ -892,7 +939,7 @@ static void gpx_write_waypoint(Waypoint * wp, GpxWritingContext * context)
 	if (wp->symbol) {
 		tmp = entitize(wp->symbol);
 		if (a_vik_gpx_export_wpt_sym_name()) {
-			// Lowercase the symbol name
+			/* Lowercase the symbol name. */
 			char * tmp2 = g_utf8_strdown(tmp, -1);
 			fprintf(f, "  <sym>%s</sym>\n",  tmp2);
 			free(tmp2);
@@ -905,6 +952,9 @@ static void gpx_write_waypoint(Waypoint * wp, GpxWritingContext * context)
 	fprintf(f, "</wpt>\n");
 }
 
+
+
+
 static void gpx_write_trackpoint(Trackpoint * tp, GpxWritingContext * context)
 {
 	FILE * f = context->file;
@@ -913,7 +963,7 @@ static void gpx_write_trackpoint(Trackpoint * tp, GpxWritingContext * context)
 	char *time_iso8601;
 	vik_coord_to_latlon(&(tp->coord), &ll);
 
-	// No such thing as a rteseg! So make sure we don't put them in
+	/* No such thing as a rteseg! So make sure we don't put them in. */
 	if (context->options && !context->options->is_route && tp->newsegment) {
 		fprintf(f, "  </trkseg>\n  <trkseg>\n");
 	}
@@ -1016,9 +1066,11 @@ static void gpx_write_trackpoint(Trackpoint * tp, GpxWritingContext * context)
 }
 
 
+
+
 static void gpx_write_track(Track * trk, GpxWritingContext * context)
 {
-	// Don't write invisible tracks when specified
+	/* Don't write invisible tracks when specified. */
 	if (context->options && !context->options->hidden && !trk->visible) {
 		return;
 	}
@@ -1026,15 +1078,15 @@ static void gpx_write_track(Track * trk, GpxWritingContext * context)
 	FILE * f = context->file;
 	char * tmp;
 
-	// Sanity clause
+	/* Sanity clause. */
 	if (trk->name) {
 		tmp = entitize(trk->name);
 	} else {
 		tmp = strdup("track");
 	}
 
-	// NB 'hidden' is not part of any GPX standard - this appears to be a made up Viking 'extension'
-	//  luckily most other GPX processing software ignores things they don't understand
+	/* NB 'hidden' is not part of any GPX standard - this appears to be a made up Viking 'extension'.
+	   Luckily most other GPX processing software ignores things they don't understand. */
 	fprintf(f, "<%s%s>\n  <name>%s</name>\n",
 		trk->is_route ? "rte" : "trk",
 		trk->visible ? "" : " hidden=\"hidden\"",
@@ -1074,13 +1126,13 @@ static void gpx_write_track(Track * trk, GpxWritingContext * context)
 
 		auto first = trk->trackpointsB->begin();
 		bool first_tp_is_newsegment = (*first)->newsegment;
-		(*first)->newsegment = false; /* so we won't write </trkseg><trkseg> already */
+		(*first)->newsegment = false; /* So we won't write </trkseg><trkseg> already. */
 
 		for (auto iter = trk->trackpointsB->begin(); iter != trk->trackpointsB->end(); iter++) {
 			gpx_write_trackpoint(*iter, context);
 		}
 
-		(*first)->newsegment = first_tp_is_newsegment; /* restore state */
+		(*first)->newsegment = first_tp_is_newsegment; /* Restore state. */
 	}
 
 	/* NB apparently no such thing as a rteseg! */
@@ -1091,6 +1143,9 @@ static void gpx_write_track(Track * trk, GpxWritingContext * context)
 	fprintf(f, "</%s>\n", trk->is_route ? "rte" : "trk");
 }
 
+
+
+
 static void gpx_write_header(FILE * f)
 {
 	fprintf(f, "<?xml version=\"1.0\"?>\n"
@@ -1100,10 +1155,16 @@ static void gpx_write_header(FILE * f)
 		"xsi:schemaLocation=\"http://www.topografix.com/GPX/1/0 http://www.topografix.com/GPX/1/0/gpx.xsd\">\n");
 }
 
+
+
+
 static void gpx_write_footer(FILE * f)
 {
 	fprintf(f, "</gpx>\n");
 }
+
+
+
 
 static int gpx_waypoint_compare(const void * x, const void * y)
 {
@@ -1112,6 +1173,9 @@ static int gpx_waypoint_compare(const void * x, const void * y)
 	return strcmp(a->name,b->name);
 }
 
+
+
+
 static int gpx_track_compare_name(const void * x, const void * y)
 {
 	Track * a = (Track *) x;
@@ -1119,7 +1183,10 @@ static int gpx_track_compare_name(const void * x, const void * y)
 	return strcmp(a->name,b->name);
 }
 
-void a_gpx_write_file(LayerTRW * trw, FILE * f, GpxWritingOptions * options)
+
+
+
+void SlavGPS::a_gpx_write_file(LayerTRW * trw, FILE * f, GpxWritingOptions * options)
 {
 	GpxWritingContext context = { options, f };
 
@@ -1158,13 +1225,12 @@ void a_gpx_write_file(LayerTRW * trw, FILE * f, GpxWritingOptions * options)
 	}
 
 	if (trw->get_waypoints_visibility() || (options && options->hidden)) {
-		// gather waypoints in a list, then sort
+		/* Gather waypoints in a list, then sort. */
 		std::unordered_map<sg_uid_t, Waypoint *> & waypoints = trw->get_waypoints();
-		std::unordered_map<sg_uid_t, Waypoint *>::iterator i;
 		int index = 0;
 		GList * gl = NULL;
-		for (i = waypoints.begin(); i != waypoints.end(); i++) {
-			gl = g_list_insert(gl, i->second, index++);
+		for (auto iter = waypoints.begin(); iter != waypoints.end(); iter++) {
+			gl = g_list_insert(gl, iter->second, index++);
 		}
 
 		gl = g_list_sort(gl, gpx_waypoint_compare);
@@ -1177,8 +1243,8 @@ void a_gpx_write_file(LayerTRW * trw, FILE * f, GpxWritingOptions * options)
 
 	GList * gl = NULL;
 	if (trw->get_tracks_visibility() || (options && options->hidden)) {
-		//gl = g_hash_table_get_values (vik_trw_layer_get_tracks (trw));
-		// Forming the list manually seems to produce one that is more likely to be nearer to the creation order
+		//gl = g_hash_table_get_values(vik_trw_layer_get_tracks (trw));
+		/* Forming the list manually seems to produce one that is more likely to be nearer to the creation order. */
 
 		std::unordered_map<sg_uid_t, Track *> tracks = trw->get_tracks();
 		for (auto i = tracks.begin(); i != tracks.end(); i++) {
@@ -1186,7 +1252,7 @@ void a_gpx_write_file(LayerTRW * trw, FILE * f, GpxWritingOptions * options)
 		}
 		gl = g_list_reverse(gl);
 
-		// Sort method determined by preference
+		/* Sort method determined by preference. */
 		if (a_vik_get_gpx_export_trk_sort() == VIK_GPX_EXPORT_TRK_SORT_TIME) {
 			gl = g_list_sort(gl, Track::compare_timestamp);
 		} else if (a_vik_get_gpx_export_trk_sort() == VIK_GPX_EXPORT_TRK_SORT_ALPHA) {
@@ -1197,7 +1263,7 @@ void a_gpx_write_file(LayerTRW * trw, FILE * f, GpxWritingOptions * options)
 	}
 
 	GList * glrte = NULL;
-	// Routes sorted by name
+	/* Routes sorted by name. */
 	if (trw->get_routes_visibility() || (options && options->hidden)) {
 
 		std::unordered_map<sg_uid_t, Track *> routes = trw->get_routes();
@@ -1208,23 +1274,22 @@ void a_gpx_write_file(LayerTRW * trw, FILE * f, GpxWritingOptions * options)
 		glrte = g_list_sort(glrte, gpx_track_compare_name);
 	}
 
-	// g_list_concat doesn't copy memory properly
-	// so process each list separately
+	/* g_list_concat doesn't copy memory properly so process each list separately. */
 
 	GpxWritingContext context_tmp = context;
 	GpxWritingOptions opt_tmp = { false, false, false, false };
-	// Force trackpoints on tracks
+	/* Force trackpoints on tracks. */
 	if (!context.options) {
 		context_tmp.options = &opt_tmp;
 	}
 	context_tmp.options->is_route = false;
 
-	// Loop around each list and write each one
+	/* Loop around each list and write each one. */
 	for (GList *iter = g_list_first(gl); iter != NULL; iter = g_list_next(iter)) {
 		gpx_write_track((Track *) iter->data, &context_tmp);
 	}
 
-	// Routes (to get routepoints)
+	/* Routes (to get routepoints). */
 	context_tmp.options->is_route = true;
 	for (GList * iter = g_list_first(glrte); iter != NULL; iter = g_list_next(iter)) {
 		gpx_write_track((Track *) iter->data, &context_tmp);
@@ -1236,7 +1301,10 @@ void a_gpx_write_file(LayerTRW * trw, FILE * f, GpxWritingOptions * options)
 	gpx_write_footer(f);
 }
 
-void a_gpx_write_track_file(Track * trk, FILE * f, GpxWritingOptions * options)
+
+
+
+void SlavGPS::a_gpx_write_track_file(Track * trk, FILE * f, GpxWritingOptions * options)
 {
 	GpxWritingContext context = {options, f};
 	gpx_write_header(f);
@@ -1244,14 +1312,17 @@ void a_gpx_write_track_file(Track * trk, FILE * f, GpxWritingOptions * options)
 	gpx_write_footer(f);
 }
 
+
+
+
 /**
- * Common write of a temporary GPX file
+ * Common write of a temporary GPX file.
  */
 static char * write_tmp_file(LayerTRW * trw, Track * trk, GpxWritingOptions * options)
 {
 	char * tmp_filename = NULL;
 	GError * error = NULL;
-	// Opening temporary file
+	/* Opening temporary file. */
 	int fd = g_file_open_tmp("viking_XXXXXX.gpx", &tmp_filename, &error);
 	if (fd < 0) {
 		fprintf(stderr, _("WARNING: failed to open temporary file: %s\n"), error->message);
@@ -1273,30 +1344,34 @@ static char * write_tmp_file(LayerTRW * trw, Track * trk, GpxWritingOptions * op
 	return tmp_filename;
 }
 
+
+
+
 /*
- * a_gpx_write_tmp_file:
  * @trw:     The #LayerTRW to write
  * @options: Possible ways of writing the file data (can be NULL)
  *
- * Returns: The name of newly created temporary GPX file
+ * Returns: The name of newly created temporary GPX file.
  *          This file should be removed once used and the string freed.
  *          If NULL then the process failed.
  */
-char * a_gpx_write_tmp_file(LayerTRW * trw, GpxWritingOptions * options)
+char * SlavGPS::a_gpx_write_tmp_file(LayerTRW * trw, GpxWritingOptions * options)
 {
 	return write_tmp_file(trw, NULL, options);
 }
 
+
+
+
 /*
- * a_gpx_write_track_tmp_file:
  * @trk:     The #Track to write
  * @options: Possible ways of writing the file data (can be NULL)
  *
- * Returns: The name of newly created temporary GPX file
+ * Returns: The name of newly created temporary GPX file.
  *          This file should be removed once used and the string freed.
  *          If NULL then the process failed.
  */
-char * a_gpx_write_track_tmp_file(Track * trk, GpxWritingOptions * options)
+char * SlavGPS::a_gpx_write_track_tmp_file(Track * trk, GpxWritingOptions * options)
 {
 	return write_tmp_file(NULL, trk, options);
 }

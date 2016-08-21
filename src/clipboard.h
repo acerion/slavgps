@@ -19,32 +19,45 @@
  *
  */
 
-#ifndef _VIKING_CLIPBOARD_H
-#define _VIKING_CLIPBOARD_H
+#ifndef _SG_CLIPBOARD_H_
+#define _SG_CLIPBOARD_H_
+
+
+
 
 #include <stdint.h>
 
 #include "viklayerspanel.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
-typedef enum {
-	VIK_CLIPBOARD_DATA_NONE = 0,
-	VIK_CLIPBOARD_DATA_LAYER,
-	VIK_CLIPBOARD_DATA_SUBLAYER,
-	VIK_CLIPBOARD_DATA_TEXT,
-} VikClipboardDataType;
 
-void a_clipboard_copy(VikClipboardDataType  type, SlavGPS::LayerType layer_type, SlavGPS::SublayerType sublayer_type, unsigned int len, const char * text, uint8_t * data);
-void a_clipboard_copy_selected(SlavGPS::LayersPanel * panel);
-bool a_clipboard_paste(SlavGPS::LayersPanel * panel);
-VikClipboardDataType a_clipboard_type();
+namespace SlavGPS {
 
-#ifdef __cplusplus
-}
-#endif
 
-#endif
+
+
+	typedef enum {
+		VIK_CLIPBOARD_DATA_NONE = 0,
+		VIK_CLIPBOARD_DATA_LAYER,
+		VIK_CLIPBOARD_DATA_SUBLAYER,
+		VIK_CLIPBOARD_DATA_TEXT,
+	} VikClipboardDataType;
+
+
+
+
+	void a_clipboard_copy(VikClipboardDataType  type, LayerType layer_type, SublayerType sublayer_type, unsigned int len, const char * text, uint8_t * data);
+	void a_clipboard_copy_selected(LayersPanel * panel);
+	bool a_clipboard_paste(LayersPanel * panel);
+	VikClipboardDataType a_clipboard_type();
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
+#endif /* #ifndef _SG_CLIPBOARD_H_ */

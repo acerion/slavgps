@@ -31,8 +31,8 @@
 #include "config.h"
 #endif
 
-
-#include <assert.h>
+#include <cassert>
+#include <cstdio>
 
 #ifdef HAVE_MATH_H
 #include <math.h>
@@ -43,7 +43,7 @@
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>
 #endif
-#include <stdio.h>
+
 
 #include <glib.h>
 #include <glib/gi18n.h>
@@ -71,7 +71,6 @@ static int  trw_layer_draw_image(Waypoint * wp, int x, int y, DrawingParams * dp
 
 
 
-
 void init_drawing_params(DrawingParams * dp, LayerTRW * trw, Viewport * viewport, bool highlight)
 {
 	dp->trw = trw;
@@ -82,17 +81,17 @@ void init_drawing_params(DrawingParams * dp, LayerTRW * trw, Viewport * viewport
 	dp->ympp = viewport->get_ympp();
 	dp->width = viewport->get_width();
 	dp->height = viewport->get_height();
-	dp->cc = trw->drawdirections_size * cos(DEG2RAD(45)); // Calculate once per trw update - even if not used
-	dp->ss = trw->drawdirections_size * sin(DEG2RAD(45)); // Calculate once per trw update - even if not used
+	dp->cc = trw->drawdirections_size * cos(DEG2RAD(45)); /* Calculate once per trw update - even if not used. */
+	dp->ss = trw->drawdirections_size * sin(DEG2RAD(45)); /* Calculate once per trw update - even if not used. */
 
 	dp->center = viewport->get_center();
 	dp->coord_mode = viewport->get_coord_mode();
-	dp->one_utm_zone = viewport->is_one_zone(); /* false if some other projection besides UTM */
+	dp->one_utm_zone = viewport->is_one_zone(); /* False if some other projection besides UTM. */
 
 	if (dp->coord_mode == VIK_COORD_UTM && dp->one_utm_zone) {
 		int w2 = dp->xmpp * (dp->width / 2) + 1600 / dp->xmpp;
 		int h2 = dp->ympp * (dp->height / 2) + 1600 / dp->ympp;
-		/* leniency -- for tracks. Obviously for waypoints this SHOULD be a lot smaller */
+		/* Leniency -- for tracks. Obviously for waypoints this SHOULD be a lot smaller. */
 
 		dp->ce1 = dp->center->east_west - w2;
 		dp->ce2 = dp->center->east_west + w2;
@@ -101,8 +100,8 @@ void init_drawing_params(DrawingParams * dp, LayerTRW * trw, Viewport * viewport
 
 	} else if (dp->coord_mode == VIK_COORD_LATLON) {
 		VikCoord upperleft, bottomright;
-		/* quick & dirty calculation; really want to check all corners due to lat/lon smaller at top in northern hemisphere */
-		/* this also DOESN'T WORK if you are crossing 180/-180 lon. I don't plan to in the near future...  */
+		/* Quick & dirty calculation; really want to check all corners due to lat/lon smaller at top in northern hemisphere. */
+		/* This also DOESN'T WORK if you are crossing 180/-180 lon. I don't plan to in the near future... */
 		viewport->screen_to_coord(-500, -500, &upperleft);
 		viewport->screen_to_coord(dp->width + 500, dp->height + 500, &bottomright);
 		dp->ce1 = upperleft.east_west;
@@ -119,9 +118,8 @@ void init_drawing_params(DrawingParams * dp, LayerTRW * trw, Viewport * viewport
 
 
 
-
 /*
- * Determine the colour of the trackpoint (and/or trackline) relative to the average speed
+ * Determine the colour of the trackpoint (and/or trackline) relative to the average speed.
  * Here a simple traffic like light colour system is used:
  *  . slow points are red
  *  . average is yellow
@@ -148,7 +146,6 @@ static int track_section_colour_by_speed(Layer * trw, Trackpoint * tp1, Trackpoi
 
 
 
-
 static void draw_utm_skip_insignia(Viewport * viewport, GdkGC * gc, int x, int y)
 {
 	/* First draw '+'. */
@@ -163,7 +160,6 @@ static void draw_utm_skip_insignia(Viewport * viewport, GdkGC * gc, int x, int y
 
 
 
-
 static void trw_layer_draw_track_label(char * name, char * fgcolour, char * bgcolour, DrawingParams * dp, VikCoord * coord)
 {
 	char *label_markup = g_strdup_printf("<span foreground=\"%s\" background=\"%s\" size=\"%s\">%s</span>", fgcolour, bgcolour, dp->trw->track_fsize_str, name);
@@ -171,7 +167,7 @@ static void trw_layer_draw_track_label(char * name, char * fgcolour, char * bgco
 	if (pango_parse_markup(label_markup, -1, 0, NULL, NULL, NULL, NULL)) {
 		pango_layout_set_markup(dp->trw->tracklabellayout, label_markup, -1);
 	} else {
-		// Fallback if parse failure
+		/* Fallback if parse failure. */
 		pango_layout_set_text(dp->trw->tracklabellayout, name, -1);
 	}
 
@@ -188,11 +184,8 @@ static void trw_layer_draw_track_label(char * name, char * fgcolour, char * bgco
 
 
 
-
 /**
- * trw_layer_draw_dist_labels:
- *
- * Draw a few labels along a track at nicely seperated distances
+ * Draw a few labels along a track at nicely seperated distances.
  * This might slow things down if there's many tracks being displayed with this on.
  */
 static void trw_layer_draw_dist_labels(DrawingParams * dp, Track * trk, bool drawing_highlight)
@@ -220,7 +213,7 @@ static void trw_layer_draw_dist_labels(DrawingParams * dp, Track * trk, bool dra
 	for (int i = 1; i < trk->max_number_dist_labels+1; i++) {
 		double dist_i = dist * i;
 
-		// Convert distance back into metres for use in finding a trackpoint
+		/* Convert distance back into metres for use in finding a trackpoint. */
 		switch (distance_unit) {
 		case DistanceUnit::MILES:
 			dist_i = VIK_MILES_TO_METERS(dist_i);
@@ -229,7 +222,7 @@ static void trw_layer_draw_dist_labels(DrawingParams * dp, Track * trk, bool dra
 			dist_i = VIK_NAUTICAL_MILES_TO_METERS(dist_i);
 			break;
 		default:
-			// DistanceUnit::KILOMETRES:
+			/* DistanceUnit::KILOMETRES. */
 			dist_i = dist_i*1000.0;
 			break;
 		}
@@ -241,29 +234,29 @@ static void trw_layer_draw_dist_labels(DrawingParams * dp, Track * trk, bool dra
 
 		double dist_between_tps = fabs(dist_next - dist_current);
 		double ratio = 0.0;
-		// Prevent division by 0 errors
+		/* Prevent division by 0 errors. */
 		if (dist_between_tps > 0.0) {
 			ratio = fabs(dist_i-dist_current) / dist_between_tps;
 		}
 
 		if (tp_current && tp_next) {
-			// Construct the name based on the distance value
+			/* Construct the name based on the distance value. */
 
 
 			char *name;
 			char unit_string[16];
 			get_distance_unit_string(unit_string, sizeof (unit_string), distance_unit);
 
-			// Convert for display
+			/* Convert for display. */
 			dist_i = convert_distance_meters_to(distance_unit, dist_i);
 
-			// Make the precision of the output related to the unit size.
+			/* Make the precision of the output related to the unit size. */
 			if (index == 0) {
 				name = g_strdup_printf("%.2f %s", dist_i, unit_string);
 			} else if (index == 1) {
 				name = g_strdup_printf("%.1f %s", dist_i, unit_string);
 			} else {
-				name = g_strdup_printf("%d %s", (int) round(dist_i), unit_string); // TODO single vs plurals
+				name = g_strdup_printf("%d %s", (int) round(dist_i), unit_string); /* TODO single vs plurals. */
 			}
 
 
@@ -271,9 +264,9 @@ static void trw_layer_draw_dist_labels(DrawingParams * dp, Track * trk, bool dra
 			vik_coord_to_latlon(&tp_current->coord, &ll_current);
 			vik_coord_to_latlon(&tp_next->coord, &ll_next);
 
-			// positional interpolation
-			// Using a simple ratio - may not be perfectly correct due to lat/long projections
-			//  but should be good enough over the small scale that I anticipate usage on
+			/* Positional interpolation.
+			   Using a simple ratio - may not be perfectly correct due to lat/long projections
+			   but should be good enough over the small scale that I anticipate usage on. */
 			struct LatLon ll_new = { ll_current.lat + (ll_next.lat-ll_current.lat)*ratio,
 						 ll_current.lon + (ll_next.lon-ll_current.lon)*ratio };
 			VikCoord coord;
@@ -286,7 +279,7 @@ static void trw_layer_draw_dist_labels(DrawingParams * dp, Track * trk, bool dra
 				fgcolour = gdk_color_to_string(&(dp->trw->track_color));
 			}
 
-			// if highlight mode on, then colour the background in the highlight colour
+			/* If highlight mode on, then colour the background in the highlight colour. */
 			char *bgcolour;
 			if (drawing_highlight) {
 				bgcolour = g_strdup(dp->viewport->get_highlight_color());
@@ -306,11 +299,8 @@ static void trw_layer_draw_dist_labels(DrawingParams * dp, Track * trk, bool dra
 
 
 
-
 /**
- * trw_layer_draw_track_name_labels:
- *
- * Draw a label (or labels) for the track name somewhere depending on the track's properties
+ * Draw a label (or labels) for the track name somewhere depending on the track's properties.
  */
 static void trw_layer_draw_track_name_labels(DrawingParams * dp, Track * trk, bool drawing_highlight)
 {
@@ -321,7 +311,7 @@ static void trw_layer_draw_track_name_labels(DrawingParams * dp, Track * trk, bo
 		fgcolour = gdk_color_to_string(&(dp->trw->track_color));
 	}
 
-	// if highlight mode on, then colour the background in the highlight colour
+	/* If highlight mode on, then colour the background in the highlight colour. */
 	char *bgcolour;
 	if (drawing_highlight) {
 		bgcolour = g_strdup(dp->viewport->get_highlight_color());
@@ -344,7 +334,7 @@ static void trw_layer_draw_track_name_labels(DrawingParams * dp, Track * trk, bo
 	}
 
 	if (trk->draw_name_mode == TRACK_DRAWNAME_CENTRE) {
-		// No other labels to draw
+		/* No other labels to draw. */
 		return;
 	}
 
@@ -364,14 +354,14 @@ static void trw_layer_draw_track_name_labels(DrawingParams * dp, Track * trk, bo
 	if (trk->draw_name_mode == TRACK_DRAWNAME_START_END ||
 	    trk->draw_name_mode == TRACK_DRAWNAME_START_END_CENTRE) {
 
-		// This number can be configured via the settings if you really want to change it
+		/* This number can be configured via the settings if you really want to change it. */
 		double distance_diff;
 		if (! a_settings_get_double("trackwaypoint_start_end_distance_diff", &distance_diff)) {
 			distance_diff = 100.0; // Metres
 		}
 
 		if (vik_coord_diff(&begin_coord, &end_coord) < distance_diff) {
-			// Start and end 'close' together so only draw one label at an average location
+			/* Start and end 'close' together so only draw one label at an average location. */
 			int x1, x2, y1, y2;
 			dp->viewport->coord_to_screen(&begin_coord, &x1, &y1);
 			dp->viewport->coord_to_screen(&end_coord, &x2, &y2);
@@ -387,18 +377,20 @@ static void trw_layer_draw_track_name_labels(DrawingParams * dp, Track * trk, bo
 	}
 
 	if (! done_start_end) {
-		if (trk->draw_name_mode == TRACK_DRAWNAME_START ||
-		    trk->draw_name_mode == TRACK_DRAWNAME_START_END ||
-		    trk->draw_name_mode == TRACK_DRAWNAME_START_END_CENTRE) {
+		if (trk->draw_name_mode == TRACK_DRAWNAME_START
+		    || trk->draw_name_mode == TRACK_DRAWNAME_START_END
+		    || trk->draw_name_mode == TRACK_DRAWNAME_START_END_CENTRE) {
+
 			char *name_start = g_strdup_printf("%s: %s", ename, _("start"));
 			trw_layer_draw_track_label(name_start, fgcolour, bgcolour, dp, &begin_coord);
 			free(name_start);
 		}
-		// Don't draw end label if this is the one being created
+		/* Don't draw end label if this is the one being created. */
 		if (trk != dp->trw->current_track) {
-			if (trk->draw_name_mode == TRACK_DRAWNAME_END ||
-			    trk->draw_name_mode == TRACK_DRAWNAME_START_END ||
-			    trk->draw_name_mode == TRACK_DRAWNAME_START_END_CENTRE) {
+			if (trk->draw_name_mode == TRACK_DRAWNAME_END
+			    || trk->draw_name_mode == TRACK_DRAWNAME_START_END
+			    || trk->draw_name_mode == TRACK_DRAWNAME_START_END_CENTRE) {
+
 				char *name_end = g_strdup_printf("%s: %s", ename, _("end"));
 				trw_layer_draw_track_label(name_end, fgcolour, bgcolour, dp, &end_coord);
 				free(name_end);
@@ -414,11 +406,8 @@ static void trw_layer_draw_track_name_labels(DrawingParams * dp, Track * trk, bo
 
 
 
-
 /**
- * trw_layer_draw_point_names:
- *
- * Draw a point labels along a track
+ * Draw a point labels along a track.
  * This might slow things down if there's many tracks being displayed with this on.
  */
 static void trw_layer_draw_point_names(DrawingParams * dp, Track * trk, bool drawing_highlight)
@@ -453,14 +442,13 @@ static void trw_layer_draw_point_names(DrawingParams * dp, Track * trk, bool dra
 
 
 
-
 void trw_layer_draw_track_draw_midarrow(DrawingParams * dp, int x, int y, int oldx, int oldy, GdkGC * main_gc)
 {
 	int midx = (oldx + x) / 2;
 	int midy = (oldy + y) / 2;
 
 	double len = sqrt(((midx - oldx) * (midx - oldx)) + ((midy - oldy) * (midy - oldy)));
-	// Avoid divide by zero and ensure at least 1 pixel big
+	/* Avoid divide by zero and ensure at least 1 pixel big. */
 	if (len > 1) {
 		double dx = (oldx - midx) / len;
 		double dy = (oldy - midy) / len;
@@ -468,7 +456,6 @@ void trw_layer_draw_track_draw_midarrow(DrawingParams * dp, int x, int y, int ol
 		dp->viewport->draw_line(main_gc, midx, midy, midx + (dx * dp->cc - dy * dp->ss), midy + (dy * dp->cc + dx * dp->ss));
 	}
 }
-
 
 
 
@@ -502,25 +489,24 @@ void trw_layer_draw_track_draw_something(DrawingParams * dp, int x, int y, int o
 
 
 
-
 static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_track_outline)
 {
 	if (!trk->visible) {
 		return;
 	}
 
-	/* TODO: this function is a mess, get rid of any redundancy */
+	/* TODO: this function is a mess, get rid of any redundancy. */
 
 	double min_alt, max_alt, alt_diff = 0;
 	if (dp->trw->drawelevation) {
 
-		/* assume if it has elevation at the beginning, it has it throughout. not ness a true good assumption */
+		/* Assume if it has elevation at the beginning, it has it throughout. not ness a true good assumption. */
 		if (trk->get_minmax_alt(&min_alt, &max_alt)) {
 			alt_diff = max_alt - min_alt;
 		}
 	}
 
-	/* admittedly this is not an efficient way to do it because we go through the whole GC thing all over... */
+	/* Admittedly this is not an efficient way to do it because we go through the whole GC thing all over... */
 	if (dp->trw->bg_line_thickness && !draw_track_outline) {
 		trw_layer_draw_track(trk, dp, true);
 	}
@@ -541,19 +527,19 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 
 	GdkGC * main_gc = NULL;
 	bool drawing_highlight = false;
-	/* Current track - used for creation */
+	/* Current track - used for creation. */
 	if (trk == dp->trw->current_track) {
 		main_gc = dp->trw->current_track_gc;
 	} else {
 		if (dp->highlight) {
-			/* Draw all tracks of the layer in special colour
-			   NB this supercedes the drawmode */
+			/* Draw all tracks of the layer in special colour.
+			   NB this supercedes the drawmode. */
 			main_gc = dp->viewport->get_gc_highlight();
 			drawing_highlight = true;
 		}
 
 		if (!drawing_highlight) {
-			// Still need to figure out the gc according to the drawing mode:
+			/* Still need to figure out the gc according to the drawing mode: */
 			switch (dp->trw->drawmode) {
 			case DRAWMODE_BY_TRACK:
 				if (dp->trw->track_1color_gc) {
@@ -564,8 +550,8 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 				main_gc = dp->trw->track_1color_gc;
 				break;
 			default:
-				// Mostly for DRAWMODE_ALL_SAME_COLOR
-				// but includes DRAWMODE_BY_SPEED, main_gc is set later on as necessary
+				/* Mostly for DRAWMODE_ALL_SAME_COLOR
+				   but includes DRAWMODE_BY_SPEED, main_gc is set later on as necessary. */
 				main_gc = g_array_index(dp->trw->track_gc, GdkGC *, VIK_TRW_LAYER_TRACK_GC_SINGLE);
 				break;
 			}
@@ -587,8 +573,8 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 	int x, y;
 	dp->viewport->coord_to_screen(&(*iter)->coord, &x, &y);
 
-	// Draw the first point as something a bit different from the normal points
-	// ATM it's slightly bigger and a triangle
+	/* Draw the first point as something a bit different from the normal points.
+	   ATM it's slightly bigger and a triangle. */
 	if (drawpoints) {
 		GdkPoint trian[3] = { { x, y-(3*tp_size) }, { x-(2*tp_size), y+(2*tp_size) }, {x+(2*tp_size), y+(2*tp_size)} };
 		dp->viewport->draw_polygon(main_gc, true, trian, 3);
@@ -597,9 +583,9 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 	double average_speed = 0.0;
 	double low_speed = 0.0;
 	double high_speed = 0.0;
-	// If necessary calculate these values - which is done only once per track redraw
+	/* If necessary calculate these values - which is done only once per track redraw. */
 	if (dp->trw->drawmode == DRAWMODE_BY_SPEED) {
-		// the percentage factor away from the average speed determines transistions between the levels
+		/* The percentage factor away from the average speed determines transistions between the levels. */
 		average_speed = trk->get_average_speed_moving(dp->trw->stop_length);
 		low_speed = average_speed - (average_speed*(dp->trw->track_draw_speed_factor/100.0));
 		high_speed = average_speed + (average_speed*(dp->trw->track_draw_speed_factor/100.0));
@@ -617,30 +603,30 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 		tp_size = (dp->trw->selected_tp.valid && tp == *dp->trw->selected_tp.iter) ? tp_size_cur : tp_size_reg;
 
 		Trackpoint * prev_tp = (Trackpoint *) *std::prev(iter);
-		// See if in a different lat/lon 'quadrant' so don't draw massively long lines (presumably wrong way around the Earth)
-		//  Mainly to prevent wrong lines drawn when a track crosses the 180 degrees East-West longitude boundary
-		//  (since Viewport::draw_line() only copes with pixel value and has no concept of the globe)
-		if (dp->coord_mode == VIK_COORD_LATLON &&
-		    ((prev_tp->coord.east_west < -90.0 && tp->coord.east_west > 90.0)
-		     || (prev_tp->coord.east_west > 90.0 && tp->coord.east_west < -90.0))) {
+		/* See if in a different lat/lon 'quadrant' so don't draw massively long lines (presumably wrong way around the Earth).
+		   Mainly to prevent wrong lines drawn when a track crosses the 180 degrees East-West longitude boundary
+		   (since Viewport::draw_line() only copes with pixel value and has no concept of the globe). */
+		if (dp->coord_mode == VIK_COORD_LATLON
+		    && ((prev_tp->coord.east_west < -90.0 && tp->coord.east_west > 90.0)
+			|| (prev_tp->coord.east_west > 90.0 && tp->coord.east_west < -90.0))) {
 
 			use_prev_xy = false;
 			continue;
 		}
 
-		/* check some stuff -- but only if we're in UTM and there's only ONE ZONE; or lat lon */
+		/* Check some stuff -- but only if we're in UTM and there's only ONE ZONE; or lat lon. */
 
 		/* kamilTODO: compare this condition with condition in trw_layer_draw_waypoint(). */
 		bool first_condition = (dp->coord_mode == VIK_COORD_UTM && !dp->one_utm_zone); /* UTM coord mode & more than one UTM zone - do everything. */
-		bool second_condition_A = ((!dp->one_utm_zone) || tp->coord.utm_zone == dp->center->utm_zone);  /* only check zones if UTM & one_utm_zone */
-		bool second_condition_B = tp->coord.east_west < dp->ce2 && tp->coord.east_west > dp->ce1;  /* both UTM and lat lon */
+		bool second_condition_A = ((!dp->one_utm_zone) || tp->coord.utm_zone == dp->center->utm_zone);  /* Only check zones if UTM & one_utm_zone. */
+		bool second_condition_B = tp->coord.east_west < dp->ce2 && tp->coord.east_west > dp->ce1;  /* Both UTM and lat lon. */
 		bool second_condition_C = tp->coord.north_south > dp->cn1 && tp->coord.north_south < dp->cn2;
 		bool second_condition = (second_condition_A && second_condition_B && second_condition_C);
 
 #if 0
-		if ((!dp->one_utm_zone && !dp->lat_lon) /* UTM & zones; do everything */
-		    || (((!dp->one_utm_zone) || tp->coord.utm_zone == dp->center->utm_zone) /* only check zones if UTM & one_utm_zone */
-			&& tp->coord.east_west < dp->ce2 && tp->coord.east_west > dp->ce1 /* both UTM and lat lon */
+		if ((!dp->one_utm_zone && !dp->lat_lon) /* UTM & zones; do everything. */
+		    || (((!dp->one_utm_zone) || tp->coord.utm_zone == dp->center->utm_zone) /* Only check zones if UTM & one_utm_zone. */
+			&& tp->coord.east_west < dp->ce2 && tp->coord.east_west > dp->ce1 /* Both UTM and lat lon. */
 			&& tp->coord.north_south > dp->cn1 && tp->coord.north_south < dp->cn2))
 
 #endif
@@ -674,7 +660,7 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 			}
 
 			if (drawpoints || dp->trw->drawlines) {
-				// setup main_gc for both point and line drawing
+				/* Setup main_gc for both point and line drawing. */
 				if (!drawing_highlight && (dp->trw->drawmode == DRAWMODE_BY_SPEED)) {
 					main_gc = g_array_index(dp->trw->track_gc, GdkGC *, track_section_colour_by_speed(dp->trw, tp, prev_tp, average_speed, low_speed, high_speed));
 				}
@@ -692,7 +678,7 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 
 			if ((!tp->newsegment) && (dp->trw->drawlines)) {
 
-				/* UTM only: zone check */
+				/* UTM only: zone check. */
 				if (drawpoints && dp->trw->coord_mode == VIK_COORD_UTM && tp->coord.utm_zone != dp->center->utm_zone) {
 					draw_utm_skip_insignia(dp->viewport, main_gc, x, y);
 				}
@@ -716,8 +702,8 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 			}
 
 			if ((!tp->newsegment) && dp->trw->drawdirections) {
-				// Draw an arrow at the mid point to show the direction of the track
-				// Code is a rework from vikwindow::draw_ruler()
+				/* Draw an arrow at the mid point to show the direction of the track.
+				   Code is a rework from vikwindow::draw_ruler(). */
 				trw_layer_draw_track_draw_midarrow(dp, x, y, prev_x, prev_y, main_gc);
 			}
 
@@ -744,7 +730,7 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 						}
 					}
 				} else {
-						/* Draw only if current point has different coordinates than the previous one. */
+					/* Draw only if current point has different coordinates than the previous one. */
 					if (x != prev_x && y != prev_y) { /* kamilFIXME: is && a correct condition? */
 						dp->viewport->coord_to_screen(&(prev_tp->coord), &x, &y);
 						draw_utm_skip_insignia(dp->viewport, main_gc, x, y);
@@ -755,7 +741,7 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 		}
 	}
 
-	// Labels drawn after the trackpoints, so the labels are on top
+	/* Labels drawn after the trackpoints, so the labels are on top. */
 	if (dp->trw->track_draw_labels) {
 		if (trk->max_number_dist_labels > 0) {
 			trw_layer_draw_dist_labels(dp, trk, drawing_highlight);
@@ -771,14 +757,12 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 
 
 
-
 void trw_layer_draw_track_cb(const void * id, Track * trk, DrawingParams * dp)
 {
 	if (BBOX_INTERSECT (trk->bbox, dp->bbox)) {
 		trw_layer_draw_track(trk, dp, false);
 	}
 }
-
 
 
 
@@ -814,21 +798,20 @@ static void trw_layer_draw_waypoint(Waypoint * wp, DrawingParams * dp)
 	int x, y;
 	dp->viewport->coord_to_screen(&(wp->coord), &x, &y);
 
-	/* if in shrunken_cache, get that. If not, get and add to shrunken_cache */
+	/* If in shrunken_cache, get that. If not, get and add to shrunken_cache. */
 	if (wp->image && dp->trw->drawimages)	{
 		if (0 == trw_layer_draw_image(wp, x, y, dp)) {
 			return;
 		}
 	}
 
-	// Draw appropriate symbol - either symbol image or simple types
+	/* Draw appropriate symbol - either symbol image or simple types. */
 	trw_layer_draw_symbol(wp, x, y, dp);
 
 	if (dp->trw->drawlabels) {
 		trw_layer_draw_label(wp, x, y, dp);
 	}
 }
-
 
 
 
@@ -861,13 +844,13 @@ int trw_layer_draw_image(Waypoint * wp, int x, int y, DrawingParams * dp)
 			}
 			cp->image = g_strdup(image);
 
-			// Apply alpha setting to the image before the pixbuf gets stored in the cache
+			/* Apply alpha setting to the image before the pixbuf gets stored in the cache. */
 			if (dp->trw->image_alpha != 255) {
 				cp->pixbuf = ui_pixbuf_set_alpha(cp->pixbuf, dp->trw->image_alpha);
 			}
 
-			/* needed so 'click picture' tool knows how big the pic is; we don't
-			 * store it in cp because they may have been freed already. */
+			/* Needed so 'click picture' tool knows how big the pic is; we don't
+			   store it in cp because they may have been freed already. */
 			wp->image_width = gdk_pixbuf_get_width(cp->pixbuf);
 			wp->image_height = gdk_pixbuf_get_height(cp->pixbuf);
 
@@ -887,8 +870,8 @@ int trw_layer_draw_image(Waypoint * wp, int x, int y, DrawingParams * dp)
 
 		if (x + (w / 2) > 0 && y + (h / 2) > 0 && x - (w / 2) < dp->width && y - (h / 2) < dp->height) { /* always draw within boundaries */
 			if (dp->highlight) {
-				// Highlighted - so draw a little border around the chosen one
-				// single line seems a little weak so draw 2 of them
+				/* Highlighted - so draw a little border around the chosen one
+				   single line seems a little weak so draw 2 of them. */
 				dp->viewport->draw_rectangle(dp->viewport->get_gc_highlight(), false,
 							    x - (w / 2) - 1, y - (h / 2) - 1, w + 2, h + 2);
 				dp->viewport->draw_rectangle(dp->viewport->get_gc_highlight(), false,
@@ -903,7 +886,6 @@ int trw_layer_draw_image(Waypoint * wp, int x, int y, DrawingParams * dp)
 	/* If failed to draw picture, default to drawing regular waypoint. */
 	return 1;
 }
-
 
 
 
@@ -955,19 +937,18 @@ void trw_layer_draw_symbol(Waypoint * wp, int x, int y, DrawingParams * dp)
 
 
 
-
 void trw_layer_draw_label(Waypoint * wp, int x, int y, DrawingParams * dp)
 {
-	/* thanks to the GPSDrive people (Fritz Ganter et al.) for hints on this part ... yah, I'm too lazy to study documentation */
+	/* Thanks to the GPSDrive people (Fritz Ganter et al.) for hints on this part ... yah, I'm too lazy to study documentation. */
 
-	// Hopefully name won't break the markup (may need to sanitize - g_markup_escape_text())
+	/* Hopefully name won't break the markup (may need to sanitize - g_markup_escape_text()). */
 
-	// Could this stored in the waypoint rather than recreating each pass?
+	/* Could this stored in the waypoint rather than recreating each pass? */
 	char * wp_label_markup = g_strdup_printf("<span size=\"%s\">%s</span>", dp->trw->wp_fsize_str, wp->name);
 	if (pango_parse_markup(wp_label_markup, -1, 0, NULL, NULL, NULL, NULL)) {
 		pango_layout_set_markup(dp->trw->wplabellayout, wp_label_markup, -1);
 	} else {
-		// Fallback if parse failure
+		/* Fallback if parse failure. */
 		pango_layout_set_text(dp->trw->wplabellayout, wp->name, -1);
 	}
 	free(wp_label_markup);
@@ -983,7 +964,7 @@ void trw_layer_draw_label(Waypoint * wp, int x, int y, DrawingParams * dp)
 		label_y = y - dp->trw->wp_size - height - 2;
 	}
 
-	/* if highlight mode on, then draw background text in highlight colour */
+	/* If highlight mode on, then draw background text in highlight colour */
 	if (dp->highlight) {
 		dp->viewport->draw_rectangle(dp->viewport->get_gc_highlight(), true, label_x - 1, label_y-1,width+2,height+2);
 	} else {
@@ -997,14 +978,12 @@ void trw_layer_draw_label(Waypoint * wp, int x, int y, DrawingParams * dp)
 
 
 
-
 void trw_layer_draw_waypoint_cb(Waypoint * wp, DrawingParams * dp)
 {
 	if (BBOX_INTERSECT (dp->trw->waypoints_bbox, dp->bbox)) {
 		trw_layer_draw_waypoint(wp, dp);
 	}
 }
-
 
 
 
@@ -1021,13 +1000,11 @@ void trw_layer_draw_waypoints_cb(std::unordered_map<sg_uid_t, Waypoint *> * wayp
 
 
 
-
 void cached_pixbuf_free(CachedPixbuf * cp)
 {
 	g_object_unref(G_OBJECT(cp->pixbuf));
 	free(cp->image);
 }
-
 
 
 

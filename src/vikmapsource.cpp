@@ -23,13 +23,12 @@
   * The #MapSource class is both the interface and the base class
   * for the hierarchie of map source.
   */
-
-#include <stdlib.h>
-#include <string.h>
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
+#include <cstdlib>
+#include <cstring>
 
 #include "vikviewport.h"
 #include "vikcoord.h"
@@ -37,7 +36,12 @@
 #include "download.h"
 #include "vikmapsource.h"
 
+
+
+
 using namespace SlavGPS;
+
+
 
 
 MapSource::MapSource()
@@ -56,14 +60,14 @@ MapSource::MapSource()
 	tilesize_x = 256;
 	tilesize_y = 256;
 
-	drawmode = VIK_VIEWPORT_DRAWMODE_MERCATOR; // VIK_VIEWPORT_DRAWMODE_UTM;
+	drawmode = VIK_VIEWPORT_DRAWMODE_MERCATOR; /* VIK_VIEWPORT_DRAWMODE_UTM */
 	file_extension = strdup(".png");
 
-	download_options.referer = NULL;     /* The REFERER string to use in HTTP request. */
+	download_options.referer = NULL;       /* The REFERER string to use in HTTP request. */
 	download_options.follow_location = 0;  /* Specifies the number of retries to follow a redirect while downloading a page. */
 	download_options.check_file = a_check_map_file;
 	download_options.check_file_server_time = false; /* Age of current cache before redownloading tile. */
-	download_options.use_etag = false;  /* Store etag in a file, and send it to server to check if we have the latest file. */
+	download_options.use_etag = false;     /* Store etag in a file, and send it to server to check if we have the latest file. */
 
 	server_hostname = NULL;
 	server_path_format = NULL;
@@ -81,6 +85,9 @@ MapSource::MapSource()
 
 	switch_xy = false; /* Switch the order of x,y components in the URL (such as used by ARCGIS Tile Server. */
 }
+
+
+
 
 MapSource::~MapSource()
 {
@@ -101,6 +108,9 @@ MapSource::~MapSource()
 	free(server_hostname);
 	free(server_path_format);
 }
+
+
+
 
 MapSource & MapSource::operator=(MapSource map)
 {
@@ -142,6 +152,9 @@ MapSource & MapSource::operator=(MapSource map)
         return *this;
 }
 
+
+
+
 MapSource::MapSource(MapSource & map)
 {
 	fprintf(stderr, "MapSource copy constructor called\n");
@@ -180,66 +193,89 @@ MapSource::MapSource(MapSource & map)
 	this->switch_xy = map.switch_xy;
 }
 
+
+
+
 void MapSource::set_name(char * name_)
 {
-      // Sanitize the name here for file usage
-      // A simple check just to prevent containing slashes ATM
-      free(name);
-      if (name_) {
-	      name = strdup(name_);
-	      g_strdelimit(name, "\\/", 'x' );
-      }
+	/* Sanitize the name here for file usage.
+	   A simple check just to prevent containing slashes ATM. */
+	free(name);
+	if (name_) {
+		name = strdup(name_);
+		g_strdelimit(name, "\\/", 'x' );
+	}
 }
+
+
+
 
 void MapSource::set_map_type(MapTypeID map_type_)
 {
 	map_type = map_type_;
 }
 
+
+
+
 void MapSource::set_label(char * label_)
 {
 	free(label);
 	label = g_strdup(label_);
-
 }
+
+
+
 
 void MapSource::set_tilesize_x(uint16_t tilesize_x_)
 {
 	tilesize_x = tilesize_x_;
-
 }
+
+
+
 void MapSource::set_tilesize_y(uint16_t tilesize_y_)
 {
 	tilesize_y = tilesize_y_;
-
 }
+
+
+
 
 void MapSource::set_drawmode(VikViewportDrawMode drawmode_)
 {
 	drawmode = drawmode_;
-
 }
+
+
+
 
 void MapSource::set_copyright(char * copyright_)
 {
 	free(copyright);
 	copyright = g_strdup(copyright_);
-
 }
+
+
+
 
 void MapSource::set_license(char * license_)
 {
 	free(license);
 	license = g_strdup(license_);
-
 }
+
+
+
 
 void MapSource::set_license_url(char * license_url_)
 {
 	free(license_url);
 	license_url = g_strdup(license_url_);
-
 }
+
+
+
 
 void MapSource::set_file_extension(char * file_extension_)
 {
@@ -247,8 +283,10 @@ void MapSource::set_file_extension(char * file_extension_)
 	file_extension = g_strdup(file_extension_);
 }
 
+
+
+
 /**
- * vik_map_source_get_copyright:
  * @self: the MapSource of interest.
  * @bbox: bounding box of interest.
  * @zoom: the zoom level of interest.
@@ -262,25 +300,40 @@ void MapSource::get_copyright(LatLonBBox bbox, double zoom, void (* fct)(Viewpor
 	return;
 }
 
+
+
+
 const char * MapSource::get_license()
 {
 	return license;
 }
+
+
+
 
 const char * MapSource::get_license_url()
 {
 	return license_url;
 }
 
+
+
+
 const GdkPixbuf * MapSource::get_logo()
 {
 	return logo;
 }
 
+
+
+
 const char * MapSource::get_name()
 {
 	return name;
 }
+
+
+
 
 MapTypeID MapSource::get_map_type()
 {
@@ -288,45 +341,61 @@ MapTypeID MapSource::get_map_type()
 	return map_type;
 }
 
+
+
+
 const char * MapSource::get_label()
 {
 	return label;
 }
+
+
+
 
 uint16_t MapSource::get_tilesize_x()
 {
 	return tilesize_x;
 }
 
+
+
+
 uint16_t MapSource::get_tilesize_y()
 {
 	return tilesize_y;
 }
+
+
+
 
 VikViewportDrawMode MapSource::get_drawmode()
 {
 	return drawmode;
 }
 
+
+
+
 /**
- * vik_map_source_is_direct_file_access:
  * @self: the MapSource of interest.
  *
- *   Return true when we can bypass all this download malarky
- *   Treat the files as a pre generated data set in OSM tile server layout: tiledir/%d/%d/%d.png
+ * Return true when we can bypass all this download malarky.
+ * Treat the files as a pre generated data set in OSM tile server layout: tiledir/%d/%d/%d.png
  */
 bool MapSource::is_direct_file_access()
 {
 	return is_direct_file_access_flag;
 }
 
+
+
+
 /**
- * vik_map_source_is_mbtiles:
  * @self: the MapSource of interest.
  *
- *   Return true when the map is in an MB Tiles format.
- *   See http://github.com/mapbox/mbtiles-spec
- *   (Read Only ATM)
+ * Return true when the map is in an MB Tiles format.
+ * See http://github.com/mapbox/mbtiles-spec
+ * (Read Only ATM)
  */
 bool MapSource::is_mbtiles()
 {
@@ -334,59 +403,84 @@ bool MapSource::is_mbtiles()
 	return is_mbtiles_flag;
 }
 
+
+
+
 /**
- * vik_map_source_is_osm_meta_tiles:
  * @self: the MapSource of interest.
  *
- *   Treat the files as a pre generated data set directly by tirex or renderd
- *     tiledir/Z/[xxxxyyyy]/[xxxxyyyy]/[xxxxyyyy]/[xxxxyyyy]/[xxxxyyyy].meta
+ * Treat the files as a pre generated data set directly by tirex or renderd
+ * tiledir/Z/[xxxxyyyy]/[xxxxyyyy]/[xxxxyyyy]/[xxxxyyyy]/[xxxxyyyy].meta
  */
 bool MapSource::is_osm_meta_tiles()
 {
 	return is_osm_meta_tiles_flag;
 }
 
+
+
+
 bool MapSource::supports_download_only_new()
 {
 	return false;
 }
+
+
+
 
 uint8_t MapSource::get_zoom_min()
 {
 	return zoom_min;
 }
 
+
+
+
 uint8_t MapSource::get_zoom_max()
 {
 	return zoom_max;
 }
+
+
+
 
 double MapSource::get_lat_max()
 {
 	return lat_max;
 }
 
+
+
+
 double MapSource::get_lat_min()
 {
 	return lat_min;
 }
+
+
+
 
 double MapSource::get_lon_max()
 {
 	return lon_max;
 }
 
+
+
+
 double MapSource::get_lon_min()
 {
 	return lon_min;
 }
 
+
+
+
 /**
- * vik_map_source_get_file_extension:
  * @self: the MapSource of interest.
  *
  * Returns the file extension of files held on disk.
- *  Typically .png but may be .jpg or whatever the user defines
+ * Typically .png but may be .jpg or whatever the user defines.
  *
  */
 const char * MapSource::get_file_extension()
@@ -394,11 +488,17 @@ const char * MapSource::get_file_extension()
 	return file_extension;
 }
 
+
+
+
 bool MapSource::coord_to_tile(const VikCoord * src, double xzoom, double yzoom, TileInfo * dest)
 {
 	fprintf(stderr, "MapSource coord_to_tile() returns false\n");
 	return false;
 }
+
+
+
 
 void MapSource::tile_to_center_coord(TileInfo *src, VikCoord *dest)
 {
@@ -406,8 +506,10 @@ void MapSource::tile_to_center_coord(TileInfo *src, VikCoord *dest)
 	return;
 }
 
+
+
+
 /**
- * vik_map_source_download:
  * @self:    The MapSource of interest.
  * @src:     The map location to download
  * @dest_fn: The filename to save the result in
@@ -421,25 +523,40 @@ DownloadResult_t MapSource::download(TileInfo * src, const char * dest_fn, void 
 	return a_http_download_get_url(get_server_hostname(), get_server_path(src), dest_fn, &download_options, handle);
 }
 
+
+
+
 void * MapSource::download_handle_init()
 {
 	return a_download_handle_init();
 }
+
+
+
 
 void MapSource::download_handle_cleanup(void * handle)
 {
 	a_download_handle_cleanup(handle);
 }
 
+
+
+
 char * MapSource::get_server_hostname()
 {
 	return g_strdup(server_hostname);
 }
 
+
+
+
 char * MapSource::get_server_path(TileInfo * src)
 {
 	return NULL;
 }
+
+
+
 
 DownloadFileOptions * MapSource::get_download_options()
 {

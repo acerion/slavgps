@@ -19,16 +19,18 @@
  *
  */
 
-#ifndef _VIKING_VIKWINDOW_H
-#define _VIKING_VIKWINDOW_H
-/* Requires <gtk/gtk.h> or glib, and coords.h*/
+#ifndef _SG_WINDOW_H_
+#define _SG_WINDOW_H_
+
+
+
+
+#include <cstdint>
+#include <unordered_map>
 
 #include <glib.h>
 #include <glib-object.h>
 #include <gtk/gtk.h>
-#include <stdint.h>
-
-#include <unordered_map>
 
 #include "vikwaypoint.h"
 #include "vikviewport.h"
@@ -43,11 +45,9 @@
 
 
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 
 
 
@@ -72,13 +72,9 @@ GType vik_window_get_type();
 
 
 
-
 #ifdef __cplusplus
 }
 #endif
-
-
-
 
 
 
@@ -92,9 +88,7 @@ typedef enum {
 
 
 
-
 namespace SlavGPS {
-
 
 
 
@@ -103,7 +97,6 @@ namespace SlavGPS {
 	class LayersPanel;
 	class Window;
 	class LayerTool;
-
 
 
 
@@ -125,7 +118,7 @@ namespace SlavGPS {
 		Window();
 		~Window();
 
-		// To call from main to start things off:
+		/* To call from main to start things off: */
 		static Window * new_window();
 
 
@@ -175,7 +168,7 @@ namespace SlavGPS {
 		Waypoint * get_selected_waypoint();
 		void set_selected_waypoint(Waypoint * wp, LayerTRW * trw);
 
-		/* Return the VikLayer of the selected track(s) or waypoint(s) are in (maybe NULL) */
+		/* Return the VikLayer of the selected track(s) or waypoint(s) are in (maybe NULL). */
 		//void * vik_window_get_containing_trw_layer(VikWindow *vw);
 
 		/* Return indicates if a redraw is necessary. */
@@ -201,15 +194,15 @@ namespace SlavGPS {
 
 
 
-		/* Store at this level for highlighted selection drawing since it applies to the viewport and the layers panel */
-		/* Only one of these items can be selected at the same time */
+		/* Store at this level for highlighted selection drawing since it applies to the viewport and the layers panel. */
+		/* Only one of these items can be selected at the same time. */
 		LayerTRW * selected_trw;
 		Tracks * selected_tracks;
 		Track * selected_track;
 		std::unordered_map<sg_uid_t, Waypoint *> * selected_waypoints;
 		Waypoint * selected_waypoint;
-		/* only use for individual track or waypoint */
-		/* For track(s) & waypoint(s) it is the layer they are in - this helps refering to the individual item easier */
+		/* Only use for individual track or waypoint. */
+		/* For track(s) & waypoint(s) it is the layer they are in - this helps refering to the individual item easier. */
 		LayerTRW * containing_trw;
 
 		Viewport * viewport;
@@ -227,17 +220,17 @@ namespace SlavGPS {
 
 
 
-		bool only_updating_coord_mode_ui; /* hack for a bug in GTK */
+		bool only_updating_coord_mode_ui; /* Hack for a bug in GTK. */
 		GtkUIManager * uim;
 
 		GThread  * thread;
-		/* half-drawn update */
+		/* Half-drawn update. */
 		VikLayer * trigger;
 		VikCoord trigger_center;
 
 
-		// Display controls
-		// NB scale, centermark and highlight are in viewport.
+		/* Display controls.
+		   NB scale, centermark and highlight are in viewport. */
 		bool show_full_screen;
 		bool show_side_panel;
 		bool show_statusbar;
@@ -246,22 +239,22 @@ namespace SlavGPS {
 
 
 		GdkCursor * busy_cursor;
-		GdkCursor * viewport_cursor; // only a reference
+		GdkCursor * viewport_cursor; /* only a reference. */
 
 
 
-		/* tool management state */
+		/* Tool management state. */
 		unsigned int current_tool;
 		LayerType tool_layer_type;
 		uint16_t tool_tool_id;
 		toolbox_tools_t * vt;
 
 
-		// Display controls
+		/* Display controls. */
 		bool select_move;
 		bool pan_move;
 		int pan_x, pan_y;
-		int delayed_pan_x, delayed_pan_y; // Temporary storage
+		int delayed_pan_x, delayed_pan_y; /* Temporary storage. */
 		bool single_click_pending;
 
 
@@ -294,9 +287,7 @@ namespace SlavGPS {
 
 
 
-
 } /* namespace SlavGPS */
-
 
 
 
@@ -310,5 +301,4 @@ SlavGPS::Window * window_from_vik_window(VikWindow * vw);
 
 
 
-
-#endif
+#endif /* #ifndef _SG_WINDOW_H_ */

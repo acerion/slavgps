@@ -19,45 +19,28 @@
  *
  */
 
-#ifndef _VIKING_MAPNIKLAYER_H
-#define _VIKING_MAPNIKLAYER_H
+#ifndef _SG_MAPNIKLAYER_H_
+#define _SG_MAPNIKLAYER_H_
 
-#include <stdint.h>
+
+
+
+#include <cstdint>
 
 #include "viklayer.h"
 #include "mapnik_interface.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
-#define VIK_MAPNIK_LAYER_TYPE            (vik_mapnik_layer_get_type ())
-#define VIK_MAPNIK_LAYER(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_MAPNIK_LAYER_TYPE, VikMapnikLayer))
-#define VIK_MAPNIK_LAYER_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), VIK_MAPNIK_LAYER_TYPE, VikMapnikLayerClass))
-#define IS_VIK_MAPNIK_LAYER(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), VIK_MAPNIK_LAYER_TYPE))
-#define IS_VIK_MAPNIK_LAYER_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), VIK_MAPNIK_LAYER_TYPE))
-
-typedef struct _VikMapnikLayerClass VikMapnikLayerClass;
-
-GType vik_mapnik_layer_get_type ();
-
-typedef struct _VikMapnikLayer VikMapnikLayer;
-
-void vik_mapnik_layer_init (void);
-void vik_mapnik_layer_post_init (void);
-void vik_mapnik_layer_uninit (void);
-
-#ifdef __cplusplus
-}
-#endif
-
 
 
 
 
 namespace SlavGPS {
 
+
+
+
+	void vik_mapnik_layer_init(void);
+	void vik_mapnik_layer_post_init(void);
+	void vik_mapnik_layer_uninit(void);
 
 
 
@@ -96,24 +79,23 @@ namespace SlavGPS {
 
 
 
-		char * filename_css; // CartoCSS MML File - use 'carto' to convert into xml
-		char * filename_xml;
-		uint8_t alpha;
+		char * filename_css = NULL; /* CartoCSS MML File - use 'carto' to convert into xml. */
+		char * filename_xml = NULL;
+		uint8_t alpha = 0;
 
-		unsigned int tile_size_x; // Y is the same as X ATM
-		bool loaded;
-		MapnikInterface * mi;
-		unsigned int rerender_timeout;
+		unsigned int tile_size_x = 0; /* Y is the same as X ATM. */
+		bool loaded = false;
+		MapnikInterface * mi = NULL;
+		unsigned int rerender_timeout = 0;
 
-		bool use_file_cache;
-		char * file_cache_dir;
+		bool use_file_cache = false;
+		char * file_cache_dir = NULL;
 
 		VikCoord rerender_ul;
 		VikCoord rerender_br;
-		double rerender_zoom;
-		GtkWidget * right_click_menu;
+		double rerender_zoom = 0;
+		GtkWidget * right_click_menu = NULL;
 	};
-
 
 
 
@@ -123,5 +105,4 @@ namespace SlavGPS {
 
 
 
-
-#endif
+#endif /* #ifndef _SG_MAPNIKLAYER_H_ */

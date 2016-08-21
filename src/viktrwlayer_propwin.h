@@ -18,18 +18,20 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-#ifndef _VIKING_TRWLAYER_PROPWIN_H
-#define _VIKING_TRWLAYER_PROPWIN_H
+#ifndef _SG_LAYER_TRW_PROPWIN_H_
+#define _SG_LAYER_TRW_PROPWIN_H_
+
+
+
+
+#include <cstdint>
 
 #include <glib.h>
 #include <gtk/gtk.h>
-#include <stdint.h>
 
 #include "viktrack.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+
 
 
 #define VIK_TRW_LAYER_PROPWIN_SPLIT 1
@@ -37,21 +39,32 @@ extern "C" {
 #define VIK_TRW_LAYER_PROPWIN_DEL_DUP 3
 #define VIK_TRW_LAYER_PROPWIN_SPLIT_MARKER 4
 
-void vik_trw_layer_propwin_run(GtkWindow * parent,
-							   SlavGPS::LayerTRW * layer,
-							   SlavGPS::Track * trk,
-							   void * panel,
-							   SlavGPS::Viewport * viewport,
-							   bool start_on_stats);
 
-/**
- * Update this property dialog
- * e.g. if the track has been renamed
- */
-void vik_trw_layer_propwin_update(SlavGPS::Track * trk);
 
-#ifdef __cplusplus
-}
-#endif
 
-#endif
+namespace SlavGPS {
+
+
+
+
+	void vik_trw_layer_propwin_run(GtkWindow * parent,
+				       LayerTRW * layer,
+				       Track * trk,
+				       void * panel,
+				       Viewport * viewport,
+				       bool start_on_stats);
+
+	/**
+	 * Update this property dialog e.g. if the track has been renamed
+	 */
+	void vik_trw_layer_propwin_update(Track * trk);
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
+#endif /* #ifndef _SG_LAYER_TRW_PROPWIN_H_ */

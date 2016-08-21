@@ -19,10 +19,14 @@
  *
  */
 
-#include "vik_compat.h"
-#include <stdlib.h>
+#include <cstdlib>
 
-GMutex * vik_mutex_new ()
+#include "vik_compat.h"
+
+
+
+
+GMutex * vik_mutex_new()
 {
 #if GLIB_CHECK_VERSION (2, 32, 0)
 	GMutex *mutex = (GMutex *) malloc(1 * sizeof (GMutex));
@@ -33,12 +37,15 @@ GMutex * vik_mutex_new ()
 	return mutex;
 }
 
-void vik_mutex_free (GMutex *mutex)
+
+
+
+void vik_mutex_free(GMutex *mutex)
 {
 #if GLIB_CHECK_VERSION (2, 32, 0)
-  g_mutex_clear (mutex);
-  free(mutex);
+	g_mutex_clear (mutex);
+	free(mutex);
 #else
-  g_mutex_free (mutex);
+	g_mutex_free (mutex);
 #endif
 }

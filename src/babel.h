@@ -21,19 +21,21 @@
  *
  */
 
-#ifndef _VIKING_BABEL_H
-#define _VIKING_BABEL_H
+#ifndef _SG_BABEL_H_
+#define _SG_BABEL_H_
+
+
+
+
+#include <cstdint>
 
 #include <glib.h>
-#include <stdint.h>
-
 
 #include "viktrwlayer.h"
 #include "download.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+
+
 
 
 /**
@@ -61,15 +63,15 @@ typedef void (*BabelStatusFunc)(BabelProgressCode, void *, void *);
  *
  * All values are defaulted to NULL
  *
- * Need to specify at least one of babelargs, URL or shell_command
+ * Need to specify at least one of babelargs, URL or shell_command.
  */
 typedef struct {
-	char* babelargs; // The standard initial arguments to gpsbabel (if gpsbabel is to be used) - normally should include the input file type (-i) option.
-	char* filename; // Input filename (or device port e.g. /dev/ttyS0)
-	char* input_file_type; // If NULL then uses internal file format handler (GPX only ATM), otherwise specify gpsbabel input type like "kml","tcx", etc...
-	char* url; // URL input rather than a filename
-	char* babel_filters; // Optional filter arguments to gpsbabel
-	char* shell_command; // Optional shell command to run instead of gpsbabel - but will be (Unix) platform specific
+	char* babelargs;       /* The standard initial arguments to gpsbabel (if gpsbabel is to be used) - normally should include the input file type (-i) option. */
+	char* filename;        /* Input filename (or device port e.g. /dev/ttyS0). */
+	char* input_file_type; /* If NULL then uses internal file format handler (GPX only ATM), otherwise specify gpsbabel input type like "kml","tcx", etc... */
+	char* url;             /* URL input rather than a filename. */
+	char* babel_filters;   /* Optional filter arguments to gpsbabel. */
+	char* shell_command;   /* Optional shell command to run instead of gpsbabel - but will be (Unix) platform specific. */
 } ProcessOptions;
 
 /**
@@ -117,7 +119,7 @@ typedef struct {
 void a_babel_foreach_file_with_mode (BabelMode mode, GFunc func, void * user_data);
 void a_babel_foreach_file_read_any (GFunc func, void * user_data);
 
-// NB needs to match typedef VikDataSourceProcessFunc in acquire.h
+/* NB needs to match typedef VikDataSourceProcessFunc in acquire.h. */
 bool a_babel_convert_from(SlavGPS::LayerTRW * trw, ProcessOptions *process_options, BabelStatusFunc cb, void * user_data, DownloadFileOptions *download_options );
 
 bool a_babel_convert_to(SlavGPS::LayerTRW * trw, SlavGPS::Track * trk, const char *babelargs, const char *file, BabelStatusFunc cb, void * user_data );
@@ -128,8 +130,7 @@ void a_babel_uninit();
 
 bool a_babel_available();
 
-#ifdef __cplusplus
-}
-#endif
 
-#endif
+
+
+#endif /* #ifndef _SG_BABEL_H_ */

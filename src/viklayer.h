@@ -18,19 +18,25 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-#ifndef _VIKING_LAYER_H
-#define _VIKING_LAYER_H
+#ifndef _SG_LAYER_H_
+#define _SG_LAYER_H_
 
-#include <stdio.h>
+
+
+
+#include <cstdio>
+#include <cstdint>
+
 #include <glib.h>
 #include <gtk/gtk.h>
 #include <gdk-pixbuf/gdk-pixdata.h>
-#include <stdint.h>
-
 
 #include "uibuilder.h"
 #include "viktreeview.h"
 #include "vikviewport.h"
+
+
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -58,13 +64,13 @@ struct _VikLayer {
 	void * layer; /* class Layer */
 };
 
-/* I think most of these are ignored,
- * returning GRAB_FOCUS grabs the focus for mouse move,
- * mouse click, release always grabs focus. Focus allows key presses
- * to be handled.
+/* I think most of these are ignored, returning GRAB_FOCUS grabs the
+ * focus for mouse move, mouse click, release always grabs
+ * focus. Focus allows key presses to be handled.
+ *
  * It used to be that, if ignored, Viking could look for other layers.
- * this was useful for clicking a way/trackpoint in any layer,
- * if no layer was selected (find way/trackpoint)
+ * this was useful for clicking a way/trackpoint in any layer, if no
+ * layer was selected (find way/trackpoint).
  */
 typedef enum {
 	VIK_LAYER_TOOL_IGNORED=0,
@@ -74,8 +80,6 @@ typedef enum {
 	VIK_LAYER_TOOL_ACK_REDRAW_IF_VISIBLE,
 	VIK_LAYER_TOOL_ACK_GRAB_FOCUS, /* only for move */
 } VikLayerToolFuncStatus;
-
-
 
 
 
@@ -92,6 +96,8 @@ typedef enum {
 typedef struct _VikLayerInterface VikLayerInterface;
 
 
+
+
 #ifdef __cplusplus
 }
 #endif
@@ -101,7 +107,6 @@ typedef struct _VikLayerInterface VikLayerInterface;
 
 
 namespace SlavGPS {
-
 
 
 
@@ -121,12 +126,11 @@ namespace SlavGPS {
 
 
 
-
 	typedef struct {
-		LayerTRW * trw; // LayerTRW
+		LayerTRW * trw; /* LayerTRW. */
 		bool holding;
 		bool moving;
-		bool is_waypoint; // otherwise a track
+		bool is_waypoint; /* Otherwise a track. */
 		GdkGC * gc;
 		int oldx, oldy;
 	} tool_ed_t;
@@ -135,7 +139,7 @@ namespace SlavGPS {
 
 	typedef struct {
 		GdkPixmap *pixmap;
-		// Track zoom bounds for zoom tool with shift modifier:
+		/* Track zoom bounds for zoom tool with shift modifier: */
 		bool bounds_active;
 		int start_x;
 		int start_y;
@@ -165,7 +169,7 @@ namespace SlavGPS {
 		/* Rarely used, this is called after a read operation
 		   or properties box is run.  usually used to create
 		   GC's that depend on params, but GC's can also be
-		   created from create() or set_param() */
+		   created from create() or set_param(). */
 		virtual void post_read(Viewport * viewport, bool from_file);
 
 		virtual void draw(Viewport * viewport);
@@ -207,8 +211,8 @@ namespace SlavGPS {
 		virtual char const * sublayer_rename_request(const char * newname, void * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, GtkTreeIter * iter);
 		virtual bool sublayer_toggle_visible(SublayerType sublayer_type, sg_uid_t sublayer_uid);
 
-		/* Do _not_ use this unless absolutely neccesary. Use the dynamic properties (see coordlayer for example)
-		   returns true if OK was pressed. */
+		/* Do _not_ use this unless absolutely neccesary. Use the dynamic properties (see coordlayer for example).
+		   Returns true if OK was pressed. */
 		virtual bool properties(void * viewport);
 
 		/* Normally only needed for layers with sublayers. This is called when they
@@ -245,11 +249,11 @@ namespace SlavGPS {
 		char * name;
 		bool visible;
 		bool realized;
-		Viewport * viewport; /* Simply a reference. */
+		Viewport * viewport;  /* Simply a reference. */
 		TreeView * tree_view; /* Simply a reference. */
 		GtkTreeIter iter;
 
-		/* for explicit "polymorphism" (function type switching) */
+		/* For explicit "polymorphism" (function type switching). */
 		LayerType type;
 
 
@@ -262,13 +266,18 @@ namespace SlavGPS {
 	};
 
 
-	/* void * is tool-specific state created in the constructor */
-	typedef LayerTool * (*VikToolConstructorFunc) (SlavGPS::Window *, SlavGPS::Viewport *);
+
+
+	/* void * is tool-specific state created in the constructor. */
+	typedef LayerTool * (*VikToolConstructorFunc) (Window *, Viewport *);
 	typedef void (*VikToolDestructorFunc) (LayerTool *);
-	typedef VikLayerToolFuncStatus (*VikToolMouseFunc) (SlavGPS::Layer *, GdkEventButton *, LayerTool *);
-	typedef VikLayerToolFuncStatus (*VikToolMouseMoveFunc) (SlavGPS::Layer *, GdkEventMotion *, LayerTool *);
-	typedef void (*VikToolActivationFunc) (SlavGPS::Layer *, LayerTool *);
-	typedef bool (*VikToolKeyFunc) (SlavGPS::Layer *, GdkEventKey *, LayerTool *);
+	typedef VikLayerToolFuncStatus (*VikToolMouseFunc) (Layer *, GdkEventButton *, LayerTool *);
+	typedef VikLayerToolFuncStatus (*VikToolMouseMoveFunc) (Layer *, GdkEventMotion *, LayerTool *);
+	typedef void (*VikToolActivationFunc) (Layer *, LayerTool *);
+	typedef bool (*VikToolKeyFunc) (Layer *, GdkEventKey *, LayerTool *);
+
+
+
 
 	class LayerTool {
 
@@ -281,11 +290,11 @@ namespace SlavGPS {
 		VikToolMouseFunc click = NULL;
 		VikToolMouseMoveFunc move = NULL;
 		VikToolMouseFunc release = NULL;
-		VikToolKeyFunc key_press = NULL; /* return false if we don't use the key press -- should return false most of the time if we want any shortcuts / UI keybindings to work! use sparingly. */
+		VikToolKeyFunc key_press = NULL; /* Return false if we don't use the key press -- should return false most of the time if we want any shortcuts / UI keybindings to work! use sparingly. */
 
 		GtkRadioActionEntry radioActionEntry = { NULL, NULL, NULL, NULL, NULL, 0 };
 
-		bool pan_handler = false; // Call click & release funtions even when 'Pan Mode' is on
+		bool pan_handler = false; /* Call click & release funtions even when 'Pan Mode' is on. */
 		GdkCursorType cursor_type = GDK_CURSOR_IS_PIXMAP;
 		GdkPixdata const * cursor_data = NULL;
 		GdkCursor const * cursor = NULL;
@@ -308,7 +317,6 @@ namespace SlavGPS {
 
 
 
-
 GtkWindow * gtk_window_from_layer(SlavGPS::Layer * layer);
 
 
@@ -320,23 +328,23 @@ extern "C" {
 
 
 
-/* layer interface functions */
+/* Layer interface functions. */
 
 typedef SlavGPS::Layer *         (* VikLayerFuncUnmarshall)    (uint8_t *, int, SlavGPS::Viewport *);
-/* returns true if needs to redraw due to changed param */
-/* in parameter bool denotes if for file I/O, as opposed to display/cut/copy etc... operations */
+/* Returns true if needs to redraw due to changed param. */
+/* In parameter bool denotes if for file I/O, as opposed to display/cut/copy etc... operations. */
 typedef bool                     (* VikLayerFuncSetParam)      (SlavGPS::Layer *, uint16_t, VikLayerParamData, SlavGPS::Viewport *, bool);
-/* in parameter bool denotes if for file I/O, as opposed to display/cut/copy etc... operations */
+/* In parameter bool denotes if for file I/O, as opposed to display/cut/copy etc... operations. */
 typedef VikLayerParamData        (* VikLayerFuncGetParam)      (SlavGPS::Layer const *, uint16_t, bool);
 typedef void                     (* VikLayerFuncChangeParam)   (GtkWidget *, ui_change_values *);
 
 
 
-/* See vik_layer_* for function parameter names */
+/* See vik_layer_* for function parameter names. */
 struct _VikLayerInterface {
-	const char *                     fixed_layer_name; // Used in .vik files - this should never change to maintain file compatibility
-	const char *                     name;             // Translate-able name used for display purposes
-	const char *                     accelerator;
+	const char *                      fixed_layer_name; /* Used in .vik files - this should never change to maintain file compatibility. */
+	const char *                      name;             /* Translate-able name used for display purposes. */
+	const char *                      accelerator;
 	const GdkPixdata *                icon;
 
 	SlavGPS::VikToolConstructorFunc layer_tool_constructors[7];
@@ -344,18 +352,18 @@ struct _VikLayerInterface {
 
 	uint16_t                           tools_count;
 
-	/* for I/O reading to and from .vik files -- params like coordline width, color, etc. */
+	/* For I/O reading to and from .vik files -- params like coordline width, color, etc. */
 	VikLayerParam *                   params;
 	uint16_t                           params_count;
 	char **                          params_groups;
 	uint8_t                            params_groups_count;
 
-	/* menu items to be created */
+	/* Menu items to be created. */
 	VikStdLayerMenuItem               menu_items_selection;
 
 	VikLayerFuncUnmarshall            unmarshall;
 
-	/* for I/O */
+	/* For I/O. */
 	VikLayerFuncSetParam              set_param;
 	VikLayerFuncGetParam              get_param;
 	VikLayerFuncChangeParam           change_param;
@@ -366,19 +374,13 @@ bool layer_set_param(SlavGPS::Layer * layer, uint16_t id, VikLayerParamData data
 VikLayerParamData layer_get_param(SlavGPS::Layer const * layer, uint16_t id, bool is_file_operation);
 
 
-/* GUI */
+/* GUI. */
 uint16_t vik_layer_get_menu_items_selection(SlavGPS::Layer * layer);
 bool vik_layer_properties(SlavGPS::Layer * layer, SlavGPS::Viewport * viewport);
 
-//VikLayer *vik_layer_copy(VikLayer * vl, void * viewport);
-
-
-//void      vik_layer_marshall_params(VikLayer * vl, uint8_t ** data, int * len);
-
-
 bool vik_layer_selected(SlavGPS::Layer * layer, SlavGPS::SublayerType sublayer_type, sg_uid_t sublayer_uid, SlavGPS::TreeItemType type, void * panel);
 
-/* TODO: put in layerspanel */
+/* TODO: put in layerspanel. */
 GdkPixbuf * vik_layer_load_icon(SlavGPS::LayerType layer_type);
 
 void vik_layer_emit_update_secondary(SlavGPS::Layer * layer); /* To be called by aggregate layer only. Doesn't set the trigger. */
@@ -386,13 +388,14 @@ void vik_layer_emit_update_although_invisible(SlavGPS::Layer * layer);
 
 
 typedef struct {
-  VikLayerParamData data;
-  VikLayerParamType type;
+	VikLayerParamData data;
+	VikLayerParamType type;
 } VikLayerTypedParamData;
 
 void vik_layer_typed_param_data_free(void * gp);
 VikLayerTypedParamData * vik_layer_typed_param_data_copy_from_data(VikLayerParamType type, VikLayerParamData val);
 VikLayerTypedParamData * vik_layer_data_typed_param_copy_from_string(VikLayerParamType type, const char * str);
+
 
 
 
@@ -403,5 +406,4 @@ VikLayerTypedParamData * vik_layer_data_typed_param_copy_from_string(VikLayerPar
 
 
 
-
-#endif
+#endif /* #ifndef _SG_LAYER_H_ */

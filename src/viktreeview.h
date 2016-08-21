@@ -19,13 +19,12 @@
  *
  */
 
-#ifndef _SG_TREEVIEW_H
-#define _SG_TREEVIEW_H
+#ifndef _SG_TREEVIEW_H_
+#define _SG_TREEVIEW_H_
 
 
 
-
-#include <stdint.h>
+#include <cstdint>
 
 #include "config.h"
 #include "uibuilder.h"
@@ -50,7 +49,6 @@ namespace SlavGPS {
 	typedef struct {
 		GtkTreeView treeview;
 	} VikTreeview;
-
 
 
 
@@ -127,4 +125,4 @@ namespace SlavGPS {
 
 
 
-#endif /* #ifndef _SG_TREEVIEW_H */
+#endif /* #ifndef _SG_TREEVIEW_H_ */

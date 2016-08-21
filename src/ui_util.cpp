@@ -25,7 +25,8 @@
 #include "config.h"
 #endif
 
-#include <stdlib.h>
+#include <cstdlib>
+
 #include <glib/gstdio.h>
 #include <glib/gi18n.h>
 #include <glib/gprintf.h>
@@ -37,6 +38,9 @@
 #ifdef WINDOWS
 #include <windows.h>
 #endif
+
+
+
 
 /*
 #ifndef WINDOWS
@@ -58,8 +62,11 @@ static bool spawn_command_line_async(const char * cmd,
 #endif
 */
 
-// Annoyingly gtk_show_uri() doesn't work so resort to ShellExecute method
-//   (non working at least in our Windows build with GTK+2.24.10 on Windows 7)
+
+
+
+/* Annoyingly gtk_show_uri() doesn't work so resort to ShellExecute method
+   (non working at least in our Windows build with GTK+2.24.10 on Windows 7). */
 
 void open_url(GtkWindow * parent, const char * url)
 {
@@ -74,6 +81,9 @@ void open_url(GtkWindow * parent, const char * url)
 	}
 #endif
 }
+
+
+
 
 void new_email(GtkWindow * parent, const char * address)
 {
@@ -96,12 +106,16 @@ void new_email(GtkWindow * parent, const char * address)
 	uri = NULL;
 }
 
-/** Creates a @c GtkButton with custom text and a stock image similar to
- * @c gtk_button_new_from_stock().
- * @param stock_id A @c GTK_STOCK_NAME string.
- * @param text Button label text, can include mnemonics.
- * @return The new @c GtkButton.
- */
+
+
+
+/**
+   Creates a @c GtkButton with custom text and a stock image similar to gtk_button_new_from_stock().
+
+   @param stock_id A @c GTK_STOCK_NAME string.
+   @param text Button label text, can include mnemonics.
+   @return The new @c GtkButton.
+*/
 GtkWidget * ui_button_new_with_image(const char * stock_id, const char * text)
 {
 	GtkWidget *image, *button;
@@ -110,16 +124,20 @@ GtkWidget * ui_button_new_with_image(const char * stock_id, const char * text)
 	gtk_widget_show(button);
 	image = gtk_image_new_from_stock(stock_id, GTK_ICON_SIZE_BUTTON);
 	gtk_button_set_image(GTK_BUTTON(button), image);
-	// note: image is shown by gtk
+	/* Note: image is shown by gtk. */
 	return button;
 }
 
-/** Reads an integer from the GTK default settings registry
- * (see http://library.gnome.org/devel/gtk/stable/GtkSettings.html).
- * @param property_name The property to read.
- * @param default_value The default value in case the value could not be read.
- * @return The value for the property if it exists, otherwise the @a default_value.
- */
+
+
+
+/**
+   Reads an integer from the GTK default settings registry
+   (see http://library.gnome.org/devel/gtk/stable/GtkSettings.html).
+   @param property_name The property to read.
+   @param default_value The default value in case the value could not be read.
+   @return The value for the property if it exists, otherwise the @a default_value.
+*/
 int ui_get_gtk_settings_integer(const char * property_name, int default_value)
 {
 	if (g_object_class_find_property(G_OBJECT_GET_CLASS(G_OBJECT(
@@ -134,16 +152,18 @@ int ui_get_gtk_settings_integer(const char * property_name, int default_value)
 }
 
 
-/** Returns a widget from a name in a component, usually created by Glade.
- * Call it with the toplevel widget in the component (i.e. a window/dialog),
- * or alternatively any widget in the component, and the name of the widget
- * you want returned.
- * @param widget Widget with the @a widget_name property set.
- * @param widget_name Name to lookup.
- * @return The widget found.
- * @see ui_hookup_widget().
- *
- */
+
+
+/**
+   Returns a widget from a name in a component, usually created by Glade.
+   Call it with the toplevel widget in the component (i.e. a window/dialog),
+   or alternatively any widget in the component, and the name of the widget
+   you want returned.
+   @param widget Widget with the @a widget_name property set.
+   @param widget_name Name to lookup.
+   @return The widget found.
+   @see ui_hookup_widget().
+*/
 GtkWidget * ui_lookup_widget(GtkWidget * widget, const char * widget_name)
 {
 	GtkWidget *parent, *found_widget;
@@ -179,8 +199,11 @@ GtkWidget * ui_lookup_widget(GtkWidget * widget, const char * widget_name)
 	return found_widget;
 }
 
+
+
+
 /**
- * Returns a label widget that is made selectable (i.e. the user can copy the text)
+ * Returns a label widget that is made selectable (i.e. the user can copy the text).
  * @param text String to display - maybe NULL
  * @return The label widget
  */
@@ -191,8 +214,11 @@ GtkWidget * ui_label_new_selectable(const char * text)
 	return widget;
 }
 
+
+
+
 /**
- * Apply the alpha value to the specified pixbuf
+ * Apply the alpha value to the specified pixbuf.
  */
 GdkPixbuf * ui_pixbuf_set_alpha(GdkPixbuf * pixbuf, uint8_t alpha)
 {
@@ -226,8 +252,10 @@ GdkPixbuf * ui_pixbuf_set_alpha(GdkPixbuf * pixbuf, uint8_t alpha)
 }
 
 
+
+
 /**
- * Reduce the alpha value of the specified pixbuf by alpha / 255
+ * Reduce the alpha value of the specified pixbuf by alpha / 255.
  */
 GdkPixbuf * ui_pixbuf_scale_alpha(GdkPixbuf * pixbuf, uint8_t alpha)
 {
@@ -261,9 +289,7 @@ GdkPixbuf * ui_pixbuf_scale_alpha(GdkPixbuf * pixbuf, uint8_t alpha)
 
 
 
-/**
- *
- */
+
 void ui_add_recent_file(const char * filename)
 {
 	if (filename) {

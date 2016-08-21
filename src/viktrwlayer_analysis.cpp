@@ -17,19 +17,22 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- ***********************************************************
- *
  */
 
-#include <math.h>
-#include <time.h>
-#include <string.h>
-#include <stdlib.h>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <cmath>
+#include <cstring>
+#include <cstdlib>
 #include <cassert>
+
 #include <glib/gprintf.h>
 #include <glib/gi18n.h>
 
-#include "viking.h"
+#include <time.h>
+
 #include "viktrwlayer_analysis.h"
 #include "ui_util.h"
 #include "settings.h"
@@ -45,15 +48,15 @@ using namespace SlavGPS;
 
 
 
-// Could use GtkGrids but that is Gtk3+
+/* Could use GtkGrids but that is Gtk3+ */
 static GtkWidget * create_table(int cnt, char * labels[], GtkWidget * contents[])
 {
 	GtkTable * table = GTK_TABLE(gtk_table_new (cnt, 2, false));
 	gtk_table_set_col_spacing(table, 0, 10);
 	for (int i = 0; i < cnt; i++) {
 		GtkWidget * label = gtk_label_new(NULL);
-		gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5); // Position text centrally in vertical plane
-		// All text labels are set to be in bold
+		gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5); /* Position text centrally in vertical plane. */
+		/* All text labels are set to be in bold. */
 		char * markup = g_markup_printf_escaped("<b>%s:</b>", _(labels[i]));
 		gtk_label_set_markup(GTK_LABEL(label), markup);
 		free(markup);
@@ -88,9 +91,7 @@ static char * label_texts[] = {
 
 
 /**
- * create_layout:
- *
- * Returns a widget to hold the stats information in a table grid layout
+ * Returns a widget to hold the stats information in a table grid layout.
  */
 static GtkWidget * create_layout(GtkWidget * content[])
 {
@@ -106,9 +107,7 @@ static GtkWidget * create_layout(GtkWidget * content[])
 
 
 /**
- * table_output:
- *
- * Update the given widgets table with the values from the track stats
+ * Update the given widgets table with the values from the track stats.
  */
 static void table_output(TrackStatistics& ts, GtkWidget * content[])
 {
@@ -119,7 +118,7 @@ static void table_output(TrackStatistics& ts, GtkWidget * content[])
 	gtk_label_set_text(GTK_LABEL(content[cnt++]), tmp_buf);
 
 	if (ts.count == 0) {
-		// Blank all other fields
+		/* Blank all other fields. */
 		snprintf(tmp_buf, sizeof(tmp_buf), "--");
 		for (int cnt = 1; cnt < G_N_ELEMENTS(label_texts); cnt++) {
 			gtk_label_set_text(GTK_LABEL(content[cnt]), tmp_buf);
@@ -127,8 +126,8 @@ static void table_output(TrackStatistics& ts, GtkWidget * content[])
 		return;
 	}
 
-	// Check for potential date range
-	// Test if the same day by comparing the date string of the timestamp
+	/* Check for potential date range. */
+	/* Test if the same day by comparing the date string of the timestamp. */
 	GDate* gdate_start = g_date_new();
 	g_date_set_time_t (gdate_start, ts.start_time);
 	char time_start[32];
@@ -178,7 +177,7 @@ static void table_output(TrackStatistics& ts, GtkWidget * content[])
 
 
 	switch (a_vik_get_units_height()) {
-		// Note always round off height value output since sub unit accuracy is overkill
+		/* Note always round off height value output since sub unit accuracy is overkill. */
 	case HeightUnit::FEET:
 		if (ts.min_alt != VIK_VAL_MIN_ALT) {
 			snprintf(tmp_buf, sizeof(tmp_buf), _("%d feet"), (int)round(VIK_METERS_TO_FEET(ts.min_alt)));
@@ -202,7 +201,7 @@ static void table_output(TrackStatistics& ts, GtkWidget * content[])
 		snprintf(tmp_buf, sizeof(tmp_buf), _("%d feet / %d feet"), (int)round(VIK_METERS_TO_FEET(ts.elev_gain/ts.count)), (int)round(VIK_METERS_TO_FEET(ts.elev_loss/ts.count)));
 		break;
 	default:
-		//HeightUnit::METRES
+		/* HeightUnit::METRES */
 		if (ts.min_alt != VIK_VAL_MIN_ALT) {
 			snprintf(tmp_buf, sizeof(tmp_buf), _("%d m"), (int)round(ts.min_alt));
 		} else {
@@ -228,7 +227,7 @@ static void table_output(TrackStatistics& ts, GtkWidget * content[])
 	gtk_label_set_text(GTK_LABEL(content[cnt++]), tmp_buf);
 	fprintf(stderr, "%d: %s, cnt = %d\n", __LINE__, tmp_buf, cnt);
 
-	// Total Duration
+	/* Total Duration. */
 	int days    = (int) (ts.duration / (60*60*24));
 	int hours   = (int) floor((ts.duration - (days * 60 * 60 * 24)) / (60 * 60));
 	int minutes = (int) ((ts.duration - (days * 60 * 60 * 24) - (hours * 60 * 60)) / 60);
@@ -236,7 +235,7 @@ static void table_output(TrackStatistics& ts, GtkWidget * content[])
 	gtk_label_set_text (GTK_LABEL(content[cnt++]), tmp_buf);
 	fprintf(stderr, "%d: %s, cnt = %d\n", __LINE__, tmp_buf, cnt);
 
-	// Average Duration
+	/* Average Duration. */
 	int avg_dur = ts.duration / ts.count;
 	hours   = (int) floor(avg_dur / (60*60));
 	minutes = (int) ((avg_dur - (hours * 60 * 60)) / 60);
@@ -249,13 +248,11 @@ static void table_output(TrackStatistics& ts, GtkWidget * content[])
 
 
 /**
- * val_analyse:
  * @widgets:           The widget layout
  * @tracks_and_layers: A list of #track_layer_t
  * @include_invisible: Whether to include invisible layers and tracks
  *
- * Analyse each item in the @tracks_and_layers list
- *
+ * Analyse each item in the @tracks_and_layers list.
  */
 void val_analyse(GtkWidget * widgets[], std::list<track_layer_t *> * tracks_and_layers, bool include_invisible)
 {
@@ -290,12 +287,12 @@ static void include_invisible_toggled_cb(GtkToggleButton * togglebutton, analyse
 		value = true;
 	}
 
-	// Delete old list of items
+	/* Delete old list of items. */
 	if (acb->tracks_and_layers) {
-		/* kamilTODO: delete acb->tracks_and_layers */
+		/* kamilTODO: delete acb->tracks_and_layers. */
 	}
 
-	// Get the latest list of items to analyse
+	/* Get the latest list of items to analyse. */
 	/* kamilTODO: why do we need to get the latest list on checkbox toggle? */
 	Layer * layer = acb->layer;
 	if (acb->layer->type == LayerType::TRW) {
@@ -316,14 +313,12 @@ static void include_invisible_toggled_cb(GtkToggleButton * togglebutton, analyse
 #define VIK_SETTINGS_ANALYSIS_DO_INVISIBLE "track_analysis_do_invisible"
 
 /**
- * analyse_close:
- *
  * Multi stage closure - as we need to clear allocations made here
- *  before passing on to the callee so they know then the dialog is closed too
+ * before passing on to the callee so they know then the dialog is closed too.
  */
 static void analyse_close(GtkWidget * dialog, int resp, analyse_cb_t * data)
 {
-	// Save current invisible value for next time
+	/* Save current invisible value for next time. */
 	bool do_invisible = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(data->check_button));
 	a_settings_set_boolean(VIK_SETTINGS_ANALYSIS_DO_INVISIBLE, do_invisible);
 
@@ -343,18 +338,17 @@ static void analyse_close(GtkWidget * dialog, int resp, analyse_cb_t * data)
 
 
 /**
- * vik_trw_layer_analyse_this:
  * @window:                   A window from which the dialog will be derived
  * @name:                     The name to be shown
  * @layer:                    The #Layer passed on into get_tracks_and_layers_cb()
  * @user_data:                Data passed on into get_tracks_and_layers_cb()
  * @get_tracks_and_layers_cb: The function to call to construct items to be analysed
  *
- * Display a dialog with stats across many tracks
+ * Display a dialog with stats across many tracks.
  *
- * Returns: The dialog that is created to display the analyse information
+ * Returns: The dialog that is created to display the analyse information.
  */
-GtkWidget * vik_trw_layer_analyse_this(GtkWindow * window,
+GtkWidget * SlavGPS::vik_trw_layer_analyse_this(GtkWindow * window,
 				       const char * name,
 				       Layer * layer,
 				       SublayerType sublayer_type,
@@ -377,7 +371,7 @@ GtkWidget * vik_trw_layer_analyse_this(GtkWindow * window,
 	GtkWidget * content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
 	gtk_box_pack_start (GTK_BOX(content), name_l, false, false, 10);
 
-	// Get previous value (if any) from the settings
+	/* Get previous value (if any) from the settings. */
 	bool include_invisible;
 	if (!a_settings_get_boolean (VIK_SETTINGS_ANALYSIS_DO_INVISIBLE, &include_invisible)) {
 		include_invisible = true;
@@ -399,9 +393,9 @@ GtkWidget * vik_trw_layer_analyse_this(GtkWindow * window,
 
 	gtk_box_pack_start(GTK_BOX(content), acb->layout, false, false, 0);
 
-	// Analysis seems reasonably quick
-	//  unless you have really large numbers of tracks (i.e. many many thousands or a really slow computer)
-	// One day might store stats in the track itself....
+	/* Analysis seems reasonably quick
+	   unless you have really large numbers of tracks (i.e. many many thousands or a really slow computer).
+	   One day might store stats in the track itself... */
 	val_analyse(acb->widgets, acb->tracks_and_layers, include_invisible);
 
 	GtkWidget * cb = gtk_check_button_new_with_label(_("Include Invisible Items"));

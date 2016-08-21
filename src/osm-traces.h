@@ -19,29 +19,38 @@
  *
  */
 
-#ifndef __VIKING_OSM_TRACES_H
-#define __VIKING_OSM_TRACES_H
+#ifndef _SG_OSM_TRACES_H_
+#define _SG_OSM_TRACES_H_
+
+
+
 
 #include <glib.h>
 #include <gtk/gtk.h>
 
 #include "viktrwlayer.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
-void osm_traces_init();
-void osm_traces_uninit();
-void osm_traces_upload_viktrwlayer(SlavGPS::LayerTRW * trw, SlavGPS::Track * trk);
 
-void osm_set_login(const char * user, const char * password);
-char *osm_get_login();
-void osm_login_widgets(GtkWidget * user_entry, GtkWidget * password_entry);
+namespace SlavGPS {
 
-#ifdef __cplusplus
-}
-#endif
 
-#endif
+
+	void osm_traces_init();
+	void osm_traces_uninit();
+	void osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk);
+
+	void osm_set_login(const char * user, const char * password);
+	char * osm_get_login();
+	void osm_login_widgets(GtkWidget * user_entry, GtkWidget * password_entry);
+
+
+
+
+} /* namespace SlavGPS */
+
+
+
+
+#endif /* #ifndef _SG_OSM_TRACES_H_ */

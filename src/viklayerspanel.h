@@ -19,17 +19,18 @@
  *
  */
 
-#ifndef _SG_LAYERS_PANEL_H
-#define _SG_LAYERS_PANEL_H
+#ifndef _SG_LAYERS_PANEL_H_
+#define _SG_LAYERS_PANEL_H_
 
+
+
+
+#include <cstdint>
 
 #include <gtk/gtk.h>
 
-#include <stdint.h>
-
 #include "viklayer.h"
 #include "vikaggregatelayer.h"
-
 
 
 
@@ -39,9 +40,7 @@ namespace SlavGPS {
 
 
 
-
 	class LayerAggregate;
-
 
 
 
@@ -76,7 +75,7 @@ namespace SlavGPS {
 		GtkTreeIter toplayer_iter;
 
 		TreeView * tree_view;
-		Viewport * viewport; /* reference */
+		Viewport * viewport; /* Reference. */
 
 		void * gob; /* Related VikLayersPanel. */
 
@@ -92,11 +91,9 @@ namespace SlavGPS {
 
 
 
-
 }
 
 
 
 
-
-#endif /* #ifndef _SG_LAYERS_PANEL_H */
+#endif /* #ifndef _SG_LAYERS_PANEL_H_ */

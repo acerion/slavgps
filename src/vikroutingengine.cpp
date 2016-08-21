@@ -30,17 +30,21 @@
 #include "config.h"
 #endif
 
+#include <cstdlib>
+
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <glib/gi18n.h>
-#include <stdlib.h>
 
 #include "babel.h"
-
 #include "vikroutingengine.h"
 
 
+
+
 using namespace SlavGPS;
+
+
 
 
 static void vik_routing_engine_finalize(GObject * gob);
@@ -53,9 +57,16 @@ struct _VikRoutingPrivate {
 	char * format;
 };
 
-#define VIK_ROUTING_ENGINE_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), VIK_ROUTING_ENGINE_TYPE, VikRoutingPrivate))
 
-/* properties */
+
+
+#define VIK_ROUTING_ENGINE_PRIVATE(o)  (G_TYPE_INSTANCE_GET_PRIVATE ((o), VIK_ROUTING_ENGINE_TYPE, VikRoutingPrivate))
+G_DEFINE_ABSTRACT_TYPE (VikRoutingEngine, vik_routing_engine, G_TYPE_OBJECT)
+
+
+
+
+/* Properties. */
 enum {
 	PROP_0,
 
@@ -64,7 +75,8 @@ enum {
 	PROP_FORMAT,
 };
 
-G_DEFINE_ABSTRACT_TYPE (VikRoutingEngine, vik_routing_engine, G_TYPE_OBJECT)
+
+
 
 static void vik_routing_engine_set_property(GObject      * object,
 					    unsigned int   property_id,
@@ -96,6 +108,9 @@ static void vik_routing_engine_set_property(GObject      * object,
 	}
 }
 
+
+
+
 static void vik_routing_engine_get_property(GObject      * object,
 					    unsigned int   property_id,
 					    GValue       * value,
@@ -123,6 +138,9 @@ static void vik_routing_engine_get_property(GObject      * object,
 	}
 }
 
+
+
+
 static void vik_routing_engine_class_init(VikRoutingEngineClass * klass)
 {
 	GObjectClass *object_class;
@@ -149,26 +167,29 @@ static void vik_routing_engine_class_init(VikRoutingEngineClass * klass)
 	pspec = g_param_spec_string("id",
 				    "Identifier",
 				    "The identifier of the routing engine",
-				    "<no-set>" /* default value */,
+				    "<no-set>", /* Default value. */
 				    (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
 	g_object_class_install_property(object_class, PROP_ID, pspec);
 
 	pspec = g_param_spec_string("label",
 				    "Label",
 				    "The label of the routing engine",
-				    "<no-set>" /* default value */,
+				    "<no-set>", /* Default value. */
 				    (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
 	g_object_class_install_property(object_class, PROP_LABEL, pspec);
 
 	pspec = g_param_spec_string("format",
 				    "Format",
 				    "The format of the output (see gpsbabel)",
-				    "<no-set>" /* default value */,
+				    "<no-set>", /* Default value. */
 				    (GParamFlags) (G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
 	g_object_class_install_property(object_class, PROP_FORMAT, pspec);
 
 	g_type_class_add_private(klass, sizeof (VikRoutingPrivate));
 }
+
+
+
 
 static void vik_routing_engine_init(VikRoutingEngine * self)
 {
@@ -178,6 +199,9 @@ static void vik_routing_engine_init(VikRoutingEngine * self)
 	priv->label = NULL;
 	priv->format = NULL;
 }
+
+
+
 
 static void vik_routing_engine_finalize(GObject * self)
 {
@@ -195,8 +219,10 @@ static void vik_routing_engine_finalize(GObject * self)
 	G_OBJECT_CLASS(parent_class)->finalize(self);
 }
 
+
+
+
 /**
- * vik_routing_engine_find:
  * @self: self object
  * @vtl:
  * @start: starting point
@@ -221,10 +247,11 @@ bool vik_routing_engine_find(VikRoutingEngine * self, VikLayer * vtl, struct Lat
 	return klass->find(self, vtl, start, end);
 }
 
+
+
+
 /**
- * vik_routing_engine_get_id:
- *
- * Returns: the id of self
+ * Returns: the id of self.
  */
 char * vik_routing_engine_get_id(VikRoutingEngine * self)
 {
@@ -233,10 +260,11 @@ char * vik_routing_engine_get_id(VikRoutingEngine * self)
 	return priv->id;
 }
 
+
+
+
 /**
- * vik_routing_engine_get_label:
- *
- * Returns: the label of self
+ * Returns: the label of self.
  */
 char * vik_routing_engine_get_label(VikRoutingEngine * self)
 {
@@ -245,12 +273,13 @@ char * vik_routing_engine_get_label(VikRoutingEngine * self)
 	return priv->label;
 }
 
+
+
+
 /**
- * vik_routing_engine_get_format:
- *
  * GPSbabel's Format of result.
  *
- * Returns: the format of self
+ * Returns: the format of self.
  */
 char * vik_routing_engine_get_format(VikRoutingEngine * self)
 {
@@ -260,9 +289,7 @@ char * vik_routing_engine_get_format(VikRoutingEngine * self)
 }
 
 /**
- * vik_routing_engine_supports_direction:
- *
- * Returns: %true if this engine supports the route finding based on directions
+ * Returns: %true if this engine supports the route finding based on directions.
  */
 bool vik_routing_engine_supports_direction(VikRoutingEngine * self)
 {
@@ -280,15 +307,17 @@ bool vik_routing_engine_supports_direction(VikRoutingEngine * self)
 	return klass->supports_direction(self);
 }
 
+
+
+
 /**
- * vik_routing_engine_get_url_from_directions:
  * @self: routing engine
  * @start: the start direction
  * @end: the end direction
  *
  * Compute the URL used with the acquire framework.
  *
- * Returns: the computed URL
+ * Returns: the computed URL.
  */
 char * vik_routing_engine_get_url_from_directions(VikRoutingEngine * self, const char * start, const char * end)
 {
@@ -305,8 +334,10 @@ char * vik_routing_engine_get_url_from_directions(VikRoutingEngine * self, const
 	return klass->get_url_from_directions(self, start, end);
 }
 
+
+
+
 /**
- * vik_routing_engine_refine:
  * @self: self object
  * @vtl: layer where to create new track
  * @vt: the simple route to refine
@@ -335,11 +366,13 @@ bool vik_routing_engine_refine(VikRoutingEngine * self, VikLayer * vtl, Track * 
 	return klass->refine(self, vtl, trk);
 }
 
+
+
+
 /**
- * vik_routing_engine_supports_refine:
  * @self: routing engine
  *
- * Returns: %true if this engine supports the refine of track
+ * Returns: %true if this engine supports the refine of track.
  */
 bool vik_routing_engine_supports_refine(VikRoutingEngine * self)
 {

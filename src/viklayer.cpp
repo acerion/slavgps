@@ -25,12 +25,12 @@
 #include "config.h"
 #endif
 
+#include <cstring>
+#include <cstdlib>
+#include <cassert>
+
 #include <glib/gi18n.h>
 
-#include "viking.h"
-#include <string.h>
-#include <stdlib.h>
-#include <assert.h>
 #include "viklayer_defaults.h"
 #include "viklayer.h"
 #include "vikaggregatelayer.h"
@@ -45,10 +45,15 @@
 #include "viktreeview.h"
 
 
+
+
 using namespace SlavGPS;
 
-/* functions common to all layers. */
-/* TODO longone: rename interface free -> finalize */
+
+
+
+/* Functions common to all layers. */
+/* TODO longone: rename interface free -> finalize. */
 
 extern VikLayerInterface vik_aggregate_layer_interface;
 extern VikLayerInterface vik_trw_layer_interface;
@@ -75,6 +80,9 @@ static bool layer_defaults_register(LayerType layer_type);
 
 G_DEFINE_TYPE (VikLayer, vik_layer, G_TYPE_OBJECT)
 
+
+
+
 static void vik_layer_class_init(VikLayerClass * klass)
 {
 	GObjectClass * object_class;
@@ -89,43 +97,45 @@ static void vik_layer_class_init(VikLayerClass * klass)
 						       (GSignalFlags) (G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION), G_STRUCT_OFFSET (VikLayerClass, update), NULL, NULL,
 						       g_cclosure_marshal_VOID__VOID, G_TYPE_NONE, 0);
 
-	// Register all parameter defaults, early in the start up sequence
+	/* Register all parameter defaults, early in the start up sequence. */
 	for (LayerType layer_type = LayerType::AGGREGATE; layer_type < LayerType::NUM_TYPES; ++layer_type) {
-		// ATM ignore the returned value
+		/* ATM ignore the returned value. */
 		layer_defaults_register(layer_type);
 	}
 }
 
+
+
+
 /**
- * Invoke the actual drawing via signal method
+ * Invoke the actual drawing via signal method.
  */
 static bool idle_draw(Layer * layer)
 {
 	g_signal_emit(G_OBJECT (layer->vl), layer_signals[VL_UPDATE_SIGNAL], 0);
-	return false; // Nothing else to do
+	return false; /* Nothing else to do. */
 }
 
 
 
 
-
 /**
- * Draw specified layer
+ * Draw specified layer.
  */
 void Layer::emit_update()
 {
 	if (this->visible && this->realized) {
 		GThread * thread = window_from_layer(this)->get_thread();
 		if (!thread) {
-			// Do nothing
+			/* Do nothing. */
 			return;
 		}
 
 		Window::set_redraw_trigger(this);
 
-		// Only ever draw when there is time to do so
+		/* Only ever draw when there is time to do so. */
 		if (g_thread_self() != thread) {
-			// Drawing requested from another (background) thread, so handle via the gdk thread method
+			/* Drawing requested from another (background) thread, so handle via the gdk thread method. */
 			gdk_threads_add_idle((GSourceFunc) idle_draw, this);
 		} else {
 			g_idle_add((GSourceFunc) idle_draw, this);
@@ -136,9 +146,8 @@ void Layer::emit_update()
 
 
 
-
 /**
- * should only be done by LayersPanel (hence never used from the background)
+ * Should only be done by LayersPanel (hence never used from the background)
  * need to redraw and record trigger when we make a layer invisible.
  */
 void vik_layer_emit_update_although_invisible(Layer * layer)
@@ -147,15 +156,21 @@ void vik_layer_emit_update_although_invisible(Layer * layer)
 	g_idle_add((GSourceFunc) idle_draw, layer);
 }
 
-/* doesn't set the trigger. should be done by aggregate layer when child emits update. */
+
+
+
+/* Doesn't set the trigger. should be done by aggregate layer when child emits update. */
 void vik_layer_emit_update_secondary(Layer * layer)
 {
 	if (layer->visible) {
-		// TODO: this can used from the background - eg in acquire
-		//       so will need to flow background update status through too
+		/* TODO: this can used from the background - e.g. in acquire
+		   so will need to flow background update status through too. */
 		g_idle_add((GSourceFunc) idle_draw, layer);
 	}
 }
+
+
+
 
 static VikLayerInterface * vik_layer_interfaces[(int) LayerType::NUM_TYPES] = {
 	&vik_aggregate_layer_interface,
@@ -170,30 +185,36 @@ static VikLayerInterface * vik_layer_interfaces[(int) LayerType::NUM_TYPES] = {
 #endif
 };
 
+
+
+
 VikLayerInterface * vik_layer_get_interface(LayerType layer_type)
 {
 	assert (layer_type < LayerType::NUM_TYPES);
 	return vik_layer_interfaces[(int) layer_type];
 }
 
+
+
+
 /**
- * Store default values for this layer
+ * Store default values for this layer.
  *
- * Returns whether any parameters where registered
+ * Returns whether any parameters where registered.
  */
 static bool layer_defaults_register(LayerType layer_type)
 {
-	// See if any parameters
+	/* See if any parameters. */
 	VikLayerParam *params = vik_layer_interfaces[(int) layer_type]->params;
 	if (!params) {
 		return false;
 	}
 
-	bool answer = false; // Incase all parameters are 'not in properties'
+	bool answer = false; /* In case all parameters are 'not in properties'. */
 	uint16_t params_count = vik_layer_interfaces[(int) layer_type]->params_count;
-	uint16_t i;
-	// Process each parameter
-	for (i = 0; i < params_count; i++) {
+
+	/* Process each parameter. */
+	for (uint16_t i = 0; i < params_count; i++) {
 		if (params[i].group != VIK_LAYER_NOT_IN_PROPERTIES) {
 			if (params[i].default_value) {
 				VikLayerParamData paramd = params[i].default_value();
@@ -206,18 +227,27 @@ static bool layer_defaults_register(LayerType layer_type)
 	return answer;
 }
 
+
+
+
 static void vik_layer_init(VikLayer * vl)
 {
 	return;
 }
 
-/* frees old name */
+
+
+
+/* Frees old name. */
 void Layer::rename(char const * new_name)
 {
 	assert (new_name);
 	free(this->name);
 	this->name = strdup(new_name);
 }
+
+
+
 
 void Layer::rename_no_copy(char * new_name)
 {
@@ -226,10 +256,15 @@ void Layer::rename_no_copy(char * new_name)
 	this->name = new_name;
 }
 
+
+
+
 char const * Layer::get_name()
 {
 	return this->name;
 }
+
+
 
 
 Layer * Layer::new_(LayerType layer_type, Viewport * viewport, bool interactive)
@@ -278,11 +313,10 @@ Layer * Layer::new_(LayerType layer_type, Viewport * viewport, bool interactive)
 
 	if (interactive) {
 		if (vik_layer_properties(layer, viewport)) {
-			/* We translate the name here */
-			/* in order to avoid translating name set by user */
+			/* We translate the name here in order to avoid translating name set by user. */
 			layer->rename(_(vik_layer_interfaces[(int) layer_type]->name));
 		} else {
-			g_object_unref(G_OBJECT(layer->vl)); /* cancel that */
+			g_object_unref(G_OBJECT(layer->vl)); /* Cancel that. */
 			delete layer;
 			layer = NULL;
 		}
@@ -290,7 +324,10 @@ Layer * Layer::new_(LayerType layer_type, Viewport * viewport, bool interactive)
 	return layer;
 }
 
-/* returns true if OK was pressed */
+
+
+
+/* Returns true if OK was pressed. */
 bool vik_layer_properties(Layer * layer, Viewport * viewport)
 {
 	if (layer->type == LayerType::GEOREF) {
@@ -300,12 +337,17 @@ bool vik_layer_properties(Layer * layer, Viewport * viewport)
 	return vik_layer_properties_factory(layer, viewport);
 }
 
+
+
+
 void Layer::draw_visible(Viewport * viewport)
 {
 	if (this->visible) {
 		this->draw(viewport);
 	}
 }
+
+
 
 
 typedef struct {
@@ -328,11 +370,17 @@ void Layer::marshall(Layer * layer, uint8_t ** data, int * len)
 	}
 }
 
+
+
+
 void Layer::marshall(uint8_t ** data, int * len)
 {
 	this->marshall_params(data, len);
 	return;
 }
+
+
+
 
 void Layer::marshall_params(uint8_t ** data, int * datalen)
 {
@@ -347,11 +395,11 @@ void Layer::marshall_params(uint8_t ** data, int * datalen)
 	g_byte_array_append(b, (uint8_t *) &len, sizeof(len));	\
 	g_byte_array_append(b, (uint8_t *) (obj), len);
 
-	// Store the internal properties first
+	/* Store the internal properties first. */
 	vlm_append(&this->visible, sizeof (this->visible));
 	vlm_append(this->name, strlen(this->name));
 
-	// Now the actual parameters
+	/* Now the actual parameters. */
 	if (params && get_param) {
 		VikLayerParamData d;
 		uint16_t i, params_count = vik_layer_get_interface(this->type)->params_count;
@@ -360,23 +408,23 @@ void Layer::marshall_params(uint8_t ** data, int * datalen)
 			d = get_param(this, i, false);
 			switch (params[i].type) {
 			case VIK_LAYER_PARAM_STRING:
-				// Remember need braces as these are macro calls, not single statement functions!
+				/* Remember need braces as these are macro calls, not single statement functions! */
 				if (d.s) {
 					vlm_append(d.s, strlen(d.s));
 				} else {
-					// Need to insert empty string otherwise the unmarshall will get confused
+					/* Need to insert empty string otherwise the unmarshall will get confused. */
 					vlm_append("", 0);
 				}
 				break;
-				/* print out the string list in the array */
+				/* Print out the string list in the array. */
 			case VIK_LAYER_PARAM_STRING_LIST: {
 				std::list<char *> * a_list = d.sl;
 
-				/* write length of list (# of strings) */
+				/* Write length of list (# of strings). */
 				int listlen = a_list->size();
 				g_byte_array_append(b, (uint8_t *) &listlen, sizeof (listlen));
 
-				/* write each string */
+				/* Write each string. */
 				for (auto iter = a_list->begin(); iter != a_list->end(); iter++) {
 					char * s = *iter;
 					vlm_append(s, strlen(s));
@@ -397,6 +445,9 @@ void Layer::marshall_params(uint8_t ** data, int * datalen)
 
 #undef vlm_append
 }
+
+
+
 
 void Layer::unmarshall_params(uint8_t * data, int datalen, Viewport * viewport)
 {
@@ -436,10 +487,10 @@ void Layer::unmarshall_params(uint8_t * data, int datalen, Viewport * viewport)
 			case VIK_LAYER_PARAM_STRING_LIST: {
 				int listlen = vlm_size;
 				std::list<char *> * list = new std::list<char *>;
-				b += sizeof(int); /* skip listlen */;
+				b += sizeof(int); /* Skip listlen. */;
 
 				for (int j = 0; j < listlen; j++) {
-					/* get a string */
+					/* Get a string. */
 					s = (char *) malloc(vlm_size + 1);
 					s[vlm_size]=0;
 					vlm_read(s);
@@ -447,7 +498,7 @@ void Layer::unmarshall_params(uint8_t * data, int datalen, Viewport * viewport)
 				}
 				d.sl = list;
 				set_param(this, i, d, viewport, false);
-				/* don't free -- string list is responsibility of the layer */
+				/* Don't free -- string list is responsibility of the layer. */
 
 				break;
 			}
@@ -460,6 +511,9 @@ void Layer::unmarshall_params(uint8_t * data, int datalen, Viewport * viewport)
 	}
 }
 
+
+
+
 Layer * Layer::unmarshall(uint8_t * data, int len, Viewport * viewport)
 {
 	header_t * header = (header_t *) data;
@@ -470,6 +524,9 @@ Layer * Layer::unmarshall(uint8_t * data, int len, Viewport * viewport)
 		return NULL;
 	}
 }
+
+
+
 
 static void vik_layer_finalize(VikLayer * vl)
 {
@@ -485,6 +542,9 @@ static void vik_layer_finalize(VikLayer * vl)
 	G_OBJECT_CLASS(parent_class)->finalize(G_OBJECT(vl));
 }
 
+
+
+
 bool vik_layer_selected(Layer * layer, SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeItemType type, void * panel)
 {
 	bool result = layer->selected(sublayer_type, sublayer_uid, type, panel);
@@ -494,6 +554,9 @@ bool vik_layer_selected(Layer * layer, SublayerType sublayer_type, sg_uid_t subl
 		return window_from_layer(layer)->clear_highlight();
 	}
 }
+
+
+
 
 uint16_t vik_layer_get_menu_items_selection(Layer * layer)
 {
@@ -508,6 +571,7 @@ uint16_t vik_layer_get_menu_items_selection(Layer * layer)
 
 
 
+
 GdkPixbuf * vik_layer_load_icon(LayerType layer_type)
 {
 	assert (layer_type < LayerType::NUM_TYPES);
@@ -517,15 +581,24 @@ GdkPixbuf * vik_layer_load_icon(LayerType layer_type)
 	return NULL;
 }
 
+
+
+
 bool layer_set_param(Layer * layer, uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
 {
 	return layer->set_param(id, data, viewport, is_file_operation);
 }
 
+
+
+
 VikLayerParamData layer_get_param(Layer const * layer, uint16_t id, bool is_file_operation)
 {
 	return layer->get_param(id, is_file_operation);
 }
+
+
+
 
 static bool vik_layer_properties_factory(Layer * layer, Viewport * viewport)
 {
@@ -544,14 +617,17 @@ static bool vik_layer_properties_factory(Layer * layer, Viewport * viewport)
 	case 0:
 	case 3:
 		return false;
-		/* redraw (?) */
+		/* Redraw (?). */
 	case 2: {
-		layer->post_read(viewport, false); /* update any gc's */
+		layer->post_read(viewport, false); /* Ypdate any gc's. */
 	}
 	default:
 		return true;
 	}
 }
+
+
+
 
 LayerType Layer::type_from_string(char const * str)
 {
@@ -562,6 +638,9 @@ LayerType Layer::type_from_string(char const * str)
 	}
 	return LayerType::NUM_TYPES;
 }
+
+
+
 
 void vik_layer_typed_param_data_free(void * gp)
 {
@@ -585,6 +664,9 @@ void vik_layer_typed_param_data_free(void * gp)
 	}
 	free(val);
 }
+
+
+
 
 VikLayerTypedParamData * vik_layer_typed_param_data_copy_from_data(VikLayerParamType type, VikLayerParamData val)
 {
@@ -611,6 +693,9 @@ VikLayerTypedParamData * vik_layer_typed_param_data_copy_from_data(VikLayerParam
 	return newval;
 }
 
+
+
+
 #define TEST_BOOLEAN(str) (! ((str)[0] == '\0' || (str)[0] == '0' || (str)[0] == 'n' || (str)[0] == 'N' || (str)[0] == 'f' || (str)[0] == 'F'))
 
 VikLayerTypedParamData * vik_layer_data_typed_param_copy_from_string(VikLayerParamType type, const char * str)
@@ -631,10 +716,10 @@ VikLayerTypedParamData * vik_layer_data_typed_param_copy_from_string(VikLayerPar
 		rv->data.b = TEST_BOOLEAN(str);
 		break;
 	case VIK_LAYER_PARAM_COLOR:
-		memset(&(rv->data.c), 0, sizeof(rv->data.c)); /* default: black */
+		memset(&(rv->data.c), 0, sizeof(rv->data.c)); /* Default: black. */
 		gdk_color_parse (str, &(rv->data.c));
 		break;
-		/* STRING or STRING_LIST -- if STRING_LIST, just set param to add a STRING */
+		/* STRING or STRING_LIST -- if STRING_LIST, just set param to add a STRING. */
 	default: {
 		char *s = g_strdup(str);
 		rv->data.s = s;
@@ -644,15 +729,15 @@ VikLayerTypedParamData * vik_layer_data_typed_param_copy_from_string(VikLayerPar
 }
 
 
+
+
 /**
- * Layer::set_defaults:
- *
- * Loop around all parameters for the specified layer to call the function to get the
- *  default value for that parameter
+ * Loop around all parameters for the specified layer to call the
+ * function to get the default value for that parameter.
  */
 void Layer::set_defaults(Viewport * viewport)
 {
-	// Sneaky initialize of the viewport value here
+	/* Sneaky initialize of the viewport value here. */
 	this->viewport = viewport;
 
 	VikLayerInterface * vli = vik_layer_get_interface(this->type);
@@ -660,10 +745,10 @@ void Layer::set_defaults(Viewport * viewport)
 	VikLayerParamData data;
 
 	for (int i = 0; i < vli->params_count; i++) {
-		// Ensure parameter is for use
+		/* Ensure parameter is for use. */
 		if (vli->params[i].group > VIK_LAYER_NOT_IN_PROPERTIES) {
-			// ATM can't handle string lists
-			// only DEM files uses this currently
+			/* ATM can't handle string lists.
+			   Only DEM files uses this currently. */
 			if (vli->params[i].type != VIK_LAYER_PARAM_STRING_LIST) {
 				data = a_layer_defaults_get(layer_name, vli->params[i].name, vli->params[i].type);
 				this->set_param(i, data, viewport, true); // Possibly come from a file
@@ -671,6 +756,7 @@ void Layer::set_defaults(Viewport * viewport)
 		}
 	}
 }
+
 
 
 
@@ -701,20 +787,32 @@ Layer::Layer(VikLayer * vl_) : Layer()
 	fprintf(stderr, "Layer::Layer(vl)\n");
 }
 
+
+
+
 bool Layer::select_click(GdkEventButton * event, Viewport * viewport, LayerTool * tool)
 {
 	return false;
 }
+
+
+
 
 bool Layer::select_move(GdkEventMotion * event, Viewport * viewport, LayerTool * tool)
 {
 	return false;
 }
 
+
+
+
 void Layer::post_read(Viewport * viewport, bool from_file)
 {
 	return;
 }
+
+
+
 
 bool Layer::select_release(GdkEventButton * event, Viewport * viewport, LayerTool * tool)
 {
@@ -722,10 +820,15 @@ bool Layer::select_release(GdkEventButton * event, Viewport * viewport, LayerToo
 }
 
 
+
+
 void Layer::draw(Viewport * viewport)
 {
 	return;
 }
+
+
+
 
 char const * Layer::tooltip()
 {
@@ -736,6 +839,7 @@ char const * Layer::tooltip()
 
 
 
+
 char const * Layer::sublayer_tooltip(SublayerType sublayer_type, sg_uid_t sublayer_uid)
 {
       static char tmp_buf[32];
@@ -743,10 +847,16 @@ char const * Layer::sublayer_tooltip(SublayerType sublayer_type, sg_uid_t sublay
       return tmp_buf;
 }
 
+
+
+
 bool Layer::selected(SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeItemType type, void * panel)
 {
 	return false;
 }
+
+
+
 
 
 bool Layer::show_selected_viewport_menu(GdkEventButton * event, Viewport * viewport)
@@ -754,30 +864,48 @@ bool Layer::show_selected_viewport_menu(GdkEventButton * event, Viewport * viewp
 	return false;
 }
 
+
+
+
 void Layer::set_menu_selection(uint16_t selection)
 {
 	return;
 }
+
+
+
 
 uint16_t Layer::get_menu_selection()
 {
 	return (uint16_t) -1;
 }
 
+
+
+
 void Layer::cut_sublayer(SublayerType sublayer_type, sg_uid_t sublayer_uid)
 {
 	return;
 }
+
+
+
 
 void Layer::copy_sublayer(SublayerType sublayer_type, sg_uid_t sublayer_uid, uint8_t ** item, unsigned int * len)
 {
 	return;
 }
 
+
+
+
 bool Layer::paste_sublayer(SublayerType sublayer_type, uint8_t * item, size_t len)
 {
 	return false;
 }
+
+
+
 
 void Layer::delete_sublayer(SublayerType sublayer_type, sg_uid_t sublayer_uid)
 {
@@ -785,26 +913,40 @@ void Layer::delete_sublayer(SublayerType sublayer_type, sg_uid_t sublayer_uid)
 }
 
 
+
+
 void Layer::change_coord_mode(VikCoordMode dest_mode)
 {
 	return;
 }
+
+
+
 
 time_t Layer::get_timestamp()
 {
 	return 0;
 }
 
+
+
+
 void Layer::drag_drop_request(Layer * src, GtkTreeIter * src_item_iter, GtkTreePath * dest_path)
 {
 	return;
 }
 
+
+
+
 int Layer::read_file(FILE * f, char const * dirpath)
 {
-	/* KamilFIXME: Magic number to indicate call of base class method. */
+	/* kamilFIXME: Magic number to indicate call of base class method. */
 	return -5;
 }
+
+
+
 
 void Layer::write_file(FILE * f) const
 {
@@ -812,31 +954,47 @@ void Layer::write_file(FILE * f) const
 }
 
 
+
+
 void Layer::add_menu_items(GtkMenu * menu, void * panel)
 {
 	return;
 }
+
+
+
 
 bool Layer::sublayer_add_menu_items(GtkMenu * menu, void * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, GtkTreeIter * iter, Viewport * viewport)
 {
 	return false;
 }
 
+
+
+
 char const * Layer::sublayer_rename_request(const char * newname, void * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, GtkTreeIter * iter)
 {
 	return NULL;
 }
 
+
+
+
 bool Layer::sublayer_toggle_visible(SublayerType sublayer_type, sg_uid_t sublayer_uid)
 {
-	/* if unknown, will always be visible */
+	/* If unknown, will always be visible. */
 	return true;
 }
+
+
+
 
 bool Layer::properties(void * viewport)
 {
 	return false;
 }
+
+
 
 
 void Layer::realize(TreeView * tree_view_, GtkTreeIter * layer_iter)
@@ -848,22 +1006,30 @@ void Layer::realize(TreeView * tree_view_, GtkTreeIter * layer_iter)
 	return;
 }
 
+
+
+
 VikLayerParamData Layer::get_param(uint16_t id, bool is_file_operation) const
 {
 	VikLayerParamData data;
 	return data;
 }
 
+
+
+
 bool Layer::set_param(uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
 {
 	return false;
 }
 
+
+
+
 GtkWindow * gtk_window_from_layer(Layer * layer)
 {
 	return GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(layer->tree_view->vt)));
 }
-
 
 
 
@@ -874,7 +1040,6 @@ LayerTool::LayerTool(Window * window, Viewport * viewport, LayerType layer_type)
 	this->viewport = viewport;
 	this->layer_type = layer_type;
 }
-
 
 
 

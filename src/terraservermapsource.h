@@ -16,18 +16,17 @@
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _TERRASERVER_MAP_SOURCE_H
-#define _TERRASERVER_MAP_SOURCE_H
+#ifndef _SG_TERRASERVER_MAP_SOURCE_H_
+#define _SG_TERRASERVER_MAP_SOURCE_H_
 
-#include <stdint.h>
 
-#include "vikcoord.h"
-#include "mapcoord.h"
+
+
+#include <cstdint>
+
 #include "vikmapsource.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+
 
 
 #define TERRASERVER_TYPE_MAP_SOURCE             (terraserver_map_source_get_type ())
@@ -52,10 +51,12 @@ struct _TerraserverMapSource
 
 GType terraserver_map_source_get_type (void) G_GNUC_CONST;
 
+
+
+
 TerraserverMapSource * terraserver_map_source_new_with_id(uint16_t id, const char * label, int type);
 
-#ifdef __cplusplus
-}
-#endif
 
-#endif /* _TERRASERVER_MAP_SOURCE_H_ */
+
+
+#endif /* #ifndef _SG_TERRASERVER_MAP_SOURCE_H_ */

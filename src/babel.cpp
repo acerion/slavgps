@@ -35,8 +35,18 @@
 #endif
 
 #include <vector>
+#include <cstdio>
+#include <cstring>
+#include <cstdlib>
 
-#include "viking.h"
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
+#include <glib.h>
+#include <glib/gstdio.h>
+#include <glib/gi18n.h>
+
 #include "gpx.h"
 #include "babel.h"
 #include "file.h"
@@ -45,30 +55,23 @@
 #include "globals.h"
 
 
-#include <stdio.h>
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-#include <string.h>
-#include <stdlib.h>
-#include <glib.h>
-#include <glib/gstdio.h>
-#include <glib/gi18n.h>
 
 
 using namespace SlavGPS;
 
 
-/* TODO in the future we could have support for other shells (change command strings), or not use a shell at all */
+
+
+/* TODO in the future we could have support for other shells (change command strings), or not use a shell at all. */
 #define BASH_LOCATION "/bin/bash"
 
 /**
- * Path to gpsbabel
+ * Path to gpsbabel.
  */
 static char *gpsbabel_loc = NULL;
 
 /**
- * Path to unbuffer
+ * Path to unbuffer.
  */
 static char *unbuffer_loc = NULL;
 
@@ -82,6 +85,9 @@ std::vector<BabelFile *> a_babel_file_list;
  */
 extern std::vector<BabelDevice *> a_babel_device_list;
 
+
+
+
 /**
  * Run a function on all file formats supporting a given mode.
  */
@@ -89,7 +95,7 @@ void a_babel_foreach_file_with_mode(BabelMode mode, GFunc func, void * user_data
 {
 	for (auto iter = a_babel_file_list.begin(); iter != a_babel_file_list.end(); iter++) {
 		BabelFile * currentFile = *iter;
-		/* Check compatibility of modes */
+		/* Check compatibility of modes. */
 		bool compat = true;
 		if (mode.waypointsRead  && ! currentFile->mode.waypointsRead)  compat = false;
 		if (mode.waypointsWrite && ! currentFile->mode.waypointsWrite) compat = false;
@@ -97,37 +103,41 @@ void a_babel_foreach_file_with_mode(BabelMode mode, GFunc func, void * user_data
 		if (mode.tracksWrite    && ! currentFile->mode.tracksWrite)    compat = false;
 		if (mode.routesRead     && ! currentFile->mode.routesRead)     compat = false;
 		if (mode.routesWrite    && ! currentFile->mode.routesWrite)    compat = false;
-		/* Do call */
+		/* Do call. */
 		if (compat) {
 			func(currentFile, user_data);
 		}
 	}
 }
 
+
+
+
 /**
- * a_babel_foreach_file_read_any:
  * @func:      The function to be called on any file format with a read method
  * @user_data: Data passed into the function
  *
  * Run a function on all file formats with any kind of read method
- *  (which is almost all but not quite - e.g. with GPSBabel v1.4.4 - PalmDoc is write only waypoints)
+ * (which is almost all but not quite - e.g. with GPSBabel v1.4.4 - PalmDoc is write only waypoints).
  */
 void a_babel_foreach_file_read_any(GFunc func, void * user_data)
 {
 	for (auto iter = a_babel_file_list.begin(); iter != a_babel_file_list.end(); iter++) {
 		BabelFile *currentFile = *iter;
-		// Call function when any read mode found
-		if (currentFile->mode.waypointsRead ||
-		     currentFile->mode.tracksRead ||
-		     currentFile->mode.routesRead) {
+		/* Call function when any read mode found. */
+		if (currentFile->mode.waypointsRead
+		    || currentFile->mode.tracksRead
+		    || currentFile->mode.routesRead) {
 
 			func(currentFile, user_data);
 		}
 	}
 }
 
+
+
+
 /**
- * a_babel_convert:
  * @trw:        The TRW layer to modify. All data will be deleted, and replaced by what gpsbabel outputs.
  * @babelargs: A string containing gpsbabel command line filter options. No file types or names should
  *             be specified.
@@ -139,7 +149,7 @@ void a_babel_foreach_file_read_any(GFunc func, void * user_data)
  * that is, it will block the calling program until the conversion is done. To avoid blocking, call
  * this routine from a worker thread.
  *
- * Returns: %true on success
+ * Returns: %true on success.
  */
 bool a_babel_convert(LayerTRW * trw, const char * babelargs, BabelStatusFunc cb, void * user_data, void * not_used)
 {
@@ -158,24 +168,29 @@ bool a_babel_convert(LayerTRW * trw, const char * babelargs, BabelStatusFunc cb,
 	return ret;
 }
 
+
+
+
 /**
- * Perform any cleanup actions once GPSBabel has completed running
+ * Perform any cleanup actions once GPSBabel has completed running.
  */
 static void babel_watch(GPid pid, int status, void * user_data)
 {
 	g_spawn_close_pid(pid);
 }
 
+
+
+
 /**
- * babel_general_convert:
  * @args: The command line arguments passed to GPSBabel
  * @cb: callback that is run for each line of GPSBabel output and at completion of the run
  *      callback may be NULL
  * @user_data: passed along to cb
  *
- * The function to actually invoke the GPSBabel external command
+ * The function to actually invoke the GPSBabel external command.
  *
- * Returns: %true on successful invocation of GPSBabel command
+ * Returns: %true on successful invocation of GPSBabel command.
  */
 static bool babel_general_convert(BabelStatusFunc cb, char **args, void * user_data)
 {
@@ -197,8 +212,7 @@ static bool babel_general_convert(BabelStatusFunc cb, char **args, void * user_d
 	} else {
 
 		char line[512];
-		FILE *diag;
-		diag = fdopen(babel_stdout, "r");
+		FILE * diag = fdopen(babel_stdout, "r");
 		setvbuf(diag, NULL, _IONBF, 0);
 
 		while (fgets(line, sizeof(line), diag)) {
@@ -220,14 +234,16 @@ static bool babel_general_convert(BabelStatusFunc cb, char **args, void * user_d
 	return ret;
 }
 
+
+
+
 /**
- * babel_general_convert_from:
- * @vtl: The TrackWaypoint Layer to save the data into
+ * @trw: The TrackWaypoint Layer to save the data into.
  *   If it is null it signifies that no data is to be processed,
- *    however the gpsbabel command is still ran as it can be for non-data related options eg:
- *    for use with the power off command - 'command_off'
- * @cb: callback that is run upon new data from STDOUT (?)
- *     (TODO: STDERR would be nice since we usually redirect STDOUT)
+ *   however the gpsbabel command is still ran as it can be for non-data related options eg:
+ *   for use with the power off command - 'command_off'
+ * @cb: callback that is run upon new data from STDOUT (?).
+ *   (TODO: STDERR would be nice since we usually redirect STDOUT)
  * @user_data: passed along to cb
  *
  * Runs args[0] with the arguments and uses the GPX module
@@ -235,22 +251,21 @@ static bool babel_general_convert(BabelStatusFunc cb, char **args, void * user_d
  * running the command, the data will appear in the (usually
  * temporary) file name_dst.
  *
- * Returns: %true on success
+ * Returns: %true on success.
  */
 static bool babel_general_convert_from(LayerTRW * trw, BabelStatusFunc cb, char **args, const char *name_dst, void * user_data)
 {
 	bool ret = false;
-	FILE *f = NULL;
 
 	if (babel_general_convert(cb, args, user_data)) {
 
 		/* No data actually required but still need to have run gpsbabel anyway
-		   - eg using the device power command_off */
+		   - eg using the device power command_off. */
 		if (trw == NULL) {
 			return true;
 		}
 
-		f = fopen(name_dst, "r");
+		FILE * f = fopen(name_dst, "r");
 		if (f) {
 			ret = a_gpx_read_file(trw, f);
 			fclose(f);
@@ -261,8 +276,10 @@ static bool babel_general_convert_from(LayerTRW * trw, BabelStatusFunc cb, char 
 	return ret;
 }
 
+
+
+
 /**
- * a_babel_convert_from_filter:
  * @trw:           The TRW layer to place data into. Duplicate items will be overwritten.
  * @babelargs:    A string containing gpsbabel command line options. This string
  *                must include the input file type (-i) option.
@@ -276,7 +293,7 @@ static bool babel_general_convert_from(LayerTRW * trw, BabelStatusFunc cb, char 
  * that is, it will block the calling program until the conversion is done. To avoid blocking, call
  * this routine from a worker thread.
  *
- * Returns: %true on success
+ * Returns: %true on success.
  */
 bool a_babel_convert_from_filter(LayerTRW * trw, const char *babelargs, const char *from, const char *babelfilters, BabelStatusFunc cb, void * user_data, void * not_used)
 {
@@ -300,7 +317,7 @@ bool a_babel_convert_from_filter(LayerTRW * trw, const char *babelargs, const ch
 			}
 			args[i++] = gpsbabel_loc;
 			for (j = 0; sub_args[j]; j++) {
-				/* some version of gpsbabel can not take extra blank arg */
+				/* Some version of gpsbabel can not take extra blank arg. */
 				if (sub_args[j][0] != '\0') {
 					args[i++] = sub_args[j];
 				}
@@ -310,7 +327,7 @@ bool a_babel_convert_from_filter(LayerTRW * trw, const char *babelargs, const ch
 			if (babelfilters) {
 				sub_filters = g_strsplit(babelfilters, " ", 0);
 				for (j = 0; sub_filters[j]; j++) {
-					/* some version of gpsbabel can not take extra blank arg */
+					/* Some version of gpsbabel can not take extra blank arg. */
 					if (sub_filters[j][0] != '\0') {
 						args[i++] = sub_filters[j];
 					}
@@ -338,8 +355,10 @@ bool a_babel_convert_from_filter(LayerTRW * trw, const char *babelargs, const ch
 	return ret;
 }
 
+
+
+
 /**
- * a_babel_convert_from_shellcommand:
  * @trw: The #LayerTRW where to insert the collected data
  * @input_cmd: the command to run
  * @input_file_type:
@@ -389,8 +408,10 @@ bool a_babel_convert_from_shellcommand(LayerTRW * trw, const char *input_cmd, co
 	return ret;
 }
 
+
+
+
 /**
- * a_babel_convert_from_url_filter:
  * @trw: The #LayerTRW where to insert the collected data
  * @url: the URL to fetch
  * @input_type:   If input_type is %NULL, input must be GPX.
@@ -402,12 +423,11 @@ bool a_babel_convert_from_shellcommand(LayerTRW * trw, const char *input_cmd, co
  * Download the file pointed by the URL and optionally uses GPSBabel to convert from input_type.
  * If input_type and babelfilters are %NULL, gpsbabel is not used.
  *
- * Returns: %true on successful invocation of GPSBabel or read of the GPX
- *
+ * Returns: %true on successful invocation of GPSBabel or read of the GPX.
  */
 bool a_babel_convert_from_url_filter(LayerTRW * trw, const char *url, const char *input_type, const char *babelfilters, BabelStatusFunc cb, void * user_data, DownloadFileOptions *options)
 {
-	// If no download options specified, use defaults:
+	/* If no download options specified, use defaults: */
 	DownloadFileOptions myoptions = { false, false, NULL, 2, NULL, NULL, NULL };
 	if (options) {
 		myoptions = *options;
@@ -431,7 +451,7 @@ bool a_babel_convert_from_url_filter(LayerTRW * trw, const char *url, const char
 				babelargs = (input_type) ? g_strdup_printf(" -i %s", input_type) : g_strdup("");
 				ret = a_babel_convert_from_filter(trw, babelargs, name_src, babelfilters, NULL, NULL, NULL);
 			} else {
-				/* Process directly the retrieved file */
+				/* Process directly the retrieved file. */
 				fprintf(stderr, "DEBUG: %s: directly read GPX file %s\n", __FUNCTION__, name_src);
 				FILE *f = fopen(name_src, "r");
 				if (f) {
@@ -449,8 +469,9 @@ bool a_babel_convert_from_url_filter(LayerTRW * trw, const char *url, const char
 	return ret;
 }
 
+
+
 /**
- * a_babel_convert_from:
  * @vt:               The TRW layer to place data into. Duplicate items will be overwritten.
  * @process_options:  The options to control the appropriate processing function. See #ProcessOptions for more detail
  * @cb:               Optional callback function. Same usage as in a_babel_convert().
@@ -461,7 +482,7 @@ bool a_babel_convert_from_url_filter(LayerTRW * trw, const char *url, const char
  * that is, it will block the calling program until the conversion is done. To avoid blocking, call
  * this routine from a worker thread.
  *
- * Returns: %true on success
+ * Returns: %true on success.
  */
 bool a_babel_convert_from(LayerTRW * trw, ProcessOptions *process_options, BabelStatusFunc cb, void * user_data, DownloadFileOptions *download_options)
 {
@@ -483,9 +504,12 @@ bool a_babel_convert_from(LayerTRW * trw, ProcessOptions *process_options, Babel
 	return false;
 }
 
+
+
+
 static bool babel_general_convert_to(LayerTRW * trw, Track * trk, BabelStatusFunc cb, char **args, const char *name_src, void * user_data)
 {
-	// Now strips out invisible tracks and waypoints
+	/* Now strips out invisible tracks and waypoints. */
 	if (!a_file_export(trw, name_src, FILE_TYPE_GPX, trk, false)) {
 		fprintf(stderr, "CRITICAL: Error exporting to %s\n", name_src);
 		return false;
@@ -494,8 +518,10 @@ static bool babel_general_convert_to(LayerTRW * trw, Track * trk, BabelStatusFun
 	return babel_general_convert(cb, args, user_data);
 }
 
+
+
+
 /**
- * a_babel_convert_to:
  * @vt:             The TRW layer from which data is taken.
  * @track:          Operate on the individual track if specified. Use NULL when operating on a TRW layer
  * @babelargs:      A string containing gpsbabel command line options.  In addition to any filters, this string
@@ -508,7 +534,7 @@ static bool babel_general_convert_to(LayerTRW * trw, Track * trk, BabelStatusFun
  * that is, it will block the calling program until the conversion is done. To avoid blocking, call
  * this routine from a worker thread.
  *
- * Returns: %true on successful invocation of GPSBabel command
+ * Returns: %true on successful invocation of GPSBabel command.
  */
 bool a_babel_convert_to(LayerTRW * trw, Track * trk, const char *babelargs, const char *to, BabelStatusFunc cb, void * user_data)
 {
@@ -533,7 +559,7 @@ bool a_babel_convert_to(LayerTRW * trw, Track * trk, const char *babelargs, cons
 			args[i++] = (char *) "-i";
 			args[i++] = (char *) "gpx";
 			for (j = 0; sub_args[j]; j++) {
-				/* some version of gpsbabel can not take extra blank arg */
+				/* Some version of gpsbabel can not take extra blank arg. */
 				if (sub_args[j][0] != '\0') {
 					args[i++] = sub_args[j];
 				}
@@ -557,6 +583,9 @@ bool a_babel_convert_to(LayerTRW * trw, Track * trk, const char *babelargs, cons
 	return ret;
 }
 
+
+
+
 static void set_mode(BabelMode *mode, char *smode)
 {
 	mode->waypointsRead  = smode[0] == 'r';
@@ -567,9 +596,10 @@ static void set_mode(BabelMode *mode, char *smode)
 	mode->routesWrite    = smode[5] == 'w';
 }
 
+
+
+
 /**
- * load_feature_parse_line:
- *
  * Load a single feature stored in the given line.
  */
 static void load_feature_parse_line (char *line)
@@ -586,7 +616,7 @@ static void load_feature_parse_line (char *line)
 				BabelDevice * device = (BabelDevice *) malloc(sizeof (BabelDevice));
 				set_mode (&(device->mode), tokens[1]);
 				device->name = g_strdup(tokens[2]);
-				device->label = g_strndup (tokens[4], 50); // Limit really long label text
+				device->label = g_strndup (tokens[4], 50); /* Limit really long label text. */
 				a_babel_device_list.push_back(device);
 				fprintf(stderr, "DEBUG: New gpsbabel device: %s, %d%d%d%d%d%d(%s)\n",
 					device->name,
@@ -618,12 +648,15 @@ static void load_feature_parse_line (char *line)
 			} else {
 				fprintf(stderr, "WARNING: Unexpected gpsbabel format string: %s\n", line);
 			}
-		} /* else: ignore */
+		} /* else: ignore. */
 	} else {
 		fprintf(stderr, "WARNING: Unexpected gpsbabel format string: %s\n", line);
 	}
 	g_strfreev (tokens);
 }
+
+
+
 
 static void load_feature_cb (BabelProgressCode code, void * line, void * user_data)
 {
@@ -632,14 +665,17 @@ static void load_feature_cb (BabelProgressCode code, void * line, void * user_da
 	}
 }
 
+
+
+
 static bool load_feature()
 {
-	int i;
 	bool ret = false;
-	char *args[4];
 
 	if (gpsbabel_loc) {
-		i = 0;
+		int i = 0;
+		char * args[4];
+
 		if (unbuffer_loc) {
 			args[i++] = unbuffer_loc;
 		}
@@ -655,24 +691,27 @@ static bool load_feature()
 	return ret;
 }
 
+
+
+
 static VikLayerParam prefs[] = {
-	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_IO_NAMESPACE "gpsbabel", VIK_LAYER_PARAM_STRING, VIK_LAYER_GROUP_NONE, N_("GPSBabel:"), VIK_LAYER_WIDGET_FILEENTRY, NULL, NULL,
-	  N_("Allow setting the specific instance of GPSBabel. You must restart Viking for this value to take effect."), NULL, NULL, NULL },
+	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_IO_NAMESPACE "gpsbabel", VIK_LAYER_PARAM_STRING, VIK_LAYER_GROUP_NONE, N_("GPSBabel:"), VIK_LAYER_WIDGET_FILEENTRY, NULL, NULL, N_("Allow setting the specific instance of GPSBabel. You must restart Viking for this value to take effect."), NULL, NULL, NULL },
 };
 
+
+
+
 /**
- * a_babel_init:
- *
- * Just setup preferences first
+ * Just setup preferences first.
  */
 void a_babel_init()
 {
-	// Set the defaults
+	/* Set the defaults. */
 	VikLayerParamData vlpd;
 #ifdef WINDOWS
-	// Basic guesses - could use %ProgramFiles% but this is simpler:
+	/* Basic guesses - could use %ProgramFiles% but this is simpler: */
 	if (g_file_test ("C:\\Program Files (x86)\\GPSBabel\\gpsbabel.exe", G_FILE_TEST_EXISTS)) {
-		// 32 bit location on a 64 bit system
+		/* 32 bit location on a 64 bit system. */
 		vlpd.s = "C:\\Program Files (x86)\\GPSBabel\\gpsbabel.exe";
 	} else {
 		vlpd.s = "C:\\Program Files\\GPSBabel\\gpsbabel.exe";
@@ -683,18 +722,18 @@ void a_babel_init()
 	a_preferences_register(&prefs[0], vlpd, VIKING_PREFERENCES_IO_GROUP_KEY);
 }
 
+
+
+
 /**
- * a_babel_post_init:
- *
  * Initialises babel module.
- * Mainly check existence of gpsbabel progam
- * and load all features available in that version.
+ * Mainly check existence of gpsbabel progam and load all features available in that version.
  */
 void a_babel_post_init()
 {
-	// Read the current preference
+	/* Read the current preference. */
 	const char *gpsbabel = a_preferences_get(VIKING_PREFERENCES_IO_NAMESPACE "gpsbabel")->s;
-	// If setting is still the UNIX default then lookup in the path - otherwise attempt to use the specified value directly.
+	/* If setting is still the UNIX default then lookup in the path - otherwise attempt to use the specified value directly. */
 	if (strcmp(gpsbabel, "gpsbabel") == 0) {
 		gpsbabel_loc = g_find_program_in_path("gpsbabel");
 		if (!gpsbabel_loc) {
@@ -704,8 +743,8 @@ void a_babel_post_init()
 		gpsbabel_loc = (char*)gpsbabel;
 	}
 
-	// Unlikely to package unbuffer on Windows so ATM don't even bother trying
-	// Highly unlikely unbuffer is available on a Windows system otherwise
+	/* Unlikely to package unbuffer on Windows so ATM don't even bother trying.
+	   Highly unlikely unbuffer is available on a Windows system otherwise. */
 #ifndef WINDOWS
 	unbuffer_loc = g_find_program_in_path("unbuffer");
 	if (!unbuffer_loc) {
@@ -716,9 +755,10 @@ void a_babel_post_init()
 	load_feature();
 }
 
+
+
+
 /**
- * a_babel_uninit:
- *
  * Free resources acquired by a_babel_init.
  */
 void a_babel_uninit ()
@@ -736,7 +776,7 @@ void a_babel_uninit ()
 
 			/* kamilFIXME: how should we do this? How to destroy BabelFile? */
 			// free(*iter);
-			//a_babel_file_list.erase(iter);
+			// a_babel_file_list.erase(iter);
 		}
 	}
 
@@ -748,19 +788,20 @@ void a_babel_uninit ()
 			free(device->label);
 
 			/* kamilFIXME: how should we do this? How to destroy BabelDevice? */
-			//free(*iter);
+			// free(*iter);
 			// a_babel_device_list.erase(iter);
 		}
 	}
 
 }
 
+
+
+
 /**
- * a_babel_available:
- *
  * Indicates if babel is available or not.
  *
- * Returns: true if babel available
+ * Returns: true if babel available.
  */
 bool a_babel_available()
 {

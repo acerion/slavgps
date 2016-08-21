@@ -23,18 +23,19 @@
 #include "config.h"
 #endif
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstring>
+#include <cstdlib>
+
 #include <glib/gprintf.h>
 #include <glib/gi18n.h>
 
-#include "viking.h"
 #include "babel.h"
 #include "gpx.h"
 #include "acquire.h"
 #include "dialog.h"
 #include "util.h"
+
 
 
 
@@ -46,17 +47,17 @@ using namespace SlavGPS;
 /************************ FILTER LIST *******************/
 // extern VikDataSourceInterface vik_datasource_gps_interface;
 
-/*** Input is TRWLayer ***/
+/*** Input is LayerTRW. ***/
 extern VikDataSourceInterface vik_datasource_bfilter_simplify_interface;
 extern VikDataSourceInterface vik_datasource_bfilter_compress_interface;
 extern VikDataSourceInterface vik_datasource_bfilter_dup_interface;
 extern VikDataSourceInterface vik_datasource_bfilter_manual_interface;
 
-/*** Input is a track and a TRWLayer ***/
+/*** Input is a track and a LayerTRW. ***/
 extern VikDataSourceInterface vik_datasource_bfilter_polygon_interface;
 extern VikDataSourceInterface vik_datasource_bfilter_exclude_polygon_interface;
 
-/*** Input is a track ***/
+/*** Input is a track. ***/
 
 const VikDataSourceInterface * filters[] = {
 	&vik_datasource_bfilter_simplify_interface,
@@ -73,7 +74,7 @@ Track * filter_track = NULL;
 
 /********************************************************/
 
-/* passed along to worker thread */
+/* Passed along to worker thread. */
 typedef struct {
 	acq_dialog_widgets_t * w;
 	ProcessOptions * po;
@@ -83,9 +84,14 @@ typedef struct {
 } w_and_interface_t;
 
 
+
+
 /*********************************************************
- * Definitions and routines for acquiring data from Data Sources in general
+ * Definitions and routines for acquiring data from Data Sources in general.
  *********************************************************/
+
+
+
 
 static void progress_func(BabelProgressCode c, void * data, acq_dialog_widgets_t * w)
 {
@@ -106,6 +112,9 @@ static void progress_func(BabelProgressCode c, void * data, acq_dialog_widgets_t
 	}
 }
 
+
+
+
 /**
  * Some common things to do on completion of a datasource process
  *  . Update layer
@@ -117,8 +126,8 @@ static void on_complete_process(w_and_interface_t * wi)
 	if (wi->w->running) {
 		gtk_label_set_text(GTK_LABEL(wi->w->status), _("Done."));
 		if (wi->creating_new_layer) {
-			/* Only create the layer if it actually contains anything useful */
-			// TODO: create function for this operation to hide detail:
+			/* Only create the layer if it actually contains anything useful. */
+			/* TODO: create function for this operation to hide detail: */
 			if (! wi->trw->is_empty()) {
 				wi->trw->post_read(wi->w->viewport, true);
 				Layer * layer = wi->trw;
@@ -133,22 +142,25 @@ static void on_complete_process(w_and_interface_t * wi)
 		} else {
 			gtk_dialog_response(GTK_DIALOG(wi->w->dialog), GTK_RESPONSE_ACCEPT);
 		}
-		// Main display update
+		/* Main display update. */
 		if (wi->trw) {
 			wi->trw->post_read(wi->w->viewport, true);
-			// View this data if desired - must be done after post read (so that the bounds are known)
+			/* View this data if desired - must be done after post read (so that the bounds are known). */
 			if (wi->w->source_interface->autoview) {
 				wi->trw->auto_set_view(wi->w->panel->get_viewport());
 			}
 			wi->w->panel->emit_update();
 		}
 	} else {
-		/* cancelled */
+		/* Cancelled. */
 		if (wi->creating_new_layer) {
 			g_object_unref(wi->trw->vl);
 		}
-  }
+	}
 }
+
+
+
 
 static void free_process_options(ProcessOptions *po)
 {
@@ -163,7 +175,10 @@ static void free_process_options(ProcessOptions *po)
 	}
 }
 
-/* this routine is the worker thread.  there is only one simultaneous download allowed */
+
+
+
+/* This routine is the worker thread.  there is only one simultaneous download allowed. */
 static void get_from_anything(w_and_interface_t * wi)
 {
 	bool result = true;
@@ -204,8 +219,11 @@ static void get_from_anything(w_and_interface_t * wi)
 	g_thread_exit(NULL);
 }
 
-/* depending on type of filter, often only vtl or track will be given.
- * the other can be NULL.
+
+
+
+/* Depending on type of filter, often only trw or track will be given.
+ * The other can be NULL.
  */
 static void acquire(Window * window,
 		    LayersPanel * panel,
@@ -217,7 +235,7 @@ static void acquire(Window * window,
 		    void * userdata,
 		    VikDataSourceCleanupFunc cleanup_function)
 {
-	/* for manual dialogs */
+	/* For manual dialogs. */
 	GtkWidget * dialog = NULL;
 	GtkWidget * status;
 	char * args_off = NULL;
@@ -232,7 +250,7 @@ static void acquire(Window * window,
 	avt.window = window;
 	avt.userdata = userdata;
 
-	/* for UI builder */
+	/* For UI builder. */
 	void * pass_along_data;
 	VikLayerParamData *paramdatas = NULL;
 
@@ -324,12 +342,12 @@ static void acquire(Window * window,
 	} else if (source_interface->get_process_options_func)
 		source_interface->get_process_options_func(pass_along_data, po, options, NULL, NULL);
 
-	/* Get data for Off command */
+	/* Get data for Off command. */
 	if (source_interface->off_func) {
 		source_interface->off_func(pass_along_data, &args_off, &fd_off);
 	}
 
-	/* cleanup for option dialogs */
+	/* Cleanup for option dialogs. */
 	if (source_interface->add_setup_widgets_func) {
 		gtk_widget_destroy(dialog);
 		dialog = NULL;
@@ -344,7 +362,7 @@ static void acquire(Window * window,
 	wi->po = po;
 	wi->options = options;
 	wi->trw = trw;
-	wi->creating_new_layer = (!trw); // Default if Auto Layer Management is passed in
+	wi->creating_new_layer = (!trw); /* Default if Auto Layer Management is passed in. */
 
 	dialog = gtk_dialog_new_with_buttons("", GTK_WINDOW(window->vw), (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL);
 	gtk_dialog_set_response_sensitive(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT, false);
@@ -355,7 +373,7 @@ static void acquire(Window * window,
 	status = gtk_label_new(_("Working..."));
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), status, false, false, 5);
 	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
-	// May not want to see the dialog at all
+	/* May not want to see the dialog at all. */
 	if (source_interface->is_thread || source_interface->keep_dialog_open) {
 		gtk_widget_show_all(dialog);
 	}
@@ -378,7 +396,7 @@ static void acquire(Window * window,
 	} else if (mode == VIK_DATASOURCE_CREATENEWLAYER) {
 		wi->creating_new_layer = true;
 	} else if (mode == VIK_DATASOURCE_MANUAL_LAYER_MANAGEMENT) {
-		// Don't create in acquire - as datasource will perform the necessary actions
+		/* Don't create in acquire - as datasource will perform the necessary actions. */
 		wi->creating_new_layer = false;
 		Layer * current_selected = w->panel->get_selected();
 		if (current_selected->type == LayerType::TRW) {
@@ -399,12 +417,12 @@ static void acquire(Window * window,
 #endif
 			gtk_dialog_run(GTK_DIALOG(dialog));
 			if (w->running) {
-				// Cancel and mark for thread to finish
+				/* Cancel and mark for thread to finish. */
 				w->running = false;
-				// NB Thread will free memory
+				/* NB Thread will free memory. */
 			} else {
 				if (args_off) {
-					/* Turn off */
+					/* Turn off. */
 					ProcessOptions off_po = { args_off, fd_off, NULL, NULL, NULL };
 					a_babel_convert_from(NULL, &off_po, NULL, NULL, NULL);
 					free(args_off);
@@ -413,17 +431,17 @@ static void acquire(Window * window,
 					free(fd_off);
 				}
 
-				// Thread finished by normal completion - free memory
+				/* Thread finished by normal completion - free memory. */
 				free(w);
 				free(wi);
 			}
 		} else {
-			// This shouldn't happen...
+			/* This shouldn't happen... */
 			gtk_label_set_text(GTK_LABEL(w->status), _("Unable to create command\nAcquire method failed."));
 			gtk_dialog_run(GTK_DIALOG (dialog));
 		}
 	} else {
-		// bypass thread method malarkly - you'll just have to wait...
+		/* Bypass thread method malarkly - you'll just have to wait... */
 		if (source_interface->process_func) {
 			bool result = source_interface->process_func(wi->trw, po, (BabelStatusFunc) progress_func, w, options);
 			if (!result) {
@@ -434,7 +452,7 @@ static void acquire(Window * window,
 		free(options);
 
 		on_complete_process(wi);
-		// Actually show it if necessary
+		/* Actually show it if necessary. */
 		if (wi->w->source_interface->keep_dialog_open) {
 			gtk_dialog_run(GTK_DIALOG(dialog));
 		}
@@ -450,8 +468,10 @@ static void acquire(Window * window,
 	}
 }
 
+
+
+
 /**
- * a_acquire:
  * @window: The #Window to work with
  * @panel: The #LayersPanel in which a #LayerTRW layer may be created/appended
  * @viewport: The #Viewport defining the current view
@@ -462,47 +482,60 @@ static void acquire(Window * window,
  *
  * Process the given VikDataSourceInterface for sources with no input data.
  */
-void a_acquire(Window * window,
-	       LayersPanel * panel,
-	       Viewport * viewport,
-	       vik_datasource_mode_t mode,
-	       VikDataSourceInterface *source_interface,
-	       void * userdata,
-	       VikDataSourceCleanupFunc cleanup_function)
+void SlavGPS::a_acquire(Window * window,
+			LayersPanel * panel,
+			Viewport * viewport,
+			vik_datasource_mode_t mode,
+			VikDataSourceInterface *source_interface,
+			void * userdata,
+			VikDataSourceCleanupFunc cleanup_function)
 {
 	acquire(window, panel, viewport, mode, source_interface, NULL, NULL, userdata, cleanup_function);
 }
 
-static void acquire_trwlayer_callback(GObject *menuitem, void ** pass_along)
+
+
+
+typedef struct {
+	Window * window;
+	LayersPanel * panel;
+	Viewport * viewport;
+	LayerTRW * trw;
+	Track * trk;
+} pass_along;
+
+
+
+
+static void acquire_trwlayer_callback(GObject *menuitem, pass_along * data)
 {
 	VikDataSourceInterface * iface = (VikDataSourceInterface *) g_object_get_data (menuitem, "vik_acq_iface");
-	Window * window = (Window *) pass_along[0];
-	LayersPanel * panel = (LayersPanel *) pass_along[1];
-	Viewport * viewport = (Viewport *) pass_along[2];
-	LayerTRW * trw = (LayerTRW *) pass_along[3];
-	Track * trk = (Track *) pass_along[4];
 
-	acquire(window, panel, viewport, iface->mode, iface, trw, trk, NULL, NULL);
+	acquire(data->window, data->panel, data->viewport, iface->mode, iface, data->trw, data->trk, NULL, NULL);
 }
 
+
+
+
 static GtkWidget * acquire_build_menu(Window * window, LayersPanel * panel, Viewport * viewport,
-				      LayerTRW * trw, Track * trk, /* both passed to acquire, although for many filters only one ness */
+				      LayerTRW * trw, Track * trk, /* Both passed to acquire, although for many filters only one is necessary. */
 				      const char *menu_title, vik_datasource_inputtype_t inputtype)
 {
-	static void * pass_along[5];
-	GtkWidget *menu_item=NULL, *menu=NULL;
-	GtkWidget *item=NULL;
-	int i;
+	GtkWidget * menu_item = NULL;
+	GtkWidget * menu = NULL;
+	GtkWidget * item = NULL;
 
-	pass_along[0] = window;
-	pass_along[1] = panel;
-	pass_along[2] = viewport;
-	pass_along[3] = trw;
-	pass_along[4] = trk;
+	static pass_along data = {
+		window,
+		panel,
+		viewport,
+		trw,
+		trk
+	};
 
-	for (i = 0; i < N_FILTERS; i++) {
+	for (int i = 0; i < N_FILTERS; i++) {
 		if (filters[i]->inputtype == inputtype) {
-			if (! menu_item) { /* do this just once, but return NULL if no filters */
+			if (! menu_item) { /* Do this just once, but return NULL if no filters. */
 				menu = gtk_menu_new();
 				menu_item = gtk_menu_item_new_with_mnemonic(menu_title);
 				gtk_menu_item_set_submenu(GTK_MENU_ITEM (menu_item), menu);
@@ -510,7 +543,7 @@ static GtkWidget * acquire_build_menu(Window * window, LayersPanel * panel, View
 
 			item = gtk_menu_item_new_with_label(filters[i]->window_title);
 			g_object_set_data(G_OBJECT(item), "vik_acq_iface", (void *) filters[i]);
-			g_signal_connect(G_OBJECT(item), "activate", G_CALLBACK(acquire_trwlayer_callback), pass_along);
+			g_signal_connect(G_OBJECT(item), "activate", G_CALLBACK(acquire_trwlayer_callback), &data);
 			gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
 			gtk_widget_show(item);
 		}
@@ -519,26 +552,28 @@ static GtkWidget * acquire_build_menu(Window * window, LayersPanel * panel, View
 	return menu_item;
 }
 
+
+
+
 /**
- * a_acquire_trwlayer_menu:
- *
  * Create a sub menu intended for rightclicking on a TRWLayer's menu called "Filter".
  *
  * Returns: %NULL if no filters.
  */
-GtkWidget * a_acquire_trwlayer_menu(Window * window, LayersPanel * panel, Viewport * viewport, LayerTRW * trw)
+GtkWidget * SlavGPS::a_acquire_trwlayer_menu(Window * window, LayersPanel * panel, Viewport * viewport, LayerTRW * trw)
 {
 	return acquire_build_menu(window, panel, viewport, trw, NULL, _("_Filter"), VIK_DATASOURCE_INPUTTYPE_TRWLAYER);
 }
 
+
+
+
 /**
- * a_acquire_trwlayer_track_menu:
- *
  * Create a sub menu intended for rightclicking on a TRWLayer's menu called "Filter with Track "TRACKNAME"...".
  *
  * Returns: %NULL if no filters or no filter track has been set.
  */
-GtkWidget * a_acquire_trwlayer_track_menu(Window * window, LayersPanel * panel, Viewport * viewport, LayerTRW * trw)
+GtkWidget * SlavGPS::a_acquire_trwlayer_track_menu(Window * window, LayersPanel * panel, Viewport * viewport, LayerTRW * trw)
 {
 	if (filter_track == NULL) {
 		return NULL;
@@ -551,24 +586,26 @@ GtkWidget * a_acquire_trwlayer_track_menu(Window * window, LayersPanel * panel, 
 	}
 }
 
+
+
+
 /**
- * a_acquire_track_menu:
- *
  * Create a sub menu intended for rightclicking on a track's menu called "Filter".
  *
  * Returns: %NULL if no applicable filters
  */
-GtkWidget * a_acquire_track_menu(Window * window, LayersPanel * panel, Viewport * viewport, Track * trk)
+GtkWidget * SlavGPS::a_acquire_track_menu(Window * window, LayersPanel * panel, Viewport * viewport, Track * trk)
 {
 	return acquire_build_menu(window, panel, viewport, NULL, trk, _("Filter"), VIK_DATASOURCE_INPUTTYPE_TRACK);
 }
 
+
+
+
 /**
- * a_acquire_set_filter_track:
- *
  * Sets application-wide track to use with filter. references the track.
  */
-void a_acquire_set_filter_track(Track * trk)
+void SlavGPS::a_acquire_set_filter_track(Track * trk)
 {
 	if (filter_track) {
 		filter_track->free();

@@ -24,15 +24,12 @@
 
 
 
-
 #include "vikgototool.h"
 
 
 
 
-
 namespace SlavGPS {
-
 
 
 
@@ -52,9 +49,7 @@ namespace SlavGPS {
 
 
 
-
 } /* namespace SlavGPS */
-
 
 
 
