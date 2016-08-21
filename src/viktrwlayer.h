@@ -45,7 +45,13 @@
 
 
 
-struct _VikTrwLayer;
+typedef struct {
+	VikLayer vl;
+} VikTrwLayer;
+
+
+
+
 struct _trw_menu_sublayer_t;
 
 
@@ -552,6 +558,11 @@ namespace SlavGPS {
 
 
 
+	void layer_trw_init(void);
+
+
+
+
 }
 
 
@@ -573,43 +584,6 @@ typedef struct _trw_menu_sublayer_t {
 	GtkTreeIter * tv_iter;
 	void * misc;
 } trw_menu_sublayer_t;
-
-
-
-
-struct _VikTrwLayer {
-	VikLayer vl;
-};
-
-
-
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
-
-
-#define VIK_TRW_LAYER_TYPE            (vik_trw_layer_get_type ())
-#define VIK_TRW_LAYER(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_TRW_LAYER_TYPE, VikTrwLayer))
-#define VIK_TRW_LAYER_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), VIK_TRW_LAYER_TYPE, VikTrwLayerClass))
-#define IS_VIK_TRW_LAYER(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), VIK_TRW_LAYER_TYPE))
-#define IS_VIK_TRW_LAYER_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), VIK_TRW_LAYER_TYPE))
-
-
-
-typedef struct _VikTrwLayerClass VikTrwLayerClass;
-struct _VikTrwLayerClass
-{
-	VikLayerClass object_class;
-};
-
-
-GType vik_trw_layer_get_type ();
-
-typedef struct _VikTrwLayer VikTrwLayer;
-
 
 
 
@@ -765,13 +739,6 @@ void trw_layer_google_route_webpage(trw_menu_sublayer_t * data);
 void trw_layer_delete_item(trw_menu_sublayer_t * data);
 void trw_layer_copy_item_cb(trw_menu_sublayer_t * data);
 void trw_layer_cut_item_cb(trw_menu_sublayer_t * data);
-
-
-
-
-#ifdef __cplusplus
-}
-#endif
 
 
 

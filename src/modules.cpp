@@ -64,6 +64,8 @@
 #include "vikmapniklayer.h"
 #endif
 
+#include "viktrwlayer.h"
+
 
 
 
@@ -309,6 +311,8 @@ void SlavGPS::modules_post_init()
 #ifdef HAVE_LIBMAPNIK
 	vik_mapnik_layer_post_init();
 #endif
+
+	layer_trw_init();
 }
 
 

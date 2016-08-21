@@ -427,8 +427,7 @@ char *astro_program = NULL;
 
 
 
-// NB Only performed once per program run
-static void vik_trwlayer_class_init(VikTrwLayerClass *klass)
+void SlavGPS::layer_trw_init(void)
 {
 	if (!a_settings_get_string(VIK_SETTINGS_EXTERNAL_DIARY_PROGRAM, &diary_program)) {
 #ifdef WINDOWS
@@ -438,19 +437,19 @@ static void vik_trwlayer_class_init(VikTrwLayerClass *klass)
 		diary_program = strdup("rednotebook");
 #endif
 	} else {
-		// User specified so assume it works
+		/* User specified so assume it works. */
 		have_diary_program = true;
 	}
 
 	if (g_find_program_in_path(diary_program)) {
 		char *mystdout = NULL;
 		char *mystderr = NULL;
-		// Needs RedNotebook 1.7.3+ for support of opening on a specified date
+		/* Needs RedNotebook 1.7.3+ for support of opening on a specified date. */
 		char *cmd = g_strconcat(diary_program, " --version", NULL); // "rednotebook --version"
 		if (g_spawn_command_line_sync(cmd, &mystdout, &mystderr, NULL, NULL)) {
-			// Annoyingly 1.7.1|2|3 versions of RedNotebook prints the version to stderr!!
+			/* Annoyingly 1.7.1|2|3 versions of RedNotebook prints the version to stderr!! */
 			if (mystdout) {
-				fprintf(stderr, "DEBUG: Diary: %s\n", mystdout); // Should be something like 'RedNotebook 1.4'
+				fprintf(stderr, "DEBUG: Diary: %s\n", mystdout); /* Should be something like 'RedNotebook 1.4'. */
 			}
 			if (mystderr) {
 				fprintf(stderr, "WARNING: Diary: stderr: %s\n", mystderr);
@@ -487,7 +486,7 @@ static void vik_trwlayer_class_init(VikTrwLayerClass *klass)
 		have_geojson_export = true;
 	}
 
-	// Astronomy Domain
+	/* Astronomy Domain. */
 	if (!a_settings_get_string(VIK_SETTINGS_EXTERNAL_ASTRO_PROGRAM, &astro_program)) {
 #ifdef WINDOWS
 		//astro_program = strdup("C:\\Program Files\\Stellarium\\stellarium.exe");
@@ -496,36 +495,12 @@ static void vik_trwlayer_class_init(VikTrwLayerClass *klass)
 		astro_program = strdup("stellarium");
 #endif
 	} else {
-		// User specified so assume it works
+		/* User specified so assume it works. */
 		have_astro_program = true;
 	}
 	if (g_find_program_in_path(astro_program)) {
 		have_astro_program = true;
 	}
-}
-
-
-
-
-GType vik_trw_layer_get_type()
-{
-	static GType vtl_type = 0;
-
-	if (!vtl_type) {
-		static const GTypeInfo vtl_info = {
-			sizeof (VikTrwLayerClass),
-			NULL, /* base_init */
-			NULL, /* base_finalize */
-			(GClassInitFunc) vik_trwlayer_class_init, /* class init */
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (VikTrwLayer),
-			0,
-			NULL /* instance init */
-		};
-		vtl_type = g_type_register_static(VIK_LAYER_TYPE, "VikTrwLayer", &vtl_info, (GTypeFlags) 0);
-	}
-	return vtl_type;
 }
 
 
