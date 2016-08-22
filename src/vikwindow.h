@@ -301,4 +301,13 @@ SlavGPS::Window * window_from_vik_window(VikWindow * vw);
 
 
 
+struct _VikWindow {
+	GtkWindow gtkwindow;
+
+	SlavGPS::Window * window;
+};
+
+
+
+
 #endif /* #ifndef _SG_WINDOW_H_ */

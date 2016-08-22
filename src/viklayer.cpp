@@ -603,7 +603,7 @@ VikLayerParamData layer_get_param(Layer const * layer, uint16_t id, bool is_file
 static bool vik_layer_properties_factory(Layer * layer, Viewport * viewport)
 {
 	switch (a_uibuilder_properties_factory(_("Layer Properties"),
-					       VIK_GTK_WINDOW_FROM_WIDGET(viewport->drawing_area),
+					       viewport->get_toolkit_window(),
 					       vik_layer_interfaces[(int) layer->type]->params,
 					       vik_layer_interfaces[(int) layer->type]->params_count,
 					       vik_layer_interfaces[(int) layer->type]->params_groups,

@@ -64,6 +64,11 @@ namespace SlavGPS {
 
 
 
+	class Window;
+
+
+
+
 	class Viewport {
 
 	public:
@@ -212,11 +217,15 @@ namespace SlavGPS {
 		void set_half_drawn(bool half_drawn);
 		bool get_half_drawn();
 
+		GtkWidget * get_toolkit_widget(void);
+		GtkWindow * get_toolkit_window(void);
+		void * get_toolkit_object(void);
+		Window * get_window(void);
 
 
 
 
-		/* Wether or not display OSD info. */
+		/* Whether or not to display OSD info. */
 		bool do_draw_scale = true;
 		bool do_draw_centermark = true;
 		bool do_draw_highlight = true;
@@ -269,14 +278,12 @@ namespace SlavGPS {
 		GdkPixmap * snapshot_buffer = NULL;
 		bool half_drawn = false;
 
-
-		GtkDrawingArea * drawing_area; /* Toolkit-specific drawing area. */
-
-		char type_string[30];
-
 	private:
 		void free_center(std::list<Coord *>::iterator iter);
 		void init_drawing_area(void);
+
+		GtkDrawingArea * drawing_area_; /* Toolkit-specific drawing area. */
+		char type_string[30];
 	};
 
 

@@ -683,7 +683,7 @@ bool LayerMaps::set_param(uint16_t id, VikLayerParamData data, Viewport * viewpo
 					/* Check if licence for this map type has been shown before. */
 					if (! a_settings_get_integer_list_contains(VIK_SETTINGS_MAP_LICENSE_SHOWN, data.u)) {
 						if (viewport) {
-							maps_show_license(VIK_GTK_WINDOW_FROM_WIDGET(viewport->drawing_area), map);
+							maps_show_license(viewport->get_toolkit_window(), map);
 						}
 						a_settings_set_integer_list_containing(VIK_SETTINGS_MAP_LICENSE_SHOWN, data.u);
 					}
@@ -921,7 +921,7 @@ void LayerMaps::post_read(Viewport * viewport, bool from_file)
 		if (map->get_drawmode() != vp_drawmode) {
 			const char *drawmode_name = viewport->get_drawmode_name(map->get_drawmode());
 			char *msg = g_strdup_printf(_("New map cannot be displayed in the current drawmode.\nSelect \"%s\" from View menu to view it."), drawmode_name);
-			a_dialog_warning_msg(VIK_GTK_WINDOW_FROM_WIDGET(viewport->drawing_area), msg);
+			a_dialog_warning_msg(viewport->get_toolkit_window(), msg);
 			free(msg);
 		}
 	}
@@ -938,7 +938,7 @@ void LayerMaps::post_read(Viewport * viewport, bool from_file)
 			/* That didn't work, so here's why: */
 			fprintf(stderr, "WARNING: %s: %s\n", __FUNCTION__, sqlite3_errmsg(this->mbtiles));
 
-			a_dialog_error_msg_extra(VIK_GTK_WINDOW_FROM_WIDGET(viewport->drawing_area),
+			a_dialog_error_msg_extra(viewport->get_toolkit_window(),
 						 _("Failed to open MBTiles file: %s"),
 						 this->filename);
 			this->mbtiles = NULL;
@@ -1289,7 +1289,7 @@ static bool should_start_autodownload(LayerMaps * layer, Viewport * viewport)
 {
 	const VikCoord *center = viewport->get_center();
 
-	if (window_from_widget(viewport->drawing_area)->get_pan_move()) {
+	if (viewport->get_window()->get_pan_move()) {
 		/* D'n'D pan in action: do not download. */
 		return false;
 	}
@@ -1512,7 +1512,7 @@ void LayerMaps::draw_section(Viewport * viewport, VikCoord *ul, VikCoord *br)
 						}
 
 						if (g_file_test(path_buf, G_FILE_TEST_EXISTS) == true) {
-							GdkGC *black_gc = gtk_widget_get_style(GTK_WIDGET(viewport->drawing_area))->black_gc;
+							GdkGC *black_gc = gtk_widget_get_style(viewport->get_toolkit_widget())->black_gc;
 							viewport->draw_line(black_gc, xx+tilesize_x_ceil, yy, xx, yy+tilesize_y_ceil);
 						}
 					} else {
@@ -1548,7 +1548,7 @@ void LayerMaps::draw_section(Viewport * viewport, VikCoord *ul, VikCoord *br)
 				/* Grid drawing here so it gets drawn on top of the map.
 				   Thus loop around x & y again, but this time separately.
 				   Only showing grid for the current scale */
-				GdkGC *black_gc = GTK_WIDGET(viewport->drawing_area)->style->black_gc;
+				GdkGC *black_gc = viewport->get_toolkit_widget()->style->black_gc;
 				/* Draw single grid lines across the whole screen. */
 				int width = viewport->get_width();
 				int height = viewport->get_height();
