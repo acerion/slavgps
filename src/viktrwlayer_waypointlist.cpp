@@ -217,7 +217,7 @@ static void trw_layer_waypoint_properties(waypointlist_data_t * values)
 		waypoint_close_cb(gw, 0, values->waypoints_and_layers);
 
 		bool updated = false;
-		char * new_name = a_dialog_waypoint(gtk_window_from_layer(trw), wp->name, trw, wp, trw->get_coord_mode(), false, &updated);
+		char * new_name = a_dialog_waypoint(trw->get_toolkit_window(), wp->name, trw, wp, trw->get_coord_mode(), false, &updated);
 		if (new_name) {
 			trw->waypoint_rename(wp, new_name);
 		}
@@ -263,7 +263,7 @@ static void trw_layer_show_picture_wp(waypointlist_data_t * values)
 	char * cmd = g_strdup_printf("%s %s", a_vik_get_image_viewer(), quoted_file);
 	free(quoted_file);
 	if (! g_spawn_command_line_async(cmd, &err)) {
-		a_dialog_error_msg_extra(gtk_window_from_layer(trw), _("Could not launch %s to open file."), a_vik_get_image_viewer());
+		a_dialog_error_msg_extra(trw->get_toolkit_window(), _("Could not launch %s to open file."), a_vik_get_image_viewer());
 		g_error_free(err);
 	}
 	free(cmd);
@@ -805,7 +805,7 @@ void SlavGPS::vik_trw_layer_waypoint_list_show_dialog(char * title,
 						      bool show_layer_names)
 {
 	GtkWidget * dialog = gtk_dialog_new_with_buttons(title,
-							 gtk_window_from_layer(layer),
+							 layer->get_toolkit_window(),
 							 GTK_DIALOG_DESTROY_WITH_PARENT,
 							 GTK_STOCK_CLOSE,
 							 GTK_RESPONSE_CLOSE,

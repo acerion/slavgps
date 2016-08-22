@@ -678,7 +678,7 @@ static void georef_layer_export_params(georef_data_t * data)
 
 		gtk_widget_destroy(file_selector);
 		if (!f) {
-			a_dialog_error_msg(VIK_GTK_WINDOW_FROM_WIDGET(layer->vl), _("The file you requested could not be opened for writing."));
+			a_dialog_error_msg(layer->get_toolkit_window(), _("The file you requested could not be opened for writing."));
 			return;
 		} else {
 			fprintf(f, "%f\n%f\n%f\n%f\n%f\n%f\n", layer->mpp_easting, layer->mpp_northing, 0.0, 0.0, layer->corner.easting, layer->corner.northing);
@@ -836,7 +836,7 @@ void LayerGeoref::check_br_is_good_or_msg_user()
 
 	struct LatLon ll_tl = this->get_ll_tl();
 	if (ll_tl.lat < this->ll_br.lat || ll_tl.lon > this->ll_br.lon) {
-		a_dialog_warning_msg(gtk_window_from_layer(this), _("Lower right corner values may not be consistent with upper right values"));
+		a_dialog_warning_msg(this->get_toolkit_window(), _("Lower right corner values may not be consistent with upper right values"));
 	}
 }
 

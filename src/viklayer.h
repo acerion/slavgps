@@ -243,6 +243,8 @@ namespace SlavGPS {
 
 		void set_defaults(Viewport * viewport);
 
+		GtkWindow * get_toolkit_window(void);
+
 
 
 
@@ -313,11 +315,6 @@ namespace SlavGPS {
 
 
 }
-
-
-
-
-GtkWindow * gtk_window_from_layer(SlavGPS::Layer * layer);
 
 
 

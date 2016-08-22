@@ -414,7 +414,7 @@ void SlavGPS::osm_login_widgets(GtkWidget *user_entry, GtkWidget *password_entry
 void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 {
 	GtkWidget *dia = gtk_dialog_new_with_buttons(_("OSM upload"),
-						     gtk_window_from_layer(trw),
+						     trw->get_toolkit_window(),
 						     (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
 						     GTK_STOCK_CANCEL,
 						     GTK_RESPONSE_REJECT,
@@ -568,7 +568,7 @@ void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 
 		/* Launch the thread. */
 		a_background_thread(BACKGROUND_POOL_REMOTE,
-				    gtk_window_from_layer(trw),              /* Parent window. */
+				    trw->get_toolkit_window(),               /* Parent window. */
 				    title,                                   /* Description string. */
 				    (vik_thr_func) osm_traces_upload_thread, /* Function to call within thread. */
 				    info,                                    /* Pass along data. */

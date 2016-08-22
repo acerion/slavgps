@@ -498,7 +498,7 @@ static void aggregate_layer_search_date(menu_array_values * values)
 void LayerAggregate::search_date()
 {
 	VikCoord position;
-	char * date_str = a_dialog_get_date(gtk_window_from_layer(this), _("Search by Date"));
+	char * date_str = a_dialog_get_date(this->get_toolkit_window(), _("Search by Date"));
 
 	if (!date_str) {
 		return;
@@ -537,7 +537,7 @@ void LayerAggregate::search_date()
 	}
 
 	if (!found) {
-		a_dialog_info_msg(gtk_window_from_layer(this), _("No items found with the requested date."));
+		a_dialog_info_msg(this->get_toolkit_window(), _("No items found with the requested date."));
 	}
 	free(date_str);
 }
@@ -622,7 +622,7 @@ static void aggregate_layer_analyse(menu_array_values * values)
 		return;
 	}
 
-	aggregate->tracks_analysis_dialog = vik_trw_layer_analyse_this(gtk_window_from_layer(aggregate),
+	aggregate->tracks_analysis_dialog = vik_trw_layer_analyse_this(aggregate->get_toolkit_window(),
 								       aggregate->name,
 								       aggregate,
 								       SublayerType::NONE,

@@ -1383,7 +1383,7 @@ int SlavGPS::vik_gps_comm(LayerTRW * layer,
 
 	/* Only create dialog if we're going to do some transferring. */
 	if (do_tracks || do_waypoints || do_routes) {
-		sess->dialog = gtk_dialog_new_with_buttons("", gtk_window_from_layer(layer), (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL);
+		sess->dialog = gtk_dialog_new_with_buttons("", layer->get_toolkit_window(), (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL);
 		gtk_dialog_set_response_sensitive(GTK_DIALOG(sess->dialog),
 						    GTK_RESPONSE_ACCEPT, false);
 		gtk_window_set_title(GTK_WINDOW(sess->dialog), sess->window_title);
@@ -1422,7 +1422,7 @@ int SlavGPS::vik_gps_comm(LayerTRW * layer,
 		gtk_widget_destroy(sess->dialog);
 	} else {
 		if (!turn_off) {
-			a_dialog_info_msg(gtk_window_from_layer(layer), _("No GPS items selected for transfer."));
+			a_dialog_info_msg(layer->get_toolkit_window(), _("No GPS items selected for transfer."));
 		}
 	}
 
@@ -1438,7 +1438,7 @@ int SlavGPS::vik_gps_comm(LayerTRW * layer,
 			ProcessOptions po = { device_off, port, NULL, NULL, NULL, NULL };
 			bool result = a_babel_convert_from(NULL, &po, NULL, NULL, NULL);
 			if (!result) {
-				a_dialog_error_msg(gtk_window_from_layer(layer), _("Could not turn off device."));
+				a_dialog_error_msg(layer->get_toolkit_window(), _("Could not turn off device."));
 			}
 			free(device_off);
 		}
@@ -1945,7 +1945,7 @@ static bool rt_gpsd_try_connect(void * gps_layer)
 
 bool LayerGPS::rt_ask_retry()
 {
-	GtkWidget * dialog = gtk_message_dialog_new(gtk_window_from_layer(this),
+	GtkWidget * dialog = gtk_message_dialog_new(this->get_toolkit_window(),
 						    GTK_DIALOG_DESTROY_WITH_PARENT,
 						    GTK_MESSAGE_QUESTION,
 						    GTK_BUTTONS_YES_NO,

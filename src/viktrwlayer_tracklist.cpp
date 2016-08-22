@@ -223,7 +223,7 @@ static void trw_layer_track_stats_cb(tracklist_data_t * values)
 		GtkWidget * gw = gtk_widget_get_toplevel(values->gtk_tree_view);
 		track_close_cb(gw, 0, values->tracks_and_layers);
 
-		vik_trw_layer_propwin_run(gtk_window_from_layer(trw),
+		vik_trw_layer_propwin_run(trw->get_toolkit_window(),
 					  trw,
 					  trk,
 					  NULL, // panel
@@ -786,7 +786,7 @@ void SlavGPS::vik_trw_layer_track_list_show_dialog(char * title,
 						   bool show_layer_names)
 {
 	GtkWidget * dialog = gtk_dialog_new_with_buttons(title,
-							 gtk_window_from_layer(layer),
+							 layer->get_toolkit_window(),
 							 GTK_DIALOG_DESTROY_WITH_PARENT,
 							 GTK_STOCK_CLOSE,
 							 GTK_RESPONSE_CLOSE,

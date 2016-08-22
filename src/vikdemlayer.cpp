@@ -1396,7 +1396,7 @@ bool LayerDEM::download_release(GdkEventButton * event, LayerTool * tool)
 			DEMDownloadParams * p = new DEMDownloadParams(dem_full_path, &ll, this);
 
 			a_background_thread(BACKGROUND_POOL_REMOTE,
-					    gtk_window_from_layer(this), tmp,
+					    this->get_toolkit_window(), tmp,
 					    (vik_thr_func) dem_download_thread, p,
 					    (vik_thr_free_func) free_dem_download_params, NULL, 1);
 

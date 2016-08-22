@@ -1026,9 +1026,9 @@ bool Layer::set_param(uint16_t id, VikLayerParamData data, Viewport * viewport, 
 
 
 
-GtkWindow * gtk_window_from_layer(Layer * layer)
+GtkWindow * Layer::get_toolkit_window()
 {
-	return GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(layer->tree_view->vt)));
+	return GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(this->tree_view->vt)));
 }
 
 
