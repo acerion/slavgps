@@ -102,7 +102,7 @@ namespace SlavGPS {
 		void print_centers(char * label);
 
 
-		/* viewport position */
+		/* Viewport position. */
 		void set_center_coord(const VikCoord * coord, bool save_position);
 		void set_center_screen(int x, int y);
 		void center_for_zonen(struct UTM *center, int zone);
@@ -270,13 +270,13 @@ namespace SlavGPS {
 		bool half_drawn = false;
 
 
-		void * vvp; /* Related VikViewport. */
+		GtkDrawingArea * drawing_area; /* Toolkit-specific drawing area. */
 
 		char type_string[30];
 
 	private:
 		void free_center(std::list<Coord *>::iterator iter);
-
+		void init_drawing_area(void);
 	};
 
 
@@ -285,6 +285,7 @@ namespace SlavGPS {
 
 	void vik_gc_get_fg_color(GdkGC * gc, GdkColor * dest); /* Warning: could be slow, don't use obsessively. */
 	GdkFunction vik_gc_get_function(GdkGC * gc);
+	void viewport_init(void);
 
 
 

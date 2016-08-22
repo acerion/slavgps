@@ -507,7 +507,7 @@ bool LayerMapnik::carto_load(Viewport * viewport)
 	/* NB Running carto may take several seconds, especially for
 	   large style sheets like the default OSM Mapnik style (~6
 	   seconds on my system). */
-	Window * window = window_from_widget(viewport->vvp);
+	Window * window = window_from_widget(viewport->drawing_area);
 	if (window) {
 		char *msg = g_strdup_printf("%s: %s", _("Running"), command);
 		window->statusbar_update(msg, VIK_STATUSBAR_INFO);
@@ -527,7 +527,7 @@ bool LayerMapnik::carto_load(Viewport * viewport)
 #endif
 		if (mystderr)
 			if (strlen(mystderr) > 1) {
-				a_dialog_error_msg_extra(VIK_GTK_WINDOW_FROM_WIDGET(viewport->vvp), _("Error running carto command:\n%s"), mystderr);
+				a_dialog_error_msg_extra(VIK_GTK_WINDOW_FROM_WIDGET(viewport->drawing_area), _("Error running carto command:\n%s"), mystderr);
 				answer = false;
 			}
 		if (mystdout) {
@@ -611,7 +611,7 @@ void LayerMapnik::post_read(Viewport * viewport, bool from_file)
 
 	char* ans = mapnik_interface_load_map_file(this->mi, this->filename_xml, this->tile_size_x, this->tile_size_x);
 	if (ans) {
-		a_dialog_error_msg_extra(VIK_GTK_WINDOW_FROM_WIDGET(viewport->vvp),
+		a_dialog_error_msg_extra(VIK_GTK_WINDOW_FROM_WIDGET(viewport->drawing_area),
 		                           _("Mapnik error loading configuration file:\n%s"),
 		                           ans);
 		free(ans);
@@ -936,7 +936,7 @@ void LayerMapnik::draw(Viewport * viewport)
 		/* Done after so drawn on top.
 		   Just a handy guide to tile blocks. */
 		if (vik_debug && vik_verbose) {
-			GdkGC *black_gc = GTK_WIDGET(viewport->vvp)->style->black_gc;
+			GdkGC *black_gc = GTK_WIDGET(viewport->drawing_area)->style->black_gc;
 			int width = viewport->get_width();
 			int height = viewport->get_height();
 			int xx, yy;
@@ -1021,7 +1021,7 @@ static void mapnik_layer_carto(menu_array_values * values)
 
 	char * ans = mapnik_interface_load_map_file(lmk->mi, lmk->filename_xml, lmk->tile_size_x, lmk->tile_size_x);
 	if (ans) {
-		a_dialog_error_msg_extra(VIK_GTK_WINDOW_FROM_WIDGET(viewport->vvp),
+		a_dialog_error_msg_extra(VIK_GTK_WINDOW_FROM_WIDGET(viewport->drawing_area),
 		                           _("Mapnik error loading configuration file:\n%s"),
 		                           ans);
 		free(ans);

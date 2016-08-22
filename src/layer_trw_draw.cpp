@@ -477,9 +477,9 @@ void trw_layer_draw_track_draw_something(DrawingParams * dp, int x, int y, int o
 
 	GdkGC *tmp_gc;
 	if (((oldx - x) > 0 && (oldy - y) > 0) || ((oldx - x) < 0 && (oldy - y) < 0)) {
-		tmp_gc = gtk_widget_get_style(GTK_WIDGET(dp->viewport->vvp))->light_gc[3];
+		tmp_gc = gtk_widget_get_style(GTK_WIDGET(dp->viewport->drawing_area))->light_gc[3];
 	} else {
-		tmp_gc = gtk_widget_get_style(GTK_WIDGET(dp->viewport->vvp))->dark_gc[0];
+		tmp_gc = gtk_widget_get_style(GTK_WIDGET(dp->viewport->drawing_area))->dark_gc[0];
 	}
 	dp->viewport->draw_polygon(tmp_gc, true, tmp, 4);
 

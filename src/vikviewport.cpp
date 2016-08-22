@@ -85,33 +85,10 @@ double calcR(double lat);
 
 static double Radius[181];
 static void viewport_init_ra();
+bool vik_viewport_configure_cb(GtkDrawingArea * area);
 
 
 
-
-#define VIK_VIEWPORT_TYPE            (vik_viewport_get_type ())
-#define VIK_VIEWPORT(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_VIEWPORT_TYPE, VikViewport))
-#define VIK_VIEWPORT_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), VIK_VIEWPORT_TYPE, VikViewportClass))
-#define VIK_IS_VIEWPORT(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), VIK_VIEWPORT_TYPE))
-#define VIK_IS_VIEWPORT_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), VIK_VIEWPORT_TYPE))
-
-struct _VikViewport {
-	GtkDrawingArea drawing_area;
-	void * viewport; /* class Viewport. Used in glib callbacks. */
-};
-
-/* Glib type inheritance and initialization. */
-typedef struct _VikViewport VikViewport;
-typedef struct _VikViewportClass VikViewportClass;
-
-struct _VikViewportClass {
-	GtkDrawingAreaClass drawing_area_class;
-	void (*updated_center) (VikViewport *vw);
-};
-GType vik_viewport_get_type();
-static void viewport_finalize(GObject * gob);
-bool vik_viewport_configure_cb(VikViewport * vpp);
-static GObjectClass * parent_class;
 
 enum {
 	VW_UPDATED_CENTER_SIGNAL = 0,
@@ -119,41 +96,33 @@ enum {
 };
 static unsigned int viewport_signals[VW_LAST_SIGNAL] = { 0 };
 
-G_DEFINE_TYPE (VikViewport, vik_viewport, GTK_TYPE_DRAWING_AREA)
 
 
 
-
-static void vik_viewport_class_init(VikViewportClass *klass)
+void SlavGPS::viewport_init(void)
 {
-	/* Destructor. */
-	GObjectClass *object_class;
-
-	object_class = G_OBJECT_CLASS (klass);
-
-	object_class->finalize = viewport_finalize;
-
-	parent_class = (GObjectClass *) g_type_class_peek_parent (klass);
-
-	viewport_signals[VW_UPDATED_CENTER_SIGNAL] = g_signal_new ("updated_center", G_TYPE_FROM_CLASS (klass),
-								    (GSignalFlags) (G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION), G_STRUCT_OFFSET (VikViewportClass, updated_center), NULL, NULL,
-								    g_cclosure_marshal_VOID__VOID, G_TYPE_NONE, 0);
+	viewport_signals[VW_UPDATED_CENTER_SIGNAL] = g_signal_new("updated_center", G_TYPE_OBJECT,
+								  (GSignalFlags) (G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION),
+								  0, NULL, NULL,
+								  g_cclosure_marshal_VOID__VOID, G_TYPE_NONE, 0);
+	viewport_init_ra();
 }
 
 
 
 
-static void vik_viewport_init(VikViewport * vvp)
+void Viewport::init_drawing_area()
 {
-	viewport_init_ra();
+	this->drawing_area = (GtkDrawingArea *) gtk_drawing_area_new();
 
-	g_signal_connect (G_OBJECT(vvp), "configure_event", G_CALLBACK(vik_viewport_configure_cb), NULL);
+	g_signal_connect(G_OBJECT (this->drawing_area), "configure_event", G_CALLBACK (vik_viewport_configure_cb), NULL);
 
 #if GTK_CHECK_VERSION (2,18,0)
-	gtk_widget_set_can_focus (GTK_WIDGET(vvp), true);
+	gtk_widget_set_can_focus(GTK_WIDGET (this->drawing_area), true);
 #else
-	GTK_WIDGET_SET_FLAGS(vvp, GTK_CAN_FOCUS); /* allow VVP to have focus -- enabling key events, etc */
+	GTK_WIDGET_SET_FLAGS (this->drawing_area, GTK_CAN_FOCUS); /* Allow drawing area to have focus -- enabling key events, etc. */
 #endif
+	g_object_set_data((GObject *) this->drawing_area, "viewport", this);
 }
 
 
@@ -247,8 +216,7 @@ Viewport::Viewport()
 		centers_radius = tmp;
 	}
 
-	this->vvp = (VikViewport *) g_object_new(VIK_VIEWPORT_TYPE, NULL);
-	((VikViewport *) this->vvp)->viewport = this;
+	this->init_drawing_area();
 
 	/* Initiate center history. */
 	update_centers();
@@ -402,7 +370,7 @@ GdkGC * Viewport::new_gc(char const * colorname, int thickness)
 {
 	GdkColor color;
 
-	GdkGC * rv = gdk_gc_new(gtk_widget_get_window(GTK_WIDGET(this->vvp)));
+	GdkGC * rv = gdk_gc_new(gtk_widget_get_window(GTK_WIDGET(this->drawing_area)));
 	if (gdk_color_parse(colorname, &color)) {
 		gdk_gc_set_rgb_fg_color(rv, &color);
 	} else {
@@ -417,7 +385,7 @@ GdkGC * Viewport::new_gc(char const * colorname, int thickness)
 
 GdkGC * Viewport::new_gc_from_color(GdkColor * color, int thickness)
 {
-	GdkGC * rv = gdk_gc_new(gtk_widget_get_window(GTK_WIDGET(this->vvp)));
+	GdkGC * rv = gdk_gc_new(gtk_widget_get_window(GTK_WIDGET(this->drawing_area)));
 	gdk_gc_set_rgb_fg_color(rv, color);
 	gdk_gc_set_line_attributes(rv, thickness, GDK_LINE_SOLID, GDK_CAP_ROUND, GDK_JOIN_ROUND);
 	return rv;
@@ -437,13 +405,13 @@ void Viewport::configure_manually(int width, unsigned int height)
 	if (this->scr_buffer) {
 		g_object_unref(G_OBJECT (this->scr_buffer));
 	}
-	this->scr_buffer = gdk_pixmap_new(gtk_widget_get_window(GTK_WIDGET(this->vvp)), this->width, this->height, -1);
+	this->scr_buffer = gdk_pixmap_new(gtk_widget_get_window(GTK_WIDGET(this->drawing_area)), this->width, this->height, -1);
 
 	/* TODO trigger: only if this is enabled!!! */
 	if (this->snapshot_buffer) {
 		g_object_unref(G_OBJECT (this->snapshot_buffer));
 	}
-	this->snapshot_buffer = gdk_pixmap_new(gtk_widget_get_window(GTK_WIDGET(this->vvp)), this->width, this->height, -1);
+	this->snapshot_buffer = gdk_pixmap_new(gtk_widget_get_window(GTK_WIDGET(this->drawing_area)), this->width, this->height, -1);
 }
 
 
@@ -457,10 +425,14 @@ GdkPixmap * Viewport::get_pixmap()
 
 
 
-bool vik_viewport_configure_cb(VikViewport * vvp)
+bool vik_viewport_configure_cb(GtkDrawingArea * drawing_area)
 {
-	assert (vvp);
-	return ((Viewport *) vvp->viewport)->configure();
+	fprintf(stderr, "=========== viewport configure event\n");
+	assert (drawing_area);
+
+
+	void * viewport = g_object_get_data((GObject *) drawing_area, "viewport");
+	return ((Viewport *) viewport)->configure();
 }
 
 
@@ -469,7 +441,7 @@ bool vik_viewport_configure_cb(VikViewport * vvp)
 bool Viewport::configure()
 {
 	GtkAllocation allocation;
-	gtk_widget_get_allocation(GTK_WIDGET(this->vvp), &allocation);
+	gtk_widget_get_allocation(GTK_WIDGET(this->drawing_area), &allocation);
 	this->width = allocation.width;
 	this->height = allocation.height;
 
@@ -480,14 +452,14 @@ bool Viewport::configure()
 		g_object_unref (G_OBJECT (this->scr_buffer));
 	}
 
-	this->scr_buffer = gdk_pixmap_new(gtk_widget_get_window(GTK_WIDGET(this->vvp)), this->width, this->height, -1);
+	this->scr_buffer = gdk_pixmap_new(gtk_widget_get_window(GTK_WIDGET(this->drawing_area)), this->width, this->height, -1);
 
 	/* TODO trigger: only if enabled! */
 	if (this->snapshot_buffer) {
 		g_object_unref(G_OBJECT (this->snapshot_buffer));
 	}
 
-	this->snapshot_buffer = gdk_pixmap_new(gtk_widget_get_window(GTK_WIDGET(this->vvp)), this->width, this->height, -1);
+	this->snapshot_buffer = gdk_pixmap_new(gtk_widget_get_window(GTK_WIDGET(this->drawing_area)), this->width, this->height, -1);
 	/* TODO trigger. */
 
 	/* Rhis is down here so it can get a GC (necessary?). */
@@ -504,14 +476,6 @@ bool Viewport::configure()
 	}
 
 	return false;
-}
-
-
-
-
-static void viewport_finalize(GObject * gob)
-{
-	G_OBJECT_CLASS(parent_class)->finalize(gob);
 }
 
 
@@ -613,8 +577,6 @@ void Viewport::draw_scale()
 		return;
 	}
 
-	VikViewport * vvp = (VikViewport *) this->vvp;
-
 	VikCoord left, right;
 	double base_distance;       /* Physical (real world) distance corresponding to full width of drawn scale. Physical units (miles, meters). */
 	int HEIGHT = 20;            /* Height of scale in pixels. */
@@ -650,7 +612,7 @@ void Viewport::draw_scale()
 	int len = rescale_unit(&base_distance, &scale_unit, MAXIMUM_WIDTH);
 
 	GdkGC * paint_bg = scale_bg_gc;
-	GdkGC * paint_fg = gtk_widget_get_style(GTK_WIDGET(&vvp->drawing_area))->black_gc;
+	GdkGC * paint_fg = gtk_widget_get_style(GTK_WIDGET(this->drawing_area))->black_gc;
 
 	/* White background. */
 	this->draw_line(paint_bg, PAD,       height - PAD, PAD + len, height - PAD);
@@ -671,8 +633,8 @@ void Viewport::draw_scale()
 		this->draw_line(paint_fg, x1, y1, x1, y1 - diff);
 	}
 
-	PangoLayout * pl = gtk_widget_create_pango_layout(GTK_WIDGET(&vvp->drawing_area), NULL);
-	pango_layout_set_font_description(pl, gtk_widget_get_style(GTK_WIDGET(&vvp->drawing_area))->font_desc);
+	PangoLayout * pl = gtk_widget_create_pango_layout(GTK_WIDGET(this->drawing_area), NULL);
+	pango_layout_set_font_description(pl, gtk_widget_get_style(GTK_WIDGET(this->drawing_area))->font_desc);
 
 	char s[128];
 	switch (distance_unit) {
@@ -742,11 +704,9 @@ void Viewport::draw_copyright()
 		strcat(s, " ");
 	}
 
-	VikViewport * vvp = (VikViewport *) (this->vvp);
-
 	/* Create pango layout. */
-	PangoLayout * pl = gtk_widget_create_pango_layout(GTK_WIDGET(&vvp->drawing_area), NULL);
-	pango_layout_set_font_description(pl, gtk_widget_get_style(GTK_WIDGET(&vvp->drawing_area))->font_desc);
+	PangoLayout * pl = gtk_widget_create_pango_layout(GTK_WIDGET(this->drawing_area), NULL);
+	pango_layout_set_font_description(pl, gtk_widget_get_style(GTK_WIDGET(this->drawing_area))->font_desc);
 	pango_layout_set_alignment(pl, PANGO_ALIGN_RIGHT);
 
 	/* Set the text. */
@@ -756,7 +716,7 @@ void Viewport::draw_copyright()
 	/* Use maximum of half the viewport width. */
 	pango_layout_set_width(pl, (width / 2) * PANGO_SCALE);
 	pango_layout_get_pixel_extents(pl, &ink_rect, &logical_rect);
-	this->draw_layout(gtk_widget_get_style(GTK_WIDGET(&vvp->drawing_area))->black_gc,
+	this->draw_layout(gtk_widget_get_style(GTK_WIDGET(this->drawing_area))->black_gc,
 			  width / 2, height - logical_rect.height, pl);
 
 	/* Free memory. */
@@ -796,8 +756,8 @@ void Viewport::draw_centermark()
 	const int gap = 4;
 	int center_x = width / 2;
 	int center_y = height / 2;
-	VikViewport * vvp = (VikViewport *) this->vvp;
-	GdkGC * black_gc = gtk_widget_get_style(GTK_WIDGET(&vvp->drawing_area))->black_gc;
+
+	GdkGC * black_gc = gtk_widget_get_style(GTK_WIDGET(this->drawing_area))->black_gc;
 
 	/* White background. */
 	this->draw_line(scale_bg_gc, center_x - len, center_y, center_x - gap, center_y);
@@ -850,7 +810,7 @@ bool Viewport::get_draw_highlight()
 
 void Viewport::sync()
 {
-	gdk_draw_drawable(gtk_widget_get_window(GTK_WIDGET(this->vvp)), gtk_widget_get_style(GTK_WIDGET(this->vvp))->bg_gc[0], GDK_DRAWABLE(this->scr_buffer), 0, 0, 0, 0, this->width, this->height);
+	gdk_draw_drawable(gtk_widget_get_window(GTK_WIDGET(this->drawing_area)), gtk_widget_get_style(GTK_WIDGET(this->drawing_area))->bg_gc[0], GDK_DRAWABLE(this->scr_buffer), 0, 0, 0, 0, this->width, this->height);
 }
 
 
@@ -860,7 +820,7 @@ void Viewport::pan_sync(int x_off, int y_off)
 {
 	int x, y, wid, hei;
 
-	gdk_draw_drawable(gtk_widget_get_window(GTK_WIDGET(this->vvp)), gtk_widget_get_style(GTK_WIDGET(this->vvp))->bg_gc[0], GDK_DRAWABLE(this->scr_buffer), 0, 0, x_off, y_off, this->width, this->height);
+	gdk_draw_drawable(gtk_widget_get_window(GTK_WIDGET(this->drawing_area)), gtk_widget_get_style(GTK_WIDGET(this->drawing_area))->bg_gc[0], GDK_DRAWABLE(this->scr_buffer), 0, 0, x_off, y_off, this->width, this->height);
 
 	if (x_off >= 0) {
 		x = 0;
@@ -877,8 +837,8 @@ void Viewport::pan_sync(int x_off, int y_off)
 		y = this->height + y_off;
 		hei = -y_off;
 	}
-	gtk_widget_queue_draw_area(GTK_WIDGET(this->vvp), x, 0, wid, this->height);
-	gtk_widget_queue_draw_area(GTK_WIDGET(this->vvp), 0, y, this->width, hei);
+	gtk_widget_queue_draw_area(GTK_WIDGET(this->drawing_area), x, 0, wid, this->height);
+	gtk_widget_queue_draw_area(GTK_WIDGET(this->drawing_area), 0, y, this->width, hei);
 }
 
 
@@ -1074,8 +1034,10 @@ void Viewport::update_centers()
 
 	this->print_centers((char *) "update_centers");
 
+	fprintf(stderr, "=========== issuing updated center signal\n");
+
 	/* Inform interested subscribers that this change has occurred. */
-	g_signal_emit(G_OBJECT(this->vvp), viewport_signals[VW_UPDATED_CENTER_SIGNAL], 0);
+	g_signal_emit(G_OBJECT(this->drawing_area), viewport_signals[VW_UPDATED_CENTER_SIGNAL], 0);
 }
 
 
@@ -1840,7 +1802,7 @@ bool Viewport::get_half_drawn()
 
 char const * Viewport::get_drawmode_name(VikViewportDrawMode mode)
 {
-	GtkWidget * mode_button = window_from_widget(this->vvp)->get_drawmode_button(mode);
+	GtkWidget * mode_button = window_from_widget(this->drawing_area)->get_drawmode_button(mode);
 	GtkWidget * label = gtk_bin_get_child(GTK_BIN(mode_button));
 
 	return gtk_label_get_text(GTK_LABEL(label));

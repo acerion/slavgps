@@ -433,7 +433,7 @@ bool LayerDEM::set_param(uint16_t id, VikLayerParamData data, Viewport * viewpor
 				dltd->layer->files = data.sl;
 
 				a_background_thread(BACKGROUND_POOL_LOCAL,
-						    VIK_GTK_WINDOW_FROM_WIDGET(viewport->vvp),
+						    VIK_GTK_WINDOW_FROM_WIDGET(&viewport->drawing_area),
 						    _("DEM Loading"),
 						    (vik_thr_func) dem_layer_load_list_thread,
 						    dltd,
@@ -1093,7 +1093,7 @@ static void srtm_draw_existence(Viewport * viewport)
 					y2 = 0;
 				}
 
-				viewport->draw_rectangle(gtk_widget_get_style(GTK_WIDGET(viewport->vvp))->black_gc,
+				viewport->draw_rectangle(gtk_widget_get_style(GTK_WIDGET(viewport->drawing_area))->black_gc,
 							 false, x1, y2, x2-x1, y1-y2);
 			}
 		}

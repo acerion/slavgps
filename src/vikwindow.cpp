@@ -1064,7 +1064,7 @@ static void window_configure_event(Window * window)
 		first = 0;
 		window->viewport_cursor = (GdkCursor *)toolbox_get_cursor(window->vt, "Pan");
 		/* We set cursor, even if it is NULL: it resets to default */
-		gdk_window_set_cursor(gtk_widget_get_window(GTK_WIDGET(window->viewport->vvp)), window->viewport_cursor);
+		gdk_window_set_cursor(gtk_widget_get_window(GTK_WIDGET(window->viewport->drawing_area)), window->viewport_cursor);
 	}
 }
 
@@ -1154,7 +1154,7 @@ static void vik_window_pan_click(Window * window, GdkEventButton * event)
 
 static void draw_click_cb(Window * window, GdkEventButton * event)
 {
-	gtk_widget_grab_focus(GTK_WIDGET(window->viewport->vvp));
+	gtk_widget_grab_focus(GTK_WIDGET(window->viewport->drawing_area));
 
 	/* middle button pressed.  we reserve all middle button and scroll events
 	 * for panning and zooming; tools only get left/right/movement
@@ -1340,7 +1340,7 @@ static void vik_window_pan_release(Window * window, GdkEventButton * event)
 
 static void draw_release_cb(Window * window, GdkEventButton * event)
 {
-	gtk_widget_grab_focus(GTK_WIDGET(window->viewport->vvp));
+	gtk_widget_grab_focus(GTK_WIDGET(window->viewport->drawing_area));
 
 	if (event->button == MouseButton::MIDDLE) {  /* move / pan */
 		if (window->vt->active_tool->pan_handler) {
@@ -1516,8 +1516,8 @@ static void draw_ruler(Viewport * viewport, GdkDrawable *d, GdkGC *gc, int x1, i
 		int wd, hd, xd, yd;
 		int wb, hb, xb, yb;
 
-		pl = gtk_widget_create_pango_layout(GTK_WIDGET(viewport->vvp), NULL);
-		pango_layout_set_font_description(pl, gtk_widget_get_style(GTK_WIDGET(viewport->vvp))->font_desc);
+		pl = gtk_widget_create_pango_layout(GTK_WIDGET(viewport->drawing_area), NULL);
+		pango_layout_set_font_description(pl, gtk_widget_get_style(GTK_WIDGET(viewport->drawing_area))->font_desc);
 		pango_layout_set_text(pl, "N", -1);
 		gdk_draw_layout(d, gc, x1-5, y1-CR-3*CW-8, pl);
 
@@ -1695,14 +1695,14 @@ static VikLayerToolFuncStatus ruler_move(Layer * layer, GdkEventMotion * event, 
 		int w1 = tool->viewport->get_width();
 		int h1 = tool->viewport->get_height();
 		if (!buf) {
-			buf = gdk_pixmap_new(gtk_widget_get_window(GTK_WIDGET(tool->viewport->vvp)), w1, h1, -1);
+			buf = gdk_pixmap_new(gtk_widget_get_window(GTK_WIDGET(tool->viewport->drawing_area)), w1, h1, -1);
 		}
 
 		int w2, h2;
 		gdk_drawable_get_size(buf, &w2, &h2);
 		if (w1 != w2 || h1 != h2) {
 			g_object_unref(G_OBJECT (buf));
-			buf = gdk_pixmap_new(gtk_widget_get_window(GTK_WIDGET(tool->viewport->vvp)), w1, h1, -1);
+			buf = gdk_pixmap_new(gtk_widget_get_window(GTK_WIDGET(tool->viewport->drawing_area)), w1, h1, -1);
 		}
 
 		tool->viewport->screen_to_coord((int) event->x, (int) event->y, &coord);
@@ -1710,13 +1710,13 @@ static VikLayerToolFuncStatus ruler_move(Layer * layer, GdkEventMotion * event, 
 		int oldx, oldy;
 		tool->viewport->coord_to_screen(&tool->ruler->oldcoord, &oldx, &oldy);
 
-		gdk_draw_drawable(buf, gtk_widget_get_style(GTK_WIDGET(tool->viewport->vvp))->black_gc,
+		gdk_draw_drawable(buf, gtk_widget_get_style(GTK_WIDGET(tool->viewport->drawing_area))->black_gc,
 				  tool->viewport->get_pixmap(), 0, 0, 0, 0, -1, -1);
-		draw_ruler(tool->viewport, buf, gtk_widget_get_style(GTK_WIDGET(tool->viewport->vvp))->black_gc, oldx, oldy, event->x, event->y, vik_coord_diff(&coord, &(tool->ruler->oldcoord)));
+		draw_ruler(tool->viewport, buf, gtk_widget_get_style(GTK_WIDGET(tool->viewport->drawing_area))->black_gc, oldx, oldy, event->x, event->y, vik_coord_diff(&coord, &(tool->ruler->oldcoord)));
 		if (draw_buf_done) {
 			static draw_buf_data_t pass_along;
-			pass_along.gdk_window = gtk_widget_get_window(GTK_WIDGET(tool->viewport->vvp));
-			pass_along.gdk_style = gtk_widget_get_style(GTK_WIDGET(tool->viewport->vvp))->black_gc;
+			pass_along.gdk_window = gtk_widget_get_window(GTK_WIDGET(tool->viewport->drawing_area));
+			pass_along.gdk_style = gtk_widget_get_style(GTK_WIDGET(tool->viewport->drawing_area))->black_gc;
 			pass_along.pixmap = buf;
 			g_idle_add_full (G_PRIORITY_HIGH_IDLE + 10, (GSourceFunc) draw_buf, (void *) &pass_along, NULL);
 			draw_buf_done = false;
@@ -1808,7 +1808,7 @@ static void zoomtool_resize_pixmap(LayerTool * tool)
 
 	if (!tool->zoom->pixmap) {
 		// Totally new
-		tool->zoom->pixmap = gdk_pixmap_new(gtk_widget_get_window(GTK_WIDGET (tool->window->viewport->vvp)), w1, h1, -1);
+		tool->zoom->pixmap = gdk_pixmap_new(gtk_widget_get_window(GTK_WIDGET (tool->window->viewport->drawing_area)), w1, h1, -1);
 	}
 
 	int w2, h2;
@@ -1817,7 +1817,7 @@ static void zoomtool_resize_pixmap(LayerTool * tool)
 	if (w1 != w2 || h1 != h2) {
 		// Has changed - delete and recreate with new values
 		g_object_unref(G_OBJECT (tool->zoom->pixmap));
-		tool->zoom->pixmap = gdk_pixmap_new(gtk_widget_get_window(GTK_WIDGET(tool->window->viewport->vvp)), w1, h1, -1);
+		tool->zoom->pixmap = gdk_pixmap_new(gtk_widget_get_window(GTK_WIDGET(tool->window->viewport->drawing_area)), w1, h1, -1);
 	}
 }
 
@@ -1923,7 +1923,7 @@ static VikLayerToolFuncStatus zoomtool_move(Layer * layer, GdkEventMotion * even
 
 		// Blank out currently drawn area
 		gdk_draw_drawable(tool->zoom->pixmap,
-				  gtk_widget_get_style(GTK_WIDGET(tool->window->viewport->vvp))->black_gc,
+				  gtk_widget_get_style(GTK_WIDGET(tool->window->viewport->drawing_area))->black_gc,
 				  tool->window->viewport->get_pixmap(),
 				  0, 0, 0, 0, -1, -1);
 
@@ -1945,13 +1945,13 @@ static VikLayerToolFuncStatus zoomtool_move(Layer * layer, GdkEventMotion * even
 		}
 
 		// Draw the box
-		gdk_draw_rectangle(tool->zoom->pixmap, gtk_widget_get_style(GTK_WIDGET(tool->window->viewport->vvp))->black_gc, false, xx, yy, width, height);
+		gdk_draw_rectangle(tool->zoom->pixmap, gtk_widget_get_style(GTK_WIDGET(tool->window->viewport->drawing_area))->black_gc, false, xx, yy, width, height);
 
 		// Only actually draw when there's time to do so
 		if (draw_buf_done) {
 			static draw_buf_data_t pass_along;
-			pass_along.gdk_window = gtk_widget_get_window(GTK_WIDGET(tool->window->viewport->vvp));
-			pass_along.gdk_style = gtk_widget_get_style(GTK_WIDGET(tool->window->viewport->vvp))->black_gc;
+			pass_along.gdk_window = gtk_widget_get_window(GTK_WIDGET(tool->window->viewport->drawing_area));
+			pass_along.gdk_style = gtk_widget_get_style(GTK_WIDGET(tool->window->viewport->drawing_area))->black_gc;
 			pass_along.pixmap = tool->zoom->pixmap;
 			g_idle_add_full (G_PRIORITY_HIGH_IDLE + 10, (GSourceFunc) draw_buf, &pass_along, NULL);
 			draw_buf_done = false;
@@ -2404,6 +2404,8 @@ static void draw_goto_cb(GtkAction * a, Window * window)
  */
 static void center_changed_cb(Window * window)
 {
+	fprintf(stderr, "=========== handling updated center signal\n");
+
 	// ATM Keep back always available, so when we pan - we can jump to the last requested position
 	/*
 	  GtkAction* action_back = gtk_action_group_get_action(window->action_group, "GoBack");
@@ -3026,7 +3028,7 @@ static void toolbox_move(toolbox_tools_t *vt, GdkEventMotion * event)
 		LayerType ltype = vt->active_tool->layer_type;
 		if (ltype == LayerType::NUM_TYPES || (layer && ltype == layer->type)) {
 			if (VIK_LAYER_TOOL_ACK_GRAB_FOCUS == vt->active_tool->move(layer, event, vt->active_tool)) {
-				gtk_widget_grab_focus(GTK_WIDGET(vt->window->viewport->vvp));
+				gtk_widget_grab_focus(GTK_WIDGET(vt->window->viewport->drawing_area));
 			}
 		}
 	}
@@ -3093,9 +3095,9 @@ static void menu_cb(GtkAction *old, GtkAction * a, Window * window)
 
 	window->viewport_cursor = (GdkCursor *)toolbox_get_cursor(window->vt, name);
 
-	if (gtk_widget_get_window(GTK_WIDGET(window->viewport->vvp)))
+	if (gtk_widget_get_window(GTK_WIDGET(window->viewport->drawing_area)))
 		/* We set cursor, even if it is NULL: it resets to default */
-		gdk_window_set_cursor(gtk_widget_get_window(GTK_WIDGET(window->viewport->vvp)), window->viewport_cursor);
+		gdk_window_set_cursor(gtk_widget_get_window(GTK_WIDGET(window->viewport->drawing_area)), window->viewport_cursor);
 
 	if (!strcmp(name, "Pan")) {
 		window->current_tool = TOOL_PAN;
@@ -3281,7 +3283,7 @@ void Window::set_busy_cursor()
 {
 	gdk_window_set_cursor(gtk_widget_get_window(GTK_WIDGET(this->vw)), this->busy_cursor);
 	// Viewport has a separate cursor
-	gdk_window_set_cursor(gtk_widget_get_window(GTK_WIDGET(this->viewport->vvp)), this->busy_cursor);
+	gdk_window_set_cursor(gtk_widget_get_window(GTK_WIDGET(this->viewport->drawing_area)), this->busy_cursor);
 	// Ensure cursor updated before doing stuff
 	while (gtk_events_pending()) {
 		gtk_main_iteration();
@@ -3295,7 +3297,7 @@ void Window::clear_busy_cursor()
 {
 	gdk_window_set_cursor(gtk_widget_get_window(GTK_WIDGET(this->vw)), NULL);
 	// Restore viewport cursor
-	gdk_window_set_cursor(gtk_widget_get_window(GTK_WIDGET(this->viewport->vvp)), this->viewport_cursor);
+	gdk_window_set_cursor(gtk_widget_get_window(GTK_WIDGET(this->viewport->drawing_area)), this->viewport_cursor);
 }
 
 
@@ -5465,15 +5467,15 @@ Window::Window()
 	g_signal_connect(G_OBJECT (this->vw), "delete_event", G_CALLBACK (delete_event), NULL);
 
 	// Own signals
-	g_signal_connect_swapped(G_OBJECT(this->viewport->vvp), "updated_center", G_CALLBACK(center_changed_cb), this);
+	g_signal_connect_swapped(G_OBJECT(this->viewport->drawing_area), "updated_center", G_CALLBACK(center_changed_cb), this);
 	// Signals from GTK
-	g_signal_connect_swapped(G_OBJECT(this->viewport->vvp), "expose_event", G_CALLBACK(draw_sync_cb), this);
-	g_signal_connect_swapped(G_OBJECT(this->viewport->vvp), "configure_event", G_CALLBACK(window_configure_event), this);
-	gtk_widget_add_events(GTK_WIDGET(this->viewport->vvp), GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_KEY_PRESS_MASK);
-	g_signal_connect_swapped(G_OBJECT(this->viewport->vvp), "scroll_event", G_CALLBACK(draw_scroll_cb), this);
-	int a = g_signal_connect_swapped(G_OBJECT(this->viewport->vvp), "button_press_event", G_CALLBACK(draw_click_cb), this);
-	g_signal_connect_swapped(G_OBJECT(this->viewport->vvp), "button_release_event", G_CALLBACK(draw_release_cb), this);
-	g_signal_connect_swapped(G_OBJECT(this->viewport->vvp), "motion_notify_event", G_CALLBACK(draw_mouse_motion_cb), this);
+	g_signal_connect_swapped(G_OBJECT(this->viewport->drawing_area), "expose_event", G_CALLBACK(draw_sync_cb), this);
+	g_signal_connect_swapped(G_OBJECT(this->viewport->drawing_area), "configure_event", G_CALLBACK(window_configure_event), this);
+	gtk_widget_add_events(GTK_WIDGET(this->viewport->drawing_area), GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_KEY_PRESS_MASK);
+	g_signal_connect_swapped(G_OBJECT(this->viewport->drawing_area), "scroll_event", G_CALLBACK(draw_scroll_cb), this);
+	int a = g_signal_connect_swapped(G_OBJECT(this->viewport->drawing_area), "button_press_event", G_CALLBACK(draw_click_cb), this);
+	g_signal_connect_swapped(G_OBJECT(this->viewport->drawing_area), "button_release_event", G_CALLBACK(draw_release_cb), this);
+	g_signal_connect_swapped(G_OBJECT(this->viewport->drawing_area), "motion_notify_event", G_CALLBACK(draw_mouse_motion_cb), this);
 
 	g_signal_connect_swapped(G_OBJECT(this->layers_panel->gob), "update", G_CALLBACK(draw_update_cb), this);
 	g_signal_connect_swapped(G_OBJECT(this->layers_panel->gob), "delete_layer", G_CALLBACK(vik_window_clear_highlight_cb), this);
@@ -5486,7 +5488,7 @@ Window::Window()
 
 	this->hpaned = gtk_hpaned_new();
 	gtk_paned_pack1(GTK_PANED(this->hpaned), GTK_WIDGET (this->layers_panel->gob), false, true);
-	gtk_paned_pack2(GTK_PANED(this->hpaned), GTK_WIDGET (this->viewport->vvp), true, true);
+	gtk_paned_pack2(GTK_PANED(this->hpaned), GTK_WIDGET (this->viewport->drawing_area), true, true);
 
 	/* This packs the button into the window (a gtk container). */
 	gtk_box_pack_start(GTK_BOX(this->main_vbox), this->hpaned, true, true, 0);
@@ -5555,9 +5557,9 @@ Window::Window()
 	this->show_main_menu = true;
 
 	// Only accept Drag and Drop of files onto the viewport
-	gtk_drag_dest_set(GTK_WIDGET(this->viewport->vvp), GTK_DEST_DEFAULT_ALL, NULL, 0, GDK_ACTION_COPY);
-	gtk_drag_dest_add_uri_targets(GTK_WIDGET(this->viewport->vvp));
-	g_signal_connect(GTK_WIDGET(this->viewport->vvp), "drag-data-received", G_CALLBACK(drag_data_received_cb), NULL);
+	gtk_drag_dest_set(GTK_WIDGET(this->viewport->drawing_area), GTK_DEST_DEFAULT_ALL, NULL, 0, GDK_ACTION_COPY);
+	gtk_drag_dest_add_uri_targets(GTK_WIDGET(this->viewport->drawing_area));
+	g_signal_connect(GTK_WIDGET(this->viewport->drawing_area), "drag-data-received", G_CALLBACK(drag_data_received_cb), NULL);
 
 	// Store the thread value so comparisons can be made to determine the gdk update method
 	// Hopefully we are storing the main thread value here :)

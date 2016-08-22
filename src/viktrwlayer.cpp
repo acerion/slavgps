@@ -6803,7 +6803,7 @@ void LayerTRW::dialog_shift(GtkWindow * dialog, VikCoord * coord, bool vertical)
 
 	int dest_x = 0;
 	int dest_y = 0;
-	if (!gtk_widget_translate_coordinates(GTK_WIDGET(viewport->vvp), GTK_WIDGET(parent), 0, 0, &dest_x, &dest_y)) {
+	if (!gtk_widget_translate_coordinates(GTK_WIDGET(viewport->drawing_area), GTK_WIDGET(parent), 0, 0, &dest_x, &dest_y)) {
 		return;
 	}
 
@@ -7770,12 +7770,12 @@ VikLayerToolFuncStatus LayerTRW::tool_new_track_move(GdkEventMotion * event, Lay
 		w1 = tool->viewport->get_width();
 		h1 = tool->viewport->get_height();
 		if (!pixmap) {
-			pixmap = gdk_pixmap_new(gtk_widget_get_window(GTK_WIDGET(tool->viewport->vvp)), w1, h1, -1);
+			pixmap = gdk_pixmap_new(gtk_widget_get_window(GTK_WIDGET(tool->viewport->drawing_area)), w1, h1, -1);
 		}
 		gdk_drawable_get_size(pixmap, &w2, &h2);
 		if (w1 != w2 || h1 != h2) {
 			g_object_unref(G_OBJECT (pixmap));
-			pixmap = gdk_pixmap_new(gtk_widget_get_window(GTK_WIDGET(tool->viewport->vvp)), w1, h1, -1);
+			pixmap = gdk_pixmap_new(gtk_widget_get_window(GTK_WIDGET(tool->viewport->drawing_area)), w1, h1, -1);
 		}
 
 		/* Reset to background. */
@@ -7833,8 +7833,8 @@ VikLayerToolFuncStatus LayerTRW::tool_new_track_move(GdkEventMotion * event, Lay
 
 			char *str = distance_string(distance);
 
-			PangoLayout *pl = gtk_widget_create_pango_layout(GTK_WIDGET(tool->viewport->vvp), NULL);
-			pango_layout_set_font_description(pl, gtk_widget_get_style(GTK_WIDGET(tool->viewport->vvp))->font_desc);
+			PangoLayout *pl = gtk_widget_create_pango_layout(GTK_WIDGET(tool->viewport->drawing_area), NULL);
+			pango_layout_set_font_description(pl, gtk_widget_get_style(GTK_WIDGET(tool->viewport->drawing_area))->font_desc);
 			pango_layout_set_text(pl, str, -1);
 			int wd, hd;
 			pango_layout_get_pixel_size(pl, &wd, &hd);
@@ -7857,7 +7857,7 @@ VikLayerToolFuncStatus LayerTRW::tool_new_track_move(GdkEventMotion * event, Lay
 		passalong = (draw_sync_t *) malloc(1 * sizeof (draw_sync_t)); /* Freed by draw_sync(). */
 		passalong->layer = this;
 		passalong->pixmap = pixmap;
-		passalong->drawable = gtk_widget_get_window(GTK_WIDGET(tool->viewport->vvp));
+		passalong->drawable = gtk_widget_get_window(GTK_WIDGET(tool->viewport->drawing_area));
 		passalong->gc = this->current_track_newpoint_gc;
 
 		double angle;
@@ -9554,15 +9554,15 @@ LayerTRW::LayerTRW(Viewport * viewport) : Layer()
 
 	this->rename(vik_trw_layer_interface.name);
 
-	if (viewport == NULL || gtk_widget_get_window(GTK_WIDGET(viewport->vvp)) == NULL) {
+	if (viewport == NULL || gtk_widget_get_window(GTK_WIDGET(viewport->drawing_area)) == NULL) {
 		;
 	} else {
 
-		this->wplabellayout = gtk_widget_create_pango_layout(GTK_WIDGET(viewport->vvp), NULL);
-		pango_layout_set_font_description(this->wplabellayout, gtk_widget_get_style(GTK_WIDGET(viewport->vvp))->font_desc);
+		this->wplabellayout = gtk_widget_create_pango_layout(GTK_WIDGET(viewport->drawing_area), NULL);
+		pango_layout_set_font_description(this->wplabellayout, gtk_widget_get_style(GTK_WIDGET(viewport->drawing_area))->font_desc);
 
-		this->tracklabellayout = gtk_widget_create_pango_layout(GTK_WIDGET(viewport->vvp), NULL);
-		pango_layout_set_font_description(this->tracklabellayout, gtk_widget_get_style(GTK_WIDGET(viewport->vvp))->font_desc);
+		this->tracklabellayout = gtk_widget_create_pango_layout(GTK_WIDGET(viewport->drawing_area), NULL);
+		pango_layout_set_font_description(this->tracklabellayout, gtk_widget_get_style(GTK_WIDGET(viewport->drawing_area))->font_desc);
 
 		this->new_track_gcs(viewport);
 

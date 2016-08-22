@@ -65,6 +65,7 @@
 #endif
 
 #include "viktrwlayer.h"
+#include "vikviewport.h"
 
 
 
@@ -313,6 +314,7 @@ void SlavGPS::modules_post_init()
 #endif
 
 	layer_trw_init();
+	viewport_init();
 }
 
 
