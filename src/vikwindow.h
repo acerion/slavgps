@@ -191,6 +191,8 @@ namespace SlavGPS {
 		void enable_layer_tool(LayerType layer_type, int tool_id);
 		GThread * get_thread();
 
+		GtkWindow * get_toolkit_window(void);
+
 
 
 

@@ -2368,7 +2368,7 @@ static void draw_goto_cb(GtkAction * a, Window * window)
 	if (!strcmp(gtk_action_get_name(a), "GotoLL")) {
 		struct LatLon ll, llold;
 		vik_coord_to_latlon(window->viewport->get_center(), &llold);
-		if (a_dialog_goto_latlon(GTK_WINDOW(window->vw), &ll, &llold)) {
+		if (a_dialog_goto_latlon(window->get_toolkit_window(), &ll, &llold)) {
 			vik_coord_load_from_latlon(&new_center, window->viewport->get_coord_mode(), &ll);
 		} else {
 			return;
@@ -2376,7 +2376,7 @@ static void draw_goto_cb(GtkAction * a, Window * window)
 	} else if (!strcmp(gtk_action_get_name(a), "GotoUTM")) {
 		struct UTM utm, utmold;
 		vik_coord_to_utm(window->viewport->get_center(), &utmold);
-		if (a_dialog_goto_utm(GTK_WINDOW(window->vw), &utm, &utmold)) {
+		if (a_dialog_goto_utm(window->get_toolkit_window(), &utm, &utmold)) {
 			vik_coord_load_from_utm(&new_center, window->viewport->get_coord_mode(), &utm);
 		} else {
 			return;
@@ -2501,7 +2501,7 @@ static void menu_paste_layer_cb(GtkAction * a, Window * window)
 static void menu_properties_cb(GtkAction * a, Window * window)
 {
 	if (!window->layers_panel->properties()) {
-		a_dialog_info_msg(GTK_WINDOW(window->vw), _("You must select a layer to show its properties."));
+		a_dialog_info_msg(window->get_toolkit_window(), _("You must select a layer to show its properties."));
 	}
 }
 
@@ -2517,11 +2517,11 @@ static void help_help_cb(GtkAction * a, Window * window)
 	GError *error = NULL;
 	bool show = gtk_show_uri(NULL, uri, GDK_CURRENT_TIME, &error);
 	if (!show && !error)
-		// No error to show, so unlikely this will get called
-		a_dialog_error_msg(GTK_WINDOW(window->vw), _("The help system is not available."));
+		/* No error to show, so unlikely this will get called. */
+		a_dialog_error_msg(window->get_toolkit_window(), _("The help system is not available."));
 	else if (error) {
-		// Main error path
-		a_dialog_error_msg_extra(GTK_WINDOW(window->vw), _("Help is not available because: %s.\nEnsure a Mime Type ghelp handler program is installed (e.g. yelp)."), error->message);
+		/* Main error path. */
+		a_dialog_error_msg_extra(window->get_toolkit_window(), _("Help is not available because: %s.\nEnsure a Mime Type ghelp handler program is installed (e.g. yelp)."), error->message);
 		g_error_free(error);
 	}
 	free(uri);
@@ -2548,9 +2548,9 @@ void Window::toggle_full_screen()
 {
 	this->show_full_screen = !this->show_full_screen;
 	if (this->show_full_screen) {
-		gtk_window_fullscreen(GTK_WINDOW(this->vw));
+		gtk_window_fullscreen(this->get_toolkit_window());
 	} else {
-		gtk_window_unfullscreen(GTK_WINDOW(this->vw));
+		gtk_window_unfullscreen(this->get_toolkit_window());
 	}
 }
 
@@ -2745,7 +2745,7 @@ static void tb_set_draw_highlight_cb(GtkAction * a, Window * window)
 
 static void help_about_cb(GtkAction * a, Window * window)
 {
-	a_dialog_about(GTK_WINDOW(window->vw));
+	a_dialog_about(window->get_toolkit_window());
 }
 
 
@@ -2762,7 +2762,7 @@ static void help_cache_info_cb(GtkAction * a, Window * window)
 	msg_sz = g_format_size_for_display(byte_size);
 #endif
 	char * msg = g_strdup_printf("Map Cache size is %s with %d items", msg_sz, map_cache_get_count());
-	a_dialog_info_msg_extra(GTK_WINDOW(window->vw), "%s", msg);
+	a_dialog_info_msg_extra(window->get_toolkit_window(), "%s", msg);
 	free(msg_sz);
 	free(msg);
 }
@@ -2772,7 +2772,7 @@ static void help_cache_info_cb(GtkAction * a, Window * window)
 
 static void back_forward_info_cb(GtkAction * a, Window * window)
 {
-	window->viewport->show_centers(GTK_WINDOW(window->vw));
+	window->viewport->show_centers(window->get_toolkit_window());
 }
 
 
@@ -2784,7 +2784,7 @@ static void menu_delete_layer_cb(GtkAction * a, Window * window)
 		window->layers_panel->delete_selected();
 		window->modified = true;
 	} else {
-		a_dialog_info_msg(GTK_WINDOW(window->vw), _("You must select a layer to delete."));
+		a_dialog_info_msg(window->get_toolkit_window(), _("You must select a layer to delete."));
 	}
 }
 
@@ -3132,7 +3132,7 @@ void Window::set_filename(char const * filename)
 	/* Refresh window's title */
 	char const * file = this->get_filename();
 	char * title = g_strdup_printf("%s - Viking", file);
-	gtk_window_set_title(GTK_WINDOW(this->vw), title);
+	gtk_window_set_title(this->get_toolkit_window(), title);
 	free(title);
 }
 
@@ -3320,16 +3320,16 @@ void Window::open_file(char const * filename, bool change_filename)
 	this->loaded_type = a_file_load(agg, this->viewport, filename);
 	switch (this->loaded_type) {
 	case LOAD_TYPE_READ_FAILURE:
-		a_dialog_error_msg(GTK_WINDOW(this->vw), _("The file you requested could not be opened."));
+		a_dialog_error_msg(this->get_toolkit_window(), _("The file you requested could not be opened."));
 		break;
 	case LOAD_TYPE_GPSBABEL_FAILURE:
-		a_dialog_error_msg(GTK_WINDOW(this->vw), _("GPSBabel is required to load files of this type or GPSBabel encountered problems."));
+		a_dialog_error_msg(this->get_toolkit_window(), _("GPSBabel is required to load files of this type or GPSBabel encountered problems."));
 		break;
 	case LOAD_TYPE_GPX_FAILURE:
-		a_dialog_error_msg_extra(GTK_WINDOW(this->vw), _("Unable to load malformed GPX file %s"), filename);
+		a_dialog_error_msg_extra(this->get_toolkit_window(), _("Unable to load malformed GPX file %s"), filename);
 		break;
 	case LOAD_TYPE_UNSUPPORTED_FAILURE:
-		a_dialog_error_msg_extra(GTK_WINDOW(this->vw), _("Unsupported file type for %s"), filename);
+		a_dialog_error_msg_extra(this->get_toolkit_window(), _("Unsupported file type for %s"), filename);
 		break;
 	case LOAD_TYPE_VIK_FAILURE_NON_FATAL:
 		{
@@ -3418,7 +3418,7 @@ static void load_file(GtkAction * a, Window * window)
 	}
 
 	GtkWidget * dialog = gtk_file_chooser_dialog_new(_("Please select a GPS data file to open. "),
-							 GTK_WINDOW(window->vw),
+							 window->get_toolkit_window(),
 							 GTK_FILE_CHOOSER_ACTION_OPEN,
 							 GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
 							 GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
@@ -3469,7 +3469,7 @@ static void load_file(GtkAction * a, Window * window)
 	gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(dialog), filter);
 
 	gtk_file_chooser_set_select_multiple(GTK_FILE_CHOOSER(dialog), true);
-	gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(window->vw));
+	gtk_window_set_transient_for(GTK_WINDOW(dialog), window->get_toolkit_window());
 	gtk_window_set_destroy_with_parent(GTK_WINDOW(dialog), true);
 
 	if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
@@ -3526,7 +3526,7 @@ static bool save_file_as(GtkAction * a, Window * window)
 	char const * fn;
 
 	GtkWidget * dialog = gtk_file_chooser_dialog_new(_("Save as Viking File."),
-							 GTK_WINDOW(window->vw),
+							 window->get_toolkit_window(),
 							 GTK_FILE_CHOOSER_ACTION_SAVE,
 							 GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
 							 GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
@@ -3548,7 +3548,7 @@ static bool save_file_as(GtkAction * a, Window * window)
 	// Default to a Viking file
 	gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(dialog), filter);
 
-	gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(window->vw));
+	gtk_window_set_transient_for(GTK_WINDOW(dialog), window->get_toolkit_window());
 	gtk_window_set_destroy_with_parent(GTK_WINDOW(dialog), true);
 
 
@@ -3589,7 +3589,7 @@ bool Window::window_save()
 	if (a_file_save(this->layers_panel->get_top_layer(), this->viewport, this->filename)) {
 		this->update_recently_used_document(this->filename);
 	} else {
-		a_dialog_error_msg(GTK_WINDOW(this->vw), _("The filename you requested could not be opened for writing."));
+		a_dialog_error_msg(this->get_toolkit_window(), _("The filename you requested could not be opened for writing."));
 		success = false;
 	}
 	this->clear_busy_cursor();
@@ -3688,20 +3688,20 @@ void Window::export_to_common(VikFileType_t vft, char const * extension)
 	std::list<Layer *> * layers = this->layers_panel->get_all_layers_of_type(LayerType::TRW, true);
 
 	if (!layers || layers->empty()) {
-		a_dialog_info_msg(GTK_WINDOW(this->vw), _("Nothing to Export!"));
+		a_dialog_info_msg(this->get_toolkit_window(), _("Nothing to Export!"));
 		/* kamilFIXME: delete layers? */
 		return;
 	}
 
 	GtkWidget *dialog = gtk_file_chooser_dialog_new(_("Export to directory"),
-							GTK_WINDOW(this->vw),
+							this->get_toolkit_window(),
 							GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER,
 							GTK_STOCK_CANCEL,
 							GTK_RESPONSE_REJECT,
 							GTK_STOCK_OK,
 							GTK_RESPONSE_ACCEPT,
 							NULL);
-	gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(this->vw));
+	gtk_window_set_transient_for(GTK_WINDOW(dialog), this->get_toolkit_window());
 	gtk_window_set_destroy_with_parent(GTK_WINDOW(dialog), true);
 	gtk_window_set_modal(GTK_WINDOW(dialog), true);
 
@@ -3712,7 +3712,7 @@ void Window::export_to_common(VikFileType_t vft, char const * extension)
 		gtk_widget_destroy(dialog);
 		if (dir) {
 			if (!this->export_to(layers, vft, dir, extension)) {
-				a_dialog_error_msg(GTK_WINDOW(this->vw),_("Could not convert all files"));
+				a_dialog_error_msg(this->get_toolkit_window(),_("Could not convert all files"));
 			}
 			free(dir);
 		}
@@ -3770,7 +3770,7 @@ static void file_properties_cb(GtkAction * a, Window * window)
 	}
 
 	// Show the info
-	a_dialog_info_msg(GTK_WINDOW(window->vw), message);
+	a_dialog_info_msg(window->get_toolkit_window(), message);
 	free(message);
 }
 
@@ -3946,8 +3946,8 @@ static void layer_defaults_cb(GtkAction * a, Window * window)
 		return; // Internally broken :(
 	}
 
-	if (!a_layer_defaults_show_window(GTK_WINDOW(window->vw), texts[1])) {
-		a_dialog_info_msg(GTK_WINDOW(window->vw), _("This layer has no configurable properties."));
+	if (!a_layer_defaults_show_window(window->get_toolkit_window(), texts[1])) {
+		a_dialog_info_msg(window->get_toolkit_window(), _("This layer has no configurable properties."));
 	}
 	// NB no update needed
 
@@ -3983,7 +3983,7 @@ static void preferences_cb(GtkAction * a, Window * window)
 {
 	bool wp_icon_size = a_vik_get_use_large_waypoint_icons();
 
-	a_preferences_show_window(GTK_WINDOW(window->vw));
+	a_preferences_show_window(window->get_toolkit_window());
 
 	// Has the waypoint size setting changed?
 	if (wp_icon_size != a_vik_get_use_large_waypoint_icons()) {
@@ -4066,7 +4066,7 @@ static void clear_cb(GtkAction * a, Window * window)
 {
 	// Do nothing if empty
 	if (!window->layers_panel->get_top_layer()->is_empty()) {
-		if (a_dialog_yes_or_no(GTK_WINDOW(window->vw), _("Are you sure you wish to delete all layers?"), NULL)) {
+		if (a_dialog_yes_or_no(window->get_toolkit_window(), _("Are you sure you wish to delete all layers?"), NULL)) {
 			window->layers_panel->clear();
 			window->set_filename(NULL);
 			window->draw_update();
@@ -4103,7 +4103,7 @@ static bool save_file_and_exit(GtkAction * a, Window * window)
 static void zoom_to_cb(GtkAction * a, Window * window)
 {
 	double xmpp = window->viewport->get_xmpp(), ympp = window->viewport->get_ympp();
-	if (a_dialog_custom_zoom(GTK_WINDOW(window->vw), &xmpp, &ympp)) {
+	if (a_dialog_custom_zoom(window->get_toolkit_window(), &xmpp, &ympp)) {
 		window->viewport->set_xmpp(xmpp);
 		window->viewport->set_ympp(ympp);
 		window->draw_update();
@@ -4120,7 +4120,7 @@ static void save_image_file(Window * window, char const *fn, unsigned int w, uns
 	double old_xmpp, old_ympp;
 	GError *error = NULL;
 
-	GtkWidget * msgbox = gtk_message_dialog_new(GTK_WINDOW(window->vw),
+	GtkWidget * msgbox = gtk_message_dialog_new(window->get_toolkit_window(),
 						    (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
 						    GTK_MESSAGE_INFO,
 						    GTK_BUTTONS_NONE,
@@ -4299,7 +4299,7 @@ static void draw_to_image_file_current_window_cb(GtkWidget* widget,GdkEventButto
 	int height = window->viewport->get_height() * window->viewport->get_xmpp() / zoom;
 
 	if (width > width_max || width < width_min || height > height_max || height < height_min) {
-		a_dialog_info_msg(GTK_WINDOW(window->vw), _("Viewable region outside allowable pixel size bounds for image. Clipping width/height values."));
+		a_dialog_info_msg(window->get_toolkit_window(), _("Viewable region outside allowable pixel size bounds for image. Clipping width/height values."));
 	}
 
 	gtk_spin_button_set_value(width_spin, width);
@@ -4355,7 +4355,7 @@ static char * draw_image_filename(Window * window, img_generation_t img_gen)
 	if (img_gen != VW_GEN_DIRECTORY_OF_IMAGES) {
 		// Single file
 		GtkWidget * dialog = gtk_file_chooser_dialog_new(_("Save Image"),
-								 GTK_WINDOW(window->vw),
+								 window->get_toolkit_window(),
 								 GTK_FILE_CHOOSER_ACTION_SAVE,
 								 GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
 								 GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
@@ -4399,7 +4399,7 @@ static char * draw_image_filename(Window * window, img_generation_t img_gen)
 			}
 		}
 
-		gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(window->vw));
+		gtk_window_set_transient_for(GTK_WINDOW(dialog), window->get_toolkit_window());
 		gtk_window_set_destroy_with_parent(GTK_WINDOW(dialog), true);
 
 		if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
@@ -4418,17 +4418,17 @@ static char * draw_image_filename(Window * window, img_generation_t img_gen)
 		// A directory
 		// For some reason this method is only written to work in UTM...
 		if (window->viewport->get_coord_mode() != VIK_COORD_UTM) {
-			a_dialog_error_msg(GTK_WINDOW(window->vw), _("You must be in UTM mode to use this feature"));
+			a_dialog_error_msg(window->get_toolkit_window(), _("You must be in UTM mode to use this feature"));
 			return fn;
 		}
 
 		GtkWidget * dialog = gtk_file_chooser_dialog_new(_("Choose a directory to hold images"),
-								 GTK_WINDOW(window->vw),
+								 window->get_toolkit_window(),
 								 GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER,
 								 GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
 								 GTK_STOCK_OK, GTK_RESPONSE_ACCEPT,
 								 NULL);
-		gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(window->vw));
+		gtk_window_set_transient_for(GTK_WINDOW(dialog), window->get_toolkit_window());
 		gtk_window_set_destroy_with_parent(GTK_WINDOW(dialog), true);
 
 		if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
@@ -4445,7 +4445,8 @@ static char * draw_image_filename(Window * window, img_generation_t img_gen)
 void Window::draw_to_image_file(img_generation_t img_gen)
 {
 	/* todo: default for answers inside VikWindow or static (thruout instance) */
-	GtkWidget * dialog = gtk_dialog_new_with_buttons(_("Save to Image File"), GTK_WINDOW(this->vw),
+	GtkWidget * dialog = gtk_dialog_new_with_buttons(_("Save to Image File"),
+							 this->get_toolkit_window(),
 							 (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
 							 GTK_STOCK_CANCEL,
 							 GTK_RESPONSE_REJECT,
@@ -4617,7 +4618,7 @@ void Window::draw_to_image_file(img_generation_t img_gen)
 static void draw_to_kmz_file_cb(GtkAction * a, Window * window)
 {
 	if (window->viewport->get_coord_mode() == VIK_COORD_UTM) {
-		a_dialog_error_msg(GTK_WINDOW(window->vw), _("This feature is not available in UTM mode"));
+		a_dialog_error_msg(window->get_toolkit_window(), _("This feature is not available in UTM mode"));
 		return;
 	}
 	// NB ATM This only generates a KMZ file with the current viewport image - intended mostly for map images [but will include any lines/icons from track & waypoints that are drawn]
@@ -4647,7 +4648,7 @@ static void draw_to_image_dir_cb(GtkAction * a, Window * window)
 static void import_kmz_file_cb(GtkAction * a, Window * window)
 {
 	GtkWidget * dialog = gtk_file_chooser_dialog_new(_("Open File"),
-							 GTK_WINDOW(window->vw),
+							 window->get_toolkit_window(),
 							 GTK_FILE_CHOOSER_ACTION_OPEN,
 							 GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
 							 GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
@@ -4672,7 +4673,7 @@ static void import_kmz_file_cb(GtkAction * a, Window * window)
 		// TODO convert ans value into readable explaination of failure...
 		int ans = kmz_open_file(fn, window->viewport, window->layers_panel);
 		if (ans) {
-			a_dialog_error_msg_extra(GTK_WINDOW(window->vw), _("Unable to import %s."), fn);
+			a_dialog_error_msg_extra(window->get_toolkit_window(), _("Unable to import %s."), fn);
 		}
 
 		window->draw_update();
@@ -5520,7 +5521,7 @@ Window::Window()
 		bool maxed;
 		if (a_settings_get_boolean(VIK_SETTINGS_WIN_MAX, &maxed)) {
 			if (maxed) {
-				gtk_window_maximize(GTK_WINDOW(this->vw));
+				gtk_window_maximize(this->get_toolkit_window());
 			}
 		}
 
@@ -5528,7 +5529,7 @@ Window::Window()
 		if (a_settings_get_boolean(VIK_SETTINGS_WIN_FULLSCREEN, &full)) {
 			if (full) {
 				this->show_full_screen = true;
-				gtk_window_fullscreen(GTK_WINDOW(this->vw));
+				gtk_window_fullscreen(this->get_toolkit_window());
 				GtkWidget *check_box = gtk_ui_manager_get_widget(this->uim, "/ui/MainMenu/View/FullScreen");
 				if (check_box) {
 					gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(check_box), true);
@@ -5543,7 +5544,7 @@ Window::Window()
 		gtk_paned_set_position(GTK_PANED(this->hpaned), position);
 	}
 
-	gtk_window_set_default_size(GTK_WINDOW(this->vw), width, height);
+	gtk_window_set_default_size(this->get_toolkit_window(), width, height);
 
 	this->show_side_panel = true;
 	this->show_statusbar = true;
@@ -5624,4 +5625,12 @@ Window * window_from_widget(void * widget)
 Window * window_from_vik_window(VikWindow * vw)
 {
 	return (Window *) vw->window;
+}
+
+
+
+
+GtkWindow * Window::get_toolkit_window(void)
+{
+	return GTK_WINDOW (this->vw);
 }
