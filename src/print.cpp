@@ -127,7 +127,7 @@ void a_print(Window * window, Viewport * viewport)
 
   res = gtk_print_operation_run (print_oper,
                                  GTK_PRINT_OPERATION_ACTION_PRINT_DIALOG,
-                                 GTK_WINDOW (window->vw), NULL);
+                                 window->get_toolkit_window(), NULL);
 
   if (res == GTK_PRINT_OPERATION_RESULT_APPLY) {
     if (print_settings != NULL)

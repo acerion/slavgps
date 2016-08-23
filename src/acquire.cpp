@@ -265,7 +265,7 @@ static void acquire(Window * window,
 	if (source_interface->check_existence_func) {
 		char *error_str = source_interface->check_existence_func();
 		if (error_str) {
-			a_dialog_error_msg(GTK_WINDOW(window->vw), error_str);
+			a_dialog_error_msg(window->get_toolkit_window(), error_str);
 			free(error_str);
 			return;
 		}
@@ -276,7 +276,7 @@ static void acquire(Window * window,
 	/* POSSIBILITY 0: NO OPTIONS. DO NOTHING HERE. */
 	/* POSSIBILITY 1: ADD_SETUP_WIDGETS_FUNC */
 	if (source_interface->add_setup_widgets_func) {
-		dialog = gtk_dialog_new_with_buttons("", GTK_WINDOW(window->vw), (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL);
+		dialog = gtk_dialog_new_with_buttons("", window->get_toolkit_window(), (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL);
 
 		gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
 		GtkWidget *response_w = NULL;
@@ -299,7 +299,7 @@ static void acquire(Window * window,
 	}
 	/* POSSIBILITY 2: UI BUILDER */
 	else if (source_interface->params) {
-		paramdatas = a_uibuilder_run_dialog(source_interface->window_title, GTK_WINDOW(window->vw),
+		paramdatas = a_uibuilder_run_dialog(source_interface->window_title, window->get_toolkit_window(),
 						    source_interface->params, source_interface->params_count,
 						    source_interface->params_groups, source_interface->params_groups_count,
 						    source_interface->params_defaults);
@@ -364,7 +364,7 @@ static void acquire(Window * window,
 	wi->trw = trw;
 	wi->creating_new_layer = (!trw); /* Default if Auto Layer Management is passed in. */
 
-	dialog = gtk_dialog_new_with_buttons("", GTK_WINDOW(window->vw), (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL);
+	dialog = gtk_dialog_new_with_buttons("", window->get_toolkit_window(), (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL);
 	gtk_dialog_set_response_sensitive(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT, false);
 	gtk_window_set_title(GTK_WINDOW(dialog), _(source_interface->window_title));
 
@@ -445,7 +445,7 @@ static void acquire(Window * window,
 		if (source_interface->process_func) {
 			bool result = source_interface->process_func(wi->trw, po, (BabelStatusFunc) progress_func, w, options);
 			if (!result) {
-				a_dialog_msg(GTK_WINDOW(window->vw), GTK_MESSAGE_ERROR, _("Error: acquisition failed."), NULL);
+				a_dialog_msg(window->get_toolkit_window(), GTK_MESSAGE_ERROR, _("Error: acquisition failed."), NULL);
 			}
 		}
 		free_process_options(po);

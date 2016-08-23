@@ -143,7 +143,7 @@ static void none_found(Window * window)
 {
 	GtkWidget *dialog = NULL;
 
-	dialog = gtk_dialog_new_with_buttons("", GTK_WINDOW(window->vw), (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, NULL);
+	dialog = gtk_dialog_new_with_buttons("", window->get_toolkit_window(), (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, NULL);
 	gtk_window_set_title(GTK_WINDOW(dialog), _("Search"));
 
 	GtkWidget *search_label = gtk_label_new(_("No entries found!"));
@@ -476,7 +476,7 @@ void SlavGPS::a_geonames_wikipedia_box(Window * window, LayerTRW * trw, struct L
 		none_found(window);
 		goto done;
 	}
-	selected = a_select_geoname_from_list(VIK_GTK_WINDOW_FROM_WIDGET(window->vw), wiki_places, true, "Select articles", "Select the articles you want to add.");
+	selected = a_select_geoname_from_list(window->get_toolkit_window_2(), wiki_places, true, "Select articles", "Select the articles you want to add.");
 	wp_runner = selected;
 	while (wp_runner) {
 		wiki_geoname = (found_geoname *)wp_runner->data;

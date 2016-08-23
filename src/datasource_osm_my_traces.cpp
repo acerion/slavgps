@@ -679,7 +679,7 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 
 	if (g_list_length (xd->list_of_gpx_meta_data) == 0) {
 		if (!vik_datasource_osm_my_traces_interface.is_thread) {
-			none_found (GTK_WINDOW(adw->window->vw));
+			none_found(adw->window->get_toolkit_window());
 		}
 		free(xd);
 		return false;
@@ -693,7 +693,7 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 		gdk_threads_enter();
 	}
 
-	GList *selected = select_from_list (GTK_WINDOW(adw->window->vw), xd->list_of_gpx_meta_data, "Select GPS Traces", "Select the GPS traces you want to add.");
+	GList *selected = select_from_list(adw->window->get_toolkit_window(), xd->list_of_gpx_meta_data, "Select GPS Traces", "Select the GPS traces you want to add.");
 	if (vik_datasource_osm_my_traces_interface.is_thread) {
 		gdk_threads_leave();
 	}

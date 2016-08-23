@@ -247,7 +247,7 @@ int main(int argc, char *argv[])
 	/* Create the first window. */
 	SlavGPS::Window * first_window = SlavGPS::Window::new_window();
 
-	vu_check_latest_version(GTK_WINDOW(first_window->vw));
+	vu_check_latest_version(first_window->get_toolkit_window());
 
 	int i = 0;
 	bool dashdash_already = false;

@@ -310,7 +310,7 @@ static void destroy_window(GtkWidget * widget, void * data)
 VikWindow * vik_window_new_window(VikWindow * vw)
 {
 	Window * new_window = new Window();
-	return (VikWindow *) new_window->vw;
+	return (VikWindow *) new_window->vw_;
 }
 
 
@@ -321,14 +321,14 @@ Window * Window::new_window()
 	if (window_count < MAX_WINDOWS) {
 		Window * window = new Window();
 
-		g_signal_connect(G_OBJECT (window->vw), "destroy",
+		g_signal_connect(window->get_toolkit_object(), "destroy",
 				 G_CALLBACK (destroy_window), NULL);
-		g_signal_connect(G_OBJECT (window->vw), "newwindow",
+		g_signal_connect(window->get_toolkit_object(), "newwindow",
 				 G_CALLBACK (vik_window_new_window), NULL);
-		g_signal_connect(G_OBJECT (window->vw), "openwindow",
+		g_signal_connect(window->get_toolkit_object(), "openwindow",
 				 G_CALLBACK (open_window), NULL);
 
-		gtk_widget_show_all(GTK_WIDGET(window->vw));
+		gtk_widget_show_all(window->get_toolkit_widget());
 
 		if (a_vik_get_restore_window_state()) {
 			// These settings are applied after the show all as these options hide widgets
@@ -466,7 +466,7 @@ void Window::finish_new()
 			vik_statusbar_set_message(this->viking_vs, VIK_STATUSBAR_INFO, _("Trying to determine location..."));
 
 			a_background_thread(BACKGROUND_POOL_REMOTE,
-					    GTK_WINDOW(vw),
+					    this->get_toolkit_window(),
 					    _("Determining location"),
 					    (vik_thr_func) determine_location_thread,
 					    this,
@@ -955,7 +955,7 @@ static bool delete_event(VikWindow * vw)
 /* Drawing stuff. */
 static void newwindow_cb(GtkAction *a, Window * window)
 {
-	g_signal_emit(G_OBJECT(window->vw), window_signals[VW_NEWWINDOW_SIGNAL], 0);
+	g_signal_emit(window->get_toolkit_object(), window_signals[VW_NEWWINDOW_SIGNAL], 0);
 }
 
 
@@ -1306,7 +1306,7 @@ static void vik_window_pan_release(Window * window, GdkEventButton * event)
 			window->delayed_pan_x = window->pan_x;
 			window->delayed_pan_y = window->pan_y;
 			// Get double click time
-			GtkSettings *gs = gtk_widget_get_settings(GTK_WIDGET(window->vw));
+			GtkSettings *gs = gtk_widget_get_settings(window->get_toolkit_widget());
 			GValue dct = { 0 }; // = G_VALUE_INIT; // GLIB 2.30+ only
 			g_value_init(&dct, G_TYPE_INT);
 			g_object_get_property(G_OBJECT(gs), "gtk-double-click-time", &dct);
@@ -3199,7 +3199,7 @@ static void on_activate_recent_item(GtkRecentChooser *chooser, Window * window)
 		if (window->filename) {
 			GSList *filenames = NULL;
 			filenames = g_slist_append(filenames, path);
-			g_signal_emit(G_OBJECT(window->vw), window_signals[VW_OPENWINDOW_SIGNAL], 0, filenames);
+			g_signal_emit(window->get_toolkit_object(), window_signals[VW_OPENWINDOW_SIGNAL], 0, filenames);
 			// NB: GSList & contents are freed by main.open_window
 		} else {
 			window->open_file(path, true);
@@ -3275,7 +3275,7 @@ void Window::update_recently_used_document(char const * filename)
  */
 void Window::set_busy_cursor()
 {
-	gdk_window_set_cursor(gtk_widget_get_window(GTK_WIDGET(this->vw)), this->busy_cursor);
+	gdk_window_set_cursor(gtk_widget_get_window(this->get_toolkit_widget()), this->busy_cursor);
 	// Viewport has a separate cursor
 	gdk_window_set_cursor(gtk_widget_get_window(this->viewport->get_toolkit_widget()), this->busy_cursor);
 	// Ensure cursor updated before doing stuff
@@ -3289,7 +3289,7 @@ void Window::set_busy_cursor()
 
 void Window::clear_busy_cursor()
 {
-	gdk_window_set_cursor(gtk_widget_get_window(GTK_WIDGET(this->vw)), NULL);
+	gdk_window_set_cursor(gtk_widget_get_window(this->get_toolkit_widget()), NULL);
 	// Restore viewport cursor
 	gdk_window_set_cursor(gtk_widget_get_window(this->viewport->get_toolkit_widget()), this->viewport_cursor);
 }
@@ -3481,7 +3481,7 @@ static void load_file(GtkAction * a, Window * window)
 #else
 		if (window->filename && newwindow) {
 #endif
-			g_signal_emit(G_OBJECT(window->vw), window_signals[VW_OPENWINDOW_SIGNAL], 0, gtk_file_chooser_get_filenames(GTK_FILE_CHOOSER(dialog)));
+			g_signal_emit(window->get_toolkit_object(), window_signals[VW_OPENWINDOW_SIGNAL], 0, gtk_file_chooser_get_filenames(GTK_FILE_CHOOSER(dialog)));
 		} else {
 
 			files = gtk_file_chooser_get_filenames(GTK_FILE_CHOOSER(dialog));
@@ -4079,8 +4079,8 @@ static void clear_cb(GtkAction * a, Window * window)
 
 static void window_close(GtkAction * a, Window * window)
 {
-	if (!delete_event((VikWindow *) window->vw)) {
-		gtk_widget_destroy(GTK_WIDGET(window->vw));
+	if (!delete_event((VikWindow *) window->vw_)) {
+		gtk_widget_destroy(window->get_toolkit_widget());
 	}
 }
 
@@ -5359,7 +5359,7 @@ bool Window::clear_highlight()
  */
 GThread * Window::get_thread()
 {
-	if (this->vw) {
+	if (this->vw_) {
 		return this->thread;
 	}
 	return NULL;
@@ -5384,8 +5384,8 @@ Window::Window()
 	strcpy(this->type_string, "The WINDOW");
 
 
-	this->vw = (VikWindow *) g_object_new(VIK_WINDOW_TYPE, NULL);
-	((VikWindow *) this->vw)->window = this;
+	this->vw_ = (VikWindow *) g_object_new(VIK_WINDOW_TYPE, NULL);
+	((VikWindow *) this->vw_)->window = this;
 
 
 
@@ -5431,14 +5431,14 @@ Window::Window()
 	}
 
 	this->main_vbox = gtk_vbox_new(false, 1);
-	gtk_container_add(GTK_CONTAINER (this->vw), this->main_vbox);
+	gtk_container_add(GTK_CONTAINER (this->vw_), this->main_vbox);
 	this->menu_hbox = gtk_hbox_new(false, 1);
 	GtkWidget *menu_bar = gtk_ui_manager_get_widget(this->uim, "/MainMenu");
 	gtk_box_pack_start(GTK_BOX(this->menu_hbox), menu_bar, false, true, 0);
 	gtk_box_pack_start(GTK_BOX(this->main_vbox), this->menu_hbox, false, true, 0);
 
 	toolbar_init(this->viking_vtb,
-		     &((VikWindow *) this->vw)->gtkwindow,
+		     &((VikWindow *) this->vw_)->gtkwindow,
 		     this->main_vbox,
 		     this->menu_hbox,
 		     toolbar_tool_cb,
@@ -5459,7 +5459,7 @@ Window::Window()
 	g_signal_connect(G_OBJECT(zoom_levels_menu), "selection-done", G_CALLBACK(zoom_changed_cb), this);
 	g_signal_connect_swapped(G_OBJECT(this->viking_vs), "clicked", G_CALLBACK(zoom_popup_handler), zoom_levels_menu);
 
-	g_signal_connect(G_OBJECT (this->vw), "delete_event", G_CALLBACK (delete_event), NULL);
+	g_signal_connect(this->get_toolkit_object(), "delete_event", G_CALLBACK (delete_event), NULL);
 
 	// Own signals
 	g_signal_connect_swapped(G_OBJECT(this->viewport->get_toolkit_object()), "updated_center", G_CALLBACK(center_changed_cb), this);
@@ -5476,7 +5476,7 @@ Window::Window()
 	g_signal_connect_swapped(G_OBJECT(this->layers_panel->gob), "delete_layer", G_CALLBACK(vik_window_clear_highlight_cb), this);
 
 	// Allow key presses to be processed anywhere
-	g_signal_connect_swapped(G_OBJECT (this->vw), "key_press_event", G_CALLBACK (key_press_event_cb), this);
+	g_signal_connect_swapped(this->get_toolkit_object(), "key_press_event", G_CALLBACK (key_press_event_cb), this);
 
 	// Set initial button sensitivity
 	center_changed_cb(this);
@@ -5591,8 +5591,8 @@ Window::~Window()
 	delete this->viewport;
 	delete this->layers_panel;
 
-	window_finalize((GObject *) this->vw);
-	this->vw = NULL;
+	window_finalize((GObject *) this->get_toolkit_object());
+	this->vw_ = NULL;
 }
 
 
@@ -5632,5 +5632,29 @@ Window * window_from_vik_window(VikWindow * vw)
 
 GtkWindow * Window::get_toolkit_window(void)
 {
-	return GTK_WINDOW (this->vw);
+	return GTK_WINDOW (this->vw_);
+}
+
+
+
+
+GtkWindow * Window::get_toolkit_window_2(void)
+{
+	return GTK_WINDOW (gtk_widget_get_toplevel(GTK_WIDGET (this->vw_)));
+}
+
+
+
+
+GtkWidget * Window::get_toolkit_widget(void)
+{
+	return GTK_WIDGET (this->vw_);
+}
+
+
+
+
+void * Window::get_toolkit_object(void)
+{
+	return G_OBJECT (this->vw_);
 }

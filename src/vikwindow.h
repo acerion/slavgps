@@ -192,8 +192,9 @@ namespace SlavGPS {
 		GThread * get_thread();
 
 		GtkWindow * get_toolkit_window(void);
-
-
+		GtkWindow * get_toolkit_window_2(void);
+		GtkWidget * get_toolkit_widget(void);
+		void * get_toolkit_object(void);
 
 
 		/* Store at this level for highlighted selection drawing since it applies to the viewport and the layers panel. */
@@ -271,7 +272,7 @@ namespace SlavGPS {
 		GtkActionGroup * action_group;
 
 
-		void * vw; /* VikWindow. */
+		void * vw_; /* VikWindow. */
 
 
 		// private:

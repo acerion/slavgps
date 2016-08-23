@@ -107,7 +107,7 @@ static void display_no_tool(Window * window)
 {
 	GtkWidget *dialog = NULL;
 
-	dialog = gtk_message_dialog_new(GTK_WINDOW(window->vw), GTK_DIALOG_MODAL, GTK_MESSAGE_WARNING, GTK_BUTTONS_OK, _("No goto tool available."));
+	dialog = gtk_message_dialog_new(window->get_toolkit_window(), GTK_DIALOG_MODAL, GTK_MESSAGE_WARNING, GTK_BUTTONS_OK, _("No goto tool available."));
 
 	gtk_dialog_run(GTK_DIALOG(dialog));
 
@@ -122,7 +122,7 @@ static bool prompt_try_again(Window * window, const char *msg)
 	GtkWidget *dialog = NULL;
 	bool ret = true;
 
-	dialog = gtk_dialog_new_with_buttons("", GTK_WINDOW(window->vw), (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL);
+	dialog = gtk_dialog_new_with_buttons("", window->get_toolkit_window(), (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL);
 	gtk_window_set_title(GTK_WINDOW(dialog), _("goto"));
 
 	GtkWidget *goto_label = gtk_label_new(msg);
@@ -198,7 +198,7 @@ static char *a_prompt_for_goto_string(Window * window)
 {
 	GtkWidget *dialog = NULL;
 
-	dialog = gtk_dialog_new_with_buttons("", GTK_WINDOW(window->vw), (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL);
+	dialog = gtk_dialog_new_with_buttons("", window->get_toolkit_window(), (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT, NULL);
 	gtk_window_set_title(GTK_WINDOW(dialog), _("goto"));
 
 	GtkWidget *tool_label = gtk_label_new(_("goto provider:"));
