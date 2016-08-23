@@ -283,6 +283,10 @@ namespace SlavGPS {
 		void toggle_toolbar();
 		void toggle_main_menu();
 
+
+	private:
+		void init_toolkit_widget(void);
+
 		char type_string[30];
 
 	}; /* class Window */
@@ -306,8 +310,6 @@ SlavGPS::Window * window_from_vik_window(VikWindow * vw);
 
 struct _VikWindow {
 	GtkWindow gtkwindow;
-
-	SlavGPS::Window * window;
 };
 
 

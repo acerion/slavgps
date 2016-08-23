@@ -882,7 +882,7 @@ static bool key_press_event_cb(Window * window, GdkEventKey * event, void * data
 
 static bool delete_event(VikWindow * vw)
 {
-	Window * window = vw->window;
+	Window * window = (Window *) g_object_get_data((GObject *) &((VikWindow *) vw)->gtkwindow, "window");
 
 #ifdef VIKING_PROMPT_IF_MODIFIED
 	if (window->modified)
@@ -906,7 +906,7 @@ static bool delete_event(VikWindow * vw)
 			return true;
 		default:
 			gtk_widget_destroy(GTK_WIDGET(dia));
-			return !save_file(NULL, vw->window);
+			return !save_file(NULL, window);
 		}
 	}
 
@@ -5368,6 +5368,15 @@ GThread * Window::get_thread()
 
 
 
+void Window::init_toolkit_widget(void)
+{
+	this->vw_ = (VikWindow *) g_object_new(VIK_WINDOW_TYPE, NULL);
+	g_object_set_data((GObject *) &((VikWindow *) this->vw_)->gtkwindow, "window", this);
+}
+
+
+
+
 Window::Window()
 {
 	this->selected_trw = NULL;
@@ -5383,10 +5392,7 @@ Window::Window()
 
 	strcpy(this->type_string, "The WINDOW");
 
-
-	this->vw_ = (VikWindow *) g_object_new(VIK_WINDOW_TYPE, NULL);
-	((VikWindow *) this->vw_)->window = this;
-
+	this->init_toolkit_widget();
 
 
 	this->action_group = NULL;
@@ -5608,7 +5614,9 @@ VikWindow * vik_window_from_layer(Layer * layer)
 
 Window * window_from_layer(Layer * layer)
 {
-	return vik_window_from_layer(layer)->window;
+	VikWindow * vw = vik_window_from_layer(layer);
+	Window * window = (Window *) g_object_get_data((GObject *) &((VikWindow *) vw)->gtkwindow, "window");
+	return window;
 }
 
 
@@ -5616,7 +5624,9 @@ Window * window_from_layer(Layer * layer)
 
 Window * window_from_widget(void * widget)
 {
-	return ((VikWindow *) gtk_widget_get_toplevel(GTK_WIDGET(widget)))->window;
+	VikWindow * vw = (VikWindow *) gtk_widget_get_toplevel(GTK_WIDGET(widget));
+	Window * window = (Window *) g_object_get_data((GObject *) &((VikWindow *) vw)->gtkwindow, "window");
+	return window;
 }
 
 
@@ -5624,7 +5634,8 @@ Window * window_from_widget(void * widget)
 
 Window * window_from_vik_window(VikWindow * vw)
 {
-	return (Window *) vw->window;
+	Window * window = (Window *) g_object_get_data((GObject *) &((VikWindow *) vw)->gtkwindow, "window");
+	return window;
 }
 
 
