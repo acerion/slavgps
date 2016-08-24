@@ -70,6 +70,12 @@ namespace SlavGPS {
 		std::list<Layer *> * get_all_layers_of_type(LayerType type, bool include_invisible);
 		TreeView * get_treeview();
 
+		void set_visible(bool visible);
+		bool get_visible();
+
+		GtkWindow * get_toolkit_window(void);
+		GtkWidget * get_toolkit_widget(void);
+
 
 		LayerAggregate * toplayer;
 		GtkTreeIter toplayer_iter;
@@ -87,7 +93,8 @@ namespace SlavGPS {
 		bool key_press(GdkEventKey * event);
 		void move_item(bool up);
 
-		GtkVBox * panel_;
+	private:
+		GtkVBox * panel_box_;
 	};
 
 

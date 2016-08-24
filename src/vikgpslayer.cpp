@@ -1522,9 +1522,9 @@ static void gps_empty_upload_cb(gps_layer_data_t * data)
 	LayersPanel * panel = data->panel;
 
 	/* Get confirmation from the user. */
-	if (! a_dialog_yes_or_no(VIK_GTK_WINDOW_FROM_WIDGET(panel->panel_),
-				 _("Are you sure you want to delete GPS Upload data?"),
-				 NULL)) {
+	if (!a_dialog_yes_or_no(panel->get_toolkit_window(),
+				_("Are you sure you want to delete GPS Upload data?"),
+				NULL)) {
 		return;
 	}
 
@@ -1542,9 +1542,9 @@ static void gps_empty_download_cb(gps_layer_data_t * data)
 	LayersPanel * panel = data->panel;
 
 	/* Get confirmation from the user. */
-	if (! a_dialog_yes_or_no(VIK_GTK_WINDOW_FROM_WIDGET(panel->panel_),
-				    _("Are you sure you want to delete GPS Download data?"),
-				    NULL)) {
+	if (!a_dialog_yes_or_no(panel->get_toolkit_window(),
+				_("Are you sure you want to delete GPS Download data?"),
+				NULL)) {
 		return;
 	}
 
@@ -1563,9 +1563,9 @@ static void gps_empty_realtime_cb(gps_layer_data_t * data)
 	LayersPanel * panel = data->panel;
 
 	/* Get confirmation from the user. */
-	if (! a_dialog_yes_or_no(VIK_GTK_WINDOW_FROM_WIDGET(panel->panel_),
-				    _("Are you sure you want to delete GPS Realtime data?"),
-				    NULL)) {
+	if (!a_dialog_yes_or_no(panel->get_toolkit_window(),
+				_("Are you sure you want to delete GPS Realtime data?"),
+				NULL)) {
 		return;
 	}
 
@@ -1583,9 +1583,9 @@ static void gps_empty_all_cb(gps_layer_data_t * data)
 	LayersPanel * panel = data->panel;
 
 	/* Get confirmation from the user. */
-	if (! a_dialog_yes_or_no(VIK_GTK_WINDOW_FROM_WIDGET(panel->panel_),
-				    _("Are you sure you want to delete All GPS data?"),
-				    NULL)) {
+	if (!a_dialog_yes_or_no(panel->get_toolkit_window(),
+				_("Are you sure you want to delete All GPS data?"),
+				NULL)) {
 		return;
 	}
 
