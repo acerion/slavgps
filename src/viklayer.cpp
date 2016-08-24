@@ -125,7 +125,7 @@ static bool idle_draw(Layer * layer)
 void Layer::emit_update()
 {
 	if (this->visible && this->realized) {
-		GThread * thread = window_from_layer(this)->get_thread();
+		GThread * thread = this->get_window()->get_thread();
 		if (!thread) {
 			/* Do nothing. */
 			return;
@@ -551,7 +551,7 @@ bool vik_layer_selected(Layer * layer, SublayerType sublayer_type, sg_uid_t subl
 	if (result) {
 		return result;
 	} else {
-		return window_from_layer(layer)->clear_highlight();
+		return layer->get_window()->clear_highlight();
 	}
 }
 
@@ -1116,4 +1116,14 @@ bool Layer::compare_name_descending(Layer * first, Layer * second)
 bool Layer::compare_name_ascending(Layer * first, Layer * second)
 {
 	return !Layer::compare_name_descending(first, second);
+}
+
+
+
+
+Window * Layer::get_window(void)
+{
+	VikWindow * vw = (VikWindow *) GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(this->tree_view->vt)));
+	Window * window = (Window *) g_object_get_data((GObject *) &((VikWindow *) vw)->gtkwindow, "window");
+	return window;
 }

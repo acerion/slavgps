@@ -504,7 +504,7 @@ void LayerAggregate::search_date()
 		return;
 	}
 
-	Viewport * viewport = window_from_layer(this)->get_viewport();
+	Viewport * viewport = this->get_window()->get_viewport();
 
 	bool found = false;
 	std::list<Layer *> * layers = new std::list<Layer *>;

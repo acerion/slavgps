@@ -506,7 +506,7 @@ static void select_cb(GtkTreeSelection * selection, void * data)
 	}
 
 	Layer * layer = tree_view->get_layer(&iter);
-	Window * window = window_from_layer(layer);
+	Window * window = layer->get_window();
 	window->selected_layer(layer);
 
 	/* Apply settings now we have the all details. */

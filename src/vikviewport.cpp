@@ -1802,7 +1802,7 @@ bool Viewport::get_half_drawn()
 
 char const * Viewport::get_drawmode_name(VikViewportDrawMode mode)
 {
-	GtkWidget * mode_button = window_from_widget(this->drawing_area_)->get_drawmode_button(mode);
+	GtkWidget * mode_button = this->get_window()->get_drawmode_button(mode);
 	GtkWidget * label = gtk_bin_get_child(GTK_BIN(mode_button));
 
 	return gtk_label_get_text(GTK_LABEL(label));

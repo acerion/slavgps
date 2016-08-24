@@ -108,7 +108,7 @@ static void draw_update_cb(Window * window);
 static void newwindow_cb(GtkAction *a, Window * window);
 
 /* Signals. */
-static void open_window(Window * window, GSList * files);
+static void open_window(GtkWidget * widget, GSList * files);
 static void destroy_window(GtkWidget * widget, void * data);
 
 /* Drawing & stuff. */
@@ -480,11 +480,13 @@ void Window::finish_new()
 
 
 
-static void open_window(Window * window, GSList *files)
+static void open_window(GtkWidget * widget, GSList *files)
 {
-	if (!window) {
+	if (!widget) {
 		return;
 	}
+
+	Window * window = window_from_widget(widget);
 
 	bool change_fn = (g_slist_length(files) == 1); /* only change fn if one file */
 	GSList *cur_file = files;
@@ -713,8 +715,8 @@ static void drag_data_received_cb(GtkWidget * widget,
 			}
 
 			if (filenames) {
-				g_signal_emit(G_OBJECT(VIK_WINDOW_FROM_WIDGET(widget)), window_signals[VW_OPENWINDOW_SIGNAL], 0, filenames);
-			// NB: GSList & contents are freed by main.open_window
+				g_signal_emit(G_OBJECT (toolkit_window_from_widget(widget)), window_signals[VW_OPENWINDOW_SIGNAL], 0, filenames);
+				/* NB: GSList & contents are freed by main.open_window. */
 			}
 
 			success = true;
@@ -1039,7 +1041,7 @@ void Window::draw_status()
 
 void Window::set_redraw_trigger(Layer * layer)
 {
-	Window * window = window_from_layer(layer);
+	Window * window = layer->get_window();
 	if (window) {
 		window->trigger = layer->vl;
 	}
@@ -5150,7 +5152,7 @@ static void window_create_ui(Window * window)
 	window->action_group = action_group;
 
 	GtkAccelGroup * accel_group = gtk_ui_manager_get_accel_group(uim);
-	gtk_window_add_accel_group(GTK_WINDOW (window), accel_group);
+	gtk_window_add_accel_group(GTK_WINDOW (window->get_toolkit_window()), accel_group);
 	gtk_ui_manager_ensure_update(uim);
 
 	window->setup_recent_files();
@@ -5604,27 +5606,9 @@ Window::~Window()
 
 
 
-VikWindow * vik_window_from_layer(Layer * layer)
-{
-	return (VikWindow *) GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(layer->tree_view->vt)));
-}
-
-
-
-
-Window * window_from_layer(Layer * layer)
-{
-	VikWindow * vw = vik_window_from_layer(layer);
-	Window * window = (Window *) g_object_get_data((GObject *) &((VikWindow *) vw)->gtkwindow, "window");
-	return window;
-}
-
-
-
-
 Window * window_from_widget(void * widget)
 {
-	VikWindow * vw = (VikWindow *) gtk_widget_get_toplevel(GTK_WIDGET(widget));
+	VikWindow * vw = toolkit_window_from_widget(widget);
 	Window * window = (Window *) g_object_get_data((GObject *) &((VikWindow *) vw)->gtkwindow, "window");
 	return window;
 }
@@ -5632,10 +5616,10 @@ Window * window_from_widget(void * widget)
 
 
 
-Window * window_from_vik_window(VikWindow * vw)
+VikWindow * toolkit_window_from_widget(void * widget)
 {
-	Window * window = (Window *) g_object_get_data((GObject *) &((VikWindow *) vw)->gtkwindow, "window");
-	return window;
+	VikWindow * vw = (VikWindow *) gtk_widget_get_toplevel(GTK_WIDGET(widget));
+	return vw;
 }
 
 

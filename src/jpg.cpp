@@ -106,7 +106,7 @@ bool SlavGPS::jpg_load_file(LayerAggregate * top, char const * filename, Viewpor
 {
 	bool auto_zoom = true;
 	/* Auto load into TrackWaypoint layer if one is selected. */
-	Layer * trw = window_from_layer(top)->get_layers_panel()->get_selected();
+	Layer * trw = top->get_window()->get_layers_panel()->get_selected();
 
 	bool create_layer = false;
 	if (trw == NULL || trw->type != LayerType::TRW) {

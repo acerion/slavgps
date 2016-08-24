@@ -244,6 +244,7 @@ namespace SlavGPS {
 		void set_defaults(Viewport * viewport);
 
 		GtkWindow * get_toolkit_window(void);
+		Window * get_window(void);
 
 
 

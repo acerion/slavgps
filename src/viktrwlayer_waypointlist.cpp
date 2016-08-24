@@ -505,7 +505,7 @@ static bool trw_layer_waypoint_menu_popup(GtkWidget * tree_view,
 
 	sg_uid_t wp_uuid = LayerTRWc::find_uid_of_waypoint(trw->get_waypoints(), wp);
 	if (wp_uuid) {
-		Viewport * viewport = window_from_layer(trw)->get_viewport();
+		Viewport * viewport = trw->get_window()->get_viewport();
 
 		GtkWidget * menu = gtk_menu_new();
 

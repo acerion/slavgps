@@ -80,10 +80,10 @@ void SlavGPS::vik_trw_layer_export(LayerTRW * layer, char const * title, char co
 			last_folder_uri = gtk_file_chooser_get_current_folder_uri(GTK_FILE_CHOOSER(file_selector));
 
 			gtk_widget_hide(file_selector);
-			window_from_layer(layer)->set_busy_cursor();
+			layer->get_window()->set_busy_cursor();
 			/* Don't Export invisible items - unless requested on this specific track. */
 			failed = ! a_file_export(layer, fn, file_type, trk, trk ? true : false);
-			window_from_layer(layer)->clear_busy_cursor();
+			layer->get_window()->clear_busy_cursor();
 			break;
 		}
 	}
@@ -197,11 +197,11 @@ void SlavGPS::vik_trw_layer_export_gpsbabel(LayerTRW * trw, char const *title, c
 				a_dialog_error_msg(trw->get_toolkit_window(), _("You did not select a valid file format."));
 			} else {
 				gtk_widget_hide(file_selector);
-				window_from_layer(trw)->set_busy_cursor();
+				trw->get_window()->set_busy_cursor();
 				bool tracks, routes, waypoints;
 				a_babel_ui_modes_get(babel_modes, &tracks, &routes, &waypoints);
 				failed = ! a_file_export_babel(trw, fn, active->name, tracks, routes, waypoints);
-				window_from_layer(trw)->clear_busy_cursor();
+				trw->get_window()->clear_busy_cursor();
 				break;
 			}
 		}

@@ -76,7 +76,7 @@ void init_drawing_params(DrawingParams * dp, LayerTRW * trw, Viewport * viewport
 	dp->trw = trw;
 	dp->viewport = viewport;
 	dp->highlight = highlight;
-	dp->window = window_from_layer(dp->trw);
+	dp->window = dp->trw->get_window();
 	dp->xmpp = viewport->get_xmpp();
 	dp->ympp = viewport->get_ympp();
 	dp->width = viewport->get_width();

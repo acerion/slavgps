@@ -430,7 +430,7 @@ void LayersPanel::item_edited(GtkTreeIter * iter, char const * new_text)
 	}
 
 	if (new_text[0] == '\0') {
-		a_dialog_error_msg(GTK_WINDOW(VIK_WINDOW_FROM_WIDGET(this->gob)), _("New name can not be blank."));
+		a_dialog_error_msg(this->toplayer->get_window()->get_toolkit_window(), _("New name can not be blank."));
 		return;
 	}
 

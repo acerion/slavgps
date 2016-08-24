@@ -299,11 +299,8 @@ namespace SlavGPS {
 
 
 
-#define VIK_WINDOW_FROM_WIDGET(x) VIK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(x)))
-VikWindow * vik_window_from_layer(SlavGPS::Layer * layer);
-SlavGPS::Window * window_from_layer(SlavGPS::Layer * layer);
 SlavGPS::Window * window_from_widget(void * widget);
-SlavGPS::Window * window_from_vik_window(VikWindow * vw);
+VikWindow * toolkit_window_from_widget(void * widget);
 
 
 

@@ -78,9 +78,10 @@ bool SlavGPS::geojson_write_file(LayerTRW * trw, FILE * ff)
 	/* TODO: monitor stderr? */
 	if (!g_spawn_async_with_pipes(NULL, argv, NULL, (GSpawnFlags) (G_SPAWN_SEARCH_PATH | G_SPAWN_DO_NOT_REAP_CHILD), NULL, NULL, &pid, NULL, &mystdout, NULL, &error)) {
 
-		if (IS_VIK_WINDOW (vik_window_from_layer(trw))) {
+		Window * w = trw->get_window();
+		if (w) {
 			char * msg = g_strdup_printf(_("%s command failed: %s"), argv[0], error->message);
-			window_from_layer(trw)->statusbar_update(msg, VIK_STATUSBAR_INFO);
+			w->statusbar_update(msg, VIK_STATUSBAR_INFO);
 			free(msg);
 		} else {
 			fprintf(stderr, "WARNING: Async command failed: %s\n", error->message);

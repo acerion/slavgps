@@ -350,7 +350,8 @@ static void osm_traces_upload_thread(OsmTracesInfo *oti, void * threaddata)
 
 	/* Test to see if window it was invoked on is still valid.
 	   Not sure if this test really works! (i.e. if the window was closed in the mean time). */
-	if (IS_VIK_WINDOW (vik_window_from_layer(oti->trw))) {
+	Window * w = oti->trw->get_window();
+	if (w) {
 		char* msg;
 		if (ans == 0) {
 			/* Success. */
@@ -362,7 +363,7 @@ static void osm_traces_upload_thread(OsmTracesInfo *oti, void * threaddata)
 		} else {
 			msg = g_strdup_printf("%s : %s %d (@%s)", _("FAILED TO UPLOAD DATA TO OSM"), _("HTTP response code"), ans, timestr);
 		}
-		window_from_layer(oti->trw)->statusbar_update(msg, VIK_STATUSBAR_INFO);
+		w->statusbar_update(msg, VIK_STATUSBAR_INFO);
 		free(msg);
 	}
 	/* Removing temporary file. */

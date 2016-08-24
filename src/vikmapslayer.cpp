@@ -1263,9 +1263,10 @@ static GdkPixbuf * get_pixbuf_from_file(LayerMaps * layer, TileInfo * mapcoord, 
 		if (gx) {
 			if (gx->domain != GDK_PIXBUF_ERROR || gx->code != GDK_PIXBUF_ERROR_CORRUPT_IMAGE) {
 				/* Report a warning. */
-				if (IS_VIK_WINDOW (vik_window_from_layer((Layer *) layer))) {
-					char* msg = g_strdup_printf(_("Couldn't open image file: %s"), gx->message);
-					window_from_layer((Layer *) layer)->statusbar_update(msg, VIK_STATUSBAR_INFO);
+				Window * w = layer->get_window();
+				if (w) {
+					char * msg = g_strdup_printf(_("Couldn't open image file: %s"), gx->message);
+					w->statusbar_update(msg, VIK_STATUSBAR_INFO);
 					free(msg);
 				}
 			}
@@ -1405,9 +1406,10 @@ void LayerMaps::draw_section(Viewport * viewport, VikCoord *ul, VikCoord *br)
 				existence_only = true;
 			} else {
 				/* Report the reason for not drawing. */
-				if (IS_VIK_WINDOW (vik_window_from_layer(this))) {
+				Window * w = this->get_window();
+				if (w) {
 					char * msg = g_strdup_printf(_("Cowardly refusing to draw tiles or existence of tiles beyond %d zoom out factor"), (int)(1.0/REAL_MIN_SHRINKFACTOR));
-					window_from_layer(this)->statusbar_update(msg, VIK_STATUSBAR_INFO);
+					w->statusbar_update(msg, VIK_STATUSBAR_INFO);
 					free(msg);
 				}
 				return;
@@ -1774,13 +1776,13 @@ static int map_download_thread(MapDownloadInfo *mdi, void * threaddata)
 					case DOWNLOAD_CONTENT_ERROR: {
 						/* TODO: ?? count up the number of download errors somehow... */
 						char* msg = g_strdup_printf("%s: %s", mdi->layer->get_map_label(), _("Failed to download tile"));
-						window_from_layer(mdi->layer)->statusbar_update(msg, VIK_STATUSBAR_INFO);
+						mdi->layer->get_window()->statusbar_update(msg, VIK_STATUSBAR_INFO);
 						free(msg);
 						break;
 					}
 					case DOWNLOAD_FILE_WRITE_ERROR: {
 						char * msg = g_strdup_printf("%s: %s", mdi->layer->get_map_label(), _("Unable to save tile"));
-						window_from_layer(mdi->layer)->statusbar_update(msg, VIK_STATUSBAR_INFO);
+						mdi->layer->get_window()->statusbar_update(msg, VIK_STATUSBAR_INFO);
 						free(msg);
 						break;
 					}

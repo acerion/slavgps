@@ -449,7 +449,7 @@ static bool trw_layer_track_menu_popup(GtkWidget * tree_view,
 	}
 
 	if (uid) {
-		Viewport * viewport = window_from_layer(trw)->get_viewport();
+		Viewport * viewport = trw->get_window()->get_viewport();
 
 		GtkWidget * menu = gtk_menu_new();
 
