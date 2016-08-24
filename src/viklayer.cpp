@@ -1123,7 +1123,7 @@ bool Layer::compare_name_ascending(Layer * first, Layer * second)
 
 Window * Layer::get_window(void)
 {
-	VikWindow * vw = (VikWindow *) GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(this->tree_view->vt)));
-	Window * window = (Window *) g_object_get_data((GObject *) &((VikWindow *) vw)->gtkwindow, "window");
+	GtkWindow * w = GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(this->tree_view->vt)));
+	Window * window = (Window *) g_object_get_data((GObject *) w, "window");
 	return window;
 }

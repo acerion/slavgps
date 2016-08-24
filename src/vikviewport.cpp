@@ -2011,8 +2011,8 @@ void * Viewport::get_toolkit_object(void)
 
 Window * Viewport::get_window(void)
 {
-	VikWindow * vw = (VikWindow *) gtk_widget_get_toplevel(GTK_WIDGET(this->drawing_area_));
-	Window * window = (Window *) g_object_get_data((GObject *) &((VikWindow *) vw)->gtkwindow, "window");
+	GtkWindow * w = (GtkWindow *) gtk_widget_get_toplevel(GTK_WIDGET(this->drawing_area_));
+	Window * window = (Window *) g_object_get_data((GObject *) w, "window");
 
 	return window;
 }

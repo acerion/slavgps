@@ -98,13 +98,10 @@ static std::list<Window *> window_list;
 static char *last_folder_files_uri = NULL;
 static char *last_folder_images_uri = NULL;
 
-static void window_finalize(GObject *gob);
-static GObjectClass *parent_class;
 
 
 
 static void draw_update_cb(Window * window);
-
 static void newwindow_cb(GtkAction *a, Window * window);
 
 /* Signals. */
@@ -113,7 +110,7 @@ static void destroy_window(GtkWidget * widget, void * data);
 
 /* Drawing & stuff. */
 
-static bool delete_event(VikWindow * vw);
+static bool delete_event(GtkWindow * w);
 
 static bool key_press_event_cb(Window * window, GdkEventKey * event, void * data);
 
@@ -183,8 +180,6 @@ static unsigned int window_signals[VW_LAST_SIGNAL] = { 0 };
 
 /* TODO get rid of this as this is unnecessary duplication... */
 static char *tool_names[NUMBER_OF_TOOLS] = { (char *) N_("Pan"), (char *) N_("Zoom"), (char *) N_("Ruler"), (char *) N_("Select") };
-
-G_DEFINE_TYPE (VikWindow, vik_window, GTK_TYPE_WINDOW)
 
 
 
@@ -307,10 +302,10 @@ static void destroy_window(GtkWidget * widget, void * data)
 
 
 
-VikWindow * vik_window_new_window(VikWindow * vw)
+GtkWindow * vik_window_new_window(GtkWindow * w)
 {
 	Window * new_window = new Window();
-	return (VikWindow *) new_window->vw_;
+	return new_window->gtk_window_;
 }
 
 
@@ -533,33 +528,12 @@ void Window::selected_layer(Layer * layer)
 
 
 
-static void window_finalize(GObject * gob)
+void window_init(void)
 {
-	VikWindow * vw = VIK_WINDOW(gob);
-	if (!vw) {
-		return;
-	}
+	window_signals[VW_NEWWINDOW_SIGNAL] = g_signal_new("newwindow", G_TYPE_OBJECT, (GSignalFlags) (G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION), 0, NULL, NULL, g_cclosure_marshal_VOID__VOID, G_TYPE_NONE, 0);
+	window_signals[VW_OPENWINDOW_SIGNAL] = g_signal_new("openwindow", G_TYPE_OBJECT, (GSignalFlags) (G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION), 0, NULL, NULL, g_cclosure_marshal_VOID__POINTER, G_TYPE_NONE, 1, G_TYPE_POINTER);
 
-	G_OBJECT_CLASS(parent_class)->finalize(gob);
-}
-
-
-
-
-static void vik_window_class_init(VikWindowClass *klass)
-{
-	/* destructor */
-	GObjectClass *object_class;
-
-	window_signals[VW_NEWWINDOW_SIGNAL] = g_signal_new("newwindow", G_TYPE_FROM_CLASS (klass), (GSignalFlags) (G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION), G_STRUCT_OFFSET (VikWindowClass, newwindow), NULL, NULL, g_cclosure_marshal_VOID__VOID, G_TYPE_NONE, 0);
-	window_signals[VW_OPENWINDOW_SIGNAL] = g_signal_new("openwindow", G_TYPE_FROM_CLASS (klass), (GSignalFlags) (G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION), G_STRUCT_OFFSET (VikWindowClass, openwindow), NULL, NULL, g_cclosure_marshal_VOID__POINTER, G_TYPE_NONE, 1, G_TYPE_POINTER);
-
-	object_class = G_OBJECT_CLASS (klass);
-
-	object_class->finalize = window_finalize;
-
-	parent_class = (GObjectClass *) g_type_class_peek_parent(klass);
-
+	return;
 }
 
 
@@ -770,13 +744,6 @@ static void toolbar_reload_cb(GtkActionGroup *grp, void * gp)
 
 
 
-static void vik_window_init(VikWindow * vw)
-{
-}
-
-
-
-
 /**
  * Update the displayed map
  *  Only update the top most visible map layer
@@ -882,9 +849,9 @@ static bool key_press_event_cb(Window * window, GdkEventKey * event, void * data
 
 
 
-static bool delete_event(VikWindow * vw)
+static bool delete_event(GtkWindow * gtk_window)
 {
-	Window * window = (Window *) g_object_get_data((GObject *) &((VikWindow *) vw)->gtkwindow, "window");
+	Window * window = (Window *) g_object_get_data((GObject *) gtk_window, "window");
 
 #ifdef VIKING_PROMPT_IF_MODIFIED
 	if (window->modified)
@@ -893,7 +860,7 @@ static bool delete_event(VikWindow * vw)
 #endif
 	{
 		GtkDialog *dia;
-		dia = GTK_DIALOG (gtk_message_dialog_new(GTK_WINDOW(vw), GTK_DIALOG_DESTROY_WITH_PARENT, GTK_MESSAGE_QUESTION, GTK_BUTTONS_NONE,
+		dia = GTK_DIALOG (gtk_message_dialog_new(gtk_window, GTK_DIALOG_DESTROY_WITH_PARENT, GTK_MESSAGE_QUESTION, GTK_BUTTONS_NONE,
 							 _("Do you want to save the changes you made to the document \"%s\"?\n"
 							   "\n"
 							   "Your changes will be lost if you don't save them."),
@@ -915,7 +882,7 @@ static bool delete_event(VikWindow * vw)
 	if (window_count == 1) {
 		// On the final window close - save latest state - if it's wanted...
 		if (a_vik_get_restore_window_state()) {
-			int state = gdk_window_get_state(GTK_WIDGET(vw)->window);
+			int state = gdk_window_get_state(GTK_WIDGET (gtk_window)->window);
 			bool state_max = state & GDK_WINDOW_STATE_MAXIMIZED;
 			a_settings_set_boolean(VIK_SETTINGS_WIN_MAX, state_max);
 
@@ -931,7 +898,7 @@ static bool delete_event(VikWindow * vw)
 			// If supersized - no need to save the enlarged width+height values
 			if (! (state_fullscreen || state_max)) {
 				int width, height;
-				gtk_window_get_size(GTK_WINDOW (vw), &width, &height);
+				gtk_window_get_size(gtk_window, &width, &height);
 				a_settings_set_integer(VIK_SETTINGS_WIN_WIDTH, width);
 				a_settings_set_integer(VIK_SETTINGS_WIN_HEIGHT, height);
 			}
@@ -4081,7 +4048,7 @@ static void clear_cb(GtkAction * a, Window * window)
 
 static void window_close(GtkAction * a, Window * window)
 {
-	if (!delete_event((VikWindow *) window->vw_)) {
+	if (!delete_event(window->gtk_window_)) {
 		gtk_widget_destroy(window->get_toolkit_widget());
 	}
 }
@@ -4446,7 +4413,7 @@ static char * draw_image_filename(Window * window, img_generation_t img_gen)
 
 void Window::draw_to_image_file(img_generation_t img_gen)
 {
-	/* todo: default for answers inside VikWindow or static (thruout instance) */
+	/* todo: default for answers inside Window or static (thruout instance) */
 	GtkWidget * dialog = gtk_dialog_new_with_buttons(_("Save to Image File"),
 							 this->get_toolkit_window(),
 							 (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
@@ -5361,7 +5328,7 @@ bool Window::clear_highlight()
  */
 GThread * Window::get_thread()
 {
-	if (this->vw_) {
+	if (this->gtk_window_) {
 		return this->thread;
 	}
 	return NULL;
@@ -5372,8 +5339,8 @@ GThread * Window::get_thread()
 
 void Window::init_toolkit_widget(void)
 {
-	this->vw_ = (VikWindow *) g_object_new(VIK_WINDOW_TYPE, NULL);
-	g_object_set_data((GObject *) &((VikWindow *) this->vw_)->gtkwindow, "window", this);
+	this->gtk_window_ = (GtkWindow *) gtk_window_new(GTK_WINDOW_TOPLEVEL);
+	g_object_set_data((GObject *) this->gtk_window_, "window", this);
 }
 
 
@@ -5439,14 +5406,14 @@ Window::Window()
 	}
 
 	this->main_vbox = gtk_vbox_new(false, 1);
-	gtk_container_add(GTK_CONTAINER (this->vw_), this->main_vbox);
+	gtk_container_add(GTK_CONTAINER (this->gtk_window_), this->main_vbox);
 	this->menu_hbox = gtk_hbox_new(false, 1);
 	GtkWidget *menu_bar = gtk_ui_manager_get_widget(this->uim, "/MainMenu");
 	gtk_box_pack_start(GTK_BOX(this->menu_hbox), menu_bar, false, true, 0);
 	gtk_box_pack_start(GTK_BOX(this->main_vbox), this->menu_hbox, false, true, 0);
 
 	toolbar_init(this->viking_vtb,
-		     &((VikWindow *) this->vw_)->gtkwindow,
+		     this->gtk_window_,
 		     this->main_vbox,
 		     this->menu_hbox,
 		     toolbar_tool_cb,
@@ -5599,8 +5566,8 @@ Window::~Window()
 	delete this->viewport;
 	delete this->layers_panel;
 
-	window_finalize((GObject *) this->get_toolkit_object());
-	this->vw_ = NULL;
+	/* kamilFIXME: free this window first. */
+	this->gtk_window_ = NULL;
 }
 
 
@@ -5608,18 +5575,18 @@ Window::~Window()
 
 Window * window_from_widget(void * widget)
 {
-	VikWindow * vw = toolkit_window_from_widget(widget);
-	Window * window = (Window *) g_object_get_data((GObject *) &((VikWindow *) vw)->gtkwindow, "window");
+	GtkWindow * w = toolkit_window_from_widget(widget);
+	Window * window = (Window *) g_object_get_data((GObject *) w, "window");
 	return window;
 }
 
 
 
 
-VikWindow * toolkit_window_from_widget(void * widget)
+GtkWindow * toolkit_window_from_widget(void * widget)
 {
-	VikWindow * vw = (VikWindow *) gtk_widget_get_toplevel(GTK_WIDGET(widget));
-	return vw;
+	GtkWindow * w = (GtkWindow *) gtk_widget_get_toplevel(GTK_WIDGET(widget));
+	return w;
 }
 
 
@@ -5627,7 +5594,7 @@ VikWindow * toolkit_window_from_widget(void * widget)
 
 GtkWindow * Window::get_toolkit_window(void)
 {
-	return GTK_WINDOW (this->vw_);
+	return GTK_WINDOW (this->gtk_window_);
 }
 
 
@@ -5635,7 +5602,7 @@ GtkWindow * Window::get_toolkit_window(void)
 
 GtkWindow * Window::get_toolkit_window_2(void)
 {
-	return GTK_WINDOW (gtk_widget_get_toplevel(GTK_WIDGET (this->vw_)));
+	return GTK_WINDOW (gtk_widget_get_toplevel(GTK_WIDGET (this->gtk_window_)));
 }
 
 
@@ -5643,7 +5610,7 @@ GtkWindow * Window::get_toolkit_window_2(void)
 
 GtkWidget * Window::get_toolkit_widget(void)
 {
-	return GTK_WIDGET (this->vw_);
+	return GTK_WIDGET (this->gtk_window_);
 }
 
 
@@ -5651,5 +5618,5 @@ GtkWidget * Window::get_toolkit_widget(void)
 
 void * Window::get_toolkit_object(void)
 {
-	return G_OBJECT (this->vw_);
+	return G_OBJECT (this->gtk_window_);
 }

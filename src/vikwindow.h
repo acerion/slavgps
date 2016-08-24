@@ -45,40 +45,6 @@
 
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
-
-
-#define VIK_WINDOW_TYPE            (vik_window_get_type ())
-#define VIK_WINDOW(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_WINDOW_TYPE, VikWindow))
-#define VIK_WINDOW_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), VIK_WINDOW_TYPE, VikWindowClass))
-#define IS_VIK_WINDOW(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), VIK_WINDOW_TYPE))
-#define IS_VIK_WINDOW_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), VIK_WINDOW_TYPE))
-
-typedef struct _VikWindow VikWindow;
-typedef struct _VikWindowClass VikWindowClass;
-
-struct _VikWindowClass {
-	GtkWindowClass window_class;
-	void (* newwindow) (VikWindow * vw);
-	void (* openwindow) (VikWindow * vw, GSList * filenames);
-};
-
-GType vik_window_get_type();
-
-
-
-
-#ifdef __cplusplus
-}
-#endif
-
-
-
-
 typedef enum {
 	VW_GEN_SINGLE_IMAGE,
 	VW_GEN_DIRECTORY_OF_IMAGES,
@@ -272,7 +238,7 @@ namespace SlavGPS {
 		GtkActionGroup * action_group;
 
 
-		void * vw_; /* VikWindow. */
+		GtkWindow * gtk_window_;
 
 
 		// private:
@@ -300,15 +266,8 @@ namespace SlavGPS {
 
 
 SlavGPS::Window * window_from_widget(void * widget);
-VikWindow * toolkit_window_from_widget(void * widget);
-
-
-
-
-struct _VikWindow {
-	GtkWindow gtkwindow;
-};
-
+GtkWindow * toolkit_window_from_widget(void * widget);
+void window_init(void);
 
 
 
