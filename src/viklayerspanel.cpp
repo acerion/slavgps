@@ -29,7 +29,6 @@
 
 #include <glib/gi18n.h>
 #include <gdk/gdkkeysyms.h>
-#include <glib-object.h>
 
 #include "settings.h"
 #include "viklayerspanel.h"
@@ -62,31 +61,6 @@ static unsigned int layers_panel_signals[VLP_LAST_SIGNAL] = { 0 };
 
 
 
-static GObjectClass * parent_class;
-
-#define VIK_LAYERS_PANEL_TYPE            (vik_layers_panel_get_type ())
-#define VIK_LAYERS_PANEL(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_LAYERS_PANEL_TYPE, VikLayersPanel))
-#define VIK_LAYERS_PANEL_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), VIK_LAYERS_PANEL_TYPE, VikLayersPanelClass))
-#define IS_VIK_LAYERS_PANEL(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), VIK_LAYERS_PANEL_TYPE))
-#define IS_VIK_LAYERS_PANEL_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), VIK_LAYERS_PANEL_TYPE))
-
-struct _VikLayersPanel {
-	GtkVBox vbox;
-};
-
-
-typedef struct _VikLayersPanel VikLayersPanel;
-typedef struct _VikLayersPanelClass VikLayersPanelClass;
-
-struct _VikLayersPanelClass
-{
-	GtkVBoxClass vbox_class;
-
-	void (* update) (VikLayersPanel * vlp);
-	void (* delete_layer) (VikLayersPanel * vlp); // NB Just before (actual layer *not* specified ATM) it is deleted
-};
-
-GType vik_layers_panel_get_type();
 static void vik_layers_panel_emit_update_cb(LayersPanel * panel);
 static void vik_layers_panel_cut_selected_cb(LayersPanel * panel);
 static void vik_layers_panel_copy_selected_cb(LayersPanel * panel);
@@ -114,30 +88,13 @@ static void layers_move_item_up_cb(LayersPanel * panel);
 static void layers_move_item_down_cb(LayersPanel * panel);
 static void layers_panel_finalize(GObject * gob);
 
-G_DEFINE_TYPE (VikLayersPanel, vik_layers_panel, GTK_TYPE_VBOX)
 
 
 
-
-static void vik_layers_panel_class_init(VikLayersPanelClass *klass)
+void SlavGPS::layers_panel_init(void)
 {
-	GObjectClass * object_class;
-
-	object_class = G_OBJECT_CLASS (klass);
-
-	object_class->finalize = layers_panel_finalize;
-
-	parent_class = (GObjectClass *) g_type_class_peek_parent(klass);
-
-	layers_panel_signals[VLP_UPDATE_SIGNAL] = g_signal_new("update", G_TYPE_FROM_CLASS (klass), (GSignalFlags) (G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION), G_STRUCT_OFFSET (VikLayersPanelClass, update), NULL, NULL, g_cclosure_marshal_VOID__VOID, G_TYPE_NONE, 0);
-	layers_panel_signals[VLP_DELETE_LAYER_SIGNAL] = g_signal_new("delete_layer", G_TYPE_FROM_CLASS (klass), (GSignalFlags) (G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION), G_STRUCT_OFFSET (VikLayersPanelClass, update), NULL, NULL, g_cclosure_marshal_VOID__VOID, G_TYPE_NONE, 0);
-}
-
-
-
-
-static void layers_panel_finalize(GObject *gob)
-{
+	layers_panel_signals[VLP_UPDATE_SIGNAL] = g_signal_new("update", G_TYPE_OBJECT, (GSignalFlags) (G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION), 0, NULL, NULL, g_cclosure_marshal_VOID__VOID, G_TYPE_NONE, 0);
+	layers_panel_signals[VLP_DELETE_LAYER_SIGNAL] = g_signal_new("delete_layer", G_TYPE_OBJECT, (GSignalFlags) (G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION), 0, NULL, NULL, g_cclosure_marshal_VOID__VOID, G_TYPE_NONE, 0);
 }
 
 
@@ -149,7 +106,7 @@ LayersPanel::LayersPanel()
 	memset(&this->toplayer_iter, 0, sizeof (GtkTreeIter));
 	this->viewport = NULL; /* reference */
 
-	this->gob = g_object_new(VIK_LAYERS_PANEL_TYPE, NULL);
+	this->panel_ = (GtkVBox *) gtk_vbox_new(false, 2);
 
 	GtkWidget * hbox = gtk_hbox_new(true, 2);
 	this->tree_view = new TreeView();
@@ -227,8 +184,8 @@ LayersPanel::LayersPanel()
 	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW(scrolledwindow), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
 	gtk_container_add (GTK_CONTAINER(scrolledwindow), GTK_WIDGET(this->tree_view->vt));
 
-	gtk_box_pack_start(GTK_BOX(this->gob), scrolledwindow, true, true, 0);
-	gtk_box_pack_start(GTK_BOX(this->gob), hbox, false, false, 0);
+	gtk_box_pack_start(GTK_BOX(this->panel_), scrolledwindow, true, true, 0);
+	gtk_box_pack_start(GTK_BOX(this->panel_), hbox, false, false, 0);
 }
 
 
@@ -241,7 +198,9 @@ LayersPanel::~LayersPanel()
 	fprintf(stderr, "~LayersPanel() called\n");
 
 	g_object_unref(this->toplayer->vl);
-	G_OBJECT_CLASS(parent_class)->finalize((GObject *) this->gob);
+
+	/* kamilFIXME: free this pointer. */
+	this->panel_ = NULL;
 }
 
 
@@ -292,7 +251,7 @@ static GtkWidget* layers_panel_create_popup(LayersPanel * panel, bool full)
 				menuitem = gtk_menu_item_new_with_mnemonic(entries[ii].label);
 			}
 
-			g_signal_connect_swapped(G_OBJECT(menuitem), "activate", G_CALLBACK(entries[ii].callback), panel->gob);
+			g_signal_connect_swapped(G_OBJECT(menuitem), "activate", G_CALLBACK(entries[ii].callback), panel->panel_);
 			gtk_menu_shell_append(GTK_MENU_SHELL (menu), menuitem);
 			gtk_widget_show(menuitem);
 		}
@@ -329,19 +288,12 @@ static GtkWidget* layers_panel_create_popup(LayersPanel * panel, bool full)
 
 
 
-static void vik_layers_panel_init(VikLayersPanel * vlp)
-{
-}
-
-
-
-
 /**
  * Invoke the actual drawing via signal method.
  */
 static bool idle_draw_panel(LayersPanel * panel)
 {
-	g_signal_emit(G_OBJECT(panel->gob), layers_panel_signals[VLP_UPDATE_SIGNAL], 0);
+	g_signal_emit(G_OBJECT(panel->panel_), layers_panel_signals[VLP_UPDATE_SIGNAL], 0);
 	return false; /* Nothing else to do. */
 }
 
@@ -358,7 +310,7 @@ void vik_layers_panel_emit_update_cb(LayersPanel * panel)
 
 void LayersPanel::emit_update()
 {
-	GThread * thread = window_from_widget(this->gob)->get_thread();
+	GThread * thread = window_from_widget(this->panel_)->get_thread();
 	if (!thread) {
 		/* Do nothing. */
 		return;
@@ -720,7 +672,7 @@ bool LayersPanel::properties()
 
 	if (this->tree_view->get_selected_iter(&iter) && this->tree_view->get_item_type(&iter) == TreeItemType::LAYER) {
 		if (this->tree_view->get_layer(&iter)->type == LayerType::AGGREGATE) {
-			a_dialog_info_msg(VIK_GTK_WINDOW_FROM_WIDGET(this->gob), _("Aggregate Layers have no settable properties."));
+			a_dialog_info_msg(VIK_GTK_WINDOW_FROM_WIDGET(this->panel_), _("Aggregate Layers have no settable properties."));
 		}
 		Layer * layer = this->tree_view->get_layer(&iter);
 		if (vik_layer_properties(layer, this->viewport)) {
@@ -777,14 +729,14 @@ void LayersPanel::cut_selected()
 
 			if (parent->type == LayerType::AGGREGATE) {
 
-				g_signal_emit(G_OBJECT(this->gob), layers_panel_signals[VLP_DELETE_LAYER_SIGNAL], 0);
+				g_signal_emit(G_OBJECT(this->panel_), layers_panel_signals[VLP_DELETE_LAYER_SIGNAL], 0);
 
 				if (parent->delete_layer(&iter)) {
 					this->emit_update();
 				}
 			}
 		} else {
-			a_dialog_info_msg(VIK_GTK_WINDOW_FROM_WIDGET(this->gob), _("You cannot cut the Top Layer."));
+			a_dialog_info_msg(VIK_GTK_WINDOW_FROM_WIDGET(this->panel_), _("You cannot cut the Top Layer."));
 		}
 	} else if (type == TreeItemType::SUBLAYER) {
 		Layer * selected = this->get_selected();
@@ -861,7 +813,7 @@ void LayersPanel::delete_selected()
 	if (type == TreeItemType::LAYER) {
 		Layer * layer = this->tree_view->get_layer(&iter);
 		/* Get confirmation from the user. */
-		if (! a_dialog_yes_or_no(VIK_GTK_WINDOW_FROM_WIDGET(this->gob),
+		if (! a_dialog_yes_or_no(VIK_GTK_WINDOW_FROM_WIDGET(this->panel_),
 					 _("Are you sure you want to delete %s?"),
 					 layer->get_name())) {
 			return;
@@ -876,14 +828,14 @@ void LayersPanel::delete_selected()
 
 			if (parent->type == LayerType::AGGREGATE) {
 
-				g_signal_emit(G_OBJECT(this->gob), layers_panel_signals[VLP_DELETE_LAYER_SIGNAL], 0);
+				g_signal_emit(G_OBJECT(this->panel_), layers_panel_signals[VLP_DELETE_LAYER_SIGNAL], 0);
 
 				if (parent->delete_layer(&iter)) {
 					this->emit_update();
 				}
 			}
 		} else {
-			a_dialog_info_msg (VIK_GTK_WINDOW_FROM_WIDGET(this->gob), _("You cannot delete the Top Layer."));
+			a_dialog_info_msg (VIK_GTK_WINDOW_FROM_WIDGET(this->panel_), _("You cannot delete the Top Layer."));
 		}
 	} else if (type == TreeItemType::SUBLAYER) {
 		Layer * selected = this->get_selected();
@@ -993,7 +945,7 @@ LayerAggregate * LayersPanel::get_top_layer()
 void LayersPanel::clear()
 {
 	if (!this->toplayer->is_empty()) {
-		g_signal_emit(G_OBJECT(this->gob), layers_panel_signals[VLP_DELETE_LAYER_SIGNAL], 0);
+		g_signal_emit(G_OBJECT(this->panel_), layers_panel_signals[VLP_DELETE_LAYER_SIGNAL], 0);
 		this->toplayer->clear(); /* simply deletes all layers */
 	}
 }

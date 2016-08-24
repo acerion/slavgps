@@ -67,6 +67,7 @@
 #include "viktrwlayer.h"
 #include "vikviewport.h"
 #include "vikwindow.h"
+#include "viklayerspanel.h"
 
 
 
@@ -317,6 +318,7 @@ void SlavGPS::modules_post_init()
 	layer_trw_init();
 	viewport_init();
 	window_init();
+	layers_panel_init();
 }
 
 

@@ -77,7 +77,7 @@ namespace SlavGPS {
 		TreeView * tree_view;
 		Viewport * viewport; /* Reference. */
 
-		void * gob; /* Related VikLayersPanel. */
+
 
 		/* This should be somehow private. */
 		void item_toggled(GtkTreeIter * iter);
@@ -86,12 +86,19 @@ namespace SlavGPS {
 		bool button_press(GdkEventButton * event);
 		bool key_press(GdkEventKey * event);
 		void move_item(bool up);
+
+		GtkVBox * panel_;
 	};
 
 
 
 
-}
+	void layers_panel_init(void);
+
+
+
+
+} /* namespace SlavGPS */
 
 
 

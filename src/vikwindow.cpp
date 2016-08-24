@@ -330,7 +330,7 @@ Window * Window::new_window()
 			bool sidepanel;
 			if (a_settings_get_boolean(VIK_SETTINGS_WIN_SIDEPANEL, &sidepanel)) {
 				if (! sidepanel) {
-					gtk_widget_hide(GTK_WIDGET(window->layers_panel->gob));
+					gtk_widget_hide(GTK_WIDGET(window->layers_panel->panel_));
 					GtkWidget *check_box = gtk_ui_manager_get_widget(window->uim, "/ui/MainMenu/View/SetShow/ViewSidePanel");
 					gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(check_box), false);
 				}
@@ -889,7 +889,7 @@ static bool delete_event(GtkWindow * gtk_window)
 			bool state_fullscreen = state & GDK_WINDOW_STATE_FULLSCREEN;
 			a_settings_set_boolean(VIK_SETTINGS_WIN_FULLSCREEN, state_fullscreen);
 
-			a_settings_set_boolean(VIK_SETTINGS_WIN_SIDEPANEL, GTK_WIDGET_VISIBLE (GTK_WIDGET(window->layers_panel->gob)));
+			a_settings_set_boolean(VIK_SETTINGS_WIN_SIDEPANEL, GTK_WIDGET_VISIBLE (GTK_WIDGET(window->layers_panel->panel_)));
 
 			a_settings_set_boolean(VIK_SETTINGS_WIN_STATUSBAR, GTK_WIDGET_VISIBLE (GTK_WIDGET(window->viking_vs)));
 
@@ -2504,9 +2504,9 @@ void Window::toggle_side_panel()
 {
 	this->show_side_panel = !this->show_side_panel;
 	if (this->show_side_panel) {
-		gtk_widget_show(GTK_WIDGET(this->layers_panel->gob));
+		gtk_widget_show(GTK_WIDGET(this->layers_panel->panel_));
 	} else {
-		gtk_widget_hide(GTK_WIDGET(this->layers_panel->gob));
+		gtk_widget_hide(GTK_WIDGET(this->layers_panel->panel_));
 	}
 }
 
@@ -5447,8 +5447,8 @@ Window::Window()
 	g_signal_connect_swapped(G_OBJECT(this->viewport->get_toolkit_object()), "button_release_event", G_CALLBACK(draw_release_cb), this);
 	g_signal_connect_swapped(G_OBJECT(this->viewport->get_toolkit_object()), "motion_notify_event", G_CALLBACK(draw_mouse_motion_cb), this);
 
-	g_signal_connect_swapped(G_OBJECT(this->layers_panel->gob), "update", G_CALLBACK(draw_update_cb), this);
-	g_signal_connect_swapped(G_OBJECT(this->layers_panel->gob), "delete_layer", G_CALLBACK(vik_window_clear_highlight_cb), this);
+	g_signal_connect_swapped(G_OBJECT(this->layers_panel->panel_), "update", G_CALLBACK(draw_update_cb), this);
+	g_signal_connect_swapped(G_OBJECT(this->layers_panel->panel_), "delete_layer", G_CALLBACK(vik_window_clear_highlight_cb), this);
 
 	// Allow key presses to be processed anywhere
 	g_signal_connect_swapped(this->get_toolkit_object(), "key_press_event", G_CALLBACK (key_press_event_cb), this);
@@ -5457,7 +5457,7 @@ Window::Window()
 	center_changed_cb(this);
 
 	this->hpaned = gtk_hpaned_new();
-	gtk_paned_pack1(GTK_PANED(this->hpaned), GTK_WIDGET (this->layers_panel->gob), false, true);
+	gtk_paned_pack1(GTK_PANED(this->hpaned), GTK_WIDGET (this->layers_panel->panel_), false, true);
 	gtk_paned_pack2(GTK_PANED(this->hpaned), this->viewport->get_toolkit_widget(), true, true);
 
 	/* This packs the button into the window (a gtk container). */
