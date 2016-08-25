@@ -93,7 +93,6 @@ namespace SlavGPS {
 		bool key_press(GdkEventKey * event);
 		void move_item(bool up);
 
-	private:
 		GtkVBox * panel_box_;
 	};
 
