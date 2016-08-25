@@ -1028,7 +1028,7 @@ bool Layer::set_param(uint16_t id, VikLayerParamData data, Viewport * viewport, 
 
 GtkWindow * Layer::get_toolkit_window()
 {
-	return GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(this->tree_view->vt)));
+	return this->tree_view->get_toolkit_window();
 }
 
 
@@ -1123,7 +1123,7 @@ bool Layer::compare_name_ascending(Layer * first, Layer * second)
 
 Window * Layer::get_window(void)
 {
-	GtkWindow * w = GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(this->tree_view->vt)));
+	GtkWindow * w = this->tree_view->get_toolkit_window();
 	Window * window = (Window *) g_object_get_data((GObject *) w, "window");
 	return window;
 }

@@ -46,11 +46,6 @@ namespace SlavGPS {
 	};
 
 
-	typedef struct {
-		GtkTreeView treeview;
-	} VikTreeview;
-
-
 
 
 	class Layer;
@@ -105,17 +100,26 @@ namespace SlavGPS {
 
 		bool go_up_to_layer(GtkTreeIter * iter);
 
+		GtkWindow * get_toolkit_window(void);
+		GtkWidget * get_toolkit_widget(void);
+
 
 
 		GtkTreeModel * model;
 		bool editing;
 		bool was_a_toggle;
 		GdkPixbuf * layer_type_icons[(int) LayerType::NUM_TYPES];
-		VikTreeview * vt;
+
+		GtkTreeView * tv_;
 
 	private:
 		void add_columns();
 	};
+
+
+
+
+	void treeview_init(void);
 
 
 
