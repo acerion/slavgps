@@ -1657,9 +1657,9 @@ static void mdi_free(MapDownloadInfo *mdi)
 
 
 
-static void weak_ref_cb(void * ptr, GObject * dead_vml)
+void LayerMaps::weak_ref_cb(void * ptr, GObject * dead_vml)
 {
-	MapDownloadInfo *mdi = (MapDownloadInfo *) ptr;
+	MapDownloadInfo * mdi = (MapDownloadInfo *) ptr;
 	g_mutex_lock(mdi->mutex);
 	mdi->map_layer_alive = false;
 	g_mutex_unlock(mdi->mutex);
@@ -1810,7 +1810,7 @@ static int map_download_thread(MapDownloadInfo *mdi, void * threaddata)
 	map_sources[mdi->map_index]->download_handle_cleanup(handle);
 	g_mutex_lock(mdi->mutex);
 	if (mdi->map_layer_alive) {
-		g_object_weak_unref(G_OBJECT(mdi->layer->vl), weak_ref_cb, mdi);
+		g_object_weak_unref(G_OBJECT(mdi->layer->vl), LayerMaps::weak_ref_cb, mdi);
 	}
 	g_mutex_unlock(mdi->mutex);
 	return 0;
@@ -1868,7 +1868,7 @@ static void start_download_thread(LayerMaps * layer, Viewport * viewport, const 
 		if (mdi->mapstoget) {
 			char * msg = redownload_mode_message(redownload_mode, mdi->mapstoget, MAPS_LAYER_NTH_LABEL(layer->map_index));
 
-			g_object_weak_ref(G_OBJECT(mdi->layer->vl), weak_ref_cb, mdi);
+			mdi->layer->weak_ref(LayerMaps::weak_ref_cb, mdi);
 			/* Launch the thread */
 			a_background_thread(BACKGROUND_POOL_REMOTE,
 					    layer->get_toolkit_window(),            /* Parent window. */
@@ -1915,7 +1915,7 @@ void LayerMaps::download_section_sub(VikCoord *ul, VikCoord *br, double zoom, in
 	if (mdi->mapstoget) {
 		char * msg = redownload_mode_message(redownload_mode, mdi->mapstoget, MAPS_LAYER_NTH_LABEL(this->map_index));
 
-		g_object_weak_ref(G_OBJECT(mdi->layer->vl), weak_ref_cb, mdi);
+		mdi->layer->weak_ref(weak_ref_cb, mdi);
 
 		/* Launch the thread. */
 		a_background_thread(BACKGROUND_POOL_REMOTE,

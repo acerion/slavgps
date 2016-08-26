@@ -793,7 +793,7 @@ VikLoadType_t SlavGPS::a_file_load(LayerAggregate * top, Viewport * viewport, ch
 		/* Clean up when we can't handle the file. */
 		if (! success) {
 			/* free up layer. */
-			g_object_unref(layer->vl);
+			layer->unref();
 		} else {
 			/* Complete the setup from the successful load. */
 			layer->post_read(viewport, true);

@@ -745,7 +745,7 @@ LayerAggregate::~LayerAggregate()
 {
 	for (auto child = this->children->begin(); child != this->children->end(); child++) {
 		disconnect_layer_signal((*child)->vl, this->vl);
-		g_object_unref((*child)->vl);
+		(*child)->unref();
 	}
 	// g_list_free(val->children); // kamilFIXME: clean up the list. */
 
@@ -773,7 +773,7 @@ void LayerAggregate::clear()
 	for (auto child = this->children->begin(); child != this->children->end(); child++) {
 		disconnect_layer_signal((*child)->vl, this->vl);
 		delete_layer_iter((*child)->vl);
-		g_object_unref((*child)->vl);
+		(*child)->unref();
 	}
 	// g_list_free(val->children); // kamilFIXME: clean up the list
 }
@@ -796,7 +796,7 @@ bool LayerAggregate::delete_layer(GtkTreeIter * iter)
 		}
 	}
 	disconnect_layer_signal(layer->vl, this->vl);
-	g_object_unref(layer->vl);
+	layer->unref();
 
 	return was_visible;
 }
@@ -988,7 +988,7 @@ void LayerAggregate::drag_drop_request(Layer * src, GtkTreeIter *src_item_iter, 
 
 	/* LayerAggregate::delete_layer unrefs, but we don't want that here.
 	   We're still using the layer. */
-	g_object_ref(layer->vl);
+	layer->ref();
 	((LayerAggregate *) src)->delete_layer(src_item_iter);
 
 	if (target_exists) {

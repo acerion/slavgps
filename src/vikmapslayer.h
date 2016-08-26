@@ -93,6 +93,9 @@ namespace SlavGPS {
 		void download_section_sub(VikCoord *ul, VikCoord *br, double zoom, int redownload_mode);
 
 
+		static void weak_ref_cb(void * ptr, GObject * dead_vml);
+
+
 
 
 		int map_index = 0;

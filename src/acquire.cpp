@@ -154,7 +154,7 @@ static void on_complete_process(w_and_interface_t * wi)
 	} else {
 		/* Cancelled. */
 		if (wi->creating_new_layer) {
-			g_object_unref(wi->trw->vl);
+			wi->trw->unref();
 		}
 	}
 }
@@ -195,7 +195,7 @@ static void get_from_anything(w_and_interface_t * wi)
 		gdk_threads_enter();
 		gtk_label_set_text(GTK_LABEL(wi->w->status), _("Error: acquisition failed."));
 		if (wi->creating_new_layer) {
-			g_object_unref(G_OBJECT (wi->trw->vl));
+			wi->trw->unref();
 		}
 		gdk_threads_leave();
 	} else {

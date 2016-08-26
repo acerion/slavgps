@@ -316,7 +316,7 @@ Layer * Layer::new_(LayerType layer_type, Viewport * viewport, bool interactive)
 			/* We translate the name here in order to avoid translating name set by user. */
 			layer->rename(_(vik_layer_interfaces[(int) layer_type]->name));
 		} else {
-			g_object_unref(G_OBJECT(layer->vl)); /* Cancel that. */
+			layer->unref(); /* Cancel that. */
 			delete layer;
 			layer = NULL;
 		}
@@ -1126,4 +1126,39 @@ Window * Layer::get_window(void)
 	GtkWindow * w = this->tree_view->get_toolkit_window();
 	Window * window = (Window *) g_object_get_data((GObject *) w, "window");
 	return window;
+}
+
+
+
+
+void Layer::ref(void)
+{
+	g_object_ref(this->vl);
+}
+
+
+
+
+void Layer::unref(void)
+{
+	g_object_unref(this->vl);
+	return;
+}
+
+
+
+
+void Layer::weak_ref(LayerRefCB cb, void * obj)
+{
+	g_object_weak_ref(G_OBJECT (this->vl), cb, obj);
+	return;
+}
+
+
+
+
+void Layer::weak_unref(LayerRefCB cb, void * obj)
+{
+	g_object_weak_unref(G_OBJECT (this->vl), cb, obj);
+	return;
 }

@@ -78,7 +78,6 @@ static void srtm_draw_existence(Viewport * viewport);
 static void dem24k_draw_existence(Viewport * viewport);
 #endif
 
-static void weak_ref_cb(void * ptr, GObject * dead_vdl);
 
 /* Upped upper limit incase units are feet */
 static VikLayerParamScale param_scales[] = {
@@ -953,7 +952,7 @@ DEMDownloadParams::DEMDownloadParams(std::string& full_path, struct LatLon * ll,
 	this->layer = layer;
 	this->mutex = vik_mutex_new();
 	this->source = layer->source;
-	g_object_weak_ref(G_OBJECT(this->layer->vl), weak_ref_cb, this);
+	this->layer->weak_ref(LayerDEM::weak_ref_cb, this);
 }
 
 
@@ -1205,7 +1204,7 @@ static void dem24k_draw_existence(Viewport * viewport)
 
 
 
-static void weak_ref_cb(void * ptr, GObject * dead_vdl)
+void LayerDEM::weak_ref_cb(void * ptr, GObject * dead_vdl)
 {
 	DEMDownloadParams * p = (DEMDownloadParams *) ptr;
 	g_mutex_lock(p->mutex);
@@ -1254,7 +1253,7 @@ static void dem_download_thread(DEMDownloadParams * p, void * threaddata)
 	//gdk_threads_enter();
 	g_mutex_lock(p->mutex);
 	if (p->layer) {
-		g_object_weak_unref(G_OBJECT(p->layer->vl), weak_ref_cb, p);
+		p->layer->weak_unref(LayerDEM::weak_ref_cb, p);
 
 		if (p->layer->add_file(p->dest)) {
 			p->layer->emit_update(); /* NB update from background thread. */

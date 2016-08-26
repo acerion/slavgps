@@ -122,7 +122,7 @@ static void oti_free(OsmTracesInfo *oti)
 		free(oti->description); oti->description = NULL;
 		free(oti->tags); oti->tags = NULL;
 
-		g_object_unref(oti->trw->vl);
+		oti->trw->unref();
 		oti->trw = NULL;
 	}
 	/* Main struct has been g_malloc'ed. */

@@ -807,7 +807,7 @@ LayerGPS::~LayerGPS()
 		if (this->realized) {
 			this->disconnect_layer_signal(this->trw_children[i]->vl);
 		}
-		g_object_unref(this->trw_children[i]->vl);
+		this->trw_children[i]->unref();
 	}
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
 	this->rt_gpsd_disconnect();

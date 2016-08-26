@@ -147,6 +147,12 @@ namespace SlavGPS {
 
 
 
+
+	typedef void (* LayerRefCB) (void * ptr, GObject * dead_vml);
+
+
+
+
 	class Layer {
 	public:
 
@@ -245,6 +251,11 @@ namespace SlavGPS {
 
 		GtkWindow * get_toolkit_window(void);
 		Window * get_window(void);
+
+		void ref();
+		void unref();
+		void weak_ref(LayerRefCB cb, void * obj);
+		void weak_unref(LayerRefCB cb, void * obj);
 
 
 

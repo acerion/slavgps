@@ -197,7 +197,7 @@ LayersPanel::~LayersPanel()
 
 	fprintf(stderr, "~LayersPanel() called\n");
 
-	g_object_unref(this->toplayer->vl);
+	this->toplayer->unref();
 
 	/* kamilFIXME: free this pointer. */
 	this->panel_box_ = NULL;

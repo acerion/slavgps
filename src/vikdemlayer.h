@@ -51,6 +51,7 @@ namespace SlavGPS {
 		bool set_param(uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
 		VikLayerParamData get_param(uint16_t id, bool is_file_operation) const;
 
+		static void weak_ref_cb(void * ptr, GObject * dead_vdl);
 
 		GdkGC ** gcs;
 		GdkGC ** gcsgradient;
