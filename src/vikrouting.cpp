@@ -148,12 +148,12 @@ VikRoutingEngine * vik_routing_default_engine(void)
  *
  * Return indicates success or not.
  */
-bool vik_routing_default_find(VikLayer * vtl, struct LatLon start, struct LatLon end)
+bool vik_routing_default_find(LayerTRW * trw, struct LatLon start, struct LatLon end)
 {
 	/* The engine. */
 	VikRoutingEngine * engine = vik_routing_default_engine();
 	/* The route computation. */
-	return vik_routing_engine_find(engine, vtl, start, end);
+	return vik_routing_engine_find(engine, trw, start, end);
 }
 
 

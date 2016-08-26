@@ -4596,7 +4596,7 @@ void trw_layer_route_refine(trw_menu_sublayer_t * data)
 			layer->route_finder_check_added_track = true;
 
 			/* the job */
-			vik_routing_engine_refine(routing, layer->vl, trk);
+			vik_routing_engine_refine(routing, layer, trk);
 
 			/* FIXME: remove or rename this hack */
 			if (layer->route_finder_added_track) {
@@ -8522,7 +8522,7 @@ bool LayerTRW::tool_extended_route_finder_click(GdkEventButton * event, LayerToo
 			gtk_main_iteration();
 		}
 
-		bool find_status = vik_routing_default_find(this->vl, start, end);
+		bool find_status = vik_routing_default_find(this, start, end);
 
 		/* Update UI to say we're done. */
 		this->get_window()->clear_busy_cursor();

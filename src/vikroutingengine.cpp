@@ -224,7 +224,7 @@ static void vik_routing_engine_finalize(GObject * self)
 
 /**
  * @self: self object
- * @vtl:
+ * @trw:
  * @start: starting point
  * @end: ending point
  *
@@ -232,7 +232,7 @@ static void vik_routing_engine_finalize(GObject * self)
  *
  * Returns: indicates success or not.
  */
-bool vik_routing_engine_find(VikRoutingEngine * self, VikLayer * vtl, struct LatLon start, struct LatLon end)
+bool vik_routing_engine_find(VikRoutingEngine * self, LayerTRW * trw, struct LatLon start, struct LatLon end)
 {
 	VikRoutingEngineClass * klass;
 
@@ -244,7 +244,7 @@ bool vik_routing_engine_find(VikRoutingEngine * self, VikLayer * vtl, struct Lat
 		return 0;
 	}
 
-	return klass->find(self, vtl, start, end);
+	return klass->find(self, trw, start, end);
 }
 
 
@@ -339,7 +339,7 @@ char * vik_routing_engine_get_url_from_directions(VikRoutingEngine * self, const
 
 /**
  * @self: self object
- * @vtl: layer where to create new track
+ * @trw: layer where to create new track
  * @vt: the simple route to refine
  *
  * Retrieve a route refining the @vt track/route.
@@ -350,7 +350,7 @@ char * vik_routing_engine_get_url_from_directions(VikRoutingEngine * self, const
  *
  * Returns: indicates success or not.
  */
-bool vik_routing_engine_refine(VikRoutingEngine * self, VikLayer * vtl, Track * trk)
+bool vik_routing_engine_refine(VikRoutingEngine * self, LayerTRW * trw, Track * trk)
 {
 	VikRoutingEngineClass * klass;
 
@@ -363,7 +363,7 @@ bool vik_routing_engine_refine(VikRoutingEngine * self, VikLayer * vtl, Track * 
 		return 0;
 	}
 
-	return klass->refine(self, vtl, trk);
+	return klass->refine(self, trw, trk);
 }
 
 
