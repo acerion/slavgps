@@ -64,6 +64,7 @@
 #include "vikmapniklayer.h"
 #endif
 
+#include "vikmapniklayer.h"
 #include "vikgpslayer.h"
 #include "viktrwlayer.h"
 #include "vikviewport.h"
@@ -320,6 +321,7 @@ void SlavGPS::modules_post_init()
 	layer_init();
 	layer_trw_init();
 	layer_gps_init();
+	layer_mapnik_init();
 	viewport_init();
 	window_init();
 	layers_panel_init();

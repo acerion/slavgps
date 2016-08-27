@@ -62,23 +62,6 @@ using namespace SlavGPS;
 
 
 
-#define VIK_MAPNIK_LAYER_TYPE            (vik_mapnik_layer_get_type ())
-#define VIK_MAPNIK_LAYER(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_MAPNIK_LAYER_TYPE, VikMapnikLayer))
-#define VIK_MAPNIK_LAYER_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), VIK_MAPNIK_LAYER_TYPE, VikMapnikLayerClass))
-#define IS_VIK_MAPNIK_LAYER(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), VIK_MAPNIK_LAYER_TYPE))
-#define IS_VIK_MAPNIK_LAYER_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), VIK_MAPNIK_LAYER_TYPE))
-
-typedef struct _VikMapnikLayerClass VikMapnikLayerClass;
-
-GType vik_mapnik_layer_get_type ();
-
-typedef VikLayer VikMapnikLayer;
-
-struct _VikMapnikLayerClass
-{
-	VikLayerClass object_class;
-};
-
 static VikLayerParamData file_default(void)
 {
 	VikLayerParamData data;
@@ -292,8 +275,11 @@ void SlavGPS::vik_mapnik_layer_uninit()
 	vik_mutex_free(tp_mutex);
 }
 
+
+
+
 /* NB Only performed once per program run. */
-static void mapnik_layer_class_init(VikMapnikLayerClass *klass)
+void SlavGPS::layer_mapnik_init(void)
 {
 	VikLayerParamData *pd = a_preferences_get(MAPNIK_PREFS_NAMESPACE"plugins_directory");
 	VikLayerParamData *fd = a_preferences_get(MAPNIK_PREFS_NAMESPACE"fonts_directory");
@@ -304,31 +290,6 @@ static void mapnik_layer_class_init(VikMapnikLayerClass *klass)
 	} else {
 		fprintf(stderr, "CRITICAL: Unable to initialize mapnik interface from preferences\n");
 	}
-}
-
-
-
-
-GType vik_mapnik_layer_get_type()
-{
-	static GType vml_type = 0;
-
-	if (!vml_type) {
-		static const GTypeInfo vml_info = {
-			sizeof (VikMapnikLayerClass),
-			NULL, /* base_init */
-			NULL, /* base_finalize */
-			(GClassInitFunc) mapnik_layer_class_init, /* class init */
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (VikMapnikLayer),
-			0,
-			NULL /* instance init */
-		};
-		vml_type = g_type_register_static(VIK_LAYER_TYPE, "VikMapnikLayer", &vml_info, (GTypeFlags) 0);
-	}
-
-	return vml_type;
 }
 
 

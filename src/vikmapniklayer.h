@@ -100,6 +100,11 @@ namespace SlavGPS {
 
 
 
+	void layer_mapnik_init(void);
+
+
+
+
 }
 
 
