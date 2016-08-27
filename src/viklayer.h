@@ -38,26 +38,9 @@
 
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
-#define VIK_LAYER_TYPE            (vik_layer_get_type ())
-#define VIK_LAYER(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_LAYER_TYPE, VikLayer))
-#define VIK_LAYER_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), VIK_LAYER_TYPE, VikLayerClass))
-#define IS_VIK_LAYER(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), VIK_LAYER_TYPE))
-#define IS_VIK_LAYER_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), VIK_LAYER_TYPE))
-
 typedef GObject VikLayer;
-typedef struct _VikLayerClass VikLayerClass;
 
-struct _VikLayerClass {
-	GObjectClass object_class;
-	void (* update) (VikLayer *vl);
-};
 
-GType vik_layer_get_type();
 
 
 /* I think most of these are ignored, returning GRAB_FOCUS grabs the
@@ -89,15 +72,10 @@ typedef enum {
 	VIK_MENU_ITEM_ALL      = 0xff
 } VikStdLayerMenuItem;
 
+
+
+
 typedef struct _VikLayerInterface VikLayerInterface;
-
-
-
-
-#ifdef __cplusplus
-}
-#endif
-
 
 
 

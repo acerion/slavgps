@@ -72,19 +72,9 @@ enum {
 };
 static unsigned int layer_signals[VL_LAST_SIGNAL] = { 0 };
 
-static GObjectClass * parent_class;
 
 static bool vik_layer_properties_factory(Layer * layer, Viewport * viewport);
 static bool layer_defaults_register(LayerType layer_type);
-
-G_DEFINE_TYPE (VikLayer, vik_layer, G_TYPE_OBJECT)
-
-
-
-
-static void vik_layer_class_init(VikLayerClass * klass)
-{
-}
 
 
 
