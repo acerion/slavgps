@@ -140,14 +140,9 @@ static void menu_delete_layer_cb(GtkAction * a, Window * window);
 
 static void menu_cb(GtkAction * old, GtkAction * a, Window * window);
 static void window_change_coord_mode_cb(GtkAction * old, GtkAction * a, Window * window);
-static toolbox_tools_t* toolbox_create(Window * window);
-static LayerTool const * toolbox_add_tool(toolbox_tools_t * vt, VikToolConstructorFunc create_fn, LayerType layer_type);
-static int toolbox_get_tool(toolbox_tools_t * vt, char const * tool_name);
-static void toolbox_activate(toolbox_tools_t * vt, char const * tool_name);
-static const GdkCursor *toolbox_get_cursor(toolbox_tools_t * vt, char const * tool_name);
-static void toolbox_click(toolbox_tools_t * vt, GdkEventButton * event);
-static void toolbox_move(toolbox_tools_t * vt, GdkEventMotion * event);
-static void toolbox_release(toolbox_tools_t * vt, GdkEventButton * event);
+
+
+
 
 
 /* UI creation. */
@@ -814,18 +809,18 @@ static bool key_press_event_cb(Window * window, GdkEventKey * event, void * data
 	}
 
 	Layer * layer = window->layers_panel->get_selected();
-	if (layer && window->vt->active_tool && window->vt->active_tool->key_press) {
-		LayerType ltype = window->vt->active_tool->layer_type;
+	if (layer && window->tb->active_tool && window->tb->active_tool->key_press) {
+		LayerType ltype = window->tb->active_tool->layer_type;
 		if (layer && ltype == layer->type) {
-			return window->vt->active_tool->key_press(layer, event, window->vt->active_tool);
+			return window->tb->active_tool->key_press(layer, event, window->tb->active_tool);
 		}
 	}
 
 	// Ensure called only on window tools (i.e. not on any of the Layer tools since the layer is NULL)
 	if (window->current_tool < TOOL_LAYER) {
 		// No layer - but enable window tool keypress processing - these should be able to handle a NULL layer
-		if (window->vt->active_tool->key_press) {
-			return window->vt->active_tool->key_press(layer, event, window->vt->active_tool);
+		if (window->tb->active_tool->key_press) {
+			return window->tb->active_tool->key_press(layer, event, window->tb->active_tool);
 		}
 	}
 
@@ -1025,7 +1020,7 @@ static void window_configure_event(Window * window)
 		// This is a hack to set the cursor corresponding to the first tool
 		// FIXME find the correct way to initialize both tool and its cursor
 		first = 0;
-		window->viewport_cursor = (GdkCursor *)toolbox_get_cursor(window->vt, "Pan");
+		window->viewport_cursor = (GdkCursor *) window->tb->get_cursor("Pan");
 		/* We set cursor, even if it is NULL: it resets to default */
 		gdk_window_set_cursor(gtk_widget_get_window(window->viewport->get_toolkit_widget()), window->viewport_cursor);
 	}
@@ -1123,13 +1118,13 @@ static void draw_click_cb(Window * window, GdkEventButton * event)
 	 * for panning and zooming; tools only get left/right/movement
 	 */
 	if (event->button == MouseButton::MIDDLE) {
-		if (window->vt->active_tool->pan_handler) {
+		if (window->tb->active_tool->pan_handler) {
 			// Tool still may need to do something (such as disable something)
-			toolbox_click(window->vt, event);
+			window->tb->click(event);
 		}
 		vik_window_pan_click(window, event);
 	} else {
-		toolbox_click(window->vt, event);
+		window->tb->click(event);
 	}
 }
 
@@ -1193,7 +1188,7 @@ static void draw_mouse_motion_cb(Window * window, GdkEventMotion * event)
 	event->x = x;
 	event->y = y;
 
-	toolbox_move(window->vt, event);
+	window->tb->move(event);
 
 	window->viewport->screen_to_coord(event->x, event->y, &coord);
 	vik_coord_to_utm(&coord, &utm);
@@ -1306,13 +1301,13 @@ static void draw_release_cb(Window * window, GdkEventButton * event)
 	gtk_widget_grab_focus(window->viewport->get_toolkit_widget());
 
 	if (event->button == MouseButton::MIDDLE) {  /* move / pan */
-		if (window->vt->active_tool->pan_handler) {
+		if (window->tb->active_tool->pan_handler) {
 			// Tool still may need to do something (such as reenable something)
-			toolbox_release(window->vt, event);
+			window->tb->release(event);
 		}
 		vik_window_pan_release(window, event);
 	} else {
-		toolbox_release(window->vt, event);
+		window->tb->release(event);
 	}
 }
 
@@ -2851,34 +2846,32 @@ static void view_main_menu_cb(GtkAction * a, Window * window)
 
 
 
-/***************************************
- ** tool management routines
- **
- ***************************************/
+/***************
+ *** ToolBox ***
+ ***************/
 
-static toolbox_tools_t * toolbox_create(Window * window)
+
+
+
+ToolBox::~ToolBox()
 {
-	toolbox_tools_t *vt = (toolbox_tools_t *) malloc(1 * sizeof (toolbox_tools_t));
-	vt->tools = NULL;
-	vt->n_tools = 0;
-	vt->active_tool = NULL;
-	vt->window = window;
-	return vt;
+	for (int tt = 0; tt < this->n_tools; tt++) {
+		delete this->tools[tt];
+	}
 }
 
 
 
 
-static LayerTool const * toolbox_add_tool(toolbox_tools_t * vt, VikToolConstructorFunc create_fn, LayerType layer_type)
+LayerTool const * ToolBox::add_tool(VikToolConstructorFunc create_fn, LayerType layer_type)
 {
-	vt->tools = (LayerTool **) realloc(vt->tools, (vt->n_tools + 1) * (sizeof (LayerTool *)));
-	LayerTool * layer_tool = create_fn(vt->window, vt->window->viewport);
-	vt->tools[vt->n_tools] = layer_tool;
-	vt->tools[vt->n_tools]->layer_type = layer_type;
+	LayerTool * layer_tool = create_fn(this->window, this->window->viewport);
 
-	toolbar_action_tool_entry_register(vt->window->viking_vtb, &vt->tools[vt->n_tools]->radioActionEntry);
+	layer_tool->layer_type = layer_type;
+	toolbar_action_tool_entry_register(this->window->viking_vtb, &layer_tool->radioActionEntry);
 
-	vt->n_tools++;
+	this->tools.push_back(layer_tool);
+	this->n_tools++;
 
 	return layer_tool;
 }
@@ -2886,58 +2879,56 @@ static LayerTool const * toolbox_add_tool(toolbox_tools_t * vt, VikToolConstruct
 
 
 
-static int toolbox_get_tool(toolbox_tools_t *vt, char const *tool_name)
+LayerTool * ToolBox::get_tool(char const *tool_name)
 {
-	int i;
-	for (i = 0; i < vt->n_tools; i++) {
-		if (!strcmp(tool_name, vt->tools[i]->radioActionEntry.name)) {
+	for (int i = 0; i < this->n_tools; i++) {
+		if (0 == strcmp(tool_name, this->tools[i]->radioActionEntry.name)) {
+			return this->tools[i];
 			break;
 		}
 	}
-	return i;
+	return NULL;
 }
 
 
 
 
-static void toolbox_activate(toolbox_tools_t *vt, char const *tool_name)
+void ToolBox::activate(char const *tool_name)
 {
-	int tool_no = toolbox_get_tool(vt, tool_name);
-	LayerTool * tool = vt->tools[tool_no];
-	Layer * layer = vt->window->layers_panel->get_selected();
+	LayerTool * tool = this->get_tool(tool_name);
+	Layer * layer = this->window->layers_panel->get_selected();
 #if 0
 	if (!layer) {
 		return;
 	}
 #endif
 
-	if (tool_no == vt->n_tools) {
+	if (!tool) {
 		fprintf(stderr, "CRITICAL: trying to activate a non-existent tool...\n");
 		return;
 	}
 	/* is the tool already active? */
-	if (vt->active_tool == tool) {
+	if (this->active_tool == tool) {
 		return;
 	}
 
-	if (vt->active_tool) {
-		if (vt->active_tool->deactivate) {
-			vt->active_tool->deactivate(NULL, vt->active_tool);
+	if (this->active_tool) {
+		if (this->active_tool->deactivate) {
+			this->active_tool->deactivate(NULL, this->active_tool);
 		}
 	}
 	if (tool->activate) {
 		tool->activate(layer, tool);
 	}
-	vt->active_tool = tool;
+	this->active_tool = tool;
 }
 
 
 
 
-static const GdkCursor *toolbox_get_cursor(toolbox_tools_t *vt, char const *tool_name)
+const GdkCursor * ToolBox::get_cursor(char const *tool_name)
 {
-	int tool_no = toolbox_get_tool(vt, tool_name);
-	LayerTool * tool = vt->tools[tool_no];
+	LayerTool * tool = this->get_tool(tool_name);
 	if (tool->cursor == NULL) {
 		if (tool->cursor_type == GDK_CURSOR_IS_PIXMAP && tool->cursor_data != NULL) {
 			GdkPixbuf *cursor_pixbuf = gdk_pixbuf_from_pixdata(tool->cursor_data, false, NULL);
@@ -2954,19 +2945,19 @@ static const GdkCursor *toolbox_get_cursor(toolbox_tools_t *vt, char const *tool
 
 
 
-static void toolbox_click(toolbox_tools_t *vt, GdkEventButton * event)
+void ToolBox::click(GdkEventButton * event)
 {
-	Layer * layer = vt->window->layers_panel->get_selected();
+	Layer * layer = this->window->layers_panel->get_selected();
 #if 1
 	if (!layer) {
 		return;
 	}
 #endif
 
-	if (vt->active_tool && vt->active_tool->click) {
-		LayerType ltype = vt->active_tool->layer_type;
+	if (this->active_tool && this->active_tool->click) {
+		LayerType ltype = this->active_tool->layer_type;
 		if (ltype == LayerType::NUM_TYPES || (layer && ltype == layer->type)) {
-			vt->active_tool->click(layer, event, vt->active_tool);
+			this->active_tool->click(layer, event, this->active_tool);
 		}
 	}
 }
@@ -2974,20 +2965,20 @@ static void toolbox_click(toolbox_tools_t *vt, GdkEventButton * event)
 
 
 
-static void toolbox_move(toolbox_tools_t *vt, GdkEventMotion * event)
+void ToolBox::move(GdkEventMotion * event)
 {
-	Layer * layer = vt->window->layers_panel->get_selected();
+	Layer * layer = this->window->layers_panel->get_selected();
 #if 1
 	if (!layer) {
 		return;
 	}
 #endif
 
-	if (vt->active_tool && vt->active_tool->move) {
-		LayerType ltype = vt->active_tool->layer_type;
+	if (this->active_tool && this->active_tool->move) {
+		LayerType ltype = this->active_tool->layer_type;
 		if (ltype == LayerType::NUM_TYPES || (layer && ltype == layer->type)) {
-			if (VIK_LAYER_TOOL_ACK_GRAB_FOCUS == vt->active_tool->move(layer, event, vt->active_tool)) {
-				gtk_widget_grab_focus(vt->window->viewport->get_toolkit_widget());
+			if (VIK_LAYER_TOOL_ACK_GRAB_FOCUS == this->active_tool->move(layer, event, this->active_tool)) {
+				gtk_widget_grab_focus(this->window->viewport->get_toolkit_widget());
 			}
 		}
 	}
@@ -2996,24 +2987,29 @@ static void toolbox_move(toolbox_tools_t *vt, GdkEventMotion * event)
 
 
 
-static void toolbox_release(toolbox_tools_t *vt, GdkEventButton * event)
+void ToolBox::release(GdkEventButton * event)
 {
-	Layer * layer = vt->window->layers_panel->get_selected();
+	Layer * layer = this->window->layers_panel->get_selected();
 #if 1
 	if (!layer) {
 		return;
 	}
 #endif
 
-	if (vt->active_tool && vt->active_tool->release) {
-		LayerType ltype = vt->active_tool->layer_type;
+	if (this->active_tool && this->active_tool->release) {
+		LayerType ltype = this->active_tool->layer_type;
 		if (ltype == LayerType::NUM_TYPES || (layer && ltype == layer->type)) {
-			vt->active_tool->release(layer, event, vt->active_tool);
+			this->active_tool->release(layer, event, this->active_tool);
 		}
 	}
 }
 
-/** End tool management ************************************/
+
+
+
+/****************
+ *** /ToolBox ***
+ ****************/
 
 
 
@@ -3050,9 +3046,9 @@ static void menu_cb(GtkAction *old, GtkAction * a, Window * window)
 
 	/* White Magic, my friends ... White Magic... */
 	int tool_id;
-	toolbox_activate(window->vt, name);
+	window->tb->activate(name);
 
-	window->viewport_cursor = (GdkCursor *)toolbox_get_cursor(window->vt, name);
+	window->viewport_cursor = (GdkCursor *) window->tb->get_cursor(name);
 
 	if (gtk_widget_get_window(window->viewport->get_toolkit_widget()))
 		/* We set cursor, even if it is NULL: it resets to default */
@@ -4946,10 +4942,10 @@ static void window_create_ui(Window * window)
 	GtkUIManager * uim = gtk_ui_manager_new();
 	window->uim = uim;
 
-	toolbox_add_tool(window->vt, ruler_create,      LayerType::NUM_TYPES);
-	toolbox_add_tool(window->vt, zoomtool_create,   LayerType::NUM_TYPES);
-	toolbox_add_tool(window->vt, pantool_create,    LayerType::NUM_TYPES);
-	toolbox_add_tool(window->vt, selecttool_create, LayerType::NUM_TYPES);
+	window->tb->add_tool(ruler_create,      LayerType::NUM_TYPES);
+	window->tb->add_tool(zoomtool_create,   LayerType::NUM_TYPES);
+	window->tb->add_tool(pantool_create,    LayerType::NUM_TYPES);
+	window->tb->add_tool(selecttool_create, LayerType::NUM_TYPES);
 
 	GError * error = NULL;
 	unsigned int mid;
@@ -5021,11 +5017,11 @@ static void window_create_ui(Window * window)
 	// Copy the tool RadioActionEntries out of the main Window structure into an extending array 'tools'
 	//  so that it can be applied to the UI in one action group add function call below
 	unsigned int ntools = 0;
-	for (unsigned int i = 0; i < window->vt->n_tools; i++) {
+	for (unsigned int i = 0; i < window->tb->n_tools; i++) {
 		tools = g_renew(GtkRadioActionEntry, tools, ntools+1);
 		radio = &tools[ntools];
 		ntools++;
-		*radio = window->vt->tools[i]->radioActionEntry;
+		*radio = window->tb->tools[i]->radioActionEntry;
 		radio->value = ntools;
 	}
 
@@ -5060,7 +5056,7 @@ static void window_create_ui(Window * window)
 			radio = &tools[ntools];
 			ntools++;
 
-			LayerTool const * layer_tool = toolbox_add_tool(window->vt, vik_layer_get_interface(i)->layer_tool_constructors[j], i);
+			LayerTool const * layer_tool = window->tb->add_tool(vik_layer_get_interface(i)->layer_tool_constructors[j], i);
 
 			gtk_ui_manager_add_ui(uim, mid,  "/ui/MainMenu/Tools",
 					      layer_tool->radioActionEntry.label,
@@ -5351,16 +5347,16 @@ Window::Window()
 	this->layers_panel->set_viewport(this->viewport);
 	this->viking_vs = vik_statusbar_new();
 
-	this->vt = toolbox_create(this);
 	this->viking_vtb = vik_toolbar_new();
+
+	this->tb = new ToolBox(this);
+
 	window_create_ui(this);
 	this->set_filename(NULL);
 
 	this->busy_cursor = gdk_cursor_new(GDK_WATCH);
 
 	strcpy(this->type_string, "The WINDOW");
-
-
 
 
 	int draw_image_width;
@@ -5527,11 +5523,8 @@ Window::~Window()
 	window_list.remove(this);
 
 	gdk_cursor_unref(this->busy_cursor);
-	for (int tt = 0; tt < this->vt->n_tools; tt++) {
-		delete this->vt->tools[tt];
-	}
-	free(this->vt->tools);
-	free(this->vt);
+
+	delete this->tb;
 
 	vik_toolbar_finalize(this->viking_vtb);
 

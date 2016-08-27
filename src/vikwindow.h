@@ -25,6 +25,7 @@
 
 
 
+#include <vector>
 #include <cstdint>
 #include <unordered_map>
 
@@ -63,17 +64,33 @@ namespace SlavGPS {
 	class LayersPanel;
 	class Window;
 	class LayerTool;
+	class Window;
 
 
 
 
-	typedef struct {
-		LayerTool * active_tool;
-		int n_tools;
-		LayerTool ** tools;
-		Window * window;
-	} toolbox_tools_t;
+	class ToolBox {
 
+	public:
+		ToolBox(Window * win) : window(win) {};
+		~ToolBox();
+
+		LayerTool const * add_tool(VikToolConstructorFunc create_fn, LayerType layer_type);
+		LayerTool * get_tool(char const * tool_name);;
+		void activate(char const * tool_name);
+		const GdkCursor * get_cursor(char const * tool_name);
+
+		void click(GdkEventButton * event);
+		void move(GdkEventMotion * event);
+		void release(GdkEventButton * event);
+
+
+
+		LayerTool * active_tool = NULL;
+		int n_tools = 0;
+		std::vector<LayerTool *> tools;
+		Window * window = NULL;
+	};
 
 
 
@@ -212,7 +229,8 @@ namespace SlavGPS {
 		unsigned int current_tool;
 		LayerType tool_layer_type;
 		uint16_t tool_tool_id;
-		toolbox_tools_t * vt = NULL;
+
+		ToolBox * tb = NULL;
 
 		/* Display controls. */
 		bool select_move = false;
