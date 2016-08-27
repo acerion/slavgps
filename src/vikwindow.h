@@ -163,82 +163,74 @@ namespace SlavGPS {
 		void * get_toolkit_object(void);
 
 
+
+
 		/* Store at this level for highlighted selection drawing since it applies to the viewport and the layers panel. */
 		/* Only one of these items can be selected at the same time. */
-		LayerTRW * selected_trw;
-		Tracks * selected_tracks;
-		Track * selected_track;
-		std::unordered_map<sg_uid_t, Waypoint *> * selected_waypoints;
-		Waypoint * selected_waypoint;
+		LayerTRW * selected_trw = NULL;
+		Tracks * selected_tracks = NULL;
+		Track * selected_track = NULL;
+		std::unordered_map<sg_uid_t, Waypoint *> * selected_waypoints = NULL;
+		Waypoint * selected_waypoint = NULL;
 		/* Only use for individual track or waypoint. */
 		/* For track(s) & waypoint(s) it is the layer they are in - this helps refering to the individual item easier. */
-		LayerTRW * containing_trw;
+		LayerTRW * containing_trw = NULL;
 
-		Viewport * viewport;
-		LayersPanel * layers_panel;
-		VikStatusbar * viking_vs;
-		VikToolbar * viking_vtb;
+		Viewport * viewport = NULL;
+		LayersPanel * layers_panel = NULL;
+		VikStatusbar * viking_vs = NULL;
+		VikToolbar * viking_vtb = NULL;
 
-		char * filename;
-		bool modified;
-		VikLoadType_t loaded_type;
+		char * filename = NULL;
+		bool modified = false;
+		VikLoadType_t loaded_type = LOAD_TYPE_READ_FAILURE; /* AKA none. */
 
 		unsigned int draw_image_width;
 		unsigned int draw_image_height;
-		bool draw_image_save_as_png;
+		bool draw_image_save_as_png = false;
 
+		bool only_updating_coord_mode_ui = false; /* Hack for a bug in GTK. */
+		GtkUIManager * uim = NULL;
 
-
-		bool only_updating_coord_mode_ui; /* Hack for a bug in GTK. */
-		GtkUIManager * uim;
-
-		GThread  * thread;
+		GThread  * thread = NULL;
 		/* Half-drawn update. */
-		Layer * trigger;
+		Layer * trigger = NULL;
 		VikCoord trigger_center;
-
 
 		/* Display controls.
 		   NB scale, centermark and highlight are in viewport. */
-		bool show_full_screen;
-		bool show_side_panel;
-		bool show_statusbar;
-		bool show_toolbar;
-		bool show_main_menu;
+		bool show_full_screen = false;
+		bool show_side_panel = false;
+		bool show_statusbar = false;
+		bool show_toolbar = false;
+		bool show_main_menu = false;
 
-
-		GdkCursor * busy_cursor;
-		GdkCursor * viewport_cursor; /* only a reference. */
-
-
+		GdkCursor * busy_cursor = NULL;
+		GdkCursor * viewport_cursor = NULL; /* Only a reference. */
 
 		/* Tool management state. */
 		unsigned int current_tool;
 		LayerType tool_layer_type;
 		uint16_t tool_tool_id;
-		toolbox_tools_t * vt;
-
+		toolbox_tools_t * vt = NULL;
 
 		/* Display controls. */
-		bool select_move;
-		bool pan_move;
-		int pan_x, pan_y;
+		bool select_move = false;
+		bool pan_move = false;
+		int pan_x = -1;
+		int pan_y = -1;
 		int delayed_pan_x, delayed_pan_y; /* Temporary storage. */
-		bool single_click_pending;
+		bool single_click_pending = false;
+
+		GtkWidget * hpaned = NULL;
+		GtkWidget * main_vbox = NULL;
+		GtkWidget * menu_hbox = NULL;
+
+		GtkActionGroup * action_group = NULL;
+
+		GtkWindow * gtk_window_ = NULL;
 
 
-
-		GtkWidget * hpaned;
-		GtkWidget * main_vbox;
-		GtkWidget * menu_hbox;
-
-
-
-
-		GtkActionGroup * action_group;
-
-
-		GtkWindow * gtk_window_;
 
 
 		// private:
@@ -253,7 +245,7 @@ namespace SlavGPS {
 	private:
 		void init_toolkit_widget(void);
 
-		char type_string[30];
+		char type_string[30] = { 0 };
 
 	}; /* class Window */
 
@@ -268,6 +260,7 @@ namespace SlavGPS {
 SlavGPS::Window * window_from_widget(void * widget);
 GtkWindow * toolkit_window_from_widget(void * widget);
 void window_init(void);
+
 
 
 

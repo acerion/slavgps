@@ -5344,23 +5344,8 @@ void Window::init_toolkit_widget(void)
 
 Window::Window()
 {
-	this->selected_trw = NULL;
-	this->selected_tracks = NULL;
-	this->selected_track = NULL;
-	this->selected_waypoints = NULL;
-	this->selected_waypoint = NULL;
-	this->containing_trw = NULL;
-
-	this->viewport = NULL;
-
-	this->filename = NULL;
-
-	strcpy(this->type_string, "The WINDOW");
-
 	this->init_toolkit_widget();
 
-
-	this->action_group = NULL;
 	this->viewport = new Viewport();
 	this->layers_panel = new LayersPanel();
 	this->layers_panel->set_viewport(this->viewport);
@@ -5373,14 +5358,10 @@ Window::Window()
 
 	this->busy_cursor = gdk_cursor_new(GDK_WATCH);
 
-	this->loaded_type = LOAD_TYPE_READ_FAILURE; //AKA none
-	this->modified = false;
-	this->only_updating_coord_mode_ui = false;
+	strcpy(this->type_string, "The WINDOW");
 
-	this->select_move = false;
-	this->pan_move = false;
-	this->pan_x = this->pan_y = -1;
-	this->single_click_pending = false;
+
+
 
 	int draw_image_width;
 	if (a_settings_get_integer(VIK_SETTINGS_WIN_SAVE_IMAGE_WIDTH, &draw_image_width)) {
@@ -5516,11 +5497,6 @@ Window::Window()
 	}
 
 	gtk_window_set_default_size(this->get_toolkit_window(), width, height);
-
-	this->show_side_panel = true;
-	this->show_statusbar = true;
-	this->show_toolbar = true;
-	this->show_main_menu = true;
 
 	// Only accept Drag and Drop of files onto the viewport
 	gtk_drag_dest_set(this->viewport->get_toolkit_widget(), GTK_DEST_DEFAULT_ALL, NULL, 0, GDK_ACTION_COPY);
