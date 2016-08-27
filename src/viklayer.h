@@ -49,7 +49,7 @@ extern "C" {
 #define IS_VIK_LAYER(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), VIK_LAYER_TYPE))
 #define IS_VIK_LAYER_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), VIK_LAYER_TYPE))
 
-typedef struct _VikLayer VikLayer;
+typedef GObject VikLayer;
 typedef struct _VikLayerClass VikLayerClass;
 
 struct _VikLayerClass {
@@ -59,10 +59,6 @@ struct _VikLayerClass {
 
 GType vik_layer_get_type();
 
-struct _VikLayer {
-	GObject obj;
-	void * layer; /* class Layer */
-};
 
 /* I think most of these are ignored, returning GRAB_FOCUS grabs the
  * focus for mouse move, mouse click, release always grabs
@@ -158,7 +154,7 @@ namespace SlavGPS {
 
 		Layer();
 		Layer(VikLayer * vl);
-		~Layer() {};
+		~Layer();
 
 		static void    marshall(Layer * layer, uint8_t ** data, int * len);
 		void           marshall_params(uint8_t ** data, int * datalen);
@@ -251,6 +247,8 @@ namespace SlavGPS {
 
 		GtkWindow * get_toolkit_window(void);
 		Window * get_window(void);
+		void * get_toolkit_object(void);
+		static Layer * get_layer(VikLayer * vl);
 
 		void ref();
 		void unref();
@@ -274,7 +272,7 @@ namespace SlavGPS {
 		LayerType type;
 
 
-		VikLayer * vl;
+		GObject * vl;
 
 		char type_string[10];
 
@@ -325,6 +323,11 @@ namespace SlavGPS {
 
 		LayerType layer_type;
 	};
+
+
+
+
+	void layer_init(void);
 
 
 

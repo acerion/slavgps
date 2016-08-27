@@ -74,7 +74,6 @@ static unsigned int layer_signals[VL_LAST_SIGNAL] = { 0 };
 
 static GObjectClass * parent_class;
 
-static void vik_layer_finalize(VikLayer * vl);
 static bool vik_layer_properties_factory(Layer * layer, Viewport * viewport);
 static bool layer_defaults_register(LayerType layer_type);
 
@@ -85,16 +84,15 @@ G_DEFINE_TYPE (VikLayer, vik_layer, G_TYPE_OBJECT)
 
 static void vik_layer_class_init(VikLayerClass * klass)
 {
-	GObjectClass * object_class;
+}
 
-	object_class = G_OBJECT_CLASS (klass);
 
-	object_class->finalize = (GObjectFinalizeFunc) vik_layer_finalize;
 
-	parent_class = (GObjectClass *) g_type_class_peek_parent(klass);
 
-	layer_signals[VL_UPDATE_SIGNAL] = g_signal_new("update", G_TYPE_FROM_CLASS (klass),
-						       (GSignalFlags) (G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION), G_STRUCT_OFFSET (VikLayerClass, update), NULL, NULL,
+void SlavGPS::layer_init(void)
+{
+	layer_signals[VL_UPDATE_SIGNAL] = g_signal_new("update", G_TYPE_OBJECT,
+						       (GSignalFlags) (G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION), 0, NULL, NULL,
 						       g_cclosure_marshal_VOID__VOID, G_TYPE_NONE, 0);
 
 	/* Register all parameter defaults, early in the start up sequence. */
@@ -528,18 +526,14 @@ Layer * Layer::unmarshall(uint8_t * data, int len, Viewport * viewport)
 
 
 
-static void vik_layer_finalize(VikLayer * vl)
+Layer::~Layer()
 {
-	assert (vl != NULL);
-
-	Layer * layer = (Layer *) vl->layer;
-	if (layer->name) {
-		free(layer->name);
+	if (this->name) {
+		free(this->name);
 	}
 
-	delete layer;
-
-	G_OBJECT_CLASS(parent_class)->finalize(G_OBJECT(vl));
+	/* kamilTODO: free this object. */
+	this->vl = NULL;
 }
 
 
@@ -775,8 +769,8 @@ Layer::Layer()
 
 	strcpy(this->type_string, "LAST");
 
-	this->vl = (VikLayer *) g_object_new(VIK_LAYER_TYPE, NULL);
-	this->vl->layer = this;
+	this->vl = (VikLayer *) g_object_new(G_TYPE_OBJECT, NULL);
+	g_object_set_data((GObject *) this->vl, "layer", this);
 }
 
 
@@ -1167,7 +1161,7 @@ void Layer::weak_unref(LayerRefCB cb, void * obj)
 
 bool Layer::the_same_object(Layer const * layer)
 {
-	return this->vl == layer->vl;
+	return layer && this->vl == layer->vl;
 }
 
 
@@ -1179,4 +1173,21 @@ void Layer::disconnect_layer_signal(Layer * layer)
 	if (number_handlers != 1) {
 		fprintf(stderr, "CRITICAL: %s: Unexpected number of disconnect handlers: %d\n", __FUNCTION__, number_handlers);
 	}
+}
+
+
+
+
+void * Layer::get_toolkit_object(void)
+{
+	return (void *) this->vl;
+}
+
+
+
+
+Layer * Layer::get_layer(VikLayer * vl)
+{
+	Layer * layer = (Layer *) g_object_get_data((GObject *) vl, "layer");
+	return layer;
 }

@@ -746,9 +746,8 @@ LayerAggregate::~LayerAggregate()
 
 
 
-static void delete_layer_iter(VikLayer *vl)
+static void delete_layer_iter(Layer * layer)
 {
-	Layer * layer = (Layer *) vl->layer;
 	if (layer->realized) {
 		layer->tree_view->erase(&layer->iter);
 	}
@@ -761,7 +760,7 @@ void LayerAggregate::clear()
 {
 	for (auto child = this->children->begin(); child != this->children->end(); child++) {
 		this->disconnect_layer_signal(*child);
-		delete_layer_iter((*child)->vl);
+		delete_layer_iter(*child);
 		(*child)->unref();
 	}
 	// g_list_free(val->children); // kamilFIXME: clean up the list

@@ -316,6 +316,7 @@ void SlavGPS::modules_post_init()
 	vik_mapnik_layer_post_init();
 #endif
 
+	layer_init();
 	layer_trw_init();
 	viewport_init();
 	window_init();

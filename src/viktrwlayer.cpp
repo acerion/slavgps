@@ -9166,7 +9166,7 @@ static GList *add_fillins(GList *list, VikCoord *from, VikCoord *to, struct LatL
 
 
 
-void vik_track_download_map(Track *tr, VikLayer *vml, Viewport * viewport, double zoom_level)
+void vik_track_download_map(Track *tr, Layer * vml, Viewport * viewport, double zoom_level)
 {
 	struct LatLon wh;
 	if (get_download_area_width(viewport, zoom_level, &wh)) {
@@ -9217,7 +9217,7 @@ void vik_track_download_map(Track *tr, VikLayer *vml, Viewport * viewport, doubl
 	}
 
 	for (auto rect_iter = rects_to_download->begin(); rect_iter != rects_to_download->end(); rect_iter++) {
-		((LayerMaps *) vml->layer)->download_section(&(*rect_iter)->tl, &(*rect_iter)->br, zoom_level);
+		((LayerMaps *) vml)->download_section(&(*rect_iter)->tl, &(*rect_iter)->br, zoom_level);
 	}
 
 	if (fillins) {
@@ -9239,7 +9239,7 @@ void vik_track_download_map(Track *tr, VikLayer *vml, Viewport * viewport, doubl
 
 void trw_layer_download_map_along_track_cb(trw_menu_sublayer_t * data)
 {
-	VikLayer *vml;
+	Layer *vml;
 	int selected_map;
 	char *zoomlist[] = {(char *) "0.125", (char *) "0.25", (char *) "0.5", (char *) "1", (char *) "2", (char *) "4", (char *) "8", (char *) "16", (char *) "32", (char *) "64", (char *) "128", (char *) "256", (char *) "512", (char *) "1024", NULL };
 	double zoom_vals[] = {0.125, 0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024};
@@ -9265,14 +9265,14 @@ void trw_layer_download_map_along_track_cb(trw_menu_sublayer_t * data)
 
 	/* Convert from list of vmls to list of names. Allowing the user to select one of them. */
 	char **map_names = (char **) g_malloc_n(1 + num_maps, sizeof (char *));
-	VikLayer **map_layers = (VikLayer **) g_malloc_n(1 + num_maps, sizeof(VikLayer *));
+	Layer ** map_layers = (Layer **) g_malloc_n(1 + num_maps, sizeof(Layer *));
 
 	char **np = map_names;
-	VikLayer **lp = map_layers;
+	Layer **lp = map_layers;
 	for (auto i = vmls->begin(); i != vmls->end(); i++) {
-		vml = (VikLayer *) *i;
+		vml = (Layer *) *i;
 		*lp++ = vml;
-		LayerMaps * lm = (LayerMaps *) vml->layer;
+		LayerMaps * lm = (LayerMaps *) vml;
 		*np++ = lm->get_map_label();
 	}
 	/* Mark end of the array lists. */

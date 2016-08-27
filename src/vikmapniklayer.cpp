@@ -72,11 +72,7 @@ typedef struct _VikMapnikLayerClass VikMapnikLayerClass;
 
 GType vik_mapnik_layer_get_type ();
 
-typedef struct _VikMapnikLayer VikMapnikLayer;
-
-struct _VikMapnikLayer {
-	VikLayer vl;
-};
+typedef VikLayer VikMapnikLayer;
 
 struct _VikMapnikLayerClass
 {

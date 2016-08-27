@@ -78,11 +78,8 @@ struct _VikGpsLayerClass {
 	VikLayerClass vik_layer_class;
 };
 
-struct _VikGpsLayer {
-	VikLayer vl;
-};
 
-typedef struct _VikGpsLayer VikGpsLayer;
+typedef VikLayer VikGpsLayer;
 
 GType vik_gps_layer_get_type();
 

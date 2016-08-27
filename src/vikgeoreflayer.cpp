@@ -33,7 +33,6 @@
 #include <glib/gstdio.h>
 #include <glib/gi18n.h>
 
-//#include "viking.h"
 #include "vikutils.h"
 #include "ui_util.h"
 #include "preferences.h"
@@ -93,7 +92,7 @@ enum {
 
 
 static Layer * georef_layer_unmarshall(uint8_t * data, int len, Viewport * viewport);
-static VikLayer *georef_layer_new(Viewport * viewport);
+static LayerGeoref * georef_layer_new(Viewport * viewport);
 
 /* Tools. */
 static LayerTool * georef_layer_move_create(Window * window, Viewport * viewport);
@@ -149,29 +148,6 @@ VikLayerInterface vik_georef_layer_interface = {
 
 
 
-#define VIK_GEOREF_LAYER_TYPE            (vik_georef_layer_get_type())
-#define VIK_GEOREF_LAYER(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_GEOREF_LAYER_TYPE, VikGeorefLayer))
-#define VIK_GEOREF_LAYER_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), VIK_GEOREF_LAYER_TYPE, VikGeorefLayerClass))
-#define IS_VIK_GEOREF_LAYER(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), VIK_GEOREF_LAYER_TYPE))
-#define IS_VIK_GEOREF_LAYER_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), VIK_GEOREF_LAYER_TYPE))
-
-typedef struct _VikGeorefLayerClass VikGeorefLayerClass;
-struct _VikGeorefLayerClass
-{
-	VikLayerClass object_class;
-};
-
-GType vik_georef_layer_get_type();
-
-typedef struct _VikGeorefLayer VikGeorefLayer;
-
-struct _VikGeorefLayer {
-	VikLayer vl;
-};
-
-
-
-
 static VikLayerParam io_prefs[] = {
 	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_IO_NAMESPACE "georef_auto_read_world_file", VIK_LAYER_PARAM_BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Auto Read World Files:"), VIK_LAYER_WIDGET_CHECKBUTTON, NULL, NULL,
 	  N_("Automatically attempt to read associated world file of a new image for a GeoRef layer"), NULL, NULL, NULL}
@@ -195,31 +171,6 @@ void SlavGPS::vik_georef_layer_init(void)
 
 
 
-GType vik_georef_layer_get_type()
-{
-	static GType vgl_type = 0;
-
-	if (!vgl_type) {
-		static const GTypeInfo vgl_info =  {
-			sizeof (VikGeorefLayerClass),
-			NULL, /* base_init */
-			NULL, /* base_finalize */
-			NULL, /* class init */
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (VikGeorefLayer),
-			0,
-			NULL /* instance init */
-		};
-		vgl_type = g_type_register_static(VIK_LAYER_TYPE, "VikGeorefLayer", &vgl_info, (GTypeFlags) 0);
-	}
-
-	return vgl_type;
-}
-
-
-
-
 char const * LayerGeoref::tooltip()
 {
 	return this->image;
@@ -230,15 +181,14 @@ char const * LayerGeoref::tooltip()
 
 static Layer * georef_layer_unmarshall(uint8_t * data, int len, Viewport * viewport)
 {
-	VikLayer *rv = georef_layer_new(viewport);
-	LayerGeoref * layer = (LayerGeoref *) rv->layer;
+	LayerGeoref * grl = georef_layer_new(viewport);
 
-	layer->unmarshall_params(data, len, viewport);
+	grl->unmarshall_params(data, len, viewport);
 
-	if (layer->image) {
-		layer->post_read(viewport, true);
+	if (grl->image) {
+		grl->post_read(viewport, true);
 	}
-	return layer;
+	return (Layer *) grl;
 }
 
 
@@ -360,27 +310,27 @@ VikLayerParamData LayerGeoref::get_param(uint16_t id, bool is_file_operation) co
 
 
 
-static VikLayer * georef_layer_new(Viewport * viewport)
+static LayerGeoref * georef_layer_new(Viewport * viewport)
 {
-	LayerGeoref * layer = new LayerGeoref();
+	LayerGeoref * grl = new LayerGeoref();
 
 	/* Make these defaults based on the current view. */
-	layer->mpp_northing = viewport->get_ympp();
-	layer->mpp_easting = viewport->get_xmpp();
-	vik_coord_to_utm(viewport->get_center(), &(layer->corner));
+	grl->mpp_northing = viewport->get_ympp();
+	grl->mpp_easting = viewport->get_xmpp();
+	vik_coord_to_utm(viewport->get_center(), &(grl->corner));
 
-	layer->image = NULL;
-	layer->pixbuf = NULL;
-	layer->click_x = -1;
-	layer->click_y = -1;
-	layer->scaled = NULL;
-	layer->scaled_width = 0;
-	layer->scaled_height = 0;
-	layer->ll_br.lat = 0.0;
-	layer->ll_br.lon = 0.0;
-	layer->alpha = 255;
+	grl->image = NULL;
+	grl->pixbuf = NULL;
+	grl->click_x = -1;
+	grl->click_y = -1;
+	grl->scaled = NULL;
+	grl->scaled_width = 0;
+	grl->scaled_height = 0;
+	grl->ll_br.lat = 0.0;
+	grl->ll_br.lon = 0.0;
+	grl->alpha = 255;
 
-	return layer->vl;
+	return grl;
 }
 
 
@@ -1316,27 +1266,26 @@ static void goto_center_ll(Viewport * viewport, struct LatLon ll_tl, struct LatL
 
 
 
-VikLayer * SlavGPS::vik_georef_layer_create(Viewport * viewport,
-					    LayersPanel * panel,
-					    const char *name,
-					    GdkPixbuf *pixbuf,
-					    VikCoord *coord_tl,
-					    VikCoord *coord_br)
+LayerGeoref * SlavGPS::vik_georef_layer_create(Viewport * viewport,
+					       LayersPanel * panel,
+					       const char *name,
+					       GdkPixbuf *pixbuf,
+					       VikCoord *coord_tl,
+					       VikCoord *coord_br)
 {
-	VikLayer *vgl = georef_layer_new(viewport);
-	((Layer *) vgl->layer)->rename(name);
-	LayerGeoref * layer = (LayerGeoref *) vgl->layer;
+	LayerGeoref * grl = georef_layer_new(viewport);
 
-	layer->pixbuf = pixbuf;
+	grl->rename(name);
+	grl->pixbuf = pixbuf;
 
-	vik_coord_to_utm(coord_tl, &(layer->corner));
-	vik_coord_to_latlon(coord_br, &(layer->ll_br));
+	vik_coord_to_utm(coord_tl, &(grl->corner));
+	vik_coord_to_latlon(coord_br, &(grl->ll_br));
 
-	if (layer->pixbuf) {
-		layer->width = gdk_pixbuf_get_width(layer->pixbuf);
-		layer->height = gdk_pixbuf_get_height(layer->pixbuf);
+	if (grl->pixbuf) {
+		grl->width = gdk_pixbuf_get_width(grl->pixbuf);
+		grl->height = gdk_pixbuf_get_height(grl->pixbuf);
 
-		if (layer->width > 0 && layer->height > 0) {
+		if (grl->width > 0 && grl->height > 0) {
 
 			struct LatLon ll_tl;
 			vik_coord_to_latlon(coord_tl, &ll_tl);
@@ -1346,21 +1295,21 @@ VikLayer * SlavGPS::vik_georef_layer_create(Viewport * viewport,
 			VikCoordMode mode = viewport->get_coord_mode();
 
 			double xmpp, ympp;
-			georef_layer_mpp_from_coords(mode, ll_tl, ll_br, layer->width, layer->height, &xmpp, &ympp);
-			layer->mpp_easting = xmpp;
-			layer->mpp_northing = ympp;
+			georef_layer_mpp_from_coords(mode, ll_tl, ll_br, grl->width, grl->height, &xmpp, &ympp);
+			grl->mpp_easting = xmpp;
+			grl->mpp_northing = ympp;
 
 			goto_center_ll(viewport, ll_tl, ll_br);
 			/* Set best zoom level. */
 			struct LatLon maxmin[2] = { ll_tl, ll_br };
 			vu_zoom_to_show_latlons(viewport->get_coord_mode(), viewport, maxmin);
 
-			return vgl;
+			return grl;
 		}
 	}
 
 	/* Bad image. */
-	delete layer;
+	delete grl;
 	return NULL;
 }
 

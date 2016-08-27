@@ -39,12 +39,6 @@ namespace SlavGPS {
 
 	void vik_georef_layer_init(void);
 
-	VikLayer * vik_georef_layer_create(Viewport * viewport,
-					   LayersPanel * panel,
-					   const char *name,
-					   GdkPixbuf *pibxbuf,
-					   VikCoord *coord_tr,
-					   VikCoord *coord_br );
 
 
 
@@ -127,6 +121,16 @@ namespace SlavGPS {
 		int click_y = -1;
 		changeable_widgets cw;
 	};
+
+
+
+
+	LayerGeoref * vik_georef_layer_create(Viewport * viewport,
+					      LayersPanel * panel,
+					      const char *name,
+					      GdkPixbuf *pibxbuf,
+					      VikCoord *coord_tr,
+					      VikCoord *coord_br );
 
 
 

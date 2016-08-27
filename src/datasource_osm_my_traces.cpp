@@ -644,8 +644,6 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 {
 	// datasource_osm_my_traces_t *data = (datasource_osm_my_traces_t *)adw->user_data;
 
-	bool result;
-
 	char *user_pass = osm_get_login();
 
 	/* Support .zip + bzip2 files directly. */
@@ -663,7 +661,7 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 	xd->current_gpx_meta_data = new_gpx_meta_data_t();
 	xd->list_of_gpx_meta_data = NULL;
 
-	result = read_gpx_files_metadata_xml(tmpname, xd);
+	bool read_result = read_gpx_files_metadata_xml(tmpname, xd);
 	/* Test already downloaded metadata file: eg: */
 	// result = read_gpx_files_metadata_xml ("/tmp/viking-download.GI47PW", xd);
 
@@ -672,7 +670,7 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 		free(tmpname);
 	}
 
-	if (! result) {
+	if (!read_result) {
 		free(xd);
 		return false;
 	}
@@ -711,39 +709,40 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 	bool create_new_layer = (!trw);
 
 	/* Only update the screen on the last layer acquired. */
-	VikLayer *vtl_last = trw->vl;
+	LayerTRW * vtl_last = trw;
 	bool got_something = false;
 
 	GList *selected_iterator = selected;
 	while (selected_iterator) {
 
-		VikLayer *vtlX = trw->vl;
+		LayerTRW * target_layer = NULL;
 
 		if (create_new_layer) {
 			/* Have data but no layer - so create one. */
-			LayerTRW * layer = new LayerTRW(adw->viewport);
-			vtlX = layer->vl;
+			target_layer = new LayerTRW(adw->viewport);
 			if (((gpx_meta_data_t *) selected_iterator->data)->name) {
-				layer->rename(((gpx_meta_data_t *) selected_iterator->data)->name);
+				target_layer->rename(((gpx_meta_data_t *) selected_iterator->data)->name);
 			} else {
-				layer->rename(_("My OSM Traces"));
+				target_layer->rename(_("My OSM Traces"));
 			}
+		} else {
+			target_layer = trw;
 		}
 
-		result = false;
-		int gpx_id = ((gpx_meta_data_t*)selected_iterator->data)->id;
+		bool convert_result = false;
+		int gpx_id = ((gpx_meta_data_t *) selected_iterator->data)->id;
 		if (gpx_id) {
 			char *url = g_strdup_printf(DS_OSM_TRACES_GPX_URL_FMT, gpx_id);
 
 			/* NB download type is GPX (or a compressed version). */
 			ProcessOptions my_po = *process_options;
 			my_po.url = url;
-			result = a_babel_convert_from((LayerTRW *) vtlX->layer, &my_po, status_cb, adw, &options);
+			convert_result = a_babel_convert_from(target_layer, &my_po, status_cb, adw, &options);
 			/* TODO investigate using a progress bar:
 			   http://developer.gnome.org/gtk/2.24/GtkProgressBar.html */
 
-			got_something = got_something || result;
-			if (!result) {
+			got_something = got_something || convert_result;
+			if (!convert_result) {
 				/* Report errors to the status bar. */
 				char* msg = g_strdup_printf (_("Unable to get trace: %s"), url);
 				adw->window->statusbar_update(msg, VIK_STATUSBAR_INFO);
@@ -752,20 +751,21 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 			free(url);
 		}
 
-		if (result) {
+		if (convert_result) {
 			/* Can use the layer. */
-			LayerTRW * layer = (LayerTRW *) vtlX->layer;
-			adw->panel->get_top_layer()->add_layer(layer, true);
+			adw->panel->get_top_layer()->add_layer(target_layer, true);
 			/* Move to area of the track. */
-			layer->post_read(adw->window->get_viewport(), true);
-			layer->auto_set_view(adw->window->get_viewport());
-			vtl_last = vtlX;
-		} else if (create_new_layer) {
-			/* Layer not needed as no data has been acquired. */
-			g_object_unref(vtlX);
+			target_layer->post_read(adw->window->get_viewport(), true);
+			target_layer->auto_set_view(adw->window->get_viewport());
+			vtl_last = target_layer;
+		} else {
+			if (create_new_layer) {
+				/* Layer not needed as no data has been acquired. */
+				target_layer->unref();
+			}
 		}
 
-		selected_iterator = g_list_next (selected_iterator);
+		selected_iterator = g_list_next(selected_iterator);
 	}
 
 	/* Free memory. */
@@ -781,10 +781,11 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 	/* Would prefer to keep the update in acquire.c,
 	   however since we may create the layer - need to do the update here. */
 	if (got_something) {
-		Layer * layer_last = (Layer *) vtl_last->layer;
+		Layer * layer_last = (Layer *) vtl_last;
 		layer_last->emit_update();
 	}
 
+	bool result = false;
 	/* ATM The user is only informed if all getting *all* of the traces failed. */
 	if (selected) {
 		result = got_something;

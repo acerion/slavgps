@@ -119,7 +119,7 @@ LayersPanel::LayersPanel()
 	Viewport * viewport = NULL;
 	this->toplayer = new LayerAggregate(viewport);
 	this->toplayer->rename(_("Top Layer"));
-	int a = g_signal_connect_swapped(G_OBJECT(this->toplayer->vl), "update", G_CALLBACK(vik_layers_panel_emit_update_cb), this);
+	int a = g_signal_connect_swapped(G_OBJECT(this->toplayer->get_toolkit_object()), "update", G_CALLBACK(vik_layers_panel_emit_update_cb), this);
 
 	this->tree_view->add_layer(NULL, &(this->toplayer_iter), this->toplayer->name, NULL, true, this->toplayer, (int) LayerType::AGGREGATE, LayerType::AGGREGATE, 0);
 	this->toplayer->realize(this->tree_view, &(this->toplayer_iter));
