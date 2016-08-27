@@ -72,7 +72,7 @@ namespace SlavGPS {
 
 
 		/* Layer interface methods. */
-		void load_image(Viewport * viewport, bool from_file);
+		void post_read(Viewport * viewport, bool from_file);
 		void draw(Viewport * viewport);
 		char const * tooltip();
 		void add_menu_items(GtkMenu * menu, void * panel);

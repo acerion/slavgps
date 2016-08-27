@@ -448,8 +448,8 @@ bool LayerGeoref::properties(void * viewport)
 
 
 
-/* Formerly known as georef_layer_load_image(). */
-void LayerGeoref::load_image(Viewport * viewport, bool from_file)
+/* Also known as LayerGeoref::load_image(). */
+void LayerGeoref::post_read(Viewport * viewport, bool from_file)
 {
 	GError *gx = NULL;
 	if (this->image == NULL) {
