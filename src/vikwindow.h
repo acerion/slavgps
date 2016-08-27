@@ -194,7 +194,7 @@ namespace SlavGPS {
 
 		GThread  * thread;
 		/* Half-drawn update. */
-		VikLayer * trigger;
+		Layer * trigger;
 		VikCoord trigger_center;
 
 

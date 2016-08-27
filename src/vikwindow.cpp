@@ -1010,7 +1010,7 @@ void Window::set_redraw_trigger(Layer * layer)
 {
 	Window * window = layer->get_window();
 	if (window) {
-		window->trigger = layer->vl;
+		window->trigger = layer;
 	}
 }
 
@@ -1038,13 +1038,13 @@ void Window::draw_redraw()
 {
 	VikCoord old_center = this->trigger_center;
 	this->trigger_center = *(this->viewport->get_center());
-	VikLayer *new_trigger = this->trigger;
+	Layer * new_trigger = this->trigger;
 	this->trigger = NULL;
-	VikLayer *old_trigger = (VikLayer *) this->viewport->get_trigger();
+	Layer * old_trigger = this->viewport->get_trigger();
 
 	if (!new_trigger) {
 		; /* do nothing -- have to redraw everything. */
-	} else if ((old_trigger != new_trigger) || !vik_coord_equals(&old_center, &this->trigger_center) || (((Layer *) new_trigger->layer)->type == LayerType::AGGREGATE)) {
+	} else if ((old_trigger != new_trigger) || !vik_coord_equals(&old_center, &this->trigger_center) || (new_trigger->type == LayerType::AGGREGATE)) {
 		this->viewport->set_trigger(new_trigger); /* todo: set to half_drawn mode if new trigger is above old */
 	} else {
 		this->viewport->set_half_drawn(true);

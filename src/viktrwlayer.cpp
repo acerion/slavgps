@@ -8680,7 +8680,7 @@ static int create_thumbnails_thread(thumbnail_create_thread_data * tctd, void * 
 	}
 
 	/* Redraw to show the thumbnails as they are now created. */
-	if (IS_VIK_LAYER(tctd->layer->vl)) {
+	if (tctd->layer) {
 		tctd->layer->emit_update(); /* NB update from background thread. */
 	}
 

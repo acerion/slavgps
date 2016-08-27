@@ -65,6 +65,7 @@ namespace SlavGPS {
 
 
 	class Window;
+	class Layer;
 
 
 
@@ -208,8 +209,8 @@ namespace SlavGPS {
 
 
 		/* Trigger stuff. */
-		void set_trigger(void * trigger);
-		void * get_trigger();
+		void set_trigger(Layer * trigger);
+		Layer * get_trigger();
 
 		void snapshot_save();
 		void snapshot_load();
@@ -274,7 +275,7 @@ namespace SlavGPS {
 
 
 		/* Trigger stuff. */
-		void * trigger = NULL; /* Usually pointer to Layer. */
+		Layer * trigger = NULL;
 		GdkPixmap * snapshot_buffer = NULL;
 		bool half_drawn = false;
 

@@ -167,7 +167,7 @@ void LayerAggregate::insert_layer(Layer * layer, GtkTreeIter *replace_iter)
 
 		auto theone = this->children->end();
 		for (auto i = this->children->begin(); i != this->children->end(); i++) {
-			if ((*i)->vl == existing_layer->vl) {
+			if (existing_layer->the_same_object(*i)) {
 				theone = i;
 			}
 		}
@@ -245,7 +245,7 @@ void LayerAggregate::move_layer(GtkTreeIter *child_iter, bool up)
 	Layer * layer = this->tree_view->get_layer(child_iter);
 
 	for (auto i = this->children->begin(); i != this->children->end(); i++) {
-		if ((*i)->vl == layer->vl) {
+		if (layer->the_same_object(*i)) {
 			theone = i;
 		}
 	}
@@ -290,11 +290,11 @@ void LayerAggregate::move_layer(GtkTreeIter *child_iter, bool up)
  */
 void LayerAggregate::draw(Viewport * viewport)
 {
-	VikLayer * trigger = (VikLayer *) viewport->get_trigger();
+	Layer * trigger = viewport->get_trigger();
 
 	for (auto child = this->children->begin(); child != this->children->end(); child++) {
 		Layer * layer = *child;
-		if (layer->vl == trigger) {
+		if (layer->the_same_object(trigger)) {
 			if (viewport->get_half_drawn()) {
 				viewport->set_half_drawn(false);
 				viewport->snapshot_load();
@@ -730,21 +730,10 @@ void LayerAggregate::add_menu_items(GtkMenu * menu, void * panel)
 
 
 
-static void disconnect_layer_signal(VikLayer *vl, VikLayer *val)
-{
-	unsigned int number_handlers = g_signal_handlers_disconnect_matched(vl, G_SIGNAL_MATCH_DATA, 0, 0, 0, 0, val);
-	if (number_handlers != 1) {
-		fprintf(stderr, "CRITICAL: %s: Unexpected number of disconnect handlers: %d\n", __FUNCTION__, number_handlers);
-	}
-}
-
-
-
-
 LayerAggregate::~LayerAggregate()
 {
 	for (auto child = this->children->begin(); child != this->children->end(); child++) {
-		disconnect_layer_signal((*child)->vl, this->vl);
+		this->disconnect_layer_signal(*child);
 		(*child)->unref();
 	}
 	// g_list_free(val->children); // kamilFIXME: clean up the list. */
@@ -771,7 +760,7 @@ static void delete_layer_iter(VikLayer *vl)
 void LayerAggregate::clear()
 {
 	for (auto child = this->children->begin(); child != this->children->end(); child++) {
-		disconnect_layer_signal((*child)->vl, this->vl);
+		this->disconnect_layer_signal(*child);
 		delete_layer_iter((*child)->vl);
 		(*child)->unref();
 	}
@@ -790,12 +779,12 @@ bool LayerAggregate::delete_layer(GtkTreeIter * iter)
 	this->tree_view->erase(iter);
 
 	for (auto i = this->children->begin(); i != this->children->end(); i++) {
-		if ((*i)->vl = layer->vl) {
+		if (layer->the_same_object(*i)) {
 			this->children->erase(i);
 			break;
 		}
 	}
-	disconnect_layer_signal(layer->vl, this->vl);
+	this->disconnect_layer_signal(layer);
 	layer->unref();
 
 	return was_visible;

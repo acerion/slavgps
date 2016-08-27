@@ -1810,7 +1810,7 @@ static int map_download_thread(MapDownloadInfo *mdi, void * threaddata)
 	map_sources[mdi->map_index]->download_handle_cleanup(handle);
 	g_mutex_lock(mdi->mutex);
 	if (mdi->map_layer_alive) {
-		g_object_weak_unref(G_OBJECT(mdi->layer->vl), LayerMaps::weak_ref_cb, mdi);
+		mdi->layer->weak_unref(LayerMaps::weak_ref_cb, mdi);
 	}
 	g_mutex_unlock(mdi->mutex);
 	return 0;

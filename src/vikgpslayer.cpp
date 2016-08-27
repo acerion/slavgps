@@ -674,11 +674,11 @@ VikLayerParamData LayerGPS::get_param(uint16_t id, bool is_file_operation) const
 
 void LayerGPS::draw(Viewport * viewport)
 {
-	VikLayer *trigger = (VikLayer *) viewport->get_trigger();
+	Layer * trigger = viewport->get_trigger();
 
 	for (int i = 0; i < NUM_TRW; i++) {
 		LayerTRW * trw = this->trw_children[i];
-		if (trw->vl == trigger) {
+		if (trw->the_same_object(trigger)) {
 			if (viewport->get_half_drawn()) {
 				viewport->set_half_drawn(false);
 				viewport->snapshot_load();
@@ -692,7 +692,7 @@ void LayerGPS::draw(Viewport * viewport)
 	}
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
 	if (this->realtime_tracking) {
-		if (this->vl == trigger) {
+		if (this->the_same_object(trigger)) {
 			if (viewport->get_half_drawn()) {
 				viewport->set_half_drawn(false);
 				viewport->snapshot_load();
@@ -789,23 +789,11 @@ void LayerGPS::add_menu_items(GtkMenu * menu, void * panel)
 
 
 
-void LayerGPS::disconnect_layer_signal(VikLayer * vl)
-{
-	unsigned int number_handlers = g_signal_handlers_disconnect_matched(vl, G_SIGNAL_MATCH_DATA, 0, 0, 0, 0, this->vl);
-	if (number_handlers != 1) {
-		fprintf(stderr, _("CRITICAL: Unexpected number of disconnected handlers: %d\n"), number_handlers);
-	}
-}
-
-
-
-
-
 LayerGPS::~LayerGPS()
 {
 	for (int i = 0; i < NUM_TRW; i++) {
 		if (this->realized) {
-			this->disconnect_layer_signal(this->trw_children[i]->vl);
+			this->disconnect_layer_signal(this->trw_children[i]);
 		}
 		this->trw_children[i]->unref();
 	}

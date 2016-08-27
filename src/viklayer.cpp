@@ -1162,3 +1162,21 @@ void Layer::weak_unref(LayerRefCB cb, void * obj)
 	g_object_weak_unref(G_OBJECT (this->vl), cb, obj);
 	return;
 }
+
+
+
+bool Layer::the_same_object(Layer const * layer)
+{
+	return this->vl == layer->vl;
+}
+
+
+
+
+void Layer::disconnect_layer_signal(Layer * layer)
+{
+	unsigned int number_handlers = g_signal_handlers_disconnect_matched(layer->vl, G_SIGNAL_MATCH_DATA, 0, 0, 0, 0, this->vl);
+	if (number_handlers != 1) {
+		fprintf(stderr, "CRITICAL: %s: Unexpected number of disconnect handlers: %d\n", __FUNCTION__, number_handlers);
+	}
+}

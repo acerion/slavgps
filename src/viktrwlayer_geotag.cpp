@@ -377,7 +377,7 @@ static void trw_layer_geotag_waypoint(geotag_options_t *options)
  */
 static void trw_layer_geotag_process(geotag_options_t *options)
 {
-	if (!options->trw || !IS_VIK_LAYER(options->trw->vl)) {
+	if (!options->trw) {
 		return;
 	}
 
@@ -546,7 +546,7 @@ static int trw_layer_geotag_thread(geotag_options_t *options, void * threaddata)
 	}
 
 	if (options->redraw) {
-		if (IS_VIK_LAYER(options->trw->vl)) {
+		if (options->trw) {
 			options->trw->calculate_bounds_waypoints();
 			/* Ensure any new images get show. */
 			options->trw->verify_thumbnails(NULL); // NB second parameter not used ATM

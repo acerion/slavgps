@@ -721,7 +721,7 @@ void LayersPanel::cut_selected()
 		LayerAggregate * parent = (LayerAggregate *) this->tree_view->get_parent_layer(&iter);
 		if (parent){
 			/* Reset trigger if trigger deleted. */
-			if (this->get_selected()->vl == this->viewport->get_trigger()) {
+			if (this->get_selected()->the_same_object(this->viewport->get_trigger())) {
 				this->viewport->set_trigger(NULL);
 			}
 
@@ -822,7 +822,7 @@ void LayersPanel::delete_selected()
 		LayerAggregate * parent = (LayerAggregate *) this->tree_view->get_parent_layer(&iter);
 		if (parent) {
 			/* Reset trigger if trigger deleted. */
-			if (this->get_selected()->vl == this->viewport->get_trigger()) {
+			if (this->get_selected()->the_same_object(this->viewport->get_trigger())) {
 				this->viewport->set_trigger(NULL);
 			}
 

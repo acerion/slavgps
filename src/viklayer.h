@@ -257,6 +257,9 @@ namespace SlavGPS {
 		void weak_ref(LayerRefCB cb, void * obj);
 		void weak_unref(LayerRefCB cb, void * obj);
 
+		bool the_same_object(Layer const * layer);
+		void disconnect_layer_signal(Layer * layer);
+
 
 
 

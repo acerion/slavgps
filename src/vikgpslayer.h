@@ -123,7 +123,6 @@ namespace SlavGPS {
 		VikLayerParamData get_param(uint16_t id, bool is_file_operation) const;
 
 
-		void disconnect_layer_signal(VikLayer * vl);
 		std::list<Layer const * > * get_children();
 		LayerTRW * get_a_child();
 		bool is_empty();

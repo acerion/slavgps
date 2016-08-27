@@ -1752,7 +1752,7 @@ VikViewportDrawMode Viewport::get_drawmode()
 
 
 /******** Triggering. *******/
-void Viewport::set_trigger(void * trigger)
+void Viewport::set_trigger(Layer * trigger)
 {
 	this->trigger = trigger;
 }
@@ -1760,7 +1760,7 @@ void Viewport::set_trigger(void * trigger)
 
 
 
-void * Viewport::get_trigger()
+Layer * Viewport::get_trigger()
 {
 	return this->trigger;
 }

@@ -323,7 +323,7 @@ static int dem_layer_load_list_thread(dem_load_thread_data * dltd, void * thread
 	   Thus force draw only at the end, as loading is complete/aborted. */
 	//gdk_threads_enter();
 	/* Test is helpful to prevent Gtk-CRITICAL warnings if the program is exitted whilst loading. */
-	if (IS_VIK_LAYER(dltd->layer->vl)) {
+	if (dltd->layer) {
 		dltd->layer->emit_update(); /* NB update from background thread. */
 	}
 	//gdk_threads_leave();
