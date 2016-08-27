@@ -1280,6 +1280,8 @@ static LayerTool * dem_layer_download_create(Window * window, Viewport * viewpor
 
 	dem_tools[0] = layer_tool;
 
+	layer_tool->layer_type = LayerType::DEM;
+
 	layer_tool->radioActionEntry.name        = strdup("DEMDownload");
 	layer_tool->radioActionEntry.stock_id    = strdup("vik-icon-DEM Download");
 	layer_tool->radioActionEntry.label       = strdup(N_("_DEM Download"));

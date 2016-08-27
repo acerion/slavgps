@@ -7375,6 +7375,8 @@ static LayerTool * tool_edit_waypoint_create(Window * window, Viewport * viewpor
 
 	trw_layer_tools[4] = layer_tool;
 
+	layer_tool->layer_type = LayerType::TRW;
+
 	layer_tool->radioActionEntry.name = strdup("EditWaypoint");
 	layer_tool->radioActionEntry.stock_id = strdup("vik-icon-Edit Waypoint");
 	layer_tool->radioActionEntry.label = strdup(N_("_Edit Waypoint"));
@@ -7593,6 +7595,8 @@ static LayerTool * tool_new_track_create(Window * window, Viewport * viewport)
 	LayerTool * layer_tool = new LayerTool(window, viewport, LayerType::TRW);
 
 	trw_layer_tools[1] = layer_tool;
+
+	layer_tool->layer_type = LayerType::TRW;
 
 	layer_tool->radioActionEntry.name = strdup("CreateTrack");
 	layer_tool->radioActionEntry.stock_id = strdup("vik-icon-Create Track");
@@ -8060,6 +8064,8 @@ static LayerTool * tool_new_route_create(Window * window, Viewport * viewport)
 
 	trw_layer_tools[2] = layer_tool;
 
+	layer_tool->layer_type = LayerType::TRW;
+
 	layer_tool->radioActionEntry.name = strdup("CreateRoute");
 	layer_tool->radioActionEntry.stock_id = strdup("vik-icon-Create Route");
 	layer_tool->radioActionEntry.label = strdup(N_("Create _Route"));
@@ -8128,6 +8134,8 @@ static LayerTool * tool_new_waypoint_create(Window * window, Viewport * viewport
 
 	trw_layer_tools[0] = layer_tool;
 
+	layer_tool->layer_type = LayerType::TRW;
+
 	layer_tool->radioActionEntry.name = strdup("CreateWaypoint");
 	layer_tool->radioActionEntry.stock_id = strdup("vik-icon-Create Waypoint");
 	layer_tool->radioActionEntry.label = strdup(N_("Create _Waypoint"));
@@ -8185,6 +8193,8 @@ static LayerTool * tool_edit_trackpoint_create(Window * window, Viewport * viewp
 	LayerTool * layer_tool = new LayerTool(window, viewport, LayerType::TRW);
 
 	trw_layer_tools[5] = layer_tool;
+
+	layer_tool->layer_type = LayerType::TRW;
 
 	layer_tool->radioActionEntry.name = strdup("EditTrackpoint");
 	layer_tool->radioActionEntry.stock_id = strdup("vik-icon-Edit Trackpoint");
@@ -8419,6 +8429,8 @@ static LayerTool * tool_extended_route_finder_create(Window * window, Viewport *
 
 	trw_layer_tools[3] = layer_tool;
 
+	layer_tool->layer_type = LayerType::TRW;
+
 	layer_tool->radioActionEntry.name = strdup("ExtendedRouteFinder");
 	layer_tool->radioActionEntry.stock_id = strdup("vik-icon-Route Finder");
 	layer_tool->radioActionEntry.label = strdup(N_("Route _Finder"));
@@ -8581,6 +8593,8 @@ static LayerTool * tool_show_picture_create(Window * window, Viewport * viewport
 	LayerTool * layer_tool = new LayerTool(window, viewport, LayerType::TRW);
 
 	trw_layer_tools[6] = layer_tool;
+
+	layer_tool->layer_type = LayerType::TRW;
 
 	layer_tool->radioActionEntry.name = strdup("ShowPicture");
 	layer_tool->radioActionEntry.stock_id = strdup("vik-icon-Show Picture");

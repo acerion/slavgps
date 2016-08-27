@@ -1172,6 +1172,8 @@ static LayerTool * mapnik_feature_create(Window * window, Viewport * viewport)
 
 	mapnik_tools[0] = layer_tool;
 
+	layer_tool->layer_type = LayerType::MAPNIK;
+
 	layer_tool->radioActionEntry.name = strdup("MapnikFeatures");
 	layer_tool->radioActionEntry.stock_id = strdup(GTK_STOCK_INFO);
 	layer_tool->radioActionEntry.label = strdup(N_("_Mapnik Features"));

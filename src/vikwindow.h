@@ -75,7 +75,7 @@ namespace SlavGPS {
 		ToolBox(Window * win) : window(win) {};
 		~ToolBox();
 
-		LayerTool const * add_tool(VikToolConstructorFunc create_fn, LayerType layer_type);
+		int add_tool(LayerTool * layer_tool);
 		LayerTool * get_tool(char const * tool_name);;
 		void activate(char const * tool_name);
 		const GdkCursor * get_cursor(char const * tool_name);

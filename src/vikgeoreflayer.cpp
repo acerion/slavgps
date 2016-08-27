@@ -1124,6 +1124,8 @@ static LayerTool * georef_layer_move_create(Window * window, Viewport * viewport
 
 	georef_tools[0] = layer_tool;
 
+	layer_tool->layer_type = LayerType::GEOREF;
+
 	layer_tool->radioActionEntry.name        = strdup("GeorefMoveMap");
 	layer_tool->radioActionEntry.stock_id    = strdup("vik-icon-Georef Move Map");
 	layer_tool->radioActionEntry.label       = strdup(N_("_Georef Move Map"));
@@ -1175,6 +1177,8 @@ static LayerTool * georef_layer_zoom_create(Window * window, Viewport * viewport
 	LayerTool * layer_tool = new LayerTool(window, viewport, LayerType::GEOREF);
 
 	georef_tools[1] = layer_tool;
+
+	layer_tool->layer_type = LayerType::GEOREF;
 
 	layer_tool->radioActionEntry.name        = strdup("GeorefZoomTool");
 	layer_tool->radioActionEntry.stock_id    = strdup("vik-icon-Georef Zoom Tool");

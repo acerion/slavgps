@@ -1388,12 +1388,6 @@ static bool ruler_key_press(Layer * layer, GdkEventKey *event, LayerTool * tool)
 
 
 
-static LayerTool * ruler_tool = NULL;
-//VikToolConstructorFunc ruler_create;  /* (VikToolConstructorFunc) */
-
-
-
-
 static void draw_ruler(Viewport * viewport, GdkDrawable *d, GdkGC *gc, int x1, int y1, int x2, int y2, double distance)
 {
 	PangoLayout *pl;
@@ -1565,7 +1559,7 @@ static LayerTool * ruler_create(Window * window, Viewport * viewport)
 {
 	LayerTool * layer_tool = new LayerTool(window, viewport, LayerType::NUM_TYPES);
 
-	ruler_tool = layer_tool;
+	layer_tool->layer_type = LayerType::NUM_TYPES;
 
 	layer_tool->radioActionEntry.name = strdup("Ruler");
 	layer_tool->radioActionEntry.stock_id = strdup("vik-icon-ruler");
@@ -1749,12 +1743,6 @@ static VikLayerToolFuncStatus zoomtool_release(Layer * layer, GdkEventButton * e
 
 
 
-static LayerTool * zoom_tool = NULL;
-//VikToolConstructorFunc zoomtool_create;  /* (VikToolConstructorFunc) */
-
-
-
-
 /*
  * In case the screen size has changed
  */
@@ -1786,7 +1774,7 @@ static LayerTool * zoomtool_create(Window * window, Viewport * viewport)
 {
 	LayerTool * layer_tool = new LayerTool(window, viewport, LayerType::NUM_TYPES);
 
-	zoom_tool = layer_tool;
+	layer_tool->layer_type = LayerType::NUM_TYPES;
 
 	layer_tool->radioActionEntry.name = strdup("Zoom");
 	layer_tool->radioActionEntry.stock_id = strdup("vik-icon-zoom");
@@ -1990,17 +1978,11 @@ static VikLayerToolFuncStatus pantool_release(Layer * layer, GdkEventButton * ev
 
 
 
-static LayerTool * pan_tool = NULL;
-//VikToolConstructorFunc pantool_create; /* (VikToolConstructorFunc) */
-
-
-
-
 static LayerTool * pantool_create(Window * window, Viewport * viewport)
 {
 	LayerTool * layer_tool = new LayerTool(window, viewport, LayerType::NUM_TYPES);
 
-	pan_tool = layer_tool;
+	layer_tool->layer_type = LayerType::NUM_TYPES;
 
 	layer_tool->radioActionEntry.name = strdup("Pan");
 	layer_tool->radioActionEntry.stock_id = strdup("vik-icon-pan");
@@ -2087,8 +2069,6 @@ static VikLayerToolFuncStatus selecttool_click(Layer * layer, GdkEventButton * e
 static VikLayerToolFuncStatus selecttool_move(Layer * layer, GdkEventMotion * event, LayerTool * tool);
 static VikLayerToolFuncStatus selecttool_release(Layer * layer, GdkEventButton * event, LayerTool * tool);
 
-static LayerTool * select_tool = NULL;
-
 
 
 
@@ -2096,7 +2076,7 @@ static LayerTool * selecttool_create(Window * window, Viewport * viewport)
 {
 	LayerTool * layer_tool = new LayerTool(window, viewport, LayerType::NUM_TYPES);
 
-	select_tool = layer_tool;
+	layer_tool->layer_type = LayerType::NUM_TYPES;
 
 	layer_tool->radioActionEntry.name = strdup("Select");
 	layer_tool->radioActionEntry.stock_id = strdup("vik-icon-select");
@@ -2863,17 +2843,14 @@ ToolBox::~ToolBox()
 
 
 
-LayerTool const * ToolBox::add_tool(VikToolConstructorFunc create_fn, LayerType layer_type)
+int ToolBox::add_tool(LayerTool * layer_tool)
 {
-	LayerTool * layer_tool = create_fn(this->window, this->window->viewport);
-
-	layer_tool->layer_type = layer_type;
 	toolbar_action_tool_entry_register(this->window->viking_vtb, &layer_tool->radioActionEntry);
 
 	this->tools.push_back(layer_tool);
 	this->n_tools++;
 
-	return layer_tool;
+	return this->n_tools;
 }
 
 
@@ -2884,7 +2861,6 @@ LayerTool * ToolBox::get_tool(char const *tool_name)
 	for (int i = 0; i < this->n_tools; i++) {
 		if (0 == strcmp(tool_name, this->tools[i]->radioActionEntry.name)) {
 			return this->tools[i];
-			break;
 		}
 	}
 	return NULL;
@@ -4936,16 +4912,13 @@ static GCallback toggle_entries_toolbar_cb[] = {
 #include "menu.xml.h"
 static void window_create_ui(Window * window)
 {
-	GtkIconSet * icon_set;
-	GtkRadioActionEntry *tools = NULL, *radio;
-
 	GtkUIManager * uim = gtk_ui_manager_new();
 	window->uim = uim;
 
-	window->tb->add_tool(ruler_create,      LayerType::NUM_TYPES);
-	window->tb->add_tool(zoomtool_create,   LayerType::NUM_TYPES);
-	window->tb->add_tool(pantool_create,    LayerType::NUM_TYPES);
-	window->tb->add_tool(selecttool_create, LayerType::NUM_TYPES);
+	window->tb->add_tool(ruler_create(window, window->viewport));
+	window->tb->add_tool(zoomtool_create(window, window->viewport));
+	window->tb->add_tool(pantool_create(window, window->viewport));
+	window->tb->add_tool(selecttool_create(window, window->viewport));
 
 	GError * error = NULL;
 	unsigned int mid;
@@ -5014,15 +4987,14 @@ static void window_create_ui(Window * window)
 
 	register_vik_icons(icon_factory);
 
-	// Copy the tool RadioActionEntries out of the main Window structure into an extending array 'tools'
-	//  so that it can be applied to the UI in one action group add function call below
-	unsigned int ntools = 0;
+	/* Copy the tool RadioActionEntries out of the main Window structure into an extending array 'tools'
+	   so that it can be applied to the UI in one action group add function call below. */
+	GtkRadioActionEntry * radio_actions = NULL;
+	unsigned int n_radio_actions = 0;
 	for (unsigned int i = 0; i < window->tb->n_tools; i++) {
-		tools = g_renew(GtkRadioActionEntry, tools, ntools+1);
-		radio = &tools[ntools];
-		ntools++;
-		*radio = window->tb->tools[i]->radioActionEntry;
-		radio->value = ntools;
+		radio_actions = (GtkRadioActionEntry *) realloc(radio_actions, (n_radio_actions + 1) * sizeof (GtkRadioActionEntry));
+		radio_actions[n_radio_actions] = window->tb->tools[i]->radioActionEntry;
+		radio_actions[n_radio_actions].value = ++n_radio_actions;
 	}
 
 	for (LayerType i = LayerType::AGGREGATE; i < LayerType::NUM_TYPES; ++i) {
@@ -5032,7 +5004,7 @@ static void window_create_ui(Window * window)
 				      vik_layer_get_interface(i)->name,
 				      GTK_UI_MANAGER_MENUITEM, false);
 
-		icon_set = gtk_icon_set_new_from_pixbuf(gdk_pixbuf_from_pixdata(vik_layer_get_interface(i)->icon, false, NULL));
+		GtkIconSet * icon_set = gtk_icon_set_new_from_pixbuf(gdk_pixbuf_from_pixdata(vik_layer_get_interface(i)->icon, false, NULL));
 		gtk_icon_factory_add(icon_factory, vik_layer_get_interface(i)->name, icon_set);
 		gtk_icon_set_unref(icon_set);
 
@@ -5052,11 +5024,10 @@ static void window_create_ui(Window * window)
 
 		// Further tool copying for to apply to the UI, also apply menu UI setup
 		for (unsigned int j = 0; j < vik_layer_get_interface(i)->tools_count; j++) {
-			tools = g_renew(GtkRadioActionEntry, tools, ntools+1);
-			radio = &tools[ntools];
-			ntools++;
 
-			LayerTool const * layer_tool = window->tb->add_tool(vik_layer_get_interface(i)->layer_tool_constructors[j], i);
+			LayerTool * layer_tool = vik_layer_get_interface(i)->layer_tool_constructors[j](window, window->viewport);
+			window->tb->add_tool(layer_tool);
+			assert (layer_tool->layer_type == i);
 
 			gtk_ui_manager_add_ui(uim, mid,  "/ui/MainMenu/Tools",
 					      layer_tool->radioActionEntry.label,
@@ -5064,10 +5035,10 @@ static void window_create_ui(Window * window)
 					      GTK_UI_MANAGER_MENUITEM, false);
 
 
-
-			*radio = layer_tool->radioActionEntry;
-			// Overwrite with actual number to use
-			radio->value = ntools;
+			radio_actions = (GtkRadioActionEntry *) realloc(radio_actions, (n_radio_actions + 1) * sizeof (GtkRadioActionEntry));
+			radio_actions[n_radio_actions] = layer_tool->radioActionEntry;
+			/* Overwrite with actual number to use. */
+			radio_actions[n_radio_actions].value = ++n_radio_actions;
 		}
 
 		GtkActionEntry action_dl;
@@ -5092,8 +5063,8 @@ static void window_create_ui(Window * window)
 	}
 	g_object_unref(icon_factory);
 
-	gtk_action_group_add_radio_actions(action_group, tools, ntools, 0, (GCallback) menu_cb, window);
-	free(tools);
+	gtk_action_group_add_radio_actions(action_group, radio_actions, n_radio_actions, 0, (GCallback) menu_cb, window);
+	free(radio_actions);
 
 	gtk_ui_manager_insert_action_group(uim, action_group, 0);
 
