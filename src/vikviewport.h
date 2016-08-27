@@ -283,8 +283,8 @@ namespace SlavGPS {
 		void free_center(std::list<Coord *>::iterator iter);
 		void init_drawing_area(void);
 
-		GtkDrawingArea * drawing_area_; /* Toolkit-specific drawing area. */
-		char type_string[30];
+		GtkDrawingArea * drawing_area_ = NULL; /* Toolkit-specific drawing area. */
+		char type_string[30] = { 0 };
 	};
 
 

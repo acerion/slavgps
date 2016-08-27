@@ -370,7 +370,7 @@ GdkGC * Viewport::new_gc(char const * colorname, int thickness)
 {
 	GdkColor color;
 
-	GdkGC * rv = gdk_gc_new(gtk_widget_get_window(GTK_WIDGET(this->drawing_area_)));
+	GdkGC * rv = gdk_gc_new(GTK_WIDGET(this->drawing_area_)->window);
 	if (gdk_color_parse(colorname, &color)) {
 		gdk_gc_set_rgb_fg_color(rv, &color);
 	} else {
