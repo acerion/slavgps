@@ -133,48 +133,45 @@ namespace SlavGPS {
 
 
 
+
+		LayerTRW * trw_children[NUM_TRW] = { 0 };
+		int cur_read_child = 0;   /* Used only for reading file. */
+
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
 		bool rt_gpsd_connect(bool ask_if_failed);
 		void rt_gpsd_disconnect();
-#endif
 
-
-
-
-		LayerTRW * trw_children[NUM_TRW];
-		int cur_read_child;   /* Used only for reading file. */
-
-#if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
-		VglGpsd * vgpsd;
+		VglGpsd * vgpsd = NULL;
 		bool realtime_tracking;  /* Set/reset only by the callback. */
-		bool first_realtime_trackpoint;
+		bool first_realtime_trackpoint = false;
 		GpsFix realtime_fix;
 		GpsFix last_fix;
 
-		Track * realtime_track;
+		Track * realtime_track = NULL;
 
-		GIOChannel * realtime_io_channel;
-		unsigned int realtime_io_watch_id;
-		unsigned int realtime_retry_timer;
-		GdkGC * realtime_track_gc;
-		GdkGC * realtime_track_bg_gc;
-		GdkGC * realtime_track_pt_gc;
-		GdkGC * realtime_track_pt1_gc;
-		GdkGC * realtime_track_pt2_gc;
+		GIOChannel * realtime_io_channel = NULL;
+		unsigned int realtime_io_watch_id = 0;
+		unsigned int realtime_retry_timer = 0;
+		GdkGC * realtime_track_gc = NULL;
+		GdkGC * realtime_track_bg_gc = NULL;
+		GdkGC * realtime_track_pt_gc = NULL;
+		GdkGC * realtime_track_pt1_gc = NULL;
+		GdkGC * realtime_track_pt2_gc = NULL;
 
 		/* Params. */
-		char * gpsd_host;
-		char * gpsd_port;
+		char * gpsd_host = NULL;
+		char * gpsd_port = NULL;
 		int gpsd_retry_interval;
 		bool realtime_record;
 		bool realtime_jump_to_start;
 		unsigned int vehicle_position;
 		bool realtime_update_statusbar;
-		Trackpoint * tp;
-		Trackpoint * tp_prev;
+		Trackpoint * tp = NULL;
+		Trackpoint * tp_prev = NULL;
 #endif /* VIK_CONFIG_REALTIME_GPS_TRACKING */
-		char * protocol;
-		char * serial_port;
+
+		char * protocol = NULL;
+		char * serial_port = NULL;
 		bool download_tracks;
 		bool download_routes;
 		bool download_waypoints;
@@ -182,6 +179,11 @@ namespace SlavGPS {
 		bool upload_routes;
 		bool upload_waypoints;
 	};
+
+
+
+
+	void layer_gps_init(void);
 
 
 

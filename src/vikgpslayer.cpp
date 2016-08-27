@@ -67,26 +67,6 @@ using namespace SlavGPS;
 
 
 
-#define VIK_GPS_LAYER_TYPE            (vik_gps_layer_get_type ())
-#define VIK_GPS_LAYER(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_GPS_LAYER_TYPE, VikGpsLayer))
-#define VIK_GPS_LAYER_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), VIK_GPS_LAYER_TYPE, VikGpsLayerClass))
-#define IS_VIK_GPS_LAYER(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), VIK_GPS_LAYER_TYPE))
-#define IS_VIK_GPS_LAYER_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), VIK_GPS_LAYER_TYPE))
-
-typedef struct _VikGpsLayerClass VikGpsLayerClass;
-struct _VikGpsLayerClass {
-	VikLayerClass vik_layer_class;
-};
-
-
-typedef VikLayer VikGpsLayer;
-
-GType vik_gps_layer_get_type();
-
-
-
-
-
 extern std::vector<BabelDevice *> a_babel_device_list;
 
 
@@ -383,7 +363,7 @@ static char * trw_names[] = {
 /**
  * Overwrite the static setup with dynamically generated GPS Babel device list.
  */
-static void gps_layer_inst_init(VikGpsLayer *self)
+void SlavGPS::layer_gps_init(void)
 {
 	int new_proto = 0;
 	/* +1 for luck (i.e the NULL terminator) */
@@ -398,31 +378,6 @@ static void gps_layer_inst_init(VikGpsLayer *self)
 	new_protocols[new_proto] = NULL;
 
 	vik_gps_layer_interface.params[PARAM_PROTOCOL].widget_data = new_protocols;
-}
-
-
-
-
-GType vik_gps_layer_get_type()
-{
-	static GType val_type = 0;
-
-	if (!val_type) {
-		static const GTypeInfo val_info = {
-			sizeof (VikGpsLayerClass),
-			NULL, /* base_init */
-			NULL, /* base_finalize */
-			NULL, /* class init */
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (VikGpsLayer),
-			0,
-			(GInstanceInitFunc) gps_layer_inst_init,
-		};
-		val_type = g_type_register_static(VIK_LAYER_TYPE, "VikGpsLayer", &val_info, (GTypeFlags) 0);
-	}
-
-	return val_type;
 }
 
 
@@ -2044,24 +1999,8 @@ LayerGPS::LayerGPS()
 
 LayerGPS::LayerGPS(Viewport * viewport) : LayerGPS()
 {
-	for (int i = 0; i < NUM_TRW; i++) {
-		this->trw_children[i] = NULL;
-	}
-	this->cur_read_child = 0;
-
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
-	this->vgpsd = NULL;
-	this->first_realtime_trackpoint = false;
-	this->realtime_track = NULL;
 
-	this->realtime_io_channel = NULL;
-	this->realtime_io_watch_id = 0;
-	this->realtime_retry_timer = 0;
-	this->realtime_track_gc = NULL;
-	this->realtime_track_bg_gc = NULL;
-	this->realtime_track_pt1_gc = NULL;
-	this->realtime_track_pt2_gc = NULL;
-	this->realtime_track_pt_gc = NULL;
 	if (viewport) {
 		this->realtime_track_gc = viewport->new_gc("#203070", 2);
 		this->realtime_track_bg_gc = viewport->new_gc("grey", 2);
@@ -2073,18 +2012,9 @@ LayerGPS::LayerGPS(Viewport * viewport) : LayerGPS()
 	this->gpsd_host = NULL; //strdup("host");
 	this->gpsd_port = NULL; //strdup("port");
 
-	this->tp = NULL;
-	this->tp_prev = NULL;
-
 #endif // VIK_CONFIG_REALTIME_GPS_TRACKING
 
-	this->protocol = NULL;
-	this->serial_port = NULL;
-
 	this->set_defaults(viewport);
-
-
-
 	this->rename(vik_gps_layer_interface.name);
 
 	for (int i = 0; i < NUM_TRW; i++) {
