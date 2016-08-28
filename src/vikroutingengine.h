@@ -31,7 +31,7 @@
 #include "viktrwlayer.h"
 #include "coords.h"
 #include "download.h"
-#include "vikwindow.h"
+#include "window.h"
 
 
 

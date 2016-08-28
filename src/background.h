@@ -30,7 +30,7 @@
 #include <gtk/gtk.h>
 
 
-#include "vikwindow.h"
+#include "window.h"
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif

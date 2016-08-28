@@ -68,7 +68,7 @@
 #include "vikgpslayer.h"
 #include "viktrwlayer.h"
 #include "vikviewport.h"
-#include "vikwindow.h"
+#include "window.h"
 #include "viklayerspanel.h"
 #include "viktreeview.h"
 

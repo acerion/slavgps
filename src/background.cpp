@@ -36,7 +36,7 @@
 #include "globals.h"
 #include "preferences.h"
 //#include "viking.h"
-#include "vikwindow.h"
+#include "window.h"
 
 
 

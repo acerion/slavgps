@@ -26,7 +26,7 @@
 
 #include <stdint.h>
 
-#include "vikwindow.h"
+#include "window.h"
 #include "vikexttool.h"
 
 

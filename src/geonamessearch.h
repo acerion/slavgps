@@ -24,7 +24,7 @@
 
 
 
-#include "vikwindow.h"
+#include "window.h"
 #include "viktrwlayer.h"
 #include "coords.h"
 

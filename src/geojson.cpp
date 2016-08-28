@@ -24,7 +24,7 @@
 #include "geojson.h"
 #include "gpx.h"
 #include "globals.h"
-#include "vikwindow.h"
+#include "window.h"
 
 #include <glib.h>
 #include <glib/gstdio.h>

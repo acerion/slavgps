@@ -30,7 +30,7 @@
 
 #include <gtk/gtk.h>
 
-#include "vikwindow.h"
+#include "window.h"
 #include "viklayerspanel.h"
 #include "vikviewport.h"
 #include "babel.h"

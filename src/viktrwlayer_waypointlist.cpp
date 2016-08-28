@@ -34,7 +34,7 @@
 #include "dialog.h"
 #include "settings.h"
 #include "globals.h"
-#include "vikwindow.h"
+#include "window.h"
 
 
 

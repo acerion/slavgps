@@ -22,7 +22,7 @@
 #define _SG_EXTERNAL_H
 
 
-#include "vikwindow.h"
+#include "window.h"
 #include "vikcoord.h"
 
 

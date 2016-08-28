@@ -47,7 +47,7 @@
 
 #include "coords.h"
 #include "vikcoord.h"
-#include "vikwindow.h"
+#include "window.h"
 #include "vikviewport.h"
 #include "mapcoord.h"
 

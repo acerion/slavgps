@@ -56,7 +56,7 @@
 #include "map_ids.h"
 #include "file.h"
 #include "settings.h"
-#include "vikwindow.h"
+#include "window.h"
 #include "modules.h"
 
 /* FIXME LOCALEDIR must be configured by ./configure --localedir */

@@ -28,7 +28,7 @@
 #include <glib.h>
 
 #include "viktrwlayer.h"
-#include "vikwindow.h"
+#include "window.h"
 #include "map_ids.h"
 
 

@@ -24,7 +24,7 @@
 #ifndef __VIKING_PRINT_H
 #define __VIKING_PRINT_H
 
-#include "vikwindow.h"
+#include "window.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -25,7 +25,7 @@
 
 #include <gtk/gtk.h>
 
-#include "vikwindow.h"
+#include "window.h"
 #include "vikexttool.h"
 
 

@@ -32,7 +32,7 @@
 #include "viklayer.h"
 #include "viktrack.h"
 #include "viktrwlayer.h"
-#include "vikwindow.h"
+#include "window.h"
 
 
 

@@ -34,7 +34,7 @@
 
 #include "config.h"
 #include "viklayer.h"
-#include "vikwindow.h"
+#include "window.h"
 #include "viktreeview.h"
 #include "viklayerspanel.h"
 #include "globals.h"
