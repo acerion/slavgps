@@ -55,9 +55,9 @@ typedef struct {
 	bool is_route;
 } TP_write_info_type;
 
-static void a_gpspoint_write_track(const void * id, const Track * trk, FILE * f);
+//static void a_gpspoint_write_track(const void * id, const Track * trk, FILE * f);
 static void a_gpspoint_write_trackpoint(Trackpoint * tp, TP_write_info_type * write_info);
-static void a_gpspoint_write_waypoint(const void * id, const Waypoint * wp, FILE * f);
+//static void a_gpspoint_write_waypoint(const void * id, const Waypoint * wp, FILE * f);
 
 
 

@@ -276,7 +276,7 @@ static bool vik_goto_place(Window * window, Viewport * viewport, char* name, Vik
 	if (!goto_tools.empty() && last_goto_tool >= 0) {
 		GotoTool * goto_tool = goto_tools[last_goto_tool];
 		if (goto_tool) {
-			if (goto_tool->get_coord(window, viewport, name, vcoord) == 0) {
+			if (goto_tool->get_coord(viewport, name, vcoord) == 0) {
 				return true;
 			}
 		}
@@ -303,7 +303,7 @@ void SlavGPS::a_vik_goto(Window * window, Viewport * viewport)
 		if ((!s_str) || (s_str[0] == 0)) {
 			more = false;
 		} else {
-			int ans = goto_tools[last_goto_tool]->get_coord(window, viewport, s_str, &new_center);
+			int ans = goto_tools[last_goto_tool]->get_coord(viewport, s_str, &new_center);
 			if (ans == 0) {
 				if (last_coord) {
 					free(last_coord);

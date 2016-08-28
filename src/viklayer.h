@@ -156,7 +156,7 @@ namespace SlavGPS {
 		virtual char const * tooltip();
 		virtual char const * sublayer_tooltip(SublayerType sublayer_type, sg_uid_t sublayer_uid);
 
-		virtual bool selected(SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeItemType type, void * panel);
+		virtual bool selected(SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeItemType type);
 
 		virtual bool show_selected_viewport_menu(GdkEventButton * event, Viewport * viewport);
 
@@ -371,7 +371,7 @@ VikLayerParamData layer_get_param(SlavGPS::Layer const * layer, uint16_t id, boo
 uint16_t vik_layer_get_menu_items_selection(SlavGPS::Layer * layer);
 bool vik_layer_properties(SlavGPS::Layer * layer, SlavGPS::Viewport * viewport);
 
-bool vik_layer_selected(SlavGPS::Layer * layer, SlavGPS::SublayerType sublayer_type, sg_uid_t sublayer_uid, SlavGPS::TreeItemType type, void * panel);
+bool vik_layer_selected(SlavGPS::Layer * layer, SlavGPS::SublayerType sublayer_type, sg_uid_t sublayer_uid, SlavGPS::TreeItemType type);
 
 /* TODO: put in layerspanel. */
 GdkPixbuf * vik_layer_load_icon(SlavGPS::LayerType layer_type);

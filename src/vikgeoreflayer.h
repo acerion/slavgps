@@ -126,7 +126,6 @@ namespace SlavGPS {
 
 
 	LayerGeoref * vik_georef_layer_create(Viewport * viewport,
-					      LayersPanel * panel,
 					      const char *name,
 					      GdkPixbuf *pibxbuf,
 					      VikCoord *coord_tr,

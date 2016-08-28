@@ -979,7 +979,6 @@ void SlavGPS::vu_command_line(Window * window, double latitude, double longitude
 
 		/* Don't add map layer if one already exists. */
 		std::list<Layer *> * vmls = window->get_layers_panel()->get_all_layers_of_type(LayerType::MAPS, true);
-		int num_maps = vmls->size();
 		bool add_map = true;
 
 		for (auto iter = vmls->begin(); iter != vmls->end(); iter++) {

@@ -86,7 +86,6 @@ static bool layers_button_press_cb(LayersPanel * panel, GdkEventButton * event);
 static bool layers_key_press_cb(LayersPanel * panel, GdkEventKey * event);
 static void layers_move_item_up_cb(LayersPanel * panel);
 static void layers_move_item_down_cb(LayersPanel * panel);
-static void layers_panel_finalize(GObject * gob);
 
 
 
@@ -119,16 +118,16 @@ LayersPanel::LayersPanel()
 	Viewport * viewport = NULL;
 	this->toplayer = new LayerAggregate(viewport);
 	this->toplayer->rename(_("Top Layer"));
-	int a = g_signal_connect_swapped(G_OBJECT(this->toplayer->get_toolkit_object()), "update", G_CALLBACK(vik_layers_panel_emit_update_cb), this);
+	g_signal_connect_swapped(G_OBJECT(this->toplayer->get_toolkit_object()), "update", G_CALLBACK(vik_layers_panel_emit_update_cb), this);
 
 	this->tree_view->add_layer(NULL, &(this->toplayer_iter), this->toplayer->name, NULL, true, this->toplayer, (int) LayerType::AGGREGATE, LayerType::AGGREGATE, 0);
 	this->toplayer->realize(this->tree_view, &(this->toplayer_iter));
 
-	a = g_signal_connect_swapped (this->tree_view->get_toolkit_widget(), "popup_menu", G_CALLBACK(menu_popup_cb), this);
-	a = g_signal_connect_swapped (this->tree_view->get_toolkit_widget(), "button_press_event", G_CALLBACK(layers_button_press_cb), this);
-	a = g_signal_connect_swapped (this->tree_view->get_toolkit_widget(), "item_toggled", G_CALLBACK(layers_item_toggled_cb), this);
-	a = g_signal_connect_swapped (this->tree_view->get_toolkit_widget(), "item_edited", G_CALLBACK(layers_item_edited_cb), this);
-	a = g_signal_connect_swapped (this->tree_view->get_toolkit_widget(), "key_press_event", G_CALLBACK(layers_key_press_cb), this);
+	g_signal_connect_swapped (this->tree_view->get_toolkit_widget(), "popup_menu", G_CALLBACK(menu_popup_cb), this);
+	g_signal_connect_swapped (this->tree_view->get_toolkit_widget(), "button_press_event", G_CALLBACK(layers_button_press_cb), this);
+	g_signal_connect_swapped (this->tree_view->get_toolkit_widget(), "item_toggled", G_CALLBACK(layers_item_toggled_cb), this);
+	g_signal_connect_swapped (this->tree_view->get_toolkit_widget(), "item_edited", G_CALLBACK(layers_item_edited_cb), this);
+	g_signal_connect_swapped (this->tree_view->get_toolkit_widget(), "key_press_event", G_CALLBACK(layers_key_press_cb), this);
 
 	/* Add button. */
 	GtkWidget * addimage = gtk_image_new_from_stock (GTK_STOCK_ADD, GTK_ICON_SIZE_SMALL_TOOLBAR);

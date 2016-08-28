@@ -124,7 +124,7 @@ static double __mapzooms_y[] = { 0.0, 0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0, 32.0,
 static Layer * maps_layer_unmarshall(uint8_t * data, int len, Viewport * viewport);
 static void maps_layer_change_param(GtkWidget *widget, ui_change_values * values);
 static void start_download_thread(LayerMaps * layer, Viewport * viewport, const VikCoord *ul, const VikCoord *br, int redownload_mode);
-static int map_type_to_map_index(MapTypeID map_type);
+static unsigned int map_type_to_map_index(MapTypeID map_type);
 
 
 static LayerTool * maps_layer_download_create(Window * window, Viewport * viewport);
@@ -384,7 +384,7 @@ void _add_map_source(MapSource * map, const char * label, MapTypeID map_type)
 
 
 
-void _update_map_source(MapSource *map, const char *label, int index)
+void _update_map_source(MapSource *map, const char *label, unsigned int index)
 {
 	if (index >= map_sources.size()) {
 		return;
@@ -419,7 +419,7 @@ void maps_layer_register_map_source(MapSource * map)
 	const char * label = map->get_label();
 	assert (label);
 
-	int previous = map_type_to_map_index(map_type);
+	unsigned int previous = map_type_to_map_index(map_type);
 	if (previous != map_sources.size()) {
 		_update_map_source(map, label, previous);
 	} else {
@@ -446,7 +446,7 @@ MapTypeID LayerMaps::get_map_type()
 
 void LayerMaps::set_map_type(MapTypeID map_type)
 {
-	int map_index = map_type_to_map_index(map_type);
+	unsigned int map_index = map_type_to_map_index(map_type);
 	if (map_index == map_sources.size()) {
 		fprintf(stderr, _("WARNING: Unknown map type\n"));
 	} else {
@@ -615,7 +615,7 @@ void LayerMaps::set_file(char const * name)
 /************** PARAMETERS **************/
 /****************************************/
 
-static MapTypeID map_index_to_map_type(int index)
+static MapTypeID map_index_to_map_type(unsigned int index)
 {
 	assert (index < map_sources.size());
 	return map_sources[index]->map_type;
@@ -624,9 +624,9 @@ static MapTypeID map_index_to_map_type(int index)
 
 
 
-static int map_type_to_map_index(MapTypeID map_type)
+static unsigned int map_type_to_map_index(MapTypeID map_type)
 {
-	for (int i = 0; i < map_sources.size(); i++) {
+	for (unsigned int i = 0; i < map_sources.size(); i++) {
 		if (map_sources[i]->map_type == map_type) {
 			return i;
 		}
@@ -668,7 +668,7 @@ bool LayerMaps::set_param(uint16_t id, VikLayerParamData data, Viewport * viewpo
 		this->set_file(data.s);
 		break;
 	case PARAM_MAPTYPE: {
-		int map_index = map_type_to_map_index((MapTypeID) data.u);
+		unsigned int map_index = map_type_to_map_index((MapTypeID) data.u);
 		if (map_index == map_sources.size()) {
 			fprintf(stderr, _("WARNING: Unknown map type\n"));
 		} else {
@@ -982,7 +982,7 @@ static Layer * maps_layer_unmarshall(uint8_t * data, int len, Viewport * viewpor
 /****** DRAWING ******/
 /*********************/
 
-static GdkPixbuf * get_pixbuf_from_file(LayerMaps * layer, TileInfo * mapcoord, char * filename_buf);
+static GdkPixbuf * get_pixbuf_from_file(LayerMaps * layer, char * filename_buf);
 
 static GdkPixbuf *pixbuf_shrink(GdkPixbuf *pixbuf, double xshrinkfactor, double yshrinkfactor)
 {
@@ -1229,13 +1229,13 @@ static GdkPixbuf * get_pixbuf(LayerMaps * layer, MapTypeID map_type, const char*
 				get_cache_filename(layer->cache_dir, MapsCacheLayout::OSM, map_type, NULL,
 					     mapcoord, filename_buf, buf_len,
 					     map->get_file_extension());
-				pixbuf = get_pixbuf_from_file(layer, mapcoord, filename_buf);
+				pixbuf = get_pixbuf_from_file(layer, filename_buf);
 			}
 		} else {
 			get_cache_filename(layer->cache_dir, layer->cache_layout, map_type, mapname,
 				     mapcoord, filename_buf, buf_len,
 				     map->get_file_extension());
-			pixbuf = get_pixbuf_from_file(layer, mapcoord, filename_buf);
+			pixbuf = get_pixbuf_from_file(layer, filename_buf);
 		}
 
 		if (pixbuf) {
@@ -1251,7 +1251,7 @@ static GdkPixbuf * get_pixbuf(LayerMaps * layer, MapTypeID map_type, const char*
 
 
 
-static GdkPixbuf * get_pixbuf_from_file(LayerMaps * layer, TileInfo * mapcoord, char * filename_buf)
+static GdkPixbuf * get_pixbuf_from_file(LayerMaps * layer, char * filename_buf)
 {
 	GdkPixbuf * pixbuf = NULL;
 
@@ -1331,7 +1331,7 @@ static bool should_start_autodownload(LayerMaps * layer, Viewport * viewport)
 bool try_draw_scale_down(LayerMaps * layer, Viewport * viewport, TileInfo ulm, int xx, int yy, int tilesize_x_ceil, int tilesize_y_ceil,
 			 double xshrinkfactor, double yshrinkfactor, MapTypeID map_type, const char *mapname, char *path_buf, unsigned int max_path_len)
 {
-	for (int scale_inc = 1; scale_inc < SCALE_INC_DOWN; scale_inc++) {
+	for (unsigned int scale_inc = 1; scale_inc < SCALE_INC_DOWN; scale_inc++) {
 		/* Try with smaller zooms. */
 		int scale_factor = 1 << scale_inc;  /* 2^scale_inc */
 		TileInfo ulm2 = ulm;
@@ -1357,7 +1357,7 @@ bool try_draw_scale_up(LayerMaps * layer, Viewport * viewport, TileInfo ulm, int
 		       double xshrinkfactor, double yshrinkfactor, MapTypeID map_type, const char *mapname, char *path_buf, unsigned int max_path_len)
 {
 	/* Try with bigger zooms. */
-	for (int scale_dec = 1; scale_dec < SCALE_INC_UP; scale_dec++) {
+	for (unsigned int scale_dec = 1; scale_dec < SCALE_INC_UP; scale_dec++) {
 		int scale_factor = 1 << scale_dec;  /* 2^scale_dec */
 		TileInfo ulm2 = ulm;
 		ulm2.x = ulm.x * scale_factor;
@@ -2276,7 +2276,7 @@ static void maps_layer_about(menu_array_values * values)
 /**
  * Copied from maps_layer_download_section but without the actual download and this returns a value
  */
-int LayerMaps::how_many_maps(Viewport * viewport, VikCoord *ul, VikCoord *br, double zoom, int redownload_mode)
+int LayerMaps::how_many_maps(VikCoord *ul, VikCoord *br, double zoom, int redownload_mode)
 {
 	TileInfo ulm, brm;
 	MapSource *map = map_sources[this->map_index];
@@ -2466,7 +2466,7 @@ static void maps_layer_download_all(menu_array_values * values)
 	   With REDOWNLOAD_NONE this only missing ones - however still has a server lookup per tile. */
 	int map_count = 0;
 	for (int zz = selected_zoom2; zz >= selected_zoom1; zz--) {
-		map_count = map_count + layer->how_many_maps(viewport, &vc_ul, &vc_br, zoom_vals[zz], selected_download_method);
+		map_count = map_count + layer->how_many_maps(&vc_ul, &vc_br, zoom_vals[zz], selected_download_method);
 	}
 
 	fprintf(stderr, "DEBUG: vikmapslayer: download request map count %d for method %d", map_count, selected_download_method);

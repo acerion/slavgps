@@ -684,7 +684,7 @@ void Viewport::draw_copyright()
 	/* Compute copyrights string. */
 	unsigned int len = g_slist_length(copyrights);
 
-	for (int i = 0 ; i < len ; i++) {
+	for (unsigned int i = 0 ; i < len ; i++) {
 		/* Stop when buffer is full. */
 		int slen = strlen(s);
 		if (slen >= 127) {
@@ -780,7 +780,7 @@ void Viewport::draw_logo()
 	unsigned int len = g_slist_length(logos);
 	int x = width - PAD;
 	int y = PAD;
-	for (int i = 0 ; i < len ; i++) {
+	for (unsigned int i = 0 ; i < len ; i++) {
 		GdkPixbuf *logo = (GdkPixbuf *) g_slist_nth_data(logos, i);
 		int width = gdk_pixbuf_get_width (logo);
 		int height = gdk_pixbuf_get_height (logo);

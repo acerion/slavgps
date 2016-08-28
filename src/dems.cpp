@@ -55,7 +55,7 @@ static std::unordered_map<std::string, LoadedDEM *> loaded_dems;
 
 
 static void dem_cache_unref(std::string& filename);
-static bool get_elev_by_coord(std::string key, LoadedDEM * ldem, CoordElev * ce);
+static bool get_elev_by_coord(LoadedDEM * ldem, CoordElev * ce);
 //static GList * a_dems_list_copy(GList * dems);
 //static int16_t a_dems_list_get_elev_by_coord(GList * dems, const Coord * coord);
 
@@ -129,7 +129,7 @@ static void dem_cache_unref(std::string& filename)
 
 
 /* Probably gets called whenever DEM layer is moved in viewport.
-   Probably called with tile names that are - or can be - in current viewport.
+   Probably called with tile names that are - or can be - in current viewport. */
 
 /* To get a DEM that was already loaded.
  * Assumes that its in there already,
@@ -203,7 +203,7 @@ void SlavGPS::dem_cache_list_free(std::list<std::string>& filenames)
 
 
 
-static bool get_elev_by_coord(std::string key, LoadedDEM * ldem, CoordElev * ce)
+static bool get_elev_by_coord(LoadedDEM * ldem, CoordElev * ce)
 {
 	DEM * dem = ldem->dem;
 	double lat, lon;
@@ -256,7 +256,7 @@ int16_t SlavGPS::dem_cache_get_elev_by_coord(const Coord * coord, VikDemInterpol
 	ce.elev = VIK_DEM_INVALID_ELEVATION;
 
 	for (auto iter = loaded_dems.begin(); iter != loaded_dems.end(); ++iter) {
-		if (get_elev_by_coord((*iter).first, (*iter).second, &ce)) {
+		if (get_elev_by_coord((*iter).second, &ce)) {
 			return ce.elev;
 		}
 	}

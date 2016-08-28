@@ -822,8 +822,6 @@ GdkPixbuf * LayerMapnik::get_pixbuf(TileInfo * ulm, TileInfo * brm)
 		}
 	}
 
-	fprintf(stderr, "---- returning pixbuf %x\n", pixbuf);
-
 	return pixbuf;
 }
 
@@ -1004,7 +1002,7 @@ static void mapnik_layer_information(menu_array_values * values)
 	if (array->len) {
 		a_dialog_list(lmk->get_toolkit_window(), _("Mapnik Information"), array, 1);
 		/* Free the copied strings. */
-		for (int i = 0; i < array->len; i++) {
+		for (unsigned int i = 0; i < array->len; i++) {
 			free(g_array_index(array, char*, i));
 		}
 	}

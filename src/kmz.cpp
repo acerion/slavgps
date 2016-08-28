@@ -482,7 +482,7 @@ typedef struct zip_file zip_file_t;
 			vik_coord_load_from_latlon(&vc_tl, viewport->get_coord_mode(), &ll_tl);
 			vik_coord_load_from_latlon(&vc_br, viewport->get_coord_mode(), &ll_br);
 
-			Layer * grl = vik_georef_layer_create(viewport, panel, name, pixbuf, &vc_tl, &vc_br);
+			Layer * grl = vik_georef_layer_create(viewport, name, pixbuf, &vc_tl, &vc_br);
 			if (grl) {
 				LayerAggregate * top = panel->get_top_layer();
 				top->add_layer(grl, false);

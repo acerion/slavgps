@@ -257,7 +257,7 @@ WebToolDatasource::WebToolDatasource(const char * new_label,
 				     const char * new_babel_filter_args,
 				     const char * new_input_label)
 {
-	fprintf(stderr, "%s:%d, label = \n", __PRETTY_FUNCTION__, __LINE__, new_label);
+	fprintf(stderr, "%s:%d, label = %s\n", __PRETTY_FUNCTION__, __LINE__, new_label);
 
 	if (new_label) {
 		this->label = strdup(new_label);

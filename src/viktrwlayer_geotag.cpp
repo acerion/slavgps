@@ -253,14 +253,12 @@ static option_values_t get_default_values()
 /**
  * Correlate the image against the specified track.
  */
-static void trw_layer_geotag_track(const void * id, Track * trk, geotag_options_t *options)
+static void trw_layer_geotag_track(Track * trk, geotag_options_t *options)
 {
 	/* If already found match then don't need to check this track. */
 	if (options->found_match) {
 		return;
 	}
-
-	Trackpoint * tp_next;
 
 	for (auto iter = trk->begin(); iter != trk->end(); iter++) {
 
@@ -340,7 +338,7 @@ static void trw_layer_geotag_track(const void * id, Track * trk, geotag_options_
 static void trw_layer_geotag_tracks(std::unordered_map<sg_uid_t, Track *> & tracks, geotag_options_t *options)
 {
 	for (auto i = tracks.begin(); i != tracks.end(); i++) {
-		trw_layer_geotag_track((void *) ((long) i->first), i->second, options);
+		trw_layer_geotag_track(i->second, options);
 	}
 }
 
@@ -446,8 +444,7 @@ static void trw_layer_geotag_process(geotag_options_t *options)
 
 		if (options->trk) {
 			/* Single specified track. */
-			/* NB Doesn't care about track id. */
-			trw_layer_geotag_track(NULL, options->trk, options);
+			trw_layer_geotag_track(options->trk, options);
 		} else {
 			/* Try all tracks. */
 			std::unordered_map<unsigned int, SlavGPS::Track*> & tracks = options->trw->get_tracks();
@@ -549,7 +546,7 @@ static int trw_layer_geotag_thread(geotag_options_t *options, void * threaddata)
 		if (options->trw) {
 			options->trw->calculate_bounds_waypoints();
 			/* Ensure any new images get show. */
-			options->trw->verify_thumbnails(NULL); // NB second parameter not used ATM
+			options->trw->verify_thumbnails();
 			/* Force redraw as verify only redraws if there are new thumbnails (they may already exist). */
 			options->trw->emit_update(); /* NB Update from background. */
 		}

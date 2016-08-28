@@ -79,7 +79,7 @@ namespace SlavGPS {
 		VikLayerParamData get_param(uint16_t id, bool is_file_operation) const;
 
 		char * get_map_label();
-		int how_many_maps(Viewport * viewport, VikCoord *ul, VikCoord *br, double zoom, int redownload_mode);
+		int how_many_maps(VikCoord * ul, VikCoord * br, double zoom, int redownload_mode);
 
 		void set_cache_dir(char const * dir);
 		void mkdir_if_default_dir();
@@ -98,7 +98,7 @@ namespace SlavGPS {
 
 
 
-		int map_index = 0;
+		unsigned int map_index = 0;
 		char * cache_dir = NULL;
 		MapsCacheLayout cache_layout = MapsCacheLayout::VIKING;
 		uint8_t alpha = 0;

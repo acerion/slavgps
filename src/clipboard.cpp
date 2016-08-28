@@ -327,7 +327,7 @@ static void clip_receive_html(GtkClipboard * c, GtkSelectionData * sd, void * p)
 	size_t r, w;
 	GError *err = NULL;
 	char *s, *span;
-	int tag = 0, i;
+	int tag = 0;
 	struct LatLon coord;
 
 	if (gtk_selection_data_get_length(sd) == -1) {
@@ -345,7 +345,7 @@ static void clip_receive_html(GtkClipboard * c, GtkSelectionData * sd, void * p)
 	if (!(span = g_strstr_len(s, w, "<span id=\"LatLon\">"))) {
 		span = s;
 	}
-	for (i=0; i<strlen(span); i++) {
+	for (size_t i = 0; i < strlen(span); i++) {
 		char ch = span[i];
 		if (ch == '<') {
 			tag++;
@@ -354,7 +354,9 @@ static void clip_receive_html(GtkClipboard * c, GtkSelectionData * sd, void * p)
 			span[i] = ' ';
 		}
 		if (ch == '>') {
-			if (tag>0) tag--;
+			if (tag>0) {
+				tag--;
+			}
 		}
 	}
 	if (clip_parse_latlon(span, &coord)) {

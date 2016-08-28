@@ -305,7 +305,7 @@ static void minmax_array(const double * array, double * min, double * max, bool 
 	*max = -1000;
 	*min = 20000;
 
-	for (unsigned int i = 0; i < PROFILE_WIDTH; i++) {
+	for (int i = 0; i < PROFILE_WIDTH; i++) {
 		if (NO_ALT_TEST || (array[i] != VIK_DEFAULT_ALTITUDE)) {
 			if (array[i] > *max) {
 				*max = array[i];
@@ -1356,7 +1356,6 @@ static void draw_dem_alt_speed_dist(Track * trk,
 				    GdkGC *alt_gc,
 				    GdkGC *speed_gc,
 				    double alt_offset,
-				    double alt_diff,
 				    double max_speed_in,
 				    int cia,
 				    int width,
@@ -1577,7 +1576,7 @@ static void draw_distance_divisions(GtkWidget * window, GtkWidget * image, GdkPi
  */
 static void draw_elevations(GtkWidget * image, Track * trk, PropWidgets * widgets)
 {
-	unsigned int i;
+	int i;
 
 	GdkGC *no_alt_info;
 	GdkColor color;
@@ -1678,7 +1677,6 @@ static void draw_elevations(GtkWidget * image, Track * trk, PropWidgets * widget
 					dem_alt_gc,
 					gps_speed_gc,
 					mina,
-					widgets->max_altitude - mina,
 					widgets->max_speed,
 					widgets->cia,
 					widgets->profile_width,
@@ -1711,7 +1709,6 @@ static void draw_speed_dist(Track * trk,
 			    double max_speed_in,
 			    int width,
 			    int height,
-			    int margin,
 			    bool do_speed)
 {
 	double max_speed = 0;
@@ -1746,7 +1743,7 @@ static void draw_speed_dist(Track * trk,
  */
 static void draw_gradients(GtkWidget * image, Track * trk, PropWidgets * widgets)
 {
-	unsigned int i;
+	int i;
 
 	/* Free previous allocation. */
 	if (widgets->gradients) {
@@ -1810,7 +1807,6 @@ static void draw_gradients(GtkWidget * image, Track * trk, PropWidgets * widgets
 				widgets->max_speed,
 				widgets->profile_width,
 				widgets->profile_height,
-				MARGIN_X,
 				gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widgets->w_show_alt_gps_speed)));
 
 		g_object_unref(G_OBJECT(gps_speed_gc));
@@ -1848,7 +1844,7 @@ static void draw_time_lines(GtkWidget * window, GtkWidget * image, GdkPixmap * p
  */
 static void draw_vt(GtkWidget * image, Track * trk, PropWidgets * widgets)
 {
-	unsigned int i;
+	int i;
 
 	/* Free previous allocation. */
 	if (widgets->speeds) {
@@ -1965,7 +1961,7 @@ static void draw_vt(GtkWidget * image, Track * trk, PropWidgets * widgets)
  */
 static void draw_dt(GtkWidget * image, Track * trk, PropWidgets * widgets)
 {
-	unsigned int i;
+	int i;
 
 	/* Free previous allocation. */
 	if (widgets->distances) {
@@ -2066,7 +2062,7 @@ static void draw_dt(GtkWidget * image, Track * trk, PropWidgets * widgets)
  */
 static void draw_et(GtkWidget * image, Track * trk, PropWidgets * widgets)
 {
-	unsigned int i;
+	int i;
 
 	/* Free previous allocation. */
 	if (widgets->ats) {
@@ -2206,7 +2202,7 @@ static void draw_et(GtkWidget * image, Track * trk, PropWidgets * widgets)
 static void draw_sd(GtkWidget * image, Track * trk, PropWidgets * widgets)
 {
 	double mins;
-	unsigned int i;
+	int i;
 
 	/* Free previous allocation. */
 	if (widgets->speeds_dist) {
@@ -2778,7 +2774,6 @@ static void propwin_response_cb(GtkDialog * dialog, int resp, PropWidgets * widg
 		/* Get new tracks, add them and then the delete old one. old can still exist on clipboard. */
 		std::list<Track *> * tracks = trk->split_into_segments();
 		char *new_tr_name;
-		unsigned int i;
 		for (auto iter = tracks->begin(); iter != tracks->end(); iter++) {
 			if (*iter) {
 				new_tr_name = trw->new_unique_sublayer_name(widgets->trk->is_route ? SublayerType::ROUTE : SublayerType::TRACK,

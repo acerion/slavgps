@@ -423,7 +423,7 @@ static void acquire(Window * window,
 			} else {
 				if (args_off) {
 					/* Turn off. */
-					ProcessOptions off_po = { args_off, fd_off, NULL, NULL, NULL };
+					ProcessOptions off_po = { args_off, fd_off, NULL, NULL, NULL, NULL };
 					a_babel_convert_from(NULL, &off_po, NULL, NULL, NULL);
 					free(args_off);
 				}
@@ -533,7 +533,7 @@ static GtkWidget * acquire_build_menu(Window * window, LayersPanel * panel, View
 		trk
 	};
 
-	for (int i = 0; i < N_FILTERS; i++) {
+	for (unsigned int i = 0; i < N_FILTERS; i++) {
 		if (filters[i]->inputtype == inputtype) {
 			if (! menu_item) { /* Do this just once, but return NULL if no filters. */
 				menu = gtk_menu_new();

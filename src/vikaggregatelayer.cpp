@@ -451,7 +451,6 @@ std::list<waypoint_layer_t *> * LayerAggregate::create_waypoints_and_layers_list
 
 	/* For each TRW layers keep adding the waypoints to build a list of all of them. */
 	std::list<waypoint_layer_t *> * waypoints_and_layers = new std::list<waypoint_layer_t *>;
-	int index = 0;
 	for (auto iter = layers->begin(); iter != layers->end(); iter++) {
 		std::list<Waypoint *> * waypoints = new std::list<Waypoint *>;
 
@@ -545,7 +544,7 @@ void LayerAggregate::search_date()
 
 
 
-std::list<SlavGPS::track_layer_t *> * aggregate_layer_create_tracks_and_layers_list(Layer * layer, SublayerType sublayer_type)
+std::list<SlavGPS::track_layer_t *> * aggregate_layer_create_tracks_and_layers_list(Layer * layer)
 {
 	return ((LayerAggregate *) layer)->create_tracks_and_layers_list();
 }
@@ -949,7 +948,7 @@ std::list<Layer const *> * LayerAggregate::get_children()
 		fprintf(stderr, "pushing child from aggregate\n");
 		result->push_back(*iter);
 	}
-	fprintf(stderr, "returning %d items in %x\n", result->size(), (void *) result);
+	fprintf(stderr, "returning %ld items in %p\n", result->size(), result);
 	return result;
 }
 
@@ -1002,7 +1001,7 @@ char const * LayerAggregate::tooltip()
 	if (size) {
 		/* Could have a more complicated tooltip that numbers each
 		   type of layers, but for now a simple overall count. */
-		snprintf(tmp_buf, sizeof(tmp_buf), ngettext("One layer", "%d layers", size), size);
+		snprintf(tmp_buf, sizeof(tmp_buf), ngettext("One layer", "%ld layers", size), size);
 	}
 	return tmp_buf;
 }

@@ -486,8 +486,7 @@ static void select_cb(GtkTreeSelection * selection, void * data)
 	if (vik_layer_selected(layer,
 			       sublayer_type,
 			       sublayer_uid,
-			       tree_item_type,
-			       window->get_layers_panel())) {
+			       tree_item_type)) {
 
 		/* Redraw required. */
 		window->get_layers_panel()->emit_update();

@@ -145,7 +145,7 @@ namespace SlavGPS {
 		char const * tooltip();
 		char const * sublayer_tooltip(SublayerType sublayer_type, sg_uid_t sublayer_uid);
 
-		bool selected(SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeItemType type, void * panel);
+		bool selected(SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeItemType type);
 
 		bool show_selected_viewport_menu(GdkEventButton * event, Viewport * viewport);
 
@@ -374,7 +374,7 @@ namespace SlavGPS {
 		void set_metadata(TRWMetadata * metadata);
 
 		/* Intended only for use by other trw_layer subwindows. */
-		void verify_thumbnails(Viewport * viewport);
+		void verify_thumbnails(void);
 
 
 		/* Callback-related. */
@@ -592,7 +592,7 @@ GdkPixbuf* get_wp_sym_small(char *symbol);
 
 /* Exposed Layer Interface function definitions.
    Intended only for use by other trw_layer subwindows. */
-//void trw_layer_verify_thumbnails(VikLayer * vtl, Viewport * viewport);
+//void trw_layer_verify_thumbnails(VikLayer * vtl);
 void trw_layer_calculate_bounds_waypoints(VikLayer *vtl);
 
 

@@ -87,7 +87,7 @@ namespace SlavGPS {
 
 
 		LayerTool * active_tool = NULL;
-		int n_tools = 0;
+		unsigned int n_tools = 0;
 		std::vector<LayerTool *> tools;
 		Window * window = NULL;
 	};

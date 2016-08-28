@@ -665,7 +665,7 @@ void a_dialog_list(GtkWindow *parent, const char *title, GArray *array, int padd
 	GtkBox *vbox = GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog)));
 	GtkWidget *label;
 
-	for (int i = 0; i < array->len; i++) {
+	for (unsigned int i = 0; i < array->len; i++) {
 		label = ui_label_new_selectable(NULL);
 		gtk_label_set_markup(GTK_LABEL(label), g_array_index(array,char*,i));
 		gtk_box_pack_start(GTK_BOX(vbox), label, false, true, padding);

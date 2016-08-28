@@ -1809,7 +1809,7 @@ void LayerTRW::realize(TreeView * tree_view_, GtkTreeIter * layer_iter)
 		this->tree_view->set_visibility(&(this->waypoint_iter), this->waypoints_visible);
 	}
 
-	this->verify_thumbnails(NULL);
+	this->verify_thumbnails();
 
 	this->sort_all();
 }
@@ -2020,7 +2020,7 @@ char const * LayerTRW::tooltip()
 
 		// Put together all the elements to form compact tooltip text
 		snprintf(tmp_buf, sizeof(tmp_buf),
-			 _("Tracks: %d - Waypoints: %d - Routes: %d%s%s"),
+			 _("Tracks: %ld - Waypoints: %ld - Routes: %ld%s%s"),
 			 this->tracks.size(), this->waypoints.size(), this->routes.size(), tbuf2, tbuf1);
 
 		g_date_free(gdate_start);
@@ -2040,7 +2040,7 @@ char const * LayerTRW::sublayer_tooltip(SublayerType sublayer_type, sg_uid_t sub
 		{
 			// Very simple tooltip - may expand detail in the future...
 			static char tmp_buf[32];
-			snprintf(tmp_buf, sizeof(tmp_buf), _("Tracks: %d"), this->tracks.size());
+			snprintf(tmp_buf, sizeof(tmp_buf), _("Tracks: %ld"), this->tracks.size());
 			return tmp_buf;
 		}
 		break;
@@ -2048,7 +2048,7 @@ char const * LayerTRW::sublayer_tooltip(SublayerType sublayer_type, sg_uid_t sub
 		{
 			// Very simple tooltip - may expand detail in the future...
 			static char tmp_buf[32];
-			snprintf(tmp_buf, sizeof(tmp_buf), _("Routes: %d"), this->routes.size());
+			snprintf(tmp_buf, sizeof(tmp_buf), _("Routes: %ld"), this->routes.size());
 			return tmp_buf;
 		}
 		break;
@@ -2104,7 +2104,7 @@ char const * LayerTRW::sublayer_tooltip(SublayerType sublayer_type, sg_uid_t sub
 		{
 			// Very simple tooltip - may expand detail in the future...
 			static char tmp_buf[32];
-			snprintf(tmp_buf, sizeof(tmp_buf), _("Waypoints: %d"), this->waypoints.size());
+			snprintf(tmp_buf, sizeof(tmp_buf), _("Waypoints: %ld"), this->waypoints.size());
 			return tmp_buf;
 		}
 		break;
@@ -2207,7 +2207,7 @@ void LayerTRW::set_statusbar_msg_info_wpt(Waypoint * wp)
 /**
  * General layer selection function, find out which bit is selected and take appropriate action.
  */
-bool LayerTRW::selected(SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeItemType type, void * panel)
+bool LayerTRW::selected(SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeItemType type)
 {
 	// Reset
 	this->current_wp = NULL;
@@ -2928,7 +2928,7 @@ void trw_layer_acquire_geotagged_cb(trw_menu_layer_t * data)
 
 	// Reverify thumbnails as they may have changed
 	layer->has_verified_thumbnails = false;
-	layer->verify_thumbnails(NULL);
+	layer->verify_thumbnails();
 }
 #endif
 
@@ -4057,7 +4057,7 @@ void LayerTRW::update_treeview(Track * trk)
 
 	if (uid) {
 		/* kamilFIXME: uid should be a valid key of either routes_iters or tracks_iters, but there is no such key in the maps yet. Check why. */
-		fprintf(stderr, "uid = %d, size of tracks_iters = %d, size of routes_iters = %d\n", uid, this->tracks_iters.size(), this->routes_iters.size());
+		fprintf(stderr, "uid = %d, size of tracks_iters = %ld, size of routes_iters = %ld\n", uid, this->tracks_iters.size(), this->routes_iters.size());
 		GtkTreeIter *iter = NULL;
 		if (trk->is_route) {
 			if (this->routes_iters.size()) {
@@ -5005,7 +5005,6 @@ void trw_layer_merge_by_timestamp(trw_menu_sublayer_t * data)
 	// keep attempting to merge all tracks until no merges within the time specified is possible
 	bool attempt_merge = true;
 	GList *nearby_tracks = NULL;
-	GList *trps;
 
 	while (attempt_merge) {
 
@@ -8716,7 +8715,7 @@ static void thumbnail_create_thread_free(thumbnail_create_thread_data * tctd)
 
 
 
-void LayerTRW::verify_thumbnails(Viewport * viewport)
+void LayerTRW::verify_thumbnails(void)
 {
 	if (!this->has_verified_thumbnails) {
 		GSList *pics = LayerTRWc::image_wp_make_list(this->waypoints);
@@ -8997,7 +8996,7 @@ time_t LayerTRW::get_timestamp()
 void LayerTRW::post_read(Viewport * viewport, bool from_file)
 {
 	if (this->realized) {
-		this->verify_thumbnails(viewport);
+		this->verify_thumbnails();
 	}
 	this->track_alloc_colors();
 
@@ -9112,7 +9111,7 @@ uint16_t LayerTRW::get_menu_selection()
 
 /* ----------- Downloading maps along tracks --------------- */
 
-static int get_download_area_width(Viewport * viewport, double zoom_level, struct LatLon *wh) /* kamilFIXME: viewport is unused, why? */
+static int get_download_area_width(double zoom_level, struct LatLon *wh) /* kamilFIXME: viewport is unused, why? */
 {
 	/* TODO: calculating based on current size of viewport. */
 	const double w_at_zoom_0_125 = 0.0013;
@@ -9180,10 +9179,10 @@ static GList *add_fillins(GList *list, VikCoord *from, VikCoord *to, struct LatL
 
 
 
-void vik_track_download_map(Track *tr, Layer * vml, Viewport * viewport, double zoom_level)
+void vik_track_download_map(Track *tr, Layer * vml, double zoom_level)
 {
 	struct LatLon wh;
-	if (get_download_area_width(viewport, zoom_level, &wh)) {
+	if (get_download_area_width(zoom_level, &wh)) {
 		return;
 	}
 
@@ -9305,7 +9304,7 @@ void trw_layer_download_map_along_track_cb(trw_menu_sublayer_t * data)
 		goto done;
 	}
 
-	vik_track_download_map(trk, map_layers[selected_map], viewport, zoom_vals[selected_zoom]);
+	vik_track_download_map(trk, map_layers[selected_map], zoom_vals[selected_zoom]);
 
  done:
 	for (int i = 0; i < num_maps; i++) {
@@ -9399,7 +9398,7 @@ char * LayerTRW::highest_wp_number_get()
 /**
  * Create the latest list of tracks and routes.
  */
-static std::list<track_layer_t *> * trw_layer_create_tracks_and_layers_list_both(Layer * layer, SublayerType sublayer_type)
+static std::list<track_layer_t *> * trw_layer_create_tracks_and_layers_list_both(Layer * layer)
 {
 	std::list<Track *> * tracks = new std::list<Track *>;
 	tracks = LayerTRWc::get_track_values(tracks, ((LayerTRW *) layer)->get_tracks());

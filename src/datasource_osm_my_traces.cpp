@@ -611,7 +611,7 @@ static void none_found(GtkWindow *gw)
 /**
  * For each track - mark whether the start is in within the viewport.
  */
-static void set_in_current_view_property(LayerTRW * trw, datasource_osm_my_traces_t *data, GList *gl)
+static void set_in_current_view_property(datasource_osm_my_traces_t *data, GList *gl)
 {
 	LatLonBBox bbox;
 	/* get Viewport bounding box */
@@ -685,7 +685,7 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 
 	xd->list_of_gpx_meta_data = g_list_reverse(xd->list_of_gpx_meta_data);
 
-	set_in_current_view_property(trw, (datasource_osm_my_traces_t *) adw->user_data, xd->list_of_gpx_meta_data);
+	set_in_current_view_property((datasource_osm_my_traces_t *) adw->user_data, xd->list_of_gpx_meta_data);
 
 	if (vik_datasource_osm_my_traces_interface.is_thread) {
 		gdk_threads_enter();

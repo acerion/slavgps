@@ -2149,7 +2149,7 @@ static VikLayerToolFuncStatus selecttool_click(Layer * layer, GdkEventButton * e
 			clicker ck;
 			ck.cont = true;
 			ck.viewport = tool->window->viewport;
-			fprintf(stderr, "%s:%d: %x\n", __FUNCTION__, __LINE__, (unsigned long) ck.viewport);
+			fprintf(stderr, "%s:%d: %p\n", __FUNCTION__, __LINE__, ck.viewport);
 			ck.event = event;
 			ck.tool = tool;
 			for (auto iter = layers->begin(); iter != layers->end(); iter++) {
@@ -2455,7 +2455,7 @@ static void menu_properties_cb(GtkAction * a, Window * window)
 static void help_help_cb(GtkAction * a, Window * window)
 {
 #ifdef WINDOWS
-	ShellExecute(NULL, "open", ""PACKAGE".pdf", NULL, NULL, SW_SHOWNORMAL);
+	ShellExecute(NULL, "open", "" PACKAGE".pdf", NULL, NULL, SW_SHOWNORMAL);
 #else /* WINDOWS */
 	char * uri = g_strdup_printf("ghelp:%s", PACKAGE);
 	GError *error = NULL;
@@ -4129,7 +4129,8 @@ static void save_image_file(Window * window, char const *fn, unsigned int w, uns
 
 	g_object_unref(G_OBJECT(pixbuf_to_save));
 
- cleanup:
+	/* Cleanup. */
+
 	vik_statusbar_set_message(window->viking_vs, VIK_STATUSBAR_INFO, "");
 	gtk_dialog_add_button(GTK_DIALOG(msgbox), GTK_STOCK_OK, GTK_RESPONSE_OK);
 	gtk_dialog_run(GTK_DIALOG(msgbox)); // Don't care about the result
@@ -4994,7 +4995,8 @@ static void window_create_ui(Window * window)
 	for (unsigned int i = 0; i < window->tb->n_tools; i++) {
 		radio_actions = (GtkRadioActionEntry *) realloc(radio_actions, (n_radio_actions + 1) * sizeof (GtkRadioActionEntry));
 		radio_actions[n_radio_actions] = window->tb->tools[i]->radioActionEntry;
-		radio_actions[n_radio_actions].value = ++n_radio_actions;
+		++n_radio_actions;
+		radio_actions[n_radio_actions].value = n_radio_actions;
 	}
 
 	for (LayerType i = LayerType::AGGREGATE; i < LayerType::NUM_TYPES; ++i) {
@@ -5038,7 +5040,8 @@ static void window_create_ui(Window * window)
 			radio_actions = (GtkRadioActionEntry *) realloc(radio_actions, (n_radio_actions + 1) * sizeof (GtkRadioActionEntry));
 			radio_actions[n_radio_actions] = layer_tool->radioActionEntry;
 			/* Overwrite with actual number to use. */
-			radio_actions[n_radio_actions].value = ++n_radio_actions;
+			++n_radio_actions;
+			radio_actions[n_radio_actions].value = n_radio_actions;
 		}
 
 		GtkActionEntry action_dl;
@@ -5387,7 +5390,7 @@ Window::Window()
 	g_signal_connect_swapped(G_OBJECT(this->viewport->get_toolkit_object()), "configure_event", G_CALLBACK(window_configure_event), this);
 	gtk_widget_add_events(this->viewport->get_toolkit_widget(), GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_KEY_PRESS_MASK);
 	g_signal_connect_swapped(G_OBJECT(this->viewport->get_toolkit_object()), "scroll_event", G_CALLBACK(draw_scroll_cb), this);
-	int a = g_signal_connect_swapped(G_OBJECT(this->viewport->get_toolkit_object()), "button_press_event", G_CALLBACK(draw_click_cb), this);
+	g_signal_connect_swapped(G_OBJECT(this->viewport->get_toolkit_object()), "button_press_event", G_CALLBACK(draw_click_cb), this);
 	g_signal_connect_swapped(G_OBJECT(this->viewport->get_toolkit_object()), "button_release_event", G_CALLBACK(draw_release_cb), this);
 	g_signal_connect_swapped(G_OBJECT(this->viewport->get_toolkit_object()), "motion_notify_event", G_CALLBACK(draw_mouse_motion_cb), this);
 

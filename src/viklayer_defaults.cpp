@@ -334,7 +334,7 @@ bool a_layer_defaults_show_window(GtkWindow *parent, const char *layername)
 
 	bool found_first = false;
 	int index = 0;
-	for (int i = 0; i < paramsVD->len; i++) {
+	for (unsigned int i = 0; i < paramsVD->len; i++) {
 		VikLayerParam *param = (VikLayerParam*)(g_ptr_array_index(paramsVD,i));
 		if (param->layer_type == layer_type) {
 			layer_params_count++;
@@ -351,7 +351,7 @@ bool a_layer_defaults_show_window(GtkWindow *parent, const char *layername)
 	}
 
 	VikLayerParam *params = (VikLayerParam *) malloc(layer_params_count * sizeof (VikLayerParam));
-	for (int i = 0; i < layer_params_count; i++) {
+	for (unsigned int i = 0; i < layer_params_count; i++) {
 		params[i] = *((VikLayerParam*)(g_ptr_array_index(paramsVD,i+index)));
 	}
 

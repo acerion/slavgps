@@ -218,14 +218,6 @@ static bool layer_defaults_register(LayerType layer_type)
 
 
 
-static void vik_layer_init(VikLayer * vl)
-{
-	return;
-}
-
-
-
-
 /* Frees old name. */
 void Layer::rename(char const * new_name)
 {
@@ -529,9 +521,9 @@ Layer::~Layer()
 
 
 
-bool vik_layer_selected(Layer * layer, SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeItemType type, void * panel)
+bool vik_layer_selected(Layer * layer, SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeItemType type)
 {
-	bool result = layer->selected(sublayer_type, sublayer_uid, type, panel);
+	bool result = layer->selected(sublayer_type, sublayer_uid, type);
 	if (result) {
 		return result;
 	} else {
@@ -834,7 +826,7 @@ char const * Layer::sublayer_tooltip(SublayerType sublayer_type, sg_uid_t sublay
 
 
 
-bool Layer::selected(SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeItemType type, void * panel)
+bool Layer::selected(SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeItemType type)
 {
 	return false;
 }

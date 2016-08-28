@@ -1811,7 +1811,7 @@ Track * Track::unmarshall(uint8_t *data, size_t datalen)
 	data += len;
 
 	Trackpoint * new_tp;
-	for (int i = 0; i < ntp; i++) {
+	for (unsigned int i = 0; i < ntp; i++) {
 		new_tp = new Trackpoint();
 		memcpy(new_tp, data, sizeof(*new_tp));
 		data += sizeof(*new_tp);

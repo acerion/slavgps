@@ -110,7 +110,7 @@ DownloadFileOptions * GotoTool::get_download_options()
  *  1  = search unavailable in the #GotoTool due to communication issue
  *
  */
-int GotoTool::get_coord(Window * window, Viewport * viewport, char * srch_str, VikCoord * coord)
+int GotoTool::get_coord(Viewport * viewport, char * srch_str, VikCoord * coord)
 {
 	int ret = 0;  /* OK */
 

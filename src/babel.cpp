@@ -158,7 +158,7 @@ bool a_babel_convert(LayerTRW * trw, const char * babelargs, BabelStatusFunc cb,
 	char *name_src = a_gpx_write_tmp_file(trw, NULL);
 
 	if (name_src) {
-		ProcessOptions po = { bargs, name_src, NULL, NULL, NULL };
+		ProcessOptions po = { bargs, name_src, NULL, NULL, NULL, NULL };
 		ret = a_babel_convert_from(trw, &po, cb, user_data, (DownloadFileOptions *) not_used);
 		(void) remove(name_src);
 		free(name_src);

@@ -265,7 +265,7 @@ char const * LayerDEM::tooltip()
 {
 	static char tmp_buf[100];
 
-	snprintf(tmp_buf, sizeof(tmp_buf), _("Number of files: %d"), this->files->size());
+	snprintf(tmp_buf, sizeof(tmp_buf), _("Number of files: %ld"), this->files->size());
 	return tmp_buf;
 }
 
@@ -274,14 +274,14 @@ static Layer * dem_layer_unmarshall(uint8_t * data, int len, Viewport * viewport
 	LayerDEM * layer = new LayerDEM(viewport);
 
 	/* TODO: share GCS between layers. */
-	for (int i = 0; i < DEM_N_HEIGHT_COLORS; i++) {
+	for (unsigned int i = 0; i < DEM_N_HEIGHT_COLORS; i++) {
 		if (i == 0) {
 			layer->gcs[i] = viewport->new_gc_from_color(&layer->color, UNUSED_LINE_THICKNESS);
 		} else {
 			layer->gcs[i] = viewport->new_gc(dem_height_colors[i], UNUSED_LINE_THICKNESS);
 		}
 	}
-	for (int i = 0; i < DEM_N_GRADIENT_COLORS; i++) {
+	for (unsigned int i = 0; i < DEM_N_GRADIENT_COLORS; i++) {
 		layer->gcsgradient[i] = viewport->new_gc(dem_gradient_colors[i], UNUSED_LINE_THICKNESS);
 	}
 
@@ -903,7 +903,7 @@ void LayerDEM::draw(Viewport * viewport)
 LayerDEM::~LayerDEM()
 {
 	if (this->gcs) {
-		for (int i = 0; i < DEM_N_HEIGHT_COLORS; i++) {
+		for (unsigned int i = 0; i < DEM_N_HEIGHT_COLORS; i++) {
 			g_object_unref(this->gcs[i]);
 		}
 	}
@@ -911,7 +911,7 @@ LayerDEM::~LayerDEM()
 	free(this->gcs);
 
 	if (this->gcsgradient) {
-		for (int i = 0; i < DEM_N_GRADIENT_COLORS; i++) {
+		for (unsigned int i = 0; i < DEM_N_GRADIENT_COLORS; i++) {
 			g_object_unref(this->gcsgradient[i]);
 		}
 	}
@@ -1465,13 +1465,13 @@ LayerDEM::LayerDEM(Viewport * viewport) : LayerDEM()
 
 	if (viewport) {
 		/* TODO: share GCS between layers. */
-		for (int i = 0; i < DEM_N_HEIGHT_COLORS; i++) {
+		for (unsigned int i = 0; i < DEM_N_HEIGHT_COLORS; i++) {
 			if (i > 0) {
 				this->gcs[i] = viewport->new_gc(dem_height_colors[i], UNUSED_LINE_THICKNESS);
 			}
 		}
 
-		for (int i = 0; i < DEM_N_GRADIENT_COLORS; i++) {
+		for (unsigned int i = 0; i < DEM_N_GRADIENT_COLORS; i++) {
 				this->gcsgradient[i] = viewport->new_gc(dem_gradient_colors[i], UNUSED_LINE_THICKNESS);
 		}
 	}

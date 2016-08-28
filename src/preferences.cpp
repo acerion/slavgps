@@ -224,8 +224,7 @@ bool a_preferences_save_to_file()
 	if (f) {
 		VikLayerParam *param;
 		VikLayerTypedParamData * val;
-		int i;
-		for (i = 0; i < params->len; i++) {
+		for (unsigned int i = 0; i < params->len; i++) {
 			param = (VikLayerParam *) g_ptr_array_index(params,i);
 			val = (VikLayerTypedParamData *) g_hash_table_lookup(values, param->name);
 			if (val) {
@@ -251,8 +250,7 @@ void a_preferences_show_window(GtkWindow * parent)
 	/* TODO: THIS IS A MAJOR HACKAROUND, but ok when we have only a couple preferences. */
 	int params_count = params->len;
 	VikLayerParam * contiguous_params = (VikLayerParam *) malloc(params_count * sizeof (VikLayerParam));
-	int i;
-	for (i = 0; i < params->len; i++) {
+	for (unsigned int i = 0; i < params->len; i++) {
 		contiguous_params[i] = *((VikLayerParam*) (g_ptr_array_index(params,i)));
 	}
 	loaded = true;

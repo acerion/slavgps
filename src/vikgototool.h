@@ -29,7 +29,6 @@
 
 #include "coords.h"
 #include "vikviewport.h"
-#include "vikwindow.h"
 #include "download.h"
 
 
@@ -54,7 +53,7 @@ namespace SlavGPS {
 		virtual DownloadFileOptions * get_download_options();
 		virtual bool parse_file_for_latlon(char * filename, struct LatLon * ll) = 0;
 
-		int get_coord(Window * window, Viewport * viewport, char * srch_str, VikCoord * coord);
+		int get_coord(Viewport * viewport, char * srch_str, VikCoord * coord);
 
 	protected:
 

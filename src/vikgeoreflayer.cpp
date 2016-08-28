@@ -1271,7 +1271,6 @@ static void goto_center_ll(Viewport * viewport, struct LatLon ll_tl, struct LatL
 
 
 LayerGeoref * SlavGPS::vik_georef_layer_create(Viewport * viewport,
-					       LayersPanel * panel,
 					       const char *name,
 					       GdkPixbuf *pixbuf,
 					       VikCoord *coord_tl,

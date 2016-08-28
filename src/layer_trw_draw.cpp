@@ -125,7 +125,7 @@ void init_drawing_params(DrawingParams * dp, LayerTRW * trw, Viewport * viewport
  *  . average is yellow
  *  . fast points are green
  */
-static int track_section_colour_by_speed(Layer * trw, Trackpoint * tp1, Trackpoint * tp2, double average_speed, double low_speed, double high_speed)
+static int track_section_colour_by_speed(Trackpoint * tp1, Trackpoint * tp2, double average_speed, double low_speed, double high_speed)
 {
 	double rv = 0;
 	if (tp1->has_timestamp && tp2->has_timestamp) {
@@ -662,7 +662,7 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 			if (drawpoints || dp->trw->drawlines) {
 				/* Setup main_gc for both point and line drawing. */
 				if (!drawing_highlight && (dp->trw->drawmode == DRAWMODE_BY_SPEED)) {
-					main_gc = g_array_index(dp->trw->track_gc, GdkGC *, track_section_colour_by_speed(dp->trw, tp, prev_tp, average_speed, low_speed, high_speed));
+					main_gc = g_array_index(dp->trw->track_gc, GdkGC *, track_section_colour_by_speed(tp, prev_tp, average_speed, low_speed, high_speed));
 				}
 			}
 
@@ -718,7 +718,7 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 					dp->viewport->coord_to_screen(&(tp->coord), &x, &y);
 
 					if (!drawing_highlight && (dp->trw->drawmode == DRAWMODE_BY_SPEED)) {
-						main_gc = g_array_index(dp->trw->track_gc, GdkGC *, track_section_colour_by_speed(dp->trw, tp, prev_tp, average_speed, low_speed, high_speed));
+						main_gc = g_array_index(dp->trw->track_gc, GdkGC *, track_section_colour_by_speed(tp, prev_tp, average_speed, low_speed, high_speed));
 					}
 
 					/* Draw only if current point has different coordinates than the previous one. */
