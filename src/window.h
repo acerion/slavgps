@@ -155,6 +155,9 @@ namespace SlavGPS {
 		void * get_toolkit_object(void);
 
 
+		void pan_click(GdkEventButton * event);
+		void pan_move(GdkEventMotion * event);
+		void pan_release(GdkEventButton * event);
 
 
 		/* Store at this level for highlighted selection drawing since it applies to the viewport and the layers panel. */
@@ -209,7 +212,7 @@ namespace SlavGPS {
 
 		/* Display controls. */
 		bool select_move = false;
-		bool pan_move = false;
+		bool pan_move_flag = false;
 		int pan_x = -1;
 		int pan_y = -1;
 		int delayed_pan_x, delayed_pan_y; /* Temporary storage. */

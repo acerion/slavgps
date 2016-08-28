@@ -18,6 +18,7 @@ namespace SlavGPS {
 
 
 	class Window;
+	class Viewport;
 
 
 
@@ -44,6 +45,14 @@ namespace SlavGPS {
 		std::vector<LayerTool *> tools;
 		Window * window = NULL;
 	};
+
+
+
+
+	LayerTool * ruler_create(Window * window, Viewport * viewport);
+	LayerTool * zoomtool_create(Window * window, Viewport * viewport);
+	LayerTool * pantool_create(Window * window, Viewport * viewport);
+	LayerTool * selecttool_create(Window * window, Viewport * viewport);
 
 
 
