@@ -1,4 +1,11 @@
-2014.04.30
+2016.08.28
+Committed first files with QT5 UI. These files implement just a toy
+application, without any signal or methods or variables, but we have
+to start somewhere...
+Commit: ecb92115f05a01b2b8d4acea6f0221f1b7dcc25f
+
+
+2016.04.30
 Committed first switch from glib container to C++ container (unordered map).
 Commit: 00480e8ff9fac78df79e26f6e577052fde3a246b
 
