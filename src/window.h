@@ -42,6 +42,7 @@
 #include "layer_trw_containers.h"
 #include "file.h"
 #include "toolbar.h"
+#include "window_layer_tools.h"
 
 
 
@@ -65,32 +66,6 @@ namespace SlavGPS {
 	class Window;
 	class LayerTool;
 	class Window;
-
-
-
-
-	class ToolBox {
-
-	public:
-		ToolBox(Window * win) : window(win) {};
-		~ToolBox();
-
-		int add_tool(LayerTool * layer_tool);
-		LayerTool * get_tool(char const * tool_name);;
-		void activate(char const * tool_name);
-		const GdkCursor * get_cursor(char const * tool_name);
-
-		void click(GdkEventButton * event);
-		void move(GdkEventMotion * event);
-		void release(GdkEventButton * event);
-
-
-
-		LayerTool * active_tool = NULL;
-		unsigned int n_tools = 0;
-		std::vector<LayerTool *> tools;
-		Window * window = NULL;
-	};
 
 
 
@@ -230,7 +205,7 @@ namespace SlavGPS {
 		LayerType tool_layer_type;
 		uint16_t tool_tool_id;
 
-		ToolBox * tb = NULL;
+		LayerToolsBox * tb = NULL;
 
 		/* Display controls. */
 		bool select_move = false;
