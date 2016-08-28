@@ -84,7 +84,8 @@ libviking_a_SOURCES = \
 	viklayerspanel.cpp viklayerspanel.h \
 	vikcoordlayer.cpp vikcoordlayer.h \
 	vikstatus.cpp vikstatus.h \
-	vikwindow.cpp vikwindow.h \
+	window.cpp window.h \
+	window_layer_tools.cpp window_layer_tools.h \
 	vikviewport.cpp vikviewport.h \
 	vikaggregatelayer.cpp vikaggregatelayer.h \
 	vikgobjectbuilder.cpp vikgobjectbuilder.h \
