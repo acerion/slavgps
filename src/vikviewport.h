@@ -30,7 +30,6 @@
 
 #include <gtk/gtk.h>
 
-
 #include "vikcoord.h"
 #include "bbox.h"
 
@@ -251,11 +250,11 @@ namespace SlavGPS {
 		unsigned int centers_radius;   /* Metres. */
 
 		GdkPixmap * scr_buffer = NULL;
-		int width = 0;
-		int height = 0;
+		int size_width = 0;
+		int size_height = 0;
 		/* Half of the normal width and height. */
-		int width_2 = 0;
-		int height_2 = 0;
+		int size_width_2 = 0;
+		int size_height_2 = 0;
 
 		void update_centers();
 

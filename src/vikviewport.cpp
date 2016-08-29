@@ -32,7 +32,6 @@
 #define DEFAULT_HIGHLIGHT_COLOR "#EEA500"
 /* Default highlight in orange */
 
-#include <gtk/gtk.h>
 #ifdef HAVE_MATH_H
 #include <math.h>
 #endif
@@ -45,10 +44,9 @@
 
 #include <glib-object.h>
 
-#include "coords.h"
-#include "vikcoord.h"
-#include "window.h"
 #include "vikviewport.h"
+#include "coords.h"
+#include "window.h"
 #include "mapcoord.h"
 
 /* For ALTI_TO_MPP. */
@@ -135,7 +133,7 @@ double Viewport::calculate_utm_zone_width()
 
 		/* Get latitude of screen bottom. */
 		struct UTM utm = *((struct UTM *)(get_center()));
-		utm.northing -= height * ympp / 2;
+		utm.northing -= this->size_height * ympp / 2;
 		a_coords_utm_to_latlon(&utm, &ll);
 
 		/* Boundary. */
@@ -394,24 +392,24 @@ GdkGC * Viewport::new_gc_from_color(GdkColor * color, int thickness)
 
 
 
-void Viewport::configure_manually(int width, unsigned int height)
+void Viewport::configure_manually(int width_, unsigned int height_)
 {
-	this->width = width;
-	this->height = height;
+	this->size_width = width_;
+	this->size_height = height_;
 
-	this->width_2 = this->width / 2;
-	this->height_2 = this->height / 2;
+	this->size_width_2 = this->size_width / 2;
+	this->size_height_2 = this->size_height / 2;
 
 	if (this->scr_buffer) {
 		g_object_unref(G_OBJECT (this->scr_buffer));
 	}
-	this->scr_buffer = gdk_pixmap_new(gtk_widget_get_window(GTK_WIDGET(this->drawing_area_)), this->width, this->height, -1);
+	this->scr_buffer = gdk_pixmap_new(gtk_widget_get_window(GTK_WIDGET(this->drawing_area_)), this->size_width, this->size_height, -1);
 
 	/* TODO trigger: only if this is enabled!!! */
 	if (this->snapshot_buffer) {
 		g_object_unref(G_OBJECT (this->snapshot_buffer));
 	}
-	this->snapshot_buffer = gdk_pixmap_new(gtk_widget_get_window(GTK_WIDGET(this->drawing_area_)), this->width, this->height, -1);
+	this->snapshot_buffer = gdk_pixmap_new(gtk_widget_get_window(GTK_WIDGET(this->drawing_area_)), this->size_width, this->size_height, -1);
 }
 
 
@@ -442,24 +440,24 @@ bool Viewport::configure()
 {
 	GtkAllocation allocation;
 	gtk_widget_get_allocation(GTK_WIDGET(this->drawing_area_), &allocation);
-	this->width = allocation.width;
-	this->height = allocation.height;
+	this->size_width = allocation.width;
+	this->size_height = allocation.height;
 
-	this->width_2 = this->width / 2;
-	this->height_2 = this->height/2;
+	this->size_width_2 = this->size_width / 2;
+	this->size_height_2 = this->size_height / 2;
 
 	if (this->scr_buffer) {
 		g_object_unref (G_OBJECT (this->scr_buffer));
 	}
 
-	this->scr_buffer = gdk_pixmap_new(gtk_widget_get_window(GTK_WIDGET(this->drawing_area_)), this->width, this->height, -1);
+	this->scr_buffer = gdk_pixmap_new(gtk_widget_get_window(GTK_WIDGET(this->drawing_area_)), this->size_width, this->size_height, -1);
 
 	/* TODO trigger: only if enabled! */
 	if (this->snapshot_buffer) {
 		g_object_unref(G_OBJECT (this->snapshot_buffer));
 	}
 
-	this->snapshot_buffer = gdk_pixmap_new(gtk_widget_get_window(GTK_WIDGET(this->drawing_area_)), this->width, this->height, -1);
+	this->snapshot_buffer = gdk_pixmap_new(gtk_widget_get_window(GTK_WIDGET(this->drawing_area_)), this->size_width, this->size_height, -1);
 	/* TODO trigger. */
 
 	/* Rhis is down here so it can get a GC (necessary?). */
@@ -486,7 +484,7 @@ bool Viewport::configure()
  */
 void Viewport::clear()
 {
-	gdk_draw_rectangle(GDK_DRAWABLE(scr_buffer), background_gc, true, 0, 0, width, height);
+	gdk_draw_rectangle(GDK_DRAWABLE(scr_buffer), background_gc, true, 0, 0, this->size_width, this->size_height);
 	this->reset_copyrights();
 	this->reset_logos();
 }
@@ -581,10 +579,10 @@ void Viewport::draw_scale()
 	double base_distance;       /* Physical (real world) distance corresponding to full width of drawn scale. Physical units (miles, meters). */
 	int HEIGHT = 20;            /* Height of scale in pixels. */
 	float RELATIVE_WIDTH = 0.5; /* Width of scale, relative to width of viewport. */
-	int MAXIMUM_WIDTH = this->width * RELATIVE_WIDTH;
+	int MAXIMUM_WIDTH = this->size_width * RELATIVE_WIDTH;
 
-	this->screen_to_coord(0,                      height / 2, &left);
-	this->screen_to_coord(width * RELATIVE_WIDTH, height / 2, &right);
+	this->screen_to_coord(0,                                 this->size_height / 2, &left);
+	this->screen_to_coord(this->size_width * RELATIVE_WIDTH, this->size_height / 2, &right);
 
 	DistanceUnit distance_unit = a_vik_get_units_distance();
 	switch (distance_unit) {
@@ -615,26 +613,23 @@ void Viewport::draw_scale()
 	GdkGC * paint_fg = gtk_widget_get_style(GTK_WIDGET(this->drawing_area_))->black_gc;
 
 	/* White background. */
-	this->draw_line(paint_bg, PAD,       height - PAD, PAD + len, height - PAD);
-	this->draw_line(paint_bg, PAD,       height - PAD, PAD,       height - PAD - HEIGHT);
-	this->draw_line(paint_bg, PAD + len, height - PAD, PAD + len, height - PAD - HEIGHT);
+	this->draw_line(paint_bg, PAD,       this->size_height - PAD, PAD + len, this->size_height - PAD);
+	this->draw_line(paint_bg, PAD,       this->size_height - PAD, PAD,       this->size_height - PAD - HEIGHT);
+	this->draw_line(paint_bg, PAD + len, this->size_height - PAD, PAD + len, this->size_height - PAD - HEIGHT);
 
 	/* Black scale. */
-	this->draw_line(paint_fg, PAD,       height - PAD, PAD + len, height - PAD);
-	this->draw_line(paint_fg, PAD,       height - PAD, PAD,       height - PAD - HEIGHT);
-	this->draw_line(paint_fg, PAD + len, height - PAD, PAD + len, height - PAD - HEIGHT);
+	this->draw_line(paint_fg, PAD,       this->size_height - PAD, PAD + len, this->size_height - PAD);
+	this->draw_line(paint_fg, PAD,       this->size_height - PAD, PAD,       this->size_height - PAD - HEIGHT);
+	this->draw_line(paint_fg, PAD + len, this->size_height - PAD, PAD + len, this->size_height - PAD - HEIGHT);
 
 
-	int y1 = height - PAD;
+	int y1 = this->size_height - PAD;
 	for (int i = 1; i < 10; i++) {
 		int x1 = PAD + i * len / 10;
 		int diff = ((i == 5) ? (2 * HEIGHT / 3) : (1 * HEIGHT / 3));
 		this->draw_line(paint_bg, x1, y1, x1, y1 - diff);
 		this->draw_line(paint_fg, x1, y1, x1, y1 - diff);
 	}
-
-	PangoLayout * pl = gtk_widget_create_pango_layout(GTK_WIDGET(this->drawing_area_), NULL);
-	pango_layout_set_font_description(pl, gtk_widget_get_style(GTK_WIDGET(this->drawing_area_))->font_desc);
 
 	char s[128];
 	switch (distance_unit) {
@@ -668,8 +663,12 @@ void Viewport::draw_scale()
 	default:
 		fprintf(stderr, "CRITICAL: failed to get correct units of distance, got %d\n", distance_unit);
 	}
+
+
+	PangoLayout * pl = gtk_widget_create_pango_layout(GTK_WIDGET(this->drawing_area_), NULL);
+	pango_layout_set_font_description(pl, gtk_widget_get_style(GTK_WIDGET(this->drawing_area_))->font_desc);
 	pango_layout_set_text(pl, s, -1);
-	this->draw_layout(paint_fg, PAD + len + PAD, height - PAD - 10, pl);
+	this->draw_layout(paint_fg, PAD + len + PAD, this->size_height - PAD - 10, pl);
 	g_object_unref(pl);
 	pl = NULL;
 }
@@ -714,10 +713,10 @@ void Viewport::draw_copyright()
 
 	PangoRectangle ink_rect, logical_rect;
 	/* Use maximum of half the viewport width. */
-	pango_layout_set_width(pl, (width / 2) * PANGO_SCALE);
+	pango_layout_set_width(pl, (this->size_width / 2) * PANGO_SCALE);
 	pango_layout_get_pixel_extents(pl, &ink_rect, &logical_rect);
 	this->draw_layout(gtk_widget_get_style(GTK_WIDGET(this->drawing_area_))->black_gc,
-			  width / 2, height - logical_rect.height, pl);
+			  this->size_width / 2, this->size_height - logical_rect.height, pl);
 
 	/* Free memory. */
 	g_object_unref(pl);
@@ -754,22 +753,22 @@ void Viewport::draw_centermark()
 
 	const int len = 30;
 	const int gap = 4;
-	int center_x = width / 2;
-	int center_y = height / 2;
+	int center_x = this->size_width / 2;
+	int center_y = this->size_height / 2;
 
 	GdkGC * black_gc = gtk_widget_get_style(GTK_WIDGET(this->drawing_area_))->black_gc;
 
 	/* White background. */
-	this->draw_line(scale_bg_gc, center_x - len, center_y, center_x - gap, center_y);
-	this->draw_line(scale_bg_gc, center_x + gap, center_y, center_x + len, center_y);
-	this->draw_line(scale_bg_gc, center_x, center_y - len, center_x, center_y - gap);
-	this->draw_line(scale_bg_gc, center_x, center_y + gap, center_x, center_y + len);
+	this->draw_line(scale_bg_gc, center_x - len, center_y,       center_x - gap, center_y);
+	this->draw_line(scale_bg_gc, center_x + gap, center_y,       center_x + len, center_y);
+	this->draw_line(scale_bg_gc, center_x,       center_y - len, center_x,       center_y - gap);
+	this->draw_line(scale_bg_gc, center_x,       center_y + gap, center_x,       center_y + len);
 
 	/* Black foreground. */
-	this->draw_line(black_gc, center_x - len, center_y, center_x - gap, center_y);
-	this->draw_line(black_gc, center_x + gap, center_y, center_x + len, center_y);
-	this->draw_line(black_gc, center_x, center_y - len, center_x, center_y - gap);
-	this->draw_line(black_gc, center_x, center_y + gap, center_x, center_y + len);
+	this->draw_line(black_gc, center_x - len, center_y,        center_x - gap, center_y);
+	this->draw_line(black_gc, center_x + gap, center_y,        center_x + len, center_y);
+	this->draw_line(black_gc, center_x,       center_y - len,  center_x,       center_y - gap);
+	this->draw_line(black_gc, center_x,       center_y + gap,  center_x,       center_y + len);
 }
 
 
@@ -778,9 +777,9 @@ void Viewport::draw_centermark()
 void Viewport::draw_logo()
 {
 	unsigned int len = g_slist_length(logos);
-	int x = width - PAD;
+	int x = this->size_width - PAD;
 	int y = PAD;
-	for (unsigned int i = 0 ; i < len ; i++) {
+	for (unsigned int i = 0; i < len; i++) {
 		GdkPixbuf *logo = (GdkPixbuf *) g_slist_nth_data(logos, i);
 		int width = gdk_pixbuf_get_width (logo);
 		int height = gdk_pixbuf_get_height (logo);
@@ -810,7 +809,7 @@ bool Viewport::get_draw_highlight()
 
 void Viewport::sync()
 {
-	gdk_draw_drawable(gtk_widget_get_window(GTK_WIDGET(this->drawing_area_)), gtk_widget_get_style(GTK_WIDGET(this->drawing_area_))->bg_gc[0], GDK_DRAWABLE(this->scr_buffer), 0, 0, 0, 0, this->width, this->height);
+	gdk_draw_drawable(gtk_widget_get_window(GTK_WIDGET(this->drawing_area_)), gtk_widget_get_style(GTK_WIDGET(this->drawing_area_))->bg_gc[0], GDK_DRAWABLE(this->scr_buffer), 0, 0, 0, 0, this->size_width, this->size_height);
 }
 
 
@@ -820,13 +819,13 @@ void Viewport::pan_sync(int x_off, int y_off)
 {
 	int x, y, wid, hei;
 
-	gdk_draw_drawable(gtk_widget_get_window(GTK_WIDGET(this->drawing_area_)), gtk_widget_get_style(GTK_WIDGET(this->drawing_area_))->bg_gc[0], GDK_DRAWABLE(this->scr_buffer), 0, 0, x_off, y_off, this->width, this->height);
+	gdk_draw_drawable(gtk_widget_get_window(GTK_WIDGET(this->drawing_area_)), gtk_widget_get_style(GTK_WIDGET(this->drawing_area_))->bg_gc[0], GDK_DRAWABLE(this->scr_buffer), 0, 0, x_off, y_off, this->size_width, this->size_height);
 
 	if (x_off >= 0) {
 		x = 0;
 		wid = x_off;
 	} else {
-		x = this->width + x_off;
+		x = this->size_width + x_off;
 		wid = -x_off;
 	}
 
@@ -834,11 +833,11 @@ void Viewport::pan_sync(int x_off, int y_off)
 		y = 0;
 		hei = y_off;
 	} else {
-		y = this->height + y_off;
+		y = this->size_height + y_off;
 		hei = -y_off;
 	}
-	gtk_widget_queue_draw_area(GTK_WIDGET(this->drawing_area_), x, 0, wid, this->height);
-	gtk_widget_queue_draw_area(GTK_WIDGET(this->drawing_area_), 0, y, this->width, hei);
+	gtk_widget_queue_draw_area(GTK_WIDGET(this->drawing_area_), x, 0, wid, this->size_height);
+	gtk_widget_queue_draw_area(GTK_WIDGET(this->drawing_area_), 0, y, this->size_width, hei);
 }
 
 
@@ -1282,10 +1281,10 @@ void Viewport::corners_for_zonen(int zone, VikCoord * ul, VikCoord * br)
 	ul->mode = VIK_COORD_UTM;
 	*br = *ul;
 
-	ul->north_south += (ympp * height / 2);
-	ul->east_west -= (xmpp * width / 2);
-	br->north_south -= (ympp * height / 2);
-	br->east_west += (xmpp * width / 2);
+	ul->north_south += (ympp * this->size_height / 2);
+	ul->east_west -= (xmpp * this->size_width / 2);
+	br->north_south -= (ympp * this->size_height / 2);
+	br->east_west += (xmpp * this->size_width / 2);
 }
 
 
@@ -1320,7 +1319,7 @@ char Viewport::rightmost_zone()
 {
 	if (coord_mode == VIK_COORD_UTM) {
 		VikCoord coord;
-		this->screen_to_coord(width, 0, &coord);
+		this->screen_to_coord(this->size_width, 0, &coord);
 		return coord.utm_zone;
 	}
 	return '\0';
@@ -1333,8 +1332,8 @@ void Viewport::set_center_screen(int x, int y)
 {
 	if (coord_mode == VIK_COORD_UTM) {
 		/* Slightly optimized. */
-		center.east_west += xmpp * (x - (width/2));
-		center.north_south += ympp * ((height/2) - y);
+		center.east_west += xmpp * (x - (this->size_width / 2));
+		center.north_south += ympp * ((this->size_height / 2) - y);
 		this->utm_zone_check();
 	} else {
 		VikCoord tmp;
@@ -1348,7 +1347,7 @@ void Viewport::set_center_screen(int x, int y)
 
 int Viewport::get_width()
 {
-	return width;
+	return this->size_width;
 }
 
 
@@ -1356,7 +1355,7 @@ int Viewport::get_width()
 
 int Viewport::get_height()
 {
-	return height;
+	return this->size_height;
 }
 
 
@@ -1371,22 +1370,22 @@ void Viewport::screen_to_coord(int x, int y, VikCoord * coord)
 
 		utm->zone = center.utm_zone;
 		utm->letter = center.utm_letter;
-		utm->easting = ((x - (width_2)) * xmpp) + center.east_west;
+		utm->easting = ((x - (this->size_width_2)) * xmpp) + center.east_west;
 		zone_delta = floor((utm->easting - EASTING_OFFSET) / utm_zone_width + 0.5);
 		utm->zone += zone_delta;
 		utm->easting -= zone_delta * utm_zone_width;
-		utm->northing = (((height_2) - y) * ympp) + center.north_south;
+		utm->northing = (((this->size_height_2) - y) * ympp) + center.north_south;
 	} else if (coord_mode == VIK_COORD_LATLON) {
 		coord->mode = VIK_COORD_LATLON;
 		if (drawmode == VIK_VIEWPORT_DRAWMODE_LATLON) {
-			coord->east_west = center.east_west + (180.0 * xmpp / 65536 / 256 * (x - width_2));
-			coord->north_south = center.north_south + (180.0 * ympp / 65536 / 256 * (height_2 - y));
+			coord->east_west = center.east_west + (180.0 * xmpp / 65536 / 256 * (x - this->size_width_2));
+			coord->north_south = center.north_south + (180.0 * ympp / 65536 / 256 * (this->size_height_2 - y));
 		} else if (drawmode == VIK_VIEWPORT_DRAWMODE_EXPEDIA) {
-			calcxy_rev(&(coord->east_west), &(coord->north_south), x, y, center.east_west, center.north_south, xmpp * ALTI_TO_MPP, ympp * ALTI_TO_MPP, width_2, height_2);
+			calcxy_rev(&(coord->east_west), &(coord->north_south), x, y, center.east_west, center.north_south, xmpp * ALTI_TO_MPP, ympp * ALTI_TO_MPP, this->size_width_2, this->size_height_2);
 		} else if (drawmode == VIK_VIEWPORT_DRAWMODE_MERCATOR) {
 			/* This isn't called with a high frequently so less need to optimize. */
-			coord->east_west = center.east_west + (180.0 * xmpp / 65536 / 256 * (x - width_2));
-			coord->north_south = DEMERCLAT (MERCLAT(center.north_south) + (180.0 * ympp / 65536 / 256 * (height_2 - y)));
+			coord->east_west = center.east_west + (180.0 * xmpp / 65536 / 256 * (x - this->size_width_2));
+			coord->north_south = DEMERCLAT (MERCLAT(center.north_south) + (180.0 * ympp / 65536 / 256 * (this->size_height_2 - y)));
 		} else {
 			;
 		}
@@ -1420,22 +1419,22 @@ void Viewport::coord_to_screen(const VikCoord * coord, int * x, int * y)
 			return;
 		}
 
-		*x = ((utm->easting - center->easting) / this->xmpp) + (this->width_2) -
+		*x = ((utm->easting - center->easting) / this->xmpp) + (this->size_width_2) -
 			(center->zone - utm->zone) * this->utm_zone_width / this->xmpp;
-		*y = (this->height_2) - ((utm->northing - center->northing) / this->ympp);
+		*y = (this->size_height_2) - ((utm->northing - center->northing) / this->ympp);
 	} else if (this->coord_mode == VIK_COORD_LATLON) {
 		struct LatLon *center = (struct LatLon *) &(this->center);
 		struct LatLon *ll = (struct LatLon *) coord;
 		double xx,yy;
 		if (this->drawmode == VIK_VIEWPORT_DRAWMODE_LATLON) {
-			*x = this->width_2 + (MERCATOR_FACTOR(this->xmpp) * (ll->lon - center->lon));
-			*y = this->height_2 + (MERCATOR_FACTOR(this->ympp) * (center->lat - ll->lat));
+			*x = this->size_width_2 + (MERCATOR_FACTOR(this->xmpp) * (ll->lon - center->lon));
+			*y = this->size_height_2 + (MERCATOR_FACTOR(this->ympp) * (center->lat - ll->lat));
 		} else if (this->drawmode == VIK_VIEWPORT_DRAWMODE_EXPEDIA) {
-			calcxy (&xx, &yy, center->lon, center->lat, ll->lon, ll->lat, this->xmpp * ALTI_TO_MPP, this->ympp * ALTI_TO_MPP, this->width_2, this->height_2);
+			calcxy (&xx, &yy, center->lon, center->lat, ll->lon, ll->lat, this->xmpp * ALTI_TO_MPP, this->ympp * ALTI_TO_MPP, this->size_width_2, this->size_height_2);
 			*x = xx; *y = yy;
 		} else if (this->drawmode == VIK_VIEWPORT_DRAWMODE_MERCATOR) {
-			*x = this->width_2 + (MERCATOR_FACTOR(this->xmpp) * (ll->lon - center->lon));
-			*y = this->height_2 + (MERCATOR_FACTOR(this->ympp) * (MERCLAT(center->lat) - MERCLAT(ll->lat)));
+			*x = this->size_width_2 + (MERCATOR_FACTOR(this->xmpp) * (ll->lon - center->lon));
+			*y = this->size_height_2 + (MERCATOR_FACTOR(this->ympp) * (MERCLAT(center->lat) - MERCLAT(ll->lat)));
 		}
 	}
 }
@@ -1448,8 +1447,8 @@ void Viewport::coord_to_screen(const VikCoord * coord, int * x, int * y)
 static void clip_x(int * x1, int * y1, int * x2, int * y2)
 {
 	while (ABS(*x1) > 32768) {
-		*x1 = *x2 + (0.5 * (*x1-*x2));
-		*y1 = *y2 + (0.5 * (*y1-*y2));
+		*x1 = *x2 + (0.5 * (*x1 - *x2));
+		*y1 = *y2 + (0.5 * (*y1 - *y2));
 	}
 }
 
@@ -1459,8 +1458,8 @@ static void clip_x(int * x1, int * y1, int * x2, int * y2)
 static void clip_y(int * x1, int * y1, int * x2, int * y2)
 {
 	while (ABS(*y1) > 32767) {
-		*x1 = *x2 + (0.5 * (*x1-*x2));
-		*y1 = *y2 + (0.5 * (*y1-*y2));
+		*x1 = *x2 + (0.5 * (*x1 - *x2));
+		*y1 = *y2 + (0.5 * (*y1 - *y2));
 	}
 }
 
@@ -1511,8 +1510,8 @@ void Viewport::clip_line(int * x1, int * y1, int * x2, int * y2)
 void Viewport::draw_line(GdkGC * gc, int x1, int y1, int x2, int y2)
 {
 	if (! ((x1 < 0 && x2 < 0) || (y1 < 0 && y2 < 0)
-	       || (x1 > this->width && x2 > this->width)
-	       || (y1 > this->height && y2 > this->height))) {
+	       || (x1 > this->size_width && x2 > this->size_width)
+	       || (y1 > this->size_height && y2 > this->size_height))) {
 
 		/*** Clipping, yeah! ***/
 		Viewport::clip_line(&x1, &y1, &x2, &y2);
@@ -1526,7 +1525,7 @@ void Viewport::draw_line(GdkGC * gc, int x1, int y1, int x2, int y2)
 void Viewport::draw_rectangle(GdkGC * gc, bool filled, int x1, int y1, int x2, int y2)
 {
 	/* Using 32 as half the default waypoint image size, so this draws ensures the highlight gets done. */
-	if (x1 > -32 && x1 < this->width + 32 && y1 > -32 && y1 < this->height + 32) {
+	if (x1 > -32 && x1 < this->size_width + 32 && y1 > -32 && y1 < this->size_height + 32) {
 		gdk_draw_rectangle(this->scr_buffer, gc, filled, x1, y1, x2, y2);
 	}
 }
@@ -1536,7 +1535,7 @@ void Viewport::draw_rectangle(GdkGC * gc, bool filled, int x1, int y1, int x2, i
 
 void Viewport::draw_string(GdkFont * font, GdkGC * gc, int x1, int y1, const char *string)
 {
-	if (x1 > -100 && x1 < this->width + 100 && y1 > -100 && y1 < this->height + 100) {
+	if (x1 > -100 && x1 < this->size_width + 100 && y1 > -100 && y1 < this->size_height + 100) {
 		gdk_draw_string(this->scr_buffer, font, gc, x1, y1, string);
 	}
 }
@@ -1628,7 +1627,7 @@ static bool calcxy(double * x, double * y, double lg, double lt, double zero_lon
 	assert (lt >= -90.0 && lt <= 90.0);
 	//    lg *= rad2deg; // FIXME, optimize equations
 	//    lt *= rad2deg;
-	double Ra = Radius[90+(int)lt];
+	double Ra = Radius[90 + (int) lt];
 	*x = Ra *
 		cos (DEG2RAD(lt)) * (lg - zero_long);
 	*y = Ra * (lt - zero_lat);
@@ -1652,7 +1651,7 @@ static void viewport_init_ra()
 	static bool done_before = false;
 	if (!done_before) {
 		for (int i = -90; i <= 90; i++) {
-			Radius[i+90] = calcR (DEG2RAD((double)i));
+			Radius[i + 90] = calcR (DEG2RAD((double)i));
 		}
 		done_before = true;
 	}
@@ -1702,7 +1701,7 @@ bool Viewport::is_one_zone()
 
 void Viewport::draw_layout(GdkGC * gc, int x, int y, PangoLayout * layout)
 {
-	if (x > -100 && x < this->width + 100 && y > -100 && y < this->height + 100) {
+	if (x > -100 && x < this->size_width + 100 && y > -100 && y < this->size_height + 100) {
 		gdk_draw_layout(this->scr_buffer, gc, x, y, layout);
 	}
 }
@@ -1816,10 +1815,10 @@ void Viewport::get_min_max_lat_lon(double * min_lat, double * max_lat, double * 
 {
 	VikCoord tleft, tright, bleft, bright;
 
-	this->screen_to_coord(0, 0, &tleft);
-	this->screen_to_coord(this->get_width(), 0, &tright);
-	this->screen_to_coord(0, this->get_height(), &bleft);
-	this->screen_to_coord(width, height, &bright);
+	this->screen_to_coord(0,                0,                 &tleft);
+	this->screen_to_coord(this->size_width, 0,                 &tright);
+	this->screen_to_coord(0,                this->size_height, &bleft);
+	this->screen_to_coord(this->size_width, this->size_height, &bright);
 
 	vik_coord_convert(&tleft, VIK_COORD_LATLON);
 	vik_coord_convert(&tright, VIK_COORD_LATLON);
@@ -1839,10 +1838,10 @@ void Viewport::get_bbox(LatLonBBox * bbox)
 {
 	VikCoord tleft, tright, bleft, bright;
 
-	this->screen_to_coord(0, 0, &tleft);
-	this->screen_to_coord(this->get_width(), 0, &tright);
-	this->screen_to_coord(0, this->get_height(), &bleft);
-	this->screen_to_coord(width, height, &bright);
+	this->screen_to_coord(0,                0,                 &tleft);
+	this->screen_to_coord(this->size_width, 0,                 &tright);
+	this->screen_to_coord(0,                this->size_height, &bleft);
+	this->screen_to_coord(this->size_width, this->size_height, &bright);
 
 	vik_coord_convert(&tleft, VIK_COORD_LATLON);
 	vik_coord_convert(&tright, VIK_COORD_LATLON);
@@ -1950,9 +1949,9 @@ void Viewport::add_logo(const GdkPixbuf *logo_)
  */
 void Viewport::compute_bearing(int x1, int y1, int x2, int y2, double * angle, double * baseangle)
 {
-	double len = sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2));
-	double dx = (x2-x1)/len*10;
-	double dy = (y2-y1)/len*10;
+	double len = sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
+	double dx = (x2 - x1) / len * 10;
+	double dy = (y2 - y1) / len * 10;
 
 	*angle = atan2(dy, dx) + M_PI_2;
 
@@ -1969,16 +1968,16 @@ void Viewport::compute_bearing(int x1, int y1, int x2, int y2, double * angle, d
 		vik_coord_load_from_utm(&test, VIK_COORD_UTM, &u); /* kamilFIXME: it was VIK_VIEWPORT_DRAWMODE_UTM. */
 		this->coord_to_screen(&test, &tx, &ty);
 
-		*baseangle = M_PI - atan2(tx-x1, ty-y1);
+		*baseangle = M_PI - atan2(tx - x1, ty - y1);
 		*angle -= *baseangle;
 	}
 
 	if (*angle < 0) {
-		*angle += 2*M_PI;
+		*angle += 2 * M_PI;
 	}
 
-	if (*angle > 2*M_PI) {
-		*angle -= 2*M_PI;
+	if (*angle > 2 * M_PI) {
+		*angle -= 2 * M_PI;
 	}
 }
 
