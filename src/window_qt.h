@@ -8,7 +8,7 @@
 #include <QMenuBar>
 #include <QToolBar>
 #include <QStatusBar>
-
+#include <QTreeView>
 
 
 
@@ -25,12 +25,14 @@ private slots:
 
 private:
 
-	void create_ui(void);
+	void create_layout(void);
+	void create_actions();
 
 	QMenuBar * menu_bar = NULL;
 	QToolBar * tool_bar = NULL;
 	QStatusBar * status_bar = NULL;
 
+	QTreeView * tree_view = NULL;
 };
 
 

@@ -1,17 +1,64 @@
 #include <QtWidgets>
 
 #include "window_qt.h"
-
+#include "vikviewport.h"
 
 Window::Window()
 {
-	this->create_ui();
+	this->create_layout();
+	this->create_actions();
 }
 
 
 
 
-void Window::create_ui(void)
+void Window::create_layout()
+{
+	QHBoxLayout * layout = new QHBoxLayout;
+	QWidget * central_widget = new QWidget;
+	central_widget->setLayout(layout);
+
+
+	QFileSystemModel * model = new QFileSystemModel;
+	model->setRootPath(QDir::currentPath());
+	tree_view = new QTreeView(central_widget);
+	tree_view->setModel(model);
+	tree_view->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
+
+
+	QDockWidget * dock = new QDockWidget(this);
+	dock->setWidget(tree_view);
+	dock->setWindowTitle("Layers");
+	this->addDockWidget(Qt::LeftDockWidgetArea, dock);
+
+	setStyleSheet("QMainWindow::separator { image: url(src/icons/handle_indicator.png); width: 8}");
+
+
+#if 0
+	QWidget * wi = new QWidget2(this);
+	layout->addWidget(wi);
+	wi->show();
+
+	fprintf(stderr, "%d / %d\n", wi->height(), wi->width());
+#else
+	SlavGPS::Viewport * viewport = new SlavGPS::Viewport(this);
+	viewport->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Maximum);
+	layout->addWidget(viewport);
+	//viewport->show();
+	fprintf(stderr, "%d / %d\n", viewport->height(), viewport->width());
+
+#endif
+
+
+	this->setCentralWidget(central_widget);
+
+	return;
+}
+
+
+
+
+void Window::create_actions(void)
 {
 	QMenu * menu_file = new QMenu("File");
 	QMenu * menu_edit = new QMenu("Edit");

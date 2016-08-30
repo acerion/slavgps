@@ -28,7 +28,13 @@
 #include <list>
 #include <cstdint>
 
+#ifdef SLAVGPS_QT
+#include <QPainter>
+#include <QWidget>
+#include "slav_qt.h"
+#else
 #include <gtk/gtk.h>
+#endif
 
 #include "vikcoord.h"
 #include "bbox.h"
@@ -46,6 +52,7 @@
 
 
 
+
 /* Drawmode management. */
 typedef enum {
 	VIK_VIEWPORT_DRAWMODE_UTM = 0,
@@ -59,28 +66,49 @@ typedef enum {
 
 
 namespace SlavGPS {
+#ifdef SLAVGPS_QT
+	typedef QPixmap Pixmap;
+#else
+	typedef GdkPixmap Pixmap;
+#endif
 
 
 
 
 	class Window;
+#ifndef SLAVGPS_QT
 	class Layer;
+#endif
 
 
 
 
+#ifdef SLAVGPS_QT
+	class Viewport : public QWidget {
+	Q_OBJECT
+#else
 	class Viewport {
+#endif
 
 	public:
+#ifdef SLAVGPS_QT
+		Viewport(QWidget * parent);
+#else
 		Viewport();
+#endif
 		~Viewport();
 
 		/* Viking initialization. */
 		bool configure();
 		void configure_manually(int width, unsigned int height); /* for off-screen viewports */
 
+#ifdef SLAVGPS_QT
+		void paintEvent(QPaintEvent * event);
+		void resizeEvent(QResizeEvent * event);
+#endif
 		/* Drawing primitives. */
 
+#ifndef SLAVGPS_QT
 		void draw_line(GdkGC * gc, int x1, int y1, int x2, int y2);
 		void draw_rectangle(GdkGC * gc, bool filled, int x1, int y1, int x2, int y2);
 		void draw_string(GdkFont * font, GdkGC * gc, int x1, int y1, char const * string);
@@ -89,6 +117,15 @@ namespace SlavGPS {
 		void draw_layout(GdkGC * gc, int x, int y, PangoLayout * layout);
 
 		void draw_pixbuf(GdkPixbuf * pixbuf, int src_x, int src_y, int dest_x, int dest_y, int region_width, int region_height);
+#else
+		void draw_line(GdkGC * gc, int x1, int y1, int x2, int y2);
+		void draw_rectangle(GdkGC * gc, bool filled, int x1, int y1, int x2, int y2);
+		void draw_string(GdkFont * font, GdkGC * gc, int x1, int y1, char const * string);
+		void draw_arc(GdkGC * gc, bool filled, int x, int y, int width, int height, int angle1, int angle2);
+		void draw_polygon(GdkGC * gc, bool filled, QPointF * points, int npoints);
+		void draw_layout(GdkGC * gc, int x, int y, PangoLayout * layout);
+		void draw_pixbuf(GdkPixbuf * pixbuf, int src_x, int src_y, int dest_x, int dest_y, int region_width, int region_height);
+#endif
 
 		/* Run this before drawing a line. Viewport::draw_line() runs it for you. */
 		static void clip_line(int * x1, int * y1, int * x2, int * y2);
@@ -249,7 +286,7 @@ namespace SlavGPS {
 		unsigned int centers_max;      /* configurable maximum size of the history list. */
 		unsigned int centers_radius;   /* Metres. */
 
-		GdkPixmap * scr_buffer = NULL;
+		SlavGPS::Pixmap * scr_buffer = NULL;
 		int size_width = 0;
 		int size_height = 0;
 		/* Half of the normal width and height. */

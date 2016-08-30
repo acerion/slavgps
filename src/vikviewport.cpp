@@ -42,17 +42,23 @@
 #include <cstdlib>
 #include <cassert>
 
+#ifndef SLAVGPS_QT
 #include <glib-object.h>
+#endif
 
 #include "vikviewport.h"
 #include "coords.h"
+#ifndef SLAVGPS_QT
 #include "window.h"
+#endif
 #include "mapcoord.h"
 
 /* For ALTI_TO_MPP. */
 #include "globals.h"
 #include "settings.h"
+#ifndef SLAVGPS_QT
 #include "dialog.h"
+#endif
 
 
 
@@ -99,10 +105,12 @@ static unsigned int viewport_signals[VW_LAST_SIGNAL] = { 0 };
 
 void SlavGPS::viewport_init(void)
 {
+#ifndef SLAVGPS_QT
 	viewport_signals[VW_UPDATED_CENTER_SIGNAL] = g_signal_new("updated_center", G_TYPE_OBJECT,
 								  (GSignalFlags) (G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION),
 								  0, NULL, NULL,
 								  g_cclosure_marshal_VOID__VOID, G_TYPE_NONE, 0);
+#endif
 	viewport_init_ra();
 }
 
@@ -111,6 +119,9 @@ void SlavGPS::viewport_init(void)
 
 void Viewport::init_drawing_area()
 {
+#ifdef SLAVGPS_QT
+	//this->qpainter = new QPainter(this);
+#else
 	this->drawing_area_ = (GtkDrawingArea *) gtk_drawing_area_new();
 
 	g_signal_connect(G_OBJECT (this->drawing_area_), "configure_event", G_CALLBACK (vik_viewport_configure_cb), NULL);
@@ -121,6 +132,7 @@ void Viewport::init_drawing_area()
 	GTK_WIDGET_SET_FLAGS (this->drawing_area_, GTK_CAN_FOCUS); /* Allow drawing area to have focus -- enabling key events, etc. */
 #endif
 	g_object_set_data((GObject *) this->drawing_area_, "viewport", this);
+#endif
 }
 
 
@@ -150,16 +162,28 @@ double Viewport::calculate_utm_zone_width()
 
 GdkColor * Viewport::get_background_gdkcolor()
 {
+#ifdef SLAVGPS_QT
+	return NULL;
+#else
 	GdkColor *rv = (GdkColor *) malloc(sizeof (GdkColor));
 	*rv = background_color;
 	return rv;
+#endif
 }
 
 
 
 
+#ifdef SLAVGPS_QT
+Viewport::Viewport(QWidget * parent) : QWidget(parent)
+#else
 Viewport::Viewport()
+#endif
 {
+#ifdef SLAVGPS_QT
+	this->setMinimumSize(200, 300);
+	this->setMaximumSize(2700, 2700);
+#endif
 	struct UTM utm;
 	struct LatLon ll;
 	ll.lat = a_vik_get_default_lat();
@@ -220,6 +244,7 @@ Viewport::Viewport()
 	update_centers();
 
 	strncpy(this->type_string, "Le Viewport", (sizeof (this->type_string)) - 1);
+	this->do_draw_scale = true;
 }
 
 
@@ -241,6 +266,7 @@ Viewport::~Viewport()
 		delete this->centers;
 	}
 
+#ifndef SLAVGPS_QT
 	if (this->scr_buffer) {
 		g_object_unref(G_OBJECT (this->scr_buffer));
 	}
@@ -261,6 +287,7 @@ Viewport::~Viewport()
 		g_object_unref(G_OBJECT (this->scale_bg_gc));
 		this->scale_bg_gc = NULL;
 	}
+#endif
 }
 
 
@@ -270,10 +297,12 @@ Viewport::~Viewport()
 char const * Viewport::get_background_color()
 {
 	static char color[8];
+#ifndef SLAVGPS_QT
 	snprintf(color, sizeof(color), "#%.2x%.2x%.2x",
 		 (int) (background_color.red / 256),
 		 (int) (background_color.green / 256),
 		 (int) (background_color.blue / 256));
+#endif
 	return color;
 }
 
@@ -282,12 +311,14 @@ char const * Viewport::get_background_color()
 
 void Viewport::set_background_color(char const * colorname)
 {
+#ifndef SLAVGPS_QT
 	assert (background_gc);
 	if (gdk_color_parse(colorname, &(background_color))) {
 		gdk_gc_set_rgb_fg_color(background_gc, &(background_color));
 	} else {
 		fprintf(stderr, "WARNING: %s: Failed to parse color '%s'\n", __FUNCTION__, colorname);
 	}
+#endif
 }
 
 
@@ -295,9 +326,11 @@ void Viewport::set_background_color(char const * colorname)
 
 void Viewport::set_background_gdkcolor(GdkColor * color)
 {
+#ifndef SLAVGPS_QT
 	assert (background_gc);
 	background_color = *color;
 	gdk_gc_set_rgb_fg_color(background_gc, color);
+#endif
 }
 
 
@@ -305,9 +338,13 @@ void Viewport::set_background_gdkcolor(GdkColor * color)
 
 GdkColor * Viewport::get_highlight_gdkcolor()
 {
+#ifdef SLAVGPS_QT
+	return NULL;
+#else
 	GdkColor * rv = (GdkColor *) malloc(sizeof (GdkColor));
 	*rv = highlight_color; /* kamilTODO: what? */
 	return rv;
+#endif
 }
 
 
@@ -317,10 +354,12 @@ GdkColor * Viewport::get_highlight_gdkcolor()
 const char * Viewport::get_highlight_color()
 {
 	static char color[8];
+#ifndef SLAVGPS_QT
 	snprintf(color, sizeof(color), "#%.2x%.2x%.2x",
 		 (int) (highlight_color.red / 256),
 		 (int) (highlight_color.green / 256),
 		 (int) (highlight_color.blue / 256));
+#endif
 	return color;
 }
 
@@ -329,9 +368,11 @@ const char * Viewport::get_highlight_color()
 
 void Viewport::set_highlight_color(char const * colorname)
 {
+#ifndef SLAVGPS_QT
 	assert (highlight_gc);
 	gdk_color_parse(colorname, &(highlight_color));
 	gdk_gc_set_rgb_fg_color(highlight_gc, &(highlight_color));
+#endif
 }
 
 
@@ -339,9 +380,11 @@ void Viewport::set_highlight_color(char const * colorname)
 
 void Viewport::set_highlight_gdkcolor(GdkColor * color)
 {
+#ifndef SLAVGPS_QT
 	assert (highlight_gc);
 	highlight_color = *color;
 	gdk_gc_set_rgb_fg_color(highlight_gc, color);
+#endif
 }
 
 
@@ -357,8 +400,10 @@ GdkGC * Viewport::get_gc_highlight()
 
 void Viewport::set_highlight_thickness(int thickness)
 {
+#ifndef SLAVGPS_QT
 	/* Otherwise same GDK_* attributes as in Viewport::new_gc(). */
 	gdk_gc_set_line_attributes(highlight_gc, thickness, GDK_LINE_SOLID, GDK_CAP_ROUND, GDK_JOIN_ROUND);
+#endif
 }
 
 
@@ -366,6 +411,9 @@ void Viewport::set_highlight_thickness(int thickness)
 
 GdkGC * Viewport::new_gc(char const * colorname, int thickness)
 {
+#ifdef SLAVGPS_QT
+	return NULL;
+#else
 	GdkColor color;
 
 	GdkGC * rv = gdk_gc_new(GTK_WIDGET(this->drawing_area_)->window);
@@ -376,6 +424,7 @@ GdkGC * Viewport::new_gc(char const * colorname, int thickness)
 	}
 	gdk_gc_set_line_attributes(rv, thickness, GDK_LINE_SOLID, GDK_CAP_ROUND, GDK_JOIN_ROUND);
 	return rv;
+#endif
 }
 
 
@@ -383,10 +432,14 @@ GdkGC * Viewport::new_gc(char const * colorname, int thickness)
 
 GdkGC * Viewport::new_gc_from_color(GdkColor * color, int thickness)
 {
+#ifdef SLAVGPS_QT
+	return NULL;
+#else
 	GdkGC * rv = gdk_gc_new(gtk_widget_get_window(GTK_WIDGET(this->drawing_area_)));
 	gdk_gc_set_rgb_fg_color(rv, color);
 	gdk_gc_set_line_attributes(rv, thickness, GDK_LINE_SOLID, GDK_CAP_ROUND, GDK_JOIN_ROUND);
 	return rv;
+#endif
 }
 
 
@@ -400,6 +453,16 @@ void Viewport::configure_manually(int width_, unsigned int height_)
 	this->size_width_2 = this->size_width / 2;
 	this->size_height_2 = this->size_height / 2;
 
+#ifdef SLAVGPS_QT
+	if (this->scr_buffer) {
+		delete this->scr_buffer;
+	}
+	fprintf(stderr, "%s:%d: creating new pixmap with %d/%d\n", __FUNCTION__, __LINE__, this->size_width, this->size_height);
+	this->scr_buffer = new QPixmap(this->size_width, this->size_height);
+	this->scr_buffer->fill();
+
+#else
+
 	if (this->scr_buffer) {
 		g_object_unref(G_OBJECT (this->scr_buffer));
 	}
@@ -410,6 +473,7 @@ void Viewport::configure_manually(int width_, unsigned int height_)
 		g_object_unref(G_OBJECT (this->snapshot_buffer));
 	}
 	this->snapshot_buffer = gdk_pixmap_new(gtk_widget_get_window(GTK_WIDGET(this->drawing_area_)), this->size_width, this->size_height, -1);
+#endif
 }
 
 
@@ -417,7 +481,11 @@ void Viewport::configure_manually(int width_, unsigned int height_)
 
 GdkPixmap * Viewport::get_pixmap()
 {
+#ifdef SLAVGPS_QT
+	return NULL;
+#else
 	return this->scr_buffer;
+#endif
 }
 
 
@@ -425,12 +493,16 @@ GdkPixmap * Viewport::get_pixmap()
 
 bool vik_viewport_configure_cb(GtkDrawingArea * drawing_area)
 {
+#ifdef SLAVGPS_QT
+	return true;
+#else
 	fprintf(stderr, "=========== viewport configure event\n");
 	assert (drawing_area);
 
 
 	void * viewport = g_object_get_data((GObject *) drawing_area, "viewport");
 	return ((Viewport *) viewport)->configure();
+#endif
 }
 
 
@@ -438,6 +510,23 @@ bool vik_viewport_configure_cb(GtkDrawingArea * drawing_area)
 
 bool Viewport::configure()
 {
+#ifdef SLAVGPS_QT
+	const QRect geom = this->geometry();
+	this->size_width = geom.width();
+	this->size_height = geom.height();
+
+	this->size_width_2 = this->size_width / 2;
+	this->size_height_2 = this->size_height / 2;
+
+	if (this->scr_buffer) {
+		delete this->scr_buffer;
+	}
+	fprintf(stderr, "%s:%d: creating new pixmap with %d/%d\n", __FUNCTION__, __LINE__, this->size_width, this->size_height);
+	this->scr_buffer = new QPixmap(this->size_width, this->size_height);
+	this->scr_buffer->fill();
+
+	return false;
+#else
 	GtkAllocation allocation;
 	gtk_widget_get_allocation(GTK_WIDGET(this->drawing_area_), &allocation);
 	this->size_width = allocation.width;
@@ -474,6 +563,7 @@ bool Viewport::configure()
 	}
 
 	return false;
+#endif
 }
 
 
@@ -484,7 +574,13 @@ bool Viewport::configure()
  */
 void Viewport::clear()
 {
+	fprintf(stderr, "%s:%d\n", __FUNCTION__, __LINE__);
+#ifdef SLAVGPS_QT
+	QPainter painter(this->scr_buffer);
+	painter.eraseRect(0, 0, this->size_width, this->size_height);
+#else
 	gdk_draw_rectangle(GDK_DRAWABLE(scr_buffer), background_gc, true, 0, 0, this->size_width, this->size_height);
+#endif
 	this->reset_copyrights();
 	this->reset_logos();
 }
@@ -516,6 +612,7 @@ bool Viewport::get_draw_scale()
 int rescale_unit(double * base_distance, double * scale_unit, int maximum_width)
 {
 	double ratio = *base_distance / *scale_unit;
+	fprintf(stderr, "%s:%d: %d / %d / %d\n", __FUNCTION__, __LINE__, (int) *base_distance, (int) *scale_unit, maximum_width);
 
 	int n = 0;
 	if (ratio > 1) {
@@ -524,12 +621,14 @@ int rescale_unit(double * base_distance, double * scale_unit, int maximum_width)
 		n = (int) floor(log10(1.0 / ratio));
 	}
 
+	fprintf(stderr, "%s:%d: ratio = %f, n = %d\n", __FUNCTION__, __LINE__, ratio, n);
 
 	*scale_unit = pow(10.0, n); /* scale_unit is still a unit (1 km, 10 miles, 100 km, etc. ), only 10^n times larger. */
 	ratio = *base_distance / *scale_unit;
 	double len = maximum_width / ratio; /* [px] */
 
 
+	fprintf(stderr, "%s:%d: len = %f\n", __FUNCTION__, __LINE__, len);
 	/* I don't want the scale unit to be always 10^n.
 
 	   Let's say that at this point we have a scale of length 10km
@@ -562,6 +661,7 @@ int rescale_unit(double * base_distance, double * scale_unit, int maximum_width)
 	} else {
 		;
 	}
+	fprintf(stderr, "rescale unit len = %g\n", len);
 
 	return (int) len;
 }
@@ -571,6 +671,7 @@ int rescale_unit(double * base_distance, double * scale_unit, int maximum_width)
 
 void Viewport::draw_scale()
 {
+	fprintf(stderr, "%s:%d\n", __FUNCTION__, __LINE__);
 	if (!this->do_draw_scale) {
 		return;
 	}
@@ -607,10 +708,20 @@ void Viewport::draw_scale()
 	   it should be something like 1.00 mile or 10.00 km - a unit. */
 	double scale_unit = 1; /* [km, miles, nautical miles] */
 
+#ifdef SLAVGPS_QT
+	base_distance = 10;
+#endif
+	fprintf(stderr, "%s:%d: base_distance = %g, scale_unit = %g, MAXIMUM_WIDTH = %d\n", __FUNCTION__, __LINE__, base_distance, scale_unit, MAXIMUM_WIDTH);
 	int len = rescale_unit(&base_distance, &scale_unit, MAXIMUM_WIDTH);
+	fprintf(stderr, "resolved len = %d\n", len);
 
+#ifdef SLAVGPS_QT
+	GdkGC * paint_bg = NULL;
+	GdkGC * paint_fg = NULL;
+#else
 	GdkGC * paint_bg = scale_bg_gc;
 	GdkGC * paint_fg = gtk_widget_get_style(GTK_WIDGET(this->drawing_area_))->black_gc;
+#endif
 
 	/* White background. */
 	this->draw_line(paint_bg, PAD,       this->size_height - PAD, PAD + len, this->size_height - PAD);
@@ -665,12 +776,16 @@ void Viewport::draw_scale()
 	}
 
 
+#ifdef SLAVGPS_QT
+	this->repaint();
+#else
 	PangoLayout * pl = gtk_widget_create_pango_layout(GTK_WIDGET(this->drawing_area_), NULL);
 	pango_layout_set_font_description(pl, gtk_widget_get_style(GTK_WIDGET(this->drawing_area_))->font_desc);
 	pango_layout_set_text(pl, s, -1);
 	this->draw_layout(paint_fg, PAD + len + PAD, this->size_height - PAD - 10, pl);
 	g_object_unref(pl);
 	pl = NULL;
+#endif
 }
 
 
@@ -703,6 +818,8 @@ void Viewport::draw_copyright()
 		strcat(s, " ");
 	}
 
+#ifdef SLAVGPS_QT
+#else
 	/* Create pango layout. */
 	PangoLayout * pl = gtk_widget_create_pango_layout(GTK_WIDGET(this->drawing_area_), NULL);
 	pango_layout_set_font_description(pl, gtk_widget_get_style(GTK_WIDGET(this->drawing_area_))->font_desc);
@@ -721,6 +838,7 @@ void Viewport::draw_copyright()
 	/* Free memory. */
 	g_object_unref(pl);
 	pl = NULL;
+#endif
 }
 
 
@@ -756,7 +874,11 @@ void Viewport::draw_centermark()
 	int center_x = this->size_width / 2;
 	int center_y = this->size_height / 2;
 
+#ifdef SLAVGPS_QT
+	GdkGC * black_gc = NULL;
+#else
 	GdkGC * black_gc = gtk_widget_get_style(GTK_WIDGET(this->drawing_area_))->black_gc;
+#endif
 
 	/* White background. */
 	this->draw_line(scale_bg_gc, center_x - len, center_y,       center_x - gap, center_y);
@@ -776,6 +898,7 @@ void Viewport::draw_centermark()
 
 void Viewport::draw_logo()
 {
+#ifndef SLAVGPS_QT
 	unsigned int len = g_slist_length(logos);
 	int x = this->size_width - PAD;
 	int y = PAD;
@@ -786,6 +909,7 @@ void Viewport::draw_logo()
 		this->draw_pixbuf(logo, 0, 0, x - width, y, width, height);
 		x = x - width - PAD;
 	}
+#endif
 }
 
 
@@ -809,7 +933,9 @@ bool Viewport::get_draw_highlight()
 
 void Viewport::sync()
 {
+#ifndef SLAVGPS_QT
 	gdk_draw_drawable(gtk_widget_get_window(GTK_WIDGET(this->drawing_area_)), gtk_widget_get_style(GTK_WIDGET(this->drawing_area_))->bg_gc[0], GDK_DRAWABLE(this->scr_buffer), 0, 0, 0, 0, this->size_width, this->size_height);
+#endif
 }
 
 
@@ -817,6 +943,7 @@ void Viewport::sync()
 
 void Viewport::pan_sync(int x_off, int y_off)
 {
+#ifndef SLAVGPS_QT
 	int x, y, wid, hei;
 
 	gdk_draw_drawable(gtk_widget_get_window(GTK_WIDGET(this->drawing_area_)), gtk_widget_get_style(GTK_WIDGET(this->drawing_area_))->bg_gc[0], GDK_DRAWABLE(this->scr_buffer), 0, 0, x_off, y_off, this->size_width, this->size_height);
@@ -838,6 +965,7 @@ void Viewport::pan_sync(int x_off, int y_off)
 	}
 	gtk_widget_queue_draw_area(GTK_WIDGET(this->drawing_area_), x, 0, wid, this->size_height);
 	gtk_widget_queue_draw_area(GTK_WIDGET(this->drawing_area_), 0, y, this->size_width, hei);
+#endif
 }
 
 
@@ -1035,8 +1163,10 @@ void Viewport::update_centers()
 
 	fprintf(stderr, "=========== issuing updated center signal\n");
 
+#ifndef SLAVGPS_QT
 	/* Inform interested subscribers that this change has occurred. */
 	g_signal_emit(G_OBJECT(this->drawing_area_), viewport_signals[VW_UPDATED_CENTER_SIGNAL], 0);
+#endif
 }
 
 
@@ -1048,6 +1178,7 @@ void Viewport::update_centers()
  */
 void Viewport::show_centers(GtkWindow * parent)
 {
+#ifndef SLAVGPS_QT
 	GList * texts = NULL;
 	for (auto iter = centers->begin(); iter != centers->end(); iter++) {
 		char *lat = NULL, *lon = NULL;
@@ -1086,6 +1217,7 @@ void Viewport::show_centers(GtkWindow * parent)
 		free(node->data);
 	}
 	g_list_free(texts);
+#endif
 }
 
 
@@ -1507,7 +1639,11 @@ void Viewport::clip_line(int * x1, int * y1, int * x2, int * y2)
 
 
 
+#ifdef SLAVGPS_QT
 void Viewport::draw_line(GdkGC * gc, int x1, int y1, int x2, int y2)
+#else
+void Viewport::draw_line(GdkGC * gc, int x1, int y1, int x2, int y2)
+#endif
 {
 	if (! ((x1 < 0 && x2 < 0) || (y1 < 0 && y2 < 0)
 	       || (x1 > this->size_width && x2 > this->size_width)
@@ -1515,34 +1651,73 @@ void Viewport::draw_line(GdkGC * gc, int x1, int y1, int x2, int y2)
 
 		/*** Clipping, yeah! ***/
 		Viewport::clip_line(&x1, &y1, &x2, &y2);
+#ifdef SLAVGPS_QT
+		fprintf(stderr, "Drawing line %d %d / %d %d\n", x1, y1, x2, y2);
+		QPainter painter(this->scr_buffer);
+
+		//painter.begin(this->scr_buffer);
+		painter.drawLine(x1, y1, x2, y2);
+		//painter.end();
+
+#else
 		gdk_draw_line(this->scr_buffer, gc, x1, y1, x2, y2);
+#endif
 	}
 }
 
 
 
 
+#ifdef SLAVGPS_QT
 void Viewport::draw_rectangle(GdkGC * gc, bool filled, int x1, int y1, int x2, int y2)
+#else
+void Viewport::draw_rectangle(GdkGC * gc, bool filled, int x1, int y1, int x2, int y2)
+#endif
 {
 	/* Using 32 as half the default waypoint image size, so this draws ensures the highlight gets done. */
 	if (x1 > -32 && x1 < this->size_width + 32 && y1 > -32 && y1 < this->size_height + 32) {
+#ifdef SLAVGPS_QT
+		//this->qpainter->drawRect(x1, y1, x2 - x1, y2 - y1);
+#else
 		gdk_draw_rectangle(this->scr_buffer, gc, filled, x1, y1, x2, y2);
+#endif
 	}
 }
 
 
 
 
+#ifdef SLAVGPS_QT
 void Viewport::draw_string(GdkFont * font, GdkGC * gc, int x1, int y1, const char *string)
+#else
+void Viewport::draw_string(GdkFont * font, GdkGC * gc, int x1, int y1, const char *string)
+#endif
 {
 	if (x1 > -100 && x1 < this->size_width + 100 && y1 > -100 && y1 < this->size_height + 100) {
+#ifdef SLAVGPS_QT
+		//this->qpainter->drawText(x1, y1, string);
+#else
 		gdk_draw_string(this->scr_buffer, font, gc, x1, y1, string);
+#endif
 	}
 }
 
 
 
 
+#ifdef SLAVGPS_QT
+void Viewport::draw_pixbuf(GdkPixbuf *pixbuf, int src_x, int src_y,
+			   int dest_x, int dest_y, int region_width, int region_height)
+{
+#if 0
+	gdk_draw_pixbuf(this->scr_buffer,
+			NULL,
+			pixbuf,
+			src_x, src_y, dest_x, dest_y, region_width, region_height,
+			GDK_RGB_DITHER_NONE, 0, 0);
+#endif
+}
+#else
 void Viewport::draw_pixbuf(GdkPixbuf *pixbuf, int src_x, int src_y,
 			   int dest_x, int dest_y, int region_width, int region_height)
 {
@@ -1552,22 +1727,37 @@ void Viewport::draw_pixbuf(GdkPixbuf *pixbuf, int src_x, int src_y,
 			src_x, src_y, dest_x, dest_y, region_width, region_height,
 			GDK_RGB_DITHER_NONE, 0, 0);
 }
+#endif
 
 
 
 
+#ifdef SLAVGPS_QT
+void Viewport::draw_arc(GdkGC * gc, bool filled, int x, int y, int width, int height, int angle1, int angle2)
+{
+	//this->qpainter->drawArc(x, y, width, height, angle1, angle2);
+}
+#else
 void Viewport::draw_arc(GdkGC * gc, bool filled, int x, int y, int width, int height, int angle1, int angle2)
 {
 	gdk_draw_arc(this->scr_buffer, gc, filled, x, y, width, height, angle1, angle2);
 }
+#endif
 
 
 
 
+#ifdef SLAVGPS_QT
+void Viewport::draw_polygon(GdkGC * gc, bool filled, QPointF * points, int npoints)
+{
+	//this->qpainter->drawPoints(points, npoints);
+}
+#else
 void Viewport::draw_polygon(GdkGC * gc, bool filled, GdkPoint *points, int npoints)
 {
 	gdk_draw_polygon(this->scr_buffer, gc, filled, points, npoints);
 }
+#endif
 
 
 
@@ -1701,9 +1891,11 @@ bool Viewport::is_one_zone()
 
 void Viewport::draw_layout(GdkGC * gc, int x, int y, PangoLayout * layout)
 {
+#ifndef SLAVGPS_QT
 	if (x > -100 && x < this->size_width + 100 && y > -100 && y < this->size_height + 100) {
 		gdk_draw_layout(this->scr_buffer, gc, x, y, layout);
 	}
+#endif
 }
 
 
@@ -1711,9 +1903,11 @@ void Viewport::draw_layout(GdkGC * gc, int x, int y, PangoLayout * layout)
 
 void vik_gc_get_fg_color(GdkGC * gc, GdkColor * dest)
 {
+#ifndef SLAVGPS_QT
 	static GdkGCValues values;
 	gdk_gc_get_values(gc, &values);
 	gdk_colormap_query_color(gdk_colormap_get_system(), values.foreground.pixel, dest);
+#endif
 }
 
 
@@ -1721,9 +1915,11 @@ void vik_gc_get_fg_color(GdkGC * gc, GdkColor * dest)
 
 GdkFunction vik_gc_get_function(GdkGC * gc)
 {
+#ifndef SLAVGPS_QT
 	static GdkGCValues values;
 	gdk_gc_get_values (gc, &values);
 	return values.function;
+#endif
 }
 
 
@@ -1769,7 +1965,9 @@ Layer * Viewport::get_trigger()
 
 void Viewport::snapshot_save()
 {
+#ifndef SLAVGPS_QT
 	gdk_draw_drawable(this->snapshot_buffer, this->background_gc, this->scr_buffer, 0, 0, 0, 0, -1, -1);
+#endif
 }
 
 
@@ -1777,7 +1975,9 @@ void Viewport::snapshot_save()
 
 void Viewport::snapshot_load()
 {
+#ifndef SLAVGPS_QT
 	gdk_draw_drawable(this->scr_buffer, this->background_gc, this->snapshot_buffer, 0, 0, 0, 0, -1, -1);
+#endif
 }
 
 
@@ -1801,11 +2001,15 @@ bool Viewport::get_half_drawn()
 
 char const * Viewport::get_drawmode_name(VikViewportDrawMode mode)
 {
+#ifdef SLAVGPS_QT
+	return NULL;
+#else
 	GtkWidget * mode_button = this->get_window()->get_drawmode_button(mode);
 	GtkWidget * label = gtk_bin_get_child(GTK_BIN(mode_button));
 
 	return gtk_label_get_text(GTK_LABEL(label));
 
+#endif
 }
 
 
@@ -1926,12 +2130,14 @@ void Viewport::reset_logos()
 
 void Viewport::add_logo(const GdkPixbuf *logo_)
 {
+#ifndef SLAVGPS_QT
 	if (logo_) {
 		GdkPixbuf * found = NULL; /* FIXME (GdkPixbuf*)g_slist_find_custom (vp->port.logos, logo, (GCompareFunc)==); */
 		if (found == NULL) {
 			logos = g_slist_prepend(logos, (void *) logo_);
 		}
 	}
+#endif
 }
 
 
@@ -1986,7 +2192,11 @@ void Viewport::compute_bearing(int x1, int y1, int x2, int y2, double * angle, d
 
 GtkWidget * Viewport::get_toolkit_widget(void)
 {
+#ifdef SLAVGPS_QT
+	return NULL;
+#else
 	return GTK_WIDGET(this->drawing_area_);
+#endif
 }
 
 
@@ -1994,7 +2204,11 @@ GtkWidget * Viewport::get_toolkit_widget(void)
 
 GtkWindow * Viewport::get_toolkit_window(void)
 {
+#ifdef SLAVGPS_QT
+	return NULL;
+#else
 	return GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(this->drawing_area_)));
+#endif
 }
 
 
@@ -2002,7 +2216,11 @@ GtkWindow * Viewport::get_toolkit_window(void)
 
 void * Viewport::get_toolkit_object(void)
 {
+#ifdef SLAVGPS_QT
+	return NULL;
+#else
 	return (void *) this->drawing_area_;
+#endif
 }
 
 
@@ -2010,8 +2228,39 @@ void * Viewport::get_toolkit_object(void)
 
 Window * Viewport::get_window(void)
 {
+#ifdef SLAVGPS_QT
+	return NULL;
+#else
 	GtkWindow * w = (GtkWindow *) gtk_widget_get_toplevel(GTK_WIDGET(this->drawing_area_));
 	Window * window = (Window *) g_object_get_data((GObject *) w, "window");
 
 	return window;
+#endif
 }
+#ifdef SLAVGPS_QT
+void Viewport::paintEvent(QPaintEvent *event)
+{
+	fprintf(stderr, "%s:%d\n", __FUNCTION__, __LINE__);
+	QPainter painter(this);
+
+	painter.drawPixmap(0, 0, *this->scr_buffer);
+
+	painter.setPen(Qt::blue);
+	painter.setFont(QFont("Arial", 30));
+	painter.drawText(this->rect(), Qt::AlignCenter, "Qt");
+
+	return;
+}
+
+
+
+
+void Viewport::resizeEvent(QResizeEvent * event)
+{
+	fprintf(stderr, "%s:%d\n", __FUNCTION__, __LINE__);
+	this->configure();
+	this->draw_scale();
+
+	return;
+}
+#endif
