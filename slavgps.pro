@@ -12,7 +12,8 @@ SOURCES += src/main_qt.cpp \
     src/slav_qt.cpp \
     src/viklayer_defaults.cpp \
     src/viklayer.cpp \
-    src/vikcoordlayer.cpp
+    src/vikcoordlayer.cpp \
+    src/uibuilder.cpp
 
 
 HEADERS += src/window_qt.h \
@@ -24,7 +25,8 @@ HEADERS += src/window_qt.h \
     src/slav_qt.h \
     src/viklayer_defaults.h \
     src/viklayer.h \
-    src/vikcoordlayer.h
+    src/vikcoordlayer.h \
+    src/uibuilder.h
 
 
 # For glib library.
