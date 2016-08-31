@@ -46,7 +46,7 @@ static Layer * coord_layer_unmarshall(uint8_t * data, int len, Viewport * viewpo
 
 
 
-
+#ifndef SLAVGPS_QT
 static VikLayerParamScale param_scales[] = {
 	{ 0.05, 60.0, 0.25, 10 },
 	{ 1, 10, 1, 0 },
@@ -72,7 +72,7 @@ static VikLayerParam coord_layer_params[] = {
 	{ LayerType::COORD, "min_inc",        VIK_LAYER_PARAM_DOUBLE, VIK_LAYER_GROUP_NONE, N_("Minutes Width:"),  VIK_LAYER_WIDGET_SPINBUTTON, &param_scales[0], NULL, NULL, min_inc_default,        NULL, NULL },
 	{ LayerType::COORD, "line_thickness", VIK_LAYER_PARAM_UINT,   VIK_LAYER_GROUP_NONE, N_("Line Thickness:"), VIK_LAYER_WIDGET_SPINBUTTON, &param_scales[1], NULL, NULL, line_thickness_default, NULL, NULL },
 };
-
+#endif
 
 
 
@@ -91,14 +91,23 @@ VikLayerInterface vik_coord_layer_interface = {
 	"Coord",
 	N_("Coordinate"),
 	NULL,
+#ifdef SLAVGPS_QT
+	NULL,
+#else
 	&vikcoordlayer_pixbuf,
+#endif
 
 	{ NULL, NULL, NULL, NULL, NULL, NULL, NULL },
 	NULL,
 	0,
 
+#ifdef SLAVGPS_QT
+	NULL,
+	0,
+#else
 	coord_layer_params,
 	NUM_PARAMS,
+#endif
 	NULL,
 	0,
 
@@ -131,6 +140,7 @@ static Layer * coord_layer_unmarshall(uint8_t * data, int len, Viewport * viewpo
 // NB Viewport can be null as it's not used ATM
 bool LayerCoord::set_param(uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
 {
+#ifndef SLAVGPS_QT
 	switch (id) {
 	case PARAM_COLOR:
 		this->color = data.c;
@@ -146,6 +156,7 @@ bool LayerCoord::set_param(uint16_t id, VikLayerParamData data, Viewport * viewp
 	default:
 		break;
 	}
+#endif
 	return true;
 }
 
@@ -155,6 +166,7 @@ bool LayerCoord::set_param(uint16_t id, VikLayerParamData data, Viewport * viewp
 
 VikLayerParamData LayerCoord::get_param(uint16_t id, bool is_file_operation) const
 {
+#ifndef SLAVGPS_QT
 	VikLayerParamData rv;
 	switch (id) {
 	case PARAM_COLOR:
@@ -170,6 +182,7 @@ VikLayerParamData LayerCoord::get_param(uint16_t id, bool is_file_operation) con
 		break;
 	}
 	return rv;
+#endif
 }
 
 
@@ -178,9 +191,11 @@ VikLayerParamData LayerCoord::get_param(uint16_t id, bool is_file_operation) con
 
 void LayerCoord::post_read(Viewport * viewport, bool from_file)
 {
+#ifndef SLAVGPS_QT
 	if (this->gc) {
 		g_object_unref(G_OBJECT(this->gc));
 	}
+#endif
 
 	this->gc = viewport->new_gc_from_color(&(this->color), this->line_thickness);
 }
@@ -191,9 +206,11 @@ void LayerCoord::post_read(Viewport * viewport, bool from_file)
 
 void LayerCoord::draw(Viewport * viewport)
 {
+#ifndef SLAVGPS_QT
 	if (!this->gc) {
 		return;
 	}
+#endif
 
 	if (viewport->get_coord_mode() != VIK_COORD_UTM) {
 		this->draw_latlon(viewport);
@@ -209,15 +226,21 @@ void LayerCoord::draw(Viewport * viewport)
 
 void LayerCoord::draw_latlon(Viewport * viewport)
 {
+#ifdef SLAVGPS_QT
+	GdkGC * dgc = NULL;
+	GdkGC * mgc = NULL;
+	GdkGC * sgc = NULL;
+#else
 	GdkGC * dgc = viewport->new_gc_from_color(&(this->color), this->line_thickness);
 	GdkGC * mgc = viewport->new_gc_from_color(&(this->color), MAX(this->line_thickness / 2, 1));
 	GdkGC * sgc = viewport->new_gc_from_color(&(this->color), MAX(this->line_thickness / 5, 1));
+#endif
 
 	int x1, y1, x2, y2;
 #define CLINE(gc, c1, c2) {						\
 		viewport->coord_to_screen((c1), &x1, &y1);		\
 		viewport->coord_to_screen((c2), &x2, &y2);		\
-		viewport->draw_line((gc), x1, y1, x2, y2);		\
+		viewport->draw_line((gc), x1 + 1, y1 + 1, x2, y2);		\
 	}
 
 
@@ -246,7 +269,7 @@ void LayerCoord::draw_latlon(Viewport * viewport)
 		}
 
 		for (double i = floor(min * 60); i < ceil(max * 60); i += 1.0) {
-			if (seconds) {
+			if (smod && seconds) {
 				for (double j = i * 60 + 1; j < (i + 1) * 60; j += 1.0) {
 					ul.east_west = j / 3600.0;
 					bl.east_west = j / 3600.0;
@@ -255,7 +278,7 @@ void LayerCoord::draw_latlon(Viewport * viewport)
 					}
 				}
 			}
-			if (minutes) {
+			if (mmod && minutes) {
 				ul.east_west = i / 60.0;
 				bl.east_west = i / 60.0;
 				if ((int) i % mmod == 0) {
@@ -281,7 +304,7 @@ void LayerCoord::draw_latlon(Viewport * viewport)
 		const double max = ul.north_south;
 
 		for (double i = floor(min * 60); i < ceil(max * 60); i += 1.0) {
-			if (seconds) {
+			if (smod && seconds) {
 				for (double j = i * 60 + 1; j < (i + 1) * 60; j += 1.0) {
 					ul.north_south = j / 3600.0;
 					ur.north_south = j / 3600.0;
@@ -290,7 +313,7 @@ void LayerCoord::draw_latlon(Viewport * viewport)
 					}
 				}
 			}
-			if (minutes) {
+			if (mmod && minutes) {
 				ul.north_south = i / 60.0;
 				ur.north_south = i / 60.0;
 				if ((int) i % mmod == 0) {
@@ -305,9 +328,11 @@ void LayerCoord::draw_latlon(Viewport * viewport)
 		}
 	}
 #undef CLINE
+#ifndef SLAVGPS_QT
 	g_object_unref(dgc);
 	g_object_unref(sgc);
 	g_object_unref(mgc);
+#endif
 	return;
 }
 
@@ -410,9 +435,11 @@ void LayerCoord::draw_utm(Viewport * viewport)
 
 LayerCoord::~LayerCoord()
 {
+#ifndef SLAVGPS_QT
 	if (this->gc) {
 		g_object_unref(G_OBJECT (this->gc));
 	}
+#endif
 }
 
 
@@ -421,11 +448,13 @@ LayerCoord::~LayerCoord()
 
 void LayerCoord::update_gc(Viewport * viewport)
 {
+#ifndef SLAVGPS_QT
 	if (this->gc) {
 		g_object_unref(G_OBJECT(this->gc));
 	}
 
 	this->gc = viewport->new_gc_from_color(&(this->color), this->line_thickness);
+#endif
 }
 
 

@@ -616,15 +616,6 @@ void a_uibuilder_free_paramdatas(VikLayerParamData *paramdatas, VikLayerParam *p
 
 
 
-LayerType& SlavGPS::operator++(LayerType& layer_type)
-{
-	layer_type = static_cast<LayerType>(static_cast<int>(layer_type) + 1);
-	return layer_type;
-}
-
-
-
-
 bool SlavGPS::operator==(unsigned int event_button, MouseButton button)
 {
 	return event_button == static_cast<unsigned int>(button);

@@ -22,14 +22,18 @@
 #include <cstdlib>
 #include <cstdio>
 
+#ifndef SLAVGPS_QT
 #include <gtk/gtk.h>
+#endif
 #include <glib/gi18n.h>
 #include <glib/gstdio.h>
 
 //#include "viking.h"
 #include "viklayer_defaults.h"
+#ifndef SLAVGPS_QT
 #include "dir.h"
 #include "file.h"
+#endif
 #include "globals.h"
 
 
@@ -55,6 +59,7 @@ static bool loaded;
 
 static VikLayerParamData get_default_data_answer(const char *group, const char *name, VikLayerParamType ptype, void * *success)
 {
+#ifndef SLAVGPS_QT
 	VikLayerParamData data = VIK_LPD_BOOLEAN (false);
 
 	GError *error = NULL;
@@ -121,6 +126,7 @@ static VikLayerParamData get_default_data_answer(const char *group, const char *
 	}
 
 	return data;
+#endif
 }
 
 
@@ -128,9 +134,11 @@ static VikLayerParamData get_default_data_answer(const char *group, const char *
 
 static VikLayerParamData get_default_data(const char *group, const char *name, VikLayerParamType ptype)
 {
+#ifndef SLAVGPS_QT
 	void * success = KINT_TO_POINTER (true);
 	/* NB This should always succeed - don't worry about 'success'. */
 	return get_default_data_answer(group, name, ptype, &success);
+#endif
 }
 
 
@@ -138,6 +146,7 @@ static VikLayerParamData get_default_data(const char *group, const char *name, V
 
 static void set_default_data(VikLayerParamData data, const char *group, const char *name, VikLayerParamType ptype)
 {
+#ifndef SLAVGPS_QT
 	switch (ptype) {
 	case VIK_LAYER_PARAM_DOUBLE:
 		g_key_file_set_double(keyfile, group, name, data.d);
@@ -162,6 +171,7 @@ static void set_default_data(VikLayerParamData data, const char *group, const ch
 	}
 	default: break;
 	}
+#endif
 }
 
 
@@ -169,11 +179,13 @@ static void set_default_data(VikLayerParamData data, const char *group, const ch
 
 static void defaults_run_setparam(void * index_ptr, uint16_t i, VikLayerParamData data, VikLayerParam *params)
 {
+#ifndef SLAVGPS_QT
 	/* Index is only an index into values from this layer. */
 	int index = KPOINTER_TO_INT (index_ptr);
 	VikLayerParam *vlp = (VikLayerParam *) g_ptr_array_index(paramsVD, index + i);
 
 	set_default_data(data, vik_layer_get_interface(vlp->layer_type)->fixed_layer_name, vlp->name, vlp->type);
+#endif
 }
 
 
@@ -181,11 +193,13 @@ static void defaults_run_setparam(void * index_ptr, uint16_t i, VikLayerParamDat
 
 static VikLayerParamData defaults_run_getparam(void * index_ptr, uint16_t i, bool notused2)
 {
+#ifndef SLAVGPS_QT
 	/* Index is only an index into values from this layer. */
 	int index = (int) (long) (index_ptr);
 	VikLayerParam *vlp = (VikLayerParam *) g_ptr_array_index(paramsVD, index + i);
 
 	return get_default_data(vik_layer_get_interface(vlp->layer_type)->fixed_layer_name, vlp->name, vlp->type);
+#endif
 }
 
 
@@ -193,6 +207,7 @@ static VikLayerParamData defaults_run_getparam(void * index_ptr, uint16_t i, boo
 
 static void use_internal_defaults_if_missing_default(LayerType layer_type)
 {
+#ifndef SLAVGPS_QT
 	VikLayerParam * params = vik_layer_get_interface(layer_type)->params;
 	if (!params) {
 		return;
@@ -216,6 +231,7 @@ static void use_internal_defaults_if_missing_default(LayerType layer_type)
 			}
 		}
 	}
+#endif
 }
 
 
@@ -223,6 +239,7 @@ static void use_internal_defaults_if_missing_default(LayerType layer_type)
 
 static bool defaults_load_from_file()
 {
+#ifndef SLAVGPS_QT
 	GKeyFileFlags flags = G_KEY_FILE_KEEP_COMMENTS;
 
 	GError *error = NULL;
@@ -242,7 +259,7 @@ static bool defaults_load_from_file()
 	for (LayerType layer_type = LayerType::AGGREGATE; layer_type < LayerType::NUM_TYPES; ++layer_type) {
 		use_internal_defaults_if_missing_default(layer_type);
 	}
-
+#endif
 	return true;
 }
 
@@ -252,6 +269,7 @@ static bool defaults_load_from_file()
 /* Return true on success. */
 static bool layer_defaults_save_to_file()
 {
+#ifndef SLAVGPS_QT
 	bool answer = true;
 	GError *error = NULL;
 	char * fn = g_build_filename(get_viking_dir(), VIKING_LAYER_DEFAULTS_INI_FILE, NULL);
@@ -295,6 +313,7 @@ tidy:
 	free(fn);
 
 	return answer;
+#endif
 }
 
 
@@ -311,6 +330,7 @@ tidy:
  */
 bool a_layer_defaults_show_window(GtkWindow *parent, const char *layername)
 {
+#ifndef SLAVGPS_QT
 	if (! loaded) {
 		/* Since we can't load the file in a_defaults_init (no params registered yet),
 		   do it once before we display the params. */
@@ -375,6 +395,7 @@ bool a_layer_defaults_show_window(GtkWindow *parent, const char *layername)
 
 	free(title);
 	free(params);
+#endif
 
 	return true;
 }
@@ -391,6 +412,7 @@ bool a_layer_defaults_show_window(GtkWindow *parent, const char *layername)
  */
 void a_layer_defaults_register(VikLayerParam *vlp, VikLayerParamData defaultval, const char *layername)
 {
+#ifndef SLAVGPS_QT
 	/* Copy value. */
 	VikLayerParam *newvlp = (VikLayerParam *) malloc(1 * sizeof (VikLayerParam));
 	*newvlp = *vlp;
@@ -398,6 +420,7 @@ void a_layer_defaults_register(VikLayerParam *vlp, VikLayerParamData defaultval,
 	g_ptr_array_add(paramsVD, newvlp);
 
 	set_default_data(defaultval, layername, vlp->name, vlp->type);
+#endif
 }
 
 

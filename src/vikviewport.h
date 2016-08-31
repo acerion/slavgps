@@ -76,9 +76,7 @@ namespace SlavGPS {
 
 
 	class Window;
-#ifndef SLAVGPS_QT
 	class Layer;
-#endif
 
 
 

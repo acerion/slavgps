@@ -2,6 +2,8 @@
 
 #include "window_qt.h"
 #include "vikviewport.h"
+#include "viklayer.h"
+
 
 Window::Window()
 {
@@ -44,11 +46,18 @@ void Window::create_layout()
 	SlavGPS::Viewport * viewport = new SlavGPS::Viewport(this);
 	viewport->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Maximum);
 	layout->addWidget(viewport);
+	struct LatLon ll = { 22.0, 27.0 };
+	viewport->set_center_latlon(&ll, false);
+	viewport->xmpp = 1;
+	viewport->ympp = 1;
 	//viewport->show();
 	fprintf(stderr, "%d / %d\n", viewport->height(), viewport->width());
 
 #endif
 
+	SlavGPS::Layer * layer = SlavGPS::Layer::new_(SlavGPS::LayerType::COORD, viewport, false);
+	viewport->configure();
+	layer->draw(viewport);
 
 	this->setCentralWidget(central_widget);
 

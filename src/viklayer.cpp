@@ -33,16 +33,22 @@
 
 #include "viklayer_defaults.h"
 #include "viklayer.h"
+#ifndef SLAVGPS_QT
 #include "vikaggregatelayer.h"
 #include "viktrwlayer.h"
+#endif
 #include "vikcoordlayer.h"
+#ifndef SLAVGPS_QT
 #include "vikmapslayer.h"
 #include "vikdemlayer.h"
 #include "vikgeoreflayer.h"
 #include "vikgpslayer.h"
 #include "vikmapniklayer.h"
+#endif
 #include "globals.h"
+#ifndef SLAVGPS_QT
 #include "viktreeview.h"
+#endif
 
 
 
@@ -55,15 +61,19 @@ using namespace SlavGPS;
 /* Functions common to all layers. */
 /* TODO longone: rename interface free -> finalize. */
 
+#ifndef SLAVGPS_QT
 extern VikLayerInterface vik_aggregate_layer_interface;
 extern VikLayerInterface vik_trw_layer_interface;
 extern VikLayerInterface vik_maps_layer_interface;
+#endif
 extern VikLayerInterface vik_coord_layer_interface;
+#ifndef SLAVGPS_QT
 extern VikLayerInterface vik_georef_layer_interface;
 extern VikLayerInterface vik_gps_layer_interface;
 extern VikLayerInterface vik_dem_layer_interface;
 #ifdef HAVE_LIBMAPNIK
 extern VikLayerInterface vik_mapnik_layer_interface;
+#endif
 #endif
 
 enum {
@@ -81,10 +91,11 @@ static bool layer_defaults_register(LayerType layer_type);
 
 void SlavGPS::layer_init(void)
 {
+#ifndef SLAVGPS_QT
 	layer_signals[VL_UPDATE_SIGNAL] = g_signal_new("update", G_TYPE_OBJECT,
 						       (GSignalFlags) (G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION), 0, NULL, NULL,
 						       g_cclosure_marshal_VOID__VOID, G_TYPE_NONE, 0);
-
+#endif
 	/* Register all parameter defaults, early in the start up sequence. */
 	for (LayerType layer_type = LayerType::AGGREGATE; layer_type < LayerType::NUM_TYPES; ++layer_type) {
 		/* ATM ignore the returned value. */
@@ -100,7 +111,9 @@ void SlavGPS::layer_init(void)
  */
 static bool idle_draw(Layer * layer)
 {
+#ifndef SLAVGPS_QT
 	g_signal_emit(G_OBJECT (layer->vl), layer_signals[VL_UPDATE_SIGNAL], 0);
+#endif
 	return false; /* Nothing else to do. */
 }
 
@@ -112,6 +125,7 @@ static bool idle_draw(Layer * layer)
  */
 void Layer::emit_update()
 {
+#ifndef SLAVGPS_QT
 	if (this->visible && this->realized) {
 		GThread * thread = this->get_window()->get_thread();
 		if (!thread) {
@@ -129,6 +143,7 @@ void Layer::emit_update()
 			g_idle_add((GSourceFunc) idle_draw, this);
 		}
 	}
+#endif
 }
 
 
@@ -140,8 +155,10 @@ void Layer::emit_update()
  */
 void vik_layer_emit_update_although_invisible(Layer * layer)
 {
+#ifndef SLAVGPS_QT
 	Window::set_redraw_trigger(layer);
 	g_idle_add((GSourceFunc) idle_draw, layer);
+#endif
 }
 
 
@@ -150,26 +167,32 @@ void vik_layer_emit_update_although_invisible(Layer * layer)
 /* Doesn't set the trigger. should be done by aggregate layer when child emits update. */
 void vik_layer_emit_update_secondary(Layer * layer)
 {
+#ifndef SLAVGPS_QT
 	if (layer->visible) {
 		/* TODO: this can used from the background - e.g. in acquire
 		   so will need to flow background update status through too. */
 		g_idle_add((GSourceFunc) idle_draw, layer);
 	}
+#endif
 }
 
 
 
 
 static VikLayerInterface * vik_layer_interfaces[(int) LayerType::NUM_TYPES] = {
+#ifndef SLAVGPS_QT
 	&vik_aggregate_layer_interface,
 	&vik_trw_layer_interface,
+#endif
 	&vik_coord_layer_interface,
+#ifndef SLAVGPS_QT
 	&vik_georef_layer_interface,
 	&vik_gps_layer_interface,
 	&vik_maps_layer_interface,
 	&vik_dem_layer_interface,
 #ifdef HAVE_LIBMAPNIK
 	&vik_mapnik_layer_interface,
+#endif
 #endif
 };
 
@@ -192,6 +215,7 @@ VikLayerInterface * vik_layer_get_interface(LayerType layer_type)
  */
 static bool layer_defaults_register(LayerType layer_type)
 {
+#ifndef SLAVGPS_QT
 	/* See if any parameters. */
 	VikLayerParam *params = vik_layer_interfaces[(int) layer_type]->params;
 	if (!params) {
@@ -213,6 +237,7 @@ static bool layer_defaults_register(LayerType layer_type)
 	}
 
 	return answer;
+#endif
 }
 
 
@@ -252,6 +277,7 @@ Layer * Layer::new_(LayerType layer_type, Viewport * viewport, bool interactive)
 	assert (layer_type != LayerType::NUM_TYPES);
 
 	Layer * layer = NULL;
+#ifndef SLAVGPS_QT
 	if (layer_type == LayerType::AGGREGATE) {
 		fprintf(stderr, "\n\n\n NEW AGGREGATE\n\n\n");
 		layer = new LayerAggregate(viewport);
@@ -260,11 +286,15 @@ Layer * Layer::new_(LayerType layer_type, Viewport * viewport, bool interactive)
 		fprintf(stderr, "\n\n\n NEW TRW\n\n\n");
 		layer = new LayerTRW(viewport);
 
-	} else if (layer_type == LayerType::COORD) {
+	} else
+#endif
+		if (layer_type == LayerType::COORD) {
 		fprintf(stderr, "\n\n\n NEW COORD\n\n\n");
 		layer = new LayerCoord(viewport);
 
-	} else if (layer_type == LayerType::MAPS) {
+	}
+#ifndef SLAVGPS_QT
+		else if (layer_type == LayerType::MAPS) {
 		fprintf(stderr, "\n\n\n NEW MAPS\n\n\n");
 		layer = new LayerMaps(viewport);
 
@@ -301,6 +331,7 @@ Layer * Layer::new_(LayerType layer_type, Viewport * viewport, bool interactive)
 			layer = NULL;
 		}
 	}
+#endif
 	return layer;
 }
 
@@ -338,6 +369,7 @@ typedef struct {
 
 void Layer::marshall(Layer * layer, uint8_t ** data, int * len)
 {
+#ifndef SLAVGPS_QT
 	layer->marshall(data, len);
 	if (*data) {
 		header_t * header = (header_t *) malloc(*len + sizeof (*header));
@@ -348,6 +380,7 @@ void Layer::marshall(Layer * layer, uint8_t ** data, int * len)
 		*data = (uint8_t *) header;
 		*len = *len + sizeof (*header);
 	}
+#endif
 }
 
 
@@ -364,6 +397,7 @@ void Layer::marshall(uint8_t ** data, int * len)
 
 void Layer::marshall_params(uint8_t ** data, int * datalen)
 {
+#ifndef SLAVGPS_QT
 	VikLayerParam * params = vik_layer_get_interface(this->type)->params;
 	VikLayerFuncGetParam get_param = vik_layer_get_interface(this->type)->get_param;
 
@@ -424,6 +458,7 @@ void Layer::marshall_params(uint8_t ** data, int * datalen)
 	g_byte_array_free (b, false);
 
 #undef vlm_append
+#endif
 }
 
 
@@ -431,6 +466,7 @@ void Layer::marshall_params(uint8_t ** data, int * datalen)
 
 void Layer::unmarshall_params(uint8_t * data, int datalen, Viewport * viewport)
 {
+#ifndef SLAVGPS_QT
 	VikLayerParam *params = vik_layer_get_interface(this->type)->params;
 	VikLayerFuncSetParam set_param = vik_layer_get_interface(this->type)->set_param;
 
@@ -489,6 +525,7 @@ void Layer::unmarshall_params(uint8_t * data, int datalen, Viewport * viewport)
 			}
 		}
 	}
+#endif
 }
 
 
@@ -496,6 +533,7 @@ void Layer::unmarshall_params(uint8_t * data, int datalen, Viewport * viewport)
 
 Layer * Layer::unmarshall(uint8_t * data, int len, Viewport * viewport)
 {
+#ifndef SLAVGPS_QT
 	header_t * header = (header_t *) data;
 
 	if (vik_layer_interfaces[(int) header->layer_type]->unmarshall) {
@@ -503,6 +541,7 @@ Layer * Layer::unmarshall(uint8_t * data, int len, Viewport * viewport)
 	} else {
 		return NULL;
 	}
+#endif
 }
 
 
@@ -510,12 +549,14 @@ Layer * Layer::unmarshall(uint8_t * data, int len, Viewport * viewport)
 
 Layer::~Layer()
 {
+#ifndef SLAVGPS_QT
 	if (this->name) {
 		free(this->name);
 	}
 
 	/* kamilTODO: free this object. */
 	this->vl = NULL;
+#endif
 }
 
 
@@ -523,12 +564,14 @@ Layer::~Layer()
 
 bool vik_layer_selected(Layer * layer, SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeItemType type)
 {
+#ifndef SLAVGPS_QT
 	bool result = layer->selected(sublayer_type, sublayer_uid, type);
 	if (result) {
 		return result;
 	} else {
 		return layer->get_window()->clear_highlight();
 	}
+#endif
 }
 
 
@@ -536,6 +579,7 @@ bool vik_layer_selected(Layer * layer, SublayerType sublayer_type, sg_uid_t subl
 
 uint16_t vik_layer_get_menu_items_selection(Layer * layer)
 {
+#ifndef SLAVGPS_QT
 	uint16_t rv = layer->get_menu_selection();
 	if (rv == (uint16_t) -1) {
 		/* Perhaps this line could go to base class. */
@@ -543,6 +587,7 @@ uint16_t vik_layer_get_menu_items_selection(Layer * layer)
 	} else {
 		return rv;
 	}
+#endif
 }
 
 
@@ -550,10 +595,12 @@ uint16_t vik_layer_get_menu_items_selection(Layer * layer)
 
 GdkPixbuf * vik_layer_load_icon(LayerType layer_type)
 {
+#ifndef SLAVGPS_QT
 	assert (layer_type < LayerType::NUM_TYPES);
 	if (vik_layer_interfaces[(int) layer_type]->icon) {
 		return gdk_pixbuf_from_pixdata(vik_layer_interfaces[(int) layer_type]->icon, false, NULL);
 	}
+#endif
 	return NULL;
 }
 
@@ -578,6 +625,7 @@ VikLayerParamData layer_get_param(Layer const * layer, uint16_t id, bool is_file
 
 static bool vik_layer_properties_factory(Layer * layer, Viewport * viewport)
 {
+#ifndef SLAVGPS_QT
 	switch (a_uibuilder_properties_factory(_("Layer Properties"),
 					       viewport->get_toolkit_window(),
 					       vik_layer_interfaces[(int) layer->type]->params,
@@ -600,6 +648,7 @@ static bool vik_layer_properties_factory(Layer * layer, Viewport * viewport)
 	default:
 		return true;
 	}
+#endif
 }
 
 
@@ -620,6 +669,7 @@ LayerType Layer::type_from_string(char const * str)
 
 void vik_layer_typed_param_data_free(void * gp)
 {
+#ifndef SLAVGPS_QT
 	VikLayerTypedParamData *val = (VikLayerTypedParamData *)gp;
 	switch (val->type) {
 	case VIK_LAYER_PARAM_STRING:
@@ -639,6 +689,7 @@ void vik_layer_typed_param_data_free(void * gp)
 		break;
 	}
 	free(val);
+#endif
 }
 
 
@@ -646,6 +697,7 @@ void vik_layer_typed_param_data_free(void * gp)
 
 VikLayerTypedParamData * vik_layer_typed_param_data_copy_from_data(VikLayerParamType type, VikLayerParamData val)
 {
+#ifndef SLAVGPS_QT
 	VikLayerTypedParamData * newval = (VikLayerTypedParamData *) malloc(1 * sizeof (VikLayerTypedParamData));
 	newval->data = val;
 	newval->type = type;
@@ -667,6 +719,7 @@ VikLayerTypedParamData * vik_layer_typed_param_data_copy_from_data(VikLayerParam
 		break;
 	}
 	return newval;
+#endif
 }
 
 
@@ -676,6 +729,7 @@ VikLayerTypedParamData * vik_layer_typed_param_data_copy_from_data(VikLayerParam
 
 VikLayerTypedParamData * vik_layer_data_typed_param_copy_from_string(VikLayerParamType type, const char * str)
 {
+#ifndef SLAVGPS_QT
 	VikLayerTypedParamData * rv = (VikLayerTypedParamData *) malloc(1 * sizeof (VikLayerTypedParamData));
 	rv->type = type;
 	switch (type) {
@@ -702,6 +756,7 @@ VikLayerTypedParamData * vik_layer_data_typed_param_copy_from_string(VikLayerPar
 	}
 	}
 	return rv;
+#endif
 }
 
 
@@ -713,6 +768,7 @@ VikLayerTypedParamData * vik_layer_data_typed_param_copy_from_string(VikLayerPar
  */
 void Layer::set_defaults(Viewport * viewport)
 {
+#ifndef SLAVGPS_QT
 	/* Sneaky initialize of the viewport value here. */
 	this->viewport = viewport;
 
@@ -731,6 +787,7 @@ void Layer::set_defaults(Viewport * viewport)
 			}
 		}
 	}
+#endif
 }
 
 
@@ -750,9 +807,10 @@ Layer::Layer()
 	memset(&this->iter, 0, sizeof (this->iter));
 
 	strcpy(this->type_string, "LAST");
-
+#ifndef SLAVGPS_QT
 	this->vl = (VikLayer *) g_object_new(G_TYPE_OBJECT, NULL);
 	g_object_set_data((GObject *) this->vl, "layer", this);
+#endif
 }
 
 
@@ -975,9 +1033,11 @@ bool Layer::properties(void * viewport)
 
 void Layer::realize(TreeView * tree_view_, GtkTreeIter * layer_iter)
 {
+#ifndef SLAVGPS_QT
 	this->tree_view = tree_view_;
 	this->iter = *layer_iter;
 	this->realized = true;
+#endif
 
 	return;
 }
@@ -1004,7 +1064,9 @@ bool Layer::set_param(uint16_t id, VikLayerParamData data, Viewport * viewport, 
 
 GtkWindow * Layer::get_toolkit_window()
 {
+#ifndef SLAVGPS_QT
 	return this->tree_view->get_toolkit_window();
+#endif
 }
 
 
@@ -1022,6 +1084,7 @@ LayerTool::LayerTool(Window * window, Viewport * viewport, LayerType layer_type)
 
 LayerTool::~LayerTool()
 {
+#ifndef SLAVGPS_QT
 	if (radioActionEntry.name) {
 		free((void *) radioActionEntry.name);
 		radioActionEntry.name = NULL;
@@ -1059,7 +1122,7 @@ LayerTool::~LayerTool()
 		free(ed);
 		ed = NULL;
 	}
-
+#endif
 }
 
 
@@ -1099,9 +1162,11 @@ bool Layer::compare_name_ascending(Layer * first, Layer * second)
 
 Window * Layer::get_window(void)
 {
+#ifndef SLAVGPS_QT
 	GtkWindow * w = this->tree_view->get_toolkit_window();
 	Window * window = (Window *) g_object_get_data((GObject *) w, "window");
 	return window;
+#endif
 }
 
 
@@ -1109,7 +1174,9 @@ Window * Layer::get_window(void)
 
 void Layer::ref(void)
 {
+#ifndef SLAVGPS_QT
 	g_object_ref(this->vl);
+#endif
 }
 
 
@@ -1117,8 +1184,10 @@ void Layer::ref(void)
 
 void Layer::unref(void)
 {
+#ifndef SLAVGPS_QT
 	g_object_unref(this->vl);
 	return;
+#endif
 }
 
 
@@ -1126,8 +1195,10 @@ void Layer::unref(void)
 
 void Layer::weak_ref(LayerRefCB cb, void * obj)
 {
+#ifndef SLAVGPS_QT
 	g_object_weak_ref(G_OBJECT (this->vl), cb, obj);
 	return;
+#endif
 }
 
 
@@ -1135,15 +1206,19 @@ void Layer::weak_ref(LayerRefCB cb, void * obj)
 
 void Layer::weak_unref(LayerRefCB cb, void * obj)
 {
+#ifndef SLAVGPS_QT
 	g_object_weak_unref(G_OBJECT (this->vl), cb, obj);
 	return;
+#endif
 }
 
 
 
 bool Layer::the_same_object(Layer const * layer)
 {
+#ifndef SLAVGPS_QT
 	return layer && this->vl == layer->vl;
+#endif
 }
 
 
@@ -1151,10 +1226,12 @@ bool Layer::the_same_object(Layer const * layer)
 
 void Layer::disconnect_layer_signal(Layer * layer)
 {
+#ifndef SLAVGPS_QT
 	unsigned int number_handlers = g_signal_handlers_disconnect_matched(layer->vl, G_SIGNAL_MATCH_DATA, 0, 0, 0, 0, this->vl);
 	if (number_handlers != 1) {
 		fprintf(stderr, "CRITICAL: %s: Unexpected number of disconnect handlers: %d\n", __FUNCTION__, number_handlers);
 	}
+#endif
 }
 
 
@@ -1162,7 +1239,9 @@ void Layer::disconnect_layer_signal(Layer * layer)
 
 void * Layer::get_toolkit_object(void)
 {
+#ifndef SLAVGPS_QT
 	return (void *) this->vl;
+#endif
 }
 
 
@@ -1170,6 +1249,17 @@ void * Layer::get_toolkit_object(void)
 
 Layer * Layer::get_layer(VikLayer * vl)
 {
+#ifndef SLAVGPS_QT
 	Layer * layer = (Layer *) g_object_get_data((GObject *) vl, "layer");
 	return layer;
+#endif
+}
+
+
+
+
+LayerType& SlavGPS::operator++(LayerType& layer_type)
+{
+	layer_type = static_cast<LayerType>(static_cast<int>(layer_type) + 1);
+	return layer_type;
 }

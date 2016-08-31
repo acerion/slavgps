@@ -28,13 +28,18 @@
 #include <cstdint>
 
 #include <glib.h>
+#ifndef SLAVGPS_QT
 #include <gtk/gtk.h>
 #include <gdk-pixbuf/gdk-pixdata.h>
+#endif
 
+#ifndef SLAVGPS_QT
 #include "uibuilder.h"
 #include "viktreeview.h"
+#include "slav_qt.h"
+#endif
 #include "vikviewport.h"
-
+#include "globals.h"
 
 
 

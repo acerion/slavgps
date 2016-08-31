@@ -26,9 +26,13 @@
 
 #include <stdint.h>
 
+#ifndef SLAVGPS_QT
 #include "uibuilder.h"
+#endif
 
-
+#ifdef SLAVGPS_QT
+#include "slav_qt.h"
+#endif
 
 
 void a_layer_defaults_init();
