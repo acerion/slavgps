@@ -119,8 +119,8 @@ namespace SlavGPS {
 		void change_coord_mode(VikCoordMode mode);
 		void add_menu_items(GtkMenu * menu, void * panel);
 		void realize(TreeView * tree_view, GtkTreeIter * layer_iter);
-		bool set_param(uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
-		VikLayerParamData get_param(uint16_t id, bool is_file_operation) const;
+		bool set_param(uint16_t id, LayerParamData data, Viewport * viewport, bool is_file_operation);
+		LayerParamData get_param(uint16_t id, bool is_file_operation) const;
 
 
 		std::list<Layer const * > * get_children();

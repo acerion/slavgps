@@ -694,8 +694,8 @@ static bool load_feature()
 
 
 
-static VikLayerParam prefs[] = {
-	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_IO_NAMESPACE "gpsbabel", VIK_LAYER_PARAM_STRING, VIK_LAYER_GROUP_NONE, N_("GPSBabel:"), VIK_LAYER_WIDGET_FILEENTRY, NULL, NULL, N_("Allow setting the specific instance of GPSBabel. You must restart Viking for this value to take effect."), NULL, NULL, NULL },
+static LayerParam prefs[] = {
+	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_IO_NAMESPACE "gpsbabel", LayerParamType::STRING, VIK_LAYER_GROUP_NONE, N_("GPSBabel:"), LayerWidgetType::FILEENTRY, NULL, NULL, N_("Allow setting the specific instance of GPSBabel. You must restart Viking for this value to take effect."), NULL, NULL, NULL },
 };
 
 
@@ -707,7 +707,7 @@ static VikLayerParam prefs[] = {
 void a_babel_init()
 {
 	/* Set the defaults. */
-	VikLayerParamData vlpd;
+	LayerParamData vlpd;
 #ifdef WINDOWS
 	/* Basic guesses - could use %ProgramFiles% but this is simpler: */
 	if (g_file_test ("C:\\Program Files (x86)\\GPSBabel\\gpsbabel.exe", G_FILE_TEST_EXISTS)) {

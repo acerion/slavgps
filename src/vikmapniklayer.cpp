@@ -62,35 +62,35 @@ using namespace SlavGPS;
 
 
 
-static VikLayerParamData file_default(void)
+static LayerParamData file_default(void)
 {
-	VikLayerParamData data;
+	LayerParamData data;
 	data.s = "";
 	return data;
 }
 
-static VikLayerParamData size_default(void) { return VIK_LPD_UINT (256); }
-static VikLayerParamData alpha_default(void) { return VIK_LPD_UINT (255); }
+static LayerParamData size_default(void) { return VIK_LPD_UINT (256); }
+static LayerParamData alpha_default(void) { return VIK_LPD_UINT (255); }
 
-static VikLayerParamData cache_dir_default(void)
+static LayerParamData cache_dir_default(void)
 {
-	VikLayerParamData data;
+	LayerParamData data;
 	data.s = g_strconcat(maps_layer_default_dir(), "MapnikRendering", NULL);
 	return data;
 }
 
-static VikLayerParamScale scales[] = {
+static LayerParamScale scales[] = {
 	{ 0, 255, 5, 0 },   /* Alpha. */
 	{ 64, 1024, 8, 0 }, /* Tile size. */
 	{ 0, 1024, 12, 0 }, /* Rerender timeout hours. */
 };
 
-VikLayerParam mapnik_layer_params[] = {
-	{ LayerType::MAPNIK, "config-file-mml", VIK_LAYER_PARAM_STRING,  VIK_LAYER_GROUP_NONE, N_("CSS (MML) Config File:"), VIK_LAYER_WIDGET_FILEENTRY,   KINT_TO_POINTER(VF_FILTER_CARTO), NULL, N_("CartoCSS configuration file"),   file_default,         NULL, NULL },
-	{ LayerType::MAPNIK, "config-file-xml", VIK_LAYER_PARAM_STRING,  VIK_LAYER_GROUP_NONE, N_("XML Config File:"),       VIK_LAYER_WIDGET_FILEENTRY,   KINT_TO_POINTER(VF_FILTER_XML),   NULL, N_("Mapnik XML configuration file"), file_default,         NULL, NULL },
-	{ LayerType::MAPNIK, "alpha",           VIK_LAYER_PARAM_UINT,    VIK_LAYER_GROUP_NONE, N_("Alpha:"),                 VIK_LAYER_WIDGET_HSCALE,      &scales[0],                       NULL, NULL,                                alpha_default,        NULL, NULL },
-	{ LayerType::MAPNIK, "use-file-cache",  VIK_LAYER_PARAM_BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Use File Cache:"),        VIK_LAYER_WIDGET_CHECKBUTTON, NULL,                             NULL, NULL,                                vik_lpd_true_default, NULL, NULL },
-	{ LayerType::MAPNIK, "file-cache-dir",  VIK_LAYER_PARAM_STRING,  VIK_LAYER_GROUP_NONE, N_("File Cache Directory:"),  VIK_LAYER_WIDGET_FOLDERENTRY, NULL,                             NULL, NULL,                                cache_dir_default,    NULL, NULL },
+LayerParam mapnik_layer_params[] = {
+	{ LayerType::MAPNIK, "config-file-mml", LayerParamType::STRING,  VIK_LAYER_GROUP_NONE, N_("CSS (MML) Config File:"), LayerWidgetType::FILEENTRY,   KINT_TO_POINTER(VF_FILTER_CARTO), NULL, N_("CartoCSS configuration file"),   file_default,         NULL, NULL },
+	{ LayerType::MAPNIK, "config-file-xml", LayerParamType::STRING,  VIK_LAYER_GROUP_NONE, N_("XML Config File:"),       LayerWidgetType::FILEENTRY,   KINT_TO_POINTER(VF_FILTER_XML),   NULL, N_("Mapnik XML configuration file"), file_default,         NULL, NULL },
+	{ LayerType::MAPNIK, "alpha",           LayerParamType::UINT,    VIK_LAYER_GROUP_NONE, N_("Alpha:"),                 LayerWidgetType::HSCALE,      &scales[0],                       NULL, NULL,                                alpha_default,        NULL, NULL },
+	{ LayerType::MAPNIK, "use-file-cache",  LayerParamType::BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Use File Cache:"),        LayerWidgetType::CHECKBUTTON, NULL,                             NULL, NULL,                                vik_lpd_true_default, NULL, NULL },
+	{ LayerType::MAPNIK, "file-cache-dir",  LayerParamType::STRING,  VIK_LAYER_GROUP_NONE, N_("File Cache Directory:"),  LayerWidgetType::FOLDERENTRY, NULL,                             NULL, NULL,                                cache_dir_default,    NULL, NULL },
 };
 
 enum {
@@ -151,9 +151,9 @@ VikLayerInterface vik_mapnik_layer_interface = {
 
 
 
-static VikLayerParamData plugins_default(void)
+static LayerParamData plugins_default(void)
 {
-	VikLayerParamData data;
+	LayerParamData data;
 #ifdef WINDOWS
 	data.s = strdup("input");
 #else
@@ -174,10 +174,10 @@ static VikLayerParamData plugins_default(void)
 
 
 
-static VikLayerParamData fonts_default(void)
+static LayerParamData fonts_default(void)
 {
 	/* Possibly should be string list to allow loading from multiple directories. */
-	VikLayerParamData data;
+	LayerParamData data;
 #ifdef WINDOWS
 	data.s = strdup("C:\\Windows\\Fonts");
 #elif defined __APPLE__
@@ -191,14 +191,14 @@ static VikLayerParamData fonts_default(void)
 
 
 
-static VikLayerParam prefs[] = {
+static LayerParam prefs[] = {
 	/* Changing these values only applies before first mapnik layer is 'created' */
-	{ LayerType::NUM_TYPES, MAPNIK_PREFS_NAMESPACE"plugins_directory", VIK_LAYER_PARAM_STRING, VIK_LAYER_GROUP_NONE, N_("Plugins Directory:"), VIK_LAYER_WIDGET_FOLDERENTRY, NULL, NULL, N_("You need to restart Viking for a change to this value to be used"), plugins_default, NULL, NULL },
-	{ LayerType::NUM_TYPES, MAPNIK_PREFS_NAMESPACE"fonts_directory", VIK_LAYER_PARAM_STRING, VIK_LAYER_GROUP_NONE, N_("Fonts Directory:"), VIK_LAYER_WIDGET_FOLDERENTRY, NULL, NULL, N_("You need to restart Viking for a change to this value to be used"), fonts_default, NULL, NULL },
-	{ LayerType::NUM_TYPES, MAPNIK_PREFS_NAMESPACE"recurse_fonts_directory", VIK_LAYER_PARAM_BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Recurse Fonts Directory:"), VIK_LAYER_WIDGET_CHECKBUTTON, NULL, NULL, N_("You need to restart Viking for a change to this value to be used"), vik_lpd_true_default, NULL, NULL },
-	{ LayerType::NUM_TYPES, MAPNIK_PREFS_NAMESPACE"rerender_after", VIK_LAYER_PARAM_UINT, VIK_LAYER_GROUP_NONE, N_("Rerender Timeout (hours):"), VIK_LAYER_WIDGET_SPINBUTTON, &scales[2], NULL, N_("You need to restart Viking for a change to this value to be used"), NULL, NULL, NULL },
+	{ LayerType::NUM_TYPES, MAPNIK_PREFS_NAMESPACE"plugins_directory",       LayerParamType::STRING, VIK_LAYER_GROUP_NONE,  N_("Plugins Directory:"),        LayerWidgetType::FOLDERENTRY, NULL,       NULL, N_("You need to restart Viking for a change to this value to be used"), plugins_default, NULL, NULL },
+	{ LayerType::NUM_TYPES, MAPNIK_PREFS_NAMESPACE"fonts_directory",         LayerParamType::STRING, VIK_LAYER_GROUP_NONE,  N_("Fonts Directory:"),          LayerWidgetType::FOLDERENTRY, NULL,       NULL, N_("You need to restart Viking for a change to this value to be used"), fonts_default, NULL, NULL },
+	{ LayerType::NUM_TYPES, MAPNIK_PREFS_NAMESPACE"recurse_fonts_directory", LayerParamType::BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Recurse Fonts Directory:"),  LayerWidgetType::CHECKBUTTON, NULL,       NULL, N_("You need to restart Viking for a change to this value to be used"), vik_lpd_true_default, NULL, NULL },
+	{ LayerType::NUM_TYPES, MAPNIK_PREFS_NAMESPACE"rerender_after",          LayerParamType::UINT, VIK_LAYER_GROUP_NONE,    N_("Rerender Timeout (hours):"), LayerWidgetType::SPINBUTTON,  &scales[2], NULL, N_("You need to restart Viking for a change to this value to be used"), NULL, NULL, NULL },
 	/* Changeable any time. */
-	{ LayerType::NUM_TYPES, MAPNIK_PREFS_NAMESPACE"carto", VIK_LAYER_PARAM_STRING, VIK_LAYER_GROUP_NONE, N_("CartoCSS:"), VIK_LAYER_WIDGET_FILEENTRY, NULL, NULL,  N_("The program to convert CartoCSS files into Mapnik XML"), NULL, NULL, NULL },
+	{ LayerType::NUM_TYPES, MAPNIK_PREFS_NAMESPACE"carto",                   LayerParamType::STRING, VIK_LAYER_GROUP_NONE,  N_("CartoCSS:"),                 LayerWidgetType::FILEENTRY,   NULL,       NULL,  N_("The program to convert CartoCSS files into Mapnik XML"), NULL, NULL, NULL },
 };
 
 
@@ -219,7 +219,7 @@ void SlavGPS::vik_mapnik_layer_init(void)
 	a_preferences_register_group(MAPNIK_PREFS_GROUP_KEY, "Mapnik");
 
 	unsigned int i = 0;
-	VikLayerParamData tmp = plugins_default();
+	LayerParamData tmp = plugins_default();
 	a_preferences_register(&prefs[i++], tmp, MAPNIK_PREFS_GROUP_KEY);
 
 	tmp = fonts_default();
@@ -281,9 +281,9 @@ void SlavGPS::vik_mapnik_layer_uninit()
 /* NB Only performed once per program run. */
 void SlavGPS::layer_mapnik_init(void)
 {
-	VikLayerParamData *pd = a_preferences_get(MAPNIK_PREFS_NAMESPACE"plugins_directory");
-	VikLayerParamData *fd = a_preferences_get(MAPNIK_PREFS_NAMESPACE"fonts_directory");
-	VikLayerParamData *rfd = a_preferences_get(MAPNIK_PREFS_NAMESPACE"recurse_fonts_directory");
+	LayerParamData *pd = a_preferences_get(MAPNIK_PREFS_NAMESPACE"plugins_directory");
+	LayerParamData *fd = a_preferences_get(MAPNIK_PREFS_NAMESPACE"fonts_directory");
+	LayerParamData *rfd = a_preferences_get(MAPNIK_PREFS_NAMESPACE"recurse_fonts_directory");
 
 	if (pd && fd && rfd) {
 		mapnik_interface_initialize(pd->s, fd->s, rfd->b);
@@ -356,7 +356,7 @@ static Layer * mapnik_layer_unmarshall(uint8_t * data, int len, Viewport * viewp
 
 
 
-bool LayerMapnik::set_param(uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
+bool LayerMapnik::set_param(uint16_t id, LayerParamData data, Viewport * viewport, bool is_file_operation)
 {
 	switch (id) {
 		case PARAM_CONFIG_CSS:
@@ -384,9 +384,9 @@ bool LayerMapnik::set_param(uint16_t id, VikLayerParamData data, Viewport * view
 
 
 
-VikLayerParamData LayerMapnik::get_param(uint16_t id, bool is_file_operation) const
+LayerParamData LayerMapnik::get_param(uint16_t id, bool is_file_operation) const
 {
-	VikLayerParamData data;
+	LayerParamData data;
 	switch (id) {
 		case PARAM_CONFIG_CSS: {
 			data.s = this->filename_css;
@@ -452,7 +452,7 @@ bool LayerMapnik::carto_load(Viewport * viewport)
 	char *mystderr = NULL;
 	GError *error = NULL;
 
-	VikLayerParamData *vlpd = a_preferences_get(MAPNIK_PREFS_NAMESPACE"carto");
+	LayerParamData *vlpd = a_preferences_get(MAPNIK_PREFS_NAMESPACE"carto");
 	char *command = g_strdup_printf("%s %s", vlpd->s, this->filename_css);
 
 	bool answer = true;

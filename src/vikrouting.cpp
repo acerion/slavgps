@@ -61,8 +61,8 @@ static GList * routing_engine_list = NULL;
 
 
 
-static VikLayerParam prefs[] = {
-	{ LayerType::NUM_TYPES, VIKING_ROUTING_PARAMS_NAMESPACE "default", VIK_LAYER_PARAM_STRING, VIK_LAYER_GROUP_NONE, N_("Default engine:"), VIK_LAYER_WIDGET_COMBOBOX, NULL, NULL, NULL, NULL, NULL, NULL },
+static LayerParam prefs[] = {
+	{ LayerType::NUM_TYPES, VIKING_ROUTING_PARAMS_NAMESPACE "default", LayerParamType::STRING, VIK_LAYER_GROUP_NONE, N_("Default engine:"), LayerWidgetType::COMBOBOX, NULL, NULL, NULL, NULL, NULL, NULL },
 };
 
 
@@ -81,7 +81,7 @@ void vik_routing_prefs_init()
 {
 	a_preferences_register_group(VIKING_ROUTING_PARAMS_GROUP_KEY, _("Routing"));
 
-	VikLayerParamData tmp;
+	LayerParamData tmp;
 	tmp.s = NULL;
 	a_preferences_register(prefs, tmp, VIKING_ROUTING_PARAMS_GROUP_KEY);
 }

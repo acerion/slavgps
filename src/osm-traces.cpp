@@ -103,9 +103,9 @@ typedef struct _OsmTracesInfo {
 	Track * trk;
 } OsmTracesInfo;
 
-static VikLayerParam prefs[] = {
-	{ LayerType::NUM_TYPES, VIKING_OSM_TRACES_PARAMS_NAMESPACE "username", VIK_LAYER_PARAM_STRING, VIK_LAYER_GROUP_NONE, N_("OSM username:"), VIK_LAYER_WIDGET_ENTRY, NULL, NULL, NULL, NULL, NULL, NULL },
-	{ LayerType::NUM_TYPES, VIKING_OSM_TRACES_PARAMS_NAMESPACE "password", VIK_LAYER_PARAM_STRING, VIK_LAYER_GROUP_NONE, N_("OSM password:"), VIK_LAYER_WIDGET_PASSWORD, NULL, NULL, NULL, NULL, NULL, NULL },
+static LayerParam prefs[] = {
+	{ LayerType::NUM_TYPES, VIKING_OSM_TRACES_PARAMS_NAMESPACE "username", LayerParamType::STRING, VIK_LAYER_GROUP_NONE, N_("OSM username:"), LayerWidgetType::ENTRY, NULL, NULL, NULL, NULL, NULL, NULL },
+	{ LayerType::NUM_TYPES, VIKING_OSM_TRACES_PARAMS_NAMESPACE "password", LayerParamType::STRING, VIK_LAYER_GROUP_NONE, N_("OSM password:"), LayerWidgetType::PASSWORD, NULL, NULL, NULL, NULL, NULL, NULL },
 };
 
 
@@ -181,7 +181,7 @@ void SlavGPS::osm_traces_init()
 	/* Preferences. */
 	a_preferences_register_group(VIKING_OSM_TRACES_PARAMS_GROUP_KEY, _("OpenStreetMap Traces"));
 
-	VikLayerParamData tmp;
+	LayerParamData tmp;
 	tmp.s = "";
 	a_preferences_register(prefs, tmp, VIKING_OSM_TRACES_PARAMS_GROUP_KEY);
 	tmp.s = "";

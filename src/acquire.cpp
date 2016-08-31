@@ -252,7 +252,7 @@ static void acquire(Window * window,
 
 	/* For UI builder. */
 	void * pass_along_data;
-	VikLayerParamData *paramdatas = NULL;
+	LayerParamData *paramdatas = NULL;
 
 	/*** INIT AND CHECK EXISTENCE ***/
 	if (source_interface->init_func) {

@@ -70,13 +70,13 @@ static size_t max_cache_size = VIK_CONFIG_MAPCACHE_SIZE * 1024 * 1024;
 
 static GMutex * mc_mutex = NULL;
 
-static VikLayerParamScale params_scales[] = {
+static LayerParamScale params_scales[] = {
 	/* min, max, step, digits (decimal places) */
 	{ 1, 1024, 1, 0 },
 };
 
-static VikLayerParam prefs[] = {
-	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_NAMESPACE "mapcache_size", VIK_LAYER_PARAM_UINT, VIK_LAYER_GROUP_NONE, N_("Map cache memory size (MB):"), VIK_LAYER_WIDGET_HSCALE, params_scales, NULL, NULL, NULL, NULL, NULL },
+static LayerParam prefs[] = {
+	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_NAMESPACE "mapcache_size", LayerParamType::UINT, VIK_LAYER_GROUP_NONE, N_("Map cache memory size (MB):"), LayerWidgetType::HSCALE, params_scales, NULL, NULL, NULL, NULL, NULL },
 };
 
 
@@ -104,7 +104,7 @@ static void cache_item_free(cache_item_t * ci)
 
 void SlavGPS::map_cache_init()
 {
-	VikLayerParamData tmp;
+	LayerParamData tmp;
 	tmp.u = VIK_CONFIG_MAPCACHE_SIZE;
 	a_preferences_register(prefs, tmp, VIKING_PREFERENCES_GROUP_KEY);
 

@@ -119,11 +119,11 @@ typedef struct {
 
 static config_t extra_widget_data;
 
-static VikLayerParam prefs[] = {
-	{ LayerType::NUM_TYPES, TOOLBAR_PARAMS_NAMESPACE "append_to_menu", VIK_LAYER_PARAM_BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Append to Menu:"), VIK_LAYER_WIDGET_CHECKBUTTON, NULL,                    NULL, N_("Pack the toolbar to the main menu to save vertical space"), NULL, NULL, NULL },
-	{ LayerType::NUM_TYPES, TOOLBAR_PARAMS_NAMESPACE "icon_size",      VIK_LAYER_PARAM_UINT,    VIK_LAYER_GROUP_NONE, N_("Icon Size:"),      VIK_LAYER_WIDGET_COMBOBOX,    params_icon_size,        NULL, NULL, NULL, NULL, NULL },
-	{ LayerType::NUM_TYPES, TOOLBAR_PARAMS_NAMESPACE "icon_style",     VIK_LAYER_PARAM_UINT,    VIK_LAYER_GROUP_NONE, N_("Icon Style:"),     VIK_LAYER_WIDGET_COMBOBOX,    params_icon_style,       NULL, NULL, NULL, NULL, NULL },
-	{ LayerType::NUM_TYPES, TOOLBAR_PARAMS_NAMESPACE "NOTSAVED1",      VIK_LAYER_PARAM_PTR,     VIK_LAYER_GROUP_NONE, N_("Customize:"),      VIK_LAYER_WIDGET_BUTTON,      (void *) N_("Customize Buttons"), NULL, NULL, NULL, NULL, NULL },
+static LayerParam prefs[] = {
+	{ LayerType::NUM_TYPES, TOOLBAR_PARAMS_NAMESPACE "append_to_menu", LayerParamType::BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Append to Menu:"), LayerWidgetType::CHECKBUTTON, NULL,                    NULL, N_("Pack the toolbar to the main menu to save vertical space"), NULL, NULL, NULL },
+	{ LayerType::NUM_TYPES, TOOLBAR_PARAMS_NAMESPACE "icon_size",      LayerParamType::UINT,    VIK_LAYER_GROUP_NONE, N_("Icon Size:"),      LayerWidgetType::COMBOBOX,    params_icon_size,        NULL, NULL, NULL, NULL, NULL },
+	{ LayerType::NUM_TYPES, TOOLBAR_PARAMS_NAMESPACE "icon_style",     LayerParamType::UINT,    VIK_LAYER_GROUP_NONE, N_("Icon Style:"),     LayerWidgetType::COMBOBOX,    params_icon_style,       NULL, NULL, NULL, NULL, NULL },
+	{ LayerType::NUM_TYPES, TOOLBAR_PARAMS_NAMESPACE "NOTSAVED1",      LayerParamType::PTR,     VIK_LAYER_GROUP_NONE, N_("Customize:"),      LayerWidgetType::BUTTON,      (void *) N_("Customize Buttons"), NULL, NULL, NULL, NULL, NULL },
 };
 
 /* Global storage to enable freeing upon closure. */
@@ -159,7 +159,7 @@ void a_toolbar_init(void)
 	a_preferences_register_group(TOOLBAR_PARAMS_GROUP_KEY, _("Toolbar"));
 
 	unsigned int i = 0;
-	VikLayerParamData tmp;
+	LayerParamData tmp;
 	tmp.b = false;
 	a_preferences_register(&prefs[i++], tmp, TOOLBAR_PARAMS_GROUP_KEY);
 	tmp.u = 0;

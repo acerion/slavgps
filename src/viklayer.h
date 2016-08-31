@@ -204,8 +204,8 @@ namespace SlavGPS {
 		   are added to the treeview so they can add sublayers to the treeview. */
 		virtual void realize(TreeView * tree_view, GtkTreeIter * layer_iter);
 
-		virtual VikLayerParamData get_param(uint16_t id, bool is_file_operation) const;
-		virtual bool set_param(uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation);
+		virtual LayerParamData get_param(uint16_t id, bool is_file_operation) const;
+		virtual bool set_param(uint16_t id, LayerParamData data, Viewport * viewport, bool is_file_operation);
 
 
 		static LayerType type_from_string(char const * str);
@@ -331,9 +331,9 @@ extern "C" {
 typedef SlavGPS::Layer *         (* VikLayerFuncUnmarshall)    (uint8_t *, int, SlavGPS::Viewport *);
 /* Returns true if needs to redraw due to changed param. */
 /* In parameter bool denotes if for file I/O, as opposed to display/cut/copy etc... operations. */
-typedef bool                     (* VikLayerFuncSetParam)      (SlavGPS::Layer *, uint16_t, VikLayerParamData, SlavGPS::Viewport *, bool);
+typedef bool                     (* VikLayerFuncSetParam)      (SlavGPS::Layer *, uint16_t, LayerParamData, SlavGPS::Viewport *, bool);
 /* In parameter bool denotes if for file I/O, as opposed to display/cut/copy etc... operations. */
-typedef VikLayerParamData        (* VikLayerFuncGetParam)      (SlavGPS::Layer const *, uint16_t, bool);
+typedef LayerParamData        (* VikLayerFuncGetParam)      (SlavGPS::Layer const *, uint16_t, bool);
 typedef void                     (* VikLayerFuncChangeParam)   (GtkWidget *, ui_change_values *);
 
 
@@ -351,7 +351,7 @@ struct _VikLayerInterface {
 	uint16_t                           tools_count;
 
 	/* For I/O reading to and from .vik files -- params like coordline width, color, etc. */
-	VikLayerParam *                   params;
+	LayerParam *                   params;
 	uint16_t                           params_count;
 	char **                          params_groups;
 	uint8_t                            params_groups_count;
@@ -368,8 +368,8 @@ struct _VikLayerInterface {
 };
 
 VikLayerInterface * vik_layer_get_interface(SlavGPS::LayerType layer_type);
-bool layer_set_param(SlavGPS::Layer * layer, uint16_t id, VikLayerParamData data, SlavGPS::Viewport * viewport, bool is_file_operation);
-VikLayerParamData layer_get_param(SlavGPS::Layer const * layer, uint16_t id, bool is_file_operation);
+bool layer_set_param(SlavGPS::Layer * layer, uint16_t id, LayerParamData data, SlavGPS::Viewport * viewport, bool is_file_operation);
+LayerParamData layer_get_param(SlavGPS::Layer const * layer, uint16_t id, bool is_file_operation);
 
 
 /* GUI. */
@@ -386,13 +386,13 @@ void vik_layer_emit_update_although_invisible(SlavGPS::Layer * layer);
 
 
 typedef struct {
-	VikLayerParamData data;
-	VikLayerParamType type;
-} VikLayerTypedParamData;
+	LayerParamData data;
+	LayerParamType type;
+} LayerTypedParamData;
 
 void vik_layer_typed_param_data_free(void * gp);
-VikLayerTypedParamData * vik_layer_typed_param_data_copy_from_data(VikLayerParamType type, VikLayerParamData val);
-VikLayerTypedParamData * vik_layer_data_typed_param_copy_from_string(VikLayerParamType type, const char * str);
+LayerTypedParamData * vik_layer_typed_param_data_copy_from_data(LayerParamType type, LayerParamData val);
+LayerTypedParamData * vik_layer_data_typed_param_copy_from_string(LayerParamType type, const char * str);
 
 
 

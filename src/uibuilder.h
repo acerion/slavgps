@@ -46,35 +46,35 @@ typedef union {
 	GdkColor c;
 	std::list<char *> * sl;
 	void * ptr; // For internal usage - don't save this value in a file!
-} VikLayerParamData;
+} LayerParamData;
 
-typedef enum {
-	VIK_LAYER_WIDGET_CHECKBUTTON=0,
-	VIK_LAYER_WIDGET_RADIOGROUP,
-	VIK_LAYER_WIDGET_RADIOGROUP_STATIC,
-	VIK_LAYER_WIDGET_SPINBUTTON,
-	VIK_LAYER_WIDGET_ENTRY,
-	VIK_LAYER_WIDGET_PASSWORD,
-	VIK_LAYER_WIDGET_FILEENTRY,
-	VIK_LAYER_WIDGET_FOLDERENTRY,
-	VIK_LAYER_WIDGET_HSCALE,
-	VIK_LAYER_WIDGET_COLOR,
-	VIK_LAYER_WIDGET_COMBOBOX,
-	VIK_LAYER_WIDGET_FILELIST,
-	VIK_LAYER_WIDGET_BUTTON,
-} VikLayerWidgetType;
+enum class LayerWidgetType {
+	CHECKBUTTON = 0,
+	RADIOGROUP,
+	RADIOGROUP_STATIC,
+	SPINBUTTON,
+	ENTRY,
+	PASSWORD,
+	FILEENTRY,
+	FOLDERENTRY,
+	HSCALE,
+	COLOR,
+	COMBOBOX,
+	FILELIST,
+	BUTTON,
+};
 
 /* id is index. */
-typedef enum {
-	VIK_LAYER_PARAM_DOUBLE=1,
-	VIK_LAYER_PARAM_UINT,
-	VIK_LAYER_PARAM_INT,
+enum class LayerParamType {
+	DOUBLE = 1,
+	UINT,
+	INT,
 
 	/* In my_layer_set_param, if you want to use the string, you should dup it.
 	 * In my_layer_get_param, the string returned will NOT be free'd, you are responsible for managing it (I think). */
-	VIK_LAYER_PARAM_STRING,
-	VIK_LAYER_PARAM_BOOLEAN,
-	VIK_LAYER_PARAM_COLOR,
+	STRING,
+	BOOLEAN,
+	COLOR,
 
 	/* NOTE: string list works uniquely: data.sl should NOT be free'd when
 	 * the internals call get_param -- i.e. it should be managed w/in the layer.
@@ -82,35 +82,35 @@ typedef enum {
 	 * by the layer -- i.e. free'd by the layer.
 	 */
 
-	VIK_LAYER_PARAM_STRING_LIST,
-	VIK_LAYER_PARAM_PTR, /* Not really a 'parameter' but useful to route to extended configuration (e.g. toolbar order). */
-} VikLayerParamType;
+	STRING_LIST,
+	PTR, /* Not really a 'parameter' but useful to route to extended configuration (e.g. toolbar order). */
+};
 
 
 /* Default value has to be returned via a function
    because certain types value are can not be statically allocated
    (i.e. a string value that is dependent on other functions).
    Also easier for colours to be set via a function call rather than a static assignment. */
-typedef VikLayerParamData (*VikLayerDefaultFunc) (void);
+typedef LayerParamData (* LayerDefaultFunc) (void);
 
 /* Convert between the value held internally and the value used for display
    e.g. keep the internal value in seconds yet use days in the display. */
-typedef VikLayerParamData (*VikLayerConvertFunc) (VikLayerParamData);
+typedef LayerParamData (* LayerConvertFunc) (LayerParamData);
 
 typedef struct {
 	SlavGPS::LayerType layer_type;
 	const char *name;
-	VikLayerParamType type;
+	LayerParamType type;
 	int16_t group;
 	const char *title;
-	VikLayerWidgetType widget_type;
+	LayerWidgetType widget_type;
 	void * widget_data;
 	void * extra_widget_data;
 	const char *tooltip;
-	VikLayerDefaultFunc default_value;
-	VikLayerConvertFunc convert_to_display;
-	VikLayerConvertFunc convert_to_internal;
-} VikLayerParam;
+	LayerDefaultFunc default_value;
+	LayerConvertFunc convert_to_display;
+	LayerConvertFunc convert_to_internal;
+} LayerParam;
 
 enum {
 	VIK_LAYER_NOT_IN_PROPERTIES=-2,
@@ -122,61 +122,8 @@ typedef struct {
 	double max;
 	double step;
 	uint8_t digits;
-} VikLayerParamScale;
+} LayerParamScale;
 
-
-/* Annoyingly 'C' cannot initialize unions properly. */
-/* It's dependent on the standard used or the compiler support... */
-#if defined __STDC_VERSION__ && __STDC_VERSION__ >= 199901L || __GNUC__
-#define VIK_LPD_BOOLEAN(X)     (VikLayerParamData) { .b = (X) }
-#define VIK_LPD_INT(X)         (VikLayerParamData) { .u = (X) }
-#define VIK_LPD_UINT(X)        (VikLayerParamData) { .i = (X) }
-#define VIK_LPD_COLOR(X,Y,Z,A) (VikLayerParamData) { .c = (GdkColor){ (X), (Y), (Z), (A) } }
-#define VIK_LPD_DOUBLE(X)      (VikLayerParamData) { .d = (X) }
-#else
-#define VIK_LPD_BOOLEAN(X)     (VikLayerParamData) { (X) }
-#define VIK_LPD_INT(X)         (VikLayerParamData) { (X) }
-#define VIK_LPD_UINT(X)        (VikLayerParamData) { (X) }
-#define VIK_LPD_COLOR(X,Y,Z,A) (VikLayerParamData) { (X), (Y), (Z), (A) }
-#define VIK_LPD_DOUBLE(X)      (VikLayerParamData) { (X) }
-#endif
-
-VikLayerParamData vik_lpd_true_default (void);
-VikLayerParamData vik_lpd_false_default (void);
-
-
-
-typedef struct {
-	void * layer;
-	VikLayerParam * param;
-	int param_id;
-	GtkWidget ** widgets;
-	GtkWidget ** labels;
-} ui_change_values;
-
-
-GtkWidget *a_uibuilder_new_widget(VikLayerParam *param, VikLayerParamData data);
-VikLayerParamData a_uibuilder_widget_get_value(GtkWidget *widget, VikLayerParam *param);
-int a_uibuilder_properties_factory(const char *dialog_name,
-				   GtkWindow *parent,
-				   VikLayerParam *params,
-				   uint16_t params_count,
-				   char **groups,
-				   uint8_t groups_count,
-				   bool (*setparam) (void *,uint16_t,VikLayerParamData,void *,bool), /* AKA VikLayerFuncSetParam in viklayer.h. */
-				   void * pass_along1,
-				   void * pass_along2,
-				   VikLayerParamData (*getparam) (void *,uint16_t,bool),  /* AKA VikLayerFuncGetParam in viklayer.h. */
-				   void * pass_along_getparam,
-				   void (*changeparam) (GtkWidget*, ui_change_values *)); /* AKA VikLayerFuncChangeParam in viklayer.h. */
-	/* pass_along1 and pass_along2 are for set_param first and last params. */
-
-VikLayerParamData *a_uibuilder_run_dialog(const char *dialog_name, GtkWindow *parent, VikLayerParam *params,
-					  uint16_t params_count, char **groups, uint8_t groups_count,
-					  VikLayerParamData *params_defaults);
-
-/* Frees data from last (if necessary). */
-void a_uibuilder_free_paramdatas(VikLayerParamData *paramdatas, VikLayerParam *params, uint16_t params_count);
 
 typedef enum {
 	VL_SO_NONE = 0,
@@ -188,6 +135,59 @@ typedef enum {
 } vik_layer_sort_order_t;
 
 
+
+/* Annoyingly 'C' cannot initialize unions properly. */
+/* It's dependent on the standard used or the compiler support... */
+#if defined __STDC_VERSION__ && __STDC_VERSION__ >= 199901L || __GNUC__
+#define VIK_LPD_BOOLEAN(X)     (LayerParamData) { .b = (X) }
+#define VIK_LPD_INT(X)         (LayerParamData) { .u = (X) }
+#define VIK_LPD_UINT(X)        (LayerParamData) { .i = (X) }
+#define VIK_LPD_COLOR(X,Y,Z,A) (LayerParamData) { .c = (GdkColor){ (X), (Y), (Z), (A) } }
+#define VIK_LPD_DOUBLE(X)      (LayerParamData) { .d = (X) }
+#else
+#define VIK_LPD_BOOLEAN(X)     (LayerParamData) { (X) }
+#define VIK_LPD_INT(X)         (LayerParamData) { (X) }
+#define VIK_LPD_UINT(X)        (LayerParamData) { (X) }
+#define VIK_LPD_COLOR(X,Y,Z,A) (LayerParamData) { (X), (Y), (Z), (A) }
+#define VIK_LPD_DOUBLE(X)      (LayerParamData) { (X) }
+#endif
+
+LayerParamData vik_lpd_true_default (void);
+LayerParamData vik_lpd_false_default (void);
+
+
+
+typedef struct {
+	void * layer;
+	LayerParam * param;
+	int param_id;
+	GtkWidget ** widgets;
+	GtkWidget ** labels;
+} ui_change_values;
+
+
+GtkWidget *a_uibuilder_new_widget(LayerParam *param, LayerParamData data);
+LayerParamData a_uibuilder_widget_get_value(GtkWidget *widget, LayerParam *param);
+int a_uibuilder_properties_factory(const char *dialog_name,
+				   GtkWindow *parent,
+				   LayerParam *params,
+				   uint16_t params_count,
+				   char **groups,
+				   uint8_t groups_count,
+				   bool (*setparam) (void *,uint16_t,LayerParamData,void *,bool), /* AKA LayerFuncSetParam in viklayer.h. */
+				   void * pass_along1,
+				   void * pass_along2,
+				   LayerParamData (*getparam) (void *,uint16_t,bool),  /* AKA LayerFuncGetParam in viklayer.h. */
+				   void * pass_along_getparam,
+				   void (*changeparam) (GtkWidget*, ui_change_values *)); /* AKA LayerFuncChangeParam in viklayer.h. */
+	/* pass_along1 and pass_along2 are for set_param first and last params. */
+
+LayerParamData *a_uibuilder_run_dialog(const char *dialog_name, GtkWindow *parent, LayerParam *params,
+				       uint16_t params_count, char **groups, uint8_t groups_count,
+				       LayerParamData *params_defaults);
+
+/* Frees data from last (if necessary). */
+void a_uibuilder_free_paramdatas(LayerParamData *paramdatas, LayerParam *params, uint16_t params_count);
 
 
 #endif /* #ifndef _SG_UIBUILDER_H_ */

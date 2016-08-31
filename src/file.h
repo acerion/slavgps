@@ -75,7 +75,7 @@ namespace SlavGPS {
 	bool a_file_export_babel(LayerTRW * trw, char const * filename, char const * format,
 				 bool tracks, bool routes, bool waypoints);
 
-	void file_write_layer_param(FILE * f, char const * name, VikLayerParamType type, VikLayerParamData data);
+	void file_write_layer_param(FILE * f, char const * name, LayerParamType type, LayerParamData data);
 
 	char * file_realpath(char const * path, char * real);
 

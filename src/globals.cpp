@@ -78,19 +78,19 @@ static char * params_degree_formats[] = { (char *) "DDD", (char *) "DMM", (char 
 static char * params_units_distance[] = { (char *) N_("Kilometres"), (char *) N_("Miles"), (char *) N_("Nautical Miles"), NULL};
 static char * params_units_speed[] = { (char *) "km/h", (char *) "mph", (char *) "m/s", (char *) "knots", NULL};
 static char * params_units_height[] = { (char *) "Metres", (char *) "Feet", NULL};
-static VikLayerParamScale params_scales_lat[] = { {-90.0, 90.0, 0.05, 2} };
-static VikLayerParamScale params_scales_long[] = { {-180.0, 180.0, 0.05, 2} };
+static LayerParamScale params_scales_lat[] = { {-90.0, 90.0, 0.05, 2} };
+static LayerParamScale params_scales_long[] = { {-180.0, 180.0, 0.05, 2} };
 static char * params_time_ref_frame[] = { (char *) N_("Locale"), (char *) N_("World"), (char *) N_("UTC"), NULL};
 
-static VikLayerParam general_prefs[] = {
-	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_NAMESPACE "degree_format",            VIK_LAYER_PARAM_UINT,    VIK_LAYER_GROUP_NONE, N_("Degree format:"),            VIK_LAYER_WIDGET_COMBOBOX,    params_degree_formats, NULL, NULL, NULL, NULL, NULL },
-	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_NAMESPACE "units_distance",           VIK_LAYER_PARAM_UINT,    VIK_LAYER_GROUP_NONE, N_("Distance units:"),           VIK_LAYER_WIDGET_COMBOBOX,    params_units_distance, NULL, NULL, NULL, NULL, NULL },
-	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_NAMESPACE "units_speed",              VIK_LAYER_PARAM_UINT,    VIK_LAYER_GROUP_NONE, N_("Speed units:"),              VIK_LAYER_WIDGET_COMBOBOX,    params_units_speed,    NULL, NULL, NULL, NULL, NULL },
-	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_NAMESPACE "units_height",             VIK_LAYER_PARAM_UINT,    VIK_LAYER_GROUP_NONE, N_("Height units:"),             VIK_LAYER_WIDGET_COMBOBOX,    params_units_height,   NULL, NULL, NULL, NULL, NULL },
-	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_NAMESPACE "use_large_waypoint_icons", VIK_LAYER_PARAM_BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Use large waypoint icons:"), VIK_LAYER_WIDGET_CHECKBUTTON, NULL,                  NULL, NULL, NULL, NULL, NULL },
-	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_NAMESPACE "default_latitude",         VIK_LAYER_PARAM_DOUBLE,  VIK_LAYER_GROUP_NONE, N_("Default latitude:"),         VIK_LAYER_WIDGET_SPINBUTTON,  params_scales_lat,     NULL, NULL, NULL, NULL, NULL },
-	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_NAMESPACE "default_longitude",        VIK_LAYER_PARAM_DOUBLE,  VIK_LAYER_GROUP_NONE, N_("Default longitude:"),        VIK_LAYER_WIDGET_SPINBUTTON,  params_scales_long,    NULL, NULL, NULL, NULL, NULL },
-	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_NAMESPACE "time_reference_frame",     VIK_LAYER_PARAM_UINT,    VIK_LAYER_GROUP_NONE, N_("Time Display:"),             VIK_LAYER_WIDGET_COMBOBOX,    params_time_ref_frame, NULL, N_("Display times according to the reference frame. Locale is the user's system setting. World is relative to the location of the object."), NULL, NULL, NULL },
+static LayerParam general_prefs[] = {
+	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_NAMESPACE "degree_format",            LayerParamType::UINT,    VIK_LAYER_GROUP_NONE, N_("Degree format:"),            LayerWidgetType::COMBOBOX,    params_degree_formats, NULL, NULL, NULL, NULL, NULL },
+	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_NAMESPACE "units_distance",           LayerParamType::UINT,    VIK_LAYER_GROUP_NONE, N_("Distance units:"),           LayerWidgetType::COMBOBOX,    params_units_distance, NULL, NULL, NULL, NULL, NULL },
+	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_NAMESPACE "units_speed",              LayerParamType::UINT,    VIK_LAYER_GROUP_NONE, N_("Speed units:"),              LayerWidgetType::COMBOBOX,    params_units_speed,    NULL, NULL, NULL, NULL, NULL },
+	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_NAMESPACE "units_height",             LayerParamType::UINT,    VIK_LAYER_GROUP_NONE, N_("Height units:"),             LayerWidgetType::COMBOBOX,    params_units_height,   NULL, NULL, NULL, NULL, NULL },
+	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_NAMESPACE "use_large_waypoint_icons", LayerParamType::BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Use large waypoint icons:"), LayerWidgetType::CHECKBUTTON, NULL,                  NULL, NULL, NULL, NULL, NULL },
+	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_NAMESPACE "default_latitude",         LayerParamType::DOUBLE,  VIK_LAYER_GROUP_NONE, N_("Default latitude:"),         LayerWidgetType::SPINBUTTON,  params_scales_lat,     NULL, NULL, NULL, NULL, NULL },
+	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_NAMESPACE "default_longitude",        LayerParamType::DOUBLE,  VIK_LAYER_GROUP_NONE, N_("Default longitude:"),        LayerWidgetType::SPINBUTTON,  params_scales_long,    NULL, NULL, NULL, NULL, NULL },
+	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_NAMESPACE "time_reference_frame",     LayerParamType::UINT,    VIK_LAYER_GROUP_NONE, N_("Time Display:"),             LayerWidgetType::COMBOBOX,    params_time_ref_frame, NULL, N_("Display times according to the reference frame. Locale is the user's system setting. World is relative to the location of the object."), NULL, NULL, NULL },
 };
 
 /* External/Export Options */
@@ -99,41 +99,41 @@ static char * params_kml_export_units[] = {(char *) "Metric", (char *) "Statute"
 static char * params_gpx_export_trk_sort[] = {(char *) N_("Alphabetical"), (char *) N_("Time"), (char *) N_("Creation"), NULL };
 static char * params_gpx_export_wpt_symbols[] = {(char *) N_("Title Case"), (char *) N_("Lowercase"), NULL};
 
-static VikLayerParam io_prefs[] = {
-	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_IO_NAMESPACE "kml_export_units",         VIK_LAYER_PARAM_UINT, VIK_LAYER_GROUP_NONE, N_("KML File Export Units:"), VIK_LAYER_WIDGET_COMBOBOX, params_kml_export_units, NULL, NULL, NULL, NULL, NULL },
-	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_IO_NAMESPACE "gpx_export_track_sort",    VIK_LAYER_PARAM_UINT, VIK_LAYER_GROUP_NONE, N_("GPX Track Order:"), VIK_LAYER_WIDGET_COMBOBOX, params_gpx_export_trk_sort, NULL, NULL, NULL, NULL, NULL },
-	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_IO_NAMESPACE "gpx_export_wpt_sym_names", VIK_LAYER_PARAM_UINT, VIK_LAYER_GROUP_NONE, N_("GPX Waypoint Symbols:"), VIK_LAYER_WIDGET_COMBOBOX, params_gpx_export_wpt_symbols, NULL, N_("Save GPX Waypoint Symbol names in the specified case. May be useful for compatibility with various devices"), NULL, NULL, NULL },
+static LayerParam io_prefs[] = {
+	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_IO_NAMESPACE "kml_export_units",         LayerParamType::UINT, VIK_LAYER_GROUP_NONE, N_("KML File Export Units:"), LayerWidgetType::COMBOBOX, params_kml_export_units,       NULL, NULL, NULL, NULL, NULL },
+	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_IO_NAMESPACE "gpx_export_track_sort",    LayerParamType::UINT, VIK_LAYER_GROUP_NONE, N_("GPX Track Order:"),       LayerWidgetType::COMBOBOX, params_gpx_export_trk_sort,    NULL, NULL, NULL, NULL, NULL },
+	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_IO_NAMESPACE "gpx_export_wpt_sym_names", LayerParamType::UINT, VIK_LAYER_GROUP_NONE, N_("GPX Waypoint Symbols:"),  LayerWidgetType::COMBOBOX, params_gpx_export_wpt_symbols, NULL, N_("Save GPX Waypoint Symbol names in the specified case. May be useful for compatibility with various devices"), NULL, NULL, NULL },
 };
 
 #ifndef WINDOWS
-static VikLayerParam io_prefs_non_windows[] = {
-	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_IO_NAMESPACE "image_viewer", VIK_LAYER_PARAM_STRING, VIK_LAYER_GROUP_NONE, N_("Image Viewer:"), VIK_LAYER_WIDGET_FILEENTRY, NULL, NULL, NULL, NULL, NULL, NULL },
+static LayerParam io_prefs_non_windows[] = {
+	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_IO_NAMESPACE "image_viewer", LayerParamType::STRING, VIK_LAYER_GROUP_NONE, N_("Image Viewer:"), LayerWidgetType::FILEENTRY, NULL, NULL, NULL, NULL, NULL, NULL },
 };
 #endif
 
-static VikLayerParam io_prefs_external_gpx[] = {
-	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_IO_NAMESPACE "external_gpx_1", VIK_LAYER_PARAM_STRING, VIK_LAYER_GROUP_NONE, N_("External GPX Program 1:"), VIK_LAYER_WIDGET_FILEENTRY, NULL, NULL, NULL, NULL, NULL, NULL },
-	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_IO_NAMESPACE "external_gpx_2", VIK_LAYER_PARAM_STRING, VIK_LAYER_GROUP_NONE, N_("External GPX Program 2:"), VIK_LAYER_WIDGET_FILEENTRY, NULL, NULL, NULL, NULL, NULL, NULL },
+static LayerParam io_prefs_external_gpx[] = {
+	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_IO_NAMESPACE "external_gpx_1", LayerParamType::STRING, VIK_LAYER_GROUP_NONE, N_("External GPX Program 1:"), LayerWidgetType::FILEENTRY, NULL, NULL, NULL, NULL, NULL, NULL },
+	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_IO_NAMESPACE "external_gpx_2", LayerParamType::STRING, VIK_LAYER_GROUP_NONE, N_("External GPX Program 2:"), LayerWidgetType::FILEENTRY, NULL, NULL, NULL, NULL, NULL, NULL },
 };
 
 static char * params_vik_fileref[] = {(char *) N_("Absolute"), (char *) N_("Relative"), NULL};
-static VikLayerParamScale params_recent_files[] = { {-1, 25, 1, 0} };
+static LayerParamScale params_recent_files[] = { {-1, 25, 1, 0} };
 
-static VikLayerParam prefs_advanced[] = {
-	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_ADVANCED_NAMESPACE "save_file_reference_mode",  VIK_LAYER_PARAM_UINT,    VIK_LAYER_GROUP_NONE, N_("Save File Reference Mode:"),           VIK_LAYER_WIDGET_COMBOBOX,    params_vik_fileref,  NULL, N_("When saving a Viking .vik file, this determines how the directory paths of filenames are written."), NULL, NULL, NULL },
-	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_ADVANCED_NAMESPACE "ask_for_create_track_name", VIK_LAYER_PARAM_BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Ask for Name before Track Creation:"), VIK_LAYER_WIDGET_CHECKBUTTON, NULL,                NULL, NULL, NULL, NULL, NULL },
-	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_ADVANCED_NAMESPACE "create_track_tooltip",      VIK_LAYER_PARAM_BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Show Tooltip during Track Creation:"), VIK_LAYER_WIDGET_CHECKBUTTON, NULL,                NULL, NULL, NULL, NULL, NULL },
-	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_ADVANCED_NAMESPACE "number_recent_files",       VIK_LAYER_PARAM_INT,     VIK_LAYER_GROUP_NONE, N_("The number of recent files:"),         VIK_LAYER_WIDGET_SPINBUTTON,  params_recent_files, NULL, N_("Only applies to new windows or on application restart. -1 means all available files."), NULL, NULL, NULL },
+static LayerParam prefs_advanced[] = {
+	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_ADVANCED_NAMESPACE "save_file_reference_mode",  LayerParamType::UINT,    VIK_LAYER_GROUP_NONE, N_("Save File Reference Mode:"),           LayerWidgetType::COMBOBOX,    params_vik_fileref,  NULL, N_("When saving a Viking .vik file, this determines how the directory paths of filenames are written."), NULL, NULL, NULL },
+	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_ADVANCED_NAMESPACE "ask_for_create_track_name", LayerParamType::BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Ask for Name before Track Creation:"), LayerWidgetType::CHECKBUTTON, NULL,                NULL, NULL, NULL, NULL, NULL },
+	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_ADVANCED_NAMESPACE "create_track_tooltip",      LayerParamType::BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Show Tooltip during Track Creation:"), LayerWidgetType::CHECKBUTTON, NULL,                NULL, NULL, NULL, NULL, NULL },
+	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_ADVANCED_NAMESPACE "number_recent_files",       LayerParamType::INT,     VIK_LAYER_GROUP_NONE, N_("The number of recent files:"),         LayerWidgetType::SPINBUTTON,  params_recent_files, NULL, N_("Only applies to new windows or on application restart. -1 means all available files."), NULL, NULL, NULL },
 };
 
 static char * params_startup_methods[] = {(char *) N_("Home Location"), (char *) N_("Last Location"), (char *) N_("Specified File"), (char *) N_("Auto Location"), NULL};
 
-static VikLayerParam startup_prefs[] = {
-	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_STARTUP_NAMESPACE "restore_window_state",  VIK_LAYER_PARAM_BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Restore Window Setup:"),    VIK_LAYER_WIDGET_CHECKBUTTON, NULL,                   NULL, N_("Restore window size and layout"), NULL, NULL, NULL},
-	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_STARTUP_NAMESPACE "add_default_map_layer", VIK_LAYER_PARAM_BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Add a Default Map Layer:"), VIK_LAYER_WIDGET_CHECKBUTTON, NULL,                   NULL, N_("The default map layer added is defined by the Layer Defaults. Use the menu Edit->Layer Defaults->Map... to change the map type and other values."), NULL, NULL, NULL},
-	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_STARTUP_NAMESPACE "startup_method",        VIK_LAYER_PARAM_UINT,    VIK_LAYER_GROUP_NONE, N_("Startup Method:"),          VIK_LAYER_WIDGET_COMBOBOX,    params_startup_methods, NULL, NULL, NULL, NULL, NULL },
-	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_STARTUP_NAMESPACE "startup_file",          VIK_LAYER_PARAM_STRING,  VIK_LAYER_GROUP_NONE, N_("Startup File:"),            VIK_LAYER_WIDGET_FILEENTRY,   NULL,                   NULL, N_("The default file to load on startup. Only applies when the startup method is set to 'Specified File'"), NULL, NULL, NULL },
-	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_STARTUP_NAMESPACE "check_version",         VIK_LAYER_PARAM_BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Check For New Version:"),   VIK_LAYER_WIDGET_CHECKBUTTON, NULL,                   NULL, N_("Periodically check to see if a new version of Viking is available"), NULL, NULL, NULL },
+static LayerParam startup_prefs[] = {
+	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_STARTUP_NAMESPACE "restore_window_state",  LayerParamType::BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Restore Window Setup:"),    LayerWidgetType::CHECKBUTTON, NULL,                   NULL, N_("Restore window size and layout"), NULL, NULL, NULL},
+	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_STARTUP_NAMESPACE "add_default_map_layer", LayerParamType::BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Add a Default Map Layer:"), LayerWidgetType::CHECKBUTTON, NULL,                   NULL, N_("The default map layer added is defined by the Layer Defaults. Use the menu Edit->Layer Defaults->Map... to change the map type and other values."), NULL, NULL, NULL},
+	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_STARTUP_NAMESPACE "startup_method",        LayerParamType::UINT,    VIK_LAYER_GROUP_NONE, N_("Startup Method:"),          LayerWidgetType::COMBOBOX,    params_startup_methods, NULL, NULL, NULL, NULL, NULL },
+	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_STARTUP_NAMESPACE "startup_file",          LayerParamType::STRING,  VIK_LAYER_GROUP_NONE, N_("Startup File:"),            LayerWidgetType::FILEENTRY,   NULL,                   NULL, N_("The default file to load on startup. Only applies when the startup method is set to 'Specified File'"), NULL, NULL, NULL },
+	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_STARTUP_NAMESPACE "check_version",         LayerParamType::BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Check For New Version:"),   LayerWidgetType::CHECKBUTTON, NULL,                   NULL, N_("Periodically check to see if a new version of Viking is available"), NULL, NULL, NULL },
 };
 /* End of Options static stuff. */
 
@@ -179,7 +179,7 @@ void a_vik_preferences_init()
 	/* Defaults for the options are setup here. */
 	a_preferences_register_group(VIKING_PREFERENCES_GROUP_KEY, _("General"));
 
-	VikLayerParamData tmp;
+	LayerParamData tmp;
 	tmp.u = VIK_DEGREE_FORMAT_DMS;
 	a_preferences_register(&general_prefs[0], tmp, VIKING_PREFERENCES_GROUP_KEY);
 

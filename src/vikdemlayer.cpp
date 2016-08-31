@@ -80,7 +80,7 @@ static void dem24k_draw_existence(Viewport * viewport);
 
 
 /* Upped upper limit incase units are feet */
-static VikLayerParamScale param_scales[] = {
+static LayerParamScale param_scales[] = {
 	{ 0, 30000, 10, 1 },
 	{ 1, 30000, 10, 1 },
 };
@@ -113,9 +113,9 @@ enum { DEM_TYPE_HEIGHT = 0,
 
 
 
-static VikLayerParamData color_default(void)
+static LayerParamData color_default(void)
 {
-	VikLayerParamData data;
+	LayerParamData data;
 	gdk_color_parse("blue", &data.c);
 	return data;
 }
@@ -123,7 +123,7 @@ static VikLayerParamData color_default(void)
 
 
 
-static VikLayerParamData source_default(void)
+static LayerParamData source_default(void)
 {
 	return VIK_LPD_UINT (DEM_SOURCE_SRTM);
 }
@@ -131,7 +131,7 @@ static VikLayerParamData source_default(void)
 
 
 
-static VikLayerParamData type_default(void)
+static LayerParamData type_default(void)
 {
 	return VIK_LPD_UINT (DEM_TYPE_HEIGHT);
 }
@@ -139,7 +139,7 @@ static VikLayerParamData type_default(void)
 
 
 
-static VikLayerParamData min_elev_default(void)
+static LayerParamData min_elev_default(void)
 {
 	return VIK_LPD_DOUBLE (0.0);
 }
@@ -147,7 +147,7 @@ static VikLayerParamData min_elev_default(void)
 
 
 
-static VikLayerParamData max_elev_default(void)
+static LayerParamData max_elev_default(void)
 {
 	return VIK_LPD_DOUBLE (1000.0);
 }
@@ -155,13 +155,13 @@ static VikLayerParamData max_elev_default(void)
 
 
 
-static VikLayerParam dem_layer_params[] = {
-	{ LayerType::DEM, "files",    VIK_LAYER_PARAM_STRING_LIST, VIK_LAYER_GROUP_NONE, N_("DEM Files:"),       VIK_LAYER_WIDGET_FILELIST,          NULL,             NULL, NULL, NULL, NULL, NULL },
-	{ LayerType::DEM, "source",   VIK_LAYER_PARAM_UINT,        VIK_LAYER_GROUP_NONE, N_("Download Source:"), VIK_LAYER_WIDGET_RADIOGROUP_STATIC, params_source,    NULL, NULL, source_default, NULL, NULL },
-	{ LayerType::DEM, "color",    VIK_LAYER_PARAM_COLOR,       VIK_LAYER_GROUP_NONE, N_("Min Elev Color:"),  VIK_LAYER_WIDGET_COLOR,             NULL,             NULL, NULL, color_default, NULL, NULL },
-	{ LayerType::DEM, "type",     VIK_LAYER_PARAM_UINT,        VIK_LAYER_GROUP_NONE, N_("Type:"),            VIK_LAYER_WIDGET_RADIOGROUP_STATIC, params_type,      NULL, NULL, type_default, NULL, NULL },
-	{ LayerType::DEM, "min_elev", VIK_LAYER_PARAM_DOUBLE,      VIK_LAYER_GROUP_NONE, N_("Min Elev:"),        VIK_LAYER_WIDGET_SPINBUTTON,        param_scales + 0, NULL, NULL, min_elev_default, NULL, NULL },
-	{ LayerType::DEM, "max_elev", VIK_LAYER_PARAM_DOUBLE,      VIK_LAYER_GROUP_NONE, N_("Max Elev:"),        VIK_LAYER_WIDGET_SPINBUTTON,        param_scales + 0, NULL, NULL, max_elev_default, NULL, NULL },
+static LayerParam dem_layer_params[] = {
+	{ LayerType::DEM, "files",    LayerParamType::STRING_LIST, VIK_LAYER_GROUP_NONE, N_("DEM Files:"),       LayerWidgetType::FILELIST,          NULL,             NULL, NULL, NULL, NULL, NULL },
+	{ LayerType::DEM, "source",   LayerParamType::UINT,        VIK_LAYER_GROUP_NONE, N_("Download Source:"), LayerWidgetType::RADIOGROUP_STATIC, params_source,    NULL, NULL, source_default, NULL, NULL },
+	{ LayerType::DEM, "color",    LayerParamType::COLOR,       VIK_LAYER_GROUP_NONE, N_("Min Elev Color:"),  LayerWidgetType::COLOR,             NULL,             NULL, NULL, color_default, NULL, NULL },
+	{ LayerType::DEM, "type",     LayerParamType::UINT,        VIK_LAYER_GROUP_NONE, N_("Type:"),            LayerWidgetType::RADIOGROUP_STATIC, params_type,      NULL, NULL, type_default, NULL, NULL },
+	{ LayerType::DEM, "min_elev", LayerParamType::DOUBLE,      VIK_LAYER_GROUP_NONE, N_("Min Elev:"),        LayerWidgetType::SPINBUTTON,        param_scales + 0, NULL, NULL, min_elev_default, NULL, NULL },
+	{ LayerType::DEM, "max_elev", LayerParamType::DOUBLE,      VIK_LAYER_GROUP_NONE, N_("Max Elev:"),        LayerWidgetType::SPINBUTTON,        param_scales + 0, NULL, NULL, max_elev_default, NULL, NULL },
 };
 
 
@@ -387,7 +387,7 @@ static std::list<char *> * dem_layer_convert_to_relative_filenaming(std::list<ch
 
 
 
-bool LayerDEM::set_param(uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
+bool LayerDEM::set_param(uint16_t id, LayerParamData data, Viewport * viewport, bool is_file_operation)
 {
 	switch (id) {
 	case PARAM_COLOR:
@@ -450,9 +450,9 @@ bool LayerDEM::set_param(uint16_t id, VikLayerParamData data, Viewport * viewpor
 
 
 
-VikLayerParamData LayerDEM::get_param(uint16_t id, bool is_file_operation) const
+LayerParamData LayerDEM::get_param(uint16_t id, bool is_file_operation) const
 {
-	VikLayerParamData rv;
+	LayerParamData rv;
 
 	switch (id) {
 	case PARAM_FILES:

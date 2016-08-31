@@ -132,14 +132,14 @@ static bool preferences_load_from_file()
 		char buf[4096];
 		char * key = NULL;
 		char * val = NULL;
-		VikLayerTypedParamData *oldval, *newval;
+		LayerTypedParamData *oldval, *newval;
 		while (!feof (f)) {
 			if (fgets(buf,sizeof(buf), f) == NULL) {
 				break;
 			}
 			if (split_string_from_file_on_equals(buf, &key, &val)) {
 				/* if it's not in there, ignore it. */
-				oldval = (VikLayerTypedParamData *) g_hash_table_lookup(values, key);
+				oldval = (LayerTypedParamData *) g_hash_table_lookup(values, key);
 				if (! oldval) {
 					free(key);
 					free(val);
@@ -148,7 +148,7 @@ static bool preferences_load_from_file()
 
 				/* Otherwise change it (you know the type!).
 				   If it's a string list do some funky stuff ... yuck... not yet. */
-				if (oldval->type == VIK_LAYER_PARAM_STRING_LIST) {
+				if (oldval->type == LayerParamType::STRING_LIST) {
 					fprintf(stderr, "CRITICAL: Param strings not implemented in preferences\n"); /* Fake it. */
 				}
 
@@ -170,13 +170,13 @@ static bool preferences_load_from_file()
 
 
 
-static void preferences_run_setparam(void * notused, uint16_t i, VikLayerParamData data, VikLayerParam *vlparams)
+static void preferences_run_setparam(void * notused, uint16_t i, LayerParamData data, LayerParam *vlparams)
 {
 	/* Don't change stored pointer values. */
-	if (vlparams[i].type == VIK_LAYER_PARAM_PTR) {
+	if (vlparams[i].type == LayerParamType::PTR) {
 		return;
 	}
-	if (vlparams[i].type == VIK_LAYER_PARAM_STRING_LIST) {
+	if (vlparams[i].type == LayerParamType::STRING_LIST) {
 		fprintf(stderr, "CRITICAL: Param strings not implemented in preferences\n"); /* Fake it. */
 	}
 	g_hash_table_insert(values, (char *)(vlparams[i].name), vik_layer_typed_param_data_copy_from_data(vlparams[i].type, data));
@@ -186,7 +186,7 @@ static void preferences_run_setparam(void * notused, uint16_t i, VikLayerParamDa
 
 
 /* Allow preferences to be manipulated externally. */
-void a_preferences_run_setparam(VikLayerParamData data, VikLayerParam * vlparams)
+void a_preferences_run_setparam(LayerParamData data, LayerParam * vlparams)
 {
 	preferences_run_setparam(NULL, 0, data, vlparams);
 }
@@ -194,11 +194,11 @@ void a_preferences_run_setparam(VikLayerParamData data, VikLayerParam * vlparams
 
 
 
-static VikLayerParamData preferences_run_getparam(void * notused, uint16_t i, bool notused2)
+static LayerParamData preferences_run_getparam(void * notused, uint16_t i, bool notused2)
 {
-	VikLayerTypedParamData * val = (VikLayerTypedParamData *) g_hash_table_lookup (values, ((VikLayerParam *)g_ptr_array_index(params,i))->name);
+	LayerTypedParamData * val = (LayerTypedParamData *) g_hash_table_lookup (values, ((LayerParam *)g_ptr_array_index(params,i))->name);
 	assert (val != NULL);
-	if (val->type == VIK_LAYER_PARAM_STRING_LIST) {
+	if (val->type == LayerParamType::STRING_LIST) {
 		fprintf(stderr, "CRITICAL: Param strings not implemented in preferences\n"); /* fake it. */
 	}
 	return val->data;
@@ -222,13 +222,13 @@ bool a_preferences_save_to_file()
 	free(fn);
 
 	if (f) {
-		VikLayerParam *param;
-		VikLayerTypedParamData * val;
+		LayerParam *param;
+		LayerTypedParamData * val;
 		for (unsigned int i = 0; i < params->len; i++) {
-			param = (VikLayerParam *) g_ptr_array_index(params,i);
-			val = (VikLayerTypedParamData *) g_hash_table_lookup(values, param->name);
+			param = (LayerParam *) g_ptr_array_index(params,i);
+			val = (LayerTypedParamData *) g_hash_table_lookup(values, param->name);
 			if (val) {
-				if (val->type != VIK_LAYER_PARAM_PTR) {
+				if (val->type != LayerParamType::PTR) {
 					file_write_layer_param(f, param->name, val->type, val->data);
 				}
 			}
@@ -249,9 +249,9 @@ void a_preferences_show_window(GtkWindow * parent)
 	//VikLayerParamData *a_uibuilder_run_dialog (GtkWindow *parent, VikLayerParam \*params, // uint16_t params_count, char **groups, uint8_t groups_count, // VikLayerParamData *params_defaults)
 	/* TODO: THIS IS A MAJOR HACKAROUND, but ok when we have only a couple preferences. */
 	int params_count = params->len;
-	VikLayerParam * contiguous_params = (VikLayerParam *) malloc(params_count * sizeof (VikLayerParam));
+	LayerParam * contiguous_params = (LayerParam *) malloc(params_count * sizeof (LayerParam));
 	for (unsigned int i = 0; i < params->len; i++) {
-		contiguous_params[i] = *((VikLayerParam*) (g_ptr_array_index(params,i)));
+		contiguous_params[i] = *((LayerParam*) (g_ptr_array_index(params,i)));
 	}
 	loaded = true;
 	preferences_load_from_file();
@@ -261,7 +261,7 @@ void a_preferences_show_window(GtkWindow * parent)
 					   params_count,
 					   (char **) groups_names->pdata,
 					   groups_names->len, // groups, groups_count, // groups? what groups?!
-					   (bool (*) (void *, uint16_t, VikLayerParamData,void *, bool)) preferences_run_setparam,
+					   (bool (*) (void *, uint16_t, LayerParamData,void *, bool)) preferences_run_setparam,
 					   NULL /* Not used. */,
 					   contiguous_params,
 					   preferences_run_getparam,
@@ -275,16 +275,16 @@ void a_preferences_show_window(GtkWindow * parent)
 
 
 
-void a_preferences_register(VikLayerParam * pref, VikLayerParamData defaultval, const char * group_key)
+void a_preferences_register(LayerParam * pref, LayerParamData defaultval, const char * group_key)
 {
 	/* All preferences should be registered before loading. */
 	if (loaded) {
 		fprintf(stderr, "CRITICAL: REGISTERING preference %s after LOADING from \n" VIKING_PREFS_FILE, pref->name);
 	}
 	/* Copy value. */
-	VikLayerParam * newpref = (VikLayerParam *) malloc(1 * sizeof (VikLayerParam));
+	LayerParam * newpref = (LayerParam *) malloc(1 * sizeof (LayerParam));
 	*newpref = *pref;
-	VikLayerTypedParamData * newval = vik_layer_typed_param_data_copy_from_data(pref->type, defaultval);
+	LayerTypedParamData * newval = vik_layer_typed_param_data_copy_from_data(pref->type, defaultval);
 	if (group_key) {
 		newpref->group = preferences_groups_key_to_index(group_key);
 	}
@@ -324,7 +324,7 @@ void a_preferences_uninit()
 
 
 
-VikLayerParamData * a_preferences_get(const char * key)
+LayerParamData * a_preferences_get(const char * key)
 {
 	if (!loaded) {
 		fprintf(stderr, "DEBUG: %s: First time: %s\n", __FUNCTION__, key);
@@ -333,5 +333,5 @@ VikLayerParamData * a_preferences_get(const char * key)
 		preferences_load_from_file();
 		loaded = true;
 	}
-	return (VikLayerParamData *) g_hash_table_lookup(values, key);
+	return (LayerParamData *) g_hash_table_lookup(values, key);
 }

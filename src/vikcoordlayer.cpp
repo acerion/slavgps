@@ -47,30 +47,30 @@ static Layer * coord_layer_unmarshall(uint8_t * data, int len, Viewport * viewpo
 
 
 #ifndef SLAVGPS_QT
-static VikLayerParamScale param_scales[] = {
+static LayerParamScale param_scales[] = {
 	{ 0.05, 60.0, 0.25, 10 },
 	{ 1, 10, 1, 0 },
 };
-static VikLayerParamData color_default(void)
+static LayerParamData color_default(void)
 {
-	VikLayerParamData data;
+	LayerParamData data;
 	gdk_color_parse("red", &data.c);
 	return data;
 	// or: return VIK_LPD_COLOR (0, 65535, 0, 0);
 }
-static VikLayerParamData min_inc_default(void)
+static LayerParamData min_inc_default(void)
 {
 	return VIK_LPD_DOUBLE (1.0);
 }
-static VikLayerParamData line_thickness_default(void)
+static LayerParamData line_thickness_default(void)
 {
 	return VIK_LPD_UINT (3);
 }
 
-static VikLayerParam coord_layer_params[] = {
-	{ LayerType::COORD, "color",          VIK_LAYER_PARAM_COLOR,  VIK_LAYER_GROUP_NONE, N_("Color:"),          VIK_LAYER_WIDGET_COLOR,      NULL,             NULL, NULL, color_default,          NULL, NULL },
-	{ LayerType::COORD, "min_inc",        VIK_LAYER_PARAM_DOUBLE, VIK_LAYER_GROUP_NONE, N_("Minutes Width:"),  VIK_LAYER_WIDGET_SPINBUTTON, &param_scales[0], NULL, NULL, min_inc_default,        NULL, NULL },
-	{ LayerType::COORD, "line_thickness", VIK_LAYER_PARAM_UINT,   VIK_LAYER_GROUP_NONE, N_("Line Thickness:"), VIK_LAYER_WIDGET_SPINBUTTON, &param_scales[1], NULL, NULL, line_thickness_default, NULL, NULL },
+static LayerParam coord_layer_params[] = {
+	{ LayerType::COORD, "color",          LayerParamType::COLOR,  VIK_LAYER_GROUP_NONE, N_("Color:"),          LayerWidgetType::COLOR,      NULL,             NULL, NULL, color_default,          NULL, NULL },
+	{ LayerType::COORD, "min_inc",        LayerParamType::DOUBLE, VIK_LAYER_GROUP_NONE, N_("Minutes Width:"),  LayerWidgetType::SPINBUTTON, &param_scales[0], NULL, NULL, min_inc_default,        NULL, NULL },
+	{ LayerType::COORD, "line_thickness", LayerParamType::UINT,   VIK_LAYER_GROUP_NONE, N_("Line Thickness:"), LayerWidgetType::SPINBUTTON, &param_scales[1], NULL, NULL, line_thickness_default, NULL, NULL },
 };
 #endif
 
@@ -138,7 +138,7 @@ static Layer * coord_layer_unmarshall(uint8_t * data, int len, Viewport * viewpo
 
 
 // NB Viewport can be null as it's not used ATM
-bool LayerCoord::set_param(uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
+bool LayerCoord::set_param(uint16_t id, LayerParamData data, Viewport * viewport, bool is_file_operation)
 {
 #ifndef SLAVGPS_QT
 	switch (id) {
@@ -164,10 +164,10 @@ bool LayerCoord::set_param(uint16_t id, VikLayerParamData data, Viewport * viewp
 
 
 
-VikLayerParamData LayerCoord::get_param(uint16_t id, bool is_file_operation) const
+LayerParamData LayerCoord::get_param(uint16_t id, bool is_file_operation) const
 {
 #ifndef SLAVGPS_QT
-	VikLayerParamData rv;
+	LayerParamData rv;
 	switch (id) {
 	case PARAM_COLOR:
 		rv.c = this->color;

@@ -616,10 +616,10 @@ void SlavGPS::vu_set_auto_features_on_first_run(void)
 		   Only the name & type are important for setting a preference via this 'external' way. */
 
 		/* Enable auto add map + Enable IP lookup. */
-		VikLayerParam pref_add_map[] = { { LayerType::NUM_TYPES, VIKING_PREFERENCES_STARTUP_NAMESPACE "add_default_map_layer", VIK_LAYER_PARAM_BOOLEAN, VIK_LAYER_GROUP_NONE, NULL, VIK_LAYER_WIDGET_CHECKBUTTON, NULL, NULL, NULL, NULL, NULL, NULL, }, };
-		VikLayerParam pref_startup_method[] = { { LayerType::NUM_TYPES, VIKING_PREFERENCES_STARTUP_NAMESPACE "startup_method", VIK_LAYER_PARAM_UINT, VIK_LAYER_GROUP_NONE, NULL, VIK_LAYER_WIDGET_COMBOBOX, NULL, NULL, NULL, NULL, NULL, NULL}, };
+		LayerParam pref_add_map[] = { { LayerType::NUM_TYPES, VIKING_PREFERENCES_STARTUP_NAMESPACE "add_default_map_layer", LayerParamType::BOOLEAN, VIK_LAYER_GROUP_NONE, NULL, LayerWidgetType::CHECKBUTTON, NULL, NULL, NULL, NULL, NULL, NULL, }, };
+		LayerParam pref_startup_method[] = { { LayerType::NUM_TYPES, VIKING_PREFERENCES_STARTUP_NAMESPACE "startup_method", LayerParamType::UINT,    VIK_LAYER_GROUP_NONE, NULL, LayerWidgetType::COMBOBOX, NULL, NULL, NULL, NULL, NULL, NULL}, };
 
-		VikLayerParamData vlp_data;
+		LayerParamData vlp_data;
 		vlp_data.b = true;
 		a_preferences_run_setparam(vlp_data, pref_add_map);
 
@@ -629,7 +629,7 @@ void SlavGPS::vu_set_auto_features_on_first_run(void)
 		/* Only on Windows make checking for the latest version on by default. */
 		/* For other systems it's expected a Package manager or similar controls the installation, so leave it off. */
 #ifdef WINDOWS
-		VikLayerParam pref_startup_version_check[] = { { LayerType::NUM_TYPES, VIKING_PREFERENCES_STARTUP_NAMESPACE "check_version", VIK_LAYER_PARAM_BOOLEAN, VIK_LAYER_GROUP_NONE, NULL, VIK_LAYER_WIDGET_CHECKBUTTON, NULL, NULL, NULL, NULL, }, };
+		VikLayerParam pref_startup_version_check[] = { { LayerType::NUM_TYPES, VIKING_PREFERENCES_STARTUP_NAMESPACE "check_version", LayerParamType::BOOLEAN, VIK_LAYER_GROUP_NONE, NULL, VIK_LAYER_WIDGET_CHECKBUTTON, NULL, NULL, NULL, NULL, }, };
 		vlp_data.b = true;
 		a_preferences_run_setparam(vlp_data, pref_startup_version_check);
 #endif

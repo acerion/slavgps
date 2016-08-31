@@ -38,11 +38,11 @@
 void a_layer_defaults_init();
 void a_layer_defaults_uninit();
 
-void a_layer_defaults_register(VikLayerParam * vlp, VikLayerParamData defaultval, const char * layername);
+void a_layer_defaults_register(LayerParam * vlp, LayerParamData defaultval, const char * layername);
 
 bool a_layer_defaults_show_window(GtkWindow * parent, const char * layername);
 
-VikLayerParamData a_layer_defaults_get(const char * layername, const char * param_name, VikLayerParamType param_type);
+LayerParamData a_layer_defaults_get(const char * layername, const char * param_name, LayerParamType param_type);
 
 bool a_layer_defaults_save();
 

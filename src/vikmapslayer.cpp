@@ -134,7 +134,7 @@ static bool maps_layer_download_click(Layer * layer, GdkEventButton *event, Laye
 
 
 
-static VikLayerParamScale params_scales[] = {
+static LayerParamScale params_scales[] = {
 	/* min, max, step, digits (decimal places). */
 	{ 0, 255, 3, 0 }, /* alpha */
 };
@@ -142,7 +142,7 @@ static VikLayerParamScale params_scales[] = {
 
 
 
-static VikLayerParamData id_default(void)
+static LayerParamData id_default(void)
 {
 	return VIK_LPD_UINT(MAP_ID_MAPQUEST_OSM);
 }
@@ -150,10 +150,10 @@ static VikLayerParamData id_default(void)
 
 
 
-static VikLayerParamData directory_default(void)
+static LayerParamData directory_default(void)
 {
-	VikLayerParamData data;
-	VikLayerParamData *pref = a_preferences_get(VIKING_PREFERENCES_NAMESPACE "maplayer_default_dir");
+	LayerParamData data;
+	LayerParamData *pref = a_preferences_get(VIKING_PREFERENCES_NAMESPACE "maplayer_default_dir");
 	if (pref) {
 		data.s = g_strdup(pref->s);
 	} else {
@@ -165,9 +165,9 @@ static VikLayerParamData directory_default(void)
 
 
 
-static VikLayerParamData file_default(void)
+static LayerParamData file_default(void)
 {
-	VikLayerParamData data;
+	LayerParamData data;
 	data.s = "";
 	return data;
 }
@@ -175,7 +175,7 @@ static VikLayerParamData file_default(void)
 
 
 
-static VikLayerParamData alpha_default(void)
+static LayerParamData alpha_default(void)
 {
 	return VIK_LPD_UINT (255);
 }
@@ -183,7 +183,7 @@ static VikLayerParamData alpha_default(void)
 
 
 
-static VikLayerParamData mapzoom_default(void)
+static LayerParamData mapzoom_default(void)
 {
 	return VIK_LPD_UINT (0);
 }
@@ -197,7 +197,7 @@ static MapsCacheLayout cache_layout_default_value = MapsCacheLayout::VIKING;
 
 
 
-static VikLayerParamData cache_layout_default(void)
+static LayerParamData cache_layout_default(void)
 {
 	return VIK_LPD_UINT ((int32_t) cache_layout_default_value);
 }
@@ -205,16 +205,16 @@ static VikLayerParamData cache_layout_default(void)
 
 
 
-VikLayerParam maps_layer_params[] = {
+LayerParam maps_layer_params[] = {
 	// NB mode => map source type id - But can't break file format just to rename something better
-	{ LayerType::MAPS, "mode",           VIK_LAYER_PARAM_UINT,    VIK_LAYER_GROUP_NONE, N_("Map Type:"),                            VIK_LAYER_WIDGET_COMBOBOX,    NULL,                               NULL, NULL, id_default, NULL, NULL },
-	{ LayerType::MAPS, "directory",      VIK_LAYER_PARAM_STRING,  VIK_LAYER_GROUP_NONE, N_("Maps Directory:"),                      VIK_LAYER_WIDGET_FOLDERENTRY, NULL,                               NULL, NULL, directory_default, NULL, NULL },
-	{ LayerType::MAPS, "cache_type",     VIK_LAYER_PARAM_UINT,    VIK_LAYER_GROUP_NONE, N_("Cache Layout:"),                        VIK_LAYER_WIDGET_COMBOBOX,    cache_types,                        NULL, N_("This determines the tile storage layout on disk"), cache_layout_default, NULL, NULL },
-	{ LayerType::MAPS, "mapfile",        VIK_LAYER_PARAM_STRING,  VIK_LAYER_GROUP_NONE, N_("Map File:"),                            VIK_LAYER_WIDGET_FILEENTRY,   KINT_TO_POINTER(VF_FILTER_MBTILES), NULL, N_("An MBTiles file. Only applies when the map type method is 'MBTiles'"), file_default, NULL, NULL },
-	{ LayerType::MAPS, "alpha",          VIK_LAYER_PARAM_UINT,    VIK_LAYER_GROUP_NONE, N_("Alpha:"),                               VIK_LAYER_WIDGET_HSCALE,      params_scales,                      NULL, N_("Control the Alpha value for transparency effects"), alpha_default, NULL, NULL },
-	{ LayerType::MAPS, "autodownload",   VIK_LAYER_PARAM_BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Autodownload maps:"),                   VIK_LAYER_WIDGET_CHECKBUTTON, NULL,                               NULL, NULL, vik_lpd_true_default, NULL, NULL },
-	{ LayerType::MAPS, "adlonlymissing", VIK_LAYER_PARAM_BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Autodownload Only Gets Missing Maps:"), VIK_LAYER_WIDGET_CHECKBUTTON, NULL,                               NULL, N_("Using this option avoids attempting to update already acquired tiles. This can be useful if you want to restrict the network usage, without having to resort to manual control. Only applies when 'Autodownload Maps' is on."), vik_lpd_false_default, NULL, NULL },
-	{ LayerType::MAPS, "mapzoom",        VIK_LAYER_PARAM_UINT,    VIK_LAYER_GROUP_NONE, N_("Zoom Level:"),                          VIK_LAYER_WIDGET_COMBOBOX,    params_mapzooms,                    NULL, N_("Determines the method of displaying map tiles for the current zoom level. 'Viking Zoom Level' uses the best matching level, otherwise setting a fixed value will always use map tiles of the specified value regardless of the actual zoom level."),	  mapzoom_default, NULL, NULL },
+	{ LayerType::MAPS, "mode",           LayerParamType::UINT,    VIK_LAYER_GROUP_NONE, N_("Map Type:"),                            LayerWidgetType::COMBOBOX,    NULL,                               NULL, NULL, id_default, NULL, NULL },
+	{ LayerType::MAPS, "directory",      LayerParamType::STRING,  VIK_LAYER_GROUP_NONE, N_("Maps Directory:"),                      LayerWidgetType::FOLDERENTRY, NULL,                               NULL, NULL, directory_default, NULL, NULL },
+	{ LayerType::MAPS, "cache_type",     LayerParamType::UINT,    VIK_LAYER_GROUP_NONE, N_("Cache Layout:"),                        LayerWidgetType::COMBOBOX,    cache_types,                        NULL, N_("This determines the tile storage layout on disk"), cache_layout_default, NULL, NULL },
+	{ LayerType::MAPS, "mapfile",        LayerParamType::STRING,  VIK_LAYER_GROUP_NONE, N_("Map File:"),                            LayerWidgetType::FILEENTRY,   KINT_TO_POINTER(VF_FILTER_MBTILES), NULL, N_("An MBTiles file. Only applies when the map type method is 'MBTiles'"), file_default, NULL, NULL },
+	{ LayerType::MAPS, "alpha",          LayerParamType::UINT,    VIK_LAYER_GROUP_NONE, N_("Alpha:"),                               LayerWidgetType::HSCALE,      params_scales,                      NULL, N_("Control the Alpha value for transparency effects"), alpha_default, NULL, NULL },
+	{ LayerType::MAPS, "autodownload",   LayerParamType::BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Autodownload maps:"),                   LayerWidgetType::CHECKBUTTON, NULL,                               NULL, NULL, vik_lpd_true_default, NULL, NULL },
+	{ LayerType::MAPS, "adlonlymissing", LayerParamType::BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Autodownload Only Gets Missing Maps:"), LayerWidgetType::CHECKBUTTON, NULL,                               NULL, N_("Using this option avoids attempting to update already acquired tiles. This can be useful if you want to restrict the network usage, without having to resort to manual control. Only applies when 'Autodownload Maps' is on."), vik_lpd_false_default, NULL, NULL },
+	{ LayerType::MAPS, "mapzoom",        LayerParamType::UINT,    VIK_LAYER_GROUP_NONE, N_("Zoom Level:"),                          LayerWidgetType::COMBOBOX,    params_mapzooms,                    NULL, N_("Determines the method of displaying map tiles for the current zoom level. 'Viking Zoom Level' uses the best matching level, otherwise setting a fixed value will always use map tiles of the specified value regardless of the actual zoom level."),	  mapzoom_default, NULL, NULL },
 };
 
 
@@ -295,8 +295,8 @@ enum { REDOWNLOAD_NONE = 0,    /* Download only missing maps. */
 
 
 
-static VikLayerParam prefs[] = {
-	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_NAMESPACE "maplayer_default_dir", VIK_LAYER_PARAM_STRING, VIK_LAYER_GROUP_NONE, N_("Default map layer directory:"), VIK_LAYER_WIDGET_FOLDERENTRY, NULL, NULL, N_("Choose a directory to store cached Map tiles for this layer"), NULL, NULL, NULL },
+static LayerParam prefs[] = {
+	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_NAMESPACE "maplayer_default_dir", LayerParamType::STRING, VIK_LAYER_GROUP_NONE, N_("Default map layer directory:"), LayerWidgetType::FOLDERENTRY, NULL, NULL, N_("Choose a directory to store cached Map tiles for this layer"), NULL, NULL, NULL },
 };
 
 
@@ -304,7 +304,7 @@ static VikLayerParam prefs[] = {
 
 void maps_layer_init()
 {
-	VikLayerParamData tmp;
+	LayerParamData tmp;
 	tmp.s = maps_layer_default_dir();
 	a_preferences_register(prefs, tmp, VIKING_PREFERENCES_GROUP_KEY);
 
@@ -460,7 +460,7 @@ void LayerMaps::set_map_type(MapTypeID map_type)
 MapTypeID maps_layer_get_default_map_type()
 {
 	VikLayerInterface *vli = vik_layer_get_interface(LayerType::MAPS);
-	VikLayerParamData vlpd = a_layer_defaults_get(vli->fixed_layer_name, "mode", VIK_LAYER_PARAM_UINT);
+	LayerParamData vlpd = a_layer_defaults_get(vli->fixed_layer_name, "mode", LayerParamType::UINT);
 	if (vlpd.u == 0) {
 		vlpd = id_default();
 	}
@@ -653,7 +653,7 @@ static void maps_show_license(GtkWindow *parent, MapSource *map)
 
 
 
-bool LayerMaps::set_param(uint16_t id, VikLayerParamData data, Viewport * viewport, bool is_file_operation)
+bool LayerMaps::set_param(uint16_t id, LayerParamData data, Viewport * viewport, bool is_file_operation)
 {
 	switch (id) {
 	case PARAM_CACHE_DIR:
@@ -721,9 +721,9 @@ bool LayerMaps::set_param(uint16_t id, VikLayerParamData data, Viewport * viewpo
 
 
 
-VikLayerParamData LayerMaps::get_param(uint16_t id, bool is_file_operation) const
+LayerParamData LayerMaps::get_param(uint16_t id, bool is_file_operation) const
 {
-	VikLayerParamData rv;
+	LayerParamData rv;
 	switch (id) {
 	case PARAM_CACHE_DIR: {
 		bool set = false;
@@ -784,7 +784,7 @@ static void maps_layer_change_param(GtkWidget *widget, ui_change_values * values
 		/* Alter sensitivity of download option widgets according to the map_index setting. */
 	case PARAM_MAPTYPE: {
 		/* Get new value. */
-		VikLayerParamData vlpd = a_uibuilder_widget_get_value(widget, values->param);
+		LayerParamData vlpd = a_uibuilder_widget_get_value(widget, values->param);
 		/* Is it *not* the OSM On Disk Tile Layout or the MBTiles type or the OSM Metatiles type. */
 		bool sensitive = (MAP_ID_OSM_ON_DISK != vlpd.u &&
 				  MAP_ID_MBTILES != vlpd.u &&
@@ -854,7 +854,7 @@ static void maps_layer_change_param(GtkWidget *widget, ui_change_values * values
 		/* Alter sensitivity of 'download only missing' widgets according to the autodownload setting. */
 	case PARAM_AUTODOWNLOAD: {
 		/* Get new value. */
-		VikLayerParamData vlpd = a_uibuilder_widget_get_value(widget, values->param);
+		LayerParamData vlpd = a_uibuilder_widget_get_value(widget, values->param);
 		GtkWidget **ww1 = values->widgets;
 		GtkWidget **ww2 = values->labels;
 		GtkWidget *w1 = ww1[PARAM_ONLYMISSING];

@@ -136,14 +136,14 @@ static bool str_starts_with(char const * haystack, char const * needle, uint16_t
 
 
 
-void SlavGPS::file_write_layer_param(FILE * f, char const * name, VikLayerParamType type, VikLayerParamData data)
+void SlavGPS::file_write_layer_param(FILE * f, char const * name, LayerParamType type, LayerParamData data)
 {
 	/* String lists are handled differently. We get a std::list<char *> (that shouldn't
 	 * be freed) back for get_param and if it is null we shouldn't write
 	 * anything at all (otherwise we'd read in a list with an empty string,
 	 * not an empty string list.
 	 */
-	if (type == VIK_LAYER_PARAM_STRING_LIST) {
+	if (type == LayerParamType::STRING_LIST) {
 		if (data.sl) {
 			for (auto iter = data.sl->begin(); iter != data.sl->end(); iter++) {
 				fprintf(f, "%s=", name);
@@ -153,25 +153,25 @@ void SlavGPS::file_write_layer_param(FILE * f, char const * name, VikLayerParamT
 	} else {
 		fprintf(f, "%s=", name);
 		switch (type)	{
-		case VIK_LAYER_PARAM_DOUBLE: {
+		case LayerParamType::DOUBLE: {
 			// char buf[15]; /* Locale independent. */
 			// fprintf(f, "%s\n", (char *) g_dtostr (data.d, buf, sizeof (buf))); break;
 			fprintf(f, "%f\n", data.d);
 			break;
 		}
-		case VIK_LAYER_PARAM_UINT:
+		case LayerParamType::UINT:
 			fprintf(f, "%d\n", data.u);
 			break;
-		case VIK_LAYER_PARAM_INT:
+		case LayerParamType::INT:
 			fprintf(f, "%d\n", data.i);
 			break;
-		case VIK_LAYER_PARAM_BOOLEAN:
+		case LayerParamType::BOOLEAN:
 			fprintf(f, "%c\n", data.b ? 't' : 'f');
 			break;
-		case VIK_LAYER_PARAM_STRING:
+		case LayerParamType::STRING:
 			fprintf(f, "%s\n", data.s ? data.s : "");
 			break;
-		case VIK_LAYER_PARAM_COLOR:
+		case LayerParamType::COLOR:
 			fprintf(f, "#%.2x%.2x%.2x\n", (int)(data.c.red/256),(int)(data.c.green/256),(int)(data.c.blue/256));
 			break;
 		default: break;
@@ -184,7 +184,7 @@ void SlavGPS::file_write_layer_param(FILE * f, char const * name, VikLayerParamT
 
 static void write_layer_params_and_data(Layer const * layer, FILE * f)
 {
-	VikLayerParam *params = vik_layer_get_interface(layer->type)->params;
+	LayerParam *params = vik_layer_get_interface(layer->type)->params;
 	VikLayerFuncGetParam get_param = vik_layer_get_interface(layer->type)->get_param;
 
 	fprintf(f, "name=%s\n", layer->name ? layer->name : "");
@@ -193,7 +193,7 @@ static void write_layer_params_and_data(Layer const * layer, FILE * f)
 	}
 
 	if (params && get_param) {
-		VikLayerParamData data;
+		LayerParamData data;
 		uint16_t params_count = vik_layer_get_interface(layer->type)->params_count;
 		for (uint16_t i = 0; i < params_count; i++) {
 			data = get_param(layer, i, true);
@@ -317,7 +317,7 @@ static void string_list_delete(void * key, void * l, void * user_data)
 
 static void string_list_set_param(int i, std::list<char *> * list, LayerAndVp * layer_and_vp)
 {
-	VikLayerParamData x;
+	LayerParamData x;
 	x.sl = list;
 	layer_and_vp->layer->set_param(i, x, layer_and_vp->viewport, true);
 }
@@ -340,7 +340,7 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 	uint16_t len;
 	long line_num = 0;
 
-	VikLayerParam *params = NULL; /* For current layer, so we don't have to keep on looking up interface. */
+	LayerParam *params = NULL; /* For current layer, so we don't have to keep on looking up interface. */
 	uint8_t params_count = 0;
 
 	GHashTable *string_lists = g_hash_table_new(g_direct_hash,g_direct_equal);
@@ -545,9 +545,9 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 
 				for (i = 0; i < params_count; i++) {
 					if (strlen(params[i].name) == eq_pos && strncasecmp(line, params[i].name, eq_pos) == 0) {
-						VikLayerParamData x;
+						LayerParamData x;
 						line += eq_pos+1;
-						if (params[i].type == VIK_LAYER_PARAM_STRING_LIST) {
+						if (params[i].type == LayerParamType::STRING_LIST) {
 							GList *l = g_list_append((GList *) g_hash_table_lookup(string_lists, KINT_TO_POINTER ((int) i)),
 										   g_strdup(line));
 							g_hash_table_replace(string_lists, KINT_TO_POINTER ((int)i), l);
@@ -555,19 +555,19 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 							   This will be passed to the layer when we read an ~EndLayer. */
 						} else {
 							switch (params[i].type) {
-							case VIK_LAYER_PARAM_DOUBLE:
+							case LayerParamType::DOUBLE:
 								x.d = strtod_i8n(line, NULL);
 								break;
-							case VIK_LAYER_PARAM_UINT:
+							case LayerParamType::UINT:
 								x.u = strtoul(line, NULL, 10);
 								break;
-							case VIK_LAYER_PARAM_INT:
+							case LayerParamType::INT:
 								x.i = strtol(line, NULL, 10);
 								break;
-							case VIK_LAYER_PARAM_BOOLEAN:
+							case LayerParamType::BOOLEAN:
 								x.b = TEST_BOOLEAN(line);
 								break;
-							case VIK_LAYER_PARAM_COLOR:
+							case LayerParamType::COLOR:
 								memset(&(x.c), 0, sizeof(x.c)); /* default: black */
 								gdk_color_parse(line, &(x.c));
 								break;

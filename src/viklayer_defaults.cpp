@@ -57,43 +57,43 @@ static bool loaded;
 
 
 
-static VikLayerParamData get_default_data_answer(const char *group, const char *name, VikLayerParamType ptype, void * *success)
+static LayerParamData get_default_data_answer(const char *group, const char *name, LayerParamType ptype, void * *success)
 {
 #ifndef SLAVGPS_QT
-	VikLayerParamData data = VIK_LPD_BOOLEAN (false);
+	LayerParamData data = VIK_LPD_BOOLEAN (false);
 
 	GError *error = NULL;
 
 	switch (ptype) {
-	case VIK_LAYER_PARAM_DOUBLE: {
+	case LayerParamType::DOUBLE: {
 		double dd = g_key_file_get_double(keyfile, group, name, &error);
 		if (!error) {
 			data.d = dd;
 		}
 		break;
 	}
-	case VIK_LAYER_PARAM_UINT: {
+	case LayerParamType::UINT: {
 		uint32_t uu = g_key_file_get_integer(keyfile, group, name, &error);
 		if (!error) {
 			data.u = uu;
 		}
 		break;
 	}
-	case VIK_LAYER_PARAM_INT: {
+	case LayerParamType::INT: {
 		int32_t ii = g_key_file_get_integer(keyfile, group, name, &error);
 		if (!error) {
 			data.i = ii;
 		}
 		break;
 	}
-	case VIK_LAYER_PARAM_BOOLEAN: {
+	case LayerParamType::BOOLEAN: {
 		bool bb = g_key_file_get_boolean(keyfile, group, name, &error);
 		if (!error) {
 			data.b = bb;
 		}
 		break;
 	}
-	case VIK_LAYER_PARAM_STRING: {
+	case LayerParamType::STRING: {
 		char *str = g_key_file_get_string(keyfile, group, name, &error);
 		if (!error) {
 			data.s = str;
@@ -101,13 +101,13 @@ static VikLayerParamData get_default_data_answer(const char *group, const char *
 		break;
 	}
 #if 0
-	case VIK_LAYER_PARAM_STRING_LIST: {
+	case LayerParamType::STRING_LIST: {
 		char **str = g_key_file_get_string_list(keyfile, group, name, &error);
 		data.sl = str_to_glist(str); /* TODO convert. */
 		break;
 	}
 #endif
-	case VIK_LAYER_PARAM_COLOR: {
+	case LayerParamType::COLOR: {
 		char *str = g_key_file_get_string(keyfile, group, name, &error);
 		if (!error) {
 			memset(&(data.c), 0, sizeof(data.c));
@@ -132,7 +132,7 @@ static VikLayerParamData get_default_data_answer(const char *group, const char *
 
 
 
-static VikLayerParamData get_default_data(const char *group, const char *name, VikLayerParamType ptype)
+static LayerParamData get_default_data(const char *group, const char *name, LayerParamType ptype)
 {
 #ifndef SLAVGPS_QT
 	void * success = KINT_TO_POINTER (true);
@@ -144,26 +144,26 @@ static VikLayerParamData get_default_data(const char *group, const char *name, V
 
 
 
-static void set_default_data(VikLayerParamData data, const char *group, const char *name, VikLayerParamType ptype)
+static void set_default_data(LayerParamData data, const char *group, const char *name, LayerParamType ptype)
 {
 #ifndef SLAVGPS_QT
 	switch (ptype) {
-	case VIK_LAYER_PARAM_DOUBLE:
+	case LayerParamType::DOUBLE:
 		g_key_file_set_double(keyfile, group, name, data.d);
 		break;
-	case VIK_LAYER_PARAM_UINT:
+	case LayerParamType::UINT:
 		g_key_file_set_integer(keyfile, group, name, data.u);
 		break;
-	case VIK_LAYER_PARAM_INT:
+	case LayerParamType::INT:
 		g_key_file_set_integer(keyfile, group, name, data.i);
 		break;
-	case VIK_LAYER_PARAM_BOOLEAN:
+	case LayerParamType::BOOLEAN:
 		g_key_file_set_boolean(keyfile, group, name, data.b);
 		break;
-	case VIK_LAYER_PARAM_STRING:
+	case LayerParamType::STRING:
 		g_key_file_set_string(keyfile, group, name, data.s);
 		break;
-	case VIK_LAYER_PARAM_COLOR: {
+	case LayerParamType::COLOR: {
 		char *str = g_strdup_printf("#%.2x%.2x%.2x", (int)(data.c.red/256),(int)(data.c.green/256),(int)(data.c.blue/256));
 		g_key_file_set_string(keyfile, group, name, str);
 		free(str);
@@ -177,12 +177,12 @@ static void set_default_data(VikLayerParamData data, const char *group, const ch
 
 
 
-static void defaults_run_setparam(void * index_ptr, uint16_t i, VikLayerParamData data, VikLayerParam *params)
+static void defaults_run_setparam(void * index_ptr, uint16_t i, LayerParamData data, LayerParam *params)
 {
 #ifndef SLAVGPS_QT
 	/* Index is only an index into values from this layer. */
 	int index = KPOINTER_TO_INT (index_ptr);
-	VikLayerParam *vlp = (VikLayerParam *) g_ptr_array_index(paramsVD, index + i);
+	LayerParam *vlp = (LayerParam *) g_ptr_array_index(paramsVD, index + i);
 
 	set_default_data(data, vik_layer_get_interface(vlp->layer_type)->fixed_layer_name, vlp->name, vlp->type);
 #endif
@@ -191,12 +191,12 @@ static void defaults_run_setparam(void * index_ptr, uint16_t i, VikLayerParamDat
 
 
 
-static VikLayerParamData defaults_run_getparam(void * index_ptr, uint16_t i, bool notused2)
+static LayerParamData defaults_run_getparam(void * index_ptr, uint16_t i, bool notused2)
 {
 #ifndef SLAVGPS_QT
 	/* Index is only an index into values from this layer. */
 	int index = (int) (long) (index_ptr);
-	VikLayerParam *vlp = (VikLayerParam *) g_ptr_array_index(paramsVD, index + i);
+	LayerParam *vlp = (LayerParam *) g_ptr_array_index(paramsVD, index + i);
 
 	return get_default_data(vik_layer_get_interface(vlp->layer_type)->fixed_layer_name, vlp->name, vlp->type);
 #endif
@@ -208,7 +208,7 @@ static VikLayerParamData defaults_run_getparam(void * index_ptr, uint16_t i, boo
 static void use_internal_defaults_if_missing_default(LayerType layer_type)
 {
 #ifndef SLAVGPS_QT
-	VikLayerParam * params = vik_layer_get_interface(layer_type)->params;
+	LayerParam * params = vik_layer_get_interface(layer_type)->params;
 	if (!params) {
 		return;
 	}
@@ -225,7 +225,7 @@ static void use_internal_defaults_if_missing_default(LayerType layer_type)
 			if (! KPOINTER_TO_INT (success)) {
 				/* Reset value. */
 				if (params[i].default_value) {
-					VikLayerParamData paramd = params[i].default_value();
+					LayerParamData paramd = params[i].default_value();
 					set_default_data(paramd, vik_layer_get_interface(layer_type)->fixed_layer_name, params[i].name, params[i].type);
 				}
 			}
@@ -355,7 +355,7 @@ bool a_layer_defaults_show_window(GtkWindow *parent, const char *layername)
 	bool found_first = false;
 	int index = 0;
 	for (unsigned int i = 0; i < paramsVD->len; i++) {
-		VikLayerParam *param = (VikLayerParam*)(g_ptr_array_index(paramsVD,i));
+		LayerParam *param = (LayerParam*)(g_ptr_array_index(paramsVD,i));
 		if (param->layer_type == layer_type) {
 			layer_params_count++;
 			if (!found_first) {
@@ -370,9 +370,9 @@ bool a_layer_defaults_show_window(GtkWindow *parent, const char *layername)
 		return false;
 	}
 
-	VikLayerParam *params = (VikLayerParam *) malloc(layer_params_count * sizeof (VikLayerParam));
+	LayerParam *params = (LayerParam *) malloc(layer_params_count * sizeof (LayerParam));
 	for (unsigned int i = 0; i < layer_params_count; i++) {
-		params[i] = *((VikLayerParam*)(g_ptr_array_index(paramsVD,i+index)));
+		params[i] = *((LayerParam*)(g_ptr_array_index(paramsVD,i+index)));
 	}
 
 	char *title = g_strconcat(layername, ": ", _("Layer Defaults"), NULL);
@@ -383,7 +383,7 @@ bool a_layer_defaults_show_window(GtkWindow *parent, const char *layername)
 					   layer_params_count,
 					   vik_layer_get_interface(layer_type)->params_groups,
 					   vik_layer_get_interface(layer_type)->params_groups_count,
-					   (bool (*) (void *,uint16_t,VikLayerParamData,void *,bool)) defaults_run_setparam,
+					   (bool (*) (void *,uint16_t,LayerParamData,void *,bool)) defaults_run_setparam,
 					   ((void *) (long) (index)),
 					   params,
 					   defaults_run_getparam,
@@ -410,11 +410,11 @@ bool a_layer_defaults_show_window(GtkWindow *parent, const char *layername)
  *
  * Call this function on to set the default value for the particular parameter.
  */
-void a_layer_defaults_register(VikLayerParam *vlp, VikLayerParamData defaultval, const char *layername)
+void a_layer_defaults_register(LayerParam *vlp, LayerParamData defaultval, const char *layername)
 {
 #ifndef SLAVGPS_QT
 	/* Copy value. */
-	VikLayerParam *newvlp = (VikLayerParam *) malloc(1 * sizeof (VikLayerParam));
+	LayerParam *newvlp = (LayerParam *) malloc(1 * sizeof (LayerParam));
 	*newvlp = *vlp;
 
 	g_ptr_array_add(paramsVD, newvlp);
@@ -462,7 +462,7 @@ void a_layer_defaults_uninit()
  *
  * Call this function to get the default value for the parameter requested.
  */
-VikLayerParamData a_layer_defaults_get(const char *layername, const char *param_name, VikLayerParamType param_type)
+LayerParamData a_layer_defaults_get(const char *layername, const char *param_name, LayerParamType param_type)
 {
 	if (!loaded) {
 		/* Since we can't load the file in a_defaults_init (no params registered yet),
