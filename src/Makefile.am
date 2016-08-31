@@ -151,7 +151,7 @@ libviking_a_SOURCES = \
 	vikwebtool_datasource.cpp vikwebtool_datasource.h \
 	dems.cpp dems.h \
 	srtm_continent.cpp \
-	uibuilder.cpp uibuilder.h \
+	uibuilder_gtk.cpp uibuilder.h \
 	print-preview.cpp print-preview.h \
 	print.cpp print.h \
 	kmz.cpp kmz.h \
