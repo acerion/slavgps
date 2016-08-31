@@ -33,8 +33,8 @@
 #include <gdk-pixbuf/gdk-pixdata.h>
 #endif
 
-#ifndef SLAVGPS_QT
 #include "uibuilder.h"
+#ifndef SLAVGPS_QT
 #include "viktreeview.h"
 #include "slav_qt.h"
 #endif

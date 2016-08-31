@@ -215,7 +215,6 @@ VikLayerInterface * vik_layer_get_interface(LayerType layer_type)
  */
 static bool layer_defaults_register(LayerType layer_type)
 {
-#ifndef SLAVGPS_QT
 	/* See if any parameters. */
 	LayerParam *params = vik_layer_interfaces[(int) layer_type]->params;
 	if (!params) {
@@ -237,7 +236,6 @@ static bool layer_defaults_register(LayerType layer_type)
 	}
 
 	return answer;
-#endif
 }
 
 
@@ -397,7 +395,6 @@ void Layer::marshall(uint8_t ** data, int * len)
 
 void Layer::marshall_params(uint8_t ** data, int * datalen)
 {
-#ifndef SLAVGPS_QT
 	LayerParam * params = vik_layer_get_interface(this->type)->params;
 	VikLayerFuncGetParam get_param = vik_layer_get_interface(this->type)->get_param;
 
@@ -458,7 +455,6 @@ void Layer::marshall_params(uint8_t ** data, int * datalen)
 	g_byte_array_free (b, false);
 
 #undef vlm_append
-#endif
 }
 
 
@@ -466,7 +462,6 @@ void Layer::marshall_params(uint8_t ** data, int * datalen)
 
 void Layer::unmarshall_params(uint8_t * data, int datalen, Viewport * viewport)
 {
-#ifndef SLAVGPS_QT
 	LayerParam *params = vik_layer_get_interface(this->type)->params;
 	VikLayerFuncSetParam set_param = vik_layer_get_interface(this->type)->set_param;
 
@@ -525,7 +520,6 @@ void Layer::unmarshall_params(uint8_t * data, int datalen, Viewport * viewport)
 			}
 		}
 	}
-#endif
 }
 
 
@@ -533,7 +527,6 @@ void Layer::unmarshall_params(uint8_t * data, int datalen, Viewport * viewport)
 
 Layer * Layer::unmarshall(uint8_t * data, int len, Viewport * viewport)
 {
-#ifndef SLAVGPS_QT
 	header_t * header = (header_t *) data;
 
 	if (vik_layer_interfaces[(int) header->layer_type]->unmarshall) {
@@ -541,7 +534,6 @@ Layer * Layer::unmarshall(uint8_t * data, int len, Viewport * viewport)
 	} else {
 		return NULL;
 	}
-#endif
 }
 
 
@@ -549,11 +541,10 @@ Layer * Layer::unmarshall(uint8_t * data, int len, Viewport * viewport)
 
 Layer::~Layer()
 {
-#ifndef SLAVGPS_QT
 	if (this->name) {
 		free(this->name);
 	}
-
+#ifndef SLAVGPS_QT
 	/* kamilTODO: free this object. */
 	this->vl = NULL;
 #endif
@@ -579,7 +570,6 @@ bool vik_layer_selected(Layer * layer, SublayerType sublayer_type, sg_uid_t subl
 
 uint16_t vik_layer_get_menu_items_selection(Layer * layer)
 {
-#ifndef SLAVGPS_QT
 	uint16_t rv = layer->get_menu_selection();
 	if (rv == (uint16_t) -1) {
 		/* Perhaps this line could go to base class. */
@@ -587,7 +577,6 @@ uint16_t vik_layer_get_menu_items_selection(Layer * layer)
 	} else {
 		return rv;
 	}
-#endif
 }
 
 
@@ -669,7 +658,6 @@ LayerType Layer::type_from_string(char const * str)
 
 void vik_layer_typed_param_data_free(void * gp)
 {
-#ifndef SLAVGPS_QT
 	LayerTypedParamData *val = (LayerTypedParamData *)gp;
 	switch (val->type) {
 	case LayerParamType::STRING:
@@ -689,7 +677,6 @@ void vik_layer_typed_param_data_free(void * gp)
 		break;
 	}
 	free(val);
-#endif
 }
 
 
@@ -697,7 +684,6 @@ void vik_layer_typed_param_data_free(void * gp)
 
 LayerTypedParamData * vik_layer_typed_param_data_copy_from_data(LayerParamType type, LayerParamData val)
 {
-#ifndef SLAVGPS_QT
 	LayerTypedParamData * newval = (LayerTypedParamData *) malloc(1 * sizeof (LayerTypedParamData));
 	newval->data = val;
 	newval->type = type;
@@ -719,7 +705,6 @@ LayerTypedParamData * vik_layer_typed_param_data_copy_from_data(LayerParamType t
 		break;
 	}
 	return newval;
-#endif
 }
 
 
@@ -729,7 +714,6 @@ LayerTypedParamData * vik_layer_typed_param_data_copy_from_data(LayerParamType t
 
 LayerTypedParamData * vik_layer_data_typed_param_copy_from_string(LayerParamType type, const char * str)
 {
-#ifndef SLAVGPS_QT
 	LayerTypedParamData * rv = (LayerTypedParamData *) malloc(1 * sizeof (LayerTypedParamData));
 	rv->type = type;
 	switch (type) {
@@ -745,18 +729,19 @@ LayerTypedParamData * vik_layer_data_typed_param_copy_from_string(LayerParamType
 	case LayerParamType::BOOLEAN:
 		rv->data.b = TEST_BOOLEAN(str);
 		break;
+#ifndef SLAVGPS_QT
 	case LayerParamType::COLOR:
 		memset(&(rv->data.c), 0, sizeof(rv->data.c)); /* Default: black. */
 		gdk_color_parse (str, &(rv->data.c));
 		break;
-		/* STRING or STRING_LIST -- if STRING_LIST, just set param to add a STRING. */
+#endif
+	/* STRING or STRING_LIST -- if STRING_LIST, just set param to add a STRING. */
 	default: {
 		char *s = g_strdup(str);
 		rv->data.s = s;
 	}
 	}
 	return rv;
-#endif
 }
 
 

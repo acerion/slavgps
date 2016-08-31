@@ -42,22 +42,6 @@ using namespace SlavGPS;
 
 
 
-LayerParamData vik_lpd_true_default(void)
-{
-	return VIK_LPD_BOOLEAN (true);
-}
-
-
-
-
-LayerParamData vik_lpd_false_default(void)
-{
-	return VIK_LPD_BOOLEAN (false);
-}
-
-
-
-
 GtkWidget *a_uibuilder_new_widget(LayerParam *param, LayerParamData data)
 {
 	/* Perform pre conversion if necessary. */
@@ -528,28 +512,6 @@ int a_uibuilder_properties_factory(const char *dialog_name,
 
 
 
-static void uibuilder_run_setparam(LayerParamData *paramdatas, uint16_t i, LayerParamData data, LayerParam *params)
-{
-	/* Could have to copy it if it's a string! */
-	switch (params[i].type) {
-	case LayerParamType::STRING:
-		paramdatas[i].s = g_strdup(data.s);
-		break;
-	default:
-		paramdatas[i] = data; /* Dtring list will have to be freed by layer. anything else not freed. */
-	}
-}
-
-
-
-
-static LayerParamData uibuilder_run_getparam(LayerParamData *params_defaults, uint16_t i)
-{
-	return params_defaults[i];
-}
-
-
-
 
 LayerParamData *a_uibuilder_run_dialog(const char *dialog_name, GtkWindow *parent, LayerParam *params,
 				       uint16_t params_count, char **groups, uint8_t groups_count,
@@ -573,74 +535,4 @@ LayerParamData *a_uibuilder_run_dialog(const char *dialog_name, GtkWindow *paren
 	}
 	free(paramdatas);
 	return NULL;
-}
-
-
-
-
-static void a_uibuilder_free_paramdatas_sub(LayerParamData *paramdatas, int i)
-{
-        /* Should make a util function out of this. */
-	std::list<char *> * a_list = paramdatas[i].sl;
-	for (auto iter = a_list->begin(); iter != a_list->end(); iter++) {
-		free(*iter);
-        }
-        delete paramdatas[i].sl;
-	paramdatas[i].sl = NULL;
-}
-
-
-
-
-/* Frees data from last (if necessary). */
-void a_uibuilder_free_paramdatas(LayerParamData *paramdatas, LayerParam *params, uint16_t params_count)
-{
-	int i;
-	/* May have to free strings, etc. */
-	for (i = 0; i < params_count; i++) {
-		switch (params[i].type) {
-		case LayerParamType::STRING:
-			free((char *) paramdatas[i].s);
-			break;
-		case LayerParamType::STRING_LIST: {
-			a_uibuilder_free_paramdatas_sub(paramdatas, i);
-			break;
-			default:
-				break;
-		}
-		}
-	}
-	free(paramdatas);
-}
-
-
-
-
-bool SlavGPS::operator==(unsigned int event_button, MouseButton button)
-{
-	return event_button == static_cast<unsigned int>(button);
-}
-
-
-
-
-bool SlavGPS::operator!=(unsigned int event_button, MouseButton button)
-{
-	return event_button != static_cast<unsigned int>(button);
-}
-
-
-
-
-bool SlavGPS::operator==(MouseButton button, unsigned int event_button)
-{
-	return event_button == static_cast<unsigned int>(button);
-}
-
-
-
-
-bool SlavGPS::operator!=(MouseButton button, unsigned int event_button)
-{
-	return event_button != static_cast<unsigned int>(button);
 }

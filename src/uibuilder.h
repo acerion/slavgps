@@ -22,13 +22,14 @@
 #define _SG_UIBUILDER_H_
 
 
+
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <list>
 #include <cstdint>
-
-#include <gtk/gtk.h>
-
-#include "vik_compat.h"
-#include "config.h"
 
 #include "globals.h"
 
@@ -43,10 +44,13 @@ typedef union {
 	int32_t i;
 	bool b;
 	const char *s;
+#ifndef SLAVGPS_QT
 	GdkColor c;
+#endif
 	std::list<char *> * sl;
 	void * ptr; // For internal usage - don't save this value in a file!
 } LayerParamData;
+
 
 enum class LayerWidgetType {
 	CHECKBUTTON = 0,
@@ -63,6 +67,7 @@ enum class LayerWidgetType {
 	FILELIST,
 	BUTTON,
 };
+
 
 /* id is index. */
 enum class LayerParamType {
@@ -152,8 +157,21 @@ typedef enum {
 #define VIK_LPD_DOUBLE(X)      (LayerParamData) { (X) }
 #endif
 
-LayerParamData vik_lpd_true_default (void);
-LayerParamData vik_lpd_false_default (void);
+
+
+
+LayerParamData vik_lpd_true_default(void);
+LayerParamData vik_lpd_false_default(void);
+void uibuilder_run_setparam(LayerParamData * paramdatas, uint16_t i, LayerParamData data, LayerParam * params);
+LayerParamData uibuilder_run_getparam(LayerParamData * params_defaults, uint16_t i);
+/* Frees data from last (if necessary). */
+void a_uibuilder_free_paramdatas(LayerParamData * paramdatas, LayerParam * params, uint16_t params_count);
+
+
+
+
+#ifndef SLAVGPS_QT
+
 
 
 
@@ -164,6 +182,8 @@ typedef struct {
 	GtkWidget ** widgets;
 	GtkWidget ** labels;
 } ui_change_values;
+
+
 
 
 GtkWidget *a_uibuilder_new_widget(LayerParam *param, LayerParamData data);
@@ -186,8 +206,12 @@ LayerParamData *a_uibuilder_run_dialog(const char *dialog_name, GtkWindow *paren
 				       uint16_t params_count, char **groups, uint8_t groups_count,
 				       LayerParamData *params_defaults);
 
-/* Frees data from last (if necessary). */
-void a_uibuilder_free_paramdatas(LayerParamData *paramdatas, LayerParam *params, uint16_t params_count);
+
+
+
+#endif
+
+
 
 
 #endif /* #ifndef _SG_UIBUILDER_H_ */

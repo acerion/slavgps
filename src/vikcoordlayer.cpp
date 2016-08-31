@@ -46,7 +46,6 @@ static Layer * coord_layer_unmarshall(uint8_t * data, int len, Viewport * viewpo
 
 
 
-#ifndef SLAVGPS_QT
 static LayerParamScale param_scales[] = {
 	{ 0.05, 60.0, 0.25, 10 },
 	{ 1, 10, 1, 0 },
@@ -54,7 +53,9 @@ static LayerParamScale param_scales[] = {
 static LayerParamData color_default(void)
 {
 	LayerParamData data;
+#ifndef SLAVGPS_QT
 	gdk_color_parse("red", &data.c);
+#endif
 	return data;
 	// or: return VIK_LPD_COLOR (0, 65535, 0, 0);
 }
@@ -72,7 +73,6 @@ static LayerParam coord_layer_params[] = {
 	{ LayerType::COORD, "min_inc",        LayerParamType::DOUBLE, VIK_LAYER_GROUP_NONE, N_("Minutes Width:"),  LayerWidgetType::SPINBUTTON, &param_scales[0], NULL, NULL, min_inc_default,        NULL, NULL },
 	{ LayerType::COORD, "line_thickness", LayerParamType::UINT,   VIK_LAYER_GROUP_NONE, N_("Line Thickness:"), LayerWidgetType::SPINBUTTON, &param_scales[1], NULL, NULL, line_thickness_default, NULL, NULL },
 };
-#endif
 
 
 
@@ -140,11 +140,12 @@ static Layer * coord_layer_unmarshall(uint8_t * data, int len, Viewport * viewpo
 // NB Viewport can be null as it's not used ATM
 bool LayerCoord::set_param(uint16_t id, LayerParamData data, Viewport * viewport, bool is_file_operation)
 {
-#ifndef SLAVGPS_QT
 	switch (id) {
+#ifndef SLAVGPS_QT
 	case PARAM_COLOR:
 		this->color = data.c;
 		break;
+#endif
 	case PARAM_MIN_INC:
 		this->deg_inc = data.d / 60.0;
 		break;
@@ -156,7 +157,6 @@ bool LayerCoord::set_param(uint16_t id, LayerParamData data, Viewport * viewport
 	default:
 		break;
 	}
-#endif
 	return true;
 }
 
@@ -166,12 +166,13 @@ bool LayerCoord::set_param(uint16_t id, LayerParamData data, Viewport * viewport
 
 LayerParamData LayerCoord::get_param(uint16_t id, bool is_file_operation) const
 {
-#ifndef SLAVGPS_QT
 	LayerParamData rv;
 	switch (id) {
+#ifndef SLAVGPS_QT
 	case PARAM_COLOR:
 		rv.c = this->color;
 		break;
+#endif
 	case PARAM_MIN_INC:
 		rv.d = this->deg_inc * 60.0;
 		break;
@@ -182,7 +183,6 @@ LayerParamData LayerCoord::get_param(uint16_t id, bool is_file_operation) const
 		break;
 	}
 	return rv;
-#endif
 }
 
 

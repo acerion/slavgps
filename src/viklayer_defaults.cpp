@@ -59,7 +59,6 @@ static bool loaded;
 
 static LayerParamData get_default_data_answer(const char *group, const char *name, LayerParamType ptype, void * *success)
 {
-#ifndef SLAVGPS_QT
 	LayerParamData data = VIK_LPD_BOOLEAN (false);
 
 	GError *error = NULL;
@@ -107,6 +106,7 @@ static LayerParamData get_default_data_answer(const char *group, const char *nam
 		break;
 	}
 #endif
+#ifndef SLAVGPS_QT
 	case LayerParamType::COLOR: {
 		char *str = g_key_file_get_string(keyfile, group, name, &error);
 		if (!error) {
@@ -116,7 +116,9 @@ static LayerParamData get_default_data_answer(const char *group, const char *nam
 		free(str);
 		break;
 	}
-	default: break;
+#endif
+	default:
+		break;
 	}
 	*success = KINT_TO_POINTER (true);
 	if (error) {
@@ -126,7 +128,7 @@ static LayerParamData get_default_data_answer(const char *group, const char *nam
 	}
 
 	return data;
-#endif
+
 }
 
 
@@ -134,11 +136,9 @@ static LayerParamData get_default_data_answer(const char *group, const char *nam
 
 static LayerParamData get_default_data(const char *group, const char *name, LayerParamType ptype)
 {
-#ifndef SLAVGPS_QT
 	void * success = KINT_TO_POINTER (true);
 	/* NB This should always succeed - don't worry about 'success'. */
 	return get_default_data_answer(group, name, ptype, &success);
-#endif
 }
 
 
@@ -146,7 +146,6 @@ static LayerParamData get_default_data(const char *group, const char *name, Laye
 
 static void set_default_data(LayerParamData data, const char *group, const char *name, LayerParamType ptype)
 {
-#ifndef SLAVGPS_QT
 	switch (ptype) {
 	case LayerParamType::DOUBLE:
 		g_key_file_set_double(keyfile, group, name, data.d);
@@ -163,15 +162,16 @@ static void set_default_data(LayerParamData data, const char *group, const char 
 	case LayerParamType::STRING:
 		g_key_file_set_string(keyfile, group, name, data.s);
 		break;
+#ifndef SLAVGPS_QT
 	case LayerParamType::COLOR: {
 		char *str = g_strdup_printf("#%.2x%.2x%.2x", (int)(data.c.red/256),(int)(data.c.green/256),(int)(data.c.blue/256));
 		g_key_file_set_string(keyfile, group, name, str);
 		free(str);
 		break;
 	}
+#endif
 	default: break;
 	}
-#endif
 }
 
 
@@ -179,13 +179,11 @@ static void set_default_data(LayerParamData data, const char *group, const char 
 
 static void defaults_run_setparam(void * index_ptr, uint16_t i, LayerParamData data, LayerParam *params)
 {
-#ifndef SLAVGPS_QT
 	/* Index is only an index into values from this layer. */
 	int index = KPOINTER_TO_INT (index_ptr);
 	LayerParam *vlp = (LayerParam *) g_ptr_array_index(paramsVD, index + i);
 
 	set_default_data(data, vik_layer_get_interface(vlp->layer_type)->fixed_layer_name, vlp->name, vlp->type);
-#endif
 }
 
 
@@ -193,13 +191,11 @@ static void defaults_run_setparam(void * index_ptr, uint16_t i, LayerParamData d
 
 static LayerParamData defaults_run_getparam(void * index_ptr, uint16_t i, bool notused2)
 {
-#ifndef SLAVGPS_QT
 	/* Index is only an index into values from this layer. */
 	int index = (int) (long) (index_ptr);
 	LayerParam *vlp = (LayerParam *) g_ptr_array_index(paramsVD, index + i);
 
 	return get_default_data(vik_layer_get_interface(vlp->layer_type)->fixed_layer_name, vlp->name, vlp->type);
-#endif
 }
 
 
@@ -207,7 +203,6 @@ static LayerParamData defaults_run_getparam(void * index_ptr, uint16_t i, bool n
 
 static void use_internal_defaults_if_missing_default(LayerType layer_type)
 {
-#ifndef SLAVGPS_QT
 	LayerParam * params = vik_layer_get_interface(layer_type)->params;
 	if (!params) {
 		return;
@@ -231,7 +226,6 @@ static void use_internal_defaults_if_missing_default(LayerType layer_type)
 			}
 		}
 	}
-#endif
 }
 
 
@@ -254,12 +248,12 @@ static bool defaults_load_from_file()
 	}
 
 	free(fn);
-
+#endif
 	/* Ensure if have a key file, then any missing values are set from the internal defaults. */
 	for (LayerType layer_type = LayerType::AGGREGATE; layer_type < LayerType::NUM_TYPES; ++layer_type) {
 		use_internal_defaults_if_missing_default(layer_type);
 	}
-#endif
+
 	return true;
 }
 
@@ -269,8 +263,8 @@ static bool defaults_load_from_file()
 /* Return true on success. */
 static bool layer_defaults_save_to_file()
 {
-#ifndef SLAVGPS_QT
 	bool answer = true;
+#ifndef SLAVGPS_QT
 	GError *error = NULL;
 	char * fn = g_build_filename(get_viking_dir(), VIKING_LAYER_DEFAULTS_INI_FILE, NULL);
 	size_t size;
@@ -311,9 +305,8 @@ static bool layer_defaults_save_to_file()
 tidy:
 	free(keyfilestr);
 	free(fn);
-
-	return answer;
 #endif
+	return answer;
 }
 
 
@@ -412,7 +405,6 @@ bool a_layer_defaults_show_window(GtkWindow *parent, const char *layername)
  */
 void a_layer_defaults_register(LayerParam *vlp, LayerParamData defaultval, const char *layername)
 {
-#ifndef SLAVGPS_QT
 	/* Copy value. */
 	LayerParam *newvlp = (LayerParam *) malloc(1 * sizeof (LayerParam));
 	*newvlp = *vlp;
@@ -420,7 +412,6 @@ void a_layer_defaults_register(LayerParam *vlp, LayerParamData defaultval, const
 	g_ptr_array_add(paramsVD, newvlp);
 
 	set_default_data(defaultval, layername, vlp->name, vlp->type);
-#endif
 }
 
 
