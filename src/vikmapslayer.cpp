@@ -67,6 +67,8 @@
 #include "file.h"
 #include "settings.h"
 #include "globals.h"
+#include "vik_compat.h"
+#include "uibuilder.h"
 
 #ifdef HAVE_SQLITE3_H
 #include "sqlite3.h"

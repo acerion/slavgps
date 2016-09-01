@@ -58,6 +58,7 @@
 #include "icons/icons.h"
 #include "babel.h"
 #include "dialog.h"
+#include "vik_compat.h"
 
 
 

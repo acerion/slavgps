@@ -28,6 +28,7 @@
 #include "acquire.h"
 #include "babel.h"
 #include "settings.h"
+#include "vik_compat.h"
 
 
 

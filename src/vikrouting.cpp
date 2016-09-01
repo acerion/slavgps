@@ -41,6 +41,7 @@
 #include "preferences.h"
 #include "vikrouting.h"
 #include "vikroutingengine.h"
+#include "vik_compat.h"
 
 
 

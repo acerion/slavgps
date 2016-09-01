@@ -33,6 +33,7 @@
 #include "vikfilelist.h"
 #include "viking.h"
 #include "globals.h"
+#include "vik_compat.h"
 
 
 

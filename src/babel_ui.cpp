@@ -24,6 +24,7 @@
 
 #include "babel.h"
 #include "babel_ui.h"
+#include "vik_compat.h"
 
 
 static void babel_ui_selector_add_entry_cb ( void * data, void * user_data )

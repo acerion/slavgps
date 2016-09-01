@@ -69,6 +69,7 @@
 #include "clipboard.h"
 #include "settings.h"
 #include "globals.h"
+#include "vik_compat.h"
 
 
 

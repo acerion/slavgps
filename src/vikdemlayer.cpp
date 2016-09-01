@@ -49,6 +49,7 @@
 #include "file.h"
 #include "dialog.h"
 #include "globals.h"
+#include "vik_compat.h"
 
 
 

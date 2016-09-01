@@ -34,6 +34,9 @@
 #include "globals.h"
 
 
+#ifndef SLAVGPS_QT
+#include <gtk/gtk.h>
+#endif
 
 
 /* Parameters (for I/O and Properties) */
@@ -156,7 +159,6 @@ typedef enum {
 #define VIK_LPD_COLOR(X,Y,Z,A) (LayerParamData) { (X), (Y), (Z), (A) }
 #define VIK_LPD_DOUBLE(X)      (LayerParamData) { (X) }
 #endif
-
 
 
 

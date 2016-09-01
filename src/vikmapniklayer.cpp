@@ -53,6 +53,7 @@
 #include "vikmapniklayer.h"
 #include "vikfileentry.h"
 #include "file.h"
+#include "vik_compat.h"
 
 
 
