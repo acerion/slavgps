@@ -13,6 +13,9 @@ SOURCES += src/main_qt.cpp \
     src/viklayer_defaults.cpp \
     src/viklayer.cpp \
     src/vikcoordlayer.cpp \
+    src/vikaggregatelayer.cpp \
+    src/viklayerspanel.cpp \
+    src/viktreeview.cpp \
     src/uibuilder.cpp
 
 
@@ -26,6 +29,9 @@ HEADERS += src/window_qt.h \
     src/viklayer_defaults.h \
     src/viklayer.h \
     src/vikcoordlayer.h \
+    src/vikaggregatelayer.h \
+    src/viklayerspanel.h \
+    src/viktreeview.h \
     src/uibuilder.h
 
 
