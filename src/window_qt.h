@@ -10,6 +10,7 @@
 #include <QStatusBar>
 #include <QTreeView>
 
+#include "viklayerspanel.h"
 
 
 class Window : public QMainWindow {
@@ -32,7 +33,7 @@ private:
 	QToolBar * tool_bar = NULL;
 	QStatusBar * status_bar = NULL;
 
-	QTreeView * tree_view = NULL;
+	SlavGPS::LayersPanel * layers_panel = NULL;
 };
 
 

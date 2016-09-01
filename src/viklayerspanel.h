@@ -27,7 +27,13 @@
 
 #include <cstdint>
 
+#ifdef SLAVGPS_QT
+#include <QtWidgets>
+#include <QWidget>
+#include <QVBoxLayout>
+#else
 #include <gtk/gtk.h>
+#endif
 
 #include "viklayer.h"
 #include "vikaggregatelayer.h"
@@ -45,10 +51,19 @@ namespace SlavGPS {
 
 
 
+#ifdef SLAVGPS_QT
+	class LayersPanel : public QWidget {
+		Q_OBJECT
+#else
 	class LayersPanel {
+#endif
 	public:
 
+#ifdef SLAVGPS_QT
+		LayersPanel(QWidget * parent);
+#else
 		LayersPanel();
+#endif
 		~LayersPanel();
 
 		void add_layer(Layer * layer);
@@ -93,7 +108,11 @@ namespace SlavGPS {
 		bool key_press(GdkEventKey * event);
 		void move_item(bool up);
 
-		GtkVBox * panel_box_;
+#ifdef SLAVGPS_QT
+		QVBoxLayout * panel_box_ = NULL;
+#else
+		GtkVBox * panel_box_ = NULL;
+#endif
 	};
 
 

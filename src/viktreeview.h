@@ -30,8 +30,14 @@
 #include "uibuilder.h"
 #include "globals.h"
 
+#ifdef SLAVGPS_QT
+#include <QStandardItem>
+#include <QTreeView>
+#include <QString>
+#include "slav_qt.h"
+#else
 #include <gtk/gtk.h>
-
+#endif
 
 
 
@@ -53,9 +59,28 @@ namespace SlavGPS {
 
 
 
-	class TreeView {
+#ifdef SLAVGPS_QT
+	class LayerTreeItem : public QStandardItem {
 	public:
+		LayerTreeItem(QString arg);
+
+	};
+#endif
+
+
+
+#ifdef SLAVGPS_QT
+	class TreeView : public QTreeView {
+#else
+	class TreeView {
+#endif
+	public:
+#ifdef SLAVGPS_QT
+		TreeView(QWidget * parent);
+#else
 		TreeView();
+#endif
+
 		~TreeView();
 
 		void add_layer(GtkTreeIter *parent_iter, GtkTreeIter *iter, const char *name, Layer * parent_layer, bool above, Layer * layer, int data, LayerType layer_type, time_t timestamp);
@@ -105,12 +130,17 @@ namespace SlavGPS {
 
 
 
-		GtkTreeModel * model;
+
 		bool editing;
 		bool was_a_toggle;
 		GdkPixbuf * layer_type_icons[(int) LayerType::NUM_TYPES];
 
+#ifdef SLAVGPS_QT
+		QStandardItemModel * model;
+#else
 		GtkTreeView * tv_;
+		GtkTreeModel * model;
+#endif
 
 	private:
 		void add_columns();

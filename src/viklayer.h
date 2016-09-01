@@ -34,8 +34,8 @@
 #endif
 
 #include "uibuilder.h"
-#ifndef SLAVGPS_QT
 #include "viktreeview.h"
+#ifdef SLAVGPS_QT
 #include "slav_qt.h"
 #endif
 #include "vikviewport.h"

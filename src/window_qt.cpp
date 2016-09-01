@@ -3,6 +3,7 @@
 #include "window_qt.h"
 #include "vikviewport.h"
 #include "viklayer.h"
+#include "viklayerspanel.h"
 
 
 Window::Window()
@@ -16,50 +17,39 @@ Window::Window()
 
 void Window::create_layout()
 {
-	QHBoxLayout * layout = new QHBoxLayout;
+	//QHBoxLayout * layout = new QHBoxLayout;
 	QWidget * central_widget = new QWidget;
-	central_widget->setLayout(layout);
+	//central_widget->setLayout(layout);
 
 
-	QFileSystemModel * model = new QFileSystemModel;
-	model->setRootPath(QDir::currentPath());
-	tree_view = new QTreeView(central_widget);
-	tree_view->setModel(model);
-	tree_view->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
+	this->layers_panel = new SlavGPS::LayersPanel(central_widget);
 
 
 	QDockWidget * dock = new QDockWidget(this);
-	dock->setWidget(tree_view);
+	dock->setWidget(this->layers_panel);
 	dock->setWindowTitle("Layers");
 	this->addDockWidget(Qt::LeftDockWidgetArea, dock);
 
 	setStyleSheet("QMainWindow::separator { image: url(src/icons/handle_indicator.png); width: 8}");
 
 
-#if 0
-	QWidget * wi = new QWidget2(this);
-	layout->addWidget(wi);
-	wi->show();
 
-	fprintf(stderr, "%d / %d\n", wi->height(), wi->width());
-#else
 	SlavGPS::Viewport * viewport = new SlavGPS::Viewport(this);
 	viewport->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Maximum);
-	layout->addWidget(viewport);
+	//layout->addWidget(viewport);
 	struct LatLon ll = { 22.0, 27.0 };
 	viewport->set_center_latlon(&ll, false);
-	viewport->xmpp = 1;
-	viewport->ympp = 1;
+	viewport->xmpp = 0.01;
+	viewport->ympp = 0.01;
 	//viewport->show();
 	fprintf(stderr, "%d / %d\n", viewport->height(), viewport->width());
 
-#endif
 
 	SlavGPS::Layer * layer = SlavGPS::Layer::new_(SlavGPS::LayerType::COORD, viewport, false);
 	viewport->configure();
 	layer->draw(viewport);
 
-	this->setCentralWidget(central_widget);
+	this->setCentralWidget(viewport);
 
 	return;
 }

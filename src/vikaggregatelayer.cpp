@@ -21,12 +21,16 @@
  */
 
 #include "viking.h"
+#include "vikaggregatelayer.h"
+#include "viklayerspanel.h"
+#ifndef SLAVGPS_QT
 #include "vikgpslayer.h"
 #include "viktrwlayer_analysis.h"
 #include "viktrwlayer_tracklist.h"
 #include "viktrwlayer_waypointlist.h"
-#include "icons/icons.h"
 #include "dialog.h"
+#endif
+#include "icons/icons.h"
 #include "globals.h"
 
 #include <list>
@@ -53,7 +57,11 @@ VikLayerInterface vik_aggregate_layer_interface = {
 	"Aggregate",
 	N_("Aggregate"),
 	"<control><shift>A",
+#ifdef SLAVGPS_QT
+	NULL,
+#else
 	&vikaggregatelayer_pixbuf,
+#endif
 
 	{ NULL, NULL, NULL, NULL, NULL, NULL, NULL },
 	NULL,
@@ -124,7 +132,9 @@ static Layer * aggregate_layer_unmarshall(uint8_t *data, int len, Viewport * vie
 		Layer * child_layer = Layer::unmarshall(data + sizeof (int), alm_size, viewport);
 		if (child_layer) {
 			aggregate->children->push_front(child_layer);
+#ifndef SLAVGPS_QT
 			g_signal_connect_swapped(G_OBJECT (child_layer->vl), "update", G_CALLBACK(vik_layer_emit_update_secondary), (Layer *) aggregate);
+#endif
 		}
 		alm_next;
 	}
@@ -139,6 +149,7 @@ static Layer * aggregate_layer_unmarshall(uint8_t *data, int len, Viewport * vie
 
 void LayerAggregate::insert_layer(Layer * layer, GtkTreeIter *replace_iter)
 {
+#ifndef SLAVGPS_QT
 	GtkTreeIter iter;
 
 	/* By default layers are inserted above the selected layer. */
@@ -188,6 +199,7 @@ void LayerAggregate::insert_layer(Layer * layer, GtkTreeIter *replace_iter)
 	}
 
 	g_signal_connect_swapped(G_OBJECT(layer->vl), "update", G_CALLBACK(vik_layer_emit_update_secondary), (Layer *) this);
+#endif
 }
 
 
@@ -199,6 +211,7 @@ void LayerAggregate::insert_layer(Layer * layer, GtkTreeIter *replace_iter)
  */
 void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 {
+#ifndef SLAVGPS_QT
 	GtkTreeIter iter;
 
 	/* By default layers go to the top. */
@@ -231,6 +244,7 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 	}
 
 	g_signal_connect_swapped(G_OBJECT(layer->vl), "update", G_CALLBACK(vik_layer_emit_update_secondary), (Layer *) this);
+#endif
 }
 
 
@@ -238,6 +252,7 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 
 void LayerAggregate::move_layer(GtkTreeIter *child_iter, bool up)
 {
+#ifndef SLAVGPS_QT
 	auto theone = this->children->end();
 
 	this->tree_view->move(child_iter, up);
@@ -273,6 +288,7 @@ void LayerAggregate::move_layer(GtkTreeIter *child_iter, bool up)
 	} else {
 		return;
 	}
+#endif
 #endif
 }
 
@@ -343,6 +359,7 @@ static void aggregate_layer_child_visible_toggle(menu_array_values * values)
 
 void LayerAggregate::child_visible_toggle(LayersPanel * panel)
 {
+#ifndef SLAVGPS_QT
 	TreeView * tree = panel->get_treeview();
 
 	/* Loop around all (child) layers applying visibility setting.
@@ -355,6 +372,7 @@ void LayerAggregate::child_visible_toggle(LayersPanel * panel)
 	}
 	/* Redraw as view may have changed. */
 	this->emit_update();
+#endif
 }
 
 
@@ -362,6 +380,7 @@ void LayerAggregate::child_visible_toggle(LayersPanel * panel)
 
 void LayerAggregate::child_visible_set(LayersPanel * panel, bool on_off)
 {
+#ifndef SLAVGPS_QT
 	/* Loop around all (child) layers applying visibility setting.
 	   This does not descend the tree if there are aggregates within aggregrate - just the first level of layers held. */
 	for (auto child = this->children->begin(); child != this->children->end(); child++) {
@@ -373,6 +392,7 @@ void LayerAggregate::child_visible_set(LayersPanel * panel, bool on_off)
 
 	/* Redraw as view may have changed. */
 	this->emit_update();
+#endif
 }
 
 
@@ -404,8 +424,10 @@ static void aggregate_layer_sort_a2z(menu_array_values * values)
 {
 	LayerAggregate * aggregate = values->aggregate;
 
+#ifndef SLAVGPS_QT
 	aggregate->tree_view->sort_children(&aggregate->iter, VL_SO_ALPHABETICAL_ASCENDING);
 	aggregate->children->sort(Layer::compare_name_ascending);
+#endif
 }
 
 
@@ -415,8 +437,10 @@ static void aggregate_layer_sort_z2a(menu_array_values * values)
 {
 	LayerAggregate * aggregate = values->aggregate;
 
+#ifndef SLAVGPS_QT
 	aggregate->tree_view->sort_children(&aggregate->iter, VL_SO_ALPHABETICAL_DESCENDING);
 	aggregate->children->sort(Layer::compare_name_descending);
+#endif
 }
 
 
@@ -426,8 +450,10 @@ static void aggregate_layer_sort_timestamp_ascend(menu_array_values * values)
 {
 	LayerAggregate * aggregate = values->aggregate;
 
+#ifndef SLAVGPS_QT
 	aggregate->tree_view->sort_children(&aggregate->iter, VL_SO_DATE_ASCENDING);
 	aggregate->children->sort(Layer::compare_timestamp_ascending);
+#endif
 }
 
 
@@ -437,8 +463,10 @@ static void aggregate_layer_sort_timestamp_descend(menu_array_values * values)
 {
 	LayerAggregate * aggregate = values->aggregate;
 
+#ifndef SLAVGPS_QT
 	aggregate->tree_view->sort_children(&aggregate->iter, VL_SO_DATE_DESCENDING);
 	aggregate->children->sort(Layer::compare_timestamp_descending);
+#endif
 }
 
 
@@ -446,6 +474,7 @@ static void aggregate_layer_sort_timestamp_descend(menu_array_values * values)
 
 std::list<waypoint_layer_t *> * LayerAggregate::create_waypoints_and_layers_list()
 {
+#ifndef SLAVGPS_QT
 	std::list<Layer *> * layers = new std::list<Layer *>;
 	layers = this->get_all_layers_of_type(layers, LayerType::TRW, true);
 
@@ -464,6 +493,7 @@ std::list<waypoint_layer_t *> * LayerAggregate::create_waypoints_and_layers_list
 	delete layers;
 
 	return waypoints_and_layers;
+#endif
 }
 
 
@@ -471,11 +501,13 @@ std::list<waypoint_layer_t *> * LayerAggregate::create_waypoints_and_layers_list
 
 static void aggregate_layer_waypoint_list_dialog(menu_array_values * values)
 {
+#ifndef SLAVGPS_QT
 	LayerAggregate * aggregate = values->aggregate;
 
 	char *title = g_strdup_printf(_("%s: Waypoint List"), aggregate->name);
 	vik_trw_layer_waypoint_list_show_dialog(title, aggregate, true);
 	free(title);
+#endif
 }
 
 
@@ -496,6 +528,7 @@ static void aggregate_layer_search_date(menu_array_values * values)
  */
 void LayerAggregate::search_date()
 {
+#ifndef SLAVGPS_QT
 	VikCoord position;
 	char * date_str = a_dialog_get_date(this->get_toolkit_window(), _("Search by Date"));
 
@@ -539,6 +572,7 @@ void LayerAggregate::search_date()
 		a_dialog_info_msg(this->get_toolkit_window(), _("No items found with the requested date."));
 	}
 	free(date_str);
+#endif
 }
 
 
@@ -546,7 +580,9 @@ void LayerAggregate::search_date()
 
 std::list<SlavGPS::track_layer_t *> * aggregate_layer_create_tracks_and_layers_list(Layer * layer)
 {
+#ifndef SLAVGPS_QT
 	return ((LayerAggregate *) layer)->create_tracks_and_layers_list();
+#endif
 }
 
 
@@ -554,7 +590,9 @@ std::list<SlavGPS::track_layer_t *> * aggregate_layer_create_tracks_and_layers_l
 
 std::list<SlavGPS::track_layer_t *> * LayerAggregate::create_tracks_and_layers_list(SublayerType sublayer_type)
 {
+#ifndef SLAVGPS_QT
 	return this->create_tracks_and_layers_list();
+#endif
 }
 
 
@@ -562,6 +600,7 @@ std::list<SlavGPS::track_layer_t *> * LayerAggregate::create_tracks_and_layers_l
 
 std::list<track_layer_t *> * LayerAggregate::create_tracks_and_layers_list()
 {
+#ifndef SLAVGPS_QT
 	std::list<Layer *> * layers = new std::list<Layer *>;
 	layers = this->get_all_layers_of_type(layers, LayerType::TRW, true);
 
@@ -582,6 +621,7 @@ std::list<track_layer_t *> * LayerAggregate::create_tracks_and_layers_list()
 	delete layers;
 
 	return tracks_and_layers;
+#endif
 }
 
 
@@ -589,11 +629,13 @@ std::list<track_layer_t *> * LayerAggregate::create_tracks_and_layers_list()
 
 static void aggregate_layer_track_list_dialog(menu_array_values * values)
 {
+#ifndef SLAVGPS_QT
 	LayerAggregate * aggregate = values->aggregate;
 
 	char *title = g_strdup_printf(_("%s: Track and Route List"), aggregate->name);
 	vik_trw_layer_track_list_show_dialog(title, aggregate, SublayerType::NONE, true);
 	free(title);
+#endif
 }
 
 
@@ -604,9 +646,11 @@ static void aggregate_layer_track_list_dialog(menu_array_values * values)
  */
 static void aggregate_layer_analyse_close(GtkWidget *dialog, int resp, Layer * layer)
 {
+#ifndef SLAVGPS_QT
 	LayerAggregate * aggregate = (LayerAggregate *) layer;
 	gtk_widget_destroy(dialog);
 	aggregate->tracks_analysis_dialog = NULL;
+#endif
 }
 
 
@@ -614,6 +658,7 @@ static void aggregate_layer_analyse_close(GtkWidget *dialog, int resp, Layer * l
 
 static void aggregate_layer_analyse(menu_array_values * values)
 {
+#ifndef SLAVGPS_QT
 	LayerAggregate * aggregate = values->aggregate;
 
 	/* There can only be one! */
@@ -626,6 +671,7 @@ static void aggregate_layer_analyse(menu_array_values * values)
 								       aggregate,
 								       SublayerType::NONE,
 								       aggregate_layer_analyse_close);
+#endif
 }
 
 
@@ -633,6 +679,7 @@ static void aggregate_layer_analyse(menu_array_values * values)
 
 void LayerAggregate::add_menu_items(GtkMenu * menu, void * panel)
 {
+#ifndef SLAVGPS_QT
 	/* Data to pass on in menu functions. */
 	static menu_array_values values { .aggregate = this, .panel = (LayersPanel *) panel };
 
@@ -724,6 +771,7 @@ void LayerAggregate::add_menu_items(GtkMenu * menu, void * panel)
 	gtk_menu_shell_append (GTK_MENU_SHELL(search_submenu), item);
 	gtk_widget_set_tooltip_text (item, _("Find the first item with a specified date"));
 	gtk_widget_show (item);
+#endif
 }
 
 
@@ -731,6 +779,7 @@ void LayerAggregate::add_menu_items(GtkMenu * menu, void * panel)
 
 LayerAggregate::~LayerAggregate()
 {
+#ifndef SLAVGPS_QT
 	for (auto child = this->children->begin(); child != this->children->end(); child++) {
 		this->disconnect_layer_signal(*child);
 		(*child)->unref();
@@ -740,6 +789,7 @@ LayerAggregate::~LayerAggregate()
 	if (this->tracks_analysis_dialog) {
 		gtk_widget_destroy(this->tracks_analysis_dialog);
 	}
+#endif
 }
 
 
@@ -747,9 +797,11 @@ LayerAggregate::~LayerAggregate()
 
 static void delete_layer_iter(Layer * layer)
 {
+#ifndef SLAVGPS_QT
 	if (layer->realized) {
 		layer->tree_view->erase(&layer->iter);
 	}
+#endif
 }
 
 
@@ -771,6 +823,7 @@ void LayerAggregate::clear()
 /* Delete a layer specified by \p iter. */
 bool LayerAggregate::delete_layer(GtkTreeIter * iter)
 {
+#ifndef SLAVGPS_QT
 	Layer * layer = this->tree_view->get_layer(iter);
 	bool was_visible = layer->visible;
 
@@ -786,6 +839,7 @@ bool LayerAggregate::delete_layer(GtkTreeIter * iter)
 	layer->unref();
 
 	return was_visible;
+#endif
 }
 
 
@@ -886,6 +940,7 @@ std::list<Layer *> * LayerAggregate::get_all_layers_of_type(std::list<Layer *> *
 				layers->push_back(layer); /* now in top down order */
 			}
 		} else if (layer_type == LayerType::TRW) {
+#ifndef SLAVGPS_QT
 			/* GPS layers contain TRW layers. cf with usage in file.c */
 			if (layer->type == LayerType::GPS) {
 				if (layer->visible || include_invisible) {
@@ -906,6 +961,7 @@ std::list<Layer *> * LayerAggregate::get_all_layers_of_type(std::list<Layer *> *
 					}
 				}
 			}
+#endif
 		}
 		child++;
 	}
@@ -928,6 +984,7 @@ void LayerAggregate::realize(TreeView * tree_view_, GtkTreeIter *layer_iter)
 	GtkTreeIter iter;
 
 	for (auto child = this->children->begin(); child != this->children->end(); child++) {
+#ifndef SLAVGPS_QT
 		Layer * layer = *child;
 		this->tree_view->add_layer(layer_iter, &iter, layer->name, this, true,
 					   layer, (int) layer->type, layer->type, layer->get_timestamp());
@@ -935,6 +992,7 @@ void LayerAggregate::realize(TreeView * tree_view_, GtkTreeIter *layer_iter)
 			this->tree_view->set_visibility(&iter, false);
 		}
 		layer->realize(this->tree_view, &iter);
+#endif
 	}
 }
 
@@ -965,6 +1023,7 @@ bool LayerAggregate::is_empty()
 
 void LayerAggregate::drag_drop_request(Layer * src, GtkTreeIter *src_item_iter, GtkTreePath *dest_path)
 {
+#ifndef SLAVGPS_QT
 	Layer * layer = src->tree_view->get_layer(src_item_iter);
 	GtkTreeIter dest_iter;
 	char *dp;
@@ -984,6 +1043,7 @@ void LayerAggregate::drag_drop_request(Layer * src, GtkTreeIter *src_item_iter, 
 		this->insert_layer(layer, NULL); /* Append. */
 	}
 	free(dp);
+#endif
 }
 
 

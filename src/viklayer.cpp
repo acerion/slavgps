@@ -46,9 +46,7 @@
 #include "vikmapniklayer.h"
 #endif
 #include "globals.h"
-#ifndef SLAVGPS_QT
 #include "viktreeview.h"
-#endif
 
 
 

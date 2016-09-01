@@ -28,14 +28,21 @@
 #include <cassert>
 
 #include <glib/gi18n.h>
+#ifndef SLAVGPS_QT
 #include <gdk/gdkkeysyms.h>
+#endif
 
 #include "settings.h"
 #include "viklayerspanel.h"
+#include "vikaggregatelayer.h"
+#ifndef SLAVGPS_QT
 #include "dialog.h"
 #include "clipboard.h"
+#endif
 #include "globals.h"
+#ifndef SLAVGPS_QT
 #include "window.h"
+#endif
 
 
 
@@ -68,12 +75,14 @@ static bool vik_layers_panel_paste_selected_cb(LayersPanel * panel);
 static void vik_layers_panel_delete_selected_cb(LayersPanel * panel);
 static bool vik_layers_panel_properties_cb(LayersPanel * panel);
 
+#ifndef SLAVGPS_QT
 static GtkActionEntry entries[] = {
 	{ "Cut",    GTK_STOCK_CUT,    N_("C_ut"),       NULL, NULL, (GCallback) vik_layers_panel_cut_selected_cb    },
 	{ "Copy",   GTK_STOCK_COPY,   N_("_Copy"),      NULL, NULL, (GCallback) vik_layers_panel_copy_selected_cb   },
 	{ "Paste",  GTK_STOCK_PASTE,  N_("_Paste"),     NULL, NULL, (GCallback) vik_layers_panel_paste_selected_cb  },
 	{ "Delete", GTK_STOCK_DELETE, N_("_Delete"),    NULL, NULL, (GCallback) vik_layers_panel_delete_selected_cb },
 };
+#endif
 
 
 
@@ -92,23 +101,83 @@ static void layers_move_item_down_cb(LayersPanel * panel);
 
 void SlavGPS::layers_panel_init(void)
 {
+#ifndef SLAVGPS_QT
 	layers_panel_signals[VLP_UPDATE_SIGNAL] = g_signal_new("update", G_TYPE_OBJECT, (GSignalFlags) (G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION), 0, NULL, NULL, g_cclosure_marshal_VOID__VOID, G_TYPE_NONE, 0);
 	layers_panel_signals[VLP_DELETE_LAYER_SIGNAL] = g_signal_new("delete_layer", G_TYPE_OBJECT, (GSignalFlags) (G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION), 0, NULL, NULL, g_cclosure_marshal_VOID__VOID, G_TYPE_NONE, 0);
+	#endif
 }
 
 
 
 
+#ifdef SLAVGPS_QT
+LayersPanel::LayersPanel(QWidget * parent) : QWidget(parent)
+#else
 LayersPanel::LayersPanel()
+#endif
 {
 	this->toplayer = NULL;
 	memset(&this->toplayer_iter, 0, sizeof (GtkTreeIter));
 	this->viewport = NULL; /* reference */
 
+#ifdef SLAVGPS_QT
+	this->panel_box_ = new QVBoxLayout;
+
+	if (0) {
+		QFileSystemModel * model = new QFileSystemModel;
+		model->setRootPath(QDir::currentPath());
+
+		QTreeView * tree_view = NULL;
+		tree_view = new QTreeView(parent);
+		tree_view->setModel(model);
+		tree_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+		this->panel_box_->addWidget(tree_view);
+		tree_view->show();
+	} else {
+		TreeView * tree_view = new TreeView(this);
+		this->panel_box_->addWidget(tree_view);
+		tree_view->show();
+	}
+
+
+
+	{
+
+		QHBoxLayout * buttons_container = new QHBoxLayout;
+
+		QPushButton * button1 = new QPushButton("Add");
+		buttons_container->addWidget(button1);
+
+		QPushButton * button2 = new QPushButton("Remove");
+		buttons_container->addWidget(button2);
+
+		QPushButton * button3 = new QPushButton("Up");
+		buttons_container->addWidget(button3);
+
+		QPushButton * button4 = new QPushButton("Down");
+		buttons_container->addWidget(button4);
+
+		QPushButton * button5 = new QPushButton("Cut");
+		buttons_container->addWidget(button5);
+
+		QPushButton * button6 = new QPushButton("Copy");
+		buttons_container->addWidget(button6);
+
+		QPushButton * button7 = new QPushButton("Paste");
+		buttons_container->addWidget(button7);
+
+		this->panel_box_->addLayout(buttons_container);
+	}
+
+	this->setLayout(this->panel_box_);
+
+
+#else
 	this->panel_box_ = (GtkVBox *) gtk_vbox_new(false, 2);
 
 	GtkWidget * hbox = gtk_hbox_new(true, 2);
 	this->tree_view = new TreeView();
+#endif
 
 
 	/* All this stuff has been moved here from
@@ -118,6 +187,7 @@ LayersPanel::LayersPanel()
 	Viewport * viewport = NULL;
 	this->toplayer = new LayerAggregate(viewport);
 	this->toplayer->rename(_("Top Layer"));
+	#ifndef SLAVGPS_QT
 	g_signal_connect_swapped(G_OBJECT(this->toplayer->get_toolkit_object()), "update", G_CALLBACK(vik_layers_panel_emit_update_cb), this);
 
 	this->tree_view->add_layer(NULL, &(this->toplayer_iter), this->toplayer->name, NULL, true, this->toplayer, (int) LayerType::AGGREGATE, LayerType::AGGREGATE, 0);
@@ -185,6 +255,7 @@ LayersPanel::LayersPanel()
 
 	gtk_box_pack_start(GTK_BOX(this->panel_box_), scrolledwindow, true, true, 0);
 	gtk_box_pack_start(GTK_BOX(this->panel_box_), hbox, false, false, 0);
+#endif
 }
 
 
@@ -198,8 +269,10 @@ LayersPanel::~LayersPanel()
 
 	this->toplayer->unref();
 
+#ifndef SLAVGPS_QT
 	/* kamilFIXME: free this pointer. */
 	this->panel_box_ = NULL;
+#endif
 }
 
 
@@ -238,6 +311,7 @@ static bool layers_panel_new_layer(void * data)
  */
 static GtkWidget* layers_panel_create_popup(LayersPanel * panel, bool full)
 {
+#ifndef SLAVGPS_QT
 	GtkWidget * menu = gtk_menu_new();
 	GtkWidget * menuitem;
 
@@ -282,6 +356,7 @@ static GtkWidget* layers_panel_create_popup(LayersPanel * panel, bool full)
 	}
 
 	return menu;
+#endif
 }
 
 
@@ -292,7 +367,9 @@ static GtkWidget* layers_panel_create_popup(LayersPanel * panel, bool full)
  */
 static bool idle_draw_panel(LayersPanel * panel)
 {
+#ifndef SLAVGPS_QT
 	g_signal_emit(G_OBJECT(panel->panel_box_), layers_panel_signals[VLP_UPDATE_SIGNAL], 0);
+#endif
 	return false; /* Nothing else to do. */
 }
 
@@ -309,6 +386,7 @@ void vik_layers_panel_emit_update_cb(LayersPanel * panel)
 
 void LayersPanel::emit_update()
 {
+	#ifndef SLAVGPS_QT
 	GThread * thread = window_from_widget(this->panel_box_)->get_thread();
 	if (!thread) {
 		/* Do nothing. */
@@ -322,6 +400,7 @@ void LayersPanel::emit_update()
 	} else {
 		g_idle_add((GSourceFunc) idle_draw_panel, this);
 	}
+#endif
 }
 
 
@@ -337,6 +416,7 @@ static void layers_item_toggled_cb(LayersPanel * panel, GtkTreeIter * iter)
 
 void LayersPanel::item_toggled(GtkTreeIter * iter)
 {
+#ifndef SLAVGPS_QT
 	/* Get type and data. */
 	TreeItemType type = this->tree_view->get_item_type(iter);
 
@@ -361,6 +441,7 @@ void LayersPanel::item_toggled(GtkTreeIter * iter)
 	}
 
 	this->tree_view->set_visibility(iter, visible);
+#endif
 }
 
 
@@ -380,6 +461,7 @@ void LayersPanel::item_edited(GtkTreeIter * iter, char const * new_text)
 		return;
 	}
 
+#ifndef SLAVGPS_QT
 	if (new_text[0] == '\0') {
 		a_dialog_error_msg(this->toplayer->get_window()->get_toolkit_window(), _("New name can not be blank."));
 		return;
@@ -401,6 +483,7 @@ void LayersPanel::item_edited(GtkTreeIter * iter, char const * new_text)
 			this->tree_view->set_name(iter, name);
 		}
 	}
+#endif
 }
 
 
@@ -416,6 +499,7 @@ static bool layers_button_press_cb(LayersPanel * panel, GdkEventButton * event)
 
 bool LayersPanel::button_press(GdkEventButton * event)
 {
+#ifndef SLAVGPS_QT
 	/* I don't understand what's going on with mouse buttons in this function. */
 
 	if (event->button == 3) {
@@ -428,6 +512,7 @@ bool LayersPanel::button_press(GdkEventButton * event)
 		}
 		return true;
 	}
+#endif
 	return false;
 }
 
@@ -444,11 +529,13 @@ static bool layers_key_press_cb(LayersPanel * panel, GdkEventKey * event)
 
 bool LayersPanel::key_press(GdkEventKey * event)
 {
+#ifndef SLAVGPS_QT
 	/* Accept all forms of delete keys. */
 	if (event->keyval == GDK_Delete || event->keyval == GDK_KP_Delete || event->keyval == GDK_BackSpace) {
 		this->delete_selected();
 		return true;
 	}
+#endif
 	return false;
 }
 
@@ -457,6 +544,7 @@ bool LayersPanel::key_press(GdkEventKey * event)
 
 void LayersPanel::popup(GtkTreeIter * iter, MouseButton mouse_button)
 {
+#ifndef SLAVGPS_QT
 	GtkMenu * menu = NULL;
 
 	if (iter) {
@@ -522,6 +610,7 @@ void LayersPanel::popup(GtkTreeIter * iter, MouseButton mouse_button)
 		menu = GTK_MENU (layers_panel_create_popup(this, false));
 	}
 	gtk_menu_popup(menu, NULL, NULL, NULL, NULL, (unsigned int) mouse_button, gtk_get_current_event_time());
+#endif
 }
 
 
@@ -529,8 +618,10 @@ void LayersPanel::popup(GtkTreeIter * iter, MouseButton mouse_button)
 
 static void menu_popup_cb(LayersPanel * panel)
 {
+#ifndef SLAVGPS_QT
 	GtkTreeIter iter;
 	panel->popup(panel->tree_view->get_selected_iter(&iter) ? &iter : NULL, MouseButton::OTHER);
+#endif
 }
 
 
@@ -552,6 +643,7 @@ static void layers_popup_cb(LayersPanel * panel)
  */
 bool LayersPanel::new_layer(LayerType layer_type)
 {
+#ifndef SLAVGPS_QT
 	assert (this->viewport);
 	bool ask_user = false;
 	if (layer_type == LayerType::TRW) {
@@ -566,6 +658,7 @@ bool LayersPanel::new_layer(LayerType layer_type)
 		this->add_layer(layer);
 		return true;
 	}
+#endif
 	return false;
 }
 
@@ -579,6 +672,7 @@ bool LayersPanel::new_layer(LayerType layer_type)
  */
 void LayersPanel::add_layer(Layer * layer)
 {
+#ifndef SLAVGPS_QT
 	GtkTreeIter iter;
 
 	/* Could be something different so we have to do this. */
@@ -628,6 +722,7 @@ void LayersPanel::add_layer(Layer * layer)
 	}
 
 	this->emit_update();
+#endif
 }
 
 
@@ -635,6 +730,7 @@ void LayersPanel::add_layer(Layer * layer)
 
 void LayersPanel::move_item(bool up)
 {
+#ifndef SLAVGPS_QT
 	GtkTreeIter iter;
 
 	/* TODO: deactivate the buttons and stuff. */
@@ -651,6 +747,7 @@ void LayersPanel::move_item(bool up)
 			this->emit_update();
 		}
 	}
+#endif
 }
 
 
@@ -666,6 +763,7 @@ bool vik_layers_panel_properties_cb(LayersPanel * panel)
 
 bool LayersPanel::properties()
 {
+#ifndef SLAVGPS_QT
 	GtkTreeIter iter;
 	assert (this->viewport);
 
@@ -681,6 +779,7 @@ bool LayersPanel::properties()
 	} else {
 		return false;
 	}
+#endif
 }
 
 
@@ -707,6 +806,7 @@ void vik_layers_panel_cut_selected_cb(LayersPanel * panel)
 
 void LayersPanel::cut_selected()
 {
+#ifndef SLAVGPS_QT
 	GtkTreeIter iter;
 
 	if (!this->tree_view->get_selected_iter(&iter)) {
@@ -742,6 +842,7 @@ void LayersPanel::cut_selected()
 		SublayerType sublayer_type = this->tree_view->get_sublayer_type(&iter);
 		selected->cut_sublayer(sublayer_type, selected->tree_view->get_sublayer_uid(&iter));
 	}
+#endif
 }
 
 
@@ -757,6 +858,7 @@ void vik_layers_panel_copy_selected_cb(LayersPanel * panel)
 
 void LayersPanel::copy_selected()
 {
+#ifndef SLAVGPS_QT
 	GtkTreeIter iter;
 	if (!this->tree_view->get_selected_iter(&iter)) {
 		/* Nothing to do. */
@@ -764,6 +866,7 @@ void LayersPanel::copy_selected()
 	}
 	/* NB clipboard contains layer vs sublayer logic, so don't need to do it here. */
 	a_clipboard_copy_selected(this);
+#endif
 }
 
 
@@ -779,12 +882,14 @@ bool vik_layers_panel_paste_selected_cb(LayersPanel * panel)
 
 bool LayersPanel::paste_selected()
 {
+#ifndef SLAVGPS_QT
 	GtkTreeIter iter;
 	if (!this->tree_view->get_selected_iter(&iter)) {
 		/* Nothing to do. */
 		return false;
 	}
 	return a_clipboard_paste(this);
+#endif
 }
 
 
@@ -800,6 +905,7 @@ void vik_layers_panel_delete_selected_cb(LayersPanel * panel)
 
 void LayersPanel::delete_selected()
 {
+#ifndef SLAVGPS_QT
 	GtkTreeIter iter;
 
 	if (!this->tree_view->get_selected_iter(&iter)) {
@@ -841,6 +947,7 @@ void LayersPanel::delete_selected()
 		SublayerType sublayer_type = this->tree_view->get_sublayer_type(&iter);
 		selected->delete_sublayer(sublayer_type, selected->tree_view->get_sublayer_uid(&iter));
 	}
+#endif
 }
 
 
@@ -848,6 +955,7 @@ void LayersPanel::delete_selected()
 
 Layer * LayersPanel::get_selected()
 {
+#ifndef SLAVGPS_QT
 	GtkTreeIter iter, parent;
 	memset(&iter, 0, sizeof (GtkTreeIter));
 
@@ -866,6 +974,7 @@ Layer * LayersPanel::get_selected()
 	}
 
 	return this->tree_view->get_layer(&iter);
+#endif
 }
 
 
@@ -906,6 +1015,7 @@ bool vik_layers_panel_tool(LayersPanel * panel, LayerType layer_type, VikToolInt
 
 Layer * LayersPanel::get_layer_of_type(LayerType layer_type)
 {
+#ifndef SLAVGPS_QT
 	Layer * layer = this->get_selected();
 	if (layer == NULL || layer->type != layer_type) {
 		if (this->toplayer->visible) {
@@ -916,6 +1026,7 @@ Layer * LayersPanel::get_layer_of_type(LayerType layer_type)
 	} else {
 		return (Layer *) layer;
 	}
+#endif
 }
 
 
@@ -923,8 +1034,10 @@ Layer * LayersPanel::get_layer_of_type(LayerType layer_type)
 
 std::list<Layer *> * LayersPanel::get_all_layers_of_type(LayerType layer_type, bool include_invisible)
 {
+#ifndef SLAVGPS_QT
 	std::list<Layer *> * layers = new std::list<Layer *>;
 	return this->toplayer->get_all_layers_of_type(layers, layer_type, include_invisible);
+#endif
 }
 
 
@@ -944,7 +1057,9 @@ LayerAggregate * LayersPanel::get_top_layer()
 void LayersPanel::clear()
 {
 	if (!this->toplayer->is_empty()) {
+#ifndef SLAVGPS_QT
 		g_signal_emit(G_OBJECT(this->panel_box_), layers_panel_signals[VLP_DELETE_LAYER_SIGNAL], 0);
+#endif
 		this->toplayer->clear(); /* simply deletes all layers */
 	}
 }
@@ -962,11 +1077,13 @@ void LayersPanel::change_coord_mode(VikCoordMode mode)
 
 void LayersPanel::set_visible(bool visible)
 {
+#ifndef SLAVGPS_QT
 	if (visible) {
 		gtk_widget_show(GTK_WIDGET (this->panel_box_));
 	} else {
 		gtk_widget_hide(GTK_WIDGET (this->panel_box_));
 	}
+#endif
 	return;
 }
 
@@ -975,7 +1092,9 @@ void LayersPanel::set_visible(bool visible)
 
 bool LayersPanel::get_visible(void)
 {
+#ifndef SLAVGPS_QT
 	return GTK_WIDGET_VISIBLE (GTK_WIDGET (this->panel_box_));
+#endif
 }
 
 
@@ -983,7 +1102,9 @@ bool LayersPanel::get_visible(void)
 
 TreeView * LayersPanel::get_treeview()
 {
+#ifndef SLAVGPS_QT
 	return this->tree_view;
+#endif
 }
 
 
@@ -991,7 +1112,9 @@ TreeView * LayersPanel::get_treeview()
 
 GtkWindow * LayersPanel::get_toolkit_window(void)
 {
+#ifndef SLAVGPS_QT
 	return VIK_GTK_WINDOW_FROM_WIDGET(GTK_WIDGET (this->panel_box_));
+#endif
 }
 
 
@@ -999,5 +1122,7 @@ GtkWindow * LayersPanel::get_toolkit_window(void)
 
 GtkWidget * LayersPanel::get_toolkit_widget(void)
 {
+#ifndef SLAVGPS_QT
 	return GTK_WIDGET (this->panel_box_);
+#endif
 }

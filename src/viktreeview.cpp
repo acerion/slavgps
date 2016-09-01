@@ -28,13 +28,15 @@
 #include <cstdlib>
 #include <cassert>
 
+#ifndef SLAVGPS_QT
 #include <glib.h>
-#include <gtk/gtk.h>
+#endif
 #include <glib/gi18n.h>
 
-#include "config.h"
 #include "viklayer.h"
+#ifndef SLAVGPS_QT
 #include "window.h"
+#endif
 #include "viktreeview.h"
 #include "viklayerspanel.h"
 #include "globals.h"
@@ -58,8 +60,11 @@ static unsigned int treeview_signals[VT_LAST_SIGNAL] = { 0, 0 };
 
 
 
-
+#ifdef SLAVGPS_QT
+#define TREEVIEW_GET(model,iter,what,dest)
+#else
 #define TREEVIEW_GET(model,iter,what,dest) gtk_tree_model_get(GTK_TREE_MODEL(model),(iter),(what),(dest),-1)
+#endif
 
 
 
@@ -89,7 +94,7 @@ static int vik_treeview_drag_data_delete(GtkTreeDragSource *drag_source, GtkTree
 
 
 
-
+#ifndef SLAVGPS_QT
 static void vik_cclosure_marshal_VOID__POINTER_POINTER(GClosure     * closure,
 						       GValue       * return_value,
 						       unsigned int   n_param_vals,
@@ -126,18 +131,19 @@ static void vik_cclosure_marshal_VOID__POINTER_POINTER(GClosure     * closure,
 		 g_value_get_pointer(param_values + 2),
 		 data2);
 }
-
+#endif
 
 
 
 void SlavGPS::treeview_init(void)
 {
+#ifndef SLAVGPS_QT
 	treeview_signals[VT_ITEM_EDITED_SIGNAL] = g_signal_new("item_edited", G_TYPE_OBJECT, (GSignalFlags) (G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION), 0, NULL, NULL,
 							       vik_cclosure_marshal_VOID__POINTER_POINTER, G_TYPE_NONE, 2, G_TYPE_POINTER, G_TYPE_POINTER);
 
 	treeview_signals[VT_ITEM_TOGGLED_SIGNAL] = g_signal_new("item_toggled", G_TYPE_OBJECT, (GSignalFlags) (G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION), 0, NULL, NULL,
 								g_cclosure_marshal_VOID__POINTER, G_TYPE_NONE, 1, G_TYPE_POINTER);
-
+#endif
 	return;
 }
 
@@ -152,7 +158,9 @@ static void vik_treeview_edited_cb(GtkCellRendererText *cell, char *path_str, co
 	/* Get type and data. */
 	tree_view->get_iter_from_path_str(&iter, path_str);
 
+#ifndef SLAVGPS_QT
 	g_signal_emit(G_OBJECT(tree_view->tv_), treeview_signals[VT_ITEM_EDITED_SIGNAL], 0, &iter, new_name);
+#endif
 }
 
 
@@ -182,6 +190,7 @@ static void vik_treeview_toggled_cb(GtkCellRendererToggle *cell, char *path_str,
 	/* Get type and data. */
 	tree_view->get_iter_from_path_str(&iter_toggle, path_str);
 
+#ifndef SLAVGPS_QT
 	GtkTreePath *tp_toggle = gtk_tree_model_get_path(tree_view->model, &iter_toggle);
 
 	if (gtk_tree_selection_get_selected(gtk_tree_view_get_selection(tree_view->tv_), NULL, &iter_selected)) {
@@ -201,6 +210,7 @@ static void vik_treeview_toggled_cb(GtkCellRendererToggle *cell, char *path_str,
 	gtk_tree_path_free(tp_toggle);
 
 	g_signal_emit(G_OBJECT (tree_view->tv_), treeview_signals[VT_ITEM_TOGGLED_SIGNAL], 0, &iter_toggle);
+#endif
 }
 
 
@@ -216,6 +226,7 @@ static bool vik_treeview_tooltip_cb(GtkWidget  * widget,
 				    GtkTooltip * tooltip,
 				    void       * data)
 {
+#ifndef SLAVGPS_QT
 	GtkTreeIter iter;
 	GtkTreeView *tree_view = GTK_TREE_VIEW (widget);
 	GtkTreeModel *model = gtk_tree_view_get_model(tree_view);
@@ -268,6 +279,7 @@ static bool vik_treeview_tooltip_cb(GtkWidget  * widget,
 	gtk_tree_view_set_tooltip_row(tree_view, tooltip, path);
 
 	gtk_tree_path_free(path);
+#endif
 
 	return true;
 }
@@ -336,7 +348,9 @@ Layer * TreeView::get_layer(GtkTreeIter * iter)
 
 void TreeView::set_timestamp(GtkTreeIter *iter, time_t timestamp)
 {
+#ifndef SLAVGPS_QT
 	gtk_tree_store_set (GTK_TREE_STORE(this->model), iter, COLUMN_TIMESTAMP, (int64_t) timestamp, -1);
+#endif
 }
 
 
@@ -354,7 +368,9 @@ Layer * TreeView::get_parent_layer(GtkTreeIter *iter)
 
 bool TreeView::get_iter_from_path_str(GtkTreeIter * iter, char const * path_str)
 {
+#ifndef SLAVGPS_QT
 	return gtk_tree_model_get_iter_from_string(GTK_TREE_MODEL (this->model), iter, path_str);
+#endif
 }
 
 
@@ -376,6 +392,7 @@ bool TreeView::is_visible_in_tree(GtkTreeIter * iter)
 
 	GtkTreeIter parent;
 	GtkTreeIter child = * iter;
+#ifndef SLAVGPS_QT
 	while (gtk_tree_model_iter_parent(this->model, &parent, &child)) {
 		/* Visibility of this parent. */
 		TREEVIEW_GET (this->model, &parent, COLUMN_VISIBLE, &ans);
@@ -385,6 +402,7 @@ bool TreeView::is_visible_in_tree(GtkTreeIter * iter)
 		}
 		child = parent;
 	}
+#endif
 	return ans;
 }
 
@@ -393,6 +411,7 @@ bool TreeView::is_visible_in_tree(GtkTreeIter * iter)
 
 void TreeView::add_columns()
 {
+#ifndef SLAVGPS_QT
 	int col_offset;
 	GtkCellRenderer *renderer;
 	GtkTreeViewColumn *column;
@@ -455,6 +474,7 @@ void TreeView::add_columns()
 
 	g_object_set(this->tv_, "has-tooltip", true, NULL);
 	g_signal_connect(this->tv_, "query-tooltip", G_CALLBACK (vik_treeview_tooltip_cb), this);
+#endif
 }
 
 
@@ -462,6 +482,7 @@ void TreeView::add_columns()
 
 static void select_cb(GtkTreeSelection * selection, void * data)
 {
+#ifndef SLAVGPS_QT
 	GtkTreeIter iter;
 	if (!gtk_tree_selection_get_selected(selection, NULL, &iter)) {
 		return;
@@ -491,6 +512,7 @@ static void select_cb(GtkTreeSelection * selection, void * data)
 		/* Redraw required. */
 		window->get_layers_panel()->emit_update();
 	}
+#endif
 }
 
 
@@ -533,7 +555,9 @@ static int vik_treeview_selection_filter(GtkTreeSelection *selection, GtkTreeMod
 
 bool TreeView::get_parent_iter(GtkTreeIter * iter, GtkTreeIter * parent)
 {
+#ifndef SLAVGPS_QT
 	return gtk_tree_model_iter_parent(GTK_TREE_MODEL(this->model), parent, iter);
+#endif
 }
 
 
@@ -541,6 +565,7 @@ bool TreeView::get_parent_iter(GtkTreeIter * iter, GtkTreeIter * parent)
 
 bool TreeView::move(GtkTreeIter * iter, bool up)
 {
+#ifndef SLAVGPS_QT
 	TreeItemType t = this->get_item_type(iter);
 	if (t == TreeItemType::LAYER) {
 		GtkTreeIter switch_iter;
@@ -562,6 +587,7 @@ bool TreeView::move(GtkTreeIter * iter, bool up)
 		return true;
 		/* Now, the easy part. actually switching them, not the GUI. */
 	} /* If item is map. */
+#endif
 	return false;
 }
 
@@ -570,6 +596,7 @@ bool TreeView::move(GtkTreeIter * iter, bool up)
 
 bool TreeView::get_iter_at_pos(GtkTreeIter * iter, int x, int y)
 {
+#ifndef SLAVGPS_QT
 	GtkTreePath * path;
 	(void) gtk_tree_view_get_path_at_pos(this->tv_, x, y, &path, NULL, NULL, NULL);
 	if (!path) {
@@ -578,6 +605,7 @@ bool TreeView::get_iter_at_pos(GtkTreeIter * iter, int x, int y)
 
 	gtk_tree_model_get_iter(GTK_TREE_MODEL (this->model), iter, path);
 	gtk_tree_path_free(path);
+#endif
 	return true;
 }
 
@@ -586,6 +614,7 @@ bool TreeView::get_iter_at_pos(GtkTreeIter * iter, int x, int y)
 
 void TreeView::select_and_expose(GtkTreeIter * iter)
 {
+#ifndef SLAVGPS_QT
 	GtkTreeView * tree_view = this->tv_;
 	GtkTreePath * path = gtk_tree_model_get_path(gtk_tree_view_get_model(tree_view), iter);
 
@@ -593,6 +622,7 @@ void TreeView::select_and_expose(GtkTreeIter * iter)
 	this->select(iter);
 	gtk_tree_view_scroll_to_cell(tree_view, path, gtk_tree_view_get_expander_column(tree_view), false, 0.0, 0.0);
 	gtk_tree_path_free(path);
+#endif
 }
 
 
@@ -600,7 +630,9 @@ void TreeView::select_and_expose(GtkTreeIter * iter)
 
 bool TreeView::get_selected_iter(GtkTreeIter * iter)
 {
+#ifndef SLAVGPS_QT
 	return gtk_tree_selection_get_selected(gtk_tree_view_get_selection(this->tv_), NULL, iter);
+#endif
 }
 
 
@@ -620,7 +652,9 @@ bool TreeView::get_editing()
 
 void TreeView::erase(GtkTreeIter *iter)
 {
+#ifndef SLAVGPS_QT
 	gtk_tree_store_remove(GTK_TREE_STORE (this->model), iter);
+#endif
 }
 
 
@@ -631,7 +665,9 @@ void TreeView::set_icon(GtkTreeIter * iter, const GdkPixbuf * icon)
 	if (!iter) {
 		return;
 	}
+#ifndef SLAVGPS_QT
 	gtk_tree_store_set(GTK_TREE_STORE(this->model), iter, COLUMN_ICON, icon, -1);
+#endif
 }
 
 
@@ -642,7 +678,9 @@ void TreeView::set_name(GtkTreeIter *iter, char const * name)
 	if (!iter || !name) {
 		return;
 	}
+#ifndef SLAVGPS_QT
 	gtk_tree_store_set(GTK_TREE_STORE(this->model), iter, COLUMN_NAME, name, -1);
+#endif
 }
 
 
@@ -653,7 +691,9 @@ void TreeView::set_visibility(GtkTreeIter *iter, bool visible)
 	if (!iter) {
 		return;
 	}
+#ifndef SLAVGPS_QT
 	gtk_tree_store_set(GTK_TREE_STORE(this->model), iter, COLUMN_VISIBLE, visible, -1);
+#endif
 }
 
 
@@ -666,7 +706,9 @@ void TreeView::toggle_visibility(GtkTreeIter *iter)
 	}
 	bool visibility;
 	TREEVIEW_GET(this->model, iter, COLUMN_VISIBLE, &visibility);
+#ifndef SLAVGPS_QT
 	gtk_tree_store_set(GTK_TREE_STORE(this->model), iter, COLUMN_VISIBLE, !visibility, -1);
+#endif
 }
 
 
@@ -674,9 +716,11 @@ void TreeView::toggle_visibility(GtkTreeIter *iter)
 
 void TreeView::expand(GtkTreeIter * iter)
 {
+#ifndef SLAVGPS_QT
 	GtkTreePath * path = gtk_tree_model_get_path(this->model, iter);
 	gtk_tree_view_expand_row(this->tv_, path, false);
 	gtk_tree_path_free(path);
+#endif
 }
 
 
@@ -684,7 +728,9 @@ void TreeView::expand(GtkTreeIter * iter)
 
 void TreeView::select(GtkTreeIter *iter)
 {
+#ifndef SLAVGPS_QT
 	gtk_tree_selection_select_iter(gtk_tree_view_get_selection(this->tv_), iter);
+#endif
 }
 
 
@@ -692,7 +738,9 @@ void TreeView::select(GtkTreeIter *iter)
 
 void TreeView::unselect(GtkTreeIter *iter)
 {
+#ifndef SLAVGPS_QT
 	gtk_tree_selection_unselect_iter(gtk_tree_view_get_selection(this->tv_), iter);
+#endif
 }
 
 
@@ -708,6 +756,7 @@ void TreeView::add_layer(GtkTreeIter * parent_iter,
 			 LayerType layer_type,
 			 time_t timestamp)
 {
+#ifndef SLAVGPS_QT
 	assert (iter);
 	if (above) {
 		gtk_tree_store_prepend(GTK_TREE_STORE (this->model), iter, parent_iter);
@@ -725,6 +774,7 @@ void TreeView::add_layer(GtkTreeIter * parent_iter,
 			   COLUMN_ICON, layer_type == LayerType::NUM_TYPES ? 0 : this->layer_type_icons[(int) layer_type],
 			   COLUMN_TIMESTAMP, (int64_t) timestamp,
 			   -1);
+#endif
 }
 
 
@@ -741,6 +791,7 @@ void TreeView::insert_layer(GtkTreeIter * parent_iter,
 			    GtkTreeIter * sibling,
 			    time_t timestamp)
 {
+#ifndef SLAVGPS_QT
 	assert (iter);
 	if (sibling) {
 		if (above) {
@@ -767,6 +818,7 @@ void TreeView::insert_layer(GtkTreeIter * parent_iter,
 			   COLUMN_ICON, layer_type == LayerType::NUM_TYPES ? NULL : this->layer_type_icons[(int) layer_type],
 			   COLUMN_TIMESTAMP, (int64_t) timestamp,
 			   -1);
+#endif
 }
 
 
@@ -783,6 +835,7 @@ void TreeView::add_sublayer(GtkTreeIter * parent_iter,
 			    time_t timestamp)
 {
 	assert (iter != NULL);
+#ifndef SLAVGPS_QT
 
 	gtk_tree_store_append(GTK_TREE_STORE(this->model), iter, parent_iter);
 	gtk_tree_store_set(GTK_TREE_STORE(this->model), iter,
@@ -796,6 +849,7 @@ void TreeView::add_sublayer(GtkTreeIter * parent_iter,
 			   COLUMN_ICON, icon,
 			   COLUMN_TIMESTAMP, (int64_t)timestamp,
 			   -1);
+#endif
 }
 
 
@@ -815,6 +869,7 @@ static int sort_tuple_compare(gconstpointer a, gconstpointer b, void * order)
 	SortTuple *sb = (SortTuple *)b;
 
 	int answer = -1;
+#ifndef SLAVGPS_QT
 	if (KPOINTER_TO_INT(order) < VL_SO_DATE_ASCENDING) {
 		/* Alphabetical comparison, default ascending order. */
 		answer = g_strcmp0(sa->name, sb->name);
@@ -833,6 +888,7 @@ static int sort_tuple_compare(gconstpointer a, gconstpointer b, void * order)
 			answer = -answer;
 		}
 	}
+#endif
 	return answer;
 }
 
@@ -865,7 +921,7 @@ void TreeView::sort_children(GtkTreeIter * parent, vik_layer_sort_order_t order)
 		/* Nothing to do. */
 		return;
 	}
-
+#ifndef SLAVGPS_QT
 	GtkTreeModel * model = this->model;
 	GtkTreeIter child;
 	if (!gtk_tree_model_iter_children(model, &child, parent)) {
@@ -904,6 +960,7 @@ void TreeView::sort_children(GtkTreeIter * parent, vik_layer_sort_order_t order)
 	/* This is extremely fast compared to the old alphabetical insertion. */
 	gtk_tree_store_reorder(GTK_TREE_STORE(model), parent, positions);
 	free(positions);
+#endif
 }
 
 
@@ -911,6 +968,7 @@ void TreeView::sort_children(GtkTreeIter * parent, vik_layer_sort_order_t order)
 
 static int vik_treeview_drag_data_received(GtkTreeDragDest *drag_dest, GtkTreePath *dest, GtkSelectionData *selection_data)
 {
+#ifndef SLAVGPS_QT
 	GtkTreeModel *tree_model;
 	GtkTreeModel *src_model = NULL;
 	GtkTreePath *src_path = NULL, *dest_cp = NULL;
@@ -980,6 +1038,7 @@ static int vik_treeview_drag_data_received(GtkTreeDragDest *drag_dest, GtkTreePa
 	}
 
 	return retval;
+#endif
 }
 
 
@@ -990,17 +1049,45 @@ static int vik_treeview_drag_data_received(GtkTreeDragDest *drag_dest, GtkTreePa
  */
 static int vik_treeview_drag_data_delete(GtkTreeDragSource *drag_source, GtkTreePath *path)
 {
+#ifndef SLAVGPS_QT
 	char *s_dest = gtk_tree_path_to_string(path);
 	fprintf(stdout, _("delete data from %s\n"), s_dest);
 	free(s_dest);
+#endif
 	return false;
 }
 
 
 
+#ifdef SLAVGPS_QT
+LayerTreeItem::LayerTreeItem(QString arg) : QStandardItem(arg)
+{}
+#endif
 
+#ifdef SLAVGPS_QT
+TreeView::TreeView(QWidget * parent) : QTreeView(parent)
+#else
 TreeView::TreeView()
+#endif
 {
+#ifdef SLAVGPS_QT
+
+
+	this->model = new QStandardItemModel();
+	LayerTreeItem * parentItem = (LayerTreeItem *) this->model->invisibleRootItem();
+	for (int i = 0; i < 4; ++i) {
+		LayerTreeItem * item = new LayerTreeItem(QString("item %0").arg(i));
+		parentItem->appendRow(item);
+		//parentItem = item;
+	}
+
+
+	this->setModel(this->model);
+
+
+
+
+#else
 	this->tv_ = (GtkTreeView *) gtk_tree_view_new();
 
 	memset(this->layer_type_icons, 0, sizeof (this->layer_type_icons));
@@ -1061,7 +1148,7 @@ TreeView::TreeView()
 	gtk_tree_view_set_reorderable(this->tv_, true);
 	g_signal_connect(gtk_tree_view_get_selection(this->tv_), "changed",
 			 G_CALLBACK(select_cb), this);
-
+#endif
 }
 
 
@@ -1069,6 +1156,7 @@ TreeView::TreeView()
 
 TreeView::~TreeView()
 {
+#ifndef SLAVGPS_QT
 	for (LayerType i = LayerType::AGGREGATE; i < LayerType::NUM_TYPES; ++i) {
 		if (this->layer_type_icons[(int) i] != NULL) {
 			g_object_unref(G_OBJECT(this->layer_type_icons[(int) i]));
@@ -1077,6 +1165,7 @@ TreeView::~TreeView()
 
 	/* kamilTODO: free this pointer. */
 	this->tv_ = NULL;
+#endif
 }
 
 
@@ -1084,7 +1173,9 @@ TreeView::~TreeView()
 
 GtkWindow * TreeView::get_toolkit_window(void)
 {
+#ifndef SLAVGPS_QT
 	return GTK_WINDOW (gtk_widget_get_toplevel(GTK_WIDGET (this->tv_)));
+#endif
 }
 
 
@@ -1092,5 +1183,7 @@ GtkWindow * TreeView::get_toolkit_window(void)
 
 GtkWidget * TreeView::get_toolkit_widget(void)
 {
+#ifndef SLAVGPS_QT
 	return GTK_WIDGET(this->tv_);
+#endif
 }

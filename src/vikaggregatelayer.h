@@ -30,6 +30,7 @@
 
 #include "viklayer.h"
 
+#include "vikviewport.h"
 
 
 
@@ -40,10 +41,12 @@ namespace SlavGPS {
 
 	/* Forward declarations. */
 	class LayersPanel;
+#ifndef SLAVGPS_QT
 	class Track;
 	struct track_layer_t;
 	struct waypoint_layer_t;
 
+#endif
 
 
 
