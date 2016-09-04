@@ -1,38 +1,5 @@
-TEMPLATE = app
-TARGET = slavgps
-
-QT = core gui widgets
-
-SOURCES += src/main_qt.cpp \
-    src/window_qt.cpp \
-    src/vikviewport.cpp \
-    src/vikcoord.cpp \
-    src/coords.cpp \
-    src/degrees_converters.cpp \
-    src/slav_qt.cpp \
-    src/viklayer_defaults.cpp \
-    src/viklayer.cpp \
-    src/vikcoordlayer.cpp \
-    src/vikaggregatelayer.cpp \
-    src/viklayerspanel.cpp \
-    src/viktreeview.cpp \
-    src/uibuilder.cpp
-
-
-HEADERS += src/window_qt.h \
-    src/vikviewport.h \
-    src/vikcoord.h \
-    src/coords.h \
-    src/globals.h \
-    src/degrees_converters.h \
-    src/slav_qt.h \
-    src/viklayer_defaults.h \
-    src/viklayer.h \
-    src/vikcoordlayer.h \
-    src/vikaggregatelayer.h \
-    src/viklayerspanel.h \
-    src/viktreeview.h \
-    src/uibuilder.h
+TEMPLATE = subdirs
+SUBDIRS = src
 
 
 # For glib library.
@@ -46,4 +13,3 @@ DEFINES += SLAVGPS_QT HAVE_CONFIG_H
 QMAKE_CXXFLAGS += -std=c++11 -Wno-unused -g -O0
 QMAKE_LDFLAGS += -lm
 
-QMAKE_MAKEFILE = Makefile.qt
