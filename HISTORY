@@ -1,3 +1,10 @@
+2016.09.04
+This commit that I've made today:
+09c0a5334196e5737d9f94b12ca3a3d3228fa826
+breaks GTK application. From now on, the GTK application will be broken.
+There will be less and less gtk code in code base, and more of QT code.
+
+
 2016.08.28
 Committed first files with QT5 UI. These files implement just a toy
 application, without any signal or methods or variables, but we have
