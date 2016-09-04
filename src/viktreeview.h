@@ -114,7 +114,7 @@ namespace SlavGPS {
 
 		QString get_name(QStandardItem * item);
 
-		bool get_selected_iter(GtkTreeIter * iter);
+		QStandardItem * get_selected_item();
 		bool get_iter_at_pos(GtkTreeIter * iter, int x, int y);
 		bool get_iter_from_path_str(GtkTreeIter * iter, char const * path_str);
 		bool get_parent_iter(GtkTreeIter * iter, GtkTreeIter * parent);

@@ -610,11 +610,17 @@ void TreeView::select_and_expose(GtkTreeIter * iter)
 
 
 
-bool TreeView::get_selected_iter(GtkTreeIter * iter)
+QStandardItem * TreeView::get_selected_item(void)
 {
-#ifndef SLAVGPS_QT
-	return gtk_tree_selection_get_selected(gtk_tree_view_get_selection(this->tv_), NULL, iter);
-#endif
+	QModelIndex index = this->currentIndex();
+	if (!index.isValid()) {
+		return NULL;
+	}
+
+	QStandardItem * item = this->model->itemFromIndex(index);
+	qDebug() << "get_selected_item gets item with column" << item->column();
+
+	return item;
 }
 
 

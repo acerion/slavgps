@@ -29,7 +29,6 @@
 #include <list>
 
 #include "viklayer.h"
-
 #include "vikviewport.h"
 
 
@@ -66,7 +65,7 @@ namespace SlavGPS {
 		void change_coord_mode(VikCoordMode mode);
 		void drag_drop_request(Layer * src, GtkTreeIter * src_item_iter, GtkTreePath * dest_path);
 		void add_menu_items(GtkMenu * menu, void * panel);
-		void realize(TreeView * tree_view, GtkTreeIter * layer_iter);
+		void realize(TreeView * tree_view, QStandardItem * layer_item);
 
 
 		void add_layer(Layer * layer, bool allow_reordering);

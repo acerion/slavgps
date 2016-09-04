@@ -4,6 +4,9 @@
 #include "vikviewport.h"
 #include "viklayer.h"
 #include "viklayerspanel.h"
+#include "globals.h"
+
+
 
 
 Window::Window()
@@ -12,6 +15,8 @@ Window::Window()
 	QIcon::setThemeName("Tango");
 	this->create_layout();
 	this->create_actions();
+
+	this->layers_panel->new_layer(SlavGPS::LayerType::COORD);
 }
 
 
@@ -36,20 +41,22 @@ void Window::create_layout()
 
 
 
-	SlavGPS::Viewport * viewport = new SlavGPS::Viewport(this);
-	viewport->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Maximum);
+	this->viewport = new SlavGPS::Viewport(this);
+	this->viewport->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Maximum);
 	//layout->addWidget(viewport);
 	struct LatLon ll = { 22.0, 27.0 };
-	viewport->set_center_latlon(&ll, false);
-	viewport->xmpp = 0.01;
-	viewport->ympp = 0.01;
+	this->viewport->set_center_latlon(&ll, false);
+	this->viewport->xmpp = 0.01;
+	this->viewport->ympp = 0.01;
 	//viewport->show();
-	fprintf(stderr, "%d / %d\n", viewport->height(), viewport->width());
+	fprintf(stderr, "%d / %d\n", this->viewport->height(), this->viewport->width());
+
+	this->layers_panel->set_viewport(this->viewport);
 
 
-	SlavGPS::Layer * layer = SlavGPS::Layer::new_(SlavGPS::LayerType::COORD, viewport, false);
-	viewport->configure();
-	layer->draw(viewport);
+	SlavGPS::Layer * layer = SlavGPS::Layer::new_(SlavGPS::LayerType::COORD, this->viewport, false);
+	this->viewport->configure();
+	layer->draw(this->viewport);
 
 	this->setCentralWidget(viewport);
 

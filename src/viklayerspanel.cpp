@@ -192,7 +192,10 @@ LayersPanel::LayersPanel(QWidget * parent) : QWidget(parent)
 	Viewport * viewport = NULL;
 	this->toplayer = new LayerAggregate(viewport);
 	this->toplayer->rename(_("Top Layer"));
-	this->toplayer_item = this->tree_view->add_layer(NULL, "some name", this->toplayer, 0, LayerType::AGGREGATE, 0);
+	///this->tree_view->add_layer(NULL, &(this->toplayer_iter), this->toplayer->name, NULL, true, this->toplayer, (int) LayerType::AGGREGATE, LayerType::AGGREGATE, 0);
+	this->toplayer_item = this->tree_view->add_layer(NULL, this->toplayer->name, this->toplayer, 0, LayerType::AGGREGATE, 0);
+	this->toplayer->realize(this->tree_view, this->toplayer_item);
+
 
 	Layer * layer = new LayerCoord();
 	layer->rename("a coord layer");
@@ -202,9 +205,6 @@ LayersPanel::LayersPanel(QWidget * parent) : QWidget(parent)
 
 #ifndef SLAVGPS_QT
 	g_signal_connect_swapped(G_OBJECT(this->toplayer->get_toolkit_object()), "update", G_CALLBACK(vik_layers_panel_emit_update_cb), this);
-
-	///this->tree_view->add_layer(NULL, &(this->toplayer_iter), this->toplayer->name, NULL, true, this->toplayer, (int) LayerType::AGGREGATE, LayerType::AGGREGATE, 0);
-	this->toplayer->realize(this->tree_view, &(this->toplayer_iter));
 
 	g_signal_connect_swapped (this->tree_view->get_toolkit_widget(), "popup_menu", G_CALLBACK(menu_popup_cb), this);
 	g_signal_connect_swapped (this->tree_view->get_toolkit_widget(), "button_press_event", G_CALLBACK(layers_button_press_cb), this);
@@ -599,14 +599,14 @@ static void layers_popup_cb(LayersPanel * panel)
  */
 bool LayersPanel::new_layer(LayerType layer_type)
 {
-#ifndef SLAVGPS_QT
 	assert (this->viewport);
 	bool ask_user = false;
+#ifndef SLAVGPS_QT
 	if (layer_type == LayerType::TRW) {
 		(void)a_settings_get_boolean(VIK_SETTINGS_LAYERS_TRW_CREATE_DEFAULT, &ask_user);
 	}
 	ask_user = !ask_user;
-
+#endif
 	assert (layer_type != LayerType::NUM_TYPES);
 
 	Layer * layer = Layer::new_(layer_type, this->viewport, ask_user);
@@ -614,7 +614,7 @@ bool LayersPanel::new_layer(LayerType layer_type)
 		this->add_layer(layer);
 		return true;
 	}
-#endif
+
 	return false;
 }
 
@@ -628,22 +628,24 @@ bool LayersPanel::new_layer(LayerType layer_type)
  */
 void LayersPanel::add_layer(Layer * layer)
 {
-#ifndef SLAVGPS_QT
-	GtkTreeIter iter;
+
+
 
 	/* Could be something different so we have to do this. */
 	layer->change_coord_mode(this->viewport->get_coord_mode());
 	fprintf(stderr, "INFO: %s:%d: attempting to add layer '%s'\n", __FUNCTION__, __LINE__, layer->type_string);
 
-	if (!this->tree_view->get_selected_iter(&iter)) {
-
+	QStandardItem * item = this->tree_view->get_selected_item();
+	if (!item) {
 		/* No particular layer is selected in panel, so the
 		   layer to be added goes directly under top level
 		   aggregate layer. */
 		fprintf(stderr, "INFO: %s:%d: No selected layer, adding layer '%s' under top level aggregate layer\n", __FUNCTION__, __LINE__, layer->type_string);
 		this->toplayer->add_layer(layer, true);
 
-	} else {
+	}
+#ifndef SLAVGPS_QT
+	else {
 		/* Some item in tree view is already selected. Let's find a good
 		   place for given layer to be added - a first aggregate
 		   layer that we meet going up in hierarchy. */
@@ -676,9 +678,9 @@ void LayersPanel::add_layer(Layer * layer)
 			aggregate->add_layer(layer, true);
 		}
 	}
+#endif
 
 	this->emit_update();
-#endif
 }
 
 

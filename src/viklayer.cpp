@@ -1014,13 +1014,11 @@ bool Layer::properties(void * viewport)
 
 
 
-void Layer::realize(TreeView * tree_view_, GtkTreeIter * layer_iter)
+void Layer::realize(TreeView * tree_view_, QStandardItem * layer_item)
 {
-#ifndef SLAVGPS_QT
 	this->tree_view = tree_view_;
-	this->iter = *layer_iter;
+	this->item = layer_item;
 	this->realized = true;
-#endif
 
 	return;
 }

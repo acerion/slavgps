@@ -466,6 +466,8 @@ LayerCoord::LayerCoord()
 	fprintf(stderr, "LayerCoord()\n");
 	this->type = LayerType::COORD;
 	strcpy(this->type_string, "COORD");
+
+	this->rename("My Coord Layer"); /* kamilFIXME: this shouldn't be here. Shouldn't we get the default name from layer defaults or layer interface? */
 }
 
 
@@ -484,4 +486,6 @@ LayerCoord::LayerCoord(Viewport * viewport)
 	if (viewport) {
 		this->update_gc(viewport);
 	}
+
+	this->rename("My Coord Layer"); /* kamilFIXME: this shouldn't be here. Shouldn't we get the default name from layer defaults or layer interface? */
 }

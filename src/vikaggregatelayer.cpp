@@ -211,30 +211,33 @@ void LayerAggregate::insert_layer(Layer * layer, GtkTreeIter *replace_iter)
  */
 void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 {
-#ifndef SLAVGPS_QT
-	GtkTreeIter iter;
-
 	/* By default layers go to the top. */
 	bool put_above = true;
 
+#ifndef SLAVGPS_QT
 	if (allow_reordering) {
 		/* These types are 'base' types in that you what other information on top. */
 		if (layer->type == LayerType::MAPS || layer->type == LayerType::DEM || layer->type == LayerType::GEOREF) {
 			put_above = false;
 		}
 	}
+#endif
 
+	QStandardItem * new_item = NULL;
 	if (this->realized) {
-		this->tree_view->add_layer(&this->iter, &iter, layer->name, this, put_above, layer, (int) layer->type, layer->type, layer->get_timestamp());
+		//new_item = this->tree_view->add_layer(&this->item, &iter, layer->name, this, put_above, layer, (int) layer->type, layer->type, layer->get_timestamp());
+		new_item = this->tree_view->add_layer(this->item, layer->name, layer, 0, layer->type, layer->get_timestamp());
 		if (!layer->visible) {
-			this->tree_view->set_visibility(&iter, false);
+			this->tree_view->set_visibility(new_item, false);
 		}
 
-		layer->realize(this->tree_view, &iter);
+		layer->realize(this->tree_view, new_item);
 
 		if (this->children->empty()) {
-			this->tree_view->expand(&this->iter);
+			this->tree_view->expand(this->item);
 		}
+	} else {
+		qDebug() << "Not realized";
 	}
 
 	if (put_above) {
@@ -243,6 +246,7 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 		this->children->push_front(layer);
 	}
 
+#ifndef SLAVGPS_QT
 	g_signal_connect_swapped(G_OBJECT(layer->vl), "update", G_CALLBACK(vik_layer_emit_update_secondary), (Layer *) this);
 #endif
 }
@@ -971,28 +975,24 @@ std::list<Layer *> * LayerAggregate::get_all_layers_of_type(std::list<Layer *> *
 
 
 
-void LayerAggregate::realize(TreeView * tree_view_, GtkTreeIter *layer_iter)
+void LayerAggregate::realize(TreeView * tree_view_, QStandardItem * layer_item)
 {
 	this->tree_view = tree_view_;
-	this->iter = *layer_iter;
+	this->item = layer_item;
 	this->realized = true;
 
 	if (this->children->empty()) {
 		return;
 	}
 
-	GtkTreeIter iter;
-
 	for (auto child = this->children->begin(); child != this->children->end(); child++) {
-#ifndef SLAVGPS_QT
 		Layer * layer = *child;
-		this->tree_view->add_layer(layer_iter, &iter, layer->name, this, true,
-					   layer, (int) layer->type, layer->type, layer->get_timestamp());
-		if (! layer->visible) {
-			this->tree_view->set_visibility(&iter, false);
+		//QStandardItem * item = this->tree_view->add_layer(layer_item, &iter, layer->name, this, true, layer, (int) layer->type, layer->type, layer->get_timestamp());
+		QStandardItem * new_item = this->tree_view->add_layer(this->item, "Layer Name", layer, 0, layer->type, layer->get_timestamp());
+		if (!layer->visible) {
+			this->tree_view->set_visibility(new_item, false);
 		}
-		layer->realize(this->tree_view, &iter);
-#endif
+		layer->realize(this->tree_view, new_item);
 	}
 }
 

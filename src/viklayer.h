@@ -31,6 +31,7 @@
 #ifdef SLAVGPS_QT
 #include <QObject>
 #include <QTreeWidgetItem>
+#include <QStandardItem>
 #else
 #include <gtk/gtk.h>
 #include <gdk-pixbuf/gdk-pixdata.h>
@@ -206,7 +207,7 @@ namespace SlavGPS {
 
 		/* Normally only needed for layers with sublayers. This is called when they
 		   are added to the treeview so they can add sublayers to the treeview. */
-		virtual void realize(TreeView * tree_view, GtkTreeIter * layer_iter);
+		virtual void realize(TreeView * tree_view, QStandardItem * layer_item);
 
 		virtual LayerParamData get_param(uint16_t id, bool is_file_operation) const;
 		virtual bool set_param(uint16_t id, LayerParamData data, Viewport * viewport, bool is_file_operation);
@@ -254,6 +255,7 @@ namespace SlavGPS {
 		Viewport * viewport;  /* Simply a reference. */
 		TreeView * tree_view; /* Simply a reference. */
 		GtkTreeIter iter;
+		QStandardItem * item = NULL;
 
 		/* For explicit "polymorphism" (function type switching). */
 		LayerType type;

@@ -11,6 +11,7 @@
 #include <QTreeView>
 
 #include "viklayerspanel.h"
+#include "vikviewport.h"
 
 
 class Window : public QMainWindow {
@@ -34,6 +35,8 @@ private:
 	QStatusBar * status_bar = NULL;
 
 	SlavGPS::LayersPanel * layers_panel = NULL;
+
+	SlavGPS::Viewport * viewport = NULL;
 };
 
 
