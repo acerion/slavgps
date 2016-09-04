@@ -31,6 +31,7 @@
 #include <QtWidgets>
 #include <QWidget>
 #include <QVBoxLayout>
+#include <QToolBar>
 #else
 #include <gtk/gtk.h>
 #endif
@@ -92,11 +93,11 @@ namespace SlavGPS {
 		GtkWidget * get_toolkit_widget(void);
 
 
-		LayerAggregate * toplayer;
-		GtkTreeIter toplayer_iter;
+		LayerAggregate * toplayer = NULL;
+		QStandardItem * toplayer_item = NULL;
 
-		TreeView * tree_view;
-		Viewport * viewport; /* Reference. */
+		TreeView * tree_view = NULL;
+		Viewport * viewport = NULL; /* Reference. */
 
 
 
@@ -110,6 +111,7 @@ namespace SlavGPS {
 
 #ifdef SLAVGPS_QT
 		QVBoxLayout * panel_box_ = NULL;
+		QToolBar * tool_bar_ = NULL;
 #else
 		GtkVBox * panel_box_ = NULL;
 #endif

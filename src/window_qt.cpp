@@ -8,6 +8,8 @@
 
 Window::Window()
 {
+
+	QIcon::setThemeName("Tango");
 	this->create_layout();
 	this->create_actions();
 }

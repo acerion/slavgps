@@ -1055,10 +1055,15 @@ QStandardItem * TreeView::add_layer(QStandardItem * parent_item, char const * na
 	item->setData(layer_variant, RoleLayerData);
 	items << item;
 
-	item = new QStandardItem("Icon");
+	item = new QStandardItem(QString(layer->type_string));
+	item->setIcon(QIcon("src/icons/layer_coord.png"));
 	items << item;
 
-	parent_item->appendRow(items);
+	if (parent_item) {
+		parent_item->appendRow(items);
+	} else {
+		this->model->invisibleRootItem()->appendRow(items);
+	}
 	connect(this->model, SIGNAL(itemChanged(QStandardItem*)), layer, SLOT(visibility_toggled(QStandardItem *)));
 
 	return ret;
@@ -1079,29 +1084,19 @@ TreeView::TreeView()
 	this->model = new QStandardItemModel();
 
 
-	QString visible_label;
-	QFont visible_font;
+
 	QStandardItem * header_item = NULL;
 
 	header_item = new QStandardItem("Layer Name");
 	this->model->setHorizontalHeaderItem((int) LayersTreeColumn::NAME, header_item);
 
 	header_item = new QStandardItem("Visible");
-	visible_label = header_item->text();
+	QString visible_label = header_item->text();
+	QFont visible_font = header_item->font();
 	this->model->setHorizontalHeaderItem((int) LayersTreeColumn::VISIBLE, header_item);
 
-	header_item = new QStandardItem("Icon");
+	header_item = new QStandardItem("Type");
 	this->model->setHorizontalHeaderItem((int) LayersTreeColumn::ICON, header_item);
-
-
-
-	QStandardItem * root_item = this->model->invisibleRootItem();
-
-	Layer * layer = new LayerAggregate();
-	QStandardItem * agg = this->add_layer(root_item, "Aggregate", layer, 0, LayerType::AGGREGATE, 0);
-
-	layer = new LayerCoord();
-	QStandardItem * coord = this->add_layer(agg, "Coord", layer, 0, LayerType::COORD, 0);
 
 
 
