@@ -52,20 +52,34 @@ namespace SlavGPS {
 	};
 
 
+	enum LayersTreeRole {
+		RoleLayerData = Qt::UserRole + 1,
+		RoleSublayerData
+	};
+
+
+	enum class LayersTreeColumn {
+		NAME        =  0,
+		VISIBLE     =  1,
+		ICON        =  2,
+
+
+		/* Invisible. */
+		TYPE        =  3,
+		PARENT      =  4,
+		ITEM        =  5,
+		DATA        =  6,
+		UID         =  7,
+		EDITABLE    =  8,
+		TIMESTAMP   =  9, /* Date timestamp stored in tree model to enable sorting on this value. */
+		NUM_COLUMNS = 10
+	};
+
+
 
 
 	class Layer;
 
-
-
-
-#ifdef SLAVGPS_QT
-	class LayerTreeItem : public QStandardItem {
-	public:
-		LayerTreeItem(QString arg);
-
-	};
-#endif
 
 
 
@@ -84,6 +98,7 @@ namespace SlavGPS {
 		~TreeView();
 
 		void add_layer(GtkTreeIter *parent_iter, GtkTreeIter *iter, const char *name, Layer * parent_layer, bool above, Layer * layer, int data, LayerType layer_type, time_t timestamp);
+		QStandardItem * add_layer(QStandardItem * parent_item, char const * name, Layer * layer, int data, LayerType layer_type, time_t timestamp);
 		void insert_layer(GtkTreeIter *parent_iter, GtkTreeIter *iter, const char *name, Layer * parent_layer, bool above, Layer * layer, int data, LayerType layer_type, GtkTreeIter *sibling, time_t timestamp);
 		void add_sublayer(GtkTreeIter *parent_iter, GtkTreeIter *iter, const char *name, Layer * parent_layer, sg_uid_t sublayer_uid, SublayerType sublayer_type, GdkPixbuf *icon, bool editable, time_t timestamp);
 
@@ -97,8 +112,7 @@ namespace SlavGPS {
 		sg_uid_t     get_sublayer_uid(GtkTreeIter * iter);
 		void       * get_sublayer_uid_pointer(GtkTreeIter * iter);
 
-		char * get_name(GtkTreeIter * iter);
-
+		QString get_name(QStandardItem * item);
 
 		bool get_selected_iter(GtkTreeIter * iter);
 		bool get_iter_at_pos(GtkTreeIter * iter, int x, int y);
@@ -107,9 +121,9 @@ namespace SlavGPS {
 
 
 		void set_icon(GtkTreeIter * iter, GdkPixbuf const * icon);
-		void set_name(GtkTreeIter * iter, char const * name);
-		void set_visibility(GtkTreeIter * iter, bool visible);
-		void toggle_visibility(GtkTreeIter * iter);
+		void set_name(QStandardItem * item, QString const & name);
+		void set_visibility(QStandardItem * item, bool visible);
+		void toggle_visibility(QStandardItem * item);
 		void set_timestamp(GtkTreeIter * iter, time_t timestamp);
 
 
@@ -120,7 +134,7 @@ namespace SlavGPS {
 		bool move(GtkTreeIter * iter, bool up);
 		bool is_visible_in_tree(GtkTreeIter * iter);
 		bool get_editing();
-		void expand(GtkTreeIter * iter);
+		void expand(QStandardItem * item);
 		void sort_children(GtkTreeIter * parent, vik_layer_sort_order_t order);
 
 		bool go_up_to_layer(GtkTreeIter * iter);
@@ -157,6 +171,8 @@ namespace SlavGPS {
 } /* namespace SlavGPS */
 
 
+
+	Q_DECLARE_METATYPE(SlavGPS::Layer*);
 
 
 #endif /* #ifndef _SG_TREEVIEW_H_ */

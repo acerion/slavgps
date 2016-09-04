@@ -34,7 +34,9 @@
 #include <glib/gi18n.h>
 
 #include "viklayer.h"
-#ifndef SLAVGPS_QT
+#ifdef SLAVGPS_QT
+#include <QVariant>
+#else
 #include "window.h"
 #endif
 #include "viktreeview.h"
@@ -42,6 +44,8 @@
 #include "globals.h"
 #include "uibuilder.h"
 
+#include "vikaggregatelayer.h"
+#include "vikcoordlayer.h"
 
 
 
@@ -65,26 +69,6 @@ static unsigned int treeview_signals[VT_LAST_SIGNAL] = { 0, 0 };
 #else
 #define TREEVIEW_GET(model,iter,what,dest) gtk_tree_model_get(GTK_TREE_MODEL(model),(iter),(what),(dest),-1)
 #endif
-
-
-
-
-enum {
-	COLUMN_NAME = 0,
-	COLUMN_VISIBLE,
-	COLUMN_ICON,
-
-
-	/* Invisible. */
-	COLUMN_TYPE,
-	COLUMN_PARENT,
-	COLUMN_ITEM,
-	COLUMN_DATA,
-	COLUMN_UID,
-	COLUMN_EDITABLE,
-	COLUMN_TIMESTAMP, /* Date timestamp stored in tree model to enable sorting on this value. */
-	NUM_COLUMNS
-};
 
 
 
@@ -297,11 +281,9 @@ TreeItemType TreeView::get_item_type(GtkTreeIter *iter)
 
 
 
-char * TreeView::get_name(GtkTreeIter * iter)
+QString TreeView::get_name(QStandardItem * item)
 {
-	char *rv;
-	TREEVIEW_GET (this->model, iter, COLUMN_NAME, &rv);
-	return rv;
+	return item->text();
 }
 
 
@@ -673,54 +655,46 @@ void TreeView::set_icon(GtkTreeIter * iter, const GdkPixbuf * icon)
 
 
 
-void TreeView::set_name(GtkTreeIter *iter, char const * name)
+void TreeView::set_name(QStandardItem * item, QString const & name)
 {
-	if (!iter || !name) {
+	if (!item) {
 		return;
 	}
-#ifndef SLAVGPS_QT
-	gtk_tree_store_set(GTK_TREE_STORE(this->model), iter, COLUMN_NAME, name, -1);
-#endif
+	item->setText(name);
 }
 
 
 
 
-void TreeView::set_visibility(GtkTreeIter *iter, bool visible)
+void TreeView::set_visibility(QStandardItem * item, bool visible)
 {
-	if (!iter) {
+	if (!item) {
 		return;
 	}
-#ifndef SLAVGPS_QT
-	gtk_tree_store_set(GTK_TREE_STORE(this->model), iter, COLUMN_VISIBLE, visible, -1);
-#endif
+	/* kamilFIXME: this does not take into account third state. */
+	item->setCheckState(visible ? Qt::Checked : Qt::Unchecked);
 }
 
 
 
 
-void TreeView::toggle_visibility(GtkTreeIter *iter)
+void TreeView::toggle_visibility(QStandardItem * item)
 {
-	if (!iter) {
+	if (!item) {
 		return;
 	}
-	bool visibility;
-	TREEVIEW_GET(this->model, iter, COLUMN_VISIBLE, &visibility);
-#ifndef SLAVGPS_QT
-	gtk_tree_store_set(GTK_TREE_STORE(this->model), iter, COLUMN_VISIBLE, !visibility, -1);
-#endif
+
+	/* kamilFIXME: this does not take into account third state. */
+	bool visible = item->checkState() == Qt::Checked;
+	item->setCheckState(!visible ? Qt::Checked : Qt::Unchecked);
 }
 
 
 
 
-void TreeView::expand(GtkTreeIter * iter)
+void TreeView::expand(QStandardItem * item)
 {
-#ifndef SLAVGPS_QT
-	GtkTreePath * path = gtk_tree_model_get_path(this->model, iter);
-	gtk_tree_view_expand_row(this->tv_, path, false);
-	gtk_tree_path_free(path);
-#endif
+	this->setExpanded(item->index(), true);
 }
 
 
@@ -1060,8 +1034,37 @@ static int vik_treeview_drag_data_delete(GtkTreeDragSource *drag_source, GtkTree
 
 
 #ifdef SLAVGPS_QT
-LayerTreeItem::LayerTreeItem(QString arg) : QStandardItem(arg)
-{}
+
+
+QStandardItem * TreeView::add_layer(QStandardItem * parent_item, char const * name, Layer * layer, int data, LayerType layer_type, time_t timestamp)
+{
+	QList<QStandardItem *> items;
+	QStandardItem * item = NULL;
+	QStandardItem * ret = NULL;
+	// http://www.qtforum.org/article/34069/store-user-data-void-with-qstandarditem-in-qstandarditemmodel.html
+	QVariant layer_variant = QVariant::fromValue(layer);
+
+	item = new QStandardItem(QString(name));
+	item->setData(layer_variant, RoleLayerData);
+	ret = item;
+	items << item;
+
+	item = new QStandardItem();
+	item->setCheckable(true);
+	item->setCheckState(layer->visible ? Qt::Checked : Qt::Unchecked);
+	item->setData(layer_variant, RoleLayerData);
+	items << item;
+
+	item = new QStandardItem("Icon");
+	items << item;
+
+	parent_item->appendRow(items);
+	connect(this->model, SIGNAL(itemChanged(QStandardItem*)), layer, SLOT(visibility_toggled(QStandardItem *)));
+
+	return ret;
+}
+
+
 #endif
 
 #ifdef SLAVGPS_QT
@@ -1074,20 +1077,52 @@ TreeView::TreeView()
 
 
 	this->model = new QStandardItemModel();
-	LayerTreeItem * parentItem = (LayerTreeItem *) this->model->invisibleRootItem();
-	for (int i = 0; i < 4; ++i) {
-		LayerTreeItem * item = new LayerTreeItem(QString("item %0").arg(i));
-		parentItem->appendRow(item);
-		//parentItem = item;
-	}
+
+
+	QString visible_label;
+	QFont visible_font;
+	QStandardItem * header_item = NULL;
+
+	header_item = new QStandardItem("Layer Name");
+	this->model->setHorizontalHeaderItem((int) LayersTreeColumn::NAME, header_item);
+
+	header_item = new QStandardItem("Visible");
+	visible_label = header_item->text();
+	this->model->setHorizontalHeaderItem((int) LayersTreeColumn::VISIBLE, header_item);
+
+	header_item = new QStandardItem("Icon");
+	this->model->setHorizontalHeaderItem((int) LayersTreeColumn::ICON, header_item);
+
+
+
+	QStandardItem * root_item = this->model->invisibleRootItem();
+
+	Layer * layer = new LayerAggregate();
+	QStandardItem * agg = this->add_layer(root_item, "Aggregate", layer, 0, LayerType::AGGREGATE, 0);
+
+	layer = new LayerCoord();
+	QStandardItem * coord = this->add_layer(agg, "Coord", layer, 0, LayerType::COORD, 0);
+
 
 
 	this->setModel(this->model);
+	this->expandAll();
+
+
+
+	QHeaderView * header = this->header();
+	QFontMetrics fm(visible_font);
+	int visible_width = fm.width(visible_label);
+	header->resizeSection((int) LayersTreeColumn::VISIBLE, visible_width + 0.3 * visible_width);
 
 
 
 
 #else
+
+
+
+
 	this->tv_ = (GtkTreeView *) gtk_tree_view_new();
 
 	memset(this->layer_type_icons, 0, sizeof (this->layer_type_icons));

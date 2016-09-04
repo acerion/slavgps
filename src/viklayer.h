@@ -28,7 +28,10 @@
 #include <cstdint>
 
 #include <glib.h>
-#ifndef SLAVGPS_QT
+#ifdef SLAVGPS_QT
+#include <QObject>
+#include <QTreeWidgetItem>
+#else
 #include <gtk/gtk.h>
 #include <gdk-pixbuf/gdk-pixdata.h>
 #endif
@@ -132,7 +135,8 @@ namespace SlavGPS {
 
 
 
-	class Layer {
+	class Layer : public QObject {
+		Q_OBJECT
 	public:
 
 		Layer();
@@ -261,6 +265,9 @@ namespace SlavGPS {
 
 	protected:
 		virtual void marshall(uint8_t ** data, int * len);
+
+	public slots:
+		void visibility_toggled(QStandardItem * item);
 	};
 
 

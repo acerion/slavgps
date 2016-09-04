@@ -1246,3 +1246,16 @@ LayerType& SlavGPS::operator++(LayerType& layer_type)
 	layer_type = static_cast<LayerType>(static_cast<int>(layer_type) + 1);
 	return layer_type;
 }
+
+
+
+void Layer::visibility_toggled(QStandardItem * item) /* Slot. */
+{
+	if (item->column() == (int) LayersTreeColumn::VISIBLE) {
+		QVariant layer_variant = item->data(RoleLayerData);
+		Layer * layer = layer_variant.value<Layer *>();
+		if (layer == this) {
+			fprintf(stderr, "Layer %s: slot 'changed' called, visibility = %d\n", this->type_string, (int) item->checkState());
+		}
+	}
+}
