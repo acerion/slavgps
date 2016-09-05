@@ -271,11 +271,11 @@ static bool vik_treeview_tooltip_cb(GtkWidget  * widget,
 
 
 
-TreeItemType TreeView::get_item_type(GtkTreeIter *iter)
+TreeItemType TreeView::get_item_type(QStandardItem * item)
 {
-	TreeItemType rv;
-	TREEVIEW_GET (this->model, iter, COLUMN_TYPE, &rv);
-	return rv;
+	int row = item->row();
+	QVariant variant = this->model->item(row, (int) LayersTreeColumn::TREE_ITEM_TYPE)->data(RoleLayerData);
+	return (TreeItemType) variant.toInt();
 }
 
 
@@ -283,17 +283,18 @@ TreeItemType TreeView::get_item_type(GtkTreeIter *iter)
 
 QString TreeView::get_name(QStandardItem * item)
 {
-	return item->text();
+	int row = item->row();
+	return this->model->item(row, (int) LayersTreeColumn::NAME)->text();
 }
 
 
 
 
-SublayerType TreeView::get_sublayer_type(GtkTreeIter * iter)
+SublayerType TreeView::get_sublayer_type(QStandardItem * item)
 {
-	SublayerType rv;
-	TREEVIEW_GET (this->model, iter, COLUMN_DATA, &rv);
-	return rv;
+	int row = item->row();
+	QVariant variant = this->model->item(row, (int) LayersTreeColumn::DATA)->data(RoleLayerData);
+	return (SublayerType) variant.toInt();
 }
 
 
@@ -318,10 +319,13 @@ sg_uid_t TreeView::get_sublayer_uid(GtkTreeIter * iter)
 
 
 
-Layer * TreeView::get_layer(GtkTreeIter * iter)
+Layer * TreeView::get_layer(QStandardItem * item)
 {
-	Layer * layer;
-	TREEVIEW_GET (this->model, iter, COLUMN_ITEM, &layer);
+	int row = item->row();
+	QVariant variant = this->model->item(row, (int) LayersTreeColumn::ITEM)->data(RoleLayerData);
+	fprintf(stderr, "%s:%d: looking for layer in item column %d\n", __FUNCTION__, __LINE__, item->column());
+	// http://www.qtforum.org/article/34069/store-user-data-void-with-qstandarditem-in-qstandarditemmodel.html
+	Layer * layer = variant.value<Layer *>();
 	return layer;
 }
 
@@ -338,10 +342,12 @@ void TreeView::set_timestamp(GtkTreeIter *iter, time_t timestamp)
 
 
 
-Layer * TreeView::get_parent_layer(GtkTreeIter *iter)
+Layer * TreeView::get_parent_layer(QStandardItem * item)
 {
-	Layer * parent_layer;
-	TREEVIEW_GET (this->model, iter, COLUMN_PARENT, &parent_layer);
+	int row = item->row();
+	QVariant variant = this->model->item(row, (int) LayersTreeColumn::PARENT_LAYER)->data(RoleLayerData);
+	// http://www.qtforum.org/article/34069/store-user-data-void-with-qstandarditem-in-qstandarditemmodel.html
+	Layer * parent_layer = variant.value<Layer *>();
 	return parent_layer;
 }
 
@@ -358,34 +364,44 @@ bool TreeView::get_iter_from_path_str(GtkTreeIter * iter, char const * path_str)
 
 
 
+bool TreeView::is_visible(QStandardItem * item)
+{
+	int row = item->row();
+	QVariant variant = this->model->item(row, (int) LayersTreeColumn::VISIBLE)->data();
+	bool visible = variant.toBool();
+
+	return visible;
+}
+
+
+
+
 /**
  * Get visibility of an item considering visibility of all parents
  * i.e. if any parent is off then this item will also be considered
  * off (even though itself may be marked as on).
  */
-bool TreeView::is_visible_in_tree(GtkTreeIter * iter)
+bool TreeView::is_visible_in_tree(QStandardItem * item)
 {
-	bool ans;
-	TREEVIEW_GET (this->model, iter, COLUMN_VISIBLE, &ans);
+	bool visible = this->is_visible(item);
 
-	if (!ans) {
-		return ans;
+	if (!visible) {
+		return visible;
 	}
 
-	GtkTreeIter parent;
-	GtkTreeIter child = * iter;
-#ifndef SLAVGPS_QT
-	while (gtk_tree_model_iter_parent(this->model, &parent, &child)) {
+	QStandardItem * parent;
+	QStandardItem * child = item;
+
+	while (NULL != (parent = this->get_parent_item(child))) {
 		/* Visibility of this parent. */
-		TREEVIEW_GET (this->model, &parent, COLUMN_VISIBLE, &ans);
+		visible = this->is_visible(parent);
 		/* If not visible, no need to check further ancestors. */
-		if (!ans) {
+		if (!visible) {
 			break;
 		}
 		child = parent;
 	}
-#endif
-	return ans;
+	return visible;
 }
 
 
@@ -501,20 +517,19 @@ static void select_cb(GtkTreeSelection * selection, void * data)
 
 
 /* Go up the tree to find a Layer. */
-bool TreeView::go_up_to_layer(GtkTreeIter * iter)
+QStandardItem * TreeView::go_up_to_layer(QStandardItem * item)
 {
-	GtkTreeIter this_iter = *iter;
-	GtkTreeIter parent_iter;
+	QStandardItem * this_item = item;
+	QStandardItem * parent_item = NULL;;
 
-	while (TreeItemType::LAYER != this->get_item_type(&this_iter)) {
-		if (!this->get_parent_iter(&this_iter, &parent_iter)) {
-			return false;
+	while (TreeItemType::LAYER != this->get_item_type(this_item)) {
+		if (NULL == (parent_item = this->get_parent_item(this_item))) {
+			return NULL;
 		}
-		this_iter = parent_iter;
+		this_item = parent_item;
 	}
 
-	*iter = this_iter; /* Don't use parent_iter. If while() loop executes zero times, parent_iter is invalid. */
-	return true;
+	return this_item; /* Don't use parent_iter. If while() loop executes zero times, parent_iter is invalid. */
 }
 
 
@@ -535,11 +550,9 @@ static int vik_treeview_selection_filter(GtkTreeSelection *selection, GtkTreeMod
 
 
 
-bool TreeView::get_parent_iter(GtkTreeIter * iter, GtkTreeIter * parent)
+QStandardItem * TreeView::get_parent_item(QStandardItem * item)
 {
-#ifndef SLAVGPS_QT
-	return gtk_tree_model_iter_parent(GTK_TREE_MODEL(this->model), parent, iter);
-#endif
+	return item->parent();
 }
 
 
@@ -999,7 +1012,7 @@ static int vik_treeview_drag_data_received(GtkTreeDragDest *drag_dest, GtkTreePa
 				 && layer->tree_view->get_item_type(&dest_parent) != TreeItemType::LAYER);
 
 
-			Layer * layer_source  = layer->tree_view->get_parent_layer(&src_iter);
+			Layer * layer_source  = layer->tree_view->get_parent_layer(&src_item);
 			assert (layer_source);
 			Layer * layer_dest = layer->tree_view->get_layer(&dest_parent);
 
@@ -1042,28 +1055,52 @@ static int vik_treeview_drag_data_delete(GtkTreeDragSource *drag_source, GtkTree
 #ifdef SLAVGPS_QT
 
 
-QStandardItem * TreeView::add_layer(QStandardItem * parent_item, char const * name, Layer * layer, int data, LayerType layer_type, time_t timestamp)
+QStandardItem * TreeView::add_layer(Layer * layer, Layer * parent_layer, QStandardItem * parent_item, bool above, int data, time_t timestamp)
 {
+	// http://www.qtforum.org/article/34069/store-user-data-void-with-qstandarditem-in-qstandarditemmodel.html
+
 	QList<QStandardItem *> items;
 	QStandardItem * item = NULL;
 	QStandardItem * ret = NULL;
-	// http://www.qtforum.org/article/34069/store-user-data-void-with-qstandarditem-in-qstandarditemmodel.html
 	QVariant layer_variant = QVariant::fromValue(layer);
+	QVariant variant;
 
-	item = new QStandardItem(QString(name));
-	item->setData(layer_variant, RoleLayerData);
+
+	/* LayersTreeColumn::NAME */
+	item = new QStandardItem(QString(layer->name));
 	ret = item;
 	items << item;
 
+	/* LayersTreeColumn::VISIBLE */
 	item = new QStandardItem();
 	item->setCheckable(true);
+	item->setData(layer_variant, RoleLayerData); /* I'm assigning layer to "visible" so that I don't have to look up ::ITEM column to find a layer. */
 	item->setCheckState(layer->visible ? Qt::Checked : Qt::Unchecked);
-	item->setData(layer_variant, RoleLayerData);
 	items << item;
 
+	/* LayersTreeColumn::ICON */
 	item = new QStandardItem(QString(layer->type_string));
 	item->setIcon(QIcon("src/icons/layer_coord.png"));
 	items << item;
+
+	/* LayersTreeColumn::TREE_ITEM_TYPE */
+	item = new QStandardItem();
+	variant = QVariant((int) TreeItemType::LAYER);
+	item->setData(variant, RoleLayerData);
+	items << item;
+
+	/* LayersTreeColumn::PARENT_LAYER */
+	item = new QStandardItem();
+	variant = QVariant::fromValue(parent_layer);
+	item->setData(variant, RoleLayerData);
+	items << item;
+
+	/* LayersTreeColumn::ITEM */
+	item = new QStandardItem();
+	variant = QVariant::fromValue(layer);
+	item->setData(variant, RoleLayerData);
+	items << item;
+
 
 	if (parent_item) {
 		parent_item->appendRow(items);
@@ -1078,14 +1115,11 @@ QStandardItem * TreeView::add_layer(QStandardItem * parent_item, char const * na
 
 #endif
 
-#ifdef SLAVGPS_QT
+
+
 TreeView::TreeView(QWidget * parent) : QTreeView(parent)
-#else
-TreeView::TreeView()
-#endif
 {
 #ifdef SLAVGPS_QT
-
 
 	this->model = new QStandardItemModel();
 
@@ -1097,12 +1131,19 @@ TreeView::TreeView()
 	this->model->setHorizontalHeaderItem((int) LayersTreeColumn::NAME, header_item);
 
 	header_item = new QStandardItem("Visible");
-	QString visible_label = header_item->text();
-	QFont visible_font = header_item->font();
 	this->model->setHorizontalHeaderItem((int) LayersTreeColumn::VISIBLE, header_item);
 
 	header_item = new QStandardItem("Type");
 	this->model->setHorizontalHeaderItem((int) LayersTreeColumn::ICON, header_item);
+
+	header_item = new QStandardItem("Tree Item Type");
+	this->model->setHorizontalHeaderItem((int) LayersTreeColumn::TREE_ITEM_TYPE, header_item);
+
+	header_item = new QStandardItem("Parent Layer");
+	this->model->setHorizontalHeaderItem((int) LayersTreeColumn::PARENT_LAYER, header_item);
+
+	header_item = new QStandardItem("Item");
+	this->model->setHorizontalHeaderItem((int) LayersTreeColumn::ITEM, header_item);
 
 
 
@@ -1111,25 +1152,15 @@ TreeView::TreeView()
 
 
 
-	QHeaderView * header = this->header();
-	QFontMetrics fm(visible_font);
-	int visible_width = fm.width(visible_label);
-	header->resizeSection((int) LayersTreeColumn::VISIBLE, visible_width + 0.3 * visible_width);
-
-
+	this->header()->setSectionResizeMode((int) LayersTreeColumn::VISIBLE, QHeaderView::ResizeToContents); /* This column holds only a checkbox, so let's limit its width to column label. */
+	this->header()->setSectionHidden((int) LayersTreeColumn::TREE_ITEM_TYPE, true);
+	this->header()->setSectionHidden((int) LayersTreeColumn::PARENT_LAYER, true);
+	this->header()->setSectionHidden((int) LayersTreeColumn::ITEM, true);
 
 
 #else
-
-
-
-
-	this->tv_ = (GtkTreeView *) gtk_tree_view_new();
-
 	memset(this->layer_type_icons, 0, sizeof (this->layer_type_icons));
 
-	this->was_a_toggle = false;
-	this->editing = false;
 
 	/* ATM The dates are stored on initial creation and updated when items are deleted.
 	   This should be good enough for most purposes, although it may get inaccurate if items are edited in a particular manner.
@@ -1149,7 +1180,7 @@ TreeView::TreeView()
 	/* Create tree view. */
 	gtk_tree_selection_set_select_function(gtk_tree_view_get_selection(this->tv_), vik_treeview_selection_filter, this, NULL);
 
-	gtk_tree_view_set_model(this->tv_, this->model);
+	///gtk_tree_view_set_model(this->tv_, this->model);
 	this->add_columns();
 
 	/* Can not specify 'auto' sort order with a 'GtkTreeSortable' on the name since we want to control the ordering of layers.

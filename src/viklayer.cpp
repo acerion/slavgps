@@ -1253,7 +1253,7 @@ void Layer::visibility_toggled(QStandardItem * item) /* Slot. */
 		QVariant layer_variant = item->data(RoleLayerData);
 		Layer * layer = layer_variant.value<Layer *>();
 		if (layer == this) {
-			fprintf(stderr, "Layer %s: slot 'changed' called, visibility = %d\n", this->type_string, (int) item->checkState());
+			fprintf(stderr, "Layer %s/%s: slot 'changed' called, visibility = %d\n", this->type_string, this->name, (int) item->checkState());
 		}
 	}
 }

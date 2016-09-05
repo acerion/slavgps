@@ -136,7 +136,7 @@ static void clip_receive_viking(GtkClipboard * c, GtkSelectionData * sd, void * 
 		Layer * new_layer = Layer::unmarshall(vc->data, vc->len, panel->get_viewport());
 		panel->add_layer(new_layer);
 	} else if (vc->type == VIK_CLIPBOARD_DATA_SUBLAYER) {
-		Layer * selected = panel->get_selected();
+		Layer * selected = panel->get_selected_layer();
 		if (selected && selected->type == vc->layer_type) {
 			selected->paste_sublayer(vc->sublayer_type, vc->data, vc->len);
 		} else {
@@ -275,7 +275,7 @@ static bool clip_parse_latlon(const char * text, struct LatLon * coord)
 static void clip_add_wp(LayersPanel * panel, struct LatLon * coord)
 {
 	VikCoord vc;
-	Layer * selected = panel->get_selected();
+	Layer * selected = panel->get_selected_layer();
 
 	vik_coord_load_from_latlon (&vc, VIK_COORD_LATLON, coord);
 
@@ -297,7 +297,7 @@ static void clip_receive_text(GtkClipboard * c, const char * text, void * p)
 
 	fprintf(stderr, "DEBUG: got text: %s\n", text);
 
-	Layer * selected = panel->get_selected();
+	Layer * selected = panel->get_selected_layer();
 
 	if (selected && selected->tree_view->get_editing()) {
 		GtkTreeIter iter;
@@ -415,7 +415,7 @@ void clip_receive_targets(GtkClipboard * c, GdkAtom * a, int n, void * p)
  */
 void SlavGPS::a_clipboard_copy_selected(LayersPanel * panel)
 {
-	Layer * selected = panel->get_selected();
+	Layer * selected = panel->get_selected_layer();
 	GtkTreeIter iter;
 	VikClipboardDataType type = VIK_CLIPBOARD_DATA_NONE;
 	LayerType layer_type = LayerType::AGGREGATE;

@@ -59,20 +59,19 @@ namespace SlavGPS {
 
 
 	enum class LayersTreeColumn {
-		NAME        =  0,
-		VISIBLE     =  1,
-		ICON        =  2,
-
+		NAME           =  0, /* From layer->name. */
+		VISIBLE        =  1, /* From layer->visible. */
+		ICON           =  2, /* Provided separately. */
 
 		/* Invisible. */
-		TYPE        =  3,
-		PARENT      =  4,
-		ITEM        =  5,
-		DATA        =  6,
-		UID         =  7,
-		EDITABLE    =  8,
-		TIMESTAMP   =  9, /* Date timestamp stored in tree model to enable sorting on this value. */
-		NUM_COLUMNS = 10
+		TREE_ITEM_TYPE =  3, /* Implicit, based on function adding an item. */
+		PARENT_LAYER   =  4, /* Function's argument. */
+		ITEM           =  5, /* Function's argument. */
+		DATA           =  6, /* Function's argument. */
+		UID            =  7, /* */
+		EDITABLE       =  8, /* */
+		TIMESTAMP      =  9, /* Date timestamp stored in tree model to enable sorting on this value. */
+		NUM_COLUMNS    = 10
 	};
 
 
@@ -98,17 +97,17 @@ namespace SlavGPS {
 		~TreeView();
 
 		void add_layer(GtkTreeIter *parent_iter, GtkTreeIter *iter, const char *name, Layer * parent_layer, bool above, Layer * layer, int data, LayerType layer_type, time_t timestamp);
-		QStandardItem * add_layer(QStandardItem * parent_item, char const * name, Layer * layer, int data, LayerType layer_type, time_t timestamp);
+		QStandardItem * add_layer(Layer * layer, Layer * parent_layer, QStandardItem * parent_item, bool above, int data, time_t timestamp);
 		void insert_layer(GtkTreeIter *parent_iter, GtkTreeIter *iter, const char *name, Layer * parent_layer, bool above, Layer * layer, int data, LayerType layer_type, GtkTreeIter *sibling, time_t timestamp);
 		void add_sublayer(GtkTreeIter *parent_iter, GtkTreeIter *iter, const char *name, Layer * parent_layer, sg_uid_t sublayer_uid, SublayerType sublayer_type, GdkPixbuf *icon, bool editable, time_t timestamp);
 
 
-		TreeItemType get_item_type(GtkTreeIter * iter);
+		TreeItemType get_item_type(QStandardItem * item);
 
-		Layer * get_parent_layer(GtkTreeIter * iter);
-		Layer * get_layer(GtkTreeIter * iter);
+		Layer * get_parent_layer(QStandardItem * item);
+		Layer * get_layer(QStandardItem * item);
 
-		SublayerType get_sublayer_type(GtkTreeIter * iter);
+		SublayerType get_sublayer_type(QStandardItem * item);
 		sg_uid_t     get_sublayer_uid(GtkTreeIter * iter);
 		void       * get_sublayer_uid_pointer(GtkTreeIter * iter);
 
@@ -117,7 +116,7 @@ namespace SlavGPS {
 		QStandardItem * get_selected_item();
 		bool get_iter_at_pos(GtkTreeIter * iter, int x, int y);
 		bool get_iter_from_path_str(GtkTreeIter * iter, char const * path_str);
-		bool get_parent_iter(GtkTreeIter * iter, GtkTreeIter * parent);
+		QStandardItem * get_parent_item(QStandardItem * item);
 
 
 		void set_icon(GtkTreeIter * iter, GdkPixbuf const * icon);
@@ -132,12 +131,13 @@ namespace SlavGPS {
 		void unselect(GtkTreeIter * iter);
 		void erase(GtkTreeIter * iter);
 		bool move(GtkTreeIter * iter, bool up);
-		bool is_visible_in_tree(GtkTreeIter * iter);
+		bool is_visible(QStandardItem * item);
+		bool is_visible_in_tree(QStandardItem * item);
 		bool get_editing();
 		void expand(QStandardItem * item);
 		void sort_children(GtkTreeIter * parent, vik_layer_sort_order_t order);
 
-		bool go_up_to_layer(GtkTreeIter * iter);
+		QStandardItem * go_up_to_layer(QStandardItem * item);
 
 		GtkWindow * get_toolkit_window(void);
 		GtkWidget * get_toolkit_widget(void);
@@ -145,12 +145,12 @@ namespace SlavGPS {
 
 
 
-		bool editing;
-		bool was_a_toggle;
+		bool editing = false;
+		bool was_a_toggle = false;
 		GdkPixbuf * layer_type_icons[(int) LayerType::NUM_TYPES];
 
 #ifdef SLAVGPS_QT
-		QStandardItemModel * model;
+		QStandardItemModel * model = NULL;
 #else
 		GtkTreeView * tv_;
 		GtkTreeModel * model;

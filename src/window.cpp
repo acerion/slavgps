@@ -809,7 +809,7 @@ static bool key_press_event_cb(Window * window, GdkEventKey * event, void * data
 		return true; // handled keypress
 	}
 
-	Layer * layer = window->layers_panel->get_selected();
+	Layer * layer = window->layers_panel->get_selected_layer();
 	if (layer && window->tb->active_tool && window->tb->active_tool->key_press) {
 		LayerType ltype = window->tb->active_tool->layer_type;
 		if (layer && ltype == layer->type) {
@@ -1358,7 +1358,7 @@ static void draw_pan_cb(GtkAction * a, Window * window)
 {
 	// Since the treeview cell editting intercepts standard keyboard handlers, it means we can receive events here
 	// Thus if currently editting, ensure we don't move the viewport when Ctrl+<arrow> is received
-	Layer * sel = window->layers_panel->get_selected();
+	Layer * sel = window->layers_panel->get_selected_layer();
 	if (sel && sel->tree_view->get_editing()) {
 		return;
 	}
@@ -1832,7 +1832,7 @@ static void back_forward_info_cb(GtkAction * a, Window * window)
 
 static void menu_delete_layer_cb(GtkAction * a, Window * window)
 {
-	if (window->layers_panel->get_selected()) {
+	if (window->layers_panel->get_selected_layer()) {
 		window->layers_panel->delete_selected();
 		window->modified = true;
 	} else {

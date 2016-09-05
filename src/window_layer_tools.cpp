@@ -87,7 +87,7 @@ LayerTool * LayerToolsBox::get_tool(char const *tool_name)
 void LayerToolsBox::activate(char const *tool_name)
 {
 	LayerTool * tool = this->get_tool(tool_name);
-	Layer * layer = this->window->layers_panel->get_selected();
+	Layer * layer = this->window->layers_panel->get_selected_layer();
 #if 0
 	if (!layer) {
 		return;
@@ -138,7 +138,7 @@ const GdkCursor * LayerToolsBox::get_cursor(char const *tool_name)
 
 void LayerToolsBox::click(GdkEventButton * event)
 {
-	Layer * layer = this->window->layers_panel->get_selected();
+	Layer * layer = this->window->layers_panel->get_selected_layer();
 #if 1
 	if (!layer) {
 		return;
@@ -158,7 +158,7 @@ void LayerToolsBox::click(GdkEventButton * event)
 
 void LayerToolsBox::move(GdkEventMotion * event)
 {
-	Layer * layer = this->window->layers_panel->get_selected();
+	Layer * layer = this->window->layers_panel->get_selected_layer();
 #if 1
 	if (!layer) {
 		return;
@@ -180,7 +180,7 @@ void LayerToolsBox::move(GdkEventMotion * event)
 
 void LayerToolsBox::release(GdkEventButton * event)
 {
-	Layer * layer = this->window->layers_panel->get_selected();
+	Layer * layer = this->window->layers_panel->get_selected_layer();
 #if 1
 	if (!layer) {
 		return;

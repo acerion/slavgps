@@ -193,13 +193,13 @@ LayersPanel::LayersPanel(QWidget * parent) : QWidget(parent)
 	this->toplayer = new LayerAggregate(viewport);
 	this->toplayer->rename(_("Top Layer"));
 	///this->tree_view->add_layer(NULL, &(this->toplayer_iter), this->toplayer->name, NULL, true, this->toplayer, (int) LayerType::AGGREGATE, LayerType::AGGREGATE, 0);
-	this->toplayer_item = this->tree_view->add_layer(NULL, this->toplayer->name, this->toplayer, 0, LayerType::AGGREGATE, 0);
+	this->toplayer_item = this->tree_view->add_layer(this->toplayer, NULL, NULL, false, 0, 0);
 	this->toplayer->realize(this->tree_view, this->toplayer_item);
 
 
 	Layer * layer = new LayerCoord();
 	layer->rename("a coord layer");
-	QStandardItem * coord = this->tree_view->add_layer(this->toplayer_item, "Coord", layer, 0, LayerType::COORD, 0);
+	QStandardItem * coord = this->tree_view->add_layer(layer, this->toplayer, this->toplayer_item, false, 0, 0);
 
 
 
@@ -342,7 +342,7 @@ void vik_layers_panel_emit_update_cb(LayersPanel * panel)
 
 void LayersPanel::emit_update()
 {
-	#ifndef SLAVGPS_QT
+#ifndef SLAVGPS_QT
 	GThread * thread = window_from_widget(this->panel_box_)->get_thread();
 	if (!thread) {
 		/* Do nothing. */
@@ -576,7 +576,7 @@ static void menu_popup_cb(LayersPanel * panel)
 {
 #ifndef SLAVGPS_QT
 	GtkTreeIter iter;
-	panel->popup(panel->tree_view->get_selected_iter(&iter) ? &iter : NULL, MouseButton::OTHER);
+	panel->popup(panel->tree_view->get_selected_item(&iter) ? &iter : NULL, MouseButton::OTHER);
 #endif
 }
 
@@ -692,7 +692,7 @@ void LayersPanel::move_item(bool up)
 	GtkTreeIter iter;
 
 	/* TODO: deactivate the buttons and stuff. */
-	if (!this->tree_view->get_selected_iter(&iter)) {
+	if (!this->tree_view->get_selected_item(&iter)) {
 		return;
 	}
 
@@ -725,7 +725,7 @@ bool LayersPanel::properties()
 	GtkTreeIter iter;
 	assert (this->viewport);
 
-	if (this->tree_view->get_selected_iter(&iter) && this->tree_view->get_item_type(&iter) == TreeItemType::LAYER) {
+	if (this->tree_view->get_selected_item(&iter) && this->tree_view->get_item_type(&iter) == TreeItemType::LAYER) {
 		if (this->tree_view->get_layer(&iter)->type == LayerType::AGGREGATE) {
 			a_dialog_info_msg(VIK_GTK_WINDOW_FROM_WIDGET(this->panel_box_), _("Aggregate Layers have no settable properties."));
 		}
@@ -767,7 +767,7 @@ void LayersPanel::cut_selected()
 #ifndef SLAVGPS_QT
 	GtkTreeIter iter;
 
-	if (!this->tree_view->get_selected_iter(&iter)) {
+	if (!this->tree_view->get_selected_item(&iter)) {
 		/* Nothing to do. */
 		return;
 	}
@@ -778,7 +778,7 @@ void LayersPanel::cut_selected()
 		LayerAggregate * parent = (LayerAggregate *) this->tree_view->get_parent_layer(&iter);
 		if (parent){
 			/* Reset trigger if trigger deleted. */
-			if (this->get_selected()->the_same_object(this->viewport->get_trigger())) {
+			if (this->get_selected_layer()->the_same_object(this->viewport->get_trigger())) {
 				this->viewport->set_trigger(NULL);
 			}
 
@@ -796,7 +796,7 @@ void LayersPanel::cut_selected()
 			a_dialog_info_msg(this->get_toolkit_window(), _("You cannot cut the Top Layer."));
 		}
 	} else if (type == TreeItemType::SUBLAYER) {
-		Layer * selected = this->get_selected();
+		Layer * selected = this->get_selected_layer();
 		SublayerType sublayer_type = this->tree_view->get_sublayer_type(&iter);
 		selected->cut_sublayer(sublayer_type, selected->tree_view->get_sublayer_uid(&iter));
 	}
@@ -818,7 +818,7 @@ void LayersPanel::copy_selected()
 {
 #ifndef SLAVGPS_QT
 	GtkTreeIter iter;
-	if (!this->tree_view->get_selected_iter(&iter)) {
+	if (!this->tree_view->get_selected_item(&iter)) {
 		/* Nothing to do. */
 		return;
 	}
@@ -842,7 +842,7 @@ bool LayersPanel::paste_selected()
 {
 #ifndef SLAVGPS_QT
 	GtkTreeIter iter;
-	if (!this->tree_view->get_selected_iter(&iter)) {
+	if (!this->tree_view->get_selected_item(&iter)) {
 		/* Nothing to do. */
 		return false;
 	}
@@ -866,7 +866,7 @@ void LayersPanel::delete_selected()
 #ifndef SLAVGPS_QT
 	GtkTreeIter iter;
 
-	if (!this->tree_view->get_selected_iter(&iter)) {
+	if (!this->tree_view->get_selected_item(&iter)) {
 		/* Nothing to do. */
 		return;
 	}
@@ -885,7 +885,7 @@ void LayersPanel::delete_selected()
 		LayerAggregate * parent = (LayerAggregate *) this->tree_view->get_parent_layer(&iter);
 		if (parent) {
 			/* Reset trigger if trigger deleted. */
-			if (this->get_selected()->the_same_object(this->viewport->get_trigger())) {
+			if (this->get_selected_layer()->the_same_object(this->viewport->get_trigger())) {
 				this->viewport->set_trigger(NULL);
 			}
 
@@ -901,7 +901,7 @@ void LayersPanel::delete_selected()
 			a_dialog_info_msg(this->get_toolkit_window(), _("You cannot delete the Top Layer."));
 		}
 	} else if (type == TreeItemType::SUBLAYER) {
-		Layer * selected = this->get_selected();
+		Layer * selected = this->get_selected_layer();
 		SublayerType sublayer_type = this->tree_view->get_sublayer_type(&iter);
 		selected->delete_sublayer(sublayer_type, selected->tree_view->get_sublayer_uid(&iter));
 	}
@@ -911,28 +911,24 @@ void LayersPanel::delete_selected()
 
 
 
-Layer * LayersPanel::get_selected()
+Layer * LayersPanel::get_selected_layer()
 {
-#ifndef SLAVGPS_QT
-	GtkTreeIter iter, parent;
-	memset(&iter, 0, sizeof (GtkTreeIter));
-
-	if (!this->tree_view->get_selected_iter(&iter)) {
+	QStandardItem * item = this->tree_view->get_selected_item();
+	if (!item) {
 		return NULL;
 	}
 
-	TreeItemType type = this->tree_view->get_item_type(&iter);
-
+	TreeItemType type = this->tree_view->get_item_type(item);
+	QStandardItem * parent = NULL;
 	while (type != TreeItemType::LAYER) {
-		if (!this->tree_view->get_parent_iter(&iter, &parent)) {
+		if (NULL == (parent = this->tree_view->get_parent_item(item))) {
 			return NULL;
 		}
-		iter = parent;
-		type = this->tree_view->get_item_type(&iter);
+		item = parent;
+		type = this->tree_view->get_item_type(item);
 	}
 
-	return this->tree_view->get_layer(&iter);
-#endif
+	return this->tree_view->get_layer(item);
 }
 
 
@@ -956,7 +952,7 @@ static void layers_move_item_down_cb(LayersPanel * panel)
 #if 0
 bool vik_layers_panel_tool(LayersPanel * panel, LayerType layer_type, VikToolInterfaceFunc tool_func, GdkEventButton * event, Viewport * viewport)
 {
-	Layer * layer = panel->get_selected();
+	Layer * layer = panel->get_selected_layer();
 	if (layer && layer->type == layer_type) {
 		tool_func(layer, event, viewport);
 		return true;
@@ -973,8 +969,7 @@ bool vik_layers_panel_tool(LayersPanel * panel, LayerType layer_type, VikToolInt
 
 Layer * LayersPanel::get_layer_of_type(LayerType layer_type)
 {
-#ifndef SLAVGPS_QT
-	Layer * layer = this->get_selected();
+	Layer * layer = this->get_selected_layer();
 	if (layer == NULL || layer->type != layer_type) {
 		if (this->toplayer->visible) {
 			return this->toplayer->get_top_visible_layer_of_type(layer_type);
@@ -984,7 +979,6 @@ Layer * LayersPanel::get_layer_of_type(LayerType layer_type)
 	} else {
 		return (Layer *) layer;
 	}
-#endif
 }
 
 

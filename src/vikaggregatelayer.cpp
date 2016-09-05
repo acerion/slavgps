@@ -226,7 +226,7 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 	QStandardItem * new_item = NULL;
 	if (this->realized) {
 		//new_item = this->tree_view->add_layer(&this->item, &iter, layer->name, this, put_above, layer, (int) layer->type, layer->type, layer->get_timestamp());
-		new_item = this->tree_view->add_layer(this->item, layer->name, layer, 0, layer->type, layer->get_timestamp());
+		new_item = this->tree_view->add_layer(layer, this, this->item, false, 0, layer->get_timestamp());
 		if (!layer->visible) {
 			this->tree_view->set_visibility(new_item, false);
 		}
@@ -988,7 +988,7 @@ void LayerAggregate::realize(TreeView * tree_view_, QStandardItem * layer_item)
 	for (auto child = this->children->begin(); child != this->children->end(); child++) {
 		Layer * layer = *child;
 		//QStandardItem * item = this->tree_view->add_layer(layer_item, &iter, layer->name, this, true, layer, (int) layer->type, layer->type, layer->get_timestamp());
-		QStandardItem * new_item = this->tree_view->add_layer(this->item, "Layer Name", layer, 0, layer->type, layer->get_timestamp());
+		QStandardItem * new_item = this->tree_view->add_layer(layer, this, this->item, false, 0, layer->get_timestamp());
 		if (!layer->visible) {
 			this->tree_view->set_visibility(new_item, false);
 		}

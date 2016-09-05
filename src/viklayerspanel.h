@@ -69,7 +69,7 @@ namespace SlavGPS {
 
 		void add_layer(Layer * layer);
 		void draw_all();
-		Layer * get_selected();
+		Layer * get_selected_layer();
 		void cut_selected();
 		void copy_selected();
 		bool paste_selected();

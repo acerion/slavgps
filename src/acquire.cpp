@@ -388,7 +388,7 @@ static void acquire(Window * window,
 	w->user_data = user_data;
 
 	if (mode == VIK_DATASOURCE_ADDTOLAYER) {
-		Layer * current_selected = w->panel->get_selected();
+		Layer * current_selected = w->panel->get_selected_layer();
 		if (current_selected->type == LayerType::TRW) {
 			wi->trw = (LayerTRW *) current_selected;
 			wi->creating_new_layer = false;
@@ -398,7 +398,7 @@ static void acquire(Window * window,
 	} else if (mode == VIK_DATASOURCE_MANUAL_LAYER_MANAGEMENT) {
 		/* Don't create in acquire - as datasource will perform the necessary actions. */
 		wi->creating_new_layer = false;
-		Layer * current_selected = w->panel->get_selected();
+		Layer * current_selected = w->panel->get_selected_layer();
 		if (current_selected->type == LayerType::TRW) {
 			wi->trw = (LayerTRW *) current_selected;
 		}
