@@ -2260,7 +2260,7 @@ void Viewport::resizeEvent(QResizeEvent * event)
 {
 	fprintf(stderr, "%s:%d\n", __FUNCTION__, __LINE__);
 	this->configure();
-	this->draw_scale();
+	//this->draw_scale();
 
 	return;
 }

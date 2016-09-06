@@ -182,7 +182,6 @@ static char *tool_names[NUMBER_OF_TOOLS] = { (char *) N_("Pan"), (char *) N_("Zo
 
 Viewport * Window::get_viewport()
 {
-	return this->viewport;
 }
 
 
@@ -190,7 +189,6 @@ Viewport * Window::get_viewport()
 
 LayersPanel * Window::get_layers_panel()
 {
-	return this->layers_panel;
 }
 
 
@@ -504,21 +502,6 @@ static void open_window(GtkWidget * widget, GSList *files)
 
 void Window::selected_layer(Layer * layer)
 {
-	if (!this->action_group) {
-		return;
-	}
-
-	for (LayerType type = LayerType::AGGREGATE; type < LayerType::NUM_TYPES; ++type) {
-		VikLayerInterface * layer_interface = vik_layer_get_interface(type);
-		int tool_count = layer_interface->tools_count;
-
-		for (int tool = 0; tool < tool_count; tool++) {
-			GtkAction * action = gtk_action_group_get_action(this->action_group,
-									 layer_interface->layer_tools[tool]->radioActionEntry.name);
-			g_object_set(action, "sensitive", type == layer->type, NULL);
-			toolbar_action_set_sensitive(this->viking_vtb, vik_layer_get_interface(type)->layer_tools[tool]->radioActionEntry.name, type == layer->type);
-		}
-	}
 }
 
 
@@ -936,8 +919,6 @@ static void draw_update_cb(Window * window)
 
 void Window::draw_update()
 {
-	this->draw_redraw();
-	this->draw_sync();
 }
 
 
@@ -953,8 +934,6 @@ static void draw_sync_cb(Window * window)
 
 void Window::draw_sync()
 {
-	this->viewport->sync();
-	this->draw_status();
 }
 
 
@@ -979,24 +958,6 @@ static void draw_status_tool(Window * window)
 
 void Window::draw_status()
 {
-	static char zoom_level[22];
-	double xmpp = this->viewport->get_xmpp();
-	double ympp = this->viewport->get_ympp();
-	char *unit = this->viewport->get_coord_mode() == VIK_COORD_UTM ? _("mpp") : _("pixelfact");
-	if (xmpp != ympp) {
-		snprintf(zoom_level, 22, "%.3f/%.3f %s", xmpp, ympp, unit);
-	} else {
-		if ((int)xmpp - xmpp < 0.0) {
-			snprintf(zoom_level, 22, "%.3f %s", xmpp, unit);
-		} else {
-			/* xmpp should be a whole number so don't show useless .000 bit */
-			snprintf(zoom_level, 22, "%d %s", (int)xmpp, unit);
-		}
-	}
-
-	vik_statusbar_set_message(this->viking_vs, VIK_STATUSBAR_ZOOM, zoom_level);
-
-	draw_status_tool(this);
 }
 
 
@@ -1032,43 +993,6 @@ static void window_configure_event(Window * window)
 
 void Window::draw_redraw()
 {
-	VikCoord old_center = this->trigger_center;
-	this->trigger_center = *(this->viewport->get_center());
-	Layer * new_trigger = this->trigger;
-	this->trigger = NULL;
-	Layer * old_trigger = this->viewport->get_trigger();
-
-	if (!new_trigger) {
-		; /* do nothing -- have to redraw everything. */
-	} else if ((old_trigger != new_trigger) || !vik_coord_equals(&old_center, &this->trigger_center) || (new_trigger->type == LayerType::AGGREGATE)) {
-		this->viewport->set_trigger(new_trigger); /* todo: set to half_drawn mode if new trigger is above old */
-	} else {
-		this->viewport->set_half_drawn(true);
-	}
-
-	/* actually draw */
-	this->viewport->clear();
-	// Main layer drawing
-	this->layers_panel->draw_all();
-	// Draw highlight (possibly again but ensures it is on top - especially for when tracks overlap)
-	if (this->viewport->get_draw_highlight()) {
-		if (this->containing_trw && (this->selected_tracks || this->selected_waypoints)) {
-			this->containing_trw->draw_highlight_items(this->selected_tracks, this->selected_waypoints, this->viewport);
-
-		} else if (this->containing_trw && (this->selected_track || this->selected_waypoint)) {
-			this->containing_trw->draw_highlight_item((Track *) this->selected_track, this->selected_waypoint, this->viewport);
-
-		} else if (this->selected_trw) {
-			this->selected_trw->draw_highlight(this->viewport);
-		}
-	}
-	// Other viewport decoration items on top if they are enabled/in use
-	this->viewport->draw_scale();
-	this->viewport->draw_copyright();
-	this->viewport->draw_centermark();
-	this->viewport->draw_logo();
-
-	this->viewport->set_half_drawn(false); /* just in case. */
 }
 
 
@@ -1514,14 +1438,6 @@ static void draw_refresh_cb(GtkAction * a, Window * window)
 
 static void menu_addlayer_cb(GtkAction * a, Window * window)
 {
-	for (LayerType type = LayerType::AGGREGATE; type < LayerType::NUM_TYPES; ++type) {
-		if (!strcmp(vik_layer_get_interface(type)->name, gtk_action_get_name(a))) {
-			if (window->layers_panel->new_layer(type)) {
-				window->draw_update();
-				window->modified = true;
-			}
-		}
-	}
 }
 
 

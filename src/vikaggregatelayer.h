@@ -69,7 +69,7 @@ namespace SlavGPS {
 
 
 		void add_layer(Layer * layer, bool allow_reordering);
-		void insert_layer(Layer * layer, GtkTreeIter *replace_iter);
+		void insert_layer(Layer * layer, QStandardItem * replace_item);
 		void move_layer(GtkTreeIter * child_iter, bool up);
 		bool delete_layer(GtkTreeIter * iter);
 		void clear();

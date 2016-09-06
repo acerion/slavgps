@@ -91,7 +91,7 @@ void LayerAggregate::marshall(uint8_t **data, int *datalen)
 	GByteArray* b = g_byte_array_new();
 	int len;
 
-#define alm_append(obj, sz) 	\
+#define alm_append(obj, sz)					\
 	len = (sz);						\
 	g_byte_array_append(b, (uint8_t *)&len, sizeof(len));	\
 	g_byte_array_append(b, (uint8_t *)(obj), len);
@@ -132,9 +132,7 @@ static Layer * aggregate_layer_unmarshall(uint8_t *data, int len, Viewport * vie
 		Layer * child_layer = Layer::unmarshall(data + sizeof (int), alm_size, viewport);
 		if (child_layer) {
 			aggregate->children->push_front(child_layer);
-#ifndef SLAVGPS_QT
-			g_signal_connect_swapped(G_OBJECT (child_layer->vl), "update", G_CALLBACK(vik_layer_emit_update_secondary), (Layer *) aggregate);
-#endif
+			QObject::connect(child_layer, SIGNAL(Layer::update(void)), (Layer *) aggregate, SLOT(emit_update_secondary(void)));
 		}
 		alm_next;
 	}
@@ -147,34 +145,36 @@ static Layer * aggregate_layer_unmarshall(uint8_t *data, int len, Viewport * vie
 
 
 
-void LayerAggregate::insert_layer(Layer * layer, GtkTreeIter *replace_iter)
+void LayerAggregate::insert_layer(Layer * layer, QStandardItem * replace_item)
 {
-#ifndef SLAVGPS_QT
-	GtkTreeIter iter;
+
+	QStandardItem * item;
 
 	/* By default layers are inserted above the selected layer. */
 	bool put_above = true;
 
+#if 0
 	/* These types are 'base' types in that you what other information on top. */
 	if (layer->type == LayerType::MAPS || layer->type == LayerType::DEM || layer->type == LayerType::GEOREF) {
 		put_above = false;
 	}
+#endif
 
 	if (this->realized) {
-		this->tree_view->insert_layer(&this->iter, &iter, layer->name, this, put_above, layer, (int) layer->type, layer->type, replace_iter, layer->get_timestamp());
-		if (! layer->visible) {
-			this->tree_view->set_visibility(&iter, false);
+		item = this->tree_view->insert_layer(layer, this, this->item, put_above, (int) layer->type, layer->get_timestamp(), replace_item);
+		if (!layer->visible) {
+			this->tree_view->set_visibility(item, false);
 		}
 
-		layer->realize(this->tree_view, &iter);
+		layer->realize(this->tree_view, item);
 
-		if (this->children->empty()) {
-			this->tree_view->expand(&this->iter);
+		if (this->children->empty()) { /* kamilTODO: empty() or !empty()? */
+			this->tree_view->expand(this->item);
 		}
 	}
 
-	if (replace_iter) {
-		Layer * existing_layer = this->tree_view->get_layer(replace_iter);
+	if (replace_item) {
+		Layer * existing_layer = this->tree_view->get_layer(replace_item);
 
 		auto theone = this->children->end();
 		for (auto i = this->children->begin(); i != this->children->end(); i++) {
@@ -198,8 +198,7 @@ void LayerAggregate::insert_layer(Layer * layer, GtkTreeIter *replace_iter)
 		this->children->push_back(layer);
 	}
 
-	g_signal_connect_swapped(G_OBJECT(layer->vl), "update", G_CALLBACK(vik_layer_emit_update_secondary), (Layer *) this);
-#endif
+	QObject::connect(layer, SIGNAL(update(void)), (Layer *) this, SLOT(emit_update_secondary(void)));
 }
 
 
@@ -246,9 +245,7 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 		this->children->push_front(layer);
 	}
 
-#ifndef SLAVGPS_QT
-	g_signal_connect_swapped(G_OBJECT(layer->vl), "update", G_CALLBACK(vik_layer_emit_update_secondary), (Layer *) this);
-#endif
+	QObject::connect(layer, SIGNAL(update(void)), this, SLOT(emit_update_secondary(void)));
 }
 
 
@@ -322,7 +319,13 @@ void LayerAggregate::draw(Viewport * viewport)
 				viewport->snapshot_save();
 			}
 		}
-		if (layer->type == LayerType::AGGREGATE || layer->type == LayerType::GPS || ! viewport->get_half_drawn()) {
+
+		if (layer->type == LayerType::AGGREGATE
+#ifndef SLAVGPS_QT
+		    || layer->type == LayerType::GPS
+#endif
+		    || !viewport->get_half_drawn()) {
+
 			layer->draw_visible(viewport);
 		}
 	}
@@ -363,7 +366,6 @@ static void aggregate_layer_child_visible_toggle(menu_array_values * values)
 
 void LayerAggregate::child_visible_toggle(LayersPanel * panel)
 {
-#ifndef SLAVGPS_QT
 	TreeView * tree = panel->get_treeview();
 
 	/* Loop around all (child) layers applying visibility setting.
@@ -372,11 +374,10 @@ void LayerAggregate::child_visible_toggle(LayersPanel * panel)
 		Layer * layer = *child;
 		layer->visible = !layer->visible;
 		/* Also set checkbox on/off. */
-		tree->toggle_visibility(&layer->iter);
+		tree->toggle_visibility(layer->item);
 	}
 	/* Redraw as view may have changed. */
 	this->emit_update();
-#endif
 }
 
 
@@ -384,19 +385,17 @@ void LayerAggregate::child_visible_toggle(LayersPanel * panel)
 
 void LayerAggregate::child_visible_set(LayersPanel * panel, bool on_off)
 {
-#ifndef SLAVGPS_QT
 	/* Loop around all (child) layers applying visibility setting.
 	   This does not descend the tree if there are aggregates within aggregrate - just the first level of layers held. */
 	for (auto child = this->children->begin(); child != this->children->end(); child++) {
 		Layer * layer = *child;
 		layer->visible = on_off;
 		/* Also set checkbox on_off. */
-		panel->get_treeview()->set_visibility(&layer->iter, on_off);
+		panel->get_treeview()->set_visibility(layer->item, on_off);
 	}
 
 	/* Redraw as view may have changed. */
 	this->emit_update();
-#endif
 }
 
 
@@ -943,8 +942,8 @@ std::list<Layer *> * LayerAggregate::get_all_layers_of_type(std::list<Layer *> *
 			if (layer->visible || include_invisible) {
 				layers->push_back(layer); /* now in top down order */
 			}
-		} else if (layer_type == LayerType::TRW) {
 #ifndef SLAVGPS_QT
+		} else if (layer_type == LayerType::TRW) {
 			/* GPS layers contain TRW layers. cf with usage in file.c */
 			if (layer->type == LayerType::GPS) {
 				if (layer->visible || include_invisible) {

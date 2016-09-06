@@ -62,14 +62,18 @@ namespace SlavGPS {
 
 	enum class LayerType {
 		AGGREGATE = 0,
+#ifndef SLAVGPS_QT
 		TRW,
+#endif
 		COORD,
+#ifndef SLAVGPS_QT
 		GEOREF,
 		GPS,
 		MAPS,
 		DEM,
 #ifdef HAVE_LIBMAPNIK
 		MAPNIK,
+#endif
 #endif
 		NUM_TYPES // Also use this value to indicate no layer association
 	};

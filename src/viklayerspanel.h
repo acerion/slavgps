@@ -87,7 +87,7 @@ namespace SlavGPS {
 		TreeView * get_treeview();
 
 		void set_visible(bool visible);
-		bool get_visible();
+		bool get_visible(void);
 
 		GtkWindow * get_toolkit_window(void);
 		GtkWidget * get_toolkit_widget(void);

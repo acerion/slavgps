@@ -107,11 +107,10 @@ void SlavGPS::layer_init(void)
 /**
  * Invoke the actual drawing via signal method.
  */
-static bool idle_draw(Layer * layer)
+bool Layer::idle_draw() /* Slot. */
 {
-#ifndef SLAVGPS_QT
-	g_signal_emit(G_OBJECT (layer->vl), layer_signals[VL_UPDATE_SIGNAL], 0);
-#endif
+	fprintf(stderr, "layer %s emits 'update' signal\n", this->name);
+	emit this->update();
 	return false; /* Nothing else to do. */
 }
 
@@ -136,9 +135,17 @@ void Layer::emit_update()
 		/* Only ever draw when there is time to do so. */
 		if (g_thread_self() != thread) {
 			/* Drawing requested from another (background) thread, so handle via the gdk thread method. */
+#if 0
 			gdk_threads_add_idle((GSourceFunc) idle_draw, this);
+#else
+			emit this->update();
+#endif
 		} else {
+#if 0
 			g_idle_add((GSourceFunc) idle_draw, this);
+#else
+			emit this->update();
+#endif
 		}
 	}
 #endif
@@ -155,8 +162,13 @@ void vik_layer_emit_update_although_invisible(Layer * layer)
 {
 #ifndef SLAVGPS_QT
 	Window::set_redraw_trigger(layer);
-	g_idle_add((GSourceFunc) idle_draw, layer);
 #endif
+#if 0
+	g_idle_add((GSourceFunc) idle_draw, layer);
+#else
+	emit layer->update();
+#endif
+
 }
 
 
@@ -165,13 +177,33 @@ void vik_layer_emit_update_although_invisible(Layer * layer)
 /* Doesn't set the trigger. should be done by aggregate layer when child emits update. */
 void vik_layer_emit_update_secondary(Layer * layer)
 {
-#ifndef SLAVGPS_QT
 	if (layer->visible) {
 		/* TODO: this can used from the background - e.g. in acquire
 		   so will need to flow background update status through too. */
+#if 0
 		g_idle_add((GSourceFunc) idle_draw, layer);
-	}
+#else
+		emit layer->update();
 #endif
+	}
+}
+
+
+
+
+/* Doesn't set the trigger. should be done by aggregate layer when child emits update. */
+void Layer::emit_update_secondary(void) /* Slot. */
+{
+	if (this->visible) {
+		fprintf(stderr, "scheduling 'idle_draw' for layer %s\n", this->name);
+		/* TODO: this can used from the background - e.g. in acquire
+		   so will need to flow background update status through too. */
+#if 0
+		g_idle_add((GSourceFunc) idle_draw, this);
+#else
+		emit this->update();
+#endif
+	}
 }
 
 
@@ -337,9 +369,11 @@ Layer * Layer::new_(LayerType layer_type, Viewport * viewport, bool interactive)
 /* Returns true if OK was pressed. */
 bool vik_layer_properties(Layer * layer, Viewport * viewport)
 {
+#ifndef SLAVGPS_QT
 	if (layer->type == LayerType::GEOREF) {
 		return layer->properties(viewport);
 	}
+#endif
 
 	return vik_layer_properties_factory(layer, viewport);
 }
@@ -551,16 +585,17 @@ Layer::~Layer()
 
 
 
-bool vik_layer_selected(Layer * layer, SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeItemType type)
+bool Layer::layer_selected(SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeItemType type)
 {
-#ifndef SLAVGPS_QT
-	bool result = layer->selected(sublayer_type, sublayer_uid, type);
+	bool result = this->selected(sublayer_type, sublayer_uid, type);
 	if (result) {
 		return result;
 	} else {
-		return layer->get_window()->clear_highlight();
-	}
+#ifndef SLAVGPS_QT
+		return this->get_window()->clear_highlight();
 #endif
+	}
+
 }
 
 

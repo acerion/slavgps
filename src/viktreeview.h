@@ -98,6 +98,7 @@ namespace SlavGPS {
 
 		void add_layer(GtkTreeIter *parent_iter, GtkTreeIter *iter, const char *name, Layer * parent_layer, bool above, Layer * layer, int data, LayerType layer_type, time_t timestamp);
 		QStandardItem * add_layer(Layer * layer, Layer * parent_layer, QStandardItem * parent_item, bool above, int data, time_t timestamp);
+		QStandardItem * insert_layer(Layer * layer, Layer * parent_layer, QStandardItem * parent_item, bool above, int data, time_t timestamp, QStandardItem * sibling);
 		void insert_layer(GtkTreeIter *parent_iter, GtkTreeIter *iter, const char *name, Layer * parent_layer, bool above, Layer * layer, int data, LayerType layer_type, GtkTreeIter *sibling, time_t timestamp);
 		void add_sublayer(GtkTreeIter *parent_iter, GtkTreeIter *iter, const char *name, Layer * parent_layer, sg_uid_t sublayer_uid, SublayerType sublayer_type, GdkPixbuf *icon, bool editable, time_t timestamp);
 
@@ -108,8 +109,8 @@ namespace SlavGPS {
 		Layer * get_layer(QStandardItem * item);
 
 		SublayerType get_sublayer_type(QStandardItem * item);
-		sg_uid_t     get_sublayer_uid(GtkTreeIter * iter);
-		void       * get_sublayer_uid_pointer(GtkTreeIter * iter);
+		sg_uid_t     get_sublayer_uid(QStandardItem * item);
+		void       * get_sublayer_uid_pointer(QStandardItem * item);
 
 		QString get_name(QStandardItem * item);
 
@@ -126,7 +127,7 @@ namespace SlavGPS {
 		void set_timestamp(GtkTreeIter * iter, time_t timestamp);
 
 
-		void select(GtkTreeIter * iter);
+		void select(QStandardItem * item);
 		void select_and_expose(GtkTreeIter * iter);
 		void unselect(GtkTreeIter * iter);
 		void erase(GtkTreeIter * iter);
@@ -155,6 +156,9 @@ namespace SlavGPS {
 		GtkTreeView * tv_;
 		GtkTreeModel * model;
 #endif
+
+	private slots:
+		void select_cb(void);
 
 	private:
 		void add_columns();

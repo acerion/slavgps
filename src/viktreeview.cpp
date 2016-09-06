@@ -28,17 +28,17 @@
 #include <cstdlib>
 #include <cassert>
 
+#include <QVariant>
+
 #ifndef SLAVGPS_QT
 #include <glib.h>
 #endif
 #include <glib/gi18n.h>
 
 #include "viklayer.h"
-#ifdef SLAVGPS_QT
-#include <QVariant>
-#else
-#include "window.h"
-#endif
+#include "window_qt.h"
+
+
 #include "viktreeview.h"
 #include "viklayerspanel.h"
 #include "globals.h"
@@ -300,19 +300,21 @@ SublayerType TreeView::get_sublayer_type(QStandardItem * item)
 
 
 
-void * TreeView::get_sublayer_uid_pointer(GtkTreeIter * iter)
+void * TreeView::get_sublayer_uid_pointer(QStandardItem * item)
 {
-	sg_uid_t * uid;
+	sg_uid_t * uid = NULL;
+#if 0
 	TREEVIEW_GET (this->model, iter, COLUMN_UID, &uid);
+#endif
 	return uid;
 }
 
 
 
 
-sg_uid_t TreeView::get_sublayer_uid(GtkTreeIter * iter)
+sg_uid_t TreeView::get_sublayer_uid(QStandardItem * item)
 {
-	void * uid = this->get_sublayer_uid_pointer(iter);
+	void * uid = this->get_sublayer_uid_pointer(item);
 	return (sg_uid_t) KPOINTER_TO_UINT (uid);
 }
 
@@ -478,39 +480,35 @@ void TreeView::add_columns()
 
 
 
-static void select_cb(GtkTreeSelection * selection, void * data)
+void TreeView::select_cb(void) /* Slot. */
 {
-#ifndef SLAVGPS_QT
-	GtkTreeIter iter;
-	if (!gtk_tree_selection_get_selected(selection, NULL, &iter)) {
+	QStandardItem * item = this->get_selected_item();
+	if (!item) {
 		return;
 	}
 
-	TreeView * tree_view = (TreeView *) data;
-	SublayerType sublayer_type = tree_view->get_sublayer_type(&iter);
-	TreeItemType tree_item_type = tree_view->get_item_type(&iter);
-	sg_uid_t sublayer_uid = tree_view->get_sublayer_uid(&iter);
+	SublayerType sublayer_type = this->get_sublayer_type(item);
+	TreeItemType tree_item_type = this->get_item_type(item);
+	sg_uid_t sublayer_uid = this->get_sublayer_uid(item);
 
 	if (tree_item_type == TreeItemType::SUBLAYER) {
-		if (!tree_view->go_up_to_layer(&iter)) {
+		if (!this->go_up_to_layer(item)) {
 			return;
 		}
 	}
 
-	Layer * layer = tree_view->get_layer(&iter);
+	Layer * layer = this->get_layer(item);
 	Window * window = layer->get_window();
 	window->selected_layer(layer);
 
 	/* Apply settings now we have the all details. */
-	if (vik_layer_selected(layer,
-			       sublayer_type,
-			       sublayer_uid,
-			       tree_item_type)) {
+	if (layer->layer_selected(sublayer_type,
+				  sublayer_uid,
+				  tree_item_type)) {
 
 		/* Redraw required. */
 		window->get_layers_panel()->emit_update();
 	}
-#endif
 }
 
 
@@ -719,7 +717,7 @@ void TreeView::expand(QStandardItem * item)
 
 
 
-void TreeView::select(GtkTreeIter *iter)
+void TreeView::select(QStandardItem * item)
 {
 #ifndef SLAVGPS_QT
 	gtk_tree_selection_select_iter(gtk_tree_view_get_selection(this->tv_), iter);
@@ -1110,6 +1108,26 @@ QStandardItem * TreeView::add_layer(Layer * layer, Layer * parent_layer, QStanda
 	connect(this->model, SIGNAL(itemChanged(QStandardItem*)), layer, SLOT(visibility_toggled(QStandardItem *)));
 
 	return ret;
+}
+
+
+
+QStandardItem * TreeView::insert_layer(Layer * layer, Layer * parent_layer, QStandardItem * parent_item, bool above, int data, time_t timestamp, QStandardItem * sibling)
+{
+	QStandardItem * item = NULL;
+	/* kamilTODO: handle "sibling" */
+#ifndef SLAVGPS_QT
+	if (sibling) {
+		if (above) {
+			gtk_tree_store_insert_before(GTK_TREE_STORE (this->model), iter, parent_iter, sibling);
+		} else {
+			gtk_tree_store_insert_after(GTK_TREE_STORE (this->model), iter, parent_iter, sibling);
+		}
+	} else
+#endif
+		{
+		return this->add_layer(layer, parent_layer, parent_item, above, data, timestamp);
+	}
 }
 
 

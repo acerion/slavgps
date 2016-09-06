@@ -176,9 +176,9 @@ namespace SlavGPS {
 		VikStatusbar * viking_vs = NULL;
 		VikToolbar * viking_vtb = NULL;
 
-		char * filename = NULL;
-		bool modified = false;
-		VikLoadType_t loaded_type = LOAD_TYPE_READ_FAILURE; /* AKA none. */
+		//char * filename = NULL;
+		//bool modified = false;
+		//VikLoadType_t loaded_type = LOAD_TYPE_READ_FAILURE; /* AKA none. */
 
 		unsigned int draw_image_width;
 		unsigned int draw_image_height;
@@ -189,8 +189,8 @@ namespace SlavGPS {
 
 		GThread  * thread = NULL;
 		/* Half-drawn update. */
-		Layer * trigger = NULL;
-		VikCoord trigger_center;
+		//Layer * trigger = NULL;
+		//VikCoord trigger_center;
 
 		/* Display controls.
 		   NB scale, centermark and highlight are in viewport. */
