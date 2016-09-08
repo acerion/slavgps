@@ -30,7 +30,12 @@
 
 #ifdef SLAVGPS_QT
 #include <QPainter>
+#include <QPen>
 #include <QWidget>
+#include <QWheelEvent>
+#include <QMouseEvent>
+#include <QPen>
+
 #include "slav_qt.h"
 #else
 #include <gtk/gtk.h>
@@ -90,7 +95,7 @@ namespace SlavGPS {
 
 	public:
 #ifdef SLAVGPS_QT
-		Viewport(QWidget * parent);
+		Viewport(Window * parent);
 #else
 		Viewport();
 #endif
@@ -103,6 +108,8 @@ namespace SlavGPS {
 #ifdef SLAVGPS_QT
 		void paintEvent(QPaintEvent * event);
 		void resizeEvent(QResizeEvent * event);
+		void mousePressEvent(QMouseEvent * event);
+		void wheelEvent(QWheelEvent * event);
 #endif
 		/* Drawing primitives. */
 
@@ -116,7 +123,7 @@ namespace SlavGPS {
 
 		void draw_pixbuf(GdkPixbuf * pixbuf, int src_x, int src_y, int dest_x, int dest_y, int region_width, int region_height);
 #else
-		void draw_line(GdkGC * gc, int x1, int y1, int x2, int y2);
+		void draw_line(const QPen & pen, int x1, int y1, int x2, int y2);
 		void draw_rectangle(GdkGC * gc, bool filled, int x1, int y1, int x2, int y2);
 		void draw_string(GdkFont * font, GdkGC * gc, int x1, int y1, char const * string);
 		void draw_arc(GdkGC * gc, bool filled, int x, int y, int width, int height, int angle1, int angle2);
@@ -301,9 +308,13 @@ namespace SlavGPS {
 		VikViewportDrawMode drawmode;
 
 
+		/* For scale and center mark. */
+		QPen pen_marks_bg;
+		QPen pen_marks_fg;
+
 		GdkGC * background_gc = NULL;
 		GdkColor background_color;
-		GdkGC * scale_bg_gc = NULL;
+
 		GdkGC * highlight_gc = NULL;
 		GdkColor highlight_color;
 
@@ -319,6 +330,15 @@ namespace SlavGPS {
 
 		GtkDrawingArea * drawing_area_ = NULL; /* Toolkit-specific drawing area. */
 		char type_string[30] = { 0 };
+
+		Window * window = NULL;
+
+	signals:
+		void updated_center(void);
+
+
+	public slots:
+		bool configure_cb(void);
 	};
 
 

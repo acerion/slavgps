@@ -25,9 +25,9 @@
 
 
 
+#include <QPen>
 
 #include "viklayer.h"
-
 
 
 
@@ -56,8 +56,8 @@ namespace SlavGPS {
 		void draw_latlon(Viewport * viewport);
 		void draw_utm(Viewport * viewport);
 
-		GdkGC * gc = NULL;
-		GdkColor color;
+		QPen pen;
+		QColor color;
 
 		double deg_inc;
 		uint8_t line_thickness;

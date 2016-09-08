@@ -47,6 +47,7 @@ namespace SlavGPS {
 	protected:
 
 	private slots:
+		void center_changed_cb(void);
 
 	private:
 

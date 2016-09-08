@@ -42,11 +42,15 @@
 #include <cstdlib>
 #include <cassert>
 
+#include <QMouseEvent>
+#include <QWheelEvent>
+
 #ifndef SLAVGPS_QT
 #include <glib-object.h>
 #endif
 
 #include "vikviewport.h"
+#include "window_qt.h"
 #include "coords.h"
 #ifndef SLAVGPS_QT
 #include "window.h"
@@ -89,28 +93,13 @@ double calcR(double lat);
 
 static double Radius[181];
 static void viewport_init_ra();
-bool vik_viewport_configure_cb(GtkDrawingArea * area);
 
-
-
-
-enum {
-	VW_UPDATED_CENTER_SIGNAL = 0,
-	VW_LAST_SIGNAL,
-};
-static unsigned int viewport_signals[VW_LAST_SIGNAL] = { 0 };
 
 
 
 
 void SlavGPS::viewport_init(void)
 {
-#ifndef SLAVGPS_QT
-	viewport_signals[VW_UPDATED_CENTER_SIGNAL] = g_signal_new("updated_center", G_TYPE_OBJECT,
-								  (GSignalFlags) (G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION),
-								  0, NULL, NULL,
-								  g_cclosure_marshal_VOID__VOID, G_TYPE_NONE, 0);
-#endif
 	viewport_init_ra();
 }
 
@@ -120,18 +109,17 @@ void SlavGPS::viewport_init(void)
 void Viewport::init_drawing_area()
 {
 #ifdef SLAVGPS_QT
+	//connect(this, SIGNAL(resizeEvent(QResizeEvent *)), this, SLOT(configure_cb(void)));
 	//this->qpainter = new QPainter(this);
-#else
-	this->drawing_area_ = (GtkDrawingArea *) gtk_drawing_area_new();
 
-	g_signal_connect(G_OBJECT (this->drawing_area_), "configure_event", G_CALLBACK (vik_viewport_configure_cb), NULL);
+	this->setFocusPolicy(Qt::ClickFocus);
+#else
 
 #if GTK_CHECK_VERSION (2,18,0)
 	gtk_widget_set_can_focus(GTK_WIDGET (this->drawing_area_), true);
 #else
 	GTK_WIDGET_SET_FLAGS (this->drawing_area_, GTK_CAN_FOCUS); /* Allow drawing area to have focus -- enabling key events, etc. */
 #endif
-	g_object_set_data((GObject *) this->drawing_area_, "viewport", this);
 #endif
 }
 
@@ -174,16 +162,13 @@ GdkColor * Viewport::get_background_gdkcolor()
 
 
 
-#ifdef SLAVGPS_QT
-Viewport::Viewport(QWidget * parent) : QWidget(parent)
-#else
-Viewport::Viewport()
-#endif
+Viewport::Viewport(Window * parent) : QWidget((QWidget *) parent)
 {
-#ifdef SLAVGPS_QT
+	this->window = parent;
+
 	this->setMinimumSize(200, 300);
 	this->setMaximumSize(2700, 2700);
-#endif
+
 	struct UTM utm;
 	struct LatLon ll;
 	ll.lat = a_vik_get_default_lat();
@@ -281,11 +266,6 @@ Viewport::~Viewport()
 
 	if (this->highlight_gc) {
 		g_object_unref(G_OBJECT (this->highlight_gc));
-	}
-
-	if (this->scale_bg_gc) {
-		g_object_unref(G_OBJECT (this->scale_bg_gc));
-		this->scale_bg_gc = NULL;
 	}
 #endif
 }
@@ -491,18 +471,10 @@ GdkPixmap * Viewport::get_pixmap()
 
 
 
-bool vik_viewport_configure_cb(GtkDrawingArea * drawing_area)
+bool Viewport::configure_cb(void)
 {
-#ifdef SLAVGPS_QT
-	return true;
-#else
-	fprintf(stderr, "=========== viewport configure event\n");
-	assert (drawing_area);
-
-
-	void * viewport = g_object_get_data((GObject *) drawing_area, "viewport");
-	return ((Viewport *) viewport)->configure();
-#endif
+	fprintf(stderr, "---- handling signal \"configure event\" (%s:%d)\n", __FUNCTION__, __LINE__);
+	return this->configure();
 }
 
 
@@ -519,27 +491,21 @@ bool Viewport::configure()
 	this->size_height_2 = this->size_height / 2;
 
 	if (this->scr_buffer) {
+		// g_object_unref (G_OBJECT (this->scr_buffer));
 		delete this->scr_buffer;
 	}
 	fprintf(stderr, "%s:%d: creating new pixmap with %d/%d\n", __FUNCTION__, __LINE__, this->size_width, this->size_height);
 	this->scr_buffer = new QPixmap(this->size_width, this->size_height);
 	this->scr_buffer->fill();
 
+	this->pen_marks_fg.setColor(QColor("grey"));
+	this->pen_marks_fg.setWidth(3);
+	this->pen_marks_bg.setColor(QColor("white"));
+	this->pen_marks_bg.setWidth(6);
+
+
 	return false;
 #else
-	GtkAllocation allocation;
-	gtk_widget_get_allocation(GTK_WIDGET(this->drawing_area_), &allocation);
-	this->size_width = allocation.width;
-	this->size_height = allocation.height;
-
-	this->size_width_2 = this->size_width / 2;
-	this->size_height_2 = this->size_height / 2;
-
-	if (this->scr_buffer) {
-		g_object_unref (G_OBJECT (this->scr_buffer));
-	}
-
-	this->scr_buffer = gdk_pixmap_new(gtk_widget_get_window(GTK_WIDGET(this->drawing_area_)), this->size_width, this->size_height, -1);
 
 	/* TODO trigger: only if enabled! */
 	if (this->snapshot_buffer) {
@@ -558,10 +524,6 @@ bool Viewport::configure()
 		this->highlight_gc = this->new_gc(DEFAULT_HIGHLIGHT_COLOR, 1);
 		this->set_highlight_color(DEFAULT_HIGHLIGHT_COLOR);
 	}
-	if (!this->scale_bg_gc) {
-		this->scale_bg_gc = this->new_gc("grey", 3);
-	}
-
 	return false;
 #endif
 }
@@ -574,13 +536,10 @@ bool Viewport::configure()
  */
 void Viewport::clear()
 {
-	fprintf(stderr, "%s:%d\n", __FUNCTION__, __LINE__);
-#ifdef SLAVGPS_QT
+	fprintf(stderr, "    %s:%d\n", __FUNCTION__, __LINE__);
 	QPainter painter(this->scr_buffer);
 	painter.eraseRect(0, 0, this->size_width, this->size_height);
-#else
-	gdk_draw_rectangle(GDK_DRAWABLE(scr_buffer), background_gc, true, 0, 0, this->size_width, this->size_height);
-#endif
+
 	this->reset_copyrights();
 	this->reset_logos();
 }
@@ -708,38 +667,30 @@ void Viewport::draw_scale()
 	   it should be something like 1.00 mile or 10.00 km - a unit. */
 	double scale_unit = 1; /* [km, miles, nautical miles] */
 
-#ifdef SLAVGPS_QT
-	base_distance = 10;
-#endif
 	fprintf(stderr, "%s:%d: base_distance = %g, scale_unit = %g, MAXIMUM_WIDTH = %d\n", __FUNCTION__, __LINE__, base_distance, scale_unit, MAXIMUM_WIDTH);
 	int len = rescale_unit(&base_distance, &scale_unit, MAXIMUM_WIDTH);
 	fprintf(stderr, "resolved len = %d\n", len);
 
-#ifdef SLAVGPS_QT
-	GdkGC * paint_bg = NULL;
-	GdkGC * paint_fg = NULL;
-#else
-	GdkGC * paint_bg = scale_bg_gc;
-	GdkGC * paint_fg = gtk_widget_get_style(GTK_WIDGET(this->drawing_area_))->black_gc;
-#endif
+	const QPen & pen_fg = this->pen_marks_fg;
+	const QPen & pen_bg = this->pen_marks_bg;
 
 	/* White background. */
-	this->draw_line(paint_bg, PAD,       this->size_height - PAD, PAD + len, this->size_height - PAD);
-	this->draw_line(paint_bg, PAD,       this->size_height - PAD, PAD,       this->size_height - PAD - HEIGHT);
-	this->draw_line(paint_bg, PAD + len, this->size_height - PAD, PAD + len, this->size_height - PAD - HEIGHT);
+	this->draw_line(pen_bg, PAD,       this->size_height - PAD, PAD + len, this->size_height - PAD);
+	this->draw_line(pen_bg, PAD,       this->size_height - PAD, PAD,       this->size_height - PAD - HEIGHT);
+	this->draw_line(pen_bg, PAD + len, this->size_height - PAD, PAD + len, this->size_height - PAD - HEIGHT);
 
 	/* Black scale. */
-	this->draw_line(paint_fg, PAD,       this->size_height - PAD, PAD + len, this->size_height - PAD);
-	this->draw_line(paint_fg, PAD,       this->size_height - PAD, PAD,       this->size_height - PAD - HEIGHT);
-	this->draw_line(paint_fg, PAD + len, this->size_height - PAD, PAD + len, this->size_height - PAD - HEIGHT);
+	this->draw_line(pen_fg, PAD,       this->size_height - PAD, PAD + len, this->size_height - PAD);
+	this->draw_line(pen_fg, PAD,       this->size_height - PAD, PAD,       this->size_height - PAD - HEIGHT);
+	this->draw_line(pen_fg, PAD + len, this->size_height - PAD, PAD + len, this->size_height - PAD - HEIGHT);
 
 
 	int y1 = this->size_height - PAD;
 	for (int i = 1; i < 10; i++) {
 		int x1 = PAD + i * len / 10;
 		int diff = ((i == 5) ? (2 * HEIGHT / 3) : (1 * HEIGHT / 3));
-		this->draw_line(paint_bg, x1, y1, x1, y1 - diff);
-		this->draw_line(paint_fg, x1, y1, x1, y1 - diff);
+		this->draw_line(pen_bg, x1, y1, x1, y1 - diff);
+		this->draw_line(pen_fg, x1, y1, x1, y1 - diff);
 	}
 
 	char s[128];
@@ -782,7 +733,7 @@ void Viewport::draw_scale()
 	PangoLayout * pl = gtk_widget_create_pango_layout(GTK_WIDGET(this->drawing_area_), NULL);
 	pango_layout_set_font_description(pl, gtk_widget_get_style(GTK_WIDGET(this->drawing_area_))->font_desc);
 	pango_layout_set_text(pl, s, -1);
-	this->draw_layout(paint_fg, PAD + len + PAD, this->size_height - PAD - 10, pl);
+	this->draw_layout(pen_fg, PAD + len + PAD, this->size_height - PAD - 10, pl);
 	g_object_unref(pl);
 	pl = NULL;
 #endif
@@ -874,23 +825,20 @@ void Viewport::draw_centermark()
 	int center_x = this->size_width / 2;
 	int center_y = this->size_height / 2;
 
-#ifdef SLAVGPS_QT
-	GdkGC * black_gc = NULL;
-#else
-	GdkGC * black_gc = gtk_widget_get_style(GTK_WIDGET(this->drawing_area_))->black_gc;
-#endif
+	const QPen & pen_fg = this->pen_marks_fg;
+	const QPen & pen_bg = this->pen_marks_bg;
 
 	/* White background. */
-	this->draw_line(scale_bg_gc, center_x - len, center_y,       center_x - gap, center_y);
-	this->draw_line(scale_bg_gc, center_x + gap, center_y,       center_x + len, center_y);
-	this->draw_line(scale_bg_gc, center_x,       center_y - len, center_x,       center_y - gap);
-	this->draw_line(scale_bg_gc, center_x,       center_y + gap, center_x,       center_y + len);
+	this->draw_line(pen_bg, center_x - len, center_y,       center_x - gap, center_y);
+	this->draw_line(pen_bg, center_x + gap, center_y,       center_x + len, center_y);
+	this->draw_line(pen_bg, center_x,       center_y - len, center_x,       center_y - gap);
+	this->draw_line(pen_bg, center_x,       center_y + gap, center_x,       center_y + len);
 
 	/* Black foreground. */
-	this->draw_line(black_gc, center_x - len, center_y,        center_x - gap, center_y);
-	this->draw_line(black_gc, center_x + gap, center_y,        center_x + len, center_y);
-	this->draw_line(black_gc, center_x,       center_y - len,  center_x,       center_y - gap);
-	this->draw_line(black_gc, center_x,       center_y + gap,  center_x,       center_y + len);
+	this->draw_line(pen_fg, center_x - len, center_y,        center_x - gap, center_y);
+	this->draw_line(pen_fg, center_x + gap, center_y,        center_x + len, center_y);
+	this->draw_line(pen_fg, center_x,       center_y - len,  center_x,       center_y - gap);
+	this->draw_line(pen_fg, center_x,       center_y + gap,  center_x,       center_y + len);
 }
 
 
@@ -1161,12 +1109,8 @@ void Viewport::update_centers()
 
 	this->print_centers((char *) "update_centers");
 
-	fprintf(stderr, "=========== issuing updated center signal\n");
-
-#ifndef SLAVGPS_QT
-	/* Inform interested subscribers that this change has occurred. */
-	g_signal_emit(G_OBJECT(this->drawing_area_), viewport_signals[VW_UPDATED_CENTER_SIGNAL], 0);
-#endif
+	fprintf(stderr, "++++ emitting updated_center() (%s:%d)\n", __FUNCTION__, __LINE__);
+	emit this->updated_center();
 }
 
 
@@ -1639,11 +1583,7 @@ void Viewport::clip_line(int * x1, int * y1, int * x2, int * y2)
 
 
 
-#ifdef SLAVGPS_QT
-void Viewport::draw_line(GdkGC * gc, int x1, int y1, int x2, int y2)
-#else
-void Viewport::draw_line(GdkGC * gc, int x1, int y1, int x2, int y2)
-#endif
+void Viewport::draw_line(const QPen & pen, int x1, int y1, int x2, int y2)
 {
 	//fprintf(stderr, "Called to draw line between points (%d %d) and (%d %d)\n", x1, y1, x2, y2);
 	if (! ((x1 < 0 && x2 < 0) || (y1 < 0 && y2 < 0)
@@ -1655,6 +1595,7 @@ void Viewport::draw_line(GdkGC * gc, int x1, int y1, int x2, int y2)
 #ifdef SLAVGPS_QT
 		//fprintf(stderr, "Drawing line %d %d / %d %d\n", x1, y1, x2, y2);
 		QPainter painter(this->scr_buffer);
+		painter.setPen(pen);
 
 		//painter.begin(this->scr_buffer);
 		painter.drawLine(x1, y1, x2, y2);
@@ -2265,3 +2206,68 @@ void Viewport::resizeEvent(QResizeEvent * event)
 	return;
 }
 #endif
+
+
+
+
+void Viewport::mousePressEvent(QMouseEvent * event)
+{
+	fprintf(stderr, "mouse event, button %d\n", (int) event->button());
+	event->ignore();
+}
+
+
+
+
+void Viewport::wheelEvent(QWheelEvent * event)
+{
+	QPoint angle = event->angleDelta();
+	fprintf(stderr, "wheel event, buttons %d, angle = %d\n", (int) event->buttons(), angle.y());
+	event->accept();
+
+	const Qt::KeyboardModifiers modifiers = event->modifiers(); // (GDK_SHIFT_MASK | GDK_CONTROL_MASK);
+
+	const int w = this->get_width();
+	const int h = this->get_height();
+	const bool scroll_up = angle.y() > 0;
+
+	if (modifiers == Qt::ControlModifier) {
+		/* Control == pan up & down. */
+		if (scroll_up) {
+			this->set_center_screen(w / 2, h / 3);
+		} else {
+			this->set_center_screen(w / 2, h * 2 / 3);
+		}
+	} else if (modifiers == Qt::ShiftModifier) {
+		/* Shift == pan left & right. */
+		if (scroll_up) {
+			this->set_center_screen(w / 3, h / 2);
+		} else {
+			this->set_center_screen(w * 2 / 3, h / 2);
+		}
+	} else if (modifiers == (Qt::ControlModifier | Qt::ShiftModifier)) {
+		/* This zoom is on the center position. */
+		if (scroll_up) {
+			this->zoom_in();
+		} else {
+			this->zoom_out();
+		}
+	} else {
+		/* Make sure mouse is still over the same point on the map when we zoom. */
+		VikCoord coord;
+		int x, y;
+		int center_x = w / 2;
+		int center_y = h / 2;
+		this->screen_to_coord(event->x(), event->y(), &coord);
+		if (scroll_up) {
+			this->zoom_in();
+		} else {
+			this->zoom_out();
+		}
+		this->coord_to_screen(&coord, &x, &y);
+		this->set_center_screen(center_x + (x - event->x()),
+					center_y + (y - event->y()));
+	}
+
+	this->window->draw_update();
+}

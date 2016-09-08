@@ -188,18 +188,11 @@ LayerParamData LayerCoord::get_param(uint16_t id, bool is_file_operation) const
 
 
 
-
 void LayerCoord::post_read(Viewport * viewport, bool from_file)
 {
-#ifndef SLAVGPS_QT
-	if (this->gc) {
-		g_object_unref(G_OBJECT(this->gc));
-	}
-#endif
-
-	this->gc = viewport->new_gc_from_color(&(this->color), this->line_thickness);
+	this->pen.setColor(this->color);
+	this->pen.setWidth(this->line_thickness);
 }
-
 
 
 
@@ -223,24 +216,20 @@ void LayerCoord::draw(Viewport * viewport)
 
 
 
-
 void LayerCoord::draw_latlon(Viewport * viewport)
 {
-#ifdef SLAVGPS_QT
-	GdkGC * dgc = NULL;
-	GdkGC * mgc = NULL;
-	GdkGC * sgc = NULL;
-#else
-	GdkGC * dgc = viewport->new_gc_from_color(&(this->color), this->line_thickness);
-	GdkGC * mgc = viewport->new_gc_from_color(&(this->color), MAX(this->line_thickness / 2, 1));
-	GdkGC * sgc = viewport->new_gc_from_color(&(this->color), MAX(this->line_thickness / 5, 1));
-#endif
+	QPen dgc(this->color);
+	dgc.setWidth(this->line_thickness);
+	QPen mgc(this->color);
+	mgc.setWidth(MAX(this->line_thickness / 2, 1));
+	QPen sgc(this->color);
+	sgc.setWidth(MAX(this->line_thickness / 5, 1));
 
 	int x1, y1, x2, y2;
 #define CLINE(gc, c1, c2) {						\
 		viewport->coord_to_screen((c1), &x1, &y1);		\
 		viewport->coord_to_screen((c2), &x2, &y2);		\
-		viewport->draw_line((gc), x1 + 1, y1 + 1, x2, y2);		\
+		viewport->draw_line((gc), x1 + 1, y1 + 1, x2, y2);	\
 	}
 
 
@@ -404,7 +393,7 @@ void LayerCoord::draw_utm(Viewport * viewport)
 		int x1 = ((utm.easting - center->easting) / xmpp) + (width / 2);
 		a_coords_latlon_to_utm(&ll2, &utm);
 		int x2 = ((utm.easting - center->easting) / xmpp) + (width / 2);
-		viewport->draw_line(this->gc, x1, height, x2, 0);
+		viewport->draw_line(this->pen, x1, height, x2, 0);
 	}
 
 	utm = *center;
@@ -425,7 +414,7 @@ void LayerCoord::draw_utm(Viewport * viewport)
 		int x1 = (height / 2) - ((utm.northing - center->northing) / ympp);
 		a_coords_latlon_to_utm (&ll2, &utm);
 		int x2 = (height / 2) - ((utm.northing - center->northing) / ympp);
-		viewport->draw_line(this->gc, width, x2, 0, x1);
+		viewport->draw_line(this->pen, width, x2, 0, x1);
 	}
 }
 
@@ -435,11 +424,6 @@ void LayerCoord::draw_utm(Viewport * viewport)
 
 LayerCoord::~LayerCoord()
 {
-#ifndef SLAVGPS_QT
-	if (this->gc) {
-		g_object_unref(G_OBJECT (this->gc));
-	}
-#endif
 }
 
 
@@ -448,13 +432,8 @@ LayerCoord::~LayerCoord()
 
 void LayerCoord::update_gc(Viewport * viewport)
 {
-#ifndef SLAVGPS_QT
-	if (this->gc) {
-		g_object_unref(G_OBJECT(this->gc));
-	}
-
-	this->gc = viewport->new_gc_from_color(&(this->color), this->line_thickness);
-#endif
+	this->pen.setColor(this->color);
+	this->pen.setWidth(this->line_thickness);
 }
 
 
@@ -466,6 +445,9 @@ LayerCoord::LayerCoord()
 	fprintf(stderr, "LayerCoord()\n");
 	this->type = LayerType::COORD;
 	strcpy(this->type_string, "COORD");
+
+	this->color.setNamedColor("black");
+	this->line_thickness = 3;
 
 	this->rename("My Coord Layer"); /* kamilFIXME: this shouldn't be here. Shouldn't we get the default name from layer defaults or layer interface? */
 }
@@ -480,6 +462,9 @@ LayerCoord::LayerCoord(Viewport * viewport)
 
 	this->type = LayerType::COORD;
 	strcpy(this->type_string, "COORD");
+
+	this->color.setNamedColor("black");
+	this->line_thickness = 3;
 
 
 	this->set_defaults(viewport);

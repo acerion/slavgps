@@ -21,6 +21,11 @@ Window::Window()
 	this->create_layout();
 	this->create_actions();
 
+
+	// Own signals
+	connect(this->viewport, SIGNAL(updated_center(void)), this, SLOT(center_changed_cb(void)));
+
+
 	this->layers_panel->new_layer(SlavGPS::LayerType::COORD);
 }
 
@@ -283,4 +288,30 @@ Viewport * Window::get_viewport()
 LayersPanel * Window::get_layers_panel()
 {
 	return this->layers_panel;
+}
+
+
+
+
+/**
+ * center_changed_cb:
+ */
+void Window::center_changed_cb(void) /* Slot. */
+{
+	fprintf(stderr, "---- handling updated_center signal (%s:%d)\n", __FUNCTION__, __LINE__);
+#if 0
+	// ATM Keep back always available, so when we pan - we can jump to the last requested position
+	/*
+	  GtkAction* action_back = gtk_action_group_get_action(window->action_group, "GoBack");
+	  if (action_back) {
+	  gtk_action_set_sensitive(action_back, vik_viewport_back_available(window->viewport));
+	  }
+	*/
+	GtkAction* action_forward = gtk_action_group_get_action(this->action_group, "GoForward");
+	if (action_forward) {
+		gtk_action_set_sensitive(action_forward, this->viewport->forward_available());
+	}
+
+	toolbar_action_set_sensitive(this->viking_vtb, "GoForward", this->viewport->forward_available());
+#endif
 }

@@ -1225,50 +1225,7 @@ static void draw_scroll_cb(Window * window, GdkEventScroll * event)
 
 void Window::draw_scroll(GdkEventScroll * event)
 {
-	unsigned int modifiers = event->state & (GDK_SHIFT_MASK | GDK_CONTROL_MASK);
 
-	int width = this->viewport->get_width();
-	int height = this->viewport->get_height();
-
-	if (modifiers == GDK_CONTROL_MASK) {
-		/* control == pan up & down */
-		if (event->direction == GDK_SCROLL_UP) {
-			this->viewport->set_center_screen(width/2, height/3);
-		} else {
-			this->viewport->set_center_screen(width/2, height*2/3);
-		}
-	} else if (modifiers == GDK_SHIFT_MASK) {
-		/* shift == pan left & right */
-		if (event->direction == GDK_SCROLL_UP) {
-			this->viewport->set_center_screen(width/3, height/2);
-		} else {
-			this->viewport->set_center_screen(width*2/3, height/2);
-		}
-	} else if (modifiers == (GDK_CONTROL_MASK | GDK_SHIFT_MASK)) {
-		// This zoom is on the center position
-		if (event->direction == GDK_SCROLL_UP) {
-			this->viewport->zoom_in();
-		} else {
-			this->viewport->zoom_out();
-		}
-	} else {
-		/* make sure mouse is still over the same point on the map when we zoom */
-		VikCoord coord;
-		int x, y;
-		int center_x = width / 2;
-		int center_y = height / 2;
-		this->viewport->screen_to_coord(event->x, event->y, &coord);
-		if (event->direction == GDK_SCROLL_UP) {
-			this->viewport->zoom_in();
-		} else {
-			this->viewport->zoom_out();
-		}
-		this->viewport->coord_to_screen(&coord, &x, &y);
-		this->viewport->set_center_screen(center_x + (x - event->x),
-						  center_y + (y - event->y));
-	}
-
-	this->draw_update();
 }
 
 
@@ -4250,8 +4207,7 @@ Window::Window()
 
 	g_signal_connect(this->get_toolkit_object(), "delete_event", G_CALLBACK (delete_event), NULL);
 
-	// Own signals
-	g_signal_connect_swapped(G_OBJECT(this->viewport->get_toolkit_object()), "updated_center", G_CALLBACK(center_changed_cb), this);
+
 	// Signals from GTK
 	g_signal_connect_swapped(G_OBJECT(this->viewport->get_toolkit_object()), "expose_event", G_CALLBACK(draw_sync_cb), this);
 	g_signal_connect_swapped(G_OBJECT(this->viewport->get_toolkit_object()), "configure_event", G_CALLBACK(window_configure_event), this);
