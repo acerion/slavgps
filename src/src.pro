@@ -16,7 +16,8 @@ SOURCES += main_qt.cpp \
     vikaggregatelayer.cpp \
     viklayerspanel.cpp \
     viktreeview.cpp \
-    uibuilder.cpp
+    uibuilder.cpp \
+    uibuilder_qt.cpp
 
 
 HEADERS += window_qt.h \
@@ -32,7 +33,8 @@ HEADERS += window_qt.h \
     vikaggregatelayer.h \
     viklayerspanel.h \
     viktreeview.h \
-    uibuilder.h
+    uibuilder.h \
+    uibuilder_qt.h
 
 
 # For glib library.

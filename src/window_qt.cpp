@@ -5,6 +5,7 @@
 #include "viklayer.h"
 #include "viklayerspanel.h"
 #include "globals.h"
+#include "uibuilder_qt.h"
 
 
 
@@ -27,6 +28,29 @@ Window::Window()
 
 
 	this->layers_panel->new_layer(SlavGPS::LayerType::COORD);
+
+
+	static LayerParamScale param_scales[] = {
+		{ 0.05, 60.0, 0.25, 10 },
+		{ 1, 10, 1, 0 },
+	};
+
+
+
+	static LayerParam layer_params[] = {
+		{ LayerType::COORD, "color",          LayerParamType::STRING,   VIK_LAYER_GROUP_NONE, "Entry:",          LayerWidgetType::ENTRY,             NULL,             NULL, NULL, NULL,          NULL, NULL },
+		{ LayerType::COORD, "color",          LayerParamType::BOOLEAN,  VIK_LAYER_GROUP_NONE, "Checkbox:",       LayerWidgetType::CHECKBUTTON,       NULL,             NULL, NULL, NULL,          NULL, NULL },
+
+		{ LayerType::COORD, "color",          LayerParamType::COLOR,  VIK_LAYER_GROUP_NONE, "Color:",          LayerWidgetType::COLOR,      NULL,             NULL, NULL, NULL,          NULL, NULL },
+		{ LayerType::COORD, "min_inc",        LayerParamType::DOUBLE, VIK_LAYER_GROUP_NONE, "Minutes Width:",  LayerWidgetType::DOUBLE_SPINBOX, &param_scales[0], NULL, NULL, NULL,        NULL, NULL },
+		{ LayerType::COORD, "line_thickness", LayerParamType::UINT,   VIK_LAYER_GROUP_NONE, "Line Thickness:", LayerWidgetType::SPINBUTTON, &param_scales[1], NULL, NULL, NULL, NULL, NULL },
+	};
+
+
+
+	LayerPropertiesDialog dialog(this);
+	dialog.fill(layer_params, 5);
+	dialog.exec();
 }
 
 
