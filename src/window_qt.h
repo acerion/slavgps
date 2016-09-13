@@ -39,6 +39,7 @@ namespace SlavGPS {
 
 		Viewport * get_viewport(void);
 		LayersPanel * get_layers_panel(void);
+		QMenu * get_layer_menu(QMenu * menu);
 
 
 	public slots:
@@ -67,6 +68,8 @@ namespace SlavGPS {
 		char * filename = NULL;
 		bool modified = false;
 		//VikLoadType_t loaded_type = LOAD_TYPE_READ_FAILURE; /* AKA none. */
+
+		QAction * qa_layer_properties = NULL;
 	};
 
 

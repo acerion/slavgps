@@ -48,23 +48,17 @@ namespace SlavGPS {
 
 
 	class LayerAggregate;
+	class Window;
 
 
 
 
-#ifdef SLAVGPS_QT
 	class LayersPanel : public QWidget {
 		Q_OBJECT
-#else
-	class LayersPanel {
-#endif
+
 	public:
 
-#ifdef SLAVGPS_QT
-		LayersPanel(QWidget * parent);
-#else
-		LayersPanel();
-#endif
+		LayersPanel(Window * parent);
 		~LayersPanel();
 
 		void add_layer(Layer * layer);
@@ -78,7 +72,6 @@ namespace SlavGPS {
 		void set_viewport(Viewport * viewport);
 		Viewport * get_viewport();
 		void emit_update();
-		bool properties();
 		bool new_layer(LayerType layer_type);
 		void clear();
 		LayerAggregate * get_top_layer();
@@ -92,12 +85,15 @@ namespace SlavGPS {
 		GtkWindow * get_toolkit_window(void);
 		GtkWidget * get_toolkit_widget(void);
 
+		void contextMenuEvent(QContextMenuEvent * event);
+
 
 		LayerAggregate * toplayer = NULL;
 		QStandardItem * toplayer_item = NULL;
 
 		TreeView * tree_view = NULL;
 		Viewport * viewport = NULL; /* Reference. */
+		Window * window = NULL; /* Reference. */
 
 
 
@@ -115,6 +111,20 @@ namespace SlavGPS {
 #else
 		GtkVBox * panel_box_ = NULL;
 #endif
+
+	private:
+		QAction * qa_layer_add = NULL;
+		QAction * qa_layer_remove = NULL;
+		QAction * qa_layer_move_up = NULL;
+		QAction * qa_layer_move_down = NULL;
+		QAction * qa_layer_cut = NULL;
+		QAction * qa_layer_copy = NULL;
+		QAction * qa_layer_paste = NULL;
+
+
+	public slots:
+		bool properties();
+
 	};
 
 

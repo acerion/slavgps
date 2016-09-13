@@ -47,6 +47,7 @@
 #endif
 #include "globals.h"
 #include "viktreeview.h"
+#include "uibuilder_qt.h"
 
 
 
@@ -59,15 +60,15 @@ using namespace SlavGPS;
 /* Functions common to all layers. */
 /* TODO longone: rename interface free -> finalize. */
 
-#ifndef SLAVGPS_QT
 extern VikLayerInterface vik_aggregate_layer_interface;
+#ifndef SLAVGPS_QT
 extern VikLayerInterface vik_trw_layer_interface;
-extern VikLayerInterface vik_maps_layer_interface;
 #endif
 extern VikLayerInterface vik_coord_layer_interface;
 #ifndef SLAVGPS_QT
 extern VikLayerInterface vik_georef_layer_interface;
 extern VikLayerInterface vik_gps_layer_interface;
+extern VikLayerInterface vik_maps_layer_interface;
 extern VikLayerInterface vik_dem_layer_interface;
 #ifdef HAVE_LIBMAPNIK
 extern VikLayerInterface vik_mapnik_layer_interface;
@@ -210,8 +211,8 @@ void Layer::emit_update_secondary(void) /* Slot. */
 
 
 static VikLayerInterface * vik_layer_interfaces[(int) LayerType::NUM_TYPES] = {
-#ifndef SLAVGPS_QT
 	&vik_aggregate_layer_interface,
+#ifndef SLAVGPS_QT
 	&vik_trw_layer_interface,
 #endif
 	&vik_coord_layer_interface,
@@ -647,25 +648,42 @@ LayerParamData layer_get_param(Layer const * layer, uint16_t id, bool is_file_op
 
 static bool vik_layer_properties_factory(Layer * layer, Viewport * viewport)
 {
-#ifndef SLAVGPS_QT
-	switch (a_uibuilder_properties_factory(_("Layer Properties"),
-					       viewport->get_toolkit_window(),
-					       vik_layer_interfaces[(int) layer->type]->params,
-					       vik_layer_interfaces[(int) layer->type]->params_count,
-					       vik_layer_interfaces[(int) layer->type]->params_groups,
-					       vik_layer_interfaces[(int) layer->type]->params_groups_count,
-					       (bool (*)(void*, uint16_t, LayerParamData, void*, bool)) vik_layer_interfaces[(int) layer->type]->set_param,
-					       layer,
-					       viewport,
-					       (LayerParamData (*)(void*, uint16_t, bool)) vik_layer_interfaces[(int) layer->type]->get_param,
-					       layer,
-					       vik_layer_interfaces[(int) layer->type]->change_param)) {
+#ifdef SLAVGPS_QT
+
+	LayerPropertiesDialog dialog(NULL);
+	dialog.fill(vik_layer_interfaces[(int) layer->type]->params,
+		    vik_layer_interfaces[(int) layer->type]->params_count);
+	int dialog_code = dialog.exec();
+
+	if (dialog_code == QDialog::Accepted) {
+		layer->post_read(viewport, false); /* Update any gc's. */
+		return true;
+	} else {
+		/* Redraw (?). */
+		return false;
+	}
+
+#else
+	int prop = a_uibuilder_properties_factory(_("Layer Properties"),
+						  viewport->get_toolkit_window(),
+						  vik_layer_interfaces[(int) layer->type]->params,
+						  vik_layer_interfaces[(int) layer->type]->params_count,
+						  vik_layer_interfaces[(int) layer->type]->params_groups,
+						  vik_layer_interfaces[(int) layer->type]->params_groups_count,
+						  (bool (*)(void*, uint16_t, LayerParamData, void*, bool)) vik_layer_interfaces[(int) layer->type]->set_param,
+						  layer,
+						  viewport,
+						  (LayerParamData (*)(void*, uint16_t, bool)) vik_layer_interfaces[(int) layer->type]->get_param,
+						  layer,
+						  vik_layer_interfaces[(int) layer->type]->change_param)
+
+	switch (prop) {
 	case 0:
 	case 3:
 		return false;
 		/* Redraw (?). */
 	case 2: {
-		layer->post_read(viewport, false); /* Ypdate any gc's. */
+		layer->post_read(viewport, false); /* Update any gc's. */
 	}
 	default:
 		return true;

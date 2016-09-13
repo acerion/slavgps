@@ -15,6 +15,34 @@ using namespace SlavGPS;
 
 
 
+static LayerParamScale param_scales[] = {
+	{ 0.05, 60.0, 0.25, 10 },
+	{ 1, 10, 1, 0 },
+};
+
+
+static LayerParamData color_default(void)
+{
+	LayerParamData data;
+	data.c.r = 1;
+	data.c.g = 1;
+	data.c.b = 1;
+	data.c.a = 1;
+	return data;
+	// or: return VIK_LPD_COLOR (0, 65535, 0, 0);
+}
+
+static LayerParamData min_inc_default(void)
+{
+	return VIK_LPD_DOUBLE (1.0);
+}
+static LayerParamData line_thickness_default(void)
+{
+	return VIK_LPD_UINT (3);
+}
+
+
+
 Window::Window()
 {
 
@@ -27,23 +55,20 @@ Window::Window()
 	connect(this->viewport, SIGNAL(updated_center(void)), this, SLOT(center_changed_cb(void)));
 
 
-	this->layers_panel->new_layer(SlavGPS::LayerType::COORD);
+	//this->layers_panel->new_layer(SlavGPS::LayerType::COORD);
 
 
-	static LayerParamScale param_scales[] = {
-		{ 0.05, 60.0, 0.25, 10 },
-		{ 1, 10, 1, 0 },
-	};
 
 
 
 	static LayerParam layer_params[] = {
-		{ LayerType::COORD, "color",          LayerParamType::STRING,   VIK_LAYER_GROUP_NONE, "Entry:",          LayerWidgetType::ENTRY,             NULL,             NULL, NULL, NULL,          NULL, NULL },
-		{ LayerType::COORD, "color",          LayerParamType::BOOLEAN,  VIK_LAYER_GROUP_NONE, "Checkbox:",       LayerWidgetType::CHECKBUTTON,       NULL,             NULL, NULL, NULL,          NULL, NULL },
+		/* Layer type       name              param type                group                   title              widget type                         widget data       extra widget data       tooltip        default value              convert to display        convert to internal */
+		{ LayerType::COORD, "color",          LayerParamType::STRING,   VIK_LAYER_GROUP_NONE,   "Entry:",          LayerWidgetType::ENTRY,             NULL,             NULL,                   NULL,          NULL,                      NULL,                     NULL },
+		{ LayerType::COORD, "color",          LayerParamType::BOOLEAN,  VIK_LAYER_GROUP_NONE,   "Checkbox:",       LayerWidgetType::CHECKBUTTON,       NULL,             NULL,                   NULL,          NULL,                      NULL,                     NULL },
 
-		{ LayerType::COORD, "color",          LayerParamType::COLOR,  VIK_LAYER_GROUP_NONE, "Color:",          LayerWidgetType::COLOR,      NULL,             NULL, NULL, NULL,          NULL, NULL },
-		{ LayerType::COORD, "min_inc",        LayerParamType::DOUBLE, VIK_LAYER_GROUP_NONE, "Minutes Width:",  LayerWidgetType::DOUBLE_SPINBOX, &param_scales[0], NULL, NULL, NULL,        NULL, NULL },
-		{ LayerType::COORD, "line_thickness", LayerParamType::UINT,   VIK_LAYER_GROUP_NONE, "Line Thickness:", LayerWidgetType::SPINBUTTON, &param_scales[1], NULL, NULL, NULL, NULL, NULL },
+		{ LayerType::COORD, "color",          LayerParamType::COLOR,    VIK_LAYER_GROUP_NONE,   "Color:",          LayerWidgetType::COLOR,             NULL,             NULL,                   NULL,          color_default,             NULL,                     NULL },
+		{ LayerType::COORD, "min_inc",        LayerParamType::DOUBLE,   VIK_LAYER_GROUP_NONE,   "Minutes Width:",  LayerWidgetType::SPINBOX_DOUBLE,    &param_scales[0], NULL,                   NULL,          min_inc_default,           NULL,                     NULL },
+		{ LayerType::COORD, "line_thickness", LayerParamType::UINT,     VIK_LAYER_GROUP_NONE,   "Line Thickness:", LayerWidgetType::SPINBUTTON,        &param_scales[1], NULL,                   NULL,          line_thickness_default,    NULL,                     NULL },
 	};
 
 
@@ -63,7 +88,7 @@ void Window::create_layout()
 	//central_widget->setLayout(layout);
 
 
-	this->layers_panel = new SlavGPS::LayersPanel(central_widget);
+	this->layers_panel = new SlavGPS::LayersPanel(this);
 
 
 	QDockWidget * dock = new QDockWidget(this);
@@ -129,8 +154,9 @@ void Window::create_actions(void)
 	menu_file->addAction(qa_file_new);
 
 	{
-		QAction * qa_layer_properties = new QAction("Properties...", this);
-		menu_layers->addAction(qa_layer_properties);
+		this->qa_layer_properties = new QAction("Properties...", this);
+		menu_layers->addAction(this->qa_layer_properties);
+		connect (this->qa_layer_properties, SIGNAL (triggered(bool)), this->layers_panel, SLOT (properties(void)));
 
 		for (SlavGPS::LayerType i = SlavGPS::LayerType::AGGREGATE; i < SlavGPS::LayerType::NUM_TYPES; ++i) {
 
@@ -338,4 +364,13 @@ void Window::center_changed_cb(void) /* Slot. */
 
 	toolbar_action_set_sensitive(this->viking_vtb, "GoForward", this->viewport->forward_available());
 #endif
+}
+
+
+
+
+QMenu * Window::get_layer_menu(QMenu * menu)
+{
+	menu->addAction(this->qa_layer_properties);
+	return menu;
 }

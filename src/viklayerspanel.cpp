@@ -47,6 +47,7 @@
 #include "window.h"
 #endif
 
+#include "window_qt.h"
 
 
 
@@ -113,8 +114,9 @@ void SlavGPS::layers_panel_init(void)
 
 
 
-LayersPanel::LayersPanel(QWidget * parent) : QWidget(parent)
+LayersPanel::LayersPanel(Window * parent) : QWidget((QWidget *) parent)
 {
+	this->window = parent;
 	this->panel_box_ = new QVBoxLayout;
 
 	{
@@ -135,39 +137,39 @@ LayersPanel::LayersPanel(QWidget * parent) : QWidget(parent)
 		this->panel_box_->addWidget(this->tool_bar_);
 
 
-		QAction * qa_layer_add = new QAction("Add", this);
-		qa_layer_add->setToolTip("Add new layer");
-		qa_layer_add->setIcon(QIcon::fromTheme("list-add"));
+		this->qa_layer_add = new QAction("Add", this);
+		this->qa_layer_add->setToolTip("Add new layer");
+		this->qa_layer_add->setIcon(QIcon::fromTheme("list-add"));
 		// g_signal_connect_swapped (G_OBJECT(addbutton), "clicked", G_CALLBACK(layers_popup_cb), this);
 
-		QAction * qa_layer_remove = new QAction("Remove", this);
-		qa_layer_remove->setToolTip("Remove selected layer");
-		qa_layer_remove->setIcon(QIcon::fromTheme("list-remove"));
+		this->qa_layer_remove = new QAction("Remove", this);
+		this->qa_layer_remove->setToolTip("Remove selected layer");
+		this->qa_layer_remove->setIcon(QIcon::fromTheme("list-remove"));
 		// g_signal_connect_swapped (G_OBJECT(removebutton), "clicked", G_CALLBACK(vik_layers_panel_delete_selected_cb), this);
 
-		QAction * qa_layer_move_up = new QAction("Up", this);
-		qa_layer_move_up->setToolTip("Move selected layer up");
-		qa_layer_move_up->setIcon(QIcon::fromTheme("go-up"));
+		this->qa_layer_move_up = new QAction("Up", this);
+		this->qa_layer_move_up->setToolTip("Move selected layer up");
+		this->qa_layer_move_up->setIcon(QIcon::fromTheme("go-up"));
 		// g_signal_connect_swapped (G_OBJECT(upbutton), "clicked", G_CALLBACK(layers_move_item_up_cb), this);
 
-		QAction * qa_layer_move_down = new QAction("Down", this);
-		qa_layer_move_down->setToolTip("Move selected layer down");
-		qa_layer_move_down->setIcon(QIcon::fromTheme("go-down"));
+		this->qa_layer_move_down = new QAction("Down", this);
+		this->qa_layer_move_down->setToolTip("Move selected layer down");
+		this->qa_layer_move_down->setIcon(QIcon::fromTheme("go-down"));
 		// g_signal_connect_swapped (G_OBJECT(downbutton), "clicked", G_CALLBACK(layers_move_item_down_cb), this);
 
-		QAction * qa_layer_cut = new QAction("Cut", this);
-		qa_layer_cut->setToolTip("Cut selected layer");
-		qa_layer_cut->setIcon(QIcon::fromTheme("edit-cut"));
+		this->qa_layer_cut = new QAction("Cut", this);
+		this->qa_layer_cut->setToolTip("Cut selected layer");
+		this->qa_layer_cut->setIcon(QIcon::fromTheme("edit-cut"));
 		// g_signal_connect_swapped (G_OBJECT(cutbutton), "clicked", G_CALLBACK(vik_layers_panel_cut_selected_cb), this);
 
-		QAction * qa_layer_copy = new QAction("Copy", this);
-		qa_layer_copy->setToolTip("Copy selected layer");
-		qa_layer_copy->setIcon(QIcon::fromTheme("edit-copy"));
+		this->qa_layer_copy = new QAction("Copy", this);
+		this->qa_layer_copy->setToolTip("Copy selected layer");
+		this->qa_layer_copy->setIcon(QIcon::fromTheme("edit-copy"));
 		// g_signal_connect_swapped (G_OBJECT(copybutton), "clicked", G_CALLBACK(vik_layers_panel_copy_selected_cb), this);
 
-		QAction * qa_layer_paste = new QAction("Paste", this);
-		qa_layer_paste->setToolTip("Paste layer into selected container layer or otherwise above selected layer");
-		qa_layer_paste->setIcon(QIcon::fromTheme("edit-paste"));
+		this->qa_layer_paste = new QAction("Paste", this);
+		this->qa_layer_paste->setToolTip("Paste layer into selected container layer or otherwise above selected layer");
+		this->qa_layer_paste->setIcon(QIcon::fromTheme("edit-paste"));
 		// g_signal_connect_swapped (G_OBJECT(pastebutton), "clicked", G_CALLBACK(vik_layers_panel_paste_selected_cb), this);
 
 		this->tool_bar_->addAction(qa_layer_add);
@@ -197,9 +199,9 @@ LayersPanel::LayersPanel(QWidget * parent) : QWidget(parent)
 	this->toplayer->realize(this->tree_view, this->toplayer_item);
 
 
-	Layer * layer = new LayerCoord();
-	layer->rename("a coord layer");
-	QStandardItem * coord = this->tree_view->add_layer(layer, this->toplayer, this->toplayer_item, false, 0, 0);
+	//Layer * layer = new LayerCoord();
+	//layer->rename("a coord layer");
+	//QStandardItem * coord = this->tree_view->add_layer(layer, this->toplayer, this->toplayer_item, false, 0, 0);
 
 
 
@@ -640,7 +642,7 @@ void LayersPanel::add_layer(Layer * layer)
 	fprintf(stderr, "INFO: %s:%d: attempting to add layer '%s'\n", __FUNCTION__, __LINE__, layer->type_string);
 
 	QStandardItem * item = this->tree_view->get_selected_item();
-	if (!item) {
+	if (true) { /* kamilFIXME: "if (!item) { */
 		/* No particular layer is selected in panel, so the
 		   layer to be added goes directly under top level
 		   aggregate layer. */
@@ -731,15 +733,15 @@ bool LayersPanel::properties()
 
 	QStandardItem * item = this->tree_view->get_selected_item();
 	if (this->tree_view->get_item_type(item) == TreeItemType::LAYER) {
-#ifndef SLAVGPS_QT
 		if (this->tree_view->get_layer(item)->type == LayerType::AGGREGATE) {
+#ifndef SLAVGPS_QT
 			a_dialog_info_msg(VIK_GTK_WINDOW_FROM_WIDGET(this->panel_box_), _("Aggregate Layers have no settable properties."));
+#endif
 		}
-		Layer * layer = this->tree_view->get_layer(&iter);
+		Layer * layer = this->tree_view->get_layer(item);
 		if (vik_layer_properties(layer, this->viewport)) {
 			layer->emit_update();
 		}
-#endif
 		return true;
 	} else {
 		return false;
@@ -1076,4 +1078,62 @@ GtkWidget * LayersPanel::get_toolkit_widget(void)
 #ifndef SLAVGPS_QT
 	return GTK_WIDGET (this->panel_box_);
 #endif
+}
+
+
+
+
+
+void LayersPanel::contextMenuEvent(QContextMenuEvent * event)
+{
+	//TreeView * tree_view = this->layers_panel->get_treeview();
+
+	QPoint orig = event->pos();
+	fprintf(stderr, "event %d %d\n", orig.x(), orig.y());
+
+	QPoint v = this->tree_view->pos();
+	fprintf(stderr, "viewport %d %d\n", v.x(), v.y());
+	QPoint t = this->tree_view->viewport()->pos();
+	fprintf(stderr, "treeview %d %d\n", t.x(), t.y());
+
+	orig.setX(orig.x() - v.x() - t.x());
+	orig.setY(orig.y() - v.y() - t.y());
+
+
+	QPoint point = orig;//this->tree_view->viewport()->mapToGlobal();
+	//QPoint point = event->pos();
+	QModelIndex ind = this->tree_view->indexAt(point);
+
+	if (ind.isValid()) {
+		fprintf(stderr, "valid index\n");
+		qDebug() << "row = " << ind.row();
+		QStandardItem * item = this->tree_view->model->itemFromIndex(ind);
+
+
+		Layer * layer = this->tree_view->get_layer(item);
+		if (layer) {
+			fprintf(stderr, "layer type = %s\n", layer->type_string);
+		} else {
+			fprintf(stderr, "layer type is NULL\n");
+		}
+
+		QStandardItem * parent = item->parent();
+		if (parent) {
+			QStandardItem * item2 = parent->child(ind.row(), 0);
+			qDebug() << "----- item" << item << "item2" << item2;
+			if (item) {
+				qDebug() << "item.row = " << item->row() << "item.col = " << item->column() << "text = " << item2->text();
+			}
+			item = item2;
+		}
+		QMenu menu(this);
+		this->window->get_layer_menu(&menu);
+		menu.addAction(this->qa_layer_cut);
+		menu.addAction(this->qa_layer_copy);
+		menu.addAction(this->qa_layer_paste);
+		menu.addAction(this->qa_layer_remove);
+		menu.exec(QCursor::pos());
+	} else {
+		fprintf(stderr, "INvalid index\n");
+	}
 }

@@ -47,9 +47,7 @@ typedef union {
 	int32_t i;
 	bool b;
 	const char *s;
-#ifndef SLAVGPS_QT
-	GdkColor c;
-#endif
+	struct { int r; int g; int b; int a; } c;
 	std::list<char *> * sl;
 	void * ptr; // For internal usage - don't save this value in a file!
 } LayerParamData;
@@ -59,7 +57,7 @@ enum class LayerWidgetType {
 	CHECKBUTTON = 0,
 	RADIOGROUP,
 	RADIOGROUP_STATIC,
-	DOUBLE_SPINBOX,
+	SPINBOX_DOUBLE,
 	SPINBUTTON,
 	ENTRY,
 	PASSWORD,
@@ -151,7 +149,7 @@ typedef enum {
 #define VIK_LPD_BOOLEAN(X)     (LayerParamData) { .b = (X) }
 #define VIK_LPD_INT(X)         (LayerParamData) { .u = (X) }
 #define VIK_LPD_UINT(X)        (LayerParamData) { .i = (X) }
-#define VIK_LPD_COLOR(X,Y,Z,A) (LayerParamData) { .c = (GdkColor){ (X), (Y), (Z), (A) } }
+#define VIK_LPD_COLOR(X,Y,Z,A) (LayerParamData) { .c = { (X), (Y), (Z), (A) } }
 #define VIK_LPD_DOUBLE(X)      (LayerParamData) { .d = (X) }
 #else
 #define VIK_LPD_BOOLEAN(X)     (LayerParamData) { (X) }
