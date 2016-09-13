@@ -53,9 +53,10 @@ static LayerParamScale param_scales[] = {
 static LayerParamData color_default(void)
 {
 	LayerParamData data;
-#ifndef SLAVGPS_QT
-	gdk_color_parse("red", &data.c);
-#endif
+	data.c.r = 1;
+	data.c.g = 1;
+	data.c.b = 1;
+	data.c.a = 1;
 	return data;
 	// or: return VIK_LPD_COLOR (0, 65535, 0, 0);
 }
@@ -101,13 +102,9 @@ VikLayerInterface vik_coord_layer_interface = {
 	NULL,
 	0,
 
-#ifdef SLAVGPS_QT
-	NULL,
-	0,
-#else
 	coord_layer_params,
 	NUM_PARAMS,
-#endif
+
 	NULL,
 	0,
 
