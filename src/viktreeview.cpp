@@ -269,22 +269,81 @@ static bool vik_treeview_tooltip_cb(GtkWidget  * widget,
 }
 
 
+QString TreeView::get_name(QStandardItem * item)
+{
+	QStandardItem * parent = item->parent();
+	if (!parent) {
+		fprintf(stderr, "%s:%d returning NULL value for item row=%d, col=%d\n", __FUNCTION__, __LINE__, item->row(), item->column());
+		return NULL;
+	}
+	QStandardItem * ch = parent->child(item->row(), (int) LayersTreeColumn::NAME);
+
+	return ch->text();
+}
+
+
+
+bool TreeView::is_visible(QStandardItem * item)
+{
+	QStandardItem * parent = item->parent();
+	if (!parent) {
+		fprintf(stderr, "%s:%d returning NULL value for item row=%d, col=%d\n", __FUNCTION__, __LINE__, item->row(), item->column());
+		return false;
+	}
+	QStandardItem * ch = parent->child(item->row(), (int) LayersTreeColumn::VISIBLE);
+
+	QVariant variant = ch->data();
+	return variant.toBool();;
+}
+
+
 
 
 TreeItemType TreeView::get_item_type(QStandardItem * item)
 {
-	int row = item->row();
-	QVariant variant = this->model->item(row, (int) LayersTreeColumn::TREE_ITEM_TYPE)->data(RoleLayerData);
+	QStandardItem * parent = item->parent();
+	if (!parent) {
+		fprintf(stderr, "%s:%d returning NULL value for item row=%d, col=%d\n", __FUNCTION__, __LINE__, item->row(), item->column());
+		return TreeItemType::LAYER;
+	}
+	QStandardItem * ch = parent->child(item->row(), (int) LayersTreeColumn::TREE_ITEM_TYPE);
+
+	QVariant variant = ch->data(RoleLayerData);
 	return (TreeItemType) variant.toInt();
 }
 
 
 
 
-QString TreeView::get_name(QStandardItem * item)
+Layer * TreeView::get_parent_layer(QStandardItem * item)
 {
-	int row = item->row();
-	return this->model->item(row, (int) LayersTreeColumn::NAME)->text();
+	QStandardItem * parent = item->parent();
+	if (!parent) {
+		fprintf(stderr, "%s:%d returning NULL value for item row=%d, col=%d\n", __FUNCTION__, __LINE__, item->row(), item->column());
+		return NULL;
+	}
+	QStandardItem * ch = parent->child(item->row(), (int) LayersTreeColumn::PARENT_LAYER);
+
+	QVariant variant = ch->data(RoleLayerData);
+	// http://www.qtforum.org/article/34069/store-user-data-void-with-qstandarditem-in-qstandarditemmodel.html
+	return variant.value<Layer *>();
+}
+
+
+
+
+Layer * TreeView::get_layer(QStandardItem * item)
+{
+	QStandardItem * parent = item->parent();
+	if (!parent) {
+		fprintf(stderr, "%s:%d returning NULL value for item row=%d, col=%d\n", __FUNCTION__, __LINE__, item->row(), item->column());
+		return NULL;
+	}
+	QStandardItem * ch = parent->child(item->row(), (int) LayersTreeColumn::ITEM);
+
+	QVariant variant = ch->data(RoleLayerData);
+	// http://www.qtforum.org/article/34069/store-user-data-void-with-qstandarditem-in-qstandarditemmodel.html
+	return variant.value<Layer *>();
 }
 
 
@@ -292,8 +351,14 @@ QString TreeView::get_name(QStandardItem * item)
 
 SublayerType TreeView::get_sublayer_type(QStandardItem * item)
 {
-	int row = item->row();
-	QVariant variant = this->model->item(row, (int) LayersTreeColumn::DATA)->data(RoleLayerData);
+	QStandardItem * parent = item->parent();
+	if (!parent) {
+		fprintf(stderr, "%s:%d returning NULL value for item row=%d, col=%d\n", __FUNCTION__, __LINE__, item->row(), item->column());
+		return SublayerType::NONE;
+	}
+	QStandardItem * ch = parent->child(item->row(), (int) LayersTreeColumn::DATA);
+
+	QVariant variant = ch->data(RoleLayerData);
 	return (SublayerType) variant.toInt();
 }
 
@@ -321,15 +386,6 @@ sg_uid_t TreeView::get_sublayer_uid(QStandardItem * item)
 
 
 
-Layer * TreeView::get_layer(QStandardItem * item)
-{
-	int row = item->row();
-	QVariant variant = this->model->item(row, (int) LayersTreeColumn::ITEM)->data(RoleLayerData);
-	fprintf(stderr, "%s:%d: looking for layer in item column %d\n", __FUNCTION__, __LINE__, item->column());
-	// http://www.qtforum.org/article/34069/store-user-data-void-with-qstandarditem-in-qstandarditemmodel.html
-	Layer * layer = variant.value<Layer *>();
-	return layer;
-}
 
 
 
@@ -344,15 +400,6 @@ void TreeView::set_timestamp(GtkTreeIter *iter, time_t timestamp)
 
 
 
-Layer * TreeView::get_parent_layer(QStandardItem * item)
-{
-	int row = item->row();
-	QVariant variant = this->model->item(row, (int) LayersTreeColumn::PARENT_LAYER)->data(RoleLayerData);
-	// http://www.qtforum.org/article/34069/store-user-data-void-with-qstandarditem-in-qstandarditemmodel.html
-	Layer * parent_layer = variant.value<Layer *>();
-	return parent_layer;
-}
-
 
 
 
@@ -366,14 +413,6 @@ bool TreeView::get_iter_from_path_str(GtkTreeIter * iter, char const * path_str)
 
 
 
-bool TreeView::is_visible(QStandardItem * item)
-{
-	int row = item->row();
-	QVariant variant = this->model->item(row, (int) LayersTreeColumn::VISIBLE)->data();
-	bool visible = variant.toBool();
-
-	return visible;
-}
 
 
 
