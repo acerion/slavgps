@@ -53,6 +53,10 @@ typedef union {
 } LayerParamData;
 
 
+typedef LayerParamData LayerParamValue;
+
+
+
 enum class LayerWidgetType {
 	CHECKBUTTON = 0,
 	RADIOGROUP,
@@ -106,6 +110,7 @@ typedef LayerParamData (* LayerConvertFunc) (LayerParamData);
 
 typedef struct {
 	SlavGPS::LayerType layer_type;
+	int16_t id;
 	const char *name;
 	LayerParamType type;
 	int16_t group;

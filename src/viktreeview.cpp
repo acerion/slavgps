@@ -273,8 +273,9 @@ QString TreeView::get_name(QStandardItem * item)
 {
 	QStandardItem * parent = item->parent();
 	if (!parent) {
-		fprintf(stderr, "%s:%d returning NULL value for item row=%d, col=%d\n", __FUNCTION__, __LINE__, item->row(), item->column());
-		return NULL;
+		/* "item" points at the "Top Layer" layer. */
+		fprintf(stderr, "%s:%d querying Top Layer for item row=%d, col=%d\n", __FUNCTION__, __LINE__, item->row(), item->column());
+		parent = this->model->invisibleRootItem();
 	}
 	QStandardItem * ch = parent->child(item->row(), (int) LayersTreeColumn::NAME);
 
@@ -287,8 +288,9 @@ bool TreeView::is_visible(QStandardItem * item)
 {
 	QStandardItem * parent = item->parent();
 	if (!parent) {
-		fprintf(stderr, "%s:%d returning NULL value for item row=%d, col=%d\n", __FUNCTION__, __LINE__, item->row(), item->column());
-		return false;
+		/* "item" points at the "Top Layer" layer. */
+		fprintf(stderr, "%s:%d querying Top Layer for item row=%d, col=%d\n", __FUNCTION__, __LINE__, item->row(), item->column());
+		parent = this->model->invisibleRootItem();
 	}
 	QStandardItem * ch = parent->child(item->row(), (int) LayersTreeColumn::VISIBLE);
 
@@ -303,8 +305,9 @@ TreeItemType TreeView::get_item_type(QStandardItem * item)
 {
 	QStandardItem * parent = item->parent();
 	if (!parent) {
-		fprintf(stderr, "%s:%d returning NULL value for item row=%d, col=%d\n", __FUNCTION__, __LINE__, item->row(), item->column());
-		return TreeItemType::LAYER;
+		/* "item" points at the "Top Layer" layer. */
+		fprintf(stderr, "%s:%d querying Top Layer for item row=%d, col=%d\n", __FUNCTION__, __LINE__, item->row(), item->column());
+		parent = this->model->invisibleRootItem();
 	}
 	QStandardItem * ch = parent->child(item->row(), (int) LayersTreeColumn::TREE_ITEM_TYPE);
 
@@ -319,8 +322,9 @@ Layer * TreeView::get_parent_layer(QStandardItem * item)
 {
 	QStandardItem * parent = item->parent();
 	if (!parent) {
-		fprintf(stderr, "%s:%d returning NULL value for item row=%d, col=%d\n", __FUNCTION__, __LINE__, item->row(), item->column());
-		return NULL;
+		/* "item" points at the "Top Layer" layer. */
+		fprintf(stderr, "%s:%d querying Top Layer for item row=%d, col=%d\n", __FUNCTION__, __LINE__, item->row(), item->column());
+		parent = this->model->invisibleRootItem();
 	}
 	QStandardItem * ch = parent->child(item->row(), (int) LayersTreeColumn::PARENT_LAYER);
 
@@ -336,8 +340,9 @@ Layer * TreeView::get_layer(QStandardItem * item)
 {
 	QStandardItem * parent = item->parent();
 	if (!parent) {
-		fprintf(stderr, "%s:%d returning NULL value for item row=%d, col=%d\n", __FUNCTION__, __LINE__, item->row(), item->column());
-		return NULL;
+		/* "item" points at the "Top Layer" layer. */
+		fprintf(stderr, "%s:%d querying Top Layer for item row=%d, col=%d\n", __FUNCTION__, __LINE__, item->row(), item->column());
+		parent = this->model->invisibleRootItem();
 	}
 	QStandardItem * ch = parent->child(item->row(), (int) LayersTreeColumn::ITEM);
 
@@ -353,8 +358,9 @@ SublayerType TreeView::get_sublayer_type(QStandardItem * item)
 {
 	QStandardItem * parent = item->parent();
 	if (!parent) {
-		fprintf(stderr, "%s:%d returning NULL value for item row=%d, col=%d\n", __FUNCTION__, __LINE__, item->row(), item->column());
-		return SublayerType::NONE;
+		/* "item" points at the "Top Layer" layer. */
+		fprintf(stderr, "%s:%d querying Top Layer for item row=%d, col=%d\n", __FUNCTION__, __LINE__, item->row(), item->column());
+		parent = this->model->invisibleRootItem();
 	}
 	QStandardItem * ch = parent->child(item->row(), (int) LayersTreeColumn::DATA);
 

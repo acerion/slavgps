@@ -652,10 +652,22 @@ static bool vik_layer_properties_factory(Layer * layer, Viewport * viewport)
 
 	LayerPropertiesDialog dialog(NULL);
 	dialog.fill(vik_layer_interfaces[(int) layer->type]->params,
-		    vik_layer_interfaces[(int) layer->type]->params_count);
+		    vik_layer_interfaces[(int) layer->type]->params_count,
+		    layer);
 	int dialog_code = dialog.exec();
 
 	if (dialog_code == QDialog::Accepted) {
+
+
+		bool must_redraw = false;
+		for (uint16_t id = 0; id < vik_layer_interfaces[(int) layer->type]->params_count; id++) {
+			LayerParamData param_data = dialog.get_param_value(id, &(vik_layer_interfaces[(int) layer->type]->params[id]));
+			bool set = layer->set_param(id, param_data, viewport, false);
+			if (set) {
+				must_redraw = true;
+			}
+		}
+
 		layer->post_read(viewport, false); /* Update any gc's. */
 		return true;
 	} else {
@@ -804,7 +816,6 @@ LayerTypedParamData * vik_layer_data_typed_param_copy_from_string(LayerParamType
  */
 void Layer::set_defaults(Viewport * viewport)
 {
-#ifndef SLAVGPS_QT
 	/* Sneaky initialize of the viewport value here. */
 	this->viewport = viewport;
 
@@ -823,7 +834,6 @@ void Layer::set_defaults(Viewport * viewport)
 			}
 		}
 	}
-#endif
 }
 
 

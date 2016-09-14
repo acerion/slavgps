@@ -48,7 +48,7 @@ static Layer * coord_layer_unmarshall(uint8_t * data, int len, Viewport * viewpo
 
 static LayerParamScale param_scales[] = {
 	{ 0.05, 60.0, 0.25, 10 },
-	{ 1, 10, 1, 0 },
+	{ 1, 15, 1, 0 },
 };
 static LayerParamData color_default(void)
 {
@@ -56,7 +56,7 @@ static LayerParamData color_default(void)
 	data.c.r = 1;
 	data.c.g = 1;
 	data.c.b = 1;
-	data.c.a = 1;
+	data.c.a = 100;
 	return data;
 	// or: return VIK_LPD_COLOR (0, 65535, 0, 0);
 }
@@ -69,14 +69,6 @@ static LayerParamData line_thickness_default(void)
 	return VIK_LPD_UINT (3);
 }
 
-static LayerParam coord_layer_params[] = {
-	{ LayerType::COORD, "color",          LayerParamType::COLOR,  VIK_LAYER_GROUP_NONE, N_("Color:"),          LayerWidgetType::COLOR,      NULL,             NULL, NULL, color_default,          NULL, NULL },
-	{ LayerType::COORD, "min_inc",        LayerParamType::DOUBLE, VIK_LAYER_GROUP_NONE, N_("Minutes Width:"),  LayerWidgetType::SPINBUTTON, &param_scales[0], NULL, NULL, min_inc_default,        NULL, NULL },
-	{ LayerType::COORD, "line_thickness", LayerParamType::UINT,   VIK_LAYER_GROUP_NONE, N_("Line Thickness:"), LayerWidgetType::SPINBUTTON, &param_scales[1], NULL, NULL, line_thickness_default, NULL, NULL },
-};
-
-
-
 
 enum {
 	PARAM_COLOR = 0,
@@ -84,6 +76,17 @@ enum {
 	PARAM_LINE_THICKNESS,
 	NUM_PARAMS
 };
+
+
+
+
+static LayerParam coord_layer_params[] = {
+	{ LayerType::COORD, PARAM_COLOR,          "color",          LayerParamType::COLOR,  VIK_LAYER_GROUP_NONE, N_("Color:"),          LayerWidgetType::COLOR,      NULL,             NULL, NULL, color_default,          NULL, NULL },
+	{ LayerType::COORD, PARAM_MIN_INC,        "min_inc",        LayerParamType::DOUBLE, VIK_LAYER_GROUP_NONE, N_("Minutes Width:"),  LayerWidgetType::SPINBOX_DOUBLE, &param_scales[0], NULL, NULL, min_inc_default,        NULL, NULL },
+	{ LayerType::COORD, PARAM_LINE_THICKNESS, "line_thickness", LayerParamType::UINT,   VIK_LAYER_GROUP_NONE, N_("Line Thickness:"), LayerWidgetType::SPINBUTTON, &param_scales[1], NULL, NULL, line_thickness_default, NULL, NULL },
+};
+
+
 
 
 
@@ -137,16 +140,20 @@ static Layer * coord_layer_unmarshall(uint8_t * data, int len, Viewport * viewpo
 // NB Viewport can be null as it's not used ATM
 bool LayerCoord::set_param(uint16_t id, LayerParamData data, Viewport * viewport, bool is_file_operation)
 {
+	fprintf(stderr, "set param %d\n", id);
 	switch (id) {
-#ifndef SLAVGPS_QT
 	case PARAM_COLOR:
-		this->color = data.c;
+		fprintf(stderr, "++++ saving colors: %d %d %d %d\n", data.c.r, data.c.g, data.c.b, data.c.a);
+		this->color.setRed(data.c.r);
+		this->color.setGreen(data.c.g);
+		this->color.setBlue(data.c.b);
+		this->color.setAlpha(50);
 		break;
-#endif
 	case PARAM_MIN_INC:
 		this->deg_inc = data.d / 60.0;
 		break;
 	case PARAM_LINE_THICKNESS:
+		fprintf(stderr, "set param %d line thickness %d\n", id, data.u);
 		if (data.u >= 1 && data.u <= 15) {
 			this->line_thickness = data.u;
 		}
@@ -165,11 +172,13 @@ LayerParamData LayerCoord::get_param(uint16_t id, bool is_file_operation) const
 {
 	LayerParamData rv;
 	switch (id) {
-#ifndef SLAVGPS_QT
 	case PARAM_COLOR:
-		rv.c = this->color;
+		rv.c.r = this->color.red();
+		rv.c.g = this->color.green();
+		rv.c.b = this->color.blue();
+		rv.c.a = this->color.alpha();
+		fprintf(stderr, "++++ getting colors: %d %d %d %d\n", rv.c.r, rv.c.g, rv.c.b, rv.c.a);
 		break;
-#endif
 	case PARAM_MIN_INC:
 		rv.d = this->deg_inc * 60.0;
 		break;

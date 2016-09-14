@@ -63,12 +63,12 @@ Window::Window()
 
 	static LayerParam layer_params[] = {
 		/* Layer type       name              param type                group                   title              widget type                         widget data       extra widget data       tooltip        default value              convert to display        convert to internal */
-		{ LayerType::COORD, "color",          LayerParamType::STRING,   VIK_LAYER_GROUP_NONE,   "Entry:",          LayerWidgetType::ENTRY,             NULL,             NULL,                   NULL,          NULL,                      NULL,                     NULL },
-		{ LayerType::COORD, "color",          LayerParamType::BOOLEAN,  VIK_LAYER_GROUP_NONE,   "Checkbox:",       LayerWidgetType::CHECKBUTTON,       NULL,             NULL,                   NULL,          NULL,                      NULL,                     NULL },
+		{ LayerType::COORD, 0, "color",          LayerParamType::STRING,   VIK_LAYER_GROUP_NONE,   "Entry:",          LayerWidgetType::ENTRY,             NULL,             NULL,                   NULL,          NULL,                      NULL,                     NULL },
+		{ LayerType::COORD, 1, "color",          LayerParamType::BOOLEAN,  VIK_LAYER_GROUP_NONE,   "Checkbox:",       LayerWidgetType::CHECKBUTTON,       NULL,             NULL,                   NULL,          NULL,                      NULL,                     NULL },
 
-		{ LayerType::COORD, "color",          LayerParamType::COLOR,    VIK_LAYER_GROUP_NONE,   "Color:",          LayerWidgetType::COLOR,             NULL,             NULL,                   NULL,          color_default,             NULL,                     NULL },
-		{ LayerType::COORD, "min_inc",        LayerParamType::DOUBLE,   VIK_LAYER_GROUP_NONE,   "Minutes Width:",  LayerWidgetType::SPINBOX_DOUBLE,    &param_scales[0], NULL,                   NULL,          min_inc_default,           NULL,                     NULL },
-		{ LayerType::COORD, "line_thickness", LayerParamType::UINT,     VIK_LAYER_GROUP_NONE,   "Line Thickness:", LayerWidgetType::SPINBUTTON,        &param_scales[1], NULL,                   NULL,          line_thickness_default,    NULL,                     NULL },
+		{ LayerType::COORD, 2, "color",          LayerParamType::COLOR,    VIK_LAYER_GROUP_NONE,   "Color:",          LayerWidgetType::COLOR,             NULL,             NULL,                   NULL,          color_default,             NULL,                     NULL },
+		{ LayerType::COORD, 3, "min_inc",        LayerParamType::DOUBLE,   VIK_LAYER_GROUP_NONE,   "Minutes Width:",  LayerWidgetType::SPINBOX_DOUBLE,    &param_scales[0], NULL,                   NULL,          min_inc_default,           NULL,                     NULL },
+		{ LayerType::COORD, 4, "line_thickness", LayerParamType::UINT,     VIK_LAYER_GROUP_NONE,   "Line Thickness:", LayerWidgetType::SPINBUTTON,        &param_scales[1], NULL,                   NULL,          line_thickness_default,    NULL,                     NULL },
 	};
 
 
