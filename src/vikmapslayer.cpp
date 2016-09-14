@@ -461,7 +461,7 @@ void LayerMaps::set_map_type(MapTypeID map_type)
 
 MapTypeID maps_layer_get_default_map_type()
 {
-	VikLayerInterface *vli = vik_layer_get_interface(LayerType::MAPS);
+	LayerInterface * vli = Layer::get_interface(LayerType::MAPS);
 	LayerParamData vlpd = a_layer_defaults_get(vli->fixed_layer_name, "mode", LayerParamType::UINT);
 	if (vlpd.u == 0) {
 		vlpd = id_default();
@@ -2726,6 +2726,7 @@ LayerMaps::LayerMaps()
 
 	this->type = LayerType::MAPS;
 	strcpy(this->type_string, "MAPS");
+	this->interface = &vik_maps_layer_interface;
 
 	memset(&redownload_ul, 0, sizeof (VikCoord));
 	memset(&redownload_br, 0, sizeof (VikCoord));

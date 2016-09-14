@@ -143,7 +143,7 @@ static void clip_receive_viking(GtkClipboard * c, GtkSelectionData * sd, void * 
 			a_dialog_error_msg_extra(panel->get_toolkit_window(),
 						 _("The clipboard contains sublayer data for %s layers. "
 						   "You must select a layer of this type to paste the clipboard data."),
-						 vik_layer_get_interface(vc->layer_type)->name);
+						 Layer::get_interface(vc->layer_type)->name);
 		}
 	}
 }

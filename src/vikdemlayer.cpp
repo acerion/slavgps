@@ -1441,10 +1441,12 @@ static bool dem_layer_download_click(Layer * vdl, GdkEventButton * event, LayerT
 
 LayerDEM::LayerDEM()
 {
-	this->files = new std::list<char *>;
 	this->type = LayerType::DEM;
-	this->dem_type = 0;
 	strcpy(this->type_string, "DEM");
+	this->interface = &vik_dem_layer_interface;
+
+	this->files = new std::list<char *>;
+	this->dem_type = 0;
 }
 
 

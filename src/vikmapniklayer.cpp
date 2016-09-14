@@ -1238,6 +1238,7 @@ LayerMapnik::LayerMapnik()
 {
 	this->type = LayerType::MAPNIK;
 	strcpy(this->type_string, "MAPNIK");
+	this->interface = &vik_mapnik_layer_interface
 
 	/* kamilTODO: initialize this? */
 	//this->rerender_ul;

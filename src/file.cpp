@@ -184,8 +184,8 @@ void SlavGPS::file_write_layer_param(FILE * f, char const * name, LayerParamType
 
 static void write_layer_params_and_data(Layer const * layer, FILE * f)
 {
-	LayerParam *params = vik_layer_get_interface(layer->type)->params;
-	VikLayerFuncGetParam get_param = vik_layer_get_interface(layer->type)->get_param;
+	LayerParam *params = layer->get_interface()->params;
+	VikLayerFuncGetParam get_param = layer->get_interface()->get_param;
 
 	fprintf(f, "name=%s\n", layer->name ? layer->name : "");
 	if (!layer->visible) {
@@ -194,7 +194,7 @@ static void write_layer_params_and_data(Layer const * layer, FILE * f)
 
 	if (params && get_param) {
 		LayerParamData data;
-		uint16_t params_count = vik_layer_get_interface(layer->type)->params_count;
+		uint16_t params_count = layer->get_interface()->params_count;
 		for (uint16_t i = 0; i < params_count; i++) {
 			data = get_param(layer, i, true);
 			file_write_layer_param(f, params[i].name, params[i].type, data);
@@ -263,7 +263,7 @@ static void file_write(LayerAggregate * top, FILE * f, Viewport * viewport)
 
 	while (aggregates && aggregates->data && ((std::list<Layer const *> *) aggregates->data)->size()) {
 		Layer const * current = ((std::list<Layer const *> *) aggregates->data)->front();
-		fprintf(f, "\n~Layer %s\n", vik_layer_get_interface(current->type)->fixed_layer_name);
+		fprintf(f, "\n~Layer %s\n", current->get_interface()->fixed_layer_name);
 		write_layer_params_and_data(current, f);
 		if (current->type == LayerType::AGGREGATE && !((LayerAggregate *) current)->is_empty()) {
 			push(&aggregates);
@@ -402,14 +402,14 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 					} else if (parent_type == LayerType::GPS) {
 						LayerGPS * g = (LayerGPS *) stack->under->data;
 						stack->data = (void *) g->get_a_child();
-						params = vik_layer_get_interface(layer_type)->params;
-						params_count = vik_layer_get_interface(layer_type)->params_count;
+						params = Layer::get_interface(layer_type)->params;
+						params_count = Layer::get_interface(layer_type)->params_count;
 
 					} else { /* Any other LayerType::X type. */
 						Layer * layer = Layer::new_(layer_type, viewport, false);
 						stack->data = (void *) layer;
-						params = vik_layer_get_interface(layer_type)->params;
-						params_count = vik_layer_get_interface(layer_type)->params_count;
+						params = Layer::get_interface(layer_type)->params;
+						params_count = Layer::get_interface(layer_type)->params_count;
 					}
 				}
 			} else if (str_starts_with(line, "EndLayer", 8, false)) {

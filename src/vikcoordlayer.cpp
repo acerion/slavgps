@@ -449,8 +449,10 @@ void LayerCoord::update_gc(Viewport * viewport)
 LayerCoord::LayerCoord()
 {
 	fprintf(stderr, "LayerCoord()\n");
+
 	this->type = LayerType::COORD;
 	strcpy(this->type_string, "COORD");
+	this->interface = &vik_coord_layer_interface;
 
 	this->color.setNamedColor("black");
 	this->line_thickness = 3;
@@ -468,6 +470,7 @@ LayerCoord::LayerCoord(Viewport * viewport)
 
 	this->type = LayerType::COORD;
 	strcpy(this->type_string, "COORD");
+	this->interface = &vik_coord_layer_interface;
 
 	this->color.setNamedColor("black");
 	this->line_thickness = 3;

@@ -1071,10 +1071,12 @@ char const * LayerAggregate::tooltip()
 LayerAggregate::LayerAggregate()
 {
 	this->type = LayerType::AGGREGATE;
+	strcpy(this->type_string, "AGGREGATE");
+	this->interface = &vik_aggregate_layer_interface;
+
 	this->rename(vik_aggregate_layer_interface.name);
 	this->children = new std::list<Layer *>;
 	this->tracks_analysis_dialog = NULL;
-	strcpy(this->type_string, "AGGREGATE");
 }
 
 

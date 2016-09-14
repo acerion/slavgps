@@ -60,18 +60,18 @@ using namespace SlavGPS;
 /* Functions common to all layers. */
 /* TODO longone: rename interface free -> finalize. */
 
-extern VikLayerInterface vik_aggregate_layer_interface;
+extern LayerInterface vik_aggregate_layer_interface;
 #ifndef SLAVGPS_QT
-extern VikLayerInterface vik_trw_layer_interface;
+extern LayerInterface vik_trw_layer_interface;
 #endif
-extern VikLayerInterface vik_coord_layer_interface;
+extern LayerInterface vik_coord_layer_interface;
 #ifndef SLAVGPS_QT
-extern VikLayerInterface vik_georef_layer_interface;
-extern VikLayerInterface vik_gps_layer_interface;
-extern VikLayerInterface vik_maps_layer_interface;
-extern VikLayerInterface vik_dem_layer_interface;
+extern LayerInterface vik_georef_layer_interface;
+extern LayerInterface vik_gps_layer_interface;
+extern LayerInterface vik_maps_layer_interface;
+extern LayerInterface vik_dem_layer_interface;
 #ifdef HAVE_LIBMAPNIK
-extern VikLayerInterface vik_mapnik_layer_interface;
+extern LayerInterface vik_mapnik_layer_interface;
 #endif
 #endif
 
@@ -210,7 +210,7 @@ void Layer::emit_update_secondary(void) /* Slot. */
 
 
 
-static VikLayerInterface * vik_layer_interfaces[(int) LayerType::NUM_TYPES] = {
+static LayerInterface * vik_layer_interfaces[(int) LayerType::NUM_TYPES] = {
 	&vik_aggregate_layer_interface,
 #ifndef SLAVGPS_QT
 	&vik_trw_layer_interface,
@@ -230,7 +230,7 @@ static VikLayerInterface * vik_layer_interfaces[(int) LayerType::NUM_TYPES] = {
 
 
 
-VikLayerInterface * vik_layer_get_interface(LayerType layer_type)
+LayerInterface * Layer::get_interface(LayerType layer_type)
 {
 	assert (layer_type < LayerType::NUM_TYPES);
 	return vik_layer_interfaces[(int) layer_type];
@@ -428,8 +428,8 @@ void Layer::marshall(uint8_t ** data, int * len)
 
 void Layer::marshall_params(uint8_t ** data, int * datalen)
 {
-	LayerParam * params = vik_layer_get_interface(this->type)->params;
-	VikLayerFuncGetParam get_param = vik_layer_get_interface(this->type)->get_param;
+	LayerParam * params = this->get_interface()->params;
+	VikLayerFuncGetParam get_param = this->get_interface()->get_param;
 
 	GByteArray* b = g_byte_array_new();
 	int len;
@@ -446,7 +446,7 @@ void Layer::marshall_params(uint8_t ** data, int * datalen)
 	/* Now the actual parameters. */
 	if (params && get_param) {
 		LayerParamData d;
-		uint16_t i, params_count = vik_layer_get_interface(this->type)->params_count;
+		uint16_t i, params_count = this->get_interface()->params_count;
 		for (i = 0; i < params_count; i++) {
 			fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, params[i].name);
 			d = get_param(this, i, false);
@@ -495,8 +495,8 @@ void Layer::marshall_params(uint8_t ** data, int * datalen)
 
 void Layer::unmarshall_params(uint8_t * data, int datalen, Viewport * viewport)
 {
-	LayerParam *params = vik_layer_get_interface(this->type)->params;
-	VikLayerFuncSetParam set_param = vik_layer_get_interface(this->type)->set_param;
+	LayerParam *params = this->get_interface()->params;
+	VikLayerFuncSetParam set_param = this->get_interface()->set_param;
 
 	char *s;
 	uint8_t *b = (uint8_t *) data;
@@ -516,7 +516,7 @@ void Layer::unmarshall_params(uint8_t * data, int datalen, Viewport * viewport)
 
 	if (params && set_param) {
 		LayerParamData d;
-		uint16_t params_count = vik_layer_get_interface(this->type)->params_count;
+		uint16_t params_count = this->get_interface()->params_count;
 		for (uint16_t i = 0; i < params_count; i++){
 			fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, params[i].name);
 			switch (params[i].type) {
@@ -709,7 +709,7 @@ static bool vik_layer_properties_factory(Layer * layer, Viewport * viewport)
 LayerType Layer::type_from_string(char const * str)
 {
 	for (LayerType i = LayerType::AGGREGATE; i < LayerType::NUM_TYPES; ++i) {
-		if (strcasecmp(str, vik_layer_get_interface(i)->fixed_layer_name) == 0) {
+		if (strcasecmp(str, Layer::get_interface(i)->fixed_layer_name) == 0) {
 			return i;
 		}
 	}
@@ -819,7 +819,7 @@ void Layer::set_defaults(Viewport * viewport)
 	/* Sneaky initialize of the viewport value here. */
 	this->viewport = viewport;
 
-	VikLayerInterface * vli = vik_layer_get_interface(this->type);
+	LayerInterface * vli = this->get_interface();
 	char const * layer_name = vli->fixed_layer_name;
 	LayerParamData data;
 

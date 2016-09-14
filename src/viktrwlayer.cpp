@@ -9501,8 +9501,8 @@ void LayerTRW::write_file(FILE * f) const
 LayerTRW::LayerTRW() : Layer()
 {
 	this->type = LayerType::TRW;
-
 	strcpy(this->type_string, "TRW");
+	this->interface = &vik_trw_layer_interface;
 
 	memset(&coord_mode, 0, sizeof (VikCoordMode));
 }
@@ -9513,8 +9513,8 @@ LayerTRW::LayerTRW() : Layer()
 LayerTRW::LayerTRW(Viewport * viewport) : Layer()
 {
 	this->type = LayerType::TRW;
-
 	strcpy(this->type_string, "TRW");
+	this->interface = &vik_trw_layer_interface;
 
 	memset(&coord_mode, 0, sizeof (VikCoordMode));
 
@@ -9586,6 +9586,6 @@ LayerTRW::LayerTRW(Viewport * viewport) : Layer()
 
 		this->coord_mode = viewport->get_coord_mode();
 
-		this->menu_selection = vik_layer_get_interface(this->type)->menu_items_selection;
+		this->menu_selection = this->interface->menu_items_selection;
 	}
 }

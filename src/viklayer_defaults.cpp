@@ -183,7 +183,7 @@ static void defaults_run_setparam(void * index_ptr, uint16_t i, LayerParamData d
 	int index = KPOINTER_TO_INT (index_ptr);
 	LayerParam *vlp = (LayerParam *) g_ptr_array_index(paramsVD, index + i);
 
-	set_default_data(data, vik_layer_get_interface(vlp->layer_type)->fixed_layer_name, vlp->name, vlp->type);
+	set_default_data(data, Layer::get_interface(vlp->layer_type)->fixed_layer_name, vlp->name, vlp->type);
 }
 
 
@@ -195,7 +195,7 @@ static LayerParamData defaults_run_getparam(void * index_ptr, uint16_t i, bool n
 	int index = (int) (long) (index_ptr);
 	LayerParam *vlp = (LayerParam *) g_ptr_array_index(paramsVD, index + i);
 
-	return get_default_data(vik_layer_get_interface(vlp->layer_type)->fixed_layer_name, vlp->name, vlp->type);
+	return get_default_data(Layer::get_interface(vlp->layer_type)->fixed_layer_name, vlp->name, vlp->type);
 }
 
 
@@ -203,25 +203,25 @@ static LayerParamData defaults_run_getparam(void * index_ptr, uint16_t i, bool n
 
 static void use_internal_defaults_if_missing_default(LayerType layer_type)
 {
-	LayerParam * params = vik_layer_get_interface(layer_type)->params;
+	LayerParam * params = Layer::get_interface(layer_type)->params;
 	if (!params) {
 		return;
 	}
 
-	uint16_t params_count = vik_layer_get_interface(layer_type)->params_count;
+	uint16_t params_count = Layer::get_interface(layer_type)->params_count;
 	uint16_t i;
 	/* Process each parameter. */
 	for (i = 0; i < params_count; i++) {
 		if (params[i].group != VIK_LAYER_NOT_IN_PROPERTIES) {
 			void * success = KINT_TO_POINTER (false);
 			/* Check current default is available. */
-			get_default_data_answer(vik_layer_get_interface(layer_type)->fixed_layer_name, params[i].name, params[i].type, &success);
+			get_default_data_answer(Layer::get_interface(layer_type)->fixed_layer_name, params[i].name, params[i].type, &success);
 			/* If no longer have a viable default. */
 			if (! KPOINTER_TO_INT (success)) {
 				/* Reset value. */
 				if (params[i].default_value) {
 					LayerParamData paramd = params[i].default_value();
-					set_default_data(paramd, vik_layer_get_interface(layer_type)->fixed_layer_name, params[i].name, params[i].type);
+					set_default_data(paramd, Layer::get_interface(layer_type)->fixed_layer_name, params[i].name, params[i].type);
 				}
 			}
 		}
@@ -374,8 +374,8 @@ bool a_layer_defaults_show_window(GtkWindow *parent, const char *layername)
 					   parent,
 					   params,
 					   layer_params_count,
-					   vik_layer_get_interface(layer_type)->params_groups,
-					   vik_layer_get_interface(layer_type)->params_groups_count,
+					   Layer::get_interface(layer_type)->params_groups,
+					   Layer::get_interface(layer_type)->params_groups_count,
 					   (bool (*) (void *,uint16_t,LayerParamData,void *,bool)) defaults_run_setparam,
 					   ((void *) (long) (index)),
 					   params,

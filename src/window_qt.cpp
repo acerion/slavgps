@@ -312,14 +312,14 @@ void Window::selected_layer(Layer * layer)
 	}
 
 	for (LayerType type = LayerType::AGGREGATE; type < LayerType::NUM_TYPES; ++type) {
-		VikLayerInterface * layer_interface = vik_layer_get_interface(type);
+		VikLayerInterface * layer_interface = Layer::get_interface(type);
 		int tool_count = layer_interface->tools_count;
 
 		for (int tool = 0; tool < tool_count; tool++) {
 			GtkAction * action = gtk_action_group_get_action(this->action_group,
 									 layer_interface->layer_tools[tool]->radioActionEntry.name);
 			g_object_set(action, "sensitive", type == layer->type, NULL);
-			toolbar_action_set_sensitive(this->viking_vtb, vik_layer_get_interface(type)->layer_tools[tool]->radioActionEntry.name, type == layer->type);
+			toolbar_action_set_sensitive(this->viking_vtb, Layer::get_interface(type)->layer_tools[tool]->radioActionEntry.name, type == layer->type);
 		}
 	}
 #endif

@@ -1993,6 +1993,7 @@ LayerGPS::LayerGPS()
 {
 	this->type = LayerType::GPS;
 	strcpy(this->type_string, "GPS");
+	this->interface = &vik_gps_layer_interface;
 }
 
 

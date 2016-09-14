@@ -85,7 +85,7 @@ typedef enum {
 
 
 typedef struct _VikLayerInterface VikLayerInterface;
-
+typedef VikLayerInterface LayerInterface;
 
 
 
@@ -153,6 +153,8 @@ namespace SlavGPS {
 
 		void emit_update();
 
+		LayerInterface * get_interface(void);
+		static LayerInterface * get_interface(LayerType layer_type);
 
 		/* Layer interface methods. */
 
@@ -270,6 +272,8 @@ namespace SlavGPS {
 
 	protected:
 		virtual void marshall(uint8_t ** data, int * len);
+
+		VikLayerInterface * interface = NULL;
 
 	public slots:
 		void visibility_toggled(QStandardItem * item);

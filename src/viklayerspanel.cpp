@@ -298,11 +298,11 @@ static GtkWidget* layers_panel_create_popup(LayersPanel * panel, bool full)
 	static new_layer_data_t lpnl[(int) LayerType::NUM_TYPES];
 
 	for (LayerType ii = LayerType::AGGREGATE; ii < LayerType::NUM_TYPES; ++ii) {
-		if (vik_layer_get_interface(ii)->icon) {
-			menuitem = gtk_image_menu_item_new_with_mnemonic(vik_layer_get_interface(ii)->name);
+		if (Layer::get_interface(ii)->icon) {
+			menuitem = gtk_image_menu_item_new_with_mnemonic(Layer::get_interface(ii)->name);
 			gtk_image_menu_item_set_image((GtkImageMenuItem*)menuitem, gtk_image_new_from_pixbuf(vik_layer_load_icon(ii)));
 		} else {
-			menuitem = gtk_menu_item_new_with_mnemonic (vik_layer_get_interface(ii)->name);
+			menuitem = gtk_menu_item_new_with_mnemonic (Layer::get_interface(ii)->name);
 		}
 
 		lpnl[(int) ii].panel = panel;

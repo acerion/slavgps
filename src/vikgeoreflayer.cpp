@@ -1323,6 +1323,7 @@ LayerGeoref::LayerGeoref()
 {
 	this->type = LayerType::GEOREF;
 	strcpy(this->type_string, "GEOREF");
+	this->interface = &vik_georef_layer_interface;
 }
 
 
