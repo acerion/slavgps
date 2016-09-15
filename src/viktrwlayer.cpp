@@ -317,6 +317,8 @@ LayerParam trw_layer_params[] = {
 	{ LayerType::TRW, "metadataauthor",    LayerParamType::STRING,  GROUP_METADATA,              N_("Author"),                      LayerWidgetType::ENTRY,        NULL,               NULL, NULL, string_default,             NULL, NULL },
 	{ LayerType::TRW, "metadatatime",      LayerParamType::STRING,  GROUP_METADATA,              N_("Creation Time"),               LayerWidgetType::ENTRY,        NULL,               NULL, NULL, string_default,             NULL, NULL },
 	{ LayerType::TRW, "metadatakeywords",  LayerParamType::STRING,  GROUP_METADATA,              N_("Keywords"),                    LayerWidgetType::ENTRY,        NULL,               NULL, NULL, string_default,             NULL, NULL },
+
+	{ LayerType::NUM_TYPES, NUM_PARAMS,       NULL,             LayerParamType::PTR,    VIK_LAYER_GROUP_NONE, NULL,                  LayerWidgetType::CHECKBUTTON, NULL,            NULL, NULL, NULL,                   NULL, NULL }, /* Guard. */
 };
 
 // ENUMERATION MUST BE IN THE SAME ORDER AS THE NAMED PARAMS ABOVE
@@ -1084,7 +1086,7 @@ bool LayerTRW::set_param_value(uint16_t id, LayerParamData data, Viewport * view
 
 
 
-LayerParamData LayerTRW::get_param_value(uint16_t id, bool is_file_operation) const
+LayerParamData LayerTRW::get_param_value(layer_param_id_t id, bool is_file_operation) const
 {
 	LayerParamData rv;
 	switch (id) {
@@ -9499,7 +9501,7 @@ LayerTRW::LayerTRW() : Layer()
 {
 	this->type = LayerType::TRW;
 	strcpy(this->type_string, "TRW");
-	this->interface = &vik_trw_layer_interface;
+	this->configure_interface(&vik_trw_layer_interface, layer_params);
 
 	memset(&coord_mode, 0, sizeof (VikCoordMode));
 }
@@ -9511,7 +9513,7 @@ LayerTRW::LayerTRW(Viewport * viewport) : Layer()
 {
 	this->type = LayerType::TRW;
 	strcpy(this->type_string, "TRW");
-	this->interface = &vik_trw_layer_interface;
+	this->configure_interface(&vik_trw_layer_interface, layer_params);
 
 	memset(&coord_mode, 0, sizeof (VikCoordMode));
 

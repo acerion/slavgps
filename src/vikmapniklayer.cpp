@@ -92,6 +92,8 @@ LayerParam mapnik_layer_params[] = {
 	{ LayerType::MAPNIK, "alpha",           LayerParamType::UINT,    VIK_LAYER_GROUP_NONE, N_("Alpha:"),                 LayerWidgetType::HSCALE,      &scales[0],                       NULL, NULL,                                alpha_default,        NULL, NULL },
 	{ LayerType::MAPNIK, "use-file-cache",  LayerParamType::BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Use File Cache:"),        LayerWidgetType::CHECKBUTTON, NULL,                             NULL, NULL,                                vik_lpd_true_default, NULL, NULL },
 	{ LayerType::MAPNIK, "file-cache-dir",  LayerParamType::STRING,  VIK_LAYER_GROUP_NONE, N_("File Cache Directory:"),  LayerWidgetType::FOLDERENTRY, NULL,                             NULL, NULL,                                cache_dir_default,    NULL, NULL },
+
+	{ LayerType::NUM_TYPES, NUM_PARAMS,       NULL,             LayerParamType::PTR,    VIK_LAYER_GROUP_NONE, NULL,                  LayerWidgetType::CHECKBUTTON, NULL,            NULL, NULL, NULL,                   NULL, NULL }, /* Guard. */
 };
 
 enum {
@@ -382,7 +384,7 @@ bool LayerMapnik::set_param_value(uint16_t id, LayerParamValue data, Viewport * 
 
 
 
-LayerParamValue LayerMapnik::get_param_value(uint16_t id, bool is_file_operation) const
+LayerParamValue LayerMapnik::get_param_value(layer_param_id_t id, bool is_file_operation) const
 {
 	LayerParamValue param_value;
 	switch (id) {
@@ -1239,7 +1241,7 @@ LayerMapnik::LayerMapnik()
 {
 	this->type = LayerType::MAPNIK;
 	strcpy(this->type_string, "MAPNIK");
-	this->interface = &vik_mapnik_layer_interface
+	this->configure_interface(&vik_mapnik_layer_interface, layer_params);
 
 	/* kamilTODO: initialize this? */
 	//this->rerender_ul;

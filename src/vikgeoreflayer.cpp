@@ -74,6 +74,8 @@ LayerParam georef_layer_params[] = {
 	{ LayerType::GEOREF, "corner_zone",          LayerParamType::UINT,   VIK_LAYER_NOT_IN_PROPERTIES, NULL, (LayerWidgetType) 0, NULL, NULL, NULL, NULL, NULL, NULL },
 	{ LayerType::GEOREF, "corner_letter_as_int", LayerParamType::UINT,   VIK_LAYER_NOT_IN_PROPERTIES, NULL, (LayerWidgetType) 0, NULL, NULL, NULL, NULL, NULL, NULL },
 	{ LayerType::GEOREF, "alpha",                LayerParamType::UINT,   VIK_LAYER_NOT_IN_PROPERTIES, NULL, (LayerWidgetType) 0, NULL, NULL, NULL, NULL, NULL, NULL },
+
+	{ LayerType::NUM_TYPES, NUM_PARAMS,       NULL,             LayerParamType::PTR,    VIK_LAYER_GROUP_NONE, NULL,                  LayerWidgetType::CHECKBUTTON, NULL,            NULL, NULL, NULL,                   NULL, NULL }, /* Guard. */
 };
 
 enum {
@@ -252,7 +254,7 @@ void LayerGeoref::create_image_file()
 
 
 
-LayerParamValue LayerGeoref::get_param_value(uint16_t id, bool is_file_operation) const
+LayerParamValue LayerGeoref::get_param_value(layer_param_id_t id, bool is_file_operation) const
 {
 	LayerParamValue rv;
 	switch (id) {
@@ -1320,7 +1322,7 @@ LayerGeoref::LayerGeoref()
 {
 	this->type = LayerType::GEOREF;
 	strcpy(this->type_string, "GEOREF");
-	this->interface = &vik_georef_layer_interface;
+	this->configure_interface(&vik_georef_layer_interface, layer_params);
 }
 
 

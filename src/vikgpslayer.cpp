@@ -302,6 +302,8 @@ static LayerParam gps_layer_params[] = {
 	{ LayerType::GPS, "gpsd_port",                 LayerParamType::STRING,  GROUP_REALTIME_MODE, N_("Gpsd Port:"),                        LayerWidgetType::ENTRY,             NULL,                    NULL, NULL, gpsd_port_default,           NULL, NULL },
 	{ LayerType::GPS, "gpsd_retry_interval",       LayerParamType::STRING,  GROUP_REALTIME_MODE, N_("Gpsd Retry Interval (seconds):"),    LayerWidgetType::ENTRY,             NULL,                    NULL, NULL, gpsd_retry_interval_default, NULL, NULL },
 #endif /* VIK_CONFIG_REALTIME_GPS_TRACKING */
+
+	{ LayerType::NUM_TYPES, NUM_PARAMS,       NULL,             LayerParamType::PTR,    VIK_LAYER_GROUP_NONE, NULL,                  LayerWidgetType::CHECKBUTTON, NULL,            NULL, NULL, NULL,                   NULL, NULL }, /* Guard. */
 };
 enum {
 	PARAM_PROTOCOL=0,
@@ -559,7 +561,7 @@ bool LayerGPS::set_param_value(uint16_t id, LayerParamValue data, Viewport * vie
 
 
 
-LayerParamValue LayerGPS::get_param_value(uint16_t id, bool is_file_operation) const
+LayerParamValue LayerGPS::get_param_value(layer_param_id_t id, bool is_file_operation) const
 {
 	LayerParamValue rv;
 	switch (id) {
@@ -1990,7 +1992,7 @@ LayerGPS::LayerGPS()
 {
 	this->type = LayerType::GPS;
 	strcpy(this->type_string, "GPS");
-	this->interface = &vik_gps_layer_interface;
+	this->configure_interface(&vik_gps_layer_interface, layer_params);
 }
 
 

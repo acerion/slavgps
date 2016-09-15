@@ -84,6 +84,8 @@ static LayerParam coord_layer_params[] = {
 	{ LayerType::COORD, PARAM_COLOR,          "color",          LayerParamType::COLOR,  VIK_LAYER_GROUP_NONE, N_("Color:"),          LayerWidgetType::COLOR,      NULL,             NULL, NULL, color_default,          NULL, NULL },
 	{ LayerType::COORD, PARAM_MIN_INC,        "min_inc",        LayerParamType::DOUBLE, VIK_LAYER_GROUP_NONE, N_("Minutes Width:"),  LayerWidgetType::SPINBOX_DOUBLE, &param_scales[0], NULL, NULL, min_inc_default,        NULL, NULL },
 	{ LayerType::COORD, PARAM_LINE_THICKNESS, "line_thickness", LayerParamType::UINT,   VIK_LAYER_GROUP_NONE, N_("Line Thickness:"), LayerWidgetType::SPINBUTTON, &param_scales[1], NULL, NULL, line_thickness_default, NULL, NULL },
+
+	{ LayerType::NUM_TYPES, NUM_PARAMS,       NULL,             LayerParamType::PTR,    VIK_LAYER_GROUP_NONE, NULL,                  LayerWidgetType::CHECKBUTTON, NULL,            NULL, NULL, NULL,                   NULL, NULL }, /* Guard. */
 };
 
 
@@ -115,6 +117,7 @@ VikLayerInterface vik_coord_layer_interface = {
 
 	/* (VikLayerFuncUnmarshall) */    coord_layer_unmarshall,
 	/* (VikLayerFuncChangeParam) */   NULL,
+	NULL,
 };
 
 
@@ -165,7 +168,7 @@ bool LayerCoord::set_param_value(uint16_t id, LayerParamValue param_value, Viewp
 
 
 
-LayerParamValue LayerCoord::get_param_value(uint16_t id, bool is_file_operation) const
+LayerParamValue LayerCoord::get_param_value(layer_param_id_t id, bool is_file_operation) const
 {
 	LayerParamValue rv;
 	switch (id) {
@@ -441,15 +444,13 @@ void LayerCoord::update_gc(Viewport * viewport)
 
 
 
-
-
 LayerCoord::LayerCoord()
 {
 	fprintf(stderr, "LayerCoord()\n");
 
 	this->type = LayerType::COORD;
 	strcpy(this->type_string, "COORD");
-	this->interface = &vik_coord_layer_interface;
+	this->configure_interface(&vik_coord_layer_interface, coord_layer_params);
 
 	this->color.setNamedColor("black");
 	this->line_thickness = 3;
@@ -460,14 +461,13 @@ LayerCoord::LayerCoord()
 
 
 
-
 LayerCoord::LayerCoord(Viewport * viewport)
 {
 	fprintf(stderr, "LayerCoord()\n");
 
 	this->type = LayerType::COORD;
 	strcpy(this->type_string, "COORD");
-	this->interface = &vik_coord_layer_interface;
+	this->configure_interface(&vik_coord_layer_interface, coord_layer_params);
 
 	this->color.setNamedColor("black");
 	this->line_thickness = 3;

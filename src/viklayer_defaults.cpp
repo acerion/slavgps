@@ -233,11 +233,10 @@ static void use_internal_defaults_if_missing_default(LayerType layer_type)
 
 static bool defaults_load_from_file()
 {
-#ifndef SLAVGPS_QT
 	GKeyFileFlags flags = G_KEY_FILE_KEEP_COMMENTS;
 
 	GError *error = NULL;
-
+#ifndef SLAVGPS_QT
 	char *fn = g_build_filename(get_viking_dir(), VIKING_LAYER_DEFAULTS_INI_FILE, NULL);
 
 	if (!g_key_file_load_from_file(keyfile, fn, flags, &error)) {
@@ -249,6 +248,7 @@ static bool defaults_load_from_file()
 
 	free(fn);
 #endif
+
 	/* Ensure if have a key file, then any missing values are set from the internal defaults. */
 	for (LayerType layer_type = LayerType::AGGREGATE; layer_type < LayerType::NUM_TYPES; ++layer_type) {
 		use_internal_defaults_if_missing_default(layer_type);
@@ -323,8 +323,7 @@ tidy:
  */
 bool a_layer_defaults_show_window(GtkWindow *parent, const char *layername)
 {
-#ifndef SLAVGPS_QT
-	if (! loaded) {
+	if (!loaded) {
 		/* Since we can't load the file in a_defaults_init (no params registered yet),
 		   do it once before we display the params. */
 		defaults_load_from_file();
@@ -370,6 +369,8 @@ bool a_layer_defaults_show_window(GtkWindow *parent, const char *layername)
 
 	char *title = g_strconcat(layername, ": ", _("Layer Defaults"), NULL);
 
+#ifndef SLAVGPS_QT
+
 	if (a_uibuilder_properties_factory(title,
 					   parent,
 					   params,
@@ -385,10 +386,10 @@ bool a_layer_defaults_show_window(GtkWindow *parent, const char *layername)
 		/* Save. */
 		layer_defaults_save_to_file();
 	}
+#endif
 
 	free(title);
 	free(params);
-#endif
 
 	return true;
 }

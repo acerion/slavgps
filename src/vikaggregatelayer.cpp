@@ -76,6 +76,7 @@ VikLayerInterface vik_aggregate_layer_interface = {
 
 	/* (VikLayerFuncUnmarshall) */   aggregate_layer_unmarshall,
 	/* (VikLayerFuncChangeParam) */  NULL,
+	NULL,
 };
 
 
@@ -1069,7 +1070,7 @@ LayerAggregate::LayerAggregate()
 {
 	this->type = LayerType::AGGREGATE;
 	strcpy(this->type_string, "AGGREGATE");
-	this->interface = &vik_aggregate_layer_interface;
+	this->configure_interface(&vik_aggregate_layer_interface, NULL);
 
 	this->rename(vik_aggregate_layer_interface.name);
 	this->children = new std::list<Layer *>;

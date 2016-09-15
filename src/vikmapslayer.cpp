@@ -217,6 +217,8 @@ LayerParam maps_layer_params[] = {
 	{ LayerType::MAPS, "autodownload",   LayerParamType::BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Autodownload maps:"),                   LayerWidgetType::CHECKBUTTON, NULL,                               NULL, NULL, vik_lpd_true_default, NULL, NULL },
 	{ LayerType::MAPS, "adlonlymissing", LayerParamType::BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Autodownload Only Gets Missing Maps:"), LayerWidgetType::CHECKBUTTON, NULL,                               NULL, N_("Using this option avoids attempting to update already acquired tiles. This can be useful if you want to restrict the network usage, without having to resort to manual control. Only applies when 'Autodownload Maps' is on."), vik_lpd_false_default, NULL, NULL },
 	{ LayerType::MAPS, "mapzoom",        LayerParamType::UINT,    VIK_LAYER_GROUP_NONE, N_("Zoom Level:"),                          LayerWidgetType::COMBOBOX,    params_mapzooms,                    NULL, N_("Determines the method of displaying map tiles for the current zoom level. 'Viking Zoom Level' uses the best matching level, otherwise setting a fixed value will always use map tiles of the specified value regardless of the actual zoom level."),	  mapzoom_default, NULL, NULL },
+
+	{ LayerType::NUM_TYPES, NUM_PARAMS,       NULL,             LayerParamType::PTR,    VIK_LAYER_GROUP_NONE, NULL,                  LayerWidgetType::CHECKBUTTON, NULL,            NULL, NULL, NULL,                   NULL, NULL }, /* Guard. */
 };
 
 
@@ -720,7 +722,7 @@ bool LayerMaps::set_param_value(uint16_t id, LayerParamData data, Viewport * vie
 
 
 
-LayerParamData LayerMaps::get_param_value(uint16_t id, bool is_file_operation) const
+LayerParamData LayerMaps::get_param_value(layer_param_id_t id, bool is_file_operation) const
 {
 	LayerParamData rv;
 	switch (id) {
@@ -2723,7 +2725,7 @@ LayerMaps::LayerMaps()
 
 	this->type = LayerType::MAPS;
 	strcpy(this->type_string, "MAPS");
-	this->interface = &vik_maps_layer_interface;
+	this->configure_interface(&vik_maps_layer_interface, layer_params);
 
 	memset(&redownload_ul, 0, sizeof (VikCoord));
 	memset(&redownload_br, 0, sizeof (VikCoord));

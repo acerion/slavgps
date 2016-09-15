@@ -163,6 +163,8 @@ static LayerParam dem_layer_params[] = {
 	{ LayerType::DEM, "type",     LayerParamType::UINT,        VIK_LAYER_GROUP_NONE, N_("Type:"),            LayerWidgetType::RADIOGROUP_STATIC, params_type,      NULL, NULL, type_default, NULL, NULL },
 	{ LayerType::DEM, "min_elev", LayerParamType::DOUBLE,      VIK_LAYER_GROUP_NONE, N_("Min Elev:"),        LayerWidgetType::SPINBUTTON,        param_scales + 0, NULL, NULL, min_elev_default, NULL, NULL },
 	{ LayerType::DEM, "max_elev", LayerParamType::DOUBLE,      VIK_LAYER_GROUP_NONE, N_("Max Elev:"),        LayerWidgetType::SPINBUTTON,        param_scales + 0, NULL, NULL, max_elev_default, NULL, NULL },
+
+	{ LayerType::NUM_TYPES, NUM_PARAMS,       NULL,             LayerParamType::PTR,    VIK_LAYER_GROUP_NONE, NULL,                  LayerWidgetType::CHECKBUTTON, NULL,            NULL, NULL, NULL,                   NULL, NULL }, /* Guard. */
 };
 
 
@@ -448,7 +450,7 @@ bool LayerDEM::set_param_value(uint16_t id, LayerParamValue data, Viewport * vie
 
 
 
-LayerParamValue LayerDEM::get_param_value(uint16_t id, bool is_file_operation) const
+LayerParamValue LayerDEM::get_param_value(layer_param_id_t id, bool is_file_operation) const
 {
 	LayerParamValue rv;
 
@@ -1440,7 +1442,7 @@ LayerDEM::LayerDEM()
 {
 	this->type = LayerType::DEM;
 	strcpy(this->type_string, "DEM");
-	this->interface = &vik_dem_layer_interface;
+	this->configure_interface(&vik_dem_layer_interface, layer_params);
 
 	this->files = new std::list<char *>;
 	this->dem_type = 0;

@@ -48,7 +48,7 @@ namespace SlavGPS {
 		void post_read(Viewport * viewport, bool from_file);
 		void draw(Viewport * viewport);
 		bool set_param_value(uint16_t id, LayerParamValue param_value, Viewport * viewport, bool is_file_operation);
-		LayerParamValue get_param_value(uint16_t id, bool is_file_operation) const;
+		LayerParamValue get_param_value(layer_param_id_t id, bool is_file_operation) const;
 
 		void update_gc(Viewport * viewport);
 

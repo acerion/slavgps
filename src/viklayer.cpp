@@ -245,6 +245,22 @@ LayerInterface * Layer::get_interface(void)
 
 
 
+void Layer::configure_interface(LayerInterface * intf, LayerParam * parameters)
+{
+	this->interface = intf;
+
+	if (parameters && this->interface && !this->interface->layer_parameters) {
+		this->interface->layer_parameters = new std::map<layer_param_id_t, LayerParam *>;
+		int i = 0;
+		while (parameters[i].name) {
+			this->interface->layer_parameters->insert(std::pair<layer_param_id_t, LayerParam *>(parameters[i].id, &parameters[i]));
+			i++;
+		}
+	}
+}
+
+
+
 
 /**
  * Store default values for this layer.
@@ -435,7 +451,7 @@ void Layer::marshall(uint8_t ** data, int * len)
 
 void Layer::marshall_params(uint8_t ** data, int * datalen)
 {
-	LayerParam * params = this->get_interface()->params;
+
 
 	GByteArray* b = g_byte_array_new();
 	int len;
@@ -450,17 +466,18 @@ void Layer::marshall_params(uint8_t ** data, int * datalen)
 	vlm_append(this->name, strlen(this->name));
 
 	/* Now the actual parameters. */
-	if (params) {
-		LayerParamData d;
-		uint16_t i, params_count = this->get_interface()->params_count;
-		for (i = 0; i < params_count; i++) {
-			fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, params[i].name);
-			d = this->get_param_value(i, false);
-			switch (params[i].type) {
+	std::map<layer_param_id_t, LayerParam *> * parameters = this->get_interface()->layer_parameters;
+	if (parameters) {
+		LayerParamValue param_value;
+		for (auto iter = parameters->begin(); iter != parameters->end(); iter++) {
+			fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, iter->second->name);
+
+			param_value = this->get_param_value(iter->first, false);
+			switch (iter->second->type) {
 			case LayerParamType::STRING:
 				/* Remember need braces as these are macro calls, not single statement functions! */
-				if (d.s) {
-					vlm_append(d.s, strlen(d.s));
+				if (param_value.s) {
+					vlm_append(param_value.s, strlen(param_value.s));
 				} else {
 					/* Need to insert empty string otherwise the unmarshall will get confused. */
 					vlm_append("", 0);
@@ -468,22 +485,22 @@ void Layer::marshall_params(uint8_t ** data, int * datalen)
 				break;
 				/* Print out the string list in the array. */
 			case LayerParamType::STRING_LIST: {
-				std::list<char *> * a_list = d.sl;
+				std::list<char *> * a_list = param_value.sl;
 
 				/* Write length of list (# of strings). */
 				int listlen = a_list->size();
 				g_byte_array_append(b, (uint8_t *) &listlen, sizeof (listlen));
 
 				/* Write each string. */
-				for (auto iter = a_list->begin(); iter != a_list->end(); iter++) {
-					char * s = *iter;
+				for (auto l = a_list->begin(); l != a_list->end(); l++) {
+					char * s = *l;
 					vlm_append(s, strlen(s));
 				}
 
 				break;
 			}
 			default:
-				vlm_append(&d, sizeof (d));
+				vlm_append(&param_value, sizeof (param_value));
 				break;
 			}
 		}
@@ -501,8 +518,6 @@ void Layer::marshall_params(uint8_t ** data, int * datalen)
 
 void Layer::unmarshall_params(uint8_t * data, int datalen, Viewport * viewport)
 {
-	LayerParam *params = this->get_interface()->params;
-
 	char *s;
 	uint8_t *b = (uint8_t *) data;
 
@@ -519,18 +534,20 @@ void Layer::unmarshall_params(uint8_t * data, int datalen, Viewport * viewport)
 	this->rename(s);
 	free(s);
 
-	if (params) {
-		LayerParamData d;
-		uint16_t params_count = this->get_interface()->params_count;
-		for (uint16_t i = 0; i < params_count; i++){
-			fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, params[i].name);
-			switch (params[i].type) {
+	std::map<layer_param_id_t, LayerParam *> * parameters = this->get_interface()->layer_parameters;
+	if (parameters) {
+		LayerParamValue param_value;
+
+		for (auto iter = parameters->begin(); iter != parameters->end(); iter++) {
+			fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, iter->second->name);
+
+			switch (iter->second->type) {
 			case LayerParamType::STRING:
 				s = (char *) malloc(vlm_size + 1);
 				s[vlm_size] = 0;
 				vlm_read(s);
-				d.s = s;
-				this->set_param_value(i, d, viewport, false);
+				param_value.s = s;
+				this->set_param_value(iter->first, param_value, viewport, false);
 				free(s);
 				break;
 			case LayerParamType::STRING_LIST: {
@@ -541,19 +558,19 @@ void Layer::unmarshall_params(uint8_t * data, int datalen, Viewport * viewport)
 				for (int j = 0; j < listlen; j++) {
 					/* Get a string. */
 					s = (char *) malloc(vlm_size + 1);
-					s[vlm_size]=0;
+					s[vlm_size] = 0;
 					vlm_read(s);
 					list->push_back(s);
 				}
-				d.sl = list;
-				this->set_param_value(i, d, viewport, false);
+				param_value.sl = list;
+				this->set_param_value(iter->first, param_value, viewport, false);
 				/* Don't free -- string list is responsibility of the layer. */
 
 				break;
 			}
 			default:
-				vlm_read(&d);
-				this->set_param_value(i, d, viewport, false);
+				vlm_read(&param_value);
+				this->set_param_value(iter->first, param_value, viewport, false);
 				break;
 			}
 		}
@@ -645,11 +662,12 @@ static bool vik_layer_properties_factory(Layer * layer, Viewport * viewport)
 
 	if (dialog_code == QDialog::Accepted) {
 
-
 		bool must_redraw = false;
-		for (uint16_t id = 0; id < layer->get_interface()->params_count; id++) {
-			LayerParamData param_data = dialog.get_param_value(id, &(layer->get_interface()->params[id]));
-			bool set = layer->set_param_value(id, param_data, viewport, false);
+
+		std::map<layer_param_id_t, LayerParam *> * parameters = layer->get_interface()->layer_parameters;
+		for (auto iter = parameters->begin(); iter != parameters->end(); iter++) {
+			LayerParamValue param_value = dialog.get_param_value(iter->first, iter->second);
+			bool set = layer->set_param_value(iter->first, param_value, viewport, false);
 			if (set) {
 				must_redraw = true;
 			}
@@ -806,18 +824,18 @@ void Layer::set_defaults(Viewport * viewport)
 	/* Sneaky initialize of the viewport value here. */
 	this->viewport = viewport;
 
-	LayerInterface * vli = this->get_interface();
-	char const * layer_name = vli->fixed_layer_name;
-	LayerParamData data;
+	char const * layer_name = this->get_interface()->fixed_layer_name;
+	LayerParamValue param_value;
 
-	for (int i = 0; i < vli->params_count; i++) {
+	std::map<layer_param_id_t, LayerParam *> * parameters = this->interface->layer_parameters;
+	for (auto iter = parameters->begin(); iter != parameters->end(); iter++) {
 		/* Ensure parameter is for use. */
-		if (vli->params[i].group > VIK_LAYER_NOT_IN_PROPERTIES) {
+		if (iter->second->group > VIK_LAYER_NOT_IN_PROPERTIES) {
 			/* ATM can't handle string lists.
 			   Only DEM files uses this currently. */
-			if (vli->params[i].type != LayerParamType::STRING_LIST) {
-				data = a_layer_defaults_get(layer_name, vli->params[i].name, vli->params[i].type);
-				this->set_param_value(i, data, viewport, true); // Possibly come from a file
+			if (iter->second->type != LayerParamType::STRING_LIST) {
+				param_value = a_layer_defaults_get(layer_name, iter->second->name, iter->second->type);
+				this->set_param_value(iter->first, param_value, viewport, true); /* Possibly comes from a file. */
 			}
 		}
 	}
@@ -1076,7 +1094,7 @@ void Layer::realize(TreeView * tree_view_, QStandardItem * layer_item)
 
 
 
-LayerParamValue Layer::get_param_value(uint16_t id, bool is_file_operation) const
+LayerParamValue Layer::get_param_value(layer_param_id_t id, bool is_file_operation) const
 {
 	LayerParamValue param_value;
 	return param_value;

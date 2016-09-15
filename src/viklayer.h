@@ -26,6 +26,7 @@
 
 #include <cstdio>
 #include <cstdint>
+#include <map>
 
 #include <glib.h>
 #ifdef SLAVGPS_QT
@@ -86,6 +87,7 @@ typedef enum {
 
 typedef struct _VikLayerInterface VikLayerInterface;
 typedef VikLayerInterface LayerInterface;
+typedef int16_t layer_param_id_t;
 
 
 
@@ -155,6 +157,7 @@ namespace SlavGPS {
 
 		LayerInterface * get_interface(void);
 		static LayerInterface * get_interface(LayerType layer_type);
+		void configure_interface(LayerInterface * intf, LayerParam * parameters);
 
 		/* Layer interface methods. */
 
@@ -213,7 +216,7 @@ namespace SlavGPS {
 		virtual void realize(TreeView * tree_view, QStandardItem * layer_item);
 
 		/* bool denotes if for file I/O, as opposed to display/cut/copy etc... operations. */
-		virtual LayerParamValue get_param_value(uint16_t id, bool is_file_operation) const;
+		virtual LayerParamValue get_param_value(layer_param_id_t id, bool is_file_operation) const;
 
 		/* Returns true if needs to redraw due to changed param. */
 		/* bool denotes if for file I/O, as opposed to display/cut/copy etc... operations. */
@@ -358,6 +361,8 @@ typedef void                     (* VikLayerFuncChangeParam)   (GtkWidget *, ui_
 
 
 
+
+
 /* See vik_layer_* for function parameter names. */
 struct _VikLayerInterface {
 	const char *                      fixed_layer_name; /* Used in .vik files - this should never change to maintain file compatibility. */
@@ -370,11 +375,12 @@ struct _VikLayerInterface {
 
 	uint16_t                           tools_count;
 
+
 	/* For I/O reading to and from .vik files -- params like coordline width, color, etc. */
-	LayerParam *                   params;
-	uint16_t                           params_count;
-	char **                          params_groups;
-	uint8_t                            params_groups_count;
+	LayerParam *                      params;
+	uint16_t                          params_count;
+	char **                           params_groups;
+	uint8_t                           params_groups_count;
 
 	/* Menu items to be created. */
 	VikStdLayerMenuItem               menu_items_selection;
@@ -383,9 +389,10 @@ struct _VikLayerInterface {
 
 	/* For I/O. */
 	VikLayerFuncChangeParam           change_param;
+
+	std::map<layer_param_id_t, LayerParam *> * layer_parameters;
 };
 
-VikLayerInterface * vik_layer_get_interface(SlavGPS::LayerType layer_type);
 
 
 /* GUI. */
