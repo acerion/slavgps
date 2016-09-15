@@ -139,9 +139,6 @@ VikLayerInterface vik_georef_layer_interface = {
 	VIK_MENU_ITEM_ALL,
 
 	/* (VikLayerFuncUnmarshall) */    georef_layer_unmarshall,
-
-	/* (VikLayerFuncSetParam) */      layer_set_param,
-	/* (VikLayerFuncGetParam) */      layer_get_param,
 	/* (VikLayerFuncChangeParam) */   NULL,
 };
 
@@ -194,7 +191,7 @@ static Layer * georef_layer_unmarshall(uint8_t * data, int len, Viewport * viewp
 
 
 
-bool LayerGeoref::set_param(uint16_t id, LayerParamData data, Viewport * viewport, bool is_file_operation)
+bool LayerGeoref::set_param_value(uint16_t id, LayerParamValue data, Viewport * viewport, bool is_file_operation)
 {
 	switch (id) {
 	case PARAM_IMAGE:
@@ -255,9 +252,9 @@ void LayerGeoref::create_image_file()
 
 
 
-LayerParamData LayerGeoref::get_param(uint16_t id, bool is_file_operation) const
+LayerParamValue LayerGeoref::get_param_value(uint16_t id, bool is_file_operation) const
 {
-	LayerParamData rv;
+	LayerParamValue rv;
 	switch (id) {
 	case PARAM_IMAGE: {
 		bool set = false;

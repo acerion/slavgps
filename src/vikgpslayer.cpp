@@ -341,9 +341,6 @@ VikLayerInterface vik_gps_layer_interface = {
 	VIK_MENU_ITEM_ALL,
 
 	/* (VikLayerFuncUnmarshall) */    gps_layer_unmarshall,
-
-	/* (VikLayerFuncSetParam) */      layer_set_param,
-	/* (VikLayerFuncGetParam) */      layer_get_param,
 	/* (VikLayerFuncChangeParam) */   NULL,
 };
 
@@ -457,7 +454,7 @@ static Layer * gps_layer_unmarshall(uint8_t * data, int len, Viewport * viewport
 
 
 
-bool LayerGPS::set_param(uint16_t id, LayerParamData data, Viewport * viewport, bool is_file_operation)
+bool LayerGPS::set_param_value(uint16_t id, LayerParamValue data, Viewport * viewport, bool is_file_operation)
 {
 	switch (id) {
 	case PARAM_PROTOCOL:
@@ -553,7 +550,7 @@ bool LayerGPS::set_param(uint16_t id, LayerParamData data, Viewport * viewport, 
 		break;
 #endif /* VIK_CONFIG_REALTIME_GPS_TRACKING */
 	default:
-		fprintf(stderr, "WARNING: LayerGPS::set_param(): unknown parameter\n");
+		fprintf(stderr, "WARNING: LayerGPS::set_param_value(): unknown parameter\n");
 	}
 
 	return true;
@@ -562,9 +559,9 @@ bool LayerGPS::set_param(uint16_t id, LayerParamData data, Viewport * viewport, 
 
 
 
-LayerParamData LayerGPS::get_param(uint16_t id, bool is_file_operation) const
+LayerParamValue LayerGPS::get_param_value(uint16_t id, bool is_file_operation) const
 {
-	LayerParamData rv;
+	LayerParamValue rv;
 	switch (id) {
 	case PARAM_PROTOCOL:
 		rv.s = this->protocol;

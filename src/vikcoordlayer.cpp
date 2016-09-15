@@ -114,9 +114,6 @@ VikLayerInterface vik_coord_layer_interface = {
 	VIK_MENU_ITEM_ALL,
 
 	/* (VikLayerFuncUnmarshall) */    coord_layer_unmarshall,
-
-	/* (VikLayerFuncSetParam) */      layer_set_param,
-	/* (VikLayerFuncGetParam) */      layer_get_param,
 	/* (VikLayerFuncChangeParam) */   NULL,
 };
 
@@ -138,24 +135,24 @@ static Layer * coord_layer_unmarshall(uint8_t * data, int len, Viewport * viewpo
 
 
 // NB Viewport can be null as it's not used ATM
-bool LayerCoord::set_param(uint16_t id, LayerParamData data, Viewport * viewport, bool is_file_operation)
+bool LayerCoord::set_param_value(uint16_t id, LayerParamValue param_value, Viewport * viewport, bool is_file_operation)
 {
 	fprintf(stderr, "set param %d\n", id);
 	switch (id) {
 	case PARAM_COLOR:
-		fprintf(stderr, "++++ saving colors: %d %d %d %d\n", data.c.r, data.c.g, data.c.b, data.c.a);
-		this->color.setRed(data.c.r);
-		this->color.setGreen(data.c.g);
-		this->color.setBlue(data.c.b);
+		fprintf(stderr, "++++ saving colors: %d %d %d %d\n", param_value.c.r, param_value.c.g, param_value.c.b, param_value.c.a);
+		this->color.setRed(param_value.c.r);
+		this->color.setGreen(param_value.c.g);
+		this->color.setBlue(param_value.c.b);
 		this->color.setAlpha(50);
 		break;
 	case PARAM_MIN_INC:
-		this->deg_inc = data.d / 60.0;
+		this->deg_inc = param_value.d / 60.0;
 		break;
 	case PARAM_LINE_THICKNESS:
-		fprintf(stderr, "set param %d line thickness %d\n", id, data.u);
-		if (data.u >= 1 && data.u <= 15) {
-			this->line_thickness = data.u;
+		fprintf(stderr, "set param %d line thickness %d\n", id, param_value.u);
+		if (param_value.u >= 1 && param_value.u <= 15) {
+			this->line_thickness = param_value.u;
 		}
 		break;
 	default:
@@ -168,9 +165,9 @@ bool LayerCoord::set_param(uint16_t id, LayerParamData data, Viewport * viewport
 
 
 
-LayerParamData LayerCoord::get_param(uint16_t id, bool is_file_operation) const
+LayerParamValue LayerCoord::get_param_value(uint16_t id, bool is_file_operation) const
 {
-	LayerParamData rv;
+	LayerParamValue rv;
 	switch (id) {
 	case PARAM_COLOR:
 		rv.c.r = this->color.red();

@@ -279,9 +279,6 @@ VikLayerInterface vik_maps_layer_interface = {
 	VIK_MENU_ITEM_ALL,
 
 	/* (VikLayerFuncUnmarshall) */   maps_layer_unmarshall,
-
-	/* (VikLayerFuncSetParam) */     layer_set_param,
-	/* (VikLayerFuncGetParam) */     layer_get_param,
 	/* (VikLayerFuncChangeParam) */  maps_layer_change_param,
 };
 
@@ -655,7 +652,7 @@ static void maps_show_license(GtkWindow *parent, MapSource *map)
 
 
 
-bool LayerMaps::set_param(uint16_t id, LayerParamData data, Viewport * viewport, bool is_file_operation)
+bool LayerMaps::set_param_value(uint16_t id, LayerParamData data, Viewport * viewport, bool is_file_operation)
 {
 	switch (id) {
 	case PARAM_CACHE_DIR:
@@ -723,7 +720,7 @@ bool LayerMaps::set_param(uint16_t id, LayerParamData data, Viewport * viewport,
 
 
 
-LayerParamData LayerMaps::get_param(uint16_t id, bool is_file_operation) const
+LayerParamData LayerMaps::get_param_value(uint16_t id, bool is_file_operation) const
 {
 	LayerParamData rv;
 	switch (id) {

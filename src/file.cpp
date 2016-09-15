@@ -184,20 +184,19 @@ void SlavGPS::file_write_layer_param(FILE * f, char const * name, LayerParamType
 
 static void write_layer_params_and_data(Layer const * layer, FILE * f)
 {
-	LayerParam *params = layer->get_interface()->params;
-	VikLayerFuncGetParam get_param = layer->get_interface()->get_param;
+	LayerParam * params = layer->get_interface()->params;
 
 	fprintf(f, "name=%s\n", layer->name ? layer->name : "");
 	if (!layer->visible) {
 		fprintf(f, "visible=f\n");
 	}
 
-	if (params && get_param) {
-		LayerParamData data;
+	if (params) {
+		LayerParamValue param_value;
 		uint16_t params_count = layer->get_interface()->params_count;
 		for (uint16_t i = 0; i < params_count; i++) {
-			data = get_param(layer, i, true);
-			file_write_layer_param(f, params[i].name, params[i].type, data);
+			param_value = layer->get_param_value(i, true);
+			file_write_layer_param(f, params[i].name, params[i].type, param_value);
 		}
 	}
 
@@ -317,9 +316,9 @@ static void string_list_delete(void * key, void * l, void * user_data)
 
 static void string_list_set_param(int i, std::list<char *> * list, LayerAndVp * layer_and_vp)
 {
-	LayerParamData x;
-	x.sl = list;
-	layer_and_vp->layer->set_param(i, x, layer_and_vp->viewport, true);
+	LayerParamValue param_value;
+	param_value.sl = list;
+	layer_and_vp->layer->set_param_value(i, param_value, layer_and_vp->viewport, true);
 }
 
 
@@ -575,7 +574,7 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 							default: x.s = line;
 							}
 							Layer * l_a_y_e_r = (Layer *) stack->data;
-							l_a_y_e_r->set_param(i, x, viewport, true);
+							l_a_y_e_r->set_param_value(i, x, viewport, true);
 						}
 						found_match = true;
 						break;

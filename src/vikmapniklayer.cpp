@@ -137,9 +137,6 @@ VikLayerInterface vik_mapnik_layer_interface = {
 	VIK_MENU_ITEM_ALL,
 
 	/* (VikLayerFuncUnmarshall) */    mapnik_layer_unmarshall,
-
-	/* (VikLayerFuncSetParam) */      layer_set_param,
-	/* (VikLayerFuncGetParam) */      layer_get_param,
 	/* (VikLayerFuncChangeParam) */   NULL,
 };
 
@@ -357,7 +354,7 @@ static Layer * mapnik_layer_unmarshall(uint8_t * data, int len, Viewport * viewp
 
 
 
-bool LayerMapnik::set_param(uint16_t id, LayerParamData data, Viewport * viewport, bool is_file_operation)
+bool LayerMapnik::set_param_value(uint16_t id, LayerParamValue data, Viewport * viewport, bool is_file_operation)
 {
 	switch (id) {
 		case PARAM_CONFIG_CSS:
@@ -385,58 +382,62 @@ bool LayerMapnik::set_param(uint16_t id, LayerParamData data, Viewport * viewpor
 
 
 
-LayerParamData LayerMapnik::get_param(uint16_t id, bool is_file_operation) const
+LayerParamValue LayerMapnik::get_param_value(uint16_t id, bool is_file_operation) const
 {
-	LayerParamData data;
+	LayerParamValue param_value;
 	switch (id) {
 		case PARAM_CONFIG_CSS: {
-			data.s = this->filename_css;
+			param_value.s = this->filename_css;
 			bool set = false;
 			if (is_file_operation) {
 				if (a_vik_get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE) {
 					char *cwd = g_get_current_dir();
 					if (cwd) {
-						data.s = file_GetRelativeFilename(cwd, this->filename_css);
-						if (!data.s) data.s = "";
+						param_value.s = file_GetRelativeFilename(cwd, this->filename_css);
+						if (!param_value.s) {
+							param_value.s = "";
+						}
 						set = true;
 					}
 				}
 			}
 			if (!set) {
-				data.s = this->filename_css ? this->filename_css : "";
+				param_value.s = this->filename_css ? this->filename_css : "";
 			}
 			break;
 		}
 		case PARAM_CONFIG_XML: {
-			data.s = this->filename_xml;
+			param_value.s = this->filename_xml;
 			bool set = false;
 			if (is_file_operation) {
 				if (a_vik_get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE) {
 					char *cwd = g_get_current_dir();
 					if (cwd) {
-						data.s = file_GetRelativeFilename(cwd, this->filename_xml);
-						if (!data.s) data.s = "";
+						param_value.s = file_GetRelativeFilename(cwd, this->filename_xml);
+						if (!param_value.s) {
+							param_value.s = "";
+						}
 						set = true;
 					}
 				}
 			}
 			if (!set) {
-				data.s = this->filename_xml ? this->filename_xml : "";
+				param_value.s = this->filename_xml ? this->filename_xml : "";
 			}
 			break;
 		}
 		case PARAM_ALPHA:
-			data.u = this->alpha;
+			param_value.u = this->alpha;
 			break;
 		case PARAM_USE_FILE_CACHE:
-			data.b = this->use_file_cache;
+			param_value.b = this->use_file_cache;
 			break;
 		case PARAM_FILE_CACHE_DIR:
-			data.s = this->file_cache_dir;
+			param_value.s = this->file_cache_dir;
 			break;
 		default: break;
 	}
-	return data;
+	return param_value;
 }
 
 

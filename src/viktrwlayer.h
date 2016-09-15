@@ -177,8 +177,8 @@ namespace SlavGPS {
 		bool sublayer_toggle_visible(SublayerType sublayer_type, sg_uid_t sublayer_uid);
 
 		void realize(TreeView * tree_view, GtkTreeIter * layer_iter);
-		bool set_param(uint16_t id, LayerParamData data, Viewport * viewport, bool is_file_operation);
-		LayerParamData get_param(uint16_t id, bool is_file_operation) const;
+		bool set_param_value(uint16_t id, LayerParamValue param_value, Viewport * viewport, bool is_file_operation);
+		LayerParamValue get_param_value(uint16_t id, bool is_file_operation) const;
 
 
 

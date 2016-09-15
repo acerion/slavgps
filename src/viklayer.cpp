@@ -238,6 +238,13 @@ LayerInterface * Layer::get_interface(LayerType layer_type)
 
 
 
+LayerInterface * Layer::get_interface(void)
+{
+	return this->interface;
+}
+
+
+
 
 /**
  * Store default values for this layer.
@@ -353,7 +360,7 @@ Layer * Layer::new_(LayerType layer_type, Viewport * viewport, bool interactive)
 	if (interactive) {
 		if (vik_layer_properties(layer, viewport)) {
 			/* We translate the name here in order to avoid translating name set by user. */
-			layer->rename(_(vik_layer_interfaces[(int) layer_type]->name));
+			layer->rename(_(layer->get_interface()->name));
 		} else {
 			layer->unref(); /* Cancel that. */
 			delete layer;
@@ -429,7 +436,6 @@ void Layer::marshall(uint8_t ** data, int * len)
 void Layer::marshall_params(uint8_t ** data, int * datalen)
 {
 	LayerParam * params = this->get_interface()->params;
-	VikLayerFuncGetParam get_param = this->get_interface()->get_param;
 
 	GByteArray* b = g_byte_array_new();
 	int len;
@@ -444,12 +450,12 @@ void Layer::marshall_params(uint8_t ** data, int * datalen)
 	vlm_append(this->name, strlen(this->name));
 
 	/* Now the actual parameters. */
-	if (params && get_param) {
+	if (params) {
 		LayerParamData d;
 		uint16_t i, params_count = this->get_interface()->params_count;
 		for (i = 0; i < params_count; i++) {
 			fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, params[i].name);
-			d = get_param(this, i, false);
+			d = this->get_param_value(i, false);
 			switch (params[i].type) {
 			case LayerParamType::STRING:
 				/* Remember need braces as these are macro calls, not single statement functions! */
@@ -496,7 +502,6 @@ void Layer::marshall_params(uint8_t ** data, int * datalen)
 void Layer::unmarshall_params(uint8_t * data, int datalen, Viewport * viewport)
 {
 	LayerParam *params = this->get_interface()->params;
-	VikLayerFuncSetParam set_param = this->get_interface()->set_param;
 
 	char *s;
 	uint8_t *b = (uint8_t *) data;
@@ -514,7 +519,7 @@ void Layer::unmarshall_params(uint8_t * data, int datalen, Viewport * viewport)
 	this->rename(s);
 	free(s);
 
-	if (params && set_param) {
+	if (params) {
 		LayerParamData d;
 		uint16_t params_count = this->get_interface()->params_count;
 		for (uint16_t i = 0; i < params_count; i++){
@@ -525,7 +530,7 @@ void Layer::unmarshall_params(uint8_t * data, int datalen, Viewport * viewport)
 				s[vlm_size] = 0;
 				vlm_read(s);
 				d.s = s;
-				set_param(this, i, d, viewport, false);
+				this->set_param_value(i, d, viewport, false);
 				free(s);
 				break;
 			case LayerParamType::STRING_LIST: {
@@ -541,14 +546,14 @@ void Layer::unmarshall_params(uint8_t * data, int datalen, Viewport * viewport)
 					list->push_back(s);
 				}
 				d.sl = list;
-				set_param(this, i, d, viewport, false);
+				this->set_param_value(i, d, viewport, false);
 				/* Don't free -- string list is responsibility of the layer. */
 
 				break;
 			}
 			default:
 				vlm_read(&d);
-				set_param(this, i, d, viewport, false);
+				this->set_param_value(i, d, viewport, false);
 				break;
 			}
 		}
@@ -607,7 +612,7 @@ uint16_t vik_layer_get_menu_items_selection(Layer * layer)
 	uint16_t rv = layer->get_menu_selection();
 	if (rv == (uint16_t) -1) {
 		/* Perhaps this line could go to base class. */
-		return vik_layer_interfaces[(int) layer->type]->menu_items_selection;
+		return layer->get_interface()->menu_items_selection;
 	} else {
 		return rv;
 	}
@@ -630,39 +635,21 @@ GdkPixbuf * vik_layer_load_icon(LayerType layer_type)
 
 
 
-bool layer_set_param(Layer * layer, uint16_t id, LayerParamData data, Viewport * viewport, bool is_file_operation)
-{
-	return layer->set_param(id, data, viewport, is_file_operation);
-}
-
-
-
-
-LayerParamData layer_get_param(Layer const * layer, uint16_t id, bool is_file_operation)
-{
-	return layer->get_param(id, is_file_operation);
-}
-
-
-
-
 static bool vik_layer_properties_factory(Layer * layer, Viewport * viewport)
 {
 #ifdef SLAVGPS_QT
 
 	LayerPropertiesDialog dialog(NULL);
-	dialog.fill(vik_layer_interfaces[(int) layer->type]->params,
-		    vik_layer_interfaces[(int) layer->type]->params_count,
-		    layer);
+	dialog.fill(layer);
 	int dialog_code = dialog.exec();
 
 	if (dialog_code == QDialog::Accepted) {
 
 
 		bool must_redraw = false;
-		for (uint16_t id = 0; id < vik_layer_interfaces[(int) layer->type]->params_count; id++) {
-			LayerParamData param_data = dialog.get_param_value(id, &(vik_layer_interfaces[(int) layer->type]->params[id]));
-			bool set = layer->set_param(id, param_data, viewport, false);
+		for (uint16_t id = 0; id < layer->get_interface()->params_count; id++) {
+			LayerParamData param_data = dialog.get_param_value(id, &(layer->get_interface()->params[id]));
+			bool set = layer->set_param_value(id, param_data, viewport, false);
 			if (set) {
 				must_redraw = true;
 			}
@@ -678,16 +665,16 @@ static bool vik_layer_properties_factory(Layer * layer, Viewport * viewport)
 #else
 	int prop = a_uibuilder_properties_factory(_("Layer Properties"),
 						  viewport->get_toolkit_window(),
-						  vik_layer_interfaces[(int) layer->type]->params,
-						  vik_layer_interfaces[(int) layer->type]->params_count,
-						  vik_layer_interfaces[(int) layer->type]->params_groups,
-						  vik_layer_interfaces[(int) layer->type]->params_groups_count,
-						  (bool (*)(void*, uint16_t, LayerParamData, void*, bool)) vik_layer_interfaces[(int) layer->type]->set_param,
+						  layer->get_interface()->params,
+						  layer->get_interface()->params_count,
+						  layer->get_interface()->params_groups,
+						  layer->get_interface()->params_groups_count,
+						  (bool (*)(void*, uint16_t, LayerParamData, void*, bool)) layer->set_param,
 						  layer,
 						  viewport,
-						  (LayerParamData (*)(void*, uint16_t, bool)) vik_layer_interfaces[(int) layer->type]->get_param,
+						  (LayerParamData (*)(void*, uint16_t, bool)) layer->get_param,
 						  layer,
-						  vik_layer_interfaces[(int) layer->type]->change_param)
+						  layer->get_interface()->change_param)
 
 	switch (prop) {
 	case 0:
@@ -830,7 +817,7 @@ void Layer::set_defaults(Viewport * viewport)
 			   Only DEM files uses this currently. */
 			if (vli->params[i].type != LayerParamType::STRING_LIST) {
 				data = a_layer_defaults_get(layer_name, vli->params[i].name, vli->params[i].type);
-				this->set_param(i, data, viewport, true); // Possibly come from a file
+				this->set_param_value(i, data, viewport, true); // Possibly come from a file
 			}
 		}
 	}
@@ -1089,16 +1076,16 @@ void Layer::realize(TreeView * tree_view_, QStandardItem * layer_item)
 
 
 
-LayerParamData Layer::get_param(uint16_t id, bool is_file_operation) const
+LayerParamValue Layer::get_param_value(uint16_t id, bool is_file_operation) const
 {
-	LayerParamData data;
-	return data;
+	LayerParamValue param_value;
+	return param_value;
 }
 
 
 
 
-bool Layer::set_param(uint16_t id, LayerParamData data, Viewport * viewport, bool is_file_operation)
+bool Layer::set_param_value(uint16_t id, LayerParamValue param_value, Viewport * viewport, bool is_file_operation)
 {
 	return false;
 }

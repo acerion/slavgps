@@ -405,9 +405,6 @@ VikLayerInterface vik_trw_layer_interface = {
 	VIK_MENU_ITEM_ALL,
 
 	/* (VikLayerFuncUnmarshall) */   trw_layer_unmarshall,
-
-	/* (VikLayerFuncSetParam) */     layer_set_param,
-	/* (VikLayerFuncGetParam) */     layer_get_param,
 	/* (VikLayerFuncChangeParam) */  trw_layer_change_param,
 };
 
@@ -887,7 +884,7 @@ char * font_size_to_string(int font_size)
 
 
 
-bool LayerTRW::set_param(uint16_t id, LayerParamData data, Viewport * viewport, bool is_file_operation)
+bool LayerTRW::set_param_value(uint16_t id, LayerParamData data, Viewport * viewport, bool is_file_operation)
 {
 	switch (id) {
 	case PARAM_TV:
@@ -1087,7 +1084,7 @@ bool LayerTRW::set_param(uint16_t id, LayerParamData data, Viewport * viewport, 
 
 
 
-LayerParamData LayerTRW::get_param(uint16_t id, bool is_file_operation) const
+LayerParamData LayerTRW::get_param_value(uint16_t id, bool is_file_operation) const
 {
 	LayerParamData rv;
 	switch (id) {

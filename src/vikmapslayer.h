@@ -75,8 +75,8 @@ namespace SlavGPS {
 		void draw_section(Viewport * viewport, VikCoord *ul, VikCoord *br);
 		char const * tooltip();
 		void add_menu_items(GtkMenu * menu, void * panel);
-		bool set_param(uint16_t id, LayerParamData data, Viewport * viewport, bool is_file_operation);
-		LayerParamData get_param(uint16_t id, bool is_file_operation) const;
+		bool set_param_value(uint16_t id, LayerParamValue param_value, Viewport * viewport, bool is_file_operation);
+		LayerParamValue get_param_value(uint16_t id, bool is_file_operation) const;
 
 		char * get_map_label();
 		int how_many_maps(VikCoord * ul, VikCoord * br, double zoom, int redownload_mode);

@@ -253,9 +253,6 @@ VikLayerInterface vik_dem_layer_interface = {
 	VIK_MENU_ITEM_ALL,
 
 	/* (VikLayerFuncUnmarshall) */   dem_layer_unmarshall,
-
-	/* (VikLayerFuncSetParam) */     layer_set_param,
-	/* (VikLayerFuncGetParam) */     layer_get_param,
 	/* (VikLayerFuncChangeParam) */  NULL,
 };
 
@@ -388,7 +385,7 @@ static std::list<char *> * dem_layer_convert_to_relative_filenaming(std::list<ch
 
 
 
-bool LayerDEM::set_param(uint16_t id, LayerParamData data, Viewport * viewport, bool is_file_operation)
+bool LayerDEM::set_param_value(uint16_t id, LayerParamValue data, Viewport * viewport, bool is_file_operation)
 {
 	switch (id) {
 	case PARAM_COLOR:
@@ -451,9 +448,9 @@ bool LayerDEM::set_param(uint16_t id, LayerParamData data, Viewport * viewport, 
 
 
 
-LayerParamData LayerDEM::get_param(uint16_t id, bool is_file_operation) const
+LayerParamValue LayerDEM::get_param_value(uint16_t id, bool is_file_operation) const
 {
-	LayerParamData rv;
+	LayerParamValue rv;
 
 	switch (id) {
 	case PARAM_FILES:

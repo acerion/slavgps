@@ -75,9 +75,6 @@ VikLayerInterface vik_aggregate_layer_interface = {
 	VIK_MENU_ITEM_ALL,
 
 	/* (VikLayerFuncUnmarshall) */   aggregate_layer_unmarshall,
-
-	/* (VikLayerFuncSetParam) */     NULL,
-	/* (VikLayerFuncGetParam) */     NULL,
 	/* (VikLayerFuncChangeParam) */  NULL,
 };
 
