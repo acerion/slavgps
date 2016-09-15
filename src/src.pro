@@ -17,7 +17,8 @@ SOURCES += main_qt.cpp \
     viklayerspanel.cpp \
     viktreeview.cpp \
     uibuilder.cpp \
-    uibuilder_qt.cpp
+    uibuilder_qt.cpp \
+    widget_color_button.cpp
 
 
 HEADERS += window_qt.h \
@@ -34,7 +35,8 @@ HEADERS += window_qt.h \
     viklayerspanel.h \
     viktreeview.h \
     uibuilder.h \
-    uibuilder_qt.h
+    uibuilder_qt.h \
+    widget_color_button.h
 
 
 # For glib library.
@@ -47,4 +49,3 @@ DEFINES += SLAVGPS_QT HAVE_CONFIG_H
 
 QMAKE_CXXFLAGS += -std=c++11 -Wno-unused -g -O0
 QMAKE_LDFLAGS += -lm
-
