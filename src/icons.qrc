@@ -1,0 +1,7 @@
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource>
+	<file>icons/layer/aggregate.png</file>
+	<file>icons/layer/trackwaypoint.png</file>
+	<file>icons/layer/coord.png</file>
+</qresource>
+</RCC>
