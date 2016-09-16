@@ -163,6 +163,7 @@ void Window::create_actions(void)
 			QVariant variant((int) i);
 			QAction * qa = new QAction("new layer", this);
 			qa->setData(variant);
+			qa->setIcon(*Layer::get_interface(i)->icon);
 			connect(qa, SIGNAL(triggered(bool)), this, SLOT(menu_layer_new_cb(void)));
 
 			menu_layers->addAction(qa);

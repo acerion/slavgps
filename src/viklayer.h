@@ -33,6 +33,7 @@
 #include <QObject>
 #include <QTreeWidgetItem>
 #include <QStandardItem>
+#include <QIcon>
 #else
 #include <gtk/gtk.h>
 #include <gdk-pixbuf/gdk-pixdata.h>
@@ -158,6 +159,7 @@ namespace SlavGPS {
 		LayerInterface * get_interface(void);
 		static LayerInterface * get_interface(LayerType layer_type);
 		void configure_interface(LayerInterface * intf, LayerParam * parameters);
+		static void preconfigure_interfaces(void);
 
 		/* Layer interface methods. */
 
@@ -368,7 +370,7 @@ struct _VikLayerInterface {
 	const char *                      fixed_layer_name; /* Used in .vik files - this should never change to maintain file compatibility. */
 	const char *                      name;             /* Translate-able name used for display purposes. */
 	const char *                      accelerator;
-	const GdkPixdata *                icon;
+	const QIcon * icon;
 
 	SlavGPS::VikToolConstructorFunc layer_tool_constructors[7];
 	SlavGPS::LayerTool **              layer_tools;

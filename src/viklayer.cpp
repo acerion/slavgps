@@ -29,6 +29,9 @@
 #include <cstdlib>
 #include <cassert>
 
+#include <QString>
+#include <QDebug>
+
 #include <glib/gi18n.h>
 
 #include "viklayer_defaults.h"
@@ -256,6 +259,18 @@ void Layer::configure_interface(LayerInterface * intf, LayerParam * parameters)
 			this->interface->layer_parameters->insert(std::pair<layer_param_id_t, LayerParam *>(parameters[i].id, &parameters[i]));
 			i++;
 		}
+	}
+}
+
+
+
+
+void Layer::preconfigure_interfaces(void)
+{
+	for (SlavGPS::LayerType i = SlavGPS::LayerType::AGGREGATE; i < SlavGPS::LayerType::NUM_TYPES; ++i) {
+		QString path = QString(":/icons/layer/") + QString(Layer::get_interface(i)->fixed_layer_name).toLower() + QString(".png");
+		qDebug() << "path is" << path;
+		Layer::get_interface(i)->icon = new QIcon(path);
 	}
 }
 

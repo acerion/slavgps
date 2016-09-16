@@ -1123,7 +1123,7 @@ QStandardItem * TreeView::add_layer(Layer * layer, Layer * parent_layer, QStanda
 
 	/* LayersTreeColumn::ICON */
 	item = new QStandardItem(QString(layer->type_string));
-	item->setIcon(QIcon("src/icons/layer_coord.png"));
+	item->setIcon(*layer->get_interface()->icon);
 	items << item;
 
 	/* LayersTreeColumn::TREE_ITEM_TYPE */

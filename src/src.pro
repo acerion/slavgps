@@ -3,6 +3,8 @@ TARGET = slavgps
 
 QT = core gui widgets
 
+RESOURCES = icons.qrc
+
 SOURCES += main_qt.cpp \
     window_qt.cpp \
     vikviewport.cpp \
