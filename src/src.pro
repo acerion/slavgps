@@ -16,11 +16,16 @@ SOURCES += main_qt.cpp \
     viklayer.cpp \
     vikcoordlayer.cpp \
     vikaggregatelayer.cpp \
+    vikdemlayer.cpp \
     viklayerspanel.cpp \
     viktreeview.cpp \
     uibuilder.cpp \
     uibuilder_qt.cpp \
-    widget_color_button.cpp
+    widget_color_button.cpp \
+    widget_file_list.cpp \
+    dem.cpp \
+    dems.cpp \
+    fileutils.cpp
 
 
 HEADERS += window_qt.h \
@@ -34,11 +39,16 @@ HEADERS += window_qt.h \
     viklayer.h \
     vikcoordlayer.h \
     vikaggregatelayer.h \
+    vikdemlayer.h \
     viklayerspanel.h \
     viktreeview.h \
     uibuilder.h \
     uibuilder_qt.h \
-    widget_color_button.h
+    widget_color_button.h \
+    widget_file_list.h \
+    dem.h \
+    dems.h \
+    fileutils.h
 
 
 # For glib library.
