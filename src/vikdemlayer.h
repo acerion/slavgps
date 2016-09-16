@@ -25,6 +25,8 @@
 
 
 
+#include <QPen>
+
 #include "viklayer.h"
 #include "dem.h"
 
@@ -45,7 +47,7 @@ namespace SlavGPS {
 		/* Layer interface methods. */
 		void draw(Viewport * viewport);
 		char const * tooltip();
-		bool download_release(GdkEventButton * event, LayerTool * tool);
+		bool download_release(QMouseEvent * event, LayerTool * tool);
 		bool add_file(std::string& dem_filename);
 		void draw_dem(Viewport * viewport, DEM * dem);
 		bool set_param_value(uint16_t id, LayerParamValue param_value, Viewport * viewport, bool is_file_operation);
@@ -53,12 +55,13 @@ namespace SlavGPS {
 
 		static void weak_ref_cb(void * ptr, GObject * dead_vdl);
 
+		QPen pen;
 		GdkGC ** gcs;
 		GdkGC ** gcsgradient;
 		std::list<char *> * files;
 		double min_elev;
 		double max_elev;
-		GdkColor color;
+		QColor color;
 		unsigned int source;
 		unsigned int dem_type;
 

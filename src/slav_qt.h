@@ -2,6 +2,9 @@
 #define SLAV_QT_H
 
 
+
+#include "globals.h"
+
 /* Mock definitions used during migration of SlavGPS to QT. */
 
 
@@ -52,5 +55,7 @@ namespace SlavGPS {
 }
 
 #endif
+
+HeightUnit a_vik_get_units_height();
 
 #endif

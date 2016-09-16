@@ -87,6 +87,9 @@ vik_degree_format_t a_vik_get_degree_format()
 	return VIK_DEGREE_FORMAT_DDD;
 }
 
-
+HeightUnit a_vik_get_units_height()
+{
+	return HeightUnit::METRES;
+}
 
 #endif

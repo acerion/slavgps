@@ -34,6 +34,7 @@
 #include <QTreeWidgetItem>
 #include <QStandardItem>
 #include <QIcon>
+#include <QMouseEvent>
 #else
 #include <gtk/gtk.h>
 #include <gdk-pixbuf/gdk-pixdata.h>
@@ -299,7 +300,7 @@ namespace SlavGPS {
 	/* void * is tool-specific state created in the constructor. */
 	typedef LayerTool * (*VikToolConstructorFunc) (Window *, Viewport *);
 	typedef void (*VikToolDestructorFunc) (LayerTool *);
-	typedef VikLayerToolFuncStatus (*VikToolMouseFunc) (Layer *, GdkEventButton *, LayerTool *);
+	typedef VikLayerToolFuncStatus (*VikToolMouseFunc) (Layer *, QMouseEvent *, LayerTool *);
 	typedef VikLayerToolFuncStatus (*VikToolMouseMoveFunc) (Layer *, GdkEventMotion *, LayerTool *);
 	typedef void (*VikToolActivationFunc) (Layer *, LayerTool *);
 	typedef bool (*VikToolKeyFunc) (Layer *, GdkEventKey *, LayerTool *);

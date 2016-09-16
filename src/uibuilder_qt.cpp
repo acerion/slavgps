@@ -40,6 +40,7 @@
 #include "uibuilder_qt.h"
 #include "globals.h"
 #include "widget_color_button.h"
+#include "widget_file_list.h"
 
 
 
@@ -569,13 +570,14 @@ QWidget * LayerPropertiesDialog::new_widget(LayerParam * param, LayerParamValue 
 			}
 		}
 		break;
-
+#endif
 	case LayerWidgetType::FILELIST:
 		if (param->type == LayerParamType::STRING_LIST) {
-			rv = vik_file_list_new(_(param->title), NULL);
-			vik_file_list_set_files(VIK_FILE_LIST(rv), vlpd.sl);
+			SGFileList * widget_ = new SGFileList(param->title, vlpd.sl, NULL);
+			widget = widget_;
 		}
 		break;
+#if 0
 	case LayerWidgetType::HSCALE:
 		if ((param->type == LayerParamType::DOUBLE || param->type == LayerParamType::UINT
 		     || param->type == LayerParamType::INT)  && param->widget_data) {
@@ -686,9 +688,11 @@ LayerParamValue LayerPropertiesDialog::get_param_value(layer_param_id_t id, Laye
 	case LayerWidgetType::FOLDERENTRY:
 		rv.s = vik_file_entry_get_filename(VIK_FILE_ENTRY(widget));
 		break;
+#endif
 	case LayerWidgetType::FILELIST:
-		rv.sl = vik_file_list_get_files(VIK_FILE_LIST(widget));
+		rv.sl = ((SGFileList *) widget)->get_list();
 		break;
+#if 0
 	case LayerWidgetType::HSCALE:
 		if (param->type == LayerParamType::UINT) {
 			rv.u = (uint32_t) gtk_range_get_value(GTK_RANGE(widget));

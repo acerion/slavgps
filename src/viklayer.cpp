@@ -41,9 +41,9 @@
 #include "viktrwlayer.h"
 #endif
 #include "vikcoordlayer.h"
+#include "vikdemlayer.h"
 #ifndef SLAVGPS_QT
 #include "vikmapslayer.h"
-#include "vikdemlayer.h"
 #include "vikgeoreflayer.h"
 #include "vikgpslayer.h"
 #include "vikmapniklayer.h"
@@ -72,7 +72,9 @@ extern LayerInterface vik_coord_layer_interface;
 extern LayerInterface vik_georef_layer_interface;
 extern LayerInterface vik_gps_layer_interface;
 extern LayerInterface vik_maps_layer_interface;
+#endif
 extern LayerInterface vik_dem_layer_interface;
+#ifndef SLAVGPS_QT
 #ifdef HAVE_LIBMAPNIK
 extern LayerInterface vik_mapnik_layer_interface;
 #endif
@@ -223,7 +225,9 @@ static LayerInterface * vik_layer_interfaces[(int) LayerType::NUM_TYPES] = {
 	&vik_georef_layer_interface,
 	&vik_gps_layer_interface,
 	&vik_maps_layer_interface,
+#endif
 	&vik_dem_layer_interface,
+#ifndef SLAVGPS_QT
 #ifdef HAVE_LIBMAPNIK
 	&vik_mapnik_layer_interface,
 #endif
@@ -365,11 +369,15 @@ Layer * Layer::new_(LayerType layer_type, Viewport * viewport, bool interactive)
 		fprintf(stderr, "\n\n\n NEW MAPS\n\n\n");
 		layer = new LayerMaps(viewport);
 
-	} else if (layer_type == LayerType::DEM) {
+	} else
+#endif
+	if (layer_type == LayerType::DEM) {
 		fprintf(stderr, "\n\n\n NEW DEM\n\n\n");
 		layer = new LayerDEM(viewport);
 
-	} else if (layer_type == LayerType::GEOREF) {
+	}
+#ifndef SLAVGPS_QT
+	else if (layer_type == LayerType::GEOREF) {
 		fprintf(stderr, "\n\n\n NEW GEOREF\n\n\n");
 		layer = new LayerGeoref(viewport);
 

@@ -361,6 +361,7 @@ bool DEM::read_srtm_hgt(char const * file_name, char const * basename, bool zip)
 
 	int16_t * dem_mem = NULL;
 	if (zip) {
+#if 0
 		void * unzip_mem = NULL;
 		unsigned long ucsize;
 
@@ -371,6 +372,7 @@ bool DEM::read_srtm_hgt(char const * file_name, char const * basename, bool zip)
 
 		dem_mem = (int16_t *) unzip_mem;
 		file_size = ucsize;
+#endif
 	} else {
 		dem_mem = (int16_t *) dem_file;
 	}

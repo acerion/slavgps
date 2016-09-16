@@ -172,12 +172,14 @@ int SlavGPS::dem_cache_load_list(std::list<std::string>& filenames, void * threa
 		}
 		/* When running a thread - inform of progress. */
 		if (threaddata) {
+#if 0
 			dem_count++;
 			/* NB Progress also detects abort request via the returned value. */
 			int result = a_background_thread_progress(threaddata, ((double) dem_count) / dem_total);
 			if (result != 0) {
 				return -1; /* Abort thread. */
 			}
+#endif
 		}
 	}
 	return 0;

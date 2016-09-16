@@ -27,10 +27,10 @@
 
 #include <stdint.h>
 
-#include <gtk/gtk.h>
+#include "slav_qt.h"
 
 
-#include "window.h"
+#include "window_qt.h"
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
