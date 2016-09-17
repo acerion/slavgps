@@ -103,7 +103,7 @@ void Window::create_layout()
 	this->viewport = new SlavGPS::Viewport(this);
 	this->viewport->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Maximum);
 	//layout->addWidget(viewport);
-	struct LatLon ll = { 22.0, 27.0 };
+	struct LatLon ll = { 54.0, 14.0 };
 	this->viewport->set_center_latlon(&ll, false);
 	this->viewport->xmpp = 0.01;
 	this->viewport->ympp = 0.01;
