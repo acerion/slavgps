@@ -363,7 +363,7 @@ void LayerPropertiesDialog::fill(Layer * layer)
 		QWidget * widget = this->new_widget(iter->second, param_value);
 
 		form->addRow(label, widget);
-		qDebug() << ">>>> inserting parameter widget %x" << widget;
+		qDebug() << ">>>> inserting parameter widget" << widget;
 		this->widgets.insert(std::pair<layer_param_id_t, QWidget *>(iter->first, widget));
 	}
 	qDebug() << "^^^^^^^^^ there are " << this->widgets.size() << "widgets";
@@ -573,7 +573,7 @@ QWidget * LayerPropertiesDialog::new_widget(LayerParam * param, LayerParamValue 
 #endif
 	case LayerWidgetType::FILELIST:
 		if (param->type == LayerParamType::STRING_LIST) {
-			SGFileList * widget_ = new SGFileList(param->title, vlpd.sl, NULL);
+			SGFileList * widget_ = new SGFileList(param->title, vlpd.sl, this);
 			widget = widget_;
 		}
 		break;
@@ -691,6 +691,9 @@ LayerParamValue LayerPropertiesDialog::get_param_value(layer_param_id_t id, Laye
 #endif
 	case LayerWidgetType::FILELIST:
 		rv.sl = ((SGFileList *) widget)->get_list();
+		for (auto iter = rv.sl->begin(); iter != rv.sl->end(); iter++) {
+			qDebug() << "File on retrieved list: " << QString(*iter);
+		}
 		break;
 #if 0
 	case LayerWidgetType::HSCALE:
