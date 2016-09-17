@@ -11,5 +11,4 @@ DEFINES += SLAVGPS_QT HAVE_CONFIG_H
 
 
 QMAKE_CXXFLAGS += -std=c++11 -Wno-unused -g -O0
-QMAKE_LDFLAGS += -lm
-
+QMAKE_LFLAGS += -lm
