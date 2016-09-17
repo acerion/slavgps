@@ -26,6 +26,7 @@
 
 
 #include <QPen>
+#include <QColor>
 
 #include "viklayer.h"
 #include "dem.h"
@@ -56,12 +57,12 @@ namespace SlavGPS {
 		static void weak_ref_cb(void * ptr, GObject * dead_vdl);
 
 		QPen pen;
-		GdkGC ** gcs;
-		GdkGC ** gcsgradient;
+		QColor ** colors;
+		QColor ** gradients;
 		std::list<char *> * files;
 		double min_elev;
 		double max_elev;
-		QColor color;
+		QColor base_color; /* Minimum elevation color, selected in layer's properties window. */
 		unsigned int source;
 		unsigned int dem_type;
 

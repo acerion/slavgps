@@ -50,8 +50,8 @@
 #include "dem.h"
 #include "dems.h"
 #include "icons/icons.h"
-#if 0
 #include "file.h"
+#if 0
 #include "dialog.h"
 #include "vik_compat.h"
 #endif
@@ -67,6 +67,9 @@ using namespace SlavGPS;
 #if 0
 #define MAPS_CACHE_DIR maps_layer_default_dir()
 #define MAPS_CACHE_DIR_2 maps_layer_default_dir_2()
+#else
+#define MAPS_CACHE_DIR "/home/kamil/.viking-maps/"
+#define MAPS_CACHE_DIR_2 QString("/home/kamil/.viking-maps/");
 #endif
 
 #define SRTM_CACHE_TEMPLATE "%ssrtm3-%s%s%c%02d%c%03d.hgt.zip"
@@ -282,22 +285,23 @@ char const * LayerDEM::tooltip()
 	return tmp_buf;
 }
 
+
+
+
 static Layer * dem_layer_unmarshall(uint8_t * data, int len, Viewport * viewport)
 {
 	LayerDEM * layer = new LayerDEM(viewport);
-#if 0
-	/* TODO: share GCS between layers. */
-	for (unsigned int i = 0; i < DEM_N_HEIGHT_COLORS; i++) {
-		if (i == 0) {
-			layer->gcs[i] = viewport->new_gc_from_color(&layer->color, UNUSED_LINE_THICKNESS);
-		} else {
-			layer->gcs[i] = viewport->new_gc(dem_height_colors[i], UNUSED_LINE_THICKNESS);
-		}
+
+	/* TODO: share ->colors[] between layers. */
+	layer->colors[0] = new QColor(layer->base_color);
+	for (unsigned int i = 1; i < DEM_N_HEIGHT_COLORS; i++) {
+		layer->colors[i] = new QColor(dem_height_colors[i]);
 	}
+
 	for (unsigned int i = 0; i < DEM_N_GRADIENT_COLORS; i++) {
-		layer->gcsgradient[i] = viewport->new_gc(dem_gradient_colors[i], UNUSED_LINE_THICKNESS);
+		layer->gradients[i] = new QColor(dem_gradient_colors[i]);
 	}
-#endif
+
 	layer->unmarshall_params(data, len, viewport);
 	return layer;
 }
@@ -377,12 +381,10 @@ static std::list<char *> * dem_layer_convert_to_relative_filenaming(std::list<ch
 	}
 
 	std::list<char *> * relfiles = new std::list<char *>;
-#if 0
 	for (auto iter = files->begin(); iter != files->end(); iter++) {
 		char * file = (char *) g_strdup(file_GetRelativeFilename(cwd, *iter));
 		relfiles->push_front(file);
 	}
-#endif
 
 	free(cwd);
 
@@ -405,13 +407,13 @@ bool LayerDEM::set_param_value(uint16_t id, LayerParamValue param_value, Viewpor
 {
 	switch (id) {
 	case PARAM_COLOR:
-		this->color.setRed(param_value.c.r);
-		this->color.setGreen(param_value.c.g);
-		this->color.setBlue(param_value.c.b);
-		this->color.setAlpha(50);
-#if 0
-		gdk_gc_set_rgb_fg_color(this->gcs[0], &(this->color));
-#endif
+		this->base_color.setRed(param_value.c.r);
+		this->base_color.setGreen(param_value.c.g);
+		this->base_color.setBlue(param_value.c.b);
+		this->base_color.setAlpha(127);
+
+		*this->colors[0] = this->base_color;
+
 		break;
 
 #if 0
@@ -445,7 +447,14 @@ bool LayerDEM::set_param_value(uint16_t id, LayerParamValue param_value, Viewpor
 		// dem_cache_list_free (this->files); // kamilFIXME: re-enable this line in future.
 		/* Set file list so any other intermediate screen drawing updates will show currently loaded DEMs by the working thread. */
 		this->files = param_value.sl;
-#if 0
+		fprintf(stderr, "%s:%d: string list:\n", __FUNCTION__, __LINE__);
+		if (this->files) {
+			for (auto iter = this->files->begin(); iter != this->files->end(); ++iter) {
+				fprintf(stderr, " ---- '%s'\n", *iter);
+			}
+		} else {
+			fprintf(stderr, " ---- none\n");
+		}
 		/* No need for thread if no files. */
 		if (this->files && !this->files->empty()) {
 			/* Thread Load. */
@@ -453,6 +462,9 @@ bool LayerDEM::set_param_value(uint16_t id, LayerParamValue param_value, Viewpor
 			dltd->layer = this;
 			dltd->layer->files = param_value.sl;
 
+#if 1
+			dem_layer_load_list_thread(dltd, NULL);
+#else
 			a_background_thread(BACKGROUND_POOL_LOCAL,
 					    viewport->get_toolkit_window(),
 					    _("DEM Loading"),
@@ -461,8 +473,9 @@ bool LayerDEM::set_param_value(uint16_t id, LayerParamValue param_value, Viewpor
 					    (vik_thr_free_func) dem_layer_thread_data_free,
 					    (vik_thr_free_func) dem_layer_thread_cancel,
 					    param_value.sl->size()); /* Number of DEM files. */
-		}
 #endif
+		}
+
 		break;
 	}
 
@@ -483,13 +496,19 @@ LayerParamValue LayerDEM::get_param_value(layer_param_id_t id, bool is_file_oper
 
 	case PARAM_FILES:
 		rv.sl = this->files;
+		fprintf(stderr, "%s:%d: string list:\n", __FUNCTION__, __LINE__);
+		if (this->files) {
+			for (auto iter = this->files->begin(); iter != this->files->end(); ++iter) {
+				fprintf(stderr, " ---- '%s'\n", *iter);
+			}
+		} else {
+			fprintf(stderr, " ---- none\n");
+		}
 		if (is_file_operation) {
-#if 0
 			/* Save in relative format if necessary. */
 			if (a_vik_get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE) {
 				rv.sl = dem_layer_convert_to_relative_filenaming(rv.sl);
 			}
-#endif
 		}
 		break;
 #if 0
@@ -501,10 +520,10 @@ LayerParamValue LayerDEM::get_param_value(layer_param_id_t id, bool is_file_oper
 		break;
 #endif
 	case PARAM_COLOR:
-		rv.c.r = this->color.red();
-		rv.c.g = this->color.green();
-		rv.c.b = this->color.blue();
-		rv.c.a = this->color.alpha();
+		rv.c.r = this->base_color.red();
+		rv.c.g = this->base_color.green();
+		rv.c.b = this->base_color.blue();
+		rv.c.a = this->base_color.alpha();
 		break;
 	case PARAM_MIN_ELEV:
 		/* Convert for display in desired units.
@@ -723,14 +742,16 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 
 					// void Viewport::draw_rectangle(Viewport * viewport, GdkGC *gc, bool filled, int x1, int y1, int x2, int y2);
 					int idx = (int)floor(((change - this->min_elev)/(this->max_elev - this->min_elev))*(DEM_N_GRADIENT_COLORS-2))+1;
-					viewport->draw_rectangle(this->gcsgradient[idx], true, box_x, box_y, box_width, box_height);
+					//fprintf(stderr, "VIEWPORT: filling rectangle with gradient (%s:%d)\n", __FUNCTION__, __LINE__);
+					viewport->fill_rectangle(*this->gradients[idx], box_x, box_y, box_width, box_height);
 
 				} else if (this->dem_type == DEM_TYPE_HEIGHT) {
 					int idx = 0; /* Default index for colour of 'sea' or for places below the defined mininum. */
 					if (elev > 0 && !below_minimum) {
 						idx = (int)floor(((elev - this->min_elev)/(this->max_elev - this->min_elev))*(DEM_N_HEIGHT_COLORS-2))+1;
 					}
-					viewport->draw_rectangle(this->gcs[idx], true, box_x, box_y, box_width, box_height);
+					//fprintf(stderr, "VIEWPORT: filling rectangle with color (%s:%d)\n", __FUNCTION__, __LINE__);
+					viewport->fill_rectangle(*this->colors[idx], box_x, box_y, box_width, box_height);
 				} else {
 					; /* No other dem type to process. */
 				}
@@ -830,7 +851,8 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 					if (elev > 0) {
 						idx = (int)floor((elev - this->min_elev)/(this->max_elev - this->min_elev)*(DEM_N_HEIGHT_COLORS-2))+1;
 					}
-					viewport->draw_rectangle(this->gcs[idx], true, a-1, b-1, 2, 2);
+					//fprintf(stderr, "VIEWPORT: filling rectangle with color (%s:%d)\n", __FUNCTION__, __LINE__);
+					viewport->fill_rectangle(*this->colors[idx], a - 1, b - 1, 2, 2);
 				}
 			} /* for y= */
 		} /* for x= */
@@ -868,8 +890,9 @@ void draw_loaded_dem_box(Viewport * viewport)
 		y1 = 0;
 	}
 
+	fprintf(stderr, "%s:%d: drawing rectangle\n", __FUNCTION__, __LINE__);
 	viewport->draw_rectangle(gtk_widget_get_style(GTK_WIDGET(viewport->vvp))->black_gc,
-					 false, x2, y1, x1-x2, y2-y1);
+				 false, x2, y1, x1-x2, y2-y1);
 	return;
 }
 #endif
@@ -890,7 +913,6 @@ static const char *srtm_continent_dir(int lat, int lon)
 		const char **s;
 
 		srtm_continent = g_hash_table_new(g_str_hash, g_str_equal);
-#if 0
 		s = _srtm_continent_data;
 		while (*s != (char *)-1) {
 			continent = *s++;
@@ -900,7 +922,6 @@ static const char *srtm_continent_dir(int lat, int lon)
 			}
 			s++;
 		}
-#endif
 	}
 	snprintf(name, sizeof(name), "%c%02d%c%03d",
 		 (lat >= 0) ? 'N' : 'S', ABS(lat),
@@ -927,7 +948,10 @@ void LayerDEM::draw(Viewport * viewport)
 		std::string dem_filename = std::string(*iter);
 		DEM * dem = dem_cache_get(dem_filename);
 		if (dem) {
+			fprintf(stderr, "DEM: got file %s from cache, drawing (%s:%d)\n", dem_filename.c_str(), __FUNCTION__, __LINE__);
 			this->draw_dem(viewport, dem);
+		} else {
+			fprintf(stderr, "DEM: failed to get file %s from cache, not drawing (%s:%d)\n", dem_filename.c_str(),  __FUNCTION__, __LINE__);
 		}
 	}
 }
@@ -937,22 +961,21 @@ void LayerDEM::draw(Viewport * viewport)
 
 LayerDEM::~LayerDEM()
 {
-#if 0
-	if (this->gcs) {
+	if (this->colors) {
 		for (unsigned int i = 0; i < DEM_N_HEIGHT_COLORS; i++) {
-			g_object_unref(this->gcs[i]);
+			delete this->colors[i];
 		}
 	}
+	free(this->colors);
 
-	free(this->gcs);
 
-	if (this->gcsgradient) {
+	if (this->gradients) {
 		for (unsigned int i = 0; i < DEM_N_GRADIENT_COLORS; i++) {
-			g_object_unref(this->gcsgradient[i]);
+			delete this->gradients[i];
 		}
 	}
-	free(this->gcsgradient);
-#endif
+	free(this->gradients);
+
 
 	// dem_cache_list_free(this->files); // kamilFIXME: re-enable this line in future
 }
@@ -1096,11 +1119,14 @@ static char *srtm_lat_lon_to_dest_fn(double lat, double lon)
 /* TODO: generalize. */
 static void srtm_draw_existence(Viewport * viewport)
 {
-#if 0
 	char buf[strlen(MAPS_CACHE_DIR)+strlen(SRTM_CACHE_TEMPLATE)+30];
 
 	LatLonBBox bbox;
 	viewport->get_bbox(&bbox);
+	QPen pen("black");
+
+
+	fprintf(stderr, "DEM: viewport bounding box: north:%d south:%d east:%d west:%d\n", (int) bbox.north, (int) bbox.south, (int) bbox.east, (int) bbox.west);
 
 	for (int i = floor(bbox.south); i <= floor(bbox.north); i++) {
 		for (int j = floor(bbox.west); j <= floor(bbox.east); j++) {
@@ -1137,12 +1163,11 @@ static void srtm_draw_existence(Viewport * viewport)
 					y2 = 0;
 				}
 
-				viewport->draw_rectangle(gtk_widget_get_style(viewport->get_toolkit_widget())->black_gc,
-							 false, x1, y2, x2-x1, y1-y2);
+				fprintf(stderr, "DEM: %s:%d: drawing existence rectangle for %s\n", __FUNCTION__, __LINE__, buf);
+				viewport->draw_rectangle(pen, false, x1, y2, x2-x1, y1-y2);
 			}
 		}
 	}
-#endif
 }
 
 
@@ -1232,6 +1257,7 @@ static void dem24k_draw_existence(Viewport * viewport)
 					y2 = 0;
 				}
 
+				fprintf(stderr, "%s:%d: drawing rectangle\n", __FUNCTION__, __LINE__);
 				viewport->draw_rectangle(gtk_widget_get_style(GTK_WIDGET(viewport->vvp))->black_gc,
 							 false, x1, y2, x2-x1, y1-y2);
 			}
@@ -1504,28 +1530,29 @@ LayerDEM::LayerDEM()
 
 LayerDEM::LayerDEM(Viewport * viewport) : LayerDEM()
 {
-	this->gcs = (GdkGC **) malloc(sizeof(GdkGC *) * DEM_N_HEIGHT_COLORS);
-	this->gcsgradient = (GdkGC **) malloc(sizeof(GdkGC *) * DEM_N_GRADIENT_COLORS);
-	/* Make new gcs only if we need it (copy layer -> use old). */
+	this->colors = (QColor **) malloc(sizeof(QColor *) * DEM_N_HEIGHT_COLORS);
+	this->gradients = (QColor **) malloc(sizeof(QColor *) * DEM_N_GRADIENT_COLORS);
 
-	/* Ensure the base GC is available so the default colour can be applied. */
+	/* Make new color only if we need it (copy layer -> use old). */
+
+	/* Ensure the base color is available so the default colour can be applied. */
 	if (viewport) {
-		this->gcs[0] = viewport->new_gc("#0000FF", 1);
+		this->colors[0] = new QColor("#0000FF");
 	}
 
 	this->set_defaults(viewport);
 
 
 	if (viewport) {
-		/* TODO: share GCS between layers. */
+		/* TODO: share ->colors[] between layers. */
 		for (unsigned int i = 0; i < DEM_N_HEIGHT_COLORS; i++) {
 			if (i > 0) {
-				this->gcs[i] = viewport->new_gc(dem_height_colors[i], UNUSED_LINE_THICKNESS);
+				this->colors[i] = new QColor(dem_height_colors[i]);
 			}
 		}
 
 		for (unsigned int i = 0; i < DEM_N_GRADIENT_COLORS; i++) {
-				this->gcsgradient[i] = viewport->new_gc(dem_gradient_colors[i], UNUSED_LINE_THICKNESS);
+			this->gradients[i] = new QColor(dem_gradient_colors[i]);
 		}
 	}
 }
