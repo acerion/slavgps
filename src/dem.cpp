@@ -361,7 +361,6 @@ bool DEM::read_srtm_hgt(char const * file_name, char const * basename, bool zip)
 
 	int16_t * dem_mem = NULL;
 	if (zip) {
-#if 0
 		void * unzip_mem = NULL;
 		unsigned long ucsize;
 
@@ -372,7 +371,6 @@ bool DEM::read_srtm_hgt(char const * file_name, char const * basename, bool zip)
 
 		dem_mem = (int16_t *) unzip_mem;
 		file_size = ucsize;
-#endif
 	} else {
 		dem_mem = (int16_t *) dem_file;
 	}
@@ -734,16 +732,16 @@ bool DEM::overlap(LatLonBBox * bbox)
 	if ((bbox->north > dem_northeast.lat && bbox->south > dem_northeast.lat) ||
 	    (bbox->north < dem_southwest.lat && bbox->south < dem_southwest.lat)) {
 
-		fprintf(stderr, "no overlap 1\n");
+		fprintf(stderr, "DEM: no overlap 1\n");
 		return false;
 
 	} else if ((bbox->east > dem_northeast.lon && bbox->west > dem_northeast.lon) ||
 		   (bbox->east < dem_southwest.lon && bbox->west < dem_southwest.lon)) {
 
-		fprintf(stderr, "no overlap 2\n");
+		fprintf(stderr, "DEM: no overlap 2\n");
 		return false;
 	} else {
-		fprintf(stderr, "overlap\n");
+		fprintf(stderr, "DEM: overlap\n");
 		return true;
 	}
 }
