@@ -1,3 +1,18 @@
+2019.09.17
+With today's commits I can display selected SRTM files in viewport.
+Still lots of work is needed, but it's a big step in good direction.
+commit 9e908b1de4feb1ca155d494ec80df4a7a5519e31
+commit 1718cbb0bd520b549e2991f29df2393b50e7bc52
+commit df5e2352ea0a6df98dd36700a37bee6b1f2a8e96
+commit df5e2352ea0a6df98dd36700a37bee6b1f2a8e96
+commit eedb9e40824f3d364cab0683af1774f4bd546608
+commit 5d1010d42d311b0c9c1fdf1cd6d3f197e4363228
+commit 3ba289ae6e0d7eb93f3be62cae6fc562c49433cf
+commit 2611e55e613bd1b3991b6ef119f5e5058f6fd373
+commit 0ac325365b6bfeb5dc49816234745fe73367c85e
+commit 7d7cc9caeeb6d8cc88e58d5db263e84ac5b4c173
+
+
 2016.09.04
 This commit that I've made today:
 09c0a5334196e5737d9f94b12ca3a3d3228fa826
