@@ -28,6 +28,12 @@
 
 #include <QObject>
 #include <QWidget>
+#include <QDialogButtonBox>
+#include <QPushButton>
+#include <QVBoxLayout>
+#include <QStandardItemModel>
+#include <QTableView>
+
 
 
 
@@ -47,10 +53,19 @@ namespace SlavGPS {
 	signals:
 
 	private slots:
+		void add_file();
+		void del_file();
 
 
 	private:
-		std::list<char *> * list;
+		std::list<char *> * file_list = NULL;
+		QDialogButtonBox * button_box = NULL;
+		QPushButton * add = NULL;
+		QPushButton * del = NULL;
+		QVBoxLayout * vbox = NULL;
+
+		QStandardItemModel * model = NULL;
+		QTableView * view = NULL;
 	};
 
 
