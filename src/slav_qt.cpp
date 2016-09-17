@@ -92,4 +92,11 @@ HeightUnit a_vik_get_units_height()
 	return HeightUnit::METRES;
 }
 
+
+vik_file_ref_format_t a_vik_get_file_ref_format()
+{
+	return VIK_FILE_REF_FORMAT_ABSOLUTE;
+}
+
+
 #endif
