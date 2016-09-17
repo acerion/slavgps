@@ -171,7 +171,7 @@ enum {
 	PARAM_FILES = 0,
 	PARAM_SOURCE,
 	PARAM_COLOR,
-	//PARAM_TYPE,
+	PARAM_TYPE,
 	PARAM_MIN_ELEV,
 	PARAM_MAX_ELEV,
 	NUM_PARAMS
@@ -182,7 +182,7 @@ enum {
 
 static LayerParam dem_layer_params[] = {
 	{ LayerType::DEM, PARAM_FILES,      "files",    LayerParamType::STRING_LIST, VIK_LAYER_GROUP_NONE, N_("DEM Files:"),       LayerWidgetType::FILELIST,          NULL,             NULL, NULL, NULL,             NULL, NULL },
-	{ LayerType::DEM, PARAM_SOURCE,     "source",   LayerParamType::UINT,        VIK_LAYER_GROUP_NONE, N_("Download Source:"), LayerWidgetType::RADIOGROUP_STATIC, params_source,    NULL, NULL, source_default,   NULL, NULL },
+	//{ LayerType::DEM, PARAM_SOURCE,     "source",   LayerParamType::UINT,        VIK_LAYER_GROUP_NONE, N_("Download Source:"), LayerWidgetType::RADIOGROUP_STATIC, params_source,    NULL, NULL, source_default,   NULL, NULL },
 	{ LayerType::DEM, PARAM_COLOR,      "color",    LayerParamType::COLOR,       VIK_LAYER_GROUP_NONE, N_("Min Elev Color:"),  LayerWidgetType::COLOR,             NULL,             NULL, NULL, color_default,    NULL, NULL },
 	//{ LayerType::DEM, PARAM_TYPE,       "type",     LayerParamType::UINT,        VIK_LAYER_GROUP_NONE, N_("Type:"),            LayerWidgetType::RADIOGROUP_STATIC, params_type,      NULL, NULL, type_default,     NULL, NULL },
 	{ LayerType::DEM, PARAM_MIN_ELEV,   "min_elev", LayerParamType::DOUBLE,      VIK_LAYER_GROUP_NONE, N_("Min Elev:"),        LayerWidgetType::SPINBOX_DOUBLE,    param_scales + 0, NULL, NULL, min_elev_default, NULL, NULL },
@@ -413,10 +413,11 @@ bool LayerDEM::set_param_value(uint16_t id, LayerParamValue param_value, Viewpor
 		gdk_gc_set_rgb_fg_color(this->gcs[0], &(this->color));
 #endif
 		break;
+
+#if 0
 	case PARAM_SOURCE:
 		this->source = param_value.u;
 		break;
-#if 0
 	case PARAM_TYPE:
 		this->dem_type = param_value.u;
 		break;
@@ -482,19 +483,19 @@ LayerParamValue LayerDEM::get_param_value(layer_param_id_t id, bool is_file_oper
 
 	case PARAM_FILES:
 		rv.sl = this->files;
-#if 0
 		if (is_file_operation) {
+#if 0
 			/* Save in relative format if necessary. */
 			if (a_vik_get_file_ref_format() == VIK_FILE_REF_FORMAT_RELATIVE) {
 				rv.sl = dem_layer_convert_to_relative_filenaming(rv.sl);
 			}
-		}
 #endif
+		}
 		break;
+#if 0
 	case PARAM_SOURCE:
 		rv.u = this->source;
 		break;
-#if 0
 	case PARAM_TYPE:
 		rv.u = this->dem_type;
 		break;
