@@ -33,6 +33,7 @@
 #include <QVBoxLayout>
 #include <QStandardItemModel>
 #include <QTableView>
+#include <QFileDialog>
 
 
 
@@ -45,7 +46,7 @@ namespace SlavGPS {
 	class SGFileList : public QWidget {
 		Q_OBJECT
 	public:
-		SGFileList(char const * title, std::list<char *> * sl, QWidget * parent);
+		SGFileList(char const * title, std::list<char *> * fl, QWidget * parent);
 		~SGFileList();
 
 		std::list<char *> * get_list(void);
@@ -66,6 +67,8 @@ namespace SlavGPS {
 
 		QStandardItemModel * model = NULL;
 		QTableView * view = NULL;
+
+		QFileDialog * file_selector = NULL;
 	};
 
 
