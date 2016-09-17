@@ -40,22 +40,37 @@
 #include <glib/gstdio.h>
 #include <glib/gi18n.h>
 
+#if 0
 #include "jpg.h"
 #include "gpx.h"
 #include "geojson.h"
 #include "babel.h"
 #include "vikgpslayer.h"
-#include "file.h"
 #include "misc/strtod.h"
 #include "gpspoint.h"
 #include "gpsmapper.h"
+#endif
+
+#include "file.h"
 #include "fileutils.h"
 #include "globals.h"
 
 
 
 
+#ifndef MAXPATHLEN
+#define MAXPATHLEN 1024
+#endif
+
+
+
+
 using namespace SlavGPS;
+
+
+
+
+#if 0
 
 
 
@@ -974,13 +989,6 @@ char * SlavGPS::file_realpath(char const * path, char * real)
 
 
 
-#ifndef MAXPATHLEN
-#define MAXPATHLEN 1024
-#endif
-
-
-
-
 /**
  * Always return the canonical filename in a newly allocated string.
  */
@@ -998,6 +1006,11 @@ char * SlavGPS::file_realpath_dup(char const * path)
 
 	return g_strdup(path);
 }
+
+
+
+
+#endif
 
 
 

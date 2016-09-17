@@ -29,9 +29,10 @@
 #include <cstdint>
 
 #include "vikaggregatelayer.h"
+#if 0
 #include "viktrwlayer.h"
 #include "vikviewport.h"
-
+#endif
 
 
 
@@ -60,7 +61,7 @@ namespace SlavGPS {
 
 
 
-
+#if 0
 	bool a_file_check_ext(char const * filename, char const * fileext);
 
 	/* Function to determine if a filename is a 'viking' type file. */
@@ -80,7 +81,7 @@ namespace SlavGPS {
 	char * file_realpath(char const * path, char * real);
 
 	char * file_realpath_dup(char const * path);
-
+#endif
 	char const * file_GetRelativeFilename(char * currentDirectory, char * absoluteFilename);
 
 

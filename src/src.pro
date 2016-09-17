@@ -25,7 +25,10 @@ SOURCES += main_qt.cpp \
     widget_file_list.cpp \
     dem.cpp \
     dems.cpp \
-    fileutils.cpp
+    srtm_continent.cpp \
+    compression.cpp \
+    fileutils.cpp \
+    file.cpp
 
 
 HEADERS += window_qt.h \
@@ -48,16 +51,18 @@ HEADERS += window_qt.h \
     widget_file_list.h \
     dem.h \
     dems.h \
-    fileutils.h
+    compression.h \
+    fileutils.h \
+    file.h
 
 
 # For glib library.
 CONFIG += link_pkgconfig debug
-PKGCONFIG += glib-2.0
+PKGCONFIG += glib-2.0 zlib gio-2.0
 
 DEFINES += SLAVGPS_QT HAVE_CONFIG_H
 
 
 
 QMAKE_CXXFLAGS += -std=c++11 -Wno-unused -g -O0
-QMAKE_LDFLAGS += -lm
+QMAKE_LFLAGS += -lm -lbz2
