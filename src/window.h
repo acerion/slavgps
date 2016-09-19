@@ -203,20 +203,13 @@ namespace SlavGPS {
 		GdkCursor * busy_cursor = NULL;
 		GdkCursor * viewport_cursor = NULL; /* Only a reference. */
 
-		/* Tool management state. */
-		unsigned int current_tool;
-		LayerType tool_layer_type;
-		uint16_t tool_tool_id;
-
 		LayerToolsBox * tb = NULL;
 
 		/* Display controls. */
 		bool select_move = false;
-		bool pan_move_flag = false;
-		int pan_x = -1;
-		int pan_y = -1;
-		int delayed_pan_x, delayed_pan_y; /* Temporary storage. */
-		bool single_click_pending = false;
+
+
+
 
 		GtkWidget * hpaned = NULL;
 		GtkWidget * main_vbox = NULL;
