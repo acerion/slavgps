@@ -25,13 +25,14 @@
 
 #include <cstring>
 
-#include <gdk/gdkkeysyms.h>
+//#include <gdk/gdkkeysyms.h>
 
-#include "window.h"
+#include "window_qt.h"
 #include "window_layer_tools.h"
 #include "coords.h"
-#include "vikutils.h"
+//#include "vikutils.h"
 #include "icons/icons.h"
+#include "slav_qt.h"
 
 
 
@@ -58,23 +59,33 @@ LayerToolsBox::~LayerToolsBox()
 
 
 
-int LayerToolsBox::add_tool(LayerTool * layer_tool)
+QAction * LayerToolsBox::add_tool(LayerTool * layer_tool)
 {
+#if 0
 	toolbar_action_tool_entry_register(this->window->viking_vtb, &layer_tool->radioActionEntry);
+#endif
+	QString label(layer_tool->radioActionEntry.label);
+	QAction * qa = new QAction(label, this->window);
+
+	qa->setObjectName(QString(layer_tool->radioActionEntry.name));
+	qa->setIcon(QIcon(QString(layer_tool->radioActionEntry.stock_id)));
+	qa->setCheckable(true);
+
+	layer_tool->radioActionEntry.qa = qa;
 
 	this->tools.push_back(layer_tool);
 	this->n_tools++;
 
-	return this->n_tools;
+	return qa;
 }
 
 
 
 
-LayerTool * LayerToolsBox::get_tool(char const *tool_name)
+LayerTool * LayerToolsBox::get_tool(QString & tool_name)
 {
 	for (int i = 0; i < this->n_tools; i++) {
-		if (0 == strcmp(tool_name, this->tools[i]->radioActionEntry.name)) {
+		if (tool_name == this->tools[i]->radioActionEntry.name) {
 			return this->tools[i];
 		}
 	}
@@ -84,7 +95,7 @@ LayerTool * LayerToolsBox::get_tool(char const *tool_name)
 
 
 
-void LayerToolsBox::activate(char const *tool_name)
+void LayerToolsBox::activate(QString & tool_name)
 {
 	LayerTool * tool = this->get_tool(tool_name);
 	Layer * layer = this->window->layers_panel->get_selected_layer();
@@ -108,6 +119,7 @@ void LayerToolsBox::activate(char const *tool_name)
 			this->active_tool->deactivate(NULL, this->active_tool);
 		}
 	}
+	qDebug() << "LAYER TOOLS: activating tool" << tool_name;
 	if (tool->activate) {
 		tool->activate(layer, tool);
 	}
@@ -117,18 +129,20 @@ void LayerToolsBox::activate(char const *tool_name)
 
 
 
-const GdkCursor * LayerToolsBox::get_cursor(char const *tool_name)
+const GdkCursor * LayerToolsBox::get_cursor(QString & tool_name)
 {
 	LayerTool * tool = this->get_tool(tool_name);
 	if (tool->cursor == NULL) {
-		if (tool->cursor_type == GDK_CURSOR_IS_PIXMAP && tool->cursor_data != NULL) {
+#if 0
+		if (tool->cursor_shape == Qt::BitmapCursor && tool->cursor_data != NULL) {
 			GdkPixbuf *cursor_pixbuf = gdk_pixbuf_from_pixdata(tool->cursor_data, false, NULL);
 			/* TODO: settable offeset. */
 			tool->cursor = gdk_cursor_new_from_pixbuf(gdk_display_get_default(), cursor_pixbuf, 3, 3);
 			g_object_unref(G_OBJECT(cursor_pixbuf));
 		} else {
-			tool->cursor = gdk_cursor_new(tool->cursor_type);
+			tool->cursor = gdk_cursor_new(tool->cursor_shape);
 		}
+#endif
 	}
 	return tool->cursor;
 }
@@ -136,11 +150,13 @@ const GdkCursor * LayerToolsBox::get_cursor(char const *tool_name)
 
 
 
-void LayerToolsBox::click(GdkEventButton * event)
+void LayerToolsBox::click(QMouseEvent * event)
 {
 	Layer * layer = this->window->layers_panel->get_selected_layer();
+	fprintf(stderr, "LAYER TOOLS: click received\n");
 #if 1
 	if (!layer) {
+		fprintf(stderr, "LAYER TOOLS: click received, no layer\n");
 		return;
 	}
 #endif
@@ -148,16 +164,22 @@ void LayerToolsBox::click(GdkEventButton * event)
 	if (this->active_tool && this->active_tool->click) {
 		LayerType ltype = this->active_tool->layer_type;
 		if (ltype == LayerType::NUM_TYPES || (layer && ltype == layer->type)) {
+			fprintf(stderr, "LAYER TOOLS: click received, passing to Tool\n");
 			this->active_tool->click(layer, event, this->active_tool);
+		} else {
+			fprintf(stderr, "LAYER TOOLS: !condition 2\n");
 		}
+	} else {
+		fprintf(stderr, "LAYER TOOLS: !condition 1\n");
 	}
 }
 
 
 
 
-void LayerToolsBox::move(GdkEventMotion * event)
+void LayerToolsBox::move(QMouseEvent * event)
 {
+	fprintf(stderr, "LAYER TOOLS: move received\n");
 	Layer * layer = this->window->layers_panel->get_selected_layer();
 #if 1
 	if (!layer) {
@@ -168,9 +190,12 @@ void LayerToolsBox::move(GdkEventMotion * event)
 	if (this->active_tool && this->active_tool->move) {
 		LayerType ltype = this->active_tool->layer_type;
 		if (ltype == LayerType::NUM_TYPES || (layer && ltype == layer->type)) {
+			fprintf(stderr, "LAYER TOOLS: move received, passing to tool\n");
+#if 0
 			if (VIK_LAYER_TOOL_ACK_GRAB_FOCUS == this->active_tool->move(layer, event, this->active_tool)) {
 				gtk_widget_grab_focus(this->window->viewport->get_toolkit_widget());
 			}
+#endif
 		}
 	}
 }
@@ -178,8 +203,10 @@ void LayerToolsBox::move(GdkEventMotion * event)
 
 
 
-void LayerToolsBox::release(GdkEventButton * event)
+void LayerToolsBox::release(QMouseEvent * event)
 {
+	fprintf(stderr, "LAYER TOOLS: release received\n");
+
 	Layer * layer = this->window->layers_panel->get_selected_layer();
 #if 1
 	if (!layer) {
@@ -190,6 +217,7 @@ void LayerToolsBox::release(GdkEventButton * event)
 	if (this->active_tool && this->active_tool->release) {
 		LayerType ltype = this->active_tool->layer_type;
 		if (ltype == LayerType::NUM_TYPES || (layer && ltype == layer->type)) {
+			fprintf(stderr, "LAYER TOOLS: release received, passing to tool\n");
 			this->active_tool->release(layer, event, this->active_tool);
 		}
 	}
@@ -208,7 +236,7 @@ void LayerToolsBox::release(GdkEventButton * event)
 static bool draw_buf_done = true;
 
 typedef struct {
-	GdkDrawable * gdk_window;
+	QWindow * window;
 	GdkGC * gdk_style;
 	GdkPixmap * pixmap;
 } draw_buf_data_t;
@@ -218,28 +246,31 @@ typedef struct {
 
 static int draw_buf(draw_buf_data_t * data)
 {
+#if 0
 	gdk_threads_enter();
-	gdk_draw_drawable(data->gdk_window, data->gdk_style, data->pixmap,
+	gdk_draw_drawable(data->window, data->gdk_style, data->pixmap,
 			  0, 0, 0, 0, -1, -1);
 	draw_buf_done = true;
 	gdk_threads_leave();
+#endif
 	return false;
 }
 
 
 
 
-static VikLayerToolFuncStatus ruler_click(Layer * layer, GdkEventButton * event, LayerTool * tool);
-static VikLayerToolFuncStatus ruler_move(Layer * layer, GdkEventMotion * event, LayerTool * tool);
-static VikLayerToolFuncStatus ruler_release(Layer * layer, GdkEventButton * event, LayerTool * tool);
+static VikLayerToolFuncStatus ruler_click(Layer * layer, QMouseEvent * event, LayerTool * tool);
+static VikLayerToolFuncStatus ruler_move(Layer * layer, QMouseEvent * event, LayerTool * tool);
+static VikLayerToolFuncStatus ruler_release(Layer * layer, QMouseEvent * event, LayerTool * tool);
 static void ruler_deactivate(Layer * layer, LayerTool * tool);
 static bool ruler_key_press(Layer * layer, GdkEventKey *event, LayerTool * tool);
 
 
 
 
-static void draw_ruler(Viewport * viewport, GdkDrawable *d, GdkGC *gc, int x1, int y1, int x2, int y2, double distance)
+static void draw_ruler(Viewport * viewport, QWindow * d, GdkGC *gc, int x1, int y1, int x2, int y2, double distance)
 {
+#if 0
 	PangoLayout *pl;
 	char str[128];
 	GdkGC *labgc = viewport->new_gc("#cccccc", 1);
@@ -399,6 +430,7 @@ static void draw_ruler(Viewport * viewport, GdkDrawable *d, GdkGC *gc, int x1, i
 	g_object_unref(G_OBJECT (pl));
 	g_object_unref(G_OBJECT (labgc));
 	g_object_unref(G_OBJECT (thickgc));
+#endif
 }
 
 
@@ -411,8 +443,8 @@ LayerTool * SlavGPS::ruler_create(Window * window, Viewport * viewport)
 	layer_tool->layer_type = LayerType::NUM_TYPES;
 
 	layer_tool->radioActionEntry.name = strdup("Ruler");
-	layer_tool->radioActionEntry.stock_id = strdup("vik-icon-ruler");
-	layer_tool->radioActionEntry.label = strdup(N_("_Ruler"));
+	layer_tool->radioActionEntry.stock_id = strdup(":/icons/layer_tool/ruler_18.png");
+	layer_tool->radioActionEntry.label = strdup(N_("&Ruler"));
 	layer_tool->radioActionEntry.accelerator = strdup("<control><shift>U"); /* Ctrl+Shift+R is used for Refresh (deemed more important), so use 'U' instead. */
 	layer_tool->radioActionEntry.tooltip = strdup(N_("Ruler Tool"));
 	layer_tool->radioActionEntry.value = 2;
@@ -423,8 +455,10 @@ LayerTool * SlavGPS::ruler_create(Window * window, Viewport * viewport)
 	layer_tool->release = (VikToolMouseFunc) ruler_release;
 	layer_tool->key_press = ruler_key_press;
 
-	layer_tool->cursor_type = GDK_CURSOR_IS_PIXMAP;
+	layer_tool->cursor_shape = Qt::BitmapCursor;
+#if 0
 	layer_tool->cursor_data = &cursor_ruler_pixbuf;
+#endif
 
 	layer_tool->ruler = (ruler_tool_state_t *) malloc(1 * sizeof (ruler_tool_state_t));
 	memset(layer_tool->ruler, 0, sizeof (ruler_tool_state_t));
@@ -435,12 +469,15 @@ LayerTool * SlavGPS::ruler_create(Window * window, Viewport * viewport)
 
 
 
-static VikLayerToolFuncStatus ruler_click(Layer * layer, GdkEventButton * event, LayerTool * tool)
+static VikLayerToolFuncStatus ruler_click(Layer * layer, QMouseEvent * event, LayerTool * tool)
 {
+	fprintf(stderr, "LAYER TOOLS: RULER CLICK, tool's ->click() called\n");
+
 	struct LatLon ll;
 	VikCoord coord;
 	char temp[128] = { 0 };
-	if (event->button == MouseButton::LEFT) {
+#if 0
+	if (event->button() == Qt::LeftButton) {
 		char *lat = NULL, *lon = NULL;
 		tool->viewport->screen_to_coord((int) event->x, (int) event->y, &coord);
 		vik_coord_to_latlon(&coord, &ll);
@@ -467,21 +504,23 @@ static VikLayerToolFuncStatus ruler_click(Layer * layer, GdkEventButton * event,
 			sprintf(temp, "%s %s", lat, lon);
 			tool->ruler->has_oldcoord = true;
 		}
-
+#if 0
 		vik_statusbar_set_message(tool->window->viking_vs, VIK_STATUSBAR_INFO, temp);
+#endif
 
 		tool->ruler->oldcoord = coord;
 	} else {
 		tool->viewport->set_center_screen((int) event->x, (int) event->y);
 		tool->window->draw_update();
 	}
+#endif
 	return VIK_LAYER_TOOL_ACK;
 }
 
 
 
 
-static VikLayerToolFuncStatus ruler_move(Layer * layer, GdkEventMotion * event, LayerTool * tool)
+static VikLayerToolFuncStatus ruler_move(Layer * layer, QMouseEvent * event, LayerTool * tool)
 {
 	Window * window = tool->window;
 
@@ -490,6 +529,7 @@ static VikLayerToolFuncStatus ruler_move(Layer * layer, GdkEventMotion * event, 
 	char temp[128] = { 0 };
 
 	if (tool->ruler->has_oldcoord) {
+#if 0
 		static GdkPixmap *buf = NULL;
 		char *lat = NULL, *lon = NULL;
 		int w1 = tool->viewport->get_width();
@@ -515,7 +555,7 @@ static VikLayerToolFuncStatus ruler_move(Layer * layer, GdkEventMotion * event, 
 		draw_ruler(tool->viewport, buf, gtk_widget_get_style(tool->viewport->get_toolkit_widget())->black_gc, oldx, oldy, event->x, event->y, vik_coord_diff(&coord, &(tool->ruler->oldcoord)));
 		if (draw_buf_done) {
 			static draw_buf_data_t pass_along;
-			pass_along.gdk_window = gtk_widget_get_window(tool->viewport->get_toolkit_widget());
+			pass_along.window = gtk_widget_get_window(tool->viewport->get_toolkit_widget());
 			pass_along.gdk_style = gtk_widget_get_style(tool->viewport->get_toolkit_widget())->black_gc;
 			pass_along.pixmap = buf;
 			g_idle_add_full (G_PRIORITY_HIGH_IDLE + 10, (GSourceFunc) draw_buf, (void *) &pass_along, NULL);
@@ -538,6 +578,7 @@ static VikLayerToolFuncStatus ruler_move(Layer * layer, GdkEventMotion * event, 
 			fprintf(stderr, "CRITICAL: Houston, we've had a problem. distance=%d\n", distance_unit);
 		}
 		vik_statusbar_set_message(window->viking_vs, VIK_STATUSBAR_INFO, temp);
+#endif
 	}
 	return VIK_LAYER_TOOL_ACK;
 }
@@ -545,7 +586,7 @@ static VikLayerToolFuncStatus ruler_move(Layer * layer, GdkEventMotion * event, 
 
 
 
-static VikLayerToolFuncStatus ruler_release(Layer * layer, GdkEventButton * event, LayerTool * tool)
+static VikLayerToolFuncStatus ruler_release(Layer * layer, QMouseEvent * event, LayerTool * tool)
 {
 	return VIK_LAYER_TOOL_ACK;
 }
@@ -563,11 +604,13 @@ static void ruler_deactivate(Layer * layer, LayerTool * tool)
 
 static bool ruler_key_press(Layer * layer, GdkEventKey *event, LayerTool * tool)
 {
+#if 0
 	if (event->keyval == GDK_Escape) {
 		tool->ruler->has_oldcoord = false;
 		ruler_deactivate(layer, tool);
 		return true;
 	}
+#endif
 	/* Regardless of whether we used it, return false so other GTK things may use it. */
 	return false;
 }
@@ -584,9 +627,9 @@ static bool ruler_key_press(Layer * layer, GdkEventKey *event, LayerTool * tool)
 
 
 
-static VikLayerToolFuncStatus zoomtool_click(Layer * layer, GdkEventButton * event, LayerTool * tool);
-static VikLayerToolFuncStatus zoomtool_move(Layer * layer, GdkEventMotion * event, LayerTool * tool);
-static VikLayerToolFuncStatus zoomtool_release(Layer * layer, GdkEventButton * event, LayerTool * tool);
+static VikLayerToolFuncStatus zoomtool_click(Layer * layer, QMouseEvent * event, LayerTool * tool);
+static VikLayerToolFuncStatus zoomtool_move(Layer * layer, QMouseEvent * event, LayerTool * tool);
+static VikLayerToolFuncStatus zoomtool_release(Layer * layer, QMouseEvent * event, LayerTool * tool);
 
 
 
@@ -599,6 +642,8 @@ static void zoomtool_resize_pixmap(LayerTool * tool)
 	/* Allocate a drawing area the size of the viewport. */
 	int w1 = tool->window->viewport->get_width();
 	int h1 = tool->window->viewport->get_height();
+
+#if 0
 
 	if (!tool->zoom->pixmap) {
 		/* Totally new. */
@@ -613,6 +658,7 @@ static void zoomtool_resize_pixmap(LayerTool * tool)
 		g_object_unref(G_OBJECT (tool->zoom->pixmap));
 		tool->zoom->pixmap = gdk_pixmap_new(gtk_widget_get_window(tool->window->viewport->get_toolkit_widget()), w1, h1, -1);
 	}
+#endif
 }
 
 
@@ -625,8 +671,8 @@ LayerTool * SlavGPS::zoomtool_create(Window * window, Viewport * viewport)
 	layer_tool->layer_type = LayerType::NUM_TYPES;
 
 	layer_tool->radioActionEntry.name = strdup("Zoom");
-	layer_tool->radioActionEntry.stock_id = strdup("vik-icon-zoom");
-	layer_tool->radioActionEntry.label = strdup(N_("_Zoom"));
+	layer_tool->radioActionEntry.stock_id = strdup(":/icons/layer_tool/zoom_18.png");
+	layer_tool->radioActionEntry.label = strdup(N_("&Zoom"));
 	layer_tool->radioActionEntry.accelerator = strdup("<control><shift>Z");
 	layer_tool->radioActionEntry.tooltip = strdup(N_("Zoom Tool"));
 	layer_tool->radioActionEntry.value = 1;
@@ -635,8 +681,10 @@ LayerTool * SlavGPS::zoomtool_create(Window * window, Viewport * viewport)
 	layer_tool->move = (VikToolMouseMoveFunc) zoomtool_move;
 	layer_tool->release = (VikToolMouseFunc) zoomtool_release;
 
-	layer_tool->cursor_type = GDK_CURSOR_IS_PIXMAP;
+	layer_tool->cursor_shape = Qt::BitmapCursor;
+#if 0
 	layer_tool->cursor_data = &cursor_zoom_pixbuf;
+#endif
 
 	layer_tool->zoom = (zoom_tool_state_t *) malloc(1 * sizeof (zoom_tool_state_t));
 	memset(layer_tool->zoom, 0, sizeof (zoom_tool_state_t));
@@ -647,8 +695,10 @@ LayerTool * SlavGPS::zoomtool_create(Window * window, Viewport * viewport)
 
 
 
-static VikLayerToolFuncStatus zoomtool_click(Layer * layer, GdkEventButton * event, LayerTool * tool)
+static VikLayerToolFuncStatus zoomtool_click(Layer * layer, QMouseEvent * event, LayerTool * tool)
 {
+	fprintf(stderr, "LAYER TOOLS: ZOOM CLICK, tool's ->click() called\n");
+#if 0
 	tool->window->modified = true;
 	unsigned int modifiers = event->state & (GDK_SHIFT_MASK | GDK_CONTROL_MASK);
 
@@ -663,22 +713,22 @@ static VikLayerToolFuncStatus zoomtool_click(Layer * layer, GdkEventButton * eve
 	if (modifiers == (GDK_CONTROL_MASK | GDK_SHIFT_MASK)) {
 		/* This zoom is on the center position. */
 		tool->window->viewport->set_center_screen(center_x, center_y);
-		if (event->button == MouseButton::LEFT) {
+		if (event->button() == Qt::LeftButton) {
 			tool->window->viewport->zoom_in();
-		} else if (event->button == MouseButton::RIGHT) {
+		} else if (event->button() == Qt::RigthButton) {
 			tool->window->viewport->zoom_out();
 		}
 	} else if (modifiers == GDK_CONTROL_MASK) {
 		/* This zoom is to recenter on the mouse position. */
 		tool->window->viewport->set_center_screen((int) event->x, (int) event->y);
-		if (event->button == MouseButton::LEFT) {
+		if (event->button() == Qt::LeftButton) {
 			tool->window->viewport->zoom_in();
-		} else if (event->button == MouseButton::RIGHT) {
+		} else if (event->button() == Qt::RightButton) {
 			tool->window->viewport->zoom_out();
 		}
 	} else if (modifiers == GDK_SHIFT_MASK) {
 		/* Get start of new zoom bounds. */
-		if (event->button == MouseButton::LEFT) {
+		if (event->button() == Qt::LeftButton) {
 			tool->zoom->bounds_active = true;
 			tool->zoom->start_x = (int) event->x;
 			tool->zoom->start_y = (int) event->y;
@@ -687,9 +737,9 @@ static VikLayerToolFuncStatus zoomtool_click(Layer * layer, GdkEventButton * eve
 	} else {
 		/* Make sure mouse is still over the same point on the map when we zoom. */
 		tool->window->viewport->screen_to_coord(event->x, event->y, &coord);
-		if (event->button == MouseButton::LEFT) {
+		if (event->button() == Qt::LeftButton) {
 			tool->window->viewport->zoom_in();
-		} else if (event->button == MouseButton::RIGHT) {
+		} else if (event->button() == Qt::RightButton) {
 			tool->window->viewport->zoom_out();
 		}
 		int x, y;
@@ -702,14 +752,17 @@ static VikLayerToolFuncStatus zoomtool_click(Layer * layer, GdkEventButton * eve
 		tool->window->draw_update();
 	}
 
+#endif
+
 	return VIK_LAYER_TOOL_ACK;
 }
 
 
 
 
-static VikLayerToolFuncStatus zoomtool_move(Layer * layer, GdkEventMotion * event, LayerTool * tool)
+static VikLayerToolFuncStatus zoomtool_move(Layer * layer, QMouseEvent * event, LayerTool * tool)
 {
+#if 0
 	unsigned int modifiers = event->state & (GDK_SHIFT_MASK | GDK_CONTROL_MASK);
 
 	if (tool->zoom->bounds_active && modifiers == GDK_SHIFT_MASK) {
@@ -744,7 +797,7 @@ static VikLayerToolFuncStatus zoomtool_move(Layer * layer, GdkEventMotion * even
 		/* Only actually draw when there's time to do so. */
 		if (draw_buf_done) {
 			static draw_buf_data_t pass_along;
-			pass_along.gdk_window = gtk_widget_get_window(tool->window->viewport->get_toolkit_widget());
+			pass_along.window = gtk_widget_get_window(tool->window->viewport->get_toolkit_widget());
 			pass_along.gdk_style = gtk_widget_get_style(tool->window->viewport->get_toolkit_widget())->black_gc;
 			pass_along.pixmap = tool->zoom->pixmap;
 			g_idle_add_full (G_PRIORITY_HIGH_IDLE + 10, (GSourceFunc) draw_buf, &pass_along, NULL);
@@ -753,15 +806,16 @@ static VikLayerToolFuncStatus zoomtool_move(Layer * layer, GdkEventMotion * even
 	} else {
 		tool->zoom->bounds_active = false;
 	}
-
+#endif
 	return VIK_LAYER_TOOL_ACK;
 }
 
 
 
 
-static VikLayerToolFuncStatus zoomtool_release(Layer * layer, GdkEventButton * event, LayerTool * tool)
+static VikLayerToolFuncStatus zoomtool_release(Layer * layer, QMouseEvent * event, LayerTool * tool)
 {
+#if 0
 	unsigned int modifiers = event->state & (GDK_SHIFT_MASK | GDK_CONTROL_MASK);
 
 	/* Ensure haven't just released on the exact same position
@@ -787,11 +841,11 @@ static VikLayerToolFuncStatus zoomtool_release(Layer * layer, GdkEventButton * e
 		if (modifiers == GDK_SHIFT_MASK) {
 			/* Zoom in/out by three if possible. */
 			tool->window->viewport->set_center_screen(event->x, event->y);
-			if (event->button == MouseButton::LEFT) {
+			if (event->button() == Qt::LeftButton) {
 				tool->window->viewport->zoom_in();
 				tool->window->viewport->zoom_in();
 				tool->window->viewport->zoom_in();
-			} else if (event->button == MouseButton::RIGHT) {
+			} else if (event->button() == Qt::RightButton) {
 				tool->window->viewport->zoom_out();
 				tool->window->viewport->zoom_out();
 				tool->window->viewport->zoom_out();
@@ -803,7 +857,7 @@ static VikLayerToolFuncStatus zoomtool_release(Layer * layer, GdkEventButton * e
 
 	/* Reset. */
 	tool->zoom->bounds_active = false;
-
+#endif
 	return VIK_LAYER_TOOL_ACK;
 }
 
@@ -820,9 +874,9 @@ static VikLayerToolFuncStatus zoomtool_release(Layer * layer, GdkEventButton * e
 
 
 
-static VikLayerToolFuncStatus pantool_click(Layer * layer, GdkEventButton * event, LayerTool * tool);
-static VikLayerToolFuncStatus pantool_move(Layer * layer, GdkEventMotion * event, LayerTool * tool);
-static VikLayerToolFuncStatus pantool_release(Layer * layer, GdkEventButton * event, LayerTool * tool);
+static VikLayerToolFuncStatus pantool_click(Layer * layer, QMouseEvent * event, LayerTool * tool);
+static VikLayerToolFuncStatus pantool_move(Layer * layer, QMouseEvent * event, LayerTool * tool);
+static VikLayerToolFuncStatus pantool_release(Layer * layer, QMouseEvent * event, LayerTool * tool);
 
 
 
@@ -834,8 +888,8 @@ LayerTool * SlavGPS::pantool_create(Window * window, Viewport * viewport)
 	layer_tool->layer_type = LayerType::NUM_TYPES;
 
 	layer_tool->radioActionEntry.name = strdup("Pan");
-	layer_tool->radioActionEntry.stock_id = strdup("vik-icon-pan");
-	layer_tool->radioActionEntry.label = strdup(N_("_Pan"));
+	layer_tool->radioActionEntry.stock_id = strdup(":/icons/layer_tool/pan_22.png");
+	layer_tool->radioActionEntry.label = strdup(N_("&Pan"));
 	layer_tool->radioActionEntry.accelerator = strdup("<control><shift>P");
 	layer_tool->radioActionEntry.tooltip = strdup(N_("Pan Tool"));
 	layer_tool->radioActionEntry.value = 0;
@@ -844,7 +898,7 @@ LayerTool * SlavGPS::pantool_create(Window * window, Viewport * viewport)
 	layer_tool->move = (VikToolMouseMoveFunc) pantool_move;
 	layer_tool->release = (VikToolMouseFunc) pantool_release;
 
-	layer_tool->cursor_type = GDK_FLEUR;
+	layer_tool->cursor_shape = Qt::SizeAllCursor;
 	layer_tool->cursor_data = NULL;
 
 	return layer_tool;
@@ -854,50 +908,57 @@ LayerTool * SlavGPS::pantool_create(Window * window, Viewport * viewport)
 
 
 /* NB Double clicking means this gets called THREE times!!! */
-static VikLayerToolFuncStatus pantool_click(Layer * layer, GdkEventButton * event, LayerTool * tool)
+static VikLayerToolFuncStatus pantool_click(Layer * layer, QMouseEvent * event, LayerTool * tool)
 {
+	fprintf(stderr, "LAYER TOOLS: PAN CLICK, tool's ->click() called\n");
 	tool->window->modified = true;
-
+#if 0
 	if (event->type == GDK_2BUTTON_PRESS) {
 		/* Zoom in / out on double click.
 		   No need to change the center as that has already occurred in the first click of a double click occurrence. */
-		if (event->button == MouseButton::LEFT) {
+		if (event->button() == Qt::LeftButton) {
 			unsigned int modifier = event->state & GDK_SHIFT_MASK;
 			if (modifier) {
 				tool->window->viewport->zoom_out();
 			} else {
 				tool->window->viewport->zoom_in();
 			}
-		} else if (event->button == MouseButton::RIGHT) {
+		} else if (event->button() == Qt::RightButton) {
 			tool->window->viewport->zoom_out();
 		}
 
 		tool->window->draw_update();
 	} else {
+#endif
+		fprintf(stderr, "LAYER TOOLS: PAN CLICK, tool's ->click() called, checking button\n");
 		/* Standard pan click. */
-		if (event->button == MouseButton::LEFT) {
+		if (event->button() == Qt::LeftButton) {
+			fprintf(stderr, "LAYER TOOLS: PAN CLICK, calling window->pan_click()\n");
 			tool->window->pan_click(event);
 		}
+#if 0
 	}
-
+#endif
 	return VIK_LAYER_TOOL_ACK;
 }
 
 
 
 
-static VikLayerToolFuncStatus pantool_move(Layer * layer, GdkEventMotion * event, LayerTool * tool)
+static VikLayerToolFuncStatus pantool_move(Layer * layer, QMouseEvent * event, LayerTool * tool)
 {
+	fprintf(stderr, "LAYER TOOLS: PAN MOVE, calling window->pan_move()\n");
 	tool->window->pan_move(event);
+
 	return VIK_LAYER_TOOL_ACK;
 }
 
 
 
 
-static VikLayerToolFuncStatus pantool_release(Layer * layer, GdkEventButton * event, LayerTool * tool)
+static VikLayerToolFuncStatus pantool_release(Layer * layer, QMouseEvent * event, LayerTool * tool)
 {
-	if (event->button == MouseButton::LEFT) {
+	if (event->button() == Qt::LeftButton) {
 		tool->window->pan_release(event);
 	}
 	return VIK_LAYER_TOOL_ACK;
@@ -916,9 +977,9 @@ static VikLayerToolFuncStatus pantool_release(Layer * layer, GdkEventButton * ev
 
 
 
-static VikLayerToolFuncStatus selecttool_click(Layer * layer, GdkEventButton * event, LayerTool * tool);
-static VikLayerToolFuncStatus selecttool_move(Layer * layer, GdkEventMotion * event, LayerTool * tool);
-static VikLayerToolFuncStatus selecttool_release(Layer * layer, GdkEventButton * event, LayerTool * tool);
+static VikLayerToolFuncStatus selecttool_click(Layer * layer, QMouseEvent * event, LayerTool * tool);
+static VikLayerToolFuncStatus selecttool_move(Layer * layer, QMouseEvent * event, LayerTool * tool);
+static VikLayerToolFuncStatus selecttool_release(Layer * layer, QMouseEvent * event, LayerTool * tool);
 
 
 
@@ -930,8 +991,8 @@ LayerTool * SlavGPS::selecttool_create(Window * window, Viewport * viewport)
 	layer_tool->layer_type = LayerType::NUM_TYPES;
 
 	layer_tool->radioActionEntry.name = strdup("Select");
-	layer_tool->radioActionEntry.stock_id = strdup("vik-icon-select");
-	layer_tool->radioActionEntry.label = strdup(N_("_Select"));
+	layer_tool->radioActionEntry.stock_id = strdup(":/icons/layer_tool/select_18.png");
+	layer_tool->radioActionEntry.label = strdup(N_("&Select"));
 	layer_tool->radioActionEntry.accelerator = strdup("<control><shift>S");
 	layer_tool->radioActionEntry.tooltip = strdup(N_("Select Tool"));
 	layer_tool->radioActionEntry.value = 3;
@@ -940,7 +1001,7 @@ LayerTool * SlavGPS::selecttool_create(Window * window, Viewport * viewport)
 	layer_tool->move = (VikToolMouseMoveFunc) selecttool_move;
 	layer_tool->release = (VikToolMouseFunc) selecttool_release;
 
-	layer_tool->cursor_type = GDK_LEFT_PTR;
+	layer_tool->cursor_shape = Qt::ArrowCursor;
 	layer_tool->cursor_data = NULL;
 
 	layer_tool->ed  = (tool_ed_t *) malloc(1 * sizeof (tool_ed_t));
@@ -955,7 +1016,7 @@ LayerTool * SlavGPS::selecttool_create(Window * window, Viewport * viewport)
 typedef struct {
 	bool cont;
 	Viewport * viewport;
-	GdkEventButton * event;
+	QMouseEvent * event;
 	LayerTool * tool;
 } clicker;
 
@@ -975,7 +1036,7 @@ static void click_layer_selected(Layer * layer, clicker * ck)
 
 
 
-
+#if 0
 #ifdef WINDOWS
 /* Hopefully Alt keys by default. */
 #define VIK_MOVE_MODIFIER GDK_MOD1_MASK
@@ -984,15 +1045,18 @@ static void click_layer_selected(Layer * layer, clicker * ck)
    Thus use an alternate modifier - you may need to set something into this group. */
 #define VIK_MOVE_MODIFIER GDK_MOD5_MASK
 #endif
+#endif
 
 
 
-
-static VikLayerToolFuncStatus selecttool_click(Layer * layer, GdkEventButton * event, LayerTool * tool)
+static VikLayerToolFuncStatus selecttool_click(Layer * layer, QMouseEvent * event, LayerTool * tool)
 {
+	fprintf(stderr, "LAYER TOOLS: SELECT CLICK, tool's ->click() called\n");
+#if 0
 	tool->window->select_move = false;
+
 	/* Only allow selection on primary button. */
-	if (event->button == MouseButton::LEFT) {
+	if (event->button() == Qt::LeftButton) {
 
 		if (event->state & VIK_MOVE_MODIFIER) {
 			tool->window->pan_click(event);
@@ -1033,7 +1097,7 @@ static VikLayerToolFuncStatus selecttool_click(Layer * layer, GdkEventButton * e
 				tool->window->select_move = true;
 			}
 		}
-	} else if ((event->button == MouseButton::RIGHT) && (layer && layer->type == LayerType::TRW)) {
+	} else if ((event->button() == Qt::RightButton) && (layer && layer->type == LayerType::TRW)) {
 		if (layer->visible) {
 			/* Act on currently selected item to show menu. */
 			if (tool->window->selected_track || tool->window->selected_waypoint) {
@@ -1041,15 +1105,16 @@ static VikLayerToolFuncStatus selecttool_click(Layer * layer, GdkEventButton * e
 			}
 		}
 	}
-
+#endif
 	return VIK_LAYER_TOOL_ACK;
 }
 
 
 
 
-static VikLayerToolFuncStatus selecttool_move(Layer * layer, GdkEventMotion * event, LayerTool * tool)
+static VikLayerToolFuncStatus selecttool_move(Layer * layer, QMouseEvent * event, LayerTool * tool)
 {
+#if 0
 	if (tool->window->select_move) {
 		/* Don't care about trw here. */
 		if (tool->ed->trw) {
@@ -1061,15 +1126,16 @@ static VikLayerToolFuncStatus selecttool_move(Layer * layer, GdkEventMotion * ev
 			tool->window->pan_move(event);
 		}
 	}
-
+#endif
 	return VIK_LAYER_TOOL_ACK;
 }
 
 
 
 
-static VikLayerToolFuncStatus selecttool_release(Layer * layer, GdkEventButton * event, LayerTool * tool)
+static VikLayerToolFuncStatus selecttool_release(Layer * layer, QMouseEvent * event, LayerTool * tool)
 {
+#if 0
 	if (tool->window->select_move) {
 		/* Don't care about trw here. */
 		if (tool->ed->trw) {
@@ -1077,7 +1143,7 @@ static VikLayerToolFuncStatus selecttool_release(Layer * layer, GdkEventButton *
 		}
 	}
 
-	if (event->button == MouseButton::LEFT && (event->state & VIK_MOVE_MODIFIER)) {
+	if (event->button() == Qt::LeftButton && (event->state & VIK_MOVE_MODIFIER)) {
 		tool->window->pan_release(event);
 	}
 
@@ -1087,6 +1153,7 @@ static VikLayerToolFuncStatus selecttool_release(Layer * layer, GdkEventButton *
 
 	/* End of this select movement. */
 	tool->window->select_move = false;
+#endif
 
 	return VIK_LAYER_TOOL_ACK;
 }

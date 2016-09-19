@@ -35,6 +35,7 @@
 #include <QStandardItem>
 #include <QIcon>
 #include <QMouseEvent>
+#include <QCursor>
 #else
 #include <gtk/gtk.h>
 #include <gdk-pixbuf/gdk-pixdata.h>
@@ -177,11 +178,11 @@ namespace SlavGPS {
 		virtual bool selected(SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeItemType type);
 		bool layer_selected(SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeItemType type);
 
-		virtual bool show_selected_viewport_menu(GdkEventButton * event, Viewport * viewport);
+		virtual bool show_selected_viewport_menu(QMouseEvent * event, Viewport * viewport);
 
-		virtual bool select_click(GdkEventButton * event, Viewport * viewport, LayerTool * tool);
-		virtual bool select_move(GdkEventMotion * event, Viewport * viewport, LayerTool * tool);
-		virtual bool select_release(GdkEventButton * event, Viewport * viewport, LayerTool * tool);
+		virtual bool select_click(QMouseEvent * event, Viewport * viewport, LayerTool * tool);
+		virtual bool select_move(QMouseEvent * event, Viewport * viewport, LayerTool * tool);
+		virtual bool select_release(QMouseEvent * event, Viewport * viewport, LayerTool * tool);
 
 		/* kamilTODO: consider removing them from Layer. They are overriden only in LayerTRW. */
 		virtual void set_menu_selection(uint16_t selection);
@@ -301,10 +302,21 @@ namespace SlavGPS {
 	typedef LayerTool * (*VikToolConstructorFunc) (Window *, Viewport *);
 	typedef void (*VikToolDestructorFunc) (LayerTool *);
 	typedef VikLayerToolFuncStatus (*VikToolMouseFunc) (Layer *, QMouseEvent *, LayerTool *);
-	typedef VikLayerToolFuncStatus (*VikToolMouseMoveFunc) (Layer *, GdkEventMotion *, LayerTool *);
+	typedef VikLayerToolFuncStatus (*VikToolMouseMoveFunc) (Layer *, QMouseEvent *, LayerTool *);
 	typedef void (*VikToolActivationFunc) (Layer *, LayerTool *);
 	typedef bool (*VikToolKeyFunc) (Layer *, GdkEventKey *, LayerTool *);
 
+
+
+	struct ActionEntry {
+		char const * name;
+		char const * stock_id;
+		char const * label;
+		char const * accelerator;
+		char const * tooltip;
+		int value;
+		QAction * qa;
+	};
 
 
 
@@ -321,10 +333,10 @@ namespace SlavGPS {
 		VikToolMouseFunc release = NULL;
 		VikToolKeyFunc key_press = NULL; /* Return false if we don't use the key press -- should return false most of the time if we want any shortcuts / UI keybindings to work! use sparingly. */
 
-		GtkRadioActionEntry radioActionEntry = { NULL, NULL, NULL, NULL, NULL, 0 };
+		ActionEntry radioActionEntry = { NULL, NULL, NULL, NULL, NULL, 0, NULL };
 
 		bool pan_handler = false; /* Call click & release funtions even when 'Pan Mode' is on. */
-		GdkCursorType cursor_type = GDK_CURSOR_IS_PIXMAP;
+		Qt::CursorShape cursor_shape = Qt::ArrowCursor;
 		GdkPixdata const * cursor_data = NULL;
 		GdkCursor const * cursor = NULL;
 

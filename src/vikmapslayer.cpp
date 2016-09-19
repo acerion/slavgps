@@ -2096,7 +2096,7 @@ static bool maps_layer_download_release(Layer * _layer, GdkEventButton *event, L
 	LayerMaps * layer = (LayerMaps *) _layer;
 
 	if (layer->dl_tool_x != -1 && layer->dl_tool_y != -1) {
-		if (event->button == MouseButton::LEFT) {
+		if (event->button() == Qt::LeftButton) {
 			VikCoord ul, br;
 			tool->viewport->screen_to_coord(MAX(0, MIN(event->x, layer->dl_tool_x)), MAX(0, MIN(event->y, layer->dl_tool_y)), &ul);
 			tool->viewport->screen_to_coord(MIN(tool->viewport->get_width(), MAX(event->x, layer->dl_tool_x)), MIN(tool->viewport->get_height(), MAX (event->y, layer->dl_tool_y)), &br);
@@ -2159,7 +2159,7 @@ static LayerTool * maps_layer_download_create(Window * window, Viewport * viewpo
 	layer_tool->click = (VikToolMouseFunc) maps_layer_download_click;
 	layer_tool->release = (VikToolMouseFunc) maps_layer_download_release;
 
-	layer_tool->cursor_type = GDK_CURSOR_IS_PIXMAP;
+	layer_tool->cursor_shape = Qt::BitmapCursor;
 	layer_tool->cursor_data = &cursor_mapdl_pixbuf;
 
 	return layer_tool;

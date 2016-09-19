@@ -6980,7 +6980,7 @@ bool LayerTRW::select_move(GdkEventMotion * event, Viewport * viewport, LayerToo
 
 bool LayerTRW::select_release(GdkEventButton * event, Viewport * viewport, LayerTool * tool)
 {
-	if (tool->ed->holding && event->button == MouseButton::LEFT) {
+	if (tool->ed->holding && event->button() == Qt::LeftButton) {
 		// Prevent accidental (small) shifts when specific movement has not been requested
 		//  (as the click release has occurred within the click object detection area)
 		if (!tool->ed->moving) {
@@ -7050,7 +7050,7 @@ bool LayerTRW::select_release(GdkEventButton * event, Viewport * viewport, Layer
  */
 bool LayerTRW::select_click(GdkEventButton * event, Viewport * viewport, LayerTool * tool)
 {
-	if (event->button != MouseButton::LEFT) {
+	if (event->button() != Qt::LeftButton) {
 		return false;
 	}
 
@@ -7386,7 +7386,7 @@ static LayerTool * tool_edit_waypoint_create(Window * window, Viewport * viewpor
 	layer_tool->move = (VikToolMouseMoveFunc) tool_edit_waypoint_move_cb;
 	layer_tool->release = (VikToolMouseFunc) tool_edit_waypoint_release_cb;
 
-	layer_tool->cursor_type = GDK_CURSOR_IS_PIXMAP;
+	layer_tool->cursor_shape = Qt::BitmapCursor;
 	layer_tool->cursor_data = &cursor_edwp_pixbuf;
 
 	layer_tool->ed = (tool_ed_t *) malloc(1 * sizeof (tool_ed_t));
@@ -7540,7 +7540,7 @@ bool LayerTRW::tool_edit_waypoint_release(GdkEventButton * event, LayerTool * to
 		return false;
 	}
 
-	if (tool->ed->holding && event->button == MouseButton::LEFT) {
+	if (tool->ed->holding && event->button() == Qt::LeftButton) {
 		VikCoord new_coord;
 		tool->viewport->screen_to_coord(event->x, event->y, &new_coord);
 
@@ -7609,7 +7609,7 @@ static LayerTool * tool_new_track_create(Window * window, Viewport * viewport)
 	layer_tool->key_press = tool_new_track_key_press_cb;
 
 	layer_tool->pan_handler = true;  /* Still need to handle clicks when in PAN mode to disable the potential trackpoint drawing. */
-	layer_tool->cursor_type = GDK_CURSOR_IS_PIXMAP;
+	layer_tool->cursor_shape = Qt::BitmapCursor;
 	layer_tool->cursor_data = &cursor_addtr_pixbuf;
 
 	layer_tool->ed = (tool_ed_t *) malloc(sizeof (tool_ed_t));
@@ -8017,7 +8017,7 @@ bool LayerTRW::tool_new_track_click(GdkEventButton * event, LayerTool * tool)
 	this->route_finder_started = false;
 
 	/* If current is a route - switch to new track. */
-	if (event->button == MouseButton::LEFT && (!this->current_track || (this->current_track && this->current_track->is_route))) {
+	if (event->button() == Qt::LeftButton && (!this->current_track || (this->current_track && this->current_track->is_route))) {
 		char *name = this->new_unique_sublayer_name(SublayerType::TRACK, _("Track"));
 		if (a_vik_get_ask_for_create_track_name()) {
 			name = a_dialog_new_track(this->get_toolkit_window(), name, false);
@@ -8077,7 +8077,7 @@ static LayerTool * tool_new_route_create(Window * window, Viewport * viewport)
 	layer_tool->key_press = tool_new_track_key_press_cb;                 /* Reuse this track method for a route. */
 
 	layer_tool->pan_handler = true;  /* Still need to handle clicks when in PAN mode to disable the potential trackpoint drawing. */
-	layer_tool->cursor_type = GDK_CURSOR_IS_PIXMAP;
+	layer_tool->cursor_shape = Qt::BitmapCursor;
 	layer_tool->cursor_data = &cursor_new_route_pixbuf;
 	layer_tool->cursor = NULL;
 
@@ -8104,7 +8104,7 @@ bool LayerTRW::tool_new_route_click(GdkEventButton * event, LayerTool * tool)
 	this->route_finder_started = false;
 
 	/* If current is a track - switch to new route */
-	if (event->button == MouseButton::LEFT
+	if (event->button() == Qt::LeftButton
 	    && (!this->current_track
 		|| (this->current_track && !this->current_track->is_route))) {
 
@@ -8143,7 +8143,7 @@ static LayerTool * tool_new_waypoint_create(Window * window, Viewport * viewport
 
 	layer_tool->click = (VikToolMouseFunc) tool_new_waypoint_click_cb;
 
-	layer_tool->cursor_type = GDK_CURSOR_IS_PIXMAP;
+	layer_tool->cursor_shape = Qt::BitmapCursor;
 	layer_tool->cursor_data = &cursor_addwp_pixbuf;
 
 	layer_tool->ed = (tool_ed_t *) malloc(sizeof (tool_ed_t));;
@@ -8205,7 +8205,7 @@ static LayerTool * tool_edit_trackpoint_create(Window * window, Viewport * viewp
 	layer_tool->move = (VikToolMouseMoveFunc) tool_edit_trackpoint_move_cb;
 	layer_tool->release = (VikToolMouseFunc) tool_edit_trackpoint_release_cb;
 
-	layer_tool->cursor_type = GDK_CURSOR_IS_PIXMAP;
+	layer_tool->cursor_shape = Qt::BitmapCursor;
 	layer_tool->cursor_data = &cursor_edtr_pixbuf;
 
 	layer_tool->ed = (tool_ed_t *) malloc(1 * sizeof (tool_ed_t));
@@ -8244,7 +8244,7 @@ bool LayerTRW::tool_edit_trackpoint_click(GdkEventButton * event, LayerTool * to
 
 	tool->viewport->get_bbox(&params.bbox);
 
-	if (event->button != MouseButton::LEFT) {
+	if (event->button() != Qt::LeftButton) {
 		return false;
 	}
 
@@ -8380,7 +8380,7 @@ bool LayerTRW::tool_edit_trackpoint_release(GdkEventButton * event, LayerTool * 
 		return false;
 	}
 
-	if (event->button != MouseButton::LEFT) {
+	if (event->button() != Qt::LeftButton) {
 		return false;
 	}
 
@@ -8442,7 +8442,7 @@ static LayerTool * tool_extended_route_finder_create(Window * window, Viewport *
 	layer_tool->key_press = tool_extended_route_finder_key_press_cb;
 
 	layer_tool->pan_handler = true;  /* Still need to handle clicks when in PAN mode to disable the potential trackpoint drawing. */
-	layer_tool->cursor_type = GDK_CURSOR_IS_PIXMAP;
+	layer_tool->cursor_shape = Qt::BitmapCursor;
 	layer_tool->cursor_data = &cursor_route_finder_pixbuf;
 
 	layer_tool->ed = (tool_ed_t *) malloc(sizeof (tool_ed_t));
@@ -8603,7 +8603,7 @@ static LayerTool * tool_show_picture_create(Window * window, Viewport * viewport
 
 	layer_tool->click = (VikToolMouseFunc) tool_show_picture_click_cb;
 
-	layer_tool->cursor_type = GDK_CURSOR_IS_PIXMAP;
+	layer_tool->cursor_shape = Qt::BitmapCursor;
 	layer_tool->cursor_data = &cursor_showpic_pixbuf;
 
 	layer_tool->ed = (tool_ed_t *) malloc(sizeof (tool_ed_t));

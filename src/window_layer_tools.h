@@ -5,9 +5,11 @@
 
 #include <vector>
 
-#include <gtk/gtk.h>
+#include <QAction>
+#include <QMouseEvent>
 
 #include "viklayer.h"
+#include "slav_qt.h"
 
 
 
@@ -29,14 +31,14 @@ namespace SlavGPS {
 		LayerToolsBox(Window * win) : window(win) {};
 		~LayerToolsBox();
 
-		int add_tool(LayerTool * layer_tool);
-		LayerTool * get_tool(char const * tool_name);;
-		void activate(char const * tool_name);
-		const GdkCursor * get_cursor(char const * tool_name);
+		QAction * add_tool(LayerTool * layer_tool);
+		LayerTool * get_tool(QString & tool_name);;
+		void activate(QString & tool_name);
+		const GdkCursor * get_cursor(QString & tool_name);
 
-		void click(GdkEventButton * event);
-		void move(GdkEventMotion * event);
-		void release(GdkEventButton * event);
+		void click(QMouseEvent * event);
+		void move(QMouseEvent * event);
+		void release(QMouseEvent * event);
 
 
 

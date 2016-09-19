@@ -7,6 +7,7 @@ RESOURCES = icons.qrc
 
 SOURCES += main_qt.cpp \
     window_qt.cpp \
+    window_layer_tools.cpp \
     vikviewport.cpp \
     vikcoord.cpp \
     coords.cpp \
@@ -32,6 +33,7 @@ SOURCES += main_qt.cpp \
 
 
 HEADERS += window_qt.h \
+    window_layer_tools.h \
     vikviewport.h \
     vikcoord.h \
     coords.h \

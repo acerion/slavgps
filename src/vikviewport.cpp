@@ -2181,8 +2181,32 @@ void Viewport::resizeEvent(QResizeEvent * event)
 
 void Viewport::mousePressEvent(QMouseEvent * event)
 {
-	fprintf(stderr, "VIEWPORT: mouse event, button %d\n", (int) event->button());
-	event->ignore();
+	fprintf(stderr, "VIEWPORT: mouse press event, button %d\n", (int) event->button());
+
+	this->window->get_layer_tools_box()->click(event);
+
+	event->accept();
+}
+
+
+
+void Viewport::mouseMoveEvent(QMouseEvent * event)
+{
+	fprintf(stderr, "VIEWPORT: mouse move event, button %d\n", (int) event->button());
+
+	this->window->get_layer_tools_box()->move(event);
+
+	event->accept();
+}
+
+
+void Viewport::mouseReleaseEvent(QMouseEvent * event)
+{
+	fprintf(stderr, "VIEWPORT: mouse release event, button %d\n", (int) event->button());
+
+	this->window->get_layer_tools_box()->release(event);
+
+	event->accept();
 }
 
 

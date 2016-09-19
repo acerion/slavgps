@@ -1185,7 +1185,7 @@ static LayerTool * mapnik_feature_create(Window * window, Viewport * viewport)
 
 	layer_tool->release = (VikToolMouseFunc) mapnik_feature_release_cb;
 
-	layer_tool->cursor_type = GDK_LEFT_PTR;
+	layer_tool->cursor_shape = Qt::ArrowCursor;
 	layer_tool->cursor_data = NULL;
 
 	return layer_tool;
@@ -1208,7 +1208,7 @@ static bool mapnik_feature_release_cb(Layer * layer, GdkEventButton *event, Laye
 
 bool LayerMapnik::feature_release(GdkEventButton * event, LayerTool * tool)
 {
-	if (event->button == MouseButton::RIGHT) {
+	if (event->button() == Qt::RightButton) {
 		tool->viewport->screen_to_coord(MAX(0, event->x), MAX(0, event->y), &this->rerender_ul);
 		this->rerender_zoom = tool->viewport->get_zoom();
 

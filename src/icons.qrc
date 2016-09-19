@@ -4,5 +4,10 @@
 	<file>icons/layer/trackwaypoint.png</file>
 	<file>icons/layer/coord.png</file>
 	<file>icons/layer/dem.png</file>
+
+	<file>icons/layer_tool/ruler_18.png</file>
+	<file>icons/layer_tool/zoom_18.png</file>
+	<file>icons/layer_tool/pan_22.png</file>
+	<file>icons/layer_tool/select_18.png</file>
 </qresource>
 </RCC>

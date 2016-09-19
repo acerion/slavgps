@@ -1349,7 +1349,7 @@ static void free_dem_download_params(DEMDownloadParams * p)
 static LayerTool * dem_layer_download_create(Window * window, Viewport * viewport)
 {
 	LayerTool * layer_tool = new LayerTool(window, viewport, LayerType::DEM);
-#if 0
+
 	dem_tools[0] = layer_tool;
 
 	layer_tool->layer_type = LayerType::DEM;
@@ -1360,13 +1360,16 @@ static LayerTool * dem_layer_download_create(Window * window, Viewport * viewpor
 	layer_tool->radioActionEntry.accelerator = NULL;
 	layer_tool->radioActionEntry.tooltip     = strdup(N_("DEM Download"));
 	layer_tool->radioActionEntry.value       = 0;
+	layer_tool->radioActionEntry.qa          = NULL;
 
 	layer_tool->click = (VikToolMouseFunc) dem_layer_download_click;
 	layer_tool->release = (VikToolMouseFunc) dem_layer_download_release;
 
-	layer_tool->cursor_type = GDK_CURSOR_IS_PIXMAP;
+	layer_tool->cursor_shape = Qt::BitmapCursor;
+#if 0
 	layer_tool->cursor_data = &cursor_demdl_pixbuf;
 #endif
+
 
 	return layer_tool;
 }

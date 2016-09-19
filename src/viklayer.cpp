@@ -898,7 +898,7 @@ Layer::Layer(VikLayer * vl_) : Layer()
 
 
 
-bool Layer::select_click(GdkEventButton * event, Viewport * viewport, LayerTool * tool)
+bool Layer::select_click(QMouseEvent * event, Viewport * viewport, LayerTool * tool)
 {
 	return false;
 }
@@ -906,7 +906,7 @@ bool Layer::select_click(GdkEventButton * event, Viewport * viewport, LayerTool 
 
 
 
-bool Layer::select_move(GdkEventMotion * event, Viewport * viewport, LayerTool * tool)
+bool Layer::select_move(QMouseEvent * event, Viewport * viewport, LayerTool * tool)
 {
 	return false;
 }
@@ -922,7 +922,7 @@ void Layer::post_read(Viewport * viewport, bool from_file)
 
 
 
-bool Layer::select_release(GdkEventButton * event, Viewport * viewport, LayerTool * tool)
+bool Layer::select_release(QMouseEvent * event, Viewport * viewport, LayerTool * tool)
 {
 	return false;
 }
@@ -967,7 +967,7 @@ bool Layer::selected(SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeItem
 
 
 
-bool Layer::show_selected_viewport_menu(GdkEventButton * event, Viewport * viewport)
+bool Layer::show_selected_viewport_menu(QMouseEvent * event, Viewport * viewport)
 {
 	return false;
 }

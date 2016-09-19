@@ -1135,7 +1135,7 @@ static LayerTool * georef_layer_move_create(Window * window, Viewport * viewport
 	layer_tool->click = (VikToolMouseFunc) georef_layer_move_press_cb;
 	layer_tool->release = (VikToolMouseFunc) georef_layer_move_release_cb;
 
-	layer_tool->cursor_type = GDK_CURSOR_IS_PIXMAP;
+	layer_tool->cursor_shape = Qt::BitmapCursor;
 	layer_tool->cursor_data = &cursor_geomove_pixbuf;
 
 	return layer_tool;
@@ -1188,7 +1188,7 @@ static LayerTool * georef_layer_zoom_create(Window * window, Viewport * viewport
 
 	layer_tool->click = (VikToolMouseFunc) georef_layer_zoom_press_cb;
 
-	layer_tool->cursor_type = GDK_CURSOR_IS_PIXMAP;
+	layer_tool->cursor_shape = Qt::BitmapCursor;
 	layer_tool->cursor_data = &cursor_geozoom_pixbuf;
 
 	return layer_tool;
@@ -1212,7 +1212,7 @@ bool LayerGeoref::zoom_press(GdkEventButton * event, LayerTool * tool)
 		return false;
 	}
 
-	if (event->button == MouseButton::LEFT) {
+	if (event->button() == Qt::LeftButton) {
 		if (this->mpp_easting < (VIK_VIEWPORT_MAX_ZOOM / 1.05) && this->mpp_northing < (VIK_VIEWPORT_MAX_ZOOM / 1.05)) {
 			this->mpp_easting *= 1.01;
 			this->mpp_northing *= 1.01;
