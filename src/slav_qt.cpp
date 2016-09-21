@@ -49,7 +49,7 @@ using namespace SlavGPS;
 
 DistanceUnit a_vik_get_units_distance(void)
 {
-	return (DistanceUnit) 0;
+	return DistanceUnit::KILOMETRES;
 }
 
 vik_startup_method_t a_vik_get_startup_method()

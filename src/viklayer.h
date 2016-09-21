@@ -336,9 +336,14 @@ namespace SlavGPS {
 		ActionEntry radioActionEntry = { NULL, NULL, NULL, NULL, NULL, 0, NULL };
 
 		bool pan_handler = false; /* Call click & release funtions even when 'Pan Mode' is on. */
-		Qt::CursorShape cursor_shape = Qt::ArrowCursor;
-		GdkPixdata const * cursor_data = NULL;
-		GdkCursor const * cursor = NULL;
+
+		QCursor const * cursor_click = NULL;
+		Qt::CursorShape cursor_click_shape = Qt::ArrowCursor;
+		GdkPixdata const * cursor_click_data = NULL;
+
+		QCursor const * cursor_release = NULL;
+		Qt::CursorShape cursor_release_shape = Qt::ArrowCursor;
+		GdkPixdata const * cursor_release_data = NULL;
 
 		Window * window = NULL;
 		Viewport * viewport = NULL;

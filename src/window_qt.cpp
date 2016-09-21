@@ -821,13 +821,7 @@ void Window::menu_cb(QAction * a)
 	/* White Magic, my friends ... White Magic... */
 	int tool_id;
 	this->tb->activate(name);
-#if 0
-	window->viewport_cursor = (GdkCursor *) window->tb->get_cursor(name);
-
-	if (gtk_widget_get_window(window->viewport->get_toolkit_widget()))
-		/* We set cursor, even if it is NULL: it resets to default */
-		gdk_window_set_cursor(gtk_widget_get_window(window->viewport->get_toolkit_widget()), window->viewport_cursor);
-#endif
+	this->viewport->setCursor(*this->tb->get_cursor_release(name));
 
 	if (name == "Pan") {
 		this->current_tool = TOOL_PAN;

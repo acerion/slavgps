@@ -10,6 +10,7 @@
 #include <QStatusBar>
 #include <QTreeView>
 #include <QMouseEvent>
+#include <QCursor>
 
 #include "viklayerspanel.h"
 #include "vikviewport.h"
@@ -106,6 +107,10 @@ namespace SlavGPS {
 		uint16_t tool_tool_id;
 
 		LayerToolsBox * tb = NULL;
+
+		QCursor * busy_cursor = NULL;
+		QCursor * viewport_cursor = NULL; /* Only a reference. */
+
 	};
 
 

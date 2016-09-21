@@ -200,9 +200,6 @@ namespace SlavGPS {
 		bool show_toolbar = false;
 		bool show_main_menu = false;
 
-		GdkCursor * busy_cursor = NULL;
-		GdkCursor * viewport_cursor = NULL; /* Only a reference. */
-
 		LayerToolsBox * tb = NULL;
 
 		/* Display controls. */

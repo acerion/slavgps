@@ -1365,11 +1365,10 @@ static LayerTool * dem_layer_download_create(Window * window, Viewport * viewpor
 	layer_tool->click = (VikToolMouseFunc) dem_layer_download_click;
 	layer_tool->release = (VikToolMouseFunc) dem_layer_download_release;
 
-	layer_tool->cursor_shape = Qt::BitmapCursor;
-#if 0
-	layer_tool->cursor_data = &cursor_demdl_pixbuf;
-#endif
-
+	layer_tool->cursor_click = new QCursor(Qt::ArrowCursor);
+	layer_tool->cursor_release = new QCursor(Qt::ArrowCursor);
+	//layer_tool->cursor_shape = Qt::BitmapCursor;
+	//layer_tool->cursor_data = &cursor_demdl_pixbuf;
 
 	return layer_tool;
 }

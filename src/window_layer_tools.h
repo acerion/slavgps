@@ -7,6 +7,7 @@
 
 #include <QAction>
 #include <QMouseEvent>
+#include <QCursor>
 
 #include "viklayer.h"
 #include "slav_qt.h"
@@ -34,7 +35,9 @@ namespace SlavGPS {
 		QAction * add_tool(LayerTool * layer_tool);
 		LayerTool * get_tool(QString & tool_name);;
 		void activate(QString & tool_name);
-		const GdkCursor * get_cursor(QString & tool_name);
+
+		QCursor const * get_cursor_click(QString & tool_name);
+		QCursor const * get_cursor_release(QString & tool_name);
 
 		void click(QMouseEvent * event);
 		void move(QMouseEvent * event);

@@ -51,7 +51,7 @@ using namespace SlavGPS;
 
 LayerToolsBox::~LayerToolsBox()
 {
-	for (int tt = 0; tt < this->n_tools; tt++) {
+	for (unsigned int tt = 0; tt < this->n_tools; tt++) {
 		delete this->tools[tt];
 	}
 }
@@ -84,7 +84,7 @@ QAction * LayerToolsBox::add_tool(LayerTool * layer_tool)
 
 LayerTool * LayerToolsBox::get_tool(QString & tool_name)
 {
-	for (int i = 0; i < this->n_tools; i++) {
+	for (unsigned i = 0; i < this->n_tools; i++) {
 		if (tool_name == this->tools[i]->radioActionEntry.name) {
 			return this->tools[i];
 		}
@@ -129,22 +129,17 @@ void LayerToolsBox::activate(QString & tool_name)
 
 
 
-const GdkCursor * LayerToolsBox::get_cursor(QString & tool_name)
+QCursor const * LayerToolsBox::get_cursor_click(QString & tool_name)
 {
-	LayerTool * tool = this->get_tool(tool_name);
-	if (tool->cursor == NULL) {
-#if 0
-		if (tool->cursor_shape == Qt::BitmapCursor && tool->cursor_data != NULL) {
-			GdkPixbuf *cursor_pixbuf = gdk_pixbuf_from_pixdata(tool->cursor_data, false, NULL);
-			/* TODO: settable offeset. */
-			tool->cursor = gdk_cursor_new_from_pixbuf(gdk_display_get_default(), cursor_pixbuf, 3, 3);
-			g_object_unref(G_OBJECT(cursor_pixbuf));
-		} else {
-			tool->cursor = gdk_cursor_new(tool->cursor_shape);
-		}
-#endif
-	}
-	return tool->cursor;
+	return this->get_tool(tool_name)->cursor_release;
+}
+
+
+
+
+QCursor const * LayerToolsBox::get_cursor_release(QString & tool_name)
+{
+	return this->get_tool(tool_name)->cursor_release;
 }
 
 
@@ -165,6 +160,7 @@ void LayerToolsBox::click(QMouseEvent * event)
 		LayerType ltype = this->active_tool->layer_type;
 		if (ltype == LayerType::NUM_TYPES || (layer && ltype == layer->type)) {
 			fprintf(stderr, "LAYER TOOLS: click received, passing to Tool\n");
+			this->active_tool->viewport->setCursor(*this->active_tool->cursor_click);
 			this->active_tool->click(layer, event, this->active_tool);
 		} else {
 			fprintf(stderr, "LAYER TOOLS: !condition 2\n");
@@ -191,11 +187,12 @@ void LayerToolsBox::move(QMouseEvent * event)
 		LayerType ltype = this->active_tool->layer_type;
 		if (ltype == LayerType::NUM_TYPES || (layer && ltype == layer->type)) {
 			fprintf(stderr, "LAYER TOOLS: move received, passing to tool\n");
-#if 0
+
 			if (VIK_LAYER_TOOL_ACK_GRAB_FOCUS == this->active_tool->move(layer, event, this->active_tool)) {
+#if 0
 				gtk_widget_grab_focus(this->window->viewport->get_toolkit_widget());
-			}
 #endif
+			}
 		}
 	}
 }
@@ -218,6 +215,7 @@ void LayerToolsBox::release(QMouseEvent * event)
 		LayerType ltype = this->active_tool->layer_type;
 		if (ltype == LayerType::NUM_TYPES || (layer && ltype == layer->type)) {
 			fprintf(stderr, "LAYER TOOLS: release received, passing to tool\n");
+			this->active_tool->viewport->setCursor(*this->active_tool->cursor_release);
 			this->active_tool->release(layer, event, this->active_tool);
 		}
 	}
@@ -268,13 +266,14 @@ static bool ruler_key_press(Layer * layer, GdkEventKey *event, LayerTool * tool)
 
 
 
-static void draw_ruler(Viewport * viewport, QWindow * d, GdkGC *gc, int x1, int y1, int x2, int y2, double distance)
+static void draw_ruler(Viewport * viewport, QPixmap * pixmap, QPen & pen, int x1, int y1, int x2, int y2, double distance)
 {
+	fprintf(stderr, "LAYER TOOLS: RULER DRAW\n");
 #if 0
 	PangoLayout *pl;
-	char str[128];
 	GdkGC *labgc = viewport->new_gc("#cccccc", 1);
 	GdkGC *thickgc = gdk_gc_new(d);
+#endif
 
 	double len = sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
 	double dx = (x2 - x1) / len * 10;
@@ -284,74 +283,106 @@ static void draw_ruler(Viewport * viewport, QWindow * d, GdkGC *gc, int x1, int 
 	double angle;
 	double baseangle = 0;
 
+	QPainter painter(pixmap);
+	painter.setPen(pen);
+
 	/* Draw line with arrow ends. */
 	{
 		int tmp_x1 = x1, tmp_y1 = y1, tmp_x2 = x2, tmp_y2 = y2;
 		Viewport::clip_line(&tmp_x1, &tmp_y1, &tmp_x2, &tmp_y2);
-		gdk_draw_line(d, gc, tmp_x1, tmp_y1, tmp_x2, tmp_y2);
+		painter.drawLine(tmp_x1, tmp_y1, tmp_x2, tmp_y2);
+
+
+		Viewport::clip_line(&x1, &y1, &x2, &y2);
+		painter.drawLine(x1,      y1,      x2,                     y2);
+		painter.drawLine(x1 - dy, y1 + dx, x1 + dy,                y1 - dx);
+		painter.drawLine(x2 - dy, y2 + dx, x2 + dy,                y2 - dx);
+		painter.drawLine(x2,      y2,      x2 - (dx * c + dy * s), y2 - (dy * c - dx * s));
+		painter.drawLine(x2,      y2,      x2 - (dx * c - dy * s), y2 - (dy * c + dx * s));
+		painter.drawLine(x1,      y1,      x1 + (dx * c + dy * s), y1 + (dy * c - dx * s));
+		painter.drawLine(x1,      y1,      x1 + (dx * c - dy * s), y1 + (dy * c + dx * s));
+
 	}
 
-	Viewport::clip_line(&x1, &y1, &x2, &y2);
-	gdk_draw_line(d, gc, x1,      y1,      x2,                     y2);
-	gdk_draw_line(d, gc, x1 - dy, y1 + dx, x1 + dy,                y1 - dx);
-	gdk_draw_line(d, gc, x2 - dy, y2 + dx, x2 + dy,                y2 - dx);
-	gdk_draw_line(d, gc, x2,      y2,      x2 - (dx * c + dy * s), y2 - (dy * c - dx * s));
-	gdk_draw_line(d, gc, x2,      y2,      x2 - (dx * c - dy * s), y2 - (dy * c + dx * s));
-	gdk_draw_line(d, gc, x1,      y1,      x1 + (dx * c + dy * s), y1 + (dy * c - dx * s));
-	gdk_draw_line(d, gc, x1,      y1,      x1 + (dx * c - dy * s), y1 + (dy * c + dx * s));
 
 	/* Draw compass. */
+
 #define CR 80
-#define CW 4
 
-	viewport->compute_bearing(x1, y1, x2, y2, &angle, &baseangle);
+	/* Distance between circles. */
+	const int dist = 4;
 
+#if 1
+	/* Three full circles. */
+	painter.drawArc(x1 - CR + dist, y1 - CR + dist, 2 * (CR - dist), 2 * (CR - dist), 0, 16 * 360); /* Innermost. */
+	painter.drawArc(x1 - CR,        y1 - CR,        2 * CR,          2 * CR,          0, 16 * 360); /* Middle. */
+	painter.drawArc(x1 - CR - dist, y1 - CR - dist, 2 * (CR + dist), 2 * (CR + dist), 0, 16 * 360); /* Outermost. */
+#endif
+
+
+
+
+#if 1
+	/* Fill between middle and innermost circle. */
 	{
-		GdkColor color;
-		gdk_gc_copy(thickgc, gc);
-		gdk_gc_set_line_attributes(thickgc, CW, GDK_LINE_SOLID, GDK_CAP_BUTT, GDK_JOIN_MITER);
-		gdk_color_parse("#2255cc", &color);
-		gdk_gc_set_rgb_fg_color(thickgc, &color);
+		// "#2255cc", GDK_LINE_SOLID, GDK_CAP_BUTT, GDK_JOIN_MITER;
+
+		viewport->compute_bearing(x1, y1, x2, y2, &angle, &baseangle);
+		float start_angle = (90 - RAD2DEG(baseangle)) * 16;
+		float span_angle = -RAD2DEG(angle) * 16;
+		fprintf(stderr, "RULER DRAW IN RECTANGLE %d %d %d %d / %f / %f\n", x1-CR+dist/2, y1-CR+dist/2, 2*CR-dist, 2*CR-dist, start_angle, span_angle);
+		QPen new_pen(QColor("red"));
+		new_pen.setWidth(dist);
+		painter.setPen(new_pen);
+		painter.drawArc(x1 - CR + dist / 2, y1 - CR + dist / 2, 2 * CR - dist, 2 * CR - dist, start_angle, span_angle);
+
+		painter.setPen(pen);
 	}
-	gdk_draw_arc(d, thickgc, false, x1-CR+CW/2, y1-CR+CW/2, 2*CR-CW, 2*CR-CW, (90 - RAD2DEG(baseangle))*64, -RAD2DEG(angle)*64);
+#endif
 
-
-	gdk_gc_copy(thickgc, gc);
-	gdk_gc_set_line_attributes(thickgc, 2, GDK_LINE_SOLID, GDK_CAP_BUTT, GDK_JOIN_MITER);
-	for (int i = 0; i < 180; i++) {
-		c = cos(DEG2RAD(i)*2 + baseangle);
-		s = sin(DEG2RAD(i)*2 + baseangle);
-
-		if (i % 5) {
-			gdk_draw_line(d, gc, x1 + CR*c, y1 + CR*s, x1 + (CR+CW)*c, y1 + (CR+CW)*s);
-		} else {
-			double ticksize = 2*CW;
-			gdk_draw_line(d, thickgc, x1 + (CR-CW)*c, y1 + (CR-CW)*s, x1 + (CR+ticksize)*c, y1 + (CR+ticksize)*s);
+#if 1
+	/* Ticks around circles, every N degrees. */
+	{
+		int ticksize = 2 * dist;
+		for (int i = 0; i < 180; i += 5) {
+			c = cos(DEG2RAD(i) * 2 + baseangle);
+			s = sin(DEG2RAD(i) * 2 + baseangle);
+			painter.drawLine(x1 + (CR-dist)*c, y1 + (CR-dist)*s, x1 + (CR+ticksize)*c, y1 + (CR+ticksize)*s);
 		}
 	}
+#endif
 
-	gdk_draw_arc(d, gc, false, x1-CR, y1-CR, 2*CR, 2*CR, 0, 64*360);
-	gdk_draw_arc(d, gc, false, x1-CR-CW, y1-CR-CW, 2*(CR+CW), 2*(CR+CW), 0, 64*360);
-	gdk_draw_arc(d, gc, false, x1-CR+CW, y1-CR+CW, 2*(CR-CW), 2*(CR-CW), 0, 64*360);
-	c = (CR+CW*2)*cos(baseangle);
-	s = (CR+CW*2)*sin(baseangle);
-	gdk_draw_line(d, gc, x1-c, y1-s, x1+c, y1+s);
-	gdk_draw_line(d, gc, x1+s, y1-c, x1-s, y1+c);
+
+#if 1
+	{
+		/* Two axis inside a compass.
+		   Varying angle will rotate the axis. I don't know why you would need this :) */
+		float angle = 0;
+		int c2 = (CR + dist * 2) * sin(baseangle);
+		int s2 = (CR + dist * 2) * cos(baseangle);
+		painter.drawLine(x1 - c2, y1 - s2, x1 + c2, y1 + s2);
+		painter.drawLine(x1 + s2, y1 - c2, x1 - s2, y1 + c2);
+	}
+#endif
+
+
+
 
 	/* Draw labels. */
-#define LABEL(x, y, w, h) {						\
-		gdk_draw_rectangle(d, labgc, true, (x)-2, (y)-1, (w)+4, (h)+1); \
-		gdk_draw_rectangle(d, gc, false, (x)-2, (y)-1, (w)+4, (h)+1); \
-		gdk_draw_layout(d, gc, (x), (y), pl); }
+	{
+		painter.drawText(x1-5, y1-CR-3*dist-8, "N");
+	}
+#if 1
+	//gdk_draw_rectangle(d, labgc, true, (x)-2, (y)-1, (w)+4, (h)+1);
+	//gdk_draw_rectangle(d, gc, false, (x)-2, (y)-1, (w)+4, (h)+1);
+	#define LABEL(x, y, w, h, text) {				\
+		painter.drawText((x), (y), text); }
+#endif
 
 	{
 		int wd, hd, xd, yd;
 		int wb, hb, xb, yb;
-
-		pl = gtk_widget_create_pango_layout(viewport->get_toolkit_widget(), NULL);
-		pango_layout_set_font_description(pl, gtk_widget_get_style(viewport->get_toolkit_widget())->font_desc);
-		pango_layout_set_text(pl, "N", -1);
-		gdk_draw_layout(d, gc, x1-5, y1-CR-3*CW-8, pl);
+		char str[128];
 
 		/* Draw label with distance. */
 		DistanceUnit distance_unit = a_vik_get_units_distance();
@@ -387,46 +418,59 @@ static void draw_ruler(Viewport * viewport, QWindow * d, GdkGC *gc, int x1, int 
 			fprintf(stderr, "CRITICAL: invalid distance unit %d\n", distance_unit);
 		}
 
-		pango_layout_set_text(pl, str, -1);
-
-		pango_layout_get_pixel_size(pl, &wd, &hd);
-		if (dy>0) {
-			xd = (x1 + x2) / 2 + dy;
-			yd = (y1 + y2) / 2 - hd / 2 - dx;
-		} else {
-			xd = (x1 + x2) / 2 - dy;
-			yd = (y1 + y2) / 2 - hd / 2 + dx;
-		}
-
-		if (xd < -5 || yd < -5 || xd > viewport->get_width() + 5 || yd > viewport->get_height() + 5) {
-			xd = x2 + 10;
-			yd = y2 - 5;
-		}
-
-		LABEL(xd, yd, wd, hd);
-
-		/* Draw label with bearing. */
-		sprintf(str, "%3.1f°", RAD2DEG(angle));
-		pango_layout_set_text(pl, str, -1);
-		pango_layout_get_pixel_size(pl, &wb, &hb);
-		xb = x1 + CR * cos(angle - M_PI_2);
-		yb = y1 + CR * sin(angle - M_PI_2);
-
-		if (xb < -5 || yb < -5 || xb > viewport->get_width() + 5 || yb > viewport->get_height() + 5) {
-			xb = x2 + 10;
-			yb = y2 + 10;
-		}
-
+		/* Draw distance label. */
 		{
-			GdkRectangle r1 = {xd - 2, yd - 1, wd + 4, hd + 1}, r2 = {xb - 2, yb - 1, wb + 4, hb + 1};
-			if (gdk_rectangle_intersect(&r1, &r2, &r2)) {
-				xb = xd + wd + 5;
+			QRectF r1 = painter.boundingRect(QRect(0, 0, 0, 0), Qt::AlignHCenter, QString(str));
+			wd = r1.width();
+			hd = r1.height();
+			if (dy>0) {
+				xd = (x1 + x2) / 2 + dy;
+				yd = (y1 + y2) / 2 - hd / 2 - dx;
+			} else {
+				xd = (x1 + x2) / 2 - dy;
+				yd = (y1 + y2) / 2 - hd / 2 + dx;
 			}
+
+			if (xd < -5 || yd < -5 || xd > viewport->get_width() + 5 || yd > viewport->get_height() + 5) {
+				xd = x2 + 10;
+				yd = y2 - 5;
+			}
+
+			LABEL(xd, yd, wd, hd, QString(str));
 		}
-		LABEL(xb, yb, wb, hb);
+
+#if 1
+		/* Draw bearing label. */
+		{
+
+			sprintf(str, "%3.1f°", RAD2DEG(angle));
+			QRectF box = painter.boundingRect(QRect(0, 0, 0, 0), Qt::AlignHCenter, QString(str));
+			wb = box.width();
+			hb = box.height();
+
+			xb = x1 + CR * cos(angle - M_PI_2);
+			yb = y1 + CR * sin(angle - M_PI_2);
+
+			if (xb < -5 || yb < -5 || xb > viewport->get_width() + 5 || yb > viewport->get_height() + 5) {
+				xb = x2 + 10;
+				yb = y2 + 10;
+			}
+
+			{
+				QRect r1(xd - 2, yd - 1, wd + 4, hd + 1);
+				QRect r2(xb - 2, yb - 1, wb + 4, hb + 1);
+				if (r1.intersects(r2)) {
+					xb = xd + wd + 5;
+				}
+			}
+			LABEL(xb, yb, wb, hb, QString(str));
+		}
+#endif
 	}
+
 #undef LABEL
 
+#if 0
 	g_object_unref(G_OBJECT (pl));
 	g_object_unref(G_OBJECT (labgc));
 	g_object_unref(G_OBJECT (thickgc));
@@ -455,10 +499,11 @@ LayerTool * SlavGPS::ruler_create(Window * window, Viewport * viewport)
 	layer_tool->release = (VikToolMouseFunc) ruler_release;
 	layer_tool->key_press = ruler_key_press;
 
-	layer_tool->cursor_shape = Qt::BitmapCursor;
-#if 0
-	layer_tool->cursor_data = &cursor_ruler_pixbuf;
-#endif
+	layer_tool->cursor_click = new QCursor(Qt::ArrowCursor);
+	layer_tool->cursor_release = new QCursor(Qt::ArrowCursor);
+	//shape = Qt::BitmapCursor;
+	//layer_tool->cursor_data = &cursor_ruler_pixbuf;
+
 
 	layer_tool->ruler = (ruler_tool_state_t *) malloc(1 * sizeof (ruler_tool_state_t));
 	memset(layer_tool->ruler, 0, sizeof (ruler_tool_state_t));
@@ -476,10 +521,11 @@ static VikLayerToolFuncStatus ruler_click(Layer * layer, QMouseEvent * event, La
 	struct LatLon ll;
 	VikCoord coord;
 	char temp[128] = { 0 };
-#if 0
+
 	if (event->button() == Qt::LeftButton) {
-		char *lat = NULL, *lon = NULL;
-		tool->viewport->screen_to_coord((int) event->x, (int) event->y, &coord);
+		char * lat = NULL;
+		char * lon = NULL;
+		tool->viewport->screen_to_coord(event->x(), event->y(), &coord);
 		vik_coord_to_latlon(&coord, &ll);
 		a_coords_latlon_to_string(&ll, &lat, &lon);
 		if (tool->ruler->has_oldcoord) {
@@ -510,10 +556,10 @@ static VikLayerToolFuncStatus ruler_click(Layer * layer, QMouseEvent * event, La
 
 		tool->ruler->oldcoord = coord;
 	} else {
-		tool->viewport->set_center_screen((int) event->x, (int) event->y);
+		tool->viewport->set_center_screen((int) event->x(), (int) event->y());
 		tool->window->draw_update();
 	}
-#endif
+
 	return VIK_LAYER_TOOL_ACK;
 }
 
@@ -524,43 +570,66 @@ static VikLayerToolFuncStatus ruler_move(Layer * layer, QMouseEvent * event, Lay
 {
 	Window * window = tool->window;
 
+	fprintf(stderr, "LAYER TOOLS: RULER MOVE, tool's ->move() called\n");
+
 	struct LatLon ll;
 	VikCoord coord;
 	char temp[128] = { 0 };
 
 	if (tool->ruler->has_oldcoord) {
-#if 0
-		static GdkPixmap *buf = NULL;
-		char *lat = NULL, *lon = NULL;
+		static QPixmap * buf = NULL;
+		char * lat = NULL;
+		char * lon = NULL;
 		int w1 = tool->viewport->get_width();
 		int h1 = tool->viewport->get_height();
 		if (!buf) {
-			buf = gdk_pixmap_new(gtk_widget_get_window(tool->viewport->get_toolkit_widget()), w1, h1, -1);
+			fprintf(stderr, "LAYER TOOL RULER: creating new pixmap with %d/%d (%s:%d)\n", w1, h1, __FUNCTION__, __LINE__);
+			buf = new QPixmap(w1, h1);
 		}
 
-		int w2, h2;
-		gdk_drawable_get_size(buf, &w2, &h2);
+		int w2 = buf->width();
+		int h2 = buf->height();;
 		if (w1 != w2 || h1 != h2) {
-			g_object_unref(G_OBJECT (buf));
-			buf = gdk_pixmap_new(gtk_widget_get_window(tool->viewport->get_toolkit_widget()), w1, h1, -1);
-		}
+			delete buf;
+			fprintf(stderr, "LAYER TOOL RULER: creating new pixmap with %d/%d (%s:%d)\n", w1, h1, __FUNCTION__, __LINE__);
+			buf = new QPixmap(w1, h1);
 
-		tool->viewport->screen_to_coord((int) event->x, (int) event->y, &coord);
+		}
+		buf->fill();
+
+		tool->viewport->screen_to_coord(event->x(), event->y(), &coord);
 		vik_coord_to_latlon(&coord, &ll);
 		int oldx, oldy;
 		tool->viewport->coord_to_screen(&tool->ruler->oldcoord, &oldx, &oldy);
 
-		gdk_draw_drawable(buf, gtk_widget_get_style(tool->viewport->get_toolkit_widget())->black_gc,
-				  tool->viewport->get_pixmap(), 0, 0, 0, 0, -1, -1);
-		draw_ruler(tool->viewport, buf, gtk_widget_get_style(tool->viewport->get_toolkit_widget())->black_gc, oldx, oldy, event->x, event->y, vik_coord_diff(&coord, &(tool->ruler->oldcoord)));
+		//gdk_draw_drawable(buf, gtk_widget_get_style(tool->viewport->get_toolkit_widget())->black_gc,
+		//		  tool->viewport->get_pixmap(), 0, 0, 0, 0, -1, -1);
+
+		QPen pen("black");
+		pen.setWidth(1);
+		//draw_ruler(tool->viewport, buf, gtk_widget_get_style(tool->viewport->get_toolkit_widget())->black_gc, oldx, oldy, event->x(), event->y(), vik_coord_diff(&coord, &(tool->ruler->oldcoord)));
+		draw_ruler(tool->viewport, buf, pen, oldx, oldy, event->x(), event->y(), vik_coord_diff(&coord, &(tool->ruler->oldcoord)));
+
+
 		if (draw_buf_done) {
+#if 0
 			static draw_buf_data_t pass_along;
 			pass_along.window = gtk_widget_get_window(tool->viewport->get_toolkit_widget());
 			pass_along.gdk_style = gtk_widget_get_style(tool->viewport->get_toolkit_widget())->black_gc;
 			pass_along.pixmap = buf;
 			g_idle_add_full (G_PRIORITY_HIGH_IDLE + 10, (GSourceFunc) draw_buf, (void *) &pass_along, NULL);
 			draw_buf_done = false;
+
+#else
+			QPainter painter(tool->viewport->scr_buffer);
+			painter.drawPixmap(0, 0, *buf);
+			tool->viewport->update();
+			draw_buf_done = true;
+#endif
+
 		}
+
+
 		a_coords_latlon_to_string(&ll, &lat, &lon);
 		DistanceUnit distance_unit = a_vik_get_units_distance();
 		switch (distance_unit) {
@@ -577,6 +646,7 @@ static VikLayerToolFuncStatus ruler_move(Layer * layer, QMouseEvent * event, Lay
 			sprintf(temp, "Just to keep the compiler happy");
 			fprintf(stderr, "CRITICAL: Houston, we've had a problem. distance=%d\n", distance_unit);
 		}
+#if 0
 		vik_statusbar_set_message(window->viking_vs, VIK_STATUSBAR_INFO, temp);
 #endif
 	}
@@ -588,6 +658,7 @@ static VikLayerToolFuncStatus ruler_move(Layer * layer, QMouseEvent * event, Lay
 
 static VikLayerToolFuncStatus ruler_release(Layer * layer, QMouseEvent * event, LayerTool * tool)
 {
+	fprintf(stderr, "LAYER TOOLS: RULER RELEASE, tool's ->release() called\n");
 	return VIK_LAYER_TOOL_ACK;
 }
 
@@ -596,6 +667,7 @@ static VikLayerToolFuncStatus ruler_release(Layer * layer, QMouseEvent * event, 
 
 static void ruler_deactivate(Layer * layer, LayerTool * tool)
 {
+	fprintf(stderr, "LAYER TOOLS: RULER DEACTIVATE, tool's ->deactivate() called\n");
 	tool->window->draw_update();
 }
 
@@ -681,10 +753,11 @@ LayerTool * SlavGPS::zoomtool_create(Window * window, Viewport * viewport)
 	layer_tool->move = (VikToolMouseMoveFunc) zoomtool_move;
 	layer_tool->release = (VikToolMouseFunc) zoomtool_release;
 
-	layer_tool->cursor_shape = Qt::BitmapCursor;
-#if 0
-	layer_tool->cursor_data = &cursor_zoom_pixbuf;
-#endif
+	layer_tool->cursor_click = new QCursor(Qt::ArrowCursor);
+	layer_tool->cursor_release = new QCursor(Qt::ArrowCursor);
+
+	//layer_tool->cursor_shape = Qt::BitmapCursor;
+	//layer_tool->cursor_data = &cursor_zoom_pixbuf;
 
 	layer_tool->zoom = (zoom_tool_state_t *) malloc(1 * sizeof (zoom_tool_state_t));
 	memset(layer_tool->zoom, 0, sizeof (zoom_tool_state_t));
@@ -898,8 +971,8 @@ LayerTool * SlavGPS::pantool_create(Window * window, Viewport * viewport)
 	layer_tool->move = (VikToolMouseMoveFunc) pantool_move;
 	layer_tool->release = (VikToolMouseFunc) pantool_release;
 
-	layer_tool->cursor_shape = Qt::SizeAllCursor;
-	layer_tool->cursor_data = NULL;
+	layer_tool->cursor_click = new QCursor(Qt::ClosedHandCursor);
+	layer_tool->cursor_release = new QCursor(Qt::OpenHandCursor);
 
 	return layer_tool;
 }
@@ -930,6 +1003,7 @@ static VikLayerToolFuncStatus pantool_click(Layer * layer, QMouseEvent * event, 
 		tool->window->draw_update();
 	} else {
 #endif
+
 		fprintf(stderr, "LAYER TOOLS: PAN CLICK, tool's ->click() called, checking button\n");
 		/* Standard pan click. */
 		if (event->button() == Qt::LeftButton) {
@@ -1001,8 +1075,8 @@ LayerTool * SlavGPS::selecttool_create(Window * window, Viewport * viewport)
 	layer_tool->move = (VikToolMouseMoveFunc) selecttool_move;
 	layer_tool->release = (VikToolMouseFunc) selecttool_release;
 
-	layer_tool->cursor_shape = Qt::ArrowCursor;
-	layer_tool->cursor_data = NULL;
+	layer_tool->cursor_click = new QCursor(Qt::ArrowCursor);
+	layer_tool->cursor_release = new QCursor(Qt::ArrowCursor);
 
 	layer_tool->ed  = (tool_ed_t *) malloc(1 * sizeof (tool_ed_t));
 	memset(layer_tool->ed, 0, sizeof (tool_ed_t));

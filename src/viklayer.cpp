@@ -1195,6 +1195,9 @@ LayerTool::~LayerTool()
 		ed = NULL;
 	}
 #endif
+
+	delete this->cursor_click;
+	delete this->cursor_release;
 }
 
 
