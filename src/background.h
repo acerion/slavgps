@@ -25,7 +25,7 @@
 
 
 
-#include <stdint.h>
+#include <cstdint>
 
 #include "slav_qt.h"
 
