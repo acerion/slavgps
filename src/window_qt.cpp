@@ -22,6 +22,8 @@
  */
 
 
+#include <cassert>
+
 #include <QtWidgets>
 
 #include "window_qt.h"
@@ -524,6 +526,9 @@ void Window::draw_redraw()
 
 void Window::selected_layer(Layer * layer)
 {
+	QString layer_type(QString(layer->get_interface(layer->type)->fixed_layer_name));
+	qDebug() << "Selected layer" << layer_type;
+	this->tb->activate_layer_tools(layer_type);
 #if 0
 	if (!this->action_group) {
 		return;
@@ -613,6 +618,7 @@ void Window::create_ui(void)
 
 	{
 		QActionGroup * window_tools = new QActionGroup(this);
+		window_tools->setObjectName("window");
 		QAction * qa = NULL;
 
 		qa = this->tool_bar->addSeparator();
@@ -634,8 +640,32 @@ void Window::create_ui(void)
 
 		this->tool_bar->addActions(window_tools->actions());
 		this->menu_tools->addActions(window_tools->actions());
+		this->tb->add_layer_tools(window_tools);
 
 		connect(window_tools, SIGNAL(triggered(QAction *)), this, SLOT(menu_cb(QAction *)));
+	}
+
+
+	{
+		for (LayerType i = LayerType::AGGREGATE; i < LayerType::NUM_TYPES; ++i) {
+
+			QActionGroup * group = new QActionGroup(this);
+			QString name(Layer::get_interface(i)->fixed_layer_name);
+			group->setObjectName(name);
+
+			for (unsigned int j = 0; j < Layer::get_interface(i)->tools_count; j++) {
+
+				LayerTool * layer_tool = Layer::get_interface(i)->layer_tool_constructors[j](this, this->viewport);
+				QAction * qa = this->tb->add_tool(layer_tool);
+				group->addAction(qa);
+
+				assert (layer_tool->layer_type == i);
+			}
+			this->tool_bar->addActions(group->actions());
+			this->tb->add_layer_tools(group);
+
+			connect(group, SIGNAL(triggered(QAction *)), this, SLOT(menu_cb(QAction *)));
+		}
 	}
 
 #if 0
@@ -742,6 +772,7 @@ void Window::create_ui(void)
 			gtk_ui_manager_add_ui(uim, mid,  "/ui/MainMenu/Tools/", Layer::get_interface(i)->name, NULL, GTK_UI_MANAGER_SEPARATOR, false);
 		}
 
+#if 0 // Added to QT.
 		// Further tool copying for to apply to the UI, also apply menu UI setup
 		for (unsigned int j = 0; j < Layer::get_interface(i)->tools_count; j++) {
 
@@ -761,6 +792,7 @@ void Window::create_ui(void)
 			++n_radio_actions;
 			radio_actions[n_radio_actions].value = n_radio_actions;
 		}
+#endif
 
 		GtkActionEntry action_dl;
 		char *layername = g_strdup_printf("Layer%s", Layer::get_interface(i)->fixed_layer_name);
@@ -812,15 +844,15 @@ void Window::create_ui(void)
 
 
 
-void Window::menu_cb(QAction * a)
+void Window::menu_cb(QAction * qa)
 {
 	// Ensure Toolbar kept in sync
-	QString name = a->objectName();
+	QString name = qa->objectName();
 	//toolbar_sync(window, name, true);
 
 	/* White Magic, my friends ... White Magic... */
 	int tool_id;
-	this->tb->activate(name);
+	this->tb->activate_layer_tools(qa);
 	this->viewport->setCursor(*this->tb->get_cursor_release(name));
 
 	if (name == "Pan") {
@@ -832,17 +864,15 @@ void Window::menu_cb(QAction * a)
 	} else if (name == "Select") {
 		this->current_tool = TOOL_SELECT;
 	} else {
-#if 0
 		for (LayerType layer_type = LayerType::AGGREGATE; layer_type < LayerType::NUM_TYPES; ++layer_type) {
 			for (tool_id = 0; tool_id < Layer::get_interface(layer_type)->tools_count; tool_id++) {
-				if (!g_strcmp0(Layer::get_interface(layer_type)->layer_tools[tool_id]->radioActionEntry.name, name)) {
-					window->current_tool = TOOL_LAYER;
-					window->tool_layer_type = layer_type;
-					window->tool_tool_id = tool_id;
+				if (Layer::get_interface(layer_type)->layer_tools[tool_id]->radioActionEntry.name == name) {
+					this->current_tool = TOOL_LAYER;
+					this->tool_layer_type = layer_type;
+					this->tool_tool_id = tool_id;
 				}
 			}
 		}
-#endif
 	}
 #if 0
 	draw_status_tool(window);

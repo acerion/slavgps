@@ -33,8 +33,13 @@ namespace SlavGPS {
 		~LayerToolsBox();
 
 		QAction * add_tool(LayerTool * layer_tool);
+		void add_layer_tools(QActionGroup * group);
 		LayerTool * get_tool(QString & tool_name);;
-		void activate(QString & tool_name);
+
+		void activate_tool(QAction * qa);
+		void activate_layer_tools(QAction * qa);
+		void activate_layer_tools(QString & layer_type);
+
 
 		QCursor const * get_cursor_click(QString & tool_name);
 		QCursor const * get_cursor_release(QString & tool_name);
@@ -46,9 +51,13 @@ namespace SlavGPS {
 
 
 		LayerTool * active_tool = NULL;
+		QAction * active_tool_qa = NULL;
 		unsigned int n_tools = 0;
 		std::vector<LayerTool *> tools;
 		Window * window = NULL;
+
+	private:
+		std::vector<QActionGroup *> action_groups;
 	};
 
 

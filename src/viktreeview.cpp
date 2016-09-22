@@ -1260,6 +1260,11 @@ TreeView::TreeView(QWidget * parent) : QTreeView(parent)
 	this->header()->setSectionHidden((int) LayersTreeColumn::TIMESTAMP, true);
 
 
+	//connect(this, SIGNAL(activated(const QModelIndex &)), this, SLOT(select_cb(void)));
+	connect(this, SIGNAL(clicked(const QModelIndex &)), this, SLOT(select_cb(void)));
+	//connect(this, SIGNAL(pressed(const QModelIndex &)), this, SLOT(select_cb(void)));
+
+
 #if 0
 	memset(this->layer_type_icons, 0, sizeof (this->layer_type_icons));
 

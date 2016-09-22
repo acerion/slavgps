@@ -23,6 +23,7 @@
 
 
 
+#include <cassert>
 #include <cstring>
 
 //#include <gdk/gdkkeysyms.h>
@@ -95,8 +96,9 @@ LayerTool * LayerToolsBox::get_tool(QString & tool_name)
 
 
 
-void LayerToolsBox::activate(QString & tool_name)
+void LayerToolsBox::activate_tool(QAction * qa)
 {
+	QString tool_name = qa->objectName();
 	LayerTool * tool = this->get_tool(tool_name);
 	Layer * layer = this->window->layers_panel->get_selected_layer();
 #if 0
@@ -111,6 +113,7 @@ void LayerToolsBox::activate(QString & tool_name)
 	}
 	/* Is the tool already active? */
 	if (this->active_tool == tool) {
+		assert (this->active_tool_qa == qa);
 		return;
 	}
 
@@ -124,6 +127,57 @@ void LayerToolsBox::activate(QString & tool_name)
 		tool->activate(layer, tool);
 	}
 	this->active_tool = tool;
+	this->active_tool_qa = qa;
+}
+
+
+
+
+void LayerToolsBox::activate_layer_tools(QAction * qa)
+{
+	QString layer_type = qa->actionGroup()->objectName();
+
+	for (auto group = this->action_groups.begin(); group != this->action_groups.end(); ++group) {
+		bool is_window_tools = (*group)->objectName() == "window";
+		bool activate = (*group)->objectName() == layer_type;
+		for (QList<QAction *>::const_iterator action = (*group)->actions().constBegin(); action != (*group)->actions().constEnd(); ++action) {
+			(*action)->setEnabled(activate || is_window_tools);
+			if ((*action) != qa) {
+				(*action)->setChecked(false);
+			}
+		}
+	}
+
+	this->activate_tool(qa);
+}
+
+
+
+
+void LayerToolsBox::activate_layer_tools(QString & layer_type)
+{
+	for (auto group = this->action_groups.begin(); group != this->action_groups.end(); ++group) {
+		bool is_window_tools = (*group)->objectName() == "window";
+		bool activate = (*group)->objectName() == layer_type;
+		for (QList<QAction *>::const_iterator action = (*group)->actions().constBegin(); action != (*group)->actions().constEnd(); ++action) {
+			(*action)->setEnabled(activate || is_window_tools);
+		}
+
+		if (activate) {
+			QList<QAction *>::const_iterator action = (*group)->actions().constBegin();
+			if (action != (*group)->actions().constEnd()) {
+				(*action)->setChecked(true);
+			}
+		}
+	}
+}
+
+
+
+
+void LayerToolsBox::add_layer_tools(QActionGroup * group)
+{
+	this->action_groups.push_back(group);
 }
 
 
