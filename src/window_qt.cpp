@@ -84,6 +84,8 @@ static LayerParamData line_thickness_default(void)
 Window::Window()
 {
 
+	strcpy(this->type_string, "SG QT WINDOW");
+
 	QIcon::setThemeName("Tango");
 	this->create_layout();
 	this->create_actions();
@@ -307,8 +309,22 @@ void Window::create_layout()
 	//central_widget->setLayout(layout);
 
 
-	this->layers_panel = new SlavGPS::LayersPanel(this);
 
+	this->viewport = new SlavGPS::Viewport(this);
+	this->viewport->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Maximum);
+	//layout->addWidget(viewport);
+	struct LatLon ll = { 54.0, 14.0 };
+	this->viewport->set_center_latlon(&ll, false);
+	this->viewport->xmpp = 0.01;
+	this->viewport->ympp = 0.01;
+	//viewport->show();
+	fprintf(stderr, "WINDOW created VIEWPORT with size: %d / %d\n", this->viewport->height(), this->viewport->width());
+
+
+	this->setCentralWidget(viewport);
+
+
+	this->layers_panel = new SlavGPS::LayersPanel(this);
 
 	QDockWidget * dock = new QDockWidget(this);
 	dock->setWidget(this->layers_panel);
@@ -319,20 +335,6 @@ void Window::create_layout()
 
 
 
-	this->viewport = new SlavGPS::Viewport(this);
-	this->viewport->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Maximum);
-	//layout->addWidget(viewport);
-	struct LatLon ll = { 54.0, 14.0 };
-	this->viewport->set_center_latlon(&ll, false);
-	this->viewport->xmpp = 0.01;
-	this->viewport->ympp = 0.01;
-	//viewport->show();
-	fprintf(stderr, "%d / %d\n", this->viewport->height(), this->viewport->width());
-
-	this->layers_panel->set_viewport(this->viewport);
-
-
-	this->setCentralWidget(viewport);
 
 	return;
 }

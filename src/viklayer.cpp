@@ -1237,11 +1237,7 @@ bool Layer::compare_name_ascending(Layer * first, Layer * second)
 
 Window * Layer::get_window(void)
 {
-#ifndef SLAVGPS_QT
-	GtkWindow * w = this->tree_view->get_toolkit_window();
-	Window * window = (Window *) g_object_get_data((GObject *) w, "window");
-	return window;
-#endif
+	return this->viewport->get_window();
 }
 
 

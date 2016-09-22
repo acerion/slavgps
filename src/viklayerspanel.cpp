@@ -191,8 +191,7 @@ LayersPanel::LayersPanel(Window * parent) : QWidget((QWidget *) parent)
 	   vik_layers_panel_init(), because leaving it in _init()
 	   caused problems during execution time. */
 
-	Viewport * viewport = NULL;
-	this->toplayer = new LayerAggregate(viewport);
+	this->toplayer = new LayerAggregate(this->window->get_viewport());
 	this->toplayer->rename(_("Top Layer"));
 	///this->tree_view->add_layer(NULL, &(this->toplayer_iter), this->toplayer->name, NULL, true, this->toplayer, (int) LayerType::AGGREGATE, LayerType::AGGREGATE, 0);
 	this->toplayer_item = this->tree_view->add_layer(this->toplayer, NULL, NULL, false, 0, 0);
@@ -239,6 +238,7 @@ LayersPanel::~LayersPanel()
 void LayersPanel::set_viewport(Viewport * viewport)
 {
 	this->viewport = viewport;
+	this->toplayer->viewport = viewport;
 	/* TODO: also update GCs (?) */
 }
 

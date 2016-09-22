@@ -265,11 +265,11 @@ namespace SlavGPS {
 
 
 
-		char * name;
+		char * name = NULL;
 		bool visible;
 		bool realized;
-		Viewport * viewport;  /* Simply a reference. */
-		TreeView * tree_view; /* Simply a reference. */
+		Viewport * viewport = NULL;  /* Simply a reference. */
+		TreeView * tree_view = NULL; /* Simply a reference. */
 		GtkTreeIter iter;
 		QStandardItem * item = NULL;
 

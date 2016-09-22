@@ -21,6 +21,7 @@ int main(int argc, char ** argv)
 	Layer::preconfigure_interfaces();
 
 	Window window;
+	window.layers_panel->set_viewport(window.viewport); /* Ugly, FIXME. */
 	window.show();
 
 	return app.exec();
