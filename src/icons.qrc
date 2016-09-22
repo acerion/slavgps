@@ -9,5 +9,7 @@
 	<file>icons/layer_tool/zoom_18.png</file>
 	<file>icons/layer_tool/pan_22.png</file>
 	<file>icons/layer_tool/select_18.png</file>
+
+	<file>icons/layer_tool/dem_download_18.png</file>
 </qresource>
 </RCC>
