@@ -124,7 +124,7 @@ namespace SlavGPS {
 		void set_name(QStandardItem * item, QString const & name);
 		void set_visibility(QStandardItem * item, bool visible);
 		void toggle_visibility(QStandardItem * item);
-		void set_timestamp(GtkTreeIter * iter, time_t timestamp);
+		void set_timestamp(QStandardItem * item, time_t timestamp);
 
 
 		void select(QStandardItem * item);

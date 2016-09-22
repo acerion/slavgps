@@ -385,26 +385,36 @@ void * TreeView::get_sublayer_uid_pointer(QStandardItem * item)
 
 sg_uid_t TreeView::get_sublayer_uid(QStandardItem * item)
 {
-	void * uid = this->get_sublayer_uid_pointer(item);
-	return (sg_uid_t) KPOINTER_TO_UINT (uid);
+	QStandardItem * parent = item->parent();
+	if (!parent) {
+		/* "item" points at the "Top Layer" layer. */
+		fprintf(stderr, "%s:%d querying Top Layer for item row=%d, col=%d\n", __FUNCTION__, __LINE__, item->row(), item->column());
+		parent = this->model->invisibleRootItem();
+	}
+	QStandardItem * ch = parent->child(item->row(), (int) LayersTreeColumn::ITEM);
+
+	QVariant variant = ch->data(RoleLayerData);
+	// http://www.qtforum.org/article/34069/store-user-data-void-with-qstandarditem-in-qstandarditemmodel.html
+	return (sg_uid_t) variant.toULongLong();
 }
 
 
 
 
-
-
-
-
-void TreeView::set_timestamp(GtkTreeIter *iter, time_t timestamp)
+void TreeView::set_timestamp(QStandardItem * item, time_t timestamp)
 {
-#ifndef SLAVGPS_QT
-	gtk_tree_store_set (GTK_TREE_STORE(this->model), iter, COLUMN_TIMESTAMP, (int64_t) timestamp, -1);
-#endif
+	QStandardItem * parent = item->parent();
+	if (!parent) {
+		/* "item" points at the "Top Layer" layer. */
+		fprintf(stderr, "%s:%d querying Top Layer for item row=%d, col=%d\n", __FUNCTION__, __LINE__, item->row(), item->column());
+		parent = this->model->invisibleRootItem();
+	}
+	QStandardItem * ch = parent->child(item->row(), (int) LayersTreeColumn::TIMESTAMP);
+
+	QModelIndex index = ch->index();
+	QVariant variant = QVariant::fromValue((qlonglong) timestamp);
+	this->model->setData(index, variant, RoleLayerData);
 }
-
-
-
 
 
 
@@ -415,10 +425,6 @@ bool TreeView::get_iter_from_path_str(GtkTreeIter * iter, char const * path_str)
 	return gtk_tree_model_get_iter_from_string(GTK_TREE_MODEL (this->model), iter, path_str);
 #endif
 }
-
-
-
-
 
 
 
@@ -1144,6 +1150,29 @@ QStandardItem * TreeView::add_layer(Layer * layer, Layer * parent_layer, QStanda
 	item->setData(variant, RoleLayerData);
 	items << item;
 
+	/* LayersTreeColumn::DATA */
+	item = new QStandardItem();
+	variant = QVariant::fromValue(data);
+	item->setData(variant, RoleLayerData);
+	items << item;
+
+	/* LayersTreeColumn::UID */
+	item = new QStandardItem((qulonglong) SG_UID_NONE);
+	variant = QVariant::fromValue(data);
+	item->setData(variant, RoleLayerData);
+	items << item;
+
+	/* LayersTreeColumn::EDITABLE */
+	item = new QStandardItem(parent_layer == NULL ? false : true);
+	variant = QVariant::fromValue(data);
+	item->setData(variant, RoleLayerData);
+	items << item;
+
+	/* LayersTreeColumn::TIMESTAMP */
+	item = new QStandardItem((qlonglong) timestamp);
+	variant = QVariant::fromValue(data);
+	item->setData(variant, RoleLayerData);
+	items << item;
 
 	if (parent_item) {
 		parent_item->appendRow(items);
@@ -1208,6 +1237,17 @@ TreeView::TreeView(QWidget * parent) : QTreeView(parent)
 	header_item = new QStandardItem("Item");
 	this->model->setHorizontalHeaderItem((int) LayersTreeColumn::ITEM, header_item);
 
+	header_item = new QStandardItem("Data");
+	this->model->setHorizontalHeaderItem((int) LayersTreeColumn::DATA, header_item);
+
+	header_item = new QStandardItem("UID");
+	this->model->setHorizontalHeaderItem((int) LayersTreeColumn::UID, header_item);
+
+	header_item = new QStandardItem("Editable");
+	this->model->setHorizontalHeaderItem((int) LayersTreeColumn::EDITABLE, header_item);
+
+	header_item = new QStandardItem("Time stamp");
+	this->model->setHorizontalHeaderItem((int) LayersTreeColumn::TIMESTAMP, header_item);
 
 
 	this->setModel(this->model);
@@ -1219,6 +1259,10 @@ TreeView::TreeView(QWidget * parent) : QTreeView(parent)
 	this->header()->setSectionHidden((int) LayersTreeColumn::TREE_ITEM_TYPE, true);
 	this->header()->setSectionHidden((int) LayersTreeColumn::PARENT_LAYER, true);
 	this->header()->setSectionHidden((int) LayersTreeColumn::ITEM, true);
+	this->header()->setSectionHidden((int) LayersTreeColumn::DATA, true);
+	this->header()->setSectionHidden((int) LayersTreeColumn::UID, true);
+	this->header()->setSectionHidden((int) LayersTreeColumn::EDITABLE, true);
+	this->header()->setSectionHidden((int) LayersTreeColumn::TIMESTAMP, true);
 
 
 #else
