@@ -49,6 +49,7 @@
 
 
 
+
 using namespace SlavGPS;
 
 
@@ -1101,8 +1102,6 @@ static int vik_treeview_drag_data_delete(GtkTreeDragSource *drag_source, GtkTree
 
 
 
-#ifdef SLAVGPS_QT
-
 
 QStandardItem * TreeView::add_layer(Layer * layer, Layer * parent_layer, QStandardItem * parent_item, bool above, int data, time_t timestamp)
 {
@@ -1205,14 +1204,10 @@ QStandardItem * TreeView::insert_layer(Layer * layer, Layer * parent_layer, QSta
 }
 
 
-#endif
-
 
 
 TreeView::TreeView(QWidget * parent) : QTreeView(parent)
 {
-#ifdef SLAVGPS_QT
-
 	this->model = new QStandardItemModel();
 
 
@@ -1265,7 +1260,7 @@ TreeView::TreeView(QWidget * parent) : QTreeView(parent)
 	this->header()->setSectionHidden((int) LayersTreeColumn::TIMESTAMP, true);
 
 
-#else
+#if 0
 	memset(this->layer_type_icons, 0, sizeof (this->layer_type_icons));
 
 

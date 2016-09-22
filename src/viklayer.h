@@ -368,6 +368,11 @@ namespace SlavGPS {
 
 
 
+Q_DECLARE_METATYPE(SlavGPS::Layer*);
+
+
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif

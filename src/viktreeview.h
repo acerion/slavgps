@@ -26,18 +26,16 @@
 
 #include <cstdint>
 
-#include "config.h"
-#include "uibuilder.h"
-#include "globals.h"
-
-#ifdef SLAVGPS_QT
 #include <QStandardItem>
 #include <QTreeView>
 #include <QString>
+#include <QObject>
+
+#include "config.h"
+#include "uibuilder.h"
+#include "globals.h"
 #include "slav_qt.h"
-#else
-#include <gtk/gtk.h>
-#endif
+
 
 
 
@@ -82,17 +80,11 @@ namespace SlavGPS {
 
 
 
-#ifdef SLAVGPS_QT
 	class TreeView : public QTreeView {
-#else
-	class TreeView {
-#endif
+		Q_OBJECT
 	public:
-#ifdef SLAVGPS_QT
 		TreeView(QWidget * parent);
-#else
 		TreeView();
-#endif
 
 		~TreeView();
 
@@ -150,12 +142,7 @@ namespace SlavGPS {
 		bool was_a_toggle = false;
 		GdkPixbuf * layer_type_icons[(int) LayerType::NUM_TYPES];
 
-#ifdef SLAVGPS_QT
 		QStandardItemModel * model = NULL;
-#else
-		GtkTreeView * tv_;
-		GtkTreeModel * model;
-#endif
 
 	private slots:
 		void select_cb(void);
@@ -175,8 +162,6 @@ namespace SlavGPS {
 } /* namespace SlavGPS */
 
 
-
-	Q_DECLARE_METATYPE(SlavGPS::Layer*);
 
 
 #endif /* #ifndef _SG_TREEVIEW_H_ */
