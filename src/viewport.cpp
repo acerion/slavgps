@@ -49,7 +49,7 @@
 #include <glib-object.h>
 #endif
 
-#include "vikviewport.h"
+#include "viewport.h"
 #include "window.h"
 #include "coords.h"
 #ifndef SLAVGPS_QT

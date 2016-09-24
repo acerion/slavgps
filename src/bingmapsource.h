@@ -21,7 +21,7 @@
 
 #include <cstdint>
 
-#include "vikcoord.h"
+#include "coord.h"
 #include "mapcoord.h"
 #include "vikslippymapsource.h"
 #include "map_ids.h"

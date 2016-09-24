@@ -33,9 +33,9 @@
 
 #include <stdint.h>
 
-#include "vikcoord.h"
-#include "viklayer.h"
-#include "vikviewport.h"
+#include "coord.h"
+#include "layer.h"
+#include "viewport.h"
 #include "vikmapsource.h"
 #include "mapcoord.h"
 #include "vikmapslayer_compat.h"

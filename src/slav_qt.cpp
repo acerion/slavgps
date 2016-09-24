@@ -20,7 +20,7 @@
 #include <glib-object.h>
 #endif
 
-#include "vikviewport.h"
+#include "viewport.h"
 #include "coords.h"
 #ifndef SLAVGPS_QT
 #include "window.h"

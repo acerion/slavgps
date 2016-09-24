@@ -27,7 +27,7 @@
 
 #include <QPen>
 
-#include "viklayer.h"
+#include "layer.h"
 
 
 

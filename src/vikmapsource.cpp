@@ -30,8 +30,8 @@
 #include <cstdlib>
 #include <cstring>
 
-#include "vikviewport.h"
-#include "vikcoord.h"
+#include "viewport.h"
+#include "coord.h"
 #include "mapcoord.h"
 #include "download.h"
 #include "vikmapsource.h"

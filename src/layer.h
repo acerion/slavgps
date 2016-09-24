@@ -42,11 +42,11 @@
 #endif
 
 #include "uibuilder.h"
-#include "viktreeview.h"
+#include "tree_view.h"
 #ifdef SLAVGPS_QT
 #include "slav_qt.h"
 #endif
-#include "vikviewport.h"
+#include "viewport.h"
 #include "globals.h"
 
 

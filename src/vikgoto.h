@@ -28,7 +28,7 @@
 #include <stdint.h>
 
 #include "window.h"
-#include "vikviewport.h"
+#include "viewport.h"
 #include "vikgototool.h"
 
 

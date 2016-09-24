@@ -34,14 +34,14 @@
 
 #include <glib/gi18n.h>
 
-#include "viklayer_defaults.h"
-#include "viklayer.h"
+#include "layer_defaults.h"
+#include "layer.h"
 #ifndef SLAVGPS_QT
-#include "vikaggregatelayer.h"
 #include "viktrwlayer.h"
 #endif
-#include "vikcoordlayer.h"
-#include "vikdemlayer.h"
+#include "layer_aggregate.h"
+#include "layer_coord.h"
+#include "layer_dem.h"
 #ifndef SLAVGPS_QT
 #include "vikmapslayer.h"
 #include "vikgeoreflayer.h"
@@ -49,7 +49,7 @@
 #include "vikmapniklayer.h"
 #endif
 #include "globals.h"
-#include "viktreeview.h"
+#include "tree_view.h"
 #include "uibuilder_qt.h"
 
 

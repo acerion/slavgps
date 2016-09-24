@@ -28,7 +28,7 @@
 #include <stdint.h>
 
 #include "coords.h"
-#include "vikviewport.h"
+#include "viewport.h"
 #include "download.h"
 
 

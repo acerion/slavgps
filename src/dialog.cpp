@@ -39,7 +39,7 @@
 #include "ui_util.h"
 #include "dialog.h"
 #include "vik_compat.h"
-#include "vikviewport.h"
+#include "viewport.h"
 #include "globals.h"
 
 

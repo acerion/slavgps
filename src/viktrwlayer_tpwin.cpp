@@ -34,7 +34,7 @@
 
 #include "viking.h"
 #include "coords.h"
-#include "vikcoord.h"
+#include "coord.h"
 #include "viktrack.h"
 #include "viktrwlayer_tpwin.h"
 #include "vikwaypoint.h"

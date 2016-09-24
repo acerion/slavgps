@@ -37,7 +37,7 @@
 #include "map_ids.h"
 #include "globals.h"
 #include "coords.h"
-#include "vikcoord.h"
+#include "coord.h"
 #include "mapcoord.h"
 #include "download.h"
 #include "vikmapslayer.h"

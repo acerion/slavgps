@@ -38,7 +38,7 @@
 #endif
 
 #include "coords.h"
-#include "vikcoord.h"
+#include "coord.h"
 #include "viktrack.h"
 #include "dems.h"
 #include "settings.h"

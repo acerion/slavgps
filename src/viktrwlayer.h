@@ -34,11 +34,11 @@
 #include <list>
 #include <unordered_map>
 
-#include "viklayer.h"
-#include "vikviewport.h"
+#include "layer.h"
+#include "viewport.h"
 #include "vikwaypoint.h"
 #include "viktrack.h"
-#include "viklayerspanel.h"
+#include "layers_panel.h"
 #include "viktrwlayer_tpwin.h"
 #include "layer_trw_containers.h"
 

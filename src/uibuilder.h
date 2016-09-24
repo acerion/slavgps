@@ -200,12 +200,12 @@ int a_uibuilder_properties_factory(const char *dialog_name,
 				   uint16_t params_count,
 				   char **groups,
 				   uint8_t groups_count,
-				   bool (*setparam) (void *,uint16_t,LayerParamData,void *,bool), /* AKA LayerFuncSetParam in viklayer.h. */
+				   bool (*setparam) (void *,uint16_t,LayerParamData,void *,bool), /* AKA LayerFuncSetParam in layer.h. */
 				   void * pass_along1,
 				   void * pass_along2,
-				   LayerParamData (*getparam) (void *,uint16_t,bool),  /* AKA LayerFuncGetParam in viklayer.h. */
+				   LayerParamData (*getparam) (void *,uint16_t,bool),  /* AKA LayerFuncGetParam in layer.h. */
 				   void * pass_along_getparam,
-				   void (*changeparam) (GtkWidget*, ui_change_values *)); /* AKA LayerFuncChangeParam in viklayer.h. */
+				   void (*changeparam) (GtkWidget*, ui_change_values *)); /* AKA LayerFuncChangeParam in layer.h. */
 	/* pass_along1 and pass_along2 are for set_param first and last params. */
 
 LayerParamData *a_uibuilder_run_dialog(const char *dialog_name, GtkWindow *parent, LayerParam *params,

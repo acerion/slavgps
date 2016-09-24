@@ -34,10 +34,10 @@
 #include <gtk/gtk.h>
 
 #include "vikwaypoint.h"
-#include "vikviewport.h"
+#include "viewport.h"
 #include "vikstatus.h"
 #include "viktrack.h"
-#include "viklayer.h"
+#include "layer.h"
 #include "viktrwlayer.h"
 #include "layer_trw_containers.h"
 #include "file.h"

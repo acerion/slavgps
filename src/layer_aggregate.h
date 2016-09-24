@@ -28,8 +28,8 @@
 #include <cstdint>
 #include <list>
 
-#include "viklayer.h"
-#include "vikviewport.h"
+#include "layer.h"
+#include "viewport.h"
 
 
 

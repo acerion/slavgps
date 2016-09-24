@@ -32,7 +32,7 @@
 #include <cstdint>
 #include <unordered_map>
 
-#include "vikviewport.h"
+#include "viewport.h"
 #include "vikwaypoint.h"
 #include "viktrack.h"
 #include "viktrwlayer.h"

@@ -28,7 +28,7 @@
 #include <glib/gi18n.h>
 #include <stdlib.h>
 
-#include "vikcoordlayer.h"
+#include "layer_coord.h"
 #include "icons/icons.h"
 
 

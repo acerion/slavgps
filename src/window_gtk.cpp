@@ -53,7 +53,7 @@
 #include "mapcache.h"
 #include "print.h"
 #include "preferences.h"
-#include "viklayer_defaults.h"
+#include "layer_defaults.h"
 #include "icons/icons.h"
 #include "vikexttools.h"
 #include "vikexttool_datasources.h"

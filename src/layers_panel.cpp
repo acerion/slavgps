@@ -30,14 +30,14 @@
 #include <glib/gi18n.h>
 #ifdef SLAVGPS_QT
 #include <QPushButton>
-#include "vikcoordlayer.h"
 #else
 #include <gdk/gdkkeysyms.h>
 #endif
 
 #include "settings.h"
-#include "viklayerspanel.h"
-#include "vikaggregatelayer.h"
+#include "layers_panel.h"
+#include "layer_aggregate.h"
+#include "layer_coord.h"
 #ifndef SLAVGPS_QT
 #include "dialog.h"
 #include "clipboard.h"

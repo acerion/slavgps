@@ -12,9 +12,9 @@
 #include <QMouseEvent>
 #include <QCursor>
 
-#include "viklayerspanel.h"
-#include "vikviewport.h"
-#include "viklayer.h"
+#include "layers_panel.h"
+#include "viewport.h"
+#include "layer.h"
 #include "window_layer_tools.h"
 
 

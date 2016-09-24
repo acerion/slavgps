@@ -35,17 +35,17 @@
 #endif
 #include <glib/gi18n.h>
 
-#include "viklayer.h"
+#include "layer.h"
 #include "window.h"
 
 
-#include "viktreeview.h"
-#include "viklayerspanel.h"
+#include "tree_view.h"
+#include "layers_panel.h"
 #include "globals.h"
 #include "uibuilder.h"
 
-#include "vikaggregatelayer.h"
-#include "vikcoordlayer.h"
+#include "layer_aggregate.h"
+#include "layer_coord.h"
 
 
 

@@ -21,8 +21,8 @@
  */
 
 #include "viking.h"
-#include "vikaggregatelayer.h"
-#include "viklayerspanel.h"
+#include "layer_aggregate.h"
+#include "layers_panel.h"
 #ifndef SLAVGPS_QT
 #include "vikgpslayer.h"
 #include "viktrwlayer_analysis.h"

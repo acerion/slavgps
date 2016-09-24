@@ -9,7 +9,7 @@
 #include <QMouseEvent>
 #include <QCursor>
 
-#include "viklayer.h"
+#include "layer.h"
 #include "slav_qt.h"
 
 

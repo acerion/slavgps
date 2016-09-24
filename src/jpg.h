@@ -25,7 +25,7 @@
 
 
 
-#include "vikaggregatelayer.h"
+#include "layer_aggregate.h"
 
 
 

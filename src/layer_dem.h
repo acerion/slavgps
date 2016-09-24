@@ -28,7 +28,7 @@
 #include <QPen>
 #include <QColor>
 
-#include "viklayer.h"
+#include "layer.h"
 #include "dem.h"
 
 

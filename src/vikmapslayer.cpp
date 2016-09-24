@@ -61,7 +61,7 @@
 #include "metatile.h"
 #include "ui_util.h"
 #include "map_ids.h"
-#include "viklayer_defaults.h"
+#include "layer_defaults.h"
 #include "vikfileentry.h"
 #include "dialog.h"
 #include "file.h"

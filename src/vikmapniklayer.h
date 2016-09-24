@@ -27,7 +27,7 @@
 
 #include <cstdint>
 
-#include "viklayer.h"
+#include "layer.h"
 #include "mapnik_interface.h"
 
 

@@ -26,10 +26,10 @@
 
 #include <QtWidgets>
 
-#include "window_qt.h"
-#include "vikviewport.h"
-#include "viklayer.h"
-#include "viklayerspanel.h"
+#include "window.h"
+#include "viewport.h"
+#include "layer.h"
+#include "layers_panel.h"
 #include "globals.h"
 #include "uibuilder_qt.h"
 

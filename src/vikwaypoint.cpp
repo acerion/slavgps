@@ -24,7 +24,7 @@
 #include <stdlib.h>
 
 #include "coords.h"
-#include "vikcoord.h"
+#include "coord.h"
 #include "vikwaypoint.h"
 #include "globals.h"
 #include "garminsymbols.h"

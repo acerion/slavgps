@@ -27,7 +27,7 @@
 
 #include "globals.h"
 #include "terraservermapsource.h"
-#include "vikcoord.h"
+#include "coord.h"
 #include "mapcoord.h"
 
 

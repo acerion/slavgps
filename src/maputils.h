@@ -27,7 +27,7 @@
 #include <cstdint>
 
 #include "mapcoord.h"
-#include "vikcoord.h"
+#include "coord.h"
 
 
 

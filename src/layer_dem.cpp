@@ -46,7 +46,7 @@
 #if 0
 #include "vikmapslayer.h"
 #endif
-#include "vikdemlayer.h"
+#include "layer_dem.h"
 #include "dem.h"
 #include "dems.h"
 #include "icons/icons.h"

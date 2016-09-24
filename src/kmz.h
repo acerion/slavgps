@@ -27,8 +27,8 @@
 #include <glib.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
 
-#include "vikviewport.h"
-#include "viklayerspanel.h"
+#include "viewport.h"
+#include "layers_panel.h"
 
 
 

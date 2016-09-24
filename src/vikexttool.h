@@ -23,7 +23,7 @@
 
 
 #include "window.h"
-#include "vikcoord.h"
+#include "coord.h"
 
 
 

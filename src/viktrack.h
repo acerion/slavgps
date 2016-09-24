@@ -39,7 +39,7 @@
 #include <math.h>
 #endif
 
-#include "vikcoord.h"
+#include "coord.h"
 #include "bbox.h"
 #include "globals.h"
 

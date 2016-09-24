@@ -36,8 +36,8 @@
 #include <gtk/gtk.h>
 #endif
 
-#include "viklayer.h"
-#include "vikaggregatelayer.h"
+#include "layer.h"
+#include "layer_aggregate.h"
 
 
 

@@ -27,7 +27,7 @@
 
 #include <stdint.h>
 
-#include "viklayerspanel.h"
+#include "layers_panel.h"
 
 
 

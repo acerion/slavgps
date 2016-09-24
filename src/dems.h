@@ -29,7 +29,7 @@
 #include <cstdint>
 
 #include "dem.h"
-#include "vikcoord.h"
+#include "coord.h"
 
 
 

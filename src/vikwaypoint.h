@@ -29,7 +29,7 @@
 
 #include <time.h>
 
-#include "vikcoord.h"
+#include "coord.h"
 #include "globals.h"
 
 #include <gdk-pixbuf/gdk-pixdata.h>

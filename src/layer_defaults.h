@@ -27,7 +27,7 @@
 #include <stdint.h>
 
 #include "uibuilder.h"
-#include "viklayer.h"
+#include "layer.h"
 
 #ifdef SLAVGPS_QT
 #include "slav_qt.h"

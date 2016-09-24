@@ -45,7 +45,7 @@
 #include "babel.h"
 #include "curl_download.h"
 #include "preferences.h"
-#include "viklayer_defaults.h"
+#include "layer_defaults.h"
 #include "globals.h"
 #include "vikmapslayer.h"
 #include "vikgeoreflayer.h"

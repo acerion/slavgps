@@ -28,10 +28,10 @@
 #include <cstdio>
 #include <cstdint>
 
-#include "vikaggregatelayer.h"
+#include "layer_aggregate.h"
 #if 0
 #include "viktrwlayer.h"
-#include "vikviewport.h"
+#include "viewport.h"
 #endif
 
 

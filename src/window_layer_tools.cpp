@@ -28,7 +28,7 @@
 
 //#include <gdk/gdkkeysyms.h>
 
-#include "window_qt.h"
+#include "window.h"
 #include "window_layer_tools.h"
 #include "coords.h"
 //#include "vikutils.h"

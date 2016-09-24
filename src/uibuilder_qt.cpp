@@ -36,7 +36,7 @@
 
 #include <glib/gi18n.h>
 
-#include "viklayer.h"
+#include "layer.h"
 #include "uibuilder_qt.h"
 #include "globals.h"
 #include "widget_color_button.h"

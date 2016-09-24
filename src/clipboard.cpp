@@ -36,7 +36,7 @@
 #include <glib/gi18n.h>
 
 //#include "viking.h"
-#include "viktreeview.h"
+#include "tree_view.h"
 #include "clipboard.h"
 #include "dialog.h"
 #include "viktrwlayer.h"

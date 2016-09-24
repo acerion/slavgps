@@ -29,7 +29,7 @@
 #include <glib/gstdio.h>
 
 //#include "viking.h"
-#include "viklayer_defaults.h"
+#include "layer_defaults.h"
 #ifndef SLAVGPS_QT
 #include "dir.h"
 #include "file.h"

@@ -29,7 +29,7 @@
 #include <list>
 #include <cstdint>
 
-#include "viklayer.h"
+#include "layer.h"
 #include "viktrack.h"
 #include "viktrwlayer.h"
 #include "window.h"

@@ -31,8 +31,8 @@
 #include <gtk/gtk.h>
 
 #include "window.h"
-#include "viklayerspanel.h"
-#include "vikviewport.h"
+#include "layers_panel.h"
+#include "viewport.h"
 #include "babel.h"
 
 

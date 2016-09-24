@@ -44,7 +44,7 @@
 #include "viktrwlayer.h"
 #include "viktrwlayer_propwin.h"
 #include "dems.h"
-#include "vikviewport.h" /* ugh */
+#include "viewport.h" /* ugh */
 #include "vikutils.h"
 #include "ui_util.h"
 #include "dialog.h"

@@ -40,7 +40,7 @@
 #if 0
 #include "preferences.h"
 #endif
-#include "window_qt.h"
+#include "window.h"
 
 
 

@@ -2,8 +2,8 @@
 #include <QPushButton>
 #include <QResource>
 
-#include "window_qt.h"
-#include "viklayer.h"
+#include "window.h"
+#include "layer.h"
 
 
 

@@ -20,7 +20,7 @@
  */
 
 #include "coords.h"
-#include "vikcoord.h"
+#include "coord.h"
 
 
 

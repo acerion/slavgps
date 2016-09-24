@@ -43,7 +43,7 @@
 
 #include "globals.h"
 #include "uibuilder.h"
-#include "viklayer.h"
+#include "layer.h"
 
 
 
