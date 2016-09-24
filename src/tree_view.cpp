@@ -36,7 +36,7 @@
 #include <glib/gi18n.h>
 
 #include "viklayer.h"
-#include "window_qt.h"
+#include "window.h"
 
 
 #include "viktreeview.h"
