@@ -5,21 +5,21 @@ QT = core gui widgets
 
 RESOURCES = icons.qrc
 
-SOURCES += main_qt.cpp \
-    window_qt.cpp \
+SOURCES += main.cpp \
+    window.cpp \
     window_layer_tools.cpp \
-    vikviewport.cpp \
-    vikcoord.cpp \
+    viewport.cpp \
+    coord.cpp \
     coords.cpp \
     degrees_converters.cpp \
     slav_qt.cpp \
-    viklayer_defaults.cpp \
-    viklayer.cpp \
-    vikcoordlayer.cpp \
-    vikaggregatelayer.cpp \
-    vikdemlayer.cpp \
-    viklayerspanel.cpp \
-    viktreeview.cpp \
+    layer_defaults.cpp \
+    layer.cpp \
+    layer_coord.cpp \
+    layer_aggregate.cpp \
+    layer_dem.cpp \
+    layers_panel.cpp \
+    tree_view.cpp \
     uibuilder.cpp \
     uibuilder_qt.cpp \
     widget_color_button.cpp \
@@ -32,21 +32,21 @@ SOURCES += main_qt.cpp \
     file.cpp
 
 
-HEADERS += window_qt.h \
+HEADERS += window.h \
     window_layer_tools.h \
-    vikviewport.h \
-    vikcoord.h \
+    viewport.h \
+    coord.h \
     coords.h \
     globals.h \
     degrees_converters.h \
     slav_qt.h \
-    viklayer_defaults.h \
-    viklayer.h \
-    vikcoordlayer.h \
-    vikaggregatelayer.h \
-    vikdemlayer.h \
-    viklayerspanel.h \
-    viktreeview.h \
+    layer_defaults.h \
+    layer.h \
+    layer_coord.h \
+    layer_aggregate.h \
+    layer_dem.h \
+    layers_panel.h \
+    tree_view.h \
     uibuilder.h \
     uibuilder_qt.h \
     widget_color_button.h \
