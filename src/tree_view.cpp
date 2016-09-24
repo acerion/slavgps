@@ -1129,6 +1129,7 @@ QStandardItem * TreeView::add_layer(Layer * layer, Layer * parent_layer, QStanda
 	/* LayersTreeColumn::ICON */
 	item = new QStandardItem(QString(layer->type_string));
 	item->setIcon(*layer->get_interface()->icon);
+	item->setEditable(false); /* Don't allow editing layer type string. */
 	items << item;
 
 	/* LayersTreeColumn::TREE_ITEM_TYPE */
@@ -1263,6 +1264,7 @@ TreeView::TreeView(QWidget * parent) : QTreeView(parent)
 	//connect(this, SIGNAL(activated(const QModelIndex &)), this, SLOT(select_cb(void)));
 	connect(this, SIGNAL(clicked(const QModelIndex &)), this, SLOT(select_cb(void)));
 	//connect(this, SIGNAL(pressed(const QModelIndex &)), this, SLOT(select_cb(void)));
+	connect(this->model, SIGNAL(dataChanged(const QModelIndex&, const QModelIndex&)), this, SLOT(data_changed_cb(const QModelIndex&, const QModelIndex&)));
 
 
 #if 0
@@ -1360,4 +1362,43 @@ GtkWidget * TreeView::get_toolkit_widget(void)
 #ifndef SLAVGPS_QT
 	return GTK_WIDGET(this->tv_);
 #endif
+}
+
+
+
+/**
+   Called when data in tree view has been changed
+
+   Should call column-specific handlers.
+
+   Range of changed items is between @param top_left and @param
+   bottom_right, but this method only handles @top_left item.
+*/
+void TreeView::data_changed_cb(const QModelIndex & top_left, const QModelIndex & bottom_right)
+{
+	if (!top_left.isValid()) {
+		return;
+	}
+
+	QStandardItem * item = this->model->itemFromIndex(top_left);
+	if (!item) {
+		qDebug() << "EE: Tree View: invalid item from valid index" << top_left << __FUNCTION__ << __LINE__;
+		return;
+	}
+
+
+	if (item->column() == (int) LayersTreeColumn::VISIBLE) {
+		qDebug() << "II: Tree View: edited item in column VISIBLE: is checkable?" << item->isCheckable();
+		this->get_layer(item)->visible = (bool) item->checkState();
+		qDebug() << "SIGNAL: Tree View layer_needs_redraw(78)";
+		emit this->layer_needs_redraw(78);
+
+	} else if (item->column() == (int) LayersTreeColumn::NAME) {
+
+		qDebug() << "II: Tree View: edited item in column NAME: new name is" << item->text();
+		this->get_layer(item)->rename((char *) item->text().data());
+	} else {
+		qDebug() << "EE: Tree View: edited item in column" << item->column();
+	}
+
 }

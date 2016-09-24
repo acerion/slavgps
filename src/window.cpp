@@ -531,6 +531,16 @@ void Window::draw_redraw()
 
 
 
+void Window::draw_layer_cb(sg_uid_t uid) /* Slot. */
+{
+	qDebug() << "SLOT: Window: draw_layer" << (qulonglong) uid;
+	/* TODO: draw only one layer, not all of them. */
+	this->draw_redraw();
+}
+
+
+
+
 void Window::selected_layer(Layer * layer)
 {
 	QString layer_type(QString(layer->get_interface(layer->type)->fixed_layer_name));

@@ -61,6 +61,7 @@ namespace SlavGPS {
 
 	public slots:
 		void menu_layer_new_cb(void);
+		void draw_layer_cb(sg_uid_t uid);
 
 	protected:
 

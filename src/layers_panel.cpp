@@ -202,6 +202,7 @@ LayersPanel::LayersPanel(Window * parent) : QWidget((QWidget *) parent)
 	//layer->rename("a coord layer");
 	//QStandardItem * coord = this->tree_view->add_layer(layer, this->toplayer, this->toplayer_item, false, 0, 0);
 
+	connect(this->tree_view, SIGNAL(layer_needs_redraw(sg_uid_t)), this->window, SLOT(draw_layer_cb(sg_uid_t)));
 
 
 #ifndef SLAVGPS_QT

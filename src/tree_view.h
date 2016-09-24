@@ -146,9 +146,13 @@ namespace SlavGPS {
 
 	private slots:
 		void select_cb(void);
+		void data_changed_cb(const QModelIndex & top_left, const QModelIndex & bottom_right);
 
 	private:
 		void add_columns();
+
+	signals:
+		void layer_needs_redraw(sg_uid_t uid);
 	};
 
 
