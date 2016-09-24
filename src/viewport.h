@@ -28,19 +28,13 @@
 #include <list>
 #include <cstdint>
 
-#ifdef SLAVGPS_QT
 #include <QPainter>
 #include <QPen>
 #include <QWidget>
 #include <QWheelEvent>
 #include <QMouseEvent>
-#include <QPen>
 
 #include "slav_qt.h"
-#else
-#include <gtk/gtk.h>
-#endif
-
 #include "coord.h"
 #include "bbox.h"
 
@@ -331,6 +325,9 @@ namespace SlavGPS {
 	private:
 		void free_center(std::list<Coord *>::iterator iter);
 		void init_drawing_area(void);
+
+		void draw_scale_helper_scale(const QPen & pen, int scale_len, int h);
+		void draw_scale_helper_value(char * s, DistanceUnit distance_unit, double scale_unit);
 
 		GtkDrawingArea * drawing_area_ = NULL; /* Toolkit-specific drawing area. */
 		char type_string[30] = { 0 };

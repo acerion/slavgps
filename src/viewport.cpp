@@ -485,7 +485,7 @@ bool Viewport::configure()
 	this->scr_buffer->fill();
 
 	this->pen_marks_fg.setColor(QColor("grey"));
-	this->pen_marks_fg.setWidth(3);
+	this->pen_marks_fg.setWidth(2);
 	this->pen_marks_bg.setColor(QColor("white"));
 	this->pen_marks_bg.setWidth(6);
 
@@ -616,7 +616,6 @@ int rescale_unit(double * base_distance, double * scale_unit, int maximum_width)
 
 void Viewport::draw_scale()
 {
-	//fprintf(stderr, "%s:%d\n", __FUNCTION__, __LINE__);
 	if (!this->do_draw_scale) {
 		return;
 	}
@@ -657,35 +656,81 @@ void Viewport::draw_scale()
 	int len = rescale_unit(&base_distance, &scale_unit, MAXIMUM_WIDTH);
 	//fprintf(stderr, "resolved len = %d\n", len);
 
+
 	const QPen & pen_fg = this->pen_marks_fg;
 	const QPen & pen_bg = this->pen_marks_bg;
 
-	/* White background. */
-	this->draw_line(pen_bg, PAD,       this->size_height - PAD, PAD + len, this->size_height - PAD);
-	this->draw_line(pen_bg, PAD,       this->size_height - PAD, PAD,       this->size_height - PAD - HEIGHT);
-	this->draw_line(pen_bg, PAD + len, this->size_height - PAD, PAD + len, this->size_height - PAD - HEIGHT);
+	this->draw_scale_helper_scale(pen_bg, len, HEIGHT); /* Bright background. */
+	this->draw_scale_helper_scale(pen_fg, len, HEIGHT); /* Darker scale on the bright background. */
 
+	char s[128];
+	this->draw_scale_helper_value(s, distance_unit, scale_unit);
+
+
+	QString text(s);
+	QPainter painter(this->scr_buffer);
+
+	QPointF scale_start(PAD, this->size_height - PAD); /* Bottom-left corner of scale. */
+	QPointF value_start = QPointF(scale_start.x() + len + PAD, scale_start.y()); /* Bottom-left corner of value. */
+
+#if 1
+	/* Debug. */
+	painter.setPen(QColor("red"));
+	painter.drawEllipse(scale_start, 3, 3);
+	painter.setPen(QColor("blue"));
+	painter.drawEllipse(value_start, 3, 3);
+#endif
+
+	painter.setFont(QFont("Helvetica", 40));
+
+	QRectF input_rect = QRectF((int) value_start.x(), 0, (int) value_start.x() + 1000, (int) value_start.y());
+	QRectF text_rect = painter.boundingRect(input_rect, Qt::AlignBottom, text);
+	QRectF margins_rect(text_rect.x() - 2, text_rect.y() - 2, text_rect.width() + 4, text_rect.height() + 4);
+	painter.fillRect(margins_rect, pen_bg.color());
+
+#if 1
+	/* Debug. */
+	painter.setPen(QColor("orange"));
+	painter.drawRect(input_rect);
+	painter.setPen(QColor("red"));
+	painter.drawRect(text_rect);
+#endif
+
+	painter.setPen(pen_fg);
+	painter.drawText(PAD + len + PAD, this->size_height - PAD - 10, text);
+
+	this->repaint();
+}
+
+
+
+
+void Viewport::draw_scale_helper_scale(const QPen & pen, int scale_len, int h)
+{
 	/* Black scale. */
-	this->draw_line(pen_fg, PAD,       this->size_height - PAD, PAD + len, this->size_height - PAD);
-	this->draw_line(pen_fg, PAD,       this->size_height - PAD, PAD,       this->size_height - PAD - HEIGHT);
-	this->draw_line(pen_fg, PAD + len, this->size_height - PAD, PAD + len, this->size_height - PAD - HEIGHT);
-
+	this->draw_line(pen, PAD,             this->size_height - PAD, PAD + scale_len, this->size_height - PAD);
+	this->draw_line(pen, PAD,             this->size_height - PAD, PAD,             this->size_height - PAD - h);
+	this->draw_line(pen, PAD + scale_len, this->size_height - PAD, PAD + scale_len, this->size_height - PAD - h);
 
 	int y1 = this->size_height - PAD;
 	for (int i = 1; i < 10; i++) {
-		int x1 = PAD + i * len / 10;
-		int diff = ((i == 5) ? (2 * HEIGHT / 3) : (1 * HEIGHT / 3));
-		this->draw_line(pen_bg, x1, y1, x1, y1 - diff);
-		this->draw_line(pen_fg, x1, y1, x1, y1 - diff);
+		int x1 = PAD + i * scale_len / 10;
+		int diff = ((i == 5) ? (2 * h / 3) : (1 * h / 3));
+		this->draw_line(pen, x1, y1, x1, y1 - diff);
 	}
+}
 
-	char s[128];
+
+
+
+void Viewport::draw_scale_helper_value(char * s, DistanceUnit distance_unit, double scale_unit)
+{
 	switch (distance_unit) {
 	case DistanceUnit::KILOMETRES:
 		if (scale_unit >= 1000) {
-			sprintf(s, "%d km", (int) scale_unit / 1000);
+			sprintf(s, "y%d km", (int) scale_unit / 1000);
 		} else {
-			sprintf(s, "%d m", (int) scale_unit);
+			sprintf(s, "y%d m", (int) scale_unit);
 		}
 		break;
 	case DistanceUnit::MILES:
@@ -711,18 +756,6 @@ void Viewport::draw_scale()
 	default:
 		fprintf(stderr, "CRITICAL: failed to get correct units of distance, got %d\n", distance_unit);
 	}
-
-
-#ifdef SLAVGPS_QT
-	this->repaint();
-#else
-	PangoLayout * pl = gtk_widget_create_pango_layout(GTK_WIDGET(this->drawing_area_), NULL);
-	pango_layout_set_font_description(pl, gtk_widget_get_style(GTK_WIDGET(this->drawing_area_))->font_desc);
-	pango_layout_set_text(pl, s, -1);
-	this->draw_layout(pen_fg, PAD + len + PAD, this->size_height - PAD - 10, pl);
-	g_object_unref(pl);
-	pl = NULL;
-#endif
 }
 
 
