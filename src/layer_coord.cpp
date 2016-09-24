@@ -28,6 +28,8 @@
 #include <glib/gi18n.h>
 #include <stdlib.h>
 
+#include <QDebug>
+
 #include "layer_coord.h"
 #include "icons/icons.h"
 
@@ -211,12 +213,17 @@ void LayerCoord::draw(Viewport * viewport)
 	}
 #endif
 
+	qDebug() << "II: Layer Coord: draw begin";
 	if (viewport->get_coord_mode() != VIK_COORD_UTM) {
 		this->draw_latlon(viewport);
 	}
 	if (viewport->get_coord_mode() == VIK_COORD_UTM) {
 		this->draw_utm(viewport);
 	}
+	qDebug() << "II: Layer Coord: draw end";
+	//qDebug() << "II: Layer Coord: sync begin";
+	//viewport->sync();
+	//qDebug() << "II: Layer Coord: sync end";
 }
 
 

@@ -413,8 +413,10 @@ void Window::create_actions(void)
 
 void Window::draw_update()
 {
+	qDebug() << "II: Window: redraw + sync begin" << __FUNCTION__ << __LINE__;
 	this->draw_redraw();
-	this->draw_sync();
+	//this->draw_sync();
+	qDebug() << "II: Window: redraw + sync end" << __FUNCTION__ << __LINE__;
 }
 
 
@@ -430,7 +432,9 @@ static void draw_sync_cb(Window * window)
 
 void Window::draw_sync()
 {
+	qDebug() << "II: Window: sync begin" << __FUNCTION__ << __LINE__;
 	this->viewport->sync();
+	qDebug() << "II: Window: sync end" << __FUNCTION__ << __LINE__;
 	this->draw_status();
 }
 
@@ -471,6 +475,7 @@ void Window::menu_layer_new_cb(void) /* Slot. */
 	qDebug() << "Window: clicked \"layer new\" for layer type" << (int) layer_type << Layer::get_interface(layer_type)->fixed_layer_name;
 
 	if (this->layers_panel->new_layer(layer_type)) {
+		qDebug() << "II: Window: new layer, call draw_update()" << __FUNCTION__ << __LINE__;
 		this->draw_update();
 		this->modified = true;
 	}

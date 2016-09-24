@@ -431,9 +431,11 @@ void Viewport::configure_manually(int width_, unsigned int height_)
 	this->size_height_2 = this->size_height / 2;
 
 	if (this->scr_buffer) {
+		qDebug() << "II: deleting old scr_buffer" << __FUNCTION__ << __LINE__;
 		delete this->scr_buffer;
 	}
-	fprintf(stderr, "VIEWPORT: creating new pixmap with %d/%d (%s:%d: )\n", this->size_width, this->size_height, __FUNCTION__, __LINE__);
+
+	qDebug() << "II: Viewport creating new scr_buffer with size" << this->size_width << this->size_height << __FUNCTION__ << __LINE__;
 	this->scr_buffer = new QPixmap(this->size_width, this->size_height);
 	this->scr_buffer->fill();
 
@@ -468,7 +470,6 @@ bool Viewport::configure_cb(void)
 
 bool Viewport::configure()
 {
-
 	const QRect geom = this->geometry();
 	this->size_width = geom.width();
 	this->size_height = geom.height();
@@ -477,10 +478,11 @@ bool Viewport::configure()
 	this->size_height_2 = this->size_height / 2;
 
 	if (this->scr_buffer) {
-		// g_object_unref (G_OBJECT (this->scr_buffer));
+		qDebug() << "II: deleting old scr_buffer" << __FUNCTION__ << __LINE__;
 		delete this->scr_buffer;
 	}
-	fprintf(stderr, "%s:%d: creating new pixmap with %d/%d\n", __FUNCTION__, __LINE__, this->size_width, this->size_height);
+
+	qDebug() << "II: Viewport creating new scr_buffer with size" << this->size_width << this->size_height << __FUNCTION__ << __LINE__;
 	this->scr_buffer = new QPixmap(this->size_width, this->size_height);
 	this->scr_buffer->fill();
 
@@ -522,7 +524,7 @@ bool Viewport::configure()
  */
 void Viewport::clear()
 {
-	fprintf(stderr, "VIEWPORT: clear whole viewport (%s:%d)\n", __FUNCTION__, __LINE__);
+	qDebug() << "II: Viewport: clear whole viewport" << __FUNCTION__ << __LINE__;
 	QPainter painter(this->scr_buffer);
 	painter.eraseRect(0, 0, this->size_width, this->size_height);
 
@@ -900,7 +902,7 @@ bool Viewport::get_draw_highlight()
 
 void Viewport::sync()
 {
-	fprintf(stderr, "VIEWPORT: SYNC (%s:%d)\n", __FUNCTION__, __LINE__);
+	qDebug() << "II: Viewport: ->sync() (will call ->render())" << __FUNCTION__ << __LINE__;
 	//gdk_draw_drawable(gtk_widget_get_window(GTK_WIDGET(this->drawing_area_)), gtk_widget_get_style(GTK_WIDGET(this->drawing_area_))->bg_gc[0], GDK_DRAWABLE(this->scr_buffer), 0, 0, 0, 0, this->size_width, this->size_height);
 	this->render(this->scr_buffer);
 }
@@ -1612,18 +1614,10 @@ void Viewport::draw_line(const QPen & pen, int x1, int y1, int x2, int y2)
 
 		/*** Clipping, yeah! ***/
 		Viewport::clip_line(&x1, &y1, &x2, &y2);
-#ifdef SLAVGPS_QT
-		//fprintf(stderr, "Drawing line %d %d / %d %d\n", x1, y1, x2, y2);
+
 		QPainter painter(this->scr_buffer);
 		painter.setPen(pen);
-
-		//painter.begin(this->scr_buffer);
 		painter.drawLine(x1, y1, x2, y2);
-		//painter.end();
-
-#else
-		gdk_draw_line(this->scr_buffer, gc, x1, y1, x2, y2);
-#endif
 	}
 }
 
@@ -1634,9 +1628,9 @@ void Viewport::draw_rectangle(const QPen & pen, bool filled, int x, int y, int w
 {
 	/* Using 32 as half the default waypoint image size, so this draws ensures the highlight gets done. */
 	if (x > -32 && x < this->size_width + 32 && y > -32 && y < this->size_height + 32) {
+
 		QPainter painter(this->scr_buffer);
 		painter.setPen(pen);
-		//fprintf(stderr, "VIEWPORT: drawing rectangle, starting at %d/%d, size %d/%d\n", x, y, width, height);
 		painter.drawRect(x, y, width, height);
 	}
 }
@@ -1648,8 +1642,8 @@ void Viewport::fill_rectangle(const QColor & color, int x, int y, int width, int
 {
 	/* Using 32 as half the default waypoint image size, so this draws ensures the highlight gets done. */
 	if (x > -32 && x < this->size_width + 32 && y > -32 && y < this->size_height + 32) {
+
 		QPainter painter(this->scr_buffer);
-		//fprintf(stderr, "VIEWPORT: filling rectangle, starting at %d/%d, size %d/%d\n", x, y, width, height);
 		painter.fillRect(x, y, width, height, color);
 	}
 }
@@ -2177,7 +2171,8 @@ Window * Viewport::get_window(void)
 
 void Viewport::paintEvent(QPaintEvent *event)
 {
-	fprintf(stderr, "VIEWPORT: paint event (%s:%d)\n", __FUNCTION__, __LINE__);
+	qDebug() << "II: Viewport : paintEvent()" << __FUNCTION__ << __LINE__;
+
 	QPainter painter(this);
 
 	painter.drawPixmap(0, 0, *this->scr_buffer);
@@ -2196,6 +2191,7 @@ void Viewport::resizeEvent(QResizeEvent * event)
 {
 	fprintf(stderr, "VIEWPORT: resize event (%s:%d)\n", __FUNCTION__, __LINE__);
 	this->configure();
+	this->get_window()->draw_redraw();
 	//this->draw_scale();
 
 	return;
@@ -2288,5 +2284,6 @@ void Viewport::wheelEvent(QWheelEvent * event)
 					center_y + (y - event->y()));
 	}
 
+	qDebug() << "II: Viewport: wheel event, call Window::draw_update()" << __FUNCTION__ << __LINE__;
 	this->window->draw_update();
 }

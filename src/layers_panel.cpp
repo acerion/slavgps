@@ -614,17 +614,15 @@ bool LayersPanel::new_layer(LayerType layer_type)
 
 	Layer * layer = Layer::new_(layer_type, this->viewport, ask_user);
 	if (layer) {
-		fprintf(stderr, "%s:%d: calling add_layer(%s)\n", __FUNCTION__, __LINE__, layer->type_string);
 		this->add_layer(layer);
 
 		this->viewport->configure();
+		qDebug() << "II: Layers Panel: calling layer->draw() for" << layer->get_interface(layer->type)->fixed_layer_name << __FUNCTION__ << __LINE__;
 		layer->draw(this->viewport);
 
-		fprintf(stderr, "%s:%d: returning true\n", __FUNCTION__, __LINE__);
 		return true;
 	}
 
-	fprintf(stderr, "%s:%d: returning false\n", __FUNCTION__, __LINE__);
 	return false;
 }
 
