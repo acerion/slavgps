@@ -468,7 +468,7 @@ void Window::menu_layer_new_cb(void) /* Slot. */
 	QAction * qa = (QAction *) QObject::sender();
 	SlavGPS::LayerType layer_type = (SlavGPS::LayerType) qa->data().toInt();
 
-	fprintf(stderr, "clicked layer new for layer type %d\n", (int) layer_type);
+	qDebug() << "Window: clicked \"layer new\" for layer type" << (int) layer_type << Layer::get_interface(layer_type)->fixed_layer_name;
 
 	if (this->layers_panel->new_layer(layer_type)) {
 		this->draw_update();
@@ -803,7 +803,7 @@ void Window::create_ui(void)
 		action.label = g_strdup_printf(_("New _%s Layer"), Layer::get_interface(i)->name);
 		action.accelerator = Layer::get_interface(i)->accelerator;
 		action.tooltip = NULL;
-		action.callback = (GCallback)menu_addlayer_cb;
+		action.callback = (GCallback)menu_layer_new_cb;
 		gtk_action_group_add_actions(action_group, &action, 1, window);
 
 		free((char*)action.label);

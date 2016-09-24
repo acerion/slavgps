@@ -438,10 +438,9 @@ LayerGeoref::~LayerGeoref()
 
 
 
-bool LayerGeoref::properties(void * viewport)
+bool LayerGeoref::properties_dialog(Viewport * viewport)
 {
-	Viewport * v = (Viewport *) viewport;
-	return this->dialog(v, v->get_toolkit_window());
+	return this->dialog(viewport, viewport->get_toolkit_window());
 }
 
 

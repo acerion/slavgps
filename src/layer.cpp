@@ -87,7 +87,6 @@ enum {
 static unsigned int layer_signals[VL_LAST_SIGNAL] = { 0 };
 
 
-static bool vik_layer_properties_factory(Layer * layer, Viewport * viewport);
 static bool layer_defaults_register(LayerType layer_type);
 
 
@@ -345,52 +344,44 @@ char const * Layer::get_name()
 
 Layer * Layer::new_(LayerType layer_type, Viewport * viewport, bool interactive)
 {
+	qDebug() << "II: Layer: will create new" << Layer::get_interface(layer_type)->fixed_layer_name << "layer; interactive =" << interactive;
+
 	assert (layer_type != LayerType::NUM_TYPES);
 
 	Layer * layer = NULL;
-#ifndef SLAVGPS_QT
+
 	if (layer_type == LayerType::AGGREGATE) {
-		fprintf(stderr, "\n\n\n NEW AGGREGATE\n\n\n");
 		layer = new LayerAggregate(viewport);
-
-	} else if (layer_type == LayerType::TRW) {
-		fprintf(stderr, "\n\n\n NEW TRW\n\n\n");
-		layer = new LayerTRW(viewport);
-
-	} else
-#endif
-		if (layer_type == LayerType::COORD) {
-		fprintf(stderr, "\n\n\n NEW COORD\n\n\n");
-		layer = new LayerCoord(viewport);
 
 	}
 #ifndef SLAVGPS_QT
-		else if (layer_type == LayerType::MAPS) {
-		fprintf(stderr, "\n\n\n NEW MAPS\n\n\n");
-		layer = new LayerMaps(viewport);
-
-	} else
+	else if (layer_type == LayerType::TRW) {
+		layer = new LayerTRW(viewport);
+	}
 #endif
-	if (layer_type == LayerType::DEM) {
-		fprintf(stderr, "\n\n\n NEW DEM\n\n\n");
+	else if (layer_type == LayerType::COORD) {
+		layer = new LayerCoord(viewport);
+	}
+#ifndef SLAVGPS_QT
+	else if (layer_type == LayerType::MAPS) {
+		layer = new LayerMaps(viewport);
+	}
+#endif
+	else if (layer_type == LayerType::DEM) {
 		layer = new LayerDEM(viewport);
-
 	}
 #ifndef SLAVGPS_QT
 	else if (layer_type == LayerType::GEOREF) {
-		fprintf(stderr, "\n\n\n NEW GEOREF\n\n\n");
 		layer = new LayerGeoref(viewport);
-
 #ifdef HAVE_LIBMAPNIK
 	} else if (layer_type == LayerType::MAPNIK) {
-		fprintf(stderr, "\n\n\n NEW MAPNIK\n\n\n");
 		layer = new LayerMapnik(viewport);
 #endif
-
 	} else if (layer_type == LayerType::GPS) {
-		fprintf(stderr, "\n\n\n NEW GPS\n\n\n");
 		layer = new LayerGPS(viewport);
-	} else {
+	}
+#endif
+	else {
 		assert (0);
 	}
 
@@ -406,7 +397,7 @@ Layer * Layer::new_(LayerType layer_type, Viewport * viewport, bool interactive)
 			layer = NULL;
 		}
 	}
-#endif
+
 	return layer;
 }
 
@@ -418,11 +409,11 @@ bool vik_layer_properties(Layer * layer, Viewport * viewport)
 {
 #ifndef SLAVGPS_QT
 	if (layer->type == LayerType::GEOREF) {
-		return layer->properties(viewport);
+		return layer->properties_dialog(viewport);
 	}
 #endif
 
-	return vik_layer_properties_factory(layer, viewport);
+	return layer->properties_dialog(viewport);
 }
 
 
@@ -675,35 +666,35 @@ GdkPixbuf * vik_layer_load_icon(LayerType layer_type)
 
 
 
-static bool vik_layer_properties_factory(Layer * layer, Viewport * viewport)
+bool Layer::properties_dialog(Viewport * viewport)
 {
-#ifdef SLAVGPS_QT
+	qDebug() << "II: Layer: opening properties dialog for layer" << this->get_interface(this->type)->fixed_layer_name;
 
 	LayerPropertiesDialog dialog(NULL);
-	dialog.fill(layer);
+	dialog.fill(this);
 	int dialog_code = dialog.exec();
 
 	if (dialog_code == QDialog::Accepted) {
 
 		bool must_redraw = false;
 
-		std::map<layer_param_id_t, LayerParam *> * parameters = layer->get_interface()->layer_parameters;
+		std::map<layer_param_id_t, LayerParam *> * parameters = this->get_interface()->layer_parameters;
 		for (auto iter = parameters->begin(); iter != parameters->end(); iter++) {
 			LayerParamValue param_value = dialog.get_param_value(iter->first, iter->second);
-			bool set = layer->set_param_value(iter->first, param_value, viewport, false);
+			bool set = this->set_param_value(iter->first, param_value, viewport, false);
 			if (set) {
 				must_redraw = true;
 			}
 		}
 
-		layer->post_read(viewport, false); /* Update any gc's. */
+		this->post_read(viewport, false); /* Update any gc's. */
 		return true;
 	} else {
 		/* Redraw (?). */
 		return false;
 	}
 
-#else
+#if 0
 	int prop = a_uibuilder_properties_factory(_("Layer Properties"),
 						  viewport->get_toolkit_window(),
 						  layer->get_interface()->params,
@@ -1092,14 +1083,6 @@ bool Layer::sublayer_toggle_visible(SublayerType sublayer_type, sg_uid_t sublaye
 {
 	/* If unknown, will always be visible. */
 	return true;
-}
-
-
-
-
-bool Layer::properties(void * viewport)
-{
-	return false;
 }
 
 

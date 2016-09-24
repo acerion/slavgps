@@ -37,6 +37,11 @@ namespace SlavGPS {
 
 
 
+	class Viewport;
+
+
+
+
 	void vik_georef_layer_init(void);
 
 
@@ -76,7 +81,7 @@ namespace SlavGPS {
 		void draw(Viewport * viewport);
 		char const * tooltip();
 		void add_menu_items(GtkMenu * menu, void * panel);
-		bool properties(void * vp);
+		bool properties_dialog(Viewport * viewport);
 		bool set_param_value(uint16_t id, LayerParamValue param_value, Viewport * viewport, bool is_file_operation);
 		LayerParamValue get_param_value(layer_param_id_t id, bool is_file_operation) const;
 

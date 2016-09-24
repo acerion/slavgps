@@ -211,9 +211,7 @@ namespace SlavGPS {
 		virtual char const * sublayer_rename_request(const char * newname, void * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, GtkTreeIter * iter);
 		virtual bool sublayer_toggle_visible(SublayerType sublayer_type, sg_uid_t sublayer_uid);
 
-		/* Do _not_ use this unless absolutely neccesary. Use the dynamic properties (see coordlayer for example).
-		   Returns true if OK was pressed. */
-		virtual bool properties(void * viewport);
+		virtual bool properties_dialog(Viewport * viewport);
 
 		/* Normally only needed for layers with sublayers. This is called when they
 		   are added to the treeview so they can add sublayers to the treeview. */
@@ -262,7 +260,7 @@ namespace SlavGPS {
 
 
 
-
+		static bool properties_dialog(Layer * layer, Viewport * viewport);
 
 
 		char * name = NULL;

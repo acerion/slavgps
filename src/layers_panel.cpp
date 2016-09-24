@@ -607,8 +607,9 @@ bool LayersPanel::new_layer(LayerType layer_type)
 	if (layer_type == LayerType::TRW) {
 		(void)a_settings_get_boolean(VIK_SETTINGS_LAYERS_TRW_CREATE_DEFAULT, &ask_user);
 	}
-	ask_user = !ask_user;
 #endif
+	ask_user = !ask_user;
+
 	assert (layer_type != LayerType::NUM_TYPES);
 
 	Layer * layer = Layer::new_(layer_type, this->viewport, ask_user);
@@ -739,7 +740,7 @@ bool LayersPanel::properties()
 #endif
 		}
 		Layer * layer = this->tree_view->get_layer(item);
-		if (vik_layer_properties(layer, this->viewport)) {
+		if (layer->properties_dialog(this->viewport)) {
 			layer->emit_update();
 		}
 		return true;
