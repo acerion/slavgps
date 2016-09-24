@@ -575,6 +575,7 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 	LatLonBBox viewport_bbox;
 	viewport->get_bbox(&viewport_bbox);
 	if (!dem->overlap(&viewport_bbox)) {
+		qDebug() << "Dem: no overlap, skipping";
 		return;
 	}
 
