@@ -69,6 +69,7 @@ QAction * LayerToolsBox::add_tool(LayerTool * layer_tool)
 	QAction * qa = new QAction(label, this->window);
 
 	qa->setObjectName(QString(layer_tool->radioActionEntry.name));
+	qDebug() << "Created qaction with name" << qa->objectName() << qa;
 	qa->setIcon(QIcon(QString(layer_tool->radioActionEntry.stock_id)));
 	qa->setCheckable(true);
 
@@ -108,7 +109,7 @@ void LayerToolsBox::activate_tool(QAction * qa)
 #endif
 
 	if (!tool) {
-		fprintf(stderr, "CRITICAL: trying to activate a non-existent tool...\n");
+		qDebug() << "ERROR: Layer Tools: trying to activate a non-existent tool" << tool_name << qa;
 		return;
 	}
 	/* Is the tool already active? */
@@ -122,12 +123,38 @@ void LayerToolsBox::activate_tool(QAction * qa)
 			this->active_tool->deactivate(NULL, this->active_tool);
 		}
 	}
-	qDebug() << "LAYER TOOLS: activating tool" << tool_name;
+	qDebug() << "Layer Tools: activating tool" << tool_name;
 	if (tool->activate) {
 		tool->activate(layer, tool);
 	}
 	this->active_tool = tool;
 	this->active_tool_qa = qa;
+}
+
+
+
+
+
+void LayerToolsBox::deactivate_tool(QAction * qa)
+{
+	QString tool_name = qa->objectName();
+	LayerTool * tool = this->get_tool(tool_name);
+	if (!tool) {
+		qDebug() << "ERROR: Layer Tools: trying to deactivate a non-existent tool" << tool_name;
+		return;
+	}
+
+	qDebug() << "Layer Tools: deactivating tool" << tool_name;
+
+	assert (this->active_tool);
+
+	if (tool->deactivate) {
+		tool->deactivate(NULL, tool);
+	}
+	qa->setChecked(false);
+
+	this->active_tool = NULL;
+	this->active_tool_qa = NULL;
 }
 
 
@@ -140,15 +167,147 @@ void LayerToolsBox::activate_layer_tools(QAction * qa)
 	for (auto group = this->action_groups.begin(); group != this->action_groups.end(); ++group) {
 		bool is_window_tools = (*group)->objectName() == "window";
 		bool activate = (*group)->objectName() == layer_type;
-		for (QList<QAction *>::const_iterator action = (*group)->actions().constBegin(); action != (*group)->actions().constEnd(); ++action) {
-			(*action)->setEnabled(activate || is_window_tools);
-			if ((*action) != qa) {
-				(*action)->setChecked(false);
-			}
+
+	}
+
+	//this->activate_tool(qa);
+}
+
+
+
+
+
+/**
+   Enable all buttons in given actions group
+
+   If group is non-empty, return first action in that group.
+*/
+QAction * LayerToolsBox::set_group_enabled(QString & group_name)
+{
+	QActionGroup * group = this->get_group(group_name);
+	if (!group) {
+		/* This may a valid situation for layers without tools, e.g. Aggregate. */
+		qDebug() << "NOTICE: Layer Tools: can't find group" << group_name << "to enable";
+		return NULL;
+	} else {
+		qDebug() << "Layer Tools: Enabling group" << group_name;
+	}
+
+
+	int i = 0;
+
+	QList<QAction *>::const_iterator first = group->actions().constBegin();
+	for (QList<QAction *>::const_iterator action = first; action != group->actions().constEnd(); ++action) {
+		if (!(*action)->isEnabled()) {
+			qDebug() << "Layer Tools: Enabling action" << *action << "in group" << group;
+			(*action)->setEnabled(true);
+			i++;
 		}
 	}
 
-	this->activate_tool(qa);
+	if (i) {
+		/* There was more than one action, so 'first' is valid iterator. */
+		qDebug() << "Returning first enabled action" << *first;
+		return *first;
+	} else {
+		return NULL;
+	}
+}
+
+
+
+
+/**
+   Disable all buttons in given actions group
+
+   If any action is checked (active), return that action. The function doesn't un-check that action.
+
+   If a group is "window", its buttons are not disabled. Its active button (if present) is returned nonetheless.
+*/
+QAction * LayerToolsBox::set_group_disabled(QString & group_name)
+{
+	QActionGroup * group = this->get_group(group_name);
+	if (!group) {
+		qDebug() << "WINDOW LAYER TOOLS: can't find group" << group_name << "to disable";
+		return NULL;
+	}
+
+	QAction * checked = NULL;
+	bool really_disable = group_name != "window";
+
+	for (QList<QAction *>::const_iterator action = group->actions().constBegin(); action != group->actions().constEnd(); ++action) {
+
+		/* We don't want to disable "window" group buttons, but we want to know which one of them is selected. */
+		if (really_disable) {
+			(*action)->setEnabled(false);
+		}
+		if ((*action)->isChecked()) {
+			checked = *action;
+		}
+	}
+
+	return checked;
+}
+
+
+
+
+
+/**
+   Disable all buttons in groups other than given actions group
+
+   Make an exception for actions group called "window" - this one should be always enabled.
+
+   If any action is checked (active), return that action. The function doesn't un-check that action.
+*/
+QAction * LayerToolsBox::set_other_groups_disabled(QString & group_name)
+{
+	QActionGroup * this_group = this->get_group(group_name);
+	if (!this_group) {
+		/* This may be a valid situation for layers that don't have any tools (e.g. Aggregate). */
+		qDebug() << "NOTICE: Layer Tools: can't find group" << group_name << "to disable";
+	}
+
+	QAction * ret = NULL;
+
+	for (auto group = this->action_groups.begin(); group != this->action_groups.end(); ++group) {
+		if (group_name == (*group)->objectName()) {
+			/* Disable other groups, not this group. */
+			continue;
+		}
+		QString name((*group)->objectName());
+		QAction * checked = this->set_group_disabled(name);
+		if (checked) {
+			ret = checked;
+		}
+	}
+
+	return ret;
+}
+
+
+
+
+/**
+   Find group by object name
+*/
+QActionGroup * LayerToolsBox::get_group(QString & group_name)
+{
+	for (auto group = this->action_groups.begin(); group != this->action_groups.end(); ++group) {
+		if ((*group)->objectName() == group_name) {
+			return (*group);
+		}
+	}
+
+	return NULL;
+}
+
+
+
+
+QAction * LayerToolsBox::get_active_tool(void)
+{
+	return this->active_tool_qa;
 }
 
 
@@ -175,7 +334,7 @@ void LayerToolsBox::activate_layer_tools(QString & layer_type)
 
 
 
-void LayerToolsBox::add_layer_tools(QActionGroup * group)
+void LayerToolsBox::add_group(QActionGroup * group)
 {
 	this->action_groups.push_back(group);
 }

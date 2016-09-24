@@ -529,8 +529,36 @@ void Window::draw_redraw()
 void Window::selected_layer(Layer * layer)
 {
 	QString layer_type(QString(layer->get_interface(layer->type)->fixed_layer_name));
-	qDebug() << "Selected layer" << layer_type;
-	this->tb->activate_layer_tools(layer_type);
+	qDebug() << "Window: selected layer type" << layer_type;
+
+	bool window_tool_still_active = false;
+	QAction * qa = this->tb->set_other_groups_disabled(layer_type);
+	if (qa) {
+		if (qa->actionGroup()->objectName() == "window") {
+			window_tool_still_active = true;
+		} else {
+			/* qa is still-active button in non-window, not-this-layer group. Deactivate. */
+			qa->setChecked(false);
+		}
+	}
+
+
+	qa = this->tb->set_group_enabled(layer_type);
+	if (qa) {
+		if (window_tool_still_active) {
+			/* There is already one button active (in 'window' tools group).
+			   No need to have more than one button checked. */
+		} else {
+			/* We have switched from one layer-specific group to another.
+			   No button in "window" group is active. Some button needs to be active, though. */
+			qa->setChecked(true);
+		}
+	} else {
+		if (layer->type != LayerType::AGGREGATE) {
+			qDebug() << "ERROR: WINDOW: can't find any action in newly selected layer group" << layer_type;
+		}
+	}
+
 #if 0
 	if (!this->action_group) {
 		return;
@@ -619,43 +647,51 @@ void Window::create_ui(void)
 #endif
 
 	{
-		QActionGroup * window_tools = new QActionGroup(this);
-		window_tools->setObjectName("window");
+		QActionGroup * group = new QActionGroup(this);
+		group->setObjectName("window");
 		QAction * qa = NULL;
 
-		qa = this->tool_bar->addSeparator();
-		window_tools->addAction(qa);
+		this->tool_bar->addSeparator();
 
-		qa = this->tb->add_tool(ruler_create(this, this->viewport));
-		window_tools->addAction(qa);
-
-		qa = this->tb->add_tool(zoomtool_create(this, this->viewport));
-		window_tools->addAction(qa);
-
-		qa = this->tb->add_tool(pantool_create(this, this->viewport));
-		window_tools->addAction(qa);
 
 		qa = this->tb->add_tool(selecttool_create(this, this->viewport));
+		group->addAction(qa);
 		qa->setChecked(true);
-		window_tools->addAction(qa);
+		this->tb->activate_tool(qa);
+
+		qa = this->tb->add_tool(ruler_create(this, this->viewport));
+		group->addAction(qa);
+
+		qa = this->tb->add_tool(zoomtool_create(this, this->viewport));
+		group->addAction(qa);
+
+		qa = this->tb->add_tool(pantool_create(this, this->viewport));
+		group->addAction(qa);
 
 
-		this->tool_bar->addActions(window_tools->actions());
-		this->menu_tools->addActions(window_tools->actions());
-		this->tb->add_layer_tools(window_tools);
+		this->tool_bar->addActions(group->actions());
+		this->menu_tools->addActions(group->actions());
+		this->tb->add_group(group);
 
-		connect(window_tools, SIGNAL(triggered(QAction *)), this, SLOT(menu_cb(QAction *)));
+		connect(group, SIGNAL(triggered(QAction *)), this, SLOT(layer_tools_cb(QAction *)));
 	}
 
 
 	{
 		for (LayerType i = LayerType::AGGREGATE; i < LayerType::NUM_TYPES; ++i) {
 
+			if (!Layer::get_interface(i)->tools_count) {
+				continue;
+			}
+			this->tool_bar->addSeparator();
+			this->menu_tools->addSeparator();
+
 			QActionGroup * group = new QActionGroup(this);
-			QString name(Layer::get_interface(i)->fixed_layer_name);
+			QString name(Layer::get_interface(i)->name);
 			group->setObjectName(name);
 
-			for (unsigned int j = 0; j < Layer::get_interface(i)->tools_count; j++) {
+			unsigned int j = 0;
+			for (j = 0; j < Layer::get_interface(i)->tools_count; j++) {
 
 				LayerTool * layer_tool = Layer::get_interface(i)->layer_tool_constructors[j](this, this->viewport);
 				QAction * qa = this->tb->add_tool(layer_tool);
@@ -664,9 +700,11 @@ void Window::create_ui(void)
 				assert (layer_tool->layer_type == i);
 			}
 			this->tool_bar->addActions(group->actions());
-			this->tb->add_layer_tools(group);
+			this->menu_tools->addActions(group->actions());
+			this->tb->add_group(group);
+			this->tb->set_group_disabled(name);
 
-			connect(group, SIGNAL(triggered(QAction *)), this, SLOT(menu_cb(QAction *)));
+			connect(group, SIGNAL(triggered(QAction *)), this, SLOT(layer_tools_cb(QAction *)));
 		}
 	}
 
@@ -846,29 +884,56 @@ void Window::create_ui(void)
 
 
 
-void Window::menu_cb(QAction * qa)
+void Window::layer_tools_cb(QAction * qa)
 {
-	// Ensure Toolbar kept in sync
-	QString name = qa->objectName();
-	//toolbar_sync(window, name, true);
+	QString tool_name = qa->objectName();
+	QString group_name = qa->actionGroup()->objectName();
+
+	if (qa->actionGroup()->objectName() == "window") {
+		/* User selected tool in "window" group, but that is not a good reason to
+		   disable whole layer-specific group. Only deactivate the old tool. */
+	} else {
+		/* This can happen only of we are switching from tool in
+		   "window" group to tool in a layer group. */
+		qDebug() << "Window: switching from \"window\" tool to" << group_name << "tool";
+	}
+
+
+	QAction * old_action = this->tb->get_active_tool();
+	assert (old_action);
+	if (old_action) {
+		qDebug() << "Window: deactivating old action" << old_action;
+		this->tb->deactivate_tool(old_action);
+	} else {
+		qDebug() << "ERROR: Window: no old action found";
+		return;
+	}
+
+
+	QAction * first_action = this->tb->set_group_enabled(group_name);
+	if (first_action) {
+		this->tb->activate_tool(first_action);
+	} else {
+		this->tb->activate_tool(qa);
+	}
 
 	/* White Magic, my friends ... White Magic... */
 	int tool_id;
-	this->tb->activate_layer_tools(qa);
-	this->viewport->setCursor(*this->tb->get_cursor_release(name));
 
-	if (name == "Pan") {
+	this->viewport->setCursor(*this->tb->get_cursor_release(tool_name));
+
+	if (group_name == "Pan") {
 		this->current_tool = TOOL_PAN;
-	} else if (name == "Zoom") {
+	} else if (tool_name == "Zoom") {
 		this->current_tool = TOOL_ZOOM;
-	} else if (name == "Ruler") {
+	} else if (tool_name == "Ruler") {
 		this->current_tool = TOOL_RULER;
-	} else if (name == "Select") {
+	} else if (tool_name == "Select") {
 		this->current_tool = TOOL_SELECT;
 	} else {
 		for (LayerType layer_type = LayerType::AGGREGATE; layer_type < LayerType::NUM_TYPES; ++layer_type) {
 			for (tool_id = 0; tool_id < Layer::get_interface(layer_type)->tools_count; tool_id++) {
-				if (Layer::get_interface(layer_type)->layer_tools[tool_id]->radioActionEntry.name == name) {
+				if (Layer::get_interface(layer_type)->layer_tools[tool_id]->radioActionEntry.name == tool_name) {
 					this->current_tool = TOOL_LAYER;
 					this->tool_layer_type = layer_type;
 					this->tool_tool_id = tool_id;
