@@ -50,7 +50,7 @@
 #endif
 
 #include "vikviewport.h"
-#include "window_qt.h"
+#include "window.h"
 #include "coords.h"
 #ifndef SLAVGPS_QT
 #include "window.h"
