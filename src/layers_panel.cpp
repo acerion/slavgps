@@ -47,7 +47,7 @@
 #include "window.h"
 #endif
 
-#include "window_qt.h"
+#include "window.h"
 
 
 
