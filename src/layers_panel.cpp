@@ -755,8 +755,7 @@ bool LayersPanel::properties()
 void LayersPanel::draw_all()
 {
 	if (this->viewport && this->toplayer->visible) {
-		Layer * layer = (Layer *) this->toplayer;
-		layer->draw(this->viewport);
+		this->toplayer->draw(this->viewport);
 	}
 }
 
