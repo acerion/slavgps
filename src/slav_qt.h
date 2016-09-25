@@ -10,6 +10,8 @@
 
 
 #ifdef SLAVGPS_QT
+typedef int VikLayer;
+
 typedef int GdkGC;
 typedef int GdkFont;
 typedef int GdkColor;
