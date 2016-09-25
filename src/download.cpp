@@ -29,6 +29,9 @@
 #include <cstdlib>
 #include <cctype>
 #include <cstring>
+#include <mutex>
+#include <algorithm>
+#include <string>
 
 #include <errno.h>
 
@@ -136,8 +139,8 @@ bool a_check_kml_file(FILE* f)
 
 
 
-static GList *file_list = NULL;
-static GMutex *file_list_mutex = NULL;
+static std::list<std::string> file_list;
+static std::mutex file_list_mutex;
 
 
 
@@ -150,7 +153,7 @@ static LayerParamScale params_scales[] = {
 
 
 
-static LayerParamData convert_to_display(LayerParamData value)
+static LayerParamValue convert_to_display(LayerParamValue value)
 {
 	/* From seconds into days. */
 	return VIK_LPD_UINT (value.u / 86400);
@@ -159,7 +162,7 @@ static LayerParamData convert_to_display(LayerParamData value)
 
 
 
-static LayerParamData convert_to_internal(LayerParamData value)
+static LayerParamValue convert_to_internal(LayerParamValue value)
 {
 	/* From days into seconds. */
 	return VIK_LPD_UINT (86400 * value.u);
@@ -177,11 +180,10 @@ static LayerParam prefs[] = {
 
 void a_download_init(void)
 {
-	LayerParamData tmp;
+	LayerParamValue tmp;
 	tmp.u = VIK_CONFIG_DEFAULT_TILE_AGE / 86400; /* Now in days. */
 #if 0
 	a_preferences_register(prefs, tmp, VIKING_PREFERENCES_GROUP_KEY);
-	file_list_mutex = vik_mutex_new();
 #endif
 }
 
@@ -190,39 +192,35 @@ void a_download_init(void)
 
 void a_download_uninit(void)
 {
-#if 0
-	vik_mutex_free(file_list_mutex);
-#endif
 }
 
 
 
 
-static bool lock_file(char const * fn)
+static bool lock_file(const std::string & fn)
 {
 	bool locked = false;
-#if 0
-	g_mutex_lock(file_list_mutex);
-#endif
-	if (g_list_find_custom(file_list, fn, (GCompareFunc)g_strcmp0) == NULL) {
+
+	file_list_mutex.lock();
+	auto found = std::find(file_list.begin(), file_list.end(), fn);
+	if (found == file_list.end()) {
 		/* The filename is not yet locked. */
-		file_list = g_list_append(file_list, (void *)fn),
-			locked = true;
+		file_list.push_back(fn);
+		locked = true;
 	}
-#if 0
-	g_mutex_unlock(file_list_mutex);
-#endif
+	file_list_mutex.unlock();
+
 	return locked;
 }
 
 
 
 
-static void unlock_file(char const * fn)
+static void unlock_file(const std::string & fn)
 {
-	g_mutex_lock(file_list_mutex);
-	file_list = g_list_remove(file_list, (gconstpointer)fn);
-	g_mutex_unlock(file_list_mutex);
+	file_list_mutex.lock();
+	std::remove(file_list.begin(), file_list.end(), fn);
+	file_list_mutex.unlock();
 }
 
 
@@ -450,14 +448,14 @@ static void set_etag(char const * fn, char const * fntmp, CurlDownloadOptions * 
 
 
 
-static DownloadResult_t download(char const * hostname, char const * uri, char const * fn, DownloadFileOptions * options, bool ftp, void * handle)
+static DownloadResult_t download(char const * hostname, char const * uri, const std::string & fn, DownloadFileOptions * options, bool ftp, void * handle)
 {
 	int ret;
 	bool failure = false;
 	CurlDownloadOptions cdo = {0, NULL, NULL};
 
 	/* Check file. */
-	if (g_file_test(fn, G_FILE_TEST_EXISTS) == true) {
+	if (g_file_test(fn.c_str(), G_FILE_TEST_EXISTS) == true) {
 		if (options == NULL
 		    || (!options->check_file_server_time
 			&& !options->use_etag)) {
@@ -468,7 +466,7 @@ static DownloadResult_t download(char const * hostname, char const * uri, char c
 		time_t tile_age = 365; //a_preferences_get(VIKING_PREFERENCES_NAMESPACE "download_tile_age")->u;
 		/* Get the modified time of this file. */
 		GStatBuf buf;
-		(void)g_stat(fn, &buf);
+		(void)g_stat(fn.c_str(), &buf);
 		time_t file_time = buf.st_mtime;
 		if ((time(NULL) - file_time) < tile_age) {
 			/* File cache is too recent, so return. */
@@ -479,31 +477,29 @@ static DownloadResult_t download(char const * hostname, char const * uri, char c
 			cdo.time_condition = file_time;
 		}
 		if (options != NULL && options->use_etag) {
-			get_etag(fn, &cdo);
+			get_etag(fn.c_str(), &cdo);
 		}
 
 	} else {
-		char *dir = g_path_get_dirname(fn);
+		char *dir = g_path_get_dirname(fn.c_str());
 		if (g_mkdir_with_parents(dir , 0777) != 0) {
 			fprintf(stderr, "WARNING: %s: Failed to mkdir %s\n", __FUNCTION__, dir);
 		}
 		free(dir);
 	}
 
-	char * tmpfilename = g_strdup_printf("%s.tmp", fn);
+	std::string tmpfilename = fn + ".tmp";
 	if (!lock_file(tmpfilename)) {
-		fprintf(stderr, "DEBUG: %s: Couldn't take lock on temporary file \"%s\"\n", __FUNCTION__, tmpfilename);
-		free(tmpfilename);
+		fprintf(stderr, "DEBUG: %s: Couldn't take lock on temporary file \"%s\"\n", __FUNCTION__, tmpfilename.c_str());
 		if (options->use_etag) {
 			free(cdo.etag);
 		}
 		return DOWNLOAD_FILE_WRITE_ERROR;
 	}
 
-	FILE * f = fopen(tmpfilename, "w+b");  /* Truncate file and open it. */
+	FILE * f = fopen(tmpfilename.c_str(), "w+b");  /* Truncate file and open it. */
 	if (!f) {
-		fprintf(stderr, "WARNING: Couldn't open temporary file \"%s\": %s\n", tmpfilename, g_strerror(errno));
-		free(tmpfilename);
+		fprintf(stderr, "WARNING: Couldn't open temporary file \"%s\": %s\n", tmpfilename.c_str(), g_strerror(errno));
 		if (options->use_etag) {
 			free(cdo.etag);
 		}
@@ -531,12 +527,11 @@ static DownloadResult_t download(char const * hostname, char const * uri, char c
 	f = NULL;
 
 	if (failure) {
-		fprintf(stderr, _("WARNING: Download error: %s\n"), fn);
-		if (remove(tmpfilename) != 0) {
-			fprintf(stderr, _("WARNING: Failed to remove: %s\n"), tmpfilename);
+		fprintf(stderr, _("WARNING: Download error: %s\n"), fn.c_str());
+		if (remove(tmpfilename.c_str()) != 0) {
+			fprintf(stderr, _("WARNING: Failed to remove: %s\n"), tmpfilename.c_str());
 		}
-		unlock_file (tmpfilename);
-		free(tmpfilename);
+		unlock_file(tmpfilename);
 		if (options != NULL && options->use_etag) {
 			free(cdo.etag);
 			free(cdo.new_etag);
@@ -545,31 +540,30 @@ static DownloadResult_t download(char const * hostname, char const * uri, char c
 	}
 
 	if (ret == CURL_DOWNLOAD_NO_NEWER_FILE)  {
-		(void) remove(tmpfilename);
+		(void) remove(tmpfilename.c_str());
 		/* Wpdate mtime of local copy.
 		   Not security critical, thus potential Time of Check Time of Use race condition is not bad.
 		   coverity[toctou] */
-		if (g_utime (fn, NULL) != 0)
-			fprintf(stderr, "WARNING: %s couldn't set time on: %s\n", __FUNCTION__, fn);
+		if (g_utime(fn.c_str(), NULL) != 0)
+			fprintf(stderr, "WARNING: %s couldn't set time on: %s\n", __FUNCTION__, fn.c_str());
 	} else {
 		if (options != NULL && options->convert_file) {
-			options->convert_file (tmpfilename);
+			options->convert_file((char *) tmpfilename.c_str());
 		}
 
 		if (options != NULL && options->use_etag) {
 			if (cdo.new_etag) {
 				/* Server returned an etag value. */
-				set_etag(fn, tmpfilename, &cdo);
+				set_etag(fn.c_str(), tmpfilename.c_str(), &cdo);
 			}
 		}
 
 		/* Move completely-downloaded file to permanent location. */
-		if (g_rename(tmpfilename, fn)) {
-			fprintf(stderr, "WARNING: %s: file rename failed [%s] to [%s]\n", __FUNCTION__, tmpfilename, fn);
+		if (g_rename(tmpfilename.c_str(), fn.c_str())) {
+			fprintf(stderr, "WARNING: %s: file rename failed [%s] to [%s]\n", __FUNCTION__, tmpfilename.c_str(), fn.c_str());
 		}
 	}
-	unlock_file (tmpfilename);
-	free(tmpfilename);
+	unlock_file(tmpfilename);
 
 	if (options != NULL && options->use_etag) {
 		free(cdo.etag);
@@ -585,7 +579,7 @@ static DownloadResult_t download(char const * hostname, char const * uri, char c
  * uri: like "/uri.html?whatever"
  * Only reason for the "wrapper" is so we can do redirects.
  */
-DownloadResult_t a_http_download_get_url(char const * hostname, char const * uri, char const * fn, DownloadFileOptions * opt, void * handle)
+DownloadResult_t a_http_download_get_url(char const * hostname, char const * uri, const std::string & fn, DownloadFileOptions * opt, void * handle)
 {
 	return download(hostname, uri, fn, opt, false, handle);
 }
@@ -593,7 +587,7 @@ DownloadResult_t a_http_download_get_url(char const * hostname, char const * uri
 
 
 
-DownloadResult_t a_ftp_download_get_url(char const * hostname, char const * uri, char const * fn, DownloadFileOptions * opt, void * handle)
+DownloadResult_t a_ftp_download_get_url(char const * hostname, char const * uri, const std::string & fn, DownloadFileOptions * opt, void * handle)
 {
 	return download(hostname, uri, fn, opt, true, handle);
 }
