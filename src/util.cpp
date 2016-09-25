@@ -242,7 +242,7 @@ char * util_str_remove_chars(char * string, char const * chars)
  */
 int util_remove(char const * filename)
 {
-	if (vik_debug && vik_verbose) {
+	if (1 /* vik_debug && vik_verbose */) {
 		fprintf(stderr, "WARNING: Not removing file: %s\n", filename);
 		return 0;
 	} else {

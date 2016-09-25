@@ -56,10 +56,11 @@ static GThreadPool *thread_pool_local = NULL;
 static GThreadPool *thread_pool_local_mapnik = NULL;
 #endif
 static bool stop_all_threads = false;
-
+#if 0
 static GtkWidget *bgwindow = NULL;
 static GtkWidget *bgtreeview = NULL;
 static GtkListStore *bgstore = NULL;
+#endif
 
 /* Still only actually updating the statusbar though. */
 static std::list<Window *> windows_to_update;

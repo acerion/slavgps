@@ -41,17 +41,19 @@
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <glib/gi18n.h>
+#include <gio/gio.h>
 
-#ifdef HAVE_MAGIC_H
+#if 1 //#ifdef HAVE_MAGIC_H // kamilFIXME: check dependency during configuration
 #include <magic.h>
 #endif
 
 #include "compression.h"
 #include "download.h"
 #include "curl_download.h"
-#include "preferences.h"
+#include "uibuilder.h"
+//#include "preferences.h"
 #include "globals.h"
-#include "vik_compat.h"
+//#include "vik_compat.h"
 
 
 
@@ -167,7 +169,7 @@ static LayerParamData convert_to_internal(LayerParamData value)
 
 
 static LayerParam prefs[] = {
-	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_NAMESPACE "download_tile_age", LayerParamType::UINT, VIK_LAYER_GROUP_NONE, N_("Tile age (days):"), LayerWidgetType::SPINBUTTON, &params_scales[0], NULL, NULL, NULL, convert_to_display, convert_to_internal },
+	{ LayerType::NUM_TYPES, 0, VIKING_PREFERENCES_NAMESPACE "download_tile_age", LayerParamType::UINT, VIK_LAYER_GROUP_NONE, N_("Tile age (days):"), LayerWidgetType::SPINBUTTON, &params_scales[0], NULL, NULL, NULL, convert_to_display, convert_to_internal },
 };
 
 
@@ -177,8 +179,10 @@ void a_download_init(void)
 {
 	LayerParamData tmp;
 	tmp.u = VIK_CONFIG_DEFAULT_TILE_AGE / 86400; /* Now in days. */
+#if 0
 	a_preferences_register(prefs, tmp, VIKING_PREFERENCES_GROUP_KEY);
 	file_list_mutex = vik_mutex_new();
+#endif
 }
 
 
@@ -186,7 +190,9 @@ void a_download_init(void)
 
 void a_download_uninit(void)
 {
+#if 0
 	vik_mutex_free(file_list_mutex);
+#endif
 }
 
 
@@ -195,13 +201,17 @@ void a_download_uninit(void)
 static bool lock_file(char const * fn)
 {
 	bool locked = false;
+#if 0
 	g_mutex_lock(file_list_mutex);
+#endif
 	if (g_list_find_custom(file_list, fn, (GCompareFunc)g_strcmp0) == NULL) {
 		/* The filename is not yet locked. */
 		file_list = g_list_append(file_list, (void *)fn),
 			locked = true;
 	}
+#if 0
 	g_mutex_unlock(file_list_mutex);
+#endif
 	return locked;
 }
 
@@ -455,7 +465,7 @@ static DownloadResult_t download(char const * hostname, char const * uri, char c
 			return DOWNLOAD_NOT_REQUIRED;
 		}
 
-		time_t tile_age = a_preferences_get(VIKING_PREFERENCES_NAMESPACE "download_tile_age")->u;
+		time_t tile_age = 365; //a_preferences_get(VIKING_PREFERENCES_NAMESPACE "download_tile_age")->u;
 		/* Get the modified time of this file. */
 		GStatBuf buf;
 		(void)g_stat(fn, &buf);

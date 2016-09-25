@@ -29,7 +29,11 @@ SOURCES += main.cpp \
     srtm_continent.cpp \
     compression.cpp \
     fileutils.cpp \
-    file.cpp
+    util.cpp \
+    file.cpp \
+    background.cpp \
+    download.cpp \
+    curl_download.cpp
 
 
 HEADERS += window.h \
@@ -55,7 +59,11 @@ HEADERS += window.h \
     dems.h \
     compression.h \
     fileutils.h \
-    file.h
+    util.h \
+    file.h \
+    background.h \
+    download.h \
+    curl_download.h
 
 
 # For glib library.
@@ -67,4 +75,4 @@ DEFINES += SLAVGPS_QT HAVE_CONFIG_H
 
 
 QMAKE_CXXFLAGS += -std=c++11 -Wno-unused -g -O0
-QMAKE_LFLAGS += -lm -lbz2
+QMAKE_LFLAGS += -lm -lbz2 -lmagic -lcurl

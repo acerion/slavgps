@@ -130,7 +130,7 @@ int curl_download_uri(const char * uri, FILE * f, DownloadFileOptions * options,
 	if (!curl) {
 		return CURL_DOWNLOAD_ERROR;
 	}
-	if (vik_verbose) {
+	if (1 /* vik_verbose */) {
 		curl_easy_setopt (curl, CURLOPT_VERBOSE, 1);
 	}
 	curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1); /* Yep, we're a multi-threaded program so don't let signals mess it up! */
