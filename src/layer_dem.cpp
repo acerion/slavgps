@@ -56,6 +56,7 @@
 #include "vik_compat.h"
 #endif
 #include "globals.h"
+#include "download.h"
 
 
 
@@ -69,7 +70,8 @@ using namespace SlavGPS;
 #define MAPS_CACHE_DIR_2 maps_layer_default_dir_2()
 #else
 #define MAPS_CACHE_DIR "/home/kamil/.viking-maps/"
-#define MAPS_CACHE_DIR_2 QString("/home/kamil/.viking-maps/");
+#define MAPS_CACHE_DIR_2 QString("/home/kamil/.viking-maps/")
+#define MAPS_CACHE_DIR_3 std::string("/home/kamil/.viking-maps/")
 #endif
 
 #define SRTM_CACHE_TEMPLATE "%ssrtm3-%s%s%c%02d%c%03d.hgt.zip"
@@ -108,17 +110,6 @@ static char *params_type[] = {
 	(char *) N_("Absolute height"),
 	(char *) N_("Height gradient"),
 	NULL
-};
-
-enum { DEM_SOURCE_SRTM,
-#ifdef VIK_CONFIG_DEM24K
-       DEM_SOURCE_DEM24K,
-#endif
-};
-
-enum { DEM_TYPE_HEIGHT = 0,
-       DEM_TYPE_GRADIENT,
-       DEM_TYPE_NONE,
 };
 
 
@@ -1059,20 +1050,24 @@ static void srtm_dem_download_thread(DEMDownloadParams * p, void * threaddata)
 				       ABS(intlat),
 				       (intlon >= 0) ? 'E' : 'W',
 				       ABS(intlon));
-#if 0
+#if 1
 	static DownloadFileOptions options = { false, false, NULL, 0, a_check_map_file, NULL, NULL };
 	DownloadResult_t result = a_http_download_get_url(SRTM_HTTP_SITE, src_fn, p->dest.c_str(), &options, NULL);
 	switch (result) {
 	case DOWNLOAD_CONTENT_ERROR:
 	case DOWNLOAD_HTTP_ERROR: {
 		char *msg = g_strdup_printf(_("DEM download failure for %f, %f"), p->lat, p->lon);
+#if 0
 		p->layer->get_window()->statusbar_update(msg, VIK_STATUSBAR_INFO);
+#endif
 		free(msg);
 		break;
 	}
 	case DOWNLOAD_FILE_WRITE_ERROR: {
 		char *msg = g_strdup_printf(_("DEM write failure for %s"), p->dest.c_str());
+#if 0
 		p->layer->get_window()->statusbar_update(msg, VIK_STATUSBAR_INFO);
+#endif
 		free(msg);
 		break;
 	}
@@ -1098,6 +1093,7 @@ static char *srtm_lat_lon_to_dest_fn(double lat, double lon)
 	continent_dir = srtm_continent_dir(intlat, intlon);
 
 	if (!continent_dir) {
+		qDebug() << "NN: Layer DEM: didn't hit any continent and coordinates" << lat << lon;
 		continent_dir = "nowhere";
 	}
 
@@ -1448,9 +1444,12 @@ bool LayerDEM::download_release(QMouseEvent * event, LayerTool * tool)
 	tool->viewport->screen_to_coord(event->x(), event->y(), &coord);
 	vik_coord_to_latlon(&coord, &ll);
 
+	qDebug() << "II: Layer DEM: received release event, processing (coord" << ll.lat << ll.lon << ")";
+
 
 	char * dem_file = NULL;
 	if (this->source == DEM_SOURCE_SRTM) {
+		qDebug() << "II: Layer DEM: SRTM";
 		dem_file = srtm_lat_lon_to_dest_fn(ll.lat, ll.lon);
 #ifdef VIK_CONFIG_DEM24K
 	} else if (this->source == DEM_SOURCE_DEM24K) {
@@ -1459,16 +1458,18 @@ bool LayerDEM::download_release(QMouseEvent * event, LayerTool * tool)
 	}
 
 	if (!dem_file) {
+		qDebug() << "NN: Layer DEM: received click event, but no dem file";
 		return true;
 	}
 
-#if 0
+#if 1
 	if (event->button() == Qt::LeftButton) {
-		std::string dem_full_path = std::string(MAPS_CACHE_DIR_2 + std::string(dem_file));
-		fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, dem_full_path.c_str());
+		std::string dem_full_path = std::string(MAPS_CACHE_DIR_3 + std::string(dem_file));
+		qDebug() << "II: Layer DEM: release left button, path is" << dem_full_path.c_str();
 
 		/* TODO: check if already in filelist. */
 		if (!this->add_file(dem_full_path)) {
+			qDebug() << "II: Layer DEM: release left button, failed to add the file, downloading it";
 			char * tmp = g_strdup_printf(_("Downloading DEM %s"), dem_file);
 			DEMDownloadParams * p = new DEMDownloadParams(dem_full_path, &ll, this);
 
@@ -1479,9 +1480,12 @@ bool LayerDEM::download_release(QMouseEvent * event, LayerTool * tool)
 
 			free(tmp);
 		} else {
+			qDebug() << "II: Layer DEM: release left button, successfully added the file, emitting update";
 			this->emit_update();
 		}
 	} else {
+		qDebug() << "II: Layer DEM: release right button";
+#if 0
 		if (!this->right_click_menu) {
 			this->right_click_menu = GTK_MENU (gtk_menu_new());
 
@@ -1493,6 +1497,7 @@ bool LayerDEM::download_release(QMouseEvent * event, LayerTool * tool)
 
 		gtk_menu_popup(this->right_click_menu, NULL, NULL, NULL, NULL, event->button, event->time);
 		gtk_widget_show_all(GTK_WIDGET(this->right_click_menu));
+#endif
 	}
 #endif
 
@@ -1509,6 +1514,7 @@ static bool dem_layer_download_click(Layer * vdl, QMouseEvent * event, LayerTool
 	/* Choose & keep track of cache dir.
 	 * Download in background thread.
 	 * Download over area. */
+	qDebug() << "II: Layer DEM: received click event, ignoring";
 	return true;
 }
 
