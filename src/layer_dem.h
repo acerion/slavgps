@@ -39,6 +39,20 @@ namespace SlavGPS {
 
 
 
+	enum { DEM_SOURCE_SRTM,
+#ifdef VIK_CONFIG_DEM24K
+	       DEM_SOURCE_DEM24K,
+#endif
+	};
+
+	enum { DEM_TYPE_HEIGHT = 0,
+	       DEM_TYPE_GRADIENT,
+	       DEM_TYPE_NONE,
+	};
+
+
+
+
 	class LayerDEM : public Layer {
 	public:
 		LayerDEM();
@@ -57,17 +71,17 @@ namespace SlavGPS {
 		static void weak_ref_cb(void * ptr, GObject * dead_vdl);
 
 		QPen pen;
-		QColor ** colors;
-		QColor ** gradients;
-		std::list<char *> * files;
-		double min_elev;
-		double max_elev;
+		QColor ** colors = NULL;
+		QColor ** gradients = NULL;
+		std::list<char *> * files = NULL;
+		double min_elev = 0;
+		double max_elev = 0;
 		QColor base_color; /* Minimum elevation color, selected in layer's properties window. */
-		unsigned int source;
-		unsigned int dem_type;
+		unsigned int source = DEM_SOURCE_SRTM;
+		unsigned int dem_type = DEM_TYPE_HEIGHT;
 
 		/* right click menu only stuff - similar to LayerMaps. */
-		GtkMenu * right_click_menu;
+		GtkMenu * right_click_menu = NULL;
 	};
 
 
