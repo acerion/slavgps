@@ -361,25 +361,26 @@ QCursor const * LayerToolsBox::get_cursor_release(QString & tool_name)
 void LayerToolsBox::click(QMouseEvent * event)
 {
 	Layer * layer = this->window->layers_panel->get_selected_layer();
-	fprintf(stderr, "LAYER TOOLS: click received\n");
-#if 1
 	if (!layer) {
-		fprintf(stderr, "LAYER TOOLS: click received, no layer\n");
+		qDebug() << "EE: Layer Tools: click received, no layer";
 		return;
 	}
-#endif
+
+	qDebug() << "II: Layer Tools: click received, selected layer" << layer->type_string;
 
 	if (this->active_tool && this->active_tool->click) {
 		LayerType ltype = this->active_tool->layer_type;
-		if (ltype == LayerType::NUM_TYPES || (layer && ltype == layer->type)) {
-			fprintf(stderr, "LAYER TOOLS: click received, passing to Tool\n");
+		if (ltype == LayerType::NUM_TYPES /* Generic tool. */
+		    || (layer && ltype == layer->type)) { /* Layer-specific tool. */
+
+			qDebug() << "II: Layer Tools: click received, will pass it to tool" << this->active_tool->radioActionEntry.name << "for layer" << layer->type_string;
 			this->active_tool->viewport->setCursor(*this->active_tool->cursor_click);
 			this->active_tool->click(layer, event, this->active_tool);
 		} else {
-			fprintf(stderr, "LAYER TOOLS: !condition 2\n");
+			qDebug() << "EE: Layer Tools: click received, condition 2 failed";
 		}
 	} else {
-		fprintf(stderr, "LAYER TOOLS: !condition 1\n");
+		qDebug() << "EE: Layer Tools: click received, condition 1 failed";
 	}
 }
 
@@ -415,22 +416,26 @@ void LayerToolsBox::move(QMouseEvent * event)
 
 void LayerToolsBox::release(QMouseEvent * event)
 {
-	fprintf(stderr, "LAYER TOOLS: release received\n");
-
 	Layer * layer = this->window->layers_panel->get_selected_layer();
-#if 1
 	if (!layer) {
 		return;
 	}
-#endif
+
+	qDebug() << "II: Layer Tools: release received, selected layer" << layer->type_string;
 
 	if (this->active_tool && this->active_tool->release) {
 		LayerType ltype = this->active_tool->layer_type;
-		if (ltype == LayerType::NUM_TYPES || (layer && ltype == layer->type)) {
-			fprintf(stderr, "LAYER TOOLS: release received, passing to tool\n");
+		if (ltype == LayerType::NUM_TYPES /* Generic tool. */
+		    || (layer && ltype == layer->type)) { /* Layer-specific tool. */
+
+			qDebug() << "II: Layer Tools: release received, will pass it to tool" << this->active_tool->radioActionEntry.name << "for layer" << layer->type_string;
 			this->active_tool->viewport->setCursor(*this->active_tool->cursor_release);
 			this->active_tool->release(layer, event, this->active_tool);
+		} else {
+			qDebug() << "EE: Layer Tools: release received, condition 2 failed";
 		}
+	} else {
+		qDebug() << "EE: Layer Tools: release received, condition 1 failed";
 	}
 }
 
