@@ -1273,9 +1273,13 @@ static void dem24k_draw_existence(Viewport * viewport)
 void LayerDEM::weak_ref_cb(void * ptr, GObject * dead_vdl)
 {
 	DEMDownloadParams * p = (DEMDownloadParams *) ptr;
+#if 0
 	g_mutex_lock(p->mutex);
+#endif
 	p->layer = NULL;
+#if 0
 	g_mutex_unlock(p->mutex);
+#endif
 }
 
 /* Try to add file full_path.
@@ -1317,7 +1321,9 @@ static void dem_download_thread(DEMDownloadParams * p, void * threaddata)
 	}
 
 	//gdk_threads_enter();
+#if 0
 	g_mutex_lock(p->mutex);
+#endif
 	if (p->layer) {
 		p->layer->weak_unref(LayerDEM::weak_ref_cb, p);
 
@@ -1325,7 +1331,9 @@ static void dem_download_thread(DEMDownloadParams * p, void * threaddata)
 			p->layer->emit_update(); /* NB update from background thread. */
 		}
 	}
+#if 0
 	g_mutex_unlock(p->mutex);
+#endif
 	//gdk_threads_leave();
 }
 
