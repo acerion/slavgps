@@ -28,6 +28,7 @@
 
 #include <cstdio>
 #include <cstdint>
+#include <string>
 
 
 
@@ -98,8 +99,8 @@ typedef enum {
 
 
 
-DownloadResult_t a_http_download_get_url(char const * hostname, char const * uri, char const * fn, DownloadFileOptions * opt, void * handle);
-DownloadResult_t a_ftp_download_get_url(char const * hostname, char const * uri, char const * fn, DownloadFileOptions * opt, void * handle);
+DownloadResult_t a_http_download_get_url(char const * hostname, char const * uri, const std::string & fn, DownloadFileOptions * opt, void * handle);
+DownloadResult_t a_ftp_download_get_url(char const * hostname, char const * uri, const std::string & fn, DownloadFileOptions * opt, void * handle);
 void * a_download_handle_init();
 void a_download_handle_cleanup(void * handle);
 
