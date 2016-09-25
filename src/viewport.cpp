@@ -488,7 +488,7 @@ bool Viewport::configure()
 
 	this->pen_marks_fg.setColor(QColor("grey"));
 	this->pen_marks_fg.setWidth(2);
-	this->pen_marks_bg.setColor(QColor("white"));
+	this->pen_marks_bg.setColor(QColor("pink"));
 	this->pen_marks_bg.setWidth(6);
 
 #if 0
