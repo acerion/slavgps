@@ -53,7 +53,7 @@ static Layer * aggregate_layer_unmarshall(uint8_t * data, int len, Viewport * vi
 
 
 
-VikLayerInterface vik_aggregate_layer_interface = {
+LayerInterface vik_aggregate_layer_interface = {
 	"Aggregate",
 	N_("Aggregate"),
 	"<control><shift>A",
@@ -1068,8 +1068,10 @@ char const * LayerAggregate::tooltip()
 
 LayerAggregate::LayerAggregate()
 {
+	qDebug() << "II: LayerAggregate::LayerAggregate()";
+
 	this->type = LayerType::AGGREGATE;
-	strcpy(this->type_string, "AGGREGATE");
+	strcpy(this->type_string, "LayerType::AGGREGATE");
 	this->configure_interface(&vik_aggregate_layer_interface, NULL);
 
 	this->rename(vik_aggregate_layer_interface.name);

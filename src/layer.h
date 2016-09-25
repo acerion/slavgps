@@ -28,30 +28,18 @@
 #include <cstdint>
 #include <map>
 
-#include <glib.h>
-#ifdef SLAVGPS_QT
 #include <QObject>
 #include <QTreeWidgetItem>
 #include <QStandardItem>
 #include <QIcon>
 #include <QMouseEvent>
 #include <QCursor>
-#else
-#include <gtk/gtk.h>
-#include <gdk-pixbuf/gdk-pixdata.h>
-#endif
 
 #include "uibuilder.h"
 #include "tree_view.h"
-#ifdef SLAVGPS_QT
 #include "slav_qt.h"
-#endif
 #include "viewport.h"
 #include "globals.h"
-
-
-
-typedef GObject VikLayer;
 
 
 
@@ -88,9 +76,9 @@ typedef enum {
 
 
 
-typedef struct _VikLayerInterface VikLayerInterface;
-typedef VikLayerInterface LayerInterface;
+typedef struct _LayerInterface LayerInterface;
 typedef int16_t layer_param_id_t;
+
 
 
 
@@ -146,7 +134,6 @@ namespace SlavGPS {
 	public:
 
 		Layer();
-		Layer(VikLayer * vl);
 		~Layer();
 
 		static void    marshall(Layer * layer, uint8_t ** data, int * len);
@@ -264,8 +251,8 @@ namespace SlavGPS {
 
 
 		char * name = NULL;
-		bool visible;
-		bool realized;
+		bool visible = true;
+		bool realized = false;
 		Viewport * viewport = NULL;  /* Simply a reference. */
 		TreeView * tree_view = NULL; /* Simply a reference. */
 		GtkTreeIter iter;
@@ -274,15 +261,12 @@ namespace SlavGPS {
 		/* For explicit "polymorphism" (function type switching). */
 		LayerType type;
 
-
-		GObject * vl;
-
-		char type_string[10];
+		char type_string[30] = { 0 };
 
 	protected:
 		virtual void marshall(uint8_t ** data, int * len);
 
-		VikLayerInterface * interface = NULL;
+		LayerInterface * interface = NULL;
 
 	public slots:
 		void visibility_toggled(QStandardItem * item);
@@ -387,7 +371,7 @@ typedef void                     (* VikLayerFuncChangeParam)   (GtkWidget *, ui_
 
 
 /* See vik_layer_* for function parameter names. */
-struct _VikLayerInterface {
+struct _LayerInterface {
 	const char *                      fixed_layer_name; /* Used in .vik files - this should never change to maintain file compatibility. */
 	const char *                      name;             /* Translate-able name used for display purposes. */
 	const char *                      accelerator;
@@ -420,7 +404,6 @@ struct _VikLayerInterface {
 
 /* GUI. */
 uint16_t vik_layer_get_menu_items_selection(SlavGPS::Layer * layer);
-bool vik_layer_properties(SlavGPS::Layer * layer, SlavGPS::Viewport * viewport);
 
 
 /* TODO: put in layerspanel. */

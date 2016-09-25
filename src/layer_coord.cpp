@@ -95,7 +95,7 @@ static LayerParam coord_layer_params[] = {
 
 
 
-VikLayerInterface vik_coord_layer_interface = {
+LayerInterface vik_coord_layer_interface = {
 	"Coord",
 	N_("Coordinate"),
 	NULL,
@@ -434,11 +434,9 @@ void LayerCoord::draw_utm(Viewport * viewport)
 
 
 
-
 LayerCoord::~LayerCoord()
 {
 }
-
 
 
 
@@ -451,12 +449,13 @@ void LayerCoord::update_gc(Viewport * viewport)
 
 
 
+
 LayerCoord::LayerCoord()
 {
-	fprintf(stderr, "LayerCoord()\n");
+	qDebug() << "II: LayerCoord::LayerCoord()";
 
 	this->type = LayerType::COORD;
-	strcpy(this->type_string, "COORD");
+	strcpy(this->type_string, "LayerType::COORD");
 	this->configure_interface(&vik_coord_layer_interface, coord_layer_params);
 
 	this->color.setNamedColor("black");

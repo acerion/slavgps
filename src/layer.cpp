@@ -388,7 +388,7 @@ Layer * Layer::new_(LayerType layer_type, Viewport * viewport, bool interactive)
 	assert (layer);
 
 	if (interactive) {
-		if (vik_layer_properties(layer, viewport)) {
+		if (layer->properties_dialog(viewport)) {
 			/* We translate the name here in order to avoid translating name set by user. */
 			layer->rename(_(layer->get_interface()->name));
 		} else {
@@ -404,7 +404,7 @@ Layer * Layer::new_(LayerType layer_type, Viewport * viewport, bool interactive)
 
 
 
-/* Returns true if OK was pressed. */
+
 bool vik_layer_properties(Layer * layer, Viewport * viewport)
 {
 #ifndef SLAVGPS_QT
@@ -666,6 +666,7 @@ GdkPixbuf * vik_layer_load_icon(LayerType layer_type)
 
 
 
+/* Returns true if OK was pressed. */
 bool Layer::properties_dialog(Viewport * viewport)
 {
 	qDebug() << "II: Layer: opening properties dialog for layer" << this->get_interface(this->type)->fixed_layer_name;
@@ -860,30 +861,9 @@ void Layer::set_defaults(Viewport * viewport)
 
 Layer::Layer()
 {
-	fprintf(stderr, "Layer::Layer()\n");
+	qDebug() << "II: Layer::Layer()";
 
-	this->name = NULL;
-	this->visible = true;
-	this->realized = false;
-
-	this->tree_view = NULL;
-
-	fprintf(stderr, "setting iter\n");
-	memset(&this->iter, 0, sizeof (this->iter));
-
-	strcpy(this->type_string, "LAST");
-#ifndef SLAVGPS_QT
-	this->vl = (VikLayer *) g_object_new(G_TYPE_OBJECT, NULL);
-	g_object_set_data((GObject *) this->vl, "layer", this);
-#endif
-}
-
-
-
-
-Layer::Layer(VikLayer * vl_) : Layer()
-{
-	fprintf(stderr, "Layer::Layer(vl)\n");
+	strcpy(this->type_string, "LayerType::NUM_TYPES");
 }
 
 
