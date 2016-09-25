@@ -1112,6 +1112,12 @@ LayerTool::LayerTool(Window * window, Viewport * viewport, LayerType layer_type)
 	this->window = window;
 	this->viewport = viewport;
 	this->layer_type = layer_type;
+	if (layer_type == LayerType::NUM_TYPES) {
+		strcpy(this->layer_type_string, "LayerType::generic");
+	} else {
+		strcpy(this->layer_type_string, "LayerType::");
+		strcpy(this->layer_type_string + 11, Layer::get_interface(layer_type)->fixed_layer_name);
+	}
 }
 
 

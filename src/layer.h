@@ -335,6 +335,7 @@ namespace SlavGPS {
 		zoom_tool_state_t * zoom = NULL;
 
 		LayerType layer_type;
+		char layer_type_string[30];
 	};
 
 
