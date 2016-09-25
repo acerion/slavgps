@@ -19,6 +19,7 @@ typedef int GtkWindow;
 typedef int GtkWidget;
 typedef void GdkPixbuf;
 typedef void GdkFunction;
+typedef int GtkDialog;
 typedef int PangoLayout;
 typedef int GdkPixmap;
 typedef int GtkDrawingArea;
