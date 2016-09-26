@@ -41,6 +41,7 @@
 #include "globals.h"
 #include "widget_color_button.h"
 #include "widget_file_list.h"
+#include "widget_radio_group.h"
 
 
 
@@ -483,9 +484,12 @@ QWidget * LayerPropertiesDialog::new_widget(LayerParam * param, LayerParamValue 
 			}
 		}
 		break;
+#endif
+
+
 	case LayerWidgetType::RADIOGROUP_STATIC:
-		if (param->type == LayerParamType::UINT && param->widget_data) {
-			rv = vik_radio_group_new_static((const char **) param->widget_data);
+#if 0
+		rv = vik_radio_group_new_static((const char **) param->widget_data);
 			if (param->extra_widget_data) { /* Map of alternate uint values for options. */
 				int i;
 				for (i = 0; ((const char **)param->widget_data)[i]; i++)
@@ -496,6 +500,19 @@ QWidget * LayerPropertiesDialog::new_widget(LayerParam * param, LayerParamValue 
 			} else if (vlpd.u) { /* Zero is already default. */
 				vik_radio_group_set_selected(VIK_RADIO_GROUP(rv), vlpd.u);
 			}
+		}
+		break;
+#else
+		if (param->type == LayerParamType::UINT && param->widget_data) {
+			std::list<QString> labels;
+			for (int i = 0; ((const char **)param->widget_data)[i]; i++) {
+				QString label (((const char **)param->widget_data)[i]);
+				labels.push_back(label);
+			}
+			QString title("");
+			SGRadioGroup * widget_ = new SGRadioGroup(title, labels, this);
+
+			widget = widget_;
 		}
 		break;
 #endif
@@ -659,14 +676,14 @@ LayerParamValue LayerPropertiesDialog::get_param_value(layer_param_id_t id, Laye
 			fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, rv.s);
 		}
 		break;
+#endif
 	case LayerWidgetType::RADIOGROUP:
 	case LayerWidgetType::RADIOGROUP_STATIC:
-		rv.u = vik_radio_group_get_selected(VIK_RADIO_GROUP(widget));
+		rv.u = ((SGRadioGroup *) widget)->value();
 		if (param->extra_widget_data) {
 			rv.u = KPOINTER_TO_UINT (g_list_nth_data((GList *) param->extra_widget_data, rv.u));
 		}
 		break;
-#endif
 	case LayerWidgetType::SPINBUTTON:
 		if (param->type == LayerParamType::UINT) {
 			rv.u = ((QSpinBox *) widget)->value();

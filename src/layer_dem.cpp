@@ -98,10 +98,10 @@ static LayerParamScale param_scales[] = {
 	{ 1, 30000, 10, 1 },
 };
 
-static char *params_source[] = {
-	(char *) "SRTM Global 90m (3 arcsec)",
+static char const * params_source[] = {
+	"SRTM Global 90m (3 arcsec)",
 #ifdef VIK_CONFIG_DEM24K
-	(char *) "USA 10m (USGS 24k)",
+	"USA 10m (USGS 24k)",
 #endif
 	NULL
 };
@@ -176,9 +176,9 @@ enum {
 
 static LayerParam dem_layer_params[] = {
 	{ LayerType::DEM, PARAM_FILES,      "files",    LayerParamType::STRING_LIST, VIK_LAYER_GROUP_NONE, N_("DEM Files:"),       LayerWidgetType::FILELIST,          NULL,             NULL, NULL, NULL,             NULL, NULL },
-	//{ LayerType::DEM, PARAM_SOURCE,     "source",   LayerParamType::UINT,        VIK_LAYER_GROUP_NONE, N_("Download Source:"), LayerWidgetType::RADIOGROUP_STATIC, params_source,    NULL, NULL, source_default,   NULL, NULL },
+	{ LayerType::DEM, PARAM_SOURCE,     "source",   LayerParamType::UINT,        VIK_LAYER_GROUP_NONE, N_("Download Source:"), LayerWidgetType::RADIOGROUP_STATIC, params_source,    NULL, NULL, source_default,   NULL, NULL },
 	{ LayerType::DEM, PARAM_COLOR,      "color",    LayerParamType::COLOR,       VIK_LAYER_GROUP_NONE, N_("Min Elev Color:"),  LayerWidgetType::COLOR,             NULL,             NULL, NULL, color_default,    NULL, NULL },
-	//{ LayerType::DEM, PARAM_TYPE,       "type",     LayerParamType::UINT,        VIK_LAYER_GROUP_NONE, N_("Type:"),            LayerWidgetType::RADIOGROUP_STATIC, params_type,      NULL, NULL, type_default,     NULL, NULL },
+	{ LayerType::DEM, PARAM_TYPE,       "type",     LayerParamType::UINT,        VIK_LAYER_GROUP_NONE, N_("Type:"),            LayerWidgetType::RADIOGROUP_STATIC, params_type,      NULL, NULL, type_default,     NULL, NULL },
 	{ LayerType::DEM, PARAM_MIN_ELEV,   "min_elev", LayerParamType::DOUBLE,      VIK_LAYER_GROUP_NONE, N_("Min Elev:"),        LayerWidgetType::SPINBOX_DOUBLE,    param_scales + 0, NULL, NULL, min_elev_default, NULL, NULL },
 	{ LayerType::DEM, PARAM_MAX_ELEV,   "max_elev", LayerParamType::DOUBLE,      VIK_LAYER_GROUP_NONE, N_("Max Elev:"),        LayerWidgetType::SPINBOX_DOUBLE,    param_scales + 0, NULL, NULL, max_elev_default, NULL, NULL },
 
@@ -404,14 +404,14 @@ bool LayerDEM::set_param_value(uint16_t id, LayerParamValue param_value, Viewpor
 
 		break;
 
-#if 0
 	case PARAM_SOURCE:
 		this->source = param_value.u;
 		break;
+
 	case PARAM_TYPE:
 		this->dem_type = param_value.u;
 		break;
-#endif
+
 	case PARAM_MIN_ELEV:
 		/* Convert to store internally.
 		   NB file operation always in internal units (metres). */
@@ -499,20 +499,22 @@ LayerParamValue LayerDEM::get_param_value(layer_param_id_t id, bool is_file_oper
 			}
 		}
 		break;
-#if 0
+
 	case PARAM_SOURCE:
 		rv.u = this->source;
 		break;
+
 	case PARAM_TYPE:
 		rv.u = this->dem_type;
 		break;
-#endif
+
 	case PARAM_COLOR:
 		rv.c.r = this->base_color.red();
 		rv.c.g = this->base_color.green();
 		rv.c.b = this->base_color.blue();
 		rv.c.a = this->base_color.alpha();
 		break;
+
 	case PARAM_MIN_ELEV:
 		/* Convert for display in desired units.
 		   NB file operation always in internal units (metres). */
