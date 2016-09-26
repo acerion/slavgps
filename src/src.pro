@@ -33,7 +33,8 @@ SOURCES += main.cpp \
     file.cpp \
     background.cpp \
     download.cpp \
-    curl_download.cpp
+    curl_download.cpp \
+    dialog.cpp
 
 
 HEADERS += window.h \
@@ -63,7 +64,8 @@ HEADERS += window.h \
     file.h \
     background.h \
     download.h \
-    curl_download.h
+    curl_download.h \
+    dialog.h
 
 
 # For glib library.

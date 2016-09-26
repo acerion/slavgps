@@ -613,10 +613,8 @@ Layer::~Layer()
 	if (this->name) {
 		free(this->name);
 	}
-#ifndef SLAVGPS_QT
-	/* kamilTODO: free this object. */
-	this->vl = NULL;
-#endif
+
+	delete right_click_menu;
 }
 
 
@@ -1315,4 +1313,12 @@ void Layer::visibility_toggled(QStandardItem * item) /* Slot. */
 			fprintf(stderr, "Layer %s/%s: slot 'changed' called, visibility = %d\n", this->type_string, this->name, (int) item->checkState());
 		}
 	}
+}
+
+
+
+
+void Layer::location_info_cb(void) /* Slot. */
+{
+
 }

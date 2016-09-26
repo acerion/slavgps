@@ -32,14 +32,15 @@
 
 #include <glib/gi18n.h>
 
-//#include "viking.h"
+#include "dialog.h"
+#include "viewport.h"
+#if 0
 #include "degrees_converters.h"
 #include "authors.h"
 #include "documenters.h"
 #include "ui_util.h"
-#include "dialog.h"
 #include "vik_compat.h"
-#include "viewport.h"
+#endif
 #include "globals.h"
 
 
@@ -50,12 +51,16 @@ using namespace SlavGPS;
 
 
 
-void a_dialog_msg(GtkWindow *parent, int type, const char *info, const char *extra)
+void a_dialog_msg(enum QMessageBox::Icon type, QString & text, QString & title)
 {
-	GtkWidget *msgbox = gtk_message_dialog_new(parent, GTK_DIALOG_DESTROY_WITH_PARENT, (GtkMessageType) type, GTK_BUTTONS_OK, info, extra);
-	gtk_dialog_run(GTK_DIALOG(msgbox));
-	gtk_widget_destroy(msgbox);
+	QMessageBox box(type, title, text, QMessageBox::Ok);
+	box.exec();
 }
+
+
+
+
+#if 0
 
 
 
@@ -861,3 +866,6 @@ void a_dialog_license(GtkWindow *parent, const char *map, const char *license, c
 	} while (response != GTK_RESPONSE_DELETE_EVENT && response != GTK_RESPONSE_OK);
 	gtk_widget_destroy(dialog);
 }
+
+
+#endif

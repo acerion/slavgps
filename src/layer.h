@@ -34,6 +34,7 @@
 #include <QIcon>
 #include <QMouseEvent>
 #include <QCursor>
+#include <QMenu>
 
 #include "uibuilder.h"
 #include "tree_view.h"
@@ -267,11 +268,15 @@ namespace SlavGPS {
 		virtual void marshall(uint8_t ** data, int * len);
 
 		LayerInterface * interface = NULL;
+		QMenu * right_click_menu = NULL;
 
 	public slots:
 		void visibility_toggled(QStandardItem * item);
 		void emit_update_secondary(void);
 		bool idle_draw(void);
+
+	protected slots:
+		virtual void location_info_cb(void);
 
 	signals:
 		void update(void);

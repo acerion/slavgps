@@ -23,6 +23,8 @@
 #endif
 
 #include <unistd.h>
+#include <cstring>
+#include <cstdlib>
 
 #ifdef HAVE_MATH_H
 #include <math.h>
@@ -33,10 +35,8 @@
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif
-#ifdef HAVE_STRING_H
-#include <string.h>
-#endif
-#include <cstdlib>
+
+#include <QMenu>
 
 #include <glib/gstdio.h>
 #include <glib/gi18n.h>
@@ -51,8 +51,8 @@
 #include "dems.h"
 #include "icons/icons.h"
 #include "file.h"
-#if 0
 #include "dialog.h"
+#if 0
 #include "vik_compat.h"
 #endif
 #include "globals.h"
@@ -1381,11 +1381,25 @@ static LayerTool * dem_layer_download_create(Window * window, Viewport * viewpor
 /**
  * Display a simple dialog with information about the DEM file at this location.
  */
-static void dem_layer_file_info(GtkWidget *widget, struct LatLon *ll)
+void LayerDEM::location_info_cb(void) /* Slot. */
 {
-#if 0
-	int intlat = (int)floor(ll->lat);
-	int intlon = (int)floor(ll->lon);
+	QAction * qa = (QAction *) QObject::sender();
+	QMenu * menu = (QMenu *) qa->parentWidget();
+
+	struct LatLon ll;
+
+	QVariant variant;
+	variant = menu->property("lat");
+	ll.lat = variant.toDouble();
+	variant = menu->property("lon");
+	ll.lon = variant.toDouble();
+
+	qDebug() << "II: Layer DEM: will display file info for coordinates" << ll.lat << ll.lon;
+
+
+
+	int intlat = (int) floor(ll.lat);
+	int intlon = (int) floor(ll.lon);
 	const char * continent_dir = srtm_continent_dir(intlat, intlon);
 
 	char * source = NULL;
@@ -1404,33 +1418,32 @@ static void dem_layer_file_info(GtkWidget *widget, struct LatLon *ll)
 	}
 
 #ifdef VIK_CONFIG_DEM24K
-	char * dem_file = dem24k_lat_lon_to_dest_fn(ll->lat, ll->lon);
+	QString dem_file(dem24k_lat_lon_to_dest_fn(ll.lat, ll.lon));
 #else
-	char * dem_file = srtm_lat_lon_to_dest_fn(ll->lat, ll->lon);
+	QString dem_file(srtm_lat_lon_to_dest_fn(ll.lat, ll.lon));
 #endif
-	char * message = NULL;
-	char * filename = g_strdup_printf("%s%s", MAPS_CACHE_DIR, dem_file);
+	QString filename = QString(MAPS_CACHE_DIR) + dem_file;
 
-	if (0 == access(filename, F_OK)) {
+	QString message;
+	if (0 == access(filename.toUtf8().constData(), F_OK)) {
 		/* Get some timestamp information of the file. */
 		GStatBuf stat_buf;
-		if (g_stat(filename, &stat_buf) == 0) {
+		if (g_stat(filename.toUtf8().constData(), &stat_buf) == 0) {
 			char time_buf[64];
 			strftime(time_buf, sizeof(time_buf), "%c", gmtime((const time_t *)&stat_buf.st_mtime));
-			message = g_strdup_printf(_("\nSource: %s\n\nDEM File: %s\nDEM File Timestamp: %s"), source, filename, time_buf);
+			message = QString("\nSource: %1\n\nDEM File: %2\nDEM File Timestamp: %3").arg(source).arg(filename).arg(time_buf);
+		} else {
+			message = QString("\nSource: %1\n\nDEM File: %2\nDEM File Timestamp: unavailable").arg(source).arg(filename);
 		}
 	} else {
-		message = g_strdup_printf(_("Source: %s\n\nNo DEM File!"), source);
+		message = QString("Source: %1\n\nNo DEM File!").arg(QString(source));
 	}
 
 	/* Show the info. */
-	a_dialog_info_msg(GTK_WINDOW(gtk_widget_get_toplevel(widget)), message);
+	QString title("DEM File");
+	a_dialog_info_msg(message, title);
 
-	free(message);
 	free(source);
-	free(dem_file);
-	free(filename);
-#endif
 }
 
 
@@ -1454,7 +1467,6 @@ bool LayerDEM::download_release(QMouseEvent * event, LayerTool * tool)
 
 	qDebug() << "II: Layer DEM: received release event, processing (coord" << ll.lat << ll.lon << ")";
 
-
 	char * dem_file = NULL;
 	if (this->source == DEM_SOURCE_SRTM) {
 		qDebug() << "II: Layer DEM: SRTM";
@@ -1470,7 +1482,6 @@ bool LayerDEM::download_release(QMouseEvent * event, LayerTool * tool)
 		return true;
 	}
 
-#if 1
 	if (event->button() == Qt::LeftButton) {
 		std::string dem_full_path = std::string(MAPS_CACHE_DIR_3 + std::string(dem_file));
 		qDebug() << "II: Layer DEM: release left button, path is" << dem_full_path.c_str();
@@ -1491,23 +1502,28 @@ bool LayerDEM::download_release(QMouseEvent * event, LayerTool * tool)
 			qDebug() << "II: Layer DEM: release left button, successfully added the file, emitting update";
 			this->emit_update();
 		}
-	} else {
-		qDebug() << "II: Layer DEM: release right button";
-#if 0
-		if (!this->right_click_menu) {
-			this->right_click_menu = GTK_MENU (gtk_menu_new());
 
-			GtkWidget * item = gtk_image_menu_item_new_with_mnemonic(_("_Show DEM File Information"));
-			gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_INFO, GTK_ICON_SIZE_MENU));
-			g_signal_connect(G_OBJECT(item), "activate", G_CALLBACK(dem_layer_file_info), &ll);
-			gtk_menu_shell_append(GTK_MENU_SHELL(this->right_click_menu), item);
+	} else if (event->button() == Qt::RightButton) {
+		qDebug() << "II: Layer DEM: release right button";
+		if (!this->right_click_menu) {
+
+			this->right_click_menu = new QMenu();
+			QAction * qa = this->right_click_menu->addAction(QIcon::fromTheme("dialog-information"), "&Show DEM File Information");
+
+			connect(qa, SIGNAL(triggered(bool)), this, SLOT(location_info_cb(void)));
 		}
 
-		gtk_menu_popup(this->right_click_menu, NULL, NULL, NULL, NULL, event->button, event->time);
-		gtk_widget_show_all(GTK_WIDGET(this->right_click_menu));
-#endif
+		/* What a hack... */
+		QVariant variant;
+		variant = QVariant::fromValue((double) ll.lat);
+		this->right_click_menu->setProperty("lat", variant);
+		variant = QVariant::fromValue((double) ll.lon);
+		this->right_click_menu->setProperty("lon", variant);
+
+		this->right_click_menu->exec(QCursor::pos());
+	} else {
+		;
 	}
-#endif
 
 	free(dem_file);
 

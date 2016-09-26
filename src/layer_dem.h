@@ -80,8 +80,9 @@ namespace SlavGPS {
 		unsigned int source = DEM_SOURCE_SRTM;
 		unsigned int dem_type = DEM_TYPE_HEIGHT;
 
-		/* right click menu only stuff - similar to LayerMaps. */
-		GtkMenu * right_click_menu = NULL;
+
+	private slots:
+		void location_info_cb(void);
 	};
 
 

@@ -27,8 +27,13 @@
 
 #include <cstdint>
 
+#include <QString>
+#include <QMessageBox>
+
 #include <glib.h>
+#if 0
 #include <gtk/gtk.h>
+#endif
 
 #include "coords.h"
 
@@ -37,9 +42,13 @@
 
 /* Most of this file is an architechtural flaw. */
 
-#define a_dialog_info_msg(win,info) a_dialog_msg(win,GTK_MESSAGE_INFO,info,NULL)
-#define a_dialog_warning_msg(win,info) a_dialog_msg(win,GTK_MESSAGE_WARNING,info,NULL)
-#define a_dialog_error_msg(win,info) a_dialog_msg(win,GTK_MESSAGE_ERROR,info,NULL)
+void a_dialog_msg(enum QMessageBox::Icon type, QString & text, QString & title);
+
+#define a_dialog_info_msg(text, title) a_dialog_msg(QMessageBox::Information, text, title)
+#define a_dialog_warning_msg(text, title) a_dialog_msg(QMessageBox::Warning, text, title)
+#define a_dialog_error_msg(text, title) a_dialog_msg(QMessageBox::Critical, text, title)
+
+#if 0
 
 #define a_dialog_info_msg_extra(win,info,extra) a_dialog_msg(win,GTK_MESSAGE_INFO,info,extra)
 #define a_dialog_error_msg_extra(win,info,extra) a_dialog_msg(win,GTK_MESSAGE_ERROR,info,extra)
@@ -74,7 +83,7 @@ bool a_dialog_map_n_zoom(GtkWindow *parent, char *mapnames[], int default_map, c
 GList *a_dialog_select_from_list(GtkWindow *parent, GList *names, bool multiple_selection_allowed, const char *title, const char *msg);
 
 void a_dialog_license(GtkWindow *parent, const char *map, const char *license, const char *url);
-
+#endif
 
 
 
