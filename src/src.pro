@@ -24,6 +24,7 @@ SOURCES += main.cpp \
     uibuilder_qt.cpp \
     widget_color_button.cpp \
     widget_file_list.cpp \
+    widget_radio_group.cpp \
     dem.cpp \
     dems.cpp \
     srtm_continent.cpp \
@@ -56,6 +57,7 @@ HEADERS += window.h \
     uibuilder_qt.h \
     widget_color_button.h \
     widget_file_list.h \
+    widget_radio_group.h \
     dem.h \
     dems.h \
     compression.h \
