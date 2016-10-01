@@ -22,18 +22,15 @@
 #include <cstdlib>
 #include <cstdio>
 
-#ifndef SLAVGPS_QT
-#include <gtk/gtk.h>
-#endif
 #include <glib/gi18n.h>
 #include <glib/gstdio.h>
 
-//#include "viking.h"
+#include <QSettings>
+#include <QDebug>
+
 #include "layer_defaults.h"
-#ifndef SLAVGPS_QT
 #include "dir.h"
 #include "file.h"
-#endif
 #include "globals.h"
 
 
@@ -44,158 +41,161 @@ using namespace SlavGPS;
 
 
 
+static LayerParamValue get_default_data_answer(const char * group, const char * name, LayerParamType ptype, bool * success);
+static LayerParamValue get_default_data(const char * group, const char * name, LayerParamType ptype);
+static void set_default_value(LayerParamValue value, const char * group, const char * name, LayerParamType ptype);
+static void defaults_run_setparam(void * index_ptr, uint16_t i, LayerParamValue value, LayerParam * params);
+static LayerParamValue defaults_run_getparam(void * index_ptr, uint16_t i, bool notused2);
+static void use_internal_defaults_if_missing_default(LayerType layer_type);
+static bool defaults_load_from_file(void);
+static bool layer_defaults_save_to_file(void);
+
+
+
+
 #define VIKING_LAYER_DEFAULTS_INI_FILE "viking_layer_defaults.ini"
 
 
+
+
 /* A list of the parameter types in use. */
-static GPtrArray *paramsVD;
+static GPtrArray * paramsVD;
 
-static GKeyFile *keyfile;
-
+static QSettings * keyfile = NULL;
 static bool loaded;
 
 
 
 
-static LayerParamData get_default_data_answer(const char *group, const char *name, LayerParamType ptype, void * *success)
+static LayerParamValue get_default_data_answer(const char * group, const char * name, LayerParamType ptype, bool * success)
 {
-	LayerParamData data = VIK_LPD_BOOLEAN (false);
+	LayerParamValue value = VIK_LPD_BOOLEAN (false);
 
-	GError *error = NULL;
+	QString key(QString(group) + QString("/") + QString(name));
+	QVariant variant = keyfile->value(key);
+
+	if (!variant.isValid()) {
+		qDebug() << "EE: Layer Defaults: failed to read key" << key;
+		*success = false;
+		return value;
+	}
+	*success = true;
 
 	switch (ptype) {
 	case LayerParamType::DOUBLE: {
-		double dd = g_key_file_get_double(keyfile, group, name, &error);
-		if (!error) {
-			data.d = dd;
-		}
+		value.d = variant.toDouble();
 		break;
 	}
 	case LayerParamType::UINT: {
-		uint32_t uu = g_key_file_get_integer(keyfile, group, name, &error);
-		if (!error) {
-			data.u = uu;
-		}
+		value.u = (uint32_t) variant.toULongLong();
 		break;
 	}
 	case LayerParamType::INT: {
-		int32_t ii = g_key_file_get_integer(keyfile, group, name, &error);
-		if (!error) {
-			data.i = ii;
-		}
+		value.i = (int32_t) variant.toLongLong();
 		break;
 	}
 	case LayerParamType::BOOLEAN: {
-		bool bb = g_key_file_get_boolean(keyfile, group, name, &error);
-		if (!error) {
-			data.b = bb;
-		}
+		value.b = variant.toBool();
 		break;
 	}
 	case LayerParamType::STRING: {
-		char *str = g_key_file_get_string(keyfile, group, name, &error);
-		if (!error) {
-			data.s = str;
-		}
+		value.s = strdup(variant.toString().toUtf8().constData());
+		qDebug() << "II: Layer Defaults: read string" << value.s;
 		break;
 	}
 #if 0
 	case LayerParamType::STRING_LIST: {
 		char **str = g_key_file_get_string_list(keyfile, group, name, &error);
-		data.sl = str_to_glist(str); /* TODO convert. */
+		value.sl = str_to_glist(str); /* TODO convert. */
 		break;
 	}
 #endif
-#ifndef SLAVGPS_QT
 	case LayerParamType::COLOR: {
-		char *str = g_key_file_get_string(keyfile, group, name, &error);
-		if (!error) {
-			memset(&(data.c), 0, sizeof(data.c));
-			gdk_color_parse(str, &(data.c));
-		}
-		free(str);
+		QColor color = variant.value<QColor>();
+		value.c.r = color.red();
+		value.c.g = color.green();
+		value.c.b = color.blue();
+		value.c.a = color.alpha();
 		break;
 	}
-#endif
 	default:
+		qDebug() << "EE: Layer Defaults: unhandled value type" << (int) ptype;
+		*success = false;
 		break;
-	}
-	*success = KINT_TO_POINTER (true);
-	if (error) {
-		fprintf(stderr, "WARNING: %s\n", error->message);
-		g_error_free(error);
-		*success = KINT_TO_POINTER (false);
 	}
 
-	return data;
+	return value;
 
 }
 
 
 
 
-static LayerParamData get_default_data(const char *group, const char *name, LayerParamType ptype)
+static LayerParamValue get_default_data(const char * group, const char * name, LayerParamType ptype)
 {
-	void * success = KINT_TO_POINTER (true);
-	/* NB This should always succeed - don't worry about 'success'. */
+	bool success = true;
+	/* This should always succeed - don't worry about 'success'. */
 	return get_default_data_answer(group, name, ptype, &success);
 }
 
 
 
 
-static void set_default_data(LayerParamData data, const char *group, const char *name, LayerParamType ptype)
+static void set_default_value(LayerParamValue value, const char * group, const char * name, LayerParamType ptype)
 {
+	QVariant variant;
+
 	switch (ptype) {
 	case LayerParamType::DOUBLE:
-		g_key_file_set_double(keyfile, group, name, data.d);
+		variant = QVariant((double) value.d);
 		break;
 	case LayerParamType::UINT:
-		g_key_file_set_integer(keyfile, group, name, data.u);
+		variant = QVariant((qulonglong) value.u);
 		break;
 	case LayerParamType::INT:
-		g_key_file_set_integer(keyfile, group, name, data.i);
+		variant = QVariant((qlonglong) value.i);
 		break;
 	case LayerParamType::BOOLEAN:
-		g_key_file_set_boolean(keyfile, group, name, data.b);
+		variant = QVariant((bool) value.b);
 		break;
 	case LayerParamType::STRING:
-		g_key_file_set_string(keyfile, group, name, data.s);
+		variant = QString(value.s);
 		break;
-#ifndef SLAVGPS_QT
 	case LayerParamType::COLOR: {
-		char *str = g_strdup_printf("#%.2x%.2x%.2x", (int)(data.c.red/256),(int)(data.c.green/256),(int)(data.c.blue/256));
-		g_key_file_set_string(keyfile, group, name, str);
-		free(str);
+		variant = QColor(value.c.r, value.c.g, value.c.b, value.c.a);
 		break;
 	}
-#endif
-	default: break;
+	default:
+		qDebug() << "EE: Layer Defaults: unhandled parameter type" << (int) ptype;
+		return;
 	}
+
+	QString key(QString(group) + QString("/") + QString(name));
+	keyfile->setValue(key, variant);
 }
 
 
 
 
-static void defaults_run_setparam(void * index_ptr, uint16_t i, LayerParamData data, LayerParam *params)
+static void defaults_run_setparam(void * index_ptr, uint16_t i, LayerParamValue value, LayerParam * params)
 {
 	/* Index is only an index into values from this layer. */
 	int index = KPOINTER_TO_INT (index_ptr);
-	LayerParam *vlp = (LayerParam *) g_ptr_array_index(paramsVD, index + i);
+	LayerParam * layer_param = (LayerParam *) g_ptr_array_index(paramsVD, index + i);
 
-	set_default_data(data, Layer::get_interface(vlp->layer_type)->fixed_layer_name, vlp->name, vlp->type);
+	set_default_value(value, Layer::get_interface(layer_param->layer_type)->fixed_layer_name, layer_param->name, layer_param->type);
 }
 
 
 
 
-static LayerParamData defaults_run_getparam(void * index_ptr, uint16_t i, bool notused2)
+static LayerParamValue defaults_run_getparam(void * index_ptr, uint16_t i, bool notused2)
 {
 	/* Index is only an index into values from this layer. */
 	int index = (int) (long) (index_ptr);
-	LayerParam *vlp = (LayerParam *) g_ptr_array_index(paramsVD, index + i);
+	LayerParam * layer_param = (LayerParam *) g_ptr_array_index(paramsVD, index + i);
 
-	return get_default_data(Layer::get_interface(vlp->layer_type)->fixed_layer_name, vlp->name, vlp->type);
+	return get_default_data(Layer::get_interface(layer_param->layer_type)->fixed_layer_name, layer_param->name, layer_param->type);
 }
 
 
@@ -209,20 +209,21 @@ static void use_internal_defaults_if_missing_default(LayerType layer_type)
 	}
 
 	uint16_t params_count = Layer::get_interface(layer_type)->params_count;
-	uint16_t i;
 	/* Process each parameter. */
-	for (i = 0; i < params_count; i++) {
-		if (params[i].group != VIK_LAYER_NOT_IN_PROPERTIES) {
-			void * success = KINT_TO_POINTER (false);
-			/* Check current default is available. */
-			get_default_data_answer(Layer::get_interface(layer_type)->fixed_layer_name, params[i].name, params[i].type, &success);
-			/* If no longer have a viable default. */
-			if (! KPOINTER_TO_INT (success)) {
-				/* Reset value. */
-				if (params[i].default_value) {
-					LayerParamData paramd = params[i].default_value();
-					set_default_data(paramd, Layer::get_interface(layer_type)->fixed_layer_name, params[i].name, params[i].type);
-				}
+	for (uint16_t i = 0; i < params_count; i++) {
+		if (params[i].group == VIK_LAYER_NOT_IN_PROPERTIES) {
+			continue;
+		}
+
+		bool success = false;
+		/* Check current default is available. */
+		get_default_data_answer(Layer::get_interface(layer_type)->fixed_layer_name, params[i].name, params[i].type, &success);
+		/* If no longer have a viable default. */
+		if (!success) {
+			/* Reset value. */
+			if (params[i].default_value) {
+				LayerParamValue value = params[i].default_value();
+				set_default_value(value, Layer::get_interface(layer_type)->fixed_layer_name, params[i].name, params[i].type);
 			}
 		}
 	}
@@ -231,23 +232,22 @@ static void use_internal_defaults_if_missing_default(LayerType layer_type)
 
 
 
-static bool defaults_load_from_file()
+/* kamilFIXME: return value is not checked. */
+static bool defaults_load_from_file(void)
 {
-	GKeyFileFlags flags = G_KEY_FILE_KEEP_COMMENTS;
+	//GKeyFileFlags flags = G_KEY_FILE_KEEP_COMMENTS;
 
-	GError *error = NULL;
-#ifndef SLAVGPS_QT
-	char *fn = g_build_filename(get_viking_dir(), VIKING_LAYER_DEFAULTS_INI_FILE, NULL);
+	if (!keyfile) {
+		qDebug() << "EE: Layer Defaults: key file is not initialized";
+		exit(EXIT_FAILURE);
+	}
 
-	if (!g_key_file_load_from_file(keyfile, fn, flags, &error)) {
-		fprintf(stderr, "WARNING: %s: %s\n", error->message, fn);
-		free(fn);
-		g_error_free(error);
+	enum QSettings::Status status = keyfile->status();
+	if (status != QSettings::NoError) {
+		qDebug() << "EE: Layer Defaults: key file status is" << status;
 		return false;
 	}
 
-	free(fn);
-#endif
 
 	/* Ensure if have a key file, then any missing values are set from the internal defaults. */
 	for (LayerType layer_type = LayerType::AGGREGATE; layer_type < LayerType::NUM_TYPES; ++layer_type) {
@@ -260,68 +260,26 @@ static bool defaults_load_from_file()
 
 
 
-/* Return true on success. */
-static bool layer_defaults_save_to_file()
+/* Returns true. */
+static bool layer_defaults_save_to_file(void)
 {
-	bool answer = true;
-#ifndef SLAVGPS_QT
-	GError *error = NULL;
-	char * fn = g_build_filename(get_viking_dir(), VIKING_LAYER_DEFAULTS_INI_FILE, NULL);
-	size_t size;
-
-	char *keyfilestr = g_key_file_to_data(keyfile, &size, &error);
-
-	if (error) {
-		fprintf(stderr, "WARNING: %s\n", error->message);
-		g_error_free(error);
-		answer = false;
-		goto tidy;
-	}
-
-	/* Optionally could do:
-	g_file_set_contents(fn, keyfilestr, size, &error);
-	if (error) {
-		fprintf(stderr, "WARNING: %s: %s\n", error->message, fn);
-		g_error_free(error);
-		answer = false;
-		goto tidy;
-	}
-	*/
-
-	FILE *ff;
-	if (!(ff = fopen(fn, "w"))) {
-		fprintf(stderr, _("WARNING: Could not open file: %s\n"), fn);
-		answer = false;
-		goto tidy;
-	}
-	/* Layer defaults not that secret, but just in case... */
-	if (chmod(fn, 0600) != 0) {
-		fprintf(stderr, "WARNING: %s: Failed to set permissions on %s\n", __FUNCTION__, fn);
-	}
-
-	fputs(keyfilestr, ff);
-	fclose(ff);
-
-tidy:
-	free(keyfilestr);
-	free(fn);
-#endif
-	return answer;
+	keyfile->sync();
+	return true;
 }
 
 
 
 
 /**
- * @parent:     The Window
- * @layername:  The layer
+ * @parent:      The Window
+ * @layer_name:  The layer
  *
  * This displays a Window showing the default parameter values for the selected layer.
  * It allows the parameters to be changed.
  *
  * Returns: %true if the window is displayed (because there are parameters to view).
  */
-bool a_layer_defaults_show_window(GtkWindow *parent, const char *layername)
+bool a_layer_defaults_show_window(GtkWindow * parent, const char * layer_name)
 {
 	if (!loaded) {
 		/* Since we can't load the file in a_defaults_init (no params registered yet),
@@ -330,7 +288,7 @@ bool a_layer_defaults_show_window(GtkWindow *parent, const char *layername)
 		loaded = true;
 	}
 
-	LayerType layer_type = Layer::type_from_string(layername);
+	LayerType layer_type = Layer::type_from_string(layer_name);
 
 	/*
 	   Need to know where the params start and they finish for this layer
@@ -367,7 +325,7 @@ bool a_layer_defaults_show_window(GtkWindow *parent, const char *layername)
 		params[i] = *((LayerParam*)(g_ptr_array_index(paramsVD,i+index)));
 	}
 
-	char *title = g_strconcat(layername, ": ", _("Layer Defaults"), NULL);
+	char *title = g_strconcat(layer_name, ": ", _("Layer Defaults"), NULL);
 
 #ifndef SLAVGPS_QT
 
@@ -377,7 +335,7 @@ bool a_layer_defaults_show_window(GtkWindow *parent, const char *layername)
 					   layer_params_count,
 					   Layer::get_interface(layer_type)->params_groups,
 					   Layer::get_interface(layer_type)->params_groups_count,
-					   (bool (*) (void *,uint16_t,LayerParamData,void *,bool)) defaults_run_setparam,
+					   (bool (*) (void *,uint16_t,LayerParamValue,void *,bool)) defaults_run_setparam,
 					   ((void *) (long) (index)),
 					   params,
 					   defaults_run_getparam,
@@ -398,21 +356,21 @@ bool a_layer_defaults_show_window(GtkWindow *parent, const char *layername)
 
 
 /**
- * @vlp:        The parameter
- * @defaultval: The default value
- * @layername:  The layer in which the parameter resides
+ * @layer_param:     The parameter
+ * @default_value:   The default value
+ * @layer_name:      The layer in which the parameter resides
  *
  * Call this function on to set the default value for the particular parameter.
  */
-void a_layer_defaults_register(LayerParam *vlp, LayerParamData defaultval, const char *layername)
+void a_layer_defaults_register(const char * layer_name, LayerParam * layer_param, LayerParamValue default_value)
 {
 	/* Copy value. */
-	LayerParam *newvlp = (LayerParam *) malloc(1 * sizeof (LayerParam));
-	*newvlp = *vlp;
+	LayerParam * new_layer_param = (LayerParam *) malloc(1 * sizeof (LayerParam));
+	*new_layer_param = *layer_param;
 
-	g_ptr_array_add(paramsVD, newvlp);
+	g_ptr_array_add(paramsVD, new_layer_param);
 
-	set_default_data(defaultval, layername, vlp->name, vlp->type);
+	set_default_value(default_value, layer_name, layer_param->name, layer_param->type);
 }
 
 
@@ -423,7 +381,11 @@ void a_layer_defaults_register(LayerParam *vlp, LayerParamData defaultval, const
  */
 void a_layer_defaults_init()
 {
-	keyfile = g_key_file_new();
+	/* kamilFIXME: improve this section. Make sure that the file exists. */
+	QString path(QString(get_viking_dir()) + "/" + VIKING_LAYER_DEFAULTS_INI_FILE);
+	keyfile = new QSettings(path, QSettings::IniFormat);
+
+	qDebug() << "II: Layer Defaults: key file initialized as" << keyfile << "with path" << path;
 
 	/* Not copied. */
 	paramsVD = g_ptr_array_new();
@@ -439,7 +401,8 @@ void a_layer_defaults_init()
  */
 void a_layer_defaults_uninit()
 {
-	g_key_file_free(keyfile);
+	delete keyfile;
+
 	g_ptr_array_foreach(paramsVD, (GFunc)g_free, NULL);
 	g_ptr_array_free(paramsVD, true);
 }
@@ -448,13 +411,13 @@ void a_layer_defaults_uninit()
 
 
 /**
- * @layername:  String name of the layer
- * @param_name: String name of the parameter
- * @param_type: The parameter type
+ * @layer_name:  String name of the layer
+ * @param_name:  String name of the parameter
+ * @param_type:  The parameter type
  *
  * Call this function to get the default value for the parameter requested.
  */
-LayerParamData a_layer_defaults_get(const char *layername, const char *param_name, LayerParamType param_type)
+LayerParamValue a_layer_defaults_get(const char * layer_name, const char * param_name, LayerParamType param_type)
 {
 	if (!loaded) {
 		/* Since we can't load the file in a_defaults_init (no params registered yet),
@@ -463,7 +426,7 @@ LayerParamData a_layer_defaults_get(const char *layername, const char *param_nam
 		loaded = true;
 	}
 
-	return get_default_data(layername, param_name, param_type);
+	return get_default_data(layer_name, param_name, param_type);
 }
 
 

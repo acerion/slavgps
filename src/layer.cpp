@@ -287,21 +287,22 @@ void Layer::preconfigure_interfaces(void)
  */
 static bool layer_defaults_register(LayerType layer_type)
 {
-	/* See if any parameters. */
-	LayerParam *params = vik_layer_interfaces[(int) layer_type]->params;
+	LayerInterface * layer_interface = Layer::get_interface(layer_type);
+
+	LayerParam * params = layer_interface->params;
 	if (!params) {
 		return false;
 	}
 
 	bool answer = false; /* In case all parameters are 'not in properties'. */
-	uint16_t params_count = vik_layer_interfaces[(int) layer_type]->params_count;
+	uint16_t params_count = layer_interface->params_count;
 
 	/* Process each parameter. */
 	for (uint16_t i = 0; i < params_count; i++) {
 		if (params[i].group != VIK_LAYER_NOT_IN_PROPERTIES) {
 			if (params[i].default_value) {
-				LayerParamData paramd = params[i].default_value();
-				a_layer_defaults_register(&params[i], paramd, vik_layer_interfaces[(int) layer_type]->fixed_layer_name);
+				LayerParamValue value = params[i].default_value();
+				a_layer_defaults_register(layer_interface->fixed_layer_name, &params[i], value);
 				answer = true;
 			}
 		}
