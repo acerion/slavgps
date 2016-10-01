@@ -32,6 +32,7 @@ SOURCES += main.cpp \
     fileutils.cpp \
     util.cpp \
     file.cpp \
+    dir.cpp \
     background.cpp \
     download.cpp \
     curl_download.cpp \
@@ -64,6 +65,7 @@ HEADERS += window.h \
     fileutils.h \
     util.h \
     file.h \
+    dir.h \
     background.h \
     download.h \
     curl_download.h \
