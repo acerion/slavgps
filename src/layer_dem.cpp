@@ -25,6 +25,7 @@
 #include <unistd.h>
 #include <cstring>
 #include <cstdlib>
+#include <mutex>
 
 #ifdef HAVE_MATH_H
 #include <math.h>
@@ -42,7 +43,6 @@
 #include <glib/gi18n.h>
 
 #include "background.h"
-//#include "viking.h"
 #if 0
 #include "vikmapslayer.h"
 #endif
@@ -985,7 +985,7 @@ public:
 	std::string dest;
 	double lat, lon;
 
-	GMutex * mutex;
+	std::mutex mutex;
 	LayerDEM * layer; /* NULL if not alive. */
 
 	unsigned int source;
@@ -1001,9 +1001,6 @@ DEMDownloadParams::DEMDownloadParams(std::string& full_path, struct LatLon * ll,
 	this->lat = ll->lat;
 	this->lon = ll->lon;
 	this->layer = layer;
-#if 0
-	this->mutex = vik_mutex_new();
-#endif
 	this->source = layer->source;
 	this->layer->weak_ref(LayerDEM::weak_ref_cb, this);
 }
@@ -1013,9 +1010,6 @@ DEMDownloadParams::DEMDownloadParams(std::string& full_path, struct LatLon * ll,
 
 DEMDownloadParams::~DEMDownloadParams()
 {
-#if 0
-	vik_mutex_free(this->mutex);
-#endif
 }
 
 
@@ -1052,7 +1046,7 @@ static void srtm_dem_download_thread(DEMDownloadParams * p, void * threaddata)
 				       ABS(intlat),
 				       (intlon >= 0) ? 'E' : 'W',
 				       ABS(intlon));
-#if 1
+
 	static DownloadFileOptions options = { false, false, NULL, 0, a_check_map_file, NULL, NULL };
 	DownloadResult_t result = a_http_download_get_url(SRTM_HTTP_SITE, src_fn, p->dest.c_str(), &options, NULL);
 	switch (result) {
@@ -1079,7 +1073,6 @@ static void srtm_dem_download_thread(DEMDownloadParams * p, void * threaddata)
 		break;
 	}
 	free(src_fn);
-#endif
 }
 
 
@@ -1275,13 +1268,9 @@ static void dem24k_draw_existence(Viewport * viewport)
 void LayerDEM::weak_ref_cb(void * ptr, GObject * dead_vdl)
 {
 	DEMDownloadParams * p = (DEMDownloadParams *) ptr;
-#if 0
-	g_mutex_lock(p->mutex);
-#endif
+	p->mutex.lock();
 	p->layer = NULL;
-#if 0
-	g_mutex_unlock(p->mutex);
-#endif
+	p->mutex.unlock();
 }
 
 /* Try to add file full_path.
@@ -1323,9 +1312,8 @@ static void dem_download_thread(DEMDownloadParams * p, void * threaddata)
 	}
 
 	//gdk_threads_enter();
-#if 0
-	g_mutex_lock(p->mutex);
-#endif
+
+	p->mutex.lock();
 	if (p->layer) {
 		p->layer->weak_unref(LayerDEM::weak_ref_cb, p);
 
@@ -1333,9 +1321,8 @@ static void dem_download_thread(DEMDownloadParams * p, void * threaddata)
 			p->layer->emit_update(); /* NB update from background thread. */
 		}
 	}
-#if 0
-	g_mutex_unlock(p->mutex);
-#endif
+	p->mutex.unlock();
+
 	//gdk_threads_leave();
 }
 
