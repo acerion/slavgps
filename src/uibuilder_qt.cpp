@@ -540,11 +540,12 @@ QWidget * LayerPropertiesDialog::new_widget(LayerParam * param, LayerParamValue 
 			double init_val = vlpd.d;
 			LayerParamScale * scale = (LayerParamScale *) param->widget_data;
 			QDoubleSpinBox * widget_ = new QDoubleSpinBox();
-			widget_->setValue(init_val);
+			/* Order of fields is important. Use setDecimals() before using setValue(). */
+			widget_->setDecimals(scale->digits);
 			widget_->setMinimum(scale->min);
 			widget_->setMaximum(scale->max);
 			widget_->setSingleStep(scale->step);
-			widget_->setDecimals(scale->digits);
+			widget_->setValue(init_val);
 
 			widget = widget_;
 		}
