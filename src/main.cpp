@@ -27,6 +27,7 @@
 
 #include "window.h"
 #include "layer.h"
+#include "layer_defaults.h"
 #include "download.h"
 #include "background.h"
 
@@ -105,11 +106,11 @@ int main(int argc, char ** argv)
 	  return the default value, until the values have changed.
 	*/
 	a_vik_preferences_init();
-
-	a_layer_defaults_init();
 #endif
 
+	a_layer_defaults_init();
 	a_download_init();
+
 #if 0
 	curl_download_init();
 
@@ -181,27 +182,6 @@ int main(int argc, char ** argv)
 
 	gtk_main();
 	gdk_threads_leave();
-
-	a_babel_uninit();
-	a_toolbar_uninit();
-	a_background_uninit();
-	map_cache_uninit();
-	dem_cache_uninit();
-	a_layer_defaults_uninit();
-	a_preferences_uninit();
-	a_settings_uninit();
-
-	modules_uninit();
-
-	curl_download_uninit();
-
-	vu_finalize_lat_lon_tz_lookup();
-
-	/* Clean up any temporary files. */
-	util_remove_all_in_deletion_list();
-
-	delete first_window;
-
 #endif
 
 
@@ -215,5 +195,29 @@ int main(int argc, char ** argv)
 	window.layers_panel->set_viewport(window.viewport); /* Ugly, FIXME. */
 	window.show();
 
-	return app.exec();
+	int rv = app.exec();
+
+#if 0
+	a_babel_uninit();
+	a_toolbar_uninit();
+	a_background_uninit();
+	map_cache_uninit();
+	dem_cache_uninit();
+#endif
+	a_layer_defaults_uninit();
+#if 0
+
+	a_preferences_uninit();
+	a_settings_uninit();
+
+	modules_uninit();
+
+	curl_download_uninit();
+
+	vu_finalize_lat_lon_tz_lookup();
+
+	/* Clean up any temporary files. */
+	util_remove_all_in_deletion_list();
+#endif
+	return rv;
 }
