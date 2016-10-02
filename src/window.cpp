@@ -32,7 +32,7 @@
 #include "layers_panel.h"
 #include "globals.h"
 #include "uibuilder_qt.h"
-
+#include "preferences.h"
 
 
 
@@ -50,28 +50,6 @@ enum {
 	NUMBER_OF_TOOLS
 };
 
-
-
-
-static LayerParamScale param_scales[] = {
-	{ 0.05, 60.0, 0.25, 10 },
-	{ 1, 10, 1, 0 },
-};
-
-
-static LayerParamData color_default(void)
-{
-	return LAYER_PARAM_COLOR(255, 0, 0, 100);
-}
-
-static LayerParamData min_inc_default(void)
-{
-	return VIK_LPD_DOUBLE (1.0);
-}
-static LayerParamData line_thickness_default(void)
-{
-	return VIK_LPD_UINT (3);
-}
 
 
 
@@ -93,40 +71,6 @@ Window::Window()
 	// Own signals
 	connect(this->viewport, SIGNAL(updated_center(void)), this, SLOT(center_changed_cb(void)));
 
-
-	//this->layers_panel->new_layer(SlavGPS::LayerType::COORD);
-
-
-
-
-	enum {
-		TEST_STRING,
-		TEST_BOOLEAN,
-		TEST_COLOR,
-		TEST_DOUBLE,
-		TEST_UINT,
-		TEST_MAX
-	};
-
-
-
-	static LayerParam layer_params[] = {
-		/* Layer type                         name         param type                group                   title              widget type                         widget data       extra widget data       tooltip        default value              convert to display        convert to internal */
-		{ LayerType::COORD,     TEST_STRING,  "string",    LayerParamType::STRING,   VIK_LAYER_GROUP_NONE,   "Entry:",          LayerWidgetType::ENTRY,             NULL,             NULL,                   NULL,          NULL,                      NULL,                     NULL },
-		{ LayerType::COORD,     TEST_BOOLEAN, "boolean",   LayerParamType::BOOLEAN,  VIK_LAYER_GROUP_NONE,   "Checkbox:",       LayerWidgetType::CHECKBUTTON,       NULL,             NULL,                   NULL,          NULL,                      NULL,                     NULL },
-		{ LayerType::COORD,     TEST_COLOR,   "color",     LayerParamType::COLOR,    VIK_LAYER_GROUP_NONE,   "Color:",          LayerWidgetType::COLOR,             NULL,             NULL,                   NULL,          color_default,             NULL,                     NULL },
-		{ LayerType::COORD,     TEST_DOUBLE,  "double",    LayerParamType::DOUBLE,   VIK_LAYER_GROUP_NONE,   "Minutes Width:",  LayerWidgetType::SPINBOX_DOUBLE,    &param_scales[0], NULL,                   NULL,          min_inc_default,           NULL,                     NULL },
-		{ LayerType::COORD,     TEST_UINT,    "uint",      LayerParamType::UINT,     VIK_LAYER_GROUP_NONE,   "Line Thickness:", LayerWidgetType::SPINBUTTON,        &param_scales[1], NULL,                   NULL,          line_thickness_default,    NULL,                     NULL },
-
-		{ LayerType::NUM_TYPES, TEST_MAX,     NULL,        LayerParamType::UINT,     VIK_LAYER_GROUP_NONE,   "Line Thickness:", LayerWidgetType::SPINBUTTON,        &param_scales[1], NULL,                   NULL,          line_thickness_default,    NULL,                     NULL },
-
-	};
-
-
-
-	LayerPropertiesDialog dialog(this);
-	dialog.fill(layer_params, TEST_MAX);
-	dialog.exec();
 
 
 #if 0
@@ -369,6 +313,15 @@ void Window::create_actions(void)
 	QAction * qa_file_new = new QAction("New file...", this);
 	qa_file_new->setIcon(QIcon::fromTheme("document-new"));
 
+
+	/* "Edit" menu. */
+	{
+		QAction * qa_edit_preferences = new QAction("Preferences", this);
+		qa_edit_preferences->setIcon(QIcon::fromTheme("preferences-other"));
+		connect(qa_edit_preferences, SIGNAL (triggered(bool)), this, SLOT (preferences_cb(void)));
+
+		this->menu_edit->addAction(qa_edit_preferences);
+	}
 
 
 	QAction * qa_help_help = new QAction("Help", this);
@@ -1034,4 +987,34 @@ void Window::pan_release(QMouseEvent * event)
 	if (do_draw) {
 		this->draw_update();
 	}
+}
+
+
+
+void Window::preferences_cb(void) /* Slot. */
+{
+#if 0
+	bool wp_icon_size = a_vik_get_use_large_waypoint_icons();
+#endif
+	a_preferences_show_window((QWindow *) this);
+#if 0
+	// Has the waypoint size setting changed?
+	if (wp_icon_size != a_vik_get_use_large_waypoint_icons()) {
+		// Delete icon indexing 'cache' and so automatically regenerates with the new setting when changed
+		clear_garmin_icon_syms();
+
+		// Update all windows
+		for (auto i = window_list.begin(); i != window_list.end(); i++) {
+			preferences_change_update(*i);
+		}
+	}
+
+
+	// Ensure TZ Lookup initialized
+	if (a_vik_get_time_ref_frame() == VIK_TIME_REF_WORLD) {
+		vu_setup_lat_lon_tz_lookup();
+	}
+
+	toolbar_apply_settings(window->viking_vtb, window->main_vbox, window->menu_hbox, true);
+#endif
 }
