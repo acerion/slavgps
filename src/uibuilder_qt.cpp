@@ -334,14 +334,15 @@ void LayerPropertiesDialog::fill(LayerParam * params, uint16_t params_count)
 	QString label("page");
 	QFormLayout * form = this->insert_tab(label);
 	LayerParamValue param_value;
+	qDebug() << "II: UI Builder: vvvvvvvvvv adding widgets:";
 	for (uint16_t i = 0; i < params_count; i++) {
 		QString label = QString(params[i].title);
 		QWidget * widget = this->new_widget(&params[i], param_value);
 		form->addRow(label, widget);
-		qDebug() << ">>>> pushing back %x" << widget;
+		qDebug() << "II: UI Builder: adding widget" << widget;
 		this->widgets.insert(std::pair<layer_param_id_t, QWidget *>(i, widget));
 	}
-	qDebug() << "^^^^^^^^^ there are " << this->widgets.size() << "widgets";
+	qDebug() << "II: UI Builder ^^^^^^^^^^ there are " << this->widgets.size() << "widgets";
 }
 
 
@@ -356,6 +357,7 @@ void LayerPropertiesDialog::fill(Layer * layer)
 	QString tab_label("page");
 	QFormLayout * form = this->insert_tab(tab_label);
 
+	qDebug() << "II: UI Builder vvvvvvvvvv adding widgets:";
 	for (auto iter = params->begin(); iter != params->end(); iter++) {
 
 		LayerParamValue param_value = layer->get_param_value(iter->first, false);
@@ -364,10 +366,10 @@ void LayerPropertiesDialog::fill(Layer * layer)
 		QWidget * widget = this->new_widget(iter->second, param_value);
 
 		form->addRow(label, widget);
-		qDebug() << ">>>> inserting parameter widget" << widget;
+		qDebug() << "II: UI Builder: adding widget" << widget;
 		this->widgets.insert(std::pair<layer_param_id_t, QWidget *>(iter->first, widget));
 	}
-	qDebug() << "^^^^^^^^^ there are " << this->widgets.size() << "widgets";
+	qDebug() << "II: UI Builder ^^^^^^^^^^ there are " << this->widgets.size() << "widgets";
 }
 
 
@@ -386,6 +388,7 @@ QWidget * LayerPropertiesDialog::new_widget(LayerParam * param, LayerParamValue 
 #if 1
 	case LayerWidgetType::COLOR:
 		if (param->type == LayerParamType::COLOR) {
+			qDebug() << "II: UI Builder: creating color button with colors" << vlpd.c.r << vlpd.c.g << vlpd.c.b << vlpd.c.a;
 			QColor color(vlpd.c.r, vlpd.c.g, vlpd.c.b, vlpd.c.a);
 			SGColorButton * widget_ = new SGColorButton(color, NULL);
 
