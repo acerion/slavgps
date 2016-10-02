@@ -61,13 +61,7 @@ static LayerParamScale param_scales[] = {
 
 static LayerParamData color_default(void)
 {
-	LayerParamData data;
-	data.c.r = 1;
-	data.c.g = 1;
-	data.c.b = 1;
-	data.c.a = 1;
-	return data;
-	// or: return VIK_LPD_COLOR (0, 65535, 0, 0);
+	return LAYER_PARAM_COLOR(255, 0, 0, 100);
 }
 
 static LayerParamData min_inc_default(void)
@@ -105,21 +99,33 @@ Window::Window()
 
 
 
+	enum {
+		TEST_STRING,
+		TEST_BOOLEAN,
+		TEST_COLOR,
+		TEST_DOUBLE,
+		TEST_UINT,
+		TEST_MAX
+	};
+
+
 
 	static LayerParam layer_params[] = {
-		/* Layer type       name              param type                group                   title              widget type                         widget data       extra widget data       tooltip        default value              convert to display        convert to internal */
-		{ LayerType::COORD, 0, "color",          LayerParamType::STRING,   VIK_LAYER_GROUP_NONE,   "Entry:",          LayerWidgetType::ENTRY,             NULL,             NULL,                   NULL,          NULL,                      NULL,                     NULL },
-		{ LayerType::COORD, 1, "color",          LayerParamType::BOOLEAN,  VIK_LAYER_GROUP_NONE,   "Checkbox:",       LayerWidgetType::CHECKBUTTON,       NULL,             NULL,                   NULL,          NULL,                      NULL,                     NULL },
+		/* Layer type                         name         param type                group                   title              widget type                         widget data       extra widget data       tooltip        default value              convert to display        convert to internal */
+		{ LayerType::COORD,     TEST_STRING,  "string",    LayerParamType::STRING,   VIK_LAYER_GROUP_NONE,   "Entry:",          LayerWidgetType::ENTRY,             NULL,             NULL,                   NULL,          NULL,                      NULL,                     NULL },
+		{ LayerType::COORD,     TEST_BOOLEAN, "boolean",   LayerParamType::BOOLEAN,  VIK_LAYER_GROUP_NONE,   "Checkbox:",       LayerWidgetType::CHECKBUTTON,       NULL,             NULL,                   NULL,          NULL,                      NULL,                     NULL },
+		{ LayerType::COORD,     TEST_COLOR,   "color",     LayerParamType::COLOR,    VIK_LAYER_GROUP_NONE,   "Color:",          LayerWidgetType::COLOR,             NULL,             NULL,                   NULL,          color_default,             NULL,                     NULL },
+		{ LayerType::COORD,     TEST_DOUBLE,  "double",    LayerParamType::DOUBLE,   VIK_LAYER_GROUP_NONE,   "Minutes Width:",  LayerWidgetType::SPINBOX_DOUBLE,    &param_scales[0], NULL,                   NULL,          min_inc_default,           NULL,                     NULL },
+		{ LayerType::COORD,     TEST_UINT,    "uint",      LayerParamType::UINT,     VIK_LAYER_GROUP_NONE,   "Line Thickness:", LayerWidgetType::SPINBUTTON,        &param_scales[1], NULL,                   NULL,          line_thickness_default,    NULL,                     NULL },
 
-		{ LayerType::COORD, 2, "color",          LayerParamType::COLOR,    VIK_LAYER_GROUP_NONE,   "Color:",          LayerWidgetType::COLOR,             NULL,             NULL,                   NULL,          color_default,             NULL,                     NULL },
-		{ LayerType::COORD, 3, "min_inc",        LayerParamType::DOUBLE,   VIK_LAYER_GROUP_NONE,   "Minutes Width:",  LayerWidgetType::SPINBOX_DOUBLE,    &param_scales[0], NULL,                   NULL,          min_inc_default,           NULL,                     NULL },
-		{ LayerType::COORD, 4, "line_thickness", LayerParamType::UINT,     VIK_LAYER_GROUP_NONE,   "Line Thickness:", LayerWidgetType::SPINBUTTON,        &param_scales[1], NULL,                   NULL,          line_thickness_default,    NULL,                     NULL },
+		{ LayerType::NUM_TYPES, TEST_MAX,     NULL,        LayerParamType::UINT,     VIK_LAYER_GROUP_NONE,   "Line Thickness:", LayerWidgetType::SPINBUTTON,        &param_scales[1], NULL,                   NULL,          line_thickness_default,    NULL,                     NULL },
+
 	};
 
 
 
 	LayerPropertiesDialog dialog(this);
-	dialog.fill(layer_params, 5);
+	dialog.fill(layer_params, TEST_MAX);
 	dialog.exec();
 
 
