@@ -154,16 +154,15 @@ typedef enum {
 #define VIK_LPD_BOOLEAN(X)     (LayerParamData) { .b = (X) }
 #define VIK_LPD_INT(X)         (LayerParamData) { .u = (X) }
 #define VIK_LPD_UINT(X)        (LayerParamData) { .i = (X) }
-#define VIK_LPD_COLOR(X,Y,Z,A) (LayerParamData) { .c = { (X), (Y), (Z), (A) } }
 #define VIK_LPD_DOUBLE(X)      (LayerParamData) { .d = (X) }
 #else
 #define VIK_LPD_BOOLEAN(X)     (LayerParamData) { (X) }
 #define VIK_LPD_INT(X)         (LayerParamData) { (X) }
 #define VIK_LPD_UINT(X)        (LayerParamData) { (X) }
-#define VIK_LPD_COLOR(X,Y,Z,A) (LayerParamData) { (X), (Y), (Z), (A) }
 #define VIK_LPD_DOUBLE(X)      (LayerParamData) { (X) }
 #endif
 
+#define LAYER_PARAM_COLOR(R, G, B, A)  (LayerParamValue) { .c = { .r = (R), .g = (G), .b = (B), .a = (A) } }
 
 
 LayerParamData vik_lpd_true_default(void);
