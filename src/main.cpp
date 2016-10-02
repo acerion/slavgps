@@ -30,6 +30,7 @@
 #include "layer_defaults.h"
 #include "download.h"
 #include "background.h"
+#include "preferences.h"
 
 
 
@@ -92,6 +93,7 @@ int main(int argc, char ** argv)
 	a_vik_very_first_run();
 
 	a_settings_init();
+#endif
 	a_preferences_init();
 
 	/*
@@ -106,7 +108,7 @@ int main(int argc, char ** argv)
 	  return the default value, until the values have changed.
 	*/
 	a_vik_preferences_init();
-#endif
+
 
 	a_layer_defaults_init();
 	a_download_init();
@@ -205,9 +207,8 @@ int main(int argc, char ** argv)
 	dem_cache_uninit();
 #endif
 	a_layer_defaults_uninit();
-#if 0
-
 	a_preferences_uninit();
+#if 0
 	a_settings_uninit();
 
 	modules_uninit();
