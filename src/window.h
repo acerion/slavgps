@@ -68,6 +68,7 @@ namespace SlavGPS {
 	private slots:
 		void center_changed_cb(void);
 		void layer_tools_cb(QAction * a);
+		void preferences_cb(void);
 
 	private:
 
