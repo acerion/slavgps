@@ -24,7 +24,9 @@
 #include <cstdlib>
 #include <cassert>
 
+#if 0
 #include <gtk/gtk.h>
+#endif
 #include <glib/gi18n.h>
 #include <glib/gstdio.h>
 
@@ -33,6 +35,8 @@
 #include "file.h"
 #include "util.h"
 #include "globals.h"
+#include "uibuilder_qt.h"
+
 
 
 
@@ -244,7 +248,7 @@ bool a_preferences_save_to_file()
 
 
 
-void a_preferences_show_window(GtkWindow * parent)
+void a_preferences_show_window(QWindow * parent)
 {
 	//VikLayerParamData *a_uibuilder_run_dialog (GtkWindow *parent, VikLayerParam \*params, // uint16_t params_count, char **groups, uint8_t groups_count, // VikLayerParamData *params_defaults)
 	/* TODO: THIS IS A MAJOR HACKAROUND, but ok when we have only a couple preferences. */
@@ -253,6 +257,13 @@ void a_preferences_show_window(GtkWindow * parent)
 	for (unsigned int i = 0; i < params->len; i++) {
 		contiguous_params[i] = *((LayerParam*) (g_ptr_array_index(params,i)));
 	}
+	contiguous_params[params_count - 1].title = NULL;
+
+	LayerPropertiesDialog dialog((QWidget *) parent);
+	dialog.fill(contiguous_params, params_count);
+	dialog.exec();
+
+#if 0
 	loaded = true;
 	preferences_load_from_file();
 	if (a_uibuilder_properties_factory(_("Preferences"),
@@ -270,6 +281,7 @@ void a_preferences_show_window(GtkWindow * parent)
 		a_preferences_save_to_file();
 	}
 	free(contiguous_params);
+#endif
 }
 
 
