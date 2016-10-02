@@ -47,15 +47,7 @@ using namespace SlavGPS;
 #ifdef SLAVGPS_QT
 
 
-DistanceUnit a_vik_get_units_distance(void)
-{
-	return DistanceUnit::KILOMETRES;
-}
 
-vik_startup_method_t a_vik_get_startup_method()
-{
-	return VIK_STARTUP_METHOD_LAST_LOCATION;
-}
 
 void a_settings_set_double(char const*, double)
 {
@@ -72,31 +64,7 @@ bool a_settings_get_integer(char const*, int*)
 	return true;
 }
 
-double a_vik_get_default_lat()
-{
-	return 55.0;
-}
 
-double a_vik_get_default_long()
-{
-	return 16.0;
-}
-
-vik_degree_format_t a_vik_get_degree_format()
-{
-	return VIK_DEGREE_FORMAT_DDD;
-}
-
-HeightUnit a_vik_get_units_height()
-{
-	return HeightUnit::METRES;
-}
-
-
-vik_file_ref_format_t a_vik_get_file_ref_format()
-{
-	return VIK_FILE_REF_FORMAT_ABSOLUTE;
-}
 
 
 #endif
