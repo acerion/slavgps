@@ -148,7 +148,7 @@ static bool str_starts_with(char const * haystack, char const * needle, uint16_t
 	return false;
 }
 
-
+#endif
 
 
 void SlavGPS::file_write_layer_param(FILE * f, char const * name, LayerParamType type, LayerParamData data)
@@ -187,7 +187,7 @@ void SlavGPS::file_write_layer_param(FILE * f, char const * name, LayerParamType
 			fprintf(f, "%s\n", data.s ? data.s : "");
 			break;
 		case LayerParamType::COLOR:
-			fprintf(f, "#%.2x%.2x%.2x\n", (int)(data.c.red/256),(int)(data.c.green/256),(int)(data.c.blue/256));
+			fprintf(f, "#%.2x%.2x%.2x\n", (int)(data.c.r/256),(int)(data.c.g/256),(int)(data.c.b/256));
 			break;
 		default: break;
 		}
@@ -195,7 +195,7 @@ void SlavGPS::file_write_layer_param(FILE * f, char const * name, LayerParamType
 }
 
 
-
+#if 0
 
 static void write_layer_params_and_data(Layer const * layer, FILE * f)
 {
