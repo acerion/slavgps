@@ -26,6 +26,8 @@
 
 #include <cstdint>
 
+#include <QWindow>
+
 #include "uibuilder.h"
 
 
@@ -49,7 +51,7 @@ void a_preferences_register_group(const char * key, const char * name);
 /* Group field (integer) will be overwritten. */
 void a_preferences_register(LayerParam * pref, LayerParamData defaultval, const char * group_key);
 
-void a_preferences_show_window(GtkWindow * parent);
+void a_preferences_show_window(QWindow * parent);
 
 LayerParamData * a_preferences_get(const char * key);
 
