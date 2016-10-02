@@ -11,6 +11,7 @@ SOURCES += main.cpp \
     viewport.cpp \
     coord.cpp \
     coords.cpp \
+    globals.cpp \
     degrees_converters.cpp \
     slav_qt.cpp \
     layer_defaults.cpp \
@@ -36,7 +37,8 @@ SOURCES += main.cpp \
     background.cpp \
     download.cpp \
     curl_download.cpp \
-    dialog.cpp
+    dialog.cpp \
+    preferences.cpp
 
 
 HEADERS += window.h \
@@ -69,7 +71,8 @@ HEADERS += window.h \
     background.h \
     download.h \
     curl_download.h \
-    dialog.h
+    dialog.h \
+    preferences.h
 
 
 # For glib library.
