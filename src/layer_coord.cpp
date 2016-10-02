@@ -22,23 +22,20 @@
 #include "config.h"
 #endif
 
-#ifdef HAVE_MATH_H
-#include <math.h>
-#endif
-#include <glib/gi18n.h>
-#include <stdlib.h>
+#include <cmath>
+#include <cstdlib>
 
+#include <glib/gi18n.h>
+
+#include <QPen>
 #include <QDebug>
 
 #include "layer_coord.h"
-#include "icons/icons.h"
-
 
 
 
 
 using namespace SlavGPS;
-
 
 
 
@@ -50,23 +47,17 @@ static Layer * coord_layer_unmarshall(uint8_t * data, int len, Viewport * viewpo
 
 static LayerParamScale param_scales[] = {
 	{ 0.05, 60.0, 0.25, 10 },
-	{ 1, 15, 1, 0 },
+	{ 1,    15,   1,     0 },
 };
-static LayerParamData color_default(void)
+static LayerParamValue color_default(void)
 {
-	LayerParamData data;
-	data.c.r = 1;
-	data.c.g = 1;
-	data.c.b = 1;
-	data.c.a = 100;
-	return data;
-	// or: return VIK_LPD_COLOR (0, 65535, 0, 0);
+	return LAYER_PARAM_COLOR (255, 0, 0, 100);
 }
-static LayerParamData min_inc_default(void)
+static LayerParamValue min_inc_default(void)
 {
 	return VIK_LPD_DOUBLE (1.0);
 }
-static LayerParamData line_thickness_default(void)
+static LayerParamValue line_thickness_default(void)
 {
 	return VIK_LPD_UINT (3);
 }
@@ -76,21 +67,19 @@ enum {
 	PARAM_COLOR = 0,
 	PARAM_MIN_INC,
 	PARAM_LINE_THICKNESS,
-	NUM_PARAMS
+	PARAM_MAX
 };
 
 
 
 
 static LayerParam coord_layer_params[] = {
-	{ LayerType::COORD, PARAM_COLOR,          "color",          LayerParamType::COLOR,  VIK_LAYER_GROUP_NONE, N_("Color:"),          LayerWidgetType::COLOR,      NULL,             NULL, NULL, color_default,          NULL, NULL },
-	{ LayerType::COORD, PARAM_MIN_INC,        "min_inc",        LayerParamType::DOUBLE, VIK_LAYER_GROUP_NONE, N_("Minutes Width:"),  LayerWidgetType::SPINBOX_DOUBLE, &param_scales[0], NULL, NULL, min_inc_default,        NULL, NULL },
-	{ LayerType::COORD, PARAM_LINE_THICKNESS, "line_thickness", LayerParamType::UINT,   VIK_LAYER_GROUP_NONE, N_("Line Thickness:"), LayerWidgetType::SPINBUTTON, &param_scales[1], NULL, NULL, line_thickness_default, NULL, NULL },
+	{ LayerType::COORD,     PARAM_COLOR,          "color",          LayerParamType::COLOR,  VIK_LAYER_GROUP_NONE, N_("Color:"),          LayerWidgetType::COLOR,          NULL,             NULL, NULL, color_default,          NULL, NULL },
+	{ LayerType::COORD,     PARAM_MIN_INC,        "min_inc",        LayerParamType::DOUBLE, VIK_LAYER_GROUP_NONE, N_("Minutes Width:"),  LayerWidgetType::SPINBOX_DOUBLE, &param_scales[0], NULL, NULL, min_inc_default,        NULL, NULL },
+	{ LayerType::COORD,     PARAM_LINE_THICKNESS, "line_thickness", LayerParamType::UINT,   VIK_LAYER_GROUP_NONE, N_("Line Thickness:"), LayerWidgetType::SPINBUTTON,     &param_scales[1], NULL, NULL, line_thickness_default, NULL, NULL },
 
-	{ LayerType::NUM_TYPES, NUM_PARAMS,       NULL,             LayerParamType::PTR,    VIK_LAYER_GROUP_NONE, NULL,                  LayerWidgetType::CHECKBUTTON, NULL,            NULL, NULL, NULL,                   NULL, NULL }, /* Guard. */
+	{ LayerType::NUM_TYPES, PARAM_MAX,            NULL,             LayerParamType::PTR,    VIK_LAYER_GROUP_NONE, NULL,                  LayerWidgetType::CHECKBUTTON,    NULL,             NULL, NULL, NULL,                   NULL, NULL }, /* Guard. */
 };
-
-
 
 
 
@@ -99,27 +88,24 @@ LayerInterface vik_coord_layer_interface = {
 	"Coord",
 	N_("Coordinate"),
 	NULL,
-#ifdef SLAVGPS_QT
 	NULL,
-#else
-	&vikcoordlayer_pixbuf,
-#endif
 
 	{ NULL, NULL, NULL, NULL, NULL, NULL, NULL },
 	NULL,
 	0,
 
 	coord_layer_params,
-	NUM_PARAMS,
+	PARAM_MAX,
 
 	NULL,
 	0,
 
 	VIK_MENU_ITEM_ALL,
 
-	/* (VikLayerFuncUnmarshall) */    coord_layer_unmarshall,
-	/* (VikLayerFuncChangeParam) */   NULL,
-	NULL,
+	coord_layer_unmarshall, /* (VikLayerFuncUnmarshall) */
+	NULL,                   /* (VikLayerFuncChangeParam) */
+
+	NULL
 };
 
 
@@ -128,35 +114,30 @@ LayerInterface vik_coord_layer_interface = {
 static Layer * coord_layer_unmarshall(uint8_t * data, int len, Viewport * viewport)
 {
 	LayerCoord * layer = new LayerCoord();
-
 	layer->unmarshall_params(data, len, viewport);
-	layer->update_gc(viewport);
-
 	return layer;
 }
 
 
 
 
-
-// NB Viewport can be null as it's not used ATM
+/* Viewport can be NULL as it's not used ATM. */
 bool LayerCoord::set_param_value(uint16_t id, LayerParamValue param_value, Viewport * viewport, bool is_file_operation)
 {
-	fprintf(stderr, "set param %d\n", id);
 	switch (id) {
 	case PARAM_COLOR:
-		fprintf(stderr, "++++ saving colors: %d %d %d %d\n", param_value.c.r, param_value.c.g, param_value.c.b, param_value.c.a);
+		qDebug() << "II: Layer Coordinate: saving color" << param_value.c.r << param_value.c.g << param_value.c.b << param_value.c.a;
 		this->color.setRed(param_value.c.r);
 		this->color.setGreen(param_value.c.g);
 		this->color.setBlue(param_value.c.b);
-		this->color.setAlpha(50);
+		this->color.setAlpha(param_value.c.a);
 		break;
 	case PARAM_MIN_INC:
 		this->deg_inc = param_value.d / 60.0;
 		break;
 	case PARAM_LINE_THICKNESS:
-		fprintf(stderr, "set param %d line thickness %d\n", id, param_value.u);
 		if (param_value.u >= 1 && param_value.u <= 15) {
+			qDebug() << "II: Layer Coordinate: saving line thickness" << param_value.u;
 			this->line_thickness = param_value.u;
 		}
 		break;
@@ -165,7 +146,6 @@ bool LayerCoord::set_param_value(uint16_t id, LayerParamValue param_value, Viewp
 	}
 	return true;
 }
-
 
 
 
@@ -179,7 +159,7 @@ LayerParamValue LayerCoord::get_param_value(layer_param_id_t id, bool is_file_op
 		rv.c.g = this->color.green();
 		rv.c.b = this->color.blue();
 		rv.c.a = this->color.alpha();
-		fprintf(stderr, "++++ getting colors: %d %d %d %d\n", rv.c.r, rv.c.g, rv.c.b, rv.c.a);
+		qDebug() << "II: Layer Coordinate: returning color" << rv.c.r << rv.c.g << rv.c.b << rv.c.a;
 		break;
 	case PARAM_MIN_INC:
 		rv.d = this->deg_inc * 60.0;
@@ -196,34 +176,17 @@ LayerParamValue LayerCoord::get_param_value(layer_param_id_t id, bool is_file_op
 
 
 
-void LayerCoord::post_read(Viewport * viewport, bool from_file)
-{
-	this->pen.setColor(this->color);
-	this->pen.setWidth(this->line_thickness);
-}
-
-
-
-
 void LayerCoord::draw(Viewport * viewport)
 {
-#ifndef SLAVGPS_QT
-	if (!this->gc) {
-		return;
-	}
-#endif
-
-	qDebug() << "II: Layer Coord: draw begin";
 	if (viewport->get_coord_mode() != VIK_COORD_UTM) {
 		this->draw_latlon(viewport);
 	}
 	if (viewport->get_coord_mode() == VIK_COORD_UTM) {
 		this->draw_utm(viewport);
 	}
-	qDebug() << "II: Layer Coord: draw end";
-	//qDebug() << "II: Layer Coord: sync begin";
-	//viewport->sync();
-	//qDebug() << "II: Layer Coord: sync end";
+
+	/* Not really necessary, but keeping for now. */
+	// viewport->sync();
 }
 
 
@@ -344,6 +307,9 @@ void LayerCoord::draw_latlon(Viewport * viewport)
 
 void LayerCoord::draw_utm(Viewport * viewport)
 {
+	QPen pen(this->color);
+	pen.setWidth(this->line_thickness);
+
 	const struct UTM * center = (const struct UTM *) viewport->get_center();
 	double xmpp = viewport->get_xmpp(), ympp = viewport->get_ympp();
 	uint16_t width = viewport->get_width(), height = viewport->get_height();
@@ -359,8 +325,9 @@ void LayerCoord::draw_utm(Viewport * viewport)
 	a_coords_utm_to_latlon(&utm, &ll2);
 
 	{
-		/* find corner coords in lat/lon.
-		   start at whichever is less: top or bottom left lon. goto whichever more: top or bottom right lon
+		/*
+		  Find corner coords in lat/lon.
+		  Start at whichever is less: top or bottom left lon. Go to whichever more: top or bottom right lon.
 		*/
 		struct LatLon topleft, topright, bottomleft, bottomright;
 		struct UTM temp_utm;
@@ -406,7 +373,7 @@ void LayerCoord::draw_utm(Viewport * viewport)
 		int x1 = ((utm.easting - center->easting) / xmpp) + (width / 2);
 		a_coords_latlon_to_utm(&ll2, &utm);
 		int x2 = ((utm.easting - center->easting) / xmpp) + (width / 2);
-		viewport->draw_line(this->pen, x1, height, x2, 0);
+		viewport->draw_line(pen, x1, height, x2, 0);
 	}
 
 	utm = *center;
@@ -418,7 +385,7 @@ void LayerCoord::draw_utm(Viewport * viewport)
 
 	a_coords_utm_to_latlon(&utm, &ll2);
 
-	/* really lat, just reusing a variable */
+	/* Really lat, just reusing a variable. */
 	lon = ((double) ((long) ((min.lat)/ this->deg_inc))) * this->deg_inc;
 	ll.lat = ll2.lat = lon;
 
@@ -427,7 +394,7 @@ void LayerCoord::draw_utm(Viewport * viewport)
 		int x1 = (height / 2) - ((utm.northing - center->northing) / ympp);
 		a_coords_latlon_to_utm (&ll2, &utm);
 		int x2 = (height / 2) - ((utm.northing - center->northing) / ympp);
-		viewport->draw_line(this->pen, width, x2, 0, x1);
+		viewport->draw_line(pen, width, x2, 0, x1);
 	}
 }
 
@@ -441,48 +408,23 @@ LayerCoord::~LayerCoord()
 
 
 
-void LayerCoord::update_gc(Viewport * viewport)
-{
-	this->pen.setColor(this->color);
-	this->pen.setWidth(this->line_thickness);
-}
-
-
-
-
 LayerCoord::LayerCoord()
 {
-	qDebug() << "II: LayerCoord::LayerCoord()";
+	qDebug() << "II: Layer Coordinate: LayerCoord::LayerCoord()";
 
 	this->type = LayerType::COORD;
 	strcpy(this->type_string, "LayerType::COORD");
 	this->configure_interface(&vik_coord_layer_interface, coord_layer_params);
 
-	this->color.setNamedColor("black");
-	this->line_thickness = 3;
-
 	this->rename("My Coord Layer"); /* kamilFIXME: this shouldn't be here. Shouldn't we get the default name from layer defaults or layer interface? */
 }
 
 
 
 
-LayerCoord::LayerCoord(Viewport * viewport)
+LayerCoord::LayerCoord(Viewport * viewport) : LayerCoord::LayerCoord()
 {
-	fprintf(stderr, "LayerCoord()\n");
-
-	this->type = LayerType::COORD;
-	strcpy(this->type_string, "COORD");
-	this->configure_interface(&vik_coord_layer_interface, coord_layer_params);
-
-	this->color.setNamedColor("black");
-	this->line_thickness = 3;
-
+	qDebug() << "II: Layer Coordinate: LayerCoord::LayerCoord(viewport)";
 
 	this->set_defaults(viewport);
-	if (viewport) {
-		this->update_gc(viewport);
-	}
-
-	this->rename("My Coord Layer"); /* kamilFIXME: this shouldn't be here. Shouldn't we get the default name from layer defaults or layer interface? */
 }

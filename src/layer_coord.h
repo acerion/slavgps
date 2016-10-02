@@ -19,21 +19,19 @@
  *
  */
 
-#ifndef _SG_LAYER_COORD_H
-#define _SG_LAYER_COORD_H
+#ifndef _SG_LAYER_COORD_H_
+#define _SG_LAYER_COORD_H_
 
 
 
-
-#include <QPen>
 
 #include "layer.h"
+#include "viewport.h"
 
 
 
 
 namespace SlavGPS {
-
 
 
 
@@ -45,24 +43,19 @@ namespace SlavGPS {
 		~LayerCoord();
 
 		/* Layer interface methods. */
-		void post_read(Viewport * viewport, bool from_file);
 		void draw(Viewport * viewport);
 		bool set_param_value(uint16_t id, LayerParamValue param_value, Viewport * viewport, bool is_file_operation);
 		LayerParamValue get_param_value(layer_param_id_t id, bool is_file_operation) const;
-
-		void update_gc(Viewport * viewport);
 
 	private:
 		void draw_latlon(Viewport * viewport);
 		void draw_utm(Viewport * viewport);
 
-		QPen pen;
-		QColor color;
+		QColor color;           /* Color of coordinate lines. */
+		uint8_t line_thickness; /* Base thickness of coordinate lines. */
 
 		double deg_inc;
-		uint8_t line_thickness;
 	};
-
 
 
 
@@ -72,5 +65,4 @@ namespace SlavGPS {
 
 
 
-
-#endif /* #ifndef _SG_LAYER_COORD_H */
+#endif /* #ifndef _SG_LAYER_COORD_H_ */
