@@ -24,6 +24,8 @@
 #include <cstdlib>
 #include <cassert>
 
+#include <QDebug>
+
 #if 0
 #include <gtk/gtk.h>
 #endif
@@ -58,8 +60,8 @@ using namespace SlavGPS;
 
 
 
-static GPtrArray *params;
-static GHashTable *values;
+static GPtrArray * registered_parameters = NULL;
+static GHashTable * registered_parameter_values = NULL;
 bool loaded;
 
 
@@ -143,12 +145,16 @@ static bool preferences_load_from_file()
 			}
 			if (split_string_from_file_on_equals(buf, &key, &val)) {
 				/* if it's not in there, ignore it. */
-				oldval = (LayerTypedParamData *) g_hash_table_lookup(values, key);
-				if (! oldval) {
+				oldval = (LayerTypedParamData *) g_hash_table_lookup(registered_parameter_values, key);
+				if (!oldval) {
+					qDebug() << "II: Preferences: load from file: ignoring key/val" << key << val;
 					free(key);
 					free(val);
 					continue;
+				} else {
+					qDebug() << "II: Preferences: load from file: modifying key/val" << key << val;
 				}
+
 
 				/* Otherwise change it (you know the type!).
 				   If it's a string list do some funky stuff ... yuck... not yet. */
@@ -157,7 +163,7 @@ static bool preferences_load_from_file()
 				}
 
 				newval = vik_layer_data_typed_param_copy_from_string(oldval->type, val);
-				g_hash_table_insert(values, key, newval);
+				g_hash_table_insert(registered_parameter_values, key, newval);
 
 				free(key);
 				free(val);
@@ -174,33 +180,33 @@ static bool preferences_load_from_file()
 
 
 
-static void preferences_run_setparam(void * notused, uint16_t i, LayerParamData data, LayerParam *vlparams)
+static void preferences_run_setparam(void * notused, uint16_t i, LayerParamValue value, LayerParam * parameters)
 {
 	/* Don't change stored pointer values. */
-	if (vlparams[i].type == LayerParamType::PTR) {
+	if (parameters[i].type == LayerParamType::PTR) {
 		return;
 	}
-	if (vlparams[i].type == LayerParamType::STRING_LIST) {
+	if (parameters[i].type == LayerParamType::STRING_LIST) {
 		fprintf(stderr, "CRITICAL: Param strings not implemented in preferences\n"); /* Fake it. */
 	}
-	g_hash_table_insert(values, (char *)(vlparams[i].name), vik_layer_typed_param_data_copy_from_data(vlparams[i].type, data));
+	g_hash_table_insert(registered_parameter_values, (char *)(parameters[i].name), vik_layer_typed_param_data_copy_from_data(parameters[i].type, value));
 }
 
 
 
 
 /* Allow preferences to be manipulated externally. */
-void a_preferences_run_setparam(LayerParamData data, LayerParam * vlparams)
+void a_preferences_run_setparam(LayerParamValue value, LayerParam * parameters)
 {
-	preferences_run_setparam(NULL, 0, data, vlparams);
+	preferences_run_setparam(NULL, 0, value, parameters);
 }
 
 
 
 
-static LayerParamData preferences_run_getparam(void * notused, uint16_t i, bool notused2)
+static LayerParamValue preferences_run_getparam(void * notused, uint16_t i, bool notused2)
 {
-	LayerTypedParamData * val = (LayerTypedParamData *) g_hash_table_lookup (values, ((LayerParam *)g_ptr_array_index(params,i))->name);
+	LayerTypedParamData * val = (LayerTypedParamData *) g_hash_table_lookup(registered_parameter_values, ((LayerParam *)g_ptr_array_index(registered_parameters, i))->name);
 	assert (val != NULL);
 	if (val->type == LayerParamType::STRING_LIST) {
 		fprintf(stderr, "CRITICAL: Param strings not implemented in preferences\n"); /* fake it. */
@@ -228,9 +234,9 @@ bool a_preferences_save_to_file()
 	if (f) {
 		LayerParam *param;
 		LayerTypedParamData * val;
-		for (unsigned int i = 0; i < params->len; i++) {
-			param = (LayerParam *) g_ptr_array_index(params,i);
-			val = (LayerTypedParamData *) g_hash_table_lookup(values, param->name);
+		for (unsigned int i = 0; i < registered_parameters->len; i++) {
+			param = (LayerParam *) g_ptr_array_index(registered_parameters, i);
+			val = (LayerTypedParamData *) g_hash_table_lookup(registered_parameter_values, param->name);
 			if (val) {
 				if (val->type != LayerParamType::PTR) {
 					file_write_layer_param(f, param->name, val->type, val->data);
@@ -250,12 +256,12 @@ bool a_preferences_save_to_file()
 
 void a_preferences_show_window(QWindow * parent)
 {
-	//VikLayerParamData *a_uibuilder_run_dialog (GtkWindow *parent, VikLayerParam \*params, // uint16_t params_count, char **groups, uint8_t groups_count, // VikLayerParamData *params_defaults)
+	//LayerParamValue *a_uibuilder_run_dialog (GtkWindow *parent, VikLayerParam \* registered_parameters, // uint16_t params_count, char **groups, uint8_t groups_count, // LayerParamValue *params_defaults)
 	/* TODO: THIS IS A MAJOR HACKAROUND, but ok when we have only a couple preferences. */
-	int params_count = params->len;
+	int params_count = registered_parameters->len;
 	LayerParam * contiguous_params = (LayerParam *) malloc(params_count * sizeof (LayerParam));
-	for (unsigned int i = 0; i < params->len; i++) {
-		contiguous_params[i] = *((LayerParam*) (g_ptr_array_index(params,i)));
+	for (unsigned int i = 0; i < registered_parameters->len; i++) {
+		contiguous_params[i] = *((LayerParam*) (g_ptr_array_index(registered_parameters, i)));
 	}
 	contiguous_params[params_count - 1].title = NULL;
 
@@ -272,7 +278,7 @@ void a_preferences_show_window(QWindow * parent)
 					   params_count,
 					   (char **) groups_names->pdata,
 					   groups_names->len, // groups, groups_count, // groups? what groups?!
-					   (bool (*) (void *, uint16_t, LayerParamData,void *, bool)) preferences_run_setparam,
+					   (bool (*) (void *, uint16_t, LayerParamValue,void *, bool)) preferences_run_setparam,
 					   NULL /* Not used. */,
 					   contiguous_params,
 					   preferences_run_getparam,
@@ -287,22 +293,22 @@ void a_preferences_show_window(QWindow * parent)
 
 
 
-void a_preferences_register(LayerParam * pref, LayerParamData defaultval, const char * group_key)
+void a_preferences_register(LayerParam * parameter, LayerParamValue default_value, const char * group_key)
 {
 	/* All preferences should be registered before loading. */
 	if (loaded) {
-		fprintf(stderr, "CRITICAL: REGISTERING preference %s after LOADING from \n" VIKING_PREFS_FILE, pref->name);
+		fprintf(stderr, "CRITICAL: REGISTERING preference %s after LOADING from \n" VIKING_PREFS_FILE, parameter->name);
 	}
 	/* Copy value. */
-	LayerParam * newpref = (LayerParam *) malloc(1 * sizeof (LayerParam));
-	*newpref = *pref;
-	LayerTypedParamData * newval = vik_layer_typed_param_data_copy_from_data(pref->type, defaultval);
+	LayerParam * new_parameter = (LayerParam *) malloc(1 * sizeof (LayerParam));
+	*new_parameter = *parameter;
+	LayerTypedParamData * newval = vik_layer_typed_param_data_copy_from_data(parameter->type, default_value);
 	if (group_key) {
-		newpref->group = preferences_groups_key_to_index(group_key);
+		new_parameter->group = preferences_groups_key_to_index(group_key);
 	}
 
-	g_ptr_array_add(params, newpref);
-	g_hash_table_insert(values, (char *)pref->name, newval);
+	g_ptr_array_add(registered_parameters, new_parameter);
+	g_hash_table_insert(registered_parameter_values, (char *) parameter->name, newval);
 }
 
 
@@ -313,10 +319,10 @@ void a_preferences_init()
 	preferences_groups_init();
 
 	/* Not copied. */
-	params = g_ptr_array_new();
+	registered_parameters = g_ptr_array_new();
 
 	/* Key not copied (same ptr as in pref), actual param data yes. */
-	values = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, vik_layer_typed_param_data_free);
+	registered_parameter_values = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, vik_layer_typed_param_data_free);
 
 	loaded = false;
 }
@@ -328,15 +334,15 @@ void a_preferences_uninit()
 {
 	preferences_groups_uninit();
 
-	g_ptr_array_foreach(params, (GFunc)g_free, NULL);
-	g_ptr_array_free(params, true);
-	g_hash_table_destroy(values);
+	g_ptr_array_foreach(registered_parameters, (GFunc)g_free, NULL);
+	g_ptr_array_free(registered_parameters, true);
+	g_hash_table_destroy(registered_parameter_values);
 }
 
 
 
 
-LayerParamData * a_preferences_get(const char * key)
+LayerParamValue * a_preferences_get(const char * key)
 {
 	if (!loaded) {
 		fprintf(stderr, "DEBUG: %s: First time: %s\n", __FUNCTION__, key);
@@ -345,5 +351,5 @@ LayerParamData * a_preferences_get(const char * key)
 		preferences_load_from_file();
 		loaded = true;
 	}
-	return (LayerParamData *) g_hash_table_lookup(values, key);
+	return (LayerParamValue *) g_hash_table_lookup(registered_parameter_values, key);
 }
