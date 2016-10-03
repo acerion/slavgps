@@ -330,64 +330,33 @@ LayerPropertiesDialog::~LayerPropertiesDialog()
 
 
 
-#if 0
-void LayerPropertiesDialog::fill(LayerParam * params, uint16_t params_count)
+
+void LayerPropertiesDialog::fill(Preferences * preferences)
 {
-	QString label("page");
-	QFormLayout * form = this->insert_tab(label);
-	LayerParamValue param_value;
-	qDebug() << "II: UI Builder: vvvvvvvvvv adding widgets:";
-	for (uint16_t i = 0; i < params_count; i++) {
-		QString label = QString(params[i].title);
-		QWidget * widget = this->new_widget(&params[i], param_value);
+	for (auto iter = preferences->begin(); iter != preferences->end(); iter++) {
+		param_id_t group_id = iter->second->group;
+
+		auto form_iter = this->forms.find(group_id);
+		QFormLayout * form = NULL;
+		if (form_iter == this->forms.end()) {
+			QString label("page");
+			form = this->insert_tab(label);
+
+			this->forms.insert(std::pair<param_id_t, QFormLayout *>(group_id, form));
+
+			qDebug() << "II: Preferences Builder: created tab" << label;
+		} else {
+			form = form_iter->second;
+		}
+
+
+		LayerParamValue param_value = preferences->get_param_value(iter->first);
+		QString label = QString(iter->second->title);
+		QWidget * widget = this->new_widget(iter->second, param_value);
 		form->addRow(label, widget);
 		qDebug() << "II: UI Builder: adding widget" << widget;
-		this->widgets.insert(std::pair<layer_param_id_t, QWidget *>(i, widget));
+		this->widgets.insert(std::pair<layer_param_id_t, QWidget *>(iter->first, widget));
 	}
-	qDebug() << "II: UI Builder ^^^^^^^^^^ there are " << this->widgets.size() << "widgets";
-}
-#endif
-
-
-
-void LayerPropertiesDialog::fill(LayerParam * params, uint16_t params_count)
-{
-	uint16_t start = 0;
-	uint16_t r = 0;
-	do {
-		start += r;
-		QString label("page");
-		QFormLayout * form = this->insert_tab(label);
-		qDebug() << "II: Preferences Builder: adding widgets to tab" << label;
-		r = this->add_widgets_to_tab(form, params, start);
-	} while (r && params[start + r].title);
-}
-
-
-
-
-uint16_t LayerPropertiesDialog::add_widgets_to_tab(QFormLayout * form, LayerParam * params, uint16_t start)
-{
-	LayerParamValue param_value;
-
-	uint16_t i = 0;
-	int last_group = params[start + i].group;
-
-	qDebug() << "II: UI Builder: vvvvvvvvvv adding widgets to group" << last_group << ":";
-
-	while (params[start + i].title && params[start + i].group == last_group) {
-		QString label = QString(params[start + i].title);
-		QWidget * widget = this->new_widget(&params[start + i], param_value);
-		form->addRow(label, widget);
-		qDebug() << "II: UI Builder: adding widget" << widget;
-		this->widgets.insert(std::pair<layer_param_id_t, QWidget *>(start + i, widget));
-
-		last_group = params[start + i].group;
-		i++;
-	}
-
-	qDebug() << "II: UI Builder ^^^^^^^^^^ added new" << i << "widgets in this tab (" << widgets.size() << "in total)";
-	return i;
 }
 
 
@@ -415,7 +384,7 @@ void LayerPropertiesDialog::fill(Layer * layer)
 
 std::map<layer_param_id_t, LayerParam *>::iterator LayerPropertiesDialog::add_widgets_to_tab(QFormLayout * form, Layer * layer, std::map<layer_param_id_t, LayerParam *>::iterator & iter, std::map<layer_param_id_t, LayerParam *>::iterator & end)
 {
-	uint16_t i = 0;
+	param_id_t i = 0;
 	int last_group = iter->second->group;
 
 	qDebug() << "II: UI Builder: vvvvvvvvvv adding widgets to group" << last_group << ":";
