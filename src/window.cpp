@@ -32,7 +32,7 @@
 #include "layers_panel.h"
 #include "globals.h"
 #include "uibuilder_qt.h"
-#include "preferences.h"
+
 
 
 
