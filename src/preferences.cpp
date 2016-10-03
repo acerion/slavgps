@@ -19,6 +19,8 @@
  *
  */
 
+#include <string>
+#include <map>
 #include <cstring>
 #include <cstdio>
 #include <cstdlib>
@@ -42,8 +44,12 @@
 
 
 
-
 using namespace SlavGPS;
+
+
+
+
+static Preferences preferences;
 
 
 
@@ -59,9 +65,16 @@ using namespace SlavGPS;
 
 
 
+/* When doing lookup:
+   1. use id to get a parameter from registered_parameters.
+   2. use parameter->name to look up parameter's value in registered_parameters_values.
 
-static GPtrArray * registered_parameters = NULL;
-static GHashTable * registered_parameter_values = NULL;
+   When doing registration:
+   1.
+   2.
+*/
+static std::map<param_id_t, LayerParam *> registered_parameters; /* Parameter id -> Parameter. */
+static std::map<std::string, LayerTypedParamData *> registered_parameter_values; /* Parameter name -> Typed parameter value. */
 bool loaded;
 
 
@@ -138,15 +151,15 @@ static bool preferences_load_from_file()
 		char buf[4096];
 		char * key = NULL;
 		char * val = NULL;
-		LayerTypedParamData *oldval, *newval;
+		LayerTypedParamData * newval;
 		while (!feof (f)) {
 			if (fgets(buf,sizeof(buf), f) == NULL) {
 				break;
 			}
 			if (split_string_from_file_on_equals(buf, &key, &val)) {
 				/* if it's not in there, ignore it. */
-				oldval = (LayerTypedParamData *) g_hash_table_lookup(registered_parameter_values, key);
-				if (!oldval) {
+				auto oldval = registered_parameter_values.find(key);
+				if (oldval == registered_parameter_values.end()) {
 					qDebug() << "II: Preferences: load from file: ignoring key/val" << key << val;
 					free(key);
 					free(val);
@@ -158,12 +171,12 @@ static bool preferences_load_from_file()
 
 				/* Otherwise change it (you know the type!).
 				   If it's a string list do some funky stuff ... yuck... not yet. */
-				if (oldval->type == LayerParamType::STRING_LIST) {
+				if (oldval->second->type == LayerParamType::STRING_LIST) {
 					fprintf(stderr, "CRITICAL: Param strings not implemented in preferences\n"); /* Fake it. */
 				}
 
-				newval = vik_layer_data_typed_param_copy_from_string(oldval->type, val);
-				g_hash_table_insert(registered_parameter_values, key, newval);
+				newval = vik_layer_data_typed_param_copy_from_string(oldval->second->type, val);
+				registered_parameter_values.insert(std::pair<std::string, LayerTypedParamData *>(key, newval));
 
 				free(key);
 				free(val);
@@ -180,16 +193,17 @@ static bool preferences_load_from_file()
 
 
 
-static void preferences_run_setparam(void * notused, uint16_t i, LayerParamValue value, LayerParam * parameters)
+void Preferences::set_param_value(param_id_t id, LayerParamValue value, LayerParam * parameters)
 {
 	/* Don't change stored pointer values. */
-	if (parameters[i].type == LayerParamType::PTR) {
+	if (parameters[id].type == LayerParamType::PTR) {
 		return;
 	}
-	if (parameters[i].type == LayerParamType::STRING_LIST) {
+	if (parameters[id].type == LayerParamType::STRING_LIST) {
 		fprintf(stderr, "CRITICAL: Param strings not implemented in preferences\n"); /* Fake it. */
 	}
-	g_hash_table_insert(registered_parameter_values, (char *)(parameters[i].name), vik_layer_typed_param_data_copy_from_data(parameters[i].type, value));
+	registered_parameter_values.insert(std::pair<std::string, LayerTypedParamData *>(std::string((char *)(parameters[id].name)),
+											 vik_layer_typed_param_data_copy_from_data(parameters[id].type, value)));
 }
 
 
@@ -198,20 +212,21 @@ static void preferences_run_setparam(void * notused, uint16_t i, LayerParamValue
 /* Allow preferences to be manipulated externally. */
 void a_preferences_run_setparam(LayerParamValue value, LayerParam * parameters)
 {
-	preferences_run_setparam(NULL, 0, value, parameters);
+	preferences.set_param_value(0, value, parameters);
 }
 
 
 
 
-static LayerParamValue preferences_run_getparam(void * notused, uint16_t i, bool notused2)
+LayerParamValue Preferences::get_param_value(param_id_t id)
 {
-	LayerTypedParamData * val = (LayerTypedParamData *) g_hash_table_lookup(registered_parameter_values, ((LayerParam *)g_ptr_array_index(registered_parameters, i))->name);
-	assert (val != NULL);
-	if (val->type == LayerParamType::STRING_LIST) {
+	auto val = registered_parameter_values.find(std::string(registered_parameters[id]->name));
+	assert (val != registered_parameter_values.end());
+
+	if (val->second->type == LayerParamType::STRING_LIST) {
 		fprintf(stderr, "CRITICAL: Param strings not implemented in preferences\n"); /* fake it. */
 	}
-	return val->data;
+	return val->second->data;
 }
 
 
@@ -232,14 +247,12 @@ bool a_preferences_save_to_file()
 	free(fn);
 
 	if (f) {
-		LayerParam *param;
-		LayerTypedParamData * val;
-		for (unsigned int i = 0; i < registered_parameters->len; i++) {
-			param = (LayerParam *) g_ptr_array_index(registered_parameters, i);
-			val = (LayerTypedParamData *) g_hash_table_lookup(registered_parameter_values, param->name);
-			if (val) {
-				if (val->type != LayerParamType::PTR) {
-					file_write_layer_param(f, param->name, val->type, val->data);
+		for (unsigned int i = 0; i < registered_parameters.size(); i++) {
+			LayerParam * param = registered_parameters[i];
+			auto val = registered_parameter_values.find(std::string(param->name));
+			if (val != registered_parameter_values.end()) {
+				if (val->second->type != LayerParamType::PTR) {
+					file_write_layer_param(f, param->name, val->second->type, val->second->data);
 				}
 			}
 		}
@@ -258,16 +271,25 @@ void a_preferences_show_window(QWindow * parent)
 {
 	//LayerParamValue *a_uibuilder_run_dialog (GtkWindow *parent, VikLayerParam \* registered_parameters, // uint16_t params_count, char **groups, uint8_t groups_count, // LayerParamValue *params_defaults)
 	/* TODO: THIS IS A MAJOR HACKAROUND, but ok when we have only a couple preferences. */
-	int params_count = registered_parameters->len;
+#if 0
+	int params_count = registered_parameters.size();
 	LayerParam * contiguous_params = (LayerParam *) malloc(params_count * sizeof (LayerParam));
-	for (unsigned int i = 0; i < registered_parameters->len; i++) {
-		contiguous_params[i] = *((LayerParam*) (g_ptr_array_index(registered_parameters, i)));
+	for (unsigned int i = 0; i < registered_parameters.size(); i++) {
+		contiguous_params[i] = *(registered_parameters[i]);
 	}
 	contiguous_params[params_count - 1].title = NULL;
 
 	LayerPropertiesDialog dialog((QWidget *) parent);
-	dialog.fill(contiguous_params, params_count);
+	dialog.fill(&preferences, contiguous_params, params_count);
 	dialog.exec();
+#else
+
+	LayerPropertiesDialog dialog((QWidget *) parent);
+	dialog.fill(&preferences);
+	dialog.exec();
+#endif
+
+
 
 #if 0
 	loaded = true;
@@ -295,6 +317,7 @@ void a_preferences_show_window(QWindow * parent)
 
 void a_preferences_register(LayerParam * parameter, LayerParamValue default_value, const char * group_key)
 {
+	static param_id_t id = 0;
 	/* All preferences should be registered before loading. */
 	if (loaded) {
 		fprintf(stderr, "CRITICAL: REGISTERING preference %s after LOADING from \n" VIKING_PREFS_FILE, parameter->name);
@@ -307,8 +330,9 @@ void a_preferences_register(LayerParam * parameter, LayerParamValue default_valu
 		new_parameter->group = preferences_groups_key_to_index(group_key);
 	}
 
-	g_ptr_array_add(registered_parameters, new_parameter);
-	g_hash_table_insert(registered_parameter_values, (char *) parameter->name, newval);
+	registered_parameters.insert(std::pair<param_id_t, LayerParam *>(id, new_parameter));
+	registered_parameter_values.insert(std::pair<std::string, LayerTypedParamData *>(std::string(new_parameter->name), newval));
+	id++;
 }
 
 
@@ -319,10 +343,10 @@ void a_preferences_init()
 	preferences_groups_init();
 
 	/* Not copied. */
-	registered_parameters = g_ptr_array_new();
+	//registered_parameters = g_ptr_array_new();
 
 	/* Key not copied (same ptr as in pref), actual param data yes. */
-	registered_parameter_values = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, vik_layer_typed_param_data_free);
+	//registered_parameter_values = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, vik_layer_typed_param_data_free);
 
 	loaded = false;
 }
@@ -334,9 +358,8 @@ void a_preferences_uninit()
 {
 	preferences_groups_uninit();
 
-	g_ptr_array_foreach(registered_parameters, (GFunc)g_free, NULL);
-	g_ptr_array_free(registered_parameters, true);
-	g_hash_table_destroy(registered_parameter_values);
+	registered_parameters.clear();
+	registered_parameter_values.clear();
 }
 
 
@@ -351,5 +374,26 @@ LayerParamValue * a_preferences_get(const char * key)
 		preferences_load_from_file();
 		loaded = true;
 	}
-	return (LayerParamValue *) g_hash_table_lookup(registered_parameter_values, key);
+	auto val = registered_parameter_values.find(std::string(key));
+	if (val == registered_parameter_values.end()) {
+		return NULL;
+	} else {
+		return &val->second->data;
+	}
+}
+
+
+
+
+std::map<param_id_t, LayerParam *>::iterator Preferences::begin()
+{
+	return registered_parameters.begin();
+}
+
+
+
+
+std::map<param_id_t, LayerParam *>::iterator Preferences::end()
+{
+	return registered_parameters.end();
 }
