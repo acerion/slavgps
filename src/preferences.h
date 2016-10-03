@@ -41,7 +41,7 @@ namespace SlavGPS {
 
 	class Preferences {
 	public:
-		void set_param_value(param_id_t id, LayerParamValue value, LayerParam * parameters);
+		void set_param_value(param_id_t id, LayerParamValue value);
 		LayerParamValue get_param_value(param_id_t id);
 
 		std::map<param_id_t, LayerParam *>::iterator begin();

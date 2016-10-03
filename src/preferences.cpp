@@ -65,16 +65,17 @@ static Preferences preferences;
 
 
 
-/* When doing lookup:
-   1. use id to get a parameter from registered_parameters.
+/* How to get a value of parameter:
+   1. use id to get a parameter from registered_parameters, then
    2. use parameter->name to look up parameter's value in registered_parameters_values.
+   You probably can skip right to point 2 if you know full name of parameter.
 
-   When doing registration:
+   How to set a value of parameter:
    1.
    2.
 */
 static std::map<param_id_t, LayerParam *> registered_parameters; /* Parameter id -> Parameter. */
-static std::map<std::string, LayerTypedParamData *> registered_parameter_values; /* Parameter name -> Typed parameter value. */
+static std::map<std::string, ParameterValue *> registered_parameter_values; /* Parameter name -> Typed parameter value. */
 bool loaded;
 
 
@@ -151,7 +152,6 @@ static bool preferences_load_from_file()
 		char buf[4096];
 		char * key = NULL;
 		char * val = NULL;
-		LayerTypedParamData * newval;
 		while (!feof (f)) {
 			if (fgets(buf,sizeof(buf), f) == NULL) {
 				break;
@@ -175,8 +175,8 @@ static bool preferences_load_from_file()
 					fprintf(stderr, "CRITICAL: Param strings not implemented in preferences\n"); /* Fake it. */
 				}
 
-				newval = vik_layer_data_typed_param_copy_from_string(oldval->second->type, val);
-				registered_parameter_values.insert(std::pair<std::string, LayerTypedParamData *>(key, newval));
+				ParameterValue * newval = vik_layer_data_typed_param_copy_from_string(oldval->second->type, val);
+				registered_parameter_values.at(std::string(key)) = newval;
 
 				free(key);
 				free(val);
@@ -193,17 +193,22 @@ static bool preferences_load_from_file()
 
 
 
-void Preferences::set_param_value(param_id_t id, LayerParamValue value, LayerParam * parameters)
+void Preferences::set_param_value(param_id_t id, LayerParamValue value)
 {
 	/* Don't change stored pointer values. */
-	if (parameters[id].type == LayerParamType::PTR) {
+	if (registered_parameters[id]->type == LayerParamType::PTR) {
 		return;
 	}
-	if (parameters[id].type == LayerParamType::STRING_LIST) {
+	if (registered_parameters[id]->type == LayerParamType::STRING_LIST) {
 		fprintf(stderr, "CRITICAL: Param strings not implemented in preferences\n"); /* Fake it. */
 	}
-	registered_parameter_values.insert(std::pair<std::string, LayerTypedParamData *>(std::string((char *)(parameters[id].name)),
-											 vik_layer_typed_param_data_copy_from_data(parameters[id].type, value)));
+
+	ParameterValue * new_value = vik_layer_typed_param_data_copy_from_data(registered_parameters[id]->type, value); /* New value to save under an existing name. */
+	registered_parameter_values.at(std::string(registered_parameters[id]->name)) = new_value;
+
+	if (registered_parameters[id]->type == LayerParamType::DOUBLE) {
+		qDebug() << "II: Preferences: saved parameter #" << id << registered_parameters[id]->name << new_value->data.d;
+	}
 }
 
 
@@ -212,7 +217,7 @@ void Preferences::set_param_value(param_id_t id, LayerParamValue value, LayerPar
 /* Allow preferences to be manipulated externally. */
 void a_preferences_run_setparam(LayerParamValue value, LayerParam * parameters)
 {
-	preferences.set_param_value(0, value, parameters);
+	//preferences.set_param_value(0, value, parameters);
 }
 
 
@@ -252,6 +257,9 @@ bool a_preferences_save_to_file()
 			auto val = registered_parameter_values.find(std::string(param->name));
 			if (val != registered_parameter_values.end()) {
 				if (val->second->type != LayerParamType::PTR) {
+					if (val->second->type == LayerParamType::DOUBLE) {
+						qDebug() << "II: Preferences: saving to file" << param->name << (double) val->second->data.d;
+					}
 					file_write_layer_param(f, param->name, val->second->type, val->second->data);
 				}
 			}
@@ -269,31 +277,26 @@ bool a_preferences_save_to_file()
 
 void a_preferences_show_window(QWindow * parent)
 {
-	//LayerParamValue *a_uibuilder_run_dialog (GtkWindow *parent, VikLayerParam \* registered_parameters, // uint16_t params_count, char **groups, uint8_t groups_count, // LayerParamValue *params_defaults)
-	/* TODO: THIS IS A MAJOR HACKAROUND, but ok when we have only a couple preferences. */
-#if 0
-	int params_count = registered_parameters.size();
-	LayerParam * contiguous_params = (LayerParam *) malloc(params_count * sizeof (LayerParam));
-	for (unsigned int i = 0; i < registered_parameters.size(); i++) {
-		contiguous_params[i] = *(registered_parameters[i]);
-	}
-	contiguous_params[params_count - 1].title = NULL;
-
-	LayerPropertiesDialog dialog((QWidget *) parent);
-	dialog.fill(&preferences, contiguous_params, params_count);
-	dialog.exec();
-#else
+	//loaded = true;
+	//preferences_load_from_file();
 
 	LayerPropertiesDialog dialog((QWidget *) parent);
 	dialog.fill(&preferences);
-	dialog.exec();
-#endif
+	int dialog_code = dialog.exec();
 
+	if (dialog_code == QDialog::Accepted) {
+		for (auto iter = registered_parameters.begin(); iter != registered_parameters.end(); iter++) {
+			LayerParamValue param_value = dialog.get_param_value(iter->first, iter->second);
+			if (iter->second->type == LayerParamType::DOUBLE) {
+				qDebug() << "II: Preferences: extracted from dialog parameter #" << iter->first << iter->second->name << param_value.d;
+			}
+			preferences.set_param_value(iter->first, param_value);
+		}
+		a_preferences_save_to_file();
+	}
 
 
 #if 0
-	loaded = true;
-	preferences_load_from_file();
 	if (a_uibuilder_properties_factory(_("Preferences"),
 					   parent,
 					   contiguous_params,
@@ -306,7 +309,7 @@ void a_preferences_show_window(QWindow * parent)
 					   preferences_run_getparam,
 					   NULL,
 					   NULL /* Not used, */)) {
-		a_preferences_save_to_file();
+
 	}
 	free(contiguous_params);
 #endif
@@ -325,13 +328,13 @@ void a_preferences_register(LayerParam * parameter, LayerParamValue default_valu
 	/* Copy value. */
 	LayerParam * new_parameter = (LayerParam *) malloc(1 * sizeof (LayerParam));
 	*new_parameter = *parameter;
-	LayerTypedParamData * newval = vik_layer_typed_param_data_copy_from_data(parameter->type, default_value);
+	ParameterValue * newval = vik_layer_typed_param_data_copy_from_data(parameter->type, default_value);
 	if (group_key) {
 		new_parameter->group = preferences_groups_key_to_index(group_key);
 	}
 
 	registered_parameters.insert(std::pair<param_id_t, LayerParam *>(id, new_parameter));
-	registered_parameter_values.insert(std::pair<std::string, LayerTypedParamData *>(std::string(new_parameter->name), newval));
+	registered_parameter_values.insert(std::pair<std::string, ParameterValue *>(std::string(new_parameter->name), newval));
 	id++;
 }
 
