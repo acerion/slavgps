@@ -53,6 +53,9 @@ typedef union {
 } LayerParamData;
 
 
+typedef int16_t param_id_t;
+
+
 typedef LayerParamData LayerParamValue;
 
 
