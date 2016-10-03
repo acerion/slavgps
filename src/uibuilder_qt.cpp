@@ -350,11 +350,12 @@ void LayerPropertiesDialog::fill(Preferences * preferences)
 		}
 
 
+
 		LayerParamValue param_value = preferences->get_param_value(iter->first);
 		QString label = QString(iter->second->title);
 		QWidget * widget = this->new_widget(iter->second, param_value);
 		form->addRow(label, widget);
-		qDebug() << "II: UI Builder: adding widget" << widget;
+		qDebug() << "II: UI Builder: adding widget #" << iter->first << iter->second->title << widget;
 		this->widgets.insert(std::pair<layer_param_id_t, QWidget *>(iter->first, widget));
 	}
 }
@@ -635,7 +636,7 @@ LayerParamValue LayerPropertiesDialog::get_param_value(layer_param_id_t id, Laye
 
 	QWidget * widget = this->widgets[id];
 
-	LayerParamValue rv;
+	LayerParamValue rv = { 0 };
 	switch (param->widget_type) {
 	case LayerWidgetType::COLOR: {
 		QColor c = ((SGColorButton *) widget)->get_color();
@@ -670,6 +671,7 @@ LayerParamValue LayerPropertiesDialog::get_param_value(layer_param_id_t id, Laye
 
 	case LayerWidgetType::SPINBOX_DOUBLE:
 		rv.d = ((QDoubleSpinBox *) widget)->value();
+		qDebug() << "II: UI Builder: saving value of Spinbox Double:" << rv.d;
 		break;
 
 	case LayerWidgetType::ENTRY:
