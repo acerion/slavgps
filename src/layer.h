@@ -424,6 +424,9 @@ typedef struct {
 	LayerParamType type;
 } LayerTypedParamData;
 
+typedef LayerTypedParamData ParameterValue;
+
+
 void vik_layer_typed_param_data_free(void * gp);
 LayerTypedParamData * vik_layer_typed_param_data_copy_from_data(LayerParamType type, LayerParamData val);
 LayerTypedParamData * vik_layer_data_typed_param_copy_from_string(LayerParamType type, const char * str);
