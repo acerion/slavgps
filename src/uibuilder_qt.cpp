@@ -23,6 +23,7 @@
 #endif
 
 #include <cstdlib>
+#include <cassert>
 
 #include <QDebug>
 #include <QDialog>
@@ -33,6 +34,7 @@
 #include <QLineEdit>
 #include <QSpinBox>
 #include <QDoubleSpinBox>
+#include <QComboBox>
 
 #include <glib/gi18n.h>
 
@@ -451,7 +453,7 @@ QWidget * LayerPropertiesDialog::new_widget(LayerParam * param, LayerParamValue 
 
 	QWidget * widget = NULL;
 	switch (param->widget_type) {
-#if 1
+
 	case LayerWidgetType::COLOR:
 		if (param->type == LayerParamType::COLOR) {
 			qDebug() << "II: UI Builder: creating color button with colors" << vlpd.c.r << vlpd.c.g << vlpd.c.b << vlpd.c.a;
@@ -462,80 +464,39 @@ QWidget * LayerPropertiesDialog::new_widget(LayerParam * param, LayerParamValue 
 			widget = widget_;
 		}
 		break;
-#endif
+
 	case LayerWidgetType::CHECKBUTTON:
-	    if (param->type == LayerParamType::BOOLEAN) {
-		    QCheckBox * widget_ = new QCheckBox;
-		    if (vlpd.b) {
-			    widget_->setCheckState(Qt::Checked);
-		    }
-		    widget = widget_;
-	    }
-	    break;
-#if 0
-	case LayerWidgetType::COMBOBOX:
-		if (param->type == LayerParamType::UINT && param->widget_data) {
-			/* Build a simple combobox. */
-			char **pstr = (char **) param->widget_data;
-			rv = vik_combo_box_text_new();
-			while (*pstr) {
-				vik_combo_box_text_append(rv, *(pstr++));
+		if (param->type == LayerParamType::BOOLEAN) {
+			QCheckBox * widget_ = new QCheckBox;
+			if (vlpd.b) {
+				widget_->setCheckState(Qt::Checked);
 			}
-
-			if (param->extra_widget_data) { /* Map of alternate uint values for options. */
-				/* Set the effective default value. */
-				int i;
-				for (i = 0; ((const char **)param->widget_data)[i]; i++)
-					if (((unsigned int *)param->extra_widget_data)[i] == vlpd.u) {
-						/* Match default value. */
-						gtk_combo_box_set_active(GTK_COMBO_BOX(rv), i);
-						break;
-					}
-			} else {
-				gtk_combo_box_set_active(GTK_COMBO_BOX (rv), vlpd.u);
-			}
-		} else if (param->type == LayerParamType::STRING && param->widget_data && !param->extra_widget_data) {
-			/* Build a combobox with editable text. */
-			char **pstr = (char **) param->widget_data;
-#if GTK_CHECK_VERSION (2, 24, 0)
-			rv = gtk_combo_box_text_new_with_entry();
-#else
-			rv = gtk_combo_box_entry_new_text();
-#endif
-			if (vlpd.s) {
-				vik_combo_box_text_append(rv, vlpd.s);
-			}
-
-			while (*pstr) {
-				vik_combo_box_text_append(rv, *(pstr++));
-			}
-
-			if (vlpd.s) {
-				gtk_combo_box_set_active(GTK_COMBO_BOX (rv), 0);
-			}
-		} else if (param->type == LayerParamType::STRING && param->widget_data && param->extra_widget_data) {
-			/* Build a combobox with fixed selections without editable text. */
-			char **pstr = (char **) param->widget_data;
-			rv = GTK_WIDGET (vik_combo_box_text_new());
-			while (*pstr) {
-				vik_combo_box_text_append(rv, *(pstr++));
-			}
-			if (vlpd.s) {
-				/* Set the effective default value. */
-				/* In case of value does not exist, set the first value. */
-				gtk_combo_box_set_active(GTK_COMBO_BOX (rv), 0);
-				int i;
-				for (i = 0; ((const char **)param->widget_data)[i]; i++)
-					if (strcmp(((const char **)param->extra_widget_data)[i], vlpd.s) == 0) {
-						/* Match default value. */
-						gtk_combo_box_set_active(GTK_COMBO_BOX (rv), i);
-						break;
-					}
-			} else {
-				gtk_combo_box_set_active(GTK_COMBO_BOX (rv), 0);
-			}
+			widget = widget_;
 		}
 		break;
+
+	case LayerWidgetType::COMBOBOX: {
+		assert (param->type == LayerParamType::UINT);
+		assert (param->widget_data);
+
+		QComboBox * widget_ = new QComboBox(this);
+
+		label_id_t * values = (label_id_t *) param->widget_data;
+		int i = 0;
+		while (values[i].label) {
+			QString label(values[i].label);
+			widget_->addItem(label, values[i].id);
+			i++;
+		}
+
+		/* TODO: add code to set arbitrary item on the list as default one. */
+		/* if (param_value.u == values[i]->id) ... */
+
+		widget = widget_;
+	}
+		break;
+
+#if 0
 	case LayerWidgetType::RADIOGROUP:
 		/* widget_data and extra_widget_data are GList. */
 		if (param->type == LayerParamType::UINT && param->widget_data) {
@@ -615,6 +576,7 @@ QWidget * LayerPropertiesDialog::new_widget(LayerParam * param, LayerParamValue 
 			widget_->setMaximum(scale->max);
 			widget_->setSingleStep(scale->step);
 			widget_->setValue(init_val);
+			qDebug() << "II: UI Builder: new SpinBoxDouble with initial value" << init_val;
 
 			widget = widget_;
 		}
@@ -717,36 +679,11 @@ LayerParamValue LayerPropertiesDialog::get_param_value(layer_param_id_t id, Laye
 	case LayerWidgetType::CHECKBUTTON:
 		rv.b = ((QCheckBox *) widget)->isChecked();
 		break;
-#if 0
-	case LayerWidgetType::COMBOBOX:
-		if (param->type == LayerParamType::UINT) {
-			rv.i = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
-			if (rv.i == -1) {
-				rv.i = 0;
-			}
 
-			rv.u = rv.i;
-			if (param->extra_widget_data) {
-				rv.u = ((unsigned int *)param->extra_widget_data)[rv.u];
-			}
-		}
-		if (param->type == LayerParamType::STRING) {
-			if (param->extra_widget_data) {
-				/* Combobox displays labels and we want values from extra. */
-				int pos = gtk_combo_box_get_active (GTK_COMBO_BOX(widget));
-				rv.s = ((const char **)param->extra_widget_data)[pos];
-			} else {
-				/* Return raw value. */
-#if GTK_CHECK_VERSION (2, 24, 0)
-				rv.s = gtk_entry_get_text(GTK_ENTRY (gtk_bin_get_child (GTK_BIN (widget))));
-#else
-				rv.s = gtk_combo_box_get_active_text(GTK_COMBO_BOX(widget));
-#endif
-			}
-			fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, rv.s);
-		}
+	case LayerWidgetType::COMBOBOX:
+		rv.i = (int32_t) ((QComboBox *) widget)->currentData().toInt();
 		break;
-#endif
+
 	case LayerWidgetType::RADIOGROUP:
 	case LayerWidgetType::RADIOGROUP_STATIC:
 		rv.u = ((SGRadioGroup *) widget)->value();
