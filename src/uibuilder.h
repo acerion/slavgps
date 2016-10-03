@@ -175,6 +175,12 @@ void a_uibuilder_free_paramdatas(LayerParamData * paramdatas, LayerParam * param
 
 
 
+typedef struct {
+	char const * label;
+	int32_t id;
+} label_id_t;
+
+
 #ifndef SLAVGPS_QT
 
 
