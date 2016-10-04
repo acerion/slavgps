@@ -43,6 +43,7 @@
 #include "globals.h"
 #include "widget_color_button.h"
 #include "widget_file_list.h"
+#include "widget_file_entry.h"
 #include "widget_radio_group.h"
 
 
@@ -573,23 +574,30 @@ QWidget * LayerPropertiesDialog::new_widget(LayerParam * param, LayerParamValue 
 						    _("Take care that this password will be stored clearly in a plain file."));
 		}
 		break;
+#endif
 	case LayerWidgetType::FILEENTRY:
 		if (param->type == LayerParamType::STRING) {
-			rv = vik_file_entry_new(GTK_FILE_CHOOSER_ACTION_OPEN, (vf_filter_type) KPOINTER_TO_INT(param->widget_data), NULL, NULL);
+			QString title("Select file");
+			SGFileEntry * widget_ = new SGFileEntry(QFileDialog::Option(0), QFileDialog::ExistingFile, title, NULL);
 			if (vlpd.s) {
-				vik_file_entry_set_filename(VIK_FILE_ENTRY(rv), vlpd.s);
+				QString filename(vlpd.s);
+				widget_->set_filename(filename);
 			}
+			widget = widget_;
 		}
 		break;
+
 	case LayerWidgetType::FOLDERENTRY:
 		if (param->type == LayerParamType::STRING) {
-			rv = vik_file_entry_new(GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER, VF_FILTER_NONE, NULL, NULL);
+			QString title("Select file");
+			SGFileEntry * widget_ = new SGFileEntry(QFileDialog::Option(0), QFileDialog::Directory, title, NULL);
 			if (vlpd.s) {
-				vik_file_entry_set_filename(VIK_FILE_ENTRY(rv), vlpd.s);
+				QString filename(vlpd.s);
+				widget_->set_filename(filename);
 			}
+			widget = widget_;
 		}
 		break;
-#endif
 	case LayerWidgetType::FILELIST:
 		if (param->type == LayerParamType::STRING_LIST) {
 			SGFileList * widget_ = new SGFileList(param->title, vlpd.sl, this);
@@ -678,12 +686,12 @@ LayerParamValue LayerPropertiesDialog::get_param_value(layer_param_id_t id, Laye
 	case LayerWidgetType::PASSWORD:
 		rv.s = (char *) ((QLineEdit *) widget)->text().data(); /* kamilFIXME */
 		break;
-#if 0
+
 	case LayerWidgetType::FILEENTRY:
 	case LayerWidgetType::FOLDERENTRY:
-		rv.s = vik_file_entry_get_filename(VIK_FILE_ENTRY(widget));
+		rv.s = strdup(((SGFileEntry *) widget)->get_filename().toUtf8().constData()); /* FIXME: memory management. */
 		break;
-#endif
+
 	case LayerWidgetType::FILELIST:
 		rv.sl = ((SGFileList *) widget)->get_list();
 		for (auto iter = rv.sl->begin(); iter != rv.sl->end(); iter++) {
