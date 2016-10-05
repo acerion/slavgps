@@ -699,15 +699,6 @@ static void toolbar_reload_cb(GtkActionGroup *grp, void * gp)
 
 
 
-#define VIK_SETTINGS_WIN_MAX "window_maximized"
-#define VIK_SETTINGS_WIN_FULLSCREEN "window_fullscreen"
-#define VIK_SETTINGS_WIN_WIDTH "window_width"
-#define VIK_SETTINGS_WIN_HEIGHT "window_height"
-#define VIK_SETTINGS_WIN_PANE_POSITION "window_horizontal_pane_position"
-#define VIK_SETTINGS_WIN_SAVE_IMAGE_WIDTH "window_save_image_width"
-#define VIK_SETTINGS_WIN_SAVE_IMAGE_HEIGHT "window_save_image_height"
-#define VIK_SETTINGS_WIN_SAVE_IMAGE_PNG "window_save_image_as_png"
-#define VIK_SETTINGS_WIN_COPY_CENTRE_FULL_FORMAT "window_copy_centre_full_format"
 
 #define VIKING_ACCELERATOR_KEY_FILE "keys.rc"
 
@@ -821,6 +812,8 @@ static bool key_press_event_cb(Window * window, GdkEventKey * event, void * data
 
 static bool delete_event(GtkWindow * gtk_window)
 {
+#if 0 /* Moved to QT app. */
+
 	Window * window = (Window *) g_object_get_data((GObject *) gtk_window, "window");
 
 #ifdef VIKING_PROMPT_IF_MODIFIED
@@ -886,6 +879,7 @@ static bool delete_event(GtkWindow * gtk_window)
 	}
 
 	return false;
+#endif
 }
 
 
@@ -2736,9 +2730,11 @@ static void clear_cb(GtkAction * a, Window * window)
 
 static void window_close(GtkAction * a, Window * window)
 {
+#if 0 /* Moved to QT app. */
 	if (!delete_event(window->gtk_window_)) {
 		gtk_widget_destroy(window->get_toolkit_widget());
 	}
+#endif
 }
 
 

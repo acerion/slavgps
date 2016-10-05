@@ -32,6 +32,7 @@
 #include "layers_panel.h"
 #include "globals.h"
 #include "uibuilder_qt.h"
+#include "settings.h"
 
 
 
@@ -89,8 +90,6 @@ Window::Window()
 	this->set_filename(NULL);
 
 	this->busy_cursor = gdk_cursor_new(GDK_WATCH);
-
-	strcpy(this->type_string, "The WINDOW");
 
 
 	int draw_image_width;
@@ -178,7 +177,7 @@ Window::Window()
 	int height = VIKING_WINDOW_HEIGHT;
 	int width = VIKING_WINDOW_WIDTH;
 
-	if (a_vik_get_restore_window_state()) {
+	if (Preferences::get_restore_window_state()) {
 		if (a_settings_get_integer(VIK_SETTINGS_WIN_HEIGHT, &height)) {
 			// Enforce a basic minimum size
 			if (height < 160) {
@@ -294,12 +293,12 @@ void Window::create_layout()
 
 void Window::create_actions(void)
 {
-	this->menu_file = new QMenu("File");
-	this->menu_edit = new QMenu("Edit");
-	this->menu_view = new QMenu("View");
-	this->menu_layers = new QMenu("Layers");
-	this->menu_tools = new QMenu("Tools");
-	this->menu_help = new QMenu("Help");
+	this->menu_file = new QMenu("&File");
+	this->menu_edit = new QMenu("&Edit");
+	this->menu_view = new QMenu("&View");
+	this->menu_layers = new QMenu("&Layers");
+	this->menu_tools = new QMenu("&Tools");
+	this->menu_help = new QMenu("&Help");
 
 	this->menu_bar = new QMenuBar();
 	this->menu_bar->addMenu(this->menu_file);
@@ -310,13 +309,28 @@ void Window::create_actions(void)
 	this->menu_bar->addMenu(this->menu_help);
 	setMenuBar(this->menu_bar);
 
-	QAction * qa_file_new = new QAction("New file...", this);
-	qa_file_new->setIcon(QIcon::fromTheme("document-new"));
+
+	/* "File" menu. */
+	QAction * qa_file_new = NULL;
+	QAction * qa_file_exit = NULL;
+	{
+		qa_file_new = new QAction("&New file...", this);
+		qa_file_new->setShortcut(Qt::CTRL + Qt::Key_N);
+		qa_file_new->setIcon(QIcon::fromTheme("document-new"));
+
+		qa_file_exit = new QAction("E&xit", this);
+		qa_file_exit->setShortcut(Qt::CTRL + Qt::Key_X);
+		qa_file_exit->setIcon(QIcon::fromTheme("application-exit"));
+		connect(qa_file_exit, SIGNAL (triggered(bool)), this, SLOT (close(void)));
+
+		this->menu_file->addAction(qa_file_new);
+		this->menu_file->addAction(qa_file_exit);
+	}
 
 
 	/* "Edit" menu. */
 	{
-		QAction * qa_edit_preferences = new QAction("Preferences", this);
+		QAction * qa_edit_preferences = new QAction("&Preferences", this);
 		qa_edit_preferences->setIcon(QIcon::fromTheme("preferences-other"));
 		connect(qa_edit_preferences, SIGNAL (triggered(bool)), this, SLOT (preferences_cb(void)));
 
@@ -324,15 +338,7 @@ void Window::create_actions(void)
 	}
 
 
-	QAction * qa_help_help = new QAction("Help", this);
-	qa_help_help->setIcon(QIcon::fromTheme("help-contents"));
-
-	QAction * qa_help_about = new QAction("About", this);
-	qa_help_about->setIcon(QIcon::fromTheme("help-about"));
-
-
-	this->menu_file->addAction(qa_file_new);
-
+	/* "Layers" menu. */
 	{
 		this->qa_layer_properties = new QAction("Properties...", this);
 		this->menu_layers->addAction(this->qa_layer_properties);
@@ -350,14 +356,26 @@ void Window::create_actions(void)
 		}
 	}
 
-	this->menu_help->addAction(qa_help_help);
-	this->menu_help->addAction(qa_help_about);
+
+	/* "Help" menu. */
+	{
+		QAction * qa_help_help = new QAction("&Help", this);
+		qa_help_help->setIcon(QIcon::fromTheme("help-contents"));
+		qa_help_help->setShortcut(Qt::Key_F1);
+
+		QAction * qa_help_about = new QAction("&About", this);
+		qa_help_about->setIcon(QIcon::fromTheme("help-about"));
+
+		this->menu_help->addAction(qa_help_help);
+		this->menu_help->addAction(qa_help_about);
+	}
+
+
 
 	this->tool_bar = new QToolBar("Main Toolbar");
 	addToolBar(this->tool_bar);
 
 	this->tool_bar->addAction(qa_file_new);
-
 
 
 
@@ -1017,4 +1035,85 @@ void Window::preferences_cb(void) /* Slot. */
 
 	toolbar_apply_settings(window->viking_vtb, window->main_vbox, window->menu_hbox, true);
 #endif
+}
+
+
+
+
+void Window::closeEvent(QCloseEvent * event)
+{
+#if 0
+#ifdef VIKING_PROMPT_IF_MODIFIED
+	if (window->modified)
+#else
+	if (0)
+#endif
+#endif
+	{
+		QMessageBox::StandardButton reply = QMessageBox::question(this, "SlavGPS",
+									  QString("Changes in file '%1' are not saved and will be lost if you don't save them.\n\n"
+										  "Do you want to save the changes?").arg("some file"), // window->get_filename()
+									  QMessageBox::Cancel | QMessageBox::No | QMessageBox::Yes,
+									  QMessageBox::Yes);
+		if (reply == QMessageBox::No) {
+			event->accept();
+		} else if (reply == QMessageBox::Yes) {
+			//save_file(NULL, window);
+			event->accept();
+		} else {
+			event->ignore();
+		}
+	}
+
+
+#if 0
+	if (window_count == 1)
+#endif
+	{
+
+		// On the final window close - save latest state - if it's wanted...
+		if (Preferences::get_restore_window_state()) {
+
+			const Qt::WindowStates states = this->windowState();
+
+
+
+			bool state_max = states.testFlag(Qt::WindowMaximized);
+			a_settings_set_boolean(VIK_SETTINGS_WIN_MAX, state_max);
+
+			bool state_fullscreen = states.testFlag(Qt::WindowFullScreen);
+			a_settings_set_boolean(VIK_SETTINGS_WIN_FULLSCREEN, state_fullscreen);
+
+#if 0
+
+			a_settings_set_boolean(VIK_SETTINGS_WIN_SIDEPANEL, window->layers_panel->get_visible());
+
+			a_settings_set_boolean(VIK_SETTINGS_WIN_STATUSBAR, GTK_WIDGET_VISIBLE (GTK_WIDGET(window->viking_vs)));
+
+			a_settings_set_boolean(VIK_SETTINGS_WIN_TOOLBAR, GTK_WIDGET_VISIBLE (toolbar_get_widget(window->viking_vtb)));
+
+
+
+			// If supersized - no need to save the enlarged width+height values
+			if (! (state_fullscreen || state_max)) {
+				int width, height;
+				gtk_window_get_size(gtk_window, &width, &height);
+				a_settings_set_integer(VIK_SETTINGS_WIN_WIDTH, width);
+				a_settings_set_integer(VIK_SETTINGS_WIN_HEIGHT, height);
+			}
+
+			a_settings_set_integer(VIK_SETTINGS_WIN_PANE_POSITION, gtk_paned_get_position(GTK_PANED(window->hpaned)));
+#endif
+		}
+#if 0
+		a_settings_set_integer(VIK_SETTINGS_WIN_SAVE_IMAGE_WIDTH, window->draw_image_width);
+		a_settings_set_integer(VIK_SETTINGS_WIN_SAVE_IMAGE_HEIGHT, window->draw_image_height);
+		a_settings_set_boolean(VIK_SETTINGS_WIN_SAVE_IMAGE_PNG, window->draw_image_save_as_png);
+
+		char *accel_file_name = g_build_filename(get_viking_dir(), VIKING_ACCELERATOR_KEY_FILE, NULL);
+		gtk_accel_map_save(accel_file_name);
+		free(accel_file_name);
+#endif
+
+	}
 }
