@@ -31,6 +31,7 @@
 #include "download.h"
 #include "background.h"
 #include "preferences.h"
+#include "settings.h"
 
 
 
@@ -92,8 +93,8 @@ int main(int argc, char ** argv)
 	/* Discover if this is the very first run. */
 	a_vik_very_first_run();
 
-	a_settings_init();
 #endif
+	a_settings_init();
 	a_preferences_init();
 
 	/*
@@ -208,8 +209,9 @@ int main(int argc, char ** argv)
 #endif
 	a_layer_defaults_uninit();
 	a_preferences_uninit();
-#if 0
 	a_settings_uninit();
+#if 0
+
 
 	modules_uninit();
 
