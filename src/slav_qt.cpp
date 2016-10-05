@@ -48,23 +48,4 @@ using namespace SlavGPS;
 
 
 
-
-void a_settings_set_double(char const*, double)
-{
-
-}
-
-bool a_settings_get_double(char const*, double*)
-{
-	return true;
-}
-
-bool a_settings_get_integer(char const*, int*)
-{
-	return true;
-}
-
-
-
-
 #endif
