@@ -46,6 +46,8 @@ namespace SlavGPS {
 
 		std::map<param_id_t, LayerParam *>::iterator begin();
 		std::map<param_id_t, LayerParam *>::iterator end();
+
+		static bool get_restore_window_state(void);
 	};
 
 

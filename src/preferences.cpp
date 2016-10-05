@@ -400,3 +400,14 @@ std::map<param_id_t, LayerParam *>::iterator Preferences::end()
 {
 	return registered_parameters.end();
 }
+
+
+
+
+/* Startup Preferences. */
+
+
+bool Preferences::get_restore_window_state(void)
+{
+	return a_preferences_get(VIKING_PREFERENCES_STARTUP_NAMESPACE "restore_window_state")->b;
+}
