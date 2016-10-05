@@ -489,12 +489,6 @@ int a_vik_get_recent_number_files()
 
 /* Startup Options. */
 
-bool a_vik_get_restore_window_state()
-{
-	bool data;
-	data = a_preferences_get(VIKING_PREFERENCES_STARTUP_NAMESPACE "restore_window_state")->b;
-	return data;
-}
 
 
 

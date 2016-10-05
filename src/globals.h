@@ -305,7 +305,7 @@ bool a_vik_get_ask_for_create_track_name();
 
 bool a_vik_get_create_track_tooltip();
 
-bool a_vik_get_restore_window_state();
+
 
 bool a_vik_get_add_default_map_layer();
 
