@@ -44,8 +44,8 @@ namespace SlavGPS {
 		void set_param_value(param_id_t id, LayerParamValue value);
 		LayerParamValue get_param_value(param_id_t id);
 
-		std::map<param_id_t, LayerParam *>::iterator begin();
-		std::map<param_id_t, LayerParam *>::iterator end();
+		std::map<param_id_t, Parameter *>::iterator begin();
+		std::map<param_id_t, Parameter *>::iterator end();
 
 		static bool get_restore_window_state(void);
 	};
@@ -75,14 +75,14 @@ void a_preferences_register_group(const char * key, const char * name);
 /* Nothing in pref is copied neither but pref itself is copied. (TODO: COPY EVERYTHING IN PREF WE NEED, IF ANYTHING),
    so pref key is not copied. default param data IS copied. */
 /* Group field (integer) will be overwritten. */
-void a_preferences_register(LayerParam * parameter, LayerParamValue default_value, const char * group_key);
+void a_preferences_register(Parameter * parameter, LayerParamValue default_value, const char * group_key);
 
 void a_preferences_show_window(QWindow * parent);
 
 LayerParamValue * a_preferences_get(const char * key);
 
 /* Allow preferences to be manipulated externally. */
-void a_preferences_run_setparam(LayerParamValue value, LayerParam * parameters);
+void a_preferences_run_setparam(LayerParamValue value, ParameterScale * parameters);
 
 bool a_preferences_save_to_file();
 

@@ -196,7 +196,7 @@ static char *params_wpsymbols[] = { (char *) N_("Filled Square"), (char *) N_("S
 #define MIN_ARROW_SIZE 3
 #define MAX_ARROW_SIZE 20
 
-static LayerParamScale params_scales[] = {
+static ParameterScale params_scales[] = {
 	/* min  max    step digits */
 	{  1,   10,    1,   0 }, /* line_thickness */
 	{  0,   100,   1,   0 }, /* track draw speed factor */
@@ -272,7 +272,7 @@ static LayerParamData string_default(void)
 	return data;
 }
 
-LayerParam trw_layer_params[] = {
+Parameter trw_layer_params[] = {
 	{ LayerType::TRW, "tracks_visible",    LayerParamType::BOOLEAN, VIK_LAYER_NOT_IN_PROPERTIES, NULL,                              (LayerWidgetType) 0,        NULL,               NULL, NULL, vik_lpd_true_default,       NULL, NULL },
 	{ LayerType::TRW, "waypoints_visible", LayerParamType::BOOLEAN, VIK_LAYER_NOT_IN_PROPERTIES, NULL,                              (LayerWidgetType) 0,        NULL,               NULL, NULL, vik_lpd_true_default,       NULL, NULL },
 	{ LayerType::TRW, "routes_visible",    LayerParamType::BOOLEAN, VIK_LAYER_NOT_IN_PROPERTIES, NULL,                              (LayerWidgetType) 0,        NULL,               NULL, NULL, vik_lpd_true_default,       NULL, NULL },

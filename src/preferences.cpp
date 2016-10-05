@@ -74,7 +74,7 @@ static Preferences preferences;
    1.
    2.
 */
-static std::map<param_id_t, LayerParam *> registered_parameters; /* Parameter id -> Parameter. */
+static std::map<param_id_t, Parameter *> registered_parameters; /* Parameter id -> Parameter. */
 static std::map<std::string, ParameterValue *> registered_parameter_values; /* Parameter name -> Typed parameter value. */
 bool loaded;
 
@@ -215,7 +215,7 @@ void Preferences::set_param_value(param_id_t id, LayerParamValue value)
 
 
 /* Allow preferences to be manipulated externally. */
-void a_preferences_run_setparam(LayerParamValue value, LayerParam * parameters)
+void a_preferences_run_setparam(LayerParamValue value, Parameter * parameters)
 {
 	//preferences.set_param_value(0, value, parameters);
 }
@@ -253,7 +253,7 @@ bool a_preferences_save_to_file()
 
 	if (f) {
 		for (unsigned int i = 0; i < registered_parameters.size(); i++) {
-			LayerParam * param = registered_parameters[i];
+			Parameter * param = registered_parameters[i];
 			auto val = registered_parameter_values.find(std::string(param->name));
 			if (val != registered_parameter_values.end()) {
 				if (val->second->type != LayerParamType::PTR) {
@@ -280,7 +280,7 @@ void a_preferences_show_window(QWindow * parent)
 	//loaded = true;
 	//preferences_load_from_file();
 
-	LayerPropertiesDialog dialog((QWidget *) parent);
+	PropertiesDialog dialog((QWidget *) parent);
 	dialog.fill(&preferences);
 	int dialog_code = dialog.exec();
 
@@ -318,7 +318,7 @@ void a_preferences_show_window(QWindow * parent)
 
 
 
-void a_preferences_register(LayerParam * parameter, LayerParamValue default_value, const char * group_key)
+void a_preferences_register(Parameter * parameter, LayerParamValue default_value, const char * group_key)
 {
 	static param_id_t id = 0;
 	/* All preferences should be registered before loading. */
@@ -326,14 +326,14 @@ void a_preferences_register(LayerParam * parameter, LayerParamValue default_valu
 		fprintf(stderr, "CRITICAL: REGISTERING preference %s after LOADING from \n" VIKING_PREFS_FILE, parameter->name);
 	}
 	/* Copy value. */
-	LayerParam * new_parameter = (LayerParam *) malloc(1 * sizeof (LayerParam));
+        Parameter * new_parameter = (Parameter *) malloc(1 * sizeof (Parameter));
 	*new_parameter = *parameter;
 	ParameterValue * newval = vik_layer_typed_param_data_copy_from_data(parameter->type, default_value);
 	if (group_key) {
 		new_parameter->group = preferences_groups_key_to_index(group_key);
 	}
 
-	registered_parameters.insert(std::pair<param_id_t, LayerParam *>(id, new_parameter));
+	registered_parameters.insert(std::pair<param_id_t, Parameter *>(id, new_parameter));
 	registered_parameter_values.insert(std::pair<std::string, ParameterValue *>(std::string(new_parameter->name), newval));
 	id++;
 }
@@ -388,7 +388,7 @@ LayerParamValue * a_preferences_get(const char * key)
 
 
 
-std::map<param_id_t, LayerParam *>::iterator Preferences::begin()
+std::map<param_id_t, Parameter *>::iterator Preferences::begin()
 {
 	return registered_parameters.begin();
 }
@@ -396,7 +396,7 @@ std::map<param_id_t, LayerParam *>::iterator Preferences::begin()
 
 
 
-std::map<param_id_t, LayerParam *>::iterator Preferences::end()
+std::map<param_id_t, Parameter *>::iterator Preferences::end()
 {
 	return registered_parameters.end();
 }

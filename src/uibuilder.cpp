@@ -51,7 +51,7 @@ LayerParamData vik_lpd_false_default(void)
 
 
 
-void uibuilder_run_setparam(LayerParamData * paramdatas, uint16_t i, LayerParamData data, LayerParam * params)
+void uibuilder_run_setparam(LayerParamData * paramdatas, uint16_t i, LayerParamData data, Parameter * params)
 {
 	/* Could have to copy it if it's a string! */
 	switch (params[i].type) {
@@ -89,7 +89,7 @@ static void a_uibuilder_free_paramdatas_sub(LayerParamData * paramdatas, int i)
 
 
 /* Frees data from last (if necessary). */
-void a_uibuilder_free_paramdatas(LayerParamData *paramdatas, LayerParam *params, uint16_t params_count)
+void a_uibuilder_free_paramdatas(LayerParamData *paramdatas, Parameter *params, uint16_t params_count)
 {
 	int i;
 	/* May have to free strings, etc. */

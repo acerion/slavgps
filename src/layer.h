@@ -148,7 +148,7 @@ namespace SlavGPS {
 
 		LayerInterface * get_interface(void);
 		static LayerInterface * get_interface(LayerType layer_type);
-		void configure_interface(LayerInterface * intf, LayerParam * parameters);
+		void configure_interface(LayerInterface * intf, Parameter * parameters);
 		static void preconfigure_interfaces(void);
 
 		/* Layer interface methods. */
@@ -390,7 +390,7 @@ struct _LayerInterface {
 
 
 	/* For I/O reading to and from .vik files -- params like coordline width, color, etc. */
-	LayerParam *                      params;
+	Parameter *                       params;
 	uint16_t                          params_count;
 	char **                           params_groups;
 	uint8_t                           params_groups_count;
@@ -403,7 +403,7 @@ struct _LayerInterface {
 	/* For I/O. */
 	VikLayerFuncChangeParam           change_param;
 
-	std::map<layer_param_id_t, LayerParam *> * layer_parameters;
+	std::map<layer_param_id_t, Parameter *> * layer_parameters;
 };
 
 
@@ -422,14 +422,12 @@ void vik_layer_emit_update_although_invisible(SlavGPS::Layer * layer);
 typedef struct {
 	LayerParamData data;
 	LayerParamType type;
-} LayerTypedParamData;
-
-typedef LayerTypedParamData ParameterValue;
+} ParameterValue;
 
 
 void vik_layer_typed_param_data_free(void * gp);
-LayerTypedParamData * vik_layer_typed_param_data_copy_from_data(LayerParamType type, LayerParamData val);
-LayerTypedParamData * vik_layer_data_typed_param_copy_from_string(LayerParamType type, const char * str);
+ParameterValue * vik_layer_typed_param_data_copy_from_data(LayerParamType type, LayerParamData val);
+ParameterValue * vik_layer_data_typed_param_copy_from_string(LayerParamType type, const char * str);
 
 
 

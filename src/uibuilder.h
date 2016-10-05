@@ -125,7 +125,7 @@ typedef struct {
 	LayerDefaultFunc default_value;
 	LayerConvertFunc convert_to_display;
 	LayerConvertFunc convert_to_internal;
-} LayerParam;
+} Parameter;
 
 enum {
 	VIK_LAYER_NOT_IN_PROPERTIES=-2,
@@ -137,7 +137,7 @@ typedef struct {
 	double max;
 	double step;
 	uint8_t digits;
-} LayerParamScale;
+} ParameterScale;
 
 
 typedef enum {
@@ -170,10 +170,10 @@ typedef enum {
 
 LayerParamData vik_lpd_true_default(void);
 LayerParamData vik_lpd_false_default(void);
-void uibuilder_run_setparam(LayerParamData * paramdatas, uint16_t i, LayerParamData data, LayerParam * params);
+void uibuilder_run_setparam(LayerParamData * paramdatas, uint16_t i, LayerParamData data, Parameter * params);
 LayerParamData uibuilder_run_getparam(LayerParamData * params_defaults, uint16_t i);
 /* Frees data from last (if necessary). */
-void a_uibuilder_free_paramdatas(LayerParamData * paramdatas, LayerParam * params, uint16_t params_count);
+void a_uibuilder_free_paramdatas(LayerParamData * paramdatas, Parameter * params, uint16_t params_count);
 
 
 
@@ -191,7 +191,7 @@ typedef struct {
 
 typedef struct {
 	void * layer;
-	LayerParam * param;
+	Parameter * param;
 	int param_id;
 	GtkWidget ** widgets;
 	GtkWidget ** labels;
@@ -204,7 +204,7 @@ GtkWidget *a_uibuilder_new_widget(LayerParam *param, LayerParamData data);
 LayerParamData a_uibuilder_widget_get_value(GtkWidget *widget, LayerParam *param);
 int a_uibuilder_properties_factory(const char *dialog_name,
 				   GtkWindow *parent,
-				   LayerParam *params,
+				   Parameter *params,
 				   uint16_t params_count,
 				   char **groups,
 				   uint8_t groups_count,

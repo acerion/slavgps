@@ -59,24 +59,24 @@ namespace SlavGPS {
 
 
 
-	class LayerPropertiesDialog : public QDialog {
+	class PropertiesDialog : public QDialog {
 	public:
-		LayerPropertiesDialog(QWidget * parent);
-		~LayerPropertiesDialog();
+		PropertiesDialog(QWidget * parent);
+		~PropertiesDialog();
 
 		void fill(Preferences * preferences);
 		void fill(Layer * layer);
 
-		LayerParamValue get_param_value(layer_param_id_t id, LayerParam * param);
+		LayerParamValue get_param_value(layer_param_id_t id, Parameter * param);
 
 
 
 
 	private:
-		QWidget * new_widget(LayerParam * param, LayerParamValue param_value);
+		QWidget * new_widget(Parameter * param, LayerParamValue param_value);
 
 		QFormLayout * insert_tab(QString & label);
-		std::map<layer_param_id_t, LayerParam *>::iterator add_widgets_to_tab(QFormLayout * form, Layer * layer, std::map<layer_param_id_t, LayerParam *>::iterator & iter, std::map<layer_param_id_t, LayerParam *>::iterator & end);
+		std::map<layer_param_id_t, Parameter *>::iterator add_widgets_to_tab(QFormLayout * form, Layer * layer, std::map<layer_param_id_t, Parameter *>::iterator & iter, std::map<layer_param_id_t, Parameter *>::iterator & end);
 
 		QDialogButtonBox * button_box = NULL;
 		QPushButton * ok = NULL;

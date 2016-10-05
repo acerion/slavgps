@@ -694,7 +694,7 @@ static bool load_feature()
 
 
 
-static LayerParam prefs[] = {
+static Parameter prefs[] = {
 	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_IO_NAMESPACE "gpsbabel", LayerParamType::STRING, VIK_LAYER_GROUP_NONE, N_("GPSBabel:"), LayerWidgetType::FILEENTRY, NULL, NULL, N_("Allow setting the specific instance of GPSBabel. You must restart Viking for this value to take effect."), NULL, NULL, NULL },
 };
 

@@ -72,7 +72,7 @@ LayerParamValue a_uibuilder_widget_get_value(GtkWidget *widget, LayerParam *para
 //static void draw_to_image_file_total_area_cb (GtkSpinButton *spinbutton, void * *pass_along)
 int a_uibuilder_properties_factory(const char * dialog_name,
 				   QWindow * parent,
-				   LayerParam * params,
+				   Parameter * params,
 				   uint16_t params_count,
 				   char ** groups,
 				   uint8_t groups_count,
@@ -281,7 +281,7 @@ LayerParamValue *a_uibuilder_run_dialog(const char *dialog_name, GtkWindow *pare
 
 
 
-LayerPropertiesDialog::LayerPropertiesDialog(QWidget * parent) : QDialog(parent)
+PropertiesDialog::PropertiesDialog(QWidget * parent) : QDialog(parent)
 {
 	this->button_box = new QDialogButtonBox();
 	this->ok = this->button_box->addButton("OK", QDialogButtonBox::AcceptRole);
@@ -308,7 +308,7 @@ LayerPropertiesDialog::LayerPropertiesDialog(QWidget * parent) : QDialog(parent)
 
 
 
-QFormLayout * LayerPropertiesDialog::insert_tab(QString & label)
+QFormLayout * PropertiesDialog::insert_tab(QString & label)
 {
 	QFormLayout * form = new QFormLayout();
 	QWidget * page = new QWidget();
@@ -322,7 +322,7 @@ QFormLayout * LayerPropertiesDialog::insert_tab(QString & label)
 }
 
 
-LayerPropertiesDialog::~LayerPropertiesDialog()
+PropertiesDialog::~PropertiesDialog()
 {
 	delete this->ok;
 	delete this->cancel;
@@ -332,7 +332,7 @@ LayerPropertiesDialog::~LayerPropertiesDialog()
 
 
 
-void LayerPropertiesDialog::fill(Preferences * preferences)
+void PropertiesDialog::fill(Preferences * preferences)
 {
 	for (auto iter = preferences->begin(); iter != preferences->end(); iter++) {
 		param_id_t group_id = iter->second->group;
@@ -364,14 +364,14 @@ void LayerPropertiesDialog::fill(Preferences * preferences)
 
 
 
-void LayerPropertiesDialog::fill(Layer * layer)
+void PropertiesDialog::fill(Layer * layer)
 {
-	std::map<layer_param_id_t, LayerParam *> * params = layer->get_interface()->layer_parameters;
+	std::map<layer_param_id_t, Parameter *> * params = layer->get_interface()->layer_parameters;
 	if (!params) {
 		return;
 	}
-	std::map<layer_param_id_t, LayerParam *>::iterator iter = params->begin();
-	std::map<layer_param_id_t, LayerParam *>::iterator end = params->end();
+	std::map<layer_param_id_t, Parameter *>::iterator iter = params->begin();
+	std::map<layer_param_id_t, Parameter *>::iterator end = params->end();
 
 	do {
 		QString label("page");
@@ -384,7 +384,7 @@ void LayerPropertiesDialog::fill(Layer * layer)
 
 
 
-std::map<layer_param_id_t, LayerParam *>::iterator LayerPropertiesDialog::add_widgets_to_tab(QFormLayout * form, Layer * layer, std::map<layer_param_id_t, LayerParam *>::iterator & iter, std::map<layer_param_id_t, LayerParam *>::iterator & end)
+std::map<layer_param_id_t, Parameter *>::iterator PropertiesDialog::add_widgets_to_tab(QFormLayout * form, Layer * layer, std::map<layer_param_id_t, Parameter *>::iterator & iter, std::map<layer_param_id_t, Parameter *>::iterator & end)
 {
 	param_id_t i = 0;
 	int last_group = iter->second->group;
@@ -414,7 +414,7 @@ std::map<layer_param_id_t, LayerParam *>::iterator LayerPropertiesDialog::add_wi
 
 
 
-QWidget * LayerPropertiesDialog::new_widget(LayerParam * param, LayerParamValue param_value)
+QWidget * PropertiesDialog::new_widget(Parameter * param, LayerParamValue param_value)
 {
 	/* Perform pre conversion if necessary. */
 	LayerParamValue vlpd = param_value;
@@ -522,7 +522,7 @@ QWidget * LayerPropertiesDialog::new_widget(LayerParam * param, LayerParamValue 
 		    && param->widget_data) {
 
 			int init_val = param->type == LayerParamType::UINT ? vlpd.u : vlpd.i;
-			LayerParamScale * scale = (LayerParamScale *) param->widget_data;
+			ParameterScale * scale = (ParameterScale *) param->widget_data;
 			QSpinBox * widget_ = new QSpinBox();
 			widget_->setValue(init_val);
 			widget_->setMinimum(scale->min);
@@ -539,7 +539,7 @@ QWidget * LayerPropertiesDialog::new_widget(LayerParam * param, LayerParamValue 
 		    && param->widget_data) {
 
 			double init_val = vlpd.d;
-			LayerParamScale * scale = (LayerParamScale *) param->widget_data;
+			ParameterScale * scale = (ParameterScale *) param->widget_data;
 			QDoubleSpinBox * widget_ = new QDoubleSpinBox();
 			/* Order of fields is important. Use setDecimals() before using setValue(). */
 			widget_->setDecimals(scale->digits);
@@ -610,7 +610,7 @@ QWidget * LayerPropertiesDialog::new_widget(LayerParam * param, LayerParamValue 
 		     || param->type == LayerParamType::INT)  && param->widget_data) {
 
 			double init_val = (param->type == LayerParamType::DOUBLE) ? vlpd.d : (param->type == LayerParamType::UINT ? vlpd.u : vlpd.i);
-			LayerParamScale *scale = (LayerParamScale *) param->widget_data;
+			ParameterScale * scale = (ParameterScale *) param->widget_data;
 			rv = gtk_hscale_new_with_range(scale->min, scale->max, scale->step);
 			gtk_scale_set_digits(GTK_SCALE(rv), scale->digits);
 			gtk_range_set_value(GTK_RANGE(rv), init_val);
@@ -638,7 +638,7 @@ QWidget * LayerPropertiesDialog::new_widget(LayerParam * param, LayerParamValue 
 
 
 
-LayerParamValue LayerPropertiesDialog::get_param_value(layer_param_id_t id, LayerParam * param)
+LayerParamValue PropertiesDialog::get_param_value(layer_param_id_t id, Parameter * param)
 {
 	qDebug() << "vvvvvvvvvvv there are " << this->widgets.size() << "widgets";
 

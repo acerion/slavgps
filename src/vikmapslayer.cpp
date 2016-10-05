@@ -136,7 +136,7 @@ static bool maps_layer_download_click(Layer * layer, GdkEventButton *event, Laye
 
 
 
-static LayerParamScale params_scales[] = {
+static ParameterScale params_scales[] = {
 	/* min, max, step, digits (decimal places). */
 	{ 0, 255, 3, 0 }, /* alpha */
 };
@@ -207,7 +207,7 @@ static LayerParamData cache_layout_default(void)
 
 
 
-LayerParam maps_layer_params[] = {
+Parameter maps_layer_params[] = {
 	// NB mode => map source type id - But can't break file format just to rename something better
 	{ LayerType::MAPS, "mode",           LayerParamType::UINT,    VIK_LAYER_GROUP_NONE, N_("Map Type:"),                            LayerWidgetType::COMBOBOX,    NULL,                               NULL, NULL, id_default, NULL, NULL },
 	{ LayerType::MAPS, "directory",      LayerParamType::STRING,  VIK_LAYER_GROUP_NONE, N_("Maps Directory:"),                      LayerWidgetType::FOLDERENTRY, NULL,                               NULL, NULL, directory_default, NULL, NULL },
@@ -296,7 +296,7 @@ enum { REDOWNLOAD_NONE = 0,    /* Download only missing maps. */
 
 
 
-static LayerParam prefs[] = {
+static Parameter prefs[] = {
 	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_NAMESPACE "maplayer_default_dir", LayerParamType::STRING, VIK_LAYER_GROUP_NONE, N_("Default map layer directory:"), LayerWidgetType::FOLDERENTRY, NULL, NULL, N_("Choose a directory to store cached Map tiles for this layer"), NULL, NULL, NULL },
 };
 
@@ -372,7 +372,7 @@ void _add_map_source(MapSource * map, const char * label, MapTypeID map_type)
 	map_sources.push_back(map);
 
 	/* Hack.
-	   We have to ensure the mode LayerParam references the up-to-date GLists.
+	   We have to ensure the mode Parameter references the up-to-date GLists.
 	*/
 	/*
 	  memcpy(&maps_layer_params[0].widget_data, &map_type_labels, sizeof(void *));

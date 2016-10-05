@@ -99,8 +99,8 @@ static label_id_t params_units_height[] = {
 	{ "Feet",   1 },
 	{ NULL,     2 } };
 
-static LayerParamScale params_scales_lat[] = { {-90.0, 90.0, 0.05, 2} };
-static LayerParamScale params_scales_long[] = { {-180.0, 180.0, 0.05, 2} };
+static ParameterScale params_scales_lat[] = { {-90.0, 90.0, 0.05, 2} };
+static ParameterScale params_scales_long[] = { {-180.0, 180.0, 0.05, 2} };
 
 static label_id_t params_time_ref_frame[] = {
 	{ "Locale", 0 },
@@ -108,7 +108,7 @@ static label_id_t params_time_ref_frame[] = {
 	{ "UTC",    2 },
 	{ NULL,     3 } };
 
-static LayerParam general_prefs[] = {
+static Parameter general_prefs[] = {
 	{ LayerType::NUM_TYPES, 0, VIKING_PREFERENCES_NAMESPACE "degree_format",            LayerParamType::UINT,    VIK_LAYER_GROUP_NONE, N_("Degree format:"),            LayerWidgetType::COMBOBOX,        params_degree_formats, NULL, NULL, NULL, NULL, NULL },
 	{ LayerType::NUM_TYPES, 1, VIKING_PREFERENCES_NAMESPACE "units_distance",           LayerParamType::UINT,    VIK_LAYER_GROUP_NONE, N_("Distance units:"),           LayerWidgetType::COMBOBOX,        params_units_distance, NULL, NULL, NULL, NULL, NULL },
 	{ LayerType::NUM_TYPES, 2, VIKING_PREFERENCES_NAMESPACE "units_speed",              LayerParamType::UINT,    VIK_LAYER_GROUP_NONE, N_("Speed units:"),              LayerWidgetType::COMBOBOX,        params_units_speed,    NULL, NULL, NULL, NULL, NULL },
@@ -139,7 +139,7 @@ static label_id_t params_gpx_export_wpt_symbols[] = {
 	{ "Lowercase",  1 },
 	{ NULL,         2 } };
 
-static LayerParam io_prefs[] = {
+static Parameter io_prefs[] = {
 	{ LayerType::NUM_TYPES, 0, VIKING_PREFERENCES_IO_NAMESPACE "kml_export_units",         LayerParamType::UINT, VIK_LAYER_GROUP_NONE, N_("KML File Export Units:"), LayerWidgetType::COMBOBOX, params_kml_export_units,       NULL, NULL, NULL, NULL, NULL },
 	{ LayerType::NUM_TYPES, 1, VIKING_PREFERENCES_IO_NAMESPACE "gpx_export_track_sort",    LayerParamType::UINT, VIK_LAYER_GROUP_NONE, N_("GPX Track Order:"),       LayerWidgetType::COMBOBOX, params_gpx_export_trk_sort,    NULL, NULL, NULL, NULL, NULL },
 	{ LayerType::NUM_TYPES, 2, VIKING_PREFERENCES_IO_NAMESPACE "gpx_export_wpt_sym_names", LayerParamType::UINT, VIK_LAYER_GROUP_NONE, N_("GPX Waypoint Symbols:"),  LayerWidgetType::COMBOBOX, params_gpx_export_wpt_symbols, NULL, N_("Save GPX Waypoint Symbol names in the specified case. May be useful for compatibility with various devices"), NULL, NULL, NULL },
@@ -147,13 +147,13 @@ static LayerParam io_prefs[] = {
 };
 
 #ifndef WINDOWS
-static LayerParam io_prefs_non_windows[] = {
+static Parameter io_prefs_non_windows[] = {
 	{ LayerType::NUM_TYPES, 0, VIKING_PREFERENCES_IO_NAMESPACE "image_viewer", LayerParamType::STRING, VIK_LAYER_GROUP_NONE, N_("Image Viewer:"), LayerWidgetType::FILEENTRY, NULL, NULL, NULL, NULL, NULL, NULL },
 	{ LayerType::NUM_TYPES, 1, NULL,                                           LayerParamType::STRING, VIK_LAYER_GROUP_NONE, N_("Image Viewer:"), LayerWidgetType::FILEENTRY, NULL, NULL, NULL, NULL, NULL, NULL },
 };
 #endif
 
-static LayerParam io_prefs_external_gpx[] = {
+static Parameter io_prefs_external_gpx[] = {
 	{ LayerType::NUM_TYPES, 0, VIKING_PREFERENCES_IO_NAMESPACE "external_gpx_1", LayerParamType::STRING, VIK_LAYER_GROUP_NONE, N_("External GPX Program 1:"), LayerWidgetType::FILEENTRY, NULL, NULL, NULL, NULL, NULL, NULL },
 	{ LayerType::NUM_TYPES, 1, VIKING_PREFERENCES_IO_NAMESPACE "external_gpx_2", LayerParamType::STRING, VIK_LAYER_GROUP_NONE, N_("External GPX Program 2:"), LayerWidgetType::FILEENTRY, NULL, NULL, NULL, NULL, NULL, NULL },
 	{ LayerType::NUM_TYPES, 2, NULL,                                             LayerParamType::STRING, VIK_LAYER_GROUP_NONE, N_("External GPX Program 2:"), LayerWidgetType::FILEENTRY, NULL, NULL, NULL, NULL, NULL, NULL },
@@ -164,9 +164,9 @@ static label_id_t params_vik_fileref[] = {
 	{ "Relative", 1 },
 	{ NULL,       2 } };
 
-static LayerParamScale params_recent_files[] = { {-1, 25, 1, 0} };
+static ParameterScale params_recent_files[] = { {-1, 25, 1, 0} };
 
-static LayerParam prefs_advanced[] = {
+static Parameter prefs_advanced[] = {
 	{ LayerType::NUM_TYPES, 0, VIKING_PREFERENCES_ADVANCED_NAMESPACE "save_file_reference_mode",  LayerParamType::UINT,    VIK_LAYER_GROUP_NONE, N_("Save File Reference Mode:"),           LayerWidgetType::COMBOBOX,    params_vik_fileref,  NULL, N_("When saving a Viking .vik file, this determines how the directory paths of filenames are written."), NULL, NULL, NULL },
 	{ LayerType::NUM_TYPES, 1, VIKING_PREFERENCES_ADVANCED_NAMESPACE "ask_for_create_track_name", LayerParamType::BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Ask for Name before Track Creation:"), LayerWidgetType::CHECKBUTTON, NULL,                NULL, NULL, NULL, NULL, NULL },
 	{ LayerType::NUM_TYPES, 2, VIKING_PREFERENCES_ADVANCED_NAMESPACE "create_track_tooltip",      LayerParamType::BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Show Tooltip during Track Creation:"), LayerWidgetType::CHECKBUTTON, NULL,                NULL, NULL, NULL, NULL, NULL },
@@ -181,7 +181,7 @@ static label_id_t params_startup_methods[] = {
 	{ "Auto Location",  3 },
 	{ NULL,             4 } };
 
-static LayerParam startup_prefs[] = {
+static Parameter startup_prefs[] = {
 	{ LayerType::NUM_TYPES, 0, VIKING_PREFERENCES_STARTUP_NAMESPACE "restore_window_state",  LayerParamType::BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Restore Window Setup:"),    LayerWidgetType::CHECKBUTTON, NULL,                   NULL, N_("Restore window size and layout"), NULL, NULL, NULL},
 	{ LayerType::NUM_TYPES, 1, VIKING_PREFERENCES_STARTUP_NAMESPACE "add_default_map_layer", LayerParamType::BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Add a Default Map Layer:"), LayerWidgetType::CHECKBUTTON, NULL,                   NULL, N_("The default map layer added is defined by the Layer Defaults. Use the menu Edit->Layer Defaults->Map... to change the map type and other values."), NULL, NULL, NULL},
 	{ LayerType::NUM_TYPES, 2, VIKING_PREFERENCES_STARTUP_NAMESPACE "startup_method",        LayerParamType::UINT,    VIK_LAYER_GROUP_NONE, N_("Startup Method:"),          LayerWidgetType::COMBOBOX,    params_startup_methods, NULL, NULL, NULL, NULL, NULL },

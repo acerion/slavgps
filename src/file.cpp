@@ -199,7 +199,7 @@ void SlavGPS::file_write_layer_param(FILE * f, char const * name, LayerParamType
 
 static void write_layer_params_and_data(Layer const * layer, FILE * f)
 {
-	LayerParam * params = layer->get_interface()->params;
+	Parameter * params = layer->get_interface()->params;
 
 	fprintf(f, "name=%s\n", layer->name ? layer->name : "");
 	if (!layer->visible) {
@@ -354,7 +354,7 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 	uint16_t len;
 	long line_num = 0;
 
-	LayerParam *params = NULL; /* For current layer, so we don't have to keep on looking up interface. */
+	Parameter *params = NULL; /* For current layer, so we don't have to keep on looking up interface. */
 	uint8_t params_count = 0;
 
 	GHashTable *string_lists = g_hash_table_new(g_direct_hash,g_direct_equal);

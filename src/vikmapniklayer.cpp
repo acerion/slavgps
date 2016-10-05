@@ -80,13 +80,13 @@ static LayerParamData cache_dir_default(void)
 	return data;
 }
 
-static LayerParamScale scales[] = {
+static ParameterScale scales[] = {
 	{ 0, 255, 5, 0 },   /* Alpha. */
 	{ 64, 1024, 8, 0 }, /* Tile size. */
 	{ 0, 1024, 12, 0 }, /* Rerender timeout hours. */
 };
 
-LayerParam mapnik_layer_params[] = {
+Parameter mapnik_layer_params[] = {
 	{ LayerType::MAPNIK, "config-file-mml", LayerParamType::STRING,  VIK_LAYER_GROUP_NONE, N_("CSS (MML) Config File:"), LayerWidgetType::FILEENTRY,   KINT_TO_POINTER(VF_FILTER_CARTO), NULL, N_("CartoCSS configuration file"),   file_default,         NULL, NULL },
 	{ LayerType::MAPNIK, "config-file-xml", LayerParamType::STRING,  VIK_LAYER_GROUP_NONE, N_("XML Config File:"),       LayerWidgetType::FILEENTRY,   KINT_TO_POINTER(VF_FILTER_XML),   NULL, N_("Mapnik XML configuration file"), file_default,         NULL, NULL },
 	{ LayerType::MAPNIK, "alpha",           LayerParamType::UINT,    VIK_LAYER_GROUP_NONE, N_("Alpha:"),                 LayerWidgetType::HSCALE,      &scales[0],                       NULL, NULL,                                alpha_default,        NULL, NULL },
@@ -191,7 +191,7 @@ static LayerParamData fonts_default(void)
 
 
 
-static LayerParam prefs[] = {
+static Parameter prefs[] = {
 	/* Changing these values only applies before first mapnik layer is 'created' */
 	{ LayerType::NUM_TYPES, MAPNIK_PREFS_NAMESPACE"plugins_directory",       LayerParamType::STRING, VIK_LAYER_GROUP_NONE,  N_("Plugins Directory:"),        LayerWidgetType::FOLDERENTRY, NULL,       NULL, N_("You need to restart Viking for a change to this value to be used"), plugins_default, NULL, NULL },
 	{ LayerType::NUM_TYPES, MAPNIK_PREFS_NAMESPACE"fonts_directory",         LayerParamType::STRING, VIK_LAYER_GROUP_NONE,  N_("Fonts Directory:"),          LayerWidgetType::FOLDERENTRY, NULL,       NULL, N_("You need to restart Viking for a change to this value to be used"), fonts_default, NULL, NULL },

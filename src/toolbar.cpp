@@ -119,7 +119,7 @@ typedef struct {
 
 static config_t extra_widget_data;
 
-static LayerParam prefs[] = {
+static Parameter prefs[] = {
 	{ LayerType::NUM_TYPES, TOOLBAR_PARAMS_NAMESPACE "append_to_menu", LayerParamType::BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Append to Menu:"), LayerWidgetType::CHECKBUTTON, NULL,                    NULL, N_("Pack the toolbar to the main menu to save vertical space"), NULL, NULL, NULL },
 	{ LayerType::NUM_TYPES, TOOLBAR_PARAMS_NAMESPACE "icon_size",      LayerParamType::UINT,    VIK_LAYER_GROUP_NONE, N_("Icon Size:"),      LayerWidgetType::COMBOBOX,    params_icon_size,        NULL, NULL, NULL, NULL, NULL },
 	{ LayerType::NUM_TYPES, TOOLBAR_PARAMS_NAMESPACE "icon_style",     LayerParamType::UINT,    VIK_LAYER_GROUP_NONE, N_("Icon Style:"),     LayerWidgetType::COMBOBOX,    params_icon_style,       NULL, NULL, NULL, NULL, NULL },

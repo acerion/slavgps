@@ -46,11 +46,11 @@ using namespace SlavGPS;
 /************************************ Simplify (Count) *****************************/
 
 /* Spin button scales. */
-LayerParamScale simplify_params_scales[] = {
+ParameterScale simplify_params_scales[] = {
 	{1, 10000, 10, 0},
 };
 
-LayerParam bfilter_simplify_params[] = {
+Parameter bfilter_simplify_params[] = {
 	{ LayerType::NUM_TYPES, "numberofpoints", LayerParamType::UINT, VIK_LAYER_GROUP_NONE, N_("Max number of points:"), LayerWidgetType::SPINBUTTON, simplify_params_scales, NULL, NULL, NULL, NULL, NULL },
 };
 
@@ -134,9 +134,9 @@ VikDataSourceInterface vik_datasource_bfilter_simplify_interface = {
 
 
 
-static LayerParamScale compress_spin_scales[] = { {0.0, 1.000, 0.001, 3} };
+static ParameterScale compress_spin_scales[] = { {0.0, 1.000, 0.001, 3} };
 
-LayerParam bfilter_compress_params[] = {
+Parameter bfilter_compress_params[] = {
 	//{ LayerType::NUM_TYPES, "compressmethod", LayerParamType::UINT, VIK_LAYER_GROUP_NONE, N_("Simplify Method:"), LayerWidgetType::COMBOBOX, compress_method, NULL, NULL, NULL, NULL, NULL },
 	{ LayerType::NUM_TYPES, "compressfactor", LayerParamType::DOUBLE, VIK_LAYER_GROUP_NONE, N_("Error Factor:"), LayerWidgetType::SPINBUTTON, compress_spin_scales, NULL, N_("Specifies the maximum allowable error that may be introduced by removing a single point by the crosstrack method. See the manual or GPSBabel Simplify Filter documentation for more detail."), NULL, NULL, NULL },
 };
@@ -273,7 +273,7 @@ LayerParamData bfilter_manual_params_defaults[] = {
 	{ .s = NULL },
 };
 
-LayerParam bfilter_manual_params[] = {
+Parameter bfilter_manual_params[] = {
 	{ LayerType::NUM_TYPES, "manual", LayerParamType::STRING, VIK_LAYER_GROUP_NONE, N_("Manual filter:"), LayerWidgetType::ENTRY, NULL, NULL, N_("Manual filter command: e.g. 'swap'."), NULL, NULL, NULL },
 };
 

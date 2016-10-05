@@ -70,12 +70,12 @@ static size_t max_cache_size = VIK_CONFIG_MAPCACHE_SIZE * 1024 * 1024;
 
 static GMutex * mc_mutex = NULL;
 
-static LayerParamScale params_scales[] = {
+static ParameterScale params_scales[] = {
 	/* min, max, step, digits (decimal places) */
 	{ 1, 1024, 1, 0 },
 };
 
-static LayerParam prefs[] = {
+static Parameter prefs[] = {
 	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_NAMESPACE "mapcache_size", LayerParamType::UINT, VIK_LAYER_GROUP_NONE, N_("Map cache memory size (MB):"), LayerWidgetType::HSCALE, params_scales, NULL, NULL, NULL, NULL, NULL },
 };
 

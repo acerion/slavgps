@@ -65,7 +65,7 @@ static VikLayerParamData image_default(void)
 
 
 
-LayerParam georef_layer_params[] = {
+Parameter georef_layer_params[] = {
 	{ LayerType::GEOREF, "image",                LayerParamType::STRING, VIK_LAYER_NOT_IN_PROPERTIES, NULL, (LayerWidgetType) 0, NULL, NULL, NULL, NULL, NULL, NULL },
 	{ LayerType::GEOREF, "corner_easting",       LayerParamType::DOUBLE, VIK_LAYER_NOT_IN_PROPERTIES, NULL, (LayerWidgetType) 0, NULL, NULL, NULL, NULL, NULL, NULL },
 	{ LayerType::GEOREF, "corner_northing",      LayerParamType::DOUBLE, VIK_LAYER_NOT_IN_PROPERTIES, NULL, (LayerWidgetType) 0, NULL, NULL, NULL, NULL, NULL, NULL },
@@ -147,7 +147,7 @@ VikLayerInterface vik_georef_layer_interface = {
 
 
 
-static LayerParam io_prefs[] = {
+static Parameter io_prefs[] = {
 	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_IO_NAMESPACE "georef_auto_read_world_file", LayerParamType::BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Auto Read World Files:"), LayerWidgetType::CHECKBUTTON, NULL, NULL,
 	  N_("Automatically attempt to read associated world file of a new image for a GeoRef layer"), NULL, NULL, NULL}
 };

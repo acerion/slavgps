@@ -167,7 +167,7 @@ GtkWidget *a_uibuilder_new_widget(LayerParam *param, LayerParamData data)
 		     || param->type == LayerParamType::INT)  && param->widget_data) {
 
 			double init_val = (param->type == LayerParamType::DOUBLE) ? vlpd.d : (param->type == LayerParamType::UINT ? vlpd.u : vlpd.i);
-			LayerParamScale *scale = (LayerParamScale *) param->widget_data;
+			ParameterScale * scale = (ParameterScale *) param->widget_data;
 			rv = gtk_spin_button_new (GTK_ADJUSTMENT(gtk_adjustment_new(init_val, scale->min, scale->max, scale->step, scale->step, 0)), scale->step, scale->digits);
 		}
 		break;
@@ -218,7 +218,7 @@ GtkWidget *a_uibuilder_new_widget(LayerParam *param, LayerParamData data)
 		     || param->type == LayerParamType::INT)  && param->widget_data) {
 
 			double init_val = (param->type == LayerParamType::DOUBLE) ? vlpd.d : (param->type == LayerParamType::UINT ? vlpd.u : vlpd.i);
-			LayerParamScale *scale = (LayerParamScale *) param->widget_data;
+			ParameterScale * scale = (ParameterScale *) param->widget_data;
 			rv = gtk_hscale_new_with_range(scale->min, scale->max, scale->step);
 			gtk_scale_set_digits(GTK_SCALE(rv), scale->digits);
 			gtk_range_set_value(GTK_RANGE(rv), init_val);
@@ -337,7 +337,7 @@ LayerParamData a_uibuilder_widget_get_value(GtkWidget *widget, LayerParam *param
 //static void draw_to_image_file_total_area_cb (GtkSpinButton *spinbutton, void * *pass_along)
 int a_uibuilder_properties_factory(const char *dialog_name,
 				   GtkWindow *parent,
-				   LayerParam *params,
+				   Parameter *params,
 				   uint16_t params_count,
 				   char **groups,
 				   uint8_t groups_count,

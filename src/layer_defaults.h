@@ -36,7 +36,7 @@
 void a_layer_defaults_init();
 void a_layer_defaults_uninit();
 
-void a_layer_defaults_register(const char * layer_name, LayerParam * layer_param, LayerParamValue default_value);
+void a_layer_defaults_register(const char * layer_name, Parameter * layer_param, LayerParamValue default_value);
 
 bool a_layer_defaults_show_window(GtkWindow * parent, const char * layer_name);
 

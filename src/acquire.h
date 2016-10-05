@@ -179,7 +179,7 @@ namespace SlavGPS {
 		VikDataSourceOffFunc off_func;
 
 		/*** UI Building.        ***/
-		LayerParam *     params;
+		Parameter *      params;
 		uint16_t         params_count;
 		LayerParamData * params_defaults;
 		char **          params_groups;

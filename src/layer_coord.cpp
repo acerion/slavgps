@@ -45,7 +45,7 @@ static Layer * coord_layer_unmarshall(uint8_t * data, int len, Viewport * viewpo
 
 
 
-static LayerParamScale param_scales[] = {
+static ParameterScale param_scales[] = {
 	{ 0.05, 60.0, 0.25, 10 },
 	{ 1,    15,   1,     0 },
 };
@@ -73,7 +73,7 @@ enum {
 
 
 
-static LayerParam coord_layer_params[] = {
+static Parameter coord_layer_params[] = {
 	{ LayerType::COORD,     PARAM_COLOR,          "color",          LayerParamType::COLOR,  VIK_LAYER_GROUP_NONE, N_("Color:"),          LayerWidgetType::COLOR,          NULL,             NULL, NULL, color_default,          NULL, NULL },
 	{ LayerType::COORD,     PARAM_MIN_INC,        "min_inc",        LayerParamType::DOUBLE, VIK_LAYER_GROUP_NONE, N_("Minutes Width:"),  LayerWidgetType::SPINBOX_DOUBLE, &param_scales[0], NULL, NULL, min_inc_default,        NULL, NULL },
 	{ LayerType::COORD,     PARAM_LINE_THICKNESS, "line_thickness", LayerParamType::UINT,   VIK_LAYER_GROUP_NONE, N_("Line Thickness:"), LayerWidgetType::SPINBUTTON,     &param_scales[1], NULL, NULL, line_thickness_default, NULL, NULL },

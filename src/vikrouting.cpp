@@ -62,7 +62,7 @@ static GList * routing_engine_list = NULL;
 
 
 
-static LayerParam prefs[] = {
+static Parameter prefs[] = {
 	{ LayerType::NUM_TYPES, VIKING_ROUTING_PARAMS_NAMESPACE "default", LayerParamType::STRING, VIK_LAYER_GROUP_NONE, N_("Default engine:"), LayerWidgetType::COMBOBOX, NULL, NULL, NULL, NULL, NULL, NULL },
 };
 
@@ -210,7 +210,7 @@ void vik_routing_register(VikRoutingEngine * engine)
 		routing_engine_ids[len+1] = NULL;
 
 		/* Hack
-		   We have to ensure the mode LayerParam references the up-to-date
+		   We have to ensure the mode Parameter references the up-to-date
 		   GLists.
 		*/
 		/*

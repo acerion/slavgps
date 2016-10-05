@@ -315,9 +315,9 @@ static void bgwindow_response(GtkDialog * dialog, int arg1)
 #define VIK_SETTINGS_BACKGROUND_MAX_THREADS_LOCAL "background_max_threads_local"
 
 #ifdef HAVE_LIBMAPNIK
-LayerParamScale params_threads[] = { {1, 64, 1, 0} }; /* 64 threads should be enough for anyone... */
+ParameterScale params_threads[] = { {1, 64, 1, 0} }; /* 64 threads should be enough for anyone... */
 /* Implicit use of 'MAPNIK_PREFS_NAMESPACE' to avoid dependency issues. */
-static LayerParam prefs_mapnik[] = {
+static Parameter prefs_mapnik[] = {
 	{ LayerType::NUM_TYPES, 0, "mapnik.background_max_threads_local_mapnik", LayerParamType::UINT, VIK_LAYER_GROUP_NONE, N_("Threads:"), LayerWidgetType::SPINBUTTON, params_threads, NULL, N_("Number of threads to use for Mapnik tasks. You need to restart Viking for a change to this value to be used"), NULL, NULL, NULL },
 };
 #endif

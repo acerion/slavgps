@@ -146,7 +146,7 @@ static std::mutex file_list_mutex;
 
 
 /* Spin button scales. */
-static LayerParamScale params_scales[] = {
+static ParameterScale params_scales[] = {
 	{1, 365, 1, 0},		/* download_tile_age */
 };
 
@@ -171,7 +171,7 @@ static LayerParamValue convert_to_internal(LayerParamValue value)
 
 
 
-static LayerParam prefs[] = {
+static Parameter prefs[] = {
 	{ LayerType::NUM_TYPES, 0, VIKING_PREFERENCES_NAMESPACE "download_tile_age", LayerParamType::UINT, VIK_LAYER_GROUP_NONE, N_("Tile age (days):"), LayerWidgetType::SPINBUTTON, &params_scales[0], NULL, NULL, NULL, convert_to_display, convert_to_internal },
 };
 

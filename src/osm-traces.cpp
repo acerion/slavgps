@@ -104,7 +104,7 @@ typedef struct _OsmTracesInfo {
 	Track * trk;
 } OsmTracesInfo;
 
-static LayerParam prefs[] = {
+static Parameter prefs[] = {
 	{ LayerType::NUM_TYPES, VIKING_OSM_TRACES_PARAMS_NAMESPACE "username", LayerParamType::STRING, VIK_LAYER_GROUP_NONE, N_("OSM username:"), LayerWidgetType::ENTRY, NULL, NULL, NULL, NULL, NULL, NULL },
 	{ LayerType::NUM_TYPES, VIKING_OSM_TRACES_PARAMS_NAMESPACE "password", LayerParamType::STRING, VIK_LAYER_GROUP_NONE, N_("OSM password:"), LayerWidgetType::PASSWORD, NULL, NULL, NULL, NULL, NULL, NULL },
 };

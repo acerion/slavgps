@@ -44,7 +44,7 @@ using namespace SlavGPS;
 static LayerParamValue get_default_data_answer(const char * group, const char * name, LayerParamType ptype, bool * success);
 static LayerParamValue get_default_data(const char * group, const char * name, LayerParamType ptype);
 static void set_default_value(LayerParamValue value, const char * group, const char * name, LayerParamType ptype);
-static void defaults_run_setparam(void * index_ptr, uint16_t i, LayerParamValue value, LayerParam * params);
+static void defaults_run_setparam(void * index_ptr, uint16_t i, LayerParamValue value, Parameter * params);
 static LayerParamValue defaults_run_getparam(void * index_ptr, uint16_t i, bool notused2);
 static void use_internal_defaults_if_missing_default(LayerType layer_type);
 static bool defaults_load_from_file(void);
@@ -177,11 +177,11 @@ static void set_default_value(LayerParamValue value, const char * group, const c
 
 
 
-static void defaults_run_setparam(void * index_ptr, uint16_t i, LayerParamValue value, LayerParam * params)
+static void defaults_run_setparam(void * index_ptr, uint16_t i, LayerParamValue value, Parameter * params)
 {
 	/* Index is only an index into values from this layer. */
 	int index = KPOINTER_TO_INT (index_ptr);
-	LayerParam * layer_param = (LayerParam *) g_ptr_array_index(paramsVD, index + i);
+	Parameter * layer_param = (Parameter *) g_ptr_array_index(paramsVD, index + i);
 
 	set_default_value(value, Layer::get_interface(layer_param->layer_type)->fixed_layer_name, layer_param->name, layer_param->type);
 }
@@ -193,7 +193,7 @@ static LayerParamValue defaults_run_getparam(void * index_ptr, uint16_t i, bool 
 {
 	/* Index is only an index into values from this layer. */
 	int index = (int) (long) (index_ptr);
-	LayerParam * layer_param = (LayerParam *) g_ptr_array_index(paramsVD, index + i);
+	Parameter * layer_param = (Parameter *) g_ptr_array_index(paramsVD, index + i);
 
 	return get_default_data(Layer::get_interface(layer_param->layer_type)->fixed_layer_name, layer_param->name, layer_param->type);
 }
@@ -203,7 +203,7 @@ static LayerParamValue defaults_run_getparam(void * index_ptr, uint16_t i, bool 
 
 static void use_internal_defaults_if_missing_default(LayerType layer_type)
 {
-	LayerParam * params = Layer::get_interface(layer_type)->params;
+	Parameter * params = Layer::get_interface(layer_type)->params;
 	if (!params) {
 		return;
 	}
@@ -305,7 +305,7 @@ bool a_layer_defaults_show_window(GtkWindow * parent, const char * layer_name)
 	bool found_first = false;
 	int index = 0;
 	for (unsigned int i = 0; i < paramsVD->len; i++) {
-		LayerParam *param = (LayerParam*)(g_ptr_array_index(paramsVD,i));
+		Parameter * param = (Parameter *) g_ptr_array_index(paramsVD, i);
 		if (param->layer_type == layer_type) {
 			layer_params_count++;
 			if (!found_first) {
@@ -320,9 +320,9 @@ bool a_layer_defaults_show_window(GtkWindow * parent, const char * layer_name)
 		return false;
 	}
 
-	LayerParam *params = (LayerParam *) malloc(layer_params_count * sizeof (LayerParam));
+	Parameter * params = (Parameter *) malloc(layer_params_count * sizeof (Parameter));
 	for (unsigned int i = 0; i < layer_params_count; i++) {
-		params[i] = *((LayerParam*)(g_ptr_array_index(paramsVD,i+index)));
+		params[i] = *((Parameter *) (g_ptr_array_index(paramsVD,i+index)));
 	}
 
 	char *title = g_strconcat(layer_name, ": ", _("Layer Defaults"), NULL);
@@ -362,10 +362,10 @@ bool a_layer_defaults_show_window(GtkWindow * parent, const char * layer_name)
  *
  * Call this function on to set the default value for the particular parameter.
  */
-void a_layer_defaults_register(const char * layer_name, LayerParam * layer_param, LayerParamValue default_value)
+void a_layer_defaults_register(const char * layer_name, Parameter * layer_param, LayerParamValue default_value)
 {
 	/* Copy value. */
-	LayerParam * new_layer_param = (LayerParam *) malloc(1 * sizeof (LayerParam));
+	Parameter * new_layer_param = (Parameter *) malloc(1 * sizeof (Parameter));
 	*new_layer_param = *layer_param;
 
 	g_ptr_array_add(paramsVD, new_layer_param);

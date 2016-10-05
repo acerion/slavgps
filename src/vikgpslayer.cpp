@@ -281,7 +281,7 @@ static LayerParamData gpsd_retry_interval_default(void)
 
 
 
-static LayerParam gps_layer_params[] = {
+static Parameter gps_layer_params[] = {
 	/* NB gps_layer_inst_init() is performed after parameter registeration
 	   thus to give the protocols some potential values use the old static list. */
 	/* TODO: find another way to use gps_layer_inst_init()? */

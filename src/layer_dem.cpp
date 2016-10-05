@@ -93,7 +93,7 @@ static void dem24k_draw_existence(Viewport * viewport);
 
 
 /* Upped upper limit incase units are feet */
-static LayerParamScale param_scales[] = {
+static ParameterScale param_scales[] = {
 	{ 0, 30000, 10, 1 },
 	{ 1, 30000, 10, 1 },
 };
@@ -174,7 +174,7 @@ enum {
 
 
 
-static LayerParam dem_layer_params[] = {
+static Parameter dem_layer_params[] = {
 	{ LayerType::DEM, PARAM_FILES,      "files",    LayerParamType::STRING_LIST, VIK_LAYER_GROUP_NONE, N_("DEM Files:"),       LayerWidgetType::FILELIST,          NULL,             NULL, NULL, NULL,             NULL, NULL },
 	{ LayerType::DEM, PARAM_SOURCE,     "source",   LayerParamType::UINT,        VIK_LAYER_GROUP_NONE, N_("Download Source:"), LayerWidgetType::RADIOGROUP_STATIC, params_source,    NULL, NULL, source_default,   NULL, NULL },
 	{ LayerType::DEM, PARAM_COLOR,      "color",    LayerParamType::COLOR,       VIK_LAYER_GROUP_NONE, N_("Min Elev Color:"),  LayerWidgetType::COLOR,             NULL,             NULL, NULL, color_default,    NULL, NULL },
