@@ -837,6 +837,8 @@ bool Viewport::get_draw_centermark()
 
 void Viewport::draw_centermark()
 {
+	qDebug() << "II: Viewport: draw centermark:" << do_draw_centermark;
+
 	if (!do_draw_centermark) {
 		return;
 	}
@@ -860,6 +862,8 @@ void Viewport::draw_centermark()
 	this->draw_line(pen_fg, center_x + gap, center_y,        center_x + len, center_y);
 	this->draw_line(pen_fg, center_x,       center_y - len,  center_x,       center_y - gap);
 	this->draw_line(pen_fg, center_x,       center_y + gap,  center_x,       center_y + len);
+
+	this->update();
 }
 
 

@@ -253,10 +253,8 @@ Window::Window()
 
 void Window::create_layout()
 {
-	//QHBoxLayout * layout = new QHBoxLayout;
-	QWidget * central_widget = new QWidget;
-	//central_widget->setLayout(layout);
-
+	this->toolbar = new QToolBar("Main Toolbar");
+	this->addToolBar(this->toolbar);
 
 
 	this->viewport = new SlavGPS::Viewport(this);
@@ -267,7 +265,7 @@ void Window::create_layout()
 	this->viewport->xmpp = 0.01;
 	this->viewport->ympp = 0.01;
 	//viewport->show();
-	fprintf(stderr, "WINDOW created VIEWPORT with size: %d / %d\n", this->viewport->height(), this->viewport->width());
+	qDebug() << "II: Window: created Viewport with size:" << this->viewport->height() << this->viewport->width();
 
 
 	this->setCentralWidget(viewport);
@@ -275,10 +273,10 @@ void Window::create_layout()
 
 	this->layers_panel = new SlavGPS::LayersPanel(this);
 
-	QDockWidget * dock = new QDockWidget(this);
-	dock->setWidget(this->layers_panel);
-	dock->setWindowTitle("Layers");
-	this->addDockWidget(Qt::LeftDockWidgetArea, dock);
+	this->panel_dock = new QDockWidget(this);
+	this->panel_dock->setWidget(this->layers_panel);
+	this->panel_dock->setWindowTitle("Layers");
+	this->addDockWidget(Qt::LeftDockWidgetArea, this->panel_dock);
 
 	setStyleSheet("QMainWindow::separator { image: url(src/icons/handle_indicator.png); width: 8}");
 
@@ -338,6 +336,114 @@ void Window::create_actions(void)
 	}
 
 
+	/* "View" menu. */
+	QAction * qa_view_full_screen = NULL;
+
+	QAction * qa_view_show_draw_scale = NULL;
+	QAction * qa_view_show_draw_centermark = NULL;
+	QAction * qa_view_show_draw_highlight = NULL;
+	QAction * qa_view_show_side_panel = NULL;
+	QAction * qa_view_show_statusbar = NULL;
+	QAction * qa_view_show_toolbar = NULL;
+	QAction * qa_view_show_main_menu = NULL;
+
+	QAction * qa_view_zoom_in = NULL;
+	QAction * qa_view_zoom_out = NULL;
+	QAction * qa_view_zoom_to = NULL;
+	{
+		qa_view_full_screen = new QAction("&Full Screen", this);
+		qa_view_full_screen->setShortcut(Qt::Key_F11);
+		qa_view_full_screen->setCheckable(true);
+		qa_view_full_screen->setChecked(this->view_full_screen);
+		connect(qa_view_full_screen, SIGNAL(triggered(bool)), this, SLOT(view_full_screen_cb(bool)));
+
+		this->menu_view->addAction(qa_view_full_screen);
+
+
+		QMenu * show_submenu = new QMenu("&Show", this);
+		this->menu_view->addMenu(show_submenu);
+
+		qa_view_show_draw_scale = new QAction("Show &Scale", this);
+		qa_view_show_draw_scale->setShortcut(Qt::SHIFT + Qt::Key_F5);
+		qa_view_show_draw_scale->setCheckable(true);
+		qa_view_show_draw_scale->setChecked(this->draw_scale);
+		connect(qa_view_show_draw_scale, SIGNAL(triggered(bool)), this, SLOT(draw_scale_cb(bool)));
+
+		qa_view_show_draw_centermark = new QAction("Show &Center Mark", this);
+		qa_view_show_draw_centermark->setShortcut(Qt::Key_F6);
+		qa_view_show_draw_centermark->setCheckable(true);
+		qa_view_show_draw_centermark->setChecked(this->draw_centermark);
+		connect(qa_view_show_draw_centermark, SIGNAL(triggered(bool)), this, SLOT(draw_centermark_cb(bool)));
+
+		qa_view_show_draw_highlight = new QAction("Show &Highlight", this);
+		qa_view_show_draw_highlight->setShortcut(Qt::Key_F7);
+		qa_view_show_draw_highlight->setCheckable(true);
+		qa_view_show_draw_highlight->setChecked(this->draw_highlight);
+		connect(qa_view_show_draw_highlight, SIGNAL(triggered(bool)), this, SLOT(draw_highlight_cb(bool)));
+
+		qa_view_show_side_panel = this->panel_dock->toggleViewAction(); /* Existing action! */
+		qa_view_show_side_panel->setText("Show Side &Panel");
+		qa_view_show_side_panel->setShortcut(Qt::Key_F9);
+		qa_view_show_side_panel->setCheckable(true);
+		qa_view_show_side_panel->setChecked(this->view_side_panel);
+		connect(qa_view_show_side_panel, SIGNAL(triggered(bool)), this, SLOT(view_side_panel_cb(bool)));
+
+		qa_view_show_statusbar = new QAction("Show Status&bar", this);
+		qa_view_show_statusbar->setShortcut(Qt::Key_F12);
+		qa_view_show_statusbar->setCheckable(true);
+		qa_view_show_statusbar->setChecked(this->view_statusbar);
+		connect(qa_view_show_statusbar, SIGNAL(triggered(bool)), this, SLOT(view_statusbar_cb(bool)));
+
+		qa_view_show_toolbar = this->toolbar->toggleViewAction(); /* Existing action! */
+		qa_view_show_toolbar->setText("Show &Toolbar");
+		qa_view_show_toolbar->setShortcut(Qt::Key_F3);
+		qa_view_show_toolbar->setCheckable(true);
+		qa_view_show_toolbar->setChecked(this->view_toolbar);
+		/* No signal connection needed, we have toggleViewAction(). */
+
+		qa_view_show_main_menu = new QAction("Show &Menu", this);
+		qa_view_show_main_menu->setShortcut(Qt::Key_F4);
+		qa_view_show_main_menu->setCheckable(true);
+		qa_view_show_main_menu->setChecked(this->view_main_menu);
+		connect(qa_view_show_main_menu, SIGNAL(triggered(bool)), this, SLOT(view_main_menu_cb(bool)));
+
+
+		show_submenu->addAction(qa_view_show_draw_scale);
+		show_submenu->addAction(qa_view_show_draw_centermark);
+		show_submenu->addAction(qa_view_show_draw_highlight);
+		show_submenu->addAction(qa_view_show_side_panel);
+		show_submenu->addAction(qa_view_show_statusbar);
+		show_submenu->addAction(qa_view_show_toolbar);
+		show_submenu->addAction(qa_view_show_main_menu);
+
+
+		this->menu_view->addSeparator();
+
+
+		qa_view_zoom_in = new QAction("Zoom &In", this);
+		qa_view_zoom_in->setShortcut(Qt::CTRL + Qt::Key_Plus);
+		qa_view_zoom_in->setIcon(QIcon::fromTheme("zoom-in"));
+		connect(qa_view_zoom_in, SIGNAL(triggered(bool)), this, SLOT(zoom_cb(void)));
+
+		qa_view_zoom_out = new QAction("Zoom &Out", this);
+		qa_view_zoom_out->setShortcut(Qt::CTRL + Qt::Key_Minus);
+		qa_view_zoom_out->setIcon(QIcon::fromTheme("zoom-out"));
+		connect(qa_view_zoom_out, SIGNAL(triggered(bool)), this, SLOT(zoom_cb(void)));
+
+		qa_view_zoom_to = new QAction("Zoom &To...", this);
+		qa_view_zoom_to->setShortcut(Qt::CTRL + Qt::Key_Z);
+		qa_view_zoom_to->setIcon(QIcon::fromTheme("zoom-fit-best"));
+		connect(qa_view_zoom_to, SIGNAL(triggered(bool)), this, SLOT(zoom_to_cb(void)));
+
+
+		this->menu_view->addAction(qa_view_zoom_in);
+		this->menu_view->addAction(qa_view_zoom_out);
+		this->menu_view->addAction(qa_view_zoom_to);
+
+	}
+
+
+
 	/* "Layers" menu. */
 	{
 		this->qa_layer_properties = new QAction("Properties...", this);
@@ -372,10 +478,8 @@ void Window::create_actions(void)
 
 
 
-	this->tool_bar = new QToolBar("Main Toolbar");
-	addToolBar(this->tool_bar);
 
-	this->tool_bar->addAction(qa_file_new);
+	this->toolbar->addAction(qa_file_new);
 
 
 
@@ -643,7 +747,7 @@ void Window::create_ui(void)
 		group->setObjectName("window");
 		QAction * qa = NULL;
 
-		this->tool_bar->addSeparator();
+		this->toolbar->addSeparator();
 
 
 		qa = this->tb->add_tool(selecttool_create(this, this->viewport));
@@ -661,7 +765,7 @@ void Window::create_ui(void)
 		group->addAction(qa);
 
 
-		this->tool_bar->addActions(group->actions());
+		this->toolbar->addActions(group->actions());
 		this->menu_tools->addActions(group->actions());
 		this->tb->add_group(group);
 
@@ -675,7 +779,7 @@ void Window::create_ui(void)
 			if (!Layer::get_interface(i)->tools_count) {
 				continue;
 			}
-			this->tool_bar->addSeparator();
+			this->toolbar->addSeparator();
 			this->menu_tools->addSeparator();
 
 			QActionGroup * group = new QActionGroup(this);
@@ -691,7 +795,7 @@ void Window::create_ui(void)
 
 				assert (layer_tool->layer_type == i);
 			}
-			this->tool_bar->addActions(group->actions());
+			this->toolbar->addActions(group->actions());
 			this->menu_tools->addActions(group->actions());
 			this->tb->add_group(group);
 			this->tb->set_group_disabled(name);
@@ -1116,4 +1220,210 @@ void Window::closeEvent(QCloseEvent * event)
 #endif
 
 	}
+}
+
+
+
+
+void Window::view_full_screen_cb(bool new_state)
+{
+	assert (new_state != this->view_full_screen);
+	if (new_state != this->view_full_screen) {
+		this->toggle_full_screen();
+	}
+}
+
+
+
+
+void Window::draw_scale_cb(bool new_state)
+{
+	assert (new_state != this->draw_scale);
+	if (new_state != this->draw_scale) {
+		this->viewport->set_draw_scale(new_state);
+		this->draw_update();
+		this->draw_scale = !this->draw_scale;
+	}
+}
+
+
+
+
+void Window::draw_centermark_cb(bool new_state)
+{
+	assert (new_state != this->draw_centermark);
+	if (new_state != this->draw_centermark) {
+		this->viewport->set_draw_centermark(new_state);
+		this->draw_update();
+		this->draw_centermark = !this->draw_centermark;
+	}
+}
+
+
+
+void Window::draw_highlight_cb(bool new_state)
+{
+	assert (new_state != this->draw_highlight);
+	if (new_state != this->draw_highlight) {
+		this->viewport->set_draw_highlight(new_state);
+		this->draw_update();
+		this->draw_highlight = !this->draw_highlight;
+	}
+}
+
+
+
+void Window::view_side_panel_cb(bool new_state)
+{
+	assert (new_state != this->view_side_panel);
+	if (new_state != this->view_side_panel) {
+		this->toggle_side_panel();
+	}
+}
+
+
+
+
+void Window::view_statusbar_cb(bool new_state)
+{
+	assert (new_state != this->view_statusbar);
+	if (new_state != this->view_statusbar) {
+		this->toggle_statusbar();
+	}
+}
+
+
+
+
+void Window::view_main_menu_cb(bool new_state)
+{
+	assert (new_state != this->view_main_menu);
+	if (new_state != this->view_main_menu) {
+		this->toggle_main_menu();
+	}
+}
+
+
+
+void Window::toggle_full_screen()
+{
+	this->view_full_screen = !this->view_full_screen;
+	const Qt::WindowStates state = this->windowState();
+
+	if (this->view_full_screen) {
+		this->setWindowState(state | Qt::WindowFullScreen);
+	} else {
+		this->setWindowState(state & (~Qt::WindowFullScreen));
+	}
+}
+
+
+
+
+void Window::toggle_side_panel()
+{
+	this->view_side_panel = !this->view_side_panel;
+	QAction * qa = this->panel_dock->toggleViewAction();
+	qDebug() << "II: Window: setting panel dock visible:" << this->view_side_panel;
+	qa->setChecked(this->view_side_panel);
+	if (this->view_side_panel) {
+		this->panel_dock->show();
+	} else {
+		this->panel_dock->hide();
+	}
+}
+
+
+
+
+void Window::toggle_statusbar()
+{
+	this->view_statusbar = !this->view_statusbar;
+	if (this->view_statusbar) {
+		//gtk_widget_show(GTK_WIDGET(this->viking_vs));
+	} else {
+		//gtk_widget_hide(GTK_WIDGET(this->viking_vs));
+	}
+}
+
+
+
+
+void Window::toggle_main_menu()
+{
+	this->view_main_menu = !this->view_main_menu;
+	if (this->view_main_menu) {
+		//gtk_widget_show(gtk_ui_manager_get_widget(this->uim, "/ui/MainMenu"));
+	} else {
+		//gtk_widget_hide(gtk_ui_manager_get_widget(this->uim, "/ui/MainMenu"));
+	}
+}
+
+
+
+
+void Window::zoom_cb(void)
+{
+	QAction * qa = (QAction *) QObject::sender();
+	QKeySequence seq = qa->shortcut();
+
+	if (seq == (Qt::CTRL + Qt::Key_Plus)) {
+		this->viewport->zoom_in();
+	} else if (seq == (Qt::CTRL + Qt::Key_Minus)) {
+		this->viewport->zoom_out();
+	} else {
+		qDebug() << "EE: Window: unhandled case";
+		return;
+	}
+
+#if 0
+	unsigned int what = 128;
+
+	if (!strcmp(gtk_action_get_name(a), "ZoomIn")) {
+		what = -3;
+	} else if (!strcmp(gtk_action_get_name(a), "ZoomOut")) {
+		what = -4;
+	} else if (!strcmp(gtk_action_get_name(a), "Zoom0.25")) {
+		what = -2;
+	} else if (!strcmp(gtk_action_get_name(a), "Zoom0.5")) {
+		what = -1;
+	} else {
+		char *s = (char *)gtk_action_get_name(a);
+		what = atoi(s+4);
+	}
+
+	switch (what) {
+	case -3:
+
+		break;
+	case -4:
+		window->viewport->zoom_out();
+		break;
+	case -1:
+		window->viewport->set_zoom(0.5);
+		break;
+	case -2:
+		window->viewport->set_zoom(0.25);
+		break;
+	default:
+		window->viewport->set_zoom(what);
+	}
+#endif
+	this->draw_update();
+}
+
+
+
+
+void Window::zoom_to_cb(void)
+{
+	double xmpp = this->viewport->get_xmpp();
+	double ympp = this->viewport->get_ympp();
+#if 0
+	if (a_dialog_custom_zoom(window->get_toolkit_window(), &xmpp, &ympp)) {
+		window->viewport->set_xmpp(xmpp);
+		window->viewport->set_ympp(ympp);
+		window->draw_update();
+	}
+#endif
 }

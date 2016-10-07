@@ -1187,41 +1187,6 @@ static void draw_pan_cb(GtkAction * a, Window * window)
 
 
 
-static void draw_zoom_cb(GtkAction * a, Window * window)
-{
-	unsigned int what = 128;
-
-	if (!strcmp(gtk_action_get_name(a), "ZoomIn")) {
-		what = -3;
-	} else if (!strcmp(gtk_action_get_name(a), "ZoomOut")) {
-		what = -4;
-	} else if (!strcmp(gtk_action_get_name(a), "Zoom0.25")) {
-		what = -2;
-	} else if (!strcmp(gtk_action_get_name(a), "Zoom0.5")) {
-		what = -1;
-	} else {
-		char *s = (char *)gtk_action_get_name(a);
-		what = atoi(s+4);
-	}
-
-	switch (what) {
-	case -3:
-		window->viewport->zoom_in();
-		break;
-	case -4:
-		window->viewport->zoom_out();
-		break;
-	case -1:
-		window->viewport->set_zoom(0.5);
-		break;
-	case -2:
-		window->viewport->set_zoom(0.25);
-		break;
-	default:
-		window->viewport->set_zoom(what);
-	}
-	window->draw_update();
-}
 
 
 
@@ -1388,67 +1353,6 @@ static void help_help_cb(GtkAction * a, Window * window)
 
 
 
-void Window::toggle_side_panel()
-{
-	this->show_side_panel = !this->show_side_panel;
-	this->layers_panel->set_visible(this->show_side_panel);
-}
-
-
-
-
-void Window::toggle_full_screen()
-{
-	this->show_full_screen = !this->show_full_screen;
-	if (this->show_full_screen) {
-		gtk_window_fullscreen(this->get_toolkit_window());
-	} else {
-		gtk_window_unfullscreen(this->get_toolkit_window());
-	}
-}
-
-
-
-
-void Window::toggle_statusbar()
-{
-	this->show_statusbar = !this->show_statusbar;
-	if (this->show_statusbar) {
-		gtk_widget_show(GTK_WIDGET(this->viking_vs));
-	} else {
-		gtk_widget_hide(GTK_WIDGET(this->viking_vs));
-	}
-}
-
-
-
-
-void Window::toggle_toolbar()
-{
-	this->show_toolbar = !this->show_toolbar;
-	if (this->show_toolbar) {
-		gtk_widget_show(toolbar_get_widget(this->viking_vtb));
-	} else {
-		gtk_widget_hide(toolbar_get_widget(this->viking_vtb));
-	}
-}
-
-
-
-
-void Window::toggle_main_menu()
-{
-	this->show_main_menu = !this->show_main_menu;
-	if (this->show_main_menu) {
-		gtk_widget_show(gtk_ui_manager_get_widget(this->uim, "/ui/MainMenu"));
-	} else {
-		gtk_widget_hide(gtk_ui_manager_get_widget(this->uim, "/ui/MainMenu"));
-	}
-}
-
-
-
-
 // Only for 'view' toggle menu widgets ATM.
 GtkWidget * get_show_widget_by_name(Window * window, char const * name)
 {
@@ -1473,109 +1377,6 @@ GtkWidget * get_show_widget_by_name(Window * window, char const * name)
 
 
 
-static void tb_view_side_panel_cb(GtkAction * a, Window * window)
-{
-	bool next_state = !window->show_side_panel;
-	GtkWidget *check_box = get_show_widget_by_name(window, gtk_action_get_name(a));
-	bool menu_state = gtk_check_menu_item_get_active (GTK_CHECK_MENU_ITEM(check_box));
-	if(next_state != menu_state) {
-		gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(check_box), next_state);
-	} else {
-		window->toggle_side_panel();
-	}
-}
-
-
-
-
-static void tb_full_screen_cb(GtkAction * a, Window * window)
-{
-	bool next_state = !window->show_full_screen;
-	GtkWidget *check_box = get_show_widget_by_name(window, gtk_action_get_name(a));
-	bool menu_state = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(check_box));
-	if (next_state != menu_state) {
-		gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(check_box), next_state);
-	} else {
-		window->toggle_full_screen();
-	}
-}
-
-
-
-
-static void tb_view_statusbar_cb(GtkAction * a, Window * window)
-{
-	bool next_state = !window->show_statusbar;
-	GtkWidget *check_box = get_show_widget_by_name(window, gtk_action_get_name(a));
-	bool menu_state = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(check_box));
-	if (next_state != menu_state) {
-		gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(check_box), next_state);
-	} else {
-		window->toggle_statusbar();
-	}
-}
-
-
-
-
-static void tb_view_toolbar_cb(GtkAction * a, Window * window)
-{
-	bool next_state = !window->show_toolbar;
-	GtkWidget *check_box = get_show_widget_by_name(window, gtk_action_get_name(a));
-	bool menu_state = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(check_box));
-	if (next_state != menu_state) {
-		gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(check_box), next_state);
-	} else {
-		window->toggle_toolbar();
-	}
-}
-
-
-
-
-static void tb_view_main_menu_cb(GtkAction * a, Window * window)
-{
-	bool next_state = !window->show_main_menu;
-	GtkWidget *check_box = get_show_widget_by_name(window, gtk_action_get_name(a));
-	bool menu_state = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(check_box));
-	if (next_state != menu_state) {
-		gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(check_box), next_state);
-	} else {
-		window->toggle_main_menu();
-	}
-}
-
-
-
-
-static void tb_set_draw_scale_cb(GtkAction * a, Window * window)
-{
-	bool next_state = !window->viewport->get_draw_scale();
-	GtkWidget *check_box = get_show_widget_by_name(window, gtk_action_get_name(a));
-	bool menu_state = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(check_box));
-	if (next_state != menu_state) {
-		gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(check_box), next_state);
-	} else {
-		window->viewport->set_draw_scale(next_state);
-		window->draw_update();
-	}
-}
-
-
-
-
-static void tb_set_draw_centermark_cb(GtkAction * a, Window * window)
-{
-	bool next_state = !window->viewport->get_draw_centermark();
-	GtkWidget *check_box = get_show_widget_by_name(window, gtk_action_get_name(a));
-	bool menu_state = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(check_box));
-	if (next_state != menu_state) {
-		gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(check_box), next_state);
-	} else {
-		window->viewport->set_draw_centermark(next_state);
-		window->draw_update();
-	}
-}
 
 
 
@@ -2753,15 +2554,6 @@ static bool save_file_and_exit(GtkAction * a, Window * window)
 
 
 
-static void zoom_to_cb(GtkAction * a, Window * window)
-{
-	double xmpp = window->viewport->get_xmpp(), ympp = window->viewport->get_ympp();
-	if (a_dialog_custom_zoom(window->get_toolkit_window(), &xmpp, &ympp)) {
-		window->viewport->set_xmpp(xmpp);
-		window->viewport->set_ympp(ympp);
-		window->draw_update();
-	}
-}
 
 
 
@@ -3382,75 +3174,6 @@ static void window_change_coord_mode_cb(GtkAction * old_a, GtkAction * a, Window
 			window->draw_update();
 		}
 	}
-}
-
-
-
-
-static void toggle_draw_scale(GtkAction * a, Window * window)
-{
-	window->toggle_draw_scale(a);
-}
-
-
-
-
-void Window::toggle_draw_scale(GtkAction * a)
-{
-	bool state = !this->viewport->get_draw_scale();
-	GtkWidget * check_box = gtk_ui_manager_get_widget(this->uim, "/ui/MainMenu/View/SetShow/ShowScale");
-	if (!check_box) {
-		return;
-	}
-	gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(check_box), state);
-	this->viewport->set_draw_scale(state);
-	this->draw_update();
-}
-
-
-
-
-static void toggle_draw_centermark(GtkAction * a, Window * window)
-{
-	window->toggle_draw_centermark(a);
-}
-
-
-
-
-void Window::toggle_draw_centermark(GtkAction * a)
-{
-	bool state = !this->viewport->get_draw_centermark();
-	GtkWidget * check_box = gtk_ui_manager_get_widget(this->uim, "/ui/MainMenu/View/SetShow/ShowCenterMark");
-	if (!check_box) {
-		return;
-	}
-	gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(check_box), state);
-	this->viewport->set_draw_centermark(state);
-	this->draw_update();
-}
-
-
-
-
-static void toggle_draw_highlight(GtkAction * a, Window * window)
-{
-	window->toggle_draw_highlight(a);
-}
-
-
-
-
-void Window::toggle_draw_highlight(GtkAction * a)
-{
-	bool state = !this->viewport->get_draw_highlight();
-	GtkWidget * check_box = gtk_ui_manager_get_widget(this->uim, "/ui/MainMenu/View/SetShow/ShowHighlight");
-	if (!check_box) {
-		return;
-	}
-	gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(check_box), state);
-	this->viewport->set_draw_highlight(state);
-	this->draw_update();
 }
 
 

@@ -72,9 +72,33 @@ namespace SlavGPS {
 		void closeEvent(QCloseEvent * event);
 
 
+
+		void toggle_full_screen();
+
+		void toggle_side_panel();
+		void toggle_statusbar();
+		void toggle_main_menu();
+		//void simple_map_update(bool only_new);
+
 	public slots:
 		void menu_layer_new_cb(void);
 		void draw_layer_cb(sg_uid_t uid);
+
+
+		void view_full_screen_cb(bool new_state);
+
+		void view_side_panel_cb(bool new_state);
+		void view_statusbar_cb(bool new_state);
+		void view_main_menu_cb(bool new_state);
+
+		void draw_highlight_cb(bool new_state);
+		void draw_scale_cb(bool new_state);
+		void draw_centermark_cb(bool new_state);
+
+
+		void zoom_cb(void);
+		void zoom_to_cb(void);
+
 
 	protected:
 
@@ -99,8 +123,9 @@ namespace SlavGPS {
 
 
 		QMenuBar * menu_bar = NULL;
-		QToolBar * tool_bar = NULL;
+		QToolBar * toolbar = NULL;
 		QStatusBar * status_bar = NULL;
+		QDockWidget * panel_dock = NULL;
 
 		QMenu * menu_file = NULL;
 		QMenu * menu_edit = NULL;
@@ -127,6 +152,21 @@ namespace SlavGPS {
 
 		QCursor * busy_cursor = NULL;
 		QCursor * viewport_cursor = NULL; /* Only a reference. */
+
+
+
+		/* Display various window items. */
+		bool view_full_screen = false;
+
+		bool draw_scale = true;
+		bool draw_centermark = true;
+		bool draw_highlight = true;
+
+		bool view_side_panel = true;
+		bool view_statusbar = true;
+		bool view_toolbar = true;
+		bool view_main_menu = true;
+
 
 	};
 

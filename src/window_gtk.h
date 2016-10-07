@@ -192,13 +192,6 @@ namespace SlavGPS {
 		//Layer * trigger = NULL;
 		//VikCoord trigger_center;
 
-		/* Display controls.
-		   NB scale, centermark and highlight are in viewport. */
-		bool show_full_screen = false;
-		bool show_side_panel = false;
-		bool show_statusbar = false;
-		bool show_toolbar = false;
-		bool show_main_menu = false;
 
 		LayerToolsBox * tb = NULL;
 
@@ -220,12 +213,6 @@ namespace SlavGPS {
 
 
 		// private:
-		void simple_map_update(bool only_new);
-		void toggle_side_panel();
-		void toggle_full_screen();
-		void toggle_statusbar();
-		void toggle_toolbar();
-		void toggle_main_menu();
 
 
 	private:
