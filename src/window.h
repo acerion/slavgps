@@ -100,6 +100,9 @@ namespace SlavGPS {
 		void zoom_to_cb(void);
 
 
+		void show_background_jobs_window_cb(void);
+
+
 	protected:
 
 	private slots:

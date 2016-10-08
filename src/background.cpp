@@ -48,6 +48,7 @@
 using namespace SlavGPS;
 
 
+static BackgroundWindow * bgwindow;
 
 
 static GThreadPool *thread_pool_remote = NULL;
@@ -56,11 +57,6 @@ static GThreadPool *thread_pool_local = NULL;
 static GThreadPool *thread_pool_local_mapnik = NULL;
 #endif
 static bool stop_all_threads = false;
-#if 0
-static GtkWidget *bgwindow = NULL;
-static GtkWidget *bgtreeview = NULL;
-static GtkListStore *bgstore = NULL;
-#endif
 
 /* Still only actually updating the statusbar though. */
 static std::list<Window *> windows_to_update;
@@ -247,19 +243,18 @@ void a_background_thread(Background_Pool_Type bp, GtkWindow *parent, const char 
 
 
 /**
- * Display the background window.
+ * Display the background jobs window.
  */
 void a_background_show_window()
 {
-#if 0
-	gtk_widget_show_all(bgwindow);
-#endif
+	bgwindow->show();
+
 }
 
 
 
 
-static void cancel_job_with_iter(GtkTreeIter * iter)
+static void remove_job_with_item(QStandardItem * item)
 {
 #if 0
 	thread_args * args = NULL;
@@ -278,35 +273,6 @@ static void cancel_job_with_iter(GtkTreeIter * iter)
 }
 
 
-
-
-static void bgwindow_response(GtkDialog * dialog, int arg1)
-{
-#if 0
-	/* Note this function is a signal handler called back from the
-	   GTK main loop, so GDK is already locked.  We need to
-	   release the lock before calling thread-safe routines. */
-	if (arg1 == 1) { /* Cancel. */
-		GtkTreeIter iter;
-		if (gtk_tree_selection_get_selected(gtk_tree_view_get_selection (GTK_TREE_VIEW(bgtreeview)), NULL, &iter)) {
-			cancel_job_with_iter(&iter);
-		}
-		gdk_threads_leave();
-		background_thread_update();
-		gdk_threads_enter();
-	} else if (arg1 == 2) { /* Clear. */
-		GtkTreeIter iter;
-		while (gtk_tree_model_get_iter_first(GTK_TREE_MODEL(bgstore), &iter)) {
-			cancel_job_with_iter(&iter);
-		}
-		gdk_threads_leave();
-		background_thread_update();
-		gdk_threads_enter();
-	} else { /* OK. */
-		gtk_widget_hide(bgwindow);
-	}
-#endif
-}
 
 
 
@@ -407,18 +373,21 @@ void a_background_post_init()
 #endif
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(bgwindow))), scrolled_window, true, true, 0);
 	gtk_window_set_default_size(GTK_WINDOW(bgwindow), 400, 400);
-	gtk_window_set_title(GTK_WINDOW(bgwindow), _("Viking Background Jobs"));
+	gtk_window_set_title(GTK_WINDOW(bgwindow), _());
 	if (response_w) {
 		gtk_widget_grab_focus(response_w);
 	}
 	/* Don't destroy win. */
 	g_signal_connect(G_OBJECT(bgwindow), "delete-event", G_CALLBACK(gtk_widget_hide_on_delete), NULL);
-
-	g_signal_connect(G_OBJECT(bgwindow), "response", G_CALLBACK(bgwindow_response), 0);
 #endif
 }
 
 
+
+void a_background_post_init_window(QWidget * parent)
+{
+	bgwindow = new BackgroundWindow(parent);
+}
 
 
 /**
@@ -456,4 +425,153 @@ void a_background_add_window(Window * window)
 void a_background_remove_window(Window * window)
 {
 	windows_to_update.remove(window);
+}
+
+
+
+
+BackgroundWindow::BackgroundWindow(QWidget * parent) : QDialog(parent)
+{
+	this->button_box = new QDialogButtonBox();
+	this->close = this->button_box->addButton("&Close", QDialogButtonBox::ActionRole);
+	this->remove_selected = this->button_box->addButton("Remove &Selected", QDialogButtonBox::ActionRole);
+	this->remove_all = this->button_box->addButton("Remove &All",  QDialogButtonBox::ActionRole);
+
+	this->vbox = new QVBoxLayout;
+
+	this->model = new QStandardItemModel();
+	this->model->setHorizontalHeaderItem(TITLE_COLUMN, new QStandardItem("Job"));
+	this->model->setHorizontalHeaderItem(PROGRESS_COLUMN, new QStandardItem("Progress"));
+
+
+	this->view = new QTableView();
+	this->view->horizontalHeader()->setStretchLastSection(true);
+	this->view->verticalHeader()->setVisible(false);
+	this->view->setWordWrap(false);
+	this->view->setTextElideMode(Qt::ElideNone);
+	this->view->setShowGrid(false);
+	this->view->setModel(this->model);
+	this->view->show();
+
+
+
+
+	this->view->setVisible(false);
+	this->view->resizeRowsToContents();
+	this->view->resizeColumnsToContents();
+	this->view->setVisible(true);
+	this->view->setSelectionBehavior(QAbstractItemView::SelectRows); /* Single click in a cell selects whole row. */
+
+
+
+	this->vbox->addWidget(this->view);
+	this->vbox->addWidget(this->button_box);
+
+
+	QLayout * old = this->layout();
+	delete old;
+	this->setLayout(this->vbox);
+
+	this->setWindowTitle("Viking Background Jobs");
+
+
+	QStringList file_list;
+	file_list << "aa" << "bb" << "cc" << "dd" << "ee" << "ff";
+
+	for (auto iter = file_list.begin(); iter != file_list.end(); ++iter) {
+		qDebug() << "SGFileList: adding to initial file list:" << (*iter);
+
+		QStandardItem * item = new QStandardItem(*iter);
+		item->setToolTip(*iter);
+		this->model->appendRow(item);
+	}
+
+
+	connect(this->close, SIGNAL(clicked()), this, SLOT(close_cb()));
+	connect(this->remove_selected, SIGNAL(clicked()), this, SLOT(remove_selected_cb()));
+	connect(this->remove_all, SIGNAL(clicked()), this, SLOT(remove_all_cb()));
+
+	QItemSelectionModel * selection_model = this->view->selectionModel();
+	connect(selection_model, SIGNAL(selectionChanged(const QItemSelection, const QItemSelection)), this, SLOT(remove_selected_state_cb(void)));
+	this->remove_selected_state_cb();
+}
+
+
+
+
+void BackgroundWindow::close_cb()
+{
+	bgwindow->hide();
+}
+
+
+
+
+void BackgroundWindow::remove_selected_cb()
+{
+	QStandardItem * item = NULL;
+	QModelIndexList indexes = this->view->selectionModel()->selectedIndexes();
+
+	while (!indexes.isEmpty()) {
+
+		QModelIndex index = indexes.last();
+		if (!index.isValid()) {
+			continue;
+		}
+		QStandardItem * item = this->model->itemFromIndex(index);
+		remove_job_with_item(item);
+
+		this->model->removeRows(indexes.last().row(), 1);
+		indexes.removeLast();
+		indexes = this->view->selectionModel()->selectedIndexes();
+	}
+
+	background_thread_update();
+}
+
+
+
+
+void BackgroundWindow::remove_all_cb()
+{
+	QModelIndex parent = QModelIndex();
+	for (int r = 0; r < this->model->rowCount(parent); ++r) {
+		QModelIndex index = this->model->index(r, 0, parent);
+		QVariant name = model->data(index);
+		qDebug() << name;
+
+		QStandardItem * item = this->model->itemFromIndex(index);
+		remove_job_with_item(item);
+	}
+
+	background_thread_update();
+}
+
+
+
+
+void BackgroundWindow::remove_selected_state_cb(void)
+{
+	QModelIndexList indexes = this->view->selectionModel()->selectedIndexes();
+	if (indexes.isEmpty()) {
+		this->remove_selected->setEnabled(false);
+	} else {
+		this->remove_selected->setEnabled(true);
+	}
+}
+
+
+
+
+void BackgroundWindow::show_window(void)
+{
+	QItemSelectionModel * selection_model = this->view->selectionModel();
+	QModelIndex index = selection_model->currentIndex();
+	if (index.isValid()) {
+		qDebug() << "II: Background: clearing current selection";
+		selection_model->select(index, QItemSelectionModel::Clear | QItemSelectionModel::Deselect);
+	}
+
+	this->remove_selected_state_cb();
+	this->show();
 }

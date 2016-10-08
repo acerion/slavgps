@@ -33,6 +33,7 @@
 #include "globals.h"
 #include "uibuilder_qt.h"
 #include "settings.h"
+#include "background.h"
 
 
 
@@ -440,6 +441,16 @@ void Window::create_actions(void)
 		this->menu_view->addAction(qa_view_zoom_out);
 		this->menu_view->addAction(qa_view_zoom_to);
 
+
+		this->menu_view->addSeparator();
+
+
+		QAction * qa = new QAction("Background &Jobs", this);
+		qa->setIcon(QIcon::fromTheme("emblem-system"));
+		connect(qa, SIGNAL(triggered(bool)), this, SLOT(show_background_jobs_window_cb(void)));
+
+
+		this->menu_view->addAction(qa);
 	}
 
 
@@ -976,6 +987,8 @@ void Window::create_ui(void)
 
 	window->setup_recent_files();
 #endif
+
+	a_background_post_init_window(this);
 }
 
 
@@ -1426,4 +1439,16 @@ void Window::zoom_to_cb(void)
 		window->draw_update();
 	}
 #endif
+}
+
+
+
+
+
+/**
+ * Display the background jobs window.
+ */
+void Window::show_background_jobs_window_cb(void)
+{
+	a_background_show_window();
 }

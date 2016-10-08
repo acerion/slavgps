@@ -27,6 +27,16 @@
 
 #include <cstdint>
 
+
+#include <QObject>
+#include <QDialog>
+#include <QDialogButtonBox>
+#include <QPushButton>
+#include <QVBoxLayout>
+#include <QStandardItemModel>
+#include <QTableView>
+
+
 #include "slav_qt.h"
 
 
@@ -52,12 +62,44 @@ typedef enum {
 
 
 
+
+
+
+class BackgroundWindow : public QDialog {
+	Q_OBJECT
+
+public:
+	BackgroundWindow(QWidget * parent);
+	~BackgroundWindow() {};
+
+	void show_window(void);
+
+private slots:
+	void close_cb(void);
+	void remove_selected_cb(void);
+	void remove_all_cb(void);
+	void remove_selected_state_cb(void);
+
+private:
+	QStandardItemModel * model = NULL;
+	QTableView * view = NULL;
+
+	QDialogButtonBox * button_box = NULL;
+	QPushButton * close = NULL;
+	QPushButton * remove_selected = NULL;
+	QPushButton * remove_all = NULL;
+	QVBoxLayout * vbox = NULL;
+};
+
+
+
 void a_background_thread(Background_Pool_Type bp, GtkWindow * parent, char const * message, vik_thr_func func, void * userdata, vik_thr_free_func userdata_free_func, vik_thr_free_func userdata_cancel_cleanup_func, int number_items);
 int a_background_thread_progress(void * callbackdata, double fraction);
 int a_background_testcancel(void * callbackdata);
 void a_background_show_window();
 void a_background_init();
 void a_background_post_init();
+void a_background_post_init_window(QWidget * parent);
 void a_background_uninit();
 void a_background_add_window(SlavGPS::Window * window);
 void a_background_remove_window(SlavGPS::Window * window);
