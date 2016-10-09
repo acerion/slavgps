@@ -24,10 +24,6 @@
 #include <cstdlib>
 #include <list>
 
-#if 0
-#include <gtk/gtk.h>
-#endif
-
 #include <glib.h>
 #include <glib/gi18n.h>
 
@@ -48,8 +44,16 @@
 using namespace SlavGPS;
 
 
-static BackgroundWindow * bgwindow;
 
+
+enum {
+	RoleBackgroundData = Qt::UserRole + 1
+};
+
+
+
+
+static BackgroundWindow * bgwindow = NULL;
 
 static GThreadPool *thread_pool_remote = NULL;
 static GThreadPool *thread_pool_local = NULL;
@@ -66,22 +70,20 @@ static int bgitemcount = 0;
 
 
 
-typedef struct {
-	bool some_arg;
-	vik_thr_func func;
-	void * userdata;
-	vik_thr_free_func userdata_free_func;
-	vik_thr_free_func userdata_cancel_cleanup_func;
-	GtkTreeIter * iter;
-	int number_items;
-} thread_args;
-
-
 enum {
 	TITLE_COLUMN = 0,
 	PROGRESS_COLUMN,
 	DATA_COLUMN,
 	N_COLUMNS,
+};
+
+
+
+
+class BackgroundProgress : public QStyledItemDelegate {
+public:
+	BackgroundProgress(QObject * parent) : QStyledItemDelegate(parent) {};
+	void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const;
 };
 
 
@@ -105,63 +107,57 @@ static void background_thread_update()
 
 /**
  * @callbackdata: Thread data
- * @fraction:     The value should be between 0.0 and 1.0 indicating percentage of the task complete
+ * @progress:     The value should be between 0 and 100 indicating percentage of the task complete
  */
-int a_background_thread_progress(void * callbackdata, double fraction)
+int a_background_thread_progress(background_job_t * job, int progress)
 {
-	thread_args * args = (thread_args *) callbackdata;
+	int res = a_background_testcancel(job);
 
-	int res = a_background_testcancel(callbackdata);
-#if 0
-	if (args->iter) {
-		double myfraction = fabs(fraction);
-		if (myfraction > 1.0) {
-			myfraction = 1.0;
-		}
-		gdk_threads_enter();
-		gtk_list_store_set(GTK_LIST_STORE(bgstore), args->iter, PROGRESS_COLUMN, myfraction * 100, -1);
-		gdk_threads_leave();
+	if (job->index->isValid()) {
+		job->progress = progress;
+
+		//gtk_list_store_set(GTK_LIST_STORE(bgstore), job->index, PROGRESS_COLUMN, myfraction * 100, -1);
 	}
 
-	args->number_items--;
+	job->number_items--;
 	bgitemcount--;
 	background_thread_update();
-#endif
+
 	return res;
 }
 
 
 
 
-static void thread_die(thread_args * args)
+static void thread_die(background_job_t * job)
 {
-	if (args->userdata_free_func) {
-		args->userdata_free_func(args->userdata);
+	if (job->worker_data_free_func) {
+		job->worker_data_free_func(job->worker_data);
 	}
 
-	if (args->number_items) {
-		bgitemcount -= args->number_items;
+	if (job->number_items) {
+		bgitemcount -= job->number_items;
 		background_thread_update();
 	}
 
-	free(args->iter);
-	free(args);
+	delete job->index;
+	job->index = NULL;
+
+	free(job);
 }
 
 
 
 
-int a_background_testcancel(void * callbackdata)
+int a_background_testcancel(background_job_t * job)
 {
 	if (stop_all_threads) {
 		return -1;
 	}
 
-	thread_args * args = (thread_args *) callbackdata;
-
-	if (args && args->some_arg) {
-		if (args->userdata_free_func) {
-			args->userdata_free_func(args->userdata);
+	if (job && job->remove_from_list) {
+		if (job->worker_data_cancel_cleanup_func) {
+			job->worker_data_cancel_cleanup_func(job->worker_data);
 		}
 		return -1;
 	}
@@ -171,71 +167,68 @@ int a_background_testcancel(void * callbackdata)
 
 
 
-static void thread_helper(void * args_, void * user_data)
+static void thread_helper(void * job_, void * unused_user_data)
 {
-	thread_args * args = (thread_args *) args_;
+	background_job_t * job = (background_job_t *) job_;
 
-	fprintf(stderr, "DEBUG: %s\n", __FUNCTION__);
+	qDebug() << "II: Background: helper function: starting worker function";
 
-	args->func(args->userdata, args);
-#if 0
-	gdk_threads_enter();
-	if (!args->some_arg) {
-		gtk_list_store_remove(bgstore, args->iter);
+	job->worker_function(job->worker_data, job);
+
+	qDebug() << "II: Background: helper function: worker function returned, remove_from_list =" << job->remove_from_list << ", job index = " << job->index << job->index->isValid();
+
+	if (job && job->remove_from_list) {
+		if (job->index && job->index->isValid()) {
+			qDebug() << "II: Background: removing job from list";
+			bgwindow->model->removeRow(job->index->row());
+		}
 	}
-	gdk_threads_leave();
-#endif
 
-	thread_die(args);
+	thread_die(job);
 }
+
+
+
 
 /**
  * @bp:      Which pool this thread should run in
- * @parent:
- * @message:
- * @func: worker function
- * @userdata:
- * @userdata_free_func: free function for userdata
- * @userdata_cancel_cleanup_func:
+ * @job_description:
+ * @worker_function: worker function
+ * @worker_data:
+ * @worker_data_free_func: free function for worker_data
+ * @worker_data_cancel_cleanup_func:
  * @number_items:
  *
  * Function to enlist new background function.
  */
-void a_background_thread(Background_Pool_Type bp, GtkWindow *parent, const char *message, vik_thr_func func, void * userdata, vik_thr_free_func userdata_free_func, vik_thr_free_func userdata_cancel_cleanup_func, int number_items)
+void a_background_thread(Background_Pool_Type bp, char const * job_description, vik_thr_func worker_function, void * worker_data, vik_thr_free_func worker_data_free_func, vik_thr_free_func worker_data_cancel_cleanup_func, int number_items)
 {
-	GtkTreeIter * iter = (GtkTreeIter *) malloc(sizeof (GtkTreeIter));
-	thread_args * args = (thread_args *) malloc(sizeof (thread_args));
+	background_job_t * job = (background_job_t *) malloc(sizeof (background_job_t));
 
-	fprintf(stderr, "DEBUG: %s\n", __FUNCTION__);
+	QString job_name(job_description);
+	qDebug() << "II: Background: creating background thread" << job_name;
 
-	args->some_arg = 0;
-	args->func = func;
-	args->userdata = userdata;
-	args->userdata_free_func = userdata_free_func;
-	args->userdata_cancel_cleanup_func = userdata_cancel_cleanup_func;
-	args->iter = iter;
-	args->number_items = number_items;
+	job->remove_from_list = true;
+	job->worker_function = worker_function;
+	job->worker_data = worker_data;
+	job->worker_data_free_func = worker_data_free_func;
+	job->worker_data_cancel_cleanup_func = worker_data_cancel_cleanup_func;
+	job->number_items = number_items;
+	job->progress = 0;
+	job->index = bgwindow->insert_job(job_name, job);
 
 	bgitemcount += number_items;
-#if 0
-	gtk_list_store_append(bgstore, iter);
-	gtk_list_store_set(bgstore, iter,
-			   TITLE_COLUMN, message,
-			   PROGRESS_COLUMN, 0.0,
-			   DATA_COLUMN, args,
-			   -1);
-#endif
 
 	/* Run the thread in the background. */
 	if (bp == BACKGROUND_POOL_REMOTE) {
-		g_thread_pool_push(thread_pool_remote, args, NULL);
+		g_thread_pool_push(thread_pool_remote, job, NULL);
 #ifdef HAVE_LIBMAPNIK
 	} else if (bp == BACKGROUND_POOL_LOCAL_MAPNIK) {
-		g_thread_pool_push(thread_pool_local_mapnik, args, NULL);
+		g_thread_pool_push(thread_pool_local_mapnik, job, NULL);
 
 #endif
 	} else {
-		g_thread_pool_push(thread_pool_local, args, NULL);
+		g_thread_pool_push(thread_pool_local, job, NULL);
 	}
 }
 
@@ -254,25 +247,20 @@ void a_background_show_window()
 
 
 
-static void remove_job_with_item(QStandardItem * item)
+void BackgroundWindow::remove_job(QStandardItem * item)
 {
-#if 0
-	thread_args * args = NULL;
+	QStandardItem * parent = this->model->invisibleRootItem();
+	QStandardItem * child = parent->child(item->row(), PROGRESS_COLUMN);
 
-	fprintf(stderr, "DEBUG: %s\n", __FUNCTION__);
+	background_job_t * job = (background_job_t *) child->data(RoleLayerData).toULongLong();
 
-	gtk_tree_model_get(GTK_TREE_MODEL(bgstore), iter, DATA_COLUMN, &args, -1);
+	if (job->index && job->index->isValid()) {
+		qDebug() << "II: Background: removing job" << parent->child(item->row(), TITLE_COLUMN)->text();
 
-	/* We know args still exists because it is free _after_ the list item is destroyed. */
-	/* Need MUTEX? */
-	args->some_arg = 1; /* Set killswitch. */
-
-	gtk_list_store_remove(bgstore, iter);
-	args->iter = NULL;
-#endif
+		job->remove_from_list = false;
+		this->model->removeRow(job->index->row());
+	}
 }
-
-
 
 
 
@@ -338,45 +326,6 @@ void a_background_post_init()
 	thread_pool_local_mapnik = g_thread_pool_new((GFunc) thread_helper, NULL, mapnik_threads, false, NULL);
 #endif
 
-	GtkCellRenderer *renderer;
-	GtkTreeViewColumn *column;
-	GtkWidget *scrolled_window;
-
-	fprintf(stderr, "DEBUG: %s\n", __FUNCTION__);
-
-	/* Store & treeview. */
-	bgstore = gtk_list_store_new(N_COLUMNS, G_TYPE_STRING, G_TYPE_DOUBLE, G_TYPE_POINTER);
-	bgtreeview = gtk_tree_view_new_with_model(GTK_TREE_MODEL(bgstore));
-	gtk_tree_view_set_rules_hint(GTK_TREE_VIEW (bgtreeview), true);
-	gtk_tree_selection_set_mode(gtk_tree_view_get_selection(GTK_TREE_VIEW (bgtreeview)),
-				    GTK_SELECTION_SINGLE);
-
-	/* Add columns. */
-	renderer = gtk_cell_renderer_text_new();
-	column = gtk_tree_view_column_new_with_attributes(_("Job"), renderer, "text", TITLE_COLUMN, NULL);
-	gtk_tree_view_append_column(GTK_TREE_VIEW(bgtreeview), column);
-
-	renderer = gtk_cell_renderer_progress_new();
-	column = gtk_tree_view_column_new_with_attributes(_("Progress"), renderer, "value", PROGRESS_COLUMN, NULL);
-	gtk_tree_view_append_column(GTK_TREE_VIEW(bgtreeview), column);
-
-	/* Setup window. */
-	scrolled_window = gtk_scrolled_window_new(NULL, NULL);
-	gtk_container_add(GTK_CONTAINER(scrolled_window), bgtreeview);
-	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_window), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-
-	bgwindow = gtk_dialog_new_with_buttons("", NULL, (GtkDialogFlags) 0, GTK_STOCK_OK, GTK_RESPONSE_ACCEPT, GTK_STOCK_DELETE, 1, GTK_STOCK_CLEAR, 2, NULL);
-	gtk_dialog_set_default_response(GTK_DIALOG(bgwindow), GTK_RESPONSE_ACCEPT);
-	GtkWidget *response_w = NULL;
-#if GTK_CHECK_VERSION (2, 20, 0)
-	response_w = gtk_dialog_get_widget_for_response(GTK_DIALOG(bgwindow), GTK_RESPONSE_ACCEPT);
-#endif
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(bgwindow))), scrolled_window, true, true, 0);
-	gtk_window_set_default_size(GTK_WINDOW(bgwindow), 400, 400);
-	gtk_window_set_title(GTK_WINDOW(bgwindow), _());
-	if (response_w) {
-		gtk_widget_grab_focus(response_w);
-	}
 	/* Don't destroy win. */
 	g_signal_connect(G_OBJECT(bgwindow), "delete-event", G_CALLBACK(gtk_widget_hide_on_delete), NULL);
 #endif
@@ -384,10 +333,13 @@ void a_background_post_init()
 
 
 
+
 void a_background_post_init_window(QWidget * parent)
 {
 	bgwindow = new BackgroundWindow(parent);
 }
+
+
 
 
 /**
@@ -406,9 +358,9 @@ void a_background_uninit()
 #if 0
 	gtk_list_store_clear(bgstore);
 	g_object_unref(bgstore);
-
-	gtk_widget_destroy(bgwindow);
 #endif
+
+	delete bgwindow;
 }
 
 
@@ -434,10 +386,10 @@ BackgroundWindow::BackgroundWindow(QWidget * parent) : QDialog(parent)
 {
 	this->button_box = new QDialogButtonBox();
 	this->close = this->button_box->addButton("&Close", QDialogButtonBox::ActionRole);
+	this->close->setDefault(true);
 	this->remove_selected = this->button_box->addButton("Remove &Selected", QDialogButtonBox::ActionRole);
 	this->remove_all = this->button_box->addButton("Remove &All",  QDialogButtonBox::ActionRole);
 
-	this->vbox = new QVBoxLayout;
 
 	this->model = new QStandardItemModel();
 	this->model->setHorizontalHeaderItem(TITLE_COLUMN, new QStandardItem("Job"));
@@ -445,25 +397,27 @@ BackgroundWindow::BackgroundWindow(QWidget * parent) : QDialog(parent)
 
 
 	this->view = new QTableView();
-	this->view->horizontalHeader()->setStretchLastSection(true);
+	this->view->setSelectionBehavior(QAbstractItemView::SelectRows); /* Single click in a cell selects whole row. */
+	this->view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 	this->view->verticalHeader()->setVisible(false);
 	this->view->setWordWrap(false);
-	this->view->setTextElideMode(Qt::ElideNone);
+	this->view->setTextElideMode(Qt::ElideLeft); /* The most interesting part should be on the right-hand side of text. */
 	this->view->setShowGrid(false);
 	this->view->setModel(this->model);
 	this->view->show();
 
 
+	this->view->horizontalHeader()->setSectionHidden(DATA_COLUMN, true);
+	this->view->horizontalHeader()->setDefaultSectionSize(200);
+	this->view->horizontalHeader()->setSectionResizeMode(TITLE_COLUMN, QHeaderView::Interactive);
+	this->view->horizontalHeader()->setStretchLastSection(true);
 
 
-	this->view->setVisible(false);
-	this->view->resizeRowsToContents();
-	this->view->resizeColumnsToContents();
-	this->view->setVisible(true);
-	this->view->setSelectionBehavior(QAbstractItemView::SelectRows); /* Single click in a cell selects whole row. */
+	BackgroundProgress * delegate = new BackgroundProgress(this);
+	this->view->setItemDelegateForColumn(PROGRESS_COLUMN, delegate);
 
 
-
+	this->vbox = new QVBoxLayout;
 	this->vbox->addWidget(this->view);
 	this->vbox->addWidget(this->button_box);
 
@@ -474,17 +428,24 @@ BackgroundWindow::BackgroundWindow(QWidget * parent) : QDialog(parent)
 
 	this->setWindowTitle("Viking Background Jobs");
 
+#if 1
+	/* This artificial string list is just for testing purposes. */
+	QStringList job_list;
+	job_list << "aa" << "bb" << "cc" << "dd" << "ee" << "ff";
+	int value = 0;
 
-	QStringList file_list;
-	file_list << "aa" << "bb" << "cc" << "dd" << "ee" << "ff";
+	for (auto iter = job_list.begin(); iter != job_list.end(); ++iter) {
 
-	for (auto iter = file_list.begin(); iter != file_list.end(); ++iter) {
-		qDebug() << "SGFileList: adding to initial file list:" << (*iter);
+		qDebug() << "II: Background: adding to initial list:" << (*iter);
 
-		QStandardItem * item = new QStandardItem(*iter);
-		item->setToolTip(*iter);
-		this->model->appendRow(item);
+		background_job_t * job = (background_job_t *) malloc(sizeof (background_job_t));
+		job->progress = value;
+		job->index = this->insert_job(*iter, job);
+		qDebug() << "II: Background: added to list an item with index" << job->index->isValid();
+
+		value += 10;
 	}
+#endif
 
 
 	connect(this->close, SIGNAL(clicked()), this, SLOT(close_cb()));
@@ -494,6 +455,8 @@ BackgroundWindow::BackgroundWindow(QWidget * parent) : QDialog(parent)
 	QItemSelectionModel * selection_model = this->view->selectionModel();
 	connect(selection_model, SIGNAL(selectionChanged(const QItemSelection, const QItemSelection)), this, SLOT(remove_selected_state_cb(void)));
 	this->remove_selected_state_cb();
+
+	this->resize(QSize(400, 400));
 }
 
 
@@ -519,7 +482,7 @@ void BackgroundWindow::remove_selected_cb()
 			continue;
 		}
 		QStandardItem * item = this->model->itemFromIndex(index);
-		remove_job_with_item(item);
+		this->remove_job(item);
 
 		this->model->removeRows(indexes.last().row(), 1);
 		indexes.removeLast();
@@ -535,13 +498,13 @@ void BackgroundWindow::remove_selected_cb()
 void BackgroundWindow::remove_all_cb()
 {
 	QModelIndex parent = QModelIndex();
-	for (int r = 0; r < this->model->rowCount(parent); ++r) {
+	for (int r = this->model->rowCount(parent) - 1; r >= 0; --r) {
 		QModelIndex index = this->model->index(r, 0, parent);
 		QVariant name = model->data(index);
-		qDebug() << name;
+		qDebug() << "II: Background: removing job" << name;
 
 		QStandardItem * item = this->model->itemFromIndex(index);
-		remove_job_with_item(item);
+		this->remove_job(item);
 	}
 
 	background_thread_update();
@@ -574,4 +537,66 @@ void BackgroundWindow::show_window(void)
 
 	this->remove_selected_state_cb();
 	this->show();
+}
+
+
+
+
+QPersistentModelIndex * BackgroundWindow::insert_job(QString & message, background_job_t * job)
+{
+	QList<QStandardItem *> items;
+	QStandardItem * item = NULL;
+	QVariant variant;
+
+	/* TITLE_COLUMN */
+	item = new QStandardItem(QString(message));
+	item->setToolTip(QString(message));
+	items << item;
+
+	/* PROGRESS_COLUMN */
+	item = new QStandardItem();
+	variant = QVariant::fromValue((qulonglong) job);
+	item->setData(variant, RoleBackgroundData);
+	items << item;
+
+	this->model->invisibleRootItem()->appendRow(items);
+
+	/* We generate index of item in second column. Notice that the
+	   index is valid only after inserting items (i.e. appending row)
+	   into model, that's why we do it right at the end. */
+	QPersistentModelIndex * index = new QPersistentModelIndex(this->model->indexFromItem(item));
+
+#if 1
+	this->view->setVisible(false);
+	this->view->resizeRowsToContents();
+	//this->view->resizeColumnsToContents();
+	this->view->setVisible(true);
+#endif
+
+	return index;
+}
+
+
+
+
+/**
+   @brief Reimplemented ::paint() method, drawing a progress bar in PROGRESS_COLUMN column
+*/
+void BackgroundProgress::paint(QPainter * painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
+{
+	background_job_t * job = (background_job_t *) index.data(RoleLayerData).toULongLong();
+
+	QRect rect(option.rect.x() + 1, option.rect.y() + 1, option.rect.width() - 2, option.rect.height() - 2);
+
+	/* http://doc.qt.io/qt-5/qabstractitemdelegate.html#details */
+
+        QStyleOptionProgressBar progressBarOption;
+        progressBarOption.rect = option.rect;
+        progressBarOption.minimum = 0; /* We could get min/max/unit from background_job_t for non-percentage progress indicators. */
+        progressBarOption.maximum = 100;
+        progressBarOption.progress = job->progress;
+        progressBarOption.text = QString::number(job->progress) + "%";
+        progressBarOption.textVisible = true;
+
+        QApplication::style()->drawControl(QStyle::CE_ProgressBar, &progressBarOption, painter);
 }

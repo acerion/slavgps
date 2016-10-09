@@ -65,6 +65,21 @@ typedef enum {
 
 
 
+
+
+typedef struct {
+	bool remove_from_list;
+	vik_thr_func worker_function;
+	void * worker_data;
+	vik_thr_free_func worker_data_free_func;
+	vik_thr_free_func worker_data_cancel_cleanup_func;
+	QPersistentModelIndex * index;
+	int number_items;
+	int progress; /* 0 - 100% */
+} background_job_t;
+
+
+
 class BackgroundWindow : public QDialog {
 	Q_OBJECT
 
@@ -73,6 +88,12 @@ public:
 	~BackgroundWindow() {};
 
 	void show_window(void);
+	QPersistentModelIndex * insert_job(QString & message, background_job_t * job);
+	void remove_job(QStandardItem * item);
+
+	QStandardItemModel * model = NULL;
+	QTableView * view = NULL;
+
 
 private slots:
 	void close_cb(void);
@@ -81,8 +102,6 @@ private slots:
 	void remove_selected_state_cb(void);
 
 private:
-	QStandardItemModel * model = NULL;
-	QTableView * view = NULL;
 
 	QDialogButtonBox * button_box = NULL;
 	QPushButton * close = NULL;
@@ -93,9 +112,9 @@ private:
 
 
 
-void a_background_thread(Background_Pool_Type bp, GtkWindow * parent, char const * message, vik_thr_func func, void * userdata, vik_thr_free_func userdata_free_func, vik_thr_free_func userdata_cancel_cleanup_func, int number_items);
-int a_background_thread_progress(void * callbackdata, double fraction);
-int a_background_testcancel(void * callbackdata);
+void a_background_thread(Background_Pool_Type bp, char const * job_description, vik_thr_func worker_function, void * worker_data, vik_thr_free_func worker_data_free_func, vik_thr_free_func worker_data_cancel_cleanup_func, int number_items);
+int a_background_thread_progress(background_job_t * job, int progress);
+int a_background_testcancel(background_job_t * job);
 void a_background_show_window();
 void a_background_init();
 void a_background_post_init();

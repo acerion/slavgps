@@ -446,7 +446,6 @@ void Window::finish_new()
 			vik_statusbar_set_message(this->viking_vs, VIK_STATUSBAR_INFO, _("Trying to determine location..."));
 
 			a_background_thread(BACKGROUND_POOL_REMOTE,
-					    this->get_toolkit_window(),
 					    _("Determining location"),
 					    (vik_thr_func) determine_location_thread,
 					    this,

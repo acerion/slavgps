@@ -382,7 +382,7 @@ int MapSourceBing::emit_update(void * data)
 int MapSourceBing::load_attributions_thread(void * threaddata)
 {
 	_load_attributions (self);
-	int result = a_background_thread_progress(threaddata, 1.0);
+	int result = a_background_thread_progress(threaddata, 1);
 	if (result != 0) {
 		return -1; /* Abort thread. */
 	}
@@ -400,10 +400,9 @@ int MapSourceBing::load_attributions_thread(void * threaddata)
 void MapSourceBing::async_load_attributions()
 {
 	a_background_thread(BACKGROUND_POOL_REMOTE,
-			    /* VIK_GTK_WINDOW_FROM_WIDGET(vp) */ NULL,
-			    _("Bing attribution Loading"),
-			    (vik_thr_func) _load_attributions_thread,
-			    self,
+			    _("Bing attribution Loading"),            /* Job description. */
+			    (vik_thr_func) _load_attributions_thread, /* Worker function. */
+			    self,                                     /* Worker data. */
 			    NULL,
 			    NULL,
 			    1);

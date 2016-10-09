@@ -158,7 +158,7 @@ DEM * SlavGPS::dem_cache_get(std::string& filename)
  * We need to know that they weren't referenced though when we
  * do the dem_cache_list_free().
  */
-int SlavGPS::dem_cache_load_list(std::list<std::string>& filenames, void * threaddata)
+int SlavGPS::dem_cache_load_list(std::list<std::string>& filenames, background_job_t * background_job)
 {
 	auto iter = filenames.begin();
 	unsigned int dem_count = 0;
@@ -171,11 +171,11 @@ int SlavGPS::dem_cache_load_list(std::list<std::string>& filenames, void * threa
 			iter++;
 		}
 		/* When running a thread - inform of progress. */
-		if (threaddata) {
-#if 0
+		if (background_job) {
+#if 1
 			dem_count++;
 			/* NB Progress also detects abort request via the returned value. */
-			int result = a_background_thread_progress(threaddata, ((double) dem_count) / dem_total);
+			int result = a_background_thread_progress(background_job, ((double) dem_count) / dem_total);
 			if (result != 0) {
 				return -1; /* Abort thread. */
 			}

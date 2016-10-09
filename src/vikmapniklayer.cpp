@@ -742,17 +742,16 @@ void LayerMapnik::thread_add(TileInfo * mul, VikCoord * ul, VikCoord * br, int x
 	g_mutex_unlock(tp_mutex);
 
 	char *basename = g_path_get_basename(name);
-	char *description = g_strdup_printf(_("Mapnik Render %d:%d:%d %s"), zoom, x, y, basename);
+	char * job_description = g_strdup_printf(_("Mapnik Render %d:%d:%d %s"), zoom, x, y, basename);
 	free(basename);
 	a_background_thread(BACKGROUND_POOL_LOCAL_MAPNIK,
-			    this->get_toolkit_window(),
-			    description,
-			    (vik_thr_func) background,
-			    ri,
-			    (vik_thr_free_func) render_info_free,
+			    job_description,
+			    (vik_thr_func) background,             /* Worker function. */
+			    ri,                                    /* Worker function. */
+			    (vik_thr_free_func) render_info_free,  /* Function to free worker data. */
 			    (vik_thr_free_func) render_cancel_cleanup,
 			    1);
-	free(description);
+	free(job_description);
 }
 
 

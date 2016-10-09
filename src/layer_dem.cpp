@@ -308,7 +308,7 @@ typedef struct {
 /*
  * Function for starting the DEM file loading as a background thread/
  */
-static int dem_layer_load_list_thread(dem_load_thread_data * dltd, void * threaddata)
+static int dem_layer_load_list_thread(dem_load_thread_data * dltd, background_job_t * background_job)
 {
 	int result = 0; /* Default to good. */
 	/* Actual Load. */
@@ -319,7 +319,7 @@ static int dem_layer_load_list_thread(dem_load_thread_data * dltd, void * thread
 		dem_filenames.push_front(dem_filename);
 	}
 
-	if (dem_cache_load_list(dem_filenames, threaddata)) {
+	if (dem_cache_load_list(dem_filenames, background_job)) {
 		/* Thread cancelled. */
 		result = -1;
 	}
@@ -450,18 +450,13 @@ bool LayerDEM::set_param_value(uint16_t id, LayerParamValue param_value, Viewpor
 			dltd->layer = this;
 			dltd->layer->files = param_value.sl;
 
-#if 1
-			dem_layer_load_list_thread(dltd, NULL);
-#else
 			a_background_thread(BACKGROUND_POOL_LOCAL,
-					    viewport->get_toolkit_window(),
-					    _("DEM Loading"),
-					    (vik_thr_func) dem_layer_load_list_thread,
-					    dltd,
-					    (vik_thr_free_func) dem_layer_thread_data_free,
+					    _("DEM Loading"),                                 /* Job description. */
+					    (vik_thr_func) dem_layer_load_list_thread,        /* Worker function. */
+					    dltd,                                             /* Worker data. */
+					    (vik_thr_free_func) dem_layer_thread_data_free,   /* Function to free worker data. */
 					    (vik_thr_free_func) dem_layer_thread_cancel,
 					    param_value.sl->size()); /* Number of DEM files. */
-#endif
 		}
 
 		break;
@@ -1019,7 +1014,7 @@ DEMDownloadParams::~DEMDownloadParams()
  *  SOURCE: SRTM                                  *
  **************************************************/
 
-static void srtm_dem_download_thread(DEMDownloadParams * p, void * threaddata)
+static void srtm_dem_download_thread(DEMDownloadParams * p, background_job_t * background_job)
 {
 	int intlat, intlon;
 	const char *continent_dir;
@@ -1070,6 +1065,8 @@ static void srtm_dem_download_thread(DEMDownloadParams * p, void * threaddata)
 	case DOWNLOAD_SUCCESS:
 	case DOWNLOAD_NOT_REQUIRED:
 	default:
+		qDebug() << "II: Layer DEM: layer download progress = 100";
+		background_job->progress = 100;
 		break;
 	}
 	free(src_fn);
@@ -1168,7 +1165,7 @@ static void srtm_draw_existence(Viewport * viewport)
 
 #ifdef VIK_CONFIG_DEM24K
 
-static void dem24k_dem_download_thread(DEMDownloadParams * p, void * threaddata)
+static void dem24k_dem_download_thread(DEMDownloadParams * p, void * background_job)
 {
 	/* TODO: dest dir. */
 	char *cmdline = g_strdup_printf("%s %.03f %.03f",
@@ -1299,13 +1296,13 @@ bool LayerDEM::add_file(std::string& dem_filename)
 
 
 
-static void dem_download_thread(DEMDownloadParams * p, void * threaddata)
+static void dem_download_thread(DEMDownloadParams * p, background_job_t * background_job)
 {
 	if (p->source == DEM_SOURCE_SRTM) {
-		srtm_dem_download_thread(p, threaddata);
+		srtm_dem_download_thread(p, background_job);
 #ifdef VIK_CONFIG_DEM24K
 	} else if (p->source == DEM_SOURCE_DEM24K) {
-		dem24k_dem_download_thread(p, threaddata);
+		dem24k_dem_download_thread(p, background_job);
 #endif
 	} else {
 		return;
@@ -1478,15 +1475,17 @@ bool LayerDEM::download_release(QMouseEvent * event, LayerTool * tool)
 		/* TODO: check if already in filelist. */
 		if (!this->add_file(dem_full_path)) {
 			qDebug() << "II: Layer DEM: release left button, failed to add the file, downloading it";
-			char * tmp = g_strdup_printf(_("Downloading DEM %s"), dem_file);
+			char * job_description = g_strdup_printf(_("Downloading DEM %s"), dem_file);
 			DEMDownloadParams * p = new DEMDownloadParams(dem_full_path, &ll, this);
 
 			a_background_thread(BACKGROUND_POOL_REMOTE,
-					    this->get_toolkit_window(), tmp,
-					    (vik_thr_func) dem_download_thread, p,
-					    (vik_thr_free_func) free_dem_download_params, NULL, 1);
+					    job_description,
+					    (vik_thr_func) dem_download_thread,            /* Worker function. */
+					    p,                                             /* Worker data. */
+					    (vik_thr_free_func) free_dem_download_params,  /* Function to free worker data. */
+					    NULL, 1);
 
-			free(tmp);
+			free(job_description);
 		} else {
 			qDebug() << "II: Layer DEM: release left button, successfully added the file, emitting update";
 			this->emit_update();

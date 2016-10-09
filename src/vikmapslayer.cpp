@@ -1867,19 +1867,18 @@ static void start_download_thread(LayerMaps * layer, Viewport * viewport, const 
 		mdi->mapcoord.y = 0;
 
 		if (mdi->mapstoget) {
-			char * msg = redownload_mode_message(redownload_mode, mdi->mapstoget, MAPS_LAYER_NTH_LABEL(layer->map_index));
+			char * job_description = redownload_mode_message(redownload_mode, mdi->mapstoget, MAPS_LAYER_NTH_LABEL(layer->map_index));
 
 			mdi->layer->weak_ref(LayerMaps::weak_ref_cb, mdi);
 			/* Launch the thread */
 			a_background_thread(BACKGROUND_POOL_REMOTE,
-					    layer->get_toolkit_window(),            /* Parent window. */
-					    msg,                                    /* Description string. */
-					    (vik_thr_func) map_download_thread,     /* Function to call within thread. */
-					    mdi,                                    /* Pass along data. */
-					    (vik_thr_free_func) mdi_free,           /* Function to free pass along data. */
+					    job_description,
+					    (vik_thr_func) map_download_thread,     /* Worker function. */
+					    mdi,                                    /* Worker data. */
+					    (vik_thr_free_func) mdi_free,           /* Function to free worker data. */
 					    (vik_thr_free_func) mdi_cancel_cleanup,
 					    mdi->mapstoget);
-			free(msg);
+			free(job_description);
 		} else {
 			mdi_free(mdi);
 		}
@@ -1914,20 +1913,19 @@ void LayerMaps::download_section_sub(VikCoord *ul, VikCoord *br, double zoom, in
 	mdi->mapcoord.y = 0;
 
 	if (mdi->mapstoget) {
-		char * msg = redownload_mode_message(redownload_mode, mdi->mapstoget, MAPS_LAYER_NTH_LABEL(this->map_index));
+		char * job_description = redownload_mode_message(redownload_mode, mdi->mapstoget, MAPS_LAYER_NTH_LABEL(this->map_index));
 
 		mdi->layer->weak_ref(weak_ref_cb, mdi);
 
 		/* Launch the thread. */
 		a_background_thread(BACKGROUND_POOL_REMOTE,
-				    this->get_toolkit_window(),             /* Parent window. */
-				    msg,                                    /* Description string. */
-				    (vik_thr_func) map_download_thread,     /* Function to call within thread. */
-				    mdi,                                    /* Pass along data. */
-				    (vik_thr_free_func) mdi_free,           /* Function to free pass along data. */
+				    job_description,
+				    (vik_thr_func) map_download_thread,     /* Worker function. */
+				    mdi,                                    /* Worker data. */
+				    (vik_thr_free_func) mdi_free,           /* Function to free worker data. */
 				    (vik_thr_free_func) mdi_cancel_cleanup,
 				    mdi->mapstoget);
-		free(msg);
+		free(job_description);
 	} else {
 		mdi_free(mdi);
 	}

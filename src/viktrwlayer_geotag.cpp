@@ -609,19 +609,18 @@ static void trw_layer_geotag_response_cb(GtkDialog *dialog, int resp, GeoTagWidg
 		options->files->insert(options->files->begin(), a_list->begin(), a_list->end());
 
 		int len = options->files->size();
-		char *tmp = g_strdup_printf(_("Geotagging %d Images..."), len);
+		char * job_description = g_strdup_printf(_("Geotagging %d Images..."), len);
 
 		/* Processing lots of files can take time - so run a background effort. */
 		a_background_thread(BACKGROUND_POOL_LOCAL,
-				    options->trw->get_toolkit_window(),
-				    tmp,
-				    (vik_thr_func) trw_layer_geotag_thread,
-				    options,
-				    (vik_thr_free_func) trw_layer_geotag_thread_free,
+				    job_description,
+				    (vik_thr_func) trw_layer_geotag_thread,            /* Worker function. */
+				    options,                                           /* Worker data. */
+				    (vik_thr_free_func) trw_layer_geotag_thread_free,  /* Function to free worker data. */
 				    NULL,
 				    len);
 
-		free(tmp);
+		free(job_description);
 
 		break;
 	}

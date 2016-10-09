@@ -541,7 +541,6 @@ void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 	gtk_widget_grab_focus(description_entry);
 
 	if (gtk_dialog_run(GTK_DIALOG(dia)) == GTK_RESPONSE_ACCEPT) {
-		char * title = NULL;
 
 		/* Overwrite authentication info. */
 		osm_set_login(gtk_entry_get_text(GTK_ENTRY(user_entry)),
@@ -566,18 +565,18 @@ void SlavGPS::osm_traces_upload_viktrwlayer(LayerTRW * trw, Track * trk)
 		last_active = gtk_combo_box_get_active(GTK_COMBO_BOX(visibility));
 		a_settings_set_string(VIK_SETTINGS_OSM_TRACE_VIS, OsmTraceVis[last_active].apistr);
 
-		title = g_strdup_printf(_("Uploading %s to OSM"), info->name);
+		char * job_description = g_strdup_printf(_("Uploading %s to OSM"), info->name);
 
 		/* Launch the thread. */
 		a_background_thread(BACKGROUND_POOL_REMOTE,
-				    trw->get_toolkit_window(),               /* Parent window. */
-				    title,                                   /* Description string. */
-				    (vik_thr_func) osm_traces_upload_thread, /* Function to call within thread. */
-				    info,                                    /* Pass along data. */
-				    (vik_thr_free_func) oti_free,            /* Function to free pass along data. */
+				    job_description,
+				    (vik_thr_func) osm_traces_upload_thread, /* Worker function. */
+				    info,                                    /* Worker data. */
+				    (vik_thr_free_func) oti_free,            /* Function to free worker data. */
 				    (vik_thr_free_func) NULL,
 				    1);
-		free(title); title = NULL;
+		free(job_description);
+		job_description = NULL;
 	}
 	gtk_widget_destroy(dia);
 }

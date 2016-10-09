@@ -8720,19 +8720,18 @@ void LayerTRW::verify_thumbnails(void)
 		GSList *pics = LayerTRWc::image_wp_make_list(this->waypoints);
 		if (pics) {
 			int len = g_slist_length(pics);
-			char *tmp = g_strdup_printf(_("Creating %d Image Thumbnails..."), len);
+			char * job_description = g_strdup_printf(_("Creating %d Image Thumbnails..."), len);
 			thumbnail_create_thread_data * tctd = (thumbnail_create_thread_data *) malloc(sizeof (thumbnail_create_thread_data));
 			tctd->layer = this;
 			tctd->pics = pics;
 			a_background_thread(BACKGROUND_POOL_LOCAL,
-					    this->get_toolkit_window(),
-					    tmp,
-					    (vik_thr_func) create_thumbnails_thread,
-					    tctd,
-					    (vik_thr_free_func) thumbnail_create_thread_free,
+					    job_description,
+					    (vik_thr_func) create_thumbnails_thread,            /* Worker function. */
+					    tctd,                                               /* Worker data. */
+					    (vik_thr_free_func) thumbnail_create_thread_free,   /* Function to free worker data. */
 					    NULL,
 					    len);
-			free(tmp);
+			free(job_description);
 		}
 	}
 }
