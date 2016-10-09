@@ -34,12 +34,12 @@
 #include "uibuilder_qt.h"
 #include "settings.h"
 #include "background.h"
+#include "vikstatus.h"
 
 
 
 
 using namespace SlavGPS;
-
 
 
 
@@ -51,6 +51,12 @@ enum {
 	TOOL_LAYER,
 	NUMBER_OF_TOOLS
 };
+
+
+
+
+/* TODO get rid of this as this is unnecessary duplication... */
+static char const * tool_names[NUMBER_OF_TOOLS] = { "Pan", "Zoom", "Ruler", "Select" };
 
 
 
@@ -283,6 +289,9 @@ void Window::create_layout()
 
 
 
+	this->status_bar = new StatusBar(this);
+	this->setStatusBar(this->status_bar);
+
 
 	return;
 }
@@ -488,14 +497,8 @@ void Window::create_actions(void)
 	}
 
 
-
-
 	this->toolbar->addAction(qa_file_new);
 
-
-
-	this->status_bar = new QStatusBar();
-	setStatusBar(this->status_bar);
 
 	return;
 }
@@ -507,7 +510,7 @@ void Window::draw_update()
 {
 	qDebug() << "II: Window: redraw + sync begin" << __FUNCTION__ << __LINE__;
 	this->draw_redraw();
-	//this->draw_sync();
+	this->draw_sync();
 	qDebug() << "II: Window: redraw + sync end" << __FUNCTION__ << __LINE__;
 }
 
@@ -525,7 +528,7 @@ static void draw_sync_cb(Window * window)
 void Window::draw_sync()
 {
 	qDebug() << "II: Window: sync begin" << __FUNCTION__ << __LINE__;
-	this->viewport->sync();
+	//this->viewport->sync();
 	qDebug() << "II: Window: sync end" << __FUNCTION__ << __LINE__;
 	this->draw_status();
 }
@@ -549,11 +552,10 @@ void Window::draw_status()
 			snprintf(zoom_level, 22, "%d %s", (int)xmpp, unit);
 		}
 	}
-#if 0
-	vik_statusbar_set_message(this->viking_vs, VIK_STATUSBAR_ZOOM, zoom_level);
 
-	draw_status_tool(this);
-#endif
+	qDebug() << "II: Window: zoom level is" << zoom_level;
+	this->status_bar->set_message(StatusBarField::ZOOM, zoom_level);
+	this->display_tool_name();
 }
 
 
@@ -757,14 +759,14 @@ void Window::create_ui(void)
 		QActionGroup * group = new QActionGroup(this);
 		group->setObjectName("window");
 		QAction * qa = NULL;
+		QAction * default_qa = NULL;
 
 		this->toolbar->addSeparator();
 
 
 		qa = this->tb->add_tool(selecttool_create(this, this->viewport));
 		group->addAction(qa);
-		qa->setChecked(true);
-		this->tb->activate_tool(qa);
+		default_qa = qa;
 
 		qa = this->tb->add_tool(ruler_create(this, this->viewport));
 		group->addAction(qa);
@@ -781,6 +783,9 @@ void Window::create_ui(void)
 		this->tb->add_group(group);
 
 		connect(group, SIGNAL(triggered(QAction *)), this, SLOT(layer_tools_cb(QAction *)));
+		default_qa->setChecked(true);
+		default_qa->trigger();
+		this->tb->activate_tool(default_qa);
 	}
 
 
@@ -1009,13 +1014,11 @@ void Window::layer_tools_cb(QAction * qa)
 
 
 	QAction * old_action = this->tb->get_active_tool();
-	assert (old_action);
 	if (old_action) {
-		qDebug() << "Window: deactivating old action" << old_action;
+		qDebug() << "II: Window: deactivating old action" << old_action;
 		this->tb->deactivate_tool(old_action);
 	} else {
-		qDebug() << "ERROR: Window: no old action found";
-		return;
+		qDebug() << "WW: Window: no old action found";
 	}
 
 
@@ -1031,7 +1034,7 @@ void Window::layer_tools_cb(QAction * qa)
 
 	this->viewport->setCursor(*this->tb->get_cursor_release(tool_name));
 
-	if (group_name == "Pan") {
+	if (tool_name == "Pan") {
 		this->current_tool = TOOL_PAN;
 	} else if (tool_name == "Zoom") {
 		this->current_tool = TOOL_ZOOM;
@@ -1050,10 +1053,10 @@ void Window::layer_tools_cb(QAction * qa)
 			}
 		}
 	}
-#if 0
-	draw_status_tool(window);
-#endif
+	this->display_tool_name();
 }
+
+
 
 
 void Window::pan_click(QMouseEvent * event)
@@ -1451,4 +1454,19 @@ void Window::zoom_to_cb(void)
 void Window::show_background_jobs_window_cb(void)
 {
 	a_background_show_window();
+}
+
+
+
+
+
+void Window::display_tool_name(void)
+{
+
+	if (this->current_tool == TOOL_LAYER) {
+		// Use tooltip rather than the internal name as the tooltip is i8n
+		this->status_bar->set_message(StatusBarField::TOOL, Layer::get_interface(this->tool_layer_type)->layer_tools[this->tool_tool_id]->radioActionEntry.tooltip);
+	} else {
+		this->status_bar->set_message(StatusBarField::TOOL, tool_names[this->current_tool]);
+	}
 }

@@ -7,7 +7,6 @@
 #include <QMainWindow>
 #include <QMenuBar>
 #include <QToolBar>
-#include <QStatusBar>
 #include <QTreeView>
 #include <QMouseEvent>
 #include <QCursor>
@@ -17,6 +16,8 @@
 #include "viewport.h"
 #include "layer.h"
 #include "window_layer_tools.h"
+#include "vikstatus.h"
+
 
 
 
@@ -62,6 +63,7 @@ namespace SlavGPS {
 		SlavGPS::LayersPanel * layers_panel = NULL;
 		SlavGPS::Viewport * viewport = NULL;
 		bool modified = false;
+		StatusBar * status_bar = NULL;
 
 		void pan_click(QMouseEvent * event);
 		void pan_move(QMouseEvent * event);
@@ -116,6 +118,8 @@ namespace SlavGPS {
 		void create_actions(void);
 		void create_ui(void);
 
+		void display_tool_name();
+
 
 		bool pan_move_flag = false;
 		int pan_x = -1;
@@ -127,7 +131,6 @@ namespace SlavGPS {
 
 		QMenuBar * menu_bar = NULL;
 		QToolBar * toolbar = NULL;
-		QStatusBar * status_bar = NULL;
 		QDockWidget * panel_dock = NULL;
 
 		QMenu * menu_file = NULL;

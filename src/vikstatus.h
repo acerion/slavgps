@@ -26,48 +26,60 @@
 
 
 #include <cstdint>
+#include <vector>
 
-#include <glib.h>
-#include <glib-object.h>
-#include <gtk/gtk.h>
-
-
-
-
-#define VIK_STATUSBAR_TYPE            (vik_statusbar_get_type ())
-#define VIK_STATUSBAR(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_STATUSBAR_TYPE, VikStatusbar))
-#define VIK_STATUSBAR_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), VIK_STATUSBAR_TYPE, VikStatusbarClass))
-#define IS_VIK_STATUSBAR(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), VIK_STATUSBAR_TYPE))
-#define IS_VIK_STATUSBAR_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), VIK_STATUSBAR_TYPE))
-
-typedef struct _VikStatusbar VikStatusbar;
-typedef struct _VikStatusbarClass VikStatusbarClass;
-
-struct _VikStatusbarClass {
-	GtkStatusbarClass statusbar_class;
-
-	void (* clicked) (VikStatusbar * vs, int item);
-};
-
-GType vik_statusbar_get_type();
+#include <QObject>
+#include <QStatusBar>
 
 
 
 
-typedef enum {
-	VIK_STATUSBAR_TOOL,
-	VIK_STATUSBAR_ITEMS,
-	VIK_STATUSBAR_ZOOM,
-	VIK_STATUSBAR_INFO,
-	VIK_STATUSBAR_POSITION,
-	VIK_STATUSBAR_NUM_TYPES
-} vik_statusbar_type_t;
+#if 0
+	struct _VikStatusbarClass {
+		GtkStatusbarClass statusbar_class;
+
+		void (* clicked) (VikStatusbar * vs, int item);
+	};
+#endif
 
 
 
 
-VikStatusbar * vik_statusbar_new();
-void vik_statusbar_set_message(VikStatusbar * vs, vik_statusbar_type_t field, const char * message);
+
+namespace SlavGPS {
+
+
+
+
+	enum class StatusBarField {
+		TOOL,
+		ITEMS,
+		ZOOM,
+		INFO,
+		POSITION,
+		NUM_FIELDS
+	};
+
+
+
+
+	class StatusBar : public QStatusBar {
+		Q_OBJECT
+	public:
+		StatusBar(QWidget * parent);
+		~StatusBar();
+
+		void set_message(StatusBarField field, char const * message);
+
+	private:
+
+		std::vector<QWidget *> fields;
+	};
+
+
+
+
+} /* namespace SlavGPS */
 
 
 

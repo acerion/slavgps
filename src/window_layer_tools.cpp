@@ -768,10 +768,8 @@ static VikLayerToolFuncStatus ruler_click(Layer * layer, QMouseEvent * event, La
 			sprintf(temp, "%s %s", lat, lon);
 			tool->ruler->has_oldcoord = true;
 		}
-#if 0
-		vik_statusbar_set_message(tool->window->viking_vs, VIK_STATUSBAR_INFO, temp);
-#endif
 
+		tool->window->status_bar->set_message(StatusBarField::INFO, temp);
 		tool->ruler->oldcoord = coord;
 	} else {
 		tool->viewport->set_center_screen((int) event->x(), (int) event->y());
@@ -864,9 +862,8 @@ static VikLayerToolFuncStatus ruler_move(Layer * layer, QMouseEvent * event, Lay
 			sprintf(temp, "Just to keep the compiler happy");
 			fprintf(stderr, "CRITICAL: Houston, we've had a problem. distance=%d\n", distance_unit);
 		}
-#if 0
-		vik_statusbar_set_message(window->viking_vs, VIK_STATUSBAR_INFO, temp);
-#endif
+
+		tool->window->status_bar->set_message(StatusBarField::INFO, temp);
 	}
 	return VIK_LAYER_TOOL_ACK;
 }

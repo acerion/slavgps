@@ -24,16 +24,18 @@
 /* gtk status bars: just plain dumb. this file shouldn't have to exist.
    NB as of gtk 2.18 there are 'info bars' that could be useful... */
 
-#include <gtk/gtk.h>
-#include <glib/gi18n.h>
 
 #include <math.h>
 #include <cstdlib>
 
-//#include "viking.h"
 #include "vikstatus.h"
 #include "background.h"
 #include "globals.h"
+
+
+
+
+using namespace SlavGPS;
 
 
 
@@ -45,7 +47,7 @@ enum {
 
 
 
-
+#if 0
 struct _VikStatusbar {
 	GtkHBox hbox;
 	GtkWidget * status[VIK_STATUSBAR_NUM_TYPES];
@@ -137,29 +139,10 @@ static void vik_statusbar_init(VikStatusbar * vs)
 		g_object_set_data(G_OBJECT (vs->status[i]), "type", KINT_TO_POINTER(i));
 	}
 
-	gtk_box_pack_start(GTK_BOX(vs), vs->status[VIK_STATUSBAR_TOOL], false, false, 1);
-	gtk_widget_set_size_request(vs->status[VIK_STATUSBAR_TOOL], 125, -1);
 
-	g_signal_connect(G_OBJECT(vs->status[VIK_STATUSBAR_ITEMS]), "clicked", G_CALLBACK (forward_signal), vs);
-	gtk_button_set_relief(GTK_BUTTON(vs->status[VIK_STATUSBAR_ITEMS]), GTK_RELIEF_NONE);
-	gtk_widget_set_tooltip_text(GTK_WIDGET (vs->status[VIK_STATUSBAR_ITEMS]), _("Current number of background tasks. Click to see the background jobs."));
-	gtk_box_pack_start(GTK_BOX(vs), vs->status[VIK_STATUSBAR_ITEMS], false, false, 1);
-	gtk_widget_set_size_request(vs->status[VIK_STATUSBAR_ITEMS], 100, -1);
 
-	g_signal_connect(G_OBJECT(vs->status[VIK_STATUSBAR_ZOOM]), "clicked", G_CALLBACK (forward_signal), vs);
-	gtk_button_set_relief(GTK_BUTTON(vs->status[VIK_STATUSBAR_ZOOM]), GTK_RELIEF_NONE);
-	gtk_widget_set_tooltip_text(GTK_WIDGET (vs->status[VIK_STATUSBAR_ZOOM]), _("Current zoom level. Click to select a new one."));
-	gtk_box_pack_start(GTK_BOX(vs), vs->status[VIK_STATUSBAR_ZOOM], false, false, 1);
-	gtk_widget_set_size_request(vs->status[VIK_STATUSBAR_ZOOM], 100, -1);
 
-	gtk_box_pack_start(GTK_BOX(vs), vs->status[VIK_STATUSBAR_POSITION], false, false, 1);
-	gtk_widget_set_size_request(vs->status[VIK_STATUSBAR_POSITION], 275, -1);
 
-	g_signal_connect(G_OBJECT(vs->status[VIK_STATUSBAR_INFO]), "button-release-event", G_CALLBACK (button_release_event), vs);
-	g_signal_connect(G_OBJECT(vs->status[VIK_STATUSBAR_INFO]), "clicked", G_CALLBACK (forward_signal), vs);
-	gtk_widget_set_tooltip_text(GTK_WIDGET (vs->status[VIK_STATUSBAR_INFO]), _("Left click to clear the message. Right click to copy the message."));
-	gtk_button_set_alignment(GTK_BUTTON(vs->status[VIK_STATUSBAR_INFO]), 0.0, 0.5); // Left align the text
-	gtk_box_pack_end(GTK_BOX(vs), vs->status[VIK_STATUSBAR_INFO], true, true, 1);
 
 	/* Set minimum overall size.
 	   Otherwise the individual size_requests above create an implicit overall size,
@@ -168,45 +151,96 @@ static void vik_statusbar_init(VikStatusbar * vs)
 }
 
 
+#endif
 
 
-/**
- * Creates a new #VikStatusbar widget.
- *
- * Return value: the new #VikStatusbar widget.
- **/
-VikStatusbar * vik_statusbar_new()
+StatusBar::StatusBar(QWidget * parent) : QStatusBar(parent)
 {
-	VikStatusbar *vs = VIK_STATUSBAR (g_object_new(VIK_STATUSBAR_TYPE, NULL));
+	this->fields.assign((int) StatusBarField::NUM_FIELDS, NULL);
 
-	return vs;
+	QLabel * label = NULL;
+	QString tooltip;
+
+	label = new QLabel("tool");
+	label->minimumSize().rwidth() = 120;
+	label->setFrameStyle(QFrame::StyledPanel | QFrame::Sunken);
+	label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+	label->setToolTip("Currently selected tool");
+	this->fields[(int) StatusBarField::TOOL] = label;
+	this->addPermanentWidget(label);
+
+	label = new QLabel("zoom level");
+	label->minimumSize().rwidth() = 100;
+	label->setFrameStyle(QFrame::StyledPanel | QFrame::Sunken);
+	label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+	tooltip = QString("Current zoom level. Click to select a new one.");
+	label->setToolTip(tooltip);
+	this->fields[(int) StatusBarField::ZOOM] = label;
+	this->addPermanentWidget(label);
+
+	label = new QLabel("tasks");
+	label->minimumSize().rwidth() = 100;
+	label->setFrameStyle(QFrame::StyledPanel | QFrame::Sunken);
+	label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+	tooltip = QString("Current number of background tasks. Click to see the background jobs.");
+	label->setToolTip(tooltip);
+	this->fields[(int) StatusBarField::ITEMS] = label;
+	this->addPermanentWidget(label);
+
+	label = new QLabel("position");
+	label->minimumSize().rwidth() = 275;
+	label->setFrameStyle(QFrame::StyledPanel | QFrame::Sunken);
+	label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+	tooltip = QString("Current position");
+	label->setToolTip(tooltip);
+	this->fields[(int) StatusBarField::POSITION] = label;
+	this->addPermanentWidget(label);
+
+	label = new QLabel("info");
+	label->minimumSize().rwidth() = 275;
+	label->setFrameStyle(QFrame::StyledPanel | QFrame::Sunken);
+	label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+	tooltip = QString("Left click to clear the message. Right click to copy the message.");
+	label->setToolTip(tooltip);
+	this->fields[(int) StatusBarField::INFO] = label;
+	this->addPermanentWidget(label);
 }
 
 
 
 
+
+
 /**
- * @vs: the #VikStatusbar itself
  * @field: the field to update
  * @message: the message to use
  *
  * Update the message of the given field.
  **/
-void vik_statusbar_set_message(VikStatusbar * vs, vik_statusbar_type_t field, const char * message)
+void StatusBar::set_message(StatusBarField field, char const * message)
 {
-	if (field >= 0 && field < VIK_STATUSBAR_NUM_TYPES) {
-		if (field == VIK_STATUSBAR_ITEMS || field == VIK_STATUSBAR_ZOOM || field == VIK_STATUSBAR_INFO) {
-			gtk_button_set_label(GTK_BUTTON(vs->status[field]), message);
-		} else {
-			GtkStatusbar * gsb = GTK_STATUSBAR(vs->status[field]);
+	switch (field) {
+	case StatusBarField::ITEMS:
+	case StatusBarField::ZOOM:
+	case StatusBarField::INFO:
+	case StatusBarField::POSITION:
+	case StatusBarField::TOOL: {
 
-			if (!vs->empty[field]) {
-				gtk_statusbar_pop(gsb, 0);
-			} else {
-				vs->empty[field] = false;
-			}
-
-			gtk_statusbar_push(gsb, 0, message);
-		}
+		/* Label. */
+		QString new_message(message);
+		((QLabel *) this->fields[(int) field])->setText(new_message);
 	}
+		break;
+
+	default:
+		qDebug() << "WW: Status Bar: unhandled field number" << (int) field;
+		break;
+	}
+}
+
+
+
+StatusBar::~StatusBar()
+{
+	this->fields.clear();
 }

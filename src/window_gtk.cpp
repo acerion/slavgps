@@ -165,10 +165,6 @@ enum {
 
 static unsigned int window_signals[VW_LAST_SIGNAL] = { 0 };
 
-/* TODO get rid of this as this is unnecessary duplication... */
-static char *tool_names[NUMBER_OF_TOOLS] = { (char *) N_("Pan"), (char *) N_("Zoom"), (char *) N_("Ruler"), (char *) N_("Select") };
-
-
 
 
 Viewport * Window::get_viewport()
@@ -918,23 +914,6 @@ static void draw_sync_cb(Window * window)
 
 void Window::draw_sync()
 {
-}
-
-
-
-
-/*
- * Split the status update, as sometimes only need to update the tool part.
- * Also on initialization the zoom related stuff is not ready to be used.
- */
-static void draw_status_tool(Window * window)
-{
-	if (window->current_tool == TOOL_LAYER) {
-		// Use tooltip rather than the internal name as the tooltip is i8n
-		vik_statusbar_set_message(window->viking_vs, VIK_STATUSBAR_TOOL, Layer::get_interface(window->tool_layer_type)->layer_tools[window->tool_tool_id]->radioActionEntry.tooltip);
-	} else {
-		vik_statusbar_set_message(window->viking_vs, VIK_STATUSBAR_TOOL, _(tool_names[window->current_tool]));
-	}
 }
 
 

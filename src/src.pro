@@ -40,7 +40,8 @@ SOURCES += main.cpp \
     curl_download.cpp \
     dialog.cpp \
     preferences.cpp \
-    settings.cpp
+    settings.cpp \
+    vikstatus.cpp
 
 
 HEADERS += window.h \
@@ -76,7 +77,8 @@ HEADERS += window.h \
     curl_download.h \
     dialog.h \
     preferences.h \
-    settings.h
+    settings.h \
+    vikstatus.h
 
 
 # For glib library.
