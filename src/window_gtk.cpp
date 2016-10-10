@@ -121,7 +121,6 @@ static void draw_sync_cb(Window * window);
 static void draw_scroll_cb(Window * window, GdkEventScroll * event);
 static void draw_click_cb(Window * window, GdkEventButton * event);
 static void draw_release_cb(Window * window, GdkEventButton * event);
-static void draw_mouse_motion_cb(Window * window, GdkEventMotion * event);
 static void draw_zoom_cb(GtkAction * a, Window * window);
 static void draw_goto_cb(GtkAction * a, Window * window);
 static void draw_refresh_cb(GtkAction * a, Window * window);
@@ -983,93 +982,6 @@ static void draw_click_cb(Window * window, GdkEventButton * event)
 
 
 
-
-
-
-
-/**
- * Utility function to get positional strings for the given location
- * lat and lon strings will get allocated and so need to be freed after use
- */
-static void get_location_strings(Window * window, struct UTM utm, char **lat, char **lon)
-{
-	if (window->viewport->get_drawmode() == VIK_VIEWPORT_DRAWMODE_UTM) {
-		// Reuse lat for the first part (Zone + N or S, and lon for the second part (easting and northing) of a UTM format:
-		//  ZONE[N|S] EASTING NORTHING
-		*lat = (char *) malloc(4*sizeof(char));
-		// NB zone is stored in a char but is an actual number
-		snprintf(*lat, 4, "%d%c", utm.zone, utm.letter);
-		*lon = (char *) malloc(16*sizeof(char));
-		snprintf(*lon, 16, "%d %d", (int)utm.easting, (int)utm.northing);
-	} else {
-		struct LatLon ll;
-		a_coords_utm_to_latlon(&utm, &ll);
-		a_coords_latlon_to_string(&ll, lat, lon);
-	}
-}
-
-
-
-
-static void draw_mouse_motion_cb(Window * window, GdkEventMotion * event)
-{
-	static VikCoord coord;
-	static struct UTM utm;
-#define BUFFER_SIZE 50
-	static char pointer_buf[BUFFER_SIZE];
-	char *lat = NULL, *lon = NULL;
-	int16_t alt;
-	double zoom;
-	VikDemInterpol interpol_method;
-
-	/* This is a hack, but work far the best, at least for single pointer systems.
-	 * See http://bugzilla.gnome.org/show_bug.cgi?id=587714 for more. */
-	int x, y;
-	gdk_window_get_pointer(event->window, &x, &y, NULL);
-	event->x = x;
-	event->y = y;
-
-	window->tb->move(event);
-
-	window->viewport->screen_to_coord(event->x, event->y, &coord);
-	vik_coord_to_utm(&coord, &utm);
-
-	get_location_strings(window, utm, &lat, &lon);
-
-	/* Change interpolate method according to scale */
-	zoom = window->viewport->get_zoom();
-	if (zoom > 2.0) {
-		interpol_method = VIK_DEM_INTERPOL_NONE;
-	} else if (zoom >= 1.0) {
-		interpol_method = VIK_DEM_INTERPOL_SIMPLE;
-	} else {
-		interpol_method = VIK_DEM_INTERPOL_BEST;
-	}
-
-
-	if ((alt = dem_cache_get_elev_by_coord(&coord, interpol_method)) != VIK_DEM_INVALID_ELEVATION) {
-		if (a_vik_get_units_height() == HeightUnit::METRES) {
-			snprintf(pointer_buf, BUFFER_SIZE, _("%s %s %dm"), lat, lon, alt);
-		} else {
-			snprintf(pointer_buf, BUFFER_SIZE, _("%s %s %dft"), lat, lon, (int)VIK_METERS_TO_FEET(alt));
-		}
-	} else {
-		snprintf(pointer_buf, BUFFER_SIZE, _("%s %s"), lat, lon);
-	}
-	free(lat);
-	lat = NULL;
-	free(lon);
-	lon = NULL;
-	vik_statusbar_set_message(window->viking_vs, VIK_STATUSBAR_POSITION, pointer_buf);
-
-	window->pan_move(event);
-
-	/* This is recommended by the GTK+ documentation, but does not work properly.
-	 * Use deprecated way until GTK+ gets a solution for correct motion hint handling:
-	 * http://bugzilla.gnome.org/show_bug.cgi?id=587714
-	 */
-	/* gdk_event_request_motions (event); */
-}
 
 
 

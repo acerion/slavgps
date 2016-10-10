@@ -157,7 +157,7 @@ Window::Window()
 	g_signal_connect_swapped(G_OBJECT(this->viewport->get_toolkit_object()), "scroll_event", G_CALLBACK(draw_scroll_cb), this);
 	g_signal_connect_swapped(G_OBJECT(this->viewport->get_toolkit_object()), "button_press_event", G_CALLBACK(draw_click_cb), this);
 	g_signal_connect_swapped(G_OBJECT(this->viewport->get_toolkit_object()), "button_release_event", G_CALLBACK(draw_release_cb), this);
-	g_signal_connect_swapped(G_OBJECT(this->viewport->get_toolkit_object()), "motion_notify_event", G_CALLBACK(draw_mouse_motion_cb), this);
+
 
 	g_signal_connect_swapped(G_OBJECT(this->layers_panel->get_toolkit_widget()), "update", G_CALLBACK(draw_update_cb), this);
 	g_signal_connect_swapped(G_OBJECT(this->layers_panel->get_toolkit_widget()), "delete_layer", G_CALLBACK(vik_window_clear_highlight_cb), this);
