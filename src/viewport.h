@@ -99,14 +99,18 @@ namespace SlavGPS {
 		bool configure();
 		void configure_manually(int width, unsigned int height); /* for off-screen viewports */
 
-#ifdef SLAVGPS_QT
 		void paintEvent(QPaintEvent * event);
 		void resizeEvent(QResizeEvent * event);
 		void mousePressEvent(QMouseEvent * event);
 		void mouseMoveEvent(QMouseEvent * event);
 		void mouseReleaseEvent(QMouseEvent * event);
 		void wheelEvent(QWheelEvent * event);
-#endif
+
+		void draw_mouse_motion_cb(QMouseEvent * event);
+		void get_location_strings(struct UTM utm, char **lat, char **lon);
+
+
+
 		/* Drawing primitives. */
 
 #ifndef SLAVGPS_QT

@@ -52,6 +52,7 @@
 #include "viewport.h"
 #include "window.h"
 #include "coords.h"
+#include "dems.h"
 #ifndef SLAVGPS_QT
 #include "window.h"
 #endif
@@ -218,6 +219,9 @@ Viewport::Viewport(Window * parent) : QWidget((QWidget *) parent)
 	}
 
 	this->init_drawing_area();
+
+	/* We want to constantly update cursor position in status bar. For this we need cursor tracking in viewport. */
+	this->setMouseTracking(true);
 
 	/* Initiate center history. */
 	update_centers();
@@ -2218,9 +2222,14 @@ void Viewport::mousePressEvent(QMouseEvent * event)
 
 void Viewport::mouseMoveEvent(QMouseEvent * event)
 {
-	fprintf(stderr, "VIEWPORT: mouse move event, button %d\n", (int) event->button());
+	this->draw_mouse_motion_cb(event);
 
-	this->window->get_layer_tools_box()->move(event);
+	if (event->buttons() != Qt::NoButton) {
+		// qDebug() << "II: Viewport: mouse move with buttons";
+		this->window->get_layer_tools_box()->move(event);
+	} else {
+		//qDebug() << "II: Viewport: mouse move without buttons";
+	}
 
 	event->accept();
 }
@@ -2290,4 +2299,82 @@ void Viewport::wheelEvent(QWheelEvent * event)
 
 	qDebug() << "II: Viewport: wheel event, call Window::draw_update()" << __FUNCTION__ << __LINE__;
 	this->window->draw_update();
+}
+
+
+
+
+void Viewport::draw_mouse_motion_cb(QMouseEvent * event)
+{
+#define BUFFER_SIZE 50
+	QPoint position = this->mapFromGlobal(QCursor::pos());
+	qDebug() << "II: Viewport: difference in cursor position: dx = " << position.x() - event->x() << ", dy = " << position.y() - event->y();
+	int x = position.x();
+	int y = position.y();
+
+	//this->window->tb->move(event); /* TODO: uncomment this. */
+
+	static VikCoord coord;
+	static struct UTM utm;
+	this->screen_to_coord(x, y, &coord);
+	vik_coord_to_utm(&coord, &utm);
+
+	char * lat = NULL;
+	char * lon = NULL;
+	this->get_location_strings(utm, &lat, &lon);
+
+	/* Change interpolate method according to scale. */
+	double zoom = this->get_zoom();
+	VikDemInterpol interpol_method;
+	if (zoom > 2.0) {
+		interpol_method = VIK_DEM_INTERPOL_NONE;
+	} else if (zoom >= 1.0) {
+		interpol_method = VIK_DEM_INTERPOL_SIMPLE;
+	} else {
+		interpol_method = VIK_DEM_INTERPOL_BEST;
+	}
+
+	int16_t alt;
+	static char pointer_buf[BUFFER_SIZE] = { 0 };
+	if ((alt = dem_cache_get_elev_by_coord(&coord, interpol_method)) != VIK_DEM_INVALID_ELEVATION) {
+		if (a_vik_get_units_height() == HeightUnit::METRES) {
+			snprintf(pointer_buf, BUFFER_SIZE, "%s %s %dm", lat, lon, alt);
+		} else {
+			snprintf(pointer_buf, BUFFER_SIZE, "%s %s %dft", lat, lon, (int) VIK_METERS_TO_FEET(alt));
+		}
+	} else {
+		snprintf(pointer_buf, BUFFER_SIZE, "%s %s", lat, lon);
+	}
+	free(lat);
+	lat = NULL;
+	free(lon);
+	lon = NULL;
+	this->window->status_bar->set_message(StatusBarField::POSITION, pointer_buf);
+
+	//this->window->pan_move(event); /* TODO: uncomment this. */
+#undef BUFFER_SIZE
+}
+
+
+
+
+/**
+ * Utility function to get positional strings for the given location
+ * lat and lon strings will get allocated and so need to be freed after use
+ */
+void Viewport::get_location_strings(struct UTM utm, char **lat, char **lon)
+{
+	if (this->get_drawmode() == VIK_VIEWPORT_DRAWMODE_UTM) {
+		// Reuse lat for the first part (Zone + N or S, and lon for the second part (easting and northing) of a UTM format:
+		//  ZONE[N|S] EASTING NORTHING
+		*lat = (char *) malloc(4*sizeof(char));
+		// NB zone is stored in a char but is an actual number
+		snprintf(*lat, 4, "%d%c", utm.zone, utm.letter);
+		*lon = (char *) malloc(16*sizeof(char));
+		snprintf(*lon, 16, "%d %d", (int)utm.easting, (int)utm.northing);
+	} else {
+		struct LatLon ll;
+		a_coords_utm_to_latlon(&utm, &ll);
+		a_coords_latlon_to_string(&ll, lat, lon);
+	}
 }
