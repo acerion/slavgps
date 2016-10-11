@@ -65,11 +65,6 @@ typedef enum {
 
 
 namespace SlavGPS {
-#ifdef SLAVGPS_QT
-	typedef QPixmap Pixmap;
-#else
-	typedef GdkPixmap Pixmap;
-#endif
 
 
 
@@ -80,19 +75,11 @@ namespace SlavGPS {
 
 
 
-#ifdef SLAVGPS_QT
 	class Viewport : public QWidget {
 	Q_OBJECT
-#else
-	class Viewport {
-#endif
 
 	public:
-#ifdef SLAVGPS_QT
 		Viewport(Window * parent);
-#else
-		Viewport();
-#endif
 		~Viewport();
 
 		/* Viking initialization. */
@@ -240,7 +227,7 @@ namespace SlavGPS {
 
 
 		/* Viewport buffer management/drawing to screen. */
-		SlavGPS::Pixmap * get_pixmap(); /* Get pointer to drawing buffer. */
+		QPixmap * get_pixmap();   /* Get pointer to drawing buffer. */
 		void sync();              /* Draw buffer to window. */
 		void pan_sync(int x_off, int y_off);
 
@@ -293,7 +280,7 @@ namespace SlavGPS {
 		unsigned int centers_max;      /* configurable maximum size of the history list. */
 		unsigned int centers_radius;   /* Metres. */
 
-		SlavGPS::Pixmap * scr_buffer = NULL;
+		QPixmap * scr_buffer = NULL;
 		int size_width = 0;
 		int size_height = 0;
 		/* Half of the normal width and height. */

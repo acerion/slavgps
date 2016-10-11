@@ -28,47 +28,36 @@
 #include "config.h"
 #endif
 
-#define DEFAULT_BACKGROUND_COLOR "#CCCCCC"
-#define DEFAULT_HIGHLIGHT_COLOR "#EEA500"
-/* Default highlight in orange */
-
-#ifdef HAVE_MATH_H
-#include <math.h>
-#endif
-#ifdef HAVE_STRING_H
-#include <string.h>
-#endif
-
+#include <cmath>
+#include <cstring>
 #include <cstdlib>
 #include <cassert>
 
 #include <QMouseEvent>
 #include <QWheelEvent>
 
-#ifndef SLAVGPS_QT
-#include <glib-object.h>
-#endif
-
 #include "viewport.h"
 #include "window.h"
 #include "coords.h"
 #include "dems.h"
-#ifndef SLAVGPS_QT
-#include "window.h"
-#endif
 #include "mapcoord.h"
 
 /* For ALTI_TO_MPP. */
 #include "globals.h"
 #include "settings.h"
-#ifndef SLAVGPS_QT
 #include "dialog.h"
-#endif
 
 
 
 
 using namespace SlavGPS;
+
+
+
+
+#define DEFAULT_BACKGROUND_COLOR "#CCCCCC"
+#define DEFAULT_HIGHLIGHT_COLOR "#EEA500"
+/* Default highlight in orange */
 
 
 
@@ -109,12 +98,11 @@ void SlavGPS::viewport_init(void)
 
 void Viewport::init_drawing_area()
 {
-#ifdef SLAVGPS_QT
 	//connect(this, SIGNAL(resizeEvent(QResizeEvent *)), this, SLOT(configure_cb(void)));
 	//this->qpainter = new QPainter(this);
 
 	this->setFocusPolicy(Qt::ClickFocus);
-#else
+#if 0
 
 #if GTK_CHECK_VERSION (2,18,0)
 	gtk_widget_set_can_focus(GTK_WIDGET (this->drawing_area_), true);
@@ -235,7 +223,7 @@ Viewport::Viewport(Window * parent) : QWidget((QWidget *) parent)
 
 Viewport::~Viewport()
 {
-	fprintf(stderr, "~Viewport called\n");
+	qDebug() << "II: Viewport: ~Viewport called";
 	if (a_vik_get_startup_method() == VIK_STARTUP_METHOD_LAST_LOCATION) {
 		struct LatLon ll;
 		vik_coord_to_latlon(&(this->center), &ll);
@@ -455,7 +443,7 @@ void Viewport::configure_manually(int width_, unsigned int height_)
 
 
 
-SlavGPS::Pixmap * Viewport::get_pixmap()
+QPixmap * Viewport::get_pixmap()
 {
 	return this->scr_buffer;
 }
@@ -465,7 +453,7 @@ SlavGPS::Pixmap * Viewport::get_pixmap()
 
 bool Viewport::configure_cb(void)
 {
-	fprintf(stderr, "VIEWPORT: handling signal \"configure event\" (%s:%d)\n", __FUNCTION__, __LINE__);
+	qDebug() << "II: Viewport: handling signal \"configure event\"";
 	return this->configure();
 }
 
@@ -650,7 +638,7 @@ void Viewport::draw_scale()
 		break;
 	default:
 		base_distance = 1; /* Keep the compiler happy. */
-		fprintf(stderr, "CRITICAL: failed to get correct units of distance, got %d\n", distance_unit);
+		qDebug() << "EE: Viewport: failed to get correct units of distance, got" << (int) distance_unit;
 	}
 
 	/* At this point "base_distance" is a distance between "left" and "right" in physical units.
@@ -760,7 +748,7 @@ void Viewport::draw_scale_helper_value(char * s, DistanceUnit distance_unit, dou
 		}
 		break;
 	default:
-		fprintf(stderr, "CRITICAL: failed to get correct units of distance, got %d\n", distance_unit);
+		qDebug() << "EE: Viewport: failed to get correct units of distance, got" << (int) distance_unit;
 	}
 }
 
@@ -794,8 +782,7 @@ void Viewport::draw_copyright()
 		strcat(s, " ");
 	}
 
-#ifdef SLAVGPS_QT
-#else
+#ifndef SLAVGPS_QT
 	/* Create pango layout. */
 	PangoLayout * pl = gtk_widget_create_pango_layout(GTK_WIDGET(this->drawing_area_), NULL);
 	pango_layout_set_font_description(pl, gtk_widget_get_style(GTK_WIDGET(this->drawing_area_))->font_desc);
@@ -920,7 +907,7 @@ void Viewport::sync()
 
 void Viewport::pan_sync(int x_off, int y_off)
 {
-	fprintf(stderr, "VIEWPORT: PAN SYNC (%s:%d)\n", __FUNCTION__, __LINE__);
+	qDebug() << "II: Viewport: Pan Sync";
 #ifndef SLAVGPS_QT
 	int x, y, wid, hei;
 
@@ -1215,7 +1202,7 @@ void Viewport::print_centers(char * label)
 			extra = (char *) "";
 		}
 
-		fprintf(stderr, "VIEWPORT: centers (%s): %s %s %s\n", label, lat, lon, extra);
+		qDebug() << "II: Viewport: centers" << label << lat << lon << extra;
 
 		free(lat);
 		free(lon);
@@ -1512,7 +1499,7 @@ void Viewport::coord_to_screen(const VikCoord * coord, int * x, int * y)
 	static VikCoord tmp;
 
 	if (coord->mode != this->coord_mode){
-		fprintf(stderr, "WARNING: Have to convert in Viewport::coord_to_screen()! This should never happen!\n");
+		qDebug() << "WW: Viewport: Have to convert in Viewport::coord_to_screen()! This should never happen!";
 		vik_coord_copy_convert (coord, this->coord_mode, &tmp);
 		coord = &tmp;
 	}
@@ -1906,7 +1893,7 @@ Layer * Viewport::get_trigger()
 
 void Viewport::snapshot_save()
 {
-	fprintf(stderr, "VIEWPORT: save snapshot\n");
+	qDebug() << "II: Viewport: save snapshot";
 #ifndef SLAVGPS_QT
 	gdk_draw_drawable(this->snapshot_buffer, this->background_gc, this->scr_buffer, 0, 0, 0, 0, -1, -1);
 #endif
@@ -1917,7 +1904,7 @@ void Viewport::snapshot_save()
 
 void Viewport::snapshot_load()
 {
-	fprintf(stderr, "VIEWPORT: load snapshot\n");
+	qDebug() << "II: Viewport: load snapshot";
 #ifndef SLAVGPS_QT
 	gdk_draw_drawable(this->scr_buffer, this->background_gc, this->snapshot_buffer, 0, 0, 0, 0, -1, -1);
 #endif
@@ -2179,7 +2166,7 @@ Window * Viewport::get_window(void)
 
 void Viewport::paintEvent(QPaintEvent *event)
 {
-	qDebug() << "II: Viewport : paintEvent()" << __FUNCTION__ << __LINE__;
+	qDebug() << "II: Viewport: paintEvent()" << __FUNCTION__ << __LINE__;
 
 	QPainter painter(this);
 
@@ -2197,7 +2184,7 @@ void Viewport::paintEvent(QPaintEvent *event)
 
 void Viewport::resizeEvent(QResizeEvent * event)
 {
-	fprintf(stderr, "VIEWPORT: resize event (%s:%d)\n", __FUNCTION__, __LINE__);
+	qDebug() << "II: Viewport: resize event";
 	this->configure();
 	this->get_window()->draw_redraw();
 	//this->draw_scale();
@@ -2211,7 +2198,7 @@ void Viewport::resizeEvent(QResizeEvent * event)
 
 void Viewport::mousePressEvent(QMouseEvent * event)
 {
-	fprintf(stderr, "VIEWPORT: mouse press event, button %d\n", (int) event->button());
+	qDebug() << "II: Viewport: mouse press event, button" << (int) event->button();
 
 	this->window->get_layer_tools_box()->click(event);
 
@@ -2237,7 +2224,7 @@ void Viewport::mouseMoveEvent(QMouseEvent * event)
 
 void Viewport::mouseReleaseEvent(QMouseEvent * event)
 {
-	fprintf(stderr, "VIEWPORT: mouse release event, button %d\n", (int) event->button());
+	qDebug() << "II: Viewport: mouse release event, button" << (int) event->button();
 
 	this->window->get_layer_tools_box()->release(event);
 
@@ -2250,7 +2237,7 @@ void Viewport::mouseReleaseEvent(QMouseEvent * event)
 void Viewport::wheelEvent(QWheelEvent * event)
 {
 	QPoint angle = event->angleDelta();
-	fprintf(stderr, "VIEWPORT: wheel event, buttons %d, angle = %d\n", (int) event->buttons(), angle.y());
+	qDebug() << "II: Viewport: wheel event, buttons =" << (int) event->buttons() << "angle =" << angle.y();
 	event->accept();
 
 	const Qt::KeyboardModifiers modifiers = event->modifiers(); // (GDK_SHIFT_MASK | GDK_CONTROL_MASK);
@@ -2308,7 +2295,11 @@ void Viewport::draw_mouse_motion_cb(QMouseEvent * event)
 {
 #define BUFFER_SIZE 50
 	QPoint position = this->mapFromGlobal(QCursor::pos());
+
+#if 0   /* Verbose debug. */
 	qDebug() << "II: Viewport: difference in cursor position: dx = " << position.x() - event->x() << ", dy = " << position.y() - event->y();
+#endif
+
 	int x = position.x();
 	int y = position.y();
 
@@ -2349,7 +2340,8 @@ void Viewport::draw_mouse_motion_cb(QMouseEvent * event)
 	lat = NULL;
 	free(lon);
 	lon = NULL;
-	this->window->status_bar->set_message(StatusBarField::POSITION, pointer_buf);
+	QString message(pointer_buf);
+	this->window->status_bar->set_message(StatusBarField::POSITION, message);
 
 	//this->window->pan_move(event); /* TODO: uncomment this. */
 #undef BUFFER_SIZE
