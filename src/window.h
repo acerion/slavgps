@@ -150,7 +150,7 @@ namespace SlavGPS {
 		QAction * qa_layer_properties = NULL;
 
 		/* Tool management state. */
-		unsigned int current_tool;
+		LayerTool * current_tool = NULL;
 		LayerType tool_layer_type;
 		uint16_t tool_tool_id;
 

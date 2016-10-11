@@ -68,12 +68,10 @@ QAction * LayerToolsBox::add_tool(LayerTool * layer_tool)
 	QString label(layer_tool->radioActionEntry.label);
 	QAction * qa = new QAction(label, this->window);
 
-	qa->setObjectName(QString(layer_tool->radioActionEntry.name));
+	qa->setObjectName(layer_tool->id_string);
 	qDebug() << "Created qaction with name" << qa->objectName() << qa;
 	qa->setIcon(QIcon(QString(layer_tool->radioActionEntry.stock_id)));
 	qa->setCheckable(true);
-
-	layer_tool->radioActionEntry.qa = qa;
 
 	this->tools.push_back(layer_tool);
 	this->n_tools++;
@@ -84,10 +82,10 @@ QAction * LayerToolsBox::add_tool(LayerTool * layer_tool)
 
 
 
-LayerTool * LayerToolsBox::get_tool(QString & tool_name)
+LayerTool * LayerToolsBox::get_tool(QString & tool_id)
 {
 	for (unsigned i = 0; i < this->n_tools; i++) {
-		if (tool_name == this->tools[i]->radioActionEntry.name) {
+		if (tool_id == this->tools[i]->id_string) {
 			return this->tools[i];
 		}
 	}
@@ -99,8 +97,8 @@ LayerTool * LayerToolsBox::get_tool(QString & tool_name)
 
 void LayerToolsBox::activate_tool(QAction * qa)
 {
-	QString tool_name = qa->objectName();
-	LayerTool * tool = this->get_tool(tool_name);
+	QString tool_id = qa->objectName();
+	LayerTool * tool = this->get_tool(tool_id);
 	Layer * layer = this->window->layers_panel->get_selected_layer();
 #if 0
 	if (!layer) {
@@ -109,7 +107,7 @@ void LayerToolsBox::activate_tool(QAction * qa)
 #endif
 
 	if (!tool) {
-		qDebug() << "ERROR: Layer Tools: trying to activate a non-existent tool" << tool_name << qa;
+		qDebug() << "ERROR: Layer Tools: trying to activate a non-existent tool" << tool_id;
 		return;
 	}
 	/* Is the tool already active? */
@@ -123,7 +121,7 @@ void LayerToolsBox::activate_tool(QAction * qa)
 			this->active_tool->deactivate(NULL, this->active_tool);
 		}
 	}
-	qDebug() << "Layer Tools: activating tool" << tool_name;
+	qDebug() << "Layer Tools: activating tool" << tool_id;
 	if (tool->activate) {
 		tool->activate(layer, tool);
 	}
@@ -135,16 +133,16 @@ void LayerToolsBox::activate_tool(QAction * qa)
 
 
 
-void LayerToolsBox::deactivate_tool(QAction * qa)
+bool LayerToolsBox::deactivate_tool(QAction * qa)
 {
-	QString tool_name = qa->objectName();
-	LayerTool * tool = this->get_tool(tool_name);
+	QString tool_id = qa->objectName();
+	LayerTool * tool = this->get_tool(tool_id);
 	if (!tool) {
-		qDebug() << "ERROR: Layer Tools: trying to deactivate a non-existent tool" << tool_name;
-		return;
+		qDebug() << "ERROR: Layer Tools: trying to deactivate a non-existent tool" << tool_id;
+		return true;
 	}
 
-	qDebug() << "Layer Tools: deactivating tool" << tool_name;
+	qDebug() << "Layer Tools: deactivating tool" << tool_id;
 
 	assert (this->active_tool);
 
@@ -155,24 +153,8 @@ void LayerToolsBox::deactivate_tool(QAction * qa)
 
 	this->active_tool = NULL;
 	this->active_tool_qa = NULL;
+	return false;
 }
-
-
-
-
-void LayerToolsBox::activate_layer_tools(QAction * qa)
-{
-	QString layer_type = qa->actionGroup()->objectName();
-
-	for (auto group = this->action_groups.begin(); group != this->action_groups.end(); ++group) {
-		bool is_window_tools = (*group)->objectName() == "window";
-		bool activate = (*group)->objectName() == layer_type;
-
-	}
-
-	//this->activate_tool(qa);
-}
-
 
 
 
@@ -222,7 +204,7 @@ QAction * LayerToolsBox::set_group_enabled(QString & group_name)
 
    If any action is checked (active), return that action. The function doesn't un-check that action.
 
-   If a group is "window", its buttons are not disabled. Its active button (if present) is returned nonetheless.
+   If a group is "generic", its buttons are not disabled. Its active button (if present) is returned nonetheless.
 */
 QAction * LayerToolsBox::set_group_disabled(QString & group_name)
 {
@@ -233,11 +215,11 @@ QAction * LayerToolsBox::set_group_disabled(QString & group_name)
 	}
 
 	QAction * checked = NULL;
-	bool really_disable = group_name != "window";
+	bool really_disable = group_name != "generic";
 
 	for (QList<QAction *>::const_iterator action = group->actions().constBegin(); action != group->actions().constEnd(); ++action) {
 
-		/* We don't want to disable "window" group buttons, but we want to know which one of them is selected. */
+		/* We don't want to disable "generic" group buttons, but we want to know which one of them is selected. */
 		if (really_disable) {
 			(*action)->setEnabled(false);
 		}
@@ -256,7 +238,7 @@ QAction * LayerToolsBox::set_group_disabled(QString & group_name)
 /**
    Disable all buttons in groups other than given actions group
 
-   Make an exception for actions group called "window" - this one should be always enabled.
+   Make an exception for actions group called "generic" - this one should be always enabled.
 
    If any action is checked (active), return that action. The function doesn't un-check that action.
 */
@@ -316,7 +298,7 @@ QAction * LayerToolsBox::get_active_tool(void)
 void LayerToolsBox::activate_layer_tools(QString & layer_type)
 {
 	for (auto group = this->action_groups.begin(); group != this->action_groups.end(); ++group) {
-		bool is_window_tools = (*group)->objectName() == "window";
+		bool is_window_tools = (*group)->objectName() == "generic";
 		bool activate = (*group)->objectName() == layer_type;
 		for (QList<QAction *>::const_iterator action = (*group)->actions().constBegin(); action != (*group)->actions().constEnd(); ++action) {
 			(*action)->setEnabled(activate || is_window_tools);
@@ -342,17 +324,17 @@ void LayerToolsBox::add_group(QActionGroup * group)
 
 
 
-QCursor const * LayerToolsBox::get_cursor_click(QString & tool_name)
+QCursor const * LayerToolsBox::get_cursor_click(QString & tool_id)
 {
-	return this->get_tool(tool_name)->cursor_release;
+	return this->get_tool(tool_id)->cursor_release;
 }
 
 
 
 
-QCursor const * LayerToolsBox::get_cursor_release(QString & tool_name)
+QCursor const * LayerToolsBox::get_cursor_release(QString & tool_id)
 {
-	return this->get_tool(tool_name)->cursor_release;
+	return this->get_tool(tool_id)->cursor_release;
 }
 
 
@@ -373,7 +355,7 @@ void LayerToolsBox::click(QMouseEvent * event)
 		if (ltype == LayerType::NUM_TYPES /* Generic tool. */
 		    || (layer && ltype == layer->type)) { /* Layer-specific tool. */
 
-			qDebug() << "II: Layer Tools: click received, will pass it to tool" << this->active_tool->radioActionEntry.name << "for layer" << layer->type_string;
+			qDebug() << "II: Layer Tools: click received, will pass it to tool" << this->active_tool->id_string << "for layer" << layer->type_string;
 			this->active_tool->viewport->setCursor(*this->active_tool->cursor_click);
 			this->active_tool->click(layer, event, this->active_tool);
 		} else {
@@ -428,7 +410,7 @@ void LayerToolsBox::release(QMouseEvent * event)
 		if (ltype == LayerType::NUM_TYPES /* Generic tool. */
 		    || (layer && ltype == layer->type)) { /* Layer-specific tool. */
 
-			qDebug() << "II: Layer Tools: release received, will pass it to tool" << this->active_tool->radioActionEntry.name << "for layer" << layer->type_string;
+			qDebug() << "II: Layer Tools: release received, will pass it to tool" << this->active_tool->id_string << "for layer" << layer->type_string;
 			this->active_tool->viewport->setCursor(*this->active_tool->cursor_release);
 			this->active_tool->release(layer, event, this->active_tool);
 		} else {
@@ -703,8 +685,8 @@ LayerTool * SlavGPS::ruler_create(Window * window, Viewport * viewport)
 	LayerTool * layer_tool = new LayerTool(window, viewport, LayerType::NUM_TYPES);
 
 	layer_tool->layer_type = LayerType::NUM_TYPES;
+	layer_tool->id_string = QString("generic.ruler");
 
-	layer_tool->radioActionEntry.name = strdup("Ruler");
 	layer_tool->radioActionEntry.stock_id = strdup(":/icons/layer_tool/ruler_18.png");
 	layer_tool->radioActionEntry.label = strdup(N_("&Ruler"));
 	layer_tool->radioActionEntry.accelerator = strdup("<control><shift>U"); /* Ctrl+Shift+R is used for Refresh (deemed more important), so use 'U' instead. */
@@ -769,7 +751,8 @@ static VikLayerToolFuncStatus ruler_click(Layer * layer, QMouseEvent * event, La
 			tool->ruler->has_oldcoord = true;
 		}
 
-		tool->window->status_bar->set_message(StatusBarField::INFO, temp);
+		QString message(temp);
+		tool->window->status_bar->set_message(StatusBarField::INFO, message);
 		tool->ruler->oldcoord = coord;
 	} else {
 		tool->viewport->set_center_screen((int) event->x(), (int) event->y());
@@ -863,7 +846,8 @@ static VikLayerToolFuncStatus ruler_move(Layer * layer, QMouseEvent * event, Lay
 			fprintf(stderr, "CRITICAL: Houston, we've had a problem. distance=%d\n", distance_unit);
 		}
 
-		tool->window->status_bar->set_message(StatusBarField::INFO, temp);
+		QString message(temp);
+		tool->window->status_bar->set_message(StatusBarField::INFO, message);
 	}
 	return VIK_LAYER_TOOL_ACK;
 }
@@ -956,8 +940,8 @@ LayerTool * SlavGPS::zoomtool_create(Window * window, Viewport * viewport)
 	LayerTool * layer_tool = new LayerTool(window, viewport, LayerType::NUM_TYPES);
 
 	layer_tool->layer_type = LayerType::NUM_TYPES;
+	layer_tool->id_string = QString("generic.zoom");
 
-	layer_tool->radioActionEntry.name = strdup("Zoom");
 	layer_tool->radioActionEntry.stock_id = strdup(":/icons/layer_tool/zoom_18.png");
 	layer_tool->radioActionEntry.label = strdup(N_("&Zoom"));
 	layer_tool->radioActionEntry.accelerator = strdup("<control><shift>Z");
@@ -1174,8 +1158,8 @@ LayerTool * SlavGPS::pantool_create(Window * window, Viewport * viewport)
 	LayerTool * layer_tool = new LayerTool(window, viewport, LayerType::NUM_TYPES);
 
 	layer_tool->layer_type = LayerType::NUM_TYPES;
+	layer_tool->id_string = QString("generic.pan");
 
-	layer_tool->radioActionEntry.name = strdup("Pan");
 	layer_tool->radioActionEntry.stock_id = strdup(":/icons/layer_tool/pan_22.png");
 	layer_tool->radioActionEntry.label = strdup(N_("&Pan"));
 	layer_tool->radioActionEntry.accelerator = strdup("<control><shift>P");
@@ -1278,8 +1262,8 @@ LayerTool * SlavGPS::selecttool_create(Window * window, Viewport * viewport)
 	LayerTool * layer_tool = new LayerTool(window, viewport, LayerType::NUM_TYPES);
 
 	layer_tool->layer_type = LayerType::NUM_TYPES;
+	layer_tool->id_string = QString("generic.select");
 
-	layer_tool->radioActionEntry.name = strdup("Select");
 	layer_tool->radioActionEntry.stock_id = strdup(":/icons/layer_tool/select_18.png");
 	layer_tool->radioActionEntry.label = strdup(N_("&Select"));
 	layer_tool->radioActionEntry.accelerator = strdup("<control><shift>S");

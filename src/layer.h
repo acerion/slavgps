@@ -296,13 +296,11 @@ namespace SlavGPS {
 
 
 	struct ActionEntry {
-		char const * name;
 		char const * stock_id;
 		char const * label;
 		char const * accelerator;
 		char const * tooltip;
 		int value;
-		QAction * qa;
 	};
 
 
@@ -313,6 +311,8 @@ namespace SlavGPS {
 		LayerTool(Window * window, Viewport * viewport, LayerType layer_type);
 		~LayerTool();
 
+		QString & get_description() const;
+
 		VikToolActivationFunc activate = NULL;
 		VikToolActivationFunc deactivate = NULL;
 		VikToolMouseFunc click = NULL;
@@ -320,7 +320,7 @@ namespace SlavGPS {
 		VikToolMouseFunc release = NULL;
 		VikToolKeyFunc key_press = NULL; /* Return false if we don't use the key press -- should return false most of the time if we want any shortcuts / UI keybindings to work! use sparingly. */
 
-		ActionEntry radioActionEntry = { NULL, NULL, NULL, NULL, NULL, 0, NULL };
+		ActionEntry radioActionEntry = { NULL, NULL, NULL, NULL, 0 };
 
 		bool pan_handler = false; /* Call click & release funtions even when 'Pan Mode' is on. */
 
@@ -339,8 +339,10 @@ namespace SlavGPS {
 		ruler_tool_state_t * ruler = NULL;
 		zoom_tool_state_t * zoom = NULL;
 
-		LayerType layer_type;
-		char layer_type_string[30];
+		LayerType layer_type; /* Can be set to LayerType::NUM_TYPES to indicate "generic" (non-layer-specific) tool (zoom, select, etc.). */
+		QString id_string;    /* E.g. "generic.zoom", or "dem.download". For internal use, not visible to user. */
+
+		char layer_type_string[30]; /* For debug purposes only. */
 	};
 
 

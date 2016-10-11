@@ -43,23 +43,6 @@ using namespace SlavGPS;
 
 
 
-enum {
-	TOOL_PAN = 0,
-	TOOL_ZOOM,
-	TOOL_RULER,
-	TOOL_SELECT,
-	TOOL_LAYER,
-	NUMBER_OF_TOOLS
-};
-
-
-
-
-/* TODO get rid of this as this is unnecessary duplication... */
-static char const * tool_names[NUMBER_OF_TOOLS] = { "Pan", "Zoom", "Ruler", "Select" };
-
-
-
 
 Window::Window()
 {
@@ -76,7 +59,7 @@ Window::Window()
 	this->create_ui();
 
 
-	// Own signals
+	/* Own signals. */
 	connect(this->viewport, SIGNAL(updated_center(void)), this, SLOT(center_changed_cb(void)));
 
 
@@ -135,7 +118,7 @@ Window::Window()
 	// Must be performed post toolbar init
 	for (LayerType i = LayerType::AGGREGATE; i < LayerType::NUM_TYPES; ++i) {
 		for (int j = 0; j < Layer::get_interface(i)->tools_count; j++) {
-			toolbar_action_set_sensitive(this->viking_vtb, Layer::get_interface(i)->layer_tools[j]->radioActionEntry.name, false);
+			toolbar_action_set_sensitive(this->viking_vtb, Layer::get_interface(i)->layer_tools[j]->id_string, false);
 		}
 	}
 
@@ -554,7 +537,8 @@ void Window::draw_status()
 	}
 
 	qDebug() << "II: Window: zoom level is" << zoom_level;
-	this->status_bar->set_message(StatusBarField::ZOOM, zoom_level);
+	QString message(zoom_level);
+	this->status_bar->set_message(StatusBarField::ZOOM, message);
 	this->display_tool_name();
 }
 
@@ -643,7 +627,7 @@ void Window::selected_layer(Layer * layer)
 	bool window_tool_still_active = false;
 	QAction * qa = this->tb->set_other_groups_disabled(layer_type);
 	if (qa) {
-		if (qa->actionGroup()->objectName() == "window") {
+		if (qa->actionGroup()->objectName() == "generic") {
 			window_tool_still_active = true;
 		} else {
 			/* qa is still-active button in non-window, not-this-layer group. Deactivate. */
@@ -659,7 +643,7 @@ void Window::selected_layer(Layer * layer)
 			   No need to have more than one button checked. */
 		} else {
 			/* We have switched from one layer-specific group to another.
-			   No button in "window" group is active. Some button needs to be active, though. */
+			   No button in "generic" group is active. Some button needs to be active, though. */
 			qa->setChecked(true);
 		}
 	} else {
@@ -679,9 +663,9 @@ void Window::selected_layer(Layer * layer)
 
 		for (int tool = 0; tool < tool_count; tool++) {
 			GtkAction * action = gtk_action_group_get_action(this->action_group,
-									 layer_interface->layer_tools[tool]->radioActionEntry.name);
+									 layer_interface->layer_tools[tool]->id_string);
 			g_object_set(action, "sensitive", type == layer->type, NULL);
-			toolbar_action_set_sensitive(this->viking_vtb, Layer::get_interface(type)->layer_tools[tool]->radioActionEntry.name, type == layer->type);
+			toolbar_action_set_sensitive(this->viking_vtb, Layer::get_interface(type)->layer_tools[tool]->id_string, type == layer->type);
 		}
 	}
 #endif
@@ -757,7 +741,7 @@ void Window::create_ui(void)
 
 	{
 		QActionGroup * group = new QActionGroup(this);
-		group->setObjectName("window");
+		group->setObjectName("generic");
 		QAction * qa = NULL;
 		QAction * default_qa = NULL;
 
@@ -934,7 +918,7 @@ void Window::create_ui(void)
 
 			gtk_ui_manager_add_ui(uim, mid,  "/ui/MainMenu/Tools",
 					      layer_tool->radioActionEntry.label,
-					      layer_tool->radioActionEntry.name,
+					      layer_tool->id_string,
 					      GTK_UI_MANAGER_MENUITEM, false);
 
 
@@ -976,7 +960,7 @@ void Window::create_ui(void)
 	for (LayerType i = LayerType::AGGREGATE; i < LayerType::NUM_TYPES; ++i) {
 		for (unsigned int j = 0; j < Layer::get_interface(i)->tools_count; j++) {
 			GtkAction * action = gtk_action_group_get_action(action_group,
-									 Layer::get_interface(i)->layer_tools[j]->radioActionEntry.name);
+									 Layer::get_interface(i)->layer_tools[j]->id_string);
 			g_object_set(action, "sensitive", false, NULL);
 		}
 	}
@@ -1003,20 +987,22 @@ void Window::layer_tools_cb(QAction * qa)
 	QString tool_name = qa->objectName();
 	QString group_name = qa->actionGroup()->objectName();
 
-	if (qa->actionGroup()->objectName() == "window") {
-		/* User selected tool in "window" group, but that is not a good reason to
+	if (qa->actionGroup()->objectName() == "generic") {
+		/* User selected tool in "generic" group, but that is not a good reason to
 		   disable whole layer-specific group. Only deactivate the old tool. */
 	} else {
 		/* This can happen only of we are switching from tool in
-		   "window" group to tool in a layer group. */
-		qDebug() << "Window: switching from \"window\" tool to" << group_name << "tool";
+		   "generic" group to tool in a layer group. */
+		qDebug() << "Window: switching from \"generic\" tool to" << group_name << "tool";
 	}
 
 
 	QAction * old_action = this->tb->get_active_tool();
 	if (old_action) {
-		qDebug() << "II: Window: deactivating old action" << old_action;
-		this->tb->deactivate_tool(old_action);
+		qDebug() << "II: Window: deactivating old tool" << old_action->objectName();
+		if (this->tb->deactivate_tool(old_action)) {
+			old_action->setChecked(false);
+		}
 	} else {
 		qDebug() << "WW: Window: no old action found";
 	}
@@ -1024,35 +1010,15 @@ void Window::layer_tools_cb(QAction * qa)
 
 	QAction * first_action = this->tb->set_group_enabled(group_name);
 	if (first_action) {
+		/* First action in the group is the default one for newly enabled group. */
 		this->tb->activate_tool(first_action);
 	} else {
 		this->tb->activate_tool(qa);
 	}
 
-	/* White Magic, my friends ... White Magic... */
-	int tool_id;
 
 	this->viewport->setCursor(*this->tb->get_cursor_release(tool_name));
-
-	if (tool_name == "Pan") {
-		this->current_tool = TOOL_PAN;
-	} else if (tool_name == "Zoom") {
-		this->current_tool = TOOL_ZOOM;
-	} else if (tool_name == "Ruler") {
-		this->current_tool = TOOL_RULER;
-	} else if (tool_name == "Select") {
-		this->current_tool = TOOL_SELECT;
-	} else {
-		for (LayerType layer_type = LayerType::AGGREGATE; layer_type < LayerType::NUM_TYPES; ++layer_type) {
-			for (tool_id = 0; tool_id < Layer::get_interface(layer_type)->tools_count; tool_id++) {
-				if (Layer::get_interface(layer_type)->layer_tools[tool_id]->radioActionEntry.name == tool_name) {
-					this->current_tool = TOOL_LAYER;
-					this->tool_layer_type = layer_type;
-					this->tool_tool_id = tool_id;
-				}
-			}
-		}
-	}
+	this->current_tool = this->tb->get_tool(tool_name);
 	this->display_tool_name();
 }
 
@@ -1459,14 +1425,7 @@ void Window::show_background_jobs_window_cb(void)
 
 
 
-
 void Window::display_tool_name(void)
 {
-
-	if (this->current_tool == TOOL_LAYER) {
-		// Use tooltip rather than the internal name as the tooltip is i8n
-		this->status_bar->set_message(StatusBarField::TOOL, Layer::get_interface(this->tool_layer_type)->layer_tools[this->tool_tool_id]->radioActionEntry.tooltip);
-	} else {
-		this->status_bar->set_message(StatusBarField::TOOL, tool_names[this->current_tool]);
-	}
+	this->status_bar->set_message(StatusBarField::TOOL, this->current_tool->get_description());
 }

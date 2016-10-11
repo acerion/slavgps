@@ -217,7 +217,7 @@ StatusBar::StatusBar(QWidget * parent) : QStatusBar(parent)
  *
  * Update the message of the given field.
  **/
-void StatusBar::set_message(StatusBarField field, char const * message)
+void StatusBar::set_message(StatusBarField field, QString & message)
 {
 	switch (field) {
 	case StatusBarField::ITEMS:
@@ -227,8 +227,7 @@ void StatusBar::set_message(StatusBarField field, char const * message)
 	case StatusBarField::TOOL: {
 
 		/* Label. */
-		QString new_message(message);
-		((QLabel *) this->fields[(int) field])->setText(new_message);
+		((QLabel *) this->fields[(int) field])->setText(message);
 	}
 		break;
 

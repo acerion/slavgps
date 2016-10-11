@@ -7374,8 +7374,8 @@ static LayerTool * tool_edit_waypoint_create(Window * window, Viewport * viewpor
 	trw_layer_tools[4] = layer_tool;
 
 	layer_tool->layer_type = LayerType::TRW;
+	layer_tool->id_string = QString("EditWaypoint");
 
-	layer_tool->radioActionEntry.name = strdup("EditWaypoint");
 	layer_tool->radioActionEntry.stock_id = strdup("vik-icon-Edit Waypoint");
 	layer_tool->radioActionEntry.label = strdup(N_("_Edit Waypoint"));
 	layer_tool->radioActionEntry.accelerator = strdup("<control><shift>E");
@@ -7595,8 +7595,8 @@ static LayerTool * tool_new_track_create(Window * window, Viewport * viewport)
 	trw_layer_tools[1] = layer_tool;
 
 	layer_tool->layer_type = LayerType::TRW;
+	layer_tool->id_string = QString("CreateTrack");
 
-	layer_tool->radioActionEntry.name = strdup("CreateTrack");
 	layer_tool->radioActionEntry.stock_id = strdup("vik-icon-Create Track");
 	layer_tool->radioActionEntry.label = strdup(N_("Create _Track"));
 	layer_tool->radioActionEntry.accelerator = strdup("<control><shift>T");
@@ -8063,8 +8063,8 @@ static LayerTool * tool_new_route_create(Window * window, Viewport * viewport)
 	trw_layer_tools[2] = layer_tool;
 
 	layer_tool->layer_type = LayerType::TRW;
+	layer_tool->id_string = QString("CreateRoute");
 
-	layer_tool->radioActionEntry.name = strdup("CreateRoute");
 	layer_tool->radioActionEntry.stock_id = strdup("vik-icon-Create Route");
 	layer_tool->radioActionEntry.label = strdup(N_("Create _Route"));
 	layer_tool->radioActionEntry.accelerator = strdup("<control><shift>B");
@@ -8133,8 +8133,8 @@ static LayerTool * tool_new_waypoint_create(Window * window, Viewport * viewport
 	trw_layer_tools[0] = layer_tool;
 
 	layer_tool->layer_type = LayerType::TRW;
+	layer_tool->id_string = QString("CreateWaypoint");
 
-	layer_tool->radioActionEntry.name = strdup("CreateWaypoint");
 	layer_tool->radioActionEntry.stock_id = strdup("vik-icon-Create Waypoint");
 	layer_tool->radioActionEntry.label = strdup(N_("Create _Waypoint"));
 	layer_tool->radioActionEntry.accelerator = strdup("<control><shift>W");
@@ -8193,8 +8193,8 @@ static LayerTool * tool_edit_trackpoint_create(Window * window, Viewport * viewp
 	trw_layer_tools[5] = layer_tool;
 
 	layer_tool->layer_type = LayerType::TRW;
+	layer_tool->id_string = QString("EditTrackpoint");
 
-	layer_tool->radioActionEntry.name = strdup("EditTrackpoint");
 	layer_tool->radioActionEntry.stock_id = strdup("vik-icon-Edit Trackpoint");
 	layer_tool->radioActionEntry.label = strdup(N_("Edit Trac_kpoint"));
 	layer_tool->radioActionEntry.accelerator = strdup("<control><shift>K");
@@ -8428,8 +8428,8 @@ static LayerTool * tool_extended_route_finder_create(Window * window, Viewport *
 	trw_layer_tools[3] = layer_tool;
 
 	layer_tool->layer_type = LayerType::TRW;
+	layer_tool->id_string = QString("ExtendedRouteFinder");
 
-	layer_tool->radioActionEntry.name = strdup("ExtendedRouteFinder");
 	layer_tool->radioActionEntry.stock_id = strdup("vik-icon-Route Finder");
 	layer_tool->radioActionEntry.label = strdup(N_("Route _Finder"));
 	layer_tool->radioActionEntry.accelerator = strdup("<control><shift>F");
@@ -8593,8 +8593,8 @@ static LayerTool * tool_show_picture_create(Window * window, Viewport * viewport
 	trw_layer_tools[6] = layer_tool;
 
 	layer_tool->layer_type = LayerType::TRW;
+	layer_tool->id_string = QString("ShowPicture");
 
-	layer_tool->radioActionEntry.name = strdup("ShowPicture");
 	layer_tool->radioActionEntry.stock_id = strdup("vik-icon-Show Picture");
 	layer_tool->radioActionEntry.label = strdup(N_("Show P_icture"));
 	layer_tool->radioActionEntry.accelerator = strdup("<control><shift>I");

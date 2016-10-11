@@ -1125,10 +1125,6 @@ LayerTool::LayerTool(Window * window, Viewport * viewport, LayerType layer_type)
 LayerTool::~LayerTool()
 {
 #ifndef SLAVGPS_QT
-	if (radioActionEntry.name) {
-		free((void *) radioActionEntry.name);
-		radioActionEntry.name = NULL;
-	}
 	if (radioActionEntry.stock_id) {
 		free((void *) radioActionEntry.stock_id);
 		radioActionEntry.stock_id = NULL;
@@ -1166,6 +1162,18 @@ LayerTool::~LayerTool()
 
 	delete this->cursor_click;
 	delete this->cursor_release;
+}
+
+
+
+
+/**
+   @brief Return Pretty-print name of tool that can be used in UI
+*/
+QString & LayerTool::get_description() const
+{
+	static QString description(this->radioActionEntry.tooltip);
+	return description;
 }
 
 

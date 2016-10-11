@@ -1341,14 +1341,13 @@ static LayerTool * dem_layer_download_create(Window * window, Viewport * viewpor
 	dem_tools[0] = layer_tool;
 
 	layer_tool->layer_type = LayerType::DEM;
+	layer_tool->id_string = QString("dem.download");
 
-	layer_tool->radioActionEntry.name        = strdup("DEMDownload");
 	layer_tool->radioActionEntry.stock_id    = strdup(":/icons/layer_tool/dem_download_18.png");
 	layer_tool->radioActionEntry.label       = strdup(N_("&DEM Download"));
 	layer_tool->radioActionEntry.accelerator = NULL;
 	layer_tool->radioActionEntry.tooltip     = strdup(N_("DEM Download"));
 	layer_tool->radioActionEntry.value       = 0;
-	layer_tool->radioActionEntry.qa          = NULL;
 
 	layer_tool->click = (VikToolMouseFunc) dem_layer_download_click;
 	layer_tool->release = (VikToolMouseFunc) dem_layer_download_release;

@@ -2146,8 +2146,8 @@ static LayerTool * maps_layer_download_create(Window * window, Viewport * viewpo
 	LayerTool * layer_tool = new LayerTool(window, viewport, LayerType::MAPS);
 
 	maps_tools[0] = layer_tool;
+	layer_tool->id_string = QString("MapsDownload");
 
-	layer_tool->radioActionEntry.name = strdup("MapsDownload");
 	layer_tool->radioActionEntry.stock_id = strdup("vik-icon-Maps Download");
 	layer_tool->radioActionEntry.label = strdup(N_("_Maps Download"));
 	layer_tool->radioActionEntry.accelerator = NULL;
