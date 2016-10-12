@@ -559,7 +559,7 @@ void TreeView::select_cb(void) /* Slot. */
 				  tree_item_type)) {
 
 		/* Redraw required. */
-		window->get_layers_panel()->emit_update();
+		window->get_layers_panel()->emit_update_cb();
 	}
 }
 

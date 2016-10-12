@@ -71,7 +71,6 @@ namespace SlavGPS {
 		Layer * get_layer_of_type(LayerType layer_type);
 		void set_viewport(Viewport * viewport);
 		Viewport * get_viewport();
-		void emit_update();
 		bool new_layer(LayerType layer_type);
 		void clear();
 		LayerAggregate * get_top_layer();
@@ -124,6 +123,10 @@ namespace SlavGPS {
 
 	public slots:
 		bool properties();
+		void emit_update_cb();
+
+	signals:
+		void update(void);
 
 	};
 

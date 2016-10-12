@@ -114,7 +114,7 @@ void SlavGPS::layer_init(void)
  */
 bool Layer::idle_draw() /* Slot. */
 {
-	fprintf(stderr, "layer %s emits 'update' signal\n", this->name);
+	qDebug() << "SIGNAL: Layer: layer" << this->name << "emits 'update' signal";
 	emit this->update();
 	return false; /* Nothing else to do. */
 }
@@ -127,8 +127,8 @@ bool Layer::idle_draw() /* Slot. */
  */
 void Layer::emit_update()
 {
-#ifndef SLAVGPS_QT
 	if (this->visible && this->realized) {
+#if 0
 		GThread * thread = this->get_window()->get_thread();
 		if (!thread) {
 			/* Do nothing. */
@@ -140,20 +140,16 @@ void Layer::emit_update()
 		/* Only ever draw when there is time to do so. */
 		if (g_thread_self() != thread) {
 			/* Drawing requested from another (background) thread, so handle via the gdk thread method. */
-#if 0
 			gdk_threads_add_idle((GSourceFunc) idle_draw, this);
-#else
-			emit this->update();
-#endif
 		} else {
-#if 0
+
 			g_idle_add((GSourceFunc) idle_draw, this);
-#else
-			emit this->update();
 #endif
+			this->idle_draw();
+#if 0
 		}
-	}
 #endif
+	}
 }
 
 
@@ -200,12 +196,13 @@ void vik_layer_emit_update_secondary(Layer * layer)
 void Layer::emit_update_secondary(void) /* Slot. */
 {
 	if (this->visible) {
-		fprintf(stderr, "scheduling 'idle_draw' for layer %s\n", this->name);
+		qDebug() << "II: Layer: emit update secondary";
 		/* TODO: this can used from the background - e.g. in acquire
 		   so will need to flow background update status through too. */
 #if 0
 		g_idle_add((GSourceFunc) idle_draw, this);
 #else
+		qDebug() << "SIGNAL: Layer: emit secondary update";
 		emit this->update();
 #endif
 	}

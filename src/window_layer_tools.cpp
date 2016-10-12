@@ -762,7 +762,7 @@ static VikLayerToolFuncStatus ruler_click(Layer * layer, QMouseEvent * event, La
 		tool->ruler->start_coord = coord;
 	} else {
 		tool->viewport->set_center_screen((int) event->x(), (int) event->y());
-		tool->window->draw_update();
+		tool->window->draw_update_cb();
 	}
 
 	return VIK_LAYER_TOOL_ACK;
@@ -884,7 +884,7 @@ static VikLayerToolFuncStatus ruler_release(Layer * layer, QMouseEvent * event, 
 static void ruler_deactivate(Layer * layer, LayerTool * tool)
 {
 	fprintf(stderr, "LAYER TOOLS: RULER DEACTIVATE, tool's ->deactivate() called\n");
-	tool->window->draw_update();
+	tool->window->draw_update_cb();
 }
 
 

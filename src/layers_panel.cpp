@@ -62,7 +62,6 @@ typedef struct {
 } new_layer_data_t;
 
 enum {
-	VLP_UPDATE_SIGNAL,
 	VLP_DELETE_LAYER_SIGNAL,
 	VLP_LAST_SIGNAL
 };
@@ -72,7 +71,6 @@ static unsigned int layers_panel_signals[VLP_LAST_SIGNAL] = { 0 };
 
 
 
-static void vik_layers_panel_emit_update_cb(LayersPanel * panel);
 static void vik_layers_panel_cut_selected_cb(LayersPanel * panel);
 static void vik_layers_panel_copy_selected_cb(LayersPanel * panel);
 static bool vik_layers_panel_paste_selected_cb(LayersPanel * panel);
@@ -106,7 +104,6 @@ static void layers_move_item_down_cb(LayersPanel * panel);
 void SlavGPS::layers_panel_init(void)
 {
 #ifndef SLAVGPS_QT
-	layers_panel_signals[VLP_UPDATE_SIGNAL] = g_signal_new("update", G_TYPE_OBJECT, (GSignalFlags) (G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION), 0, NULL, NULL, g_cclosure_marshal_VOID__VOID, G_TYPE_NONE, 0);
 	layers_panel_signals[VLP_DELETE_LAYER_SIGNAL] = g_signal_new("delete_layer", G_TYPE_OBJECT, (GSignalFlags) (G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION), 0, NULL, NULL, g_cclosure_marshal_VOID__VOID, G_TYPE_NONE, 0);
 #endif
 }
@@ -203,10 +200,11 @@ LayersPanel::LayersPanel(Window * parent) : QWidget((QWidget *) parent)
 	//QStandardItem * coord = this->tree_view->add_layer(layer, this->toplayer, this->toplayer_item, false, 0, 0);
 
 	connect(this->tree_view, SIGNAL(layer_needs_redraw(sg_uid_t)), this->window, SLOT(draw_layer_cb(sg_uid_t)));
+	connect(this->toplayer, SIGNAL(update(void)), this, SLOT(emit_update_cb(void)));
 
 
 #ifndef SLAVGPS_QT
-	g_signal_connect_swapped(G_OBJECT(this->toplayer->get_toolkit_object()), "update", G_CALLBACK(vik_layers_panel_emit_update_cb), this);
+
 
 	g_signal_connect_swapped (this->tree_view->get_toolkit_widget(), "popup_menu", G_CALLBACK(menu_popup_cb), this);
 	g_signal_connect_swapped (this->tree_view->get_toolkit_widget(), "button_press_event", G_CALLBACK(layers_button_press_cb), this);
@@ -326,24 +324,15 @@ static GtkWidget* layers_panel_create_popup(LayersPanel * panel, bool full)
  */
 static bool idle_draw_panel(LayersPanel * panel)
 {
-#ifndef SLAVGPS_QT
-	g_signal_emit(G_OBJECT(panel->panel_box_), layers_panel_signals[VLP_UPDATE_SIGNAL], 0);
-#endif
+	qDebug() << "SIGNAL: LayersPanel::update()";
+	emit panel->update();
 	return false; /* Nothing else to do. */
 }
 
 
 
 
-void vik_layers_panel_emit_update_cb(LayersPanel * panel)
-{
-	panel->emit_update();
-}
-
-
-
-
-void LayersPanel::emit_update()
+void LayersPanel::emit_update_cb()
 {
 #ifndef SLAVGPS_QT
 	GThread * thread = window_from_widget(this->panel_box_)->get_thread();
@@ -357,9 +346,13 @@ void LayersPanel::emit_update()
 		/* Drawing requested from another (background) thread, so handle via the gdk thread method. */
 		gdk_threads_add_idle((GSourceFunc) idle_draw_panel, this);
 	} else {
+#endif
+		qDebug() << "II: Layers Panel: scheduling idle draw panel in response to update signal";
 		g_idle_add((GSourceFunc) idle_draw_panel, this);
+#if 0
 	}
 #endif
+
 }
 
 
@@ -689,7 +682,7 @@ void LayersPanel::add_layer(Layer * layer)
 #endif
 	}
 
-	this->emit_update();
+	this->emit_update_cb();
 }
 
 
@@ -710,7 +703,7 @@ void LayersPanel::move_item(bool up)
 		if (parent) { /* Not toplevel. */
 #ifndef SLAVGPS_QT
 			parent->move_layer(item, up);
-			this->emit_update();
+			this->emit_update_cb();
 #endif
 		}
 	}
@@ -796,7 +789,7 @@ void LayersPanel::cut_selected()
 				g_signal_emit(G_OBJECT(this->panel_box_), layers_panel_signals[VLP_DELETE_LAYER_SIGNAL], 0);
 
 				if (parent->delete_layer(item)) {
-					this->emit_update();
+					this->emit_update_cb();
 				}
 			}
 		} else {
@@ -898,7 +891,7 @@ void LayersPanel::delete_selected()
 				g_signal_emit(G_OBJECT(this->panel_box_), layers_panel_signals[VLP_DELETE_LAYER_SIGNAL], 0);
 
 				if (parent->delete_layer(item)) {
-					this->emit_update();
+					this->emit_update_cb();
 				}
 			}
 		} else {

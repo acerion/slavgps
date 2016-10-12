@@ -46,7 +46,6 @@ namespace SlavGPS {
 	public:
 		Window();
 
-		void draw_update();
 		void draw_sync();
 		void draw_status();
 		void draw_redraw();
@@ -85,6 +84,7 @@ namespace SlavGPS {
 	public slots:
 		void menu_layer_new_cb(void);
 		void draw_layer_cb(sg_uid_t uid);
+		void draw_update_cb(void);
 
 
 		void view_full_screen_cb(bool new_state);

@@ -2278,7 +2278,7 @@ void Viewport::wheelEvent(QWheelEvent * event)
 	}
 
 	qDebug() << "II: Viewport: wheel event, call Window::draw_update()" << __FUNCTION__ << __LINE__;
-	this->window->draw_update();
+	this->window->draw_update_cb();
 }
 
 

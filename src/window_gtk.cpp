@@ -888,21 +888,6 @@ static void newwindow_cb(GtkAction *a, Window * window)
 
 
 
-static void draw_update_cb(Window * window)
-{
-	window->draw_update();
-}
-
-
-
-
-void Window::draw_update()
-{
-}
-
-
-
-
 static void draw_sync_cb(Window * window)
 {
 	window->draw_sync();

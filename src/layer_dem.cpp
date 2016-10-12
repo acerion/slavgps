@@ -329,6 +329,7 @@ static int dem_layer_load_list_thread(dem_load_thread_data * dltd, background_jo
 	//gdk_threads_enter();
 	/* Test is helpful to prevent Gtk-CRITICAL warnings if the program is exitted whilst loading. */
 	if (dltd->layer) {
+		qDebug() << "II: Layer DEM: will emit layer update B";
 		dltd->layer->emit_update(); /* NB update from background thread. */
 	}
 	//gdk_threads_leave();
@@ -1315,6 +1316,7 @@ static void dem_download_thread(DEMDownloadParams * p, background_job_t * backgr
 		p->layer->weak_unref(LayerDEM::weak_ref_cb, p);
 
 		if (p->layer->add_file(p->dest)) {
+			qDebug() << "II: Layer DEM: will emit layer update A";
 			p->layer->emit_update(); /* NB update from background thread. */
 		}
 	}

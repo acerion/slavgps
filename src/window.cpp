@@ -61,7 +61,7 @@ Window::Window()
 
 	/* Own signals. */
 	connect(this->viewport, SIGNAL(updated_center(void)), this, SLOT(center_changed_cb(void)));
-
+	connect(this->layers_panel, SIGNAL(update()), this, SLOT(draw_update_cb()));
 
 
 #if 0
@@ -142,7 +142,7 @@ Window::Window()
 	g_signal_connect_swapped(G_OBJECT(this->viewport->get_toolkit_object()), "button_release_event", G_CALLBACK(draw_release_cb), this);
 
 
-	g_signal_connect_swapped(G_OBJECT(this->layers_panel->get_toolkit_widget()), "update", G_CALLBACK(draw_update_cb), this);
+
 	g_signal_connect_swapped(G_OBJECT(this->layers_panel->get_toolkit_widget()), "delete_layer", G_CALLBACK(vik_window_clear_highlight_cb), this);
 
 	// Allow key presses to be processed anywhere
@@ -489,7 +489,7 @@ void Window::create_actions(void)
 
 
 
-void Window::draw_update()
+void Window::draw_update_cb()
 {
 	qDebug() << "II: Window: redraw + sync begin" << __FUNCTION__ << __LINE__;
 	this->draw_redraw();
@@ -553,8 +553,8 @@ void Window::menu_layer_new_cb(void) /* Slot. */
 	qDebug() << "Window: clicked \"layer new\" for layer type" << (int) layer_type << Layer::get_interface(layer_type)->fixed_layer_name;
 
 	if (this->layers_panel->new_layer(layer_type)) {
-		qDebug() << "II: Window: new layer, call draw_update()" << __FUNCTION__ << __LINE__;
-		this->draw_update();
+		qDebug() << "II: Window: new layer, call draw_update_cb()" << __FUNCTION__ << __LINE__;
+		this->draw_update_cb();
 		this->modified = true;
 	}
 
@@ -1046,7 +1046,7 @@ void Window::pan_move(QMouseEvent * event)
 		this->pan_move_flag = true;
 		this->pan_x = event->x();
 		this->pan_y = event->y();
-		this->draw_update();
+		this->draw_update_cb();
 	}
 }
 
@@ -1089,7 +1089,7 @@ void Window::pan_release(QMouseEvent * event)
 	this->pan_x = -1;
 	this->pan_y = -1;
 	if (do_draw) {
-		this->draw_update();
+		this->draw_update_cb();
 	}
 }
 
@@ -1223,7 +1223,7 @@ void Window::draw_scale_cb(bool new_state)
 	assert (new_state != this->draw_scale);
 	if (new_state != this->draw_scale) {
 		this->viewport->set_draw_scale(new_state);
-		this->draw_update();
+		this->draw_update_cb();
 		this->draw_scale = !this->draw_scale;
 	}
 }
@@ -1236,7 +1236,7 @@ void Window::draw_centermark_cb(bool new_state)
 	assert (new_state != this->draw_centermark);
 	if (new_state != this->draw_centermark) {
 		this->viewport->set_draw_centermark(new_state);
-		this->draw_update();
+		this->draw_update_cb();
 		this->draw_centermark = !this->draw_centermark;
 	}
 }
@@ -1248,7 +1248,7 @@ void Window::draw_highlight_cb(bool new_state)
 	assert (new_state != this->draw_highlight);
 	if (new_state != this->draw_highlight) {
 		this->viewport->set_draw_highlight(new_state);
-		this->draw_update();
+		this->draw_update_cb();
 		this->draw_highlight = !this->draw_highlight;
 	}
 }
@@ -1391,7 +1391,7 @@ void Window::zoom_cb(void)
 		window->viewport->set_zoom(what);
 	}
 #endif
-	this->draw_update();
+	this->draw_update_cb();
 }
 
 
@@ -1405,7 +1405,7 @@ void Window::zoom_to_cb(void)
 	if (a_dialog_custom_zoom(window->get_toolkit_window(), &xmpp, &ympp)) {
 		window->viewport->set_xmpp(xmpp);
 		window->viewport->set_ympp(ympp);
-		window->draw_update();
+		window->draw_update_cb();
 	}
 #endif
 }
