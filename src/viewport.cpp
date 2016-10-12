@@ -233,19 +233,11 @@ Viewport::~Viewport()
 		a_settings_set_double(VIK_SETTINGS_VIEW_LAST_ZOOM_Y, this->ympp);
 	}
 
-	if (this->centers) {
-		delete this->centers;
-	}
+	delete this->centers;
+	delete this->scr_buffer;
+	delete this->snapshot_buffer;
 
 #ifndef SLAVGPS_QT
-	if (this->scr_buffer) {
-		g_object_unref(G_OBJECT (this->scr_buffer));
-	}
-
-	if (this->snapshot_buffer) {
-		g_object_unref(G_OBJECT (this->snapshot_buffer));
-	}
-
 	if (this->background_gc) {
 		g_object_unref(G_OBJECT (this->background_gc));
 	}
@@ -423,21 +415,21 @@ void Viewport::configure_manually(int width_, unsigned int height_)
 	this->size_height_2 = this->size_height / 2;
 
 	if (this->scr_buffer) {
-		qDebug() << "II: deleting old scr_buffer" << __FUNCTION__ << __LINE__;
+		qDebug() << "II: Viewport: deleting old scr_buffer";
 		delete this->scr_buffer;
 	}
 
-	qDebug() << "II: Viewport creating new scr_buffer with size" << this->size_width << this->size_height << __FUNCTION__ << __LINE__;
+	qDebug() << "II: Viewport creating new scr_buffer with size" << this->size_width << this->size_height;
 	this->scr_buffer = new QPixmap(this->size_width, this->size_height);
 	this->scr_buffer->fill();
 
-#if 0
 	/* TODO trigger: only if this is enabled!!! */
 	if (this->snapshot_buffer) {
-		g_object_unref(G_OBJECT (this->snapshot_buffer));
+		qDebug() << "DD: Viewport: deleting old snapshot buffer";
+		delete this->snapshot_buffer;
 	}
-	this->snapshot_buffer = gdk_pixmap_new(gtk_widget_get_window(GTK_WIDGET(this->drawing_area_)), this->size_width, this->size_height, -1);
-#endif
+	qDebug() << "II: Viewport creating new snapshot buffer with size" << this->size_width << this->size_height;
+	this->snapshot_buffer = new QPixmap(this->size_width, this->size_height);
 }
 
 
@@ -483,17 +475,16 @@ bool Viewport::configure()
 	this->pen_marks_bg.setColor(QColor("pink"));
 	this->pen_marks_bg.setWidth(6);
 
-#if 0
 
 	/* TODO trigger: only if enabled! */
 	if (this->snapshot_buffer) {
-		g_object_unref(G_OBJECT (this->snapshot_buffer));
+		qDebug() << "DD: Viewport: deleting old snapshot buffer";
+		delete this->snapshot_buffer;
 	}
-
-	this->snapshot_buffer = gdk_pixmap_new(gtk_widget_get_window(GTK_WIDGET(this->drawing_area_)), this->size_width, this->size_height, -1);
+	qDebug() << "II: Viewport creating new snapshot buffer with size" << this->size_width << this->size_height;
+	this->snapshot_buffer = new QPixmap(this->size_width, this->size_height);
 	/* TODO trigger. */
 
-#endif
 
 	/* This is down here so it can get a GC (necessary?). */
 	if (!this->background_gc) {
@@ -1894,6 +1885,7 @@ Layer * Viewport::get_trigger()
 void Viewport::snapshot_save()
 {
 	qDebug() << "II: Viewport: save snapshot";
+	*this->snapshot_buffer = *this->scr_buffer;
 #ifndef SLAVGPS_QT
 	gdk_draw_drawable(this->snapshot_buffer, this->background_gc, this->scr_buffer, 0, 0, 0, 0, -1, -1);
 #endif
@@ -1905,6 +1897,7 @@ void Viewport::snapshot_save()
 void Viewport::snapshot_load()
 {
 	qDebug() << "II: Viewport: load snapshot";
+	*this->scr_buffer = *this->snapshot_buffer;
 #ifndef SLAVGPS_QT
 	gdk_draw_drawable(this->scr_buffer, this->background_gc, this->snapshot_buffer, 0, 0, 0, 0, -1, -1);
 #endif

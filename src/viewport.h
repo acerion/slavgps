@@ -310,7 +310,7 @@ namespace SlavGPS {
 
 		/* Trigger stuff. */
 		Layer * trigger = NULL;
-		GdkPixmap * snapshot_buffer = NULL;
+		QPixmap * snapshot_buffer = NULL;
 		bool half_drawn = false;
 
 	private:

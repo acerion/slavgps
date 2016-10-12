@@ -466,9 +466,13 @@ static bool ruler_key_press(Layer * layer, GdkEventKey *event, LayerTool * tool)
 
 
 
+/**
+   @param x1, y1 - coordinates of beginning of ruler (start coordinates, where cursor was pressed down)
+   @param x2, y2 - coordinates of end of ruler (end coordinates, where cursor currently is)
+*/
 static void draw_ruler(Viewport * viewport, QPixmap * pixmap, QPen & pen, int x1, int y1, int x2, int y2, double distance)
 {
-	fprintf(stderr, "LAYER TOOLS: RULER DRAW\n");
+	qDebug() << "II: Layer Tool: Ruler: draw";
 #if 0
 	PangoLayout *pl;
 	GdkGC *labgc = viewport->new_gc("#cccccc", 1);
@@ -716,7 +720,7 @@ LayerTool * SlavGPS::ruler_create(Window * window, Viewport * viewport)
 
 static VikLayerToolFuncStatus ruler_click(Layer * layer, QMouseEvent * event, LayerTool * tool)
 {
-	fprintf(stderr, "LAYER TOOLS: RULER CLICK, tool's ->click() called\n");
+	qDebug() << "II: Viewport: Layer Tools: Ruler: ->click()";
 
 	struct LatLon ll;
 	VikCoord coord;
@@ -728,32 +732,34 @@ static VikLayerToolFuncStatus ruler_click(Layer * layer, QMouseEvent * event, La
 		tool->viewport->screen_to_coord(event->x(), event->y(), &coord);
 		vik_coord_to_latlon(&coord, &ll);
 		a_coords_latlon_to_string(&ll, &lat, &lon);
-		if (tool->ruler->has_oldcoord) {
+		if (tool->ruler->has_start_coord) {
 			DistanceUnit distance_unit = a_vik_get_units_distance();
 			switch (distance_unit) {
 			case DistanceUnit::KILOMETRES:
-				sprintf(temp, "%s %s DIFF %f meters", lat, lon, vik_coord_diff(&coord, &(tool->ruler->oldcoord)));
+				sprintf(temp, "%s %s DIFF %f meters", lat, lon, vik_coord_diff(&coord, &tool->ruler->start_coord));
 				break;
 			case DistanceUnit::MILES:
-				sprintf(temp, "%s %s DIFF %f miles", lat, lon, VIK_METERS_TO_MILES(vik_coord_diff(&coord, &(tool->ruler->oldcoord))));
+				sprintf(temp, "%s %s DIFF %f miles", lat, lon, VIK_METERS_TO_MILES(vik_coord_diff(&coord, &tool->ruler->start_coord)));
 				break;
 			case DistanceUnit::NAUTICAL_MILES:
-				sprintf(temp, "%s %s DIFF %f NM", lat, lon, VIK_METERS_TO_NAUTICAL_MILES(vik_coord_diff(&coord, &(tool->ruler->oldcoord))));
+				sprintf(temp, "%s %s DIFF %f NM", lat, lon, VIK_METERS_TO_NAUTICAL_MILES(vik_coord_diff(&coord, &tool->ruler->start_coord)));
 				break;
 			default:
 				sprintf(temp, "Just to keep the compiler happy");
 				fprintf(stderr, "CRITICAL: Houston, we've had a problem. distance=%d\n", distance_unit);
 			}
 
-			tool->ruler->has_oldcoord = false;
+			qDebug() << "II: Viewport: Layer Tools: Ruler: second click, dropping start coordinates";
+			tool->ruler->has_start_coord = false;
 		} else {
 			sprintf(temp, "%s %s", lat, lon);
-			tool->ruler->has_oldcoord = true;
+			qDebug() << "II: Viewport: Layer Tools: Ruler: first click, saving start coordinates";
+			tool->ruler->has_start_coord = true;
 		}
 
 		QString message(temp);
 		tool->window->status_bar->set_message(StatusBarField::INFO, message);
-		tool->ruler->oldcoord = coord;
+		tool->ruler->start_coord = coord;
 	} else {
 		tool->viewport->set_center_screen((int) event->x(), (int) event->y());
 		tool->window->draw_update();
@@ -767,88 +773,93 @@ static VikLayerToolFuncStatus ruler_click(Layer * layer, QMouseEvent * event, La
 
 static VikLayerToolFuncStatus ruler_move(Layer * layer, QMouseEvent * event, LayerTool * tool)
 {
-	Window * window = tool->window;
-
-	fprintf(stderr, "LAYER TOOLS: RULER MOVE, tool's ->move() called\n");
+	qDebug() << "II: Layer Tools: Ruler: ->move()";
 
 	struct LatLon ll;
 	VikCoord coord;
 	char temp[128] = { 0 };
 
-	if (tool->ruler->has_oldcoord) {
-		static QPixmap * buf = NULL;
-		char * lat = NULL;
-		char * lon = NULL;
-		int w1 = tool->viewport->get_width();
-		int h1 = tool->viewport->get_height();
-		if (!buf) {
-			fprintf(stderr, "LAYER TOOL RULER: creating new pixmap with %d/%d (%s:%d)\n", w1, h1, __FUNCTION__, __LINE__);
-			buf = new QPixmap(w1, h1);
-		}
+	if (!tool->ruler->has_start_coord) {
+		qDebug() << "II: Layer Tools: Ruler: not drawing, we don't have start coordinates";
+		return VIK_LAYER_TOOL_ACK;
+	}
 
-		int w2 = buf->width();
-		int h2 = buf->height();;
-		if (w1 != w2 || h1 != h2) {
+	static QPixmap * buf = NULL;
+	char * lat = NULL;
+	char * lon = NULL;
+	int w1 = tool->viewport->get_width();
+	int h1 = tool->viewport->get_height();
+	if (!buf) {
+		qDebug() << "II: Layer Tools: Ruler: creating new pixmap of size" << w1 << h1;
+		buf = new QPixmap(w1, h1);
+	} else {
+		if (w1 != buf->width() || h1 != buf->height()) {
+			qDebug() << "EE Layer Tools: Ruler: discarding old pixmap, creating new pixmap of size" << w1 << h1;
 			delete buf;
-			fprintf(stderr, "LAYER TOOL RULER: creating new pixmap with %d/%d (%s:%d)\n", w1, h1, __FUNCTION__, __LINE__);
 			buf = new QPixmap(w1, h1);
-
 		}
-		buf->fill();
+	}
+	buf->fill(QColor("transparent"));
+	//buf->fill();
 
-		tool->viewport->screen_to_coord(event->x(), event->y(), &coord);
-		vik_coord_to_latlon(&coord, &ll);
-		int oldx, oldy;
-		tool->viewport->coord_to_screen(&tool->ruler->oldcoord, &oldx, &oldy);
+	tool->viewport->screen_to_coord(event->x(), event->y(), &coord);
+	vik_coord_to_latlon(&coord, &ll);
 
-		//gdk_draw_drawable(buf, gtk_widget_get_style(tool->viewport->get_toolkit_widget())->black_gc,
-		//		  tool->viewport->get_pixmap(), 0, 0, 0, 0, -1, -1);
+	int start_x;
+	int start_y;
+	tool->viewport->coord_to_screen(&tool->ruler->start_coord, &start_x, &start_y);
 
-		QPen pen("black");
-		pen.setWidth(1);
-		//draw_ruler(tool->viewport, buf, gtk_widget_get_style(tool->viewport->get_toolkit_widget())->black_gc, oldx, oldy, event->x(), event->y(), vik_coord_diff(&coord, &(tool->ruler->oldcoord)));
-		draw_ruler(tool->viewport, buf, pen, oldx, oldy, event->x(), event->y(), vik_coord_diff(&coord, &(tool->ruler->oldcoord)));
+	//gdk_draw_drawable(buf, gtk_widget_get_style(tool->viewport->get_toolkit_widget())->black_gc,
+	//		  tool->viewport->get_pixmap(), 0, 0, 0, 0, -1, -1);
 
+	QPen pen("black");
+	pen.setWidth(1);
+	//draw_ruler(tool->viewport, buf, gtk_widget_get_style(tool->viewport->get_toolkit_widget())->black_gc, start_x, start_y, event->x(), event->y(), vik_coord_diff(&coord, &(tool->ruler->start_coord)));
+	draw_ruler(tool->viewport, buf, pen, start_x, start_y, event->x(), event->y(), vik_coord_diff(&coord, &tool->ruler->start_coord));
 
-		if (draw_buf_done) {
+	if (draw_buf_done) {
 #if 0
-			static draw_buf_data_t pass_along;
-			pass_along.window = gtk_widget_get_window(tool->viewport->get_toolkit_widget());
-			pass_along.gdk_style = gtk_widget_get_style(tool->viewport->get_toolkit_widget())->black_gc;
-			pass_along.pixmap = buf;
-			g_idle_add_full (G_PRIORITY_HIGH_IDLE + 10, (GSourceFunc) draw_buf, (void *) &pass_along, NULL);
-			draw_buf_done = false;
+		static draw_buf_data_t pass_along;
+		pass_along.window = gtk_widget_get_window(tool->viewport->get_toolkit_widget());
+		pass_along.gdk_style = gtk_widget_get_style(tool->viewport->get_toolkit_widget())->black_gc;
+		pass_along.pixmap = buf;
+		g_idle_add_full (G_PRIORITY_HIGH_IDLE + 10, (GSourceFunc) draw_buf, (void *) &pass_along, NULL);
+		draw_buf_done = false;
 
 #else
-			QPainter painter(tool->viewport->scr_buffer);
-			painter.drawPixmap(0, 0, *buf);
-			tool->viewport->update();
-			draw_buf_done = true;
+		QPainter painter(tool->viewport->scr_buffer);
+		//painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
+		painter.drawPixmap(0, 0, *buf);
+		tool->viewport->update();
+		draw_buf_done = true;
 #endif
 
-		}
-
-
-		a_coords_latlon_to_string(&ll, &lat, &lon);
-		DistanceUnit distance_unit = a_vik_get_units_distance();
-		switch (distance_unit) {
-		case DistanceUnit::KILOMETRES:
-			sprintf(temp, "%s %s DIFF %f meters", lat, lon, vik_coord_diff(&coord, &(tool->ruler->oldcoord)));
-			break;
-		case DistanceUnit::MILES:
-			sprintf(temp, "%s %s DIFF %f miles", lat, lon, VIK_METERS_TO_MILES (vik_coord_diff(&coord, &(tool->ruler->oldcoord))));
-			break;
-		case DistanceUnit::NAUTICAL_MILES:
-			sprintf(temp, "%s %s DIFF %f NM", lat, lon, VIK_METERS_TO_NAUTICAL_MILES (vik_coord_diff(&coord, &(tool->ruler->oldcoord))));
-			break;
-		default:
-			sprintf(temp, "Just to keep the compiler happy");
-			fprintf(stderr, "CRITICAL: Houston, we've had a problem. distance=%d\n", distance_unit);
-		}
-
-		QString message(temp);
-		tool->window->status_bar->set_message(StatusBarField::INFO, message);
 	}
+
+
+	a_coords_latlon_to_string(&ll, &lat, &lon);
+	DistanceUnit distance_unit = a_vik_get_units_distance();
+	switch (distance_unit) {
+	case DistanceUnit::KILOMETRES:
+		sprintf(temp, "%s %s DIFF %f meters", lat, lon, vik_coord_diff(&coord, &tool->ruler->start_coord));
+		break;
+	case DistanceUnit::MILES:
+		sprintf(temp, "%s %s DIFF %f miles", lat, lon, VIK_METERS_TO_MILES (vik_coord_diff(&coord, &tool->ruler->start_coord)));
+		break;
+	case DistanceUnit::NAUTICAL_MILES:
+		sprintf(temp, "%s %s DIFF %f NM", lat, lon, VIK_METERS_TO_NAUTICAL_MILES (vik_coord_diff(&coord, &tool->ruler->start_coord)));
+		break;
+	default:
+		sprintf(temp, "Just to keep the compiler happy");
+		fprintf(stderr, "CRITICAL: Houston, we've had a problem. distance=%d\n", distance_unit);
+	}
+
+	QString message(temp);
+	tool->window->status_bar->set_message(StatusBarField::INFO, message);
+
+	/* We have used the start coordinate to draw a ruler. The coordinate should be discarded on LMB release. */
+	tool->ruler->invalidate_start_coord = true;
+
 	return VIK_LAYER_TOOL_ACK;
 }
 
@@ -857,7 +868,13 @@ static VikLayerToolFuncStatus ruler_move(Layer * layer, QMouseEvent * event, Lay
 
 static VikLayerToolFuncStatus ruler_release(Layer * layer, QMouseEvent * event, LayerTool * tool)
 {
-	fprintf(stderr, "LAYER TOOLS: RULER RELEASE, tool's ->release() called\n");
+	qDebug() << "II: Viewport: Layer Tools: Ruler: ->release()";
+	if (tool->ruler->invalidate_start_coord) {
+		/* In ->move() we have been using ->start_coord to draw a ruler.
+		   Now the ->start_coord is unnecessary and should be discarded. */
+		tool->ruler->invalidate_start_coord = false;
+		tool->ruler->has_start_coord = false;
+	}
 	return VIK_LAYER_TOOL_ACK;
 }
 
@@ -877,7 +894,8 @@ static bool ruler_key_press(Layer * layer, GdkEventKey *event, LayerTool * tool)
 {
 #if 0
 	if (event->keyval == GDK_Escape) {
-		tool->ruler->has_oldcoord = false;
+		tool->ruler->invalidate_start_coord = false;
+		tool->ruler->has_start_coord = false;
 		ruler_deactivate(layer, tool);
 		return true;
 	}
