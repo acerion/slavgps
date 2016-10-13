@@ -26,13 +26,10 @@
 #include <cstring>
 #include <cstdlib>
 #include <cassert>
+#include <future> /* std::async */
 
 #include <glib/gi18n.h>
-#ifdef SLAVGPS_QT
 #include <QPushButton>
-#else
-#include <gdk/gdkkeysyms.h>
-#endif
 
 #include "settings.h"
 #include "layers_panel.h"
@@ -43,11 +40,8 @@
 #include "clipboard.h"
 #endif
 #include "globals.h"
-#ifndef SLAVGPS_QT
 #include "window.h"
-#endif
 
-#include "window.h"
 
 
 
@@ -322,11 +316,11 @@ static GtkWidget* layers_panel_create_popup(LayersPanel * panel, bool full)
 /**
  * Invoke the actual drawing via signal method.
  */
-static bool idle_draw_panel(LayersPanel * panel)
+void LayersPanel::idle_draw_panel(LayersPanel * panel)
 {
 	qDebug() << "SIGNAL: LayersPanel::update()";
 	emit panel->update();
-	return false; /* Nothing else to do. */
+	return;
 }
 
 
@@ -334,25 +328,8 @@ static bool idle_draw_panel(LayersPanel * panel)
 
 void LayersPanel::emit_update_cb()
 {
-#ifndef SLAVGPS_QT
-	GThread * thread = window_from_widget(this->panel_box_)->get_thread();
-	if (!thread) {
-		/* Do nothing. */
-		return;
-	}
-
-	/* Only ever draw when there is time to do so. */
-	if (g_thread_self() != thread) {
-		/* Drawing requested from another (background) thread, so handle via the gdk thread method. */
-		gdk_threads_add_idle((GSourceFunc) idle_draw_panel, this);
-	} else {
-#endif
-		qDebug() << "II: Layers Panel: scheduling idle draw panel in response to update signal";
-		g_idle_add((GSourceFunc) idle_draw_panel, this);
-#if 0
-	}
-#endif
-
+	qDebug() << "II: Layers Panel: scheduling idle draw panel in response to update signal";
+	std::async(std::launch::async, LayersPanel::idle_draw_panel, this);
 }
 
 

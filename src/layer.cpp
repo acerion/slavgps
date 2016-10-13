@@ -28,6 +28,7 @@
 #include <cstring>
 #include <cstdlib>
 #include <cassert>
+#include <future> /* std::async */
 
 #include <QString>
 #include <QDebug>
@@ -36,6 +37,7 @@
 
 #include "layer_defaults.h"
 #include "layer.h"
+#include "window.h"
 #ifndef SLAVGPS_QT
 #include "viktrwlayer.h"
 #endif
@@ -112,11 +114,11 @@ void SlavGPS::layer_init(void)
 /**
  * Invoke the actual drawing via signal method.
  */
-bool Layer::idle_draw() /* Slot. */
+void Layer::idle_draw(Layer * layer)
 {
-	qDebug() << "SIGNAL: Layer: layer" << this->name << "emits 'update' signal";
-	emit this->update();
-	return false; /* Nothing else to do. */
+	qDebug() << "SIGNAL: Layer: layer" << layer->name << "emits 'update' signal";
+	emit layer->update();
+	return;
 }
 
 
@@ -129,26 +131,9 @@ void Layer::emit_update()
 {
 	if (this->visible && this->realized) {
 #if 0
-		GThread * thread = this->get_window()->get_thread();
-		if (!thread) {
-			/* Do nothing. */
-			return;
-		}
-
 		Window::set_redraw_trigger(this);
-
-		/* Only ever draw when there is time to do so. */
-		if (g_thread_self() != thread) {
-			/* Drawing requested from another (background) thread, so handle via the gdk thread method. */
-			gdk_threads_add_idle((GSourceFunc) idle_draw, this);
-		} else {
-
-			g_idle_add((GSourceFunc) idle_draw, this);
 #endif
-			this->idle_draw();
-#if 0
-		}
-#endif
+		std::async(std::launch::async, Layer::idle_draw, this);
 	}
 }
 
@@ -161,14 +146,10 @@ void Layer::emit_update()
  */
 void vik_layer_emit_update_although_invisible(Layer * layer)
 {
-#ifndef SLAVGPS_QT
+#if 0
 	Window::set_redraw_trigger(layer);
 #endif
-#if 0
-	g_idle_add((GSourceFunc) idle_draw, layer);
-#else
-	emit layer->update();
-#endif
+	std::async(std::launch::async, Layer::idle_draw, layer);
 
 }
 
@@ -181,11 +162,7 @@ void vik_layer_emit_update_secondary(Layer * layer)
 	if (layer->visible) {
 		/* TODO: this can used from the background - e.g. in acquire
 		   so will need to flow background update status through too. */
-#if 0
-		g_idle_add((GSourceFunc) idle_draw, layer);
-#else
-		emit layer->update();
-#endif
+		std::async(std::launch::async, Layer::idle_draw, layer);
 	}
 }
 
@@ -199,12 +176,7 @@ void Layer::emit_update_secondary(void) /* Slot. */
 		qDebug() << "II: Layer: emit update secondary";
 		/* TODO: this can used from the background - e.g. in acquire
 		   so will need to flow background update status through too. */
-#if 0
-		g_idle_add((GSourceFunc) idle_draw, this);
-#else
-		qDebug() << "SIGNAL: Layer: emit secondary update";
-		emit this->update();
-#endif
+		std::async(std::launch::async, idle_draw, this);
 	}
 }
 

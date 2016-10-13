@@ -214,6 +214,8 @@ namespace SlavGPS {
 		virtual bool set_param_value(uint16_t id, LayerParamValue param_value, Viewport * viewport, bool is_file_operation);
 
 
+		static void idle_draw(Layer * layer);
+
 		static LayerType type_from_string(char const * str);
 
 
@@ -274,7 +276,7 @@ namespace SlavGPS {
 	public slots:
 		void visibility_toggled(QStandardItem * item);
 		void emit_update_secondary(void);
-		bool idle_draw(void);
+
 
 	protected slots:
 		virtual void location_info_cb(void);
