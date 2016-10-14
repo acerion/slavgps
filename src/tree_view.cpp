@@ -1395,6 +1395,8 @@ void TreeView::data_changed_cb(const QModelIndex & top_left, const QModelIndex &
 
 	} else if (item->column() == (int) LayersTreeColumn::NAME) {
 
+		/* TODO: reject empty new name. */
+
 		qDebug() << "II: Tree View: edited item in column NAME: new name is" << item->text();
 		this->get_layer(item)->rename((char *) item->text().data());
 	} else {
