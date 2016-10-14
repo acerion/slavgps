@@ -42,7 +42,7 @@
 
 /* Most of this file is an architechtural flaw. */
 
-void a_dialog_msg(enum QMessageBox::Icon type, QString & text, QString & title);
+void a_dialog_msg(enum QMessageBox::Icon type, const QString & text, const QString & title);
 
 #define a_dialog_info_msg(text, title) a_dialog_msg(QMessageBox::Information, text, title)
 #define a_dialog_warning_msg(text, title) a_dialog_msg(QMessageBox::Warning, text, title)

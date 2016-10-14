@@ -51,7 +51,7 @@ using namespace SlavGPS;
 
 
 
-void a_dialog_msg(enum QMessageBox::Icon type, QString & text, QString & title)
+void a_dialog_msg(enum QMessageBox::Icon type, const QString & text, const QString & title)
 {
 	QMessageBox box(type, title, text, QMessageBox::Ok);
 	box.exec();
