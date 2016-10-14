@@ -794,7 +794,7 @@ void LayerGPS::realize(TreeView * tree_view_, GtkTreeIter *layer_iter)
 			this->tree_view->set_visibility(&iter, false);
 		}
 		trw->realize(this->tree_view, &iter);
-		g_signal_connect_swapped(G_OBJECT(trw->vl), "update", G_CALLBACK(vik_layer_emit_update_secondary), (Layer *) this);
+		g_signal_connect_swapped(G_OBJECT(trw->vl), "update", G_CALLBACK(Layer::emit_update_secondary), (Layer *) this);
 	}
 }
 

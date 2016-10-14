@@ -145,7 +145,8 @@ namespace SlavGPS {
 
 		static Layer * new_(LayerType layer_type, Viewport * viewport, bool interactive);
 
-		void emit_update();
+		void emit_update(void);
+		void emit_update_although_invisible(void);
 
 		LayerInterface * get_interface(void);
 		static LayerInterface * get_interface(LayerType layer_type);
@@ -420,8 +421,6 @@ uint16_t vik_layer_get_menu_items_selection(SlavGPS::Layer * layer);
 /* TODO: put in layerspanel. */
 GdkPixbuf * vik_layer_load_icon(SlavGPS::LayerType layer_type);
 
-void vik_layer_emit_update_secondary(SlavGPS::Layer * layer); /* To be called by aggregate layer only. Doesn't set the trigger. */
-void vik_layer_emit_update_although_invisible(SlavGPS::Layer * layer);
 
 
 typedef struct {

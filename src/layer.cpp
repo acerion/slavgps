@@ -144,26 +144,13 @@ void Layer::emit_update()
  * Should only be done by LayersPanel (hence never used from the background)
  * need to redraw and record trigger when we make a layer invisible.
  */
-void vik_layer_emit_update_although_invisible(Layer * layer)
+void Layer::emit_update_although_invisible()
 {
 #if 0
-	Window::set_redraw_trigger(layer);
+	Window::set_redraw_trigger(this);
 #endif
-	std::async(std::launch::async, Layer::idle_draw, layer);
+	std::async(std::launch::async, Layer::idle_draw, this);
 
-}
-
-
-
-
-/* Doesn't set the trigger. should be done by aggregate layer when child emits update. */
-void vik_layer_emit_update_secondary(Layer * layer)
-{
-	if (layer->visible) {
-		/* TODO: this can used from the background - e.g. in acquire
-		   so will need to flow background update status through too. */
-		std::async(std::launch::async, Layer::idle_draw, layer);
-	}
 }
 
 
@@ -176,7 +163,7 @@ void Layer::emit_update_secondary(void) /* Slot. */
 		qDebug() << "II: Layer: emit update secondary";
 		/* TODO: this can used from the background - e.g. in acquire
 		   so will need to flow background update status through too. */
-		std::async(std::launch::async, idle_draw, this);
+		std::async(std::launch::async, Layer::idle_draw, this);
 	}
 }
 

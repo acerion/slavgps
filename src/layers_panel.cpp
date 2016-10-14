@@ -35,8 +35,8 @@
 #include "layers_panel.h"
 #include "layer_aggregate.h"
 #include "layer_coord.h"
-#ifndef SLAVGPS_QT
 #include "dialog.h"
+#ifndef SLAVGPS_QT
 #include "clipboard.h"
 #endif
 #include "globals.h"
@@ -83,7 +83,6 @@ static GtkActionEntry entries[] = {
 
 
 
-static void layers_item_toggled_cb(LayersPanel * panel, GtkTreeIter * iter);
 static void layers_item_edited_cb(LayersPanel * panel, GtkTreeIter * iter, char const * new_text);
 static void menu_popup_cb(LayersPanel * panel);
 static void layers_popup_cb(LayersPanel * panel);
@@ -195,6 +194,7 @@ LayersPanel::LayersPanel(Window * parent) : QWidget((QWidget *) parent)
 
 	connect(this->tree_view, SIGNAL(layer_needs_redraw(sg_uid_t)), this->window, SLOT(draw_layer_cb(sg_uid_t)));
 	connect(this->toplayer, SIGNAL(update(void)), this, SLOT(emit_update_cb(void)));
+	//connect(this->tree_view, "item_toggled", this, SLOT(item_toggled));
 
 
 #ifndef SLAVGPS_QT
@@ -202,7 +202,6 @@ LayersPanel::LayersPanel(Window * parent) : QWidget((QWidget *) parent)
 
 	g_signal_connect_swapped (this->tree_view->get_toolkit_widget(), "popup_menu", G_CALLBACK(menu_popup_cb), this);
 	g_signal_connect_swapped (this->tree_view->get_toolkit_widget(), "button_press_event", G_CALLBACK(layers_button_press_cb), this);
-	g_signal_connect_swapped (this->tree_view->get_toolkit_widget(), "item_toggled", G_CALLBACK(layers_item_toggled_cb), this);
 	g_signal_connect_swapped (this->tree_view->get_toolkit_widget(), "item_edited", G_CALLBACK(layers_item_edited_cb), this);
 	g_signal_connect_swapped (this->tree_view->get_toolkit_widget(), "key_press_event", G_CALLBACK(layers_key_press_cb), this);
 #endif
@@ -335,42 +334,32 @@ void LayersPanel::emit_update_cb()
 
 
 
-static void layers_item_toggled_cb(LayersPanel * panel, GtkTreeIter * iter)
+/* Why do we have this function? Isn't TreeView::data_changed_cb() enough? */
+void LayersPanel::item_toggled(QStandardItem * item)
 {
-	panel->item_toggled(iter);
-}
-
-
-
-
-void LayersPanel::item_toggled(GtkTreeIter * iter)
-{
-#ifndef SLAVGPS_QT
 	/* Get type and data. */
-	TreeItemType type = this->tree_view->get_item_type(iter);
+	TreeItemType type = this->tree_view->get_item_type(item);
 
 	bool visible;
 	switch (type) {
 	case TreeItemType::LAYER: {
-		Layer * layer = this->tree_view->get_layer(iter);;
+		Layer * layer = this->tree_view->get_layer(item);
 		visible = (layer->visible ^= 1);
-		vik_layer_emit_update_although_invisible(layer); /* Set trigger for half-drawn. */
+		layer->emit_update_although_invisible(); /* Set trigger for half-drawn. */
 		break;
 		}
 	case TreeItemType::SUBLAYER: {
-		sg_uid_t sublayer_uid = this->tree_view->get_sublayer_uid(iter);
-		Layer * parent = this->tree_view->get_parent_layer(iter);
-
-		visible = parent->sublayer_toggle_visible(this->tree_view->get_sublayer_type(iter), sublayer_uid);
-		vik_layer_emit_update_although_invisible(parent);
+		sg_uid_t sublayer_uid = this->tree_view->get_sublayer_uid(item);
+		Layer * parent = this->tree_view->get_parent_layer(item);
+		visible = parent->sublayer_toggle_visible(this->tree_view->get_sublayer_type(item), sublayer_uid);
+		parent->emit_update_although_invisible();
 		break;
 	}
 	default:
 		return;
 	}
 
-	this->tree_view->set_visibility(iter, visible);
-#endif
+	this->tree_view->set_visibility(item, visible);
 }
 
 
@@ -384,6 +373,7 @@ static void layers_item_edited_cb(LayersPanel * panel, GtkTreeIter * iter, char 
 
 
 
+/* Why do we have this function? Isn't TreeView::data_changed_cb() enough? */
 void LayersPanel::item_edited(GtkTreeIter * iter, char const * new_text)
 {
 	if (!new_text) {
@@ -704,13 +694,12 @@ bool LayersPanel::properties()
 	QStandardItem * item = this->tree_view->get_selected_item();
 	if (this->tree_view->get_item_type(item) == TreeItemType::LAYER) {
 		if (this->tree_view->get_layer(item)->type == LayerType::AGGREGATE) {
-#ifndef SLAVGPS_QT
-			a_dialog_info_msg(VIK_GTK_WINDOW_FROM_WIDGET(this->panel_box_), _("Aggregate Layers have no settable properties."));
-#endif
-		}
-		Layer * layer = this->tree_view->get_layer(item);
-		if (layer->properties_dialog(this->viewport)) {
-			layer->emit_update();
+			a_dialog_info_msg("Aggregate Layer has no settable properties.", "Properties");
+		} else {
+			Layer * layer = this->tree_view->get_layer(item);
+			if (layer->properties_dialog(this->viewport)) {
+				layer->emit_update();
+			}
 		}
 		return true;
 	} else {
@@ -1058,12 +1047,12 @@ void LayersPanel::contextMenuEvent(QContextMenuEvent * event)
 	//TreeView * tree_view = this->layers_panel->get_treeview();
 
 	QPoint orig = event->pos();
-	fprintf(stderr, "event %d %d\n", orig.x(), orig.y());
+	qDebug() << "II: Layers Panel: context menu event: event @" << orig.x() << orig.y();
 
 	QPoint v = this->tree_view->pos();
-	fprintf(stderr, "viewport %d %d\n", v.x(), v.y());
+	qDebug() << "II: Layers Panel: context menu event: viewport @" << v;
 	QPoint t = this->tree_view->viewport()->pos();
-	fprintf(stderr, "treeview %d %d\n", t.x(), t.y());
+	qDebug() << "II: Layers Panel: context menu event: treeview @" << t;
 
 	orig.setX(orig.x() - v.x() - t.x());
 	orig.setY(orig.y() - v.y() - t.y());
@@ -1074,24 +1063,24 @@ void LayersPanel::contextMenuEvent(QContextMenuEvent * event)
 	QModelIndex ind = this->tree_view->indexAt(point);
 
 	if (ind.isValid()) {
-		fprintf(stderr, "valid index\n");
-		qDebug() << "row = " << ind.row();
+		qDebug() << "II: Layers Panel: context menu event: valid index";
+		qDebug() << "II: Layers Panel: context menu event: row = " << ind.row();
 		QStandardItem * item = this->tree_view->model->itemFromIndex(ind);
 
 
 		Layer * layer = this->tree_view->get_layer(item);
 		if (layer) {
-			fprintf(stderr, "layer type = %s\n", layer->type_string);
+			qDebug() << "II: Layers Panel: context menu event: layer type =" << layer->type_string;
 		} else {
-			fprintf(stderr, "layer type is NULL\n");
+			qDebug() << "II: Layers Panel: context menu event: layer type is NULL";
 		}
 
 		QStandardItem * parent = item->parent();
 		if (parent) {
 			QStandardItem * item2 = parent->child(ind.row(), 0);
-			qDebug() << "----- item" << item << "item2" << item2;
+			qDebug() << "II: Layers Panel: context menu event: item" << item << "item2" << item2;
 			if (item) {
-				qDebug() << "item.row = " << item->row() << "item.col = " << item->column() << "text = " << item2->text();
+				qDebug() << "II: Layers Panel: context menu event: item.row = " << item->row() << "item.col = " << item->column() << "text = " << item2->text();
 			}
 			item = item2;
 		}
@@ -1103,6 +1092,6 @@ void LayersPanel::contextMenuEvent(QContextMenuEvent * event)
 		menu.addAction(this->qa_layer_remove);
 		menu.exec(QCursor::pos());
 	} else {
-		fprintf(stderr, "INvalid index\n");
+		qDebug() << "II: Layers Panel: context menu event: INvalid index";
 	}
 }
