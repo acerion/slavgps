@@ -366,6 +366,37 @@ void PropertiesDialog::fill(Preferences * preferences)
 
 void PropertiesDialog::fill(Layer * layer)
 {
+#if 1
+	std::map<layer_param_id_t, Parameter *> * params = layer->get_interface()->layer_parameters;
+
+	for (auto iter = params->begin(); iter != params->end(); iter++) {
+		param_id_t group_id = iter->second->group;
+		if (group_id == VIK_LAYER_NOT_IN_PROPERTIES) {
+			iter++;
+			continue;
+		}
+
+		auto form_iter = this->forms.find(group_id);
+		QFormLayout * form = NULL;
+		if (form_iter == this->forms.end()) {
+			QString label("page");
+			form = this->insert_tab(label);
+
+			this->forms.insert(std::pair<param_id_t, QFormLayout *>(group_id, form));
+
+			qDebug() << "II: Parameters Builder: created tab" << label;
+		} else {
+			form = form_iter->second;
+		}
+
+		LayerParamValue param_value = layer->get_param_value(iter->first, false);
+		QString label = QString(iter->second->title);
+		QWidget * widget = this->new_widget(iter->second, param_value);
+		form->addRow(label, widget);
+		qDebug() << "II: UI Builder: adding widget #" << iter->first << iter->second->title << widget;
+		this->widgets.insert(std::pair<layer_param_id_t, QWidget *>(iter->first, widget));
+	}
+#else
 	std::map<layer_param_id_t, Parameter *> * params = layer->get_interface()->layer_parameters;
 	if (!params) {
 		return;
@@ -380,6 +411,7 @@ void PropertiesDialog::fill(Layer * layer)
 
 		iter = this->add_widgets_to_tab(form, layer, iter, end);
 	} while (iter != params->end());
+#endif
 }
 
 
@@ -391,7 +423,16 @@ std::map<layer_param_id_t, Parameter *>::iterator PropertiesDialog::add_widgets_
 
 	qDebug() << "II: UI Builder: vvvvvvvvvv adding widgets to group" << last_group << ":";
 
-	while (iter != end && iter->second->title && iter->second->group == last_group) {
+	while (iter != end && iter->second->group == last_group) {
+
+		if (!iter->second->title) {
+			iter++;
+			continue;
+		}
+		if (iter->second->group == VIK_LAYER_NOT_IN_PROPERTIES) {
+			iter++;
+			continue;
+		}
 
 		LayerParamValue param_value = layer->get_param_value(iter->first, false);
 
@@ -642,9 +683,12 @@ LayerParamValue PropertiesDialog::get_param_value(layer_param_id_t id, Parameter
 {
 	qDebug() << "vvvvvvvvvvv there are " << this->widgets.size() << "widgets";
 
-	QWidget * widget = this->widgets[id];
-
 	LayerParamValue rv = { 0 };
+	QWidget * widget = this->widgets[id];
+	if (!widget) {
+		return rv;
+	}
+
 	switch (param->widget_type) {
 	case LayerWidgetType::COLOR: {
 		QColor c = ((SGColorButton *) widget)->get_color();
