@@ -39,7 +39,7 @@
 
 #include "coords.h"
 #include "coord.h"
-#include "viktrack.h"
+#include "track.h"
 #include "dems.h"
 #include "settings.h"
 #include "util.h"
@@ -257,11 +257,13 @@ Track::~Track()
 	free_string(&type);
 	free_string(&name);
 
+#ifdef K
 	if (property_dialog) {
 		if (GTK_IS_WIDGET (property_dialog)) {
 			gtk_widget_destroy(GTK_WIDGET (property_dialog));
 		}
 	}
+#endif
 }
 
 

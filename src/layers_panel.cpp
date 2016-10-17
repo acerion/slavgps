@@ -564,11 +564,9 @@ bool LayersPanel::new_layer(LayerType layer_type)
 {
 	assert (this->viewport);
 	bool ask_user = false;
-#ifndef SLAVGPS_QT
 	if (layer_type == LayerType::TRW) {
 		(void)a_settings_get_boolean(VIK_SETTINGS_LAYERS_TRW_CREATE_DEFAULT, &ask_user);
 	}
-#endif
 	ask_user = !ask_user;
 
 	assert (layer_type != LayerType::NUM_TYPES);

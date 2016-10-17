@@ -41,8 +41,9 @@
 #include <string.h>
 #endif
 
-#include "viktrwlayer.h"
-#include "thumbnails.h"
+#include "layer_trw.h"
+#include "layer_trw_containers.h"
+//#include "thumbnails.h"
 
 
 
@@ -455,7 +456,9 @@ bool LayerTRWc::has_same_track_names(std::unordered_map<sg_uid_t, Track *> & ht_
 void LayerTRWc::iter_visibility_toggle(std::unordered_map<sg_uid_t, TreeIndex *> & items, TreeView * tree_view)
 {
 	for (auto i = items.begin(); i != items.end(); i++) {
+#ifdef K
 		tree_view->toggle_visibility(i->second);
+#endif
 	}
 }
 
@@ -465,7 +468,9 @@ void LayerTRWc::iter_visibility_toggle(std::unordered_map<sg_uid_t, TreeIndex *>
 void LayerTRWc::set_iter_visibility(std::unordered_map<sg_uid_t, TreeIndex *> & items, TreeView * tree_view, bool on_off)
 {
 	for (auto i = items.begin(); i != items.end(); i++) {
+#ifdef K
 		tree_view->set_visibility(i->second, on_off);
+#endif
 	}
 }
 
@@ -640,9 +645,11 @@ GSList * LayerTRWc::image_wp_make_list(std::unordered_map<sg_uid_t, Waypoint *> 
 	Waypoint * wp = NULL;
 	for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
 		wp = i->second;
+#ifdef K
 		if (wp->image && (!a_thumbnails_exists(wp->image))) {
 			pics = g_slist_append(pics, (void *) g_strdup(wp->image));
 		}
+#endif
 	}
 
 	return pics;

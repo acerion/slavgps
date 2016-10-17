@@ -66,9 +66,7 @@ using namespace SlavGPS;
 /* TODO longone: rename interface free -> finalize. */
 
 extern LayerInterface vik_aggregate_layer_interface;
-#ifndef SLAVGPS_QT
 extern LayerInterface vik_trw_layer_interface;
-#endif
 extern LayerInterface vik_coord_layer_interface;
 #ifndef SLAVGPS_QT
 extern LayerInterface vik_georef_layer_interface;
@@ -172,9 +170,7 @@ void Layer::emit_update_secondary(void) /* Slot. */
 
 static LayerInterface * vik_layer_interfaces[(int) LayerType::NUM_TYPES] = {
 	&vik_aggregate_layer_interface,
-#ifndef SLAVGPS_QT
 	&vik_trw_layer_interface,
-#endif
 	&vik_coord_layer_interface,
 #ifndef SLAVGPS_QT
 	&vik_georef_layer_interface,
@@ -310,13 +306,9 @@ Layer * Layer::new_(LayerType layer_type, Viewport * viewport, bool interactive)
 	if (layer_type == LayerType::AGGREGATE) {
 		layer = new LayerAggregate(viewport);
 
-	}
-#ifndef SLAVGPS_QT
-	else if (layer_type == LayerType::TRW) {
+	} else if (layer_type == LayerType::TRW) {
 		layer = new LayerTRW(viewport);
-	}
-#endif
-	else if (layer_type == LayerType::COORD) {
+	} else if (layer_type == LayerType::COORD) {
 		layer = new LayerCoord(viewport);
 	}
 #ifndef SLAVGPS_QT

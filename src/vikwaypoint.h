@@ -29,10 +29,12 @@
 
 #include <time.h>
 
+#include <QPixmap>
+
 #include "coord.h"
 #include "globals.h"
 
-#include <gdk-pixbuf/gdk-pixdata.h>
+//#include <gdk-pixbuf/gdk-pixdata.h>
 
 
 
@@ -89,7 +91,7 @@ namespace SlavGPS {
 
 		char * symbol = NULL;
 		/* Only for GUI display. */
-		GdkPixbuf * symbol_pixbuf = NULL;
+		QPixmap * symbol_pixbuf = NULL;
 	};
 
 

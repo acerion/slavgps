@@ -29,6 +29,7 @@
 #include <list>
 
 #include "layer.h"
+#include "layer_trw.h"
 #include "viewport.h"
 
 
@@ -40,12 +41,10 @@ namespace SlavGPS {
 
 	/* Forward declarations. */
 	class LayersPanel;
-#ifndef SLAVGPS_QT
 	class Track;
 	struct track_layer_t;
 	struct waypoint_layer_t;
 
-#endif
 
 
 

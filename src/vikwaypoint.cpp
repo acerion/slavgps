@@ -27,7 +27,7 @@
 #include "coord.h"
 #include "vikwaypoint.h"
 #include "globals.h"
-#include "garminsymbols.h"
+//#include "garminsymbols.h"
 #include "dems.h"
 #include "util.h"
 #include <glib/gi18n.h>
@@ -203,15 +203,17 @@ void Waypoint::set_symbol(char const * symname_)
 	/* NB symbol_pixbuf is just a reference, so no need to free it */
 
 	if (symname_ && symname_[0] != '\0') {
+#ifdef K
 		char const * hashed_symname = a_get_hashed_sym(symname_);
 		if (hashed_symname) {
 			symname_ = hashed_symname;
 		}
 		symbol = strdup(symname_);
-		symbol_pixbuf = a_get_wp_sym(symbol);
+		this->symbol_pixbuf = a_get_wp_sym(symbol);
+#endif
 	} else {
 		symbol = NULL;
-		symbol_pixbuf = NULL;
+		this->symbol_pixbuf = NULL;
 	}
 }
 

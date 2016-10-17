@@ -1169,7 +1169,12 @@ QStandardItem * TreeView::add_layer(Layer * layer, Layer * parent_layer, QStanda
 	items << item;
 
 	/* LayersTreeColumn::TIMESTAMP */
+#ifdef K
 	item = new QStandardItem((qlonglong) timestamp);
+#else
+	timestamp = 0;
+	item = new QStandardItem((qlonglong) timestamp);
+#endif
 	variant = QVariant::fromValue(data);
 	item->setData(variant, RoleLayerData);
 	items << item;

@@ -19,7 +19,12 @@ SOURCES += main.cpp \
     layer_coord.cpp \
     layer_aggregate.cpp \
     layer_dem.cpp \
+    layer_trw.cpp \
+    layer_trw_draw.cpp \
+    layer_trw_containers.cpp \
     layers_panel.cpp \
+    track.cpp \
+    vikwaypoint.cpp \
     tree_view.cpp \
     uibuilder.cpp \
     uibuilder_qt.cpp \
@@ -57,7 +62,12 @@ HEADERS += window.h \
     layer_coord.h \
     layer_aggregate.h \
     layer_dem.h \
+    layer_trw.h \
+    layer_trw_draw.h \
+    layer_trw_containers.h \
     layers_panel.h \
+    track.h \
+    layer_trw.h \
     tree_view.h \
     uibuilder.h \
     uibuilder_qt.h \

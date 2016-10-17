@@ -33,7 +33,7 @@
 #include <cstdint>
 
 #include <time.h>
-#include <gtk/gtk.h>
+//#include <gtk/gtk.h>
 
 #ifdef HAVE_MATH_H
 #include <math.h>
@@ -42,6 +42,7 @@
 #include "coord.h"
 #include "bbox.h"
 #include "globals.h"
+#include "slav_qt.h"
 
 
 

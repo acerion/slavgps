@@ -48,7 +48,7 @@
 #include <glib.h>
 #include <glib/gi18n.h>
 
-#include "thumbnails.h"
+//#include "thumbnails.h"
 #include "ui_util.h"
 #include "layer_trw_draw.h"
 #include "settings.h"
@@ -148,6 +148,7 @@ static int track_section_colour_by_speed(Trackpoint * tp1, Trackpoint * tp2, dou
 
 static void draw_utm_skip_insignia(Viewport * viewport, GdkGC * gc, int x, int y)
 {
+#ifdef K
 	/* First draw '+'. */
 	viewport->draw_line(gc, x+5, y,   x-5, y );
 	viewport->draw_line(gc, x,   y+5, x,   y-5);
@@ -155,6 +156,7 @@ static void draw_utm_skip_insignia(Viewport * viewport, GdkGC * gc, int x, int y
 	/* And now draw 'x' on top of it. */
 	viewport->draw_line(gc, x+5, y+5, x-5, y-5);
 	viewport->draw_line(gc, x+5, y-5, x-5, y+5);
+#endif
 }
 
 
@@ -163,7 +165,7 @@ static void draw_utm_skip_insignia(Viewport * viewport, GdkGC * gc, int x, int y
 static void trw_layer_draw_track_label(char * name, char * fgcolour, char * bgcolour, DrawingParams * dp, VikCoord * coord)
 {
 	char *label_markup = g_strdup_printf("<span foreground=\"%s\" background=\"%s\" size=\"%s\">%s</span>", fgcolour, bgcolour, dp->trw->track_fsize_str, name);
-
+#ifdef K
 	if (pango_parse_markup(label_markup, -1, 0, NULL, NULL, NULL, NULL)) {
 		pango_layout_set_markup(dp->trw->tracklabellayout, label_markup, -1);
 	} else {
@@ -179,6 +181,7 @@ static void trw_layer_draw_track_label(char * name, char * fgcolour, char * bgco
 
 	dp->viewport->coord_to_screen(coord, &label_x, &label_y);
 	dp->viewport->draw_layout(dp->trw->track_bg_gc, label_x-width/2, label_y-height/2, dp->trw->tracklabellayout);
+#endif
 }
 
 
@@ -190,6 +193,7 @@ static void trw_layer_draw_track_label(char * name, char * fgcolour, char * bgco
  */
 static void trw_layer_draw_dist_labels(DrawingParams * dp, Track * trk, bool drawing_highlight)
 {
+#ifdef K
 	static const double chunksd[] = {0.25, 0.5, 1.0, 2.0, 5.0, 10.0, 15.0, 20.0,
 					 25.0, 40.0, 50.0, 75.0, 100.0,
 					 150.0, 200.0, 250.0, 500.0, 1000.0};
@@ -294,6 +298,7 @@ static void trw_layer_draw_dist_labels(DrawingParams * dp, Track * trk, bool dra
 			free(name);
 		}
 	}
+#endif
 }
 
 
@@ -304,6 +309,7 @@ static void trw_layer_draw_dist_labels(DrawingParams * dp, Track * trk, bool dra
  */
 static void trw_layer_draw_track_name_labels(DrawingParams * dp, Track * trk, bool drawing_highlight)
 {
+#ifdef K
 	char *fgcolour;
 	if (dp->trw->drawmode == DRAWMODE_BY_TRACK) {
 		fgcolour = gdk_color_to_string(&(trk->color));
@@ -401,6 +407,7 @@ static void trw_layer_draw_track_name_labels(DrawingParams * dp, Track * trk, bo
 	free(fgcolour);
 	free(bgcolour);
 	free(ename);
+#endif
 }
 
 
@@ -415,7 +422,7 @@ static void trw_layer_draw_point_names(DrawingParams * dp, Track * trk, bool dra
 	if (trk->empty()) {
 		return;
 	}
-
+#ifdef K
 	char *fgcolour;
 	if (dp->trw->drawmode == DRAWMODE_BY_TRACK) {
 		fgcolour = gdk_color_to_string(&(trk->color));
@@ -437,6 +444,7 @@ static void trw_layer_draw_point_names(DrawingParams * dp, Track * trk, bool dra
 
 	free(fgcolour);
 	free(bgcolour);
+#endif
 }
 
 
@@ -450,10 +458,12 @@ void trw_layer_draw_track_draw_midarrow(DrawingParams * dp, int x, int y, int ol
 	double len = sqrt(((midx - oldx) * (midx - oldx)) + ((midy - oldy) * (midy - oldy)));
 	/* Avoid divide by zero and ensure at least 1 pixel big. */
 	if (len > 1) {
+#ifdef K
 		double dx = (oldx - midx) / len;
 		double dy = (oldy - midy) / len;
 		dp->viewport->draw_line(main_gc, midx, midy, midx + (dx * dp->cc + dy * dp->ss), midy + (dy * dp->cc - dx * dp->ss));
 		dp->viewport->draw_line(main_gc, midx, midy, midx + (dx * dp->cc - dy * dp->ss), midy + (dy * dp->cc + dx * dp->ss));
+#endif
 	}
 }
 
@@ -462,6 +472,7 @@ void trw_layer_draw_track_draw_midarrow(DrawingParams * dp, int x, int y, int ol
 
 void trw_layer_draw_track_draw_something(DrawingParams * dp, int x, int y, int oldx, int oldy, GdkGC * main_gc, Trackpoint * tp, Trackpoint * tp_next, double min_alt, double alt_diff)
 {
+#ifdef K
 	GdkPoint tmp[4];
 #define FIXALTITUDE(what) \
 	((((Trackpoint *) (what))->altitude - min_alt) / alt_diff * DRAW_ELEVATION_FACTOR * dp->trw->elevation_factor / dp->xmpp)
@@ -484,6 +495,7 @@ void trw_layer_draw_track_draw_something(DrawingParams * dp, int x, int y, int o
 	dp->viewport->draw_polygon(tmp_gc, true, tmp, 4);
 
 	dp->viewport->draw_line(main_gc, oldx, oldy - FIXALTITUDE (tp), x, y - FIXALTITUDE (tp_next));
+#endif
 }
 
 
@@ -494,6 +506,8 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 	if (!trk->visible) {
 		return;
 	}
+
+#ifdef K
 
 	/* TODO: this function is a mess, get rid of any redundancy. */
 
@@ -752,6 +766,7 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 			trw_layer_draw_track_name_labels(dp, trk, drawing_highlight);
 		}
 	}
+#endif
 }
 
 
@@ -822,6 +837,8 @@ int trw_layer_draw_image(Waypoint * wp, int x, int y, DrawingParams * dp)
 		return 0;
 	}
 
+#ifdef K
+
 	GdkPixbuf * pixbuf = NULL;
 	GList * l = g_list_find_custom(dp->trw->image_cache->head, wp->image, (GCompareFunc) cached_pixbuf_cmp);
 	if (l) {
@@ -877,12 +894,11 @@ int trw_layer_draw_image(Waypoint * wp, int x, int y, DrawingParams * dp)
 				dp->viewport->draw_rectangle(dp->viewport->get_gc_highlight(), false,
 							    x - (w / 2) - 2, y - (h / 2) - 2, w + 4, h + 4);
 			}
-
 			dp->viewport->draw_pixbuf(pixbuf, 0, 0, x - (w / 2), y - (h / 2), w, h);
 		}
 		return 0;
 	}
-
+#endif
 	/* If failed to draw picture, default to drawing regular waypoint. */
 	return 1;
 }
@@ -892,6 +908,7 @@ int trw_layer_draw_image(Waypoint * wp, int x, int y, DrawingParams * dp)
 
 void trw_layer_draw_symbol(Waypoint * wp, int x, int y, DrawingParams * dp)
 {
+#ifdef K
 	if (dp->trw->wp_draw_symbols && wp->symbol && wp->symbol_pixbuf) {
 		dp->viewport->draw_pixbuf(wp->symbol_pixbuf, 0, 0, x - gdk_pixbuf_get_width(wp->symbol_pixbuf)/2, y - gdk_pixbuf_get_height(wp->symbol_pixbuf)/2, -1, -1);
 	} else if (wp == dp->trw->current_wp) {
@@ -930,6 +947,7 @@ void trw_layer_draw_symbol(Waypoint * wp, int x, int y, DrawingParams * dp)
 			break;
 		}
 	}
+#endif
 
 	return;
 }
@@ -939,6 +957,7 @@ void trw_layer_draw_symbol(Waypoint * wp, int x, int y, DrawingParams * dp)
 
 void trw_layer_draw_label(Waypoint * wp, int x, int y, DrawingParams * dp)
 {
+#ifdef K
 	/* Thanks to the GPSDrive people (Fritz Ganter et al.) for hints on this part ... yah, I'm too lazy to study documentation. */
 
 	/* Hopefully name won't break the markup (may need to sanitize - g_markup_escape_text()). */
@@ -963,7 +982,7 @@ void trw_layer_draw_label(Waypoint * wp, int x, int y, DrawingParams * dp)
 	} else {
 		label_y = y - dp->trw->wp_size - height - 2;
 	}
-
+#ifdef K
 	/* If highlight mode on, then draw background text in highlight colour */
 	if (dp->highlight) {
 		dp->viewport->draw_rectangle(dp->viewport->get_gc_highlight(), true, label_x - 1, label_y-1,width+2,height+2);
@@ -971,7 +990,8 @@ void trw_layer_draw_label(Waypoint * wp, int x, int y, DrawingParams * dp)
 		dp->viewport->draw_rectangle(dp->trw->waypoint_bg_gc, true, label_x - 1, label_y-1,width+2,height+2);
 	}
 	dp->viewport->draw_layout(dp->trw->waypoint_text_gc, label_x, label_y, dp->trw->wplabellayout);
-
+#endif
+#endif
 	return;
 }
 
@@ -1002,8 +1022,10 @@ void trw_layer_draw_waypoints_cb(std::unordered_map<sg_uid_t, Waypoint *> * wayp
 
 void cached_pixbuf_free(CachedPixbuf * cp)
 {
+#ifdef K
 	g_object_unref(G_OBJECT(cp->pixbuf));
 	free(cp->image);
+#endif
 }
 
 

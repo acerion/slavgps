@@ -37,10 +37,11 @@
 #include "layer.h"
 #include "viewport.h"
 #include "vikwaypoint.h"
-#include "viktrack.h"
+#include "track.h"
 #include "layers_panel.h"
-#include "viktrwlayer_tpwin.h"
+//#include "viktrwlayer_tpwin.h"
 #include "layer_trw_containers.h"
+#include "slav_qt.h"
 
 
 
@@ -63,6 +64,7 @@ namespace SlavGPS {
 
 
 	class LayerTRW;
+	class LayersPanel;
 
 
 
@@ -171,8 +173,10 @@ namespace SlavGPS {
 
 		int read_file(FILE * f, char const * dirpath);
 		void write_file(FILE * f) const;
+#ifdef K
 		void add_menu_items(GtkMenu * menu, void * panel);
 		bool sublayer_add_menu_items(GtkMenu * menu, void * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, GtkTreeIter * iter, Viewport * viewport);
+#endif
 		char const * sublayer_rename_request(const char * newname, void * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, GtkTreeIter * iter);
 		bool sublayer_toggle_visible(SublayerType sublayer_type, sg_uid_t sublayer_uid);
 

@@ -62,9 +62,7 @@ namespace SlavGPS {
 
 	enum class LayerType {
 		AGGREGATE = 0,
-#ifndef SLAVGPS_QT
 		TRW,
-#endif
 		COORD,
 #ifndef SLAVGPS_QT
 		GEOREF,

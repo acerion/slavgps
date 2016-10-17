@@ -26,8 +26,8 @@
 #include <cstdint>
 
 #include <glib.h>
-#include <gtk/gtk.h>
-
+//#include <gtk/gtk.h>
+#include "slav_qt.h"
 
 
 
