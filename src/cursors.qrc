@@ -1,9 +1,9 @@
 <!DOCTYPE RCC><RCC version="1.0">
 <qresource>
-	<file>src/cursors/trw_add_route.png</file>
-	<file>src/cursors/trw_add_tr.png</file>
-	<file>src/cursors/trw_add_wp.png</file>
-	<file>src/cursors/trw_edit_tr.png</file>
-	<file>src/cursors/trw_edit_wp.png </file>
+	<file>cursors/trw_add_route.png</file>
+	<file>cursors/trw_add_tr.png</file>
+	<file>cursors/trw_add_wp.png</file>
+	<file>cursors/trw_edit_tr.png</file>
+	<file>cursors/trw_edit_wp.png</file>
 </qresource>
 </RCC>
