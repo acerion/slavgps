@@ -39,6 +39,8 @@
 #include <math.h>
 #endif
 
+#include <QColor>
+
 #include "coord.h"
 #include "bbox.h"
 #include "globals.h"
@@ -261,7 +263,7 @@ namespace SlavGPS {
 		char * name = NULL;
 		GtkWidget * property_dialog = NULL;
 		bool has_color = false;
-		GdkColor color;
+		QColor color;
 		LatLonBBox bbox;
 	private:
 		static void smoothie(TrackPoints::iterator start, TrackPoints::iterator stop, double elev1, double elev2, unsigned int points);

@@ -509,7 +509,7 @@ void Viewport::clear()
 {
 	qDebug() << "II: Viewport: clear whole viewport" << __FUNCTION__ << __LINE__;
 	QPainter painter(this->scr_buffer);
-	painter.eraseRect(0, 0, this->size_width, this->size_height);
+	//painter.eraseRect(0, 0, this->size_width, this->size_height);
 
 	this->reset_copyrights();
 	this->reset_logos();

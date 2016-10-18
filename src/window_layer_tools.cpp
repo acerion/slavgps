@@ -382,7 +382,7 @@ void LayerToolsBox::move(QMouseEvent * event)
 	if (this->active_tool && this->active_tool->move) {
 		LayerType ltype = this->active_tool->layer_type;
 		if (ltype == LayerType::NUM_TYPES || (layer && ltype == layer->type)) {
-			fprintf(stderr, "LAYER TOOLS: move received, passing to tool\n");
+			qDebug() << "II: Layer Tools: move received, passing to tool" << this->active_tool->get_description();
 
 			if (VIK_LAYER_TOOL_ACK_GRAB_FOCUS == this->active_tool->move(layer, event, this->active_tool)) {
 #if 0

@@ -391,12 +391,12 @@ namespace SlavGPS {
 		bool tool_edit_trackpoint_click(GdkEventButton * event, LayerTool * tool);
 		bool tool_edit_trackpoint_move(GdkEventMotion *event, LayerTool * tool);
 		bool tool_edit_trackpoint_release(GdkEventButton * event, LayerTool * tool);
-		VikLayerToolFuncStatus tool_new_track_move(GdkEventMotion * event, LayerTool * tool);
+		VikLayerToolFuncStatus tool_new_track_move(QMouseEvent * event, LayerTool * tool);
 		bool tool_new_track_key_press(GdkEventKey *event, LayerTool * tool);
-		bool tool_new_track_click(GdkEventButton * event, LayerTool * tool);
+		bool tool_new_track_click(QMouseEvent * event, LayerTool * tool);
 		bool tool_new_waypoint_click(GdkEventButton * event, LayerTool * tool);
 		bool tool_new_route_click(GdkEventButton * event, LayerTool * tool);
-		void tool_new_track_release(GdkEventButton *event, LayerTool * tool);
+		void tool_new_track_release(QMouseEvent * event, LayerTool * tool);
 
 
 
@@ -410,7 +410,7 @@ namespace SlavGPS {
 		Track * get_track_helper(struct _trw_menu_sublayer_t * data);
 		void update_statusbar();
 		void tool_extended_route_finder_undo();
-		bool tool_new_track_or_route_click(GdkEventButton * event, Viewport * viewport);
+		bool tool_new_track_or_route_click(QMouseEvent * event, Viewport * viewport);
 		void undo_trackpoint_add();
 
 
@@ -496,23 +496,23 @@ namespace SlavGPS {
 		double track_draw_speed_factor;
 		GArray * track_gc = NULL;
 		GdkGC * track_1color_gc = NULL;
-		GdkColor track_color;
+		QColor track_color;
 		GdkGC * current_track_gc = NULL;
 		/* Separate GC for a track's potential new point as drawn via separate method
 		   (compared to the actual track points drawn in the main trw_layer_draw_track function). */
 		GdkGC * current_track_newpoint_gc = NULL;
 
 		GdkGC * track_bg_gc = NULL;
-		GdkColor track_bg_color;
+		QColor track_bg_color;
 
 		GdkGC * waypoint_gc = NULL;
-		GdkColor waypoint_color;
+		QColor waypoint_color;
 
 		GdkGC * waypoint_text_gc = NULL;
-		GdkColor waypoint_text_color;
+		QColor waypoint_text_color;
 
 		GdkGC * waypoint_bg_gc = NULL;
-		GdkColor waypoint_bg_color;
+		QColor waypoint_bg_color;
 
 		GdkFunction wpbgand;
 

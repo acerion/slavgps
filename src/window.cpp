@@ -1017,6 +1017,7 @@ void Window::layer_tools_cb(QAction * qa)
 	}
 
 
+	qDebug() << "II: Window: setting 'release' cursor for" << tool_name;
 	this->viewport->setCursor(*this->tb->get_cursor_release(tool_name));
 	this->current_tool = this->tb->get_tool(tool_name);
 	this->display_tool_name();

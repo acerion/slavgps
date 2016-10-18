@@ -36,6 +36,7 @@
 #include <cstdio>
 #include <cctype>
 #include <cassert>
+#include <future> /* std::async */
 
 //#include <gdk/gdkkeysyms.h>
 #include <glib.h>
@@ -138,9 +139,9 @@ static LayerTool * tool_new_route_create(Window * window, Viewport * viewport);
 static bool   tool_new_route_click_cb(Layer * trw, GdkEventButton *event, LayerTool * tool);
 
 static LayerTool * tool_new_track_create(Window * window, Viewport * viewport);
-static bool   tool_new_track_click_cb(Layer * trw, GdkEventButton *event, LayerTool * tool);
-static VikLayerToolFuncStatus tool_new_track_move_cb(Layer * trw, GdkEventMotion *event, LayerTool * tool);
-static void   tool_new_track_release_cb(Layer * trw, GdkEventButton *event, LayerTool * tool);
+static bool   tool_new_track_click_cb(Layer * trw, QMouseEvent * event, LayerTool * tool);
+static VikLayerToolFuncStatus tool_new_track_move_cb(Layer * trw, QMouseEvent * event, LayerTool * tool);
+static void   tool_new_track_release_cb(Layer * trw, QMouseEvent * event, LayerTool * tool);
 static bool   tool_new_track_key_press_cb(Layer * trw, GdkEventKey *event, LayerTool * tool);
 
 static LayerTool * tool_new_waypoint_create(Window * window, Viewport * viewport);
@@ -921,8 +922,8 @@ bool LayerTRW::set_param_value(uint16_t id, LayerParamData data, Viewport * view
 		this->drawmode = data.u;
 		break;
 	case PARAM_TC:
+		this->track_color = QColor("red"); // = data.c;
 #ifdef K
-		this->track_color = data.c;
 		if (viewport) {
 			this->new_track_gcs(viewport);
 		}
@@ -3191,7 +3192,6 @@ void trw_layer_new_wp(trw_menu_layer_t * data)
 
 void LayerTRW::new_track_create_common(char * name)
 {
-#ifdef K
 	this->current_track = new Track();
 	this->current_track->set_defaults();
 	this->current_track->visible = true;
@@ -3200,12 +3200,11 @@ void LayerTRW::new_track_create_common(char * name)
 		// Create track with the preferred colour from the layer properties
 		this->current_track->color = this->track_color;
 	} else {
-		gdk_color_parse("#000000", &(this->current_track->color));
+		this->current_track->color = QColor("#aa22dd"); //QColor("#000000");
 	}
 
 	this->current_track->has_color = true;
 	this->add_track(this->current_track, name);
-#endif
 }
 
 
@@ -3213,17 +3212,16 @@ void LayerTRW::new_track_create_common(char * name)
 
 void trw_layer_new_track(trw_menu_layer_t * data)
 {
-#ifdef K
 	LayerTRW * layer = data->layer;
 
 	if (!layer->current_track) {
 		char *name = layer->new_unique_sublayer_name(SublayerType::TRACK, _("Track")) ;
 		layer->new_track_create_common(name);
 		free(name);
-
+#ifdef K
 		layer->get_window()->enable_layer_tool(LayerType::TRW, TOOL_CREATE_TRACK);
-	}
 #endif
+	}
 }
 
 
@@ -3237,9 +3235,7 @@ void LayerTRW::new_route_create_common(char * name)
 	this->current_track->is_route = true;
 	// By default make all routes red
 	this->current_track->has_color = true;
-#ifdef K
-	gdk_color_parse ("red", &this->current_track->color);
-#endif
+	this->current_track->color = QColor("red");
 	this->add_route(this->current_track, name);
 }
 
@@ -7631,19 +7627,18 @@ static LayerTool * tool_edit_waypoint_create(Window * window, Viewport * viewpor
 	layer_tool->layer_type = LayerType::TRW;
 	layer_tool->id_string = QString("EditWaypoint");
 
-	layer_tool->radioActionEntry.stock_id = strdup("vik-icon-Edit Waypoint");
-	layer_tool->radioActionEntry.label = strdup(N_("_Edit Waypoint"));
+	layer_tool->radioActionEntry.stock_id    = strdup(":/icons/layer_tool/trw_edit_wp_18.png");
+	layer_tool->radioActionEntry.label       = strdup(N_("&Edit Waypoint"));
 	layer_tool->radioActionEntry.accelerator = strdup("<control><shift>E");
-	layer_tool->radioActionEntry.tooltip = strdup(N_("Edit Waypoint"));
-	layer_tool->radioActionEntry.value = 0;
+	layer_tool->radioActionEntry.tooltip     = strdup(N_("Edit Waypoint"));
+	layer_tool->radioActionEntry.value       = 0;
 
 	layer_tool->click = (VikToolMouseFunc) tool_edit_waypoint_click_cb;
 	layer_tool->move = (VikToolMouseMoveFunc) tool_edit_waypoint_move_cb;
 	layer_tool->release = (VikToolMouseFunc) tool_edit_waypoint_release_cb;
 
-	layer_tool->cursor_click_shape = Qt::BitmapCursor;
-	layer_tool->cursor_release_shape = Qt::BitmapCursor;
-	//layer_tool->cursor_data = &cursor_edwp_pixbuf;
+	layer_tool->cursor_click = new QCursor(QPixmap(":/cursors/trw_edit_wp.png"), 0, 0);
+	layer_tool->cursor_release = new QCursor(Qt::ArrowCursor);
 
 	layer_tool->ed = (tool_ed_t *) malloc(1 * sizeof (tool_ed_t));
 	memset(layer_tool->ed, 0, sizeof (tool_ed_t));
@@ -7858,11 +7853,11 @@ static LayerTool * tool_new_track_create(Window * window, Viewport * viewport)
 	layer_tool->layer_type = LayerType::TRW;
 	layer_tool->id_string = QString("CreateTrack");
 
-	layer_tool->radioActionEntry.stock_id = strdup("vik-icon-Create Track");
-	layer_tool->radioActionEntry.label = strdup(N_("Create _Track"));
+	layer_tool->radioActionEntry.stock_id    = strdup(":/icons/layer_tool/trw_add_tr_18.png");
+	layer_tool->radioActionEntry.label       = strdup(N_("Create &Track"));
 	layer_tool->radioActionEntry.accelerator = strdup("<control><shift>T");
-	layer_tool->radioActionEntry.tooltip = strdup(N_("Create Track"));
-	layer_tool->radioActionEntry.value = 0;
+	layer_tool->radioActionEntry.tooltip     = strdup(N_("Create Track"));
+	layer_tool->radioActionEntry.value       = 0;
 
 	layer_tool->click = (VikToolMouseFunc) tool_new_track_click_cb;
 	layer_tool->move = (VikToolMouseMoveFunc) tool_new_track_move_cb;
@@ -7870,9 +7865,8 @@ static LayerTool * tool_new_track_create(Window * window, Viewport * viewport)
 	layer_tool->key_press = tool_new_track_key_press_cb;
 
 	layer_tool->pan_handler = true;  /* Still need to handle clicks when in PAN mode to disable the potential trackpoint drawing. */
-	layer_tool->cursor_click_shape = Qt::BitmapCursor;
-	layer_tool->cursor_release_shape = Qt::BitmapCursor;
-	//layer_tool->cursor_data = &cursor_addtr_pixbuf;
+	layer_tool->cursor_click = new QCursor(QPixmap(":/cursors/trw_add_tr.png"), 0, 0);
+	layer_tool->cursor_release = new QCursor(Qt::ArrowCursor);
 
 	layer_tool->ed = (tool_ed_t *) malloc(sizeof (tool_ed_t));
 	memset(layer_tool->ed, 0, sizeof (tool_ed_t));
@@ -7885,9 +7879,9 @@ static LayerTool * tool_new_track_create(Window * window, Viewport * viewport)
 
 typedef struct {
 	LayerTRW * layer;
-	GdkDrawable *drawable;
+	QPixmap * drawable;
 	GdkGC *gc;
-	QPixmap *pixmap;
+	QPixmap * pixmap;
 } draw_sync_t;
 
 
@@ -7898,22 +7892,23 @@ typedef struct {
  */
 static int draw_sync(void * data)
 {
-#ifdef K
 	draw_sync_t * ds = (draw_sync_t *) data;
 	/* Sometimes don't want to draw normally because another
 	   update has taken precedent such as panning the display
 	   which means this pixmap is no longer valid. */
-	if (ds->layer->draw_sync_do) {
-		gdk_threads_enter();
+	if (1 /*ds->layer->draw_sync_do*/ ) {
+		QPainter painter(ds->drawable);
+		painter.drawPixmap(0, 0, *ds->pixmap);
+		emit ds->layer->update();
+#if 0
 		gdk_draw_drawable(ds->drawable,
 				  ds->gc,
 				  ds->pixmap,
 				  0, 0, 0, 0, -1, -1);
+#endif
 		ds->layer->draw_sync_done = true;
-		gdk_threads_leave();
 	}
 	free(ds);
-#endif
 	return 0;
 }
 
@@ -8018,7 +8013,7 @@ void LayerTRW::update_statusbar()
 
 
 
-static VikLayerToolFuncStatus tool_new_track_move_cb(Layer * trw, GdkEventMotion *event, LayerTool * tool)
+static VikLayerToolFuncStatus tool_new_track_move_cb(Layer * trw, QMouseEvent * event, LayerTool * tool)
 {
 	return ((LayerTRW *) trw)->tool_new_track_move(event, tool);
 }
@@ -8026,32 +8021,38 @@ static VikLayerToolFuncStatus tool_new_track_move_cb(Layer * trw, GdkEventMotion
 
 
 
-VikLayerToolFuncStatus LayerTRW::tool_new_track_move(GdkEventMotion * event, LayerTool * tool)
+VikLayerToolFuncStatus LayerTRW::tool_new_track_move(QMouseEvent * event, LayerTool * tool)
 {
-#ifdef K
+	qDebug() << "II: Layer TRW: new track's move()" << this->draw_sync_done << this->current_track << !this->current_track->empty();
 	/* If we haven't sync'ed yet, we don't have time to do more. */
-	if (this->draw_sync_done && this->current_track && !this->current_track->empty()) {
+	if (/* this->draw_sync_done && */ this->current_track && !this->current_track->empty()) {
 		Trackpoint * last_tpt = this->current_track->get_tp_last();
 
-		static GdkPixmap *pixmap = NULL;
-		int w1, h1, w2, h2;
+		static QPixmap * pixmap = NULL;
+
 		/* Need to check in case window has been resized. */
-		w1 = tool->viewport->get_width();
-		h1 = tool->viewport->get_height();
+		int w1 = tool->viewport->get_width();
+		int h1 = tool->viewport->get_height();
+
 		if (!pixmap) {
-			pixmap = gdk_pixmap_new(gtk_widget_get_window(tool->viewport->get_toolkit_widget()), w1, h1, -1);
+			pixmap = new QPixmap(w1, h1);
 		}
-		gdk_drawable_get_size(pixmap, &w2, &h2);
-		if (w1 != w2 || h1 != h2) {
-			g_object_unref(G_OBJECT (pixmap));
-			pixmap = gdk_pixmap_new(gtk_widget_get_window(tool->viewport->get_toolkit_widget()), w1, h1, -1);
+		int w2, h2;
+		if (w1 != pixmap->width() || h1 != pixmap->height()) {
+			delete pixmap;
+			pixmap = new QPixmap(w1, h1);
 		}
 
 		/* Reset to background. */
+		//QPainter painter2(ds->drawable);
+		//painter2.drawPixmap(0, 0, *ds->pixmap);
+		*pixmap = *tool->viewport->get_pixmap();
+#if 0
 		gdk_draw_drawable(pixmap,
 				  this->current_track_newpoint_gc,
 				  tool->viewport->get_pixmap(),
 				  0, 0, 0, 0, -1, -1);
+#endif
 
 		draw_sync_t * passalong;
 		int x1, y1;
@@ -8061,9 +8062,17 @@ VikLayerToolFuncStatus LayerTRW::tool_new_track_move(GdkEventMotion * event, Lay
 		/* FOR SCREEN OVERLAYS WE MUST DRAW INTO THIS PIXMAP (when using the reset method)
 		   otherwise using Viewport::draw_* functions puts the data into the base pixmap,
 		   thus when we come to reset to the background it would include what we have already drawn!! */
+		QPen pen(QColor("red"));
+		pen.setWidth(1);
+		QPainter painter(pixmap);
+		painter.setPen(pen);
+		qDebug() << "II: Layer TRW: drawing line" << x1 << y1 << event->x() << event->y();
+		painter.drawLine(x1, y1, event->x(), event->y());
+#if 0
 		gdk_draw_line(pixmap,
 			      this->current_track_newpoint_gc,
-			      x1, y1, event->x, event->y);
+			      x1, y1, );
+#endif
 		/* Using this reset method is more reliable than trying to undraw previous efforts via the GDK_INVERT method. */
 
 		/* Find out actual distance of current track. */
@@ -8072,7 +8081,7 @@ VikLayerToolFuncStatus LayerTRW::tool_new_track_move(GdkEventMotion * event, Lay
 		/* Now add distance to where the pointer is. */
 		VikCoord coord;
 		struct LatLon ll;
-		tool->viewport->screen_to_coord((int) event->x, (int) event->y, &coord);
+		tool->viewport->screen_to_coord(event->x(), event->y(), &coord);
 		vik_coord_to_latlon(&coord, &ll);
 		double last_step = vik_coord_diff(&coord, &last_tpt->coord);
 		distance = distance + last_step;
@@ -8127,22 +8136,23 @@ VikLayerToolFuncStatus LayerTRW::tool_new_track_move(GdkEventMotion * event, Lay
 		passalong = (draw_sync_t *) malloc(1 * sizeof (draw_sync_t)); /* Freed by draw_sync(). */
 		passalong->layer = this;
 		passalong->pixmap = pixmap;
-		passalong->drawable = gtk_widget_get_window(tool->viewport->get_toolkit_widget());
+		passalong->drawable = tool->viewport->scr_buffer;
 		passalong->gc = this->current_track_newpoint_gc;
 
 		double angle;
 		double baseangle;
-		tool->viewport->compute_bearing(x1, y1, event->x, event->y, &angle, &baseangle);
-
+		tool->viewport->compute_bearing(x1, y1, event->x(), event->y(), &angle, &baseangle);
+#if 0
 		/* Update statusbar with full gain/loss information. */
 		statusbar_write(distance, elev_gain, elev_loss, last_step, angle, this);
+#endif
 
 		/* Draw pixmap when we have time to. */
-		g_idle_add_full(G_PRIORITY_HIGH_IDLE + 10, draw_sync, passalong, NULL);
+		std::async(std::launch::async, draw_sync, passalong);
 		this->draw_sync_done = false;
+
 		return VIK_LAYER_TOOL_ACK_GRAB_FOCUS;
 	}
-#endif
 	return VIK_LAYER_TOOL_ACK;
 }
 
@@ -8207,21 +8217,20 @@ bool LayerTRW::tool_new_track_key_press(GdkEventKey *event, LayerTool * tool)
  *  . enables removal of last point via right click
  *  . finishing of the track or route via double clicking
  */
-bool LayerTRW::tool_new_track_or_route_click(GdkEventButton * event, Viewport * viewport)
+bool LayerTRW::tool_new_track_or_route_click(QMouseEvent * event, Viewport * viewport)
 {
 	if (this->type != LayerType::TRW) {
 		return false;
 	}
-#ifdef K
 
-	if (event->button == MouseButton::MIDDLE) {
+	if (event->button() == Qt::MiddleButton) {
 		/* As the display is panning, the new track pixmap is now invalid so don't draw it
 		   otherwise this drawing done results in flickering back to an old image. */
 		this->draw_sync_do = false;
 		return false;
 	}
 
-	if (event->button == MouseButton::RIGHT) {
+	if (event->button() == Qt::RightButton) {
 		if (!this->current_track) {
 			return false;
 		}
@@ -8230,6 +8239,8 @@ bool LayerTRW::tool_new_track_or_route_click(GdkEventButton * event, Viewport * 
 		this->emit_update();
 		return true;
 	}
+
+#ifdef K
 
 	if (event->type == GDK_2BUTTON_PRESS) {
 		/* Subtract last (duplicate from double click) tp then end. */
@@ -8242,12 +8253,14 @@ bool LayerTRW::tool_new_track_or_route_click(GdkEventButton * event, Viewport * 
 		return true;
 	}
 
+#endif
+
 	Trackpoint * tp = new Trackpoint();
-	viewport->screen_to_coord(event->x, event->y, &tp->coord);
+	viewport->screen_to_coord(event->x(), event->y(), &tp->coord);
 
 	/* Snap to other TP. */
-	if (event->state & GDK_CONTROL_MASK) {
-		Trackpoint * other_tp = this->closest_tp_in_five_pixel_interval(viewport, event->x, event->y);
+	if (event->modifiers() & Qt::ControlModifier) {
+		Trackpoint * other_tp = this->closest_tp_in_five_pixel_interval(viewport, event->x(), event->y());
 		if (other_tp) {
 			tp->coord = other_tp->coord;
 		}
@@ -8265,18 +8278,18 @@ bool LayerTRW::tool_new_track_or_route_click(GdkEventButton * event, Viewport * 
 
 	this->ct_x1 = this->ct_x2;
 	this->ct_y1 = this->ct_y2;
-	this->ct_x2 = event->x;
-	this->ct_y2 = event->y;
+	this->ct_x2 = event->x();
+	this->ct_y2 = event->y();
 
 	this->emit_update();
-#endif
+
 	return true;
 }
 
 
 
 
-static bool tool_new_track_click_cb(Layer * trw, GdkEventButton *event, LayerTool * tool)
+static bool tool_new_track_click_cb(Layer * trw, QMouseEvent * event, LayerTool * tool)
 {
 	return ((LayerTRW *) trw)->tool_new_track_click(event, tool);
 }
@@ -8284,9 +8297,8 @@ static bool tool_new_track_click_cb(Layer * trw, GdkEventButton *event, LayerToo
 
 
 
-bool LayerTRW::tool_new_track_click(GdkEventButton * event, LayerTool * tool)
+bool LayerTRW::tool_new_track_click(QMouseEvent * event, LayerTool * tool)
 {
-#ifdef K
 	/* If we were running the route finder, cancel it. */
 	this->route_finder_started = false;
 
@@ -8294,7 +8306,9 @@ bool LayerTRW::tool_new_track_click(GdkEventButton * event, LayerTool * tool)
 	if (event->button() == Qt::LeftButton && (!this->current_track || (this->current_track && this->current_track->is_route))) {
 		char *name = this->new_unique_sublayer_name(SublayerType::TRACK, _("Track"));
 		if (a_vik_get_ask_for_create_track_name()) {
+#ifdef K
 			name = a_dialog_new_track(this->get_toolkit_window(), name, false);
+#endif
 			if (!name) {
 				return false;
 			}
@@ -8302,14 +8316,14 @@ bool LayerTRW::tool_new_track_click(GdkEventButton * event, LayerTool * tool)
 		this->new_track_create_common(name);
 		free(name);
 	}
+
 	return this->tool_new_track_or_route_click(event, tool->viewport);
-#endif
 }
 
 
 
 
-static void tool_new_track_release_cb(Layer * trw, GdkEventButton *event, LayerTool * tool)
+static void tool_new_track_release_cb(Layer * trw, QMouseEvent * event, LayerTool * tool)
 {
 	((LayerTRW *) trw)->tool_new_track_release(event, tool);
 }
@@ -8317,15 +8331,13 @@ static void tool_new_track_release_cb(Layer * trw, GdkEventButton *event, LayerT
 
 
 
-void LayerTRW::tool_new_track_release(GdkEventButton *event, LayerTool * tool)
+void LayerTRW::tool_new_track_release(QMouseEvent * event, LayerTool * tool)
 {
-#ifdef K
-	if (event->button == MouseButton::MIDDLE) {
+	if (event->button() == Qt::MiddleButton) {
 		/* Pan moving ended - enable potential point drawing again. */
 		this->draw_sync_do = true;
 		this->draw_sync_done = true;
 	}
-#endif
 }
 
 
@@ -8342,11 +8354,11 @@ static LayerTool * tool_new_route_create(Window * window, Viewport * viewport)
 	layer_tool->layer_type = LayerType::TRW;
 	layer_tool->id_string = QString("CreateRoute");
 
-	layer_tool->radioActionEntry.stock_id = strdup("vik-icon-Create Route");
-	layer_tool->radioActionEntry.label = strdup(N_("Create _Route"));
+	layer_tool->radioActionEntry.stock_id    = strdup(":/icons/layer_tool/trw_add_route_18.png");
+	layer_tool->radioActionEntry.label       = strdup(N_("Create &Route"));
 	layer_tool->radioActionEntry.accelerator = strdup("<control><shift>B");
-	layer_tool->radioActionEntry.tooltip = strdup(N_("Create Route"));
-	layer_tool->radioActionEntry.value = 0;
+	layer_tool->radioActionEntry.tooltip     = strdup(N_("Create Route"));
+	layer_tool->radioActionEntry.value       = 0;
 
 	layer_tool->click = (VikToolMouseFunc) tool_new_route_click_cb;
 	layer_tool->move = (VikToolMouseMoveFunc) tool_new_track_move_cb;    /* Reuse this track method for a route. */
@@ -8354,10 +8366,8 @@ static LayerTool * tool_new_route_create(Window * window, Viewport * viewport)
 	layer_tool->key_press = tool_new_track_key_press_cb;                 /* Reuse this track method for a route. */
 
 	layer_tool->pan_handler = true;  /* Still need to handle clicks when in PAN mode to disable the potential trackpoint drawing. */
-	layer_tool->cursor_click_shape = Qt::BitmapCursor;
-	layer_tool->cursor_release_shape = Qt::BitmapCursor;
-	//layer_tool->cursor_data = &cursor_new_route_pixbuf;
-	//layer_tool->cursor = NULL;
+	layer_tool->cursor_click = new QCursor(QPixmap(":/cursors/trw_add_route.png"), 0, 0);
+	layer_tool->cursor_release = new QCursor(Qt::ArrowCursor);
 
 	layer_tool->ed = (tool_ed_t *) malloc(sizeof (tool_ed_t));
 	memset(layer_tool->ed, 0, sizeof (tool_ed_t));
@@ -8416,17 +8426,16 @@ static LayerTool * tool_new_waypoint_create(Window * window, Viewport * viewport
 	layer_tool->layer_type = LayerType::TRW;
 	layer_tool->id_string = QString("CreateWaypoint");
 
-	layer_tool->radioActionEntry.stock_id = strdup("vik-icon-Create Waypoint");
-	layer_tool->radioActionEntry.label = strdup(N_("Create _Waypoint"));
+	layer_tool->radioActionEntry.stock_id    = strdup(":/icons/layer_tool/trw_add_wp_18.png");
+	layer_tool->radioActionEntry.label       = strdup(N_("Create &Waypoint"));
 	layer_tool->radioActionEntry.accelerator = strdup("<control><shift>W");
-	layer_tool->radioActionEntry.tooltip = strdup(N_("Create Waypoint"));
-	layer_tool->radioActionEntry.value = 0;
+	layer_tool->radioActionEntry.tooltip     = strdup(N_("Create Waypoint"));
+	layer_tool->radioActionEntry.value       = 0;
 
 	layer_tool->click = (VikToolMouseFunc) tool_new_waypoint_click_cb;
 
-	layer_tool->cursor_click_shape = Qt::BitmapCursor;
-	layer_tool->cursor_release_shape = Qt::BitmapCursor;
-	//layer_tool->cursor_data = &cursor_addwp_pixbuf;
+	layer_tool->cursor_click = new QCursor(QPixmap(":/cursors/trw_add_wp.png"), 0, 0);
+	layer_tool->cursor_release = new QCursor(Qt::ArrowCursor);
 
 	layer_tool->ed = (tool_ed_t *) malloc(sizeof (tool_ed_t));;
 	memset(layer_tool->ed, 0, sizeof (tool_ed_t));
@@ -8479,19 +8488,18 @@ static LayerTool * tool_edit_trackpoint_create(Window * window, Viewport * viewp
 	layer_tool->layer_type = LayerType::TRW;
 	layer_tool->id_string = QString("EditTrackpoint");
 
-	layer_tool->radioActionEntry.stock_id = strdup("vik-icon-Edit Trackpoint");
-	layer_tool->radioActionEntry.label = strdup(N_("Edit Trac_kpoint"));
+	layer_tool->radioActionEntry.stock_id    = strdup(":/icons/layer_tool/trw_edit_tr_18.png");
+	layer_tool->radioActionEntry.label       = strdup(N_("Edit Trac&kpoint"));
 	layer_tool->radioActionEntry.accelerator = strdup("<control><shift>K");
-	layer_tool->radioActionEntry.tooltip = strdup(N_("Edit Trackpoint"));
-	layer_tool->radioActionEntry.value = 0;
+	layer_tool->radioActionEntry.tooltip     = strdup(N_("Edit Trackpoint"));
+	layer_tool->radioActionEntry.value       = 0;
 
 	layer_tool->click = (VikToolMouseFunc) tool_edit_trackpoint_click_cb;
 	layer_tool->move = (VikToolMouseMoveFunc) tool_edit_trackpoint_move_cb;
 	layer_tool->release = (VikToolMouseFunc) tool_edit_trackpoint_release_cb;
 
-	layer_tool->cursor_click_shape = Qt::BitmapCursor;
-	layer_tool->cursor_release_shape = Qt::BitmapCursor;
-	//layer_tool->cursor_data = &cursor_edtr_pixbuf;
+	layer_tool->cursor_click = new QCursor(QPixmap(":/cursors/trw_edit_tr.png"), 0, 0);
+	layer_tool->cursor_release = new QCursor(Qt::ArrowCursor);
 
 	layer_tool->ed = (tool_ed_t *) malloc(1 * sizeof (tool_ed_t));
 	memset(layer_tool->ed, 0, sizeof (tool_ed_t));
@@ -8722,7 +8730,7 @@ static LayerTool * tool_extended_route_finder_create(Window * window, Viewport *
 	layer_tool->id_string = QString("ExtendedRouteFinder");
 
 	layer_tool->radioActionEntry.stock_id = strdup("vik-icon-Route Finder");
-	layer_tool->radioActionEntry.label = strdup(N_("Route _Finder"));
+	layer_tool->radioActionEntry.label = strdup(N_("Route &Finder"));
 	layer_tool->radioActionEntry.accelerator = strdup("<control><shift>F");
 	layer_tool->radioActionEntry.tooltip = strdup(N_("Route Finder"));
 	layer_tool->radioActionEntry.value = 0;
@@ -8733,9 +8741,8 @@ static LayerTool * tool_extended_route_finder_create(Window * window, Viewport *
 	layer_tool->key_press = tool_extended_route_finder_key_press_cb;
 
 	layer_tool->pan_handler = true;  /* Still need to handle clicks when in PAN mode to disable the potential trackpoint drawing. */
-	layer_tool->cursor_click_shape = Qt::BitmapCursor;
-	layer_tool->cursor_release_shape = Qt::BitmapCursor;
-	//layer_tool->cursor_data = &cursor_route_finder_pixbuf;
+	layer_tool->cursor_click = new QCursor(QPixmap(":/cursors/trw____.png"), 0, 0);
+	layer_tool->cursor_release = new QCursor(Qt::ArrowCursor);
 
 	layer_tool->ed = (tool_ed_t *) malloc(sizeof (tool_ed_t));
 	memset(layer_tool->ed, 0, sizeof (tool_ed_t));
@@ -8892,16 +8899,15 @@ static LayerTool * tool_show_picture_create(Window * window, Viewport * viewport
 	layer_tool->id_string = QString("ShowPicture");
 
 	layer_tool->radioActionEntry.stock_id = strdup("vik-icon-Show Picture");
-	layer_tool->radioActionEntry.label = strdup(N_("Show P_icture"));
+	layer_tool->radioActionEntry.label = strdup(N_("Show P&icture"));
 	layer_tool->radioActionEntry.accelerator = strdup("<control><shift>I");
 	layer_tool->radioActionEntry.tooltip = strdup(N_("Show Picture"));
 	layer_tool->radioActionEntry.value = 0;
 
 	layer_tool->click = (VikToolMouseFunc) tool_show_picture_click_cb;
 
-	layer_tool->cursor_click_shape = Qt::BitmapCursor;
-	layer_tool->cursor_release_shape = Qt::BitmapCursor;
-	//layer_tool->cursor_data = &cursor_showpic_pixbuf;
+	layer_tool->cursor_click = new QCursor(QPixmap(":/cursors/trw____.png"), 0, 0);
+	layer_tool->cursor_release = new QCursor(Qt::ArrowCursor);
 
 	layer_tool->ed = (tool_ed_t *) malloc(sizeof (tool_ed_t));
 	memset(layer_tool->ed, 0, sizeof (tool_ed_t));

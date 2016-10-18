@@ -1356,8 +1356,6 @@ static LayerTool * dem_layer_download_create(Window * window, Viewport * viewpor
 
 	layer_tool->cursor_click = new QCursor(Qt::ArrowCursor);
 	layer_tool->cursor_release = new QCursor(Qt::ArrowCursor);
-	//layer_tool->cursor_shape = Qt::BitmapCursor;
-	//layer_tool->cursor_data = &cursor_demdl_pixbuf;
 
 	return layer_tool;
 }
