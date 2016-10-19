@@ -111,26 +111,6 @@ namespace SlavGPS {
 		void save_image_dir(char const * fn, unsigned int w, unsigned int h, double zoom, bool save_as_png, unsigned int tiles_w, unsigned int tiles_h);
 		void draw_to_image_file(img_generation_t img_gen);
 
-		LayerTRW * get_selected_trw_layer();
-		void set_selected_trw_layer(LayerTRW * trw);
-
-		Tracks * get_selected_tracks();
-		void set_selected_tracks(Tracks * tracks, LayerTRW * trw);
-
-		Track * get_selected_track();
-		void set_selected_track(Track * track, LayerTRW * trw);
-
-		Waypoints * get_selected_waypoints();
-		void set_selected_waypoints(Waypoints * waypoints, LayerTRW * trw);
-
-		Waypoint * get_selected_waypoint();
-		void set_selected_waypoint(Waypoint * wp, LayerTRW * trw);
-
-		/* Return the VikLayer of the selected track(s) or waypoint(s) are in (maybe NULL). */
-		//void * vik_window_get_containing_trw_layer(VikWindow *vw);
-
-		/* Return indicates if a redraw is necessary. */
-		bool clear_highlight();
 
 		char const * get_filename_2();
 
@@ -160,16 +140,6 @@ namespace SlavGPS {
 		void pan_release(GdkEventButton * event);
 
 
-		/* Store at this level for highlighted selection drawing since it applies to the viewport and the layers panel. */
-		/* Only one of these items can be selected at the same time. */
-		LayerTRW * selected_trw = NULL;
-		Tracks * selected_tracks = NULL;
-		Track * selected_track = NULL;
-		std::unordered_map<sg_uid_t, Waypoint *> * selected_waypoints = NULL;
-		Waypoint * selected_waypoint = NULL;
-		/* Only use for individual track or waypoint. */
-		/* For track(s) & waypoint(s) it is the layer they are in - this helps refering to the individual item easier. */
-		LayerTRW * containing_trw = NULL;
 
 		Viewport * viewport = NULL;
 		LayersPanel * layers_panel = NULL;

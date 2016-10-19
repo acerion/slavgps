@@ -1430,3 +1430,156 @@ void Window::display_tool_name(void)
 {
 	this->status_bar->set_message(StatusBarField::TOOL, this->current_tool->get_description());
 }
+
+
+
+
+LayerTRW * Window::get_selected_trw_layer()
+{
+	return this->selected_trw;
+}
+
+
+
+
+void Window::set_selected_trw_layer(LayerTRW * trw)
+{
+	this->selected_trw       = trw;
+	this->containing_trw     = trw;
+	/* Clear others */
+	this->selected_track     = NULL;
+	this->selected_tracks    = NULL;
+	this->selected_waypoint  = NULL;
+	this->selected_waypoints = NULL;
+	// Set highlight thickness
+	this->viewport->set_highlight_thickness(this->containing_trw->get_property_tracks_line_thickness());
+}
+
+
+
+
+Tracks * Window::get_selected_tracks()
+{
+	return this->selected_tracks;
+}
+
+
+
+
+void Window::set_selected_tracks(Tracks * tracks, LayerTRW * trw)
+{
+	this->selected_tracks    = tracks;
+	this->containing_trw     = trw;
+	/* Clear others */
+	this->selected_trw       = NULL;
+	this->selected_track     = NULL;
+	this->selected_waypoint  = NULL;
+	this->selected_waypoints = NULL;
+	// Set highlight thickness
+	this->viewport->set_highlight_thickness(this->containing_trw->get_property_tracks_line_thickness());
+}
+
+
+
+
+Track * Window::get_selected_track()
+{
+	return this->selected_track;
+}
+
+
+
+
+void Window::set_selected_track(Track * track, LayerTRW * trw)
+{
+	this->selected_track     = track;
+	this->containing_trw     = trw;
+	/* Clear others */
+	this->selected_trw       = NULL;
+	this->selected_tracks    = NULL;
+	this->selected_waypoint  = NULL;
+	this->selected_waypoints = NULL;
+	// Set highlight thickness
+	this->viewport->set_highlight_thickness(this->containing_trw->get_property_tracks_line_thickness());
+}
+
+
+
+
+Waypoints * Window::get_selected_waypoints()
+{
+	return this->selected_waypoints;
+}
+
+
+
+
+void Window::set_selected_waypoints(Waypoints * waypoints, LayerTRW * trw)
+{
+	this->selected_waypoints = waypoints;
+	this->containing_trw     = trw;
+	/* Clear others */
+	this->selected_trw       = NULL;
+	this->selected_track     = NULL;
+	this->selected_tracks    = NULL;
+	this->selected_waypoint  = NULL;
+}
+
+
+
+
+Waypoint * Window::get_selected_waypoint()
+{
+	return this->selected_waypoint;
+}
+
+
+
+
+void Window::set_selected_waypoint(Waypoint * wp, LayerTRW * trw)
+{
+	this->selected_waypoint  = wp;
+	this->containing_trw     = trw;
+	/* Clear others */
+	this->selected_trw       = NULL;
+	this->selected_track     = NULL;
+	this->selected_tracks    = NULL;
+	this->selected_waypoints = NULL;
+}
+
+
+
+
+bool vik_window_clear_highlight_cb(Window * window)
+{
+	return window->clear_highlight();
+}
+
+
+
+
+bool Window::clear_highlight()
+{
+	bool need_redraw = false;
+	if (this->selected_trw != NULL) {
+		this->selected_trw = NULL;
+		need_redraw = true;
+	}
+	if (this->selected_track != NULL) {
+		this->selected_track = NULL;
+		need_redraw = true;
+	}
+	if (this->selected_tracks != NULL) {
+		this->selected_tracks = NULL;
+		need_redraw = true;
+	}
+	if (this->selected_waypoint != NULL) {
+		this->selected_waypoint = NULL;
+		need_redraw = true;
+	}
+	if (this->selected_waypoints != NULL) {
+		this->selected_waypoints = NULL;
+		need_redraw = true;
+	}
+	return need_redraw;
+}
