@@ -1787,7 +1787,7 @@ void LayerTRW::add_routes_node(void)
 
 void LayerTRW::realize(TreeView * tree_view_, QPersistentModelIndex * layer_index)
 {
-#ifdef K
+
 	trw_data4_t pass_along;
 	pass_along.parent_index = this->tracks_node;
 	pass_along.index = NULL;
@@ -1823,7 +1823,6 @@ void LayerTRW::realize(TreeView * tree_view_, QPersistentModelIndex * layer_inde
 	this->verify_thumbnails();
 
 	this->sort_all();
-#endif
 }
 
 
@@ -2232,14 +2231,15 @@ bool LayerTRW::selected(SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeI
 	this->cancel_current_tp(false);
 #ifdef K
 
-	// Clear statusbar
+	/* Clear statusbar. */
 	this->get_window()->status_bar->set_message(VIK_STATUSBAR_INFO, "");
+#endif
 
 	switch (type)	{
 	case TreeItemType::LAYER:
 		{
 			this->get_window()->set_selected_trw_layer(this);
-			/* Mark for redraw */
+			/* Mark for redraw. */
 			return true;
 		}
 		break;
@@ -2250,7 +2250,7 @@ bool LayerTRW::selected(SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeI
 			case SublayerType::TRACKS:
 				{
 					this->get_window()->set_selected_tracks(&this->tracks, this);
-					/* Mark for redraw */
+					/* Mark for redraw. */
 					return true;
 				}
 				break;
@@ -2258,14 +2258,14 @@ bool LayerTRW::selected(SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeI
 				{
 					Track * trk = this->tracks.at(sublayer_uid);
 					this->get_window()->set_selected_track(trk, this);
-					/* Mark for redraw */
+					/* Mark for redraw. */
 					return true;
 				}
 				break;
 			case SublayerType::ROUTES:
 				{
 					this->get_window()->set_selected_tracks(&this->routes, this);
-					/* Mark for redraw */
+					/* Mark for redraw. */
 					return true;
 				}
 				break;
@@ -2273,14 +2273,14 @@ bool LayerTRW::selected(SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeI
 				{
 					Track * trk = this->routes.at(sublayer_uid);
 					this->get_window()->set_selected_track(trk, this);
-					/* Mark for redraw */
+					/* Mark for redraw. */
 					return true;
 				}
 				break;
 			case SublayerType::WAYPOINTS:
 				{
 					this->get_window()->set_selected_waypoints(&this->waypoints, this);
-					/* Mark for redraw */
+					/* Mark for redraw. */
 					return true;
 				}
 				break;
@@ -2289,9 +2289,9 @@ bool LayerTRW::selected(SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeI
 					Waypoint * wp = this->waypoints.at(sublayer_uid);
 					if (wp) {
 						this->get_window()->set_selected_waypoint(wp, this);
-						// Show some waypoint info
+						/* Show some waypoint info. */
 						this->set_statusbar_msg_info_wpt(wp);
-						/* Mark for redraw */
+						/* Mark for redraw. */
 						return true;
 					}
 				}
@@ -2310,7 +2310,6 @@ bool LayerTRW::selected(SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeI
 		return this->get_window()->clear_highlight();
 		break;
 	}
-#endif
 }
 
 
@@ -2735,7 +2734,6 @@ void trw_layer_goto_wp(trw_menu_layer_t * data)
 
 bool LayerTRW::new_waypoint(GtkWindow * w, const VikCoord * def_coord)
 {
-#ifdef K
 	char * default_name = this->highest_wp_number_get();
 	Waypoint * wp = new Waypoint();
 	bool updated;
@@ -2744,7 +2742,11 @@ bool LayerTRW::new_waypoint(GtkWindow * w, const VikCoord * def_coord)
 	// Attempt to auto set height if DEM data is available
 	wp->apply_dem_data(true);
 
+#ifdef K
 	char * returned_name = a_dialog_waypoint(w, default_name, this, wp, this->coord_mode, true, &updated);
+#else
+	char * returned_name = strdup("waypoint name");
+#endif
 
 	if (returned_name) {
 		wp->visible = true;
@@ -2752,11 +2754,11 @@ bool LayerTRW::new_waypoint(GtkWindow * w, const VikCoord * def_coord)
 		free(default_name);
 		free(returned_name);
 		return true;
+	} else {
+		free(default_name);
+		delete wp;
+		return false;
 	}
-	free(default_name);
-	delete wp;
-#endif
-	return false;
 }
 
 
@@ -3159,6 +3161,8 @@ void trw_layer_new_wp(trw_menu_layer_t * data)
 
 void LayerTRW::new_track_create_common(char * name)
 {
+	qDebug() << "II: Layer TRW: new track create common, track name" << name;
+
 	this->current_track = new Track();
 	this->current_track->set_defaults();
 	this->current_track->visible = true;
@@ -3339,12 +3343,11 @@ GtkWidget* create_external_submenu(GtkMenu *menu)
 
 
 
-// Fake Waypoint UUIDs vith simple increasing integer
+/* Fake Waypoint UUIDs with simple increasing integer. */
 static sg_uid_t global_wp_uid = SG_UID_INITIAL;
 
 void LayerTRW::add_waypoint(Waypoint * wp, char const * name)
 {
-#ifdef K
 	global_wp_uid++;
 
 	wp->set_name(name);
@@ -3375,18 +3378,16 @@ void LayerTRW::add_waypoint(Waypoint * wp, char const * name)
 
 	this->highest_wp_number_add_wp(name);
 	waypoints.insert({{ global_wp_uid, wp }});
-#endif
 }
 
 
 
 
-// Fake Track UUIDs vi simple increasing integer
+/* Fake Track UUIDs with simple increasing integer. */
 static sg_uid_t global_tr_uuid = SG_UID_INITIAL;
 
 void LayerTRW::add_track(Track * trk, char const * name)
 {
-#ifdef K
 	global_tr_uuid++;
 
 	trk->set_name(name);
@@ -3397,8 +3398,6 @@ void LayerTRW::add_track(Track * trk, char const * name)
 		if (tracks.size() == 0) {
 			this->add_tracks_node();
 		}
-
-		GtkTreeIter *iter = (GtkTreeIter *) malloc(sizeof(GtkTreeIter));
 
 		time_t timestamp = 0;
 		Trackpoint * tp = trk->get_tp_first();
@@ -3421,18 +3420,16 @@ void LayerTRW::add_track(Track * trk, char const * name)
 	tracks.insert({{ global_tr_uuid, trk }});
 
 	this->update_treeview(trk);
-#endif
 }
 
 
 
 
-// Fake Route UUIDs vi simple increasing integer
+/* Fake Route UUIDs with simple increasing integer. */
 static sg_uid_t global_rt_uuid = SG_UID_INITIAL;
 
 void LayerTRW::add_route(Track * trk, char const * name)
 {
-#ifdef K
 	global_rt_uuid++;
 
 	trk->set_name(name);
@@ -3459,7 +3456,6 @@ void LayerTRW::add_route(Track * trk, char const * name)
 	routes.insert({{ global_rt_uuid, trk }});
 
 	this->update_treeview(trk);
-#endif
 }
 
 

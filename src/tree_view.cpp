@@ -886,12 +886,13 @@ QPersistentModelIndex * TreeView::add_sublayer(sg_uid_t sublayer_uid, SublayerTy
 
 	QList<QStandardItem *> items;
 	QStandardItem * item = NULL;
+	QStandardItem * first_item = NULL;
 	QVariant variant;
 
 
 	/* LayersTreeColumn::NAME */
 	item = new QStandardItem(QString(name));
-	QPersistentModelIndex * ret = new QPersistentModelIndex(item->index());
+	first_item = item;
 	items << item;
 
 	/* LayersTreeColumn::VISIBLE */
@@ -955,13 +956,15 @@ QPersistentModelIndex * TreeView::add_sublayer(sg_uid_t sublayer_uid, SublayerTy
 	//item->setData(variant, RoleLayerData);
 	items << item;
 
-	if (parent_index) {
+
+	if (parent_index && parent_index->isValid()) {
 		this->model->item(parent_index->row(), parent_index->column())->appendRow(items);
 	} else {
 		/* TODO: this shouldn't happen, we can't add sublayers right on top. */
 		qDebug() << "EE: Tree View: adding sublayer on top level";
 		this->model->invisibleRootItem()->appendRow(items);
 	}
+	QPersistentModelIndex * ret = new QPersistentModelIndex(first_item->index());
 	//connect(this->model, SIGNAL(itemChanged(QStandardItem*)), layer, SLOT(visibility_toggled(QStandardItem *)));
 
 	return ret;
@@ -1494,17 +1497,25 @@ void TreeView::data_changed_cb(const QModelIndex & top_left, const QModelIndex &
 
 
 	if (item->column() == (int) LayersTreeColumn::VISIBLE) {
-		qDebug() << "II: Tree View: edited item in column VISIBLE: is checkable?" << item->isCheckable();
-		this->get_layer(item)->visible = (bool) item->checkState();
-		qDebug() << "SIGNAL: Tree View layer_needs_redraw(78)";
-		emit this->layer_needs_redraw(78);
+		if (this->get_layer(item)) {
+			qDebug() << "II: Tree View: edited item in column VISIBLE: is checkable?" << item->isCheckable();
+			this->get_layer(item)->visible = (bool) item->checkState();
+			qDebug() << "SIGNAL: Tree View layer_needs_redraw(78)";
+			emit this->layer_needs_redraw(78);
+		} else {
+			/* No layer probably means that we want to edit a sublayer. */
+		}
 
 	} else if (item->column() == (int) LayersTreeColumn::NAME) {
 
 		/* TODO: reject empty new name. */
 
-		qDebug() << "II: Tree View: edited item in column NAME: new name is" << item->text();
-		this->get_layer(item)->rename((char *) item->text().data());
+		if (this->get_layer(item)) {
+			qDebug() << "II: Tree View: edited item in column NAME: new name is" << item->text();
+			this->get_layer(item)->rename((char *) item->text().data());
+		} else {
+			/* No layer probably means that we want to edit a sublayer. */
+		}
 	} else {
 		qDebug() << "EE: Tree View: edited item in column" << item->column();
 	}

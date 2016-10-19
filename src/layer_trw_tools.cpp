@@ -1047,7 +1047,9 @@ static VikLayerToolFuncStatus tool_new_track_move_cb(Layer * trw, QMouseEvent * 
 
 VikLayerToolFuncStatus LayerTRW::tool_new_track_move(QMouseEvent * event, LayerTool * tool)
 {
-	qDebug() << "II: Layer TRW: new track's move()" << this->draw_sync_done << this->current_track << !this->current_track->empty();
+	qDebug() << "II: Layer TRW: new track's move()" << this->draw_sync_done;
+	qDebug() << "II: Layer TRW: new track's move()" << this->current_track;
+	qDebug() << "II: Layer TRW: new track's move()" << !this->current_track->empty();
 	/* If we haven't sync'ed yet, we don't have time to do more. */
 	if (/* this->draw_sync_done && */ this->current_track && !this->current_track->empty()) {
 		Trackpoint * last_tpt = this->current_track->get_tp_last();
