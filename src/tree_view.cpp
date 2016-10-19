@@ -657,7 +657,7 @@ bool TreeView::get_iter_at_pos(GtkTreeIter * iter, int x, int y)
 
 
 
-void TreeView::select_and_expose(GtkTreeIter * iter)
+void TreeView::select_and_expose(QPersistentModelIndex * index)
 {
 #ifndef SLAVGPS_QT
 	GtkTreeView * tree_view = this->tv_;
@@ -701,7 +701,7 @@ bool TreeView::get_editing()
 
 
 
-void TreeView::erase(GtkTreeIter *iter)
+void TreeView::erase(QPersistentModelIndex * index)
 {
 #ifndef SLAVGPS_QT
 	gtk_tree_store_remove(GTK_TREE_STORE (this->model), iter);
@@ -711,9 +711,9 @@ void TreeView::erase(GtkTreeIter *iter)
 
 
 
-void TreeView::set_icon(GtkTreeIter * iter, const GdkPixbuf * icon)
+void TreeView::set_icon(QPersistentModelIndex * index, const GdkPixbuf * icon)
 {
-	if (!iter) {
+	if (!index || !index->isValid()) {
 		return;
 	}
 #ifndef SLAVGPS_QT
@@ -740,6 +740,20 @@ void TreeView::set_visibility(QStandardItem * item, bool visible)
 	if (!item) {
 		return;
 	}
+	/* kamilFIXME: this does not take into account third state. */
+	item->setCheckState(visible ? Qt::Checked : Qt::Unchecked);
+}
+
+
+
+
+void TreeView::set_visibility(QPersistentModelIndex * index, bool visible)
+{
+	if (!index || !index->isValid()) {
+		qDebug() << "EE: Tree View: model index NULL or invalid:" << index;
+		return;
+	}
+	QStandardItem * item = this->model->item(index->row(), index->column());
 	/* kamilFIXME: this does not take into account third state. */
 	item->setCheckState(visible ? Qt::Checked : Qt::Unchecked);
 }
@@ -866,7 +880,94 @@ void TreeView::insert_layer(GtkTreeIter * parent_iter,
 
 
 
+QPersistentModelIndex * TreeView::add_sublayer(sg_uid_t sublayer_uid, SublayerType sublayer_type, Layer * parent_layer, QPersistentModelIndex * parent_index, char const * name, QIcon * icon, bool editable, time_t timestamp)
+{
+	// http://www.qtforum.org/article/34069/store-user-data-void-with-qstandarditem-in-qstandarditemmodel.html
 
+	QList<QStandardItem *> items;
+	QStandardItem * item = NULL;
+	QVariant variant;
+
+
+	/* LayersTreeColumn::NAME */
+	item = new QStandardItem(QString(name));
+	QPersistentModelIndex * ret = new QPersistentModelIndex(item->index());
+	items << item;
+
+	/* LayersTreeColumn::VISIBLE */
+	item = new QStandardItem();
+	item->setCheckable(true);
+	item->setCheckState(parent_layer->visible ? Qt::Checked : Qt::Unchecked);
+	variant = QVariant((qulonglong) sublayer_uid);
+	item->setData(variant, RoleLayerData); /* I'm assigning sublayer_uid to "visible" so that I don't have to look up ::ITEM column to find the su. */
+	items << item;
+
+	/* LayersTreeColumn::ICON */
+	item = new QStandardItem();
+	item->setIcon(*icon);
+	item->setEditable(false);
+	items << item;
+
+	/* LayersTreeColumn::TREE_ITEM_TYPE */
+	item = new QStandardItem();
+	variant = QVariant((int) TreeItemType::SUBLAYER);
+	item->setData(variant, RoleLayerData);
+	items << item;
+
+	/* LayersTreeColumn::PARENT_LAYER */
+	item = new QStandardItem();
+	variant = QVariant::fromValue(parent_layer);
+	item->setData(variant, RoleLayerData);
+	items << item;
+
+	/* LayersTreeColumn::ITEM */
+	item = new QStandardItem();
+	variant = QVariant::fromValue((qulonglong) sublayer_uid);
+	item->setData(variant, RoleLayerData);
+	items << item;
+
+	/* LayersTreeColumn::DATA */
+	item = new QStandardItem();
+	variant = QVariant::fromValue(0);
+	item->setData(variant, RoleLayerData);
+	items << item;
+
+	/* LayersTreeColumn::UID */
+	item = new QStandardItem();
+	variant = QVariant::fromValue((qulonglong) sublayer_uid);
+	item->setData(variant, RoleLayerData);
+	items << item;
+
+	/* LayersTreeColumn::EDITABLE */
+	item = new QStandardItem();
+	variant = QVariant::fromValue(editable);
+	item->setData(variant, RoleLayerData);
+	items << item;
+
+	/* LayersTreeColumn::TIMESTAMP */
+#ifdef K
+	item = new QStandardItem((qlonglong) timestamp);
+#else
+	timestamp = 0;
+	item = new QStandardItem((qlonglong) timestamp);
+#endif
+	//variant = QVariant::fromValue(data);
+	//item->setData(variant, RoleLayerData);
+	items << item;
+
+	if (parent_index) {
+		this->model->item(parent_index->row(), parent_index->column())->appendRow(items);
+	} else {
+		/* TODO: this shouldn't happen, we can't add sublayers right on top. */
+		qDebug() << "EE: Tree View: adding sublayer on top level";
+		this->model->invisibleRootItem()->appendRow(items);
+	}
+	//connect(this->model, SIGNAL(itemChanged(QStandardItem*)), layer, SLOT(visibility_toggled(QStandardItem *)));
+
+	return ret;
+}
+
+#if 0
 void TreeView::add_sublayer(GtkTreeIter * parent_iter,
 			    GtkTreeIter * iter,
 			    const char * name,
@@ -894,7 +995,7 @@ void TreeView::add_sublayer(GtkTreeIter * parent_iter,
 			   -1);
 #endif
 }
-
+#endif
 
 
 
@@ -958,7 +1059,7 @@ static int sort_tuple_compare(gconstpointer a, gconstpointer b, void * order)
  * For a KML file with over 10,000 tracks (3Mb zipped) - See 'UK Hampshire Rights of Way'
  * http://www3.hants.gov.uk/row/row-maps.htm
  */
-void TreeView::sort_children(GtkTreeIter * parent, vik_layer_sort_order_t order)
+void TreeView::sort_children(QPersistentModelIndex * parent_index, vik_layer_sort_order_t order)
 {
 	if (order == VL_SO_NONE) {
 		/* Nothing to do. */
@@ -967,11 +1068,11 @@ void TreeView::sort_children(GtkTreeIter * parent, vik_layer_sort_order_t order)
 #ifndef SLAVGPS_QT
 	GtkTreeModel * model = this->model;
 	GtkTreeIter child;
-	if (!gtk_tree_model_iter_children(model, &child, parent)) {
+	if (!gtk_tree_model_iter_children(model, &child, parent_index)) {
 		return;
 	}
 
-	unsigned int length = gtk_tree_model_iter_n_children(model, parent);
+	unsigned int length = gtk_tree_model_iter_n_children(model, parent_index);
 
 	/* Create an array to store the position offsets. */
 	SortTuple *sort_array;
@@ -1001,7 +1102,7 @@ void TreeView::sort_children(GtkTreeIter * parent, vik_layer_sort_order_t order)
 	free(sort_array);
 
 	/* This is extremely fast compared to the old alphabetical insertion. */
-	gtk_tree_store_reorder(GTK_TREE_STORE(model), parent, positions);
+	gtk_tree_store_reorder(GTK_TREE_STORE(model), parent_index, positions);
 	free(positions);
 #endif
 }

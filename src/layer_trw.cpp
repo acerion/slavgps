@@ -995,7 +995,7 @@ bool LayerTRW::set_param_value(uint16_t id, LayerParamData data, Viewport * view
 		}
 		break;
 	case PARAM_WPC:
-		#ifdef K
+#ifdef K
 		this->waypoint_color = data.c;
 		if (this->waypoint_gc) {
 			gdk_gc_set_rgb_fg_color(this->waypoint_gc, &(this->waypoint_color));
@@ -1685,12 +1685,11 @@ GdkPixbuf* get_wp_sym_small(char *symbol)
 
 
 
-void LayerTRW::realize_track(std::unordered_map<sg_uid_t, Track *> & tracks, trw_data4_t * pass_along, SublayerType sublayer_type)
+void LayerTRW::realize_track(std::unordered_map<sg_uid_t, Track *> & tracks, trw_data4_t * data, SublayerType sublayer_type)
 {
-#ifdef K
 	for (auto i = tracks.begin(); i != tracks.end(); i++) {
-		GtkTreeIter * new_iter = (GtkTreeIter *) malloc(sizeof(GtkTreeIter));
 		Track * trk = i->second;
+#ifdef K
 
 		GdkPixbuf *pixbuf = NULL;
 
@@ -1705,6 +1704,7 @@ void LayerTRW::realize_track(std::unordered_map<sg_uid_t, Track *> & tracks, trw
 
 			gdk_pixbuf_fill(pixbuf, pixel);
 		}
+#endif
 
 		time_t timestamp = 0;
 		Trackpoint * tpt = trk->get_tp_first();
@@ -1712,52 +1712,45 @@ void LayerTRW::realize_track(std::unordered_map<sg_uid_t, Track *> & tracks, trw
 			timestamp = tpt->timestamp;
 		}
 
-		Layer * parent = pass_along->layer;
-		TreeView * tree_view = pass_along->tree_view;
-		tree_view->add_sublayer(pass_along->path_iter, pass_along->iter2, trk->name, parent, i->first, sublayer_type, pixbuf, true, timestamp);
+		Layer * parent = data->layer;
+		TreeView * tree_view = data->tree_view;
+		data->index = tree_view->add_sublayer(i->first, sublayer_type, parent, data->parent_index, trk->name, NULL, true, timestamp);
 
+#ifdef K
 		if (pixbuf) {
 			g_object_unref(pixbuf);
 		}
+#endif
 
-		*new_iter = *(pass_along->iter2);
 		if (trk->is_route) {
-			this->routes_iters.insert({{ i->first, new_iter }});
+			this->routes_iters.insert({{ i->first, data->index }});
 		} else {
-			this->tracks_iters.insert({{ i->first, new_iter }});
+			this->tracks_iters.insert({{ i->first, data->index }});
 		}
 
 		if (!trk->visible) {
-			pass_along->tree_view->set_visibility(pass_along->iter2, false);
+			data->tree_view->set_visibility(data->index, false);
 		}
 	}
-#endif
 }
 
 
 
 
-void LayerTRW::realize_waypoints(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, trw_data4_t * pass_along, SublayerType sublayer_type)
+void LayerTRW::realize_waypoints(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, trw_data4_t * data, SublayerType sublayer_type)
 {
 	for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
-		GtkTreeIter *new_iter = (GtkTreeIter *) malloc(sizeof (GtkTreeIter));
-
 		time_t timestamp = 0;
 		if (i->second->has_timestamp) {
 			timestamp = i->second->timestamp;
 		}
 
-		Layer * parent = pass_along->layer;
+		data->index = data->tree_view->add_sublayer(i->first, sublayer_type, data->layer, data->parent_index, i->second->name, NULL /* i->second->symbol */, true, timestamp);
 
-		pass_along->tree_view->add_sublayer(pass_along->path_iter, pass_along->iter2, i->second->name, parent, i->first, sublayer_type, get_wp_sym_small(i->second->symbol), true, timestamp);
-
-		*new_iter = *(pass_along->iter2);
-		this->waypoints_iters.insert({{ i->first, new_iter }});
+		this->waypoints_iters.insert({{ i->first, data->index }});
 
 		if (!i->second->visible) {
-#ifdef K
-			pass_along->tree_view->set_visibility(pass_along->iter2, false);
-#endif
+			data->tree_view->set_visibility(data->index, false);
 		}
 	}
 }
@@ -1765,64 +1758,66 @@ void LayerTRW::realize_waypoints(std::unordered_map<sg_uid_t, Waypoint *> & wayp
 
 
 
-void LayerTRW::add_sublayer_tracks(TreeView * tree_view_, GtkTreeIter * layer_iter)
+void LayerTRW::add_tracks_node(void)
 {
-	tree_view_->add_sublayer(layer_iter, &(track_iter), _("Tracks"), this, SG_UID_NONE, SublayerType::TRACKS, NULL, false, 0);
+	/* TODO: assert that this layer is realized. */
+	this->tracks_node = this->tree_view->add_sublayer(SG_UID_NONE, SublayerType::TRACKS, this, this->index, _("Tracks"), NULL, false, 0);
 }
 
 
 
 
-void LayerTRW::add_sublayer_waypoints(TreeView * tree_view_, GtkTreeIter * layer_iter)
+void LayerTRW::add_waypoints_node(void)
 {
-	tree_view_->add_sublayer(layer_iter, &(waypoint_iter), _("Waypoints"), this, SG_UID_NONE, SublayerType::WAYPOINTS, NULL, false, 0);
+	/* TODO: assert that this layer is realized. */
+	this->waypoints_node = this->tree_view->add_sublayer(SG_UID_NONE, SublayerType::WAYPOINTS, this, this->index, _("Waypoints"), NULL, false, 0);
 }
 
 
 
 
-void LayerTRW::add_sublayer_routes(TreeView * tree_view_, GtkTreeIter * layer_iter)
+void LayerTRW::add_routes_node(void)
 {
-	tree_view_->add_sublayer(layer_iter, &(route_iter), _("Routes"), this, SG_UID_NONE, SublayerType::ROUTES, NULL, false, 0);
+	/* TODO: assert that this layer is realized. */
+	this->routes_node = this->tree_view->add_sublayer(SG_UID_NONE, SublayerType::ROUTES, this, this->index, _("Routes"), NULL, false, 0);
 }
 
 
 
 
-void LayerTRW::realize(TreeView * tree_view_, GtkTreeIter * layer_iter)
+void LayerTRW::realize(TreeView * tree_view_, QPersistentModelIndex * layer_index)
 {
 #ifdef K
-	GtkTreeIter iter2;
 	trw_data4_t pass_along;
-	pass_along.path_iter = &this->track_iter;
-	pass_along.iter2 = &iter2;
+	pass_along.parent_index = this->tracks_node;
+	pass_along.index = NULL;
 	pass_along.layer = this;
 	pass_along.tree_view = tree_view_;
 
 	this->tree_view = tree_view_;
-	this->iter = *layer_iter;
+	this->index = layer_index;
 	this->realized = true;
 
 	if (this->tracks.size() > 0) {
-		this->add_sublayer_tracks(this->tree_view, layer_iter);
+		this->add_tracks_node();
 		this->realize_track(this->tracks, &pass_along, SublayerType::TRACK);
-		this->tree_view->set_visibility(&(this->track_iter), this->tracks_visible);
+		this->tree_view->set_visibility(this->tracks_node, this->tracks_visible);
 	}
 
 	if (this->routes.size() > 0) {
-		pass_along.path_iter = &(this->route_iter);
+		pass_along.parent_index = this->routes_node;
 
-		this->add_sublayer_routes(this->tree_view, layer_iter);
+		this->add_routes_node();
 		this->realize_track(this->routes, &pass_along, SublayerType::ROUTE);
-		this->tree_view->set_visibility(&(this->route_iter), this->routes_visible);
+		this->tree_view->set_visibility(this->routes_node, this->routes_visible);
 	}
 
 	if (this->waypoints.size() > 0) {
-		pass_along.path_iter = &(this->waypoint_iter);
+		pass_along.parent_index = this->waypoints_node;
 
-		this->add_sublayer_waypoints(this->tree_view, layer_iter);
+		this->add_waypoints_node();
 		this->realize_waypoints(this->waypoints, &pass_along, SublayerType::WAYPOINT);
-		this->tree_view->set_visibility(&(this->waypoint_iter), this->waypoints_visible);
+		this->tree_view->set_visibility(this->waypoints_node, this->waypoints_visible);
 	}
 
 	this->verify_thumbnails();
@@ -2345,7 +2340,7 @@ std::unordered_map<sg_uid_t, Waypoint *> & LayerTRW::get_waypoints()
 
 
 
-std::unordered_map<sg_uid_t, TreeIndex *> & LayerTRW::get_tracks_iters()
+std::unordered_map<sg_uid_t, QPersistentModelIndex *> & LayerTRW::get_tracks_iters()
 {
 	return tracks_iters;
 }
@@ -2353,7 +2348,7 @@ std::unordered_map<sg_uid_t, TreeIndex *> & LayerTRW::get_tracks_iters()
 
 
 
-std::unordered_map<sg_uid_t, TreeIndex *> & LayerTRW::get_routes_iters()
+std::unordered_map<sg_uid_t, QPersistentModelIndex *> & LayerTRW::get_routes_iters()
 {
 	return routes_iters;
 }
@@ -2361,7 +2356,7 @@ std::unordered_map<sg_uid_t, TreeIndex *> & LayerTRW::get_routes_iters()
 
 
 
-std::unordered_map<sg_uid_t, TreeIndex *> & LayerTRW::get_waypoints_iters()
+std::unordered_map<sg_uid_t, QPersistentModelIndex *> & LayerTRW::get_waypoints_iters()
 {
 	return waypoints_iters;
 }
@@ -3043,7 +3038,7 @@ void trw_layer_gps_upload(trw_menu_layer_t * data)
 
 
 /**
- * If pass_along->tree is defined that this will upload just that track.
+ * If data->tree is defined that this will upload just that track.
  */
 void trw_layer_gps_upload_any(trw_menu_sublayer_t * data)
 {
@@ -3355,28 +3350,27 @@ void LayerTRW::add_waypoint(Waypoint * wp, char const * name)
 	wp->set_name(name);
 
 	if (this->realized) {
-		// Do we need to create the sublayer:
+		/* Do we need to create the sublayer?
+		   TODO: this condition should be unnecessary for realized layer, right? */
 		if (waypoints.size() == 0) {
-			this->add_sublayer_waypoints(this->tree_view, &this->iter);
+			this->add_waypoints_node();
 		}
-
-		GtkTreeIter *iter = (GtkTreeIter *) malloc(sizeof(GtkTreeIter));
 
 		time_t timestamp = 0;
 		if (wp->has_timestamp) {
 			timestamp = wp->timestamp;
 		}
 
-		// Visibility column always needed for waypoints
-		this->tree_view->add_sublayer(&waypoint_iter, iter, name, this, global_wp_uid, SublayerType::WAYPOINT, get_wp_sym_small(wp->symbol), true, timestamp);
+		/* Visibility column always needed for waypoints. */
+		QPersistentModelIndex * index = this->tree_view->add_sublayer(global_wp_uid, SublayerType::WAYPOINT, this, this->waypoints_node, name, NULL /* wp->symbol */, true, timestamp);
 
-		// Actual setting of visibility dependent on the waypoint
-		this->tree_view->set_visibility(iter, wp->visible);
+		/* Actual setting of visibility dependent on the waypoint. */
+		this->tree_view->set_visibility(index, wp->visible);
 
-		waypoints_iters.insert({{ global_wp_uid, iter }});
+		waypoints_iters.insert({{ global_wp_uid, index }});
 
-		// Sort now as post_read is not called on a realized waypoint
-		this->tree_view->sort_children(&(waypoint_iter), this->wp_sort_order);
+		/* Sort now as post_read is not called on a realized waypoint. */
+		this->tree_view->sort_children(this->waypoints_node, this->wp_sort_order);
 	}
 
 	this->highest_wp_number_add_wp(name);
@@ -3398,9 +3392,10 @@ void LayerTRW::add_track(Track * trk, char const * name)
 	trk->set_name(name);
 
 	if (this->realized) {
-		// Do we need to create the sublayer:
+		/* Do we need to create the sublayer?
+		   TODO: this condition should be unnecessary for realized layer, right? */
 		if (tracks.size() == 0) {
-			this->add_sublayer_tracks(this->tree_view, &this->iter);
+			this->add_tracks_node();
 		}
 
 		GtkTreeIter *iter = (GtkTreeIter *) malloc(sizeof(GtkTreeIter));
@@ -3411,16 +3406,16 @@ void LayerTRW::add_track(Track * trk, char const * name)
 			timestamp = tp->timestamp;
 		}
 
-		// Visibility column always needed for tracks
-		this->tree_view->add_sublayer(&track_iter, iter, name, this, global_tr_uuid, SublayerType::TRACK, NULL, true, timestamp);
+		/* Visibility column always needed for tracks. */
+		QPersistentModelIndex * index = this->tree_view->add_sublayer(global_tr_uuid, SublayerType::TRACK, this, this->tracks_node, name, NULL, true, timestamp);
 
-		// Actual setting of visibility dependent on the track
-		this->tree_view->set_visibility(iter, trk->visible);
+		/* Actual setting of visibility dependent on the track. */
+		this->tree_view->set_visibility(index, trk->visible);
 
-		tracks_iters.insert({{ global_tr_uuid, iter }});
+		tracks_iters.insert({{ global_tr_uuid, index }});
 
-		// Sort now as post_read is not called on a realized track
-		this->tree_view->sort_children(&(track_iter), this->track_sort_order);
+		/* Sort now as post_read is not called on a realized track. */
+		this->tree_view->sort_children(this->tracks_node, this->track_sort_order);
 	}
 
 	tracks.insert({{ global_tr_uuid, trk }});
@@ -3443,21 +3438,22 @@ void LayerTRW::add_route(Track * trk, char const * name)
 	trk->set_name(name);
 
 	if (this->realized) {
-		// Do we need to create the sublayer:
+		/* Do we need to create the sublayer?
+		   TODO: this condition should be unnecessary for realized layer, right? */
 		if (routes.size() == 0) {
-			this->add_sublayer_routes(this->tree_view, &this->iter);
+			this->add_routes_node();
 		}
 
-		GtkTreeIter *iter = (GtkTreeIter *) malloc(sizeof(GtkTreeIter));
-		// Visibility column always needed for routes
-		this->tree_view->add_sublayer(&route_iter, iter, name, this, global_rt_uuid, SublayerType::ROUTE, NULL, true, 0); // Routes don't have times
-		// Actual setting of visibility dependent on the route
-		this->tree_view->set_visibility(iter, trk->visible);
+		/* Visibility column always needed for routes. */
+		QPersistentModelIndex * index = this->tree_view->add_sublayer(global_rt_uuid, SublayerType::ROUTE, this, this->routes_node, name, NULL, true, 0); // Routes don't have times
 
-		routes_iters.insert({{ global_rt_uuid, iter }});
+		/* Actual setting of visibility dependent on the route. */
+		this->tree_view->set_visibility(index, trk->visible);
 
-		// Sort now as post_read is not called on a realized route
-		this->tree_view->sort_children(&(route_iter), this->track_sort_order);
+		routes_iters.insert({{ global_rt_uuid, index }});
+
+		/* Sort now as post_read is not called on a realized route. */
+		this->tree_view->sort_children(this->routes_node, this->track_sort_order);
 	}
 
 	routes.insert({{ global_rt_uuid, trk }});
@@ -3728,7 +3724,7 @@ bool LayerTRW::delete_track(Track * trk)
 			/* could be current_tp, so we have to check */
 			this->cancel_tps_of_track(trk);
 
-			TreeIndex * it = tracks_iters.at(uid);
+			QPersistentModelIndex * it = tracks_iters.at(uid);
 			if (it) {
 				this->tree_view->erase(it);
 				tracks_iters.erase(uid);
@@ -3736,7 +3732,7 @@ bool LayerTRW::delete_track(Track * trk)
 
 				// If last sublayer, then remove sublayer container
 				if (tracks.size() == 0) {
-					this->tree_view->erase(&track_iter);
+					this->tree_view->erase(this->tracks_node);
 				}
 			}
 			// In case it was selected (no item delete signal ATM)
@@ -3785,7 +3781,7 @@ bool LayerTRW::delete_route(Track * trk)
 
 				// If last sublayer, then remove sublayer container
 				if (routes.size() == 0) {
-					this->tree_view->erase(&route_iter);
+					this->tree_view->erase(this->routes_node);
 				}
 			}
 			/* In case it was selected (no item delete signal ATM). */
@@ -3816,7 +3812,7 @@ bool LayerTRW::delete_waypoint(Waypoint * wp)
 
 		sg_uid_t uid = LayerTRWc::find_uid_of_waypoint(waypoints, wp);
 		if (uid) {
-			TreeIndex * it = waypoints_iters.at(uid);
+			QPersistentModelIndex * it = waypoints_iters.at(uid);
 
 			if (it) {
 				this->tree_view->erase(it);
@@ -3829,7 +3825,7 @@ bool LayerTRW::delete_waypoint(Waypoint * wp)
 
 				// If last sublayer, then remove sublayer container
 				if (waypoints.size() == 0) {
-					this->tree_view->erase(&waypoint_iter);
+					this->tree_view->erase(this->waypoints_node);
 				}
 			}
 			/* In case it was selected (no item delete signal ATM). */
@@ -3899,7 +3895,7 @@ void LayerTRW::delete_all_routes()
 	this->routes_iters.clear(); /* kamilTODO: call destructors of route iters. */
 	this->routes.clear(); /* kamilTODO: call destructors of routes. */
 
-	this->tree_view->erase(&this->route_iter);
+	this->tree_view->erase(this->routes_node);
 
 	this->emit_update();
 }
@@ -3919,7 +3915,7 @@ void LayerTRW::delete_all_tracks()
 	this->tracks_iters.clear();
 	this->tracks.clear(); /* kamilTODO: call destructors of tracks. */
 
-	this->tree_view->erase(&this->track_iter);
+	this->tree_view->erase(this->tracks_node);
 
 	this->emit_update();
 }
@@ -3939,7 +3935,7 @@ void LayerTRW::delete_all_waypoints()
 	this->waypoints_iters.clear();
 	this->waypoints.clear(); /* kamilTODO: does this really call destructors of Waypoints? */
 
-	this->tree_view->erase(&this->waypoint_iter);
+	this->tree_view->erase(this->waypoints_node);
 
 	this->emit_update();
 }
@@ -4077,7 +4073,7 @@ void LayerTRW::waypoint_rename(Waypoint * wp, char const * new_name)
 		GtkTreeIter * it = this->waypoints_iters.at(uid);
 		if (it) {
 			this->tree_view->set_name(it, new_name);
-			this->tree_view->sort_children(&(this->waypoint_iter), this->wp_sort_order);
+			this->tree_view->sort_children(this->waypoints_node, this->wp_sort_order);
 		}
 	}
 #endif
@@ -4095,9 +4091,9 @@ void LayerTRW::waypoint_reset_icon(Waypoint * wp)
 	// Need key of it for treeview update
 	sg_uid_t uid = LayerTRWc::find_uid_of_waypoint(this->waypoints, wp);
 	if (uid) {
-		GtkTreeIter * it = this->waypoints_iters.at(uid);
-		if (it) {
-			this->tree_view->set_icon(it, get_wp_sym_small(wp->symbol));
+		QPersistentModelIndex * index = this->waypoints_iters.at(uid);
+		if (index && index->isValid()) {
+			this->tree_view->set_icon(index, get_wp_sym_small(wp->symbol));
 		}
 	}
 }
@@ -5937,9 +5933,9 @@ void LayerTRW::uniquify_tracks(LayersPanel * panel, std::unordered_map<sg_uid_t,
 			if (it) {
 				this->tree_view->set_name(it, newname);
 				if (ontrack) {
-					this->tree_view->sort_children(&(this->track_iter), this->track_sort_order);
+					this->tree_view->sort_children(this->tracks_node, this->track_sort_order);
 				} else {
-					this->tree_view->sort_children(&(this->route_iter), this->track_sort_order);
+					this->tree_view->sort_children(this->routes_node, this->track_sort_order);
 				}
 			}
 		}
@@ -5966,24 +5962,24 @@ void LayerTRW::uniquify_tracks(LayersPanel * panel, std::unordered_map<sg_uid_t,
 
 void LayerTRW::sort_order_specified(SublayerType sublayer_type, vik_layer_sort_order_t order)
 {
-	GtkTreeIter * iter = NULL;
+	QPersistentModelIndex * index = NULL;
 
 	switch (sublayer_type) {
 	case SublayerType::TRACKS:
-		iter = &(this->track_iter);
+		index = this->tracks_node;
 		this->track_sort_order = order;
 		break;
 	case SublayerType::ROUTES:
-		iter = &(this->route_iter);
+		index = this->routes_node;
 		this->track_sort_order = order;
 		break;
 	default: // SublayerType::WAYPOINTS:
-		iter = &(this->waypoint_iter);
+		index = this->waypoints_node;
 		this->wp_sort_order = order;
 		break;
 	}
 
-	this->tree_view->sort_children(iter, order);
+	this->tree_view->sort_children(index, order);
 }
 
 
@@ -6638,7 +6634,7 @@ char const * LayerTRW::sublayer_rename_request(const char * newname, void * pane
 		wp->set_name(newname);
 
 		this->tree_view->set_name(iter, newname);
-		this->tree_view->sort_children(&(this->waypoint_iter), this->wp_sort_order);
+		this->tree_view->sort_children(this->waypoints_node, this->wp_sort_order);
 
 		((LayersPanel *) panel)->emit_update();
 
@@ -6677,7 +6673,7 @@ char const * LayerTRW::sublayer_rename_request(const char * newname, void * pane
 		vik_trw_layer_propwin_update(trk);
 
 		this->tree_view->set_name(iter, newname);
-		this->tree_view->sort_children(&(this->track_iter), this->track_sort_order);
+		this->tree_view->sort_children(this->tracks_node, this->track_sort_order);
 
 		((LayersPanel *) panel)->emit_update();
 
@@ -6716,7 +6712,7 @@ char const * LayerTRW::sublayer_rename_request(const char * newname, void * pane
 		vik_trw_layer_propwin_update(trk);
 
 		this->tree_view->set_name(iter, newname);
-		this->tree_view->sort_children(&(this->track_iter), this->track_sort_order);
+		this->tree_view->sort_children(this->tracks_node, this->track_sort_order);
 
 		((LayersPanel *) panel)->emit_update();
 
@@ -7314,15 +7310,15 @@ void LayerTRW::sort_all()
 
 	/* Obviously need 2 to tango - sorting with only 1 (or less) is a lonely activity! */
 	if (this->tracks.size() > 1) {
-		this->tree_view->sort_children(&(this->track_iter), this->track_sort_order);
+		this->tree_view->sort_children(this->tracks_node, this->track_sort_order);
 	}
 
 	if (this->routes.size() > 1) {
-		this->tree_view->sort_children(&(this->route_iter), this->track_sort_order);
+		this->tree_view->sort_children(this->routes_node, this->track_sort_order);
 	}
 
 	if (this->waypoints.size() > 1) {
-		this->tree_view->sort_children(&(this->waypoint_iter), this->wp_sort_order);
+		this->tree_view->sort_children(this->waypoints_node, this->wp_sort_order);
 	}
 }
 

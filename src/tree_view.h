@@ -27,6 +27,7 @@
 #include <cstdint>
 
 #include <QStandardItem>
+#include <QPersistentModelIndex>
 #include <QTreeView>
 #include <QString>
 #include <QObject>
@@ -92,7 +93,8 @@ namespace SlavGPS {
 		QStandardItem * add_layer(Layer * layer, Layer * parent_layer, QStandardItem * parent_item, bool above, int data, time_t timestamp);
 		QStandardItem * insert_layer(Layer * layer, Layer * parent_layer, QStandardItem * parent_item, bool above, int data, time_t timestamp, QStandardItem * sibling);
 		void insert_layer(GtkTreeIter *parent_iter, GtkTreeIter *iter, const char *name, Layer * parent_layer, bool above, Layer * layer, int data, LayerType layer_type, GtkTreeIter *sibling, time_t timestamp);
-		void add_sublayer(GtkTreeIter *parent_iter, GtkTreeIter *iter, const char *name, Layer * parent_layer, sg_uid_t sublayer_uid, SublayerType sublayer_type, GdkPixbuf *icon, bool editable, time_t timestamp);
+		//void add_sublayer(GtkTreeIter *parent_iter, GtkTreeIter *iter, const char *name, Layer * parent_layer, sg_uid_t sublayer_uid, SublayerType sublayer_type, GdkPixbuf *icon, bool editable, time_t timestamp);
+		QPersistentModelIndex * add_sublayer(sg_uid_t sublayer_uid, SublayerType sublayer_type, Layer * parent_layer, QPersistentModelIndex * parent_index, char const * name, QIcon * icon, bool editable, time_t timestamp);
 
 
 		TreeItemType get_item_type(QStandardItem * item);
@@ -112,23 +114,24 @@ namespace SlavGPS {
 		QStandardItem * get_parent_item(QStandardItem * item);
 
 
-		void set_icon(GtkTreeIter * iter, GdkPixbuf const * icon);
+		void set_icon(QPersistentModelIndex * index, GdkPixbuf const * icon);
 		void set_name(QStandardItem * item, QString const & name);
 		void set_visibility(QStandardItem * item, bool visible);
+		void set_visibility(QPersistentModelIndex * index, bool visible);
 		void toggle_visibility(QStandardItem * item);
 		void set_timestamp(QStandardItem * item, time_t timestamp);
 
 
 		void select(QStandardItem * item);
-		void select_and_expose(GtkTreeIter * iter);
+		void select_and_expose(QPersistentModelIndex * index);
 		void unselect(GtkTreeIter * iter);
-		void erase(GtkTreeIter * iter);
+		void erase(QPersistentModelIndex * index);
 		bool move(GtkTreeIter * iter, bool up);
 		bool is_visible(QStandardItem * item);
 		bool is_visible_in_tree(QStandardItem * item);
 		bool get_editing();
 		void expand(QStandardItem * item);
-		void sort_children(GtkTreeIter * parent, vik_layer_sort_order_t order);
+		void sort_children(QPersistentModelIndex * parent_index, vik_layer_sort_order_t order);
 
 		QStandardItem * go_up_to_layer(QStandardItem * item);
 

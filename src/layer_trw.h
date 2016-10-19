@@ -34,6 +34,8 @@
 #include <list>
 #include <unordered_map>
 
+#include <QStandardItem>
+
 #include "layer.h"
 #include "viewport.h"
 #include "vikwaypoint.h"
@@ -70,8 +72,8 @@ namespace SlavGPS {
 
 
 	typedef struct {
-		GtkTreeIter * path_iter;
-		GtkTreeIter * iter2;
+		QPersistentModelIndex * parent_index;
+		QPersistentModelIndex * index;
 		Layer * layer;
 		TreeView * tree_view;
 	} trw_data4_t;
@@ -180,7 +182,7 @@ namespace SlavGPS {
 		char const * sublayer_rename_request(const char * newname, void * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, GtkTreeIter * iter);
 		bool sublayer_toggle_visible(SublayerType sublayer_type, sg_uid_t sublayer_uid);
 
-		void realize(TreeView * tree_view, GtkTreeIter * layer_iter);
+		void realize(TreeView * tree_view, QPersistentModelIndex * layer_index);
 		bool set_param_value(uint16_t id, LayerParamValue param_value, Viewport * viewport, bool is_file_operation);
 		LayerParamValue get_param_value(layer_param_id_t id, bool is_file_operation) const;
 
@@ -198,9 +200,9 @@ namespace SlavGPS {
 		std::unordered_map<sg_uid_t, Track *> & get_routes();
 		std::unordered_map<sg_uid_t, Waypoint *> & get_waypoints();
 
-		std::unordered_map<sg_uid_t, TreeIndex *> & get_tracks_iters();
-		std::unordered_map<sg_uid_t, TreeIndex *> & get_routes_iters();
-		std::unordered_map<sg_uid_t, TreeIndex *> & get_waypoints_iters();
+		std::unordered_map<sg_uid_t, QPersistentModelIndex *> & get_tracks_iters();
+		std::unordered_map<sg_uid_t, QPersistentModelIndex *> & get_routes_iters();
+		std::unordered_map<sg_uid_t, QPersistentModelIndex *> & get_waypoints_iters();
 
 		bool get_tracks_visibility();
 		bool get_routes_visibility();
@@ -225,11 +227,6 @@ namespace SlavGPS {
 
 		void realize_track(std::unordered_map<sg_uid_t, Track *> & tracks, trw_data4_t * pass_along, SublayerType sublayer_type);
 		void realize_waypoints(std::unordered_map<sg_uid_t, Waypoint *> & data, trw_data4_t * pass_along, SublayerType sublayer_type);
-
-
-		void add_sublayer_tracks(TreeView * tree_view, GtkTreeIter * layer_iter);
-		void add_sublayer_waypoints(TreeView * tree_view, GtkTreeIter * layer_iter);
-		void add_sublayer_routes(TreeView * tree_view, GtkTreeIter * layer_iter);
 
 
 		static void find_maxmin_in_track(const Track * trk, struct LatLon maxmin[2]);
@@ -421,18 +418,18 @@ namespace SlavGPS {
 
 
 		std::unordered_map<sg_uid_t, Track *> tracks;
-		std::unordered_map<sg_uid_t, TreeIndex *> tracks_iters;
-		GtkTreeIter track_iter;
+		std::unordered_map<sg_uid_t, QPersistentModelIndex *> tracks_iters;
+		QPersistentModelIndex * tracks_node = NULL; /* Sub-node, under which all layer's tracks are shown. */
 		bool tracks_visible;
 
 		std::unordered_map<sg_uid_t, Track *> routes;
-		std::unordered_map<sg_uid_t, TreeIndex *> routes_iters;
-		GtkTreeIter route_iter;
+		std::unordered_map<sg_uid_t, QPersistentModelIndex *> routes_iters;
+		QPersistentModelIndex * routes_node = NULL; /* Sub-node, under which all layer's routes are shown. */
 		bool routes_visible;
 
 		std::unordered_map<sg_uid_t, Waypoint *> waypoints;
-		std::unordered_map<sg_uid_t, TreeIndex *> waypoints_iters;
-		TreeIndex waypoint_iter;
+		std::unordered_map<sg_uid_t, QPersistentModelIndex *> waypoints_iters;
+		QPersistentModelIndex * waypoints_node = NULL; /* Sub-node, under which all layer's waypoints are shown. */
 		bool waypoints_visible;
 
 
@@ -557,6 +554,12 @@ namespace SlavGPS {
 
 		/* One per layer. */
 		GtkWidget * tracks_analysis_dialog = NULL;
+
+	private:
+		/* Add a node in tree view, under which layers' tracks/waypoints/routes will be displayed. */
+		void add_tracks_node(void);
+		void add_waypoints_node(void);
+		void add_routes_node(void);
 	};
 
 
@@ -585,7 +588,7 @@ typedef struct _trw_menu_sublayer_t {
 	sg_uid_t sublayer_uid;
 	bool confirm;
 	SlavGPS::Viewport * viewport;
-	GtkTreeIter * tv_iter;
+	QStandardItem * tv_item;
 	void * misc;
 } trw_menu_sublayer_t;
 

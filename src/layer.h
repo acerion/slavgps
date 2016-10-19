@@ -31,6 +31,7 @@
 #include <QObject>
 #include <QTreeWidgetItem>
 #include <QStandardItem>
+#include <QPersistentModelIndex>
 #include <QIcon>
 #include <QMouseEvent>
 #include <QCursor>
@@ -262,6 +263,7 @@ namespace SlavGPS {
 		TreeView * tree_view = NULL; /* Simply a reference. */
 		GtkTreeIter iter;
 		QStandardItem * item = NULL;
+		QPersistentModelIndex * index = NULL;
 
 		/* For explicit "polymorphism" (function type switching). */
 		LayerType type;
