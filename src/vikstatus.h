@@ -69,7 +69,7 @@ namespace SlavGPS {
 		StatusBar(QWidget * parent);
 		~StatusBar();
 
-		void set_message(StatusBarField field, QString & message);
+		void set_message(StatusBarField field, QString const & message);
 
 	private:
 
