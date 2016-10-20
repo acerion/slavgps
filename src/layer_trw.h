@@ -151,11 +151,11 @@ namespace SlavGPS {
 
 		bool selected(SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeItemType type);
 
-		bool show_selected_viewport_menu(GdkEventButton * event, Viewport * viewport);
+		bool show_selected_viewport_menu(QMouseEvent * event, Viewport * viewport);
 
-		bool select_click(GdkEventButton * event, Viewport * viewport, LayerTool * tool);
-		bool select_move(GdkEventMotion * event, Viewport * viewport, LayerTool * tool);
-		bool select_release(GdkEventButton * event, Viewport * viewport, LayerTool * tool);
+		bool select_click(QMouseEvent * event, Viewport * viewport, LayerTool * tool);
+		bool select_move(QMouseEvent * event, Viewport * viewport, LayerTool * tool);
+		bool select_release(QMouseEvent * event, Viewport * viewport, LayerTool * tool);
 
 		void set_menu_selection(uint16_t selection);
 		uint16_t get_menu_selection();
@@ -379,20 +379,20 @@ namespace SlavGPS {
 
 
 		/* Callback-related. */
-		bool tool_edit_waypoint_click(GdkEventButton * event, LayerTool * tool);
-		bool tool_edit_waypoint_move(GdkEventMotion * event, LayerTool * tool);
-		bool tool_edit_waypoint_release(GdkEventButton * event, LayerTool * tool);
-		bool tool_extended_route_finder_click(GdkEventButton * event, LayerTool * tool);
+		bool tool_edit_waypoint_click(QMouseEvent * event, LayerTool * tool);
+		bool tool_edit_waypoint_move(QMouseEvent * event, LayerTool * tool);
+		bool tool_edit_waypoint_release(QMouseEvent * event, LayerTool * tool);
+		bool tool_extended_route_finder_click(QMouseEvent * event, LayerTool * tool);
 		bool tool_extended_route_finder_key_press(GdkEventKey * event, LayerTool * tool);
-		bool tool_show_picture_click(GdkEventButton * event, LayerTool * tool);
-		bool tool_edit_trackpoint_click(GdkEventButton * event, LayerTool * tool);
-		bool tool_edit_trackpoint_move(GdkEventMotion *event, LayerTool * tool);
-		bool tool_edit_trackpoint_release(GdkEventButton * event, LayerTool * tool);
+		bool tool_show_picture_click(QMouseEvent * event, LayerTool * tool);
+		bool tool_edit_trackpoint_click(QMouseEvent * event, LayerTool * tool);
+		bool tool_edit_trackpoint_move(QMouseEvent *event, LayerTool * tool);
+		bool tool_edit_trackpoint_release(QMouseEvent * event, LayerTool * tool);
 		VikLayerToolFuncStatus tool_new_track_move(QMouseEvent * event, LayerTool * tool);
 		bool tool_new_track_key_press(GdkEventKey *event, LayerTool * tool);
 		bool tool_new_track_click(QMouseEvent * event, LayerTool * tool);
-		bool tool_new_waypoint_click(GdkEventButton * event, LayerTool * tool);
-		bool tool_new_route_click(GdkEventButton * event, LayerTool * tool);
+		bool tool_new_waypoint_click(QMouseEvent * event, LayerTool * tool);
+		bool tool_new_route_click(QMouseEvent * event, LayerTool * tool);
 		void tool_new_track_release(QMouseEvent * event, LayerTool * tool);
 
 

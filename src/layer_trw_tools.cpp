@@ -33,7 +33,6 @@
 #include <cstdio>
 #include <cctype>
 #include <cassert>
-#include <future> /* std::async */
 
 //#include <gdk/gdkkeysyms.h>
 #include <glib.h>
@@ -119,32 +118,32 @@ extern LayerTool * trw_layer_tools[];
 
 
 
-static bool tool_edit_trackpoint_click_cb(Layer * trw, GdkEventButton *event, LayerTool * tool);
-static bool tool_edit_trackpoint_move_cb(Layer * trw, GdkEventMotion *event, LayerTool * tool);
-static bool tool_edit_trackpoint_release_cb(Layer * trw, GdkEventButton *event, LayerTool * tool);
+static bool tool_edit_trackpoint_click_cb(Layer * trw, QMouseEvent * event, LayerTool * tool);
+static bool tool_edit_trackpoint_move_cb(Layer * trw, QMouseEvent * event, LayerTool * tool);
+static bool tool_edit_trackpoint_release_cb(Layer * trw, QMouseEvent * event, LayerTool * tool);
 
 
-static bool tool_show_picture_click_cb(Layer * trw, GdkEventButton *event, LayerTool * tool);
+static bool tool_show_picture_click_cb(Layer * trw, QMouseEvent * event, LayerTool * tool);
 
 
-static bool tool_edit_waypoint_click_cb(Layer * trw, GdkEventButton *event, LayerTool * tool);
-static bool tool_edit_waypoint_move_cb(Layer * trw, GdkEventMotion *event, LayerTool * tool);
-static bool tool_edit_waypoint_release_cb(Layer * trw, GdkEventButton *event, LayerTool * tool);
+static bool tool_edit_waypoint_click_cb(Layer * trw, QMouseEvent * event, LayerTool * tool);
+static bool tool_edit_waypoint_move_cb(Layer * trw, QMouseEvent * event, LayerTool * tool);
+static bool tool_edit_waypoint_release_cb(Layer * trw, QMouseEvent * event, LayerTool * tool);
 
 
-static bool tool_new_route_click_cb(Layer * trw, GdkEventButton *event, LayerTool * tool);
+static bool tool_new_route_click_cb(Layer * trw, QMouseEvent * event, LayerTool * tool);
 
 static bool tool_new_track_click_cb(Layer * trw, QMouseEvent * event, LayerTool * tool);
 static VikLayerToolFuncStatus tool_new_track_move_cb(Layer * trw, QMouseEvent * event, LayerTool * tool);
 static void tool_new_track_release_cb(Layer * trw, QMouseEvent * event, LayerTool * tool);
-static bool tool_new_track_key_press_cb(Layer * trw, GdkEventKey *event, LayerTool * tool);
+static bool tool_new_track_key_press_cb(Layer * trw, GdkEventKey * event, LayerTool * tool);
 
 
-static bool tool_new_waypoint_click_cb(Layer * trw, GdkEventButton *event, LayerTool * tool);
+static bool tool_new_waypoint_click_cb(Layer * trw, QMouseEvent * event, LayerTool * tool);
 
 
-static bool tool_extended_route_finder_click_cb(Layer * trw, GdkEventButton *event, LayerTool * tool);
-static bool tool_extended_route_finder_key_press_cb(Layer * trw, GdkEventKey *event, LayerTool * tool);
+static bool tool_extended_route_finder_click_cb(Layer * trw, QMouseEvent * event, LayerTool * tool);
+static bool tool_extended_route_finder_key_press_cb(Layer * trw, GdkEventKey * event, LayerTool * tool);
 
 
 
@@ -196,28 +195,28 @@ static void marker_moveto(LayerTool * tool, int x, int y);
 static void marker_end_move(LayerTool * tool);
 //
 
-bool LayerTRW::select_move(GdkEventMotion * event, Viewport * viewport, LayerTool * tool)
+bool LayerTRW::select_move(QMouseEvent * event, Viewport * viewport, LayerTool * tool)
 {
 	if (tool->ed->holding) {
 		VikCoord new_coord;
-#ifdef K
-		viewport->screen_to_coord(event->x, event->y, &new_coord);
+
+		viewport->screen_to_coord(event->x(), event->y(), &new_coord);
 
 		// Here always allow snapping back to the original location
 		//  this is useful when one decides not to move the thing afterall
 		// If one wants to move the item only a little bit then don't hold down the 'snap' key!
 
-		// snap to TP
-		if (event->state & GDK_CONTROL_MASK) {
-			Trackpoint * tp = this->closest_tp_in_five_pixel_interval(viewport, event->x, event->y);
+		/* Snap to trackpoint. */
+		if (event->modifiers() & Qt::ControlModifier) {
+			Trackpoint * tp = this->closest_tp_in_five_pixel_interval(viewport, event->x(), event->y());
 			if (tp) {
 				new_coord = tp->coord;
 			}
 		}
 
-		// snap to WP
-		if (event->state & GDK_SHIFT_MASK) {
-			Waypoint * wp = this->closest_wp_in_five_pixel_interval(viewport, event->x, event->y);
+		/* Snap to waypoint. */
+		if (event->modifiers() & Qt::ShiftModifier) {
+			Waypoint * wp = this->closest_wp_in_five_pixel_interval(viewport, event->x(), event->y());
 			if (wp) {
 				new_coord = wp->coord;
 			}
@@ -227,7 +226,6 @@ bool LayerTRW::select_move(GdkEventMotion * event, Viewport * viewport, LayerToo
 		viewport->coord_to_screen(&new_coord, &x, &y);
 
 		marker_moveto(tool, x, y);
-#endif
 
 		return true;
 	}
@@ -237,9 +235,8 @@ bool LayerTRW::select_move(GdkEventMotion * event, Viewport * viewport, LayerToo
 
 
 
-bool LayerTRW::select_release(GdkEventButton * event, Viewport * viewport, LayerTool * tool)
+bool LayerTRW::select_release(QMouseEvent * event, Viewport * viewport, LayerTool * tool)
 {
-#ifdef K
 	if (tool->ed->holding && event->button() == Qt::LeftButton) {
 		// Prevent accidental (small) shifts when specific movement has not been requested
 		//  (as the click release has occurred within the click object detection area)
@@ -248,19 +245,19 @@ bool LayerTRW::select_release(GdkEventButton * event, Viewport * viewport, Layer
 		}
 
 		VikCoord new_coord;
-		viewport->screen_to_coord(event->x, event->y, &new_coord);
+		viewport->screen_to_coord(event->x(), event->y(), &new_coord);
 
-		// snap to TP
-		if (event->state & GDK_CONTROL_MASK) {
-			Trackpoint * tp = this->closest_tp_in_five_pixel_interval(viewport, event->x, event->y);
+		/* Snap to trackpoint. */
+		if (event->modifiers() & Qt::ControlModifier) {
+			Trackpoint * tp = this->closest_tp_in_five_pixel_interval(viewport, event->x(), event->y());
 			if (tp) {
 				new_coord = tp->coord;
 			}
 		}
 
-		// snap to WP
-		if (event->state & GDK_SHIFT_MASK) {
-			Waypoint * wp = this->closest_wp_in_five_pixel_interval(viewport, event->x, event->y);
+		/* Snap to waypoint. */
+		if (event->modifiers() & Qt::ShiftModifier) {
+			Waypoint * wp = this->closest_wp_in_five_pixel_interval(viewport, event->x(), event->y());
 			if (wp) {
 				new_coord = wp->coord;
 			}
@@ -297,7 +294,6 @@ bool LayerTRW::select_release(GdkEventButton * event, Viewport * viewport, Layer
 		this->emit_update();
 		return true;
 	}
-#endif
 	return false;
 }
 
@@ -309,9 +305,8 @@ bool LayerTRW::select_release(GdkEventButton * event, Viewport * viewport, Layer
   The item found is automatically selected
   This is a tool like feature but routed via the layer interface, since it's instigated by a 'global' layer tool in vikwindow.c
  */
-bool LayerTRW::select_click(GdkEventButton * event, Viewport * viewport, LayerTool * tool)
+bool LayerTRW::select_click(QMouseEvent * event, Viewport * viewport, LayerTool * tool)
 {
-	#ifdef K
 	if (event->button() != Qt::LeftButton) {
 		return false;
 	}
@@ -332,8 +327,8 @@ bool LayerTRW::select_click(GdkEventButton * event, Viewport * viewport, LayerTo
 	if (this->waypoints_visible && BBOX_INTERSECT (this->waypoints_bbox, bbox)) {
 		WPSearchParams wp_params;
 		wp_params.viewport = viewport;
-		wp_params.x = event->x;
-		wp_params.y = event->y;
+		wp_params.x = event->x();
+		wp_params.y = event->y();
 		wp_params.draw_images = this->drawimages;
 		wp_params.closest_wp_uid = 0;
 		wp_params.closest_wp = NULL;
@@ -347,19 +342,20 @@ bool LayerTRW::select_click(GdkEventButton * event, Viewport * viewport, LayerTo
 
 			// Too easy to move it so must be holding shift to start immediately moving it
 			//   or otherwise be previously selected but not have an image (otherwise clicking within image bounds (again) moves it)
-			if (event->state & GDK_SHIFT_MASK
+			if (event->modifiers() & Qt::ShiftModifier
 			    || (this->current_wp == wp_params.closest_wp && !this->current_wp->image)) {
 				// Put into 'move buffer'
 				// NB viewport & window already set in tool
 				tool->ed->trw = this;
 				tool->ed->is_waypoint = true;
 
-				marker_begin_move(tool, event->x, event->y);
+				marker_begin_move(tool, event->x(), event->y());
 			}
 
 			this->current_wp =     wp_params.closest_wp;
 			this->current_wp_uid = wp_params.closest_wp_uid;
 
+#ifdef K
 			if (event->type == GDK_2BUTTON_PRESS) {
 				if (this->current_wp->image) {
 					trw_menu_sublayer_t data;
@@ -369,6 +365,7 @@ bool LayerTRW::select_click(GdkEventButton * event, Viewport * viewport, LayerTo
 					trw_layer_show_picture(&data);
 				}
 			}
+#endif
 
 			this->emit_update();
 			return true;
@@ -378,8 +375,8 @@ bool LayerTRW::select_click(GdkEventButton * event, Viewport * viewport, LayerTo
 	// Used for both track and route lists
 	TPSearchParams tp_params;
 	tp_params.viewport = viewport;
-	tp_params.x = event->x;
-	tp_params.y = event->y;
+	tp_params.x = event->x();
+	tp_params.y = event->y();
 	tp_params.closest_track_uid = 0;
 	tp_params.closest_tp = NULL;
 	//tp_params.closest_tp_iter = NULL;
@@ -397,13 +394,13 @@ bool LayerTRW::select_click(GdkEventButton * event, Viewport * viewport, LayerTo
 
 			// Select the Trackpoint
 			// Can move it immediately when control held or it's the previously selected tp
-			if (event->state & GDK_CONTROL_MASK
+			if (event->modifiers() & Qt::ControlModifier
 			    || this->selected_tp.iter == tp_params.closest_tp_iter) {
 
 				// Put into 'move buffer'
 				// NB viewport & window already set in tool
 				tool->ed->trw = this;
-				marker_begin_move(tool, event->x, event->y);
+				marker_begin_move(tool, event->x(), event->y());
 			}
 
 			this->selected_tp.iter = tp_params.closest_tp_iter;
@@ -436,13 +433,13 @@ bool LayerTRW::select_click(GdkEventButton * event, Viewport * viewport, LayerTo
 
 			// Select the Trackpoint
 			// Can move it immediately when control held or it's the previously selected tp
-			if (event->state & GDK_CONTROL_MASK
+			if (event->modifiers() & Qt::ControlModifier
 			    || this->selected_tp.iter == tp_params.closest_tp_iter) {
 
 				// Put into 'move buffer'
 				// NB viewport & window already set in tool
 				tool->ed->trw = this;
-				marker_begin_move(tool, event->x, event->y);
+				marker_begin_move(tool, event->x(), event->y());
 			}
 
 			this->selected_tp.iter = tp_params.closest_tp_iter;
@@ -462,14 +459,13 @@ bool LayerTRW::select_click(GdkEventButton * event, Viewport * viewport, LayerTo
 		}
 	}
 
-	/* these aren't the droids you're looking for */
+	/* These aren't the droids you're looking for. */
 	this->current_wp    = NULL;
 	this->current_wp_uid = 0;
 	this->cancel_current_tp(false);
 
-	// Blank info
-	this->get_window()->status_bar->set_message(VIK_STATUSBAR_INFO, "");
-#endif
+	/* Blank info. */
+	this->get_window()->status_bar->set_message(StatusBarField::INFO, "");
 
 	return false;
 }
@@ -477,10 +473,9 @@ bool LayerTRW::select_click(GdkEventButton * event, Viewport * viewport, LayerTo
 
 
 
-bool LayerTRW::show_selected_viewport_menu(GdkEventButton * event, Viewport * viewport)
+bool LayerTRW::show_selected_viewport_menu(QMouseEvent * event, Viewport * viewport)
 {
-#ifdef K
-	if (event->button != MouseButton::RIGHT) {
+	if (event->button() != Qt::RightButton) {
 		return false;
 	}
 
@@ -499,12 +494,13 @@ bool LayerTRW::show_selected_viewport_menu(GdkEventButton * event, Viewport * vi
 	if (trk && trk->visible) {
 
 		if (trk->name) {
-
+#ifdef K
 			if (this->track_right_click_menu) {
 				g_object_ref_sink(G_OBJECT(this->track_right_click_menu));
 			}
 
 			this->track_right_click_menu = GTK_MENU (gtk_menu_new());
+#endif
 
 			sg_uid_t uid = 0;;
 			if (trk->is_route) {
@@ -512,7 +508,7 @@ bool LayerTRW::show_selected_viewport_menu(GdkEventButton * event, Viewport * vi
 			} else {
 				uid = LayerTRWc::find_uid_of_track(this->tracks, trk);
 			}
-
+#ifdef K
 			if (uid) {
 
 				GtkTreeIter *iter;
@@ -521,17 +517,18 @@ bool LayerTRW::show_selected_viewport_menu(GdkEventButton * event, Viewport * vi
 				} else {
 					iter = this->tracks_iters.at(uid);
 				}
-#ifdef K
+
 				this->sublayer_add_menu_items(this->track_right_click_menu,
 							      NULL,
 							      trk->is_route ? SublayerType::ROUTE : SublayerType::TRACK,
 							      uid,
 							      iter,
 							      viewport);
-#endif
+
 			}
 
 			gtk_menu_popup(this->track_right_click_menu, NULL, NULL, NULL, NULL, event->button, gtk_get_current_event_time());
+			#endif
 
 			return true;
 		}
@@ -541,7 +538,7 @@ bool LayerTRW::show_selected_viewport_menu(GdkEventButton * event, Viewport * vi
 	Waypoint * waypoint = this->get_window()->get_selected_waypoint();
 	if (waypoint && waypoint->visible) {
 		if (waypoint->name) {
-
+#ifdef K
 			if (this->wp_right_click_menu) {
 				g_object_ref_sink(G_OBJECT(this->wp_right_click_menu));
 			}
@@ -552,21 +549,21 @@ bool LayerTRW::show_selected_viewport_menu(GdkEventButton * event, Viewport * vi
 			if (wp_uid) {
 				GtkTreeIter * iter = this->waypoints_iters.at(wp_uid);
 
-#ifdef K
+
 				this->sublayer_add_menu_items(this->wp_right_click_menu,
 							      NULL,
 							      SublayerType::WAYPOINT,
 							      wp_uid,
 							      iter,
 							      viewport);
-#endif
+
 			}
 			gtk_menu_popup(this->wp_right_click_menu, NULL, NULL, NULL, NULL, event->button, gtk_get_current_event_time());
 
 			return true;
+#endif
 		}
 	}
-#endif
 	return false;
 }
 
@@ -575,18 +572,6 @@ bool LayerTRW::show_selected_viewport_menu(GdkEventButton * event, Viewport * vi
 
 /* background drawing hook, to be passed the viewport */
 static bool tool_sync_done = true;
-
-static int tool_sync(void * data)
-{
-#ifdef K
-	Viewport * viewport = (Viewport *) data;
-	gdk_threads_enter();
-	viewport->sync();
-	tool_sync_done = true;
-	gdk_threads_leave();
-#endif
-	return 0;
-}
 
 
 
@@ -618,8 +603,8 @@ static void marker_moveto(LayerTool * tool, int x, int y)
 	tool->ed->moving = true;
 
 	if (tool_sync_done) {
-		g_idle_add_full(G_PRIORITY_HIGH_IDLE + 10, tool_sync, tool->viewport, NULL);
-		tool_sync_done = false;
+		viewport->sync();
+		tool_sync_done = true;
 	}
 #endif
 }
@@ -673,7 +658,7 @@ LayerTool * tool_edit_waypoint_create(Window * window, Viewport * viewport)
 
 
 
-static bool tool_edit_waypoint_click_cb(Layer * trw, GdkEventButton *event, LayerTool * tool)
+static bool tool_edit_waypoint_click_cb(Layer * trw, QMouseEvent * event, LayerTool * tool)
 {
 	 return ((LayerTRW *) trw)->tool_edit_waypoint_click(event, tool);
 }
@@ -681,9 +666,9 @@ static bool tool_edit_waypoint_click_cb(Layer * trw, GdkEventButton *event, Laye
 
 
 
-bool LayerTRW::tool_edit_waypoint_click(GdkEventButton * event, LayerTool * tool)
+bool LayerTRW::tool_edit_waypoint_click(QMouseEvent * event, LayerTool * tool)
 {
-#ifdef K
+
 	if (this->type != LayerType::TRW) {
 		return false;
 	}
@@ -701,12 +686,12 @@ bool LayerTRW::tool_edit_waypoint_click(GdkEventButton * event, LayerTool * tool
 		int x, y;
 		tool->viewport->coord_to_screen(&this->current_wp->coord, &x, &y);
 
-		if (abs(x - (int)round(event->x)) <= WAYPOINT_SIZE_APPROX
-		    && abs(y - (int)round(event->y)) <= WAYPOINT_SIZE_APPROX) {
-			if (event->button == MouseButton::RIGHT) {
+		if (abs(x - (int) round(event->x())) <= WAYPOINT_SIZE_APPROX
+		    && abs(y - (int) round(event->y())) <= WAYPOINT_SIZE_APPROX) {
+			if (event->button() == Qt::RightButton) {
 				this->waypoint_rightclick = true; /* Remember that we're clicking; other layers will ignore release signal. */
 			} else {
-				marker_begin_move(tool, event->x, event->y);
+				marker_begin_move(tool, event->x(), event->y());
 			}
 			return true;
 		}
@@ -714,21 +699,21 @@ bool LayerTRW::tool_edit_waypoint_click(GdkEventButton * event, LayerTool * tool
 
 	WPSearchParams params;
 	params.viewport = tool->viewport;
-	params.x = event->x;
-	params.y = event->y;
+	params.x = event->x();
+	params.y = event->y();
 	params.draw_images = this->drawimages;
 	params.closest_wp_uid = 0;
 	params.closest_wp = NULL;
 	LayerTRWc::waypoint_search_closest_tp(this->waypoints, &params);
 	if (this->current_wp && (this->current_wp == params.closest_wp)) {
-		if (event->button == MouseButton::RIGHT) {
+		if (event->button() == Qt::RightButton) {
 			this->waypoint_rightclick = true; /* Remember that we're clicking; other layers will ignore release signal. */
 		} else {
-			marker_begin_move(tool, event->x, event->y);
+			marker_begin_move(tool, event->x(), event->y());
 		}
 		return false;
 	} else if (params.closest_wp) {
-		if (event->button == MouseButton::RIGHT) {
+		if (event->button() == Qt::RightButton) {
 			this->waypoint_rightclick = true; /* Remember that we're clicking; other layers will ignore release signal. */
 		} else {
 			this->waypoint_rightclick = false;
@@ -748,14 +733,14 @@ bool LayerTRW::tool_edit_waypoint_click(GdkEventButton * event, LayerTool * tool
 	this->current_wp_uid = 0;
 	this->waypoint_rightclick = false;
 	this->emit_update();
-#endif
+
 	return false;
 }
 
 
 
 
-static bool tool_edit_waypoint_move_cb(Layer * trw, GdkEventMotion *event, LayerTool * tool)
+static bool tool_edit_waypoint_move_cb(Layer * trw, QMouseEvent * event, LayerTool * tool)
 {
 	return ((LayerTRW *) trw)->tool_edit_waypoint_move(event, tool);
 }
@@ -763,28 +748,27 @@ static bool tool_edit_waypoint_move_cb(Layer * trw, GdkEventMotion *event, Layer
 
 
 
-bool LayerTRW::tool_edit_waypoint_move(GdkEventMotion * event, LayerTool * tool)
+bool LayerTRW::tool_edit_waypoint_move(QMouseEvent * event, LayerTool * tool)
 {
 	if (this->type != LayerType::TRW) {
 		return false;
 	}
-#ifdef K
 
 	if (tool->ed->holding) {
 		VikCoord new_coord;
-		tool->viewport->screen_to_coord(event->x, event->y, &new_coord);
+		tool->viewport->screen_to_coord(event->x(), event->y(), &new_coord);
 
-		/* Snap to TP. */
-		if (event->state & GDK_CONTROL_MASK) {
-			Trackpoint * tp = this->closest_tp_in_five_pixel_interval(tool->viewport, event->x, event->y);
+		/* Snap to trackpoint. */
+		if (event->modifiers() & Qt::ControlModifier) {
+			Trackpoint * tp = this->closest_tp_in_five_pixel_interval(tool->viewport, event->x(), event->y());
 			if (tp) {
 				new_coord = tp->coord;
 			}
 		}
 
-		/* Snap to WP. */
-		if (event->state & GDK_SHIFT_MASK) {
-			Waypoint * wp = this->closest_wp_in_five_pixel_interval(tool->viewport, event->x, event->y);
+		/* Snap to waypoint. */
+		if (event->modifiers() & Qt::ShiftModifier) {
+			Waypoint * wp = this->closest_wp_in_five_pixel_interval(tool->viewport, event->x(), event->y());
 			if (wp && wp != this->current_wp) {
 				new_coord = wp->coord;
 			}
@@ -798,14 +782,13 @@ bool LayerTRW::tool_edit_waypoint_move(GdkEventMotion * event, LayerTool * tool)
 		}
 		return true;
 	}
-#endif
 	return false;
 }
 
 
 
 
-static bool tool_edit_waypoint_release_cb(Layer * trw, GdkEventButton * event, LayerTool * tool)
+static bool tool_edit_waypoint_release_cb(Layer * trw, QMouseEvent * event, LayerTool * tool)
 {
 	return ((LayerTRW *) trw)->tool_edit_waypoint_release(event, tool);
 }
@@ -813,27 +796,27 @@ static bool tool_edit_waypoint_release_cb(Layer * trw, GdkEventButton * event, L
 
 
 
-bool LayerTRW::tool_edit_waypoint_release(GdkEventButton * event, LayerTool * tool)
+bool LayerTRW::tool_edit_waypoint_release(QMouseEvent * event, LayerTool * tool)
 {
 	if (this->type != LayerType::TRW) {
 		return false;
 	}
-#ifdef K
+
 	if (tool->ed->holding && event->button() == Qt::LeftButton) {
 		VikCoord new_coord;
-		tool->viewport->screen_to_coord(event->x, event->y, &new_coord);
+		tool->viewport->screen_to_coord(event->x(), event->y(), &new_coord);
 
-		/* Snap to TP. */
-		if (event->state & GDK_CONTROL_MASK) {
-			Trackpoint * tp = this->closest_tp_in_five_pixel_interval(tool->viewport, event->x, event->y);
+		/* Snap to trackpoint. */
+		if (event->modifiers() & Qt::ControlModifier) {
+			Trackpoint * tp = this->closest_tp_in_five_pixel_interval(tool->viewport, event->x(), event->y());
 			if (tp) {
 				new_coord = tp->coord;
 			}
 		}
 
-		/* Snap to WP. */
-		if (event->state & GDK_SHIFT_MASK) {
-			Waypoint * wp = this->closest_wp_in_five_pixel_interval(tool->viewport, event->x, event->y);
+		/* Snap to waypoint. */
+		if (event->modifiers() & Qt::ShiftModifier) {
+			Waypoint * wp = this->closest_wp_in_five_pixel_interval(tool->viewport, event->x(), event->y());
 			if (wp && wp != this->current_wp) {
 				new_coord = wp->coord;
 			}
@@ -848,7 +831,8 @@ bool LayerTRW::tool_edit_waypoint_release(GdkEventButton * event, LayerTool * to
 		return true;
 	}
 	/* PUT IN RIGHT PLACE!!! */
-	if (event->button == MouseButton::RIGHT && this->waypoint_rightclick) {
+	if (event->button() == Qt::RightButton && this->waypoint_rightclick) {
+#ifdef K
 		if (this->wp_right_click_menu) {
 			g_object_ref_sink(G_OBJECT(this->wp_right_click_menu));
 		}
@@ -858,8 +842,8 @@ bool LayerTRW::tool_edit_waypoint_release(GdkEventButton * event, LayerTool * to
 			gtk_menu_popup(this->wp_right_click_menu, NULL, NULL, NULL, NULL, event->button, gtk_get_current_event_time());
 		}
 		this->waypoint_rightclick = false;
-	}
 #endif
+	}
 	return false;
 }
 
@@ -914,25 +898,24 @@ typedef struct {
 /*
  * Draw specified pixmap.
  */
-static int draw_sync(void * data)
+static int draw_sync(draw_sync_t * data)
 {
-	draw_sync_t * ds = (draw_sync_t *) data;
 	/* Sometimes don't want to draw normally because another
 	   update has taken precedent such as panning the display
 	   which means this pixmap is no longer valid. */
 	if (1 /*ds->layer->draw_sync_do*/ ) {
-		QPainter painter(ds->drawable);
-		painter.drawPixmap(0, 0, *ds->pixmap);
-		emit ds->layer->update();
+		QPainter painter(data->drawable);
+		painter.drawPixmap(0, 0, *data->pixmap);
+		emit data->layer->update();
 #if 0
 		gdk_draw_drawable(ds->drawable,
 				  ds->gc,
 				  ds->pixmap,
 				  0, 0, 0, 0, -1, -1);
 #endif
-		ds->layer->draw_sync_done = true;
+		data->layer->draw_sync_done = true;
 	}
-	free(ds);
+	free(data);
 	return 0;
 }
 
@@ -986,7 +969,6 @@ static char* distance_string(double distance)
  */
 static void statusbar_write(double distance, double elev_gain, double elev_loss, double last_step, double angle, LayerTRW * layer)
 {
-#ifdef K
 	/* Only show elevation data when track has some elevation properties. */
 	char str_gain_loss[64];
 	str_gain_loss[0] = '\0';
@@ -1010,10 +992,9 @@ static void statusbar_write(double distance, double elev_gain, double elev_loss,
 
 	/* Write with full gain/loss information. */
 	char *msg = g_strdup_printf("Total %s%s%s", str_total, str_last_step, str_gain_loss);
-	layer->get_window()->status_bar->set_message(VIK_STATUSBAR_INFO, msg);
+	layer->get_window()->status_bar->set_message(StatusBarField::INFO, msg);
 	free(msg);
 	free(str_total);
-#endif
 }
 
 
@@ -1173,8 +1154,7 @@ VikLayerToolFuncStatus LayerTRW::tool_new_track_move(QMouseEvent * event, LayerT
 		statusbar_write(distance, elev_gain, elev_loss, last_step, angle, this);
 #endif
 
-		/* Draw pixmap when we have time to. */
-		std::async(std::launch::async, draw_sync, passalong);
+		draw_sync(passalong);
 		this->draw_sync_done = false;
 
 		return VIK_LAYER_TOOL_ACK_GRAB_FOCUS;
@@ -1201,7 +1181,7 @@ void LayerTRW::undo_trackpoint_add()
 
 
 
-static bool tool_new_track_key_press_cb(Layer * trw, GdkEventKey *event, LayerTool * tool)
+static bool tool_new_track_key_press_cb(Layer * trw, GdkEventKey * event, LayerTool * tool)
 {
 	return ((LayerTRW *) trw)->tool_new_track_key_press(event, tool);
 }
@@ -1209,7 +1189,7 @@ static bool tool_new_track_key_press_cb(Layer * trw, GdkEventKey *event, LayerTo
 
 
 
-bool LayerTRW::tool_new_track_key_press(GdkEventKey *event, LayerTool * tool)
+bool LayerTRW::tool_new_track_key_press(GdkEventKey * event, LayerTool * tool)
 {
 #ifdef K
 	if (this->current_track && event->keyval == GDK_Escape) {
@@ -1404,7 +1384,7 @@ LayerTool * tool_new_route_create(Window * window, Viewport * viewport)
 
 
 
-static bool tool_new_route_click_cb(Layer * trw, GdkEventButton *event, LayerTool * tool)
+static bool tool_new_route_click_cb(Layer * trw, QMouseEvent * event, LayerTool * tool)
 {
 	return ((LayerTRW *) trw)->tool_new_route_click(event, tool);
 }
@@ -1412,30 +1392,29 @@ static bool tool_new_route_click_cb(Layer * trw, GdkEventButton *event, LayerToo
 
 
 
-bool LayerTRW::tool_new_route_click(GdkEventButton * event, LayerTool * tool)
+bool LayerTRW::tool_new_route_click(QMouseEvent * event, LayerTool * tool)
 {
 	/* If we were running the route finder, cancel it. */
 	this->route_finder_started = false;
-
-#ifdef K
 
 	/* If current is a track - switch to new route */
 	if (event->button() == Qt::LeftButton
 	    && (!this->current_track
 		|| (this->current_track && !this->current_track->is_route))) {
 
-		char *name = this->new_unique_sublayer_name(SublayerType::ROUTE, _("Route"));
+		char * name = this->new_unique_sublayer_name(SublayerType::ROUTE, _("Route"));
+#ifdef K
 		if (a_vik_get_ask_for_create_track_name()) {
 			name = a_dialog_new_track(this->get_toolkit_window(), name, true);
 			if (!name) {
 				return false;
 			}
 		}
+#endif
 		this->new_route_create_common(name);
 		free(name);
 	}
 	return this->tool_new_track_or_route_click(event, tool->viewport);
-#endif
 }
 
 
@@ -1472,7 +1451,7 @@ LayerTool * tool_new_waypoint_create(Window * window, Viewport * viewport)
 
 
 
-static bool tool_new_waypoint_click_cb(Layer * trw, GdkEventButton *event, LayerTool * tool)
+static bool tool_new_waypoint_click_cb(Layer * trw, QMouseEvent * event, LayerTool * tool)
 {
 	return ((LayerTRW *) trw)->tool_new_waypoint_click(event, tool);
 }
@@ -1480,22 +1459,20 @@ static bool tool_new_waypoint_click_cb(Layer * trw, GdkEventButton *event, Layer
 
 
 
-bool LayerTRW::tool_new_waypoint_click(GdkEventButton * event, LayerTool * tool)
+bool LayerTRW::tool_new_waypoint_click(QMouseEvent * event, LayerTool * tool)
 {
-#ifdef K
 	VikCoord coord;
 	if (this->type != LayerType::TRW) {
 		return false;
 	}
 
-	tool->viewport->screen_to_coord(event->x, event->y, &coord);
+	tool->viewport->screen_to_coord(event->x(), event->y(), &coord);
 	if (this->new_waypoint(this->get_toolkit_window(), &coord)) {
 		this->calculate_bounds_waypoints();
 		if (this->visible) {
 			this->emit_update();
 		}
 	}
-#endif
 	return true;
 }
 
@@ -1536,7 +1513,7 @@ LayerTool * tool_edit_trackpoint_create(Window * window, Viewport * viewport)
 
 
 
-static bool tool_edit_trackpoint_click_cb(Layer * trw, GdkEventButton * event, LayerTool * tool)
+static bool tool_edit_trackpoint_click_cb(Layer * trw, QMouseEvent * event, LayerTool * tool)
 {
 	return ((LayerTRW *) trw)->tool_edit_trackpoint_click(event, tool);
 }
@@ -1551,13 +1528,13 @@ static bool tool_edit_trackpoint_click_cb(Layer * trw, GdkEventButton * event, L
  * then initiate the move operation to drag the point to a new destination.
  * NB The current trackpoint will get reset elsewhere.
  */
-bool LayerTRW::tool_edit_trackpoint_click(GdkEventButton * event, LayerTool * tool)
+bool LayerTRW::tool_edit_trackpoint_click(QMouseEvent * event, LayerTool * tool)
 {
 #ifdef K
 	TPSearchParams params;
 	params.viewport = tool->viewport;
-	params.x = event->x;
-	params.y = event->y;
+	params.x = event->x();
+	params.y = event->y();
 	params.closest_track_uid = 0;
 	params.closest_tp = NULL;
 	//params.closest_tp_iter = NULL;
@@ -1595,7 +1572,7 @@ bool LayerTRW::tool_edit_trackpoint_click(GdkEventButton * event, LayerTool * to
 		    && abs(x - (int)round(event->x)) < TRACKPOINT_SIZE_APPROX
 		    && abs(y - (int)round(event->y)) < TRACKPOINT_SIZE_APPROX) {
 
-			marker_begin_move(tool, event->x, event->y);
+			marker_begin_move(tool, event->x(), event->y());
 			return true;
 		}
 
@@ -1646,7 +1623,7 @@ bool LayerTRW::tool_edit_trackpoint_click(GdkEventButton * event, LayerTool * to
 
 
 
-static bool tool_edit_trackpoint_move_cb(Layer * trw, GdkEventMotion *event, LayerTool * tool)
+static bool tool_edit_trackpoint_move_cb(Layer * trw, QMouseEvent * event, LayerTool * tool)
 {
 	return ((LayerTRW *) trw)->tool_edit_trackpoint_move(event, tool);
 }
@@ -1654,7 +1631,7 @@ static bool tool_edit_trackpoint_move_cb(Layer * trw, GdkEventMotion *event, Lay
 
 
 
-bool LayerTRW::tool_edit_trackpoint_move(GdkEventMotion *event, LayerTool * tool)
+bool LayerTRW::tool_edit_trackpoint_move(QMouseEvent * event, LayerTool * tool)
 {
 	if (this->type != LayerType::TRW) {
 		return false;
@@ -1663,11 +1640,11 @@ bool LayerTRW::tool_edit_trackpoint_move(GdkEventMotion *event, LayerTool * tool
 
 	if (tool->ed->holding) {
 		VikCoord new_coord;
-		tool->viewport->screen_to_coord(event->x, event->y, &new_coord);
+		tool->viewport->screen_to_coord(event->x(), event->y(), &new_coord);
 
 		/* Snap to TP. */
-		if (event->state & GDK_CONTROL_MASK) {
-			Trackpoint * tp = this->closest_tp_in_five_pixel_interval(tool->viewport, event->x, event->y);
+		if (event->modifiers() & Qt::ControlModifier) {
+			Trackpoint * tp = this->closest_tp_in_five_pixel_interval(tool->viewport, event->x(), event->y());
 			if (tp && tp != *this->selected_tp.iter) {
 				new_coord = tp->coord;
 			}
@@ -1688,7 +1665,7 @@ bool LayerTRW::tool_edit_trackpoint_move(GdkEventMotion *event, LayerTool * tool
 
 
 
-static bool tool_edit_trackpoint_release_cb(Layer * trw, GdkEventButton *event, LayerTool * tool)
+static bool tool_edit_trackpoint_release_cb(Layer * trw, QMouseEvent * event, LayerTool * tool)
 {
 	return ((LayerTRW *) trw)->tool_edit_trackpoint_release(event, tool);
 }
@@ -1696,7 +1673,7 @@ static bool tool_edit_trackpoint_release_cb(Layer * trw, GdkEventButton *event, 
 
 
 
-bool LayerTRW::tool_edit_trackpoint_release(GdkEventButton * event, LayerTool * tool)
+bool LayerTRW::tool_edit_trackpoint_release(QMouseEvent * event, LayerTool * tool)
 {
 	if (this->type != LayerType::TRW) {
 		return false;
@@ -1710,11 +1687,11 @@ bool LayerTRW::tool_edit_trackpoint_release(GdkEventButton * event, LayerTool * 
 
 	if (tool->ed->holding) {
 		VikCoord new_coord;
-		tool->viewport->screen_to_coord(event->x, event->y, &new_coord);
+		tool->viewport->screen_to_coord(event->x(), event->y(), &new_coord);
 
 		/* snap to TP */
-		if (event->state & GDK_CONTROL_MASK) {
-			Trackpoint * tp = this->closest_tp_in_five_pixel_interval(tool->viewport, event->x, event->y);
+		if (event->modifiers() & Qt::ControlModifier) {
+			Trackpoint * tp = this->closest_tp_in_five_pixel_interval(tool->viewport, event->x(), event->y());
 			if (tp && tp != *this->selected_tp.iter) {
 				new_coord = tp->coord;
 			}
@@ -1801,7 +1778,7 @@ void LayerTRW::tool_extended_route_finder_undo()
 
 
 
-static bool tool_extended_route_finder_click_cb(Layer * trw, GdkEventButton *event, LayerTool * tool)
+static bool tool_extended_route_finder_click_cb(Layer * trw, QMouseEvent * event, LayerTool * tool)
 {
 	return ((LayerTRW *) trw)->tool_extended_route_finder_click(event, tool);
 }
@@ -1809,16 +1786,15 @@ static bool tool_extended_route_finder_click_cb(Layer * trw, GdkEventButton *eve
 
 
 
-bool LayerTRW::tool_extended_route_finder_click(GdkEventButton * event, LayerTool * tool)
+bool LayerTRW::tool_extended_route_finder_click(QMouseEvent * event, LayerTool * tool)
 {
 	VikCoord tmp;
-#ifdef K
 
-	tool->viewport->screen_to_coord(event->x, event->y, &tmp);
-	if (event->button == MouseButton::RIGHT && this->current_track) {
+	tool->viewport->screen_to_coord(event->x(), event->y(), &tmp);
+	if (event->button() == Qt::RightButton && this->current_track) {
 		this->tool_extended_route_finder_undo();
 
-	} else if (event->button == MouseButton::MIDDLE) {
+	} else if (event->button() == Qt::MiddleButton) {
 		this->draw_sync_do = false;
 		return false;
 	}
@@ -1827,7 +1803,7 @@ bool LayerTRW::tool_extended_route_finder_click(GdkEventButton * event, LayerToo
 		return this->tool_new_track_or_route_click(event, tool->viewport);
 
 	} else if ((this->current_track && this->current_track->is_route)
-		   || (event->state & GDK_CONTROL_MASK && this->current_track)) {
+		   || ((event->modifiers() & Qt::ControlModifier) && this->current_track)) {
 
 		struct LatLon start, end;
 
@@ -1838,17 +1814,19 @@ bool LayerTRW::tool_extended_route_finder_click(GdkEventButton * event, LayerToo
 		this->route_finder_started = true;
 		this->route_finder_append = true;  /* Merge tracks. Keep started true. */
 
+#ifdef K
+
 		/* Update UI to let user know what's going on. */
 		VikStatusbar *sb = this->get_window()->get_statusbar();
 		VikRoutingEngine *engine = vik_routing_default_engine();
 		if (!engine) {
-			this->get_window()->status_bar->set_message(VIK_STATUSBAR_INFO, "Cannot plan route without a default routing engine.");
+			this->get_window()->status_bar->set_message(StatusBarField::INFO, "Cannot plan route without a default routing engine.");
 			return true;
 		}
 		char *msg = g_strdup_printf(_("Querying %s for route between (%.3f, %.3f) and (%.3f, %.3f)."),
 					    vik_routing_engine_get_label(engine),
 					    start.lat, start.lon, end.lat, end.lon);
-		this->get_window()->status_bar->set_message(VIK_STATUSBAR_INFO, msg);
+		this->get_window()->status_bar->set_message(StatusBarField::INFO, msg);
 		free(msg);
 		this->get_window()->set_busy_cursor();
 
@@ -1866,8 +1844,9 @@ bool LayerTRW::tool_extended_route_finder_click(GdkEventButton * event, LayerToo
 			? g_strdup_printf(_("%s returned route between (%.3f, %.3f) and (%.3f, %.3f)."), vik_routing_engine_get_label(engine), start.lat, start.lon, end.lat, end.lon)
 			: g_strdup_printf(_("Error getting route from %s."), vik_routing_engine_get_label(engine));
 
-		this->get_window()->status_bar->set_message(VIK_STATUSBAR_INFO, msg);
+		this->get_window()->status_bar->set_message(StatusBarField::INFO, msg);
 		free(msg);
+#endif
 
 		this->emit_update();
 	} else {
@@ -1880,14 +1859,14 @@ bool LayerTRW::tool_extended_route_finder_click(GdkEventButton * event, LayerToo
 
 		return ret;
 	}
-#endif
+
 	return true;
 }
 
 
 
 
-static bool tool_extended_route_finder_key_press_cb(Layer * trw, GdkEventKey *event, LayerTool * tool)
+static bool tool_extended_route_finder_key_press_cb(Layer * trw, GdkEventKey * event, LayerTool * tool)
 {
 	return ((LayerTRW *) trw)->tool_extended_route_finder_key_press(event, tool);
 }
@@ -1967,7 +1946,7 @@ void trw_layer_show_picture(trw_menu_sublayer_t * data)
 
 
 
-static bool tool_show_picture_click_cb(Layer * trw, GdkEventButton * event, LayerTool * tool)
+static bool tool_show_picture_click_cb(Layer * trw, QMouseEvent * event, LayerTool * tool)
 {
 	return ((LayerTRW *) trw)->tool_show_picture_click(event, tool);
 }
@@ -1975,14 +1954,13 @@ static bool tool_show_picture_click_cb(Layer * trw, GdkEventButton * event, Laye
 
 
 
-bool LayerTRW::tool_show_picture_click(GdkEventButton * event, LayerTool * tool)
+bool LayerTRW::tool_show_picture_click(QMouseEvent * event, LayerTool * tool)
 {
-#ifdef K
 	if (this->type != LayerType::TRW) {
 		return false;
 	}
 
-	char * found = LayerTRWc::tool_show_picture_wp(this->waypoints, event->x, event->y, tool->viewport);
+	char * found = LayerTRWc::tool_show_picture_wp(this->waypoints, event->x(), event->y(), tool->viewport);
 	if (found) {
 		trw_menu_sublayer_t data;
 		memset(&data, 0, sizeof (trw_menu_sublayer_t));
@@ -1993,5 +1971,4 @@ bool LayerTRW::tool_show_picture_click(GdkEventButton * event, LayerTool * tool)
 	} else {
 		return false; /* Go through other layers, searching for a match. */
 	}
-#endif
 }
