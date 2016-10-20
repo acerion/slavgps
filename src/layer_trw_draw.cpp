@@ -146,17 +146,15 @@ static int track_section_colour_by_speed(Trackpoint * tp1, Trackpoint * tp2, dou
 
 
 
-static void draw_utm_skip_insignia(Viewport * viewport, GdkGC * gc, int x, int y)
+static void draw_utm_skip_insignia(Viewport * viewport, QPen & pen, int x, int y)
 {
-#ifdef K
 	/* First draw '+'. */
-	viewport->draw_line(gc, x+5, y,   x-5, y );
-	viewport->draw_line(gc, x,   y+5, x,   y-5);
+	viewport->draw_line(pen, x+5, y,   x-5, y );
+	viewport->draw_line(pen, x,   y+5, x,   y-5);
 
 	/* And now draw 'x' on top of it. */
-	viewport->draw_line(gc, x+5, y+5, x-5, y-5);
-	viewport->draw_line(gc, x+5, y-5, x-5, y+5);
-#endif
+	viewport->draw_line(pen, x+5, y+5, x-5, y-5);
+	viewport->draw_line(pen, x+5, y-5, x-5, y+5);
 }
 
 
@@ -450,7 +448,7 @@ static void trw_layer_draw_point_names(DrawingParams * dp, Track * trk, bool dra
 
 
 
-void trw_layer_draw_track_draw_midarrow(DrawingParams * dp, int x, int y, int oldx, int oldy, GdkGC * main_gc)
+void trw_layer_draw_track_draw_midarrow(DrawingParams * dp, int x, int y, int oldx, int oldy, QPen & main_pen)
 {
 	int midx = (oldx + x) / 2;
 	int midy = (oldy + y) / 2;
@@ -458,24 +456,23 @@ void trw_layer_draw_track_draw_midarrow(DrawingParams * dp, int x, int y, int ol
 	double len = sqrt(((midx - oldx) * (midx - oldx)) + ((midy - oldy) * (midy - oldy)));
 	/* Avoid divide by zero and ensure at least 1 pixel big. */
 	if (len > 1) {
-#ifdef K
 		double dx = (oldx - midx) / len;
 		double dy = (oldy - midy) / len;
-		dp->viewport->draw_line(main_gc, midx, midy, midx + (dx * dp->cc + dy * dp->ss), midy + (dy * dp->cc - dx * dp->ss));
-		dp->viewport->draw_line(main_gc, midx, midy, midx + (dx * dp->cc - dy * dp->ss), midy + (dy * dp->cc + dx * dp->ss));
-#endif
+		dp->viewport->draw_line(main_pen, midx, midy, midx + (dx * dp->cc + dy * dp->ss), midy + (dy * dp->cc - dx * dp->ss));
+		dp->viewport->draw_line(main_pen, midx, midy, midx + (dx * dp->cc - dy * dp->ss), midy + (dy * dp->cc + dx * dp->ss));
 	}
 }
 
 
 
 
-void trw_layer_draw_track_draw_something(DrawingParams * dp, int x, int y, int oldx, int oldy, GdkGC * main_gc, Trackpoint * tp, Trackpoint * tp_next, double min_alt, double alt_diff)
+void trw_layer_draw_track_draw_something(DrawingParams * dp, int x, int y, int oldx, int oldy, QPen & main_pen, Trackpoint * tp, Trackpoint * tp_next, double min_alt, double alt_diff)
 {
-#ifdef K
-	GdkPoint tmp[4];
 #define FIXALTITUDE(what) \
 	((((Trackpoint *) (what))->altitude - min_alt) / alt_diff * DRAW_ELEVATION_FACTOR * dp->trw->elevation_factor / dp->xmpp)
+
+#ifdef K
+	GdkPoint tmp[4];
 
 	tmp[0].x = oldx;
 	tmp[0].y = oldy;
@@ -493,9 +490,9 @@ void trw_layer_draw_track_draw_something(DrawingParams * dp, int x, int y, int o
 		tmp_gc = gtk_widget_get_style(dp->viewport->get_toolkit_widget())->dark_gc[0];
 	}
 	dp->viewport->draw_polygon(tmp_gc, true, tmp, 4);
-
-	dp->viewport->draw_line(main_gc, oldx, oldy - FIXALTITUDE (tp), x, y - FIXALTITUDE (tp_next));
 #endif
+
+	dp->viewport->draw_line(main_pen, oldx, oldy - FIXALTITUDE (tp), x, y - FIXALTITUDE (tp_next));
 }
 
 
@@ -506,8 +503,6 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 	if (!trk->visible) {
 		return;
 	}
-
-#ifdef K
 
 	/* TODO: this function is a mess, get rid of any redundancy. */
 
@@ -539,16 +534,22 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 	dp->trw->drawmode = DRAWMODE_BY_SPEED;
 #endif
 
-	GdkGC * main_gc = NULL;
+	QPen main_pen = QPen(QColor("black"));
+	main_pen.setWidth(1);
+
 	bool drawing_highlight = false;
 	/* Current track - used for creation. */
 	if (trk == dp->trw->current_track) {
-		main_gc = dp->trw->current_track_gc;
+#ifdef K
+		main_pen = dp->trw->current_track_gc;
+#endif
 	} else {
 		if (dp->highlight) {
 			/* Draw all tracks of the layer in special colour.
 			   NB this supercedes the drawmode. */
-			main_gc = dp->viewport->get_gc_highlight();
+#ifdef K
+			main_pen = dp->viewport->get_gc_highlight();
+#endif
 			drawing_highlight = true;
 		}
 
@@ -556,17 +557,20 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 			/* Still need to figure out the gc according to the drawing mode: */
 			switch (dp->trw->drawmode) {
 			case DRAWMODE_BY_TRACK:
+#ifdef K
 				if (dp->trw->track_1color_gc) {
 					g_object_unref(dp->trw->track_1color_gc);
 				}
-
 				dp->trw->track_1color_gc = dp->viewport->new_gc_from_color(&trk->color, dp->trw->line_thickness);
-				main_gc = dp->trw->track_1color_gc;
+				main_pen = dp->trw->track_1color_gc;
+#endif
 				break;
 			default:
 				/* Mostly for DRAWMODE_ALL_SAME_COLOR
-				   but includes DRAWMODE_BY_SPEED, main_gc is set later on as necessary. */
-				main_gc = g_array_index(dp->trw->track_gc, GdkGC *, VIK_TRW_LAYER_TRACK_GC_SINGLE);
+				   but includes DRAWMODE_BY_SPEED, main_pen is set later on as necessary. */
+#ifdef K
+				main_pen = g_array_index(dp->trw->track_gc, GdkGC *, VIK_TRW_LAYER_TRACK_GC_SINGLE);
+#endif
 				break;
 			}
 		}
@@ -589,10 +593,12 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 
 	/* Draw the first point as something a bit different from the normal points.
 	   ATM it's slightly bigger and a triangle. */
+#ifdef K
 	if (drawpoints) {
 		GdkPoint trian[3] = { { x, y-(3*tp_size) }, { x-(2*tp_size), y+(2*tp_size) }, {x+(2*tp_size), y+(2*tp_size)} };
-		dp->viewport->draw_polygon(main_gc, true, trian, 3);
+		dp->viewport->draw_polygon(main_pen, true, trian, 3);
 	}
+#endif
 
 	double average_speed = 0.0;
 	double low_speed = 0.0;
@@ -663,7 +669,9 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 			    && std::next(iter) != trk->trackpointsB->end()
 			    && (*std::next(iter))->timestamp - (*iter)->timestamp > dp->trw->stop_length) {
 
+#ifdef K
 				dp->viewport->draw_arc(g_array_index(dp->trw->track_gc, GdkGC *, VIK_TRW_LAYER_TRACK_GC_STOP), true, x-(3*tp_size), y-(3*tp_size), 6*tp_size, 6*tp_size, 0, 360*64);
+#endif
 			}
 
 			if (use_prev_xy && x == prev_x && y == prev_y) {
@@ -674,43 +682,55 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 			}
 
 			if (drawpoints || dp->trw->drawlines) {
-				/* Setup main_gc for both point and line drawing. */
+				/* Setup main_pen for both point and line drawing. */
 				if (!drawing_highlight && (dp->trw->drawmode == DRAWMODE_BY_SPEED)) {
-					main_gc = g_array_index(dp->trw->track_gc, GdkGC *, track_section_colour_by_speed(tp, prev_tp, average_speed, low_speed, high_speed));
+#ifdef K
+					main_pen = g_array_index(dp->trw->track_gc, GdkGC *, track_section_colour_by_speed(tp, prev_tp, average_speed, low_speed, high_speed));
+#endif
 				}
 			}
 
 			if (drawpoints && !draw_track_outline) {
+#ifdef K
 				if (std::next(iter) != trk->trackpointsB->end()) {
 					/* Regular point - draw 2x square. */
-					dp->viewport->draw_rectangle(main_gc, true, x-tp_size, y-tp_size, 2*tp_size, 2*tp_size);
+					dp->viewport->draw_rectangle(main_pen, true, x-tp_size, y-tp_size, 2*tp_size, 2*tp_size);
 				} else {
 					/* Final point - draw 4x circle. */
-					dp->viewport->draw_arc(main_gc, true, x-(2*tp_size), y-(2*tp_size), 4*tp_size, 4*tp_size, 0, 360*64);
+					dp->viewport->draw_arc(main_pen, true, x-(2*tp_size), y-(2*tp_size), 4*tp_size, 4*tp_size, 0, 360*64);
 				}
+#endif
 			}
 
 			if ((!tp->newsegment) && (dp->trw->drawlines)) {
 
+#ifdef K
 				/* UTM only: zone check. */
 				if (drawpoints && dp->trw->coord_mode == VIK_COORD_UTM && tp->coord.utm_zone != dp->center->utm_zone) {
-					draw_utm_skip_insignia(dp->viewport, main_gc, x, y);
+					draw_utm_skip_insignia(dp->viewport, main_pen, x, y);
 				}
+#endif
 
 				if (!use_prev_xy) {
 					dp->viewport->coord_to_screen(&(prev_tp->coord), &prev_x, &prev_y);
 				}
 
 				if (draw_track_outline) {
+#ifdef K
 					dp->viewport->draw_line(dp->trw->track_bg_gc, prev_x, prev_y, x, y);
+#else
+					dp->viewport->draw_line(main_pen, prev_x, prev_y, x, y);
+#endif
 				} else {
-					dp->viewport->draw_line(main_gc, prev_x, prev_y, x, y);
+					dp->viewport->draw_line(main_pen, prev_x, prev_y, x, y);
 
 					if (dp->trw->drawelevation
 					    && std::next(iter) != trk->trackpointsB->end()
 					    && (*std::next(iter))->altitude != VIK_DEFAULT_ALTITUDE) {
 
-						trw_layer_draw_track_draw_something(dp, x, y, prev_x, prev_y, main_gc, *iter, *std::next(iter), min_alt, alt_diff);
+#ifdef K
+						trw_layer_draw_track_draw_something(dp, x, y, prev_x, prev_y, main_pen, *iter, *std::next(iter), min_alt, alt_diff);
+#endif
 					}
 				}
 			}
@@ -718,7 +738,7 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 			if ((!tp->newsegment) && dp->trw->drawdirections) {
 				/* Draw an arrow at the mid point to show the direction of the track.
 				   Code is a rework from vikwindow::draw_ruler(). */
-				trw_layer_draw_track_draw_midarrow(dp, x, y, prev_x, prev_y, main_gc);
+				trw_layer_draw_track_draw_midarrow(dp, x, y, prev_x, prev_y, main_pen);
 			}
 
 		skip:
@@ -732,22 +752,28 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 					dp->viewport->coord_to_screen(&(tp->coord), &x, &y);
 
 					if (!drawing_highlight && (dp->trw->drawmode == DRAWMODE_BY_SPEED)) {
-						main_gc = g_array_index(dp->trw->track_gc, GdkGC *, track_section_colour_by_speed(tp, prev_tp, average_speed, low_speed, high_speed));
+#ifdef K
+						main_pen = g_array_index(dp->trw->track_gc, GdkGC *, track_section_colour_by_speed(tp, prev_tp, average_speed, low_speed, high_speed));
+#endif
 					}
 
 					/* Draw only if current point has different coordinates than the previous one. */
 					if (x != prev_x || y != prev_y) {
 						if (draw_track_outline) {
+#ifdef K
 							dp->viewport->draw_line(dp->trw->track_bg_gc, prev_x, prev_y, x, y);
+#else
+							dp->viewport->draw_line(main_pen, prev_x, prev_y, x, y);
+#endif
 						} else {
-							dp->viewport->draw_line(main_gc, prev_x, prev_y, x, y);
+							dp->viewport->draw_line(main_pen, prev_x, prev_y, x, y);
 						}
 					}
 				} else {
 					/* Draw only if current point has different coordinates than the previous one. */
 					if (x != prev_x && y != prev_y) { /* kamilFIXME: is && a correct condition? */
 						dp->viewport->coord_to_screen(&(prev_tp->coord), &x, &y);
-						draw_utm_skip_insignia(dp->viewport, main_gc, x, y);
+						draw_utm_skip_insignia(dp->viewport, main_pen, x, y);
 					}
 				}
 			}
@@ -766,7 +792,6 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 			trw_layer_draw_track_name_labels(dp, trk, drawing_highlight);
 		}
 	}
-#endif
 }
 
 
@@ -947,6 +972,11 @@ void trw_layer_draw_symbol(Waypoint * wp, int x, int y, DrawingParams * dp)
 			break;
 		}
 	}
+#else
+	QPen pen = QPen(QColor("red"));
+	pen.setWidth(1);
+	dp->viewport->draw_line(pen, x-dp->trw->wp_size, y-dp->trw->wp_size, x+dp->trw->wp_size, y+dp->trw->wp_size);
+	dp->viewport->draw_line(pen, x-dp->trw->wp_size, y+dp->trw->wp_size, x+dp->trw->wp_size, y-dp->trw->wp_size);
 #endif
 
 	return;
