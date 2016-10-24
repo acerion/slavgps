@@ -227,7 +227,7 @@ static void trw_layer_waypoint_properties(waypointlist_data_t * values)
 		}
 
 		if (updated && trw->visible) {
-			trw->emit_update();
+			trw->emit_changed();
 		}
 	}
 }
@@ -245,7 +245,7 @@ static void trw_layer_waypoint_view(waypointlist_data_t * values)
 
 	trw_layer_waypoint_select(values);
 
-	trw->emit_update();
+	trw->emit_changed();
 }
 
 

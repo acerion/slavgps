@@ -997,7 +997,7 @@ void SlavGPS::vu_command_line(Window * window, double latitude, double longitude
 			layer->rename(_("Map"));
 
 			window->get_layers_panel()->get_top_layer()->add_layer(layer, true);
-			layer->emit_update();
+			layer->emit_changed();
 		}
 	}
 }

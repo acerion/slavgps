@@ -130,7 +130,7 @@ static Layer * aggregate_layer_unmarshall(uint8_t *data, int len, Viewport * vie
 		Layer * child_layer = Layer::unmarshall(data + sizeof (int), alm_size, viewport);
 		if (child_layer) {
 			aggregate->children->push_front(child_layer);
-			QObject::connect(child_layer, SIGNAL(Layer::update(void)), (Layer *) aggregate, SLOT(emit_update_secondary(void)));
+			QObject::connect(child_layer, SIGNAL(Layer::changed(void)), (Layer *) aggregate, SLOT(child_layer_changed_cb(void)));
 		}
 		alm_next;
 	}
@@ -193,7 +193,7 @@ void LayerAggregate::insert_layer(Layer * layer, TreeIndex * replace_index)
 		this->children->push_back(layer);
 	}
 
-	QObject::connect(layer, SIGNAL(update(void)), (Layer *) this, SLOT(emit_update_secondary(void)));
+	QObject::connect(layer, SIGNAL(changed(void)), (Layer *) this, SLOT(child_layer_changed_cb(void)));
 }
 
 
@@ -238,7 +238,7 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 		this->children->push_front(layer);
 	}
 
-	QObject::connect(layer, SIGNAL(update(void)), this, SLOT(emit_update_secondary(void)));
+	QObject::connect(layer, SIGNAL(changed(void)), this, SLOT(child_layer_changed_cb(void)));
 }
 
 
@@ -319,6 +319,7 @@ void LayerAggregate::draw(Viewport * viewport)
 #endif
 		    || !viewport->get_half_drawn()) {
 
+			qDebug() << "II: Layer Aggregate: calling draw_visible() for" << layer->name;
 			layer->draw_visible(viewport);
 		}
 	}
@@ -370,7 +371,7 @@ void LayerAggregate::child_visible_toggle(LayersPanel * panel)
 		tree->toggle_visibility(layer->index);
 	}
 	/* Redraw as view may have changed. */
-	this->emit_update();
+	this->emit_changed();
 }
 
 
@@ -388,7 +389,7 @@ void LayerAggregate::child_visible_set(LayersPanel * panel, bool on_off)
 	}
 
 	/* Redraw as view may have changed. */
-	this->emit_update();
+	this->emit_changed();
 }
 
 

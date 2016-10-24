@@ -1161,7 +1161,7 @@ bool LayerGeoref::move_release(GdkEventButton * event, LayerTool * tool)
 	if (this->click_x != -1) {
 		this->corner.easting += (event->x - this->click_x) * viewport->get_xmpp();
 		this->corner.northing -= (event->y - this->click_y) * viewport->get_ympp();
-		this->emit_update();
+		this->emit_changed();
 		return true;
 	}
 	return false; /* I didn't move anything on this layer! */
@@ -1224,7 +1224,7 @@ bool LayerGeoref::zoom_press(GdkEventButton * event, LayerTool * tool)
 	}
 	tool->viewport->set_xmpp(this->mpp_easting);
 	tool->viewport->set_ympp(this->mpp_northing);
-	this->emit_update();
+	this->emit_changed();
 	return true;
 }
 

@@ -782,7 +782,7 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 	   however since we may create the layer - need to do the update here. */
 	if (got_something) {
 		Layer * layer_last = (Layer *) vtl_last;
-		layer_last->emit_update();
+		layer_last->emit_changed();
 	}
 
 	bool result = false;

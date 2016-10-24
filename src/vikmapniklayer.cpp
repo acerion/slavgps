@@ -690,7 +690,7 @@ static void background(RenderInfo *data, void * threaddata)
 	g_mutex_unlock(tp_mutex);
 
 	if (res == 0) {
-		data->lmk->emit_update(); /* NB update display from background. */
+		data->lmk->emit_changed(); /* NB update display from background. */
 	}
 }
 
@@ -820,7 +820,7 @@ GdkPixbuf * LayerMapnik::get_pixbuf(TileInfo * ulm, TileInfo * brm)
 			} else {
 				/* Run in the foreground. */
 				this->render(&ul, &br, ulm);
-				this->emit_update();
+				this->emit_changed();
 			}
 		}
 	}

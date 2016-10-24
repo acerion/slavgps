@@ -95,7 +95,7 @@ static bool layer_defaults_register(LayerType layer_type);
 void SlavGPS::layer_init(void)
 {
 #ifndef SLAVGPS_QT
-	layer_signals[VL_UPDATE_SIGNAL] = g_signal_new("update", G_TYPE_OBJECT,
+	layer_signals[VL_UPDATE_SIGNAL] = g_signal_new("changed", G_TYPE_OBJECT,
 						       (GSignalFlags) (G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION), 0, NULL, NULL,
 						       g_cclosure_marshal_VOID__VOID, G_TYPE_NONE, 0);
 #endif
@@ -110,28 +110,14 @@ void SlavGPS::layer_init(void)
 
 
 /**
- * Invoke the actual drawing via signal method.
- */
-void Layer::idle_draw(Layer * layer)
-{
-	qDebug() << "SIGNAL: Layer: layer" << layer->name << "emits 'update' signal";
-	emit layer->update();
-	return;
-}
-
-
-
-
-/**
  * Draw specified layer.
  */
-void Layer::emit_update()
+void Layer::emit_changed()
 {
 	if (this->visible && this->realized) {
-#if 0
 		Window::set_redraw_trigger(this);
-#endif
-		std::async(std::launch::async, Layer::idle_draw, this);
+		qDebug() << "SIGNAL: Layer: layer" << this->name << "emits 'changed' signal";
+		emit this->changed();
 	}
 }
 
@@ -142,26 +128,25 @@ void Layer::emit_update()
  * Should only be done by LayersPanel (hence never used from the background)
  * need to redraw and record trigger when we make a layer invisible.
  */
-void Layer::emit_update_although_invisible()
+void Layer::emit_changed_although_invisible()
 {
-#if 0
 	Window::set_redraw_trigger(this);
-#endif
-	std::async(std::launch::async, Layer::idle_draw, this);
-
+	qDebug() << "SIGNAL: Layer: layer" << this->name << "emits 'changed' signal";
+	emit this->changed();
 }
 
 
 
 
-/* Doesn't set the trigger. should be done by aggregate layer when child emits update. */
-void Layer::emit_update_secondary(void) /* Slot. */
+/* Doesn't set the trigger. should be done by aggregate layer when child emits 'changed' signal. */
+void Layer::child_layer_changed_cb(void) /* Slot. */
 {
+	qDebug() << "SLOT:" << this->name << "received 'child layer changed' signal";
 	if (this->visible) {
-		qDebug() << "II: Layer: emit update secondary";
 		/* TODO: this can used from the background - e.g. in acquire
 		   so will need to flow background update status through too. */
-		std::async(std::launch::async, Layer::idle_draw, this);
+		qDebug() << "SIGNAL: Layer: layer" << this->name << "emits 'changed' signal";
+		emit this->changed();
 	}
 }
 
@@ -371,6 +356,7 @@ bool vik_layer_properties(Layer * layer, Viewport * viewport)
 void Layer::draw_visible(Viewport * viewport)
 {
 	if (this->visible) {
+		qDebug() << "II: Layer: calling draw() for" << this->name;
 		this->draw(viewport);
 	}
 }
@@ -575,9 +561,7 @@ bool Layer::layer_selected(SublayerType sublayer_type, sg_uid_t sublayer_uid, Tr
 	if (result) {
 		return result;
 	} else {
-#ifndef SLAVGPS_QT
 		return this->get_window()->clear_highlight();
-#endif
 	}
 
 }

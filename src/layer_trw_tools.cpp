@@ -291,7 +291,7 @@ bool LayerTRW::select_release(QMouseEvent * event, Viewport * viewport, LayerToo
 			}
 		}
 
-		this->emit_update();
+		this->emit_changed();
 		return true;
 	}
 	return false;
@@ -367,7 +367,7 @@ bool LayerTRW::select_click(QMouseEvent * event, Viewport * viewport, LayerTool 
 			}
 #endif
 
-			this->emit_update();
+			this->emit_changed();
 			return true;
 		}
 	}
@@ -415,7 +415,7 @@ bool LayerTRW::select_click(QMouseEvent * event, Viewport * viewport, LayerTool 
 				this->my_tpwin_set_tp();
 			}
 
-			this->emit_update();
+			this->emit_changed();
 			return true;
 		}
 	}
@@ -454,7 +454,7 @@ bool LayerTRW::select_click(QMouseEvent * event, Viewport * viewport, LayerTool 
 				this->my_tpwin_set_tp();
 			}
 
-			this->emit_update();
+			this->emit_changed();
 			return true;
 		}
 	}
@@ -725,14 +725,14 @@ bool LayerTRW::tool_edit_waypoint_click(QMouseEvent * event, LayerTool * tool)
 		this->current_wp_uid = params.closest_wp_uid;
 
 		/* Could make it so don't update if old WP is off screen and new is null but oh well. */
-		this->emit_update();
+		this->emit_changed();
 		return true;
 	}
 
 	this->current_wp = NULL;
 	this->current_wp_uid = 0;
 	this->waypoint_rightclick = false;
-	this->emit_update();
+	this->emit_changed();
 
 	return false;
 }
@@ -827,7 +827,7 @@ bool LayerTRW::tool_edit_waypoint_release(QMouseEvent * event, LayerTool * tool)
 		this->current_wp->coord = new_coord;
 
 		this->calculate_bounds_waypoints();
-		this->emit_update();
+		this->emit_changed();
 		return true;
 	}
 	/* PUT IN RIGHT PLACE!!! */
@@ -906,7 +906,7 @@ static int draw_sync(draw_sync_t * data)
 	if (1 /*ds->layer->draw_sync_do*/ ) {
 		QPainter painter(data->drawable);
 		painter.drawPixmap(0, 0, *data->pixmap);
-		emit data->layer->update();
+		emit data->layer->changed();
 #if 0
 		gdk_draw_drawable(ds->drawable,
 				  ds->gc,
@@ -1202,12 +1202,12 @@ bool LayerTRW::tool_new_track_key_press(GdkEventKey * event, LayerTool * tool)
 			}
 		}
 		this->current_track = NULL;
-		this->emit_update();
+		this->emit_changed();
 		return true;
 	} else if (this->current_track && event->keyval == GDK_BackSpace) {
 		this->undo_trackpoint_add();
 		this->update_statusbar();
-		this->emit_update();
+		this->emit_changed();
 		return true;
 	}
 #endif
@@ -1242,7 +1242,7 @@ bool LayerTRW::tool_new_track_or_route_click(QMouseEvent * event, Viewport * vie
 		}
 		this->undo_trackpoint_add();
 		this->update_statusbar();
-		this->emit_update();
+		this->emit_changed();
 		return true;
 	}
 
@@ -1255,7 +1255,7 @@ bool LayerTRW::tool_new_track_or_route_click(QMouseEvent * event, Viewport * vie
 			this->undo_trackpoint_add();
 			this->current_track = NULL;
 		}
-		this->emit_update();
+		this->emit_changed();
 		return true;
 	}
 
@@ -1287,7 +1287,7 @@ bool LayerTRW::tool_new_track_or_route_click(QMouseEvent * event, Viewport * vie
 	this->ct_x2 = event->x();
 	this->ct_y2 = event->y();
 
-	this->emit_update();
+	this->emit_changed();
 
 	return true;
 }
@@ -1472,7 +1472,8 @@ bool LayerTRW::tool_new_waypoint_click(QMouseEvent * event, LayerTool * tool)
 	if (this->new_waypoint(this->get_toolkit_window(), &coord)) {
 		this->calculate_bounds_waypoints();
 		if (this->visible) {
-			this->emit_update();
+			qDebug() << "II: Layer TRW: created new waypoint, will emit update";
+			this->emit_changed();
 		}
 	}
 	return true;
@@ -1595,7 +1596,7 @@ bool LayerTRW::tool_edit_trackpoint_click(QMouseEvent * event, LayerTool * tool)
 		this->selected_track = this->tracks.at(params.closest_track_uid);
 		this->tpwin_init();
 		this->set_statusbar_msg_info_trkpt(params.closest_tp);
-		this->emit_update();
+		this->emit_changed();
 		return true;
 	}
 
@@ -1614,7 +1615,7 @@ bool LayerTRW::tool_edit_trackpoint_click(QMouseEvent * event, LayerTool * tool)
 		this->selected_track = this->routes.at(params.closest_track_uid);
 		this->tpwin_init();
 		this->set_statusbar_msg_info_trkpt(params.closest_tp);
-		this->emit_update();
+		this->emit_changed();
 		return true;
 	}
 #endif
@@ -1713,7 +1714,7 @@ bool LayerTRW::tool_edit_trackpoint_release(QMouseEvent * event, LayerTool * too
 			}
 		}
 
-		this->emit_update();
+		this->emit_changed();
 		return true;
 	}
 #endif
@@ -1763,7 +1764,7 @@ void LayerTRW::tool_extended_route_finder_undo()
 	VikCoord * new_end = this->current_track->cut_back_to_double_point();
 	if (new_end) {
 		free(new_end);
-		this->emit_update();
+		this->emit_changed();
 
 		/* Remove last ' to:...' */
 		if (this->current_track->comment) {
@@ -1850,7 +1851,7 @@ bool LayerTRW::tool_extended_route_finder_click(QMouseEvent * event, LayerTool *
 		free(msg);
 #endif
 
-		this->emit_update();
+		this->emit_changed();
 	} else {
 		this->current_track = NULL;
 
@@ -1882,7 +1883,7 @@ bool LayerTRW::tool_extended_route_finder_key_press(GdkEventKey * event, LayerTo
 	if (this->current_track && event->keyval == GDK_Escape) {
 		this->route_finder_started = false;
 		this->current_track = NULL;
-		this->emit_update();
+		this->emit_changed();
 		return true;
 	} else if (this->current_track && event->keyval == GDK_BackSpace) {
 		this->tool_extended_route_finder_undo();

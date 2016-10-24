@@ -124,7 +124,7 @@ namespace SlavGPS {
 		struct _VikStatusbar * get_statusbar();
 		void statusbar_update(char const * message, vik_statusbar_type_t vs_type);
 
-		static void set_redraw_trigger(Layer * layer);
+
 
 		void enable_layer_tool(LayerType layer_type, int tool_id);
 		GThread * get_thread();

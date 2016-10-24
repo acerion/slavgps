@@ -120,9 +120,6 @@ namespace SlavGPS {
 		QAction * qa_layer_copy = NULL;
 		QAction * qa_layer_paste = NULL;
 
-		static void idle_draw_panel(LayersPanel * panel);
-
-
 	public slots:
 		bool properties();
 		void emit_update_cb();

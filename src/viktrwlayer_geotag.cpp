@@ -548,7 +548,7 @@ static int trw_layer_geotag_thread(geotag_options_t *options, void * threaddata)
 			/* Ensure any new images get show. */
 			options->trw->verify_thumbnails();
 			/* Force redraw as verify only redraws if there are new thumbnails (they may already exist). */
-			options->trw->emit_update(); /* NB Update from background. */
+			options->trw->emit_changed(); /* NB Update from background. */
 		}
 	}
 

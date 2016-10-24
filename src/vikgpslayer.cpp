@@ -794,7 +794,7 @@ void LayerGPS::realize(TreeView * tree_view_, GtkTreeIter *layer_iter)
 			this->tree_view->set_visibility(&iter, false);
 		}
 		trw->realize(this->tree_view, &iter);
-		g_signal_connect_swapped(G_OBJECT(trw->vl), "update", G_CALLBACK(Layer::emit_update_secondary), (Layer *) this);
+		g_signal_connect_swapped(G_OBJECT(trw->vl), "update", G_CALLBACK(Layer::child_layer_changed_cb), (Layer *) this);
 	}
 }
 
@@ -1216,7 +1216,7 @@ static void gps_comm_thread(GpsSession *sess)
 					sess->trw->post_read(sess->viewport, true);
 					/* View the data available. */
 					sess->trw->auto_set_view(sess->viewport) ;
-					sess->trw->emit_update(); /* NB update from background thread. */
+					sess->trw->emit_changed(); /* NB update from background thread. */
 				}
 			}
 		} else {
@@ -1766,9 +1766,9 @@ static void gpsd_raw_hook(VglGpsd *vgpsd, char *data)
 
 		/* NB update from background thread. */
 		if (update_all) {
-			layer->emit_update();
+			layer->emit_changed();
 		} else {
-			layer->trw_children[TRW_REALTIME]->emit_update();
+			layer->trw_children[TRW_REALTIME]->emit_changed();
 		}
 	}
 }

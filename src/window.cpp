@@ -491,6 +491,15 @@ void Window::create_actions(void)
 
 void Window::draw_update_cb()
 {
+	qDebug() << "SLOT: Window: received 'update' signal from Layers Panel";
+	this->draw_update();
+}
+
+
+
+
+void Window::draw_update()
+{
 	qDebug() << "II: Window: redraw + sync begin" << __FUNCTION__ << __LINE__;
 	this->draw_redraw();
 	this->draw_sync();
@@ -554,7 +563,7 @@ void Window::menu_layer_new_cb(void) /* Slot. */
 
 	if (this->layers_panel->new_layer(layer_type)) {
 		qDebug() << "II: Window: new layer, call draw_update_cb()" << __FUNCTION__ << __LINE__;
-		this->draw_update_cb();
+		this->draw_update();
 		this->modified = true;
 	}
 
@@ -584,7 +593,7 @@ void Window::draw_redraw()
 	/* Main layer drawing. */
 	this->layers_panel->draw_all();
 	/* Draw highlight (possibly again but ensures it is on top - especially for when tracks overlap). */
-#if 0
+
 	if (this->viewport->get_draw_highlight()) {
 		if (this->containing_trw && (this->selected_tracks || this->selected_waypoints)) {
 			this->containing_trw->draw_highlight_items(this->selected_tracks, this->selected_waypoints, this->viewport);
@@ -596,7 +605,7 @@ void Window::draw_redraw()
 			this->selected_trw->draw_highlight(this->viewport);
 		}
 	}
-#endif
+
 	/* Other viewport decoration items on top if they are enabled/in use. */
 	this->viewport->draw_scale();
 	this->viewport->draw_copyright();
@@ -1047,7 +1056,7 @@ void Window::pan_move(QMouseEvent * event)
 		this->pan_move_flag = true;
 		this->pan_x = event->x();
 		this->pan_y = event->y();
-		this->draw_update_cb();
+		this->draw_update();
 	}
 }
 
@@ -1090,7 +1099,7 @@ void Window::pan_release(QMouseEvent * event)
 	this->pan_x = -1;
 	this->pan_y = -1;
 	if (do_draw) {
-		this->draw_update_cb();
+		this->draw_update();
 	}
 }
 
@@ -1224,7 +1233,7 @@ void Window::draw_scale_cb(bool new_state)
 	assert (new_state != this->draw_scale);
 	if (new_state != this->draw_scale) {
 		this->viewport->set_draw_scale(new_state);
-		this->draw_update_cb();
+		this->draw_update();
 		this->draw_scale = !this->draw_scale;
 	}
 }
@@ -1237,7 +1246,7 @@ void Window::draw_centermark_cb(bool new_state)
 	assert (new_state != this->draw_centermark);
 	if (new_state != this->draw_centermark) {
 		this->viewport->set_draw_centermark(new_state);
-		this->draw_update_cb();
+		this->draw_update();
 		this->draw_centermark = !this->draw_centermark;
 	}
 }
@@ -1249,7 +1258,7 @@ void Window::draw_highlight_cb(bool new_state)
 	assert (new_state != this->draw_highlight);
 	if (new_state != this->draw_highlight) {
 		this->viewport->set_draw_highlight(new_state);
-		this->draw_update_cb();
+		this->draw_update();
 		this->draw_highlight = !this->draw_highlight;
 	}
 }
@@ -1392,7 +1401,7 @@ void Window::zoom_cb(void)
 		window->viewport->set_zoom(what);
 	}
 #endif
-	this->draw_update_cb();
+	this->draw_update();
 }
 
 
@@ -1406,7 +1415,7 @@ void Window::zoom_to_cb(void)
 	if (a_dialog_custom_zoom(window->get_toolkit_window(), &xmpp, &ympp)) {
 		window->viewport->set_xmpp(xmpp);
 		window->viewport->set_ympp(ympp);
-		window->draw_update_cb();
+		window->draw_update();
 	}
 #endif
 }
@@ -1582,4 +1591,15 @@ bool Window::clear_highlight()
 		need_redraw = true;
 	}
 	return need_redraw;
+}
+
+
+
+
+void Window::set_redraw_trigger(Layer * layer)
+{
+	Window * window = layer->get_window();
+	if (window) {
+		window->trigger = layer;
+	}
 }

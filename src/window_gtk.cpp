@@ -910,17 +910,6 @@ void Window::draw_status()
 
 
 
-void Window::set_redraw_trigger(Layer * layer)
-{
-	Window * window = layer->get_window();
-	if (window) {
-		window->trigger = layer;
-	}
-}
-
-
-
-
 static void window_configure_event(Window * window)
 {
 	static int first = 1;

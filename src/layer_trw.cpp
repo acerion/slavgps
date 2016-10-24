@@ -608,7 +608,7 @@ bool LayerTRW::find_by_date(char const * date_str, VikCoord * position, Viewport
 			viewport->set_center_coord(&df.wp->coord, true);
 			this->tree_view->select_and_expose(waypoints_iters.at(df.wp_uid));
 		}
-		this->emit_update();
+		this->emit_changed();
 	}
 	return df.found;
 }
@@ -776,7 +776,7 @@ bool LayerTRW::paste_sublayer(SublayerType sublayer_type, uint8_t * item, size_t
 
 		// Consider if redraw necessary for the new item
 		if (this->visible && this->waypoints_visible && wp->visible) {
-			this->emit_update();
+			this->emit_changed();
 		}
 		return true;
 	}
@@ -790,7 +790,7 @@ bool LayerTRW::paste_sublayer(SublayerType sublayer_type, uint8_t * item, size_t
 
 		// Consider if redraw necessary for the new item
 		if (this->visible && this->tracks_visible && trk->visible) {
-			this->emit_update();
+			this->emit_changed();
 		}
 		return true;
 	}
@@ -804,7 +804,7 @@ bool LayerTRW::paste_sublayer(SublayerType sublayer_type, uint8_t * item, size_t
 
 		// Consider if redraw necessary for the new item
 		if (this->visible && this->routes_visible && trk->visible) {
-			this->emit_update();
+			this->emit_changed();
 		}
 		return true;
 	}
@@ -1458,15 +1458,18 @@ void LayerTRW::draw_with_highlight(Viewport * viewport, bool highlight)
 	static DrawingParams dp;
 	init_drawing_params(&dp, this, viewport, highlight);
 
-	if (tracks_visible) {
+	if (true /* this->tracks_visible */) { /* TODO: fix condition. */
+		qDebug() << "II: Layer TRW: calling function to draw tracks";
 		trw_layer_draw_track_cb(tracks, &dp);
 	}
 
-	if (routes_visible) {
+	if (true /* this->routes_visible */) { /* TODO: fix condition. */
+		qDebug() << "II: Layer TRW: calling function to draw routes";
 		trw_layer_draw_track_cb(routes, &dp);
 	}
 
-	if (waypoints_visible) {
+	if (true /* this->waypoints_visible */) { /* TODO: fix condition. */
+		qDebug() << "II: Layer TRW: calling function to draw waypoints";
 		trw_layer_draw_waypoints_cb(&waypoints, &dp);
 	}
 }
@@ -1479,15 +1482,15 @@ void LayerTRW::draw(Viewport * viewport)
 	// If this layer is to be highlighted - then don't draw now - as it will be drawn later on in the specific highlight draw stage
 	// This may seem slightly inefficient to test each time for every layer
 	//  but for a layer with *lots* of tracks & waypoints this can save some effort by not drawing the items twice
+#if K
 	if (viewport->get_draw_highlight()
-#ifdef K
-	    && this->get_window()->get_selected_trw_layer() == this
-#endif
-	    ) {
+	    && this->get_window()->get_selected_trw_layer() == this) {
 
 		return;
 	}
+#endif
 
+	qDebug() << "II: Layer TRW: calling draw_with_highlight()";
 	this->draw_with_highlight(viewport, false);
 }
 
@@ -1529,12 +1532,12 @@ void LayerTRW::draw_highlight_item(Track * trk, Waypoint * wp, Viewport * viewpo
 	init_drawing_params(&dp, this, viewport, true);
 
 	if (trk) {
-		bool draw = (trk->is_route && routes_visible) || (!trk->is_route && tracks_visible);
+		bool draw = (trk->is_route && this->routes_visible) || (!trk->is_route && this->tracks_visible);
 		if (draw) {
 			trw_layer_draw_track_cb(NULL, trk, &dp);
 		}
 	}
-	if (waypoints_visible && wp) {
+	if (this->waypoints_visible && wp) {
 		trw_layer_draw_waypoint_cb(wp, &dp);
 	}
 }
@@ -1564,13 +1567,13 @@ void LayerTRW::draw_highlight_items(std::unordered_map<sg_uid_t, Track *> * trac
 
 	if (tracks) {
 		bool is_routes = (tracks == &routes);
-		bool draw = (is_routes && routes_visible) || (!is_routes && tracks_visible);
+		bool draw = (is_routes && this->routes_visible) || (!is_routes && this->tracks_visible);
 		if (draw) {
 			trw_layer_draw_track_cb(*tracks, &dp);
 		}
 	}
 
-	if (waypoints_visible && selected_waypoints) {
+	if (this->waypoints_visible && selected_waypoints) {
 		trw_layer_draw_waypoints_cb(selected_waypoints, &dp);
 	}
 }
@@ -1971,8 +1974,6 @@ char const * LayerTRW::tooltip()
 
 	static char tmp_buf[128] = { 0 };
 
-#ifdef K
-
 	// For compact date format I'm using '%x'     [The preferred date representation for the current locale without the time.]
 
 	if (!this->tracks.empty()) {
@@ -1999,7 +2000,7 @@ char const * LayerTRW::tooltip()
 
 		tbuf2[0] = '\0';
 		if (tt.length > 0.0) {
-
+#ifdef K
 			/* Setup info dependent on distance units. */
 			DistanceUnit distance_unit = a_vik_get_units_distance();
 			get_distance_unit_string(tbuf4, sizeof (tbuf4), distance_unit);
@@ -2015,6 +2016,7 @@ char const * LayerTRW::tooltip()
 			snprintf(tbuf2, sizeof(tbuf2),
 				 _("\n%sTotal Length %.1f %s%s"),
 				 tbuf3, len_in_units, tbuf4, tbuf1);
+#endif
 		}
 
 		tbuf1[0] = '\0';
@@ -2022,13 +2024,13 @@ char const * LayerTRW::tooltip()
 		trw_layer_routes_tooltip(this->routes, &rlength);
 		if (rlength > 0.0) {
 
-
-
+#ifdef K
 			/* Setup info dependent on distance units. */
 			DistanceUnit distance_unit = a_vik_get_units_distance();
 			get_distance_unit_string(tbuf4, sizeof (tbuf4), distance_unit);
 			double len_in_units = convert_distance_meters_to(distance_unit, rlength);
 			snprintf(tbuf1, sizeof(tbuf1), _("\nTotal route length %.1f %s"), len_in_units, tbuf4);
+#endif
 		}
 
 		// Put together all the elements to form compact tooltip text
@@ -2039,7 +2041,6 @@ char const * LayerTRW::tooltip()
 		g_date_free(gdate_start);
 		g_date_free(gdate_end);
 	}
-#endif
 	return tmp_buf;
 }
 
@@ -2373,7 +2374,7 @@ bool LayerTRW::is_empty()
 
 bool LayerTRW::get_tracks_visibility()
 {
-	return tracks_visible;
+	return this->tracks_visible;
 }
 
 
@@ -2381,7 +2382,7 @@ bool LayerTRW::get_tracks_visibility()
 
 bool LayerTRW::get_routes_visibility()
 {
-	return routes_visible;
+	return this->routes_visible;
 }
 
 
@@ -2389,7 +2390,7 @@ bool LayerTRW::get_routes_visibility()
 
 bool LayerTRW::get_waypoints_visibility()
 {
-	return waypoints_visible;
+	return this->waypoints_visible;
 }
 
 
@@ -3149,9 +3150,7 @@ void trw_layer_new_wp(trw_menu_layer_t * data)
 	if (layer->new_waypoint(layer->get_toolkit_window(), panel->get_viewport()->get_center())) {
 		layer->calculate_bounds_waypoints();
 		if (layer->visible) {
-#ifdef K
-			panel->emit_update();
-#endif
+			panel->emit_update_cb();
 		}
 	}
 }
@@ -3253,7 +3252,7 @@ void trw_layer_finish_track(trw_menu_layer_t * data)
 	LayerTRW * layer = data->layer;
 	layer->current_track = NULL;
 	layer->route_finder_started = false;
-	layer->emit_update();
+	layer->emit_changed();
 }
 
 
@@ -3893,7 +3892,7 @@ void LayerTRW::delete_all_routes()
 
 	this->tree_view->erase(this->routes_node);
 
-	this->emit_update();
+	this->emit_changed();
 }
 
 
@@ -3913,7 +3912,7 @@ void LayerTRW::delete_all_tracks()
 
 	this->tree_view->erase(this->tracks_node);
 
-	this->emit_update();
+	this->emit_changed();
 }
 
 
@@ -3933,7 +3932,7 @@ void LayerTRW::delete_all_waypoints()
 
 	this->tree_view->erase(this->waypoints_node);
 
-	this->emit_update();
+	this->emit_changed();
 }
 
 
@@ -4046,7 +4045,7 @@ void trw_layer_delete_item(trw_menu_sublayer_t * data)
 		}
 	}
 	if (was_visible) {
-		layer->emit_update();
+		layer->emit_changed();
 	}
 #endif
 }
@@ -4118,7 +4117,7 @@ void trw_layer_properties_item(trw_menu_sublayer_t * data)
 			}
 
 			if (updated && layer->visible) {
-				layer->emit_update();
+				layer->emit_changed();
 			}
 		}
 	} else {
@@ -4307,7 +4306,7 @@ void trw_layer_convert_track_route(trw_menu_sublayer_t * data)
 	free(name);
 
 	// Update in case color of track / route changes when moving between sublayers
-	layer->emit_update();
+	layer->emit_changed();
 }
 
 
@@ -4658,7 +4657,7 @@ void trw_layer_auto_track_view(trw_menu_sublayer_t * data)
 		if (data->panel) {
 			data->panel->emit_update();
 		} else {
-			layer->emit_update();
+			layer->emit_changed();
 		}
 #endif
 	}
@@ -4740,7 +4739,7 @@ void trw_layer_route_refine(trw_menu_sublayer_t * data)
 			layer->route_finder_added_track = NULL;
 			layer->route_finder_check_added_track = false;
 
-			layer->emit_update();
+			layer->emit_changed();
 
 			/* Restore cursor */
 			layer->get_window()->clear_busy_cursor();
@@ -4901,7 +4900,7 @@ void trw_layer_merge_with_other(trw_menu_sublayer_t * data)
 		}
 		g_list_free(merge_list);
 
-		layer->emit_update();
+		layer->emit_changed();
 	}
 #endif
 }
@@ -4983,7 +4982,7 @@ void trw_layer_append_track(trw_menu_sublayer_t * data)
 		}
 		g_list_free(append_list);
 
-		layer->emit_update();
+		layer->emit_changed();
 	}
 #endif
 }
@@ -5085,7 +5084,7 @@ void trw_layer_append_other(trw_menu_sublayer_t * data)
 			free(l->data);
 		}
 		g_list_free(append_list);
-		layer->emit_update();
+		layer->emit_changed();
 	}
 #endif
 }
@@ -5182,7 +5181,7 @@ void trw_layer_merge_by_timestamp(trw_menu_sublayer_t * data)
 
 	g_list_free(nearby_tracks);
 
-	layer->emit_update();
+	layer->emit_changed();
 #endif
 }
 
@@ -5230,7 +5229,7 @@ void LayerTRW::split_at_selected_trackpoint(SublayerType sublayer_type)
 
 			this->current_tp_uid = uid;
 
-			this->emit_update();
+			this->emit_changed();
 			free(name);
 		}
 	}
@@ -5408,7 +5407,7 @@ bool LayerTRW::create_new_tracks(Track * orig, std::list<TrackPoints *> * points
 	} else {
 		this->delete_track(orig);
 	}
-	this->emit_update();
+	this->emit_changed();
 
 	return true;
 }
@@ -5454,7 +5453,7 @@ void trw_layer_split_segments(trw_menu_sublayer_t * data)
 		delete tracks;
 		// Remove original track
 		layer->delete_track(trk);
-		layer->emit_update();
+		layer->emit_changed();
 	} else {
 #ifdef K
 		a_dialog_error_msg(layer->get_toolkit_window(), _("Can not split track as it has no segments"));
@@ -5506,7 +5505,7 @@ void trw_layer_delete_point_selected(trw_menu_sublayer_t * data)
 	// Track has been updated so update tps:
 	layer->cancel_tps_of_track(trk);
 
-	layer->emit_update();
+	layer->emit_changed();
 }
 
 
@@ -5536,7 +5535,7 @@ void trw_layer_delete_points_same_position(trw_menu_sublayer_t * data)
 	snprintf(str, 64, tmp_str, removed);
 	a_dialog_info_msg(str, "Info");
 
-	layer->emit_update();
+	layer->emit_changed();
 }
 
 
@@ -5566,7 +5565,7 @@ void trw_layer_delete_points_same_time(trw_menu_sublayer_t * data)
 	snprintf(str, 64, tmp_str, removed);
 	a_dialog_info_msg(str, "Info");
 
-	layer->emit_update();
+	layer->emit_changed();
 }
 
 
@@ -5586,7 +5585,7 @@ void trw_layer_insert_point_after(trw_menu_sublayer_t * data)
 
 	layer->insert_tp_beside_current_tp(false);
 
-	layer->emit_update();
+	layer->emit_changed();
 }
 
 
@@ -5603,7 +5602,7 @@ void trw_layer_insert_point_before(trw_menu_sublayer_t * data)
 
 	layer->insert_tp_beside_current_tp(true);
 
-	layer->emit_update();
+	layer->emit_changed();
 }
 
 
@@ -5623,7 +5622,7 @@ void trw_layer_reverse(trw_menu_sublayer_t * data)
 
 	trk->reverse();
 
-	layer->emit_update();
+	layer->emit_changed();
 }
 
 
@@ -5948,8 +5947,8 @@ void LayerTRW::uniquify_tracks(LayersPanel * panel, std::unordered_map<sg_uid_t,
 		}
 	}
 
-	// Update
-	panel->emit_update();
+	/* Update. */
+	panel->emit_changed();
 #endif
 }
 
@@ -6056,7 +6055,7 @@ void trw_layer_delete_tracks_from_selection(trw_menu_layer_t * data)
 		// Reset layer timestamps in case they have now changed
 		layer->tree_view->set_timestamp(&layer->iter, layer->get_timestamp());
 
-		layer->emit_update();
+		layer->emit_changed();
 	}
 #endif
 }
@@ -6103,7 +6102,7 @@ void trw_layer_delete_routes_from_selection(trw_menu_layer_t * data)
 			layer->delete_track_by_name((const char *) l->data, true);
 		}
 		g_list_free(delete_list);
-		layer->emit_update();
+		layer->emit_changed();
 	}
 #endif
 }
@@ -6231,8 +6230,8 @@ void LayerTRW::uniquify_waypoints(LayersPanel * panel)
 		}
 	}
 
-	// Update
-	panel->emit_update();
+	/* Update. */
+	panel->emit_changed();
 #endif
 }
 
@@ -6286,7 +6285,7 @@ void trw_layer_delete_waypoints_from_selection(trw_menu_layer_t * data)
 		layer->calculate_bounds_waypoints();
 		// Reset layer timestamp in case it has now changed
 		layer->tree_view->set_timestamp(&layer->iter, layer->get_timestamp());
-		layer->emit_update();
+		layer->emit_changed();
 	}
 #endif
 }
@@ -6299,8 +6298,8 @@ void trw_layer_waypoints_visibility_off(trw_menu_layer_t * data)
 	LayerTRW * layer = data->layer;
 	LayerTRWc::set_iter_visibility(layer->waypoints_iters, layer->tree_view, false);
 	LayerTRWc::set_waypoints_visibility(layer->waypoints, false);
-	// Redraw
-	layer->emit_update();
+	/* Redraw. */
+	layer->emit_changed();
 }
 
 
@@ -6311,8 +6310,8 @@ void trw_layer_waypoints_visibility_on(trw_menu_layer_t * data)
 	LayerTRW * layer = data->layer;
 	LayerTRWc::set_iter_visibility(layer->waypoints_iters, layer->tree_view, true);
 	LayerTRWc::set_waypoints_visibility(layer->waypoints, true);
-	// Redraw
-	layer->emit_update();
+	/* Redraw. */
+	layer->emit_changed();
 }
 
 
@@ -6323,8 +6322,8 @@ void trw_layer_waypoints_visibility_toggle(trw_menu_layer_t * data)
 	LayerTRW * layer = data->layer;
 	LayerTRWc::iter_visibility_toggle(layer->waypoints_iters, layer->tree_view);
 	LayerTRWc::waypoints_toggle_visibility(layer->waypoints);
-	// Redraw
-	layer->emit_update();
+	/* Redraw. */
+	layer->emit_changed();
 }
 
 
@@ -6335,8 +6334,8 @@ void trw_layer_tracks_visibility_off(trw_menu_layer_t * data)
 	LayerTRW * layer = data->layer;
 	LayerTRWc::set_iter_visibility(layer->tracks_iters, layer->tree_view, false);
 	LayerTRWc::set_tracks_visibility(layer->tracks, false);
-	// Redraw
-	layer->emit_update();
+	/* Redraw. */
+	layer->emit_changed();
 }
 
 
@@ -6347,8 +6346,8 @@ void trw_layer_tracks_visibility_on(trw_menu_layer_t * data)
 	LayerTRW * layer = data->layer;
 	LayerTRWc::set_iter_visibility(layer->tracks_iters, layer->tree_view, true);
 	LayerTRWc::set_tracks_visibility(layer->tracks, true);
-	// Redraw
-	layer->emit_update();
+	/* Redraw. */
+	layer->emit_changed();
 }
 
 
@@ -6359,8 +6358,8 @@ void trw_layer_tracks_visibility_toggle(trw_menu_layer_t * data)
 	LayerTRW * layer = data->layer;
 	LayerTRWc::iter_visibility_toggle(layer->tracks_iters, layer->tree_view);
 	LayerTRWc::tracks_toggle_visibility(layer->tracks);
-	// Redraw
-	layer->emit_update();
+	/* Redraw. */
+	layer->emit_changed();
 }
 
 
@@ -6371,8 +6370,8 @@ void trw_layer_routes_visibility_off(trw_menu_layer_t * data)
 	LayerTRW * layer = data->layer;
 	LayerTRWc::set_iter_visibility(layer->routes_iters, layer->tree_view, false);
 	LayerTRWc::set_tracks_visibility(layer->routes, false);
-	// Redraw
-	layer->emit_update();
+	/* Redraw. */
+	layer->emit_changed();
 }
 
 
@@ -6383,8 +6382,8 @@ void trw_layer_routes_visibility_on(trw_menu_layer_t * data)
 	LayerTRW * layer = data->layer;
 	LayerTRWc::set_iter_visibility(layer->routes_iters, layer->tree_view, true);
 	LayerTRWc::set_tracks_visibility(layer->routes, true);
-	// Redraw
-	layer->emit_update();
+	/* Redraw. */
+	layer->emit_changed();
 }
 
 
@@ -6395,8 +6394,8 @@ void trw_layer_routes_visibility_toggle(trw_menu_layer_t * data)
 	LayerTRW * layer = data->layer;
 	LayerTRWc::iter_visibility_toggle(layer->routes_iters, layer->tree_view);
 	LayerTRWc::tracks_toggle_visibility(layer->routes);
-	// Redraw
-	layer->emit_update();
+	/* Redraw. */
+	layer->emit_changed();
 }
 
 
@@ -6849,7 +6848,7 @@ void LayerTRW::cancel_current_tp(bool destroy)
 
 		this->selected_track = NULL;
 		this->current_tp_uid = 0;
-		this->emit_update();
+		this->emit_changed();
 	}
 #endif
 }
@@ -6916,7 +6915,7 @@ void LayerTRW::tpwin_response(int response)
 			this->my_tpwin_set_tp();
 		}
 
-		this->emit_update();
+		this->emit_changed();
 
 	} else if (response == VIK_TRW_LAYER_TPWIN_FORWARD
 		   && this->selected_track
@@ -6924,7 +6923,7 @@ void LayerTRW::tpwin_response(int response)
 
 		this->selected_tp.iter++;
 		this->my_tpwin_set_tp();
-		this->emit_update(); /* TODO longone: either move or only update if tp is inside drawing window */
+		this->emit_changed(); /* TODO longone: either move or only update if tp is inside drawing window */
 
 	} else if (response == VIK_TRW_LAYER_TPWIN_BACK
 		   && this->selected_track
@@ -6932,17 +6931,17 @@ void LayerTRW::tpwin_response(int response)
 
 		this->selected_tp.iter--;
 		this->my_tpwin_set_tp();
-		this->emit_update();
+		this->emit_changed();
 
 	} else if (response == VIK_TRW_LAYER_TPWIN_INSERT
 		   && this->selected_track
 		   && std::next(this->selected_tp.iter) != this->selected_track->end()) {
 
 		this->insert_tp_beside_current_tp(false);
-		this->emit_update();
+		this->emit_changed();
 
 	} else if (response == VIK_TRW_LAYER_TPWIN_DATA_CHANGED) {
-		this->emit_update();
+		this->emit_changed();
 	}
 #endif
 }
@@ -7103,7 +7102,7 @@ static int create_thumbnails_thread(thumbnail_create_thread_data * tctd, void * 
 
 	/* Redraw to show the thumbnails as they are now created. */
 	if (tctd->layer) {
-		tctd->layer->emit_update(); /* NB update from background thread. */
+		tctd->layer->emit_changed(); /* NB update from background thread. */
 	}
 #endif
 	return 0;

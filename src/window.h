@@ -50,6 +50,7 @@ namespace SlavGPS {
 		void draw_sync();
 		void draw_status();
 		void draw_redraw();
+		void draw_update(void);
 
 		void selected_layer(Layer * layer);
 
@@ -108,6 +109,7 @@ namespace SlavGPS {
 		bool clear_highlight();
 
 
+		static void set_redraw_trigger(Layer * layer);
 
 
 

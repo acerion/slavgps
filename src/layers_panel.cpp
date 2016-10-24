@@ -26,7 +26,6 @@
 #include <cstring>
 #include <cstdlib>
 #include <cassert>
-#include <future> /* std::async */
 
 #include <glib/gi18n.h>
 #include <QPushButton>
@@ -193,7 +192,7 @@ LayersPanel::LayersPanel(Window * parent) : QWidget((QWidget *) parent)
 	//QStandardItem * coord = this->tree_view->add_layer(layer, this->toplayer, this->toplayer_item, false, 0, 0);
 
 	connect(this->tree_view, SIGNAL(layer_needs_redraw(sg_uid_t)), this->window, SLOT(draw_layer_cb(sg_uid_t)));
-	connect(this->toplayer, SIGNAL(update(void)), this, SLOT(emit_update_cb(void)));
+	connect(this->toplayer, SIGNAL(changed(void)), this, SLOT(emit_update_cb(void)));
 	//connect(this->tree_view, "item_toggled", this, SLOT(item_toggled));
 
 
@@ -312,23 +311,11 @@ static GtkWidget* layers_panel_create_popup(LayersPanel * panel, bool full)
 
 
 
-/**
- * Invoke the actual drawing via signal method.
- */
-void LayersPanel::idle_draw_panel(LayersPanel * panel)
-{
-	qDebug() << "SIGNAL: LayersPanel::update()";
-	emit panel->update();
-	return;
-}
-
-
-
-
 void LayersPanel::emit_update_cb()
 {
-	qDebug() << "II: Layers Panel: scheduling idle draw panel in response to update signal";
-	std::async(std::launch::async, LayersPanel::idle_draw_panel, this);
+	qDebug() << "SLOT?: Layers Panel received 'changed' signal from top level layer?";
+	qDebug() << "SIGNAL: Layers Panel emits 'update' signal";
+	emit this->update();
 }
 
 
@@ -345,14 +332,14 @@ void LayersPanel::item_toggled(TreeIndex * index)
 	case TreeItemType::LAYER: {
 		Layer * layer = this->tree_view->get_layer(index);
 		visible = (layer->visible ^= 1);
-		layer->emit_update_although_invisible(); /* Set trigger for half-drawn. */
+		layer->emit_changed_although_invisible(); /* Set trigger for half-drawn. */
 		break;
 		}
 	case TreeItemType::SUBLAYER: {
 		sg_uid_t sublayer_uid = this->tree_view->get_sublayer_uid(index);
 		Layer * parent = this->tree_view->get_parent_layer(index);
 		visible = parent->sublayer_toggle_visible(this->tree_view->get_sublayer_type(index), sublayer_uid);
-		parent->emit_update_although_invisible();
+		parent->emit_changed_although_invisible();
 		break;
 	}
 	default:
@@ -696,7 +683,7 @@ bool LayersPanel::properties()
 		} else {
 			Layer * layer = this->tree_view->get_layer(index);
 			if (layer->properties_dialog(this->viewport)) {
-				layer->emit_update();
+				layer->emit_changed();
 			}
 		}
 		return true;
@@ -711,6 +698,7 @@ bool LayersPanel::properties()
 void LayersPanel::draw_all()
 {
 	if (this->viewport && this->toplayer->visible) {
+		qDebug() << "II: Layers Panel: calling toplayer->draw()";
 		this->toplayer->draw(this->viewport);
 	}
 }

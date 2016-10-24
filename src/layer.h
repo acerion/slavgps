@@ -145,8 +145,8 @@ namespace SlavGPS {
 
 		static Layer * new_(LayerType layer_type, Viewport * viewport, bool interactive);
 
-		void emit_update(void);
-		void emit_update_although_invisible(void);
+		void emit_changed(void);
+		void emit_changed_although_invisible(void);
 
 		LayerInterface * get_interface(void);
 		static LayerInterface * get_interface(LayerType layer_type);
@@ -215,8 +215,6 @@ namespace SlavGPS {
 		virtual bool set_param_value(uint16_t id, LayerParamValue param_value, Viewport * viewport, bool is_file_operation);
 
 
-		static void idle_draw(Layer * layer);
-
 		static LayerType type_from_string(char const * str);
 
 
@@ -275,14 +273,14 @@ namespace SlavGPS {
 
 	public slots:
 		void visibility_toggled_cb(QStandardItem * item);
-		void emit_update_secondary(void);
+		void child_layer_changed_cb(void);
 
 
 	protected slots:
 		virtual void location_info_cb(void);
 
 	signals:
-		void update(void);
+		void changed(void);
 	};
 
 
