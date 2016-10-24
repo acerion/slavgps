@@ -1309,7 +1309,8 @@ bool LayerTRW::tool_new_track_click(QMouseEvent * event, LayerTool * tool)
 	this->route_finder_started = false;
 
 	/* If current is a route - switch to new track. */
-	if (event->button() == Qt::LeftButton && (!this->current_track || (this->current_track && this->current_track->is_route))) {
+	if (event->button() == Qt::LeftButton) {
+		if ((!this->current_track || (this->current_track && this->current_track->is_route))) {
 		char *name = this->new_unique_sublayer_name(SublayerType::TRACK, _("Track"));
 		if (a_vik_get_ask_for_create_track_name()) {
 #ifdef K
@@ -1321,6 +1322,7 @@ bool LayerTRW::tool_new_track_click(QMouseEvent * event, LayerTool * tool)
 		}
 		this->new_track_create_common(name);
 		free(name);
+		}
 	}
 
 	return this->tool_new_track_or_route_click(event, tool->viewport);

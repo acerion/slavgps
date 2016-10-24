@@ -270,30 +270,30 @@ static bool vik_treeview_tooltip_cb(GtkWidget  * widget,
 }
 
 
-QString TreeView::get_name(QStandardItem * item)
+QString TreeView::get_name(TreeIndex * index)
 {
-	QStandardItem * parent = item->parent();
+	QStandardItem * parent = this->model->itemFromIndex(index->parent());
 	if (!parent) {
-		/* "item" points at the "Top Layer" layer. */
-		fprintf(stderr, "%s:%d querying Top Layer for item row=%d, col=%d\n", __FUNCTION__, __LINE__, item->row(), item->column());
+		/* "index" points at the "Top Layer" layer. */
+		qDebug() << "II: Tree View: querying Top Layer for item" << index->row() << index->column();
 		parent = this->model->invisibleRootItem();
 	}
-	QStandardItem * ch = parent->child(item->row(), (int) LayersTreeColumn::NAME);
+	QStandardItem * ch = parent->child(index->row(), (int) LayersTreeColumn::NAME);
 
 	return ch->text();
 }
 
 
 
-bool TreeView::is_visible(QStandardItem * item)
+bool TreeView::is_visible(TreeIndex * index)
 {
-	QStandardItem * parent = item->parent();
+	QStandardItem * parent = this->model->itemFromIndex(index->parent());
 	if (!parent) {
-		/* "item" points at the "Top Layer" layer. */
-		fprintf(stderr, "%s:%d querying Top Layer for item row=%d, col=%d\n", __FUNCTION__, __LINE__, item->row(), item->column());
+		/* "index" points at the "Top Layer" layer. */
+		qDebug() << "II: Tree View: querying Top Layer for item" << index->row() << index->column();
 		parent = this->model->invisibleRootItem();
 	}
-	QStandardItem * ch = parent->child(item->row(), (int) LayersTreeColumn::VISIBLE);
+	QStandardItem * ch = parent->child(index->row(), (int) LayersTreeColumn::VISIBLE);
 
 	QVariant variant = ch->data();
 	return variant.toBool();;
@@ -302,15 +302,15 @@ bool TreeView::is_visible(QStandardItem * item)
 
 
 
-TreeItemType TreeView::get_item_type(QStandardItem * item)
+TreeItemType TreeView::get_item_type(TreeIndex * index)
 {
-	QStandardItem * parent = item->parent();
+	QStandardItem * parent = this->model->itemFromIndex(index->parent());
 	if (!parent) {
-		/* "item" points at the "Top Layer" layer. */
-		fprintf(stderr, "%s:%d querying Top Layer for item row=%d, col=%d\n", __FUNCTION__, __LINE__, item->row(), item->column());
+		/* "index" points at the "Top Layer" layer. */
+		qDebug() << "II: Tree View: querying Top Layer for item" << index->row() << index->column();
 		parent = this->model->invisibleRootItem();
 	}
-	QStandardItem * ch = parent->child(item->row(), (int) LayersTreeColumn::TREE_ITEM_TYPE);
+	QStandardItem * ch = parent->child(index->row(), (int) LayersTreeColumn::TREE_ITEM_TYPE);
 
 	QVariant variant = ch->data(RoleLayerData);
 	return (TreeItemType) variant.toInt();
@@ -319,15 +319,15 @@ TreeItemType TreeView::get_item_type(QStandardItem * item)
 
 
 
-Layer * TreeView::get_parent_layer(QStandardItem * item)
+Layer * TreeView::get_parent_layer(TreeIndex * index)
 {
-	QStandardItem * parent = item->parent();
+	QStandardItem * parent = this->model->itemFromIndex(index->parent());
 	if (!parent) {
-		/* "item" points at the "Top Layer" layer. */
-		fprintf(stderr, "%s:%d querying Top Layer for item row=%d, col=%d\n", __FUNCTION__, __LINE__, item->row(), item->column());
+		/* "index" points at the "Top Layer" layer. */
+		qDebug() << "II: Tree View: querying Top Layer for item" << index->row() << index->column();
 		parent = this->model->invisibleRootItem();
 	}
-	QStandardItem * ch = parent->child(item->row(), (int) LayersTreeColumn::PARENT_LAYER);
+	QStandardItem * ch = parent->child(index->row(), (int) LayersTreeColumn::PARENT_LAYER);
 
 	QVariant variant = ch->data(RoleLayerData);
 	// http://www.qtforum.org/article/34069/store-user-data-void-with-qstandarditem-in-qstandarditemmodel.html
@@ -337,15 +337,15 @@ Layer * TreeView::get_parent_layer(QStandardItem * item)
 
 
 
-Layer * TreeView::get_layer(QStandardItem * item)
+Layer * TreeView::get_layer(TreeIndex * index)
 {
-	QStandardItem * parent = item->parent();
+	QStandardItem * parent = this->model->itemFromIndex(index->parent());
 	if (!parent) {
-		/* "item" points at the "Top Layer" layer. */
-		fprintf(stderr, "%s:%d querying Top Layer for item row=%d, col=%d\n", __FUNCTION__, __LINE__, item->row(), item->column());
+		/* "index" points at the "Top Layer" layer. */
+		qDebug() << "II: Tree View: querying Top Layer for item" << index->row() << index->column();
 		parent = this->model->invisibleRootItem();
 	}
-	QStandardItem * ch = parent->child(item->row(), (int) LayersTreeColumn::ITEM);
+	QStandardItem * ch = parent->child(index->row(), (int) LayersTreeColumn::ITEM);
 
 	QVariant variant = ch->data(RoleLayerData);
 	// http://www.qtforum.org/article/34069/store-user-data-void-with-qstandarditem-in-qstandarditemmodel.html
@@ -355,15 +355,15 @@ Layer * TreeView::get_layer(QStandardItem * item)
 
 
 
-SublayerType TreeView::get_sublayer_type(QStandardItem * item)
+SublayerType TreeView::get_sublayer_type(TreeIndex * index)
 {
-	QStandardItem * parent = item->parent();
+	QStandardItem * parent = this->model->itemFromIndex(index->parent());
 	if (!parent) {
-		/* "item" points at the "Top Layer" layer. */
-		fprintf(stderr, "%s:%d querying Top Layer for item row=%d, col=%d\n", __FUNCTION__, __LINE__, item->row(), item->column());
+		/* "index" points at the "Top Layer" layer. */
+		qDebug() << "II: Tree View: querying Top Layer for item" << index->row() << index->column();
 		parent = this->model->invisibleRootItem();
 	}
-	QStandardItem * ch = parent->child(item->row(), (int) LayersTreeColumn::DATA);
+	QStandardItem * ch = parent->child(index->row(), (int) LayersTreeColumn::DATA);
 
 	QVariant variant = ch->data(RoleLayerData);
 	return (SublayerType) variant.toInt();
@@ -372,7 +372,7 @@ SublayerType TreeView::get_sublayer_type(QStandardItem * item)
 
 
 
-void * TreeView::get_sublayer_uid_pointer(QStandardItem * item)
+void * TreeView::get_sublayer_uid_pointer(TreeIndex * item)
 {
 	sg_uid_t * uid = NULL;
 #if 0
@@ -384,15 +384,15 @@ void * TreeView::get_sublayer_uid_pointer(QStandardItem * item)
 
 
 
-sg_uid_t TreeView::get_sublayer_uid(QStandardItem * item)
+sg_uid_t TreeView::get_sublayer_uid(TreeIndex * index)
 {
-	QStandardItem * parent = item->parent();
+	QStandardItem * parent = this->model->itemFromIndex(index->parent());
 	if (!parent) {
-		/* "item" points at the "Top Layer" layer. */
-		fprintf(stderr, "%s:%d querying Top Layer for item row=%d, col=%d\n", __FUNCTION__, __LINE__, item->row(), item->column());
+		/* "index" points at the "Top Layer" layer. */
+		qDebug() << "II: Tree View: querying Top Layer for item" << index->row() << index->column();
 		parent = this->model->invisibleRootItem();
 	}
-	QStandardItem * ch = parent->child(item->row(), (int) LayersTreeColumn::ITEM);
+	QStandardItem * ch = parent->child(index->row(), (int) LayersTreeColumn::ITEM);
 
 	QVariant variant = ch->data(RoleLayerData);
 	// http://www.qtforum.org/article/34069/store-user-data-void-with-qstandarditem-in-qstandarditemmodel.html
@@ -402,19 +402,18 @@ sg_uid_t TreeView::get_sublayer_uid(QStandardItem * item)
 
 
 
-void TreeView::set_timestamp(QStandardItem * item, time_t timestamp)
+void TreeView::set_timestamp(TreeIndex * index, time_t timestamp)
 {
-	QStandardItem * parent = item->parent();
+	QStandardItem * parent = this->model->itemFromIndex(index->parent());
 	if (!parent) {
-		/* "item" points at the "Top Layer" layer. */
-		fprintf(stderr, "%s:%d querying Top Layer for item row=%d, col=%d\n", __FUNCTION__, __LINE__, item->row(), item->column());
+		/* "index" points at the "Top Layer" layer. */
+		qDebug() << "II: Tree View: querying Top Layer for item" << index->row() << index->column();
 		parent = this->model->invisibleRootItem();
 	}
-	QStandardItem * ch = parent->child(item->row(), (int) LayersTreeColumn::TIMESTAMP);
+	QStandardItem * ch = parent->child(index->row(), (int) LayersTreeColumn::TIMESTAMP);
 
-	QModelIndex index = ch->index();
 	QVariant variant = QVariant::fromValue((qlonglong) timestamp);
-	this->model->setData(index, variant, RoleLayerData);
+	this->model->setData(ch->index(), variant, RoleLayerData);
 }
 
 
@@ -435,7 +434,7 @@ bool TreeView::get_iter_from_path_str(GtkTreeIter * iter, char const * path_str)
  * i.e. if any parent is off then this item will also be considered
  * off (even though itself may be marked as on).
  */
-bool TreeView::is_visible_in_tree(QStandardItem * item)
+bool TreeView::is_visible_in_tree(TreeIndex * item)
 {
 	bool visible = this->is_visible(item);
 
@@ -443,10 +442,10 @@ bool TreeView::is_visible_in_tree(QStandardItem * item)
 		return visible;
 	}
 
-	QStandardItem * parent;
-	QStandardItem * child = item;
+	TreeIndex * parent;
+	TreeIndex * child = item;
 
-	while (NULL != (parent = this->get_parent_item(child))) {
+	while (NULL != (parent = this->get_parent_index(child))) {
 		/* Visibility of this parent. */
 		visible = this->is_visible(parent);
 		/* If not visible, no need to check further ancestors. */
@@ -534,23 +533,23 @@ void TreeView::add_columns()
 
 void TreeView::select_cb(void) /* Slot. */
 {
-	QStandardItem * item = this->get_selected_item();
-	if (!item) {
+	TreeIndex * index = this->get_selected_item();
+	if (!index) {
 		return;
 	}
 
-	SublayerType sublayer_type = this->get_sublayer_type(item);
-	TreeItemType tree_item_type = this->get_item_type(item);
-	sg_uid_t sublayer_uid = this->get_sublayer_uid(item);
+	TreeIndex * layer_index = this->go_up_to_layer(index);
+	Layer * layer = this->get_layer(layer_index);
+	Window * window = layer->get_window();
+	TreeItemType tree_item_type = this->get_item_type(index);
 
-	if (tree_item_type == TreeItemType::SUBLAYER) {
-		if (!this->go_up_to_layer(item)) {
-			return;
-		}
+	SublayerType sublayer_type = SublayerType::NONE;
+	sg_uid_t sublayer_uid = SG_UID_NONE;
+	if (tree_item_type == TreeItemType::SUBLAYER && layer->type == LayerType::TRW) {
+		sublayer_type = this->get_sublayer_type(index);
+		sublayer_uid = this->get_sublayer_uid(index);
 	}
 
-	Layer * layer = this->get_layer(item);
-	Window * window = layer->get_window();
 	window->selected_layer(layer);
 
 	/* Apply settings now we have the all details. */
@@ -567,19 +566,19 @@ void TreeView::select_cb(void) /* Slot. */
 
 
 /* Go up the tree to find a Layer. */
-QStandardItem * TreeView::go_up_to_layer(QStandardItem * item)
+TreeIndex * TreeView::go_up_to_layer(TreeIndex * index)
 {
-	QStandardItem * this_item = item;
-	QStandardItem * parent_item = NULL;;
+        TreeIndex * this_index = index;
+	TreeIndex * parent_index = NULL;;
 
-	while (TreeItemType::LAYER != this->get_item_type(this_item)) {
-		if (NULL == (parent_item = this->get_parent_item(this_item))) {
+	while (TreeItemType::LAYER != this->get_item_type(this_index)) {
+		if (NULL == (parent_index = this->get_parent_index(this_index))) {
 			return NULL;
 		}
-		this_item = parent_item;
+		this_index = parent_index;
 	}
 
-	return this_item; /* Don't use parent_iter. If while() loop executes zero times, parent_iter is invalid. */
+	return this_index; /* Don't use parent_iter. If while() loop executes zero times, parent_iter is invalid. */
 }
 
 
@@ -600,9 +599,9 @@ static int vik_treeview_selection_filter(GtkTreeSelection *selection, GtkTreeMod
 
 
 
-QStandardItem * TreeView::get_parent_item(QStandardItem * item)
+TreeIndex * TreeView::get_parent_index(TreeIndex * index)
 {
-	return item->parent();
+	return new QPersistentModelIndex(index->parent());
 }
 
 
@@ -657,7 +656,7 @@ bool TreeView::get_iter_at_pos(GtkTreeIter * iter, int x, int y)
 
 
 
-void TreeView::select_and_expose(QPersistentModelIndex * index)
+void TreeView::select_and_expose(TreeIndex * index)
 {
 #ifndef SLAVGPS_QT
 	GtkTreeView * tree_view = this->tv_;
@@ -673,17 +672,16 @@ void TreeView::select_and_expose(QPersistentModelIndex * index)
 
 
 
-QStandardItem * TreeView::get_selected_item(void)
+TreeIndex * TreeView::get_selected_item(void)
 {
 	QModelIndex index = this->currentIndex();
 	if (!index.isValid()) {
 		return NULL;
 	}
 
-	QStandardItem * item = this->model->itemFromIndex(index);
-	qDebug() << "get_selected_item gets item with column" << item->column();
+	qDebug() << "II: Tree View: get_selected_item gets item with column" << index.column();
 
-	return item;
+	return new QPersistentModelIndex(index);
 }
 
 
@@ -701,7 +699,7 @@ bool TreeView::get_editing()
 
 
 
-void TreeView::erase(QPersistentModelIndex * index)
+void TreeView::erase(TreeIndex * index)
 {
 #ifndef SLAVGPS_QT
 	gtk_tree_store_remove(GTK_TREE_STORE (this->model), iter);
@@ -711,7 +709,7 @@ void TreeView::erase(QPersistentModelIndex * index)
 
 
 
-void TreeView::set_icon(QPersistentModelIndex * index, const GdkPixbuf * icon)
+void TreeView::set_icon(TreeIndex * index, const GdkPixbuf * icon)
 {
 	if (!index || !index->isValid()) {
 		return;
@@ -724,50 +722,40 @@ void TreeView::set_icon(QPersistentModelIndex * index, const GdkPixbuf * icon)
 
 
 
-void TreeView::set_name(QStandardItem * item, QString const & name)
+void TreeView::set_name(TreeIndex * index, QString const & name)
 {
-	if (!item) {
+	if (!index) {
 		return;
 	}
-	item->setText(name);
+	this->model->itemFromIndex(*index)->setText(name);
 }
 
 
 
 
-void TreeView::set_visibility(QStandardItem * item, bool visible)
-{
-	if (!item) {
-		return;
-	}
-	/* kamilFIXME: this does not take into account third state. */
-	item->setCheckState(visible ? Qt::Checked : Qt::Unchecked);
-}
-
-
-
-
-void TreeView::set_visibility(QPersistentModelIndex * index, bool visible)
+void TreeView::set_visibility(TreeIndex * index, bool visible)
 {
 	if (!index || !index->isValid()) {
 		qDebug() << "EE: Tree View: model index NULL or invalid:" << index;
 		return;
 	}
-	QStandardItem * item = this->model->item(index->row(), index->column());
 	/* kamilFIXME: this does not take into account third state. */
-	item->setCheckState(visible ? Qt::Checked : Qt::Unchecked);
+	QModelIndex visible_index = index->sibling(index->row(), (int) LayersTreeColumn::VISIBLE);
+	this->model->itemFromIndex(visible_index)->setCheckState(visible ? Qt::Checked : Qt::Unchecked);
 }
 
 
 
 
-void TreeView::toggle_visibility(QStandardItem * item)
+void TreeView::toggle_visibility(TreeIndex * index)
 {
-	if (!item) {
+	if (!index) {
 		return;
 	}
 
 	/* kamilFIXME: this does not take into account third state. */
+	QModelIndex visible_index = index->sibling(index->row(), (int) LayersTreeColumn::VISIBLE);
+	QStandardItem * item = this->model->itemFromIndex(visible_index);
 	bool visible = item->checkState() == Qt::Checked;
 	item->setCheckState(!visible ? Qt::Checked : Qt::Unchecked);
 }
@@ -775,15 +763,16 @@ void TreeView::toggle_visibility(QStandardItem * item)
 
 
 
-void TreeView::expand(QStandardItem * item)
+void TreeView::expand(TreeIndex * index)
 {
+	QStandardItem * item = this->model->itemFromIndex(*index);
 	this->setExpanded(item->index(), true);
 }
 
 
 
 
-void TreeView::select(QStandardItem * item)
+void TreeView::select(TreeIndex * index)
 {
 #ifndef SLAVGPS_QT
 	gtk_tree_selection_select_iter(gtk_tree_view_get_selection(this->tv_), iter);
@@ -880,7 +869,7 @@ void TreeView::insert_layer(GtkTreeIter * parent_iter,
 
 
 
-QPersistentModelIndex * TreeView::add_sublayer(sg_uid_t sublayer_uid, SublayerType sublayer_type, Layer * parent_layer, QPersistentModelIndex * parent_index, char const * name, QIcon * icon, bool editable, time_t timestamp)
+TreeIndex * TreeView::add_sublayer(sg_uid_t sublayer_uid, SublayerType sublayer_type, Layer * parent_layer, TreeIndex * parent_index, char const * name, QIcon * icon, bool editable, time_t timestamp)
 {
 	// http://www.qtforum.org/article/34069/store-user-data-void-with-qstandarditem-in-qstandarditemmodel.html
 
@@ -958,16 +947,15 @@ QPersistentModelIndex * TreeView::add_sublayer(sg_uid_t sublayer_uid, SublayerTy
 
 
 	if (parent_index && parent_index->isValid()) {
-		this->model->item(parent_index->row(), parent_index->column())->appendRow(items);
+		this->model->itemFromIndex(*parent_index)->appendRow(items);
 	} else {
 		/* TODO: this shouldn't happen, we can't add sublayers right on top. */
 		qDebug() << "EE: Tree View: adding sublayer on top level";
 		this->model->invisibleRootItem()->appendRow(items);
 	}
-	QPersistentModelIndex * ret = new QPersistentModelIndex(first_item->index());
-	//connect(this->model, SIGNAL(itemChanged(QStandardItem*)), layer, SLOT(visibility_toggled(QStandardItem *)));
+	//connect(this->model, SIGNAL(itemChanged(QStandardItem*)), layer, SLOT(visibility_toggled_cb(QStandardItem *)));
 
-	return ret;
+	return new QPersistentModelIndex(first_item->index());
 }
 
 #if 0
@@ -1062,7 +1050,7 @@ static int sort_tuple_compare(gconstpointer a, gconstpointer b, void * order)
  * For a KML file with over 10,000 tracks (3Mb zipped) - See 'UK Hampshire Rights of Way'
  * http://www3.hants.gov.uk/row/row-maps.htm
  */
-void TreeView::sort_children(QPersistentModelIndex * parent_index, vik_layer_sort_order_t order)
+void TreeView::sort_children(TreeIndex * parent_index, vik_layer_sort_order_t order)
 {
 	if (order == VL_SO_NONE) {
 		/* Nothing to do. */
@@ -1207,20 +1195,20 @@ static int vik_treeview_drag_data_delete(GtkTreeDragSource *drag_source, GtkTree
 
 
 
-QStandardItem * TreeView::add_layer(Layer * layer, Layer * parent_layer, QStandardItem * parent_item, bool above, int data, time_t timestamp)
+TreeIndex * TreeView::add_layer(Layer * layer, Layer * parent_layer, TreeIndex * parent_index, bool above, int data, time_t timestamp)
 {
 	// http://www.qtforum.org/article/34069/store-user-data-void-with-qstandarditem-in-qstandarditemmodel.html
 
 	QList<QStandardItem *> items;
 	QStandardItem * item = NULL;
-	QStandardItem * ret = NULL;
+	QStandardItem * first_item = NULL;
 	QVariant layer_variant = QVariant::fromValue(layer);
 	QVariant variant;
 
 
 	/* LayersTreeColumn::NAME */
 	item = new QStandardItem(QString(layer->name));
-	ret = item;
+	first_item = item;
 	items << item;
 
 	/* LayersTreeColumn::VISIBLE */
@@ -1283,33 +1271,32 @@ QStandardItem * TreeView::add_layer(Layer * layer, Layer * parent_layer, QStanda
 	item->setData(variant, RoleLayerData);
 	items << item;
 
-	if (parent_item) {
-		parent_item->appendRow(items);
+	if (parent_index) {
+		this->model->itemFromIndex(*parent_index)->appendRow(items);
 	} else {
 		this->model->invisibleRootItem()->appendRow(items);
 	}
-	connect(this->model, SIGNAL(itemChanged(QStandardItem*)), layer, SLOT(visibility_toggled(QStandardItem *)));
+	connect(this->model, SIGNAL(itemChanged(QStandardItem*)), layer, SLOT(visibility_toggled_cb(QStandardItem *)));
 
-	return ret;
+	return new QPersistentModelIndex(first_item->index());
 }
 
 
 
-QStandardItem * TreeView::insert_layer(Layer * layer, Layer * parent_layer, QStandardItem * parent_item, bool above, int data, time_t timestamp, QStandardItem * sibling)
+TreeIndex * TreeView::insert_layer(Layer * layer, Layer * parent_layer, TreeIndex * parent_index, bool above, int data, time_t timestamp, TreeIndex * sibling_index)
 {
-	QStandardItem * item = NULL;
 	/* kamilTODO: handle "sibling" */
 #ifndef SLAVGPS_QT
-	if (sibling) {
+	if (sibling_index) {
 		if (above) {
-			gtk_tree_store_insert_before(GTK_TREE_STORE (this->model), iter, parent_iter, sibling);
+			gtk_tree_store_insert_before(GTK_TREE_STORE (this->model), iter, parent_iter, sibling_index);
 		} else {
-			gtk_tree_store_insert_after(GTK_TREE_STORE (this->model), iter, parent_iter, sibling);
+			gtk_tree_store_insert_after(GTK_TREE_STORE (this->model), iter, parent_iter, sibling_index);
 		}
 	} else
 #endif
 		{
-		return this->add_layer(layer, parent_layer, parent_item, above, data, timestamp);
+		return this->add_layer(layer, parent_layer, parent_index, above, data, timestamp);
 	}
 }
 
@@ -1489,35 +1476,36 @@ void TreeView::data_changed_cb(const QModelIndex & top_left, const QModelIndex &
 		return;
 	}
 
-	QStandardItem * item = this->model->itemFromIndex(top_left);
-	if (!item) {
-		qDebug() << "EE: Tree View: invalid item from valid index" << top_left << __FUNCTION__ << __LINE__;
+	TreeIndex * index = new QPersistentModelIndex(top_left);
+	if (!index) {
+		qDebug() << "EE: Tree View: invalid TreeIndex from valid index" << top_left;
 		return;
 	}
 
 
-	if (item->column() == (int) LayersTreeColumn::VISIBLE) {
-		if (this->get_layer(item)) {
+	if (index->column() == (int) LayersTreeColumn::VISIBLE) {
+		if (this->get_layer(index)) {
+			QStandardItem * item = this->model->itemFromIndex(*index);
 			qDebug() << "II: Tree View: edited item in column VISIBLE: is checkable?" << item->isCheckable();
-			this->get_layer(item)->visible = (bool) item->checkState();
+			this->get_layer(index)->visible = (bool) item->checkState();
 			qDebug() << "SIGNAL: Tree View layer_needs_redraw(78)";
 			emit this->layer_needs_redraw(78);
 		} else {
 			/* No layer probably means that we want to edit a sublayer. */
 		}
 
-	} else if (item->column() == (int) LayersTreeColumn::NAME) {
+	} else if (index->column() == (int) LayersTreeColumn::NAME) {
 
 		/* TODO: reject empty new name. */
 
-		if (this->get_layer(item)) {
+		if (this->get_layer(index)) {
+			QStandardItem * item = this->model->itemFromIndex(*index);
 			qDebug() << "II: Tree View: edited item in column NAME: new name is" << item->text();
-			this->get_layer(item)->rename((char *) item->text().data());
+			this->get_layer(index)->rename((char *) item->text().data());
 		} else {
 			/* No layer probably means that we want to edit a sublayer. */
 		}
 	} else {
-		qDebug() << "EE: Tree View: edited item in column" << item->column();
+		qDebug() << "EE: Tree View: edited item in column" << index->column();
 	}
-
 }

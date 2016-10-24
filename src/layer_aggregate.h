@@ -64,11 +64,11 @@ namespace SlavGPS {
 		void change_coord_mode(VikCoordMode mode);
 		void drag_drop_request(Layer * src, GtkTreeIter * src_item_iter, GtkTreePath * dest_path);
 		void add_menu_items(GtkMenu * menu, void * panel);
-		void realize(TreeView * tree_view, QStandardItem * layer_item);
+		void realize(TreeView * tree_view, TreeIndex * layer_index);
 
 
 		void add_layer(Layer * layer, bool allow_reordering);
-		void insert_layer(Layer * layer, QStandardItem * replace_item);
+		void insert_layer(Layer * layer, TreeIndex * replace_index);
 		void move_layer(GtkTreeIter * child_iter, bool up);
 		bool delete_layer(GtkTreeIter * iter);
 		void clear();

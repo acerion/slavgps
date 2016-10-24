@@ -1015,10 +1015,10 @@ bool Layer::sublayer_toggle_visible(SublayerType sublayer_type, sg_uid_t sublaye
 
 
 
-void Layer::realize(TreeView * tree_view_, QStandardItem * layer_item)
+void Layer::realize(TreeView * tree_view_, TreeIndex * layer_index)
 {
 	this->tree_view = tree_view_;
-	this->item = layer_item;
+	this->index = layer_index;
 	this->realized = true;
 
 	return;
@@ -1261,7 +1261,7 @@ LayerType& SlavGPS::operator++(LayerType& layer_type)
 
 
 
-void Layer::visibility_toggled(QStandardItem * item) /* Slot. */
+void Layer::visibility_toggled_cb(QStandardItem * item) /* Slot. */
 {
 	if (item->column() == (int) LayersTreeColumn::VISIBLE) {
 		QVariant layer_variant = item->data(RoleLayerData);

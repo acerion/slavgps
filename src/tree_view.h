@@ -74,6 +74,9 @@ namespace SlavGPS {
 	};
 
 
+	typedef QPersistentModelIndex TreeIndex;
+
+
 
 
 	class Layer;
@@ -90,50 +93,49 @@ namespace SlavGPS {
 		~TreeView();
 
 		void add_layer(GtkTreeIter *parent_iter, GtkTreeIter *iter, const char *name, Layer * parent_layer, bool above, Layer * layer, int data, LayerType layer_type, time_t timestamp);
-		QStandardItem * add_layer(Layer * layer, Layer * parent_layer, QStandardItem * parent_item, bool above, int data, time_t timestamp);
-		QStandardItem * insert_layer(Layer * layer, Layer * parent_layer, QStandardItem * parent_item, bool above, int data, time_t timestamp, QStandardItem * sibling);
 		void insert_layer(GtkTreeIter *parent_iter, GtkTreeIter *iter, const char *name, Layer * parent_layer, bool above, Layer * layer, int data, LayerType layer_type, GtkTreeIter *sibling, time_t timestamp);
 		//void add_sublayer(GtkTreeIter *parent_iter, GtkTreeIter *iter, const char *name, Layer * parent_layer, sg_uid_t sublayer_uid, SublayerType sublayer_type, GdkPixbuf *icon, bool editable, time_t timestamp);
-		QPersistentModelIndex * add_sublayer(sg_uid_t sublayer_uid, SublayerType sublayer_type, Layer * parent_layer, QPersistentModelIndex * parent_index, char const * name, QIcon * icon, bool editable, time_t timestamp);
 
+		TreeIndex * add_layer(Layer * layer, Layer * parent_layer, TreeIndex * parent_index, bool above, int data, time_t timestamp);
+		TreeIndex * insert_layer(Layer * layer, Layer * parent_layer, TreeIndex * parent_index, bool above, int data, time_t timestamp, TreeIndex * sibling_inced);
+		TreeIndex * add_sublayer(sg_uid_t sublayer_uid, SublayerType sublayer_type, Layer * parent_layer, TreeIndex * parent_index, char const * name, QIcon * icon, bool editable, time_t timestamp);
 
-		TreeItemType get_item_type(QStandardItem * item);
+		TreeItemType get_item_type(TreeIndex * index);
 
-		Layer * get_parent_layer(QStandardItem * item);
-		Layer * get_layer(QStandardItem * item);
+		Layer * get_parent_layer(TreeIndex * index);
+		Layer * get_layer(TreeIndex * index);
 
-		SublayerType get_sublayer_type(QStandardItem * item);
-		sg_uid_t     get_sublayer_uid(QStandardItem * item);
-		void       * get_sublayer_uid_pointer(QStandardItem * item);
+		SublayerType get_sublayer_type(TreeIndex * index);
+		sg_uid_t     get_sublayer_uid(TreeIndex * index);
+		void       * get_sublayer_uid_pointer(TreeIndex * index);
 
-		QString get_name(QStandardItem * item);
+		QString get_name(TreeIndex * index);
 
-		QStandardItem * get_selected_item();
+		TreeIndex * get_selected_item();
 		bool get_iter_at_pos(GtkTreeIter * iter, int x, int y);
 		bool get_iter_from_path_str(GtkTreeIter * iter, char const * path_str);
-		QStandardItem * get_parent_item(QStandardItem * item);
+		TreeIndex * get_parent_index(TreeIndex * index);
 
 
-		void set_icon(QPersistentModelIndex * index, GdkPixbuf const * icon);
-		void set_name(QStandardItem * item, QString const & name);
-		void set_visibility(QStandardItem * item, bool visible);
-		void set_visibility(QPersistentModelIndex * index, bool visible);
-		void toggle_visibility(QStandardItem * item);
-		void set_timestamp(QStandardItem * item, time_t timestamp);
+		void set_icon(TreeIndex * index, GdkPixbuf const * icon);
+		void set_name(TreeIndex * index, QString const & name);
+		void set_visibility(TreeIndex * index, bool visible);
+		void toggle_visibility(TreeIndex * index);
+		void set_timestamp(TreeIndex * index, time_t timestamp);
 
 
-		void select(QStandardItem * item);
-		void select_and_expose(QPersistentModelIndex * index);
+		void select(TreeIndex * index);
+		void select_and_expose(TreeIndex * index);
 		void unselect(GtkTreeIter * iter);
-		void erase(QPersistentModelIndex * index);
+		void erase(TreeIndex * index);
 		bool move(GtkTreeIter * iter, bool up);
-		bool is_visible(QStandardItem * item);
-		bool is_visible_in_tree(QStandardItem * item);
+		bool is_visible(TreeIndex * index);
+		bool is_visible_in_tree(TreeIndex * index);
 		bool get_editing();
-		void expand(QStandardItem * item);
-		void sort_children(QPersistentModelIndex * parent_index, vik_layer_sort_order_t order);
+		void expand(TreeIndex * index);
+		void sort_children(TreeIndex * parent_index, vik_layer_sort_order_t order);
 
-		QStandardItem * go_up_to_layer(QStandardItem * item);
+		TreeIndex * go_up_to_layer(TreeIndex * index);
 
 		GtkWindow * get_toolkit_window(void);
 		GtkWidget * get_toolkit_widget(void);

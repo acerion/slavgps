@@ -143,11 +143,8 @@ static Layer * aggregate_layer_unmarshall(uint8_t *data, int len, Viewport * vie
 
 
 
-void LayerAggregate::insert_layer(Layer * layer, QStandardItem * replace_item)
+void LayerAggregate::insert_layer(Layer * layer, TreeIndex * replace_index)
 {
-
-	QStandardItem * item;
-
 	/* By default layers are inserted above the selected layer. */
 	bool put_above = true;
 
@@ -159,20 +156,20 @@ void LayerAggregate::insert_layer(Layer * layer, QStandardItem * replace_item)
 #endif
 
 	if (this->realized) {
-		item = this->tree_view->insert_layer(layer, this, this->item, put_above, (int) layer->type, layer->get_timestamp(), replace_item);
+		TreeIndex * new_index = this->tree_view->insert_layer(layer, this, this->index, put_above, (int) layer->type, layer->get_timestamp(), replace_index);
 		if (!layer->visible) {
-			this->tree_view->set_visibility(item, false);
+			this->tree_view->set_visibility(new_index, false);
 		}
 
-		layer->realize(this->tree_view, item);
+		layer->realize(this->tree_view, new_index);
 
 		if (this->children->empty()) { /* kamilTODO: empty() or !empty()? */
-			this->tree_view->expand(this->item);
+			this->tree_view->expand(this->index);
 		}
 	}
 
-	if (replace_item) {
-		Layer * existing_layer = this->tree_view->get_layer(replace_item);
+	if (replace_index) {
+		Layer * existing_layer = this->tree_view->get_layer(replace_index);
 
 		auto theone = this->children->end();
 		for (auto i = this->children->begin(); i != this->children->end(); i++) {
@@ -220,18 +217,16 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 	}
 #endif
 
-	QStandardItem * new_item = NULL;
 	if (this->realized) {
-		//new_item = this->tree_view->add_layer(&this->item, &iter, layer->name, this, put_above, layer, (int) layer->type, layer->type, layer->get_timestamp());
-		new_item = this->tree_view->add_layer(layer, this, this->item, false, 0, layer->get_timestamp());
+		TreeIndex * new_index = this->tree_view->add_layer(layer, this, this->index, false, 0, layer->get_timestamp());
 		if (!layer->visible) {
-			this->tree_view->set_visibility(new_item, false);
+			this->tree_view->set_visibility(new_index, false);
 		}
 
-		layer->realize(this->tree_view, new_item);
+		layer->realize(this->tree_view, new_index);
 
 		if (this->children->empty()) {
-			this->tree_view->expand(this->item);
+			this->tree_view->expand(this->index);
 		}
 	} else {
 		qDebug() << "Not realized";
@@ -372,7 +367,7 @@ void LayerAggregate::child_visible_toggle(LayersPanel * panel)
 		Layer * layer = *child;
 		layer->visible = !layer->visible;
 		/* Also set checkbox on/off. */
-		tree->toggle_visibility(layer->item);
+		tree->toggle_visibility(layer->index);
 	}
 	/* Redraw as view may have changed. */
 	this->emit_update();
@@ -389,7 +384,7 @@ void LayerAggregate::child_visible_set(LayersPanel * panel, bool on_off)
 		Layer * layer = *child;
 		layer->visible = on_off;
 		/* Also set checkbox on_off. */
-		panel->get_treeview()->set_visibility(layer->item, on_off);
+		panel->get_treeview()->set_visibility(layer->index, on_off);
 	}
 
 	/* Redraw as view may have changed. */
@@ -972,10 +967,10 @@ std::list<Layer *> * LayerAggregate::get_all_layers_of_type(std::list<Layer *> *
 
 
 
-void LayerAggregate::realize(TreeView * tree_view_, QStandardItem * layer_item)
+void LayerAggregate::realize(TreeView * tree_view_, TreeIndex * layer_index)
 {
 	this->tree_view = tree_view_;
-	this->item = layer_item;
+	this->index = layer_index;
 	this->realized = true;
 
 	if (this->children->empty()) {
@@ -985,11 +980,11 @@ void LayerAggregate::realize(TreeView * tree_view_, QStandardItem * layer_item)
 	for (auto child = this->children->begin(); child != this->children->end(); child++) {
 		Layer * layer = *child;
 		//QStandardItem * item = this->tree_view->add_layer(layer_item, &iter, layer->name, this, true, layer, (int) layer->type, layer->type, layer->get_timestamp());
-		QStandardItem * new_item = this->tree_view->add_layer(layer, this, this->item, false, 0, layer->get_timestamp());
+		TreeIndex * new_index = this->tree_view->add_layer(layer, this, this->index, false, 0, layer->get_timestamp());
 		if (!layer->visible) {
-			this->tree_view->set_visibility(new_item, false);
+			this->tree_view->set_visibility(new_index, false);
 		}
-		layer->realize(this->tree_view, new_item);
+		layer->realize(this->tree_view, new_index);
 	}
 }
 

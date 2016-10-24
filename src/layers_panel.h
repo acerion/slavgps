@@ -88,7 +88,7 @@ namespace SlavGPS {
 
 
 		LayerAggregate * toplayer = NULL;
-		QStandardItem * toplayer_item = NULL;
+		TreeIndex * toplayer_item = NULL;
 
 		TreeView * tree_view = NULL;
 		Viewport * viewport = NULL; /* Reference. */
@@ -97,7 +97,7 @@ namespace SlavGPS {
 
 
 		/* This should be somehow private. */
-		void item_toggled(QStandardItem * item);
+		void item_toggled(TreeIndex * index);
 		void item_edited(GtkTreeIter * iter, char const * new_text);
 		void popup(GtkTreeIter * iter, MouseButton mouse_button);
 		bool button_press(GdkEventButton * event);

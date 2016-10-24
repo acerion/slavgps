@@ -1785,7 +1785,7 @@ void LayerTRW::add_routes_node(void)
 
 
 
-void LayerTRW::realize(TreeView * tree_view_, QPersistentModelIndex * layer_index)
+void LayerTRW::realize(TreeView * tree_view_, TreeIndex * layer_index)
 {
 
 	trw_data4_t pass_along;
@@ -2339,7 +2339,7 @@ std::unordered_map<sg_uid_t, Waypoint *> & LayerTRW::get_waypoints()
 
 
 
-std::unordered_map<sg_uid_t, QPersistentModelIndex *> & LayerTRW::get_tracks_iters()
+std::unordered_map<sg_uid_t, TreeIndex *> & LayerTRW::get_tracks_iters()
 {
 	return tracks_iters;
 }
@@ -2347,7 +2347,7 @@ std::unordered_map<sg_uid_t, QPersistentModelIndex *> & LayerTRW::get_tracks_ite
 
 
 
-std::unordered_map<sg_uid_t, QPersistentModelIndex *> & LayerTRW::get_routes_iters()
+std::unordered_map<sg_uid_t, TreeIndex *> & LayerTRW::get_routes_iters()
 {
 	return routes_iters;
 }
@@ -2355,7 +2355,7 @@ std::unordered_map<sg_uid_t, QPersistentModelIndex *> & LayerTRW::get_routes_ite
 
 
 
-std::unordered_map<sg_uid_t, QPersistentModelIndex *> & LayerTRW::get_waypoints_iters()
+std::unordered_map<sg_uid_t, TreeIndex *> & LayerTRW::get_waypoints_iters()
 {
 	return waypoints_iters;
 }
@@ -3365,7 +3365,7 @@ void LayerTRW::add_waypoint(Waypoint * wp, char const * name)
 		}
 
 		/* Visibility column always needed for waypoints. */
-		QPersistentModelIndex * index = this->tree_view->add_sublayer(global_wp_uid, SublayerType::WAYPOINT, this, this->waypoints_node, name, NULL /* wp->symbol */, true, timestamp);
+		TreeIndex * index = this->tree_view->add_sublayer(global_wp_uid, SublayerType::WAYPOINT, this, this->waypoints_node, name, NULL /* wp->symbol */, true, timestamp);
 
 		/* Actual setting of visibility dependent on the waypoint. */
 		this->tree_view->set_visibility(index, wp->visible);
@@ -3406,7 +3406,7 @@ void LayerTRW::add_track(Track * trk, char const * name)
 		}
 
 		/* Visibility column always needed for tracks. */
-		QPersistentModelIndex * index = this->tree_view->add_sublayer(global_tr_uuid, SublayerType::TRACK, this, this->tracks_node, name, NULL, true, timestamp);
+		TreeIndex * index = this->tree_view->add_sublayer(global_tr_uuid, SublayerType::TRACK, this, this->tracks_node, name, NULL, true, timestamp);
 
 		/* Actual setting of visibility dependent on the track. */
 		this->tree_view->set_visibility(index, trk->visible);
@@ -3442,7 +3442,7 @@ void LayerTRW::add_route(Track * trk, char const * name)
 		}
 
 		/* Visibility column always needed for routes. */
-		QPersistentModelIndex * index = this->tree_view->add_sublayer(global_rt_uuid, SublayerType::ROUTE, this, this->routes_node, name, NULL, true, 0); // Routes don't have times
+		TreeIndex * index = this->tree_view->add_sublayer(global_rt_uuid, SublayerType::ROUTE, this, this->routes_node, name, NULL, true, 0); // Routes don't have times
 
 		/* Actual setting of visibility dependent on the route. */
 		this->tree_view->set_visibility(index, trk->visible);
@@ -3720,7 +3720,7 @@ bool LayerTRW::delete_track(Track * trk)
 			/* could be current_tp, so we have to check */
 			this->cancel_tps_of_track(trk);
 
-			QPersistentModelIndex * it = tracks_iters.at(uid);
+			TreeIndex * it = tracks_iters.at(uid);
 			if (it) {
 				this->tree_view->erase(it);
 				tracks_iters.erase(uid);
@@ -3808,7 +3808,7 @@ bool LayerTRW::delete_waypoint(Waypoint * wp)
 
 		sg_uid_t uid = LayerTRWc::find_uid_of_waypoint(waypoints, wp);
 		if (uid) {
-			QPersistentModelIndex * it = waypoints_iters.at(uid);
+			TreeIndex * it = waypoints_iters.at(uid);
 
 			if (it) {
 				this->tree_view->erase(it);
@@ -4087,7 +4087,7 @@ void LayerTRW::waypoint_reset_icon(Waypoint * wp)
 	// Need key of it for treeview update
 	sg_uid_t uid = LayerTRWc::find_uid_of_waypoint(this->waypoints, wp);
 	if (uid) {
-		QPersistentModelIndex * index = this->waypoints_iters.at(uid);
+		TreeIndex * index = this->waypoints_iters.at(uid);
 		if (index && index->isValid()) {
 			this->tree_view->set_icon(index, get_wp_sym_small(wp->symbol));
 		}
@@ -5958,7 +5958,7 @@ void LayerTRW::uniquify_tracks(LayersPanel * panel, std::unordered_map<sg_uid_t,
 
 void LayerTRW::sort_order_specified(SublayerType sublayer_type, vik_layer_sort_order_t order)
 {
-	QPersistentModelIndex * index = NULL;
+	TreeIndex * index = NULL;
 
 	switch (sublayer_type) {
 	case SublayerType::TRACKS:

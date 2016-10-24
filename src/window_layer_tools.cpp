@@ -417,7 +417,7 @@ void LayerToolsBox::release(QMouseEvent * event)
 			qDebug() << "EE: Layer Tools: release received, condition 2 failed";
 		}
 	} else {
-		qDebug() << "EE: Layer Tools: release received, condition 1 failed";
+		qDebug() << "DD: Layer Tools: release received, condition 1 failed" << this->active_tool << this->active_tool->release;
 	}
 }
 

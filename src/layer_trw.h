@@ -72,8 +72,8 @@ namespace SlavGPS {
 
 
 	typedef struct {
-		QPersistentModelIndex * parent_index;
-		QPersistentModelIndex * index;
+		TreeIndex * parent_index;
+		TreeIndex * index;
 		Layer * layer;
 		TreeView * tree_view;
 	} trw_data4_t;
@@ -182,7 +182,7 @@ namespace SlavGPS {
 		char const * sublayer_rename_request(const char * newname, void * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, GtkTreeIter * iter);
 		bool sublayer_toggle_visible(SublayerType sublayer_type, sg_uid_t sublayer_uid);
 
-		void realize(TreeView * tree_view, QPersistentModelIndex * layer_index);
+		void realize(TreeView * tree_view, TreeIndex * layer_index);
 		bool set_param_value(uint16_t id, LayerParamValue param_value, Viewport * viewport, bool is_file_operation);
 		LayerParamValue get_param_value(layer_param_id_t id, bool is_file_operation) const;
 
@@ -200,9 +200,9 @@ namespace SlavGPS {
 		std::unordered_map<sg_uid_t, Track *> & get_routes();
 		std::unordered_map<sg_uid_t, Waypoint *> & get_waypoints();
 
-		std::unordered_map<sg_uid_t, QPersistentModelIndex *> & get_tracks_iters();
-		std::unordered_map<sg_uid_t, QPersistentModelIndex *> & get_routes_iters();
-		std::unordered_map<sg_uid_t, QPersistentModelIndex *> & get_waypoints_iters();
+		std::unordered_map<sg_uid_t, TreeIndex *> & get_tracks_iters();
+		std::unordered_map<sg_uid_t, TreeIndex *> & get_routes_iters();
+		std::unordered_map<sg_uid_t, TreeIndex *> & get_waypoints_iters();
 
 		bool get_tracks_visibility();
 		bool get_routes_visibility();
@@ -418,18 +418,18 @@ namespace SlavGPS {
 
 
 		std::unordered_map<sg_uid_t, Track *> tracks;
-		std::unordered_map<sg_uid_t, QPersistentModelIndex *> tracks_iters;
-		QPersistentModelIndex * tracks_node = NULL; /* Sub-node, under which all layer's tracks are shown. */
+		std::unordered_map<sg_uid_t, TreeIndex *> tracks_iters;
+		TreeIndex * tracks_node = NULL; /* Sub-node, under which all layer's tracks are shown. */
 		bool tracks_visible;
 
 		std::unordered_map<sg_uid_t, Track *> routes;
-		std::unordered_map<sg_uid_t, QPersistentModelIndex *> routes_iters;
-		QPersistentModelIndex * routes_node = NULL; /* Sub-node, under which all layer's routes are shown. */
+		std::unordered_map<sg_uid_t, TreeIndex *> routes_iters;
+		TreeIndex * routes_node = NULL; /* Sub-node, under which all layer's routes are shown. */
 		bool routes_visible;
 
 		std::unordered_map<sg_uid_t, Waypoint *> waypoints;
-		std::unordered_map<sg_uid_t, QPersistentModelIndex *> waypoints_iters;
-		QPersistentModelIndex * waypoints_node = NULL; /* Sub-node, under which all layer's waypoints are shown. */
+		std::unordered_map<sg_uid_t, TreeIndex *> waypoints_iters;
+		TreeIndex * waypoints_node = NULL; /* Sub-node, under which all layer's waypoints are shown. */
 		bool waypoints_visible;
 
 

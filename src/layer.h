@@ -30,7 +30,6 @@
 
 #include <QObject>
 #include <QTreeWidgetItem>
-#include <QStandardItem>
 #include <QPersistentModelIndex>
 #include <QIcon>
 #include <QMouseEvent>
@@ -206,7 +205,7 @@ namespace SlavGPS {
 
 		/* Normally only needed for layers with sublayers. This is called when they
 		   are added to the treeview so they can add sublayers to the treeview. */
-		virtual void realize(TreeView * tree_view, QStandardItem * layer_item);
+		virtual void realize(TreeView * tree_view, TreeIndex * layer_index);
 
 		/* bool denotes if for file I/O, as opposed to display/cut/copy etc... operations. */
 		virtual LayerParamValue get_param_value(layer_param_id_t id, bool is_file_operation) const;
@@ -261,9 +260,7 @@ namespace SlavGPS {
 		bool realized = false;
 		Viewport * viewport = NULL;  /* Simply a reference. */
 		TreeView * tree_view = NULL; /* Simply a reference. */
-		GtkTreeIter iter;
-		QStandardItem * item = NULL;
-		QPersistentModelIndex * index = NULL;
+		TreeIndex * index = NULL;
 
 		/* For explicit "polymorphism" (function type switching). */
 		LayerType type;
@@ -277,7 +274,7 @@ namespace SlavGPS {
 		QMenu * right_click_menu = NULL;
 
 	public slots:
-		void visibility_toggled(QStandardItem * item);
+		void visibility_toggled_cb(QStandardItem * item);
 		void emit_update_secondary(void);
 
 

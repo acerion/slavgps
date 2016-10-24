@@ -33,6 +33,7 @@
 
 #include "vikwaypoint.h"
 #include "track.h"
+#include "layer.h"
 
 
 
@@ -42,7 +43,6 @@ namespace SlavGPS {
 
 
 
-	typedef GtkTreeIter TreeIndex;
 	typedef std::unordered_map<sg_uid_t, Track *> Tracks;
 	typedef std::unordered_map<sg_uid_t, Waypoint *> Waypoints;
 
@@ -109,7 +109,7 @@ namespace SlavGPS {
 
 		static void list_wp_uids(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, GList ** l);
 		static void list_trk_uids(std::unordered_map<sg_uid_t, Track *> & tracks, GList ** l);
-		static void remove_item_from_treeview(std::unordered_map<sg_uid_t, QPersistentModelIndex *> & items, TreeView * tree_view);
+		static void remove_item_from_treeview(std::unordered_map<sg_uid_t, TreeIndex *> & items, TreeView * tree_view);
 
 		static GList * find_tracks_with_timestamp_type(std::unordered_map<sg_uid_t, Track *> * tracks, bool with_timestamps, Track * exclude);
 		static GList * find_nearby_tracks_by_time(std::unordered_map<sg_uid_t, Track *> & tracks, Track * orig_trk, unsigned int threshold);
@@ -121,8 +121,8 @@ namespace SlavGPS {
 		static bool has_same_track_names(std::unordered_map<sg_uid_t, Track *> & ht_tracks);
 
 
-		static void iter_visibility_toggle(std::unordered_map<sg_uid_t, QPersistentModelIndex *> & items, TreeView * tree_view);
-		static void set_iter_visibility(std::unordered_map<sg_uid_t, QPersistentModelIndex *> & items, TreeView * tree_view, bool on_off);
+		static void iter_visibility_toggle(std::unordered_map<sg_uid_t, TreeIndex *> & items, TreeView * tree_view);
+		static void set_iter_visibility(std::unordered_map<sg_uid_t, TreeIndex *> & items, TreeView * tree_view, bool on_off);
 		static void set_waypoints_visibility(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, bool on_off);
 		static void waypoints_toggle_visibility(std::unordered_map<sg_uid_t, Waypoint *> & waypoints);
 		static void set_tracks_visibility(std::unordered_map<sg_uid_t, Track *> & tracks, bool on_off);

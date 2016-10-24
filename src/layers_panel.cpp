@@ -335,23 +335,23 @@ void LayersPanel::emit_update_cb()
 
 
 /* Why do we have this function? Isn't TreeView::data_changed_cb() enough? */
-void LayersPanel::item_toggled(QStandardItem * item)
+void LayersPanel::item_toggled(TreeIndex * index)
 {
 	/* Get type and data. */
-	TreeItemType type = this->tree_view->get_item_type(item);
+	TreeItemType type = this->tree_view->get_item_type(index);
 
 	bool visible;
 	switch (type) {
 	case TreeItemType::LAYER: {
-		Layer * layer = this->tree_view->get_layer(item);
+		Layer * layer = this->tree_view->get_layer(index);
 		visible = (layer->visible ^= 1);
 		layer->emit_update_although_invisible(); /* Set trigger for half-drawn. */
 		break;
 		}
 	case TreeItemType::SUBLAYER: {
-		sg_uid_t sublayer_uid = this->tree_view->get_sublayer_uid(item);
-		Layer * parent = this->tree_view->get_parent_layer(item);
-		visible = parent->sublayer_toggle_visible(this->tree_view->get_sublayer_type(item), sublayer_uid);
+		sg_uid_t sublayer_uid = this->tree_view->get_sublayer_uid(index);
+		Layer * parent = this->tree_view->get_parent_layer(index);
+		visible = parent->sublayer_toggle_visible(this->tree_view->get_sublayer_type(index), sublayer_uid);
 		parent->emit_update_although_invisible();
 		break;
 	}
@@ -359,7 +359,7 @@ void LayersPanel::item_toggled(QStandardItem * item)
 		return;
 	}
 
-	this->tree_view->set_visibility(item, visible);
+	this->tree_view->set_visibility(index, visible);
 }
 
 
@@ -599,8 +599,8 @@ void LayersPanel::add_layer(Layer * layer)
 	layer->change_coord_mode(this->viewport->get_coord_mode());
 	fprintf(stderr, "INFO: %s:%d: attempting to add layer '%s'\n", __FUNCTION__, __LINE__, layer->type_string);
 
-	QStandardItem * item = this->tree_view->get_selected_item();
-	if (true) { /* kamilFIXME: "if (!item) { */
+	TreeIndex * selected_index = this->tree_view->get_selected_item();
+	if (true) { /* kamilFIXME: "if (!selected_index) { */
 		/* No particular layer is selected in panel, so the
 		   layer to be added goes directly under top level
 		   aggregate layer. */
@@ -612,33 +612,33 @@ void LayersPanel::add_layer(Layer * layer)
 		   place for given layer to be added - a first aggregate
 		   layer that we meet going up in hierarchy. */
 
-		QStandardItem * replace_item = NULL;
+		TreeIndex * replace_index = NULL;
 		Layer * current = NULL;
 
-		if (this->tree_view->get_item_type(item) == TreeItemType::SUBLAYER) {
-			current = this->tree_view->get_parent_layer(item);
+		if (this->tree_view->get_item_type(selected_index) == TreeItemType::SUBLAYER) {
+			current = this->tree_view->get_parent_layer(selected_index);
 			fprintf(stderr, "INFO: %s:%d: Capturing parent layer '%s' as current layer\n",
 				__FUNCTION__, __LINE__, current->type_string);
 		} else {
-			current = this->tree_view->get_layer(item);
+			current = this->tree_view->get_layer(selected_index);
 			fprintf(stderr, "INFO: %s:%d: Capturing selected layer '%s' as current layer\n",
 				__FUNCTION__, __LINE__, current->type_string);
 		}
 		assert (current->realized);
-		replace_item = current->item;
+		replace_index = current->index;
 
 		/* Go further up until you find first aggregate layer. */
 		while (current->type != LayerType::AGGREGATE) {
-			current = this->tree_view->get_parent_layer(item);
-			item = current->item;
+			current = this->tree_view->get_parent_layer(selected_index);
+			selected_index = current->index;
 			assert (current->realized);
 		}
 
 
 		LayerAggregate * aggregate = (LayerAggregate *) current;
 #ifndef SLAVGPS_QT
-		if (replace_item) {
-			aggregate->insert_layer(layer, replace_item);
+		if (replace_index) {
+			aggregate->insert_layer(layer, replace_index);
 		} else {
 #endif
 			aggregate->add_layer(layer, true);
@@ -655,19 +655,19 @@ void LayersPanel::add_layer(Layer * layer)
 
 void LayersPanel::move_item(bool up)
 {
-	QStandardItem * item = this->tree_view->get_selected_item();
+	TreeIndex * selected_index = this->tree_view->get_selected_item();
 	/* TODO: deactivate the buttons and stuff. */
-	if (!item) {
+	if (!selected_index) {
 		return;
 	}
 
-	this->tree_view->select(item); /* Cancel any layer-name editing going on... */
-	if (this->tree_view->get_item_type(item) == TreeItemType::LAYER) {
-		LayerAggregate * parent = (LayerAggregate *) this->tree_view->get_parent_layer(item);
+	this->tree_view->select(selected_index); /* Cancel any layer-name editing going on... */
+	if (this->tree_view->get_item_type(selected_index) == TreeItemType::LAYER) {
+		LayerAggregate * parent = (LayerAggregate *) this->tree_view->get_parent_layer(selected_index);
 
 		if (parent) { /* Not toplevel. */
 #ifndef SLAVGPS_QT
-			parent->move_layer(item, up);
+			parent->move_layer(selected_index, up);
 			this->emit_update_cb();
 #endif
 		}
@@ -689,12 +689,12 @@ bool LayersPanel::properties()
 {
 	assert (this->viewport);
 
-	QStandardItem * item = this->tree_view->get_selected_item();
-	if (this->tree_view->get_item_type(item) == TreeItemType::LAYER) {
-		if (this->tree_view->get_layer(item)->type == LayerType::AGGREGATE) {
+	TreeIndex * index = this->tree_view->get_selected_item();
+	if (this->tree_view->get_item_type(index) == TreeItemType::LAYER) {
+		if (this->tree_view->get_layer(index)->type == LayerType::AGGREGATE) {
 			a_dialog_info_msg("Aggregate Layer has no settable properties.", "Properties");
 		} else {
-			Layer * layer = this->tree_view->get_layer(item);
+			Layer * layer = this->tree_view->get_layer(index);
 			if (layer->properties_dialog(this->viewport)) {
 				layer->emit_update();
 			}
@@ -728,18 +728,18 @@ void vik_layers_panel_cut_selected_cb(LayersPanel * panel)
 
 void LayersPanel::cut_selected()
 {
-	QStandardItem * item = this->tree_view->get_selected_item();
-	if (!item) {
+        TreeIndex * index = this->tree_view->get_selected_item();
+	if (!index) {
 		/* Nothing to do. */
 		return;
 	}
 
-	TreeItemType type = this->tree_view->get_item_type(item);
+	TreeItemType type = this->tree_view->get_item_type(index);
 
 
 
 	if (type == TreeItemType::LAYER) {
-		LayerAggregate * parent = (LayerAggregate *) this->tree_view->get_parent_layer(item);
+		LayerAggregate * parent = (LayerAggregate *) this->tree_view->get_parent_layer(index);
 #ifndef SLAVGPS_QT
 		if (parent){
 			/* Reset trigger if trigger deleted. */
@@ -752,7 +752,7 @@ void LayersPanel::cut_selected()
 			if (parent->type == LayerType::AGGREGATE) {
 				g_signal_emit(G_OBJECT(this->panel_box_), layers_panel_signals[VLP_DELETE_LAYER_SIGNAL], 0);
 
-				if (parent->delete_layer(item)) {
+				if (parent->delete_layer(index)) {
 					this->emit_update_cb();
 				}
 			}
@@ -762,8 +762,8 @@ void LayersPanel::cut_selected()
 #endif
 	} else if (type == TreeItemType::SUBLAYER) {
 		Layer * selected = this->get_selected_layer();
-		SublayerType sublayer_type = this->tree_view->get_sublayer_type(item);
-		selected->cut_sublayer(sublayer_type, selected->tree_view->get_sublayer_uid(item));
+		SublayerType sublayer_type = this->tree_view->get_sublayer_type(index);
+		selected->cut_sublayer(sublayer_type, selected->tree_view->get_sublayer_uid(index));
 	}
 }
 
@@ -825,15 +825,15 @@ void vik_layers_panel_delete_selected_cb(LayersPanel * panel)
 
 void LayersPanel::delete_selected()
 {
-	QStandardItem * item = this->tree_view->get_selected_item();
-	if (!item) {
+	TreeIndex * index = this->tree_view->get_selected_item();
+	if (!index) {
 		/* Nothing to do. */
 		return;
 	}
 
-	TreeItemType type = this->tree_view->get_item_type(item);
+	TreeItemType type = this->tree_view->get_item_type(index);
 	if (type == TreeItemType::LAYER) {
-		Layer * layer = this->tree_view->get_layer(item);
+		Layer * layer = this->tree_view->get_layer(index);
 
 #ifndef SLAVGPS_QT
 		/* Get confirmation from the user. */
@@ -843,7 +843,7 @@ void LayersPanel::delete_selected()
 			return;
 		}
 
-		LayerAggregate * parent = (LayerAggregate *) this->tree_view->get_parent_layer(item);
+		LayerAggregate * parent = (LayerAggregate *) this->tree_view->get_parent_layer(index);
 		if (parent) {
 			/* Reset trigger if trigger deleted. */
 			if (this->get_selected_layer()->the_same_object(this->viewport->get_trigger())) {
@@ -854,7 +854,7 @@ void LayersPanel::delete_selected()
 
 				g_signal_emit(G_OBJECT(this->panel_box_), layers_panel_signals[VLP_DELETE_LAYER_SIGNAL], 0);
 
-				if (parent->delete_layer(item)) {
+				if (parent->delete_layer(index)) {
 					this->emit_update_cb();
 				}
 			}
@@ -864,8 +864,8 @@ void LayersPanel::delete_selected()
 #endif
 	} else if (type == TreeItemType::SUBLAYER) {
 		Layer * selected = this->get_selected_layer();
-		SublayerType sublayer_type = this->tree_view->get_sublayer_type(item);
-		selected->delete_sublayer(sublayer_type, selected->tree_view->get_sublayer_uid(item));
+		SublayerType sublayer_type = this->tree_view->get_sublayer_type(index);
+		selected->delete_sublayer(sublayer_type, selected->tree_view->get_sublayer_uid(index));
 	}
 }
 
@@ -874,22 +874,22 @@ void LayersPanel::delete_selected()
 
 Layer * LayersPanel::get_selected_layer()
 {
-	QStandardItem * item = this->tree_view->get_selected_item();
-	if (!item) {
+	TreeIndex * index = this->tree_view->get_selected_item();
+	if (!index) {
 		return NULL;
 	}
 
-	TreeItemType type = this->tree_view->get_item_type(item);
-	QStandardItem * parent = NULL;
+	TreeItemType type = this->tree_view->get_item_type(index);
+	TreeIndex * parent = NULL;
 	while (type != TreeItemType::LAYER) {
-		if (NULL == (parent = this->tree_view->get_parent_item(item))) {
+		if (NULL == (parent = this->tree_view->get_parent_index(index))) {
 			return NULL;
 		}
-		item = parent;
-		type = this->tree_view->get_item_type(item);
+		index = parent;
+		type = this->tree_view->get_item_type(index);
 	}
 
-	return this->tree_view->get_layer(item);
+	return this->tree_view->get_layer(index);
 }
 
 
@@ -1063,24 +1063,23 @@ void LayersPanel::contextMenuEvent(QContextMenuEvent * event)
 	if (ind.isValid()) {
 		qDebug() << "II: Layers Panel: context menu event: valid index";
 		qDebug() << "II: Layers Panel: context menu event: row = " << ind.row();
-		QStandardItem * item = this->tree_view->model->itemFromIndex(ind);
+		TreeIndex index = QPersistentModelIndex(ind);
 
-
-		Layer * layer = this->tree_view->get_layer(item);
+		Layer * layer = this->tree_view->get_layer(&index);
 		if (layer) {
 			qDebug() << "II: Layers Panel: context menu event: layer type =" << layer->type_string;
 		} else {
 			qDebug() << "II: Layers Panel: context menu event: layer type is NULL";
 		}
 
-		QStandardItem * parent = item->parent();
-		if (parent) {
-			QStandardItem * item2 = parent->child(ind.row(), 0);
-			qDebug() << "II: Layers Panel: context menu event: item" << item << "item2" << item2;
-			if (item) {
-				qDebug() << "II: Layers Panel: context menu event: item.row = " << item->row() << "item.col = " << item->column() << "text = " << item2->text();
+		QModelIndex parent = index.parent();
+		if (parent.isValid()) {
+			QModelIndex index2 = parent.child(ind.row(), 0);
+			qDebug() << "II: Layers Panel: context menu event: item" << index << "index2" << index2;
+			if (index.isValid()) {
+				qDebug() << "II: Layers Panel: context menu event: index.row =" << index.row() << "index.column =" << index.column() << "text =" << this->tree_view->model->itemFromIndex(index2)->text();
 			}
-			item = item2;
+			index = index2;
 		}
 		QMenu menu(this);
 		this->window->get_layer_menu(&menu);
