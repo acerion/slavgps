@@ -400,8 +400,7 @@ namespace SlavGPS {
 
 		/* This should be private. */
 		void image_cache_free();
-		void new_track_gcs(Viewport * viewport);
-		void free_track_gcs();
+		void new_track_pens(void);
 		void cancel_current_tp(bool destroy);
 		void tpwin_response(int response);
 		Track * get_track_helper(struct _trw_menu_sublayer_t * data);
@@ -491,24 +490,24 @@ namespace SlavGPS {
 
 
 		double track_draw_speed_factor;
-		GArray * track_gc = NULL;
-		GdkGC * track_1color_gc = NULL;
+		std::vector<QPen> track_pens;
+		QPen track_1color_pen;
 		QColor track_color;
-		GdkGC * current_track_gc = NULL;
-		/* Separate GC for a track's potential new point as drawn via separate method
+		QPen current_track_pen;
+		/* Separate pen for a track's potential new point as drawn via separate method
 		   (compared to the actual track points drawn in the main trw_layer_draw_track function). */
-		GdkGC * current_track_newpoint_gc = NULL;
+		QPen current_track_new_point_pen;
 
-		GdkGC * track_bg_gc = NULL;
+		QPen track_bg_pen;
 		QColor track_bg_color;
 
-		GdkGC * waypoint_gc = NULL;
+		QPen  waypoint_pen;
 		QColor waypoint_color;
 
-		GdkGC * waypoint_text_gc = NULL;
+		QPen waypoint_text_pen;
 		QColor waypoint_text_color;
 
-		GdkGC * waypoint_bg_gc = NULL;
+		QPen waypoint_bg_pen;
 		QColor waypoint_bg_color;
 
 		GdkFunction wpbgand;

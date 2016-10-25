@@ -540,9 +540,7 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 	bool drawing_highlight = false;
 	/* Current track - used for creation. */
 	if (trk == dp->trw->current_track) {
-#ifdef K
-		main_pen = dp->trw->current_track_gc;
-#endif
+		main_pen = dp->trw->current_track_pen;
 	} else {
 		if (dp->highlight) {
 			/* Draw all tracks of the layer in special colour.
@@ -554,23 +552,17 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 		}
 
 		if (!drawing_highlight) {
-			/* Still need to figure out the gc according to the drawing mode: */
+			/* Still need to figure out the pen according to the drawing mode: */
 			switch (dp->trw->drawmode) {
 			case DRAWMODE_BY_TRACK:
-#ifdef K
-				if (dp->trw->track_1color_gc) {
-					g_object_unref(dp->trw->track_1color_gc);
-				}
-				dp->trw->track_1color_gc = dp->viewport->new_gc_from_color(&trk->color, dp->trw->line_thickness);
-				main_pen = dp->trw->track_1color_gc;
-#endif
+				dp->trw->track_1color_pen.setColor(trk->color);
+				dp->trw->track_1color_pen.setWidth(dp->trw->line_thickness);
+				main_pen = dp->trw->track_1color_pen;
 				break;
 			default:
 				/* Mostly for DRAWMODE_ALL_SAME_COLOR
 				   but includes DRAWMODE_BY_SPEED, main_pen is set later on as necessary. */
-#ifdef K
-				main_pen = g_array_index(dp->trw->track_gc, GdkGC *, VIK_TRW_LAYER_TRACK_GC_SINGLE);
-#endif
+				main_pen = dp->trw->track_pens[VIK_TRW_LAYER_TRACK_GC_SINGLE];
 				break;
 			}
 		}
@@ -668,9 +660,8 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 			    && ! draw_track_outline
 			    && std::next(iter) != trk->trackpointsB->end()
 			    && (*std::next(iter))->timestamp - (*iter)->timestamp > dp->trw->stop_length) {
-
 #ifdef K
-				dp->viewport->draw_arc(g_array_index(dp->trw->track_gc, GdkGC *, VIK_TRW_LAYER_TRACK_GC_STOP), true, x-(3*tp_size), y-(3*tp_size), 6*tp_size, 6*tp_size, 0, 360*64);
+				dp->viewport->draw_arc(dp->trw->track_pens[VIK_TRW_LAYER_TRACK_GC_STOP], true, x-(3*tp_size), y-(3*tp_size), 6*tp_size, 6*tp_size, 0, 360*64);
 #endif
 			}
 
@@ -684,9 +675,7 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 			if (drawpoints || dp->trw->drawlines) {
 				/* Setup main_pen for both point and line drawing. */
 				if (!drawing_highlight && (dp->trw->drawmode == DRAWMODE_BY_SPEED)) {
-#ifdef K
-					main_pen = g_array_index(dp->trw->track_gc, GdkGC *, track_section_colour_by_speed(tp, prev_tp, average_speed, low_speed, high_speed));
-#endif
+					main_pen = dp->trw->track_pens[track_section_colour_by_speed(tp, prev_tp, average_speed, low_speed, high_speed)];
 				}
 			}
 
@@ -716,11 +705,7 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 				}
 
 				if (draw_track_outline) {
-#ifdef K
-					dp->viewport->draw_line(dp->trw->track_bg_gc, prev_x, prev_y, x, y);
-#else
-					dp->viewport->draw_line(main_pen, prev_x, prev_y, x, y);
-#endif
+					dp->viewport->draw_line(dp->trw->track_bg_pen, prev_x, prev_y, x, y);
 				} else {
 					dp->viewport->draw_line(main_pen, prev_x, prev_y, x, y);
 
@@ -752,19 +737,13 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 					dp->viewport->coord_to_screen(&(tp->coord), &x, &y);
 
 					if (!drawing_highlight && (dp->trw->drawmode == DRAWMODE_BY_SPEED)) {
-#ifdef K
-						main_pen = g_array_index(dp->trw->track_gc, GdkGC *, track_section_colour_by_speed(tp, prev_tp, average_speed, low_speed, high_speed));
-#endif
+						main_pen = dp->trw->track_pens[track_section_colour_by_speed(tp, prev_tp, average_speed, low_speed, high_speed)];
 					}
 
 					/* Draw only if current point has different coordinates than the previous one. */
 					if (x != prev_x || y != prev_y) {
 						if (draw_track_outline) {
-#ifdef K
-							dp->viewport->draw_line(dp->trw->track_bg_gc, prev_x, prev_y, x, y);
-#else
-							dp->viewport->draw_line(main_pen, prev_x, prev_y, x, y);
-#endif
+							dp->viewport->draw_line(dp->trw->track_bg_pen, prev_x, prev_y, x, y);
 						} else {
 							dp->viewport->draw_line(main_pen, prev_x, prev_y, x, y);
 						}
@@ -939,34 +918,34 @@ void trw_layer_draw_symbol(Waypoint * wp, int x, int y, DrawingParams * dp)
 	} else if (wp == dp->trw->current_wp) {
 		switch (dp->trw->wp_symbol) {
 		case WP_SYMBOL_FILLED_SQUARE:
-			dp->viewport->draw_rectangle(dp->trw->waypoint_gc, true, x - (dp->trw->wp_size), y - (dp->trw->wp_size), dp->trw->wp_size*2, dp->trw->wp_size*2);
+			dp->viewport->draw_rectangle(dp->trw->waypoint_pen, true, x - (dp->trw->wp_size), y - (dp->trw->wp_size), dp->trw->wp_size*2, dp->trw->wp_size*2);
 			break;
 		case WP_SYMBOL_SQUARE:
-			dp->viewport->draw_rectangle(dp->trw->waypoint_gc, false, x - (dp->trw->wp_size), y - (dp->trw->wp_size), dp->trw->wp_size*2, dp->trw->wp_size*2);
+			dp->viewport->draw_rectangle(dp->trw->waypoint_pen, false, x - (dp->trw->wp_size), y - (dp->trw->wp_size), dp->trw->wp_size*2, dp->trw->wp_size*2);
 			break;
 		case WP_SYMBOL_CIRCLE:
-			dp->viewport->draw_arc(dp->trw->waypoint_gc, true, x - dp->trw->wp_size, y - dp->trw->wp_size, dp->trw->wp_size, dp->trw->wp_size, 0, 360*64);
+			dp->viewport->draw_arc(dp->trw->waypoint_pen, true, x - dp->trw->wp_size, y - dp->trw->wp_size, dp->trw->wp_size, dp->trw->wp_size, 0, 360*64);
 			break;
 		case WP_SYMBOL_X:
-			dp->viewport->draw_line(dp->trw->waypoint_gc, x - dp->trw->wp_size*2, y - dp->trw->wp_size*2, x + dp->trw->wp_size*2, y + dp->trw->wp_size*2);
-			dp->viewport->draw_line(dp->trw->waypoint_gc, x - dp->trw->wp_size*2, y + dp->trw->wp_size*2, x + dp->trw->wp_size*2, y - dp->trw->wp_size*2);
+			dp->viewport->draw_line(dp->trw->waypoint_pen, x - dp->trw->wp_size*2, y - dp->trw->wp_size*2, x + dp->trw->wp_size*2, y + dp->trw->wp_size*2);
+			dp->viewport->draw_line(dp->trw->waypoint_pen, x - dp->trw->wp_size*2, y + dp->trw->wp_size*2, x + dp->trw->wp_size*2, y - dp->trw->wp_size*2);
 		default:
 			break;
 		}
 	} else {
 		switch (dp->trw->wp_symbol) {
 		case WP_SYMBOL_FILLED_SQUARE:
-			dp->viewport->draw_rectangle(dp->trw->waypoint_gc, true, x - dp->trw->wp_size/2, y - dp->trw->wp_size/2, dp->trw->wp_size, dp->trw->wp_size);
+			dp->viewport->draw_rectangle(dp->trw->waypoint_pen, true, x - dp->trw->wp_size/2, y - dp->trw->wp_size/2, dp->trw->wp_size, dp->trw->wp_size);
 			break;
 		case WP_SYMBOL_SQUARE:
-			dp->viewport->draw_rectangle(dp->trw->waypoint_gc, false, x - dp->trw->wp_size/2, y - dp->trw->wp_size/2, dp->trw->wp_size, dp->trw->wp_size);
+			dp->viewport->draw_rectangle(dp->trw->waypoint_pen, false, x - dp->trw->wp_size/2, y - dp->trw->wp_size/2, dp->trw->wp_size, dp->trw->wp_size);
 			break;
 		case WP_SYMBOL_CIRCLE:
-			dp->viewport->draw_arc(dp->trw->waypoint_gc, true, x-dp->trw->wp_size/2, y-dp->trw->wp_size/2, dp->trw->wp_size, dp->trw->wp_size, 0, 360*64);
+			dp->viewport->draw_arc(dp->trw->waypoint_pen, true, x-dp->trw->wp_size/2, y-dp->trw->wp_size/2, dp->trw->wp_size, dp->trw->wp_size, 0, 360*64);
 			break;
 		case WP_SYMBOL_X:
-			dp->viewport->draw_line(dp->trw->waypoint_gc, x-dp->trw->wp_size, y-dp->trw->wp_size, x+dp->trw->wp_size, y+dp->trw->wp_size);
-			dp->viewport->draw_line(dp->trw->waypoint_gc, x-dp->trw->wp_size, y+dp->trw->wp_size, x+dp->trw->wp_size, y-dp->trw->wp_size);
+			dp->viewport->draw_line(dp->trw->waypoint_pen, x-dp->trw->wp_size, y-dp->trw->wp_size, x+dp->trw->wp_size, y+dp->trw->wp_size);
+			dp->viewport->draw_line(dp->trw->waypoint_pen, x-dp->trw->wp_size, y+dp->trw->wp_size, x+dp->trw->wp_size, y-dp->trw->wp_size);
 			break;
 		default:
 			break;
@@ -1017,9 +996,9 @@ void trw_layer_draw_label(Waypoint * wp, int x, int y, DrawingParams * dp)
 	if (dp->highlight) {
 		dp->viewport->draw_rectangle(dp->viewport->get_gc_highlight(), true, label_x - 1, label_y-1,width+2,height+2);
 	} else {
-		dp->viewport->draw_rectangle(dp->trw->waypoint_bg_gc, true, label_x - 1, label_y-1,width+2,height+2);
+		dp->viewport->draw_rectangle(dp->trw->waypoint_bg_pen, true, label_x - 1, label_y-1,width+2,height+2);
 	}
-	dp->viewport->draw_layout(dp->trw->waypoint_text_gc, label_x, label_y, dp->trw->wplabellayout);
+	dp->viewport->draw_layout(dp->trw->waypoint_text_pen, label_x, label_y, dp->trw->wplabellayout);
 #endif
 #endif
 	return;

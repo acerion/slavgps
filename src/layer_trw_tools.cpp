@@ -888,7 +888,7 @@ LayerTool * tool_new_track_create(Window * window, Viewport * viewport)
 typedef struct {
 	LayerTRW * layer;
 	QPixmap * drawable;
-	GdkGC *gc;
+	QPen pen;
 	QPixmap * pixmap;
 } draw_sync_t;
 
@@ -1056,7 +1056,7 @@ VikLayerToolFuncStatus LayerTRW::tool_new_track_move(QMouseEvent * event, LayerT
 		*pixmap = *tool->viewport->get_pixmap();
 #if 0
 		gdk_draw_drawable(pixmap,
-				  this->current_track_newpoint_gc,
+				  this->current_track_new_point_pen,
 				  tool->viewport->get_pixmap(),
 				  0, 0, 0, 0, -1, -1);
 #endif
@@ -1077,7 +1077,7 @@ VikLayerToolFuncStatus LayerTRW::tool_new_track_move(QMouseEvent * event, LayerT
 		painter.drawLine(x1, y1, event->x(), event->y());
 #if 0
 		gdk_draw_line(pixmap,
-			      this->current_track_newpoint_gc,
+			      this->current_track_new_point_pen,
 			      x1, y1, );
 #endif
 		/* Using this reset method is more reliable than trying to undraw previous efforts via the GDK_INVERT method. */
@@ -1132,7 +1132,7 @@ VikLayerToolFuncStatus LayerTRW::tool_new_track_move(QMouseEvent * event, LayerT
 			/* Create a background block to make the text easier to read over the background map. */
 			GdkGC *background_block_gc = tool->viewport->new_gc("#cccccc", 1);
 			gdk_draw_rectangle(pixmap, background_block_gc, true, xd-2, yd-2, wd+4, hd+2);
-			gdk_draw_layout(pixmap, this->current_track_newpoint_gc, xd, yd, pl);
+			gdk_draw_layout(pixmap, this->current_track_new_point_pen, xd, yd, pl);
 
 			g_object_unref(G_OBJECT (pl));
 			g_object_unref(G_OBJECT (background_block_gc));
@@ -1144,7 +1144,7 @@ VikLayerToolFuncStatus LayerTRW::tool_new_track_move(QMouseEvent * event, LayerT
 		passalong->layer = this;
 		passalong->pixmap = pixmap;
 		passalong->drawable = tool->viewport->scr_buffer;
-		passalong->gc = this->current_track_newpoint_gc;
+		passalong->pen = this->current_track_new_point_pen;
 
 		double angle;
 		double baseangle;

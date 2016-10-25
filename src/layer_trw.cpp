@@ -403,6 +403,24 @@ char *astro_program = NULL;
 
 
 
+void color_to_param(LayerParamValue & value, QColor const & color)
+{
+	value.c.r = color.red();
+	value.c.g = color.green();
+	value.c.b = color.blue();
+	value.c.a = color.alpha();
+}
+
+
+
+void param_to_color(QColor & color, LayerParamValue const & value)
+{
+	color = QColor(value.c.r, value.c.g, value.c.b, value.c.a);
+}
+
+
+
+
 void SlavGPS::layer_trw_init(void)
 {
 	if (!a_settings_get_string(VIK_SETTINGS_EXTERNAL_DIARY_PROGRAM, &diary_program)) {
@@ -894,12 +912,8 @@ bool LayerTRW::set_param_value(uint16_t id, LayerParamData data, Viewport * view
 		this->drawmode = data.u;
 		break;
 	case PARAM_TC:
-		this->track_color = QColor("red"); // = data.c;
-#ifdef K
-		if (viewport) {
-			this->new_track_gcs(viewport);
-		}
-#endif
+		this->track_color = QColor(data.c.r, data.c.g, data.c.b, data.c.a);
+		this->new_track_pens();
 		break;
 	case PARAM_DP:
 		this->drawpoints = data.b;
@@ -939,27 +953,21 @@ bool LayerTRW::set_param_value(uint16_t id, LayerParamData data, Viewport * view
 	case PARAM_LT:
 		if (data.u > 0 && data.u < 15 && data.u != this->line_thickness) {
 			this->line_thickness = data.u;
-			if (viewport) {
-				this->new_track_gcs(viewport);
-			}
+			this->new_track_pens();
 		}
 		break;
 	case PARAM_BLT:
 		if (data.u <= 8 && data.u != this->bg_line_thickness) {
 			this->bg_line_thickness = data.u;
-			if (viewport) {
-				this->new_track_gcs(viewport);
-			}
+			this->new_track_pens();
 		}
 		break;
+
 	case PARAM_TBGC:
-#ifdef K
-		this->track_bg_color = data.c;
-		if (this->track_bg_gc) {
-			gdk_gc_set_rgb_fg_color(this->track_bg_gc, &(this->track_bg_color));
-		}
-#endif
+		param_to_color(this->track_bg_color, data);
+		this->track_bg_pen.setColor(this->track_bg_color);
 		break;
+
 	case PARAM_TDSF:
 		this->track_draw_speed_factor = data.d;
 		break;
@@ -994,31 +1002,22 @@ bool LayerTRW::set_param_value(uint16_t id, LayerParamData data, Viewport * view
 			cached_pixbuf_free((CachedPixbuf *) g_queue_pop_tail(this->image_cache));
 		}
 		break;
-	case PARAM_WPC:
-#ifdef K
-		this->waypoint_color = data.c;
-		if (this->waypoint_gc) {
-			gdk_gc_set_rgb_fg_color(this->waypoint_gc, &(this->waypoint_color));
-		}
-#endif
-		break;
-	case PARAM_WPTC:
-#ifdef K
-		this->waypoint_text_color = data.c;
-		if (this->waypoint_text_gc) {
 
-			gdk_gc_set_rgb_fg_color(this->waypoint_text_gc, &(this->waypoint_text_color));
-		}
-#endif
+	case PARAM_WPC:
+		param_to_color(this->waypoint_color, data);
+		this->waypoint_pen.setColor(this->waypoint_color);
 		break;
+
+	case PARAM_WPTC:
+		param_to_color(this->waypoint_text_color, data);
+		this->waypoint_pen.setColor(this->waypoint_text_color);
+		break;
+
 	case PARAM_WPBC:
-#ifdef K
-		this->waypoint_bg_color = data.c;
-		if (this->waypoint_bg_gc) {
-			gdk_gc_set_rgb_fg_color(this->waypoint_bg_gc, &(this->waypoint_bg_color));
-		}
-#endif
+		param_to_color(this->waypoint_bg_color, data);
+		this->waypoint_bg_pen.setColor(this->waypoint_bg_color);
 		break;
+
 	case PARAM_WPBA:
 #ifdef K
 		this->wpbgand = (GdkFunction) data.b;
@@ -1091,9 +1090,7 @@ LayerParamData LayerTRW::get_param_value(layer_param_id_t id, bool is_file_opera
 	case PARAM_TDL: rv.b = this->track_draw_labels; break;
 	case PARAM_TLFONTSIZE: rv.u = this->track_font_size; break;
 	case PARAM_DM: rv.u = this->drawmode; break;
-#ifdef K
-	case PARAM_TC: rv.c = this->track_color; break;
-#endif
+	case PARAM_TC: color_to_param(rv, this->track_color); break;
 	case PARAM_DP: rv.b = this->drawpoints; break;
 	case PARAM_DPS: rv.u = this->drawpoints_size; break;
 	case PARAM_DE: rv.b = this->drawelevation; break;
@@ -1107,19 +1104,15 @@ LayerParamData LayerTRW::get_param_value(layer_param_id_t id, bool is_file_opera
 	case PARAM_BLT: rv.u = this->bg_line_thickness; break;
 	case PARAM_DLA: rv.b = this->drawlabels; break;
 	case PARAM_DI: rv.b = this->drawimages; break;
-#ifdef K
-	case PARAM_TBGC: rv.c = this->track_bg_color; break;
-#endif
+	case PARAM_TBGC: color_to_param(rv, this->track_bg_color); break;
 	case PARAM_TDSF: rv.d = this->track_draw_speed_factor; break;
 	case PARAM_TSO: rv.u = this->track_sort_order; break;
 	case PARAM_IS: rv.u = this->image_size; break;
 	case PARAM_IA: rv.u = this->image_alpha; break;
 	case PARAM_ICS: rv.u = this->image_cache_size; break;
-#ifdef K
-	case PARAM_WPC: rv.c = this->waypoint_color; break;
-	case PARAM_WPTC: rv.c = this->waypoint_text_color; break;
-	case PARAM_WPBC: rv.c = this->waypoint_bg_color; break;
-#endif
+	case PARAM_WPC:	color_to_param(rv, this->waypoint_color); break;
+	case PARAM_WPTC: color_to_param(rv, this->waypoint_text_color); break;
+	case PARAM_WPBC: color_to_param(rv, this->waypoint_bg_color); break;
 	case PARAM_WPBA: rv.b = this->wpbgand; break;
 	case PARAM_WPSYM: rv.u = this->wp_symbol; break;
 	case PARAM_WPSIZE: rv.u = this->wp_size; break;
@@ -1405,8 +1398,6 @@ LayerTRW::~LayerTRW()
 	this->routes.clear();
 	this->routes_iters.clear();
 
-	/* ODC: replace with GArray */
-	this->free_track_gcs();
 #ifdef K
 	if (this->wp_right_click_menu) {
 		g_object_ref_sink(G_OBJECT(this->wp_right_click_menu));
@@ -1424,17 +1415,6 @@ LayerTRW::~LayerTRW()
 		g_object_unref(G_OBJECT (this->wplabellayout));
 	}
 
-	if (this->waypoint_gc != NULL) {
-		g_object_unref(G_OBJECT (this->waypoint_gc));
-	}
-
-	if (this->waypoint_text_gc != NULL) {
-		g_object_unref(G_OBJECT (this->waypoint_text_gc));
-	}
-
-	if (this->waypoint_bg_gc != NULL) {
-		g_object_unref(G_OBJECT (this->waypoint_bg_gc));
-	}
 
 	free(this->wp_fsize_str);
 	free(this->track_fsize_str);
@@ -1581,88 +1561,48 @@ void LayerTRW::draw_highlight_items(std::unordered_map<sg_uid_t, Track *> * trac
 
 
 
-void LayerTRW::free_track_gcs()
+void LayerTRW::new_track_pens(void)
 {
-#ifdef K
-	if (this->track_bg_gc) {
-		g_object_unref(this->track_bg_gc);
-		this->track_bg_gc = NULL;
-	}
-	if (this->track_1color_gc) {
-		g_object_unref(this->track_1color_gc);
-		this->track_1color_gc = NULL;
-	}
-	if (this->current_track_gc) {
-		g_object_unref(this->current_track_gc);
-		this->current_track_gc = NULL;
-	}
-	if (this->current_track_newpoint_gc) {
-		g_object_unref(this->current_track_newpoint_gc);
-		this->current_track_newpoint_gc = NULL;
-	}
-
-	if (!this->track_gc) {
-		return;
-	}
-
-	for (int i = this->track_gc->len - 1; i >= 0; i--) {
-		g_object_unref(g_array_index(this->track_gc, GObject *, i));
-	}
-	g_array_free(this->track_gc, true);
-	this->track_gc = NULL;
-#endif
-}
-
-
-
-
-void LayerTRW::new_track_gcs(Viewport * viewport)
-{
-#ifdef K
-	if (this->track_gc) {
-		this->free_track_gcs();
-	}
-
 	int width = this->line_thickness;
 
-	if (this->track_bg_gc) {
-		g_object_unref(this->track_bg_gc);
-	}
 
-	this->track_bg_gc = viewport->new_gc_from_color(&this->track_bg_color, width + this->bg_line_thickness);
+	this->track_bg_pen = QPen(this->track_bg_color);
+	this->track_bg_pen.setWidth(width + this->bg_line_thickness);
 
-	// Ensure new track drawing heeds line thickness setting
-	//  however always have a minium of 2, as 1 pixel is really narrow
+
+	/* Ensure new track drawing heeds line thickness setting,
+	   however always have a minium of 2, as 1 pixel is really narrow. */
 	int new_track_width = (this->line_thickness < 2) ? 2 : this->line_thickness;
+	this->current_track_pen = QPen(QColor("#FF0000"));
+	this->current_track_pen.setWidth(new_track_width);
+	//gdk_gc_set_line_attributes(this->current_track_gc, new_track_width, GDK_LINE_ON_OFF_DASH, GDK_CAP_ROUND, GDK_JOIN_ROUND);
 
-	if (this->current_track_gc) {
-		g_object_unref(this->current_track_gc);
-	}
-	this->current_track_gc = viewport->new_gc("#FF0000", new_track_width);
-	gdk_gc_set_line_attributes(this->current_track_gc, new_track_width, GDK_LINE_ON_OFF_DASH, GDK_CAP_ROUND, GDK_JOIN_ROUND);
 
-	// 'newpoint' gc is exactly the same as the current track gc
-	if (this->current_track_newpoint_gc) {
-		g_object_unref(this->current_track_newpoint_gc);
-	}
-	this->current_track_newpoint_gc = viewport->new_gc("#FF0000", new_track_width);
-	gdk_gc_set_line_attributes(this->current_track_newpoint_gc, new_track_width, GDK_LINE_ON_OFF_DASH, GDK_CAP_ROUND, GDK_JOIN_ROUND);
+	/* 'new_point' pen is exactly the same as the current track pen. */
+	this->current_track_new_point_pen = QPen(QColor("#FF0000"));
+	this->current_track_new_point_pen.setWidth(new_track_width);
+	//gdk_gc_set_line_attributes(this->current_track_new_point_gc, new_track_width, GDK_LINE_ON_OFF_DASH, GDK_CAP_ROUND, GDK_JOIN_ROUND);
 
-	this->track_gc = g_array_sized_new(false, false, sizeof (GdkGC *), VIK_TRW_LAYER_TRACK_GC);
+	this->track_pens.clear();
+	this->track_pens.resize(VIK_TRW_LAYER_TRACK_GC);
 
-	GdkGC * gc[VIK_TRW_LAYER_TRACK_GC];
+	this->track_pens[VIK_TRW_LAYER_TRACK_GC_STOP] = QPen(QColor("#874200"));
+	this->track_pens[VIK_TRW_LAYER_TRACK_GC_STOP].setWidth(width);
 
-	gc[VIK_TRW_LAYER_TRACK_GC_STOP] = viewport->new_gc("#874200", width);
-	gc[VIK_TRW_LAYER_TRACK_GC_BLACK] = viewport->new_gc("#000000", width); // black
+	this->track_pens[VIK_TRW_LAYER_TRACK_GC_BLACK] = QPen(QColor("#000000")); /* Black. */
+	this->track_pens[VIK_TRW_LAYER_TRACK_GC_BLACK].setWidth(width);
 
-	gc[VIK_TRW_LAYER_TRACK_GC_SLOW] = viewport->new_gc("#E6202E", width); // red-ish
-	gc[VIK_TRW_LAYER_TRACK_GC_AVER] = viewport->new_gc("#D2CD26", width); // yellow-ish
-	gc[VIK_TRW_LAYER_TRACK_GC_FAST] = viewport->new_gc("#2B8700", width); // green-ish
+	this->track_pens[VIK_TRW_LAYER_TRACK_GC_SLOW] = QPen(QColor("#E6202E")); /* Red-ish. */
+	this->track_pens[VIK_TRW_LAYER_TRACK_GC_SLOW].setWidth(width);
 
-	gc[VIK_TRW_LAYER_TRACK_GC_SINGLE] = viewport->new_gc_from_color(&(this->track_color), width);
+	this->track_pens[VIK_TRW_LAYER_TRACK_GC_AVER] = QPen(QColor("#D2CD26")); /* Yellow-ish. */
+	this->track_pens[VIK_TRW_LAYER_TRACK_GC_AVER].setWidth(width);
 
-	g_array_append_vals(this->track_gc, gc, VIK_TRW_LAYER_TRACK_GC);
-#endif
+	this->track_pens[VIK_TRW_LAYER_TRACK_GC_FAST] = QPen(QColor("#2B8700")); /* Green-ish. */
+	this->track_pens[VIK_TRW_LAYER_TRACK_GC_FAST].setWidth(width);
+
+	this->track_pens[VIK_TRW_LAYER_TRACK_GC_SINGLE] = QPen(QColor(this->track_color));
+	this->track_pens[VIK_TRW_LAYER_TRACK_GC_SINGLE].setWidth(width);
 }
 
 
@@ -2159,7 +2099,7 @@ void LayerTRW::set_statusbar_msg_info_trkpt(Trackpoint * tp)
 	Trackpoint * tp_prev = NULL;
 	if (!a_settings_get_string(VIK_SETTINGS_TRKPT_SELECTED_STATUSBAR_FORMAT, &statusbar_format_code)) {
 		// Otherwise use default
-		statusbar_format_code =strdup("KEATDN");
+		statusbar_format_code = strdup("KEATDN");
 		need2free = true;
 	} else {
 		// Format code may want to show speed - so may need previous trkpt to work it out
@@ -2167,7 +2107,7 @@ void LayerTRW::set_statusbar_msg_info_trkpt(Trackpoint * tp)
 	}
 #ifdef K
 	char * msg = vu_trackpoint_formatted_message(statusbar_format_code, tp, tp_prev, selected_track, NAN);
-	this->get_window()->status_bar->set_message(VIK_STATUSBAR_INFO, msg);
+	this->get_window()->status_bar->set_message(StatusBarField::INFO, QString(msg));
 	free(msg);
 #endif
 
@@ -2184,7 +2124,6 @@ void LayerTRW::set_statusbar_msg_info_trkpt(Trackpoint * tp)
  */
 void LayerTRW::set_statusbar_msg_info_wpt(Waypoint * wp)
 {
-#ifdef K
 	char tmp_buf1[64];
 	switch (a_vik_get_units_height()) {
 	case HeightUnit::FEET:
@@ -2211,11 +2150,10 @@ void LayerTRW::set_statusbar_msg_info_wpt(Waypoint * wp)
 	} else {
 		msg = g_strdup_printf(_("%s | %s %s"), tmp_buf1, lat, lon);
 	}
-	this->get_window()->status_bar->set_message(VIK_STATUSBAR_INFO, msg);
+	this->get_window()->status_bar->set_message(StatusBarField::INFO, QString(msg));
 	free(lat);
 	free(lon);
 	free(msg);
-#endif
 }
 
 
@@ -2230,11 +2168,9 @@ bool LayerTRW::selected(SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeI
 	this->current_wp = NULL;
 	this->current_wp_uid = 0;
 	this->cancel_current_tp(false);
-#ifdef K
 
 	/* Clear statusbar. */
-	this->get_window()->status_bar->set_message(VIK_STATUSBAR_INFO, "");
-#endif
+	this->get_window()->status_bar->set_message(StatusBarField::INFO, "");
 
 	switch (type)	{
 	case TreeItemType::LAYER:
@@ -5905,7 +5841,7 @@ void LayerTRW::uniquify_tracks(LayersPanel * panel, std::unordered_map<sg_uid_t,
 		if (!trk) {
 			/* Broken :( */
 			fprintf(stderr, "CRITICAL: Houston, we've had a problem.\n");
-			this->get_window()->status_bar->set_message(VIK_STATUSBAR_INFO,
+			this->get_window()->status_bar->set_message(StatusBarField::INFO,
 								    _("Internal Error in LayerTRW::uniquify_tracks"));
 			return;
 		}
@@ -6208,7 +6144,7 @@ void LayerTRW::uniquify_waypoints(LayersPanel * panel)
 		if (!wp) {
 			/* Broken :( */
 			fprintf(stderr, "CRITICAL: Houston, we've had a problem.\n");
-			this->get_window()->status_bar->set_message(VIK_STATUSBAR_INFO,
+			this->get_window()->status_bar->set_message(StatusBarField::INFO,
 						  _("Internal Error in uniquify_waypoints"));
 			return;
 		}
@@ -8001,12 +7937,19 @@ LayerTRW::LayerTRW(Viewport * viewport) : Layer()
 
 		this->tracklabellayout = gtk_widget_create_pango_layout(viewport->get_toolkit_widget(), NULL);
 		pango_layout_set_font_description(this->tracklabellayout, gtk_widget_get_style(viewport->get_toolkit_widget())->font_desc);
+#endif
 
-		this->new_track_gcs(viewport);
+		this->new_track_pens();
 
-		this->waypoint_gc = viewport->new_gc_from_color(&(this->waypoint_color), 2);
-		this->waypoint_text_gc = viewport->new_gc_from_color(&(this->waypoint_text_color), 1);
-		this->waypoint_bg_gc = viewport->new_gc_from_color(&(this->waypoint_bg_color), 1);
+		this->waypoint_pen = QPen(this->waypoint_color);
+		this->waypoint_pen.setWidth(2);
+
+		this->waypoint_text_pen = QPen(this->waypoint_text_color);
+		this->waypoint_text_pen.setWidth(1);
+
+		this->waypoint_bg_pen = QPen(this->waypoint_bg_color);
+		this->waypoint_bg_pen.setWidth(1);
+#ifdef K
 		gdk_gc_set_function(this->waypoint_bg_gc, this->wpbgand);
 #endif
 
