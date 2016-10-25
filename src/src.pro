@@ -47,7 +47,7 @@ SOURCES += main.cpp \
     dialog.cpp \
     preferences.cpp \
     settings.cpp \
-    vikstatus.cpp
+    statusbar.cpp
 
 
 HEADERS += window.h \
@@ -90,7 +90,7 @@ HEADERS += window.h \
     dialog.h \
     preferences.h \
     settings.h \
-    vikstatus.h
+    statusbar.h
 
 
 # For glib library.
