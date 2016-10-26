@@ -34,7 +34,6 @@
 #include "uibuilder_qt.h"
 #include "settings.h"
 #include "background.h"
-#include "vikstatus.h"
 
 
 
@@ -690,15 +689,29 @@ Viewport * Window::get_viewport()
 
 
 
+
 LayersPanel * Window::get_layers_panel()
 {
 	return this->layers_panel;
 }
 
 
+
+
 LayerToolsBox * Window::get_layer_tools_box(void)
 {
 	return this->tb;
+}
+
+
+
+
+/**
+ * Returns the statusbar for the window
+ */
+StatusBar * Window::get_statusbar()
+{
+	return this->status_bar;
 }
 
 

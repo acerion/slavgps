@@ -120,8 +120,7 @@ namespace SlavGPS {
 
 		GtkWidget * get_drawmode_button(VikViewportDrawMode mode);
 		bool get_pan_move();
-		LayersPanel * get_layers_panel();
-		struct _VikStatusbar * get_statusbar();
+
 		void statusbar_update(char const * message, vik_statusbar_type_t vs_type);
 
 

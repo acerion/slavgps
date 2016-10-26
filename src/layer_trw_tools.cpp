@@ -465,7 +465,7 @@ bool LayerTRW::select_click(QMouseEvent * event, Viewport * viewport, LayerTool 
 	this->cancel_current_tp(false);
 
 	/* Blank info. */
-	this->get_window()->status_bar->set_message(StatusBarField::INFO, "");
+	this->get_window()->get_statusbar()->set_message(StatusBarField::INFO, "");
 
 	return false;
 }
@@ -992,7 +992,7 @@ static void statusbar_write(double distance, double elev_gain, double elev_loss,
 
 	/* Write with full gain/loss information. */
 	char *msg = g_strdup_printf("Total %s%s%s", str_total, str_last_step, str_gain_loss);
-	layer->get_window()->status_bar->set_message(StatusBarField::INFO, msg);
+	layer->get_window()->get_statusbar()->set_message(StatusBarField::INFO, msg);
 	free(msg);
 	free(str_total);
 }
@@ -1823,13 +1823,13 @@ bool LayerTRW::tool_extended_route_finder_click(QMouseEvent * event, LayerTool *
 		VikStatusbar *sb = this->get_window()->get_statusbar();
 		VikRoutingEngine *engine = vik_routing_default_engine();
 		if (!engine) {
-			this->get_window()->status_bar->set_message(StatusBarField::INFO, "Cannot plan route without a default routing engine.");
+			this->get_window()->get_statusbar()->set_message(StatusBarField::INFO, "Cannot plan route without a default routing engine.");
 			return true;
 		}
 		char *msg = g_strdup_printf(_("Querying %s for route between (%.3f, %.3f) and (%.3f, %.3f)."),
 					    vik_routing_engine_get_label(engine),
 					    start.lat, start.lon, end.lat, end.lon);
-		this->get_window()->status_bar->set_message(StatusBarField::INFO, msg);
+		this->get_window()->get_statusbar()->set_message(StatusBarField::INFO, msg);
 		free(msg);
 		this->get_window()->set_busy_cursor();
 
@@ -1847,7 +1847,7 @@ bool LayerTRW::tool_extended_route_finder_click(QMouseEvent * event, LayerTool *
 			? g_strdup_printf(_("%s returned route between (%.3f, %.3f) and (%.3f, %.3f)."), vik_routing_engine_get_label(engine), start.lat, start.lon, end.lat, end.lon)
 			: g_strdup_printf(_("Error getting route from %s."), vik_routing_engine_get_label(engine));
 
-		this->get_window()->status_bar->set_message(StatusBarField::INFO, msg);
+		this->get_window()->get_statusbar()->set_message(StatusBarField::INFO, msg);
 		free(msg);
 #endif
 

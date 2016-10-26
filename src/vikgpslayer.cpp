@@ -1289,7 +1289,7 @@ int SlavGPS::vik_gps_comm(LayerTRW * layer,
 		   NB this may only be a Garmin device restriction (and may be not every Garmin device either...).
 		   Thus this maintains the older code in built restriction. */
 		if (!sess->trw->uniquify(panel)) {
-			vik_statusbar_set_message(sess->trw->get_window()->get_statusbar(), VIK_STATUSBAR_INFO,
+			sess->trw->get_window()->get_statusbar()->set_message(StatusBarField::INFO,
 						  _("Warning - GPS Upload items may overwrite each other"));
 		}
 	}
@@ -1686,7 +1686,7 @@ void LayerGPS::update_statusbar(Window * window)
 	}
 
 	char *msg = vu_trackpoint_formatted_message(statusbar_format_code, this->tp, this->tp_prev, this->realtime_track, this->last_fix.fix.climb);
-	vik_statusbar_set_message(window->get_statusbar(), VIK_STATUSBAR_INFO, msg);
+	window->get_statusbar()->set_message(StatusBarField::INFO, msg);
 	free(msg);
 
 	if (need2free) {

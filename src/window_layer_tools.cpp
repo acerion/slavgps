@@ -758,7 +758,7 @@ static VikLayerToolFuncStatus ruler_click(Layer * layer, QMouseEvent * event, La
 		}
 
 		QString message(temp);
-		tool->window->status_bar->set_message(StatusBarField::INFO, message);
+		tool->window->get_statusbar()->set_message(StatusBarField::INFO, message);
 		tool->ruler->start_coord = coord;
 	} else {
 		tool->viewport->set_center_screen((int) event->x(), (int) event->y());
@@ -854,8 +854,7 @@ static VikLayerToolFuncStatus ruler_move(Layer * layer, QMouseEvent * event, Lay
 		fprintf(stderr, "CRITICAL: Houston, we've had a problem. distance=%d\n", distance_unit);
 	}
 
-	QString message(temp);
-	tool->window->status_bar->set_message(StatusBarField::INFO, message);
+	tool->window->get_statusbar()->set_message(StatusBarField::INFO, QString(temp));
 
 	/* We have used the start coordinate to draw a ruler. The coordinate should be discarded on LMB release. */
 	tool->ruler->invalidate_start_coord = true;

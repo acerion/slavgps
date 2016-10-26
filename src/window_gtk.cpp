@@ -166,30 +166,6 @@ static unsigned int window_signals[VW_LAST_SIGNAL] = { 0 };
 
 
 
-Viewport * Window::get_viewport()
-{
-}
-
-
-
-
-LayersPanel * Window::get_layers_panel()
-{
-}
-
-
-
-
-/**
- * Returns the statusbar for the window.
- */
-VikStatusbar * Window::get_statusbar()
-{
-	return this->viking_vs;
-}
-
-
-
 
 /**
  * Returns the 'project' filename.

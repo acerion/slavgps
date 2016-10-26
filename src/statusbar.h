@@ -34,18 +34,6 @@
 
 
 
-#if 0
-	struct _VikStatusbarClass {
-		GtkStatusbarClass statusbar_class;
-
-		void (* clicked) (VikStatusbar * vs, int item);
-	};
-#endif
-
-
-
-
-
 namespace SlavGPS {
 
 

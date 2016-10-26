@@ -28,7 +28,7 @@
 #include <math.h>
 #include <cstdlib>
 
-#include "vikstatus.h"
+#include "statusbar.h"
 #include "background.h"
 #include "globals.h"
 

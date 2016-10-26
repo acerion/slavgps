@@ -2334,7 +2334,7 @@ void Viewport::draw_mouse_motion_cb(QMouseEvent * event)
 	free(lon);
 	lon = NULL;
 	QString message(pointer_buf);
-	this->window->status_bar->set_message(StatusBarField::POSITION, message);
+	this->window->get_statusbar()->set_message(StatusBarField::POSITION, message);
 
 	//this->window->pan_move(event); /* TODO: uncomment this. */
 #undef BUFFER_SIZE

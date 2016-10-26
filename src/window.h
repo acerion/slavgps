@@ -17,7 +17,7 @@
 #include "layer.h"
 #include "layer_trw.h"
 #include "window_layer_tools.h"
-#include "vikstatus.h"
+#include "statusbar.h"
 
 
 
@@ -59,12 +59,13 @@ namespace SlavGPS {
 		Viewport * get_viewport(void);
 		LayersPanel * get_layers_panel(void);
 		QMenu * get_layer_menu(QMenu * menu);
-		LayerToolsBox * get_layer_tools_box();
+		LayerToolsBox * get_layer_tools_box(void);
+		StatusBar * get_statusbar(void);
 
 		SlavGPS::LayersPanel * layers_panel = NULL;
 		SlavGPS::Viewport * viewport = NULL;
 		bool modified = false;
-		StatusBar * status_bar = NULL;
+
 
 		void pan_click(QMouseEvent * event);
 		void pan_move(QMouseEvent * event);
@@ -164,6 +165,7 @@ namespace SlavGPS {
 		QMenuBar * menu_bar = NULL;
 		QToolBar * toolbar = NULL;
 		QDockWidget * panel_dock = NULL;
+		StatusBar * status_bar = NULL;
 
 		QMenu * menu_file = NULL;
 		QMenu * menu_edit = NULL;

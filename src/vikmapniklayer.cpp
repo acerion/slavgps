@@ -838,8 +838,7 @@ void LayerMapnik::draw(Viewport * viewport)
 	}
 
 	if (viewport->get_drawmode() != VIK_VIEWPORT_DRAWMODE_MERCATOR) {
-		vik_statusbar_set_message(this->get_window()->get_statusbar(),
-					  VIK_STATUSBAR_INFO, _("Mapnik Rendering must be in Mercator mode"));
+		this->get_window()->get_statusbar()->set_message(StatusBarField::INFO, _("Mapnik Rendering must be in Mercator mode"));
 		return;
 	}
 

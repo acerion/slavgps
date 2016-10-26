@@ -2107,7 +2107,7 @@ void LayerTRW::set_statusbar_msg_info_trkpt(Trackpoint * tp)
 	}
 #ifdef K
 	char * msg = vu_trackpoint_formatted_message(statusbar_format_code, tp, tp_prev, selected_track, NAN);
-	this->get_window()->status_bar->set_message(StatusBarField::INFO, QString(msg));
+	this->get_window()->get_statusbar()->set_message(StatusBarField::INFO, QString(msg));
 	free(msg);
 #endif
 
@@ -2150,7 +2150,7 @@ void LayerTRW::set_statusbar_msg_info_wpt(Waypoint * wp)
 	} else {
 		msg = g_strdup_printf(_("%s | %s %s"), tmp_buf1, lat, lon);
 	}
-	this->get_window()->status_bar->set_message(StatusBarField::INFO, QString(msg));
+	this->get_window()->get_statusbar()->set_message(StatusBarField::INFO, QString(msg));
 	free(lat);
 	free(lon);
 	free(msg);
@@ -2170,7 +2170,7 @@ bool LayerTRW::selected(SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeI
 	this->cancel_current_tp(false);
 
 	/* Clear statusbar. */
-	this->get_window()->status_bar->set_message(StatusBarField::INFO, "");
+	this->get_window()->get_statusbar()->set_message(StatusBarField::INFO, "");
 
 	switch (type)	{
 	case TreeItemType::LAYER:
@@ -5841,8 +5841,8 @@ void LayerTRW::uniquify_tracks(LayersPanel * panel, std::unordered_map<sg_uid_t,
 		if (!trk) {
 			/* Broken :( */
 			fprintf(stderr, "CRITICAL: Houston, we've had a problem.\n");
-			this->get_window()->status_bar->set_message(StatusBarField::INFO,
-								    _("Internal Error in LayerTRW::uniquify_tracks"));
+			this->get_window()->get_statusbar()->set_message(StatusBarField::INFO,
+									 _("Internal Error in LayerTRW::uniquify_tracks"));
 			return;
 		}
 
@@ -6144,7 +6144,7 @@ void LayerTRW::uniquify_waypoints(LayersPanel * panel)
 		if (!wp) {
 			/* Broken :( */
 			fprintf(stderr, "CRITICAL: Houston, we've had a problem.\n");
-			this->get_window()->status_bar->set_message(StatusBarField::INFO,
+			this->get_window()->get_statusbar()->set_message(StatusBarField::INFO,
 						  _("Internal Error in uniquify_waypoints"));
 			return;
 		}
