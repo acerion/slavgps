@@ -1752,11 +1752,11 @@ LayerTool * tool_extended_route_finder_create(Window * window, Viewport * viewpo
 	layer_tool->layer_type = LayerType::TRW;
 	layer_tool->id_string = QString("ExtendedRouteFinder");
 
-	layer_tool->radioActionEntry.stock_id = strdup("vik-icon-Route Finder");
-	layer_tool->radioActionEntry.label = strdup(N_("Route &Finder"));
+	layer_tool->radioActionEntry.stock_id    = strdup(":/icons/layer_tool/trw_find_route_18.png");
+	layer_tool->radioActionEntry.label       = strdup(N_("Route &Finder"));
 	layer_tool->radioActionEntry.accelerator = strdup("<control><shift>F");
-	layer_tool->radioActionEntry.tooltip = strdup(N_("Route Finder"));
-	layer_tool->radioActionEntry.value = 0;
+	layer_tool->radioActionEntry.tooltip     = strdup(N_("Route Finder"));
+	layer_tool->radioActionEntry.value       = 0;
 
 	layer_tool->click = (VikToolMouseFunc) tool_extended_route_finder_click_cb;
 	layer_tool->move = (VikToolMouseMoveFunc) tool_new_track_move_cb;   /* Reuse these track methods on a route. */
@@ -1923,11 +1923,11 @@ LayerTool * tool_show_picture_create(Window * window, Viewport * viewport)
 	layer_tool->layer_type = LayerType::TRW;
 	layer_tool->id_string = QString("ShowPicture");
 
-	layer_tool->radioActionEntry.stock_id = strdup("vik-icon-Show Picture");
-	layer_tool->radioActionEntry.label = strdup(N_("Show P&icture"));
+	layer_tool->radioActionEntry.stock_id    = strdup(":/icons/layer_tool/trw_show_picture_18.png");
+	layer_tool->radioActionEntry.label       = strdup(N_("Show P&icture"));
 	layer_tool->radioActionEntry.accelerator = strdup("<control><shift>I");
-	layer_tool->radioActionEntry.tooltip = strdup(N_("Show Picture"));
-	layer_tool->radioActionEntry.value = 0;
+	layer_tool->radioActionEntry.tooltip     = strdup(N_("Show Picture"));
+	layer_tool->radioActionEntry.value       = 0;
 
 	layer_tool->click = (VikToolMouseFunc) tool_show_picture_click_cb;
 
