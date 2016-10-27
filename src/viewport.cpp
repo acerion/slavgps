@@ -149,6 +149,8 @@ Viewport::Viewport(Window * parent) : QWidget((QWidget *) parent)
 {
 	this->window = parent;
 
+	this->installEventFilter(this);
+
 	this->setMinimumSize(200, 300);
 	this->setMaximumSize(2700, 2700);
 
@@ -1672,10 +1674,11 @@ void Viewport::draw_arc(GdkGC * gc, bool filled, int x, int y, int width, int he
 
 
 
-void Viewport::draw_polygon(GdkGC * gc, bool filled, QPointF * points, int npoints)
+void Viewport::draw_polygon(QPen const & pen, QPoint const * points, int npoints, bool filled) /* TODO: handle 'filled' arg. */
 {
-	//this->qpainter->drawPoints(points, npoints);
-	//gdk_draw_polygon(this->scr_buffer, gc, filled, points, npoints);
+	QPainter painter(this->scr_buffer);
+	painter.setPen(pen);
+	painter.drawPolygon(points, npoints);
 }
 
 
@@ -2197,6 +2200,26 @@ void Viewport::mousePressEvent(QMouseEvent * event)
 
 	event->accept();
 }
+
+
+
+
+bool Viewport::eventFilter(QObject * object, QEvent * event)
+{
+	if (event->type() == QEvent::MouseButtonDblClick) {
+		QMouseEvent * m = (QMouseEvent *) event;
+		qDebug() << "II: Viewport: mouse DOUBLE CLICK event, button" << (int) m->button();
+
+		if (m->button() == Qt::LeftButton) {
+			this->window->get_layer_tools_box()->double_click(m);
+			m->accept();
+			return true; /* Eat event. */
+		}
+	}
+	/* Standard event processing. */
+	return false;
+}
+
 
 
 

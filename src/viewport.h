@@ -88,7 +88,7 @@ namespace SlavGPS {
 
 		void paintEvent(QPaintEvent * event);
 		void resizeEvent(QResizeEvent * event);
-		void mousePressEvent(QMouseEvent * event);
+		void mousePressEvent(QMouseEvent * event); /* Double click is handled through event filter. */
 		void mouseMoveEvent(QMouseEvent * event);
 		void mouseReleaseEvent(QMouseEvent * event);
 		void wheelEvent(QWheelEvent * event);
@@ -114,7 +114,7 @@ namespace SlavGPS {
 		void fill_rectangle(const QColor & color, int x, int y, int width, int height);
 		void draw_string(GdkFont * font, GdkGC * gc, int x1, int y1, char const * string);
 		void draw_arc(GdkGC * gc, bool filled, int x, int y, int width, int height, int angle1, int angle2);
-		void draw_polygon(GdkGC * gc, bool filled, QPointF * points, int npoints);
+		void draw_polygon(QPen const & pen, QPoint const * points, int npoints, bool filled);
 		void draw_layout(GdkGC * gc, int x, int y, PangoLayout * layout);
 		void draw_pixbuf(GdkPixbuf * pixbuf, int src_x, int src_y, int dest_x, int dest_y, int region_width, int region_height);
 #endif
@@ -331,6 +331,9 @@ namespace SlavGPS {
 
 	public slots:
 		bool configure_cb(void);
+
+	protected:
+	bool eventFilter(QObject * object, QEvent * event);
 	};
 
 
