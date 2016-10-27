@@ -727,7 +727,6 @@ void LayerDEM::draw_dem(Viewport * viewport, DEM * dem)
 						change = this->max_elev;
 					}
 
-					// void Viewport::draw_rectangle(Viewport * viewport, GdkGC *gc, bool filled, int x1, int y1, int x2, int y2);
 					int idx = (int)floor(((change - this->min_elev)/(this->max_elev - this->min_elev))*(DEM_N_GRADIENT_COLORS-2))+1;
 					//fprintf(stderr, "VIEWPORT: filling rectangle with gradient (%s:%d)\n", __FUNCTION__, __LINE__);
 					viewport->fill_rectangle(*this->gradients[idx], box_x, box_y, box_width, box_height);
@@ -879,7 +878,7 @@ void draw_loaded_dem_box(Viewport * viewport)
 
 	fprintf(stderr, "%s:%d: drawing rectangle\n", __FUNCTION__, __LINE__);
 	viewport->draw_rectangle(gtk_widget_get_style(GTK_WIDGET(viewport->vvp))->black_gc,
-				 false, x2, y1, x1-x2, y2-y1);
+				 x2, y1, x1-x2, y2-y1);
 	return;
 }
 #endif
@@ -1151,7 +1150,7 @@ static void srtm_draw_existence(Viewport * viewport)
 				}
 
 				fprintf(stderr, "DEM: %s:%d: drawing existence rectangle for %s\n", __FUNCTION__, __LINE__, buf);
-				viewport->draw_rectangle(pen, false, x1, y2, x2-x1, y1-y2);
+				viewport->draw_rectangle(pen, x1, y2, x2-x1, y1-y2);
 			}
 		}
 	}
@@ -1246,7 +1245,7 @@ static void dem24k_draw_existence(Viewport * viewport)
 
 				fprintf(stderr, "%s:%d: drawing rectangle\n", __FUNCTION__, __LINE__);
 				viewport->draw_rectangle(gtk_widget_get_style(GTK_WIDGET(viewport->vvp))->black_gc,
-							 false, x1, y2, x2-x1, y1-y2);
+							 x1, y2, x2-x1, y1-y2);
 			}
 		}
 	}

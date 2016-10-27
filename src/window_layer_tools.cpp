@@ -606,8 +606,8 @@ static void draw_ruler(Viewport * viewport, QPixmap * pixmap, QPen & pen, int x1
 		painter.drawText(x1-5, y1-CR-3*dist-8, "N");
 	}
 #if 1
-	//gdk_draw_rectangle(d, labgc, true, (x)-2, (y)-1, (w)+4, (h)+1);
-	//gdk_draw_rectangle(d, gc, false, (x)-2, (y)-1, (w)+4, (h)+1);
+	// fill_rectangle(d, labgc, (x)-2, (y)-1, (w)+4, (h)+1);
+	// draw_rectangle(d, gc, (x)-2, (y)-1, (w)+4, (h)+1);
 	#define LABEL(x, y, w, h, text) {				\
 		painter.drawText((x), (y), text); }
 #endif
@@ -1110,7 +1110,7 @@ static VikLayerToolFuncStatus zoomtool_move(Layer * layer, QMouseEvent * event, 
 		}
 
 		/* Draw the box. */
-		gdk_draw_rectangle(tool->zoom->pixmap, gtk_widget_get_style(tool->window->viewport->get_toolkit_widget())->black_gc, false, xx, yy, width, height);
+		draw_rectangle(tool->zoom->pixmap, gtk_widget_get_style(tool->window->viewport->get_toolkit_widget())->black_gc, xx, yy, width, height);
 
 		/* Only actually draw when there's time to do so. */
 		if (draw_buf_done) {

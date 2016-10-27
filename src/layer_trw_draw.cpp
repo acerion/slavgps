@@ -545,9 +545,7 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 		if (dp->highlight) {
 			/* Draw all tracks of the layer in special colour.
 			   NB this supercedes the drawmode. */
-#ifdef K
-			main_pen = dp->viewport->get_gc_highlight();
-#endif
+			main_pen = dp->viewport->get_highlight_pen();
 			drawing_highlight = true;
 		}
 
@@ -659,9 +657,8 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 			    && ! draw_track_outline
 			    && std::next(iter) != trk->trackpointsB->end()
 			    && (*std::next(iter))->timestamp - (*iter)->timestamp > dp->trw->stop_length) {
-#ifdef K
-				dp->viewport->draw_arc(dp->trw->track_pens[VIK_TRW_LAYER_TRACK_GC_STOP], true, x-(3*tp_size), y-(3*tp_size), 6*tp_size, 6*tp_size, 0, 360*64);
-#endif
+
+				dp->viewport->draw_arc(dp->trw->track_pens[VIK_TRW_LAYER_TRACK_GC_STOP], x-(3*tp_size), y-(3*tp_size), 6*tp_size, 6*tp_size, 0, 360, true);
 			}
 
 			if (use_prev_xy && x == prev_x && y == prev_y) {
@@ -682,12 +679,10 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 
 				if (std::next(iter) != trk->trackpointsB->end()) {
 					/* Regular point - draw 2x square. */
-					dp->viewport->draw_rectangle(main_pen, true, x-tp_size, y-tp_size, 2*tp_size, 2*tp_size);
+					dp->viewport->fill_rectangle(main_pen.color(), x-tp_size, y-tp_size, 2*tp_size, 2*tp_size);
 				} else {
-#ifdef K
 					/* Final point - draw 4x circle. */
-					dp->viewport->draw_arc(main_pen, true, x-(2*tp_size), y-(2*tp_size), 4*tp_size, 4*tp_size, 0, 360*64);
-#endif
+					dp->viewport->draw_arc(main_pen, x-(2*tp_size), y-(2*tp_size), 4*tp_size, 4*tp_size, 0, 360, true);
 				}
 			}
 
@@ -889,9 +884,9 @@ int trw_layer_draw_image(Waypoint * wp, int x, int y, DrawingParams * dp)
 			if (dp->highlight) {
 				/* Highlighted - so draw a little border around the chosen one
 				   single line seems a little weak so draw 2 of them. */
-				dp->viewport->draw_rectangle(dp->viewport->get_gc_highlight(), false,
+				dp->viewport->draw_rectangle(dp->viewport->get_highlight_pen(),
 							    x - (w / 2) - 1, y - (h / 2) - 1, w + 2, h + 2);
-				dp->viewport->draw_rectangle(dp->viewport->get_gc_highlight(), false,
+				dp->viewport->draw_rectangle(dp->viewport->get_highlight_pen(),
 							    x - (w / 2) - 2, y - (h / 2) - 2, w + 4, h + 4);
 			}
 			dp->viewport->draw_pixbuf(pixbuf, 0, 0, x - (w / 2), y - (h / 2), w, h);
@@ -908,6 +903,10 @@ int trw_layer_draw_image(Waypoint * wp, int x, int y, DrawingParams * dp)
 
 void trw_layer_draw_symbol(Waypoint * wp, int x, int y, DrawingParams * dp)
 {
+#ifndef K
+	dp->trw->waypoint_pen.setColor(QColor("orange"));
+#endif
+
 #ifdef K
 	if (dp->trw->wp_draw_symbols && wp->symbol && wp->symbol_pixbuf) {
 		dp->viewport->draw_pixbuf(wp->symbol_pixbuf, 0, 0, x - gdk_pixbuf_get_width(wp->symbol_pixbuf)/2, y - gdk_pixbuf_get_height(wp->symbol_pixbuf)/2, -1, -1);
@@ -916,56 +915,36 @@ void trw_layer_draw_symbol(Waypoint * wp, int x, int y, DrawingParams * dp)
 		if (wp == dp->trw->current_wp) {
 		switch (dp->trw->wp_symbol) {
 		case WP_SYMBOL_FILLED_SQUARE:
-			dp->viewport->draw_rectangle(dp->trw->waypoint_pen, true, x - (dp->trw->wp_size), y - (dp->trw->wp_size), dp->trw->wp_size*2, dp->trw->wp_size*2);
+			dp->viewport->fill_rectangle(dp->trw->waypoint_pen.color(), x - (dp->trw->wp_size), y - (dp->trw->wp_size), dp->trw->wp_size*2, dp->trw->wp_size*2);
 			break;
 		case WP_SYMBOL_SQUARE:
-			dp->viewport->draw_rectangle(dp->trw->waypoint_pen, false, x - (dp->trw->wp_size), y - (dp->trw->wp_size), dp->trw->wp_size*2, dp->trw->wp_size*2);
+			dp->viewport->draw_rectangle(dp->trw->waypoint_pen, x - (dp->trw->wp_size), y - (dp->trw->wp_size), dp->trw->wp_size*2, dp->trw->wp_size*2);
 			break;
-#ifdef K
 		case WP_SYMBOL_CIRCLE:
-			dp->viewport->draw_arc(dp->trw->waypoint_pen, true, x - dp->trw->wp_size, y - dp->trw->wp_size, dp->trw->wp_size, dp->trw->wp_size, 0, 360*64);
+			dp->viewport->draw_arc(dp->trw->waypoint_pen, x - dp->trw->wp_size, y - dp->trw->wp_size, dp->trw->wp_size, dp->trw->wp_size, 0, 360, true);
 			break;
-#endif
 		case WP_SYMBOL_X:
 			dp->viewport->draw_line(dp->trw->waypoint_pen, x - dp->trw->wp_size*2, y - dp->trw->wp_size*2, x + dp->trw->wp_size*2, y + dp->trw->wp_size*2);
 			dp->viewport->draw_line(dp->trw->waypoint_pen, x - dp->trw->wp_size*2, y + dp->trw->wp_size*2, x + dp->trw->wp_size*2, y - dp->trw->wp_size*2);
 		default:
-
-#ifndef K
-			QPen pen = QPen(QColor("orange"));
-			pen.setWidth(1);
-			dp->viewport->draw_line(pen, x-dp->trw->wp_size, y-dp->trw->wp_size, x+dp->trw->wp_size, y+dp->trw->wp_size);
-			dp->viewport->draw_line(pen, x-dp->trw->wp_size, y+dp->trw->wp_size, x+dp->trw->wp_size, y-dp->trw->wp_size);
-#endif
-
 			break;
 		}
 	} else {
 		switch (dp->trw->wp_symbol) {
 		case WP_SYMBOL_FILLED_SQUARE:
-			dp->viewport->draw_rectangle(dp->trw->waypoint_pen, true, x - dp->trw->wp_size/2, y - dp->trw->wp_size/2, dp->trw->wp_size, dp->trw->wp_size);
+			dp->viewport->fill_rectangle(dp->trw->waypoint_pen.color(), x - dp->trw->wp_size/2, y - dp->trw->wp_size/2, dp->trw->wp_size, dp->trw->wp_size);
 			break;
 		case WP_SYMBOL_SQUARE:
-			dp->viewport->draw_rectangle(dp->trw->waypoint_pen, false, x - dp->trw->wp_size/2, y - dp->trw->wp_size/2, dp->trw->wp_size, dp->trw->wp_size);
+			dp->viewport->draw_rectangle(dp->trw->waypoint_pen, x - dp->trw->wp_size/2, y - dp->trw->wp_size/2, dp->trw->wp_size, dp->trw->wp_size);
 			break;
-#ifdef K
 		case WP_SYMBOL_CIRCLE:
-			dp->viewport->draw_arc(dp->trw->waypoint_pen, true, x-dp->trw->wp_size/2, y-dp->trw->wp_size/2, dp->trw->wp_size, dp->trw->wp_size, 0, 360*64);
+			dp->viewport->draw_arc(dp->trw->waypoint_pen, x-dp->trw->wp_size/2, y-dp->trw->wp_size/2, dp->trw->wp_size, dp->trw->wp_size, 0, 360, true);
 			break;
-#endif
 		case WP_SYMBOL_X:
 			dp->viewport->draw_line(dp->trw->waypoint_pen, x-dp->trw->wp_size, y-dp->trw->wp_size, x+dp->trw->wp_size, y+dp->trw->wp_size);
 			dp->viewport->draw_line(dp->trw->waypoint_pen, x-dp->trw->wp_size, y+dp->trw->wp_size, x+dp->trw->wp_size, y-dp->trw->wp_size);
 			break;
 		default:
-
-#ifndef K
-			QPen pen = QPen(QColor("red"));
-			pen.setWidth(1);
-			dp->viewport->draw_line(pen, x-dp->trw->wp_size, y-dp->trw->wp_size, x+dp->trw->wp_size, y+dp->trw->wp_size);
-			dp->viewport->draw_line(pen, x-dp->trw->wp_size, y+dp->trw->wp_size, x+dp->trw->wp_size, y-dp->trw->wp_size);
-#endif
-
 			break;
 		}
 	}
@@ -992,8 +971,9 @@ void trw_layer_draw_label(Waypoint * wp, int x, int y, DrawingParams * dp)
 		pango_layout_set_text(dp->trw->wplabellayout, wp->name, -1);
 	}
 	free(wp_label_markup);
+#endif
 
-
+#ifdef K
 	int label_x, label_y;
 	int width, height;
 	pango_layout_get_pixel_size(dp->trw->wplabellayout, &width, &height);
@@ -1003,16 +983,22 @@ void trw_layer_draw_label(Waypoint * wp, int x, int y, DrawingParams * dp)
 	} else {
 		label_y = y - dp->trw->wp_size - height - 2;
 	}
-#ifdef K
-	/* If highlight mode on, then draw background text in highlight colour */
+#else
+	int label_x = x;
+	int label_y = y;
+	int width = 0;
+	int height = 0;
+	dp->trw->waypoint_text_pen = QPen(Qt::blue);
+#endif
+
 	if (dp->highlight) {
-		dp->viewport->draw_rectangle(dp->viewport->get_gc_highlight(), true, label_x - 1, label_y-1,width+2,height+2);
+		dp->viewport->fill_rectangle(dp->viewport->get_highlight_pen().color(), label_x - 1, label_y-1,width+2,height+2);
 	} else {
-		dp->viewport->draw_rectangle(dp->trw->waypoint_bg_pen, true, label_x - 1, label_y-1,width+2,height+2);
+		dp->viewport->fill_rectangle(dp->trw->waypoint_bg_pen.color(), label_x - 1, label_y-1,width+2,height+2);
 	}
-	dp->viewport->draw_layout(dp->trw->waypoint_text_pen, label_x, label_y, dp->trw->wplabellayout);
-#endif
-#endif
+	/* TODO: use correct font size: dp->trw->wp_fsize_str. */
+	dp->viewport->draw_text(QFont("Arial", 10), dp->trw->waypoint_text_pen, label_x, label_y, QString(wp->name));
+
 	return;
 }
 

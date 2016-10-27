@@ -169,10 +169,11 @@ static void datasource_gc_draw_circle(datasource_gc_widgets_t *widgets)
 {
 	double lat, lon;
 	if (widgets->circle_onscreen) {
-		widgets->viewport->draw_arc(widgets->circle_gc, false,
+		widgets->viewport->draw_arc(widgets->circle_gc,
 					    widgets->circle_x - widgets->circle_width/2,
 					    widgets->circle_y - widgets->circle_width/2,
-					    widgets->circle_width, widgets->circle_width, 0, 360*64);
+					    widgets->circle_width, widgets->circle_width, 0, 360
+					    false);
 	}
 	/* Calculate widgets circle_x and circle_y. */
 	/* Split up lat,lon into lat and lon. */
@@ -203,10 +204,11 @@ static void datasource_gc_draw_circle(datasource_gc_widgets_t *widgets)
 			widgets->circle_width = gtk_spin_button_get_value_as_float (GTK_SPIN_BUTTON(widgets->miles_radius_spin))
 				* METERSPERMILE * pixels_per_meter * 2;
 
-			widgets->viewport->draw_arc(widgets->circle_gc, false,
+			widgets->viewport->draw_arc(widgets->circle_gc,
 						    widgets->circle_x - widgets->circle_width/2,
 						    widgets->circle_y - widgets->circle_width/2,
-						    widgets->circle_width, widgets->circle_width, 0, 360*64);
+						    widgets->circle_width, widgets->circle_width, 0, 360,
+						    false);
 
 			widgets->circle_onscreen = true;
 		} else {
@@ -308,10 +310,11 @@ static void datasource_gc_get_process_options(datasource_gc_widgets_t *widgets, 
 static void datasource_gc_cleanup(datasource_gc_widgets_t *widgets)
 {
 	if (widgets->circle_onscreen) {
-		widgets->viewport->draw_arc(widgets->circle_gc, false,
+		widgets->viewport->draw_arc(widgets->circle_gc,
 					    widgets->circle_x - widgets->circle_width/2,
 					    widgets->circle_y - widgets->circle_width/2,
-					    widgets->circle_width, widgets->circle_width, 0, 360*64);
+					    widgets->circle_width, widgets->circle_width, 0, 360,
+					    false);
 		widgets->viewport->sync();
 	}
 	free(widgets);

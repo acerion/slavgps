@@ -1598,8 +1598,8 @@ void LayerGPS::realtime_tracking_draw(Viewport * viewport)
 		//QPen const & pen, QPoint const * points, int npoints, bool filled
 		viewport->draw_polygon(this->realtime_track_bg_gc, trian_bg, 3, true);
 		viewport->draw_polygon(this->realtime_track_gc, trian, 3, true);
-		viewport->draw_rectangle((this->realtime_fix.fix.mode > MODE_2D) ? this->realtime_track_pt2_gc : this->realtime_track_pt1_gc,
-					true, x-2, y-2, 4, 4);
+		viewport->fill_rectangle((this->realtime_fix.fix.mode > MODE_2D) ? this->realtime_track_pt2_gc : this->realtime_track_pt1_gc,
+					 x-2, y-2, 4, 4);
 		//this->realtime_track_pt_gc = (this->realtime_track_pt_gc == this->realtime_track_pt1_gc) ? this->realtime_track_pt2_gc : this->realtime_track_pt1_gc;
 	}
 }

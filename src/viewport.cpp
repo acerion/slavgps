@@ -137,7 +137,7 @@ double Viewport::calculate_utm_zone_width()
 
 
 
-QColor * Viewport::get_background_gdkcolor()
+QColor * Viewport::get_background_qcolor()
 {
 	return new QColor(this->background_color);
 }
@@ -238,16 +238,6 @@ Viewport::~Viewport()
 	delete this->centers;
 	delete this->scr_buffer;
 	delete this->snapshot_buffer;
-
-#ifndef SLAVGPS_QT
-	if (this->background_gc) {
-		g_object_unref(G_OBJECT (this->background_gc));
-	}
-
-	if (this->highlight_gc) {
-		g_object_unref(G_OBJECT (this->highlight_gc));
-	}
-#endif
 }
 
 
@@ -270,23 +260,22 @@ char const * Viewport::get_background_color()
 void Viewport::set_background_color(char const * colorname)
 {
 	this->background_color.setNamedColor(colorname);
-	this->background_gc->setColor(this->background_color);
+	this->background_pen.setColor(this->background_color);
 }
 
 
 
 
-void Viewport::set_background_gdkcolor(QColor * color)
+void Viewport::set_background_color(QColor * color)
 {
-	assert (this->background_gc);
 	this->background_color = *color;
-	this->background_gc->setColor(this->background_color);
+	this->background_pen.setColor(this->background_color);
 }
 
 
 
 
-QColor * Viewport::get_highlight_gdkcolor()
+QColor * Viewport::get_highlight_qcolor()
 {
 	return new QColor(this->highlight_color);
 }
@@ -310,27 +299,25 @@ const char * Viewport::get_highlight_color()
 
 void Viewport::set_highlight_color(char const * colorname)
 {
-	assert (this->highlight_gc);
 	this->highlight_color.setNamedColor(colorname);
-	this->highlight_gc->setColor(this->highlight_color);
+	this->highlight_pen.setColor(this->highlight_color);
 }
 
 
 
 
-void Viewport::set_highlight_gdkcolor(QColor * color)
+void Viewport::set_highlight_qcolor(QColor * color)
 {
-	assert (this->highlight_gc);
 	this->highlight_color = *color;
-	this->highlight_gc->setColor(*color);
+	this->highlight_pen.setColor(*color);
 }
 
 
 
 
-QPen * Viewport::get_gc_highlight()
+QPen Viewport::get_highlight_pen()
 {
-	return highlight_gc;
+	return highlight_pen;
 }
 
 
@@ -339,7 +326,7 @@ QPen * Viewport::get_gc_highlight()
 void Viewport::set_highlight_thickness(int width)
 {
 	/* Otherwise same GDK_* attributes as in Viewport::new_pen(). */
-	this->highlight_gc->setWidth(width);
+	this->highlight_pen.setWidth(width);
 	// GDK_LINE_SOLID
 	// GDK_CAP_ROUND
 	// GDK_JOIN_ROUND
@@ -487,16 +474,13 @@ bool Viewport::configure()
 	this->snapshot_buffer = new QPixmap(this->size_width, this->size_height);
 	/* TODO trigger. */
 
+	this->background_pen.setColor(DEFAULT_BACKGROUND_COLOR);
+	this->background_pen.setWidth(1);
+	this->set_background_color(DEFAULT_BACKGROUND_COLOR);
 
-	/* This is down here so it can get a GC (necessary?). */
-	if (!this->background_gc) {
-		this->background_gc = this->new_pen(DEFAULT_BACKGROUND_COLOR, 1);
-		this->set_background_color(DEFAULT_BACKGROUND_COLOR);
-	}
-	if (!this->highlight_gc) {
-		this->highlight_gc = this->new_pen(DEFAULT_HIGHLIGHT_COLOR, 1);
-		this->set_highlight_color(DEFAULT_HIGHLIGHT_COLOR);
-	}
+	this->highlight_pen.setColor(DEFAULT_HIGHLIGHT_COLOR);
+	this->highlight_pen.setWidth(1);
+	this->set_highlight_color(DEFAULT_HIGHLIGHT_COLOR);
 
 	return false;
 }
@@ -1612,7 +1596,7 @@ void Viewport::draw_line(const QPen & pen, int x1, int y1, int x2, int y2)
 
 
 
-void Viewport::draw_rectangle(const QPen & pen, bool filled, int x, int y, int width, int height)
+void Viewport::draw_rectangle(const QPen & pen, int x, int y, int width, int height)
 {
 	/* Using 32 as half the default waypoint image size, so this draws ensures the highlight gets done. */
 	if (x > -32 && x < this->size_width + 32 && y > -32 && y < this->size_height + 32) {
@@ -1639,11 +1623,13 @@ void Viewport::fill_rectangle(const QColor & color, int x, int y, int width, int
 
 
 
-void Viewport::draw_string(GdkFont * font, GdkGC * gc, int x1, int y1, const char *string)
+void Viewport::draw_text(QFont const & font, QPen const & pen, int x, int y, QString const & text)
 {
-	if (x1 > -100 && x1 < this->size_width + 100 && y1 > -100 && y1 < this->size_height + 100) {
-		//this->qpainter->drawText(x1, y1, string);
-		//gdk_draw_string(this->scr_buffer, font, gc, x1, y1, string);
+	if (x > -100 && x < this->size_width + 100 && y > -100 && y < this->size_height + 100) {
+		QPainter painter(this->scr_buffer);
+		painter.setPen(pen);
+		painter.setFont(font);
+		painter.drawText(x, y, text);
 	}
 }
 
@@ -1665,9 +1651,11 @@ void Viewport::draw_pixbuf(GdkPixbuf *pixbuf, int src_x, int src_y,
 
 
 
-void Viewport::draw_arc(GdkGC * gc, bool filled, int x, int y, int width, int height, int angle1, int angle2)
+void Viewport::draw_arc(QPen const & pen, int x, int y, int width, int height, int angle1, int angle2, bool filled)
 {
-	//this->qpainter->drawArc(x, y, width, height, angle1, angle2);
+	QPainter painter(this->scr_buffer);
+	painter.setPen(pen);
+	painter.drawArc(x, y, width, height, angle1, angle2 * 16); /* TODO: handle 'filled' argument. */
 }
 
 
@@ -1890,7 +1878,7 @@ void Viewport::snapshot_save()
 	qDebug() << "II: Viewport: save snapshot";
 	*this->snapshot_buffer = *this->scr_buffer;
 #ifndef SLAVGPS_QT
-	gdk_draw_drawable(this->snapshot_buffer, this->background_gc, this->scr_buffer, 0, 0, 0, 0, -1, -1);
+	gdk_draw_drawable(this->snapshot_buffer, this->background_pen, this->scr_buffer, 0, 0, 0, 0, -1, -1);
 #endif
 }
 
@@ -1902,7 +1890,7 @@ void Viewport::snapshot_load()
 	qDebug() << "II: Viewport: load snapshot";
 	*this->scr_buffer = *this->snapshot_buffer;
 #ifndef SLAVGPS_QT
-	gdk_draw_drawable(this->scr_buffer, this->background_gc, this->snapshot_buffer, 0, 0, 0, 0, -1, -1);
+	gdk_draw_drawable(this->scr_buffer, this->background_pen, this->snapshot_buffer, 0, 0, 0, 0, -1, -1);
 #endif
 }
 

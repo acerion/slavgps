@@ -99,25 +99,15 @@ namespace SlavGPS {
 
 
 		/* Drawing primitives. */
-
-#ifndef SLAVGPS_QT
-		void draw_line(GdkGC * gc, int x1, int y1, int x2, int y2);
-		void draw_string(GdkFont * font, GdkGC * gc, int x1, int y1, char const * string);
-		void draw_arc(GdkGC * gc, bool filled, int x, int y, int width, int height, int angle1, int angle2);
-		void draw_polygon(GdkGC * gc, bool filled, GdkPoint * points, int npoints);
-		void draw_layout(GdkGC * gc, int x, int y, PangoLayout * layout);
-
-		void draw_pixbuf(GdkPixbuf * pixbuf, int src_x, int src_y, int dest_x, int dest_y, int region_width, int region_height);
-#else
-		void draw_line(const QPen & pen, int x1, int y1, int x2, int y2);
-		void draw_rectangle(const QPen & pen, bool filled, int x, int y, int width, int height);
-		void fill_rectangle(const QColor & color, int x, int y, int width, int height);
-		void draw_string(GdkFont * font, GdkGC * gc, int x1, int y1, char const * string);
-		void draw_arc(GdkGC * gc, bool filled, int x, int y, int width, int height, int angle1, int angle2);
+		void draw_line(QPen const & pen, int x1, int y1, int x2, int y2);
+		void draw_rectangle(QPen const & pen, int x, int y, int width, int height);
+		void fill_rectangle(QColor const & color, int x, int y, int width, int height);
+		void draw_text(QFont const & font, QPen const & pen, int x, int y, QString const & text);
+		void draw_arc(QPen const & pen, int x, int y, int width, int height, int angle1, int angle2, bool filled);
 		void draw_polygon(QPen const & pen, QPoint const * points, int npoints, bool filled);
 		void draw_layout(GdkGC * gc, int x, int y, PangoLayout * layout);
 		void draw_pixbuf(GdkPixbuf * pixbuf, int src_x, int src_y, int dest_x, int dest_y, int region_width, int region_height);
-#endif
+
 
 		/* Run this before drawing a line. Viewport::draw_line() runs it for you. */
 		static void clip_line(int * x1, int * y1, int * x2, int * y2);
@@ -176,9 +166,9 @@ namespace SlavGPS {
 
 		void set_highlight_color(char const * color);
 		char const * get_highlight_color();
-		QColor * get_highlight_gdkcolor();
-		void set_highlight_gdkcolor(QColor * color);
-		QPen * get_gc_highlight();
+		QColor * get_highlight_qcolor();
+		void set_highlight_qcolor(QColor * color);
+		QPen get_highlight_pen();
 		void set_highlight_thickness(int thickness);
 
 
@@ -186,8 +176,8 @@ namespace SlavGPS {
 		/* Color/graphics context management. */
 		void set_background_color(char const * color);
 		const char * get_background_color();
-		QColor * get_background_gdkcolor();
-		void set_background_gdkcolor(QColor * color);
+		QColor * get_background_qcolor();
+		void set_background_color(QColor * color);
 
 
 		double calculate_utm_zone_width(); // private
@@ -301,10 +291,10 @@ namespace SlavGPS {
 		QPen pen_marks_bg;
 		QPen pen_marks_fg;
 
-		QPen * background_gc = NULL;
+		QPen background_pen;
 		QColor background_color;
 
-		QPen * highlight_gc = NULL;
+		QPen highlight_pen;
 		QColor highlight_color;
 
 

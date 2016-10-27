@@ -583,7 +583,7 @@ static void marker_begin_move(LayerTool * tool, int x, int y)
 	tool->ed->holding = true;
 	tool->ed->gc = tool->viewport->new_gc("black", 2);
 	gdk_gc_set_function(tool->ed->gc, GDK_INVERT);
-	tool->viewport->draw_rectangle(tool->ed->gc, false, x-3, y-3, 6, 6);
+	tool->viewport->draw_rectangle(tool->ed->gc, x-3, y-3, 6, 6);
 	tool->viewport->sync();
 	tool->ed->oldx = x;
 	tool->ed->oldy = y;
@@ -597,8 +597,8 @@ static void marker_begin_move(LayerTool * tool, int x, int y)
 static void marker_moveto(LayerTool * tool, int x, int y)
 {
 #ifdef K
-	tool->viewport->draw_rectangle(tool->ed->gc, false, tool->ed->oldx - 3, tool->ed->oldy - 3, 6, 6);
-	tool->viewport->draw_rectangle(tool->ed->gc, false, x-3, y-3, 6, 6);
+	tool->viewport->draw_rectangle(tool->ed->gc, tool->ed->oldx - 3, tool->ed->oldy - 3, 6, 6);
+	tool->viewport->draw_rectangle(tool->ed->gc, x-3, y-3, 6, 6);
 	tool->ed->oldx = x;
 	tool->ed->oldy = y;
 	tool->ed->moving = true;
@@ -616,7 +616,7 @@ static void marker_moveto(LayerTool * tool, int x, int y)
 static void marker_end_move(LayerTool * tool)
 {
 #ifdef K
-	tool->viewport->draw_rectangle(tool->ed->gc, false, tool->ed->oldx - 3, tool->ed->oldy - 3, 6, 6);
+	tool->viewport->draw_rectangle(tool->ed->gc, tool->ed->oldx - 3, tool->ed->oldy - 3, 6, 6);
 	g_object_unref(tool->ed->gc);
 	tool->ed->holding = false;
 	tool->ed->moving = false;
@@ -1134,7 +1134,7 @@ VikLayerToolFuncStatus LayerTRW::tool_new_track_move(QMouseEvent * event, LayerT
 
 			/* Create a background block to make the text easier to read over the background map. */
 			GdkGC *background_block_gc = tool->viewport->new_gc("#cccccc", 1);
-			gdk_draw_rectangle(pixmap, background_block_gc, true, xd-2, yd-2, wd+4, hd+2);
+			fill_rectangle(pixmap, background_block_gc, xd-2, yd-2, wd+4, hd+2);
 			gdk_draw_layout(pixmap, this->current_track_new_point_pen, xd, yd, pl);
 
 			g_object_unref(G_OBJECT (pl));

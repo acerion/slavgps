@@ -516,7 +516,7 @@ static void save_image_and_draw_graph_marks(GtkWidget * image,
 
 	/* Draw a square blob to indicate where we are on track for this graph. */
 	if ((blob_x >= MARGIN_X) && (blob_x < (PROFILE_WIDTH + MARGIN_X)) && (blob_y < PROFILE_HEIGHT+MARGIN_Y)) {
-		gdk_draw_rectangle(GDK_DRAWABLE(pix), gc, true, blob_x-3, blob_y-3, 6, 6);
+		fill_rectangle(GDK_DRAWABLE(pix), gc, blob_x-3, blob_y-3, 6, 6);
 		*blob_drawn = true;
 	} else {
 		*blob_drawn = false;
@@ -1396,14 +1396,14 @@ static void draw_dem_alt_speed_dist(Track * trk,
 
 				/* consider chunk size. */
 				int y_alt = h2 - ((height * elev)/achunk);
-				gdk_draw_rectangle(GDK_DRAWABLE (pix), alt_gc, true, x - 2, y_alt - 2, 4, 4);
+				fill_rectangle(GDK_DRAWABLE (pix), alt_gc, x - 2, y_alt - 2, 4, 4);
 			}
 		}
 		if (do_speed) {
 			/* This is just a speed indicator - no actual values can be inferred by user. */
 			if (!isnan((*iter)->speed)) {
 				int y_speed = h2 - (height * (*iter)->speed) / max_speed;
-				gdk_draw_rectangle(GDK_DRAWABLE (pix), speed_gc, true, x - 2, y_speed - 2, 4, 4);
+				fill_rectangle(GDK_DRAWABLE (pix), speed_gc, x - 2, y_speed - 2, 4, 4);
 			}
 		}
 	}
@@ -1546,10 +1546,10 @@ static void draw_grid_x_distance(GtkWidget * window, GtkWidget * image, PropWidg
  */
 static void clear_images(GdkPixmap *pix, GtkWidget *window, PropWidgets *widgets)
 {
-	gdk_draw_rectangle(GDK_DRAWABLE(pix), gtk_widget_get_style(window)->bg_gc[0],
-			   true, 0, 0, widgets->profile_width+MARGIN_X, widgets->profile_height+MARGIN_Y);
-	gdk_draw_rectangle(GDK_DRAWABLE(pix), gtk_widget_get_style(window)->mid_gc[0],
-			   true, 0, 0, widgets->profile_width+MARGIN_X, widgets->profile_height+MARGIN_Y);
+	fill_rectangle(GDK_DRAWABLE(pix), gtk_widget_get_style(window)->bg_gc[0],
+		       0, 0, widgets->profile_width+MARGIN_X, widgets->profile_height+MARGIN_Y);
+	fill_rectangle(GDK_DRAWABLE(pix), gtk_widget_get_style(window)->mid_gc[0],
+		       0, 0, widgets->profile_width+MARGIN_X, widgets->profile_height+MARGIN_Y);
 }
 
 
@@ -1691,7 +1691,7 @@ static void draw_elevations(GtkWidget * image, Track * trk, PropWidgets * widget
 	}
 
 	/* Draw border. */
-	gdk_draw_rectangle(GDK_DRAWABLE(pix), gtk_widget_get_style(window)->black_gc, false, MARGIN_X, MARGIN_Y, widgets->profile_width-1, widgets->profile_height-1);
+	draw_rectangle(GDK_DRAWABLE(pix), gtk_widget_get_style(window)->black_gc, MARGIN_X, MARGIN_Y, widgets->profile_width-1, widgets->profile_height-1);
 
 	g_object_unref(G_OBJECT(pix));
 	g_object_unref(G_OBJECT(no_alt_info));
@@ -1730,7 +1730,7 @@ static void draw_speed_dist(Track * trk,
 			/* This is just a speed indicator - no actual values can be inferred by user. */
 			if (!isnan((*iter)->speed)) {
 				int y_speed = height - (height * (*iter)->speed) / max_speed;
-				gdk_draw_rectangle(GDK_DRAWABLE(pix), speed_gc, true, x - 2, y_speed - 2, 4, 4);
+				fill_rectangle(GDK_DRAWABLE(pix), speed_gc, x - 2, y_speed - 2, 4, 4);
 			}
 		}
 	}
@@ -1814,7 +1814,7 @@ static void draw_gradients(GtkWidget * image, Track * trk, PropWidgets * widgets
 	}
 
 	/* Draw border. */
-	gdk_draw_rectangle(GDK_DRAWABLE(pix), gtk_widget_get_style(window)->black_gc, false, MARGIN_X, MARGIN_Y, widgets->profile_width-1, widgets->profile_height-1);
+	draw_rectangle(GDK_DRAWABLE(pix), gtk_widget_get_style(window)->black_gc, MARGIN_X, MARGIN_Y, widgets->profile_width-1, widgets->profile_height-1);
 
 	g_object_unref(G_OBJECT(pix));
 }
@@ -1943,13 +1943,13 @@ static void draw_vt(GtkWidget * image, Track * trk, PropWidgets * widgets)
 
 			int x = MARGIN_X + widgets->profile_width * ((*iter)->timestamp - beg_time) / dur;
 			int y = height - widgets->profile_height * (gps_speed - mins) / (chunkss[widgets->cis] * LINES);
-			gdk_draw_rectangle(GDK_DRAWABLE(pix), gps_speed_gc, true, x - 2, y - 2, 4, 4);
+			fill_rectangle(GDK_DRAWABLE(pix), gps_speed_gc, x - 2, y - 2, 4, 4);
 		}
 		g_object_unref(G_OBJECT(gps_speed_gc));
 	}
 
 	/* Draw border. */
-	gdk_draw_rectangle(GDK_DRAWABLE(pix), gtk_widget_get_style(window)->black_gc, false, MARGIN_X, MARGIN_Y, widgets->profile_width-1, widgets->profile_height-1);
+	draw_rectangle(GDK_DRAWABLE(pix), gtk_widget_get_style(window)->black_gc, MARGIN_X, MARGIN_Y, widgets->profile_width-1, widgets->profile_height-1);
 
 	g_object_unref(G_OBJECT(pix));
 }
@@ -2044,13 +2044,13 @@ static void draw_dt(GtkWidget * image, Track * trk, PropWidgets * widgets)
 		/* This is just an indicator - no actual values can be inferred by user. */
 		for (i = 0; i < widgets->profile_width; i++) {
 			int y_speed = widgets->profile_height - (widgets->profile_height * widgets->speeds[i])/max_speed;
-			gdk_draw_rectangle(GDK_DRAWABLE(pix), dist_speed_gc, true, i+MARGIN_X-2, y_speed-2, 4, 4);
+			fill_rectangle(GDK_DRAWABLE(pix), dist_speed_gc, i+MARGIN_X-2, y_speed-2, 4, 4);
 		}
 		g_object_unref(G_OBJECT(dist_speed_gc));
 	}
 
 	/* Draw border. */
-	gdk_draw_rectangle(GDK_DRAWABLE(pix), gtk_widget_get_style(window)->black_gc, false, MARGIN_X, MARGIN_Y, widgets->profile_width-1, widgets->profile_height-1);
+	draw_rectangle(GDK_DRAWABLE(pix), gtk_widget_get_style(window)->black_gc, MARGIN_X, MARGIN_Y, widgets->profile_width-1, widgets->profile_height-1);
 
 	g_object_unref(G_OBJECT(pix));
 }
@@ -2163,7 +2163,7 @@ static void draw_et(GtkWidget * image, Track * trk, PropWidgets * widgets)
 
 					/* consider chunk size. */
 					int y_alt = h2 - ((widgets->profile_height * elev)/achunk);
-					gdk_draw_rectangle(GDK_DRAWABLE(pix), dem_alt_gc, true, i+MARGIN_X-2, y_alt-2, 4, 4);
+					fill_rectangle(GDK_DRAWABLE(pix), dem_alt_gc, i+MARGIN_X-2, y_alt-2, 4, 4);
 				}
 			}
 		}
@@ -2182,14 +2182,14 @@ static void draw_et(GtkWidget * image, Track * trk, PropWidgets * widgets)
 
 		for (i = 0; i < widgets->profile_width; i++) {
 			int y_speed = widgets->profile_height - (widgets->profile_height * widgets->speeds[i])/max_speed;
-			gdk_draw_rectangle(GDK_DRAWABLE(pix), elev_speed_gc, true, i+MARGIN_X-2, y_speed-2, 4, 4);
+			fill_rectangle(GDK_DRAWABLE(pix), elev_speed_gc, i+MARGIN_X-2, y_speed-2, 4, 4);
 		}
 
 		g_object_unref(G_OBJECT(elev_speed_gc));
 	}
 
 	/* Draw border. */
-	gdk_draw_rectangle(GDK_DRAWABLE(pix), gtk_widget_get_style(window)->black_gc, false, MARGIN_X, MARGIN_Y, widgets->profile_width-1, widgets->profile_height-1);
+	draw_rectangle(GDK_DRAWABLE(pix), gtk_widget_get_style(window)->black_gc, MARGIN_X, MARGIN_Y, widgets->profile_width-1, widgets->profile_height-1);
 
 	g_object_unref(G_OBJECT(pix));
 }
@@ -2300,13 +2300,13 @@ static void draw_sd(GtkWidget * image, Track * trk, PropWidgets * widgets)
 			dist_tp += vik_coord_diff(&(*iter)->coord, &(*std::prev(iter))->coord);
 			int x = MARGIN_X + (widgets->profile_width * dist_tp / dist);
 			int y = height - widgets->profile_height * (gps_speed - mins)/(chunkss[widgets->cisd] * LINES);
-			gdk_draw_rectangle(GDK_DRAWABLE (pix), gps_speed_gc, true, x - 2, y - 2, 4, 4);
+			fill_rectangle(GDK_DRAWABLE (pix), gps_speed_gc, x - 2, y - 2, 4, 4);
 		}
 		g_object_unref(G_OBJECT(gps_speed_gc));
 	}
 
 	/* Draw border. */
-	gdk_draw_rectangle(GDK_DRAWABLE(pix), gtk_widget_get_style(window)->black_gc, false, MARGIN_X, MARGIN_Y, widgets->profile_width-1, widgets->profile_height-1);
+	draw_rectangle(GDK_DRAWABLE(pix), gtk_widget_get_style(window)->black_gc, MARGIN_X, MARGIN_Y, widgets->profile_width-1, widgets->profile_height-1);
 
 	g_object_unref(G_OBJECT(pix));
 }
@@ -2571,10 +2571,10 @@ GtkWidget * vik_trw_layer_create_vtdiag(GtkWidget * window, PropWidgets * widget
 				      gtk_widget_get_style(window)->text_aa_gc };
 		for (i = 0; i < 5; i++) {
 			for (int j = 0; j < 8; j++) {
-				gdk_draw_rectangle(GDK_DRAWABLE(pix), colors[j][i],
-						   true, i*20, j*20, 20, 20);
-				gdk_draw_rectangle(GDK_DRAWABLE(pix), gtk_widget_get_style(window)->black_gc,
-						   false, i*20, j*20, 20, 20);
+				fill_rectangle(GDK_DRAWABLE(pix), colors[j][i],
+					       i*20, j*20, 20, 20);
+				draw_rectangle(GDK_DRAWABLE(pix), gtk_widget_get_style(window)->black_gc,
+					       i*20, j*20, 20, 20);
 			}
 		}
 	}

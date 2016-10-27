@@ -3022,12 +3022,12 @@ static void window_change_coord_mode_cb(GtkAction * old_a, GtkAction * a, Window
 static void set_bg_color(GtkAction * a, Window * window)
 {
 	GtkWidget * colorsd = gtk_color_selection_dialog_new(_("Choose a background color"));
-	GdkColor * color = window->viewport->get_background_gdkcolor();
+	GdkColor * color = window->viewport->get_background_qcolor();
 	gtk_color_selection_set_previous_color(GTK_COLOR_SELECTION(gtk_color_selection_dialog_get_color_selection(GTK_COLOR_SELECTION_DIALOG(colorsd))), color);
 	gtk_color_selection_set_current_color(GTK_COLOR_SELECTION(gtk_color_selection_dialog_get_color_selection(GTK_COLOR_SELECTION_DIALOG(colorsd))), color);
 	if (gtk_dialog_run(GTK_DIALOG(colorsd)) == GTK_RESPONSE_OK) {
 		gtk_color_selection_get_current_color(GTK_COLOR_SELECTION(gtk_color_selection_dialog_get_color_selection(GTK_COLOR_SELECTION_DIALOG(colorsd))), color);
-		window->viewport->set_background_gdkcolor(color);
+		window->viewport->set_background_qcolor(color);
 		window->draw_update();
 	}
 	free(color);
@@ -3040,12 +3040,12 @@ static void set_bg_color(GtkAction * a, Window * window)
 static void set_highlight_color(GtkAction * a, Window * window)
 {
 	GtkWidget * colorsd = gtk_color_selection_dialog_new(_("Choose a track highlight color"));
-	GdkColor * color = window->viewport->get_highlight_gdkcolor();
+	GdkColor * color = window->viewport->get_highlight_qcolor();
 	gtk_color_selection_set_previous_color(GTK_COLOR_SELECTION(gtk_color_selection_dialog_get_color_selection(GTK_COLOR_SELECTION_DIALOG(colorsd))), color);
 	gtk_color_selection_set_current_color(GTK_COLOR_SELECTION(gtk_color_selection_dialog_get_color_selection(GTK_COLOR_SELECTION_DIALOG(colorsd))), color);
 	if (gtk_dialog_run(GTK_DIALOG(colorsd)) == GTK_RESPONSE_OK) {
 		gtk_color_selection_get_current_color(GTK_COLOR_SELECTION(gtk_color_selection_dialog_get_color_selection(GTK_COLOR_SELECTION_DIALOG(colorsd))), color);
-		window->viewport->set_highlight_gdkcolor(color);
+		window->viewport->set_highlight_qcolor(color);
 		window->draw_update();
 	}
 	free(color);
