@@ -317,6 +317,7 @@ namespace SlavGPS {
 		VikToolActivationFunc activate = NULL;
 		VikToolActivationFunc deactivate = NULL;
 		VikToolMouseFunc click = NULL;
+		VikToolMouseFunc double_click = NULL;
 		VikToolMouseMoveFunc move = NULL;
 		VikToolMouseFunc release = NULL;
 		VikToolKeyFunc key_press = NULL; /* Return false if we don't use the key press -- should return false most of the time if we want any shortcuts / UI keybindings to work! use sparingly. */
