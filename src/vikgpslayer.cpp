@@ -1592,11 +1592,12 @@ void LayerGPS::realtime_tracking_draw(Viewport * viewport)
 		int side2bg_y = half_back_bg_y - 11 * heading_sin;
 		int side2bg_x = half_back_bg_x - 11 * heading_cos;
 
-		GdkPoint trian[3] = { { pt_x, pt_y }, {side1_x, side1_y}, {side2_x, side2_y} };
-		GdkPoint trian_bg[3] = { { ptbg_x, pt_y }, {side1bg_x, side1bg_y}, {side2bg_x, side2bg_y} };
+		QPoint trian[3] = { QPoint(pt_x, pt_y), QPoint(side1_x, side1_y), QPoint(side2_x, side2_y) };
+		QPoint trian_bg[3] = { QPoint(ptbg_x, pt_y), QPoint(side1bg_x, side1bg_y), QPoint(side2bg_x, side2bg_y) };
 
-		viewport->draw_polygon(this->realtime_track_bg_gc, true, trian_bg, 3);
-		viewport->draw_polygon(this->realtime_track_gc, true, trian, 3);
+		//QPen const & pen, QPoint const * points, int npoints, bool filled
+		viewport->draw_polygon(this->realtime_track_bg_gc, trian_bg, 3, true);
+		viewport->draw_polygon(this->realtime_track_gc, trian, 3, true);
 		viewport->draw_rectangle((this->realtime_fix.fix.mode > MODE_2D) ? this->realtime_track_pt2_gc : this->realtime_track_pt1_gc,
 					true, x-2, y-2, 4, 4);
 		//this->realtime_track_pt_gc = (this->realtime_track_pt_gc == this->realtime_track_pt1_gc) ? this->realtime_track_pt2_gc : this->realtime_track_pt1_gc;
