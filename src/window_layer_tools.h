@@ -52,6 +52,7 @@ namespace SlavGPS {
 		QCursor const * get_cursor_release(QString & tool_name);
 
 		void click(QMouseEvent * event);
+		void double_click(QMouseEvent * event);
 		void move(QMouseEvent * event);
 		void release(QMouseEvent * event);
 

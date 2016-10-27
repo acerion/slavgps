@@ -134,6 +134,7 @@ static bool tool_edit_waypoint_release_cb(Layer * trw, QMouseEvent * event, Laye
 static bool tool_new_route_click_cb(Layer * trw, QMouseEvent * event, LayerTool * tool);
 
 static bool tool_new_track_click_cb(Layer * trw, QMouseEvent * event, LayerTool * tool);
+static bool tool_new_track_double_click_cb(Layer * trw, QMouseEvent * event, LayerTool * tool);
 static VikLayerToolFuncStatus tool_new_track_move_cb(Layer * trw, QMouseEvent * event, LayerTool * tool);
 static void tool_new_track_release_cb(Layer * trw, QMouseEvent * event, LayerTool * tool);
 static bool tool_new_track_key_press_cb(Layer * trw, GdkEventKey * event, LayerTool * tool);
@@ -868,6 +869,7 @@ LayerTool * tool_new_track_create(Window * window, Viewport * viewport)
 	layer_tool->radioActionEntry.value       = 0;
 
 	layer_tool->click = (VikToolMouseFunc) tool_new_track_click_cb;
+	layer_tool->double_click = (VikToolMouseFunc) tool_new_track_double_click_cb;
 	layer_tool->move = (VikToolMouseMoveFunc) tool_new_track_move_cb;
 	layer_tool->release = (VikToolMouseFunc) tool_new_track_release_cb;
 	layer_tool->key_press = tool_new_track_key_press_cb;
@@ -888,7 +890,7 @@ LayerTool * tool_new_track_create(Window * window, Viewport * viewport)
 typedef struct {
 	LayerTRW * layer;
 	QPixmap * drawable;
-	QPen pen;
+	QPen * pen;
 	QPixmap * pixmap;
 } draw_sync_t;
 
@@ -915,6 +917,7 @@ static int draw_sync(draw_sync_t * data)
 #endif
 		data->layer->draw_sync_done = true;
 	}
+	delete data->pen;
 	free(data);
 	return 0;
 }
@@ -1144,7 +1147,7 @@ VikLayerToolFuncStatus LayerTRW::tool_new_track_move(QMouseEvent * event, LayerT
 		passalong->layer = this;
 		passalong->pixmap = pixmap;
 		passalong->drawable = tool->viewport->scr_buffer;
-		passalong->pen = this->current_track_new_point_pen;
+		passalong->pen = new QPen(this->current_track_new_point_pen);
 
 		double angle;
 		double baseangle;
@@ -1221,7 +1224,6 @@ bool LayerTRW::tool_new_track_key_press(GdkEventKey * event, LayerTool * tool)
  * Common function to handle trackpoint button requests on either a route or a track
  *  . enables adding a point via normal click
  *  . enables removal of last point via right click
- *  . finishing of the track or route via double clicking
  */
 bool LayerTRW::tool_new_track_or_route_click(QMouseEvent * event, Viewport * viewport)
 {
@@ -1246,21 +1248,6 @@ bool LayerTRW::tool_new_track_or_route_click(QMouseEvent * event, Viewport * vie
 		return true;
 	}
 
-#ifdef K
-
-	if (event->type == GDK_2BUTTON_PRESS) {
-		/* Subtract last (duplicate from double click) tp then end. */
-		if (this->current_track && !this->current_track->empty() && this->ct_x1 == this->ct_x2 && this->ct_y1 == this->ct_y2) {
-			/* Undo last, then end. */
-			this->undo_trackpoint_add();
-			this->current_track = NULL;
-		}
-		this->emit_changed();
-		return true;
-	}
-
-#endif
-
 	Trackpoint * tp = new Trackpoint();
 	viewport->screen_to_coord(event->x(), event->y(), &tp->coord);
 
@@ -1282,6 +1269,7 @@ bool LayerTRW::tool_new_track_or_route_click(QMouseEvent * event, Viewport * vie
 		this->current_track->apply_dem_data_last_trackpoint();
 	}
 
+	/* TODO: I think that in current implementation of handling of double click we don't need these fields. */
 	this->ct_x1 = this->ct_x2;
 	this->ct_y1 = this->ct_y2;
 	this->ct_x2 = event->x();
@@ -1326,6 +1314,36 @@ bool LayerTRW::tool_new_track_click(QMouseEvent * event, LayerTool * tool)
 	}
 
 	return this->tool_new_track_or_route_click(event, tool->viewport);
+}
+
+
+
+
+static bool tool_new_track_double_click_cb(Layer * layer, QMouseEvent * event, LayerTool * tool)
+{
+	LayerTRW * trw = (LayerTRW *) layer;
+	if (trw->type != LayerType::TRW) {
+		qDebug() << "II: LayerTRW: New Track tool: handling double click, cond1";
+		return false;
+	}
+
+	if (event->button() != Qt::LeftButton) {
+		qDebug() << "II: LayerTRW: New Track tool: handling double click, cond2";
+		return false;
+	}
+
+	qDebug() << "II: LayerTRW: New Track tool: handling double click" << (bool) trw->current_track << (bool) !trw->current_track->empty() << (bool) (trw->ct_x1 == trw->ct_x2) << (bool) (trw->ct_y1 == trw->ct_y2);
+
+	/* Subtract last (duplicate from double click) tp then end. */
+	if (trw->current_track && !trw->current_track->empty() /*  && trw->ct_x1 == trw->ct_x2 && trw->ct_y1 == trw->ct_y2 */) {
+		qDebug() << "II: LayerTRW: New Track tool: handling double click: undo and end";
+		/* Undo last, then end.
+		   TODO: I think that in current implementation of handling of double click we don't need the undo. */
+		trw->undo_trackpoint_add();
+		trw->current_track = NULL;
+	}
+	trw->emit_changed();
+	return true;
 }
 
 
@@ -1533,7 +1551,7 @@ static bool tool_edit_trackpoint_click_cb(Layer * trw, QMouseEvent * event, Laye
  */
 bool LayerTRW::tool_edit_trackpoint_click(QMouseEvent * event, LayerTool * tool)
 {
-#ifdef K
+
 	TPSearchParams params;
 	params.viewport = tool->viewport;
 	params.x = event->x();
@@ -1572,8 +1590,8 @@ bool LayerTRW::tool_edit_trackpoint_click(QMouseEvent * event, LayerTool * tool)
 		tool->viewport->coord_to_screen(&tp->coord, &x, &y);
 
 		if (current_tr->visible
-		    && abs(x - (int)round(event->x)) < TRACKPOINT_SIZE_APPROX
-		    && abs(y - (int)round(event->y)) < TRACKPOINT_SIZE_APPROX) {
+		    && abs(x - (int)round(event->x())) < TRACKPOINT_SIZE_APPROX
+		    && abs(y - (int)round(event->y())) < TRACKPOINT_SIZE_APPROX) {
 
 			marker_begin_move(tool, event->x(), event->y());
 			return true;
@@ -1618,7 +1636,6 @@ bool LayerTRW::tool_edit_trackpoint_click(QMouseEvent * event, LayerTool * tool)
 		this->emit_changed();
 		return true;
 	}
-#endif
 	/* These aren't the droids you're looking for. */
 	return false;
 }

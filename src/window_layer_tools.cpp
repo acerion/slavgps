@@ -369,6 +369,35 @@ void LayerToolsBox::click(QMouseEvent * event)
 
 
 
+void LayerToolsBox::double_click(QMouseEvent * event)
+{
+	Layer * layer = this->window->layers_panel->get_selected_layer();
+	if (!layer) {
+		qDebug() << "EE: Layer Tools: double click received, no layer";
+		return;
+	}
+
+	qDebug() << "II: Layer Tools: double click received, selected layer" << layer->type_string;
+
+	if (this->active_tool && this->active_tool->double_click) {
+		LayerType ltype = this->active_tool->layer_type;
+		if (ltype == LayerType::NUM_TYPES /* Generic tool. */
+		    || (layer && ltype == layer->type)) { /* Layer-specific tool. */
+
+			qDebug() << "II: Layer Tools: double click received, will pass it to tool" << this->active_tool->id_string << "for layer" << layer->type_string;
+			this->active_tool->viewport->setCursor(*this->active_tool->cursor_click);
+			this->active_tool->double_click(layer, event, this->active_tool);
+		} else {
+			qDebug() << "EE: Layer Tools: double click received, condition 2 failed";
+		}
+	} else {
+		qDebug() << "EE: Layer Tools: double click received, condition 1 failed";
+	}
+}
+
+
+
+
 void LayerToolsBox::move(QMouseEvent * event)
 {
 	fprintf(stderr, "LAYER TOOLS: move received\n");
