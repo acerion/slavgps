@@ -379,9 +379,6 @@ namespace SlavGPS {
 
 
 		/* Callback-related. */
-		bool tool_edit_waypoint_click(QMouseEvent * event, LayerTool * tool);
-		bool tool_edit_waypoint_move(QMouseEvent * event, LayerTool * tool);
-		bool tool_edit_waypoint_release(QMouseEvent * event, LayerTool * tool);
 		bool tool_extended_route_finder_click(QMouseEvent * event, LayerTool * tool);
 		bool tool_extended_route_finder_key_press(GdkEventKey * event, LayerTool * tool);
 		bool tool_show_picture_click(QMouseEvent * event, LayerTool * tool);
