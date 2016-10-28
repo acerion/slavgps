@@ -105,12 +105,13 @@ namespace SlavGPS {
 
 
 	typedef struct {
-		LayerTRW * trw; /* LayerTRW. */
-		bool holding;
-		bool moving;
-		bool is_waypoint; /* Otherwise a track. */
-		GdkGC * gc;
-		int oldx, oldy;
+		LayerTRW * trw = NULL; /* LayerTRW. */
+		bool holding = false;
+		bool moving = false;
+		bool is_waypoint = false; /* Otherwise a track. */
+		QPen * ed_pen = NULL;
+		int oldx = 0;
+		int oldy = 0;
 	} tool_ed_t;
 
 
