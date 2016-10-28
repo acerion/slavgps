@@ -579,16 +579,17 @@ static bool tool_sync_done = true;
 
 static void marker_begin_move(LayerTool * tool, int x, int y)
 {
-#ifdef K
 	tool->ed->holding = true;
-	tool->ed->gc = tool->viewport->new_gc("black", 2);
-	gdk_gc_set_function(tool->ed->gc, GDK_INVERT);
-	tool->viewport->draw_rectangle(tool->ed->gc, x-3, y-3, 6, 6);
+
+	tool->ed->ed_pen = new QPen(QColor("black"));
+	tool->ed->ed_pen->setWidth(2);
+
+	//gdk_gc_set_function(tool->ed->en_pen, GDK_INVERT);
+	tool->viewport->draw_rectangle(*tool->ed->ed_pen, x-3, y-3, 6, 6);
 	tool->viewport->sync();
 	tool->ed->oldx = x;
 	tool->ed->oldy = y;
 	tool->ed->moving = false;
-#endif
 }
 
 
@@ -596,18 +597,16 @@ static void marker_begin_move(LayerTool * tool, int x, int y)
 
 static void marker_moveto(LayerTool * tool, int x, int y)
 {
-#ifdef K
-	tool->viewport->draw_rectangle(tool->ed->gc, tool->ed->oldx - 3, tool->ed->oldy - 3, 6, 6);
-	tool->viewport->draw_rectangle(tool->ed->gc, x-3, y-3, 6, 6);
+	tool->viewport->draw_rectangle(*tool->ed->ed_pen, tool->ed->oldx - 3, tool->ed->oldy - 3, 6, 6);
+	tool->viewport->draw_rectangle(*tool->ed->ed_pen, x-3, y-3, 6, 6);
 	tool->ed->oldx = x;
 	tool->ed->oldy = y;
 	tool->ed->moving = true;
 
 	if (tool_sync_done) {
-		viewport->sync();
+		tool->viewport->sync();
 		tool_sync_done = true;
 	}
-#endif
 }
 
 
@@ -615,12 +614,10 @@ static void marker_moveto(LayerTool * tool, int x, int y)
 
 static void marker_end_move(LayerTool * tool)
 {
-#ifdef K
-	tool->viewport->draw_rectangle(tool->ed->gc, tool->ed->oldx - 3, tool->ed->oldy - 3, 6, 6);
-	g_object_unref(tool->ed->gc);
+	tool->viewport->draw_rectangle(*tool->ed->ed_pen, tool->ed->oldx - 3, tool->ed->oldy - 3, 6, 6);
+	delete tool->ed->ed_pen;
 	tool->ed->holding = false;
 	tool->ed->moving = false;
-#endif
 }
 
 
@@ -659,38 +656,30 @@ LayerTool * tool_edit_waypoint_create(Window * window, Viewport * viewport)
 
 
 
-static bool tool_edit_waypoint_click_cb(Layer * trw, QMouseEvent * event, LayerTool * tool)
+static bool tool_edit_waypoint_click_cb(Layer * layer, QMouseEvent * event, LayerTool * tool)
 {
-	 return ((LayerTRW *) trw)->tool_edit_waypoint_click(event, tool);
-}
+	LayerTRW * trw = (LayerTRW *) layer;
 
-
-
-
-bool LayerTRW::tool_edit_waypoint_click(QMouseEvent * event, LayerTool * tool)
-{
-
-	if (this->type != LayerType::TRW) {
+	if (trw->type != LayerType::TRW) {
 		return false;
 	}
-
 	if (tool->ed->holding) {
 		return true;
 	}
-
-	if (!this->visible || !this->waypoints_visible) {
+#ifdef K
+	if (!trw->visible || !trw->waypoints_visible) {
 		return false;
 	}
-
-	if (this->current_wp && this->current_wp->visible) {
+#endif
+	if (trw->current_wp && trw->current_wp->visible) {
 		/* First check if current WP is within area (other may be 'closer', but we want to move the current). */
 		int x, y;
-		tool->viewport->coord_to_screen(&this->current_wp->coord, &x, &y);
+		tool->viewport->coord_to_screen(&trw->current_wp->coord, &x, &y);
 
 		if (abs(x - (int) round(event->x())) <= WAYPOINT_SIZE_APPROX
 		    && abs(y - (int) round(event->y())) <= WAYPOINT_SIZE_APPROX) {
 			if (event->button() == Qt::RightButton) {
-				this->waypoint_rightclick = true; /* Remember that we're clicking; other layers will ignore release signal. */
+				trw->waypoint_rightclick = true; /* Remember that we're clicking; other layers will ignore release signal. */
 			} else {
 				marker_begin_move(tool, event->x(), event->y());
 			}
@@ -702,38 +691,38 @@ bool LayerTRW::tool_edit_waypoint_click(QMouseEvent * event, LayerTool * tool)
 	params.viewport = tool->viewport;
 	params.x = event->x();
 	params.y = event->y();
-	params.draw_images = this->drawimages;
+	params.draw_images = trw->drawimages;
 	params.closest_wp_uid = 0;
 	params.closest_wp = NULL;
-	LayerTRWc::waypoint_search_closest_tp(this->waypoints, &params);
-	if (this->current_wp && (this->current_wp == params.closest_wp)) {
+	LayerTRWc::waypoint_search_closest_tp(trw->waypoints, &params);
+	if (trw->current_wp && (trw->current_wp == params.closest_wp)) {
 		if (event->button() == Qt::RightButton) {
-			this->waypoint_rightclick = true; /* Remember that we're clicking; other layers will ignore release signal. */
+			trw->waypoint_rightclick = true; /* Remember that we're clicking; other layers will ignore release signal. */
 		} else {
 			marker_begin_move(tool, event->x(), event->y());
 		}
 		return false;
 	} else if (params.closest_wp) {
 		if (event->button() == Qt::RightButton) {
-			this->waypoint_rightclick = true; /* Remember that we're clicking; other layers will ignore release signal. */
+			trw->waypoint_rightclick = true; /* Remember that we're clicking; other layers will ignore release signal. */
 		} else {
-			this->waypoint_rightclick = false;
+			trw->waypoint_rightclick = false;
 		}
 
-		this->tree_view->select_and_expose(this->waypoints_iters.at(params.closest_wp_uid));
+		trw->tree_view->select_and_expose(trw->waypoints_iters.at(params.closest_wp_uid));
 
-		this->current_wp = params.closest_wp;
-		this->current_wp_uid = params.closest_wp_uid;
+		trw->current_wp = params.closest_wp;
+		trw->current_wp_uid = params.closest_wp_uid;
 
 		/* Could make it so don't update if old WP is off screen and new is null but oh well. */
-		this->emit_changed();
+		trw->emit_changed();
 		return true;
 	}
 
-	this->current_wp = NULL;
-	this->current_wp_uid = 0;
-	this->waypoint_rightclick = false;
-	this->emit_changed();
+	trw->current_wp = NULL;
+	trw->current_wp_uid = 0;
+	trw->waypoint_rightclick = false;
+	trw->emit_changed();
 
 	return false;
 }
@@ -741,65 +730,51 @@ bool LayerTRW::tool_edit_waypoint_click(QMouseEvent * event, LayerTool * tool)
 
 
 
-static bool tool_edit_waypoint_move_cb(Layer * trw, QMouseEvent * event, LayerTool * tool)
+static bool tool_edit_waypoint_move_cb(Layer * layer, QMouseEvent * event, LayerTool * tool)
 {
-	return ((LayerTRW *) trw)->tool_edit_waypoint_move(event, tool);
-}
+	LayerTRW * trw = (LayerTRW *) layer;
 
-
-
-
-bool LayerTRW::tool_edit_waypoint_move(QMouseEvent * event, LayerTool * tool)
-{
-	if (this->type != LayerType::TRW) {
+	if (trw->type != LayerType::TRW) {
 		return false;
 	}
 
-	if (tool->ed->holding) {
-		VikCoord new_coord;
-		tool->viewport->screen_to_coord(event->x(), event->y(), &new_coord);
-
-		/* Snap to trackpoint. */
-		if (event->modifiers() & Qt::ControlModifier) {
-			Trackpoint * tp = this->closest_tp_in_five_pixel_interval(tool->viewport, event->x(), event->y());
-			if (tp) {
-				new_coord = tp->coord;
-			}
-		}
-
-		/* Snap to waypoint. */
-		if (event->modifiers() & Qt::ShiftModifier) {
-			Waypoint * wp = this->closest_wp_in_five_pixel_interval(tool->viewport, event->x(), event->y());
-			if (wp && wp != this->current_wp) {
-				new_coord = wp->coord;
-			}
-		}
-
-		{
-			int x, y;
-			tool->viewport->coord_to_screen(&new_coord, &x, &y);
-
-			marker_moveto(tool, x, y);
-		}
-		return true;
+	if (!tool->ed->holding) {
+		return false;
 	}
-	return false;
+
+	VikCoord new_coord;
+	tool->viewport->screen_to_coord(event->x(), event->y(), &new_coord);
+
+
+	if (event->modifiers() & Qt::ControlModifier) { /* Snap to trackpoint. */
+		Trackpoint * tp = trw->closest_tp_in_five_pixel_interval(tool->viewport, event->x(), event->y());
+		if (tp) {
+			new_coord = tp->coord;
+		}
+	} else if (event->modifiers() & Qt::ShiftModifier) { /* Snap to waypoint. */
+		Waypoint * wp = trw->closest_wp_in_five_pixel_interval(tool->viewport, event->x(), event->y());
+		if (wp && wp != trw->current_wp) {
+			new_coord = wp->coord;
+		}
+	} else {
+		; /* No modifiers. */
+	}
+
+	int x, y;
+	tool->viewport->coord_to_screen(&new_coord, &x, &y);
+	marker_moveto(tool, x, y);
+
+	return true;
 }
 
 
 
 
-static bool tool_edit_waypoint_release_cb(Layer * trw, QMouseEvent * event, LayerTool * tool)
+static bool tool_edit_waypoint_release_cb(Layer * layer, QMouseEvent * event, LayerTool * tool)
 {
-	return ((LayerTRW *) trw)->tool_edit_waypoint_release(event, tool);
-}
+	LayerTRW * trw = (LayerTRW *) layer;
 
-
-
-
-bool LayerTRW::tool_edit_waypoint_release(QMouseEvent * event, LayerTool * tool)
-{
-	if (this->type != LayerType::TRW) {
+	if (trw->type != LayerType::TRW) {
 		return false;
 	}
 
@@ -809,7 +784,7 @@ bool LayerTRW::tool_edit_waypoint_release(QMouseEvent * event, LayerTool * tool)
 
 		/* Snap to trackpoint. */
 		if (event->modifiers() & Qt::ControlModifier) {
-			Trackpoint * tp = this->closest_tp_in_five_pixel_interval(tool->viewport, event->x(), event->y());
+			Trackpoint * tp = trw->closest_tp_in_five_pixel_interval(tool->viewport, event->x(), event->y());
 			if (tp) {
 				new_coord = tp->coord;
 			}
@@ -817,32 +792,32 @@ bool LayerTRW::tool_edit_waypoint_release(QMouseEvent * event, LayerTool * tool)
 
 		/* Snap to waypoint. */
 		if (event->modifiers() & Qt::ShiftModifier) {
-			Waypoint * wp = this->closest_wp_in_five_pixel_interval(tool->viewport, event->x(), event->y());
-			if (wp && wp != this->current_wp) {
+			Waypoint * wp = trw->closest_wp_in_five_pixel_interval(tool->viewport, event->x(), event->y());
+			if (wp && wp != trw->current_wp) {
 				new_coord = wp->coord;
 			}
 		}
 
 		marker_end_move(tool);
 
-		this->current_wp->coord = new_coord;
+		trw->current_wp->coord = new_coord;
 
-		this->calculate_bounds_waypoints();
-		this->emit_changed();
+		trw->calculate_bounds_waypoints();
+		trw->emit_changed();
 		return true;
 	}
 	/* PUT IN RIGHT PLACE!!! */
-	if (event->button() == Qt::RightButton && this->waypoint_rightclick) {
+	if (event->button() == Qt::RightButton && trw->waypoint_rightclick) {
 #ifdef K
-		if (this->wp_right_click_menu) {
-			g_object_ref_sink(G_OBJECT(this->wp_right_click_menu));
+		if (trw->wp_right_click_menu) {
+			g_object_ref_sink(G_OBJECT(trw->wp_right_click_menu));
 		}
-		if (this->current_wp) {
-			this->wp_right_click_menu = GTK_MENU (gtk_menu_new());
-			this->sublayer_add_menu_items(this->wp_right_click_menu, NULL, SublayerType::WAYPOINT, this->current_wp_uid, this->waypoints_iters.at(this->current_wp_uid), tool->viewport);
-			gtk_menu_popup(this->wp_right_click_menu, NULL, NULL, NULL, NULL, event->button, gtk_get_current_event_time());
+		if (trw->current_wp) {
+			trw->wp_right_click_menu = GTK_MENU (gtk_menu_new());
+			trw->sublayer_add_menu_items(trw->wp_right_click_menu, NULL, SublayerType::WAYPOINT, trw->current_wp_uid, trw->waypoints_iters.at(trw->current_wp_uid), tool->viewport);
+			gtk_menu_popup(trw->wp_right_click_menu, NULL, NULL, NULL, NULL, event->button, gtk_get_current_event_time());
 		}
-		this->waypoint_rightclick = false;
+		trw->waypoint_rightclick = false;
 #endif
 	}
 	return false;
