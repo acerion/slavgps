@@ -1275,15 +1275,14 @@ bool LayerTRW::tool_new_track_click(QMouseEvent * event, LayerTool * tool)
 	if (event->button() == Qt::LeftButton) {
 		if ((!this->current_track || (this->current_track && this->current_track->is_route))) {
 		char *name = this->new_unique_sublayer_name(SublayerType::TRACK, _("Track"));
+		QString new_name(name);
 		if (a_vik_get_ask_for_create_track_name()) {
-#ifdef K
-			name = a_dialog_new_track(this->get_toolkit_window(), name, false);
-#endif
-			if (!name) {
+			new_name = a_dialog_new_track(this->get_window(), QString(name), false);
+			if (new_name.isEmpty()) {
 				return false;
 			}
 		}
-		this->new_track_create_common(name);
+		this->new_track_create_common(new_name.toUtf8().data());
 		free(name);
 		}
 	}
@@ -1398,15 +1397,15 @@ bool LayerTRW::tool_new_route_click(QMouseEvent * event, LayerTool * tool)
 		|| (this->current_track && !this->current_track->is_route))) {
 
 		char * name = this->new_unique_sublayer_name(SublayerType::ROUTE, _("Route"));
-#ifdef K
+		QString new_name(name);
 		if (a_vik_get_ask_for_create_track_name()) {
-			name = a_dialog_new_track(this->get_toolkit_window(), name, true);
-			if (!name) {
+			new_name = a_dialog_new_track(this->get_window(), new_name, true);
+			if (new_name.isEmpty()) {
 				return false;
 			}
 		}
-#endif
-		this->new_route_create_common(name);
+
+		this->new_route_create_common(new_name.toUtf8().data());
 		free(name);
 	}
 	return this->tool_new_track_or_route_click(event, tool->viewport);

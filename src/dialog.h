@@ -48,6 +48,8 @@ void a_dialog_msg(enum QMessageBox::Icon type, const QString & text, const QStri
 #define a_dialog_warning_msg(text, title) a_dialog_msg(QMessageBox::Warning, text, title)
 #define a_dialog_error_msg(text, title) a_dialog_msg(QMessageBox::Critical, text, title)
 
+QString a_dialog_new_track(QWidget * parent, QString const & default_name, bool is_route);
+
 #if 0
 
 #define a_dialog_info_msg_extra(win,info,extra) a_dialog_msg(win,GTK_MESSAGE_INFO,info,extra)
@@ -66,8 +68,6 @@ void a_dialog_about(GtkWindow *parent);
 /* Okay, everthing below here is an architechtural flaw. */
 bool a_dialog_goto_latlon(GtkWindow *parent, struct LatLon *ll, const struct LatLon *old);
 bool a_dialog_goto_utm(GtkWindow *parent, struct UTM *utm, const struct UTM *old);
-
-char *a_dialog_new_track(GtkWindow *parent, char *default_name, bool is_route);
 
 char *a_dialog_get_date(GtkWindow *parent, const char *title);
 bool a_dialog_yes_or_no(GtkWindow *parent, const char *message, const char *extra);

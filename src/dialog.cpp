@@ -30,6 +30,8 @@
 #include <cstring>
 #include <cctype>
 
+#include <QInputDialog>
+
 #include <glib/gi18n.h>
 
 #include "dialog.h"
@@ -294,48 +296,35 @@ GList *a_dialog_select_from_list(GtkWindow *parent, GList *names, bool multiple_
 
 
 
+#endif
 
-char *a_dialog_new_track(GtkWindow *parent, char *default_name, bool is_route)
+
+
+QString a_dialog_new_track(QWidget * parent, QString const & default_name, bool is_route)
 {
-	GtkWidget *dialog = gtk_dialog_new_with_buttons(is_route ? _("Add Route") : _("Add Track"),
-							parent,
-							(GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
-							GTK_STOCK_CANCEL,
-							GTK_RESPONSE_REJECT,
-							GTK_STOCK_OK,
-							GTK_RESPONSE_ACCEPT,
-							NULL);
-	GtkWidget *label = gtk_label_new(is_route ? _("Route Name:") : _("Track Name:"));
-	GtkWidget *entry = gtk_entry_new();
+	QString text;
+	bool ok;
+	do {
+		text = QInputDialog::getText(parent,
+					     is_route ? QString("Add Route") : QString("Add Track"),
+					     is_route ? QString("Route Name:") : QString("Track Name:"),
+					     QLineEdit::Normal,
+					     QString(default_name), &ok);
 
-	if (default_name) {
-		gtk_entry_set_text(GTK_ENTRY(entry), default_name);
-	}
-
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), label, false, false, 0);
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), entry, false, false, 0);
-
-	g_signal_connect_swapped(entry, "activate", G_CALLBACK(a_dialog_response_accept), GTK_DIALOG(dialog));
-
-	gtk_widget_show(label);
-	gtk_widget_show(entry);
-
-	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
-
-	while (gtk_dialog_run(GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT) {
-		const char *constname = gtk_entry_get_text(GTK_ENTRY(entry));
-		if (*constname == '\0') {
-			a_dialog_info_msg(parent, _("Please enter a name for the track."));
-		} else {
-			char *name = g_strdup(constname);
-			gtk_widget_destroy(dialog);
-			return name;
+		if (ok && text.isEmpty()) {
+			QMessageBox::information(parent,
+						 is_route ? QString("Route Name") : QString("Track Name"),
+						 is_route ? QString("Please enter a name for the route.") : QString("Please enter a name for the track."));
 		}
-	}
-	gtk_widget_destroy(dialog);
-	return NULL;
+
+	} while (ok && text.isEmpty());
+
+	return text;
 }
 
+
+
+#if 0
 
 
 
