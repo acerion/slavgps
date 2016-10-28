@@ -658,15 +658,7 @@ bool TreeView::get_iter_at_pos(GtkTreeIter * iter, int x, int y)
 
 void TreeView::select_and_expose(TreeIndex * index)
 {
-#ifndef SLAVGPS_QT
-	GtkTreeView * tree_view = this->tv_;
-	GtkTreePath * path = gtk_tree_model_get_path(gtk_tree_view_get_model(tree_view), iter);
-
-	gtk_tree_view_expand_to_path(tree_view, path);
-	this->select(iter);
-	gtk_tree_view_scroll_to_cell(tree_view, path, gtk_tree_view_get_expander_column(tree_view), false, 0.0, 0.0);
-	gtk_tree_path_free(path);
-#endif
+	this->setCurrentIndex(*index);
 }
 
 
