@@ -378,22 +378,6 @@ namespace SlavGPS {
 		void verify_thumbnails(void);
 
 
-		/* Callback-related. */
-		bool tool_extended_route_finder_click(QMouseEvent * event, LayerTool * tool);
-		bool tool_extended_route_finder_key_press(GdkEventKey * event, LayerTool * tool);
-		bool tool_show_picture_click(QMouseEvent * event, LayerTool * tool);
-		bool tool_edit_trackpoint_click(QMouseEvent * event, LayerTool * tool);
-		bool tool_edit_trackpoint_move(QMouseEvent *event, LayerTool * tool);
-		bool tool_edit_trackpoint_release(QMouseEvent * event, LayerTool * tool);
-		VikLayerToolFuncStatus tool_new_track_move(QMouseEvent * event, LayerTool * tool);
-		bool tool_new_track_key_press(GdkEventKey *event, LayerTool * tool);
-		bool tool_new_track_click(QMouseEvent * event, LayerTool * tool);
-		bool tool_new_waypoint_click(QMouseEvent * event, LayerTool * tool);
-		bool tool_new_route_click(QMouseEvent * event, LayerTool * tool);
-		void tool_new_track_release(QMouseEvent * event, LayerTool * tool);
-
-
-
 
 		/* This should be private. */
 		void image_cache_free();
