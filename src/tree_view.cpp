@@ -766,15 +766,13 @@ void TreeView::expand(TreeIndex * index)
 
 void TreeView::select(TreeIndex * index)
 {
-#ifndef SLAVGPS_QT
-	gtk_tree_selection_select_iter(gtk_tree_view_get_selection(this->tv_), iter);
-#endif
+	this->setCurrentIndex(*index);
 }
 
 
 
 
-void TreeView::unselect(GtkTreeIter *iter)
+void TreeView::unselect(TreeIndex * index)
 {
 #ifndef SLAVGPS_QT
 	gtk_tree_selection_unselect_iter(gtk_tree_view_get_selection(this->tv_), iter);

@@ -126,7 +126,7 @@ namespace SlavGPS {
 
 		void select(TreeIndex * index);
 		void select_and_expose(TreeIndex * index);
-		void unselect(GtkTreeIter * iter);
+		void unselect(TreeIndex * index);
 		void erase(TreeIndex * index);
 		bool move(GtkTreeIter * iter, bool up);
 		bool is_visible(TreeIndex * index);
