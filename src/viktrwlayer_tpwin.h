@@ -94,6 +94,12 @@ namespace SlavGPS {
 		void set_track_name(char const * track_name);
 
 	private:
+
+		void update_times(Trackpoint * tp);
+
+		Trackpoint * cur_tp = NULL;
+		bool sync_to_tp_block = false;
+
 		QDialogButtonBox * button_box = NULL;
 
 		QPushButton * button_close = NULL;
@@ -114,6 +120,7 @@ namespace SlavGPS {
 		QDoubleSpinBox * lon = NULL;
 		QDoubleSpinBox * alt = NULL;
 		QLabel * course = NULL;
+		QSpinBox * timestamp = NULL;
 
 		QLabel * diff_dist = NULL;
 		QLabel * diff_time = NULL;

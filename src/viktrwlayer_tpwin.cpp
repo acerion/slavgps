@@ -100,24 +100,29 @@ GType vik_trw_layer_tpwin_get_type(void)
 
 
 
+#endif
+
 
 /**
  *  Just update the display for the time fields.
  */
-static void tpwin_update_times(VikTrwLayerTpwin * tpwin, Trackpoint * tp)
+void PropertiesDialogTP::update_times(Trackpoint * tp)
 {
+#ifdef K
 	if (tp->has_timestamp) {
-		gtk_spin_button_set_value(tpwin->ts, tp->timestamp);
+		this->timestamp->setValue(tp->timestamp);
 		char * msg = vu_get_time_string(&(tp->timestamp), "%c", &(tp->coord), NULL);
 		gtk_button_set_label(GTK_BUTTON(tpwin->time), msg);
 		free(msg);
 	} else {
-		gtk_spin_button_set_value(tpwin->ts, 0);
+		this->timestamp->setValue(0);
 		gtk_button_set_label(GTK_BUTTON(tpwin->time), "");
 	}
+#endif
 }
 
 
+#ifdef K
 
 
 static void tpwin_sync_ll_to_tp(VikTrwLayerTpwin * tpwin)
@@ -162,10 +167,10 @@ static void tpwin_sync_alt_to_tp(VikTrwLayerTpwin * tpwin)
 
 
 
-static void tpwin_sync_ts_to_tp(VikTrwLayerTpwin * tpwin)
+static void tpwin_sync_timestamp_to_tp(VikTrwLayerTpwin * tpwin)
 {
 	if (tpwin->cur_tp && (!tpwin->sync_to_tp_block)) {
-		tpwin->cur_tp->timestamp = gtk_spin_button_get_value_as_int(tpwin->ts);
+		tpwin->cur_tp->timestamp = gtk_spin_button_get_value_as_int(tpwin->timestamp);
 
 		tpwin_update_times(tpwin, tpwin->cur_tp);
 	}
@@ -286,9 +291,9 @@ VikTrwLayerTpwin * vik_trw_layer_tpwin_new(GtkWindow * parent)
 
 	g_signal_connect_swapped (G_OBJECT(tpwin->alt), "value-changed", G_CALLBACK(tpwin_sync_alt_to_tp), tpwin);
 
-	tpwin->ts = GTK_SPIN_BUTTON(gtk_spin_button_new_with_range(0,2147483647,1)); /* pow(2,31)-1 limit input to ~2038 for now. */
-	g_signal_connect_swapped (G_OBJECT(tpwin->ts), "value-changed", G_CALLBACK(tpwin_sync_ts_to_tp), tpwin);
-	gtk_spin_button_set_digits (tpwin->ts, 0);
+	tpwin->timestamp = GTK_SPIN_BUTTON(gtk_spin_button_new_with_range(0,2147483647,1)); /* pow(2,31)-1 limit input to ~2038 for now. */
+	g_signal_connect_swapped (G_OBJECT(tpwin->timestamp), "value-changed", G_CALLBACK(tpwin_sync_timestamp_to_tp), tpwin);
+	gtk_spin_button_set_digits (tpwin->timestamp, 0);
 
 	right_vbox = gtk_vbox_new (true, 1);
 	gtk_box_pack_start (GTK_BOX(right_vbox), GTK_WIDGET(tpwin->trkpt_name), false, false, 3);
@@ -296,7 +301,7 @@ VikTrwLayerTpwin * vik_trw_layer_tpwin_new(GtkWindow * parent)
 	gtk_box_pack_start (GTK_BOX(right_vbox), GTK_WIDGET(tpwin->lon), false, false, 3);
 	gtk_box_pack_start (GTK_BOX(right_vbox), GTK_WIDGET(tpwin->alt), false, false, 3);
 	gtk_box_pack_start (GTK_BOX(right_vbox), GTK_WIDGET(tpwin->course), false, false, 3);
-	gtk_box_pack_start (GTK_BOX(right_vbox), GTK_WIDGET(tpwin->ts), false, false, 3);
+	gtk_box_pack_start (GTK_BOX(right_vbox), GTK_WIDGET(tpwin->timestamp), false, false, 3);
 	gtk_box_pack_start (GTK_BOX(right_vbox), GTK_WIDGET(tpwin->time), false, false, 3);
 
 	/* Diff info. */
@@ -353,12 +358,12 @@ void vik_trw_layer_tpwin_set_empty(VikTrwLayerTpwin * tpwin)
 	gtk_widget_set_sensitive(tpwin->trkpt_name, false);
 
 	gtk_button_set_label(GTK_BUTTON(tpwin->time), "");
-	gtk_label_set_text(tpwin->course, NULL);
+	this->course->setText(QString(""));
 
 	gtk_widget_set_sensitive(GTK_WIDGET(tpwin->lat), false);
 	gtk_widget_set_sensitive(GTK_WIDGET(tpwin->lon), false);
 	gtk_widget_set_sensitive(GTK_WIDGET(tpwin->alt), false);
-	gtk_widget_set_sensitive(GTK_WIDGET(tpwin->ts), false);
+	gtk_widget_set_sensitive(GTK_WIDGET(tpwin->timestamp), false);
 	gtk_widget_set_sensitive(GTK_WIDGET(tpwin->time), false);
 
 	/* Only keep close button enabled. */
@@ -368,14 +373,14 @@ void vik_trw_layer_tpwin_set_empty(VikTrwLayerTpwin * tpwin)
 	gtk_widget_set_sensitive(tpwin->button_back, false);
 	gtk_widget_set_sensitive(tpwin->button_forward, false);
 
-	gtk_label_set_text(tpwin->diff_dist, NULL);
-	gtk_label_set_text(tpwin->diff_time, NULL);
-	gtk_label_set_text(tpwin->diff_speed, NULL);
-	gtk_label_set_text(tpwin->speed, NULL);
-	gtk_label_set_text(tpwin->vdop, NULL);
-	gtk_label_set_text(tpwin->hdop, NULL);
-	gtk_label_set_text(tpwin->pdop, NULL);
-	gtk_label_set_text(tpwin->sat, NULL);
+	this->diff_dist->setText(QString(""));
+	this->diff_time->setText(QString(""));
+	this->diff_speed->setText(QString(""));
+	this->speed->setText(QString(""));
+	this->vdop->setText(QString(""));
+	this->hdop->setText(QString(""));
+	this->pdop->setText(QString(""));
+	this->sat->setText(QString(""));
 
 	gtk_window_set_title(GTK_WINDOW(tpwin), _("Trackpoint"));
 }
@@ -394,32 +399,34 @@ void vik_trw_layer_tpwin_set_empty(VikTrwLayerTpwin * tpwin)
  */
 void PropertiesDialogTP::set_tp(Track * track, TrackPoints::iterator * iter, const char * track_name, bool is_route)
 {
-#ifdef K
 	static char tmp_str[64];
 	static struct LatLon ll;
 	Trackpoint * tp = **iter;
 
 	if (tp->name) {
-		gtk_entry_set_text(GTK_ENTRY(tpwin->trkpt_name), tp->name);
+		this->trkpt_name->insert(QString(tp->name));
 	} else {
-		gtk_editable_delete_text(GTK_EDITABLE(tpwin->trkpt_name), 0, -1);
+		this->trkpt_name->insert(QString(""));
 	}
+#ifdef K
 	gtk_widget_set_sensitive(tpwin->trkpt_name, true);
+#endif
 
-	/* Only can insert if not at the end (otherwise use extend track). */
-	gtk_widget_set_sensitive(tpwin->button_insert, std::next(*iter) != track->end());
-	gtk_widget_set_sensitive(tpwin->button_delete, true);
+	/* User can insert only if not at the end of track (otherwise use extend track). */
+	this->button_insert_after->setEnabled(std::next(*iter) != track->end());
+	this->button_delete->setEnabled(true);
 
-	/* We can only split up a track if it's not an endpoint. Makes sense to me. */
-	gtk_widget_set_sensitive(tpwin->button_split, std::next(*iter) != track->end() && *iter != track->begin());
+	/* We can only split up a track if it's not an endpoint. */
+	this->button_split_here->setEnabled(std::next(*iter) != track->end() && *iter != track->begin());
 
-	gtk_widget_set_sensitive(tpwin->button_forward, std::next(*iter) != track->end());
-	gtk_widget_set_sensitive(tpwin->button_back, *iter != track->begin());
+	this->button_forward->setEnabled(std::next(*iter) != track->end());
+	this->button_back->setEnabled(*iter != track->begin());
 
+#ifdef K
 	gtk_widget_set_sensitive(GTK_WIDGET(tpwin->lat), true);
 	gtk_widget_set_sensitive(GTK_WIDGET(tpwin->lon), true);
 	gtk_widget_set_sensitive(GTK_WIDGET(tpwin->alt), true);
-	gtk_widget_set_sensitive(GTK_WIDGET(tpwin->ts), tp->has_timestamp);
+	gtk_widget_set_sensitive(GTK_WIDGET(tpwin->timestamp), tp->has_timestamp);
 	gtk_widget_set_sensitive(GTK_WIDGET(tpwin->time), tp->has_timestamp);
 	/* Enable adding timestamps - but not on routepoints. */
 	if (!tp->has_timestamp && !is_route) {
@@ -427,89 +434,98 @@ void PropertiesDialogTP::set_tp(Track * track, TrackPoints::iterator * iter, con
 		GtkWidget *img = gtk_image_new_from_stock(GTK_STOCK_ADD, GTK_ICON_SIZE_MENU);
 		gtk_button_set_image(GTK_BUTTON(tpwin->time), img);
 	} else {
-		vik_trw_layer_tpwin_set_track_name(tpwin, track_name);
+		this->set_track_name(track_name);
 	}
 
-	tpwin->sync_to_tp_block = true; /* Don't update while setting data. */
+#endif
 
-	vik_coord_to_latlon(&(tp->coord), &ll);
-	gtk_spin_button_set_value(tpwin->lat, ll.lat);
-	gtk_spin_button_set_value(tpwin->lon, ll.lon);
+	this->sync_to_tp_block = true; /* Don't update while setting data. */
+
+	vik_coord_to_latlon(&tp->coord, &ll);
+	this->lat->setValue(ll.lat);
+	this->lon->setValue(ll.lon);
+
+
 	HeightUnit height_units = a_vik_get_units_height();
 	switch (height_units) {
 	case HeightUnit::METRES:
-		gtk_spin_button_set_value(tpwin->alt, tp->altitude);
+		this->alt->setValue(tp->altitude);
 		break;
 	case HeightUnit::FEET:
-		gtk_spin_button_set_value(tpwin->alt, VIK_METERS_TO_FEET(tp->altitude));
+		this->alt->setValue(VIK_METERS_TO_FEET(tp->altitude));
 		break;
 	default:
-		gtk_spin_button_set_value(tpwin->alt, tp->altitude);
+		this->alt->setValue(tp->altitude);
 		fprintf(stderr, "CRITICAL: Houston, we've had a problem. height=%d\n", height_units);
 	}
 
-	tpwin_update_times(tpwin, tp);
+	this->update_times(tp);
 
-	tpwin->sync_to_tp_block = false; /* Don't update while setting data. */
+	this->sync_to_tp_block = false; /* Don't update while setting data. */
+
 
 	SpeedUnit speed_units = a_vik_get_units_speed();
 	DistanceUnit distance_unit = a_vik_get_units_distance();
-	if (tpwin->cur_tp) {
+	if (this->cur_tp) {
 		switch (distance_unit) {
 		case DistanceUnit::KILOMETRES:
-			snprintf(tmp_str, sizeof(tmp_str), "%.2f m", vik_coord_diff(&(tp->coord), &(tpwin->cur_tp->coord)));
+			snprintf(tmp_str, sizeof (tmp_str), "%.2f m", vik_coord_diff(&(tp->coord), &(this->cur_tp->coord)));
 			break;
 		case DistanceUnit::MILES:
 		case DistanceUnit::NAUTICAL_MILES:
-			snprintf(tmp_str, sizeof(tmp_str), "%.2f yards", vik_coord_diff(&(tp->coord), &(tpwin->cur_tp->coord))*1.0936133);
+			snprintf(tmp_str, sizeof (tmp_str), "%.2f yards", vik_coord_diff(&(tp->coord), &(this->cur_tp->coord))*1.0936133);
 			break;
 		default:
 			fprintf(stderr, "CRITICAL: invalid distance unit %d\n", distance_unit);
 		}
 
-		gtk_label_set_text (tpwin->diff_dist, tmp_str);
-		if (tp->has_timestamp && tpwin->cur_tp->has_timestamp) {
-			snprintf(tmp_str, sizeof(tmp_str), "%ld s", tp->timestamp - tpwin->cur_tp->timestamp);
-			gtk_label_set_text (tpwin->diff_time, tmp_str);
-			if (tp->timestamp == tpwin->cur_tp->timestamp) {
-				gtk_label_set_text (tpwin->diff_speed, "--");
+		this->diff_dist->setText(QString(tmp_str));
+		if (tp->has_timestamp && this->cur_tp->has_timestamp) {
+			snprintf(tmp_str, sizeof (tmp_str), "%ld s", tp->timestamp - this->cur_tp->timestamp);
+			this->diff_time->setText(QString(tmp_str));
+			if (tp->timestamp == this->cur_tp->timestamp) {
+				this->diff_speed->setText(QString("--"));
 			} else {
-				double tmp_speed = vik_coord_diff(&tp->coord, &tpwin->cur_tp->coord) / (ABS(tp->timestamp - tpwin->cur_tp->timestamp));
+				double tmp_speed = vik_coord_diff(&tp->coord, &this->cur_tp->coord) / (ABS(tp->timestamp - this->cur_tp->timestamp));
+#ifdef K
 				get_speed_string(tmp_str, sizeof (tmp_str), speed_units, tmp_speed);
-				gtk_label_set_text(tpwin->diff_speed, tmp_str);
+#endif
+				this->diff_speed->setText(QString(tmp_str));
 			}
 		} else {
-			gtk_label_set_text(tpwin->diff_time, NULL);
-			gtk_label_set_text(tpwin->diff_speed, NULL);
+			this->diff_time->setText(QString(""));
+			this->diff_speed->setText(QString(""));
 		}
 	}
 
 	if (isnan(tp->course)) {
-		snprintf(tmp_str, sizeof(tmp_str), "--");
+		snprintf(tmp_str, sizeof (tmp_str), "--");
 	} else {
-		snprintf(tmp_str, sizeof(tmp_str), "%05.1f\302\260", tp->course);
+		snprintf(tmp_str, sizeof (tmp_str), "%05.1f\302\260", tp->course);
 	}
-	gtk_label_set_text(tpwin->course, tmp_str);
+	this->course->setText(QString(tmp_str));
 
 	if (isnan(tp->speed)) {
-		snprintf(tmp_str, sizeof(tmp_str), "--");
+		snprintf(tmp_str, sizeof (tmp_str), "--");
 	} else {
+#ifdef K
 		get_speed_string(tmp_str, sizeof (tmp_str), speed_units, tp->speed);
+#endif
 	}
-	gtk_label_set_text(tpwin->speed, tmp_str);
+	this->speed->setText(QString(tmp_str));
 
 	switch (distance_unit) {
 	case DistanceUnit::KILOMETRES:
-		snprintf(tmp_str, sizeof(tmp_str), "%.5f m", tp->hdop);
-		gtk_label_set_text(tpwin->hdop, tmp_str);
-		snprintf(tmp_str, sizeof(tmp_str), "%.5f m", tp->pdop);
-		gtk_label_set_text(tpwin->pdop, tmp_str);
+		snprintf(tmp_str, sizeof (tmp_str), "%.5f m", tp->hdop);
+		this->hdop->setText(QString(tmp_str));
+		snprintf(tmp_str, sizeof (tmp_str), "%.5f m", tp->pdop);
+		this->pdop->setText(QString(tmp_str));
 		break;
 	case DistanceUnit::MILES:
-		snprintf(tmp_str, sizeof(tmp_str), "%.5f yards", tp->hdop*1.0936133);
-		gtk_label_set_text(tpwin->hdop, tmp_str);
-		snprintf(tmp_str, sizeof(tmp_str), "%.5f yards", tp->pdop*1.0936133);
-		gtk_label_set_text(tpwin->pdop, tmp_str);
+		snprintf(tmp_str, sizeof (tmp_str), "%.5f yards", tp->hdop*1.0936133);
+		this->hdop->setText(QString(tmp_str));
+		snprintf(tmp_str, sizeof (tmp_str), "%.5f yards", tp->pdop*1.0936133);
+		this->pdop->setText(QString(tmp_str));
 		break;
 	default: /* kamilTODO: where NM are handled? */
 		fprintf(stderr, "CRITICAL: invalid distance unit %d\n", distance_unit);
@@ -517,22 +533,23 @@ void PropertiesDialogTP::set_tp(Track * track, TrackPoints::iterator * iter, con
 
 	switch (height_units) {
 	case HeightUnit::METRES:
-		snprintf(tmp_str, sizeof(tmp_str), "%.5f m", tp->vdop);
+		snprintf(tmp_str, sizeof (tmp_str), "%.5f m", tp->vdop);
 		break;
 	case HeightUnit::FEET:
-		snprintf(tmp_str, sizeof(tmp_str), "%.5f feet", VIK_METERS_TO_FEET(tp->vdop));
+		snprintf(tmp_str, sizeof (tmp_str), "%.5f feet", VIK_METERS_TO_FEET(tp->vdop));
 		break;
 	default:
-		snprintf(tmp_str, sizeof(tmp_str), "--");
+		snprintf(tmp_str, sizeof (tmp_str), "--");
 		fprintf(stderr, "CRITICAL: Houston, we've had a problem. height=%d\n", height_units);
 	}
-	gtk_label_set_text(tpwin->vdop, tmp_str);
+	this->vdop->setText(QString(tmp_str));
 
-	snprintf(tmp_str, sizeof(tmp_str), "%d / %d", tp->nsats, tp->fix_mode);
-	gtk_label_set_text(tpwin->sat, tmp_str);
 
-	tpwin->cur_tp = tp;
-#endif
+
+	snprintf(tmp_str, sizeof (tmp_str), "%d / %d", tp->nsats, tp->fix_mode);
+	this->sat->setText(QString(tmp_str));
+
+	this->cur_tp = tp;
 }
 
 
@@ -544,7 +561,7 @@ void PropertiesDialogTP::set_track_name(char const * track_name)
 	char * tmp_name = g_strdup_printf("%s: %s", track_name, _("Trackpoint"));
 	gtk_window_set_title(GTK_WINDOW(tpwin), tmp_name);
 	free(tmp_name);
-	//gtk_label_set_text(tpwin->track_name, track_name);
+	//this->track_name->setText(QString(track_name));
 #endif
 }
 
