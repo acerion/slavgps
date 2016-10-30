@@ -2670,7 +2670,7 @@ void trw_layer_goto_wp(trw_menu_layer_t * data)
 
 
 
-bool LayerTRW::new_waypoint(GtkWindow * w, const VikCoord * def_coord)
+bool LayerTRW::new_waypoint(Window * parent, const VikCoord * def_coord)
 {
 	char * default_name = this->highest_wp_number_get();
 	Waypoint * wp = new Waypoint();
@@ -2680,11 +2680,7 @@ bool LayerTRW::new_waypoint(GtkWindow * w, const VikCoord * def_coord)
 	// Attempt to auto set height if DEM data is available
 	wp->apply_dem_data(true);
 
-#ifdef K
-	char * returned_name = a_dialog_waypoint(w, default_name, this, wp, this->coord_mode, true, &updated);
-#else
-	char * returned_name = strdup("waypoint name");
-#endif
+	char * returned_name = waypoint_properties_dialog(parent, default_name, this, wp, this->coord_mode, true, &updated);
 
 	if (returned_name) {
 		wp->visible = true;
@@ -3084,7 +3080,7 @@ void trw_layer_new_wp(trw_menu_layer_t * data)
 	LayersPanel * panel = data->panel;
 	/* TODO longone: okay, if layer above (aggregate) is invisible but vtl->visible is true, this redraws for no reason.
 	   Instead return true if you want to update. */
-	if (layer->new_waypoint(layer->get_toolkit_window(), panel->get_viewport()->get_center())) {
+	if (layer->new_waypoint(layer->get_window(), panel->get_viewport()->get_center())) {
 		layer->calculate_bounds_waypoints();
 		if (layer->visible) {
 			panel->emit_update_cb();
@@ -4044,7 +4040,7 @@ void trw_layer_properties_item(trw_menu_sublayer_t * data)
 
 		if (wp && wp->name) {
 			bool updated = false;
-			char *new_name = a_dialog_waypoint(layer->get_toolkit_window(), wp->name, layer, wp, layer->coord_mode, false, &updated);
+			char *new_name = waypoint_properties_dialog(layer->get_toolkit_window(), wp->name, layer, wp, layer->coord_mode, false, &updated);
 			if (new_name) {
 				layer->waypoint_rename(wp, new_name);
 			}

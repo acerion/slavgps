@@ -44,6 +44,7 @@
 #include "globals.h"
 #include "uibuilder.h"
 #include "layer.h"
+#include "waypoint.h"
 #include "preferences.h"
 
 
@@ -66,6 +67,7 @@ namespace SlavGPS {
 
 		void fill(Preferences * preferences);
 		void fill(Layer * layer);
+		void fill(Waypoint * wp, Parameter * parameters);
 
 		LayerParamValue get_param_value(layer_param_id_t id, Parameter * param);
 
@@ -75,7 +77,7 @@ namespace SlavGPS {
 	private:
 		QWidget * new_widget(Parameter * param, LayerParamValue param_value);
 
-		QFormLayout * insert_tab(QString & label);
+		QFormLayout * insert_tab(QString const & label);
 		std::map<layer_param_id_t, Parameter *>::iterator add_widgets_to_tab(QFormLayout * form, Layer * layer, std::map<layer_param_id_t, Parameter *>::iterator & iter, std::map<layer_param_id_t, Parameter *>::iterator & end);
 
 		QDialogButtonBox * button_box = NULL;

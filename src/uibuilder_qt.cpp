@@ -45,6 +45,8 @@
 #include "widget_file_list.h"
 #include "widget_file_entry.h"
 #include "widget_radio_group.h"
+#include "uibuilder.h"
+#include "waypoint_properties.h"
 
 
 
@@ -308,7 +310,7 @@ PropertiesDialog::PropertiesDialog(QWidget * parent) : QDialog(parent)
 
 
 
-QFormLayout * PropertiesDialog::insert_tab(QString & label)
+QFormLayout * PropertiesDialog::insert_tab(QString const & label)
 {
 	QFormLayout * form = new QFormLayout();
 	QWidget * page = new QWidget();
@@ -340,12 +342,11 @@ void PropertiesDialog::fill(Preferences * preferences)
 		auto form_iter = this->forms.find(group_id);
 		QFormLayout * form = NULL;
 		if (form_iter == this->forms.end()) {
-			QString label("page");
-			form = this->insert_tab(label);
+			form = this->insert_tab(QString("page"));
 
 			this->forms.insert(std::pair<param_id_t, QFormLayout *>(group_id, form));
 
-			qDebug() << "II: Preferences Builder: created tab" << label;
+			qDebug() << "II: Preferences Builder: created tab" << QString("page");
 		} else {
 			form = form_iter->second;
 		}
@@ -379,12 +380,11 @@ void PropertiesDialog::fill(Layer * layer)
 		auto form_iter = this->forms.find(group_id);
 		QFormLayout * form = NULL;
 		if (form_iter == this->forms.end()) {
-			QString label("page");
-			form = this->insert_tab(label);
+			form = this->insert_tab(QString("page"));
 
 			this->forms.insert(std::pair<param_id_t, QFormLayout *>(group_id, form));
 
-			qDebug() << "II: Parameters Builder: created tab" << label;
+			qDebug() << "II: Parameters Builder: created tab" << QString("page");
 		} else {
 			form = form_iter->second;
 		}
@@ -412,6 +412,104 @@ void PropertiesDialog::fill(Layer * layer)
 		iter = this->add_widgets_to_tab(form, layer, iter, end);
 	} while (iter != params->end());
 #endif
+}
+
+
+
+
+void PropertiesDialog::fill(Waypoint * wp, Parameter * parameters)
+{
+	int i = 0;
+	QFormLayout * form = this->insert_tab(QString("page"));
+	this->forms.insert(std::pair<param_id_t, QFormLayout *>(parameters[SG_WP_PARAM_NAME].group, form));
+	LayerParamValue param_value; // = layer->get_param_value(i, false);
+	Parameter * param = NULL;
+	QWidget * widget = NULL;
+
+
+	struct LatLon ll;
+	vik_coord_to_latlon(&wp->coord, &ll);
+
+	/* FIXME: memory management. */
+	char * lat = g_strdup_printf("%f", ll.lat);
+	char * lon = g_strdup_printf("%f", ll.lon);
+	char * alt = NULL;
+
+	HeightUnit height_units = a_vik_get_units_height();
+	switch (height_units) {
+	case HeightUnit::METRES:
+		alt = g_strdup_printf("%f", wp->altitude);
+		break;
+	case HeightUnit::FEET:
+		alt = g_strdup_printf("%f", VIK_METERS_TO_FEET(wp->altitude));
+		break;
+	default:
+		alt = g_strdup_printf("%f", wp->altitude);
+		fprintf(stderr, "CRITICAL: invalid height unit %d\n", height_units);
+	}
+
+	param = &parameters[SG_WP_PARAM_NAME];
+	param_value.s = wp->name;
+	widget = this->new_widget(param, param_value);
+	form->addRow(QString(param->title), widget);
+	qDebug() << "II: UI Builder: adding widget #" << param->id << param->title << widget;
+	this->widgets.insert(std::pair<layer_param_id_t, QWidget *>(param->id, widget));
+
+	param = &parameters[SG_WP_PARAM_LAT];
+	param_value.s = lat;
+	widget = this->new_widget(param, param_value);
+	form->addRow(QString(param->title), widget);
+	qDebug() << "II: UI Builder: adding widget #" << param->id << param->title << widget;
+	this->widgets.insert(std::pair<layer_param_id_t, QWidget *>(param->id, widget));
+
+	param = &parameters[SG_WP_PARAM_LON];
+	param_value.s = lon;
+	widget = this->new_widget(param, param_value);
+	form->addRow(QString(param->title), widget);
+	qDebug() << "II: UI Builder: adding widget #" << param->id << param->title << widget;
+	this->widgets.insert(std::pair<layer_param_id_t, QWidget *>(param->id, widget));
+
+	param = &parameters[SG_WP_PARAM_TIME];
+	param_value.s = "time";
+	widget = this->new_widget(param, param_value);
+	form->addRow(QString(param->title), widget);
+	qDebug() << "II: UI Builder: adding widget #" << param->id << param->title << widget;
+	this->widgets.insert(std::pair<layer_param_id_t, QWidget *>(param->id, widget));
+
+	param = &parameters[SG_WP_PARAM_ALT];
+	param_value.s = alt;
+	widget = this->new_widget(param, param_value);
+	form->addRow(QString(param->title), widget);
+	qDebug() << "II: UI Builder: adding widget #" << param->id << param->title << widget;
+	this->widgets.insert(std::pair<layer_param_id_t, QWidget *>(param->id, widget));
+
+	param = &parameters[SG_WP_PARAM_COMMENT];
+	param_value.s = wp->comment;
+	widget = this->new_widget(param, param_value);
+	form->addRow(QString(param->title), widget);
+	qDebug() << "II: UI Builder: adding widget #" << param->id << param->title << widget;
+	this->widgets.insert(std::pair<layer_param_id_t, QWidget *>(param->id, widget));
+
+	param = &parameters[SG_WP_PARAM_DESC];
+	param_value.s = wp->description;
+	widget = this->new_widget(param, param_value);
+	form->addRow(QString(param->title), widget);
+	qDebug() << "II: UI Builder: adding widget #" << param->id << param->title << widget;
+	this->widgets.insert(std::pair<layer_param_id_t, QWidget *>(param->id, widget));
+
+	param = &parameters[SG_WP_PARAM_IMAGE];
+	param_value.s = wp->image;
+	widget = this->new_widget(param, param_value);
+	form->addRow(QString(param->title), widget);
+	qDebug() << "II: UI Builder: adding widget #" << param->id << param->title << widget;
+	this->widgets.insert(std::pair<layer_param_id_t, QWidget *>(param->id, widget));
+
+	param = &parameters[SG_WP_PARAM_SYMBOL];
+	param_value.s = wp->symbol;
+	widget = this->new_widget(param, param_value);
+	form->addRow(QString(param->title), widget);
+	qDebug() << "II: UI Builder: adding widget #" << param->id << param->title << widget;
+	this->widgets.insert(std::pair<layer_param_id_t, QWidget *>(param->id, widget));
 }
 
 
@@ -728,7 +826,8 @@ LayerParamValue PropertiesDialog::get_param_value(layer_param_id_t id, Parameter
 
 	case LayerWidgetType::ENTRY:
 	case LayerWidgetType::PASSWORD:
-		rv.s = (char *) ((QLineEdit *) widget)->text().data(); /* kamilFIXME */
+		rv.s = strdup((char *) ((QLineEdit *) widget)->text().toUtf8().constData()); /* FIXME: memory management. */
+		qDebug() << "II: UI Builder: saving value of Entry or Password:" << rv.s;
 		break;
 
 	case LayerWidgetType::FILEENTRY:

@@ -217,7 +217,7 @@ static void trw_layer_waypoint_properties(waypointlist_data_t * values)
 		waypoint_close_cb(gw, 0, values->waypoints_and_layers);
 
 		bool updated = false;
-		char * new_name = a_dialog_waypoint(trw->get_toolkit_window(), wp->name, trw, wp, trw->get_coord_mode(), false, &updated);
+		char * new_name = waypoint_properties_dialog(trw->get_toolkit_window(), wp->name, trw, wp, trw->get_coord_mode(), false, &updated);
 		if (new_name) {
 			trw->waypoint_rename(wp, new_name);
 		}

@@ -18,13 +18,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-#ifndef _SG_LAYER_TRW_WPWIN_H_
-#define _SG_LAYER_TRW_WPWIN_H_
+#ifndef _SG_WAYPOINT_PARAMETERS_H_
+#define _SG_WAYPOINT_PARAMETERS_H_
 
 
 
-
-//#include <gtk/gtk.h>
+#include <QWidget>
 
 #include "layer_trw.h"
 #include "waypoint.h"
@@ -37,11 +36,22 @@ namespace SlavGPS {
 
 
 
-	/* Specify if a new waypoint or not. */
-	/* If a new waypoint then it uses the default_name for the suggested name allowing the user to change it.
-	   The name to use is returned.
-	   When an existing waypoint the name is shown but is not allowed to be changed and NULL is returned. */
-	char * a_dialog_waypoint(GtkWindow * parent, char * default_name, LayerTRW * trw, Waypoint * wp, VikCoordMode coord_mode, bool is_new, bool * updated);
+	enum {
+		SG_WP_PARAM_NAME,
+		SG_WP_PARAM_LAT,
+		SG_WP_PARAM_LON,
+		SG_WP_PARAM_TIME,
+		SG_WP_PARAM_ALT,
+		SG_WP_PARAM_COMMENT,
+		SG_WP_PARAM_DESC,
+		SG_WP_PARAM_IMAGE,
+		SG_WP_PARAM_SYMBOL
+	};
+
+
+
+
+	char * waypoint_properties_dialog(QWidget * parent, char * default_name, LayerTRW * trw, Waypoint * wp, VikCoordMode coord_mode, bool is_new, bool * updated);
 
 
 
@@ -51,4 +61,4 @@ namespace SlavGPS {
 
 
 
-#endif /* #ifndef _SG_LAYER_TRW_WPWIN_H_ */
+#endif /* #ifndef _SG_WAYPOINT_PARAMETERS_H_ */

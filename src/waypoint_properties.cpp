@@ -43,11 +43,28 @@
 #include "dialog.h"
 #include "globals.h"
 #include "slav_qt.h"
+#include "uibuilder_qt.h"
 
 
 
 
 using namespace SlavGPS;
+
+
+
+
+Parameter wp_params[] = {
+	{ LayerType::NUM_TYPES,  SG_WP_PARAM_NAME,     "",  LayerParamType::STRING,  PARAMETER_GROUP_NONE,  "Name",         LayerWidgetType::ENTRY,       NULL, NULL, NULL, NULL, NULL, NULL },
+	{ LayerType::NUM_TYPES,  SG_WP_PARAM_LAT,      "",  LayerParamType::STRING,  PARAMETER_GROUP_NONE,  "Latitude",     LayerWidgetType::ENTRY,       NULL, NULL, NULL, NULL, NULL, NULL },
+	{ LayerType::NUM_TYPES,  SG_WP_PARAM_LON,      "",  LayerParamType::STRING,  PARAMETER_GROUP_NONE,  "Longitude",    LayerWidgetType::ENTRY,       NULL, NULL, NULL, NULL, NULL, NULL },
+	{ LayerType::NUM_TYPES,  SG_WP_PARAM_TIME,     "",  LayerParamType::STRING,  PARAMETER_GROUP_NONE,  "Time",         LayerWidgetType::ENTRY,       NULL, NULL, NULL, NULL, NULL, NULL },
+	{ LayerType::NUM_TYPES,  SG_WP_PARAM_ALT,      "",  LayerParamType::STRING,  PARAMETER_GROUP_NONE,  "Altitude",     LayerWidgetType::ENTRY,       NULL, NULL, NULL, NULL, NULL, NULL },
+	{ LayerType::NUM_TYPES,  SG_WP_PARAM_COMMENT,  "",  LayerParamType::STRING,  PARAMETER_GROUP_NONE,  "Comment",      LayerWidgetType::ENTRY,       NULL, NULL, NULL, NULL, NULL, NULL },
+	{ LayerType::NUM_TYPES,  SG_WP_PARAM_DESC,     "",  LayerParamType::STRING,  PARAMETER_GROUP_NONE,  "Description",  LayerWidgetType::ENTRY,       NULL, NULL, NULL, NULL, NULL, NULL },
+	{ LayerType::NUM_TYPES,  SG_WP_PARAM_IMAGE,    "",  LayerParamType::STRING,  PARAMETER_GROUP_NONE,  "Image",        LayerWidgetType::FILEENTRY,   NULL, NULL, NULL, NULL, NULL, NULL },
+	{ LayerType::NUM_TYPES,  SG_WP_PARAM_SYMBOL,   "",  LayerParamType::STRING,  PARAMETER_GROUP_NONE,  "Symbol",       LayerWidgetType::ENTRY,       NULL, NULL, NULL, NULL, NULL, NULL },
+};
+
 
 
 
@@ -139,7 +156,7 @@ char * a_dialog_waypoint(GtkWindow * parent, char * default_name, LayerTRW * trw
 							 GTK_STOCK_OK,
 							 GTK_RESPONSE_ACCEPT,
 							 NULL);
-	struct LatLon ll;
+
 	GtkWidget *latlabel, *lonlabel, *namelabel, *latentry, *lonentry, *altentry, *altlabel, *nameentry=NULL;
 	GtkWidget *commentlabel, *commententry, *descriptionlabel, *descriptionentry, *imagelabel, *imageentry, *symbollabel, *symbolentry;
 	GtkWidget *sourcelabel = NULL, *sourceentry = NULL;
@@ -150,24 +167,7 @@ char * a_dialog_waypoint(GtkWindow * parent, char * default_name, LayerTRW * trw
 	GtkWidget *consistentGeotagCB = NULL;
 	GtkListStore *store;
 
-	char *lat, *lon, *alt;
 
-	vik_coord_to_latlon(&(wp->coord), &ll);
-
-	lat = g_strdup_printf("%f", ll.lat);
-	lon = g_strdup_printf("%f", ll.lon);
-	HeightUnit height_units = a_vik_get_units_height();
-	switch (height_units) {
-	case HeightUnit::METRES:
-		alt = g_strdup_printf("%f", wp->altitude);
-		break;
-	case HeightUnit::FEET:
-		alt = g_strdup_printf("%f", VIK_METERS_TO_FEET(wp->altitude));
-		break;
-	default:
-		alt = g_strdup_printf("%f", wp->altitude);
-		fprintf(stderr, "CRITICAL: invalid height unit %d\n", height_units);
-	}
 
 	*updated = false;
 
@@ -180,21 +180,6 @@ char * a_dialog_waypoint(GtkWindow * parent, char * default_name, LayerTRW * trw
 	}
 	g_signal_connect_swapped(nameentry, "activate", G_CALLBACK(a_dialog_response_accept), GTK_DIALOG(dialog));
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), nameentry, false, false, 0);
-
-	latlabel = gtk_label_new(_("Latitude:"));
-	latentry = gtk_entry_new();
-	gtk_entry_set_text(GTK_ENTRY(latentry), lat);
-	free(lat);
-
-	lonlabel = gtk_label_new(_("Longitude:"));
-	lonentry = gtk_entry_new();
-	gtk_entry_set_text(GTK_ENTRY(lonentry), lon);
-	free(lon);
-
-	altlabel = gtk_label_new(_("Altitude:"));
-	altentry = gtk_entry_new();
-	gtk_entry_set_text(GTK_ENTRY(altentry), alt);
-	free(alt);
 
 	if (wp->comment && !strncmp(wp->comment, "http", 4)) {
 		commentlabel = gtk_link_button_new_with_label(wp->comment, _("Comment:"));
@@ -215,18 +200,6 @@ char * a_dialog_waypoint(GtkWindow * parent, char * default_name, LayerTRW * trw
 		descriptionlabel = gtk_label_new(_("Description:"));
 	}
 	descriptionentry = gtk_entry_new();
-
-	sourcelabel = gtk_label_new(_("Source:"));
-	if (wp->source) {
-		sourceentry = gtk_entry_new();
-		gtk_entry_set_text(GTK_ENTRY(sourceentry), wp->source);
-	}
-
-	typelabel = gtk_label_new(_("Type:"));
-	if (wp->type) {
-		typeentry = gtk_entry_new();
-		gtk_entry_set_text(GTK_ENTRY(typeentry), wp->type);
-	}
 
 	imagelabel = gtk_label_new(_("Image:"));
 	imageentry = vik_file_entry_new(GTK_FILE_CHOOSER_ACTION_OPEN, VF_FILTER_IMAGE, NULL, NULL);
@@ -328,40 +301,13 @@ char * a_dialog_waypoint(GtkWindow * parent, char * default_name, LayerTRW * trw
 	}
 	g_signal_connect(G_OBJECT(timevaluebutton), "button-release-event", G_CALLBACK(time_edit_click), edit_wp);
 
-	gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), latlabel, false, false, 0);
-	gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), latentry, false, false, 0);
-	gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), lonlabel, false, false, 0);
-	gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), lonentry, false, false, 0);
-	gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), timelabel, false, false, 0);
-	gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), timevaluebutton, false, false, 0);
-	gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), altlabel, false, false, 0);
-	gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), altentry, false, false, 0);
-	gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), commentlabel, false, false, 0);
-	gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), commententry, false, false, 0);
-	gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), descriptionlabel, false, false, 0);
-	gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), descriptionentry, false, false, 0);
-	if (wp->source) {
-		gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), sourcelabel, false, false, 0);
-		gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), sourceentry, false, false, 0);
-	}
-	if (wp->type) {
-		gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), typelabel, false, false, 0);
-		gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), typeentry, false, false, 0);
-	}
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), imagelabel, false, false, 0);
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), imageentry, false, false, 0);
+
 	if (hasGeotagCB) {
 		GtkWidget *hbox =  gtk_hbox_new(false, 0);
 		gtk_box_pack_start(GTK_BOX(hbox), hasGeotagCB, false, false, 0);
 		gtk_box_pack_start(GTK_BOX(hbox), consistentGeotagCB, false, false, 0);
 		gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), hbox, false, false, 0);
 	}
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), symbollabel, false, false, 0);
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), GTK_WIDGET(symbolentry), false, false, 0);
-
-	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
-
-	gtk_widget_show_all(gtk_dialog_get_content_area(GTK_DIALOG(dialog)));
 
 	if (!is_new) {
 		/* Shift left<->right to try not to obscure the waypoint. */
@@ -436,4 +382,53 @@ char * a_dialog_waypoint(GtkWindow * parent, char * default_name, LayerTRW * trw
 	gtk_widget_destroy(dialog);
 #endif
 	return NULL;
+}
+
+
+/* If a new waypoint then it uses the default_name for the suggested name allowing the user to change it.
+   The name to use is returned.
+*/
+char * SlavGPS::waypoint_properties_dialog(QWidget * parent, char * default_name, LayerTRW * trw, Waypoint * wp, VikCoordMode coord_mode, bool is_new, bool * updated)
+{
+	PropertiesDialog dialog(parent);
+	dialog.fill(wp, wp_params);
+	int dialog_code = dialog.exec();
+
+	char * entered_name = NULL;
+
+	if (dialog_code == QDialog::Accepted) {
+
+		LayerParamValue param_value;
+
+		param_value = dialog.get_param_value(SG_WP_PARAM_NAME, &wp_params[SG_WP_PARAM_NAME]);
+		wp->set_name(param_value.s);
+		entered_name = strdup(param_value.s);
+
+		param_value = dialog.get_param_value(SG_WP_PARAM_LAT, &wp_params[SG_WP_PARAM_LAT]);
+
+		param_value = dialog.get_param_value(SG_WP_PARAM_LON, &wp_params[SG_WP_PARAM_LON]);
+
+
+		param_value = dialog.get_param_value(SG_WP_PARAM_TIME, &wp_params[SG_WP_PARAM_TIME]);
+		//wp->time = ;
+
+		param_value = dialog.get_param_value(SG_WP_PARAM_ALT, &wp_params[SG_WP_PARAM_ALT]);
+		//wp->alt = ;
+
+		param_value = dialog.get_param_value(SG_WP_PARAM_COMMENT, &wp_params[SG_WP_PARAM_COMMENT]);
+		wp->set_comment(param_value.s);
+
+		param_value = dialog.get_param_value(SG_WP_PARAM_DESC, &wp_params[SG_WP_PARAM_DESC]);
+		wp->set_description(param_value.s);
+
+		param_value = dialog.get_param_value(SG_WP_PARAM_IMAGE, &wp_params[SG_WP_PARAM_IMAGE]);
+		wp->set_image(param_value.s);
+
+		param_value = dialog.get_param_value(SG_WP_PARAM_SYMBOL, &wp_params[SG_WP_PARAM_SYMBOL]);
+		wp->set_symbol(param_value.s);
+
+		return entered_name;
+	} else {
+		return NULL;
+	}
 }

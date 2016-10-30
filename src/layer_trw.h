@@ -244,7 +244,7 @@ namespace SlavGPS {
 
 
 
-		bool new_waypoint(GtkWindow * w, const VikCoord * def_coord);
+		bool new_waypoint(Window * parent, const VikCoord * def_coord);
 		void new_track_create_common(char * name);
 		void new_route_create_common(char * name);
 

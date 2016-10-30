@@ -1359,7 +1359,7 @@ static bool tool_new_waypoint_click_cb(Layer * layer, QMouseEvent * event, Layer
 	}
 
 	tool->viewport->screen_to_coord(event->x(), event->y(), &coord);
-	if (trw->new_waypoint(trw->get_toolkit_window(), &coord)) {
+	if (trw->new_waypoint(trw->get_window(), &coord)) {
 		trw->calculate_bounds_waypoints();
 		if (trw->visible) {
 			qDebug() << "II: Layer TRW: created new waypoint, will emit update";

@@ -129,7 +129,8 @@ typedef struct {
 
 enum {
 	VIK_LAYER_NOT_IN_PROPERTIES=-2,
-	VIK_LAYER_GROUP_NONE=-1
+	VIK_LAYER_GROUP_NONE=-1,
+	PARAMETER_GROUP_NONE=-1
 };
 
 typedef struct {
