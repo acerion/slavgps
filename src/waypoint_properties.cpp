@@ -25,9 +25,8 @@
 
 #include <cstdlib>
 
+#if 0
 #include <glib/gi18n.h>
-
-#include "viktrwlayer_wpwin.h"
 #include "degrees_converters.h"
 #include "garminsymbols.h"
 #ifdef VIK_CONFIG_GEOTAG
@@ -39,8 +38,11 @@
 #include "vikgoto.h"
 #include "vikutils.h"
 #include "vikfileentry.h"
+#endif
+#include "waypoint_properties.h"
 #include "dialog.h"
 #include "globals.h"
+#include "slav_qt.h"
 
 
 
@@ -49,7 +51,7 @@ using namespace SlavGPS;
 
 
 
-
+#if 0
 static void update_time(GtkWidget * widget, Waypoint * wp)
 {
 	char * msg = vu_get_time_string(&(wp->timestamp), "%c", &(wp->coord), NULL);
@@ -117,7 +119,7 @@ static void symbol_entry_changed_cb(GtkWidget * combo, GtkListStore * store)
 	gtk_widget_set_tooltip_text(combo, sym);
 	free(sym);
 }
-
+#endif
 
 
 
@@ -126,8 +128,9 @@ static void symbol_entry_changed_cb(GtkWidget * combo, GtkListStore * store)
    The name to use is returned.
 */
 /* TODO: less on this side, like add track. */
-char * SlavGPS::a_dialog_waypoint(GtkWindow * parent, char * default_name, LayerTRW * trw, Waypoint * wp, VikCoordMode coord_mode, bool is_new, bool * updated)
+char * a_dialog_waypoint(GtkWindow * parent, char * default_name, LayerTRW * trw, Waypoint * wp, VikCoordMode coord_mode, bool is_new, bool * updated)
 {
+#if 0
 	GtkWidget * dialog = gtk_dialog_new_with_buttons(_("Waypoint Properties"),
 							 parent,
 							 (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
@@ -431,5 +434,6 @@ char * SlavGPS::a_dialog_waypoint(GtkWindow * parent, char * default_name, Layer
 		}
 	}
 	gtk_widget_destroy(dialog);
+#endif
 	return NULL;
 }

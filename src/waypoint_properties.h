@@ -24,10 +24,10 @@
 
 
 
-#include <gtk/gtk.h>
+//#include <gtk/gtk.h>
 
-#include "viktrwlayer.h"
-#include "vikwaypoint.h"
+#include "layer_trw.h"
+#include "waypoint.h"
 
 
 
