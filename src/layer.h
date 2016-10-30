@@ -313,7 +313,7 @@ namespace SlavGPS {
 		LayerTool(Window * window, Viewport * viewport, LayerType layer_type);
 		~LayerTool();
 
-		QString & get_description() const;
+		QString get_description() const;
 
 		VikToolActivationFunc activate = NULL;
 		VikToolActivationFunc deactivate = NULL;

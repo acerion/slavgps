@@ -1102,10 +1102,9 @@ LayerTool::~LayerTool()
 /**
    @brief Return Pretty-print name of tool that can be used in UI
 */
-QString & LayerTool::get_description() const
+QString LayerTool::get_description() const
 {
-	static QString description(this->radioActionEntry.tooltip);
-	return description;
+	return QString(this->radioActionEntry.tooltip);
 }
 
 
