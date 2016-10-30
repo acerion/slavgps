@@ -164,10 +164,6 @@ namespace SlavGPS {
 
 		LayerToolsBox * tb = NULL;
 
-		/* Display controls. */
-		bool select_move = false;
-
-
 
 
 		GtkWidget * hpaned = NULL;

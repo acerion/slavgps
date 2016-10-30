@@ -112,6 +112,22 @@ namespace SlavGPS {
 
 		static void set_redraw_trigger(Layer * layer);
 
+		/* Display controls. */
+		bool select_move = false;
+
+
+		/* Store at this level for highlighted selection drawing since it applies to the viewport and the layers panel. */
+		/* Only one of these items can be selected at the same time. */
+		LayerTRW * selected_trw = NULL;
+		Tracks * selected_tracks = NULL;
+		Track * selected_track = NULL;
+		std::unordered_map<sg_uid_t, Waypoint *> * selected_waypoints = NULL;
+		Waypoint * selected_waypoint = NULL;
+		/* Only use for individual track or waypoint. */
+		/* For track(s) & waypoint(s) it is the layer they are in - this helps refering to the individual item easier. */
+		LayerTRW * containing_trw = NULL;
+
+
 
 
 	public slots:
@@ -206,21 +222,6 @@ namespace SlavGPS {
 		bool view_statusbar = true;
 		bool view_toolbar = true;
 		bool view_main_menu = true;
-
-
-
-		/* Store at this level for highlighted selection drawing since it applies to the viewport and the layers panel. */
-		/* Only one of these items can be selected at the same time. */
-		LayerTRW * selected_trw = NULL;
-		Tracks * selected_tracks = NULL;
-		Track * selected_track = NULL;
-		std::unordered_map<sg_uid_t, Waypoint *> * selected_waypoints = NULL;
-		Waypoint * selected_waypoint = NULL;
-		/* Only use for individual track or waypoint. */
-		/* For track(s) & waypoint(s) it is the layer they are in - this helps refering to the individual item easier. */
-		LayerTRW * containing_trw = NULL;
-
-
 	};
 
 
