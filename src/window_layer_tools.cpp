@@ -1018,7 +1018,7 @@ static VikLayerToolFuncStatus zoomtool_click(Layer * layer, QMouseEvent * event,
 	fprintf(stderr, "LAYER TOOLS: ZOOM CLICK, tool's ->click() called\n");
 #if 0
 	tool->window->modified = true;
-	unsigned int modifiers = event->state & (GDK_SHIFT_MASK | GDK_CONTROL_MASK);
+	unsigned int modifiers = event->modifiers() & (GDK_SHIFT_MASK | GDK_CONTROL_MASK);
 
 	VikCoord coord;
 	int center_x = tool->window->viewport->get_width() / 2;
@@ -1081,7 +1081,7 @@ static VikLayerToolFuncStatus zoomtool_click(Layer * layer, QMouseEvent * event,
 static VikLayerToolFuncStatus zoomtool_move(Layer * layer, QMouseEvent * event, LayerTool * tool)
 {
 #if 0
-	unsigned int modifiers = event->state & (GDK_SHIFT_MASK | GDK_CONTROL_MASK);
+	unsigned int modifiers = event->modifiers() & (GDK_SHIFT_MASK | GDK_CONTROL_MASK);
 
 	if (tool->zoom->bounds_active && modifiers == GDK_SHIFT_MASK) {
 		zoomtool_resize_pixmap(tool);
@@ -1134,7 +1134,7 @@ static VikLayerToolFuncStatus zoomtool_move(Layer * layer, QMouseEvent * event, 
 static VikLayerToolFuncStatus zoomtool_release(Layer * layer, QMouseEvent * event, LayerTool * tool)
 {
 #if 0
-	unsigned int modifiers = event->state & (GDK_SHIFT_MASK | GDK_CONTROL_MASK);
+	unsigned int modifiers = event->modifiers() & (GDK_SHIFT_MASK | GDK_CONTROL_MASK);
 
 	/* Ensure haven't just released on the exact same position
 	   i.e. probably haven't moved the mouse at all. */
@@ -1235,7 +1235,7 @@ static VikLayerToolFuncStatus pantool_click(Layer * layer, QMouseEvent * event, 
 		/* Zoom in / out on double click.
 		   No need to change the center as that has already occurred in the first click of a double click occurrence. */
 		if (event->button() == Qt::LeftButton) {
-			unsigned int modifier = event->state & GDK_SHIFT_MASK;
+			unsigned int modifier = event->modifiers() & GDK_SHIFT_MASK;
 			if (modifier) {
 				tool->window->viewport->zoom_out();
 			} else {
@@ -1355,14 +1355,16 @@ static void click_layer_selected(Layer * layer, clicker * ck)
 
 
 
-#if 0
+#if 1
 #ifdef WINDOWS
 /* Hopefully Alt keys by default. */
 #define VIK_MOVE_MODIFIER GDK_MOD1_MASK
 #else
 /* Alt+mouse on Linux desktops tend to be used by the desktop manager.
-   Thus use an alternate modifier - you may need to set something into this group. */
-#define VIK_MOVE_MODIFIER GDK_MOD5_MASK
+   Thus use an alternate modifier - you may need to set something into this group.
+   Viking used GDK_MOD5_MASK.
+*/
+#define VIK_MOVE_MODIFIER Qt::ControlModifier
 #endif
 #endif
 
@@ -1370,14 +1372,13 @@ static void click_layer_selected(Layer * layer, clicker * ck)
 
 static VikLayerToolFuncStatus selecttool_click(Layer * layer, QMouseEvent * event, LayerTool * tool)
 {
-	fprintf(stderr, "LAYER TOOLS: SELECT CLICK, tool's ->click() called\n");
-#if 0
+	qDebug() << "II: Layer Tools:" << tool->id_string << "->click() called";
 	tool->window->select_move = false;
 
 	/* Only allow selection on primary button. */
 	if (event->button() == Qt::LeftButton) {
 
-		if (event->state & VIK_MOVE_MODIFIER) {
+		if (event->modifiers() & VIK_MOVE_MODIFIER) {
 			tool->window->pan_click(event);
 		} else {
 			/* Enable click to apply callback to potentially all track/waypoint layers. */
@@ -1399,13 +1400,14 @@ static VikLayerToolFuncStatus selecttool_click(Layer * layer, QMouseEvent * even
 				GtkTreeIter iter;
 				TreeView * tree_view = tool->window->layers_panel->get_treeview();
 
-				if (tree_view->get_selected_iter(&iter)) {
+				TreeIndex * index = tree_view->get_selected_item();
+				if (index) {
 					/* Only clear if selected thing is a TrackWaypoint layer or a sublayer. */
-					TreeItemType type = tree_view->get_item_type(&iter);
+					TreeItemType type = tree_view->get_item_type(index);
 					if (type == TreeItemType::SUBLAYER
-					    || tree_view->get_layer(&iter)->type == LayerType::TRW) {
+					    || tree_view->get_layer(index)->type == LayerType::TRW) {
 
-						tree_view->unselect(&iter);
+						tree_view->unselect(index);
 						if (tool->window->clear_highlight()) {
 							tool->window->draw_update();
 						}
@@ -1424,7 +1426,7 @@ static VikLayerToolFuncStatus selecttool_click(Layer * layer, QMouseEvent * even
 			}
 		}
 	}
-#endif
+
 	return VIK_LAYER_TOOL_ACK;
 }
 
@@ -1441,7 +1443,7 @@ static VikLayerToolFuncStatus selecttool_move(Layer * layer, QMouseEvent * event
 		}
 	} else {
 		/* Optional Panning. */
-		if (event->state & VIK_MOVE_MODIFIER) {
+		if (event->modifiers() & VIK_MOVE_MODIFIER) {
 			tool->window->pan_move(event);
 		}
 	}
@@ -1462,7 +1464,7 @@ static VikLayerToolFuncStatus selecttool_release(Layer * layer, QMouseEvent * ev
 		}
 	}
 
-	if (event->button() == Qt::LeftButton && (event->state & VIK_MOVE_MODIFIER)) {
+	if (event->button() == Qt::LeftButton && (event->modifiers() & VIK_MOVE_MODIFIER)) {
 		tool->window->pan_release(event);
 	}
 

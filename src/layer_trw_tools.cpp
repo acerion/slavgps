@@ -271,10 +271,11 @@ bool LayerTRW::select_click(QMouseEvent * event, Viewport * viewport, LayerTool 
 	if (this->type != LayerType::TRW) {
 		return false;
 	}
-
+#ifdef K
 	if (!this->tracks_visible && !this->waypoints_visible && !this->routes_visible) {
 		return false;
 	}
+#endif
 
 	LatLonBBox bbox;
 	viewport->get_bbox(&bbox);
@@ -485,7 +486,7 @@ bool LayerTRW::show_selected_viewport_menu(QMouseEvent * event, Viewport * viewp
 			}
 
 			gtk_menu_popup(this->track_right_click_menu, NULL, NULL, NULL, NULL, event->button, gtk_get_current_event_time());
-			#endif
+#endif
 
 			return true;
 		}
@@ -826,38 +827,26 @@ LayerTool * tool_new_track_create(Window * window, Viewport * viewport)
 
 
 
-typedef struct {
-	LayerTRW * layer;
-	QPixmap * drawable;
-	QPen * pen;
-	QPixmap * pixmap;
-} draw_sync_t;
-
-
-
-
 /*
  * Draw specified pixmap.
  */
-static int draw_sync(draw_sync_t * data)
+static int draw_sync(LayerTRW * trw, QPixmap * drawable, QPixmap * pixmap)
 {
 	/* Sometimes don't want to draw normally because another
 	   update has taken precedent such as panning the display
 	   which means this pixmap is no longer valid. */
-	if (1 /*ds->layer->draw_sync_do*/ ) {
-		QPainter painter(data->drawable);
-		painter.drawPixmap(0, 0, *data->pixmap);
-		emit data->layer->changed();
+	if (1 /* trw->draw_sync_do*/ ) {
+		QPainter painter(drawable);
+		painter.drawPixmap(0, 0, *pixmap);
+		emit trw->changed();
 #if 0
 		gdk_draw_drawable(ds->drawable,
 				  ds->gc,
 				  ds->pixmap,
 				  0, 0, 0, 0, -1, -1);
 #endif
-		data->layer->draw_sync_done = true;
+		trw->draw_sync_done = true;
 	}
-	delete data->pen;
-	free(data);
 	return 0;
 }
 
@@ -997,7 +986,6 @@ static VikLayerToolFuncStatus tool_new_track_move_cb(Layer * layer, QMouseEvent 
 				  0, 0, 0, 0, -1, -1);
 #endif
 
-		draw_sync_t * passalong;
 		int x1, y1;
 
 		tool->viewport->coord_to_screen(&last_tpt->coord, &x1, &y1);
@@ -1070,21 +1058,15 @@ static VikLayerToolFuncStatus tool_new_track_move_cb(Layer * layer, QMouseEvent 
 #endif
 		}
 
-		passalong = (draw_sync_t *) malloc(1 * sizeof (draw_sync_t)); /* Freed by draw_sync(). */
-		passalong->layer = trw;
-		passalong->pixmap = pixmap;
-		passalong->drawable = tool->viewport->scr_buffer;
-		passalong->pen = new QPen(trw->current_track_new_point_pen);
-
 		double angle;
 		double baseangle;
 		tool->viewport->compute_bearing(x1, y1, event->x(), event->y(), &angle, &baseangle);
-#if 0
+
 		/* Update statusbar with full gain/loss information. */
 		statusbar_write(distance, elev_gain, elev_loss, last_step, angle, trw);
-#endif
 
-		draw_sync(passalong);
+		//passalong->pen = new QPen(trw->current_track_new_point_pen);
+		draw_sync(trw, tool->viewport->scr_buffer, pixmap);
 		trw->draw_sync_done = false;
 
 		return VIK_LAYER_TOOL_ACK_GRAB_FOCUS;
@@ -1452,10 +1434,11 @@ static bool tool_edit_trackpoint_click_cb(Layer * layer, QMouseEvent * event, La
 	if (trw->type != LayerType::TRW) {
 		return false;
 	}
-
+#ifdef K
 	if (!trw->visible || !(trw->tracks_visible || trw->routes_visible)) {
 		return false;
 	}
+#endif
 
 	if (trw->selected_tp.valid) {
 		/* First check if it is within range of prev. tp. and if current_tp track is shown. (if it is, we are moving that trackpoint). */
@@ -1481,8 +1464,11 @@ static bool tool_edit_trackpoint_click_cb(Layer * layer, QMouseEvent * event, La
 		}
 
 	}
-
+#ifdef K
 	if (trw->tracks_visible) {
+#else
+	if (1) {
+#endif
 		LayerTRWc::track_search_closest_tp(trw->tracks, &params);
 	}
 
@@ -1501,7 +1487,11 @@ static bool tool_edit_trackpoint_click_cb(Layer * layer, QMouseEvent * event, La
 		return true;
 	}
 
+#ifdef K
 	if (trw->routes_visible) {
+#else
+	if (1) {
+#endif
 		LayerTRWc::track_search_closest_tp(trw->routes, &params);
 	}
 
@@ -1533,7 +1523,6 @@ static bool tool_edit_trackpoint_move_cb(Layer * layer, QMouseEvent * event, Lay
 	if (trw->type != LayerType::TRW) {
 		return false;
 	}
-#ifdef K
 
 	if (!tool->ed->holding) {
 		return false;
@@ -1550,12 +1539,10 @@ static bool tool_edit_trackpoint_move_cb(Layer * layer, QMouseEvent * event, Lay
 		}
 	}
 	// trw->selected_tp.tp->coord = new_coord;
-	{
-		int x, y;
-		tool->viewport->coord_to_screen(&new_coord, &x, &y);
-		marker_moveto(tool, x, y);
-	}
-#endif
+	int x, y;
+	tool->viewport->coord_to_screen(&new_coord, &x, &y);
+	marker_moveto(tool, x, y);
+
 	return true;
 }
 
@@ -1569,8 +1556,6 @@ static bool tool_edit_trackpoint_release_cb(Layer * layer, QMouseEvent * event, 
 	if (trw->type != LayerType::TRW) {
 		return false;
 	}
-
-#ifdef K
 
 	if (event->button() != Qt::LeftButton) {
 		return false;
@@ -1606,7 +1591,7 @@ static bool tool_edit_trackpoint_release_cb(Layer * layer, QMouseEvent * event, 
 	}
 
 	trw->emit_changed();
-#endif
+
 	return true;
 }
 
