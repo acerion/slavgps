@@ -935,10 +935,8 @@ Layer * LayersPanel::get_layer_of_type(LayerType layer_type)
 
 std::list<Layer *> * LayersPanel::get_all_layers_of_type(LayerType layer_type, bool include_invisible)
 {
-#ifndef SLAVGPS_QT
 	std::list<Layer *> * layers = new std::list<Layer *>;
 	return this->toplayer->get_all_layers_of_type(layers, layer_type, include_invisible);
-#endif
 }
 
 
