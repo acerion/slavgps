@@ -471,7 +471,6 @@ static void aggregate_layer_sort_timestamp_descend(menu_array_values * values)
 
 std::list<waypoint_layer_t *> * LayerAggregate::create_waypoints_and_layers_list()
 {
-#ifndef SLAVGPS_QT
 	std::list<Layer *> * layers = new std::list<Layer *>;
 	layers = this->get_all_layers_of_type(layers, LayerType::TRW, true);
 
@@ -490,7 +489,6 @@ std::list<waypoint_layer_t *> * LayerAggregate::create_waypoints_and_layers_list
 	delete layers;
 
 	return waypoints_and_layers;
-#endif
 }
 
 
@@ -577,9 +575,7 @@ void LayerAggregate::search_date()
 
 std::list<SlavGPS::track_layer_t *> * aggregate_layer_create_tracks_and_layers_list(Layer * layer)
 {
-#ifndef SLAVGPS_QT
 	return ((LayerAggregate *) layer)->create_tracks_and_layers_list();
-#endif
 }
 
 
@@ -587,9 +583,7 @@ std::list<SlavGPS::track_layer_t *> * aggregate_layer_create_tracks_and_layers_l
 
 std::list<SlavGPS::track_layer_t *> * LayerAggregate::create_tracks_and_layers_list(SublayerType sublayer_type)
 {
-#ifndef SLAVGPS_QT
 	return this->create_tracks_and_layers_list();
-#endif
 }
 
 
@@ -597,7 +591,6 @@ std::list<SlavGPS::track_layer_t *> * LayerAggregate::create_tracks_and_layers_l
 
 std::list<track_layer_t *> * LayerAggregate::create_tracks_and_layers_list()
 {
-#ifndef SLAVGPS_QT
 	std::list<Layer *> * layers = new std::list<Layer *>;
 	layers = this->get_all_layers_of_type(layers, LayerType::TRW, true);
 
@@ -618,7 +611,6 @@ std::list<track_layer_t *> * LayerAggregate::create_tracks_and_layers_list()
 	delete layers;
 
 	return tracks_and_layers;
-#endif
 }
 
 
@@ -936,9 +928,9 @@ std::list<Layer *> * LayerAggregate::get_all_layers_of_type(std::list<Layer *> *
 			if (layer->visible || include_invisible) {
 				layers->push_back(layer); /* now in top down order */
 			}
-#ifndef SLAVGPS_QT
 		} else if (layer_type == LayerType::TRW) {
 			/* GPS layers contain TRW layers. cf with usage in file.c */
+#ifdef K
 			if (layer->type == LayerType::GPS) {
 				if (layer->visible || include_invisible) {
 					if (!((LayerGPS *) layer)->is_empty()) {
