@@ -1420,8 +1420,6 @@ LayerTRW::~LayerTRW()
 	free(this->wp_fsize_str);
 	free(this->track_fsize_str);
 
-	if (this->tpwin != NULL)
-		gtk_widget_destroy(GTK_WIDGET(this->tpwin));
 
 	if (this->tracks_analysis_dialog != NULL) {
 		gtk_widget_destroy(GTK_WIDGET(this->tracks_analysis_dialog));
@@ -1429,6 +1427,8 @@ LayerTRW::~LayerTRW()
 
 	this->image_cache_free();
 #endif
+
+	delete this->tpwin;
 }
 
 
@@ -6766,13 +6766,14 @@ static void trw_layer_cancel_current_tp_cb(LayerTRW * layer, bool destroy)
 
 void LayerTRW::cancel_current_tp(bool destroy)
 {
-#ifdef K
 	if (this->tpwin) {
 		if (destroy) {
-			gtk_widget_destroy(GTK_WIDGET(this->tpwin));
+			delete this->tpwin;
 			this->tpwin = NULL;
 		} else {
+#ifdef K
 			vik_trw_layer_tpwin_set_empty(this->tpwin);
+#endif
 		}
 	}
 
@@ -6783,7 +6784,6 @@ void LayerTRW::cancel_current_tp(bool destroy)
 		this->current_tp_uid = 0;
 		this->emit_changed();
 	}
-#endif
 }
 
 
@@ -6791,14 +6791,12 @@ void LayerTRW::cancel_current_tp(bool destroy)
 
 void LayerTRW::my_tpwin_set_tp()
 {
-#ifdef K
 	Track * trk = this->selected_track;
 	VikCoord vc;
 	// Notional center of a track is simply an average of the bounding box extremities
 	struct LatLon center = { (trk->bbox.north+trk->bbox.south)/2, (trk->bbox.east+trk->bbox.west)/2 };
 	vik_coord_load_from_latlon(&vc, this->coord_mode, &center);
-	vik_trw_layer_tpwin_set_tp(this->tpwin, this->selected_track, &this->selected_tp.iter, trk->name, this->selected_track->is_route);
-#endif
+	this->tpwin->set_tp(this->selected_track, &this->selected_tp.iter, trk->name, this->selected_track->is_route);
 }
 
 
@@ -6983,8 +6981,9 @@ void LayerTRW::dialog_shift(GtkWindow * dialog, VikCoord * coord, bool vertical)
 void LayerTRW::tpwin_init()
 {
 	if (!this->tpwin) {
+		this->tpwin = new PropertiesDialogTP(this->get_window());
+		this->tpwin->show();
 #ifdef K
-		this->tpwin = vik_trw_layer_tpwin_new(this->get_toolkit_window());
 		g_signal_connect_swapped(GTK_DIALOG(this->tpwin), "response", G_CALLBACK(trw_layer_tpwin_response_cb), this);
 		/* connect signals -- DELETE SIGNAL VERY IMPORTANT TO SET TO NULL */
 		g_signal_connect_swapped(this->tpwin, "delete-event", G_CALLBACK(trw_layer_cancel_current_tp_cb), this);

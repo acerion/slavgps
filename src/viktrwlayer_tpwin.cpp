@@ -26,23 +26,26 @@
 
 #include <cmath>
 #include <cstdlib>
+#include <ctime>
 
-#include <gtk/gtk.h>
+//#include <gtk/gtk.h>
 #include <glib/gi18n.h>
 
-#include <time.h>
 
+#include "uibuilder_qt.h"
+#include "viktrwlayer_tpwin.h"
+#if 0
 #include "viking.h"
 #include "coords.h"
 #include "coord.h"
 #include "track.h"
-#include "viktrwlayer_tpwin.h"
 #include "waypoint.h"
 #include "vikutils.h"
 #include "dialog.h"
 #include "globals.h"
 #include "vikdatetime_edit_dialog.h"
 #include "ui_util.h"
+#endif
 
 
 
@@ -51,7 +54,7 @@ using namespace SlavGPS;
 
 
 
-
+#if 0
 struct _VikTrwLayerTpwin {
 	GtkDialog parent;
 	GtkSpinButton *lat, *lon, *alt, *ts;
@@ -240,28 +243,8 @@ static bool tpwin_set_name(VikTrwLayerTpwin * tpwin)
 
 VikTrwLayerTpwin * vik_trw_layer_tpwin_new(GtkWindow * parent)
 {
-	static char * left_label_texts[] = { (char *) N_("<b>Name:</b>"),
-					     (char *) N_("<b>Latitude:</b>"),
-					     (char *) N_("<b>Longitude:</b>"),
-					     (char *) N_("<b>Altitude:</b>"),
-					     (char *) N_("<b>Course:</b>"),
-					     (char *) N_("<b>Timestamp:</b>"),
-					     (char *) N_("<b>Time:</b>") };
-	static char * right_label_texts[] = { (char *) N_("<b>Distance Difference:</b>"),
-					      (char *) N_("<b>Time Difference:</b>"),
-					      (char *) N_("<b>\"Speed\" Between:</b>"),
-					      (char *) N_("<b>Speed:</b>"),
-					      (char *) N_("<b>VDOP:</b>"),
-					      (char *) N_("<b>HDOP:</b>"),
-					      (char *) N_("<b>PDOP:</b>"),
-					      (char *) N_("<b>SAT/FIX:</b>") };
-
-	VikTrwLayerTpwin *tpwin = VIK_TRW_LAYER_TPWIN (g_object_new (VIK_TRW_LAYER_TPWIN_TYPE, NULL));
-	GtkWidget *main_hbox, *left_vbox, *right_vbox;
-	GtkWidget *diff_left_vbox, *diff_right_vbox;
 
 	gtk_window_set_transient_for (GTK_WINDOW(tpwin), parent);
-	gtk_window_set_title (GTK_WINDOW(tpwin), _("Trackpoint"));
 
 	tpwin->button_close = gtk_dialog_add_button (GTK_DIALOG(tpwin), GTK_STOCK_CLOSE, VIK_TRW_LAYER_TPWIN_CLOSE);
 	tpwin->button_insert = gtk_dialog_add_button (GTK_DIALOG(tpwin), _("_Insert After"), VIK_TRW_LAYER_TPWIN_INSERT);
@@ -396,7 +379,7 @@ void vik_trw_layer_tpwin_set_empty(VikTrwLayerTpwin * tpwin)
 
 	gtk_window_set_title(GTK_WINDOW(tpwin), _("Trackpoint"));
 }
-
+#endif
 
 
 
@@ -409,8 +392,9 @@ void vik_trw_layer_tpwin_set_empty(VikTrwLayerTpwin * tpwin)
  *
  * Sets the Trackpoint Edit Window to the values of the current trackpoint given in @tpl.
  */
-void vik_trw_layer_tpwin_set_tp(VikTrwLayerTpwin * tpwin, Track * track, TrackPoints::iterator * iter, const char * track_name, bool is_route)
+void PropertiesDialogTP::set_tp(Track * track, TrackPoints::iterator * iter, const char * track_name, bool is_route)
 {
+#ifdef K
 	static char tmp_str[64];
 	static struct LatLon ll;
 	Trackpoint * tp = **iter;
@@ -548,12 +532,171 @@ void vik_trw_layer_tpwin_set_tp(VikTrwLayerTpwin * tpwin, Track * track, TrackPo
 	gtk_label_set_text(tpwin->sat, tmp_str);
 
 	tpwin->cur_tp = tp;
+#endif
 }
 
-void vik_trw_layer_tpwin_set_track_name(VikTrwLayerTpwin * tpwin, const char * track_name)
+
+
+
+void PropertiesDialogTP::set_track_name(char const * track_name)
 {
+#ifdef K
 	char * tmp_name = g_strdup_printf("%s: %s", track_name, _("Trackpoint"));
 	gtk_window_set_title(GTK_WINDOW(tpwin), tmp_name);
 	free(tmp_name);
 	//gtk_label_set_text(tpwin->track_name, track_name);
+#endif
+}
+
+
+
+
+PropertiesDialogTP::PropertiesDialogTP()
+{
+}
+
+
+
+PropertiesDialogTP::PropertiesDialogTP(QWidget * parent) : QDialog(parent)
+{
+	this->setWindowTitle(QString("Trackpoint"));
+
+	this->button_box = new QDialogButtonBox();
+
+	this->button_close = this->button_box->addButton("&Close", QDialogButtonBox::AcceptRole);
+	this->button_insert_after = this->button_box->addButton("&Insert After", QDialogButtonBox::ActionRole);
+	this->button_delete = this->button_box->addButton("&Delete", QDialogButtonBox::ActionRole);
+	this->button_split_here = this->button_box->addButton("Split Here", QDialogButtonBox::ActionRole);
+	this->button_back = this->button_box->addButton("&Back", QDialogButtonBox::ActionRole);
+	this->button_forward = this->button_box->addButton("&Forward", QDialogButtonBox::ActionRole);
+
+
+	this->vbox = new QVBoxLayout;
+	this->hbox = new QHBoxLayout;
+
+	QFormLayout * left_form = NULL;
+	QFormLayout * right_form = NULL;
+	QLayout * old_layout = NULL;
+
+	left_form = new QFormLayout();
+	this->left_area = new QWidget();
+	old_layout = this->left_area->layout();
+	delete old_layout;
+	this->left_area->setLayout(left_form);
+
+	right_form = new QFormLayout();
+	this->right_area = new QWidget();
+	old_layout = this->right_area->layout();
+	delete old_layout;
+	this->right_area->setLayout(right_form);
+
+
+	this->hbox->addWidget(this->left_area);
+	this->hbox->addWidget(this->right_area);
+	this->vbox->addLayout(this->hbox);
+	this->vbox->addWidget(this->button_box);
+
+	QLayout * old = this->layout();
+	delete old;
+
+	this->setLayout(this->vbox);
+
+        //connect(button_box, SIGNAL(accepted()), this, SLOT(accept()));
+	//connect(button_box, SIGNAL(rejected()), this, SLOT(reject()));
+
+
+
+
+	this->trkpt_name = new QLineEdit("", this);
+	left_form->addRow(QString("Name:"), this->trkpt_name);
+
+
+	this->lat = new QDoubleSpinBox(this);
+#if 0
+	this->lat->setDecimals();
+	this->lat->setMinimum();
+	this->lat->setMaximum();
+	this->lat->setSingleStep();
+	this->lat->setValue();
+#endif
+	left_form->addRow(QString("Latitude:"), this->lat);
+
+
+	this->lon = new QDoubleSpinBox(this);
+#if 0
+	this->lon->setDecimals();
+	this->lon->setMinimum();
+	this->lon->setMaximum();
+	this->lon->setSingleStep();
+	this->lon->setValue();
+#endif
+	left_form->addRow(QString("Latitude:"), this->lon);
+
+
+	this->alt = new QDoubleSpinBox(this);
+#if 0
+	this->alt->setDecimals();
+	this->alt->setMinimum();
+	this->alt->setMaximum();
+	this->alt->setSingleStep();
+	this->alt->setValue();
+#endif
+	left_form->addRow(QString("Altitude:"), this->alt);
+
+
+	this->course = new QLabel("", this);
+	this->course->setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard);
+	left_form->addRow(QString("Course:"), this->course);
+
+
+	left_form->addRow(QString("Timestamp:"), (QWidget *) NULL);
+
+
+	left_form->addRow(QString("Time:"), (QWidget *) NULL);
+
+
+	this->diff_dist = new QLabel("", this);
+	this->diff_dist->setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard);
+	right_form->addRow(QString("Distance Difference:"), this->diff_dist);
+
+
+	this->diff_time = new QLabel("", this);
+	this->diff_time->setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard);
+	right_form->addRow(QString("Time Difference:"), this->diff_time);
+
+
+	this->diff_speed = new QLabel("", this);
+	this->diff_speed->setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard);
+	right_form->addRow(QString("\"Speed\" Between:"), this->diff_speed);
+
+
+	this->speed = new QLabel("", this);
+	this->speed->setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard);
+	right_form->addRow(QString("Speed:"), this->speed);
+
+
+	this->vdop = new QLabel("", this);
+	this->vdop->setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard);
+	right_form->addRow(QString("VDOP:"), this->vdop);
+
+
+	this->hdop = new QLabel("", this);
+	this->hdop->setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard);
+	right_form->addRow(QString("HDOP:"), this->hdop);
+
+
+	this->pdop = new QLabel("", this);
+	this->pdop->setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard);
+	right_form->addRow(QString("PDOP:"), this->pdop);
+
+
+	this->sat = new QLabel("", this);
+	this->sat->setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard);
+	right_form->addRow(QString("SAT/FIX:"), this->sat);
+}
+
+
+
+PropertiesDialogTP::~PropertiesDialogTP()
+{
 }

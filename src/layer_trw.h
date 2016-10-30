@@ -41,7 +41,7 @@
 #include "waypoint.h"
 #include "track.h"
 #include "layers_panel.h"
-//#include "viktrwlayer_tpwin.h"
+#include "viktrwlayer_tpwin.h"
 #include "layer_trw_containers.h"
 #include "slav_qt.h"
 
@@ -428,7 +428,7 @@ namespace SlavGPS {
 		Track * selected_track = NULL;  /* Track, to which belongs currently selected trackpoint (tp)? */
 		sg_uid_t current_tp_uid = 0;   /* uid of track, to which belongs currently selected trackpoint (tp)? */
 
-		VikTrwLayerTpwin * tpwin = NULL;
+		PropertiesDialogTP * tpwin = NULL;
 
 		/* Track editing tool -- more specifically, moving tps. */
 		bool moving_tp = false;

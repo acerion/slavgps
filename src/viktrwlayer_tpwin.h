@@ -28,13 +28,22 @@
 #include <list>
 #include <cstdint>
 
-#include <glib.h>
-#include <glib-object.h>
-#include <gtk/gtk.h>
+#include <QWidget>
+#include <QFormLayout>
+#include <QPushButton>
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QDoubleSpinBox>
+#include <QDialogButtonBox>
+#include <QLabel>
+#include <QLineEdit>
+
+
+#include "track.h"
 
 
 
-
+#if 0
 /* Response codes. */
 #define VIK_TRW_LAYER_TPWIN_CLOSE    6
 #define VIK_TRW_LAYER_TPWIN_INSERT   5
@@ -64,8 +73,62 @@ GType vik_trw_layer_tpwin_get_type ();
 VikTrwLayerTpwin * vik_trw_layer_tpwin_new(GtkWindow * parent);
 void vik_trw_layer_tpwin_set_empty(VikTrwLayerTpwin * tpwin);
 void vik_trw_layer_tpwin_disable_join(VikTrwLayerTpwin * tpwin);
-void vik_trw_layer_tpwin_set_tp(VikTrwLayerTpwin * tpwin, SlavGPS::Track * list, std::list<SlavGPS::Trackpoint *>::iterator * iter, const char * track_name, bool is_route);
-void vik_trw_layer_tpwin_set_track_name(VikTrwLayerTpwin * tpwin, const char * track_name);
+
+#endif
+
+
+
+
+namespace SlavGPS {
+
+
+
+
+	class PropertiesDialogTP : public QDialog {
+	public:
+		PropertiesDialogTP();
+		PropertiesDialogTP(QWidget * parent);
+		~PropertiesDialogTP();
+
+		void set_tp(Track * list, std::list<Trackpoint *>::iterator * iter, char const * track_name, bool is_route);
+		void set_track_name(char const * track_name);
+
+	private:
+		QDialogButtonBox * button_box = NULL;
+
+		QPushButton * button_close = NULL;
+		QPushButton * button_insert_after = NULL;
+		QPushButton * button_delete = NULL;
+		QPushButton * button_split_here = NULL;
+		QPushButton * button_back = NULL;
+		QPushButton * button_forward = NULL;
+
+		QVBoxLayout * vbox = NULL;
+		QHBoxLayout * hbox = NULL;
+
+		QWidget * left_area = NULL;
+		QWidget * right_area = NULL;
+
+		QLineEdit * trkpt_name = NULL;
+		QDoubleSpinBox * lat = NULL;
+		QDoubleSpinBox * lon = NULL;
+		QDoubleSpinBox * alt = NULL;
+		QLabel * course = NULL;
+
+		QLabel * diff_dist = NULL;
+		QLabel * diff_time = NULL;
+		QLabel * diff_speed = NULL;
+		QLabel * speed = NULL;
+		QLabel * vdop = NULL;
+		QLabel * hdop = NULL;
+		QLabel * pdop = NULL;
+		QLabel * sat = NULL;
+	};
+
+
+
+
+}
 
 
 
