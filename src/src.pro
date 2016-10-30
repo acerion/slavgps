@@ -25,7 +25,8 @@ SOURCES += main.cpp \
     layer_trw_containers.cpp \
     layers_panel.cpp \
     track.cpp \
-    vikwaypoint.cpp \
+    waypoint.cpp \
+    waypoint_properties.cpp \
     tree_view.cpp \
     uibuilder.cpp \
     uibuilder_qt.cpp \
@@ -69,6 +70,8 @@ HEADERS += window.h \
     layer_trw_containers.h \
     layers_panel.h \
     track.h \
+    waypoint.h \
+    waypoint_properties.h \
     layer_trw.h \
     tree_view.h \
     uibuilder.h \
