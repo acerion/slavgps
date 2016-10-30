@@ -28,7 +28,7 @@
 
 #include <glib.h>
 
-#include "viktrwlayer.h"
+#include "layer_trw.h"
 #include "coords.h"
 #include "download.h"
 #include "window.h"

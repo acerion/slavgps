@@ -29,7 +29,7 @@
 
 #include "viking.h"
 #include "viktrwlayer_waypointlist.h"
-#include "viktrwlayer_wpwin.h"
+#include "waypoint_properties.h"
 #include "clipboard.h"
 #include "dialog.h"
 #include "settings.h"

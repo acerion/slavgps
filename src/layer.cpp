@@ -39,7 +39,7 @@
 #include "layer.h"
 #include "window.h"
 #ifndef SLAVGPS_QT
-#include "viktrwlayer.h"
+#include "layer_trw.h"
 #endif
 #include "layer_aggregate.h"
 #include "layer_coord.h"

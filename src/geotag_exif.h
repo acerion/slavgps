@@ -27,7 +27,7 @@
 
 #include <cstdint>
 
-#include "vikwaypoint.h"
+#include "waypoint.h"
 #include "coord.h"
 
 

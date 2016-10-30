@@ -30,8 +30,8 @@
 #include <cstdint>
 
 #include "layer.h"
-#include "viktrack.h"
-#include "viktrwlayer.h"
+#include "track.h"
+#include "layer_trw.h"
 #include "window.h"
 
 

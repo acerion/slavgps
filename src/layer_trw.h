@@ -38,7 +38,7 @@
 
 #include "layer.h"
 #include "viewport.h"
-#include "vikwaypoint.h"
+#include "waypoint.h"
 #include "track.h"
 #include "layers_panel.h"
 //#include "viktrwlayer_tpwin.h"

@@ -31,7 +31,7 @@
 
 #include <glib.h>
 
-#include "viktrwlayer.h"
+#include "layer_trw.h"
 #include "download.h"
 
 

@@ -30,7 +30,7 @@
 
 #include "layer_aggregate.h"
 #if 0
-#include "viktrwlayer.h"
+#include "layer_trw.h"
 #include "viewport.h"
 #endif
 

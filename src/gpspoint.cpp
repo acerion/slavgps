@@ -36,9 +36,9 @@
 #endif
 
 #include "gpspoint.h"
-#include "viktrack.h"
-#include "vikwaypoint.h"
-#include "viktrwlayer.h"
+#include "track.h"
+#include "waypoint.h"
+#include "layer_trw.h"
 #include "file.h"
 #include "globals.h"
 

@@ -41,7 +41,7 @@
 #include <string.h>
 #endif
 
-#include "viktrwlayer.h"
+#include "layer_trw.h"
 #include "viktrwlayer_propwin.h"
 #include "dems.h"
 #include "viewport.h" /* ugh */

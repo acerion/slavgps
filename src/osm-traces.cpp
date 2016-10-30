@@ -35,7 +35,7 @@
 #include <glib/gstdio.h>
 #include <glib/gi18n.h>
 
-#include "viktrwlayer.h"
+#include "layer_trw.h"
 #include "osm-traces.h"
 #include "gpx.h"
 #include "background.h"

@@ -39,7 +39,7 @@
 #include "tree_view.h"
 #include "clipboard.h"
 #include "dialog.h"
-#include "viktrwlayer.h"
+#include "layer_trw.h"
 #include "globals.h"
 
 

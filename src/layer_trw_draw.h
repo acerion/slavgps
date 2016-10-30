@@ -33,7 +33,7 @@
 #include <unordered_map>
 
 #include "viewport.h"
-#include "vikwaypoint.h"
+#include "waypoint.h"
 #include "track.h"
 #include "layer_trw.h"
 #include "window.h"

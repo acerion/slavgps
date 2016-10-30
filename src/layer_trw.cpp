@@ -47,11 +47,12 @@
 #include "layer_trw_draw.h"
 #include "layer_trw_tools.h"
 
+#include "waypoint_properties.h"
+
 #ifdef K
 #include "vikmapslayer.h"
 #include "vikgpslayer.h"
 #include "viktrwlayer_export.h"
-#include "viktrwlayer_wpwin.h"
 #include "viktrwlayer_propwin.h"
 #include "viktrwlayer_analysis.h"
 #include "viktrwlayer_tracklist.h"

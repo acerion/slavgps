@@ -50,7 +50,7 @@
 
 #include "vikgpslayer.h"
 #include "viktrwlayer_export.h"
-#include "viktrwlayer_wpwin.h"
+#include "waypoint_properties.h"
 #include "viktrwlayer_propwin.h"
 #include "viktrwlayer_analysis.h"
 #include "viktrwlayer_tracklist.h"

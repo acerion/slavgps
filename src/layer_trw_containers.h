@@ -31,7 +31,7 @@
 
 #include <list>
 
-#include "vikwaypoint.h"
+#include "waypoint.h"
 #include "track.h"
 #include "layer.h"
 

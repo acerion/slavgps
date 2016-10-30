@@ -25,7 +25,7 @@
 
 
 
-#include "viktrwlayer.h"
+#include "layer_trw.h"
 #include "file.h"
 
 

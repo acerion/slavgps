@@ -25,7 +25,7 @@
 
 #include "coords.h"
 #include "coord.h"
-#include "vikwaypoint.h"
+#include "waypoint.h"
 #include "globals.h"
 //#include "garminsymbols.h"
 #include "dems.h"

@@ -26,7 +26,7 @@
 #include "jpg.h"
 #include "file.h"
 #include "fileutils.h"
-#include "viktrwlayer.h"
+#include "layer_trw.h"
 #include "window.h"
 #include "globals.h"
 #ifdef VIK_CONFIG_GEOTAG
