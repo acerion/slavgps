@@ -31,7 +31,7 @@
 #include <QDebug>
 
 #include "uibuilder_qt.h"
-#include "viktrwlayer_tpwin.h"
+#include "trackpoint_properties.h"
 #if 0
 #include "viking.h"
 #include "coords.h"

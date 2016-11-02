@@ -40,8 +40,8 @@
 #include "viewport.h"
 #include "waypoint.h"
 #include "track.h"
+#include "trackpoint_properties.h"
 #include "layers_panel.h"
-#include "viktrwlayer_tpwin.h"
 #include "layer_trw_containers.h"
 #include "slav_qt.h"
 
