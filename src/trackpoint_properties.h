@@ -38,26 +38,28 @@
 #include <QDialogButtonBox>
 #include <QLabel>
 #include <QLineEdit>
+#include <QSignalMapper>
 
 #include "track.h"
 
 
 
 
-/* Response codes. */
-#define VIK_TRW_LAYER_TPWIN_CLOSE    6
-#define VIK_TRW_LAYER_TPWIN_INSERT   5
-#define VIK_TRW_LAYER_TPWIN_DELETE   4
-#define VIK_TRW_LAYER_TPWIN_SPLIT    3
-#define VIK_TRW_LAYER_TPWIN_BACK     1
-#define VIK_TRW_LAYER_TPWIN_FORWARD  0
-
-#define VIK_TRW_LAYER_TPWIN_DATA_CHANGED 100
-
-
-
-
 namespace SlavGPS {
+
+
+
+	/* Dialog response codes. */
+	enum {
+		SG_TRACK_CLOSE,
+		SG_TRACK_INSERT,
+		SG_TRACK_DELETE,
+		SG_TRACK_SPLIT,
+		SG_TRACK_BACK,
+		SG_TRACK_FORWARD,
+
+		SG_TRACK_CHANGED
+	};
 
 
 
@@ -72,6 +74,8 @@ namespace SlavGPS {
 		void set_tp(Track * list, std::list<Trackpoint *>::iterator * iter, char const * track_name, bool is_route);
 		void set_track_name(char const * track_name);
 		void set_empty();
+
+		QSignalMapper * signalMapper = NULL;
 
 	private slots:
 		void sync_ll_to_tp_cb(void);

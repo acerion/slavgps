@@ -87,7 +87,7 @@ void PropertiesDialogTP::sync_ll_to_tp_cb(void) /* Slot. */
 		if (vik_coord_diff(&this->cur_tp->coord, &coord) > 0.05) { /* May not be exact due to rounding. */
 			this->cur_tp->coord = coord;
 #ifdef K
-			gtk_dialog_response(GTK_DIALOG(tpwin), VIK_TRW_LAYER_TPWIN_DATA_CHANGED);
+			gtk_dialog_response(GTK_DIALOG(tpwin), SG_TRACK_CHANGED);
 #endif
 		}
 	}
@@ -203,20 +203,11 @@ bool PropertiesDialogTP::set_name_cb(void) /* Slot. */
 
 VikTrwLayerTpwin * vik_trw_layer_tpwin_new(GtkWindow * parent)
 {
-	tpwin->button_close = gtk_dialog_add_button (GTK_DIALOG(tpwin), GTK_STOCK_CLOSE, VIK_TRW_LAYER_TPWIN_CLOSE);
-	tpwin->button_insert = gtk_dialog_add_button (GTK_DIALOG(tpwin), _("_Insert After"), VIK_TRW_LAYER_TPWIN_INSERT);
-	tpwin->button_delete = gtk_dialog_add_button (GTK_DIALOG(tpwin), GTK_STOCK_DELETE, VIK_TRW_LAYER_TPWIN_DELETE);
-	tpwin->button_split = gtk_dialog_add_button (GTK_DIALOG(tpwin), _("Split Here"), VIK_TRW_LAYER_TPWIN_SPLIT);
-	tpwin->button_back = gtk_dialog_add_button (GTK_DIALOG(tpwin), GTK_STOCK_GO_BACK, VIK_TRW_LAYER_TPWIN_BACK);
-	tpwin->button_forward = gtk_dialog_add_button (GTK_DIALOG(tpwin), GTK_STOCK_GO_FORWARD, VIK_TRW_LAYER_TPWIN_FORWARD);
-
-
 	tpwin->time = gtk_button_new();
-
 
 	GtkWidget *response_w = NULL;
 #if GTK_CHECK_VERSION (2, 20, 0)
-	response_w = gtk_dialog_get_widget_for_response(GTK_DIALOG(tpwin), VIK_TRW_LAYER_TPWIN_CLOSE);
+	response_w = gtk_dialog_get_widget_for_response(GTK_DIALOG(tpwin), SG_TRACK_CLOSE);
 #endif
 	if (response_w) {
 		gtk_widget_grab_focus(response_w);
@@ -461,7 +452,6 @@ PropertiesDialogTP::PropertiesDialogTP(QWidget * parent) : QDialog(parent)
 	this->button_box = new QDialogButtonBox();
 
 	this->button_close = this->button_box->addButton("&Close", QDialogButtonBox::ActionRole);
-	connect(this->button_close, SIGNAL (released()), this, SLOT (reject()));
 	this->button_insert_after = this->button_box->addButton("&Insert After", QDialogButtonBox::ActionRole);
 	this->button_insert_after->setIcon(QIcon::fromTheme("list-add"));
 	this->button_delete = this->button_box->addButton("&Delete", QDialogButtonBox::ActionRole);
@@ -471,6 +461,24 @@ PropertiesDialogTP::PropertiesDialogTP(QWidget * parent) : QDialog(parent)
 	this->button_back->setIcon(QIcon::fromTheme("go-previous"));
 	this->button_forward = this->button_box->addButton("&Forward", QDialogButtonBox::ActionRole);
 	this->button_forward->setIcon(QIcon::fromTheme("go-next"));
+
+
+
+	this->signalMapper = new QSignalMapper(this);
+	connect(this->button_close,        SIGNAL (released()), signalMapper, SLOT (map()));
+	connect(this->button_insert_after, SIGNAL (released()), signalMapper, SLOT (map()));
+	connect(this->button_delete,       SIGNAL (released()), signalMapper, SLOT (map()));
+	connect(this->button_split_here,   SIGNAL (released()), signalMapper, SLOT (map()));
+	connect(this->button_back,         SIGNAL (released()), signalMapper, SLOT (map()));
+	connect(this->button_forward,      SIGNAL (released()), signalMapper, SLOT (map()));
+
+	this->signalMapper->setMapping(this->button_close,        SG_TRACK_CLOSE);
+	this->signalMapper->setMapping(this->button_insert_after, SG_TRACK_INSERT);
+	this->signalMapper->setMapping(this->button_delete,       SG_TRACK_DELETE);
+	this->signalMapper->setMapping(this->button_split_here,   SG_TRACK_SPLIT);
+	this->signalMapper->setMapping(this->button_back,         SG_TRACK_BACK);
+	this->signalMapper->setMapping(this->button_forward,      SG_TRACK_FORWARD);
+
 
 	this->vbox = new QVBoxLayout; /* Main track info. */
 	this->hbox = new QHBoxLayout; /* Diff info. */

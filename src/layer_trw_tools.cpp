@@ -1481,7 +1481,7 @@ static bool tool_edit_trackpoint_click_cb(Layer * layer, QMouseEvent * event, La
 		trw->current_tp_uid = params.closest_track_uid;
 
 		trw->selected_track = trw->tracks.at(params.closest_track_uid);
-		trw->tpwin_init();
+		trw->trackpoint_properties_show();
 		trw->set_statusbar_msg_info_trkpt(params.closest_tp);
 		trw->emit_changed();
 		return true;
@@ -1504,7 +1504,7 @@ static bool tool_edit_trackpoint_click_cb(Layer * layer, QMouseEvent * event, La
 
 		trw->current_tp_uid = params.closest_track_uid;
 		trw->selected_track = trw->routes.at(params.closest_track_uid);
-		trw->tpwin_init();
+		trw->trackpoint_properties_show();
 		trw->set_statusbar_msg_info_trkpt(params.closest_tp);
 		trw->emit_changed();
 		return true;

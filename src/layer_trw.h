@@ -136,7 +136,7 @@ namespace SlavGPS {
 
 
 	class LayerTRW : public Layer {
-
+		Q_OBJECT
 	public:
 		LayerTRW();
 		LayerTRW(Viewport * viewport);
@@ -319,8 +319,7 @@ namespace SlavGPS {
 		std::list<track_layer_t *> * create_tracks_and_layers_list_helper(std::list<Track *> * tracks);
 
 
-		void tpwin_init();
-
+		void trackpoint_properties_show();
 
 
 
@@ -534,6 +533,11 @@ namespace SlavGPS {
 
 		/* One per layer. */
 		GtkWidget * tracks_analysis_dialog = NULL;
+
+
+	public slots:
+		void trackpoint_properties_cb(int response);
+
 
 	private:
 		/* Add a node in tree view, under which layers' tracks/waypoints/routes will be displayed. */

@@ -122,7 +122,6 @@ using namespace SlavGPS;
 static void goto_coord(LayersPanel * panel, Layer * layer, Viewport * viewport, const VikCoord * coord);
 
 static void trw_layer_cancel_current_tp_cb(LayerTRW * layer, bool destroy);
-static void trw_layer_tpwin_response_cb(LayerTRW * layer, int response);
 
 static void waypoint_convert(Waypoint * wp, VikCoordMode * dest_mode);
 
@@ -4688,7 +4687,7 @@ void trw_layer_route_refine(trw_menu_sublayer_t * data)
 void trw_layer_edit_trackpoint(trw_menu_sublayer_t * data)
 {
 	LayerTRW * layer = data->layer;
-	layer->tpwin_init();
+	layer->trackpoint_properties_show();
 }
 
 
@@ -6800,34 +6799,26 @@ void LayerTRW::my_tpwin_set_tp()
 
 
 
-static void trw_layer_tpwin_response_cb(LayerTRW * layer, int response)
+void LayerTRW::trackpoint_properties_cb(int response) /* Slot. */
 {
-	layer->tpwin_response(response);
-}
-
-
-
-
-void LayerTRW::tpwin_response(int response)
-{
-#ifdef K
 	assert (this->tpwin != NULL);
-	if (response == VIK_TRW_LAYER_TPWIN_CLOSE) {
+	if (response == SG_TRACK_CLOSE) {
 		this->cancel_current_tp(true);
+		//this->tpwin->reject();
 	}
 
 	if (!this->selected_tp.valid) {
 		return;
 	}
 
-	if (response == VIK_TRW_LAYER_TPWIN_SPLIT
+	if (response == SG_TRACK_SPLIT
 	    && this->selected_tp.iter != this->selected_track->begin()
 	    && std::next(this->selected_tp.iter) != this->selected_track->end()) {
 
 		this->split_at_selected_trackpoint(this->selected_track->is_route ? SublayerType::ROUTE : SublayerType::TRACK);
 		this->my_tpwin_set_tp();
 
-	} else if (response == VIK_TRW_LAYER_TPWIN_DELETE) {
+	} else if (response == SG_TRACK_DELETE) {
 
 		Track * tr = this->tracks.at(this->current_tp_uid);
 		if (tr == NULL) {
@@ -6846,7 +6837,7 @@ void LayerTRW::tpwin_response(int response)
 
 		this->emit_changed();
 
-	} else if (response == VIK_TRW_LAYER_TPWIN_FORWARD
+	} else if (response == SG_TRACK_FORWARD
 		   && this->selected_track
 		   && std::next(this->selected_tp.iter) != this->selected_track->end()) {
 
@@ -6854,7 +6845,7 @@ void LayerTRW::tpwin_response(int response)
 		this->my_tpwin_set_tp();
 		this->emit_changed(); /* TODO longone: either move or only update if tp is inside drawing window */
 
-	} else if (response == VIK_TRW_LAYER_TPWIN_BACK
+	} else if (response == SG_TRACK_BACK
 		   && this->selected_track
 		   && this->selected_tp.iter != this->selected_track->begin()) {
 
@@ -6862,17 +6853,16 @@ void LayerTRW::tpwin_response(int response)
 		this->my_tpwin_set_tp();
 		this->emit_changed();
 
-	} else if (response == VIK_TRW_LAYER_TPWIN_INSERT
+	} else if (response == SG_TRACK_INSERT
 		   && this->selected_track
 		   && std::next(this->selected_tp.iter) != this->selected_track->end()) {
 
 		this->insert_tp_beside_current_tp(false);
 		this->emit_changed();
 
-	} else if (response == VIK_TRW_LAYER_TPWIN_DATA_CHANGED) {
+	} else if (response == SG_TRACK_CHANGED) {
 		this->emit_changed();
 	}
-#endif
 }
 
 
@@ -6976,34 +6966,35 @@ void LayerTRW::dialog_shift(GtkWindow * dialog, VikCoord * coord, bool vertical)
 
 
 
-void LayerTRW::tpwin_init()
+void LayerTRW::trackpoint_properties_show()
 {
 	if (!this->tpwin) {
 		this->tpwin = new PropertiesDialogTP(this->get_window());
+		//connect(this->tpwin, SIGNAL (changed(void)), this, SLOT (trackpoint_properties_cb(void)));
+
+		connect(this->tpwin->signalMapper, SIGNAL (mapped(int)), this, SLOT (trackpoint_properties_cb(int)));
+
+		//g_signal_connect_swapped(this->tpwin, "delete-event", G_CALLBACK(trw_layer_cancel_current_tp_cb), this);
 	}
 	this->tpwin->show();
+
+
+	if (this->selected_tp.valid) {
+		/* Get tp pixel position. */
+		Trackpoint * tp = *this->selected_tp.iter;
 #ifdef K
-		g_signal_connect_swapped(GTK_DIALOG(this->tpwin), "response", G_CALLBACK(trw_layer_tpwin_response_cb), this);
-		/* connect signals -- DELETE SIGNAL VERY IMPORTANT TO SET TO NULL */
-		g_signal_connect_swapped(this->tpwin, "delete-event", G_CALLBACK(trw_layer_cancel_current_tp_cb), this);
-
-		gtk_widget_show_all(GTK_WIDGET(this->tpwin));
-
-		if (this->selected_tp.valid) {
-			/* Get tp pixel position. */
-			Trackpoint * tp = *this->selected_tp.iter;
-
-			// Shift up<->down to try not to obscure the trackpoint.
-			this->dialog_shift(GTK_WINDOW(this->tpwin), &tp->coord, true);
-		}
+		/* Shift up/down to try not to obscure the trackpoint. */
+		this->dialog_shift(GTK_WINDOW(this->tpwin), &tp->coord, true);
 #endif
+	}
+
 
 	if (this->selected_tp.valid) {
 		if (this->selected_track) {
 			this->my_tpwin_set_tp();
 		}
 	}
-	/* set layer name and TP data */
+	/* Set layer name and TP data. */
 }
 
 
