@@ -6595,7 +6595,7 @@ char const * LayerTRW::sublayer_rename_request(const char * newname, void * pane
 		// Update any subwindows that could be displaying this track which has changed name
 		// Only one Track Edit Window
 		if (this->selected_track == trk && this->tpwin) {
-			vik_trw_layer_tpwin_set_track_name(this->tpwin, newname);
+			this->tpwin->set_track_name(newname);
 		}
 		// Property Dialog of the track
 		vik_trw_layer_propwin_update(trk);
@@ -6634,7 +6634,7 @@ char const * LayerTRW::sublayer_rename_request(const char * newname, void * pane
 		// Update any subwindows that could be displaying this track which has changed name
 		// Only one Track Edit Window
 		if (this->selected_track == trk && this->tpwin) {
-			vik_trw_layer_tpwin_set_track_name(this->tpwin, newname);
+			this->tpwin->set_track_name(newname);
 		}
 		// Property Dialog of the track
 		vik_trw_layer_propwin_update(trk);
@@ -6771,9 +6771,7 @@ void LayerTRW::cancel_current_tp(bool destroy)
 			delete this->tpwin;
 			this->tpwin = NULL;
 		} else {
-#ifdef K
-			vik_trw_layer_tpwin_set_empty(this->tpwin);
-#endif
+			this->tpwin->set_empty();
 		}
 	}
 
@@ -6982,7 +6980,8 @@ void LayerTRW::tpwin_init()
 {
 	if (!this->tpwin) {
 		this->tpwin = new PropertiesDialogTP(this->get_window());
-		this->tpwin->show();
+	}
+	this->tpwin->show();
 #ifdef K
 		g_signal_connect_swapped(GTK_DIALOG(this->tpwin), "response", G_CALLBACK(trw_layer_tpwin_response_cb), this);
 		/* connect signals -- DELETE SIGNAL VERY IMPORTANT TO SET TO NULL */
@@ -6998,7 +6997,6 @@ void LayerTRW::tpwin_init()
 			this->dialog_shift(GTK_WINDOW(this->tpwin), &tp->coord, true);
 		}
 #endif
-	}
 
 	if (this->selected_tp.valid) {
 		if (this->selected_track) {

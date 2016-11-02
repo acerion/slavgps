@@ -28,9 +28,7 @@
 #include <cstdlib>
 #include <ctime>
 
-//#include <gtk/gtk.h>
-#include <glib/gi18n.h>
-
+#include <QDebug>
 
 #include "uibuilder_qt.h"
 #include "viktrwlayer_tpwin.h"
@@ -54,57 +52,9 @@ using namespace SlavGPS;
 
 
 
-#if 0
-struct _VikTrwLayerTpwin {
-	GtkDialog parent;
-	GtkSpinButton *lat, *lon, *alt, *ts;
-	GtkWidget *trkpt_name;
-	GtkWidget *time;
-	GtkLabel *course, *diff_dist, *diff_time, *diff_speed, *speed, *hdop, *vdop, *pdop, *sat;
-	/* Previously these buttons were in a glist, however I think the ordering behaviour is implicit
-	   thus control manually to ensure operating on the correct button. */
-	GtkWidget * button_close;
-	GtkWidget * button_delete;
-	GtkWidget * button_insert;
-	GtkWidget * button_split;
-	GtkWidget * button_back;
-	GtkWidget * button_forward;
-	Trackpoint * cur_tp;
-	bool sync_to_tp_block;
-};
-
-
-
-
-GType vik_trw_layer_tpwin_get_type(void)
-{
-	static GType tpwin_type = 0;
-
-	if (!tpwin_type) {
-		static const GTypeInfo tpwin_info = {
-			sizeof (VikTrwLayerTpwinClass),
-			NULL, /* base_init */
-			NULL, /* base_finalize */
-			NULL, /* class init */
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (VikTrwLayerTpwin),
-			0,
-			NULL /* instance init */
-		};
-		tpwin_type = g_type_register_static(GTK_TYPE_DIALOG, "VikTrwLayerTpwin", &tpwin_info, (GTypeFlags) 0);
-	}
-
-	return tpwin_type;
-}
-
-
-
-#endif
-
 
 /**
- *  Just update the display for the time fields.
+ *  Update the display for time fields.
  */
 void PropertiesDialogTP::update_times(Trackpoint * tp)
 {
@@ -122,22 +72,23 @@ void PropertiesDialogTP::update_times(Trackpoint * tp)
 }
 
 
-#ifdef K
 
 
-static void tpwin_sync_ll_to_tp(VikTrwLayerTpwin * tpwin)
+void PropertiesDialogTP::sync_ll_to_tp_cb(void) /* Slot. */
 {
-	if (tpwin->cur_tp && (!tpwin->sync_to_tp_block)) {
+	if (this->cur_tp && (!this->sync_to_tp_block)) {
 		struct LatLon ll;
 		VikCoord coord;
-		ll.lat = gtk_spin_button_get_value(tpwin->lat);
-		ll.lon = gtk_spin_button_get_value(tpwin->lon);
-		vik_coord_load_from_latlon(&coord, tpwin->cur_tp->coord.mode, &ll);
+		ll.lat = this->lat->value();
+		ll.lon = this->lon->value();
+		vik_coord_load_from_latlon(&coord, this->cur_tp->coord.mode, &ll);
 
 		/* Don't redraw unless we really have to. */
-		if (vik_coord_diff(&(tpwin->cur_tp->coord), &coord) > 0.05) { /* May not be exact due to rounding. */
-			tpwin->cur_tp->coord = coord;
+		if (vik_coord_diff(&this->cur_tp->coord, &coord) > 0.05) { /* May not be exact due to rounding. */
+			this->cur_tp->coord = coord;
+#ifdef K
 			gtk_dialog_response(GTK_DIALOG(tpwin), VIK_TRW_LAYER_TPWIN_DATA_CHANGED);
+#endif
 		}
 	}
 }
@@ -145,21 +96,21 @@ static void tpwin_sync_ll_to_tp(VikTrwLayerTpwin * tpwin)
 
 
 
-static void tpwin_sync_alt_to_tp(VikTrwLayerTpwin * tpwin)
+void PropertiesDialogTP::sync_alt_to_tp_cb(void) /* Slot. */
 {
-	if (tpwin->cur_tp && (!tpwin->sync_to_tp_block)) {
+	if (this->cur_tp && (!this->sync_to_tp_block)) {
 		/* Always store internally in metres. */
 		HeightUnit height_units = a_vik_get_units_height();
 		switch (height_units) {
 		case HeightUnit::METRES:
-			tpwin->cur_tp->altitude = gtk_spin_button_get_value(tpwin->alt);
+			this->cur_tp->altitude = this->alt->value();
 			break;
 		case HeightUnit::FEET:
-			tpwin->cur_tp->altitude = VIK_FEET_TO_METERS(gtk_spin_button_get_value(tpwin->alt));
+			this->cur_tp->altitude = VIK_FEET_TO_METERS(this->alt->value());
 			break;
 		default:
-			tpwin->cur_tp->altitude = gtk_spin_button_get_value(tpwin->alt);
-			fprintf(stderr, "CRITICAL: Houston, we've had a problem. height=%d\n", height_units);
+			this->cur_tp->altitude = this->alt->value();
+			qDebug() << "EE: TrackPoint Properties: invalid height unit in" << __FUNCTION__;
 		}
 	}
 }
@@ -167,48 +118,50 @@ static void tpwin_sync_alt_to_tp(VikTrwLayerTpwin * tpwin)
 
 
 
-static void tpwin_sync_timestamp_to_tp(VikTrwLayerTpwin * tpwin)
+void PropertiesDialogTP::sync_timestamp_to_tp_cb(void) /* Slot. */
 {
-	if (tpwin->cur_tp && (!tpwin->sync_to_tp_block)) {
-		tpwin->cur_tp->timestamp = gtk_spin_button_get_value_as_int(tpwin->timestamp);
-
-		tpwin_update_times(tpwin, tpwin->cur_tp);
+	if (this->cur_tp && (!this->sync_to_tp_block)) {
+		this->cur_tp->timestamp = this->timestamp->value();
+		this->update_times(this->cur_tp);
 	}
 }
 
+
+
+#ifdef K
 
 
 
 static time_t last_edit_time = 0;
 
-static void tpwin_sync_time_to_tp(GtkWidget * widget, GdkEventButton * event, VikTrwLayerTpwin * tpwin)
+void PropertiesDialogTP::sync_time_to_tp_cb(GtkWidget * widget, QMouseEvent * event)
 {
-	if (!tpwin->cur_tp || tpwin->sync_to_tp_block) {
+	if (!this->cur_tp || this->sync_to_tp_block) {
 		return;
 	}
 
-	if (event->button == MouseButton::RIGHT) {
+	if (event->button() == Qt::RightButton) {
 		/* On right click and when a time is available, allow a method to copy the displayed time as text. */
 		if (!gtk_button_get_image(GTK_BUTTON(widget))) {
-			vu_copy_label_menu(widget, event->button);
+			vu_copy_label_menu(widget, event->button());
 		}
 		return;
-	} else if (event->button == MouseButton::MIDDLE) {
+	} else if (event->button() == Qt::MiddleButton) {
 		return;
 	}
 
-	if (!tpwin->cur_tp || tpwin->sync_to_tp_block) {
+	if (!this->cur_tp || this->sync_to_tp_block) {
 		return;
 	}
 
-	if (tpwin->cur_tp->has_timestamp) {
-		last_edit_time = tpwin->cur_tp->timestamp;
+	if (this->cur_tp->has_timestamp) {
+		last_edit_time = this->cur_tp->timestamp;
 	} else if (last_edit_time == 0) {
 		time(&last_edit_time);
 	}
 
 	GTimeZone * gtz = g_time_zone_new_local();
-	time_t mytime = vik_datetime_edit_dialog(GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(&tpwin->parent))),
+	time_t mytime = vik_datetime_edit_dialog(GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(&this->parent))),
 						 _("Date/Time Edit"),
 						 last_edit_time,
 						 gtz);
@@ -220,37 +173,36 @@ static void tpwin_sync_time_to_tp(GtkWidget * widget, GdkEventButton * event, Vi
 	}
 
 	/* Otherwise use the new value. */
-	tpwin->cur_tp->timestamp = mytime;
-	tpwin->cur_tp->has_timestamp = true;
+	this->cur_tp->timestamp = mytime;
+	this->cur_tp->has_timestamp = true;
 	/* TODO: consider warning about unsorted times? */
 
 	/* Clear the previous 'Add' image as now a time is set. */
-	if (gtk_button_get_image (GTK_BUTTON(tpwin->time))) {
-		gtk_button_set_image(GTK_BUTTON(tpwin->time), NULL);
+	if (gtk_button_get_image (GTK_BUTTON(this->time))) {
+		gtk_button_set_image(GTK_BUTTON(this->time), NULL);
 	}
 
-	tpwin_update_times(tpwin, tpwin->cur_tp);
+	this->update_times(this->cur_tp);
 }
 
 
+#endif
 
 
-static bool tpwin_set_name(VikTrwLayerTpwin * tpwin)
+bool PropertiesDialogTP::set_name_cb(void) /* Slot. */
 {
-	if (tpwin->cur_tp && (!tpwin->sync_to_tp_block)) {
-		tpwin->cur_tp->set_name(gtk_entry_get_text(GTK_ENTRY(tpwin->trkpt_name)));
+	if (this->cur_tp && (!this->sync_to_tp_block)) {
+		this->cur_tp->set_name(this->trkpt_name->text().toUtf8().constData());
 	}
 	return false;
 }
 
 
+#ifdef K
 
 
 VikTrwLayerTpwin * vik_trw_layer_tpwin_new(GtkWindow * parent)
 {
-
-	gtk_window_set_transient_for (GTK_WINDOW(tpwin), parent);
-
 	tpwin->button_close = gtk_dialog_add_button (GTK_DIALOG(tpwin), GTK_STOCK_CLOSE, VIK_TRW_LAYER_TPWIN_CLOSE);
 	tpwin->button_insert = gtk_dialog_add_button (GTK_DIALOG(tpwin), _("_Insert After"), VIK_TRW_LAYER_TPWIN_INSERT);
 	tpwin->button_delete = gtk_dialog_add_button (GTK_DIALOG(tpwin), GTK_STOCK_DELETE, VIK_TRW_LAYER_TPWIN_DELETE);
@@ -258,85 +210,9 @@ VikTrwLayerTpwin * vik_trw_layer_tpwin_new(GtkWindow * parent)
 	tpwin->button_back = gtk_dialog_add_button (GTK_DIALOG(tpwin), GTK_STOCK_GO_BACK, VIK_TRW_LAYER_TPWIN_BACK);
 	tpwin->button_forward = gtk_dialog_add_button (GTK_DIALOG(tpwin), GTK_STOCK_GO_FORWARD, VIK_TRW_LAYER_TPWIN_FORWARD);
 
-	/*
-	  gtk_dialog_add_buttons (GTK_DIALOG(tpwin),
-	  GTK_STOCK_CLOSE, VIK_TRW_LAYER_TPWIN_CLOSE,
-	  _("_Insert After"), VIK_TRW_LAYER_TPWIN_INSERT,
-	  GTK_STOCK_DELETE, VIK_TRW_LAYER_TPWIN_DELETE,
-	  _("Split Here"), VIK_TRW_LAYER_TPWIN_SPLIT,
-	  GTK_STOCK_GO_BACK, VIK_TRW_LAYER_TPWIN_BACK,
-	  GTK_STOCK_GO_FORWARD, VIK_TRW_LAYER_TPWIN_FORWARD,
-	  NULL);
-	  tpwin->buttons = gtk_container_get_children(GTK_CONTAINER(GTK_DIALOG(tpwin)->action_area));
-	*/
 
-	/* Main track info. */
-	left_vbox = a_dialog_create_label_vbox (left_label_texts, G_N_ELEMENTS(left_label_texts), 1, 3);
-
-	tpwin->trkpt_name = gtk_entry_new();
-	g_signal_connect_swapped (G_OBJECT(tpwin->trkpt_name), "focus-out-event", G_CALLBACK(tpwin_set_name), tpwin);
-
-	tpwin->course = GTK_LABEL(ui_label_new_selectable(NULL));
 	tpwin->time = gtk_button_new();
-	gtk_button_set_relief (GTK_BUTTON(tpwin->time), GTK_RELIEF_NONE);
-	g_signal_connect (G_OBJECT(tpwin->time), "button-release-event", G_CALLBACK(tpwin_sync_time_to_tp), tpwin);
 
-	tpwin->lat = GTK_SPIN_BUTTON(gtk_spin_button_new(GTK_ADJUSTMENT(gtk_adjustment_new(0, -90, 90, 0.00005, 0.01, 0)), 0.00005, 6));
-	tpwin->lon = GTK_SPIN_BUTTON(gtk_spin_button_new(GTK_ADJUSTMENT(gtk_adjustment_new(0, -180, 180, 0.00005, 0.01, 0)), 0.00005, 6));
-
-	g_signal_connect_swapped (G_OBJECT(tpwin->lat), "value-changed", G_CALLBACK(tpwin_sync_ll_to_tp), tpwin);
-	g_signal_connect_swapped (G_OBJECT(tpwin->lon), "value-changed", G_CALLBACK(tpwin_sync_ll_to_tp), tpwin);
-
-	tpwin->alt = GTK_SPIN_BUTTON(gtk_spin_button_new(GTK_ADJUSTMENT(gtk_adjustment_new (0, (int) VIK_VAL_MAX_ALT, (int) VIK_VAL_MIN_ALT, 10, 100, 0)), 10, 2));
-
-	g_signal_connect_swapped (G_OBJECT(tpwin->alt), "value-changed", G_CALLBACK(tpwin_sync_alt_to_tp), tpwin);
-
-	tpwin->timestamp = GTK_SPIN_BUTTON(gtk_spin_button_new_with_range(0,2147483647,1)); /* pow(2,31)-1 limit input to ~2038 for now. */
-	g_signal_connect_swapped (G_OBJECT(tpwin->timestamp), "value-changed", G_CALLBACK(tpwin_sync_timestamp_to_tp), tpwin);
-	gtk_spin_button_set_digits (tpwin->timestamp, 0);
-
-	right_vbox = gtk_vbox_new (true, 1);
-	gtk_box_pack_start (GTK_BOX(right_vbox), GTK_WIDGET(tpwin->trkpt_name), false, false, 3);
-	gtk_box_pack_start (GTK_BOX(right_vbox), GTK_WIDGET(tpwin->lat), false, false, 3);
-	gtk_box_pack_start (GTK_BOX(right_vbox), GTK_WIDGET(tpwin->lon), false, false, 3);
-	gtk_box_pack_start (GTK_BOX(right_vbox), GTK_WIDGET(tpwin->alt), false, false, 3);
-	gtk_box_pack_start (GTK_BOX(right_vbox), GTK_WIDGET(tpwin->course), false, false, 3);
-	gtk_box_pack_start (GTK_BOX(right_vbox), GTK_WIDGET(tpwin->timestamp), false, false, 3);
-	gtk_box_pack_start (GTK_BOX(right_vbox), GTK_WIDGET(tpwin->time), false, false, 3);
-
-	/* Diff info. */
-	diff_left_vbox = a_dialog_create_label_vbox (right_label_texts, G_N_ELEMENTS(right_label_texts), 1, 3);
-
-	tpwin->diff_dist = GTK_LABEL(ui_label_new_selectable(NULL));
-	tpwin->diff_time = GTK_LABEL(ui_label_new_selectable(NULL));
-	tpwin->diff_speed = GTK_LABEL(ui_label_new_selectable(NULL));
-	tpwin->speed = GTK_LABEL(ui_label_new_selectable(NULL));
-
-	tpwin->vdop = GTK_LABEL(ui_label_new_selectable(NULL));
-	tpwin->hdop = GTK_LABEL(ui_label_new_selectable(NULL));
-	tpwin->pdop = GTK_LABEL(ui_label_new_selectable(NULL));
-	tpwin->sat = GTK_LABEL(ui_label_new_selectable(NULL));
-
-	diff_right_vbox = gtk_vbox_new (true, 1);
-	gtk_box_pack_start (GTK_BOX(diff_right_vbox), GTK_WIDGET(tpwin->diff_dist), false, false, 3);
-	gtk_box_pack_start (GTK_BOX(diff_right_vbox), GTK_WIDGET(tpwin->diff_time), false, false, 3);
-	gtk_box_pack_start (GTK_BOX(diff_right_vbox), GTK_WIDGET(tpwin->diff_speed), false, false, 3);
-	gtk_box_pack_start (GTK_BOX(diff_right_vbox), GTK_WIDGET(tpwin->speed), false, false, 3);
-
-	gtk_box_pack_start (GTK_BOX(diff_right_vbox), GTK_WIDGET(tpwin->vdop), false, false, 3);
-	gtk_box_pack_start (GTK_BOX(diff_right_vbox), GTK_WIDGET(tpwin->hdop), false, false, 3);
-	gtk_box_pack_start (GTK_BOX(diff_right_vbox), GTK_WIDGET(tpwin->pdop), false, false, 3);
-	gtk_box_pack_start (GTK_BOX(diff_right_vbox), GTK_WIDGET(tpwin->sat), false, false, 3);
-
-	main_hbox = gtk_hbox_new(false, 0);
-	gtk_box_pack_start (GTK_BOX(main_hbox), left_vbox, true, true, 3);
-	gtk_box_pack_start (GTK_BOX(main_hbox), right_vbox, true, true, 0);
-	gtk_box_pack_start (GTK_BOX(main_hbox), diff_left_vbox, true, true, 0);
-	gtk_box_pack_start (GTK_BOX(main_hbox), diff_right_vbox, true, true, 0);
-
-	gtk_box_pack_start (GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(tpwin))), main_hbox, false, false, 0);
-
-	tpwin->cur_tp = NULL;
 
 	GtkWidget *response_w = NULL;
 #if GTK_CHECK_VERSION (2, 20, 0)
@@ -350,28 +226,36 @@ VikTrwLayerTpwin * vik_trw_layer_tpwin_new(GtkWindow * parent)
 }
 
 
+#endif
 
 
-void vik_trw_layer_tpwin_set_empty(VikTrwLayerTpwin * tpwin)
+void PropertiesDialogTP::set_empty()
 {
-	gtk_editable_delete_text(GTK_EDITABLE(tpwin->trkpt_name), 0, -1);
-	gtk_widget_set_sensitive(tpwin->trkpt_name, false);
+	/* TODO: shouldn't we set ->cur_tp to NULL? */
+	this->trkpt_name->insert("");
+	this->trkpt_name->setEnabled(false);
 
+#ifdef K
 	gtk_button_set_label(GTK_BUTTON(tpwin->time), "");
+#endif
+
 	this->course->setText(QString(""));
 
-	gtk_widget_set_sensitive(GTK_WIDGET(tpwin->lat), false);
-	gtk_widget_set_sensitive(GTK_WIDGET(tpwin->lon), false);
-	gtk_widget_set_sensitive(GTK_WIDGET(tpwin->alt), false);
-	gtk_widget_set_sensitive(GTK_WIDGET(tpwin->timestamp), false);
-	gtk_widget_set_sensitive(GTK_WIDGET(tpwin->time), false);
+	this->lat->setEnabled(false);
+	this->lon->setEnabled(false);
+	this->alt->setEnabled(false);
+	this->timestamp->setEnabled(false);
+#ifdef K
+	this->time->setEnabled(false);
+#endif
 
 	/* Only keep close button enabled. */
-	gtk_widget_set_sensitive(tpwin->button_insert, false);
-	gtk_widget_set_sensitive(tpwin->button_split, false);
-	gtk_widget_set_sensitive(tpwin->button_delete, false);
-	gtk_widget_set_sensitive(tpwin->button_back, false);
-	gtk_widget_set_sensitive(tpwin->button_forward, false);
+	this->button_insert_after->setEnabled(false);
+	this->button_split_here->setEnabled(false);
+	this->button_delete->setEnabled(false);
+	this->button_back->setEnabled(false);
+	this->button_forward->setEnabled(false);
+
 
 	this->diff_dist->setText(QString(""));
 	this->diff_time->setText(QString(""));
@@ -382,9 +266,9 @@ void vik_trw_layer_tpwin_set_empty(VikTrwLayerTpwin * tpwin)
 	this->pdop->setText(QString(""));
 	this->sat->setText(QString(""));
 
-	gtk_window_set_title(GTK_WINDOW(tpwin), _("Trackpoint"));
+	this->setWindowTitle(QString("Trackpoint"));
 }
-#endif
+
 
 
 
@@ -403,14 +287,12 @@ void PropertiesDialogTP::set_tp(Track * track, TrackPoints::iterator * iter, con
 	static struct LatLon ll;
 	Trackpoint * tp = **iter;
 
+	this->trkpt_name->setEnabled(true);
 	if (tp->name) {
 		this->trkpt_name->insert(QString(tp->name));
 	} else {
 		this->trkpt_name->insert(QString(""));
 	}
-#ifdef K
-	gtk_widget_set_sensitive(tpwin->trkpt_name, true);
-#endif
 
 	/* User can insert only if not at the end of track (otherwise use extend track). */
 	this->button_insert_after->setEnabled(std::next(*iter) != track->end());
@@ -422,21 +304,21 @@ void PropertiesDialogTP::set_tp(Track * track, TrackPoints::iterator * iter, con
 	this->button_forward->setEnabled(std::next(*iter) != track->end());
 	this->button_back->setEnabled(*iter != track->begin());
 
+
+	this->lat->setEnabled(true);
+	this->lon->setEnabled(true);
+	this->alt->setEnabled(true);
+	this->timestamp->setEnabled(tp->has_timestamp);
 #ifdef K
-	gtk_widget_set_sensitive(GTK_WIDGET(tpwin->lat), true);
-	gtk_widget_set_sensitive(GTK_WIDGET(tpwin->lon), true);
-	gtk_widget_set_sensitive(GTK_WIDGET(tpwin->alt), true);
-	gtk_widget_set_sensitive(GTK_WIDGET(tpwin->timestamp), tp->has_timestamp);
-	gtk_widget_set_sensitive(GTK_WIDGET(tpwin->time), tp->has_timestamp);
+	this->time->setEnabled(tp->has_timestamp);
 	/* Enable adding timestamps - but not on routepoints. */
 	if (!tp->has_timestamp && !is_route) {
-		gtk_widget_set_sensitive(GTK_WIDGET(tpwin->time), true);
+		this->time->setEnabled(true);
 		GtkWidget *img = gtk_image_new_from_stock(GTK_STOCK_ADD, GTK_ICON_SIZE_MENU);
 		gtk_button_set_image(GTK_BUTTON(tpwin->time), img);
 	} else {
 		this->set_track_name(track_name);
 	}
-
 #endif
 
 	this->sync_to_tp_block = true; /* Don't update while setting data. */
@@ -557,12 +439,9 @@ void PropertiesDialogTP::set_tp(Track * track, TrackPoints::iterator * iter, con
 
 void PropertiesDialogTP::set_track_name(char const * track_name)
 {
-#ifdef K
-	char * tmp_name = g_strdup_printf("%s: %s", track_name, _("Trackpoint"));
-	gtk_window_set_title(GTK_WINDOW(tpwin), tmp_name);
-	free(tmp_name);
+	QString new_name = QString("%1: %2").arg(QString(track_name)).arg(QString("Trackpoint"));
+	this->setWindowTitle(new_name);
 	//this->track_name->setText(QString(track_name));
-#endif
 }
 
 
@@ -574,22 +453,27 @@ PropertiesDialogTP::PropertiesDialogTP()
 
 
 
+
 PropertiesDialogTP::PropertiesDialogTP(QWidget * parent) : QDialog(parent)
 {
 	this->setWindowTitle(QString("Trackpoint"));
 
 	this->button_box = new QDialogButtonBox();
 
-	this->button_close = this->button_box->addButton("&Close", QDialogButtonBox::AcceptRole);
+	this->button_close = this->button_box->addButton("&Close", QDialogButtonBox::ActionRole);
+	connect(this->button_close, SIGNAL (released()), this, SLOT (reject()));
 	this->button_insert_after = this->button_box->addButton("&Insert After", QDialogButtonBox::ActionRole);
+	this->button_insert_after->setIcon(QIcon::fromTheme("list-add"));
 	this->button_delete = this->button_box->addButton("&Delete", QDialogButtonBox::ActionRole);
+	this->button_delete->setIcon(QIcon::fromTheme("list-delete"));
 	this->button_split_here = this->button_box->addButton("Split Here", QDialogButtonBox::ActionRole);
 	this->button_back = this->button_box->addButton("&Back", QDialogButtonBox::ActionRole);
+	this->button_back->setIcon(QIcon::fromTheme("go-previous"));
 	this->button_forward = this->button_box->addButton("&Forward", QDialogButtonBox::ActionRole);
+	this->button_forward->setIcon(QIcon::fromTheme("go-next"));
 
-
-	this->vbox = new QVBoxLayout;
-	this->hbox = new QHBoxLayout;
+	this->vbox = new QVBoxLayout; /* Main track info. */
+	this->hbox = new QHBoxLayout; /* Diff info. */
 
 	QFormLayout * left_form = NULL;
 	QFormLayout * right_form = NULL;
@@ -613,52 +497,46 @@ PropertiesDialogTP::PropertiesDialogTP(QWidget * parent) : QDialog(parent)
 	this->vbox->addLayout(this->hbox);
 	this->vbox->addWidget(this->button_box);
 
+
 	QLayout * old = this->layout();
 	delete old;
-
 	this->setLayout(this->vbox);
-
-        //connect(button_box, SIGNAL(accepted()), this, SLOT(accept()));
-	//connect(button_box, SIGNAL(rejected()), this, SLOT(reject()));
-
-
 
 
 	this->trkpt_name = new QLineEdit("", this);
 	left_form->addRow(QString("Name:"), this->trkpt_name);
+	// connect(this->trkpt_name, "focus-out-event", this, SLOT (set_name_cb(void)));
+
 
 
 	this->lat = new QDoubleSpinBox(this);
-#if 0
-	this->lat->setDecimals();
-	this->lat->setMinimum();
-	this->lat->setMaximum();
-	this->lat->setSingleStep();
-	this->lat->setValue();
-#endif
+	this->lat->setDecimals(6);
+	this->lat->setMinimum(-90);
+	this->lat->setMaximum(90);
+	this->lat->setSingleStep(0.00005);
+	this->lat->setValue(0);
 	left_form->addRow(QString("Latitude:"), this->lat);
+	connect(this->lat, SIGNAL (valueChanged(double)), this, SLOT (sync_ll_to_tp_cb(void)));
 
 
 	this->lon = new QDoubleSpinBox(this);
-#if 0
-	this->lon->setDecimals();
-	this->lon->setMinimum();
-	this->lon->setMaximum();
-	this->lon->setSingleStep();
-	this->lon->setValue();
-#endif
+	this->lon->setDecimals(0);
+	this->lon->setMinimum(-180);
+	this->lon->setMaximum(180);
+	this->lon->setSingleStep(0.00005);
+	this->lon->setValue(0);
 	left_form->addRow(QString("Latitude:"), this->lon);
+	connect(this->lon, SIGNAL (valueChanged(double)), this, SLOT (sync_ll_to_tp_cb(void)));
 
 
 	this->alt = new QDoubleSpinBox(this);
-#if 0
-	this->alt->setDecimals();
-	this->alt->setMinimum();
-	this->alt->setMaximum();
-	this->alt->setSingleStep();
-	this->alt->setValue();
-#endif
+	this->alt->setDecimals(2);
+	this->alt->setMinimum(VIK_VAL_MIN_ALT);
+	this->alt->setMaximum(VIK_VAL_MAX_ALT);
+	this->alt->setSingleStep(10);
+	this->alt->setValue(0);
 	left_form->addRow(QString("Altitude:"), this->alt);
+	connect(this->alt, SIGNAL (valueChanged(double)), this, SLOT (sync_alt_to_tp_cb(void)));
 
 
 	this->course = new QLabel("", this);
@@ -666,10 +544,18 @@ PropertiesDialogTP::PropertiesDialogTP(QWidget * parent) : QDialog(parent)
 	left_form->addRow(QString("Course:"), this->course);
 
 
-	left_form->addRow(QString("Timestamp:"), (QWidget *) NULL);
+	this->timestamp = new QSpinBox(this);
+	this->timestamp->setMinimum(0);
+	this->timestamp->setMaximum(2147483647); /* pow(2,31)-1 limit input to ~2038 for now. */ /* TODO: improve this initialization. */
+	this->timestamp->setSingleStep(1);
+	left_form->addRow(QString("Timestamp:"), this->timestamp);
+	connect(this->timestamp, SIGNAL (valueChanged(int)), this, SLOT (sync_timestamp_to_tp_cb(void)));
 
 
 	left_form->addRow(QString("Time:"), (QWidget *) NULL);
+	//gtk_button_set_relief (GTK_BUTTON(tpwin->time), GTK_RELIEF_NONE);
+	//connect(this->time, "button-release-event", this, SLOT (sync_time_to_tp_cb(void)));
+
 
 
 	this->diff_dist = new QLabel("", this);

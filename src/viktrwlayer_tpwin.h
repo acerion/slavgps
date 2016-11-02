@@ -29,6 +29,7 @@
 #include <cstdint>
 
 #include <QWidget>
+#include <QDialog>
 #include <QFormLayout>
 #include <QPushButton>
 #include <QVBoxLayout>
@@ -38,12 +39,11 @@
 #include <QLabel>
 #include <QLineEdit>
 
-
 #include "track.h"
 
 
 
-#if 0
+
 /* Response codes. */
 #define VIK_TRW_LAYER_TPWIN_CLOSE    6
 #define VIK_TRW_LAYER_TPWIN_INSERT   5
@@ -54,28 +54,6 @@
 
 #define VIK_TRW_LAYER_TPWIN_DATA_CHANGED 100
 
-#define VIK_TRW_LAYER_TPWIN_TYPE            (vik_trw_layer_tpwin_get_type ())
-#define VIK_TRW_LAYER_TPWIN(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), VIK_TRW_LAYER_TPWIN_TYPE, VikTrwLayerTpwin))
-#define VIK_TRW_LAYER_TPWIN_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), VIK_TRW_LAYER_TPWIN_TYPE, VikTrwLayerTpwinClass))
-#define IS_VIK_TRW_LAYER_TPWIN(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), VIK_TRW_LAYER_TPWIN_TYPE))
-#define IS_VIK_TRW_LAYER_TPWIN_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), VIK_TRW_LAYER_TPWIN_TYPE))
-
-typedef struct _VikTrwLayerTpwin VikTrwLayerTpwin;
-typedef struct _VikTrwLayerTpwinClass VikTrwLayerTpwinClass;
-
-struct _VikTrwLayerTpwinClass
-{
-	GtkDialogClass vik_trw_layer_class;
-};
-
-GType vik_trw_layer_tpwin_get_type ();
-
-VikTrwLayerTpwin * vik_trw_layer_tpwin_new(GtkWindow * parent);
-void vik_trw_layer_tpwin_set_empty(VikTrwLayerTpwin * tpwin);
-void vik_trw_layer_tpwin_disable_join(VikTrwLayerTpwin * tpwin);
-
-#endif
-
 
 
 
@@ -85,6 +63,7 @@ namespace SlavGPS {
 
 
 	class PropertiesDialogTP : public QDialog {
+		Q_OBJECT
 	public:
 		PropertiesDialogTP();
 		PropertiesDialogTP(QWidget * parent);
@@ -92,6 +71,13 @@ namespace SlavGPS {
 
 		void set_tp(Track * list, std::list<Trackpoint *>::iterator * iter, char const * track_name, bool is_route);
 		void set_track_name(char const * track_name);
+		void set_empty();
+
+	private slots:
+		void sync_ll_to_tp_cb(void);
+		void sync_alt_to_tp_cb(void);
+		void sync_timestamp_to_tp_cb(void);
+		bool set_name_cb(void);
 
 	private:
 
@@ -135,7 +121,7 @@ namespace SlavGPS {
 
 
 
-}
+} /* namespace SlavGPS */
 
 
 
