@@ -25,7 +25,7 @@ SOURCES += main.cpp \
     layer_trw_containers.cpp \
     layers_panel.cpp \
     track.cpp \
-    viktrwlayer_tpwin.cpp \
+    trackpoint_properties.cpp \
     waypoint.cpp \
     waypoint_properties.cpp \
     tree_view.cpp \
@@ -71,7 +71,7 @@ HEADERS += window.h \
     layer_trw_containers.h \
     layers_panel.h \
     track.h \
-    viktrwlayer_tpwin.h \
+    trackpoint_properties.h \
     waypoint.h \
     waypoint_properties.h \
     layer_trw.h \
