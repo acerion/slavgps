@@ -41,6 +41,8 @@ SOURCES += main.cpp \
     compression.cpp \
     fileutils.cpp \
     util.cpp \
+    vikutils.cpp \
+    misc/kdtree.c \
     file.cpp \
     dir.cpp \
     background.cpp \
@@ -87,6 +89,8 @@ HEADERS += window.h \
     compression.h \
     fileutils.h \
     util.h \
+    vikutils.h \
+    misc/kdtree.h \
     file.h \
     dir.h \
     background.h \

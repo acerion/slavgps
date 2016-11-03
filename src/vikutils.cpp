@@ -22,26 +22,30 @@
  * Dependencies in this file can be on anything.
  * For functions with simple system dependencies put it in util.c
  */
-#include <math.h>
-#include <glib/gstdio.h>
-#include <glib/gi18n.h>
-#include <gtk/gtk.h>
+#include <cmath>
 #include <cstdlib>
 
-//#include "viking.h"
+//#include <glib/gstdio.h>
+//#include <glib/gi18n.h>
+//#include <gtk/gtk.h>
+
+
 #include "vikutils.h"
+#include "util.h"
+#include "settings.h"
+#include "misc/kdtree.h"
+#ifdef K
 #include "globals.h"
 #include "download.h"
 #include "preferences.h"
 #include "vikmapslayer.h"
-#include "settings.h"
 #include "ui_util.h"
 #include "dir.h"
-#include "misc/kdtree.h"
 #include "layer_defaults.h"
 #include "dialog.h"
 #include "clipboard.h"
 #include "file.h"
+#endif
 
 
 
@@ -49,6 +53,12 @@
 using namespace SlavGPS;
 
 
+
+static struct kdtree * kd = NULL;
+
+
+
+#ifdef K
 
 
 #define FMT_MAX_NUMBER_CODES 9
@@ -300,6 +310,7 @@ char * SlavGPS::vu_trackpoint_formatted_message(char * format_code, Trackpoint *
 }
 
 
+#endif
 
 
 double SlavGPS::convert_speed_mps_to(SpeedUnit speed_units, double speed)
@@ -439,6 +450,7 @@ double SlavGPS::convert_distance_meters_to(DistanceUnit distance_unit, double di
 }
 
 
+#ifdef K
 
 
 typedef struct {
@@ -689,11 +701,6 @@ char * SlavGPS::vu_get_canonical_filename(Layer * layer, const char * filename)
 
 
 
-static struct kdtree * kd = NULL;
-
-
-
-
 /**
  * @dir: The directory from which to load the latlontz.txt file.
  *
@@ -785,6 +792,7 @@ void SlavGPS::vu_finalize_lat_lon_tz_lookup()
 }
 
 
+#endif
 
 
 static double dist_sq(double * a1, double * a2, int dims)
@@ -939,6 +947,7 @@ char * SlavGPS::vu_get_time_string(time_t * time, const char * format, const Vik
 }
 
 
+#ifdef K
 
 
 /**
@@ -1099,3 +1108,6 @@ void SlavGPS::vu_zoom_to_show_latlons_common(VikCoordMode mode, Viewport * viewp
 		viewport->set_zoom(zoom);
 	}
 }
+
+
+#endif
