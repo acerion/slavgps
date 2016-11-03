@@ -32,13 +32,13 @@
 
 #include "uibuilder_qt.h"
 #include "trackpoint_properties.h"
+#include "vikutils.h"
 #if 0
 #include "viking.h"
 #include "coords.h"
 #include "coord.h"
 #include "track.h"
 #include "waypoint.h"
-#include "vikutils.h"
 #include "dialog.h"
 #include "globals.h"
 #include "vikdatetime_edit_dialog.h"
@@ -58,17 +58,16 @@ using namespace SlavGPS;
  */
 void PropertiesDialogTP::update_times(Trackpoint * tp)
 {
-#ifdef K
+
 	if (tp->has_timestamp) {
 		this->timestamp->setValue(tp->timestamp);
-		char * msg = vu_get_time_string(&(tp->timestamp), "%c", &(tp->coord), NULL);
-		gtk_button_set_label(GTK_BUTTON(tpwin->time), msg);
+		char * msg = vu_get_time_string(&tp->timestamp, "%c", &tp->coord, NULL);
+		this->datetime->setText(QString(msg));
 		free(msg);
 	} else {
 		this->timestamp->setValue(0);
-		gtk_button_set_label(GTK_BUTTON(tpwin->time), "");
+		this->datetime->setText(QString(""));
 	}
-#endif
 }
 
 
@@ -128,27 +127,26 @@ void PropertiesDialogTP::sync_timestamp_to_tp_cb(void) /* Slot. */
 
 
 
-#ifdef K
-
-
 
 static time_t last_edit_time = 0;
 
-void PropertiesDialogTP::sync_time_to_tp_cb(GtkWidget * widget, QMouseEvent * event)
+void PropertiesDialogTP::datetime_clicked_cb(void)
 {
 	if (!this->cur_tp || this->sync_to_tp_block) {
 		return;
 	}
 
+#ifdef K
 	if (event->button() == Qt::RightButton) {
 		/* On right click and when a time is available, allow a method to copy the displayed time as text. */
-		if (!gtk_button_get_image(GTK_BUTTON(widget))) {
+		if (this->datetime->icon().isNull()) {
 			vu_copy_label_menu(widget, event->button());
 		}
 		return;
 	} else if (event->button() == Qt::MiddleButton) {
 		return;
 	}
+#endif
 
 	if (!this->cur_tp || this->sync_to_tp_block) {
 		return;
@@ -160,12 +158,15 @@ void PropertiesDialogTP::sync_time_to_tp_cb(GtkWidget * widget, QMouseEvent * ev
 		time(&last_edit_time);
 	}
 
+	time_t mytime = 0;
+#ifdef K
 	GTimeZone * gtz = g_time_zone_new_local();
 	time_t mytime = vik_datetime_edit_dialog(GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(&this->parent))),
 						 _("Date/Time Edit"),
 						 last_edit_time,
 						 gtz);
 	g_time_zone_unref(gtz);
+#endif
 
 	/* Was the dialog cancelled? */
 	if (mytime == 0) {
@@ -177,16 +178,15 @@ void PropertiesDialogTP::sync_time_to_tp_cb(GtkWidget * widget, QMouseEvent * ev
 	this->cur_tp->has_timestamp = true;
 	/* TODO: consider warning about unsorted times? */
 
-	/* Clear the previous 'Add' image as now a time is set. */
-	if (gtk_button_get_image (GTK_BUTTON(this->time))) {
-		gtk_button_set_image(GTK_BUTTON(this->time), NULL);
+	/* Clear the previous 'Add' icon as now a time is set. */
+	if (!this->datetime->icon().isNull()) {
+		this->datetime->setIcon(QIcon());
 	}
 
 	this->update_times(this->cur_tp);
 }
 
 
-#endif
 
 
 bool PropertiesDialogTP::set_name_cb(void) /* Slot. */
@@ -198,26 +198,6 @@ bool PropertiesDialogTP::set_name_cb(void) /* Slot. */
 }
 
 
-#ifdef K
-
-
-VikTrwLayerTpwin * vik_trw_layer_tpwin_new(GtkWindow * parent)
-{
-	tpwin->time = gtk_button_new();
-
-	GtkWidget *response_w = NULL;
-#if GTK_CHECK_VERSION (2, 20, 0)
-	response_w = gtk_dialog_get_widget_for_response(GTK_DIALOG(tpwin), SG_TRACK_CLOSE);
-#endif
-	if (response_w) {
-		gtk_widget_grab_focus(response_w);
-	}
-
-	return tpwin;
-}
-
-
-#endif
 
 
 void PropertiesDialogTP::set_empty()
@@ -226,9 +206,7 @@ void PropertiesDialogTP::set_empty()
 	this->trkpt_name->insert("");
 	this->trkpt_name->setEnabled(false);
 
-#ifdef K
-	gtk_button_set_label(GTK_BUTTON(tpwin->time), "");
-#endif
+	this->datetime->setText(QString(""));
 
 	this->course->setText(QString(""));
 
@@ -236,9 +214,7 @@ void PropertiesDialogTP::set_empty()
 	this->lon->setEnabled(false);
 	this->alt->setEnabled(false);
 	this->timestamp->setEnabled(false);
-#ifdef K
-	this->time->setEnabled(false);
-#endif
+	this->datetime->setEnabled(false);
 
 	/* Only keep close button enabled. */
 	this->button_insert_after->setEnabled(false);
@@ -300,17 +276,15 @@ void PropertiesDialogTP::set_tp(Track * track, TrackPoints::iterator * iter, con
 	this->lon->setEnabled(true);
 	this->alt->setEnabled(true);
 	this->timestamp->setEnabled(tp->has_timestamp);
-#ifdef K
-	this->time->setEnabled(tp->has_timestamp);
+
+	this->datetime->setEnabled(tp->has_timestamp);
 	/* Enable adding timestamps - but not on routepoints. */
 	if (!tp->has_timestamp && !is_route) {
-		this->time->setEnabled(true);
-		GtkWidget *img = gtk_image_new_from_stock(GTK_STOCK_ADD, GTK_ICON_SIZE_MENU);
-		gtk_button_set_image(GTK_BUTTON(tpwin->time), img);
+		this->datetime->setEnabled(true);
+		this->datetime->setIcon(QIcon::fromTheme("list-add"));
 	} else {
 		this->set_track_name(track_name);
 	}
-#endif
 
 	this->sync_to_tp_block = true; /* Don't update while setting data. */
 
@@ -360,9 +334,7 @@ void PropertiesDialogTP::set_tp(Track * track, TrackPoints::iterator * iter, con
 				this->diff_speed->setText(QString("--"));
 			} else {
 				double tmp_speed = vik_coord_diff(&tp->coord, &this->cur_tp->coord) / (ABS(tp->timestamp - this->cur_tp->timestamp));
-#ifdef K
 				get_speed_string(tmp_str, sizeof (tmp_str), speed_units, tmp_speed);
-#endif
 				this->diff_speed->setText(QString(tmp_str));
 			}
 		} else {
@@ -381,9 +353,7 @@ void PropertiesDialogTP::set_tp(Track * track, TrackPoints::iterator * iter, con
 	if (isnan(tp->speed)) {
 		snprintf(tmp_str, sizeof (tmp_str), "--");
 	} else {
-#ifdef K
 		get_speed_string(tmp_str, sizeof (tmp_str), speed_units, tp->speed);
-#endif
 	}
 	this->speed->setText(QString(tmp_str));
 
@@ -560,10 +530,10 @@ PropertiesDialogTP::PropertiesDialogTP(QWidget * parent) : QDialog(parent)
 	connect(this->timestamp, SIGNAL (valueChanged(int)), this, SLOT (sync_timestamp_to_tp_cb(void)));
 
 
-	left_form->addRow(QString("Time:"), (QWidget *) NULL);
+	this->datetime = new QPushButton(this);
+	left_form->addRow(QString("Time:"), this->datetime);
 	//gtk_button_set_relief (GTK_BUTTON(tpwin->time), GTK_RELIEF_NONE);
-	//connect(this->time, "button-release-event", this, SLOT (sync_time_to_tp_cb(void)));
-
+	connect(this->datetime, SIGNAL (released(void)), this, SLOT (datetime_clicked_cb(void)));
 
 
 	this->diff_dist = new QLabel("", this);

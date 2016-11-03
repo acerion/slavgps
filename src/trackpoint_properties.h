@@ -39,6 +39,7 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QSignalMapper>
+#include <QDateTimeEdit>
 
 #include "track.h"
 
@@ -82,6 +83,7 @@ namespace SlavGPS {
 		void sync_alt_to_tp_cb(void);
 		void sync_timestamp_to_tp_cb(void);
 		bool set_name_cb(void);
+		void datetime_clicked_cb(void);
 
 	private:
 
@@ -111,6 +113,7 @@ namespace SlavGPS {
 		QDoubleSpinBox * alt = NULL;
 		QLabel * course = NULL;
 		QSpinBox * timestamp = NULL;
+		QPushButton * datetime = NULL;
 
 		QLabel * diff_dist = NULL;
 		QLabel * diff_time = NULL;
