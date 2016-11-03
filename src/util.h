@@ -78,6 +78,10 @@ char * util_write_tmp_file_from_bytes(const void * buffer, size_t count);
 void free_string(char ** s);
 
 
+#ifndef _
+#define _(s) s
+#endif
+
 
 
 #endif /* #ifndef _SG_UTIL_H_ */
