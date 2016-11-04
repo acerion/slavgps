@@ -30,19 +30,17 @@
 #include "config.h"
 #endif
 
-#ifdef HAVE_MATH_H
-#include <math.h>
-#endif
-#ifdef HAVE_STRING_H
-#include <string.h>
-#endif
-#ifdef HAVE_STDLIB_H
-#include <stdlib.h>
-#endif
+#include <cmath>
+#include <cstring>
+#include <cstdlib>
 #include <cstdio>
 #include <cctype>
 #include <cassert>
 
+#include "util.h"
+#include "layer_trw.h"
+
+#ifdef K
 #include <gdk/gdkkeysyms.h>
 #include <glib.h>
 #include <glib/gstdio.h>
@@ -83,11 +81,11 @@
 #include "gpspoint.h"
 #include "clipboard.h"
 #include "settings.h"
-#include "util.h"
 #include "globals.h"
 #include "vikrouting.h"
 #include "layer_trw_draw.h"
 #include "icons/icons.h"
+#endif
 
 
 
@@ -119,8 +117,10 @@ extern bool have_geojson_export;
 
 
 
-void LayerTRW::add_menu_items(GtkMenu * menu, void * panel_)
+void LayerTRW::add_menu_items(QMenu & menu, void * panel_)
 {
+	QAction * qa = NULL;
+#ifdef K
 	static trw_menu_layer_t pass_along;
 	LayersPanel * panel = (LayersPanel *) panel_;
 	pass_along.layer = this;
@@ -148,13 +148,12 @@ void LayerTRW::add_menu_items(GtkMenu * menu, void * panel_)
 		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
 		gtk_widget_show(item);
 	}
+#endif
 
-	/* Now with icons. */
-	item = gtk_image_menu_item_new_with_mnemonic(_("_View Layer"));
-	gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_ZOOM_FIT, GTK_ICON_SIZE_MENU));
-	g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_auto_view), &pass_along);
-	gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-	gtk_widget_show(item);
+	qa = menu.addAction(QIcon::fromTheme("zoom-fit-best"), QString(_("&View Layer")));
+	connect(qa, SIGNAL (triggered(bool)), this, SLOT (full_view_cb()));
+
+#ifdef K
 
 	GtkWidget *view_submenu = gtk_menu_new();
 	item = gtk_image_menu_item_new_with_mnemonic(_("V_iew"));
@@ -451,6 +450,7 @@ void LayerTRW::add_menu_items(GtkMenu * menu, void * panel_)
 	GtkWidget *external_submenu = create_external_submenu(menu);
 	/* TODO: Should use selected layer's centre - rather than implicitly using the current viewport. */
 	vik_ext_tools_add_menu_items_to_menu(this->get_window(), GTK_MENU (external_submenu), NULL);
+#endif
 }
 
 
@@ -458,8 +458,9 @@ void LayerTRW::add_menu_items(GtkMenu * menu, void * panel_)
 
 /* Panel can be NULL if necessary - i.e. right-click from a tool. */
 /* Viewpoint is now available instead. */
-bool LayerTRW::sublayer_add_menu_items(GtkMenu * menu, void * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, GtkTreeIter * iter, Viewport * viewport)
+bool LayerTRW::sublayer_add_menu_items(QMenu & menu, void * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeIndex * index, Viewport * viewport)
 {
+#ifdef K
 	GtkWidget *item;
 	bool rv = false;
 
@@ -1354,4 +1355,5 @@ bool LayerTRW::sublayer_add_menu_items(GtkMenu * menu, void * panel, SublayerTyp
 	gtk_widget_show_all(GTK_WIDGET (menu));
 
 	return rv;
+#endif
 }
