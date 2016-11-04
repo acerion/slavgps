@@ -23,6 +23,7 @@ SOURCES += main.cpp \
     layer_trw_draw.cpp \
     layer_trw_tools.cpp \
     layer_trw_containers.cpp \
+    viktrwlayer_ui.cpp \
     layers_panel.cpp \
     track.cpp \
     trackpoint_properties.cpp \
