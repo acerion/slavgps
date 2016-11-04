@@ -1039,6 +1039,7 @@ void SlavGPS::vu_copy_label_menu(GtkWidget * widget, unsigned int button)
 }
 
 
+#endif
 
 
 /**
@@ -1108,6 +1109,3 @@ void SlavGPS::vu_zoom_to_show_latlons_common(VikCoordMode mode, Viewport * viewp
 		viewport->set_zoom(zoom);
 	}
 }
-
-
-#endif
