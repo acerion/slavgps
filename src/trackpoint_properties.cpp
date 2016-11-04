@@ -33,7 +33,7 @@
 #include "uibuilder_qt.h"
 #include "trackpoint_properties.h"
 #include "vikutils.h"
-#include "vikdatetime_edit_dialog.h"
+#include "date_time_dialog.h"
 #include "util.h"
 #if 0
 #include "viking.h"

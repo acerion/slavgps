@@ -35,7 +35,7 @@ SOURCES += main.cpp \
     widget_file_list.cpp \
     widget_file_entry.cpp \
     widget_radio_group.cpp \
-    vikdatetime_edit_dialog.cpp \
+    date_time_dialog.cpp \
     dem.cpp \
     dems.cpp \
     srtm_continent.cpp \
@@ -85,7 +85,7 @@ HEADERS += window.h \
     widget_file_list.h \
     widget_file_entry.h \
     widget_radio_group.h \
-    vikdatetime_edit_dialog.h \
+    date_time_dialog.h \
     dem.h \
     dems.h \
     compression.h \
