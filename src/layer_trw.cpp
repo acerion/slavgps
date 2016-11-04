@@ -46,7 +46,7 @@
 #include "layer_trw.h"
 #include "layer_trw_draw.h"
 #include "layer_trw_tools.h"
-
+#include "vikutils.h"
 #include "waypoint_properties.h"
 
 #ifdef K
@@ -77,7 +77,6 @@
 #include "vikexttools.h"
 #include "vikexttool_datasources.h"
 #include "ui_util.h"
-#include "vikutils.h"
 #include "gpspoint.h"
 #include "clipboard.h"
 #include "vikrouting.h"
@@ -2440,9 +2439,7 @@ void trw_layer_centerize(trw_menu_layer_t * data)
 
 void LayerTRW::zoom_to_show_latlons(Viewport * viewport, struct LatLon maxmin[2])
 {
-#ifdef K
 	vu_zoom_to_show_latlons(coord_mode, viewport, maxmin);
-#endif
 }
 
 
@@ -2464,17 +2461,13 @@ bool LayerTRW::auto_set_view(Viewport * viewport)
 
 
 
-void trw_layer_auto_view(trw_menu_layer_t * data)
+void LayerTRW::full_view_cb(void) /* Slot. */
 {
-#ifdef K
-	LayerTRW * layer = data->layer;
-	LayersPanel * panel = data->panel;
-	if (layer->auto_set_view(panel->get_viewport())) {
-		panel->emit_update();
+	if (this->auto_set_view(this->viewport)) {
+		this->get_window()->get_layers_panel()->emit_update_cb();
 	} else {
 		a_dialog_info_msg("This layer has no waypoints or trackpoints.", "Info");
 	}
-#endif
 }
 
 

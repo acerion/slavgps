@@ -408,7 +408,7 @@ bool LayersPanel::button_press(GdkEventButton * event)
 #ifndef SLAVGPS_QT
 	/* I don't understand what's going on with mouse buttons in this function. */
 
-	if (event->button == 3) {
+	if (event->button() == Qt::RightButton) {
 		static GtkTreeIter iter;
 		if (this->tree_view->get_iter_at_pos(&iter, event->x, event->y)) {
 			this->popup(&iter, (MouseButton) event->button);
@@ -1073,6 +1073,9 @@ void LayersPanel::contextMenuEvent(QContextMenuEvent * event)
 		menu.addAction(this->qa_layer_copy);
 		menu.addAction(this->qa_layer_paste);
 		menu.addAction(this->qa_layer_remove);
+
+		layer->add_menu_items(menu, this);
+
 		menu.exec(QCursor::pos());
 	} else {
 		qDebug() << "II: Layers Panel: context menu event: INvalid index";

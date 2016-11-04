@@ -175,10 +175,10 @@ namespace SlavGPS {
 
 		int read_file(FILE * f, char const * dirpath);
 		void write_file(FILE * f) const;
-#ifdef K
-		void add_menu_items(GtkMenu * menu, void * panel);
-		bool sublayer_add_menu_items(GtkMenu * menu, void * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, GtkTreeIter * iter, Viewport * viewport);
-#endif
+
+		void add_menu_items(QMenu & menu, void * panel);
+		bool sublayer_add_menu_items(QMenu & menu, void * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeIndex * index, Viewport * viewport);
+
 		char const * sublayer_rename_request(const char * newname, void * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, GtkTreeIter * iter);
 		bool sublayer_toggle_visible(SublayerType sublayer_type, sg_uid_t sublayer_uid);
 
@@ -537,6 +537,7 @@ namespace SlavGPS {
 
 	public slots:
 		void trackpoint_properties_cb(int response);
+		void full_view_cb(void); /* Context menu callback. */
 
 
 	private:
@@ -625,7 +626,6 @@ void trw_layer_edit_trackpoint(trw_menu_sublayer_t * data);
 void trw_layer_show_picture(trw_menu_sublayer_t * data);
 void trw_layer_gps_upload_any(trw_menu_sublayer_t * data);
 void trw_layer_centerize(trw_menu_layer_t * data);
-void trw_layer_auto_view(trw_menu_layer_t * data);
 void trw_layer_goto_wp(trw_menu_layer_t * data);
 void trw_layer_new_wp(trw_menu_layer_t * data);
 void trw_layer_new_track(trw_menu_layer_t * data);
