@@ -91,6 +91,7 @@ namespace SlavGPS {
 
 		Trackpoint * cur_tp = NULL;
 		bool sync_to_tp_block = false;
+		QWidget * parent = NULL;
 
 		QDialogButtonBox * button_box = NULL;
 

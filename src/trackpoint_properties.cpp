@@ -33,6 +33,8 @@
 #include "uibuilder_qt.h"
 #include "trackpoint_properties.h"
 #include "vikutils.h"
+#include "vikdatetime_edit_dialog.h"
+#include "util.h"
 #if 0
 #include "viking.h"
 #include "coords.h"
@@ -41,7 +43,6 @@
 #include "waypoint.h"
 #include "dialog.h"
 #include "globals.h"
-#include "vikdatetime_edit_dialog.h"
 #include "ui_util.h"
 #endif
 
@@ -58,7 +59,6 @@ using namespace SlavGPS;
  */
 void PropertiesDialogTP::update_times(Trackpoint * tp)
 {
-
 	if (tp->has_timestamp) {
 		this->timestamp->setValue(tp->timestamp);
 		char * msg = vu_get_time_string(&tp->timestamp, "%c", &tp->coord, NULL);
@@ -158,15 +158,9 @@ void PropertiesDialogTP::datetime_clicked_cb(void)
 		time(&last_edit_time);
 	}
 
-	time_t mytime = 0;
-#ifdef K
-	GTimeZone * gtz = g_time_zone_new_local();
-	time_t mytime = vik_datetime_edit_dialog(GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(&this->parent))),
-						 _("Date/Time Edit"),
-						 last_edit_time,
-						 gtz);
-	g_time_zone_unref(gtz);
-#endif
+	time_t mytime = datetime_edit_dialog(this,
+					     QString(_("Edit Date/Time")),
+					     last_edit_time);
 
 	/* Was the dialog cancelled? */
 	if (mytime == 0) {
@@ -284,6 +278,9 @@ void PropertiesDialogTP::set_tp(Track * track, TrackPoints::iterator * iter, con
 		this->datetime->setIcon(QIcon::fromTheme("list-add"));
 	} else {
 		this->set_track_name(track_name);
+		if (!this->datetime->icon().isNull()) {
+			this->datetime->setIcon(QIcon());
+		}
 	}
 
 	this->sync_to_tp_block = true; /* Don't update while setting data. */
@@ -420,6 +417,7 @@ PropertiesDialogTP::PropertiesDialogTP(QWidget * parent) : QDialog(parent)
 	this->setWindowTitle(QString("Trackpoint"));
 
 	this->button_box = new QDialogButtonBox();
+	this->parent = parent;
 
 	this->button_close = this->button_box->addButton("&Close", QDialogButtonBox::ActionRole);
 	this->button_insert_after = this->button_box->addButton("&Insert After", QDialogButtonBox::ActionRole);
@@ -483,7 +481,9 @@ PropertiesDialogTP::PropertiesDialogTP(QWidget * parent) : QDialog(parent)
 
 	this->trkpt_name = new QLineEdit("", this);
 	left_form->addRow(QString("Name:"), this->trkpt_name);
-	// connect(this->trkpt_name, "focus-out-event", this, SLOT (set_name_cb(void)));
+#ifdef K
+	connect(this->trkpt_name, "focus-out-event", this, SLOT (set_name_cb(void)));
+#endif
 
 
 
@@ -532,7 +532,9 @@ PropertiesDialogTP::PropertiesDialogTP(QWidget * parent) : QDialog(parent)
 
 	this->datetime = new QPushButton(this);
 	left_form->addRow(QString("Time:"), this->datetime);
-	//gtk_button_set_relief (GTK_BUTTON(tpwin->time), GTK_RELIEF_NONE);
+#ifdef K
+	gtk_button_set_relief (GTK_BUTTON(tpwin->time), GTK_RELIEF_NONE);
+#endif
 	connect(this->datetime, SIGNAL (released(void)), this, SLOT (datetime_clicked_cb(void)));
 
 
