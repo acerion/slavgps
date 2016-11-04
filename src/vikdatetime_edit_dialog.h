@@ -21,9 +21,15 @@
 #ifndef _SG_DATE_TIME_EDIT_H_
 #define _SG_DATE_TIME_EDIT_H_
 
-#include <time.h>
-#include <glib.h>
-#include <gtk/gtk.h>
+
+
+
+#include <QDialog>
+#include <QVBoxLayout>
+#include <QCalendarWidget>
+#include <QTimeEdit>
+#include <QDateTime>
+#include <QDialogButtonBox>
 
 
 
@@ -33,7 +39,23 @@ namespace SlavGPS {
 
 
 
-	time_t vik_datetime_edit_dialog(GtkWindow * parent, const char * title, time_t initial_time, GTimeZone * tz);
+	time_t datetime_edit_dialog(QWidget * parent, QString const & title, time_t date_time);
+
+
+
+
+	class SGDateTime : public QDialog {
+	public:
+		SGDateTime(QWidget * parent, QDateTime const & date_time);
+		~SGDateTime();
+		time_t get_timestamp();
+
+	private:
+		QVBoxLayout * vbox = NULL;
+		QCalendarWidget * calendar = NULL;
+		QTimeEdit * clock = NULL;
+		QDialogButtonBox * button_box = NULL;
+	};
 
 
 

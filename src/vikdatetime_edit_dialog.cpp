@@ -20,128 +20,86 @@
  */
 #include <cstdlib>
 
+#include <QDebug>
+
 #include "vikdatetime_edit_dialog.h"
 
 
 
 
-/* Show leading zeros. */
-static bool on_output(GtkSpinButton *spin, void * data)
-{
-	GtkAdjustment *adjustment = gtk_spin_button_get_adjustment(spin);
-	int value = (int)gtk_adjustment_get_value(adjustment);
-	char *text = g_strdup_printf("%02d", value);
-	gtk_entry_set_text(GTK_ENTRY (spin), text);
-	free(text);
-
-	return true;
-}
+using namespace SlavGPS;
 
 
 
 
 /**
- * @parent:         The parent window
- * @title:          The title to use for the dialog
- * @initial_time:   The inital date/time to be shown
- * @tz:             The #GTimeZone this dialog will operate in
+ * @parent:     The parent window
+ * @title:      The title to use for the dialog
+ * @date_time:  The inital date/time to be shown
  *
  * Returns: A time selected by the user via this dialog.
  *          Even though a time of zero is notionally valid - consider it unlikely to be actually wanted!
  *          Thus if the time is zero then the dialog was cancelled or somehow an invalid date was encountered.
  */
-time_t SlavGPS::vik_datetime_edit_dialog(GtkWindow *parent, const char *title, time_t initial_time, GTimeZone *tz)
+time_t SlavGPS::datetime_edit_dialog(QWidget * parent, QString const & title, time_t date_time)
 {
-	if (!tz) {
+	SGDateTime * dialog = new SGDateTime(parent, QDateTime::fromTime_t(date_time));
+	dialog->setWindowTitle(title);
+	int dialog_code = dialog->exec();
+
+	time_t ret = date_time;
+
+	if (dialog_code == QDialog::Accepted) {
+		ret = dialog->get_timestamp();
+		qDebug() << "II DateTime: returning timestamp" << ret;
+		return ret;
+	} else {
+		qDebug() << "II DateTime: returning zero";
 		return 0;
 	}
+}
 
-	GtkWidget * dialog = gtk_dialog_new_with_buttons(title,
-							 parent,
-							 (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
-							 GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT,
-							 GTK_STOCK_OK,     GTK_RESPONSE_ACCEPT,
-							 NULL);
 
-	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
-	GtkWidget *response_w = NULL;
-#if GTK_CHECK_VERSION (2, 20, 0)
-	response_w = gtk_dialog_get_widget_for_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
-#endif
 
-	GtkWidget *label;
-	GtkWidget *cal = gtk_calendar_new();
 
-	/* Set according to the given date/time + timezone for display. */
-	GDateTime *gdt_in = g_date_time_new_from_unix_utc((int64_t)initial_time);
-	GDateTime *gdt_tz = g_date_time_to_timezone(gdt_in, tz);
-	g_date_time_unref(gdt_in);
+SGDateTime::SGDateTime(QWidget * parent, QDateTime const & date_time) : QDialog(parent)
+{
+	this->vbox = new QVBoxLayout;
+	this->calendar = new QCalendarWidget(this);
+	this->calendar->setSelectedDate(date_time.date());
+	this->clock = new QTimeEdit(this);
+	this->clock->setTime(date_time.time());
+	this->clock->setDisplayFormat(QString("h:mm:ss t"));
 
-	gtk_calendar_select_month(GTK_CALENDAR(cal), g_date_time_get_month(gdt_tz)-1, g_date_time_get_year(gdt_tz));
-	gtk_calendar_select_day(GTK_CALENDAR(cal), g_date_time_get_day_of_month(gdt_tz));
+	this->button_box = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+	connect(this->button_box, &QDialogButtonBox::accepted, this, &QDialog::accept);
+	connect(this->button_box, &QDialogButtonBox::rejected, this, &QDialog::reject);
 
-	GtkWidget *hbox_time = gtk_hbox_new(false, 1);
 
-	label = gtk_label_new(g_date_time_get_timezone_abbreviation(gdt_tz));
-	gtk_box_pack_start(GTK_BOX(hbox_time), label, false, false, 5);
+	QLayout * old = this->layout();
+	delete old;
+	this->setLayout(this->vbox);
 
-	GtkWidget *sb_hours = gtk_spin_button_new_with_range(0.0, 23.0, 1.0);
-	gtk_box_pack_start(GTK_BOX(hbox_time), sb_hours, false, false, 0);
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(sb_hours), g_date_time_get_hour(gdt_tz));
-	g_signal_connect(sb_hours, "output", G_CALLBACK(on_output), NULL);
+	this->vbox->addWidget(this->calendar);
+	this->vbox->addWidget(this->clock);
+	this->vbox->addWidget(this->button_box);
+}
 
-	label = gtk_label_new(":");
-	gtk_box_pack_start(GTK_BOX(hbox_time), label, false, false, 0);
 
-	GtkWidget *sb_minutes = gtk_spin_button_new_with_range(0.0, 59.0, 1.0);
-	gtk_box_pack_start(GTK_BOX(hbox_time), sb_minutes, false, false, 0);
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(sb_minutes), g_date_time_get_minute(gdt_tz));
-	g_signal_connect(sb_minutes, "output", G_CALLBACK(on_output), NULL);
 
-	label = gtk_label_new(":");
-	gtk_box_pack_start(GTK_BOX(hbox_time), label, false, false, 0);
 
-	GtkWidget *sb_seconds = gtk_spin_button_new_with_range(0.0, 59.0, 1.0);
-	gtk_box_pack_start(GTK_BOX(hbox_time), sb_seconds, false, false, 0);
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(sb_seconds), g_date_time_get_second(gdt_tz));
-	g_signal_connect(sb_seconds, "output", G_CALLBACK(on_output), NULL);
+SGDateTime::~SGDateTime()
+{
+}
 
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), cal, false, false, 0);
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), hbox_time, false, false, 5);
 
-	if (response_w) {
-		gtk_widget_grab_focus(response_w);
-	}
 
-	g_date_time_unref(gdt_tz);
 
-	gtk_widget_show_all(dialog);
-	if (gtk_dialog_run(GTK_DIALOG(dialog)) != GTK_RESPONSE_ACCEPT) {
-		gtk_widget_destroy(dialog);
-		return 0;
-	}
+time_t SGDateTime::get_timestamp()
+{
+	QDateTime date_time;
+	date_time.setDate(this->calendar->selectedDate());
+	date_time.setTime(this->clock->time());
 
-	/* Read values. */
-	unsigned int year = 0;
-	unsigned int month = 0;
-	unsigned int day = 0;
-	unsigned int hours = 0;
-	unsigned int minutes = 0;
-	unsigned int seconds = 0;
-
-	gtk_calendar_get_date(GTK_CALENDAR(cal), &year, &month, &day);
-	hours = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(sb_hours));
-	minutes = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(sb_minutes));
-	seconds = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(sb_seconds));
-
-	gtk_widget_destroy(dialog);
-
-	time_t ans = initial_time;
-	GDateTime * gdt_ans = g_date_time_new(tz, year, month+1, day, hours, minutes, (double) seconds);
-	if (gdt_ans) {
-		ans = g_date_time_to_unix(gdt_ans);
-		g_date_time_unref(gdt_ans);
-	}
-
-	return ans;
+	return date_time.toTime_t();
 }
