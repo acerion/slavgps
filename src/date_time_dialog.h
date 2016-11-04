@@ -18,8 +18,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-#ifndef _SG_DATE_TIME_EDIT_H_
-#define _SG_DATE_TIME_EDIT_H_
+#ifndef _SG_DATE_TIME_DIALOG_H_
+#define _SG_DATE_TIME_DIALOG_H_
 
 
 
@@ -30,6 +30,7 @@
 #include <QTimeEdit>
 #include <QDateTime>
 #include <QDialogButtonBox>
+#include <QPushButton>
 
 
 
@@ -39,15 +40,15 @@ namespace SlavGPS {
 
 
 
-	time_t datetime_edit_dialog(QWidget * parent, QString const & title, time_t date_time);
+	time_t date_time_dialog(QWidget * parent, QString const & title, time_t date_time);
 
 
 
 
-	class SGDateTime : public QDialog {
+	class SGDateTimeDialog : public QDialog {
 	public:
-		SGDateTime(QWidget * parent, QDateTime const & date_time);
-		~SGDateTime();
+		SGDateTimeDialog(QWidget * parent, QDateTime const & date_time);
+		~SGDateTimeDialog();
 		time_t get_timestamp();
 
 	private:
@@ -60,9 +61,28 @@ namespace SlavGPS {
 
 
 
+
+	class SGDateTime : public QPushButton {
+		Q_OBJECT
+	public:
+		SGDateTime(time_t date_time, QWidget * parent);
+		~SGDateTime();
+		time_t value(void);
+
+	private slots:
+		void open_dialog_cb(void);
+
+	private:
+		SGDateTimeDialog * dialog = NULL;
+		time_t timestamp = 0;
+	};
+
+
+
+
 } /* namespace SlavGPS */
 
 
 
 
-#endif /* #ifndef _SG_DATE_TIME_EDIT_H_ */
+#endif /* #ifndef _SG_DATE_TIME_DIALOG_H_ */
