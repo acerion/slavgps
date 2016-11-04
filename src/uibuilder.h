@@ -75,6 +75,7 @@ enum class LayerWidgetType {
 	COMBOBOX,
 	FILELIST,
 	BUTTON,
+	DATETIME
 };
 
 

@@ -47,6 +47,7 @@
 #include "widget_radio_group.h"
 #include "uibuilder.h"
 #include "waypoint_properties.h"
+#include "date_time_dialog.h"
 
 
 
@@ -470,7 +471,7 @@ void PropertiesDialog::fill(Waypoint * wp, Parameter * parameters)
 	this->widgets.insert(std::pair<layer_param_id_t, QWidget *>(param->id, widget));
 
 	param = &parameters[SG_WP_PARAM_TIME];
-	param_value.s = "time";
+	param_value.u = wp->timestamp;
 	widget = this->new_widget(param, param_value);
 	form->addRow(QString(param->title), widget);
 	qDebug() << "II: UI Builder: adding widget #" << param->id << param->title << widget;
@@ -762,7 +763,13 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, LayerParamValue param_
 		}
 		break;
 #endif
-	default: break;
+	case LayerWidgetType::DATETIME: {
+			SGDateTime * widget_ = new SGDateTime(param_value.u, this);
+			widget = widget_;
+		}
+		break;
+	default:
+		break;
 	}
 #if 0
 	if (rv && !gtk_widget_get_tooltip_text(rv)) {
@@ -852,6 +859,10 @@ LayerParamValue PropertiesDialog::get_param_value(layer_param_id_t id, Parameter
 		}
 		break;
 #endif
+	case LayerWidgetType::DATETIME:
+		rv.u = ((SGDateTime *) widget)->value();
+		qDebug() << "II: UI Builder: saving value of time stamp:" << rv.u;
+		break;
 	default:
 		break;
 	}

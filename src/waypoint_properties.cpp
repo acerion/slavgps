@@ -34,7 +34,6 @@
 #endif
 #include "thumbnails.h"
 //#include "viking.h"
-#include "vikdatetime_edit_dialog.h"
 #include "vikgoto.h"
 #include "vikutils.h"
 #include "vikfileentry.h"
@@ -44,6 +43,7 @@
 #include "globals.h"
 #include "slav_qt.h"
 #include "uibuilder_qt.h"
+#include "date_time_dialog.h"
 
 
 
@@ -57,7 +57,7 @@ Parameter wp_params[] = {
 	{ LayerType::NUM_TYPES,  SG_WP_PARAM_NAME,     "",  LayerParamType::STRING,  PARAMETER_GROUP_NONE,  "Name",         LayerWidgetType::ENTRY,       NULL, NULL, NULL, NULL, NULL, NULL },
 	{ LayerType::NUM_TYPES,  SG_WP_PARAM_LAT,      "",  LayerParamType::STRING,  PARAMETER_GROUP_NONE,  "Latitude",     LayerWidgetType::ENTRY,       NULL, NULL, NULL, NULL, NULL, NULL },
 	{ LayerType::NUM_TYPES,  SG_WP_PARAM_LON,      "",  LayerParamType::STRING,  PARAMETER_GROUP_NONE,  "Longitude",    LayerWidgetType::ENTRY,       NULL, NULL, NULL, NULL, NULL, NULL },
-	{ LayerType::NUM_TYPES,  SG_WP_PARAM_TIME,     "",  LayerParamType::STRING,  PARAMETER_GROUP_NONE,  "Time",         LayerWidgetType::ENTRY,       NULL, NULL, NULL, NULL, NULL, NULL },
+	{ LayerType::NUM_TYPES,  SG_WP_PARAM_TIME,     "",  LayerParamType::STRING,  PARAMETER_GROUP_NONE,  "Time",         LayerWidgetType::DATETIME,    NULL, NULL, NULL, NULL, NULL, NULL },
 	{ LayerType::NUM_TYPES,  SG_WP_PARAM_ALT,      "",  LayerParamType::STRING,  PARAMETER_GROUP_NONE,  "Altitude",     LayerWidgetType::ENTRY,       NULL, NULL, NULL, NULL, NULL, NULL },
 	{ LayerType::NUM_TYPES,  SG_WP_PARAM_COMMENT,  "",  LayerParamType::STRING,  PARAMETER_GROUP_NONE,  "Comment",      LayerWidgetType::ENTRY,       NULL, NULL, NULL, NULL, NULL, NULL },
 	{ LayerType::NUM_TYPES,  SG_WP_PARAM_DESC,     "",  LayerParamType::STRING,  PARAMETER_GROUP_NONE,  "Description",  LayerWidgetType::ENTRY,       NULL, NULL, NULL, NULL, NULL, NULL },
@@ -96,12 +96,9 @@ static void time_edit_click(GtkWidget * widget, GdkEventButton * event, Waypoint
 		return;
 	}
 
-	GTimeZone * gtz = g_time_zone_new_local();
-	time_t mytime = vik_datetime_edit_dialog(GTK_WINDOW(gtk_widget_get_toplevel(widget)),
-						 _("Date/Time Edit"),
-						 wp->timestamp,
-						 gtz);
-	g_time_zone_unref(gtz);
+	time_t mytime = date_time_dialog(parent,
+					 QString(_("Date/Time Edit")),
+					 wp->timestamp);
 
 	/* Was the dialog cancelled?. */
 	if (mytime == 0) {
@@ -410,7 +407,7 @@ char * SlavGPS::waypoint_properties_dialog(QWidget * parent, char * default_name
 
 
 		param_value = dialog.get_param_value(SG_WP_PARAM_TIME, &wp_params[SG_WP_PARAM_TIME]);
-		//wp->time = ;
+		wp->timestamp = param_value.u;
 
 		param_value = dialog.get_param_value(SG_WP_PARAM_ALT, &wp_params[SG_WP_PARAM_ALT]);
 		//wp->alt = ;
