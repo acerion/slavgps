@@ -158,9 +158,9 @@ void PropertiesDialogTP::datetime_clicked_cb(void)
 		time(&last_edit_time);
 	}
 
-	time_t mytime = datetime_edit_dialog(this,
-					     QString(_("Edit Date/Time")),
-					     last_edit_time);
+	time_t mytime = date_time_dialog(this,
+					 QString(_("Edit Date/Time")),
+					 last_edit_time);
 
 	/* Was the dialog cancelled? */
 	if (mytime == 0) {
