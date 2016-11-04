@@ -2505,7 +2505,7 @@ static void maps_layer_flush(menu_array_values * values)
 
 
 
-void LayerMaps::add_menu_items(GtkMenu * menu, void * panel_)
+void LayerMaps::add_menu_items(QMenu & menu, void * panel_)
 {
 	LayersPanel * panel = (LayersPanel *) panel_;
 

@@ -666,9 +666,9 @@ static void aggregate_layer_analyse(menu_array_values * values)
 
 
 
-void LayerAggregate::add_menu_items(GtkMenu * menu, void * panel)
+void LayerAggregate::add_menu_items(QMenu & menu, void * panel)
 {
-#ifndef SLAVGPS_QT
+#ifdef K
 	/* Data to pass on in menu functions. */
 	static menu_array_values values { .aggregate = this, .panel = (LayersPanel *) panel };
 

@@ -672,7 +672,7 @@ void LayerGPS::change_coord_mode(VikCoordMode mode)
 
 
 
-void LayerGPS::add_menu_items(GtkMenu * menu, void * panel)
+void LayerGPS::add_menu_items(QMenu & menu, void * panel)
 {
 	static gps_layer_data_t pass_along;
 	GtkWidget *item;

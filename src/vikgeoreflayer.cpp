@@ -1081,7 +1081,7 @@ static void georef_layer_goto_center(georef_data_t * data)
 
 
 
-void LayerGeoref::add_menu_items(GtkMenu *menu, void * panel)
+void LayerGeoref::add_menu_items(QMenu & menu, void * panel)
 {
 	static georef_data_t pass_along;
 	pass_along.layer = this;

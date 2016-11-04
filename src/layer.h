@@ -197,8 +197,8 @@ namespace SlavGPS {
 		virtual int read_file(FILE * f, char const * dirpath);
 		virtual void write_file(FILE * f) const;
 
-		virtual void add_menu_items(GtkMenu * menu, void * panel);
-		virtual bool sublayer_add_menu_items(GtkMenu * menu, void * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, GtkTreeIter * iter, Viewport * viewport);
+		virtual void add_menu_items(QMenu & menu, void * panel);
+		virtual bool sublayer_add_menu_items(QMenu & menu, void * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeIndex * index, Viewport * viewport);
 		virtual char const * sublayer_rename_request(const char * newname, void * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, GtkTreeIter * iter);
 		virtual bool sublayer_toggle_visible(SublayerType sublayer_type, sg_uid_t sublayer_uid);
 

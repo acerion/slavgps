@@ -966,7 +966,7 @@ void Layer::write_file(FILE * f) const
 
 
 
-void Layer::add_menu_items(GtkMenu * menu, void * panel)
+void Layer::add_menu_items(QMenu & menu, void * panel)
 {
 	return;
 }
@@ -974,7 +974,7 @@ void Layer::add_menu_items(GtkMenu * menu, void * panel)
 
 
 
-bool Layer::sublayer_add_menu_items(GtkMenu * menu, void * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, GtkTreeIter * iter, Viewport * viewport)
+bool Layer::sublayer_add_menu_items(QMenu & menu, void * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeIndex * index, Viewport * viewport)
 {
 	return false;
 }
