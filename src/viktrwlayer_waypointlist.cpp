@@ -400,7 +400,7 @@ static void add_copy_menu_items(GtkMenu * menu, GtkWidget * tree_view)
 
 
 
-static bool add_menu_items(GtkMenu * menu, LayerTRW * trw, Waypoint * wp, sg_uid_t wp_uid, Viewport * viewport, GtkWidget * gtk_tree_view, std::list<waypoint_layer_t *> * waypoints_and_layers)
+static bool add_menu_items(QMenu & menu, LayerTRW * trw, Waypoint * wp, sg_uid_t wp_uid, Viewport * viewport, GtkWidget * gtk_tree_view, std::list<waypoint_layer_t *> * waypoints_and_layers)
 {
 	GtkWidget * item;
 

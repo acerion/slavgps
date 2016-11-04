@@ -344,7 +344,7 @@ static void add_copy_menu_item(GtkMenu * menu, GtkWidget * tree_view)
 
 
 
-static bool add_menu_items(GtkMenu * menu, LayerTRW * trw, Track * trk, sg_uid_t track_uid, Viewport * viewport, GtkWidget * gtk_tree_view, std::list<track_layer_t *> * tracks_and_layers)
+static bool add_menu_items(QMenu & menu, LayerTRW * trw, Track * trk, sg_uid_t track_uid, Viewport * viewport, GtkWidget * gtk_tree_view, std::list<track_layer_t *> * tracks_and_layers)
 {
 	static tracklist_data_t values;
 
