@@ -408,27 +408,16 @@ GtkWidget *a_dialog_create_label_vbox(char **texts, int label_count, int spacing
 }
 
 
+#endif
 
 
-bool a_dialog_yes_or_no(GtkWindow *parent, const char *message, const char *extra)
+bool a_dialog_yes_or_no(QWidget * parent, QString const & message, QString const & title)
 {
-	GtkWidget *dia;
-	dia = gtk_message_dialog_new(parent,
-				     GTK_DIALOG_DESTROY_WITH_PARENT,
-				     GTK_MESSAGE_QUESTION,
-				     GTK_BUTTONS_YES_NO,
-				     message, extra);
-
-	if (gtk_dialog_run(GTK_DIALOG(dia)) == GTK_RESPONSE_YES) {
-		gtk_widget_destroy(dia);
-		return true;
-	} else {
-		gtk_widget_destroy(dia);
-		return false;
-	}
+	return QMessageBox::Yes == QMessageBox::question(parent, title, message);
 }
 
 
+#ifdef K
 
 
 static void zoom_spin_changed(GtkSpinButton *spin, GtkWidget *pass_along[3])

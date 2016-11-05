@@ -35,6 +35,8 @@
 #include <glib.h>
 
 
+#define SG_APPLICATION_NAME "slavgps"
+
 
 
 typedef uint32_t sg_uid_t;

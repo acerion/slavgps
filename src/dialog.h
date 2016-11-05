@@ -35,6 +35,7 @@
 #include <gtk/gtk.h>
 #endif
 
+#include "globals.h"
 #include "coords.h"
 
 
@@ -70,7 +71,9 @@ bool a_dialog_goto_latlon(GtkWindow *parent, struct LatLon *ll, const struct Lat
 bool a_dialog_goto_utm(GtkWindow *parent, struct UTM *utm, const struct UTM *old);
 
 char *a_dialog_get_date(GtkWindow *parent, const char *title);
-bool a_dialog_yes_or_no(GtkWindow *parent, const char *message, const char *extra);
+#endif
+bool a_dialog_yes_or_no(QWidget * parent, QString const & message, QString const & title = SG_APPLICATION_NAME);
+#if 0
 bool a_dialog_custom_zoom(GtkWindow *parent, double *xmpp, double *ympp);
 bool a_dialog_time_threshold(GtkWindow *parent, char *title_text, char *label_text, unsigned int *thr);
 
