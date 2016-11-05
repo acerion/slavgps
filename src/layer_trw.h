@@ -537,7 +537,69 @@ namespace SlavGPS {
 
 	public slots:
 		void trackpoint_properties_cb(int response);
-		void full_view_cb(void); /* Context menu callback. */
+
+
+
+		/* Context menu callbacks. */
+
+		void finish_track_cb(void);
+
+		void full_view_cb(void);
+		void full_view_tracks_cb(void);
+		void full_view_routes_cb(void);
+		void full_view_waypoints_cb(void);
+
+		void centerize_cb(void);
+		void goto_waypoint_cb(void);
+
+		void export_as_gpspoint_cb(void);
+		void export_as_gpsmapper_cb(void);
+		void export_as_gpx_cb(void);
+		void export_as_kml_cb(void);
+		void export_as_geojson_cb(void);
+		void export_via_babel_cb(void);
+		void open_with_external_gpx_1_cb(void);
+		void open_with_external_gpx_2_cb(void);
+
+		void new_waypoint_cb(void);
+		void new_track_cb(void);
+		void new_route_cb(void);
+
+#ifdef VIK_CONFIG_GEOTAG
+		void geotag_images_cb(void);
+#endif
+
+		void acquire_from_gps_cb(void);
+		void acquire_from_routing_cb(void);
+#ifdef VIK_CONFIG_OPENSTREETMAP
+		void acquire_from_osm_cb(void);
+		void acquire_from_osm_my_traces_cb(void);
+#endif
+		void acquire_from_url_cb(void);
+
+		void acquire_from_wikipedia_waypoints_viewport_cb(void);
+		void acquire_from_wikipedia_waypoints_layer_cb(void);
+
+
+#ifdef VIK_CONFIG_GEOCACHES
+		void acquire_from_geocache_cb(void);
+#endif
+#ifdef VIK_CONFIG_GEOTAG
+		void acquire_from_geotagged_images_cb(void);
+#endif
+		void acquire_from_file_cb();
+
+
+		void upload_to_gps_cb(void);
+		void upload_to_osm_traces_cb(void);
+
+
+		void delete_all_tracks_cb(void);
+		void delete_selected_tracks_cb(void);
+		void delete_all_routes_cb();
+		void delete_selected_routes_cb();
+		void delete_all_waypoints_cb(void);
+		void delete_selected_waypoints_cb(void);
 
 
 	private:
@@ -625,67 +687,28 @@ void trw_layer_download_map_along_track_cb(trw_menu_sublayer_t * data);
 void trw_layer_edit_trackpoint(trw_menu_sublayer_t * data);
 void trw_layer_show_picture(trw_menu_sublayer_t * data);
 void trw_layer_gps_upload_any(trw_menu_sublayer_t * data);
-void trw_layer_centerize(trw_menu_layer_t * data);
-void trw_layer_goto_wp(trw_menu_layer_t * data);
-void trw_layer_new_wp(trw_menu_layer_t * data);
-void trw_layer_new_track(trw_menu_layer_t * data);
-void trw_layer_new_route(trw_menu_layer_t * data);
-void trw_layer_finish_track(trw_menu_layer_t * data);
-void trw_layer_auto_waypoints_view(trw_menu_layer_t * data);
-void trw_layer_auto_tracks_view(trw_menu_layer_t * data);
-void trw_layer_delete_all_tracks(trw_menu_layer_t * data);
-void trw_layer_delete_tracks_from_selection(trw_menu_layer_t * data);
-void trw_layer_delete_all_waypoints(trw_menu_layer_t * data);
-void trw_layer_delete_waypoints_from_selection(trw_menu_layer_t * data);
-void trw_layer_new_wikipedia_wp_viewport(trw_menu_layer_t * data);
-void trw_layer_new_wikipedia_wp_layer(trw_menu_layer_t * data);
 #ifdef VIK_CONFIG_GEOTAG
 void trw_layer_geotagging_waypoint_mtime_keep(trw_menu_sublayer_t * data);
 void trw_layer_geotagging_waypoint_mtime_update(trw_menu_sublayer_t * data);
 void trw_layer_geotagging_track(trw_menu_sublayer_t * data);
-void trw_layer_geotagging(trw_menu_layer_t * data);
 #endif
-void trw_layer_acquire_gps_cb(trw_menu_layer_t * data);
-void trw_layer_acquire_routing_cb(trw_menu_layer_t * data);
-void trw_layer_acquire_url_cb(trw_menu_layer_t * data);
-#ifdef VIK_CONFIG_OPENSTREETMAP
-void trw_layer_acquire_osm_cb(trw_menu_layer_t * data);
-void trw_layer_acquire_osm_my_traces_cb(trw_menu_layer_t * data);
-#endif
-#ifdef VIK_CONFIG_GEOCACHES
-void trw_layer_acquire_geocache_cb(trw_menu_layer_t * data);
-#endif
-#ifdef VIK_CONFIG_GEOTAG
-void trw_layer_acquire_geotagged_cb(trw_menu_layer_t * data);
-#endif
-void trw_layer_acquire_file_cb(trw_menu_layer_t * data);
-void trw_layer_gps_upload(trw_menu_layer_t * data);
+
+
 void trw_layer_track_list_dialog_single(trw_menu_sublayer_t * data);
 void trw_layer_track_list_dialog(trw_menu_layer_t * data);
 void trw_layer_waypoint_list_dialog(trw_menu_layer_t * data);
 /* Specific route versions:
    Most track handling functions can handle operating on the route list.
    However these ones are easier in separate functions. */
-void trw_layer_auto_routes_view(trw_menu_layer_t * data);
-void trw_layer_delete_all_routes(trw_menu_layer_t * data);
-void trw_layer_delete_routes_from_selection(trw_menu_layer_t * data);
+
 /* Pop-up items. */
 void trw_layer_properties_item(trw_menu_sublayer_t * data); /* TODO?? */
 void trw_layer_goto_waypoint(trw_menu_sublayer_t * data);
 void trw_layer_waypoint_gc_webpage(trw_menu_sublayer_t * data);
 void trw_layer_waypoint_webpage(trw_menu_sublayer_t * data);
 void trw_layer_paste_item_cb(trw_menu_sublayer_t * data);
-void trw_layer_export_gpspoint(trw_menu_layer_t * data);
-void trw_layer_export_gpsmapper(trw_menu_layer_t * data);
-void trw_layer_export_gpx(trw_menu_layer_t * data);
-void trw_layer_export_kml(trw_menu_layer_t * data);
-void trw_layer_export_geojson(trw_menu_layer_t * data);
-void trw_layer_export_babel(trw_menu_layer_t * data);
-void trw_layer_export_external_gpx_1(trw_menu_layer_t * data);
-void trw_layer_export_external_gpx_2(trw_menu_layer_t * data);
 void trw_layer_export_gpx_track(trw_menu_sublayer_t * data);
 void trw_layer_geotagging_waypoint(trw_menu_sublayer_t * data);
-void trw_layer_osm_traces_upload_cb(trw_menu_layer_t * data);
 void trw_layer_osm_traces_upload_track_cb(trw_menu_sublayer_t * data);
 GtkWidget* create_external_submenu(GtkMenu *menu);
 void trw_layer_track_statistics(trw_menu_sublayer_t * data);

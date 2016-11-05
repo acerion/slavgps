@@ -2423,12 +2423,11 @@ bool LayerTRW::find_center(VikCoord * dest)
 
 
 
-void trw_layer_centerize(trw_menu_layer_t * data)
+void LayerTRW::centerize_cb(void)
 {
-	LayerTRW * layer = data->layer;
 	VikCoord coord;
-	if (layer->find_center(&coord)) {
-		goto_coord(data->panel, NULL, NULL, &coord);
+	if (this->find_center(&coord)) {
+		goto_coord(this->get_window()->get_layers_panel(), NULL, NULL, &coord);
 	} else {
 		a_dialog_info_msg("This layer has no waypoints or trackpoints.", "Info");
 	}
@@ -2473,14 +2472,11 @@ void LayerTRW::full_view_cb(void) /* Slot. */
 
 
 
-void trw_layer_export_gpspoint(trw_menu_layer_t * data)
+void LayerTRW::export_as_gpspoint_cb(void) /* Slot. */
 {
 #ifdef K
-	LayerTRW * layer = data->layer;
-	char *auto_save_name = append_file_ext(layer->get_name(), FILE_TYPE_GPSPOINT);
-
-	vik_trw_layer_export(layer, _("Export Layer"), auto_save_name, NULL, FILE_TYPE_GPSPOINT);
-
+	char * auto_save_name = append_file_ext(this->get_name(), FILE_TYPE_GPSPOINT);
+	vik_trw_layer_export(this, _("Export Layer"), auto_save_name, NULL, FILE_TYPE_GPSPOINT);
 	free(auto_save_name);
 #endif
 }
@@ -2488,14 +2484,11 @@ void trw_layer_export_gpspoint(trw_menu_layer_t * data)
 
 
 
-void trw_layer_export_gpsmapper(trw_menu_layer_t * data)
+void LayerTRW::export_as_gpsmapper_cb(void) /* Slot. */
 {
 #ifdef K
-	LayerTRW * layer = data->layer;
-	char *auto_save_name = append_file_ext(layer->get_name(), FILE_TYPE_GPSMAPPER);
-
-	vik_trw_layer_export(layer, _("Export Layer"), auto_save_name, NULL, FILE_TYPE_GPSMAPPER);
-
+	char * auto_save_name = append_file_ext(this->get_name(), FILE_TYPE_GPSMAPPER);
+	vik_trw_layer_export(this, _("Export Layer"), auto_save_name, NULL, FILE_TYPE_GPSMAPPER);
 	free(auto_save_name);
 #endif
 }
@@ -2503,14 +2496,11 @@ void trw_layer_export_gpsmapper(trw_menu_layer_t * data)
 
 
 
-void trw_layer_export_gpx(trw_menu_layer_t * data)
+void LayerTRW::export_as_gpx_cb(void) /* Slot. */
 {
 #ifdef K
-	LayerTRW * layer = data->layer;
-	char *auto_save_name = append_file_ext(layer->get_name(), FILE_TYPE_GPX);
-
-	vik_trw_layer_export(layer, _("Export Layer"), auto_save_name, NULL, FILE_TYPE_GPX);
-
+	char * auto_save_name = append_file_ext(this->get_name(), FILE_TYPE_GPX);
+	vik_trw_layer_export(this, _("Export Layer"), auto_save_name, NULL, FILE_TYPE_GPX);
 	free(auto_save_name);
 #endif
 }
@@ -2518,14 +2508,11 @@ void trw_layer_export_gpx(trw_menu_layer_t * data)
 
 
 
-void trw_layer_export_kml(trw_menu_layer_t * data)
+void LayerTRW::export_as_kml_cb(void) /* Slot. */
 {
 #ifdef K
-	LayerTRW * layer = data->layer;
-	char *auto_save_name = append_file_ext(layer->get_name(), FILE_TYPE_KML);
-
-	vik_trw_layer_export(layer, _("Export Layer"), auto_save_name, NULL, FILE_TYPE_KML);
-
+	char * auto_save_name = append_file_ext(this->get_name(), FILE_TYPE_KML);
+	vik_trw_layer_export(this, _("Export Layer"), auto_save_name, NULL, FILE_TYPE_KML);
 	free(auto_save_name);
 #endif
 }
@@ -2533,14 +2520,11 @@ void trw_layer_export_kml(trw_menu_layer_t * data)
 
 
 
-void trw_layer_export_geojson(trw_menu_layer_t * data)
+void LayerTRW::export_as_geojson_cb(void) /* Slot. */
 {
 #ifdef K
-	LayerTRW * layer = data->layer;
-	char *auto_save_name = append_file_ext(layer->get_name(), FILE_TYPE_GEOJSON);
-
-	vik_trw_layer_export(layer, _("Export Layer"), auto_save_name, NULL, FILE_TYPE_GEOJSON);
-
+	char * auto_save_name = append_file_ext(this->get_name(), FILE_TYPE_GEOJSON);
+	vik_trw_layer_export(this, _("Export Layer"), auto_save_name, NULL, FILE_TYPE_GEOJSON);
 	free(auto_save_name);
 #endif
 }
@@ -2548,32 +2532,30 @@ void trw_layer_export_geojson(trw_menu_layer_t * data)
 
 
 
-void trw_layer_export_babel(trw_menu_layer_t * data)
+void LayerTRW::export_via_babel_cb(void) /* Slot. */
 {
 #ifdef K
-	LayerTRW * layer = data->layer;
-	const char *auto_save_name = layer->get_name();
-	vik_trw_layer_export_gpsbabel(layer, _("Export Layer"), auto_save_name);
+	vik_trw_layer_export_gpsbabel(this, _("Export Layer"), this->get_name());
 #endif
 }
 
 
 
 
-void trw_layer_export_external_gpx_1(trw_menu_layer_t * data)
+void LayerTRW::open_with_external_gpx_1_cb(void) /* Slot. */
 {
 #ifdef K
-	vik_trw_layer_export_external_gpx(data->layer, a_vik_get_external_gpx_program_1());
+	vik_trw_layer_export_external_gpx(this, a_vik_get_external_gpx_program_1());
 #endif
 }
 
 
 
 
-void trw_layer_export_external_gpx_2(trw_menu_layer_t * data)
+void LayerTRW::open_with_external_gpx_2_cb(void) /* Slot. */
 {
 #ifdef K
-	vik_trw_layer_export_external_gpx(data->layer, a_vik_get_external_gpx_program_2());
+	vik_trw_layer_export_external_gpx(this, a_vik_get_external_gpx_program_2());
 #endif
 }
 
@@ -2607,7 +2589,7 @@ void trw_layer_export_gpx_track(trw_menu_sublayer_t * data)
 
 
 
-void trw_layer_goto_wp(trw_menu_layer_t * data)
+void LayerTRW::goto_waypoint_cb(void)
 {
 #ifdef K
 	LayerTRW * layer = data->layer;
@@ -2690,36 +2672,34 @@ bool LayerTRW::new_waypoint(Window * parent, const VikCoord * def_coord)
 
 
 
-void trw_layer_new_wikipedia_wp_viewport(trw_menu_layer_t * data)
+void LayerTRW::acquire_from_wikipedia_waypoints_viewport_cb(void) /* Slot. */
 {
-#ifdef K
 	struct LatLon maxmin[2] = { {0.0,0.0}, {0.0,0.0} };
-	LayerTRW * layer = data->layer;
-	LayersPanel * panel = data->panel;
-	Viewport * viewport = layer->get_window()->get_viewport();
+	LayersPanel * panel = this->get_window()->get_layers_panel();
+	Viewport * viewport = this->get_window()->get_viewport();
 
 	// Note the order is max part first then min part - thus reverse order of use in min_max function:
 	viewport->get_min_max_lat_lon(&maxmin[1].lat, &maxmin[0].lat, &maxmin[1].lon, &maxmin[0].lon);
-	a_geonames_wikipedia_box(layer->get_window(), layer, maxmin);
-	layer->calculate_bounds_waypoints();
-	panel->emit_update();
+#ifdef K
+	a_geonames_wikipedia_box(this->get_window(), this, maxmin);
+	this->calculate_bounds_waypoints();
+	panel->emit_update_cb();
 #endif
 }
 
 
 
 
-void trw_layer_new_wikipedia_wp_layer(trw_menu_layer_t * data)
+void LayerTRW::acquire_from_wikipedia_waypoints_layer_cb(void) /* Slot. */
 {
-#ifdef K
-	LayerTRW * layer = data->layer;
-	LayersPanel * panel = data->panel;
+	LayersPanel * panel = this->get_window()->get_layers_panel();
 	struct LatLon maxmin[2] = { {0.0,0.0}, {0.0,0.0} };
 
-	layer->find_maxmin(maxmin);
-	a_geonames_wikipedia_box(layer->get_window(), layer, maxmin);
-	layer->calculate_bounds_waypoints();
-	panel->emit_update();
+	this->find_maxmin(maxmin);
+#ifdef K
+	a_geonames_wikipedia_box(this->get_window(), this, maxmin);
+	this->calculate_bounds_waypoints();
+	panel->emit_update_cb();
 #endif
 }
 
@@ -2796,7 +2776,7 @@ void trw_layer_geotagging_waypoint(trw_menu_sublayer_t * data)
 
 
 
-void trw_layer_geotagging(trw_menu_layer_t * data)
+void LayerTRW::geotag_images_cb(void) /* Slot. */
 {
 #ifdef K
 	LayerTRW * layer = data->layer;
@@ -2838,7 +2818,7 @@ static void trw_layer_acquire(trw_menu_layer_t * data, VikDataSourceInterface *d
 /*
  * Acquire into this TRW Layer straight from GPS Device.
  */
-void trw_layer_acquire_gps_cb(trw_menu_layer_t * data)
+void LayerTRW::acquire_from_gps_cb(void)
 {
 #ifdef K
 	trw_layer_acquire(data, &vik_datasource_gps_interface);
@@ -2851,7 +2831,7 @@ void trw_layer_acquire_gps_cb(trw_menu_layer_t * data)
 /*
  * Acquire into this TRW Layer from Directions.
  */
-void trw_layer_acquire_routing_cb(trw_menu_layer_t * data)
+void LayerTRW::acquire_from_routing_cb(void) /* Slot. */
 {
 #ifdef K
 	trw_layer_acquire(data, &vik_datasource_routing_interface);
@@ -2864,7 +2844,7 @@ void trw_layer_acquire_routing_cb(trw_menu_layer_t * data)
 /*
  * Acquire into this TRW Layer from an entered URL.
  */
-void trw_layer_acquire_url_cb(trw_menu_layer_t * data)
+void LayerTRW::acquire_from_url_cb(void) /* Slot. */
 {
 #ifdef K
 	trw_layer_acquire(data, &vik_datasource_url_interface);
@@ -2878,7 +2858,7 @@ void trw_layer_acquire_url_cb(trw_menu_layer_t * data)
 /*
  * Acquire into this TRW Layer from OSM.
  */
-void trw_layer_acquire_osm_cb(trw_menu_layer_t * data)
+void LayerTRW::acquire_from_osm_cb(void) /* Slot. */
 {
 #ifdef K
 	trw_layer_acquire(data, &vik_datasource_osm_interface);
@@ -2891,7 +2871,7 @@ void trw_layer_acquire_osm_cb(trw_menu_layer_t * data)
 /**
  * Acquire into this TRW Layer from OSM for 'My' Traces.
  */
-void trw_layer_acquire_osm_my_traces_cb(trw_menu_layer_t * data)
+void LayerTRW::acquire_from_osm_my_traces_cb(void) /* Slot. */
 {
 #ifdef K
 	trw_layer_acquire(data, &vik_datasource_osm_my_traces_interface);
@@ -2906,7 +2886,7 @@ void trw_layer_acquire_osm_my_traces_cb(trw_menu_layer_t * data)
 /*
  * Acquire into this TRW Layer from Geocaching.com
  */
-void trw_layer_acquire_geocache_cb(trw_menu_layer_t * data)
+void LayerTRW::acquire_from_geocache_cb(void) /* Slot. */
 {
 #ifdef K
 	trw_layer_acquire(values, &vik_datasource_gc_interface);
@@ -2921,7 +2901,7 @@ void trw_layer_acquire_geocache_cb(trw_menu_layer_t * data)
 /*
  * Acquire into this TRW Layer from images.
  */
-void trw_layer_acquire_geotagged_cb(trw_menu_layer_t * data)
+void LayerTRW::acquire_from_geotagged_images_cb(void) /* Slot. */
 {
 #ifdef K
 	LayerTRW * layer = data->layer;
@@ -2941,7 +2921,7 @@ void trw_layer_acquire_geotagged_cb(trw_menu_layer_t * data)
 /*
  * Acquire into this TRW Layer from any GPS Babel supported file.
  */
-void trw_layer_acquire_file_cb(trw_menu_layer_t * data)
+void LayerTRW::acquire_from_file_cb(void) /* Slot. */
 {
 #ifdef K
 	trw_layer_acquire(data, &vik_datasource_file_interface);
@@ -2951,8 +2931,9 @@ void trw_layer_acquire_file_cb(trw_menu_layer_t * data)
 
 
 
-void trw_layer_gps_upload(trw_menu_layer_t * data)
+void LayerTRW::upload_to_gps_cb(void) /* Slot. */
 {
+#ifdef K
 	trw_menu_sublayer_t data2;
 	memset(&data2, 0, sizeof (trw_menu_sublayer_t));
 
@@ -2960,6 +2941,7 @@ void trw_layer_gps_upload(trw_menu_layer_t * data)
 	data2.panel = data->panel;
 
 	trw_layer_gps_upload_any(&data2);
+#endif
 }
 
 
@@ -3066,15 +3048,14 @@ void trw_layer_gps_upload_any(trw_menu_sublayer_t * data)
 
 
 
-void trw_layer_new_wp(trw_menu_layer_t * data)
+void LayerTRW::new_waypoint_cb(void) /* Slot. */
 {
-	LayerTRW * layer = data->layer;
-	LayersPanel * panel = data->panel;
+	LayersPanel * panel = this->get_window()->get_layers_panel();
 	/* TODO longone: okay, if layer above (aggregate) is invisible but vtl->visible is true, this redraws for no reason.
 	   Instead return true if you want to update. */
-	if (layer->new_waypoint(layer->get_window(), panel->get_viewport()->get_center())) {
-		layer->calculate_bounds_waypoints();
-		if (layer->visible) {
+	if (this->new_waypoint(this->get_window(), panel->get_viewport()->get_center())) {
+		this->calculate_bounds_waypoints();
+		if (this->visible) {
 			panel->emit_update_cb();
 		}
 	}
@@ -3105,16 +3086,14 @@ void LayerTRW::new_track_create_common(char * name)
 
 
 
-void trw_layer_new_track(trw_menu_layer_t * data)
+void LayerTRW::new_track_cb() /* Slot. */
 {
-	LayerTRW * layer = data->layer;
-
-	if (!layer->current_track) {
-		char *name = layer->new_unique_sublayer_name(SublayerType::TRACK, _("Track")) ;
-		layer->new_track_create_common(name);
+	if (!this->current_track) {
+		char * name = this->new_unique_sublayer_name(SublayerType::TRACK, _("Track")) ;
+		this->new_track_create_common(name);
 		free(name);
 #ifdef K
-		layer->get_window()->enable_layer_tool(LayerType::TRW, TOOL_CREATE_TRACK);
+		this->get_window()->enable_layer_tool(LayerType::TRW, TOOL_CREATE_TRACK);
 #endif
 	}
 }
@@ -3137,16 +3116,14 @@ void LayerTRW::new_route_create_common(char * name)
 
 
 
-void trw_layer_new_route(trw_menu_layer_t * data)
+void LayerTRW::new_route_cb(void) /* Slot. */
 {
-	LayerTRW * layer = data->layer;
-
-	if (!layer->current_track) {
-		char *name = layer->new_unique_sublayer_name(SublayerType::ROUTE, _("Route")) ;
-		layer->new_route_create_common(name);
+	if (!this->current_track) {
+		char * name = this->new_unique_sublayer_name(SublayerType::ROUTE, _("Route")) ;
+		this->new_route_create_common(name);
 		free(name);
 #ifdef K
-		layer->get_window()->enable_layer_tool(LayerType::TRW, TOOL_CREATE_ROUTE);
+		this->get_window()->enable_layer_tool(LayerType::TRW, TOOL_CREATE_ROUTE);
 #endif
 	}
 }
@@ -3154,84 +3131,75 @@ void trw_layer_new_route(trw_menu_layer_t * data)
 
 
 
-void trw_layer_auto_routes_view(trw_menu_layer_t * data)
+void LayerTRW::full_view_routes_cb(void) /* Slot. */
 {
-#ifdef K
-	LayerTRW * layer = data->layer;
-	LayersPanel * panel = data->panel;
+	LayersPanel * panel = this->get_window()->get_layers_panel();
 
-	if (layer->routes.size() > 0) {
+	if (this->routes.size() > 0) {
 		struct LatLon maxmin[2] = { {0,0}, {0,0} };
-		LayerTRWc::find_maxmin_in_tracks(layer->routes, maxmin);
-		layer->zoom_to_show_latlons(panel->get_viewport(), maxmin);
-		panel->emit_update();
+		LayerTRWc::find_maxmin_in_tracks(this->routes, maxmin);
+		this->zoom_to_show_latlons(panel->get_viewport(), maxmin);
+		panel->emit_update_cb();
 	}
-#endif
 }
 
 
 
 
-void trw_layer_finish_track(trw_menu_layer_t * data)
+void LayerTRW::finish_track_cb(void) /* Slot. */
 {
-	LayerTRW * layer = data->layer;
-	layer->current_track = NULL;
-	layer->route_finder_started = false;
-	layer->emit_changed();
+	this->current_track = NULL;
+	this->route_finder_started = false;
+	this->emit_changed();
 }
 
 
 
 
-void trw_layer_auto_tracks_view(trw_menu_layer_t * data)
+void LayerTRW::full_view_tracks_cb(void) /* Slot. */
 {
-#ifdef K
-	LayerTRW * layer = data->layer;
-	LayersPanel * panel = data->panel;
+	LayersPanel * panel = this->get_window()->get_layers_panel();
 
-	if (layer->tracks.size() > 0) {
+	if (this->tracks.size() > 0) {
 		struct LatLon maxmin[2] = { {0,0}, {0,0} };
-		LayerTRWc::find_maxmin_in_tracks(layer->tracks, maxmin);
-		layer->zoom_to_show_latlons(panel->get_viewport(), maxmin);
-		panel->emit_update();
+		LayerTRWc::find_maxmin_in_tracks(this->tracks, maxmin);
+		this->zoom_to_show_latlons(panel->get_viewport(), maxmin);
+		panel->emit_update_cb();
 	}
-#endif
 }
 
 
 
 
-void trw_layer_auto_waypoints_view(trw_menu_layer_t * data)
+void LayerTRW::full_view_waypoints_cb(void) /* Slot. */
 {
-	LayerTRW * layer = data->layer;
-	LayersPanel * panel = data->panel;
+	LayersPanel * panel = this->get_window()->get_layers_panel();
 
 	/* Only 1 waypoint - jump straight to it */
-	if (layer->waypoints.size() == 1) {
+	if (this->waypoints.size() == 1) {
 		Viewport * viewport = panel->get_viewport();
-		LayerTRWc::single_waypoint_jump(layer->waypoints, viewport);
+		LayerTRWc::single_waypoint_jump(this->waypoints, viewport);
 	}
 	/* If at least 2 waypoints - find center and then zoom to fit */
-	else if (layer->waypoints.size() > 1) {
+	else if (this->waypoints.size() > 1) {
 		struct LatLon maxmin[2] = { {0,0}, {0,0} };
-		maxmin[0].lat = layer->waypoints_bbox.north;
-		maxmin[1].lat = layer->waypoints_bbox.south;
-		maxmin[0].lon = layer->waypoints_bbox.east;
-		maxmin[1].lon = layer->waypoints_bbox.west;
-		layer->zoom_to_show_latlons(panel->get_viewport(), maxmin);
+		maxmin[0].lat = this->waypoints_bbox.north;
+		maxmin[1].lat = this->waypoints_bbox.south;
+		maxmin[0].lon = this->waypoints_bbox.east;
+		maxmin[1].lon = this->waypoints_bbox.west;
+		this->zoom_to_show_latlons(panel->get_viewport(), maxmin);
 	}
-#ifdef K
-	panel->emit_update();
-#endif
+
+	panel->emit_update_cb();
 }
 
 
 
 
-void trw_layer_osm_traces_upload_cb(trw_menu_layer_t * data)
+void LayerTRW::upload_to_osm_traces_cb(void) /* Slot. */
 {
 #ifdef K
-	osm_traces_upload_viktrwlayer(data->layer, NULL);
+	osm_traces_upload_viktrwlayer(this, NULL);
 #endif
 }
 
@@ -3863,16 +3831,15 @@ void LayerTRW::delete_all_waypoints()
 
 
 
-void trw_layer_delete_all_tracks(trw_menu_layer_t * data)
+void LayerTRW::delete_all_tracks_cb()
 {
 #ifdef K
-	LayerTRW * layer = data->layer;
 	/* Get confirmation from the user. */
-	if (a_dialog_yes_or_no(layer->get_toolkit_window(),
+	if (a_dialog_yes_or_no(layer->get_window(),
 			       _("Are you sure you want to delete all tracks in %s?"),
-			       layer->get_name())) {
+			       this->get_name())) {
 
-		layer->delete_all_tracks();
+		this->delete_all_tracks();
 	}
 #endif
 }
@@ -3880,16 +3847,15 @@ void trw_layer_delete_all_tracks(trw_menu_layer_t * data)
 
 
 
-void trw_layer_delete_all_routes(trw_menu_layer_t * data)
+void LayerTRW::delete_all_routes_cb(void) /* Slot. */
 {
 #ifdef K
-	LayerTRW * layer = data->layer;
 	/* Get confirmation from the user. */
-	if (a_dialog_yes_or_no(layer->get_toolkit_window(),
+	if (a_dialog_yes_or_no(this->get_window(),
 			       _("Are you sure you want to delete all routes in %s?"),
-			       layer->get_name())) {
+			       this->get_name())) {
 
-		layer->delete_all_routes();
+		this->delete_all_routes();
 	}
 #endif
 }
@@ -3897,16 +3863,15 @@ void trw_layer_delete_all_routes(trw_menu_layer_t * data)
 
 
 
-void trw_layer_delete_all_waypoints(trw_menu_layer_t * data)
+void LayerTRW::delete_all_waypoints_cb() /* Slot. */
 {
 #ifdef K
-	LayerTRW * layer = data->layer;
 	/* Get confirmation from the user. */
-	if (a_dialog_yes_or_no(layer->get_toolkit_window(),
+	if (a_dialog_yes_or_no(this->get_window(),
 			       _("Are you sure you want to delete all waypoints in %s?"),
-			       layer->get_name())) {
+			       this->get_name())) {
 
-		layer->delete_all_waypoints();
+		this->delete_all_waypoints();
 	}
 #endif
 }
@@ -5937,7 +5902,7 @@ void trw_layer_sort_order_timestamp_descend(trw_menu_sublayer_t * data)
 
 
 
-void trw_layer_delete_tracks_from_selection(trw_menu_layer_t * data)
+void LayerTRW::delete_selected_tracks_cb(void)
 {
 #ifdef K
 	LayerTRW * layer = data->layer;
@@ -5988,7 +5953,7 @@ void trw_layer_delete_tracks_from_selection(trw_menu_layer_t * data)
 
 
 
-void trw_layer_delete_routes_from_selection(trw_menu_layer_t * data)
+void LayerTRW::delete_selected_routes_cb(void) /* Slot. */
 {
 #ifdef K
 	LayerTRW * layer = data->layer;
@@ -6163,7 +6128,7 @@ void LayerTRW::uniquify_waypoints(LayersPanel * panel)
 
 
 
-void trw_layer_delete_waypoints_from_selection(trw_menu_layer_t * data)
+void LayerTRW::delete_selected_waypoints_cb(void)
 {
 #ifdef K
 	LayerTRW * layer = data->layer;
