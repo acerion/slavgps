@@ -908,7 +908,7 @@ TreeIndex * TreeView::add_sublayer(sg_uid_t sublayer_uid, SublayerType sublayer_
 
 	/* LayersTreeColumn::DATA */
 	item = new QStandardItem();
-	variant = QVariant::fromValue(0);
+	variant = QVariant::fromValue((int) sublayer_type);
 	item->setData(variant, RoleLayerData);
 	items << item;
 
