@@ -339,28 +339,10 @@ void LayerAggregate::change_coord_mode(VikCoordMode mode)
 
 
 
-typedef struct {
-	LayerAggregate * aggregate;
-	LayersPanel * panel;
-} menu_array_values;
-
-
-
-
-static void aggregate_layer_child_visible_toggle(menu_array_values * values)
+void LayerAggregate::child_visible_toggle_cb(void) /* Slot. */
 {
-	LayerAggregate * aggregate = (LayerAggregate *) values->aggregate;
-	LayersPanel * panel = values->panel;
-
-	aggregate->child_visible_toggle(panel);
-}
-
-
-
-
-void LayerAggregate::child_visible_toggle(LayersPanel * panel)
-{
-	TreeView * tree = panel->get_treeview();
+	LayersPanel * panel = (LayersPanel *) this->menu_data->layers_panel;
+	TreeView * tree_view = panel->get_treeview();
 
 	/* Loop around all (child) layers applying visibility setting.
 	   This does not descend the tree if there are aggregates within aggregrate - just the first level of layers held. */
@@ -368,7 +350,7 @@ void LayerAggregate::child_visible_toggle(LayersPanel * panel)
 		Layer * layer = *child;
 		layer->visible = !layer->visible;
 		/* Also set checkbox on/off. */
-		tree->toggle_visibility(layer->index);
+		tree_view->toggle_visibility(layer->index);
 	}
 	/* Redraw as view may have changed. */
 	this->emit_changed();
@@ -395,75 +377,53 @@ void LayerAggregate::child_visible_set(LayersPanel * panel, bool on_off)
 
 
 
-static void aggregate_layer_child_visible_on(menu_array_values * values)
+void LayerAggregate::child_visible_on_cb(void) /* Slot. */
 {
-	LayerAggregate * aggregate = values->aggregate;
-	LayersPanel * panel = values->panel;
-
-	aggregate->child_visible_set(panel, true);
+	this->child_visible_set((LayersPanel *) this->menu_data->layers_panel, true);
 }
 
 
 
 
-static void aggregate_layer_child_visible_off(menu_array_values * values)
+void LayerAggregate::child_visible_off_cb(void) /* Slot. */
 {
-	LayerAggregate * aggregate = values->aggregate;
-	LayersPanel * panel = values->panel;
-
-	aggregate->child_visible_set(panel, false);
+	this->child_visible_set((LayersPanel *) this->menu_data->layers_panel, false);
 }
 
 
 
 
-static void aggregate_layer_sort_a2z(menu_array_values * values)
+void LayerAggregate::sort_a2z_cb(void)
 {
-	LayerAggregate * aggregate = values->aggregate;
-
-#ifndef SLAVGPS_QT
-	aggregate->tree_view->sort_children(&aggregate->iter, VL_SO_ALPHABETICAL_ASCENDING);
-	aggregate->children->sort(Layer::compare_name_ascending);
-#endif
+	this->tree_view->sort_children(this->index, VL_SO_ALPHABETICAL_ASCENDING);
+	this->children->sort(Layer::compare_name_ascending);
 }
 
 
 
 
-static void aggregate_layer_sort_z2a(menu_array_values * values)
+void LayerAggregate::sort_z2a_cb(void)
 {
-	LayerAggregate * aggregate = values->aggregate;
-
-#ifndef SLAVGPS_QT
-	aggregate->tree_view->sort_children(&aggregate->iter, VL_SO_ALPHABETICAL_DESCENDING);
-	aggregate->children->sort(Layer::compare_name_descending);
-#endif
+	this->tree_view->sort_children(this->index, VL_SO_ALPHABETICAL_DESCENDING);
+	this->children->sort(Layer::compare_name_descending);
 }
 
 
 
 
-static void aggregate_layer_sort_timestamp_ascend(menu_array_values * values)
+void LayerAggregate::sort_timestamp_ascend_cb(void)
 {
-	LayerAggregate * aggregate = values->aggregate;
-
-#ifndef SLAVGPS_QT
-	aggregate->tree_view->sort_children(&aggregate->iter, VL_SO_DATE_ASCENDING);
-	aggregate->children->sort(Layer::compare_timestamp_ascending);
-#endif
+	this->tree_view->sort_children(this->index, VL_SO_DATE_ASCENDING);
+	this->children->sort(Layer::compare_timestamp_ascending);
 }
 
 
 
 
-static void aggregate_layer_sort_timestamp_descend(menu_array_values * values)
+void LayerAggregate::sort_timestamp_descend_cb(void)
 {
-	LayerAggregate * aggregate = values->aggregate;
-
-#ifndef SLAVGPS_QT
-	aggregate->tree_view->sort_children(&aggregate->iter, VL_SO_DATE_DESCENDING);
-	aggregate->children->sort(Layer::compare_timestamp_descending);
-#endif
+	this->tree_view->sort_children(this->index, VL_SO_DATE_DESCENDING);
+	this->children->sort(Layer::compare_timestamp_descending);
 }
 
 
@@ -494,25 +454,13 @@ std::list<waypoint_layer_t *> * LayerAggregate::create_waypoints_and_layers_list
 
 
 
-static void aggregate_layer_waypoint_list_dialog(menu_array_values * values)
+void LayerAggregate::waypoint_list_dialog_cb(void)
 {
 #ifndef SLAVGPS_QT
-	LayerAggregate * aggregate = values->aggregate;
-
-	char *title = g_strdup_printf(_("%s: Waypoint List"), aggregate->name);
-	vik_trw_layer_waypoint_list_show_dialog(title, aggregate, true);
+	char * title = g_strdup_printf(_("%s: Waypoint List"), this->name);
+	vik_trw_layer_waypoint_list_show_dialog(title, this, true);
 	free(title);
 #endif
-}
-
-
-
-
-static void aggregate_layer_search_date(menu_array_values * values)
-{
-	LayerAggregate * aggregate = values->aggregate;
-
-	aggregate->search_date();
 }
 
 
@@ -521,11 +469,11 @@ static void aggregate_layer_search_date(menu_array_values * values)
 /**
  * Search all TrackWaypoint layers in this aggregate layer for an item on the user specified date
  */
-void LayerAggregate::search_date()
+void LayerAggregate::search_date_cb(void)
 {
 #ifndef SLAVGPS_QT
 	VikCoord position;
-	char * date_str = a_dialog_get_date(this->get_toolkit_window(), _("Search by Date"));
+	char * date_str = a_dialog_get_date(this->get_window(), _("Search by Date"));
 
 	if (!date_str) {
 		return;
@@ -564,7 +512,7 @@ void LayerAggregate::search_date()
 	}
 
 	if (!found) {
-		a_dialog_info_msg(this->get_toolkit_window(), _("No items found with the requested date."));
+		a_dialog_info_msg(this->get_window(), _("No items found with the requested date."));
 	}
 	free(date_str);
 #endif
@@ -616,13 +564,11 @@ std::list<track_layer_t *> * LayerAggregate::create_tracks_and_layers_list()
 
 
 
-static void aggregate_layer_track_list_dialog(menu_array_values * values)
+void LayerAggregate::track_list_dialog_cb(void)
 {
 #ifndef SLAVGPS_QT
-	LayerAggregate * aggregate = values->aggregate;
-
-	char *title = g_strdup_printf(_("%s: Track and Route List"), aggregate->name);
-	vik_trw_layer_track_list_show_dialog(title, aggregate, SublayerType::NONE, true);
+	char *title = g_strdup_printf(_("%s: Track and Route List"), this->name);
+	vik_trw_layer_track_list_show_dialog(title, this, SublayerType::NONE, true);
 	free(title);
 #endif
 }
@@ -645,21 +591,19 @@ static void aggregate_layer_analyse_close(GtkWidget *dialog, int resp, Layer * l
 
 
 
-static void aggregate_layer_analyse(menu_array_values * values)
+void LayerAggregate::analyse_cb(void)
 {
 #ifndef SLAVGPS_QT
-	LayerAggregate * aggregate = values->aggregate;
-
 	/* There can only be one! */
-	if (aggregate->tracks_analysis_dialog) {
+	if (this->tracks_analysis_dialog) {
 		return;
 	}
 
-	aggregate->tracks_analysis_dialog = vik_trw_layer_analyse_this(aggregate->get_toolkit_window(),
-								       aggregate->name,
-								       aggregate,
-								       SublayerType::NONE,
-								       aggregate_layer_analyse_close);
+	this->tracks_analysis_dialog = vik_trw_layer_analyse_this(this->get_window(),
+								  this->name,
+								  this,
+								  SublayerType::NONE,
+								  aggregate_layer_analyse_close);
 #endif
 }
 
@@ -668,99 +612,55 @@ static void aggregate_layer_analyse(menu_array_values * values)
 
 void LayerAggregate::add_menu_items(QMenu & menu)
 {
-#ifdef K
-	/* Data to pass on in menu functions. */
-	static menu_array_values values { .aggregate = this, .panel = (LayersPanel *) panel };
+	QAction * qa = NULL;
+	menu.addSeparator();
 
-	GtkWidget *item = gtk_menu_item_new();
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-	gtk_widget_show(item);
+	{
+		QMenu * vis_submenu = menu.addMenu(QString("&Visibility"));
 
-	GtkWidget *vis_submenu = gtk_menu_new();
-	item = gtk_menu_item_new_with_mnemonic(_("_Visibility"));
-	gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-	gtk_widget_show(item);
-	gtk_menu_item_set_submenu(GTK_MENU_ITEM (item), vis_submenu);
+		qa = vis_submenu->addAction(QIcon::fromTheme("APPLY"), QString(_("&Show All")));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (child_visible_on_cb()));
 
-	item = gtk_image_menu_item_new_with_mnemonic(_("_Show All"));
-	gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_APPLY, GTK_ICON_SIZE_MENU));
-	g_signal_connect_swapped (G_OBJECT(item), "activate", G_CALLBACK(aggregate_layer_child_visible_on), &values);
-	gtk_menu_shell_append (GTK_MENU_SHELL (vis_submenu), item);
-	gtk_widget_show (item);
+		qa = vis_submenu->addAction(QIcon::fromTheme("CLEAR"), QString(_("&Hide All")));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (child_visible_off_cb()));
 
-	item = gtk_image_menu_item_new_with_mnemonic (_("_Hide All"));
-	gtk_image_menu_item_set_image ((GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_CLEAR, GTK_ICON_SIZE_MENU));
-	g_signal_connect_swapped (G_OBJECT(item), "activate", G_CALLBACK(aggregate_layer_child_visible_off), &values);
-	gtk_menu_shell_append (GTK_MENU_SHELL (vis_submenu), item);
-	gtk_widget_show (item);
+		qa = vis_submenu->addAction(QIcon::fromTheme("REFRESH"), QString(_("&Toggle")));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (child_visible_toggle_cb()));
+	}
 
-	item = gtk_image_menu_item_new_with_mnemonic (_("_Toggle"));
-	gtk_image_menu_item_set_image ((GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_REFRESH, GTK_ICON_SIZE_MENU));
-	g_signal_connect_swapped (G_OBJECT(item), "activate", G_CALLBACK(aggregate_layer_child_visible_toggle), &values);
-	gtk_menu_shell_append (GTK_MENU_SHELL (vis_submenu), item);
-	gtk_widget_show (item);
 
-	GtkWidget *submenu_sort = gtk_menu_new ();
-	item = gtk_image_menu_item_new_with_mnemonic (_("_Sort"));
-	gtk_image_menu_item_set_image ((GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_REFRESH, GTK_ICON_SIZE_MENU));
-	gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-	gtk_widget_show (item);
-	gtk_menu_item_set_submenu (GTK_MENU_ITEM (item), submenu_sort);
+	{
+		QMenu * sort_submenu = menu.addMenu(QIcon::fromTheme("REFRESH"), QString("&Sort"));
 
-	item = gtk_image_menu_item_new_with_mnemonic (_("Name _Ascending"));
-	gtk_image_menu_item_set_image ((GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_SORT_ASCENDING, GTK_ICON_SIZE_MENU));
-	g_signal_connect_swapped (G_OBJECT(item), "activate", G_CALLBACK(aggregate_layer_sort_a2z), &values);
-	gtk_menu_shell_append (GTK_MENU_SHELL(submenu_sort), item);
-	gtk_widget_show (item);
+		qa = sort_submenu->addAction(QIcon::fromTheme("view-sort-ascending"), QString(_("Name &Ascending")));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (sort_a2z_cb()));
 
-	item = gtk_image_menu_item_new_with_mnemonic (_("Name _Descending"));
-	gtk_image_menu_item_set_image ((GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_SORT_DESCENDING, GTK_ICON_SIZE_MENU));
-	g_signal_connect_swapped (G_OBJECT(item), "activate", G_CALLBACK(aggregate_layer_sort_z2a), &values);
-	gtk_menu_shell_append (GTK_MENU_SHELL(submenu_sort), item);
-	gtk_widget_show (item);
+		qa = sort_submenu->addAction(QIcon::fromTheme("view-sort-descending"), QString(_("Name &Descending")));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (sort_z2a_cb()));
 
-	item = gtk_image_menu_item_new_with_mnemonic (_("Date Ascending"));
-	gtk_image_menu_item_set_image ((GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_SORT_ASCENDING, GTK_ICON_SIZE_MENU));
-	g_signal_connect_swapped (G_OBJECT(item), "activate", G_CALLBACK(aggregate_layer_sort_timestamp_ascend), &values);
-	gtk_menu_shell_append (GTK_MENU_SHELL(submenu_sort), item);
-	gtk_widget_show (item);
+		qa = sort_submenu->addAction(QIcon::fromTheme("view-sort-ascending"), QString(_("Date Ascending")));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (sort_timestamp_ascend_cb()));
 
-	item = gtk_image_menu_item_new_with_mnemonic (_("Date Descending"));
-	gtk_image_menu_item_set_image ((GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_SORT_DESCENDING, GTK_ICON_SIZE_MENU));
-	g_signal_connect_swapped (G_OBJECT(item), "activate", G_CALLBACK(aggregate_layer_sort_timestamp_descend), &values);
-	gtk_menu_shell_append (GTK_MENU_SHELL(submenu_sort), item);
-	gtk_widget_show (item);
+		qa = sort_submenu->addAction(QIcon::fromTheme("view-sort-descending"), QString(_("Date Descending")));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (sort_timestamp_descend_cb()));
+	}
 
-	item = gtk_menu_item_new_with_mnemonic (_("_Statistics"));
-	g_signal_connect_swapped (G_OBJECT(item), "activate", G_CALLBACK(aggregate_layer_analyse), &values);
-	gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-	gtk_widget_show (item);
+	qa = menu.addAction(QString(_("&Statistics")));
+	connect(qa, SIGNAL (triggered(bool)), this, SLOT (analyse_cb()));
 
-	item = gtk_image_menu_item_new_with_mnemonic (_("Track _List..."));
-	gtk_image_menu_item_set_image ((GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_INDEX, GTK_ICON_SIZE_MENU));
-	g_signal_connect_swapped (G_OBJECT(item), "activate", G_CALLBACK(aggregate_layer_track_list_dialog), &values);
-	gtk_menu_shell_append (GTK_MENU_SHELL(menu), item);
-	gtk_widget_show (item);
+	qa = menu.addAction(QIcon::fromTheme("INDEX"), QString(_("Track &List...")));
+	connect(qa, SIGNAL (triggered(bool)), this, SLOT (track_list_dialog_cb()));
 
-	item = gtk_image_menu_item_new_with_mnemonic (_("_Waypoint List..."));
-	gtk_image_menu_item_set_image ((GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_INDEX, GTK_ICON_SIZE_MENU));
-	g_signal_connect_swapped (G_OBJECT(item), "activate", G_CALLBACK(aggregate_layer_waypoint_list_dialog), &values);
-	gtk_menu_shell_append (GTK_MENU_SHELL(menu), item);
-	gtk_widget_show (item);
+	qa = menu.addAction(QIcon::fromTheme("INDEX"), QString(_("&Waypoint List...")));
+	connect(qa, SIGNAL (triggered(bool)), this, SLOT (waypoint_list_dialog_cb()));
 
-	GtkWidget *search_submenu = gtk_menu_new ();
-	item = gtk_image_menu_item_new_with_mnemonic (_("Searc_h"));
-	gtk_image_menu_item_set_image ((GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_JUMP_TO, GTK_ICON_SIZE_MENU));
-	gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
-	gtk_widget_show (item);
-	gtk_menu_item_set_submenu (GTK_MENU_ITEM (item), search_submenu);
+	{
+		QMenu * search_submenu = menu.addMenu(QIcon::fromTheme("go-jump"), QString("Searc&h"));
 
-	item = gtk_menu_item_new_with_mnemonic (_("By _Date..."));
-	g_signal_connect_swapped (G_OBJECT(item), "activate", G_CALLBACK(aggregate_layer_search_date), &values);
-	gtk_menu_shell_append (GTK_MENU_SHELL(search_submenu), item);
-	gtk_widget_set_tooltip_text (item, _("Find the first item with a specified date"));
-	gtk_widget_show (item);
-#endif
+		qa = search_submenu->addAction(QString(_("By &Date...")));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (search_date_cb()));
+		qa->setToolTip(QString(_("Find the first item with a specified date")));
+	}
 }
 
 

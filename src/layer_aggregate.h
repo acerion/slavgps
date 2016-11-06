@@ -49,7 +49,7 @@ namespace SlavGPS {
 
 
 	class LayerAggregate : public Layer {
-
+		Q_OBJECT
 	public:
 		LayerAggregate();
 		LayerAggregate(Viewport * viewport);
@@ -82,16 +82,26 @@ namespace SlavGPS {
 		bool is_empty();
 		std::list<Layer const *> * get_children();
 
+		std::list<Layer *> * children = NULL;
 
-		void search_date();
-
+	private:
 		void child_visible_set(LayersPanel * panel, bool visible);
-		void child_visible_toggle(LayersPanel * panel);
-
-		std::list<Layer *> * children;
 
 		/* One per layer. */
-		GtkWidget * tracks_analysis_dialog;
+		GtkWidget * tracks_analysis_dialog = NULL;
+
+	private slots:
+		void child_visible_on_cb(void);
+		void child_visible_off_cb(void);
+		void child_visible_toggle_cb(void);
+		void sort_a2z_cb(void);
+		void sort_z2a_cb(void);
+		void sort_timestamp_ascend_cb(void);
+		void sort_timestamp_descend_cb(void);
+		void analyse_cb(void);
+		void track_list_dialog_cb(void);
+		void waypoint_list_dialog_cb(void);
+		void search_date_cb(void);
 	};
 
 
