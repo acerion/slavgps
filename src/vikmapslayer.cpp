@@ -2396,7 +2396,7 @@ bool maps_dialog_zoom_between(GtkWindow *parent,
 
 /**
  * Get all maps in the region for zoom levels specified by the user
- * Sort of similar to trw_layer_download_map_along_track_cb function
+ * Sort of similar to LayerTRW::download_map_along_track_cb().
  */
 static void maps_layer_download_all(menu_array_values * values)
 {
