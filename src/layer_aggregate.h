@@ -34,6 +34,7 @@
 
 
 
+
 namespace SlavGPS {
 
 
@@ -70,7 +71,7 @@ namespace SlavGPS {
 		void add_layer(Layer * layer, bool allow_reordering);
 		void insert_layer(Layer * layer, TreeIndex * replace_index);
 		void move_layer(GtkTreeIter * child_iter, bool up);
-		bool delete_layer(GtkTreeIter * iter);
+		bool delete_layer(TreeIndex * index);
 		void clear();
 
 
