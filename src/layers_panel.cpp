@@ -1049,34 +1049,56 @@ void LayersPanel::contextMenuEvent(QContextMenuEvent * event)
 	if (ind.isValid()) {
 		qDebug() << "II: Layers Panel: context menu event: valid index";
 		qDebug() << "II: Layers Panel: context menu event: row = " << ind.row();
+
 		TreeIndex index = QPersistentModelIndex(ind);
 
-		Layer * layer = this->tree_view->get_layer(&index);
-		if (layer) {
-			qDebug() << "II: Layers Panel: context menu event: layer type =" << layer->type_string;
-		} else {
-			qDebug() << "II: Layers Panel: context menu event: layer type is NULL";
-		}
+		if (TreeItemType::LAYER == this->tree_view->get_item_type(&index)) {
+			qDebug() << "II: Layers Panel: creating context menu for TreeItemType::LAYER";
 
-		QModelIndex parent = index.parent();
-		if (parent.isValid()) {
-			QModelIndex index2 = parent.child(ind.row(), 0);
-			qDebug() << "II: Layers Panel: context menu event: item" << index << "index2" << index2;
-			if (index.isValid()) {
-				qDebug() << "II: Layers Panel: context menu event: index.row =" << index.row() << "index.column =" << index.column() << "text =" << this->tree_view->model->itemFromIndex(index2)->text();
+			Layer * layer = this->tree_view->get_layer(&index);
+			if (layer) {
+				qDebug() << "II: Layers Panel: context menu event: layer type =" << layer->type_string;
+			} else {
+				qDebug() << "II: Layers Panel: context menu event: layer type is NULL";
 			}
-			index = index2;
+
+			QModelIndex parent = index.parent();
+			if (parent.isValid()) {
+				QModelIndex index2 = parent.child(ind.row(), 0);
+				qDebug() << "II: Layers Panel: context menu event: item" << index << "index2" << index2;
+				if (index.isValid()) {
+					qDebug() << "II: Layers Panel: context menu event: index.row =" << index.row() << "index.column =" << index.column() << "text =" << this->tree_view->model->itemFromIndex(index2)->text();
+				}
+				index = index2;
+			}
+			QMenu menu(this);
+			this->window->get_layer_menu(&menu);
+			menu.addAction(this->qa_layer_cut);
+			menu.addAction(this->qa_layer_copy);
+			menu.addAction(this->qa_layer_paste);
+			menu.addAction(this->qa_layer_remove);
+
+			layer->add_menu_items(menu, this);
+
+			menu.exec(QCursor::pos());
+		} else {
+			qDebug() << "II: Layers Panel: creating context menu for TreeItemType::SUBLAYER";
+
+			Layer * layer = this->tree_view->get_parent_layer(&index);
+			if (layer) {
+				qDebug() << "II: Layers Panel: context menu event: layer type =" << layer->type_string;
+			} else {
+				qDebug() << "II: Layers Panel: context menu event: layer type is NULL";
+			}
+
+			SublayerType sublayer_type = this->tree_view->get_sublayer_type(&index);
+			sg_uid_t sublayer_uid = this->tree_view->get_sublayer_uid(&index);
+
+
+			QMenu menu(this);
+			layer->sublayer_add_menu_items(menu, this, sublayer_type, sublayer_uid, &index, this->get_viewport());
+			menu.exec(QCursor::pos());
 		}
-		QMenu menu(this);
-		this->window->get_layer_menu(&menu);
-		menu.addAction(this->qa_layer_cut);
-		menu.addAction(this->qa_layer_copy);
-		menu.addAction(this->qa_layer_paste);
-		menu.addAction(this->qa_layer_remove);
-
-		layer->add_menu_items(menu, this);
-
-		menu.exec(QCursor::pos());
 	} else {
 		qDebug() << "II: Layers Panel: context menu event: INvalid index";
 	}
