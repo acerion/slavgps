@@ -383,7 +383,7 @@ namespace SlavGPS {
 		void new_track_pens(void);
 		void cancel_current_tp(bool destroy);
 		void tpwin_response(int response);
-		Track * get_track_helper(struct _trw_menu_sublayer_t * data);
+		Track * get_track_helper(SublayerType sublayer_type, sg_uid_t sublayer_uid);
 		void update_statusbar();
 		void tool_extended_route_finder_undo();
 		bool tool_new_track_or_route_click(QMouseEvent * event, Viewport * viewport);
@@ -601,6 +601,97 @@ namespace SlavGPS {
 		void delete_all_waypoints_cb(void);
 		void delete_selected_waypoints_cb(void);
 
+		void waypoints_visibility_on_cb(void);
+		void waypoints_visibility_off_cb(void);
+		void waypoints_visibility_toggle_cb(void);
+
+		void tracks_visibility_off_cb(void);
+		void tracks_visibility_on_cb(void);
+		void tracks_visibility_toggle_cb(void);
+
+		void routes_visibility_off_cb(void);
+		void routes_visibility_on_cb(void);
+		void routes_visibility_toggle_cb(void);
+
+		void waypoint_list_dialog_cb(void);
+
+		void delete_sublayer_cb(void);
+		void copy_sublayer_cb(void);
+		void cut_sublayer_cb(void);
+		void paste_sublayer_cb(void);
+
+		void goto_waypoint2_cb(void);
+
+		void waypoint_geocache_webpage_cb(void);
+		void geotagging_waypoint_cb(void);
+
+		void track_list_dialog_single_cb(void);
+		void tracks_stats_cb(void);
+
+		void show_picture_cb(void);
+
+#ifdef VIK_CONFIG_GEOTAG
+		void geotagging_waypoint_mtime_keep_cb(void);
+		void geotagging_waypoint_mtime_update_cb(void);
+		void geotagging_track_cb(void);
+#endif
+
+		void goto_track_startpoint_cb(void);
+		void goto_track_endpoint_cb(void);
+		void goto_track_max_speed_cb(void);
+		void goto_track_max_alt_cb(void);
+		void goto_track_min_alt_cb(void);
+		void goto_track_center_cb(void);
+
+		void merge_by_segment_cb(void);
+		void merge_by_timestamp_cb(void);
+		void merge_with_other_cb(void);
+		void append_track_cb(void);
+		void split_by_timestamp_cb(void);
+		void split_by_n_points_cb(void);
+		void split_at_trackpoint_cb(void);
+		void split_segments_cb(void);
+		void delete_point_selected_cb(void);
+		void delete_points_same_position_cb(void);
+		void delete_points_same_time_cb(void);
+		void reverse_cb(void);
+		void download_map_along_track_cb(void);
+		void edit_trackpoint_cb(void);
+		void gps_upload_any_cb(void);
+		void track_list_dialog_cb(void);
+		void properties_item_cb(void); /* TODO?? */
+		void waypoint_webpage_cb(void);
+		void export_gpx_track_cb(void);
+		void osm_traces_upload_track_cb(void);
+		void track_statistics_cb(void);
+		void convert_track_route_cb(void);
+		void anonymize_times_cb(void);
+		void interpolate_times_cb(void);
+		void extend_track_end_cb(void);
+		void extend_track_end_route_finder_cb(void);
+		void apply_dem_data_all_cb(void);
+		void apply_dem_data_only_missing_cb(void);
+		void missing_elevation_data_interp_cb(void);
+		void missing_elevation_data_flat_cb(void);
+		void apply_dem_data_wpt_all_cb(void);
+		void apply_dem_data_wpt_only_missing_cb(void);
+		void auto_track_view_cb(void);
+		void route_refine_cb(void);
+		void append_other_cb(void);
+		void insert_point_after_cb(void);
+		void insert_point_before_cb(void);
+		void diary_cb(void);
+		void astro_cb(void);
+		void sort_order_a2z_cb(void);
+		void sort_order_z2a_cb(void);
+		void sort_order_timestamp_ascend_cb(void);
+		void sort_order_timestamp_descend_cb(void);
+		void routes_stats_cb();
+#ifndef WINDOWS
+		void track_use_with_filter_cb(void);
+#endif
+		void google_route_webpage_cb(void);
+
 
 	private:
 		/* Add a node in tree view, under which layers' tracks/waypoints/routes will be displayed. */
@@ -630,12 +721,11 @@ typedef struct {
 
 typedef struct _trw_menu_sublayer_t {
 	SlavGPS::LayerTRW * layer;
-	SlavGPS::LayersPanel * panel;
 	SlavGPS::SublayerType sublayer_type;
 	sg_uid_t sublayer_uid;
 	bool confirm;
 	SlavGPS::Viewport * viewport;
-	QStandardItem * tv_item;
+	SlavGPS::TreeIndex * index;
 	void * misc;
 } trw_menu_sublayer_t;
 
@@ -665,96 +755,9 @@ int check_tracks_for_same_name(gconstpointer aa, gconstpointer bb, void * udata)
 
 
 /* This needs to be visible in viktrwlayer_ui.h. */
-void trw_layer_goto_track_startpoint(trw_menu_sublayer_t * data);
-void trw_layer_goto_track_endpoint(trw_menu_sublayer_t * data);
-void trw_layer_goto_track_max_speed(trw_menu_sublayer_t * data);
-void trw_layer_goto_track_max_alt(trw_menu_sublayer_t * data);
-void trw_layer_goto_track_min_alt(trw_menu_sublayer_t * data);
-void trw_layer_goto_track_center(trw_menu_sublayer_t * data);
-void trw_layer_merge_by_segment(trw_menu_sublayer_t * data);
-void trw_layer_merge_by_timestamp(trw_menu_sublayer_t * data);
-void trw_layer_merge_with_other(trw_menu_sublayer_t * data);
-void trw_layer_append_track(trw_menu_sublayer_t * data);
-void trw_layer_split_by_timestamp(trw_menu_sublayer_t * data);
-void trw_layer_split_by_n_points(trw_menu_sublayer_t * data);
-void trw_layer_split_at_trackpoint(trw_menu_sublayer_t * data);
-void trw_layer_split_segments(trw_menu_sublayer_t * data);
-void trw_layer_delete_point_selected(trw_menu_sublayer_t * data);
-void trw_layer_delete_points_same_position(trw_menu_sublayer_t * data);
-void trw_layer_delete_points_same_time(trw_menu_sublayer_t * data);
-void trw_layer_reverse(trw_menu_sublayer_t * data);
-void trw_layer_download_map_along_track_cb(trw_menu_sublayer_t * data);
-void trw_layer_edit_trackpoint(trw_menu_sublayer_t * data);
-void trw_layer_show_picture(trw_menu_sublayer_t * data);
-void trw_layer_gps_upload_any(trw_menu_sublayer_t * data);
-#ifdef VIK_CONFIG_GEOTAG
-void trw_layer_geotagging_waypoint_mtime_keep(trw_menu_sublayer_t * data);
-void trw_layer_geotagging_waypoint_mtime_update(trw_menu_sublayer_t * data);
-void trw_layer_geotagging_track(trw_menu_sublayer_t * data);
-#endif
 
-
-void trw_layer_track_list_dialog_single(trw_menu_sublayer_t * data);
-void trw_layer_track_list_dialog(trw_menu_layer_t * data);
-void trw_layer_waypoint_list_dialog(trw_menu_layer_t * data);
-/* Specific route versions:
-   Most track handling functions can handle operating on the route list.
-   However these ones are easier in separate functions. */
-
-/* Pop-up items. */
-void trw_layer_properties_item(trw_menu_sublayer_t * data); /* TODO?? */
-void trw_layer_goto_waypoint(trw_menu_sublayer_t * data);
-void trw_layer_waypoint_gc_webpage(trw_menu_sublayer_t * data);
-void trw_layer_waypoint_webpage(trw_menu_sublayer_t * data);
-void trw_layer_paste_item_cb(trw_menu_sublayer_t * data);
-void trw_layer_export_gpx_track(trw_menu_sublayer_t * data);
-void trw_layer_geotagging_waypoint(trw_menu_sublayer_t * data);
-void trw_layer_osm_traces_upload_track_cb(trw_menu_sublayer_t * data);
-GtkWidget* create_external_submenu(GtkMenu *menu);
-void trw_layer_track_statistics(trw_menu_sublayer_t * data);
-void trw_layer_convert_track_route(trw_menu_sublayer_t * data);
-void trw_layer_anonymize_times(trw_menu_sublayer_t * data);
-void trw_layer_interpolate_times(trw_menu_sublayer_t * data);
-void trw_layer_extend_track_end(trw_menu_sublayer_t * data);
-void trw_layer_extend_track_end_route_finder(trw_menu_sublayer_t * data);
-void trw_layer_apply_dem_data_all(trw_menu_sublayer_t * data);
-void trw_layer_apply_dem_data_only_missing(trw_menu_sublayer_t * data);
-void trw_layer_missing_elevation_data_interp(trw_menu_sublayer_t * data);
-void trw_layer_missing_elevation_data_flat(trw_menu_sublayer_t * data);
-void trw_layer_apply_dem_data_wpt_all(trw_menu_sublayer_t * data);
-void trw_layer_apply_dem_data_wpt_only_missing(trw_menu_sublayer_t * data);
-void trw_layer_auto_track_view(trw_menu_sublayer_t * data);
-void trw_layer_route_refine(trw_menu_sublayer_t * data);
-void trw_layer_append_other(trw_menu_sublayer_t * data);
-void trw_layer_insert_point_after(trw_menu_sublayer_t * data);
-void trw_layer_insert_point_before(trw_menu_sublayer_t * data);
-void trw_layer_diary(trw_menu_sublayer_t * data);
-void trw_layer_astro(trw_menu_sublayer_t * data);
-void trw_layer_sort_order_a2z(trw_menu_sublayer_t * data);
-void trw_layer_sort_order_z2a(trw_menu_sublayer_t * data);
-void trw_layer_sort_order_timestamp_ascend(trw_menu_sublayer_t * data);
-void trw_layer_sort_order_timestamp_descend(trw_menu_sublayer_t * data);
-void trw_layer_waypoints_visibility_off(trw_menu_layer_t * data);
-void trw_layer_waypoints_visibility_on(trw_menu_layer_t * data);
-void trw_layer_waypoints_visibility_toggle(trw_menu_layer_t * data);
-void trw_layer_tracks_visibility_off(trw_menu_layer_t * data);
-void trw_layer_tracks_visibility_on(trw_menu_layer_t * data);
-void trw_layer_tracks_visibility_toggle(trw_menu_layer_t * data);
-void trw_layer_routes_visibility_off(trw_menu_layer_t * data);
-void trw_layer_routes_visibility_on(trw_menu_layer_t * data);
-void trw_layer_routes_visibility_toggle(trw_menu_layer_t * data);
-void trw_layer_tracks_stats(trw_menu_layer_t * data);
-void trw_layer_routes_stats(trw_menu_layer_t * data);
+QMenu * create_external_submenu(QMenu & menu);
 bool is_valid_geocache_name(char *str);
-#ifndef WINDOWS
-void trw_layer_track_use_with_filter(trw_menu_sublayer_t * data);
-#endif
-void trw_layer_google_route_webpage(trw_menu_sublayer_t * data);
-void trw_layer_delete_item(trw_menu_sublayer_t * data);
-void trw_layer_copy_item_cb(trw_menu_sublayer_t * data);
-void trw_layer_cut_item_cb(trw_menu_sublayer_t * data);
-
-
 
 
 #endif /* #ifndef _SG_LAYER_TRW_H_ */

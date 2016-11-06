@@ -23,8 +23,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-/* WARNING: If you go beyond this point, we are NOT responsible for any ill effects on your sanity */
-/* viktrwlayer.c -- 8000+ lines can make a difference in the state of things */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -160,7 +158,7 @@ void LayerTRW::add_menu_items(QMenu & menu, void * panel_)
 	qa = menu.addAction(QIcon::fromTheme("go-jump"), QString(_("&Goto Center of Layer")));
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (centerize_cb()));
 
-	qa = menu.addAction(QIcon::fromTheme(""), QString(_("Goto &Waypoint...")));
+	qa = menu.addAction(QString(_("Goto &Waypoint...")));
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (goto_waypoint_cb()));
 
 	{
@@ -318,31 +316,25 @@ void LayerTRW::add_menu_items(QMenu & menu, void * panel_)
 				       panel->get_viewport(), this);
 	if (item) {
 		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-		gtk_widget_show(item);
 	}
 
 	item = a_acquire_trwlayer_track_menu(this->get_window(), panel,
 					     panel->get_viewport(), this);
 	if (item) {
 		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-		gtk_widget_show(item);
 	}
+#endif
 
-	item = gtk_image_menu_item_new_with_mnemonic(_("Track _List..."));
-	gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_INDEX, GTK_ICON_SIZE_MENU));
-	g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_track_list_dialog), &pass_along);
-	gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-	gtk_widget_show(item);
-	gtk_widget_set_sensitive(item, (bool) (this->tracks.size() + this->routes.size()));
+	qa = menu.addAction(QIcon::fromTheme("INDEX"), QString(_("Track _List...")));
+	connect(qa, SIGNAL (triggered(bool)), this, SLOT (track_list_dialog_cb()));
+	qa->setEnabled((bool) (this->tracks.size() + this->routes.size()));
 
-	item = gtk_image_menu_item_new_with_mnemonic(_("_Waypoint List..."));
-	gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_INDEX, GTK_ICON_SIZE_MENU));
-	g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_waypoint_list_dialog), &pass_along);
-	gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-	gtk_widget_show(item);
-	gtk_widget_set_sensitive(item, (bool) (this->waypoints.size()));
+	qa = menu.addAction(QIcon::fromTheme("INDEX"), QString(_("_Waypoint List...")));
+	connect(qa, SIGNAL (triggered(bool)), this, SLOT (waypoint_list_dialog_cb()));
+	qa->setEnabled((bool) (this->waypoints.size()));
 
-	GtkWidget *external_submenu = create_external_submenu(menu);
+#ifdef K
+	QMenu * external_submenu = create_external_submenu(menu);
 	/* TODO: Should use selected layer's centre - rather than implicitly using the current viewport. */
 	vik_ext_tools_add_menu_items_to_menu(this->get_window(), GTK_MENU (external_submenu), NULL);
 #endif
@@ -355,117 +347,90 @@ void LayerTRW::add_menu_items(QMenu & menu, void * panel_)
 /* Viewpoint is now available instead. */
 bool LayerTRW::sublayer_add_menu_items(QMenu & menu, void * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeIndex * index, Viewport * viewport)
 {
-#ifdef K
-	GtkWidget *item;
+	QAction * qa = NULL;
 	bool rv = false;
 
 	static trw_menu_sublayer_t pass_along;
 
 	pass_along.layer         = this;
-	pass_along.panel         = (LayersPanel *) panel;
 	pass_along.sublayer_type = sublayer_type;
 	pass_along.sublayer_uid  = sublayer_uid;
 	pass_along.confirm       = true; /* Confirm delete request. */
 	pass_along.viewport      = viewport;
-	pass_along.tv_iter       = iter;
+	pass_along.index         = index;
 	pass_along.misc          = NULL; /* For misc purposes - maybe track or waypoint. */
 
 	if (sublayer_type == SublayerType::WAYPOINT || sublayer_type == SublayerType::TRACK || sublayer_type == SublayerType::ROUTE) {
 		rv = true;
 
-		item = gtk_image_menu_item_new_from_stock(GTK_STOCK_PROPERTIES, NULL);
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_properties_item), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-		gtk_widget_show(item);
+		qa = menu.addAction(QIcon::fromTheme("document-properties"), QString(_("&Properties")));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (properties_item_cb()));
 
 		if (sublayer_type == SublayerType::TRACK) {
 			Track * trk = this->tracks.at(sublayer_uid);
 			if (trk && trk->property_dialog) {
-				gtk_widget_set_sensitive(GTK_WIDGET (item), false);
+				qa->setEnabled(false);
 			}
 		}
 		if (sublayer_type == SublayerType::ROUTE) {
 			Track * trk = this->routes.at(sublayer_uid);
 			if (trk && trk->property_dialog) {
-				gtk_widget_set_sensitive(GTK_WIDGET (item), false);
+				qa->setEnabled(false);
 			}
 		}
 
-		item = gtk_image_menu_item_new_from_stock(GTK_STOCK_CUT, NULL);
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_cut_item_cb), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-		gtk_widget_show(item);
+		qa = menu.addAction(QIcon::fromTheme("edit-cut"), QString(_("Cut")));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (cut_sublayer_cb()));
 
-		item = gtk_image_menu_item_new_from_stock(GTK_STOCK_COPY, NULL);
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_copy_item_cb), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-		gtk_widget_show(item);
+		qa = menu.addAction(QIcon::fromTheme("edit-copy"), QString(_("Copy")));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (copy_sublayer_cb()));
 
-		item = gtk_image_menu_item_new_from_stock(GTK_STOCK_DELETE, NULL);
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_delete_item), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-		gtk_widget_show(item);
+		qa = menu.addAction(QIcon::fromTheme("edit-delete"), QString(_("Delete")));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (delete_sublayer_cb()));
 
 		if (sublayer_type == SublayerType::WAYPOINT) {
+
 			/* Always create separator as now there is always at least the transform menu option. */
-			item = gtk_menu_item_new();
-			gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-			gtk_widget_show(item);
+			menu.addSeparator();
 
 			/* Could be a right-click using the tool. */
 			if (panel != NULL) {
-				item = gtk_image_menu_item_new_with_mnemonic(_("_Goto"));
-				gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_JUMP_TO, GTK_ICON_SIZE_MENU));
-				g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_goto_waypoint), &pass_along);
-				gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-				gtk_widget_show(item);
+				qa = menu.addAction(QIcon::fromTheme("go-jump"), QString(_("&Goto")));
+				connect(qa, SIGNAL (triggered(bool)), this, SLOT (goto_waypoint2_cb()));
 			}
 
 			Waypoint * wp = this->waypoints.at(sublayer_uid);
 
 			if (wp && wp->name) {
 				if (is_valid_geocache_name(wp->name)) {
-					item = gtk_menu_item_new_with_mnemonic(_("_Visit Geocache Webpage"));
-					g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_waypoint_gc_webpage), &pass_along);
-					gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-					gtk_widget_show(item);
+					qa = menu.addAction(QIcon::fromTheme("go-jump"), QString(_("&Visit Geocache Webpage")));
+					connect(qa, SIGNAL (triggered(bool)), this, SLOT (waypoint_geocache_webpage_cb()));
 				}
 #ifdef VIK_CONFIG_GEOTAG
-				item = gtk_menu_item_new_with_mnemonic(_("Geotag _Images..."));
-				g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_geotagging_waypoint), &pass_along);
-				gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-				gtk_widget_set_tooltip_text(item, _("Geotag multiple images against this waypoint"));
-				gtk_widget_show(item);
+				qa = menu.addAction(QIcon::fromTheme("go-jump"), QString(_("Geotag &Images...")));
+				connect(qa, SIGNAL (triggered(bool)), this, SLOT (geotagging_waypoint_cb()));
+				qa->setToolTip(QString(_("Geotag multiple images against this waypoint")));
 #endif
 			}
 
+
 			if (wp && wp->image) {
-				/* Set up image paramater. */
+				/* Set up image parameter. */
 				pass_along.misc = wp->image;
 
-				item = gtk_image_menu_item_new_with_mnemonic(_("_Show Picture..."));
-				gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock("vik-icon-Show Picture", GTK_ICON_SIZE_MENU)); // Own icon - see stock_icons in vikwindow.c
-				g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_show_picture), &pass_along);
-				gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-				gtk_widget_show(item);
+				qa = menu.addAction(QIcon::fromTheme("vik-icon-Show Picture"), QString(_("&Show Picture..."))); /* TODO: icon. */
+				connect(qa, SIGNAL (triggered(bool)), this, SLOT (show_picture_cb()));
 
 #ifdef VIK_CONFIG_GEOTAG
-				GtkWidget *geotag_submenu = gtk_menu_new();
-				item = gtk_image_menu_item_new_with_mnemonic(_("Update Geotag on _Image"));
-				gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_REFRESH, GTK_ICON_SIZE_MENU));
-				gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-				gtk_widget_show(item);
-				gtk_menu_item_set_submenu(GTK_MENU_ITEM (item), geotag_submenu);
+				{
+					QMenu * geotag_submenu = menu.addMenu(QIcon::fromTheme("view-refresh"), QString("Update Geotag on &Image"));
 
-				item = gtk_menu_item_new_with_mnemonic(_("_Update"));
-				g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_geotagging_waypoint_mtime_update), &pass_along);
-				gtk_menu_shell_append(GTK_MENU_SHELL (geotag_submenu), item);
-				gtk_widget_show(item);
+					qa = geotag_submenu->addAction(QString(_("&Update")));
+					connect(qa, SIGNAL (triggered(bool)), this, SLOT (geotagging_waypoint_mtime_update_cb()));
 
-				item = gtk_menu_item_new_with_mnemonic(_("Update and _Keep File Timestamp"));
-				g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_geotagging_waypoint_mtime_keep), &pass_along);
-				gtk_menu_shell_append(GTK_MENU_SHELL (geotag_submenu), item);
-				gtk_widget_show(item);
+					qa = geotag_submenu->addAction(QString(_("Update and &Keep File Timestamp")));
+					connect(qa, SIGNAL (triggered(bool)), this, SLOT (geotagging_waypoint_mtime_keep_cb()));
+				}
 #endif
 			}
 
@@ -474,668 +439,430 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu, void * panel, SublayerType 
 				    || (wp->comment && !strncmp(wp->comment, "http", 4))
 				    || (wp->description && !strncmp(wp->description, "http", 4))) {
 
-					item = gtk_image_menu_item_new_with_mnemonic(_("Visit _Webpage"));
-					gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_NETWORK, GTK_ICON_SIZE_MENU));
-					g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_waypoint_webpage), &pass_along);
-					gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-					gtk_widget_show(item);
+					qa = menu.addAction(QIcon::fromTheme("applications-internet"), QString(_("Visit &Webpage")));
+					connect(qa, SIGNAL (triggered(bool)), this, SLOT (waypoint_webpage_cb()));
 				}
 			}
 		}
 	}
 
+
 	if (sublayer_type == SublayerType::WAYPOINTS || sublayer_type == SublayerType::TRACKS || sublayer_type == SublayerType::ROUTES) {
-		item = gtk_image_menu_item_new_from_stock(GTK_STOCK_PASTE, NULL);
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_paste_item_cb), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-		gtk_widget_show(item);
+		qa = menu.addAction(QIcon::fromTheme("edit-paste"), QString(_("Paste")));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (paste_sublayer_cb()));
+#ifdef K
 		/* TODO: only enable if suitable item is in clipboard - want to determine *which* sublayer type. */
 		if (a_clipboard_type() == VIK_CLIPBOARD_DATA_SUBLAYER) {
-			gtk_widget_set_sensitive(item, true);
+			qa->setEnabled(true);
 		} else {
-			gtk_widget_set_sensitive(item, false);
+			qa->setEnabled(false);
 		}
+#endif
 
-		/* Add separator. */
-		item = gtk_menu_item_new();
-		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-		gtk_widget_show(item);
+		menu.addSeparator();
 	}
+
 
 	if (panel && (sublayer_type == SublayerType::WAYPOINTS || sublayer_type == SublayerType::WAYPOINT)) {
 		rv = true;
-		item = gtk_image_menu_item_new_with_mnemonic(_("_New Waypoint..."));
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_NEW, GTK_ICON_SIZE_MENU));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(new_waypoint_cb), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-		gtk_widget_show(item);
+		qa = menu.addAction(QIcon::fromTheme("document-new"), QString(_("&New Waypoint...")));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (new_waypoint_cb()));
 	}
+
+
 
 	if (sublayer_type == SublayerType::WAYPOINTS) {
-		item = gtk_image_menu_item_new_with_mnemonic(_("_View All Waypoints"));
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_ZOOM_FIT, GTK_ICON_SIZE_MENU));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(full_view_waypoints_cb), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-		gtk_widget_show(item);
+		qa = menu.addAction(QIcon::fromTheme("zoom-fit-best"), QString(_("&View All Waypoints")));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (full_view_waypoints_cb()));
 
-		item = gtk_image_menu_item_new_with_mnemonic(_("Goto _Waypoint..."));
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_JUMP_TO, GTK_ICON_SIZE_MENU));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(goto_waypoint_cb()), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-		gtk_widget_show(item);
+		qa = menu.addAction(QString(_("Goto &Waypoint...")));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (goto_waypoint_cb()));
 
-		item = gtk_image_menu_item_new_with_mnemonic(_("Delete _All Waypoints"));
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_REMOVE, GTK_ICON_SIZE_MENU));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(delete_all_waypoints_cb), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-		gtk_widget_show(item);
+		qa = menu.addAction(QIcon::fromTheme("list-remove"), QString(_("Delete &All Waypoints")));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (delete_all_waypoints_cb()));
 
-		item = gtk_image_menu_item_new_with_mnemonic(_("_Delete Waypoints From Selection..."));
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_INDEX, GTK_ICON_SIZE_MENU));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(delete_selected_waypoints_cb), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-		gtk_widget_show(item);
+		qa = menu.addAction(QString(_("&Delete Waypoints From Selection...")));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (delete_selected_waypoints_cb()));
 
-		GtkWidget *vis_submenu = gtk_menu_new();
-		item = gtk_menu_item_new_with_mnemonic(_("_Visibility"));
-		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-		gtk_widget_show(item);
-		gtk_menu_item_set_submenu(GTK_MENU_ITEM (item), vis_submenu);
+		{
+			QMenu * vis_submenu = menu.addMenu(QString("&Visibility"));
 
-		item = gtk_image_menu_item_new_with_mnemonic(_("_Show All Waypoints"));
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_APPLY, GTK_ICON_SIZE_MENU));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_waypoints_visibility_on), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (vis_submenu), item);
-		gtk_widget_show(item);
+			qa = vis_submenu->addAction(QIcon::fromTheme("list-add"), QString(_("&Show All Waypoints")));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (waypoints_visibility_on_cb()));
 
-		item = gtk_image_menu_item_new_with_mnemonic(_("_Hide All Waypoints"));
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_CLEAR, GTK_ICON_SIZE_MENU));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_waypoints_visibility_off), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (vis_submenu), item);
-		gtk_widget_show(item);
+			qa = vis_submenu->addAction(QIcon::fromTheme("list-remove"), QString(_("&Hide All Waypoints")));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (waypoints_visibility_off_cb()));
 
-		item = gtk_image_menu_item_new_with_mnemonic(_("_Toggle"));
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_REFRESH, GTK_ICON_SIZE_MENU));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_waypoints_visibility_toggle), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (vis_submenu), item);
-		gtk_widget_show(item);
+			qa = vis_submenu->addAction(QString(_("&Toggle")));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (waypoints_visibility_toggle_cb()));
+		}
 
-		item = gtk_image_menu_item_new_with_mnemonic(_("_List Waypoints..."));
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_INDEX, GTK_ICON_SIZE_MENU));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_waypoint_list_dialog), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
+		qa = menu.addAction(QString(_("&List Waypoints...")));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (waypoint_list_dialog_cb()));
 	}
+
+
 
 	if (sublayer_type == SublayerType::TRACKS) {
 		rv = true;
 
 		if (this->current_track && !this->current_track->is_route) {
-			item = gtk_menu_item_new_with_mnemonic(_("_Finish Track"));
-			g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(finish_track_cb), &pass_along);
-			gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-			gtk_widget_show(item);
-			/* Add separator. */
-			item = gtk_menu_item_new();
-			gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-			gtk_widget_show(item);
+			qa = menu.addAction(QString(_("&Finish Track")));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (finish_track_cb()));
+
+			menu.addSeparator();
 		}
 
-		item = gtk_image_menu_item_new_with_mnemonic(_("_View All Tracks"));
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_ZOOM_FIT, GTK_ICON_SIZE_MENU));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(full_view_tracks_cb()), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-		gtk_widget_show(item);
+		qa = menu.addAction(QIcon::fromTheme("zoom-fit-best"), QString(_("&View All Tracks")));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (full_view_tracks_cb()));
 
-		item = gtk_image_menu_item_new_with_mnemonic(_("_New Track"));
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_NEW, GTK_ICON_SIZE_MENU));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(new_track_cb), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-		gtk_widget_show(item);
+		qa = menu.addAction(QIcon::fromTheme("document-new"), QString(_("&New Track")));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (new_track_cb()));
 		/* Make it available only when a new track is *not* already in progress. */
-		gtk_widget_set_sensitive(item, !(bool)KPOINTER_TO_INT(this->current_track));
+		qa->setEnabled(!(bool)KPOINTER_TO_INT(this->current_track));
 
-		item = gtk_image_menu_item_new_with_mnemonic(_("Delete _All Tracks"));
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_REMOVE, GTK_ICON_SIZE_MENU));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(delete_all_tracks_cb), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-		gtk_widget_show(item);
+		qa = menu.addAction(QIcon::fromTheme("list-remove"), QString(_("Delete &All Tracks")));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (delete_all_tracks_cb()));
 
-		item = gtk_image_menu_item_new_with_mnemonic(_("_Delete Tracks From Selection..."));
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_INDEX, GTK_ICON_SIZE_MENU));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(delete_selected_tracks_cb), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-		gtk_widget_show(item);
+		qa = menu.addAction(QString(_("&Delete Tracks From Selection...")));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (delete_selected_tracks_cb()));
 
-		GtkWidget *vis_submenu = gtk_menu_new();
-		item = gtk_menu_item_new_with_mnemonic(_("_Visibility"));
-		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-		gtk_widget_show(item);
-		gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), vis_submenu);
+		{
+			QMenu * vis_submenu = menu.addMenu(QString("&Visibility"));
 
-		item = gtk_image_menu_item_new_with_mnemonic(_("_Show All Tracks"));
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_APPLY, GTK_ICON_SIZE_MENU));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_tracks_visibility_on), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (vis_submenu), item);
-		gtk_widget_show(item);
+			qa = vis_submenu->addAction(QIcon::fromTheme("list-add"), QString(_("&Show All Tracks")));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (tracks_visibility_on_cb()));
 
-		item = gtk_image_menu_item_new_with_mnemonic(_("_Hide All Tracks"));
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_CLEAR, GTK_ICON_SIZE_MENU));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_tracks_visibility_off), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (vis_submenu), item);
-		gtk_widget_show(item);
+			qa = vis_submenu->addAction(QIcon::fromTheme("list-remove"), QString(_("&Hide All Tracks")));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (tracks_visibility_off_cb()));
 
-		item = gtk_image_menu_item_new_with_mnemonic(_("_Toggle"));
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_REFRESH, GTK_ICON_SIZE_MENU));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_tracks_visibility_toggle), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (vis_submenu), item);
+			qa = vis_submenu->addAction(QString(_("&Toggle")));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (tracks_visibility_toggle_cb()));
+		}
 
-		item = gtk_image_menu_item_new_with_mnemonic(_("_List Tracks..."));
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_INDEX, GTK_ICON_SIZE_MENU));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_track_list_dialog_single), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-		gtk_widget_show(item);
+		qa = menu.addAction(QString(_("&List Tracks...")));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (track_list_dialog_single_cb()));
 
-		item = gtk_menu_item_new_with_mnemonic(_("_Statistics"));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_tracks_stats), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-		gtk_widget_show(item);
+		qa = menu.addAction(QString(_("&Statistics")));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (tracks_stats_cb()));
 	}
+
 
 	if (sublayer_type == SublayerType::ROUTES) {
 		rv = true;
 
 		if (this->current_track && this->current_track->is_route) {
-			item = gtk_menu_item_new_with_mnemonic(_("_Finish Route"));
+			qa = menu.addAction(QString(_("_Finish Route")));
 			/* Reuse finish track method. */
-			g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(finish_track_cb), &pass_along);
-			gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-			gtk_widget_show(item);
-			/* Add separator. */
-			item = gtk_menu_item_new();
-			gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-			gtk_widget_show(item);
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (finish_track_cb()));
+
+			menu.addSeparator();
 		}
 
-		item = gtk_image_menu_item_new_with_mnemonic(_("_View All Routes"));
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_ZOOM_FIT, GTK_ICON_SIZE_MENU));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(full_view_routes_cb), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-		gtk_widget_show(item);
+		qa = menu.addAction(QIcon::fromTheme("ZOOM_FIT"), QString(_("_View All Routes")));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (full_view_routes_cb()));
 
-		item = gtk_image_menu_item_new_with_mnemonic(_("_New Route"));
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_NEW, GTK_ICON_SIZE_MENU));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(new_route_cb), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-		gtk_widget_show(item);
+		qa = menu.addAction(QIcon::fromTheme("document-new"), QString(_("_New Route")));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (new_route_cb()));
 		/* Make it available only when a new track is *not* already in progress. */
-		gtk_widget_set_sensitive(item, !(bool)KPOINTER_TO_INT(this->current_track));
+		qa->setEnabled(!(bool)KPOINTER_TO_INT(this->current_track));
 
-		item = gtk_image_menu_item_new_with_mnemonic(_("Delete _All Routes"));
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_REMOVE, GTK_ICON_SIZE_MENU));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(delete_all_routes_cb), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-		gtk_widget_show(item);
+		qa = menu.addAction(QIcon::fromTheme("list-delete"), QString(_("Delete _All Routes")));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (delete_all_routes_cb()));
 
-		item = gtk_image_menu_item_new_with_mnemonic(_("_Delete Routes From Selection..."));
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_INDEX, GTK_ICON_SIZE_MENU));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(delete_selected_routes_cb), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-		gtk_widget_show(item);
+		qa = menu.addAction(QIcon::fromTheme("INDEX"), QString(_("_Delete Routes From Selection...")));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (delete_selected_routes_cb()));
 
-		GtkWidget *vis_submenu = gtk_menu_new();
-		item = gtk_menu_item_new_with_mnemonic(_("_Visibility"));
-		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-		gtk_widget_show(item);
-		gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), vis_submenu);
+		{
+			QMenu * vis_submenu = menu.addMenu(QString(_("_Visibility")));
 
-		item = gtk_image_menu_item_new_with_mnemonic(_("_Show All Routes"));
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_APPLY, GTK_ICON_SIZE_MENU));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_routes_visibility_on), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (vis_submenu), item);
-		gtk_widget_show(item);
+			qa = vis_submenu->addAction(QIcon::fromTheme("list-add"), QString(_("_Show All Routes")));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (routes_visibility_on_cb()));
 
-		item = gtk_image_menu_item_new_with_mnemonic(_("_Hide All Routes"));
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_CLEAR, GTK_ICON_SIZE_MENU));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_routes_visibility_off), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (vis_submenu), item);
-		gtk_widget_show(item);
+			qa = vis_submenu->addAction(QIcon::fromTheme("list-delete"), QString(_("_Hide All Routes")));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (routes_visibility_off_cb()));
 
-		item = gtk_image_menu_item_new_with_mnemonic(_("_Toggle"));
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_REFRESH, GTK_ICON_SIZE_MENU));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_routes_visibility_toggle), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (vis_submenu), item);
+			qa = vis_submenu->addAction(QIcon::fromTheme("view-refresh"), QString(_("_Toggle")));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (routes_visibility_toggle_cb()));
+		}
 
-		item = gtk_image_menu_item_new_with_mnemonic(_("_List Routes..."));
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_INDEX, GTK_ICON_SIZE_MENU));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_track_list_dialog_single), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
+		qa = menu.addAction(QIcon::fromTheme("INDEX"), QString(_("_List Routes...")));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (track_list_dialog_single_cb()));
 
-		gtk_widget_show(item);
 
-		item = gtk_menu_item_new_with_mnemonic(_("_Statistics"));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_routes_stats), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-		gtk_widget_show(item);
+		qa = menu.addAction(QString(_("_Statistics")));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (routes_stats_cb()));
 	}
 
 
 	if (sublayer_type == SublayerType::WAYPOINTS || sublayer_type == SublayerType::TRACKS || sublayer_type == SublayerType::ROUTES) {
-		GtkWidget *submenu_sort = gtk_menu_new();
-		item = gtk_image_menu_item_new_with_mnemonic(_("_Sort"));
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_REFRESH, GTK_ICON_SIZE_MENU));
-		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-		gtk_widget_show(item);
-		gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), submenu_sort);
 
-		item = gtk_image_menu_item_new_with_mnemonic(_("Name _Ascending"));
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_SORT_ASCENDING, GTK_ICON_SIZE_MENU));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_sort_order_a2z), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (submenu_sort), item);
-		gtk_widget_show(item);
+		QMenu * sort_submenu = menu.addMenu(QIcon::fromTheme("view-refresh"), QString(_("_Sort")));
 
-		item = gtk_image_menu_item_new_with_mnemonic(_("Name _Descending"));
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_SORT_DESCENDING, GTK_ICON_SIZE_MENU));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_sort_order_z2a), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (submenu_sort), item);
-		gtk_widget_show(item);
+		qa = sort_submenu->addAction(QIcon::fromTheme("view-sort-ascending"), QString(_("Name &Ascending")));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (sort_order_a2z_cb()));
 
-		item = gtk_image_menu_item_new_with_mnemonic(_("Date Ascending"));
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_SORT_ASCENDING, GTK_ICON_SIZE_MENU));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_sort_order_timestamp_ascend), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (submenu_sort), item);
-		gtk_widget_show(item);
+		qa = sort_submenu->addAction(QIcon::fromTheme("view-sort-descending"), QString(_("Name &Descending")));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (sort_order_z2a_cb()));
 
-		item = gtk_image_menu_item_new_with_mnemonic(_("Date Descending"));
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_SORT_DESCENDING, GTK_ICON_SIZE_MENU));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_sort_order_timestamp_descend), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (submenu_sort), item);
-		gtk_widget_show(item);
+		qa = sort_submenu->addAction(QIcon::fromTheme("view-sort-ascending"), QString(_("Date Ascending")));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (sort_order_timestamp_ascend_cb()));
+
+		qa = sort_submenu->addAction(QIcon::fromTheme("view-sort-descending"), QString(_("Date Descending")));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (sort_order_timestamp_descend_cb()));
 	}
 
-	GtkWidget *upload_submenu = gtk_menu_new();
+	QMenu * upload_submenu = menu.addMenu(QIcon::fromTheme("go-up"), QString(_("&Upload")));
 
 	if (sublayer_type == SublayerType::TRACK || sublayer_type == SublayerType::ROUTE) {
-		item = gtk_menu_item_new();
-		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-		gtk_widget_show(item);
 
 		if (this->current_track && sublayer_type == SublayerType::TRACK && !this->current_track->is_route) {
-			item = gtk_menu_item_new_with_mnemonic(_("_Finish Track"));
-		}
-
-		if (this->current_track && sublayer_type == SublayerType::ROUTE && this->current_track->is_route) {
-			item = gtk_menu_item_new_with_mnemonic(_("_Finish Route"));
-		}
-
-		if (this->current_track) {
-			g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(finish_track_cb), &pass_along);
-			gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-			gtk_widget_show(item);
-
-			/* Add separator. */
-			item = gtk_menu_item_new();
-			gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-			gtk_widget_show(item);
+			qa = menu.addAction(QString(_("_Finish Track")));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (finish_track_cb()));
+			menu.addSeparator();
+		} else if (this->current_track && sublayer_type == SublayerType::ROUTE && this->current_track->is_route) {
+			qa = menu.addAction(QString(_("_Finish Route")));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (finish_track_cb()));
+			menu.addSeparator();
 		}
 
 		if (sublayer_type == SublayerType::TRACK) {
-			item = gtk_image_menu_item_new_with_mnemonic(_("_View Track"));
+			qa = menu.addAction(QIcon::fromTheme("zoom-fit-best"), QString(_("_View Track")));
 		} else {
-			item = gtk_image_menu_item_new_with_mnemonic(_("_View Route"));
+			qa = menu.addAction(QIcon::fromTheme("zoom-fit-best"), QString(_("_View Route")));
+		}
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (auto_track_view_cb()));
+
+		qa = menu.addAction(QString(_("_Statistics")));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (track_statistics_cb()));
+
+		{
+			QMenu * goto_submenu = menu.addMenu(QIcon::fromTheme("go-jump"), QString(_("&Goto")));
+
+			qa = menu.addAction(QIcon::fromTheme("go-first"), QString(_("&Startpoint")));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (goto_track_startpoint_cb()));
+
+			qa = menu.addAction(QIcon::fromTheme("go-jump"), QString(_("\"&Center\"")));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (goto_track_center_cb()));
+
+			qa = menu.addAction(QIcon::fromTheme("go-last"), QString(_("&Endpoint")));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (goto_track_endpoint_cb()));
+
+			qa = menu.addAction(QIcon::fromTheme("go-top"), QString(_("&Highest Altitude")));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (goto_track_max_alt_cb()));
+
+			qa = menu.addAction(QIcon::fromTheme("go-bottom"), QString(_("&Lowest Altitude")));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (goto_track_min_alt_cb()));
+
+			/* Routes don't have speeds. */
+			if (sublayer_type == SublayerType::TRACK) {
+				qa = menu.addAction(QIcon::fromTheme("media-seek-forward"), QString(_("_Maximum Speed")));
+				connect(qa, SIGNAL (triggered(bool)), this, SLOT (goto_track_max_speed_cb()));
+			}
 		}
 
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_ZOOM_FIT, GTK_ICON_SIZE_MENU));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_auto_track_view), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-		gtk_widget_show(item);
+		{
 
-		item = gtk_menu_item_new_with_mnemonic(_("_Statistics"));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_track_statistics), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-		gtk_widget_show(item);
+			QMenu * combine_submenu = menu.addMenu(QIcon::fromTheme("CONNECT"), QString(_("Co&mbine")));
 
-		GtkWidget *goto_submenu;
-		goto_submenu = gtk_menu_new();
-		item = gtk_image_menu_item_new_with_mnemonic(_("_Goto"));
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_JUMP_TO, GTK_ICON_SIZE_MENU));
-		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-		gtk_widget_show(item);
-		gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), goto_submenu);
+			/* Routes don't have times or segments... */
+			if (sublayer_type == SublayerType::TRACK) {
+				qa = combine_submenu->addAction(QString(_("&Merge By Time...")));
+				connect(qa, SIGNAL (triggered(bool)), this, SLOT (merge_by_timestamp_cb()));
 
-		item = gtk_image_menu_item_new_with_mnemonic(_("_Startpoint"));
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_GOTO_FIRST, GTK_ICON_SIZE_MENU));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_goto_track_startpoint), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (goto_submenu), item);
-		gtk_widget_show(item);
+				qa = combine_submenu->addAction(QString(_("Merge &Segments")));
+				connect(qa, SIGNAL (triggered(bool)), this, SLOT (merge_by_segment_cb()));
+			}
 
-		item = gtk_image_menu_item_new_with_mnemonic(_("\"_Center\""));
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_JUMP_TO, GTK_ICON_SIZE_MENU));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_goto_track_center), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (goto_submenu), item);
-		gtk_widget_show(item);
+			qa = combine_submenu->addAction(QString(_("Merge &With Other Tracks...")));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (merge_with_other_cb()));
 
-		item = gtk_image_menu_item_new_with_mnemonic(_("_Endpoint"));
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_GOTO_LAST, GTK_ICON_SIZE_MENU));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_goto_track_endpoint), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (goto_submenu), item);
-		gtk_widget_show(item);
+			if (sublayer_type == SublayerType::TRACK) {
+				qa = combine_submenu->addAction(QString(_("&Append Track...")));
+			} else {
+				qa = combine_submenu->addAction(QString(_("&Append Route...")));
+			}
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (append_track_cb()));
 
-		item = gtk_image_menu_item_new_with_mnemonic(_("_Highest Altitude"));
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_GOTO_TOP, GTK_ICON_SIZE_MENU));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_goto_track_max_alt), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (goto_submenu), item);
-		gtk_widget_show(item);
-
-		item = gtk_image_menu_item_new_with_mnemonic(_("_Lowest Altitude"));
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_GOTO_BOTTOM, GTK_ICON_SIZE_MENU));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_goto_track_min_alt), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (goto_submenu), item);
-		gtk_widget_show(item);
-
-		/* Routes don't have speeds. */
-		if (sublayer_type == SublayerType::TRACK) {
-			item = gtk_image_menu_item_new_with_mnemonic(_("_Maximum Speed"));
-			gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_MEDIA_FORWARD, GTK_ICON_SIZE_MENU));
-			g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_goto_track_max_speed), &pass_along);
-			gtk_menu_shell_append(GTK_MENU_SHELL (goto_submenu), item);
-			gtk_widget_show(item);
+			if (sublayer_type == SublayerType::TRACK) {
+				qa = combine_submenu->addAction(QString(_("Append _Route...")));
+			} else {
+				qa = combine_submenu->addAction(QString(_("Append _Track...")));
+			}
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (append_other_cb()));
 		}
 
-		GtkWidget *combine_submenu;
-		combine_submenu = gtk_menu_new();
-		item = gtk_image_menu_item_new_with_mnemonic(_("Co_mbine"));
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_CONNECT, GTK_ICON_SIZE_MENU));
-		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-		gtk_widget_show(item);
-		gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), combine_submenu);
 
-		/* Routes don't have times or segments... */
-		if (sublayer_type == SublayerType::TRACK) {
-			item = gtk_menu_item_new_with_mnemonic(_("_Merge By Time..."));
-			g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_merge_by_timestamp), &pass_along);
-			gtk_menu_shell_append(GTK_MENU_SHELL (combine_submenu), item);
-			gtk_widget_show(item);
 
-			item = gtk_menu_item_new_with_mnemonic(_("Merge _Segments"));
-			g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_merge_by_segment), &pass_along);
-			gtk_menu_shell_append(GTK_MENU_SHELL (combine_submenu), item);
-			gtk_widget_show(item);
+		{
+			QMenu * split_submenu = menu.addMenu(QIcon::fromTheme("DISCONNECT"), QString(_("&Split")));
+
+			/* Routes don't have times or segments... */
+			if(sublayer_type == SublayerType::TRACK) {
+				qa = split_submenu->addAction(QString(_("_Split By Time...")));
+				connect(qa, SIGNAL (triggered(bool)), this, SLOT (split_by_timestamp_cb()));
+
+				/* ATM always enable this entry - don't want to have to analyse the track before displaying the menu - to keep the menu speedy. */
+				qa = split_submenu->addAction(QString(_("Split Se_gments")));
+				connect(qa, SIGNAL (triggered(bool)), this, SLOT (split_segments_cb()));
+			}
+
+			qa = split_submenu->addAction(QString(_("Split By _Number of Points...")));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (split_by_n_points_cb()));
+
+			qa = split_submenu->addAction(QString(_("Split at _Trackpoint")));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (split_at_trackpoint_cb()));
+			/* Make it available only when a trackpoint is selected. */
+			qa->setEnabled(this->selected_tp.valid);
 		}
 
-		item = gtk_menu_item_new_with_mnemonic(_("Merge _With Other Tracks..."));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_merge_with_other), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (combine_submenu), item);
-		gtk_widget_show(item);
+
+
+		{
+			QMenu * insert_submenu = menu.addMenu(QIcon::fromTheme("list-add"), QString(_("&Insert Points")));
+
+			qa = insert_submenu->addAction(QIcon::fromTheme(""), QString(_("Insert Point _Before Selected Point")));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (insert_point_before_cb()));
+			/* Make it available only when a point is selected. */
+			qa->setEnabled(this->selected_tp.valid);
+
+			qa = insert_submenu->addAction(QIcon::fromTheme(""), QString(_("Insert Point _After Selected Point")));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (insert_point_after_cb()));
+			/* Make it available only when a point is selected. */
+			qa->setEnabled(this->selected_tp.valid);
+		}
+
+
+		{
+			QMenu * delete_submenu = menu.addMenu(QIcon::fromTheme("list-delete"), QString(_("Delete Poi&nts")));
+
+			qa = delete_submenu->addAction(QIcon::fromTheme("list-delete"), QString(_("Delete &Selected Point")));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (delete_point_selected_cb()));
+			/* Make it available only when a point is selected. */
+			qa->setEnabled(this->selected_tp.valid);
+
+			qa = delete_submenu->addAction(QString(_("Delete Points With The Same _Position")));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (delete_points_same_position_cb()));
+
+			qa = delete_submenu->addAction(QString(_("Delete Points With The Same _Time")));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (delete_points_same_time_cb()));
+		}
+
+		{
+			QMenu * transform_submenu = menu.addMenu(QIcon::fromTheme("CONVERT"), QString(_("_Transform")));
+			{
+				QMenu * dem_submenu = transform_submenu->addMenu(QIcon::fromTheme("vik-icon-DEM Download"), QString(_("&Apply DEM Data")));
+
+				qa = dem_submenu->addAction(QString(_("_Overwrite")));
+				connect(qa, SIGNAL (triggered(bool)), this, SLOT (apply_dem_data_all_cb()));
+				qa->setToolTip(QString(_("Overwrite any existing elevation values with DEM values")));
+
+				qa = dem_submenu->addAction(QString(_("_Keep Existing")));
+				connect(qa, SIGNAL (triggered(bool)), this, SLOT (apply_dem_data_only_missing_cb()));
+				qa->setToolTip(QString(_("Keep existing elevation values, only attempt for missing values")));
+			}
+
+			{
+				QMenu * smooth_submenu = transform_submenu->addMenu(QString(_("&Smooth Missing Elevation Data")));
+
+				qa = smooth_submenu->addAction(QString(_("&Interpolated")));
+				connect(qa, SIGNAL (triggered(bool)), this, SLOT (missing_elevation_data_interp_cb()));
+				qa->setToolTip(QString(_("Interpolate between known elevation values to derive values for the missing elevations")));
+
+				qa = smooth_submenu->addAction(QString(_("&Flat")));
+				connect(qa, SIGNAL (triggered(bool)), this, SLOT (missing_elevation_data_flat_cb()));
+				qa->setToolTip(QString(_("Set unknown elevation values to the last known value")));
+			}
+
+			if (sublayer_type == SublayerType::TRACK) {
+				qa = transform_submenu->addAction(QIcon::fromTheme("CONVERT"), QString(_("C_onvert to a Route")));
+			} else {
+				qa = transform_submenu->addAction(QIcon::fromTheme("CONVERT"), QString(_("C_onvert to a Track")));
+			}
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (convert_track_route_cb()));
+
+			/* Routes don't have timestamps - so these are only available for tracks. */
+			if (sublayer_type == SublayerType::TRACK) {
+				qa = transform_submenu->addAction(QString(_("_Anonymize Times")));
+				connect(qa, SIGNAL (triggered(bool)), this, SLOT (anonymize_times_cb()));
+				qa->setToolTip(QString(_("Shift timestamps to a relative offset from 1901-01-01")));
+
+				qa = transform_submenu->addAction(QString(_("_Interpolate Times")));
+				connect(qa, SIGNAL (triggered(bool)), this, SLOT (interpolate_times_cb()));
+				qa->setToolTip(QString(_("Reset trackpoint timestamps between the first and last points such that track is traveled at equal speed")));
+			}
+		}
+
 
 		if (sublayer_type == SublayerType::TRACK) {
-			item = gtk_menu_item_new_with_mnemonic(_("_Append Track..."));
+			qa = menu.addAction(QIcon::fromTheme("go-back"), QString(_("_Reverse Track")));
 		} else {
-			item = gtk_menu_item_new_with_mnemonic(_("_Append Route..."));
+			qa = menu.addAction(QIcon::fromTheme("go-back"), QString(_("_Reverse Route")));
 		}
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_append_track), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (combine_submenu), item);
-		gtk_widget_show(item);
-
-		if (sublayer_type == SublayerType::TRACK) {
-			item = gtk_menu_item_new_with_mnemonic(_("Append _Route..."));
-		} else {
-			item = gtk_menu_item_new_with_mnemonic(_("Append _Track..."));
-		}
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_append_other), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (combine_submenu), item);
-		gtk_widget_show(item);
-
-		GtkWidget *split_submenu;
-		split_submenu = gtk_menu_new();
-		item = gtk_image_menu_item_new_with_mnemonic(_("_Split"));
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_DISCONNECT, GTK_ICON_SIZE_MENU));
-		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-		gtk_widget_show(item);
-		gtk_menu_item_set_submenu(GTK_MENU_ITEM (item), split_submenu);
-
-		/* Routes don't have times or segments... */
-		if(sublayer_type == SublayerType::TRACK) {
-			item = gtk_menu_item_new_with_mnemonic(_("_Split By Time..."));
-			g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_split_by_timestamp), &pass_along);
-			gtk_menu_shell_append(GTK_MENU_SHELL (split_submenu), item);
-			gtk_widget_show(item);
-
-			/* ATM always enable this entry - don't want to have to analyse the track before displaying the menu - to keep the menu speedy. */
-			item = gtk_menu_item_new_with_mnemonic(_("Split Se_gments"));
-			g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_split_segments), &pass_along);
-			gtk_menu_shell_append(GTK_MENU_SHELL (split_submenu), item);
-			gtk_widget_show(item);
-		}
-
-		item = gtk_menu_item_new_with_mnemonic(_("Split By _Number of Points..."));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_split_by_n_points), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (split_submenu), item);
-		gtk_widget_show(item);
-
-		item = gtk_menu_item_new_with_mnemonic(_("Split at _Trackpoint"));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_split_at_trackpoint), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (split_submenu), item);
-		gtk_widget_show(item);
-		/* Make it available only when a trackpoint is selected. */
-		gtk_widget_set_sensitive(item, this->selected_tp.valid);
-
-		GtkWidget *insert_submenu = gtk_menu_new();
-		item = gtk_image_menu_item_new_with_mnemonic(_("_Insert Points"));
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_ADD, GTK_ICON_SIZE_MENU));
-		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-		gtk_widget_show(item);
-		gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), insert_submenu);
-
-		item = gtk_menu_item_new_with_mnemonic(_("Insert Point _Before Selected Point"));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_insert_point_before), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (insert_submenu), item);
-		gtk_widget_show(item);
-		/* Make it available only when a point is selected. */
-		gtk_widget_set_sensitive(item, this->selected_tp.valid);
-
-		item = gtk_menu_item_new_with_mnemonic(_("Insert Point _After Selected Point"));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_insert_point_after), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (insert_submenu), item);
-		gtk_widget_show(item);
-		/* Make it available only when a point is selected. */
-		gtk_widget_set_sensitive(item, this->selected_tp.valid);
-
-		GtkWidget *delete_submenu;
-		delete_submenu = gtk_menu_new();
-		item = gtk_image_menu_item_new_with_mnemonic(_("Delete Poi_nts"));
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_DELETE, GTK_ICON_SIZE_MENU));
-		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-		gtk_widget_show(item);
-		gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), delete_submenu);
-
-		item = gtk_image_menu_item_new_with_mnemonic(_("Delete _Selected Point"));
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_DELETE, GTK_ICON_SIZE_MENU));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_delete_point_selected), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (delete_submenu), item);
-		gtk_widget_show(item);
-		/* Make it available only when a point is selected. */
-		gtk_widget_set_sensitive(item, this->selected_tp.valid);
-
-		item = gtk_menu_item_new_with_mnemonic(_("Delete Points With The Same _Position"));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_delete_points_same_position), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (delete_submenu), item);
-		gtk_widget_show(item);
-
-		item = gtk_menu_item_new_with_mnemonic(_("Delete Points With The Same _Time"));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_delete_points_same_time), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (delete_submenu), item);
-		gtk_widget_show(item);
-
-		GtkWidget *transform_submenu;
-		transform_submenu = gtk_menu_new();
-		item = gtk_image_menu_item_new_with_mnemonic(_("_Transform"));
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_CONVERT, GTK_ICON_SIZE_MENU));
-		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-		gtk_widget_show(item);
-		gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), transform_submenu);
-
-		GtkWidget *dem_submenu;
-		dem_submenu = gtk_menu_new();
-		item = gtk_image_menu_item_new_with_mnemonic(_("_Apply DEM Data"));
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock("vik-icon-DEM Download", GTK_ICON_SIZE_MENU)); // Own icon - see stock_icons in vikwindow.c
-		gtk_menu_shell_append(GTK_MENU_SHELL (transform_submenu), item);
-		gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), dem_submenu);
-
-		item = gtk_image_menu_item_new_with_mnemonic(_("_Overwrite"));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_apply_dem_data_all), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (dem_submenu), item);
-		gtk_widget_set_tooltip_text(item, _("Overwrite any existing elevation values with DEM values"));
-		gtk_widget_show(item);
-
-		item = gtk_image_menu_item_new_with_mnemonic(_("_Keep Existing"));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_apply_dem_data_only_missing), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (dem_submenu), item);
-		gtk_widget_set_tooltip_text(item, _("Keep existing elevation values, only attempt for missing values"));
-		gtk_widget_show(item);
-
-		GtkWidget *smooth_submenu;
-		smooth_submenu = gtk_menu_new();
-		item = gtk_menu_item_new_with_mnemonic(_("_Smooth Missing Elevation Data"));
-		gtk_menu_shell_append(GTK_MENU_SHELL (transform_submenu), item);
-		gtk_widget_show(item);
-		gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), smooth_submenu);
-
-		item = gtk_image_menu_item_new_with_mnemonic(_("_Interpolated"));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_missing_elevation_data_interp), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (smooth_submenu), item);
-		gtk_widget_set_tooltip_text(item, _("Interpolate between known elevation values to derive values for the missing elevations"));
-		gtk_widget_show(item);
-
-		item = gtk_image_menu_item_new_with_mnemonic(_("_Flat"));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_missing_elevation_data_flat), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (smooth_submenu), item);
-		gtk_widget_set_tooltip_text(item, _("Set unknown elevation values to the last known value"));
-		gtk_widget_show(item);
-
-		if (sublayer_type == SublayerType::TRACK) {
-			item = gtk_image_menu_item_new_with_mnemonic(_("C_onvert to a Route"));
-		} else {
-			item = gtk_image_menu_item_new_with_mnemonic(_("C_onvert to a Track"));
-		}
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_CONVERT, GTK_ICON_SIZE_MENU));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_convert_track_route), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (transform_submenu), item);
-		gtk_widget_show(item);
-
-		/* Routes don't have timestamps - so these are only available for tracks. */
-		if (sublayer_type == SublayerType::TRACK) {
-			item = gtk_image_menu_item_new_with_mnemonic(_("_Anonymize Times"));
-			g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_anonymize_times), &pass_along);
-			gtk_menu_shell_append(GTK_MENU_SHELL (transform_submenu), item);
-			gtk_widget_set_tooltip_text(item, _("Shift timestamps to a relative offset from 1901-01-01"));
-			gtk_widget_show(item);
-
-			item = gtk_image_menu_item_new_with_mnemonic(_("_Interpolate Times"));
-			g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_interpolate_times), &pass_along);
-			gtk_menu_shell_append(GTK_MENU_SHELL (transform_submenu), item);
-			gtk_widget_set_tooltip_text(item, _("Reset trackpoint timestamps between the first and last points such that track is traveled at equal speed"));
-			gtk_widget_show(item);
-		}
-
-		if (sublayer_type == SublayerType::TRACK) {
-			item = gtk_image_menu_item_new_with_mnemonic(_("_Reverse Track"));
-		} else {
-			item = gtk_image_menu_item_new_with_mnemonic(_("_Reverse Route"));
-		}
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_GO_BACK, GTK_ICON_SIZE_MENU));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_reverse), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-		gtk_widget_show(item);
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (reverse_cb()));
 
 		if (sublayer_type == SublayerType::ROUTE) {
-			item = gtk_image_menu_item_new_with_mnemonic(_("Refine Route..."));
-			gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_FIND, GTK_ICON_SIZE_MENU));
-			g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_route_refine), &pass_along);
-			gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-			gtk_widget_show(item);
+			qa = menu.addAction(QIcon::fromTheme("edit-find"), QString(_("Refine Route...")));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (route_refine_cb()));
 		}
 
 		/* ATM This function is only available via the layers panel, due to the method in finding out the maps in use. */
 		if (panel) {
 			if (sublayer_type == SublayerType::TRACK) {
-				item = gtk_image_menu_item_new_with_mnemonic(_("Down_load Maps Along Track..."));
+				qa = menu.addAction(QIcon::fromTheme("vik-icon-Maps Download"), QString(_("Down_load Maps Along Track...")));
 			} else {
-				item = gtk_image_menu_item_new_with_mnemonic(_("Down_load Maps Along Route..."));
+				qa = menu.addAction(QIcon::fromTheme("vik-icon-Maps Download"), QString(_("Down_load Maps Along Route...")));
 			}
-			gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock("vik-icon-Maps Download", GTK_ICON_SIZE_MENU)); /* Own icon - see stock_icons in vikwindow.c. */
-			g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_download_map_along_track_cb), &pass_along);
-			gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-			gtk_widget_show(item);
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (download_map_along_track_cb()));
 		}
 
 		if (sublayer_type == SublayerType::TRACK) {
-			item = gtk_image_menu_item_new_with_mnemonic(_("_Export Track as GPX..."));
+			qa = menu.addAction(QIcon::fromTheme("document-save-as"), QString(_("_Export Track as GPX...")));
 		} else {
-			item = gtk_image_menu_item_new_with_mnemonic(_("_Export Route as GPX..."));
+			qa = menu.addAction(QIcon::fromTheme("document-save-as"), QString(_("_Export Route as GPX...")));
 		}
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_HARDDISK, GTK_ICON_SIZE_MENU));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_export_gpx_track), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-		gtk_widget_show(item);
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (export_gpx_track_cb()));
 
 		if (sublayer_type == SublayerType::TRACK) {
-			item = gtk_image_menu_item_new_with_mnemonic(_("E_xtend Track End"));
+			qa = menu.addAction(QIcon::fromTheme("list-add"), QString(_("E_xtend Track End")));
 		} else {
-			item = gtk_image_menu_item_new_with_mnemonic(_("E_xtend Route End"));
+			qa = menu.addAction(QIcon::fromTheme("list-add"), QString(_("E_xtend Route End")));
 		}
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_ADD, GTK_ICON_SIZE_MENU));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_extend_track_end), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-		gtk_widget_show(item);
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (extend_track_end_cb()));
 
 		if (sublayer_type == SublayerType::ROUTE) {
-			item = gtk_image_menu_item_new_with_mnemonic(_("Extend _Using Route Finder"));
-			gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock("vik-icon-Route Finder", GTK_ICON_SIZE_MENU)); // Own icon - see stock_icons in vikwindow.c
-			g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_extend_track_end_route_finder), &pass_along);
-			gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-			gtk_widget_show(item);
+			qa = menu.addAction(QIcon::fromTheme("vik-icon-Route Finder"), QString(_("Extend _Using Route Finder")));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (extend_track_end_route_finder_cb()));
 		}
 
 		/* ATM can't upload a single waypoint but can do waypoints to a GPS. */
 		if (sublayer_type != SublayerType::WAYPOINT) {
-			item = gtk_image_menu_item_new_with_mnemonic(_("_Upload"));
-			gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_GO_UP, GTK_ICON_SIZE_MENU));
-			gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-			gtk_widget_show(item);
-			gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), upload_submenu);
 
-			item = gtk_image_menu_item_new_with_mnemonic(_("_Upload to GPS..."));
-			gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_GO_FORWARD, GTK_ICON_SIZE_MENU));
-			g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_gps_upload_any), &pass_along);
-			gtk_menu_shell_append(GTK_MENU_SHELL (upload_submenu), item);
-			gtk_widget_show(item);
+			qa = upload_submenu->addAction(QIcon::fromTheme("go-forward"), QString(_("_Upload to GPS...")));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (gps_upload_any_cb()));
 		}
 	}
 
-	GtkWidget *external_submenu = create_external_submenu(menu);
+	QMenu * external_submenu = create_external_submenu(menu);
 
 	/* These are only made available if a suitable program is installed. */
 	if ((have_astro_program || have_diary_program)
 	    && (sublayer_type == SublayerType::TRACK || sublayer_type == SublayerType::WAYPOINT)) {
 
 		if (have_diary_program) {
-			item = gtk_image_menu_item_new_with_mnemonic(_("_Diary"));
-			gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_SPELL_CHECK, GTK_ICON_SIZE_MENU));
-			g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_diary), &pass_along);
-			gtk_menu_shell_append(GTK_MENU_SHELL (external_submenu), item);
-			gtk_widget_set_tooltip_text(item, _("Open diary program at this date"));
-			gtk_widget_show(item);
+			qa = external_submenu->addAction(QIcon::fromTheme("SPELL_CHECK"), QString(_("_Diary")));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (diary_cb()));
+			qa->setToolTip(QString(_("Open diary program at this date")));
 		}
 
 		if (have_astro_program) {
-			item = gtk_image_menu_item_new_with_mnemonic(_("_Astronomy"));
-			g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_astro), &pass_along);
-			gtk_menu_shell_append(GTK_MENU_SHELL (external_submenu), item);
-			gtk_widget_set_tooltip_text(item, _("Open astronomy program at this date and location"));
-			gtk_widget_show(item);
+			qa = external_submenu->addAction(QString(_("_Astronomy")));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (astro_cb()));
+			qa->setToolTip(QString(_("Open astronomy program at this date and location")));
 		}
 	}
 
+#ifdef K
 	if (this->selected_tp.valid || this->current_wp) {
 		/* For the selected point. */
 		VikCoord *vc;
@@ -1150,105 +877,78 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu, void * panel, SublayerType 
 		   TODO: Should use selected items centre - rather than implicitly using the current viewport. */
 		vik_ext_tools_add_menu_items_to_menu(this->get_window(), GTK_MENU (external_submenu), NULL);
 	}
+#endif
 
 
 #ifdef VIK_CONFIG_GOOGLE
 	if (sublayer_type == SublayerType::ROUTE && (this->is_valid_google_route(sublayer_uid))) {
-		item = gtk_image_menu_item_new_with_mnemonic(_("_View Google Directions"));
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_NETWORK, GTK_ICON_SIZE_MENU));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_google_route_webpage), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-		gtk_widget_show(item);
+		qa = menu.addAction(QIcon::fromTheme("applications-internet"), QString(_("_View Google Directions")));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (google_route_webpage_cb()));
 	}
 #endif
 
 	/* Some things aren't usable with routes. */
 	if (sublayer_type == SublayerType::TRACK) {
 #ifdef VIK_CONFIG_OPENSTREETMAP
-		item = gtk_image_menu_item_new_with_mnemonic(_("Upload to _OSM..."));
+		qa = upload_submenu->addAction(QIcon::fromTheme("go-up"), QString(_("Upload to _OSM...")));
 		/* Convert internal pointer into track. */
 		pass_along.misc = this->tracks.at(sublayer_uid);
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_GO_UP, GTK_ICON_SIZE_MENU));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_osm_traces_upload_track_cb), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (upload_submenu), item);
-		gtk_widget_show(item);
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (osm_traces_upload_track_cb()));
 #endif
 
 		/* Currently filter with functions all use shellcommands and thus don't work in Windows. */
 #ifndef WINDOWS
-		item = gtk_image_menu_item_new_with_mnemonic(_("Use with _Filter"));
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_INDEX, GTK_ICON_SIZE_MENU));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_track_use_with_filter), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-		gtk_widget_show(item);
+		qa = menu.addAction(QIcon::fromTheme("INDEX"), QString(_("Use with &Filter")));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (track_use_with_filter_cb()));
 #endif
+
 
 		/* ATM This function is only available via the layers panel, due to needing a panel. */
 		if (panel) {
+#ifdef K
 			item = a_acquire_track_menu(this->get_window(), (LayersPanel *) panel,
 						    ((LayersPanel *) panel)->get_viewport(),
 						    this->tracks.at(sublayer_uid));
 			if (item) {
 				gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-				gtk_widget_show(item);
 			}
+#endif
 		}
 
 #ifdef VIK_CONFIG_GEOTAG
-		item = gtk_menu_item_new_with_mnemonic(_("Geotag _Images..."));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_geotagging_track), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-		gtk_widget_show(item);
+		qa = menu.addAction(QString(_("Geotag _Images...")));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (geotagging_track_cb()));
 #endif
 	}
 
 	if (sublayer_type == SublayerType::TRACK || sublayer_type == SublayerType::ROUTE) {
 		/* Only show on viewport popmenu when a trackpoint is selected. */
 		if (!panel && this->selected_tp.valid) {
-			/* Add separator. */
-			item = gtk_menu_item_new();
-			gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-			gtk_widget_show(item);
 
-			item = gtk_image_menu_item_new_with_mnemonic(_("_Edit Trackpoint"));
-			gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_PROPERTIES, GTK_ICON_SIZE_MENU));
-			g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_edit_trackpoint), &pass_along);
-			gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-			gtk_widget_show(item);
+			menu.addSeparator();
+
+			qa = menu.addAction(QIcon::fromTheme("document-properties"), QString(_("_Edit Trackpoint")));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (edit_trackpoint_cb()));
 		}
 	}
 
 	if (sublayer_type == SublayerType::WAYPOINTS || sublayer_type == SublayerType::WAYPOINT) {
-		GtkWidget *transform_submenu;
-		transform_submenu = gtk_menu_new();
-		item = gtk_image_menu_item_new_with_mnemonic(_("_Transform"));
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_CONVERT, GTK_ICON_SIZE_MENU));
-		gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-		gtk_widget_show(item);
-		gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), transform_submenu);
 
-		GtkWidget *dem_submenu;
-		dem_submenu = gtk_menu_new();
-		item = gtk_image_menu_item_new_with_mnemonic(_("_Apply DEM Data"));
-		gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock("vik-icon-DEM Download", GTK_ICON_SIZE_MENU)); // Own icon - see stock_icons in vikwindow.c
-		gtk_menu_shell_append(GTK_MENU_SHELL (transform_submenu), item);
-		gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), dem_submenu);
+		QMenu * transform_submenu = menu.addMenu(QIcon::fromTheme("CONVERT"), QString(_("&Transform")));
+		{
+			QMenu * dem_submenu = transform_submenu->addMenu(QIcon::fromTheme("vik-icon-DEM Download"), QString(_("&Apply DEM Data")));
 
-		item = gtk_image_menu_item_new_with_mnemonic(_("_Overwrite"));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_apply_dem_data_wpt_all), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (dem_submenu), item);
-		gtk_widget_set_tooltip_text(item, _("Overwrite any existing elevation values with DEM values"));
-		gtk_widget_show(item);
+			qa = dem_submenu->addAction(QString(_("_Overwrite")));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (apply_dem_data_wpt_all_cb()));
+			qa->setToolTip(QString(_("Overwrite any existing elevation values with DEM values")));
 
-		item = gtk_image_menu_item_new_with_mnemonic(_("_Keep Existing"));
-		g_signal_connect_swapped(G_OBJECT (item), "activate", G_CALLBACK(trw_layer_apply_dem_data_wpt_only_missing), &pass_along);
-		gtk_menu_shell_append(GTK_MENU_SHELL (dem_submenu), item);
-		gtk_widget_set_tooltip_text(item, _("Keep existing elevation values, only attempt for missing values"));
-		gtk_widget_show(item);
+			qa = dem_submenu->addAction(QString(_("_Keep Existing")));
+			connect(qa, SIGNAL (triggered(bool)), this, SLOT (apply_dem_data_wpt_only_missing_cb()));
+			qa->setToolTip(QString(_("Keep existing elevation values, only attempt for missing values")));
+		}
 	}
 
-	gtk_widget_show_all(GTK_WIDGET (menu));
 
 	return rv;
-#endif
+
 }

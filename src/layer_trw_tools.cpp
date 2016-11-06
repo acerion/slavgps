@@ -320,7 +320,7 @@ bool LayerTRW::select_click(QMouseEvent * event, Viewport * viewport, LayerTool 
 					memset(&data, 0, sizeof (trw_menu_sublayer_t));
 					data.layer = this;
 					data.misc = this->current_wp->image;
-					trw_layer_show_picture(&data);
+					this->show_picture_cb(&data);
 				}
 			}
 #endif
@@ -1790,7 +1790,7 @@ LayerTool * tool_show_picture_create(Window * window, Viewport * viewport)
 
 
 
-void trw_layer_show_picture(trw_menu_sublayer_t * data)
+void LayerTRW::show_picture_cb(void) /* Slot. */
 {
 #ifdef K
 	/* Thanks to the Gaim people for showing me ShellExecute and g_spawn_command_line_async. */
@@ -1823,11 +1823,13 @@ static bool tool_show_picture_click_cb(Layer * layer, QMouseEvent * event, Layer
 
 	char * found = LayerTRWc::tool_show_picture_wp(trw->waypoints, event->x(), event->y(), tool->viewport);
 	if (found) {
+#ifdef K
 		trw_menu_sublayer_t data;
 		memset(&data, 0, sizeof (trw_menu_sublayer_t));
 		data.layer = trw;
 		data.misc = found;
-		trw_layer_show_picture(&data);
+		trw->show_picture_cb(&data);
+#endif
 		return true; /* Found a match. */
 	} else {
 		return false; /* Go through other layers, searching for a match. */
