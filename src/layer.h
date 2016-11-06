@@ -79,7 +79,7 @@ typedef enum {
 
 typedef struct _LayerInterface LayerInterface;
 typedef int16_t layer_param_id_t;
-
+struct _trw_menu_sublayer_t;
 
 
 
@@ -197,8 +197,8 @@ namespace SlavGPS {
 		virtual int read_file(FILE * f, char const * dirpath);
 		virtual void write_file(FILE * f) const;
 
-		virtual void add_menu_items(QMenu & menu, void * panel);
-		virtual bool sublayer_add_menu_items(QMenu & menu, void * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeIndex * index, Viewport * viewport);
+		virtual void add_menu_items(QMenu & menu);
+		virtual bool sublayer_add_menu_items(QMenu & menu);
 		virtual char const * sublayer_rename_request(const char * newname, void * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, GtkTreeIter * iter);
 		virtual bool sublayer_toggle_visible(SublayerType sublayer_type, sg_uid_t sublayer_uid);
 
@@ -265,6 +265,8 @@ namespace SlavGPS {
 		LayerType type;
 
 		char type_string[30] = { 0 };
+
+		struct _trw_menu_sublayer_t * menu_data = NULL;
 
 	protected:
 		virtual void marshall(uint8_t ** data, int * len);
@@ -427,6 +429,17 @@ void vik_layer_typed_param_data_free(void * gp);
 ParameterValue * vik_layer_typed_param_data_copy_from_data(LayerParamType type, LayerParamData val);
 ParameterValue * vik_layer_data_typed_param_copy_from_string(LayerParamType type, const char * str);
 
+
+
+typedef struct _trw_menu_sublayer_t {
+	void * layers_panel;
+	SlavGPS::SublayerType sublayer_type;
+	sg_uid_t sublayer_uid;
+	bool confirm;
+	SlavGPS::Viewport * viewport;
+	SlavGPS::TreeIndex * index;
+	void * misc;
+} trw_menu_sublayer_t;
 
 
 

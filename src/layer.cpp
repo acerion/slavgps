@@ -550,6 +550,10 @@ Layer::~Layer()
 	}
 
 	delete right_click_menu;
+
+	if (this->menu_data) {
+		free(this->menu_data);
+	}
 }
 
 
@@ -795,6 +799,9 @@ Layer::Layer()
 	qDebug() << "II: Layer::Layer()";
 
 	strcpy(this->type_string, "LayerType::NUM_TYPES");
+
+	this->menu_data = (struct _trw_menu_sublayer_t *) malloc(sizeof (struct _trw_menu_sublayer_t));
+	memset(this->menu_data, 0, sizeof (struct _trw_menu_sublayer_t));
 }
 
 
@@ -966,7 +973,7 @@ void Layer::write_file(FILE * f) const
 
 
 
-void Layer::add_menu_items(QMenu & menu, void * panel)
+void Layer::add_menu_items(QMenu & menu)
 {
 	return;
 }
@@ -974,7 +981,7 @@ void Layer::add_menu_items(QMenu & menu, void * panel)
 
 
 
-bool Layer::sublayer_add_menu_items(QMenu & menu, void * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeIndex * index, Viewport * viewport)
+bool Layer::sublayer_add_menu_items(QMenu & menu)
 {
 	return false;
 }

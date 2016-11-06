@@ -1026,7 +1026,7 @@ static void mapnik_layer_about(menu_array_values * values)
 
 
 
-void LayerMapnik::add_menu_items(QMenu & menu, void * panel_)
+void LayerMapnik::add_menu_items(QMenu & menu)
 {
 	LayersPanel * panel = (LayersPanel *) panel_;
 

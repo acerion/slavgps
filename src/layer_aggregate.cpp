@@ -666,7 +666,7 @@ static void aggregate_layer_analyse(menu_array_values * values)
 
 
 
-void LayerAggregate::add_menu_items(QMenu & menu, void * panel)
+void LayerAggregate::add_menu_items(QMenu & menu)
 {
 #ifdef K
 	/* Data to pass on in menu functions. */

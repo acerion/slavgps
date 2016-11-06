@@ -55,11 +55,6 @@ typedef struct {
 
 
 
-struct _trw_menu_sublayer_t;
-
-
-
-
 namespace SlavGPS {
 
 
@@ -176,8 +171,8 @@ namespace SlavGPS {
 		int read_file(FILE * f, char const * dirpath);
 		void write_file(FILE * f) const;
 
-		void add_menu_items(QMenu & menu, void * panel);
-		bool sublayer_add_menu_items(QMenu & menu, void * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeIndex * index, Viewport * viewport);
+		void add_menu_items(QMenu & menu);
+		bool sublayer_add_menu_items(QMenu & menu);
 
 		char const * sublayer_rename_request(const char * newname, void * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, GtkTreeIter * iter);
 		bool sublayer_toggle_visible(SublayerType sublayer_type, sg_uid_t sublayer_uid);
@@ -535,6 +530,7 @@ namespace SlavGPS {
 		GtkWidget * tracks_analysis_dialog = NULL;
 
 
+
 	public slots:
 		void trackpoint_properties_cb(int response);
 
@@ -580,7 +576,6 @@ namespace SlavGPS {
 		void acquire_from_wikipedia_waypoints_viewport_cb(void);
 		void acquire_from_wikipedia_waypoints_layer_cb(void);
 
-
 #ifdef VIK_CONFIG_GEOCACHES
 		void acquire_from_geocache_cb(void);
 #endif
@@ -589,10 +584,8 @@ namespace SlavGPS {
 #endif
 		void acquire_from_file_cb();
 
-
 		void upload_to_gps_cb(void);
 		void upload_to_osm_traces_cb(void);
-
 
 		void delete_all_tracks_cb(void);
 		void delete_selected_tracks_cb(void);
@@ -719,17 +712,6 @@ typedef struct {
 } trw_menu_layer_t;
 
 
-typedef struct _trw_menu_sublayer_t {
-	SlavGPS::LayerTRW * layer;
-	SlavGPS::SublayerType sublayer_type;
-	sg_uid_t sublayer_uid;
-	bool confirm;
-	SlavGPS::Viewport * viewport;
-	SlavGPS::TreeIndex * index;
-	void * misc;
-} trw_menu_sublayer_t;
-
-
 
 
 GdkPixbuf* get_wp_sym_small(char *symbol);
@@ -754,9 +736,6 @@ int check_tracks_for_same_name(gconstpointer aa, gconstpointer bb, void * udata)
 
 
 
-/* This needs to be visible in viktrwlayer_ui.h. */
-
-QMenu * create_external_submenu(QMenu & menu);
 bool is_valid_geocache_name(char *str);
 
 

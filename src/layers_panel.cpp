@@ -1071,16 +1071,19 @@ void LayersPanel::contextMenuEvent(QContextMenuEvent * event)
 				}
 				index = index2;
 			}
+			memset(layer->menu_data, 0, sizeof (struct _trw_menu_sublayer_t));
+			layer->menu_data->layers_panel = this;
+
 			QMenu menu(this);
 			this->window->get_layer_menu(&menu);
 			menu.addAction(this->qa_layer_cut);
 			menu.addAction(this->qa_layer_copy);
 			menu.addAction(this->qa_layer_paste);
 			menu.addAction(this->qa_layer_remove);
-
-			layer->add_menu_items(menu, this);
-
+			layer->add_menu_items(menu);
 			menu.exec(QCursor::pos());
+
+			memset(layer->menu_data, 0, sizeof (struct _trw_menu_sublayer_t));
 		} else {
 			qDebug() << "II: Layers Panel: creating context menu for TreeItemType::SUBLAYER";
 
@@ -1091,13 +1094,19 @@ void LayersPanel::contextMenuEvent(QContextMenuEvent * event)
 				qDebug() << "II: Layers Panel: context menu event: layer type is NULL";
 			}
 
-			SublayerType sublayer_type = this->tree_view->get_sublayer_type(&index);
-			sg_uid_t sublayer_uid = this->tree_view->get_sublayer_uid(&index);
-
+			memset(layer->menu_data, 0, sizeof (struct _trw_menu_sublayer_t));
+			layer->menu_data->sublayer_type = this->tree_view->get_sublayer_type(&index);
+			layer->menu_data->sublayer_uid = this->tree_view->get_sublayer_uid(&index);
+			layer->menu_data->index = &index;
+			layer->menu_data->viewport = this->get_viewport();
+			layer->menu_data->layers_panel = this;
+			layer->menu_data->confirm = true; /* Confirm delete request. */
 
 			QMenu menu(this);
-			layer->sublayer_add_menu_items(menu, this, sublayer_type, sublayer_uid, &index, this->get_viewport());
+			layer->sublayer_add_menu_items(menu);
 			menu.exec(QCursor::pos());
+
+			memset(layer->menu_data, 0, sizeof (struct _trw_menu_sublayer_t));
 		}
 	} else {
 		qDebug() << "II: Layers Panel: context menu event: INvalid index";

@@ -56,7 +56,7 @@ namespace SlavGPS {
 		void post_read(Viewport * viewport, bool from_file);
 		void draw(Viewport * viewport);
 		char const * tooltip();
-		void add_menu_items(QMenu & menu, void * panel);
+		void add_menu_items(QMenu & menu);
 		bool set_param_value(uint16_t id, LayerParamValue param_value, Viewport * viewport, bool is_file_operation);
 		LayerParamValue get_param_value(layer_param_id_t id, bool is_file_operation) const;
 
