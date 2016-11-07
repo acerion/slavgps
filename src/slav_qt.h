@@ -46,6 +46,8 @@ typedef int GtkTooltip;
 typedef int GtkTreeSelection;
 typedef int GtkTreeModel;
 typedef int GdkDrawable;
+typedef int GtkTreeStore;
+typedef int GtkTreeViewColumn;
 typedef int VikDataSourceInterface;
 
 typedef int VikTrwLayerTpwin;
