@@ -56,9 +56,11 @@ using namespace SlavGPS;
  */
 static void waypoint_close_cb(GtkWidget * dialog, int resp, std::list<waypoint_layer_t *> * waypoints_and_layers)
 {
+#ifdef K
 	/* kamilTODO: free waypoints_and_layers */
 
 	gtk_widget_destroy(dialog);
+#endif
 }
 
 
@@ -107,6 +109,7 @@ static bool trw_layer_waypoint_tooltip_cb(GtkWidget  * widget,
 					  GtkTooltip * tooltip,
 					  void       * data)
 {
+#ifdef K
 	GtkTreeIter iter;
 	GtkTreePath * path = NULL;
 	GtkTreeView * tree_view = GTK_TREE_VIEW (widget);
@@ -139,6 +142,7 @@ static bool trw_layer_waypoint_tooltip_cb(GtkWidget  * widget,
 	gtk_tree_path_free(path);
 
 	return tooltip_set;
+#endif
 }
 
 
@@ -190,6 +194,7 @@ typedef struct {
 // This is performed on demand via the specific menu request
 static void trw_layer_waypoint_select(waypointlist_data_t * values)
 {
+#ifdef K
 	LayerTRW * trw = values->trw;
 
 	if (values->waypoint_uid) {
@@ -200,6 +205,7 @@ static void trw_layer_waypoint_select(waypointlist_data_t * values)
 			trw->tree_view->select_and_expose(iter);
 		}
 	}
+#endif
 }
 
 
@@ -207,6 +213,7 @@ static void trw_layer_waypoint_select(waypointlist_data_t * values)
 
 static void trw_layer_waypoint_properties(waypointlist_data_t * values)
 {
+#ifdef K
 	LayerTRW * trw = values->trw;
 	Waypoint * wp = values->waypoint;
 
@@ -230,6 +237,7 @@ static void trw_layer_waypoint_properties(waypointlist_data_t * values)
 			trw->emit_changed();
 		}
 	}
+#endif
 }
 
 
@@ -253,6 +261,7 @@ static void trw_layer_waypoint_view(waypointlist_data_t * values)
 
 static void trw_layer_show_picture_wp(waypointlist_data_t * values)
 {
+#ifdef K
 	Waypoint * wp = values->waypoint;
 #ifdef WINDOWS
 	ShellExecute(NULL, "open", wp->image, NULL, NULL, SW_SHOWNORMAL);
@@ -267,6 +276,7 @@ static void trw_layer_show_picture_wp(waypointlist_data_t * values)
 		g_error_free(err);
 	}
 	free(cmd);
+#endif
 #endif
 }
 
@@ -293,6 +303,7 @@ static void copy_selection(GtkTreeModel * model,
 			   GtkTreeIter  * iter,
 			   void         * data)
 {
+#ifdef K
 	copy_data_t * cd = (copy_data_t *) data;
 
 	char * layername;
@@ -340,6 +351,7 @@ static void copy_selection(GtkTreeModel * model,
 	free(name);
 	free(date);
 	free(comment);
+#endif
 }
 
 
@@ -347,6 +359,7 @@ static void copy_selection(GtkTreeModel * model,
 
 static void trw_layer_copy_selected(GtkWidget * tree_view, bool include_positions)
 {
+#ifdef K
 	GtkTreeSelection * selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(tree_view));
 	// NB GTK3 has gtk_tree_view_get_n_columns() but we're GTK2 ATM
 	GList * gl = gtk_tree_view_get_columns(GTK_TREE_VIEW(tree_view));
@@ -361,6 +374,7 @@ static void trw_layer_copy_selected(GtkWidget * tree_view, bool include_position
 	a_clipboard_copy(VIK_CLIPBOARD_DATA_TEXT, LayerType::AGGREGATE, SublayerType::NONE, 0, cd.str->str, NULL);
 
 	g_string_free(cd.str, true);
+#endif
 }
 
 
@@ -368,7 +382,9 @@ static void trw_layer_copy_selected(GtkWidget * tree_view, bool include_position
 
 static void trw_layer_copy_selected_only_visible_columns(GtkWidget * tree_view)
 {
+#ifdef K
 	trw_layer_copy_selected(tree_view, false);
+#endif
 }
 
 
@@ -376,7 +392,9 @@ static void trw_layer_copy_selected_only_visible_columns(GtkWidget * tree_view)
 
 static void trw_layer_copy_selected_with_position(GtkWidget * tree_view)
 {
+#ifdef K
 	trw_layer_copy_selected(tree_view, true);
+#endif
 }
 
 
@@ -384,6 +402,7 @@ static void trw_layer_copy_selected_with_position(GtkWidget * tree_view)
 
 static void add_copy_menu_items(GtkMenu * menu, GtkWidget * tree_view)
 {
+#ifdef K
 	GtkWidget * item = gtk_image_menu_item_new_with_mnemonic(_("_Copy Data"));
 	gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_COPY, GTK_ICON_SIZE_MENU));
 	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(trw_layer_copy_selected_only_visible_columns), tree_view);
@@ -395,6 +414,7 @@ static void add_copy_menu_items(GtkMenu * menu, GtkWidget * tree_view)
 	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(trw_layer_copy_selected_with_position), tree_view);
 	gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
 	gtk_widget_show(item);
+#endif
 }
 
 
@@ -402,6 +422,7 @@ static void add_copy_menu_items(GtkMenu * menu, GtkWidget * tree_view)
 
 static bool add_menu_items(QMenu & menu, LayerTRW * trw, Waypoint * wp, sg_uid_t wp_uid, Viewport * viewport, GtkWidget * gtk_tree_view, std::list<waypoint_layer_t *> * waypoints_and_layers)
 {
+#ifdef K
 	GtkWidget * item;
 
 	static waypointlist_data_t values;
@@ -441,6 +462,7 @@ static bool add_menu_items(QMenu & menu, LayerTRW * trw, Waypoint * wp, sg_uid_t
 	gtk_widget_set_sensitive(item, KPOINTER_TO_INT(wp->image));
 
 	add_copy_menu_items(menu, gtk_tree_view);
+#endif
 
 	return true;
 }
@@ -452,11 +474,13 @@ static bool trw_layer_waypoint_menu_popup_multi(GtkWidget * tree_view,
 						GdkEventButton * event,
 						void * waypoints_and_layers)
 {
+#ifdef K
 	GtkWidget * menu = gtk_menu_new();
 
 	add_copy_menu_items(GTK_MENU(menu), tree_view);
 
 	gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL, event->button, gtk_get_current_event_time());
+#endif
 
 	return true;
 }
@@ -468,6 +492,7 @@ static bool trw_layer_waypoint_menu_popup(GtkWidget * tree_view,
 					  GdkEventButton * event,
 					  void * waypoints_and_layers)
 {
+#ifdef K
 	static GtkTreeIter iter;
 
 	// Use selected item to get a single iterator ref
@@ -524,6 +549,7 @@ static bool trw_layer_waypoint_menu_popup(GtkWidget * tree_view,
 		gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL, event->button, gtk_get_current_event_time());
 		return true;
 	}
+#endif
 	return false;
 }
 
@@ -534,6 +560,7 @@ static bool trw_layer_waypoint_button_pressed(GtkWidget * tree_view,
 					      GdkEventButton * event,
 					      void * waypoints_and_layers)
 {
+#ifdef K
 	// Only on right clicks...
 	if (! (event->type == GDK_BUTTON_PRESS && event->button == MouseButton::RIGHT)) {
 		return false;
@@ -555,6 +582,7 @@ static bool trw_layer_waypoint_button_pressed(GtkWidget * tree_view,
 		}
 	}
 	return trw_layer_waypoint_menu_popup(tree_view, event, waypoints_and_layers);
+#endif
 }
 
 
@@ -569,6 +597,7 @@ static void trw_layer_waypoint_list_add(waypoint_layer_t * element,
 					HeightUnit height_units,
 					const char * date_format)
 {
+#ifdef K
 	GtkTreeIter t_iter;
 	Waypoint * wp = element->wp;
 	LayerTRW * trw = element->trw;
@@ -618,6 +647,7 @@ static void trw_layer_waypoint_list_add(waypoint_layer_t * element,
 			   TRW_COL_NUM, trw,
 			   WPT_COL_NUM, wp,
 			   -1);
+#endif
 }
 
 
@@ -632,6 +662,7 @@ int sort_pixbuf_compare_func(GtkTreeModel * model,
 			     GtkTreeIter  * b,
 			     void         * userdata)
 {
+#ifdef K
 	Waypoint * wp1, * wp2;
 	gtk_tree_model_get(model, a, WPT_COL_NUM, &wp1, -1);
 	if (!wp1) {
@@ -643,6 +674,7 @@ int sort_pixbuf_compare_func(GtkTreeModel * model,
 	}
 
 	return g_strcmp0(wp1->symbol, wp2->symbol);
+#endif
 }
 
 
@@ -650,12 +682,14 @@ int sort_pixbuf_compare_func(GtkTreeModel * model,
 
 static GtkTreeViewColumn * my_new_column_text(const char * title, GtkCellRenderer * renderer, GtkWidget * view, int column_runner)
 {
+#ifdef K
 	GtkTreeViewColumn * column = gtk_tree_view_column_new_with_attributes(title, renderer, "text", column_runner, NULL);
 	gtk_tree_view_column_set_sort_column_id(column, column_runner);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);
 	gtk_tree_view_column_set_reorderable(column, true);
 	gtk_tree_view_column_set_resizable(column, true);
 	return column;
+#endif
 }
 
 
@@ -674,6 +708,7 @@ static void vik_trw_layer_waypoint_list_internal(GtkWidget * dialog,
 						 std::list<waypoint_layer_t *> * waypoints_and_layers,
 						 bool show_layer_names)
 {
+#ifdef K
 	if (!waypoints_and_layers || waypoints_and_layers->empty()) {
 		return;
 	}
@@ -786,6 +821,7 @@ static void vik_trw_layer_waypoint_list_internal(GtkWidget * dialog,
 	// Ensure a reasonable number of items are shown
 	//  TODO: may be save window size, column order, sorted by between invocations.
 	gtk_window_set_default_size(GTK_WINDOW(dialog), show_layer_names ? 700 : 500, 400);
+#endif
 }
 
 
@@ -804,6 +840,7 @@ void SlavGPS::vik_trw_layer_waypoint_list_show_dialog(char * title,
 						      Layer * layer,
 						      bool show_layer_names)
 {
+#ifdef K
 	GtkWidget * dialog = gtk_dialog_new_with_buttons(title,
 							 layer->get_toolkit_window(),
 							 GTK_DIALOG_DESTROY_WITH_PARENT,
@@ -837,4 +874,5 @@ void SlavGPS::vik_trw_layer_waypoint_list_show_dialog(char * title,
 	// Occassionally the 'View' doesn't update the viewport properly
 	//  viewport center + zoom is changed but the viewport isn't updated
 	// not sure why yet..
+#endif
 }
