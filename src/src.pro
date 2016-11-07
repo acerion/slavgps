@@ -29,7 +29,7 @@ SOURCES += main.cpp \
     trackpoint_properties.cpp \
     waypoint.cpp \
     waypoint_properties.cpp \
-    viktrwlayer_waypointlist.cpp \
+    waypoint_list.cpp \
     tree_view.cpp \
     uibuilder.cpp \
     uibuilder_qt.cpp \
@@ -79,7 +79,7 @@ HEADERS += window.h \
     trackpoint_properties.h \
     waypoint.h \
     waypoint_properties.h \
-    viktrwlayer_waypointlist.h \
+    waypoint_list.h \
     layer_trw.h \
     tree_view.h \
     uibuilder.h \
