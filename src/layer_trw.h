@@ -174,7 +174,7 @@ namespace SlavGPS {
 		void add_menu_items(QMenu & menu);
 		bool sublayer_add_menu_items(QMenu & menu);
 
-		char const * sublayer_rename_request(const char * newname, void * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, GtkTreeIter * iter);
+		char const * sublayer_rename_request(const char * newname, void * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeIndex * parent_index);
 		bool sublayer_toggle_visible(SublayerType sublayer_type, sg_uid_t sublayer_uid);
 
 		void realize(TreeView * tree_view, TreeIndex * layer_index);

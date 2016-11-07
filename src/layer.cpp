@@ -989,7 +989,7 @@ bool Layer::sublayer_add_menu_items(QMenu & menu)
 
 
 
-char const * Layer::sublayer_rename_request(const char * newname, void * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, GtkTreeIter * iter)
+char const * Layer::sublayer_rename_request(const char * newname, void * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeIndex * parent_index)
 {
 	return NULL;
 }

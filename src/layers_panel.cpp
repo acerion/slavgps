@@ -82,7 +82,7 @@ static GtkActionEntry entries[] = {
 
 
 
-static void layers_item_edited_cb(LayersPanel * panel, GtkTreeIter * iter, char const * new_text);
+static void layers_item_edited_cb(LayersPanel * panel, TreeIndex * index, char const * new_text);
 static void menu_popup_cb(LayersPanel * panel);
 static void layers_popup_cb(LayersPanel * panel);
 static bool layers_button_press_cb(LayersPanel * panel, GdkEventButton * event);
@@ -352,41 +352,41 @@ void LayersPanel::item_toggled(TreeIndex * index)
 
 
 
-static void layers_item_edited_cb(LayersPanel * panel, GtkTreeIter * iter, char const * new_text)
+static void layers_item_edited_cb(LayersPanel * panel, TreeIndex * index, char const * new_text)
 {
-	panel->item_edited(iter, new_text);
+	panel->item_edited(index, new_text);
 }
 
 
 
 
 /* Why do we have this function? Isn't TreeView::data_changed_cb() enough? */
-void LayersPanel::item_edited(GtkTreeIter * iter, char const * new_text)
+void LayersPanel::item_edited(TreeIndex * index, char const * new_text)
 {
 	if (!new_text) {
 		return;
 	}
 
-#ifndef SLAVGPS_QT
+#ifdef K
 	if (new_text[0] == '\0') {
 		a_dialog_error_msg(this->toplayer->get_window()->get_toolkit_window(), _("New name can not be blank."));
 		return;
 	}
 
-	if (this->tree_view->get_item_type(iter) == TreeItemType::LAYER) {
+	if (this->tree_view->get_item_type(index) == TreeItemType::LAYER) {
 
-		/* Get iter and layer. */
-		Layer * layer = this->tree_view->get_layer(iter);
+		/* Get index and layer. */
+		Layer * layer = this->tree_view->get_layer(index);
 
 		if (strcmp(layer->name, new_text) != 0) {
 			layer->rename(new_text);
-			this->tree_view->set_name(iter, layer->name);
+			this->tree_view->set_name(index, layer->name);
 		}
 	} else {
-		Layer * parent = this->tree_view->get_parent_layer(iter);
-		const char *name = parent->sublayer_rename_request(new_text, this, this->tree_view->get_sublayer_type(iter), this->tree_view->get_sublayer_uid(iter), iter);
+		Layer * parent = this->tree_view->get_parent_layer(index);
+		const char *name = parent->sublayer_rename_request(new_text, this, this->tree_view->get_sublayer_type(index), this->tree_view->get_sublayer_uid(index), index);
 		if (name) {
-			this->tree_view->set_name(iter, name);
+			this->tree_view->set_name(index, name);
 		}
 	}
 #endif

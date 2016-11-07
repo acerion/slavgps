@@ -2562,12 +2562,12 @@ void LayerTRW::open_with_external_gpx_2_cb(void) /* Slot. */
 
 void LayerTRW::export_gpx_track_cb(void)
 {
-#ifdef K
-	Track * trk = this->get_track_helper(data);
+	Track * trk = this->get_track_helper(this->menu_data->sublayer_type, this->menu_data->sublayer_uid);
 
 	if (!trk || !trk->name) {
 		return;
 	}
+#ifdef K
 
 	char * auto_save_name = append_file_ext(trk->name, FILE_TYPE_GPX);
 
@@ -2720,14 +2720,14 @@ void LayerTRW::geotagging_waypoint_mtime_keep_cb(void)
 
 void LayerTRW::geotagging_waypoint_mtime_update_cb(void)
 {
-#ifdef K
 	sg_uid_t wp_uid = this->menu_data->sublayer_uid;
 	Waypoint * wp = this->waypoints.at(wp_uid);
 	if (wp) {
+#ifdef K
 		/* Update directly. */
 		a_geotag_write_exif_gps(wp->image, wp->coord, wp->altitude, false);
-	}
 #endif
+	}
 }
 
 
@@ -2738,16 +2738,12 @@ void LayerTRW::geotagging_waypoint_mtime_update_cb(void)
  */
 void LayerTRW::geotagging_track_cb(void)
 {
-#ifdef K
 	sg_uid_t uid = this->menu_data->sublayer_uid;
 	Track * trk = this->tracks.at(uid);
 	/* Unset so can be reverified later if necessary. */
 	this->has_verified_thumbnails = false;
-
-	trw_layer_geotag_dialog(this->get_window(),
-				this,
-				NULL,
-				trk);
+#ifdef K
+	trw_layer_geotag_dialog(this->get_window(), this, NULL, trk);
 #endif
 }
 
@@ -2756,14 +2752,10 @@ void LayerTRW::geotagging_track_cb(void)
 
 void LayerTRW::geotagging_waypoint_cb(void)
 {
-#ifdef K
 	sg_uid_t wp_uid = this->menu_data->sublayer_uid;
 	Waypoint * wp = this->waypoints.at(wp_uid);
-
-	trw_layer_geotag_dialog(this->get_window(),
-				this,
-				wp,
-				NULL);
+#ifdef K
+	trw_layer_geotag_dialog(this->get_window(), this, wp, NULL);
 #endif
 }
 
@@ -2772,14 +2764,10 @@ void LayerTRW::geotagging_waypoint_cb(void)
 
 void LayerTRW::geotag_images_cb(void) /* Slot. */
 {
-#ifdef K
 	/* Unset so can be reverified later if necessary. */
 	this->has_verified_thumbnails = false;
-
-	trw_layer_geotag_dialog(this->get_window(),
-				this,
-				NULL,
-				NULL);
+#ifdef K
+	trw_layer_geotag_dialog(this->get_window(), this, NULL, NULL);
 #endif
 }
 #endif
@@ -2943,9 +2931,9 @@ void LayerTRW::upload_to_gps_cb(void) /* Slot. */
  */
 void LayerTRW::gps_upload_any_cb()
 {
-#ifdef K
-	LayersPanel * panel = this->menu_data->layers_panel;
+	LayersPanel * panel = (LayersPanel *) this->menu_data->layers_panel;
 	sg_uid_t uid = this->menu_data->sublayer_uid;
+#ifdef K
 
 	// May not actually get a track here as values[2&3] can be null
 	Track * trk = NULL;
@@ -3198,12 +3186,12 @@ void LayerTRW::upload_to_osm_traces_cb(void) /* Slot. */
 
 void LayerTRW::osm_traces_upload_track_cb(void)
 {
-#ifdef K
 	if (this->menu_data->misc) {
 		Track * trk = ((Track *) this->menu_data->misc);
+#ifdef K
 		osm_traces_upload_viktrwlayer(this, trk);
-	}
 #endif
+	}
 }
 
 
@@ -3841,7 +3829,6 @@ void LayerTRW::delete_all_waypoints_cb(void) /* Slot. */
 
 void LayerTRW::delete_sublayer_cb(void)
 {
-#ifdef K
 	sg_uid_t uid = this->menu_data->sublayer_uid;
 	bool was_visible = false;
 
@@ -3859,7 +3846,7 @@ void LayerTRW::delete_sublayer_cb(void)
 
 			was_visible = this->delete_waypoint(wp);
 			this->calculate_bounds_waypoints();
-			// Reset layer timestamp in case it has now changed
+			/* Reset layer timestamp in case it has now changed. */
 			this->tree_view->set_timestamp(this->index, this->get_timestamp());
 		}
 	} else if (this->menu_data->sublayer_type == SublayerType::TRACK) {
@@ -3874,14 +3861,14 @@ void LayerTRW::delete_sublayer_cb(void)
 			}
 
 			was_visible = this->delete_track(trk);
-			// Reset layer timestamp in case it has now changed
+			/* Reset layer timestamp in case it has now changed. */
 			this->tree_view->set_timestamp(this->index, this->get_timestamp());
 		}
 	} else {
 		Track * trk = this->routes.at(uid);
 		if (trk && trk->name) {
 			if (this->menu_data->confirm) {
-				// Get confirmation from the user
+				/* Get confirmation from the user. */
 				if (!a_dialog_yes_or_no(this->get_window(),
 							QString(_("Are you sure you want to delete the route \"%1\"?")).arg(QString(trk->name)))) {
 					return;
@@ -3893,7 +3880,6 @@ void LayerTRW::delete_sublayer_cb(void)
 	if (was_visible) {
 		this->emit_changed();
 	}
-#endif
 }
 
 
@@ -3904,20 +3890,22 @@ void LayerTRW::delete_sublayer_cb(void)
  */
 void LayerTRW::waypoint_rename(Waypoint * wp, char const * new_name)
 {
-#ifdef K
 	wp->set_name(new_name);
 
-	// Now update the treeview as well
-	// Need key of it for treeview update
+	/* Now update the treeview as well.
+	   Need key of it for treeview update. */
 	sg_uid_t uid = LayerTRWc::find_uid_of_waypoint(this->waypoints, wp);
 	if (uid) {
-		GtkTreeIter * it = this->waypoints_iters.at(uid);
-		if (it) {
-			this->tree_view->set_name(it, new_name);
+		TreeIndex * index = this->waypoints_iters.at(uid);
+		if (index && index->isValid()) {
+			this->tree_view->set_name(index, new_name);
 			this->tree_view->sort_children(this->waypoints_node, this->wp_sort_order);
+		} else if (!index || !index->isValid()) {
+			qDebug() << "EE: TRW Layer: trying to rename waypoint with invalid index";
+		} else {
+			;
 		}
 	}
-#endif
 }
 
 
@@ -3928,13 +3916,17 @@ void LayerTRW::waypoint_rename(Waypoint * wp, char const * new_name)
  */
 void LayerTRW::waypoint_reset_icon(Waypoint * wp)
 {
-	// update the treeview
-	// Need key of it for treeview update
+	/* Update the treeview.
+	   Need key of it for treeview update. */
 	sg_uid_t uid = LayerTRWc::find_uid_of_waypoint(this->waypoints, wp);
 	if (uid) {
 		TreeIndex * index = this->waypoints_iters.at(uid);
 		if (index && index->isValid()) {
 			this->tree_view->set_icon(index, get_wp_sym_small(wp->symbol));
+		} else if (!index || !index->isValid()) {
+			qDebug() << "EE: TRW Layer: trying to reset icon of waypoint with invalid index";
+		} else {
+			;
 		}
 	}
 }
@@ -3944,21 +3936,22 @@ void LayerTRW::waypoint_reset_icon(Waypoint * wp)
 
 void LayerTRW::properties_item_cb(void)
 {
-#ifdef K
 	if (this->menu_data->sublayer_type == SublayerType::WAYPOINT) {
 		sg_uid_t wp_uid = this->menu_data->sublayer_uid;
 		Waypoint * wp = this->waypoints.at(wp_uid);
 
 		if (wp && wp->name) {
 			bool updated = false;
-			char *new_name = waypoint_properties_dialog(this->get_window(), wp->name, this, wp, this->coord_mode, false, &updated);
-			if (new_name) {
+#ifdef K
+			char * new_name = waypoint_properties_dialog(this->get_window(), wp->name, this, wp, this->coord_mode, false, &updated);
+			if (new_name) { /* TODO: memory management. */
 				this->waypoint_rename(wp, new_name);
 			}
 
-			if (updated && data->tv_iter) {
+			if (updated && this->menu_data->index) {
 				this->tree_view->set_icon(this->menu_data->index, get_wp_sym_small(wp->symbol));
 			}
+#endif
 
 			if (updated && this->visible) {
 				this->emit_changed();
@@ -3966,17 +3959,17 @@ void LayerTRW::properties_item_cb(void)
 		}
 	} else {
 		Track * trk = this->get_track_helper(this->menu_data->sublayer_type, this->menu_data->sublayer_uid);
-
 		if (trk && trk->name) {
+#ifdef K
 			vik_trw_layer_propwin_run(this->get_window(),
 						  this,
 						  trk,
 						  this->menu_data->layers_panel ? this->menu_data->layers_panel : NULL,
 						  this->menu_data->viewport,
 						  false);
+#endif
 		}
 	}
-#endif
 }
 
 
@@ -3989,18 +3982,17 @@ void LayerTRW::properties_item_cb(void)
  */
 void LayerTRW::track_statistics_cb(void)
 {
-#ifdef K
 	Track * trk = this->get_track_helper(this->menu_data->sublayer_type, this->menu_data->sublayer_uid);
-
 	if (trk && trk->name) {
+#ifdef K
 		vik_trw_layer_propwin_run(this->get_window(),
 					  this,
 					  trk,
 					  this->menu_data->layers_panel,
 					  this->menu_data->viewport,
 					  true);
-	}
 #endif
+	}
 }
 
 
@@ -4071,14 +4063,12 @@ static void goto_coord(LayersPanel * panel, Layer * layer, Viewport * viewport, 
 
 void LayerTRW::goto_track_startpoint_cb(void)
 {
-#ifdef K
 	LayersPanel * panel = this->get_window()->get_layers_panel();
 	Track * trk = this->get_track_helper(this->menu_data->sublayer_type, this->menu_data->sublayer_uid);
 
 	if (trk && !trk->empty()) {
-		goto_coord(panel, this, data->viewport, &trk->get_tp_first()->coord);
+		goto_coord(panel, this, this->menu_data->viewport, &trk->get_tp_first()->coord);
 	}
-#endif
 }
 
 
@@ -4208,21 +4198,20 @@ void LayerTRW::extend_track_end_cb(void)
  */
 void LayerTRW::extend_track_end_route_finder_cb(void)
 {
-#ifdef K
 	sg_uid_t uid = this->menu_data->sublayer_uid;
 	Track * trk = this->routes.at(uid);
 	if (!trk) {
 		return;
 	}
-
+#ifdef K
 	this->get_window()->enable_layer_tool(LayerType::TRW, TOOL_ROUTE_FINDER);
+#endif
 	this->current_track = trk;
 	this->route_finder_started = true;
 
 	if (!trk->empty()) {
-		goto_coord(this->menu_data->layers_panel, this, this->menu_data->viewport, &trk->get_tp_last()->coord);
+		goto_coord((LayersPanel *) this->menu_data->layers_panel, this, this->menu_data->viewport, &trk->get_tp_last()->coord);
 	}
-#endif
 }
 
 
@@ -4230,9 +4219,9 @@ void LayerTRW::extend_track_end_route_finder_cb(void)
 
 bool LayerTRW::dem_test(LayersPanel * panel)
 {
-	// If have a panel then perform a basic test to see if any DEM info available...
+	/* If have a panel then perform a basic test to see if any DEM info available... */
 	if (panel) {
-		std::list<Layer *> * dems = panel->get_all_layers_of_type(LayerType::DEM, true); // Includes hidden DEM layer types
+		std::list<Layer *> * dems = panel->get_all_layers_of_type(LayerType::DEM, true); /* Includes hidden DEM layer types. */
 		if (dems->empty()) {
 			a_dialog_error_msg("No DEM layers available, thus no DEM values can be applied.", "Error");
 			return false;
@@ -4254,7 +4243,7 @@ void LayerTRW::apply_dem_data_common(LayersPanel * panel, Track * trk, bool skip
 	}
 
 	unsigned long changed = trk->apply_dem_data(skip_existing_elevations);
-	// Inform user how much was changed
+	/* Inform user how much was changed. */
 	char str[64];
 	const char * tmp_str = ngettext("%ld point adjusted", "%ld points adjusted", changed);
 	snprintf(str, 64, tmp_str, changed);
@@ -4300,7 +4289,7 @@ void LayerTRW::apply_dem_data_only_missing_cb(void)
 void LayerTRW::smooth_it(Track * trk, bool flat)
 {
 	unsigned long changed = trk->smooth_missing_elevation_data(flat);
-	// Inform user how much was changed
+	/* Inform user how much was changed. */
 	char str[64];
 	const char * tmp_str = ngettext("%ld point adjusted", "%ld points adjusted", changed);
 	snprintf(str, 64, tmp_str, changed);
@@ -4410,7 +4399,6 @@ void LayerTRW::apply_dem_data_wpt_only_missing_cb(void)
 
 void LayerTRW::goto_track_endpoint_cb(void)
 {
-#ifdef K
 	LayersPanel * panel = this->get_window()->get_layers_panel();
 	Track * trk = this->get_track_helper(this->menu_data->sublayer_type, this->menu_data->sublayer_uid);
 
@@ -4421,8 +4409,7 @@ void LayerTRW::goto_track_endpoint_cb(void)
 	if (trk->empty()) {
 		return;
 	}
-	goto_coord(panel, this, data->viewport, &trk->get_tp_last()->coord);
-#endif
+	goto_coord((LayersPanel *) panel, this, this->menu_data->viewport, &trk->get_tp_last()->coord);
 }
 
 
@@ -4514,13 +4501,13 @@ void LayerTRW::auto_track_view_cb(void)
  */
 void LayerTRW::route_refine_cb(void)
 {
-#ifdef K
 	static int last_engine = 0;
-	Track * trk = this->get_track_helper(data);
+	Track * trk = this->get_track_helper(this->menu_data->sublayer_type, this->menu_data->sublayer_uid);
 
 	if (trk && !trk->empty()) {
 		/* Check size of the route */
 		int nb = trk->get_tp_count();
+#ifdef K
 		if (nb > 100) {
 			GtkWidget *dialog = gtk_message_dialog_new(this->get_window(),
 								   (GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
@@ -4533,7 +4520,6 @@ void LayerTRW::route_refine_cb(void)
 			if (response != GTK_RESPONSE_OK) {
 				return;
 			}
-
 		}
 		/* Select engine from dialog */
 		GtkWidget *dialog = gtk_dialog_new_with_buttons(_("Refine Route with Routing Engine..."),
@@ -4586,8 +4572,8 @@ void LayerTRW::route_refine_cb(void)
 			this->get_window()->clear_busy_cursor();
 		}
 		gtk_widget_destroy(dialog);
-	}
 #endif
+	}
 }
 
 
@@ -4660,7 +4646,6 @@ int sort_alphabetically(gconstpointer a, gconstpointer b, void * user_data)
  */
 void LayerTRW::merge_with_other_cb(void)
 {
-#ifdef K
 	sg_uid_t uid = this->menu_data->sublayer_uid;
 	std::unordered_map<sg_uid_t, SlavGPS::Track*> * ght_tracks = NULL;
 	if (this->menu_data->sublayer_type == SublayerType::ROUTE) {
@@ -4678,6 +4663,7 @@ void LayerTRW::merge_with_other_cb(void)
 	if (trk->empty()) {
 		return;
 	}
+#ifdef K
 
 	/* with_timestamps: allow merging with 'similar' time type time tracks
 	   i.e. either those times, or those without */
@@ -4694,9 +4680,9 @@ void LayerTRW::merge_with_other_cb(void)
 		return;
 	}
 
-	// Sort alphabetically for user presentation
-	// Convert into list of names for usage with dialog function
-	// TODO: Need to consider how to work best when we can have multiple tracks the same name...
+	/* Sort alphabetically for user presentation.
+	   Convert into list of names for usage with dialog function.
+	   TODO: Need to consider how to work best when we can have multiple tracks the same name... */
 	GList *other_tracks_names = NULL;
 	GList *iter = g_list_first(other_tracks);
 	while (iter) {
@@ -4754,7 +4740,6 @@ void LayerTRW::merge_with_other_cb(void)
  */
 void LayerTRW::append_track_cb(void)
 {
-#ifdef K
 	Track *trk;
 	std::unordered_map<sg_uid_t, SlavGPS::Track*> * ght_tracks = NULL;
 	if (this->menu_data->sublayer_type == SublayerType::ROUTE) {
@@ -4770,20 +4755,21 @@ void LayerTRW::append_track_cb(void)
 		return;
 	}
 
+#ifdef K
 	GList *other_tracks_names = NULL;
 
-	// Sort alphabetically for user presentation
-	// Convert into list of names for usage with dialog function
-	// TODO: Need to consider how to work best when we can have multiple tracks the same name...
+	/* Sort alphabetically for user presentation.
+	   Convert into list of names for usage with dialog function.
+	   TODO: Need to consider how to work best when we can have multiple tracks the same name... */
 	twt_udata udata;
 	udata.result = &other_tracks_names;
 	udata.exclude = trk;
 
 	LayerTRWc::sorted_track_id_by_name_list_exclude_self(ght_tracks, &udata);
 
-	// Note the limit to selecting one track only
-	//  this is to control the ordering of appending tracks, i.e. the selected track always goes after the current track
-	//  (otherwise with multiple select the ordering would not be controllable by the user - automatically being alphabetically)
+	/* Note the limit to selecting one track only.
+	   This is to control the ordering of appending tracks, i.e. the selected track always goes after the current track
+	   (otherwise with multiple select the ordering would not be controllable by the user - automatically being alphabetically). */
 	GList *append_list = a_dialog_select_from_list(this->get_window(),
 						       other_tracks_names,
 						       false,
@@ -4793,12 +4779,12 @@ void LayerTRW::append_track_cb(void)
 
 	g_list_free(other_tracks_names);
 
-	// It's a list, but shouldn't contain more than one other track!
+	/* It's a list, but shouldn't contain more than one other track! */
 	if (append_list) {
 
 		for (GList * l = append_list; l != NULL; l = g_list_next(l)) {
-			// TODO: at present this uses the first track found by name,
-			//  which with potential multiple same named tracks may not be the one selected...
+			/* TODO: at present this uses the first track found by name,
+			   which with potential multiple same named tracks may not be the one selected... */
 			Track *append_track;
 			if (trk->is_route) {
 				append_track = this->get_route((const char *) l->data);
@@ -4836,7 +4822,6 @@ void LayerTRW::append_track_cb(void)
  */
 void LayerTRW::append_other_cb(void)
 {
-#ifdef K
 	sg_uid_t uid = this->menu_data->sublayer_uid;
 
 	std::unordered_map<sg_uid_t, SlavGPS::Track*> * ght_mykind;
@@ -4854,21 +4839,21 @@ void LayerTRW::append_other_cb(void)
 	if (!trk) {
 		return;
 	}
-
+#ifdef K
 	GList *other_tracks_names = NULL;
 
-	// Sort alphabetically for user presentation
-	// Convert into list of names for usage with dialog function
-	// TODO: Need to consider how to work best when we can have multiple tracks the same name...
+	/* Sort alphabetically for user presentation.
+	   Convert into list of names for usage with dialog function.
+	   TODO: Need to consider how to work best when we can have multiple tracks the same name... */
 	twt_udata udata;
 	udata.result = &other_tracks_names;
 	udata.exclude = trk;
 
 	LayerTRWc::sorted_track_id_by_name_list_exclude_self(ght_others, &udata);
 
-	// Note the limit to selecting one track only
-	//  this is to control the ordering of appending tracks, i.e. the selected track always goes after the current track
-	//  (otherwise with multiple select the ordering would not be controllable by the user - automatically being alphabetically)
+	/* Note the limit to selecting one track only.
+	   this is to control the ordering of appending tracks, i.e. the selected track always goes after the current track
+	   (otherwise with multiple select the ordering would not be controllable by the user - automatically being alphabetically). */
 	GList *append_list = a_dialog_select_from_list(this->get_window(),
 						       other_tracks_names,
 						       false,
@@ -4878,13 +4863,13 @@ void LayerTRW::append_other_cb(void)
 
 	g_list_free(other_tracks_names);
 
-	// It's a list, but shouldn't contain more than one other track!
+	/* It's a list, but shouldn't contain more than one other track! */
 	if (append_list) {
 		for (GList * l = append_list; l != NULL; l = g_list_next(l)) {
-			// TODO: at present this uses the first track found by name,
-			//  which with potential multiple same named tracks may not be the one selected...
+			/* TODO: at present this uses the first track found by name,
+			   which with potential multiple same named tracks may not be the one selected... */
 
-			// Get FROM THE OTHER TYPE list
+			/* Get FROM THE OTHER TYPE list. */
 			Track *append_track;
 			if (trk->is_route) {
 				append_track = this->get_track((const char *) l->data);
@@ -4929,7 +4914,7 @@ void LayerTRW::append_other_cb(void)
 
 
 
-/* merge by segments */
+/* Merge by segments. */
 void LayerTRW::merge_by_segment_cb(void)
 {
 	sg_uid_t uid = this->menu_data->sublayer_uid;
@@ -4949,12 +4934,12 @@ void LayerTRW::merge_by_segment_cb(void)
 /* merge by time routine */
 void LayerTRW::merge_by_timestamp_cb(void)
 {
-#ifdef K
 	sg_uid_t uid = this->menu_data->sublayer_uid;
 
 	//time_t t1, t2;
 
-	Track *orig_trk = this->tracks.at(uid);
+	Track * orig_trk = this->tracks.at(uid);
+#ifdef K
 	if (!orig_trk->empty()
 	    && !orig_trk->get_tp_first()->has_timestamp) {
 		a_dialog_error_msg(this->get_window(), _("Failed. This track does not have timestamp"));
@@ -4978,13 +4963,13 @@ void LayerTRW::merge_by_timestamp_cb(void)
 		return;
 	}
 
-	// keep attempting to merge all tracks until no merges within the time specified is possible
+	/* Keep attempting to merge all tracks until no merges within the time specified is possible. */
 	bool attempt_merge = true;
 	GList *nearby_tracks = NULL;
 
 	while (attempt_merge) {
 
-		// Don't try again unless tracks have changed
+		/* Don't try again unless tracks have changed. */
 		attempt_merge = false;
 
 		/* kamilTODO: why call this here? Shouldn't we call this way earlier? */
@@ -4997,17 +4982,17 @@ void LayerTRW::merge_by_timestamp_cb(void)
 			nearby_tracks = NULL;
 		}
 
-		/* get a list of adjacent-in-time tracks */
+		/* Get a list of adjacent-in-time tracks. */
 		nearby_tracks = LayerTRWc::find_nearby_tracks_by_time(this->tracks, orig_trk, (threshold_in_minutes * 60));
 
-		/* merge them */
+		/* Merge them. */
 
 		for (GList *l = nearby_tracks; l; l = g_list_next(l)) {
 			/* remove trackpoints from merged track, delete track */
 			orig_trk->steal_and_append_trackpoints(((Track *) l->data));
 			this->delete_track(((Track *) l->data));
 
-			// Tracks have changed, therefore retry again against all the remaining tracks
+			/* Tracks have changed, therefore retry again against all the remaining tracks. */
 			attempt_merge = true;
 		}
 
@@ -5094,7 +5079,7 @@ void LayerTRW::split_by_timestamp_cb(void)
 	}
 #endif
 
-	/* iterate through trackpoints, and copy them into new lists without touching original list */
+	/* Iterate through trackpoints, and copy them into new lists without touching original list. */
 	auto iter = trk->trackpointsB->begin();
 	time_t prev_ts = (*iter)->timestamp;
 
@@ -5104,7 +5089,7 @@ void LayerTRW::split_by_timestamp_cb(void)
 	for (; iter != trk->trackpointsB->end(); iter++) {
 		time_t ts = (*iter)->timestamp;
 
-		// Check for unordered time points - this is quite a rare occurence - unless one has reversed a track.
+		/* Check for unordered time points - this is quite a rare occurence - unless one has reversed a track. */
 		if (ts < prev_ts) {
 			char tmp_str[64];
 			strftime(tmp_str, sizeof(tmp_str), "%c", localtime(&ts));
@@ -5117,7 +5102,7 @@ void LayerTRW::split_by_timestamp_cb(void)
 		}
 
 		if (ts - prev_ts > thr * 60) {
-			/* flush accumulated trackpoints into new list */
+			/* Flush accumulated trackpoints into new list. */
 			points.push_back(newtps);
 			newtps = new TrackPoints;
 		}
@@ -5151,7 +5136,6 @@ void LayerTRW::split_by_timestamp_cb(void)
  */
 void LayerTRW::split_by_n_points_cb(void)
 {
-#ifdef K
 	Track * trk = this->get_track_helper(this->menu_data->sublayer_type, this->menu_data->sublayer_uid);
 
 	if (!trk || trk->empty()) {
@@ -5162,17 +5146,16 @@ void LayerTRW::split_by_n_points_cb(void)
 	int n_points = a_dialog_get_positive_number(this->get_window(),
 						    _("Split Every Nth Point"),
 						    _("Split on every Nth point:"),
-						    250,   // Default value as per typical limited track capacity of various GPS devices
-						    2,     // Min
-						    65536, // Max
-						    5);    // Step
-#endif
-	// Was a valid number returned?
+						    250,   /* Default value as per typical limited track capacity of various GPS devices. */
+						    2,     /* Min */
+						    65536, /* Max */
+						    5);    /* Step */
+	/* Was a valid number returned? */
 	if (!n_points) {
 		return;
 	}
 
-	// Now split...
+	/* Now split. */
 	TrackPoints * newtps = new TrackPoints;
 	std::list<TrackPoints *> points;
 
@@ -5838,7 +5821,6 @@ void LayerTRW::delete_selected_tracks_cb(void) /* Slot. */
 {
 	LayersPanel * panel = this->get_window()->get_layers_panel();
 
-#ifdef K
 	/* Ensure list of track names offered is unique. */
 	if (LayerTRWc::has_same_track_names(this->tracks)) {
 		if (a_dialog_yes_or_no(this->get_window(),
@@ -5849,6 +5831,7 @@ void LayerTRW::delete_selected_tracks_cb(void) /* Slot. */
 		}
 	}
 
+#ifdef K
 	/* Sort list alphabetically for better presentation. */
 	GList * all = LayerTRWc::sorted_track_id_by_name_list(this->tracks);
 
@@ -5888,7 +5871,6 @@ void LayerTRW::delete_selected_routes_cb(void) /* Slot. */
 {
 	LayersPanel * panel = this->get_window()->get_layers_panel();
 
-#ifdef K
 	/* Ensure list of track names offered is unique. */
 	if (LayerTRWc::has_same_track_names(this->routes)) {
 		if (a_dialog_yes_or_no(this->get_window(),
@@ -5898,7 +5880,7 @@ void LayerTRW::delete_selected_routes_cb(void) /* Slot. */
 			return;
 		}
 	}
-
+#ifdef K
 	/* Sort list alphabetically for better presentation. */
 	GList * all = LayerTRWc::sorted_track_id_by_name_list(this->routes);
 
@@ -6357,14 +6339,12 @@ void LayerTRW::routes_stats_cb(void)
 
 void LayerTRW::goto_waypoint_cb(void)
 {
-#ifdef K
 	LayersPanel * panel = this->get_window()->get_layers_panel();
 	sg_uid_t wp_uid = this->menu_data->sublayer_uid;
 	Waypoint * wp = this->waypoints.at(wp_uid);
 	if (wp) {
-		goto_coord(panel, this, data->viewport, &wp->coord);
+		goto_coord((LayersPanel *) panel, this, this->menu_data->viewport, &wp->coord);
 	}
-#endif
 }
 
 
@@ -6372,12 +6352,12 @@ void LayerTRW::goto_waypoint_cb(void)
 
 void LayerTRW::waypoint_geocache_webpage_cb(void)
 {
-#ifdef K
 	sg_uid_t wp_uid = this->menu_data->sublayer_uid;
 	Waypoint * wp = this->waypoints.at(wp_uid);
 	if (!wp) {
 		return;
 	}
+#ifdef K
 	char *webpage = g_strdup_printf("http://www.geocaching.com/seek/cache_details.aspx?wp=%s", wp->name);
 	open_url(this->get_window(), webpage);
 	free(webpage);
@@ -6389,13 +6369,12 @@ void LayerTRW::waypoint_geocache_webpage_cb(void)
 
 void LayerTRW::waypoint_webpage_cb(void)
 {
-#ifdef K
 	sg_uid_t wp_uid = this->menu_data->sublayer_uid;
 	Waypoint * wp = this->waypoints.at(wp_uid);
 	if (!wp) {
 		return;
 	}
-
+#ifdef K
 	if (wp->url) {
 		open_url(this->get_window(), wp->url);
 	} else if (!strncmp(wp->comment, "http", 4)) {
@@ -6409,13 +6388,12 @@ void LayerTRW::waypoint_webpage_cb(void)
 
 
 
-char const * LayerTRW::sublayer_rename_request(const char * newname, void * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, GtkTreeIter * iter)
+char const * LayerTRW::sublayer_rename_request(const char * newname, void * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeIndex * index)
 {
-#ifdef K
 	if (sublayer_type == SublayerType::WAYPOINT) {
 		Waypoint * wp = this->waypoints.at(sublayer_uid);
 
-		// No actual change to the name supplied
+		/* No actual change to the name supplied. */
 		if (wp->name) {
 			if (strcmp(newname, wp->name) == 0) {
 				return NULL;
@@ -6427,15 +6405,15 @@ char const * LayerTRW::sublayer_rename_request(const char * newname, void * pane
 		if (wpf) {
 			/* An existing waypoint has been found with the requested name. */
 			if (!a_dialog_yes_or_no(this->get_window(),
-						QString(_("A waypoint with the name \"%1\" already exists. Really rename to the same name?")).args(QString(newname)))) {
+						QString(_("A waypoint with the name \"%1\" already exists. Really rename to the same name?")).arg(QString(newname)))) {
 				return NULL;
 			}
 		}
 
-		// Update WP name and refresh the treeview
+		/* Update WP name and refresh the treeview. */
 		wp->set_name(newname);
 
-		this->tree_view->set_name(iter, newname);
+		this->tree_view->set_name(index, newname);
 		this->tree_view->sort_children(this->waypoints_node, this->wp_sort_order);
 
 		((LayersPanel *) panel)->emit_update_cb();
@@ -6446,7 +6424,7 @@ char const * LayerTRW::sublayer_rename_request(const char * newname, void * pane
 	if (sublayer_type == SublayerType::TRACK) {
 		Track * trk = this->tracks.at(sublayer_uid);
 
-		// No actual change to the name supplied
+		/* No actual change to the name supplied. */
 		if (trk->name) {
 			if (strcmp(newname, trk->name) == 0) {
 				return NULL;
@@ -6462,18 +6440,20 @@ char const * LayerTRW::sublayer_rename_request(const char * newname, void * pane
 				return NULL;
 			}
 		}
-		// Update track name and refresh GUI parts
+		/* Update track name and refresh GUI parts. */
 		trk->set_name(newname);
 
-		// Update any subwindows that could be displaying this track which has changed name
-		// Only one Track Edit Window
+		/* Update any subwindows that could be displaying this track which has changed name.
+		   Only one Track Edit Window. */
 		if (this->selected_track == trk && this->tpwin) {
 			this->tpwin->set_track_name(newname);
 		}
-		// Property Dialog of the track
+#ifdef K
+		/* Property Dialog of the track. */
 		vik_trw_layer_propwin_update(trk);
+#endif
 
-		this->tree_view->set_name(iter, newname);
+		this->tree_view->set_name(index, newname);
 		this->tree_view->sort_children(this->tracks_node, this->track_sort_order);
 
 		((LayersPanel *) panel)->emit_update_cb();
@@ -6484,7 +6464,7 @@ char const * LayerTRW::sublayer_rename_request(const char * newname, void * pane
 	if (sublayer_type == SublayerType::ROUTE) {
 		Track * trk = this->routes.at(sublayer_uid);
 
-		// No actual change to the name supplied
+		/* No actual change to the name supplied. */
 		if (trk->name) {
 			if (strcmp(newname, trk->name) == 0) {
 				return NULL;
@@ -6500,25 +6480,27 @@ char const * LayerTRW::sublayer_rename_request(const char * newname, void * pane
 				return NULL;
 			}
 		}
-		// Update track name and refresh GUI parts
+		/* Update track name and refresh GUI parts. */
 		trk->set_name(newname);
 
-		// Update any subwindows that could be displaying this track which has changed name
-		// Only one Track Edit Window
+		/* Update any subwindows that could be displaying this track which has changed name.
+		   Only one Track Edit Window. */
 		if (this->selected_track == trk && this->tpwin) {
 			this->tpwin->set_track_name(newname);
 		}
-		// Property Dialog of the track
+#ifdef K
+		/* Property Dialog of the track. */
 		vik_trw_layer_propwin_update(trk);
+#endif
 
-		this->tree_view->set_name(iter, newname);
+		this->tree_view->set_name(index, newname);
 		this->tree_view->sort_children(this->tracks_node, this->track_sort_order);
 
 		((LayersPanel *) panel)->emit_update_cb();
 
 		return newname;
 	}
-#endif
+
 	return NULL;
 }
 
@@ -6537,9 +6519,9 @@ bool is_valid_geocache_name(char *str)
 #ifndef WINDOWS
 void LayerTRW::track_use_with_filter_cb(void)
 {
-#ifdef K
 	sg_uid_t uid = this->menu_data->sublayer_uid;
 	Track * trk = this->tracks.at(uid);
+#ifdef K
 	a_acquire_set_filter_track(trk);
 #endif
 }
@@ -6562,17 +6544,17 @@ bool LayerTRW::is_valid_google_route(sg_uid_t track_uid)
 
 void LayerTRW::google_route_webpage_cb(void)
 {
-#ifdef K
-	sg_uid_t uid = this->menu_->sublayer_uid;
+	sg_uid_t uid = this->menu_data->sublayer_uid;
 	Track * trk = this->routes.at(uid);
 	if (trk) {
+#ifdef K
 		char *escaped = uri_escape(trk->comment);
 		char *webpage = g_strdup_printf("http://maps.google.com/maps?f=q&hl=en&q=%s", escaped);
 		open_url(this->get_window(), webpage);
 		free(escaped);
 		free(webpage);
+#endif
 	}
-	#endif
 }
 
 #endif
@@ -6580,7 +6562,7 @@ void LayerTRW::google_route_webpage_cb(void)
 
 
 
-// TODO: Probably better to rework this track manipulation in viktrack.c
+/* TODO: Probably better to rework this track manipulation in viktrack.c. */
 void LayerTRW::insert_tp_beside_current_tp(bool before)
 {
 	/* Sanity check. */
@@ -6663,7 +6645,7 @@ void LayerTRW::my_tpwin_set_tp()
 {
 	Track * trk = this->selected_track;
 	VikCoord vc;
-	// Notional center of a track is simply an average of the bounding box extremities
+	/* Notional center of a track is simply an average of the bounding box extremities. */
 	struct LatLon center = { (trk->bbox.north+trk->bbox.south)/2, (trk->bbox.east+trk->bbox.west)/2 };
 	vik_coord_load_from_latlon(&vc, this->coord_mode, &center);
 	this->tpwin->set_tp(this->selected_track, &this->selected_tp.iter, trk->name, this->selected_track->is_route);
@@ -6965,7 +6947,6 @@ static const char* my_track_colors(int ii)
 
 void LayerTRW::track_alloc_colors()
 {
-#ifdef K
 	/* Tracks. */
 	int ii = 0;
 	for (auto i = this->tracks.begin(); i != this->tracks.end(); i++) {
@@ -6974,12 +6955,14 @@ void LayerTRW::track_alloc_colors()
 
 		/* Tracks get a random spread of colours if not already assigned. */
 		if (!trk->has_color) {
+#ifdef K
 			if (this->drawmode == DRAWMODE_ALL_SAME_COLOR) {
 				trk->color = this->track_color;
 			} else {
 				gdk_color_parse(my_track_colors(ii), &(trk->color));
 			}
 			trk->has_color = true;
+#endif
 		}
 
 		this->update_treeview(trk);
@@ -6998,19 +6981,20 @@ void LayerTRW::track_alloc_colors()
 
 		/* Routes get an intermix of reds. */
 		if (!trk->has_color) {
+#ifdef K
 			if (ii) {
 				gdk_color_parse("#FF0000", &trk->color); /* Red. */
 			} else {
 				gdk_color_parse("#B40916", &trk->color); /* Dark Red. */
 			}
 			trk->has_color = true;
+#endif
 		}
 
 		this->update_treeview(trk);
 
 		ii = !ii;
 	}
-#endif
 }
 
 
@@ -7457,15 +7441,14 @@ void vik_track_download_map(Track *tr, Layer * vml, double zoom_level)
 
 void LayerTRW::download_map_along_track_cb(void)
 {
-#ifdef K
 	Layer *vml;
 	int selected_map;
 	char *zoomlist[] = {(char *) "0.125", (char *) "0.25", (char *) "0.5", (char *) "1", (char *) "2", (char *) "4", (char *) "8", (char *) "16", (char *) "32", (char *) "64", (char *) "128", (char *) "256", (char *) "512", (char *) "1024", NULL };
 	double zoom_vals[] = {0.125, 0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024};
 	int selected_zoom, default_zoom;
 
-	LayersPanel * panel = this->menu_data->layers_panel;
-	Track * trk = this->get_track_helper(this->menu_data);
+	LayersPanel * panel = (LayersPanel *) this->menu_data->layers_panel;
+	Track * trk = this->get_track_helper(this->menu_data->sublayer_type, this->menu_data->sublayer_uid);
 
 	if (!trk) {
 		return;
@@ -7473,9 +7456,9 @@ void LayerTRW::download_map_along_track_cb(void)
 
 	Viewport * viewport = this->get_window()->get_viewport();
 
+#ifdef K
 	std::list<Layer *> * vmls = panel->get_all_layers_of_type(LayerType::MAPS, true); /* Includes hidden map layer types. */
 	int num_maps = vmls->size();
-
 	if (!num_maps) {
 		a_dialog_error_msg(this->get_window(), _("No map layer in use. Create one first"));
 		return;
@@ -7624,9 +7607,7 @@ std::list<track_layer_t *> * LayerTRW::create_tracks_and_layers_list()
 	std::list<Track *> * tracks = new std::list<Track *>;
 	tracks = LayerTRWc::get_track_values(tracks, this->get_tracks());
 	tracks = LayerTRWc::get_track_values(tracks, this->get_routes());
-#ifdef K
 	return this->create_tracks_and_layers_list_helper(tracks);
-#endif
 }
 
 
@@ -7635,16 +7616,15 @@ std::list<track_layer_t *> * LayerTRW::create_tracks_and_layers_list()
 void LayerTRW::track_list_dialog_single_cb(void) /* Slot. */
 {
 	char * title = NULL;
-#ifdef K
 	if (this->menu_data->sublayer_type == SublayerType::TRACKS) {
 		title = g_strdup_printf(_("%s: Track List"), this->name);
 	} else {
 		title = g_strdup_printf(_("%s: Route List"), this->name);
 	}
-
-	vik_trw_layer_track_list_show_dialog(title, this, data->sublayer_type, false);
-	free(title);
+#ifdef K
+	vik_trw_layer_track_list_show_dialog(title, this, this->menu_data->sublayer_type, false);
 #endif
+	free(title);
 }
 
 
@@ -7652,11 +7632,11 @@ void LayerTRW::track_list_dialog_single_cb(void) /* Slot. */
 
 void LayerTRW::track_list_dialog_cb(void)
 {
-#ifdef K
 	char *title = g_strdup_printf(_("%s: Track and Route List"), this->name);
+#ifdef K
 	vik_trw_layer_track_list_show_dialog(title, this, SublayerType::NONE, false);
-	free(title);
 #endif
+	free(title);
 }
 
 
@@ -7664,11 +7644,11 @@ void LayerTRW::track_list_dialog_cb(void)
 
 void LayerTRW::waypoint_list_dialog_cb(void) /* Slot. */
 {
-#ifdef K
 	char * title = g_strdup_printf(_("%s: Waypoint List"), this->name);
+#ifdef K
 	vik_trw_layer_waypoint_list_show_dialog(title, this, false);
-	free(title);
 #endif
+	free(title);
 }
 
 
