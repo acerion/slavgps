@@ -18,24 +18,31 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-#include <math.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
+#include <cmath>
+#include <cstring>
+#include <cstdlib>
+#include <cstdio>
 #include <cassert>
+
+#include <QMenu>
+
+#ifdef K
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <glib/gi18n.h>
+#endif
 
-#include "viking.h"
-#include "viktrwlayer_waypointlist.h"
+//#include "viking.h"
+#include "waypoint_list.h"
 #include "waypoint_properties.h"
+#include "util.h"
+#ifdef K
 #include "clipboard.h"
 #include "dialog.h"
 #include "settings.h"
 #include "globals.h"
 #include "window.h"
-
+#endif
 
 
 
@@ -44,10 +51,12 @@ using namespace SlavGPS;
 
 
 
-// Long formatted date+basic time - listing this way ensures the string comparison sort works - so no local type format %x or %c here!
+/* Long formatted date+basic time - listing this way ensures the string
+   comparison sort works - so no local type format %x or %c here! */
 #define WAYPOINT_LIST_DATE_FORMAT "%Y-%m-%d %H:%M"
 
 
+typedef int waypointlist_data_t;
 
 
 /**
@@ -89,9 +98,18 @@ static void format_1f_cell_data_func(GtkTreeViewColumn * col,
 
 
 
-#define WPT_LIST_COLS 9
-#define WPT_COL_NUM WPT_LIST_COLS-1
-#define TRW_COL_NUM WPT_COL_NUM-1
+enum {
+	LAYER_NAME_COLUMN = 0,    /* Layer Name (string). */
+	WAYPOINT_NAME_COLUMN,     /* Waypoint Name (string). */
+	DATE_COLUMN,              /* Date (string). */
+	VISIBLE_COLUMN,           /* Visibility (boolean). */
+	COMMENT_COLUMN,           /* Comment (string). */
+	HEIGHT_COLUMN,            /* Height (int). */
+	SYMBOL_COLUMN,            /* Symbol icon (pixmap). */
+	LAYER_POINTER_COLUMN,     /* Pointer to TRW layer (pointer). */
+	WAYPOINT_POINTER_COLUMN,  /* Pointer to waypoint (pointer). */
+	N_COLUMNS
+};
 
 
 
@@ -123,7 +141,7 @@ static bool trw_layer_waypoint_tooltip_cb(GtkWidget  * widget,
 	}
 
 	Waypoint * wp;
-	gtk_tree_model_get(model, &iter, WPT_COL_NUM, &wp, -1);
+	gtk_tree_model_get(model, &iter, WAYPOINT_POINTER_COLUMN, &wp, -1);
 	if (!wp) {
 		return false;
 	}
@@ -149,7 +167,7 @@ static bool trw_layer_waypoint_tooltip_cb(GtkWidget  * widget,
 
 
 /*
-static void trw_layer_waypoint_select_cb(GtkTreeSelection * selection, void * data)
+void WaypointListDialog::waypoint_select_cb(void) // Slot.
 {
 	GtkTreeIter iter;
 	if (!gtk_tree_selection_get_selected(selection, NULL, &iter)) {
@@ -160,13 +178,13 @@ static void trw_layer_waypoint_select_cb(GtkTreeSelection * selection, void * da
 	GtkTreeModel *model = gtk_tree_view_get_model(tree_view);
 
 	Waypoint *wp;
-	gtk_tree_model_get(model, &iter, WPT_COL_NUM, &wp, -1);
+	gtk_tree_model_get(model, &iter, WAYPOINT_POINTER_COLUMN, &wp, -1);
 	if (!wp) {
 		return;
 	}
 
 	LayerTRW * trw;
-	gtk_tree_model_get(model, &iter, TRW_COL_NUM, &trw-, -1);
+	gtk_tree_model_get(model, &iter, LAYER_POINTER_COLUMN, &trw-, -1);
 	if (trw->type != LayerTRW::TRW) {
 		return;
 	}
@@ -178,21 +196,10 @@ static void trw_layer_waypoint_select_cb(GtkTreeSelection * selection, void * da
 
 
 
-typedef struct {
-	LayerTRW * trw;
-	Waypoint * waypoint;
-	sg_uid_t waypoint_uid;
-	Viewport * viewport;
-	GtkWidget * gtk_tree_view;
-	std::list<waypoint_layer_t *> * waypoints_and_layers;
-} waypointlist_data_t;
-
-
-
 
 // Instead of hooking automatically on treeview item selection
 // This is performed on demand via the specific menu request
-static void trw_layer_waypoint_select(waypointlist_data_t * values)
+void WaypointListDialog::waypoint_select(LayerTRW * layer)
 {
 #ifdef K
 	LayerTRW * trw = values->trw;
@@ -211,7 +218,7 @@ static void trw_layer_waypoint_select(waypointlist_data_t * values)
 
 
 
-static void trw_layer_waypoint_properties(waypointlist_data_t * values)
+void WaypointListDialog::waypoint_properties_cb(void) /* Slot. */
 {
 #ifdef K
 	LayerTRW * trw = values->trw;
@@ -243,23 +250,25 @@ static void trw_layer_waypoint_properties(waypointlist_data_t * values)
 
 
 
-static void trw_layer_waypoint_view(waypointlist_data_t * values)
+void WaypointListDialog::waypoint_view_cb(void) /* Slot. */
 {
+#ifdef K
 	LayerTRW * trw = values->trw;
 	Waypoint * wp = values->waypoint;
 	Viewport * viewport = values->viewport;
 
 	viewport->set_center_coord(&(wp->coord), true);
 
-	trw_layer_waypoint_select(values);
+	this->waypoint_select(trw);
 
 	trw->emit_changed();
+#endif
 }
 
 
 
 
-static void trw_layer_show_picture_wp(waypointlist_data_t * values)
+void WaypointListDialog::show_picture_waypoint_cb(void) /* Slot. */
 {
 #ifdef K
 	Waypoint * wp = values->waypoint;
@@ -325,7 +334,7 @@ static void copy_selection(GtkTreeModel * model,
 	gtk_tree_model_get(model, iter, 5, &hh, -1);
 
 	Waypoint * wp;
-        gtk_tree_model_get(model, iter, WPT_COL_NUM, &wp, -1);
+        gtk_tree_model_get(model, iter, WAYPOINT_POINTER_COLUMN, &wp, -1);
 	struct LatLon ll;
 	if (wp) {
 		vik_coord_to_latlon(&wp->coord, &ll);
@@ -366,7 +375,7 @@ static void trw_layer_copy_selected(GtkWidget * tree_view, bool include_position
 	unsigned int count = g_list_length(gl);
 	g_list_free(gl);
 	copy_data_t cd;
-	cd.has_layer_names = (count > WPT_LIST_COLS-3);
+	cd.has_layer_names = (count > N_COLUMNS-3);
 	cd.str = g_string_new(NULL);
 	cd.include_positions = include_positions;
 	gtk_tree_selection_selected_foreach(selection, copy_selection, &cd);
@@ -380,7 +389,7 @@ static void trw_layer_copy_selected(GtkWidget * tree_view, bool include_position
 
 
 
-static void trw_layer_copy_selected_only_visible_columns(GtkWidget * tree_view)
+void WaypointListDialog::copy_selected_only_visible_columns_cb(void) /* Slot. */
 {
 #ifdef K
 	trw_layer_copy_selected(tree_view, false);
@@ -390,7 +399,7 @@ static void trw_layer_copy_selected_only_visible_columns(GtkWidget * tree_view)
 
 
 
-static void trw_layer_copy_selected_with_position(GtkWidget * tree_view)
+void WaypointListDialog::copy_selected_with_position_cb(void) /* Slot. */
 {
 #ifdef K
 	trw_layer_copy_selected(tree_view, true);
@@ -400,71 +409,40 @@ static void trw_layer_copy_selected_with_position(GtkWidget * tree_view)
 
 
 
-static void add_copy_menu_items(GtkMenu * menu, GtkWidget * tree_view)
+void WaypointListDialog::add_copy_menu_items(QMenu & menu)
 {
-#ifdef K
-	GtkWidget * item = gtk_image_menu_item_new_with_mnemonic(_("_Copy Data"));
-	gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_COPY, GTK_ICON_SIZE_MENU));
-	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(trw_layer_copy_selected_only_visible_columns), tree_view);
-	gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-	gtk_widget_show(item);
+	QAction * qa = NULL;
 
-	item = gtk_image_menu_item_new_with_mnemonic(_("Copy Data (with _positions)"));
-	gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_COPY, GTK_ICON_SIZE_MENU));
-	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(trw_layer_copy_selected_with_position), tree_view);
-	gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-	gtk_widget_show(item);
-#endif
+	qa = menu.addAction(QIcon::fromTheme("edit-copy"), QString(_("&Copy Data")));
+	connect(qa, SIGNAL (triggered(bool)), this, SLOT (copy_selected_only_visible_columns_cb()));
+
+	qa = menu.addAction(QIcon::fromTheme("edit-copy"), QString(_("Copy Data (with &positions)")));
+	connect(qa, SIGNAL (triggered(bool)), this, SLOT (copy_selected_with_position_cb()));
 }
 
 
 
 
-static bool add_menu_items(QMenu & menu, LayerTRW * trw, Waypoint * wp, sg_uid_t wp_uid, Viewport * viewport, GtkWidget * gtk_tree_view, std::list<waypoint_layer_t *> * waypoints_and_layers)
+void WaypointListDialog::add_menu_items(QMenu & menu)
 {
-#ifdef K
-	GtkWidget * item;
+	QAction * qa = NULL;
 
-	static waypointlist_data_t values;
-	values.trw                  = trw;
-	values.waypoint             = wp;
-	values.waypoint_uid         = wp_uid;
-	values.viewport             = viewport;
-	values.gtk_tree_view        = gtk_tree_view;
-	values.waypoints_and_layers = waypoints_and_layers;
-
-	/*
-	item = gtk_image_menu_item_new_with_mnemonic(_("_Select"));
-	gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_FIND, GTK_ICON_SIZE_MENU));
-	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(trw_layer_waypoint_select), &values);
-	gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-	gtk_widget_show(item);
-	*/
-
-	// AUTO SELECT NOT true YET...
-	// ATM view auto selects, so don't bother with separate select menu entry
-	item = gtk_image_menu_item_new_with_mnemonic(_("_View"));
-	gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_ZOOM_FIT, GTK_ICON_SIZE_MENU));
-	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(trw_layer_waypoint_view), &values);
-	gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-	gtk_widget_show(item);
-
-	item = gtk_image_menu_item_new_from_stock(GTK_STOCK_PROPERTIES, NULL);
-	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(trw_layer_waypoint_properties), &values);
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-	gtk_widget_show(item);
-
-	item = gtk_image_menu_item_new_with_mnemonic(_("_Show Picture..."));
-	gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock ("vik-icon-Show Picture", GTK_ICON_SIZE_MENU)); // Own icon - see stock_icons in vikwindow.c
-	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(trw_layer_show_picture_wp), &values);
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-	gtk_widget_show(item);
-	gtk_widget_set_sensitive(item, KPOINTER_TO_INT(wp->image));
-
-	add_copy_menu_items(menu, gtk_tree_view);
+#if 0
+	qa = menu.addAction(QIcon::fromTheme("edit-find"), QString(_("&Select")));
+	connect(qa, SIGNAL (triggered(bool)), this, SLOT (waypoint_select_cb()));
 #endif
 
-	return true;
+	qa = menu.addAction(QIcon::fromTheme("zoom-fit-best"), QString(_("&Zoom onto")));
+	connect(qa, SIGNAL (triggered(bool)), this, SLOT (waypoint_view_cb()));
+
+	qa = menu.addAction(QIcon::fromTheme("document-properties"), QString(_("&Properties")));
+	connect(qa, SIGNAL (triggered(bool)), this, SLOT (waypoint_properties_cb()));
+
+	qa = menu.addAction(QIcon::fromTheme("vik-icon-Show Picture"), QString(_("&Show Picture...")));
+	connect(qa, SIGNAL (triggered(bool)), this, SLOT (show_picture_waypoint_cb()));
+	qa->setEnabled(this->menu_data.waypoint->image);
+
+	return;
 }
 
 
@@ -488,69 +466,94 @@ static bool trw_layer_waypoint_menu_popup_multi(GtkWidget * tree_view,
 
 
 
-static bool trw_layer_waypoint_menu_popup(GtkWidget * tree_view,
-					  GdkEventButton * event,
-					  void * waypoints_and_layers)
+
+
+void WaypointListDialog::contextMenuEvent(QContextMenuEvent * event)
 {
-#ifdef K
-	static GtkTreeIter iter;
+	QPoint orig = event->pos();
+	QPoint v = this->view->pos();
+	QPoint t = this->view->viewport()->pos();
 
-	// Use selected item to get a single iterator ref
-	// This relies on an row being selected as part of the right click
-	GtkTreeSelection *selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(tree_view));
-	if (gtk_tree_selection_count_selected_rows(selection) != 1) {
-		return trw_layer_waypoint_menu_popup_multi(tree_view, event, waypoints_and_layers);
+	orig.setX(orig.x() - v.x() - t.x());
+	orig.setY(orig.y() - v.y() - t.y());
+
+	QPoint point = orig;
+	QModelIndex ind = this->view->indexAt(point);
+
+	if (!ind.isValid()) {
+		qDebug() << "II: Waypoint List:: context menu event: INvalid index";
+		return;
 	}
 
-	GtkTreePath * path;
-	GtkTreeModel * model = gtk_tree_view_get_model(GTK_TREE_VIEW(tree_view));
 
-	// All this just to get the iter
-	if (gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(tree_view),
-					  (int) event->x,
-					  (int) event->y,
-					  &path, NULL, NULL, NULL)) {
-		gtk_tree_model_get_iter_from_string(model, &iter, gtk_tree_path_to_string (path));
-		gtk_tree_path_free(path);
-	} else {
-		return false;
+	qDebug() << "II: Waypoint list: context menu event: valid index, row = " << ind.row();
+
+	TreeIndex index = QPersistentModelIndex(ind);
+	{
+		QStandardItem * parent = this->model->itemFromIndex(index.parent());
+		if (!parent) {
+			/* "index" points at the "Top Layer" layer. */
+			qDebug() << "II: Tree View: querying Top Layer for item" << index.row() << index.column();
+			parent = this->model->invisibleRootItem();
+		}
+		QStandardItem * ch = parent->child(index.row(), WAYPOINT_NAME_COLUMN);
+		qDebug() << "II: Waypoint List: selected waypoint" << ch->text();
 	}
 
-	Waypoint * wp;
-	gtk_tree_model_get(model, &iter, WPT_COL_NUM, &wp, -1);
-	if (!wp) {
-		return false;
+	QModelIndex parent = index.parent();
+	if (parent.isValid()) {
+		QModelIndex index2 = parent.child(ind.row(), 0);
+		qDebug() << "II: Waypoint List: context menu event: item" << index << "index2" << index2;
+		if (index.isValid()) {
+			qDebug() << "II: Waypoint List: context menu event: index.row =" << index.row() << "index.column =" << index.column() << "text =" << this->model->itemFromIndex(index2)->text();
+		}
+		index = index2;
 	}
 
-	LayerTRW * trw;
-	gtk_tree_model_get(model, &iter, TRW_COL_NUM, &trw, -1);
-	if (trw->type != LayerType::TRW) {
-		return false;
+
+	Waypoint * wp = NULL;
+	LayerTRW * trw = NULL;
+	{
+		QStandardItem * parent2 = this->model->itemFromIndex(parent);
+		if (!parent2) {
+			/* "index" points at the "Top Layer" layer. */
+			qDebug() << "II: Tree View: querying Top Layer for item" << index.row() << index.column();
+			parent2 = this->model->invisibleRootItem();
+		}
+		QStandardItem * ch = parent2->child(index.row(), WAYPOINT_POINTER_COLUMN);
+		QVariant variant = ch->data(RoleLayerData);
+		wp = (Waypoint *) variant.toULongLong();
+	}
+
+	{
+		QStandardItem * parent2 = this->model->itemFromIndex(parent);
+		if (!parent2) {
+			/* "index" points at the "Top Layer" layer. */
+			qDebug() << "II: Tree View: querying Top Layer for item" << index.row() << index.column();
+			parent2 = this->model->invisibleRootItem();
+		}
+		QStandardItem * ch = parent2->child(index.row(), LAYER_POINTER_COLUMN);
+		QVariant variant = ch->data(RoleLayerData);
+		trw = (LayerTRW *) variant.value<Layer *>();
+		if (trw->type != LayerType::TRW) {
+			return;
+		}
 	}
 
 	sg_uid_t wp_uuid = LayerTRWc::find_uid_of_waypoint(trw->get_waypoints(), wp);
 	if (wp_uuid) {
-		Viewport * viewport = trw->get_window()->get_viewport();
+		this->menu_data.trw = trw;
+		this->menu_data.waypoint = wp;
+		this->menu_data.waypoint_uid = wp_uuid;
+		this->menu_data.viewport = trw->get_window()->get_viewport();
 
-		GtkWidget * menu = gtk_menu_new();
+		QMenu menu(this);
+		this->add_menu_items(menu);
 
-		// Originally started to reuse the trw_layer menu items
-		//  however these offer too many ways to edit the waypoint data
-		//  so without an easy way to distinguish read only operations,
-		//  create a very minimal new set of operations
-		add_menu_items(GTK_MENU(menu),
-			       trw,
-			       wp,
-			       wp_uuid,
-			       viewport,
-			       tree_view,
-			       (std::list<SlavGPS::waypoint_layer_t*> *) waypoints_and_layers);
-
-		gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL, event->button, gtk_get_current_event_time());
-		return true;
+		menu.exec(QCursor::pos());
+		return;
 	}
-#endif
-	return false;
+	return;
 }
 
 
@@ -589,24 +592,16 @@ static bool trw_layer_waypoint_button_pressed(GtkWidget * tree_view,
 
 
 /*
- * Foreach entry we copy the various individual waypoint properties into the tree store
- *  formatting & converting the internal values into something for display
+ * For each entry we copy the various individual waypoint properties into the tree store
+ * formatting & converting the internal values into something for display.
  */
-static void trw_layer_waypoint_list_add(waypoint_layer_t * element,
-					GtkTreeStore * store,
-					HeightUnit height_units,
-					const char * date_format)
+void WaypointListDialog::add(Waypoint * wp, LayerTRW * trw, HeightUnit height_units, const char * date_format)
 {
-#ifdef K
-	GtkTreeIter t_iter;
-	Waypoint * wp = element->wp;
-	LayerTRW * trw = element->trw;
-
-	// Get start date
-	char time_buf[32];
-	time_buf[0] = '\0';
+	/* Get start date. */
+	char time_buf[32] = { 0 };
 	if (wp->has_timestamp) {
 
+#ifdef K
 #if GLIB_CHECK_VERSION(2,26,0)
 		GDateTime * gdt = g_date_time_new_from_unix_utc(wp->timestamp);
 		char * time = g_date_time_format(gdt, date_format);
@@ -619,9 +614,10 @@ static void trw_layer_waypoint_list_add(waypoint_layer_t * element,
 		g_date_strftime(time_buf, sizeof(time_buf), date_format, gdate_start);
 		g_date_free(gdate_start);
 #endif
+#endif
 	}
 
-	// NB: doesn't include aggegrate visibility
+	/* This parameter doesn't include aggegrate visibility. */
 	bool visible = trw->visible && wp->visible;
 	visible = visible && trw->get_waypoints_visibility();
 
@@ -631,23 +627,67 @@ static void trw_layer_waypoint_list_add(waypoint_layer_t * element,
 		alt = VIK_METERS_TO_FEET(alt);
 		break;
 	default:
-		// HeightUnit::METRES: no need to convert
+		/* HeightUnit::METRES: no need to convert. */
 		break;
 	}
 
-	gtk_tree_store_append(store, &t_iter, NULL);
-	gtk_tree_store_set(store, &t_iter,
-			   0, trw->name,
-			   1, wp->name,
-			   2, time_buf,
-			   3, visible,
-			   4, wp->comment,
-			   5, (int) round(alt),
-			   6, get_wp_sym_small(wp->symbol),
-			   TRW_COL_NUM, trw,
-			   WPT_COL_NUM, wp,
-			   -1);
+
+	QList<QStandardItem *> items;
+	QStandardItem * item = NULL;
+	QVariant variant;
+
+
+	/* LAYER_NAME_COLUMN */
+	item = new QStandardItem(QString(trw->name));
+	items << item;
+
+	/* WAYPOINT_NAME_COLUMN */
+	item = new QStandardItem(QString(wp->name));
+	items << item;
+
+	/* DATE_COLUMN */
+	item = new QStandardItem(QString(time_buf));
+	items << item;
+
+	/* VISIBLE_COLUMN */
+	visible;
+	item = new QStandardItem();
+	item->setCheckable(true);
+	item->setCheckState(visible ? Qt::Checked : Qt::Unchecked);
+	items << item;
+
+	/* COMMENT_COLUMN */
+	item = new QStandardItem(QString(wp->comment));
+	items << item;
+
+	/* HEIGHT_COLUMN */
+	item = new QStandardItem();
+	variant = QVariant::fromValue((int) round(alt));
+	item->setData(variant, RoleLayerData);
+	items << item;
+
+	/* SYMBOL_COLUMN */
+#ifdef K
+	get_wp_sym_small(wp->symbol);
 #endif
+	item = new QStandardItem();
+	item->setIcon(QIcon::fromTheme("list-add"));
+	item->setEditable(false);
+	items << item;
+
+	/* LAYER_POINTER_COLUMN */
+	item = new QStandardItem();
+	variant = QVariant::fromValue((Layer *) trw);
+	item->setData(variant, RoleLayerData);
+	items << item;
+
+	/* WAYPOINT_POINTER_COLUMN */
+	item = new QStandardItem();
+	variant = QVariant::fromValue((qulonglong) wp);
+	item->setData(variant, RoleLayerData);
+	items << item;
+
+	this->model->invisibleRootItem()->appendRow(items);
 }
 
 
@@ -664,11 +704,11 @@ int sort_pixbuf_compare_func(GtkTreeModel * model,
 {
 #ifdef K
 	Waypoint * wp1, * wp2;
-	gtk_tree_model_get(model, a, WPT_COL_NUM, &wp1, -1);
+	gtk_tree_model_get(model, a, WAYPOINT_POINTER_COLUMN, &wp1, -1);
 	if (!wp1) {
 		return 0;
 	}
-	gtk_tree_model_get(model, b, WPT_COL_NUM, &wp2, -1);
+	gtk_tree_model_get(model, b, WAYPOINT_POINTER_COLUMN, &wp2, -1);
 	if (!wp2) {
 		return 0;
 	}
@@ -704,45 +744,92 @@ static GtkTreeViewColumn * my_new_column_text(const char * title, GtkCellRendere
  * Create a table of waypoints with corresponding waypoint information
  * This table does not support being actively updated
  */
-static void vik_trw_layer_waypoint_list_internal(GtkWidget * dialog,
-						 std::list<waypoint_layer_t *> * waypoints_and_layers,
-						 bool show_layer_names)
+void WaypointListDialog::build_model(bool show_layer_names)
 {
-#ifdef K
-	if (!waypoints_and_layers || waypoints_and_layers->empty()) {
+	if (!this->waypoints_and_layers || this->waypoints_and_layers->empty()) {
 		return;
 	}
+
+
+	this->model = new QStandardItemModel();
+	this->model->setHorizontalHeaderItem(LAYER_NAME_COLUMN, new QStandardItem("Layer"));
+	this->model->setHorizontalHeaderItem(WAYPOINT_NAME_COLUMN, new QStandardItem("Name"));
+	this->model->setHorizontalHeaderItem(DATE_COLUMN, new QStandardItem("Date"));
+	this->model->setHorizontalHeaderItem(VISIBLE_COLUMN, new QStandardItem("Visible"));
+	this->model->setHorizontalHeaderItem(COMMENT_COLUMN, new QStandardItem("Comment"));
+	this->model->setHorizontalHeaderItem(HEIGHT_COLUMN, new QStandardItem("Max Height (units)"));
+	this->model->setHorizontalHeaderItem(SYMBOL_COLUMN, new QStandardItem("Symbol"));
+	this->model->setHorizontalHeaderItem(LAYER_POINTER_COLUMN, new QStandardItem("Layer Pointer"));
+	this->model->setHorizontalHeaderItem(WAYPOINT_POINTER_COLUMN, new QStandardItem("Waypoint Pointer"));
+
+
+	this->view = new QTableView();
+	this->view->horizontalHeader()->setStretchLastSection(true);
+	this->view->verticalHeader()->setVisible(false);
+	this->view->setWordWrap(false);
+	this->view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+	this->view->setTextElideMode(Qt::ElideNone);
+	this->view->setShowGrid(false);
+	this->view->setModel(this->model);
+	this->view->show();
+	this->view->setVisible(false);
+	this->view->resizeRowsToContents();
+	this->view->resizeColumnsToContents();
+	this->view->setVisible(true);
+
+
+	this->view->horizontalHeader()->setSectionHidden(LAYER_NAME_COLUMN, true);
+	this->view->horizontalHeader()->setSectionHidden(WAYPOINT_NAME_COLUMN, false);
+	this->view->horizontalHeader()->setSectionHidden(DATE_COLUMN, false);
+	this->view->horizontalHeader()->setSectionHidden(VISIBLE_COLUMN, false);
+	this->view->horizontalHeader()->setSectionHidden(COMMENT_COLUMN, false);
+	this->view->horizontalHeader()->setSectionHidden(HEIGHT_COLUMN, false);
+	this->view->horizontalHeader()->setSectionHidden(SYMBOL_COLUMN, false);
+	this->view->horizontalHeader()->setSectionHidden(LAYER_POINTER_COLUMN, true);
+	this->view->horizontalHeader()->setSectionHidden(WAYPOINT_POINTER_COLUMN, true);
+
+
+	this->vbox->addWidget(this->view);
+	this->vbox->addWidget(this->button_box);
+
+	QLayout * old = this->layout();
+	delete old;
+	this->setLayout(this->vbox);
+
+	connect(this->button_box, SIGNAL(accepted()), this, SLOT(accept()));
+
+
+
+
+
+	HeightUnit height_units = a_vik_get_units_height();
+
+	char * date_format = NULL;
+#ifdef K
+	if (!a_settings_get_string(VIK_SETTINGS_LIST_DATE_FORMAT, &date_format)) {
+#endif
+		date_format = g_strdup(WAYPOINT_LIST_DATE_FORMAT);
+#ifdef K
+	}
+#endif
+
+	for (auto iter = waypoints_and_layers->begin(); iter != waypoints_and_layers->end(); iter++) {
+		this->add((*iter)->wp, (*iter)->trw, height_units, date_format);
+	}
+	free(date_format);
+
+
+#ifdef K
 
 	// It's simple storing the double values in the tree store as the sort works automatically
 	// Then apply specific cell data formatting (rather default double is to 6 decimal places!)
 	// However not storing any doubles for waypoints ATM
 	// TODO: Consider adding the waypoint icon into this store for display in the list
-	GtkTreeStore * store = gtk_tree_store_new(WPT_LIST_COLS,
-						  G_TYPE_STRING,    // 0: Layer Name
-						  G_TYPE_STRING,    // 1: Waypoint Name
-						  G_TYPE_STRING,    // 2: Date
-						  G_TYPE_BOOLEAN,   // 3: Visible
-						  G_TYPE_STRING,    // 4: Comment
-						  G_TYPE_INT,       // 5: Height
-						  GDK_TYPE_PIXBUF,  // 6: Symbol Icon
-						  G_TYPE_POINTER,   // 7: TrackWaypoint Layer pointer
-						  G_TYPE_POINTER);  // 8: Waypoint pointer
+	GtkTreeStore * store = gtk_tree_store_new(N_COLUMNS, ...);
 
 	//gtk_tree_selection_set_select_function(gtk_tree_view_get_selection (GTK_TREE_VIEW(vt)), vik_treeview_selection_filter, vt, NULL);
 
-	HeightUnit height_units = a_vik_get_units_height();
 
-	//GList *gl = create_waypoints_and_layers_cb(vl, user_data);
-	//g_list_foreach(waypoints_and_layers, (GFunc) trw_layer_waypoint_list_add, store);
-	char *date_format = NULL;
-	if (!a_settings_get_string(VIK_SETTINGS_LIST_DATE_FORMAT, &date_format)) {
-		date_format = g_strdup(WAYPOINT_LIST_DATE_FORMAT);
-	}
-
-	for (auto iter = waypoints_and_layers->begin(); iter != waypoints_and_layers->end(); iter++) {
-		trw_layer_waypoint_list_add(*iter, store, height_units, date_format);
-	}
-	free(date_format);
 
 	GtkWidget * view = gtk_tree_view_new();
 	GtkCellRenderer * renderer = gtk_cell_renderer_text_new();
@@ -808,8 +895,6 @@ static void vik_trw_layer_waypoint_list_internal(GtkWidget * dialog,
 	g_object_set(view, "has-tooltip", true, NULL);
 
 	g_signal_connect(view, "query-tooltip", G_CALLBACK (trw_layer_waypoint_tooltip_cb), NULL);
-	//g_signal_connect(gtk_tree_view_get_selection(GTK_TREE_VIEW(view)), "changed", G_CALLBACK(trw_layer_waypoint_select_cb), view);
-
 	g_signal_connect(view, "popup-menu", G_CALLBACK(trw_layer_waypoint_menu_popup), waypoints_and_layers);
 	g_signal_connect(view, "button-press-event", G_CALLBACK(trw_layer_waypoint_button_pressed), waypoints_and_layers);
 
@@ -836,28 +921,25 @@ static void vik_trw_layer_waypoint_list_internal(GtkWidget * dialog,
  * Common method for showing a list of waypoints with extended information
  *
  */
-void SlavGPS::vik_trw_layer_waypoint_list_show_dialog(char * title,
+void SlavGPS::vik_trw_layer_waypoint_list_show_dialog(QString const & title,
 						      Layer * layer,
 						      bool show_layer_names)
 {
-#ifdef K
-	GtkWidget * dialog = gtk_dialog_new_with_buttons(title,
-							 layer->get_toolkit_window(),
-							 GTK_DIALOG_DESTROY_WITH_PARENT,
-							 GTK_STOCK_CLOSE,
-							 GTK_RESPONSE_CLOSE,
-							 NULL);
+	WaypointListDialog dialog(title, layer->get_window());
 
-	std::list<waypoint_layer_t *> * waypoints_and_layers = NULL;
+
 	if (layer->type == LayerType::TRW) {
-		waypoints_and_layers = ((LayerTRW *) layer)->create_waypoints_and_layers_list();
+		dialog.waypoints_and_layers = ((LayerTRW *) layer)->create_waypoints_and_layers_list();
 	} else if (layer->type == LayerType::AGGREGATE) {
-		waypoints_and_layers = ((LayerAggregate *) layer)->create_waypoints_and_layers_list();
+		dialog.waypoints_and_layers = ((LayerAggregate *) layer)->create_waypoints_and_layers_list();
 	} else {
 		assert (0);
 	}
 
-	vik_trw_layer_waypoint_list_internal(dialog, waypoints_and_layers, show_layer_names);
+	dialog.build_model(show_layer_names);
+	dialog.exec();
+
+#ifdef K
 
 	// Use response to close the dialog with tidy up
 	g_signal_connect(G_OBJECT(dialog), "response", G_CALLBACK(waypoint_close_cb), waypoints_and_layers);
@@ -875,4 +957,24 @@ void SlavGPS::vik_trw_layer_waypoint_list_show_dialog(char * title,
 	//  viewport center + zoom is changed but the viewport isn't updated
 	// not sure why yet..
 #endif
+}
+
+
+
+
+WaypointListDialog::WaypointListDialog(QString const & title, QWidget * parent) : QDialog(parent)
+{
+	this->setWindowTitle(title);
+
+	this->button_box = new QDialogButtonBox();
+	this->parent = parent;
+	this->button_box->addButton("&Close", QDialogButtonBox::ActionRole);
+	this->vbox = new QVBoxLayout;
+}
+
+
+
+
+WaypointListDialog::~WaypointListDialog()
+{
 }

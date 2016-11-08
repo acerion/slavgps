@@ -23,8 +23,20 @@
 
 
 
+#include <list>
+
+#include <QWidget>
+#include <QDialog>
+#include <QPushButton>
+#include <QVBoxLayout>
+#include <QDialogButtonBox>
+#include <QStandardItemModel>
+#include <QTableView>
+#include <QContextMenuEvent>
 
 #include "layer.h"
+#include "layer_trw.h"
+#include "window.h"
 
 
 
@@ -34,7 +46,53 @@ namespace SlavGPS {
 
 
 
-	void vik_trw_layer_waypoint_list_show_dialog(char * title, Layer * layer, bool is_aggregate);
+	void vik_trw_layer_waypoint_list_show_dialog(QString const & title, Layer * layer, bool is_aggregate);
+
+
+
+
+	class WaypointListDialog : public QDialog {
+		Q_OBJECT
+	public:
+		WaypointListDialog(QString const & title, QWidget * parent = NULL);
+		~WaypointListDialog();
+		void build_model(bool show_layer_names);
+
+		std::list<waypoint_layer_t*> * waypoints_and_layers = NULL;
+
+	private slots:
+		void waypoint_view_cb(void);
+		// void waypoint_select_cb(void);
+		void waypoint_properties_cb(void);
+		void show_picture_waypoint_cb(void);
+
+		void copy_selected_only_visible_columns_cb(void);
+		void copy_selected_with_position_cb(void);
+
+	private:
+		void add(Waypoint * wp, LayerTRW * trw, HeightUnit height_units, const char * date_format);
+		void contextMenuEvent(QContextMenuEvent * event);
+		void add_menu_items(QMenu & menu);
+		void add_copy_menu_items(QMenu & menu);
+		void waypoint_select(LayerTRW * layer);
+
+		QWidget * parent = NULL;
+		QDialogButtonBox * button_box = NULL;
+		QVBoxLayout * vbox = NULL;
+
+		QStandardItemModel * model = NULL;
+		QTableView * view = NULL;
+
+
+
+		struct {
+			LayerTRW * trw;
+			Waypoint * waypoint;
+			sg_uid_t waypoint_uid;
+			Viewport * viewport;
+		} menu_data;
+	};
+
 
 
 
