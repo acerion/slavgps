@@ -27,12 +27,12 @@
 
 #include "layer_aggregate.h"
 #include "layers_panel.h"
+#include "waypoint_list.h"
 #include "util.h"
 #ifdef K
 #include "vikgpslayer.h"
 #include "viktrwlayer_analysis.h"
 #include "viktrwlayer_tracklist.h"
-#include "viktrwlayer_waypointlist.h"
 #include "dialog.h"
 #endif
 #include "icons/icons.h"
@@ -459,9 +459,7 @@ std::list<waypoint_layer_t *> * LayerAggregate::create_waypoints_and_layers_list
 void LayerAggregate::waypoint_list_dialog_cb(void) /* Slot. */
 {
 	QString title = QString(_("%1: Waypoint List")).arg(QString(this->name));
-#ifdef K
 	vik_trw_layer_waypoint_list_show_dialog(title, this, true);
-#endif
 }
 
 

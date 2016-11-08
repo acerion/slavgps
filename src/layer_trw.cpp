@@ -47,6 +47,7 @@
 #include "layer_trw_tools.h"
 #include "vikutils.h"
 #include "waypoint_properties.h"
+#include "waypoint_list.h"
 
 #ifdef K
 #include "vikmapslayer.h"
@@ -55,7 +56,6 @@
 #include "viktrwlayer_propwin.h"
 #include "viktrwlayer_analysis.h"
 #include "viktrwlayer_tracklist.h"
-#include "viktrwlayer_waypointlist.h"
 #ifdef VIK_CONFIG_GEOTAG
 #include "viktrwlayer_geotag.h"
 #include "geotag_exif.h"
@@ -7644,11 +7644,8 @@ void LayerTRW::track_list_dialog_cb(void)
 
 void LayerTRW::waypoint_list_dialog_cb(void) /* Slot. */
 {
-	char * title = g_strdup_printf(_("%s: Waypoint List"), this->name);
-#ifdef K
+	QString title = QString(_("%1: Waypoint List")).arg(QString(this->name));
 	vik_trw_layer_waypoint_list_show_dialog(title, this, false);
-#endif
-	free(title);
 }
 
 
