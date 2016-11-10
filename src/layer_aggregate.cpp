@@ -511,7 +511,7 @@ void LayerAggregate::search_date_cb(void) /* Slot. */
 	}
 
 	if (!found) {
-		a_dialog_info_msg(this->get_window(), _("No items found with the requested date."));
+		dialog_info("No items found with the requested date.", this->get_window());
 	}
 	free(date_str);
 #endif

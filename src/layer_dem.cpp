@@ -1424,8 +1424,7 @@ void LayerDEM::location_info_cb(void) /* Slot. */
 	}
 
 	/* Show the info. */
-	QString title("DEM File");
-	a_dialog_info_msg(message, title);
+	dialog_info(message, this->get_window());
 
 	free(source);
 }

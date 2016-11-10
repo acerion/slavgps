@@ -922,7 +922,7 @@ void LayerMaps::post_read(Viewport * viewport, bool from_file)
 		if (map->get_drawmode() != vp_drawmode) {
 			const char *drawmode_name = viewport->get_drawmode_name(map->get_drawmode());
 			char *msg = g_strdup_printf(_("New map cannot be displayed in the current drawmode.\nSelect \"%s\" from View menu to view it."), drawmode_name);
-			a_dialog_warning_msg(viewport->get_toolkit_window(), msg);
+			dialog_warning(msg, viewport->get_window());
 			free(msg);
 		}
 	}
@@ -939,9 +939,7 @@ void LayerMaps::post_read(Viewport * viewport, bool from_file)
 			/* That didn't work, so here's why: */
 			fprintf(stderr, "WARNING: %s: %s\n", __FUNCTION__, sqlite3_errmsg(this->mbtiles));
 
-			a_dialog_error_msg_extra(viewport->get_toolkit_window(),
-						 _("Failed to open MBTiles file: %s"),
-						 this->filename);
+			dialog_error(QString("Failed to open MBTiles file: %1").arg(QString(this->filename)), viewport->get_window());
 			this->mbtiles = NULL;
 		}
 	}
@@ -2222,10 +2220,10 @@ static void download_onscreen_maps(menu_array_values * values, int redownload_mo
 	} else if (map->get_drawmode() != vp_drawmode) {
 		const char * drawmode_name = viewport->get_drawmode_name(map->get_drawmode());
 		char *err = g_strdup_printf(_("Wrong drawmode for this map.\nSelect \"%s\" from View menu and try again."), _(drawmode_name));
-		a_dialog_error_msg(layer->get_toolkit_window(), err);
+		dialog_error(err, layer->get_window());
 		free(err);
 	} else {
-		a_dialog_error_msg(layer->get_toolkit_window(), _("Wrong zoom level for this map."));
+		dialog_error("Wrong zoom level for this map.", layer->get_window());
 	}
 
 }
@@ -2265,7 +2263,7 @@ static void maps_layer_about(menu_array_values * values)
 	if (map->get_license()) {
 		maps_show_license(layer->get_toolkit_window(), map);
 	} else {
-		a_dialog_info_msg(layer->get_toolkit_window(), map->get_label());
+		dialog_info(map->get_label(), layer->get_window());
 	}
 }
 
@@ -2473,7 +2471,7 @@ static void maps_layer_download_all(menu_array_values * values)
 	/* Absolute protection of hammering a map server. */
 	if (map_count > REALLY_LARGE_AMOUNT_OF_TILES) {
 		char *str = g_strdup_printf(_("You are not allowed to download more than %d tiles in one go (requested %d)"), REALLY_LARGE_AMOUNT_OF_TILES, map_count);
-		a_dialog_error_msg(layer->get_toolkit_window(), str);
+		dialog_error(str, layer->get_window());
 		free(str);
 		return;
 	}
@@ -2481,7 +2479,7 @@ static void maps_layer_download_all(menu_array_values * values)
 	/* Confirm really want to do this. */
 	if (map_count > CONFIRM_LARGE_AMOUNT_OF_TILES) {
 		char *str = g_strdup_printf(_("Do you really want to download %d tiles?"), map_count);
-		bool ans = a_dialog_yes_or_no(layer->get_toolkit_window(), str, NULL);
+		bool ans = dialog_yes_or_no(str, layer->get_window());
 		free(str);
 		if (!ans) {
 			return;

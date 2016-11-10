@@ -81,6 +81,7 @@ namespace SlavGPS {
 		void set_visible(bool visible);
 		bool get_visible(void);
 
+		Window * get_window(void);
 		GtkWindow * get_toolkit_window(void);
 		GtkWidget * get_toolkit_widget(void);
 

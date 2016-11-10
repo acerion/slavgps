@@ -2427,7 +2427,7 @@ void LayerTRW::centerize_cb(void)
 	if (this->find_center(&coord)) {
 		goto_coord(this->get_window()->get_layers_panel(), NULL, NULL, &coord);
 	} else {
-		a_dialog_info_msg("This layer has no waypoints or trackpoints.", "Info");
+		dialog_info("This layer has no waypoints or trackpoints.", this->get_window());
 	}
 }
 
@@ -2463,7 +2463,7 @@ void LayerTRW::full_view_cb(void) /* Slot. */
 	if (this->auto_set_view(this->viewport)) {
 		this->get_window()->get_layers_panel()->emit_update_cb();
 	} else {
-		a_dialog_info_msg("This layer has no waypoints or trackpoints.", "Info");
+		dialog_info("This layer has no waypoints or trackpoints.", this->get_window());
 	}
 }
 
@@ -2615,7 +2615,7 @@ void LayerTRW::goto_waypoint2_cb(void)
 		Waypoint * wp = this->get_waypoint((const char *) name);
 
 		if (!wp) {
-			a_dialog_error_msg(this->get_window(), _("Waypoint not found in this layer."));
+			dialog_error(_("Waypoint not found in this layer."), this->get_window());
 		} else {
 			panel->get_viewport()->set_center_coord(&wp->coord, true);
 			panel->emit_update_cb();
@@ -2958,7 +2958,7 @@ void LayerTRW::gps_upload_any_cb()
 	}
 
 	if (trk && !trk->visible) {
-		a_dialog_error_msg(this->get_window(), _("Can not upload invisible track."));
+		dialog_error(_("Can not upload invisible track."), this->get_window());
 		return;
 	}
 
@@ -3791,9 +3791,7 @@ void LayerTRW::delete_all_waypoints()
 void LayerTRW::delete_all_tracks_cb(void) /* Slot. */
 {
 	/* Get confirmation from the user. */
-	if (a_dialog_yes_or_no(this->get_window(),
-			       QString(_("Are you sure you want to delete all tracks in \"%1\"?")).arg(QString(this->get_name())))) {
-
+	if (dialog_yes_or_no(QString("Are you sure you want to delete all tracks in \"%1\"?").arg(QString(this->get_name())), this->get_window())) {
 		    this->delete_all_tracks();
 	}
 }
@@ -3804,8 +3802,7 @@ void LayerTRW::delete_all_tracks_cb(void) /* Slot. */
 void LayerTRW::delete_all_routes_cb(void) /* Slot. */
 {
 	/* Get confirmation from the user. */
-	if (a_dialog_yes_or_no(this->get_window(),
-			       QString(_("Are you sure you want to delete all routes in \"%1\"?")).arg(QString(this->get_name())))) {
+	if (dialog_yes_or_no(QString("Are you sure you want to delete all routes in \"%1\"?").arg(QString(this->get_name())), this->get_window())) {
 
 		    this->delete_all_routes();
 	}
@@ -3817,8 +3814,7 @@ void LayerTRW::delete_all_routes_cb(void) /* Slot. */
 void LayerTRW::delete_all_waypoints_cb(void) /* Slot. */
 {
 	/* Get confirmation from the user. */
-	if (a_dialog_yes_or_no(this->get_window(),
-			       QString(_("Are you sure you want to delete all waypoints in \"%1\"?")).arg(QString(this->get_name())))) {
+	if (dialog_yes_or_no(QString("Are you sure you want to delete all waypoints in \"%1\"?").arg(QString(this->get_name())), this->get_window())) {
 
 		    this->delete_all_waypoints();
 	}
@@ -3838,8 +3834,7 @@ void LayerTRW::delete_sublayer_cb(void)
 			if (this->menu_data->confirm) {
 				/* Get confirmation from the user. */
 				/* Maybe this Waypoint Delete should be optional as is it could get annoying... */
-				if (!a_dialog_yes_or_no(this->get_window(),
-							QString(_("Are you sure you want to delete the waypoint \"%1\"?")).arg(QString(wp->name)))) {
+				if (!dialog_yes_or_no(QString("Are you sure you want to delete the waypoint \"%1\"?").arg(QString(wp->name))), this->get_window()) {
 					return;
 				}
 			}
@@ -3854,8 +3849,7 @@ void LayerTRW::delete_sublayer_cb(void)
 		if (trk && trk->name) {
 			if (this->menu_data->confirm) {
 				/* Get confirmation from the user. */
-				if (!a_dialog_yes_or_no(this->get_window(),
-							QString(_("Are you sure you want to delete the track \"%1\"?")).arg(QString(trk->name)))) {
+				if (!dialog_yes_or_no(QString("Are you sure you want to delete the track \"%1\"?").arg(QString(trk->name))), this->get_window()) {
 					return;
 				}
 			}
@@ -3869,8 +3863,7 @@ void LayerTRW::delete_sublayer_cb(void)
 		if (trk && trk->name) {
 			if (this->menu_data->confirm) {
 				/* Get confirmation from the user. */
-				if (!a_dialog_yes_or_no(this->get_window(),
-							QString(_("Are you sure you want to delete the route \"%1\"?")).arg(QString(trk->name)))) {
+				if (!dialog_yes_or_no(QString("Are you sure you want to delete the route \"%1\"?").arg(QString(trk->name))), this->get_window()) {
 					return;
 				}
 			}
@@ -4107,8 +4100,7 @@ void LayerTRW::convert_track_route_cb(void)
 	    && ((trk->get_segment_count() > 1)
 		|| (trk->get_average_speed() > 0.0))) {
 
-		if (!a_dialog_yes_or_no(this->get_window(),
-					QString(_("Converting a track to a route removes extra track data such as segments, timestamps, etc...\nDo you want to continue?")))) {
+		if (!dialog_yes_or_no("Converting a track to a route removes extra track data such as segments, timestamps, etc...\nDo you want to continue?", this->get_window())) {
 			return;
 		}
 	}
@@ -4223,7 +4215,7 @@ bool LayerTRW::dem_test(LayersPanel * panel)
 	if (panel) {
 		std::list<Layer *> * dems = panel->get_all_layers_of_type(LayerType::DEM, true); /* Includes hidden DEM layer types. */
 		if (dems->empty()) {
-			a_dialog_error_msg("No DEM layers available, thus no DEM values can be applied.", "Error");
+			dialog_error("No DEM layers available, thus no DEM values can be applied.", this->get_window());
 			return false;
 		}
 	}
@@ -4247,7 +4239,7 @@ void LayerTRW::apply_dem_data_common(LayersPanel * panel, Track * trk, bool skip
 	char str[64];
 	const char * tmp_str = ngettext("%ld point adjusted", "%ld points adjusted", changed);
 	snprintf(str, 64, tmp_str, changed);
-	a_dialog_info_msg(str, "Info");
+	dialog_info(str, this->get_window());
 }
 
 
@@ -4293,7 +4285,7 @@ void LayerTRW::smooth_it(Track * trk, bool flat)
 	char str[64];
 	const char * tmp_str = ngettext("%ld point adjusted", "%ld points adjusted", changed);
 	snprintf(str, 64, tmp_str, changed);
-	a_dialog_info_msg(str, "Info");
+	dialog_info(str, this->get_window());
 }
 
 
@@ -4335,7 +4327,7 @@ void LayerTRW::wp_changed_message(int changed)
 	char str[64];
 	const char * tmp_str = ngettext("%ld waypoint changed", "%ld waypoints changed", changed);
 	snprintf(str, 64, tmp_str, changed);
-	a_dialog_info_msg(str, "Info");
+	dialog_info(str, this->get_window());
 }
 
 
@@ -4673,9 +4665,9 @@ void LayerTRW::merge_with_other_cb(void)
 
 	if (!other_tracks) {
 		if (with_timestamps) {
-			a_dialog_error_msg(layer->get_window(), _("Failed. No other tracks with timestamps in this layer found"));
+			dialog_error("Failed. No other tracks with timestamps in this layer found", this->get_window());
 		} else {
-			a_dialog_error_msg(layer->get_window(), _("Failed. No other tracks without timestamps in this layer found"));
+			dialog_error("Failed. No other tracks without timestamps in this layer found", this->get_window());
 		}
 		return;
 	}
@@ -4883,8 +4875,7 @@ void LayerTRW::append_other_cb(void)
 				    && ((append_track->get_segment_count() > 1)
 					|| (append_track->get_average_speed() > 0.0))) {
 
-					if (a_dialog_yes_or_no(this->get_window(),
-							       QString(_("Converting a track to a route removes extra track data such as segments, timestamps, etc...\nDo you want to continue?")))) {
+					if (dialog_yes_or_no("Converting a track to a route removes extra track data such as segments, timestamps, etc...\nDo you want to continue?", this->get_window())) {
 						append_track->merge_segments();
 						append_track->to_routepoints();
 					} else {
@@ -4925,7 +4916,7 @@ void LayerTRW::merge_by_segment_cb(void)
 	char str[64];
 	const char *tmp_str = ngettext("%d segment merged", "%d segments merged", segments);
 	snprintf(str, 64, tmp_str, segments);
-	a_dialog_info_msg(str, "Info");
+	dialog_info(str, this->get_window());
 }
 
 
@@ -4939,18 +4930,20 @@ void LayerTRW::merge_by_timestamp_cb(void)
 	//time_t t1, t2;
 
 	Track * orig_trk = this->tracks.at(uid);
-#ifdef K
+
 	if (!orig_trk->empty()
 	    && !orig_trk->get_tp_first()->has_timestamp) {
-		a_dialog_error_msg(this->get_window(), _("Failed. This track does not have timestamp"));
+		dialog_error("Failed. This track does not have timestamp", this->get_window());
 		return;
 	}
+
+#ifdef K
 
 	GList * tracks_with_timestamp = LayerTRWc::find_tracks_with_timestamp_type(&this->tracks, true, orig_trk);
 	tracks_with_timestamp = g_list_reverse(tracks_with_timestamp);
 
 	if (!tracks_with_timestamp) {
-		a_dialog_error_msg(this->get_window(), _("Failed. No other track in this layer has timestamp"));
+		dialog_error("Failed. No other track in this layer has timestamp", this->get_window());
 		return;
 	}
 	g_list_free(tracks_with_timestamp);
@@ -5094,8 +5087,7 @@ void LayerTRW::split_by_timestamp_cb(void)
 			char tmp_str[64];
 			strftime(tmp_str, sizeof(tmp_str), "%c", localtime(&ts));
 
-			if (a_dialog_yes_or_no(this->get_window(),
-					       QString(_("Can not split track due to trackpoints not ordered in time - such as at %1.\n\nGoto this trackpoint?")).arg(QString(tmp_str)))) {
+			if (dialog_yes_or_no(QString("Can not split track due to trackpoints not ordered in time - such as at %1.\n\nGoto this trackpoint?").arg(QString(tmp_str))), this->get_window()) {
 				goto_coord(panel, this, this->menu_data->viewport, &(*iter)->coord);
 			}
 			return;
@@ -5268,9 +5260,7 @@ void LayerTRW::split_segments_cb(void)
 		this->delete_track(trk);
 		this->emit_changed();
 	} else {
-#ifdef K
-		a_dialog_error_msg(this->get_window(), _("Can not split track as it has no segments"));
-#endif
+		dialog_error("Can not split track as it has no segments", this->get_window());
 	}
 }
 /* end of split/merge routines */
@@ -5344,7 +5334,7 @@ void LayerTRW::delete_points_same_position_cb(void)
 	char str[64];
 	const char *tmp_str = ngettext("Deleted %ld point", "Deleted %ld points", removed);
 	snprintf(str, 64, tmp_str, removed);
-	a_dialog_info_msg(str, "Info");
+	dialog_info(str, this->get_window());
 
 	this->emit_changed();
 }
@@ -5373,7 +5363,7 @@ void LayerTRW::delete_points_same_time_cb(void)
 	char str[64];
 	const char *tmp_str = ngettext("Deleted %ld point", "Deleted %ld points", removed);
 	snprintf(str, 64, tmp_str, removed);
-	a_dialog_info_msg(str, "Info");
+	dialog_info(str, this->get_window());
 
 	this->emit_changed();
 }
@@ -5446,9 +5436,7 @@ void LayerTRW::diary_open(char const * date_str)
 	GError *err = NULL;
 	char * cmd = g_strdup_printf("%s %s%s", diary_program, "--date=", date_str);
 	if (!g_spawn_command_line_async(cmd, &err)) {
-#ifdef K
-		a_dialog_error_msg_extra(this->get_window(), _("Could not launch %s to open file."), diary_program);
-#endif
+		dialog_error(QString("Could not launch %1 to open file.").arg(QString(diary_program)), this->get_window());
 		g_error_free(err);
 	}
 	free(cmd);
@@ -5476,9 +5464,7 @@ void LayerTRW::diary_cb(void)
 			strftime(date_buf, sizeof(date_buf), "%Y-%m-%d", gmtime(&(*trk->trackpointsB->begin())->timestamp));
 			this->diary_open(date_buf);
 		} else {
-#ifdef K
-			a_dialog_info_msg(this->get_window(), _("This track has no date information."));
-#endif
+			dialog_info("This track has no date information.", this->get_window());
 		}
 	} else if (this->menu_data->sublayer_type == SublayerType::WAYPOINT) {
 		Waypoint * wp = this->waypoints.at(uid);
@@ -5492,7 +5478,7 @@ void LayerTRW::diary_cb(void)
 			strftime(date_buf, sizeof(date_buf), "%Y-%m-%d", gmtime(&(wp->timestamp)));
 			this->diary_open(date_buf);
 		} else {
-			a_dialog_info_msg("This waypoint has no date information.", "Info");
+			dialog_info("This waypoint has no date information.", this->get_window());
 		}
 	}
 }
@@ -5520,9 +5506,7 @@ void LayerTRW::astro_open(char const * date_str,  char const * time_str, char co
 				    astro_program, "-c", tmp, "--full-screen no", "--sky-date", date_str, "--sky-time", time_str, "--latitude", lat_str, "--longitude", lon_str, "--altitude", alt_str);
 	fprintf(stderr, "WARNING: %s\n", cmd);
 	if (!g_spawn_command_line_async(cmd, &err)) {
-#ifdef K
-		a_dialog_error_msg_extra(this->get_window(), _("Could not launch %s"), astro_program);
-#endif
+		dialog_error(QString("Could not launch %1").arg(QString(astro_program)), this->get_window());
 		fprintf(stderr, "WARNING: %s\n", err->message);
 		g_error_free(err);
 	}
@@ -5609,7 +5593,7 @@ void LayerTRW::astro_cb(void)
 			free(lat_str);
 			free(lon_str);
 		} else {
-			a_dialog_info_msg("This track has no date information.", "Info");
+			dialog_info("This track has no date information.", this->get_window());
 		}
 	} else if (this->menu_data->sublayer_type == SublayerType::WAYPOINT) {
 		sg_uid_t wp_uid = this->menu_data->sublayer_uid;
@@ -5633,7 +5617,7 @@ void LayerTRW::astro_cb(void)
 			free(lat_str);
 			free(lon_str);
 		} else {
-			a_dialog_info_msg("This waypoint has no date information.", "Info");
+			dialog_info("This waypoint has no date information.", this->get_window());
 		}
 	}
 }
@@ -5823,8 +5807,7 @@ void LayerTRW::delete_selected_tracks_cb(void) /* Slot. */
 
 	/* Ensure list of track names offered is unique. */
 	if (LayerTRWc::has_same_track_names(this->tracks)) {
-		if (a_dialog_yes_or_no(this->get_window(),
-				       QString(_("Multiple entries with the same name exist. This method only works with unique names. Force unique names now?")))) {
+		if (dialog_yes_or_no(QString("Multiple entries with the same name exist. This method only works with unique names. Force unique names now?")), this->get_window()) {
 			this->uniquify_tracks(panel, this->tracks, true);
 		} else {
 			return;
@@ -5836,7 +5819,7 @@ void LayerTRW::delete_selected_tracks_cb(void) /* Slot. */
 	GList * all = LayerTRWc::sorted_track_id_by_name_list(this->tracks);
 
 	if (!all) {
-		a_dialog_error_msg("No tracks found", "Error");
+		dialog_error("No tracks found", this->get_window());
 		return;
 	}
 
@@ -5873,8 +5856,7 @@ void LayerTRW::delete_selected_routes_cb(void) /* Slot. */
 
 	/* Ensure list of track names offered is unique. */
 	if (LayerTRWc::has_same_track_names(this->routes)) {
-		if (a_dialog_yes_or_no(this->get_window(),
-				       QString(_("Multiple entries with the same name exist. This method only works with unique names. Force unique names now?")))) {
+		if (dialog_yes_or_no("Multiple entries with the same name exist. This method only works with unique names. Force unique names now?", this->get_window())) {
 			this->uniquify_tracks(panel, this->routes, false);
 		} else {
 			return;
@@ -5885,7 +5867,7 @@ void LayerTRW::delete_selected_routes_cb(void) /* Slot. */
 	GList * all = LayerTRWc::sorted_track_id_by_name_list(this->routes);
 
 	if (!all) {
-		a_dialog_error_msg(tehis->get_window(), _("No routes found"));
+		dialog_error("No routes found", this->get_window());
 		return;
 	}
 
@@ -6048,8 +6030,7 @@ void LayerTRW::delete_selected_waypoints_cb(void)
 
 	/* Ensure list of waypoint names offered is unique. */
 	if (this->has_same_waypoint_names()) {
-		if (a_dialog_yes_or_no(this->get_window(),
-				       QString(_("Multiple entries with the same name exist. This method only works with unique names. Force unique names now?")))) {
+		if (dialog_yes_or_no("Multiple entries with the same name exist. This method only works with unique names. Force unique names now?", this->get_window())) {
 			this->uniquify_waypoints(panel);
 		} else {
 			return;
@@ -6059,7 +6040,7 @@ void LayerTRW::delete_selected_waypoints_cb(void)
 	/* Sort list alphabetically for better presentation. */
 	LayerTRWc::sorted_wp_id_by_name_list(this->waypoints, &all);
 	if (!all) {
-		a_dialog_error_msg(this->get_window(), _("No waypoints found"));
+		dialog_error("No waypoints found", this->get_window());
 		return;
 	}
 
@@ -6404,8 +6385,7 @@ char const * LayerTRW::sublayer_rename_request(const char * newname, void * pane
 
 		if (wpf) {
 			/* An existing waypoint has been found with the requested name. */
-			if (!a_dialog_yes_or_no(this->get_window(),
-						QString(_("A waypoint with the name \"%1\" already exists. Really rename to the same name?")).arg(QString(newname)))) {
+			if (!dialog_yes_or_no(QString("A waypoint with the name \"%1\" already exists. Really rename to the same name?").arg(QString(newname)), this->get_window())) {
 				return NULL;
 			}
 		}
@@ -6435,8 +6415,7 @@ char const * LayerTRW::sublayer_rename_request(const char * newname, void * pane
 
 		if (trkf) {
 			/* An existing track has been found with the requested name. */
-			if (!a_dialog_yes_or_no(this->get_window(),
-						QString(_("A track with the name \"%1\" already exists. Really rename to the same name?")).arg(QString(newname)))) {
+			if (!dialog_yes_or_no(QString("A track with the name \"%1\" already exists. Really rename to the same name?").arg(QString(newname)), this->get_window())) {
 				return NULL;
 			}
 		}
@@ -6475,8 +6454,7 @@ char const * LayerTRW::sublayer_rename_request(const char * newname, void * pane
 
 		if (trkf) {
 			/* An existing track has been found with the requested name. */
-			if (!a_dialog_yes_or_no(this->get_window(),
-						QString(_("A route with the name \"%1\" already exists. Really rename to the same name?")).arg(QString(newname)))) {
+			if (!dialog_yes_or_no(QString("A route with the name \"%1\" already exists. Really rename to the same name?").arg(QString(newname)), this->get_window())) {
 				return NULL;
 			}
 		}
@@ -7460,7 +7438,7 @@ void LayerTRW::download_map_along_track_cb(void)
 	std::list<Layer *> * vmls = panel->get_all_layers_of_type(LayerType::MAPS, true); /* Includes hidden map layer types. */
 	int num_maps = vmls->size();
 	if (!num_maps) {
-		a_dialog_error_msg(this->get_window(), _("No map layer in use. Create one first"));
+		dialog_error("No map layer in use. Create one first", this->get_window());
 		return;
 	}
 

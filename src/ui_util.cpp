@@ -76,7 +76,7 @@ void open_url(GtkWindow * parent, const char * url)
 	GError * error = NULL;
 	gtk_show_uri(gtk_widget_get_screen(GTK_WIDGET(parent)), url, GDK_CURRENT_TIME, &error);
 	if (error) {
-		a_dialog_error_msg_extra(parent, _("Could not launch web browser. %s"), error->message);
+		dialog_error(QString("Could not launch web browser. %1").arg(QString(error->message)), parent);
 		g_error_free(error);
 	}
 #endif
@@ -91,7 +91,7 @@ void new_email(GtkWindow * parent, const char * address)
 	GError *error = NULL;
 	gtk_show_uri(gtk_widget_get_screen(GTK_WIDGET(parent)), uri, GDK_CURRENT_TIME, &error);
 	if (error) {
-		a_dialog_error_msg_extra(parent, _("Could not create new email. %s"), error->message);
+		dialog_error(QString("Could not create new email. %1").arg(QString(error->message)), parent);
 		g_error_free(error);
 	}
 	/*
@@ -99,7 +99,7 @@ void new_email(GtkWindow * parent, const char * address)
 	  ShellExecute(NULL, NULL, (char *) uri, NULL, ".\\", 0);
 	  #else
 	  if (!spawn_command_line_async("xdg-email", uri))
-	  a_dialog_error_msg (parent, _("Could not create new email."));
+	  dialog_error("Could not create new email.", parent);
 	  #endif
 	*/
 	free(uri);

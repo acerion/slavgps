@@ -367,11 +367,11 @@ void LayersPanel::item_edited(TreeIndex * index, char const * new_text)
 		return;
 	}
 
-#ifdef K
 	if (new_text[0] == '\0') {
-		a_dialog_error_msg(this->toplayer->get_window()->get_toolkit_window(), _("New name can not be blank."));
+		dialog_error(_("New name can not be blank."), this->toplayer->get_window());
 		return;
 	}
+#ifdef K
 
 	if (this->tree_view->get_item_type(index) == TreeItemType::LAYER) {
 
@@ -679,7 +679,7 @@ bool LayersPanel::properties()
 	TreeIndex * index = this->tree_view->get_selected_item();
 	if (this->tree_view->get_item_type(index) == TreeItemType::LAYER) {
 		if (this->tree_view->get_layer(index)->type == LayerType::AGGREGATE) {
-			a_dialog_info_msg("Aggregate Layer has no settable properties.", "Properties");
+			dialog_info("Aggregate Layer has no settable properties.", this->get_window());
 		} else {
 			Layer * layer = this->tree_view->get_layer(index);
 			if (layer->properties_dialog(this->viewport)) {
@@ -745,7 +745,7 @@ void LayersPanel::cut_selected()
 				}
 			}
 		} else {
-			a_dialog_info_msg(this->get_toolkit_window(), _("You cannot cut the Top Layer."));
+			dialog_info("You cannot cut the Top Layer.", this->get_window());
 		}
 #endif
 	} else if (type == TreeItemType::SUBLAYER) {
@@ -823,16 +823,15 @@ void LayersPanel::delete_selected()
 	if (type == TreeItemType::LAYER) {
 		Layer * layer = this->tree_view->get_layer(index);
 
-#ifndef SLAVGPS_QT
+
 		/* Get confirmation from the user. */
-		if (!a_dialog_yes_or_no(this->get_toolkit_window(),
-					 _("Are you sure you want to delete %s?"),
-					 layer->get_name())) {
+		if (!dialog_yes_or_no(QString("Are you sure you want to delete %1?").arg(QString(layer->get_name())), this->get_window())) {
 			return;
 		}
 
 		LayerAggregate * parent = (LayerAggregate *) this->tree_view->get_parent_layer(index);
 		if (parent) {
+#ifndef SLAVGPS_QT
 			/* Reset trigger if trigger deleted. */
 			if (this->get_selected_layer()->the_same_object(this->viewport->get_trigger())) {
 				this->viewport->set_trigger(NULL);
@@ -846,10 +845,10 @@ void LayersPanel::delete_selected()
 					this->emit_update_cb();
 				}
 			}
-		} else {
-			a_dialog_info_msg(this->get_toolkit_window(), _("You cannot delete the Top Layer."));
-		}
 #endif
+		} else {
+			dialog_info("You cannot delete the Top Layer.", this->get_window());
+		}
 	} else if (type == TreeItemType::SUBLAYER) {
 		Layer * selected = this->get_selected_layer();
 		SublayerType sublayer_type = this->tree_view->get_sublayer_type(index);
@@ -1000,6 +999,14 @@ bool LayersPanel::get_visible(void)
 TreeView * LayersPanel::get_treeview()
 {
 	return this->tree_view;
+}
+
+
+
+
+Window * LayersPanel::get_window()
+{
+	return this->window;
 }
 
 

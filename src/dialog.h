@@ -40,14 +40,13 @@
 
 
 
+void dialog_info(QString const & message, QWidget * parent);
+void dialog_warning(QString const & message, QWidget * parent);
+void dialog_error(QString const & message, QWidget * parent);
+bool dialog_yes_or_no(QString const & message, QWidget * parent = NULL, QString const & title = SG_APPLICATION_NAME);
 
 /* Most of this file is an architechtural flaw. */
 
-void a_dialog_msg(enum QMessageBox::Icon type, const QString & text, const QString & title);
-
-#define a_dialog_info_msg(text, title) a_dialog_msg(QMessageBox::Information, text, title)
-#define a_dialog_warning_msg(text, title) a_dialog_msg(QMessageBox::Warning, text, title)
-#define a_dialog_error_msg(text, title) a_dialog_msg(QMessageBox::Critical, text, title)
 
 QString a_dialog_new_track(QWidget * parent, QString const & default_name, bool is_route);
 
@@ -71,9 +70,6 @@ bool a_dialog_goto_latlon(GtkWindow *parent, struct LatLon *ll, const struct Lat
 bool a_dialog_goto_utm(GtkWindow *parent, struct UTM *utm, const struct UTM *old);
 
 char *a_dialog_get_date(GtkWindow *parent, const char *title);
-#endif
-bool a_dialog_yes_or_no(QWidget * parent, QString const & message, QString const & title = SG_APPLICATION_NAME);
-#if 0
 bool a_dialog_custom_zoom(GtkWindow *parent, double *xmpp, double *ympp);
 bool a_dialog_time_threshold(GtkWindow *parent, char *title_text, char *label_text, unsigned int *thr);
 

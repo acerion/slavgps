@@ -1802,7 +1802,7 @@ void LayerTRW::show_picture_cb(void) /* Slot. */
 	char *cmd = g_strdup_printf("%s %s", a_vik_get_image_viewer(), quoted_file);
 	free(quoted_file);
 	if (!g_spawn_command_line_async(cmd, &err)) {
-		a_dialog_error_msg_extra(data->layer->get_toolkit_window(), _("Could not launch %s to open file."), a_vik_get_image_viewer());
+		dialog_error(QString("Could not launch %1 to open file.").arg(Qstring(a_vik_get_image_viewer())), data->layer->get_window());
 		g_error_free(err);
 	}
 	free(cmd);

@@ -265,7 +265,7 @@ static void acquire(Window * window,
 	if (source_interface->check_existence_func) {
 		char *error_str = source_interface->check_existence_func();
 		if (error_str) {
-			a_dialog_error_msg(window->get_toolkit_window(), error_str);
+			dialog_error(error_str, window);
 			free(error_str);
 			return;
 		}
@@ -445,7 +445,7 @@ static void acquire(Window * window,
 		if (source_interface->process_func) {
 			bool result = source_interface->process_func(wi->trw, po, (BabelStatusFunc) progress_func, w, options);
 			if (!result) {
-				a_dialog_msg(window->get_toolkit_window(), GTK_MESSAGE_ERROR, _("Error: acquisition failed."), NULL);
+				dialog_error(QString(_("Error: acquisition failed.")), window);
 			}
 		}
 		free_process_options(po);

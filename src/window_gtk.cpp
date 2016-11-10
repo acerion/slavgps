@@ -1163,7 +1163,7 @@ static void menu_paste_layer_cb(GtkAction * a, Window * window)
 static void menu_properties_cb(GtkAction * a, Window * window)
 {
 	if (!window->layers_panel->properties()) {
-		a_dialog_info_msg(window->get_toolkit_window(), _("You must select a layer to show its properties."));
+		dialog_info("You must select a layer to show its properties.", window);
 	}
 }
 
@@ -1180,10 +1180,10 @@ static void help_help_cb(GtkAction * a, Window * window)
 	bool show = gtk_show_uri(NULL, uri, GDK_CURRENT_TIME, &error);
 	if (!show && !error)
 		/* No error to show, so unlikely this will get called. */
-		a_dialog_error_msg(window->get_toolkit_window(), _("The help system is not available."));
+		dialog_error("The help system is not available.", window);
 	else if (error) {
 		/* Main error path. */
-		a_dialog_error_msg_extra(window->get_toolkit_window(), _("Help is not available because: %s.\nEnsure a Mime Type ghelp handler program is installed (e.g. yelp)."), error->message);
+		dialog_error(QString("Help is not available because: %1.\nEnsure a Mime Type ghelp handler program is installed (e.g. yelp).").arg(QString(error->message)), window);
 		g_error_free(error);
 	}
 	free(uri);
@@ -1256,7 +1256,7 @@ static void help_cache_info_cb(GtkAction * a, Window * window)
 	msg_sz = g_format_size_for_display(byte_size);
 #endif
 	char * msg = g_strdup_printf("Map Cache size is %s with %d items", msg_sz, map_cache_get_count());
-	a_dialog_info_msg_extra(window->get_toolkit_window(), "%s", msg);
+	dialog_info(msg, window);
 	free(msg_sz);
 	free(msg);
 }
@@ -1278,7 +1278,7 @@ static void menu_delete_layer_cb(GtkAction * a, Window * window)
 		window->layers_panel->delete_selected();
 		window->modified = true;
 	} else {
-		a_dialog_info_msg(window->get_toolkit_window(), _("You must select a layer to delete."));
+		dialog_info("You must select a layer to delete.", window);
 	}
 }
 
@@ -1612,16 +1612,16 @@ void Window::open_file(char const * filename, bool change_filename)
 	this->loaded_type = a_file_load(agg, this->viewport, filename);
 	switch (this->loaded_type) {
 	case LOAD_TYPE_READ_FAILURE:
-		a_dialog_error_msg(this->get_toolkit_window(), _("The file you requested could not be opened."));
+		dialog_error("The file you requested could not be opened.", this->get_window());
 		break;
 	case LOAD_TYPE_GPSBABEL_FAILURE:
-		a_dialog_error_msg(this->get_toolkit_window(), _("GPSBabel is required to load files of this type or GPSBabel encountered problems."));
+		dialog_error("GPSBabel is required to load files of this type or GPSBabel encountered problems.", this->get_window());
 		break;
 	case LOAD_TYPE_GPX_FAILURE:
-		a_dialog_error_msg_extra(this->get_toolkit_window(), _("Unable to load malformed GPX file %s"), filename);
+		dialog_error(QString("Unable to load malformed GPX file %1").arg(QString(filename)), this->get_window());
 		break;
 	case LOAD_TYPE_UNSUPPORTED_FAILURE:
-		a_dialog_error_msg_extra(this->get_toolkit_window(), _("Unsupported file type for %s"), filename);
+		dialog_error(QString("Unsupported file type for %1").arg(QString(filename)), this->get_window());
 		break;
 	case LOAD_TYPE_VIK_FAILURE_NON_FATAL:
 		{
@@ -1854,7 +1854,7 @@ static bool save_file_as(GtkAction * a, Window * window)
 
 	while (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
 		fn = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
-		if (g_file_test(fn, G_FILE_TEST_EXISTS) == false || a_dialog_yes_or_no(GTK_WINDOW(dialog), _("The file \"%s\" exists, do you wish to overwrite it?"), file_basename(fn))) {
+		if (g_file_test(fn, G_FILE_TEST_EXISTS) == false || dialog_yes_or_no(QString("The file \"%1\" exists, do you wish to overwrite it?").arg(file_basename(fn)), GTK_WINDOW(dialog))) {
 			window->set_filename(fn);
 			rv = window->window_save();
 			if (rv) {
@@ -1881,7 +1881,7 @@ bool Window::window_save()
 	if (a_file_save(this->layers_panel->get_top_layer(), this->viewport, this->filename)) {
 		this->update_recently_used_document(this->filename);
 	} else {
-		a_dialog_error_msg(this->get_toolkit_window(), _("The filename you requested could not be opened for writing."));
+		dialog_error("The filename you requested could not be opened for writing.", this->get_window());
 		success = false;
 	}
 	this->clear_busy_cursor();
@@ -1980,7 +1980,7 @@ void Window::export_to_common(VikFileType_t vft, char const * extension)
 	std::list<Layer *> * layers = this->layers_panel->get_all_layers_of_type(LayerType::TRW, true);
 
 	if (!layers || layers->empty()) {
-		a_dialog_info_msg(this->get_toolkit_window(), _("Nothing to Export!"));
+		dialog_info("Nothing to Export!", this->get_window());
 		/* kamilFIXME: delete layers? */
 		return;
 	}
@@ -2004,7 +2004,7 @@ void Window::export_to_common(VikFileType_t vft, char const * extension)
 		gtk_widget_destroy(dialog);
 		if (dir) {
 			if (!this->export_to(layers, vft, dir, extension)) {
-				a_dialog_error_msg(this->get_toolkit_window(),_("Could not convert all files"));
+				dialog_error("Could not convert all files", this->get_window());
 			}
 			free(dir);
 		}
@@ -2061,8 +2061,8 @@ static void file_properties_cb(GtkAction * a, Window * window)
 		message = strdup(_("No Viking File"));
 	}
 
-	// Show the info
-	a_dialog_info_msg(window->get_toolkit_window(), message);
+	/* Show the info. */
+	dialog_info(message, window);
 	free(message);
 }
 
@@ -2239,7 +2239,7 @@ static void layer_defaults_cb(GtkAction * a, Window * window)
 	}
 
 	if (!a_layer_defaults_show_window(window->get_toolkit_window(), texts[1])) {
-		a_dialog_info_msg(window->get_toolkit_window(), _("This layer has no configurable properties."));
+		dialog_info("This layer has no configurable properties.", window);
 	}
 	// NB no update needed
 
@@ -2358,7 +2358,7 @@ static void clear_cb(GtkAction * a, Window * window)
 {
 	// Do nothing if empty
 	if (!window->layers_panel->get_top_layer()->is_empty()) {
-		if (a_dialog_yes_or_no(window->get_toolkit_window(), _("Are you sure you wish to delete all layers?"), NULL)) {
+		if (dialog_yes_or_no("Are you sure you wish to delete all layers?", window)) {
 			window->layers_panel->clear();
 			window->set_filename(NULL);
 			window->draw_update();
@@ -2585,7 +2585,7 @@ static void draw_to_image_file_current_window_cb(GtkWidget* widget,GdkEventButto
 	int height = window->viewport->get_height() * window->viewport->get_xmpp() / zoom;
 
 	if (width > width_max || width < width_min || height > height_max || height < height_min) {
-		a_dialog_info_msg(window->get_toolkit_window(), _("Viewable region outside allowable pixel size bounds for image. Clipping width/height values."));
+		dialog_info("Viewable region outside allowable pixel size bounds for image. Clipping width/height values.");
 	}
 
 	gtk_spin_button_set_value(width_spin, width);
@@ -2694,7 +2694,7 @@ static char * draw_image_filename(Window * window, img_generation_t img_gen)
 
 			fn = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
 			if (g_file_test(fn, G_FILE_TEST_EXISTS)) {
-				if (! a_dialog_yes_or_no(GTK_WINDOW(dialog), _("The file \"%s\" exists, do you wish to overwrite it?"), file_basename(fn))) {
+				if (!dialog_yes_or_no(QString("The file \"%1\" exists, do you wish to overwrite it?").arg(QString(file_basename(fn))), GTK_WINDOW(dialog))) {
 					fn = NULL;
 				}
 			}
@@ -2704,7 +2704,7 @@ static char * draw_image_filename(Window * window, img_generation_t img_gen)
 		// A directory
 		// For some reason this method is only written to work in UTM...
 		if (window->viewport->get_coord_mode() != VIK_COORD_UTM) {
-			a_dialog_error_msg(window->get_toolkit_window(), _("You must be in UTM mode to use this feature"));
+			dialog_error("You must be in UTM mode to use this feature", window);
 			return fn;
 		}
 
@@ -2904,7 +2904,7 @@ void Window::draw_to_image_file(img_generation_t img_gen)
 static void draw_to_kmz_file_cb(GtkAction * a, Window * window)
 {
 	if (window->viewport->get_coord_mode() == VIK_COORD_UTM) {
-		a_dialog_error_msg(window->get_toolkit_window(), _("This feature is not available in UTM mode"));
+		dialog_error("This feature is not available in UTM mode");
 		return;
 	}
 	// NB ATM This only generates a KMZ file with the current viewport image - intended mostly for map images [but will include any lines/icons from track & waypoints that are drawn]
@@ -2959,7 +2959,7 @@ static void import_kmz_file_cb(GtkAction * a, Window * window)
 		// TODO convert ans value into readable explaination of failure...
 		int ans = kmz_open_file(fn, window->viewport, window->layers_panel);
 		if (ans) {
-			a_dialog_error_msg_extra(window->get_toolkit_window(), _("Unable to import %s."), fn);
+			dialog_error(QString("Unable to import %1.").arg(QString(fn)), window);
 		}
 
 		window->draw_update();

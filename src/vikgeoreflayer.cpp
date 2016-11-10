@@ -467,7 +467,7 @@ void LayerGeoref::post_read(Viewport * viewport, bool from_file)
 
 	if (gx) {
 		if (!from_file) {
-			a_dialog_error_msg_extra(viewport->get_toolkit_window(), _("Couldn't open image file: %s"), gx->message);
+			dialog_error(QString("Couldn't open image file: %1").arg(QString(gx->message)), viewport->get_window());
 		}
 		g_error_free (gx);
 	} else {
@@ -596,9 +596,9 @@ static void georef_layer_dialog_load(changeable_widgets *cw)
 		double values[4];
 		int answer = world_file_read_file(gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(file_selector)), values);
 		if (answer == 1) {
-			a_dialog_error_msg(VIK_GTK_WINDOW_FROM_WIDGET(cw->x_spin), _("The World file you requested could not be opened for reading."));
+			dialog_error("The World file you requested could not be opened for reading.", VIK_GTK_WINDOW_FROM_WIDGET(cw->x_spin));
 		} else if (answer == 2) {
-			a_dialog_error_msg(VIK_GTK_WINDOW_FROM_WIDGET(cw->x_spin), _("Unexpected end of file reading World file."));
+			ialog_error("Unexpected end of file reading World file.", VIK_GTK_WINDOW_FROM_WIDGET(cw->x_spin));
 		} else {
 			/* NB answer should == 0 for success. */
 			set_widget_values(cw, values);
@@ -626,7 +626,7 @@ static void georef_layer_export_params(georef_data_t * data)
 
 		gtk_widget_destroy(file_selector);
 		if (!f) {
-			a_dialog_error_msg(layer->get_toolkit_window(), _("The file you requested could not be opened for writing."));
+			dialog_error("The file you requested could not be opened for writing."), layer->get_window());
 			return;
 		} else {
 			fprintf(f, "%f\n%f\n%f\n%f\n%f\n%f\n", layer->mpp_easting, layer->mpp_northing, 0.0, 0.0, layer->corner.easting, layer->corner.northing);
@@ -784,7 +784,7 @@ void LayerGeoref::check_br_is_good_or_msg_user()
 
 	struct LatLon ll_tl = this->get_ll_tl();
 	if (ll_tl.lat < this->ll_br.lat || ll_tl.lon > this->ll_br.lon) {
-		a_dialog_warning_msg(this->get_toolkit_window(), _("Lower right corner values may not be consistent with upper right values"));
+		dialog_warning("Lower right corner values may not be consistent with upper right values", this->get_window());
 	}
 }
 
@@ -808,7 +808,7 @@ void LayerGeoref::calculate_mpp_from_coords(GtkWidget * ww)
 	GError *gx = NULL;
 	GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(filename, &gx);
 	if (gx) {
-		a_dialog_error_msg_extra(VIK_GTK_WINDOW_FROM_WIDGET(ww), _("Couldn't open image file: %s"), gx->message);
+		dialog_error(QString("Couldn't open image file: %1").arg(QString(gx->message)), VIK_GTK_WINDOW_FROM_WIDGET(ww));
 		g_error_free(gx);
 		return;
 	}
@@ -817,7 +817,7 @@ void LayerGeoref::calculate_mpp_from_coords(GtkWidget * ww)
 	unsigned int height = gdk_pixbuf_get_height(pixbuf);
 
 	if (width == 0 || height == 0) {
-		a_dialog_error_msg_extra(VIK_GTK_WINDOW_FROM_WIDGET(ww), _("Invalid image size: %s"), filename);
+		dialog_error(QString("Invalid image size: %1").arg(QString(filename)), VIK_GTK_WINDOW_FROM_WIDGET(ww));
 	} else {
 		this->align_coords();
 

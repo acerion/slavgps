@@ -53,10 +53,37 @@ using namespace SlavGPS;
 
 
 
-void a_dialog_msg(enum QMessageBox::Icon type, const QString & text, const QString & title)
+void dialog_info(QString const & message, QWidget * parent)
 {
-	QMessageBox box(type, title, text, QMessageBox::Ok);
+	QMessageBox box(parent);
+	box.setText(message);
+	box.setIcon(QMessageBox::Information);
 	box.exec();
+	return;
+}
+
+
+
+
+void dialog_warning(QString const & message, QWidget * parent)
+{
+	QMessageBox box(parent);
+	box.setText(message);
+	box.setIcon(QMessageBox::Warning);
+	box.exec();
+	return;
+}
+
+
+
+
+void dialog_error(QString const & message, QWidget * parent)
+{
+	QMessageBox box(parent);
+	box.setText(message);
+	box.setIcon(QMessageBox::Critical);
+	box.exec();
+	return;
 }
 
 
@@ -288,7 +315,7 @@ GList *a_dialog_select_from_list(GtkWindow *parent, GList *names, bool multiple_
 			gtk_widget_destroy(dialog);
 			return names_selected;
 		}
-		a_dialog_error_msg(parent, _("Nothing was selected"));
+		dialog_error("Nothing was selected", parent);
 	}
 	gtk_widget_destroy(dialog);
 	return NULL;
@@ -411,7 +438,7 @@ GtkWidget *a_dialog_create_label_vbox(char **texts, int label_count, int spacing
 #endif
 
 
-bool a_dialog_yes_or_no(QWidget * parent, QString const & message, QString const & title)
+bool dialog_yes_or_no(QString const & message, QWidget * parent, QString const & title)
 {
 	return QMessageBox::Yes == QMessageBox::question(parent, title, message);
 }

@@ -462,8 +462,7 @@ static bool new_version_available_message(new_version_thread_data * nvtd)
 {
 	/* Only a simple goto website option is offered.
 	   Trying to do an installation update is platform specific. */
-	if (a_dialog_yes_or_no(nvtd->window,
-			       _("There is a newer version of Viking available: %s\n\nDo you wish to go to Viking's website now?"), nvtd->version)) {
+	if (dialog_yes_or_no(QString("There is a newer version of Viking available: %1\n\nDo you wish to go to Viking's website now?").arg(QString(nvtd->version)), nvtd->window)) {
 
 		/* NB 'VIKING_URL' redirects to the Wiki, here we want to go the main site. */
 		open_url(nvtd->window, "http://sourceforge.net/projects/viking/");
@@ -607,8 +606,7 @@ void SlavGPS::vu_set_auto_features_on_first_run(void)
 
 		GtkWidget *win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 
-		if (a_dialog_yes_or_no(GTK_WINDOW(win),
-				       _("This appears to be Viking's very first run.\n\nDo you wish to enable automatic internet features?\n\nIndividual settings can be controlled in the Preferences."), NULL)) {
+		if (dialog_yes_or_no("This appears to be Viking's very first run.\n\nDo you wish to enable automatic internet features?\n\nIndividual settings can be controlled in the Preferences.", GTK_WINDOW(win))) {
 
 			auto_features = true;
 		}
