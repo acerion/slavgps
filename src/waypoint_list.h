@@ -46,7 +46,7 @@ namespace SlavGPS {
 
 
 
-	void vik_trw_layer_waypoint_list_show_dialog(QString const & title, Layer * layer, bool is_aggregate);
+	void vik_trw_layer_waypoint_list_show_dialog(QString const & title, Layer * layer, bool is_aggregate_layer);
 
 
 
@@ -56,7 +56,7 @@ namespace SlavGPS {
 	public:
 		WaypointListDialog(QString const & title, QWidget * parent = NULL);
 		~WaypointListDialog();
-		void build_model(bool show_layer_names);
+		void build_model(bool hide_layer_names);
 
 		std::list<waypoint_layer_t*> * waypoints_and_layers = NULL;
 
