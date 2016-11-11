@@ -237,8 +237,8 @@ static bool layer_defaults_register(LayerType layer_type)
 	/* Process each parameter. */
 	for (uint16_t i = 0; i < params_count; i++) {
 		if (params[i].group != VIK_LAYER_NOT_IN_PROPERTIES) {
-			if (params[i].default_value) {
-				LayerParamValue value = params[i].default_value();
+			if (params[i].hardwired_default_value) {
+				LayerParamValue value = params[i].hardwired_default_value();
 				a_layer_defaults_register(layer_interface->fixed_layer_name, &params[i], value);
 				answer = true;
 			}

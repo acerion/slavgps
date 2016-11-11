@@ -123,7 +123,7 @@ typedef struct {
 	void * widget_data;
 	void * extra_widget_data;
 	const char *tooltip;
-	LayerDefaultFunc default_value;
+	LayerDefaultFunc hardwired_default_value; /* Program's internal, hardwired value that will be used if settings file doesn't contain a value for given parameter. */
 	LayerConvertFunc convert_to_display;
 	LayerConvertFunc convert_to_internal;
 } Parameter;

@@ -243,9 +243,9 @@ void maps_layer_set_autodownload_default(bool autodownload)
 {
 	/* Set appropriate function. */
 	if(autodownload) {
-		maps_layer_params[PARAM_AUTODOWNLOAD].default_value = vik_lpd_true_default;
+		maps_layer_params[PARAM_AUTODOWNLOAD].hardwired_default_value = vik_lpd_true_default;
 	} else {
-		maps_layer_params[PARAM_AUTODOWNLOAD].default_value = vik_lpd_false_default;
+		maps_layer_params[PARAM_AUTODOWNLOAD].hardwired_default_value = vik_lpd_false_default;
 	}
 }
 

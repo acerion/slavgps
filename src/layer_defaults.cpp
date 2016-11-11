@@ -21,6 +21,7 @@
 #include <cstring>
 #include <cstdlib>
 #include <cstdio>
+#include <cassert>
 
 #include <glib/gi18n.h>
 #include <glib/gstdio.h>
@@ -42,13 +43,15 @@ using namespace SlavGPS;
 
 
 
-static LayerParamValue get_default_data_answer(const char * group, const char * name, LayerParamType ptype, bool * success);
-static LayerParamValue get_default_data(const char * group, const char * name, LayerParamType ptype);
-static void set_default_value(LayerParamValue value, const char * group, const char * name, LayerParamType ptype);
-static void defaults_run_setparam(void * index_ptr, uint16_t i, LayerParamValue value, Parameter * params);
-static LayerParamValue defaults_run_getparam(void * index_ptr, uint16_t i, bool notused2);
+static LayerParamValue read_parameter_value(const char * group, const char * name, LayerParamType ptype, bool * success);
+static LayerParamValue read_parameter_value(const char * group, const char * name, LayerParamType ptype);
+static void write_parameter_value(LayerParamValue value, const char * group, const char * name, LayerParamType ptype);
+
+static void defaults_run_setparam(void * index_ptr, param_id_t id, LayerParamValue value, Parameter * params);
+static LayerParamValue defaults_run_getparam(void * index_ptr, param_id_t id, bool notused2);
 static void use_internal_defaults_if_missing_default(LayerType layer_type);
-static bool defaults_load_from_file(void);
+
+static bool layer_defaults_load_from_file(void);
 static bool layer_defaults_save_to_file(void);
 
 
@@ -67,8 +70,10 @@ static bool loaded;
 
 
 
-
-static LayerParamValue get_default_data_answer(const char * group, const char * name, LayerParamType ptype, bool * success)
+/* "read" is supposed to indicate that this is a low-level function,
+   reading directly from file, even though the reading is made from QT
+   abstraction of settings file. */
+static LayerParamValue read_parameter_value(const char * group, const char * name, LayerParamType ptype, bool * success)
 {
 	LayerParamValue value = VIK_LPD_BOOLEAN (false);
 
@@ -132,17 +137,23 @@ static LayerParamValue get_default_data_answer(const char * group, const char * 
 
 
 
-static LayerParamValue get_default_data(const char * group, const char * name, LayerParamType ptype)
+/* "read" is supposed to indicate that this is a low-level function,
+   reading directly from file, even though the reading is made from QT
+   abstraction of settings file. */
+static LayerParamValue read_parameter_value(const char * group, const char * name, LayerParamType ptype)
 {
 	bool success = true;
 	/* This should always succeed - don't worry about 'success'. */
-	return get_default_data_answer(group, name, ptype, &success);
+	return read_parameter_value(group, name, ptype, &success);
 }
 
 
 
 
-static void set_default_value(LayerParamValue value, const char * group, const char * name, LayerParamType ptype)
+/* "write" is supposed to indicate that this is a low-level function,
+   writing directly to file, even though the writing is made to QT
+   abstraction of settings file. */
+static void write_parameter_value(LayerParamValue value, const char * group, const char * name, LayerParamType ptype)
 {
 	QVariant variant;
 
@@ -178,25 +189,25 @@ static void set_default_value(LayerParamValue value, const char * group, const c
 
 
 
-static void defaults_run_setparam(void * index_ptr, uint16_t i, LayerParamValue value, Parameter * params)
+static void defaults_run_setparam(void * index_ptr, param_id_t id, LayerParamValue value, Parameter * params)
 {
 	/* Index is only an index into values from this layer. */
 	int index = KPOINTER_TO_INT (index_ptr);
-	Parameter * layer_param = (Parameter *) g_ptr_array_index(paramsVD, index + i);
+	Parameter * layer_param = (Parameter *) g_ptr_array_index(paramsVD, index + id);
 
-	set_default_value(value, Layer::get_interface(layer_param->layer_type)->fixed_layer_name, layer_param->name, layer_param->type);
+	write_parameter_value(value, Layer::get_interface(layer_param->layer_type)->fixed_layer_name, layer_param->name, layer_param->type);
 }
 
 
 
 
-static LayerParamValue defaults_run_getparam(void * index_ptr, uint16_t i, bool notused2)
+static LayerParamValue defaults_run_getparam(void * index_ptr, param_id_t id, bool notused2)
 {
 	/* Index is only an index into values from this layer. */
 	int index = (int) (long) (index_ptr);
-	Parameter * layer_param = (Parameter *) g_ptr_array_index(paramsVD, index + i);
+	Parameter * layer_param = (Parameter *) g_ptr_array_index(paramsVD, index + id);
 
-	return get_default_data(Layer::get_interface(layer_param->layer_type)->fixed_layer_name, layer_param->name, layer_param->type);
+	return read_parameter_value(Layer::get_interface(layer_param->layer_type)->fixed_layer_name, layer_param->name, layer_param->type);
 }
 
 
@@ -217,14 +228,12 @@ static void use_internal_defaults_if_missing_default(LayerType layer_type)
 		}
 
 		bool success = false;
-		/* Check current default is available. */
-		get_default_data_answer(Layer::get_interface(layer_type)->fixed_layer_name, params[i].name, params[i].type, &success);
-		/* If no longer have a viable default. */
+		/* Check if a value is stored in settings file. If not, get program's internal, hardwired value. */
+		read_parameter_value(Layer::get_interface(layer_type)->fixed_layer_name, params[i].name, params[i].type, &success);
 		if (!success) {
-			/* Reset value. */
-			if (params[i].default_value) {
-				LayerParamValue value = params[i].default_value();
-				set_default_value(value, Layer::get_interface(layer_type)->fixed_layer_name, params[i].name, params[i].type);
+			if (params[i].hardwired_default_value) {
+				LayerParamValue value = params[i].hardwired_default_value();
+				write_parameter_value(value, Layer::get_interface(layer_type)->fixed_layer_name, params[i].name, params[i].type);
 			}
 		}
 	}
@@ -233,8 +242,12 @@ static void use_internal_defaults_if_missing_default(LayerType layer_type)
 
 
 
-/* kamilFIXME: return value is not checked. */
-static bool defaults_load_from_file(void)
+/**
+   \brief Load "layer defaults" configuration from a settings file
+
+   kamilFIXME: return value is not checked.
+*/
+static bool layer_defaults_load_from_file(void)
 {
 	//GKeyFileFlags flags = G_KEY_FILE_KEEP_COMMENTS;
 
@@ -261,7 +274,11 @@ static bool defaults_load_from_file(void)
 
 
 
-/* Returns true. */
+/**
+   \brief Save "layer defaults" configuration to a settings file
+
+   \return true
+*/
 static bool layer_defaults_save_to_file(void)
 {
 	keyfile->sync();
@@ -285,7 +302,7 @@ bool layer_defaults_show_window(LayerType layer_type, QWidget * parent)
 	if (!loaded) {
 		/* Since we can't load the file in a_defaults_init (no params registered yet),
 		   do it once before we display the params. */
-		defaults_load_from_file();
+		layer_defaults_load_from_file();
 		loaded = true;
 	}
 
@@ -389,7 +406,7 @@ void a_layer_defaults_register(const char * layer_name, Parameter * layer_param,
 
 	g_ptr_array_add(paramsVD, new_layer_param);
 
-	set_default_value(default_value, layer_name, layer_param->name, layer_param->type);
+	write_parameter_value(default_value, layer_name, layer_param->name, layer_param->type);
 }
 
 
@@ -441,11 +458,11 @@ LayerParamValue a_layer_defaults_get(const char * layer_name, const char * param
 	if (!loaded) {
 		/* Since we can't load the file in a_defaults_init (no params registered yet),
 		   do it once before we get the first key. */
-		defaults_load_from_file();
+		layer_defaults_load_from_file();
 		loaded = true;
 	}
 
-	return get_default_data(layer_name, param_name, param_type);
+	return read_parameter_value(layer_name, param_name, param_type);
 }
 
 
