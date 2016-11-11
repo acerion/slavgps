@@ -387,7 +387,7 @@ char * a_dialog_waypoint(GtkWindow * parent, char * default_name, LayerTRW * trw
 */
 char * SlavGPS::waypoint_properties_dialog(QWidget * parent, char * default_name, LayerTRW * trw, Waypoint * wp, VikCoordMode coord_mode, bool is_new, bool * updated)
 {
-	PropertiesDialog dialog(parent);
+	PropertiesDialog dialog(QString(wp->name), parent);
 	dialog.fill(wp, wp_params);
 	int dialog_code = dialog.exec();
 

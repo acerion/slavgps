@@ -77,7 +77,7 @@ void a_preferences_register_group(const char * key, const char * name);
 /* Group field (integer) will be overwritten. */
 void a_preferences_register(Parameter * parameter, LayerParamValue default_value, const char * group_key);
 
-void a_preferences_show_window(QWindow * parent);
+void preferences_show_window(QWidget * parent = NULL);
 
 LayerParamValue * a_preferences_get(const char * key);
 

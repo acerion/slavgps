@@ -28,6 +28,7 @@
 #include <QSettings>
 #include <QDebug>
 
+#include "uibuilder_qt.h"
 #include "layer_defaults.h"
 #include "dir.h"
 #include "file.h"
@@ -279,7 +280,7 @@ static bool layer_defaults_save_to_file(void)
  *
  * Returns: %true if the window is displayed (because there are parameters to view).
  */
-bool a_layer_defaults_show_window(GtkWindow * parent, const char * layer_name)
+bool layer_defaults_show_window(LayerType layer_type, QWidget * parent)
 {
 	if (!loaded) {
 		/* Since we can't load the file in a_defaults_init (no params registered yet),
@@ -288,7 +289,7 @@ bool a_layer_defaults_show_window(GtkWindow * parent, const char * layer_name)
 		loaded = true;
 	}
 
-	LayerType layer_type = Layer::type_from_string(layer_name);
+	char const * layer_name = Layer::get_interface(layer_type)->name;
 
 	/*
 	   Need to know where the params start and they finish for this layer
@@ -325,12 +326,9 @@ bool a_layer_defaults_show_window(GtkWindow * parent, const char * layer_name)
 		params[i] = *((Parameter *) (g_ptr_array_index(paramsVD,i+index)));
 	}
 
-	char *title = g_strconcat(layer_name, ": ", _("Layer Defaults"), NULL);
-
-#ifndef SLAVGPS_QT
-
-	if (a_uibuilder_properties_factory(title,
-					   parent,
+#ifdef K
+	if (a_uibuilder_properties_factory(/* title */,
+					   /* parent */,
 					   params,
 					   layer_params_count,
 					   Layer::get_interface(layer_type)->params_groups,
@@ -341,15 +339,36 @@ bool a_layer_defaults_show_window(GtkWindow * parent, const char * layer_name)
 					   defaults_run_getparam,
 					   ((void *) (long) (index)),
 					   NULL)) {
-		/* Save. */
-		layer_defaults_save_to_file();
+
 	}
 #endif
 
-	free(title);
-	free(params);
+	PropertiesDialog dialog(QString("%1: Layer Defaults").arg(QString(layer_name)), parent);
+#ifdef K
+	dialog.fill(this);
+#endif
+	int dialog_code = dialog.exec();
 
-	return true;
+	if (dialog_code == QDialog::Accepted) {
+#ifdef K
+		std::map<layer_param_id_t, Parameter *> * parameters = this->get_interface()->layer_parameters;
+		for (auto iter = parameters->begin(); iter != parameters->end(); iter++) {
+			LayerParamValue param_value = dialog.get_param_value(iter->first, iter->second);
+			bool set = this->set_param_value(iter->first, param_value, viewport, false);
+			if (set) {
+				must_redraw = true;
+			}
+		}
+
+		/* Save. */
+		layer_defaults_save_to_file();
+#endif
+		free(params);
+		return true;
+	} else {
+		free(params);
+		return false;
+	}
 }
 
 

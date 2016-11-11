@@ -2230,25 +2230,6 @@ static void menu_copy_centre_cb(GtkAction * a, Window * window)
 
 
 
-static void layer_defaults_cb(GtkAction * a, Window * window)
-{
-	char ** texts = g_strsplit(gtk_action_get_name(a), "Layer", 0);
-
-	if (!texts[1]) {
-		return; // Internally broken :(
-	}
-
-	if (!a_layer_defaults_show_window(window->get_toolkit_window(), texts[1])) {
-		dialog_info("This layer has no configurable properties.", window);
-	}
-	// NB no update needed
-
-	g_strfreev(texts);
-}
-
-
-
-
 static void preferences_change_update(Window * window)
 {
 	// Want to update all TrackWaypoint layers
@@ -2270,12 +2251,12 @@ static void preferences_change_update(Window * window)
 
 
 
-
+#if 0 /* Already moved to window.cpp */
 static void preferences_cb(GtkAction * a, Window * window)
 {
 	bool wp_icon_size = a_vik_get_use_large_waypoint_icons();
 
-	a_preferences_show_window(window->get_toolkit_window());
+	preferences_show_window(window->get_toolkit_window());
 
 	// Has the waypoint size setting changed?
 	if (wp_icon_size != a_vik_get_use_large_waypoint_icons()) {
@@ -2295,7 +2276,7 @@ static void preferences_cb(GtkAction * a, Window * window)
 
 	toolbar_apply_settings(window->viking_vtb, window->main_vbox, window->menu_hbox, true);
 }
-
+#endif
 
 
 

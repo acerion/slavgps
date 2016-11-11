@@ -26,6 +26,8 @@
 
 #include <cstdint>
 
+#include <QWidget>
+
 #include "uibuilder.h"
 #include "layer.h"
 #include "slav_qt.h"
@@ -38,7 +40,7 @@ void a_layer_defaults_uninit();
 
 void a_layer_defaults_register(const char * layer_name, Parameter * layer_param, LayerParamValue default_value);
 
-bool a_layer_defaults_show_window(GtkWindow * parent, const char * layer_name);
+bool layer_defaults_show_window(SlavGPS::LayerType layer_type, QWidget * parent);
 
 LayerParamData a_layer_defaults_get(const char * layer_name, const char * param_name, LayerParamType param_type);
 

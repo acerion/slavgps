@@ -29,11 +29,13 @@
 #include "window.h"
 #include "viewport.h"
 #include "layer.h"
+#include "layer_defaults.h"
 #include "layers_panel.h"
 #include "globals.h"
 #include "uibuilder_qt.h"
 #include "settings.h"
 #include "background.h"
+#include "dialog.h"
 
 
 
@@ -320,11 +322,22 @@ void Window::create_actions(void)
 
 	/* "Edit" menu. */
 	{
-		QAction * qa_edit_preferences = new QAction("&Preferences", this);
-		qa_edit_preferences->setIcon(QIcon::fromTheme("preferences-other"));
-		connect(qa_edit_preferences, SIGNAL (triggered(bool)), this, SLOT (preferences_cb(void)));
+		QAction * qa = NULL;
+		qa = new QAction("&Preferences", this);
+		qa->setIcon(QIcon::fromTheme("preferences-other"));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (preferences_cb(void)));
+		this->menu_edit->addAction(qa);
 
-		this->menu_edit->addAction(qa_edit_preferences);
+		{
+			QMenu * defaults_submenu = this->menu_edit->addMenu(QIcon::fromTheme("document-properties"), QString("&Layer Defaults"));
+
+			for (LayerType i = LayerType::AGGREGATE; i < LayerType::NUM_TYPES; ++i) {
+				qa = defaults_submenu->addAction("&" + QString(Layer::get_interface(i)->name) + "...");
+				qa->setData(QVariant((int) i));
+				qa->setIcon(*Layer::get_interface(i)->icon);
+				connect(qa, SIGNAL (triggered(bool)), this, SLOT (show_layer_defaults_cb()));
+			}
+		}
 	}
 
 
@@ -1123,7 +1136,7 @@ void Window::preferences_cb(void) /* Slot. */
 #if 0
 	bool wp_icon_size = a_vik_get_use_large_waypoint_icons();
 #endif
-	a_preferences_show_window((QWindow *) this);
+	preferences_show_window(this);
 #if 0
 	// Has the waypoint size setting changed?
 	if (wp_icon_size != a_vik_get_use_large_waypoint_icons()) {
@@ -1615,4 +1628,21 @@ void Window::set_redraw_trigger(Layer * layer)
 	if (window) {
 		window->trigger = layer;
 	}
+}
+
+
+
+
+void Window::show_layer_defaults_cb(void)
+{
+	QAction * qa = (QAction *) QObject::sender();
+	LayerType layer_type = (SlavGPS::LayerType) qa->data().toInt();
+
+	qDebug() << "II: Window: clicked \"layer defaults\" for layer type" << (int) layer_type << Layer::get_interface(layer_type)->fixed_layer_name;
+
+	if (!layer_defaults_show_window(layer_type, this)) {
+		dialog_info("This layer has no configurable properties.", this);
+	}
+
+	/* No update needed. */
 }

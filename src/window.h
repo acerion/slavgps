@@ -153,6 +153,8 @@ namespace SlavGPS {
 
 		void show_background_jobs_window_cb(void);
 
+		void show_layer_defaults_cb(void);
+
 
 	protected:
 

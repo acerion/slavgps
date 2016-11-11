@@ -62,7 +62,7 @@ namespace SlavGPS {
 
 	class PropertiesDialog : public QDialog {
 	public:
-		PropertiesDialog(QWidget * parent);
+		PropertiesDialog(QString const & title = "Properties", QWidget * parent = NULL);
 		~PropertiesDialog();
 
 		void fill(Preferences * preferences);

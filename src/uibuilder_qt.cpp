@@ -284,8 +284,10 @@ LayerParamValue *a_uibuilder_run_dialog(const char *dialog_name, GtkWindow *pare
 
 
 
-PropertiesDialog::PropertiesDialog(QWidget * parent) : QDialog(parent)
+PropertiesDialog::PropertiesDialog(QString const & title, QWidget * parent) : QDialog(parent)
 {
+	this->setWindowTitle(title);
+
 	this->button_box = new QDialogButtonBox();
 	this->ok = this->button_box->addButton("OK", QDialogButtonBox::AcceptRole);
 	this->cancel = this->button_box->addButton("Cancel", QDialogButtonBox::RejectRole);

@@ -275,12 +275,12 @@ bool a_preferences_save_to_file()
 
 
 
-void a_preferences_show_window(QWindow * parent)
+void preferences_show_window(QWidget * parent)
 {
 	//loaded = true;
 	//preferences_load_from_file();
 
-	PropertiesDialog dialog((QWidget *) parent);
+	PropertiesDialog dialog(QString("Preferences"), parent);
 	dialog.fill(&preferences);
 	int dialog_code = dialog.exec();
 
