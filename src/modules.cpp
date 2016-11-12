@@ -25,13 +25,19 @@
 
 #include <cstdlib>
 
+#ifdef K
+
 #include <glib.h>
 #include <glib/gstdio.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 
+#endif
+
 #include "modules.h"
+
+#ifdef K
 #include "bing.h"
 #include "google.h"
 #include "terraserver.h"
@@ -66,11 +72,14 @@
 
 #include "vikmapniklayer.h"
 #include "vikgpslayer.h"
+#endif
 #include "layer_trw.h"
 #include "viewport.h"
 #include "window.h"
 #include "layers_panel.h"
 #include "tree_view.h"
+
+
 
 
 
@@ -88,6 +97,7 @@ using namespace SlavGPS;
 
 
 
+#ifdef K
 
 static void modules_register_map_source(VikGobjectBuilder * self, MapSource * mapsource)
 {
@@ -256,6 +266,7 @@ static void register_loadable_types(void)
 }
 
 
+#endif
 
 
 /**
@@ -265,6 +276,7 @@ static void register_loadable_types(void)
  */
 void SlavGPS::modules_init()
 {
+#ifdef K
 	/* OSM done first so this will be the default service for searching/routing/etc... */
 #ifdef VIK_CONFIG_OPENSTREETMAP
 	osm_init();
@@ -300,6 +312,7 @@ void SlavGPS::modules_init()
 
 	/* As modules are loaded, we can load configuration files. */
 	modules_load_config();
+#endif
 }
 
 
@@ -311,19 +324,24 @@ void SlavGPS::modules_init()
  */
 void SlavGPS::modules_post_init()
 {
+#ifdef K
 #ifdef VIK_CONFIG_GOOGLE
 	google_post_init();
 #endif
 #ifdef HAVE_LIBMAPNIK
 	vik_mapnik_layer_post_init();
 #endif
-
+#endif
 	layer_init();
 	layer_trw_init();
+#ifdef K
 	layer_gps_init();
 	layer_mapnik_init();
+#endif
 	viewport_init();
+#ifdef K
 	window_init();
+#endif
 	layers_panel_init();
 	treeview_init();
 }
@@ -333,10 +351,12 @@ void SlavGPS::modules_post_init()
 
 void SlavGPS::modules_uninit()
 {
+#ifdef K
 #ifdef VIK_CONFIG_OPENSTREETMAP
 	osm_traces_uninit();
 #endif
 #ifdef HAVE_LIBMAPNIK
 	vik_mapnik_layer_uninit();
+#endif
 #endif
 }

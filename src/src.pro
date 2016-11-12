@@ -54,7 +54,8 @@ SOURCES += main.cpp \
     dialog.cpp \
     preferences.cpp \
     settings.cpp \
-    statusbar.cpp
+    statusbar.cpp \
+    modules.cpp
 
 
 HEADERS += window.h \
@@ -104,7 +105,8 @@ HEADERS += window.h \
     dialog.h \
     preferences.h \
     settings.h \
-    statusbar.h
+    statusbar.h \
+    modules.h
 
 
 # For glib library.
