@@ -18,6 +18,7 @@
 #include "layer_trw.h"
 #include "window_layer_tools.h"
 #include "statusbar.h"
+#include "file.h"
 
 
 
@@ -162,6 +163,7 @@ namespace SlavGPS {
 		void center_changed_cb(void);
 		void layer_tools_cb(QAction * a);
 		void preferences_cb(void);
+		void open_file_cb(void);
 
 	private:
 
@@ -170,6 +172,13 @@ namespace SlavGPS {
 		void create_ui(void);
 
 		void display_tool_name();
+		void open_file(char const * filename, bool change_filename);
+		void set_busy_cursor(void);
+		void clear_busy_cursor(void);
+		void set_filename(char const * filename);
+		char const * get_filename(void);
+		GtkWidget * get_drawmode_button(VikViewportDrawMode mode);
+		void update_recently_used_document(char const * filename);
 
 
 		bool pan_move_flag = false;
@@ -197,7 +206,7 @@ namespace SlavGPS {
 
 		char * filename = NULL;
 
-		//VikLoadType_t loaded_type = LOAD_TYPE_READ_FAILURE; /* AKA none. */
+		VikLoadType_t loaded_type = LOAD_TYPE_READ_FAILURE; /* AKA none. */
 
 		QAction * qa_layer_properties = NULL;
 
@@ -224,6 +233,8 @@ namespace SlavGPS {
 		bool view_statusbar = true;
 		bool view_toolbar = true;
 		bool view_main_menu = true;
+
+		bool only_updating_coord_mode_ui = false; /* Hack for a bug in GTK. */
 	};
 
 

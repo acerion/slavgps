@@ -70,7 +70,7 @@ using namespace SlavGPS;
 
 
 
-#if 0
+
 
 
 
@@ -82,6 +82,7 @@ using namespace SlavGPS;
 #define GPX_MAGIC_LEN 4
 
 #define VIKING_FILE_VERSION 1
+
 
 
 
@@ -148,7 +149,7 @@ static bool str_starts_with(char const * haystack, char const * needle, uint16_t
 	return false;
 }
 
-#endif
+
 
 
 void SlavGPS::file_write_layer_param(FILE * f, char const * name, ParameterType type, ParameterValue data)
@@ -313,6 +314,7 @@ static void file_write(LayerAggregate * top, FILE * f, Viewport * viewport)
 }
 
 
+#endif
 
 
 static void string_list_delete(void * key, void * l, void * user_data)
@@ -400,7 +402,11 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 				continue;
 			} else if (str_starts_with(line, "Layer ", 6, true)) {
 				LayerType parent_type = ((Layer *) stack->data)->type;
-				if ((! stack->data) || ((parent_type != LayerType::AGGREGATE) && (parent_type != LayerType::GPS))) {
+				if ((! stack->data) || ((parent_type != LayerType::AGGREGATE)
+#ifdef K
+							&& (parent_type != LayerType::GPS)
+#endif
+							)) {
 					successful_read = false;
 					fprintf(stderr, "WARNING: Line %ld: Layer command inside non-Aggregate Layer (type %d)\n", line_num, parent_type);
 					push(&stack); /* Inside INVALID layer. */
@@ -413,11 +419,13 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 						successful_read = false;
 						fprintf(stderr, "WARNING: Line %ld: Unknown type %s\n", line_num, line+6);
 						stack->data = NULL;
+#ifdef K
 					} else if (parent_type == LayerType::GPS) {
 						LayerGPS * g = (LayerGPS *) stack->under->data;
 						stack->data = (void *) g->get_a_child();
 						params = Layer::get_interface(layer_type)->params;
 						params_count = Layer::get_interface(layer_type)->params_count;
+#endif
 
 					} else { /* Any other LayerType::X type. */
 						Layer * layer = Layer::new_(layer_type, viewport, false);
@@ -443,8 +451,10 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 							Layer * layer = (Layer *) stack->data;
 							((LayerAggregate *) stack->under->data)->add_layer(layer, false);
 							layer->post_read(viewport, true);
+#ifdef K
 						} else if (((Layer *) stack->under->data)->type == LayerType::GPS) {
 							/* TODO: anything else needs to be done here? */
+#endif
 						} else {
 							successful_read = false;
 							fprintf(stderr, "WARNING: Line %ld: EndLayer command inside non-Aggregate Layer (type %d)\n", line_num, ((Layer *) stack->data)->type);
@@ -507,13 +517,29 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 				}
 				/* However we'll still carry and attempt to read whatever we can. */
 			} else if (stack->under == NULL && eq_pos == 4 && strncasecmp(line, "xmpp", eq_pos) == 0) { /* "hard coded" params: global & for all layer-types */
+#ifdef K
 				viewport->set_xmpp(strtod_i8n(line+5, NULL));
+#else
+				viewport->set_xmpp(strtod(line+5, NULL));
+#endif
 			} else if (stack->under == NULL && eq_pos == 4 && strncasecmp(line, "ympp", eq_pos) == 0) {
+#ifdef K
 				viewport->set_ympp(strtod_i8n(line+5, NULL));
+#else
+				viewport->set_ympp(strtod(line+5, NULL));
+#endif
 			} else if (stack->under == NULL && eq_pos == 3 && strncasecmp(line, "lat", eq_pos) == 0) {
+#ifdef K
 				ll.lat = strtod_i8n(line+4, NULL);
+#else
+				ll.lat = strtod(line+4, NULL);
+#endif
 			} else if (stack->under == NULL && eq_pos == 3 && strncasecmp(line, "lon", eq_pos) == 0) {
+#ifdef K
 				ll.lon = strtod_i8n(line+4, NULL);
+#else
+				ll.lon = strtod(line+4, NULL);
+#endif
 			} else if (stack->under == NULL && eq_pos == 4 && strncasecmp(line, "mode", eq_pos) == 0 && strcasecmp(line+5, "utm") == 0) {
 				viewport->set_drawmode(VIK_VIEWPORT_DRAWMODE_UTM);
 			} else if (stack->under == NULL && eq_pos == 4 && strncasecmp(line, "mode", eq_pos) == 0 && strcasecmp(line+5, "expedia") == 0) {
@@ -570,7 +596,11 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 						} else {
 							switch (params[i].type) {
 							case ParameterType::DOUBLE:
+#ifdef K
 								x.d = strtod_i8n(line, NULL);
+#else
+								x.d = strtod(line, NULL);
+#endif
 								break;
 							case ParameterType::UINT:
 								x.u = strtoul(line, NULL, 10);
@@ -582,8 +612,10 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 								x.b = TEST_BOOLEAN(line);
 								break;
 							case ParameterType::COLOR:
+#ifdef K
 								memset(&(x.c), 0, sizeof(x.c)); /* default: black */
 								gdk_color_parse(line, &(x.c));
+#endif
 								break;
 								/* STRING or STRING_LIST -- if STRING_LIST, just set param to add a STRING. */
 							default: x.s = line;
@@ -631,7 +663,7 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 	}
 
 	if ((!aggregate->visible) && aggregate->realized) {
-		aggregate->tree_view->set_visibility(&aggregate->iter, false);
+		aggregate->tree_view->set_visibility(aggregate->index, false);
 	}
 
 	/* Delete anything we've forgotten about -- should only happen when file ends before an EndLayer. */
@@ -640,6 +672,8 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 
 	return successful_read;
 }
+
+#ifdef K
 
 /*
 read thru file
@@ -678,6 +712,7 @@ static void xfclose(FILE * f)
 }
 
 
+#endif
 
 
 /*
@@ -686,15 +721,17 @@ static void xfclose(FILE * f)
 bool SlavGPS::check_file_magic_vik(char const * filename)
 {
 	bool result = false;
-	FILE * ff = xfopen(filename);
+	FILE * ff = fopen(filename, "r");
 	if (ff) {
 		result = check_magic(ff, VIK_MAGIC, VIK_MAGIC_LEN);
-		xfclose(ff);
+		fclose(ff);
 	}
 	return result;
 }
 
 
+
+#ifdef K
 
 
 /**
@@ -737,6 +774,7 @@ char * SlavGPS::append_file_ext(char const * filename, VikFileType_t type)
 }
 
 
+#endif
 
 
 VikLoadType_t SlavGPS::a_file_load(LayerAggregate * top, Viewport * viewport, char const * filename_or_uri)
@@ -753,7 +791,7 @@ VikLoadType_t SlavGPS::a_file_load(LayerAggregate * top, Viewport * viewport, ch
 		filename = filename + 7;
 		fprintf(stderr, "DEBUG: Loading file %s from URI %s\n", filename, filename_or_uri);
 	}
-	FILE * f = xfopen(filename);
+	FILE * f = fopen(filename, "r");
 
 	if (!f) {
 		return LOAD_TYPE_READ_FAILURE;
@@ -769,10 +807,12 @@ VikLoadType_t SlavGPS::a_file_load(LayerAggregate * top, Viewport * viewport, ch
 		} else {
 			load_answer = LOAD_TYPE_VIK_FAILURE_NON_FATAL;
 		}
+#ifdef K
 	} else if (jpg_magic_check(filename)) {
 		if (!jpg_load_file(top, filename, viewport)) {
 			load_answer = LOAD_TYPE_UNSUPPORTED_FAILURE;
 		}
+#endif
 	} else {
 		/* For all other file types which consist of tracks, routes and/or waypoints,
 		   must be loaded into a new TrackWaypoint layer (hence it be created). */
@@ -783,24 +823,30 @@ VikLoadType_t SlavGPS::a_file_load(LayerAggregate * top, Viewport * viewport, ch
 
 		/* In fact both kml & gpx files start the same as they are in xml. */
 		if (a_file_check_ext(filename, ".kml") && check_magic(f, GPX_MAGIC, GPX_MAGIC_LEN)) {
+#ifdef K
 			/* Implicit Conversion. */
 			ProcessOptions po = { (char *) "-i kml", filename, NULL, NULL, NULL, NULL };
 			if (! (success = a_babel_convert_from(layer, &po, NULL, NULL, NULL))) {
 				load_answer = LOAD_TYPE_GPSBABEL_FAILURE;
 			}
+#endif
 		}
 		/* NB use a extension check first, as a GPX file header may have a Byte Order Mark (BOM) in it
 		   - which currently confuses our check_magic function. */
 		else if (a_file_check_ext(filename, ".gpx") || check_magic(f, GPX_MAGIC, GPX_MAGIC_LEN)) {
+#ifdef K
 			if (! (success = a_gpx_read_file(layer, f))) {
 				load_answer = LOAD_TYPE_GPX_FAILURE;
 			}
+#endif
 		} else {
+#ifdef K
 			/* Try final supported file type. */
 			if (! (success = a_gpspoint_read_file(layer, f, dirpath))) {
 				/* Failure here means we don't know how to handle the file. */
 				load_answer = LOAD_TYPE_UNSUPPORTED_FAILURE;
 			}
+#endif
 		}
 		free(dirpath);
 
@@ -815,11 +861,12 @@ VikLoadType_t SlavGPS::a_file_load(LayerAggregate * top, Viewport * viewport, ch
 			layer->auto_set_view(viewport);
 		}
 	}
-	xfclose(f);
+	fclose(f);
 	return load_answer;
 }
 
 
+#ifdef K
 
 
 bool SlavGPS::a_file_save(LayerAggregate * top, Viewport * viewport, char const * filename)
@@ -863,6 +910,7 @@ bool SlavGPS::a_file_save(LayerAggregate * top, Viewport * viewport, char const 
 }
 
 
+#endif
 
 
 /* Example:
@@ -892,6 +940,7 @@ bool SlavGPS::a_file_check_ext(char const * filename, char const * fileext)
 }
 
 
+#ifdef K
 
 
 /**

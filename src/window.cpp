@@ -36,11 +36,20 @@
 #include "settings.h"
 #include "background.h"
 #include "dialog.h"
+#include "util.h"
+#include "file.h"
+#include "fileutils.h"
 
 
 
 
 using namespace SlavGPS;
+
+
+
+
+/* The last used directories. */
+static QUrl last_folder_files_url;
 
 
 
@@ -304,19 +313,27 @@ void Window::create_actions(void)
 
 	/* "File" menu. */
 	QAction * qa_file_new = NULL;
+	QAction * qa_file_open = NULL;
 	QAction * qa_file_exit = NULL;
 	{
-		qa_file_new = new QAction("&New file...", this);
+		QAction * qa = NULL;
+
+		qa_file_new = this->menu_file->addAction(QIcon::fromTheme("document-new"), _("&New file..."));
 		qa_file_new->setShortcut(Qt::CTRL + Qt::Key_N);
 		qa_file_new->setIcon(QIcon::fromTheme("document-new"));
 
-		qa_file_exit = new QAction("E&xit", this);
-		qa_file_exit->setShortcut(Qt::CTRL + Qt::Key_X);
-		qa_file_exit->setIcon(QIcon::fromTheme("application-exit"));
-		connect(qa_file_exit, SIGNAL (triggered(bool)), this, SLOT (close(void)));
+		qa_file_open = this->menu_file->addAction(QIcon::fromTheme("document-open"), _("&Open..."));
+		qa_file_open->setShortcut(Qt::CTRL + Qt::Key_O);
+		qa_file_open->setData(QVariant((int) 12)); /* kamilFIXME: magic number. */
+		connect(qa_file_open, SIGNAL (triggered(bool)), this, SLOT (open_file_cb()));
 
-		this->menu_file->addAction(qa_file_new);
-		this->menu_file->addAction(qa_file_exit);
+		qa = this->menu_file->addAction(QIcon::fromTheme("list-add"), _("Append &File..."));
+		qa->setData(QVariant((int) 21)); /* kamilFIXME: magic number. */
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (open_file_cb()));
+
+		qa_file_exit = this->menu_file->addAction(QIcon::fromTheme("application-exit"), _("E&xit"));
+		qa_file_exit->setShortcut(Qt::CTRL + Qt::Key_X);
+		connect(qa_file_exit, SIGNAL (triggered(bool)), this, SLOT (close(void)));
 	}
 
 
@@ -1645,4 +1662,339 @@ void Window::show_layer_defaults_cb(void)
 	}
 
 	/* No update needed. */
+}
+
+
+
+
+void Window::open_file_cb(void)
+{
+	QAction * qa = (QAction *) QObject::sender();
+
+	bool newwindow;
+	if (qa->data().toInt() == 12) {
+		newwindow = true;
+	} else if (qa->data().toInt() == 21) {
+		newwindow = false;
+	} else {
+		qDebug() << "EE: Window: unrecognized Open/Append action value:" << qa->data().toInt();
+		return;
+	}
+
+	//GSList *files = NULL;
+	//GSList *cur_file = NULL;
+
+
+	QFileDialog dialog(this, "Please select a GPS data file to open.");
+
+	if (last_folder_files_url.isValid()) {
+		dialog.setDirectoryUrl(last_folder_files_url);
+	}
+
+	QStringList filter;
+
+	/* File filters are listed this way for alphabetical ordering. */
+#ifdef VIK_CONFIG_GEOCACHES
+	filter << _("Geocaching (*.loc)");
+#endif
+
+#ifdef K
+	gtk_file_filter_set_name(filter, _("Google Earth"));
+	gtk_file_filter_add_mime_type(filter, "application/vnd.google-earth.kml+xml");
+#endif
+
+	filter << _("GPX (*.gpx)");
+
+#ifdef K
+	gtk_file_filter_set_name(filter, _("JPG"));
+	gtk_file_filter_add_mime_type(filter, "image/jpeg");
+#endif
+
+	filter << _("Viking (*.vik *.viking)");
+
+
+	/* Could have filters for gpspoint (*.gps,*.gpsoint?) + gpsmapper (*.gsm,*.gpsmapper?).
+	   However assume this are barely used and thus not worthy of inclusion
+	   as they'll just make the options too many and have no clear file pattern.
+	   One can always use the all option. */
+	filter << _("All (*)");
+
+	dialog.setNameFilters(filter);
+
+#ifdef K
+	gtk_file_chooser_set_select_multiple(GTK_FILE_CHOOSER(dialog), true);
+#endif
+
+
+	int dialog_code = dialog.exec();
+	if (dialog_code == QDialog::Accepted) {
+		last_folder_files_url = dialog.directoryUrl();
+#ifdef K
+
+#ifdef VIKING_PROMPT_IF_MODIFIED
+		if ((window->modified || window->filename) && newwindow) {
+#else
+		if (window->filename && newwindow) {
+#endif
+			g_signal_emit(window->get_toolkit_object(), window_signals[VW_OPENWINDOW_SIGNAL], 0, gtk_file_chooser_get_filenames(GTK_FILE_CHOOSER(dialog)));
+		} else {
+#endif
+
+			QStringList files = dialog.selectedFiles();
+			bool change_fn = newwindow && (files.size() == 1); /* Only change fn if one file. */
+			bool first_vik_file = true;
+			auto iter = files.begin();
+			while (iter != files.end()) {
+
+				QString file_name = *iter;
+				if (newwindow && check_file_magic_vik(file_name.toUtf8().data())) {
+					/* Load first of many .vik files in current window. */
+					if (first_vik_file) {
+						this->open_file(file_name.toUtf8().data(), true);
+						first_vik_file = false;
+					} else {
+#ifdef K
+						/* Load each subsequent .vik file in a separate window. */
+						Window * new_window = Window::new_window();
+						if (new_window) {
+							new_window->open_file(file_name.toUtf8().data(), true);
+						}
+#endif
+					}
+				} else {
+					/* Other file types. */
+					this->open_file(file_name.toUtf8().data(), change_fn);
+				}
+
+				iter++;
+			}
+#ifdef K
+		}
+#endif
+	}
+}
+
+
+
+
+void Window::open_file(char const * filename, bool change_filename)
+{
+	this->set_busy_cursor();
+
+	// Enable the *new* filename to be accessible by the Layers codez
+	char *original_filename = g_strdup(this->filename);
+	free(this->filename);
+	this->filename = g_strdup(filename);
+	bool success = false;
+	bool restore_original_filename = false;
+
+	LayerAggregate * agg = this->layers_panel->get_top_layer();
+	this->loaded_type = a_file_load(agg, this->viewport, filename);
+	switch (this->loaded_type) {
+	case LOAD_TYPE_READ_FAILURE:
+		dialog_error("The file you requested could not be opened.", this);
+		break;
+	case LOAD_TYPE_GPSBABEL_FAILURE:
+		dialog_error("GPSBabel is required to load files of this type or GPSBabel encountered problems.", this);
+		break;
+	case LOAD_TYPE_GPX_FAILURE:
+		dialog_error(QString("Unable to load malformed GPX file %1").arg(QString(filename)), this);
+		break;
+	case LOAD_TYPE_UNSUPPORTED_FAILURE:
+		dialog_error(QString("Unsupported file type for %1").arg(QString(filename)), this);
+		break;
+	case LOAD_TYPE_VIK_FAILURE_NON_FATAL:
+		{
+			/* Since we can process .vik files with issues just show a warning in the status bar.
+			   Not that a user can do much about it... or tells them what this issue is yet... */
+			this->get_statusbar()->set_message(StatusBarField::INFO, QString("WARNING: issues encountered loading %1").arg(file_basename(filename)));
+		}
+		// No break, carry on to show any data
+	case LOAD_TYPE_VIK_SUCCESS:
+		{
+#ifdef K
+			restore_original_filename = true; // NB Will actually get inverted by the 'success' component below
+			GtkWidget *mode_button;
+			/* Update UI */
+			if (change_filename) {
+				this->set_filename(filename);
+			}
+			mode_button = this->get_drawmode_button(this->viewport->get_drawmode());
+			this->only_updating_coord_mode_ui = true; /* if we don't set this, it will change the coord to UTM if we click Lat/Lon. I don't know why. */
+			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mode_button), true);
+			this->only_updating_coord_mode_ui = false;
+
+			this->layers_panel->change_coord_mode(this->viewport->get_coord_mode());
+
+			// Slightly long winded methods to align loaded viewport settings with the UI
+			//  Since the rewrite for toolbar + menu actions
+			//  there no longer exists a simple way to directly change the UI to a value for toggle settings
+			//  it only supports toggling the existing setting (otherwise get infinite loops in trying to align tb+menu elements)
+			// Thus get state, compare them, if different then invert viewport setting and (re)sync the setting (via toggling)
+			bool vp_state_scale = this->viewport->get_draw_scale();
+			bool ui_state_scale = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(get_show_widget_by_name(this, "ShowScale")));
+			if (vp_state_scale != ui_state_scale) {
+				this->viewport->set_draw_scale(!vp_state_scale);
+				this->toggle_draw_scale(NULL);
+			}
+			bool vp_state_centermark = this->viewport->get_draw_centermark();
+			bool ui_state_centermark = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(get_show_widget_by_name(this, "ShowCenterMark")));
+			if (vp_state_centermark != ui_state_centermark) {
+				this->viewport->set_draw_centermark(!vp_state_centermark);
+				this->toggle_draw_centermark(NULL);
+			}
+			bool vp_state_highlight = this->viewport->get_draw_highlight();
+			bool ui_state_highlight = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(get_show_widget_by_name(this, "ShowHighlight")));
+			if (vp_state_highlight != ui_state_highlight) {
+				this->viewport->set_draw_highlight(!vp_state_highlight);
+				this->toggle_draw_highlight(NULL);
+			}
+#endif
+		}
+		// NB No break, carry on to redraw
+		//case LOAD_TYPE_OTHER_SUCCESS:
+	default:
+		success = true;
+		// When LOAD_TYPE_OTHER_SUCCESS *only*, this will maintain the existing Viking project
+		restore_original_filename = ! restore_original_filename;
+		this->update_recently_used_document(filename);
+		this->draw_update();
+		break;
+	}
+
+	if (!success || restore_original_filename) {
+		// Load didn't work or want to keep as the existing Viking project, keep using the original name
+		this->set_filename(original_filename);
+	}
+	free(original_filename);
+
+	this->clear_busy_cursor();
+}
+
+
+
+
+void Window::update_recently_used_document(char const * filename)
+{
+#ifdef K
+	/* Update Recently Used Document framework */
+	GtkRecentManager *manager = gtk_recent_manager_get_default();
+	GtkRecentData * recent_data = g_slice_new(GtkRecentData);
+	char *groups[] = { (char *) "viking", NULL};
+	GFile * file = g_file_new_for_commandline_arg(filename);
+	char * uri = g_file_get_uri(file);
+	char * basename = g_path_get_basename(filename);
+	g_object_unref(file);
+	file = NULL;
+
+	recent_data->display_name   = basename;
+	recent_data->description    = NULL;
+	recent_data->mime_type      = (char *) "text/x-gps-data";
+	recent_data->app_name       = (char *) g_get_application_name();
+	recent_data->app_exec       = g_strjoin(" ", g_get_prgname(), "%f", NULL);
+	recent_data->groups         = groups;
+	recent_data->is_private     = false;
+	if (!gtk_recent_manager_add_full(manager, uri, recent_data)) {
+		this->get_statusbar()->set_message(StatusBarField::INFO, QString("Unable to add '%s' to the list of recently used documents").arg(uri));
+	}
+
+	free(uri);
+	free(basename);
+	free(recent_data->app_exec);
+	g_slice_free(GtkRecentData, recent_data);
+#endif
+}
+
+
+
+
+
+ /**
+ * Call this before doing things that may take a long time and otherwise not show any other feedback
+ * such as loading and saving files.
+ */
+void Window::set_busy_cursor()
+{
+#ifdef K
+	gdk_window_set_cursor(gtk_widget_get_window(this->get_toolkit_widget()), this->busy_cursor);
+	// Viewport has a separate cursor
+	gdk_window_set_cursor(gtk_widget_get_window(this->viewport->get_toolkit_widget()), this->busy_cursor);
+	// Ensure cursor updated before doing stuff
+	while (gtk_events_pending()) {
+		gtk_main_iteration();
+	}
+#endif
+}
+
+
+
+
+void Window::clear_busy_cursor()
+{
+#ifdef K
+	gdk_window_set_cursor(gtk_widget_get_window(this->get_toolkit_widget()), NULL);
+	// Restore viewport cursor
+	gdk_window_set_cursor(gtk_widget_get_window(this->viewport->get_toolkit_widget()), this->viewport_cursor);
+#endif
+}
+
+
+
+
+void Window::set_filename(char const * filename)
+{
+	if (this->filename) {
+		free(this->filename);
+	}
+	if (filename == NULL) {
+		this->filename = NULL;
+	} else {
+		this->filename = g_strdup(filename);
+	}
+
+	/* Refresh window's title */
+	char const * file = this->get_filename();
+#ifdef K
+	char * title = g_strdup_printf("%s - Viking", file);
+	gtk_window_set_title(this->get_toolkit_window(), title);
+	free(title);
+#endif
+}
+
+
+
+
+char const * Window::get_filename()
+{
+	return this->filename ? file_basename(this->filename) : _("Untitled");
+}
+
+
+
+
+
+GtkWidget * Window::get_drawmode_button(VikViewportDrawMode mode)
+{
+	GtkWidget *mode_button;
+	char *buttonname;
+	switch (mode) {
+#ifdef VIK_CONFIG_EXPEDIA
+	case VIK_VIEWPORT_DRAWMODE_EXPEDIA:
+		buttonname = (char *) "/ui/MainMenu/View/ModeExpedia";
+		break;
+#endif
+	case VIK_VIEWPORT_DRAWMODE_MERCATOR:
+		buttonname = (char *) "/ui/MainMenu/View/ModeMercator";
+		break;
+	case VIK_VIEWPORT_DRAWMODE_LATLON:
+		buttonname = (char *) "/ui/MainMenu/View/ModeLatLon";
+		break;
+	default:
+		buttonname = (char *) "/ui/MainMenu/View/ModeUTM";
+	}
+#ifdef K
+	mode_button = gtk_ui_manager_get_widget(this->uim, buttonname);
+#endif
+	assert(mode_button);
+	return mode_button;
 }

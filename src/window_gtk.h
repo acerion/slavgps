@@ -153,7 +153,7 @@ namespace SlavGPS {
 		unsigned int draw_image_height;
 		bool draw_image_save_as_png = false;
 
-		bool only_updating_coord_mode_ui = false; /* Hack for a bug in GTK. */
+
 		GtkUIManager * uim = NULL;
 
 		GThread  * thread = NULL;

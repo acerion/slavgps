@@ -61,15 +61,17 @@ namespace SlavGPS {
 
 
 
-#if 0
 	bool a_file_check_ext(char const * filename, char const * fileext);
 
 	/* Function to determine if a filename is a 'viking' type file. */
 	bool check_file_magic_vik(char const * filename);
 
+#ifdef K
 	char * append_file_ext(char const * filename, VikFileType_t type);
+#endif
 
 	VikLoadType_t a_file_load(LayerAggregate * top, Viewport * viewport, char const * filename);
+#ifdef K
 	bool a_file_save(LayerAggregate * top, Viewport * viewport, char const * filename);
 	/* Only need to define Track if the file type is FILE_TYPE_GPX_TRACK. */
 	bool a_file_export(LayerTRW * trw, char const * filename, VikFileType_t file_type, Track * trk, bool write_hidden);
