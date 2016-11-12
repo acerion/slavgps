@@ -420,6 +420,42 @@ void PropertiesDialog::fill(Layer * layer)
 
 
 
+void PropertiesDialog::fill(LayerInterface * interface)
+{
+	std::map<layer_param_id_t, Parameter *> * params = interface->layer_parameters;
+	std::map<layer_param_id_t, LayerParamValue> * values = interface->parameter_value_defaults;
+
+	for (auto iter = params->begin(); iter != params->end(); iter++) {
+		param_id_t group_id = iter->second->group;
+		if (group_id == VIK_LAYER_NOT_IN_PROPERTIES) {
+			iter++;
+			continue;
+		}
+
+		auto form_iter = this->forms.find(group_id);
+		QFormLayout * form = NULL;
+		if (form_iter == this->forms.end()) {
+			form = this->insert_tab(QString("page"));
+
+			this->forms.insert(std::pair<param_id_t, QFormLayout *>(group_id, form));
+
+			qDebug() << "II: Parameters Builder: created tab" << QString("page");
+		} else {
+			form = form_iter->second;
+		}
+
+		LayerParamValue param_value = values->at(iter->first);
+		QString label = QString(iter->second->title);
+		QWidget * widget = this->new_widget(iter->second, param_value);
+		form->addRow(label, widget);
+		qDebug() << "II: UI Builder: adding widget #" << iter->first << iter->second->title << widget;
+		this->widgets.insert(std::pair<layer_param_id_t, QWidget *>(iter->first, widget));
+	}
+}
+
+
+
+
 void PropertiesDialog::fill(Waypoint * wp, Parameter * parameters)
 {
 	int i = 0;

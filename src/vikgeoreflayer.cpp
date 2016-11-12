@@ -1321,7 +1321,7 @@ LayerGeoref::LayerGeoref()
 {
 	this->type = LayerType::GEOREF;
 	strcpy(this->type_string, "GEOREF");
-	this->configure_interface(&vik_georef_layer_interface, layer_params);
+	this->interface = &vik_georef_layer_interface;
 }
 
 
@@ -1331,7 +1331,7 @@ LayerGeoref::LayerGeoref(Viewport * viewport) : LayerGeoref()
 {
 	/* Since GeoRef layer doesn't use uibuilder initializing this
 	   way won't do anything yet... */
-	this->set_defaults(viewport);
+	this->set_initial_parameter_values(viewport);
 
 	/* Make these defaults based on the current view. */
 	this->mpp_northing = viewport->get_ympp();

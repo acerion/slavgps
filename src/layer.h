@@ -234,7 +234,7 @@ namespace SlavGPS {
 		void rename_no_copy(char * new_name);
 		void draw_visible(Viewport * viewport);
 
-		void set_defaults(Viewport * viewport);
+		void set_initial_parameter_values(Viewport * viewport);
 
 		GtkWindow * get_toolkit_window(void);
 		Window * get_window(void);
@@ -406,6 +406,7 @@ struct _LayerInterface {
 	VikLayerFuncChangeParam           change_param;
 
 	std::map<layer_param_id_t, Parameter *> * layer_parameters;
+	std::map<param_id_t, LayerParamValue> * parameter_value_defaults;
 };
 
 

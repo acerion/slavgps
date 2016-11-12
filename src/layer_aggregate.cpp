@@ -947,7 +947,7 @@ LayerAggregate::LayerAggregate()
 
 	this->type = LayerType::AGGREGATE;
 	strcpy(this->type_string, "LayerType::AGGREGATE");
-	this->configure_interface(&vik_aggregate_layer_interface, NULL);
+	this->interface = &vik_aggregate_layer_interface;
 
 	this->rename(vik_aggregate_layer_interface.name);
 	this->children = new std::list<Layer *>;

@@ -461,7 +461,7 @@ void LayerMaps::set_map_type(MapTypeID map_type)
 MapTypeID maps_layer_get_default_map_type()
 {
 	LayerInterface * vli = Layer::get_interface(LayerType::MAPS);
-	LayerParamData vlpd = a_layer_defaults_get(vli->fixed_layer_name, "mode", LayerParamType::UINT);
+	LayerParamData vlpd = a_layer_defaults_get(vli->fixed_layer_name, "mode", LayerParamType::UINT); /* kamilTODO: get the default value from LayerInterface. */
 	if (vlpd.u == 0) {
 		vlpd = id_default();
 	}
@@ -2721,7 +2721,7 @@ LayerMaps::LayerMaps()
 
 	this->type = LayerType::MAPS;
 	strcpy(this->type_string, "MAPS");
-	this->configure_interface(&vik_maps_layer_interface, layer_params);
+	this->interface = (&vik_maps_layer_interface, layer_params);
 
 	memset(&redownload_ul, 0, sizeof (VikCoord));
 	memset(&redownload_br, 0, sizeof (VikCoord));
@@ -2734,5 +2734,5 @@ LayerMaps::LayerMaps(Viewport * viewport) : LayerMaps()
 {
 	fprintf(stderr, "LayerMaps::LayerMaps(viewport)\n");
 
-	this->set_defaults(viewport);
+	this->set_initial_parameter_values(viewport);
 }

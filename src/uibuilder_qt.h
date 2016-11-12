@@ -67,6 +67,7 @@ namespace SlavGPS {
 
 		void fill(Preferences * preferences);
 		void fill(Layer * layer);
+		void fill(LayerInterface * interface);
 		void fill(Waypoint * wp, Parameter * parameters);
 
 		LayerParamValue get_param_value(layer_param_id_t id, Parameter * param);

@@ -1235,7 +1235,7 @@ LayerMapnik::LayerMapnik()
 {
 	this->type = LayerType::MAPNIK;
 	strcpy(this->type_string, "MAPNIK");
-	this->configure_interface(&vik_mapnik_layer_interface, layer_params);
+	this->interface = &vik_mapnik_layer_interface;
 
 	/* kamilTODO: initialize this? */
 	//this->rerender_ul;
@@ -1247,7 +1247,7 @@ LayerMapnik::LayerMapnik()
 
 LayerMapnik::LayerMapnik(Viewport * viewport) : LayerMapnik()
 {
-	this->set_defaults(viewport);
+	this->set_initial_parameter_values(viewport);
 	this->tile_size_x = size_default().u; /* FUTURE: Is there any use in this being configurable? */
 	this->loaded = false;
 	this->mi = mapnik_interface_new();

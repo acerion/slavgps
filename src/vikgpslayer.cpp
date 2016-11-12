@@ -1985,7 +1985,7 @@ LayerGPS::LayerGPS()
 {
 	this->type = LayerType::GPS;
 	strcpy(this->type_string, "GPS");
-	this->configure_interface(&vik_gps_layer_interface, layer_params);
+	this->interface = &vik_gps_layer_interface;
 }
 
 
@@ -2008,7 +2008,7 @@ LayerGPS::LayerGPS(Viewport * viewport) : LayerGPS()
 
 #endif // VIK_CONFIG_REALTIME_GPS_TRACKING
 
-	this->set_defaults(viewport);
+	this->set_initial_parameter_values(viewport);
 	this->rename(vik_gps_layer_interface.name);
 
 	for (int i = 0; i < NUM_TRW; i++) {

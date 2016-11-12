@@ -203,7 +203,7 @@ int main(int argc, char *argv[])
 	*/
 	a_vik_preferences_init();
 
-	a_layer_defaults_init();
+	layer_defaults_init();
 
 	a_download_init();
 	curl_download_init();

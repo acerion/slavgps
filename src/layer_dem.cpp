@@ -1536,7 +1536,7 @@ LayerDEM::LayerDEM()
 
 	this->type = LayerType::DEM;
 	strcpy(this->type_string, "LayerType::DEM");
-	this->configure_interface(&vik_dem_layer_interface, dem_layer_params);
+	this->interface = &vik_dem_layer_interface;
 
 	this->files = new std::list<char *>;
 	this->dem_type = 0;
@@ -1557,7 +1557,7 @@ LayerDEM::LayerDEM(Viewport * viewport) : LayerDEM()
 		this->colors[0] = new QColor("#0000FF");
 	}
 
-	this->set_defaults(viewport);
+	this->set_initial_parameter_values(viewport);
 
 
 	if (viewport) {

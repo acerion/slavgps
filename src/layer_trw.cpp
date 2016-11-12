@@ -383,6 +383,8 @@ LayerInterface vik_trw_layer_interface = {
 
 	/* (VikLayerFuncUnmarshall) */   trw_layer_unmarshall,
 	/* (VikLayerFuncChangeParam) */  trw_layer_change_param,
+	NULL,
+	NULL
 };
 
 
@@ -7667,7 +7669,7 @@ LayerTRW::LayerTRW() : Layer()
 {
 	this->type = LayerType::TRW;
 	strcpy(this->type_string, "TRW");
-	this->configure_interface(&vik_trw_layer_interface, trw_layer_params);
+	this->interface = &vik_trw_layer_interface;
 
 	memset(&coord_mode, 0, sizeof (VikCoordMode));
 }
@@ -7679,7 +7681,7 @@ LayerTRW::LayerTRW(Viewport * viewport) : Layer()
 {
 	this->type = LayerType::TRW;
 	strcpy(this->type_string, "TRW");
-	this->configure_interface(&vik_trw_layer_interface, trw_layer_params);
+	this->interface = &vik_trw_layer_interface;
 
 	memset(&coord_mode, 0, sizeof (VikCoordMode));
 
@@ -7715,9 +7717,9 @@ LayerTRW::LayerTRW(Viewport * viewport) : Layer()
 	rv->routes_iters = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, g_free);
 	#endif
 
-	this->image_cache = g_queue_new(); /* Must be performed before set_params via set_defaults. */
+	this->image_cache = g_queue_new(); /* Must be performed before set_params via set_initial_parameter_values. */
 
-	this->set_defaults(viewport);
+	this->set_initial_parameter_values(viewport);
 
 	/* Param settings that are not available via the GUI. */
 	/* Force to on after processing params (which defaults them to off with a zero value). */

@@ -47,9 +47,11 @@ static LayerParamValue read_parameter_value(const char * group, const char * nam
 static LayerParamValue read_parameter_value(const char * group, const char * name, LayerParamType ptype);
 static void write_parameter_value(LayerParamValue value, const char * group, const char * name, LayerParamType ptype);
 
+#if 0
 static void defaults_run_setparam(void * index_ptr, param_id_t id, LayerParamValue value, Parameter * params);
 static LayerParamValue defaults_run_getparam(void * index_ptr, param_id_t id, bool notused2);
 static void use_internal_defaults_if_missing_default(LayerType layer_type);
+#endif
 
 static bool layer_defaults_load_from_file(void);
 static bool layer_defaults_save_to_file(void);
@@ -61,9 +63,10 @@ static bool layer_defaults_save_to_file(void);
 
 
 
-
+#if 0
 /* A list of the parameter types in use. */
 static GPtrArray * paramsVD;
+#endif
 
 static QSettings * keyfile = NULL;
 static bool loaded;
@@ -188,6 +191,8 @@ static void write_parameter_value(LayerParamValue value, const char * group, con
 
 
 
+#if 0
+
 
 static void defaults_run_setparam(void * index_ptr, param_id_t id, LayerParamValue value, Parameter * params)
 {
@@ -238,7 +243,7 @@ static void use_internal_defaults_if_missing_default(LayerType layer_type)
 		}
 	}
 }
-
+#endif
 
 
 
@@ -262,11 +267,12 @@ static bool layer_defaults_load_from_file(void)
 		return false;
 	}
 
-
+#if 0
 	/* Ensure if have a key file, then any missing values are set from the internal defaults. */
 	for (LayerType layer_type = LayerType::AGGREGATE; layer_type < LayerType::NUM_TYPES; ++layer_type) {
 		use_internal_defaults_if_missing_default(layer_type);
 	}
+#endif
 
 	return true;
 }
@@ -307,83 +313,27 @@ bool layer_defaults_show_window(LayerType layer_type, QWidget * parent)
 	}
 
 	char const * layer_name = Layer::get_interface(layer_type)->name;
-
-	/*
-	   Need to know where the params start and they finish for this layer
-
-	   1. inspect every registered param - see if it has the layer value required to determine overall size
-	      [they are contiguous from the start index]
-	   2. copy the these params from the main list into a tmp struct
-
-	   Then pass this tmp struct to uibuilder for display
-	*/
-
-	unsigned int layer_params_count = 0;
-
-	bool found_first = false;
-	int index = 0;
-	for (unsigned int i = 0; i < paramsVD->len; i++) {
-		Parameter * param = (Parameter *) g_ptr_array_index(paramsVD, i);
-		if (param->layer_type == layer_type) {
-			layer_params_count++;
-			if (!found_first) {
-				index = i;
-				found_first = true;
-			}
-		}
-	}
-
-	/* Have we any parameters to show! */
-	if (!layer_params_count) {
-		return false;
-	}
-
-	Parameter * params = (Parameter *) malloc(layer_params_count * sizeof (Parameter));
-	for (unsigned int i = 0; i < layer_params_count; i++) {
-		params[i] = *((Parameter *) (g_ptr_array_index(paramsVD,i+index)));
-	}
-
-#ifdef K
-	if (a_uibuilder_properties_factory(/* title */,
-					   /* parent */,
-					   params,
-					   layer_params_count,
-					   Layer::get_interface(layer_type)->params_groups,
-					   Layer::get_interface(layer_type)->params_groups_count,
-					   (bool (*) (void *,uint16_t,LayerParamValue,void *,bool)) defaults_run_setparam,
-					   ((void *) (long) (index)),
-					   params,
-					   defaults_run_getparam,
-					   ((void *) (long) (index)),
-					   NULL)) {
-
-	}
-#endif
+	LayerInterface * interface = Layer::get_interface(layer_type);
 
 	PropertiesDialog dialog(QString("%1: Layer Defaults").arg(QString(layer_name)), parent);
-#ifdef K
-	dialog.fill(this);
-#endif
+	dialog.fill(interface);
 	int dialog_code = dialog.exec();
 
 	if (dialog_code == QDialog::Accepted) {
-#ifdef K
-		std::map<layer_param_id_t, Parameter *> * parameters = this->get_interface()->layer_parameters;
+
+		std::map<layer_param_id_t, Parameter *> * parameters = interface->layer_parameters;
+		std::map<param_id_t, LayerParamValue> * values = interface->parameter_value_defaults;
+
 		for (auto iter = parameters->begin(); iter != parameters->end(); iter++) {
 			LayerParamValue param_value = dialog.get_param_value(iter->first, iter->second);
-			bool set = this->set_param_value(iter->first, param_value, viewport, false);
-			if (set) {
-				must_redraw = true;
-			}
+			values->at(iter->first) = param_value;
+			write_parameter_value(param_value, interface->fixed_layer_name, iter->second->name, iter->second->type);
 		}
 
-		/* Save. */
 		layer_defaults_save_to_file();
-#endif
-		free(params);
+
 		return true;
 	} else {
-		free(params);
 		return false;
 	}
 }
@@ -400,11 +350,13 @@ bool layer_defaults_show_window(LayerType layer_type, QWidget * parent)
  */
 void a_layer_defaults_register(const char * layer_name, Parameter * layer_param, LayerParamValue default_value)
 {
+#if 0
 	/* Copy value. */
 	Parameter * new_layer_param = (Parameter *) malloc(1 * sizeof (Parameter));
 	*new_layer_param = *layer_param;
 
 	g_ptr_array_add(paramsVD, new_layer_param);
+#endif
 
 	write_parameter_value(default_value, layer_name, layer_param->name, layer_param->type);
 }
@@ -423,8 +375,10 @@ void a_layer_defaults_init()
 
 	qDebug() << "II: Layer Defaults: key file initialized as" << keyfile << "with path" << path;
 
+#if 0
 	/* Not copied. */
 	paramsVD = g_ptr_array_new();
+#endif
 
 	loaded = false;
 }
@@ -438,9 +392,10 @@ void a_layer_defaults_init()
 void a_layer_defaults_uninit()
 {
 	delete keyfile;
-
+#if 0
 	g_ptr_array_foreach(paramsVD, (GFunc)g_free, NULL);
 	g_ptr_array_free(paramsVD, true);
+#endif
 }
 
 
@@ -469,20 +424,22 @@ LayerParamValue a_layer_defaults_get(const char * layer_name, const char * param
 
 
 /**
- * Call this function to save the current layer defaults.
- * Normally should only be performed if any layer defaults have been changed via direct manipulation of the layer
- * rather than the user changing the preferences via the dialog window above.
- *
- * This must only be performed once all layer parameters have been initialized.
- *
- * Returns: %true if saving was successful
- */
+   \brief Save current layer defaults to settings file
+
+   \return: true if saving was successful
+*/
 bool a_layer_defaults_save()
 {
-	/* Generate defaults. */
-	for (LayerType layer_type = LayerType::AGGREGATE; layer_type < LayerType::NUM_TYPES; ++layer_type) {
-		use_internal_defaults_if_missing_default(layer_type);
-	}
+	/*
+	  Default values of layer parameters may be edited only through
+	  dialog window in menu Edit -> Layer Defaults -> <layer type>.
+
+	  After every instance of editing the values in the dialog, the
+	  modified values are saved into layer's Interface and into keyfile.
+
+	  So all we have to do now is to call this function that will
+	  simply sync keyfile to disc file.
+	*/
 
 	return layer_defaults_save_to_file();
 }

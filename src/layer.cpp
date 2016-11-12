@@ -86,24 +86,27 @@ enum {
 };
 static unsigned int layer_signals[VL_LAST_SIGNAL] = { 0 };
 
-
+#if 0
 static bool layer_defaults_register(LayerType layer_type);
-
+#endif
 
 
 
 void SlavGPS::layer_init(void)
 {
-#ifndef SLAVGPS_QT
+#if 0
 	layer_signals[VL_UPDATE_SIGNAL] = g_signal_new("changed", G_TYPE_OBJECT,
 						       (GSignalFlags) (G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION), 0, NULL, NULL,
 						       g_cclosure_marshal_VOID__VOID, G_TYPE_NONE, 0);
 #endif
+
+#if 0
 	/* Register all parameter defaults, early in the start up sequence. */
 	for (LayerType layer_type = LayerType::AGGREGATE; layer_type < LayerType::NUM_TYPES; ++layer_type) {
 		/* ATM ignore the returned value. */
 		layer_defaults_register(layer_type);
 	}
+#endif
 }
 
 
@@ -188,35 +191,48 @@ LayerInterface * Layer::get_interface(void)
 
 
 
-void Layer::configure_interface(LayerInterface * intf, Parameter * parameters)
-{
-	this->interface = intf;
 
-	if (parameters && this->interface && !this->interface->layer_parameters) {
-		this->interface->layer_parameters = new std::map<layer_param_id_t, Parameter *>;
-		int i = 0;
-		while (parameters[i].name) {
-			this->interface->layer_parameters->insert(std::pair<layer_param_id_t, Parameter *>(parameters[i].id, &parameters[i]));
-			i++;
+void Layer::preconfigure_interfaces(void)
+{
+	for (SlavGPS::LayerType i = SlavGPS::LayerType::AGGREGATE; i < SlavGPS::LayerType::NUM_TYPES; ++i) {
+
+		LayerInterface * interface = Layer::get_interface(i);
+		QString path = QString(":/icons/layer/") + QString(interface->fixed_layer_name).toLower() + QString(".png");
+		qDebug() << "path is" << path;
+		interface->icon = new QIcon(path);
+
+		interface->parameter_value_defaults = new std::map<param_id_t, LayerParamValue>;
+
+		if (!interface->params) {
+			continue;
+		}
+
+		interface->layer_parameters = new std::map<layer_param_id_t, Parameter *>;
+		int j = 0;
+		while (interface->params[j].name) {
+			interface->layer_parameters->insert(std::pair<layer_param_id_t, Parameter *>(interface->params[j].id, &interface->params[j]));
+
+			/* Read and store default values of layer's parameters.
+			   First try to get program's internal/hardwired value.
+			   Then try to get value from settings file. */
+			LayerParamData param_value;
+			if (interface->params[j].hardwired_default_value) {
+				/* This will be overwritten below by value from settings file. */
+				param_value = interface->params[j].hardwired_default_value();
+			}
+			/* kamilTODO: make sure that the value read from Layer Defaults is valid. */
+			/* kamilTODO: if invalid, call a_layer_defaults_register() to save the value? */
+			param_value = a_layer_defaults_get(interface->fixed_layer_name, interface->params[j].name, interface->params[j].type);
+			(*interface->parameter_value_defaults)[interface->params[j].id] = param_value;
+
+			j++;
 		}
 	}
 }
 
 
 
-
-void Layer::preconfigure_interfaces(void)
-{
-	for (SlavGPS::LayerType i = SlavGPS::LayerType::AGGREGATE; i < SlavGPS::LayerType::NUM_TYPES; ++i) {
-		QString path = QString(":/icons/layer/") + QString(Layer::get_interface(i)->fixed_layer_name).toLower() + QString(".png");
-		qDebug() << "path is" << path;
-		Layer::get_interface(i)->icon = new QIcon(path);
-	}
-}
-
-
-
-
+#if 0
 /**
  * Store default values for this layer.
  *
@@ -247,6 +263,7 @@ static bool layer_defaults_register(LayerType layer_type)
 
 	return answer;
 }
+#endif
 
 
 
@@ -766,10 +783,12 @@ ParameterValue * vik_layer_data_typed_param_copy_from_string(LayerParamType type
 
 
 /**
- * Loop around all parameters for the specified layer to call the
- * function to get the default value for that parameter.
- */
-void Layer::set_defaults(Viewport * viewport)
+   Every layer has a set of parameters.
+   Every new layer gets assigned some initial/default values of these parameters.
+   These initial/default values of parameters are stored in the Layer Interface.
+   This method copies the values from the interface into given layer.
+*/
+void Layer::set_initial_parameter_values(Viewport * viewport)
 {
 	/* Sneaky initialize of the viewport value here. */
 	this->viewport = viewport;
@@ -778,13 +797,15 @@ void Layer::set_defaults(Viewport * viewport)
 	LayerParamValue param_value;
 
 	std::map<layer_param_id_t, Parameter *> * parameters = this->interface->layer_parameters;
+	std::map<param_id_t, LayerParamValue> * defaults = this->interface->parameter_value_defaults;
+
 	for (auto iter = parameters->begin(); iter != parameters->end(); iter++) {
 		/* Ensure parameter is for use. */
 		if (iter->second->group > VIK_LAYER_NOT_IN_PROPERTIES) {
 			/* ATM can't handle string lists.
 			   Only DEM files uses this currently. */
 			if (iter->second->type != LayerParamType::STRING_LIST) {
-				param_value = a_layer_defaults_get(layer_name, iter->second->name, iter->second->type);
+				param_value = defaults->at(iter->first);
 				this->set_param_value(iter->first, param_value, viewport, true); /* Possibly comes from a file. */
 			}
 		}
