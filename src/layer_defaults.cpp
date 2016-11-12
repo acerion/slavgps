@@ -43,13 +43,13 @@ using namespace SlavGPS;
 
 
 
-static LayerParamValue read_parameter_value(const char * group, const char * name, LayerParamType ptype, bool * success);
-static LayerParamValue read_parameter_value(const char * group, const char * name, LayerParamType ptype);
-static void write_parameter_value(LayerParamValue value, const char * group, const char * name, LayerParamType ptype);
+static ParameterValue read_parameter_value(const char * group, const char * name, ParameterType ptype, bool * success);
+static ParameterValue read_parameter_value(const char * group, const char * name, ParameterType ptype);
+static void write_parameter_value(ParameterValue value, const char * group, const char * name, ParameterType ptype);
 
 #if 0
-static void defaults_run_setparam(void * index_ptr, param_id_t id, LayerParamValue value, Parameter * params);
-static LayerParamValue defaults_run_getparam(void * index_ptr, param_id_t id, bool notused2);
+static void defaults_run_setparam(void * index_ptr, param_id_t id, ParameterValue value, Parameter * params);
+static ParameterValue defaults_run_getparam(void * index_ptr, param_id_t id, bool notused2);
 static void use_internal_defaults_if_missing_default(LayerType layer_type);
 #endif
 
@@ -76,9 +76,9 @@ static bool loaded;
 /* "read" is supposed to indicate that this is a low-level function,
    reading directly from file, even though the reading is made from QT
    abstraction of settings file. */
-static LayerParamValue read_parameter_value(const char * group, const char * name, LayerParamType ptype, bool * success)
+static ParameterValue read_parameter_value(const char * group, const char * name, ParameterType ptype, bool * success)
 {
-	LayerParamValue value = VIK_LPD_BOOLEAN (false);
+	ParameterValue value = VIK_LPD_BOOLEAN (false);
 
 	QString key(QString(group) + QString("/") + QString(name));
 	QVariant variant = keyfile->value(key);
@@ -91,35 +91,35 @@ static LayerParamValue read_parameter_value(const char * group, const char * nam
 	*success = true;
 
 	switch (ptype) {
-	case LayerParamType::DOUBLE: {
+	case ParameterType::DOUBLE: {
 		value.d = variant.toDouble();
 		break;
 	}
-	case LayerParamType::UINT: {
+	case ParameterType::UINT: {
 		value.u = (uint32_t) variant.toULongLong();
 		break;
 	}
-	case LayerParamType::INT: {
+	case ParameterType::INT: {
 		value.i = (int32_t) variant.toLongLong();
 		break;
 	}
-	case LayerParamType::BOOLEAN: {
+	case ParameterType::BOOLEAN: {
 		value.b = variant.toBool();
 		break;
 	}
-	case LayerParamType::STRING: {
+	case ParameterType::STRING: {
 		value.s = strdup(variant.toString().toUtf8().constData());
 		qDebug() << "II: Layer Defaults: read string" << value.s;
 		break;
 	}
 #if 0
-	case LayerParamType::STRING_LIST: {
+	case ParameterType::STRING_LIST: {
 		char **str = g_key_file_get_string_list(keyfile, group, name, &error);
 		value.sl = str_to_glist(str); /* TODO convert. */
 		break;
 	}
 #endif
-	case LayerParamType::COLOR: {
+	case ParameterType::COLOR: {
 		QColor color = variant.value<QColor>();
 		value.c.r = color.red();
 		value.c.g = color.green();
@@ -143,7 +143,7 @@ static LayerParamValue read_parameter_value(const char * group, const char * nam
 /* "read" is supposed to indicate that this is a low-level function,
    reading directly from file, even though the reading is made from QT
    abstraction of settings file. */
-static LayerParamValue read_parameter_value(const char * group, const char * name, LayerParamType ptype)
+static ParameterValue read_parameter_value(const char * group, const char * name, ParameterType ptype)
 {
 	bool success = true;
 	/* This should always succeed - don't worry about 'success'. */
@@ -156,27 +156,27 @@ static LayerParamValue read_parameter_value(const char * group, const char * nam
 /* "write" is supposed to indicate that this is a low-level function,
    writing directly to file, even though the writing is made to QT
    abstraction of settings file. */
-static void write_parameter_value(LayerParamValue value, const char * group, const char * name, LayerParamType ptype)
+static void write_parameter_value(ParameterValue value, const char * group, const char * name, ParameterType ptype)
 {
 	QVariant variant;
 
 	switch (ptype) {
-	case LayerParamType::DOUBLE:
+	case ParameterType::DOUBLE:
 		variant = QVariant((double) value.d);
 		break;
-	case LayerParamType::UINT:
+	case ParameterType::UINT:
 		variant = QVariant((qulonglong) value.u);
 		break;
-	case LayerParamType::INT:
+	case ParameterType::INT:
 		variant = QVariant((qlonglong) value.i);
 		break;
-	case LayerParamType::BOOLEAN:
+	case ParameterType::BOOLEAN:
 		variant = QVariant((bool) value.b);
 		break;
-	case LayerParamType::STRING:
+	case ParameterType::STRING:
 		variant = QString(value.s);
 		break;
-	case LayerParamType::COLOR: {
+	case ParameterType::COLOR: {
 		variant = QColor(value.c.r, value.c.g, value.c.b, value.c.a);
 		break;
 	}
@@ -194,7 +194,7 @@ static void write_parameter_value(LayerParamValue value, const char * group, con
 #if 0
 
 
-static void defaults_run_setparam(void * index_ptr, param_id_t id, LayerParamValue value, Parameter * params)
+static void defaults_run_setparam(void * index_ptr, param_id_t id, ParameterValue value, Parameter * params)
 {
 	/* Index is only an index into values from this layer. */
 	int index = KPOINTER_TO_INT (index_ptr);
@@ -206,7 +206,7 @@ static void defaults_run_setparam(void * index_ptr, param_id_t id, LayerParamVal
 
 
 
-static LayerParamValue defaults_run_getparam(void * index_ptr, param_id_t id, bool notused2)
+static ParameterValue defaults_run_getparam(void * index_ptr, param_id_t id, bool notused2)
 {
 	/* Index is only an index into values from this layer. */
 	int index = (int) (long) (index_ptr);
@@ -237,7 +237,7 @@ static void use_internal_defaults_if_missing_default(LayerType layer_type)
 		read_parameter_value(Layer::get_interface(layer_type)->fixed_layer_name, params[i].name, params[i].type, &success);
 		if (!success) {
 			if (params[i].hardwired_default_value) {
-				LayerParamValue value = params[i].hardwired_default_value();
+				ParameterValue value = params[i].hardwired_default_value();
 				write_parameter_value(value, Layer::get_interface(layer_type)->fixed_layer_name, params[i].name, params[i].type);
 			}
 		}
@@ -321,13 +321,13 @@ bool layer_defaults_show_window(LayerType layer_type, QWidget * parent)
 
 	if (dialog_code == QDialog::Accepted) {
 
-		std::map<layer_param_id_t, Parameter *> * parameters = interface->layer_parameters;
-		std::map<param_id_t, LayerParamValue> * values = interface->parameter_value_defaults;
+		std::map<param_id_t, Parameter *> * parameters = interface->layer_parameters;
+		std::map<param_id_t, ParameterValue> * values = interface->parameter_value_defaults;
 
 		for (auto iter = parameters->begin(); iter != parameters->end(); iter++) {
-			LayerParamValue param_value = dialog.get_param_value(iter->first, iter->second);
+			ParameterValue param_value = dialog.get_param_value(iter->first, iter->second);
 			values->at(iter->first) = param_value;
-			write_parameter_value(param_value, interface->fixed_layer_name, iter->second->name, iter->second->type);
+			write_parameter_value(param_value, interface->layer_type_string, iter->second->name, iter->second->type);
 		}
 
 		layer_defaults_save_to_file();
@@ -348,7 +348,7 @@ bool layer_defaults_show_window(LayerType layer_type, QWidget * parent)
  *
  * Call this function on to set the default value for the particular parameter.
  */
-void a_layer_defaults_register(const char * layer_name, Parameter * layer_param, LayerParamValue default_value)
+void a_layer_defaults_register(const char * layer_name, Parameter * layer_param, ParameterValue default_value)
 {
 #if 0
 	/* Copy value. */
@@ -408,7 +408,7 @@ void a_layer_defaults_uninit()
  *
  * Call this function to get the default value for the parameter requested.
  */
-LayerParamValue a_layer_defaults_get(const char * layer_name, const char * param_name, LayerParamType param_type)
+ParameterValue a_layer_defaults_get(const char * layer_name, const char * param_name, ParameterType param_type)
 {
 	if (!loaded) {
 		/* Since we can't load the file in a_defaults_init (no params registered yet),

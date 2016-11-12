@@ -78,7 +78,6 @@ typedef enum {
 
 
 typedef struct _LayerInterface LayerInterface;
-typedef int16_t layer_param_id_t;
 struct _trw_menu_sublayer_t;
 
 
@@ -209,11 +208,11 @@ namespace SlavGPS {
 		virtual void realize(TreeView * tree_view, TreeIndex * layer_index);
 
 		/* bool denotes if for file I/O, as opposed to display/cut/copy etc... operations. */
-		virtual LayerParamValue get_param_value(layer_param_id_t id, bool is_file_operation) const;
+		virtual ParameterValue get_param_value(param_id_t id, bool is_file_operation) const;
 
 		/* Returns true if needs to redraw due to changed param. */
 		/* bool denotes if for file I/O, as opposed to display/cut/copy etc... operations. */
-		virtual bool set_param_value(uint16_t id, LayerParamValue param_value, Viewport * viewport, bool is_file_operation);
+		virtual bool set_param_value(uint16_t id, ParameterValue param_value, Viewport * viewport, bool is_file_operation);
 
 
 		static LayerType type_from_string(char const * str);
@@ -380,7 +379,7 @@ typedef void                     (* VikLayerFuncChangeParam)   (GtkWidget *, ui_
 
 /* See vik_layer_* for function parameter names. */
 struct _LayerInterface {
-	const char *                      fixed_layer_name; /* Used in .vik files - this should never change to maintain file compatibility. */
+	const char *                      layer_type_string; /* Used in .vik files - this should never change to maintain file compatibility. */
 	const char *                      name;             /* Translate-able name used for display purposes. */
 	const char *                      accelerator;
 	const QIcon * icon;
@@ -405,8 +404,8 @@ struct _LayerInterface {
 	/* For I/O. */
 	VikLayerFuncChangeParam           change_param;
 
-	std::map<layer_param_id_t, Parameter *> * layer_parameters;
-	std::map<param_id_t, LayerParamValue> * parameter_value_defaults;
+	std::map<param_id_t, Parameter *> * layer_parameters;
+	std::map<param_id_t, ParameterValue> * parameter_value_defaults;
 };
 
 
@@ -421,14 +420,14 @@ GdkPixbuf * vik_layer_load_icon(SlavGPS::LayerType layer_type);
 
 
 typedef struct {
-	LayerParamData data;
-	LayerParamType type;
-} ParameterValue;
+	ParameterValue data;
+	ParameterType type;
+} ParameterValueTyped;
 
 
 void vik_layer_typed_param_data_free(void * gp);
-ParameterValue * vik_layer_typed_param_data_copy_from_data(LayerParamType type, LayerParamData val);
-ParameterValue * vik_layer_data_typed_param_copy_from_string(LayerParamType type, const char * str);
+ParameterValueTyped * vik_layer_typed_param_data_copy_from_data(ParameterType type, ParameterValue val);
+ParameterValueTyped * vik_layer_data_typed_param_copy_from_string(ParameterType type, const char * str);
 
 
 

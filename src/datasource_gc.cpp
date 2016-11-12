@@ -119,7 +119,7 @@ void a_datasource_gc_init()
 {
 	a_preferences_register_group (VIKING_GC_PARAMS_GROUP_KEY, "Geocaching");
 
-	VikLayerParamData tmp;
+	ParameterValue tmp;
 	tmp.s = "username";
 	a_preferences_register(prefs, tmp, VIKING_GC_PARAMS_GROUP_KEY);
 	tmp.s = "password";

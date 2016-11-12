@@ -195,9 +195,9 @@ enum {
 
 
 
-static LayerParamData gps_protocol_default(void)
+static ParameterValue gps_protocol_default(void)
 {
-	LayerParamData data;
+	ParameterValue data;
 	data.s = strdup("garmin");
 	return data;
 }
@@ -205,9 +205,9 @@ static LayerParamData gps_protocol_default(void)
 
 
 
-static LayerParamData gps_port_default(void)
+static ParameterValue gps_port_default(void)
 {
-	LayerParamData data;
+	ParameterValue data;
 	data.s = strdup("usb:");
 #ifndef WINDOWS
 	/* Attempt to auto set default USB serial port entry. */
@@ -247,11 +247,11 @@ enum {
 
 
 
-static LayerParamData moving_map_method_default(void) { return VIK_LPD_UINT (VEHICLE_POSITION_ON_SCREEN); }
+static ParameterValue moving_map_method_default(void) { return VIK_LPD_UINT (VEHICLE_POSITION_ON_SCREEN); }
 
-static LayerParamData gpsd_host_default(void)
+static ParameterValue gpsd_host_default(void)
 {
-	LayerParamData data;
+	ParameterValue data;
 	data.s = strdup("localhost");
 	return data;
 }
@@ -259,9 +259,9 @@ static LayerParamData gpsd_host_default(void)
 
 
 
-static LayerParamData gpsd_port_default(void)
+static ParameterValue gpsd_port_default(void)
 {
-	LayerParamData data;
+	ParameterValue data;
 	data.s = g_strdup(DEFAULT_GPSD_PORT);
 	return data;
 }
@@ -269,9 +269,9 @@ static LayerParamData gpsd_port_default(void)
 
 
 
-static LayerParamData gpsd_retry_interval_default(void)
+static ParameterValue gpsd_retry_interval_default(void)
 {
-	LayerParamData data;
+	ParameterValue data;
 	data.s = strdup("10");
 	return data;
 }
@@ -281,32 +281,8 @@ static LayerParamData gpsd_retry_interval_default(void)
 
 
 
-static Parameter gps_layer_params[] = {
-	/* NB gps_layer_inst_init() is performed after parameter registeration
-	   thus to give the protocols some potential values use the old static list. */
-	/* TODO: find another way to use gps_layer_inst_init()? */
-	{ LayerType::GPS, "gps_protocol",              LayerParamType::STRING,  GROUP_DATA_MODE,     N_("GPS Protocol:"),                     LayerWidgetType::COMBOBOX,          protocols_args,          NULL, NULL, gps_protocol_default,        NULL, NULL }, // List reassigned at runtime
-	{ LayerType::GPS, "gps_port",                  LayerParamType::STRING,  GROUP_DATA_MODE,     N_("Serial Port:"),                      LayerWidgetType::COMBOBOX,          params_ports,            NULL, NULL, gps_port_default,            NULL, NULL },
-	{ LayerType::GPS, "gps_download_tracks",       LayerParamType::BOOLEAN, GROUP_DATA_MODE,     N_("Download Tracks:"),                  LayerWidgetType::CHECKBUTTON,       NULL,                    NULL, NULL, vik_lpd_true_default,        NULL, NULL },
-	{ LayerType::GPS, "gps_upload_tracks",         LayerParamType::BOOLEAN, GROUP_DATA_MODE,     N_("Upload Tracks:"),                    LayerWidgetType::CHECKBUTTON,       NULL,                    NULL, NULL, vik_lpd_true_default,        NULL, NULL },
-	{ LayerType::GPS, "gps_download_routes",       LayerParamType::BOOLEAN, GROUP_DATA_MODE,     N_("Download Routes:"),                  LayerWidgetType::CHECKBUTTON,       NULL,                    NULL, NULL, vik_lpd_true_default,        NULL, NULL },
-	{ LayerType::GPS, "gps_upload_routes",         LayerParamType::BOOLEAN, GROUP_DATA_MODE,     N_("Upload Routes:"),                    LayerWidgetType::CHECKBUTTON,       NULL,                    NULL, NULL, vik_lpd_true_default,        NULL, NULL },
-	{ LayerType::GPS, "gps_download_waypoints",    LayerParamType::BOOLEAN, GROUP_DATA_MODE,     N_("Download Waypoints:"),               LayerWidgetType::CHECKBUTTON,       NULL,                    NULL, NULL, vik_lpd_true_default,        NULL, NULL },
-	{ LayerType::GPS, "gps_upload_waypoints",      LayerParamType::BOOLEAN, GROUP_DATA_MODE,     N_("Upload Waypoints:"),                 LayerWidgetType::CHECKBUTTON,       NULL,                    NULL, NULL, vik_lpd_true_default,        NULL, NULL },
-#if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
-	{ LayerType::GPS, "record_tracking",           LayerParamType::BOOLEAN, GROUP_REALTIME_MODE, N_("Recording tracks"),                  LayerWidgetType::CHECKBUTTON,       NULL,                    NULL, NULL, vik_lpd_true_default,        NULL, NULL },
-	{ LayerType::GPS, "center_start_tracking",     LayerParamType::BOOLEAN, GROUP_REALTIME_MODE, N_("Jump to current position on start"), LayerWidgetType::CHECKBUTTON,       NULL,                    NULL, NULL, vik_lpd_false_default,       NULL, NULL },
-	{ LayerType::GPS, "moving_map_method",         LayerParamType::UINT,    GROUP_REALTIME_MODE, N_("Moving Map Method:"),                LayerWidgetType::RADIOGROUP_STATIC, params_vehicle_position, NULL, NULL, moving_map_method_default,   NULL, NULL },
-	{ LayerType::GPS, "realtime_update_statusbar", LayerParamType::BOOLEAN, GROUP_REALTIME_MODE, N_("Update Statusbar:"),                 LayerWidgetType::CHECKBUTTON,       NULL,                    NULL, N_("Display information in the statusbar on GPS updates"), vik_lpd_true_default, NULL, NULL },
-	{ LayerType::GPS, "gpsd_host",                 LayerParamType::STRING,  GROUP_REALTIME_MODE, N_("Gpsd Host:"),                        LayerWidgetType::ENTRY,             NULL,                    NULL, NULL, gpsd_host_default,           NULL, NULL },
-	{ LayerType::GPS, "gpsd_port",                 LayerParamType::STRING,  GROUP_REALTIME_MODE, N_("Gpsd Port:"),                        LayerWidgetType::ENTRY,             NULL,                    NULL, NULL, gpsd_port_default,           NULL, NULL },
-	{ LayerType::GPS, "gpsd_retry_interval",       LayerParamType::STRING,  GROUP_REALTIME_MODE, N_("Gpsd Retry Interval (seconds):"),    LayerWidgetType::ENTRY,             NULL,                    NULL, NULL, gpsd_retry_interval_default, NULL, NULL },
-#endif /* VIK_CONFIG_REALTIME_GPS_TRACKING */
-
-	{ LayerType::NUM_TYPES, NUM_PARAMS,       NULL,             LayerParamType::PTR,    VIK_LAYER_GROUP_NONE, NULL,                  LayerWidgetType::CHECKBUTTON, NULL,            NULL, NULL, NULL,                   NULL, NULL }, /* Guard. */
-};
 enum {
-	PARAM_PROTOCOL=0,
+	PARAM_PROTOCOL = 0,
 	PARAM_PORT,
 	PARAM_DOWNLOAD_TRACKS,
 	PARAM_UPLOAD_TRACKS,
@@ -323,7 +299,36 @@ enum {
 	PARAM_GPSD_PORT,
 	PARAM_GPSD_RETRY_INTERVAL,
 #endif /* VIK_CONFIG_REALTIME_GPS_TRACKING */
-	NUM_PARAMS};
+	NUM_PARAMS
+};
+
+
+
+
+static Parameter gps_layer_params[] = {
+	/* NB gps_layer_inst_init() is performed after parameter registeration
+	   thus to give the protocols some potential values use the old static list. */
+	/* TODO: find another way to use gps_layer_inst_init()? */
+	{ PARAM_PROTOCOL,                   "gps_protocol",              ParameterType::STRING,  GROUP_DATA_MODE,     N_("GPS Protocol:"),                     WidgetType::COMBOBOX,          protocols_args,          NULL, NULL, gps_protocol_default,        NULL, NULL }, // List reassigned at runtime
+	{ PARAM_PORT,                       "gps_port",                  ParameterType::STRING,  GROUP_DATA_MODE,     N_("Serial Port:"),                      WidgetType::COMBOBOX,          params_ports,            NULL, NULL, gps_port_default,            NULL, NULL },
+	{ PARAM_DOWNLOAD_TRACKS,            "gps_download_tracks",       ParameterType::BOOLEAN, GROUP_DATA_MODE,     N_("Download Tracks:"),                  WidgetType::CHECKBUTTON,       NULL,                    NULL, NULL, vik_lpd_true_default,        NULL, NULL },
+	{ PARAM_UPLOAD_TRACKS,              "gps_upload_tracks",         ParameterType::BOOLEAN, GROUP_DATA_MODE,     N_("Upload Tracks:"),                    WidgetType::CHECKBUTTON,       NULL,                    NULL, NULL, vik_lpd_true_default,        NULL, NULL },
+	{ PARAM_DOWNLOAD_ROUTES,            "gps_download_routes",       ParameterType::BOOLEAN, GROUP_DATA_MODE,     N_("Download Routes:"),                  WidgetType::CHECKBUTTON,       NULL,                    NULL, NULL, vik_lpd_true_default,        NULL, NULL },
+	{ PARAM_UPLOAD_ROUTES,              "gps_upload_routes",         ParameterType::BOOLEAN, GROUP_DATA_MODE,     N_("Upload Routes:"),                    WidgetType::CHECKBUTTON,       NULL,                    NULL, NULL, vik_lpd_true_default,        NULL, NULL },
+	{ PARAM_DOWNLOAD_WAYPOINTS,         "gps_download_waypoints",    ParameterType::BOOLEAN, GROUP_DATA_MODE,     N_("Download Waypoints:"),               WidgetType::CHECKBUTTON,       NULL,                    NULL, NULL, vik_lpd_true_default,        NULL, NULL },
+	{ PARAM_UPLOAD_WAYPOINTS,           "gps_upload_waypoints",      ParameterType::BOOLEAN, GROUP_DATA_MODE,     N_("Upload Waypoints:"),                 WidgetType::CHECKBUTTON,       NULL,                    NULL, NULL, vik_lpd_true_default,        NULL, NULL },
+#if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
+	{ PARAM_REALTIME_REC,               "record_tracking",           ParameterType::BOOLEAN, GROUP_REALTIME_MODE, N_("Recording tracks"),                  WidgetType::CHECKBUTTON,       NULL,                    NULL, NULL, vik_lpd_true_default,        NULL, NULL },
+	{ PARAM_REALTIME_CENTER_START,      "center_start_tracking",     ParameterType::BOOLEAN, GROUP_REALTIME_MODE, N_("Jump to current position on start"), WidgetType::CHECKBUTTON,       NULL,                    NULL, NULL, vik_lpd_false_default,       NULL, NULL },
+	{ PARAM_VEHICLE_POSITION,           "moving_map_method",         ParameterType::UINT,    GROUP_REALTIME_MODE, N_("Moving Map Method:"),                WidgetType::RADIOGROUP_STATIC, params_vehicle_position, NULL, NULL, moving_map_method_default,   NULL, NULL },
+	{ PARAM_REALTIME_UPDATE_STATUSBAR,  "realtime_update_statusbar", ParameterType::BOOLEAN, GROUP_REALTIME_MODE, N_("Update Statusbar:"),                 WidgetType::CHECKBUTTON,       NULL,                    NULL, N_("Display information in the statusbar on GPS updates"), vik_lpd_true_default, NULL, NULL },
+	{ PARAM_GPSD_HOST,                  "gpsd_host",                 ParameterType::STRING,  GROUP_REALTIME_MODE, N_("Gpsd Host:"),                        WidgetType::ENTRY,             NULL,                    NULL, NULL, gpsd_host_default,           NULL, NULL },
+	{ PARAM_GPSD_PORT,                  "gpsd_port",                 ParameterType::STRING,  GROUP_REALTIME_MODE, N_("Gpsd Port:"),                        WidgetType::ENTRY,             NULL,                    NULL, NULL, gpsd_port_default,           NULL, NULL },
+	{ PARAM_GPSD_RETRY_INTERVAL,        "gpsd_retry_interval",       ParameterType::STRING,  GROUP_REALTIME_MODE, N_("Gpsd Retry Interval (seconds):"),    WidgetType::ENTRY,             NULL,                    NULL, NULL, gpsd_retry_interval_default, NULL, NULL },
+#endif /* VIK_CONFIG_REALTIME_GPS_TRACKING */
+
+	{ NUM_PARAMS,                       NULL,                        ParameterType::PTR,     VIK_LAYER_GROUP_NONE, NULL,                                   WidgetType::NONE,              NULL,                    NULL, NULL, NULL,                        NULL, NULL }, /* Guard. */
+};
 
 VikLayerInterface vik_gps_layer_interface = {
 	"GPS",
@@ -456,7 +461,7 @@ static Layer * gps_layer_unmarshall(uint8_t * data, int len, Viewport * viewport
 
 
 
-bool LayerGPS::set_param_value(uint16_t id, LayerParamValue data, Viewport * viewport, bool is_file_operation)
+bool LayerGPS::set_param_value(uint16_t id, ParameterValue data, Viewport * viewport, bool is_file_operation)
 {
 	switch (id) {
 	case PARAM_PROTOCOL:
@@ -561,9 +566,9 @@ bool LayerGPS::set_param_value(uint16_t id, LayerParamValue data, Viewport * vie
 
 
 
-LayerParamValue LayerGPS::get_param_value(layer_param_id_t id, bool is_file_operation) const
+ParameterValue LayerGPS::get_param_value(param_id_t id, bool is_file_operation) const
 {
-	LayerParamValue rv;
+	ParameterValue rv;
 	switch (id) {
 	case PARAM_PROTOCOL:
 		rv.s = this->protocol;

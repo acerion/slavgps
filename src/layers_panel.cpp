@@ -563,7 +563,7 @@ bool LayersPanel::new_layer(LayerType layer_type)
 		this->add_layer(layer);
 
 		this->viewport->configure();
-		qDebug() << "II: Layers Panel: calling layer->draw() for" << layer->get_interface(layer->type)->fixed_layer_name << __FUNCTION__ << __LINE__;
+		qDebug() << "II: Layers Panel: calling layer->draw() for" << layer->get_interface(layer->type)->layer_type_string << __FUNCTION__ << __LINE__;
 		layer->draw(this->viewport);
 
 		return true;

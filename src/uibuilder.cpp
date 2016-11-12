@@ -35,7 +35,7 @@ using namespace SlavGPS;
 
 
 
-LayerParamData vik_lpd_true_default(void)
+ParameterValue vik_lpd_true_default(void)
 {
 	return VIK_LPD_BOOLEAN (true);
 }
@@ -43,7 +43,7 @@ LayerParamData vik_lpd_true_default(void)
 
 
 
-LayerParamData vik_lpd_false_default(void)
+ParameterValue vik_lpd_false_default(void)
 {
 	return VIK_LPD_BOOLEAN (false);
 }
@@ -51,11 +51,11 @@ LayerParamData vik_lpd_false_default(void)
 
 
 
-void uibuilder_run_setparam(LayerParamData * paramdatas, uint16_t i, LayerParamData data, Parameter * params)
+void uibuilder_run_setparam(ParameterValue * paramdatas, uint16_t i, ParameterValue data, Parameter * params)
 {
 	/* Could have to copy it if it's a string! */
 	switch (params[i].type) {
-	case LayerParamType::STRING:
+	case ParameterType::STRING:
 		paramdatas[i].s = g_strdup(data.s);
 		break;
 	default:
@@ -66,7 +66,7 @@ void uibuilder_run_setparam(LayerParamData * paramdatas, uint16_t i, LayerParamD
 
 
 
-LayerParamData uibuilder_run_getparam(LayerParamData * params_defaults, uint16_t i)
+ParameterValue uibuilder_run_getparam(ParameterValue * params_defaults, uint16_t i)
 {
 	return params_defaults[i];
 }
@@ -74,7 +74,7 @@ LayerParamData uibuilder_run_getparam(LayerParamData * params_defaults, uint16_t
 
 
 
-static void a_uibuilder_free_paramdatas_sub(LayerParamData * paramdatas, int i)
+static void a_uibuilder_free_paramdatas_sub(ParameterValue * paramdatas, int i)
 {
         /* Should make a util function out of this. */
 	std::list<char *> * a_list = paramdatas[i].sl;
@@ -89,16 +89,16 @@ static void a_uibuilder_free_paramdatas_sub(LayerParamData * paramdatas, int i)
 
 
 /* Frees data from last (if necessary). */
-void a_uibuilder_free_paramdatas(LayerParamData *paramdatas, Parameter *params, uint16_t params_count)
+void a_uibuilder_free_paramdatas(ParameterValue *paramdatas, Parameter *params, uint16_t params_count)
 {
 	int i;
 	/* May have to free strings, etc. */
 	for (i = 0; i < params_count; i++) {
 		switch (params[i].type) {
-		case LayerParamType::STRING:
+		case ParameterType::STRING:
 			free((char *) paramdatas[i].s);
 			break;
-		case LayerParamType::STRING_LIST: {
+		case ParameterType::STRING_LIST: {
 			a_uibuilder_free_paramdatas_sub(paramdatas, i);
 			break;
 			default:

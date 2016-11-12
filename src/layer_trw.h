@@ -178,8 +178,8 @@ namespace SlavGPS {
 		bool sublayer_toggle_visible(SublayerType sublayer_type, sg_uid_t sublayer_uid);
 
 		void realize(TreeView * tree_view, TreeIndex * layer_index);
-		bool set_param_value(uint16_t id, LayerParamValue param_value, Viewport * viewport, bool is_file_operation);
-		LayerParamValue get_param_value(layer_param_id_t id, bool is_file_operation) const;
+		bool set_param_value(uint16_t id, ParameterValue param_value, Viewport * viewport, bool is_file_operation);
+		ParameterValue get_param_value(param_id_t id, bool is_file_operation) const;
 
 
 

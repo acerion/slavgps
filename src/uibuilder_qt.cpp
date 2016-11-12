@@ -57,14 +57,14 @@ using namespace SlavGPS;
 
 
 #if 0
-GtkWidget *a_uibuilder_new_widget(LayerParam *param, LayerParamValue data)
+GtkWidget *a_uibuilder_new_widget(LayerParam *param, ParameterValue data)
 {
 }
 
 
 
 
-LayerParamValue a_uibuilder_widget_get_value(GtkWidget *widget, LayerParam *param)
+ParameterValue a_uibuilder_widget_get_value(GtkWidget *widget, LayerParam *param)
 {
 
 }
@@ -79,10 +79,10 @@ int a_uibuilder_properties_factory(const char * dialog_name,
 				   uint16_t params_count,
 				   char ** groups,
 				   uint8_t groups_count,
-				   bool (* setparam) (void *, uint16_t, LayerParamValue, void *, bool),
+				   bool (* setparam) (void *, uint16_t, ParameterValue, void *, bool),
 				   void * pass_along1,
 				   void * pass_along2,
-				   LayerParamValue (* getparam) (void *, uint16_t, bool),
+				   ParameterValue (* getparam) (void *, uint16_t, bool),
 				   void * pass_along_getparam,
 				   void (* changeparam) (GtkWidget*, ui_change_values *))
 /* pass_along1 and pass_along2 are for set_param first and last params */
@@ -174,10 +174,10 @@ int a_uibuilder_properties_factory(const char * dialog_name,
 
 						switch (params[i].widget_type) {
 							/* Change conditions for other widget types can be added when needed. */
-						case LayerWidgetType::COMBOBOX:
+						case WidgetType::COMBOBOX:
 							g_signal_connect(G_OBJECT(widgets[j]), "changed", G_CALLBACK(changeparam), &change_values[j]);
 							break;
-						case LayerWidgetType::CHECKBUTTON:
+						case WidgetType::CHECKBUTTON:
 							g_signal_connect(G_OBJECT(widgets[j]), "toggled", G_CALLBACK(changeparam), &change_values[j]);
 							break;
 						default:
@@ -252,21 +252,21 @@ int a_uibuilder_properties_factory(const char * dialog_name,
 
 
 
-LayerParamValue *a_uibuilder_run_dialog(const char *dialog_name, GtkWindow *parent, LayerParam *params,
+ParameterValue *a_uibuilder_run_dialog(const char *dialog_name, GtkWindow *parent, LayerParam *params,
 				       uint16_t params_count, char **groups, uint8_t groups_count,
-				       LayerParamValue *params_defaults)
+				       ParameterValue *params_defaults)
 {
-	LayerParamValue * paramdatas = (LayerParamValue *) malloc(params_count * sizeof (LayerParamValue));
+	ParameterValue * paramdatas = (ParameterValue *) malloc(params_count * sizeof (ParameterValue));
 	if (a_uibuilder_properties_factory(dialog_name,
 					   parent,
 					   params,
 					   params_count,
 					   groups,
 					   groups_count,
-					   (bool (*)(void*, uint16_t, LayerParamValue, void*, bool)) uibuilder_run_setparam,
+					   (bool (*)(void*, uint16_t, ParameterValue, void*, bool)) uibuilder_run_setparam,
 					   paramdatas,
 					   params,
-					   (LayerParamValue (*)(void*, uint16_t, bool)) uibuilder_run_getparam,
+					   (ParameterValue (*)(void*, uint16_t, bool)) uibuilder_run_getparam,
 					   params_defaults,
 					   NULL) > 0) {
 
@@ -356,12 +356,12 @@ void PropertiesDialog::fill(Preferences * preferences)
 
 
 
-		LayerParamValue param_value = preferences->get_param_value(iter->first);
+		ParameterValue param_value = preferences->get_param_value(iter->first);
 		QString label = QString(iter->second->title);
 		QWidget * widget = this->new_widget(iter->second, param_value);
 		form->addRow(label, widget);
 		qDebug() << "II: UI Builder: adding widget #" << iter->first << iter->second->title << widget;
-		this->widgets.insert(std::pair<layer_param_id_t, QWidget *>(iter->first, widget));
+		this->widgets.insert(std::pair<param_id_t, QWidget *>(iter->first, widget));
 	}
 }
 
@@ -371,7 +371,7 @@ void PropertiesDialog::fill(Preferences * preferences)
 void PropertiesDialog::fill(Layer * layer)
 {
 #if 1
-	std::map<layer_param_id_t, Parameter *> * params = layer->get_interface()->layer_parameters;
+	std::map<param_id_t, Parameter *> * params = layer->get_interface()->layer_parameters;
 
 	for (auto iter = params->begin(); iter != params->end(); iter++) {
 		param_id_t group_id = iter->second->group;
@@ -392,20 +392,20 @@ void PropertiesDialog::fill(Layer * layer)
 			form = form_iter->second;
 		}
 
-		LayerParamValue param_value = layer->get_param_value(iter->first, false);
+		ParameterValue param_value = layer->get_param_value(iter->first, false);
 		QString label = QString(iter->second->title);
 		QWidget * widget = this->new_widget(iter->second, param_value);
 		form->addRow(label, widget);
 		qDebug() << "II: UI Builder: adding widget #" << iter->first << iter->second->title << widget;
-		this->widgets.insert(std::pair<layer_param_id_t, QWidget *>(iter->first, widget));
+		this->widgets.insert(std::pair<param_id_t, QWidget *>(iter->first, widget));
 	}
 #else
-	std::map<layer_param_id_t, Parameter *> * params = layer->get_interface()->layer_parameters;
+	std::map<param_id_t, Parameter *> * params = layer->get_interface()->layer_parameters;
 	if (!params) {
 		return;
 	}
-	std::map<layer_param_id_t, Parameter *>::iterator iter = params->begin();
-	std::map<layer_param_id_t, Parameter *>::iterator end = params->end();
+	std::map<param_id_t, Parameter *>::iterator iter = params->begin();
+	std::map<param_id_t, Parameter *>::iterator end = params->end();
 
 	do {
 		QString label("page");
@@ -422,8 +422,8 @@ void PropertiesDialog::fill(Layer * layer)
 
 void PropertiesDialog::fill(LayerInterface * interface)
 {
-	std::map<layer_param_id_t, Parameter *> * params = interface->layer_parameters;
-	std::map<layer_param_id_t, LayerParamValue> * values = interface->parameter_value_defaults;
+	std::map<param_id_t, Parameter *> * params = interface->layer_parameters;
+	std::map<param_id_t, ParameterValue> * values = interface->parameter_value_defaults;
 
 	for (auto iter = params->begin(); iter != params->end(); iter++) {
 		param_id_t group_id = iter->second->group;
@@ -444,12 +444,12 @@ void PropertiesDialog::fill(LayerInterface * interface)
 			form = form_iter->second;
 		}
 
-		LayerParamValue param_value = values->at(iter->first);
+		ParameterValue param_value = values->at(iter->first);
 		QString label = QString(iter->second->title);
 		QWidget * widget = this->new_widget(iter->second, param_value);
 		form->addRow(label, widget);
 		qDebug() << "II: UI Builder: adding widget #" << iter->first << iter->second->title << widget;
-		this->widgets.insert(std::pair<layer_param_id_t, QWidget *>(iter->first, widget));
+		this->widgets.insert(std::pair<param_id_t, QWidget *>(iter->first, widget));
 	}
 }
 
@@ -461,7 +461,7 @@ void PropertiesDialog::fill(Waypoint * wp, Parameter * parameters)
 	int i = 0;
 	QFormLayout * form = this->insert_tab(QString("page"));
 	this->forms.insert(std::pair<param_id_t, QFormLayout *>(parameters[SG_WP_PARAM_NAME].group, form));
-	LayerParamValue param_value; // = layer->get_param_value(i, false);
+	ParameterValue param_value; // = layer->get_param_value(i, false);
 	Parameter * param = NULL;
 	QWidget * widget = NULL;
 
@@ -492,68 +492,68 @@ void PropertiesDialog::fill(Waypoint * wp, Parameter * parameters)
 	widget = this->new_widget(param, param_value);
 	form->addRow(QString(param->title), widget);
 	qDebug() << "II: UI Builder: adding widget #" << param->id << param->title << widget;
-	this->widgets.insert(std::pair<layer_param_id_t, QWidget *>(param->id, widget));
+	this->widgets.insert(std::pair<param_id_t, QWidget *>(param->id, widget));
 
 	param = &parameters[SG_WP_PARAM_LAT];
 	param_value.s = lat;
 	widget = this->new_widget(param, param_value);
 	form->addRow(QString(param->title), widget);
 	qDebug() << "II: UI Builder: adding widget #" << param->id << param->title << widget;
-	this->widgets.insert(std::pair<layer_param_id_t, QWidget *>(param->id, widget));
+	this->widgets.insert(std::pair<param_id_t, QWidget *>(param->id, widget));
 
 	param = &parameters[SG_WP_PARAM_LON];
 	param_value.s = lon;
 	widget = this->new_widget(param, param_value);
 	form->addRow(QString(param->title), widget);
 	qDebug() << "II: UI Builder: adding widget #" << param->id << param->title << widget;
-	this->widgets.insert(std::pair<layer_param_id_t, QWidget *>(param->id, widget));
+	this->widgets.insert(std::pair<param_id_t, QWidget *>(param->id, widget));
 
 	param = &parameters[SG_WP_PARAM_TIME];
 	param_value.u = wp->timestamp;
 	widget = this->new_widget(param, param_value);
 	form->addRow(QString(param->title), widget);
 	qDebug() << "II: UI Builder: adding widget #" << param->id << param->title << widget;
-	this->widgets.insert(std::pair<layer_param_id_t, QWidget *>(param->id, widget));
+	this->widgets.insert(std::pair<param_id_t, QWidget *>(param->id, widget));
 
 	param = &parameters[SG_WP_PARAM_ALT];
 	param_value.s = alt;
 	widget = this->new_widget(param, param_value);
 	form->addRow(QString(param->title), widget);
 	qDebug() << "II: UI Builder: adding widget #" << param->id << param->title << widget;
-	this->widgets.insert(std::pair<layer_param_id_t, QWidget *>(param->id, widget));
+	this->widgets.insert(std::pair<param_id_t, QWidget *>(param->id, widget));
 
 	param = &parameters[SG_WP_PARAM_COMMENT];
 	param_value.s = wp->comment;
 	widget = this->new_widget(param, param_value);
 	form->addRow(QString(param->title), widget);
 	qDebug() << "II: UI Builder: adding widget #" << param->id << param->title << widget;
-	this->widgets.insert(std::pair<layer_param_id_t, QWidget *>(param->id, widget));
+	this->widgets.insert(std::pair<param_id_t, QWidget *>(param->id, widget));
 
 	param = &parameters[SG_WP_PARAM_DESC];
 	param_value.s = wp->description;
 	widget = this->new_widget(param, param_value);
 	form->addRow(QString(param->title), widget);
 	qDebug() << "II: UI Builder: adding widget #" << param->id << param->title << widget;
-	this->widgets.insert(std::pair<layer_param_id_t, QWidget *>(param->id, widget));
+	this->widgets.insert(std::pair<param_id_t, QWidget *>(param->id, widget));
 
 	param = &parameters[SG_WP_PARAM_IMAGE];
 	param_value.s = wp->image;
 	widget = this->new_widget(param, param_value);
 	form->addRow(QString(param->title), widget);
 	qDebug() << "II: UI Builder: adding widget #" << param->id << param->title << widget;
-	this->widgets.insert(std::pair<layer_param_id_t, QWidget *>(param->id, widget));
+	this->widgets.insert(std::pair<param_id_t, QWidget *>(param->id, widget));
 
 	param = &parameters[SG_WP_PARAM_SYMBOL];
 	param_value.s = wp->symbol;
 	widget = this->new_widget(param, param_value);
 	form->addRow(QString(param->title), widget);
 	qDebug() << "II: UI Builder: adding widget #" << param->id << param->title << widget;
-	this->widgets.insert(std::pair<layer_param_id_t, QWidget *>(param->id, widget));
+	this->widgets.insert(std::pair<param_id_t, QWidget *>(param->id, widget));
 }
 
 
 
-std::map<layer_param_id_t, Parameter *>::iterator PropertiesDialog::add_widgets_to_tab(QFormLayout * form, Layer * layer, std::map<layer_param_id_t, Parameter *>::iterator & iter, std::map<layer_param_id_t, Parameter *>::iterator & end)
+std::map<param_id_t, Parameter *>::iterator PropertiesDialog::add_widgets_to_tab(QFormLayout * form, Layer * layer, std::map<param_id_t, Parameter *>::iterator & iter, std::map<param_id_t, Parameter *>::iterator & end)
 {
 	param_id_t i = 0;
 	int last_group = iter->second->group;
@@ -571,14 +571,14 @@ std::map<layer_param_id_t, Parameter *>::iterator PropertiesDialog::add_widgets_
 			continue;
 		}
 
-		LayerParamValue param_value = layer->get_param_value(iter->first, false);
+		ParameterValue param_value = layer->get_param_value(iter->first, false);
 
 		QString label = QString(iter->second->title);
 		QWidget * widget = this->new_widget(iter->second, param_value);
 
 		form->addRow(label, widget);
 		qDebug() << "II: UI Builder: adding widget" << widget;
-		this->widgets.insert(std::pair<layer_param_id_t, QWidget *>(iter->first, widget));
+		this->widgets.insert(std::pair<param_id_t, QWidget *>(iter->first, widget));
 
 		last_group = iter->second->group;
 		i++;
@@ -592,10 +592,10 @@ std::map<layer_param_id_t, Parameter *>::iterator PropertiesDialog::add_widgets_
 
 
 
-QWidget * PropertiesDialog::new_widget(Parameter * param, LayerParamValue param_value)
+QWidget * PropertiesDialog::new_widget(Parameter * param, ParameterValue param_value)
 {
 	/* Perform pre conversion if necessary. */
-	LayerParamValue vlpd = param_value;
+	ParameterValue vlpd = param_value;
 	if (param->convert_to_display) {
 		vlpd = param->convert_to_display(param_value);
 	}
@@ -603,8 +603,8 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, LayerParamValue param_
 	QWidget * widget = NULL;
 	switch (param->widget_type) {
 
-	case LayerWidgetType::COLOR:
-		if (param->type == LayerParamType::COLOR) {
+	case WidgetType::COLOR:
+		if (param->type == ParameterType::COLOR) {
 			qDebug() << "II: UI Builder: creating color button with colors" << vlpd.c.r << vlpd.c.g << vlpd.c.b << vlpd.c.a;
 			QColor color(vlpd.c.r, vlpd.c.g, vlpd.c.b, vlpd.c.a);
 			SGColorButton * widget_ = new SGColorButton(color, NULL);
@@ -614,8 +614,8 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, LayerParamValue param_
 		}
 		break;
 
-	case LayerWidgetType::CHECKBUTTON:
-		if (param->type == LayerParamType::BOOLEAN) {
+	case WidgetType::CHECKBUTTON:
+		if (param->type == ParameterType::BOOLEAN) {
 			QCheckBox * widget_ = new QCheckBox;
 			if (vlpd.b) {
 				widget_->setCheckState(Qt::Checked);
@@ -624,8 +624,8 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, LayerParamValue param_
 		}
 		break;
 
-	case LayerWidgetType::COMBOBOX: {
-		assert (param->type == LayerParamType::UINT);
+	case WidgetType::COMBOBOX: {
+		assert (param->type == ParameterType::UINT);
 		assert (param->widget_data);
 
 		QComboBox * widget_ = new QComboBox(this);
@@ -646,9 +646,9 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, LayerParamValue param_
 		break;
 
 #if 0
-	case LayerWidgetType::RADIOGROUP:
+	case WidgetType::RADIOGROUP:
 		/* widget_data and extra_widget_data are GList. */
-		if (param->type == LayerParamType::UINT && param->widget_data) {
+		if (param->type == ParameterType::UINT && param->widget_data) {
 			rv = vik_radio_group_new((GList *) param->widget_data);
 			if (param->extra_widget_data) { /* Map of alternate uint values for options. */
 				int i;
@@ -666,7 +666,7 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, LayerParamValue param_
 #endif
 
 
-	case LayerWidgetType::RADIOGROUP_STATIC:
+	case WidgetType::RADIOGROUP_STATIC:
 #if 0
 		rv = vik_radio_group_new_static((const char **) param->widget_data);
 			if (param->extra_widget_data) { /* Map of alternate uint values for options. */
@@ -682,7 +682,7 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, LayerParamValue param_
 		}
 		break;
 #else
-		if (param->type == LayerParamType::UINT && param->widget_data) {
+		if (param->type == ParameterType::UINT && param->widget_data) {
 			std::list<QString> labels;
 			for (int i = 0; ((const char **)param->widget_data)[i]; i++) {
 				QString label (((const char **)param->widget_data)[i]);
@@ -695,11 +695,11 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, LayerParamValue param_
 		}
 		break;
 #endif
-	case LayerWidgetType::SPINBUTTON:
-		if ((param->type == LayerParamType::UINT || param->type == LayerParamType::INT)
+	case WidgetType::SPINBUTTON:
+		if ((param->type == ParameterType::UINT || param->type == ParameterType::INT)
 		    && param->widget_data) {
 
-			int init_val = param->type == LayerParamType::UINT ? vlpd.u : vlpd.i;
+			int init_val = param->type == ParameterType::UINT ? vlpd.u : vlpd.i;
 			ParameterScale * scale = (ParameterScale *) param->widget_data;
 			QSpinBox * widget_ = new QSpinBox();
 			widget_->setValue(init_val);
@@ -712,8 +712,8 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, LayerParamValue param_
 		}
 		break;
 
-	case LayerWidgetType::SPINBOX_DOUBLE:
-		if (param->type == LayerParamType::DOUBLE
+	case WidgetType::SPINBOX_DOUBLE:
+		if (param->type == ParameterType::DOUBLE
 		    && param->widget_data) {
 
 			double init_val = vlpd.d;
@@ -731,8 +731,8 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, LayerParamValue param_
 		}
 		break;
 
-	case LayerWidgetType::ENTRY:
-		if (param->type == LayerParamType::STRING) {
+	case WidgetType::ENTRY:
+		if (param->type == ParameterType::STRING) {
 			QLineEdit * widget_ = new QLineEdit;
 			if (vlpd.s) {
 				widget_->insert(QString(vlpd.s));
@@ -741,8 +741,8 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, LayerParamValue param_
 		}
 		break;
 #if 0
-	case LayerWidgetType::PASSWORD:
-		if (param->type == LayerParamType::STRING) {
+	case WidgetType::PASSWORD:
+		if (param->type == ParameterType::STRING) {
 			rv = gtk_entry_new();
 			gtk_entry_set_visibility(GTK_ENTRY(rv), false);
 			if (vlpd.s) {
@@ -753,8 +753,8 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, LayerParamValue param_
 		}
 		break;
 #endif
-	case LayerWidgetType::FILEENTRY:
-		if (param->type == LayerParamType::STRING) {
+	case WidgetType::FILEENTRY:
+		if (param->type == ParameterType::STRING) {
 			QString title("Select file");
 			SGFileEntry * widget_ = new SGFileEntry(QFileDialog::Option(0), QFileDialog::ExistingFile, title, NULL);
 			if (vlpd.s) {
@@ -765,8 +765,8 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, LayerParamValue param_
 		}
 		break;
 
-	case LayerWidgetType::FOLDERENTRY:
-		if (param->type == LayerParamType::STRING) {
+	case WidgetType::FOLDERENTRY:
+		if (param->type == ParameterType::STRING) {
 			QString title("Select file");
 			SGFileEntry * widget_ = new SGFileEntry(QFileDialog::Option(0), QFileDialog::Directory, title, NULL);
 			if (vlpd.s) {
@@ -776,32 +776,32 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, LayerParamValue param_
 			widget = widget_;
 		}
 		break;
-	case LayerWidgetType::FILELIST:
-		if (param->type == LayerParamType::STRING_LIST) {
+	case WidgetType::FILELIST:
+		if (param->type == ParameterType::STRING_LIST) {
 			SGFileList * widget_ = new SGFileList(param->title, vlpd.sl, this);
 			widget = widget_;
 		}
 		break;
 #if 0
-	case LayerWidgetType::HSCALE:
-		if ((param->type == LayerParamType::DOUBLE || param->type == LayerParamType::UINT
-		     || param->type == LayerParamType::INT)  && param->widget_data) {
+	case WidgetType::HSCALE:
+		if ((param->type == ParameterType::DOUBLE || param->type == ParameterType::UINT
+		     || param->type == ParameterType::INT)  && param->widget_data) {
 
-			double init_val = (param->type == LayerParamType::DOUBLE) ? vlpd.d : (param->type == LayerParamType::UINT ? vlpd.u : vlpd.i);
+			double init_val = (param->type == ParameterType::DOUBLE) ? vlpd.d : (param->type == ParameterType::UINT ? vlpd.u : vlpd.i);
 			ParameterScale * scale = (ParameterScale *) param->widget_data;
 			rv = gtk_hscale_new_with_range(scale->min, scale->max, scale->step);
 			gtk_scale_set_digits(GTK_SCALE(rv), scale->digits);
 			gtk_range_set_value(GTK_RANGE(rv), init_val);
 		}
 		break;
-	case LayerWidgetType::BUTTON:
-		if (param->type == LayerParamType::PTR && param->widget_data) {
+	case WidgetType::BUTTON:
+		if (param->type == ParameterType::PTR && param->widget_data) {
 			rv = gtk_button_new_with_label((const char *) param->widget_data);
 			g_signal_connect(G_OBJECT(rv), "clicked", G_CALLBACK (vlpd.ptr), param->extra_widget_data);
 		}
 		break;
 #endif
-	case LayerWidgetType::DATETIME: {
+	case WidgetType::DATETIME: {
 			SGDateTime * widget_ = new SGDateTime(param_value.u, this);
 			widget = widget_;
 		}
@@ -822,18 +822,18 @@ QWidget * PropertiesDialog::new_widget(Parameter * param, LayerParamValue param_
 
 
 
-LayerParamValue PropertiesDialog::get_param_value(layer_param_id_t id, Parameter * param)
+ParameterValue PropertiesDialog::get_param_value(param_id_t id, Parameter * param)
 {
 	qDebug() << "vvvvvvvvvvv there are " << this->widgets.size() << "widgets";
 
-	LayerParamValue rv = { 0 };
+	ParameterValue rv = { 0 };
 	QWidget * widget = this->widgets[id];
 	if (!widget) {
 		return rv;
 	}
 
 	switch (param->widget_type) {
-	case LayerWidgetType::COLOR: {
+	case WidgetType::COLOR: {
 		QColor c = ((SGColorButton *) widget)->get_color();
 		rv.c.r = c.red();
 		rv.c.g = c.green();
@@ -841,63 +841,63 @@ LayerParamValue PropertiesDialog::get_param_value(layer_param_id_t id, Parameter
 		rv.c.a = c.alpha();
 	}
 		break;
-	case LayerWidgetType::CHECKBUTTON:
+	case WidgetType::CHECKBUTTON:
 		rv.b = ((QCheckBox *) widget)->isChecked();
 		break;
 
-	case LayerWidgetType::COMBOBOX:
+	case WidgetType::COMBOBOX:
 		rv.i = (int32_t) ((QComboBox *) widget)->currentData().toInt();
 		break;
 
-	case LayerWidgetType::RADIOGROUP:
-	case LayerWidgetType::RADIOGROUP_STATIC:
+	case WidgetType::RADIOGROUP:
+	case WidgetType::RADIOGROUP_STATIC:
 		rv.u = ((SGRadioGroup *) widget)->value();
 		if (param->extra_widget_data) {
 			rv.u = KPOINTER_TO_UINT (g_list_nth_data((GList *) param->extra_widget_data, rv.u));
 		}
 		break;
-	case LayerWidgetType::SPINBUTTON:
-		if (param->type == LayerParamType::UINT) {
+	case WidgetType::SPINBUTTON:
+		if (param->type == ParameterType::UINT) {
 			rv.u = ((QSpinBox *) widget)->value();
 		} else {
 			rv.i = ((QSpinBox *) widget)->value();
 		}
 		break;
 
-	case LayerWidgetType::SPINBOX_DOUBLE:
+	case WidgetType::SPINBOX_DOUBLE:
 		rv.d = ((QDoubleSpinBox *) widget)->value();
 		qDebug() << "II: UI Builder: saving value of Spinbox Double:" << rv.d;
 		break;
 
-	case LayerWidgetType::ENTRY:
-	case LayerWidgetType::PASSWORD:
+	case WidgetType::ENTRY:
+	case WidgetType::PASSWORD:
 		rv.s = strdup((char *) ((QLineEdit *) widget)->text().toUtf8().constData()); /* FIXME: memory management. */
 		qDebug() << "II: UI Builder: saving value of Entry or Password:" << rv.s;
 		break;
 
-	case LayerWidgetType::FILEENTRY:
-	case LayerWidgetType::FOLDERENTRY:
+	case WidgetType::FILEENTRY:
+	case WidgetType::FOLDERENTRY:
 		rv.s = strdup(((SGFileEntry *) widget)->get_filename().toUtf8().constData()); /* FIXME: memory management. */
 		break;
 
-	case LayerWidgetType::FILELIST:
+	case WidgetType::FILELIST:
 		rv.sl = ((SGFileList *) widget)->get_list();
 		for (auto iter = rv.sl->begin(); iter != rv.sl->end(); iter++) {
 			qDebug() << "File on retrieved list: " << QString(*iter);
 		}
 		break;
 #if 0
-	case LayerWidgetType::HSCALE:
-		if (param->type == LayerParamType::UINT) {
+	case WidgetType::HSCALE:
+		if (param->type == ParameterType::UINT) {
 			rv.u = (uint32_t) gtk_range_get_value(GTK_RANGE(widget));
-		} else if (param->type == LayerParamType::INT) {
+		} else if (param->type == ParameterType::INT) {
 			rv.i = (int32_t) gtk_range_get_value(GTK_RANGE(widget));
 		} else {
 			rv.d = gtk_range_get_value(GTK_RANGE(widget));
 		}
 		break;
 #endif
-	case LayerWidgetType::DATETIME:
+	case WidgetType::DATETIME:
 		rv.u = ((SGDateTime *) widget)->value();
 		qDebug() << "II: UI Builder: saving value of time stamp:" << rv.u;
 		break;

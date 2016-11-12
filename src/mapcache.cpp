@@ -76,7 +76,7 @@ static ParameterScale params_scales[] = {
 };
 
 static Parameter prefs[] = {
-	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_NAMESPACE "mapcache_size", LayerParamType::UINT, VIK_LAYER_GROUP_NONE, N_("Map cache memory size (MB):"), LayerWidgetType::HSCALE, params_scales, NULL, NULL, NULL, NULL, NULL },
+	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_NAMESPACE "mapcache_size", ParameterType::UINT, VIK_LAYER_GROUP_NONE, N_("Map cache memory size (MB):"), WidgetType::HSCALE, params_scales, NULL, NULL, NULL, NULL, NULL },
 };
 
 
@@ -104,7 +104,7 @@ static void cache_item_free(cache_item_t * ci)
 
 void SlavGPS::map_cache_init()
 {
-	LayerParamData tmp;
+	ParameterValue tmp;
 	tmp.u = VIK_CONFIG_MAPCACHE_SIZE;
 	a_preferences_register(prefs, tmp, VIKING_PREFERENCES_GROUP_KEY);
 

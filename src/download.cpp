@@ -153,7 +153,7 @@ static ParameterScale params_scales[] = {
 
 
 
-static LayerParamValue convert_to_display(LayerParamValue value)
+static ParameterValue convert_to_display(ParameterValue value)
 {
 	/* From seconds into days. */
 	return VIK_LPD_UINT (value.u / 86400);
@@ -162,7 +162,7 @@ static LayerParamValue convert_to_display(LayerParamValue value)
 
 
 
-static LayerParamValue convert_to_internal(LayerParamValue value)
+static ParameterValue convert_to_internal(ParameterValue value)
 {
 	/* From days into seconds. */
 	return VIK_LPD_UINT (86400 * value.u);
@@ -172,7 +172,7 @@ static LayerParamValue convert_to_internal(LayerParamValue value)
 
 
 static Parameter prefs[] = {
-	{ LayerType::NUM_TYPES, 0, VIKING_PREFERENCES_NAMESPACE "download_tile_age", LayerParamType::UINT, VIK_LAYER_GROUP_NONE, N_("Tile age (days):"), LayerWidgetType::SPINBUTTON, &params_scales[0], NULL, NULL, NULL, convert_to_display, convert_to_internal },
+	{ 0, VIKING_PREFERENCES_NAMESPACE "download_tile_age", ParameterType::UINT, VIK_LAYER_GROUP_NONE, N_("Tile age (days):"), WidgetType::SPINBUTTON, &params_scales[0], NULL, NULL, NULL, convert_to_display, convert_to_internal },
 };
 
 
@@ -180,7 +180,7 @@ static Parameter prefs[] = {
 
 void a_download_init(void)
 {
-	LayerParamValue tmp;
+	ParameterValue tmp;
 	tmp.u = VIK_CONFIG_DEFAULT_TILE_AGE / 86400; /* Now in days. */
 #if 0
 	a_preferences_register(prefs, tmp, VIKING_PREFERENCES_GROUP_KEY);

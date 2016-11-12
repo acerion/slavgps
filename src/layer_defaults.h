@@ -38,11 +38,11 @@
 void a_layer_defaults_init();
 void a_layer_defaults_uninit();
 
-void a_layer_defaults_register(const char * layer_name, Parameter * layer_param, LayerParamValue default_value);
+void a_layer_defaults_register(const char * layer_name, Parameter * layer_param, ParameterValue default_value);
 
 bool layer_defaults_show_window(SlavGPS::LayerType layer_type, QWidget * parent);
 
-LayerParamData a_layer_defaults_get(const char * layer_name, const char * param_name, LayerParamType param_type);
+ParameterValue a_layer_defaults_get(const char * layer_name, const char * param_name, ParameterType param_type);
 
 bool a_layer_defaults_save();
 

@@ -206,41 +206,41 @@ static char* params_sort_order[] = {
 	NULL
 };
 
-static LayerParamValue black_color_default(void) {
-	LayerParamValue data; data.c = { .r = 0, .g = 0, .b = 0, .a = 100 }; return data; // Black
+static ParameterValue black_color_default(void) {
+	ParameterValue data; data.c = { .r = 0, .g = 0, .b = 0, .a = 100 }; return data; // Black
 }
-static LayerParamValue drawmode_default(void) { return VIK_LPD_UINT (DRAWMODE_BY_TRACK); }
-static LayerParamValue line_thickness_default(void) { return VIK_LPD_UINT (1); }
-static LayerParamValue trkpointsize_default(void) { return VIK_LPD_UINT (MIN_POINT_SIZE); }
-static LayerParamValue trkdirectionsize_default(void) { return VIK_LPD_UINT (5); }
-static LayerParamValue bg_line_thickness_default(void) { return VIK_LPD_UINT (0); }
-static LayerParamValue trackbgcolor_default(void) {
-	LayerParamValue data; data.c = { .r = 255, .g = 255, .b = 255, .a = 100 }; return data; // White
+static ParameterValue drawmode_default(void) { return VIK_LPD_UINT (DRAWMODE_BY_TRACK); }
+static ParameterValue line_thickness_default(void) { return VIK_LPD_UINT (1); }
+static ParameterValue trkpointsize_default(void) { return VIK_LPD_UINT (MIN_POINT_SIZE); }
+static ParameterValue trkdirectionsize_default(void) { return VIK_LPD_UINT (5); }
+static ParameterValue bg_line_thickness_default(void) { return VIK_LPD_UINT (0); }
+static ParameterValue trackbgcolor_default(void) {
+	ParameterValue data; data.c = { .r = 255, .g = 255, .b = 255, .a = 100 }; return data; // White
 }
-static LayerParamValue elevation_factor_default(void) { return VIK_LPD_UINT (30); }
-static LayerParamValue stop_length_default(void) { return VIK_LPD_UINT (60); }
-static LayerParamValue speed_factor_default(void) { return VIK_LPD_DOUBLE (30.0); }
+static ParameterValue elevation_factor_default(void) { return VIK_LPD_UINT (30); }
+static ParameterValue stop_length_default(void) { return VIK_LPD_UINT (60); }
+static ParameterValue speed_factor_default(void) { return VIK_LPD_DOUBLE (30.0); }
 
-static LayerParamValue tnfontsize_default(void) { return VIK_LPD_UINT (FS_MEDIUM); }
-static LayerParamValue wpfontsize_default(void) { return VIK_LPD_UINT (FS_MEDIUM); }
-static LayerParamValue wptextcolor_default(void) {
-	LayerParamValue data; data.c = { .r = 255, .g = 255, .b = 255, .a = 100 }; return data; // White
+static ParameterValue tnfontsize_default(void) { return VIK_LPD_UINT (FS_MEDIUM); }
+static ParameterValue wpfontsize_default(void) { return VIK_LPD_UINT (FS_MEDIUM); }
+static ParameterValue wptextcolor_default(void) {
+	ParameterValue data; data.c = { .r = 255, .g = 255, .b = 255, .a = 100 }; return data; // White
 }
-static LayerParamValue wpbgcolor_default(void) {
-	LayerParamValue data; data.c = { .r = 0x83, .g = 0x83, .b = 0xc4, .a = 100 }; return data; // Kind of Blue
+static ParameterValue wpbgcolor_default(void) {
+	ParameterValue data; data.c = { .r = 0x83, .g = 0x83, .b = 0xc4, .a = 100 }; return data; // Kind of Blue
 }
-static LayerParamValue wpsize_default(void) { return VIK_LPD_UINT(4); }
-static LayerParamValue wpsymbol_default(void) { return VIK_LPD_UINT (WP_SYMBOL_FILLED_SQUARE); }
+static ParameterValue wpsize_default(void) { return VIK_LPD_UINT(4); }
+static ParameterValue wpsymbol_default(void) { return VIK_LPD_UINT (WP_SYMBOL_FILLED_SQUARE); }
 
-static LayerParamValue image_size_default(void) { return VIK_LPD_UINT (64); }
-static LayerParamValue image_alpha_default(void) { return VIK_LPD_UINT (255); }
-static LayerParamValue image_cache_size_default(void) { return VIK_LPD_UINT (300); }
+static ParameterValue image_size_default(void) { return VIK_LPD_UINT (64); }
+static ParameterValue image_alpha_default(void) { return VIK_LPD_UINT (255); }
+static ParameterValue image_cache_size_default(void) { return VIK_LPD_UINT (300); }
 
-static LayerParamValue sort_order_default(void) { return VIK_LPD_UINT (0); }
+static ParameterValue sort_order_default(void) { return VIK_LPD_UINT (0); }
 
-static LayerParamValue string_default(void)
+static ParameterValue string_default(void)
 {
-	LayerParamValue data;
+	ParameterValue data;
 	data.s = "";
 	return data;
 }
@@ -296,52 +296,52 @@ enum {
 
 
 Parameter trw_layer_params[] = {
-	{ LayerType::TRW,       PARAM_TV,         "tracks_visible",    LayerParamType::BOOLEAN, VIK_LAYER_NOT_IN_PROPERTIES, NULL,                              (LayerWidgetType) 0,        NULL,               NULL, NULL, vik_lpd_true_default,       NULL, NULL },
-	{ LayerType::TRW,       PARAM_WV,         "waypoints_visible", LayerParamType::BOOLEAN, VIK_LAYER_NOT_IN_PROPERTIES, NULL,                              (LayerWidgetType) 0,        NULL,               NULL, NULL, vik_lpd_true_default,       NULL, NULL },
-	{ LayerType::TRW,       PARAM_RV,         "routes_visible",    LayerParamType::BOOLEAN, VIK_LAYER_NOT_IN_PROPERTIES, NULL,                              (LayerWidgetType) 0,        NULL,               NULL, NULL, vik_lpd_true_default,       NULL, NULL },
+	{ PARAM_TV,         "tracks_visible",    ParameterType::BOOLEAN, VIK_LAYER_NOT_IN_PROPERTIES, NULL,                              WidgetType::NONE,         NULL,               NULL, NULL, vik_lpd_true_default,       NULL, NULL },
+	{ PARAM_WV,         "waypoints_visible", ParameterType::BOOLEAN, VIK_LAYER_NOT_IN_PROPERTIES, NULL,                              WidgetType::NONE,         NULL,               NULL, NULL, vik_lpd_true_default,       NULL, NULL },
+	{ PARAM_RV,         "routes_visible",    ParameterType::BOOLEAN, VIK_LAYER_NOT_IN_PROPERTIES, NULL,                              WidgetType::NONE,         NULL,               NULL, NULL, vik_lpd_true_default,       NULL, NULL },
 
-	{ LayerType::TRW,       PARAM_TDL,        "trackdrawlabels",   LayerParamType::BOOLEAN, GROUP_TRACKS,                N_("Draw Labels"),                 LayerWidgetType::CHECKBUTTON,  NULL,               NULL, N_("Note: the individual track controls what labels may be displayed"), vik_lpd_true_default, NULL, NULL },
-	{ LayerType::TRW,       PARAM_TLFONTSIZE, "trackfontsize",     LayerParamType::UINT,    GROUP_TRACKS_ADV,            N_("Track Labels Font Size:"),     LayerWidgetType::COMBOBOX,     params_font_sizes,  NULL, NULL, tnfontsize_default,         NULL, NULL },
-	{ LayerType::TRW,       PARAM_DM,         "drawmode",          LayerParamType::UINT,    GROUP_TRACKS,                N_("Track Drawing Mode:"),         LayerWidgetType::COMBOBOX,     params_drawmodes,   NULL, NULL, drawmode_default,           NULL, NULL },
-	{ LayerType::TRW,       PARAM_TC,         "trackcolor",        LayerParamType::COLOR,   GROUP_TRACKS,                N_("All Tracks Color:"),           LayerWidgetType::COLOR,        NULL,               NULL, N_("The color used when 'All Tracks Same Color' drawing mode is selected"), black_color_default, NULL, NULL },
-	{ LayerType::TRW,       PARAM_DL,         "drawlines",         LayerParamType::BOOLEAN, GROUP_TRACKS,                N_("Draw Track Lines"),            LayerWidgetType::CHECKBUTTON,  NULL,               NULL, NULL, vik_lpd_true_default,       NULL, NULL },
-	{ LayerType::TRW,       PARAM_LT,         "line_thickness",    LayerParamType::UINT,    GROUP_TRACKS_ADV,            N_("Track Thickness:"),            LayerWidgetType::SPINBUTTON,   &params_scales[0],  NULL, NULL, line_thickness_default,     NULL, NULL },
-	{ LayerType::TRW,       PARAM_DD,         "drawdirections",    LayerParamType::BOOLEAN, GROUP_TRACKS,                N_("Draw Track Direction"),        LayerWidgetType::CHECKBUTTON,  NULL,               NULL, NULL, vik_lpd_false_default,      NULL, NULL },
-	{ LayerType::TRW,       PARAM_DDS,        "trkdirectionsize",  LayerParamType::UINT,    GROUP_TRACKS_ADV,            N_("Direction Size:"),             LayerWidgetType::SPINBUTTON,   &params_scales[11], NULL, NULL, trkdirectionsize_default,   NULL, NULL },
-	{ LayerType::TRW,       PARAM_DP,         "drawpoints",        LayerParamType::BOOLEAN, GROUP_TRACKS,                N_("Draw Trackpoints"),            LayerWidgetType::CHECKBUTTON,  NULL,               NULL, NULL, vik_lpd_true_default,       NULL, NULL },
-	{ LayerType::TRW,       PARAM_DPS,        "trkpointsize",      LayerParamType::UINT,    GROUP_TRACKS_ADV,            N_("Trackpoint Size:"),            LayerWidgetType::SPINBUTTON,   &params_scales[10], NULL, NULL, trkpointsize_default,       NULL, NULL },
-	{ LayerType::TRW,       PARAM_DE,         "drawelevation",     LayerParamType::BOOLEAN, GROUP_TRACKS,                N_("Draw Elevation"),              LayerWidgetType::CHECKBUTTON,  NULL,               NULL, NULL, vik_lpd_false_default,      NULL, NULL },
-	{ LayerType::TRW,       PARAM_EF,         "elevation_factor",  LayerParamType::UINT,    GROUP_TRACKS_ADV,            N_("Draw Elevation Height %:"),    LayerWidgetType::HSCALE,       &params_scales[9],  NULL, NULL, elevation_factor_default,   NULL, NULL },
-	{ LayerType::TRW,       PARAM_DS,         "drawstops",         LayerParamType::BOOLEAN, GROUP_TRACKS,                N_("Draw Stops"),                  LayerWidgetType::CHECKBUTTON,  NULL,               NULL, N_("Whether to draw a marker when trackpoints are at the same position but over the minimum stop length apart in time"), vik_lpd_false_default, NULL, NULL },
-	{ LayerType::TRW,       PARAM_SL,         "stop_length",       LayerParamType::UINT,    GROUP_TRACKS_ADV,            N_("Min Stop Length (seconds):"),  LayerWidgetType::SPINBUTTON,   &params_scales[8],  NULL, NULL, stop_length_default,        NULL, NULL },
+	{ PARAM_TDL,        "trackdrawlabels",   ParameterType::BOOLEAN, GROUP_TRACKS,                N_("Draw Labels"),                 WidgetType::CHECKBUTTON,  NULL,               NULL, N_("Note: the individual track controls what labels may be displayed"), vik_lpd_true_default, NULL, NULL },
+	{ PARAM_TLFONTSIZE, "trackfontsize",     ParameterType::UINT,    GROUP_TRACKS_ADV,            N_("Track Labels Font Size:"),     WidgetType::COMBOBOX,     params_font_sizes,  NULL, NULL, tnfontsize_default,         NULL, NULL },
+	{ PARAM_DM,         "drawmode",          ParameterType::UINT,    GROUP_TRACKS,                N_("Track Drawing Mode:"),         WidgetType::COMBOBOX,     params_drawmodes,   NULL, NULL, drawmode_default,           NULL, NULL },
+	{ PARAM_TC,         "trackcolor",        ParameterType::COLOR,   GROUP_TRACKS,                N_("All Tracks Color:"),           WidgetType::COLOR,        NULL,               NULL, N_("The color used when 'All Tracks Same Color' drawing mode is selected"), black_color_default, NULL, NULL },
+	{ PARAM_DL,         "drawlines",         ParameterType::BOOLEAN, GROUP_TRACKS,                N_("Draw Track Lines"),            WidgetType::CHECKBUTTON,  NULL,               NULL, NULL, vik_lpd_true_default,       NULL, NULL },
+	{ PARAM_LT,         "line_thickness",    ParameterType::UINT,    GROUP_TRACKS_ADV,            N_("Track Thickness:"),            WidgetType::SPINBUTTON,   &params_scales[0],  NULL, NULL, line_thickness_default,     NULL, NULL },
+	{ PARAM_DD,         "drawdirections",    ParameterType::BOOLEAN, GROUP_TRACKS,                N_("Draw Track Direction"),        WidgetType::CHECKBUTTON,  NULL,               NULL, NULL, vik_lpd_false_default,      NULL, NULL },
+	{ PARAM_DDS,        "trkdirectionsize",  ParameterType::UINT,    GROUP_TRACKS_ADV,            N_("Direction Size:"),             WidgetType::SPINBUTTON,   &params_scales[11], NULL, NULL, trkdirectionsize_default,   NULL, NULL },
+	{ PARAM_DP,         "drawpoints",        ParameterType::BOOLEAN, GROUP_TRACKS,                N_("Draw Trackpoints"),            WidgetType::CHECKBUTTON,  NULL,               NULL, NULL, vik_lpd_true_default,       NULL, NULL },
+	{ PARAM_DPS,        "trkpointsize",      ParameterType::UINT,    GROUP_TRACKS_ADV,            N_("Trackpoint Size:"),            WidgetType::SPINBUTTON,   &params_scales[10], NULL, NULL, trkpointsize_default,       NULL, NULL },
+	{ PARAM_DE,         "drawelevation",     ParameterType::BOOLEAN, GROUP_TRACKS,                N_("Draw Elevation"),              WidgetType::CHECKBUTTON,  NULL,               NULL, NULL, vik_lpd_false_default,      NULL, NULL },
+	{ PARAM_EF,         "elevation_factor",  ParameterType::UINT,    GROUP_TRACKS_ADV,            N_("Draw Elevation Height %:"),    WidgetType::HSCALE,       &params_scales[9],  NULL, NULL, elevation_factor_default,   NULL, NULL },
+	{ PARAM_DS,         "drawstops",         ParameterType::BOOLEAN, GROUP_TRACKS,                N_("Draw Stops"),                  WidgetType::CHECKBUTTON,  NULL,               NULL, N_("Whether to draw a marker when trackpoints are at the same position but over the minimum stop length apart in time"), vik_lpd_false_default, NULL, NULL },
+	{ PARAM_SL,         "stop_length",       ParameterType::UINT,    GROUP_TRACKS_ADV,            N_("Min Stop Length (seconds):"),  WidgetType::SPINBUTTON,   &params_scales[8],  NULL, NULL, stop_length_default,        NULL, NULL },
 
-	{ LayerType::TRW,       PARAM_BLT,        "bg_line_thickness", LayerParamType::UINT,    GROUP_TRACKS_ADV,            N_("Track BG Thickness:"),         LayerWidgetType::SPINBUTTON,   &params_scales[6],  NULL, NULL, bg_line_thickness_default,  NULL, NULL },
-	{ LayerType::TRW,       PARAM_TBGC,       "trackbgcolor",      LayerParamType::COLOR,   GROUP_TRACKS_ADV,            N_("Track Background Color"),      LayerWidgetType::COLOR,        NULL,               NULL, NULL, trackbgcolor_default,       NULL, NULL },
-	{ LayerType::TRW,       PARAM_TDSF,       "speed_factor",      LayerParamType::DOUBLE,  GROUP_TRACKS_ADV,            N_("Draw by Speed Factor (%):"),   LayerWidgetType::HSCALE,       &params_scales[1],  NULL, N_("The percentage factor away from the average speed determining the color used"), speed_factor_default, NULL, NULL },
-	{ LayerType::TRW,       PARAM_TSO,        "tracksortorder",    LayerParamType::UINT,    GROUP_TRACKS_ADV,            N_("Track Sort Order:"),           LayerWidgetType::COMBOBOX,     params_sort_order,  NULL, NULL, sort_order_default,         NULL, NULL },
+	{ PARAM_BLT,        "bg_line_thickness", ParameterType::UINT,    GROUP_TRACKS_ADV,            N_("Track BG Thickness:"),         WidgetType::SPINBUTTON,   &params_scales[6],  NULL, NULL, bg_line_thickness_default,  NULL, NULL },
+	{ PARAM_TBGC,       "trackbgcolor",      ParameterType::COLOR,   GROUP_TRACKS_ADV,            N_("Track Background Color"),      WidgetType::COLOR,        NULL,               NULL, NULL, trackbgcolor_default,       NULL, NULL },
+	{ PARAM_TDSF,       "speed_factor",      ParameterType::DOUBLE,  GROUP_TRACKS_ADV,            N_("Draw by Speed Factor (%):"),   WidgetType::HSCALE,       &params_scales[1],  NULL, N_("The percentage factor away from the average speed determining the color used"), speed_factor_default, NULL, NULL },
+	{ PARAM_TSO,        "tracksortorder",    ParameterType::UINT,    GROUP_TRACKS_ADV,            N_("Track Sort Order:"),           WidgetType::COMBOBOX,     params_sort_order,  NULL, NULL, sort_order_default,         NULL, NULL },
 
-	{ LayerType::TRW,       PARAM_DLA,        "drawlabels",        LayerParamType::BOOLEAN, GROUP_WAYPOINTS,             N_("Draw Labels"),                 LayerWidgetType::CHECKBUTTON,  NULL,               NULL, NULL, vik_lpd_true_default,       NULL, NULL },
-	{ LayerType::TRW,       PARAM_WPFONTSIZE, "wpfontsize",        LayerParamType::UINT,    GROUP_WAYPOINTS,             N_("Waypoint Font Size:"),         LayerWidgetType::COMBOBOX,     params_font_sizes,  NULL, NULL, wpfontsize_default,         NULL, NULL },
-	{ LayerType::TRW,       PARAM_WPC,        "wpcolor",           LayerParamType::COLOR,   GROUP_WAYPOINTS,             N_("Waypoint Color:"),             LayerWidgetType::COLOR,        NULL,               NULL, NULL, black_color_default,        NULL, NULL },
-	{ LayerType::TRW,       PARAM_WPTC,       "wptextcolor",       LayerParamType::COLOR,   GROUP_WAYPOINTS,             N_("Waypoint Text:"),              LayerWidgetType::COLOR,        NULL,               NULL, NULL, wptextcolor_default,        NULL, NULL },
-	{ LayerType::TRW,       PARAM_WPBC,       "wpbgcolor",         LayerParamType::COLOR,   GROUP_WAYPOINTS,             N_("Background:"),                 LayerWidgetType::COLOR,        NULL,               NULL, NULL, wpbgcolor_default,          NULL, NULL },
-	{ LayerType::TRW,       PARAM_WPBA,       "wpbgand",           LayerParamType::BOOLEAN, GROUP_WAYPOINTS,             N_("Fake BG Color Translucency:"), LayerWidgetType::CHECKBUTTON,  NULL,               NULL, NULL, vik_lpd_false_default,      NULL, NULL },
-	{ LayerType::TRW,       PARAM_WPSYM,      "wpsymbol",          LayerParamType::UINT,    GROUP_WAYPOINTS,             N_("Waypoint marker:"),            LayerWidgetType::COMBOBOX,     params_wpsymbols,   NULL, NULL, wpsymbol_default,           NULL, NULL },
-	{ LayerType::TRW,       PARAM_WPSIZE,     "wpsize",            LayerParamType::UINT,    GROUP_WAYPOINTS,             N_("Waypoint size:"),              LayerWidgetType::SPINBUTTON,   &params_scales[7],  NULL, NULL, wpsize_default,             NULL, NULL },
-	{ LayerType::TRW,       PARAM_WPSYMS,     "wpsyms",            LayerParamType::BOOLEAN, GROUP_WAYPOINTS,             N_("Draw Waypoint Symbols:"),      LayerWidgetType::CHECKBUTTON,  NULL,               NULL, NULL, vik_lpd_true_default,       NULL, NULL },
-	{ LayerType::TRW,       PARAM_WPSO,       "wpsortorder",       LayerParamType::UINT,    GROUP_WAYPOINTS,             N_("Waypoint Sort Order:"),        LayerWidgetType::COMBOBOX,     params_sort_order,  NULL, NULL, sort_order_default,         NULL, NULL },
+	{ PARAM_DLA,        "drawlabels",        ParameterType::BOOLEAN, GROUP_WAYPOINTS,             N_("Draw Labels"),                 WidgetType::CHECKBUTTON,  NULL,               NULL, NULL, vik_lpd_true_default,       NULL, NULL },
+	{ PARAM_WPFONTSIZE, "wpfontsize",        ParameterType::UINT,    GROUP_WAYPOINTS,             N_("Waypoint Font Size:"),         WidgetType::COMBOBOX,     params_font_sizes,  NULL, NULL, wpfontsize_default,         NULL, NULL },
+	{ PARAM_WPC,        "wpcolor",           ParameterType::COLOR,   GROUP_WAYPOINTS,             N_("Waypoint Color:"),             WidgetType::COLOR,        NULL,               NULL, NULL, black_color_default,        NULL, NULL },
+	{ PARAM_WPTC,       "wptextcolor",       ParameterType::COLOR,   GROUP_WAYPOINTS,             N_("Waypoint Text:"),              WidgetType::COLOR,        NULL,               NULL, NULL, wptextcolor_default,        NULL, NULL },
+	{ PARAM_WPBC,       "wpbgcolor",         ParameterType::COLOR,   GROUP_WAYPOINTS,             N_("Background:"),                 WidgetType::COLOR,        NULL,               NULL, NULL, wpbgcolor_default,          NULL, NULL },
+	{ PARAM_WPBA,       "wpbgand",           ParameterType::BOOLEAN, GROUP_WAYPOINTS,             N_("Fake BG Color Translucency:"), WidgetType::CHECKBUTTON,  NULL,               NULL, NULL, vik_lpd_false_default,      NULL, NULL },
+	{ PARAM_WPSYM,      "wpsymbol",          ParameterType::UINT,    GROUP_WAYPOINTS,             N_("Waypoint marker:"),            WidgetType::COMBOBOX,     params_wpsymbols,   NULL, NULL, wpsymbol_default,           NULL, NULL },
+	{ PARAM_WPSIZE,     "wpsize",            ParameterType::UINT,    GROUP_WAYPOINTS,             N_("Waypoint size:"),              WidgetType::SPINBUTTON,   &params_scales[7],  NULL, NULL, wpsize_default,             NULL, NULL },
+	{ PARAM_WPSYMS,     "wpsyms",            ParameterType::BOOLEAN, GROUP_WAYPOINTS,             N_("Draw Waypoint Symbols:"),      WidgetType::CHECKBUTTON,  NULL,               NULL, NULL, vik_lpd_true_default,       NULL, NULL },
+	{ PARAM_WPSO,       "wpsortorder",       ParameterType::UINT,    GROUP_WAYPOINTS,             N_("Waypoint Sort Order:"),        WidgetType::COMBOBOX,     params_sort_order,  NULL, NULL, sort_order_default,         NULL, NULL },
 
-	{ LayerType::TRW,       PARAM_DI,         "drawimages",        LayerParamType::BOOLEAN, GROUP_IMAGES,                N_("Draw Waypoint Images"),        LayerWidgetType::CHECKBUTTON,  NULL,               NULL, NULL, vik_lpd_true_default,       NULL, NULL },
-	{ LayerType::TRW,       PARAM_IS,         "image_size",        LayerParamType::UINT,    GROUP_IMAGES,                N_("Image Size (pixels):"),        LayerWidgetType::HSCALE,       &params_scales[3],  NULL, NULL, image_size_default,         NULL, NULL },
-	{ LayerType::TRW,       PARAM_IA,         "image_alpha",       LayerParamType::UINT,    GROUP_IMAGES,                N_("Image Alpha:"),                LayerWidgetType::HSCALE,       &params_scales[4],  NULL, NULL, image_alpha_default,        NULL, NULL },
-	{ LayerType::TRW,       PARAM_ICS,        "image_cache_size",  LayerParamType::UINT,    GROUP_IMAGES,                N_("Image Memory Cache Size:"),    LayerWidgetType::HSCALE,       &params_scales[5],  NULL, NULL, image_cache_size_default,   NULL, NULL },
+	{ PARAM_DI,         "drawimages",        ParameterType::BOOLEAN, GROUP_IMAGES,                N_("Draw Waypoint Images"),        WidgetType::CHECKBUTTON,  NULL,               NULL, NULL, vik_lpd_true_default,       NULL, NULL },
+	{ PARAM_IS,         "image_size",        ParameterType::UINT,    GROUP_IMAGES,                N_("Image Size (pixels):"),        WidgetType::HSCALE,       &params_scales[3],  NULL, NULL, image_size_default,         NULL, NULL },
+	{ PARAM_IA,         "image_alpha",       ParameterType::UINT,    GROUP_IMAGES,                N_("Image Alpha:"),                WidgetType::HSCALE,       &params_scales[4],  NULL, NULL, image_alpha_default,        NULL, NULL },
+	{ PARAM_ICS,        "image_cache_size",  ParameterType::UINT,    GROUP_IMAGES,                N_("Image Memory Cache Size:"),    WidgetType::HSCALE,       &params_scales[5],  NULL, NULL, image_cache_size_default,   NULL, NULL },
 
-	{ LayerType::TRW,       PARAM_MDDESC,     "metadatadesc",      LayerParamType::STRING,  GROUP_METADATA,              N_("Description"),                 LayerWidgetType::ENTRY,        NULL,               NULL, NULL, string_default,             NULL, NULL },
-	{ LayerType::TRW,       PARAM_MDAUTH,     "metadataauthor",    LayerParamType::STRING,  GROUP_METADATA,              N_("Author"),                      LayerWidgetType::ENTRY,        NULL,               NULL, NULL, string_default,             NULL, NULL },
-	{ LayerType::TRW,       PARAM_MDTIME,     "metadatatime",      LayerParamType::STRING,  GROUP_METADATA,              N_("Creation Time"),               LayerWidgetType::ENTRY,        NULL,               NULL, NULL, string_default,             NULL, NULL },
-	{ LayerType::TRW,       PARAM_MDKEYS,     "metadatakeywords",  LayerParamType::STRING,  GROUP_METADATA,              N_("Keywords"),                    LayerWidgetType::ENTRY,        NULL,               NULL, NULL, string_default,             NULL, NULL },
+	{ PARAM_MDDESC,     "metadatadesc",      ParameterType::STRING,  GROUP_METADATA,              N_("Description"),                 WidgetType::ENTRY,        NULL,               NULL, NULL, string_default,             NULL, NULL },
+	{ PARAM_MDAUTH,     "metadataauthor",    ParameterType::STRING,  GROUP_METADATA,              N_("Author"),                      WidgetType::ENTRY,        NULL,               NULL, NULL, string_default,             NULL, NULL },
+	{ PARAM_MDTIME,     "metadatatime",      ParameterType::STRING,  GROUP_METADATA,              N_("Creation Time"),               WidgetType::ENTRY,        NULL,               NULL, NULL, string_default,             NULL, NULL },
+	{ PARAM_MDKEYS,     "metadatakeywords",  ParameterType::STRING,  GROUP_METADATA,              N_("Keywords"),                    WidgetType::ENTRY,        NULL,               NULL, NULL, string_default,             NULL, NULL },
 
-	{ LayerType::NUM_TYPES, NUM_PARAMS,       NULL,                LayerParamType::PTR,     VIK_LAYER_GROUP_NONE,        NULL,                              LayerWidgetType::CHECKBUTTON,  NULL,               NULL, NULL, NULL,               NULL, NULL }, /* Guard. */
+	{ NUM_PARAMS,       NULL,                ParameterType::PTR,     VIK_LAYER_GROUP_NONE,        NULL,                              WidgetType::NONE,         NULL,               NULL, NULL, NULL,               NULL, NULL }, /* Guard. */
 };
 
 
@@ -403,7 +403,7 @@ char *astro_program = NULL;
 
 
 
-void color_to_param(LayerParamValue & value, QColor const & color)
+void color_to_param(ParameterValue & value, QColor const & color)
 {
 	value.c.r = color.red();
 	value.c.g = color.green();
@@ -413,7 +413,7 @@ void color_to_param(LayerParamValue & value, QColor const & color)
 
 
 
-void param_to_color(QColor & color, LayerParamValue const & value)
+void param_to_color(QColor & color, ParameterValue const & value)
 {
 	color = QColor(value.c.r, value.c.g, value.c.b, value.c.a);
 }
@@ -889,7 +889,7 @@ char * font_size_to_string(int font_size)
 
 
 
-bool LayerTRW::set_param_value(uint16_t id, LayerParamData data, Viewport * viewport, bool is_file_operation)
+bool LayerTRW::set_param_value(uint16_t id, ParameterValue data, Viewport * viewport, bool is_file_operation)
 {
 	switch (id) {
 	case PARAM_TV:
@@ -1083,9 +1083,9 @@ bool LayerTRW::set_param_value(uint16_t id, LayerParamData data, Viewport * view
 
 
 
-LayerParamData LayerTRW::get_param_value(layer_param_id_t id, bool is_file_operation) const
+ParameterValue LayerTRW::get_param_value(param_id_t id, bool is_file_operation) const
 {
-	LayerParamData rv;
+	ParameterValue rv;
 	switch (id) {
 	case PARAM_TV: rv.b = this->tracks_visible; break;
 	case PARAM_WV: rv.b = this->waypoints_visible; break;
@@ -1160,7 +1160,7 @@ static void trw_layer_change_param(GtkWidget * widget, ui_change_values * values
 		// Alter sensitivity of waypoint draw image related widgets according to the draw image setting.
 	case PARAM_DI: {
 		// Get new value
-		LayerParamData vlpd = a_uibuilder_widget_get_value(widget, values->param);
+		ParameterValue vlpd = a_uibuilder_widget_get_value(widget, values->param);
 		GtkWidget **ww1 = values->widgets;
 		GtkWidget **ww2 = values->labels;
 		GtkWidget *w1 = ww1[OFFSET + PARAM_IS];
@@ -1180,7 +1180,7 @@ static void trw_layer_change_param(GtkWidget * widget, ui_change_values * values
 		// Alter sensitivity of waypoint label related widgets according to the draw label setting.
 	case PARAM_DLA: {
 		// Get new value
-		LayerParamData vlpd = a_uibuilder_widget_get_value(widget, values->param);
+		ParameterValue vlpd = a_uibuilder_widget_get_value(widget, values->param);
 		GtkWidget **ww1 = values->widgets;
 		GtkWidget **ww2 = values->labels;
 		GtkWidget *w1 = ww1[OFFSET + PARAM_WPTC];
@@ -1204,7 +1204,7 @@ static void trw_layer_change_param(GtkWidget * widget, ui_change_values * values
 		// Alter sensitivity of all track colours according to the draw track mode.
 	case PARAM_DM: {
 		// Get new value
-		LayerParamData vlpd = a_uibuilder_widget_get_value(widget, values->param);
+		ParameterValue vlpd = a_uibuilder_widget_get_value(widget, values->param);
 		bool sensitive = (vlpd.u == DRAWMODE_ALL_SAME_COLOR);
 		GtkWidget **ww1 = values->widgets;
 		GtkWidget **ww2 = values->labels;

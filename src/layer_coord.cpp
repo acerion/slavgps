@@ -49,15 +49,15 @@ static ParameterScale param_scales[] = {
 	{ 0.05, 60.0, 0.25, 10 },
 	{ 1,    15,   1,     0 },
 };
-static LayerParamValue color_default(void)
+static ParameterValue color_default(void)
 {
 	return LAYER_PARAM_COLOR (255, 0, 0, 100);
 }
-static LayerParamValue min_inc_default(void)
+static ParameterValue min_inc_default(void)
 {
 	return VIK_LPD_DOUBLE (1.0);
 }
-static LayerParamValue line_thickness_default(void)
+static ParameterValue line_thickness_default(void)
 {
 	return VIK_LPD_UINT (3);
 }
@@ -74,11 +74,11 @@ enum {
 
 
 static Parameter coord_layer_params[] = {
-	{ LayerType::COORD,     PARAM_COLOR,          "color",          LayerParamType::COLOR,  VIK_LAYER_GROUP_NONE, N_("Color:"),          LayerWidgetType::COLOR,          NULL,             NULL, NULL, color_default,          NULL, NULL },
-	{ LayerType::COORD,     PARAM_MIN_INC,        "min_inc",        LayerParamType::DOUBLE, VIK_LAYER_GROUP_NONE, N_("Minutes Width:"),  LayerWidgetType::SPINBOX_DOUBLE, &param_scales[0], NULL, NULL, min_inc_default,        NULL, NULL },
-	{ LayerType::COORD,     PARAM_LINE_THICKNESS, "line_thickness", LayerParamType::UINT,   VIK_LAYER_GROUP_NONE, N_("Line Thickness:"), LayerWidgetType::SPINBUTTON,     &param_scales[1], NULL, NULL, line_thickness_default, NULL, NULL },
+	{ PARAM_COLOR,          "color",          ParameterType::COLOR,  VIK_LAYER_GROUP_NONE, N_("Color:"),          WidgetType::COLOR,          NULL,             NULL, NULL, color_default,          NULL, NULL },
+	{ PARAM_MIN_INC,        "min_inc",        ParameterType::DOUBLE, VIK_LAYER_GROUP_NONE, N_("Minutes Width:"),  WidgetType::SPINBOX_DOUBLE, &param_scales[0], NULL, NULL, min_inc_default,        NULL, NULL },
+	{ PARAM_LINE_THICKNESS, "line_thickness", ParameterType::UINT,   VIK_LAYER_GROUP_NONE, N_("Line Thickness:"), WidgetType::SPINBUTTON,     &param_scales[1], NULL, NULL, line_thickness_default, NULL, NULL },
 
-	{ LayerType::NUM_TYPES, PARAM_MAX,            NULL,             LayerParamType::PTR,    VIK_LAYER_GROUP_NONE, NULL,                  LayerWidgetType::CHECKBUTTON,    NULL,             NULL, NULL, NULL,                   NULL, NULL }, /* Guard. */
+	{ PARAM_MAX,            NULL,             ParameterType::PTR,    VIK_LAYER_GROUP_NONE, NULL,                  WidgetType::CHECKBUTTON,    NULL,             NULL, NULL, NULL,                   NULL, NULL }, /* Guard. */
 };
 
 
@@ -105,6 +105,7 @@ LayerInterface vik_coord_layer_interface = {
 	coord_layer_unmarshall, /* (VikLayerFuncUnmarshall) */
 	NULL,                   /* (VikLayerFuncChangeParam) */
 
+	NULL,
 	NULL
 };
 
@@ -122,7 +123,7 @@ static Layer * coord_layer_unmarshall(uint8_t * data, int len, Viewport * viewpo
 
 
 /* Viewport can be NULL as it's not used ATM. */
-bool LayerCoord::set_param_value(uint16_t id, LayerParamValue param_value, Viewport * viewport, bool is_file_operation)
+bool LayerCoord::set_param_value(uint16_t id, ParameterValue param_value, Viewport * viewport, bool is_file_operation)
 {
 	switch (id) {
 	case PARAM_COLOR:
@@ -150,9 +151,9 @@ bool LayerCoord::set_param_value(uint16_t id, LayerParamValue param_value, Viewp
 
 
 
-LayerParamValue LayerCoord::get_param_value(layer_param_id_t id, bool is_file_operation) const
+ParameterValue LayerCoord::get_param_value(param_id_t id, bool is_file_operation) const
 {
-	LayerParamValue rv;
+	ParameterValue rv;
 	switch (id) {
 	case PARAM_COLOR:
 		rv.c.r = this->color.red();

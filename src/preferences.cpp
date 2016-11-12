@@ -75,7 +75,7 @@ static Preferences preferences;
    2.
 */
 static std::map<param_id_t, Parameter *> registered_parameters; /* Parameter id -> Parameter. */
-static std::map<std::string, ParameterValue *> registered_parameter_values; /* Parameter name -> Typed parameter value. */
+static std::map<std::string, ParameterValueTyped *> registered_parameter_values; /* Parameter name -> Typed parameter value. */
 bool loaded;
 
 
@@ -171,11 +171,11 @@ static bool preferences_load_from_file()
 
 				/* Otherwise change it (you know the type!).
 				   If it's a string list do some funky stuff ... yuck... not yet. */
-				if (oldval->second->type == LayerParamType::STRING_LIST) {
+				if (oldval->second->type == ParameterType::STRING_LIST) {
 					fprintf(stderr, "CRITICAL: Param strings not implemented in preferences\n"); /* Fake it. */
 				}
 
-				ParameterValue * newval = vik_layer_data_typed_param_copy_from_string(oldval->second->type, val);
+				ParameterValueTyped * newval = vik_layer_data_typed_param_copy_from_string(oldval->second->type, val);
 				registered_parameter_values.at(std::string(key)) = newval;
 
 				free(key);
@@ -193,20 +193,20 @@ static bool preferences_load_from_file()
 
 
 
-void Preferences::set_param_value(param_id_t id, LayerParamValue value)
+void Preferences::set_param_value(param_id_t id, ParameterValue value)
 {
 	/* Don't change stored pointer values. */
-	if (registered_parameters[id]->type == LayerParamType::PTR) {
+	if (registered_parameters[id]->type == ParameterType::PTR) {
 		return;
 	}
-	if (registered_parameters[id]->type == LayerParamType::STRING_LIST) {
+	if (registered_parameters[id]->type == ParameterType::STRING_LIST) {
 		fprintf(stderr, "CRITICAL: Param strings not implemented in preferences\n"); /* Fake it. */
 	}
 
-	ParameterValue * new_value = vik_layer_typed_param_data_copy_from_data(registered_parameters[id]->type, value); /* New value to save under an existing name. */
+	ParameterValueTyped * new_value = vik_layer_typed_param_data_copy_from_data(registered_parameters[id]->type, value); /* New value to save under an existing name. */
 	registered_parameter_values.at(std::string(registered_parameters[id]->name)) = new_value;
 
-	if (registered_parameters[id]->type == LayerParamType::DOUBLE) {
+	if (registered_parameters[id]->type == ParameterType::DOUBLE) {
 		qDebug() << "II: Preferences: saved parameter #" << id << registered_parameters[id]->name << new_value->data.d;
 	}
 }
@@ -215,7 +215,7 @@ void Preferences::set_param_value(param_id_t id, LayerParamValue value)
 
 
 /* Allow preferences to be manipulated externally. */
-void a_preferences_run_setparam(LayerParamValue value, Parameter * parameters)
+void a_preferences_run_setparam(ParameterValue value, Parameter * parameters)
 {
 	//preferences.set_param_value(0, value, parameters);
 }
@@ -223,12 +223,12 @@ void a_preferences_run_setparam(LayerParamValue value, Parameter * parameters)
 
 
 
-LayerParamValue Preferences::get_param_value(param_id_t id)
+ParameterValue Preferences::get_param_value(param_id_t id)
 {
 	auto val = registered_parameter_values.find(std::string(registered_parameters[id]->name));
 	assert (val != registered_parameter_values.end());
 
-	if (val->second->type == LayerParamType::STRING_LIST) {
+	if (val->second->type == ParameterType::STRING_LIST) {
 		fprintf(stderr, "CRITICAL: Param strings not implemented in preferences\n"); /* fake it. */
 	}
 	return val->second->data;
@@ -256,8 +256,8 @@ bool a_preferences_save_to_file()
 			Parameter * param = registered_parameters[i];
 			auto val = registered_parameter_values.find(std::string(param->name));
 			if (val != registered_parameter_values.end()) {
-				if (val->second->type != LayerParamType::PTR) {
-					if (val->second->type == LayerParamType::DOUBLE) {
+				if (val->second->type != ParameterType::PTR) {
+					if (val->second->type == ParameterType::DOUBLE) {
 						qDebug() << "II: Preferences: saving to file" << param->name << (double) val->second->data.d;
 					}
 					file_write_layer_param(f, param->name, val->second->type, val->second->data);
@@ -286,8 +286,8 @@ void preferences_show_window(QWidget * parent)
 
 	if (dialog_code == QDialog::Accepted) {
 		for (auto iter = registered_parameters.begin(); iter != registered_parameters.end(); iter++) {
-			LayerParamValue param_value = dialog.get_param_value(iter->first, iter->second);
-			if (iter->second->type == LayerParamType::DOUBLE) {
+			ParameterValue param_value = dialog.get_param_value(iter->first, iter->second);
+			if (iter->second->type == ParameterType::DOUBLE) {
 				qDebug() << "II: Preferences: extracted from dialog parameter #" << iter->first << iter->second->name << param_value.d;
 			}
 			preferences.set_param_value(iter->first, param_value);
@@ -303,7 +303,7 @@ void preferences_show_window(QWidget * parent)
 					   params_count,
 					   (char **) groups_names->pdata,
 					   groups_names->len, // groups, groups_count, // groups? what groups?!
-					   (bool (*) (void *, uint16_t, LayerParamValue,void *, bool)) preferences_run_setparam,
+					   (bool (*) (void *, uint16_t, ParameterValue,void *, bool)) preferences_run_setparam,
 					   NULL /* Not used. */,
 					   contiguous_params,
 					   preferences_run_getparam,
@@ -318,7 +318,7 @@ void preferences_show_window(QWidget * parent)
 
 
 
-void a_preferences_register(Parameter * parameter, LayerParamValue default_value, const char * group_key)
+void a_preferences_register(Parameter * parameter, ParameterValue default_value, const char * group_key)
 {
 	static param_id_t id = 0;
 	/* All preferences should be registered before loading. */
@@ -328,13 +328,13 @@ void a_preferences_register(Parameter * parameter, LayerParamValue default_value
 	/* Copy value. */
         Parameter * new_parameter = (Parameter *) malloc(1 * sizeof (Parameter));
 	*new_parameter = *parameter;
-	ParameterValue * newval = vik_layer_typed_param_data_copy_from_data(parameter->type, default_value);
+	ParameterValueTyped * newval = vik_layer_typed_param_data_copy_from_data(parameter->type, default_value);
 	if (group_key) {
 		new_parameter->group = preferences_groups_key_to_index(group_key);
 	}
 
 	registered_parameters.insert(std::pair<param_id_t, Parameter *>(id, new_parameter));
-	registered_parameter_values.insert(std::pair<std::string, ParameterValue *>(std::string(new_parameter->name), newval));
+	registered_parameter_values.insert(std::pair<std::string, ParameterValueTyped *>(std::string(new_parameter->name), newval));
 	id++;
 }
 
@@ -368,7 +368,7 @@ void a_preferences_uninit()
 
 
 
-LayerParamValue * a_preferences_get(const char * key)
+ParameterValue * a_preferences_get(const char * key)
 {
 	if (!loaded) {
 		fprintf(stderr, "DEBUG: %s: First time: %s\n", __FUNCTION__, key);

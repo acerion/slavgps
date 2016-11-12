@@ -197,32 +197,32 @@ void Layer::preconfigure_interfaces(void)
 	for (SlavGPS::LayerType i = SlavGPS::LayerType::AGGREGATE; i < SlavGPS::LayerType::NUM_TYPES; ++i) {
 
 		LayerInterface * interface = Layer::get_interface(i);
-		QString path = QString(":/icons/layer/") + QString(interface->fixed_layer_name).toLower() + QString(".png");
+		QString path = QString(":/icons/layer/") + QString(interface->layer_type_string).toLower() + QString(".png");
 		qDebug() << "path is" << path;
 		interface->icon = new QIcon(path);
 
-		interface->parameter_value_defaults = new std::map<param_id_t, LayerParamValue>;
+		interface->parameter_value_defaults = new std::map<param_id_t, ParameterValue>;
 
 		if (!interface->params) {
 			continue;
 		}
 
-		interface->layer_parameters = new std::map<layer_param_id_t, Parameter *>;
+		interface->layer_parameters = new std::map<param_id_t, Parameter *>;
 		int j = 0;
 		while (interface->params[j].name) {
-			interface->layer_parameters->insert(std::pair<layer_param_id_t, Parameter *>(interface->params[j].id, &interface->params[j]));
+			interface->layer_parameters->insert(std::pair<param_id_t, Parameter *>(interface->params[j].id, &interface->params[j]));
 
 			/* Read and store default values of layer's parameters.
 			   First try to get program's internal/hardwired value.
 			   Then try to get value from settings file. */
-			LayerParamData param_value;
+			ParameterValue param_value;
 			if (interface->params[j].hardwired_default_value) {
 				/* This will be overwritten below by value from settings file. */
 				param_value = interface->params[j].hardwired_default_value();
 			}
 			/* kamilTODO: make sure that the value read from Layer Defaults is valid. */
 			/* kamilTODO: if invalid, call a_layer_defaults_register() to save the value? */
-			param_value = a_layer_defaults_get(interface->fixed_layer_name, interface->params[j].name, interface->params[j].type);
+			param_value = a_layer_defaults_get(interface->layer_type_string, interface->params[j].name, interface->params[j].type);
 			(*interface->parameter_value_defaults)[interface->params[j].id] = param_value;
 
 			j++;
@@ -254,7 +254,7 @@ static bool layer_defaults_register(LayerType layer_type)
 	for (uint16_t i = 0; i < params_count; i++) {
 		if (params[i].group != VIK_LAYER_NOT_IN_PROPERTIES) {
 			if (params[i].hardwired_default_value) {
-				LayerParamValue value = params[i].hardwired_default_value();
+				ParameterValue value = params[i].hardwired_default_value();
 				a_layer_defaults_register(layer_interface->fixed_layer_name, &params[i], value);
 				answer = true;
 			}
@@ -299,7 +299,7 @@ char const * Layer::get_name()
 
 Layer * Layer::new_(LayerType layer_type, Viewport * viewport, bool interactive)
 {
-	qDebug() << "II: Layer: will create new" << Layer::get_interface(layer_type)->fixed_layer_name << "layer; interactive =" << interactive;
+	qDebug() << "II: Layer: will create new" << Layer::get_interface(layer_type)->layer_type_string << "layer; interactive =" << interactive;
 
 	assert (layer_type != LayerType::NUM_TYPES);
 
@@ -432,15 +432,15 @@ void Layer::marshall_params(uint8_t ** data, int * datalen)
 	vlm_append(this->name, strlen(this->name));
 
 	/* Now the actual parameters. */
-	std::map<layer_param_id_t, Parameter *> * parameters = this->get_interface()->layer_parameters;
+	std::map<param_id_t, Parameter *> * parameters = this->get_interface()->layer_parameters;
 	if (parameters) {
-		LayerParamValue param_value;
+		ParameterValue param_value;
 		for (auto iter = parameters->begin(); iter != parameters->end(); iter++) {
 			fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, iter->second->name);
 
 			param_value = this->get_param_value(iter->first, false);
 			switch (iter->second->type) {
-			case LayerParamType::STRING:
+			case ParameterType::STRING:
 				/* Remember need braces as these are macro calls, not single statement functions! */
 				if (param_value.s) {
 					vlm_append(param_value.s, strlen(param_value.s));
@@ -450,7 +450,7 @@ void Layer::marshall_params(uint8_t ** data, int * datalen)
 				}
 				break;
 				/* Print out the string list in the array. */
-			case LayerParamType::STRING_LIST: {
+			case ParameterType::STRING_LIST: {
 				std::list<char *> * a_list = param_value.sl;
 
 				/* Write length of list (# of strings). */
@@ -500,15 +500,15 @@ void Layer::unmarshall_params(uint8_t * data, int datalen, Viewport * viewport)
 	this->rename(s);
 	free(s);
 
-	std::map<layer_param_id_t, Parameter *> * parameters = this->get_interface()->layer_parameters;
+	std::map<param_id_t, Parameter *> * parameters = this->get_interface()->layer_parameters;
 	if (parameters) {
-		LayerParamValue param_value;
+		ParameterValue param_value;
 
 		for (auto iter = parameters->begin(); iter != parameters->end(); iter++) {
 			fprintf(stderr, "DEBUG: %s: %s\n", __FUNCTION__, iter->second->name);
 
 			switch (iter->second->type) {
-			case LayerParamType::STRING:
+			case ParameterType::STRING:
 				s = (char *) malloc(vlm_size + 1);
 				s[vlm_size] = 0;
 				vlm_read(s);
@@ -516,7 +516,7 @@ void Layer::unmarshall_params(uint8_t * data, int datalen, Viewport * viewport)
 				this->set_param_value(iter->first, param_value, viewport, false);
 				free(s);
 				break;
-			case LayerParamType::STRING_LIST: {
+			case ParameterType::STRING_LIST: {
 				int listlen = vlm_size;
 				std::list<char *> * list = new std::list<char *>;
 				b += sizeof(int); /* Skip listlen. */;
@@ -621,7 +621,7 @@ GdkPixbuf * vik_layer_load_icon(LayerType layer_type)
 /* Returns true if OK was pressed. */
 bool Layer::properties_dialog(Viewport * viewport)
 {
-	qDebug() << "II: Layer: opening properties dialog for layer" << this->get_interface(this->type)->fixed_layer_name;
+	qDebug() << "II: Layer: opening properties dialog for layer" << this->get_interface(this->type)->layer_type_string;
 
 	PropertiesDialog dialog(NULL);
 	dialog.fill(this);
@@ -631,9 +631,9 @@ bool Layer::properties_dialog(Viewport * viewport)
 
 		bool must_redraw = false;
 
-		std::map<layer_param_id_t, Parameter *> * parameters = this->get_interface()->layer_parameters;
+		std::map<param_id_t, Parameter *> * parameters = this->get_interface()->layer_parameters;
 		for (auto iter = parameters->begin(); iter != parameters->end(); iter++) {
-			LayerParamValue param_value = dialog.get_param_value(iter->first, iter->second);
+			ParameterValue param_value = dialog.get_param_value(iter->first, iter->second);
 			bool set = this->set_param_value(iter->first, param_value, viewport, false);
 			if (set) {
 				must_redraw = true;
@@ -654,10 +654,10 @@ bool Layer::properties_dialog(Viewport * viewport)
 						  layer->get_interface()->params_count,
 						  layer->get_interface()->params_groups,
 						  layer->get_interface()->params_groups_count,
-						  (bool (*)(void*, uint16_t, LayerParamData, void*, bool)) layer->set_param,
+						  (bool (*)(void*, uint16_t, ParameterValue, void*, bool)) layer->set_param,
 						  layer,
 						  viewport,
-						  (LayerParamData (*)(void*, uint16_t, bool)) layer->get_param,
+						  (ParameterValue (*)(void*, uint16_t, bool)) layer->get_param,
 						  layer,
 						  layer->get_interface()->change_param)
 
@@ -681,7 +681,7 @@ bool Layer::properties_dialog(Viewport * viewport)
 LayerType Layer::type_from_string(char const * str)
 {
 	for (LayerType i = LayerType::AGGREGATE; i < LayerType::NUM_TYPES; ++i) {
-		if (strcasecmp(str, Layer::get_interface(i)->fixed_layer_name) == 0) {
+		if (strcasecmp(str, Layer::get_interface(i)->layer_type_string) == 0) {
 			return i;
 		}
 	}
@@ -693,9 +693,9 @@ LayerType Layer::type_from_string(char const * str)
 
 void vik_layer_typed_param_data_free(void * gp)
 {
-	ParameterValue * val = (ParameterValue *) gp;
+	ParameterValueTyped * val = (ParameterValueTyped *) gp;
 	switch (val->type) {
-	case LayerParamType::STRING:
+	case ParameterType::STRING:
 		if (val->data.s) {
 			free((void *) val->data.s);
 		}
@@ -705,7 +705,7 @@ void vik_layer_typed_param_data_free(void * gp)
 		 * The value passed by the internals into set_param should also be managed
 		 * by the layer -- i.e. free'd by the layer.
 		 */
-	case LayerParamType::STRING_LIST:
+	case ParameterType::STRING_LIST:
 		fprintf(stderr, "WARNING: Param strings not implemented\n"); //fake it
 		break;
 	default:
@@ -717,13 +717,13 @@ void vik_layer_typed_param_data_free(void * gp)
 
 
 
-ParameterValue * vik_layer_typed_param_data_copy_from_data(LayerParamType type, LayerParamData val)
+ParameterValueTyped * vik_layer_typed_param_data_copy_from_data(ParameterType type, ParameterValue val)
 {
-	ParameterValue * newval = (ParameterValue *) malloc(1 * sizeof (ParameterValue));
+	ParameterValueTyped * newval = (ParameterValueTyped *) malloc(1 * sizeof (ParameterValueTyped));
 	newval->data = val;
 	newval->type = type;
 	switch (newval->type) {
-	case LayerParamType::STRING: {
+	case ParameterType::STRING: {
 		char * s = g_strdup(newval->data.s);
 		newval->data.s = s;
 		break;
@@ -733,7 +733,7 @@ ParameterValue * vik_layer_typed_param_data_copy_from_data(LayerParamType type, 
 		 * The value passed by the internals into set_param should also be managed
 		 * by the layer -- i.e. free'd by the layer.
 		 */
-	case LayerParamType::STRING_LIST:
+	case ParameterType::STRING_LIST:
 		fprintf(stderr, "CRITICAL: Param strings not implemented\n"); //fake it
 		break;
 	default:
@@ -747,25 +747,25 @@ ParameterValue * vik_layer_typed_param_data_copy_from_data(LayerParamType type, 
 
 #define TEST_BOOLEAN(str) (! ((str)[0] == '\0' || (str)[0] == '0' || (str)[0] == 'n' || (str)[0] == 'N' || (str)[0] == 'f' || (str)[0] == 'F'))
 
-ParameterValue * vik_layer_data_typed_param_copy_from_string(LayerParamType type, const char * str)
+ParameterValueTyped * vik_layer_data_typed_param_copy_from_string(ParameterType type, const char * str)
 {
-	ParameterValue * rv = (ParameterValue *) malloc(1 * sizeof (ParameterValue));
+	ParameterValueTyped * rv = (ParameterValueTyped *) malloc(1 * sizeof (ParameterValueTyped));
 	rv->type = type;
 	switch (type) {
-	case LayerParamType::DOUBLE:
+	case ParameterType::DOUBLE:
 		rv->data.d = strtod(str, NULL);
 		break;
-	case LayerParamType::UINT:
+	case ParameterType::UINT:
 		rv->data.u = strtoul(str, NULL, 10);
 		break;
-	case LayerParamType::INT:
+	case ParameterType::INT:
 		rv->data.i = strtol(str, NULL, 10);
 		break;
-	case LayerParamType::BOOLEAN:
+	case ParameterType::BOOLEAN:
 		rv->data.b = TEST_BOOLEAN(str);
 		break;
 #ifndef SLAVGPS_QT
-	case LayerParamType::COLOR:
+	case ParameterType::COLOR:
 		memset(&(rv->data.c), 0, sizeof(rv->data.c)); /* Default: black. */
 		gdk_color_parse (str, &(rv->data.c));
 		break;
@@ -793,18 +793,18 @@ void Layer::set_initial_parameter_values(Viewport * viewport)
 	/* Sneaky initialize of the viewport value here. */
 	this->viewport = viewport;
 
-	char const * layer_name = this->get_interface()->fixed_layer_name;
-	LayerParamValue param_value;
+	char const * layer_name = this->get_interface()->layer_type_string;
+	ParameterValue param_value;
 
-	std::map<layer_param_id_t, Parameter *> * parameters = this->interface->layer_parameters;
-	std::map<param_id_t, LayerParamValue> * defaults = this->interface->parameter_value_defaults;
+	std::map<param_id_t, Parameter *> * parameters = this->interface->layer_parameters;
+	std::map<param_id_t, ParameterValue> * defaults = this->interface->parameter_value_defaults;
 
 	for (auto iter = parameters->begin(); iter != parameters->end(); iter++) {
 		/* Ensure parameter is for use. */
 		if (iter->second->group > VIK_LAYER_NOT_IN_PROPERTIES) {
 			/* ATM can't handle string lists.
 			   Only DEM files uses this currently. */
-			if (iter->second->type != LayerParamType::STRING_LIST) {
+			if (iter->second->type != ParameterType::STRING_LIST) {
 				param_value = defaults->at(iter->first);
 				this->set_param_value(iter->first, param_value, viewport, true); /* Possibly comes from a file. */
 			}
@@ -1039,16 +1039,16 @@ void Layer::realize(TreeView * tree_view_, TreeIndex * layer_index)
 
 
 
-LayerParamValue Layer::get_param_value(layer_param_id_t id, bool is_file_operation) const
+ParameterValue Layer::get_param_value(param_id_t id, bool is_file_operation) const
 {
-	LayerParamValue param_value;
+	ParameterValue param_value;
 	return param_value;
 }
 
 
 
 
-bool Layer::set_param_value(uint16_t id, LayerParamValue param_value, Viewport * viewport, bool is_file_operation)
+bool Layer::set_param_value(uint16_t id, ParameterValue param_value, Viewport * viewport, bool is_file_operation)
 {
 	return false;
 }
@@ -1075,7 +1075,7 @@ LayerTool::LayerTool(Window * window, Viewport * viewport, LayerType layer_type)
 		strcpy(this->layer_type_string, "LayerType::generic");
 	} else {
 		strcpy(this->layer_type_string, "LayerType::");
-		strcpy(this->layer_type_string + 11, Layer::get_interface(layer_type)->fixed_layer_name);
+		strcpy(this->layer_type_string + 11, Layer::get_interface(layer_type)->layer_type_string);
 	}
 }
 

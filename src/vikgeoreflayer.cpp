@@ -54,9 +54,9 @@ using namespace SlavGPS;
 
 
 /*
-static VikLayerParamData image_default(void)
+static VikParameterValue image_default(void)
 {
-	VikLayerParamData data;
+	VikParameterValue data;
 	data.s = strdup("");
 	return data;
 }
@@ -64,19 +64,6 @@ static VikLayerParamData image_default(void)
 
 
 
-
-Parameter georef_layer_params[] = {
-	{ LayerType::GEOREF, "image",                LayerParamType::STRING, VIK_LAYER_NOT_IN_PROPERTIES, NULL, (LayerWidgetType) 0, NULL, NULL, NULL, NULL, NULL, NULL },
-	{ LayerType::GEOREF, "corner_easting",       LayerParamType::DOUBLE, VIK_LAYER_NOT_IN_PROPERTIES, NULL, (LayerWidgetType) 0, NULL, NULL, NULL, NULL, NULL, NULL },
-	{ LayerType::GEOREF, "corner_northing",      LayerParamType::DOUBLE, VIK_LAYER_NOT_IN_PROPERTIES, NULL, (LayerWidgetType) 0, NULL, NULL, NULL, NULL, NULL, NULL },
-	{ LayerType::GEOREF, "mpp_easting",          LayerParamType::DOUBLE, VIK_LAYER_NOT_IN_PROPERTIES, NULL, (LayerWidgetType) 0, NULL, NULL, NULL, NULL, NULL, NULL },
-	{ LayerType::GEOREF, "mpp_northing",         LayerParamType::DOUBLE, VIK_LAYER_NOT_IN_PROPERTIES, NULL, (LayerWidgetType) 0, NULL, NULL, NULL, NULL, NULL, NULL },
-	{ LayerType::GEOREF, "corner_zone",          LayerParamType::UINT,   VIK_LAYER_NOT_IN_PROPERTIES, NULL, (LayerWidgetType) 0, NULL, NULL, NULL, NULL, NULL, NULL },
-	{ LayerType::GEOREF, "corner_letter_as_int", LayerParamType::UINT,   VIK_LAYER_NOT_IN_PROPERTIES, NULL, (LayerWidgetType) 0, NULL, NULL, NULL, NULL, NULL, NULL },
-	{ LayerType::GEOREF, "alpha",                LayerParamType::UINT,   VIK_LAYER_NOT_IN_PROPERTIES, NULL, (LayerWidgetType) 0, NULL, NULL, NULL, NULL, NULL, NULL },
-
-	{ LayerType::NUM_TYPES, NUM_PARAMS,       NULL,             LayerParamType::PTR,    VIK_LAYER_GROUP_NONE, NULL,                  LayerWidgetType::CHECKBUTTON, NULL,            NULL, NULL, NULL,                   NULL, NULL }, /* Guard. */
-};
 
 enum {
 	PARAM_IMAGE = 0,
@@ -88,6 +75,22 @@ enum {
 	PARAM_CL,
 	PARAM_AA,
 	NUM_PARAMS
+};
+
+
+
+
+Parameter georef_layer_params[] = {
+	{ PARAM_IMAGE, "image",                ParameterType::STRING, VIK_LAYER_NOT_IN_PROPERTIES, NULL, WidgetType::NONE,        NULL, NULL, NULL, NULL, NULL, NULL },
+	{ PARAM_CE,    "corner_easting",       ParameterType::DOUBLE, VIK_LAYER_NOT_IN_PROPERTIES, NULL, WidgetType::NONE,        NULL, NULL, NULL, NULL, NULL, NULL },
+	{ PARAM_CN,    "corner_northing",      ParameterType::DOUBLE, VIK_LAYER_NOT_IN_PROPERTIES, NULL, WidgetType::NONE,        NULL, NULL, NULL, NULL, NULL, NULL },
+	{ PARAM_ME,    "mpp_easting",          ParameterType::DOUBLE, VIK_LAYER_NOT_IN_PROPERTIES, NULL, WidgetType::NONE,        NULL, NULL, NULL, NULL, NULL, NULL },
+	{ PARAM_MN,    "mpp_northing",         ParameterType::DOUBLE, VIK_LAYER_NOT_IN_PROPERTIES, NULL, WidgetType::NONE,        NULL, NULL, NULL, NULL, NULL, NULL },
+	{ PARAM_CZ,    "corner_zone",          ParameterType::UINT,   VIK_LAYER_NOT_IN_PROPERTIES, NULL, WidgetType::NONE,        NULL, NULL, NULL, NULL, NULL, NULL },
+	{ PARAM_CL,    "corner_letter_as_int", ParameterType::UINT,   VIK_LAYER_NOT_IN_PROPERTIES, NULL, WidgetType::NONE,        NULL, NULL, NULL, NULL, NULL, NULL },
+	{ PARAM_AA,    "alpha",                ParameterType::UINT,   VIK_LAYER_NOT_IN_PROPERTIES, NULL, WidgetType::NONE,        NULL, NULL, NULL, NULL, NULL, NULL },
+
+	{ NUM_PARAMS,  NULL,                   ParameterType::PTR,    VIK_LAYER_GROUP_NONE,        NULL, WidgetType::CHECKBUTTON, NULL, NULL, NULL, NULL, NULL, NULL }, /* Guard. */
 };
 
 
@@ -148,8 +151,7 @@ VikLayerInterface vik_georef_layer_interface = {
 
 
 static Parameter io_prefs[] = {
-	{ LayerType::NUM_TYPES, VIKING_PREFERENCES_IO_NAMESPACE "georef_auto_read_world_file", LayerParamType::BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Auto Read World Files:"), LayerWidgetType::CHECKBUTTON, NULL, NULL,
-	  N_("Automatically attempt to read associated world file of a new image for a GeoRef layer"), NULL, NULL, NULL}
+	{ 0, VIKING_PREFERENCES_IO_NAMESPACE "georef_auto_read_world_file", ParameterType::BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Auto Read World Files:"), WidgetType::CHECKBUTTON, NULL, NULL, N_("Automatically attempt to read associated world file of a new image for a GeoRef layer"), NULL, NULL, NULL}
 };
 
 typedef struct {
@@ -162,7 +164,7 @@ typedef struct {
 
 void SlavGPS::vik_georef_layer_init(void)
 {
-	LayerParamData tmp;
+	ParameterValue tmp;
 	tmp.b = true;
 	a_preferences_register(&io_prefs[0], tmp, VIKING_PREFERENCES_IO_GROUP_KEY);
 }
@@ -193,7 +195,7 @@ static Layer * georef_layer_unmarshall(uint8_t * data, int len, Viewport * viewp
 
 
 
-bool LayerGeoref::set_param_value(uint16_t id, LayerParamValue data, Viewport * viewport, bool is_file_operation)
+bool LayerGeoref::set_param_value(uint16_t id, ParameterValue data, Viewport * viewport, bool is_file_operation)
 {
 	switch (id) {
 	case PARAM_IMAGE:
@@ -254,9 +256,9 @@ void LayerGeoref::create_image_file()
 
 
 
-LayerParamValue LayerGeoref::get_param_value(layer_param_id_t id, bool is_file_operation) const
+ParameterValue LayerGeoref::get_param_value(param_id_t id, bool is_file_operation) const
 {
-	LayerParamValue rv;
+	ParameterValue rv;
 	switch (id) {
 	case PARAM_IMAGE: {
 		bool set = false;

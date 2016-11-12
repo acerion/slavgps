@@ -51,10 +51,10 @@ ParameterScale simplify_params_scales[] = {
 };
 
 Parameter bfilter_simplify_params[] = {
-	{ LayerType::NUM_TYPES, "numberofpoints", LayerParamType::UINT, VIK_LAYER_GROUP_NONE, N_("Max number of points:"), LayerWidgetType::SPINBUTTON, simplify_params_scales, NULL, NULL, NULL, NULL, NULL },
+	{ LayerType::NUM_TYPES, "numberofpoints", ParameterType::UINT, VIK_LAYER_GROUP_NONE, N_("Max number of points:"), WidgetType::SPINBUTTON, simplify_params_scales, NULL, NULL, NULL, NULL, NULL },
 };
 
-LayerParamData bfilter_simplify_params_defaults[] = {
+ParameterValue bfilter_simplify_params_defaults[] = {
 	/* Annoyingly 'C' cannot initialize unions properly. */
 	/* It's dependent on the standard used or the compiler support... */
 #if defined __STDC_VERSION__ && __STDC_VERSION__ >= 199901L || __GNUC__
@@ -67,7 +67,7 @@ LayerParamData bfilter_simplify_params_defaults[] = {
 
 
 
-static void datasource_bfilter_simplify_get_process_options(LayerParamData *paramdatas, ProcessOptions *po, void * not_used, const char *input_filename, const char *not_used3)
+static void datasource_bfilter_simplify_get_process_options(ParameterValue *paramdatas, ProcessOptions *po, void * not_used, const char *input_filename, const char *not_used3)
 {
 	po->babelargs = strdup("-i gpx");
 	po->filename = g_strdup(input_filename);
@@ -137,11 +137,11 @@ VikDataSourceInterface vik_datasource_bfilter_simplify_interface = {
 static ParameterScale compress_spin_scales[] = { {0.0, 1.000, 0.001, 3} };
 
 Parameter bfilter_compress_params[] = {
-	//{ LayerType::NUM_TYPES, "compressmethod", LayerParamType::UINT, VIK_LAYER_GROUP_NONE, N_("Simplify Method:"), LayerWidgetType::COMBOBOX, compress_method, NULL, NULL, NULL, NULL, NULL },
-	{ LayerType::NUM_TYPES, "compressfactor", LayerParamType::DOUBLE, VIK_LAYER_GROUP_NONE, N_("Error Factor:"), LayerWidgetType::SPINBUTTON, compress_spin_scales, NULL, N_("Specifies the maximum allowable error that may be introduced by removing a single point by the crosstrack method. See the manual or GPSBabel Simplify Filter documentation for more detail."), NULL, NULL, NULL },
+	//{ LayerType::NUM_TYPES, "compressmethod", ParameterType::UINT, VIK_LAYER_GROUP_NONE, N_("Simplify Method:"), WidgetType::COMBOBOX, compress_method, NULL, NULL, NULL, NULL, NULL },
+	{ LayerType::NUM_TYPES, "compressfactor", ParameterType::DOUBLE, VIK_LAYER_GROUP_NONE, N_("Error Factor:"), WidgetType::SPINBUTTON, compress_spin_scales, NULL, N_("Specifies the maximum allowable error that may be introduced by removing a single point by the crosstrack method. See the manual or GPSBabel Simplify Filter documentation for more detail."), NULL, NULL, NULL },
 };
 
-LayerParamData bfilter_compress_params_defaults[] = {
+ParameterValue bfilter_compress_params_defaults[] = {
 	/* Annoyingly 'C' cannot initialize unions properly. */
 	/* It's dependent on the standard used or the compiler support... */
 #if defined __STDC_VERSION__ && __STDC_VERSION__ >= 199901L || __GNUC__
@@ -157,7 +157,7 @@ LayerParamData bfilter_compress_params_defaults[] = {
 /**
  * http://www.gpsbabel.org/htmldoc-development/filter_simplify.html
  */
-static void datasource_bfilter_compress_get_process_options(LayerParamData *paramdatas, ProcessOptions *po, void * not_used, const char *input_filename, const char *not_used3)
+static void datasource_bfilter_compress_get_process_options(ParameterValue *paramdatas, ProcessOptions *po, void * not_used, const char *input_filename, const char *not_used3)
 {
 	char units = a_vik_get_units_distance() == DistanceUnit::KILOMETRES ? 'k' : ' ';
 	/* I toyed with making the length,crosstrack or relative methods selectable.
@@ -234,7 +234,7 @@ VikDataSourceInterface vik_datasource_bfilter_compress_interface = {
 
 
 
-static void datasource_bfilter_dup_get_process_options(LayerParamData *paramdatas, ProcessOptions *po, void * not_used, const char *input_filename, const char *not_used3)
+static void datasource_bfilter_dup_get_process_options(ParameterValue *paramdatas, ProcessOptions *po, void * not_used, const char *input_filename, const char *not_used3)
 {
 	po->babelargs = strdup("-i gpx");
 	po->filename = g_strdup(input_filename);
@@ -269,18 +269,18 @@ VikDataSourceInterface vik_datasource_bfilter_dup_interface = {
 
 
 
-LayerParamData bfilter_manual_params_defaults[] = {
+ParameterValue bfilter_manual_params_defaults[] = {
 	{ .s = NULL },
 };
 
 Parameter bfilter_manual_params[] = {
-	{ LayerType::NUM_TYPES, "manual", LayerParamType::STRING, VIK_LAYER_GROUP_NONE, N_("Manual filter:"), LayerWidgetType::ENTRY, NULL, NULL, N_("Manual filter command: e.g. 'swap'."), NULL, NULL, NULL },
+	{ LayerType::NUM_TYPES, "manual", ParameterType::STRING, VIK_LAYER_GROUP_NONE, N_("Manual filter:"), WidgetType::ENTRY, NULL, NULL, N_("Manual filter command: e.g. 'swap'."), NULL, NULL, NULL },
 };
 
 
 
 
-static void datasource_bfilter_manual_get_process_options(LayerParamData *paramdatas, ProcessOptions *po, void * not_used, const char *input_filename, const char *not_used3)
+static void datasource_bfilter_manual_get_process_options(ParameterValue *paramdatas, ProcessOptions *po, void * not_used, const char *input_filename, const char *not_used3)
 {
 	po->babelargs = strdup("-i gpx");
 	po->filename = g_strdup(input_filename);
@@ -320,7 +320,7 @@ VikDataSourceInterface vik_datasource_bfilter_manual_interface = {
 
 
 /* TODO: shell_escape stuff. */
-static void datasource_bfilter_polygon_get_process_options(LayerParamData *paramdatas, ProcessOptions *po, void * not_used, const char *input_filename, const char *input_track_filename)
+static void datasource_bfilter_polygon_get_process_options(ParameterValue *paramdatas, ProcessOptions *po, void * not_used, const char *input_filename, const char *input_track_filename)
 {
 	po->shell_command = g_strdup_printf("gpsbabel -i gpx -f %s -o arc -F - | gpsbabel -i gpx -f %s -x polygon,file=- -o gpx -F -", input_track_filename, input_filename);
 }
@@ -358,7 +358,7 @@ VikDataSourceInterface vik_datasource_bfilter_polygon_interface = {
 
 
 /* TODO: shell_escape stuff */
-static void datasource_bfilter_exclude_polygon_get_process_options(LayerParamData *paramdatas, ProcessOptions *po, void * not_used, const char *input_filename, const char *input_track_filename)
+static void datasource_bfilter_exclude_polygon_get_process_options(ParameterValue *paramdatas, ProcessOptions *po, void * not_used, const char *input_filename, const char *input_track_filename)
 {
 	po->shell_command = g_strdup_printf("gpsbabel -i gpx -f %s -o arc -F - | gpsbabel -i gpx -f %s -x polygon,exclude,file=- -o gpx -F -", input_track_filename, input_filename);
 }

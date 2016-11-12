@@ -54,15 +54,15 @@ using namespace SlavGPS;
 
 
 Parameter wp_params[] = {
-	{ LayerType::NUM_TYPES,  SG_WP_PARAM_NAME,     "",  LayerParamType::STRING,  PARAMETER_GROUP_NONE,  "Name",         LayerWidgetType::ENTRY,       NULL, NULL, NULL, NULL, NULL, NULL },
-	{ LayerType::NUM_TYPES,  SG_WP_PARAM_LAT,      "",  LayerParamType::STRING,  PARAMETER_GROUP_NONE,  "Latitude",     LayerWidgetType::ENTRY,       NULL, NULL, NULL, NULL, NULL, NULL },
-	{ LayerType::NUM_TYPES,  SG_WP_PARAM_LON,      "",  LayerParamType::STRING,  PARAMETER_GROUP_NONE,  "Longitude",    LayerWidgetType::ENTRY,       NULL, NULL, NULL, NULL, NULL, NULL },
-	{ LayerType::NUM_TYPES,  SG_WP_PARAM_TIME,     "",  LayerParamType::STRING,  PARAMETER_GROUP_NONE,  "Time",         LayerWidgetType::DATETIME,    NULL, NULL, NULL, NULL, NULL, NULL },
-	{ LayerType::NUM_TYPES,  SG_WP_PARAM_ALT,      "",  LayerParamType::STRING,  PARAMETER_GROUP_NONE,  "Altitude",     LayerWidgetType::ENTRY,       NULL, NULL, NULL, NULL, NULL, NULL },
-	{ LayerType::NUM_TYPES,  SG_WP_PARAM_COMMENT,  "",  LayerParamType::STRING,  PARAMETER_GROUP_NONE,  "Comment",      LayerWidgetType::ENTRY,       NULL, NULL, NULL, NULL, NULL, NULL },
-	{ LayerType::NUM_TYPES,  SG_WP_PARAM_DESC,     "",  LayerParamType::STRING,  PARAMETER_GROUP_NONE,  "Description",  LayerWidgetType::ENTRY,       NULL, NULL, NULL, NULL, NULL, NULL },
-	{ LayerType::NUM_TYPES,  SG_WP_PARAM_IMAGE,    "",  LayerParamType::STRING,  PARAMETER_GROUP_NONE,  "Image",        LayerWidgetType::FILEENTRY,   NULL, NULL, NULL, NULL, NULL, NULL },
-	{ LayerType::NUM_TYPES,  SG_WP_PARAM_SYMBOL,   "",  LayerParamType::STRING,  PARAMETER_GROUP_NONE,  "Symbol",       LayerWidgetType::ENTRY,       NULL, NULL, NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_NAME,     "",  ParameterType::STRING,  PARAMETER_GROUP_NONE,  "Name",         WidgetType::ENTRY,       NULL, NULL, NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_LAT,      "",  ParameterType::STRING,  PARAMETER_GROUP_NONE,  "Latitude",     WidgetType::ENTRY,       NULL, NULL, NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_LON,      "",  ParameterType::STRING,  PARAMETER_GROUP_NONE,  "Longitude",    WidgetType::ENTRY,       NULL, NULL, NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_TIME,     "",  ParameterType::STRING,  PARAMETER_GROUP_NONE,  "Time",         WidgetType::DATETIME,    NULL, NULL, NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_ALT,      "",  ParameterType::STRING,  PARAMETER_GROUP_NONE,  "Altitude",     WidgetType::ENTRY,       NULL, NULL, NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_COMMENT,  "",  ParameterType::STRING,  PARAMETER_GROUP_NONE,  "Comment",      WidgetType::ENTRY,       NULL, NULL, NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_DESC,     "",  ParameterType::STRING,  PARAMETER_GROUP_NONE,  "Description",  WidgetType::ENTRY,       NULL, NULL, NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_IMAGE,    "",  ParameterType::STRING,  PARAMETER_GROUP_NONE,  "Image",        WidgetType::FILEENTRY,   NULL, NULL, NULL, NULL, NULL, NULL },
+	{ SG_WP_PARAM_SYMBOL,   "",  ParameterType::STRING,  PARAMETER_GROUP_NONE,  "Symbol",       WidgetType::ENTRY,       NULL, NULL, NULL, NULL, NULL, NULL },
 };
 
 
@@ -395,7 +395,7 @@ char * SlavGPS::waypoint_properties_dialog(QWidget * parent, char * default_name
 
 	if (dialog_code == QDialog::Accepted) {
 
-		LayerParamValue param_value;
+		ParameterValue param_value;
 
 		param_value = dialog.get_param_value(SG_WP_PARAM_NAME, &wp_params[SG_WP_PARAM_NAME]);
 		wp->set_name(param_value.s);

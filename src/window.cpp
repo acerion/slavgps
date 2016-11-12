@@ -571,7 +571,7 @@ void Window::menu_layer_new_cb(void) /* Slot. */
 	QAction * qa = (QAction *) QObject::sender();
 	SlavGPS::LayerType layer_type = (SlavGPS::LayerType) qa->data().toInt();
 
-	qDebug() << "Window: clicked \"layer new\" for layer type" << (int) layer_type << Layer::get_interface(layer_type)->fixed_layer_name;
+	qDebug() << "Window: clicked \"layer new\" for layer type" << (int) layer_type << Layer::get_interface(layer_type)->layer_type_string;
 
 	if (this->layers_panel->new_layer(layer_type)) {
 		qDebug() << "II: Window: new layer, call draw_update_cb()" << __FUNCTION__ << __LINE__;
@@ -642,7 +642,7 @@ void Window::draw_layer_cb(sg_uid_t uid) /* Slot. */
 
 void Window::selected_layer(Layer * layer)
 {
-	QString layer_type(QString(layer->get_interface(layer->type)->fixed_layer_name));
+	QString layer_type(QString(layer->get_interface(layer->type)->layer_type_string));
 	qDebug() << "Window: selected layer type" << layer_type;
 
 	bool window_tool_still_active = false;
@@ -1638,7 +1638,7 @@ void Window::show_layer_defaults_cb(void)
 	QAction * qa = (QAction *) QObject::sender();
 	LayerType layer_type = (SlavGPS::LayerType) qa->data().toInt();
 
-	qDebug() << "II: Window: clicked \"layer defaults\" for layer type" << (int) layer_type << Layer::get_interface(layer_type)->fixed_layer_name;
+	qDebug() << "II: Window: clicked \"layer defaults\" for layer type" << (int) layer_type << Layer::get_interface(layer_type)->layer_type_string;
 
 	if (!layer_defaults_show_window(layer_type, this)) {
 		dialog_info("This layer has no configurable properties.", this);

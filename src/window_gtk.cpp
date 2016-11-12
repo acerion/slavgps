@@ -2287,10 +2287,10 @@ static void default_location_cb(GtkAction * a, Window * window)
 	Parameter pref_lat[] = {
 		{ LayerType::NUM_TYPES,
 		  VIKING_PREFERENCES_NAMESPACE "default_latitude",
-		  LayerParamType::DOUBLE,
+		  ParameterType::DOUBLE,
 		  VIK_LAYER_GROUP_NONE,
 		  NULL,
-		  LayerWidgetType::SPINBUTTON,
+		  WidgetType::SPINBUTTON,
 		  NULL,
 		  NULL,
 		  NULL,
@@ -2302,10 +2302,10 @@ static void default_location_cb(GtkAction * a, Window * window)
 	Parameter pref_lon[] = {
 		{ LayerType::NUM_TYPES,
 		  VIKING_PREFERENCES_NAMESPACE "default_longitude",
-		  LayerParamType::DOUBLE,
+		  ParameterType::DOUBLE,
 		  VIK_LAYER_GROUP_NONE,
 		  NULL,
-		  LayerWidgetType::SPINBUTTON,
+		  WidgetType::SPINBUTTON,
 		  NULL,
 		  NULL,
 		  NULL,
@@ -2320,7 +2320,7 @@ static void default_location_cb(GtkAction * a, Window * window)
 	vik_coord_to_latlon(window->viewport->get_center(), &ll);
 
 	/* Apply to preferences */
-	LayerParamData vlp_data;
+	ParameterValue vlp_data;
 	vlp_data.d = ll.lat;
 	a_preferences_run_setparam(vlp_data, pref_lat);
 	vlp_data.d = ll.lon;

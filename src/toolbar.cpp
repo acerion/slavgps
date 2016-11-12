@@ -120,10 +120,12 @@ typedef struct {
 static config_t extra_widget_data;
 
 static Parameter prefs[] = {
-	{ LayerType::NUM_TYPES, TOOLBAR_PARAMS_NAMESPACE "append_to_menu", LayerParamType::BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Append to Menu:"), LayerWidgetType::CHECKBUTTON, NULL,                    NULL, N_("Pack the toolbar to the main menu to save vertical space"), NULL, NULL, NULL },
-	{ LayerType::NUM_TYPES, TOOLBAR_PARAMS_NAMESPACE "icon_size",      LayerParamType::UINT,    VIK_LAYER_GROUP_NONE, N_("Icon Size:"),      LayerWidgetType::COMBOBOX,    params_icon_size,        NULL, NULL, NULL, NULL, NULL },
-	{ LayerType::NUM_TYPES, TOOLBAR_PARAMS_NAMESPACE "icon_style",     LayerParamType::UINT,    VIK_LAYER_GROUP_NONE, N_("Icon Style:"),     LayerWidgetType::COMBOBOX,    params_icon_style,       NULL, NULL, NULL, NULL, NULL },
-	{ LayerType::NUM_TYPES, TOOLBAR_PARAMS_NAMESPACE "NOTSAVED1",      LayerParamType::PTR,     VIK_LAYER_GROUP_NONE, N_("Customize:"),      LayerWidgetType::BUTTON,      (void *) N_("Customize Buttons"), NULL, NULL, NULL, NULL, NULL },
+	{ 0, TOOLBAR_PARAMS_NAMESPACE "append_to_menu", ParameterType::BOOLEAN, VIK_LAYER_GROUP_NONE, N_("Append to Menu:"), WidgetType::CHECKBUTTON, NULL,                    NULL, N_("Pack the toolbar to the main menu to save vertical space"), NULL, NULL, NULL },
+	{ 1, TOOLBAR_PARAMS_NAMESPACE "icon_size",      ParameterType::UINT,    VIK_LAYER_GROUP_NONE, N_("Icon Size:"),      WidgetType::COMBOBOX,    params_icon_size,        NULL, NULL, NULL, NULL, NULL },
+	{ 2, TOOLBAR_PARAMS_NAMESPACE "icon_style",     ParameterType::UINT,    VIK_LAYER_GROUP_NONE, N_("Icon Style:"),     WidgetType::COMBOBOX,    params_icon_style,       NULL, NULL, NULL, NULL, NULL },
+	{ 3, TOOLBAR_PARAMS_NAMESPACE "NOTSAVED1",      ParameterType::PTR,     VIK_LAYER_GROUP_NONE, N_("Customize:"),      WidgetType::BUTTON,      (void *) N_("Customize Buttons"), NULL, NULL, NULL, NULL, NULL },
+
+	{ 4, NULL,                                      ParameterType::PTR,     VIK_LAYER_GROUP_NONE, "",                    WidgetType::NONE,        (void *) N_("Customize Buttons"), NULL, NULL, NULL, NULL, NULL } /* Guard. */
 };
 
 /* Global storage to enable freeing upon closure. */
@@ -159,7 +161,7 @@ void a_toolbar_init(void)
 	a_preferences_register_group(TOOLBAR_PARAMS_GROUP_KEY, _("Toolbar"));
 
 	unsigned int i = 0;
-	LayerParamData tmp;
+	ParameterValue tmp;
 	tmp.b = false;
 	a_preferences_register(&prefs[i++], tmp, TOOLBAR_PARAMS_GROUP_KEY);
 	tmp.u = 0;

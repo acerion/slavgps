@@ -50,17 +50,15 @@ typedef union {
 	struct { int r; int g; int b; int a; } c;
 	std::list<char *> * sl;
 	void * ptr; // For internal usage - don't save this value in a file!
-} LayerParamData;
+} ParameterValue;
 
 
 typedef int16_t param_id_t;
 
 
-typedef LayerParamData LayerParamValue;
 
 
-
-enum class LayerWidgetType {
+enum class WidgetType {
 	CHECKBUTTON = 0,
 	RADIOGROUP,
 	RADIOGROUP_STATIC,
@@ -75,12 +73,13 @@ enum class LayerWidgetType {
 	COMBOBOX,
 	FILELIST,
 	BUTTON,
-	DATETIME
+	DATETIME,
+	NONE
 };
 
 
 /* id is index. */
-enum class LayerParamType {
+enum class ParameterType {
 	DOUBLE = 1,
 	UINT,
 	INT,
@@ -106,20 +105,20 @@ enum class LayerParamType {
    because certain types value are can not be statically allocated
    (i.e. a string value that is dependent on other functions).
    Also easier for colours to be set via a function call rather than a static assignment. */
-typedef LayerParamData (* LayerDefaultFunc) (void);
+typedef ParameterValue (* LayerDefaultFunc) (void);
 
 /* Convert between the value held internally and the value used for display
    e.g. keep the internal value in seconds yet use days in the display. */
-typedef LayerParamData (* LayerConvertFunc) (LayerParamData);
+typedef ParameterValue (* LayerConvertFunc) (ParameterValue);
 
 typedef struct {
-	SlavGPS::LayerType layer_type;
-	int16_t id;
+	//SlavGPS::LayerType layer_type;
+	param_id_t id;
 	const char *name;
-	LayerParamType type;
+	ParameterType type;
 	int16_t group;
 	const char *title;
-	LayerWidgetType widget_type;
+	WidgetType widget_type;
 	void * widget_data;
 	void * extra_widget_data;
 	const char *tooltip;
@@ -156,26 +155,26 @@ typedef enum {
 /* Annoyingly 'C' cannot initialize unions properly. */
 /* It's dependent on the standard used or the compiler support... */
 #if defined __STDC_VERSION__ && __STDC_VERSION__ >= 199901L || __GNUC__
-#define VIK_LPD_BOOLEAN(X)     (LayerParamData) { .b = (X) }
-#define VIK_LPD_INT(X)         (LayerParamData) { .u = (X) }
-#define VIK_LPD_UINT(X)        (LayerParamData) { .i = (X) }
-#define VIK_LPD_DOUBLE(X)      (LayerParamData) { .d = (X) }
+#define VIK_LPD_BOOLEAN(X)     (ParameterValue) { .b = (X) }
+#define VIK_LPD_INT(X)         (ParameterValue) { .u = (X) }
+#define VIK_LPD_UINT(X)        (ParameterValue) { .i = (X) }
+#define VIK_LPD_DOUBLE(X)      (ParameterValue) { .d = (X) }
 #else
-#define VIK_LPD_BOOLEAN(X)     (LayerParamData) { (X) }
-#define VIK_LPD_INT(X)         (LayerParamData) { (X) }
-#define VIK_LPD_UINT(X)        (LayerParamData) { (X) }
-#define VIK_LPD_DOUBLE(X)      (LayerParamData) { (X) }
+#define VIK_LPD_BOOLEAN(X)     (ParameterValue) { (X) }
+#define VIK_LPD_INT(X)         (ParameterValue) { (X) }
+#define VIK_LPD_UINT(X)        (ParameterValue) { (X) }
+#define VIK_LPD_DOUBLE(X)      (ParameterValue) { (X) }
 #endif
 
-#define LAYER_PARAM_COLOR(R, G, B, A)  (LayerParamValue) { .c = { .r = (R), .g = (G), .b = (B), .a = (A) } }
+#define LAYER_PARAM_COLOR(R, G, B, A)  (ParameterValue) { .c = { .r = (R), .g = (G), .b = (B), .a = (A) } }
 
 
-LayerParamData vik_lpd_true_default(void);
-LayerParamData vik_lpd_false_default(void);
-void uibuilder_run_setparam(LayerParamData * paramdatas, uint16_t i, LayerParamData data, Parameter * params);
-LayerParamData uibuilder_run_getparam(LayerParamData * params_defaults, uint16_t i);
+ParameterValue vik_lpd_true_default(void);
+ParameterValue vik_lpd_false_default(void);
+void uibuilder_run_setparam(ParameterValue * paramdatas, uint16_t i, ParameterValue data, Parameter * params);
+ParameterValue uibuilder_run_getparam(ParameterValue * params_defaults, uint16_t i);
 /* Frees data from last (if necessary). */
-void a_uibuilder_free_paramdatas(LayerParamData * paramdatas, Parameter * params, uint16_t params_count);
+void a_uibuilder_free_paramdatas(ParameterValue * paramdatas, Parameter * params, uint16_t params_count);
 
 
 
@@ -202,25 +201,25 @@ typedef struct {
 
 
 
-GtkWidget *a_uibuilder_new_widget(LayerParam *param, LayerParamData data);
-LayerParamData a_uibuilder_widget_get_value(GtkWidget *widget, LayerParam *param);
+GtkWidget *a_uibuilder_new_widget(LayerParam *param, ParameterValue data);
+ParameterValue a_uibuilder_widget_get_value(GtkWidget *widget, LayerParam *param);
 int a_uibuilder_properties_factory(const char *dialog_name,
 				   GtkWindow *parent,
 				   Parameter *params,
 				   uint16_t params_count,
 				   char **groups,
 				   uint8_t groups_count,
-				   bool (*setparam) (void *,uint16_t,LayerParamData,void *,bool), /* AKA LayerFuncSetParam in layer.h. */
+				   bool (*setparam) (void *,uint16_t,ParameterValue,void *,bool), /* AKA LayerFuncSetParam in layer.h. */
 				   void * pass_along1,
 				   void * pass_along2,
-				   LayerParamData (*getparam) (void *,uint16_t,bool),  /* AKA LayerFuncGetParam in layer.h. */
+				   ParameterValue (*getparam) (void *,uint16_t,bool),  /* AKA LayerFuncGetParam in layer.h. */
 				   void * pass_along_getparam,
 				   void (*changeparam) (GtkWidget*, ui_change_values *)); /* AKA LayerFuncChangeParam in layer.h. */
 	/* pass_along1 and pass_along2 are for set_param first and last params. */
 
-LayerParamData *a_uibuilder_run_dialog(const char *dialog_name, GtkWindow *parent, LayerParam *params,
+ParameterValue *a_uibuilder_run_dialog(const char *dialog_name, GtkWindow *parent, LayerParam *params,
 				       uint16_t params_count, char **groups, uint8_t groups_count,
-				       LayerParamData *params_defaults);
+				       ParameterValue *params_defaults);
 
 
 
