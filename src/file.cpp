@@ -24,7 +24,6 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-//#include "viking.h"
 
 #include <cstring>
 #include <cstdlib>
@@ -42,7 +41,6 @@
 
 #if 0
 #include "jpg.h"
-#include "gpx.h"
 #include "geojson.h"
 #include "babel.h"
 #include "vikgpslayer.h"
@@ -52,6 +50,7 @@
 #endif
 
 #include "file.h"
+#include "gpx.h"
 #include "fileutils.h"
 #include "globals.h"
 
@@ -70,11 +69,6 @@ using namespace SlavGPS;
 
 
 
-
-
-
-
-
 #define TEST_BOOLEAN(str) (! ((str)[0] == '\0' || (str)[0] == '0' || (str)[0] == 'n' || (str)[0] == 'N' || (str)[0] == 'f' || (str)[0] == 'F'))
 #define VIK_MAGIC "#VIK"
 #define GPX_MAGIC "<?xm"
@@ -82,7 +76,6 @@ using namespace SlavGPS;
 #define GPX_MAGIC_LEN 4
 
 #define VIKING_FILE_VERSION 1
-
 
 
 
@@ -196,11 +189,11 @@ void SlavGPS::file_write_layer_param(FILE * f, char const * name, ParameterType 
 }
 
 
-#if 0
+
 
 static void write_layer_params_and_data(Layer const * layer, FILE * f)
 {
-	Parameter * params = layer->get_interface()->params;
+	Parameter * params = ((Layer *) layer)->get_interface()->params; /* kamilTODO: remove cast. */
 
 	fprintf(f, "name=%s\n", layer->name ? layer->name : "");
 	if (!layer->visible) {
@@ -209,7 +202,7 @@ static void write_layer_params_and_data(Layer const * layer, FILE * f)
 
 	if (params) {
 		ParameterValue param_value;
-		uint16_t params_count = layer->get_interface()->params_count;
+		uint16_t params_count = ((Layer *) layer)->get_interface()->params_count; /* kamilTODO: remove cast. */
 		for (uint16_t i = 0; i < params_count; i++) {
 			param_value = layer->get_param_value(i, true);
 			file_write_layer_param(f, params[i].name, params[i].type, param_value);
@@ -277,17 +270,19 @@ static void file_write(LayerAggregate * top, FILE * f, Viewport * viewport)
 	aggregates->under = NULL;
 
 	while (aggregates && aggregates->data && ((std::list<Layer const *> *) aggregates->data)->size()) {
-		Layer const * current = ((std::list<Layer const *> *) aggregates->data)->front();
-		fprintf(f, "\n~Layer %s\n", current->get_interface()->fixed_layer_name);
+		Layer * current = (Layer *) ((std::list<Layer const *> *) aggregates->data)->front(); /* kamilTOD: remove cast. */
+		fprintf(f, "\n~Layer %s\n", current->get_interface()->layer_type_string);
 		write_layer_params_and_data(current, f);
 		if (current->type == LayerType::AGGREGATE && !((LayerAggregate *) current)->is_empty()) {
 			push(&aggregates);
 			std::list<Layer const *> * children = ((LayerAggregate *) current)->get_children();
 			aggregates->data = (void *) children;
+#ifdef K
 		} else if (current->type == LayerType::GPS && !((LayerGPS *) current)->is_empty()) {
 			push(&aggregates);
 			std::list<Layer const *> * children = ((LayerGPS *) current)->get_children();
 			aggregates->data = (void *) children;
+#endif
 		} else {
 			((std::list<Layer const *> *) aggregates->data)->pop_front();
 			fprintf(f, "~EndLayer\n\n");
@@ -314,7 +309,6 @@ static void file_write(LayerAggregate * top, FILE * f, Viewport * viewport)
 }
 
 
-#endif
 
 
 static void string_list_delete(void * key, void * l, void * user_data)
@@ -673,7 +667,8 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 	return successful_read;
 }
 
-#ifdef K
+
+
 
 /*
 read thru file
@@ -712,7 +707,6 @@ static void xfclose(FILE * f)
 }
 
 
-#endif
 
 
 /*
@@ -730,8 +724,6 @@ bool SlavGPS::check_file_magic_vik(char const * filename)
 }
 
 
-
-#ifdef K
 
 
 /**
@@ -774,7 +766,6 @@ char * SlavGPS::append_file_ext(char const * filename, VikFileType_t type)
 }
 
 
-#endif
 
 
 VikLoadType_t SlavGPS::a_file_load(LayerAggregate * top, Viewport * viewport, char const * filename_or_uri)
@@ -834,11 +825,9 @@ VikLoadType_t SlavGPS::a_file_load(LayerAggregate * top, Viewport * viewport, ch
 		/* NB use a extension check first, as a GPX file header may have a Byte Order Mark (BOM) in it
 		   - which currently confuses our check_magic function. */
 		else if (a_file_check_ext(filename, ".gpx") || check_magic(f, GPX_MAGIC, GPX_MAGIC_LEN)) {
-#ifdef K
 			if (! (success = a_gpx_read_file(layer, f))) {
 				load_answer = LOAD_TYPE_GPX_FAILURE;
 			}
-#endif
 		} else {
 #ifdef K
 			/* Try final supported file type. */
@@ -866,7 +855,6 @@ VikLoadType_t SlavGPS::a_file_load(LayerAggregate * top, Viewport * viewport, ch
 }
 
 
-#ifdef K
 
 
 bool SlavGPS::a_file_save(LayerAggregate * top, Viewport * viewport, char const * filename)
@@ -910,7 +898,6 @@ bool SlavGPS::a_file_save(LayerAggregate * top, Viewport * viewport, char const 
 }
 
 
-#endif
 
 
 /* Example:
@@ -940,7 +927,6 @@ bool SlavGPS::a_file_check_ext(char const * filename, char const * fileext)
 }
 
 
-#ifdef K
 
 
 /**
@@ -972,29 +958,41 @@ bool SlavGPS::a_file_export(LayerTRW * trw, char const * filename, VikFileType_t
 		} else {
 			switch (file_type) {
 			case FILE_TYPE_GPSMAPPER:
+#ifdef K
 				gpsmapper_write_file(f, trw);
+#endif
 				break;
 			case FILE_TYPE_GPX:
 				a_gpx_write_file(trw, f, &options);
 				break;
 			case FILE_TYPE_GPSPOINT:
+#ifdef K
 				a_gpspoint_write_file(trw, f);
+#endif
 				break;
 			case FILE_TYPE_GEOJSON:
+#ifdef K
 				result = geojson_write_file(trw, f);
+#endif
 				break;
 			case FILE_TYPE_KML:
 				fclose(f);
 				switch (a_vik_get_kml_export_units()) {
 				case VIK_KML_EXPORT_UNITS_STATUTE:
+#ifdef K
 					return a_babel_convert_to(trw, NULL, "-o kml", filename, NULL, NULL);
+#endif
 					break;
 				case VIK_KML_EXPORT_UNITS_NAUTICAL:
+#ifdef K
 					return a_babel_convert_to(trw, NULL, "-o kml,units=n", filename, NULL, NULL);
+#endif
 					break;
 				default:
 					/* VIK_KML_EXPORT_UNITS_METRIC: */
+#ifdef K
 					return a_babel_convert_to(trw, NULL, "-o kml,units=m", filename, NULL, NULL);
+#endif
 					break;
 				}
 				break;
@@ -1011,17 +1009,18 @@ bool SlavGPS::a_file_export(LayerTRW * trw, char const * filename, VikFileType_t
 
 
 
-bool SlavGPS::a_file_export_babel(LayerTRW * trw, char const * filename, char const * format,
-				  bool tracks, bool routes, bool waypoints)
+bool SlavGPS::a_file_export_babel(LayerTRW * trw, char const * filename, char const * format, bool tracks, bool routes, bool waypoints)
 {
 	char * args = g_strdup_printf("%s %s %s -o %s",
 				      tracks ? "-t" : "",
 				      routes ? "-r" : "",
 				      waypoints ? "-w" : "",
 				      format);
+#ifdef K
 	bool result = a_babel_convert_to(trw, NULL, args, filename, NULL, NULL);
 	free(args);
 	return result;
+#endif
 }
 
 
@@ -1055,11 +1054,6 @@ char * SlavGPS::file_realpath_dup(char const * path)
 
 	return g_strdup(path);
 }
-
-
-
-
-#endif
 
 
 

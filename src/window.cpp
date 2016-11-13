@@ -359,84 +359,74 @@ void Window::create_actions(void)
 
 
 	/* "View" menu. */
-	QAction * qa_view_full_screen = NULL;
-
-	QAction * qa_view_show_draw_scale = NULL;
-	QAction * qa_view_show_draw_centermark = NULL;
-	QAction * qa_view_show_draw_highlight = NULL;
-	QAction * qa_view_show_side_panel = NULL;
-	QAction * qa_view_show_statusbar = NULL;
-	QAction * qa_view_show_toolbar = NULL;
-	QAction * qa_view_show_main_menu = NULL;
-
 	QAction * qa_view_zoom_in = NULL;
 	QAction * qa_view_zoom_out = NULL;
 	QAction * qa_view_zoom_to = NULL;
 	{
-		qa_view_full_screen = new QAction("&Full Screen", this);
-		qa_view_full_screen->setShortcut(Qt::Key_F11);
-		qa_view_full_screen->setCheckable(true);
-		qa_view_full_screen->setChecked(this->view_full_screen);
-		connect(qa_view_full_screen, SIGNAL(triggered(bool)), this, SLOT(view_full_screen_cb(bool)));
+		this->qa_view_full_screen = new QAction("&Full Screen", this);
+		this->qa_view_full_screen->setShortcut(Qt::Key_F11);
+		this->qa_view_full_screen->setCheckable(true);
+		this->qa_view_full_screen->setChecked(this->view_full_screen);
+		connect(this->qa_view_full_screen, SIGNAL(triggered(bool)), this, SLOT(view_full_screen_cb(bool)));
 
-		this->menu_view->addAction(qa_view_full_screen);
+		this->menu_view->addAction(this->qa_view_full_screen);
 
 
 		QMenu * show_submenu = new QMenu("&Show", this);
 		this->menu_view->addMenu(show_submenu);
 
-		qa_view_show_draw_scale = new QAction("Show &Scale", this);
-		qa_view_show_draw_scale->setShortcut(Qt::SHIFT + Qt::Key_F5);
-		qa_view_show_draw_scale->setCheckable(true);
-		qa_view_show_draw_scale->setChecked(this->draw_scale);
-		connect(qa_view_show_draw_scale, SIGNAL(triggered(bool)), this, SLOT(draw_scale_cb(bool)));
+		this->qa_view_show_draw_scale = new QAction("Show &Scale", this);
+		this->qa_view_show_draw_scale->setShortcut(Qt::SHIFT + Qt::Key_F5);
+		this->qa_view_show_draw_scale->setCheckable(true);
+		this->qa_view_show_draw_scale->setChecked(this->draw_scale);
+		connect(this->qa_view_show_draw_scale, SIGNAL(triggered(bool)), this, SLOT(draw_scale_cb(bool)));
 
-		qa_view_show_draw_centermark = new QAction("Show &Center Mark", this);
-		qa_view_show_draw_centermark->setShortcut(Qt::Key_F6);
-		qa_view_show_draw_centermark->setCheckable(true);
-		qa_view_show_draw_centermark->setChecked(this->draw_centermark);
-		connect(qa_view_show_draw_centermark, SIGNAL(triggered(bool)), this, SLOT(draw_centermark_cb(bool)));
+		this->qa_view_show_draw_centermark = new QAction("Show &Center Mark", this);
+		this->qa_view_show_draw_centermark->setShortcut(Qt::Key_F6);
+		this->qa_view_show_draw_centermark->setCheckable(true);
+		this->qa_view_show_draw_centermark->setChecked(this->draw_centermark);
+		connect(this->qa_view_show_draw_centermark, SIGNAL(triggered(bool)), this, SLOT(draw_centermark_cb(bool)));
 
-		qa_view_show_draw_highlight = new QAction("Show &Highlight", this);
-		qa_view_show_draw_highlight->setShortcut(Qt::Key_F7);
-		qa_view_show_draw_highlight->setCheckable(true);
-		qa_view_show_draw_highlight->setChecked(this->draw_highlight);
-		connect(qa_view_show_draw_highlight, SIGNAL(triggered(bool)), this, SLOT(draw_highlight_cb(bool)));
+		this->qa_view_show_draw_highlight = new QAction("Show &Highlight", this);
+		this->qa_view_show_draw_highlight->setShortcut(Qt::Key_F7);
+		this->qa_view_show_draw_highlight->setCheckable(true);
+		this->qa_view_show_draw_highlight->setChecked(this->draw_highlight);
+		connect(this->qa_view_show_draw_highlight, SIGNAL(triggered(bool)), this, SLOT(draw_highlight_cb(bool)));
 
-		qa_view_show_side_panel = this->panel_dock->toggleViewAction(); /* Existing action! */
-		qa_view_show_side_panel->setText("Show Side &Panel");
-		qa_view_show_side_panel->setShortcut(Qt::Key_F9);
-		qa_view_show_side_panel->setCheckable(true);
-		qa_view_show_side_panel->setChecked(this->view_side_panel);
-		connect(qa_view_show_side_panel, SIGNAL(triggered(bool)), this, SLOT(view_side_panel_cb(bool)));
+		this->qa_view_show_side_panel = this->panel_dock->toggleViewAction(); /* Existing action! */
+		this->qa_view_show_side_panel->setText("Show Side &Panel");
+		this->qa_view_show_side_panel->setShortcut(Qt::Key_F9);
+		this->qa_view_show_side_panel->setCheckable(true);
+		this->qa_view_show_side_panel->setChecked(this->view_side_panel);
+		connect(this->qa_view_show_side_panel, SIGNAL(triggered(bool)), this, SLOT(view_side_panel_cb(bool)));
 
-		qa_view_show_statusbar = new QAction("Show Status&bar", this);
-		qa_view_show_statusbar->setShortcut(Qt::Key_F12);
-		qa_view_show_statusbar->setCheckable(true);
-		qa_view_show_statusbar->setChecked(this->view_statusbar);
-		connect(qa_view_show_statusbar, SIGNAL(triggered(bool)), this, SLOT(view_statusbar_cb(bool)));
+		this->qa_view_show_statusbar = new QAction("Show Status&bar", this);
+		this->qa_view_show_statusbar->setShortcut(Qt::Key_F12);
+		this->qa_view_show_statusbar->setCheckable(true);
+		this->qa_view_show_statusbar->setChecked(this->view_statusbar);
+		connect(this->qa_view_show_statusbar, SIGNAL(triggered(bool)), this, SLOT(view_statusbar_cb(bool)));
 
-		qa_view_show_toolbar = this->toolbar->toggleViewAction(); /* Existing action! */
-		qa_view_show_toolbar->setText("Show &Toolbar");
-		qa_view_show_toolbar->setShortcut(Qt::Key_F3);
-		qa_view_show_toolbar->setCheckable(true);
-		qa_view_show_toolbar->setChecked(this->view_toolbar);
+		this->qa_view_show_toolbar = this->toolbar->toggleViewAction(); /* Existing action! */
+		this->qa_view_show_toolbar->setText("Show &Toolbar");
+		this->qa_view_show_toolbar->setShortcut(Qt::Key_F3);
+		this->qa_view_show_toolbar->setCheckable(true);
+		this->qa_view_show_toolbar->setChecked(this->view_toolbar);
 		/* No signal connection needed, we have toggleViewAction(). */
 
-		qa_view_show_main_menu = new QAction("Show &Menu", this);
-		qa_view_show_main_menu->setShortcut(Qt::Key_F4);
-		qa_view_show_main_menu->setCheckable(true);
-		qa_view_show_main_menu->setChecked(this->view_main_menu);
+		this->qa_view_show_main_menu = new QAction("Show &Menu", this);
+		this->qa_view_show_main_menu->setShortcut(Qt::Key_F4);
+		this->qa_view_show_main_menu->setCheckable(true);
+		this->qa_view_show_main_menu->setChecked(this->view_main_menu);
 		connect(qa_view_show_main_menu, SIGNAL(triggered(bool)), this, SLOT(view_main_menu_cb(bool)));
 
 
-		show_submenu->addAction(qa_view_show_draw_scale);
-		show_submenu->addAction(qa_view_show_draw_centermark);
-		show_submenu->addAction(qa_view_show_draw_highlight);
-		show_submenu->addAction(qa_view_show_side_panel);
-		show_submenu->addAction(qa_view_show_statusbar);
-		show_submenu->addAction(qa_view_show_toolbar);
-		show_submenu->addAction(qa_view_show_main_menu);
+		show_submenu->addAction(this->qa_view_show_draw_scale);
+		show_submenu->addAction(this->qa_view_show_draw_centermark);
+		show_submenu->addAction(this->qa_view_show_draw_highlight);
+		show_submenu->addAction(this->qa_view_show_side_panel);
+		show_submenu->addAction(this->qa_view_show_statusbar);
+		show_submenu->addAction(this->qa_view_show_toolbar);
+		show_submenu->addAction(this->qa_view_show_main_menu);
 
 
 		this->menu_view->addSeparator();
@@ -1777,19 +1767,19 @@ void Window::open_file_cb(void)
 
 
 
-void Window::open_file(char const * filename, bool change_filename)
+void Window::open_file(char const * new_filename, bool change_filename)
 {
 	this->set_busy_cursor();
 
-	// Enable the *new* filename to be accessible by the Layers codez
-	char *original_filename = g_strdup(this->filename);
+	/* Enable the *new* filename to be accessible by the Layers code. */
+	char * original_filename = this->filename ? strdup(this->filename) : NULL;
 	free(this->filename);
-	this->filename = g_strdup(filename);
+	this->filename = strdup(new_filename);
 	bool success = false;
 	bool restore_original_filename = false;
 
 	LayerAggregate * agg = this->layers_panel->get_top_layer();
-	this->loaded_type = a_file_load(agg, this->viewport, filename);
+	this->loaded_type = a_file_load(agg, this->viewport, new_filename);
 	switch (this->loaded_type) {
 	case LOAD_TYPE_READ_FAILURE:
 		dialog_error("The file you requested could not be opened.", this);
@@ -1798,66 +1788,62 @@ void Window::open_file(char const * filename, bool change_filename)
 		dialog_error("GPSBabel is required to load files of this type or GPSBabel encountered problems.", this);
 		break;
 	case LOAD_TYPE_GPX_FAILURE:
-		dialog_error(QString("Unable to load malformed GPX file %1").arg(QString(filename)), this);
+		dialog_error(QString("Unable to load malformed GPX file %1").arg(QString(new_filename)), this);
 		break;
 	case LOAD_TYPE_UNSUPPORTED_FAILURE:
-		dialog_error(QString("Unsupported file type for %1").arg(QString(filename)), this);
+		dialog_error(QString("Unsupported file type for %1").arg(QString(new_filename)), this);
 		break;
 	case LOAD_TYPE_VIK_FAILURE_NON_FATAL:
 		{
 			/* Since we can process .vik files with issues just show a warning in the status bar.
 			   Not that a user can do much about it... or tells them what this issue is yet... */
-			this->get_statusbar()->set_message(StatusBarField::INFO, QString("WARNING: issues encountered loading %1").arg(file_basename(filename)));
+			this->get_statusbar()->set_message(StatusBarField::INFO, QString("WARNING: issues encountered loading %1").arg(file_basename(new_filename)));
 		}
-		// No break, carry on to show any data
+		/* No break, carry on to show any data. */
 	case LOAD_TYPE_VIK_SUCCESS:
 		{
-#ifdef K
-			restore_original_filename = true; // NB Will actually get inverted by the 'success' component below
-			GtkWidget *mode_button;
+
+			restore_original_filename = true; /* Will actually get inverted by the 'success' component below. */
 			/* Update UI */
 			if (change_filename) {
-				this->set_filename(filename);
+				this->set_filename(new_filename);
 			}
-			mode_button = this->get_drawmode_button(this->viewport->get_drawmode());
+#ifdef K
+			GtkWidget * mode_button = this->get_drawmode_button(this->viewport->get_drawmode());
 			this->only_updating_coord_mode_ui = true; /* if we don't set this, it will change the coord to UTM if we click Lat/Lon. I don't know why. */
 			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mode_button), true);
 			this->only_updating_coord_mode_ui = false;
+#endif
 
 			this->layers_panel->change_coord_mode(this->viewport->get_coord_mode());
 
-			// Slightly long winded methods to align loaded viewport settings with the UI
-			//  Since the rewrite for toolbar + menu actions
-			//  there no longer exists a simple way to directly change the UI to a value for toggle settings
-			//  it only supports toggling the existing setting (otherwise get infinite loops in trying to align tb+menu elements)
-			// Thus get state, compare them, if different then invert viewport setting and (re)sync the setting (via toggling)
+			/* Slightly long winded methods to align loaded viewport settings with the UI. */
 			bool vp_state_scale = this->viewport->get_draw_scale();
-			bool ui_state_scale = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(get_show_widget_by_name(this, "ShowScale")));
+			bool ui_state_scale = this->qa_view_show_draw_scale->isChecked();
 			if (vp_state_scale != ui_state_scale) {
 				this->viewport->set_draw_scale(!vp_state_scale);
-				this->toggle_draw_scale(NULL);
+				this->draw_scale_cb(!vp_state_scale);
 			}
 			bool vp_state_centermark = this->viewport->get_draw_centermark();
-			bool ui_state_centermark = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(get_show_widget_by_name(this, "ShowCenterMark")));
+			bool ui_state_centermark = this->qa_view_show_draw_centermark->isChecked();
 			if (vp_state_centermark != ui_state_centermark) {
 				this->viewport->set_draw_centermark(!vp_state_centermark);
-				this->toggle_draw_centermark(NULL);
+				this->draw_centermark_cb(!vp_state_centermark);
 			}
 			bool vp_state_highlight = this->viewport->get_draw_highlight();
-			bool ui_state_highlight = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(get_show_widget_by_name(this, "ShowHighlight")));
+			bool ui_state_highlight = this->qa_view_show_draw_highlight->isChecked();
 			if (vp_state_highlight != ui_state_highlight) {
 				this->viewport->set_draw_highlight(!vp_state_highlight);
-				this->toggle_draw_highlight(NULL);
+				this->draw_highlight_cb(!vp_state_highlight);
 			}
-#endif
 		}
-		// NB No break, carry on to redraw
+		/* No break, carry on to redraw. */
 		//case LOAD_TYPE_OTHER_SUCCESS:
 	default:
 		success = true;
-		// When LOAD_TYPE_OTHER_SUCCESS *only*, this will maintain the existing Viking project
+		/* When LOAD_TYPE_OTHER_SUCCESS *only*, this will maintain the existing Viking project. */
 		restore_original_filename = ! restore_original_filename;
-		this->update_recently_used_document(filename);
+		this->update_recently_used_document(new_filename);
 		this->draw_update();
 		break;
 	}
@@ -1945,20 +1931,14 @@ void Window::set_filename(char const * filename)
 {
 	if (this->filename) {
 		free(this->filename);
-	}
-	if (filename == NULL) {
 		this->filename = NULL;
-	} else {
-		this->filename = g_strdup(filename);
+	}
+	if (filename) {
+		this->filename = strdup(filename);
 	}
 
 	/* Refresh window's title */
-	char const * file = this->get_filename();
-#ifdef K
-	char * title = g_strdup_printf("%s - Viking", file);
-	gtk_window_set_title(this->get_toolkit_window(), title);
-	free(title);
-#endif
+	this->setWindowTitle(QString("%1 - SlavGPS").arg(this->get_filename()));
 }
 
 
@@ -1997,4 +1977,82 @@ GtkWidget * Window::get_drawmode_button(VikViewportDrawMode mode)
 #endif
 	assert(mode_button);
 	return mode_button;
+}
+
+
+
+
+/**
+ * Steps to be taken once initial loading has completed.
+ */
+void Window::finish_new(void)
+{
+	/* Don't add a map if we've loaded a Viking file already. */
+	if (this->filename) {
+		return;
+	}
+
+	if (a_vik_get_startup_method() == VIK_STARTUP_METHOD_SPECIFIED_FILE) {
+		this->open_file(a_vik_get_startup_file(), true);
+		if (this->filename) {
+			return;
+		}
+	}
+
+	/* Maybe add a default map layer. */
+	if (a_vik_get_add_default_map_layer()) {
+#ifdef K
+		LayerMaps * layer = new LayerMaps(this->viewport);
+		layer->rename(_("Default Map"));
+
+		this->layers_panel->get_top_layer()->add_layer(layer, true);
+#endif
+
+		this->draw_update();
+	}
+
+	/* If not loaded any file, maybe try the location lookup. */
+	if (this->loaded_type == LOAD_TYPE_READ_FAILURE) {
+		if (a_vik_get_startup_method() == VIK_STARTUP_METHOD_AUTO_LOCATION) {
+
+			this->status_bar->set_message(StatusBarField::INFO, _("Trying to determine location..."));
+#ifdef K
+			a_background_thread(BACKGROUND_POOL_REMOTE,
+					    _("Determining location"),
+					    (vik_thr_func) determine_location_thread,
+					    this,
+					    NULL,
+					    NULL,
+					    1);
+#endif
+		}
+	}
+}
+
+
+
+
+void Window::open_window(void)
+{
+	GSList *files;
+
+	bool change_fn = (g_slist_length(files) == 1); /* Only change fn if one file. */
+	GSList *cur_file = files;
+	while (cur_file) {
+		/* Only open a new window if a viking file. */
+		char *file_name = (char *) cur_file->data;
+		if (this->filename && check_file_magic_vik(file_name)) {
+#ifdef K
+			Window * new_window = Window::new_window();
+			if (new_window) {
+				new_window->open_file(file_name, true);
+			}
+#endif
+		} else {
+			this->open_file(file_name, change_fn);
+		}
+		free(file_name);
+		cur_file = g_slist_next(cur_file);
+	}
+	g_slist_free(files);
 }

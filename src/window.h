@@ -110,6 +110,8 @@ namespace SlavGPS {
 		/* Return indicates if a redraw is necessary. */
 		bool clear_highlight();
 
+		void finish_new(void);
+
 
 		static void set_redraw_trigger(Layer * layer);
 
@@ -179,6 +181,7 @@ namespace SlavGPS {
 		char const * get_filename(void);
 		GtkWidget * get_drawmode_button(VikViewportDrawMode mode);
 		void update_recently_used_document(char const * filename);
+		void open_window(void);
 
 
 		bool pan_move_flag = false;
@@ -235,6 +238,16 @@ namespace SlavGPS {
 		bool view_main_menu = true;
 
 		bool only_updating_coord_mode_ui = false; /* Hack for a bug in GTK. */
+
+		QAction * qa_view_full_screen = NULL;
+
+		QAction * qa_view_show_draw_scale = NULL;
+		QAction * qa_view_show_draw_centermark = NULL;
+		QAction * qa_view_show_draw_highlight = NULL;
+		QAction * qa_view_show_side_panel = NULL;
+		QAction * qa_view_show_statusbar = NULL;
+		QAction * qa_view_show_toolbar = NULL;
+		QAction * qa_view_show_main_menu = NULL;
 	};
 
 

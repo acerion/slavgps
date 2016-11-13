@@ -29,10 +29,9 @@
 #include <cstdint>
 
 #include "layer_aggregate.h"
-#if 0
 #include "layer_trw.h"
 #include "viewport.h"
-#endif
+
 
 
 
@@ -66,26 +65,17 @@ namespace SlavGPS {
 	/* Function to determine if a filename is a 'viking' type file. */
 	bool check_file_magic_vik(char const * filename);
 
-#ifdef K
 	char * append_file_ext(char const * filename, VikFileType_t type);
-#endif
-
 	VikLoadType_t a_file_load(LayerAggregate * top, Viewport * viewport, char const * filename);
-#ifdef K
 	bool a_file_save(LayerAggregate * top, Viewport * viewport, char const * filename);
 	/* Only need to define Track if the file type is FILE_TYPE_GPX_TRACK. */
 	bool a_file_export(LayerTRW * trw, char const * filename, VikFileType_t file_type, Track * trk, bool write_hidden);
 	bool a_file_export_babel(LayerTRW * trw, char const * filename, char const * format,
 				 bool tracks, bool routes, bool waypoints);
 
-#endif
 	void file_write_layer_param(FILE * f, char const * name, ParameterType type, ParameterValue data);
-#if 0
-
 	char * file_realpath(char const * path, char * real);
-
 	char * file_realpath_dup(char const * path);
-#endif
 	char const * file_GetRelativeFilename(char * currentDirectory, char * absoluteFilename);
 
 
