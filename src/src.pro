@@ -48,6 +48,7 @@ SOURCES += main.cpp \
     misc/kdtree.c \
     file.cpp \
     dir.cpp \
+    gpx.cpp \
     background.cpp \
     download.cpp \
     curl_download.cpp \
@@ -81,7 +82,6 @@ HEADERS += window.h \
     waypoint.h \
     waypoint_properties.h \
     waypoint_list.h \
-    layer_trw.h \
     tree_view.h \
     uibuilder.h \
     uibuilder_qt.h \
@@ -99,6 +99,7 @@ HEADERS += window.h \
     misc/kdtree.h \
     file.h \
     dir.h \
+    gpx.h \
     background.h \
     download.h \
     curl_download.h \
@@ -118,4 +119,4 @@ DEFINES += SLAVGPS_QT HAVE_CONFIG_H
 
 
 QMAKE_CXXFLAGS += -std=c++11 -Wno-unused -g -O0
-QMAKE_LFLAGS += -lm -lbz2 -lmagic -lcurl
+QMAKE_LFLAGS += -lm -lbz2 -lmagic -lcurl -lexpat
