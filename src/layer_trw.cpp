@@ -1631,7 +1631,7 @@ GdkPixbuf* get_wp_sym_small(char *symbol)
 
 
 
-void LayerTRW::realize_track(std::unordered_map<sg_uid_t, Track *> & tracks, trw_data4_t * data, SublayerType sublayer_type)
+void LayerTRW::realize_tracks(std::unordered_map<sg_uid_t, Track *> & tracks, Layer * parent_layer, TreeIndex * a_parent_index, TreeView * a_tree_view, SublayerType sublayer_type)
 {
 	for (auto i = tracks.begin(); i != tracks.end(); i++) {
 		Track * trk = i->second;
@@ -1658,9 +1658,7 @@ void LayerTRW::realize_track(std::unordered_map<sg_uid_t, Track *> & tracks, trw
 			timestamp = tpt->timestamp;
 		}
 
-		Layer * parent = data->layer;
-		TreeView * tree_view = data->tree_view;
-		data->index = tree_view->add_sublayer(i->first, sublayer_type, parent, data->parent_index, trk->name, NULL, true, timestamp);
+		TreeIndex * new_index = a_tree_view->add_sublayer(i->first, sublayer_type, parent_layer, a_parent_index, trk->name, NULL, true, timestamp);
 
 #ifdef K
 		if (pixbuf) {
@@ -1669,13 +1667,13 @@ void LayerTRW::realize_track(std::unordered_map<sg_uid_t, Track *> & tracks, trw
 #endif
 
 		if (trk->is_route) {
-			this->routes_iters.insert({{ i->first, data->index }});
+			this->routes_iters.insert({{ i->first, new_index }});
 		} else {
-			this->tracks_iters.insert({{ i->first, data->index }});
+			this->tracks_iters.insert({{ i->first, new_index }});
 		}
 
 		if (!trk->visible) {
-			data->tree_view->set_visibility(data->index, false);
+			a_tree_view->set_visibility(new_index, false);
 		}
 	}
 }
@@ -1683,7 +1681,7 @@ void LayerTRW::realize_track(std::unordered_map<sg_uid_t, Track *> & tracks, trw
 
 
 
-void LayerTRW::realize_waypoints(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, trw_data4_t * data, SublayerType sublayer_type)
+void LayerTRW::realize_waypoints(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, Layer * parent_layer, TreeIndex * a_parent_index, TreeView * a_tree_view, SublayerType sublayer_type)
 {
 	for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
 		time_t timestamp = 0;
@@ -1691,12 +1689,12 @@ void LayerTRW::realize_waypoints(std::unordered_map<sg_uid_t, Waypoint *> & wayp
 			timestamp = i->second->timestamp;
 		}
 
-		data->index = data->tree_view->add_sublayer(i->first, sublayer_type, data->layer, data->parent_index, i->second->name, NULL /* i->second->symbol */, true, timestamp);
+		TreeIndex * new_index = a_tree_view->add_sublayer(i->first, sublayer_type, parent_layer, a_parent_index, i->second->name, NULL /* i->second->symbol */, true, timestamp);
 
-		this->waypoints_iters.insert({{ i->first, data->index }});
+		this->waypoints_iters.insert({{ i->first, new_index }});
 
 		if (!i->second->visible) {
-			data->tree_view->set_visibility(data->index, false);
+			a_tree_view->set_visibility(new_index, false);
 		}
 	}
 }
@@ -1733,36 +1731,28 @@ void LayerTRW::add_routes_node(void)
 
 void LayerTRW::realize(TreeView * tree_view_, TreeIndex * layer_index)
 {
-
-	trw_data4_t pass_along;
-	pass_along.parent_index = this->tracks_node;
-	pass_along.index = NULL;
-	pass_along.layer = this;
-	pass_along.tree_view = tree_view_;
-
 	this->tree_view = tree_view_;
 	this->index = layer_index;
 	this->realized = true;
 
 	if (this->tracks.size() > 0) {
 		this->add_tracks_node();
-		this->realize_track(this->tracks, &pass_along, SublayerType::TRACK);
+		/* Notice that parent layer is "this", but index of direct parent node is index of "tracks" node. */
+		this->realize_tracks(this->tracks, this, this->tracks_node, tree_view_, SublayerType::TRACK);
 		this->tree_view->set_visibility(this->tracks_node, this->tracks_visible);
 	}
 
 	if (this->routes.size() > 0) {
-		pass_along.parent_index = this->routes_node;
-
 		this->add_routes_node();
-		this->realize_track(this->routes, &pass_along, SublayerType::ROUTE);
+		/* Notice that parent layer is "this", but index of direct parent node is index of "routes" node. */
+		this->realize_tracks(this->routes, this, this->routes_node, tree_view_, SublayerType::ROUTE);
 		this->tree_view->set_visibility(this->routes_node, this->routes_visible);
 	}
 
 	if (this->waypoints.size() > 0) {
-		pass_along.parent_index = this->waypoints_node;
-
 		this->add_waypoints_node();
-		this->realize_waypoints(this->waypoints, &pass_along, SublayerType::WAYPOINT);
+		/* Notice that parent layer is "this", but index of direct parent node is index of "waypoints" node. */
+		this->realize_waypoints(this->waypoints, this, this->waypoints_node, tree_view_, SublayerType::WAYPOINT);
 		this->tree_view->set_visibility(this->waypoints_node, this->waypoints_visible);
 	}
 

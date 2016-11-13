@@ -220,8 +220,8 @@ namespace SlavGPS {
 		void draw_highlight_items(std::unordered_map<sg_uid_t, Track *> * tracks, std::unordered_map<sg_uid_t, Waypoint *> * waypoints, Viewport * viewport);
 
 
-		void realize_track(std::unordered_map<sg_uid_t, Track *> & tracks, trw_data4_t * pass_along, SublayerType sublayer_type);
-		void realize_waypoints(std::unordered_map<sg_uid_t, Waypoint *> & data, trw_data4_t * pass_along, SublayerType sublayer_type);
+		void realize_tracks(std::unordered_map<sg_uid_t, Track *> & tracks, Layer * parent_layer, TreeIndex * a_parent_index, TreeView * a_tree_view, SublayerType sublayer_type);
+		void realize_waypoints(std::unordered_map<sg_uid_t, Waypoint *> & data, Layer * parent_layer, TreeIndex * a_parent_index, TreeView * a_tree_view, SublayerType sublayer_type);
 
 
 		static void find_maxmin_in_track(const Track * trk, struct LatLon maxmin[2]);
