@@ -70,6 +70,7 @@ static bool spawn_command_line_async(const char * cmd,
 
 void open_url(GtkWindow * parent, const char * url)
 {
+#ifdef K
 #ifdef WINDOWS
 	ShellExecute(NULL, NULL, (char *) url, NULL, ".\\", 0);
 #else
@@ -80,6 +81,7 @@ void open_url(GtkWindow * parent, const char * url)
 		g_error_free(error);
 	}
 #endif
+#endif
 }
 
 
@@ -87,6 +89,7 @@ void open_url(GtkWindow * parent, const char * url)
 
 void new_email(GtkWindow * parent, const char * address)
 {
+#ifdef K
 	char * uri = g_strdup_printf("mailto:%s", address);
 	GError *error = NULL;
 	gtk_show_uri(gtk_widget_get_screen(GTK_WIDGET(parent)), uri, GDK_CURRENT_TIME, &error);
@@ -104,6 +107,7 @@ void new_email(GtkWindow * parent, const char * address)
 	*/
 	free(uri);
 	uri = NULL;
+#endif
 }
 
 
@@ -118,6 +122,7 @@ void new_email(GtkWindow * parent, const char * address)
 */
 GtkWidget * ui_button_new_with_image(const char * stock_id, const char * text)
 {
+#ifdef K
 	GtkWidget *image, *button;
 
 	button = gtk_button_new_with_mnemonic(text);
@@ -126,6 +131,7 @@ GtkWidget * ui_button_new_with_image(const char * stock_id, const char * text)
 	gtk_button_set_image(GTK_BUTTON(button), image);
 	/* Note: image is shown by gtk. */
 	return button;
+#endif
 }
 
 
@@ -140,6 +146,7 @@ GtkWidget * ui_button_new_with_image(const char * stock_id, const char * text)
 */
 int ui_get_gtk_settings_integer(const char * property_name, int default_value)
 {
+#ifdef K
 	if (g_object_class_find_property(G_OBJECT_GET_CLASS(G_OBJECT(
 		gtk_settings_get_default())), property_name)) {
 
@@ -149,6 +156,7 @@ int ui_get_gtk_settings_integer(const char * property_name, int default_value)
 	} else {
 		return default_value;
 	}
+#endif
 }
 
 
@@ -166,6 +174,7 @@ int ui_get_gtk_settings_integer(const char * property_name, int default_value)
 */
 GtkWidget * ui_lookup_widget(GtkWidget * widget, const char * widget_name)
 {
+#ifdef K
 	GtkWidget *parent, *found_widget;
 
 	if (!widget) {
@@ -197,6 +206,7 @@ GtkWidget * ui_lookup_widget(GtkWidget * widget, const char * widget_name)
 		fprintf(stderr, "WARNING: Widget not found: %s\n", widget_name);
 	}
 	return found_widget;
+#endif
 }
 
 
@@ -207,11 +217,11 @@ GtkWidget * ui_lookup_widget(GtkWidget * widget, const char * widget_name)
  * @param text String to display - maybe NULL
  * @return The label widget
  */
-GtkWidget * ui_label_new_selectable(const char * text)
+QLabel * ui_label_new_selectable(QString const & text, QWidget * parent)
 {
-	GtkWidget * widget = gtk_label_new(text);
-	gtk_label_set_selectable (GTK_LABEL(widget), true);
-	return widget;
+	QLabel * label = new QLabel(text, parent);
+	label->setTextInteractionFlags(Qt::TextSelectableByMouse);
+	return label;
 }
 
 
@@ -222,6 +232,7 @@ GtkWidget * ui_label_new_selectable(const char * text)
  */
 GdkPixbuf * ui_pixbuf_set_alpha(GdkPixbuf * pixbuf, uint8_t alpha)
 {
+#ifdef K
 	unsigned char *pixels;
 	int width, height, iii, jjj;
 
@@ -249,6 +260,7 @@ GdkPixbuf * ui_pixbuf_set_alpha(GdkPixbuf * pixbuf, uint8_t alpha)
 		}
 	}
 	return pixbuf;
+#endif
 }
 
 
@@ -259,6 +271,7 @@ GdkPixbuf * ui_pixbuf_set_alpha(GdkPixbuf * pixbuf, uint8_t alpha)
  */
 GdkPixbuf * ui_pixbuf_scale_alpha(GdkPixbuf * pixbuf, uint8_t alpha)
 {
+#ifdef K
 	unsigned char *pixels;
 	int width, height, iii, jjj;
 
@@ -285,6 +298,7 @@ GdkPixbuf * ui_pixbuf_scale_alpha(GdkPixbuf * pixbuf, uint8_t alpha)
 			pixels++;
 		}
 	return pixbuf;
+#endif
 }
 
 
@@ -292,6 +306,7 @@ GdkPixbuf * ui_pixbuf_scale_alpha(GdkPixbuf * pixbuf, uint8_t alpha)
 
 void ui_add_recent_file(const char * filename)
 {
+#ifdef K
 	if (filename) {
 		GtkRecentManager * manager = gtk_recent_manager_get_default();
 		GFile * file = g_file_new_for_commandline_arg(filename);
@@ -302,4 +317,5 @@ void ui_add_recent_file(const char * filename)
 		g_object_unref(file);
 		free(uri);
 	}
+#endif
 }

@@ -25,6 +25,8 @@
 
 #include <cstdint>
 
+#include <QLabel>
+
 #include <glib.h>
 //#include <gtk/gtk.h>
 #include "slav_qt.h"
@@ -37,7 +39,7 @@ void new_email(GtkWindow * parent, const char * address);
 GtkWidget * ui_button_new_with_image(const char * stock_id, const char * text);
 int ui_get_gtk_settings_integer(const char *property_name, int default_value);
 GtkWidget * ui_lookup_widget(GtkWidget * widget, const char * widget_name);
-GtkWidget* ui_label_new_selectable(const char * text);
+QLabel * ui_label_new_selectable(QString const & text, QWidget * parent = NULL);
 
 GdkPixbuf * ui_pixbuf_set_alpha(GdkPixbuf * pixbuf, uint8_t alpha);
 GdkPixbuf * ui_pixbuf_scale_alpha(GdkPixbuf * pixbuf, uint8_t alpha);
