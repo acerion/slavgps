@@ -101,67 +101,11 @@ static char *last_folder_images_uri = NULL;
 
 
 
-static void draw_update_cb(Window * window);
-static void newwindow_cb(GtkAction *a, Window * window);
-
-/* Signals. */
-static void open_window(GtkWidget * widget, GSList * files);
-static void destroy_window(GtkWidget * widget, void * data);
-
-/* Drawing & stuff. */
-
-static bool delete_event(GtkWindow * w);
-
-static bool key_press_event_cb(Window * window, GdkEventKey * event, void * data);
-
-static void center_changed_cb(Window * window);
-static void window_configure_event(Window * window);
-static void draw_sync_cb(Window * window);
-static void draw_scroll_cb(Window * window, GdkEventScroll * event);
-static void draw_click_cb(Window * window, GdkEventButton * event);
-static void draw_release_cb(Window * window, GdkEventButton * event);
-static void draw_zoom_cb(GtkAction * a, Window * window);
-static void draw_goto_cb(GtkAction * a, Window * window);
-static void draw_refresh_cb(GtkAction * a, Window * window);
-
-static bool vik_window_clear_highlight_cb(Window * window);
-
-/* End Drawing Functions. */
-
-static void toggle_draw_scale(GtkAction * a, Window * window);
-static void toggle_draw_centermark(GtkAction * a, Window * window);
-static void toggle_draw_highlight(GtkAction * a, Window * window);
-
-static void menu_addlayer_cb(GtkAction * a, Window * window);
-static void menu_properties_cb(GtkAction * a, Window * window);
-static void menu_delete_layer_cb(GtkAction * a, Window * window);
-
-
-static void menu_cb(GtkAction * old, GtkAction * a, Window * window);
-static void window_change_coord_mode_cb(GtkAction * old, GtkAction * a, Window * window);
-
-
-
-
-
-/* UI creation. */
-static void window_create_ui(Window * window);
-static void register_vik_icons(GtkIconFactory * icon_factory);
-
-/* I/O. */
-static void load_file(GtkAction * a, Window * window);
-static bool save_file_as(GtkAction * a, Window * window);
-static bool save_file(GtkAction * a, Window * window);
-static bool save_file_and_exit(GtkAction * a, Window * window);
-
-
 enum {
 	VW_NEWWINDOW_SIGNAL,
 	VW_OPENWINDOW_SIGNAL,
 	VW_LAST_SIGNAL
 };
-
-static unsigned int window_signals[VW_LAST_SIGNAL] = { 0 };
 
 
 
@@ -382,91 +326,6 @@ static int determine_location_thread(Window * window, void * threaddata)
 
 
 
-/**
- * Steps to be taken once initial loading has completed.
- */
-void Window::finish_new()
-{
-	// Don't add a map if we've loaded a Viking file already
-	if (this->filename) {
-		return;
-	}
-
-	if (a_vik_get_startup_method() == VIK_STARTUP_METHOD_SPECIFIED_FILE) {
-		this->open_file(a_vik_get_startup_file(), true);
-		if (this->filename) {
-			return;
-		}
-	}
-
-	// Maybe add a default map layer
-	if(a_vik_get_add_default_map_layer()) {
-		LayerMaps * layer = new LayerMaps(this->viewport);
-		layer->rename(_("Default Map"));
-
-		this->layers_panel->get_top_layer()->add_layer(layer, true);
-
-		this->draw_update();
-	}
-
-	// If not loaded any file, maybe try the location lookup
-	if (this->loaded_type == LOAD_TYPE_READ_FAILURE) {
-		if (a_vik_get_startup_method() == VIK_STARTUP_METHOD_AUTO_LOCATION) {
-
-			vik_statusbar_set_message(this->viking_vs, VIK_STATUSBAR_INFO, _("Trying to determine location..."));
-
-			a_background_thread(BACKGROUND_POOL_REMOTE,
-					    _("Determining location"),
-					    (vik_thr_func) determine_location_thread,
-					    this,
-					    NULL,
-					    NULL,
-					    1);
-		}
-	}
-}
-
-
-
-
-static void open_window(GtkWidget * widget, GSList *files)
-{
-	if (!widget) {
-		return;
-	}
-
-	Window * window = window_from_widget(widget);
-
-	bool change_fn = (g_slist_length(files) == 1); /* only change fn if one file */
-	GSList *cur_file = files;
-	while (cur_file) {
-		// Only open a new window if a viking file
-		char *file_name = (char *) cur_file->data;
-		if (window->filename && check_file_magic_vik(file_name)) {
-			Window * new_window = Window::new_window();
-			if (new_window) {
-				new_window->open_file(file_name, true);
-			}
-		} else {
-			window->open_file(file_name, change_fn);
-		}
-		free(file_name);
-		cur_file = g_slist_next(cur_file);
-	}
-	g_slist_free(files);
-}
-// End signals
-
-
-
-
-void Window::selected_layer(Layer * layer)
-{
-}
-
-
-
-
 void window_init(void)
 {
 	window_signals[VW_NEWWINDOW_SIGNAL] = g_signal_new("newwindow", G_TYPE_OBJECT, (GSignalFlags) (G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION), 0, NULL, NULL, g_cclosure_marshal_VOID__VOID, G_TYPE_NONE, 0);
@@ -664,7 +523,6 @@ static void toolbar_reload_cb(GtkActionGroup *grp, void * gp)
 
 	center_changed_cb(window);
 }
-
 
 
 
@@ -871,20 +729,6 @@ static void draw_sync_cb(Window * window)
 
 
 
-void Window::draw_sync()
-{
-}
-
-
-
-
-void Window::draw_status()
-{
-}
-
-
-
-
 static void window_configure_event(Window * window)
 {
 	static int first = 1;
@@ -897,13 +741,6 @@ static void window_configure_event(Window * window)
 		/* We set cursor, even if it is NULL: it resets to default */
 		gdk_window_set_cursor(gtk_widget_get_window(window->viewport->get_toolkit_widget()), window->viewport_cursor);
 	}
-}
-
-
-
-
-void Window::draw_redraw()
-{
 }
 
 
@@ -932,9 +769,6 @@ static void draw_click_cb(Window * window, GdkEventButton * event)
 
 
 
-
-
-
 /**
  * Action the single click after a small timeout.
  * If a double click has occurred then this will do nothing.
@@ -956,10 +790,6 @@ static bool vik_window_pan_timeout(Window * window)
 	window->pan_x = window->pan_y = -1;
 	return false;
 }
-
-
-
-
 
 
 
@@ -990,18 +820,6 @@ static void draw_scroll_cb(Window * window, GdkEventScroll * event)
 
 
 
-void Window::draw_scroll(GdkEventScroll * event)
-{
-
-}
-
-
-
-
-
-
-
-
 static void draw_pan_cb(GtkAction * a, Window * window)
 {
 	// Since the treeview cell editting intercepts standard keyboard handlers, it means we can receive events here
@@ -1022,10 +840,6 @@ static void draw_pan_cb(GtkAction * a, Window * window)
 	}
 	window->draw_update();
 }
-
-
-
-
 
 
 
@@ -1125,13 +939,6 @@ static void draw_refresh_cb(GtkAction * a, Window * window)
 
 
 
-static void menu_addlayer_cb(GtkAction * a, Window * window)
-{
-}
-
-
-
-
 static void menu_copy_layer_cb(GtkAction * a, Window * window)
 {
 	a_clipboard_copy_selected(window->layers_panel);
@@ -1212,10 +1019,6 @@ GtkWidget * get_show_widget_by_name(Window * window, char const * name)
 
 	return widget;
 }
-
-
-
-
 
 
 
@@ -1379,9 +1182,6 @@ static void view_main_menu_cb(GtkAction * a, Window * window)
 
 
 
-
-
-
 void Window::enable_layer_tool(LayerType layer_type, int tool_id)
 {
 	gtk_action_activate(gtk_action_group_get_action(this->action_group, Layer::get_interface(layer_type)->layer_tools[tool_id]->radioActionEntry.name));
@@ -1400,11 +1200,6 @@ static void toolbar_sync(Window * window, char const *name, bool state)
 		gtk_toggle_tool_button_set_active(tbutton, state);
 	}
 }
-
-
-
-
-
 
 
 
@@ -1466,14 +1261,6 @@ void Window::setup_recent_files()
 	g_signal_connect(G_OBJECT (menu), "item-activated",
 			 G_CALLBACK (on_activate_recent_item), this);
 }
-
-
-
-
-
-
-
-
 
 
 
@@ -1925,35 +1712,6 @@ static void preferences_change_update(Window * window)
 
 
 
-#if 0 /* Already moved to window.cpp */
-static void preferences_cb(GtkAction * a, Window * window)
-{
-	bool wp_icon_size = a_vik_get_use_large_waypoint_icons();
-
-	preferences_show_window(window->get_toolkit_window());
-
-	// Has the waypoint size setting changed?
-	if (wp_icon_size != a_vik_get_use_large_waypoint_icons()) {
-		// Delete icon indexing 'cache' and so automatically regenerates with the new setting when changed
-		clear_garmin_icon_syms();
-
-		// Update all windows
-		for (auto i = window_list.begin(); i != window_list.end(); i++) {
-			preferences_change_update(*i);
-		}
-	}
-
-	// Ensure TZ Lookup initialized
-	if (a_vik_get_time_ref_frame() == VIK_TIME_REF_WORLD) {
-		vu_setup_lat_lon_tz_lookup();
-	}
-
-	toolbar_apply_settings(window->viking_vtb, window->main_vbox, window->menu_hbox, true);
-}
-#endif
-
-
-
 static void default_location_cb(GtkAction * a, Window * window)
 {
 	/* Simplistic repeat of preference setting
@@ -2024,18 +1782,6 @@ static void clear_cb(GtkAction * a, Window * window)
 
 
 
-static void window_close(GtkAction * a, Window * window)
-{
-#if 0 /* Moved to QT app. */
-	if (!delete_event(window->gtk_window_)) {
-		gtk_widget_destroy(window->get_toolkit_widget());
-	}
-#endif
-}
-
-
-
-
 static bool save_file_and_exit(GtkAction * a, Window * window)
 {
 	if (save_file(NULL, window)) {
@@ -2045,10 +1791,6 @@ static bool save_file_and_exit(GtkAction * a, Window * window)
 		return(false);
 	}
 }
-
-
-
-
 
 
 
@@ -2918,13 +2660,6 @@ void Window::init_toolkit_widget(void)
 
 
 
-Window::Window()
-{
-}
-
-
-
-
 Window::~Window()
 {
 	a_background_remove_window(this);
@@ -2942,55 +2677,4 @@ Window::~Window()
 
 	/* kamilFIXME: free this window first. */
 	this->gtk_window_ = NULL;
-}
-
-
-
-
-Window * window_from_widget(void * widget)
-{
-	GtkWindow * w = toolkit_window_from_widget(widget);
-	Window * window = (Window *) g_object_get_data((GObject *) w, "window");
-	return window;
-}
-
-
-
-
-GtkWindow * toolkit_window_from_widget(void * widget)
-{
-	GtkWindow * w = (GtkWindow *) gtk_widget_get_toplevel(GTK_WIDGET(widget));
-	return w;
-}
-
-
-
-
-GtkWindow * Window::get_toolkit_window(void)
-{
-	return GTK_WINDOW (this->gtk_window_);
-}
-
-
-
-
-GtkWindow * Window::get_toolkit_window_2(void)
-{
-	return GTK_WINDOW (gtk_widget_get_toplevel(GTK_WIDGET (this->gtk_window_)));
-}
-
-
-
-
-GtkWidget * Window::get_toolkit_widget(void)
-{
-	return GTK_WIDGET (this->gtk_window_);
-}
-
-
-
-
-void * Window::get_toolkit_object(void)
-{
-	return G_OBJECT (this->gtk_window_);
 }
