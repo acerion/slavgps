@@ -32,8 +32,10 @@
 
 #include <cstdlib>
 
+#ifdef K
 #include <gtk/gtk.h>
 #include <gdk-pixbuf/gdk-pixdata.h>
+#endif
 #include <glib/gi18n.h>
 #include <time.h>
 
@@ -41,16 +43,23 @@
 #include <string.h>
 #endif
 
+#include <QDebug>
+
+#include "slav_qt.h"
 #include "layer_trw.h"
 #include "viktrwlayer_propwin.h"
 #include "dems.h"
 #include "viewport.h" /* ugh */
 #include "vikutils.h"
+#ifdef K
 #include "ui_util.h"
+#endif
 #include "dialog.h"
 #include "settings.h"
 #include "globals.h"
+#ifdef K
 #include "vik_compat.h"
+#endif
 
 
 
@@ -271,6 +280,7 @@ static PropWidgets * prop_widgets_new()
 
 static void prop_widgets_free(PropWidgets * widgets)
 {
+#ifdef K
 	if (widgets->elev_graph_saved_img.img)
 		g_object_unref(widgets->elev_graph_saved_img.img);
 	if (widgets->gradient_graph_saved_img.img)
@@ -296,6 +306,7 @@ static void prop_widgets_free(PropWidgets * widgets)
 	if (widgets->speeds_dist)
 		free(widgets->speeds_dist);
 	free(widgets);
+#endif
 }
 
 
@@ -460,7 +471,7 @@ static Trackpoint * set_center_at_graph_position(double event_x,
 		VikCoord coord = tp->coord;
 		if (panel) {
 			panel->get_viewport()->set_center_coord(&coord, true);
-			panel->emit_update();
+			panel->emit_update_cb();
 		} else {
 			/* Since panel not set, viewport should be valid instead! */
 			if (viewport) {
@@ -489,6 +500,7 @@ static void save_image_and_draw_graph_marks(GtkWidget * image,
 					    bool *marker_drawn,
 					    bool *blob_drawn)
 {
+#ifdef K
 	GdkPixmap *pix = NULL;
 	/* The pixmap = margin + graph area. */
 	gtk_image_get_pixmap(GTK_IMAGE(image), &pix, NULL);
@@ -526,6 +538,7 @@ static void save_image_and_draw_graph_marks(GtkWidget * image,
 	if (*marker_drawn || *blob_drawn) {
 		gtk_widget_queue_draw(image);
 	}
+#endif
 }
 
 
@@ -586,6 +599,7 @@ static void track_graph_click(GtkWidget * event_box, GdkEventButton * event, Pro
 		 || graph_type == PROPWIN_GRAPH_TYPE_DISTANCE_TIME
 		 || graph_type == PROPWIN_GRAPH_TYPE_ELEVATION_TIME);
 
+#ifdef K
 	GtkAllocation allocation;
 	gtk_widget_get_allocation(event_box, &allocation);
 
@@ -676,6 +690,7 @@ static void track_graph_click(GtkWidget * event_box, GdkEventButton * event, Pro
 	}
 
 	gtk_dialog_set_response_sensitive(GTK_DIALOG(widgets->dialog), VIK_TRW_LAYER_PROPWIN_SPLIT_MARKER, widgets->is_marker_drawn);
+#endif
 }
 
 
@@ -872,6 +887,8 @@ void track_profile_move(GtkWidget *event_box, GdkEventMotion *event, PropWidgets
 
 	widgets->blob_tp = tp;
 
+#ifdef K
+
 	GtkWidget * window = gtk_widget_get_toplevel(event_box);
 	GList * child = gtk_container_get_children(GTK_CONTAINER(event_box));
 	GtkWidget * image = GTK_WIDGET(child->data);
@@ -898,6 +915,7 @@ void track_profile_move(GtkWidget *event_box, GdkEventMotion *event, PropWidgets
 					&widgets->is_blob_drawn);
 
 	g_list_free(child);
+#endif
 }
 
 
@@ -926,6 +944,8 @@ void track_gradient_move(GtkWidget * event_box, GdkEventMotion * event, PropWidg
 
 	widgets->blob_tp = tp;
 
+#ifdef K
+
 	GtkWidget * window = gtk_widget_get_toplevel(event_box);
 	GList * child = gtk_container_get_children(GTK_CONTAINER(event_box));
 	GtkWidget * image = GTK_WIDGET(child->data);
@@ -952,6 +972,7 @@ void track_gradient_move(GtkWidget * event_box, GdkEventMotion * event, PropWidg
 					&widgets->is_blob_drawn);
 
 	g_list_free(child);
+#endif
 }
 
 
@@ -964,7 +985,9 @@ void time_label_update(GtkWidget * widget, time_t seconds_from_start)
 	unsigned int m = (seconds_from_start - h*3600)/60;
 	unsigned int s = seconds_from_start - (3600*h) - (60*m);
 	snprintf(tmp_buf, sizeof(tmp_buf), "%02d:%02d:%02d", h, m, s);
+#ifdef K
 	gtk_label_set_text(GTK_LABEL(widget), tmp_buf);
+#endif
 
 	return;
 }
@@ -982,7 +1005,9 @@ void real_time_label_update(GtkWidget * widget, Trackpoint * tp)
 	} else {
 		snprintf(tmp_buf, sizeof(tmp_buf), _("No Data"));
 	}
+#ifdef K
 	gtk_label_set_text(GTK_LABEL(widget), tmp_buf);
+#endif
 
 	return;
 }
@@ -1011,7 +1036,9 @@ void speed_label_update(GtkWidget * widget, double value)
 		snprintf(tmp_buf, sizeof(tmp_buf), _("%.1f m/s"), value);
 		break;
 	}
+#ifdef K
 	gtk_label_set_text(GTK_LABEL(widget), tmp_buf);
+#endif
 
 	return;
 }
@@ -1023,7 +1050,9 @@ void gradient_label_update(GtkWidget * widget, double gradient)
 {
 	static char tmp_buf[20];
 	snprintf(tmp_buf, sizeof(tmp_buf), "%d%%", (int) gradient);
+#ifdef K
 	gtk_label_set_text(GTK_LABEL(widget), tmp_buf);
+#endif
 
 	return;
 }
@@ -1058,6 +1087,8 @@ void track_vt_move(GtkWidget * event_box, GdkEventMotion * event, PropWidgets * 
 
 	widgets->blob_tp = tp;
 
+#ifdef K
+
 	GtkWidget * window = gtk_widget_get_toplevel(event_box);
 	GList * child = gtk_container_get_children(GTK_CONTAINER(event_box));
 	GtkWidget * image = GTK_WIDGET(child->data);
@@ -1084,6 +1115,7 @@ void track_vt_move(GtkWidget * event_box, GdkEventMotion * event, PropWidgets * 
 					&widgets->is_blob_drawn);
 
 	g_list_free(child);
+#endif
 }
 
 
@@ -1118,6 +1150,8 @@ void track_dt_move(GtkWidget * event_box, GdkEventMotion * event, PropWidgets * 
 
 	widgets->blob_tp = tp;
 
+#ifdef K
+
 	GtkWidget * window = gtk_widget_get_toplevel(event_box);
 	GList * child = gtk_container_get_children(GTK_CONTAINER(event_box));
 	GtkWidget * image = GTK_WIDGET(child->data);
@@ -1144,6 +1178,7 @@ void track_dt_move(GtkWidget * event_box, GdkEventMotion * event, PropWidgets * 
 					&widgets->is_blob_drawn);
 
 	g_list_free(child);
+#endif
 }
 
 
@@ -1178,6 +1213,8 @@ void track_et_move(GtkWidget * event_box, GdkEventMotion * event, PropWidgets * 
 
 	widgets->blob_tp = tp;
 
+#ifdef K
+
 	GtkWidget * window = gtk_widget_get_toplevel(event_box);
 	GList * child = gtk_container_get_children(GTK_CONTAINER(event_box));
 	GtkWidget * image = GTK_WIDGET(child->data);
@@ -1204,6 +1241,7 @@ void track_et_move(GtkWidget * event_box, GdkEventMotion * event, PropWidgets * 
 					&widgets->is_blob_drawn);
 
 	g_list_free(child);
+#endif
 }
 
 
@@ -1232,6 +1270,8 @@ void track_sd_move(GtkWidget * event_box, GdkEventMotion * event, PropWidgets * 
 
 	widgets->blob_tp = tp;
 
+#ifdef K
+
 	GtkWidget * window = gtk_widget_get_toplevel(event_box);
 	GList * child = gtk_container_get_children(GTK_CONTAINER(event_box));
 	GtkWidget * image = GTK_WIDGET(child->data);
@@ -1258,6 +1298,7 @@ void track_sd_move(GtkWidget * event_box, GdkEventMotion * event, PropWidgets * 
 					&widgets->is_blob_drawn);
 
 	g_list_free(child);
+#endif
 }
 
 
@@ -1265,6 +1306,7 @@ void track_sd_move(GtkWidget * event_box, GdkEventMotion * event, PropWidgets * 
 
 void get_mouse_event_x(GtkWidget * event_box, GdkEventMotion * event, PropWidgets * widgets, double * x, int * ix)
 {
+#ifdef K
 	int mouse_x, mouse_y;
 	GdkModifierType state;
 
@@ -1290,6 +1332,7 @@ void get_mouse_event_x(GtkWidget * event_box, GdkEventMotion * event, PropWidget
 	if (*ix == widgets->profile_width) {
 		(*ix)--;
 	}
+#endif
 
 	return;
 }
@@ -1302,7 +1345,9 @@ void distance_label_update(GtkWidget * widget, double meters_from_start)
 	static char tmp_buf[20];
 	DistanceUnit distance_unit = a_vik_get_units_distance();
 	get_distance_string(tmp_buf, sizeof (tmp_buf), distance_unit, meters_from_start);
+#ifdef K
 	gtk_label_set_text(GTK_LABEL(widget), tmp_buf);
+#endif
 
 	return;
 }
@@ -1318,7 +1363,9 @@ void elevation_label_update(GtkWidget * widget, Trackpoint * tp)
 	} else {
 		snprintf(tmp_buf, sizeof(tmp_buf), "%d m", (int) tp->altitude);
 	}
+#ifdef K
 	gtk_label_set_text(GTK_LABEL(widget), tmp_buf);
+#endif
 
 	return;
 }
@@ -1340,7 +1387,9 @@ void dist_dist_label_update(GtkWidget * widget, double distance)
 		snprintf(tmp_buf, sizeof(tmp_buf), "%.2f km", distance); /* kamilTODO: why not distance/1000? */
 		break;
 	}
+#ifdef K
 	gtk_label_set_text(GTK_LABEL(widget), tmp_buf);
+#endif
 
 	return;
 }
@@ -1378,6 +1427,7 @@ static void draw_dem_alt_speed_dist(Track * trk,
 	int achunk = chunksa[cia]*LINES;
 
 	for (auto iter = std::next(trk->trackpointsB->begin()); iter != trk->trackpointsB->end(); iter++) {
+#ifdef K
 		int x;
 		dist += vik_coord_diff(&(*iter)->coord,
 				       &(*std::prev(iter))->coord);
@@ -1406,6 +1456,7 @@ static void draw_dem_alt_speed_dist(Track * trk,
 				fill_rectangle(GDK_DRAWABLE (pix), speed_gc, x - 2, y_speed - 2, 4, 4);
 			}
 		}
+#endif
 	}
 }
 
@@ -1417,6 +1468,7 @@ static void draw_dem_alt_speed_dist(Track * trk,
  */
 static void draw_grid_y(GtkWidget * window, GtkWidget * image, PropWidgets * widgets, GdkPixmap * pix, char * ss, int i)
 {
+#ifdef K
 	PangoLayout * pl = gtk_widget_create_pango_layout(GTK_WIDGET(image), NULL);
 
 	pango_layout_set_alignment(pl, PANGO_ALIGN_RIGHT);
@@ -1438,6 +1490,7 @@ static void draw_grid_y(GtkWidget * window, GtkWidget * image, PropWidgets * wid
 	gdk_draw_line(GDK_DRAWABLE(pix), gtk_widget_get_style(window)->dark_gc[0],
 		      MARGIN_X, MARGIN_Y + widgets->profile_height/LINES * i,
 		      MARGIN_X + widgets->profile_width, MARGIN_Y + widgets->profile_height/LINES * i);
+#endif
 }
 
 
@@ -1449,6 +1502,7 @@ static void draw_grid_y(GtkWidget * window, GtkWidget * image, PropWidgets * wid
 static void draw_grid_x_time(GtkWidget * window, GtkWidget * image, PropWidgets * widgets, GdkPixmap * pix, unsigned int ii, unsigned int tt, unsigned int xx)
 {
 	char *label_markup = NULL;
+#ifdef K
 	switch (ii) {
 	case 0:
 	case 1:
@@ -1499,6 +1553,7 @@ static void draw_grid_x_time(GtkWidget * window, GtkWidget * image, PropWidgets 
 
 	gdk_draw_line(GDK_DRAWABLE(pix), gtk_widget_get_style(window)->dark_gc[0],
 		      MARGIN_X+xx, MARGIN_Y, MARGIN_X+xx, MARGIN_Y+widgets->profile_height);
+#endif
 }
 
 
@@ -1513,6 +1568,8 @@ static void draw_grid_x_distance(GtkWidget * window, GtkWidget * image, PropWidg
 
 	char distance_unit_string[16] = { 0 };
 	get_distance_unit_string(distance_unit_string, sizeof (distance_unit_string), distance_unit);
+
+#ifdef K
 
 	if (ii > 4) {
 		label_markup = g_strdup_printf("<span size=\"small\">%d %s</span>", (unsigned int)dd, distance_unit_string);
@@ -1536,6 +1593,7 @@ static void draw_grid_x_distance(GtkWidget * window, GtkWidget * image, PropWidg
 
 	gdk_draw_line(GDK_DRAWABLE(pix), gtk_widget_get_style(window)->dark_gc[0],
 		      MARGIN_X+xx, MARGIN_Y, MARGIN_X+xx, MARGIN_Y+widgets->profile_height);
+#endif
 }
 
 
@@ -1546,10 +1604,12 @@ static void draw_grid_x_distance(GtkWidget * window, GtkWidget * image, PropWidg
  */
 static void clear_images(GdkPixmap *pix, GtkWidget *window, PropWidgets *widgets)
 {
+#ifdef K
 	fill_rectangle(GDK_DRAWABLE(pix), gtk_widget_get_style(window)->bg_gc[0],
 		       0, 0, widgets->profile_width+MARGIN_X, widgets->profile_height+MARGIN_Y);
 	fill_rectangle(GDK_DRAWABLE(pix), gtk_widget_get_style(window)->mid_gc[0],
 		       0, 0, widgets->profile_width+MARGIN_X, widgets->profile_height+MARGIN_Y);
+#endif
 }
 
 
@@ -1565,7 +1625,9 @@ static void draw_distance_divisions(GtkWidget * window, GtkWidget * image, GdkPi
 	double dist_per_pixel = length/widgets->profile_width;
 
 	for (unsigned int i = 1; chunksd[index] * i <= length; i++) {
+#ifdef K
 		draw_grid_x_distance(window, image, widgets, pix, index, chunksd[index] * i, (unsigned int) (chunksd[index] * i / dist_per_pixel), distance_unit);
+#endif
 	}
 }
 
@@ -1578,7 +1640,7 @@ static void draw_distance_divisions(GtkWidget * window, GtkWidget * image, GdkPi
 static void draw_elevations(GtkWidget * image, Track * trk, PropWidgets * widgets)
 {
 	int i;
-
+#ifdef K
 	GdkGC *no_alt_info;
 	GdkColor color;
 
@@ -1695,6 +1757,7 @@ static void draw_elevations(GtkWidget * image, Track * trk, PropWidgets * widget
 
 	g_object_unref(G_OBJECT(pix));
 	g_object_unref(G_OBJECT(no_alt_info));
+#endif
 }
 
 
@@ -1722,6 +1785,7 @@ static void draw_speed_dist(Track * trk,
 
 	double dist = 0;
 	for (auto iter = std::next(trk->trackpointsB->begin()); iter != trk->trackpointsB->end(); iter++) {
+#ifdef K
 		int x;
 		dist += vik_coord_diff(&(*iter)->coord,
 				       &(*std::prev(iter))->coord);
@@ -1733,6 +1797,7 @@ static void draw_speed_dist(Track * trk,
 				fill_rectangle(GDK_DRAWABLE(pix), speed_gc, x - 2, y_speed - 2, 4, 4);
 			}
 		}
+#endif
 	}
 }
 
@@ -1763,6 +1828,8 @@ static void draw_gradients(GtkWidget * image, Track * trk, PropWidgets * widgets
 
 	/* Assign locally. */
 	double mina = widgets->draw_min_gradient;
+
+#ifdef K
 
 	GtkWidget *window = gtk_widget_get_toplevel(widgets->gradient_box);
 	GdkPixmap *pix = gdk_pixmap_new(gtk_widget_get_window(window), widgets->profile_width+MARGIN_X, widgets->profile_height+MARGIN_Y, -1);
@@ -1817,6 +1884,7 @@ static void draw_gradients(GtkWidget * image, Track * trk, PropWidgets * widgets
 	draw_rectangle(GDK_DRAWABLE(pix), gtk_widget_get_style(window)->black_gc, MARGIN_X, MARGIN_Y, widgets->profile_width-1, widgets->profile_height-1);
 
 	g_object_unref(G_OBJECT(pix));
+#endif
 }
 
 
@@ -1869,6 +1937,7 @@ static void draw_vt(GtkWidget * image, Track * trk, PropWidgets * widgets)
 		widgets->speeds[i] = convert_speed_mps_to(speed_units, widgets->speeds[i]);
 	}
 
+#ifdef K
 	GtkWidget *window = gtk_widget_get_toplevel(widgets->speed_box);
 	GdkPixmap *pix = gdk_pixmap_new(gtk_widget_get_window(window), widgets->profile_width+MARGIN_X, widgets->profile_height+MARGIN_Y, -1);
 
@@ -1952,6 +2021,7 @@ static void draw_vt(GtkWidget * image, Track * trk, PropWidgets * widgets)
 	draw_rectangle(GDK_DRAWABLE(pix), gtk_widget_get_style(window)->black_gc, MARGIN_X, MARGIN_Y, widgets->profile_width-1, widgets->profile_height-1);
 
 	g_object_unref(G_OBJECT(pix));
+#endif
 }
 
 
@@ -1986,6 +2056,7 @@ static void draw_dt(GtkWidget * image, Track * trk, PropWidgets * widgets)
 		return;
 	}
 
+#ifdef K
 	GtkWidget * window = gtk_widget_get_toplevel(widgets->dist_box);
 	GdkPixmap * pix = gdk_pixmap_new(gtk_widget_get_window(window), widgets->profile_width+MARGIN_X, widgets->profile_height+MARGIN_Y, -1);
 
@@ -2053,6 +2124,7 @@ static void draw_dt(GtkWidget * image, Track * trk, PropWidgets * widgets)
 	draw_rectangle(GDK_DRAWABLE(pix), gtk_widget_get_style(window)->black_gc, MARGIN_X, MARGIN_Y, widgets->profile_width-1, widgets->profile_height-1);
 
 	g_object_unref(G_OBJECT(pix));
+#endif
 }
 
 
@@ -2098,6 +2170,8 @@ static void draw_et(GtkWidget * image, Track * trk, PropWidgets * widgets)
 	if (widgets->duration <= 0) {
 		return;
 	}
+
+#ifdef K
 
 	GtkWidget *window = gtk_widget_get_toplevel(widgets->elev_time_box);
 	GdkPixmap *pix = gdk_pixmap_new(gtk_widget_get_window(window), widgets->profile_width+MARGIN_X, widgets->profile_height+MARGIN_Y, -1);
@@ -2192,6 +2266,7 @@ static void draw_et(GtkWidget * image, Track * trk, PropWidgets * widgets)
 	draw_rectangle(GDK_DRAWABLE(pix), gtk_widget_get_style(window)->black_gc, MARGIN_X, MARGIN_Y, widgets->profile_width-1, widgets->profile_height-1);
 
 	g_object_unref(G_OBJECT(pix));
+#endif
 }
 
 
@@ -2221,6 +2296,7 @@ static void draw_sd(GtkWidget * image, Track * trk, PropWidgets * widgets)
 		widgets->speeds_dist[i] = convert_speed_mps_to(speed_units, widgets->speeds_dist[i]);
 	}
 
+#ifdef K
 
 	GtkWidget *window = gtk_widget_get_toplevel(widgets->speed_dist_box);
 	GdkPixmap *pix = gdk_pixmap_new(gtk_widget_get_window(window), widgets->profile_width+MARGIN_X, widgets->profile_height+MARGIN_Y, -1);
@@ -2309,6 +2385,7 @@ static void draw_sd(GtkWidget * image, Track * trk, PropWidgets * widgets)
 	draw_rectangle(GDK_DRAWABLE(pix), gtk_widget_get_style(window)->black_gc, MARGIN_X, MARGIN_Y, widgets->profile_width-1, widgets->profile_height-1);
 
 	g_object_unref(G_OBJECT(pix));
+#endif
 }
 #undef LINES
 
@@ -2320,6 +2397,7 @@ static void draw_sd(GtkWidget * image, Track * trk, PropWidgets * widgets)
  */
 static void draw_all_graphs(GtkWidget * widget, PropWidgets * widgets, bool resized)
 {
+#ifdef K
 	GtkWidget * window = gtk_widget_get_toplevel(widget);
 
 	/* Draw elevations. */
@@ -2363,6 +2441,7 @@ static void draw_all_graphs(GtkWidget * widget, PropWidgets * widgets, bool resi
 		draw_single_graph(window, widgets, resized, child, draw_sd, blobby_speed_dist, true, &widgets->speed_dist_graph_saved_img);
 		g_list_free(child);
 	}
+#endif
 }
 
 
@@ -2370,6 +2449,7 @@ static void draw_all_graphs(GtkWidget * widget, PropWidgets * widgets, bool resi
 
 void draw_single_graph(GtkWidget * window, PropWidgets * widgets, bool resized, GList * child, draw_graph_fn_t draw_graph, get_blobby_fn_t get_blobby, bool by_time, PropSaved * saved_img)
 {
+#ifdef K
 	/* Saved image no longer any good as we've resized, so we remove it here. */
 	if (resized && saved_img->img) {
 		g_object_unref(saved_img->img);
@@ -2423,6 +2503,7 @@ void draw_single_graph(GtkWidget * window, PropWidgets * widgets, bool resized, 
 						&widgets->is_marker_drawn,
 						&widgets->is_blob_drawn);
 	}
+#endif
 }
 
 
@@ -2433,6 +2514,7 @@ void draw_single_graph(GtkWidget * window, PropWidgets * widgets, bool resized, 
  */
 static bool configure_event(GtkWidget * widget, GdkEventConfigure * event, PropWidgets * widgets)
 {
+#ifdef K
 	if (widgets->configure_dialog) {
 		/* Determine size offsets between dialog size and size for images.
 		   Only on the initialisation of the dialog. */
@@ -2464,6 +2546,7 @@ static bool configure_event(GtkWidget * widget, GdkEventConfigure * event, PropW
 
 	/* Draw stuff. */
 	draw_all_graphs(widget, widgets, true);
+#endif
 
 	return false;
 }
@@ -2489,7 +2572,7 @@ GtkWidget * vik_trw_layer_create_profile(GtkWidget * window, PropWidgets * widge
 	}
 
 	minmax_array(widgets->altitudes, min_alt, max_alt, true, widgets->profile_width);
-
+#ifdef K
 	pix = gdk_pixmap_new(gtk_widget_get_window(window), widgets->profile_width+MARGIN_X, widgets->profile_height+MARGIN_Y, -1);
 	image = gtk_image_new_from_pixmap(pix, NULL);
 
@@ -2500,6 +2583,8 @@ GtkWidget * vik_trw_layer_create_profile(GtkWidget * window, PropWidgets * widge
 	g_signal_connect(G_OBJECT(eventbox), "motion_notify_event", G_CALLBACK(track_profile_move), widgets);
 	gtk_container_add(GTK_CONTAINER(eventbox), image);
 	gtk_widget_set_events(eventbox, GDK_BUTTON_PRESS_MASK | GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_STRUCTURE_MASK);
+
+#endif
 
 	return eventbox;
 }
@@ -2523,6 +2608,7 @@ GtkWidget * vik_trw_layer_create_gradient(GtkWidget * window, PropWidgets * widg
 		return NULL;
 	}
 
+#ifdef K
 	pix = gdk_pixmap_new(gtk_widget_get_window(window), widgets->profile_width+MARGIN_X, widgets->profile_height+MARGIN_Y, -1);
 	image = gtk_image_new_from_pixmap(pix, NULL);
 
@@ -2533,6 +2619,8 @@ GtkWidget * vik_trw_layer_create_gradient(GtkWidget * window, PropWidgets * widg
 	g_signal_connect(G_OBJECT(eventbox), "motion_notify_event", G_CALLBACK(track_gradient_move), widgets);
 	gtk_container_add(GTK_CONTAINER(eventbox), image);
 	gtk_widget_set_events(eventbox, GDK_BUTTON_PRESS_MASK | GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_STRUCTURE_MASK);
+
+#endif
 
 	return eventbox;
 }
@@ -2554,7 +2642,7 @@ GtkWidget * vik_trw_layer_create_vtdiag(GtkWidget * window, PropWidgets * widget
 	if (widgets->speeds == NULL) {
 		return NULL;
 	}
-
+#ifdef K
 	pix = gdk_pixmap_new(gtk_widget_get_window(window), widgets->profile_width+MARGIN_X, widgets->profile_height+MARGIN_Y, -1);
 	image = gtk_image_new_from_pixmap(pix, NULL);
 
@@ -2588,6 +2676,8 @@ GtkWidget * vik_trw_layer_create_vtdiag(GtkWidget * window, PropWidgets * widget
 	gtk_container_add(GTK_CONTAINER(eventbox), image);
 	gtk_widget_set_events(eventbox, GDK_BUTTON_PRESS_MASK | GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK);
 
+#endif
+
 	return eventbox;
 }
 
@@ -2608,7 +2698,7 @@ GtkWidget * vik_trw_layer_create_dtdiag(GtkWidget * window, PropWidgets * widget
 	if (widgets->distances == NULL) {
 		return NULL;
 	}
-
+#ifdef K
 	pix = gdk_pixmap_new(gtk_widget_get_window(window), widgets->profile_width+MARGIN_X, widgets->profile_height+MARGIN_Y, -1);
 	image = gtk_image_new_from_pixmap(pix, NULL);
 
@@ -2620,6 +2710,7 @@ GtkWidget * vik_trw_layer_create_dtdiag(GtkWidget * window, PropWidgets * widget
 	//g_signal_connect_swapped(G_OBJECT(eventbox), "destroy", G_CALLBACK(g_free), widgets);
 	gtk_container_add(GTK_CONTAINER(eventbox), image);
 	gtk_widget_set_events(eventbox, GDK_BUTTON_PRESS_MASK | GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK);
+#endif
 
 	return eventbox;
 }
@@ -2641,7 +2732,7 @@ GtkWidget * vik_trw_layer_create_etdiag(GtkWidget * window, PropWidgets * widget
 	if (widgets->ats == NULL) {
 		return NULL;
 	}
-
+#ifdef K
 	pix = gdk_pixmap_new(gtk_widget_get_window(window), widgets->profile_width+MARGIN_X, widgets->profile_height+MARGIN_Y, -1);
 	image = gtk_image_new_from_pixmap(pix, NULL);
 
@@ -2652,6 +2743,7 @@ GtkWidget * vik_trw_layer_create_etdiag(GtkWidget * window, PropWidgets * widget
 	g_signal_connect(G_OBJECT(eventbox), "motion_notify_event", G_CALLBACK(track_et_move), widgets);
 	gtk_container_add(GTK_CONTAINER(eventbox), image);
 	gtk_widget_set_events(eventbox, GDK_BUTTON_PRESS_MASK | GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK);
+#endif
 
 	return eventbox;
 }
@@ -2673,7 +2765,7 @@ GtkWidget * vik_trw_layer_create_sddiag(GtkWidget * window, PropWidgets * widget
 	if (widgets->speeds_dist == NULL) {
 		return NULL;
 	}
-
+#ifdef K
 	pix = gdk_pixmap_new(gtk_widget_get_window(window), widgets->profile_width+MARGIN_X, widgets->profile_height+MARGIN_Y, -1);
 	image = gtk_image_new_from_pixmap(pix, NULL);
 
@@ -2684,6 +2776,7 @@ GtkWidget * vik_trw_layer_create_sddiag(GtkWidget * window, PropWidgets * widget
 	g_signal_connect(G_OBJECT(eventbox), "motion_notify_event", G_CALLBACK(track_sd_move), widgets);
 	gtk_container_add(GTK_CONTAINER(eventbox), image);
 	gtk_widget_set_events(eventbox, GDK_BUTTON_PRESS_MASK | GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK);
+#endif
 
 	return eventbox;
 }
@@ -2700,6 +2793,7 @@ GtkWidget * vik_trw_layer_create_sddiag(GtkWidget * window, PropWidgets * widget
 
 static void save_values(PropWidgets * widgets)
 {
+#ifdef K
 	/* Session settings. */
 	a_settings_set_integer(VIK_SETTINGS_TRACK_PROFILE_WIDTH, widgets->profile_width);
 	a_settings_set_integer(VIK_SETTINGS_TRACK_PROFILE_HEIGHT, widgets->profile_height);
@@ -2721,6 +2815,7 @@ static void save_values(PropWidgets * widgets)
 		show_elev_speed         = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widgets->w_show_elev_speed));
 	if (widgets->w_show_sd_gps_speed)
 		show_sd_gps_speed       = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widgets->w_show_sd_gps_speed));
+#endif
 }
 
 
@@ -2740,6 +2835,8 @@ static void propwin_response_cb(GtkDialog * dialog, int resp, PropWidgets * widg
 	Track * trk = widgets->trk;
 	LayerTRW * trw = widgets->trw;
 	bool keep_dialog = false;
+
+#ifdef K
 
 	/* FIXME: check and make sure the track still exists before doing anything to it. */
 	/* Note: destroying diaglog (eg, parent window exit) won't give "response". */
@@ -2854,6 +2951,7 @@ static void propwin_response_cb(GtkDialog * dialog, int resp, PropWidgets * widg
 		trk->clear_property_dialog();
 		gtk_widget_destroy(GTK_WIDGET(dialog));
 	}
+#endif
 }
 
 
@@ -2887,6 +2985,7 @@ static GtkWidget * create_graph_page(GtkWidget *graph,
 				     GtkWidget *checkbutton2,
 				     bool checkbutton2_default)
 {
+#ifdef K
 	GtkWidget *hbox = gtk_hbox_new (false, 10);
 	GtkWidget *vbox = gtk_vbox_new (false, 10);
 	GtkWidget *label = gtk_label_new (NULL);
@@ -2915,6 +3014,7 @@ static GtkWidget * create_graph_page(GtkWidget *graph,
 	gtk_box_pack_start (GTK_BOX(vbox), hbox, false, false, 0);
 
 	return vbox;
+#endif
 }
 
 
@@ -2922,6 +3022,7 @@ static GtkWidget * create_graph_page(GtkWidget *graph,
 
 static GtkWidget * create_table(int cnt, char * labels[], GtkWidget * contents[])
 {
+#ifdef K
 	GtkTable * table;
 	int i;
 
@@ -2949,18 +3050,37 @@ static GtkWidget * create_table(int cnt, char * labels[], GtkWidget * contents[]
 	}
 
 	return GTK_WIDGET (table);
+#endif
 }
 
 
 
 
-void SlavGPS::vik_trw_layer_propwin_run(GtkWindow *parent,
+void SlavGPS::vik_trw_layer_propwin_run(QWidget * parent,
 					LayerTRW * layer,
 					Track * trk,
 					void * panel,
 					Viewport * viewport,
 					bool start_on_stats)
 {
+	TrackProfileDialog dialog(QString("Track Profile"), layer, trk, panel, viewport, parent);
+	dialog.exec();
+}
+
+
+
+
+TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer, Track * a_trk, void * a_panel, Viewport * a_viewport, QWidget * a_parent) : QDialog(a_parent)
+{
+	this->setWindowTitle(title);
+
+	this->layer = a_layer;
+	this->trk = a_trk;
+	this->panel = a_panel;
+	this->viewport = a_viewport;
+	this->parent = a_parent;
+
+#ifdef K
 	PropWidgets * widgets = prop_widgets_new();
 	widgets->trw = layer;
 	widgets->viewport = viewport;
@@ -3387,6 +3507,7 @@ void SlavGPS::vik_trw_layer_propwin_run(GtkWindow *parent,
 	if (start_on_stats) {
 		gtk_notebook_set_current_page(GTK_NOTEBOOK(graphs), 1);
 	}
+#endif
 }
 
 
@@ -3403,9 +3524,11 @@ void SlavGPS::vik_trw_layer_propwin_update(Track * trk)
 
 	/* Update title with current name. */
 	if (trk->name) {
+#ifdef K
 		char * title = g_strdup_printf(_("%s - Track Properties"), trk->name);
 		gtk_window_set_title(GTK_WINDOW(trk->property_dialog), title);
 		free(title);
+#endif
 	}
 
 }

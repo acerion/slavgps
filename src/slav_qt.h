@@ -12,7 +12,10 @@
 #ifdef SLAVGPS_QT
 typedef int VikLayer;
 
+typedef int GdkEventConfigure;
+typedef int GtkToggleButton;
 typedef int GdkGC;
+typedef int GdkImage;
 typedef int GdkFont;
 typedef int GdkColor;
 typedef int GtkWindow;

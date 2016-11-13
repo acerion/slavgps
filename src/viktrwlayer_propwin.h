@@ -26,9 +26,16 @@
 
 #include <cstdint>
 
-#include <glib.h>
-#include <gtk/gtk.h>
+#include <QObject>
+#include <QDialog>
 
+#include <glib.h>
+#ifdef K
+#include <gtk/gtk.h>
+#endif
+
+#include "layer_trw.h"
+#include "viewport.h"
 #include "track.h"
 
 
@@ -47,7 +54,26 @@ namespace SlavGPS {
 
 
 
-	void vik_trw_layer_propwin_run(GtkWindow * parent,
+	class TrackProfileDialog : public QDialog {
+		Q_OBJECT
+	public:
+		TrackProfileDialog() {};
+		TrackProfileDialog(QString const & title, LayerTRW * a_layer, Track * a_trk, void * a_panel, Viewport * a_viewport, QWidget * a_parent = NULL);
+		~TrackProfileDialog() {};
+
+	private:
+		QWidget * parent = NULL;
+		LayerTRW * layer = NULL;
+		Track * trk = NULL;
+		void * panel = NULL;
+		Viewport * viewport = NULL;
+
+	};
+
+
+
+
+	void vik_trw_layer_propwin_run(QWidget * parent,
 				       LayerTRW * layer,
 				       Track * trk,
 				       void * panel,

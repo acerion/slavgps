@@ -48,12 +48,12 @@
 #include "vikutils.h"
 #include "waypoint_properties.h"
 #include "waypoint_list.h"
+#include "viktrwlayer_propwin.h"
 
 #ifdef K
 #include "vikmapslayer.h"
 #include "vikgpslayer.h"
 #include "viktrwlayer_export.h"
-#include "viktrwlayer_propwin.h"
 #include "viktrwlayer_analysis.h"
 #include "viktrwlayer_tracklist.h"
 #ifdef VIK_CONFIG_GEOTAG
@@ -3945,14 +3945,12 @@ void LayerTRW::properties_item_cb(void)
 	} else {
 		Track * trk = this->get_track_helper(this->menu_data->sublayer_type, this->menu_data->sublayer_uid);
 		if (trk && trk->name) {
-#ifdef K
 			vik_trw_layer_propwin_run(this->get_window(),
 						  this,
 						  trk,
 						  this->menu_data->layers_panel ? this->menu_data->layers_panel : NULL,
 						  this->menu_data->viewport,
 						  false);
-#endif
 		}
 	}
 }
@@ -3969,14 +3967,12 @@ void LayerTRW::track_statistics_cb(void)
 {
 	Track * trk = this->get_track_helper(this->menu_data->sublayer_type, this->menu_data->sublayer_uid);
 	if (trk && trk->name) {
-#ifdef K
 		vik_trw_layer_propwin_run(this->get_window(),
 					  this,
 					  trk,
 					  this->menu_data->layers_panel,
 					  this->menu_data->viewport,
 					  true);
-#endif
 	}
 }
 
