@@ -51,9 +51,7 @@
 #include "dems.h"
 #include "viewport.h" /* ugh */
 #include "vikutils.h"
-#ifdef K
 #include "ui_util.h"
-#endif
 #include "dialog.h"
 #include "settings.h"
 #include "globals.h"
@@ -141,144 +139,30 @@ static bool show_sd_gps_speed       = true;
 
 
 
-typedef struct _propsaved {
-	bool saved;
-	GdkImage * img;
-} PropSaved;
-
 typedef struct _propwidgets {
-	bool  configure_dialog;
-	LayerTRW * trw;
-	Track * trk;
-	Viewport * viewport;
-	LayersPanel * panel;
-	int      profile_width;
-	int      profile_height;
-	int      profile_width_old;
-	int      profile_height_old;
-	int      profile_width_offset;
-	int      profile_height_offset;
-	GtkWidget *dialog;
-	GtkWidget *w_comment;
-	GtkWidget *w_description;
-	GtkWidget *w_source;
-	GtkWidget *w_type;
-	GtkWidget *w_track_length;
-	GtkWidget *w_tp_count;
-	GtkWidget *w_segment_count;
-	GtkWidget *w_duptp_count;
-	GtkWidget *w_max_speed;
-	GtkWidget *w_avg_speed;
-	GtkWidget *w_mvg_speed;
-	GtkWidget *w_avg_dist;
-	GtkWidget *w_elev_range;
-	GtkWidget *w_elev_gain;
-	GtkWidget *w_time_start;
-	GtkWidget *w_time_end;
-	GtkWidget *w_time_dur;
-	GtkWidget *w_color;
-	GtkWidget *w_namelabel;
-	GtkWidget *w_number_distlabels;
-	GtkWidget *w_cur_dist; /*< Current distance. */
-	GtkWidget *w_cur_elevation;
-	GtkWidget *w_cur_gradient_dist; /*< Current distance on gradient graph. */
-	GtkWidget *w_cur_gradient_gradient; /*< Current gradient on gradient graph. */
-	GtkWidget *w_cur_time; /*< Current track time. */
-	GtkWidget *w_cur_time_real; /*< Actual time as on a clock. */
-	GtkWidget *w_cur_speed;
-	GtkWidget *w_cur_dist_dist; /*< Current distance on distance graph. */
-	GtkWidget *w_cur_dist_time; /*< Current track time on distance graph. */
-	GtkWidget *w_cur_dist_time_real; /* Clock time. */
-	GtkWidget *w_cur_elev_elev;
-	GtkWidget *w_cur_elev_time; /* Track time. */
-	GtkWidget *w_cur_elev_time_real; /* Clock time. */
-	GtkWidget *w_cur_speed_dist;
-	GtkWidget *w_cur_speed_speed;
-	GtkWidget *w_show_dem;
-	GtkWidget *w_show_alt_gps_speed;
-	GtkWidget *w_show_gps_speed;
-	GtkWidget *w_show_gradient_gps_speed;
-	GtkWidget *w_show_dist_speed;
-	GtkWidget *w_show_elev_speed;
-	GtkWidget *w_show_elev_dem;
-	GtkWidget *w_show_sd_gps_speed;
-	double   track_length;
-	double   track_length_inc_gaps;
-	PropSaved elev_graph_saved_img;
-	PropSaved gradient_graph_saved_img;
-	PropSaved speed_graph_saved_img;
-	PropSaved dist_graph_saved_img;
-	PropSaved elev_time_graph_saved_img;
-	PropSaved speed_dist_graph_saved_img;
-	GtkWidget *elev_box;
-	GtkWidget *gradient_box;
-	GtkWidget *speed_box;
-	GtkWidget *dist_box;
-	GtkWidget *elev_time_box;
-	GtkWidget *speed_dist_box;
-	double   *altitudes;
-	double   *ats; /* Altitudes in time. */
-	double   min_altitude;
-	double   max_altitude;
-	double   draw_min_altitude;
-	double   draw_min_altitude_time;
-	int      cia; /* Chunk size Index into Altitudes. */
-	int      ciat; /* Chunk size Index into Altitudes / Time. */
-	/* NB cia & ciat are normally same value but sometimes not due to differing methods of altitude array creation.
-	   thus also have draw_min_altitude for each altitude graph type. */
-	double   *gradients;
-	double   min_gradient;
-	double   max_gradient;
-	double   draw_min_gradient;
-	int      cig; /* Chunk size Index into Gradients. */
-	double   *speeds;
-	double   *speeds_dist;
-	double   min_speed;
-	double   max_speed;
-	double   draw_min_speed;
-	double   max_speed_dist;
-	int      cis; /* Chunk size Index into Speeds. */
-	int      cisd; /* Chunk size Index into Speed/Distance. */
-	double   *distances;
-	int      cid; /* Chunk size Index into Distance. */
-	Trackpoint * marker_tp;
-	bool  is_marker_drawn;
-	Trackpoint * blob_tp;
-	bool  is_blob_drawn;
-	time_t    duration;
-	char     *tz; /* TimeZone at track's location. */
+
 } PropWidgets;
 
 
 
 
-typedef void (* draw_graph_fn_t)(GtkWidget * image, Track * trk, PropWidgets * widgets);
-typedef int (* get_blobby_fn_t)(double x_blob, PropWidgets * widgets);
+typedef void (* draw_graph_fn_t)(GtkWidget * image, Track * trk, TrackProfileDialog * widgets);
+typedef int (* get_blobby_fn_t)(double x_blob, TrackProfileDialog * widgets);
 
-static void get_mouse_event_x(GtkWidget * event_box, GdkEventMotion * event, PropWidgets * widgets, double * x, int * ix);
-static void draw_single_graph(GtkWidget * window, PropWidgets * widgets, bool resized, GList * child, draw_graph_fn_t draw_graph, get_blobby_fn_t get_blobby, bool by_time, PropSaved * saved_img);
-static void distance_label_update(GtkWidget * widget, double meters_from_start);
-static void elevation_label_update(GtkWidget * widget, Trackpoint * tp);
-static void real_time_label_update(GtkWidget * widget, Trackpoint * tp);
-static void speed_label_update(GtkWidget * widget, double value);
-static void dist_dist_label_update(GtkWidget * widget, double distance);
-static void gradient_label_update(GtkWidget * widget, double gradient);
-
-
-
-
-static PropWidgets * prop_widgets_new()
-{
-	PropWidgets * widgets = (PropWidgets *) malloc(sizeof (PropWidgets));
-	memset(widgets, 0, sizeof (PropWidgets));
-
-	return widgets;
-}
+static void get_mouse_event_x(GtkWidget * event_box, GdkEventMotion * event, TrackProfileDialog * widgets, double * x, int * ix);
+static void draw_single_graph(GtkWidget * window, TrackProfileDialog * widgets, bool resized, GList * child, draw_graph_fn_t draw_graph, get_blobby_fn_t get_blobby, bool by_time, PropSaved * saved_img);
+static void distance_label_update(QLabel * label, double meters_from_start);
+static void elevation_label_update(QLabel * label, Trackpoint * tp);
+static void time_label_update(QLabel * label, time_t seconds_from_start);
+static void real_time_label_update(QLabel * label, Trackpoint * tp);
+static void speed_label_update(QLabel * label, double value);
+static void dist_dist_label_update(QLabel * label, double distance);
+static void gradient_label_update(QLabel * label, double gradient);
 
 
 
 
-static void prop_widgets_free(PropWidgets * widgets)
+TrackProfileDialog::~TrackProfileDialog()
 {
 #ifdef K
 	if (widgets->elev_graph_saved_img.img)
@@ -592,7 +476,7 @@ static double tp_percentage_by_distance(Track * trk, Trackpoint * tp, double tra
 
 
 
-static void track_graph_click(GtkWidget * event_box, GdkEventButton * event, PropWidgets * widgets, VikPropWinGraphType_t graph_type)
+static void track_graph_click(GtkWidget * event_box, GdkEventButton * event, TrackProfileDialog * widgets, VikPropWinGraphType_t graph_type)
 {
 	bool is_time_graph =
 		(graph_type == PROPWIN_GRAPH_TYPE_SPEED_TIME
@@ -698,7 +582,7 @@ static void track_graph_click(GtkWidget * event_box, GdkEventButton * event, Pro
 
 static bool track_profile_click(GtkWidget *event_box, GdkEventButton *event, void * ptr)
 {
-	track_graph_click(event_box, event, (PropWidgets *) ptr, PROPWIN_GRAPH_TYPE_ELEVATION_DISTANCE);
+	track_graph_click(event_box, event, (TrackProfileDialog *) ptr, PROPWIN_GRAPH_TYPE_ELEVATION_DISTANCE);
 	return true;  /* Don't call other (further) callbacks. */
 }
 
@@ -707,7 +591,7 @@ static bool track_profile_click(GtkWidget *event_box, GdkEventButton *event, voi
 
 static bool track_gradient_click(GtkWidget *event_box, GdkEventButton *event, void * ptr)
 {
-	track_graph_click(event_box, event, (PropWidgets *) ptr, PROPWIN_GRAPH_TYPE_GRADIENT_DISTANCE);
+	track_graph_click(event_box, event, (TrackProfileDialog *) ptr, PROPWIN_GRAPH_TYPE_GRADIENT_DISTANCE);
 	return true;  /* Don't call other (further) callbacks. */
 }
 
@@ -716,7 +600,7 @@ static bool track_gradient_click(GtkWidget *event_box, GdkEventButton *event, vo
 
 static bool track_vt_click(GtkWidget *event_box, GdkEventButton *event, void * ptr)
 {
-	track_graph_click(event_box, event, (PropWidgets *) ptr, PROPWIN_GRAPH_TYPE_SPEED_TIME);
+	track_graph_click(event_box, event, (TrackProfileDialog *) ptr, PROPWIN_GRAPH_TYPE_SPEED_TIME);
 	return true;  /* Don't call other (further) callbacks. */
 }
 
@@ -725,7 +609,7 @@ static bool track_vt_click(GtkWidget *event_box, GdkEventButton *event, void * p
 
 static bool track_dt_click(GtkWidget *event_box, GdkEventButton *event, void * ptr)
 {
-	track_graph_click(event_box, event, (PropWidgets *) ptr, PROPWIN_GRAPH_TYPE_DISTANCE_TIME);
+	track_graph_click(event_box, event, (TrackProfileDialog *) ptr, PROPWIN_GRAPH_TYPE_DISTANCE_TIME);
 	return true;  /* Don't call other (further) callbacks. */
 }
 
@@ -734,7 +618,7 @@ static bool track_dt_click(GtkWidget *event_box, GdkEventButton *event, void * p
 
 static bool track_et_click(GtkWidget *event_box, GdkEventButton *event, void * ptr)
 {
-	track_graph_click(event_box, event, (PropWidgets *) ptr, PROPWIN_GRAPH_TYPE_ELEVATION_TIME);
+	track_graph_click(event_box, event, (TrackProfileDialog *) ptr, PROPWIN_GRAPH_TYPE_ELEVATION_TIME);
 	return true;  /* Don't call other (further) callbacks. */
 }
 
@@ -743,7 +627,7 @@ static bool track_et_click(GtkWidget *event_box, GdkEventButton *event, void * p
 
 static bool track_sd_click(GtkWidget *event_box, GdkEventButton *event, void * ptr)
 {
-	track_graph_click(event_box, event, (PropWidgets *) ptr, PROPWIN_GRAPH_TYPE_SPEED_DISTANCE);
+	track_graph_click(event_box, event, (TrackProfileDialog *) ptr, PROPWIN_GRAPH_TYPE_SPEED_DISTANCE);
 	return true;  /* Don't call other (further) callbacks. */
 }
 
@@ -753,7 +637,7 @@ static bool track_sd_click(GtkWidget *event_box, GdkEventButton *event, void * p
 /**
  * Calculate y position for blob on elevation graph.
  */
-static int blobby_altitude(double x_blob, PropWidgets * widgets)
+static int blobby_altitude(double x_blob, TrackProfileDialog * widgets)
 {
 	int ix = (int)x_blob;
 	/* Ensure ix is inbounds. */
@@ -772,7 +656,7 @@ static int blobby_altitude(double x_blob, PropWidgets * widgets)
 /**
  * Calculate y position for blob on gradient graph.
  */
-static int blobby_gradient(double x_blob, PropWidgets * widgets)
+static int blobby_gradient(double x_blob, TrackProfileDialog * widgets)
 {
 	int ix = (int)x_blob;
 	/* Ensure ix is inbounds. */
@@ -791,7 +675,7 @@ static int blobby_gradient(double x_blob, PropWidgets * widgets)
 /**
  * Calculate y position for blob on speed graph.
  */
-static int blobby_speed(double x_blob, PropWidgets * widgets)
+static int blobby_speed(double x_blob, TrackProfileDialog * widgets)
 {
 	int ix = (int)x_blob;
 	/* Ensure ix is inbounds. */
@@ -810,7 +694,7 @@ static int blobby_speed(double x_blob, PropWidgets * widgets)
 /**
  * Calculate y position for blob on distance graph.
  */
-static int blobby_distance(double x_blob, PropWidgets * widgets)
+static int blobby_distance(double x_blob, TrackProfileDialog * widgets)
 {
 	int ix = (int)x_blob;
 	/* Ensure ix is inbounds. */
@@ -830,7 +714,7 @@ static int blobby_distance(double x_blob, PropWidgets * widgets)
 /**
  * Calculate y position for blob on elevation/time graph.
  */
-static int blobby_altitude_time(double x_blob, PropWidgets * widgets)
+static int blobby_altitude_time(double x_blob, TrackProfileDialog * widgets)
 {
 	int ix = (int)x_blob;
 	/* Ensure ix is inbounds. */
@@ -848,7 +732,7 @@ static int blobby_altitude_time(double x_blob, PropWidgets * widgets)
 /**
  * Calculate y position for blob on speed/dist graph.
  */
-static int blobby_speed_dist(double x_blob, PropWidgets * widgets)
+static int blobby_speed_dist(double x_blob, TrackProfileDialog * widgets)
 {
 	int ix = (int)x_blob;
 	/* Ensure ix is inbounds. */
@@ -864,7 +748,7 @@ static int blobby_speed_dist(double x_blob, PropWidgets * widgets)
 
 
 
-void track_profile_move(GtkWidget *event_box, GdkEventMotion *event, PropWidgets *widgets)
+void track_profile_move(GtkWidget *event_box, GdkEventMotion *event, TrackProfileDialog * widgets)
 {
 	if (widgets->altitudes == NULL) {
 		return;
@@ -921,7 +805,7 @@ void track_profile_move(GtkWidget *event_box, GdkEventMotion *event, PropWidgets
 
 
 
-void track_gradient_move(GtkWidget * event_box, GdkEventMotion * event, PropWidgets * widgets)
+void track_gradient_move(GtkWidget * event_box, GdkEventMotion * event, TrackProfileDialog * widgets)
 {
 	if (widgets->gradients == NULL) {
 		return;
@@ -978,16 +862,14 @@ void track_gradient_move(GtkWidget * event_box, GdkEventMotion * event, PropWidg
 
 
 
-void time_label_update(GtkWidget * widget, time_t seconds_from_start)
+void time_label_update(QLabel * label, time_t seconds_from_start)
 {
 	static char tmp_buf[20];
 	unsigned int h = seconds_from_start/3600;
 	unsigned int m = (seconds_from_start - h*3600)/60;
 	unsigned int s = seconds_from_start - (3600*h) - (60*m);
 	snprintf(tmp_buf, sizeof(tmp_buf), "%02d:%02d:%02d", h, m, s);
-#ifdef K
-	gtk_label_set_text(GTK_LABEL(widget), tmp_buf);
-#endif
+	label->setText(QString(tmp_buf));
 
 	return;
 }
@@ -995,7 +877,7 @@ void time_label_update(GtkWidget * widget, time_t seconds_from_start)
 
 
 
-void real_time_label_update(GtkWidget * widget, Trackpoint * tp)
+void real_time_label_update(QLabel * label, Trackpoint * tp)
 {
 	static char tmp_buf[64];
 	if (tp->has_timestamp) {
@@ -1005,9 +887,7 @@ void real_time_label_update(GtkWidget * widget, Trackpoint * tp)
 	} else {
 		snprintf(tmp_buf, sizeof(tmp_buf), _("No Data"));
 	}
-#ifdef K
-	gtk_label_set_text(GTK_LABEL(widget), tmp_buf);
-#endif
+	label->setText(QString(tmp_buf));
 
 	return;
 }
@@ -1015,7 +895,7 @@ void real_time_label_update(GtkWidget * widget, Trackpoint * tp)
 
 
 
-void speed_label_update(GtkWidget * widget, double value)
+void speed_label_update(QLabel * label, double value)
 {
 	static char tmp_buf[20];
 	/* Even if GPS speed available (tp->speed), the text will correspond to the speed map shown.
@@ -1036,9 +916,7 @@ void speed_label_update(GtkWidget * widget, double value)
 		snprintf(tmp_buf, sizeof(tmp_buf), _("%.1f m/s"), value);
 		break;
 	}
-#ifdef K
-	gtk_label_set_text(GTK_LABEL(widget), tmp_buf);
-#endif
+	label->setText(QString(tmp_buf));
 
 	return;
 }
@@ -1046,13 +924,11 @@ void speed_label_update(GtkWidget * widget, double value)
 
 
 
-void gradient_label_update(GtkWidget * widget, double gradient)
+void gradient_label_update(QLabel * label, double gradient)
 {
 	static char tmp_buf[20];
 	snprintf(tmp_buf, sizeof(tmp_buf), "%d%%", (int) gradient);
-#ifdef K
-	gtk_label_set_text(GTK_LABEL(widget), tmp_buf);
-#endif
+	label->setText(QString(tmp_buf));
 
 	return;
 }
@@ -1060,7 +936,7 @@ void gradient_label_update(GtkWidget * widget, double gradient)
 
 
 
-void track_vt_move(GtkWidget * event_box, GdkEventMotion * event, PropWidgets * widgets)
+void track_vt_move(GtkWidget * event_box, GdkEventMotion * event, TrackProfileDialog * widgets)
 {
 	if (widgets->speeds == NULL) {
 		return;
@@ -1124,7 +1000,7 @@ void track_vt_move(GtkWidget * event_box, GdkEventMotion * event, PropWidgets * 
 /**
  * Update labels and blob marker on mouse moves in the distance/time graph.
  */
-void track_dt_move(GtkWidget * event_box, GdkEventMotion * event, PropWidgets * widgets)
+void track_dt_move(GtkWidget * event_box, GdkEventMotion * event, TrackProfileDialog * widgets)
 {
 	if (widgets->distances == NULL) {
 		return;
@@ -1187,7 +1063,7 @@ void track_dt_move(GtkWidget * event_box, GdkEventMotion * event, PropWidgets * 
 /**
  * Update labels and blob marker on mouse moves in the elevation/time graph.
  */
-void track_et_move(GtkWidget * event_box, GdkEventMotion * event, PropWidgets * widgets)
+void track_et_move(GtkWidget * event_box, GdkEventMotion * event, TrackProfileDialog * widgets)
 {
 	if (widgets->ats == NULL) {
 		return;
@@ -1247,7 +1123,7 @@ void track_et_move(GtkWidget * event_box, GdkEventMotion * event, PropWidgets * 
 
 
 
-void track_sd_move(GtkWidget * event_box, GdkEventMotion * event, PropWidgets * widgets)
+void track_sd_move(GtkWidget * event_box, GdkEventMotion * event, TrackProfileDialog * widgets)
 {
 	if (widgets->speeds_dist == NULL) {
 		return;
@@ -1304,7 +1180,7 @@ void track_sd_move(GtkWidget * event_box, GdkEventMotion * event, PropWidgets * 
 
 
 
-void get_mouse_event_x(GtkWidget * event_box, GdkEventMotion * event, PropWidgets * widgets, double * x, int * ix)
+void get_mouse_event_x(GtkWidget * event_box, GdkEventMotion * event, TrackProfileDialog * widgets, double * x, int * ix)
 {
 #ifdef K
 	int mouse_x, mouse_y;
@@ -1340,14 +1216,12 @@ void get_mouse_event_x(GtkWidget * event_box, GdkEventMotion * event, PropWidget
 
 
 
-void distance_label_update(GtkWidget * widget, double meters_from_start)
+void distance_label_update(QLabel * label, double meters_from_start)
 {
 	static char tmp_buf[20];
 	DistanceUnit distance_unit = a_vik_get_units_distance();
 	get_distance_string(tmp_buf, sizeof (tmp_buf), distance_unit, meters_from_start);
-#ifdef K
-	gtk_label_set_text(GTK_LABEL(widget), tmp_buf);
-#endif
+	label->setText(QString(tmp_buf));
 
 	return;
 }
@@ -1355,7 +1229,7 @@ void distance_label_update(GtkWidget * widget, double meters_from_start)
 
 
 
-void elevation_label_update(GtkWidget * widget, Trackpoint * tp)
+void elevation_label_update(QLabel * label, Trackpoint * tp)
 {
 	static char tmp_buf[20];
 	if (a_vik_get_units_height() == HeightUnit::FEET) {
@@ -1363,9 +1237,7 @@ void elevation_label_update(GtkWidget * widget, Trackpoint * tp)
 	} else {
 		snprintf(tmp_buf, sizeof(tmp_buf), "%d m", (int) tp->altitude);
 	}
-#ifdef K
-	gtk_label_set_text(GTK_LABEL(widget), tmp_buf);
-#endif
+	label->setText(QString(tmp_buf));
 
 	return;
 }
@@ -1373,7 +1245,7 @@ void elevation_label_update(GtkWidget * widget, Trackpoint * tp)
 
 
 
-void dist_dist_label_update(GtkWidget * widget, double distance)
+void dist_dist_label_update(QLabel * label, double distance)
 {
 	static char tmp_buf[20];
 	switch (a_vik_get_units_distance()) {
@@ -1387,9 +1259,8 @@ void dist_dist_label_update(GtkWidget * widget, double distance)
 		snprintf(tmp_buf, sizeof(tmp_buf), "%.2f km", distance); /* kamilTODO: why not distance/1000? */
 		break;
 	}
-#ifdef K
-	gtk_label_set_text(GTK_LABEL(widget), tmp_buf);
-#endif
+
+	label->setText(QString(tmp_buf));
 
 	return;
 }
@@ -1466,7 +1337,7 @@ static void draw_dem_alt_speed_dist(Track * trk,
 /**
  * A common way to draw the grid with y axis labels
  */
-static void draw_grid_y(GtkWidget * window, GtkWidget * image, PropWidgets * widgets, GdkPixmap * pix, char * ss, int i)
+static void draw_grid_y(GtkWidget * window, GtkWidget * image, TrackProfileDialog * widgets, GdkPixmap * pix, char * ss, int i)
 {
 #ifdef K
 	PangoLayout * pl = gtk_widget_create_pango_layout(GTK_WIDGET(image), NULL);
@@ -1499,7 +1370,7 @@ static void draw_grid_y(GtkWidget * window, GtkWidget * image, PropWidgets * wid
 /**
  * A common way to draw the grid with x axis labels for time graphs
  */
-static void draw_grid_x_time(GtkWidget * window, GtkWidget * image, PropWidgets * widgets, GdkPixmap * pix, unsigned int ii, unsigned int tt, unsigned int xx)
+static void draw_grid_x_time(GtkWidget * window, GtkWidget * image, TrackProfileDialog * widgets, GdkPixmap * pix, unsigned int ii, unsigned int tt, unsigned int xx)
 {
 	char *label_markup = NULL;
 #ifdef K
@@ -1562,7 +1433,7 @@ static void draw_grid_x_time(GtkWidget * window, GtkWidget * image, PropWidgets 
 /**
  * A common way to draw the grid with x axis labels for distance graphs.
  */
-static void draw_grid_x_distance(GtkWidget * window, GtkWidget * image, PropWidgets * widgets, GdkPixmap * pix, unsigned int ii, double dd, unsigned int xx, DistanceUnit distance_unit)
+static void draw_grid_x_distance(GtkWidget * window, GtkWidget * image, TrackProfileDialog * widgets, GdkPixmap * pix, unsigned int ii, double dd, unsigned int xx, DistanceUnit distance_unit)
 {
 	char *label_markup = NULL;
 
@@ -1602,7 +1473,7 @@ static void draw_grid_x_distance(GtkWidget * window, GtkWidget * image, PropWidg
 /**
  * Clear the images (scale texts & actual graph).
  */
-static void clear_images(GdkPixmap *pix, GtkWidget *window, PropWidgets *widgets)
+static void clear_images(GdkPixmap *pix, GtkWidget *window, TrackProfileDialog * widgets)
 {
 #ifdef K
 	fill_rectangle(GDK_DRAWABLE(pix), gtk_widget_get_style(window)->bg_gc[0],
@@ -1615,7 +1486,7 @@ static void clear_images(GdkPixmap *pix, GtkWidget *window, PropWidgets *widgets
 
 
 
-static void draw_distance_divisions(GtkWidget * window, GtkWidget * image, GdkPixmap * pix, PropWidgets * widgets, DistanceUnit distance_unit)
+static void draw_distance_divisions(GtkWidget * window, GtkWidget * image, GdkPixmap * pix, TrackProfileDialog * widgets, DistanceUnit distance_unit)
 {
 	/* Set to display units from length in metres. */
 	double length = widgets->track_length_inc_gaps;
@@ -1637,7 +1508,7 @@ static void draw_distance_divisions(GtkWidget * window, GtkWidget * image, GdkPi
 /**
  * Draw just the height profile image.
  */
-static void draw_elevations(GtkWidget * image, Track * trk, PropWidgets * widgets)
+static void draw_elevations(GtkWidget * image, Track * trk, TrackProfileDialog * widgets)
 {
 	int i;
 #ifdef K
@@ -1807,7 +1678,7 @@ static void draw_speed_dist(Track * trk,
 /**
  * Draw just the gradient image.
  */
-static void draw_gradients(GtkWidget * image, Track * trk, PropWidgets * widgets)
+static void draw_gradients(GtkWidget * image, Track * trk, TrackProfileDialog * widgets)
 {
 	int i;
 
@@ -1890,7 +1761,7 @@ static void draw_gradients(GtkWidget * image, Track * trk, PropWidgets * widgets
 
 
 
-static void draw_time_lines(GtkWidget * window, GtkWidget * image, GdkPixmap * pix, PropWidgets * widgets)
+static void draw_time_lines(GtkWidget * window, GtkWidget * image, GdkPixmap * pix, TrackProfileDialog * widgets)
 {
 	unsigned int index = get_time_chunk_index (widgets->duration);
 	double time_per_pixel = (double)(widgets->duration)/widgets->profile_width;
@@ -1911,7 +1782,7 @@ static void draw_time_lines(GtkWidget * window, GtkWidget * image, GdkPixmap * p
 /**
  * Draw just the speed (velocity)/time image.
  */
-static void draw_vt(GtkWidget * image, Track * trk, PropWidgets * widgets)
+static void draw_vt(GtkWidget * image, Track * trk, TrackProfileDialog * widgets)
 {
 	int i;
 
@@ -2030,7 +1901,7 @@ static void draw_vt(GtkWidget * image, Track * trk, PropWidgets * widgets)
 /**
  * Draw just the distance/time image.
  */
-static void draw_dt(GtkWidget * image, Track * trk, PropWidgets * widgets)
+static void draw_dt(GtkWidget * image, Track * trk, TrackProfileDialog * widgets)
 {
 	int i;
 
@@ -2133,7 +2004,7 @@ static void draw_dt(GtkWidget * image, Track * trk, PropWidgets * widgets)
 /**
  * Draw just the elevation/time image.
  */
-static void draw_et(GtkWidget * image, Track * trk, PropWidgets * widgets)
+static void draw_et(GtkWidget * image, Track * trk, TrackProfileDialog * widgets)
 {
 	int i;
 
@@ -2275,7 +2146,7 @@ static void draw_et(GtkWidget * image, Track * trk, PropWidgets * widgets)
 /**
  * Draw just the speed/distance image.
  */
-static void draw_sd(GtkWidget * image, Track * trk, PropWidgets * widgets)
+static void draw_sd(GtkWidget * image, Track * trk, TrackProfileDialog * widgets)
 {
 	double mins;
 	int i;
@@ -2395,7 +2266,7 @@ static void draw_sd(GtkWidget * image, Track * trk, PropWidgets * widgets)
 /**
  * Draw all graphs.
  */
-static void draw_all_graphs(GtkWidget * widget, PropWidgets * widgets, bool resized)
+void TrackProfileDialog::draw_all_graphs(bool resized)
 {
 #ifdef K
 	GtkWidget * window = gtk_widget_get_toplevel(widget);
@@ -2447,7 +2318,7 @@ static void draw_all_graphs(GtkWidget * widget, PropWidgets * widgets, bool resi
 
 
 
-void draw_single_graph(GtkWidget * window, PropWidgets * widgets, bool resized, GList * child, draw_graph_fn_t draw_graph, get_blobby_fn_t get_blobby, bool by_time, PropSaved * saved_img)
+void draw_single_graph(GtkWidget * window, TrackProfileDialog * widgets, bool resized, GList * child, draw_graph_fn_t draw_graph, get_blobby_fn_t get_blobby, bool by_time, PropSaved * saved_img)
 {
 #ifdef K
 	/* Saved image no longer any good as we've resized, so we remove it here. */
@@ -2512,7 +2383,7 @@ void draw_single_graph(GtkWidget * window, PropWidgets * widgets, bool resized, 
 /**
  * Configure/Resize the profile & speed/time images.
  */
-static bool configure_event(GtkWidget * widget, GdkEventConfigure * event, PropWidgets * widgets)
+static bool configure_event(GtkWidget * widget, GdkEventConfigure * event, TrackProfileDialog * widgets)
 {
 #ifdef K
 	if (widgets->configure_dialog) {
@@ -2545,7 +2416,7 @@ static bool configure_event(GtkWidget * widget, GdkEventConfigure * event, PropW
 	}
 
 	/* Draw stuff. */
-	draw_all_graphs(widget, widgets, true);
+	draw_all_graphs(true);
 #endif
 
 	return false;
@@ -2557,30 +2428,30 @@ static bool configure_event(GtkWidget * widget, GdkEventConfigure * event, PropW
 /**
  * Create height profile widgets including the image and callbacks.
  */
-GtkWidget * vik_trw_layer_create_profile(GtkWidget * window, PropWidgets * widgets, double * min_alt, double * max_alt)
+QWidget * TrackProfileDialog::create_profile(double * min_alt, double * max_alt)
 {
 	GdkPixmap *pix;
 	GtkWidget *image;
-	GtkWidget *eventbox;
+	QWidget *eventbox;
 
 	/* First allocation. */
-	widgets->altitudes = widgets->trk->make_elevation_map(widgets->profile_width);
+	this->altitudes = this->trk->make_elevation_map(this->profile_width);
 
-	if (widgets->altitudes == NULL) {
+	if (this->altitudes == NULL) {
 		*min_alt = *max_alt = VIK_DEFAULT_ALTITUDE;
 		return NULL;
 	}
 
-	minmax_array(widgets->altitudes, min_alt, max_alt, true, widgets->profile_width);
+	minmax_array(this->altitudes, min_alt, max_alt, true, this->profile_width);
 #ifdef K
-	pix = gdk_pixmap_new(gtk_widget_get_window(window), widgets->profile_width+MARGIN_X, widgets->profile_height+MARGIN_Y, -1);
+	pix = gdk_pixmap_new(gtk_widget_get_window(window), this->profile_width+MARGIN_X, this->profile_height+MARGIN_Y, -1);
 	image = gtk_image_new_from_pixmap(pix, NULL);
 
 	g_object_unref(G_OBJECT(pix));
 
 	eventbox = gtk_event_box_new();
-	g_signal_connect(G_OBJECT(eventbox), "button_press_event", G_CALLBACK(track_profile_click), widgets);
-	g_signal_connect(G_OBJECT(eventbox), "motion_notify_event", G_CALLBACK(track_profile_move), widgets);
+	connect(eventbox, "button_press_event", this, SLOT (track_profile_click_cb()));
+	connect(eventbox, "motion_notify_event", this, SLOT (track_profile_move_cb()));
 	gtk_container_add(GTK_CONTAINER(eventbox), image);
 	gtk_widget_set_events(eventbox, GDK_BUTTON_PRESS_MASK | GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_STRUCTURE_MASK);
 
@@ -2595,28 +2466,28 @@ GtkWidget * vik_trw_layer_create_profile(GtkWidget * window, PropWidgets * widge
 /**
  * Create height profile widgets including the image and callbacks.
  */
-GtkWidget * vik_trw_layer_create_gradient(GtkWidget * window, PropWidgets * widgets)
+QWidget * TrackProfileDialog::create_gradient(void)
 {
 	GdkPixmap *pix;
 	GtkWidget *image;
-	GtkWidget *eventbox;
+	QWidget *eventbox;
 
 	/* First allocation. */
-	widgets->gradients = widgets->trk->make_gradient_map(widgets->profile_width);
+	this->gradients = this->trk->make_gradient_map(this->profile_width);
 
-	if (widgets->gradients == NULL) {
+	if (this->gradients == NULL) {
 		return NULL;
 	}
 
 #ifdef K
-	pix = gdk_pixmap_new(gtk_widget_get_window(window), widgets->profile_width+MARGIN_X, widgets->profile_height+MARGIN_Y, -1);
+	pix = gdk_pixmap_new(gtk_widget_get_window(window), this->profile_width+MARGIN_X, this->profile_height+MARGIN_Y, -1);
 	image = gtk_image_new_from_pixmap(pix, NULL);
 
 	g_object_unref(G_OBJECT(pix));
 
 	eventbox = gtk_event_box_new();
-	g_signal_connect(G_OBJECT(eventbox), "button_press_event", G_CALLBACK(track_gradient_click), widgets);
-	g_signal_connect(G_OBJECT(eventbox), "motion_notify_event", G_CALLBACK(track_gradient_move), widgets);
+	connect(eventbox, "button_press_event", this, SLOT (track_gradient_click_cb()));
+	connect(eventbox, "motion_notify_event", this, SLOT (track_gradient_move_cb()));
 	gtk_container_add(GTK_CONTAINER(eventbox), image);
 	gtk_widget_set_events(eventbox, GDK_BUTTON_PRESS_MASK | GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_STRUCTURE_MASK);
 
@@ -2631,19 +2502,19 @@ GtkWidget * vik_trw_layer_create_gradient(GtkWidget * window, PropWidgets * widg
 /**
  * Create speed/time widgets including the image and callbacks.
  */
-GtkWidget * vik_trw_layer_create_vtdiag(GtkWidget * window, PropWidgets * widgets)
+QWidget * TrackProfileDialog::create_vtdiag(void)
 {
 	GdkPixmap *pix;
 	GtkWidget *image;
-	GtkWidget *eventbox;
+	QWidget *eventbox;
 
 	/* First allocation. */
-	widgets->speeds = widgets->trk->make_speed_map(widgets->profile_width);
-	if (widgets->speeds == NULL) {
+	this->speeds = this->trk->make_speed_map(this->profile_width);
+	if (this->speeds == NULL) {
 		return NULL;
 	}
 #ifdef K
-	pix = gdk_pixmap_new(gtk_widget_get_window(window), widgets->profile_width+MARGIN_X, widgets->profile_height+MARGIN_Y, -1);
+	pix = gdk_pixmap_new(gtk_widget_get_window(window), this->profile_width+MARGIN_X, this->profile_height+MARGIN_Y, -1);
 	image = gtk_image_new_from_pixmap(pix, NULL);
 
 #if 0
@@ -2671,8 +2542,8 @@ GtkWidget * vik_trw_layer_create_vtdiag(GtkWidget * window, PropWidgets * widget
 	g_object_unref(G_OBJECT(pix));
 
 	eventbox = gtk_event_box_new();
-	g_signal_connect(G_OBJECT(eventbox), "button_press_event", G_CALLBACK(track_vt_click), widgets);
-	g_signal_connect(G_OBJECT(eventbox), "motion_notify_event", G_CALLBACK(track_vt_move), widgets);
+	connect(eventbox, "button_press_event", this, SLOT (track_vt_click_cb()));
+	connect(eventbox, "motion_notify_event", this, SLOT (track_vt_move_cb()));
 	gtk_container_add(GTK_CONTAINER(eventbox), image);
 	gtk_widget_set_events(eventbox, GDK_BUTTON_PRESS_MASK | GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK);
 
@@ -2687,27 +2558,27 @@ GtkWidget * vik_trw_layer_create_vtdiag(GtkWidget * window, PropWidgets * widget
 /**
  * Create distance / time widgets including the image and callbacks.
  */
-GtkWidget * vik_trw_layer_create_dtdiag(GtkWidget * window, PropWidgets * widgets)
+QWidget * TrackProfileDialog::create_dtdiag(void)
 {
 	GdkPixmap *pix;
 	GtkWidget *image;
-	GtkWidget *eventbox;
+	QWidget *eventbox;
 
 	/* First allocation. */
-	widgets->distances = widgets->trk->make_distance_map(widgets->profile_width);
-	if (widgets->distances == NULL) {
+	this->distances = this->trk->make_distance_map(this->profile_width);
+	if (this->distances == NULL) {
 		return NULL;
 	}
 #ifdef K
-	pix = gdk_pixmap_new(gtk_widget_get_window(window), widgets->profile_width+MARGIN_X, widgets->profile_height+MARGIN_Y, -1);
+	pix = gdk_pixmap_new(gtk_widget_get_window(window), this->profile_width+MARGIN_X, this->profile_height+MARGIN_Y, -1);
 	image = gtk_image_new_from_pixmap(pix, NULL);
 
 	g_object_unref(G_OBJECT(pix));
 
 	eventbox = gtk_event_box_new();
-	g_signal_connect(G_OBJECT(eventbox), "button_press_event", G_CALLBACK(track_dt_click), widgets);
-	g_signal_connect(G_OBJECT(eventbox), "motion_notify_event", G_CALLBACK(track_dt_move), widgets);
-	//g_signal_connect_swapped(G_OBJECT(eventbox), "destroy", G_CALLBACK(g_free), widgets);
+	connect(eventbox, "button_press_event", this, SLOT (track_dt_click_cb()));
+	connect(eventbox, "motion_notify_event", this, SLOT (track_dt_move_cb()));
+	//g_signal_connect_swapped(G_OBJECT(eventbox), "destroy", G_CALLBACK(g_free), this);
 	gtk_container_add(GTK_CONTAINER(eventbox), image);
 	gtk_widget_set_events(eventbox, GDK_BUTTON_PRESS_MASK | GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK);
 #endif
@@ -2721,26 +2592,26 @@ GtkWidget * vik_trw_layer_create_dtdiag(GtkWidget * window, PropWidgets * widget
 /**
  * Create elevation / time widgets including the image and callbacks.
  */
-GtkWidget * vik_trw_layer_create_etdiag(GtkWidget * window, PropWidgets * widgets)
+QWidget * TrackProfileDialog::create_etdiag(void)
 {
 	GdkPixmap *pix;
 	GtkWidget *image;
-	GtkWidget *eventbox;
+	QWidget *eventbox;
 
 	/* First allocation. */
-	widgets->ats = widgets->trk->make_elevation_time_map(widgets->profile_width);
-	if (widgets->ats == NULL) {
+	this->ats = this->trk->make_elevation_time_map(this->profile_width);
+	if (this->ats == NULL) {
 		return NULL;
 	}
 #ifdef K
-	pix = gdk_pixmap_new(gtk_widget_get_window(window), widgets->profile_width+MARGIN_X, widgets->profile_height+MARGIN_Y, -1);
+	pix = gdk_pixmap_new(gtk_widget_get_window(window), this->profile_width+MARGIN_X, this->profile_height+MARGIN_Y, -1);
 	image = gtk_image_new_from_pixmap(pix, NULL);
 
 	g_object_unref(G_OBJECT(pix));
 
 	eventbox = gtk_event_box_new();
-	g_signal_connect(G_OBJECT(eventbox), "button_press_event", G_CALLBACK(track_et_click), widgets);
-	g_signal_connect(G_OBJECT(eventbox), "motion_notify_event", G_CALLBACK(track_et_move), widgets);
+	connect(eventbox, "button_press_event", this, SLOT (track_et_click_cb()));
+	connect(eventbox, "motion_notify_event", this, SLOT (track_et_move_cb()));
 	gtk_container_add(GTK_CONTAINER(eventbox), image);
 	gtk_widget_set_events(eventbox, GDK_BUTTON_PRESS_MASK | GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK);
 #endif
@@ -2754,26 +2625,26 @@ GtkWidget * vik_trw_layer_create_etdiag(GtkWidget * window, PropWidgets * widget
 /**
  * Create speed/distance widgets including the image and callbacks.
  */
-GtkWidget * vik_trw_layer_create_sddiag(GtkWidget * window, PropWidgets * widgets)
+QWidget * TrackProfileDialog::create_sddiag(void)
 {
 	GdkPixmap *pix;
 	GtkWidget *image;
-	GtkWidget *eventbox;
+	QWidget *eventbox;
 
 	/* First allocation. */
-	widgets->speeds_dist = widgets->trk->make_speed_dist_map(widgets->profile_width); // kamilFIXME
-	if (widgets->speeds_dist == NULL) {
+	this->speeds_dist = this->trk->make_speed_dist_map(this->profile_width); // kamilFIXME
+	if (this->speeds_dist == NULL) {
 		return NULL;
 	}
 #ifdef K
-	pix = gdk_pixmap_new(gtk_widget_get_window(window), widgets->profile_width+MARGIN_X, widgets->profile_height+MARGIN_Y, -1);
+	pix = gdk_pixmap_new(gtk_widget_get_window(window), this->profile_width+MARGIN_X, this->profile_height+MARGIN_Y, -1);
 	image = gtk_image_new_from_pixmap(pix, NULL);
 
 	g_object_unref(G_OBJECT(pix));
 
 	eventbox = gtk_event_box_new();
-	g_signal_connect(G_OBJECT(eventbox), "button_press_event", G_CALLBACK(track_sd_click), widgets);
-	g_signal_connect(G_OBJECT(eventbox), "motion_notify_event", G_CALLBACK(track_sd_move), widgets);
+	connect(eventbox, "button_press_event", this, SLOT (track_sd_click_cb()));
+	connect(eventbox, "motion_notify_event", this, SLOT (track_sd_move_cb()));
 	gtk_container_add(GTK_CONTAINER(eventbox), image);
 	gtk_widget_set_events(eventbox, GDK_BUTTON_PRESS_MASK | GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK);
 #endif
@@ -2791,7 +2662,7 @@ GtkWidget * vik_trw_layer_create_sddiag(GtkWidget * window, PropWidgets * widget
 
 
 
-static void save_values(PropWidgets * widgets)
+static void save_values(TrackProfileDialog * widgets)
 {
 #ifdef K
 	/* Session settings. */
@@ -2821,16 +2692,16 @@ static void save_values(PropWidgets * widgets)
 
 
 
-static void destroy_cb(GtkDialog * dialog, PropWidgets * widgets)
+static void destroy_cb(GtkDialog * dialog, TrackProfileDialog * widgets)
 {
 	save_values(widgets);
-	prop_widgets_free(widgets);
+	delete widgets;
 }
 
 
 
 
-static void propwin_response_cb(GtkDialog * dialog, int resp, PropWidgets * widgets)
+static void propwin_response_cb(GtkDialog * dialog, int resp, TrackProfileDialog * widgets)
 {
 	Track * trk = widgets->trk;
 	LayerTRW * trw = widgets->trw;
@@ -2845,10 +2716,10 @@ static void propwin_response_cb(GtkDialog * dialog, int resp, PropWidgets * widg
 	case GTK_RESPONSE_REJECT:
 		break;
 	case GTK_RESPONSE_ACCEPT:
-		trk->set_comment(gtk_entry_get_text(GTK_ENTRY(widgets->w_comment)));
-		trk->set_description(gtk_entry_get_text(GTK_ENTRY(widgets->w_description)));
-		trk->set_source(gtk_entry_get_text(GTK_ENTRY(widgets->w_source)));
-		trk->set_type(gtk_entry_get_text(GTK_ENTRY(widgets->w_type)));
+		trk->set_comment(widgets->w_comment->toUtf()->data());
+		trk->set_description(widgets->w_description->toUtf()->data());
+		trk->set_source(widgets->w_source->toUtf()->data())
+		trk->set_type(widgets->w_type->toUtf()->data());
 		gtk_color_button_get_color(GTK_COLOR_BUTTON(widgets->w_color), &(trk->color));
 		trk->draw_name_mode = (TrackDrawnameType) gtk_combo_box_get_active(GTK_COMBO_BOX(widgets->w_namelabel));
 		trk->max_number_dist_labels = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(widgets->w_number_distlabels));
@@ -2960,11 +2831,11 @@ static void propwin_response_cb(GtkDialog * dialog, int resp, PropWidgets * widg
 /**
  * Force a redraw when checkbutton has been toggled to show/hide that information.
  */
-static void checkbutton_toggle_cb(GtkToggleButton * togglebutton, PropWidgets * widgets, void * dummy)
+void TrackProfileDialog::checkbutton_toggle_cb(void)
 {
 	/* Even though not resized, we'll pretend it is -
 	   as this invalidates the saved images (since the image may have changed). */
-	draw_all_graphs(widgets->dialog, widgets, true);
+	this->draw_all_graphs(true);
 }
 
 
@@ -2973,36 +2844,37 @@ static void checkbutton_toggle_cb(GtkToggleButton * togglebutton, PropWidgets * 
 /**
  *  Create the widgets for the given graph tab.
  */
-static GtkWidget * create_graph_page(GtkWidget *graph,
-				     const char *markup,
-				     GtkWidget *value,
-				     const char *markup2,
-				     GtkWidget *value2,
-				     const char *markup3,
-				     GtkWidget *value3,
-				     GtkWidget *checkbutton1,
-				     bool checkbutton1_default,
-				     GtkWidget *checkbutton2,
-				     bool checkbutton2_default)
+QWidget * TrackProfileDialog::create_graph_page(QWidget * graph,
+						const char * text1,
+						QLabel * value1,
+						const char * text2,
+						QLabel * value2,
+						const char * text3,
+						QLabel * value3,
+						QCheckBox * checkbutton1,
+						bool checkbutton1_default,
+						QCheckBox * checkbutton2,
+						bool checkbutton2_default)
 {
-#ifdef K
-	GtkWidget *hbox = gtk_hbox_new (false, 10);
-	GtkWidget *vbox = gtk_vbox_new (false, 10);
-	GtkWidget *label = gtk_label_new (NULL);
-	GtkWidget *label2 = gtk_label_new (NULL);
-	GtkWidget *label3 = gtk_label_new (NULL);
-	gtk_box_pack_start (GTK_BOX(vbox), graph, false, false, 0);
-	gtk_label_set_markup (GTK_LABEL(label), markup);
-	gtk_label_set_markup (GTK_LABEL(label2), markup2);
-	gtk_label_set_markup (GTK_LABEL(label3), markup3);
-	gtk_box_pack_start (GTK_BOX(hbox), label, false, false, 0);
-	gtk_box_pack_start (GTK_BOX(hbox), value, false, false, 0);
-	gtk_box_pack_start (GTK_BOX(hbox), label2, false, false, 0);
-	gtk_box_pack_start (GTK_BOX(hbox), value2, false, false, 0);
+
+	/* kamilTODO: who deletes these two pointers? */
+	QHBoxLayout * hbox = new QHBoxLayout;
+	QVBoxLayout * vbox = new QVBoxLayout;
+
+	QLabel * label1 = new QLabel(text1, this);
+	QLabel * label2 = new QLabel(text2, this);
+	QLabel * label3 = new QLabel(text3, this);
+
+	vbox->addWidget(graph);
+	hbox->addWidget(label1);
+	hbox->addWidget(value1);
+	hbox->addWidget(label2);
+	hbox->addWidget(value2);
 	if (value3) {
-		gtk_box_pack_start (GTK_BOX(hbox), label3, false, false, 0);
-		gtk_box_pack_start (GTK_BOX(hbox), value3, false, false, 0);
+		hbox->addWidget(label3);
+		hbox->addWidget(value3);
 	}
+#ifdef K
 	if (checkbutton2) {
 		gtk_box_pack_end (GTK_BOX(hbox), checkbutton2, false, false, 0);
 		gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(checkbutton2), checkbutton2_default);
@@ -3011,10 +2883,16 @@ static GtkWidget * create_graph_page(GtkWidget *graph,
 		gtk_box_pack_end (GTK_BOX(hbox), checkbutton1, false, false, 0);
 		gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(checkbutton1), checkbutton1_default);
 	}
-	gtk_box_pack_start (GTK_BOX(vbox), hbox, false, false, 0);
-
-	return vbox;
 #endif
+	vbox->addLayout(hbox);
+
+	QWidget * widget = new QWidget(this);
+	QLayout * old = widget->layout();
+	delete old;
+	widget->setLayout(vbox);
+
+	return widget;
+
 }
 
 
@@ -3072,38 +2950,33 @@ void SlavGPS::vik_trw_layer_propwin_run(QWidget * parent,
 
 TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer, Track * a_trk, void * a_panel, Viewport * a_viewport, QWidget * a_parent) : QDialog(a_parent)
 {
-	this->setWindowTitle(title);
+	this->setWindowTitle(QString(_("%1 - Track Properties")).arg(a_trk->name));
 
-	this->layer = a_layer;
+	this->trw = a_layer;
 	this->trk = a_trk;
 	this->panel = a_panel;
 	this->viewport = a_viewport;
 	this->parent = a_parent;
 
-#ifdef K
-	PropWidgets * widgets = prop_widgets_new();
-	widgets->trw = layer;
-	widgets->viewport = viewport;
-	widgets->panel = (LayersPanel *) panel;
-	widgets->trk = trk;
 
 	int profile_size_value;
 	/* Ensure minimum values. */
-	widgets->profile_width = 600;
+	this->profile_width = 600;
 	if (a_settings_get_integer(VIK_SETTINGS_TRACK_PROFILE_WIDTH, &profile_size_value)) {
-		if (profile_size_value > widgets->profile_width) {
-			widgets->profile_width = profile_size_value;
+		if (profile_size_value > this->profile_width) {
+			this->profile_width = profile_size_value;
 		}
 	}
 
-	widgets->profile_height = 300;
+	this->profile_height = 300;
 	if (a_settings_get_integer(VIK_SETTINGS_TRACK_PROFILE_HEIGHT, &profile_size_value)) {
-		if (profile_size_value > widgets->profile_height) {
-			widgets->profile_height = profile_size_value;
+		if (profile_size_value > this->profile_height) {
+			this->profile_height = profile_size_value;
 		}
 	}
 
-	char * title = g_strdup_printf(_("%s - Track Properties"), trk->name);
+#ifdef K
+
 	GtkWidget * dialog = gtk_dialog_new_with_buttons(title,
 							 parent,
 							 (GtkDialogFlags) (GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_NO_SEPARATOR),
@@ -3117,22 +2990,22 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer
 	widgets->dialog = dialog;
 	g_signal_connect(G_OBJECT(dialog), "response", G_CALLBACK(propwin_response_cb), widgets);
 
-	free(title);
-	GtkWidget *table;
+#endif
+
 	double tr_len;
 	unsigned long tp_count;
 	unsigned int seg_count;
 
 	double min_alt, max_alt;
-	widgets->elev_box = vik_trw_layer_create_profile(GTK_WIDGET(parent), widgets, &min_alt, &max_alt);
-	widgets->gradient_box = vik_trw_layer_create_gradient(GTK_WIDGET(parent), widgets);
-	widgets->speed_box = vik_trw_layer_create_vtdiag(GTK_WIDGET(parent), widgets);
-	widgets->dist_box = vik_trw_layer_create_dtdiag(GTK_WIDGET(parent), widgets);
-	widgets->elev_time_box = vik_trw_layer_create_etdiag(GTK_WIDGET(parent), widgets);
-	widgets->speed_dist_box = vik_trw_layer_create_sddiag(GTK_WIDGET(parent), widgets);
-	GtkWidget *graphs = gtk_notebook_new();
+	this->elev_box = this->create_profile(&min_alt, &max_alt);
+	this->gradient_box = this->create_gradient();
+	this->speed_box = this->create_vtdiag();
+	this->dist_box = this->create_dtdiag();
+	this->elev_time_box = this->create_etdiag();
+	this->speed_dist_box = this->create_sddiag();
+	this->tabs = new QTabWidget();
 
-	GtkWidget *content_prop[20];
+	QWidget * content_prop[20] = { 0 };
 	int cnt_prop = 0;
 
 	static char *label_texts[] = {
@@ -3163,29 +3036,31 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer
 	double tmp_speed;
 
 	/* Properties. */
-	widgets->w_comment = gtk_entry_new();
+	this->w_comment = new QLineEdit(this);
 	if (trk->comment) {
-		gtk_entry_set_text(GTK_ENTRY(widgets->w_comment), trk->comment);
+		this->w_comment->insert(trk->comment);
 	}
-	content_prop[cnt_prop++] = widgets->w_comment;
+	content_prop[cnt_prop++] = this->w_comment;
 
-	widgets->w_description = gtk_entry_new();
+	this->w_description = new QLineEdit(this);
 	if (trk->description) {
-		gtk_entry_set_text(GTK_ENTRY(widgets->w_description), trk->description);
+		this->w_description->insert(trk->description);
 	}
-	content_prop[cnt_prop++] = widgets->w_description;
+	content_prop[cnt_prop++] = this->w_description;
 
-	widgets->w_source = gtk_entry_new();
+	this->w_source = new QLineEdit(this);
 	if (trk->source) {
-		gtk_entry_set_text(GTK_ENTRY(widgets->w_source), trk->source);
+		this->w_source->insert(trk->source);
 	}
-	content_prop[cnt_prop++] = widgets->w_source;
+	content_prop[cnt_prop++] = this->w_source;
 
-	widgets->w_type = gtk_entry_new();
+	this->w_type = new QLineEdit(this);
 	if (trk->type) {
-		gtk_entry_set_text(GTK_ENTRY(widgets->w_type), trk->type);
+		this->w_type->insert(trk->type);
 	}
-	content_prop[cnt_prop++] = widgets->w_type;
+	content_prop[cnt_prop++] = this->w_type;
+
+#ifdef K
 
 	widgets->w_color = content_prop[cnt_prop++] = gtk_color_button_new_with_color(&(trk->color));
 
@@ -3210,9 +3085,9 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer
 		gtk_spin_button_new(GTK_ADJUSTMENT(gtk_adjustment_new(trk->max_number_dist_labels, 0, 100, 1, 1, 0)), 1, 0);
 	gtk_widget_set_tooltip_text(GTK_WIDGET(widgets->w_number_distlabels), _("Maximum number of distance labels to be shown"));
 
-	table = create_table(cnt_prop, label_texts, content_prop);
+	GtkWidget * table = create_table(cnt_prop, label_texts, content_prop);
 
-	gtk_notebook_append_page(GTK_NOTEBOOK(graphs), GTK_WIDGET(table), gtk_label_new(_("Properties")));
+	this->tabs->addTab(table, _("Properties"));
 
 	/* Statistics. */
 	GtkWidget *content[20];
@@ -3226,18 +3101,18 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer
 	tr_len = widgets->track_length = trk->get_length();
 
 	get_distance_string(tmp_buf, sizeof (tmp_buf), distance_unit, tr_len);
-	widgets->w_track_length = content[cnt++] = ui_label_new_selectable(tmp_buf);
+	widgets->w_track_length = content[cnt++] = ui_label_new_selectable(tmp_buf, this);
 
 	tp_count = trk->get_tp_count();
 	snprintf(tmp_buf, sizeof(tmp_buf), "%lu", tp_count);
-	widgets->w_tp_count = content[cnt++] = ui_label_new_selectable(tmp_buf);
+	widgets->w_tp_count = content[cnt++] = ui_label_new_selectable(tmp_buf, this);
 
 	seg_count = trk->get_segment_count() ;
 	snprintf(tmp_buf, sizeof(tmp_buf), "%u", seg_count);
-	widgets->w_segment_count = content[cnt++] = ui_label_new_selectable(tmp_buf);
+	widgets->w_segment_count = content[cnt++] = ui_label_new_selectable(tmp_buf, this);
 
 	snprintf(tmp_buf, sizeof(tmp_buf), "%lu", trk->get_dup_point_count());
-	widgets->w_duptp_count = content[cnt++] = ui_label_new_selectable(tmp_buf);
+	widgets->w_duptp_count = content[cnt++] = ui_label_new_selectable(tmp_buf, this);
 
 	SpeedUnit speed_units = a_vik_get_units_speed();
 	tmp_speed = trk->get_max_speed();
@@ -3246,7 +3121,7 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer
 	} else {
 		get_speed_string(tmp_buf, sizeof (tmp_buf), speed_units, tmp_speed);
 	}
-	widgets->w_max_speed = content[cnt++] = ui_label_new_selectable(tmp_buf);
+	widgets->w_max_speed = content[cnt++] = ui_label_new_selectable(tmp_buf, this);
 
 	tmp_speed = trk->get_average_speed();
 	if (tmp_speed == 0) {
@@ -3254,7 +3129,7 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer
 	} else {
 		get_speed_string(tmp_buf, sizeof (tmp_buf), speed_units, tmp_speed);
 	}
-	widgets->w_avg_speed = content[cnt++] = ui_label_new_selectable(tmp_buf);
+	widgets->w_avg_speed = content[cnt++] = ui_label_new_selectable(tmp_buf, this);
 
 	/* Use 60sec as the default period to be considered stopped.
 	   This is the TrackWaypoint draw stops default value 'trw->stop_length'.
@@ -3266,7 +3141,7 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer
 	} else {
 		get_speed_string(tmp_buf, sizeof (tmp_buf), speed_units, tmp_speed);
 	}
-	widgets->w_mvg_speed = content[cnt++] = ui_label_new_selectable(tmp_buf);
+	widgets->w_mvg_speed = content[cnt++] = ui_label_new_selectable(tmp_buf, this);
 
 	switch (distance_unit) {
 	case DistanceUnit::KILOMETRES:
@@ -3282,7 +3157,7 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer
 	default:
 		fprintf(stderr, "CRITICAL: Houston, we've had a problem. distance=%d\n", distance_unit);
 	}
-	widgets->w_avg_dist = content[cnt++] = ui_label_new_selectable(tmp_buf);
+	widgets->w_avg_dist = content[cnt++] = ui_label_new_selectable(tmp_buf, this);
 
 	HeightUnit height_units = a_vik_get_units_height();
 	if (min_alt == VIK_DEFAULT_ALTITUDE) {
@@ -3300,7 +3175,7 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer
 			fprintf(stderr, "CRITICAL: Houston, we've had a problem. height=%d\n", height_units);
 		}
 	}
-	widgets->w_elev_range = content[cnt++] = ui_label_new_selectable(tmp_buf);
+	widgets->w_elev_range = content[cnt++] = ui_label_new_selectable(tmp_buf, this);
 
 	trk->get_total_elevation_gain(&max_alt, &min_alt);
 	if (min_alt == VIK_DEFAULT_ALTITUDE) {
@@ -3318,7 +3193,7 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer
 			fprintf(stderr, "CRITICAL: Houston, we've had a problem. height=%d\n", height_units);
 		}
 	}
-	widgets->w_elev_gain = content[cnt++] = ui_label_new_selectable(tmp_buf);
+	widgets->w_elev_gain = content[cnt++] = ui_label_new_selectable(tmp_buf, this);
 
 #if 0
 #define PACK(w) gtk_box_pack_start(GTK_BOX(right_vbox), w, false, false, 0);
@@ -3350,11 +3225,11 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer
 
 		char *msg;
 		msg = vu_get_time_string(&t1, "%c", &vc, widgets->tz);
-		widgets->w_time_start = content[cnt++] = ui_label_new_selectable(msg);
+		widgets->w_time_start = content[cnt++] = ui_label_new_selectable(msg, this);
 		free(msg);
 
 		msg = vu_get_time_string(&t2, "%c", &vc, widgets->tz);
-		widgets->w_time_end = content[cnt++] = ui_label_new_selectable(msg);
+		widgets->w_time_end = content[cnt++] = ui_label_new_selectable(msg, this);
 		free(msg);
 
 		int total_duration_s = (int)(t2-t1);
@@ -3362,7 +3237,7 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer
 		int total_duration_m = total_duration_s/60;
 		int segments_duration_m = segments_duration_s/60;
 		snprintf(tmp_buf, sizeof(tmp_buf), _("%d minutes - %d minutes moving"), total_duration_m, segments_duration_m);
-		widgets->w_time_dur = content[cnt++] = ui_label_new_selectable(tmp_buf);
+		widgets->w_time_dur = content[cnt++] = ui_label_new_selectable(tmp_buf, this);
 
 		/* A tooltip to show in more readable hours:minutes. */
 		char tip_buf_total[20];
@@ -3383,107 +3258,106 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer
 	}
 
 	table = create_table(cnt, stats_texts, content);
+	this->tabs->addTab(table, _("Statistics"));
+#endif
 
-	gtk_notebook_append_page(GTK_NOTEBOOK(graphs), GTK_WIDGET(table), gtk_label_new(_("Statistics")));
+	qDebug() << "AAAA";
 
-	if (widgets->elev_box) {
-		GtkWidget *page = NULL;
-		widgets->w_cur_dist = ui_label_new_selectable(_("No Data"));
-		widgets->w_cur_elevation = ui_label_new_selectable(_("No Data"));
-		widgets->w_show_dem = gtk_check_button_new_with_mnemonic(_("Show D_EM"));
-		widgets->w_show_alt_gps_speed = gtk_check_button_new_with_mnemonic(_("Show _GPS Speed"));
-		page = create_graph_page(widgets->elev_box,
-					 _("<b>Track Distance:</b>"), widgets->w_cur_dist,
-					 _("<b>Track Height:</b>"), widgets->w_cur_elevation,
-					 NULL, NULL,
-					 widgets->w_show_dem, show_dem,
-					 widgets->w_show_alt_gps_speed, show_alt_gps_speed);
-		g_signal_connect(widgets->w_show_dem, "toggled", G_CALLBACK (checkbutton_toggle_cb), widgets);
-		g_signal_connect(widgets->w_show_alt_gps_speed, "toggled", G_CALLBACK (checkbutton_toggle_cb), widgets);
-		gtk_notebook_append_page(GTK_NOTEBOOK(graphs), page, gtk_label_new(_("Elevation-distance")));
+
+	if (this->elev_box) {
+		this->w_cur_dist = ui_label_new_selectable(_("No Data"), this);
+		this->w_cur_elevation = ui_label_new_selectable(_("No Data"), this);
+		this->w_show_dem = new QCheckBox(_("Show D&EM"), this);
+		this->w_show_alt_gps_speed = new QCheckBox(_("Show &GPS Speed"), this);
+		QWidget * page = this->create_graph_page(this->elev_box,
+							 _("Track Distance:"), this->w_cur_dist,
+							 _("Track Height:"), this->w_cur_elevation,
+							 NULL, NULL,
+							 this->w_show_dem, show_dem,
+							 this->w_show_alt_gps_speed, show_alt_gps_speed);
+		connect(this->w_show_dem, SIGNAL (stateChanged(int)), this, SLOT (checkbutton_toggle_cb()));
+		connect(this->w_show_alt_gps_speed, SIGNAL (stateChanged(int)), this, SLOT (checkbutton_toggle_cb()));
+		this->tabs->addTab(page, _("Elevation-distance"));
 	}
 
-	if (widgets->gradient_box) {
-		GtkWidget *page = NULL;
-		widgets->w_cur_gradient_dist = ui_label_new_selectable(_("No Data"));
-		widgets->w_cur_gradient_gradient = ui_label_new_selectable(_("No Data"));
-		widgets->w_show_gradient_gps_speed = gtk_check_button_new_with_mnemonic(_("Show _GPS Speed"));
-		page = create_graph_page(widgets->gradient_box,
-					 _("<b>Track Distance:</b>"), widgets->w_cur_gradient_dist,
-					 _("<b>Track Gradient:</b>"), widgets->w_cur_gradient_gradient,
-					 NULL, NULL,
-					 widgets->w_show_gradient_gps_speed, show_gradient_gps_speed,
-					 NULL, false);
-		g_signal_connect(widgets->w_show_gradient_gps_speed, "toggled", G_CALLBACK (checkbutton_toggle_cb), widgets);
-		gtk_notebook_append_page(GTK_NOTEBOOK(graphs), page, gtk_label_new(_("Gradient-distance")));
+	if (this->gradient_box) {
+		this->w_cur_gradient_dist = ui_label_new_selectable(_("No Data"), this);
+		this->w_cur_gradient_gradient = ui_label_new_selectable(_("No Data"), this);
+		this->w_show_gradient_gps_speed = new QCheckBox(_("Show &GPS Speed"), this);
+		QWidget * page = this->create_graph_page(this->gradient_box,
+							 _("Track Distance:"), this->w_cur_gradient_dist,
+							 _("Track Gradient:"), this->w_cur_gradient_gradient,
+							 NULL, NULL,
+							 this->w_show_gradient_gps_speed, show_gradient_gps_speed,
+							 NULL, false);
+		connect(this->w_show_gradient_gps_speed, SIGNAL (stateChanged(int)), this, SLOT (checkbutton_toggle_cb()));
+		this->tabs->addTab(page, _("Gradient-distance"));
 	}
 
-	if (widgets->speed_box) {
-		GtkWidget *page = NULL;
-		widgets->w_cur_time = ui_label_new_selectable(_("No Data"));
-		widgets->w_cur_speed = ui_label_new_selectable(_("No Data"));
-		widgets->w_cur_time_real = ui_label_new_selectable(_("No Data"));
-		widgets->w_show_gps_speed = gtk_check_button_new_with_mnemonic(_("Show _GPS Speed"));
-		page = create_graph_page(widgets->speed_box,
-					 _("<b>Track Time:</b>"), widgets->w_cur_time,
-					 _("<b>Track Speed:</b>"), widgets->w_cur_speed,
-					 _("<b>Time/Date:</b>"), widgets->w_cur_time_real,
-					 widgets->w_show_gps_speed, show_gps_speed,
-					 NULL, false);
-		g_signal_connect(widgets->w_show_gps_speed, "toggled", G_CALLBACK (checkbutton_toggle_cb), widgets);
-		gtk_notebook_append_page(GTK_NOTEBOOK(graphs), page, gtk_label_new(_("Speed-time")));
+	if (this->speed_box) {
+		this->w_cur_time = ui_label_new_selectable(_("No Data"), this);
+		this->w_cur_speed = ui_label_new_selectable(_("No Data"), this);
+		this->w_cur_time_real = ui_label_new_selectable(_("No Data"), this);
+		this->w_show_gps_speed = new QCheckBox(_("Show &GPS Speed"), this);
+		QWidget * page = this->create_graph_page(this->speed_box,
+							 _("Track Time:"), this->w_cur_time,
+							 _("Track Speed:"), this->w_cur_speed,
+							 _("Time/Date:"), this->w_cur_time_real,
+							 this->w_show_gps_speed, show_gps_speed,
+							 NULL, false);
+		connect(this->w_show_gps_speed, SIGNAL (stateChanged(int)), this, SLOT (checkbutton_toggle_cb()));
+		this->tabs->addTab(page, _("Speed-time"));
 	}
 
-	if (widgets->dist_box) {
-		GtkWidget *page = NULL;
-		widgets->w_cur_dist_time = ui_label_new_selectable(_("No Data"));
-		widgets->w_cur_dist_dist = ui_label_new_selectable(_("No Data"));
-		widgets->w_cur_dist_time_real = ui_label_new_selectable(_("No Data"));
-		widgets->w_show_dist_speed = gtk_check_button_new_with_mnemonic(_("Show S_peed"));
-		page = create_graph_page(widgets->dist_box,
-					 _("<b>Track Distance:</b>"), widgets->w_cur_dist_dist,
-					 _("<b>Track Time:</b>"), widgets->w_cur_dist_time,
-					 _("<b>Time/Date:</b>"), widgets->w_cur_dist_time_real,
-					  widgets->w_show_dist_speed, show_dist_speed,
-					 NULL, false);
-		g_signal_connect(widgets->w_show_dist_speed, "toggled", G_CALLBACK (checkbutton_toggle_cb), widgets);
-		gtk_notebook_append_page(GTK_NOTEBOOK(graphs), page, gtk_label_new(_("Distance-time")));
+	if (this->dist_box) {
+		this->w_cur_dist_time = ui_label_new_selectable(_("No Data"), this);
+		this->w_cur_dist_dist = ui_label_new_selectable(_("No Data"), this);
+		this->w_cur_dist_time_real = ui_label_new_selectable(_("No Data"), this);
+		this->w_show_dist_speed = new QCheckBox(_("Show S&peed"), this);
+		QWidget * page = this->create_graph_page(this->dist_box,
+							 _("Track Distance:"), this->w_cur_dist_dist,
+							 _("Track Time:"), this->w_cur_dist_time,
+							 _("Time/Date:"), this->w_cur_dist_time_real,
+							 this->w_show_dist_speed, show_dist_speed,
+							 NULL, false);
+		connect(this->w_show_dist_speed, SIGNAL (stateChanged(int)), this, SLOT (checkbutton_toggle_cb()));
+		this->tabs->addTab(page, _("Distance-time"));
 	}
 
-	if (widgets->elev_time_box) {
-		GtkWidget *page = NULL;
-		widgets->w_cur_elev_time = ui_label_new_selectable(_("No Data"));
-		widgets->w_cur_elev_elev = ui_label_new_selectable(_("No Data"));
-		widgets->w_cur_elev_time_real = ui_label_new_selectable(_("No Data"));
-		widgets->w_show_elev_speed = gtk_check_button_new_with_mnemonic(_("Show S_peed"));
-		widgets->w_show_elev_dem = gtk_check_button_new_with_mnemonic(_("Show D_EM"));
-		page = create_graph_page(widgets->elev_time_box,
-					 _("<b>Track Time:</b>"), widgets->w_cur_elev_time,
-					 _("<b>Track Height:</b>"), widgets->w_cur_elev_elev,
-					 _("<b>Time/Date:</b>"), widgets->w_cur_elev_time_real,
-					 widgets->w_show_elev_dem, show_elev_dem,
-					 widgets->w_show_elev_speed, show_elev_speed);
-		g_signal_connect(widgets->w_show_elev_dem, "toggled", G_CALLBACK (checkbutton_toggle_cb), widgets);
-		g_signal_connect(widgets->w_show_elev_speed, "toggled", G_CALLBACK (checkbutton_toggle_cb), widgets);
-		gtk_notebook_append_page(GTK_NOTEBOOK(graphs), page, gtk_label_new(_("Elevation-time")));
+	if (this->elev_time_box) {
+		this->w_cur_elev_time = ui_label_new_selectable(_("No Data"), this);
+		this->w_cur_elev_elev = ui_label_new_selectable(_("No Data"), this);
+		this->w_cur_elev_time_real = ui_label_new_selectable(_("No Data"), this);
+		this->w_show_elev_speed = new QCheckBox(_("Show S&peed"), this);
+		this->w_show_elev_dem = new QCheckBox(_("Show D&EM"), this);
+		QWidget * page = this->create_graph_page(this->elev_time_box,
+							 _("Track Time:"), this->w_cur_elev_time,
+							 _("Track Height:"), this->w_cur_elev_elev,
+							 _("Time/Date:"), this->w_cur_elev_time_real,
+							 this->w_show_elev_dem, show_elev_dem,
+							 this->w_show_elev_speed, show_elev_speed);
+		connect(this->w_show_elev_dem, SIGNAL (stateChanged(int)), this, SLOT (checkbutton_toggle_cb()));
+		connect(this->w_show_elev_speed, SIGNAL (stateChanged(int)), this, SLOT (checkbutton_toggle_cb()));
+		this->tabs->addTab(page, _("Elevation-time"));
 	}
 
-	if (widgets->speed_dist_box) {
-		GtkWidget *page = NULL;
-		widgets->w_cur_speed_dist = ui_label_new_selectable(_("No Data"));
-		widgets->w_cur_speed_speed = ui_label_new_selectable(_("No Data"));
-		widgets->w_show_sd_gps_speed = gtk_check_button_new_with_mnemonic(_("Show _GPS Speed"));
-		page = create_graph_page(widgets->speed_dist_box,
-					 _("<b>Track Distance:</b>"), widgets->w_cur_speed_dist,
-					 _("<b>Track Speed:</b>"), widgets->w_cur_speed_speed,
-					 NULL, NULL,
-					 widgets->w_show_sd_gps_speed, show_sd_gps_speed,
-					 NULL, false);
-		g_signal_connect(widgets->w_show_sd_gps_speed, "toggled", G_CALLBACK (checkbutton_toggle_cb), widgets);
-		gtk_notebook_append_page(GTK_NOTEBOOK(graphs), page, gtk_label_new(_("Speed-distance")));
+	if (this->speed_dist_box) {
+		this->w_cur_speed_dist = ui_label_new_selectable(_("No Data"), this);
+		this->w_cur_speed_speed = ui_label_new_selectable(_("No Data"), this);
+		this->w_show_sd_gps_speed = new QCheckBox(_("Show &GPS Speed"), this);
+		QWidget * page = this->create_graph_page(this->speed_dist_box,
+							 _("Track Distance:"), this->w_cur_speed_dist,
+							 _("Track Speed:"), this->w_cur_speed_speed,
+							 NULL, NULL,
+							 this->w_show_sd_gps_speed, show_sd_gps_speed,
+							 NULL, false);
+		connect(this->w_show_sd_gps_speed, SIGNAL (stateChanged(int)), this, SLOT (checkbutton_toggle_cb()));
+		this->tabs->addTab(page, _("Speed-distance"));
 	}
 
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), graphs, false, false, 0);
+#ifdef K
+
+	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), this->tabs, false, false, 0);
 
 	gtk_dialog_set_response_sensitive(GTK_DIALOG(dialog), VIK_TRW_LAYER_PROPWIN_SPLIT_MARKER, false);
 	if (seg_count <= 1) {
@@ -3505,7 +3379,7 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer
 
 	/* Gtk note: due to historical reasons, this must be done after widgets are shown. */
 	if (start_on_stats) {
-		gtk_notebook_set_current_page(GTK_NOTEBOOK(graphs), 1);
+		gtk_notebook_set_current_page(GTK_NOTEBOOK(this->tabs), 1);
 	}
 #endif
 }

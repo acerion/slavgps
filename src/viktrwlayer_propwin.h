@@ -28,15 +28,18 @@
 
 #include <QObject>
 #include <QDialog>
+#include <QTabWidget>
+#include <QVBoxLayout>
+#include <QWidget>
+#include <QLabel>
+#include <QCheckBox>
 
 #include <glib.h>
-#ifdef K
-#include <gtk/gtk.h>
-#endif
 
 #include "layer_trw.h"
 #include "viewport.h"
 #include "track.h"
+#include "layers_panel.h"
 
 
 
@@ -54,20 +57,152 @@ namespace SlavGPS {
 
 
 
+	typedef struct _propsaved {
+		bool saved;
+		GdkImage * img;
+	} PropSaved;
+
+
+
+
 	class TrackProfileDialog : public QDialog {
 		Q_OBJECT
 	public:
 		TrackProfileDialog() {};
 		TrackProfileDialog(QString const & title, LayerTRW * a_layer, Track * a_trk, void * a_panel, Viewport * a_viewport, QWidget * a_parent = NULL);
-		~TrackProfileDialog() {};
+		~TrackProfileDialog();
 
-	private:
+	private slots:
+		void checkbutton_toggle_cb(void);
+
+
+	public:
+
+		QWidget * create_profile(double * min_alt, double * max_alt);
+		QWidget * create_gradient(void);
+		QWidget * create_vtdiag(void);
+		QWidget * create_dtdiag(void);
+		QWidget * create_etdiag(void);
+		QWidget * create_sddiag(void);
+
+		void draw_all_graphs(bool resized);
+		QWidget * create_graph_page(QWidget * graph,
+					    const char * text1,
+					    QLabel * value1,
+					    const char * text2,
+					    QLabel * value2,
+					    const char * text3,
+					    QLabel * value3,
+					    QCheckBox * checkbutton1,
+					    bool checkbutton1_default,
+					    QCheckBox * checkbutton2,
+					    bool checkbutton2_default);
+
 		QWidget * parent = NULL;
-		LayerTRW * layer = NULL;
+		LayerTRW * trw = NULL;
 		Track * trk = NULL;
 		void * panel = NULL;
 		Viewport * viewport = NULL;
 
+		QTabWidget * tabs = NULL;
+
+
+		bool  configure_dialog;
+
+		int      profile_width;
+		int      profile_height;
+		int      profile_width_old;
+		int      profile_height_old;
+		int      profile_width_offset;
+		int      profile_height_offset;
+		QLineEdit * w_comment = NULL;
+		QLineEdit * w_description = NULL;
+		QLineEdit * w_source = NULL;
+		QLineEdit * w_type = NULL;
+		QLabel * w_track_length = NULL;
+		QLabel * w_tp_count = NULL;
+		QLabel * w_segment_count = NULL;
+		QLabel * w_duptp_count = NULL;
+		QLabel * w_max_speed = NULL;
+		QLabel * w_avg_speed = NULL;
+		QLabel * w_mvg_speed = NULL;
+		QLabel * w_avg_dist = NULL;
+		QLabel * w_elev_range = NULL;
+		QLabel * w_elev_gain = NULL;
+		QLabel * w_time_start = NULL;
+		QLabel * w_time_end = NULL;
+		QLabel * w_time_dur = NULL;
+		QLabel * w_color = NULL;
+		QLabel * w_namelabel = NULL;
+		QLabel * w_number_distlabels = NULL;
+		QLabel * w_cur_dist = NULL; /*< Current distance. */
+		QLabel * w_cur_elevation = NULL;
+		QLabel * w_cur_gradient_dist = NULL; /*< Current distance on gradient graph. */
+		QLabel * w_cur_gradient_gradient = NULL; /*< Current gradient on gradient graph. */
+		QLabel * w_cur_time = NULL; /*< Current track time. */
+		QLabel * w_cur_time_real = NULL; /*< Actual time as on a clock. */
+		QLabel * w_cur_speed = NULL;
+		QLabel * w_cur_dist_dist = NULL; /*< Current distance on distance graph. */
+		QLabel * w_cur_dist_time = NULL; /*< Current track time on distance graph. */
+		QLabel * w_cur_dist_time_real = NULL; /* Clock time. */
+		QLabel * w_cur_elev_elev = NULL;
+		QLabel * w_cur_elev_time = NULL; /* Track time. */
+		QLabel * w_cur_elev_time_real = NULL; /* Clock time. */
+		QLabel * w_cur_speed_dist = NULL;
+		QLabel * w_cur_speed_speed = NULL;
+		QCheckBox * w_show_dem = NULL;
+		QCheckBox * w_show_alt_gps_speed = NULL;
+		QCheckBox * w_show_gps_speed = NULL;
+		QCheckBox * w_show_gradient_gps_speed = NULL;
+		QCheckBox * w_show_dist_speed = NULL;
+		QCheckBox * w_show_elev_speed = NULL;
+		QCheckBox * w_show_elev_dem = NULL;
+		QCheckBox * w_show_sd_gps_speed = NULL;
+		double   track_length;
+		double   track_length_inc_gaps;
+		PropSaved elev_graph_saved_img;
+		PropSaved gradient_graph_saved_img;
+		PropSaved speed_graph_saved_img;
+		PropSaved dist_graph_saved_img;
+		PropSaved elev_time_graph_saved_img;
+		PropSaved speed_dist_graph_saved_img;
+		QWidget * elev_box = NULL;
+		QWidget * gradient_box = NULL;
+		QWidget * speed_box = NULL;
+		QWidget * dist_box = NULL;
+		QWidget * elev_time_box = NULL;
+		QWidget * speed_dist_box = NULL;
+		double   * altitudes = NULL;
+		double   * ats = NULL; /* Altitudes in time. */
+		double   min_altitude;
+		double   max_altitude;
+		double   draw_min_altitude;
+		double   draw_min_altitude_time;
+		int      cia; /* Chunk size Index into Altitudes. */
+		int      ciat; /* Chunk size Index into Altitudes / Time. */
+		/* NB cia & ciat are normally same value but sometimes not due to differing methods of altitude array creation.
+		   thus also have draw_min_altitude for each altitude graph type. */
+		double   *gradients = NULL;
+		double   min_gradient;
+		double   max_gradient;
+		double   draw_min_gradient;
+		int      cig; /* Chunk size Index into Gradients. */
+		double   * speeds = NULL;
+		double   * speeds_dist = NULL;
+		double   min_speed;
+		double   max_speed;
+		double   draw_min_speed;
+		double   max_speed_dist;
+		int      cis; /* Chunk size Index into Speeds. */
+		int      cisd; /* Chunk size Index into Speed/Distance. */
+		double   * distances = NULL;
+		int      cid; /* Chunk size Index into Distance. */
+		Trackpoint * marker_tp = NULL;
+		bool  is_marker_drawn;
+		Trackpoint * blob_tp = NULL;
+		bool  is_blob_drawn;
+		time_t    duration;
+		char     * tz = NULL; /* TimeZone at track's location. */
 	};
 
 
