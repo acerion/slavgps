@@ -74,6 +74,8 @@ namespace SlavGPS {
 
 	private slots:
 		void checkbutton_toggle_cb(void);
+		void dialog_response_cb(int resp);
+		void destroy_cb(void);
 
 
 	public:
@@ -84,6 +86,24 @@ namespace SlavGPS {
 		QWidget * create_dtdiag(void);
 		QWidget * create_etdiag(void);
 		QWidget * create_sddiag(void);
+
+		/* "Draw" functions. */
+		void draw_elevations(QWidget * drawable, Track * trk);
+		void draw_gradients(QWidget * drawable, Track * trk);
+		void draw_vt(QWidget * drawable, Track * trk);
+		void draw_dt(QWidget * drawable, Track * trk);
+		void draw_et(QWidget * drawable, Track * trk);
+		void draw_sd(QWidget * drawable, Track * trk);
+
+		/* "Get blobby" functions. */
+		int blobby_speed(double x_blob);
+		int blobby_speed_dist(double x_blob);
+		int blobby_altitude(double x_blob);
+		int blobby_altitude_time(double x_blob);
+		int blobby_gradient(double x_blob);
+		int blobby_distance(double x_blob);
+
+		void clear_image(GdkPixmap * pix);
 
 		void draw_all_graphs(bool resized);
 		QWidget * create_graph_page(QWidget * graph,
@@ -97,6 +117,10 @@ namespace SlavGPS {
 					    bool checkbutton1_default,
 					    QCheckBox * checkbutton2,
 					    bool checkbutton2_default);
+
+		void save_values(void);
+
+		void draw_single_graph(bool resized, QWidget * drawable, void (TrackProfileDialog::*draw_graph)(QWidget *, Track *), int (TrackProfileDialog::*get_blobby)(double), bool by_time, PropSaved * saved_img);
 
 		QWidget * parent = NULL;
 		LayerTRW * trw = NULL;
