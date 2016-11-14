@@ -40,6 +40,7 @@
 #include "viewport.h"
 #include "track.h"
 #include "layers_panel.h"
+#include "window.h"
 
 
 
@@ -69,7 +70,7 @@ namespace SlavGPS {
 		Q_OBJECT
 	public:
 		TrackProfileDialog() {};
-		TrackProfileDialog(QString const & title, LayerTRW * a_layer, Track * a_trk, void * a_panel, Viewport * a_viewport, QWidget * a_parent = NULL);
+		TrackProfileDialog(QString const & title, LayerTRW * a_layer, Track * a_trk, void * a_panel, Viewport * a_viewport, Window * a_parent = NULL);
 		~TrackProfileDialog();
 
 	private slots:
@@ -80,20 +81,20 @@ namespace SlavGPS {
 
 	public:
 
-		QWidget * create_profile(double * min_alt, double * max_alt);
-		QWidget * create_gradient(void);
-		QWidget * create_vtdiag(void);
-		QWidget * create_dtdiag(void);
-		QWidget * create_etdiag(void);
-		QWidget * create_sddiag(void);
+		Viewport * create_profile(double * min_alt, double * max_alt);
+		Viewport * create_gradient(void);
+		Viewport * create_vtdiag(void);
+		Viewport * create_dtdiag(void);
+		Viewport * create_etdiag(void);
+		Viewport * create_sddiag(void);
 
 		/* "Draw" functions. */
-		void draw_elevations(QWidget * drawable, Track * trk);
-		void draw_gradients(QWidget * drawable, Track * trk);
-		void draw_vt(QWidget * drawable, Track * trk);
-		void draw_dt(QWidget * drawable, Track * trk);
-		void draw_et(QWidget * drawable, Track * trk);
-		void draw_sd(QWidget * drawable, Track * trk);
+		void draw_elevations(Viewport * viewport, Track * trk);
+		void draw_gradients(Viewport * viewport, Track * trk);
+		void draw_vt(Viewport * viewport, Track * trk);
+		void draw_dt(Viewport * viewport, Track * trk);
+		void draw_et(Viewport * viewport, Track * trk);
+		void draw_sd(Viewport * viewport, Track * trk);
 
 		/* "Get blobby" functions. */
 		int blobby_speed(double x_blob);
@@ -118,17 +119,17 @@ namespace SlavGPS {
 					    QCheckBox * checkbutton2,
 					    bool checkbutton2_default);
 
-		void draw_grid_x_distance(QWidget * image, QPixmap * pix, unsigned int ii, double dd, unsigned int xx, DistanceUnit distance_unit);
-		void draw_grid_x_time(QWidget * image, QPixmap * pix, unsigned int ii, unsigned int tt, unsigned int xx);
-		void draw_grid_y(QPen & fg_pen, QPen & dark_pen, QWidget * drawable, QPixmap * pix, char * ss, int i);
-		void draw_time_lines(QWidget * image, QPixmap * pix);
+		void draw_grid_x_distance(Viewport * viewport, QPixmap * pix, unsigned int ii, double dd, unsigned int xx, DistanceUnit distance_unit);
+		void draw_grid_x_time(Viewport * viewport, QPixmap * pix, unsigned int ii, unsigned int tt, unsigned int xx);
+		void draw_grid_y(Viewport * viewport, QPen & fg_pen, QPen & dark_pen, QPixmap * pix, char * ss, int i);
+		void draw_time_lines(Viewport * viewport, QPixmap * pix);
 
 		void save_values(void);
 
-		void draw_single_graph(bool resized, QWidget * drawable, void (TrackProfileDialog::*draw_graph)(QWidget *, Track *), int (TrackProfileDialog::*get_blobby)(double), bool by_time, PropSaved * saved_img);
+		void draw_single_graph(Viewport * viewport, bool resized, void (TrackProfileDialog::*draw_graph)(Viewport *, Track *), int (TrackProfileDialog::*get_blobby)(double), bool by_time, PropSaved * saved_img);
 
 
-		QWidget * parent = NULL;
+		Window * parent = NULL;
 		LayerTRW * trw = NULL;
 		Track * trk = NULL;
 		void * panel = NULL;
@@ -196,12 +197,12 @@ namespace SlavGPS {
 		PropSaved dist_graph_saved_img;
 		PropSaved elev_time_graph_saved_img;
 		PropSaved speed_dist_graph_saved_img;
-		QWidget * elev_box = NULL;
-		QWidget * gradient_box = NULL;
-		QWidget * speed_box = NULL;
-		QWidget * dist_box = NULL;
-		QWidget * elev_time_box = NULL;
-		QWidget * speed_dist_box = NULL;
+		Viewport * elev_viewport = NULL;
+		Viewport * gradient_viewport = NULL;
+		Viewport * speed_viewport = NULL;
+		Viewport * dist_viewport = NULL;
+		Viewport * elev_time_viewport = NULL;
+		Viewport * speed_dist_viewport = NULL;
 		double   * altitudes = NULL;
 		double   * ats = NULL; /* Altitudes in time. */
 		double   min_altitude;
@@ -238,7 +239,7 @@ namespace SlavGPS {
 
 
 
-	void vik_trw_layer_propwin_run(QWidget * parent,
+	void vik_trw_layer_propwin_run(Window * parent,
 				       LayerTRW * layer,
 				       Track * trk,
 				       void * panel,

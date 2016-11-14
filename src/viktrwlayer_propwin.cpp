@@ -136,7 +136,7 @@ typedef struct _propwidgets {
 
 
 
-static void get_mouse_event_x(QWidget * widget, GdkEventMotion * event, TrackProfileDialog * widgets, double * x, int * ix);
+static void get_mouse_event_x(Viewport * viewport, GdkEventMotion * event, TrackProfileDialog * widgets, double * x, int * ix);
 static void distance_label_update(QLabel * label, double meters_from_start);
 static void elevation_label_update(QLabel * label, Trackpoint * tp);
 static void time_label_update(QLabel * label, time_t seconds_from_start);
@@ -359,7 +359,7 @@ static Trackpoint * set_center_at_graph_position(double event_x,
 /**
  * Returns whether the marker was drawn or not and whether the blob was drawn or not.
  */
-static void save_image_and_draw_graph_marks(QWidget * image,
+static void save_image_and_draw_graph_marks(Viewport * viewport,
 					    double marker_x,
 					    QPen & pen,
 					    int blob_x,
@@ -482,7 +482,7 @@ static void track_graph_click(GtkWidget * widget, GdkEventButton * event, TrackP
 
 	widgets->marker_tp = tp;
 
-	QWidget * graph_box = NULL;
+	Viewport * graph_viewport = NULL;
 	PropSaved *graph_saved_img;
 	double pc = NAN;
 
@@ -496,39 +496,39 @@ static void track_graph_click(GtkWidget * widget, GdkEventButton * event, TrackP
 		switch (graphite) {
 		default:
 		case PROPWIN_GRAPH_TYPE_ELEVATION_DISTANCE:
-			graph_box       = widgets->elev_box;
+			graph_viewport  = widgets->elev_viewport;
 			graph_saved_img = &widgets->elev_graph_saved_img;
 			is_time_graph   = false;
 			break;
 		case PROPWIN_GRAPH_TYPE_GRADIENT_DISTANCE:
-			graph_box       = widgets->gradient_box;
+			graph_viewport  = widgets->gradient_viewport;
 			graph_saved_img = &widgets->gradient_graph_saved_img;
 			is_time_graph   = false;
 			break;
 		case PROPWIN_GRAPH_TYPE_SPEED_TIME:
-			graph_box       = widgets->speed_box;
+			graph_viewport  = widgets->speed_viewport;
 			graph_saved_img = &widgets->speed_graph_saved_img;
 			is_time_graph   = true;
 			break;
 		case PROPWIN_GRAPH_TYPE_DISTANCE_TIME:
-			graph_box       = widgets->dist_box;
+			graph_viewport  = widgets->dist_viewport;
 			graph_saved_img = &widgets->dist_graph_saved_img;
 			is_time_graph   = true;
 			break;
 		case PROPWIN_GRAPH_TYPE_ELEVATION_TIME:
-			graph_box       = widgets->elev_time_box;
+			graph_viewport  = widgets->elev_time_viewport;
 			graph_saved_img = &widgets->elev_time_graph_saved_img;
 			is_time_graph   = true;
 			break;
 		case PROPWIN_GRAPH_TYPE_SPEED_DISTANCE:
-			graph_box       = widgets->speed_dist_box;
+			graph_viewport  = widgets->speed_dist_viewport;
 			graph_saved_img = &widgets->speed_dist_graph_saved_img;
 			is_time_graph   = false;
 			break;
 		}
 
 		/* Commonal method of redrawing marker. */
-		if (graph_box) {
+		if (graph_viewport) {
 			if (is_time_graph) {
 				pc = tp_percentage_by_time(widgets->trk, tp);
 			} else {
@@ -537,7 +537,7 @@ static void track_graph_click(GtkWidget * widget, GdkEventButton * event, TrackP
 
 			if (!isnan(pc)) {
 				double marker_x = (pc * widgets->profile_width) + MARGIN_X;
-				save_image_and_draw_graph_marks(graph_box,
+				save_image_and_draw_graph_marks(graph_viewport,
 								marker_x,
 								black_pen,
 								-1, /* Don't draw blob on clicks. */
@@ -727,7 +727,7 @@ int TrackProfileDialog::blobby_speed_dist(double x_blob)
 
 
 
-void track_profile_move(QWidget * widget, GdkEventMotion *event, TrackProfileDialog * widgets)
+void track_profile_move(Viewport * viewport, GdkEventMotion *event, TrackProfileDialog * widgets)
 {
 	if (widgets->altitudes == NULL) {
 		return;
@@ -735,7 +735,7 @@ void track_profile_move(QWidget * widget, GdkEventMotion *event, TrackProfileDia
 
 	double x = NAN;
 	int ix = 0;
-	get_mouse_event_x(widget, event, widgets, &x, &ix);
+	get_mouse_event_x(viewport, event, widgets, &x, &ix);
 
 	double meters_from_start;
 	Trackpoint * tp = widgets->trk->get_closest_tp_by_percentage_dist((double) x / widgets->profile_width, &meters_from_start);
@@ -761,7 +761,7 @@ void track_profile_move(QWidget * widget, GdkEventMotion *event, TrackProfileDia
 	}
 
 	QPen black_pen(QColor("black"));
-	save_image_and_draw_graph_marks(widget,
+	save_image_and_draw_graph_marks(viewport,
 					marker_x,
 					black_pen,
 					MARGIN_X+x,
@@ -777,7 +777,7 @@ void track_profile_move(QWidget * widget, GdkEventMotion *event, TrackProfileDia
 
 
 
-void track_gradient_move(QWidget * widget, GdkEventMotion * event, TrackProfileDialog * widgets)
+void track_gradient_move(Viewport * viewport, GdkEventMotion * event, TrackProfileDialog * widgets)
 {
 	if (widgets->gradients == NULL) {
 		return;
@@ -785,7 +785,7 @@ void track_gradient_move(QWidget * widget, GdkEventMotion * event, TrackProfileD
 
 	double x = NAN;
 	int ix = 0;
-	get_mouse_event_x(widget, event, widgets, &x, &ix);
+	get_mouse_event_x(viewport, event, widgets, &x, &ix);
 
 	double meters_from_start;
 	Trackpoint * tp = widgets->trk->get_closest_tp_by_percentage_dist((double) x / widgets->profile_width, &meters_from_start);
@@ -811,7 +811,7 @@ void track_gradient_move(QWidget * widget, GdkEventMotion * event, TrackProfileD
 	}
 
 	QPen black_pen(QColor("black"));
-	save_image_and_draw_graph_marks(widget,
+	save_image_and_draw_graph_marks(viewport,
 					marker_x,
 					black_pen,
 					MARGIN_X+x,
@@ -901,7 +901,7 @@ void gradient_label_update(QLabel * label, double gradient)
 
 
 
-void track_vt_move(QWidget * widget, GdkEventMotion * event, TrackProfileDialog * widgets)
+void track_vt_move(Viewport * viewport, GdkEventMotion * event, TrackProfileDialog * widgets)
 {
 	if (widgets->speeds == NULL) {
 		return;
@@ -909,7 +909,7 @@ void track_vt_move(QWidget * widget, GdkEventMotion * event, TrackProfileDialog 
 
 	double x = NAN;
 	int ix = 0;
-	get_mouse_event_x(widget, event, widgets, &x, &ix);
+	get_mouse_event_x(viewport, event, widgets, &x, &ix);
 
 	time_t seconds_from_start;
 	Trackpoint * tp = widgets->trk->get_closest_tp_by_percentage_time((double) x / widgets->profile_width, &seconds_from_start);
@@ -939,7 +939,7 @@ void track_vt_move(QWidget * widget, GdkEventMotion * event, TrackProfileDialog 
 	}
 
 	QPen black_pen(QColor("black"));
-	save_image_and_draw_graph_marks(widget,
+	save_image_and_draw_graph_marks(viewport,
 					marker_x,
 					black_pen,
 					MARGIN_X+x,
@@ -958,7 +958,7 @@ void track_vt_move(QWidget * widget, GdkEventMotion * event, TrackProfileDialog 
 /**
  * Update labels and blob marker on mouse moves in the distance/time graph.
  */
-void track_dt_move(QWidget * widget, GdkEventMotion * event, TrackProfileDialog * widgets)
+void track_dt_move(Viewport * viewport, GdkEventMotion * event, TrackProfileDialog * widgets)
 {
 	if (widgets->distances == NULL) {
 		return;
@@ -966,7 +966,7 @@ void track_dt_move(QWidget * widget, GdkEventMotion * event, TrackProfileDialog 
 
 	double x = NAN;
 	int ix = 0;
-	get_mouse_event_x(widget, event, widgets, &x, &ix);
+	get_mouse_event_x(viewport, event, widgets, &x, &ix);
 
 	time_t seconds_from_start;
 	Trackpoint * tp = widgets->trk->get_closest_tp_by_percentage_time((double) x / widgets->profile_width, &seconds_from_start);
@@ -995,7 +995,7 @@ void track_dt_move(QWidget * widget, GdkEventMotion * event, TrackProfileDialog 
 	}
 
 	QPen black_pen(QColor("black"));
-	save_image_and_draw_graph_marks(widget,
+	save_image_and_draw_graph_marks(viewport,
 					marker_x,
 					black_pen,
 					MARGIN_X+x,
@@ -1013,7 +1013,7 @@ void track_dt_move(QWidget * widget, GdkEventMotion * event, TrackProfileDialog 
 /**
  * Update labels and blob marker on mouse moves in the elevation/time graph.
  */
-void track_et_move(QWidget * widget, GdkEventMotion * event, TrackProfileDialog * widgets)
+void track_et_move(Viewport * viewport, GdkEventMotion * event, TrackProfileDialog * widgets)
 {
 	if (widgets->ats == NULL) {
 		return;
@@ -1021,7 +1021,7 @@ void track_et_move(QWidget * widget, GdkEventMotion * event, TrackProfileDialog 
 
 	double x = NAN;
 	int ix = 0;
-	get_mouse_event_x(widget, event, widgets, &x, &ix);
+	get_mouse_event_x(viewport, event, widgets, &x, &ix);
 
 	time_t seconds_from_start;
 	Trackpoint * tp = widgets->trk->get_closest_tp_by_percentage_time((double) x / widgets->profile_width, &seconds_from_start);
@@ -1050,7 +1050,7 @@ void track_et_move(QWidget * widget, GdkEventMotion * event, TrackProfileDialog 
 	}
 
 	QPen black_pen(QColor("black"));
-	save_image_and_draw_graph_marks(widget,
+	save_image_and_draw_graph_marks(viewport,
 					marker_x,
 					black_pen,
 					MARGIN_X+x,
@@ -1065,7 +1065,7 @@ void track_et_move(QWidget * widget, GdkEventMotion * event, TrackProfileDialog 
 
 
 
-void track_sd_move(QWidget * widget, GdkEventMotion * event, TrackProfileDialog * widgets)
+void track_sd_move(Viewport * viewport, GdkEventMotion * event, TrackProfileDialog * widgets)
 {
 	if (widgets->speeds_dist == NULL) {
 		return;
@@ -1073,7 +1073,7 @@ void track_sd_move(QWidget * widget, GdkEventMotion * event, TrackProfileDialog 
 
 	double x = NAN;
 	int ix = 0;
-	get_mouse_event_x(widget, event, widgets, &x, &ix);
+	get_mouse_event_x(viewport, event, widgets, &x, &ix);
 
 	double meters_from_start;
 	Trackpoint * tp = widgets->trk->get_closest_tp_by_percentage_dist((double) x / widgets->profile_width, &meters_from_start);
@@ -1099,7 +1099,7 @@ void track_sd_move(QWidget * widget, GdkEventMotion * event, TrackProfileDialog 
 	}
 
 	QPen black_pen(QColor("black"));
-	save_image_and_draw_graph_marks(widget,
+	save_image_and_draw_graph_marks(viewport,
 					marker_x,
 					black_pen,
 					MARGIN_X+x,
@@ -1114,7 +1114,7 @@ void track_sd_move(QWidget * widget, GdkEventMotion * event, TrackProfileDialog 
 
 
 
-void get_mouse_event_x(QWidget * widget, GdkEventMotion * event, TrackProfileDialog * widgets, double * x, int * ix)
+void get_mouse_event_x(Viewport * viewport, GdkEventMotion * event, TrackProfileDialog * widgets, double * x, int * ix)
 {
 #ifdef K
 	int mouse_x, mouse_y;
@@ -1273,10 +1273,10 @@ static void draw_dem_alt_speed_dist(Track * trk,
 /**
  * A common way to draw the grid with y axis labels
  */
-void TrackProfileDialog::draw_grid_y(QPen & fg_pen, QPen & dark_pen, QWidget * drawable, QPixmap * pix, char * ss, int i)
+void TrackProfileDialog::draw_grid_y(Viewport * viewport, QPen & fg_pen, QPen & dark_pen, QPixmap * pix, char * ss, int i)
 {
 #ifdef K
-	PangoLayout * pl = gtk_widget_create_pango_layout(GTK_WIDGET(drawable), NULL);
+	PangoLayout * pl = gtk_widget_create_pango_layout(GTK_WIDGET(viewport), NULL);
 
 	pango_layout_set_alignment(pl, PANGO_ALIGN_RIGHT);
 	pango_layout_set_font_description(pl, gtk_widget_get_style(window)->font_desc);
@@ -1306,7 +1306,7 @@ void TrackProfileDialog::draw_grid_y(QPen & fg_pen, QPen & dark_pen, QWidget * d
 /**
  * A common way to draw the grid with x axis labels for time graphs
  */
-void TrackProfileDialog::draw_grid_x_time(QWidget * image, QPixmap * pix, unsigned int ii, unsigned int tt, unsigned int xx)
+void TrackProfileDialog::draw_grid_x_time(Viewport * viewport, QPixmap * pix, unsigned int ii, unsigned int tt, unsigned int xx)
 {
 	char *label_markup = NULL;
 #ifdef K
@@ -1345,7 +1345,7 @@ void TrackProfileDialog::draw_grid_x_time(QWidget * image, QPixmap * pix, unsign
 	}
 	if (label_markup) {
 
-		PangoLayout *pl = gtk_widget_create_pango_layout(GTK_WIDGET(image), NULL);
+		PangoLayout *pl = gtk_widget_create_pango_layout(GTK_WIDGET(viewport), NULL);
 		pango_layout_set_font_description(pl, font_desc);
 
 		pango_layout_set_markup(pl, label_markup, -1);
@@ -1369,7 +1369,7 @@ void TrackProfileDialog::draw_grid_x_time(QWidget * image, QPixmap * pix, unsign
 /**
  * A common way to draw the grid with x axis labels for distance graphs.
  */
-void TrackProfileDialog::draw_grid_x_distance(QWidget * image, QPixmap * pix, unsigned int ii, double dd, unsigned int xx, DistanceUnit distance_unit)
+void TrackProfileDialog::draw_grid_x_distance(Viewport * viewport, QPixmap * pix, unsigned int ii, double dd, unsigned int xx, DistanceUnit distance_unit)
 {
 	char *label_markup = NULL;
 
@@ -1385,7 +1385,7 @@ void TrackProfileDialog::draw_grid_x_distance(QWidget * image, QPixmap * pix, un
 	}
 
 	if (label_markup) {
-		PangoLayout *pl = gtk_widget_create_pango_layout(GTK_WIDGET(image), NULL);
+		PangoLayout *pl = gtk_widget_create_pango_layout(GTK_WIDGET(viewport), NULL);
 		pango_layout_set_font_description(pl, font_desc);
 
 		pango_layout_set_markup(pl, label_markup, -1);
@@ -1422,7 +1422,7 @@ void TrackProfileDialog::clear_image(QPixmap * pix)
 
 
 
-static void draw_distance_divisions(QWidget * image, QPixmap * pix, TrackProfileDialog * widgets, DistanceUnit distance_unit)
+static void draw_distance_divisions(Viewport * viewport, QPixmap * pix, TrackProfileDialog * widgets, DistanceUnit distance_unit)
 {
 	/* Set to display units from length in metres. */
 	double length = widgets->track_length_inc_gaps;
@@ -1432,7 +1432,7 @@ static void draw_distance_divisions(QWidget * image, QPixmap * pix, TrackProfile
 	double dist_per_pixel = length/widgets->profile_width;
 
 	for (unsigned int i = 1; chunksd[index] * i <= length; i++) {
-		widgets->draw_grid_x_distance(image, pix, index, chunksd[index] * i, (unsigned int) (chunksd[index] * i / dist_per_pixel), distance_unit);
+		widgets->draw_grid_x_distance(viewport, pix, index, chunksd[index] * i, (unsigned int) (chunksd[index] * i / dist_per_pixel), distance_unit);
 	}
 }
 
@@ -1442,7 +1442,7 @@ static void draw_distance_divisions(QWidget * image, QPixmap * pix, TrackProfile
 /**
  * Draw just the height profile image.
  */
-void TrackProfileDialog::draw_elevations(QWidget * drawable, Track * trk)
+void TrackProfileDialog::draw_elevations(Viewport * viewport, Track * trk)
 {
 	/* Free previous allocation. */
 	if (this->altitudes) {
@@ -1473,11 +1473,9 @@ void TrackProfileDialog::draw_elevations(QWidget * drawable, Track * trk)
 	double mina = this->draw_min_altitude;
 
 #ifdef K
-
-	GtkWidget * window = gtk_widget_get_toplevel(this->elev_box);
 	QPixmap * pix = new QPixmap(this->profile_width + MARGIN_X, this->profile_height + MARGIN_Y);
 
-	gtk_image_set_from_pixmap(GTK_IMAGE(drawable), pix, NULL);
+	gtk_image_set_from_pixmap(GTK_IMAGE(viewport), pix, NULL);
 
 	QPen no_alt_info_pen(QColor("yellow"));
 
@@ -1503,10 +1501,10 @@ void TrackProfileDialog::draw_elevations(QWidget * drawable, Track * trk)
 			fprintf(stderr, "CRITICAL: Houston, we've had a problem. height=%d\n", height_units);
 		}
 
-		this->draw_grid_y(fg_pen, dark_pen, drawable, pix, s, i);
+		this->draw_grid_y(viewport, fg_pen, dark_pen, pix, s, i);
 	}
 
-	draw_distance_divisions(drawable, pix, this, a_vik_get_units_distance());
+	draw_distance_divisions(viewport, pix, this, a_vik_get_units_distance());
 
 	/* Draw elevations. */
 	unsigned int height = MARGIN_Y+this->profile_height;
@@ -1599,7 +1597,7 @@ static void draw_speed_dist(Track * trk,
 /**
  * Draw just the gradient image.
  */
-void TrackProfileDialog::draw_gradients(QWidget * drawable, Track * trk)
+void TrackProfileDialog::draw_gradients(Viewport * viewport, Track * trk)
 {
 	/* Free previous allocation. */
 	if (this->gradients) {
@@ -1622,7 +1620,7 @@ void TrackProfileDialog::draw_gradients(QWidget * drawable, Track * trk)
 
 	QPixmap * pix = new QPixmap(this->profile_width + MARGIN_X, this->profile_height + MARGIN_Y);
 
-	//gtk_image_set_from_pixmap(GTK_IMAGE(drawable), pix, NULL);
+	//gtk_image_set_from_pixmap(GTK_IMAGE(viewport), pix, NULL);
 
 	/* Reset before redrawing. */
 	this->clear_image(pix);
@@ -1634,10 +1632,10 @@ void TrackProfileDialog::draw_gradients(QWidget * drawable, Track * trk)
 		char s[32];
 
 		sprintf(s, "%8d%%", (int)(mina + (LINES-i)*chunksg[this->cig]));
-		this->draw_grid_y(fg_pen, dark_pen, drawable, pix, s, i);
+		this->draw_grid_y(viewport, fg_pen, dark_pen, pix, s, i);
 	}
 
-	draw_distance_divisions(drawable, pix, this, a_vik_get_units_distance());
+	draw_distance_divisions(viewport, pix, this, a_vik_get_units_distance());
 
 	/* Draw gradients. */
 	unsigned int height = this->profile_height + MARGIN_Y;
@@ -1675,7 +1673,7 @@ void TrackProfileDialog::draw_gradients(QWidget * drawable, Track * trk)
 
 
 
-void TrackProfileDialog::draw_time_lines(QWidget * image, QPixmap * pix)
+void TrackProfileDialog::draw_time_lines(Viewport * viewport, QPixmap * pix)
 {
 	unsigned int index = get_time_chunk_index(this->duration);
 	double time_per_pixel = (double)(this->duration)/this->profile_width;
@@ -1686,7 +1684,7 @@ void TrackProfileDialog::draw_time_lines(QWidget * image, QPixmap * pix)
 	}
 
 	for (unsigned int i=1; chunkst[index]*i <= this->duration; i++) {
-		this->draw_grid_x_time(image, pix, index, chunkst[index]*i, (unsigned int)(chunkst[index]*i/time_per_pixel));
+		this->draw_grid_x_time(viewport, pix, index, chunkst[index]*i, (unsigned int)(chunkst[index]*i/time_per_pixel));
 	}
 }
 
@@ -1696,7 +1694,7 @@ void TrackProfileDialog::draw_time_lines(QWidget * image, QPixmap * pix)
 /**
  * Draw just the speed (velocity)/time image.
  */
-void TrackProfileDialog::draw_vt(QWidget * drawable, Track * trk)
+void TrackProfileDialog::draw_vt(Viewport * viewport, Track * trk)
 {
 	/* Free previous allocation. */
 	if (this->speeds) {
@@ -1722,7 +1720,7 @@ void TrackProfileDialog::draw_vt(QWidget * drawable, Track * trk)
 
 	QPixmap * pix = new QPixmap(this->profile_width + MARGIN_X, this->profile_height + MARGIN_Y);
 #ifdef K
-	gtk_image_set_from_pixmap(GTK_IMAGE(drawable), pix, NULL);
+	gtk_image_set_from_pixmap(GTK_IMAGE(viewport), pix, NULL);
 #endif
 
 	minmax_array(this->speeds, &this->min_speed, &this->max_speed, false, this->profile_width);
@@ -1764,10 +1762,10 @@ void TrackProfileDialog::draw_vt(QWidget * drawable, Track * trk)
 			fprintf(stderr, "CRITICAL: Houston, we've had a problem. speed=%d\n", speed_units);
 		}
 
-		this->draw_grid_y(fg_pen, dark_pen, drawable, pix, s, i);
+		this->draw_grid_y(viewport, fg_pen, dark_pen, pix, s, i);
 	}
 
-	this->draw_time_lines(drawable, pix);
+	this->draw_time_lines(viewport, pix);
 
 	/* Draw speeds. */
 	unsigned int height = this->profile_height + MARGIN_Y;
@@ -1812,7 +1810,7 @@ void TrackProfileDialog::draw_vt(QWidget * drawable, Track * trk)
 /**
  * Draw just the distance/time image.
  */
-void TrackProfileDialog::draw_dt(QWidget * drawable, Track * trk)
+void TrackProfileDialog::draw_dt(Viewport * viewport, Track * trk)
 {
 	/* Free previous allocation. */
 	if (this->distances) {
@@ -1838,7 +1836,7 @@ void TrackProfileDialog::draw_dt(QWidget * drawable, Track * trk)
 
 	QPixmap * pix = new QPixmap(this->profile_width + MARGIN_X, this->profile_height + MARGIN_Y);
 #ifdef K
-	gtk_image_set_from_pixmap(GTK_IMAGE(drawable), pix, NULL);
+	gtk_image_set_from_pixmap(GTK_IMAGE(viewport), pix, NULL);
 #endif
 
 	/* Easy to work out min / max of distance!
@@ -1871,10 +1869,10 @@ void TrackProfileDialog::draw_dt(QWidget * drawable, Track * trk)
 			break;
 		}
 
-		this->draw_grid_y(fg_pen, dark_pen, drawable, pix, s, i);
+		this->draw_grid_y(viewport, fg_pen, dark_pen, pix, s, i);
 	}
 
-	this->draw_time_lines(drawable, pix);
+	this->draw_time_lines(viewport, pix);
 
 	/* Draw distance. */
 	unsigned int height = this->profile_height + MARGIN_Y;
@@ -1912,7 +1910,7 @@ void TrackProfileDialog::draw_dt(QWidget * drawable, Track * trk)
 /**
  * Draw just the elevation/time image.
  */
-void TrackProfileDialog::draw_et(QWidget * drawable, Track * trk)
+void TrackProfileDialog::draw_et(Viewport * viewport, Track * trk)
 {
 	/* Free previous allocation. */
 	if (this->ats) {
@@ -1950,7 +1948,7 @@ void TrackProfileDialog::draw_et(QWidget * drawable, Track * trk)
 
 	QPixmap * pix = new QPixmap(this->profile_width + MARGIN_X, this->profile_height + MARGIN_Y);
 #ifdef K
-	gtk_image_set_from_pixmap(GTK_IMAGE(drawable), pix, NULL);
+	gtk_image_set_from_pixmap(GTK_IMAGE(viewport), pix, NULL);
 #endif
 
 	/* Reset before redrawing. */
@@ -1975,10 +1973,10 @@ void TrackProfileDialog::draw_et(QWidget * drawable, Track * trk)
 			fprintf(stderr, "CRITICAL: Houston, we've had a problem. height=%d\n", height_units);
 		}
 
-		this->draw_grid_y(fg_pen, dark_pen, drawable, pix, s, i);
+		this->draw_grid_y(viewport, fg_pen, dark_pen, pix, s, i);
 	}
 
-	this->draw_time_lines(drawable, pix);
+	this->draw_time_lines(viewport, pix);
 
 	/* Draw elevations. */
 	unsigned int height = this->profile_height + MARGIN_Y;
@@ -2047,7 +2045,7 @@ void TrackProfileDialog::draw_et(QWidget * drawable, Track * trk)
 /**
  * Draw just the speed/distance image.
  */
-void TrackProfileDialog::draw_sd(QWidget * drawable, Track * trk)
+void TrackProfileDialog::draw_sd(Viewport * viewport, Track * trk)
 {
 	double mins;
 
@@ -2069,7 +2067,7 @@ void TrackProfileDialog::draw_sd(QWidget * drawable, Track * trk)
 
 	QPixmap * pix = new QPixmap(this->profile_width + MARGIN_X, this->profile_height + MARGIN_Y);
 #ifdef K
-	gtk_image_set_from_pixmap(GTK_IMAGE(drawable), pix, NULL);
+	gtk_image_set_from_pixmap(GTK_IMAGE(viewport), pix, NULL);
 #endif
 
 	/* OK to resuse min_speed here. */
@@ -2112,10 +2110,10 @@ void TrackProfileDialog::draw_sd(QWidget * drawable, Track * trk)
 			fprintf(stderr, "CRITICAL: Houston, we've had a problem. speed=%d\n", speed_units);
 		}
 
-		this->draw_grid_y(fg_pen, dark_pen, drawable, pix, s, i);
+		this->draw_grid_y(viewport, fg_pen, dark_pen, pix, s, i);
 	}
 
-	draw_distance_divisions(drawable, pix, this, a_vik_get_units_distance());
+	draw_distance_divisions(viewport, pix, this, a_vik_get_units_distance());
 
 	/* Draw speeds. */
 	unsigned int height = this->profile_height + MARGIN_Y;
@@ -2166,40 +2164,40 @@ void TrackProfileDialog::draw_sd(QWidget * drawable, Track * trk)
 void TrackProfileDialog::draw_all_graphs(bool resized)
 {
 	/* Draw elevations. */
-	if (this->elev_box != NULL) {
-		this->draw_single_graph(resized, this->elev_box, &TrackProfileDialog::draw_elevations, &TrackProfileDialog::blobby_altitude, false, &this->elev_graph_saved_img);
+	if (this->elev_viewport) {
+		this->draw_single_graph(this->elev_viewport, resized, &TrackProfileDialog::draw_elevations, &TrackProfileDialog::blobby_altitude, false, &this->elev_graph_saved_img);
 	}
 
 	/* Draw gradients. */
-	if (this->gradient_box != NULL) {
-		this->draw_single_graph(resized, this->gradient_box, &TrackProfileDialog::draw_gradients, &TrackProfileDialog::blobby_gradient, false, &this->gradient_graph_saved_img);
+	if (this->gradient_viewport) {
+		this->draw_single_graph(this->gradient_viewport, resized, &TrackProfileDialog::draw_gradients, &TrackProfileDialog::blobby_gradient, false, &this->gradient_graph_saved_img);
 	}
 
 	/* Draw speeds. */
-	if (this->speed_box != NULL) {
-		this->draw_single_graph(resized, this->speed_box, &TrackProfileDialog::draw_vt, &TrackProfileDialog::blobby_speed, true, &this->speed_graph_saved_img);
+	if (this->speed_viewport) {
+		this->draw_single_graph(this->speed_viewport, resized, &TrackProfileDialog::draw_vt, &TrackProfileDialog::blobby_speed, true, &this->speed_graph_saved_img);
 	}
 
 	/* Draw Distances. */
-	if (this->dist_box != NULL) {
-		this->draw_single_graph(resized, this->dist_box, &TrackProfileDialog::draw_dt, &TrackProfileDialog::blobby_distance, true, &this->dist_graph_saved_img);
+	if (this->dist_viewport) {
+		this->draw_single_graph(this->dist_viewport, resized, &TrackProfileDialog::draw_dt, &TrackProfileDialog::blobby_distance, true, &this->dist_graph_saved_img);
 	}
 
 	/* Draw Elevations in timely manner. */
-	if (this->elev_time_box != NULL) {
-		this->draw_single_graph(resized, this->elev_time_box, &TrackProfileDialog::draw_et, &TrackProfileDialog::blobby_altitude_time, true, &this->elev_time_graph_saved_img);
+	if (this->elev_time_viewport) {
+		this->draw_single_graph(this->elev_time_viewport, resized, &TrackProfileDialog::draw_et, &TrackProfileDialog::blobby_altitude_time, true, &this->elev_time_graph_saved_img);
 	}
 
 	/* Draw speed distances. */
-	if (this->speed_dist_box != NULL) {
-		this->draw_single_graph(resized, this->speed_dist_box, &TrackProfileDialog::draw_sd, &TrackProfileDialog::blobby_speed_dist, true, &this->speed_dist_graph_saved_img);
+	if (this->speed_dist_viewport) {
+		this->draw_single_graph(this->speed_dist_viewport, resized, &TrackProfileDialog::draw_sd, &TrackProfileDialog::blobby_speed_dist, true, &this->speed_dist_graph_saved_img);
 	}
 }
 
 
 
 
-void TrackProfileDialog::draw_single_graph(bool resized, QWidget * drawable, void (TrackProfileDialog::*draw_graph)(QWidget *, Track *), int (TrackProfileDialog::*get_blobby)(double), bool by_time, PropSaved * saved_img)
+void TrackProfileDialog::draw_single_graph(Viewport * viewport, bool resized, void (TrackProfileDialog::*draw_graph)(Viewport *, Track *), int (TrackProfileDialog::*get_blobby)(double), bool by_time, PropSaved * saved_img)
 {
 #ifdef K
 	/* Saved image no longer any good as we've resized, so we remove it here. */
@@ -2210,7 +2208,7 @@ void TrackProfileDialog::draw_single_graph(bool resized, QWidget * drawable, voi
 	}
 #endif
 
-	(this->*draw_graph)(drawable, this->trk);
+	(this->*draw_graph)(viewport, this->trk);
 
 	/* Ensure marker or blob are redrawn if necessary. */
 	if (this->is_marker_drawn || this->is_blob_drawn) {
@@ -2244,7 +2242,7 @@ void TrackProfileDialog::draw_single_graph(bool resized, QWidget * drawable, voi
 		}
 
 		QPen black_pen(QColor("black"));
-		save_image_and_draw_graph_marks(drawable,
+		save_image_and_draw_graph_marks(viewport,
 						marker_x,
 						black_pen,
 						x_blob+MARGIN_X,
@@ -2308,7 +2306,7 @@ static bool configure_event(GtkWidget * widget, GdkEventConfigure * event, Track
 /**
  * Create height profile widgets including the image and callbacks.
  */
-QWidget * TrackProfileDialog::create_profile(double * min_alt, double * max_alt)
+Viewport * TrackProfileDialog::create_profile(double * min_alt, double * max_alt)
 {
 	/* First allocation. */
 	this->altitudes = this->trk->make_elevation_map(this->profile_width);
@@ -2319,12 +2317,12 @@ QWidget * TrackProfileDialog::create_profile(double * min_alt, double * max_alt)
 	}
 
 	minmax_array(this->altitudes, min_alt, max_alt, true, this->profile_width);
-	QWidget * widget = new QWidget(this);
-	widget->resize(this->profile_width + MARGIN_X, this->profile_height + MARGIN_Y);
+	Viewport * viewport = new Viewport(this->parent);
+	//widget->resize(this->profile_width + MARGIN_X, this->profile_height + MARGIN_Y);
 	//connect(widget, "button_press_event", this, SLOT (track_profile_click_cb()));
 	//connect(widget, "motion_notify_event", this, SLOT (track_profile_move_cb()));
 
-	return widget;
+	return viewport;
 }
 
 
@@ -2333,7 +2331,7 @@ QWidget * TrackProfileDialog::create_profile(double * min_alt, double * max_alt)
 /**
  * Create height profile widgets including the image and callbacks.
  */
-QWidget * TrackProfileDialog::create_gradient(void)
+Viewport * TrackProfileDialog::create_gradient(void)
 {
 	/* First allocation. */
 	this->gradients = this->trk->make_gradient_map(this->profile_width);
@@ -2342,12 +2340,12 @@ QWidget * TrackProfileDialog::create_gradient(void)
 		return NULL;
 	}
 
-	QWidget * widget = new QWidget(this);
-	widget->resize(this->profile_width + MARGIN_X, this->profile_height + MARGIN_Y);
+	Viewport * viewport = new Viewport(this->parent);
+	//widget->resize(this->profile_width + MARGIN_X, this->profile_height + MARGIN_Y);
 	//connect(widget, "button_press_event", this, SLOT (track_gradient_click_cb()));
 	//connect(widget, "motion_notify_event", this, SLOT (track_gradient_move_cb()));
 
-	return widget;
+	return viewport;
 }
 
 
@@ -2356,7 +2354,7 @@ QWidget * TrackProfileDialog::create_gradient(void)
 /**
  * Create speed/time widgets including the image and callbacks.
  */
-QWidget * TrackProfileDialog::create_vtdiag(void)
+Viewport * TrackProfileDialog::create_vtdiag(void)
 {
 	/* First allocation. */
 	this->speeds = this->trk->make_speed_map(this->profile_width);
@@ -2385,12 +2383,12 @@ QWidget * TrackProfileDialog::create_vtdiag(void)
 		}
 	}
 #endif
-	QWidget * widget = new QWidget(this);
-	widget->resize(this->profile_width + MARGIN_X, this->profile_height + MARGIN_Y);
+	Viewport * viewport = new Viewport(this->parent);
+	//widget->resize(this->profile_width + MARGIN_X, this->profile_height + MARGIN_Y);
 	//connect(widget, "button_press_event", this, SLOT (track_vt_click_cb()));
 	//connect(widget, "motion_notify_event", this, SLOT (track_vt_move_cb()));
 
-	return widget;
+	return viewport;
 }
 
 
@@ -2399,7 +2397,7 @@ QWidget * TrackProfileDialog::create_vtdiag(void)
 /**
  * Create distance / time widgets including the image and callbacks.
  */
-QWidget * TrackProfileDialog::create_dtdiag(void)
+Viewport * TrackProfileDialog::create_dtdiag(void)
 {
 	/* First allocation. */
 	this->distances = this->trk->make_distance_map(this->profile_width);
@@ -2407,13 +2405,13 @@ QWidget * TrackProfileDialog::create_dtdiag(void)
 		return NULL;
 	}
 
-	QWidget * widget = new QWidget(this);
-	widget->resize(this->profile_width + MARGIN_X, this->profile_height + MARGIN_Y);
+	Viewport * viewport = new Viewport(this->parent);
+	//viewport->resize(this->profile_width + MARGIN_X, this->profile_height + MARGIN_Y);
 	//connect(widget, "button_press_event", this, SLOT (track_dt_click_cb()));
 	//connect(widget, "motion_notify_event", this, SLOT (track_dt_move_cb()));
 	//g_signal_connect_swapped(G_OBJECT(widget), "destroy", G_CALLBACK(g_free), this);
 
-	return widget;
+	return viewport;
 }
 
 
@@ -2422,7 +2420,7 @@ QWidget * TrackProfileDialog::create_dtdiag(void)
 /**
  * Create elevation / time widgets including the image and callbacks.
  */
-QWidget * TrackProfileDialog::create_etdiag(void)
+Viewport * TrackProfileDialog::create_etdiag(void)
 {
 	/* First allocation. */
 	this->ats = this->trk->make_elevation_time_map(this->profile_width);
@@ -2430,12 +2428,12 @@ QWidget * TrackProfileDialog::create_etdiag(void)
 		return NULL;
 	}
 
-	QWidget * widget = new QWidget(this);
-	widget->resize(this->profile_width + MARGIN_X, this->profile_height + MARGIN_Y);
+	Viewport * viewport = new Viewport(this->parent);
+	//viewport->resize(this->profile_width + MARGIN_X, this->profile_height + MARGIN_Y);
 	//connect(widget, "button_press_event", this, SLOT (track_et_click_cb()));
 	//connect(widget, "motion_notify_event", this, SLOT (track_et_move_cb()));
 
-	return widget;
+	return viewport;
 }
 
 
@@ -2444,7 +2442,7 @@ QWidget * TrackProfileDialog::create_etdiag(void)
 /**
  * Create speed/distance widgets including the image and callbacks.
  */
-QWidget * TrackProfileDialog::create_sddiag(void)
+Viewport * TrackProfileDialog::create_sddiag(void)
 {
 	/* First allocation. */
 	this->speeds_dist = this->trk->make_speed_dist_map(this->profile_width); // kamilFIXME
@@ -2452,12 +2450,12 @@ QWidget * TrackProfileDialog::create_sddiag(void)
 		return NULL;
 	}
 
-	QWidget * widget = new QWidget(this);
-	widget->resize(this->profile_width + MARGIN_X, this->profile_height + MARGIN_Y);
+	Viewport * viewport = new Viewport(this->parent);
+	viewport->resize(this->profile_width + MARGIN_X, this->profile_height + MARGIN_Y);
 	//connect(widget, "button_press_event", this, SLOT (track_sd_click_cb()));
 	//connect(widget, "motion_notify_event", this, SLOT (track_sd_move_cb()));
 
-	return widget;
+	return viewport;
 }
 #undef MARGIN_X
 
@@ -2750,7 +2748,7 @@ static GtkWidget * create_table(int cnt, char * labels[], GtkWidget * contents[]
 
 
 
-void SlavGPS::vik_trw_layer_propwin_run(QWidget * parent,
+void SlavGPS::vik_trw_layer_propwin_run(Window * parent,
 					LayerTRW * layer,
 					Track * trk,
 					void * panel,
@@ -2764,7 +2762,7 @@ void SlavGPS::vik_trw_layer_propwin_run(QWidget * parent,
 
 
 
-TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer, Track * a_trk, void * a_panel, Viewport * a_viewport, QWidget * a_parent) : QDialog(a_parent)
+TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer, Track * a_trk, void * a_panel, Viewport * a_viewport, Window * a_parent) : QDialog(a_parent)
 {
 	this->setWindowTitle(QString(_("%1 - Track Properties")).arg(a_trk->name));
 
@@ -2813,12 +2811,12 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer
 	unsigned int seg_count;
 
 	double min_alt, max_alt;
-	this->elev_box = this->create_profile(&min_alt, &max_alt);
-	this->gradient_box = this->create_gradient();
-	this->speed_box = this->create_vtdiag();
-	this->dist_box = this->create_dtdiag();
-	this->elev_time_box = this->create_etdiag();
-	this->speed_dist_box = this->create_sddiag();
+	this->elev_viewport = this->create_profile(&min_alt, &max_alt);
+	this->gradient_viewport = this->create_gradient();
+	this->speed_viewport = this->create_vtdiag();
+	this->dist_viewport = this->create_dtdiag();
+	this->elev_time_viewport = this->create_etdiag();
+	this->speed_dist_viewport = this->create_sddiag();
 	this->tabs = new QTabWidget();
 
 	QWidget * content_prop[20] = { 0 };
@@ -3078,12 +3076,12 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer
 	this->tabs->addTab(table, _("Statistics"));
 #endif
 
-	if (this->elev_box) {
+	if (this->elev_viewport) {
 		this->w_cur_dist = ui_label_new_selectable(_("No Data"), this);
 		this->w_cur_elevation = ui_label_new_selectable(_("No Data"), this);
 		this->w_show_dem = new QCheckBox(_("Show D&EM"), this);
 		this->w_show_alt_gps_speed = new QCheckBox(_("Show &GPS Speed"), this);
-		QWidget * page = this->create_graph_page(this->elev_box,
+		QWidget * page = this->create_graph_page(this->elev_viewport,
 							 _("Track Distance:"), this->w_cur_dist,
 							 _("Track Height:"), this->w_cur_elevation,
 							 NULL, NULL,
@@ -3094,11 +3092,11 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer
 		this->tabs->addTab(page, _("Elevation-distance"));
 	}
 
-	if (this->gradient_box) {
+	if (this->gradient_viewport) {
 		this->w_cur_gradient_dist = ui_label_new_selectable(_("No Data"), this);
 		this->w_cur_gradient_gradient = ui_label_new_selectable(_("No Data"), this);
 		this->w_show_gradient_gps_speed = new QCheckBox(_("Show &GPS Speed"), this);
-		QWidget * page = this->create_graph_page(this->gradient_box,
+		QWidget * page = this->create_graph_page(this->gradient_viewport,
 							 _("Track Distance:"), this->w_cur_gradient_dist,
 							 _("Track Gradient:"), this->w_cur_gradient_gradient,
 							 NULL, NULL,
@@ -3108,12 +3106,12 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer
 		this->tabs->addTab(page, _("Gradient-distance"));
 	}
 
-	if (this->speed_box) {
+	if (this->speed_viewport) {
 		this->w_cur_time = ui_label_new_selectable(_("No Data"), this);
 		this->w_cur_speed = ui_label_new_selectable(_("No Data"), this);
 		this->w_cur_time_real = ui_label_new_selectable(_("No Data"), this);
 		this->w_show_gps_speed = new QCheckBox(_("Show &GPS Speed"), this);
-		QWidget * page = this->create_graph_page(this->speed_box,
+		QWidget * page = this->create_graph_page(this->speed_viewport,
 							 _("Track Time:"), this->w_cur_time,
 							 _("Track Speed:"), this->w_cur_speed,
 							 _("Time/Date:"), this->w_cur_time_real,
@@ -3123,12 +3121,12 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer
 		this->tabs->addTab(page, _("Speed-time"));
 	}
 
-	if (this->dist_box) {
+	if (this->dist_viewport) {
 		this->w_cur_dist_time = ui_label_new_selectable(_("No Data"), this);
 		this->w_cur_dist_dist = ui_label_new_selectable(_("No Data"), this);
 		this->w_cur_dist_time_real = ui_label_new_selectable(_("No Data"), this);
 		this->w_show_dist_speed = new QCheckBox(_("Show S&peed"), this);
-		QWidget * page = this->create_graph_page(this->dist_box,
+		QWidget * page = this->create_graph_page(this->dist_viewport,
 							 _("Track Distance:"), this->w_cur_dist_dist,
 							 _("Track Time:"), this->w_cur_dist_time,
 							 _("Time/Date:"), this->w_cur_dist_time_real,
@@ -3138,13 +3136,13 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer
 		this->tabs->addTab(page, _("Distance-time"));
 	}
 
-	if (this->elev_time_box) {
+	if (this->elev_time_viewport) {
 		this->w_cur_elev_time = ui_label_new_selectable(_("No Data"), this);
 		this->w_cur_elev_elev = ui_label_new_selectable(_("No Data"), this);
 		this->w_cur_elev_time_real = ui_label_new_selectable(_("No Data"), this);
 		this->w_show_elev_speed = new QCheckBox(_("Show S&peed"), this);
 		this->w_show_elev_dem = new QCheckBox(_("Show D&EM"), this);
-		QWidget * page = this->create_graph_page(this->elev_time_box,
+		QWidget * page = this->create_graph_page(this->elev_time_viewport,
 							 _("Track Time:"), this->w_cur_elev_time,
 							 _("Track Height:"), this->w_cur_elev_elev,
 							 _("Time/Date:"), this->w_cur_elev_time_real,
@@ -3155,11 +3153,11 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer
 		this->tabs->addTab(page, _("Elevation-time"));
 	}
 
-	if (this->speed_dist_box) {
+	if (this->speed_dist_viewport) {
 		this->w_cur_speed_dist = ui_label_new_selectable(_("No Data"), this);
 		this->w_cur_speed_speed = ui_label_new_selectable(_("No Data"), this);
 		this->w_show_sd_gps_speed = new QCheckBox(_("Show &GPS Speed"), this);
-		QWidget * page = this->create_graph_page(this->speed_dist_box,
+		QWidget * page = this->create_graph_page(this->speed_dist_viewport,
 							 _("Track Distance:"), this->w_cur_speed_dist,
 							 _("Track Speed:"), this->w_cur_speed_speed,
 							 NULL, NULL,
