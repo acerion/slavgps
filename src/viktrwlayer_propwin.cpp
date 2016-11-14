@@ -750,8 +750,6 @@ void track_profile_move(QWidget * widget, GdkEventMotion *event, TrackProfileDia
 
 	widgets->blob_tp = tp;
 
-#ifdef K
-
 	int y_blob = widgets->blobby_altitude(x);
 
 	double marker_x = -1.0; /* i.e. don't draw unless we get a valid value. */
@@ -762,6 +760,7 @@ void track_profile_move(QWidget * widget, GdkEventMotion *event, TrackProfileDia
 		}
 	}
 
+	QPen black_pen(QColor("black"));
 	save_image_and_draw_graph_marks(widget,
 					marker_x,
 					black_pen,
@@ -773,8 +772,6 @@ void track_profile_move(QWidget * widget, GdkEventMotion *event, TrackProfileDia
 					&widgets->is_marker_drawn,
 					&widgets->is_blob_drawn);
 
-	g_list_free(child);
-#endif
 }
 
 
@@ -803,8 +800,6 @@ void track_gradient_move(QWidget * widget, GdkEventMotion * event, TrackProfileD
 
 	widgets->blob_tp = tp;
 
-#ifdef K
-
 	int y_blob = widgets->blobby_gradient(x);
 
 	double marker_x = -1.0; /* i.e. don't draw unless we get a valid value. */
@@ -815,6 +810,7 @@ void track_gradient_move(QWidget * widget, GdkEventMotion * event, TrackProfileD
 		}
 	}
 
+	QPen black_pen(QColor("black"));
 	save_image_and_draw_graph_marks(widget,
 					marker_x,
 					black_pen,
@@ -826,8 +822,6 @@ void track_gradient_move(QWidget * widget, GdkEventMotion * event, TrackProfileD
 					&widgets->is_marker_drawn,
 					&widgets->is_blob_drawn);
 
-	g_list_free(child);
-#endif
 }
 
 
@@ -934,8 +928,6 @@ void track_vt_move(QWidget * widget, GdkEventMotion * event, TrackProfileDialog 
 
 	widgets->blob_tp = tp;
 
-#ifdef K
-
 	int y_blob = widgets->blobby_speed(x);
 
 	double marker_x = -1.0; /* i.e. don't draw unless we get a valid value. */
@@ -946,6 +938,7 @@ void track_vt_move(QWidget * widget, GdkEventMotion * event, TrackProfileDialog 
 		}
 	}
 
+	QPen black_pen(QColor("black"));
 	save_image_and_draw_graph_marks(widget,
 					marker_x,
 					black_pen,
@@ -957,8 +950,6 @@ void track_vt_move(QWidget * widget, GdkEventMotion * event, TrackProfileDialog 
 					&widgets->is_marker_drawn,
 					&widgets->is_blob_drawn);
 
-	g_list_free(child);
-#endif
 }
 
 
@@ -993,9 +984,7 @@ void track_dt_move(QWidget * widget, GdkEventMotion * event, TrackProfileDialog 
 
 	widgets->blob_tp = tp;
 
-#ifdef K
-
-	int y_blob = blobby_distance(x, widgets);
+	int y_blob = widgets->blobby_distance(x);
 
 	double marker_x = -1.0; // i.e. Don't draw unless we get a valid value
 	if (widgets->is_marker_drawn) {
@@ -1005,6 +994,7 @@ void track_dt_move(QWidget * widget, GdkEventMotion * event, TrackProfileDialog 
 		}
 	}
 
+	QPen black_pen(QColor("black"));
 	save_image_and_draw_graph_marks(widget,
 					marker_x,
 					black_pen,
@@ -1015,9 +1005,6 @@ void track_dt_move(QWidget * widget, GdkEventMotion * event, TrackProfileDialog 
 					widgets->profile_height,
 					&widgets->is_marker_drawn,
 					&widgets->is_blob_drawn);
-
-	g_list_free(child);
-#endif
 }
 
 
@@ -1052,8 +1039,6 @@ void track_et_move(QWidget * widget, GdkEventMotion * event, TrackProfileDialog 
 
 	widgets->blob_tp = tp;
 
-#ifdef K
-
 	int y_blob = widgets->blobby_altitude_time(x);
 
 	double marker_x = -1.0; /* i.e. don't draw unless we get a valid value. */
@@ -1064,6 +1049,7 @@ void track_et_move(QWidget * widget, GdkEventMotion * event, TrackProfileDialog 
 		}
 	}
 
+	QPen black_pen(QColor("black"));
 	save_image_and_draw_graph_marks(widget,
 					marker_x,
 					black_pen,
@@ -1074,9 +1060,6 @@ void track_et_move(QWidget * widget, GdkEventMotion * event, TrackProfileDialog 
 					widgets->profile_height,
 					&widgets->is_marker_drawn,
 					&widgets->is_blob_drawn);
-
-	g_list_free(child);
-#endif
 }
 
 
@@ -1105,8 +1088,6 @@ void track_sd_move(QWidget * widget, GdkEventMotion * event, TrackProfileDialog 
 
 	widgets->blob_tp = tp;
 
-#ifdef K
-
 	int y_blob = widgets->blobby_speed_dist(x);
 
 	double marker_x = -1.0; /* i.e. don't draw unless we get a valid value. */
@@ -1117,6 +1098,7 @@ void track_sd_move(QWidget * widget, GdkEventMotion * event, TrackProfileDialog 
 		}
 	}
 
+	QPen black_pen(QColor("black"));
 	save_image_and_draw_graph_marks(widget,
 					marker_x,
 					black_pen,
@@ -1127,9 +1109,6 @@ void track_sd_move(QWidget * widget, GdkEventMotion * event, TrackProfileDialog 
 					widgets->profile_height,
 					&widgets->is_marker_drawn,
 					&widgets->is_blob_drawn);
-
-	g_list_free(child);
-#endif
 }
 
 
@@ -1253,11 +1232,10 @@ static void draw_dem_alt_speed_dist(Track * trk,
 	int achunk = chunksa[cia]*LINES;
 
 	for (auto iter = std::next(trk->trackpointsB->begin()); iter != trk->trackpointsB->end(); iter++) {
-#ifdef K
-		int x;
+
 		dist += vik_coord_diff(&(*iter)->coord,
 				       &(*std::prev(iter))->coord);
-		x = (width * dist) / total_length + margin;
+		int x = (width * dist) / total_length + margin;
 		if (do_dem) {
 			int16_t elev = dem_cache_get_elev_by_coord(&(*iter)->coord, VIK_DEM_INTERPOL_BEST);
 			if (elev != VIK_DEM_INVALID_ELEVATION) {
@@ -1272,17 +1250,20 @@ static void draw_dem_alt_speed_dist(Track * trk,
 
 				/* consider chunk size. */
 				int y_alt = h2 - ((height * elev)/achunk);
+#ifdef K
 				fill_rectangle(GDK_DRAWABLE (pix), alt_pen, x - 2, y_alt - 2, 4, 4);
+#endif
 			}
 		}
 		if (do_speed) {
 			/* This is just a speed indicator - no actual values can be inferred by user. */
 			if (!isnan((*iter)->speed)) {
 				int y_speed = h2 - (height * (*iter)->speed) / max_speed;
+#ifdef K
 				fill_rectangle(GDK_DRAWABLE (pix), speed_pen, x - 2, y_speed - 2, 4, 4);
+#endif
 			}
 		}
-#endif
 	}
 }
 
@@ -1292,7 +1273,7 @@ static void draw_dem_alt_speed_dist(Track * trk,
 /**
  * A common way to draw the grid with y axis labels
  */
-static void draw_grid_y(QPen & fg_pen, QPen & dark_pen, GtkWidget * window, QWidget * drawable, TrackProfileDialog * widgets, GdkPixmap * pix, char * ss, int i)
+void TrackProfileDialog::draw_grid_y(QPen & fg_pen, QPen & dark_pen, QWidget * drawable, QPixmap * pix, char * ss, int i)
 {
 #ifdef K
 	PangoLayout * pl = gtk_widget_create_pango_layout(GTK_WIDGET(drawable), NULL);
@@ -1309,13 +1290,13 @@ static void draw_grid_y(QPen & fg_pen, QPen & dark_pen, GtkWidget * window, QWid
 
 	gdk_draw_layout(GDK_DRAWABLE(pix), fg_pen,
 			MARGIN_X-w-3,
-			CLAMP((int)i*widgets->profile_height/LINES - h/2 + MARGIN_Y, 0, widgets->profile_height-h+MARGIN_Y),
+			CLAMP((int)i * this->profile_height/LINES - h/2 + MARGIN_Y, 0, this->profile_height-h+MARGIN_Y),
 			pl);
 	g_object_unref(G_OBJECT (pl));
 
 	gdk_draw_line(GDK_DRAWABLE(pix), dark_pen,
-		      MARGIN_X, MARGIN_Y + widgets->profile_height/LINES * i,
-		      MARGIN_X + widgets->profile_width, MARGIN_Y + widgets->profile_height/LINES * i);
+		      MARGIN_X, MARGIN_Y + this->profile_height/LINES * i,
+		      MARGIN_X + this->profile_width, MARGIN_Y + this->profile_height/LINES * i);
 #endif
 }
 
@@ -1325,7 +1306,7 @@ static void draw_grid_y(QPen & fg_pen, QPen & dark_pen, GtkWidget * window, QWid
 /**
  * A common way to draw the grid with x axis labels for time graphs
  */
-static void draw_grid_x_time(GtkWidget * window, GtkWidget * image, TrackProfileDialog * widgets, GdkPixmap * pix, unsigned int ii, unsigned int tt, unsigned int xx)
+void TrackProfileDialog::draw_grid_x_time(QWidget * image, QPixmap * pix, unsigned int ii, unsigned int tt, unsigned int xx)
 {
 	char *label_markup = NULL;
 #ifdef K
@@ -1365,7 +1346,7 @@ static void draw_grid_x_time(GtkWidget * window, GtkWidget * image, TrackProfile
 	if (label_markup) {
 
 		PangoLayout *pl = gtk_widget_create_pango_layout(GTK_WIDGET(image), NULL);
-		pango_layout_set_font_description(pl, gtk_widget_get_style(window)->font_desc);
+		pango_layout_set_font_description(pl, font_desc);
 
 		pango_layout_set_markup(pl, label_markup, -1);
 		free(label_markup);
@@ -1378,7 +1359,7 @@ static void draw_grid_x_time(GtkWidget * window, GtkWidget * image, TrackProfile
 	}
 
 	gdk_draw_line(GDK_DRAWABLE(pix), dark_pen,
-		      MARGIN_X+xx, MARGIN_Y, MARGIN_X+xx, MARGIN_Y+widgets->profile_height);
+		      MARGIN_X + xx, MARGIN_Y, MARGIN_X + xx, MARGIN_Y + this->profile_height);
 #endif
 }
 
@@ -1388,7 +1369,7 @@ static void draw_grid_x_time(GtkWidget * window, GtkWidget * image, TrackProfile
 /**
  * A common way to draw the grid with x axis labels for distance graphs.
  */
-static void draw_grid_x_distance(GtkWidget * image, TrackProfileDialog * widgets, GdkPixmap * pix, unsigned int ii, double dd, unsigned int xx, DistanceUnit distance_unit)
+void TrackProfileDialog::draw_grid_x_distance(QWidget * image, QPixmap * pix, unsigned int ii, double dd, unsigned int xx, DistanceUnit distance_unit)
 {
 	char *label_markup = NULL;
 
@@ -1418,7 +1399,7 @@ static void draw_grid_x_distance(GtkWidget * image, TrackProfileDialog * widgets
 	}
 
 	gdk_draw_line(GDK_DRAWABLE(pix), dark_pen,
-		      MARGIN_X+xx, MARGIN_Y, MARGIN_X+xx, MARGIN_Y+widgets->profile_height);
+		      MARGIN_X + xx, MARGIN_Y, MARGIN_X + xx, MARGIN_Y + this->profile_height);
 #endif
 }
 
@@ -1428,7 +1409,7 @@ static void draw_grid_x_distance(GtkWidget * image, TrackProfileDialog * widgets
 /**
  * Clear the images (scale texts & actual graph).
  */
-void TrackProfileDialog::clear_image(GdkPixmap * pix)
+void TrackProfileDialog::clear_image(QPixmap * pix)
 {
 #ifdef K
 	fill_rectangle(GDK_DRAWABLE(pix), bg_pen,
@@ -1441,7 +1422,7 @@ void TrackProfileDialog::clear_image(GdkPixmap * pix)
 
 
 
-static void draw_distance_divisions(GtkWidget * image, GdkPixmap * pix, TrackProfileDialog * widgets, DistanceUnit distance_unit)
+static void draw_distance_divisions(QWidget * image, QPixmap * pix, TrackProfileDialog * widgets, DistanceUnit distance_unit)
 {
 	/* Set to display units from length in metres. */
 	double length = widgets->track_length_inc_gaps;
@@ -1451,7 +1432,7 @@ static void draw_distance_divisions(GtkWidget * image, GdkPixmap * pix, TrackPro
 	double dist_per_pixel = length/widgets->profile_width;
 
 	for (unsigned int i = 1; chunksd[index] * i <= length; i++) {
-		draw_grid_x_distance(image, widgets, pix, index, chunksd[index] * i, (unsigned int) (chunksd[index] * i / dist_per_pixel), distance_unit);
+		widgets->draw_grid_x_distance(image, pix, index, chunksd[index] * i, (unsigned int) (chunksd[index] * i / dist_per_pixel), distance_unit);
 	}
 }
 
@@ -1501,7 +1482,7 @@ void TrackProfileDialog::draw_elevations(QWidget * drawable, Track * trk)
 	QPen no_alt_info_pen(QColor("yellow"));
 
 	/* Reset before redrawing. */
-	clear_image(pix, this);
+	this->clear_image(pix);
 
 	/* Draw grid. */
 	QPen fg_pen(QColor("orange"));
@@ -1522,7 +1503,7 @@ void TrackProfileDialog::draw_elevations(QWidget * drawable, Track * trk)
 			fprintf(stderr, "CRITICAL: Houston, we've had a problem. height=%d\n", height_units);
 		}
 
-		draw_grid_y(fg_pen, dark_pen, drawable, this, pix, s, i);
+		this->draw_grid_y(fg_pen, dark_pen, drawable, pix, s, i);
 	}
 
 	draw_distance_divisions(drawable, pix, this, a_vik_get_units_distance());
@@ -1579,7 +1560,7 @@ void TrackProfileDialog::draw_elevations(QWidget * drawable, Track * trk)
  * (which is the gradients graph).
  */
 static void draw_speed_dist(Track * trk,
-			    GdkDrawable * pix,
+			    QPixmap * pix,
 			    QPen & speed_pen,
 			    double max_speed_in,
 			    int width,
@@ -1638,15 +1619,13 @@ void TrackProfileDialog::draw_gradients(QWidget * drawable, Track * trk)
 	/* Assign locally. */
 	double mina = this->draw_min_gradient;
 
-#ifdef K
 
-	GtkWidget *window = gtk_widget_get_toplevel(this->gradient_box);
 	QPixmap * pix = new QPixmap(this->profile_width + MARGIN_X, this->profile_height + MARGIN_Y);
 
-	gtk_image_set_from_pixmap(GTK_IMAGE(drawable), pix, NULL);
+	//gtk_image_set_from_pixmap(GTK_IMAGE(drawable), pix, NULL);
 
 	/* Reset before redrawing. */
-	clear_image(pix, this);
+	this->clear_image(pix);
 
 	/* Draw grid. */
 	QPen fg_pen(QColor("orange"));
@@ -1655,8 +1634,7 @@ void TrackProfileDialog::draw_gradients(QWidget * drawable, Track * trk)
 		char s[32];
 
 		sprintf(s, "%8d%%", (int)(mina + (LINES-i)*chunksg[this->cig]));
-
-		draw_grid_y(fg_pen, dark_pen, drawable, this, pix, s, i);
+		this->draw_grid_y(fg_pen, dark_pen, drawable, pix, s, i);
 	}
 
 	draw_distance_divisions(drawable, pix, this, a_vik_get_units_distance());
@@ -1664,8 +1642,10 @@ void TrackProfileDialog::draw_gradients(QWidget * drawable, Track * trk)
 	/* Draw gradients. */
 	unsigned int height = this->profile_height + MARGIN_Y;
 	for (int i = 0; i < this->profile_width; i++) {
+#ifdef K
 		gdk_draw_line(GDK_DRAWABLE(pix), dark_pen3,
 			      i + MARGIN_X, height, i + MARGIN_X, height - this->profile_height*(this->gradients[i]-mina)/(chunksg[this->cig]*LINES));
+#endif
 	}
 
 	if (this->w_show_gradient_gps_speed->checkState()) {
@@ -1678,7 +1658,7 @@ void TrackProfileDialog::draw_gradients(QWidget * drawable, Track * trk)
 		}
 
 		draw_speed_dist(trk,
-				GDK_DRAWABLE(pix),
+				pix,
 				gps_speed_pen,
 				this->max_speed,
 				this->profile_width,
@@ -1686,28 +1666,27 @@ void TrackProfileDialog::draw_gradients(QWidget * drawable, Track * trk)
 				this->w_show_alt_gps_speed->checkState());
 	}
 
+#ifdef K
 	/* Draw border. */
 	draw_rectangle(GDK_DRAWABLE(pix), black_pen, MARGIN_X, MARGIN_Y, this->profile_width-1, this->profile_height-1);
-
-	g_object_unref(G_OBJECT(pix));
 #endif
 }
 
 
 
 
-static void draw_time_lines(GtkWidget * window, GtkWidget * image, GdkPixmap * pix, TrackProfileDialog * widgets)
+void TrackProfileDialog::draw_time_lines(QWidget * image, QPixmap * pix)
 {
-	unsigned int index = get_time_chunk_index (widgets->duration);
-	double time_per_pixel = (double)(widgets->duration)/widgets->profile_width;
+	unsigned int index = get_time_chunk_index(this->duration);
+	double time_per_pixel = (double)(this->duration)/this->profile_width;
 
 	/* If stupidly long track in time - don't bother trying to draw grid lines. */
-	if (widgets->duration > chunkst[G_N_ELEMENTS(chunkst)-1]*LINES*LINES) {
+	if (this->duration > chunkst[G_N_ELEMENTS(chunkst)-1]*LINES*LINES) {
 		return;
 	}
 
-	for (unsigned int i=1; chunkst[index]*i <= widgets->duration; i++) {
-		draw_grid_x_time(window, image, widgets, pix, index, chunkst[index]*i, (unsigned int)(chunkst[index]*i/time_per_pixel));
+	for (unsigned int i=1; chunkst[index]*i <= this->duration; i++) {
+		this->draw_grid_x_time(image, pix, index, chunkst[index]*i, (unsigned int)(chunkst[index]*i/time_per_pixel));
 	}
 }
 
@@ -1741,11 +1720,10 @@ void TrackProfileDialog::draw_vt(QWidget * drawable, Track * trk)
 		this->speeds[i] = convert_speed_mps_to(speed_units, this->speeds[i]);
 	}
 
-#ifdef K
-	GtkWidget *window = gtk_widget_get_toplevel(this->speed_box);
 	QPixmap * pix = new QPixmap(this->profile_width + MARGIN_X, this->profile_height + MARGIN_Y);
-
+#ifdef K
 	gtk_image_set_from_pixmap(GTK_IMAGE(drawable), pix, NULL);
+#endif
 
 	minmax_array(this->speeds, &this->min_speed, &this->max_speed, false, this->profile_width);
 	if (this->min_speed < 0.0) {
@@ -1759,7 +1737,7 @@ void TrackProfileDialog::draw_vt(QWidget * drawable, Track * trk)
 	double mins = this->draw_min_speed;
 
 	/* Reset before redrawing. */
-	clear_image(pix, this);
+	this->clear_image(pix);
 
 	/* Draw grid. */
 	QPen fg_pen(QColor("orange"));
@@ -1786,21 +1764,23 @@ void TrackProfileDialog::draw_vt(QWidget * drawable, Track * trk)
 			fprintf(stderr, "CRITICAL: Houston, we've had a problem. speed=%d\n", speed_units);
 		}
 
-		draw_grid_y(fg_pen, dark_pen, drawable, this, pix, s, i);
+		this->draw_grid_y(fg_pen, dark_pen, drawable, pix, s, i);
 	}
 
-	draw_time_lines(window, drawable, pix, this);
+	this->draw_time_lines(drawable, pix);
 
 	/* Draw speeds. */
 	unsigned int height = this->profile_height + MARGIN_Y;
 	for (int i = 0; i < this->profile_width; i++) {
+#ifdef K
 		gdk_draw_line(GDK_DRAWABLE(pix), dark_pen3,
 			       i + MARGIN_X, height, i + MARGIN_X, height - this->profile_height*(this->speeds[i]-mins)/(chunkss[this->cis]*LINES));
+#endif
 	}
 
 	if (this->w_show_gps_speed->checkState()) {
 
-		QPen gps_speed_pen(Qcolor("red"));
+		QPen gps_speed_pen(QColor("red"));
 
 		time_t beg_time = (*trk->trackpointsB->begin())->timestamp;
 		time_t dur = (*std::prev(trk->trackpointsB->end()))->timestamp - beg_time;
@@ -1815,14 +1795,14 @@ void TrackProfileDialog::draw_vt(QWidget * drawable, Track * trk)
 
 			int x = MARGIN_X + this->profile_width * ((*iter)->timestamp - beg_time) / dur;
 			int y = height - this->profile_height * (gps_speed - mins) / (chunkss[this->cis] * LINES);
+#ifdef K
 			fill_rectangle(GDK_DRAWABLE(pix), gps_speed_pen, x - 2, y - 2, 4, 4);
+#endif
 		}
 	}
-
+#ifdef K
 	/* Draw border. */
 	draw_rectangle(GDK_DRAWABLE(pix), black_pen, MARGIN_X, MARGIN_Y, this->profile_width-1, this->profile_height-1);
-
-	g_object_unref(G_OBJECT(pix));
 #endif
 }
 
@@ -1856,11 +1836,10 @@ void TrackProfileDialog::draw_dt(QWidget * drawable, Track * trk)
 		return;
 	}
 
-#ifdef K
-	GtkWidget * window = gtk_widget_get_toplevel(this->dist_box);
 	QPixmap * pix = new QPixmap(this->profile_width + MARGIN_X, this->profile_height + MARGIN_Y);
-
+#ifdef K
 	gtk_image_set_from_pixmap(GTK_IMAGE(drawable), pix, NULL);
+#endif
 
 	/* Easy to work out min / max of distance!
 	   Assign locally.
@@ -1872,7 +1851,7 @@ void TrackProfileDialog::draw_dt(QWidget * drawable, Track * trk)
 	get_new_min_and_chunk_index(0, maxd, chunksd, G_N_ELEMENTS(chunksd), &dummy, &this->cid);
 
 	/* Reset before redrawing. */
-	clear_image(pix, this);
+	this->clear_image(pix);
 
 	/* Draw grid. */
 	QPen fg_pen(QColor("orange"));
@@ -1892,16 +1871,18 @@ void TrackProfileDialog::draw_dt(QWidget * drawable, Track * trk)
 			break;
 		}
 
-		draw_grid_y(fg_pen, dark_pen, drawable, this, pix, s, i);
+		this->draw_grid_y(fg_pen, dark_pen, drawable, pix, s, i);
 	}
 
-	draw_time_lines(window, drawable, pix, this);
+	this->draw_time_lines(drawable, pix);
 
 	/* Draw distance. */
 	unsigned int height = this->profile_height + MARGIN_Y;
-	for (i = 0; i < this->profile_width; i++) {
+	for (int i = 0; i < this->profile_width; i++) {
+#ifdef K
 		gdk_draw_line(GDK_DRAWABLE(pix), dark_pen3,
 			      i + MARGIN_X, height, i + MARGIN_X, height - this->profile_height*(this->distances[i])/(chunksd[this->cid]*LINES));
+#endif
 	}
 
 	/* Show speed indicator. */
@@ -1912,16 +1893,16 @@ void TrackProfileDialog::draw_dt(QWidget * drawable, Track * trk)
 		max_speed = this->max_speed * 110 / 100;
 
 		/* This is just an indicator - no actual values can be inferred by user. */
-		for (i = 0; i < this->profile_width; i++) {
+		for (int i = 0; i < this->profile_width; i++) {
 			int y_speed = this->profile_height - (this->profile_height * this->speeds[i])/max_speed;
+#ifdef K
 			fill_rectangle(GDK_DRAWABLE(pix), dist_speed_pen, i+MARGIN_X-2, y_speed-2, 4, 4);
+#endif
 		}
 	}
-
+#ifdef K
 	/* Draw border. */
 	draw_rectangle(GDK_DRAWABLE(pix), black_pen, MARGIN_X, MARGIN_Y, this->profile_width-1, this->profile_height-1);
-
-	g_object_unref(G_OBJECT(pix));
 #endif
 }
 
@@ -1967,14 +1948,13 @@ void TrackProfileDialog::draw_et(QWidget * drawable, Track * trk)
 		return;
 	}
 
-#ifdef K
-	GtkWidget *window = gtk_widget_get_toplevel(this->elev_time_box);
 	QPixmap * pix = new QPixmap(this->profile_width + MARGIN_X, this->profile_height + MARGIN_Y);
-
+#ifdef K
 	gtk_image_set_from_pixmap(GTK_IMAGE(drawable), pix, NULL);
+#endif
 
 	/* Reset before redrawing. */
-	clear_image(pix, this);
+	this->clear_image(pix);
 
 	/* Draw grid. */
 	QPen fg_pen(QColor("orange"));
@@ -1995,16 +1975,18 @@ void TrackProfileDialog::draw_et(QWidget * drawable, Track * trk)
 			fprintf(stderr, "CRITICAL: Houston, we've had a problem. height=%d\n", height_units);
 		}
 
-		draw_grid_y(fg_pen, dark_pen, drawable, this, pix, s, i);
+		this->draw_grid_y(fg_pen, dark_pen, drawable, pix, s, i);
 	}
 
-	draw_time_lines(window, drawable, pix, this);
+	this->draw_time_lines(drawable, pix);
 
 	/* Draw elevations. */
 	unsigned int height = this->profile_height + MARGIN_Y;
 	for (int i = 0; i < this->profile_width; i++) {
+#ifdef K
 		gdk_draw_line(GDK_DRAWABLE(pix), dark_pen3,
 			      i + MARGIN_X, height, i + MARGIN_X, height-this->profile_height*(this->ats[i]-mina)/(chunksa[this->ciat]*LINES));
+#endif
 	}
 
 	/* Show DEMS. */
@@ -2031,7 +2013,9 @@ void TrackProfileDialog::draw_et(QWidget * drawable, Track * trk)
 
 					/* consider chunk size. */
 					int y_alt = h2 - ((this->profile_height * elev)/achunk);
+#ifdef K
 					fill_rectangle(GDK_DRAWABLE(pix), dem_alt_pen, i+MARGIN_X-2, y_alt-2, 4, 4);
+#endif
 				}
 			}
 		}
@@ -2044,16 +2028,16 @@ void TrackProfileDialog::draw_et(QWidget * drawable, Track * trk)
 
 		double max_speed = this->max_speed * 110 / 100;
 
-		for (i = 0; i < this->profile_width; i++) {
+		for (int i = 0; i < this->profile_width; i++) {
 			int y_speed = this->profile_height - (this->profile_height * this->speeds[i])/max_speed;
+#ifdef K
 			fill_rectangle(GDK_DRAWABLE(pix), elev_speed_pen, i+MARGIN_X-2, y_speed-2, 4, 4);
+#endif
 		}
 	}
-
+#ifdef K
 	/* Draw border. */
 	draw_rectangle(GDK_DRAWABLE(pix), black_pen, MARGIN_X, MARGIN_Y, this->profile_width-1, this->profile_height-1);
-
-	g_object_unref(G_OBJECT(pix));
 #endif
 }
 
@@ -2083,11 +2067,10 @@ void TrackProfileDialog::draw_sd(QWidget * drawable, Track * trk)
 		this->speeds_dist[i] = convert_speed_mps_to(speed_units, this->speeds_dist[i]);
 	}
 
-#ifdef K
-	GtkWidget *window = gtk_widget_get_toplevel(this->speed_dist_box);
 	QPixmap * pix = new QPixmap(this->profile_width + MARGIN_X, this->profile_height + MARGIN_Y);
-
+#ifdef K
 	gtk_image_set_from_pixmap(GTK_IMAGE(drawable), pix, NULL);
+#endif
 
 	/* OK to resuse min_speed here. */
 	minmax_array(this->speeds_dist, &this->min_speed, &this->max_speed_dist, false, this->profile_width);
@@ -2102,7 +2085,7 @@ void TrackProfileDialog::draw_sd(QWidget * drawable, Track * trk)
 	mins = this->draw_min_speed;
 
 	/* Reset before redrawing. */
-	clear_image(pix, this);
+	this->clear_image(pix);
 
 	/* Draw grid. */
 	QPen fg_pen(QColor("orange"));
@@ -2129,7 +2112,7 @@ void TrackProfileDialog::draw_sd(QWidget * drawable, Track * trk)
 			fprintf(stderr, "CRITICAL: Houston, we've had a problem. speed=%d\n", speed_units);
 		}
 
-		draw_grid_y(fg_pen, dark_pen, drawable, this, pix, s, i);
+		this->draw_grid_y(fg_pen, dark_pen, drawable, pix, s, i);
 	}
 
 	draw_distance_divisions(drawable, pix, this, a_vik_get_units_distance());
@@ -2137,8 +2120,10 @@ void TrackProfileDialog::draw_sd(QWidget * drawable, Track * trk)
 	/* Draw speeds. */
 	unsigned int height = this->profile_height + MARGIN_Y;
 	for (int i = 0; i < this->profile_width; i++) {
+#ifdef K
 		gdk_draw_line(GDK_DRAWABLE(pix), dark_pen3,
 			      i + MARGIN_X, height, i + MARGIN_X, height - this->profile_height*(this->speeds_dist[i]-mins)/(chunkss[this->cisd]*LINES));
+#endif
 	}
 
 
@@ -2160,14 +2145,14 @@ void TrackProfileDialog::draw_sd(QWidget * drawable, Track * trk)
 			dist_tp += vik_coord_diff(&(*iter)->coord, &(*std::prev(iter))->coord);
 			int x = MARGIN_X + (this->profile_width * dist_tp / dist);
 			int y = height - this->profile_height * (gps_speed - mins)/(chunkss[this->cisd] * LINES);
+#ifdef K
 			fill_rectangle(GDK_DRAWABLE (pix), gps_speed_pen, x - 2, y - 2, 4, 4);
+#endif
 		}
 	}
-
+#ifdef K
 	/* Draw border. */
 	draw_rectangle(GDK_DRAWABLE(pix), black_pen, MARGIN_X, MARGIN_Y, this->profile_width-1, this->profile_height-1);
-
-	g_object_unref(G_OBJECT(pix));
 #endif
 }
 #undef LINES

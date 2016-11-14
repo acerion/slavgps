@@ -103,7 +103,7 @@ namespace SlavGPS {
 		int blobby_gradient(double x_blob);
 		int blobby_distance(double x_blob);
 
-		void clear_image(GdkPixmap * pix);
+		void clear_image(QPixmap * pix);
 
 		void draw_all_graphs(bool resized);
 		QWidget * create_graph_page(QWidget * graph,
@@ -118,9 +118,15 @@ namespace SlavGPS {
 					    QCheckBox * checkbutton2,
 					    bool checkbutton2_default);
 
+		void draw_grid_x_distance(QWidget * image, QPixmap * pix, unsigned int ii, double dd, unsigned int xx, DistanceUnit distance_unit);
+		void draw_grid_x_time(QWidget * image, QPixmap * pix, unsigned int ii, unsigned int tt, unsigned int xx);
+		void draw_grid_y(QPen & fg_pen, QPen & dark_pen, QWidget * drawable, QPixmap * pix, char * ss, int i);
+		void draw_time_lines(QWidget * image, QPixmap * pix);
+
 		void save_values(void);
 
 		void draw_single_graph(bool resized, QWidget * drawable, void (TrackProfileDialog::*draw_graph)(QWidget *, Track *), int (TrackProfileDialog::*get_blobby)(double), bool by_time, PropSaved * saved_img);
+
 
 		QWidget * parent = NULL;
 		LayerTRW * trw = NULL;
