@@ -151,8 +151,9 @@ Viewport::Viewport(Window * parent) : QWidget((QWidget *) parent)
 
 	this->installEventFilter(this);
 
-	this->setMinimumSize(200, 300);
-	this->setMaximumSize(2700, 2700);
+	this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+	//this->setMinimumSize(200, 300);
+	//this->setMaximumSize(2700, 2700);
 
 	struct UTM utm;
 	struct LatLon ll;
