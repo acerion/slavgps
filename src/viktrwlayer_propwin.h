@@ -119,11 +119,11 @@ namespace SlavGPS {
 					    QCheckBox * checkbutton2,
 					    bool checkbutton2_default);
 
-		void draw_vertical_grid_distance(Viewport * viewport, QPixmap * pix, unsigned int ii, double dd, unsigned int xx, DistanceUnit distance_unit);
-		void draw_vertical_grid_time(Viewport * viewport, QPixmap * pix, unsigned int ii, unsigned int tt, unsigned int xx);
-		void draw_horizontal_grid(Viewport * viewport, QPen & fg_pen, QPen & dark_pen, QPixmap * pix, char * ss, int i);
-		void draw_time_lines(Viewport * viewport, QPixmap * pix);
-		void draw_distance_divisions(Viewport * viewport, QPixmap * pix, DistanceUnit distance_unit);
+		void draw_vertical_grid_distance(Viewport * viewport, unsigned int ii, double dd, unsigned int xx, DistanceUnit distance_unit);
+		void draw_vertical_grid_time(Viewport * viewport, unsigned int ii, unsigned int tt, unsigned int xx);
+		void draw_horizontal_grid(Viewport * viewport, QPen & fg_pen, QPen & dark_pen, char * ss, int i);
+		void draw_time_lines(Viewport * viewport);
+		void draw_distance_divisions(Viewport * viewport, DistanceUnit distance_unit);
 
 		void save_values(void);
 
