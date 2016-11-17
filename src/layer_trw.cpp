@@ -46,6 +46,7 @@
 #include "layer_trw_draw.h"
 #include "layer_trw_tools.h"
 #include "vikutils.h"
+#include "track_properties_dialog.h"
 #include "waypoint_properties.h"
 #include "waypoint_list.h"
 #include "viktrwlayer_propwin.h"
@@ -3945,6 +3946,22 @@ void LayerTRW::properties_item_cb(void)
 	} else {
 		Track * trk = this->get_track_helper(this->menu_data->sublayer_type, this->menu_data->sublayer_uid);
 		if (trk && trk->name) {
+			track_properties_dialog(this->get_window(),
+						this,
+						trk,
+						false);
+		}
+	}
+}
+
+
+
+
+void LayerTRW::profile_item_cb(void)
+{
+	if (this->menu_data->sublayer_type != SublayerType::WAYPOINT) {
+		Track * trk = this->get_track_helper(this->menu_data->sublayer_type, this->menu_data->sublayer_uid);
+		if (trk && trk->name) {
 			vik_trw_layer_propwin_run(this->get_window(),
 						  this,
 						  trk,
@@ -3967,12 +3984,10 @@ void LayerTRW::track_statistics_cb(void)
 {
 	Track * trk = this->get_track_helper(this->menu_data->sublayer_type, this->menu_data->sublayer_uid);
 	if (trk && trk->name) {
-		vik_trw_layer_propwin_run(this->get_window(),
-					  this,
-					  trk,
-					  this->menu_data->layers_panel,
-					  this->menu_data->viewport,
-					  true);
+		track_properties_dialog(this->get_window(),
+					this,
+					trk,
+					true);
 	}
 }
 

@@ -371,6 +371,33 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 				qa->setEnabled(false);
 			}
 		}
+	}
+
+	if (this->menu_data->sublayer_type == SublayerType::TRACK
+	    || this->menu_data->sublayer_type == SublayerType::ROUTE) {
+
+		qa = menu.addAction(QIcon::fromTheme("document-properties"), QString(_("P&rofile")));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (profile_item_cb()));
+
+		if (this->menu_data->sublayer_type == SublayerType::TRACK) {
+			Track * trk = this->tracks.at(this->menu_data->sublayer_uid);
+			if (trk && trk->property_dialog) {
+				qa->setEnabled(false);
+			}
+		}
+		if (this->menu_data->sublayer_type == SublayerType::ROUTE) {
+			Track * trk = this->routes.at(this->menu_data->sublayer_uid);
+			if (trk && trk->property_dialog) {
+				qa->setEnabled(false);
+			}
+		}
+	}
+
+	if (this->menu_data->sublayer_type == SublayerType::WAYPOINT
+	    || this->menu_data->sublayer_type == SublayerType::TRACK
+	    || this->menu_data->sublayer_type == SublayerType::ROUTE) {
+
+
 
 		qa = menu.addAction(QIcon::fromTheme("edit-cut"), QString(_("Cut")));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (cut_sublayer_cb()));

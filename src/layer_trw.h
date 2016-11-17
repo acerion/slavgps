@@ -653,6 +653,7 @@ namespace SlavGPS {
 		void gps_upload_any_cb(void);
 		void track_list_dialog_cb(void);
 		void properties_item_cb(void); /* TODO?? */
+		void profile_item_cb(void);
 		void waypoint_webpage_cb(void);
 		void export_gpx_track_cb(void);
 		void osm_traces_upload_track_cb(void);
