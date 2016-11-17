@@ -41,6 +41,7 @@
 #include "dems.h"
 #include "viewport.h" /* ugh */
 #include "vikutils.h"
+#include "util.h"
 #include "ui_util.h"
 #include "dialog.h"
 #include "settings.h"
@@ -179,25 +180,6 @@ TrackProfileDialog::~TrackProfileDialog()
 #endif
 }
 
-
-
-
-static void minmax_array(const double * array, double * min, double * max, bool NO_ALT_TEST, unsigned int array_size)
-{
-	*max = -1000;
-	*min = 20000;
-
-	for (unsigned int i = 0; i < array_size; i++) {
-		if (NO_ALT_TEST || (array[i] != VIK_DEFAULT_ALTITUDE)) {
-			if (array[i] > *max) {
-				*max = array[i];
-			}
-			if (array[i] < *min) {
-				*min = array[i];
-			}
-		}
-	}
-}
 
 
 
@@ -2556,13 +2538,6 @@ void TrackProfileDialog::dialog_response_cb(int resp) /* Slot. */
 	case GTK_RESPONSE_REJECT:
 		break;
 	case GTK_RESPONSE_ACCEPT:
-		trk->set_comment(this->w_comment->toUtf()->data());
-		trk->set_description(this->w_description->toUtf()->data());
-		trk->set_source(this->w_source->toUtf()->data())
-		trk->set_type(this->w_type->toUtf()->data());
-		gtk_color_button_get_color(GTK_COLOR_BUTTON(this->w_color), &(trk->color));
-		trk->draw_name_mode = (TrackDrawnameType) gtk_combo_box_get_active(GTK_COMBO_BOX(this->w_namelabel));
-		trk->max_number_dist_labels = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(this->w_number_distlabels));
 		this->trw->update_treeview(this->trk);
 		trw->emit_changed();
 		break;
@@ -2741,41 +2716,6 @@ QWidget * TrackProfileDialog::create_graph_page(QWidget * graph,
 
 
 
-static GtkWidget * create_table(int cnt, char * labels[], GtkWidget * contents[])
-{
-#ifdef K
-	GtkTable * table;
-
-	table = GTK_TABLE(gtk_table_new(cnt, 2, false));
-	gtk_table_set_col_spacing(table, 0, 10);
-	for (int i = 0; i < cnt; i++) {
-		GtkWidget *label;
-
-		/* Settings so the text positioning only moves around vertically when the dialog is resized.
-		   This also gives more room to see the track comment. */
-		label = gtk_label_new(NULL);
-		gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5); // Position text centrally in vertical plane
-		gtk_label_set_markup(GTK_LABEL(label), _(labels[i]));
-		gtk_table_attach(table, label, 0, 1, i, i+1, GTK_FILL, GTK_SHRINK, 0, 0);
-		if (GTK_IS_MISC(contents[i])) {
-			gtk_misc_set_alignment(GTK_MISC(contents[i]), 0, 0.5);
-		}
-		if (GTK_IS_COLOR_BUTTON(contents[i]) || GTK_IS_COMBO_BOX(contents[i])) {
-			/* Buttons compressed - otherwise look weird (to me) if vertically massive. */
-			gtk_table_attach(table, contents[i], 1, 2, i, i+1, GTK_FILL, GTK_SHRINK, 0, 5);
-		} else {
-			/* Expand for comments + descriptions / labels. */
-			gtk_table_attach_defaults(table, contents[i], 1, 2, i, i+1);
-		}
-	}
-
-	return GTK_WIDGET (table);
-#endif
-}
-
-
-
-
 void SlavGPS::vik_trw_layer_propwin_run(Window * parent,
 					LayerTRW * layer,
 					Track * trk,
@@ -2834,9 +2774,7 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer
 
 #endif
 
-	double tr_len;
-	unsigned long tp_count;
-	unsigned int seg_count;
+
 
 	double min_alt, max_alt;
 	this->elev_viewport = this->create_profile(&min_alt, &max_alt);
@@ -2847,264 +2785,9 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer
 	this->speed_dist_viewport = this->create_sddiag();
 	this->tabs = new QTabWidget();
 
-	QWidget * content_prop[20] = { 0 };
-	int cnt_prop = 0;
-
-	static char *label_texts[] = {
-		(char *) N_("<b>Comment:</b>"),
-		(char *) N_("<b>Description:</b>"),
-		(char *) N_("<b>Source:</b>"),
-		(char *) N_("<b>Type:</b>"),
-		(char *) N_("<b>Color:</b>"),
-		(char *) N_("<b>Draw Name:</b>"),
-		(char *) N_("<b>Distance Labels:</b>"),
-	};
-	static char *stats_texts[] = {
-		(char *) N_("<b>Track Length:</b>"),
-		(char *) N_("<b>Trackpoints:</b>"),
-		(char *) N_("<b>Segments:</b>"),
-		(char *) N_("<b>Duplicate Points:</b>"),
-		(char *) N_("<b>Max Speed:</b>"),
-		(char *) N_("<b>Avg. Speed:</b>"),
-		(char *) N_("<b>Moving Avg. Speed:</b>"),
-		(char *) N_("<b>Avg. Dist. Between TPs:</b>"),
-		(char *) N_("<b>Elevation Range:</b>"),
-		(char *) N_("<b>Total Elevation Gain/Loss:</b>"),
-		(char *) N_("<b>Start:</b>"),
-		(char *) N_("<b>End:</b>"),
-		(char *) N_("<b>Duration:</b>"),
-	};
-	static char tmp_buf[50];
-	double tmp_speed;
-#if 0
-	/* Properties. */
-	this->w_comment = new QLineEdit(this);
-	if (trk->comment) {
-		this->w_comment->insert(trk->comment);
-	}
-	content_prop[cnt_prop++] = this->w_comment;
-
-	this->w_description = new QLineEdit(this);
-	if (trk->description) {
-		this->w_description->insert(trk->description);
-	}
-	content_prop[cnt_prop++] = this->w_description;
-
-	this->w_source = new QLineEdit(this);
-	if (trk->source) {
-		this->w_source->insert(trk->source);
-	}
-	content_prop[cnt_prop++] = this->w_source;
-
-	this->w_type = new QLineEdit(this);
-	if (trk->type) {
-		this->w_type->insert(trk->type);
-	}
-	content_prop[cnt_prop++] = this->w_type;
-#endif
-
-#ifdef K
-
-	widgets->w_color = content_prop[cnt_prop++] = gtk_color_button_new_with_color(&(trk->color));
-
-	static char * draw_name_labels[] = {
-		(char *) N_("No"),
-		(char *) N_("Centre"),
-		(char *) N_("Start only"),
-		(char *) N_("End only"),
-		(char *) N_("Start and End"),
-		(char *) N_("Centre, Start and End"),
-		NULL
-	};
-
-	widgets->w_namelabel = content_prop[cnt_prop++] = vik_combo_box_text_new();
-	char **pstr = draw_name_labels;
-	while (*pstr) {
-		vik_combo_box_text_append(widgets->w_namelabel, *(pstr++));
-	}
-	gtk_combo_box_set_active(GTK_COMBO_BOX(widgets->w_namelabel), trk->draw_name_mode);
-
-	widgets->w_number_distlabels = content_prop[cnt_prop++] =
-		gtk_spin_button_new(GTK_ADJUSTMENT(gtk_adjustment_new(trk->max_number_dist_labels, 0, 100, 1, 1, 0)), 1, 0);
-	gtk_widget_set_tooltip_text(GTK_WIDGET(widgets->w_number_distlabels), _("Maximum number of distance labels to be shown"));
-
-	GtkWidget * table = create_table(cnt_prop, label_texts, content_prop);
-
-	this->tabs->addTab(table, _("Properties"));
-
-	/* Statistics. */
-	GtkWidget *content[20];
-	int cnt = 0;
-
-	DistanceUnit distance_unit = a_vik_get_units_distance();
-#endif
 
 	/* NB This value not shown yet - but is used by internal calculations. */
 	this->track_length_inc_gaps = trk->get_length_including_gaps();
-#ifdef K
-
-	tr_len = widgets->track_length = trk->get_length();
-
-	get_distance_string(tmp_buf, sizeof (tmp_buf), distance_unit, tr_len);
-	widgets->w_track_length = content[cnt++] = ui_label_new_selectable(tmp_buf, this);
-
-	tp_count = trk->get_tp_count();
-	snprintf(tmp_buf, sizeof(tmp_buf), "%lu", tp_count);
-	widgets->w_tp_count = content[cnt++] = ui_label_new_selectable(tmp_buf, this);
-
-	seg_count = trk->get_segment_count() ;
-	snprintf(tmp_buf, sizeof(tmp_buf), "%u", seg_count);
-	widgets->w_segment_count = content[cnt++] = ui_label_new_selectable(tmp_buf, this);
-
-	snprintf(tmp_buf, sizeof(tmp_buf), "%lu", trk->get_dup_point_count());
-	widgets->w_duptp_count = content[cnt++] = ui_label_new_selectable(tmp_buf, this);
-
-	SpeedUnit speed_units = a_vik_get_units_speed();
-	tmp_speed = trk->get_max_speed();
-	if (tmp_speed == 0) {
-		snprintf(tmp_buf, sizeof(tmp_buf), _("No Data"));
-	} else {
-		get_speed_string(tmp_buf, sizeof (tmp_buf), speed_units, tmp_speed);
-	}
-	widgets->w_max_speed = content[cnt++] = ui_label_new_selectable(tmp_buf, this);
-
-	tmp_speed = trk->get_average_speed();
-	if (tmp_speed == 0) {
-		snprintf(tmp_buf, sizeof(tmp_buf), _("No Data"));
-	} else {
-		get_speed_string(tmp_buf, sizeof (tmp_buf), speed_units, tmp_speed);
-	}
-	widgets->w_avg_speed = content[cnt++] = ui_label_new_selectable(tmp_buf, this);
-
-	/* Use 60sec as the default period to be considered stopped.
-	   This is the TrackWaypoint draw stops default value 'trw->stop_length'.
-	   However this variable is not directly accessible - and I don't expect it's often changed from the default
-	   so ATM just put in the number. */
-	tmp_speed = trk->get_average_speed_moving(60);
-	if (tmp_speed == 0) {
-		snprintf(tmp_buf, sizeof(tmp_buf), _("No Data"));
-	} else {
-		get_speed_string(tmp_buf, sizeof (tmp_buf), speed_units, tmp_speed);
-	}
-	widgets->w_mvg_speed = content[cnt++] = ui_label_new_selectable(tmp_buf, this);
-
-	switch (distance_unit) {
-	case DistanceUnit::KILOMETRES:
-		/* Even though kilometres, the average distance between points is going to be quite small so keep in metres. */
-		snprintf(tmp_buf, sizeof(tmp_buf), "%.2f m", (tp_count - seg_count) == 0 ? 0 : tr_len / (tp_count - seg_count));
-		break;
-	case DistanceUnit::MILES:
-		snprintf(tmp_buf, sizeof(tmp_buf), "%.3f miles", (tp_count - seg_count) == 0 ? 0 : VIK_METERS_TO_MILES(tr_len / (tp_count - seg_count)));
-		break;
-	case DistanceUnit::NAUTICAL_MILES:
-		snprintf(tmp_buf, sizeof(tmp_buf), "%.3f NM", (tp_count - seg_count) == 0 ? 0 : VIK_METERS_TO_NAUTICAL_MILES(tr_len / (tp_count - seg_count)));
-		break;
-	default:
-		fprintf(stderr, "CRITICAL: Houston, we've had a problem. distance=%d\n", distance_unit);
-	}
-	widgets->w_avg_dist = content[cnt++] = ui_label_new_selectable(tmp_buf, this);
-
-	HeightUnit height_units = a_vik_get_units_height();
-	if (min_alt == VIK_DEFAULT_ALTITUDE) {
-		snprintf(tmp_buf, sizeof(tmp_buf), _("No Data"));
-	} else {
-		switch (height_units) {
-		case HeightUnit::METRES:
-			snprintf(tmp_buf, sizeof(tmp_buf), "%.0f m - %.0f m", min_alt, max_alt);
-			break;
-		case HeightUnit::FEET:
-			snprintf(tmp_buf, sizeof(tmp_buf), "%.0f feet - %.0f feet", VIK_METERS_TO_FEET(min_alt), VIK_METERS_TO_FEET(max_alt));
-			break;
-		default:
-			snprintf(tmp_buf, sizeof(tmp_buf), "--");
-			fprintf(stderr, "CRITICAL: Houston, we've had a problem. height=%d\n", height_units);
-		}
-	}
-	widgets->w_elev_range = content[cnt++] = ui_label_new_selectable(tmp_buf, this);
-
-	trk->get_total_elevation_gain(&max_alt, &min_alt);
-	if (min_alt == VIK_DEFAULT_ALTITUDE) {
-		snprintf(tmp_buf, sizeof(tmp_buf), _("No Data"));
-	} else {
-		switch (height_units) {
-		case HeightUnit::METRES:
-			snprintf(tmp_buf, sizeof(tmp_buf), "%.0f m / %.0f m", max_alt, min_alt);
-			break;
-		case HeightUnit::FEET:
-			snprintf(tmp_buf, sizeof(tmp_buf), "%.0f feet / %.0f feet", VIK_METERS_TO_FEET(max_alt), VIK_METERS_TO_FEET(min_alt));
-			break;
-		default:
-			snprintf(tmp_buf, sizeof(tmp_buf), "--");
-			fprintf(stderr, "CRITICAL: Houston, we've had a problem. height=%d\n", height_units);
-		}
-	}
-	widgets->w_elev_gain = content[cnt++] = ui_label_new_selectable(tmp_buf, this);
-
-#if 0
-#define PACK(w) gtk_box_pack_start(GTK_BOX(right_vbox), w, false, false, 0);
-	gtk_box_pack_start(GTK_BOX(right_vbox), e_cmt, false, false, 0);
-	PACK(l_len);
-	PACK(l_tps);
-	PACK(l_segs);
-	PACK(l_dups);
-	PACK(l_maxs);
-	PACK(l_avgs);
-	PACK(l_avgd);
-	PACK(l_elev);
-	PACK(l_galo);
-#undef PACK;
-#endif
-
-	if (!trk->empty()
-	    && (*trk->trackpointsB->begin())->timestamp) {
-
-		time_t t1 = (*trk->trackpointsB->begin())->timestamp;
-		time_t t2 = (*std::prev(trk->trackpointsB->end()))->timestamp;
-
-		VikCoord vc;
-		/* Notional center of a track is simply an average of the bounding box extremities. */
-		struct LatLon center = { (trk->bbox.north+trk->bbox.south)/2, (trk->bbox.east+trk->bbox.west)/2 };
-		vik_coord_load_from_latlon(&vc, layer->get_coord_mode(), &center);
-
-		widgets->tz = vu_get_tz_at_location(&vc);
-
-		char *msg;
-		msg = vu_get_time_string(&t1, "%c", &vc, widgets->tz);
-		widgets->w_time_start = content[cnt++] = ui_label_new_selectable(msg, this);
-		free(msg);
-
-		msg = vu_get_time_string(&t2, "%c", &vc, widgets->tz);
-		widgets->w_time_end = content[cnt++] = ui_label_new_selectable(msg, this);
-		free(msg);
-
-		int total_duration_s = (int)(t2-t1);
-		int segments_duration_s = (int) trk->get_duration(false);
-		int total_duration_m = total_duration_s/60;
-		int segments_duration_m = segments_duration_s/60;
-		snprintf(tmp_buf, sizeof(tmp_buf), _("%d minutes - %d minutes moving"), total_duration_m, segments_duration_m);
-		widgets->w_time_dur = content[cnt++] = ui_label_new_selectable(tmp_buf, this);
-
-		/* A tooltip to show in more readable hours:minutes. */
-		char tip_buf_total[20];
-		unsigned int h_tot = total_duration_s/3600;
-		unsigned int m_tot = (total_duration_s - h_tot*3600)/60;
-		snprintf(tip_buf_total, sizeof(tip_buf_total), "%d:%02d", h_tot, m_tot);
-		char tip_buf_segments[20];
-		unsigned int h_seg = segments_duration_s/3600;
-		unsigned int m_seg = (segments_duration_s - h_seg*3600)/60;
-		snprintf(tip_buf_segments, sizeof(tip_buf_segments), "%d:%02d", h_seg, m_seg);
-		char *tip = g_strdup_printf(_("%s total - %s in segments"), tip_buf_total, tip_buf_segments);
-		gtk_widget_set_tooltip_text(GTK_WIDGET(widgets->w_time_dur), tip);
-		free(tip);
-	} else {
-		widgets->w_time_start = content[cnt++] = gtk_label_new(_("No Data"));
-		widgets->w_time_end = content[cnt++] = gtk_label_new(_("No Data"));
-		widgets->w_time_dur = content[cnt++] = gtk_label_new(_("No Data"));
-	}
-
-	table = create_table(cnt, stats_texts, content);
-	this->tabs->addTab(table, _("Statistics"));
-#endif
 
 	if (this->elev_viewport) {
 		this->w_cur_dist = ui_label_new_selectable(_("No Data"), this);
@@ -3207,6 +2890,7 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer
 
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), this->tabs, false, false, 0);
 
+	unsigned int seg_count = trk->get_segment_count() ;
 	gtk_dialog_set_response_sensitive(GTK_DIALOG(dialog), VIK_TRW_LAYER_PROPWIN_SPLIT_MARKER, false);
 	if (seg_count <= 1) {
 		gtk_dialog_set_response_sensitive(GTK_DIALOG(dialog), VIK_TRW_LAYER_PROPWIN_SPLIT, false);
@@ -3231,6 +2915,8 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer
 	}
 #endif
 }
+
+
 
 
 /**

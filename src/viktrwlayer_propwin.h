@@ -147,6 +147,7 @@ namespace SlavGPS {
 		int      profile_height_old;
 		int      profile_width_offset;
 		int      profile_height_offset;
+#if 0
 		QLineEdit * w_comment = NULL;
 		QLineEdit * w_description = NULL;
 		QLineEdit * w_source = NULL;
@@ -167,6 +168,8 @@ namespace SlavGPS {
 		QLabel * w_color = NULL;
 		QLabel * w_namelabel = NULL;
 		QLabel * w_number_distlabels = NULL;
+#endif
+
 		QLabel * w_cur_dist = NULL; /*< Current distance. */
 		QLabel * w_cur_elevation = NULL;
 		QLabel * w_cur_gradient_dist = NULL; /*< Current distance on gradient graph. */
@@ -234,7 +237,7 @@ namespace SlavGPS {
 		Trackpoint * blob_tp = NULL;
 		bool  is_blob_drawn;
 		time_t    duration;
-		char     * tz = NULL; /* TimeZone at track's location. */
+		//char     * tz = NULL; /* TimeZone at track's location. */
 	};
 
 

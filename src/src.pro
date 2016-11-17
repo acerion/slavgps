@@ -27,6 +27,7 @@ SOURCES += main.cpp \
     viktrwlayer_propwin.cpp \
     layers_panel.cpp \
     track.cpp \
+    track_properties_dialog.cpp \
     trackpoint_properties.cpp \
     waypoint.cpp \
     waypoint_properties.cpp \
@@ -81,6 +82,7 @@ HEADERS += window.h \
     viktrwlayer_propwin.h \
     layers_panel.h \
     track.h \
+    track_properties_dialog.h \
     trackpoint_properties.h \
     waypoint.h \
     waypoint_properties.h \
