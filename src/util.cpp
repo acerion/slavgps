@@ -317,3 +317,23 @@ void free_string(char ** s)
 
 	return;
 }
+
+
+
+
+void minmax_array(const double * array, double * min, double * max, bool NO_ALT_TEST, unsigned int array_size)
+{
+	*max = -1000;
+	*min = 20000;
+
+	for (unsigned int i = 0; i < array_size; i++) {
+		if (NO_ALT_TEST || (array[i] != VIK_DEFAULT_ALTITUDE)) {
+			if (array[i] > *max) {
+				*max = array[i];
+			}
+			if (array[i] < *min) {
+				*min = array[i];
+			}
+		}
+	}
+}

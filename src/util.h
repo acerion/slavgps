@@ -77,6 +77,10 @@ char * util_write_tmp_file_from_bytes(const void * buffer, size_t count);
 
 void free_string(char ** s);
 
+void minmax_array(const double * array, double * min, double * max, bool NO_ALT_TEST, unsigned int array_size);
+
+
+
 
 #ifndef _
 #define _(s) s
