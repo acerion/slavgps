@@ -33,6 +33,7 @@
 #include <QWidget>
 #include <QLabel>
 #include <QCheckBox>
+#include <QMouseEvent>
 
 #include <glib.h>
 
@@ -79,6 +80,14 @@ namespace SlavGPS {
 		void destroy_cb(void);
 
 
+		void track_profile_move_cb(Viewport * viewport, QMouseEvent * event);
+		void track_gradient_move_cb(Viewport * viewport, QMouseEvent * event);
+		void track_vt_move_cb(Viewport * viewport, QMouseEvent * event);
+		void track_dt_move_cb(Viewport * viewport, QMouseEvent * event);
+		void track_et_move_cb(Viewport * viewport, QMouseEvent * event);
+		void track_sd_move_cb(Viewport * viewport, QMouseEvent * event);
+
+
 	public:
 
 		Viewport * create_profile(double * min_alt, double * max_alt);
@@ -88,6 +97,16 @@ namespace SlavGPS {
 		Viewport * create_etdiag(void);
 		Viewport * create_sddiag(void);
 
+		void save_image_and_draw_graph_marks(Viewport * viewport,
+						     QPen & pen,
+						     double selected_pos_x,
+						     double selected_pos_y,
+						     int blob_x,
+						     int blob_y,
+						     PropSaved *saved_img,
+						     unsigned int graph_width,
+						     unsigned int graph_height);
+
 		/* "Draw" functions. */
 		void draw_elevations(Viewport * viewport, Track * trk);
 		void draw_gradients(Viewport * viewport, Track * trk);
@@ -96,13 +115,13 @@ namespace SlavGPS {
 		void draw_et(Viewport * viewport, Track * trk);
 		void draw_sd(Viewport * viewport, Track * trk);
 
-		/* "Get blobby" functions. */
-		int blobby_speed(double x_blob);
-		int blobby_speed_dist(double x_blob);
-		int blobby_altitude(double x_blob);
-		int blobby_altitude_time(double x_blob);
-		int blobby_gradient(double x_blob);
-		int blobby_distance(double x_blob);
+		/* "get_pos_y" functions. */
+		int get_pos_y_speed(double pos_x, int width, int height);
+		int get_pos_y_speed_dist(double pos_x, int width, int height);
+		int get_pos_y_altitude(double pos_x, int width, int height);
+		int get_pos_y_altitude_time(double pos_x, int width, int height);
+		int get_pos_y_gradient(double pos_x, int width, int height);
+		int get_pos_y_distance(double pos_x, int width, int height);
 
 		void clear_image(QPixmap * pix);
 
@@ -127,7 +146,7 @@ namespace SlavGPS {
 
 		void save_values(void);
 
-		void draw_single_graph(Viewport * viewport, bool resized, void (TrackProfileDialog::*draw_graph)(Viewport *, Track *), int (TrackProfileDialog::*get_blobby)(double), bool by_time, PropSaved * saved_img);
+		void draw_single_graph(Viewport * viewport, bool resized, void (TrackProfileDialog::*draw_graph)(Viewport *, Track *), int (TrackProfileDialog::*get_pos_y)(double, int, int), bool by_time, PropSaved * saved_img);
 
 
 		Window * parent = NULL;
@@ -209,34 +228,36 @@ namespace SlavGPS {
 		Viewport * speed_dist_viewport = NULL;
 		double   * altitudes = NULL;
 		double   * ats = NULL; /* Altitudes in time. */
-		double   min_altitude;
-		double   max_altitude;
-		double   draw_min_altitude;
-		double   draw_min_altitude_time;
-		int      cia; /* Chunk size Index into Altitudes. */
-		int      ciat; /* Chunk size Index into Altitudes / Time. */
+		double   min_altitude = 0.0;
+		double   max_altitude = 0.0;
+		double   draw_min_altitude = 0.0;
+		double   draw_min_altitude_time = 0.0;
+		int      cia = 0; /* Chunk size Index into Altitudes. */
+		int      ciat = 0; /* Chunk size Index into Altitudes / Time. */
 		/* NB cia & ciat are normally same value but sometimes not due to differing methods of altitude array creation.
 		   thus also have draw_min_altitude for each altitude graph type. */
 		double   *gradients = NULL;
-		double   min_gradient;
-		double   max_gradient;
-		double   draw_min_gradient;
+		double   min_gradient = 0.0;
+		double   max_gradient = 0.0;
+		double   draw_min_gradient = 0.0;
 		int      cig; /* Chunk size Index into Gradients. */
 		double   * speeds = NULL;
 		double   * speeds_dist = NULL;
-		double   min_speed;
-		double   max_speed;
-		double   draw_min_speed;
-		double   max_speed_dist;
-		int      cis; /* Chunk size Index into Speeds. */
-		int      cisd; /* Chunk size Index into Speed/Distance. */
+		double   min_speed = 0.0;
+		double   max_speed = 0.0;
+		double   draw_min_speed = 0.0;
+		double   max_speed_dist = 0.0;
+		int      cis = 0; /* Chunk size Index into Speeds. */
+		int      cisd = 0; /* Chunk size Index into Speed/Distance. */
 		double   * distances = NULL;
-		int      cid; /* Chunk size Index into Distance. */
-		Trackpoint * marker_tp = NULL;
-		bool  is_marker_drawn;
-		Trackpoint * blob_tp = NULL;
-		bool  is_blob_drawn;
-		time_t    duration;
+		int      cid = 0; /* Chunk size Index into Distance. */
+
+		Trackpoint * selected_tp = NULL; /* Trackpoint selected by clicking in chart. Will be marked in a viewport by non-moving crosshair. */
+		bool  is_selected_drawn = false;
+		Trackpoint * current_tp = NULL; /* Trackpoint that is closest to current position of cursor. */
+		bool  is_current_drawn = false;
+
+		time_t    duration = 0;
 		//char     * tz = NULL; /* TimeZone at track's location. */
 	};
 

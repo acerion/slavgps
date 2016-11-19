@@ -137,7 +137,7 @@ typedef struct _propwidgets {
 
 
 
-static void get_mouse_event_x(Viewport * viewport, GdkEventMotion * event, TrackProfileDialog * widgets, double * x, int * ix);
+static bool get_mouse_event_x(Viewport * viewport, QMouseEvent * event, TrackProfileDialog * widgets, double * x, int * ix);
 static void distance_label_update(QLabel * label, double meters_from_start);
 static void elevation_label_update(QLabel * label, Trackpoint * tp);
 static void time_label_update(QLabel * label, time_t seconds_from_start);
@@ -344,16 +344,15 @@ static Trackpoint * set_center_at_graph_position(double event_x,
 /**
  * Returns whether the marker was drawn or not and whether the blob was drawn or not.
  */
-static void save_image_and_draw_graph_marks(Viewport * viewport,
-					    double marker_x,
-					    QPen & pen,
-					    int blob_x,
-					    int blob_y,
-					    PropSaved *saved_img,
-					    unsigned int graph_width,
-					    unsigned int graph_height,
-					    bool *marker_drawn,
-					    bool *blob_drawn)
+void TrackProfileDialog::save_image_and_draw_graph_marks(Viewport * viewport,
+							 QPen & pen,
+							 double selected_pos_x,
+							 double selected_pos_y,
+							 int current_pos_x,
+							 int current_pos_y,
+							 PropSaved *saved_img,
+							 unsigned int graph_width,
+							 unsigned int graph_height)
 {
 #ifdef K
 	GdkPixmap *pix = NULL;
@@ -373,27 +372,34 @@ static void save_image_and_draw_graph_marks(Viewport * viewport,
 		saved_img->img = gdk_drawable_copy_to_image(GDK_DRAWABLE(pix), saved_img->img, 0, 0, 0, 0, MARGIN_X+ graph_width, MARGIN_Y + graph_height);
 	}
 	saved_img->saved = true;
-
-	if ((marker_x >= MARGIN_X) && (marker_x < (graph_width + MARGIN_X))) {
-		gdk_draw_line(GDK_DRAWABLE(pix), pen, marker_x, MARGIN_Y, marker_x, graph_height + MARGIN_Y);
-		*marker_drawn = true;
-	} else {
-		*marker_drawn = false;
-	}
-
-	/* Draw a square blob to indicate where we are on track for this graph. */
-	if ((blob_x >= MARGIN_X) && (blob_x < (graph_width + MARGIN_X)) && (blob_y < graph_height + MARGIN_Y)) {
-		fill_rectangle(GDK_DRAWABLE(pix), pen, blob_x-3, blob_y-3, 6, 6);
-		*blob_drawn = true;
-	} else {
-		*blob_drawn = false;
-	}
-
-	/* Anywhere on image could have changed. */
-	if (*marker_drawn || *blob_drawn) {
-		gtk_widget_queue_draw(image);
-	}
 #endif
+
+	if (current_pos_x > 0 && current_pos_y > 0) {
+		viewport->draw_line(pen,
+				    GRAPH_MARGIN_LEFT + current_pos_x, GRAPH_MARGIN_UPPER,
+				    GRAPH_MARGIN_LEFT + current_pos_x, GRAPH_MARGIN_UPPER + graph_height);
+
+		viewport->draw_line(pen,
+				    GRAPH_MARGIN_LEFT,               GRAPH_MARGIN_UPPER + graph_height - current_pos_y,
+				    GRAPH_MARGIN_LEFT + graph_width, GRAPH_MARGIN_UPPER + graph_height - current_pos_y);
+
+		this->is_current_drawn = true;
+	} else {
+		this->is_current_drawn = false;
+	}
+
+
+	if (selected_pos_x > 0 && selected_pos_y > 0) {
+		viewport->draw_line(pen, selected_pos_x, GRAPH_MARGIN_UPPER, selected_pos_x, GRAPH_MARGIN_UPPER + graph_height);
+		viewport->draw_line(pen, GRAPH_MARGIN_LEFT, selected_pos_y, GRAPH_MARGIN_LEFT + graph_width, selected_pos_y);
+		this->is_selected_drawn = true;
+	} else {
+		this->is_selected_drawn = false;
+	}
+
+	if (this->is_selected_drawn || this->is_current_drawn) {
+		viewport->update();
+	}
 }
 
 
@@ -465,7 +471,7 @@ static void track_graph_click(GtkWidget * widget, GdkEventButton * event, TrackP
 		return;
 	}
 
-	widgets->marker_tp = tp;
+	widgets->selected_tp = tp;
 
 	Viewport * graph_viewport = NULL;
 	PropSaved *graph_saved_img;
@@ -521,23 +527,23 @@ static void track_graph_click(GtkWidget * widget, GdkEventButton * event, TrackP
 			}
 
 			if (!isnan(pc)) {
-				double marker_x = (pc * widgets->profile_width) + MARGIN_X;
-				save_image_and_draw_graph_marks(graph_viewport,
-								marker_x,
-								black_pen,
-								-1, /* Don't draw blob on clicks. */
-								0,
-								graph_saved_img,
-								widgets->profile_width,
-								widgets->profile_height,
-								&widgets->is_marker_drawn,
-								&widgets->is_blob_drawn);
+				double selected_pos_x = pc * graph_width;
+				double selected_pos_y = -1.0; /* TODO: get real value. */
+				widgets->save_image_and_draw_graph_marks(graph_viewport,
+									 selected_pos_x,
+									 selected_pos_y,
+									 black_pen,
+									 -1.0, /* Don't draw current position on clicks. */
+									 -1.0,
+									 graph_saved_img,
+									 graph_width,
+									 graph_height);
 			}
 			g_list_free(child);
 		}
 	}
 
-	gtk_dialog_set_response_sensitive(GTK_DIALOG(widgets->dialog), VIK_TRW_LAYER_PROPWIN_SPLIT_MARKER, widgets->is_marker_drawn);
+	gtk_dialog_set_response_sensitive(GTK_DIALOG(widgets->dialog), VIK_TRW_LAYER_PROPWIN_SPLIT_MARKER, widgets->is_selected_drawn);
 #endif
 }
 
@@ -601,17 +607,17 @@ static bool track_sd_click(GtkWidget *widget, GdkEventButton *event, void * ptr)
 /**
  * Calculate y position for blob on elevation graph.
  */
-int TrackProfileDialog::blobby_altitude(double x_blob)
+int TrackProfileDialog::get_pos_y_altitude(double x, int width, int height)
 {
-	int ix = (int)x_blob;
+	int ix = (int) x;
 	/* Ensure ix is inbounds. */
-	if (ix == this->profile_width) {
+	if (ix == width) {
 		ix--;
 	}
 
-	int y_blob = this->profile_height - this->profile_height * (this->altitudes[ix] - this->draw_min_altitude) / (chunksa[this->cia] * LINES);
+	int y = height * (this->altitudes[ix] - this->draw_min_altitude) / (chunksa[this->cia] * LINES);
 
-	return y_blob;
+	return y;
 }
 
 
@@ -620,17 +626,17 @@ int TrackProfileDialog::blobby_altitude(double x_blob)
 /**
  * Calculate y position for blob on gradient graph.
  */
-int TrackProfileDialog::blobby_gradient(double x_blob)
+int TrackProfileDialog::get_pos_y_gradient(double x, int width, int height)
 {
-	int ix = (int)x_blob;
+	int ix = (int) x;
 	/* Ensure ix is inbounds. */
-	if (ix == this->profile_width) {
+	if (ix == width) {
 		ix--;
 	}
 
-	int y_blob = this->profile_height - this->profile_height * (this->gradients[ix] - this->draw_min_gradient) / (chunksg[this->cig] * LINES);
+	int y = height * (this->gradients[ix] - this->draw_min_gradient) / (chunksg[this->cig] * LINES);
 
-	return y_blob;
+	return y;
 }
 
 
@@ -639,17 +645,17 @@ int TrackProfileDialog::blobby_gradient(double x_blob)
 /**
  * Calculate y position for blob on speed graph.
  */
-int TrackProfileDialog::blobby_speed(double x_blob)
+int TrackProfileDialog::get_pos_y_speed(double x, int width, int height)
 {
-	int ix = (int)x_blob;
+	int ix = (int) x;
 	/* Ensure ix is inbounds. */
-	if (ix == this->profile_width) {
+	if (ix == width) {
 		ix--;
 	}
 
-	int y_blob = this->profile_height - this->profile_height * (this->speeds[ix] - this->draw_min_speed) / (chunkss[this->cis] * LINES);
+	int y = height * (this->speeds[ix] - this->draw_min_speed) / (chunkss[this->cis] * LINES);
 
-	return y_blob;
+	return y;
 }
 
 
@@ -658,18 +664,18 @@ int TrackProfileDialog::blobby_speed(double x_blob)
 /**
  * Calculate y position for blob on distance graph.
  */
-int TrackProfileDialog::blobby_distance(double x_blob)
+int TrackProfileDialog::get_pos_y_distance(double x, int width, int height)
 {
-	int ix = (int)x_blob;
+	int ix = (int) x;
 	/* Ensure ix is inbounds. */
-	if (ix == this->profile_width) {
+	if (ix == width) {
 		ix--;
 	}
 
-	int y_blob = this->profile_height - this->profile_height * (this->distances[ix]) / (chunksd[this->cid] * LINES);
-	/* Min distance is always 0, so no need to subtract that from this __/ */
+	int y = height * (this->distances[ix]) / (chunksd[this->cid] * LINES);
+	/* Min distance is always 0, so no need to subtract that from distances[ix]. */
 
-	return y_blob;
+	return y;
 }
 
 
@@ -678,16 +684,17 @@ int TrackProfileDialog::blobby_distance(double x_blob)
 /**
  * Calculate y position for blob on elevation/time graph.
  */
-int TrackProfileDialog::blobby_altitude_time(double x_blob)
+int TrackProfileDialog::get_pos_y_altitude_time(double x, int width, int height)
 {
-	int ix = (int)x_blob;
+	int ix = (int) x;
 	/* Ensure ix is inbounds. */
-	if (ix == this->profile_width) {
+	if (ix == width) {
 		ix--;
 	}
 
-	int y_blob = this->profile_height - this->profile_height * (this->ats[ix] - this->draw_min_altitude_time) / (chunksa[this->ciat] * LINES);
-	return y_blob;
+	int y = height * (this->ats[ix] - this->draw_min_altitude_time) / (chunksa[this->ciat] * LINES);
+
+	return y;
 }
 
 
@@ -696,116 +703,124 @@ int TrackProfileDialog::blobby_altitude_time(double x_blob)
 /**
  * Calculate y position for blob on speed/dist graph.
  */
-int TrackProfileDialog::blobby_speed_dist(double x_blob)
+int TrackProfileDialog::get_pos_y_speed_dist(double x, int width, int height)
 {
-	int ix = (int)x_blob;
+	int ix = (int) x;
 	/* Ensure ix is inbounds. */
-	if (ix == this->profile_width) {
+	if (ix == width) {
 		ix--;
 	}
 
-	int y_blob = this->profile_height - this->profile_height * (this->speeds_dist[ix] - this->draw_min_speed) / (chunkss[this->cisd] * LINES);
+	int y = height * (this->speeds_dist[ix] - this->draw_min_speed) / (chunkss[this->cisd] * LINES);
 
-	return y_blob;
+	return y;
 }
 
 
 
 
-void track_profile_move(Viewport * viewport, GdkEventMotion *event, TrackProfileDialog * widgets)
+void TrackProfileDialog::track_profile_move_cb(Viewport * viewport, QMouseEvent * event)
 {
-	if (widgets->altitudes == NULL) {
+	unsigned int graph_width = viewport->width() - GRAPH_MARGIN_LEFT - GRAPH_MARGIN_RIGHT;
+	unsigned int graph_height = viewport->height() - GRAPH_MARGIN_UPPER - GRAPH_MARGIN_LOWER;
+
+	if (this->altitudes == NULL) {
 		return;
 	}
 
-	double x = NAN;
+	double current_pos_x = NAN;
 	int ix = 0;
-	get_mouse_event_x(viewport, event, widgets, &x, &ix);
+	if (!get_mouse_event_x(viewport, event, this, &current_pos_x, &ix)) {
+		return;
+	}
 
 	double meters_from_start;
-	Trackpoint * tp = widgets->trk->get_closest_tp_by_percentage_dist((double) x / widgets->profile_width, &meters_from_start);
-	if (tp && widgets->w_cur_dist) {
-		distance_label_update(widgets->w_cur_dist, meters_from_start);
+	this->current_tp = this->trk->get_closest_tp_by_percentage_dist((double) current_pos_x / graph_width, &meters_from_start);
+	if (this->current_tp && this->w_cur_dist) {
+		distance_label_update(this->w_cur_dist, meters_from_start);
 	}
 
 	/* Show track elevation for this position - to the nearest whole number. */
-	if (tp && widgets->w_cur_elevation) {
-		elevation_label_update(widgets->w_cur_elevation, tp);
+	if (this->current_tp && this->w_cur_elevation) {
+		elevation_label_update(this->w_cur_elevation, this->current_tp);
 	}
 
-	widgets->blob_tp = tp;
+	int current_pos_y = this->get_pos_y_altitude(current_pos_x, graph_width, graph_height);
 
-	int y_blob = widgets->blobby_altitude(x);
-
-	double marker_x = -1.0; /* i.e. don't draw unless we get a valid value. */
-	if (widgets->is_marker_drawn) {
-		double pc = tp_percentage_by_distance(widgets->trk, widgets->marker_tp, widgets->track_length_inc_gaps);
+	double selected_pos_x = -1.0; /* i.e. don't draw unless we get a valid value. */
+	double selected_pos_y = -1.0;
+	if (true || this->is_selected_drawn) {
+		double pc = tp_percentage_by_distance(this->trk, this->selected_tp, this->track_length_inc_gaps);
 		if (!isnan(pc)) {
-			marker_x = (pc * widgets->profile_width) + MARGIN_X;
+			selected_pos_x = pc * graph_width;
+			selected_pos_y = this->get_pos_y_altitude(selected_pos_x, graph_width, graph_height);
 		}
 	}
 
 	QPen black_pen(QColor("black"));
-	save_image_and_draw_graph_marks(viewport,
-					marker_x,
-					black_pen,
-					MARGIN_X+x,
-					MARGIN_Y+y_blob,
-					&widgets->elev_graph_saved_img,
-					widgets->profile_width,
-					widgets->profile_height,
-					&widgets->is_marker_drawn,
-					&widgets->is_blob_drawn);
+	this->save_image_and_draw_graph_marks(viewport,
+					      black_pen,
+					      selected_pos_x,
+					      selected_pos_y,
+					      current_pos_x,
+					      current_pos_y,
+					      &this->elev_graph_saved_img,
+					      graph_width,
+					      graph_height);
 
 }
 
 
 
 
-void track_gradient_move(Viewport * viewport, GdkEventMotion * event, TrackProfileDialog * widgets)
+void TrackProfileDialog::track_gradient_move_cb(Viewport * viewport, QMouseEvent * event)
 {
-	if (widgets->gradients == NULL) {
+	unsigned int graph_width = viewport->width() - GRAPH_MARGIN_LEFT - GRAPH_MARGIN_RIGHT;
+	unsigned int graph_height = viewport->height() - GRAPH_MARGIN_UPPER - GRAPH_MARGIN_LOWER;
+
+	if (this->gradients == NULL) {
 		return;
 	}
 
-	double x = NAN;
+	double current_pos_x = NAN;
 	int ix = 0;
-	get_mouse_event_x(viewport, event, widgets, &x, &ix);
+	if (!get_mouse_event_x(viewport, event, this, &current_pos_x, &ix)) {
+		return;
+	}
 
 	double meters_from_start;
-	Trackpoint * tp = widgets->trk->get_closest_tp_by_percentage_dist((double) x / widgets->profile_width, &meters_from_start);
-	if (tp && widgets->w_cur_gradient_dist) {
-		distance_label_update(widgets->w_cur_gradient_dist, meters_from_start);
+	this->current_tp = this->trk->get_closest_tp_by_percentage_dist((double) current_pos_x / this->profile_width, &meters_from_start);
+	if (this->current_tp && this->w_cur_gradient_dist) {
+		distance_label_update(this->w_cur_gradient_dist, meters_from_start);
 	}
 
 	/* Show track gradient for this position - to the nearest whole number. */
-	if (tp && widgets->w_cur_gradient_gradient) {
-		gradient_label_update(widgets->w_cur_gradient_gradient, widgets->gradients[ix]);
+	if (this->current_tp && this->w_cur_gradient_gradient) {
+		gradient_label_update(this->w_cur_gradient_gradient, this->gradients[ix]);
 	}
 
-	widgets->blob_tp = tp;
+	int current_pos_y = this->get_pos_y_gradient(current_pos_x, graph_width, graph_height);
 
-	int y_blob = widgets->blobby_gradient(x);
-
-	double marker_x = -1.0; /* i.e. don't draw unless we get a valid value. */
-	if (widgets->is_marker_drawn) {
-		double pc = tp_percentage_by_distance(widgets->trk, widgets->marker_tp, widgets->track_length_inc_gaps);
+	double selected_pos_x = -1.0; /* i.e. don't draw unless we get a valid value. */
+	double selected_pos_y = -1.0;
+	if (true || this->is_selected_drawn) {
+		double pc = tp_percentage_by_distance(this->trk, this->selected_tp, this->track_length_inc_gaps);
 		if (!isnan(pc)) {
-			marker_x = (pc * widgets->profile_width) + MARGIN_X;
+			selected_pos_x = pc * graph_width;
+			selected_pos_y = this->get_pos_y_gradient(selected_pos_x, graph_width, graph_height);
 		}
 	}
 
 	QPen black_pen(QColor("black"));
-	save_image_and_draw_graph_marks(viewport,
-					marker_x,
-					black_pen,
-					MARGIN_X+x,
-					MARGIN_Y+y_blob,
-					&widgets->gradient_graph_saved_img,
-					widgets->profile_width,
-					widgets->profile_height,
-					&widgets->is_marker_drawn,
-					&widgets->is_blob_drawn);
+	this->save_image_and_draw_graph_marks(viewport,
+					      black_pen,
+					      selected_pos_x,
+					      selected_pos_y,
+					      current_pos_x,
+					      current_pos_y,
+					      &this->gradient_graph_saved_img,
+					      graph_width,
+					      graph_height);
 
 }
 
@@ -886,54 +901,58 @@ void gradient_label_update(QLabel * label, double gradient)
 
 
 
-void track_vt_move(Viewport * viewport, GdkEventMotion * event, TrackProfileDialog * widgets)
+void TrackProfileDialog::track_vt_move_cb(Viewport * viewport, QMouseEvent * event)
 {
-	if (widgets->speeds == NULL) {
+	unsigned int graph_width = viewport->width() - GRAPH_MARGIN_LEFT - GRAPH_MARGIN_RIGHT;
+	unsigned int graph_height = viewport->height() - GRAPH_MARGIN_UPPER - GRAPH_MARGIN_LOWER;
+
+	if (this->speeds == NULL) {
 		return;
 	}
 
-	double x = NAN;
+	double current_pos_x = NAN;
 	int ix = 0;
-	get_mouse_event_x(viewport, event, widgets, &x, &ix);
-
-	time_t seconds_from_start;
-	Trackpoint * tp = widgets->trk->get_closest_tp_by_percentage_time((double) x / widgets->profile_width, &seconds_from_start);
-	if (tp && widgets->w_cur_time) {
-		time_label_update(widgets->w_cur_time, seconds_from_start);
+	if (!get_mouse_event_x(viewport, event, this, &current_pos_x, &ix)) {
+		return;
 	}
 
-	if (tp && widgets->w_cur_time_real) {
-		real_time_label_update(widgets->w_cur_time_real, tp);
+	time_t seconds_from_start;
+	this->current_tp = this->trk->get_closest_tp_by_percentage_time((double) current_pos_x / this->profile_width, &seconds_from_start);
+	if (this->current_tp && this->w_cur_time) {
+		time_label_update(this->w_cur_time, seconds_from_start);
+	}
+
+	if (this->current_tp && this->w_cur_time_real) {
+		real_time_label_update(this->w_cur_time_real, this->current_tp);
 	}
 
 	/* Show track speed for this position. */
-	if (tp && widgets->w_cur_speed) {
-		speed_label_update(widgets->w_cur_speed, widgets->speeds[ix]);
+	if (this->current_tp && this->w_cur_speed) {
+		speed_label_update(this->w_cur_speed, this->speeds[ix]);
 	}
 
-	widgets->blob_tp = tp;
+	int current_pos_y = this->get_pos_y_speed(current_pos_x, graph_width, graph_height);
 
-	int y_blob = widgets->blobby_speed(x);
-
-	double marker_x = -1.0; /* i.e. don't draw unless we get a valid value. */
-	if (widgets->is_marker_drawn) {
-		double pc = tp_percentage_by_time(widgets->trk, widgets->marker_tp);
+	double selected_pos_x = -1.0; /* i.e. don't draw unless we get a valid value. */
+	double selected_pos_y = -1.0;
+	if (true || this->is_selected_drawn) {
+		double pc = tp_percentage_by_time(this->trk, this->selected_tp);
 		if (!isnan(pc)) {
-			marker_x = (pc * widgets->profile_width) + MARGIN_X;
+			selected_pos_x = pc * graph_width;
+			selected_pos_y = this->get_pos_y_speed(selected_pos_x, graph_width, graph_height);
 		}
 	}
 
 	QPen black_pen(QColor("black"));
-	save_image_and_draw_graph_marks(viewport,
-					marker_x,
-					black_pen,
-					MARGIN_X+x,
-					MARGIN_Y+y_blob,
-					&widgets->speed_graph_saved_img,
-					widgets->profile_width,
-					widgets->profile_height,
-					&widgets->is_marker_drawn,
-					&widgets->is_blob_drawn);
+	this->save_image_and_draw_graph_marks(viewport,
+					      black_pen,
+					      selected_pos_x,
+					      selected_pos_y,
+					      current_pos_x,
+					      current_pos_y,
+					      &this->speed_graph_saved_img,
+					      graph_width,
+					      graph_height);
 
 }
 
@@ -943,53 +962,57 @@ void track_vt_move(Viewport * viewport, GdkEventMotion * event, TrackProfileDial
 /**
  * Update labels and blob marker on mouse moves in the distance/time graph.
  */
-void track_dt_move(Viewport * viewport, GdkEventMotion * event, TrackProfileDialog * widgets)
+void TrackProfileDialog::track_dt_move_cb(Viewport * viewport, QMouseEvent * event)
 {
-	if (widgets->distances == NULL) {
+	unsigned int graph_width = viewport->width() - GRAPH_MARGIN_LEFT - GRAPH_MARGIN_RIGHT;
+	unsigned int graph_height = viewport->height() - GRAPH_MARGIN_UPPER - GRAPH_MARGIN_LOWER;
+
+	if (this->distances == NULL) {
 		return;
 	}
 
-	double x = NAN;
+	double current_pos_x = NAN;
 	int ix = 0;
-	get_mouse_event_x(viewport, event, widgets, &x, &ix);
+	if (!get_mouse_event_x(viewport, event, this, &current_pos_x, &ix)) {
+		return;
+	}
 
 	time_t seconds_from_start;
-	Trackpoint * tp = widgets->trk->get_closest_tp_by_percentage_time((double) x / widgets->profile_width, &seconds_from_start);
-	if (tp && widgets->w_cur_dist_time) {
-		time_label_update(widgets->w_cur_dist_time, seconds_from_start);
+	this->current_tp = this->trk->get_closest_tp_by_percentage_time((double) current_pos_x / this->profile_width, &seconds_from_start);
+	if (this->current_tp && this->w_cur_dist_time) {
+		time_label_update(this->w_cur_dist_time, seconds_from_start);
 	}
 
-	if (tp && widgets->w_cur_dist_time_real) {
-		real_time_label_update(widgets->w_cur_dist_time_real, tp);
+	if (this->current_tp && this->w_cur_dist_time_real) {
+		real_time_label_update(this->w_cur_dist_time_real, this->current_tp);
 	}
 
-	if (tp && widgets->w_cur_dist_dist) {
-		dist_dist_label_update(widgets->w_cur_dist_dist, widgets->distances[ix]);
+	if (this->current_tp && this->w_cur_dist_dist) {
+		dist_dist_label_update(this->w_cur_dist_dist, this->distances[ix]);
 	}
 
-	widgets->blob_tp = tp;
+	int current_pos_y = this->get_pos_y_distance(current_pos_x, graph_width, graph_height);
 
-	int y_blob = widgets->blobby_distance(x);
-
-	double marker_x = -1.0; // i.e. Don't draw unless we get a valid value
-	if (widgets->is_marker_drawn) {
-		double pc = tp_percentage_by_time(widgets->trk, widgets->marker_tp);
+	double selected_pos_x = -1.0; /* i.e. don't draw unless we get a valid value. */
+	double selected_pos_y = -1.0;
+	if (true || this->is_selected_drawn) {
+		double pc = tp_percentage_by_time(this->trk, this->selected_tp);
 		if (!isnan(pc)) {
-			marker_x = (pc * widgets->profile_width) + MARGIN_X;
+			selected_pos_x = pc * graph_width;
+			selected_pos_y = this->get_pos_y_distance(selected_pos_x, graph_width, graph_height);
 		}
 	}
 
 	QPen black_pen(QColor("black"));
-	save_image_and_draw_graph_marks(viewport,
-					marker_x,
-					black_pen,
-					MARGIN_X+x,
-					MARGIN_Y+y_blob,
-					&widgets->dist_graph_saved_img,
-					widgets->profile_width,
-					widgets->profile_height,
-					&widgets->is_marker_drawn,
-					&widgets->is_blob_drawn);
+	this->save_image_and_draw_graph_marks(viewport,
+					      black_pen,
+					      selected_pos_x,
+					      selected_pos_y,
+					      current_pos_x,
+					      current_pos_y,
+					      &this->dist_graph_saved_img,
+					      graph_width,
+					      graph_height);
 }
 
 
@@ -998,138 +1021,151 @@ void track_dt_move(Viewport * viewport, GdkEventMotion * event, TrackProfileDial
 /**
  * Update labels and blob marker on mouse moves in the elevation/time graph.
  */
-void track_et_move(Viewport * viewport, GdkEventMotion * event, TrackProfileDialog * widgets)
+void TrackProfileDialog::track_et_move_cb(Viewport * viewport, QMouseEvent * event)
 {
-	if (widgets->ats == NULL) {
+	unsigned int graph_width = viewport->width() - GRAPH_MARGIN_LEFT - GRAPH_MARGIN_RIGHT;
+	unsigned int graph_height = viewport->height() - GRAPH_MARGIN_UPPER - GRAPH_MARGIN_LOWER;
+
+	if (this->ats == NULL) {
 		return;
 	}
 
-	double x = NAN;
+	double current_pos_x = NAN;
 	int ix = 0;
-	get_mouse_event_x(viewport, event, widgets, &x, &ix);
+	if (!get_mouse_event_x(viewport, event, this, &current_pos_x, &ix)) {
+		return;
+	}
 
 	time_t seconds_from_start;
-	Trackpoint * tp = widgets->trk->get_closest_tp_by_percentage_time((double) x / widgets->profile_width, &seconds_from_start);
-	if (tp && widgets->w_cur_elev_time) {
-		time_label_update(widgets->w_cur_elev_time, seconds_from_start);
+	this->current_tp = this->trk->get_closest_tp_by_percentage_time((double) current_pos_x / this->profile_width, &seconds_from_start);
+	if (this->current_tp && this->w_cur_elev_time) {
+		time_label_update(this->w_cur_elev_time, seconds_from_start);
 	}
 
-	if (tp && widgets->w_cur_elev_time_real) {
-		real_time_label_update(widgets->w_cur_elev_time_real, tp);
+	if (this->current_tp && this->w_cur_elev_time_real) {
+		real_time_label_update(this->w_cur_elev_time_real, this->current_tp);
 	}
 
-	if (tp && widgets->w_cur_elev_elev) {
-		elevation_label_update(widgets->w_cur_elev_elev, tp);
+	if (this->current_tp && this->w_cur_elev_elev) {
+		elevation_label_update(this->w_cur_elev_elev, this->current_tp);
 	}
 
-	widgets->blob_tp = tp;
+	int current_pos_y = this->get_pos_y_altitude_time(current_pos_x, graph_width, graph_height);
 
-	int y_blob = widgets->blobby_altitude_time(x);
-
-	double marker_x = -1.0; /* i.e. don't draw unless we get a valid value. */
-	if (widgets->is_marker_drawn) {
-		double pc = tp_percentage_by_time(widgets->trk, widgets->marker_tp);
+	double selected_pos_x = -1.0; /* i.e. don't draw unless we get a valid value. */
+	double selected_pos_y = -1.0;
+	if (true || this->is_selected_drawn) {
+		double pc = tp_percentage_by_time(this->trk, this->selected_tp);
 		if (!isnan(pc)) {
-			marker_x = (pc * widgets->profile_width) + MARGIN_X;
+			selected_pos_x = pc * graph_width;
+			selected_pos_y = this->get_pos_y_altitude_time(selected_pos_x, graph_width, graph_height);
 		}
 	}
 
 	QPen black_pen(QColor("black"));
-	save_image_and_draw_graph_marks(viewport,
-					marker_x,
-					black_pen,
-					MARGIN_X+x,
-					MARGIN_Y+y_blob,
-					&widgets->elev_time_graph_saved_img,
-					widgets->profile_width,
-					widgets->profile_height,
-					&widgets->is_marker_drawn,
-					&widgets->is_blob_drawn);
+	this->save_image_and_draw_graph_marks(viewport,
+					      black_pen,
+					      selected_pos_x,
+					      selected_pos_y,
+					      current_pos_x,
+					      current_pos_y,
+					      &this->elev_time_graph_saved_img,
+					      graph_width,
+					      graph_height);
 }
 
 
 
 
-void track_sd_move(Viewport * viewport, GdkEventMotion * event, TrackProfileDialog * widgets)
+void TrackProfileDialog::track_sd_move_cb(Viewport * viewport, QMouseEvent * event)
 {
-	if (widgets->speeds_dist == NULL) {
+	unsigned int graph_width = viewport->width() - GRAPH_MARGIN_LEFT - GRAPH_MARGIN_RIGHT;
+	unsigned int graph_height = viewport->height() - GRAPH_MARGIN_UPPER - GRAPH_MARGIN_LOWER;
+
+	if (this->speeds_dist == NULL) {
 		return;
 	}
 
-	double x = NAN;
+	double current_pos_x = NAN;
 	int ix = 0;
-	get_mouse_event_x(viewport, event, widgets, &x, &ix);
+	if (!get_mouse_event_x(viewport, event, this, &current_pos_x, &ix)) {
+		return;
+	}
 
 	double meters_from_start;
-	Trackpoint * tp = widgets->trk->get_closest_tp_by_percentage_dist((double) x / widgets->profile_width, &meters_from_start);
-	if (tp && widgets->w_cur_speed_dist) {
-		distance_label_update(widgets->w_cur_speed_dist, meters_from_start);
+	this->current_tp = this->trk->get_closest_tp_by_percentage_dist((double) current_pos_x / this->profile_width, &meters_from_start);
+	if (this->current_tp && this->w_cur_speed_dist) {
+		distance_label_update(this->w_cur_speed_dist, meters_from_start);
 	}
 
 	/* Show track speed for this position. */
-	if (widgets->w_cur_speed_speed) {
-		speed_label_update(widgets->w_cur_speed_speed, widgets->speeds_dist[ix]);
+	if (this->w_cur_speed_speed) {
+		speed_label_update(this->w_cur_speed_speed, this->speeds_dist[ix]);
 	}
 
-	widgets->blob_tp = tp;
+	int current_pos_y = this->get_pos_y_speed_dist(current_pos_x, graph_width, graph_height);
 
-	int y_blob = widgets->blobby_speed_dist(x);
-
-	double marker_x = -1.0; /* i.e. don't draw unless we get a valid value. */
-	if (widgets->is_marker_drawn) {
-		double pc = tp_percentage_by_distance(widgets->trk, widgets->marker_tp, widgets->track_length_inc_gaps);
+	double selected_pos_x = -1.0; /* i.e. don't draw unless we get a valid value. */
+	double selected_pos_y = -1.0;
+	if (true || this->is_selected_drawn) {
+		double pc = tp_percentage_by_distance(this->trk, this->selected_tp, this->track_length_inc_gaps);
 		if (!isnan(pc)) {
-			marker_x = (pc * widgets->profile_width) + MARGIN_X;
+			selected_pos_x = pc * graph_width;
+			selected_pos_y = this->get_pos_y_speed_dist(selected_pos_x, graph_width, graph_height);
 		}
 	}
 
 	QPen black_pen(QColor("black"));
-	save_image_and_draw_graph_marks(viewport,
-					marker_x,
-					black_pen,
-					MARGIN_X+x,
-					MARGIN_Y+y_blob,
-					&widgets->speed_dist_graph_saved_img,
-					widgets->profile_width,
-					widgets->profile_height,
-					&widgets->is_marker_drawn,
-					&widgets->is_blob_drawn);
+	this->save_image_and_draw_graph_marks(viewport,
+					      black_pen,
+					      selected_pos_x,
+					      selected_pos_y,
+					      current_pos_x,
+					      current_pos_y,
+					      &this->speed_dist_graph_saved_img,
+					      graph_width,
+					      graph_height);
 }
 
 
 
 
-void get_mouse_event_x(Viewport * viewport, GdkEventMotion * event, TrackProfileDialog * widgets, double * x, int * ix)
+bool get_mouse_event_x(Viewport * viewport, QMouseEvent * event, TrackProfileDialog * widgets, double * x, int * ix)
 {
-#ifdef K
-	int mouse_x, mouse_y;
-	GdkModifierType state;
+	unsigned int graph_width = viewport->width() - GRAPH_MARGIN_LEFT - GRAPH_MARGIN_RIGHT;
+	unsigned int graph_height = viewport->height() - GRAPH_MARGIN_UPPER - GRAPH_MARGIN_LOWER;
+	unsigned int graph_left = GRAPH_MARGIN_LEFT;
+	unsigned int graph_top = GRAPH_MARGIN_UPPER;
 
-	if (event->is_hint) {
-		gdk_window_get_pointer(event->window, &mouse_x, &mouse_y, &state);
-	} else {
-		mouse_x = event->x;
+	QPoint position = viewport->mapFromGlobal(QCursor::pos());
+
+	int mouse_x = position.x();
+	int mouse_y = position.y();
+
+	if (!(mouse_x >= graph_left && mouse_x <= graph_left + graph_width
+	      && mouse_y >= graph_top && mouse_y <= graph_top + graph_height)) {
+
+		/* Cursor outside of chart area. */
+		return false;
 	}
 
-	GtkAllocation allocation;
-	gtk_widget_get_allocation(widget, &allocation);
-
-	(*x) = mouse_x - allocation.width / 2 + widgets->profile_width / 2 - MARGIN_X / 2;
+	(*x) = position.x() - graph_left;
+	qDebug() << __FUNCTION__ << (*x);
 	if ((*x) < 0) {
 		(*x) = 0;
 	}
-	if ((*x) > widgets->profile_width) {
-		(*x) = widgets->profile_width;
+
+	if ((*x) > graph_width) {
+		(*x) = graph_width;
 	}
 
 	*ix = (int) (*x);
 	/* Ensure ix is inbounds. */
-	if (*ix == widgets->profile_width) {
+	if (*ix == graph_width) {
 		(*ix)--;
 	}
-#endif
 
-	return;
+	return true;
 }
 
 
@@ -2160,40 +2196,43 @@ void TrackProfileDialog::draw_all_graphs(bool resized)
 {
 	/* Draw elevations. */
 	if (this->elev_viewport) {
-		this->draw_single_graph(this->elev_viewport, resized, &TrackProfileDialog::draw_elevations, &TrackProfileDialog::blobby_altitude, false, &this->elev_graph_saved_img);
+		this->draw_single_graph(this->elev_viewport, resized, &TrackProfileDialog::draw_elevations, &TrackProfileDialog::get_pos_y_altitude, false, &this->elev_graph_saved_img);
 	}
 
 	/* Draw gradients. */
 	if (this->gradient_viewport) {
-		this->draw_single_graph(this->gradient_viewport, resized, &TrackProfileDialog::draw_gradients, &TrackProfileDialog::blobby_gradient, false, &this->gradient_graph_saved_img);
+		this->draw_single_graph(this->gradient_viewport, resized, &TrackProfileDialog::draw_gradients, &TrackProfileDialog::get_pos_y_gradient, false, &this->gradient_graph_saved_img);
 	}
 
 	/* Draw speeds. */
 	if (this->speed_viewport) {
-		this->draw_single_graph(this->speed_viewport, resized, &TrackProfileDialog::draw_vt, &TrackProfileDialog::blobby_speed, true, &this->speed_graph_saved_img);
+		this->draw_single_graph(this->speed_viewport, resized, &TrackProfileDialog::draw_vt, &TrackProfileDialog::get_pos_y_speed, true, &this->speed_graph_saved_img);
 	}
 
 	/* Draw Distances. */
 	if (this->dist_viewport) {
-		this->draw_single_graph(this->dist_viewport, resized, &TrackProfileDialog::draw_dt, &TrackProfileDialog::blobby_distance, true, &this->dist_graph_saved_img);
+		this->draw_single_graph(this->dist_viewport, resized, &TrackProfileDialog::draw_dt, &TrackProfileDialog::get_pos_y_distance, true, &this->dist_graph_saved_img);
 	}
 
 	/* Draw Elevations in timely manner. */
 	if (this->elev_time_viewport) {
-		this->draw_single_graph(this->elev_time_viewport, resized, &TrackProfileDialog::draw_et, &TrackProfileDialog::blobby_altitude_time, true, &this->elev_time_graph_saved_img);
+		this->draw_single_graph(this->elev_time_viewport, resized, &TrackProfileDialog::draw_et, &TrackProfileDialog::get_pos_y_altitude_time, true, &this->elev_time_graph_saved_img);
 	}
 
 	/* Draw speed distances. */
 	if (this->speed_dist_viewport) {
-		this->draw_single_graph(this->speed_dist_viewport, resized, &TrackProfileDialog::draw_sd, &TrackProfileDialog::blobby_speed_dist, true, &this->speed_dist_graph_saved_img);
+		this->draw_single_graph(this->speed_dist_viewport, resized, &TrackProfileDialog::draw_sd, &TrackProfileDialog::get_pos_y_speed_dist, true, &this->speed_dist_graph_saved_img);
 	}
 }
 
 
 
 
-void TrackProfileDialog::draw_single_graph(Viewport * viewport, bool resized, void (TrackProfileDialog::*draw_graph)(Viewport *, Track *), int (TrackProfileDialog::*get_blobby)(double), bool by_time, PropSaved * saved_img)
+void TrackProfileDialog::draw_single_graph(Viewport * viewport, bool resized, void (TrackProfileDialog::*draw_graph)(Viewport *, Track *), int (TrackProfileDialog::*get_pos_y)(double, int, int), bool by_time, PropSaved * saved_img)
 {
+	unsigned int graph_width = viewport->width() - GRAPH_MARGIN_LEFT - GRAPH_MARGIN_RIGHT;
+	unsigned int graph_height = viewport->height() - GRAPH_MARGIN_UPPER - GRAPH_MARGIN_LOWER;
+
 #ifdef K
 	/* Saved image no longer any good as we've resized, so we remove it here. */
 	if (resized && saved_img->img) {
@@ -2206,47 +2245,46 @@ void TrackProfileDialog::draw_single_graph(Viewport * viewport, bool resized, vo
 	(this->*draw_graph)(viewport, this->trk);
 
 	/* Ensure marker or blob are redrawn if necessary. */
-	if (this->is_marker_drawn || this->is_blob_drawn) {
+	if (this->is_selected_drawn || this->is_current_drawn) {
 
 		double pc = NAN;
-		if (by_time) {
-			pc = tp_percentage_by_time(this->trk, this->marker_tp);
-		} else {
-			pc = tp_percentage_by_distance(this->trk, this->marker_tp, this->track_length_inc_gaps);
-		}
-
-		double x_blob = -MARGIN_X - 1.0; /* i.e. don't draw unless we get a valid value. */
-		int y_blob = 0;
-		if (this->is_blob_drawn) {
-			double pc_blob = NAN;
+		double current_pos_x = -1.0; /* i.e. don't draw unless we get a valid value. */
+		double current_pos_y = 0;
+		if (this->is_current_drawn) {
+			pc = NAN;
 			if (by_time) {
-				pc_blob = tp_percentage_by_time(this->trk, this->blob_tp);
+				pc = tp_percentage_by_time(this->trk, this->current_tp);
 			} else {
-				pc_blob = tp_percentage_by_distance(this->trk, this->blob_tp, this->track_length_inc_gaps);
+				pc = tp_percentage_by_distance(this->trk, this->current_tp, this->track_length_inc_gaps);
 			}
-			if (!isnan(pc_blob)) {
-				x_blob = (pc_blob * this->profile_width);
+			if (!isnan(pc)) {
+				current_pos_x = pc * graph_width;
+				current_pos_y = (this->*get_pos_y)(current_pos_x, graph_width, graph_height);
 			}
-
-			y_blob = (this->*get_blobby)(x_blob);
 		}
 
-		double marker_x = -1.0; /* i.e. Don't draw unless we get a valid value. */
+		double selected_pos_x = -1.0; /* i.e. Don't draw unless we get a valid value. */
+		double selected_pos_y = -1.0;
+		if (by_time) {
+			pc = tp_percentage_by_time(this->trk, this->selected_tp);
+		} else {
+			pc = tp_percentage_by_distance(this->trk, this->selected_tp, this->track_length_inc_gaps);
+		}
 		if (!isnan(pc)) {
-			marker_x = (pc * this->profile_width) + MARGIN_X;
+			selected_pos_x = pc * graph_width;
+			selected_pos_y = (this->*get_pos_y)(selected_pos_x, graph_width, graph_height);
 		}
 
 		QPen black_pen(QColor("black"));
-		save_image_and_draw_graph_marks(viewport,
-						marker_x,
-						black_pen,
-						x_blob+MARGIN_X,
-						y_blob+MARGIN_Y,
-						saved_img,
-						this->profile_width,
-						this->profile_height,
-						&this->is_marker_drawn,
-						&this->is_blob_drawn);
+		this->save_image_and_draw_graph_marks(viewport,
+						      black_pen,
+						      selected_pos_x,
+						      selected_pos_y,
+						      current_pos_x,
+						      current_pos_y,
+						      saved_img,
+						      graph_width,
+						      graph_height);
 	}
 }
 
@@ -2318,7 +2356,7 @@ Viewport * TrackProfileDialog::create_profile(double * min_alt, double * max_alt
 	unsigned int graph_width = viewport->width() - GRAPH_MARGIN_LEFT - GRAPH_MARGIN_RIGHT;
 
 	//connect(widget, "button_press_event", this, SLOT (track_profile_click_cb()));
-	//connect(widget, "motion_notify_event", this, SLOT (track_profile_move_cb()));
+	connect(viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)), this, SLOT (track_profile_move_cb(Viewport *, QMouseEvent *)));
 
 	minmax_array(this->altitudes, min_alt, max_alt, true, graph_width);
 
@@ -2345,7 +2383,7 @@ Viewport * TrackProfileDialog::create_gradient(void)
 	viewport->configure_manually(GRAPH_MARGIN_LEFT + GRAPH_MARGIN_RIGHT + 5, GRAPH_MARGIN_LOWER + GRAPH_MARGIN_UPPER + 5);
 
 	//connect(widget, "button_press_event", this, SLOT (track_gradient_click_cb()));
-	//connect(widget, "motion_notify_event", this, SLOT (track_gradient_move_cb()));
+	connect(viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)), this, SLOT (track_gradient_move_cb(Viewport *, QMouseEvent *)));
 
 	return viewport;
 }
@@ -2390,7 +2428,7 @@ Viewport * TrackProfileDialog::create_vtdiag(void)
 	viewport->configure_manually(GRAPH_MARGIN_LEFT + GRAPH_MARGIN_RIGHT + 5, GRAPH_MARGIN_LOWER + GRAPH_MARGIN_UPPER + 5);
 
 	//connect(widget, "button_press_event", this, SLOT (track_vt_click_cb()));
-	//connect(widget, "motion_notify_event", this, SLOT (track_vt_move_cb()));
+	connect(viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)), this, SLOT (track_vt_move_cb(Viewport *, QMouseEvent *)));
 
 	return viewport;
 }
@@ -2414,7 +2452,7 @@ Viewport * TrackProfileDialog::create_dtdiag(void)
 	viewport->configure_manually(GRAPH_MARGIN_LEFT + GRAPH_MARGIN_RIGHT + 5, GRAPH_MARGIN_LOWER + GRAPH_MARGIN_UPPER + 5);
 
 	//connect(widget, "button_press_event", this, SLOT (track_dt_click_cb()));
-	//connect(widget, "motion_notify_event", this, SLOT (track_dt_move_cb()));
+	connect(viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)), this, SLOT (track_dt_move_cb(Viewport *, QMouseEvent *)));
 	//g_signal_connect_swapped(G_OBJECT(widget), "destroy", G_CALLBACK(g_free), this);
 
 	return viewport;
@@ -2439,7 +2477,7 @@ Viewport * TrackProfileDialog::create_etdiag(void)
 	viewport->configure_manually(GRAPH_MARGIN_LEFT + GRAPH_MARGIN_RIGHT + 5, GRAPH_MARGIN_LOWER + GRAPH_MARGIN_UPPER + 5);
 
 	//connect(widget, "button_press_event", this, SLOT (track_et_click_cb()));
-	//connect(widget, "motion_notify_event", this, SLOT (track_et_move_cb()));
+	connect(viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)), this, SLOT (track_et_move_cb(Viewport *, QMouseEvent *)));
 
 	return viewport;
 }
@@ -2463,7 +2501,7 @@ Viewport * TrackProfileDialog::create_sddiag(void)
 	viewport->configure_manually(GRAPH_MARGIN_LEFT + GRAPH_MARGIN_RIGHT + 5, GRAPH_MARGIN_LOWER + GRAPH_MARGIN_UPPER + 5);
 
 	//connect(widget, "button_press_event", this, SLOT (track_sd_click_cb()));
-	//connect(widget, "motion_notify_event", this, SLOT (track_sd_move_cb()));
+	connect(viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)), this, SLOT (track_sd_move_cb(Viewport *, QMouseEvent *)));
 
 	return viewport;
 }
@@ -2550,7 +2588,7 @@ void TrackProfileDialog::dialog_response_cb(int resp) /* Slot. */
 		/* As we could have seen the nuber of dulplicates that would be deleted in the properties statistics tab,
 		   choose not to inform the user unnecessarily. */
 
-		/* Above operation could have deleted current_tp or last_tp. */
+		/* Above operation could have deleted current_tp or last_tp (selected_tp?). */
 		trw->cancel_tps_of_track(trk);
 		trw->emit_changed();
 		break;
@@ -2588,7 +2626,7 @@ void TrackProfileDialog::dialog_response_cb(int resp) /* Slot. */
 	case VIK_TRW_LAYER_PROPWIN_SPLIT_MARKER: {
 		auto iter = std::next(trk->begin());
 		while (iter != trk->end()) {
-			if (this->marker_tp == *iter) {
+			if (this->selected_tp == *iter) {
 				break;
 			}
 			iter++;
