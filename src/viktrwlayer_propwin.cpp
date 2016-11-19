@@ -58,16 +58,6 @@ using namespace SlavGPS;
 
 
 
-typedef enum {
-	PROPWIN_GRAPH_TYPE_ELEVATION_DISTANCE,
-	PROPWIN_GRAPH_TYPE_GRADIENT_DISTANCE,
-	PROPWIN_GRAPH_TYPE_SPEED_TIME,
-	PROPWIN_GRAPH_TYPE_DISTANCE_TIME,
-	PROPWIN_GRAPH_TYPE_ELEVATION_TIME,
-	PROPWIN_GRAPH_TYPE_SPEED_DISTANCE,
-	PROPWIN_GRAPH_TYPE_END,
-} VikPropWinGraphType_t;
-
 /* (Hopefully!) Human friendly altitude grid sizes - note no fixed 'ratio' just numbers that look nice... */
 static const double chunksa[] = {2.0, 5.0, 10.0, 15.0, 20.0,
 				 25.0, 40.0, 50.0, 75.0, 100.0,
@@ -126,13 +116,6 @@ static bool show_dist_speed         = false;
 static bool show_elev_speed         = false;
 static bool show_elev_dem           = false;
 static bool show_sd_gps_speed       = true;
-
-
-
-
-typedef struct _propwidgets {
-
-} PropWidgets;
 
 
 
@@ -298,28 +281,29 @@ static unsigned int get_distance_chunk_index(double length)
 
 
 
-static Trackpoint * set_center_at_graph_position(double event_x,
-						 int img_width,
+static Trackpoint * set_center_at_graph_position(int event_x,
 						 LayerTRW * trw,
 						 LayersPanel * panel,
 						 Viewport * viewport,
 						 Track * trk,
 						 bool time_base,
-						 int PROFILE_WIDTH)
+						 int graph_width)
 {
-	Trackpoint * tp;
-	double x = event_x - img_width / 2 + PROFILE_WIDTH / 2 - MARGIN_X / 2;
+	int x = event_x;
+	if (x >= graph_width) {
+		qDebug() << "EE: Track Profile: set center: condition 1 error:" << x << graph_width;
+		x = graph_width; /* Notice that it's not 'x = graph_width - 1'. Current assignment will put mark at the border of graph. */
+	}
 	if (x < 0) {
+		qDebug() << "EE: Track Profile: set center: condition 2 error:" << x;
 		x = 0;
 	}
-	if (x > PROFILE_WIDTH) {
-		x = PROFILE_WIDTH;
-	}
 
+	Trackpoint * tp = NULL;
 	if (time_base) {
-		tp = trk->get_closest_tp_by_percentage_time((double) x / PROFILE_WIDTH, NULL);
+		tp = trk->get_closest_tp_by_percentage_time((double) x / graph_width, NULL);
 	} else {
-		tp = trk->get_closest_tp_by_percentage_dist((double) x / PROFILE_WIDTH, NULL);
+		tp = trk->get_closest_tp_by_percentage_dist((double) x / graph_width, NULL);
 	}
 
 	if (tp) {
@@ -390,8 +374,14 @@ void TrackProfileDialog::save_image_and_draw_graph_marks(Viewport * viewport,
 
 
 	if (selected_pos_x > 0 && selected_pos_y > 0) {
-		viewport->draw_line(pen, selected_pos_x, GRAPH_MARGIN_UPPER, selected_pos_x, GRAPH_MARGIN_UPPER + graph_height);
-		viewport->draw_line(pen, GRAPH_MARGIN_LEFT, selected_pos_y, GRAPH_MARGIN_LEFT + graph_width, selected_pos_y);
+		viewport->draw_line(pen,
+				    GRAPH_MARGIN_LEFT + selected_pos_x, GRAPH_MARGIN_UPPER,
+				    GRAPH_MARGIN_LEFT + selected_pos_x, GRAPH_MARGIN_UPPER + graph_height);
+
+		viewport->draw_line(pen,
+				    GRAPH_MARGIN_LEFT,               GRAPH_MARGIN_UPPER + graph_height - selected_pos_y,
+				    GRAPH_MARGIN_LEFT + graph_width, GRAPH_MARGIN_UPPER + graph_height - selected_pos_y);
+
 		this->is_selected_drawn = true;
 	} else {
 		this->is_selected_drawn = false;
@@ -453,67 +443,64 @@ static double tp_percentage_by_distance(Track * trk, Trackpoint * tp, double tra
 
 
 
-static void track_graph_click(GtkWidget * widget, GdkEventButton * event, TrackProfileDialog * widgets, VikPropWinGraphType_t graph_type)
+void TrackProfileDialog::track_graph_release(Viewport * viewport, QMouseEvent * event, TrackProfileType graph_type)
 {
-	bool is_time_graph =
-		(graph_type == PROPWIN_GRAPH_TYPE_SPEED_TIME
-		 || graph_type == PROPWIN_GRAPH_TYPE_DISTANCE_TIME
-		 || graph_type == PROPWIN_GRAPH_TYPE_ELEVATION_TIME);
+	unsigned int graph_width = viewport->width() - GRAPH_MARGIN_LEFT - GRAPH_MARGIN_RIGHT;
 
-#ifdef K
-	GtkAllocation allocation;
-	gtk_widget_get_allocation(widget, &allocation);
+	bool is_time_graph = (graph_type == SG_TRACK_PROFILE_TYPE_SPEED_TIME
+			      || graph_type == SG_TRACK_PROFILE_TYPE_DISTANCE_TIME
+			      || graph_type == SG_TRACK_PROFILE_TYPE_ELEVATION_TIME);
 
-	Trackpoint * tp = set_center_at_graph_position(event->x, allocation.width, widgets->trw, widgets->panel, widgets->main_viewport, widgets->trk, is_time_graph, widgets->profile_width);
-	/* Unable to get the point so give up. */
+	int pos_x = get_cursor_pos_x_in_graph(viewport, event);
+	Trackpoint * tp = set_center_at_graph_position(pos_x, this->trw, this->panel, this->main_viewport, this->trk, is_time_graph, graph_width);
 	if (tp == NULL) {
-		gtk_dialog_set_response_sensitive(GTK_DIALOG(widgets->dialog), VIK_TRW_LAYER_PROPWIN_SPLIT_MARKER, false);
+		/* Unable to get the point so give up. */
+#ifdef K
+		this->button_split->setEnabled(false);
+#endif
 		return;
 	}
 
-	widgets->selected_tp = tp;
+	this->selected_tp = tp;
 
 	Viewport * graph_viewport = NULL;
-	PropSaved *graph_saved_img;
+	PropSaved * graph_saved_img = NULL;
 	double pc = NAN;
 
 	/* Attempt to redraw marker on all graph types. */
-	int graphite;
-	for (graphite = PROPWIN_GRAPH_TYPE_ELEVATION_DISTANCE;
-	     graphite < PROPWIN_GRAPH_TYPE_END;
-	     graphite++) {
+	for (int type = SG_TRACK_PROFILE_TYPE_ELEVATION_DISTANCE; type < SG_TRACK_PROFILE_TYPE_END; type++) {
 
 		/* Switch commonal variables to particular graph type. */
-		switch (graphite) {
+		switch (type) {
 		default:
-		case PROPWIN_GRAPH_TYPE_ELEVATION_DISTANCE:
-			graph_viewport  = widgets->elev_viewport;
-			graph_saved_img = &widgets->elev_graph_saved_img;
+		case SG_TRACK_PROFILE_TYPE_ELEVATION_DISTANCE:
+			graph_viewport  = this->elev_viewport;
+			graph_saved_img = &this->elev_graph_saved_img;
 			is_time_graph   = false;
 			break;
-		case PROPWIN_GRAPH_TYPE_GRADIENT_DISTANCE:
-			graph_viewport  = widgets->gradient_viewport;
-			graph_saved_img = &widgets->gradient_graph_saved_img;
+		case SG_TRACK_PROFILE_TYPE_GRADIENT_DISTANCE:
+			graph_viewport  = this->gradient_viewport;
+			graph_saved_img = &this->gradient_graph_saved_img;
 			is_time_graph   = false;
 			break;
-		case PROPWIN_GRAPH_TYPE_SPEED_TIME:
-			graph_viewport  = widgets->speed_viewport;
-			graph_saved_img = &widgets->speed_graph_saved_img;
+		case SG_TRACK_PROFILE_TYPE_SPEED_TIME:
+			graph_viewport  = this->speed_viewport;
+			graph_saved_img = &this->speed_graph_saved_img;
 			is_time_graph   = true;
 			break;
-		case PROPWIN_GRAPH_TYPE_DISTANCE_TIME:
-			graph_viewport  = widgets->dist_viewport;
-			graph_saved_img = &widgets->dist_graph_saved_img;
+		case SG_TRACK_PROFILE_TYPE_DISTANCE_TIME:
+			graph_viewport  = this->dist_viewport;
+			graph_saved_img = &this->dist_graph_saved_img;
 			is_time_graph   = true;
 			break;
-		case PROPWIN_GRAPH_TYPE_ELEVATION_TIME:
-			graph_viewport  = widgets->elev_time_viewport;
-			graph_saved_img = &widgets->elev_time_graph_saved_img;
+		case SG_TRACK_PROFILE_TYPE_ELEVATION_TIME:
+			graph_viewport  = this->elev_time_viewport;
+			graph_saved_img = &this->elev_time_graph_saved_img;
 			is_time_graph   = true;
 			break;
-		case PROPWIN_GRAPH_TYPE_SPEED_DISTANCE:
-			graph_viewport  = widgets->speed_dist_viewport;
-			graph_saved_img = &widgets->speed_dist_graph_saved_img;
+		case SG_TRACK_PROFILE_TYPE_SPEED_DISTANCE:
+			graph_viewport  = this->speed_dist_viewport;
+			graph_saved_img = &this->speed_dist_graph_saved_img;
 			is_time_graph   = false;
 			break;
 		}
@@ -521,84 +508,87 @@ static void track_graph_click(GtkWidget * widget, GdkEventButton * event, TrackP
 		/* Commonal method of redrawing marker. */
 		if (graph_viewport) {
 			if (is_time_graph) {
-				pc = tp_percentage_by_time(widgets->trk, tp);
+				pc = tp_percentage_by_time(this->trk, tp);
 			} else {
-				pc = tp_percentage_by_distance(widgets->trk, tp, widgets->track_length_inc_gaps);
+				pc = tp_percentage_by_distance(this->trk, tp, this->track_length_inc_gaps);
 			}
 
 			if (!isnan(pc)) {
+				graph_width = graph_viewport->width() - GRAPH_MARGIN_LEFT - GRAPH_MARGIN_RIGHT;
+				unsigned int graph_height = graph_viewport->height() - GRAPH_MARGIN_UPPER - GRAPH_MARGIN_LOWER;
+
 				double selected_pos_x = pc * graph_width;
 				double selected_pos_y = -1.0; /* TODO: get real value. */
-				widgets->save_image_and_draw_graph_marks(graph_viewport,
-									 selected_pos_x,
-									 selected_pos_y,
-									 black_pen,
-									 -1.0, /* Don't draw current position on clicks. */
-									 -1.0,
-									 graph_saved_img,
-									 graph_width,
-									 graph_height);
+				QPen black_pen(QColor("black"));
+				this->save_image_and_draw_graph_marks(graph_viewport,
+								      black_pen,
+								      selected_pos_x,
+								      selected_pos_y,
+								      -1.0, /* Don't draw current position on clicks. */
+								      -1.0,
+								      graph_saved_img,
+								      graph_width,
+								      graph_height);
 			}
-			g_list_free(child);
 		}
 	}
-
-	gtk_dialog_set_response_sensitive(GTK_DIALOG(widgets->dialog), VIK_TRW_LAYER_PROPWIN_SPLIT_MARKER, widgets->is_selected_drawn);
+#ifdef K
+	this->button_split->setEnabled(this->is_selected_drawn);
 #endif
 }
 
 
 
 
-static bool track_profile_click(GtkWidget * widget, GdkEventButton *event, void * ptr)
+bool TrackProfileDialog::track_profile_release_cb(Viewport * viewport, QMouseEvent * event) /* Slot. */
 {
-	track_graph_click(widget, event, (TrackProfileDialog *) ptr, PROPWIN_GRAPH_TYPE_ELEVATION_DISTANCE);
-	return true;  /* Don't call other (further) callbacks. */
+	this->track_graph_release(viewport, event, SG_TRACK_PROFILE_TYPE_ELEVATION_DISTANCE);
+	return true;
 }
 
 
 
 
-static bool track_gradient_click(GtkWidget * widget, GdkEventButton *event, void * ptr)
+bool TrackProfileDialog::track_gradient_release_cb(Viewport * viewport, QMouseEvent * event) /* Slot. */
 {
-	track_graph_click(widget, event, (TrackProfileDialog *) ptr, PROPWIN_GRAPH_TYPE_GRADIENT_DISTANCE);
-	return true;  /* Don't call other (further) callbacks. */
+	this->track_graph_release(viewport, event, SG_TRACK_PROFILE_TYPE_GRADIENT_DISTANCE);
+	return true;
 }
 
 
 
 
-static bool track_vt_click(GtkWidget * widget, GdkEventButton *event, void * ptr)
+bool TrackProfileDialog::track_vt_release_cb(Viewport * viewport, QMouseEvent * event) /* Slot. */
 {
-	track_graph_click(widget, event, (TrackProfileDialog *) ptr, PROPWIN_GRAPH_TYPE_SPEED_TIME);
-	return true;  /* Don't call other (further) callbacks. */
+	this->track_graph_release(viewport, event, SG_TRACK_PROFILE_TYPE_SPEED_TIME);
+	return true;
 }
 
 
 
 
-static bool track_dt_click(GtkWidget *widget, GdkEventButton *event, void * ptr)
+bool TrackProfileDialog::track_dt_release_cb(Viewport * viewport, QMouseEvent * event) /* Slot. */
 {
-	track_graph_click(widget, event, (TrackProfileDialog *) ptr, PROPWIN_GRAPH_TYPE_DISTANCE_TIME);
-	return true;  /* Don't call other (further) callbacks. */
+	this->track_graph_release(viewport, event, SG_TRACK_PROFILE_TYPE_DISTANCE_TIME);
+	return true;
 }
 
 
 
 
-static bool track_et_click(GtkWidget *widget, GdkEventButton *event, void * ptr)
+bool TrackProfileDialog::track_et_release_cb(Viewport * viewport, QMouseEvent * event) /* Slot. */
 {
-	track_graph_click(widget, event, (TrackProfileDialog *) ptr, PROPWIN_GRAPH_TYPE_ELEVATION_TIME);
-	return true;  /* Don't call other (further) callbacks. */
+	this->track_graph_release(viewport, event, SG_TRACK_PROFILE_TYPE_ELEVATION_TIME);
+	return true;
 }
 
 
 
 
-static bool track_sd_click(GtkWidget *widget, GdkEventButton *event, void * ptr)
+bool TrackProfileDialog::track_sd_release_cb(Viewport * viewport, QMouseEvent * event) /* Slot. */
 {
-	track_graph_click(widget, event, (TrackProfileDialog *) ptr, PROPWIN_GRAPH_TYPE_SPEED_DISTANCE);
-	return true;  /* Don't call other (further) callbacks. */
+	this->track_graph_release(viewport, event, SG_TRACK_PROFILE_TYPE_SPEED_DISTANCE);
+	return true;
 }
 
 
@@ -2328,7 +2318,7 @@ Viewport * TrackProfileDialog::create_profile(double * min_alt, double * max_alt
 
 	unsigned int graph_width = viewport->width() - GRAPH_MARGIN_LEFT - GRAPH_MARGIN_RIGHT;
 
-	//connect(widget, "button_press_event", this, SLOT (track_profile_click_cb()));
+	connect(viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), this, SLOT (track_profile_release_cb(Viewport *, QMouseEvent *)));
 	connect(viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)), this, SLOT (track_profile_move_cb(Viewport *, QMouseEvent *)));
 
 	minmax_array(this->altitudes, min_alt, max_alt, true, graph_width);
@@ -2355,7 +2345,7 @@ Viewport * TrackProfileDialog::create_gradient(void)
 	viewport->resize(GRAPH_MARGIN_LEFT + GRAPH_MARGIN_RIGHT + 5, GRAPH_MARGIN_LOWER + GRAPH_MARGIN_UPPER + 5);
 	viewport->configure_manually(GRAPH_MARGIN_LEFT + GRAPH_MARGIN_RIGHT + 5, GRAPH_MARGIN_LOWER + GRAPH_MARGIN_UPPER + 5);
 
-	//connect(widget, "button_press_event", this, SLOT (track_gradient_click_cb()));
+	connect(viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), this, SLOT (track_gradient_release_cb(Viewport *, QMouseEvent *)));
 	connect(viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)), this, SLOT (track_gradient_move_cb(Viewport *, QMouseEvent *)));
 
 	return viewport;
@@ -2400,7 +2390,7 @@ Viewport * TrackProfileDialog::create_vtdiag(void)
 	viewport->resize(GRAPH_MARGIN_LEFT + GRAPH_MARGIN_RIGHT + 5, GRAPH_MARGIN_LOWER + GRAPH_MARGIN_UPPER + 5);
 	viewport->configure_manually(GRAPH_MARGIN_LEFT + GRAPH_MARGIN_RIGHT + 5, GRAPH_MARGIN_LOWER + GRAPH_MARGIN_UPPER + 5);
 
-	//connect(widget, "button_press_event", this, SLOT (track_vt_click_cb()));
+	connect(viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), this, SLOT (track_vt_release_cb(Viewport *, QMouseEvent *)));
 	connect(viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)), this, SLOT (track_vt_move_cb(Viewport *, QMouseEvent *)));
 
 	return viewport;
@@ -2424,7 +2414,7 @@ Viewport * TrackProfileDialog::create_dtdiag(void)
 	viewport->resize(GRAPH_MARGIN_LEFT + GRAPH_MARGIN_RIGHT + 5, GRAPH_MARGIN_LOWER + GRAPH_MARGIN_UPPER + 5);
 	viewport->configure_manually(GRAPH_MARGIN_LEFT + GRAPH_MARGIN_RIGHT + 5, GRAPH_MARGIN_LOWER + GRAPH_MARGIN_UPPER + 5);
 
-	//connect(widget, "button_press_event", this, SLOT (track_dt_click_cb()));
+	connect(viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), this, SLOT (track_dt_release_cb(Viewport *, QMouseEvent *)));
 	connect(viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)), this, SLOT (track_dt_move_cb(Viewport *, QMouseEvent *)));
 	//g_signal_connect_swapped(G_OBJECT(widget), "destroy", G_CALLBACK(g_free), this);
 
@@ -2449,7 +2439,7 @@ Viewport * TrackProfileDialog::create_etdiag(void)
 	viewport->resize(GRAPH_MARGIN_LEFT + GRAPH_MARGIN_RIGHT + 5, GRAPH_MARGIN_LOWER + GRAPH_MARGIN_UPPER + 5);
 	viewport->configure_manually(GRAPH_MARGIN_LEFT + GRAPH_MARGIN_RIGHT + 5, GRAPH_MARGIN_LOWER + GRAPH_MARGIN_UPPER + 5);
 
-	//connect(widget, "button_press_event", this, SLOT (track_et_click_cb()));
+	connect(viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), this, SLOT (track_et_release_cb(Viewport *, QMouseEvent *)));
 	connect(viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)), this, SLOT (track_et_move_cb(Viewport *, QMouseEvent *)));
 
 	return viewport;
@@ -2473,7 +2463,7 @@ Viewport * TrackProfileDialog::create_sddiag(void)
 	viewport->resize(GRAPH_MARGIN_LEFT + GRAPH_MARGIN_RIGHT + 5, GRAPH_MARGIN_LOWER + GRAPH_MARGIN_UPPER + 5);
 	viewport->configure_manually(GRAPH_MARGIN_LEFT + GRAPH_MARGIN_RIGHT + 5, GRAPH_MARGIN_LOWER + GRAPH_MARGIN_UPPER + 5);
 
-	//connect(widget, "button_press_event", this, SLOT (track_sd_click_cb()));
+	connect(viewport, SIGNAL (button_released(Viewport *, QMouseEvent *)), this, SLOT (track_sd_release_cb(Viewport *, QMouseEvent *)));
 	connect(viewport, SIGNAL (cursor_moved(Viewport *, QMouseEvent *)), this, SLOT (track_sd_move_cb(Viewport *, QMouseEvent *)));
 
 	return viewport;
@@ -2730,7 +2720,7 @@ QWidget * TrackProfileDialog::create_graph_page(QWidget * graph,
 void SlavGPS::vik_trw_layer_propwin_run(Window * parent,
 					LayerTRW * layer,
 					Track * trk,
-					void * panel,
+					LayersPanel * panel,
 					Viewport * viewport,
 					bool start_on_stats)
 {
@@ -2741,7 +2731,7 @@ void SlavGPS::vik_trw_layer_propwin_run(Window * parent,
 
 
 
-TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer, Track * a_trk, void * a_panel, Viewport * a_viewport, Window * a_parent) : QDialog(a_parent)
+TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer, Track * a_trk, LayersPanel * a_panel, Viewport * a_viewport, Window * a_parent) : QDialog(a_parent)
 {
 	this->setWindowTitle(QString(_("%1 - Track Properties")).arg(a_trk->name));
 

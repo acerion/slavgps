@@ -67,11 +67,24 @@ namespace SlavGPS {
 
 
 
+	typedef enum {
+		SG_TRACK_PROFILE_TYPE_ELEVATION_DISTANCE,
+		SG_TRACK_PROFILE_TYPE_GRADIENT_DISTANCE,
+		SG_TRACK_PROFILE_TYPE_SPEED_TIME,
+		SG_TRACK_PROFILE_TYPE_DISTANCE_TIME,
+		SG_TRACK_PROFILE_TYPE_ELEVATION_TIME,
+		SG_TRACK_PROFILE_TYPE_SPEED_DISTANCE,
+		SG_TRACK_PROFILE_TYPE_END,
+	} TrackProfileType;
+
+
+
+
 	class TrackProfileDialog : public QDialog {
 		Q_OBJECT
 	public:
 		TrackProfileDialog() {};
-		TrackProfileDialog(QString const & title, LayerTRW * a_layer, Track * a_trk, void * a_panel, Viewport * a_viewport, Window * a_parent = NULL);
+		TrackProfileDialog(QString const & title, LayerTRW * a_layer, Track * a_trk, LayersPanel * a_panel, Viewport * a_viewport, Window * a_parent = NULL);
 		~TrackProfileDialog();
 
 	private slots:
@@ -86,6 +99,13 @@ namespace SlavGPS {
 		void track_dt_move_cb(Viewport * viewport, QMouseEvent * event);
 		void track_et_move_cb(Viewport * viewport, QMouseEvent * event);
 		void track_sd_move_cb(Viewport * viewport, QMouseEvent * event);
+
+		bool track_profile_release_cb(Viewport * viewport, QMouseEvent * event);
+		bool track_gradient_release_cb(Viewport * viewport, QMouseEvent * event);
+		bool track_vt_release_cb(Viewport * viewport, QMouseEvent * event);
+		bool track_dt_release_cb(Viewport * viewport, QMouseEvent * event);
+		bool track_et_release_cb(Viewport * viewport, QMouseEvent * event);
+		bool track_sd_release_cb(Viewport * viewport, QMouseEvent * event);
 
 
 	public:
@@ -106,6 +126,8 @@ namespace SlavGPS {
 						     PropSaved *saved_img,
 						     unsigned int graph_width,
 						     unsigned int graph_height);
+
+		void track_graph_release(Viewport * viewport, QMouseEvent * event, TrackProfileType graph_type);
 
 		/* "Draw" functions. */
 		void draw_elevations(Viewport * viewport, Track * trk);
@@ -152,7 +174,7 @@ namespace SlavGPS {
 		Window * parent = NULL;
 		LayerTRW * trw = NULL;
 		Track * trk = NULL;
-		void * panel = NULL;
+		LayersPanel * panel = NULL;
 		Viewport * main_viewport = NULL;
 
 		QTabWidget * tabs = NULL;
@@ -166,28 +188,6 @@ namespace SlavGPS {
 		int      profile_height_old;
 		int      profile_width_offset;
 		int      profile_height_offset;
-#if 0
-		QLineEdit * w_comment = NULL;
-		QLineEdit * w_description = NULL;
-		QLineEdit * w_source = NULL;
-		QLineEdit * w_type = NULL;
-		QLabel * w_track_length = NULL;
-		QLabel * w_tp_count = NULL;
-		QLabel * w_segment_count = NULL;
-		QLabel * w_duptp_count = NULL;
-		QLabel * w_max_speed = NULL;
-		QLabel * w_avg_speed = NULL;
-		QLabel * w_mvg_speed = NULL;
-		QLabel * w_avg_dist = NULL;
-		QLabel * w_elev_range = NULL;
-		QLabel * w_elev_gain = NULL;
-		QLabel * w_time_start = NULL;
-		QLabel * w_time_end = NULL;
-		QLabel * w_time_dur = NULL;
-		QLabel * w_color = NULL;
-		QLabel * w_namelabel = NULL;
-		QLabel * w_number_distlabels = NULL;
-#endif
 
 		QLabel * w_cur_dist = NULL; /*< Current distance. */
 		QLabel * w_cur_elevation = NULL;
@@ -267,7 +267,7 @@ namespace SlavGPS {
 	void vik_trw_layer_propwin_run(Window * parent,
 				       LayerTRW * layer,
 				       Track * trk,
-				       void * panel,
+				       LayersPanel * panel,
 				       Viewport * viewport,
 				       bool start_on_stats);
 

@@ -2234,6 +2234,7 @@ void Viewport::mouseReleaseEvent(QMouseEvent * event)
 	qDebug() << "II: Viewport: mouse release event, button" << (int) event->button();
 
 	this->window->get_layer_tools_box()->release(event);
+	emit this->button_released(this, event);
 
 	event->accept();
 }
