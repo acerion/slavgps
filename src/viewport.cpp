@@ -2223,6 +2223,8 @@ void Viewport::mouseMoveEvent(QMouseEvent * event)
 		//qDebug() << "II: Viewport: mouse move without buttons";
 	}
 
+	emit this->cursor_moved(this, event);
+
 	event->accept();
 }
 

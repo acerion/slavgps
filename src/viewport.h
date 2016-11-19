@@ -317,6 +317,7 @@ namespace SlavGPS {
 
 	signals:
 		void updated_center(void);
+		void cursor_moved(Viewport * viewport, QMouseEvent * event);
 
 
 	public slots:
