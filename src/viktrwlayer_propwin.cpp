@@ -2257,8 +2257,10 @@ void TrackProfileDialog::draw_single_graph(Viewport * viewport, bool resized, vo
 /**
  * Configure/Resize the profile & speed/time images.
  */
-static bool configure_event(GtkWidget * widget, GdkEventConfigure * event, TrackProfileDialog * widgets)
+bool TrackProfileDialog::configure_event_cb(Viewport * viewport)
 {
+	qDebug() << "-------- SLOT: Track Profile: received \"reconfigured\" signal from Viewport";
+
 #ifdef K
 	if (widgets->configure_dialog) {
 		/* Determine size offsets between dialog size and size for images.
@@ -2288,10 +2290,10 @@ static bool configure_event(GtkWidget * widget, GdkEventConfigure * event, Track
 
 		return false;
 	}
-
+#endif
 	/* Draw stuff. */
 	draw_all_graphs(true);
-#endif
+
 
 	return false;
 }
@@ -2313,6 +2315,7 @@ Viewport * TrackProfileDialog::create_profile(double * min_alt, double * max_alt
 	}
 
 	Viewport * viewport = new Viewport(this->parent);
+	strcpy(viewport->type_string, "Viewport, profile");
 	viewport->resize(GRAPH_MARGIN_LEFT + GRAPH_MARGIN_RIGHT + 5, GRAPH_MARGIN_LOWER + GRAPH_MARGIN_UPPER + 5);
 	viewport->configure_manually(GRAPH_MARGIN_LEFT + GRAPH_MARGIN_RIGHT + 5, GRAPH_MARGIN_LOWER + GRAPH_MARGIN_UPPER + 5);
 
@@ -2342,6 +2345,7 @@ Viewport * TrackProfileDialog::create_gradient(void)
 	}
 
 	Viewport * viewport = new Viewport(this->parent);
+	strcpy(viewport->type_string, "Viewport, gradient");
 	viewport->resize(GRAPH_MARGIN_LEFT + GRAPH_MARGIN_RIGHT + 5, GRAPH_MARGIN_LOWER + GRAPH_MARGIN_UPPER + 5);
 	viewport->configure_manually(GRAPH_MARGIN_LEFT + GRAPH_MARGIN_RIGHT + 5, GRAPH_MARGIN_LOWER + GRAPH_MARGIN_UPPER + 5);
 
@@ -2387,6 +2391,7 @@ Viewport * TrackProfileDialog::create_vtdiag(void)
 	}
 #endif
 	Viewport * viewport = new Viewport(this->parent);
+	strcpy(viewport->type_string, "Viewport, vtdiag");
 	viewport->resize(GRAPH_MARGIN_LEFT + GRAPH_MARGIN_RIGHT + 5, GRAPH_MARGIN_LOWER + GRAPH_MARGIN_UPPER + 5);
 	viewport->configure_manually(GRAPH_MARGIN_LEFT + GRAPH_MARGIN_RIGHT + 5, GRAPH_MARGIN_LOWER + GRAPH_MARGIN_UPPER + 5);
 
@@ -2411,6 +2416,7 @@ Viewport * TrackProfileDialog::create_dtdiag(void)
 	}
 
 	Viewport * viewport = new Viewport(this->parent);
+	strcpy(viewport->type_string, "Viewport, dtdiag");
 	viewport->resize(GRAPH_MARGIN_LEFT + GRAPH_MARGIN_RIGHT + 5, GRAPH_MARGIN_LOWER + GRAPH_MARGIN_UPPER + 5);
 	viewport->configure_manually(GRAPH_MARGIN_LEFT + GRAPH_MARGIN_RIGHT + 5, GRAPH_MARGIN_LOWER + GRAPH_MARGIN_UPPER + 5);
 
@@ -2436,6 +2442,7 @@ Viewport * TrackProfileDialog::create_etdiag(void)
 	}
 
 	Viewport * viewport = new Viewport(this->parent);
+	strcpy(viewport->type_string, "Viewport, etdiag");
 	viewport->resize(GRAPH_MARGIN_LEFT + GRAPH_MARGIN_RIGHT + 5, GRAPH_MARGIN_LOWER + GRAPH_MARGIN_UPPER + 5);
 	viewport->configure_manually(GRAPH_MARGIN_LEFT + GRAPH_MARGIN_RIGHT + 5, GRAPH_MARGIN_LOWER + GRAPH_MARGIN_UPPER + 5);
 
@@ -2460,6 +2467,7 @@ Viewport * TrackProfileDialog::create_sddiag(void)
 	}
 
 	Viewport * viewport = new Viewport(this->parent);
+	strcpy(viewport->type_string, "Viewport, sddiag");
 	viewport->resize(GRAPH_MARGIN_LEFT + GRAPH_MARGIN_RIGHT + 5, GRAPH_MARGIN_LOWER + GRAPH_MARGIN_UPPER + 5);
 	viewport->configure_manually(GRAPH_MARGIN_LEFT + GRAPH_MARGIN_RIGHT + 5, GRAPH_MARGIN_LOWER + GRAPH_MARGIN_UPPER + 5);
 
@@ -2660,7 +2668,7 @@ void TrackProfileDialog::checkbutton_toggle_cb(void)
 /**
  *  Create the widgets for the given graph tab.
  */
-QWidget * TrackProfileDialog::create_graph_page(QWidget * graph,
+QWidget * TrackProfileDialog::create_graph_page(Viewport * viewport,
 						const char * text1,
 						QLabel * value1,
 						const char * text2,
@@ -2682,8 +2690,8 @@ QWidget * TrackProfileDialog::create_graph_page(QWidget * graph,
 	QLabel * label2 = new QLabel(text2, this);
 	QLabel * label3 = new QLabel(text3, this);
 
-	graph->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-	vbox->addWidget(graph);
+	viewport->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+	vbox->addWidget(viewport);
 	hbox1->addWidget(label1);
 	hbox1->addWidget(value1);
 	hbox1->addWidget(label2);
@@ -2803,6 +2811,7 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer
 							 this->w_show_alt_gps_speed, show_alt_gps_speed);
 		connect(this->w_show_dem, SIGNAL (stateChanged(int)), this, SLOT (checkbutton_toggle_cb()));
 		connect(this->w_show_alt_gps_speed, SIGNAL (stateChanged(int)), this, SLOT (checkbutton_toggle_cb()));
+		connect(this->elev_viewport, SIGNAL (reconfigured(Viewport *)), this, SLOT(configure_event_cb(Viewport *)));
 		this->tabs->addTab(page, _("Elevation-distance"));
 	}
 
@@ -2817,6 +2826,7 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer
 							 this->w_show_gradient_gps_speed, show_gradient_gps_speed,
 							 NULL, false);
 		connect(this->w_show_gradient_gps_speed, SIGNAL (stateChanged(int)), this, SLOT (checkbutton_toggle_cb()));
+		connect(this->gradient_viewport, SIGNAL (reconfigured(Viewport *)), this, SLOT(configure_event_cb(Viewport *)));
 		this->tabs->addTab(page, _("Gradient-distance"));
 	}
 
@@ -2832,6 +2842,7 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer
 							 this->w_show_gps_speed, show_gps_speed,
 							 NULL, false);
 		connect(this->w_show_gps_speed, SIGNAL (stateChanged(int)), this, SLOT (checkbutton_toggle_cb()));
+		connect(this->speed_viewport, SIGNAL (reconfigured(Viewport *)), this, SLOT(configure_event_cb(Viewport *)));
 		this->tabs->addTab(page, _("Speed-time"));
 	}
 
@@ -2847,6 +2858,7 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer
 							 this->w_show_dist_speed, show_dist_speed,
 							 NULL, false);
 		connect(this->w_show_dist_speed, SIGNAL (stateChanged(int)), this, SLOT (checkbutton_toggle_cb()));
+		connect(this->dist_viewport, SIGNAL (reconfigured(Viewport *)), this, SLOT(configure_event_cb(Viewport *)));
 		this->tabs->addTab(page, _("Distance-time"));
 	}
 
@@ -2864,6 +2876,7 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer
 							 this->w_show_elev_speed, show_elev_speed);
 		connect(this->w_show_elev_dem, SIGNAL (stateChanged(int)), this, SLOT (checkbutton_toggle_cb()));
 		connect(this->w_show_elev_speed, SIGNAL (stateChanged(int)), this, SLOT (checkbutton_toggle_cb()));
+		connect(this->elev_time_viewport, SIGNAL (reconfigured(Viewport *)), this, SLOT(configure_event_cb(Viewport *)));
 		this->tabs->addTab(page, _("Elevation-time"));
 	}
 
@@ -2878,6 +2891,7 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer
 							 this->w_show_sd_gps_speed, show_sd_gps_speed,
 							 NULL, false);
 		connect(this->w_show_sd_gps_speed, SIGNAL (stateChanged(int)), this, SLOT (checkbutton_toggle_cb()));
+		connect(this->speed_dist_viewport, SIGNAL (reconfigured(Viewport *)), this, SLOT(configure_event_cb(Viewport *)));
 		this->tabs->addTab(page, _("Speed-distance"));
 	}
 
@@ -2902,7 +2916,6 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer
 
 	/* On dialog realization configure_event causes the graphs to be initially drawn. */
 	widgets->configure_dialog = true;
-	g_signal_connect(G_OBJECT(dialog), "configure-event", G_CALLBACK (configure_event), widgets);
 
 	g_signal_connect(G_OBJECT(dialog), "destroy", G_CALLBACK (destroy_cb), widgets);
 

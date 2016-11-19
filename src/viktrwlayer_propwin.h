@@ -91,6 +91,7 @@ namespace SlavGPS {
 		void checkbutton_toggle_cb(void);
 		void dialog_response_cb(int resp);
 		void destroy_cb(void);
+		bool configure_event_cb(Viewport * viewport);
 
 
 		void track_profile_move_cb(Viewport * viewport, QMouseEvent * event);
@@ -148,7 +149,7 @@ namespace SlavGPS {
 		void clear_image(QPixmap * pix);
 
 		void draw_all_graphs(bool resized);
-		QWidget * create_graph_page(QWidget * graph,
+		QWidget * create_graph_page(Viewport * viewport,
 					    const char * text1,
 					    QLabel * value1,
 					    const char * text2,

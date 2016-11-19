@@ -303,6 +303,8 @@ namespace SlavGPS {
 		QPixmap * snapshot_buffer = NULL;
 		bool half_drawn = false;
 
+		char type_string[100] = { 0 };
+
 	private:
 		void free_center(std::list<Coord *>::iterator iter);
 		void init_drawing_area(void);
@@ -311,7 +313,6 @@ namespace SlavGPS {
 		void draw_scale_helper_value(char * s, DistanceUnit distance_unit, double scale_unit);
 
 		GtkDrawingArea * drawing_area_ = NULL; /* Toolkit-specific drawing area. */
-		char type_string[30] = { 0 };
 
 		Window * window = NULL;
 
@@ -319,6 +320,7 @@ namespace SlavGPS {
 		void updated_center(void);
 		void cursor_moved(Viewport * viewport, QMouseEvent * event);
 		void button_released(Viewport * viewport, QMouseEvent * event);
+		void reconfigured(Viewport * viewport);
 
 
 	public slots:

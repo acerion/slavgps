@@ -420,6 +420,9 @@ void Viewport::configure_manually(int width_, unsigned int height_)
 	}
 	qDebug() << "II: Viewport creating new snapshot buffer with size" << this->size_width << this->size_height;
 	this->snapshot_buffer = new QPixmap(this->size_width, this->size_height);
+
+	qDebug() << "SIGNAL: Viewport: sending \"reconfigured\" from" << this->type_string <<  __FUNCTION__;
+	emit this->reconfigured(this);
 }
 
 
@@ -483,6 +486,9 @@ bool Viewport::configure()
 	this->highlight_pen.setWidth(1);
 	this->set_highlight_color(DEFAULT_HIGHLIGHT_COLOR);
 
+	qDebug() << "SIGNAL: Viewport: sending \"reconfigured\" from" << this->type_string << __FUNCTION__;
+	emit this->reconfigured(this);
+
 	return false;
 }
 
@@ -494,7 +500,7 @@ bool Viewport::configure()
  */
 void Viewport::clear()
 {
-	qDebug() << "II: Viewport: clear whole viewport" << __FUNCTION__ << __LINE__;
+	qDebug() << "II: Viewport: clear whole viewport" << this->type_string << __FUNCTION__ << __LINE__;
 	QPainter painter(this->scr_buffer);
 	painter.eraseRect(0, 0, this->size_width, this->size_height);
 
