@@ -3965,7 +3965,7 @@ void LayerTRW::profile_item_cb(void)
 			vik_trw_layer_propwin_run(this->get_window(),
 						  this,
 						  trk,
-						  this->menu_data->layers_panel ? this->menu_data->layers_panel : NULL,
+						  (LayersPanel *) (this->menu_data->layers_panel ? this->menu_data->layers_panel : NULL),
 						  this->menu_data->viewport,
 						  false);
 		}
