@@ -101,8 +101,8 @@ namespace SlavGPS {
 						     QPen & pen,
 						     double selected_pos_x,
 						     double selected_pos_y,
-						     int blob_x,
-						     int blob_y,
+						     double current_pos_x,
+						     double current_pox_y,
 						     PropSaved *saved_img,
 						     unsigned int graph_width,
 						     unsigned int graph_height);
@@ -116,12 +116,12 @@ namespace SlavGPS {
 		void draw_sd(Viewport * viewport, Track * trk);
 
 		/* "get_pos_y" functions. */
-		int get_pos_y_speed(double pos_x, int width, int height);
-		int get_pos_y_speed_dist(double pos_x, int width, int height);
-		int get_pos_y_altitude(double pos_x, int width, int height);
-		int get_pos_y_altitude_time(double pos_x, int width, int height);
-		int get_pos_y_gradient(double pos_x, int width, int height);
-		int get_pos_y_distance(double pos_x, int width, int height);
+		double get_pos_y_speed(double pos_x, int width, int height);
+		double get_pos_y_speed_dist(double pos_x, int width, int height);
+		double get_pos_y_altitude(double pos_x, int width, int height);
+		double get_pos_y_altitude_time(double pos_x, int width, int height);
+		double get_pos_y_gradient(double pos_x, int width, int height);
+		double get_pos_y_distance(double pos_x, int width, int height);
 
 		void clear_image(QPixmap * pix);
 
@@ -146,7 +146,7 @@ namespace SlavGPS {
 
 		void save_values(void);
 
-		void draw_single_graph(Viewport * viewport, bool resized, void (TrackProfileDialog::*draw_graph)(Viewport *, Track *), int (TrackProfileDialog::*get_pos_y)(double, int, int), bool by_time, PropSaved * saved_img);
+		void draw_single_graph(Viewport * viewport, bool resized, void (TrackProfileDialog::*draw_graph)(Viewport *, Track *), double (TrackProfileDialog::*get_pos_y)(double, int, int), bool by_time, PropSaved * saved_img);
 
 
 		Window * parent = NULL;

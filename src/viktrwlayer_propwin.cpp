@@ -137,7 +137,7 @@ typedef struct _propwidgets {
 
 
 
-static bool get_mouse_event_x(Viewport * viewport, QMouseEvent * event, TrackProfileDialog * widgets, double * x, int * ix);
+static int get_cursor_pos_x_in_graph(Viewport * viewport, QMouseEvent * event);
 static void distance_label_update(QLabel * label, double meters_from_start);
 static void elevation_label_update(QLabel * label, Trackpoint * tp);
 static void time_label_update(QLabel * label, time_t seconds_from_start);
@@ -348,8 +348,8 @@ void TrackProfileDialog::save_image_and_draw_graph_marks(Viewport * viewport,
 							 QPen & pen,
 							 double selected_pos_x,
 							 double selected_pos_y,
-							 int current_pos_x,
-							 int current_pos_y,
+							 double current_pos_x,
+							 double current_pos_y,
 							 PropSaved *saved_img,
 							 unsigned int graph_width,
 							 unsigned int graph_height)
@@ -607,7 +607,7 @@ static bool track_sd_click(GtkWidget *widget, GdkEventButton *event, void * ptr)
 /**
  * Calculate y position for blob on elevation graph.
  */
-int TrackProfileDialog::get_pos_y_altitude(double x, int width, int height)
+double TrackProfileDialog::get_pos_y_altitude(double x, int width, int height)
 {
 	int ix = (int) x;
 	/* Ensure ix is inbounds. */
@@ -615,9 +615,7 @@ int TrackProfileDialog::get_pos_y_altitude(double x, int width, int height)
 		ix--;
 	}
 
-	int y = height * (this->altitudes[ix] - this->draw_min_altitude) / (chunksa[this->cia] * LINES);
-
-	return y;
+	return height * (this->altitudes[ix] - this->draw_min_altitude) / (chunksa[this->cia] * LINES);
 }
 
 
@@ -626,7 +624,7 @@ int TrackProfileDialog::get_pos_y_altitude(double x, int width, int height)
 /**
  * Calculate y position for blob on gradient graph.
  */
-int TrackProfileDialog::get_pos_y_gradient(double x, int width, int height)
+double TrackProfileDialog::get_pos_y_gradient(double x, int width, int height)
 {
 	int ix = (int) x;
 	/* Ensure ix is inbounds. */
@@ -634,9 +632,7 @@ int TrackProfileDialog::get_pos_y_gradient(double x, int width, int height)
 		ix--;
 	}
 
-	int y = height * (this->gradients[ix] - this->draw_min_gradient) / (chunksg[this->cig] * LINES);
-
-	return y;
+	return height * (this->gradients[ix] - this->draw_min_gradient) / (chunksg[this->cig] * LINES);
 }
 
 
@@ -645,17 +641,14 @@ int TrackProfileDialog::get_pos_y_gradient(double x, int width, int height)
 /**
  * Calculate y position for blob on speed graph.
  */
-int TrackProfileDialog::get_pos_y_speed(double x, int width, int height)
+double TrackProfileDialog::get_pos_y_speed(double x, int width, int height)
 {
 	int ix = (int) x;
 	/* Ensure ix is inbounds. */
 	if (ix == width) {
 		ix--;
 	}
-
-	int y = height * (this->speeds[ix] - this->draw_min_speed) / (chunkss[this->cis] * LINES);
-
-	return y;
+	return height * (this->speeds[ix] - this->draw_min_speed) / (chunkss[this->cis] * LINES);
 }
 
 
@@ -664,18 +657,15 @@ int TrackProfileDialog::get_pos_y_speed(double x, int width, int height)
 /**
  * Calculate y position for blob on distance graph.
  */
-int TrackProfileDialog::get_pos_y_distance(double x, int width, int height)
+double TrackProfileDialog::get_pos_y_distance(double x, int width, int height)
 {
 	int ix = (int) x;
 	/* Ensure ix is inbounds. */
 	if (ix == width) {
 		ix--;
 	}
-
-	int y = height * (this->distances[ix]) / (chunksd[this->cid] * LINES);
 	/* Min distance is always 0, so no need to subtract that from distances[ix]. */
-
-	return y;
+	return height * (this->distances[ix]) / (chunksd[this->cid] * LINES);
 }
 
 
@@ -684,17 +674,14 @@ int TrackProfileDialog::get_pos_y_distance(double x, int width, int height)
 /**
  * Calculate y position for blob on elevation/time graph.
  */
-int TrackProfileDialog::get_pos_y_altitude_time(double x, int width, int height)
+double TrackProfileDialog::get_pos_y_altitude_time(double x, int width, int height)
 {
 	int ix = (int) x;
 	/* Ensure ix is inbounds. */
 	if (ix == width) {
 		ix--;
 	}
-
-	int y = height * (this->ats[ix] - this->draw_min_altitude_time) / (chunksa[this->ciat] * LINES);
-
-	return y;
+	return height * (this->ats[ix] - this->draw_min_altitude_time) / (chunksa[this->ciat] * LINES);
 }
 
 
@@ -703,17 +690,14 @@ int TrackProfileDialog::get_pos_y_altitude_time(double x, int width, int height)
 /**
  * Calculate y position for blob on speed/dist graph.
  */
-int TrackProfileDialog::get_pos_y_speed_dist(double x, int width, int height)
+double TrackProfileDialog::get_pos_y_speed_dist(double x, int width, int height)
 {
 	int ix = (int) x;
 	/* Ensure ix is inbounds. */
 	if (ix == width) {
 		ix--;
 	}
-
-	int y = height * (this->speeds_dist[ix] - this->draw_min_speed) / (chunkss[this->cisd] * LINES);
-
-	return y;
+	return height * (this->speeds_dist[ix] - this->draw_min_speed) / (chunkss[this->cisd] * LINES);
 }
 
 
@@ -728,9 +712,8 @@ void TrackProfileDialog::track_profile_move_cb(Viewport * viewport, QMouseEvent 
 		return;
 	}
 
-	double current_pos_x = NAN;
-	int ix = 0;
-	if (!get_mouse_event_x(viewport, event, this, &current_pos_x, &ix)) {
+	int current_pos_x = get_cursor_pos_x_in_graph(viewport, event);
+	if (current_pos_x < 0) {
 		return;
 	}
 
@@ -745,7 +728,7 @@ void TrackProfileDialog::track_profile_move_cb(Viewport * viewport, QMouseEvent 
 		elevation_label_update(this->w_cur_elevation, this->current_tp);
 	}
 
-	int current_pos_y = this->get_pos_y_altitude(current_pos_x, graph_width, graph_height);
+	double current_pos_y = this->get_pos_y_altitude(current_pos_x, graph_width, graph_height);
 
 	double selected_pos_x = -1.0; /* i.e. don't draw unless we get a valid value. */
 	double selected_pos_y = -1.0;
@@ -782,9 +765,8 @@ void TrackProfileDialog::track_gradient_move_cb(Viewport * viewport, QMouseEvent
 		return;
 	}
 
-	double current_pos_x = NAN;
-	int ix = 0;
-	if (!get_mouse_event_x(viewport, event, this, &current_pos_x, &ix)) {
+	int current_pos_x = get_cursor_pos_x_in_graph(viewport, event);
+	if (current_pos_x < 0) {
 		return;
 	}
 
@@ -796,10 +778,10 @@ void TrackProfileDialog::track_gradient_move_cb(Viewport * viewport, QMouseEvent
 
 	/* Show track gradient for this position - to the nearest whole number. */
 	if (this->current_tp && this->w_cur_gradient_gradient) {
-		gradient_label_update(this->w_cur_gradient_gradient, this->gradients[ix]);
+		gradient_label_update(this->w_cur_gradient_gradient, this->gradients[current_pos_x]);
 	}
 
-	int current_pos_y = this->get_pos_y_gradient(current_pos_x, graph_width, graph_height);
+	double current_pos_y = this->get_pos_y_gradient(current_pos_x, graph_width, graph_height);
 
 	double selected_pos_x = -1.0; /* i.e. don't draw unless we get a valid value. */
 	double selected_pos_y = -1.0;
@@ -910,9 +892,8 @@ void TrackProfileDialog::track_vt_move_cb(Viewport * viewport, QMouseEvent * eve
 		return;
 	}
 
-	double current_pos_x = NAN;
-	int ix = 0;
-	if (!get_mouse_event_x(viewport, event, this, &current_pos_x, &ix)) {
+	int current_pos_x = get_cursor_pos_x_in_graph(viewport, event);
+	if (current_pos_x < 0) {
 		return;
 	}
 
@@ -928,10 +909,10 @@ void TrackProfileDialog::track_vt_move_cb(Viewport * viewport, QMouseEvent * eve
 
 	/* Show track speed for this position. */
 	if (this->current_tp && this->w_cur_speed) {
-		speed_label_update(this->w_cur_speed, this->speeds[ix]);
+		speed_label_update(this->w_cur_speed, this->speeds[current_pos_x]);
 	}
 
-	int current_pos_y = this->get_pos_y_speed(current_pos_x, graph_width, graph_height);
+	double current_pos_y = this->get_pos_y_speed(current_pos_x, graph_width, graph_height);
 
 	double selected_pos_x = -1.0; /* i.e. don't draw unless we get a valid value. */
 	double selected_pos_y = -1.0;
@@ -971,9 +952,8 @@ void TrackProfileDialog::track_dt_move_cb(Viewport * viewport, QMouseEvent * eve
 		return;
 	}
 
-	double current_pos_x = NAN;
-	int ix = 0;
-	if (!get_mouse_event_x(viewport, event, this, &current_pos_x, &ix)) {
+	int current_pos_x = get_cursor_pos_x_in_graph(viewport, event);
+	if (current_pos_x < 0) {
 		return;
 	}
 
@@ -988,10 +968,10 @@ void TrackProfileDialog::track_dt_move_cb(Viewport * viewport, QMouseEvent * eve
 	}
 
 	if (this->current_tp && this->w_cur_dist_dist) {
-		dist_dist_label_update(this->w_cur_dist_dist, this->distances[ix]);
+		dist_dist_label_update(this->w_cur_dist_dist, this->distances[current_pos_x]);
 	}
 
-	int current_pos_y = this->get_pos_y_distance(current_pos_x, graph_width, graph_height);
+	double current_pos_y = this->get_pos_y_distance(current_pos_x, graph_width, graph_height);
 
 	double selected_pos_x = -1.0; /* i.e. don't draw unless we get a valid value. */
 	double selected_pos_y = -1.0;
@@ -1030,9 +1010,8 @@ void TrackProfileDialog::track_et_move_cb(Viewport * viewport, QMouseEvent * eve
 		return;
 	}
 
-	double current_pos_x = NAN;
-	int ix = 0;
-	if (!get_mouse_event_x(viewport, event, this, &current_pos_x, &ix)) {
+	int current_pos_x = get_cursor_pos_x_in_graph(viewport, event);
+	if (current_pos_x < 0) {
 		return;
 	}
 
@@ -1050,7 +1029,7 @@ void TrackProfileDialog::track_et_move_cb(Viewport * viewport, QMouseEvent * eve
 		elevation_label_update(this->w_cur_elev_elev, this->current_tp);
 	}
 
-	int current_pos_y = this->get_pos_y_altitude_time(current_pos_x, graph_width, graph_height);
+	double current_pos_y = this->get_pos_y_altitude_time(current_pos_x, graph_width, graph_height);
 
 	double selected_pos_x = -1.0; /* i.e. don't draw unless we get a valid value. */
 	double selected_pos_y = -1.0;
@@ -1086,9 +1065,8 @@ void TrackProfileDialog::track_sd_move_cb(Viewport * viewport, QMouseEvent * eve
 		return;
 	}
 
-	double current_pos_x = NAN;
-	int ix = 0;
-	if (!get_mouse_event_x(viewport, event, this, &current_pos_x, &ix)) {
+	int current_pos_x = get_cursor_pos_x_in_graph(viewport, event);
+	if (current_pos_x < 0) {
 		return;
 	}
 
@@ -1100,10 +1078,10 @@ void TrackProfileDialog::track_sd_move_cb(Viewport * viewport, QMouseEvent * eve
 
 	/* Show track speed for this position. */
 	if (this->w_cur_speed_speed) {
-		speed_label_update(this->w_cur_speed_speed, this->speeds_dist[ix]);
+		speed_label_update(this->w_cur_speed_speed, this->speeds_dist[current_pos_x]);
 	}
 
-	int current_pos_y = this->get_pos_y_speed_dist(current_pos_x, graph_width, graph_height);
+	double current_pos_y = this->get_pos_y_speed_dist(current_pos_x, graph_width, graph_height);
 
 	double selected_pos_x = -1.0; /* i.e. don't draw unless we get a valid value. */
 	double selected_pos_y = -1.0;
@@ -1130,7 +1108,7 @@ void TrackProfileDialog::track_sd_move_cb(Viewport * viewport, QMouseEvent * eve
 
 
 
-bool get_mouse_event_x(Viewport * viewport, QMouseEvent * event, TrackProfileDialog * widgets, double * x, int * ix)
+int get_cursor_pos_x_in_graph(Viewport * viewport, QMouseEvent * event)
 {
 	unsigned int graph_width = viewport->width() - GRAPH_MARGIN_LEFT - GRAPH_MARGIN_RIGHT;
 	unsigned int graph_height = viewport->height() - GRAPH_MARGIN_UPPER - GRAPH_MARGIN_LOWER;
@@ -1146,26 +1124,21 @@ bool get_mouse_event_x(Viewport * viewport, QMouseEvent * event, TrackProfileDia
 	      && mouse_y >= graph_top && mouse_y <= graph_top + graph_height)) {
 
 		/* Cursor outside of chart area. */
-		return false;
+		return -1;
 	}
 
-	(*x) = position.x() - graph_left;
-	qDebug() << __FUNCTION__ << (*x);
-	if ((*x) < 0) {
-		(*x) = 0;
+	int x = position.x() - graph_left;
+	if (x < 0) {
+		qDebug() << "EE: Track Profile: condition 1 for mouse movement failed:" << x << position.x() << graph_left;
+		x = 0;
 	}
 
-	if ((*x) > graph_width) {
-		(*x) = graph_width;
+	if (x > graph_width) {
+		qDebug() << "EE: Track Profile: condition 2 for mouse movement failed:" << x << position.x() << graph_width;
+		x = graph_width;
 	}
 
-	*ix = (int) (*x);
-	/* Ensure ix is inbounds. */
-	if (*ix == graph_width) {
-		(*ix)--;
-	}
-
-	return true;
+	return x;
 }
 
 
@@ -2228,7 +2201,7 @@ void TrackProfileDialog::draw_all_graphs(bool resized)
 
 
 
-void TrackProfileDialog::draw_single_graph(Viewport * viewport, bool resized, void (TrackProfileDialog::*draw_graph)(Viewport *, Track *), int (TrackProfileDialog::*get_pos_y)(double, int, int), bool by_time, PropSaved * saved_img)
+void TrackProfileDialog::draw_single_graph(Viewport * viewport, bool resized, void (TrackProfileDialog::*draw_graph)(Viewport *, Track *), double (TrackProfileDialog::*get_pos_y)(double, int, int), bool by_time, PropSaved * saved_img)
 {
 	unsigned int graph_width = viewport->width() - GRAPH_MARGIN_LEFT - GRAPH_MARGIN_RIGHT;
 	unsigned int graph_height = viewport->height() - GRAPH_MARGIN_UPPER - GRAPH_MARGIN_LOWER;
@@ -2248,7 +2221,7 @@ void TrackProfileDialog::draw_single_graph(Viewport * viewport, bool resized, vo
 	if (this->is_selected_drawn || this->is_current_drawn) {
 
 		double pc = NAN;
-		double current_pos_x = -1.0; /* i.e. don't draw unless we get a valid value. */
+		int current_pos_x = -1; /* i.e. don't draw unless we get a valid value. */
 		double current_pos_y = 0;
 		if (this->is_current_drawn) {
 			pc = NAN;
