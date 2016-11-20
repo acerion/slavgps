@@ -219,6 +219,12 @@ Viewport::Viewport(Window * parent) : QWidget((QWidget *) parent)
 
 	strncpy(this->type_string, "Le Viewport", (sizeof (this->type_string)) - 1);
 	this->do_draw_scale = true;
+
+	this->border_pen.setColor(QColor("black"));
+	this->border_pen.setWidth(2);
+
+	this->marker_pen.setColor(QColor("gray"));
+	this->marker_pen.setWidth(1);
 }
 
 
@@ -1606,7 +1612,8 @@ void Viewport::draw_line(const QPen & pen, int x1, int y1, int x2, int y2)
 
 		QPainter painter(this->scr_buffer);
 		painter.setPen(pen);
-		painter.drawLine(x1, y1, x2, y2);
+		painter.drawLine(this->margin_left + x1, this->margin_top + y1,
+				 this->margin_left + x2, this->margin_top + y2);
 	}
 }
 
@@ -2394,5 +2401,39 @@ void Viewport::get_location_strings(struct UTM utm, char **lat, char **lon)
 		struct LatLon ll;
 		a_coords_utm_to_latlon(&utm, &ll);
 		a_coords_latlon_to_string(&ll, lat, lon);
+	}
+}
+
+
+
+
+void Viewport::set_margin(int top, int bottom, int left, int right)
+{
+	this->margin_top = top;
+	this->margin_bottom = bottom;
+	this->margin_left = left;
+	this->margin_right = right;
+}
+
+
+
+
+/*
+  Draw border between margins of viewport and main (central) area of viewport.
+  Don't draw anything if all margins have zero width.
+*/
+void Viewport::draw_border(void)
+{
+	if (this->margin_top > 0
+	    || this->margin_bottom > 0
+	    || this->margin_left > 0
+	    || this->margin_right > 0) {
+
+		this->draw_rectangle(this->border_pen,
+				     this->margin_left,
+				     this->margin_top,
+				     this->width() - this->margin_left - this->margin_right, /* Width of main area inside margins. */
+				     this->height() - this->margin_top - this->margin_bottom); /* Height of main area inside margins. */
+
 	}
 }

@@ -227,6 +227,10 @@ namespace SlavGPS {
 		void compute_bearing(int x1, int y1, int x2, int y2, double *angle, double *baseangle);
 
 
+		void set_margin(int top, int bottom, int left, int right);
+		void draw_border(void);
+
+
 
 		/* Trigger stuff. */
 		void set_trigger(Layer * trigger);
@@ -297,6 +301,11 @@ namespace SlavGPS {
 		QPen highlight_pen;
 		QColor highlight_color;
 
+		/* The border around main area of viewport. It's specified by margin sizes. */
+		QPen border_pen;
+		/* x/y mark lines indicating e.g. current position of cursor in viewport (sort of a crosshair indicator). */
+		QPen marker_pen;
+
 
 		/* Trigger stuff. */
 		Layer * trigger = NULL;
@@ -304,6 +313,11 @@ namespace SlavGPS {
 		bool half_drawn = false;
 
 		char type_string[100] = { 0 };
+
+		int margin_top = 0;
+		int margin_bottom = 0;
+		int margin_left = 0;
+		int margin_right = 0;
 
 	private:
 		void free_center(std::list<Coord *>::iterator iter);
