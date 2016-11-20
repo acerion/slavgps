@@ -223,8 +223,11 @@ Viewport::Viewport(Window * parent) : QWidget((QWidget *) parent)
 	this->border_pen.setColor(QColor("black"));
 	this->border_pen.setWidth(2);
 
-	this->marker_pen.setColor(QColor("gray"));
+	this->marker_pen.setColor(QColor("brown"));
 	this->marker_pen.setWidth(1);
+
+	this->grid_pen.setColor(QColor("dimgray"));
+	this->grid_pen.setWidth(1);
 }
 
 

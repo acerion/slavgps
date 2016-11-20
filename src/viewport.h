@@ -305,6 +305,8 @@ namespace SlavGPS {
 		QPen border_pen;
 		/* x/y mark lines indicating e.g. current position of cursor in viewport (sort of a crosshair indicator). */
 		QPen marker_pen;
+		/* Generic pen for a generic (other than geographical coordinates) grid. */
+		QPen grid_pen;
 
 
 		/* Trigger stuff. */
