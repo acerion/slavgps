@@ -418,7 +418,7 @@ void LayerGeoref::draw(Viewport * viewport)
 					this->scaled_height = layer_height;
 				}
 			}
-			viewport->draw_pixbuf(pixbuf, 0, 0, x, y, layer_width, layer_height); /* todo: draw only what we need to. */
+			viewport->draw_pixmap(pixbuf, 0, 0, x, y, layer_width, layer_height); /* todo: draw only what we need to. */
 		}
 	}
 }

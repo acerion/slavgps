@@ -106,8 +106,7 @@ namespace SlavGPS {
 		void draw_arc(QPen const & pen, int x, int y, int width, int height, int angle1, int angle2, bool filled);
 		void draw_polygon(QPen const & pen, QPoint const * points, int npoints, bool filled);
 		void draw_layout(GdkGC * gc, int x, int y, PangoLayout * layout);
-		void draw_pixbuf(GdkPixbuf * pixbuf, int src_x, int src_y, int dest_x, int dest_y, int region_width, int region_height);
-
+		void draw_pixmap(QPixmap & pixmap, int src_x, int src_y, int dest_x, int dest_y, int dest_width, int dest_height);
 
 		/* Run this before drawing a line. Viewport::draw_line() runs it for you. */
 		static void clip_line(int * x1, int * y1, int * x2, int * y2);
@@ -218,6 +217,7 @@ namespace SlavGPS {
 
 		/* Viewport buffer management/drawing to screen. */
 		QPixmap * get_pixmap();   /* Get pointer to drawing buffer. */
+		void set_pixmap(QPixmap & pixmap);
 		void sync();              /* Draw buffer to window. */
 		void pan_sync(int x_off, int y_off);
 

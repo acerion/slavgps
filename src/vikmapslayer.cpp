@@ -1341,7 +1341,7 @@ bool try_draw_scale_down(LayerMaps * layer, Viewport * viewport, TileInfo ulm, i
 		if (pixbuf) {
 			int src_x = (ulm.x % scale_factor) * tilesize_x_ceil;
 			int src_y = (ulm.y % scale_factor) * tilesize_y_ceil;
-			viewport->draw_pixbuf(pixbuf, src_x, src_y, xx, yy, tilesize_x_ceil, tilesize_y_ceil);
+			viewport->draw_pixmap(pixbuf, src_x, src_y, xx, yy, tilesize_x_ceil, tilesize_y_ceil);
 			g_object_unref(pixbuf);
 			return true;
 		}
@@ -1373,7 +1373,7 @@ bool try_draw_scale_up(LayerMaps * layer, Viewport * viewport, TileInfo ulm, int
 					int src_y = 0;
 					int dest_x = xx + pict_x * (tilesize_x_ceil / scale_factor);
 					int dest_y = yy + pict_y * (tilesize_y_ceil / scale_factor);
-					viewport->draw_pixbuf(pixbuf, src_x, src_y, dest_x, dest_y, tilesize_x_ceil / scale_factor, tilesize_y_ceil / scale_factor);
+					viewport->draw_pixmap(pixbuf, src_x, src_y, dest_x, dest_y, tilesize_x_ceil / scale_factor, tilesize_y_ceil / scale_factor);
 					g_object_unref(pixbuf);
 					return true;
 				}
@@ -1471,7 +1471,7 @@ void LayerMaps::draw_section(Viewport * viewport, VikCoord *ul, VikCoord *br)
 						xx -= (width/2);
 						yy -= (height/2);
 
-						viewport->draw_pixbuf(pixbuf, 0, 0, xx, yy, width, height);
+						viewport->draw_pixmap(pixbuf, 0, 0, xx, yy, width, height);
 						g_object_unref(pixbuf);
 					}
 				}
@@ -1523,7 +1523,7 @@ void LayerMaps::draw_section(Viewport * viewport, VikCoord *ul, VikCoord *br)
 						if (pixbuf) {
 							int src_x = (ulm.x % scale_factor) * tilesize_x_ceil;
 							int src_y = (ulm.y % scale_factor) * tilesize_y_ceil;
-							viewport->draw_pixbuf(pixbuf, src_x, src_y, xx, yy, tilesize_x_ceil, tilesize_y_ceil);
+							viewport->draw_pixmap(pixbuf, src_x, src_y, xx, yy, tilesize_x_ceil, tilesize_y_ceil);
 							g_object_unref(pixbuf);
 						} else {
 							/* Otherwise try different scales. */

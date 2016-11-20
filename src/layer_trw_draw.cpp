@@ -889,7 +889,7 @@ int trw_layer_draw_image(Waypoint * wp, int x, int y, DrawingParams * dp)
 				dp->viewport->draw_rectangle(dp->viewport->get_highlight_pen(),
 							    x - (w / 2) - 2, y - (h / 2) - 2, w + 4, h + 4);
 			}
-			dp->viewport->draw_pixbuf(pixbuf, 0, 0, x - (w / 2), y - (h / 2), w, h);
+			dp->viewport->draw_pixmap(pixbuf, 0, 0, x - (w / 2), y - (h / 2), w, h);
 		}
 		return 0;
 	}
@@ -909,7 +909,7 @@ void trw_layer_draw_symbol(Waypoint * wp, int x, int y, DrawingParams * dp)
 
 #ifdef K
 	if (dp->trw->wp_draw_symbols && wp->symbol && wp->symbol_pixbuf) {
-		dp->viewport->draw_pixbuf(wp->symbol_pixbuf, 0, 0, x - gdk_pixbuf_get_width(wp->symbol_pixbuf)/2, y - gdk_pixbuf_get_height(wp->symbol_pixbuf)/2, -1, -1);
+		dp->viewport->draw_pixmap(wp->symbol_pixbuf, 0, 0, x - gdk_pixbuf_get_width(wp->symbol_pixbuf)/2, y - gdk_pixbuf_get_height(wp->symbol_pixbuf)/2, -1, -1);
 	} else
 #endif
 		if (wp == dp->trw->current_wp) {

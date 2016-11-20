@@ -887,7 +887,7 @@ void LayerMapnik::draw(Viewport * viewport)
 				if (pixbuf) {
 					map_utils_iTMS_to_vikcoord(&ulm, &coord);
 					viewport->coord_to_screen(&coord, &xx, &yy);
-					viewport->draw_pixbuf(pixbuf, 0, 0, xx, yy, this->tile_size_x, this->tile_size_x);
+					viewport->draw_pixmap(pixbuf, 0, 0, xx, yy, this->tile_size_x, this->tile_size_x);
 					g_object_unref(pixbuf);
 				}
 			}

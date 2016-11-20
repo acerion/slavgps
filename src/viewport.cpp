@@ -436,6 +436,16 @@ QPixmap * Viewport::get_pixmap()
 
 
 
+void Viewport::set_pixmap(QPixmap & pixmap)
+{
+	QPainter painter(this->scr_buffer);
+	/* TODO: Add some comparison of pixmap size and buffer size to verify that both have the same size and that pixmap can be safely used. */
+	painter.drawPixmap(0, 0, pixmap, 0, 0, 0, 0);
+}
+
+
+
+
 bool Viewport::configure_cb(void)
 {
 	qDebug() << "II: Viewport: handling signal \"configure event\"";
@@ -854,7 +864,7 @@ void Viewport::draw_logo()
 		GdkPixbuf *logo = (GdkPixbuf *) g_slist_nth_data(logos, i);
 		int width = gdk_pixbuf_get_width (logo);
 		int height = gdk_pixbuf_get_height (logo);
-		this->draw_pixbuf(logo, 0, 0, x - width, y, width, height);
+		this->draw_pixmap(logo, 0, 0, x - width, y, width, height);
 		x = x - width - PAD;
 	}
 #endif
@@ -1643,9 +1653,11 @@ void Viewport::draw_text(QFont const & font, QPen const & pen, int x, int y, QSt
 
 
 
-void Viewport::draw_pixbuf(GdkPixbuf *pixbuf, int src_x, int src_y,
-			   int dest_x, int dest_y, int region_width, int region_height)
+void Viewport::draw_pixmap(QPixmap & pixmap, int src_x, int src_y, int dest_x, int dest_y, int dest_width, int dest_height)
 {
+	QPainter painter(this->scr_buffer);
+	/* TODO: This clearly needs to be improved. */
+	painter.drawPixmap(0, 0, pixmap, 0, 0, 0, 0);
 #if 0
 	gdk_draw_pixbuf(this->scr_buffer,
 			NULL,
