@@ -68,12 +68,12 @@ namespace SlavGPS {
 
 
 	typedef enum {
-		SG_TRACK_PROFILE_TYPE_ELEVATION_DISTANCE,
-		SG_TRACK_PROFILE_TYPE_GRADIENT_DISTANCE,
-		SG_TRACK_PROFILE_TYPE_SPEED_TIME,
-		SG_TRACK_PROFILE_TYPE_DISTANCE_TIME,
-		SG_TRACK_PROFILE_TYPE_ELEVATION_TIME,
-		SG_TRACK_PROFILE_TYPE_SPEED_DISTANCE,
+		SG_TRACK_PROFILE_TYPE_ED, /* ed = elevation-distance. */
+		SG_TRACK_PROFILE_TYPE_GD, /* gd = gradient-distance. */
+		SG_TRACK_PROFILE_TYPE_ST, /* st = speed-time. */
+		SG_TRACK_PROFILE_TYPE_DT, /* dt = distance-time. */
+		SG_TRACK_PROFILE_TYPE_ET, /* et = elevation-time. */
+		SG_TRACK_PROFILE_TYPE_SD, /* sd = speed-distance. */
 		SG_TRACK_PROFILE_TYPE_END,
 	} TrackProfileType;
 
@@ -94,16 +94,16 @@ namespace SlavGPS {
 		bool configure_event_cb(Viewport * viewport);
 
 
-		void track_profile_move_cb(Viewport * viewport, QMouseEvent * event);
-		void track_gradient_move_cb(Viewport * viewport, QMouseEvent * event);
-		void track_vt_move_cb(Viewport * viewport, QMouseEvent * event);
+		void track_ed_move_cb(Viewport * viewport, QMouseEvent * event);
+		void track_gd_move_cb(Viewport * viewport, QMouseEvent * event);
+		void track_st_move_cb(Viewport * viewport, QMouseEvent * event);
 		void track_dt_move_cb(Viewport * viewport, QMouseEvent * event);
 		void track_et_move_cb(Viewport * viewport, QMouseEvent * event);
 		void track_sd_move_cb(Viewport * viewport, QMouseEvent * event);
 
-		bool track_profile_release_cb(Viewport * viewport, QMouseEvent * event);
-		bool track_gradient_release_cb(Viewport * viewport, QMouseEvent * event);
-		bool track_vt_release_cb(Viewport * viewport, QMouseEvent * event);
+		bool track_ed_release_cb(Viewport * viewport, QMouseEvent * event);
+		bool track_gd_release_cb(Viewport * viewport, QMouseEvent * event);
+		bool track_st_release_cb(Viewport * viewport, QMouseEvent * event);
 		bool track_dt_release_cb(Viewport * viewport, QMouseEvent * event);
 		bool track_et_release_cb(Viewport * viewport, QMouseEvent * event);
 		bool track_sd_release_cb(Viewport * viewport, QMouseEvent * event);
@@ -111,12 +111,12 @@ namespace SlavGPS {
 
 	public:
 
-		Viewport * create_profile(double * min_alt, double * max_alt);
-		Viewport * create_gradient(void);
-		Viewport * create_vtdiag(void);
-		Viewport * create_dtdiag(void);
-		Viewport * create_etdiag(void);
-		Viewport * create_sddiag(void);
+		Viewport * create_ed_viewport(double * min_alt, double * max_alt);
+		Viewport * create_gd_viewport(void);
+		Viewport * create_st_viewport(void);
+		Viewport * create_dt_viewport(void);
+		Viewport * create_et_viewport(void);
+		Viewport * create_sd_viewport(void);
 
 		void restore_image_and_draw_graph_marks(Viewport * viewport,
 							QPen & pen,
@@ -130,21 +130,25 @@ namespace SlavGPS {
 
 		void track_graph_release(Viewport * viewport, QMouseEvent * event, TrackProfileType graph_type);
 
+
+
 		/* "Draw" functions. */
-		void draw_elevations(Viewport * viewport, Track * trk);
-		void draw_gradients(Viewport * viewport, Track * trk);
-		void draw_vt(Viewport * viewport, Track * trk);
+		void draw_ed(Viewport * viewport, Track * trk);
+		void draw_gd(Viewport * viewport, Track * trk);
+		void draw_st(Viewport * viewport, Track * trk);
 		void draw_dt(Viewport * viewport, Track * trk);
 		void draw_et(Viewport * viewport, Track * trk);
 		void draw_sd(Viewport * viewport, Track * trk);
 
 		/* "get_pos_y" functions. */
-		double get_pos_y_speed(double pos_x, int width, int height);
-		double get_pos_y_speed_dist(double pos_x, int width, int height);
-		double get_pos_y_altitude(double pos_x, int width, int height);
-		double get_pos_y_altitude_time(double pos_x, int width, int height);
-		double get_pos_y_gradient(double pos_x, int width, int height);
-		double get_pos_y_distance(double pos_x, int width, int height);
+		double get_pos_y_ed(double pos_x, int width, int height);
+		double get_pos_y_gd(double pos_x, int width, int height);
+		double get_pos_y_st(double pos_x, int width, int height);
+		double get_pos_y_dt(double pos_x, int width, int height);
+		double get_pos_y_et(double pos_x, int width, int height);
+		double get_pos_y_sd(double pos_x, int width, int height);
+
+
 
 		void clear_image(QPixmap * pix);
 
@@ -215,18 +219,21 @@ namespace SlavGPS {
 		QCheckBox * w_show_sd_gps_speed = NULL;
 		double   track_length;
 		double   track_length_inc_gaps;
-		PropSaved elev_graph_saved_img;
-		PropSaved gradient_graph_saved_img;
-		PropSaved speed_graph_saved_img;
-		PropSaved dist_graph_saved_img;
-		PropSaved elev_time_graph_saved_img;
-		PropSaved speed_dist_graph_saved_img;
-		Viewport * elev_viewport = NULL;
-		Viewport * gradient_viewport = NULL;
-		Viewport * speed_viewport = NULL;
-		Viewport * dist_viewport = NULL;
-		Viewport * elev_time_viewport = NULL;
-		Viewport * speed_dist_viewport = NULL;
+
+		PropSaved saved_img_ed;
+		PropSaved saved_img_gd;
+		PropSaved saved_img_st;
+		PropSaved saved_img_dt;
+		PropSaved saved_img_et;
+		PropSaved saved_img_sd;
+
+		Viewport * viewport_ed = NULL;
+		Viewport * viewport_gd = NULL;
+		Viewport * viewport_st = NULL;
+		Viewport * viewport_dt = NULL;
+		Viewport * viewport_et = NULL;
+		Viewport * viewport_sd = NULL;
+
 		double   * altitudes = NULL;
 		double   * ats = NULL; /* Altitudes in time. */
 		double   min_altitude = 0.0;
