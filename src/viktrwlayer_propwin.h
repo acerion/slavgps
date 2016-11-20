@@ -118,15 +118,14 @@ namespace SlavGPS {
 		Viewport * create_et_viewport(void);
 		Viewport * create_sd_viewport(void);
 
-		void restore_image_and_draw_graph_marks(Viewport * viewport,
-							QPen & pen,
-							double selected_pos_x,
-							double selected_pos_y,
-							double current_pos_x,
-							double current_pox_y,
-							PropSaved *saved_img,
-							unsigned int graph_width,
-							unsigned int graph_height);
+		void draw_marks(Viewport * viewport,
+				double selected_pos_x,
+				double selected_pos_y,
+				double current_pos_x,
+				double current_pox_y,
+				PropSaved * saved_img,
+				unsigned int graph_width,
+				unsigned int graph_height);
 
 		void track_graph_release(Viewport * viewport, QMouseEvent * event, TrackProfileType graph_type);
 
@@ -267,6 +266,9 @@ namespace SlavGPS {
 
 		time_t    duration = 0;
 		//char     * tz = NULL; /* TimeZone at track's location. */
+
+		/* Pen used to draw main parts of graphs (i.e. the values of functions y = f(x)). */
+		QPen main_pen;
 	};
 
 
@@ -276,8 +278,7 @@ namespace SlavGPS {
 				       LayerTRW * layer,
 				       Track * trk,
 				       LayersPanel * panel,
-				       Viewport * viewport,
-				       bool start_on_stats);
+				       Viewport * viewport);
 
 	/**
 	 * Update this property dialog e.g. if the track has been renamed

@@ -147,20 +147,39 @@ TrackProfileDialog::~TrackProfileDialog()
 		g_object_unref(widgets->elev_time_graph_saved_img.img);
 	if (widgets->speed_dist_graph_saved_img.img)
 		g_object_unref(widgets->speed_dist_graph_saved_img.img);
-	if (widgets->altitudes)
-		free(widgets->altitudes);
-	if (widgets->gradients)
-		free(widgets->gradients);
-	if (widgets->speeds)
-		free(widgets->speeds);
-	if (widgets->distances)
-		free(widgets->distances);
-	if (widgets->ats)
-		free(widgets->ats);
-	if (widgets->speeds_dist)
-		free(widgets->speeds_dist);
-	free(widgets);
 #endif
+
+	if (this->altitudes) {
+		free(this->altitudes);
+	}
+
+	if (this->gradients) {
+		free(this->gradients);
+	}
+
+	if (this->speeds) {
+		free(this->speeds);
+	}
+
+	if (this->distances) {
+		free(this->distances);
+	}
+
+	if (this->ats) {
+		free(this->ats);
+	}
+
+	if (this->speeds_dist) {
+		free(this->speeds_dist);
+	}
+
+
+	delete this->viewport_ed;
+	delete this->viewport_gd;
+	delete this->viewport_st;
+	delete this->viewport_dt;
+	delete this->viewport_et;
+	delete this->viewport_sd;
 }
 
 
@@ -170,9 +189,10 @@ TrackProfileDialog::~TrackProfileDialog()
 #define GRAPH_MARGIN_RIGHT 110 // 1
 #define GRAPH_MARGIN_TOP 75 // 20
 #define GRAPH_MARGIN_BOTTOM 99 // 1
-#define MARGIN_X 70 // GRAPH_MARGIN_LEFT
-#define MARGIN_Y 20 //GRAPH_MARGIN_TOP
 #define LINES 5
+#define GRAPH_VERTICAL_LINE_S LINES
+#define GRAPH_HORIZONTAL_LINE_S LINES
+
 
 /**
  * Returns via pointers:
@@ -184,7 +204,7 @@ static void get_new_min_and_chunk_index(double mina, double maxa, const double *
 	/* Get unitized chunk. */
 	/* Find suitable chunk index. */
 	*ci = 0;
-	double diff_chunk = (maxa - mina)/LINES;
+	double diff_chunk = (maxa - mina) / LINES;
 
 	/* Loop through to find best match. */
 	while (diff_chunk > chunks[*ci]) {
@@ -326,17 +346,19 @@ static Trackpoint * set_center_at_graph_position(int event_x,
 
 
 /**
- * Returns whether the marker was drawn or not and whether the mark was drawn or not.
- */
-void TrackProfileDialog::restore_image_and_draw_graph_marks(Viewport * viewport,
-							    QPen & pen,
-							    double selected_pos_x,
-							    double selected_pos_y,
-							    double current_pos_x,
-							    double current_pos_y,
-							    PropSaved * saved_img,
-							    unsigned int graph_width,
-							    unsigned int graph_height)
+   Draw two pairs of horizontal and vertical lines intersecting at given position.
+
+   One pair is for position of selected trackpoint.
+   The other pair is for position of current trackpoint (trackpoint corresponding to current cursor position).
+*/
+void TrackProfileDialog::draw_marks(Viewport * viewport,
+				    double selected_pos_x,
+				    double selected_pos_y,
+				    double current_pos_x,
+				    double current_pos_y,
+				    PropSaved * saved_img,
+				    unsigned int graph_width,
+				    unsigned int graph_height)
 {
 	unsigned int graph_top = GRAPH_MARGIN_TOP;
 
@@ -351,9 +373,9 @@ void TrackProfileDialog::restore_image_and_draw_graph_marks(Viewport * viewport,
 #ifdef K
 	/* ATM always save whole image - as anywhere could have changed. */
 	if (saved_img->img) {
-		gdk_drawable_copy_to_image(GDK_DRAWABLE(pix), saved_img->img, 0, 0, 0, 0, MARGIN_X+ graph_width, MARGIN_Y + graph_height);
+		gdk_drawable_copy_to_image(GDK_DRAWABLE(pix), saved_img->img, 0, 0, 0, 0, GRAPH_MARGIN_LEFT + graph_width, GRAPH_MARGIN_TOP + graph_height);
 	} else {
-		saved_img->img = gdk_drawable_copy_to_image(GDK_DRAWABLE(pix), saved_img->img, 0, 0, 0, 0, MARGIN_X+ graph_width, MARGIN_Y + graph_height);
+		saved_img->img = gdk_drawable_copy_to_image(GDK_DRAWABLE(pix), saved_img->img, 0, 0, 0, 0, GRAPH_MARGIN_LEFT + graph_width, GRAPH_MARGIN_TOP + graph_height);
 	}
 	saved_img->saved = true;
 #endif
@@ -361,11 +383,11 @@ void TrackProfileDialog::restore_image_and_draw_graph_marks(Viewport * viewport,
 	/* Now draw marks on this fresh image. */
 
 	if (current_pos_x > 0 && current_pos_y > 0) {
-		viewport->draw_line(pen,
+		viewport->draw_line(viewport->marker_pen,
 				    current_pos_x, 0,
 				    current_pos_x, 0 + graph_height);
 
-		viewport->draw_line(pen,
+		viewport->draw_line(viewport->marker_pen,
 				    0,               graph_height - current_pos_y,
 				    0 + graph_width, graph_height - current_pos_y);
 
@@ -376,11 +398,11 @@ void TrackProfileDialog::restore_image_and_draw_graph_marks(Viewport * viewport,
 
 
 	if (selected_pos_x > 0 && selected_pos_y > 0) {
-		viewport->draw_line(pen,
+		viewport->draw_line(viewport->marker_pen,
 				    selected_pos_x, 0,
 				    selected_pos_x, 0 + graph_height);
 
-		viewport->draw_line(pen,
+		viewport->draw_line(viewport->marker_pen,
 				    0,               graph_height - selected_pos_y,
 				    0 + graph_width, graph_height - selected_pos_y);
 
@@ -445,6 +467,12 @@ static double tp_percentage_by_distance(Track * trk, Trackpoint * tp, double tra
 
 
 
+/**
+   React to mouse button release
+
+   Find a trackpoint corresponding to cursor position when button was released.
+   Draw marking for this trackpoint.
+*/
 void TrackProfileDialog::track_graph_release(Viewport * viewport, QMouseEvent * event, TrackProfileType graph_type)
 {
 	unsigned int graph_width = viewport->width() - GRAPH_MARGIN_LEFT - GRAPH_MARGIN_RIGHT;
@@ -467,7 +495,6 @@ void TrackProfileDialog::track_graph_release(Viewport * viewport, QMouseEvent * 
 
 	Viewport * graph_viewport = NULL;
 	PropSaved * graph_saved_img = NULL;
-	double pc = NAN;
 
 	/* Attempt to redraw marker on all graph types. */
 	for (int type = SG_TRACK_PROFILE_TYPE_ED; type < SG_TRACK_PROFILE_TYPE_END; type++) {
@@ -507,32 +534,36 @@ void TrackProfileDialog::track_graph_release(Viewport * viewport, QMouseEvent * 
 			break;
 		}
 
-		/* Commonal method of redrawing marker. */
-		if (graph_viewport) {
-			if (is_time_graph) {
-				pc = tp_percentage_by_time(this->trk, tp);
-			} else {
-				pc = tp_percentage_by_distance(this->trk, tp, this->track_length_inc_gaps);
-			}
+		/* Common code of redrawing marker. */
 
-			if (!isnan(pc)) {
-				graph_width = graph_viewport->width() - GRAPH_MARGIN_LEFT - GRAPH_MARGIN_RIGHT;
-				unsigned int graph_height = graph_viewport->height() - GRAPH_MARGIN_TOP - GRAPH_MARGIN_BOTTOM;
-
-				double selected_pos_x = pc * graph_width;
-				double selected_pos_y = -1.0; /* TODO: get real value. */
-				QPen black_pen(QColor("black"));
-				this->restore_image_and_draw_graph_marks(graph_viewport,
-									 black_pen,
-									 selected_pos_x,
-									 selected_pos_y,
-									 -1.0, /* Don't draw current position on clicks. */
-									 -1.0,
-									 graph_saved_img,
-									 graph_width,
-									 graph_height);
-			}
+		if (!graph_viewport) {
+			continue;
 		}
+
+		double pc = NAN;
+		if (is_time_graph) {
+			pc = tp_percentage_by_time(this->trk, tp);
+		} else {
+			pc = tp_percentage_by_distance(this->trk, tp, this->track_length_inc_gaps);
+		}
+
+		if (isnan(pc)) {
+			continue;
+		}
+
+		graph_width = graph_viewport->width() - GRAPH_MARGIN_LEFT - GRAPH_MARGIN_RIGHT;
+		unsigned int graph_height = graph_viewport->height() - GRAPH_MARGIN_TOP - GRAPH_MARGIN_BOTTOM;
+
+		double selected_pos_x = pc * graph_width;
+		double selected_pos_y = -1.0; /* TODO: get real value. */
+		this->draw_marks(graph_viewport,
+				 selected_pos_x,
+				 selected_pos_y,
+				 -1.0, /* Don't draw current position on clicks. */
+				 -1.0,
+				 graph_saved_img,
+				 graph_width,
+				 graph_height);
 	}
 #ifdef K
 	this->button_split->setEnabled(this->is_selected_drawn);
@@ -597,12 +628,12 @@ bool TrackProfileDialog::track_sd_release_cb(Viewport * viewport, QMouseEvent * 
 
 
 /**
- * Calculate y position for mark on elevation graph.
+ * Calculate y position for mark on elevation-distance graph.
  */
 double TrackProfileDialog::get_pos_y_ed(double x, int width, int height)
 {
 	int ix = (int) x;
-	/* Ensure ix is inbounds. */
+	/* Ensure ix is inside of graph. */
 	if (ix == width) {
 		ix--;
 	}
@@ -614,12 +645,12 @@ double TrackProfileDialog::get_pos_y_ed(double x, int width, int height)
 
 
 /**
- * Calculate y position for mark on gradient graph.
+ * Calculate y position for mark on gradient-distance graph.
  */
 double TrackProfileDialog::get_pos_y_gd(double x, int width, int height)
 {
 	int ix = (int) x;
-	/* Ensure ix is inbounds. */
+	/* Ensure ix is inside of graph. */
 	if (ix == width) {
 		ix--;
 	}
@@ -631,12 +662,12 @@ double TrackProfileDialog::get_pos_y_gd(double x, int width, int height)
 
 
 /**
- * Calculate y position for mark on speed graph.
+ * Calculate y position for mark on speed-time graph.
  */
 double TrackProfileDialog::get_pos_y_st(double x, int width, int height)
 {
 	int ix = (int) x;
-	/* Ensure ix is inbounds. */
+	/* Ensure ix is inside of graph. */
 	if (ix == width) {
 		ix--;
 	}
@@ -647,12 +678,12 @@ double TrackProfileDialog::get_pos_y_st(double x, int width, int height)
 
 
 /**
- * Calculate y position for mark on distance graph.
+ * Calculate y position for mark on distance-time graph.
  */
 double TrackProfileDialog::get_pos_y_dt(double x, int width, int height)
 {
 	int ix = (int) x;
-	/* Ensure ix is inbounds. */
+	/* Ensure ix is inside of graph. */
 	if (ix == width) {
 		ix--;
 	}
@@ -664,12 +695,12 @@ double TrackProfileDialog::get_pos_y_dt(double x, int width, int height)
 
 
 /**
- * Calculate y position for mark on elevation/time graph.
+ * Calculate y position for mark on elevation-time graph.
  */
 double TrackProfileDialog::get_pos_y_et(double x, int width, int height)
 {
 	int ix = (int) x;
-	/* Ensure ix is inbounds. */
+	/* Ensure ix is inside of graph. */
 	if (ix == width) {
 		ix--;
 	}
@@ -680,12 +711,12 @@ double TrackProfileDialog::get_pos_y_et(double x, int width, int height)
 
 
 /**
- * Calculate y position for mark on speed/dist graph.
+ * Calculate y position for mark on speed-distance graph.
  */
 double TrackProfileDialog::get_pos_y_sd(double x, int width, int height)
 {
 	int ix = (int) x;
-	/* Ensure ix is inbounds. */
+	/* Ensure ix is inside of graph. */
 	if (ix == width) {
 		ix--;
 	}
@@ -732,16 +763,14 @@ void TrackProfileDialog::track_ed_move_cb(Viewport * viewport, QMouseEvent * eve
 		}
 	}
 
-	QPen black_pen(QColor("black"));
-	this->restore_image_and_draw_graph_marks(viewport,
-						 black_pen,
-						 selected_pos_x,
-						 selected_pos_y,
-						 current_pos_x,
-						 current_pos_y,
-						 &this->saved_img_ed,
-						 graph_width,
-						 graph_height);
+	this->draw_marks(viewport,
+			 selected_pos_x,
+			 selected_pos_y,
+			 current_pos_x,
+			 current_pos_y,
+			 &this->saved_img_ed,
+			 graph_width,
+			 graph_height);
 
 }
 
@@ -785,17 +814,14 @@ void TrackProfileDialog::track_gd_move_cb(Viewport * viewport, QMouseEvent * eve
 		}
 	}
 
-	QPen black_pen(QColor("black"));
-	this->restore_image_and_draw_graph_marks(viewport,
-						 black_pen,
-						 selected_pos_x,
-						 selected_pos_y,
-						 current_pos_x,
-						 current_pos_y,
-						 &this->saved_img_gd,
-						 graph_width,
-						 graph_height);
-
+	this->draw_marks(viewport,
+			 selected_pos_x,
+			 selected_pos_y,
+			 current_pos_x,
+			 current_pos_y,
+			 &this->saved_img_gd,
+			 graph_width,
+			 graph_height);
 }
 
 
@@ -916,17 +942,14 @@ void TrackProfileDialog::track_st_move_cb(Viewport * viewport, QMouseEvent * eve
 		}
 	}
 
-	QPen black_pen(QColor("black"));
-	this->restore_image_and_draw_graph_marks(viewport,
-						 black_pen,
-						 selected_pos_x,
-						 selected_pos_y,
-						 current_pos_x,
-						 current_pos_y,
-						 &this->saved_img_st,
-						 graph_width,
-						 graph_height);
-
+	this->draw_marks(viewport,
+			 selected_pos_x,
+			 selected_pos_y,
+			 current_pos_x,
+			 current_pos_y,
+			 &this->saved_img_st,
+			 graph_width,
+			 graph_height);
 }
 
 
@@ -975,16 +998,14 @@ void TrackProfileDialog::track_dt_move_cb(Viewport * viewport, QMouseEvent * eve
 		}
 	}
 
-	QPen black_pen(QColor("black"));
-	this->restore_image_and_draw_graph_marks(viewport,
-						 black_pen,
-						 selected_pos_x,
-						 selected_pos_y,
-						 current_pos_x,
-						 current_pos_y,
-						 &this->saved_img_dt,
-						 graph_width,
-						 graph_height);
+	this->draw_marks(viewport,
+			 selected_pos_x,
+			 selected_pos_y,
+			 current_pos_x,
+			 current_pos_y,
+			 &this->saved_img_dt,
+			 graph_width,
+			 graph_height);
 }
 
 
@@ -1033,16 +1054,14 @@ void TrackProfileDialog::track_et_move_cb(Viewport * viewport, QMouseEvent * eve
 		}
 	}
 
-	QPen black_pen(QColor("black"));
-	this->restore_image_and_draw_graph_marks(viewport,
-						 black_pen,
-						 selected_pos_x,
-						 selected_pos_y,
-						 current_pos_x,
-						 current_pos_y,
-						 &this->saved_img_et,
-						 graph_width,
-						 graph_height);
+	this->draw_marks(viewport,
+			 selected_pos_x,
+			 selected_pos_y,
+			 current_pos_x,
+			 current_pos_y,
+			 &this->saved_img_et,
+			 graph_width,
+			 graph_height);
 }
 
 
@@ -1085,16 +1104,14 @@ void TrackProfileDialog::track_sd_move_cb(Viewport * viewport, QMouseEvent * eve
 		}
 	}
 
-	QPen black_pen(QColor("black"));
-	this->restore_image_and_draw_graph_marks(viewport,
-						 black_pen,
-						 selected_pos_x,
-						 selected_pos_y,
-						 current_pos_x,
-						 current_pos_y,
-						 &this->saved_img_sd,
-						 graph_width,
-						 graph_height);
+	this->draw_marks(viewport,
+			 selected_pos_x,
+			 selected_pos_y,
+			 current_pos_x,
+			 current_pos_y,
+			 &this->saved_img_sd,
+			 graph_width,
+			 graph_height);
 }
 
 
@@ -1215,7 +1232,7 @@ static void draw_dem_alt_speed_dist(Track * trk,
 	}
 
 	double dist = 0;
-	int achunk = chunksa[cia]*LINES;
+	int achunk = chunksa[cia] * LINES;
 
 	for (auto iter = std::next(trk->trackpointsB->begin()); iter != trk->trackpointsB->end(); iter++) {
 
@@ -1277,8 +1294,8 @@ void TrackProfileDialog::draw_horizontal_grid(Viewport * viewport, QPen & fg_pen
 	pango_layout_get_pixel_size(pl, &w, &h);
 
 	gdk_draw_layout(GDK_DRAWABLE(viewport), fg_pen,
-			MARGIN_X-w-3,
-			CLAMP((int)i * graph_height/LINES - h/2 + MARGIN_Y, 0, graph_height-h+MARGIN_Y),
+			GRAPH_MARGIN_LEFT - w - 3,
+			CLAMP((int)i * graph_height/LINES - h/2 + GRAPH_MARGIN_TOP, 0, graph_height - h + GRAPH_MARGIN_TOP),
 			pl);
 	g_object_unref(G_OBJECT (pl));
 #endif
@@ -1343,18 +1360,15 @@ void TrackProfileDialog::draw_vertical_grid_time(Viewport * viewport, unsigned i
 		pango_layout_get_pixel_size(pl, &ww, &hh);
 
 		gdk_draw_layout(GDK_DRAWABLE(viewport), fg_pen,
-				MARGIN_X+xx-ww/2, MARGIN_Y/2-hh/2, pl);
+				GRAPH_MARGIN_LEFT + xx - ww / 2, GRAPH_MARGIN_TOP / 2 - hh / 2, pl);
 		g_object_unref(G_OBJECT (pl));
 	}
 
 #endif
 
-	unsigned int graph_left = GRAPH_MARGIN_LEFT;
-	unsigned int graph_top = GRAPH_MARGIN_TOP;
 	unsigned int graph_height = viewport->height() - GRAPH_MARGIN_TOP - GRAPH_MARGIN_BOTTOM;
 
-	QPen dark_pen(QColor("gray"));
-	viewport->draw_line(dark_pen,
+	viewport->draw_line(viewport->grid_pen,
 			    xx, 0,
 			    xx, 0 + graph_height);
 
@@ -1391,17 +1405,14 @@ void TrackProfileDialog::draw_vertical_grid_distance(Viewport * viewport, unsign
 		pango_layout_get_pixel_size(pl, &ww, &hh);
 
 		gdk_draw_layout(GDK_DRAWABLE(viewport), fg_pen,
-				MARGIN_X+xx-ww/2, MARGIN_Y/2-hh/2, pl);
+				GRAPH_MARGIN_LEFT + xx - ww / 2, GRAPH_MARGIN_TOP / 2 - hh / 2, pl);
 		g_object_unref(G_OBJECT (pl));
 	}
 
 #endif
-	unsigned int graph_left = GRAPH_MARGIN_LEFT;
-	unsigned int graph_top = GRAPH_MARGIN_TOP;
 	unsigned int graph_height = viewport->height() - GRAPH_MARGIN_TOP - GRAPH_MARGIN_BOTTOM;
 
-	QPen dark_pen(QColor("gray"));
-	viewport->draw_line(dark_pen,
+	viewport->draw_line(viewport->grid_pen,
 			    xx, 0,
 			    xx, 0 + graph_height);
 }
@@ -1417,7 +1428,7 @@ void TrackProfileDialog::draw_distance_divisions(Viewport * viewport, DistanceUn
 
 	unsigned int index = get_distance_chunk_index(length);
 	unsigned int graph_width = viewport->width() - GRAPH_MARGIN_LEFT - GRAPH_MARGIN_RIGHT;
-	double dist_per_pixel = length / (graph_width);
+	double dist_per_pixel = length / graph_width;
 
 	for (unsigned int i = 1; chunksd[index] * i <= length; i++) {
 		this->draw_vertical_grid_distance(viewport, index, chunksd[index] * i, (unsigned int) (chunksd[index] * i / dist_per_pixel), distance_unit);
@@ -1428,7 +1439,7 @@ void TrackProfileDialog::draw_distance_divisions(Viewport * viewport, DistanceUn
 
 
 /**
- * Draw just the height profile image.
+ * Draw the elevation-distance image.
  */
 void TrackProfileDialog::draw_ed(Viewport * viewport, Track * trk)
 {
@@ -1440,8 +1451,6 @@ void TrackProfileDialog::draw_ed(Viewport * viewport, Track * trk)
 	unsigned int graph_width = viewport->width() - GRAPH_MARGIN_LEFT - GRAPH_MARGIN_RIGHT;
 	unsigned int graph_bottom = viewport->height() - GRAPH_MARGIN_BOTTOM;
 	unsigned int graph_height = viewport->height() - GRAPH_MARGIN_TOP - GRAPH_MARGIN_BOTTOM;
-	unsigned int graph_left = GRAPH_MARGIN_LEFT;
-	unsigned int graph_top = GRAPH_MARGIN_TOP;
 
 	this->altitudes = trk->make_elevation_map(graph_width);
 	if (this->altitudes == NULL) {
@@ -1478,11 +1487,11 @@ void TrackProfileDialog::draw_ed(Viewport * viewport, Track * trk)
 
 		switch (height_units) {
 		case HeightUnit::METRES:
-			sprintf(s, "%8dm", (int)(mina + (LINES-i)*chunksa[this->cia]));
+			sprintf(s, "%8dm", (int)(mina + (LINES - i) * chunksa[this->cia]));
 			break;
 		case HeightUnit::FEET:
 			/* NB values already converted into feet. */
-			sprintf(s, "%8dft", (int)(mina + (LINES-i)*chunksa[this->cia]));
+			sprintf(s, "%8dft", (int)(mina + (LINES - i) * chunksa[this->cia]));
 			break;
 		default:
 			sprintf(s, "--");
@@ -1494,15 +1503,14 @@ void TrackProfileDialog::draw_ed(Viewport * viewport, Track * trk)
 
 	this->draw_distance_divisions(viewport, a_vik_get_units_distance());
 
-	/* Draw elevations. */
-	QPen dark_pen3(QColor("gray"));
+	/* Draw values of elevation = f(distance) function. */
 	for (unsigned int i = 0; i < graph_width; i++) {
 		if (this->altitudes[i] == VIK_DEFAULT_ALTITUDE) {
 			viewport->draw_line(no_alt_info_pen,
 					    i, 0,
 					    i, 0 + graph_height);
 		} else {
-			viewport->draw_line(dark_pen3,
+			viewport->draw_line(this->main_pen,
 					    i, graph_height,
 					    i, graph_height - graph_height * (this->altitudes[i] - mina) / (chunksa[this->cia] * LINES));
 		}
@@ -1529,7 +1537,7 @@ void TrackProfileDialog::draw_ed(Viewport * viewport, Track * trk)
 					graph_width,
 					graph_height,
 					graph_bottom,
-					MARGIN_X,
+					GRAPH_MARGIN_LEFT,
 					this->w_show_dem->checkState(),
 					this->w_show_alt_gps_speed->checkState());
 	}
@@ -1571,7 +1579,7 @@ static void draw_speed_dist(Track * trk,
 	for (auto iter = std::next(trk->trackpointsB->begin()); iter != trk->trackpointsB->end(); iter++) {
 		dist += vik_coord_diff(&(*iter)->coord,
 				       &(*std::prev(iter))->coord);
-		int x = (graph_width * dist) / total_length + MARGIN_X;
+		int x = (graph_width * dist) / total_length + GRAPH_MARGIN_LEFT;
 		if (do_speed) {
 			/* This is just a speed indicator - no actual values can be inferred by user. */
 			if (!isnan((*iter)->speed)) {
@@ -1586,7 +1594,7 @@ static void draw_speed_dist(Track * trk,
 
 
 /**
- * Draw just the gradient image.
+ * Draw the gradient-distance image.
  */
 void TrackProfileDialog::draw_gd(Viewport * viewport, Track * trk)
 {
@@ -1598,8 +1606,6 @@ void TrackProfileDialog::draw_gd(Viewport * viewport, Track * trk)
 	unsigned int graph_width = viewport->width() - GRAPH_MARGIN_LEFT - GRAPH_MARGIN_RIGHT;
 	unsigned int graph_bottom = viewport->height() - GRAPH_MARGIN_BOTTOM;
 	unsigned int graph_height = viewport->height() - GRAPH_MARGIN_TOP - GRAPH_MARGIN_BOTTOM;
-	unsigned int graph_left = GRAPH_MARGIN_LEFT;
-	unsigned int graph_top = GRAPH_MARGIN_TOP;
 
 	this->gradients = trk->make_gradient_map(graph_width);
 
@@ -1624,16 +1630,15 @@ void TrackProfileDialog::draw_gd(Viewport * viewport, Track * trk)
 	for (int i = 0; i <= LINES; i++) {
 		char s[32];
 
-		sprintf(s, "%8d%%", (int)(mina + (LINES-i)*chunksg[this->cig]));
+		sprintf(s, "%8d%%", (int)(mina + (LINES - i)*chunksg[this->cig]));
 		this->draw_horizontal_grid(viewport, fg_pen, dark_pen, s, i);
 	}
 
 	this->draw_distance_divisions(viewport, a_vik_get_units_distance());
 
-	/* Draw gradients. */
-	QPen dark_pen3(QColor("gray"));
+	/* Draw values of gradient = f(distance) function. */
 	for (unsigned int i = 0; i < graph_width; i++) {
-		viewport->draw_line(dark_pen3,
+		viewport->draw_line(this->main_pen,
 				    i, graph_height,
 				    i, graph_height - graph_height * (this->gradients[i] - mina) / (chunksg[this->cig] * LINES));
 	}
@@ -1676,7 +1681,7 @@ void TrackProfileDialog::draw_time_lines(Viewport * viewport)
 	double time_per_pixel = (double)(this->duration) / graph_width;
 
 	/* If stupidly long track in time - don't bother trying to draw grid lines. */
-	if (this->duration > chunkst[G_N_ELEMENTS(chunkst)-1]*LINES*LINES) {
+	if (this->duration > chunkst[G_N_ELEMENTS(chunkst)-1] * LINES * LINES) {
 		return;
 	}
 
@@ -1702,7 +1707,6 @@ void TrackProfileDialog::draw_st(Viewport * viewport, Track * trk)
 	unsigned int graph_bottom = viewport->height() - GRAPH_MARGIN_BOTTOM;
 	unsigned int graph_height = viewport->height() - GRAPH_MARGIN_TOP - GRAPH_MARGIN_BOTTOM;
 	unsigned int graph_left = GRAPH_MARGIN_LEFT;
-	unsigned int graph_top = GRAPH_MARGIN_TOP;
 
 	this->speeds = trk->make_speed_map(graph_width);
 	if (this->speeds == NULL) {
@@ -1720,8 +1724,6 @@ void TrackProfileDialog::draw_st(Viewport * viewport, Track * trk)
 	for (unsigned int i = 0; i < graph_width; i++) {
 		this->speeds[i] = convert_speed_mps_to(speed_units, this->speeds[i]);
 	}
-
-	QPixmap * pix = new QPixmap(this->profile_width + MARGIN_X, this->profile_height + MARGIN_Y);
 
 	minmax_array(this->speeds, &this->min_speed, &this->max_speed, false, graph_width);
 	if (this->min_speed < 0.0) {
@@ -1746,16 +1748,16 @@ void TrackProfileDialog::draw_st(Viewport * viewport, Track * trk)
 		/* NB: No need to convert here anymore as numbers are in the appropriate units. */
 		switch (speed_units) {
 		case SpeedUnit::KILOMETRES_PER_HOUR:
-			sprintf(s, "%8dkm/h", (int)(mins + (LINES-i)*chunkss[this->cis]));
+			sprintf(s, "%8dkm/h", (int)(mins + (LINES - i) * chunkss[this->cis]));
 			break;
 		case SpeedUnit::MILES_PER_HOUR:
-			sprintf(s, "%8dmph", (int)(mins + (LINES-i)*chunkss[this->cis]));
+			sprintf(s, "%8dmph", (int)(mins + (LINES - i) * chunkss[this->cis]));
 			break;
 		case SpeedUnit::METRES_PER_SECOND:
-			sprintf(s, "%8dm/s", (int)(mins + (LINES-i)*chunkss[this->cis]));
+			sprintf(s, "%8dm/s", (int)(mins + (LINES - i) * chunkss[this->cis]));
 			break;
 		case SpeedUnit::KNOTS:
-			sprintf(s, "%8dknots", (int)(mins + (LINES-i)*chunkss[this->cis]));
+			sprintf(s, "%8dknots", (int)(mins + (LINES - i) * chunkss[this->cis]));
 			break;
 		default:
 			sprintf(s, "--");
@@ -1767,10 +1769,9 @@ void TrackProfileDialog::draw_st(Viewport * viewport, Track * trk)
 
 	this->draw_time_lines(viewport);
 
-	/* Draw speeds. */
-	QPen dark_pen3(QColor("gray"));
+	/* Draw values of speed = f(time) function. */
 	for (unsigned int i = 0; i < graph_width; i++) {
-		viewport->draw_line(dark_pen3,
+		viewport->draw_line(this->main_pen,
 				    i, graph_height,
 				    i, graph_height - graph_height * (this->speeds[i] - mins) / (chunkss[this->cis] * LINES));
 	}
@@ -1809,7 +1810,7 @@ void TrackProfileDialog::draw_st(Viewport * viewport, Track * trk)
 
 
 /**
- * Draw just the distance/time image.
+ * Draw the distance-time image.
  */
 void TrackProfileDialog::draw_dt(Viewport * viewport, Track * trk)
 {
@@ -1822,7 +1823,6 @@ void TrackProfileDialog::draw_dt(Viewport * viewport, Track * trk)
 	unsigned int graph_bottom = viewport->height() - GRAPH_MARGIN_BOTTOM;
 	unsigned int graph_height = viewport->height() - GRAPH_MARGIN_TOP - GRAPH_MARGIN_BOTTOM;
 	unsigned int graph_left = GRAPH_MARGIN_LEFT;
-	unsigned int graph_top = GRAPH_MARGIN_TOP;
 
 	this->distances = trk->make_distance_map(graph_width);
 	if (this->distances == NULL) {
@@ -1861,13 +1861,13 @@ void TrackProfileDialog::draw_dt(Viewport * viewport, Track * trk)
 
 		switch (distance_unit) {
 		case DistanceUnit::MILES:
-			sprintf(s, _("%.1f miles"), ((LINES-i)*chunksd[this->cid]));
+			sprintf(s, _("%.1f miles"), ((LINES - i) * chunksd[this->cid]));
 			break;
 		case DistanceUnit::NAUTICAL_MILES:
-			sprintf(s, _("%.1f NM"), ((LINES-i)*chunksd[this->cid]));
+			sprintf(s, _("%.1f NM"), ((LINES - i) * chunksd[this->cid]));
 			break;
 		default:
-			sprintf(s, _("%.1f km"), ((LINES-i)*chunksd[this->cid]));
+			sprintf(s, _("%.1f km"), ((LINES - i) * chunksd[this->cid]));
 			break;
 		}
 
@@ -1876,10 +1876,9 @@ void TrackProfileDialog::draw_dt(Viewport * viewport, Track * trk)
 
 	this->draw_time_lines(viewport);
 
-	/* Draw distance. */
-	QPen dark_pen3(QColor("gray"));
+	/* Draw values of distance = f(time) function. */
 	for (unsigned int i = 0; i < graph_width; i++) {
-		viewport->draw_line(dark_pen3,
+		viewport->draw_line(this->main_pen,
 				    i, graph_height,
 				    i, graph_height - graph_height * (this->distances[i]) / (chunksd[this->cid] * LINES));
 	}
@@ -1911,7 +1910,7 @@ void TrackProfileDialog::draw_dt(Viewport * viewport, Track * trk)
 
 
 /**
- * Draw just the elevation/time image.
+ * Draw the elevation-time image.
  */
 void TrackProfileDialog::draw_et(Viewport * viewport, Track * trk)
 {
@@ -1919,7 +1918,6 @@ void TrackProfileDialog::draw_et(Viewport * viewport, Track * trk)
 	unsigned int graph_bottom = viewport->height() - GRAPH_MARGIN_BOTTOM;
 	unsigned int graph_height = viewport->height() - GRAPH_MARGIN_TOP - GRAPH_MARGIN_BOTTOM;
 	unsigned int graph_left = GRAPH_MARGIN_LEFT;
-	unsigned int graph_top = GRAPH_MARGIN_TOP;
 
 	/* Free previous allocation. */
 	if (this->ats) {
@@ -1954,8 +1952,6 @@ void TrackProfileDialog::draw_et(Viewport * viewport, Track * trk)
 		return;
 	}
 
-	QPixmap * pix = new QPixmap(this->profile_width + MARGIN_X, this->profile_height + MARGIN_Y);
-
 	/* Reset before redrawing. */
 	viewport->clear();
 
@@ -1967,11 +1963,11 @@ void TrackProfileDialog::draw_et(Viewport * viewport, Track * trk)
 
 		switch (height_units) {
 		case HeightUnit::METRES:
-			sprintf(s, "%8dm", (int)(mina + (LINES-i)*chunksa[this->ciat]));
+			sprintf(s, "%8dm", (int)(mina + (LINES - i) * chunksa[this->ciat]));
 			break;
 		case HeightUnit::FEET:
 			/* NB values already converted into feet. */
-			sprintf(s, "%8dft", (int)(mina + (LINES-i)*chunksa[this->ciat]));
+			sprintf(s, "%8dft", (int)(mina + (LINES - i) * chunksa[this->ciat]));
 			break;
 		default:
 			sprintf(s, "--");
@@ -1983,10 +1979,9 @@ void TrackProfileDialog::draw_et(Viewport * viewport, Track * trk)
 
 	this->draw_time_lines(viewport);
 
-	/* Draw elevations. */
-	QPen dark_pen3(QColor("gray"));
+	/* Draw values of elevation = f(time) function. */
 	for (unsigned int i = 0; i < graph_width; i++) {
-		viewport->draw_line(dark_pen3,
+		viewport->draw_line(this->main_pen,
 				    i, graph_height,
 				    i, graph_height - graph_height * (this->ats[i] - mina) / (chunksa[this->ciat] * LINES));
 	}
@@ -1995,7 +1990,7 @@ void TrackProfileDialog::draw_et(Viewport * viewport, Track * trk)
 	if (this->w_show_elev_dem->checkState())  {
 		QPen dem_alt_pen(QColor("green"));
 
-		int achunk = chunksa[this->ciat]*LINES;
+		int achunk = chunksa[this->ciat] * LINES;
 
 		for (unsigned i = 0; i < graph_width; i++) {
 			/* This could be slow doing this each time... */
@@ -2046,12 +2041,10 @@ void TrackProfileDialog::draw_et(Viewport * viewport, Track * trk)
 
 
 /**
- * Draw just the speed/distance image.
+ * Draw the speed-distance image.
  */
 void TrackProfileDialog::draw_sd(Viewport * viewport, Track * trk)
 {
-	double mins;
-
 	/* Free previous allocation. */
 	if (this->speeds_dist) {
 		free(this->speeds_dist);
@@ -2061,7 +2054,6 @@ void TrackProfileDialog::draw_sd(Viewport * viewport, Track * trk)
 	unsigned int graph_bottom = viewport->height() - GRAPH_MARGIN_BOTTOM;
 	unsigned int graph_height = viewport->height() - GRAPH_MARGIN_TOP - GRAPH_MARGIN_BOTTOM;
 	unsigned int graph_left = GRAPH_MARGIN_LEFT;
-	unsigned int graph_top = GRAPH_MARGIN_TOP;
 
 	this->speeds_dist = trk->make_speed_dist_map(graph_width);
 	if (this->speeds_dist == NULL) {
@@ -2084,7 +2076,7 @@ void TrackProfileDialog::draw_sd(Viewport * viewport, Track * trk)
 	get_new_min_and_chunk_index(this->min_speed, this->max_speed_dist, chunkss, G_N_ELEMENTS(chunkss), &this->draw_min_speed, &this->cisd);
 
 	/* Assign locally. */
-	mins = this->draw_min_speed;
+	double mins = this->draw_min_speed;
 
 	/* Reset before redrawing. */
 	viewport->clear();
@@ -2098,16 +2090,16 @@ void TrackProfileDialog::draw_sd(Viewport * viewport, Track * trk)
 		/* NB: No need to convert here anymore as numbers are in the appropriate units. */
 		switch (speed_units) {
 		case SpeedUnit::KILOMETRES_PER_HOUR:
-			sprintf(s, "%8dkm/h", (int)(mins + (LINES-i)*chunkss[this->cisd]));
+			sprintf(s, "%8dkm/h", (int)(mins + (LINES - i)*chunkss[this->cisd]));
 			break;
 		case SpeedUnit::MILES_PER_HOUR:
-			sprintf(s, "%8dmph", (int)(mins + (LINES-i)*chunkss[this->cisd]));
+			sprintf(s, "%8dmph", (int)(mins + (LINES - i)*chunkss[this->cisd]));
 			break;
 		case SpeedUnit::METRES_PER_SECOND:
-			sprintf(s, "%8dm/s", (int)(mins + (LINES-i)*chunkss[this->cisd]));
+			sprintf(s, "%8dm/s", (int)(mins + (LINES - i)*chunkss[this->cisd]));
 			break;
 		case SpeedUnit::KNOTS:
-			sprintf(s, "%8dknots", (int)(mins + (LINES-i)*chunkss[this->cisd]));
+			sprintf(s, "%8dknots", (int)(mins + (LINES - i)*chunkss[this->cisd]));
 			break;
 		default:
 			sprintf(s, "--");
@@ -2119,10 +2111,9 @@ void TrackProfileDialog::draw_sd(Viewport * viewport, Track * trk)
 
 	this->draw_distance_divisions(viewport, a_vik_get_units_distance());
 
-	/* Draw speeds. */
-	QPen dark_pen3(QColor("gray"));
+	/* Draw values of speed = f(distance) function. */
 	for (unsigned int i = 0; i < graph_width; i++) {
-		viewport->draw_line(dark_pen3,
+		viewport->draw_line(this->main_pen,
 				    i, graph_height,
 				    i, graph_height - graph_height * (this->speeds_dist[i] - mins) / (chunkss[this->cisd] * LINES));
 	}
@@ -2158,7 +2149,6 @@ void TrackProfileDialog::draw_sd(Viewport * viewport, Track * trk)
 	this->saved_img_sd.img = *viewport->get_pixmap();
 	this->saved_img_sd.valid = true;
 }
-#undef LINES
 
 
 
@@ -2245,16 +2235,14 @@ void TrackProfileDialog::draw_single_graph(Viewport * viewport, bool resized, vo
 			selected_pos_y = (this->*get_pos_y)(selected_pos_x, graph_width, graph_height);
 		}
 
-		QPen black_pen(QColor("black"));
-		this->restore_image_and_draw_graph_marks(viewport,
-							 black_pen,
-							 selected_pos_x,
-							 selected_pos_y,
-							 current_pos_x,
-							 current_pos_y,
-							 saved_img,
-							 graph_width,
-							 graph_height);
+		this->draw_marks(viewport,
+				 selected_pos_x,
+				 selected_pos_y,
+				 current_pos_x,
+				 current_pos_y,
+				 saved_img,
+				 graph_width,
+				 graph_height);
 	}
 }
 
@@ -2266,7 +2254,7 @@ void TrackProfileDialog::draw_single_graph(Viewport * viewport, bool resized, vo
  */
 bool TrackProfileDialog::configure_event_cb(Viewport * viewport)
 {
-	qDebug() << "-------- SLOT: Track Profile: received \"reconfigured\" signal from Viewport";
+	qDebug() << "SLOT: Track Profile: received \"reconfigured\" signal from" << viewport->type_string;
 
 #ifdef K
 	if (widgets->configure_dialog) {
@@ -2301,7 +2289,6 @@ bool TrackProfileDialog::configure_event_cb(Viewport * viewport)
 	/* Draw stuff. */
 	draw_all_graphs(true);
 
-
 	return false;
 }
 
@@ -2309,7 +2296,7 @@ bool TrackProfileDialog::configure_event_cb(Viewport * viewport)
 
 
 /**
- * Create height profile widgets including the image and callbacks.
+ * Create elevation-distance viewport.
  */
 Viewport * TrackProfileDialog::create_ed_viewport(double * min_alt, double * max_alt)
 {
@@ -2341,7 +2328,7 @@ Viewport * TrackProfileDialog::create_ed_viewport(double * min_alt, double * max
 
 
 /**
- * Create height profile widgets including the image and callbacks.
+ * Create gradient-distance viewport.
  */
 Viewport * TrackProfileDialog::create_gd_viewport(void)
 {
@@ -2368,7 +2355,7 @@ Viewport * TrackProfileDialog::create_gd_viewport(void)
 
 
 /**
- * Create speed/time widgets including the image and callbacks.
+ * Create speed-time viewport.
  */
 Viewport * TrackProfileDialog::create_st_viewport(void)
 {
@@ -2415,7 +2402,7 @@ Viewport * TrackProfileDialog::create_st_viewport(void)
 
 
 /**
- * Create distance / time widgets including the image and callbacks.
+ * Create distance-time viewport.
  */
 Viewport * TrackProfileDialog::create_dt_viewport(void)
 {
@@ -2442,7 +2429,7 @@ Viewport * TrackProfileDialog::create_dt_viewport(void)
 
 
 /**
- * Create elevation / time widgets including the image and callbacks.
+ * Create elevation-time viewport.
  */
 Viewport * TrackProfileDialog::create_et_viewport(void)
 {
@@ -2468,7 +2455,7 @@ Viewport * TrackProfileDialog::create_et_viewport(void)
 
 
 /**
- * Create speed/distance widgets including the image and callbacks.
+ * Create speed-distance viewport.
  */
 Viewport * TrackProfileDialog::create_sd_viewport(void)
 {
@@ -2489,7 +2476,7 @@ Viewport * TrackProfileDialog::create_sd_viewport(void)
 
 	return viewport;
 }
-#undef MARGIN_X
+
 
 
 
@@ -2742,8 +2729,7 @@ void SlavGPS::vik_trw_layer_propwin_run(Window * parent,
 					LayerTRW * layer,
 					Track * trk,
 					LayersPanel * panel,
-					Viewport * viewport,
-					bool start_on_stats)
+					Viewport * viewport)
 {
 	TrackProfileDialog dialog(QString("Track Profile"), layer, trk, panel, viewport, parent);
 	dialog.exec();
@@ -2754,7 +2740,7 @@ void SlavGPS::vik_trw_layer_propwin_run(Window * parent,
 
 TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer, Track * a_trk, LayersPanel * a_panel, Viewport * a_viewport, Window * a_parent) : QDialog(a_parent)
 {
-	this->setWindowTitle(QString(_("%1 - Track Properties")).arg(a_trk->name));
+	this->setWindowTitle(QString(_("%1 - Track Profile")).arg(a_trk->name));
 
 	this->trw = a_layer;
 	this->trk = a_trk;
@@ -2914,6 +2900,10 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer
 	this->setLayout(vbox);
 	vbox->addWidget(this->tabs);
 
+
+	this->main_pen.setColor("lightsteelblue");
+	this->main_pen.setWidth(1);
+
 #ifdef K
 
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), this->tabs, false, false, 0);
@@ -2936,10 +2926,6 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer
 	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
 	gtk_widget_show_all(dialog);
 
-	/* Gtk note: due to historical reasons, this must be done after widgets are shown. */
-	if (start_on_stats) {
-		gtk_notebook_set_current_page(GTK_NOTEBOOK(this->tabs), 1);
-	}
 #endif
 }
 
@@ -2965,5 +2951,4 @@ void SlavGPS::vik_trw_layer_propwin_update(Track * trk)
 		free(title);
 #endif
 	}
-
 }
