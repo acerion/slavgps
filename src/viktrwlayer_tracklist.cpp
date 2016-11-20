@@ -223,12 +223,10 @@ static void trw_layer_track_stats_cb(tracklist_data_t * values)
 		GtkWidget * gw = gtk_widget_get_toplevel(values->gtk_tree_view);
 		track_close_cb(gw, 0, values->tracks_and_layers);
 
-		vik_trw_layer_propwin_run(trw->get_window(),
-					  trw,
-					  trk,
-					  NULL, // panel
-					  viewport,
-					  true);
+		track_properties_dialog(trw->get_window(),
+					trw,
+					trk,
+					true);
 	}
 }
 
