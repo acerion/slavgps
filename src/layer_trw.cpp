@@ -3966,8 +3966,7 @@ void LayerTRW::profile_item_cb(void)
 						  this,
 						  trk,
 						  (LayersPanel *) (this->menu_data->layers_panel ? this->menu_data->layers_panel : NULL),
-						  this->menu_data->viewport,
-						  false);
+						  this->menu_data->viewport);
 		}
 	}
 }
