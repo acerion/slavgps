@@ -328,27 +328,26 @@ static Trackpoint * set_center_at_graph_position(int event_x,
 /**
  * Returns whether the marker was drawn or not and whether the blob was drawn or not.
  */
-void TrackProfileDialog::save_image_and_draw_graph_marks(Viewport * viewport,
-							 QPen & pen,
-							 double selected_pos_x,
-							 double selected_pos_y,
-							 double current_pos_x,
-							 double current_pos_y,
-							 PropSaved *saved_img,
-							 unsigned int graph_width,
-							 unsigned int graph_height)
+void TrackProfileDialog::restore_image_and_draw_graph_marks(Viewport * viewport,
+							    QPen & pen,
+							    double selected_pos_x,
+							    double selected_pos_y,
+							    double current_pos_x,
+							    double current_pos_y,
+							    PropSaved * saved_img,
+							    unsigned int graph_width,
+							    unsigned int graph_height)
 {
-#ifdef K
-	GdkPixmap *pix = NULL;
-	/* The pixmap = margin + graph area. */
-	gtk_image_get_pixmap(GTK_IMAGE(image), &pix, NULL);
 
-	/* Restore previously saved image. */
-	if (saved_img->saved) {
-		gdk_draw_image(GDK_DRAWABLE(pix), pen, saved_img->img, 0, 0, 0, 0, MARGIN_X+ graph_width, MARGIN_Y + graph_height);
-		saved_img->saved = false;
+	/* Restore previously saved image that has no marks on it, just the graph, border and margins. */
+	if (saved_img->valid) {
+		qDebug() << "II: Track Profile: restoring saved image";
+		viewport->set_pixmap(saved_img->img);
+	} else {
+		qDebug() << "WW: Track Profile: NOT restoring saved image";
 	}
 
+#ifdef K
 	/* ATM always save whole image - as anywhere could have changed. */
 	if (saved_img->img) {
 		gdk_drawable_copy_to_image(GDK_DRAWABLE(pix), saved_img->img, 0, 0, 0, 0, MARGIN_X+ graph_width, MARGIN_Y + graph_height);
@@ -357,6 +356,8 @@ void TrackProfileDialog::save_image_and_draw_graph_marks(Viewport * viewport,
 	}
 	saved_img->saved = true;
 #endif
+
+	/* Now draw marks on this fresh image. */
 
 	if (current_pos_x > 0 && current_pos_y > 0) {
 		viewport->draw_line(pen,
@@ -520,15 +521,15 @@ void TrackProfileDialog::track_graph_release(Viewport * viewport, QMouseEvent * 
 				double selected_pos_x = pc * graph_width;
 				double selected_pos_y = -1.0; /* TODO: get real value. */
 				QPen black_pen(QColor("black"));
-				this->save_image_and_draw_graph_marks(graph_viewport,
-								      black_pen,
-								      selected_pos_x,
-								      selected_pos_y,
-								      -1.0, /* Don't draw current position on clicks. */
-								      -1.0,
-								      graph_saved_img,
-								      graph_width,
-								      graph_height);
+				this->restore_image_and_draw_graph_marks(graph_viewport,
+									 black_pen,
+									 selected_pos_x,
+									 selected_pos_y,
+									 -1.0, /* Don't draw current position on clicks. */
+									 -1.0,
+									 graph_saved_img,
+									 graph_width,
+									 graph_height);
 			}
 		}
 	}
@@ -731,15 +732,15 @@ void TrackProfileDialog::track_profile_move_cb(Viewport * viewport, QMouseEvent 
 	}
 
 	QPen black_pen(QColor("black"));
-	this->save_image_and_draw_graph_marks(viewport,
-					      black_pen,
-					      selected_pos_x,
-					      selected_pos_y,
-					      current_pos_x,
-					      current_pos_y,
-					      &this->elev_graph_saved_img,
-					      graph_width,
-					      graph_height);
+	this->restore_image_and_draw_graph_marks(viewport,
+						 black_pen,
+						 selected_pos_x,
+						 selected_pos_y,
+						 current_pos_x,
+						 current_pos_y,
+						 &this->elev_graph_saved_img,
+						 graph_width,
+						 graph_height);
 
 }
 
@@ -784,15 +785,15 @@ void TrackProfileDialog::track_gradient_move_cb(Viewport * viewport, QMouseEvent
 	}
 
 	QPen black_pen(QColor("black"));
-	this->save_image_and_draw_graph_marks(viewport,
-					      black_pen,
-					      selected_pos_x,
-					      selected_pos_y,
-					      current_pos_x,
-					      current_pos_y,
-					      &this->gradient_graph_saved_img,
-					      graph_width,
-					      graph_height);
+	this->restore_image_and_draw_graph_marks(viewport,
+						 black_pen,
+						 selected_pos_x,
+						 selected_pos_y,
+						 current_pos_x,
+						 current_pos_y,
+						 &this->gradient_graph_saved_img,
+						 graph_width,
+						 graph_height);
 
 }
 
@@ -915,15 +916,15 @@ void TrackProfileDialog::track_vt_move_cb(Viewport * viewport, QMouseEvent * eve
 	}
 
 	QPen black_pen(QColor("black"));
-	this->save_image_and_draw_graph_marks(viewport,
-					      black_pen,
-					      selected_pos_x,
-					      selected_pos_y,
-					      current_pos_x,
-					      current_pos_y,
-					      &this->speed_graph_saved_img,
-					      graph_width,
-					      graph_height);
+	this->restore_image_and_draw_graph_marks(viewport,
+						 black_pen,
+						 selected_pos_x,
+						 selected_pos_y,
+						 current_pos_x,
+						 current_pos_y,
+						 &this->speed_graph_saved_img,
+						 graph_width,
+						 graph_height);
 
 }
 
@@ -974,15 +975,15 @@ void TrackProfileDialog::track_dt_move_cb(Viewport * viewport, QMouseEvent * eve
 	}
 
 	QPen black_pen(QColor("black"));
-	this->save_image_and_draw_graph_marks(viewport,
-					      black_pen,
-					      selected_pos_x,
-					      selected_pos_y,
-					      current_pos_x,
-					      current_pos_y,
-					      &this->dist_graph_saved_img,
-					      graph_width,
-					      graph_height);
+	this->restore_image_and_draw_graph_marks(viewport,
+						 black_pen,
+						 selected_pos_x,
+						 selected_pos_y,
+						 current_pos_x,
+						 current_pos_y,
+						 &this->dist_graph_saved_img,
+						 graph_width,
+						 graph_height);
 }
 
 
@@ -1032,15 +1033,15 @@ void TrackProfileDialog::track_et_move_cb(Viewport * viewport, QMouseEvent * eve
 	}
 
 	QPen black_pen(QColor("black"));
-	this->save_image_and_draw_graph_marks(viewport,
-					      black_pen,
-					      selected_pos_x,
-					      selected_pos_y,
-					      current_pos_x,
-					      current_pos_y,
-					      &this->elev_time_graph_saved_img,
-					      graph_width,
-					      graph_height);
+	this->restore_image_and_draw_graph_marks(viewport,
+						 black_pen,
+						 selected_pos_x,
+						 selected_pos_y,
+						 current_pos_x,
+						 current_pos_y,
+						 &this->elev_time_graph_saved_img,
+						 graph_width,
+						 graph_height);
 }
 
 
@@ -1084,15 +1085,15 @@ void TrackProfileDialog::track_sd_move_cb(Viewport * viewport, QMouseEvent * eve
 	}
 
 	QPen black_pen(QColor("black"));
-	this->save_image_and_draw_graph_marks(viewport,
-					      black_pen,
-					      selected_pos_x,
-					      selected_pos_y,
-					      current_pos_x,
-					      current_pos_y,
-					      &this->speed_dist_graph_saved_img,
-					      graph_width,
-					      graph_height);
+	this->restore_image_and_draw_graph_marks(viewport,
+						 black_pen,
+						 selected_pos_x,
+						 selected_pos_y,
+						 current_pos_x,
+						 current_pos_y,
+						 &this->speed_dist_graph_saved_img,
+						 graph_width,
+						 graph_height);
 }
 
 
@@ -1535,6 +1536,11 @@ void TrackProfileDialog::draw_elevations(Viewport * viewport, Track * trk)
 				 graph_left, graph_top,
 				 graph_width, graph_height);
 	viewport->update();
+
+	/* The pixmap = margin + graph area. */
+	qDebug() << "II: Track Profile: saving viewport" << viewport->type_string;
+	this->elev_graph_saved_img.img = *viewport->get_pixmap();
+	this->elev_graph_saved_img.valid = true;
 }
 
 
@@ -1657,6 +1663,11 @@ void TrackProfileDialog::draw_gradients(Viewport * viewport, Track * trk)
 				 graph_left, graph_top,
 				 graph_width, graph_height);
 	viewport->update();
+
+	/* The pixmap = margin + graph area. */
+	qDebug() << "II: Track Profile: saving viewport" << viewport->type_string;
+	this->gradient_graph_saved_img.img = *viewport->get_pixmap();
+	this->gradient_graph_saved_img.valid = true;
 }
 
 
@@ -1795,6 +1806,11 @@ void TrackProfileDialog::draw_vt(Viewport * viewport, Track * trk)
 				 graph_left, graph_top,
 				 graph_width, graph_height);
 	viewport->update();
+
+	/* The pixmap = margin + graph area. */
+	qDebug() << "II: Track Profile: saving viewport" << viewport->type_string;
+	this->speed_graph_saved_img.img = *viewport->get_pixmap();
+	this->speed_graph_saved_img.valid = true;
 }
 
 
@@ -1896,6 +1912,11 @@ void TrackProfileDialog::draw_dt(Viewport * viewport, Track * trk)
 				 graph_left, graph_top,
 				 graph_width, graph_height);
 	viewport->update();
+
+	/* The pixmap = margin + graph area. */
+	qDebug() << "II: Track Profile: saving viewport" << viewport->type_string;
+	this->dist_graph_saved_img.img = *viewport->get_pixmap();
+	this->dist_graph_saved_img.valid = true;
 }
 
 
@@ -2030,6 +2051,11 @@ void TrackProfileDialog::draw_et(Viewport * viewport, Track * trk)
 				 graph_left, graph_top,
 				 graph_width, graph_height);
 	viewport->update();
+
+	/* The pixmap = margin + graph area. */
+	qDebug() << "II: Track Profile: saving viewport" << viewport->type_string;
+	this->elev_graph_saved_img.img = *viewport->get_pixmap();
+	this->elev_graph_saved_img.valid = true;
 }
 
 
@@ -2146,6 +2172,11 @@ void TrackProfileDialog::draw_sd(Viewport * viewport, Track * trk)
 				 graph_left, graph_top,
 				 graph_width, graph_height);
 	viewport->update();
+
+	/* The pixmap = margin + graph area. */
+	qDebug() << "II: Track Profile: saving viewport" << viewport->type_string;
+	this->speed_dist_graph_saved_img.img = *viewport->get_pixmap();
+	this->speed_dist_graph_saved_img.valid = true;
 }
 #undef LINES
 
@@ -2196,14 +2227,10 @@ void TrackProfileDialog::draw_single_graph(Viewport * viewport, bool resized, vo
 	unsigned int graph_width = viewport->width() - GRAPH_MARGIN_LEFT - GRAPH_MARGIN_RIGHT;
 	unsigned int graph_height = viewport->height() - GRAPH_MARGIN_UPPER - GRAPH_MARGIN_LOWER;
 
-#ifdef K
-	/* Saved image no longer any good as we've resized, so we remove it here. */
-	if (resized && saved_img->img) {
-		g_object_unref(saved_img->img);
-		saved_img->img = NULL;
-		saved_img->saved = false;
+	/* Saved image no longer any good as we've resized, so we invalidate it here. */
+	if (resized) {
+		saved_img->valid = false;
 	}
-#endif
 
 	(this->*draw_graph)(viewport, this->trk);
 
@@ -2239,15 +2266,15 @@ void TrackProfileDialog::draw_single_graph(Viewport * viewport, bool resized, vo
 		}
 
 		QPen black_pen(QColor("black"));
-		this->save_image_and_draw_graph_marks(viewport,
-						      black_pen,
-						      selected_pos_x,
-						      selected_pos_y,
-						      current_pos_x,
-						      current_pos_y,
-						      saved_img,
-						      graph_width,
-						      graph_height);
+		this->restore_image_and_draw_graph_marks(viewport,
+							 black_pen,
+							 selected_pos_x,
+							 selected_pos_y,
+							 current_pos_x,
+							 current_pos_y,
+							 saved_img,
+							 graph_width,
+							 graph_height);
 	}
 }
 

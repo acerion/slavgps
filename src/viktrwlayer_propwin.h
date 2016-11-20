@@ -60,8 +60,8 @@ namespace SlavGPS {
 
 
 	typedef struct _propsaved {
-		bool saved;
-		GdkImage * img;
+		bool valid;
+		QPixmap img;
 	} PropSaved;
 
 
@@ -118,15 +118,15 @@ namespace SlavGPS {
 		Viewport * create_etdiag(void);
 		Viewport * create_sddiag(void);
 
-		void save_image_and_draw_graph_marks(Viewport * viewport,
-						     QPen & pen,
-						     double selected_pos_x,
-						     double selected_pos_y,
-						     double current_pos_x,
-						     double current_pox_y,
-						     PropSaved *saved_img,
-						     unsigned int graph_width,
-						     unsigned int graph_height);
+		void restore_image_and_draw_graph_marks(Viewport * viewport,
+							QPen & pen,
+							double selected_pos_x,
+							double selected_pos_y,
+							double current_pos_x,
+							double current_pox_y,
+							PropSaved *saved_img,
+							unsigned int graph_width,
+							unsigned int graph_height);
 
 		void track_graph_release(Viewport * viewport, QMouseEvent * event, TrackProfileType graph_type);
 
