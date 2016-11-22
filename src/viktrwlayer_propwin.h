@@ -164,9 +164,9 @@ namespace SlavGPS {
 					    QCheckBox * checkbutton2,
 					    bool checkbutton2_default);
 
-		void draw_vertical_grid_distance(Viewport * viewport, unsigned int ii, double dd, unsigned int xx, DistanceUnit distance_unit);
-		void draw_vertical_grid_time(Viewport * viewport, unsigned int ii, unsigned int tt, unsigned int xx);
-		void draw_horizontal_grid(Viewport * viewport, QPen & fg_pen, QPen & dark_pen, char * ss, int i);
+		void draw_vertical_grid_distance(Viewport * viewport, unsigned int index, unsigned int grid_x, double distance_value, DistanceUnit distance_unit);
+		void draw_vertical_grid_time(Viewport * viewport, unsigned int index, unsigned int grid_x, unsigned int time_value);
+		void draw_horizontal_grid(Viewport * viewport, char * ss, int i);
 		void draw_time_lines(Viewport * viewport);
 		void draw_distance_divisions(Viewport * viewport, DistanceUnit distance_unit);
 
@@ -269,6 +269,10 @@ namespace SlavGPS {
 
 		/* Pen used to draw main parts of graphs (i.e. the values of functions y = f(x)). */
 		QPen main_pen;
+
+		/* Properties of text labels drawn on margins of charts (next to each horizontal/vertical grid line). */
+		QPen labels_pen;
+		QFont labels_font;
 	};
 
 

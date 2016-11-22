@@ -1272,36 +1272,23 @@ static void draw_dem_alt_speed_dist(Track * trk,
 /**
  * A common way to draw the grid with y axis labels
  */
-void TrackProfileDialog::draw_horizontal_grid(Viewport * viewport, QPen & fg_pen, QPen & dark_pen, char * ss, int i)
+void TrackProfileDialog::draw_horizontal_grid(Viewport * viewport, char * ss, int i)
 {
 	unsigned int graph_height = viewport->height() - GRAPH_MARGIN_TOP - GRAPH_MARGIN_BOTTOM;
 	unsigned int graph_width = viewport->width() - GRAPH_MARGIN_LEFT - GRAPH_MARGIN_RIGHT;
 	unsigned int graph_left = GRAPH_MARGIN_LEFT;
-	unsigned int graph_rigth = viewport->width() - GRAPH_MARGIN_RIGHT;
 	unsigned int graph_top = GRAPH_MARGIN_TOP;
 
-#ifdef K
-	PangoLayout * pl = gtk_widget_create_pango_layout(GTK_WIDGET(viewport), NULL);
+	float delta_y = 1.0 * graph_height / LINES;
+	float y = graph_height - delta_y * i;
 
-	pango_layout_set_alignment(pl, PANGO_ALIGN_RIGHT);
-	pango_layout_set_font_description(pl, gtk_widget_get_style(window)->font_desc);
+	QString text(ss);
+	QPointF text_anchor(0, graph_top + graph_height - y);
+	QRectF bounding_rect = QRectF(text_anchor.x(), text_anchor.y(), text_anchor.x() + graph_left - 10, delta_y - 3);
+	viewport->draw_text(this->labels_font, this->labels_pen, bounding_rect, Qt::AlignRight | Qt::AlignTop, text, SG_TEXT_OFFSET_UP);
 
-	char * label_markup = g_strdup_printf("<span size=\"small\">%s</span>", ss);
-	pango_layout_set_markup(pl, label_markup, -1);
-	free(label_markup);
 
-	int w, h;
-	pango_layout_get_pixel_size(pl, &w, &h);
-
-	gdk_draw_layout(GDK_DRAWABLE(viewport), fg_pen,
-			GRAPH_MARGIN_LEFT - w - 3,
-			CLAMP((int)i * graph_height/LINES - h/2 + GRAPH_MARGIN_TOP, 0, graph_height - h + GRAPH_MARGIN_TOP),
-			pl);
-	g_object_unref(G_OBJECT (pl));
-#endif
-
-	int y = (graph_height / LINES) * i;
-	viewport->draw_line(dark_pen,
+	viewport->draw_line(viewport->grid_pen,
 			    0,               y,
 			    0 + graph_width, y);
 }
@@ -1312,65 +1299,59 @@ void TrackProfileDialog::draw_horizontal_grid(Viewport * viewport, QPen & fg_pen
 /**
  * A common way to draw the grid with x axis labels for time graphs
  */
-void TrackProfileDialog::draw_vertical_grid_time(Viewport * viewport, unsigned int ii, unsigned int tt, unsigned int xx)
+void TrackProfileDialog::draw_vertical_grid_time(Viewport * viewport, unsigned int index, unsigned int grid_x, unsigned int time_value)
 {
-	char *label_markup = NULL;
-#ifdef K
-	switch (ii) {
+	unsigned int graph_width = viewport->width() - GRAPH_MARGIN_LEFT - GRAPH_MARGIN_RIGHT;
+	unsigned int graph_height = viewport->height() - GRAPH_MARGIN_TOP - GRAPH_MARGIN_BOTTOM;
+	unsigned int graph_left = GRAPH_MARGIN_LEFT;
+
+	char buf[64] = { 0 };
+
+	switch (index) {
 	case 0:
 	case 1:
 	case 2:
 	case 3:
 		/* Minutes. */
-		label_markup = g_strdup_printf("<span size=\"small\">%d %s</span>", tt/60, _("mins"));
+		sprintf(buf, "%d %s", time_value / 60, _("mins"));
 		break;
 	case 4:
 	case 5:
 	case 6:
 	case 7:
 		/* Hours. */
-		label_markup = g_strdup_printf("<span size=\"small\">%.1f %s</span>", (double)tt/(60*60), _("h"));
+		sprintf(buf, "%.1f %s", (double) time_value / (60 * 60), _("h"));
 		break;
 	case 8:
 	case 9:
 	case 10:
 		/* Days. */
-		label_markup = g_strdup_printf("<span size=\"small\">%.1f %s</span>", (double)tt/(60*60*24), _("d"));
+		sprintf(buf, "%.1f %s", (double) time_value / (60 *60 * 24), _("d"));
 		break;
 	case 11:
 	case 12:
 		/* Weeks. */
-		label_markup = g_strdup_printf("<span size=\"small\">%.1f %s</span>", (double)tt/(60*60*24*7), _("w"));
+		sprintf(buf, "%.1f %s", (double) time_value / (60 * 60 * 24 * 7), _("w"));
 		break;
 	case 13:
-		/* 'Months'. */
-		label_markup = g_strdup_printf("<span size=\"small\">%.1f %s</span>", (double)tt/(60*60*24*28), _("M"));
+		/* Months. */
+		sprintf(buf, "%.1f %s", (double) time_value / (60 * 60 * 24 * 28), _("M"));
 		break;
 	default:
 		break;
 	}
-	if (label_markup) {
 
-		PangoLayout *pl = gtk_widget_create_pango_layout(GTK_WIDGET(viewport), NULL);
-		pango_layout_set_font_description(pl, font_desc);
+	float delta_x = 1.0 * graph_width / LINES; /* TODO: this needs to be fixed. */
 
-		pango_layout_set_markup(pl, label_markup, -1);
-		free(label_markup);
-		int ww, hh;
-		pango_layout_get_pixel_size(pl, &ww, &hh);
+	QString text(buf);
+	QPointF text_anchor(graph_left + grid_x, GRAPH_MARGIN_TOP + graph_height);
+	QRectF bounding_rect = QRectF(text_anchor.x(), text_anchor.y(), delta_x - 3, GRAPH_MARGIN_BOTTOM - 10);
+	viewport->draw_text(this->labels_font, this->labels_pen, bounding_rect, Qt::AlignLeft | Qt::AlignTop, text, SG_TEXT_OFFSET_LEFT);
 
-		gdk_draw_layout(GDK_DRAWABLE(viewport), fg_pen,
-				GRAPH_MARGIN_LEFT + xx - ww / 2, GRAPH_MARGIN_TOP / 2 - hh / 2, pl);
-		g_object_unref(G_OBJECT (pl));
-	}
-
-#endif
-
-	unsigned int graph_height = viewport->height() - GRAPH_MARGIN_TOP - GRAPH_MARGIN_BOTTOM;
 
 	viewport->draw_line(viewport->grid_pen,
-			    xx, 0,
-			    xx, 0 + graph_height);
+			    grid_x, 0,
+			    grid_x, 0 + graph_height);
 
 }
 
@@ -1380,41 +1361,34 @@ void TrackProfileDialog::draw_vertical_grid_time(Viewport * viewport, unsigned i
 /**
  * A common way to draw the grid with x axis labels for distance graphs.
  */
-void TrackProfileDialog::draw_vertical_grid_distance(Viewport * viewport, unsigned int ii, double dd, unsigned int xx, DistanceUnit distance_unit)
+void TrackProfileDialog::draw_vertical_grid_distance(Viewport * viewport, unsigned int index, unsigned int grid_x, double distance_value, DistanceUnit distance_unit)
 {
-	char *label_markup = NULL;
+	unsigned int graph_height = viewport->height() - GRAPH_MARGIN_TOP - GRAPH_MARGIN_BOTTOM;
+	unsigned int graph_width = viewport->width() - GRAPH_MARGIN_LEFT - GRAPH_MARGIN_RIGHT;
+	unsigned int graph_left = GRAPH_MARGIN_LEFT;
 
 	char distance_unit_string[16] = { 0 };
 	get_distance_unit_string(distance_unit_string, sizeof (distance_unit_string), distance_unit);
 
-#ifdef K
-
-	if (ii > 4) {
-		label_markup = g_strdup_printf("<span size=\"small\">%d %s</span>", (unsigned int)dd, distance_unit_string);
+	char buf[64] = { 0 };
+	if (index > 4) {
+		sprintf(buf, "%d %s", (unsigned int) distance_value, distance_unit_string);
 	} else {
-		label_markup = g_strdup_printf("<span size=\"small\">%.1f %s</span>", dd, distance_unit_string);
+		sprintf(buf, "%.1f %s", distance_value, distance_unit_string);
 	}
 
-	if (label_markup) {
-		PangoLayout *pl = gtk_widget_create_pango_layout(GTK_WIDGET(viewport), NULL);
-		pango_layout_set_font_description(pl, font_desc);
 
-		pango_layout_set_markup(pl, label_markup, -1);
-		free(label_markup);
-		int ww, hh;
-		pango_layout_get_pixel_size(pl, &ww, &hh);
+	float delta_x = 1.0 * graph_width / LINES; /* TODO: this needs to be fixed. */
 
-		gdk_draw_layout(GDK_DRAWABLE(viewport), fg_pen,
-				GRAPH_MARGIN_LEFT + xx - ww / 2, GRAPH_MARGIN_TOP / 2 - hh / 2, pl);
-		g_object_unref(G_OBJECT (pl));
-	}
+	QString text(buf);
+	QPointF text_anchor(graph_left + grid_x, GRAPH_MARGIN_TOP + graph_height);
+	QRectF bounding_rect = QRectF(text_anchor.x(), text_anchor.y(), delta_x - 3, GRAPH_MARGIN_BOTTOM - 10);
+	viewport->draw_text(this->labels_font, this->labels_pen, bounding_rect, Qt::AlignLeft | Qt::AlignTop, text, SG_TEXT_OFFSET_LEFT);
 
-#endif
-	unsigned int graph_height = viewport->height() - GRAPH_MARGIN_TOP - GRAPH_MARGIN_BOTTOM;
 
 	viewport->draw_line(viewport->grid_pen,
-			    xx, 0,
-			    xx, 0 + graph_height);
+			    grid_x, 0,
+			    grid_x, 0 + graph_height);
 }
 
 
@@ -1431,7 +1405,9 @@ void TrackProfileDialog::draw_distance_divisions(Viewport * viewport, DistanceUn
 	double dist_per_pixel = length / graph_width;
 
 	for (unsigned int i = 1; chunksd[index] * i <= length; i++) {
-		this->draw_vertical_grid_distance(viewport, index, chunksd[index] * i, (unsigned int) (chunksd[index] * i / dist_per_pixel), distance_unit);
+		double distance_value = chunksd[index] * i;
+		unsigned int grid_x = (unsigned int) (chunksd[index] * i / dist_per_pixel);
+		this->draw_vertical_grid_distance(viewport, index, grid_x, distance_value, distance_unit);
 	}
 }
 
@@ -1480,8 +1456,6 @@ void TrackProfileDialog::draw_ed(Viewport * viewport, Track * trk)
 	viewport->clear();
 
 	/* Draw grid. */
-	QPen fg_pen(QColor("orange"));
-	QPen dark_pen(QColor("black"));
 	for (int i = 0; i <= LINES; i++) {
 		char s[32];
 
@@ -1498,7 +1472,7 @@ void TrackProfileDialog::draw_ed(Viewport * viewport, Track * trk)
 			fprintf(stderr, "CRITICAL: Houston, we've had a problem. height=%d\n", height_units);
 		}
 
-		this->draw_horizontal_grid(viewport, fg_pen, dark_pen, s, i);
+		this->draw_horizontal_grid(viewport, s, i);
 	}
 
 	this->draw_distance_divisions(viewport, a_vik_get_units_distance());
@@ -1625,13 +1599,11 @@ void TrackProfileDialog::draw_gd(Viewport * viewport, Track * trk)
 	viewport->clear();
 
 	/* Draw grid. */
-	QPen fg_pen(QColor("orange"));
-	QPen dark_pen(QColor("black"));
 	for (int i = 0; i <= LINES; i++) {
 		char s[32];
 
 		sprintf(s, "%8d%%", (int)(mina + (LINES - i)*chunksg[this->cig]));
-		this->draw_horizontal_grid(viewport, fg_pen, dark_pen, s, i);
+		this->draw_horizontal_grid(viewport, s, i);
 	}
 
 	this->draw_distance_divisions(viewport, a_vik_get_units_distance());
@@ -1685,8 +1657,10 @@ void TrackProfileDialog::draw_time_lines(Viewport * viewport)
 		return;
 	}
 
-	for (unsigned int i=1; chunkst[index]*i <= this->duration; i++) {
-		this->draw_vertical_grid_time(viewport, index, chunkst[index]*i, (unsigned int)(chunkst[index]*i/time_per_pixel));
+	for (unsigned int i = 1; chunkst[index] * i <= this->duration; i++) {
+		unsigned int grid_x = (unsigned int) (chunkst[index] * i / time_per_pixel);
+		unsigned int time_value = chunkst[index] * i;
+		this->draw_vertical_grid_time(viewport, index, grid_x, time_value);
 	}
 }
 
@@ -1740,8 +1714,6 @@ void TrackProfileDialog::draw_st(Viewport * viewport, Track * trk)
 	viewport->clear();
 
 	/* Draw grid. */
-	QPen fg_pen(QColor("orange"));
-	QPen dark_pen(QColor("black"));
 	for (int i = 0; i <= LINES; i++) {
 		char s[32];
 
@@ -1764,7 +1736,7 @@ void TrackProfileDialog::draw_st(Viewport * viewport, Track * trk)
 			fprintf(stderr, "CRITICAL: Houston, we've had a problem. speed=%d\n", speed_units);
 		}
 
-		this->draw_horizontal_grid(viewport, fg_pen, dark_pen, s, i);
+		this->draw_horizontal_grid(viewport, s, i);
 	}
 
 	this->draw_time_lines(viewport);
@@ -1854,8 +1826,6 @@ void TrackProfileDialog::draw_dt(Viewport * viewport, Track * trk)
 	viewport->clear();
 
 	/* Draw grid. */
-	QPen fg_pen(QColor("orange"));
-	QPen dark_pen(QColor("black"));
 	for (int i = 0; i <= LINES; i++) {
 		char s[32];
 
@@ -1871,7 +1841,7 @@ void TrackProfileDialog::draw_dt(Viewport * viewport, Track * trk)
 			break;
 		}
 
-		this->draw_horizontal_grid(viewport, fg_pen, dark_pen, s, i);
+		this->draw_horizontal_grid(viewport, s, i);
 	}
 
 	this->draw_time_lines(viewport);
@@ -1956,8 +1926,6 @@ void TrackProfileDialog::draw_et(Viewport * viewport, Track * trk)
 	viewport->clear();
 
 	/* Draw grid. */
-	QPen fg_pen(QColor("orange"));
-	QPen dark_pen(QColor("black"));
 	for (int i = 0; i <= LINES; i++) {
 		char s[32];
 
@@ -1974,7 +1942,7 @@ void TrackProfileDialog::draw_et(Viewport * viewport, Track * trk)
 			fprintf(stderr, "CRITICAL: Houston, we've had a problem. height=%d\n", height_units);
 		}
 
-		this->draw_horizontal_grid(viewport, fg_pen, dark_pen, s, i);
+		this->draw_horizontal_grid(viewport, s, i);
 	}
 
 	this->draw_time_lines(viewport);
@@ -2082,8 +2050,6 @@ void TrackProfileDialog::draw_sd(Viewport * viewport, Track * trk)
 	viewport->clear();
 
 	/* Draw grid. */
-	QPen fg_pen(QColor("orange"));
-	QPen dark_pen(QColor("black"));
 	for (int i = 0; i <= LINES; i++) {
 		char s[32];
 
@@ -2106,7 +2072,7 @@ void TrackProfileDialog::draw_sd(Viewport * viewport, Track * trk)
 			fprintf(stderr, "CRITICAL: Houston, we've had a problem. speed=%d\n", speed_units);
 		}
 
-		this->draw_horizontal_grid(viewport, fg_pen, dark_pen, s, i);
+		this->draw_horizontal_grid(viewport, s, i);
 	}
 
 	this->draw_distance_divisions(viewport, a_vik_get_units_distance());
@@ -2903,6 +2869,11 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer
 
 	this->main_pen.setColor("lightsteelblue");
 	this->main_pen.setWidth(1);
+
+	this->labels_pen.setColor("black");
+
+	this->labels_font.setFamily("Helvetica");
+	this->labels_font.setPointSize(11);
 
 #ifdef K
 
