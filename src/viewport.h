@@ -69,6 +69,13 @@ namespace SlavGPS {
 
 
 
+	enum {
+		SG_TEXT_OFFSET_NONE = 0x00,
+		SG_TEXT_OFFSET_LEFT = 0x01,
+		SG_TEXT_OFFSET_UP   = 0x02
+	};
+
+
 	class Window;
 	class Layer;
 
@@ -103,6 +110,7 @@ namespace SlavGPS {
 		void draw_rectangle(QPen const & pen, int x, int y, int width, int height);
 		void fill_rectangle(QColor const & color, int x, int y, int width, int height);
 		void draw_text(QFont const & font, QPen const & pen, int x, int y, QString const & text);
+		void draw_text(QFont const & font, QPen const & pen, QRectF & bounding_rect, int flags, QString const & text, int text_offset);
 		void draw_arc(QPen const & pen, int x, int y, int width, int height, int angle1, int angle2, bool filled);
 		void draw_polygon(QPen const & pen, QPoint const * points, int npoints, bool filled);
 		void draw_layout(GdkGC * gc, int x, int y, PangoLayout * layout);

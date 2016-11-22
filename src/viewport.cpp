@@ -665,36 +665,21 @@ void Viewport::draw_scale()
 
 
 	QString text(s);
-	QPainter painter(this->scr_buffer);
-
 	QPointF scale_start(PAD, this->size_height - PAD); /* Bottom-left corner of scale. */
 	QPointF value_start = QPointF(scale_start.x() + len + PAD, scale_start.y()); /* Bottom-left corner of value. */
+	QRectF bounding_rect = QRectF((int) value_start.x(), 0, (int) value_start.x() + 300, (int) value_start.y());
+	this->draw_text(QFont("Helvetica", 40), pen_fg, bounding_rect, Qt::AlignBottom | Qt::AlignLeft, text, 0);
+	/* TODO: we need to draw background of the text in some color,
+	   so that it's more visible on a map that will be present in the background. */
 
 #if 1
 	/* Debug. */
+	QPainter painter(this->scr_buffer);
 	painter.setPen(QColor("red"));
 	painter.drawEllipse(scale_start, 3, 3);
 	painter.setPen(QColor("blue"));
 	painter.drawEllipse(value_start, 3, 3);
 #endif
-
-	painter.setFont(QFont("Helvetica", 40));
-
-	QRectF input_rect = QRectF((int) value_start.x(), 0, (int) value_start.x() + 1000, (int) value_start.y());
-	QRectF text_rect = painter.boundingRect(input_rect, Qt::AlignBottom, text);
-	QRectF margins_rect(text_rect.x() - 2, text_rect.y() - 2, text_rect.width() + 4, text_rect.height() + 4);
-	painter.fillRect(margins_rect, pen_bg.color());
-
-#if 1
-	/* Debug. */
-	painter.setPen(QColor("orange"));
-	painter.drawRect(input_rect);
-	painter.setPen(QColor("red"));
-	painter.drawRect(text_rect);
-#endif
-
-	painter.setPen(pen_fg);
-	painter.drawText(PAD + len + PAD, this->size_height - PAD - 10, text);
 
 	this->repaint();
 }
@@ -1658,6 +1643,47 @@ void Viewport::draw_text(QFont const & font, QPen const & pen, int x, int y, QSt
 		painter.setFont(font);
 		painter.drawText(x, y, text);
 	}
+}
+
+
+
+
+void Viewport::draw_text(QFont const & font, QPen const & pen, QRectF & bounding_rect, int flags, QString const & text, int text_offset)
+{
+	QPainter painter(this->scr_buffer);
+	painter.setFont(font);
+
+	QRectF text_rect = painter.boundingRect(bounding_rect, flags, text);
+	if (text_offset & SG_TEXT_OFFSET_UP) {
+		/* Move boxes a bit up, so that text is right against grid line, not below it. */
+		qreal new_top = text_rect.top() - (text_rect.height() / 2);
+		bounding_rect.moveTop(new_top);
+		text_rect.moveTop(new_top);
+	}
+
+	if (text_offset & SG_TEXT_OFFSET_LEFT) {
+		/* Move boxes a bit left, so that text is right below grid line, not to the right of it. */
+		qreal new_left = text_rect.left() - (text_rect.width() / 2);
+		bounding_rect.moveLeft(new_left);
+		text_rect.moveLeft(new_left);
+	}
+
+
+#if 1
+	/* Debug. */
+	painter.setPen(QColor("red"));
+	painter.drawEllipse(bounding_rect.left(), bounding_rect.top(), 3, 3);
+
+	painter.setPen(QColor("darkgreen"));
+	painter.drawRect(bounding_rect);
+
+	painter.setPen(QColor("red"));
+	painter.drawRect(text_rect);
+#endif
+
+	painter.setPen(pen);
+	painter.drawText(text_rect, flags, text, NULL);
+	painter.end();
 }
 
 
