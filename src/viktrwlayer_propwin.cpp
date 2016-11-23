@@ -1450,12 +1450,26 @@ void TrackProfileDialog::draw_ed(Viewport * viewport, Track * trk)
 	/* Assign locally. */
 	double mina = this->draw_min_altitude;
 
-	QPen no_alt_info_pen(QColor("yellow"));
-
 	/* Reset before redrawing. */
 	viewport->clear();
 
-	/* Draw grid. */
+
+	/* Draw values of 'elevation = f(distance)' function. */
+	QPen no_alt_info_pen(QColor("yellow"));
+	for (unsigned int i = 0; i < graph_width; i++) {
+		if (this->altitudes[i] == VIK_DEFAULT_ALTITUDE) {
+			viewport->draw_line(no_alt_info_pen,
+					    i, 0,
+					    i, 0 + graph_height);
+		} else {
+			viewport->draw_line(this->main_pen,
+					    i, graph_height,
+					    i, graph_height - graph_height * (this->altitudes[i] - mina) / (chunksa[this->cia] * LINES));
+		}
+	}
+
+
+	/* Draw grid on top of graph of values. */
 	for (int i = 0; i <= LINES; i++) {
 		char s[32];
 
@@ -1474,21 +1488,8 @@ void TrackProfileDialog::draw_ed(Viewport * viewport, Track * trk)
 
 		this->draw_horizontal_grid(viewport, s, i);
 	}
-
 	this->draw_distance_divisions(viewport, a_vik_get_units_distance());
 
-	/* Draw values of elevation = f(distance) function. */
-	for (unsigned int i = 0; i < graph_width; i++) {
-		if (this->altitudes[i] == VIK_DEFAULT_ALTITUDE) {
-			viewport->draw_line(no_alt_info_pen,
-					    i, 0,
-					    i, 0 + graph_height);
-		} else {
-			viewport->draw_line(this->main_pen,
-					    i, graph_height,
-					    i, graph_height - graph_height * (this->altitudes[i] - mina) / (chunksa[this->cia] * LINES));
-		}
-	}
 
 	if (this->w_show_dem->checkState()
 	    || this->w_show_alt_gps_speed->checkState()) {
@@ -1515,6 +1516,7 @@ void TrackProfileDialog::draw_ed(Viewport * viewport, Track * trk)
 					this->w_show_dem->checkState(),
 					this->w_show_alt_gps_speed->checkState());
 	}
+
 
 	viewport->draw_border();
 	viewport->update();
@@ -1594,26 +1596,26 @@ void TrackProfileDialog::draw_gd(Viewport * viewport, Track * trk)
 	/* Assign locally. */
 	double mina = this->draw_min_gradient;
 
-
 	/* Reset before redrawing. */
 	viewport->clear();
 
-	/* Draw grid. */
-	for (int i = 0; i <= LINES; i++) {
-		char s[32];
 
-		sprintf(s, "%8d%%", (int)(mina + (LINES - i)*chunksg[this->cig]));
-		this->draw_horizontal_grid(viewport, s, i);
-	}
-
-	this->draw_distance_divisions(viewport, a_vik_get_units_distance());
-
-	/* Draw values of gradient = f(distance) function. */
+	/* Draw values of 'gradient = f(distance)' function. */
 	for (unsigned int i = 0; i < graph_width; i++) {
 		viewport->draw_line(this->main_pen,
 				    i, graph_height,
 				    i, graph_height - graph_height * (this->gradients[i] - mina) / (chunksg[this->cig] * LINES));
 	}
+
+
+	/* Draw grid on top of graph of values. */
+	for (int i = 0; i <= LINES; i++) {
+		char s[32];
+		sprintf(s, "%8d%%", (int)(mina + (LINES - i)*chunksg[this->cig]));
+		this->draw_horizontal_grid(viewport, s, i);
+	}
+	this->draw_distance_divisions(viewport, a_vik_get_units_distance());
+
 
 	if (this->w_show_gradient_gps_speed->checkState()) {
 
@@ -1633,6 +1635,7 @@ void TrackProfileDialog::draw_gd(Viewport * viewport, Track * trk)
 				graph_bottom,
 				this->w_show_alt_gps_speed->checkState());
 	}
+
 
 	viewport->draw_border();
 	viewport->update();
@@ -1713,7 +1716,16 @@ void TrackProfileDialog::draw_st(Viewport * viewport, Track * trk)
 	/* Reset before redrawing. */
 	viewport->clear();
 
-	/* Draw grid. */
+
+	/* Draw values of 'speed = f(time)' function. */
+	for (unsigned int i = 0; i < graph_width; i++) {
+		viewport->draw_line(this->main_pen,
+				    i, graph_height,
+				    i, graph_height - graph_height * (this->speeds[i] - mins) / (chunkss[this->cis] * LINES));
+	}
+
+
+	/* Draw grid on top of graph of values. */
 	for (int i = 0; i <= LINES; i++) {
 		char s[32];
 
@@ -1738,15 +1750,8 @@ void TrackProfileDialog::draw_st(Viewport * viewport, Track * trk)
 
 		this->draw_horizontal_grid(viewport, s, i);
 	}
-
 	this->draw_time_lines(viewport);
 
-	/* Draw values of speed = f(time) function. */
-	for (unsigned int i = 0; i < graph_width; i++) {
-		viewport->draw_line(this->main_pen,
-				    i, graph_height,
-				    i, graph_height - graph_height * (this->speeds[i] - mins) / (chunkss[this->cis] * LINES));
-	}
 
 	if (this->w_show_gps_speed->checkState()) {
 
@@ -1768,6 +1773,7 @@ void TrackProfileDialog::draw_st(Viewport * viewport, Track * trk)
 			viewport->fill_rectangle(QColor("red"), x - 2, y - 2, 4, 4);
 		}
 	}
+
 
 	viewport->draw_border();
 	viewport->update();
@@ -1825,7 +1831,16 @@ void TrackProfileDialog::draw_dt(Viewport * viewport, Track * trk)
 	/* Reset before redrawing. */
 	viewport->clear();
 
-	/* Draw grid. */
+
+	/* Draw values of 'distance = f(time)' function. */
+	for (unsigned int i = 0; i < graph_width; i++) {
+		viewport->draw_line(this->main_pen,
+				    i, graph_height,
+				    i, graph_height - graph_height * (this->distances[i]) / (chunksd[this->cid] * LINES));
+	}
+
+
+	/* Draw grid on top of graph of values.. */
 	for (int i = 0; i <= LINES; i++) {
 		char s[32];
 
@@ -1843,15 +1858,8 @@ void TrackProfileDialog::draw_dt(Viewport * viewport, Track * trk)
 
 		this->draw_horizontal_grid(viewport, s, i);
 	}
-
 	this->draw_time_lines(viewport);
 
-	/* Draw values of distance = f(time) function. */
-	for (unsigned int i = 0; i < graph_width; i++) {
-		viewport->draw_line(this->main_pen,
-				    i, graph_height,
-				    i, graph_height - graph_height * (this->distances[i]) / (chunksd[this->cid] * LINES));
-	}
 
 	/* Show speed indicator. */
 	if (this->w_show_dist_speed->checkState()) {
@@ -1866,6 +1874,7 @@ void TrackProfileDialog::draw_dt(Viewport * viewport, Track * trk)
 			viewport->fill_rectangle(QColor("red"), graph_left + i - 2, y_speed - 2, 4, 4);
 		}
 	}
+
 
 	viewport->draw_border();
 	viewport->update();
@@ -1925,7 +1934,16 @@ void TrackProfileDialog::draw_et(Viewport * viewport, Track * trk)
 	/* Reset before redrawing. */
 	viewport->clear();
 
-	/* Draw grid. */
+
+	/* Draw values of 'elevation = f(time)' function. */
+	for (unsigned int i = 0; i < graph_width; i++) {
+		viewport->draw_line(this->main_pen,
+				    i, graph_height,
+				    i, graph_height - graph_height * (this->ats[i] - mina) / (chunksa[this->ciat] * LINES));
+	}
+
+
+	/* Draw grid on top of graph of values. */
 	for (int i = 0; i <= LINES; i++) {
 		char s[32];
 
@@ -1944,15 +1962,8 @@ void TrackProfileDialog::draw_et(Viewport * viewport, Track * trk)
 
 		this->draw_horizontal_grid(viewport, s, i);
 	}
-
 	this->draw_time_lines(viewport);
 
-	/* Draw values of elevation = f(time) function. */
-	for (unsigned int i = 0; i < graph_width; i++) {
-		viewport->draw_line(this->main_pen,
-				    i, graph_height,
-				    i, graph_height - graph_height * (this->ats[i] - mina) / (chunksa[this->ciat] * LINES));
-	}
 
 	/* Show DEMS. */
 	if (this->w_show_elev_dem->checkState())  {
@@ -1983,6 +1994,7 @@ void TrackProfileDialog::draw_et(Viewport * viewport, Track * trk)
 		}
 	}
 
+
 	/* Show speeds. */
 	if (this->w_show_elev_speed->checkState()) {
 		/* This is just an indicator - no actual values can be inferred by user. */
@@ -1995,6 +2007,7 @@ void TrackProfileDialog::draw_et(Viewport * viewport, Track * trk)
 			viewport->fill_rectangle(elev_speed_pen.color(), graph_left + i - 2, y_speed - 2, 4, 4);
 		}
 	}
+
 
 	viewport->draw_border();
 	viewport->update();
@@ -2049,7 +2062,16 @@ void TrackProfileDialog::draw_sd(Viewport * viewport, Track * trk)
 	/* Reset before redrawing. */
 	viewport->clear();
 
-	/* Draw grid. */
+
+	/* Draw values of 'speed = f(distance)' function. */
+	for (unsigned int i = 0; i < graph_width; i++) {
+		viewport->draw_line(this->main_pen,
+				    i, graph_height,
+				    i, graph_height - graph_height * (this->speeds_dist[i] - mins) / (chunkss[this->cisd] * LINES));
+	}
+
+
+	/* Draw grid on top of graph of values. */
 	for (int i = 0; i <= LINES; i++) {
 		char s[32];
 
@@ -2074,15 +2096,7 @@ void TrackProfileDialog::draw_sd(Viewport * viewport, Track * trk)
 
 		this->draw_horizontal_grid(viewport, s, i);
 	}
-
 	this->draw_distance_divisions(viewport, a_vik_get_units_distance());
-
-	/* Draw values of speed = f(distance) function. */
-	for (unsigned int i = 0; i < graph_width; i++) {
-		viewport->draw_line(this->main_pen,
-				    i, graph_height,
-				    i, graph_height - graph_height * (this->speeds_dist[i] - mins) / (chunkss[this->cisd] * LINES));
-	}
 
 
 	if (this->w_show_sd_gps_speed->checkState()) {
@@ -2106,6 +2120,7 @@ void TrackProfileDialog::draw_sd(Viewport * viewport, Track * trk)
 			viewport->fill_rectangle(gps_speed_pen.color(), x - 2, y - 2, 4, 4);
 		}
 	}
+
 
 	viewport->draw_border();
 	viewport->update();
