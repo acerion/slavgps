@@ -58,6 +58,17 @@ using namespace SlavGPS;
 
 
 
+enum {
+	SG_TRACK_PROFILE_CANCEL,
+	SG_TRACK_PROFILE_SPLIT_AT_MARKER,
+	SG_TRACK_PROFILE_SPLIT_SEGMENTS,
+	SG_TRACK_PROFILE_REVERSE,
+	SG_TRACK_PROFILE_OK,
+};
+
+
+
+
 /* (Hopefully!) Human friendly altitude grid sizes - note no fixed 'ratio' just numbers that look nice... */
 static const double chunksa[] = {2.0, 5.0, 10.0, 15.0, 20.0,
 				 25.0, 40.0, 50.0, 75.0, 100.0,
@@ -485,13 +496,12 @@ void TrackProfileDialog::track_graph_release(Viewport * viewport, QMouseEvent * 
 	Trackpoint * tp = set_center_at_graph_position(pos_x, this->trw, this->panel, this->main_viewport, this->trk, is_time_graph, graph_width);
 	if (tp == NULL) {
 		/* Unable to get the point so give up. */
-#ifdef K
-		this->button_split->setEnabled(false);
-#endif
+		this->button_split_at_marker->setEnabled(false);
 		return;
 	}
 
 	this->selected_tp = tp;
+	this->button_split_at_marker->setEnabled(true);
 
 	Viewport * graph_viewport = NULL;
 	PropSaved * graph_saved_img = NULL;
@@ -566,7 +576,7 @@ void TrackProfileDialog::track_graph_release(Viewport * viewport, QMouseEvent * 
 				 graph_height);
 	}
 #ifdef K
-	this->button_split->setEnabled(this->is_selected_drawn);
+	this->button_split_at_marker->setEnabled(this->is_selected_drawn);
 #endif
 }
 
@@ -2519,32 +2529,23 @@ void TrackProfileDialog::dialog_response_cb(int resp) /* Slot. */
 	LayerTRW * trw = this->trw;
 	bool keep_dialog = false;
 
-#ifdef K
-
 	/* FIXME: check and make sure the track still exists before doing anything to it. */
 	/* Note: destroying diaglog (eg, parent window exit) won't give "response". */
 	switch (resp) {
-	case GTK_RESPONSE_DELETE_EVENT: /* Received delete event (not from buttons). */
-	case GTK_RESPONSE_REJECT:
+	case SG_TRACK_PROFILE_CANCEL:
+		this->reject();
 		break;
-	case GTK_RESPONSE_ACCEPT:
+	case SG_TRACK_PROFILE_OK:
 		this->trw->update_treeview(this->trk);
 		trw->emit_changed();
+		this->accept();
 		break;
-	case VIK_TRW_LAYER_PROPWIN_REVERSE:
+	case SG_TRACK_PROFILE_REVERSE:
 		trk->reverse();
 		trw->emit_changed();
+		keep_dialog = true;
 		break;
-	case VIK_TRW_LAYER_PROPWIN_DEL_DUP:
-		trk->remove_dup_points(); /* NB ignore the returned answer. */
-		/* As we could have seen the nuber of dulplicates that would be deleted in the properties statistics tab,
-		   choose not to inform the user unnecessarily. */
-
-		/* Above operation could have deleted current_tp or last_tp (selected_tp?). */
-		trw->cancel_tps_of_track(trk);
-		trw->emit_changed();
-		break;
-	case VIK_TRW_LAYER_PROPWIN_SPLIT: {
+	case SG_TRACK_PROFILE_SPLIT_SEGMENTS: {
 		/* Get new tracks, add them and then the delete old one. old can still exist on clipboard. */
 		std::list<Track *> * tracks = trk->split_into_segments();
 		char *new_tr_name;
@@ -2565,7 +2566,6 @@ void TrackProfileDialog::dialog_response_cb(int resp) /* Slot. */
 		if (tracks) {
 			delete tracks;
 			/* Don't let track destroy this dialog. */
-			trk->clear_property_dialog();
 			if (this->trk->is_route) {
 				trw->delete_route(trk);
 			} else {
@@ -2575,7 +2575,7 @@ void TrackProfileDialog::dialog_response_cb(int resp) /* Slot. */
 		}
 	}
 		break;
-	case VIK_TRW_LAYER_PROPWIN_SPLIT_MARKER: {
+	case SG_TRACK_PROFILE_SPLIT_AT_MARKER: {
 		auto iter = std::next(trk->begin());
 		while (iter != trk->end()) {
 			if (this->selected_tp == *iter) {
@@ -2618,16 +2618,14 @@ void TrackProfileDialog::dialog_response_cb(int resp) /* Slot. */
 	}
 		break;
 	default:
-		fprintf(stderr, "DEBUG: unknown response\n");
+		qDebug() << "EE: Track Profile: dialog response slot: unknown response" << resp;
 		return;
 	}
 
 	/* Keep same behaviour for now: destroy dialog if click on any button. */
 	if (!keep_dialog) {
-		trk->clear_property_dialog();
-		gtk_widget_destroy(GTK_WIDGET(dialog));
+		this->accept();
 	}
-#endif
 }
 
 
@@ -2752,7 +2750,6 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer
 							 parent,
 							 (GtkDialogFlags) (GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_NO_SEPARATOR),
 							 GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT,
-							 _("Split at _Marker"), VIK_TRW_LAYER_PROPWIN_SPLIT_MARKER,
 							 _("Split _Segments"), VIK_TRW_LAYER_PROPWIN_SPLIT,
 							 _("_Reverse"),        VIK_TRW_LAYER_PROPWIN_REVERSE,
 							 _("_Delete Dupl."),   VIK_TRW_LAYER_PROPWIN_DEL_DUP,
@@ -2875,11 +2872,42 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer
 		this->tabs->addTab(page, _("Speed-distance"));
 	}
 
+
+
+	this->button_box = new QDialogButtonBox();
+
+
+	this->button_cancel = this->button_box->addButton("&Cancel", QDialogButtonBox::RejectRole);
+	this->button_split_at_marker = this->button_box->addButton("Split at &Marker", QDialogButtonBox::ActionRole);
+	this->button_split_segments = this->button_box->addButton("Split &Segments", QDialogButtonBox::ActionRole);
+	this->button_reverse = this->button_box->addButton("&Reverse", QDialogButtonBox::ActionRole);
+	this->button_ok = this->button_box->addButton("&OK", QDialogButtonBox::AcceptRole);
+
+	this->button_split_segments->setEnabled(trk->get_segment_count() > 1);
+	this->button_split_at_marker->setEnabled(this->selected_tp); /* Initially no trackpoint is selected. */
+
+	this->signal_mapper = new QSignalMapper(this);
+	connect(this->button_cancel,          SIGNAL (released()), signal_mapper, SLOT (map()));
+	connect(this->button_split_at_marker, SIGNAL (released()), signal_mapper, SLOT (map()));
+	connect(this->button_split_segments,  SIGNAL (released()), signal_mapper, SLOT (map()));
+	connect(this->button_reverse,         SIGNAL (released()), signal_mapper, SLOT (map()));
+	connect(this->button_ok,              SIGNAL (released()), signal_mapper, SLOT (map()));
+
+	this->signal_mapper->setMapping(this->button_cancel,          SG_TRACK_PROFILE_CANCEL);
+	this->signal_mapper->setMapping(this->button_split_at_marker, SG_TRACK_PROFILE_SPLIT_AT_MARKER);
+	this->signal_mapper->setMapping(this->button_split_segments,  SG_TRACK_PROFILE_SPLIT_SEGMENTS);
+	this->signal_mapper->setMapping(this->button_reverse,         SG_TRACK_PROFILE_REVERSE);
+	this->signal_mapper->setMapping(this->button_ok,              SG_TRACK_PROFILE_OK);
+
+	connect(this->signal_mapper, SIGNAL (mapped(int)), this, SLOT (dialog_response_cb(int)));
+
+
 	QLayout * old = this->layout();
 	delete old;
 	QVBoxLayout * vbox = new QVBoxLayout;
 	this->setLayout(vbox);
 	vbox->addWidget(this->tabs);
+	vbox->addWidget(this->button_box);
 
 
 	this->main_pen.setColor("lightsteelblue");
@@ -2891,27 +2919,12 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer
 	this->labels_font.setPointSize(11);
 
 #ifdef K
-
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), this->tabs, false, false, 0);
-
-	unsigned int seg_count = trk->get_segment_count() ;
-	gtk_dialog_set_response_sensitive(GTK_DIALOG(dialog), VIK_TRW_LAYER_PROPWIN_SPLIT_MARKER, false);
-	if (seg_count <= 1) {
-		gtk_dialog_set_response_sensitive(GTK_DIALOG(dialog), VIK_TRW_LAYER_PROPWIN_SPLIT, false);
-	}
-	if (trk->get_dup_point_count() <= 0) {
-		gtk_dialog_set_response_sensitive(GTK_DIALOG(dialog), VIK_TRW_LAYER_PROPWIN_DEL_DUP, false);
-	}
-
 	/* On dialog realization configure_event causes the graphs to be initially drawn. */
 	widgets->configure_dialog = true;
 
 	g_signal_connect(G_OBJECT(dialog), "destroy", G_CALLBACK (destroy_cb), widgets);
 
 	trk->set_property_dialog(dialog);
-	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
-	gtk_widget_show_all(dialog);
-
 #endif
 }
 

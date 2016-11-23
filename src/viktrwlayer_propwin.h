@@ -46,14 +46,6 @@
 
 
 
-#define VIK_TRW_LAYER_PROPWIN_SPLIT 1
-#define VIK_TRW_LAYER_PROPWIN_REVERSE 2
-#define VIK_TRW_LAYER_PROPWIN_DEL_DUP 3
-#define VIK_TRW_LAYER_PROPWIN_SPLIT_MARKER 4
-
-
-
-
 namespace SlavGPS {
 
 
@@ -184,6 +176,14 @@ namespace SlavGPS {
 		QTabWidget * tabs = NULL;
 
 
+		QDialogButtonBox * button_box = NULL;
+		QPushButton * button_cancel = NULL;
+		QPushButton * button_split_at_marker = NULL;
+		QPushButton * button_split_segments = NULL;
+		QPushButton * button_reverse = NULL;
+		QPushButton * button_ok = NULL;
+
+
 		bool  configure_dialog;
 
 		int      profile_width;
@@ -273,6 +273,8 @@ namespace SlavGPS {
 		/* Properties of text labels drawn on margins of charts (next to each horizontal/vertical grid line). */
 		QPen labels_pen;
 		QFont labels_font;
+
+		QSignalMapper * signal_mapper = NULL;
 	};
 
 
