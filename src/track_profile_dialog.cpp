@@ -37,7 +37,7 @@
 
 #include "slav_qt.h"
 #include "layer_trw.h"
-#include "viktrwlayer_propwin.h"
+#include "track_profile_dialog.h"
 #include "dems.h"
 #include "viewport.h" /* ugh */
 #include "vikutils.h"

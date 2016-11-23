@@ -47,7 +47,7 @@
 #include "vikgpslayer.h"
 #include "viktrwlayer_export.h"
 #include "waypoint_properties.h"
-#include "viktrwlayer_propwin.h"
+#include "track_profile_dialog.h"
 #include "viktrwlayer_analysis.h"
 #include "viktrwlayer_tracklist.h"
 #include "viktrwlayer_waypointlist.h"

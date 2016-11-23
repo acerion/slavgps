@@ -29,7 +29,7 @@
 
 #include "viking.h"
 #include "viktrwlayer_tracklist.h"
-#include "viktrwlayer_propwin.h"
+#include "track_profile_dialog.h"
 #include "clipboard.h"
 #include "settings.h"
 #include "globals.h"

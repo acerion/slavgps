@@ -49,7 +49,7 @@
 #include "track_properties_dialog.h"
 #include "waypoint_properties.h"
 #include "waypoint_list.h"
-#include "viktrwlayer_propwin.h"
+#include "track_profile_dialog.h"
 
 #ifdef K
 #include "vikmapslayer.h"
