@@ -34,8 +34,6 @@
 #include <QCheckBox>
 #include <QMouseEvent>
 
-#include <glib.h>
-
 #include "layer_trw.h"
 #include "viewport.h"
 #include "track.h"
@@ -185,36 +183,38 @@ namespace SlavGPS {
 
 		bool  configure_dialog;
 
-		int      profile_width;
-		int      profile_height;
-		int      profile_width_old;
-		int      profile_height_old;
-		int      profile_width_offset;
-		int      profile_height_offset;
+		int profile_width;
+		int profile_height;
+		int profile_width_old;
+		int profile_height_old;
+		int profile_width_offset;
+		int profile_height_offset;
 
-		QLabel * w_cur_dist = NULL; /*< Current distance. */
-		QLabel * w_cur_elevation = NULL;
-		QLabel * w_cur_gradient_dist = NULL; /*< Current distance on gradient graph. */
-		QLabel * w_cur_gradient_gradient = NULL; /*< Current gradient on gradient graph. */
-		QLabel * w_cur_time = NULL; /*< Current track time. */
-		QLabel * w_cur_time_real = NULL; /*< Actual time as on a clock. */
-		QLabel * w_cur_speed = NULL;
-		QLabel * w_cur_dist_dist = NULL; /*< Current distance on distance graph. */
-		QLabel * w_cur_dist_time = NULL; /*< Current track time on distance graph. */
-		QLabel * w_cur_dist_time_real = NULL; /* Clock time. */
-		QLabel * w_cur_elev_elev = NULL;
-		QLabel * w_cur_elev_time = NULL; /* Track time. */
-		QLabel * w_cur_elev_time_real = NULL; /* Clock time. */
-		QLabel * w_cur_speed_dist = NULL;
-		QLabel * w_cur_speed_speed = NULL;
-		QCheckBox * w_show_dem = NULL;
-		QCheckBox * w_show_alt_gps_speed = NULL;
-		QCheckBox * w_show_gps_speed = NULL;
-		QCheckBox * w_show_gradient_gps_speed = NULL;
-		QCheckBox * w_show_dist_speed = NULL;
-		QCheckBox * w_show_elev_speed = NULL;
-		QCheckBox * w_show_elev_dem = NULL;
-		QCheckBox * w_show_sd_gps_speed = NULL;
+		QLabel * w_ed_current_distance = NULL; /*< Current distance. */
+		QLabel * w_ed_current_elevation = NULL;
+		QLabel * w_gd_current_distance = NULL; /*< Current distance on gradient graph. */
+		QLabel * w_gd_current_gradient = NULL; /*< Current gradient on gradient graph. */
+		QLabel * w_st_current_time = NULL; /*< Current track time. */
+		QLabel * w_st_current_time_real = NULL; /*< Actual time as on a clock. */
+		QLabel * w_st_current_speed = NULL;
+		QLabel * w_dt_curent_distance = NULL; /*< Current distance on distance graph. */
+		QLabel * w_dt_current_time = NULL; /*< Current track time on distance graph. */
+		QLabel * w_dt_current_time_real = NULL; /* Clock time. */
+		QLabel * w_et_current_elevation = NULL;
+		QLabel * w_et_current_time = NULL; /* Track time. */
+		QLabel * w_et_current_time_real = NULL; /* Clock time. */
+		QLabel * w_sd_current_distance = NULL;
+		QLabel * w_sd_current_speed = NULL;
+
+		QCheckBox * w_ed_show_dem = NULL;
+		QCheckBox * w_ed_show_gps_speed = NULL;
+		QCheckBox * w_gd_show_gps_speed = NULL;
+		QCheckBox * w_st_show_gps_speed = NULL;
+		QCheckBox * w_dt_show_speed = NULL;
+		QCheckBox * w_et_show_speed = NULL;
+		QCheckBox * w_et_show_dem = NULL;
+		QCheckBox * w_sd_show_gps_speed = NULL;
+
 		double   track_length;
 		double   track_length_inc_gaps;
 
