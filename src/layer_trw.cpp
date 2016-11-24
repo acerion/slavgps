@@ -3962,11 +3962,11 @@ void LayerTRW::profile_item_cb(void)
 	if (this->menu_data->sublayer_type != SublayerType::WAYPOINT) {
 		Track * trk = this->get_track_helper(this->menu_data->sublayer_type, this->menu_data->sublayer_uid);
 		if (trk && trk->name) {
-			vik_trw_layer_propwin_run(this->get_window(),
-						  this,
-						  trk,
-						  (LayersPanel *) (this->menu_data->layers_panel ? this->menu_data->layers_panel : NULL),
-						  this->menu_data->viewport);
+			track_profile_dialog(this->get_window(),
+					     this,
+					     trk,
+					     (LayersPanel *) (this->menu_data->layers_panel ? this->menu_data->layers_panel : NULL),
+					     this->menu_data->viewport);
 		}
 	}
 }
@@ -6429,10 +6429,9 @@ char const * LayerTRW::sublayer_rename_request(const char * newname, void * pane
 		if (this->selected_track == trk && this->tpwin) {
 			this->tpwin->set_track_name(newname);
 		}
-#ifdef K
-		/* Property Dialog of the track. */
-		vik_trw_layer_propwin_update(trk);
-#endif
+
+		/* Update Track Profile dialog of the track. TODO: we need to update Track Property dialog as well. */
+		track_profile_dialog_update(trk);
 
 		this->tree_view->set_name(index, newname);
 		this->tree_view->sort_children(this->tracks_node, this->track_sort_order);
@@ -6468,10 +6467,9 @@ char const * LayerTRW::sublayer_rename_request(const char * newname, void * pane
 		if (this->selected_track == trk && this->tpwin) {
 			this->tpwin->set_track_name(newname);
 		}
-#ifdef K
-		/* Property Dialog of the track. */
-		vik_trw_layer_propwin_update(trk);
-#endif
+
+		/* Update Track Profile dialog of the track. TODO: we need to update Track Property dialog as well. */
+		track_profile_dialog_update(trk);
 
 		this->tree_view->set_name(index, newname);
 		this->tree_view->sort_children(this->tracks_node, this->track_sort_order);

@@ -2704,11 +2704,7 @@ QWidget * TrackProfileDialog::create_graph_page(Viewport * viewport,
 
 
 
-void SlavGPS::vik_trw_layer_propwin_run(Window * parent,
-					LayerTRW * layer,
-					Track * trk,
-					LayersPanel * panel,
-					Viewport * viewport)
+void SlavGPS::track_profile_dialog(Window * parent, LayerTRW * layer, Track * trk, LayersPanel * panel, Viewport * viewport)
 {
 	TrackProfileDialog dialog(QString("Track Profile"), layer, trk, panel, viewport, parent);
 	dialog.exec();
@@ -2932,10 +2928,10 @@ TrackProfileDialog::TrackProfileDialog(QString const & title, LayerTRW * a_layer
 
 
 /**
- * Update this property dialog
+ * Update this profile dialog
  * e.g. if the track has been renamed.
  */
-void SlavGPS::vik_trw_layer_propwin_update(Track * trk)
+void SlavGPS::track_profile_dialog_update(Track * trk)
 {
 	/* If not displayed do nothing. */
 	if (!trk->property_dialog) {

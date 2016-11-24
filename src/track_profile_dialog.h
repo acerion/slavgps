@@ -16,10 +16,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
-#ifndef _SG_LAYER_TRW_PROPWIN_H_
-#define _SG_LAYER_TRW_PROPWIN_H_
+#ifndef _SG_TRACK_PROFILE_DIALOG_H_
+#define _SG_TRACK_PROFILE_DIALOG_H_
 
 
 
@@ -280,16 +279,10 @@ namespace SlavGPS {
 
 
 
-	void vik_trw_layer_propwin_run(Window * parent,
-				       LayerTRW * layer,
-				       Track * trk,
-				       LayersPanel * panel,
-				       Viewport * viewport);
+	void track_profile_dialog(Window * parent, LayerTRW * layer, Track * trk, LayersPanel * panel, Viewport * viewport);
 
-	/**
-	 * Update this property dialog e.g. if the track has been renamed
-	 */
-	void vik_trw_layer_propwin_update(Track * trk);
+	/* Update this profile dialog e.g. if the track has been renamed. */
+	void track_profile_dialog_update(Track * trk);
 
 
 
@@ -299,4 +292,4 @@ namespace SlavGPS {
 
 
 
-#endif /* #ifndef _SG_LAYER_TRW_PROPWIN_H_ */
+#endif /* #ifndef _SG_TRACK_PROFILE_DIALOG_H_ */
