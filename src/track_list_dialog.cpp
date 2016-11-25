@@ -48,6 +48,22 @@ using namespace SlavGPS;
 #define TRACK_LIST_DATE_FORMAT "%Y-%m-%d %H:%M"
 
 
+enum {
+	LAYER_NAME_COLUMN,
+	TRACK_NAME_COLUMN,
+	DATE_COLUMN,
+	VISIBLE_COLUMN,
+	COMMENT_COLUMN,
+	LENGTH_COLUMN,
+	DURATION_COLUMN,
+	AVERAGE_SPEED_COLUMN,
+	MAXIMUM_SPEED_COLUMN,
+	MAXIMUM_HEIGHT_COLUMN,
+	LAYER_POINTER_COLUMN,
+	TRACK_POINTER_COLUMN,
+};
+
+
 
 
 /**
@@ -648,147 +664,159 @@ static GtkTreeViewColumn * my_new_column_text(const char * title, GtkCellRendere
  * Create a table of tracks with corresponding track information
  * This table does not support being actively updated
  */
-static void vik_trw_layer_track_list_internal(GtkWidget * dialog,
-					      std::list<track_layer_t *> * tracks_and_layers,
-					      bool show_layer_names)
+void TrackListDialog::build_model(bool hide_layer_names)
 {
-	if (!tracks_and_layers || tracks_and_layers->empty()) {
+	if (!this->tracks_and_layers || this->tracks_and_layers->empty()) {
 		return;
 	}
-#ifdef K
 
-	// It's simple storing the double values in the tree store as the sort works automatically
-	// Then apply specific cell data formatting(rather default double is to 6 decimal places!)
-	GtkTreeStore *store = gtk_tree_store_new(TRK_LIST_COLS,
-						 G_TYPE_STRING,    // 0: Layer Name
-						 G_TYPE_STRING,    // 1: Track Name
-						 G_TYPE_STRING,    // 2: Date
-						 G_TYPE_BOOLEAN,   // 3: Visible
-						 G_TYPE_DOUBLE,    // 4: Distance
-						 G_TYPE_UINT,      // 5: Length in time
-						 G_TYPE_DOUBLE,    // 6: Av. Speed
-						 G_TYPE_DOUBLE,    // 7: Max Speed
-						 G_TYPE_INT,       // 8: Max Height
-						 G_TYPE_POINTER,   // 9: TrackWaypoint Layer pointer
-						 G_TYPE_POINTER);  // 10: Track pointer
-
-	//gtk_tree_selection_set_select_function(gtk_tree_view_get_selection (GTK_TREE_VIEW(vt)), vik_treeview_selection_filter, vt, NULL);
-
-	DistanceUnit distance_unit = a_vik_get_units_distance();
+	DistanceUnit distance_units = a_vik_get_units_distance();
 	SpeedUnit speed_units = a_vik_get_units_speed();
 	HeightUnit height_units = a_vik_get_units_height();
 
-	//GList *gl = get_tracks_and_layers_cb(vl, user_data);
-	//g_list_foreach (tracks_and_layers, (GFunc) trw_layer_track_list_add, store);
-	char *date_format = NULL;
-	if (!a_settings_get_string(VIK_SETTINGS_LIST_DATE_FORMAT, &date_format)) {
+
+	this->model = new QStandardItemModel();
+	this->model->setHorizontalHeaderItem(LAYER_NAME_COLUMN, new QStandardItem("Layer"));
+	this->model->setHorizontalHeaderItem(TRACK_NAME_COLUMN, new QStandardItem("Track Name")); /* TODO: add sorting. */
+	this->model->setHorizontalHeaderItem(DATE_COLUMN, new QStandardItem("Date"));
+	this->model->setHorizontalHeaderItem(VISIBLE_COLUMN, new QStandardItem("Visible"));
+	this->model->setHorizontalHeaderItem(COMMENT_COLUMN, new QStandardItem("Comment"));
+
+	if (distance_units == DistanceUnit::MILES) {
+		this->model->setHorizontalHeaderItem(LENGTH_COLUMN, new QStandardItem("Length\n(miles)"));
+	} else if (distance_units == DistanceUnit::NAUTICAL_MILES) {
+		this->model->setHorizontalHeaderItem(LENGTH_COLUMN, new QStandardItem("Length\n(nautical miles)"));
+	} else {
+		this->model->setHorizontalHeaderItem(LENGTH_COLUMN, new QStandardItem("Length\n(km)"));
+	}
+
+	this->model->setHorizontalHeaderItem(DURATION_COLUMN, new QStandardItem("Duration\n(minutes)"));
+
+	char * speed_units_string = get_speed_unit_string(speed_units);
+	this->model->setHorizontalHeaderItem(AVERAGE_SPEED_COLUMN, new QStandardItem(QString("Average Speed\n(%1)").arg(speed_units_string))); // format_1f_cell_data_func()  Apply own formatting of the data
+	this->model->setHorizontalHeaderItem(MAXIMUM_SPEED_COLUMN, new QStandardItem(QString("Maximum Speed\n(%1)").arg(speed_units_string))); // format_1f_cell_data_func()  Apply own formatting of the data
+	free(speed_units_string);
+
+	if (height_units == HeightUnit::FEET) {
+		this->model->setHorizontalHeaderItem(MAXIMUM_HEIGHT_COLUMN, new QStandardItem("Maximum Height\n(Feet)"));
+	} else {
+		this->model->setHorizontalHeaderItem(MAXIMUM_HEIGHT_COLUMN, new QStandardItem("Maximum Height\n(Metres)"));
+	}
+
+	this->model->setHorizontalHeaderItem(LAYER_POINTER_COLUMN, new QStandardItem("Layer Pointer"));
+	this->model->setHorizontalHeaderItem(TRACK_POINTER_COLUMN, new QStandardItem("Track Pointer"));
+
+
+	this->view = new QTableView();
+	this->view->horizontalHeader()->setStretchLastSection(false);
+	this->view->verticalHeader()->setVisible(false);
+	this->view->setWordWrap(false);
+	this->view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+	this->view->setTextElideMode(Qt::ElideRight);
+	this->view->setSelectionMode(QAbstractItemView::ExtendedSelection);
+	this->view->setShowGrid(false);
+	this->view->setModel(this->model);
+	this->view->show();
+	this->view->setVisible(false);
+	this->view->resizeRowsToContents();
+	this->view->resizeColumnsToContents();
+	this->view->setVisible(true);
+
+
+	this->view->horizontalHeader()->setSectionHidden(LAYER_NAME_COLUMN, hide_layer_names);
+	this->view->horizontalHeader()->setSectionResizeMode(LAYER_NAME_COLUMN, QHeaderView::Interactive);
+
+	this->view->horizontalHeader()->setSectionHidden(TRACK_NAME_COLUMN, false);
+	this->view->horizontalHeader()->setSectionResizeMode(TRACK_NAME_COLUMN, QHeaderView::Interactive);
+
+	this->view->horizontalHeader()->setSectionHidden(DATE_COLUMN, false);
+	this->view->horizontalHeader()->setSectionResizeMode(DATE_COLUMN, QHeaderView::ResizeToContents);
+
+	this->view->horizontalHeader()->setSectionHidden(VISIBLE_COLUMN, false);
+	this->view->horizontalHeader()->setSectionResizeMode(VISIBLE_COLUMN, QHeaderView::ResizeToContents);
+
+	this->view->horizontalHeader()->setSectionHidden(COMMENT_COLUMN, false);
+	this->view->horizontalHeader()->setSectionResizeMode(COMMENT_COLUMN, QHeaderView::Stretch);
+
+	this->view->horizontalHeader()->setSectionHidden(LENGTH_COLUMN, false);
+	this->view->horizontalHeader()->setSectionResizeMode(LENGTH_COLUMN, QHeaderView::ResizeToContents);
+
+	this->view->horizontalHeader()->setSectionHidden(DURATION_COLUMN, false);
+	this->view->horizontalHeader()->setSectionResizeMode(DURATION_COLUMN, QHeaderView::ResizeToContents);
+
+	this->view->horizontalHeader()->setSectionHidden(AVERAGE_SPEED_COLUMN, false);
+	this->view->horizontalHeader()->setSectionResizeMode(AVERAGE_SPEED_COLUMN, QHeaderView::ResizeToContents);
+
+	this->view->horizontalHeader()->setSectionHidden(MAXIMUM_SPEED_COLUMN, false);
+	this->view->horizontalHeader()->setSectionResizeMode(MAXIMUM_SPEED_COLUMN, QHeaderView::ResizeToContents);
+
+	this->view->horizontalHeader()->setSectionHidden(MAXIMUM_HEIGHT_COLUMN, false);
+	this->view->horizontalHeader()->setSectionResizeMode(MAXIMUM_HEIGHT_COLUMN, QHeaderView::ResizeToContents);
+
+	this->view->horizontalHeader()->setSectionHidden(LAYER_POINTER_COLUMN, true);
+	this->view->horizontalHeader()->setSectionHidden(TRACK_POINTER_COLUMN, true);
+
+
+	this->vbox->addWidget(this->view);
+	this->vbox->addWidget(this->button_box);
+
+	QLayout * old = this->layout();
+	delete old;
+	this->setLayout(this->vbox);
+
+	connect(this->button_box, SIGNAL(accepted()), this, SLOT(accept()));
+
+
+
+	char * date_format = NULL;
+	if (
+#ifdef K
+	    !a_settings_get_string(VIK_SETTINGS_LIST_DATE_FORMAT, &date_format)
+#else
+	    false
+#endif
+	    ) {
 		date_format = g_strdup(TRACK_LIST_DATE_FORMAT);
 	}
 
 	for (auto iter = tracks_and_layers->begin(); iter != tracks_and_layers->end(); iter++) {
-		trw_layer_track_list_add(*iter, store, distance_unit, speed_units, height_units, date_format);
+#ifdef K
+		this->add((*iter)->wp, (*iter)->trw, height_units, date_format);
+
+		trw_layer_track_list_add(*iter, store, distance_units, speed_units, height_units, date_format);
+#endif
 	}
 	free(date_format);
 
-	GtkWidget * view = gtk_tree_view_new();
-	GtkCellRenderer *renderer = gtk_cell_renderer_text_new();
-	g_object_set(G_OBJECT (renderer),
-		     "xalign", 0.0,
-		     "ellipsize", PANGO_ELLIPSIZE_END,
-		     NULL);
-
-	GtkTreeViewColumn * column;
-	GtkTreeViewColumn * sort_by_column;
-
-	int column_runner = 0;
-	if (show_layer_names) {
-		// Insert column for the layer name when viewing multi layers
-		column = my_new_column_text(_("Layer"), renderer, view, column_runner++);
-		gtk_tree_view_column_set_expand(column, true);
-		// remember the layer column so we can sort by it later
-		sort_by_column = column;
+	/* TODO: add initial sorting by layer name or waypoint name. */
+#ifdef K
+	if (hide_layer_name) {
+		sort by waypoint name;
 	} else {
-		column_runner++;
+		sort by layer name;
 	}
-
-	column = my_new_column_text(_("Name"), renderer, view, column_runner++);
-	gtk_tree_view_column_set_expand(column, true);
-	if (!show_layer_names) {
-		// remember the name column so we can sort by it later
-		sort_by_column = column;
-	}
-
-	column = my_new_column_text(_("Date"), renderer, view, column_runner++);
-	gtk_tree_view_column_set_expand(column, true);
-
-	GtkCellRenderer *renderer_toggle = gtk_cell_renderer_toggle_new();
-	column = gtk_tree_view_column_new_with_attributes(_("Visible"), renderer_toggle, "active", column_runner, NULL);
-	gtk_tree_view_column_set_reorderable(column, true);
-	gtk_tree_view_column_set_sort_column_id(column, column_runner);
-	gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);
-	column_runner++;
-
-	switch (distance_unit) {
-	case DistanceUnit::MILES:
-		column = my_new_column_text(_("Distance\n(miles)"), renderer, view, column_runner++);
-		break;
-	default: /* kamilTODO: where NM are handled? */
-		column = my_new_column_text(_("Distance\n(km)"), renderer, view, column_runner++);
-		break;
-	}
-	// Apply own formatting of the data
-	gtk_tree_view_column_set_cell_data_func(column, renderer, format_1f_cell_data_func, KINT_TO_POINTER(column_runner-1), NULL);
-
-	(void) my_new_column_text(_("Length\n(minutes)"), renderer, view, column_runner++);
+#endif
 
 
-	char * spd_units = get_speed_unit_string(speed_units);
-
-	char * title = g_strdup_printf(_("Av. Speed\n(%s)"), spd_units);
-	column = my_new_column_text(title, renderer, view, column_runner++);
-	free(title);
-	gtk_tree_view_column_set_cell_data_func(column, renderer, format_1f_cell_data_func, KINT_TO_POINTER(column_runner-1), NULL); // Apply own formatting of the data
-
-	title = g_strdup_printf(_("Max Speed\n(%s)"), spd_units);
-	column = my_new_column_text(title, renderer, view, column_runner++);
-	gtk_tree_view_column_set_cell_data_func(column, renderer, format_1f_cell_data_func, KINT_TO_POINTER(column_runner-1), NULL); // Apply own formatting of the data
-
-	free(title);
-	free(spd_units);
-
-	if (height_units == HeightUnit::FEET) {
-		(void) my_new_column_text(_("Max Height\n(Feet)"), renderer, view, column_runner++);
+	/* TODO: add initial sorting by layer name or waypoint name. */
+#ifdef K
+	if (hide_layer_name) {
+		sort by waypoint name;
 	} else {
-		(void) my_new_column_text(_("Max Height\n(Metres)"), renderer, view, column_runner++);
+		sort by layer name;
 	}
+#endif
 
-	gtk_tree_view_set_model(GTK_TREE_VIEW(view), GTK_TREE_MODEL(store));
-	gtk_tree_selection_set_mode(gtk_tree_view_get_selection(GTK_TREE_VIEW(view)), GTK_SELECTION_MULTIPLE);
-	gtk_tree_view_set_rules_hint(GTK_TREE_VIEW(view), true);
+	this->setMinimumSize(hide_layer_names ? 500 : 700, 400);
 
-	g_object_unref(store);
 
-	GtkWidget *scrolledwindow = gtk_scrolled_window_new(NULL, NULL);
-	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolledwindow), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-	gtk_container_add(GTK_CONTAINER(scrolledwindow), view);
-
-	g_object_set(view, "has-tooltip", true, NULL);
-
+#ifdef K
 	g_signal_connect(view, "query-tooltip", G_CALLBACK (trw_layer_track_tooltip_cb), NULL);
 	//g_signal_connect (gtk_tree_view_get_selection (GTK_TREE_VIEW(view)), "changed", G_CALLBACK(trw_layer_track_select_cb), view);
-
 	g_signal_connect(view, "popup-menu", G_CALLBACK(trw_layer_track_menu_popup), tracks_and_layers);
 	g_signal_connect(view, "button-press-event", G_CALLBACK(trw_layer_track_button_pressed_cb), tracks_and_layers);
 
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), scrolledwindow, true, true, 0);
-
-	// Set ordering of the initial view by one of the name columns
 	gtk_tree_view_column_clicked(sort_by_column);
-
-	// Ensure a reasonable number of items are shown
-	//  TODO: may be save window size, column order, sorted by between invocations.
-	// Gtk too stupid to work out best size so need to tell it.
-	gtk_window_set_default_size(GTK_WINDOW(dialog), show_layer_names ? 900 : 700, 400);
 #endif
 }
 
@@ -810,49 +838,46 @@ void SlavGPS::track_list_dialog(QString const & title,
 				SublayerType sublayer_type,
 				bool show_layer_names)
 {
-#ifdef K
-	GtkWidget * dialog = gtk_dialog_new_with_buttons(title,
-							 layer->get_toolkit_window(),
-							 GTK_DIALOG_DESTROY_WITH_PARENT,
-							 GTK_STOCK_CLOSE,
-							 GTK_RESPONSE_CLOSE,
-							 NULL);
+	TrackListDialog dialog(title, layer->get_window());
 
 
-	std::list<track_layer_t *> * tracks_and_layers = NULL;
 	if (layer->type == LayerType::AGGREGATE) {
 		if (sublayer_type == SublayerType::NONE) { /* No particular sublayer type means both tracks and layers. */
-			tracks_and_layers = ((LayerAggregate *) layer)->create_tracks_and_layers_list();
+			dialog.tracks_and_layers = ((LayerAggregate *) layer)->create_tracks_and_layers_list();
 		} else {
-			tracks_and_layers = ((LayerAggregate *) layer)->create_tracks_and_layers_list(sublayer_type);
+			dialog.tracks_and_layers = ((LayerAggregate *) layer)->create_tracks_and_layers_list(sublayer_type);
 		}
 	} else if (layer->type == LayerType::TRW) {
 		if (sublayer_type == SublayerType::NONE) { /* No particular sublayer type means both tracks and layers. */
-			tracks_and_layers = ((LayerTRW *) layer)->create_tracks_and_layers_list();
+			dialog.tracks_and_layers = ((LayerTRW *) layer)->create_tracks_and_layers_list();
 		} else {
-			tracks_and_layers = ((LayerTRW *) layer)->create_tracks_and_layers_list(sublayer_type);
+			dialog.tracks_and_layers = ((LayerTRW *) layer)->create_tracks_and_layers_list(sublayer_type);
 		}
 	} else {
 		assert (0);
 	}
 
+	dialog.build_model(!show_layer_names);
+	dialog.exec();
+}
 
-	vik_trw_layer_track_list_internal(dialog, tracks_and_layers, show_layer_names);
 
-	// Use response to close the dialog with tidy up
-	g_signal_connect(G_OBJECT(dialog), "response", G_CALLBACK(track_close_cb), tracks_and_layers);
 
-	gtk_widget_show_all(dialog);
-	// Yes - set the size *AGAIN* - this time widgets are expanded nicely
-	gtk_window_resize(GTK_WINDOW(dialog), show_layer_names ? 1000 : 800, 400);
 
-	// ATM lock out on dialog run - to prevent list contents being manipulated in other parts of the GUI whilst shown here.
-	gtk_dialog_run(GTK_DIALOG (dialog));
-	// Unfortunately seems subsequently opening the Track Properties we can't interact with it until this dialog is closed
-	// Thus this dialog is then forcibly closed when opening the properties.
+TrackListDialog::TrackListDialog(QString const & title, QWidget * parent) : QDialog(parent)
+{
+	this->setWindowTitle(title);
 
-	// Occassionally the 'View' doesn't update the viewport properly
-	//  viewport center + zoom is changed but the viewport isn't updated
-	// not sure why yet..
-#endif
+	this->button_box = new QDialogButtonBox();
+	this->parent = parent;
+	this->button_box->addButton("&Close", QDialogButtonBox::ActionRole);
+	this->vbox = new QVBoxLayout;
+}
+
+
+
+
+TrackListDialog::~TrackListDialog()
+{
+	delete this->tracks_and_layers;
 }

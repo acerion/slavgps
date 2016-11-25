@@ -53,7 +53,7 @@ namespace SlavGPS {
 
 
 
-#ifdef K
+
 	class TrackListDialog : public QDialog {
 		Q_OBJECT
 	public:
@@ -64,19 +64,23 @@ namespace SlavGPS {
 		std::list<track_layer_t*> * tracks_and_layers = NULL;
 
 	private slots:
+#ifdef K
 		void track_view_cb(void);
 		// void track_select_cb(void);
 		void track_properties_cb(void);
 
 		void copy_selected_only_visible_columns_cb(void);
 		void copy_selected_with_position_cb(void);
+#endif
 
 	private:
+#ifdef K
 		void add(Track * trk, LayerTRW * trw, HeightUnit height_units, const char * date_format);
 		void contextMenuEvent(QContextMenuEvent * event);
 		void add_menu_items(QMenu & menu);
 		void add_copy_menu_items(QMenu & menu);
 		void track_select(LayerTRW * layer);
+#endif
 
 		QWidget * parent = NULL;
 		QDialogButtonBox * button_box = NULL;
@@ -94,7 +98,6 @@ namespace SlavGPS {
 			Viewport * viewport;
 		} menu_data;
 	};
-#endif
 
 
 
