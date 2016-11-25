@@ -28,7 +28,7 @@
 #include <glib/gi18n.h>
 
 #include "viking.h"
-#include "viktrwlayer_tracklist.h"
+#include "track_list_dialog.h"
 #include "track_profile_dialog.h"
 #include "clipboard.h"
 #include "settings.h"
@@ -57,8 +57,9 @@ using namespace SlavGPS;
 static void track_close_cb(GtkWidget * dialog, int resp, std::list<track_layer_t *> * tracks_and_layers)
 {
 	/* kamilTODO: should we delete tracks_and_layers here? */
-
+#ifdef K
 	gtk_widget_destroy(dialog);
+#endif
 }
 
 
@@ -79,9 +80,11 @@ static void format_1f_cell_data_func(GtkTreeViewColumn * col,
 	double value;
 	char buf[20];
 	int column = KPOINTER_TO_INT (user_data);
+#ifdef K
 	gtk_tree_model_get(model, iter, column, &value, -1);
 	snprintf(buf, sizeof(buf), "%.1f", value);
 	g_object_set(renderer, "text", buf, NULL);
+#endif
 }
 
 
@@ -109,6 +112,7 @@ static bool trw_layer_track_tooltip_cb(GtkWidget        * widget,
 {
 	GtkTreeIter iter;
 	GtkTreePath * path = NULL;
+#ifdef K
 	GtkTreeView * tree_view = GTK_TREE_VIEW (widget);
 	GtkTreeModel * model = gtk_tree_view_get_model(tree_view);
 
@@ -140,6 +144,7 @@ static bool trw_layer_track_tooltip_cb(GtkWidget        * widget,
 	gtk_tree_path_free(path);
 
 	return tooltip_set;
+#endif
 }
 
 
@@ -196,6 +201,7 @@ static void trw_layer_track_select(tracklist_data_t * values)
 	sg_uid_t uid = values->track_uid;
 
 	if (uid) {
+#ifdef K
 		GtkTreeIter *iter = NULL;
 		if (trk->is_route) {
 			iter = trw->get_routes_iters().at(uid);
@@ -206,6 +212,7 @@ static void trw_layer_track_select(tracklist_data_t * values)
 		if (iter) {
 			trw->tree_view->select_and_expose(iter);
 		}
+#endif
 	}
 }
 
@@ -218,6 +225,7 @@ static void trw_layer_track_stats_cb(tracklist_data_t * values)
 	Viewport * viewport = values->viewport;
 
 	if (trk && trk->name) {
+#ifdef K
 		// Kill off this dialog to allow interaction with properties window
 		//  since the properties also allows track manipulations it won't cause conflicts here.
 		GtkWidget * gw = gtk_widget_get_toplevel(values->gtk_tree_view);
@@ -227,6 +235,7 @@ static void trw_layer_track_stats_cb(tracklist_data_t * values)
 					trw,
 					trk,
 					true);
+#endif
 	}
 }
 
@@ -268,7 +277,7 @@ static void copy_selection(GtkTreeModel * model,
 			   void         * data)
 {
 	copy_data_t * cd = (copy_data_t *) data;
-
+#ifdef K
 	char * layername;
 	gtk_tree_model_get(model, iter, 0, &layername, -1);
 
@@ -304,6 +313,7 @@ static void copy_selection(GtkTreeModel * model,
 	free(layername);
 	free(name);
 	free(date);
+#endif
 }
 
 
@@ -311,6 +321,7 @@ static void copy_selection(GtkTreeModel * model,
 
 static void trw_layer_copy_selected(GtkWidget * tree_view)
 {
+#ifdef K
 	GtkTreeSelection * selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(tree_view));
 	// NB GTK3 has gtk_tree_view_get_n_columns() but we're GTK2 ATM
 	GList * gl = gtk_tree_view_get_columns(GTK_TREE_VIEW(tree_view));
@@ -325,6 +336,7 @@ static void trw_layer_copy_selected(GtkWidget * tree_view)
 	a_clipboard_copy(VIK_CLIPBOARD_DATA_TEXT, LayerType::AGGREGATE, SublayerType::NONE, 0, cd.str->str, NULL);
 
 	g_string_free(cd.str, true);
+#endif
 }
 
 
@@ -332,11 +344,13 @@ static void trw_layer_copy_selected(GtkWidget * tree_view)
 
 static void add_copy_menu_item(GtkMenu * menu, GtkWidget * tree_view)
 {
+#ifdef K
 	GtkWidget * item = gtk_image_menu_item_new_with_mnemonic(_("_Copy Data"));
 	gtk_image_menu_item_set_image((GtkImageMenuItem *) item, gtk_image_new_from_stock(GTK_STOCK_COPY, GTK_ICON_SIZE_MENU));
 	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(trw_layer_copy_selected), tree_view);
 	gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
 	gtk_widget_show(item);
+#endif
 }
 
 
@@ -344,6 +358,7 @@ static void add_copy_menu_item(GtkMenu * menu, GtkWidget * tree_view)
 
 static bool add_menu_items(QMenu & menu, LayerTRW * trw, Track * trk, sg_uid_t track_uid, Viewport * viewport, GtkWidget * gtk_tree_view, std::list<track_layer_t *> * tracks_and_layers)
 {
+#ifdef K
 	static tracklist_data_t values;
 
 	values.trw               = trw;
@@ -376,7 +391,7 @@ static bool add_menu_items(QMenu & menu, LayerTRW * trw, Track * trk, sg_uid_t t
 	gtk_widget_show(item);
 
 	add_copy_menu_item(menu, gtk_tree_view);
-
+#endif
 	return true;
 }
 
@@ -387,11 +402,13 @@ static bool trw_layer_track_menu_popup_multi(GtkWidget * gtk_tree_view,
 					     GdkEventButton * event,
 					     void * data)
 {
+#ifdef K
 	GtkWidget * menu = gtk_menu_new();
 
 	add_copy_menu_item(GTK_MENU(menu), gtk_tree_view);
 
 	gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL, event->button, gtk_get_current_event_time());
+#endif
 
 	return true;
 }
@@ -403,6 +420,7 @@ static bool trw_layer_track_menu_popup(GtkWidget * tree_view,
 				       GdkEventButton * event,
 				       void * tracks_and_layers)
 {
+#ifdef K
 	static GtkTreeIter iter;
 
 	// Use selected item to get a single iterator ref
@@ -466,6 +484,7 @@ static bool trw_layer_track_menu_popup(GtkWidget * tree_view,
 		gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL, event->button, gtk_get_current_event_time());
 		return true;
 	}
+#endif
 	return false;
 }
 
@@ -476,6 +495,7 @@ static bool trw_layer_track_button_pressed_cb(GtkWidget * tree_view,
 					      GdkEventButton * event,
 					      void * tracks_and_layers)
 {
+#ifdef K
 	// Only on right clicks...
 	if (!(event->type == GDK_BUTTON_PRESS && event->button == MouseButton::RIGHT)) {
 		return false;
@@ -497,6 +517,7 @@ static bool trw_layer_track_button_pressed_cb(GtkWidget * tree_view,
 		}
 	}
 	return trw_layer_track_menu_popup(tree_view, event, tracks_and_layers);
+#endif
 }
 
 
@@ -513,6 +534,7 @@ static void trw_layer_track_list_add(track_layer_t * element,
 				     HeightUnit height_units,
 				     const char * date_format)
 {
+#ifdef K
 	GtkTreeIter t_iter;
 	Track * trk = element->trk;
 	LayerTRW * trw = element->trw;
@@ -596,6 +618,7 @@ static void trw_layer_track_list_add(track_layer_t * element,
 			   TRW_COL_NUM, trw,
 			   TRK_COL_NUM, trk,
 			   -1);
+#endif
 }
 
 
@@ -603,12 +626,14 @@ static void trw_layer_track_list_add(track_layer_t * element,
 
 static GtkTreeViewColumn * my_new_column_text(const char * title, GtkCellRenderer * renderer, GtkWidget *view, int column_runner)
 {
+#ifdef K
 	GtkTreeViewColumn * column = gtk_tree_view_column_new_with_attributes(title, renderer, "text", column_runner, NULL);
 	gtk_tree_view_column_set_sort_column_id(column, column_runner);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);
 	gtk_tree_view_column_set_reorderable(column, true);
 	gtk_tree_view_column_set_resizable(column, true);
 	return column;
+#endif
 }
 
 
@@ -630,6 +655,7 @@ static void vik_trw_layer_track_list_internal(GtkWidget * dialog,
 	if (!tracks_and_layers || tracks_and_layers->empty()) {
 		return;
 	}
+#ifdef K
 
 	// It's simple storing the double values in the tree store as the sort works automatically
 	// Then apply specific cell data formatting(rather default double is to 6 decimal places!)
@@ -763,13 +789,14 @@ static void vik_trw_layer_track_list_internal(GtkWidget * dialog,
 	//  TODO: may be save window size, column order, sorted by between invocations.
 	// Gtk too stupid to work out best size so need to tell it.
 	gtk_window_set_default_size(GTK_WINDOW(dialog), show_layer_names ? 900 : 700, 400);
+#endif
 }
 
 
 
 
 /**
- * vik_trw_layer_track_list_show_dialog:
+ * track_list_dialog:
  * @title:               The title for the dialog
  * @layer:               The #Layer passed on into get_tracks_and_layers_cb()
  * @sublayer_typea:      Sublayer type to be show in list (NONE for both TRACKS and LAYER)
@@ -778,11 +805,12 @@ static void vik_trw_layer_track_list_internal(GtkWidget * dialog,
  * Common method for showing a list of tracks with extended information
  *
  */
-void SlavGPS::vik_trw_layer_track_list_show_dialog(char * title,
-						   Layer * layer,
-						   SublayerType sublayer_type,
-						   bool show_layer_names)
+void SlavGPS::track_list_dialog(QString const & title,
+				Layer * layer,
+				SublayerType sublayer_type,
+				bool show_layer_names)
 {
+#ifdef K
 	GtkWidget * dialog = gtk_dialog_new_with_buttons(title,
 							 layer->get_toolkit_window(),
 							 GTK_DIALOG_DESTROY_WITH_PARENT,
@@ -826,4 +854,5 @@ void SlavGPS::vik_trw_layer_track_list_show_dialog(char * title,
 	// Occassionally the 'View' doesn't update the viewport properly
 	//  viewport center + zoom is changed but the viewport isn't updated
 	// not sure why yet..
+#endif
 }

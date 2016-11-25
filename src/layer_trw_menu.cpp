@@ -49,7 +49,7 @@
 #include "waypoint_properties.h"
 #include "track_profile_dialog.h"
 #include "viktrwlayer_analysis.h"
-#include "viktrwlayer_tracklist.h"
+#include "track_list_dialog.h"
 #include "viktrwlayer_waypointlist.h"
 #ifdef VIK_CONFIG_GEOTAG
 #include "viktrwlayer_geotag.h"

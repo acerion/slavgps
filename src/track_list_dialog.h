@@ -16,15 +16,29 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
-#ifndef _SG_TRACK_LIST_H_
-#define _SG_TRACK_LIST_H_
+#ifndef _SG_TRACK_LIST_DIALOG_H_
+#define _SG_TRACK_LIST_DIALOG_H_
 
 
 
+
+#include <list>
+
+#include <QString>
+#include <QWidget>
+#include <QDialog>
+#include <QPushButton>
+#include <QVBoxLayout>
+#include <QDialogButtonBox>
+#include <QStandardItemModel>
+#include <QTableView>
+#include <QContextMenuEvent>
 
 #include "layer.h"
+#include "layer_trw.h"
+#include "window.h"
+
 
 
 
@@ -34,7 +48,53 @@ namespace SlavGPS {
 
 
 
-	void vik_trw_layer_track_list_show_dialog(char * title, Layer * layer, SublayerType sublayer_type, bool is_aggregate);
+	void track_list_dialog(QString const & title, Layer * layer, SublayerType sublayer_type, bool is_aggregate);
+
+
+
+
+#ifdef K
+	class TrackListDialog : public QDialog {
+		Q_OBJECT
+	public:
+		TrackListDialog(QString const & title, QWidget * parent = NULL);
+		~TrackListDialog();
+		void build_model(bool hide_layer_names);
+
+		std::list<track_layer_t*> * tracks_and_layers = NULL;
+
+	private slots:
+		void track_view_cb(void);
+		// void track_select_cb(void);
+		void track_properties_cb(void);
+
+		void copy_selected_only_visible_columns_cb(void);
+		void copy_selected_with_position_cb(void);
+
+	private:
+		void add(Track * trk, LayerTRW * trw, HeightUnit height_units, const char * date_format);
+		void contextMenuEvent(QContextMenuEvent * event);
+		void add_menu_items(QMenu & menu);
+		void add_copy_menu_items(QMenu & menu);
+		void track_select(LayerTRW * layer);
+
+		QWidget * parent = NULL;
+		QDialogButtonBox * button_box = NULL;
+		QVBoxLayout * vbox = NULL;
+
+		QStandardItemModel * model = NULL;
+		QTableView * view = NULL;
+
+
+
+		struct {
+			LayerTRW * trw;
+			Waypoint * waypoint;
+			sg_uid_t track_uid;
+			Viewport * viewport;
+		} menu_data;
+	};
+#endif
 
 
 
@@ -44,4 +104,4 @@ namespace SlavGPS {
 
 
 
-#endif /* #ifndef _SG_TRACK_LIST_H_ */
+#endif /* #ifndef _SG_TRACK_LIST_DIALOG_H_ */

@@ -28,11 +28,11 @@
 #include "layer_aggregate.h"
 #include "layers_panel.h"
 #include "waypoint_list.h"
+#include "track_list_dialog.h"
 #include "util.h"
 #ifdef K
 #include "vikgpslayer.h"
 #include "viktrwlayer_analysis.h"
-#include "viktrwlayer_tracklist.h"
 #include "dialog.h"
 #endif
 #include "icons/icons.h"
@@ -567,9 +567,7 @@ std::list<track_layer_t *> * LayerAggregate::create_tracks_and_layers_list()
 void LayerAggregate::track_list_dialog_cb(void) /* Slot. */
 {
 	QString title = QString(_("%1: Track and Route List")).arg(QString(this->name));
-#ifdef K
-	vik_trw_layer_track_list_show_dialog(title, this, SublayerType::NONE, true);
-#endif
+	track_list_dialog(title, this, SublayerType::NONE, true);
 }
 
 

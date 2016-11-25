@@ -50,13 +50,13 @@
 #include "waypoint_properties.h"
 #include "waypoint_list.h"
 #include "track_profile_dialog.h"
+#include "track_list_dialog.h"
 
 #ifdef K
 #include "vikmapslayer.h"
 #include "vikgpslayer.h"
 #include "viktrwlayer_export.h"
 #include "viktrwlayer_analysis.h"
-#include "viktrwlayer_tracklist.h"
 #ifdef VIK_CONFIG_GEOTAG
 #include "viktrwlayer_geotag.h"
 #include "geotag_exif.h"
@@ -7593,16 +7593,13 @@ std::list<track_layer_t *> * LayerTRW::create_tracks_and_layers_list()
 
 void LayerTRW::track_list_dialog_single_cb(void) /* Slot. */
 {
-	char * title = NULL;
+	QString title;
 	if (this->menu_data->sublayer_type == SublayerType::TRACKS) {
-		title = g_strdup_printf(_("%s: Track List"), this->name);
+		title = QString(_("%1: Track List")).arg(this->name);
 	} else {
-		title = g_strdup_printf(_("%s: Route List"), this->name);
+		title = QString(_("%1: Route List")).arg(this->name);
 	}
-#ifdef K
-	vik_trw_layer_track_list_show_dialog(title, this, this->menu_data->sublayer_type, false);
-#endif
-	free(title);
+	track_list_dialog(title, this, this->menu_data->sublayer_type, false);
 }
 
 
@@ -7610,11 +7607,8 @@ void LayerTRW::track_list_dialog_single_cb(void) /* Slot. */
 
 void LayerTRW::track_list_dialog_cb(void)
 {
-	char *title = g_strdup_printf(_("%s: Track and Route List"), this->name);
-#ifdef K
-	vik_trw_layer_track_list_show_dialog(title, this, SublayerType::NONE, false);
-#endif
-	free(title);
+	QString title = QString(_("%1: Track and Route List")).arg(this->name);
+	track_list_dialog(title, this, SublayerType::NONE, false);
 }
 
 

@@ -28,6 +28,7 @@ SOURCES += main.cpp \
     track.cpp \
     track_properties_dialog.cpp \
     track_profile_dialog.cpp \
+    track_list_dialog.cpp \
     trackpoint_properties.cpp \
     waypoint.cpp \
     waypoint_properties.cpp \
@@ -83,6 +84,7 @@ HEADERS += window.h \
     track.h \
     track_properties_dialog.h \
     track_profile_dialog.h \
+    track_list_dialog.h \
     trackpoint_properties.h \
     waypoint.h \
     waypoint_properties.h \
