@@ -686,7 +686,7 @@ void WaypointListDialog::build_model(bool hide_layer_names)
 	}
 #endif
 
-	this->setMinimumSize(hide_layer_names ? 700 : 500, 400);
+	this->setMinimumSize(hide_layer_names ? 500 : 700, 400);
 }
 
 
