@@ -42,14 +42,12 @@
 
 
 
-
 namespace SlavGPS {
 
 
 
 
 	void track_list_dialog(QString const & title, Layer * layer, SublayerType sublayer_type, bool is_aggregate);
-
 
 
 
@@ -64,23 +62,17 @@ namespace SlavGPS {
 		std::list<track_layer_t*> * tracks_and_layers = NULL;
 
 	private slots:
-#ifdef K
+		void copy_selected_cb(void);
 		void track_view_cb(void);
-		// void track_select_cb(void);
-		void track_properties_cb(void);
-
-		void copy_selected_only_visible_columns_cb(void);
-		void copy_selected_with_position_cb(void);
-#endif
+		void track_stats_cb(void);
 
 	private:
-#ifdef K
-		void add(Track * trk, LayerTRW * trw, HeightUnit height_units, const char * date_format);
+		void add(Track * trk, LayerTRW * trw, DistanceUnit distance_unit, SpeedUnit speed_units, HeightUnit height_units, char const * date_format);
 		void contextMenuEvent(QContextMenuEvent * event);
 		void add_menu_items(QMenu & menu);
-		void add_copy_menu_items(QMenu & menu);
-		void track_select(LayerTRW * layer);
-#endif
+		void add_copy_menu_item(QMenu & menu);
+
+		void track_select(LayerTRW * trw, Track * trk, sg_uid_t trk_uid);
 
 		QWidget * parent = NULL;
 		QDialogButtonBox * button_box = NULL;
@@ -93,8 +85,8 @@ namespace SlavGPS {
 
 		struct {
 			LayerTRW * trw;
-			Waypoint * waypoint;
-			sg_uid_t track_uid;
+			Track * trk;
+			sg_uid_t trk_uid;
 			Viewport * viewport;
 		} menu_data;
 	};

@@ -16,25 +16,26 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
-#include <math.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
+
+
+
+
+#include <cmath>
+#include <cstring>
+#include <cstdlib>
+#include <cstdio>
 #include <cassert>
-#include <glib.h>
-#include <glib/gstdio.h>
-#include <glib/gi18n.h>
 
 #include "viking.h"
 #include "track_list_dialog.h"
-#include "track_profile_dialog.h"
+#include "track_properties_dialog.h"
 #include "clipboard.h"
 #include "settings.h"
 #include "globals.h"
 #include "window.h"
 #include "vikutils.h"
+#include "util.h"
 
 
 
@@ -44,8 +45,10 @@ using namespace SlavGPS;
 
 
 
-// Long formatted date+basic time - listing this way ensures the string comparison sort works - so no local type format %x or %c here!
+/* Long formatted date+basic time - listing this way ensures the string comparison sort works - so no local type format %x or %c here! */
 #define TRACK_LIST_DATE_FORMAT "%Y-%m-%d %H:%M"
+
+
 
 
 enum {
@@ -66,26 +69,9 @@ enum {
 
 
 
-/**
- * track_close_cb:
- *
- */
-static void track_close_cb(GtkWidget * dialog, int resp, std::list<track_layer_t *> * tracks_and_layers)
-{
-	/* kamilTODO: should we delete tracks_and_layers here? */
 #ifdef K
-	gtk_widget_destroy(dialog);
-#endif
-}
-
-
-
-
 /**
- * format_1f_cell_data_func:
- *
  * General purpose column double formatting
- *
  */
 static void format_1f_cell_data_func(GtkTreeViewColumn * col,
 				     GtkCellRenderer   * renderer,
@@ -96,72 +82,17 @@ static void format_1f_cell_data_func(GtkTreeViewColumn * col,
 	double value;
 	char buf[20];
 	int column = KPOINTER_TO_INT (user_data);
-#ifdef K
+
 	gtk_tree_model_get(model, iter, column, &value, -1);
 	snprintf(buf, sizeof(buf), "%.1f", value);
 	g_object_set(renderer, "text", buf, NULL);
-#endif
 }
+#endif
 
 
 
 
 #define TRK_LIST_COLS 11
-#define TRK_COL_NUM TRK_LIST_COLS-1
-#define TRW_COL_NUM TRK_COL_NUM-1
-
-
-
-
-/*
- * trw_layer_track_tooltip_cb:
- *
- * Show a tooltip when the mouse is over a track list entry.
- * The tooltip contains the comment or description.
- */
-static bool trw_layer_track_tooltip_cb(GtkWidget        * widget,
-				       int                x,
-				       int                y,
-				       bool               keyboard_tip,
-				       GtkTooltip       * tooltip,
-				       void             * data)
-{
-	GtkTreeIter iter;
-	GtkTreePath * path = NULL;
-#ifdef K
-	GtkTreeView * tree_view = GTK_TREE_VIEW (widget);
-	GtkTreeModel * model = gtk_tree_view_get_model(tree_view);
-
-	if (!gtk_tree_view_get_tooltip_context(tree_view, &x, &y,
-					       keyboard_tip,
-					       &model, &path, &iter)) {
-		return false;
-	}
-
-	Track * trk;
-	gtk_tree_model_get(model, &iter, TRK_COL_NUM, &trk, -1);
-	if (!trk) {
-		return false;
-	}
-
-	bool tooltip_set = true;
-	if (trk->comment) {
-		gtk_tooltip_set_text(tooltip, trk->comment);
-	} else if (trk->description) {
-		gtk_tooltip_set_text(tooltip, trk->description);
-	} else {
-		tooltip_set = false;
-	}
-
-	if (tooltip_set) {
-		gtk_tree_view_set_tooltip_row(tree_view, tooltip, path);
-	}
-
-	gtk_tree_path_free(path);
-
-	return tooltip_set;
-#endif
-}
 
 
 
@@ -178,13 +109,13 @@ static void trw_layer_track_select_cb(GtkTreeSelection * selection, void * data)
 	GtkTreeModel * model = gtk_tree_view_get_model(tree_view);
 
 	Track * trk;
-	gtk_tree_model_get(model, &iter, TRK_COL_NUM, &trk, -1);
+	gtk_tree_model_get(model, &iter, TRACK_POINTER_COLUMN, &trk, -1);
 	if (!trk) {
 		return;
 	}
 
 	LayerTRW * trw;
-	gtk_tree_model_get(model, &iter, TRW_COL_NUM, &trw, -1);
+	gtk_tree_model_get(model, &iter, LAYER_POINTER_COLUMN, &trw, -1);
 	if (trw->type != LayerType::TRW) {
 		return;
 	}
@@ -208,61 +139,55 @@ typedef struct {
 
 
 
-// Instead of hooking automatically on treeview item selection
-// This is performed on demand via the specific menu request
-static void trw_layer_track_select(tracklist_data_t * values)
+/* Instead of hooking automatically on treeview item selection,
+   this is performed on demand via the specific menu request. */
+void TrackListDialog::track_select(LayerTRW * trw, Track * trk, sg_uid_t trk_uid)
 {
-	LayerTRW * trw = values->trw;
-	Track * trk = values->track;
-	sg_uid_t uid = values->track_uid;
-
-	if (uid) {
-#ifdef K
-		GtkTreeIter *iter = NULL;
+	if (trk_uid) {
+		TreeIndex * index = NULL;
 		if (trk->is_route) {
-			iter = trw->get_routes_iters().at(uid);
+			index = trw->get_routes_iters().at(trk_uid);
 		} else {
-			iter = trw->get_tracks_iters().at(uid);
+			index = trw->get_tracks_iters().at(trk_uid);
 		}
 
-		if (iter) {
-			trw->tree_view->select_and_expose(iter);
+		if (index) {
+			trw->tree_view->select_and_expose(index);
 		}
-#endif
 	}
 }
 
 
 
-static void trw_layer_track_stats_cb(tracklist_data_t * values)
+
+void TrackListDialog::track_stats_cb(void)
 {
-	LayerTRW * trw = values->trw;
-	Track * trk = values->track;
-	Viewport * viewport = values->viewport;
+	LayerTRW * trw = this->menu_data.trw;
+	Track * trk = this->menu_data.trk;
+	Viewport * viewport = this->menu_data.viewport;
 
 	if (trk && trk->name) {
-#ifdef K
-		// Kill off this dialog to allow interaction with properties window
-		//  since the properties also allows track manipulations it won't cause conflicts here.
-		GtkWidget * gw = gtk_widget_get_toplevel(values->gtk_tree_view);
-		track_close_cb(gw, 0, values->tracks_and_layers);
 
+		/* Kill off this dialog to allow interaction with properties window.
+		   Since the properties also allows track manipulations it won't cause conflicts here. */
+		this->accept();
 		track_properties_dialog(trw->get_window(),
 					trw,
 					trk,
 					true);
-#endif
 	}
 }
 
 
 
 
-static void trw_layer_track_view_cb(tracklist_data_t * values)
+void TrackListDialog::track_view_cb(void)
 {
-	LayerTRW * trw = values->trw;
-	Track * trk = values->track;
-	Viewport * viewport = values->viewport;
+	LayerTRW * trw = this->menu_data.trw;
+	Track * trk = this->menu_data.trk;
+	sg_uid_t uid = this->menu_data.trk_uid;
+	Viewport * viewport = this->menu_data.viewport;
+
 
 	// TODO create common function to convert between LatLon[2] and LatLonBBox or even change LatLonBBox to be 2 LatLons!
 	struct LatLon maxmin[2];
@@ -273,12 +198,13 @@ static void trw_layer_track_view_cb(tracklist_data_t * values)
 
 	trw->zoom_to_show_latlons(viewport, maxmin);
 
-	trw_layer_track_select(values);
+	this->track_select(trw, trk, uid);
 }
 
 
 
 
+#ifdef K
 typedef struct {
 	bool has_layer_names;
 	GString * str;
@@ -293,7 +219,7 @@ static void copy_selection(GtkTreeModel * model,
 			   void         * data)
 {
 	copy_data_t * cd = (copy_data_t *) data;
-#ifdef K
+
 	char * layername;
 	gtk_tree_model_get(model, iter, 0, &layername, -1);
 
@@ -329,13 +255,13 @@ static void copy_selection(GtkTreeModel * model,
 	free(layername);
 	free(name);
 	free(date);
-#endif
 }
+#endif
 
 
 
 
-static void trw_layer_copy_selected(GtkWidget * tree_view)
+void TrackListDialog::copy_selected_cb(void)
 {
 #ifdef K
 	GtkTreeSelection * selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(tree_view));
@@ -358,170 +284,132 @@ static void trw_layer_copy_selected(GtkWidget * tree_view)
 
 
 
-static void add_copy_menu_item(GtkMenu * menu, GtkWidget * tree_view)
+void TrackListDialog::add_copy_menu_item(QMenu & menu)
 {
-#ifdef K
-	GtkWidget * item = gtk_image_menu_item_new_with_mnemonic(_("_Copy Data"));
-	gtk_image_menu_item_set_image((GtkImageMenuItem *) item, gtk_image_new_from_stock(GTK_STOCK_COPY, GTK_ICON_SIZE_MENU));
-	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(trw_layer_copy_selected), tree_view);
-	gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-	gtk_widget_show(item);
-#endif
+	QAction * qa = menu.addAction(QIcon::fromTheme("edit-copy"), QString(_("&Copy Data")));
+	connect(qa, SIGNAL (triggered(bool)), this, SLOT (copy_selected_cb()));
 }
 
 
 
 
-static bool add_menu_items(QMenu & menu, LayerTRW * trw, Track * trk, sg_uid_t track_uid, Viewport * viewport, GtkWidget * gtk_tree_view, std::list<track_layer_t *> * tracks_and_layers)
+void TrackListDialog::add_menu_items(QMenu & menu)
 {
 #ifdef K
-	static tracklist_data_t values;
-
-	values.trw               = trw;
-	values.track             = trk;
-	values.track_uid         = track_uid;
-	values.viewport          = viewport;
-	values.gtk_tree_view     = gtk_tree_view;
-	values.tracks_and_layers = tracks_and_layers;
-
-	GtkWidget *item;
-
+	/* ATM view auto selects, so don't bother with separate select menu entry. */
 	/*
 	item = gtk_image_menu_item_new_with_mnemonic(_("_Select"));
 	gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_FIND, GTK_ICON_SIZE_MENU));
-	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(trw_layer_track_select), values);
+	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(track_select), values);
 	gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
 	gtk_widget_show(item);
 	*/
-
-	// ATM view auto selects, so don't bother with separate select menu entry
-	item = gtk_image_menu_item_new_with_mnemonic(_("_View"));
-	gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock(GTK_STOCK_ZOOM_FIT, GTK_ICON_SIZE_MENU));
-	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK (trw_layer_track_view_cb), &values);
-	gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-	gtk_widget_show(item);
-
-	item = gtk_menu_item_new_with_mnemonic(_("_Statistics"));
-	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK (trw_layer_track_stats_cb), &values);
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-	gtk_widget_show(item);
-
-	add_copy_menu_item(menu, gtk_tree_view);
 #endif
-	return true;
+
+	QAction * qa = NULL;
+
+	qa = menu.addAction(QIcon::fromTheme("zoom-fit-best"), QString(_("&View")));
+	connect(qa, SIGNAL (triggered(bool)), this, SLOT (track_view_cb()));
+
+	qa = menu.addAction(QString(_("&Statistics")));
+	connect(qa, SIGNAL (triggered(bool)), this, SLOT (track_stats_cb()));
+
+	this->add_copy_menu_item(menu);
+
+	return;
 }
 
 
 
 
-static bool trw_layer_track_menu_popup_multi(GtkWidget * gtk_tree_view,
-					     GdkEventButton * event,
-					     void * data)
+void TrackListDialog::contextMenuEvent(QContextMenuEvent * event)
 {
-#ifdef K
-	GtkWidget * menu = gtk_menu_new();
+	QPoint orig = event->pos();
+	QPoint v = this->view->pos();
+	QPoint t = this->view->viewport()->pos();
 
-	add_copy_menu_item(GTK_MENU(menu), gtk_tree_view);
+	orig.setX(orig.x() - v.x() - t.x());
+	orig.setY(orig.y() - v.y() - t.y());
 
-	gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL, event->button, gtk_get_current_event_time());
-#endif
-
-	return true;
-}
-
-
-
-
-static bool trw_layer_track_menu_popup(GtkWidget * tree_view,
-				       GdkEventButton * event,
-				       void * tracks_and_layers)
-{
-#ifdef K
-	static GtkTreeIter iter;
-
-	// Use selected item to get a single iterator ref
-	// This relies on an row being selected as part of the right click
-	GtkTreeSelection *selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(tree_view));
-	if (gtk_tree_selection_count_selected_rows(selection) != 1) {
-		return trw_layer_track_menu_popup_multi(tree_view, event, tracks_and_layers);
-	}
-
-	GtkTreePath * path;
-	GtkTreeModel * model = gtk_tree_view_get_model(GTK_TREE_VIEW(tree_view));
-
-	// All this just to get the iter
-	if (gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(tree_view),
-					  (int) event->x,
-					  (int) event->y,
-					  &path, NULL, NULL, NULL)) {
-		gtk_tree_model_get_iter_from_string(model, &iter, gtk_tree_path_to_string (path));
-		gtk_tree_path_free(path);
+	QPoint point = orig;
+	QModelIndex index = this->view->indexAt(point);
+	if (!index.isValid()) {
+		qDebug() << "II: Track List: context menu event: INvalid index";
+		return;
 	} else {
-		return false;
+		qDebug() << "II: Track List: context menu event: on index.row =" << index.row() << "index.column =" << index.column();
 	}
 
-	Track * trk;
-	gtk_tree_model_get(model, &iter, TRK_COL_NUM, &trk, -1);
-	if (!trk) {
-		return false;
-	}
 
-	LayerTRW * trw;
-	gtk_tree_model_get(model, &iter, TRW_COL_NUM, &trw, -1);
+	QStandardItem * parent_item = this->model->invisibleRootItem();
 
+
+	QStandardItem * child = parent_item->child(index.row(), TRACK_NAME_COLUMN);
+	qDebug() << "II: Track List: selected track" << child->text();
+
+	child = parent_item->child(index.row(), TRACK_POINTER_COLUMN);
+	QVariant variant = child->data(RoleLayerData);
+	Track * trk = (Track *) variant.toULongLong();
+
+
+	child = parent_item->child(index.row(), LAYER_POINTER_COLUMN);
+	variant = child->data(RoleLayerData);
+	LayerTRW * trw = (LayerTRW *) variant.value<Layer *>();
 	if (trw->type != LayerType::TRW) {
-		return false;
+		qDebug() << "EE: Track List: layer type is not TRW:" << (int) trw->type;
+		return;
 	}
 
-	sg_uid_t uid = 0;;
+	sg_uid_t trk_uid = 0;
 	if (trk->is_route) {
-		uid = LayerTRWc::find_uid_of_track(trw->get_routes(), trk);
+		trk_uid = LayerTRWc::find_uid_of_track(trw->get_routes(), trk);
 	} else {
-		uid = LayerTRWc::find_uid_of_track(trw->get_tracks(), trk);
+		trk_uid = LayerTRWc::find_uid_of_track(trw->get_tracks(), trk);
 	}
 
-	if (uid) {
-		Viewport * viewport = trw->get_window()->get_viewport();
+	if (trk_uid) {
+		this->menu_data.trw = trw;
+		this->menu_data.trk = trk;
+		this->menu_data.trk_uid = trk_uid;
+		this->menu_data.viewport = trw->get_window()->get_viewport();
 
-		GtkWidget * menu = gtk_menu_new();
+		QMenu menu(this);
+#if 0
+		/* When multiple rows are selected, the number of applicable operation is lower. */
+		GtkTreeSelection *selection = gtk_tree_view_get_selection(GTK_TREE_VIEW (tree_view));
+		if (gtk_tree_selection_count_selected_rows (selection) != 1) {
+			this->add_copy_menu_items(QMenu & menu);
+		}
 
-		// Originally started to reuse the trw_layer menu items
-		//  however these offer too many ways to edit the track data
-		//  so without an easy way to distinguish read only operations,
-		//  create a very minimal new set of operations
-		add_menu_items(GTK_MENU(menu),
-			       trw,
-			       trk,
-			       uid,
-			       viewport,
-			       tree_view,
-			       (std::list<track_layer_t *> * ) tracks_and_layers);
-
-		gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL, event->button, gtk_get_current_event_time());
-		return true;
-	}
+		this->add_copy_menu_item(menu);
+#else
+		this->add_menu_items(menu);
 #endif
-	return false;
+		menu.exec(QCursor::pos());
+		return;
+	}
+
+	return;
 }
 
 
 
 
+#if 0
 static bool trw_layer_track_button_pressed_cb(GtkWidget * tree_view,
 					      GdkEventButton * event,
 					      void * tracks_and_layers)
 {
-#ifdef K
-	// Only on right clicks...
+	/* Only on right clicks... */
 	if (!(event->type == GDK_BUTTON_PRESS && event->button == MouseButton::RIGHT)) {
 		return false;
 	}
 
-	// ATM Force a selection...
+	/* ATM Force a selection... */
 	GtkTreeSelection * selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(tree_view));
 	if (gtk_tree_selection_count_selected_rows(selection) <= 1) {
 		GtkTreePath * path;
-		/* Get tree path for row that was clicked */
+		/* Get tree path for row that was clicked. */
 		if (gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(tree_view),
 						  (int) event->x,
 						  (int) event->y,
@@ -533,38 +421,28 @@ static bool trw_layer_track_button_pressed_cb(GtkWidget * tree_view,
 		}
 	}
 	return trw_layer_track_menu_popup(tree_view, event, tracks_and_layers);
-#endif
 }
+#endif
 
 
 
 
 /*
  * Foreach entry we copy the various individual track properties into the tree store
- *  formatting & converting the internal values into something for display
+ * formatting & converting the internal values into something for display.
  */
-static void trw_layer_track_list_add(track_layer_t * element,
-				     GtkTreeStore * store,
-				     DistanceUnit distance_unit,
-				     SpeedUnit speed_units,
-				     HeightUnit height_units,
-				     const char * date_format)
+void TrackListDialog::add(Track * trk, LayerTRW * trw, DistanceUnit distance_unit, SpeedUnit speed_units, HeightUnit height_units, char const * date_format)
 {
-#ifdef K
-	GtkTreeIter t_iter;
-	Track * trk = element->trk;
-	LayerTRW * trw = element->trw;
-
 	double trk_dist = trk->get_length();
-	// Store unit converted value
+	/* Store unit converted value. */
 	trk_dist = convert_distance_meters_to(distance_unit, trk_dist);
 
-	// Get start date
+	/* Get start date. */
 	char time_buf[32];
 	time_buf[0] = '\0';
 	if (!trk->empty()
 	    && (*trk->trackpointsB->begin())->has_timestamp) {
-
+#ifdef K
 #if GLIB_CHECK_VERSION(2,26,0)
 		GDateTime * gdt = g_date_time_new_from_unix_utc((*trk->trackpointsB->begin())->timestamp);
 		char * time = g_date_time_format(gdt, date_format);
@@ -577,17 +455,18 @@ static void trw_layer_track_list_add(track_layer_t * element,
 		g_date_strftime(time_buf, sizeof(time_buf), date_format, gdate_start);
 		g_date_free(gdate_start);
 #endif
+#endif
 	}
 
-	// NB: doesn't include aggegrate visibility
+	/* 'visible' doesn't include aggegrate visibility. */
 	bool visible = trw->visible && trk->visible;
 	visible = visible && (trk->is_route ? trw->get_routes_visibility() : trw->get_tracks_visibility());
 
-	unsigned int trk_len_time = 0; // In minutes
+	unsigned int trk_duration = 0; /* In minutes. */
 	if (!trk->empty()) {
 		time_t t1 = (*trk->trackpointsB->begin())->timestamp;
 		time_t t2 = (*std::prev(trk->trackpointsB->end()))->timestamp;
-		trk_len_time = (int) round(labs(t2 - t1) / 60.0);
+		trk_duration = (int) round(labs(t2 - t1) / 60.0);
 	}
 
 	double av_speed = trk->get_average_speed();
@@ -597,7 +476,7 @@ static void trw_layer_track_list_add(track_layer_t * element,
 	max_speed = convert_speed_mps_to(speed_units, max_speed);
 
 	double max_alt = 0.0;
-	// TODO - make this a function to get min / max values?
+	/* TODO - make this a function to get min / max values? */
 	double * altitudes = trk->make_elevation_map(500);
 	if (altitudes) {
 		max_alt = -1000;
@@ -616,54 +495,121 @@ static void trw_layer_track_list_add(track_layer_t * element,
 		max_alt = VIK_METERS_TO_FEET(max_alt);
 		break;
 	default:
-		// HeightUnit::METRES: no need to convert
+		/* HeightUnit::METRES: no need to convert. */
 		break;
 	}
 
-	gtk_tree_store_append(store, &t_iter, NULL);
-	gtk_tree_store_set(store, &t_iter,
-			   0, trw->name,
-			   1, trk->name,
-			   2, time_buf,
-			   3, visible,
-			   4, trk_dist,
-			   5, trk_len_time,
-			   6, av_speed,
-			   7, max_speed,
-			   8, (int) round(max_alt),
-			   TRW_COL_NUM, trw,
-			   TRK_COL_NUM, trk,
-			   -1);
-#endif
+	QList<QStandardItem *> items;
+	QStandardItem * item = NULL;
+	QVariant variant;
+
+	QString tooltip("");
+	if (trk->comment) {
+		tooltip = QString(trk->comment);
+	} else if (trk->description) {
+		tooltip = QString(trk->description);
+	} else {
+		;
+	}
+
+	/* TODO: add sorting by columns. Add reordering of columns. */
+
+
+	/* LAYER_NAME_COLUMN */
+	item = new QStandardItem(QString(trw->name));
+	item->setToolTip(tooltip);
+	items << item;
+
+	/* TRACK_NAME_COLUMN */
+	item = new QStandardItem(QString(trk->name));
+	item->setToolTip(tooltip);
+	items << item;
+
+	/* DATE_COLUMN */
+	item = new QStandardItem(QString(time_buf));
+	item->setToolTip(tooltip);
+	items << item;
+
+	/* VISIBLE_COLUMN */
+	item = new QStandardItem();
+	item->setToolTip(tooltip);
+	item->setCheckable(true);
+	item->setCheckState(visible ? Qt::Checked : Qt::Unchecked);
+	items << item;
+
+	/* COMMENT_COLUMN */
+	item = new QStandardItem(QString(trk->comment));
+	item->setToolTip(tooltip);
+	items << item;
+
+	/* LENGTH_COLUMN */
+	item = new QStandardItem();
+	item->setToolTip(tooltip);
+	variant = QVariant::fromValue(trk_dist);
+	item->setData(variant, Qt::DisplayRole);
+	items << item;
+
+	/* DURATION_COLUMN */
+	item = new QStandardItem();
+	item->setToolTip(tooltip);
+	variant = QVariant::fromValue(trk_duration);
+	item->setData(variant, Qt::DisplayRole);
+	items << item;
+
+	/* AVERAGE_SPEED_COLUMN */
+	item = new QStandardItem();
+	item->setToolTip(tooltip);
+	variant = QVariant::fromValue(av_speed);
+	item->setData(variant, Qt::DisplayRole);
+	items << item;
+
+	/* MAXIMUM_SPEED_COLUMN */
+	item = new QStandardItem();
+	item->setToolTip(tooltip);
+	variant = QVariant::fromValue(max_speed);
+	item->setData(variant, Qt::DisplayRole);
+	items << item;
+
+	/* MAXIMUM_HEIGHT_COLUMN */
+	item = new QStandardItem();
+	item->setToolTip(tooltip);
+	variant = QVariant::fromValue(max_alt);
+	item->setData(variant, Qt::DisplayRole);
+	items << item;
+
+	/* LAYER_POINTER_COLUMN */
+	item = new QStandardItem();
+	variant = QVariant::fromValue((Layer *) trw);
+	item->setData(variant, RoleLayerData);
+	items << item;
+
+	/* TRACK_POINTER_COLUMN */
+	item = new QStandardItem();
+	variant = QVariant::fromValue((qulonglong) trk);
+	item->setData(variant, RoleLayerData);
+	items << item;
+
+	this->model->invisibleRootItem()->appendRow(items);
 }
 
 
 
 
+#ifdef K
 static GtkTreeViewColumn * my_new_column_text(const char * title, GtkCellRenderer * renderer, GtkWidget *view, int column_runner)
 {
-#ifdef K
 	GtkTreeViewColumn * column = gtk_tree_view_column_new_with_attributes(title, renderer, "text", column_runner, NULL);
 	gtk_tree_view_column_set_sort_column_id(column, column_runner);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);
 	gtk_tree_view_column_set_reorderable(column, true);
 	gtk_tree_view_column_set_resizable(column, true);
 	return column;
-#endif
 }
+#endif
 
 
 
 
-/**
- * vik_trw_layer_track_list_internal:
- * @dialog:            The dialog to create the widgets in
- * @tracks_and_layers: The list of tracks (and it's layer) to be shown
- * @show_layer_names:  Show the layer names that each track belongs to
- *
- * Create a table of tracks with corresponding track information
- * This table does not support being actively updated
- */
 void TrackListDialog::build_model(bool hide_layer_names)
 {
 	if (!this->tracks_and_layers || this->tracks_and_layers->empty()) {
@@ -780,28 +726,14 @@ void TrackListDialog::build_model(bool hide_layer_names)
 	}
 
 	for (auto iter = tracks_and_layers->begin(); iter != tracks_and_layers->end(); iter++) {
-#ifdef K
-		this->add((*iter)->wp, (*iter)->trw, height_units, date_format);
-
-		trw_layer_track_list_add(*iter, store, distance_units, speed_units, height_units, date_format);
-#endif
+		this->add((*iter)->trk, (*iter)->trw, distance_units, speed_units, height_units, date_format);
 	}
 	free(date_format);
 
-	/* TODO: add initial sorting by layer name or waypoint name. */
+	/* TODO: add initial sorting by layer name or track name. */
 #ifdef K
 	if (hide_layer_name) {
-		sort by waypoint name;
-	} else {
-		sort by layer name;
-	}
-#endif
-
-
-	/* TODO: add initial sorting by layer name or waypoint name. */
-#ifdef K
-	if (hide_layer_name) {
-		sort by waypoint name;
+		sort by track name;
 	} else {
 		sort by layer name;
 	}
@@ -809,10 +741,9 @@ void TrackListDialog::build_model(bool hide_layer_names)
 
 	this->setMinimumSize(hide_layer_names ? 500 : 700, 400);
 
-
 #ifdef K
 	g_signal_connect(view, "query-tooltip", G_CALLBACK (trw_layer_track_tooltip_cb), NULL);
-	//g_signal_connect (gtk_tree_view_get_selection (GTK_TREE_VIEW(view)), "changed", G_CALLBACK(trw_layer_track_select_cb), view);
+	//g_signal_connect (gtk_tree_view_get_selection (GTK_TREE_VIEW(view)), "changed", G_CALLBACK(track_select_cb), view);
 	g_signal_connect(view, "popup-menu", G_CALLBACK(trw_layer_track_menu_popup), tracks_and_layers);
 	g_signal_connect(view, "button-press-event", G_CALLBACK(trw_layer_track_button_pressed_cb), tracks_and_layers);
 
@@ -831,7 +762,6 @@ void TrackListDialog::build_model(bool hide_layer_names)
  * @show_layer_names:    Normally only set when called from an aggregate level
  *
  * Common method for showing a list of tracks with extended information
- *
  */
 void SlavGPS::track_list_dialog(QString const & title,
 				Layer * layer,
