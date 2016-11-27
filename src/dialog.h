@@ -37,6 +37,7 @@
 
 #include "globals.h"
 #include "coords.h"
+#include "window.h"
 
 
 
@@ -78,9 +79,11 @@ unsigned int a_dialog_get_positive_number(GtkWindow *parent, char *title_text, c
 void a_dialog_choose_dir(GtkWidget *entry);
 
 bool a_dialog_map_n_zoom(GtkWindow *parent, char *mapnames[], int default_map, char *zoom_list[], int default_zoom, int *selected_map, int *selected_zoom);
+#endif
 
-GList *a_dialog_select_from_list(GtkWindow *parent, GList *names, bool multiple_selection_allowed, const char *title, const char *msg);
+QStringList a_dialog_select_from_list(SlavGPS::Window * parent, QStringList & names, bool multiple_selection_allowed, QString const & title, QString const & msg);
 
+#ifdef K
 void a_dialog_license(GtkWindow *parent, const char *map, const char *license, const char *url);
 #endif
 

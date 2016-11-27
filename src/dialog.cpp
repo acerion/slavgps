@@ -30,7 +30,9 @@
 #include <cstring>
 #include <cctype>
 
+#include <QDialog>
 #include <QInputDialog>
+#include <QObject>
 
 #include <glib/gi18n.h>
 
@@ -247,83 +249,77 @@ static void get_selected_foreach_func(GtkTreeModel *model,
 
 
 
-GList *a_dialog_select_from_list(GtkWindow *parent, GList *names, bool multiple_selection_allowed, const char *title, const char *msg)
-{
-	GtkTreeIter iter;
-	GtkCellRenderer *renderer;
-	GtkWidget *view;
-
-	GtkWidget *dialog = gtk_dialog_new_with_buttons(title,
-							parent,
-							(GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
-							GTK_STOCK_CANCEL,
-							GTK_RESPONSE_REJECT,
-							GTK_STOCK_OK,
-							GTK_RESPONSE_ACCEPT,
-							NULL);
-	/* When something is selected then OK. */
-	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
-	GtkWidget *response_w = NULL;
-#if GTK_CHECK_VERSION (2, 20, 0)
-	/* Default to not apply - as initially nothing is selected! */
-	response_w = gtk_dialog_get_widget_for_response(GTK_DIALOG(dialog), GTK_RESPONSE_REJECT);
 #endif
-	GtkListStore *store = gtk_list_store_new(1, G_TYPE_STRING);
 
-	GtkWidget *scrolledwindow;
 
-	GList *runner = names;
-	while (runner) {
-		gtk_list_store_append(store, &iter);
-		gtk_list_store_set(store, &iter, 0, runner->data, -1);
-		runner = g_list_next(runner);
+
+
+QStringList a_dialog_select_from_list(Window * parent, QStringList & names, bool multiple_selection_allowed, QString const & title, QString const & msg)
+{
+	QDialog dialog(parent);
+	dialog.setWindowTitle(title);
+	dialog.setMinimumHeight(400);
+
+	QDialogButtonBox button_box(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+	QObject::connect(&button_box, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+	QObject::connect(&button_box, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+
+
+	QStandardItemModel model;
+	model.setHorizontalHeaderItem(0, new QStandardItem(msg));
+
+	QTableView view;
+	view.horizontalHeader()->setStretchLastSection(true);
+	view.verticalHeader()->setVisible(false);
+	view.setWordWrap(false);
+	view.setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+	view.setTextElideMode(Qt::ElideRight);
+	if (multiple_selection_allowed) {
+		view.setSelectionMode(QAbstractItemView::ExtendedSelection);
+	} else {
+		view.setSelectionMode(QAbstractItemView::SingleSelection);
 	}
+	view.setShowGrid(false);
+	view.setModel(&model);
 
-	view = gtk_tree_view_new();
-	renderer = gtk_cell_renderer_text_new();
-	/* Use the column header to display the message text,
-	   this makes the overall widget allocation simple as treeview takes up all the space. */
-	GtkTreeViewColumn *column;
-	column = gtk_tree_view_column_new_with_attributes(msg, renderer, "text", 0, NULL);
-	gtk_tree_view_column_set_sort_column_id(column, 0);
-	gtk_tree_view_append_column(GTK_TREE_VIEW (view), column);
+	view.horizontalHeader()->setSectionHidden(0, false);
+	view.horizontalHeader()->setSectionResizeMode(0, QHeaderView::Interactive);
 
-	gtk_tree_view_set_model(GTK_TREE_VIEW(view), GTK_TREE_MODEL(store));
-	gtk_tree_selection_set_mode(gtk_tree_view_get_selection(GTK_TREE_VIEW(view)),
-				    multiple_selection_allowed ? GTK_SELECTION_MULTIPLE : GTK_SELECTION_BROWSE);
-	g_object_unref(store);
+	QItemSelectionModel selection_model(&model);
+	view.setSelectionModel(&selection_model);
 
-	scrolledwindow = gtk_scrolled_window_new(NULL, NULL);
-	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolledwindow), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
-	gtk_container_add(GTK_CONTAINER(scrolledwindow), view);
+	QVBoxLayout vbox;
+	vbox.addWidget(&view);
+	vbox.addWidget(&button_box);
 
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), scrolledwindow, true, true, 0);
-	/* Ensure a reasonable number of items are shown, but let the width be automatically sized. */
-	gtk_widget_set_size_request(dialog, -1, 400) ;
+	QLayout * old = dialog.layout();
+	delete old;
+	dialog.setLayout(&vbox);
 
-	gtk_widget_show_all(dialog);
-
-	if (response_w) {
-		gtk_widget_grab_focus(response_w);
+	for (auto iter = names.begin(); iter != names.end(); iter++) {
+		QStandardItem * item = new QStandardItem(*iter);
+		item->setEditable(false);
+		model.invisibleRootItem()->appendRow(item);
 	}
+	view.setVisible(false);
+	view.resizeRowsToContents();
+	view.resizeColumnsToContents();
+	view.setVisible(true);
+	view.show();
 
-	while (gtk_dialog_run(GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT) {
-		GList *names_selected = NULL;
-		GtkTreeSelection *selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(view));
-		gtk_tree_selection_selected_foreach(selection, get_selected_foreach_func, &names_selected);
-		if (names_selected) {
-			gtk_widget_destroy(dialog);
-			return names_selected;
+
+	QStringList result;
+	if (dialog.exec() == QDialog::Accepted) {
+		QModelIndexList selected = selection_model.selectedIndexes();
+		for (auto iter = selected.begin(); iter != selected.end(); iter++) {
+			QString a = model.itemFromIndex(*iter)->text();
+			result << a;
 		}
-		dialog_error("Nothing was selected", parent);
 	}
-	gtk_widget_destroy(dialog);
-	return NULL;
+
+	return result;
 }
 
-
-
-#endif
 
 
 
