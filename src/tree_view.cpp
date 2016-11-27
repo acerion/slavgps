@@ -693,9 +693,7 @@ bool TreeView::get_editing()
 
 void TreeView::erase(TreeIndex * index)
 {
-#ifndef SLAVGPS_QT
-	gtk_tree_store_remove(GTK_TREE_STORE (this->model), iter);
-#endif
+	this->model->removeRow(index->row(), index->parent());
 }
 
 

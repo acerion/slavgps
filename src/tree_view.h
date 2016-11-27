@@ -147,6 +147,7 @@ namespace SlavGPS {
 		bool was_a_toggle = false;
 		GdkPixbuf * layer_type_icons[(int) LayerType::NUM_TYPES];
 
+		/* TODO: rename or remove this field. There is already QAbstractItemView::model(). */
 		QStandardItemModel * model = NULL;
 
 	private slots:
