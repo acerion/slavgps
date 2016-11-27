@@ -38,6 +38,7 @@
 #include "globals.h"
 #include "coords.h"
 #include "window.h"
+#include "ui_util.h"
 
 
 
@@ -81,7 +82,45 @@ void a_dialog_choose_dir(GtkWidget *entry);
 bool a_dialog_map_n_zoom(GtkWindow *parent, char *mapnames[], int default_map, char *zoom_list[], int default_zoom, int *selected_map, int *selected_zoom);
 #endif
 
-std::list<QString> a_dialog_select_from_list(SlavGPS::Window * parent, std::list<QString> const & names, bool multiple_selection_allowed, QString const & title, QString const & msg);
+void a_dialog_select_from_list_prepare(QDialog & dialog, QStandardItemModel & model, QTableView & view, QVBoxLayout & vbox, QDialogButtonBox & button_box, bool multiple_selection_allowed, QString const & title, QString const & msg);
+
+template <typename T>
+std::list<T> a_dialog_select_from_list(SlavGPS::Window * parent, std::list<T> const & elements, bool multiple_selection_allowed, QString const & title, QString const & msg)
+{
+	QDialog dialog(parent);
+	QDialogButtonBox button_box(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+	QStandardItemModel model;
+	QTableView view;
+	QVBoxLayout vbox;
+	QItemSelectionModel selection_model(&model);
+
+	a_dialog_select_from_list_prepare(dialog, model, view, vbox, button_box, multiple_selection_allowed, title, msg);
+	view.setSelectionModel(&selection_model);
+
+	for (auto iter = elements.begin(); iter != elements.end(); iter++) {
+		SlavGPS::SGItem * item = new SlavGPS::SGItem(*iter);
+		item->setEditable(false);
+		model.invisibleRootItem()->appendRow(item);
+	}
+	view.setVisible(false);
+	view.resizeRowsToContents();
+	view.resizeColumnsToContents();
+	view.setVisible(true);
+	view.show();
+
+
+	std::list<T> result;
+	if (dialog.exec() == QDialog::Accepted) {
+		QModelIndexList selected = selection_model.selectedIndexes();
+		for (auto iter = selected.begin(); iter != selected.end(); iter++) {
+			QVariant variant = model.itemFromIndex(*iter)->data();
+			result.push_back(variant.value<T>());
+		}
+	}
+
+	return result;
+}
+
 
 #ifdef K
 void a_dialog_license(GtkWindow *parent, const char *map, const char *license, const char *url);

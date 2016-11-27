@@ -38,11 +38,11 @@
 
 #include "dialog.h"
 #include "viewport.h"
+#include "ui_util.h"
 #if 0
 #include "degrees_converters.h"
 #include "authors.h"
 #include "documenters.h"
-#include "ui_util.h"
 #include "vik_compat.h"
 #endif
 #include "globals.h"
@@ -253,22 +253,17 @@ static void get_selected_foreach_func(GtkTreeModel *model,
 
 
 
-
-std::list<QString> a_dialog_select_from_list(Window * parent, std::list<QString> const & names, bool multiple_selection_allowed, QString const & title, QString const & msg)
+void a_dialog_select_from_list_prepare(QDialog & dialog, QStandardItemModel & model, QTableView & view, QVBoxLayout & vbox, QDialogButtonBox & button_box, bool multiple_selection_allowed, QString const & title, QString const & msg)
 {
-	QDialog dialog(parent);
 	dialog.setWindowTitle(title);
 	dialog.setMinimumHeight(400);
 
-	QDialogButtonBox button_box(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
 	QObject::connect(&button_box, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
 	QObject::connect(&button_box, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
 
-
-	QStandardItemModel model;
 	model.setHorizontalHeaderItem(0, new QStandardItem(msg));
+	model.setItemPrototype(new SGItem());
 
-	QTableView view;
 	view.horizontalHeader()->setStretchLastSection(true);
 	view.verticalHeader()->setVisible(false);
 	view.setWordWrap(false);
@@ -285,38 +280,12 @@ std::list<QString> a_dialog_select_from_list(Window * parent, std::list<QString>
 	view.horizontalHeader()->setSectionHidden(0, false);
 	view.horizontalHeader()->setSectionResizeMode(0, QHeaderView::Interactive);
 
-	QItemSelectionModel selection_model(&model);
-	view.setSelectionModel(&selection_model);
-
-	QVBoxLayout vbox;
 	vbox.addWidget(&view);
 	vbox.addWidget(&button_box);
 
 	QLayout * old = dialog.layout();
 	delete old;
 	dialog.setLayout(&vbox);
-
-	for (auto iter = names.begin(); iter != names.end(); iter++) {
-		QStandardItem * item = new QStandardItem(*iter);
-		item->setEditable(false);
-		model.invisibleRootItem()->appendRow(item);
-	}
-	view.setVisible(false);
-	view.resizeRowsToContents();
-	view.resizeColumnsToContents();
-	view.setVisible(true);
-	view.show();
-
-
-	std::list<QString> result;
-	if (dialog.exec() == QDialog::Accepted) {
-		QModelIndexList selected = selection_model.selectedIndexes();
-		for (auto iter = selected.begin(); iter != selected.end(); iter++) {
-			result.push_back(model.itemFromIndex(*iter)->text());
-		}
-	}
-
-	return result;
 }
 
 
