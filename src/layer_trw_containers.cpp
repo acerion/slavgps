@@ -258,9 +258,10 @@ void LayerTRWc::remove_item_from_treeview(std::unordered_map<sg_uid_t, TreeIndex
 
 
 
-GList * LayerTRWc::find_tracks_with_timestamp_type(std::unordered_map<sg_uid_t, Track *> * tracks, bool with_timestamps, Track * exclude)
+std::list<sg_uid_t> * LayerTRWc::find_tracks_with_timestamp_type(std::unordered_map<sg_uid_t, Track *> * tracks, bool with_timestamps, Track * exclude)
 {
-	GList * result = NULL;
+	std::list<sg_uid_t> * result = new std::list<sg_uid_t>;
+
 	for (auto i = tracks->begin(); i != tracks->end(); i++) {
 		Trackpoint * p1, * p2;
 		Track * trk = i->second;
@@ -284,7 +285,7 @@ GList * LayerTRWc::find_tracks_with_timestamp_type(std::unordered_map<sg_uid_t, 
 			}
 		}
 
-		result = g_list_prepend(result, (void *) ((long) i->first));
+		result->push_front(i->first);
 	}
 
 	return result;

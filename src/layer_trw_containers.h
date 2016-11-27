@@ -111,7 +111,7 @@ namespace SlavGPS {
 		static void list_trk_uids(std::unordered_map<sg_uid_t, Track *> & tracks, GList ** l);
 		static void remove_item_from_treeview(std::unordered_map<sg_uid_t, TreeIndex *> & items, TreeView * tree_view);
 
-		static GList * find_tracks_with_timestamp_type(std::unordered_map<sg_uid_t, Track *> * tracks, bool with_timestamps, Track * exclude);
+		static std::list<sg_uid_t> * find_tracks_with_timestamp_type(std::unordered_map<sg_uid_t, Track *> * tracks, bool with_timestamps, Track * exclude);
 		static GList * find_nearby_tracks_by_time(std::unordered_map<sg_uid_t, Track *> & tracks, Track * orig_trk, unsigned int threshold);
 		static void    sorted_track_id_by_name_list_exclude_self(std::unordered_map<sg_uid_t, Track *> * tracks, twt_udata * user_data);
 
