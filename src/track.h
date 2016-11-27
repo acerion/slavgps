@@ -278,4 +278,9 @@ namespace SlavGPS {
 
 
 
+Q_DECLARE_METATYPE(SlavGPS::Track*);
+
+
+
+
 #endif /* #ifndef _SG_TRACK_H_ */

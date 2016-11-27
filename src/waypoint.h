@@ -102,4 +102,9 @@ namespace SlavGPS {
 
 
 
+Q_DECLARE_METATYPE(SlavGPS::Waypoint*);
+
+
+
+
 #endif /* #ifndef _SG_WAYPOINT_H_ */
