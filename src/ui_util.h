@@ -26,10 +26,13 @@
 #include <cstdint>
 
 #include <QLabel>
+#include <QStandardItem>
 
 #include <glib.h>
 //#include <gtk/gtk.h>
 #include "slav_qt.h"
+#include "track.h"
+
 
 
 
@@ -44,6 +47,28 @@ QLabel * ui_label_new_selectable(QString const & text, QWidget * parent = NULL);
 GdkPixbuf * ui_pixbuf_set_alpha(GdkPixbuf * pixbuf, uint8_t alpha);
 GdkPixbuf * ui_pixbuf_scale_alpha(GdkPixbuf * pixbuf, uint8_t alpha);
 void ui_add_recent_file(const char * filename);
+
+
+
+
+namespace SlavGPS {
+
+
+
+
+	class SGItem : public QStandardItem {
+	public:
+		SGItem();
+		SGItem(Track * trk);
+		SGItem(QString const & text);
+		~SGItem() {};
+
+		virtual QStandardItem * clone() const;
+	};
+
+
+
+}
 
 
 

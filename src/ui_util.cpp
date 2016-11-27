@@ -34,10 +34,16 @@
 #include "util.h"
 #include "ui_util.h"
 #include "dialog.h"
+#include "track.h"
 
 #ifdef WINDOWS
 #include <windows.h>
 #endif
+
+
+
+
+using namespace SlavGPS;
 
 
 
@@ -318,4 +324,39 @@ void ui_add_recent_file(const char * filename)
 		free(uri);
 	}
 #endif
+}
+
+
+
+
+
+SGItem::SGItem() : QStandardItem()
+{
+
+}
+
+
+
+
+SGItem::SGItem(QString const & text) : QStandardItem(text)
+{
+	this->setText(text);
+	this->setData(QVariant::fromValue(text), RoleLayerData);
+}
+
+
+
+
+SGItem::SGItem(Track * trk) : QStandardItem()
+{
+	this->setText(QString(trk->name));
+	this->setData(QVariant::fromValue(trk), RoleLayerData);
+}
+
+
+
+
+QStandardItem * SGItem::clone() const
+{
+	return new SGItem();
 }
