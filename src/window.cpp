@@ -459,8 +459,10 @@ void Window::create_actions(void)
 		QAction * qa = new QAction("Background &Jobs", this);
 		qa->setIcon(QIcon::fromTheme("emblem-system"));
 		connect(qa, SIGNAL(triggered(bool)), this, SLOT(show_background_jobs_window_cb(void)));
+		this->menu_view->addAction(qa);
 
-
+		qa = new QAction("Show Centers", this);
+		connect(qa, SIGNAL(triggered(bool)), this, SLOT(show_centers_cb(void)));
 		this->menu_view->addAction(qa);
 	}
 
@@ -2055,4 +2057,12 @@ void Window::open_window(void)
 		cur_file = g_slist_next(cur_file);
 	}
 	g_slist_free(files);
+}
+
+
+
+
+void Window::show_centers_cb() /* Slot. */
+{
+	this->viewport->show_centers(this);
 }

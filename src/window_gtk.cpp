@@ -1066,14 +1066,6 @@ static void help_cache_info_cb(GtkAction * a, Window * window)
 
 
 
-static void back_forward_info_cb(GtkAction * a, Window * window)
-{
-	window->viewport->show_centers(window->get_toolkit_window());
-}
-
-
-
-
 static void menu_delete_layer_cb(GtkAction * a, Window * window)
 {
 	if (window->layers_panel->get_selected_layer()) {

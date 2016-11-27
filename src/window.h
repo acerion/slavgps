@@ -158,6 +158,8 @@ namespace SlavGPS {
 
 		void show_layer_defaults_cb(void);
 
+		void show_centers_cb();
+
 
 	protected:
 
