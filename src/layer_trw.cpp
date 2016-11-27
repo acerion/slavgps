@@ -3568,6 +3568,7 @@ bool LayerTRW::delete_track(Track * trk)
 
 		TreeIndex * it = tracks_iters.at(uid);
 		if (it) {
+			qDebug() << "II: Layer TRW: erasing track" << trk->name << "from tree view";
 			this->tree_view->erase(it);
 			tracks_iters.erase(uid);
 			tracks.erase(uid); /* kamilTODO: should this line be inside of "if (it)"? */
@@ -4657,71 +4658,65 @@ void LayerTRW::merge_with_other_cb(void)
 	if (trk->empty()) {
 		return;
 	}
-#ifdef K
 
 	/* with_timestamps: allow merging with 'similar' time type time tracks
 	   i.e. either those times, or those without */
 	bool with_timestamps = trk->get_tp_first()->has_timestamp;
-	GList * other_tracks = LayerTRWc::find_tracks_with_timestamp_type(ght_tracks, with_timestamps, trk);
-	other_tracks = g_list_reverse(other_tracks);
+	std::list<sg_uid_t> * other_tracks = LayerTRWc::find_tracks_with_timestamp_type(ght_tracks, with_timestamps, trk);
 
-	if (!other_tracks) {
+	if (other_tracks->empty()) {
 		if (with_timestamps) {
 			dialog_error("Failed. No other tracks with timestamps in this layer found", this->get_window());
 		} else {
 			dialog_error("Failed. No other tracks without timestamps in this layer found", this->get_window());
 		}
+		delete other_tracks;
+		return;
+	}
+	other_tracks->reverse();
+
+	/* Convert into list of names for usage with dialog function.
+	   TODO: Need to consider how to work best when we can have multiple tracks the same name... */
+	QStringList other_tracks_names;
+	for (auto iter = other_tracks->begin(); iter != other_tracks->end(); iter++) {
+		other_tracks_names << ght_tracks->at(*iter)->name;
+	}
+
+	/* Sort alphabetically for user presentation. */
+	other_tracks_names.sort();
+
+	QStringList merge_list = a_dialog_select_from_list(this->get_window(),
+							   other_tracks_names,
+							   true,
+							   QString(_("Merge with...")),
+							   trk->is_route ? QString(_("Select route to merge with")) : QString(_("Select track to merge with")));
+	delete other_tracks;
+
+	if (merge_list.empty()) {
+		qDebug() << "II: Layer TRW: merge track is empty";
 		return;
 	}
 
-	/* Sort alphabetically for user presentation.
-	   Convert into list of names for usage with dialog function.
-	   TODO: Need to consider how to work best when we can have multiple tracks the same name... */
-	GList *other_tracks_names = NULL;
-	GList *iter = g_list_first(other_tracks);
-	while (iter) {
-		other_tracks_names = g_list_append(other_tracks_names, ght_tracks->at((sg_uid_t) ((long) iter->data))->name);
-		iter = g_list_next(iter);
-	}
+	for (auto iter = merge_list.begin(); iter != merge_list.end(); iter++) {
+		Track * merge_track = NULL;
+		if (trk->is_route) {
+			merge_track = this->get_route(iter->toUtf8().data());
+		} else {
+			merge_track = this->get_track(iter->toUtf8().data());
+		}
 
-	other_tracks_names = g_list_sort_with_data(other_tracks_names, sort_alphabetically, NULL);
-
-	GList *merge_list = a_dialog_select_from_list(this->get_window(),
-						      other_tracks_names,
-						      true,
-						      _("Merge with..."),
-						      trk->is_route ? _("Select route to merge with") : _("Select track to merge with"));
-	g_list_free(other_tracks);
-	g_list_free(other_tracks_names);
-
-	if (merge_list) {
-		GList *l;
-		for (l = merge_list; l != NULL; l = g_list_next(l)) {
-			Track *merge_track;
+		if (merge_track) {
+			qDebug() << "II: Layer TRW: we have a merge track";
+			trk->steal_and_append_trackpoints(merge_track);
 			if (trk->is_route) {
-				merge_track = this->get_route((const char *) l->data);
+				this->delete_route(merge_track);
 			} else {
-				merge_track = this->get_track((const char *) l->data);
+				this->delete_track(merge_track);
 			}
-
-			if (merge_track) {
-				trk->steal_and_append_trackpoints(merge_track);
-				if (trk->is_route) {
-					this->delete_route(merge_track);
-				} else {
-					this->delete_track(merge_track);
-				}
-				trk->sort(Trackpoint::compare_timestamps);
-			}
+			trk->sort(Trackpoint::compare_timestamps);
 		}
-		for (l = merge_list; l != NULL; l = g_list_next(l)) {
-			free(l->data);
-		}
-		g_list_free(merge_list);
-
-		this->emit_changed();
 	}
-#endif
+	this->emit_changed();
 }
 
 
@@ -4941,7 +4936,7 @@ void LayerTRW::merge_by_timestamp_cb(void)
 
 #ifdef K
 
-	GList * tracks_with_timestamp = LayerTRWc::find_tracks_with_timestamp_type(&this->tracks, true, orig_trk);
+	std::list<sg_uid_t> * tracks_with_timestamp = LayerTRWc::find_tracks_with_timestamp_type(&this->tracks, true, orig_trk);
 	tracks_with_timestamp = g_list_reverse(tracks_with_timestamp);
 
 	if (!tracks_with_timestamp) {
