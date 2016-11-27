@@ -1125,48 +1125,40 @@ void Viewport::update_centers()
  * Show the list of forward/backward positions.
  * ATM only for debug usage.
  */
-void Viewport::show_centers(GtkWindow * parent)
+void Viewport::show_centers(Window * parent)
 {
-#ifndef SLAVGPS_QT
-	GList * texts = NULL;
+	QStringList texts;
 	for (auto iter = centers->begin(); iter != centers->end(); iter++) {
-		char *lat = NULL, *lon = NULL;
+		char * lat = NULL;
+		char * lon = NULL;
 		struct LatLon ll;
 		vik_coord_to_latlon(*iter, &ll);
 		a_coords_latlon_to_string(&ll, &lat, &lon);
-		char *extra = NULL;
+		QString extra;
+		/* Put the separating space in 'extra'. */
 		if (iter == next(centers_iter)) {
-			extra = strdup(" [Back]");
+			extra = QString(" [Back]");
 		} else if (iter == prev(centers_iter)) {
-			extra = strdup(" [Forward]");
+			extra = QString(" [Forward]");
 		} else {
-			extra = strdup("");
+			;
 		}
 
-		texts = g_list_prepend(texts, g_strdup_printf("%s %s%s", lat, lon, extra));
+		texts << QString("%1 %2%3").arg(lat).arg(lon).arg(extra);
 		free(lat);
 		free(lon);
-		free(extra);
 	}
 
-	/* NB: No i18n as this is just for debug.
+	/* No i18n as this is just for debug.
 	   Using this function the dialog allows sorting of the list which isn't appropriate here
 	   but this doesn't matter much for debug purposes of showing stuff... */
-	GList * ans = a_dialog_select_from_list(parent,
-						texts,
-						false,
-						"Back/Forward Locations",
-						"Back/Forward Locations");
-	for (GList * node = ans; node != NULL; node = g_list_next(node)) {
-		free(node->data);
-	}
+	QStringList result = a_dialog_select_from_list(parent,
+						       texts,
+						       false,
+						       QString("Back/Forward Locations"),
+						       QString("Back/Forward Locations"));
 
-	g_list_free(ans);
-	for (GList * node = texts; node != NULL; node = g_list_next(node)) {
-		free(node->data);
-	}
-	g_list_free(texts);
-#endif
+	qDebug() << "DD: Viewport: selected centers:" << result;
 }
 
 
@@ -1854,18 +1846,6 @@ bool Viewport::is_one_zone()
 
 
 
-void Viewport::draw_layout(GdkGC * gc, int x, int y, PangoLayout * layout)
-{
-#ifndef SLAVGPS_QT
-	if (x > -100 && x < this->size_width + 100 && y > -100 && y < this->size_height + 100) {
-		gdk_draw_layout(this->scr_buffer, gc, x, y, layout);
-	}
-#endif
-}
-
-
-
-
 void vik_gc_get_fg_color(GdkGC * gc, GdkColor * dest)
 {
 #ifndef SLAVGPS_QT
@@ -2154,42 +2134,6 @@ void Viewport::compute_bearing(int x1, int y1, int x2, int y2, double * angle, d
 	if (*angle > 2 * M_PI) {
 		*angle -= 2 * M_PI;
 	}
-}
-
-
-
-
-GtkWidget * Viewport::get_toolkit_widget(void)
-{
-#ifdef SLAVGPS_QT
-	return NULL;
-#else
-	return GTK_WIDGET(this->drawing_area_);
-#endif
-}
-
-
-
-
-GtkWindow * Viewport::get_toolkit_window(void)
-{
-#ifdef SLAVGPS_QT
-	return NULL;
-#else
-	return GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(this->drawing_area_)));
-#endif
-}
-
-
-
-
-void * Viewport::get_toolkit_object(void)
-{
-#ifdef SLAVGPS_QT
-	return NULL;
-#else
-	return (void *) this->drawing_area_;
-#endif
 }
 
 

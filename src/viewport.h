@@ -113,7 +113,6 @@ namespace SlavGPS {
 		void draw_text(QFont const & font, QPen const & pen, QRectF & bounding_rect, int flags, QString const & text, int text_offset);
 		void draw_arc(QPen const & pen, int x, int y, int width, int height, int angle1, int angle2, bool filled);
 		void draw_polygon(QPen const & pen, QPoint const * points, int npoints, bool filled);
-		void draw_layout(GdkGC * gc, int x, int y, PangoLayout * layout);
 		void draw_pixmap(QPixmap & pixmap, int src_x, int src_y, int dest_x, int dest_y, int dest_width, int dest_height);
 
 		/* Run this before drawing a line. Viewport::draw_line() runs it for you. */
@@ -129,7 +128,7 @@ namespace SlavGPS {
 		bool go_forward();
 		bool back_available(); // const
 		bool forward_available();
-		void show_centers(GtkWindow *parent);
+		void show_centers(Window * parent);
 		void print_centers(char * label);
 
 
@@ -250,12 +249,7 @@ namespace SlavGPS {
 		void set_half_drawn(bool half_drawn);
 		bool get_half_drawn();
 
-		GtkWidget * get_toolkit_widget(void);
-		GtkWindow * get_toolkit_window(void);
-		void * get_toolkit_object(void);
 		Window * get_window(void);
-
-
 
 
 		/* Whether or not to display OSD info. */
