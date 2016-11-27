@@ -352,20 +352,21 @@ GList * LayerTRWc::find_nearby_tracks_by_time(std::unordered_map<sg_uid_t, Track
 
 
 
-/* c.f. trw_layer_sorted_track_id_by_name_list
+/* c.f. get_sorted_track_name_list()
    but don't add the specified track to the list (normally current track). */
-void LayerTRWc::sorted_track_id_by_name_list_exclude_self(std::unordered_map<sg_uid_t, Track *> * tracks, twt_udata * user_data)
+std::list<QString> LayerTRWc::get_sorted_track_name_list_exclude_self(std::unordered_map<sg_uid_t, Track *> * tracks, Track const * self)
 {
+	std::list<QString> result;
 	for (auto i = tracks->begin(); i != tracks->end(); i++) {
 
 		/* Skip self. */
-		if (i->second == user_data->exclude) {
+		if (i->second == self) {
 			continue;
 		}
-
-		/* Sort named list alphabetically. */
-		*(user_data->result) = g_list_insert_sorted_with_data (*(user_data->result), i->second->name, sort_alphabetically, NULL);
+		result.push_back(QString(i->second->name));
 	}
+
+	result.sort();
 }
 
 
@@ -403,16 +404,15 @@ void LayerTRWc::sorted_wp_id_by_name_list(std::unordered_map<sg_uid_t, Waypoint 
 
 
 
-/**
- * Track specific sort.
- */
-GList * LayerTRWc::sorted_track_id_by_name_list(std::unordered_map<sg_uid_t, Track *> & tracks)
+std::list<QString> LayerTRWc::get_sorted_track_name_list(std::unordered_map<sg_uid_t, Track *> & tracks)
 {
-	GList * result = NULL;
+	std::list<QString> result;
 	for (auto i = tracks.begin(); i != tracks.end(); i++) {
-		/* Sort named list alphabetically. */
-		result = g_list_insert_sorted_with_data(result, i->second->name, sort_alphabetically, NULL);
+		result.push_back(QString(i->second->name));
 	}
+
+	/* Sort list of names alphabetically. */
+	result.sort();
 
 	return result;
 }
@@ -425,27 +425,25 @@ GList * LayerTRWc::sorted_track_id_by_name_list(std::unordered_map<sg_uid_t, Tra
  */
 bool LayerTRWc::has_same_track_names(std::unordered_map<sg_uid_t, Track *> & ht_tracks)
 {
-	/* Sort items by name, then compare if any next to each other are the same. */
+	/* Build list of names. Sort list alphabetically. Find any two adjacent duplicates on the list. */
 
-	GList * track_names = LayerTRWc::sorted_track_id_by_name_list(ht_tracks);
+	std::list<QString> track_names = LayerTRWc::get_sorted_track_name_list(ht_tracks);
 
-	/* No tracks. */
-	if (!track_names) {
+	if (track_names.size() <= 1) {
 		return false;
 	}
 
-	same_track_name_udata udata;
-	udata.has_same_track_name = false;
+	bool found = false;
+	for (auto iter = std::next(track_names.begin()); iter != track_names.end(); iter++) {
+		QString const this_one = *iter;
+		QString const previous = *(std::prev(iter));
 
-	/* Use sort routine to traverse list comparing items.
-	   Don't care how this list ends up ordered ( doesn't actually change ) - care about the returned status. */
-	GList * dummy_list = g_list_sort_with_data(track_names, check_tracks_for_same_name, &udata);
-	/* Still no tracks... */
-	if (!dummy_list) {
-		return false;
+		if (this_one == previous) {
+			return true;
+		}
 	}
 
-	return udata.has_same_track_name;
+	return false;
 }
 
 

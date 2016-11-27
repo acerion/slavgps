@@ -1127,7 +1127,7 @@ void Viewport::update_centers()
  */
 void Viewport::show_centers(Window * parent)
 {
-	QStringList texts;
+	std::list<QString> texts;
 	for (auto iter = centers->begin(); iter != centers->end(); iter++) {
 		char * lat = NULL;
 		char * lon = NULL;
@@ -1144,7 +1144,7 @@ void Viewport::show_centers(Window * parent)
 			;
 		}
 
-		texts << QString("%1 %2%3").arg(lat).arg(lon).arg(extra);
+		texts.push_back(QString("%1 %2%3").arg(lat).arg(lon).arg(extra));
 		free(lat);
 		free(lon);
 	}
@@ -1152,13 +1152,15 @@ void Viewport::show_centers(Window * parent)
 	/* No i18n as this is just for debug.
 	   Using this function the dialog allows sorting of the list which isn't appropriate here
 	   but this doesn't matter much for debug purposes of showing stuff... */
-	QStringList result = a_dialog_select_from_list(parent,
-						       texts,
-						       false,
-						       QString("Back/Forward Locations"),
-						       QString("Back/Forward Locations"));
+	std::list<QString> result = a_dialog_select_from_list(parent,
+							      texts,
+							      false,
+							      QString("Back/Forward Locations"),
+							      QString("Back/Forward Locations"));
 
-	qDebug() << "DD: Viewport: selected centers:" << result;
+	for (auto iter = result.begin(); iter != result.end(); iter++) {
+		qDebug() << "DD: Viewport: history center item:" << *iter;
+	}
 }
 
 

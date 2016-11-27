@@ -81,7 +81,7 @@ void a_dialog_choose_dir(GtkWidget *entry);
 bool a_dialog_map_n_zoom(GtkWindow *parent, char *mapnames[], int default_map, char *zoom_list[], int default_zoom, int *selected_map, int *selected_zoom);
 #endif
 
-QStringList a_dialog_select_from_list(SlavGPS::Window * parent, QStringList & names, bool multiple_selection_allowed, QString const & title, QString const & msg);
+std::list<QString> a_dialog_select_from_list(SlavGPS::Window * parent, std::list<QString> const & names, bool multiple_selection_allowed, QString const & title, QString const & msg);
 
 #ifdef K
 void a_dialog_license(GtkWindow *parent, const char *map, const char *license, const char *url);

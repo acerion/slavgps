@@ -254,7 +254,7 @@ static void get_selected_foreach_func(GtkTreeModel *model,
 
 
 
-QStringList a_dialog_select_from_list(Window * parent, QStringList & names, bool multiple_selection_allowed, QString const & title, QString const & msg)
+std::list<QString> a_dialog_select_from_list(Window * parent, std::list<QString> const & names, bool multiple_selection_allowed, QString const & title, QString const & msg)
 {
 	QDialog dialog(parent);
 	dialog.setWindowTitle(title);
@@ -308,12 +308,11 @@ QStringList a_dialog_select_from_list(Window * parent, QStringList & names, bool
 	view.show();
 
 
-	QStringList result;
+	std::list<QString> result;
 	if (dialog.exec() == QDialog::Accepted) {
 		QModelIndexList selected = selection_model.selectedIndexes();
 		for (auto iter = selected.begin(); iter != selected.end(); iter++) {
-			QString a = model.itemFromIndex(*iter)->text();
-			result << a;
+			result.push_back(model.itemFromIndex(*iter)->text());
 		}
 	}
 

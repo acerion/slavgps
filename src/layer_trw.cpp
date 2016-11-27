@@ -4677,19 +4677,19 @@ void LayerTRW::merge_with_other_cb(void)
 
 	/* Convert into list of names for usage with dialog function.
 	   TODO: Need to consider how to work best when we can have multiple tracks the same name... */
-	QStringList other_tracks_names;
+	std::list<QString> other_tracks_names;
 	for (auto iter = other_tracks->begin(); iter != other_tracks->end(); iter++) {
-		other_tracks_names << ght_tracks->at(*iter)->name;
+		other_tracks_names.push_back(ght_tracks->at(*iter)->name);
 	}
 
 	/* Sort alphabetically for user presentation. */
 	other_tracks_names.sort();
 
-	QStringList merge_list = a_dialog_select_from_list(this->get_window(),
-							   other_tracks_names,
-							   true,
-							   QString(_("Merge with...")),
-							   trk->is_route ? QString(_("Select route to merge with")) : QString(_("Select track to merge with")));
+	std::list<QString> merge_list = a_dialog_select_from_list(this->get_window(),
+								  other_tracks_names,
+								  true,
+								  QString(_("Merge with...")),
+								  trk->is_route ? QString(_("Select route to merge with")) : QString(_("Select track to merge with")));
 	delete other_tracks;
 
 	if (merge_list.empty()) {
@@ -4744,60 +4744,47 @@ void LayerTRW::append_track_cb(void)
 		return;
 	}
 
-#ifdef K
-	GList *other_tracks_names = NULL;
-
-	/* Sort alphabetically for user presentation.
-	   Convert into list of names for usage with dialog function.
+	/* Convert into list of names for usage with dialog function.
 	   TODO: Need to consider how to work best when we can have multiple tracks the same name... */
-	twt_udata udata;
-	udata.result = &other_tracks_names;
-	udata.exclude = trk;
 
-	LayerTRWc::sorted_track_id_by_name_list_exclude_self(ght_tracks, &udata);
+	std::list<QString> other_tracks_names = LayerTRWc::get_sorted_track_name_list_exclude_self(ght_tracks, trk);
 
 	/* Note the limit to selecting one track only.
 	   This is to control the ordering of appending tracks, i.e. the selected track always goes after the current track
 	   (otherwise with multiple select the ordering would not be controllable by the user - automatically being alphabetically). */
-	GList *append_list = a_dialog_select_from_list(this->get_window(),
-						       other_tracks_names,
-						       false,
-						       trk->is_route ? _("Append Route"): _("Append Track"),
-						       trk->is_route ? _("Select the route to append after the current route") :
-						       _("Select the track to append after the current track"));
-
-	g_list_free(other_tracks_names);
+	std::list<QString> append_list = a_dialog_select_from_list(this->get_window(),
+								   other_tracks_names,
+								   false,
+								   trk->is_route ? _("Append Route"): _("Append Track"),
+								   trk->is_route ? _("Select the route to append after the current route") :
+								   _("Select the track to append after the current track"));
 
 	/* It's a list, but shouldn't contain more than one other track! */
-	if (append_list) {
-
-		for (GList * l = append_list; l != NULL; l = g_list_next(l)) {
-			/* TODO: at present this uses the first track found by name,
-			   which with potential multiple same named tracks may not be the one selected... */
-			Track *append_track;
-			if (trk->is_route) {
-				append_track = this->get_route((const char *) l->data);
-			} else {
-				append_track = this->get_track((const char *) l->data);
-			}
-
-			if (append_track) {
-				trk->steal_and_append_trackpoints(append_track);
-				if (trk->is_route) {
-					this->delete_route(append_track);
-				} else {
-					this->delete_track(append_track);
-				}
-			}
-		}
-		for (GList * l = append_list; l != NULL; l = g_list_next(l)) {
-			free(l->data);
-		}
-		g_list_free(append_list);
-
-		this->emit_changed();
+	if (append_list.empty()) {
+		return;
 	}
-#endif
+
+	for (auto iter = append_list.begin(); iter != append_list.end(); iter++) {
+		/* TODO: at present this uses the first track found by name,
+		   which with potential multiple same named tracks may not be the one selected... */
+		Track * append_track = NULL;
+		if (trk->is_route) {
+			append_track = this->get_route(iter->toUtf8().data());
+		} else {
+			append_track = this->get_track(iter->toUtf8().data());
+		}
+
+		if (append_track) {
+			trk->steal_and_append_trackpoints(append_track);
+			if (trk->is_route) {
+				this->delete_route(append_track);
+			} else {
+				this->delete_track(append_track);
+			}
+		}
+	}
+
+	this->emit_changed();
 }
 
 
@@ -4828,75 +4815,66 @@ void LayerTRW::append_other_cb(void)
 	if (!trk) {
 		return;
 	}
-#ifdef K
-	GList *other_tracks_names = NULL;
 
-	/* Sort alphabetically for user presentation.
-	   Convert into list of names for usage with dialog function.
+	/* Convert into list of names for usage with dialog function.
 	   TODO: Need to consider how to work best when we can have multiple tracks the same name... */
-	twt_udata udata;
-	udata.result = &other_tracks_names;
-	udata.exclude = trk;
 
-	LayerTRWc::sorted_track_id_by_name_list_exclude_self(ght_others, &udata);
+	std::list<QString> const other_tracks_names = LayerTRWc::get_sorted_track_name_list_exclude_self(ght_others, trk);
 
 	/* Note the limit to selecting one track only.
 	   this is to control the ordering of appending tracks, i.e. the selected track always goes after the current track
 	   (otherwise with multiple select the ordering would not be controllable by the user - automatically being alphabetically). */
-	GList *append_list = a_dialog_select_from_list(this->get_window(),
-						       other_tracks_names,
-						       false,
-						       trk->is_route ? _("Append Track"): _("Append Route"),
-						       trk->is_route ? _("Select the track to append after the current route") :
-						       _("Select the route to append after the current track"));
+	std::list<QString> append_list = a_dialog_select_from_list(this->get_window(),
+								   other_tracks_names,
+								   false,
+								   trk->is_route ? QString(_("Append Track")) : QString(_("Append Route")),
+								   trk->is_route ? QString(_("Select the track to append after the current route")) : QString(_("Select the route to append after the current track")));
 
-	g_list_free(other_tracks_names);
-
-	/* It's a list, but shouldn't contain more than one other track! */
-	if (append_list) {
-		for (GList * l = append_list; l != NULL; l = g_list_next(l)) {
-			/* TODO: at present this uses the first track found by name,
-			   which with potential multiple same named tracks may not be the one selected... */
-
-			/* Get FROM THE OTHER TYPE list. */
-			Track *append_track;
-			if (trk->is_route) {
-				append_track = this->get_track((const char *) l->data);
-			} else {
-				append_track = this->get_route((const char *) l->data);
-			}
-
-			if (append_track) {
-
-				if (!append_track->is_route
-				    && ((append_track->get_segment_count() > 1)
-					|| (append_track->get_average_speed() > 0.0))) {
-
-					if (dialog_yes_or_no("Converting a track to a route removes extra track data such as segments, timestamps, etc...\nDo you want to continue?", this->get_window())) {
-						append_track->merge_segments();
-						append_track->to_routepoints();
-					} else {
-						break;
-					}
-				}
-
-				trk->steal_and_append_trackpoints(append_track);
-
-				// Delete copied which is FROM THE OTHER TYPE list
-				if (trk->is_route) {
-					this->delete_track(append_track);
-				} else {
-					this->delete_route(append_track);
-				}
-			}
-		}
-		for (GList * l = append_list; l != NULL; l = g_list_next(l)) {
-			free(l->data);
-		}
-		g_list_free(append_list);
-		this->emit_changed();
+	if (append_list.empty()) {
+		return;
 	}
-#endif
+
+	/* It's a list, but shouldn't contain more than one other track!
+	   TODO: verify that the list has only one member. The loop below would not be necessary anymore. */
+
+	for (auto iter = append_list.begin(); iter != append_list.end(); iter++) {
+		/* TODO: at present this uses the first track found by name,
+		   which with potential multiple same named tracks may not be the one selected... */
+
+		/* Get FROM THE OTHER TYPE list. */
+		Track * append_track = NULL;
+		if (trk->is_route) {
+			append_track = this->get_track(iter->toUtf8().data());
+		} else {
+			append_track = this->get_route(iter->toUtf8().data());
+		}
+
+		if (append_track) {
+
+			if (!append_track->is_route
+			    && ((append_track->get_segment_count() > 1)
+				|| (append_track->get_average_speed() > 0.0))) {
+
+				if (dialog_yes_or_no("Converting a track to a route removes extra track data such as segments, timestamps, etc...\nDo you want to continue?", this->get_window())) {
+					append_track->merge_segments();
+					append_track->to_routepoints();
+				} else {
+					break;
+				}
+			}
+
+			trk->steal_and_append_trackpoints(append_track);
+
+			/* Delete copied which is FROM THE OTHER TYPE list. */
+			if (trk->is_route) {
+				this->delete_track(append_track);
+			} else {
+				this->delete_route(append_track);
+			}
+		}
+	}
+
+	this->emit_changed();
 }
 
 
@@ -5664,10 +5642,10 @@ void LayerTRW::uniquify_tracks(LayersPanel * panel, std::unordered_map<sg_uid_t,
 	udata.has_same_track_name = false;
 	udata.same_track_name = NULL;
 
-	GList * track_names = LayerTRWc::sorted_track_id_by_name_list(track_table);
+	std::list<QString> const track_names = LayerTRWc::get_sorted_track_name_list(track_table);
 
-	// No tracks
-	if (!track_names) {
+	/* No tracks. */
+	if (track_names->empty()) {
 		return;
 	}
 
@@ -5721,9 +5699,9 @@ void LayerTRW::uniquify_tracks(LayersPanel * panel, std::unordered_map<sg_uid_t,
 			}
 		}
 
-		// Start trying to find same names again...
-		track_names = NULL; /* kamilFIXME: this list is not free()d anywhere? */
-		track_names = LayerTRWc::sorted_track_id_by_name_list(track_table);
+		/* Start trying to find same names again... */
+		delete track_names;
+		track_names = LayerTRWc::get_sorted_track_name_list(track_table);
 		udata.has_same_track_name = false;
 		GList * dummy_list2 = g_list_sort_with_data(track_names, check_tracks_for_same_name, &udata);
 
@@ -5732,6 +5710,8 @@ void LayerTRW::uniquify_tracks(LayersPanel * panel, std::unordered_map<sg_uid_t,
 			udata.has_same_track_name = false;
 		}
 	}
+
+	delete track_names;
 
 	/* Update. */
 	panel->emit_changed();
@@ -5811,37 +5791,37 @@ void LayerTRW::delete_selected_tracks_cb(void) /* Slot. */
 		}
 	}
 
-#ifdef K
 	/* Sort list alphabetically for better presentation. */
-	GList * all = LayerTRWc::sorted_track_id_by_name_list(this->tracks);
+	std::list<QString> const all = LayerTRWc::get_sorted_track_name_list(this->tracks);
 
-	if (!all) {
+	if (all.empty()) {
 		dialog_error("No tracks found", this->get_window());
 		return;
 	}
 
 	/* Get list of items to delete from the user. */
-	GList *delete_list = a_dialog_select_from_list(this->get_window(),
-						       all,
-						       true,
-						       _("Delete Selection"),
-						       _("Select tracks to delete"));
-	g_list_free(all);
+	std::list<QString> delete_list = a_dialog_select_from_list(this->get_window(),
+								   all,
+								   true,
+								   QString(_("Delete Selection")),
+								   QString(_("Select tracks to delete")));
 
-	// Delete requested tracks
-	// since specificly requested, IMHO no need for extra confirmation
-	if (delete_list) {
-		for (GList * l = delete_list; l != NULL; l = g_list_next(l)) {
-			// This deletes first trk it finds of that name (but uniqueness is enforced above)
-			this->delete_track_by_name((const char *) l->data, false);
-		}
-		g_list_free(delete_list);
-		/* Reset layer timestamps in case they have now changed. */
-		this->tree_view->set_timestamp(this->index, this->get_timestamp());
-
-		this->emit_changed();
+	if (delete_list.empty()) {
+		return;
 	}
-#endif
+
+	/* Delete requested tracks.
+	   Since specificly requested, IMHO no need for extra confirmation. */
+
+	for (auto iter = delete_list.begin(); iter != delete_list.end(); iter++) {
+		/* This deletes first trk it finds of that name (but uniqueness is enforced above). */
+		this->delete_track_by_name(iter->toUtf8().data(), false);
+	}
+
+	/* Reset layer timestamps in case they have now changed. */
+	this->tree_view->set_timestamp(this->index, this->get_timestamp());
+
+	this->emit_changed();
 }
 
 
@@ -5859,34 +5839,33 @@ void LayerTRW::delete_selected_routes_cb(void) /* Slot. */
 			return;
 		}
 	}
-#ifdef K
-	/* Sort list alphabetically for better presentation. */
-	GList * all = LayerTRWc::sorted_track_id_by_name_list(this->routes);
 
-	if (!all) {
+	std::list<QString> all = LayerTRWc::get_sorted_track_name_list(this->routes);
+
+	if (all.empty()) {
 		dialog_error("No routes found", this->get_window());
 		return;
 	}
 
 	/* Get list of items to delete from the user. */
-	GList *delete_list = a_dialog_select_from_list(this->get_window(),
-						       all,
-						       true,
-						       _("Delete Selection"),
-						       _("Select routes to delete"));
-	g_list_free(all);
+	std::list<QString> delete_list = a_dialog_select_from_list(this->get_window(),
+								   all,
+								   true,
+								   QString(_("Delete Selection")),
+								   QString(_("Select routes to delete")));
 
 	/* Delete requested routes.
 	   Since specifically requested, IMHO no need for extra confirmation. */
-	if (delete_list) {
-		for (GList * l = delete_list; l != NULL; l = g_list_next(l)) {
-			/* This deletes first route it finds of that name (but uniqueness is enforced above). */
-			this->delete_track_by_name((const char *) l->data, true);
-		}
-		g_list_free(delete_list);
-		this->emit_changed();
+	if (delete_list.empty()) {
+		return;
 	}
-#endif
+
+	for (auto iter = delete_list.begin(); iter != delete_list.end(); iter++) {
+		/* This deletes first route it finds of that name (but uniqueness is enforced above). */
+		this->delete_track_by_name(iter->toUtf8().data(), true);
+	}
+
+	this->emit_changed();
 }
 
 
@@ -6044,27 +6023,28 @@ void LayerTRW::delete_selected_waypoints_cb(void)
 	all = g_list_sort_with_data(all, sort_alphabetically, NULL);
 
 	/* Get list of items to delete from the user. */
-	GList *delete_list = a_dialog_select_from_list(this->get_window(),
-						       all,
-						       true,
-						       _("Delete Selection"),
-						       _("Select waypoints to delete"));
+	std::list<QString> delete_list = a_dialog_select_from_list(this->get_window(),
+								   all,
+								   true,
+								   QString(_("Delete Selection")),
+								   QString(_("Select waypoints to delete")));
 	g_list_free(all);
+
+	if (delete_list.empty()) {
+		return;
+	}
 
 	/* Delete requested waypoints.
 	   Since specifically requested, IMHO no need for extra confirmation. */
-	if (delete_list) {
-		for (GList * l = delete_list; l != NULL; l = g_list_next(l)) {
-			// This deletes first waypoint it finds of that name (but uniqueness is enforced above)
-			this->delete_waypoint_by_name((const char *) l->data);
-		}
-		g_list_free(delete_list);
-
-		this->calculate_bounds_waypoints();
-		/* Reset layer timestamp in case it has now changed. */
-		this->tree_view->set_timestamp(this->index, this->get_timestamp());
-		this->emit_changed();
+	for (auto iter = delete_list.begin(); iter != delete_list.end(); iter++) {
+		// This deletes first waypoint it finds of that name (but uniqueness is enforced above)
+		this->delete_waypoint_by_name(iter->toUtf8().data());
 	}
+
+	this->calculate_bounds_waypoints();
+	/* Reset layer timestamp in case it has now changed. */
+	this->tree_view->set_timestamp(this->index, this->get_timestamp());
+	this->emit_changed();
 #endif
 }
 
