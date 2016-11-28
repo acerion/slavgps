@@ -300,7 +300,6 @@ namespace SlavGPS {
 		void uniquify_tracks(LayersPanel * panel, std::unordered_map<sg_uid_t, Track *> & track_table, bool ontrack);
 		void sort_order_specified(SublayerType sublayer_type, vik_layer_sort_order_t order);
 
-		bool has_same_waypoint_names();
 		void uniquify_waypoints(LayersPanel * panel);
 
 

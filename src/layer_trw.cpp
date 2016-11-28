@@ -5783,7 +5783,7 @@ void LayerTRW::delete_selected_tracks_cb(void) /* Slot. */
 	LayersPanel * panel = this->get_window()->get_layers_panel();
 
 	/* Ensure list of track names offered is unique. */
-	if (LayerTRWc::has_same_track_names(this->tracks)) {
+	if (LayerTRWc::has_duplicate_track_names(this->tracks)) {
 		if (dialog_yes_or_no(QString("Multiple entries with the same name exist. This method only works with unique names. Force unique names now?")), this->get_window()) {
 			this->uniquify_tracks(panel, this->tracks, true);
 		} else {
@@ -5832,7 +5832,7 @@ void LayerTRW::delete_selected_routes_cb(void) /* Slot. */
 	LayersPanel * panel = this->get_window()->get_layers_panel();
 
 	/* Ensure list of track names offered is unique. */
-	if (LayerTRWc::has_same_track_names(this->routes)) {
+	if (LayerTRWc::has_duplicate_track_names(this->routes)) {
 		if (dialog_yes_or_no("Multiple entries with the same name exist. This method only works with unique names. Force unique names now?", this->get_window())) {
 			this->uniquify_tracks(panel, this->routes, false);
 		} else {
@@ -5899,38 +5899,6 @@ static int check_waypoints_for_same_name(gconstpointer aa, gconstpointer bb, voi
 
 
 /**
- * Find out if any waypoints have the same name in this layer.
- */
-bool LayerTRW::has_same_waypoint_names()
-{
-	// Sort items by name, then compare if any next to each other are the same
-
-	GList * waypoint_names = NULL;
-	LayerTRWc::sorted_wp_id_by_name_list(this->waypoints, &waypoint_names);
-
-	// No waypoints
-	if (!waypoint_names) {
-		return false;
-	}
-
-	same_waypoint_name_udata udata;
-	udata.has_same_waypoint_name = false;
-
-	// Use sort routine to traverse list comparing items
-	// Don't care how this list ends up ordered (doesn't actually change) - care about the returned status
-	GList * dummy_list = g_list_sort_with_data(waypoint_names, check_waypoints_for_same_name, &udata);
-	// Still no waypoints...
-	if (!dummy_list) {
-		return false;
-	}
-
-	return udata.has_same_waypoint_name;
-}
-
-
-
-
-/**
  * Force unqiue waypoint names for this layer.
  * Note the panel is a required parameter to enable the update of the names displayed.
  */
@@ -5949,7 +5917,7 @@ void LayerTRW::uniquify_waypoints(LayersPanel * panel)
 	udata.has_same_waypoint_name = false;
 	udata.same_waypoint_name = NULL;
 
-	LayerTRWc::sorted_wp_id_by_name_list(this->waypoints, &waypoint_names);
+	LayerTRWc::get_sorted_wp_name_list(this->waypoints, &waypoint_names);
 
 	// No waypoints
 	if (!waypoint_names) {
@@ -5981,7 +5949,7 @@ void LayerTRW::uniquify_waypoints(LayersPanel * panel)
 
 		// Start trying to find same names again...
 		waypoint_names = NULL;
-		LayerTRWc::sorted_wp_id_by_name_list(this->waypoints, &waypoint_names);
+		LayerTRWc::get_sorted_wp_name_list(this->waypoints, &waypoint_names);
 		udata.has_same_waypoint_name = false;
 		GList * dummy_list2 = g_list_sort_with_data(waypoint_names, check_waypoints_for_same_name, &udata);
 
@@ -6001,26 +5969,21 @@ void LayerTRW::uniquify_waypoints(LayersPanel * panel)
 
 void LayerTRW::delete_selected_waypoints_cb(void)
 {
-#ifdef K
-	GList *all = NULL;
-
 	/* Ensure list of waypoint names offered is unique. */
-	if (this->has_same_waypoint_names()) {
+	if (LayerTRWc::has_duplicate_waypoint_names(this->waypoints)) {
 		if (dialog_yes_or_no("Multiple entries with the same name exist. This method only works with unique names. Force unique names now?", this->get_window())) {
-			this->uniquify_waypoints(panel);
+			this->uniquify_waypoints(this->get_window()->get_layers_panel());
 		} else {
 			return;
 		}
 	}
 
 	/* Sort list alphabetically for better presentation. */
-	LayerTRWc::sorted_wp_id_by_name_list(this->waypoints, &all);
-	if (!all) {
+	std::list<QString> all = LayerTRWc::get_sorted_wp_name_list(this->waypoints);
+	if (all.empty()) {
 		dialog_error("No waypoints found", this->get_window());
 		return;
 	}
-
-	all = g_list_sort_with_data(all, sort_alphabetically, NULL);
 
 	/* Get list of items to delete from the user. */
 	std::list<QString> delete_list = a_dialog_select_from_list(this->get_window(),
@@ -6028,7 +5991,6 @@ void LayerTRW::delete_selected_waypoints_cb(void)
 								   true,
 								   QString(_("Delete Selection")),
 								   QString(_("Select waypoints to delete")));
-	g_list_free(all);
 
 	if (delete_list.empty()) {
 		return;
@@ -6037,7 +5999,7 @@ void LayerTRW::delete_selected_waypoints_cb(void)
 	/* Delete requested waypoints.
 	   Since specifically requested, IMHO no need for extra confirmation. */
 	for (auto iter = delete_list.begin(); iter != delete_list.end(); iter++) {
-		// This deletes first waypoint it finds of that name (but uniqueness is enforced above)
+		/* This deletes first waypoint it finds of that name (but uniqueness is enforced above). */
 		this->delete_waypoint_by_name(iter->toUtf8().data());
 	}
 
@@ -6045,7 +6007,7 @@ void LayerTRW::delete_selected_waypoints_cb(void)
 	/* Reset layer timestamp in case it has now changed. */
 	this->tree_view->set_timestamp(this->index, this->get_timestamp());
 	this->emit_changed();
-#endif
+
 }
 
 
