@@ -219,7 +219,7 @@ static char *a_prompt_for_goto_string(Window * window)
 	}
 
 	/* 'ok' when press return in the entry. */
-	g_signal_connect_swapped(goto_entry, "activate", G_CALLBACK(a_dialog_response_accept), dialog);
+	g_signal_connect_swapped(goto_entry, "activate", G_CALLBACK(accept), dialog);
 
 #if GTK_CHECK_VERSION (2,20,0)
 	GtkWidget *ok_button = gtk_dialog_get_widget_for_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);

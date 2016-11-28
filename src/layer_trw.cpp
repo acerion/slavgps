@@ -2599,7 +2599,7 @@ void LayerTRW::goto_waypoint2_cb(void)
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dia))), entry, false, false, 0);
 	gtk_widget_show_all(dia);
 	// 'ok' when press return in the entry
-	g_signal_connect_swapped(entry, "activate", G_CALLBACK(a_dialog_response_accept), dia);
+	g_signal_connect_swapped(entry, "activate", G_CALLBACK(accept), dia);
 	gtk_dialog_set_default_response(GTK_DIALOG(dia), GTK_RESPONSE_ACCEPT);
 
 	while (gtk_dialog_run(GTK_DIALOG(dia)) == GTK_RESPONSE_ACCEPT) {

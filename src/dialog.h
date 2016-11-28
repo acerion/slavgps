@@ -16,7 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
 
 #ifndef _SG_DIALOG_H_
@@ -30,15 +29,11 @@
 #include <QString>
 #include <QMessageBox>
 
-#include <glib.h>
-#if 0
-#include <gtk/gtk.h>
-#endif
-
 #include "globals.h"
 #include "coords.h"
 #include "window.h"
 #include "ui_util.h"
+
 
 
 
@@ -47,21 +42,12 @@ void dialog_warning(QString const & message, QWidget * parent);
 void dialog_error(QString const & message, QWidget * parent);
 bool dialog_yes_or_no(QString const & message, QWidget * parent = NULL, QString const & title = SG_APPLICATION_NAME);
 
-/* Most of this file is an architechtural flaw. */
-
-
 QString a_dialog_new_track(QWidget * parent, QString const & default_name, bool is_route);
 
+
+
+
 #if 0
-
-#define a_dialog_info_msg_extra(win,info,extra) a_dialog_msg(win,GTK_MESSAGE_INFO,info,extra)
-#define a_dialog_error_msg_extra(win,info,extra) a_dialog_msg(win,GTK_MESSAGE_ERROR,info,extra)
-
-GtkWidget *a_dialog_create_label_vbox(char **texts, int label_count, int spacing, int padding);
-
-void a_dialog_msg(GtkWindow *parent, int type, const char *info, const char *extra);
-
-void a_dialog_response_accept(GtkDialog *dialog);
 
 void a_dialog_list(GtkWindow *parent, const char *title, GArray *array, int padding);
 
@@ -76,8 +62,6 @@ bool a_dialog_custom_zoom(GtkWindow *parent, double *xmpp, double *ympp);
 bool a_dialog_time_threshold(GtkWindow *parent, char *title_text, char *label_text, unsigned int *thr);
 
 unsigned int a_dialog_get_positive_number(GtkWindow *parent, char *title_text, char *label_text, unsigned int default_num, unsigned int min, unsigned int max, unsigned int step);
-
-void a_dialog_choose_dir(GtkWidget *entry);
 
 bool a_dialog_map_n_zoom(GtkWindow *parent, char *mapnames[], int default_map, char *zoom_list[], int default_zoom, int *selected_map, int *selected_zoom);
 #endif
@@ -125,6 +109,7 @@ std::list<T> a_dialog_select_from_list(SlavGPS::Window * parent, std::list<T> co
 #ifdef K
 void a_dialog_license(GtkWindow *parent, const char *map, const char *license, const char *url);
 #endif
+
 
 
 

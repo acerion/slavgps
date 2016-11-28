@@ -175,7 +175,7 @@ char * a_dialog_waypoint(GtkWindow * parent, char * default_name, LayerTRW * trw
 	if (default_name) {
 		gtk_entry_set_text(GTK_ENTRY(nameentry), default_name);
 	}
-	g_signal_connect_swapped(nameentry, "activate", G_CALLBACK(a_dialog_response_accept), GTK_DIALOG(dialog));
+	g_signal_connect_swapped(nameentry, "activate", G_CALLBACK(accept), GTK_DIALOG(dialog));
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), nameentry, false, false, 0);
 
 	if (wp->comment && !strncmp(wp->comment, "http", 4)) {

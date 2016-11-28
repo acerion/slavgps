@@ -34,8 +34,6 @@
 #include <QInputDialog>
 #include <QObject>
 
-#include <glib/gi18n.h>
-
 #include "dialog.h"
 #include "viewport.h"
 #include "ui_util.h"
@@ -133,8 +131,8 @@ bool a_dialog_goto_latlon(GtkWindow *parent, struct LatLon *ll, const struct Lat
 	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), lon,  false, false, 0);
 
 	/* 'ok' when press return in the entry. */
-	g_signal_connect_swapped(lat, "activate", G_CALLBACK(a_dialog_response_accept), dialog);
-	g_signal_connect_swapped(lon, "activate", G_CALLBACK(a_dialog_response_accept), dialog);
+	g_signal_connect_swapped(lat, "activate", G_CALLBACK(accept), dialog);
+	g_signal_connect_swapped(lon, "activate", G_CALLBACK(accept), dialog);
 
 	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
 
@@ -222,14 +220,6 @@ bool a_dialog_goto_utm(GtkWindow *parent, struct UTM *utm, const struct UTM *old
 
 	gtk_widget_destroy(dialog);
 	return false;
-}
-
-
-
-
-void a_dialog_response_accept(GtkDialog *dialog)
-{
-	gtk_dialog_response(dialog, GTK_RESPONSE_ACCEPT);
 }
 
 
@@ -376,27 +366,6 @@ char *a_dialog_get_date(GtkWindow *parent, const char *title)
 	return date_str;
 }
 
-
-
-
-/* Creates a vbox full of labels. */
-GtkWidget *a_dialog_create_label_vbox(char **texts, int label_count, int spacing, int padding)
-{
-	GtkWidget *vbox, *label;
-	int i;
-	vbox = gtk_vbox_new(true, spacing);
-
-	for (i = 0; i < label_count; i++) {
-		label = gtk_label_new(NULL);
-		gtk_label_set_markup(GTK_LABEL(label), _(texts[i]));
-		if (strchr(texts[i], ':')) {
-			/* Align label to the right. */
-			gtk_misc_set_alignment(GTK_MISC(label), 1.0, 0.5);
-		}
-		gtk_box_pack_start(GTK_BOX(vbox), label, false, true, padding);
-	}
-	return vbox;
-}
 
 
 #endif
