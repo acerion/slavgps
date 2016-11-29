@@ -60,9 +60,11 @@ bool a_dialog_goto_utm(GtkWindow *parent, struct UTM *utm, const struct UTM *old
 char *a_dialog_get_date(GtkWindow *parent, const char *title);
 bool a_dialog_custom_zoom(GtkWindow *parent, double *xmpp, double *ympp);
 bool a_dialog_time_threshold(GtkWindow *parent, char *title_text, char *label_text, unsigned int *thr);
+#endif
 
-unsigned int a_dialog_get_positive_number(GtkWindow *parent, char *title_text, char *label_text, unsigned int default_num, unsigned int min, unsigned int max, unsigned int step);
+int a_dialog_get_positive_number(SlavGPS::Window * parent, QString const & title, QString const & label, int default_num, int min, int max, int step);
 
+#ifdef K
 bool a_dialog_map_n_zoom(GtkWindow *parent, char *mapnames[], int default_map, char *zoom_list[], int default_zoom, int *selected_map, int *selected_zoom);
 #endif
 

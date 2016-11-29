@@ -515,6 +515,7 @@ bool a_dialog_time_threshold(GtkWindow *parent, char *title_text, char *label_te
 }
 
 
+#endif
 
 
 /**
@@ -522,52 +523,16 @@ bool a_dialog_time_threshold(GtkWindow *parent, char *title_text, char *label_te
  *
  * Returns: A value of zero indicates the dialog was cancelled.
  */
-unsigned int a_dialog_get_positive_number(GtkWindow *parent, char *title_text, char *label_text, unsigned int default_num, unsigned int min, unsigned int max, unsigned int step)
+int a_dialog_get_positive_number(Window * parent, QString const & title, QString const & label, int default_num, int min, int max, int step)
 {
-	GtkWidget *dialog = gtk_dialog_new_with_buttons(title_text,
-							parent,
-							(GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
-							GTK_STOCK_CANCEL,
-							GTK_RESPONSE_REJECT,
-							GTK_STOCK_OK,
-							GTK_RESPONSE_ACCEPT,
-							NULL);
-	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
-	GtkWidget *response_w = NULL;
-#if GTK_CHECK_VERSION(2, 20, 0)
-	response_w = gtk_dialog_get_widget_for_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
-#endif
+	int result = QInputDialog::getInt(parent, title, label,
+					  default_num, min, max, step);
 
-	GtkWidget *table, *spin, *label;
-	unsigned int result = default_num;
-
-	table = gtk_table_new(2, 1, false);
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), table, true, true, 0);
-
-	label = gtk_label_new(label_text);
-	spin = gtk_spin_button_new((GtkAdjustment *) gtk_adjustment_new(default_num, min, max, step, 5, 0), 1, 0);
-
-	gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 1, 0, 1);
-	gtk_table_attach_defaults(GTK_TABLE(table), spin, 0, 1, 1, 2);
-
-	if (response_w) {
-		gtk_widget_grab_focus(response_w);
-	}
-
-	gtk_widget_show_all(table);
-
-	if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
-		result = gtk_spin_button_get_value(GTK_SPIN_BUTTON(spin));
-		gtk_widget_destroy(dialog);
-		return result;
-	}
-
-	/* Dialog cancelled. */
-	gtk_widget_destroy(dialog);
-	return 0;
+	return result;
 }
 
 
+#ifdef K
 
 
 #if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 24)
