@@ -307,8 +307,8 @@ char * a_dialog_waypoint(GtkWindow * parent, char * default_name, LayerTRW * trw
 	}
 
 	if (!is_new) {
-		/* Shift left<->right to try not to obscure the waypoint. */
-		trw->dialog_shift(GTK_WINDOW(dialog), &(wp->coord), false);
+		/* Shift left/right/up/down to try not to obscure the waypoint. */
+		trw->dialog_shift(GTK_WINDOW(dialog), &wp->coord, false);
 	}
 
 	while (gtk_dialog_run (GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {

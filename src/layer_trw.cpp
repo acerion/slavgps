@@ -5109,10 +5109,9 @@ void LayerTRW::split_by_n_points_cb(void)
 		return;
 	}
 
-#ifdef K
 	int n_points = a_dialog_get_positive_number(this->get_window(),
-						    _("Split Every Nth Point"),
-						    _("Split on every Nth point:"),
+						    QString(_("Split Every Nth Point")),
+						    QString(_("Split on every Nth point:")),
 						    250,   /* Default value as per typical limited track capacity of various GPS devices. */
 						    2,     /* Min */
 						    65536, /* Max */
@@ -5155,7 +5154,6 @@ void LayerTRW::split_by_n_points_cb(void)
 	for (auto iter = points.begin(); iter != points.end(); iter++) {
 		delete *iter;
 	}
-#endif
 }
 
 
@@ -5493,10 +5491,12 @@ void LayerTRW::astro_open(char const * date_str,  char const * time_str, char co
 
 
 
-// Format of stellarium lat & lon seems designed to be particularly awkward
-//  who uses ' & " in the parameters for the command line?!
-// -1d4'27.48"
-// +53d58'16.65"
+/*
+  Format of stellarium lat & lon seems designed to be particularly awkward
+  who uses ' & " in the parameters for the command line?!
+  -1d4'27.48"
+  +53d58'16.65"
+*/
 static char *convert_to_dms(double dec)
 {
 	char sign_c = ' ';
@@ -5504,22 +5504,22 @@ static char *convert_to_dms(double dec)
 		sign_c = '+';
 	} else if (dec < 0) {
 		sign_c = '-';
-	} else { // Nul value
+	} else { /* Nul value. */
 		sign_c = ' ';
 	}
 
-	// Degrees
+	/* Degrees. */
 	double tmp = fabs(dec);
 	int val_d = (int)tmp;
 
-	// Minutes
+	/* Minutes. */
 	tmp = (tmp - val_d) * 60;
 	int val_m = (int)tmp;
 
-	// Seconds
+	/* Seconds. */
 	double val_s = (tmp - val_m) * 60;
 
-	// Format
+	/* Format. */
 	char * result = g_strdup_printf("%c%dd%d\\\'%.4f\\\"", sign_c, val_d, val_m, val_s);
 	return result;
 }
@@ -5600,97 +5600,63 @@ void LayerTRW::astro_cb(void)
 
 
 
-int check_tracks_for_same_name(gconstpointer aa, gconstpointer bb, void * udata)
-{
-	const char* namea = (const char*) aa;
-	const char* nameb = (const char*) bb;
-
-	// the test
-	int result = strcmp(namea, nameb);
-
-	if (result == 0) {
-		// Found two names the same
-		same_track_name_udata *user_data = (same_track_name_udata *) udata;
-		user_data->has_same_track_name = true;
-		user_data->same_track_name = namea;
-	}
-
-	// Leave ordering the same
-	return 0;
-}
-
-
-
-
 /**
  * Force unqiue track names for the track table specified
  * Note the panel is a required parameter to enable the update of the names displayed
  * Specify if on tracks or else on routes
  */
-void LayerTRW::uniquify_tracks(LayersPanel * panel, std::unordered_map<sg_uid_t, Track *> & track_table, bool ontrack)
+void LayerTRW::uniquify_tracks(LayersPanel * panel, std::unordered_map<sg_uid_t, Track *> & tracks_table, bool ontrack)
 {
-#ifdef K
-	// . Search list for an instance of repeated name
-	// . get track of this name
-	// . create new name
-	// . rename track & update equiv. treeview iter
-	// . repeat until all different
-
-	same_track_name_udata udata;
-
-
-	udata.has_same_track_name = false;
-	udata.same_track_name = NULL;
-
-	std::list<QString> const track_names = LayerTRWc::get_sorted_track_name_list(track_table);
-
-	/* No tracks. */
-	if (track_names->empty()) {
+	if (tracks_table.empty()) {
+		qDebug() << "EE: LayerTRW: ::uniquify() called for empty tracks/routes set";
 		return;
 	}
 
-	GList * dummy_list1 = g_list_sort_with_data(track_names, check_tracks_for_same_name, &udata);
+	/*
+	  - Search tracks set for an instance of repeated name
+	  - get track with this name
+	  - create new name
+	  - rename track & update equiv. treeview iter
+	  - repeat until all different
+	*/
 
-	// Still no tracks...
-	if (!dummy_list1) {
-		return;
-	}
+	/* TODO: make the ::has_duplicate_track_names() return the track/route itself (or NULL). */
+	QString duplicate_name = LayerTRWc::has_duplicate_track_names(tracks_table);
+	while (duplicate_name != "") {
 
-	while (udata.has_same_track_name) {
-
-		// Find a track with the same name
+		/* Get the track with duplicate name. */
 		Track * trk;
 		if (ontrack) {
-			trk = this->get_track(udata.same_track_name);
+			trk = this->get_track(duplicate_name.toUtf8().data());
 		} else {
-			trk = this->get_route(udata.same_track_name);
+			trk = this->get_route(duplicate_name.toUtf8().data());
 		}
 
 		if (!trk) {
 			/* Broken :( */
+			qDebug() << "EE: can't retrieve track/route with duplicate name" << duplicate_name;
 			fprintf(stderr, "CRITICAL: Houston, we've had a problem.\n");
-			this->get_window()->get_statusbar()->set_message(StatusBarField::INFO,
-									 _("Internal Error in LayerTRW::uniquify_tracks"));
+			this->get_window()->get_statusbar()->set_message(StatusBarField::INFO, _("Internal Error during making tracks/routes unique"));
 			return;
 		}
 
-		// Rename it
-		char * newname = this->new_unique_sublayer_name(SublayerType::TRACK, udata.same_track_name);
+		/* Rename it. */
+		char * newname = this->new_unique_sublayer_name(SublayerType::TRACK, trk->name);
 		trk->set_name(newname);
 
-		// Need want key of it for treeview update
-		sg_uid_t uid = LayerTRWc::find_uid_of_track(track_table, trk);
+		/* We need key of it for treeview update.
+		   TODO: do we really need to do this? Isn't the name in tree view auto-updated? */
+		sg_uid_t uid = LayerTRWc::find_uid_of_track(tracks_table, trk);
 		if (uid) {
-
-			GtkTreeIter *it;
+			TreeIndex * index = NULL;
 			if (ontrack) {
-				it = this->tracks_iters.at(uid);
+				index = this->tracks_iters.at(uid);
 			} else {
-				it = this->routes_iters.at(uid);
+				index = this->routes_iters.at(uid);
 			}
 
-			if (it) {
-				this->tree_view->set_name(it, newname);
+			if (index && index->isValid()) {
+				this->tree_view->set_name(index, newname);
 				if (ontrack) {
 					this->tree_view->sort_children(this->tracks_node, this->track_sort_order);
 				} else {
@@ -5698,24 +5664,15 @@ void LayerTRW::uniquify_tracks(LayersPanel * panel, std::unordered_map<sg_uid_t,
 				}
 			}
 		}
+		free(newname);
+		newname = NULL;
 
-		/* Start trying to find same names again... */
-		delete track_names;
-		track_names = LayerTRWc::get_sorted_track_name_list(track_table);
-		udata.has_same_track_name = false;
-		GList * dummy_list2 = g_list_sort_with_data(track_names, check_tracks_for_same_name, &udata);
-
-		// No tracks any more - give up searching
-		if (!dummy_list2) {
-			udata.has_same_track_name = false;
-		}
+		/* Try to find duplicate names again in the updated set of tracks. */
+		QString duplicate_name = LayerTRWc::has_duplicate_track_names(tracks_table);
 	}
 
-	delete track_names;
-
 	/* Update. */
-	panel->emit_changed();
-#endif
+	panel->emit_update_cb();
 }
 
 
@@ -5783,7 +5740,8 @@ void LayerTRW::delete_selected_tracks_cb(void) /* Slot. */
 	LayersPanel * panel = this->get_window()->get_layers_panel();
 
 	/* Ensure list of track names offered is unique. */
-	if (LayerTRWc::has_duplicate_track_names(this->tracks)) {
+	QString duplicate_name = LayerTRWc::has_duplicate_track_names(this->tracks);
+	if (duplicate_name != "") {
 		if (dialog_yes_or_no(QString("Multiple entries with the same name exist. This method only works with unique names. Force unique names now?")), this->get_window()) {
 			this->uniquify_tracks(panel, this->tracks, true);
 		} else {
@@ -5832,7 +5790,8 @@ void LayerTRW::delete_selected_routes_cb(void) /* Slot. */
 	LayersPanel * panel = this->get_window()->get_layers_panel();
 
 	/* Ensure list of track names offered is unique. */
-	if (LayerTRWc::has_duplicate_track_names(this->routes)) {
+	QString duplicate_name = LayerTRWc::has_duplicate_track_names(this->routes);
+	if (duplicate_name != "") {
 		if (dialog_yes_or_no("Multiple entries with the same name exist. This method only works with unique names. Force unique names now?", this->get_window())) {
 			this->uniquify_tracks(panel, this->routes, false);
 		} else {
@@ -5840,6 +5799,7 @@ void LayerTRW::delete_selected_routes_cb(void) /* Slot. */
 		}
 	}
 
+	/* Sort list alphabetically for better presentation. */
 	std::list<QString> all = LayerTRWc::get_sorted_track_name_list(this->routes);
 
 	if (all.empty()) {
@@ -5871,97 +5831,50 @@ void LayerTRW::delete_selected_routes_cb(void) /* Slot. */
 
 
 
-typedef struct {
-	bool    has_same_waypoint_name;
-	const char *same_waypoint_name;
-} same_waypoint_name_udata;
-
-static int check_waypoints_for_same_name(gconstpointer aa, gconstpointer bb, void * udata)
-{
-	const char* namea = (const char*) aa;
-	const char* nameb = (const char*) bb;
-
-	// the test
-	int result = strcmp(namea, nameb);
-
-	if (result == 0) {
-		// Found two names the same
-		same_waypoint_name_udata *user_data = (same_waypoint_name_udata *) udata;
-		user_data->has_same_waypoint_name = true;
-		user_data->same_waypoint_name = namea;
-	}
-
-	// Leave ordering the same
-	return 0;
-}
-
-
-
-
 /**
  * Force unqiue waypoint names for this layer.
  * Note the panel is a required parameter to enable the update of the names displayed.
  */
 void LayerTRW::uniquify_waypoints(LayersPanel * panel)
 {
-#ifdef K
-	// . Search list for an instance of repeated name
-	// . get waypoint of this name
-	// . create new name
-	// . rename waypoint & update equiv. treeview iter
-	// . repeat until all different
-
-	same_waypoint_name_udata udata;
-
-	GList * waypoint_names = NULL;
-	udata.has_same_waypoint_name = false;
-	udata.same_waypoint_name = NULL;
-
-	LayerTRWc::get_sorted_wp_name_list(this->waypoints, &waypoint_names);
-
-	// No waypoints
-	if (!waypoint_names) {
+	if (this->waypoints.empty()) {
+		qDebug() << "EE: LayerTRW: ::uniquify() called for empty waypoints set";
 		return;
 	}
 
-	GList * dummy_list1 = g_list_sort_with_data(waypoint_names, check_waypoints_for_same_name, &udata);
-	// Still no waypoints...
-	if (!dummy_list1) {
-		return;
-	}
+	/*
+	  - Search waypoints set for an instance of repeated name
+	  - get waypoint with this name
+	  - create new name
+	  - rename waypoint
+	  - repeat until there are no waypoints with duplicate names
+	*/
 
-	while (udata.has_same_waypoint_name) {
+	/* TODO: make the ::has_duplicate_waypoint_names() return the waypoint itself (or NULL). */
+	QString duplicate_name = LayerTRWc::has_duplicate_waypoint_names(this->waypoints);
+	while (duplicate_name != "") {
 
-		// Find a waypoint with the same name
-		Waypoint * wp = this->get_waypoint((const char *) udata.same_waypoint_name);
+		/* Get that waypoint that has duplicate name. */
+		Waypoint * wp = this->get_waypoint(duplicate_name.toUtf8().data());
 		if (!wp) {
 			/* Broken :( */
-			fprintf(stderr, "CRITICAL: Houston, we've had a problem.\n");
-			this->get_window()->get_statusbar()->set_message(StatusBarField::INFO,
-						  _("Internal Error in uniquify_waypoints"));
+			qDebug() << "EE: can't retrieve waypoint with duplicate name" << duplicate_name;
+			this->get_window()->get_statusbar()->set_message(StatusBarField::INFO, QString(_("Internal Error during making waypoints unique")));
 			return;
 		}
 
-		// Rename it
-		char * newname = this->new_unique_sublayer_name(SublayerType::WAYPOINT, udata.same_waypoint_name);
-
+		/* Rename it. */
+		char * newname = this->new_unique_sublayer_name(SublayerType::WAYPOINT, wp->name);
 		this->waypoint_rename(wp, newname);
+		free(newname);
+		newname = NULL;
 
-		// Start trying to find same names again...
-		waypoint_names = NULL;
-		LayerTRWc::get_sorted_wp_name_list(this->waypoints, &waypoint_names);
-		udata.has_same_waypoint_name = false;
-		GList * dummy_list2 = g_list_sort_with_data(waypoint_names, check_waypoints_for_same_name, &udata);
-
-		// No waypoints any more - give up searching
-		if (!dummy_list2) {
-			udata.has_same_waypoint_name = false;
-		}
+		/* Try to find duplicate names again in the updated set of waypoints. */
+		duplicate_name = LayerTRWc::has_duplicate_waypoint_names(this->waypoints);
 	}
 
 	/* Update. */
-	panel->emit_changed();
-#endif
+	panel->emit_update_cb();
 }
 
 
@@ -5970,7 +5883,8 @@ void LayerTRW::uniquify_waypoints(LayersPanel * panel)
 void LayerTRW::delete_selected_waypoints_cb(void)
 {
 	/* Ensure list of waypoint names offered is unique. */
-	if (LayerTRWc::has_duplicate_waypoint_names(this->waypoints)) {
+	QString duplicate_name = LayerTRWc::has_duplicate_waypoint_names(this->waypoints);
+	if (duplicate_name != "") {
 		if (dialog_yes_or_no("Multiple entries with the same name exist. This method only works with unique names. Force unique names now?", this->get_window())) {
 			this->uniquify_waypoints(this->get_window()->get_layers_panel());
 		} else {
@@ -6644,42 +6558,34 @@ void LayerTRW::trackpoint_properties_cb(int response) /* Slot. */
  * Try to reposition a dialog if it's over the specified coord
  *  so to not obscure the item of interest
  */
-void LayerTRW::dialog_shift(GtkWindow * dialog, VikCoord * coord, bool vertical)
+void LayerTRW::dialog_shift(QDialog * dialog, VikCoord * coord, bool vertical)
 {
-#ifdef K
-	GtkWindow * parent = this->get_window(); /* i.e. the main window. */
+	Window * parent = this->get_window(); /* i.e. the main window. */
 
-	// Attempt force dialog to be shown so we can find out where it is more reliably...
-	while (gtk_events_pending()) {
-		gtk_main_iteration();
-	}
+	int win_pos_x = parent->x();
+	int win_pos_y = parent->y();
+	int win_size_x = parent->width();
+	int win_size_y = parent->height();
 
-	// get parent window position & size
-	int win_pos_x, win_pos_y;
-	gtk_window_get_position(parent, &win_pos_x, &win_pos_y);
+	int dia_pos_x = dialog->x();
+	int dia_pos_y = dialog->y();
+	int dia_size_x = dialog->width();
+	int dia_size_y = dialog->height();
 
-	int win_size_x, win_size_y;
-	gtk_window_get_size(parent, &win_size_x, &win_size_y);
 
-	// get own dialog size
-	int dia_size_x, dia_size_y;
-	gtk_window_get_size(dialog, &dia_size_x, &dia_size_y);
-
-	// get own dialog position
-	int dia_pos_x, dia_pos_y;
-	gtk_window_get_position(dialog, &dia_pos_x, &dia_pos_y);
-
-	// Dialog not 'realized'/positioned - so can't really do any repositioning logic
+	/* Dialog not 'realized'/positioned - so can't really do any repositioning logic. */
 	if (dia_pos_x <= 2 || dia_pos_y <= 2) {
+		qDebug() << "WW: LayerTRW: can't position dialog window";
 		return;
 	}
 
 	Viewport * viewport = this->get_window()->get_viewport();
 
-	int vp_xx, vp_yy; // In viewport pixels
+	int vp_xx, vp_yy; /* In viewport pixels. */
 	viewport->coord_to_screen(coord, &vp_xx, &vp_yy);
 
-	// Work out the 'bounding box' in pixel terms of the dialog and only move it when over the position
+#ifdef K
+	/* Work out the 'bounding box' in pixel terms of the dialog and only move it when over the position. */
 
 	int dest_x = 0;
 	int dest_y = 0;
@@ -6752,10 +6658,8 @@ void LayerTRW::trackpoint_properties_show()
 	if (this->selected_tp.valid) {
 		/* Get tp pixel position. */
 		Trackpoint * tp = *this->selected_tp.iter;
-#ifdef K
 		/* Shift up/down to try not to obscure the trackpoint. */
-		this->dialog_shift(GTK_WINDOW(this->tpwin), &tp->coord, true);
-#endif
+		this->dialog_shift(this->tpwin, &tp->coord, true);
 	}
 
 
@@ -6839,9 +6743,9 @@ void LayerTRW::verify_thumbnails(void)
 
 
 
-static const char* my_track_colors(int ii)
+static const char * my_track_colors(int ii)
 {
-	static const char* colors[VIK_TRW_LAYER_TRACK_GCS] = {
+	static const char * colors[TRW_LAYER_TRACK_COLORS_MAX] = {
 		"#2d870a",
 		"#135D34",
 		"#0a8783",
@@ -6854,7 +6758,7 @@ static const char* my_track_colors(int ii)
 		"#96059f"
 	};
 	/* Fast and reliable way of returning a colour. */
-	return colors[(ii % VIK_TRW_LAYER_TRACK_GCS)];
+	return colors[(ii % TRW_LAYER_TRACK_COLORS_MAX)];
 }
 
 
@@ -6870,20 +6774,18 @@ void LayerTRW::track_alloc_colors()
 
 		/* Tracks get a random spread of colours if not already assigned. */
 		if (!trk->has_color) {
-#ifdef K
 			if (this->drawmode == DRAWMODE_ALL_SAME_COLOR) {
 				trk->color = this->track_color;
 			} else {
-				gdk_color_parse(my_track_colors(ii), &(trk->color));
+				trk->color.setNamedColor(QString(my_track_colors(ii)));
 			}
 			trk->has_color = true;
-#endif
 		}
 
 		this->update_treeview(trk);
 
 		ii++;
-		if (ii > VIK_TRW_LAYER_TRACK_GCS) {
+		if (ii > TRW_LAYER_TRACK_COLORS_MAX) {
 			ii = 0;
 		}
 	}
@@ -6896,14 +6798,12 @@ void LayerTRW::track_alloc_colors()
 
 		/* Routes get an intermix of reds. */
 		if (!trk->has_color) {
-#ifdef K
 			if (ii) {
-				gdk_color_parse("#FF0000", &trk->color); /* Red. */
+				trk->color.setNamedColor("#FF0000"); /* Red. */
 			} else {
-				gdk_color_parse("#B40916", &trk->color); /* Dark Red. */
+				trk->color.setNamedColor("#B40916"); /* Dark Red. */
 			}
 			trk->has_color = true;
-#endif
 		}
 
 		this->update_treeview(trk);
@@ -7506,9 +7406,7 @@ static std::list<track_layer_t *> * trw_layer_create_tracks_and_layers_list_both
 	std::list<Track *> * tracks = new std::list<Track *>;
 	tracks = LayerTRWc::get_track_values(tracks, ((LayerTRW *) layer)->get_tracks());
 	tracks = LayerTRWc::get_track_values(tracks, ((LayerTRW *) layer)->get_routes());
-#ifdef K
 	return ((LayerTRW *) layer)->create_tracks_and_layers_list_helper(tracks);
-#endif
 }
 
 

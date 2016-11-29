@@ -357,7 +357,7 @@ namespace SlavGPS {
 		void my_tpwin_set_tp();
 
 
-		void dialog_shift(GtkWindow * dialog, VikCoord * coord, bool vertical);
+		void dialog_shift(QDialog * dialog, VikCoord * coord, bool vertical);
 
 
 		int get_property_tracks_line_thickness();
