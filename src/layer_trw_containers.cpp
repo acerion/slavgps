@@ -423,12 +423,12 @@ std::list<QString> LayerTRWc::get_sorted_track_name_list(std::unordered_map<sg_u
 /**
  * Find out if any tracks have the same name in this hash table.
  */
-bool LayerTRWc::has_duplicate_track_names(std::unordered_map<sg_uid_t, Track *> & tracks)
+QString LayerTRWc::has_duplicate_track_names(std::unordered_map<sg_uid_t, Track *> & tracks)
 {
 	/* Build list of names. Sort list alphabetically. Find any two adjacent duplicates on the list. */
 
 	if (tracks.size() <= 1) {
-		return false;
+		return QString("");
 	}
 
 	std::list<QString> track_names = LayerTRWc::get_sorted_track_name_list(tracks);
@@ -439,11 +439,11 @@ bool LayerTRWc::has_duplicate_track_names(std::unordered_map<sg_uid_t, Track *> 
 		QString const previous = *(std::prev(iter));
 
 		if (this_one == previous) {
-			return true;
+			return this_one;
 		}
 	}
 
-	return false;
+	return QString("");
 }
 
 
@@ -452,12 +452,12 @@ bool LayerTRWc::has_duplicate_track_names(std::unordered_map<sg_uid_t, Track *> 
 /**
  * Find out if any waypoints have the same name in this layer.
  */
-bool LayerTRWc::has_duplicate_waypoint_names(std::unordered_map<sg_uid_t, Waypoint *> & waypoints)
+QString LayerTRWc::has_duplicate_waypoint_names(std::unordered_map<sg_uid_t, Waypoint *> & waypoints)
 {
 	/* Build list of names. Sort list alphabetically. Find any two adjacent duplicates on the list. */
 
 	if (waypoints.size() <= 1) {
-		return false;
+		return QString("");
 	}
 
 	std::list<QString> waypoint_names = LayerTRWc::get_sorted_wp_name_list(waypoints);
@@ -467,11 +467,11 @@ bool LayerTRWc::has_duplicate_waypoint_names(std::unordered_map<sg_uid_t, Waypoi
 		QString const previous = *(std::prev(iter));
 
 		if (this_one == previous) {
-			return true;
+			return this_one;
 		}
 	}
 
-	return false;
+	return QString("");
 }
 
 

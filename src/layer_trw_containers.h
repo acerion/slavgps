@@ -116,8 +116,8 @@ namespace SlavGPS {
 		static std::list<QString> get_sorted_track_name_list(std::unordered_map<sg_uid_t, Track *> & tracks);
 		static std::list<QString> get_sorted_track_name_list_exclude_self(std::unordered_map<sg_uid_t, Track *> * tracks, Track const * self);
 		static std::list<QString> get_sorted_wp_name_list(std::unordered_map<sg_uid_t, Waypoint *> & waypoints);
-		static bool has_duplicate_track_names(std::unordered_map<sg_uid_t, Track *> & tracks);
-		static bool has_duplicate_waypoint_names(std::unordered_map<sg_uid_t, Waypoint *> & waypoints);
+		static QString has_duplicate_track_names(std::unordered_map<sg_uid_t, Track *> & tracks);
+		static QString has_duplicate_waypoint_names(std::unordered_map<sg_uid_t, Waypoint *> & waypoints);
 
 
 		static void iter_visibility_toggle(std::unordered_map<sg_uid_t, TreeIndex *> & items, TreeView * tree_view);
