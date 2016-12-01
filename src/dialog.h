@@ -56,8 +56,9 @@ void a_dialog_about(GtkWindow *parent);
 /* Okay, everthing below here is an architechtural flaw. */
 bool a_dialog_goto_latlon(GtkWindow *parent, struct LatLon *ll, const struct LatLon *old);
 bool a_dialog_goto_utm(GtkWindow *parent, struct UTM *utm, const struct UTM *old);
-
-char *a_dialog_get_date(GtkWindow *parent, const char *title);
+#endif
+char * a_dialog_get_date(SlavGPS::Window * parent, char const * title);
+#ifdef K
 bool a_dialog_custom_zoom(GtkWindow *parent, double *xmpp, double *ympp);
 bool a_dialog_time_threshold(GtkWindow *parent, char *title_text, char *label_text, unsigned int *thr);
 #endif

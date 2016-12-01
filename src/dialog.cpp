@@ -37,6 +37,7 @@
 #include "dialog.h"
 #include "viewport.h"
 #include "ui_util.h"
+#include "date_time_dialog.h"
 #if 0
 #include "degrees_converters.h"
 #include "authors.h"
@@ -319,56 +320,34 @@ static void today_clicked(GtkWidget *cal)
 
 
 
+#endif
+
 
 /**
  * Returns: a date as a string - always in ISO8601 format (YYYY-MM-DD).
  * This string can be NULL (especially when the dialog is cancelled).
  * Free the string after use.
  */
-char *a_dialog_get_date(GtkWindow *parent, const char *title)
+char * a_dialog_get_date(Window * parent, char const * title)
 {
-	GtkWidget *dialog = gtk_dialog_new_with_buttons(title,
-							parent,
-							(GtkDialogFlags) (GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
-							GTK_STOCK_CANCEL,
-							GTK_RESPONSE_REJECT,
-							GTK_STOCK_OK,
-							GTK_RESPONSE_ACCEPT,
-							NULL);
-	GtkWidget *cal = gtk_calendar_new();
-	GtkWidget *today = gtk_button_new_with_label(_("Today"));
+	time_t mytime = date_dialog(parent,
+				    QString(title),
+				    time(NULL));
 
-	static unsigned int year = 0;
-	static unsigned int month = 0;
-	static unsigned int day = 0;
-
-	if (year != 0) {
-		/* Restore the last selected date. */
-		gtk_calendar_select_month(GTK_CALENDAR(cal), month, year);
-		gtk_calendar_select_day(GTK_CALENDAR(cal), day);
+	if (!mytime) {
+		return NULL;
 	}
 
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), today, false, false, 0);
-	gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), cal, false, false, 0);
+	struct tm * out = localtime(&mytime);
+	size_t size = strlen("YYYY-MM-DD") + 1;
+	char * date_str = (char *) malloc(size);
+	snprintf(date_str, size, "%04d-%02d-%02d", 1900 + out->tm_year, out->tm_mon + 1, out->tm_mday);
+	qDebug() << "II: Dialog:" << __FUNCTION__ << date_str;
 
-	g_signal_connect_swapped(G_OBJECT(today), "clicked", G_CALLBACK(today_clicked), cal);
-
-	gtk_widget_show_all(dialog);
-
-	gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_ACCEPT);
-
-	char *date_str = NULL;
-	if (gtk_dialog_run(GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT) {
-		gtk_calendar_get_date(GTK_CALENDAR(cal), &year, &month, &day);
-		date_str = g_strdup_printf("%d-%02d-%02d", year, month+1, day);
-	}
-	gtk_widget_destroy(dialog);
 	return date_str;
 }
 
 
-
-#endif
 
 
 bool dialog_yes_or_no(QString const & message, QWidget * parent, QString const & title)
