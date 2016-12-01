@@ -41,6 +41,7 @@ namespace SlavGPS {
 
 
 	time_t date_time_dialog(QWidget * parent, QString const & title, time_t date_time);
+	time_t date_dialog(QWidget * parent, QString const & title, time_t date);
 
 
 
@@ -50,6 +51,7 @@ namespace SlavGPS {
 		SGDateTimeDialog(QWidget * parent, QDateTime const & date_time);
 		~SGDateTimeDialog();
 		time_t get_timestamp();
+		void show_clock(bool show);
 
 	private:
 		QVBoxLayout * vbox = NULL;

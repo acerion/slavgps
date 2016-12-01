@@ -51,10 +51,31 @@ time_t SlavGPS::date_time_dialog(QWidget * parent, QString const & title, time_t
 
 	if (dialog_code == QDialog::Accepted) {
 		ret = dialog->get_timestamp();
-		qDebug() << "II DateTime: returning timestamp" << ret;
+		qDebug() << "II DateTime: date time dialog: returning timestamp" << ret;
 		return ret;
 	} else {
-		qDebug() << "II DateTime: returning zero";
+		qDebug() << "II DateTime: date time dialog: returning zero";
+		return 0;
+	}
+}
+
+
+
+time_t SlavGPS::date_dialog(QWidget * parent, QString const & title, time_t date)
+{
+	SGDateTimeDialog * dialog = new SGDateTimeDialog(parent, QDateTime::fromTime_t(date));
+	dialog->setWindowTitle(title);
+	dialog->show_clock(false);
+	int dialog_code = dialog->exec();
+
+	time_t ret = date;
+
+	if (dialog_code == QDialog::Accepted) {
+		ret = dialog->get_timestamp();
+		qDebug() << "II DateTime: date dialog: returning timestamp" << ret;
+		return ret;
+	} else {
+		qDebug() << "II DateTime: date dialog: returning zero";
 		return 0;
 	}
 }
@@ -99,10 +120,21 @@ time_t SGDateTimeDialog::get_timestamp()
 {
 	QDateTime date_time;
 	date_time.setDate(this->calendar->selectedDate());
-	date_time.setTime(this->clock->time());
+	if (this->clock->isVisible()) {
+		date_time.setTime(this->clock->time());
+	}
 
 	return date_time.toTime_t();
 }
+
+
+
+
+void SGDateTimeDialog::show_clock(bool show)
+{
+	this->clock->setVisible(show);
+}
+
 
 
 
