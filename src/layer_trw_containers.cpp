@@ -374,9 +374,6 @@ std::list<QString> LayerTRWc::get_sorted_track_name_list_exclude_self(std::unord
 
 
 
-/**
- * Similar to trw_layer_enum_item, but this uses a sorted method.
- */
 /* Currently unused
 static void trw_layer_sorted_name_list(void * key, void * value, void * udata)
 {

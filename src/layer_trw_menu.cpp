@@ -158,8 +158,8 @@ void LayerTRW::add_menu_items(QMenu & menu)
 	qa = menu.addAction(QIcon::fromTheme("go-jump"), QString(_("&Goto Center of Layer")));
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (centerize_cb()));
 
-	qa = menu.addAction(QString(_("Goto &Waypoint...")));
-	connect(qa, SIGNAL (triggered(bool)), this, SLOT (goto_waypoint_cb()));
+	qa = menu.addAction(QIcon::fromTheme("edit-find"), QString(_("Find &Waypoint...")));
+	connect(qa, SIGNAL (triggered(bool)), this, SLOT (find_waypoint_dialog_cb()));
 
 	{
 		QMenu * export_submenu = menu.addMenu(QIcon::fromTheme("document-save-as"), QString("&Export Layer"));
@@ -415,8 +415,8 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 
 			/* Could be a right-click using the tool. */
 			if (this->menu_data->layers_panel != NULL) {
-				qa = menu.addAction(QIcon::fromTheme("go-jump"), QString(_("&Goto")));
-				connect(qa, SIGNAL (triggered(bool)), this, SLOT (goto_waypoint2_cb()));
+				qa = menu.addAction(QIcon::fromTheme("go-jump"), QString(_("&Go to this Waypoint")));
+				connect(qa, SIGNAL (triggered(bool)), this, SLOT (go_to_selected_waypoint_cb()));
 			}
 
 			Waypoint * wp = this->waypoints.at(this->menu_data->sublayer_uid);
@@ -498,8 +498,8 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 		qa = menu.addAction(QIcon::fromTheme("zoom-fit-best"), QString(_("&View All Waypoints")));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (full_view_waypoints_cb()));
 
-		qa = menu.addAction(QString(_("Goto &Waypoint...")));
-		connect(qa, SIGNAL (triggered(bool)), this, SLOT (goto_waypoint_cb()));
+		qa = menu.addAction(QIcon::fromTheme("edit-find"), QString(_("Find &Waypoint...")));
+		connect(qa, SIGNAL (triggered(bool)), this, SLOT (find_waypoint_dialog_cb()));
 
 		qa = menu.addAction(QIcon::fromTheme("list-remove"), QString(_("Delete &All Waypoints")));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (delete_all_waypoints_cb()));

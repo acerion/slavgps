@@ -48,13 +48,6 @@
 
 
 
-typedef struct {
-	VikLayer vl;
-} VikTrwLayer;
-
-
-
-
 namespace SlavGPS {
 
 
@@ -545,7 +538,8 @@ namespace SlavGPS {
 		void full_view_waypoints_cb(void);
 
 		void centerize_cb(void);
-		void goto_waypoint_cb(void);
+		void find_waypoint_dialog_cb(void);    /* In context menu for "Layer TRW" or "Waypoints" node in tree view. */
+		void go_to_selected_waypoint_cb(void); /* In context menu for specific Waypoint node in tree view. */
 
 		void export_as_gpspoint_cb(void);
 		void export_as_gpsmapper_cb(void);
@@ -611,8 +605,6 @@ namespace SlavGPS {
 		void copy_sublayer_cb(void);
 		void cut_sublayer_cb(void);
 		void paste_sublayer_cb(void);
-
-		void goto_waypoint2_cb(void);
 
 		void waypoint_geocache_webpage_cb(void);
 		void geotagging_waypoint_cb(void);
