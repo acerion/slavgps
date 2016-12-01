@@ -58,8 +58,6 @@ static struct kdtree * kd = NULL;
 
 
 
-#ifdef K
-
 
 #define FMT_MAX_NUMBER_CODES 9
 
@@ -309,8 +307,6 @@ char * SlavGPS::vu_trackpoint_formatted_message(char * format_code, Trackpoint *
 	return msg;
 }
 
-
-#endif
 
 
 double SlavGPS::convert_speed_mps_to(SpeedUnit speed_units, double speed)
