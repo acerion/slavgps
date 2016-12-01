@@ -33,8 +33,8 @@
 #ifdef K
 #include "vikgpslayer.h"
 #include "viktrwlayer_analysis.h"
-#include "dialog.h"
 #endif
+#include "dialog.h"
 #include "icons/icons.h"
 #include "globals.h"
 
@@ -147,12 +147,16 @@ void LayerAggregate::insert_layer(Layer * layer, TreeIndex * replace_index)
 	/* By default layers are inserted above the selected layer. */
 	bool put_above = true;
 
-#if 0
 	/* These types are 'base' types in that you what other information on top. */
-	if (layer->type == LayerType::MAPS || layer->type == LayerType::DEM || layer->type == LayerType::GEOREF) {
+	if (layer->type == LayerType::DEM
+#ifdef K
+	    || layer->type == LayerType::MAPS
+	    || layer->type == LayerType::GEOREF
+#endif
+	    ) {
+
 		put_above = false;
 	}
-#endif
 
 	if (this->realized) {
 		TreeIndex * new_index = this->tree_view->insert_layer(layer, this, this->index, put_above, (int) layer->type, layer->get_timestamp(), replace_index);
@@ -471,10 +475,8 @@ void LayerAggregate::waypoint_list_dialog_cb(void) /* Slot. */
  */
 void LayerAggregate::search_date_cb(void) /* Slot. */
 {
-#ifdef K
 	VikCoord position;
 	char * date_str = a_dialog_get_date(this->get_window(), _("Search by Date"));
-
 	if (!date_str) {
 		return;
 	}
@@ -515,7 +517,6 @@ void LayerAggregate::search_date_cb(void) /* Slot. */
 		dialog_info("No items found with the requested date.", this->get_window());
 	}
 	free(date_str);
-#endif
 }
 
 
@@ -923,18 +924,15 @@ void LayerAggregate::drag_drop_request(Layer * src, GtkTreeIter *src_item_iter, 
  */
 char const * LayerAggregate::tooltip()
 {
-	static char tmp_buf[128];
-	tmp_buf[0] = '\0';
+	QString tooltip;
 
 	size_t size = this->children->size();
 	if (size) {
 		/* Could have a more complicated tooltip that numbers each
 		   type of layers, but for now a simple overall count. */
-#ifdef K
-		snprintf(tmp_buf, sizeof(tmp_buf), ngettext("One layer", "%ld layers", size), size);
-#endif
+		tooltip = QString(tr("%n layer(s)", "", size));
 	}
-	return tmp_buf;
+	return tooltip.toUtf8().data();
 }
 
 

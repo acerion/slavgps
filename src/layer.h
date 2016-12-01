@@ -235,10 +235,7 @@ namespace SlavGPS {
 
 		void set_initial_parameter_values(Viewport * viewport);
 
-		GtkWindow * get_toolkit_window(void);
 		Window * get_window(void);
-		void * get_toolkit_object(void);
-		static Layer * get_layer(VikLayer * vl);
 
 		void ref();
 		void unref();

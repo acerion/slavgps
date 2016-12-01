@@ -86,7 +86,7 @@ enum {
 };
 static unsigned int layer_signals[VL_LAST_SIGNAL] = { 0 };
 
-#if 0
+#ifdef K
 static bool layer_defaults_register(LayerType layer_type);
 #endif
 
@@ -94,13 +94,7 @@ static bool layer_defaults_register(LayerType layer_type);
 
 void SlavGPS::layer_init(void)
 {
-#if 0
-	layer_signals[VL_UPDATE_SIGNAL] = g_signal_new("changed", G_TYPE_OBJECT,
-						       (GSignalFlags) (G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION), 0, NULL, NULL,
-						       g_cclosure_marshal_VOID__VOID, G_TYPE_NONE, 0);
-#endif
-
-#if 0
+#ifdef K
 	/* Register all parameter defaults, early in the start up sequence. */
 	for (LayerType layer_type = LayerType::AGGREGATE; layer_type < LayerType::NUM_TYPES; ++layer_type) {
 		/* ATM ignore the returned value. */
@@ -232,7 +226,7 @@ void Layer::preconfigure_interfaces(void)
 
 
 
-#if 0
+#ifdef K
 /**
  * Store default values for this layer.
  *
@@ -417,8 +411,6 @@ void Layer::marshall(uint8_t ** data, int * len)
 
 void Layer::marshall_params(uint8_t ** data, int * datalen)
 {
-
-
 	GByteArray* b = g_byte_array_new();
 	int len;
 
@@ -764,12 +756,15 @@ ParameterValueTyped * vik_layer_data_typed_param_copy_from_string(ParameterType 
 	case ParameterType::BOOLEAN:
 		rv->data.b = TEST_BOOLEAN(str);
 		break;
-#ifndef SLAVGPS_QT
 	case ParameterType::COLOR:
-		memset(&(rv->data.c), 0, sizeof(rv->data.c)); /* Default: black. */
-		gdk_color_parse (str, &(rv->data.c));
-		break;
-#endif
+		{
+			QColor color(str);
+			rv->data.c.r = color.red();
+			rv->data.c.g = color.green();
+			rv->data.c.b = color.blue();
+			rv->data.c.a = color.alpha();
+			break;
+		}
 	/* STRING or STRING_LIST -- if STRING_LIST, just set param to add a STRING. */
 	default: {
 		char *s = g_strdup(str);
@@ -1056,16 +1051,6 @@ bool Layer::set_param_value(uint16_t id, ParameterValue param_value, Viewport * 
 
 
 
-GtkWindow * Layer::get_toolkit_window()
-{
-#ifndef SLAVGPS_QT
-	return this->tree_view->get_toolkit_window();
-#endif
-}
-
-
-
-
 LayerTool::LayerTool(Window * window, Viewport * viewport, LayerType layer_type)
 {
 	this->window = window;
@@ -1243,32 +1228,12 @@ void Layer::disconnect_layer_signal(Layer * layer)
 
 
 
-void * Layer::get_toolkit_object(void)
-{
-#ifndef SLAVGPS_QT
-	return (void *) this->vl;
-#endif
-}
-
-
-
-
-Layer * Layer::get_layer(VikLayer * vl)
-{
-#ifndef SLAVGPS_QT
-	Layer * layer = (Layer *) g_object_get_data((GObject *) vl, "layer");
-	return layer;
-#endif
-}
-
-
-
-
 LayerType& SlavGPS::operator++(LayerType& layer_type)
 {
 	layer_type = static_cast<LayerType>(static_cast<int>(layer_type) + 1);
 	return layer_type;
 }
+
 
 
 
