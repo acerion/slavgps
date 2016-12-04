@@ -80,9 +80,7 @@ bool SlavGPS::geojson_write_file(LayerTRW * trw, FILE * ff)
 
 		Window * w = trw->get_window();
 		if (w) {
-			char * msg = g_strdup_printf(_("%s command failed: %s"), argv[0], error->message);
-			w->statusbar_update(msg, VIK_STATUSBAR_INFO);
-			free(msg);
+			w->statusbar_update(StatusBarField::INFO, QString("%s command failed: %1").arg(error->message));
 		} else {
 			fprintf(stderr, "WARNING: Async command failed: %s\n", error->message);
 		}

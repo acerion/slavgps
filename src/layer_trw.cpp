@@ -1886,7 +1886,7 @@ static void trw_layer_tracks_tooltip(std::unordered_map<sg_uid_t, Track *> & tra
   no tracks, a single track or multiple tracks
   (which may or may not have timing information)
 */
-char const * LayerTRW::tooltip()
+QString LayerTRW::tooltip()
 {
 	char tbuf1[64] = { 0 };
 	char tbuf2[64] = { 0 };
@@ -1958,7 +1958,7 @@ char const * LayerTRW::tooltip()
 		g_date_free(gdate_start);
 		g_date_free(gdate_end);
 	}
-	return tmp_buf;
+	return QString(tmp_buf);
 }
 
 

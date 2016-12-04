@@ -957,7 +957,7 @@ void LayerMaps::post_read(Viewport * viewport, bool from_file)
 
 
 
-char const * LayerMaps::tooltip()
+QString LayerMaps::tooltip()
 {
 	return this->get_map_label();
 }
@@ -1264,9 +1264,7 @@ static GdkPixbuf * get_pixbuf_from_file(LayerMaps * layer, char * filename_buf)
 				/* Report a warning. */
 				Window * w = layer->get_window();
 				if (w) {
-					char * msg = g_strdup_printf(_("Couldn't open image file: %s"), gx->message);
-					w->statusbar_update(msg, VIK_STATUSBAR_INFO);
-					free(msg);
+					w->statusbar_update(StatusBarField::INFO, QString("Couldn't open image file: %1").arg(gx->message));
 				}
 			}
 
@@ -1407,9 +1405,8 @@ void LayerMaps::draw_section(Viewport * viewport, VikCoord *ul, VikCoord *br)
 				/* Report the reason for not drawing. */
 				Window * w = this->get_window();
 				if (w) {
-					char * msg = g_strdup_printf(_("Cowardly refusing to draw tiles or existence of tiles beyond %d zoom out factor"), (int)(1.0/REAL_MIN_SHRINKFACTOR));
-					w->statusbar_update(msg, VIK_STATUSBAR_INFO);
-					free(msg);
+					QString msg = QString("Refusing to draw tiles or existence of tiles beyond %1 zoom out factor").arg((int)(1.0/REAL_MIN_SHRINKFACTOR));
+					w->statusbar_update(StatusBarField::INFO, msg);
 				}
 				return;
 			}
@@ -1774,15 +1771,13 @@ static int map_download_thread(MapDownloadInfo *mdi, void * threaddata)
 					case DOWNLOAD_HTTP_ERROR:
 					case DOWNLOAD_CONTENT_ERROR: {
 						/* TODO: ?? count up the number of download errors somehow... */
-						char* msg = g_strdup_printf("%s: %s", mdi->layer->get_map_label(), _("Failed to download tile"));
-						mdi->layer->get_window()->statusbar_update(msg, VIK_STATUSBAR_INFO);
-						free(msg);
+						QString msg = QString("%1: %2").arg(mdi->layer->get_map_label()).arg("Failed to download tile");
+						mdi->layer->get_window()->statusbar_update(StatusBarField::INFO, msg);
 						break;
 					}
 					case DOWNLOAD_FILE_WRITE_ERROR: {
-						char * msg = g_strdup_printf("%s: %s", mdi->layer->get_map_label(), _("Unable to save tile"));
-						mdi->layer->get_window()->statusbar_update(msg, VIK_STATUSBAR_INFO);
-						free(msg);
+						QString msg = QString("%1: %2").arg(mdi->layer->get_map_label()).arg("Unable to save tile");
+						mdi->layer->get_window()->statusbar_update(StatusBarField::INFO, msg);
 						break;
 					}
 					case DOWNLOAD_SUCCESS:

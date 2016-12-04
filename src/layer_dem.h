@@ -61,7 +61,7 @@ namespace SlavGPS {
 
 		/* Layer interface methods. */
 		void draw(Viewport * viewport);
-		char const * tooltip();
+		QString tooltip();
 		bool download_release(QMouseEvent * event, LayerTool * tool);
 		bool add_file(std::string& dem_filename);
 		void draw_dem(Viewport * viewport, DEM * dem);

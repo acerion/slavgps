@@ -300,7 +300,7 @@ void SlavGPS::layer_mapnik_init(void)
 
 
 
-char const * LayerMapnik::tooltip()
+QString LayerMapnik::tooltip(o)
 {
 	return this->filename_xml;
 }
@@ -475,8 +475,8 @@ bool LayerMapnik::carto_load(Viewport * viewport)
 	   seconds on my system). */
 	Window * window = viewport->get_window();
 	if (window) {
-		char *msg = g_strdup_printf("%s: %s", _("Running"), command);
-		window->statusbar_update(msg, VIK_STATUSBAR_INFO);
+		// char *msg = g_strdup_printf(); // kamil kamil
+		window->statusbar_update(StatusBarField::INFO, QString("%1: %2").arg("Running").arg(command);
 		window->set_busy_cursor();
 	}
 
@@ -530,9 +530,8 @@ bool LayerMapnik::carto_load(Viewport * viewport)
 	free(command);
 
 	if (window) {
-		char *msg = g_strdup_printf("%s %s %.1f %s",  vlpd->s, _(" completed in "), (double)(tt2-tt1)/G_USEC_PER_SEC, _("seconds"));
-		window->statusbar_update(msg, VIK_STATUSBAR_INFO);
-		free(msg);
+		QString msg = QString("%s %s %.1f %s").arg(vlpd->s).arg(" completed in ").arg((double)(tt2-tt1)/G_USEC_PER_SEC, _("seconds"))
+		window->statusbar_update(StatusBarField::INFO, msg);
 		window->clear_busy_cursor();
 	}
 	return answer;

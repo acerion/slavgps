@@ -863,11 +863,9 @@ void Layer::draw(Viewport * viewport)
 
 
 
-char const * Layer::tooltip()
+QString Layer::tooltip()
 {
-      static char tmp_buf[32];
-      snprintf(tmp_buf, sizeof(tmp_buf), _("Layer::tooltip"));
-      return tmp_buf;
+      return QString(tr("Layer::tooltip"));
 }
 
 

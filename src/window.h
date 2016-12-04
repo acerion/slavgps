@@ -67,6 +67,8 @@ namespace SlavGPS {
 		SlavGPS::Viewport * viewport = NULL;
 		bool modified = false;
 
+		void statusbar_update(StatusBarField field, QString const & message);
+
 
 		void pan_click(QMouseEvent * event);
 		void pan_move(QMouseEvent * event);

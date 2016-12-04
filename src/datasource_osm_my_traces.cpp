@@ -744,9 +744,7 @@ static bool datasource_osm_my_traces_process(LayerTRW * trw, ProcessOptions *pro
 			got_something = got_something || convert_result;
 			if (!convert_result) {
 				/* Report errors to the status bar. */
-				char* msg = g_strdup_printf (_("Unable to get trace: %s"), url);
-				adw->window->statusbar_update(msg, VIK_STATUSBAR_INFO);
-				free(msg);
+				adw->window->statusbar_update(StatusBarField::INFO, QString("Unable to get trace: %1").arg(url));
 			}
 			free(url);
 		}

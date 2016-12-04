@@ -25,11 +25,9 @@
 #include <unistd.h>
 #include <cstring>
 #include <cstdlib>
+#include <cmath>
 #include <mutex>
 
-#ifdef HAVE_MATH_H
-#include <math.h>
-#endif
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
@@ -266,12 +264,9 @@ LayerInterface vik_dem_layer_interface = {
 
 
 
-char const * LayerDEM::tooltip()
+QString LayerDEM::tooltip()
 {
-	static char tmp_buf[100];
-
-	snprintf(tmp_buf, sizeof(tmp_buf), _("Number of files: %ld"), this->files->size());
-	return tmp_buf;
+	return QString(tr("Number of files: %1")).arg(this->files->size());
 }
 
 
@@ -1026,11 +1021,7 @@ static void srtm_dem_download_thread(DEMDownloadParams * p, background_job_t * b
 
 	if (!continent_dir) {
 		if (p->layer) {
-#if 0
-			char *msg = g_strdup_printf(_("No SRTM data available for %f, %f"), p->lat, p->lon);
-			p->layer->get_window()->statusbar_update(msg, VIK_STATUSBAR_INFO);
-			free(msg);
-#endif
+			p->layer->get_window()->statusbar_update(StatusBarField::INFO, QString("No SRTM data available for %1, %2").arg(p->lat).arg(p->lon)); /* Float + float */
 		}
 		return;
 	}
@@ -1048,19 +1039,11 @@ static void srtm_dem_download_thread(DEMDownloadParams * p, background_job_t * b
 	switch (result) {
 	case DOWNLOAD_CONTENT_ERROR:
 	case DOWNLOAD_HTTP_ERROR: {
-		char *msg = g_strdup_printf(_("DEM download failure for %f, %f"), p->lat, p->lon);
-#if 0
-		p->layer->get_window()->statusbar_update(msg, VIK_STATUSBAR_INFO);
-#endif
-		free(msg);
+		p->layer->get_window()->statusbar_update(StatusBarField::INFO, QString("DEM download failure for %1, %2").arg(p->lat).arg(p->lon)); /* Float + float. */
 		break;
 	}
 	case DOWNLOAD_FILE_WRITE_ERROR: {
-		char *msg = g_strdup_printf(_("DEM write failure for %s"), p->dest.c_str());
-#if 0
-		p->layer->get_window()->statusbar_update(msg, VIK_STATUSBAR_INFO);
-#endif
-		free(msg);
+		p->layer->get_window()->statusbar_update(StatusBarField::INFO, QString("DEM write failure for %s").arg(p->dest.c_str()));
 		break;
 	}
 	case DOWNLOAD_SUCCESS:

@@ -130,53 +130,6 @@ typedef struct {
 
 
 
-/**
- * For the actual statusbar update!
- */
-static bool statusbar_idle_update(statusbar_idle_data * sid)
-{
-	vik_statusbar_set_message(sid->vs, sid->vs_type, sid->message);
-	free(sid->message);
-	free(sid);
-	return false;
-}
-
-
-
-
-/**
- * @message: The string to be displayed. This is copied.
- * @vs_type: The part of the statusbar to be updated.
- *
- * This updates any part of the statusbar with the new string.
- * It handles calling from the main thread or any background thread
- * ATM this mostly used from background threads - as from the main thread
- *  one may use the vik_statusbar_set_message() directly.
- */
-void Window::statusbar_update(char const * message, vik_statusbar_type_t vs_type)
-{
-	GThread * thread = this->get_thread();
-	if (!thread) {
-		// Do nothing
-		return;
-	}
-
-	statusbar_idle_data * sid = (statusbar_idle_data *) malloc(sizeof (statusbar_idle_data));
-	sid->vs = this->viking_vs;
-	sid->vs_type = vs_type;
-	sid->message = g_strdup(message);
-
-	if (g_thread_self() == thread) {
-		g_idle_add ((GSourceFunc) statusbar_idle_update, sid);
-	} else {
-		// From a background thread
-		gdk_threads_add_idle((GSourceFunc) statusbar_idle_update, sid);
-	}
-}
-
-
-
-
 // Actual signal handlers
 static void destroy_window(GtkWidget * widget, void * data)
 {
@@ -290,7 +243,7 @@ static int determine_location_thread(Window * window, void * threaddata)
 
 	int result = a_background_thread_progress(threaddata, 1.0);
 	if (result != 0) {
-		window->statusbar_update(_("Location lookup aborted"), VIK_STATUSBAR_INFO);
+		window->statusbar_update(StatusBarField::INFO, QString("Location lookup aborted"));
 		return -1; /* Abort thread */
 	}
 
@@ -309,15 +262,13 @@ static int determine_location_thread(Window * window, void * threaddata)
 		window->viewport->set_zoom(zoom);
 		window->viewport->set_center_latlon(&ll, false);
 
-		char * message = g_strdup_printf(_("Location found: %s"), name);
-		window->statusbar_update(message, VIK_STATUSBAR_INFO);
+		window->statusbar_update(StatusBarField::INFO, QString("Location found: %1").arg(name));
 		free(name);
-		free(message);
 
 		// Signal to redraw from the background
 		window->layers_panel->emit_update();
 	} else {
-		window->statusbar_update(_("Unable to determine location"), VIK_STATUSBAR_INFO);
+		window->statusbar_update(StatusBarField::INFO, QString("Unable to determine location"));
 	}
 
 	return 0;
@@ -1401,12 +1352,10 @@ bool Window::export_to(std::list<Layer *> * layers, VikFileType_t vft, char cons
 			// Show some progress
 			if (this_success) {
 				export_count++;
-				char *message = g_strdup_printf(_("Exporting to file: %s"), fn);
-				vik_statusbar_set_message(this->viking_vs, VIK_STATUSBAR_INFO, message);
+				this->status_bar->set_message(StatusBarField::INFO, QString("Exporting to file: %1").arg(fn));
 				while (gtk_events_pending()) {
 					gtk_main_iteration();
 				}
-				free(message);
 			}
 
 			success = success && this_success;
@@ -1417,10 +1366,8 @@ bool Window::export_to(std::list<Layer *> * layers, VikFileType_t vft, char cons
 
 	this->clear_busy_cursor();
 
-	// Confirm what happened.
-	char *message = g_strdup_printf(_("Exported files: %d"), export_count);
-	vik_statusbar_set_message(this->viking_vs, VIK_STATUSBAR_INFO, message);
-	free(message);
+	/* Confirm what happened. */
+	this->status_bar->set_message(StatusBarField::INFO, QString("Exported files: %1").arg(export_count));
 
 	return success;
 }
@@ -1803,8 +1750,8 @@ static void save_image_file(Window * window, char const *fn, unsigned int w, uns
 	g_signal_connect_swapped(msgbox, "response", G_CALLBACK (gtk_widget_destroy), msgbox);
 	// Ensure dialog shown
 	gtk_widget_show_all(msgbox);
-	// Try harder...
-	vik_statusbar_set_message(window->viking_vs, VIK_STATUSBAR_INFO, _("Generating image file..."));
+	/* Try harder... */
+	this->status_bar->set_message(StatusBarField::INFO, QString("Generating image file..."));
 	while (gtk_events_pending()) {
 		gtk_main_iteration();
 	}
@@ -1829,8 +1776,8 @@ static void save_image_file(Window * window, char const *fn, unsigned int w, uns
 		fprintf(stderr, "WARNING: Failed to generate internal pixmap size: %d x %d\n", w, h);
 		gtk_message_dialog_set_markup(GTK_MESSAGE_DIALOG(msgbox), _("Failed to generate internal image.\n\nTry creating a smaller image."));
 
-		// goto cleanup;
-		vik_statusbar_set_message(window->viking_vs, VIK_STATUSBAR_INFO, "");
+		/* goto cleanup; */
+		this->status_bar->set_message(StatusBarField::INFO, QString(""));
 		gtk_dialog_add_button(GTK_DIALOG(msgbox), GTK_STOCK_OK, GTK_RESPONSE_OK);
 		gtk_dialog_run(GTK_DIALOG(msgbox)); // Don't care about the result
 
@@ -1868,7 +1815,7 @@ static void save_image_file(Window * window, char const *fn, unsigned int w, uns
 
 	/* Cleanup. */
 
-	vik_statusbar_set_message(window->viking_vs, VIK_STATUSBAR_INFO, "");
+	this->status_bar->set_message(StatusBarField::INFO, QString(""));
 	gtk_dialog_add_button(GTK_DIALOG(msgbox), GTK_STOCK_OK, GTK_RESPONSE_OK);
 	gtk_dialog_run(GTK_DIALOG(msgbox)); // Don't care about the result
 
@@ -1934,9 +1881,7 @@ void Window::save_image_dir(char const * fn, unsigned int w, unsigned int h, dou
 			GdkPixbuf * pixbuf_to_save = gdk_pixbuf_get_from_drawable(NULL, GDK_DRAWABLE (this->viewport->get_pixmap()), NULL, 0, 0, 0, 0, w, h);
 			gdk_pixbuf_save(pixbuf_to_save, name_of_file, save_as_png ? "png" : "jpeg", &error, NULL);
 			if (error) {
-				char *msg = g_strdup_printf(_("Unable to write to file %s: %s"), name_of_file, error->message);
-				vik_statusbar_set_message(this->viking_vs, VIK_STATUSBAR_INFO, msg);
-				free(msg);
+				this->status_bar->set_message(StatusBarField::INFO, QString("Unable to write to file %1: %2").arg(name_of_file).arg(error->message));
 				g_error_free(error);
 			}
 

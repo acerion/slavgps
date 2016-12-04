@@ -1187,6 +1187,8 @@ TreeIndex * TreeView::add_layer(Layer * layer, Layer * parent_layer, TreeIndex *
 {
 	// http://www.qtforum.org/article/34069/store-user-data-void-with-qstandarditem-in-qstandarditemmodel.html
 
+	QString tooltip = layer->tooltip();
+
 	QList<QStandardItem *> items;
 	QStandardItem * item = NULL;
 	QStandardItem * first_item = NULL;
@@ -1196,11 +1198,14 @@ TreeIndex * TreeView::add_layer(Layer * layer, Layer * parent_layer, TreeIndex *
 
 	/* LayersTreeColumn::NAME */
 	item = new QStandardItem(QString(layer->name));
+	item->setToolTip(tooltip);
 	first_item = item;
+
 	items << item;
 
 	/* LayersTreeColumn::VISIBLE */
 	item = new QStandardItem();
+	item->setToolTip(tooltip);
 	item->setCheckable(true);
 	item->setData(layer_variant, RoleLayerData); /* I'm assigning layer to "visible" so that I don't have to look up ::ITEM column to find a layer. */
 	item->setCheckState(layer->visible ? Qt::Checked : Qt::Unchecked);
@@ -1208,6 +1213,7 @@ TreeIndex * TreeView::add_layer(Layer * layer, Layer * parent_layer, TreeIndex *
 
 	/* LayersTreeColumn::ICON */
 	item = new QStandardItem(QString(layer->type_string));
+	item->setToolTip(tooltip);
 	item->setIcon(*layer->get_interface()->icon);
 	item->setEditable(false); /* Don't allow editing layer type string. */
 	items << item;

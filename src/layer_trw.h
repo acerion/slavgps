@@ -134,7 +134,7 @@ namespace SlavGPS {
 		/* Layer interface methods. */
 		void draw(Viewport * viewport);
 		void post_read(Viewport * viewport, bool from_file);
-		char const * tooltip();
+		QString tooltip();
 		char const * sublayer_tooltip(SublayerType sublayer_type, sg_uid_t sublayer_uid);
 
 		bool selected(SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeItemType type);

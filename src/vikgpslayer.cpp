@@ -388,7 +388,7 @@ void SlavGPS::layer_gps_init(void)
 
 
 
-char const * LayerGPS::tooltip()
+QString LayerGPS::tooltip()
 {
 	return this->protocol;
 }

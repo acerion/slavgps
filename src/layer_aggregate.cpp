@@ -922,7 +922,7 @@ void LayerAggregate::drag_drop_request(Layer * src, GtkTreeIter *src_item_iter, 
 /**
  * Generate tooltip text for the layer.
  */
-char const * LayerAggregate::tooltip()
+QString LayerAggregate::tooltip()
 {
 	QString tooltip;
 
@@ -932,7 +932,7 @@ char const * LayerAggregate::tooltip()
 		   type of layers, but for now a simple overall count. */
 		tooltip = QString(tr("%n layer(s)", "", size));
 	}
-	return tooltip.toUtf8().data();
+	return tooltip;
 }
 
 

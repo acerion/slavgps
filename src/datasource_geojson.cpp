@@ -180,9 +180,7 @@ static bool datasource_geojson_process(LayerTRW * trw, ProcessOptions * process_
 			(void) remove(gpx_filename);
 			free(gpx_filename);
 		} else {
-			char * msg = g_strdup_printf(_("Unable to import from: %s"), filename);
-			adw->window->statusbar_update(msg, VIK_STATUSBAR_INFO);
-			free(msg);
+			adw->window->statusbar_update(StatusBarField::INFO, QString("Unable to import from: %1").arg(filename));
 		}
 
 		free(filename);

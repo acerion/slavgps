@@ -355,18 +355,18 @@ static void osm_traces_upload_thread(OsmTracesInfo *oti, void * threaddata)
 	   Not sure if this test really works! (i.e. if the window was closed in the mean time). */
 	Window * w = oti->trw->get_window();
 	if (w) {
-		char* msg;
+		QString msg;
 		if (ans == 0) {
 			/* Success. */
-			msg = g_strdup_printf("%s (@%s)", _("Uploaded to OSM"), timestr);
-		}
-		/* Use UPPER CASE for bad news :( */
-		else if (ans < 0) {
-			msg = g_strdup_printf("%s (@%s)", _("FAILED TO UPLOAD DATA TO OSM - CURL PROBLEM"), timestr);
+			msg = QString("%1 (@%2)").arg("Uploaded to OSM").arg(timestr);
+		} else if (ans < 0) {
+			/* Use UPPER CASE for bad news. */
+			msg = QString("%1 (@%2)").arg("FAILED TO UPLOAD DATA TO OSM - CURL PROBLEM").arg(timestr);
 		} else {
-			msg = g_strdup_printf("%s : %s %d (@%s)", _("FAILED TO UPLOAD DATA TO OSM"), _("HTTP response code"), ans, timestr);
+			/* Use UPPER CASE for bad news. */
+			msg = QString("%1 : %2 %3 (@%4)").arg("FAILED TO UPLOAD DATA TO OSM").arg("HTTP response code").arg(ans).arg(timestr);
 		}
-		w->statusbar_update(msg, VIK_STATUSBAR_INFO);
+		w->statusbar_update(StatusBarField::INFO, msg);
 		free(msg);
 	}
 	/* Removing temporary file. */

@@ -91,12 +91,8 @@ public:
 
 static void background_thread_update()
 {
-	static char buf[20];
 	for (auto i = windows_to_update.begin(); i != windows_to_update.end(); i++) {
-#if 0
-		snprintf(buf, sizeof(buf), _("%d items"), bgitemcount);
-		(*i)->statusbar_update(buf, VIK_STATUSBAR_ITEMS);
-#endif
+		(*i)->statusbar_update(StatusBarField::ITEMS, QString("%1 items").arg(bgitemcount));
 	}
 
 	return;

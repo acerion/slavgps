@@ -740,6 +740,25 @@ StatusBar * Window::get_statusbar()
 
 
 /**
+ * @field:   The part of the statusbar to be updated.
+ * @message: The string to be displayed. This is copied.
+
+ * This updates any part of the statusbar with the new string.
+ */
+void Window::statusbar_update(StatusBarField field, QString const & message)
+{
+	this->status_bar->set_message(field, message);
+}
+
+
+
+
+
+
+
+
+
+/**
  * center_changed_cb:
  */
 void Window::center_changed_cb(void) /* Slot. */

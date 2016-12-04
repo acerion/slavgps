@@ -358,9 +358,7 @@ static void trw_layer_geotag_waypoint(geotag_options_t *options)
 		if (options->ov.overwrite_gps_exif || !has_gps_exif) {
 			int ans = a_geotag_write_exif_gps(options->image, options->wp->coord, options->wp->altitude, options->ov.no_change_mtime);
 			if (ans != 0) {
-				char *message = g_strdup_printf(_("Failed updating EXIF on %s"), options->image);
-				options->trw->get_window()->statusbar_update(message, VIK_STATUSBAR_INFO);
-				free(message);
+				options->trw->get_window()->statusbar_update(StatusBarField::INFO, QString("Failed updating EXIF on %1").arg(options->image));
 			}
 		}
 		free(datetime);
@@ -493,9 +491,7 @@ static void trw_layer_geotag_process(geotag_options_t *options)
 			if (options->ov.write_exif) {
 				int ans = a_geotag_write_exif_gps(options->image, options->coord, options->altitude, options->ov.no_change_mtime);
 				if (ans != 0) {
-					char *message = g_strdup_printf(_("Failed updating EXIF on %s"), options->image);
-					options->trw->get_window()->statusbar_update(message, VIK_STATUSBAR_INFO);
-					free(message);
+					options->trw->get_window()->statusbar_update(message, StatusBarField::INFO, QString("Failed updating EXIF on %1").arg(options->image));
 				}
 			}
 		}

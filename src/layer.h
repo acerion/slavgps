@@ -35,6 +35,7 @@
 #include <QMouseEvent>
 #include <QCursor>
 #include <QMenu>
+#include <QString>
 
 #include "uibuilder.h"
 #include "tree_view.h"
@@ -162,7 +163,7 @@ namespace SlavGPS {
 		virtual void post_read(Viewport * viewport, bool from_file);
 
 		virtual void draw(Viewport * viewport);
-		virtual char const * tooltip();
+		virtual QString tooltip();
 		virtual char const * sublayer_tooltip(SublayerType sublayer_type, sg_uid_t sublayer_uid);
 
 		virtual bool selected(SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeItemType type);

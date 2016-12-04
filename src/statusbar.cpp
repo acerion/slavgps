@@ -18,14 +18,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
 
-/* gtk status bars: just plain dumb. this file shouldn't have to exist.
-   NB as of gtk 2.18 there are 'info bars' that could be useful... */
-
-
-#include <math.h>
+#include <cmath>
 #include <cstdlib>
 
 #include "statusbar.h"
@@ -40,64 +35,16 @@ using namespace SlavGPS;
 
 
 
-enum {
-	CLICKED,
-	LAST_SIGNAL
-};
-
-
-
 #if 0
+
+
+
+
 struct _VikStatusbar {
 	GtkHBox hbox;
 	GtkWidget * status[VIK_STATUSBAR_NUM_TYPES];
 	bool empty[VIK_STATUSBAR_NUM_TYPES];
 };
-
-G_DEFINE_TYPE (VikStatusbar, vik_statusbar, GTK_TYPE_HBOX)
-
-static unsigned int vik_statusbar_signals[LAST_SIGNAL] = { 0 };
-
-
-
-
-static int forward_signal(GObject * object, void * user_data)
-{
-	int item = KPOINTER_TO_INT (g_object_get_data(object, "type"));
-	VikStatusbar *vs = VIK_STATUSBAR (user_data);
-
-	/* Clicking on the items field will bring up the background jobs window. */
-	if (item == VIK_STATUSBAR_ITEMS) {
-		a_background_show_window();
-	} else if (item == VIK_STATUSBAR_INFO) {
-		/* Clear current info message. */
-		vik_statusbar_set_message(vs, VIK_STATUSBAR_INFO, "");
-	} else {
-		g_signal_emit(G_OBJECT (vs),
-			      vik_statusbar_signals[CLICKED], 0,
-			      item);
-	}
-
-	return true;
-}
-
-
-
-
-static void vik_statusbar_class_init(VikStatusbarClass * klass)
-{
-	vik_statusbar_signals[CLICKED] =
-		g_signal_new("clicked",
-			     G_TYPE_FROM_CLASS (klass),
-			     G_SIGNAL_RUN_FIRST,
-			     G_STRUCT_OFFSET (VikStatusbarClass, clicked),
-			     NULL, NULL,
-			     g_cclosure_marshal_VOID__INT,
-			     G_TYPE_NONE, 1,
-			     G_TYPE_INT);
-
-	klass->clicked = NULL;
-}
 
 
 
@@ -140,10 +87,6 @@ static void vik_statusbar_init(VikStatusbar * vs)
 	}
 
 
-
-
-
-
 	/* Set minimum overall size.
 	   Otherwise the individual size_requests above create an implicit overall size,
 	   and so one can't downsize horizontally as much as may be desired when the statusbar is on. */
@@ -151,7 +94,11 @@ static void vik_statusbar_init(VikStatusbar * vs)
 }
 
 
+
+
 #endif
+
+
 
 
 StatusBar::StatusBar(QWidget * parent) : QStatusBar(parent)
@@ -232,7 +179,7 @@ void StatusBar::set_message(StatusBarField field, QString const & message)
 		break;
 
 	default:
-		qDebug() << "WW: Status Bar: unhandled field number" << (int) field;
+		qDebug() << "EE: Status Bar: unhandled field number" << (int) field;
 		break;
 	}
 }
