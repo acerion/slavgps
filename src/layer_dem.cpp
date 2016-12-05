@@ -243,7 +243,7 @@ LayerInterface vik_dem_layer_interface = {
 	"<control><shift>D",
 	NULL,
 
-	{ dem_layer_download_create, NULL, NULL, NULL, NULL, NULL, NULL }, /* (VikToolConstructorFunc)  */
+	{ dem_layer_download_create, NULL, NULL, NULL, NULL, NULL, NULL }, /* (ToolConstructorFunc)  */
 	dem_tools,
 	1,
 
@@ -254,8 +254,8 @@ LayerInterface vik_dem_layer_interface = {
 
 	VIK_MENU_ITEM_ALL,
 
-	/* (VikLayerFuncUnmarshall) */   dem_layer_unmarshall,
-	/* (VikLayerFuncChangeParam) */  NULL,
+	/* (LayerFuncUnmarshall) */   dem_layer_unmarshall,
+	/* (LayerFuncChangeParam) */  NULL,
 
 	NULL,
 	NULL
@@ -1334,8 +1334,8 @@ static LayerTool * dem_layer_download_create(Window * window, Viewport * viewpor
 	layer_tool->radioActionEntry.tooltip     = strdup(N_("DEM Download"));
 	layer_tool->radioActionEntry.value       = 0;
 
-	layer_tool->click = (VikToolMouseFunc) dem_layer_download_click;
-	layer_tool->release = (VikToolMouseFunc) dem_layer_download_release;
+	layer_tool->click = (ToolMouseFunc) dem_layer_download_click;
+	layer_tool->release = (ToolMouseFunc) dem_layer_download_release;
 
 	layer_tool->cursor_click = new QCursor(Qt::ArrowCursor);
 	layer_tool->cursor_release = new QCursor(Qt::ArrowCursor);
@@ -1519,7 +1519,7 @@ LayerDEM::LayerDEM()
 	qDebug() << "II: LayerDEM::LayerDEM()";
 
 	this->type = LayerType::DEM;
-	strcpy(this->type_string, "LayerType::DEM");
+	strcpy(this->debug_string, "LayerType::DEM");
 	this->interface = &vik_dem_layer_interface;
 
 	this->files = new std::list<char *>;

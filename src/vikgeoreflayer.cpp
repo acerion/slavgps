@@ -124,8 +124,8 @@ VikLayerInterface vik_georef_layer_interface = {
 	NULL,
 	&vikgeoreflayer_pixbuf, /* Icon. */
 
-	{ georef_layer_move_create,   /* (VikToolConstructorFunc) */
-	  georef_layer_zoom_create,   /* (VikToolConstructorFunc) */
+	{ georef_layer_move_create,   /* (ToolConstructorFunc) */
+	  georef_layer_zoom_create,   /* (ToolConstructorFunc) */
 	  NULL,
 	  NULL,
 	  NULL,
@@ -143,8 +143,8 @@ VikLayerInterface vik_georef_layer_interface = {
 
 	VIK_MENU_ITEM_ALL,
 
-	/* (VikLayerFuncUnmarshall) */    georef_layer_unmarshall,
-	/* (VikLayerFuncChangeParam) */   NULL,
+	/* (LayerFuncUnmarshall) */    georef_layer_unmarshall,
+	/* (LayerFuncChangeParam) */   NULL,
 };
 
 
@@ -1133,8 +1133,8 @@ static LayerTool * georef_layer_move_create(Window * window, Viewport * viewport
 	layer_tool->radioActionEntry.tooltip     = strdup(N_("Georef Move Map"));
 	layer_tool->radioActionEntry.value       = 0;
 
-	layer_tool->click = (VikToolMouseFunc) georef_layer_move_press_cb;
-	layer_tool->release = (VikToolMouseFunc) georef_layer_move_release_cb;
+	layer_tool->click = (ToolMouseFunc) georef_layer_move_press_cb;
+	layer_tool->release = (ToolMouseFunc) georef_layer_move_release_cb;
 
 	layer_tool->cursor_shape = Qt::BitmapCursor;
 	layer_tool->cursor_data = &cursor_geomove_pixbuf;
@@ -1187,7 +1187,7 @@ static LayerTool * georef_layer_zoom_create(Window * window, Viewport * viewport
 	layer_tool->radioActionEntry.tooltip     = strdup(N_("Georef Zoom Tool"));
 	layer_tool->radioActionEntry.value       = 0;
 
-	layer_tool->click = (VikToolMouseFunc) georef_layer_zoom_press_cb;
+	layer_tool->click = (ToolMouseFunc) georef_layer_zoom_press_cb;
 
 	layer_tool->cursor_shape = Qt::BitmapCursor;
 	layer_tool->cursor_data = &cursor_geozoom_pixbuf;

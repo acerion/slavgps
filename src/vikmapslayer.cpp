@@ -261,7 +261,7 @@ void maps_layer_set_cache_default(MapsCacheLayout layout)
 
 
 
-static LayerTool * maps_tools[] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL } ; /* (VikToolConstructorFunc) */
+static LayerTool * maps_tools[] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL } ; /* (ToolConstructorFunc) */
 
 VikLayerInterface vik_maps_layer_interface = {
 	"Map",
@@ -280,8 +280,8 @@ VikLayerInterface vik_maps_layer_interface = {
 
 	VIK_MENU_ITEM_ALL,
 
-	/* (VikLayerFuncUnmarshall) */   maps_layer_unmarshall,
-	/* (VikLayerFuncChangeParam) */  maps_layer_change_param,
+	/* (LayerFuncUnmarshall) */   maps_layer_unmarshall,
+	/* (LayerFuncChangeParam) */  maps_layer_change_param,
 };
 
 
@@ -2147,8 +2147,8 @@ static LayerTool * maps_layer_download_create(Window * window, Viewport * viewpo
 	layer_tool->radioActionEntry.tooltip = strdup(N_("Maps Download"));
 	layer_tool->radioActionEntry.value = 0;
 
-	layer_tool->click = (VikToolMouseFunc) maps_layer_download_click;
-	layer_tool->release = (VikToolMouseFunc) maps_layer_download_release;
+	layer_tool->click = (ToolMouseFunc) maps_layer_download_click;
+	layer_tool->release = (ToolMouseFunc) maps_layer_download_release;
 
 	layer_tool->cursor_shape = Qt::BitmapCursor;
 	layer_tool->cursor_data = &cursor_mapdl_pixbuf;

@@ -72,8 +72,8 @@ LayerInterface vik_aggregate_layer_interface = {
 
 	VIK_MENU_ITEM_ALL,
 
-	/* (VikLayerFuncUnmarshall) */   aggregate_layer_unmarshall,
-	/* (VikLayerFuncChangeParam) */  NULL,
+	/* (LayerFuncUnmarshall) */   aggregate_layer_unmarshall,
+	/* (LayerFuncChangeParam) */  NULL,
 	NULL,
 	NULL,
 };
@@ -348,7 +348,7 @@ void LayerAggregate::change_coord_mode(VikCoordMode mode)
 
 void LayerAggregate::child_visible_toggle_cb(void) /* Slot. */
 {
-	LayersPanel * panel = (LayersPanel *) this->menu_data->layers_panel;
+	LayersPanel * panel = this->menu_data->layers_panel;
 	TreeView * tree_view = panel->get_treeview();
 
 	/* Loop around all (child) layers applying visibility setting.
@@ -386,7 +386,7 @@ void LayerAggregate::child_visible_set(LayersPanel * panel, bool on_off)
 
 void LayerAggregate::child_visible_on_cb(void) /* Slot. */
 {
-	this->child_visible_set((LayersPanel *) this->menu_data->layers_panel, true);
+	this->child_visible_set(this->menu_data->layers_panel, true);
 }
 
 
@@ -394,7 +394,7 @@ void LayerAggregate::child_visible_on_cb(void) /* Slot. */
 
 void LayerAggregate::child_visible_off_cb(void) /* Slot. */
 {
-	this->child_visible_set((LayersPanel *) this->menu_data->layers_panel, false);
+	this->child_visible_set(this->menu_data->layers_panel, false);
 }
 
 
@@ -943,7 +943,7 @@ LayerAggregate::LayerAggregate()
 	qDebug() << "II: LayerAggregate::LayerAggregate()";
 
 	this->type = LayerType::AGGREGATE;
-	strcpy(this->type_string, "LayerType::AGGREGATE");
+	strcpy(this->debug_string, "LayerType::AGGREGATE");
 	this->interface = &vik_aggregate_layer_interface;
 
 	this->rename(vik_aggregate_layer_interface.name);

@@ -359,13 +359,13 @@ LayerInterface vik_trw_layer_interface = {
 	"<control><shift>Y",
 	NULL, //&viktrwlayer_pixbuf,
 
-	{ tool_new_waypoint_create,          /* (VikToolConstructorFunc) */
-	  tool_new_track_create,             /* (VikToolConstructorFunc) */
-	  tool_new_route_create,             /* (VikToolConstructorFunc) */
-	  tool_extended_route_finder_create, /* (VikToolConstructorFunc) */
-	  tool_edit_waypoint_create,         /* (VikToolConstructorFunc) */
-	  tool_edit_trackpoint_create,       /* (VikToolConstructorFunc) */
-	  tool_show_picture_create },        /* (VikToolConstructorFunc) */
+	{ tool_new_waypoint_create,          /* (ToolConstructorFunc) */
+	  tool_new_track_create,             /* (ToolConstructorFunc) */
+	  tool_new_route_create,             /* (ToolConstructorFunc) */
+	  tool_extended_route_finder_create, /* (ToolConstructorFunc) */
+	  tool_edit_waypoint_create,         /* (ToolConstructorFunc) */
+	  tool_edit_trackpoint_create,       /* (ToolConstructorFunc) */
+	  tool_show_picture_create },        /* (ToolConstructorFunc) */
 
 	trw_layer_tools,
 	7,
@@ -377,8 +377,8 @@ LayerInterface vik_trw_layer_interface = {
 
 	VIK_MENU_ITEM_ALL,
 
-	/* (VikLayerFuncUnmarshall) */   trw_layer_unmarshall,
-	/* (VikLayerFuncChangeParam) */  trw_layer_change_param,
+	/* (LayerFuncUnmarshall) */   trw_layer_unmarshall,
+	/* (LayerFuncChangeParam) */  trw_layer_change_param,
 	NULL,
 	NULL
 };
@@ -2743,7 +2743,7 @@ static void trw_layer_acquire(trw_menu_layer_t * data, VikDataSourceInterface *d
 {
 #ifdef K
 	LayerTRW * layer = data->layer;
-	LayersPanel * panel = (LayersPanel *) data->panel;
+	LayersPanel * panel = data->panel;
 	Window * window = layer->get_window();
 	Viewport * viewport =  window->get_viewport();
 
@@ -2893,7 +2893,7 @@ void LayerTRW::upload_to_gps_cb(void) /* Slot. */
  */
 void LayerTRW::gps_upload_any_cb()
 {
-	LayersPanel * panel = (LayersPanel *) this->menu_data->layers_panel;
+	LayersPanel * panel = this->menu_data->layers_panel;
 	sg_uid_t uid = this->menu_data->sublayer_uid;
 #ifdef K
 
@@ -3925,7 +3925,7 @@ void LayerTRW::profile_item_cb(void)
 			track_profile_dialog(this->get_window(),
 					     this,
 					     trk,
-					     (LayersPanel *) (this->menu_data->layers_panel ? this->menu_data->layers_panel : NULL),
+					     this->menu_data->layers_panel ? this->menu_data->layers_panel : NULL,
 					     this->menu_data->viewport);
 		}
 	}
@@ -4164,7 +4164,7 @@ void LayerTRW::extend_track_end_route_finder_cb(void)
 	this->route_finder_started = true;
 
 	if (!trk->empty()) {
-		goto_coord((LayersPanel *) this->menu_data->layers_panel, this, this->menu_data->viewport, &trk->get_tp_last()->coord);
+		goto_coord(this->menu_data->layers_panel, this, this->menu_data->viewport, &trk->get_tp_last()->coord);
 	}
 }
 
@@ -4363,7 +4363,7 @@ void LayerTRW::goto_track_endpoint_cb(void)
 	if (trk->empty()) {
 		return;
 	}
-	goto_coord((LayersPanel *) panel, this, this->menu_data->viewport, &trk->get_tp_last()->coord);
+	goto_coord(panel, this, this->menu_data->viewport, &trk->get_tp_last()->coord);
 }
 
 
@@ -6136,7 +6136,7 @@ void LayerTRW::go_to_selected_waypoint_cb(void)
 	sg_uid_t wp_uid = this->menu_data->sublayer_uid;
 	Waypoint * wp = this->waypoints.at(wp_uid);
 	if (wp) {
-		goto_coord((LayersPanel *) panel, this, this->menu_data->viewport, &wp->coord);
+		goto_coord(panel, this, this->menu_data->viewport, &wp->coord);
 	}
 }
 
@@ -6181,7 +6181,7 @@ void LayerTRW::waypoint_webpage_cb(void)
 
 
 
-char const * LayerTRW::sublayer_rename_request(const char * newname, void * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeIndex * index)
+char const * LayerTRW::sublayer_rename_request(const char * newname, LayersPanel * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeIndex * index)
 {
 	if (sublayer_type == SublayerType::WAYPOINT) {
 		Waypoint * wp = this->waypoints.at(sublayer_uid);
@@ -6208,7 +6208,7 @@ char const * LayerTRW::sublayer_rename_request(const char * newname, void * pane
 		this->tree_view->set_name(index, newname);
 		this->tree_view->sort_children(this->waypoints_node, this->wp_sort_order);
 
-		((LayersPanel *) panel)->emit_update_cb();
+		panel->emit_update_cb();
 
 		return newname;
 	}
@@ -6246,7 +6246,7 @@ char const * LayerTRW::sublayer_rename_request(const char * newname, void * pane
 		this->tree_view->set_name(index, newname);
 		this->tree_view->sort_children(this->tracks_node, this->track_sort_order);
 
-		((LayersPanel *) panel)->emit_update_cb();
+		panel->emit_update_cb();
 
 		return newname;
 	}
@@ -6284,7 +6284,7 @@ char const * LayerTRW::sublayer_rename_request(const char * newname, void * pane
 		this->tree_view->set_name(index, newname);
 		this->tree_view->sort_children(this->tracks_node, this->track_sort_order);
 
-		((LayersPanel *) panel)->emit_update_cb();
+		panel->emit_update_cb();
 
 		return newname;
 	}
@@ -7055,7 +7055,7 @@ void LayerTRW::change_coord_mode(VikCoordMode dest_mode)
 void LayerTRW::set_menu_selection(uint16_t selection)
 {
 	//fprintf(stderr, "=============== set menu selection\n");
-	this->menu_selection = (VikStdLayerMenuItem) selection; /* kamil: invalid cast? */
+	this->menu_selection = (LayerMenuItem) selection; /* kamil: invalid cast? */
 }
 
 
@@ -7221,7 +7221,7 @@ void LayerTRW::download_map_along_track_cb(void)
 	double zoom_vals[] = {0.125, 0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024};
 	int selected_zoom, default_zoom;
 
-	LayersPanel * panel = (LayersPanel *) this->menu_data->layers_panel;
+	LayersPanel * panel = this->menu_data->layers_panel;
 	Track * trk = this->get_track_helper(this->menu_data->sublayer_type, this->menu_data->sublayer_uid);
 
 	if (!trk) {
@@ -7454,7 +7454,7 @@ void LayerTRW::write_file(FILE * f) const
 LayerTRW::LayerTRW() : Layer()
 {
 	this->type = LayerType::TRW;
-	strcpy(this->type_string, "TRW");
+	strcpy(this->debug_string, "TRW");
 	this->interface = &vik_trw_layer_interface;
 
 	memset(&coord_mode, 0, sizeof (VikCoordMode));
@@ -7466,7 +7466,7 @@ LayerTRW::LayerTRW() : Layer()
 LayerTRW::LayerTRW(Viewport * viewport) : Layer()
 {
 	this->type = LayerType::TRW;
-	strcpy(this->type_string, "TRW");
+	strcpy(this->debug_string, "TRW");
 	this->interface = &vik_trw_layer_interface;
 
 	memset(&coord_mode, 0, sizeof (VikCoordMode));

@@ -167,7 +167,7 @@ namespace SlavGPS {
 		void add_menu_items(QMenu & menu);
 		bool sublayer_add_menu_items(QMenu & menu);
 
-		char const * sublayer_rename_request(const char * newname, void * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeIndex * parent_index);
+		char const * sublayer_rename_request(const char * newname, LayersPanel * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeIndex * parent_index);
 		bool sublayer_toggle_visible(SublayerType sublayer_type, sg_uid_t sublayer_uid);
 
 		void realize(TreeView * tree_view, TreeIndex * layer_index);
@@ -515,7 +515,7 @@ namespace SlavGPS {
 		GtkMenu * track_right_click_menu = NULL;
 
 		/* Menu. */
-		VikStdLayerMenuItem menu_selection;
+		LayerMenuItem menu_selection;
 
 
 		/* One per layer. */

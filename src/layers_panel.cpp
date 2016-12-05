@@ -463,7 +463,7 @@ void LayersPanel::popup(GtkTreeIter * iter, MouseButton mouse_button)
 				GtkWidget *del, *prop;
 				/* kamilFIXME: this doesn't work for Map in treeview. Why?*/
 				fprintf(stderr, "will call get_menu_items_selection.\n");
-				VikStdLayerMenuItem menu_selection = (VikStdLayerMenuItem) vik_layer_get_menu_items_selection(layer);
+				LayerMenuItem menu_selection = (LayerMenuItem) vik_layer_get_menu_items_selection(layer);
 
 				menu = GTK_MENU (gtk_menu_new());
 
@@ -584,14 +584,14 @@ void LayersPanel::add_layer(Layer * layer)
 {
 	/* Could be something different so we have to do this. */
 	layer->change_coord_mode(this->viewport->get_coord_mode());
-	fprintf(stderr, "INFO: %s:%d: attempting to add layer '%s'\n", __FUNCTION__, __LINE__, layer->type_string);
+	fprintf(stderr, "INFO: %s:%d: attempting to add layer '%s'\n", __FUNCTION__, __LINE__, layer->debug_string);
 
 	TreeIndex * selected_index = this->tree_view->get_selected_item();
 	if (true) { /* kamilFIXME: "if (!selected_index) { */
 		/* No particular layer is selected in panel, so the
 		   layer to be added goes directly under top level
 		   aggregate layer. */
-		fprintf(stderr, "INFO: %s:%d: No selected layer, adding layer '%s' under top level aggregate layer\n", __FUNCTION__, __LINE__, layer->type_string);
+		fprintf(stderr, "INFO: %s:%d: No selected layer, adding layer '%s' under top level aggregate layer\n", __FUNCTION__, __LINE__, layer->debug_string);
 		this->toplayer->add_layer(layer, true);
 
 	} else {
@@ -605,11 +605,11 @@ void LayersPanel::add_layer(Layer * layer)
 		if (this->tree_view->get_item_type(selected_index) == TreeItemType::SUBLAYER) {
 			current = this->tree_view->get_parent_layer(selected_index);
 			fprintf(stderr, "INFO: %s:%d: Capturing parent layer '%s' as current layer\n",
-				__FUNCTION__, __LINE__, current->type_string);
+				__FUNCTION__, __LINE__, current->debug_string);
 		} else {
 			current = this->tree_view->get_layer(selected_index);
 			fprintf(stderr, "INFO: %s:%d: Capturing selected layer '%s' as current layer\n",
-				__FUNCTION__, __LINE__, current->type_string);
+				__FUNCTION__, __LINE__, current->debug_string);
 		}
 		assert (current->realized);
 		replace_index = current->index;
@@ -1064,7 +1064,7 @@ void LayersPanel::contextMenuEvent(QContextMenuEvent * event)
 
 			Layer * layer = this->tree_view->get_layer(&index);
 			if (layer) {
-				qDebug() << "II: Layers Panel: context menu event: layer type =" << layer->type_string;
+				qDebug() << "II: Layers Panel: context menu event: layer type =" << layer->debug_string;
 			} else {
 				qDebug() << "II: Layers Panel: context menu event: layer type is NULL";
 			}
@@ -1078,7 +1078,7 @@ void LayersPanel::contextMenuEvent(QContextMenuEvent * event)
 				}
 				index = index2;
 			}
-			memset(layer->menu_data, 0, sizeof (struct _trw_menu_sublayer_t));
+			memset(layer->menu_data, 0, sizeof (trw_menu_sublayer_t));
 			layer->menu_data->layers_panel = this;
 
 			QMenu menu(this);
@@ -1090,18 +1090,18 @@ void LayersPanel::contextMenuEvent(QContextMenuEvent * event)
 			layer->add_menu_items(menu);
 			menu.exec(QCursor::pos());
 
-			memset(layer->menu_data, 0, sizeof (struct _trw_menu_sublayer_t));
+			memset(layer->menu_data, 0, sizeof (trw_menu_sublayer_t));
 		} else {
 			qDebug() << "II: Layers Panel: creating context menu for TreeItemType::SUBLAYER";
 
 			Layer * layer = this->tree_view->get_parent_layer(&index);
 			if (layer) {
-				qDebug() << "II: Layers Panel: context menu event: layer type =" << layer->type_string;
+				qDebug() << "II: Layers Panel: context menu event: layer type =" << layer->debug_string;
 			} else {
 				qDebug() << "II: Layers Panel: context menu event: layer type is NULL";
 			}
 
-			memset(layer->menu_data, 0, sizeof (struct _trw_menu_sublayer_t));
+			memset(layer->menu_data, 0, sizeof (trw_menu_sublayer_t));
 			layer->menu_data->sublayer_type = this->tree_view->get_sublayer_type(&index);
 			layer->menu_data->sublayer_uid = this->tree_view->get_sublayer_uid(&index);
 			layer->menu_data->index = &index;
@@ -1113,7 +1113,7 @@ void LayersPanel::contextMenuEvent(QContextMenuEvent * event)
 			layer->sublayer_add_menu_items(menu);
 			menu.exec(QCursor::pos());
 
-			memset(layer->menu_data, 0, sizeof (struct _trw_menu_sublayer_t));
+			memset(layer->menu_data, 0, sizeof (trw_menu_sublayer_t));
 		}
 	} else {
 		qDebug() << "II: Layers Panel: context menu event: INvalid index";

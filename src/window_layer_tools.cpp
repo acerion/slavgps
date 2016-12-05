@@ -348,14 +348,14 @@ void LayerToolsBox::click(QMouseEvent * event)
 		return;
 	}
 
-	qDebug() << "II: Layer Tools: click received, selected layer" << layer->type_string;
+	qDebug() << "II: Layer Tools: click received, selected layer" << layer->debug_string;
 
 	if (this->active_tool && this->active_tool->click) {
 		LayerType ltype = this->active_tool->layer_type;
 		if (ltype == LayerType::NUM_TYPES /* Generic tool. */
 		    || (layer && ltype == layer->type)) { /* Layer-specific tool. */
 
-			qDebug() << "II: Layer Tools: click received, will pass it to tool" << this->active_tool->id_string << "for layer" << layer->type_string;
+			qDebug() << "II: Layer Tools: click received, will pass it to tool" << this->active_tool->id_string << "for layer" << layer->debug_string;
 			this->active_tool->viewport->setCursor(*this->active_tool->cursor_click);
 			this->active_tool->click(layer, event, this->active_tool);
 		} else {
@@ -377,14 +377,14 @@ void LayerToolsBox::double_click(QMouseEvent * event)
 		return;
 	}
 
-	qDebug() << "II: Layer Tools: double click received, selected layer" << layer->type_string;
+	qDebug() << "II: Layer Tools: double click received, selected layer" << layer->debug_string;
 
 	if (this->active_tool && this->active_tool->double_click) {
 		LayerType ltype = this->active_tool->layer_type;
 		if (ltype == LayerType::NUM_TYPES /* Generic tool. */
 		    || (layer && ltype == layer->type)) { /* Layer-specific tool. */
 
-			qDebug() << "II: Layer Tools: double click received, will pass it to tool" << this->active_tool->id_string << "for layer" << layer->type_string;
+			qDebug() << "II: Layer Tools: double click received, will pass it to tool" << this->active_tool->id_string << "for layer" << layer->debug_string;
 			this->active_tool->viewport->setCursor(*this->active_tool->cursor_click);
 			this->active_tool->double_click(layer, event, this->active_tool);
 		} else {
@@ -413,7 +413,7 @@ void LayerToolsBox::move(QMouseEvent * event)
 		if (ltype == LayerType::NUM_TYPES || (layer && ltype == layer->type)) {
 			qDebug() << "II: Layer Tools: move received, passing to tool" << this->active_tool->get_description();
 
-			if (VIK_LAYER_TOOL_ACK_GRAB_FOCUS == this->active_tool->move(layer, event, this->active_tool)) {
+			if (LayerToolFuncStatus::ACK_GRAB_FOCUS == this->active_tool->move(layer, event, this->active_tool)) {
 #if 0
 				gtk_widget_grab_focus(this->window->viewport->get_toolkit_widget());
 #endif
@@ -432,14 +432,14 @@ void LayerToolsBox::release(QMouseEvent * event)
 		return;
 	}
 
-	qDebug() << "II: Layer Tools: release received, selected layer" << layer->type_string;
+	qDebug() << "II: Layer Tools: release received, selected layer" << layer->debug_string;
 
 	if (this->active_tool && this->active_tool->release) {
 		LayerType ltype = this->active_tool->layer_type;
 		if (ltype == LayerType::NUM_TYPES /* Generic tool. */
 		    || (layer && ltype == layer->type)) { /* Layer-specific tool. */
 
-			qDebug() << "II: Layer Tools: release received, will pass it to tool" << this->active_tool->id_string << "for layer" << layer->type_string;
+			qDebug() << "II: Layer Tools: release received, will pass it to tool" << this->active_tool->id_string << "for layer" << layer->debug_string;
 			this->active_tool->viewport->setCursor(*this->active_tool->cursor_release);
 			this->active_tool->release(layer, event, this->active_tool);
 		} else {
@@ -486,9 +486,9 @@ static int draw_buf(draw_buf_data_t * data)
 
 
 
-static VikLayerToolFuncStatus ruler_click(Layer * layer, QMouseEvent * event, LayerTool * tool);
-static VikLayerToolFuncStatus ruler_move(Layer * layer, QMouseEvent * event, LayerTool * tool);
-static VikLayerToolFuncStatus ruler_release(Layer * layer, QMouseEvent * event, LayerTool * tool);
+static LayerToolFuncStatus ruler_click(Layer * layer, QMouseEvent * event, LayerTool * tool);
+static LayerToolFuncStatus ruler_move(Layer * layer, QMouseEvent * event, LayerTool * tool);
+static LayerToolFuncStatus ruler_release(Layer * layer, QMouseEvent * event, LayerTool * tool);
 static void ruler_deactivate(Layer * layer, LayerTool * tool);
 static bool ruler_key_press(Layer * layer, GdkEventKey *event, LayerTool * tool);
 
@@ -727,9 +727,9 @@ LayerTool * SlavGPS::ruler_create(Window * window, Viewport * viewport)
 	layer_tool->radioActionEntry.value = 2;
 
 	layer_tool->deactivate = ruler_deactivate;
-	layer_tool->click = (VikToolMouseFunc) ruler_click;
-	layer_tool->move = (VikToolMouseMoveFunc) ruler_move;
-	layer_tool->release = (VikToolMouseFunc) ruler_release;
+	layer_tool->click = (ToolMouseFunc) ruler_click;
+	layer_tool->move = (ToolMouseMoveFunc) ruler_move;
+	layer_tool->release = (ToolMouseFunc) ruler_release;
 	layer_tool->key_press = ruler_key_press;
 
 	layer_tool->cursor_click = new QCursor(Qt::ArrowCursor);
@@ -747,7 +747,7 @@ LayerTool * SlavGPS::ruler_create(Window * window, Viewport * viewport)
 
 
 
-static VikLayerToolFuncStatus ruler_click(Layer * layer, QMouseEvent * event, LayerTool * tool)
+static LayerToolFuncStatus ruler_click(Layer * layer, QMouseEvent * event, LayerTool * tool)
 {
 	qDebug() << "II: Viewport: Layer Tools: Ruler: ->click()";
 
@@ -794,13 +794,13 @@ static VikLayerToolFuncStatus ruler_click(Layer * layer, QMouseEvent * event, La
 		tool->window->draw_update_cb();
 	}
 
-	return VIK_LAYER_TOOL_ACK;
+	return LayerToolFuncStatus::ACK;
 }
 
 
 
 
-static VikLayerToolFuncStatus ruler_move(Layer * layer, QMouseEvent * event, LayerTool * tool)
+static LayerToolFuncStatus ruler_move(Layer * layer, QMouseEvent * event, LayerTool * tool)
 {
 	qDebug() << "II: Layer Tools: Ruler: ->move()";
 
@@ -810,7 +810,7 @@ static VikLayerToolFuncStatus ruler_move(Layer * layer, QMouseEvent * event, Lay
 
 	if (!tool->ruler->has_start_coord) {
 		qDebug() << "II: Layer Tools: Ruler: not drawing, we don't have start coordinates";
-		return VIK_LAYER_TOOL_ACK;
+		return LayerToolFuncStatus::ACK;
 	}
 
 	static QPixmap * buf = NULL;
@@ -888,13 +888,13 @@ static VikLayerToolFuncStatus ruler_move(Layer * layer, QMouseEvent * event, Lay
 	/* We have used the start coordinate to draw a ruler. The coordinate should be discarded on LMB release. */
 	tool->ruler->invalidate_start_coord = true;
 
-	return VIK_LAYER_TOOL_ACK;
+	return LayerToolFuncStatus::ACK;
 }
 
 
 
 
-static VikLayerToolFuncStatus ruler_release(Layer * layer, QMouseEvent * event, LayerTool * tool)
+static LayerToolFuncStatus ruler_release(Layer * layer, QMouseEvent * event, LayerTool * tool)
 {
 	qDebug() << "II: Viewport: Layer Tools: Ruler: ->release()";
 	if (tool->ruler->invalidate_start_coord) {
@@ -903,7 +903,7 @@ static VikLayerToolFuncStatus ruler_release(Layer * layer, QMouseEvent * event, 
 		tool->ruler->invalidate_start_coord = false;
 		tool->ruler->has_start_coord = false;
 	}
-	return VIK_LAYER_TOOL_ACK;
+	return LayerToolFuncStatus::ACK;
 }
 
 
@@ -944,9 +944,9 @@ static bool ruler_key_press(Layer * layer, GdkEventKey *event, LayerTool * tool)
 
 
 
-static VikLayerToolFuncStatus zoomtool_click(Layer * layer, QMouseEvent * event, LayerTool * tool);
-static VikLayerToolFuncStatus zoomtool_move(Layer * layer, QMouseEvent * event, LayerTool * tool);
-static VikLayerToolFuncStatus zoomtool_release(Layer * layer, QMouseEvent * event, LayerTool * tool);
+static LayerToolFuncStatus zoomtool_click(Layer * layer, QMouseEvent * event, LayerTool * tool);
+static LayerToolFuncStatus zoomtool_move(Layer * layer, QMouseEvent * event, LayerTool * tool);
+static LayerToolFuncStatus zoomtool_release(Layer * layer, QMouseEvent * event, LayerTool * tool);
 
 
 
@@ -994,9 +994,9 @@ LayerTool * SlavGPS::zoomtool_create(Window * window, Viewport * viewport)
 	layer_tool->radioActionEntry.tooltip = strdup(N_("Zoom Tool"));
 	layer_tool->radioActionEntry.value = 1;
 
-	layer_tool->click = (VikToolMouseFunc) zoomtool_click;
-	layer_tool->move = (VikToolMouseMoveFunc) zoomtool_move;
-	layer_tool->release = (VikToolMouseFunc) zoomtool_release;
+	layer_tool->click = (ToolMouseFunc) zoomtool_click;
+	layer_tool->move = (ToolMouseMoveFunc) zoomtool_move;
+	layer_tool->release = (ToolMouseFunc) zoomtool_release;
 
 	layer_tool->cursor_click = new QCursor(Qt::ArrowCursor);
 	layer_tool->cursor_release = new QCursor(Qt::ArrowCursor);
@@ -1013,7 +1013,7 @@ LayerTool * SlavGPS::zoomtool_create(Window * window, Viewport * viewport)
 
 
 
-static VikLayerToolFuncStatus zoomtool_click(Layer * layer, QMouseEvent * event, LayerTool * tool)
+static LayerToolFuncStatus zoomtool_click(Layer * layer, QMouseEvent * event, LayerTool * tool)
 {
 	fprintf(stderr, "LAYER TOOLS: ZOOM CLICK, tool's ->click() called\n");
 #if 0
@@ -1072,13 +1072,13 @@ static VikLayerToolFuncStatus zoomtool_click(Layer * layer, QMouseEvent * event,
 
 #endif
 
-	return VIK_LAYER_TOOL_ACK;
+	return LayerToolFuncStatus::ACK;
 }
 
 
 
 
-static VikLayerToolFuncStatus zoomtool_move(Layer * layer, QMouseEvent * event, LayerTool * tool)
+static LayerToolFuncStatus zoomtool_move(Layer * layer, QMouseEvent * event, LayerTool * tool)
 {
 #if 0
 	unsigned int modifiers = event->modifiers() & (GDK_SHIFT_MASK | GDK_CONTROL_MASK);
@@ -1125,13 +1125,13 @@ static VikLayerToolFuncStatus zoomtool_move(Layer * layer, QMouseEvent * event, 
 		tool->zoom->bounds_active = false;
 	}
 #endif
-	return VIK_LAYER_TOOL_ACK;
+	return LayerToolFuncStatus::ACK;
 }
 
 
 
 
-static VikLayerToolFuncStatus zoomtool_release(Layer * layer, QMouseEvent * event, LayerTool * tool)
+static LayerToolFuncStatus zoomtool_release(Layer * layer, QMouseEvent * event, LayerTool * tool)
 {
 #if 0
 	unsigned int modifiers = event->modifiers() & (GDK_SHIFT_MASK | GDK_CONTROL_MASK);
@@ -1176,7 +1176,7 @@ static VikLayerToolFuncStatus zoomtool_release(Layer * layer, QMouseEvent * even
 	/* Reset. */
 	tool->zoom->bounds_active = false;
 #endif
-	return VIK_LAYER_TOOL_ACK;
+	return LayerToolFuncStatus::ACK;
 }
 
 
@@ -1192,9 +1192,9 @@ static VikLayerToolFuncStatus zoomtool_release(Layer * layer, QMouseEvent * even
 
 
 
-static VikLayerToolFuncStatus pantool_click(Layer * layer, QMouseEvent * event, LayerTool * tool);
-static VikLayerToolFuncStatus pantool_move(Layer * layer, QMouseEvent * event, LayerTool * tool);
-static VikLayerToolFuncStatus pantool_release(Layer * layer, QMouseEvent * event, LayerTool * tool);
+static LayerToolFuncStatus pantool_click(Layer * layer, QMouseEvent * event, LayerTool * tool);
+static LayerToolFuncStatus pantool_move(Layer * layer, QMouseEvent * event, LayerTool * tool);
+static LayerToolFuncStatus pantool_release(Layer * layer, QMouseEvent * event, LayerTool * tool);
 
 
 
@@ -1212,9 +1212,9 @@ LayerTool * SlavGPS::pantool_create(Window * window, Viewport * viewport)
 	layer_tool->radioActionEntry.tooltip = strdup(N_("Pan Tool"));
 	layer_tool->radioActionEntry.value = 0;
 
-	layer_tool->click = (VikToolMouseFunc) pantool_click;
-	layer_tool->move = (VikToolMouseMoveFunc) pantool_move;
-	layer_tool->release = (VikToolMouseFunc) pantool_release;
+	layer_tool->click = (ToolMouseFunc) pantool_click;
+	layer_tool->move = (ToolMouseMoveFunc) pantool_move;
+	layer_tool->release = (ToolMouseFunc) pantool_release;
 
 	layer_tool->cursor_click = new QCursor(Qt::ClosedHandCursor);
 	layer_tool->cursor_release = new QCursor(Qt::OpenHandCursor);
@@ -1226,7 +1226,7 @@ LayerTool * SlavGPS::pantool_create(Window * window, Viewport * viewport)
 
 
 /* NB Double clicking means this gets called THREE times!!! */
-static VikLayerToolFuncStatus pantool_click(Layer * layer, QMouseEvent * event, LayerTool * tool)
+static LayerToolFuncStatus pantool_click(Layer * layer, QMouseEvent * event, LayerTool * tool)
 {
 	fprintf(stderr, "LAYER TOOLS: PAN CLICK, tool's ->click() called\n");
 	tool->window->modified = true;
@@ -1258,29 +1258,29 @@ static VikLayerToolFuncStatus pantool_click(Layer * layer, QMouseEvent * event, 
 #if 0
 	}
 #endif
-	return VIK_LAYER_TOOL_ACK;
+	return LayerToolFuncStatus::ACK;
 }
 
 
 
 
-static VikLayerToolFuncStatus pantool_move(Layer * layer, QMouseEvent * event, LayerTool * tool)
+static LayerToolFuncStatus pantool_move(Layer * layer, QMouseEvent * event, LayerTool * tool)
 {
 	fprintf(stderr, "LAYER TOOLS: PAN MOVE, calling window->pan_move()\n");
 	tool->window->pan_move(event);
 
-	return VIK_LAYER_TOOL_ACK;
+	return LayerToolFuncStatus::ACK;
 }
 
 
 
 
-static VikLayerToolFuncStatus pantool_release(Layer * layer, QMouseEvent * event, LayerTool * tool)
+static LayerToolFuncStatus pantool_release(Layer * layer, QMouseEvent * event, LayerTool * tool)
 {
 	if (event->button() == Qt::LeftButton) {
 		tool->window->pan_release(event);
 	}
-	return VIK_LAYER_TOOL_ACK;
+	return LayerToolFuncStatus::ACK;
 }
 
 
@@ -1296,9 +1296,9 @@ static VikLayerToolFuncStatus pantool_release(Layer * layer, QMouseEvent * event
 
 
 
-static VikLayerToolFuncStatus selecttool_click(Layer * layer, QMouseEvent * event, LayerTool * tool);
-static VikLayerToolFuncStatus selecttool_move(Layer * layer, QMouseEvent * event, LayerTool * tool);
-static VikLayerToolFuncStatus selecttool_release(Layer * layer, QMouseEvent * event, LayerTool * tool);
+static LayerToolFuncStatus selecttool_click(Layer * layer, QMouseEvent * event, LayerTool * tool);
+static LayerToolFuncStatus selecttool_move(Layer * layer, QMouseEvent * event, LayerTool * tool);
+static LayerToolFuncStatus selecttool_release(Layer * layer, QMouseEvent * event, LayerTool * tool);
 
 
 
@@ -1316,9 +1316,9 @@ LayerTool * SlavGPS::selecttool_create(Window * window, Viewport * viewport)
 	layer_tool->radioActionEntry.tooltip = strdup(N_("Select Tool"));
 	layer_tool->radioActionEntry.value = 3;
 
-	layer_tool->click = (VikToolMouseFunc) selecttool_click;
-	layer_tool->move = (VikToolMouseMoveFunc) selecttool_move;
-	layer_tool->release = (VikToolMouseFunc) selecttool_release;
+	layer_tool->click = (ToolMouseFunc) selecttool_click;
+	layer_tool->move = (ToolMouseMoveFunc) selecttool_move;
+	layer_tool->release = (ToolMouseFunc) selecttool_release;
 
 	layer_tool->cursor_click = new QCursor(Qt::ArrowCursor);
 	layer_tool->cursor_release = new QCursor(Qt::ArrowCursor);
@@ -1370,7 +1370,7 @@ static void click_layer_selected(Layer * layer, clicker * ck)
 
 
 
-static VikLayerToolFuncStatus selecttool_click(Layer * layer, QMouseEvent * event, LayerTool * tool)
+static LayerToolFuncStatus selecttool_click(Layer * layer, QMouseEvent * event, LayerTool * tool)
 {
 	qDebug() << "II: Layer Tools:" << tool->id_string << "->click() called";
 	tool->window->select_move = false;
@@ -1427,13 +1427,13 @@ static VikLayerToolFuncStatus selecttool_click(Layer * layer, QMouseEvent * even
 		}
 	}
 
-	return VIK_LAYER_TOOL_ACK;
+	return LayerToolFuncStatus::ACK;
 }
 
 
 
 
-static VikLayerToolFuncStatus selecttool_move(Layer * layer, QMouseEvent * event, LayerTool * tool)
+static LayerToolFuncStatus selecttool_move(Layer * layer, QMouseEvent * event, LayerTool * tool)
 {
 #if 0
 	if (tool->window->select_move) {
@@ -1448,13 +1448,13 @@ static VikLayerToolFuncStatus selecttool_move(Layer * layer, QMouseEvent * event
 		}
 	}
 #endif
-	return VIK_LAYER_TOOL_ACK;
+	return LayerToolFuncStatus::ACK;
 }
 
 
 
 
-static VikLayerToolFuncStatus selecttool_release(Layer * layer, QMouseEvent * event, LayerTool * tool)
+static LayerToolFuncStatus selecttool_release(Layer * layer, QMouseEvent * event, LayerTool * tool)
 {
 #if 0
 	if (tool->window->select_move) {
@@ -1476,7 +1476,7 @@ static VikLayerToolFuncStatus selecttool_release(Layer * layer, QMouseEvent * ev
 	tool->window->select_move = false;
 #endif
 
-	return VIK_LAYER_TOOL_ACK;
+	return LayerToolFuncStatus::ACK;
 }
 
 /*** End select tool code. ********************************************************/

@@ -1212,7 +1212,7 @@ TreeIndex * TreeView::add_layer(Layer * layer, Layer * parent_layer, TreeIndex *
 	items << item;
 
 	/* LayersTreeColumn::ICON */
-	item = new QStandardItem(QString(layer->type_string));
+	item = new QStandardItem(QString(layer->debug_string));
 	item->setToolTip(tooltip);
 	item->setIcon(*layer->get_interface()->icon);
 	item->setEditable(false); /* Don't allow editing layer type string. */

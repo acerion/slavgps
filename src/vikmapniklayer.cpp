@@ -130,7 +130,7 @@ VikLayerInterface vik_mapnik_layer_interface = {
 	NULL,
 	&vikmapniklayer_pixbuf, // icon
 
-	{ mapnik_feature_create, NULL, NULL, NULL, NULL, NULL, NULL }, /* (VikToolConstructorFunc) */
+	{ mapnik_feature_create, NULL, NULL, NULL, NULL, NULL, NULL }, /* (ToolConstructorFunc) */
 	mapnik_tools,
 	1,
 
@@ -141,8 +141,8 @@ VikLayerInterface vik_mapnik_layer_interface = {
 
 	VIK_MENU_ITEM_ALL,
 
-	/* (VikLayerFuncUnmarshall) */    mapnik_layer_unmarshall,
-	/* (VikLayerFuncChangeParam) */   NULL,
+	/* (LayerFuncUnmarshall) */    mapnik_layer_unmarshall,
+	/* (LayerFuncChangeParam) */   NULL,
 };
 
 
@@ -1181,7 +1181,7 @@ static LayerTool * mapnik_feature_create(Window * window, Viewport * viewport)
 	layer_tool->radioActionEntry.tooltip = strdup(N_("Mapnik Features"));
 	layer_tool->radioActionEntry.value = 0;
 
-	layer_tool->release = (VikToolMouseFunc) mapnik_feature_release_cb;
+	layer_tool->release = (ToolMouseFunc) mapnik_feature_release_cb;
 
 	layer_tool->cursor_shape = Qt::ArrowCursor;
 	layer_tool->cursor_data = NULL;

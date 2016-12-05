@@ -347,8 +347,8 @@ VikLayerInterface vik_gps_layer_interface = {
 
 	VIK_MENU_ITEM_ALL,
 
-	/* (VikLayerFuncUnmarshall) */    gps_layer_unmarshall,
-	/* (VikLayerFuncChangeParam) */   NULL,
+	/* (LayerFuncUnmarshall) */    gps_layer_unmarshall,
+	/* (LayerFuncChangeParam) */   NULL,
 };
 
 

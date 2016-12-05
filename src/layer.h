@@ -54,14 +54,14 @@
  * this was useful for clicking a way/trackpoint in any layer, if no
  * layer was selected (find way/trackpoint).
  */
-typedef enum {
-	VIK_LAYER_TOOL_IGNORED=0,
-	VIK_LAYER_TOOL_ACK,
-	VIK_LAYER_TOOL_ACK_REDRAW_ABOVE,
-	VIK_LAYER_TOOL_ACK_REDRAW_ALL,
-	VIK_LAYER_TOOL_ACK_REDRAW_IF_VISIBLE,
-	VIK_LAYER_TOOL_ACK_GRAB_FOCUS, /* only for move */
-} VikLayerToolFuncStatus;
+enum class LayerToolFuncStatus {
+	IGNORED = 0,
+	ACK,
+	ACK_REDRAW_ABOVE,
+	ACK_REDRAW_ALL,
+	ACK_REDRAW_IF_VISIBLE,
+	ACK_GRAB_FOCUS, /* Only for move. */
+};
 
 
 
@@ -73,13 +73,8 @@ typedef enum {
 	VIK_MENU_ITEM_PASTE    =    8,
 	VIK_MENU_ITEM_DELETE   =   16,
 	VIK_MENU_ITEM_ALL      = 0xff
-} VikStdLayerMenuItem;
+} LayerMenuItem;
 
-
-
-
-typedef struct _LayerInterface LayerInterface;
-struct _trw_menu_sublayer_t;
 
 
 
@@ -91,6 +86,9 @@ namespace SlavGPS {
 	class Window;
 	class LayerTRW;
 	class LayerTool;
+	class LayerInterface;
+	class trw_menu_sublayer_t;
+	class LayersPanel;
 
 
 
@@ -199,7 +197,7 @@ namespace SlavGPS {
 
 		virtual void add_menu_items(QMenu & menu);
 		virtual bool sublayer_add_menu_items(QMenu & menu);
-		virtual char const * sublayer_rename_request(const char * newname, void * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeIndex * parent_index);
+		virtual char const * sublayer_rename_request(const char * newname, LayersPanel * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeIndex * parent_index);
 		virtual bool sublayer_toggle_visible(SublayerType sublayer_type, sg_uid_t sublayer_uid);
 
 		virtual bool properties_dialog(Viewport * viewport);
@@ -261,9 +259,9 @@ namespace SlavGPS {
 		/* For explicit "polymorphism" (function type switching). */
 		LayerType type;
 
-		char type_string[30] = { 0 };
+		char debug_string[100] = { 0 };
 
-		struct _trw_menu_sublayer_t * menu_data = NULL;
+		trw_menu_sublayer_t * menu_data = NULL;
 
 	protected:
 		virtual void marshall(uint8_t ** data, int * len);
@@ -287,12 +285,11 @@ namespace SlavGPS {
 
 
 	/* void * is tool-specific state created in the constructor. */
-	typedef LayerTool * (*VikToolConstructorFunc) (Window *, Viewport *);
-	typedef void (*VikToolDestructorFunc) (LayerTool *);
-	typedef VikLayerToolFuncStatus (*VikToolMouseFunc) (Layer *, QMouseEvent *, LayerTool *);
-	typedef VikLayerToolFuncStatus (*VikToolMouseMoveFunc) (Layer *, QMouseEvent *, LayerTool *);
-	typedef void (*VikToolActivationFunc) (Layer *, LayerTool *);
-	typedef bool (*VikToolKeyFunc) (Layer *, GdkEventKey *, LayerTool *);
+	typedef LayerTool * (*ToolConstructorFunc) (Window *, Viewport *);
+	typedef LayerToolFuncStatus (*ToolMouseFunc) (Layer *, QMouseEvent *, LayerTool *);
+	typedef LayerToolFuncStatus (*ToolMouseMoveFunc) (Layer *, QMouseEvent *, LayerTool *);
+	typedef void (*ToolActivationFunc) (Layer *, LayerTool *);
+	typedef bool (*ToolKeyFunc) (Layer *, GdkEventKey *, LayerTool *);
 
 
 
@@ -314,13 +311,13 @@ namespace SlavGPS {
 
 		QString get_description() const;
 
-		VikToolActivationFunc activate = NULL;
-		VikToolActivationFunc deactivate = NULL;
-		VikToolMouseFunc click = NULL;
-		VikToolMouseFunc double_click = NULL;
-		VikToolMouseMoveFunc move = NULL;
-		VikToolMouseFunc release = NULL;
-		VikToolKeyFunc key_press = NULL; /* Return false if we don't use the key press -- should return false most of the time if we want any shortcuts / UI keybindings to work! use sparingly. */
+		ToolActivationFunc activate = NULL;
+		ToolActivationFunc deactivate = NULL;
+		ToolMouseFunc click = NULL;
+		ToolMouseFunc double_click = NULL;
+		ToolMouseMoveFunc move = NULL;
+		ToolMouseFunc release = NULL;
+		ToolKeyFunc key_press = NULL; /* Return false if we don't use the key press -- should return false most of the time if we want any shortcuts / UI keybindings to work! use sparingly. */
 
 		ActionEntry radioActionEntry = { NULL, NULL, NULL, NULL, 0 };
 
@@ -350,100 +347,87 @@ namespace SlavGPS {
 
 
 
+	/* Layer interface functions. */
+	typedef Layer * (* LayerFuncUnmarshall)  (uint8_t *, int, Viewport *);
+	typedef void    (* LayerFuncChangeParam) (GtkWidget *, ui_change_values *);
+
+
+
+
+	class LayerInterface {
+	public:
+		const char  * layer_type_string; /* Used in .vik files - this should never change to maintain file compatibility. */
+		const char  * name;              /* Translate-able name used for display purposes. */
+		const char  * accelerator;
+		const QIcon * icon;
+
+		ToolConstructorFunc layer_tool_constructors[7];
+		LayerTool           ** layer_tools;
+		uint16_t               tools_count;
+
+
+		/* For I/O reading to and from .vik files -- params like coordline width, color, etc. */
+		Parameter * params;
+		uint16_t    params_count;
+		char     ** params_groups;
+		uint8_t     params_groups_count;
+
+		/* Menu items to be created. */
+		LayerMenuItem    menu_items_selection;
+
+		LayerFuncUnmarshall unmarshall;
+
+		/* For I/O. */
+		LayerFuncChangeParam           change_param;
+
+		std::map<param_id_t, Parameter *> * layer_parameters;
+		std::map<param_id_t, ParameterValue> * parameter_value_defaults;
+	};
+
+
+
+	/* GUI. */
+	uint16_t vik_layer_get_menu_items_selection(Layer * layer);
+
+
+	/* TODO: put in layerspanel. */
+	GdkPixbuf * vik_layer_load_icon(LayerType layer_type);
+
+
+
+	typedef struct {
+		ParameterValue data;
+		ParameterType type;
+	} ParameterValueTyped;
+
+
+	void vik_layer_typed_param_data_free(void * gp);
+	ParameterValueTyped * vik_layer_typed_param_data_copy_from_data(ParameterType type, ParameterValue val);
+	ParameterValueTyped * vik_layer_data_typed_param_copy_from_string(ParameterType type, const char * str);
+
+
+
+
+	class trw_menu_sublayer_t {
+	public:
+		LayersPanel * layers_panel = NULL;
+		SublayerType sublayer_type = SublayerType::NONE;
+		sg_uid_t sublayer_uid = SG_UID_INITIAL;
+		bool confirm = false;
+		Viewport * viewport = NULL;
+		TreeIndex * index = NULL;
+		void * misc = NULL;
+	};
+
+
+
+
 }
 
 
 
 
 Q_DECLARE_METATYPE(SlavGPS::Layer*);
-
-
-
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
-
-/* Layer interface functions. */
-
-typedef SlavGPS::Layer *         (* VikLayerFuncUnmarshall)    (uint8_t *, int, SlavGPS::Viewport *);
-typedef void                     (* VikLayerFuncChangeParam)   (GtkWidget *, ui_change_values *);
-
-
-
-
-
-/* See vik_layer_* for function parameter names. */
-struct _LayerInterface {
-	const char *                      layer_type_string; /* Used in .vik files - this should never change to maintain file compatibility. */
-	const char *                      name;             /* Translate-able name used for display purposes. */
-	const char *                      accelerator;
-	const QIcon * icon;
-
-	SlavGPS::VikToolConstructorFunc layer_tool_constructors[7];
-	SlavGPS::LayerTool **              layer_tools;
-
-	uint16_t                           tools_count;
-
-
-	/* For I/O reading to and from .vik files -- params like coordline width, color, etc. */
-	Parameter *                       params;
-	uint16_t                          params_count;
-	char **                           params_groups;
-	uint8_t                           params_groups_count;
-
-	/* Menu items to be created. */
-	VikStdLayerMenuItem               menu_items_selection;
-
-	VikLayerFuncUnmarshall            unmarshall;
-
-	/* For I/O. */
-	VikLayerFuncChangeParam           change_param;
-
-	std::map<param_id_t, Parameter *> * layer_parameters;
-	std::map<param_id_t, ParameterValue> * parameter_value_defaults;
-};
-
-
-
-/* GUI. */
-uint16_t vik_layer_get_menu_items_selection(SlavGPS::Layer * layer);
-
-
-/* TODO: put in layerspanel. */
-GdkPixbuf * vik_layer_load_icon(SlavGPS::LayerType layer_type);
-
-
-
-typedef struct {
-	ParameterValue data;
-	ParameterType type;
-} ParameterValueTyped;
-
-
-void vik_layer_typed_param_data_free(void * gp);
-ParameterValueTyped * vik_layer_typed_param_data_copy_from_data(ParameterType type, ParameterValue val);
-ParameterValueTyped * vik_layer_data_typed_param_copy_from_string(ParameterType type, const char * str);
-
-
-
-typedef struct _trw_menu_sublayer_t {
-	void * layers_panel;
-	SlavGPS::SublayerType sublayer_type;
-	sg_uid_t sublayer_uid;
-	bool confirm;
-	SlavGPS::Viewport * viewport;
-	SlavGPS::TreeIndex * index;
-	void * misc;
-} trw_menu_sublayer_t;
-
-
-
-#ifdef __cplusplus
-}
-#endif
 
 
 

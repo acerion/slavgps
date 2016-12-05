@@ -28,7 +28,6 @@
 #include <cstring>
 #include <cstdlib>
 #include <cassert>
-#include <future> /* std::async */
 
 #include <QString>
 #include <QDebug>
@@ -38,13 +37,11 @@
 #include "layer_defaults.h"
 #include "layer.h"
 #include "window.h"
-#ifndef SLAVGPS_QT
 #include "layer_trw.h"
-#endif
 #include "layer_aggregate.h"
 #include "layer_coord.h"
 #include "layer_dem.h"
-#ifndef SLAVGPS_QT
+#ifdef K
 #include "vikmapslayer.h"
 #include "vikgeoreflayer.h"
 #include "vikgpslayer.h"
@@ -560,9 +557,7 @@ Layer::~Layer()
 
 	delete right_click_menu;
 
-	if (this->menu_data) {
-		free(this->menu_data);
-	}
+	delete this->menu_data;
 }
 
 
@@ -709,7 +704,7 @@ void vik_layer_typed_param_data_free(void * gp)
 
 
 
-ParameterValueTyped * vik_layer_typed_param_data_copy_from_data(ParameterType type, ParameterValue val)
+ParameterValueTyped * SlavGPS::vik_layer_typed_param_data_copy_from_data(ParameterType type, ParameterValue val)
 {
 	ParameterValueTyped * newval = (ParameterValueTyped *) malloc(1 * sizeof (ParameterValueTyped));
 	newval->data = val;
@@ -739,7 +734,7 @@ ParameterValueTyped * vik_layer_typed_param_data_copy_from_data(ParameterType ty
 
 #define TEST_BOOLEAN(str) (! ((str)[0] == '\0' || (str)[0] == '0' || (str)[0] == 'n' || (str)[0] == 'N' || (str)[0] == 'f' || (str)[0] == 'F'))
 
-ParameterValueTyped * vik_layer_data_typed_param_copy_from_string(ParameterType type, const char * str)
+ParameterValueTyped * SlavGPS::vik_layer_data_typed_param_copy_from_string(ParameterType type, const char * str)
 {
 	ParameterValueTyped * rv = (ParameterValueTyped *) malloc(1 * sizeof (ParameterValueTyped));
 	rv->type = type;
@@ -814,10 +809,9 @@ Layer::Layer()
 {
 	qDebug() << "II: Layer::Layer()";
 
-	strcpy(this->type_string, "LayerType::NUM_TYPES");
+	strcpy(this->debug_string, "LayerType::NUM_TYPES");
 
-	this->menu_data = (struct _trw_menu_sublayer_t *) malloc(sizeof (struct _trw_menu_sublayer_t));
-	memset(this->menu_data, 0, sizeof (struct _trw_menu_sublayer_t));
+	this->menu_data = new trw_menu_sublayer_t;
 }
 
 
@@ -1003,7 +997,7 @@ bool Layer::sublayer_add_menu_items(QMenu & menu)
 
 
 
-char const * Layer::sublayer_rename_request(const char * newname, void * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeIndex * parent_index)
+char const * Layer::sublayer_rename_request(const char * newname, LayersPanel * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeIndex * parent_index)
 {
 	return NULL;
 }
@@ -1241,7 +1235,7 @@ void Layer::visibility_toggled_cb(QStandardItem * item) /* Slot. */
 		QVariant layer_variant = item->data(RoleLayerData);
 		Layer * layer = layer_variant.value<Layer *>();
 		if (layer == this) {
-			fprintf(stderr, "Layer %s/%s: slot 'changed' called, visibility = %d\n", this->type_string, this->name, (int) item->checkState());
+			fprintf(stderr, "Layer %s/%s: slot 'changed' called, visibility = %d\n", this->debug_string, this->name, (int) item->checkState());
 		}
 	}
 }

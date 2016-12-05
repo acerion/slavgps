@@ -86,7 +86,7 @@ static bool tool_new_route_click_cb(Layer * trw, QMouseEvent * event, LayerTool 
 
 static bool tool_new_track_click_cb(Layer * trw, QMouseEvent * event, LayerTool * tool);
 static bool tool_new_track_double_click_cb(Layer * trw, QMouseEvent * event, LayerTool * tool);
-static VikLayerToolFuncStatus tool_new_track_move_cb(Layer * trw, QMouseEvent * event, LayerTool * tool);
+static LayerToolFuncStatus tool_new_track_move_cb(Layer * trw, QMouseEvent * event, LayerTool * tool);
 static void tool_new_track_release_cb(Layer * trw, QMouseEvent * event, LayerTool * tool);
 static bool tool_new_track_key_press_cb(Layer * trw, GdkEventKey * event, LayerTool * tool);
 
@@ -597,9 +597,9 @@ LayerTool * tool_edit_waypoint_create(Window * window, Viewport * viewport)
 	layer_tool->radioActionEntry.tooltip     = strdup(N_("Edit Waypoint"));
 	layer_tool->radioActionEntry.value       = 0;
 
-	layer_tool->click = (VikToolMouseFunc) tool_edit_waypoint_click_cb;
-	layer_tool->move = (VikToolMouseMoveFunc) tool_edit_waypoint_move_cb;
-	layer_tool->release = (VikToolMouseFunc) tool_edit_waypoint_release_cb;
+	layer_tool->click = (ToolMouseFunc) tool_edit_waypoint_click_cb;
+	layer_tool->move = (ToolMouseMoveFunc) tool_edit_waypoint_move_cb;
+	layer_tool->release = (ToolMouseFunc) tool_edit_waypoint_release_cb;
 
 	layer_tool->cursor_click = new QCursor(QPixmap(":/cursors/trw_edit_wp.png"), 0, 0);
 	layer_tool->cursor_release = new QCursor(Qt::ArrowCursor);
@@ -808,10 +808,10 @@ LayerTool * tool_new_track_create(Window * window, Viewport * viewport)
 	layer_tool->radioActionEntry.tooltip     = strdup(N_("Create Track"));
 	layer_tool->radioActionEntry.value       = 0;
 
-	layer_tool->click = (VikToolMouseFunc) tool_new_track_click_cb;
-	layer_tool->double_click = (VikToolMouseFunc) tool_new_track_double_click_cb;
-	layer_tool->move = (VikToolMouseMoveFunc) tool_new_track_move_cb;
-	layer_tool->release = (VikToolMouseFunc) tool_new_track_release_cb;
+	layer_tool->click = (ToolMouseFunc) tool_new_track_click_cb;
+	layer_tool->double_click = (ToolMouseFunc) tool_new_track_double_click_cb;
+	layer_tool->move = (ToolMouseMoveFunc) tool_new_track_move_cb;
+	layer_tool->release = (ToolMouseFunc) tool_new_track_release_cb;
 	layer_tool->key_press = tool_new_track_key_press_cb;
 
 	layer_tool->pan_handler = true;  /* Still need to handle clicks when in PAN mode to disable the potential trackpoint drawing. */
@@ -949,7 +949,7 @@ void LayerTRW::update_statusbar()
 
 
 
-static VikLayerToolFuncStatus tool_new_track_move_cb(Layer * layer, QMouseEvent * event, LayerTool * tool)
+static LayerToolFuncStatus tool_new_track_move_cb(Layer * layer, QMouseEvent * event, LayerTool * tool)
 {
 	LayerTRW * trw = (LayerTRW *) layer;
 
@@ -1069,9 +1069,9 @@ static VikLayerToolFuncStatus tool_new_track_move_cb(Layer * layer, QMouseEvent 
 		draw_sync(trw, tool->viewport->scr_buffer, pixmap);
 		trw->draw_sync_done = false;
 
-		return VIK_LAYER_TOOL_ACK_GRAB_FOCUS;
+		return LayerToolFuncStatus::ACK_GRAB_FOCUS;
 	}
-	return VIK_LAYER_TOOL_ACK;
+	return LayerToolFuncStatus::ACK;
 }
 
 
@@ -1270,9 +1270,9 @@ LayerTool * tool_new_route_create(Window * window, Viewport * viewport)
 	layer_tool->radioActionEntry.tooltip     = strdup(N_("Create Route"));
 	layer_tool->radioActionEntry.value       = 0;
 
-	layer_tool->click = (VikToolMouseFunc) tool_new_route_click_cb;
-	layer_tool->move = (VikToolMouseMoveFunc) tool_new_track_move_cb;    /* Reuse this track method for a route. */
-	layer_tool->release = (VikToolMouseFunc) tool_new_track_release_cb;  /* Reuse this track method for a route. */
+	layer_tool->click = (ToolMouseFunc) tool_new_route_click_cb;
+	layer_tool->move = (ToolMouseMoveFunc) tool_new_track_move_cb;    /* Reuse this track method for a route. */
+	layer_tool->release = (ToolMouseFunc) tool_new_track_release_cb;  /* Reuse this track method for a route. */
 	layer_tool->key_press = tool_new_track_key_press_cb;                 /* Reuse this track method for a route. */
 
 	layer_tool->pan_handler = true;  /* Still need to handle clicks when in PAN mode to disable the potential trackpoint drawing. */
@@ -1335,7 +1335,7 @@ LayerTool * tool_new_waypoint_create(Window * window, Viewport * viewport)
 	layer_tool->radioActionEntry.tooltip     = strdup(N_("Create Waypoint"));
 	layer_tool->radioActionEntry.value       = 0;
 
-	layer_tool->click = (VikToolMouseFunc) tool_new_waypoint_click_cb;
+	layer_tool->click = (ToolMouseFunc) tool_new_waypoint_click_cb;
 
 	layer_tool->cursor_click = new QCursor(QPixmap(":/cursors/trw_add_wp.png"), 0, 0);
 	layer_tool->cursor_release = new QCursor(Qt::ArrowCursor);
@@ -1390,9 +1390,9 @@ LayerTool * tool_edit_trackpoint_create(Window * window, Viewport * viewport)
 	layer_tool->radioActionEntry.tooltip     = strdup(N_("Edit Trackpoint"));
 	layer_tool->radioActionEntry.value       = 0;
 
-	layer_tool->click = (VikToolMouseFunc) tool_edit_trackpoint_click_cb;
-	layer_tool->move = (VikToolMouseMoveFunc) tool_edit_trackpoint_move_cb;
-	layer_tool->release = (VikToolMouseFunc) tool_edit_trackpoint_release_cb;
+	layer_tool->click = (ToolMouseFunc) tool_edit_trackpoint_click_cb;
+	layer_tool->move = (ToolMouseMoveFunc) tool_edit_trackpoint_move_cb;
+	layer_tool->release = (ToolMouseFunc) tool_edit_trackpoint_release_cb;
 
 	layer_tool->cursor_click = new QCursor(QPixmap(":/cursors/trw_edit_tr.png"), 0, 0);
 	layer_tool->cursor_release = new QCursor(Qt::ArrowCursor);
@@ -1615,9 +1615,9 @@ LayerTool * tool_extended_route_finder_create(Window * window, Viewport * viewpo
 	layer_tool->radioActionEntry.tooltip     = strdup(N_("Route Finder"));
 	layer_tool->radioActionEntry.value       = 0;
 
-	layer_tool->click = (VikToolMouseFunc) tool_extended_route_finder_click_cb;
-	layer_tool->move = (VikToolMouseMoveFunc) tool_new_track_move_cb;   /* Reuse these track methods on a route. */
-	layer_tool->release = (VikToolMouseFunc) tool_new_track_release_cb; /* Reuse these track methods on a route. */
+	layer_tool->click = (ToolMouseFunc) tool_extended_route_finder_click_cb;
+	layer_tool->move = (ToolMouseMoveFunc) tool_new_track_move_cb;   /* Reuse these track methods on a route. */
+	layer_tool->release = (ToolMouseFunc) tool_new_track_release_cb; /* Reuse these track methods on a route. */
 	layer_tool->key_press = tool_extended_route_finder_key_press_cb;
 
 	layer_tool->pan_handler = true;  /* Still need to handle clicks when in PAN mode to disable the potential trackpoint drawing. */
@@ -1776,7 +1776,7 @@ LayerTool * tool_show_picture_create(Window * window, Viewport * viewport)
 	layer_tool->radioActionEntry.tooltip     = strdup(N_("Show Picture"));
 	layer_tool->radioActionEntry.value       = 0;
 
-	layer_tool->click = (VikToolMouseFunc) tool_show_picture_click_cb;
+	layer_tool->click = (ToolMouseFunc) tool_show_picture_click_cb;
 
 	layer_tool->cursor_click = new QCursor(QPixmap(":/cursors/trw____.png"), 0, 0);
 	layer_tool->cursor_release = new QCursor(Qt::ArrowCursor);

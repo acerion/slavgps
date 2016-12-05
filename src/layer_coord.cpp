@@ -102,8 +102,8 @@ LayerInterface vik_coord_layer_interface = {
 
 	VIK_MENU_ITEM_ALL,
 
-	coord_layer_unmarshall, /* (VikLayerFuncUnmarshall) */
-	NULL,                   /* (VikLayerFuncChangeParam) */
+	coord_layer_unmarshall, /* (LayerFuncUnmarshall) */
+	NULL,                   /* (LayerFuncChangeParam) */
 
 	NULL,
 	NULL
@@ -414,7 +414,7 @@ LayerCoord::LayerCoord()
 	qDebug() << "II: Layer Coordinate: LayerCoord::LayerCoord()";
 
 	this->type = LayerType::COORD;
-	strcpy(this->type_string, "LayerType::COORD");
+	strcpy(this->debug_string, "LayerType::COORD");
 	this->interface = &vik_coord_layer_interface;
 
 	this->rename("My Coord Layer"); /* kamilFIXME: this shouldn't be here. Shouldn't we get the default name from layer defaults or layer interface? */
