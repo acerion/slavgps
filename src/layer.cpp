@@ -859,17 +859,15 @@ void Layer::draw(Viewport * viewport)
 
 QString Layer::tooltip()
 {
-      return QString(tr("Layer::tooltip"));
+	return QString(tr("Layer::tooltip"));
 }
 
 
 
 
-char const * Layer::sublayer_tooltip(SublayerType sublayer_type, sg_uid_t sublayer_uid)
+QString Layer::sublayer_tooltip(SublayerType sublayer_type, sg_uid_t sublayer_uid)
 {
-      static char tmp_buf[32];
-      snprintf(tmp_buf, sizeof(tmp_buf), _("Layer::sublayer_tooltip"));
-      return tmp_buf;
+	return QString("Layer::sublayer_tooltip");
 }
 
 

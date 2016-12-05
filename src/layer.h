@@ -162,7 +162,7 @@ namespace SlavGPS {
 
 		virtual void draw(Viewport * viewport);
 		virtual QString tooltip();
-		virtual char const * sublayer_tooltip(SublayerType sublayer_type, sg_uid_t sublayer_uid);
+		virtual QString sublayer_tooltip(SublayerType sublayer_type, sg_uid_t sublayer_uid);
 
 		virtual bool selected(SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeItemType type);
 		bool layer_selected(SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeItemType type);

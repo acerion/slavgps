@@ -135,7 +135,7 @@ namespace SlavGPS {
 		void draw(Viewport * viewport);
 		void post_read(Viewport * viewport, bool from_file);
 		QString tooltip();
-		char const * sublayer_tooltip(SublayerType sublayer_type, sg_uid_t sublayer_uid);
+		QString sublayer_tooltip(SublayerType sublayer_type, sg_uid_t sublayer_uid);
 
 		bool selected(SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeItemType type);
 
@@ -706,7 +706,7 @@ typedef struct {
 
 
 
-GdkPixbuf* get_wp_sym_small(char *symbol);
+QIcon * get_wp_sym_small(char * symbol);
 
 /* Exposed Layer Interface function definitions.
    Intended only for use by other trw_layer subwindows. */

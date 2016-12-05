@@ -895,20 +895,17 @@ void LayerAggregate::drag_drop_request(Layer * src, GtkTreeIter *src_item_iter, 
 {
 #ifdef K
 	Layer * layer = src->tree_view->get_layer(src_item_iter);
-	GtkTreeIter dest_iter;
-	char *dp;
-	bool target_exists;
 
-	dp = gtk_tree_path_to_string(dest_path);
-	target_exists = src->tree_view->get_iter_from_path_str(&dest_iter, dp);
+	char * dp = gtk_tree_path_to_string(dest_path);
+	TreeIndex * dest_index = src->tree_view->get_index_from_path_str(dp);
 
 	/* LayerAggregate::delete_layer unrefs, but we don't want that here.
 	   We're still using the layer. */
 	layer->ref();
 	((LayerAggregate *) src)->delete_layer(src_item_iter);
 
-	if (target_exists) {
-		this->insert_layer(layer, &dest_iter);
+	if (dest_index && dest_index->isValid()) {
+		this->insert_layer(layer, dest_index);
 	} else {
 		this->insert_layer(layer, NULL); /* Append. */
 	}

@@ -85,7 +85,6 @@ static GtkActionEntry entries[] = {
 static void layers_item_edited_cb(LayersPanel * panel, TreeIndex * index, char const * new_text);
 static void menu_popup_cb(LayersPanel * panel);
 static void layers_popup_cb(LayersPanel * panel);
-static bool layers_button_press_cb(LayersPanel * panel, GdkEventButton * event);
 static bool layers_key_press_cb(LayersPanel * panel, GdkEventKey * event);
 static void layers_move_item_up_cb(LayersPanel * panel);
 static void layers_move_item_down_cb(LayersPanel * panel);
@@ -182,14 +181,9 @@ LayersPanel::LayersPanel(Window * parent) : QWidget((QWidget *) parent)
 
 	this->toplayer = new LayerAggregate(this->window->get_viewport());
 	this->toplayer->rename(_("Top Layer"));
-	///this->tree_view->add_layer(NULL, &(this->toplayer_iter), this->toplayer->name, NULL, true, this->toplayer, (int) LayerType::AGGREGATE, LayerType::AGGREGATE, 0);
 	this->toplayer_item = this->tree_view->add_layer(this->toplayer, NULL, NULL, false, 0, 0);
 	this->toplayer->realize(this->tree_view, this->toplayer_item);
 
-
-	//Layer * layer = new LayerCoord();
-	//layer->rename("a coord layer");
-	//QStandardItem * coord = this->tree_view->add_layer(layer, this->toplayer, this->toplayer_item, false, 0, 0);
 
 	connect(this->tree_view, SIGNAL(layer_needs_redraw(sg_uid_t)), this->window, SLOT(draw_layer_cb(sg_uid_t)));
 	connect(this->toplayer, SIGNAL(changed(void)), this, SLOT(emit_update_cb(void)));
@@ -200,7 +194,7 @@ LayersPanel::LayersPanel(Window * parent) : QWidget((QWidget *) parent)
 
 
 	g_signal_connect_swapped (this->tree_view->get_toolkit_widget(), "popup_menu", G_CALLBACK(menu_popup_cb), this);
-	g_signal_connect_swapped (this->tree_view->get_toolkit_widget(), "button_press_event", G_CALLBACK(layers_button_press_cb), this);
+	g_signal_connect_swapped (this->tree_view->get_toolkit_widget(), "button_press_event", G_CALLBACK(button_press_cb), this);
 	g_signal_connect_swapped (this->tree_view->get_toolkit_widget(), "item_edited", G_CALLBACK(layers_item_edited_cb), this);
 	g_signal_connect_swapped (this->tree_view->get_toolkit_widget(), "key_press_event", G_CALLBACK(layers_key_press_cb), this);
 #endif
@@ -395,30 +389,23 @@ void LayersPanel::item_edited(TreeIndex * index, char const * new_text)
 
 
 
-static bool layers_button_press_cb(LayersPanel * panel, GdkEventButton * event)
+bool LayersPanel::button_press_cb(QMouseEvent * event)
 {
-	return panel->button_press(event);
-}
-
-
-
-
-bool LayersPanel::button_press(GdkEventButton * event)
-{
-#ifndef SLAVGPS_QT
 	/* I don't understand what's going on with mouse buttons in this function. */
 
 	if (event->button() == Qt::RightButton) {
-		static GtkTreeIter iter;
-		if (this->tree_view->get_iter_at_pos(&iter, event->x, event->y)) {
-			this->popup(&iter, (MouseButton) event->button);
+		TreeIndex * index = this->tree_view->get_index_at_pos(event->x(), event->y());
+#ifdef K
+		if (index && index->isValid()) {
+			this->popup(index, (MouseButton) event->button);
 			this->tree_view->select(&iter);
 		} else {
 			this->popup(NULL, (MouseButton) event->button);
 		}
 		return true;
-	}
 #endif
+	}
+
 	return false;
 }
 

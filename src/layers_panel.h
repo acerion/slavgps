@@ -101,9 +101,10 @@ namespace SlavGPS {
 		void item_toggled(TreeIndex * index);
 		void item_edited(TreeIndex * index, char const * new_text);
 		void popup(GtkTreeIter * iter, MouseButton mouse_button);
-		bool button_press(GdkEventButton * event);
 		bool key_press(GdkEventKey * event);
 		void move_item(bool up);
+
+		bool button_press_cb(QMouseEvent * event);
 
 #ifdef SLAVGPS_QT
 		QVBoxLayout * panel_box_ = NULL;

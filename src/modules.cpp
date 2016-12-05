@@ -343,7 +343,6 @@ void SlavGPS::modules_post_init()
 	window_init();
 #endif
 	layers_panel_init();
-	treeview_init();
 }
 
 

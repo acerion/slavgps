@@ -16,7 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
 
 #ifndef _SG_TREEVIEW_H_
@@ -35,7 +34,6 @@
 #include "config.h"
 #include "uibuilder.h"
 #include "globals.h"
-#include "slav_qt.h"
 
 
 
@@ -92,10 +90,6 @@ namespace SlavGPS {
 
 		~TreeView();
 
-		void add_layer(GtkTreeIter *parent_iter, GtkTreeIter *iter, const char *name, Layer * parent_layer, bool above, Layer * layer, int data, LayerType layer_type, time_t timestamp);
-		void insert_layer(GtkTreeIter *parent_iter, GtkTreeIter *iter, const char *name, Layer * parent_layer, bool above, Layer * layer, int data, LayerType layer_type, GtkTreeIter *sibling, time_t timestamp);
-		//void add_sublayer(GtkTreeIter *parent_iter, GtkTreeIter *iter, const char *name, Layer * parent_layer, sg_uid_t sublayer_uid, SublayerType sublayer_type, GdkPixbuf *icon, bool editable, time_t timestamp);
-
 		TreeIndex * add_layer(Layer * layer, Layer * parent_layer, TreeIndex * parent_index, bool above, int data, time_t timestamp);
 		TreeIndex * insert_layer(Layer * layer, Layer * parent_layer, TreeIndex * parent_index, bool above, int data, time_t timestamp, TreeIndex * sibling_inced);
 		TreeIndex * add_sublayer(sg_uid_t sublayer_uid, SublayerType sublayer_type, Layer * parent_layer, TreeIndex * parent_index, char const * name, QIcon * icon, bool editable, time_t timestamp);
@@ -107,17 +101,16 @@ namespace SlavGPS {
 
 		SublayerType get_sublayer_type(TreeIndex * index);
 		sg_uid_t     get_sublayer_uid(TreeIndex * index);
-		void       * get_sublayer_uid_pointer(TreeIndex * index);
 
 		QString get_name(TreeIndex * index);
 
 		TreeIndex * get_selected_item();
-		bool get_iter_at_pos(GtkTreeIter * iter, int x, int y);
-		bool get_iter_from_path_str(GtkTreeIter * iter, char const * path_str);
+		TreeIndex * get_index_at_pos(int x, int y);
+		TreeIndex * get_index_from_path_str(char const * path_str);
 		TreeIndex * get_parent_index(TreeIndex * index);
 
 
-		void set_icon(TreeIndex * index, GdkPixbuf const * icon);
+		void set_icon(TreeIndex * index, QIcon const * icon);
 		void set_name(TreeIndex * index, QString const & name);
 		void set_visibility(TreeIndex * index, bool visible);
 		void toggle_visibility(TreeIndex * index);
@@ -128,7 +121,7 @@ namespace SlavGPS {
 		void select_and_expose(TreeIndex * index);
 		void unselect(TreeIndex * index);
 		void erase(TreeIndex * index);
-		bool move(GtkTreeIter * iter, bool up);
+		bool move(TreeIndex * index, bool up);
 		bool is_visible(TreeIndex * index);
 		bool is_visible_in_tree(TreeIndex * index);
 		bool get_editing();
@@ -137,15 +130,9 @@ namespace SlavGPS {
 
 		TreeIndex * go_up_to_layer(TreeIndex * index);
 
-		GtkWindow * get_toolkit_window(void);
-		GtkWidget * get_toolkit_widget(void);
-
-
-
-
 		bool editing = false;
 		bool was_a_toggle = false;
-		GdkPixbuf * layer_type_icons[(int) LayerType::NUM_TYPES];
+		QIcon * layer_type_icons[(int) LayerType::NUM_TYPES];
 
 		/* TODO: rename or remove this field. There is already QAbstractItemView::model(). */
 		QStandardItemModel * model = NULL;
@@ -154,17 +141,9 @@ namespace SlavGPS {
 		void select_cb(void);
 		void data_changed_cb(const QModelIndex & top_left, const QModelIndex & bottom_right);
 
-	private:
-		void add_columns();
-
 	signals:
 		void layer_needs_redraw(sg_uid_t uid);
 	};
-
-
-
-
-	void treeview_init(void);
 
 
 

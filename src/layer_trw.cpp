@@ -1611,7 +1611,7 @@ void LayerTRW::new_track_pens(void)
 /*
  * Can accept a null symbol, and may return null value
  */
-GdkPixbuf* get_wp_sym_small(char *symbol)
+QIcon * get_wp_sym_small(char *symbol)
 {
 #ifdef K
 	GdkPixbuf* wp_icon = a_get_wp_sym(symbol);
@@ -1964,23 +1964,19 @@ QString LayerTRW::tooltip()
 
 
 
-char const * LayerTRW::sublayer_tooltip(SublayerType sublayer_type, sg_uid_t sublayer_uid)
+QString LayerTRW::sublayer_tooltip(SublayerType sublayer_type, sg_uid_t sublayer_uid)
 {
 	switch (sublayer_type) {
 	case SublayerType::TRACKS:
 		{
 			/* Very simple tooltip - may expand detail in the future. */
-			static char tmp_buf[32];
-			snprintf(tmp_buf, sizeof(tmp_buf), _("Tracks: %ld"), this->tracks.size());
-			return tmp_buf;
+			return QString("Tracks: %1").arg(this->tracks.size());
 		}
 		break;
 	case SublayerType::ROUTES:
 		{
 			/* Very simple tooltip - may expand detail in the future. */
-			static char tmp_buf[32];
-			snprintf(tmp_buf, sizeof(tmp_buf), _("Routes: %ld"), this->routes.size());
-			return tmp_buf;
+			return QString("Routes: %1").arg(this->routes.size());
 		}
 		break;
 
@@ -2027,16 +2023,14 @@ char const * LayerTRW::sublayer_tooltip(SublayerType sublayer_type, sg_uid_t sub
 				default:
 					break;
 				}
-				return tmp_buf;
+				return QString(tmp_buf);
 			}
 		}
 		break;
 	case SublayerType::WAYPOINTS:
 		{
 			/* Very simple tooltip - may expand detail in the future. */
-			static char tmp_buf[32];
-			snprintf(tmp_buf, sizeof(tmp_buf), _("Waypoints: %ld"), this->waypoints.size());
-			return tmp_buf;
+			return QString("Waypoints: %1").arg(this->waypoints.size());
 		}
 		break;
 	case SublayerType::WAYPOINT:
@@ -2045,9 +2039,9 @@ char const * LayerTRW::sublayer_tooltip(SublayerType sublayer_type, sg_uid_t sub
 			/* It's OK to return NULL. */
 			if (wp) {
 				if (wp->comment) {
-					return wp->comment;
+					return QString(wp->comment);
 				} else {
-					return wp->description;
+					return QString(wp->description);
 				}
 			}
 		}
@@ -2055,7 +2049,7 @@ char const * LayerTRW::sublayer_tooltip(SublayerType sublayer_type, sg_uid_t sub
 	default:
 		break;
 	}
-	return NULL;
+	return QString("");
 }
 
 
