@@ -172,7 +172,7 @@ void LayerAggregate::insert_layer(Layer * layer, TreeIndex * replace_index)
 	}
 
 	if (replace_index) {
-		Layer * existing_layer = this->tree_view->get_layer(replace_index);
+		Layer * existing_layer = this->tree_view->get_layer(*replace_index);
 
 		auto theone = this->children->end();
 		for (auto i = this->children->begin(); i != this->children->end(); i++) {
@@ -701,7 +701,7 @@ void LayerAggregate::clear()
 /* Delete a layer specified by \p iter. */
 bool LayerAggregate::delete_layer(TreeIndex * index)
 {
-	Layer * layer = this->tree_view->get_layer(index);
+	Layer * layer = this->tree_view->get_layer(*index);
 	bool was_visible = layer->visible;
 
 	this->tree_view->erase(index);

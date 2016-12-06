@@ -60,6 +60,7 @@ namespace SlavGPS {
 		Viewport * get_viewport(void);
 		LayersPanel * get_layers_panel(void);
 		QMenu * get_layer_menu(QMenu * menu);
+		QMenu * new_layers_submenu_add_actions(QMenu * menu);
 		LayerToolsBox * get_layer_tools_box(void);
 		StatusBar * get_statusbar(void);
 

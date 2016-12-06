@@ -16,7 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
 
 #ifdef HAVE_CONFIG_H
@@ -27,7 +26,6 @@
 #include <cstdlib>
 #include <cassert>
 
-#include <glib/gi18n.h>
 #include <QPushButton>
 
 #include "settings.h"
@@ -35,11 +33,12 @@
 #include "layer_aggregate.h"
 #include "layer_coord.h"
 #include "dialog.h"
-#ifndef SLAVGPS_QT
-#include "clipboard.h"
-#endif
 #include "globals.h"
 #include "window.h"
+#include "util.h"
+#ifdef K
+#include "clipboard.h"
+#endif
 
 
 
@@ -54,37 +53,10 @@ typedef struct {
 	LayerType layer_type;
 } new_layer_data_t;
 
-enum {
-	VLP_DELETE_LAYER_SIGNAL,
-	VLP_LAST_SIGNAL
-};
-
-static unsigned int layers_panel_signals[VLP_LAST_SIGNAL] = { 0 };
-
-
-
-
-static void vik_layers_panel_cut_selected_cb(LayersPanel * panel);
-static void vik_layers_panel_copy_selected_cb(LayersPanel * panel);
-static bool vik_layers_panel_paste_selected_cb(LayersPanel * panel);
-static void vik_layers_panel_delete_selected_cb(LayersPanel * panel);
-static bool vik_layers_panel_properties_cb(LayersPanel * panel);
-
-#ifndef SLAVGPS_QT
-static GtkActionEntry entries[] = {
-	{ "Cut",    GTK_STOCK_CUT,    N_("C_ut"),       NULL, NULL, (GCallback) vik_layers_panel_cut_selected_cb    },
-	{ "Copy",   GTK_STOCK_COPY,   N_("_Copy"),      NULL, NULL, (GCallback) vik_layers_panel_copy_selected_cb   },
-	{ "Paste",  GTK_STOCK_PASTE,  N_("_Paste"),     NULL, NULL, (GCallback) vik_layers_panel_paste_selected_cb  },
-	{ "Delete", GTK_STOCK_DELETE, N_("_Delete"),    NULL, NULL, (GCallback) vik_layers_panel_delete_selected_cb },
-};
-#endif
-
 
 
 
 static void layers_item_edited_cb(LayersPanel * panel, TreeIndex * index, char const * new_text);
-static void menu_popup_cb(LayersPanel * panel);
-static void layers_popup_cb(LayersPanel * panel);
 static bool layers_key_press_cb(LayersPanel * panel, GdkEventKey * event);
 static void layers_move_item_up_cb(LayersPanel * panel);
 static void layers_move_item_down_cb(LayersPanel * panel);
@@ -92,37 +64,27 @@ static void layers_move_item_down_cb(LayersPanel * panel);
 
 
 
-void SlavGPS::layers_panel_init(void)
-{
-#ifndef SLAVGPS_QT
-	layers_panel_signals[VLP_DELETE_LAYER_SIGNAL] = g_signal_new("delete_layer", G_TYPE_OBJECT, (GSignalFlags) (G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION), 0, NULL, NULL, g_cclosure_marshal_VOID__VOID, G_TYPE_NONE, 0);
-#endif
-}
-
-
-
-
 LayersPanel::LayersPanel(Window * parent) : QWidget((QWidget *) parent)
 {
 	this->window = parent;
-	this->panel_box_ = new QVBoxLayout;
+	this->panel_box = new QVBoxLayout;
 
 	{
 		this->tree_view = new TreeView(this);
-		this->panel_box_->addWidget(this->tree_view);
+		this->panel_box->addWidget(this->tree_view);
 		this->tree_view->show();
 	}
 
 	{
 		for (int i = 0; i < QIcon::themeSearchPaths().size(); i++) {
-			qDebug() << "XDG DATA FOLDER: " << QIcon::themeSearchPaths().at(i);
+			qDebug() << "II: Layers Panel: XDG DATA FOLDER: " << QIcon::themeSearchPaths().at(i);
 		}
 
 
-		qDebug() << "Using icon theme " << QIcon::themeName();
+		qDebug() << "II: Layers Panel: Using icon theme " << QIcon::themeName();
 
-		this->tool_bar_ = new QToolBar();
-		this->panel_box_->addWidget(this->tool_bar_);
+		this->tool_bar = new QToolBar();
+		this->panel_box->addWidget(this->tool_bar);
 
 
 		this->qa_layer_add = new QAction("Add", this);
@@ -133,51 +95,46 @@ LayersPanel::LayersPanel(Window * parent) : QWidget((QWidget *) parent)
 		this->qa_layer_remove = new QAction("Remove", this);
 		this->qa_layer_remove->setToolTip("Remove selected layer");
 		this->qa_layer_remove->setIcon(QIcon::fromTheme("list-remove"));
-		// g_signal_connect_swapped (G_OBJECT(removebutton), "clicked", G_CALLBACK(vik_layers_panel_delete_selected_cb), this);
+		connect(this->qa_layer_remove, SIGNAL (triggered(bool)), this, SLOT (delete_selected_cb()));
 
 		this->qa_layer_move_up = new QAction("Up", this);
 		this->qa_layer_move_up->setToolTip("Move selected layer up");
 		this->qa_layer_move_up->setIcon(QIcon::fromTheme("go-up"));
-		// g_signal_connect_swapped (G_OBJECT(upbutton), "clicked", G_CALLBACK(layers_move_item_up_cb), this);
+		// connect(this->qa_layer_move_up, SIGNAL (triggered(bool)), this, SLOT (layers_move_item_up_cb()));
 
 		this->qa_layer_move_down = new QAction("Down", this);
 		this->qa_layer_move_down->setToolTip("Move selected layer down");
 		this->qa_layer_move_down->setIcon(QIcon::fromTheme("go-down"));
-		// g_signal_connect_swapped (G_OBJECT(downbutton), "clicked", G_CALLBACK(layers_move_item_down_cb), this);
+		// connect(this->qa_layer_move_down, SIGNAL (triggered(bool)), this, SLOT (layers_move_item_down_cb()));
 
 		this->qa_layer_cut = new QAction("Cut", this);
 		this->qa_layer_cut->setToolTip("Cut selected layer");
 		this->qa_layer_cut->setIcon(QIcon::fromTheme("edit-cut"));
-		// g_signal_connect_swapped (G_OBJECT(cutbutton), "clicked", G_CALLBACK(vik_layers_panel_cut_selected_cb), this);
+		connect(this->qa_layer_cut, SIGNAL (triggered(bool)), this, SLOT (cut_selected_cb()));
 
 		this->qa_layer_copy = new QAction("Copy", this);
 		this->qa_layer_copy->setToolTip("Copy selected layer");
 		this->qa_layer_copy->setIcon(QIcon::fromTheme("edit-copy"));
-		// g_signal_connect_swapped (G_OBJECT(copybutton), "clicked", G_CALLBACK(vik_layers_panel_copy_selected_cb), this);
+		connect(this->qa_layer_copy, SIGNAL (triggered(bool)), this, SLOT (copy_selected_cb()));
 
 		this->qa_layer_paste = new QAction("Paste", this);
 		this->qa_layer_paste->setToolTip("Paste layer into selected container layer or otherwise above selected layer");
 		this->qa_layer_paste->setIcon(QIcon::fromTheme("edit-paste"));
-		// g_signal_connect_swapped (G_OBJECT(pastebutton), "clicked", G_CALLBACK(vik_layers_panel_paste_selected_cb), this);
+		connect(this->qa_layer_paste, SIGNAL (triggered(bool)), this, SLOT (paste_selected_cb()));
 
-		this->tool_bar_->addAction(qa_layer_add);
-		this->tool_bar_->addAction(qa_layer_remove);
-		this->tool_bar_->addAction(qa_layer_move_up);
-		this->tool_bar_->addAction(qa_layer_move_down);
-		this->tool_bar_->addAction(qa_layer_cut);
-		this->tool_bar_->addAction(qa_layer_copy);
-		this->tool_bar_->addAction(qa_layer_paste);
+		this->tool_bar->addAction(qa_layer_add);
+		this->tool_bar->addAction(qa_layer_remove);
+		this->tool_bar->addAction(qa_layer_move_up);
+		this->tool_bar->addAction(qa_layer_move_down);
+		this->tool_bar->addAction(qa_layer_cut);
+		this->tool_bar->addAction(qa_layer_copy);
+		this->tool_bar->addAction(qa_layer_paste);
 	}
 
 
 
-	this->setLayout(this->panel_box_);
+	this->setLayout(this->panel_box);
 
-
-
-	/* All this stuff has been moved here from
-	   vik_layers_panel_init(), because leaving it in _init()
-	   caused problems during execution time. */
 
 	this->toplayer = new LayerAggregate(this->window->get_viewport());
 	this->toplayer->rename(_("Top Layer"));
@@ -191,9 +148,6 @@ LayersPanel::LayersPanel(Window * parent) : QWidget((QWidget *) parent)
 
 
 #ifndef SLAVGPS_QT
-
-
-	g_signal_connect_swapped (this->tree_view->get_toolkit_widget(), "popup_menu", G_CALLBACK(menu_popup_cb), this);
 	g_signal_connect_swapped (this->tree_view->get_toolkit_widget(), "button_press_event", G_CALLBACK(button_press_cb), this);
 	g_signal_connect_swapped (this->tree_view->get_toolkit_widget(), "item_edited", G_CALLBACK(layers_item_edited_cb), this);
 	g_signal_connect_swapped (this->tree_view->get_toolkit_widget(), "key_press_event", G_CALLBACK(layers_key_press_cb), this);
@@ -205,16 +159,16 @@ LayersPanel::LayersPanel(Window * parent) : QWidget((QWidget *) parent)
 
 LayersPanel::~LayersPanel()
 {
-	/* kamilTODO: improve the destructor. */
+	qDebug() << "II: Layers Panel: ~LayersPanel() called";
 
-	fprintf(stderr, "~LayersPanel() called\n");
-
+#ifdef K
+	/* TODO: what to do with the toplayer? */
 	this->toplayer->unref();
-
-#ifndef SLAVGPS_QT
-	/* kamilFIXME: free this pointer. */
-	this->panel_box_ = NULL;
 #endif
+
+	delete this->tree_view;
+	delete this->panel_box;
+	delete this->tool_bar;
 }
 
 
@@ -248,58 +202,22 @@ static bool layers_panel_new_layer(void * data)
 
 
 
-/**
- * Create menu popup on demand.
- * @full: offer cut/copy options as well - not just the new layer options
- */
-static GtkWidget* layers_panel_create_popup(LayersPanel * panel, bool full)
+QMenu * LayersPanel::create_context_menu(bool full)
 {
-#ifndef SLAVGPS_QT
-	GtkWidget * menu = gtk_menu_new();
-	GtkWidget * menuitem;
-
+	QMenu * menu = new QMenu(this);
 	if (full) {
-		for (unsigned int ii = 0; ii < G_N_ELEMENTS(entries); ii++) {
-			if (entries[ii].stock_id) {
-				menuitem = gtk_image_menu_item_new_with_mnemonic(entries[ii].label);
-				gtk_image_menu_item_set_image((GtkImageMenuItem*)menuitem, gtk_image_new_from_stock (entries[ii].stock_id, GTK_ICON_SIZE_MENU));
-			} else {
-				menuitem = gtk_menu_item_new_with_mnemonic(entries[ii].label);
-			}
-
-			g_signal_connect_swapped(G_OBJECT(menuitem), "activate", G_CALLBACK(entries[ii].callback), panel->panel_box_);
-			gtk_menu_shell_append(GTK_MENU_SHELL (menu), menuitem);
-			gtk_widget_show(menuitem);
-		}
+		menu->addAction(this->qa_layer_cut);
+		menu->addAction(this->qa_layer_copy);
+		menu->addAction(this->qa_layer_paste);
+		menu->addAction(this->qa_layer_remove);
 	}
 
-	GtkWidget * submenu = gtk_menu_new();
-	menuitem = gtk_menu_item_new_with_mnemonic(_("New Layer"));
-	gtk_menu_shell_append (GTK_MENU_SHELL(menu), menuitem);
-	gtk_widget_show(menuitem);
-	gtk_menu_item_set_submenu(GTK_MENU_ITEM (menuitem), submenu);
-
-	/* Static: so memory accessible yet not continually allocated. */
-	static new_layer_data_t lpnl[(int) LayerType::NUM_TYPES];
-
-	for (LayerType ii = LayerType::AGGREGATE; ii < LayerType::NUM_TYPES; ++ii) {
-		if (Layer::get_interface(ii)->icon) {
-			menuitem = gtk_image_menu_item_new_with_mnemonic(Layer::get_interface(ii)->name);
-			gtk_image_menu_item_set_image((GtkImageMenuItem*)menuitem, gtk_image_new_from_pixbuf(vik_layer_load_icon(ii)));
-		} else {
-			menuitem = gtk_menu_item_new_with_mnemonic (Layer::get_interface(ii)->name);
-		}
-
-		lpnl[(int) ii].panel = panel;
-		lpnl[(int) ii].layer_type = ii;
-
-		g_signal_connect_swapped (G_OBJECT(menuitem), "activate", G_CALLBACK(layers_panel_new_layer), &(lpnl[(int) ii]));
-		gtk_menu_shell_append (GTK_MENU_SHELL (submenu), menuitem);
-		gtk_widget_show(menuitem);
-	}
+	QMenu * layers_submenu = new QMenu("New Layer");
+	menu->addMenu(layers_submenu);
+	this->window->new_layers_submenu_add_actions(layers_submenu);
 
 	return menu;
-#endif
+
 }
 
 
@@ -319,20 +237,20 @@ void LayersPanel::emit_update_cb()
 void LayersPanel::item_toggled(TreeIndex * index)
 {
 	/* Get type and data. */
-	TreeItemType type = this->tree_view->get_item_type(index);
+	TreeItemType type = this->tree_view->get_item_type(*index);
 
 	bool visible;
 	switch (type) {
 	case TreeItemType::LAYER: {
-		Layer * layer = this->tree_view->get_layer(index);
+		Layer * layer = this->tree_view->get_layer(*index);
 		visible = (layer->visible ^= 1);
 		layer->emit_changed_although_invisible(); /* Set trigger for half-drawn. */
 		break;
 		}
 	case TreeItemType::SUBLAYER: {
-		sg_uid_t sublayer_uid = this->tree_view->get_sublayer_uid(index);
-		Layer * parent = this->tree_view->get_parent_layer(index);
-		visible = parent->sublayer_toggle_visible(this->tree_view->get_sublayer_type(index), sublayer_uid);
+		sg_uid_t sublayer_uid = this->tree_view->get_sublayer_uid(*index);
+		Layer * parent = this->tree_view->get_parent_layer(*index);
+		visible = parent->sublayer_toggle_visible(this->tree_view->get_sublayer_type(*index), sublayer_uid);
 		parent->emit_changed_although_invisible();
 		break;
 	}
@@ -367,7 +285,7 @@ void LayersPanel::item_edited(TreeIndex * index, char const * new_text)
 	}
 #ifdef K
 
-	if (this->tree_view->get_item_type(index) == TreeItemType::LAYER) {
+	if (this->tree_view->get_item_type(*index) == TreeItemType::LAYER) {
 
 		/* Get index and layer. */
 		Layer * layer = this->tree_view->get_layer(index);
@@ -435,94 +353,56 @@ bool LayersPanel::key_press(GdkEventKey * event)
 
 
 
-void LayersPanel::popup(GtkTreeIter * iter, MouseButton mouse_button)
+void LayersPanel::show_context_menu(TreeIndex const & index, Layer * layer)
 {
-#ifndef SLAVGPS_QT
-	GtkMenu * menu = NULL;
+	QMenu * menu = NULL;
 
-	if (iter) {
-		if (this->tree_view->get_item_type(iter) == TreeItemType::LAYER) {
-			Layer * layer = this->tree_view->get_layer(iter);
-
+	if (index.isValid()) {
+		if (this->tree_view->get_item_type(index) == TreeItemType::LAYER) {
 			if (layer->type == LayerType::AGGREGATE) {
-				menu = GTK_MENU (layers_panel_create_popup(this, true));
+				menu = this->create_context_menu(true);
 			} else {
-				GtkWidget *del, *prop;
 				/* kamilFIXME: this doesn't work for Map in treeview. Why?*/
-				fprintf(stderr, "will call get_menu_items_selection.\n");
+				qDebug() << "II: Layers Panel: will call get_menu_items_selection";
 				LayerMenuItem menu_selection = (LayerMenuItem) vik_layer_get_menu_items_selection(layer);
 
-				menu = GTK_MENU (gtk_menu_new());
+				menu = new QMenu(this);
 
 				if (menu_selection & VIK_MENU_ITEM_PROPERTY) {
-					prop = gtk_image_menu_item_new_from_stock (GTK_STOCK_PROPERTIES, NULL);
-					g_signal_connect_swapped (G_OBJECT(prop), "activate", G_CALLBACK(vik_layers_panel_properties_cb), this);
-					gtk_menu_shell_append (GTK_MENU_SHELL (menu), prop);
-					gtk_widget_show (prop);
+#if 0
+					menu->addAction(qa_layer_properties);
+#endif
 				}
 
 				if (menu_selection & VIK_MENU_ITEM_CUT) {
-					del = gtk_image_menu_item_new_from_stock (GTK_STOCK_CUT, NULL);
-					g_signal_connect_swapped (G_OBJECT(del), "activate", G_CALLBACK(vik_layers_panel_cut_selected_cb), this);
-					gtk_menu_shell_append (GTK_MENU_SHELL (menu), del);
-					gtk_widget_show (del);
+					menu->addAction(this->qa_layer_cut);
 				}
 
 				if (menu_selection & VIK_MENU_ITEM_COPY) {
-					del = gtk_image_menu_item_new_from_stock (GTK_STOCK_COPY, NULL);
-					g_signal_connect_swapped (G_OBJECT(del), "activate", G_CALLBACK(vik_layers_panel_copy_selected_cb), this);
-					gtk_menu_shell_append (GTK_MENU_SHELL (menu), del);
-					gtk_widget_show (del);
+					menu->addAction(this->qa_layer_copy);
 				}
 
 				if (menu_selection & VIK_MENU_ITEM_PASTE) {
-					del = gtk_image_menu_item_new_from_stock (GTK_STOCK_PASTE, NULL);
-					g_signal_connect_swapped (G_OBJECT(del), "activate", G_CALLBACK(vik_layers_panel_paste_selected_cb), this);
-					gtk_menu_shell_append (GTK_MENU_SHELL (menu), del);
-					gtk_widget_show (del);
+					menu->addAction(this->qa_layer_paste);
 				}
 
 				if (menu_selection & VIK_MENU_ITEM_DELETE) {
-					del = gtk_image_menu_item_new_from_stock (GTK_STOCK_DELETE, NULL);
-					g_signal_connect_swapped (G_OBJECT(del), "activate", G_CALLBACK(vik_layers_panel_delete_selected_cb), this);
-					gtk_menu_shell_append (GTK_MENU_SHELL (menu), del);
-					gtk_widget_show (del);
+					menu->addAction(this->qa_layer_remove);
 				}
 			}
-			layer->add_menu_items(menu, this);
+			layer->add_menu_items(*menu);
 		} else {
-			menu = GTK_MENU (gtk_menu_new());
-			Layer * parent = this->tree_view->get_parent_layer(iter);
-			if (!parent->sublayer_add_menu_items(menu, this, this->tree_view->get_sublayer_type(iter), this->tree_view->get_sublayer_uid(iter), iter, this->viewport)) { // kamil
-				gtk_widget_destroy (GTK_WIDGET(menu));
+			menu = new QMenu(this);
+			if (!layer->sublayer_add_menu_items(*menu)) { /* Here 'layer' is a parent layer. */
+				delete menu;
 				return;
 			}
 			/* TODO: specific things for different types. */
 		}
 	} else {
-		menu = GTK_MENU (layers_panel_create_popup(this, false));
+		menu = this->create_context_menu(false);
 	}
-	gtk_menu_popup(menu, NULL, NULL, NULL, NULL, (unsigned int) mouse_button, gtk_get_current_event_time());
-#endif
-}
-
-
-
-
-static void menu_popup_cb(LayersPanel * panel)
-{
-#ifndef SLAVGPS_QT
-	GtkTreeIter iter;
-	panel->popup(panel->tree_view->get_selected_item(&iter) ? &iter : NULL, MouseButton::OTHER);
-#endif
-}
-
-
-
-
-static void layers_popup_cb(LayersPanel * panel)
-{
-	panel->popup(NULL, MouseButton::OTHER);
+	menu->exec(QCursor::pos());
 }
 
 
@@ -571,14 +451,14 @@ void LayersPanel::add_layer(Layer * layer)
 {
 	/* Could be something different so we have to do this. */
 	layer->change_coord_mode(this->viewport->get_coord_mode());
-	fprintf(stderr, "INFO: %s:%d: attempting to add layer '%s'\n", __FUNCTION__, __LINE__, layer->debug_string);
+	qDebug() << "II: Layers Panel: add layer: attempting to add layer" << layer->debug_string;
 
 	TreeIndex * selected_index = this->tree_view->get_selected_item();
 	if (true) { /* kamilFIXME: "if (!selected_index) { */
 		/* No particular layer is selected in panel, so the
 		   layer to be added goes directly under top level
 		   aggregate layer. */
-		fprintf(stderr, "INFO: %s:%d: No selected layer, adding layer '%s' under top level aggregate layer\n", __FUNCTION__, __LINE__, layer->debug_string);
+		qDebug() << "II: Layers Panel: add layer: no selected layer, adding layer" << layer->debug_string << "under top level aggregate layer";
 		this->toplayer->add_layer(layer, true);
 
 	} else {
@@ -589,21 +469,19 @@ void LayersPanel::add_layer(Layer * layer)
 		TreeIndex * replace_index = NULL;
 		Layer * current = NULL;
 
-		if (this->tree_view->get_item_type(selected_index) == TreeItemType::SUBLAYER) {
-			current = this->tree_view->get_parent_layer(selected_index);
-			fprintf(stderr, "INFO: %s:%d: Capturing parent layer '%s' as current layer\n",
-				__FUNCTION__, __LINE__, current->debug_string);
+		if (this->tree_view->get_item_type(*selected_index) == TreeItemType::SUBLAYER) {
+			current = this->tree_view->get_parent_layer(*selected_index);
+			qDebug() << "II: Layers Panel: add layer: capturing parent layer" << current->debug_string << "as current layer";
 		} else {
-			current = this->tree_view->get_layer(selected_index);
-			fprintf(stderr, "INFO: %s:%d: Capturing selected layer '%s' as current layer\n",
-				__FUNCTION__, __LINE__, current->debug_string);
+			current = this->tree_view->get_layer(*selected_index);
+			qDebug() << "II: Layers Panel: add layer: capturing selected layer" << current->debug_string << "as current layer";
 		}
 		assert (current->realized);
 		replace_index = current->index;
 
 		/* Go further up until you find first aggregate layer. */
 		while (current->type != LayerType::AGGREGATE) {
-			current = this->tree_view->get_parent_layer(selected_index);
+			current = this->tree_view->get_parent_layer(*selected_index);
 			selected_index = current->index;
 			assert (current->realized);
 		}
@@ -636,8 +514,8 @@ void LayersPanel::move_item(bool up)
 	}
 
 	this->tree_view->select(selected_index); /* Cancel any layer-name editing going on... */
-	if (this->tree_view->get_item_type(selected_index) == TreeItemType::LAYER) {
-		LayerAggregate * parent = (LayerAggregate *) this->tree_view->get_parent_layer(selected_index);
+	if (this->tree_view->get_item_type(*selected_index) == TreeItemType::LAYER) {
+		LayerAggregate * parent = (LayerAggregate *) this->tree_view->get_parent_layer(*selected_index);
 
 		if (parent) { /* Not toplevel. */
 #ifndef SLAVGPS_QT
@@ -651,24 +529,16 @@ void LayersPanel::move_item(bool up)
 
 
 
-bool vik_layers_panel_properties_cb(LayersPanel * panel)
-{
-	return panel->properties();
-}
-
-
-
-
-bool LayersPanel::properties()
+bool LayersPanel::properties_cb(void) /* Slot. */
 {
 	assert (this->viewport);
 
 	TreeIndex * index = this->tree_view->get_selected_item();
-	if (this->tree_view->get_item_type(index) == TreeItemType::LAYER) {
-		if (this->tree_view->get_layer(index)->type == LayerType::AGGREGATE) {
+	if (this->tree_view->get_item_type(*index) == TreeItemType::LAYER) {
+		if (this->tree_view->get_layer(*index)->type == LayerType::AGGREGATE) {
 			dialog_info("Aggregate Layer has no settable properties.", this->get_window());
 		} else {
-			Layer * layer = this->tree_view->get_layer(index);
+			Layer * layer = this->tree_view->get_layer(*index);
 			if (layer->properties_dialog(this->viewport)) {
 				layer->emit_changed();
 			}
@@ -693,15 +563,7 @@ void LayersPanel::draw_all()
 
 
 
-void vik_layers_panel_cut_selected_cb(LayersPanel * panel)
-{
-	panel->cut_selected();
-}
-
-
-
-
-void LayersPanel::cut_selected()
+void LayersPanel::cut_selected_cb(void) /* Slot. */
 {
         TreeIndex * index = this->tree_view->get_selected_item();
 	if (!index) {
@@ -709,14 +571,13 @@ void LayersPanel::cut_selected()
 		return;
 	}
 
-	TreeItemType type = this->tree_view->get_item_type(index);
-
-
+	TreeItemType type = this->tree_view->get_item_type(*index);
 
 	if (type == TreeItemType::LAYER) {
-		LayerAggregate * parent = (LayerAggregate *) this->tree_view->get_parent_layer(index);
+		LayerAggregate * parent = (LayerAggregate *) this->tree_view->get_parent_layer(*index);
+
+		if (parent) {
 #ifndef SLAVGPS_QT
-		if (parent){
 			/* Reset trigger if trigger deleted. */
 			if (this->get_selected_layer()->the_same_object(this->viewport->get_trigger())) {
 				this->viewport->set_trigger(NULL);
@@ -725,35 +586,27 @@ void LayersPanel::cut_selected()
 			a_clipboard_copy_selected(this);
 
 			if (parent->type == LayerType::AGGREGATE) {
-				g_signal_emit(G_OBJECT(this->panel_box_), layers_panel_signals[VLP_DELETE_LAYER_SIGNAL], 0);
+				g_signal_emit(G_OBJECT(this->panel_box), layers_panel_signals[VLP_DELETE_LAYER_SIGNAL], 0);
 
 				if (parent->delete_layer(index)) {
 					this->emit_update_cb();
 				}
 			}
+#endif
 		} else {
 			dialog_info("You cannot cut the Top Layer.", this->get_window());
 		}
-#endif
 	} else if (type == TreeItemType::SUBLAYER) {
 		Layer * selected = this->get_selected_layer();
-		SublayerType sublayer_type = this->tree_view->get_sublayer_type(index);
-		selected->cut_sublayer(sublayer_type, selected->tree_view->get_sublayer_uid(index));
+		SublayerType sublayer_type = this->tree_view->get_sublayer_type(*index);
+		selected->cut_sublayer(sublayer_type, selected->tree_view->get_sublayer_uid(*index));
 	}
 }
 
 
 
 
-void vik_layers_panel_copy_selected_cb(LayersPanel * panel)
-{
-	panel->copy_selected();
-}
-
-
-
-
-void LayersPanel::copy_selected()
+void LayersPanel::copy_selected_cb(void) /* Slot. */
 {
 	if (!this->tree_view->get_selected_item()) {
 		/* Nothing to do. */
@@ -768,15 +621,7 @@ void LayersPanel::copy_selected()
 
 
 
-bool vik_layers_panel_paste_selected_cb(LayersPanel * panel)
-{
-	return panel->paste_selected();
-}
-
-
-
-
-bool LayersPanel::paste_selected()
+bool LayersPanel::paste_selected_cb(void) /* Slot. */
 {
 	if (!this->tree_view->get_selected_item()) {
 		/* Nothing to do. */
@@ -790,15 +635,7 @@ bool LayersPanel::paste_selected()
 
 
 
-void vik_layers_panel_delete_selected_cb(LayersPanel * panel)
-{
-	panel->delete_selected();
-}
-
-
-
-
-void LayersPanel::delete_selected()
+void LayersPanel::delete_selected_cb(void) /* Slot. */
 {
 	TreeIndex * index = this->tree_view->get_selected_item();
 	if (!index) {
@@ -806,9 +643,9 @@ void LayersPanel::delete_selected()
 		return;
 	}
 
-	TreeItemType type = this->tree_view->get_item_type(index);
+	TreeItemType type = this->tree_view->get_item_type(*index);
 	if (type == TreeItemType::LAYER) {
-		Layer * layer = this->tree_view->get_layer(index);
+		Layer * layer = this->tree_view->get_layer(*index);
 
 
 		/* Get confirmation from the user. */
@@ -816,7 +653,7 @@ void LayersPanel::delete_selected()
 			return;
 		}
 
-		LayerAggregate * parent = (LayerAggregate *) this->tree_view->get_parent_layer(index);
+		LayerAggregate * parent = (LayerAggregate *) this->tree_view->get_parent_layer(*index);
 		if (parent) {
 #ifndef SLAVGPS_QT
 			/* Reset trigger if trigger deleted. */
@@ -826,7 +663,7 @@ void LayersPanel::delete_selected()
 
 			if (parent->type == LayerType::AGGREGATE) {
 
-				g_signal_emit(G_OBJECT(this->panel_box_), layers_panel_signals[VLP_DELETE_LAYER_SIGNAL], 0);
+				g_signal_emit(G_OBJECT(this->panel_box), layers_panel_signals[VLP_DELETE_LAYER_SIGNAL], 0);
 
 				if (parent->delete_layer(index)) {
 					this->emit_update_cb();
@@ -838,8 +675,8 @@ void LayersPanel::delete_selected()
 		}
 	} else if (type == TreeItemType::SUBLAYER) {
 		Layer * selected = this->get_selected_layer();
-		SublayerType sublayer_type = this->tree_view->get_sublayer_type(index);
-		selected->delete_sublayer(sublayer_type, selected->tree_view->get_sublayer_uid(index));
+		SublayerType sublayer_type = this->tree_view->get_sublayer_type(*index);
+		selected->delete_sublayer(sublayer_type, selected->tree_view->get_sublayer_uid(*index));
 	}
 }
 
@@ -853,17 +690,17 @@ Layer * LayersPanel::get_selected_layer()
 		return NULL;
 	}
 
-	TreeItemType type = this->tree_view->get_item_type(index);
+	TreeItemType type = this->tree_view->get_item_type(*index);
 	TreeIndex * parent = NULL;
 	while (type != TreeItemType::LAYER) {
 		if (NULL == (parent = this->tree_view->get_parent_index(index))) {
 			return NULL;
 		}
 		index = parent;
-		type = this->tree_view->get_item_type(index);
+		type = this->tree_view->get_item_type(*index);
 	}
 
-	return this->tree_view->get_layer(index);
+	return this->tree_view->get_layer(*index);
 }
 
 
@@ -943,7 +780,7 @@ void LayersPanel::clear()
 {
 	if (!this->toplayer->is_empty()) {
 #ifndef SLAVGPS_QT
-		g_signal_emit(G_OBJECT(this->panel_box_), layers_panel_signals[VLP_DELETE_LAYER_SIGNAL], 0);
+		g_signal_emit(G_OBJECT(this->panel_box), layers_panel_signals[VLP_DELETE_LAYER_SIGNAL], 0);
 #endif
 		this->toplayer->clear(); /* simply deletes all layers */
 	}
@@ -964,9 +801,9 @@ void LayersPanel::set_visible(bool visible)
 {
 #ifndef SLAVGPS_QT
 	if (visible) {
-		gtk_widget_show(GTK_WIDGET (this->panel_box_));
+		gtk_widget_show(GTK_WIDGET (this->panel_box));
 	} else {
-		gtk_widget_hide(GTK_WIDGET (this->panel_box_));
+		gtk_widget_hide(GTK_WIDGET (this->panel_box));
 	}
 #endif
 	return;
@@ -999,62 +836,41 @@ Window * LayersPanel::get_window()
 
 
 
-GtkWindow * LayersPanel::get_toolkit_window(void)
-{
-#ifndef SLAVGPS_QT
-	return VIK_GTK_WINDOW_FROM_WIDGET(GTK_WIDGET (this->panel_box_));
-#endif
-}
-
-
-
-
-GtkWidget * LayersPanel::get_toolkit_widget(void)
-{
-#ifndef SLAVGPS_QT
-	return GTK_WIDGET (this->panel_box_);
-#endif
-}
-
-
-
-
-
 void LayersPanel::contextMenuEvent(QContextMenuEvent * event)
 {
-	//TreeView * tree_view = this->layers_panel->get_treeview();
+	if (!this->tree_view->geometry().contains(event->pos())) {
+		qDebug() << "II: Layers Panel: context menu event outside tree view";
+		/* We want to handle only events that happen inside of tree view. */
+		return;
+	}
+
+	qDebug() << "II: Layers Panel: context menu event inside tree view";
 
 	QPoint orig = event->pos();
-	qDebug() << "II: Layers Panel: context menu event: event @" << orig.x() << orig.y();
-
 	QPoint v = this->tree_view->pos();
-	qDebug() << "II: Layers Panel: context menu event: viewport @" << v;
 	QPoint t = this->tree_view->viewport()->pos();
-	qDebug() << "II: Layers Panel: context menu event: treeview @" << t;
+
+	qDebug() << "DD: Layers Panel: context menu event: event @" << orig.x() << orig.y();
+	qDebug() << "DD: Layers Panel: context menu event: viewport @" << v;
+	qDebug() << "DD: Layers Panel: context menu event: treeview @" << t;
 
 	orig.setX(orig.x() - v.x() - t.x());
 	orig.setY(orig.y() - v.y() - t.y());
 
-
-	QPoint point = orig;//this->tree_view->viewport()->mapToGlobal();
-	//QPoint point = event->pos();
+	QPoint point = orig;
 	QModelIndex ind = this->tree_view->indexAt(point);
+	TreeIndex index;
+	Layer * layer = NULL;
 
 	if (ind.isValid()) {
-		qDebug() << "II: Layers Panel: context menu event: valid index";
-		qDebug() << "II: Layers Panel: context menu event: row = " << ind.row();
+		qDebug() << "II: Layers Panel: context menu event: valid tree view index, row =" << ind.row();
+		index = QPersistentModelIndex(ind);
 
-		TreeIndex index = QPersistentModelIndex(ind);
-
-		if (TreeItemType::LAYER == this->tree_view->get_item_type(&index)) {
+		if (TreeItemType::LAYER == this->tree_view->get_item_type(index)) {
 			qDebug() << "II: Layers Panel: creating context menu for TreeItemType::LAYER";
 
-			Layer * layer = this->tree_view->get_layer(&index);
-			if (layer) {
-				qDebug() << "II: Layers Panel: context menu event: layer type =" << layer->debug_string;
-			} else {
-				qDebug() << "II: Layers Panel: context menu event: layer type is NULL";
-			}
+			layer = this->tree_view->get_layer(index);
+			qDebug() << "II: Layers Panel: context menu event: layer type is" << (layer ? layer->debug_string : "NULL");
 
 			QModelIndex parent = index.parent();
 			if (parent.isValid()) {
@@ -1067,42 +883,34 @@ void LayersPanel::contextMenuEvent(QContextMenuEvent * event)
 			}
 			memset(layer->menu_data, 0, sizeof (trw_menu_sublayer_t));
 			layer->menu_data->layers_panel = this;
-
-			QMenu menu(this);
-			this->window->get_layer_menu(&menu);
-			menu.addAction(this->qa_layer_cut);
-			menu.addAction(this->qa_layer_copy);
-			menu.addAction(this->qa_layer_paste);
-			menu.addAction(this->qa_layer_remove);
-			layer->add_menu_items(menu);
-			menu.exec(QCursor::pos());
-
-			memset(layer->menu_data, 0, sizeof (trw_menu_sublayer_t));
 		} else {
 			qDebug() << "II: Layers Panel: creating context menu for TreeItemType::SUBLAYER";
 
-			Layer * layer = this->tree_view->get_parent_layer(&index);
-			if (layer) {
-				qDebug() << "II: Layers Panel: context menu event: layer type =" << layer->debug_string;
-			} else {
-				qDebug() << "II: Layers Panel: context menu event: layer type is NULL";
-			}
+			layer = this->tree_view->get_parent_layer(index);
+			qDebug() << "II: Layers Panel: context menu event: layer type is" << (layer ? layer->debug_string : "NULL");
 
 			memset(layer->menu_data, 0, sizeof (trw_menu_sublayer_t));
-			layer->menu_data->sublayer_type = this->tree_view->get_sublayer_type(&index);
-			layer->menu_data->sublayer_uid = this->tree_view->get_sublayer_uid(&index);
+			layer->menu_data->sublayer_type = this->tree_view->get_sublayer_type(index);
+			layer->menu_data->sublayer_uid = this->tree_view->get_sublayer_uid(index);
 			layer->menu_data->index = &index;
 			layer->menu_data->viewport = this->get_viewport();
 			layer->menu_data->layers_panel = this;
 			layer->menu_data->confirm = true; /* Confirm delete request. */
-
-			QMenu menu(this);
-			layer->sublayer_add_menu_items(menu);
-			menu.exec(QCursor::pos());
-
-			memset(layer->menu_data, 0, sizeof (trw_menu_sublayer_t));
 		}
+
+		this->show_context_menu(index, layer);
+		memset(layer->menu_data, 0, sizeof (trw_menu_sublayer_t));
+
 	} else {
-		qDebug() << "II: Layers Panel: context menu event: INvalid index";
+		qDebug() << "II: Layers Panel: context menu event: tree view not hit";
+		if (!this->tree_view->viewport()->geometry().contains(event->pos())) {
+			qDebug() << "II: Layers Panel: context menu event outside of tree view's viewport";
+			return;
+		}
+		qDebug() << "II: Layers Panel: context menu event inside of tree view's viewport";
+
+		/* Invalid index and NULL layer. */
+		this->show_context_menu(index, layer);
 	}
+	return;
 }

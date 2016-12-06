@@ -94,13 +94,13 @@ namespace SlavGPS {
 		TreeIndex * insert_layer(Layer * layer, Layer * parent_layer, TreeIndex * parent_index, bool above, int data, time_t timestamp, TreeIndex * sibling_inced);
 		TreeIndex * add_sublayer(sg_uid_t sublayer_uid, SublayerType sublayer_type, Layer * parent_layer, TreeIndex * parent_index, char const * name, QIcon * icon, bool editable, time_t timestamp);
 
-		TreeItemType get_item_type(TreeIndex * index);
+		TreeItemType get_item_type(TreeIndex const & index);
 
-		Layer * get_parent_layer(TreeIndex * index);
-		Layer * get_layer(TreeIndex * index);
+		Layer * get_parent_layer(TreeIndex const & index);
+		Layer * get_layer(TreeIndex const & index);
 
-		SublayerType get_sublayer_type(TreeIndex * index);
-		sg_uid_t     get_sublayer_uid(TreeIndex * index);
+		SublayerType get_sublayer_type(TreeIndex const & index);
+		sg_uid_t     get_sublayer_uid(TreeIndex const & index);
 
 		QString get_name(TreeIndex * index);
 

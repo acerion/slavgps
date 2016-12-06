@@ -577,7 +577,7 @@ bool Layer::layer_selected(SublayerType sublayer_type, sg_uid_t sublayer_uid, Tr
 
 
 
-uint16_t vik_layer_get_menu_items_selection(Layer * layer)
+uint16_t SlavGPS::vik_layer_get_menu_items_selection(Layer * layer)
 {
 	uint16_t rv = layer->get_menu_selection();
 	if (rv == (uint16_t) -1) {

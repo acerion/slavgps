@@ -153,7 +153,7 @@ Window::Window()
 
 
 
-	g_signal_connect_swapped(G_OBJECT(this->layers_panel->get_toolkit_widget()), "delete_layer", G_CALLBACK(vik_window_clear_highlight_cb), this);
+	g_signal_connect_swapped(G_OBJECT(this->layers_panel), "delete_layer", G_CALLBACK(vik_window_clear_highlight_cb), this);
 
 	// Allow key presses to be processed anywhere
 	g_signal_connect_swapped(this->get_toolkit_object(), "key_press_event", G_CALLBACK (key_press_event_cb), this);
@@ -162,7 +162,7 @@ Window::Window()
 	center_changed_cb(this);
 
 	this->hpaned = gtk_hpaned_new();
-	gtk_paned_pack1(GTK_PANED(this->hpaned), this->layers_panel->get_toolkit_widget(), false, true);
+	gtk_paned_pack1(GTK_PANED(this->hpaned), this->layers_panel, false, true);
 	gtk_paned_pack2(GTK_PANED(this->hpaned), this->viewport->get_toolkit_widget(), true, true);
 
 	/* This packs the button into the window (a gtk container). */
@@ -472,18 +472,9 @@ void Window::create_actions(void)
 	{
 		this->qa_layer_properties = new QAction("Properties...", this);
 		this->menu_layers->addAction(this->qa_layer_properties);
-		connect (this->qa_layer_properties, SIGNAL (triggered(bool)), this->layers_panel, SLOT (properties(void)));
+		connect (this->qa_layer_properties, SIGNAL (triggered(bool)), this->layers_panel, SLOT (properties_cb(void)));
 
-		for (SlavGPS::LayerType i = SlavGPS::LayerType::AGGREGATE; i < SlavGPS::LayerType::NUM_TYPES; ++i) {
-
-			QVariant variant((int) i);
-			QAction * qa = new QAction("new layer", this);
-			qa->setData(variant);
-			qa->setIcon(*Layer::get_interface(i)->icon);
-			connect(qa, SIGNAL(triggered(bool)), this, SLOT(menu_layer_new_cb(void)));
-
-			this->menu_layers->addAction(qa);
-		}
+		this->new_layers_submenu_add_actions(this->menu_layers);
 	}
 
 
@@ -791,6 +782,23 @@ QMenu * Window::get_layer_menu(QMenu * menu)
 }
 
 
+
+
+QMenu * Window::new_layers_submenu_add_actions(QMenu * menu)
+{
+	for (SlavGPS::LayerType i = SlavGPS::LayerType::AGGREGATE; i < SlavGPS::LayerType::NUM_TYPES; ++i) {
+
+		QVariant variant((int) i);
+		QAction * qa = new QAction("new layer", this);
+		qa->setData(variant);
+		qa->setIcon(*Layer::get_interface(i)->icon);
+		connect(qa, SIGNAL(triggered(bool)), this, SLOT(menu_layer_new_cb(void)));
+
+		menu->addAction(qa);
+	}
+
+	return menu;
+}
 
 
 

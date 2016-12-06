@@ -1403,9 +1403,9 @@ static LayerToolFuncStatus selecttool_click(Layer * layer, QMouseEvent * event, 
 				TreeIndex * index = tree_view->get_selected_item();
 				if (index) {
 					/* Only clear if selected thing is a TrackWaypoint layer or a sublayer. */
-					TreeItemType type = tree_view->get_item_type(index);
+					TreeItemType type = tree_view->get_item_type(*index);
 					if (type == TreeItemType::SUBLAYER
-					    || tree_view->get_layer(index)->type == LayerType::TRW) {
+					    || tree_view->get_layer(*index)->type == LayerType::TRW) {
 
 						tree_view->unselect(index);
 						if (tool->window->clear_highlight()) {

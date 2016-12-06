@@ -76,10 +76,6 @@
 #include "layer_trw.h"
 #include "viewport.h"
 #include "window.h"
-#include "layers_panel.h"
-#include "tree_view.h"
-
-
 
 
 
@@ -342,7 +338,6 @@ void SlavGPS::modules_post_init()
 #ifdef K
 	window_init();
 #endif
-	layers_panel_init();
 }
 
 

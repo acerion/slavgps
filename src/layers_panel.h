@@ -16,7 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
 
 #ifndef _SG_LAYERS_PANEL_H_
@@ -27,17 +26,12 @@
 
 #include <cstdint>
 
-#ifdef SLAVGPS_QT
 #include <QtWidgets>
 #include <QWidget>
 #include <QVBoxLayout>
 #include <QToolBar>
-#else
-#include <gtk/gtk.h>
-#endif
 
 #include "layer.h"
-#include "layer_aggregate.h"
 
 
 
@@ -64,56 +58,46 @@ namespace SlavGPS {
 		void add_layer(Layer * layer);
 		void draw_all();
 		Layer * get_selected_layer();
-		void cut_selected();
-		void copy_selected();
-		bool paste_selected();
-		void delete_selected();
+
 		Layer * get_layer_of_type(LayerType layer_type);
-		void set_viewport(Viewport * viewport);
-		Viewport * get_viewport();
+
+
 		bool new_layer(LayerType layer_type);
 		void clear();
-		LayerAggregate * get_top_layer();
+
 		void change_coord_mode(VikCoordMode mode);
 		std::list<Layer *> * get_all_layers_of_type(LayerType type, bool include_invisible);
-		TreeView * get_treeview();
 
 		void set_visible(bool visible);
 		bool get_visible(void);
 
+		LayerAggregate * get_top_layer();
+		TreeView * get_treeview();
 		Window * get_window(void);
-		GtkWindow * get_toolkit_window(void);
-		GtkWidget * get_toolkit_widget(void);
+		Viewport * get_viewport();
+		void set_viewport(Viewport * viewport);
 
 		void contextMenuEvent(QContextMenuEvent * event);
-
-
-		LayerAggregate * toplayer = NULL;
-		TreeIndex * toplayer_item = NULL;
-
-		TreeView * tree_view = NULL;
-		Viewport * viewport = NULL; /* Reference. */
-		Window * window = NULL; /* Reference. */
-
 
 
 		/* This should be somehow private. */
 		void item_toggled(TreeIndex * index);
 		void item_edited(TreeIndex * index, char const * new_text);
-		void popup(GtkTreeIter * iter, MouseButton mouse_button);
 		bool key_press(GdkEventKey * event);
 		void move_item(bool up);
-
 		bool button_press_cb(QMouseEvent * event);
 
-#ifdef SLAVGPS_QT
-		QVBoxLayout * panel_box_ = NULL;
-		QToolBar * tool_bar_ = NULL;
-#else
-		GtkVBox * panel_box_ = NULL;
-#endif
-
 	private:
+		void show_context_menu(TreeIndex const & index, Layer * layer);
+		QMenu * create_context_menu(bool full);
+
+		LayerAggregate * toplayer = NULL;
+		TreeIndex * toplayer_item = NULL;
+		TreeView * tree_view = NULL;
+		Window * window = NULL; /* Reference. */
+		Viewport * viewport = NULL; /* Reference. */
+
+
 		QAction * qa_layer_add = NULL;
 		QAction * qa_layer_remove = NULL;
 		QAction * qa_layer_move_up = NULL;
@@ -122,19 +106,21 @@ namespace SlavGPS {
 		QAction * qa_layer_copy = NULL;
 		QAction * qa_layer_paste = NULL;
 
+		QVBoxLayout * panel_box = NULL;
+		QToolBar * tool_bar = NULL;
+
 	public slots:
-		bool properties();
+		bool properties_cb(void);
+		void cut_selected_cb(void);
+		void copy_selected_cb(void);
+		bool paste_selected_cb(void);
+		void delete_selected_cb(void);
 		void emit_update_cb();
 
 	signals:
 		void update(void);
 
 	};
-
-
-
-
-	void layers_panel_init(void);
 
 
 
