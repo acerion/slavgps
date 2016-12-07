@@ -2321,28 +2321,28 @@ static void window_change_coord_mode_cb(GtkAction * old_a, GtkAction * a, Window
 		gtk_toggle_tool_button_set_active(tbutton, true);
 	}
 
-	VikViewportDrawMode drawmode;
+	ViewportDrawMode drawmode;
 	if (!strcmp(name, "ModeUTM")) {
-		drawmode = VIK_VIEWPORT_DRAWMODE_UTM;
+		drawmode = ViewportDrawMode::UTM;
 	} else if (!strcmp(name, "ModeLatLon")) {
-		drawmode = VIK_VIEWPORT_DRAWMODE_LATLON;
+		drawmode = ViewportDrawMode::LATLON;
 	} else if (!strcmp(name, "ModeExpedia")) {
-		drawmode = VIK_VIEWPORT_DRAWMODE_EXPEDIA;
+		drawmode = ViewportDrawMode::EXPEDIA;
 	} else if (!strcmp(name, "ModeMercator")) {
-		drawmode = VIK_VIEWPORT_DRAWMODE_MERCATOR;
+		drawmode = ViewportDrawMode::MERCATOR;
 	} else {
 		fprintf(stderr, "CRITICAL: Houston, we've had a problem.\n");
 		return;
 	}
 
 	if (!window->only_updating_coord_mode_ui) {
-		VikViewportDrawMode olddrawmode = window->viewport->get_drawmode();
+		ViewportDrawMode olddrawmode = window->viewport->get_drawmode();
 		if (olddrawmode != drawmode) {
 			/* this takes care of coord mode too */
 			window->viewport->set_drawmode(drawmode);
-			if (drawmode == VIK_VIEWPORT_DRAWMODE_UTM) {
+			if (drawmode == ViewportDrawMode::UTM) {
 				window->layers_panel->change_coord_mode(VIK_COORD_UTM);
-			} else if (olddrawmode == VIK_VIEWPORT_DRAWMODE_UTM) {
+			} else if (olddrawmode == ViewportDrawMode::UTM) {
 				window->layers_panel->change_coord_mode(VIK_COORD_LATLON);
 			}
 			window->draw_update();
@@ -2491,10 +2491,10 @@ static GtkActionEntry entries_geojson[] = {
 
 /* Radio items */
 static GtkRadioActionEntry mode_entries[] = {
-	{ "ModeUTM",         NULL,         N_("_UTM Mode"),               "<control>u", NULL, VIK_VIEWPORT_DRAWMODE_UTM },
-	{ "ModeExpedia",     NULL,         N_("_Expedia Mode"),           "<control>e", NULL, VIK_VIEWPORT_DRAWMODE_EXPEDIA },
-	{ "ModeMercator",    NULL,         N_("_Mercator Mode"),          "<control>m", NULL, VIK_VIEWPORT_DRAWMODE_MERCATOR },
-	{ "ModeLatLon",      NULL,         N_("Lat_/Lon Mode"),           "<control>l", NULL, VIK_VIEWPORT_DRAWMODE_LATLON },
+	{ "ModeUTM",         NULL,         N_("_UTM Mode"),               "<control>u", NULL, ViewportDrawMode::UTM },
+	{ "ModeExpedia",     NULL,         N_("_Expedia Mode"),           "<control>e", NULL, ViewportDrawMode::EXPEDIA },
+	{ "ModeMercator",    NULL,         N_("_Mercator Mode"),          "<control>m", NULL, ViewportDrawMode::MERCATOR },
+	{ "ModeLatLon",      NULL,         N_("Lat_/Lon Mode"),           "<control>l", NULL, ViewportDrawMode::LATLON },
 };
 
 static GtkToggleActionEntry toggle_entries[] = {

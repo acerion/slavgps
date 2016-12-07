@@ -78,7 +78,7 @@ static void terraserver_map_source_init(TerraserverMapSource * self)
 	g_object_set(G_OBJECT (self),
 		     "tilesize-x", 200,
 		     "tilesize-y", 200,
-		     "drawmode", VIK_VIEWPORT_DRAWMODE_UTM,
+		     "drawmode", ViewportDrawMode::UTM,
 		     NULL);
 }
 

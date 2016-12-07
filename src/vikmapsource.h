@@ -48,7 +48,7 @@ namespace SlavGPS {
 
 		virtual MapSource & operator=(MapSource map);
 
-		virtual void get_copyright(LatLonBBox bbox, double zoom, void (* fct)(Viewport *, const char *), void * data);
+		virtual void get_copyright(LatLonBBox bbox, double zoom, void (* fct)(Viewport *, QString const &), void * data);
 		const char * get_license();
 		const char * get_license_url();
 		const GdkPixbuf * get_logo();
@@ -61,7 +61,7 @@ namespace SlavGPS {
 		const char * get_label();
 		uint16_t get_tilesize_x();
 		uint16_t get_tilesize_y();
-		VikViewportDrawMode get_drawmode();
+		ViewportDrawMode get_drawmode();
 
 		virtual bool is_direct_file_access();
 		virtual bool is_mbtiles();
@@ -91,7 +91,7 @@ namespace SlavGPS {
 		void set_label(char * label);
 		void set_tilesize_x(uint16_t tilesize_x);
 		void set_tilesize_y(uint16_t tilesize_y);
-		void set_drawmode(VikViewportDrawMode drawmode);
+		void set_drawmode(ViewportDrawMode drawmode);
 		void set_copyright(char * copyright);
 		void set_license(char * license);
 		void set_license_url(char * license_url);
@@ -112,7 +112,7 @@ namespace SlavGPS {
 		uint16_t tilesize_x; /* The size of the tile (x). */
 		uint16_t tilesize_y; /* The size of the tile (x). */
 
-		VikViewportDrawMode drawmode; /* The mode used to draw map. */
+		ViewportDrawMode drawmode; /* The mode used to draw map. */
 		char * file_extension; /* The file extension of tile files on disk. */
 
 		DownloadFileOptions download_options;

@@ -60,7 +60,7 @@ MapSource::MapSource()
 	tilesize_x = 256;
 	tilesize_y = 256;
 
-	drawmode = VIK_VIEWPORT_DRAWMODE_MERCATOR; /* VIK_VIEWPORT_DRAWMODE_UTM */
+	drawmode = ViewportDrawMode::MERCATOR; /* ViewportDrawMode::UTM */
 	file_extension = strdup(".png");
 
 	download_options.referer = NULL;       /* The REFERER string to use in HTTP request. */
@@ -242,7 +242,7 @@ void MapSource::set_tilesize_y(uint16_t tilesize_y_)
 
 
 
-void MapSource::set_drawmode(VikViewportDrawMode drawmode_)
+void MapSource::set_drawmode(ViewportDrawMode drawmode_)
 {
 	drawmode = drawmode_;
 }
@@ -295,7 +295,7 @@ void MapSource::set_file_extension(char * file_extension_)
  *
  * Retrieve copyright(s) for the corresponding bounding box and zoom level.
  */
-void MapSource::get_copyright(LatLonBBox bbox, double zoom, void (* fct)(Viewport *, const char *), void * data)
+void MapSource::get_copyright(LatLonBBox bbox, double zoom, void (* fct)(Viewport *, QString const &), void * data)
 {
 	return;
 }
@@ -368,7 +368,7 @@ uint16_t MapSource::get_tilesize_y()
 
 
 
-VikViewportDrawMode MapSource::get_drawmode()
+ViewportDrawMode MapSource::get_drawmode()
 {
 	return drawmode;
 }

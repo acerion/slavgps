@@ -245,7 +245,7 @@ static void datasource_gc_add_setup_widgets(GtkWidget *dialog, Viewport * viewpo
 
 
 	widgets->viewport = viewport;
-	widgets->circle_gc = viewport->new_gc("#000000", 3);
+	widgets->circle_gc = viewport->new_pen("#000000", 3);
 	gdk_gc_set_function (widgets->circle_gc, GDK_INVERT);
 	widgets->circle_onscreen = true;
 	datasource_gc_draw_circle(widgets);

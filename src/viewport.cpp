@@ -22,8 +22,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -57,7 +57,7 @@ using namespace SlavGPS;
 
 #define DEFAULT_BACKGROUND_COLOR "#CCCCCC"
 #define DEFAULT_HIGHLIGHT_COLOR "#EEA500"
-/* Default highlight in orange */
+/* Default highlight in orange. */
 
 
 
@@ -102,14 +102,6 @@ void Viewport::init_drawing_area()
 	//this->qpainter = new QPainter(this);
 
 	this->setFocusPolicy(Qt::ClickFocus);
-#if 0
-
-#if GTK_CHECK_VERSION (2,18,0)
-	gtk_widget_set_can_focus(GTK_WIDGET (this->drawing_area_), true);
-#else
-	GTK_WIDGET_SET_FLAGS (this->drawing_area_, GTK_CAN_FOCUS); /* Allow drawing area to have focus -- enabling key events, etc. */
-#endif
-#endif
 }
 
 
@@ -188,7 +180,7 @@ Viewport::Viewport(Window * parent) : QWidget((QWidget *) parent)
 	xmfactor = MERCATOR_FACTOR(xmpp);
 	ymfactor = MERCATOR_FACTOR(ympp);
 	coord_mode = VIK_COORD_LATLON;
-	drawmode = VIK_VIEWPORT_DRAWMODE_MERCATOR;
+	drawmode = ViewportDrawMode::MERCATOR;
 	center.mode = VIK_COORD_LATLON;
 	center.north_south = ll.lat;
 	center.east_west = ll.lon;
@@ -335,7 +327,6 @@ QPen Viewport::get_highlight_pen()
 
 void Viewport::set_highlight_thickness(int width)
 {
-	/* Otherwise same GDK_* attributes as in Viewport::new_pen(). */
 	this->highlight_pen.setWidth(width);
 	// GDK_LINE_SOLID
 	// GDK_CAP_ROUND
@@ -347,8 +338,6 @@ void Viewport::set_highlight_thickness(int width)
 
 QPen * Viewport::new_pen(char const * colorname, int width)
 {
-	QColor color;
-
 	QPen * pen = new QPen(colorname);
 	pen->setWidth(width);
 	// GDK_LINE_SOLID
@@ -360,38 +349,7 @@ QPen * Viewport::new_pen(char const * colorname, int width)
 
 
 
-GdkGC * Viewport::new_gc(char const * colorname, int thickness)
-{
-#ifndef SLAVGPS_QT
-	GdkColor color;
-
-	GdkGC * rv = gdk_gc_new(GTK_WIDGET(this->drawing_area_)->window);
-	if (gdk_color_parse(colorname, &color)) {
-		gdk_gc_set_rgb_fg_color(rv, &color);
-	} else {
-		fprintf(stderr, "WARNING: %s: Failed to parse color '%s'\n", __FUNCTION__, colorname);
-	}
-	gdk_gc_set_line_attributes(rv, thickness, GDK_LINE_SOLID, GDK_CAP_ROUND, GDK_JOIN_ROUND);
-	return rv;
-#endif
-}
-
-
-
-
-GdkGC * Viewport::new_gc_from_color(GdkColor * color, int thickness)
-{
-#ifndef SLAVGPS_QT
-	GdkGC * rv = gdk_gc_new(gtk_widget_get_window(GTK_WIDGET(this->drawing_area_)));
-	gdk_gc_set_rgb_fg_color(rv, color);
-	gdk_gc_set_line_attributes(rv, thickness, GDK_LINE_SOLID, GDK_CAP_ROUND, GDK_JOIN_ROUND);
-	return rv;
-#endif
-}
-
-
-
-QPen * Viewport::new_pen_from_color(const QColor & color, int width)
+QPen * Viewport::new_pen(const QColor & color, int width)
 {
 	QPen * pen = new QPen(color);
 	pen->setWidth(width);
@@ -531,8 +489,6 @@ void Viewport::clear()
 
 
 /**
- * @draw_scale: new value
- *
  * Enable/Disable display of scale.
  */
 void Viewport::set_draw_scale(bool draw_scale_)
@@ -743,53 +699,51 @@ void Viewport::draw_scale_helper_value(char * s, DistanceUnit distance_unit, dou
 
 
 
-void Viewport::draw_copyright()
+void Viewport::draw_copyrights(void)
 {
-	char s[128] = "";
+	/* TODO: how to ensure that these 128 chars fit into bounding rectangle used below? */
+#define MAX_COPYRIGHTS_LEN 128
+	QString result;
+	int free_space = MAX_COPYRIGHTS_LEN;
+
+#if 1
+	this->copyrights << "test copyright 1";
+	this->copyrights << "another test copyright";
+#endif
 
 	/* Compute copyrights string. */
-	unsigned int len = g_slist_length(copyrights);
 
+	unsigned int len = this->copyrights.size();
 	for (unsigned int i = 0 ; i < len ; i++) {
-		/* Stop when buffer is full. */
-		int slen = strlen(s);
-		if (slen >= 127) {
+
+		if (free_space < 0) {
 			break;
 		}
 
-		char * copyright = (char *) g_slist_nth_data(copyrights, i);
+		QString const & copyright = copyrights[i];
 
 		/* Only use part of this copyright that fits in the available space left,
 		   remembering 1 character is left available for the appended space. */
-		int clen = strlen (copyright);
-		if (slen + clen > 126) {
-			clen = 126 - slen;
-		}
 
-		strncat(s, copyright, clen);
-		strcat(s, " ");
+		result.append(copyright.left(free_space));
+		free_space -= copyright.size();
+
+		result.append(" ");
+		free_space--;
 	}
 
-#ifndef SLAVGPS_QT
-	/* Create pango layout. */
-	PangoLayout * pl = gtk_widget_create_pango_layout(GTK_WIDGET(this->drawing_area_), NULL);
-	pango_layout_set_font_description(pl, gtk_widget_get_style(GTK_WIDGET(this->drawing_area_))->font_desc);
-	pango_layout_set_alignment(pl, PANGO_ALIGN_RIGHT);
+	/* Copyright text will be in bottom-right corner. */
+	/* Use no more than half of width of viewport. */
+	int x = 0.5 * this->size_width;
+	int y = 0.7 * this->size_height;
+	int w = this->size_width - x - PAD;
+	int h = this->size_height - y - PAD;
 
-	/* Set the text. */
-	pango_layout_set_text(pl, s, -1);
+	QPointF box_start = QPointF(this->size_width - PAD, this->size_height - PAD); /* Anchor in bottom-right corner. */
+	QRectF bounding_rect = QRectF(box_start.x(), box_start.y(), -w, -h);
+	this->draw_text(QFont("Helvetica", 12), this->pen_marks_fg, bounding_rect, Qt::AlignBottom | Qt::AlignRight, result, 0);
 
-	PangoRectangle ink_rect, logical_rect;
-	/* Use maximum of half the viewport width. */
-	pango_layout_set_width(pl, (this->size_width / 2) * PANGO_SCALE);
-	pango_layout_get_pixel_extents(pl, &ink_rect, &logical_rect);
-	this->draw_layout(gtk_widget_get_style(GTK_WIDGET(this->drawing_area_))->black_gc,
-			  this->size_width / 2, this->size_height - logical_rect.height, pl);
-
-	/* Free memory. */
-	g_object_unref(pl);
-	pl = NULL;
-#endif
+#undef MAX_COPYRIGHTS_LEN
 }
 
 
@@ -850,18 +804,15 @@ void Viewport::draw_centermark()
 
 void Viewport::draw_logo()
 {
-#ifndef SLAVGPS_QT
-	unsigned int len = g_slist_length(logos);
 	int x = this->size_width - PAD;
 	int y = PAD;
-	for (unsigned int i = 0; i < len; i++) {
-		GdkPixbuf *logo = (GdkPixbuf *) g_slist_nth_data(logos, i);
-		int width = gdk_pixbuf_get_width (logo);
-		int height = gdk_pixbuf_get_height (logo);
-		this->draw_pixmap(logo, 0, 0, x - width, y, width, height);
-		x = x - width - PAD;
+	for (auto iter = this->logos.begin(); iter != this->logos.end(); iter++) {
+		QPixmap const * logo = *iter;
+		int w = logo->width();
+		int h = logo->height();
+		this->draw_pixmap(*logo, 0, 0, x - w, y, w, h);
+		x = x - w - PAD;
 	}
-#endif
 }
 
 
@@ -886,7 +837,7 @@ bool Viewport::get_draw_highlight()
 void Viewport::sync()
 {
 	qDebug() << "II: Viewport: ->sync() (will call ->render())" << __FUNCTION__ << __LINE__;
-	//gdk_draw_drawable(gtk_widget_get_window(GTK_WIDGET(this->drawing_area_)), gtk_widget_get_style(GTK_WIDGET(this->drawing_area_))->bg_gc[0], GDK_DRAWABLE(this->scr_buffer), 0, 0, 0, 0, this->size_width, this->size_height);
+	//gdk_draw_drawable(gtk_widget_get_window(GTK_WIDGET(this)), gtk_widget_get_style(GTK_WIDGET(this))->bg_gc[0], GDK_DRAWABLE(this->scr_buffer), 0, 0, 0, 0, this->size_width, this->size_height);
 	this->render(this->scr_buffer);
 }
 
@@ -899,7 +850,7 @@ void Viewport::pan_sync(int x_off, int y_off)
 #ifndef SLAVGPS_QT
 	int x, y, wid, hei;
 
-	gdk_draw_drawable(gtk_widget_get_window(GTK_WIDGET(this->drawing_area_)), gtk_widget_get_style(GTK_WIDGET(this->drawing_area_))->bg_gc[0], GDK_DRAWABLE(this->scr_buffer), 0, 0, x_off, y_off, this->size_width, this->size_height);
+	gdk_draw_drawable(gtk_widget_get_window(GTK_WIDGET(this)), gtk_widget_get_style(GTK_WIDGET(this))->bg_gc[0], GDK_DRAWABLE(this->scr_buffer), 0, 0, x_off, y_off, this->size_width, this->size_height);
 
 	if (x_off >= 0) {
 		x = 0;
@@ -916,8 +867,8 @@ void Viewport::pan_sync(int x_off, int y_off)
 		y = this->size_height + y_off;
 		hei = -y_off;
 	}
-	gtk_widget_queue_draw_area(GTK_WIDGET(this->drawing_area_), x, 0, wid, this->size_height);
-	gtk_widget_queue_draw_area(GTK_WIDGET(this->drawing_area_), 0, y, this->size_width, hei);
+	gtk_widget_queue_draw_area(GTK_WIDGET(this), x, 0, wid, this->size_height);
+	gtk_widget_queue_draw_area(GTK_WIDGET(this), 0, y, this->size_width, hei);
 #endif
 }
 
@@ -932,7 +883,7 @@ void Viewport::set_zoom(double xympp_)
 		xmfactor = ymfactor = MERCATOR_FACTOR(xmpp);
 	}
 
-	if (drawmode == VIK_VIEWPORT_DRAWMODE_UTM) {
+	if (drawmode == ViewportDrawMode::UTM) {
 		this->utm_zone_check();
 	}
 }
@@ -1005,7 +956,7 @@ void Viewport::set_xmpp(double xmpp_)
 	if (xmpp_ >= VIK_VIEWPORT_MIN_ZOOM && xmpp_ <= VIK_VIEWPORT_MAX_ZOOM) {
 		xmpp = xmpp_;
 		ymfactor = MERCATOR_FACTOR(ympp);
-		if (drawmode == VIK_VIEWPORT_DRAWMODE_UTM) {
+		if (drawmode == ViewportDrawMode::UTM) {
 			this->utm_zone_check();
 		}
 	}
@@ -1019,7 +970,7 @@ void Viewport::set_ympp(double ympp_)
 	if (ympp_ >= VIK_VIEWPORT_MIN_ZOOM && ympp_ <= VIK_VIEWPORT_MAX_ZOOM) {
 		ympp = ympp_;
 		ymfactor = MERCATOR_FACTOR(ympp);
-		if (drawmode == VIK_VIEWPORT_DRAWMODE_UTM) {
+		if (drawmode == ViewportDrawMode::UTM) {
 			this->utm_zone_check();
 		}
 	}
@@ -1114,7 +1065,7 @@ void Viewport::update_centers()
 
 	this->print_centers((char *) "update_centers");
 
-	//fprintf(stderr, "VIEWPORT: emitting updated_center() (%s:%d)\n", __FUNCTION__, __LINE__);
+	// qDebug() << "SIGNAL: Viewport: emitting updated_center()";
 	emit this->updated_center();
 }
 
@@ -1452,12 +1403,12 @@ void Viewport::screen_to_coord(int x, int y, VikCoord * coord)
 		utm->northing = (((this->size_height_2) - y) * ympp) + center.north_south;
 	} else if (coord_mode == VIK_COORD_LATLON) {
 		coord->mode = VIK_COORD_LATLON;
-		if (drawmode == VIK_VIEWPORT_DRAWMODE_LATLON) {
+		if (drawmode == ViewportDrawMode::LATLON) {
 			coord->east_west = center.east_west + (180.0 * xmpp / 65536 / 256 * (x - this->size_width_2));
 			coord->north_south = center.north_south + (180.0 * ympp / 65536 / 256 * (this->size_height_2 - y));
-		} else if (drawmode == VIK_VIEWPORT_DRAWMODE_EXPEDIA) {
+		} else if (drawmode == ViewportDrawMode::EXPEDIA) {
 			calcxy_rev(&(coord->east_west), &(coord->north_south), x, y, center.east_west, center.north_south, xmpp * ALTI_TO_MPP, ympp * ALTI_TO_MPP, this->size_width_2, this->size_height_2);
-		} else if (drawmode == VIK_VIEWPORT_DRAWMODE_MERCATOR) {
+		} else if (drawmode == ViewportDrawMode::MERCATOR) {
 			/* This isn't called with a high frequently so less need to optimize. */
 			coord->east_west = center.east_west + (180.0 * xmpp / 65536 / 256 * (x - this->size_width_2));
 			coord->north_south = DEMERCLAT (MERCLAT(center.north_south) + (180.0 * ympp / 65536 / 256 * (this->size_height_2 - y)));
@@ -1501,13 +1452,13 @@ void Viewport::coord_to_screen(const VikCoord * coord, int * x, int * y)
 		struct LatLon *center = (struct LatLon *) &(this->center);
 		struct LatLon *ll = (struct LatLon *) coord;
 		double xx,yy;
-		if (this->drawmode == VIK_VIEWPORT_DRAWMODE_LATLON) {
+		if (this->drawmode == ViewportDrawMode::LATLON) {
 			*x = this->size_width_2 + (MERCATOR_FACTOR(this->xmpp) * (ll->lon - center->lon));
 			*y = this->size_height_2 + (MERCATOR_FACTOR(this->ympp) * (center->lat - ll->lat));
-		} else if (this->drawmode == VIK_VIEWPORT_DRAWMODE_EXPEDIA) {
+		} else if (this->drawmode == ViewportDrawMode::EXPEDIA) {
 			calcxy (&xx, &yy, center->lon, center->lat, ll->lon, ll->lat, this->xmpp * ALTI_TO_MPP, this->ympp * ALTI_TO_MPP, this->size_width_2, this->size_height_2);
 			*x = xx; *y = yy;
-		} else if (this->drawmode == VIK_VIEWPORT_DRAWMODE_MERCATOR) {
+		} else if (this->drawmode == ViewportDrawMode::MERCATOR) {
 			*x = this->size_width_2 + (MERCATOR_FACTOR(this->xmpp) * (ll->lon - center->lon));
 			*y = this->size_height_2 + (MERCATOR_FACTOR(this->ympp) * (MERCLAT(center->lat) - MERCLAT(ll->lat)));
 		}
@@ -1647,18 +1598,22 @@ void Viewport::draw_text(QFont const & font, QPen const & pen, QRectF & bounding
 	QPainter painter(this->scr_buffer);
 	painter.setFont(font);
 
-	QRectF text_rect = painter.boundingRect(bounding_rect, flags, text);
+	/* "Normalize" bounding rectangles that have negative width or height.
+	   Otherwise the text will be outside of the bounding rectangle. */
+	QRectF final_bounding_rect = bounding_rect.united(bounding_rect);
+
+	QRectF text_rect = painter.boundingRect(final_bounding_rect, flags, text);
 	if (text_offset & SG_TEXT_OFFSET_UP) {
 		/* Move boxes a bit up, so that text is right against grid line, not below it. */
 		qreal new_top = text_rect.top() - (text_rect.height() / 2);
-		bounding_rect.moveTop(new_top);
+		final_bounding_rect.moveTop(new_top);
 		text_rect.moveTop(new_top);
 	}
 
 	if (text_offset & SG_TEXT_OFFSET_LEFT) {
 		/* Move boxes a bit left, so that text is right below grid line, not to the right of it. */
 		qreal new_left = text_rect.left() - (text_rect.width() / 2);
-		bounding_rect.moveLeft(new_left);
+		final_bounding_rect.moveLeft(new_left);
 		text_rect.moveLeft(new_left);
 	}
 
@@ -1683,7 +1638,7 @@ void Viewport::draw_text(QFont const & font, QPen const & pen, QRectF & bounding
 
 
 
-void Viewport::draw_pixmap(QPixmap & pixmap, int src_x, int src_y, int dest_x, int dest_y, int dest_width, int dest_height)
+void Viewport::draw_pixmap(QPixmap const & pixmap, int src_x, int src_y, int dest_x, int dest_y, int dest_width, int dest_height)
 {
 	QPainter painter(this->scr_buffer);
 	/* TODO: This clearly needs to be improved. */
@@ -1848,34 +1803,10 @@ bool Viewport::is_one_zone()
 
 
 
-void vik_gc_get_fg_color(GdkGC * gc, GdkColor * dest)
-{
-#ifndef SLAVGPS_QT
-	static GdkGCValues values;
-	gdk_gc_get_values(gc, &values);
-	gdk_colormap_query_color(gdk_colormap_get_system(), values.foreground.pixel, dest);
-#endif
-}
-
-
-
-
-GdkFunction vik_gc_get_function(GdkGC * gc)
-{
-#ifndef SLAVGPS_QT
-	static GdkGCValues values;
-	gdk_gc_get_values (gc, &values);
-	return values.function;
-#endif
-}
-
-
-
-
-void Viewport::set_drawmode(VikViewportDrawMode drawmode_)
+void Viewport::set_drawmode(ViewportDrawMode drawmode_)
 {
 	drawmode = drawmode_;
-	if (drawmode_ == VIK_VIEWPORT_DRAWMODE_UTM) {
+	if (drawmode_ == ViewportDrawMode::UTM) {
 		this->set_coord_mode(VIK_COORD_UTM);
 	} else {
 		this->set_coord_mode(VIK_COORD_LATLON);
@@ -1885,7 +1816,7 @@ void Viewport::set_drawmode(VikViewportDrawMode drawmode_)
 
 
 
-VikViewportDrawMode Viewport::get_drawmode()
+ViewportDrawMode Viewport::get_drawmode()
 {
 	return drawmode;
 }
@@ -1950,7 +1881,7 @@ bool Viewport::get_half_drawn()
 
 
 
-char const * Viewport::get_drawmode_name(VikViewportDrawMode mode)
+char const * Viewport::get_drawmode_name(ViewportDrawMode mode)
 {
 #ifdef SLAVGPS_QT
 	return NULL;
@@ -2033,9 +1964,7 @@ void Viewport::get_bbox_strings(LatLonBBoxStrings * bbox_strings)
 
 void Viewport::reset_copyrights()
 {
-	g_slist_foreach(copyrights, (GFunc) g_free, NULL);
-	g_slist_free(copyrights);
-	copyrights = NULL;
+	this->copyrights.clear();
 }
 
 
@@ -2046,24 +1975,20 @@ void Viewport::reset_copyrights()
  *
  * Add a copyright to display on viewport.
  */
-void Viewport::add_copyright(char const * copyright_)
+void Viewport::add_copyright(QString const & copyright)
 {
 	/* kamilTODO: make sure that this code is executed. */
-	if (copyright_) {
-		GSList * found = g_slist_find_custom(copyrights, copyright_, (GCompareFunc) strcmp);
-		if (found == NULL) {
-			char *duple = g_strdup(copyright_);
-			copyrights = g_slist_prepend(copyrights, duple);
-		}
+	if (!this->copyrights.contains(copyright)) {
+		this->copyrights.push_front(copyright);
 	}
 }
 
 
 
 
-void vik_viewport_add_copyright_cb(Viewport * viewport, char const * copyright_)
+void vik_viewport_add_copyright_cb(Viewport * viewport, QString const & copyright)
 {
-	viewport->add_copyright(copyright_);
+	viewport->add_copyright(copyright);
 }
 
 
@@ -2071,24 +1996,27 @@ void vik_viewport_add_copyright_cb(Viewport * viewport, char const * copyright_)
 
 void Viewport::reset_logos()
 {
-	/* do not free elem */
-	g_slist_free(logos);
-	logos = NULL;
+	/* Do not free pointers, they are owned by someone else.
+	   TODO: this is potentially a source of problems - if owner deletes pointer, it becomes invalid in viewport, right?. */
+	logos.clear();
 }
 
 
 
 
-void Viewport::add_logo(const GdkPixbuf *logo_)
+void Viewport::add_logo(QPixmap const * logo)
 {
-#ifndef SLAVGPS_QT
-	if (logo_) {
-		GdkPixbuf * found = NULL; /* FIXME (GdkPixbuf*)g_slist_find_custom (vp->port.logos, logo, (GCompareFunc)==); */
-		if (found == NULL) {
-			logos = g_slist_prepend(logos, (void *) logo_);
-		}
+	if (!logo) {
+		qDebug() << "EE: Viewport: trying to add NULL logo";
+		return;
 	}
-#endif
+
+	auto iter = std::find(this->logos.begin(), this->logos.end(), logo); /* TODO: how does comparison of pointers work? */
+	if (iter == this->logos.end()) {
+		logos.push_front(logo);
+	}
+
+	return;
 }
 
 
@@ -2112,7 +2040,7 @@ void Viewport::compute_bearing(int x1, int y1, int x2, int y2, double * angle, d
 
 	*angle = atan2(dy, dx) + M_PI_2;
 
-	if (this->get_drawmode() == VIK_VIEWPORT_DRAWMODE_UTM) {
+	if (this->get_drawmode() == ViewportDrawMode::UTM) {
 		VikCoord test;
 		struct LatLon ll;
 		struct UTM u;
@@ -2122,7 +2050,7 @@ void Viewport::compute_bearing(int x1, int y1, int x2, int y2, double * angle, d
 		vik_coord_to_latlon(&test, &ll);
 		ll.lat += get_ympp() * get_height() / 11000.0; // about 11km per degree latitude
 		a_coords_latlon_to_utm(&ll, &u);
-		vik_coord_load_from_utm(&test, VIK_COORD_UTM, &u); /* kamilFIXME: it was VIK_VIEWPORT_DRAWMODE_UTM. */
+		vik_coord_load_from_utm(&test, VIK_COORD_UTM, &u); /* kamilFIXME: it was ViewportDrawMode::UTM. */
 		this->coord_to_screen(&test, &tx, &ty);
 
 		*baseangle = M_PI - atan2(tx - x1, ty - y1);
@@ -2364,7 +2292,7 @@ void Viewport::draw_mouse_motion_cb(QMouseEvent * event)
  */
 void Viewport::get_location_strings(struct UTM utm, char **lat, char **lon)
 {
-	if (this->get_drawmode() == VIK_VIEWPORT_DRAWMODE_UTM) {
+	if (this->get_drawmode() == ViewportDrawMode::UTM) {
 		// Reuse lat for the first part (Zone + N or S, and lon for the second part (easting and northing) of a UTM format:
 		//  ZONE[N|S] EASTING NORTHING
 		*lat = (char *) malloc(4*sizeof(char));

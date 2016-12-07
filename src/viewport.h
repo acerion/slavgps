@@ -16,7 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
 
 #ifndef _SG_VIEWPORT_H_
@@ -34,9 +33,9 @@
 #include <QWheelEvent>
 #include <QMouseEvent>
 
-#include "slav_qt.h"
 #include "coord.h"
 #include "bbox.h"
+#include "globals.h"
 
 
 
@@ -52,19 +51,18 @@
 
 
 
-/* Drawmode management. */
-typedef enum {
-	VIK_VIEWPORT_DRAWMODE_UTM = 0,
-	VIK_VIEWPORT_DRAWMODE_EXPEDIA,
-	VIK_VIEWPORT_DRAWMODE_MERCATOR,
-	VIK_VIEWPORT_DRAWMODE_LATLON,
-	VIK_VIEWPORT_NUM_DRAWMODES      /*< skip >*/
-} VikViewportDrawMode;
-
-
-
-
 namespace SlavGPS {
+
+
+
+
+	/* Drawmode management. */
+	enum class ViewportDrawMode {
+		UTM = 0,
+		EXPEDIA,
+		MERCATOR,
+		LATLON
+	};
 
 
 
@@ -89,9 +87,8 @@ namespace SlavGPS {
 		Viewport(Window * parent);
 		~Viewport();
 
-		/* Viking initialization. */
 		bool configure();
-		void configure_manually(int width, unsigned int height); /* for off-screen viewports */
+		void configure_manually(int width, unsigned int height); /* For off-screen viewports. */
 
 		void paintEvent(QPaintEvent * event);
 		void resizeEvent(QResizeEvent * event);
@@ -113,7 +110,7 @@ namespace SlavGPS {
 		void draw_text(QFont const & font, QPen const & pen, QRectF & bounding_rect, int flags, QString const & text, int text_offset);
 		void draw_arc(QPen const & pen, int x, int y, int width, int height, int angle1, int angle2, bool filled);
 		void draw_polygon(QPen const & pen, QPoint const * points, int npoints, bool filled);
-		void draw_pixmap(QPixmap & pixmap, int src_x, int src_y, int dest_x, int dest_y, int dest_width, int dest_height);
+		void draw_pixmap(QPixmap const & pixmap, int src_x, int src_y, int dest_x, int dest_y, int dest_width, int dest_height);
 
 		/* Run this before drawing a line. Viewport::draw_line() runs it for you. */
 		static void clip_line(int * x1, int * y1, int * x2, int * y2);
@@ -164,10 +161,10 @@ namespace SlavGPS {
 
 
 		void reset_copyrights();
-		void add_copyright(char const * copyright);
+		void add_copyright(QString const & copyright);
 
 		void reset_logos();
-		void add_logo(const GdkPixbuf * logo);
+		void add_logo(QPixmap const * logo);
 
 
 		void set_highlight_color(char const * color);
@@ -194,7 +191,7 @@ namespace SlavGPS {
 		void draw_scale();
 		void set_draw_scale(bool draw_scale);
 		bool get_draw_scale();
-		void draw_copyright();
+		void draw_copyrights();
 		void draw_centermark();
 		void set_draw_centermark(bool draw_centermark);
 		bool get_draw_centermark();
@@ -207,19 +204,14 @@ namespace SlavGPS {
 
 
 		bool is_one_zone();
-		char const * get_drawmode_name(VikViewportDrawMode mode);
-		void set_drawmode(VikViewportDrawMode drawmode);
-		VikViewportDrawMode get_drawmode();
-		/* Do not forget to update Viewport::get_drawmode_name() if you modify VikViewportDrawMode. */
+		char const * get_drawmode_name(ViewportDrawMode mode);
+		void set_drawmode(ViewportDrawMode drawmode);
+		ViewportDrawMode get_drawmode();
+		/* Do not forget to update Viewport::get_drawmode_name() if you modify ViewportDrawMode. */
 
 
-
-
-		GdkGC * new_gc(char const * colorname, int thickness);
 		QPen * new_pen(char const * colorname, int width);
-		GdkGC * new_gc_from_color(GdkColor * color, int thickness);
-		QPen * new_pen_from_color(const QColor & color, int width);
-
+		QPen * new_pen(const QColor & color, int width);
 
 
 		/* Viewport buffer management/drawing to screen. */
@@ -257,8 +249,8 @@ namespace SlavGPS {
 		bool do_draw_centermark = true;
 		bool do_draw_highlight = true;
 
-		GSList * copyrights = NULL;
-		GSList * logos = NULL;
+		QStringList copyrights;
+		std::list<QPixmap const *> logos;
 
 
 		double xmpp, ympp;
@@ -290,7 +282,7 @@ namespace SlavGPS {
 		bool one_utm_zone;
 
 		/* Subset of coord types. lat lon can be plotted in 2 ways, google or exp. */
-		VikViewportDrawMode drawmode;
+		ViewportDrawMode drawmode;
 
 
 		/* For scale and center mark. */
@@ -330,8 +322,6 @@ namespace SlavGPS {
 		void draw_scale_helper_scale(const QPen & pen, int scale_len, int h);
 		void draw_scale_helper_value(char * s, DistanceUnit distance_unit, double scale_unit);
 
-		GtkDrawingArea * drawing_area_ = NULL; /* Toolkit-specific drawing area. */
-
 		Window * window = NULL;
 
 	signals:
@@ -345,15 +335,12 @@ namespace SlavGPS {
 		bool configure_cb(void);
 
 	protected:
-	bool eventFilter(QObject * object, QEvent * event);
+		bool eventFilter(QObject * object, QEvent * event);
 	};
 
 
 
 
-
-	void vik_gc_get_fg_color(GdkGC * gc, GdkColor * dest); /* Warning: could be slow, don't use obsessively. */
-	GdkFunction vik_gc_get_function(GdkGC * gc);
 	void viewport_init(void);
 
 
@@ -364,7 +351,7 @@ namespace SlavGPS {
 
 
 
-void vik_viewport_add_copyright_cb(SlavGPS::Viewport * viewport, char const * copyright);
+void vik_viewport_add_copyright_cb(SlavGPS::Viewport * viewport, QString const & copyright);
 
 
 

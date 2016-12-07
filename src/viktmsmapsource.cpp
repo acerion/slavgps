@@ -58,7 +58,7 @@ using namespace SlavGPS;
 MapSourceTms::MapSourceTms()
 {
 	fprintf(stderr, "MapSourceTms constructor start\n");
-	drawmode = VIK_VIEWPORT_DRAWMODE_LATLON;
+	drawmode = ViewportDrawMode::LATLON;
 	fprintf(stderr, "MapSourceTms constructor end\n");
 }
 

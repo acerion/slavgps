@@ -504,7 +504,7 @@ static void draw_ruler(Viewport * viewport, QPixmap * pixmap, QPen & pen, int x1
 	qDebug() << "II: Layer Tool: Ruler: draw";
 #if 0
 	PangoLayout *pl;
-	GdkGC *labgc = viewport->new_gc("#cccccc", 1);
+	GdkGC *labgc = viewport->new_pen("#cccccc", 1);
 	GdkGC *thickgc = gdk_gc_new(d);
 #endif
 

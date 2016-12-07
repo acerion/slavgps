@@ -620,7 +620,7 @@ void Window::draw_redraw()
 
 	/* Other viewport decoration items on top if they are enabled/in use. */
 	this->viewport->draw_scale();
-	this->viewport->draw_copyright();
+	this->viewport->draw_copyrights();
 	this->viewport->draw_centermark();
 	this->viewport->draw_logo();
 
@@ -1982,20 +1982,20 @@ char const * Window::get_filename()
 
 
 
-GtkWidget * Window::get_drawmode_button(VikViewportDrawMode mode)
+GtkWidget * Window::get_drawmode_button(ViewportDrawMode mode)
 {
 	GtkWidget *mode_button;
 	char *buttonname;
 	switch (mode) {
 #ifdef VIK_CONFIG_EXPEDIA
-	case VIK_VIEWPORT_DRAWMODE_EXPEDIA:
+	case ViewportDrawMode::EXPEDIA:
 		buttonname = (char *) "/ui/MainMenu/View/ModeExpedia";
 		break;
 #endif
-	case VIK_VIEWPORT_DRAWMODE_MERCATOR:
+	case ViewportDrawMode::MERCATOR:
 		buttonname = (char *) "/ui/MainMenu/View/ModeMercator";
 		break;
-	case VIK_VIEWPORT_DRAWMODE_LATLON:
+	case ViewportDrawMode::LATLON:
 		buttonname = (char *) "/ui/MainMenu/View/ModeLatLon";
 		break;
 	default:

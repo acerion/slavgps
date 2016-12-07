@@ -224,7 +224,7 @@ static void file_write(LayerAggregate * top, FILE * f, Viewport * viewport)
 {
 	LayerAggregate * aggregate = top;
 	struct LatLon ll;
-	VikViewportDrawMode mode;
+	ViewportDrawMode mode;
 	char *modestring = NULL;
 
 	/* Crazhy CRAZHY. */
@@ -232,16 +232,16 @@ static void file_write(LayerAggregate * top, FILE * f, Viewport * viewport)
 
 	mode = viewport->get_drawmode();
 	switch (mode) {
-	case VIK_VIEWPORT_DRAWMODE_UTM:
+	case ViewportDrawMode::UTM:
 		modestring = (char *) "utm";
 		break;
-	case VIK_VIEWPORT_DRAWMODE_EXPEDIA:
+	case ViewportDrawMode::EXPEDIA:
 		modestring = (char *) "expedia";
 		break;
-	case VIK_VIEWPORT_DRAWMODE_MERCATOR:
+	case ViewportDrawMode::MERCATOR:
 		modestring = (char *) "mercator";
 		break;
-	case VIK_VIEWPORT_DRAWMODE_LATLON:
+	case ViewportDrawMode::LATLON:
 		modestring = (char *) "latlon";
 		break;
 	default:
@@ -535,9 +535,9 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 				ll.lon = strtod(line+4, NULL);
 #endif
 			} else if (stack->under == NULL && eq_pos == 4 && strncasecmp(line, "mode", eq_pos) == 0 && strcasecmp(line+5, "utm") == 0) {
-				viewport->set_drawmode(VIK_VIEWPORT_DRAWMODE_UTM);
+				viewport->set_drawmode(ViewportDrawMode::UTM);
 			} else if (stack->under == NULL && eq_pos == 4 && strncasecmp(line, "mode", eq_pos) == 0 && strcasecmp(line+5, "expedia") == 0) {
-				viewport->set_drawmode(VIK_VIEWPORT_DRAWMODE_EXPEDIA);
+				viewport->set_drawmode(ViewportDrawMode::EXPEDIA);
 			} else if (stack->under == NULL && eq_pos == 4 && strncasecmp(line, "mode", eq_pos) == 0 && strcasecmp(line+5, "google") == 0) {
 				successful_read = false;
 				fprintf(stderr, _("WARNING: Draw mode '%s' no more supported\n"), "google");
@@ -545,9 +545,9 @@ static bool file_read(LayerAggregate * top, FILE * f, const char * dirpath, View
 				successful_read = false;
 				fprintf(stderr, _("WARNING: Draw mode '%s' no more supported\n"), "kh");
 			} else if (stack->under == NULL && eq_pos == 4 && strncasecmp(line, "mode", eq_pos) == 0 && strcasecmp(line+5, "mercator") == 0) {
-				viewport->set_drawmode(VIK_VIEWPORT_DRAWMODE_MERCATOR);
+				viewport->set_drawmode(ViewportDrawMode::MERCATOR);
 			} else if (stack->under == NULL && eq_pos == 4 && strncasecmp(line, "mode", eq_pos) == 0 && strcasecmp(line+5, "latlon") == 0) {
-				viewport->set_drawmode(VIK_VIEWPORT_DRAWMODE_LATLON);
+				viewport->set_drawmode(ViewportDrawMode::LATLON);
 			} else if (stack->under == NULL && eq_pos == 5 && strncasecmp(line, "color", eq_pos) == 0) {
 				viewport->set_background_color(line+6);
 			} else if (stack->under == NULL && eq_pos == 14 && strncasecmp(line, "highlightcolor", eq_pos) == 0) {

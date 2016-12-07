@@ -43,7 +43,7 @@ namespace SlavGPS {
 		uint16_t get_tilesize_x();
 		uint16_t get_tilesize_y();
 
-		VikViewportDrawMode get_drawmode();
+		ViewportDrawMode get_drawmode();
 
 
 		char * label = NULL;

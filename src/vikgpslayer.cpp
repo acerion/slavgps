@@ -2002,10 +2002,10 @@ LayerGPS::LayerGPS(Viewport * viewport) : LayerGPS()
 #if defined (VIK_CONFIG_REALTIME_GPS_TRACKING) && defined (GPSD_API_MAJOR_VERSION)
 
 	if (viewport) {
-		this->realtime_track_gc = viewport->new_gc("#203070", 2);
-		this->realtime_track_bg_gc = viewport->new_gc("grey", 2);
-		this->realtime_track_pt1_gc = viewport->new_gc("red", 2);
-		this->realtime_track_pt2_gc = viewport->new_gc("green", 2);
+		this->realtime_track_gc = viewport->new_pen("#203070", 2);
+		this->realtime_track_bg_gc = viewport->new_pen("grey", 2);
+		this->realtime_track_pt1_gc = viewport->new_pen("red", 2);
+		this->realtime_track_pt2_gc = viewport->new_pen("green", 2);
 		this->realtime_track_pt_gc = this->realtime_track_pt1_gc;
 	}
 

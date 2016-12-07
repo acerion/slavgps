@@ -184,7 +184,7 @@ namespace SlavGPS {
 		void clear_busy_cursor(void);
 		void set_filename(char const * filename);
 		char const * get_filename(void);
-		GtkWidget * get_drawmode_button(VikViewportDrawMode mode);
+		GtkWidget * get_drawmode_button(ViewportDrawMode mode);
 		void update_recently_used_document(char const * filename);
 		void open_window(void);
 

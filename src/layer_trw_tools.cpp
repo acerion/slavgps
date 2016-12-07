@@ -1048,7 +1048,7 @@ static LayerToolFuncStatus tool_new_track_move_cb(Layer * layer, QMouseEvent * e
 			yd = event->y - hd;
 
 			/* Create a background block to make the text easier to read over the background map. */
-			GdkGC *background_block_gc = tool->viewport->new_gc("#cccccc", 1);
+			GdkGC *background_block_gc = tool->viewport->new_pen("#cccccc", 1);
 			fill_rectangle(pixmap, background_block_gc, xd-2, yd-2, wd+4, hd+2);
 			gdk_draw_layout(pixmap, trw->current_track_new_point_pen, xd, yd, pl);
 

@@ -51,7 +51,7 @@ using namespace SlavGPS;
 MapSourceWmsc::MapSourceWmsc()
 {
 	fprintf(stderr, "MapSourceWmsc constructor start\n");
-	drawmode = VIK_VIEWPORT_DRAWMODE_LATLON;
+	drawmode = ViewportDrawMode::LATLON;
 	fprintf(stderr, "MapSourceWmsc constructor end\n");
 }
 

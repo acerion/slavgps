@@ -839,7 +839,7 @@ void LayerMapnik::draw(Viewport * viewport)
 		return;
 	}
 
-	if (viewport->get_drawmode() != VIK_VIEWPORT_DRAWMODE_MERCATOR) {
+	if (viewport->get_drawmode() != ViewportDrawMode::MERCATOR) {
 		this->get_window()->get_statusbar()->set_message(StatusBarField::INFO, _("Mapnik Rendering must be in Mercator mode"));
 		return;
 	}
@@ -847,7 +847,7 @@ void LayerMapnik::draw(Viewport * viewport)
 	if (this->mi) {
 		char *copyright = mapnik_interface_get_copyright(this->mi);
 		if (copyright) {
-			viewport->add_copyright(copyright);
+			viewport->add_copyright(QString(copyright));
 		}
 	}
 

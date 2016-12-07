@@ -916,7 +916,7 @@ void LayerMaps::post_read(Viewport * viewport, bool from_file)
 	if (!from_file) {
 		/* If this method is not called in file reading context it is called in GUI context.
 		   So, we can check if we have to inform the user about inconsistency. */
-		VikViewportDrawMode vp_drawmode;
+		ViewportDrawMode vp_drawmode;
 		vp_drawmode = viewport->get_drawmode();
 
 		if (map->get_drawmode() != vp_drawmode) {
@@ -2194,7 +2194,7 @@ static void download_onscreen_maps(menu_array_values * values, int redownload_mo
 {
 	LayerMaps * layer = values->layer;
 	Viewport * viewport = values->viewport;
-	VikViewportDrawMode vp_drawmode = viewport->get_drawmode();
+	ViewportDrawMode vp_drawmode = viewport->get_drawmode();
 
 	double xzoom = layer->xmapzoom ? layer->xmapzoom : viewport->get_xmpp();
 	double yzoom = layer->ymapzoom ? layer->ymapzoom : viewport->get_ympp();
