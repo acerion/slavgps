@@ -103,7 +103,6 @@ namespace SlavGPS {
 		bool window_save();
 
 		void update_recently_used_document(char const * filename);
-		void setup_recent_files();
 
 		bool export_to(std::list<Layer *> * layers, VikFileType_t vft, char const * dir, char const * extension);
 		void export_to_common(VikFileType_t vft, char const * extension);
@@ -126,7 +125,6 @@ namespace SlavGPS {
 
 
 		void enable_layer_tool(LayerType layer_type, int tool_id);
-		GThread * get_thread();
 
 		GtkWindow * get_toolkit_window(void);
 		GtkWindow * get_toolkit_window_2(void);
@@ -174,15 +172,7 @@ namespace SlavGPS {
 
 		GtkWindow * gtk_window_ = NULL;
 
-
-
-
-		// private:
-
-
 	private:
-		void init_toolkit_widget(void);
-
 		char type_string[30] = { 0 };
 
 	}; /* class Window */

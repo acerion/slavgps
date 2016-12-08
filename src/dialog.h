@@ -51,7 +51,11 @@ QString a_dialog_new_track(QWidget * parent, QString const & default_name, bool 
 
 void a_dialog_list(GtkWindow *parent, const char *title, GArray *array, int padding);
 
-void a_dialog_about(GtkWindow *parent);
+#endif
+
+void a_dialog_about(QWidget * parent);
+
+#ifdef K
 
 /* Okay, everthing below here is an architechtural flaw. */
 bool a_dialog_goto_latlon(GtkWindow *parent, struct LatLon *ll, const struct LatLon *old);

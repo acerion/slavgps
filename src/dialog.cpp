@@ -564,10 +564,12 @@ void a_dialog_list(GtkWindow *parent, const char *title, GArray *array, int padd
 }
 
 
+#endif
 
 
-void a_dialog_about(GtkWindow *parent)
+void a_dialog_about(QWidget * parent)
 {
+#ifdef K
 	const char *program_name = PACKAGE_NAME;
 	const char *version = VIKING_VERSION;
 	const char *website = VIKING_URL;
@@ -662,9 +664,11 @@ void a_dialog_about(GtkWindow *parent)
 			      "translator-credits", _("Translation is coordinated on http://launchpad.net/viking"),
 			      "artists", libs,
 			      NULL);
+#endif
 }
 
 
+#ifdef K
 
 
 bool a_dialog_map_n_zoom(GtkWindow *parent, char *mapnames[], int default_map, char *zoom_list[], int default_zoom, int *selected_map, int *selected_zoom)

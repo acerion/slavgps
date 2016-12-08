@@ -75,8 +75,6 @@ Window::Window()
 
 
 #if 0
-	this->init_toolkit_widget();
-
 	this->viewport = new Viewport();
 	this->layers_panel = new LayersPanel();
 	this->layers_panel->set_viewport(this->viewport);
@@ -321,15 +319,20 @@ void Window::create_actions(void)
 		qa_file_new = this->menu_file->addAction(QIcon::fromTheme("document-new"), _("&New file..."));
 		qa_file_new->setShortcut(Qt::CTRL + Qt::Key_N);
 		qa_file_new->setIcon(QIcon::fromTheme("document-new"));
+		qa_file_new->setToolTip("Open a file");
 
 		qa_file_open = this->menu_file->addAction(QIcon::fromTheme("document-open"), _("&Open..."));
 		qa_file_open->setShortcut(Qt::CTRL + Qt::Key_O);
 		qa_file_open->setData(QVariant((int) 12)); /* kamilFIXME: magic number. */
 		connect(qa_file_open, SIGNAL (triggered(bool)), this, SLOT (open_file_cb()));
 
+		/* This submenu will be populated by Window::update_recent_files(). */
+		this->submenu_recent_files = this->menu_file->addMenu(QString("Open &Recent File"));
+
 		qa = this->menu_file->addAction(QIcon::fromTheme("list-add"), _("Append &File..."));
 		qa->setData(QVariant((int) 21)); /* kamilFIXME: magic number. */
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (open_file_cb()));
+		qa->setToolTip("Append data from a different file");
 
 		qa_file_exit = this->menu_file->addAction(QIcon::fromTheme("application-exit"), _("E&xit"));
 		qa_file_exit->setShortcut(Qt::CTRL + Qt::Key_X);
@@ -367,7 +370,9 @@ void Window::create_actions(void)
 		this->qa_view_full_screen->setShortcut(Qt::Key_F11);
 		this->qa_view_full_screen->setCheckable(true);
 		this->qa_view_full_screen->setChecked(this->view_full_screen);
+		this->qa_view_full_screen->setToolTip("Activate full screen mode");
 		connect(this->qa_view_full_screen, SIGNAL(triggered(bool)), this, SLOT(view_full_screen_cb(bool)));
+		/* TODO: icon: GTK_STOCK_FULLSCREEN */
 
 		this->menu_view->addAction(this->qa_view_full_screen);
 
@@ -379,31 +384,38 @@ void Window::create_actions(void)
 		this->qa_view_show_draw_scale->setShortcut(Qt::SHIFT + Qt::Key_F5);
 		this->qa_view_show_draw_scale->setCheckable(true);
 		this->qa_view_show_draw_scale->setChecked(this->draw_scale);
+		this->qa_view_show_draw_scale->setToolTip("Show Scale");
 		connect(this->qa_view_show_draw_scale, SIGNAL(triggered(bool)), this, SLOT(draw_scale_cb(bool)));
 
 		this->qa_view_show_draw_centermark = new QAction("Show &Center Mark", this);
 		this->qa_view_show_draw_centermark->setShortcut(Qt::Key_F6);
 		this->qa_view_show_draw_centermark->setCheckable(true);
 		this->qa_view_show_draw_centermark->setChecked(this->draw_centermark);
+		this->qa_view_show_draw_centermark->setToolTip("Show Center Mark");
 		connect(this->qa_view_show_draw_centermark, SIGNAL(triggered(bool)), this, SLOT(draw_centermark_cb(bool)));
 
 		this->qa_view_show_draw_highlight = new QAction("Show &Highlight", this);
 		this->qa_view_show_draw_highlight->setShortcut(Qt::Key_F7);
 		this->qa_view_show_draw_highlight->setCheckable(true);
 		this->qa_view_show_draw_highlight->setChecked(this->draw_highlight);
+		this->qa_view_show_draw_highlight->setToolTip("Show Highlight");
 		connect(this->qa_view_show_draw_highlight, SIGNAL(triggered(bool)), this, SLOT(draw_highlight_cb(bool)));
+		/* TODO: icon: GTK_STOCK_UNDERLINE */
 
 		this->qa_view_show_side_panel = this->panel_dock->toggleViewAction(); /* Existing action! */
 		this->qa_view_show_side_panel->setText("Show Side &Panel");
 		this->qa_view_show_side_panel->setShortcut(Qt::Key_F9);
 		this->qa_view_show_side_panel->setCheckable(true);
 		this->qa_view_show_side_panel->setChecked(this->view_side_panel);
+		this->qa_view_show_side_panel->setToolTip("Show Side Panel");
 		connect(this->qa_view_show_side_panel, SIGNAL(triggered(bool)), this, SLOT(view_side_panel_cb(bool)));
+		/* TODO: icon: GTK_STOCK_INDEX */
 
 		this->qa_view_show_statusbar = new QAction("Show Status&bar", this);
 		this->qa_view_show_statusbar->setShortcut(Qt::Key_F12);
 		this->qa_view_show_statusbar->setCheckable(true);
 		this->qa_view_show_statusbar->setChecked(this->view_statusbar);
+		this->qa_view_show_statusbar->setToolTip("Show Statusbar");
 		connect(this->qa_view_show_statusbar, SIGNAL(triggered(bool)), this, SLOT(view_statusbar_cb(bool)));
 
 		this->qa_view_show_toolbar = this->toolbar->toggleViewAction(); /* Existing action! */
@@ -411,12 +423,14 @@ void Window::create_actions(void)
 		this->qa_view_show_toolbar->setShortcut(Qt::Key_F3);
 		this->qa_view_show_toolbar->setCheckable(true);
 		this->qa_view_show_toolbar->setChecked(this->view_toolbar);
+		this->qa_view_show_toolbar->setToolTip("Show Toolbar");
 		/* No signal connection needed, we have toggleViewAction(). */
 
 		this->qa_view_show_main_menu = new QAction("Show &Menu", this);
 		this->qa_view_show_main_menu->setShortcut(Qt::Key_F4);
 		this->qa_view_show_main_menu->setCheckable(true);
 		this->qa_view_show_main_menu->setChecked(this->view_main_menu);
+		this->qa_view_show_main_menu->setToolTip("Show Menu");
 		connect(qa_view_show_main_menu, SIGNAL(triggered(bool)), this, SLOT(view_main_menu_cb(bool)));
 
 
@@ -483,9 +497,11 @@ void Window::create_actions(void)
 		QAction * qa_help_help = new QAction("&Help", this);
 		qa_help_help->setIcon(QIcon::fromTheme("help-contents"));
 		qa_help_help->setShortcut(Qt::Key_F1);
+		connect(qa_help_help, SIGNAL (triggered(bool)), this, SLOT (help_help_cb(void)));
 
 		QAction * qa_help_about = new QAction("&About", this);
 		qa_help_about->setIcon(QIcon::fromTheme("help-about"));
+		connect(qa_help_about, SIGNAL (triggered(bool)), this, SLOT (help_about_cb(void)));
 
 		this->menu_help->addAction(qa_help_help);
 		this->menu_help->addAction(qa_help_about);
@@ -571,7 +587,7 @@ void Window::menu_layer_new_cb(void) /* Slot. */
 	QAction * qa = (QAction *) QObject::sender();
 	SlavGPS::LayerType layer_type = (SlavGPS::LayerType) qa->data().toInt();
 
-	qDebug() << "Window: clicked \"layer new\" for layer type" << (int) layer_type << Layer::get_interface(layer_type)->layer_type_string;
+	qDebug() << "II: Window: clicked \"layer new\" for layer type" << (int) layer_type << Layer::get_interface(layer_type)->layer_type_string;
 
 	if (this->layers_panel->new_layer(layer_type)) {
 		qDebug() << "II: Window: new layer, call draw_update_cb()" << __FUNCTION__ << __LINE__;
@@ -643,7 +659,7 @@ void Window::draw_layer_cb(sg_uid_t uid) /* Slot. */
 void Window::selected_layer(Layer * layer)
 {
 	QString layer_type(QString(layer->get_interface(layer->type)->layer_type_string));
-	qDebug() << "Window: selected layer type" << layer_type;
+	qDebug() << "II: Window: selected layer type" << layer_type;
 
 	bool window_tool_still_active = false;
 	QAction * qa = this->tb->set_other_groups_disabled(layer_type);
@@ -669,7 +685,7 @@ void Window::selected_layer(Layer * layer)
 		}
 	} else {
 		if (layer->type != LayerType::AGGREGATE) {
-			qDebug() << "ERROR: WINDOW: can't find any action in newly selected layer group" << layer_type;
+			qDebug() << "EE: Window: can't find any action in newly selected layer group" << layer_type;
 		}
 	}
 
@@ -754,7 +770,7 @@ void Window::statusbar_update(StatusBarField field, QString const & message)
  */
 void Window::center_changed_cb(void) /* Slot. */
 {
-	fprintf(stderr, "---- handling updated_center signal (%s:%d)\n", __FUNCTION__, __LINE__);
+	qDebug() << "SLOT: Window: center changed";
 #if 0
 	// ATM Keep back always available, so when we pan - we can jump to the last requested position
 	/*
@@ -1044,8 +1060,6 @@ void Window::create_ui(void)
 	GtkAccelGroup * accel_group = gtk_ui_manager_get_accel_group(uim);
 	gtk_window_add_accel_group(GTK_WINDOW (window->get_toolkit_window()), accel_group);
 	gtk_ui_manager_ensure_update(uim);
-
-	window->setup_recent_files();
 #endif
 
 	a_background_post_init_window(this);
@@ -1064,7 +1078,7 @@ void Window::layer_tools_cb(QAction * qa)
 	} else {
 		/* This can happen only of we are switching from tool in
 		   "generic" group to tool in a layer group. */
-		qDebug() << "Window: switching from \"generic\" tool to" << group_name << "tool";
+		qDebug() << "II: Window: switching from \"generic\" tool to" << group_name << "tool";
 	}
 
 
@@ -1099,7 +1113,7 @@ void Window::layer_tools_cb(QAction * qa)
 
 void Window::pan_click(QMouseEvent * event)
 {
-	fprintf(stderr, "WINDOW: pan click\n");
+	qDebug() << "II: Window: pan click";
 	/* Set panning origin. */
 	this->pan_move_flag = false;
 	this->pan_x = event->x();
@@ -1111,7 +1125,7 @@ void Window::pan_click(QMouseEvent * event)
 
 void Window::pan_move(QMouseEvent * event)
 {
-	fprintf(stderr, "WINDOW: pan move\n");
+	qDebug() << "II: Window: pan move";
 	if (this->pan_x != -1) {
 		this->viewport->set_center_screen(this->viewport->get_width() / 2 - event->x() + this->pan_x,
 						  this->viewport->get_height() / 2 - event->y() + this->pan_y);
@@ -1127,7 +1141,7 @@ void Window::pan_move(QMouseEvent * event)
 
 void Window::pan_release(QMouseEvent * event)
 {
-	fprintf(stderr, "WINDOW: pan release\n");
+	qDebug() << "II: Window: pan release";
 	bool do_draw = true;
 
 	if (this->pan_move_flag == false) {
@@ -1873,6 +1887,7 @@ void Window::open_file(char const * new_filename, bool change_filename)
 		/* When LOAD_TYPE_OTHER_SUCCESS *only*, this will maintain the existing Viking project. */
 		restore_original_filename = ! restore_original_filename;
 		this->update_recently_used_document(new_filename);
+		this->update_recent_files(QString(new_filename));
 		this->draw_update();
 		break;
 	}
@@ -1884,6 +1899,43 @@ void Window::open_file(char const * new_filename, bool change_filename)
 	free(original_filename);
 
 	this->clear_busy_cursor();
+}
+
+
+
+
+void Window::update_recent_files(QString const & path)
+{
+	/*
+	  TODO
+	  - add file type filter? gtk_recent_filter_add_group(filter, "viking");
+	  - consider different sorting orders? gtk_recent_chooser_set_sort_type(GTK_RECENT_CHOOSER (menu), GTK_RECENT_SORT_MRU);
+	*/
+
+	/* Remove existing duplicate. */
+	for (auto iter = this->recent_files.begin(); iter != this->recent_files.end(); iter++) {
+		if (*iter == path) { /* This test will become more complicated as elements stored in ::recent_files become more complex. */
+			this->recent_files.erase(iter);
+			break;
+		}
+	}
+
+	this->recent_files.push_front(path);
+
+	unsigned int limit = a_vik_get_recent_number_files();
+
+	/* Remove "oldest" files from the list. */
+	while (this->recent_files.size() > limit) {
+		this->recent_files.pop_back();
+	}
+
+	/* Clear and regenerate "recent files" menu. */
+	this->submenu_recent_files->clear();
+	for (auto iter = this->recent_files.begin(); iter != this->recent_files.end(); iter++) {
+		QAction * qa = this->submenu_recent_files->addAction(*iter);
+		qa->setToolTip(*iter);
+		/* TODO: connect the action to slot. */
+	}
 }
 
 
@@ -2092,4 +2144,37 @@ void Window::open_window(void)
 void Window::show_centers_cb() /* Slot. */
 {
 	this->viewport->show_centers(this);
+}
+
+
+
+
+void Window::help_help_cb(void)
+{
+#ifdef K
+#ifdef WINDOWS
+	ShellExecute(NULL, "open", "" PACKAGE".pdf", NULL, NULL, SW_SHOWNORMAL);
+#else /* WINDOWS */
+	char * uri = g_strdup_printf("ghelp:%s", PACKAGE);
+	GError *error = NULL;
+	bool show = gtk_show_uri(NULL, uri, GDK_CURRENT_TIME, &error);
+	if (!show && !error)
+		/* No error to show, so unlikely this will get called. */
+		dialog_error("The help system is not available.", window);
+	else if (error) {
+		/* Main error path. */
+		dialog_error(QString("Help is not available because: %1.\nEnsure a Mime Type ghelp handler program is installed (e.g. yelp).").arg(QString(error->message)), window);
+		g_error_free(error);
+	}
+	free(uri);
+#endif /* WINDOWS */
+#endif
+}
+
+
+
+
+void Window::help_about_cb(void) /* Slot. */
+{
+	a_dialog_about(this);
 }

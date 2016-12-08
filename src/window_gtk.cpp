@@ -277,17 +277,6 @@ static int determine_location_thread(Window * window, void * threaddata)
 
 
 
-void window_init(void)
-{
-	window_signals[VW_NEWWINDOW_SIGNAL] = g_signal_new("newwindow", G_TYPE_OBJECT, (GSignalFlags) (G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION), 0, NULL, NULL, g_cclosure_marshal_VOID__VOID, G_TYPE_NONE, 0);
-	window_signals[VW_OPENWINDOW_SIGNAL] = g_signal_new("openwindow", G_TYPE_OBJECT, (GSignalFlags) (G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION), 0, NULL, NULL, g_cclosure_marshal_VOID__POINTER, G_TYPE_NONE, 1, G_TYPE_POINTER);
-
-	return;
-}
-
-
-
-
 /* Menu View -> Zoom -> Value. */
 static void zoom_changed_cb(GtkMenuShell * menushell, void * user_data)
 {
@@ -927,29 +916,6 @@ static void menu_properties_cb(GtkAction * a, Window * window)
 
 
 
-static void help_help_cb(GtkAction * a, Window * window)
-{
-#ifdef WINDOWS
-	ShellExecute(NULL, "open", "" PACKAGE".pdf", NULL, NULL, SW_SHOWNORMAL);
-#else /* WINDOWS */
-	char * uri = g_strdup_printf("ghelp:%s", PACKAGE);
-	GError *error = NULL;
-	bool show = gtk_show_uri(NULL, uri, GDK_CURRENT_TIME, &error);
-	if (!show && !error)
-		/* No error to show, so unlikely this will get called. */
-		dialog_error("The help system is not available.", window);
-	else if (error) {
-		/* Main error path. */
-		dialog_error(QString("Help is not available because: %1.\nEnsure a Mime Type ghelp handler program is installed (e.g. yelp).").arg(QString(error->message)), window);
-		g_error_free(error);
-	}
-	free(uri);
-#endif /* WINDOWS */
-}
-
-
-
-
 // Only for 'view' toggle menu widgets ATM.
 GtkWidget * get_show_widget_by_name(Window * window, char const * name)
 {
@@ -969,30 +935,6 @@ GtkWidget * get_show_widget_by_name(Window * window, char const * name)
 	free(path);
 
 	return widget;
-}
-
-
-
-
-static void tb_set_draw_highlight_cb(GtkAction * a, Window * window)
-{
-	bool next_state = !window->viewport->get_draw_highlight();
-	GtkWidget *check_box = get_show_widget_by_name(window, gtk_action_get_name(a));
-	bool menu_state = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(check_box));
-	if (next_state != menu_state) {
-		gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(check_box), next_state);
-	} else {
-		window->viewport->set_draw_highlight(next_state);
-		window->draw_update();
-	}
-}
-
-
-
-
-static void help_about_cb(GtkAction * a, Window * window)
-{
-	a_dialog_about(window->get_toolkit_window());
 }
 
 
@@ -1024,101 +966,6 @@ static void menu_delete_layer_cb(GtkAction * a, Window * window)
 		window->modified = true;
 	} else {
 		dialog_info("You must select a layer to delete.", window);
-	}
-}
-
-
-
-
-static void full_screen_cb(GtkAction * a, Window * window)
-{
-	bool next_state = !window->show_full_screen;
-	GtkToggleToolButton *tbutton =(GtkToggleToolButton *)toolbar_get_widget_by_name(window->viking_vtb, gtk_action_get_name(a));
-	if (tbutton) {
-		bool tb_state = gtk_toggle_tool_button_get_active(tbutton);
-		if (next_state != tb_state) {
-			gtk_toggle_tool_button_set_active(tbutton, next_state);
-		} else {
-			window->toggle_full_screen();
-		}
-	} else {
-		window->toggle_full_screen();
-	}
-}
-
-
-
-
-static void view_side_panel_cb(GtkAction * a, Window * window)
-{
-	bool next_state = !window->show_side_panel;
-	GtkToggleToolButton *tbutton = (GtkToggleToolButton *)toolbar_get_widget_by_name(window->viking_vtb, gtk_action_get_name(a));
-	if (tbutton) {
-		bool tb_state = gtk_toggle_tool_button_get_active(tbutton);
-		if (next_state != tb_state) {
-			gtk_toggle_tool_button_set_active(tbutton, next_state);
-		} else {
-			window->toggle_side_panel();
-		}
-	} else {
-		window->toggle_side_panel();
-	}
-}
-
-
-
-
-static void view_statusbar_cb(GtkAction * a, Window * window)
-{
-	bool next_state = !window->show_statusbar;
-	GtkToggleToolButton *tbutton = (GtkToggleToolButton *)toolbar_get_widget_by_name(window->viking_vtb, gtk_action_get_name(a));
-	if (tbutton) {
-		bool tb_state = gtk_toggle_tool_button_get_active(tbutton);
-		if (next_state != tb_state) {
-			gtk_toggle_tool_button_set_active(tbutton, next_state);
-		} else {
-			window->toggle_statusbar();
-		}
-	} else {
-		window->toggle_statusbar();
-	}
-}
-
-
-
-
-static void view_toolbar_cb(GtkAction * a, Window * window)
-{
-	bool next_state = !window->show_toolbar;
-	GtkToggleToolButton *tbutton = (GtkToggleToolButton *)toolbar_get_widget_by_name(window->viking_vtb, gtk_action_get_name(a));
-	if (tbutton) {
-		bool tb_state = gtk_toggle_tool_button_get_active(tbutton);
-		if (next_state != tb_state) {
-			gtk_toggle_tool_button_set_active(tbutton, next_state);
-		} else {
-			window->toggle_toolbar();
-		}
-	} else {
-		window->toggle_toolbar();
-	}
-}
-
-
-
-
-static void view_main_menu_cb(GtkAction * a, Window * window)
-{
-	bool next_state = !window->show_main_menu;
-	GtkToggleToolButton *tbutton = (GtkToggleToolButton *)toolbar_get_widget_by_name(window->viking_vtb, gtk_action_get_name(a));
-	if (tbutton) {
-		bool tb_state = gtk_toggle_tool_button_get_active(tbutton);
-		if (next_state != tb_state) {
-			gtk_toggle_tool_button_set_active(tbutton, next_state);
-		} else {
-			window->toggle_main_menu();
-		}
-	} else {
-		window->toggle_main_menu();
 	}
 }
 
@@ -1181,36 +1028,6 @@ static void on_activate_recent_item(GtkRecentChooser *chooser, Window * window)
 	}
 
 	free(filename);
-}
-
-
-
-
-void Window::setup_recent_files()
-{
-	GtkRecentFilter * filter = gtk_recent_filter_new();
-	/* gtk_recent_filter_add_application (filter, g_get_application_name()); */
-	gtk_recent_filter_add_group(filter, "viking");
-
-	GtkRecentManager * manager = gtk_recent_manager_get_default();
-	GtkWidget * menu = gtk_recent_chooser_menu_new_for_manager(manager);
-	gtk_recent_chooser_set_sort_type(GTK_RECENT_CHOOSER (menu), GTK_RECENT_SORT_MRU);
-	gtk_recent_chooser_add_filter(GTK_RECENT_CHOOSER (menu), filter);
-	gtk_recent_chooser_set_limit(GTK_RECENT_CHOOSER (menu), a_vik_get_recent_number_files());
-
-	GtkWidget * menu_item = gtk_ui_manager_get_widget(this->uim, "/ui/MainMenu/File/OpenRecentFile");
-	gtk_menu_item_set_submenu(GTK_MENU_ITEM (menu_item), menu);
-
-	g_signal_connect(G_OBJECT (menu), "item-activated",
-			 G_CALLBACK (on_activate_recent_item), this);
-}
-
-
-
-
-void vik_window_open_file(Window * window, char const * filename, bool change_filename)
-{
-	window->open_file(filename, change_filename);
 }
 
 
@@ -2406,9 +2223,6 @@ static GtkActionEntry entries[] = {
 	{ "Help",     NULL, N_("_Help"),     0, 0, 0 },
 
 	{ "New",                 GTK_STOCK_NEW,            N_("_New"),                               "<control>N",       N_("New file"),                                           (GCallback) newwindow_cb              },
-	{ "Open",                GTK_STOCK_OPEN,           N_("_Open..."),                           "<control>O",       N_("Open a file"),                                        (GCallback) load_file                 },
-	{ "OpenRecentFile",      NULL,                     N_("Open _Recent File"),                  NULL,               NULL,                                                     (GCallback) NULL                      },
-	{ "Append",              GTK_STOCK_ADD,            N_("Append _File..."),                    NULL,               N_("Append data from a different file"),                  (GCallback) load_file                 },
 	{ "Export",              GTK_STOCK_CONVERT,        N_("_Export All"),                        NULL,               N_("Export All TrackWaypoint Layers"),                    (GCallback) NULL                      },
 	{ "ExportGPX",           NULL,                     N_("_GPX..."),           	             NULL,               N_("Export as GPX"),                                      (GCallback) export_to_gpx_cb          },
 	{ "Acquire",             GTK_STOCK_GO_DOWN,        N_("A_cquire"),                           NULL,               NULL,                                                     (GCallback) NULL                      },
@@ -2471,9 +2285,6 @@ static GtkActionEntry entries[] = {
 	{ "Preferences",         GTK_STOCK_PREFERENCES,    N_("_Preferences"),                       NULL,               N_("Program Preferences"),                                (GCallback) preferences_cb            },
 	{ "LayerDefaults",       GTK_STOCK_PROPERTIES,     N_("_Layer Defaults"),                    NULL,               NULL,                                                     NULL                                  },
 	{ "Properties",          GTK_STOCK_PROPERTIES,     N_("_Properties"),                        NULL,               N_("Layer Properties"),                                   (GCallback) menu_properties_cb        },
-
-	{ "HelpEntry",           GTK_STOCK_HELP,           N_("_Help"),                              "F1",               N_("Help"),                                               (GCallback) help_help_cb              },
-	{ "About",               GTK_STOCK_ABOUT,          N_("_About"),                             NULL,               N_("About"),                                              (GCallback) help_about_cb             },
 };
 
 static GtkActionEntry debug_entries[] = {
@@ -2496,39 +2307,6 @@ static GtkRadioActionEntry mode_entries[] = {
 	{ "ModeMercator",    NULL,         N_("_Mercator Mode"),          "<control>m", NULL, ViewportDrawMode::MERCATOR },
 	{ "ModeLatLon",      NULL,         N_("Lat_/Lon Mode"),           "<control>l", NULL, ViewportDrawMode::LATLON },
 };
-
-static GtkToggleActionEntry toggle_entries[] = {
-	{ "ShowScale",      NULL,                 N_("Show _Scale"),               "<shift>F5",  N_("Show Scale"),                              (GCallback)toggle_draw_scale, true },
-	{ "ShowCenterMark", NULL,                 N_("Show _Center Mark"),         "F6",         N_("Show Center Mark"),                        (GCallback)toggle_draw_centermark, true },
-	{ "ShowHighlight",  GTK_STOCK_UNDERLINE,  N_("Show _Highlight"),           "F7",         N_("Show Highlight"),                          (GCallback)toggle_draw_highlight, true },
-	{ "FullScreen",     GTK_STOCK_FULLSCREEN, N_("_Full Screen"),              "F11",        N_("Activate full screen mode"),               (GCallback)full_screen_cb, false },
-	{ "ViewSidePanel",  GTK_STOCK_INDEX,      N_("Show Side _Panel"),          "F9",         N_("Show Side Panel"),                         (GCallback)view_side_panel_cb, true },
-	{ "ViewStatusBar",  NULL,                 N_("Show Status_bar"),           "F12",        N_("Show Statusbar"),                          (GCallback)view_statusbar_cb, true },
-	{ "ViewToolbar",    NULL,                 N_("Show _Toolbar"),             "F3",         N_("Show Toolbar"),                            (GCallback)view_toolbar_cb, true },
-	{ "ViewMainMenu",   NULL,                 N_("Show _Menu"),                "F4",         N_("Show Menu"),                               (GCallback)view_main_menu_cb, true },
-};
-
-// This must match the toggle entries order above
-static GCallback toggle_entries_toolbar_cb[] = {
-	(GCallback) tb_set_draw_scale_cb,
-	(GCallback) tb_set_draw_centermark_cb,
-	(GCallback) tb_set_draw_highlight_cb,
-	(GCallback) tb_full_screen_cb,
-	(GCallback) tb_view_side_panel_cb,
-	(GCallback) tb_view_statusbar_cb,
-	(GCallback) tb_view_toolbar_cb,
-	(GCallback) tb_view_main_menu_cb,
-};
-
-
-
-
-#include "menu.xml.h"
-static void window_create_ui(Window * window)
-{
-
-}
-
 
 
 
@@ -2574,29 +2352,6 @@ static void register_vik_icons(GtkIconFactory *icon_factory)
 
 
 
-/**
- * May return NULL if the window no longer exists.
- */
-GThread * Window::get_thread()
-{
-	if (this->gtk_window_) {
-		return this->thread;
-	}
-	return NULL;
-}
-
-
-
-
-void Window::init_toolkit_widget(void)
-{
-	this->gtk_window_ = (GtkWindow *) gtk_window_new(GTK_WINDOW_TOPLEVEL);
-	g_object_set_data((GObject *) this->gtk_window_, "window", this);
-}
-
-
-
-
 Window::~Window()
 {
 	a_background_remove_window(this);
@@ -2611,7 +2366,4 @@ Window::~Window()
 
 	delete this->viewport;
 	delete this->layers_panel;
-
-	/* kamilFIXME: free this window first. */
-	this->gtk_window_ = NULL;
 }

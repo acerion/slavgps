@@ -172,6 +172,9 @@ namespace SlavGPS {
 		void preferences_cb(void);
 		void open_file_cb(void);
 
+		void help_help_cb(void);
+		void help_about_cb(void);
+
 	private:
 
 		void create_layout(void);
@@ -186,6 +189,7 @@ namespace SlavGPS {
 		char const * get_filename(void);
 		GtkWidget * get_drawmode_button(ViewportDrawMode mode);
 		void update_recently_used_document(char const * filename);
+		void update_recent_files(QString const & path);
 		void open_window(void);
 
 
@@ -208,6 +212,8 @@ namespace SlavGPS {
 		QMenu * menu_layers = NULL;
 		QMenu * menu_tools = NULL;
 		QMenu * menu_help = NULL;
+
+		QMenu * submenu_recent_files = NULL;
 
 		SlavGPS::Layer * trigger = NULL;
 		VikCoord trigger_center;
@@ -253,6 +259,8 @@ namespace SlavGPS {
 		QAction * qa_view_show_statusbar = NULL;
 		QAction * qa_view_show_toolbar = NULL;
 		QAction * qa_view_show_main_menu = NULL;
+
+		std::list<QString> recent_files;
 	};
 
 
