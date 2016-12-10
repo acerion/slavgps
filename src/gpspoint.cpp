@@ -429,7 +429,7 @@ bool SlavGPS::a_gpspoint_read_file(LayerTRW * trw, FILE * f, char const * dirpat
 				}
 			}
 
-			trk->draw_name_mode = (TrackDrawnameType) line_name_label;
+			trk->draw_name_mode = (TrackDrawNameMode) line_name_label;
 			trk->max_number_dist_labels = line_dist_label;
 
 			/* trk->trackpoints = NULL; */ /* kamilTODO: why it was here? */

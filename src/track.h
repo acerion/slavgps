@@ -114,14 +114,14 @@ namespace SlavGPS {
 
 
 
-	enum TrackDrawnameType {
-		TRACK_DRAWNAME_NO=0,
-		TRACK_DRAWNAME_CENTRE,
-		TRACK_DRAWNAME_START,
-		TRACK_DRAWNAME_END,
-		TRACK_DRAWNAME_START_END,
-		TRACK_DRAWNAME_START_END_CENTRE,
-		NUM_TRACK_DRAWNAMES
+	enum class TrackDrawNameMode {
+		NONE = 0,
+		CENTRE,
+		START,
+		END,
+		START_END,
+		START_END_CENTRE,
+		MAX
 	};
 
 
@@ -253,7 +253,7 @@ namespace SlavGPS {
 		TrackPoints * trackpointsB = NULL;
 		bool visible = false;
 		bool is_route = false;
-		TrackDrawnameType draw_name_mode = TRACK_DRAWNAME_NO;
+		TrackDrawNameMode draw_name_mode = TrackDrawNameMode::NONE;
 		uint8_t max_number_dist_labels = 0;
 		char * comment = NULL;
 		char * description = NULL;

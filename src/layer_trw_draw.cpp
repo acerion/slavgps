@@ -758,7 +758,7 @@ static void trw_layer_draw_track(Track * trk, DrawingParams * dp, bool draw_trac
 		}
 		trw_layer_draw_point_names(dp, trk, drawing_highlight);
 
-		if (trk->draw_name_mode != TRACK_DRAWNAME_NO) {
+		if (trk->draw_name_mode != TrackDrawNameMode::NONE) {
 			trw_layer_draw_track_name_labels(dp, trk, drawing_highlight);
 		}
 	}

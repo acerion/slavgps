@@ -1,10 +1,13 @@
 /*
  * viking -- GPS Data and Topo Analyzer, Explorer, and Manager
  *
+ * Project started in 2016 by forking viking project.
+ *
  * Copyright (C) 2003-2005, Evan Battaglia <gtoevan@gmx.net>
  * Copyright (C) 2005-2007, Alex Foobarian <foobarian@gmail.com>
  * Copyright (C) 2007-2008, Quy Tonthat <qtonthat@gmail.com>
  * Copyright (C) 2012-2014, Rob Norris <rw_norris@hotmail.com>
+ * Copyright (c) 2016 Kamil Ignacak <acerion@wp.pl>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +22,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
 
 #ifdef HAVE_CONFIG_H
@@ -56,7 +58,7 @@ void SlavGPS::track_properties_dialog(Window * parent,
 				      Track * trk,
 				      bool start_on_stats)
 {
-	TrackPropertiesDialog dialog(QString("Track Profile"), layer, trk, parent);
+	TrackPropertiesDialog dialog(QString("Track Profile"), layer, trk, start_on_stats, parent);
 	dialog.create_properties_page();
 	dialog.create_statistics_page();
 	dialog.exec();
@@ -65,59 +67,16 @@ void SlavGPS::track_properties_dialog(Window * parent,
 
 
 
-TrackPropertiesDialog::TrackPropertiesDialog(QString const & title, LayerTRW * a_layer, Track * a_trk, Window * a_parent) : QDialog(a_parent)
+TrackPropertiesDialog::TrackPropertiesDialog(QString const & title, LayerTRW * a_layer, Track * a_trk, bool start_on_stats, Window * a_parent) : QDialog(a_parent)
 {
 	this->setWindowTitle(QString(_("%1 - Track Properties")).arg(a_trk->name));
 
 	this->trw = a_layer;
 	this->trk = a_trk;
 
-#ifdef K
-	static char *label_texts[] = {
-		(char *) N_("<b>Comment:</b>"),
-		(char *) N_("<b>Description:</b>"),
-		(char *) N_("<b>Source:</b>"),
-		(char *) N_("<b>Type:</b>"),
-		(char *) N_("<b>Color:</b>"),
-		(char *) N_("<b>Draw Name:</b>"),
-		(char *) N_("<b>Distance Labels:</b>"),
-	};
-	static char *stats_texts[] = {
-		(char *) N_("<b>Track Length:</b>"),
-		(char *) N_("<b>Trackpoints:</b>"),
-		(char *) N_("<b>Segments:</b>"),
-		(char *) N_("<b>Duplicate Points:</b>"),
-		(char *) N_("<b>Max Speed:</b>"),
-		(char *) N_("<b>Avg. Speed:</b>"),
-		(char *) N_("<b>Moving Avg. Speed:</b>"),
-		(char *) N_("<b>Avg. Dist. Between TPs:</b>"),
-		(char *) N_("<b>Elevation Range:</b>"),
-		(char *) N_("<b>Total Elevation Gain/Loss:</b>"),
-		(char *) N_("<b>Start:</b>"),
-		(char *) N_("<b>End:</b>"),
-		(char *) N_("<b>Duration:</b>"),
-	};
-#endif
-
-	this->button_box = new QDialogButtonBox();
-	this->button_ok = this->button_box->addButton("&OK", QDialogButtonBox::AcceptRole);
-	this->button_cancel = this->button_box->addButton("&Cancel", QDialogButtonBox::RejectRole);
-	this->button_delete_duplicates = this->button_box->addButton("&Delete Duplicates", QDialogButtonBox::ActionRole);
-	this->button_delete_duplicates->setIcon(QIcon::fromTheme("list-delete"));
-	if (trk->get_dup_point_count() <= 0) {
-		this->button_delete_duplicates->setEnabled(false);
-	}
-
-#if 0
-	this->signalMapper = new QSignalMapper(this);
-	connect(this->button_ok,                SIGNAL (released()), signalMapper, SLOT (map()));
-	connect(this->button_cancel,            SIGNAL (released()), signalMapper, SLOT (map()));
-	connect(this->button_delete_duplicates, SIGNAL (released()), signalMapper, SLOT (map()));
-
-	this->signalMapper->setMapping(this->button_ok,                SG_TRACK_CLOSE);
-	this->signalMapper->setMapping(this->button_cancel,            SG_TRACK_INSERT);
-	this->signalMapper->setMapping(this->button_delete_duplicates, SG_TRACK_DELETE);
-#endif
+	this->button_box = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+	connect(this->button_box, &QDialogButtonBox::accepted, this, &TrackPropertiesDialog::dialog_accept_cb);
+	connect(this->button_box, &QDialogButtonBox::rejected, this, &QDialog::reject);
 
 	this->tabs = new QTabWidget();
 	this->vbox = new QVBoxLayout;
@@ -148,10 +107,10 @@ TrackPropertiesDialog::TrackPropertiesDialog(QString const & title, LayerTRW * a
 
 #ifdef K
 	this->trk->set_property_dialog(dialog);
-	if (start_on_stats) {
-		gtk_notebook_set_current_page(GTK_NOTEBOOK(this->tabs), 1);
-	}
 #endif
+	if (start_on_stats) {
+		this->tabs->setCurrentIndex(1);
+	}
 }
 
 
@@ -188,7 +147,7 @@ void TrackPropertiesDialog::create_properties_page(void)
 
 
 	/* TODO: use this->trk->color. */
-       	this->w_color = new SGColorButton(QColor("red"), NULL);
+       	this->w_color = new SGColorButton(this->trk->color, NULL);
 	this->properties_form->addRow(QString("Color:"), this->w_color);
 
 
@@ -201,7 +160,7 @@ void TrackPropertiesDialog::create_properties_page(void)
 		<< _("Centre, Start and End");
 	this->w_namelabel = new QComboBox(NULL);
 	this->w_namelabel->insertItems(0, options);
-	this->w_namelabel->setCurrentIndex(this->trk->draw_name_mode);
+	this->w_namelabel->setCurrentIndex((int) this->trk->draw_name_mode);
 	this->properties_form->addRow(QString("Draw Name:"), this->w_namelabel);
 
 
@@ -296,7 +255,7 @@ void TrackPropertiesDialog::create_statistics_page(void)
 		snprintf(tmp_buf, sizeof(tmp_buf), "%.3f NM", (tp_count - seg_count) == 0 ? 0 : VIK_METERS_TO_NAUTICAL_MILES(tr_len / (tp_count - seg_count)));
 		break;
 	default:
-		fprintf(stderr, "CRITICAL: Houston, we've had a problem. distance=%d\n", distance_unit);
+		qDebug() << "EE: Track Properties Dialog: can't get distance unit for 'avg. dist between tps.'; distance_unit = " << (int) distance_unit;
 	}
 	this->w_avg_dist = ui_label_new_selectable(tmp_buf, this);
 	this->statistics_form->addRow(QString("Avg. Dist. Between TPs:"), this->w_avg_dist);
@@ -314,11 +273,11 @@ void TrackPropertiesDialog::create_statistics_page(void)
 	free(altitudes);
 	altitudes = NULL;
 
-	HeightUnit height_units = a_vik_get_units_height();
+	HeightUnit height_unit = a_vik_get_units_height();
 	if (min_alt == VIK_DEFAULT_ALTITUDE) {
 		snprintf(tmp_buf, sizeof(tmp_buf), _("No Data"));
 	} else {
-		switch (height_units) {
+		switch (height_unit) {
 		case HeightUnit::METRES:
 			snprintf(tmp_buf, sizeof(tmp_buf), "%.0f m - %.0f m", min_alt, max_alt);
 			break;
@@ -327,7 +286,7 @@ void TrackPropertiesDialog::create_statistics_page(void)
 			break;
 		default:
 			snprintf(tmp_buf, sizeof(tmp_buf), "--");
-			fprintf(stderr, "CRITICAL: Houston, we've had a problem. height=%d\n", height_units);
+			qDebug() << "EE: Track Properties Dialog: can't get height unit for 'elevation range'; height_unit = " << (int) height_unit;
 		}
 	}
 	this->w_elev_range = ui_label_new_selectable(tmp_buf, this);
@@ -338,7 +297,7 @@ void TrackPropertiesDialog::create_statistics_page(void)
 	if (min_alt == VIK_DEFAULT_ALTITUDE) {
 		snprintf(tmp_buf, sizeof(tmp_buf), _("No Data"));
 	} else {
-		switch (height_units) {
+		switch (height_unit) {
 		case HeightUnit::METRES:
 			snprintf(tmp_buf, sizeof(tmp_buf), "%.0f m / %.0f m", max_alt, min_alt);
 			break;
@@ -347,7 +306,7 @@ void TrackPropertiesDialog::create_statistics_page(void)
 			break;
 		default:
 			snprintf(tmp_buf, sizeof(tmp_buf), "--");
-			fprintf(stderr, "CRITICAL: Houston, we've had a problem. height=%d\n", height_units);
+			qDebug() << "EE: Track Properties Dialog: can't get height unit for 'total elevation gain/loss'; height_unit = " << (int) height_unit;
 		}
 	}
 	this->w_elev_gain = ui_label_new_selectable(tmp_buf, this);
@@ -439,42 +398,22 @@ void SlavGPS::track_properties_dialog_update(Track * trk)
 
 
 
-void TrackPropertiesDialog::dialog_response_cb(int resp) /* Slot. */
+void TrackPropertiesDialog::dialog_accept_cb(void) /* Slot. */
 {
-#ifdef K
-
 	/* FIXME: check and make sure the track still exists before doing anything to it. */
 
-	switch (resp) {
-	case GTK_RESPONSE_DELETE_EVENT: /* Received delete event (not from buttons). */
-	case GTK_RESPONSE_REJECT:
-		break;
-	case GTK_RESPONSE_ACCEPT:
-		trk->set_comment(this->w_comment->toUtf()->data());
-		trk->set_description(this->w_description->toUtf()->data());
-		trk->set_source(this->w_source->toUtf()->data())
-		trk->set_type(this->w_type->toUtf()->data());
-		gtk_color_button_get_color(GTK_COLOR_BUTTON(this->w_color), &(trk->color));
-		trk->draw_name_mode = (TrackDrawnameType) gtk_combo_box_get_active(GTK_COMBO_BOX(this->w_namelabel));
-		qDebug() << "II: Track Properties Dialog: selected item no" << trk->draw_name_mode;
-		trk->max_number_dist_labels = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(this->w_number_distlabels));
-		this->trw->update_treeview(this->trk);
-		trw->emit_changed();
-		break;
-	case VIK_TRW_LAYER_PROPWIN_DEL_DUP:
-		trk->remove_dup_points(); /* NB ignore the returned answer. */
-		/* As we could have seen the nuber of dulplicates that would be deleted in the properties statistics tab,
-		   choose not to inform the user unnecessarily. */
+	trk->set_comment(this->w_comment->text().toUtf8().data());
+	trk->set_description(this->w_description->text().toUtf8().data());
+	trk->set_source(this->w_source->text().toUtf8().data());
+	trk->set_type(this->w_type->text().toUtf8().data());
+	trk->color = this->w_color->get_color();
+	trk->draw_name_mode = (TrackDrawNameMode) this->w_namelabel->currentIndex();
+	trk->max_number_dist_labels = this->w_number_distlabels->value();
 
-		/* Above operation could have deleted current_tp or last_tp. */
-		trw->cancel_tps_of_track(trk);
-		trw->emit_changed();
-		break;
-	default:
-		fprintf(stderr, "DEBUG: unknown response\n");
-		return;
-	}
+	qDebug() << "II: Track Properties Dialog: selected draw name mode #" << (int) trk->draw_name_mode;
 
+	this->trw->update_treeview(this->trk);
+	this->trw->emit_changed();
 
-#endif
+	this->accept();
 }

@@ -3900,10 +3900,7 @@ void LayerTRW::properties_item_cb(void)
 	} else {
 		Track * trk = this->get_track_helper(this->menu_data->sublayer_type, this->menu_data->sublayer_uid);
 		if (trk && trk->name) {
-			track_properties_dialog(this->get_window(),
-						this,
-						trk,
-						false);
+			track_properties_dialog(this->get_window(), this, trk);
 		}
 	}
 }
@@ -3937,10 +3934,7 @@ void LayerTRW::track_statistics_cb(void)
 {
 	Track * trk = this->get_track_helper(this->menu_data->sublayer_type, this->menu_data->sublayer_uid);
 	if (trk && trk->name) {
-		track_properties_dialog(this->get_window(),
-					this,
-					trk,
-					true);
+		track_properties_dialog(this->get_window(), this, trk, true);
 	}
 }
 
@@ -3975,17 +3969,10 @@ void LayerTRW::update_treeview(Track * trk)
 		}
 
 		if (index && index->isValid()) {
-#ifdef K
-			/* TODO: Make this a function. */
-			GdkPixbuf * pixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB, false, 8, 18, 18);
-			uint32_t pixel = ((trk->color.red & 0xff00) << 16)
-				| ((trk->color.green & 0xff00) << 8)
-				| (trk->color.blue & 0xff00);
-			gdk_pixbuf_fill(pixbuf, pixel);
-
-			this->tree_view->set_icon(iter, pixbuf);
-			g_object_unref(pixbuf);
-#endif
+			QPixmap pixmap(SMALL_ICON_SIZE, SMALL_ICON_SIZE);
+			pixmap.fill(trk->color);
+			QIcon icon(pixmap);
+			this->tree_view->set_icon(index, &icon);
 		}
 	}
 }

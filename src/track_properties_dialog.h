@@ -52,14 +52,14 @@ namespace SlavGPS {
 		Q_OBJECT
 	public:
 		TrackPropertiesDialog() {};
-		TrackPropertiesDialog(QString const & title, LayerTRW * a_layer, Track * a_trk, Window * a_parent = NULL);
+		TrackPropertiesDialog(QString const & title, LayerTRW * a_layer, Track * a_trk, bool start_on_stats, Window * a_parent = NULL);
 		~TrackPropertiesDialog() {};
 
 		void create_properties_page(void);
 		void create_statistics_page(void);
 
 	private slots:
-		void dialog_response_cb(int resp);
+		void dialog_accept_cb(void);
 
 	private:
 		LayerTRW * trw = NULL;
@@ -75,7 +75,6 @@ namespace SlavGPS {
 
 		QPushButton * button_ok = NULL;
 		QPushButton * button_cancel = NULL;
-		QPushButton * button_delete_duplicates = NULL;
 
 		QVBoxLayout * vbox = NULL;
 
@@ -112,10 +111,7 @@ namespace SlavGPS {
 
 
 
-	void track_properties_dialog(Window * parent,
-				     LayerTRW * layer,
-				     Track * trk,
-				     bool start_on_stats);
+	void track_properties_dialog(Window * parent, LayerTRW * layer, Track * trk, bool start_on_stats = false);
 
 	/**
 	 * Update this property dialog e.g. if the track has been renamed

@@ -485,9 +485,17 @@ void TreeView::set_icon(TreeIndex * index, QIcon const * icon)
 	if (!index || !index->isValid()) {
 		return;
 	}
-#ifdef K
-	gtk_tree_store_set(GTK_TREE_STORE(this->model), iter, COLUMN_ICON, icon, -1);
-#endif
+
+	/* index may be pointing to first column. We want to update LayersTreeColumn::ICON column. */
+
+	QStandardItem * parent = this->model->itemFromIndex(index->parent());
+	if (!parent) {
+		/* "index" points at the "Top Layer" layer. */
+		qDebug() << "II: Tree View: querying Top Layer for item" << index->row() << index->column();
+		parent = this->model->invisibleRootItem();
+	}
+	QStandardItem * ch = parent->child(index->row(), (int) LayersTreeColumn::ICON);
+	ch->setIcon(*icon);
 }
 
 
