@@ -325,11 +325,11 @@ void LayerTRW::add_menu_items(QMenu & menu)
 	}
 #endif
 
-	qa = menu.addAction(QIcon::fromTheme("INDEX"), QString(_("Track _List...")));
+	qa = menu.addAction(QIcon::fromTheme("INDEX"), tr("&Tracks List..."));
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (track_list_dialog_cb()));
 	qa->setEnabled((bool) (this->tracks.size() + this->routes.size()));
 
-	qa = menu.addAction(QIcon::fromTheme("INDEX"), QString(_("_Waypoint List...")));
+	qa = menu.addAction(QIcon::fromTheme("INDEX"), tr("&Waypoints List..."));
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (waypoint_list_dialog_cb()));
 	qa->setEnabled((bool) (this->waypoints.size()));
 
@@ -520,7 +520,7 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 			connect(qa, SIGNAL (triggered(bool)), this, SLOT (waypoints_visibility_toggle_cb()));
 		}
 
-		qa = menu.addAction(QString(_("&List Waypoints...")));
+		qa = menu.addAction(tr("&Waypoints List..."));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (waypoint_list_dialog_cb()));
 	}
 
@@ -563,7 +563,7 @@ bool LayerTRW::sublayer_add_menu_items(QMenu & menu)
 			connect(qa, SIGNAL (triggered(bool)), this, SLOT (tracks_visibility_toggle_cb()));
 		}
 
-		qa = menu.addAction(QString(_("&List Tracks...")));
+		qa = menu.addAction(tr("&Tracks List..."));
 		connect(qa, SIGNAL (triggered(bool)), this, SLOT (track_list_dialog_single_cb()));
 
 		qa = menu.addAction(QString(_("&Statistics")));

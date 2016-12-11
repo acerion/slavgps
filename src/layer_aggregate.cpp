@@ -646,10 +646,10 @@ void LayerAggregate::add_menu_items(QMenu & menu)
 	qa = menu.addAction(QString(_("&Statistics")));
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (analyse_cb()));
 
-	qa = menu.addAction(QIcon::fromTheme("INDEX"), QString(_("Track &List...")));
+	qa = menu.addAction(QIcon::fromTheme("INDEX"), tr("&Tracks List..."));
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (track_list_dialog_cb()));
 
-	qa = menu.addAction(QIcon::fromTheme("INDEX"), QString(_("&Waypoint List...")));
+	qa = menu.addAction(QIcon::fromTheme("INDEX"), tr("&Waypoints List..."));
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (waypoint_list_dialog_cb()));
 
 	{
