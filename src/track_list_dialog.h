@@ -65,6 +65,7 @@ namespace SlavGPS {
 		void copy_selected_cb(void);
 		void track_view_cb(void);
 		void track_stats_cb(void);
+		void accept_cb(void);
 
 	private:
 		void add(Track * trk, LayerTRW * trw, DistanceUnit distance_unit, SpeedUnit speed_units, HeightUnit height_units, char const * date_format);

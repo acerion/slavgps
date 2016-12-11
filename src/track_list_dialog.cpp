@@ -69,36 +69,8 @@ enum {
 
 
 
-#ifdef K
-/**
- * General purpose column double formatting
- */
-static void format_1f_cell_data_func(GtkTreeViewColumn * col,
-				     GtkCellRenderer   * renderer,
-				     GtkTreeModel      * model,
-				     GtkTreeIter       * iter,
-				     void              * user_data)
-{
-	double value;
-	char buf[20];
-	int column = KPOINTER_TO_INT (user_data);
-
-	gtk_tree_model_get(model, iter, column, &value, -1);
-	snprintf(buf, sizeof(buf), "%.1f", value);
-	g_object_set(renderer, "text", buf, NULL);
-}
-#endif
-
-
-
-
-#define TRK_LIST_COLS 11
-
-
-
-
 /*
-static void trw_layer_track_select_cb(GtkTreeSelection * selection, void * data)
+static void track_select_cb(GtkTreeSelection * selection, void * data)
 {
 	GtkTreeIter iter;
 	if (!gtk_tree_selection_get_selected(selection, NULL, &iter)) {
@@ -127,33 +99,24 @@ static void trw_layer_track_select_cb(GtkTreeSelection * selection, void * data)
 
 
 
-typedef struct {
-	LayerTRW * trw;
-	Track * track;
-	sg_uid_t track_uid;
-	Viewport * viewport;
-	GtkWidget * gtk_tree_view;
-	std::list<track_layer_t *> * tracks_and_layers;
-} tracklist_data_t;
-
-
-
-
 /* Instead of hooking automatically on treeview item selection,
    this is performed on demand via the specific menu request. */
 void TrackListDialog::track_select(LayerTRW * trw, Track * trk, sg_uid_t trk_uid)
 {
-	if (trk_uid) {
-		TreeIndex * index = NULL;
-		if (trk->is_route) {
-			index = trw->get_routes_iters().at(trk_uid);
-		} else {
-			index = trw->get_tracks_iters().at(trk_uid);
-		}
+	if (trk_uid == SG_UID_INITIAL || trk_uid == SG_UID_NONE) {
+		qDebug() << "EE: Track List Dialog: track uid invalid:" << trk_uid;
+		return;
+	}
 
-		if (index) {
-			trw->tree_view->select_and_expose(index);
-		}
+	TreeIndex * index = NULL;
+	if (trk->is_route) {
+		index = trw->get_routes_iters().at(trk_uid);
+	} else {
+		index = trw->get_tracks_iters().at(trk_uid);
+	}
+
+	if (index) {
+		trw->tree_view->select_and_expose(index);
 	}
 }
 
@@ -292,18 +255,12 @@ void TrackListDialog::add_copy_menu_item(QMenu & menu)
 
 void TrackListDialog::add_menu_items(QMenu & menu)
 {
-#ifdef K
-	/* ATM view auto selects, so don't bother with separate select menu entry. */
-	/*
-	item = gtk_image_menu_item_new_with_mnemonic(_("_Select"));
-	gtk_image_menu_item_set_image((GtkImageMenuItem*)item, gtk_image_new_from_stock (GTK_STOCK_FIND, GTK_ICON_SIZE_MENU));
-	g_signal_connect_swapped(G_OBJECT(item), "activate", G_CALLBACK(track_select), values);
-	gtk_menu_shell_append(GTK_MENU_SHELL (menu), item);
-	gtk_widget_show(item);
-	*/
-#endif
-
 	QAction * qa = NULL;
+
+#if 0   /* OLD COMMENT: ATM view auto selects, so don't bother with separate select menu entry. */
+	qa = menu.addAction(QIcon::fromTheme("edit-find"), QString("&Select"));
+	connect(qa, SIGNAL (triggered(bool)), this, SLOT (track_select_cb()));
+#endif
 
 	qa = menu.addAction(QIcon::fromTheme("zoom-fit-best"), QString(_("&View")));
 	connect(qa, SIGNAL (triggered(bool)), this, SLOT (track_view_cb()));
@@ -509,12 +466,13 @@ void TrackListDialog::add(Track * trk, LayerTRW * trw, DistanceUnit distance_uni
 		;
 	}
 
-	/* TODO: add sorting by columns. Add reordering of columns. */
+	/* TODO: Add reordering of columns? */
 
 
 	/* LAYER_NAME_COLUMN */
 	item = new QStandardItem(QString(trw->name));
 	item->setToolTip(tooltip);
+	item->setEditable(false); /* This dialog is not a good place to edit layer name. */
 	items << item;
 
 	/* TRACK_NAME_COLUMN */
@@ -544,6 +502,7 @@ void TrackListDialog::add(Track * trk, LayerTRW * trw, DistanceUnit distance_uni
 	item->setToolTip(tooltip);
 	variant = QVariant::fromValue(trk_dist);
 	item->setData(variant, Qt::DisplayRole);
+	item->setEditable(false); /* This dialog is not a good place to edit track length. */
 	items << item;
 
 	/* DURATION_COLUMN */
@@ -551,6 +510,7 @@ void TrackListDialog::add(Track * trk, LayerTRW * trw, DistanceUnit distance_uni
 	item->setToolTip(tooltip);
 	variant = QVariant::fromValue(trk_duration);
 	item->setData(variant, Qt::DisplayRole);
+	item->setEditable(false); /* This dialog is not a good place to edit track duration. */
 	items << item;
 
 	/* AVERAGE_SPEED_COLUMN */
@@ -558,6 +518,7 @@ void TrackListDialog::add(Track * trk, LayerTRW * trw, DistanceUnit distance_uni
 	item->setToolTip(tooltip);
 	variant = QVariant::fromValue(av_speed);
 	item->setData(variant, Qt::DisplayRole);
+	item->setEditable(false); /* 'Average speed' is not an editable parameter. */
 	items << item;
 
 	/* MAXIMUM_SPEED_COLUMN */
@@ -565,6 +526,7 @@ void TrackListDialog::add(Track * trk, LayerTRW * trw, DistanceUnit distance_uni
 	item->setToolTip(tooltip);
 	variant = QVariant::fromValue(max_speed);
 	item->setData(variant, Qt::DisplayRole);
+	item->setEditable(false); /* 'Maximum speed' is not an editable parameter. */
 	items << item;
 
 	/* MAXIMUM_HEIGHT_COLUMN */
@@ -572,6 +534,7 @@ void TrackListDialog::add(Track * trk, LayerTRW * trw, DistanceUnit distance_uni
 	item->setToolTip(tooltip);
 	variant = QVariant::fromValue(max_alt);
 	item->setData(variant, Qt::DisplayRole);
+	item->setEditable(false); /* 'Maximum height' is not an editable parameter. */
 	items << item;
 
 	/* LAYER_POINTER_COLUMN */
@@ -592,27 +555,8 @@ void TrackListDialog::add(Track * trk, LayerTRW * trw, DistanceUnit distance_uni
 
 
 
-#ifdef K
-static GtkTreeViewColumn * my_new_column_text(const char * title, GtkCellRenderer * renderer, GtkWidget *view, int column_runner)
-{
-	GtkTreeViewColumn * column = gtk_tree_view_column_new_with_attributes(title, renderer, "text", column_runner, NULL);
-	gtk_tree_view_column_set_sort_column_id(column, column_runner);
-	gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);
-	gtk_tree_view_column_set_reorderable(column, true);
-	gtk_tree_view_column_set_resizable(column, true);
-	return column;
-}
-#endif
-
-
-
-
 void TrackListDialog::build_model(bool hide_layer_names)
 {
-	if (!this->tracks_and_layers || this->tracks_and_layers->empty()) {
-		return;
-	}
-
 	DistanceUnit distance_units = a_vik_get_units_distance();
 	SpeedUnit speed_units = a_vik_get_units_speed();
 	HeightUnit height_units = a_vik_get_units_height();
@@ -620,7 +564,7 @@ void TrackListDialog::build_model(bool hide_layer_names)
 
 	this->model = new QStandardItemModel();
 	this->model->setHorizontalHeaderItem(LAYER_NAME_COLUMN, new QStandardItem("Layer"));
-	this->model->setHorizontalHeaderItem(TRACK_NAME_COLUMN, new QStandardItem("Track Name")); /* TODO: add sorting. */
+	this->model->setHorizontalHeaderItem(TRACK_NAME_COLUMN, new QStandardItem("Track Name"));
 	this->model->setHorizontalHeaderItem(DATE_COLUMN, new QStandardItem("Date"));
 	this->model->setHorizontalHeaderItem(VISIBLE_COLUMN, new QStandardItem("Visible"));
 	this->model->setHorizontalHeaderItem(COMMENT_COLUMN, new QStandardItem("Comment"));
@@ -636,8 +580,8 @@ void TrackListDialog::build_model(bool hide_layer_names)
 	this->model->setHorizontalHeaderItem(DURATION_COLUMN, new QStandardItem("Duration\n(minutes)"));
 
 	char * speed_units_string = get_speed_unit_string(speed_units);
-	this->model->setHorizontalHeaderItem(AVERAGE_SPEED_COLUMN, new QStandardItem(QString("Average Speed\n(%1)").arg(speed_units_string))); // format_1f_cell_data_func()  Apply own formatting of the data
-	this->model->setHorizontalHeaderItem(MAXIMUM_SPEED_COLUMN, new QStandardItem(QString("Maximum Speed\n(%1)").arg(speed_units_string))); // format_1f_cell_data_func()  Apply own formatting of the data
+	this->model->setHorizontalHeaderItem(AVERAGE_SPEED_COLUMN, new QStandardItem(QString("Average Speed\n(%1)").arg(speed_units_string))); /* Viking was using %.1f printf() format. */
+	this->model->setHorizontalHeaderItem(MAXIMUM_SPEED_COLUMN, new QStandardItem(QString("Maximum Speed\n(%1)").arg(speed_units_string))); /* Viking was using %.1f printf() format. */
 	free(speed_units_string);
 
 	if (height_units == HeightUnit::FEET) {
@@ -679,7 +623,7 @@ void TrackListDialog::build_model(bool hide_layer_names)
 	this->view->horizontalHeader()->setSectionResizeMode(VISIBLE_COLUMN, QHeaderView::ResizeToContents);
 
 	this->view->horizontalHeader()->setSectionHidden(COMMENT_COLUMN, false);
-	this->view->horizontalHeader()->setSectionResizeMode(COMMENT_COLUMN, QHeaderView::Stretch);
+	this->view->horizontalHeader()->setSectionResizeMode(COMMENT_COLUMN, QHeaderView::Interactive);
 
 	this->view->horizontalHeader()->setSectionHidden(LENGTH_COLUMN, false);
 	this->view->horizontalHeader()->setSectionResizeMode(LENGTH_COLUMN, QHeaderView::ResizeToContents);
@@ -699,6 +643,7 @@ void TrackListDialog::build_model(bool hide_layer_names)
 	this->view->horizontalHeader()->setSectionHidden(LAYER_POINTER_COLUMN, true);
 	this->view->horizontalHeader()->setSectionHidden(TRACK_POINTER_COLUMN, true);
 
+	this->view->horizontalHeader()->setStretchLastSection(true);
 
 	this->vbox->addWidget(this->view);
 	this->vbox->addWidget(this->button_box);
@@ -712,13 +657,7 @@ void TrackListDialog::build_model(bool hide_layer_names)
 
 
 	char * date_format = NULL;
-	if (
-#ifdef K
-	    !a_settings_get_string(VIK_SETTINGS_LIST_DATE_FORMAT, &date_format)
-#else
-	    false
-#endif
-	    ) {
+	if (!a_settings_get_string(VIK_SETTINGS_LIST_DATE_FORMAT, &date_format)) {
 		date_format = g_strdup(TRACK_LIST_DATE_FORMAT);
 	}
 
@@ -727,24 +666,21 @@ void TrackListDialog::build_model(bool hide_layer_names)
 	}
 	free(date_format);
 
-	/* TODO: add initial sorting by layer name or track name. */
-#ifdef K
-	if (hide_layer_name) {
-		sort by track name;
+
+	/* Notice that we enable and perform sorting after adding all items in the for() loop. */
+	this->view->setSortingEnabled(true);
+	if (hide_layer_names) {
+		this->view->sortByColumn(TRACK_NAME_COLUMN, Qt::AscendingOrder);
 	} else {
-		sort by layer name;
+		this->view->sortByColumn(LAYER_NAME_COLUMN, Qt::AscendingOrder);
 	}
-#endif
 
-	this->setMinimumSize(hide_layer_names ? 500 : 700, 400);
+	this->setMinimumSize(750, 400);
 
 #ifdef K
-	g_signal_connect(view, "query-tooltip", G_CALLBACK (trw_layer_track_tooltip_cb), NULL);
 	//g_signal_connect (gtk_tree_view_get_selection (GTK_TREE_VIEW(view)), "changed", G_CALLBACK(track_select_cb), view);
 	g_signal_connect(view, "popup-menu", G_CALLBACK(trw_layer_track_menu_popup), tracks_and_layers);
 	g_signal_connect(view, "button-press-event", G_CALLBACK(trw_layer_track_button_pressed_cb), tracks_and_layers);
-
-	gtk_tree_view_column_clicked(sort_by_column);
 #endif
 }
 
@@ -752,7 +688,6 @@ void TrackListDialog::build_model(bool hide_layer_names)
 
 
 /**
- * track_list_dialog:
  * @title:               The title for the dialog
  * @layer:               The #Layer passed on into get_tracks_and_layers_cb()
  * @sublayer_typea:      Sublayer type to be show in list (NONE for both TRACKS and LAYER)
@@ -760,10 +695,7 @@ void TrackListDialog::build_model(bool hide_layer_names)
  *
  * Common method for showing a list of tracks with extended information
  */
-void SlavGPS::track_list_dialog(QString const & title,
-				Layer * layer,
-				SublayerType sublayer_type,
-				bool show_layer_names)
+void SlavGPS::track_list_dialog(QString const & title, Layer * layer, SublayerType sublayer_type, bool show_layer_names)
 {
 	TrackListDialog dialog(title, layer->get_window());
 
@@ -797,7 +729,12 @@ TrackListDialog::TrackListDialog(QString const & title, QWidget * parent) : QDia
 
 	this->button_box = new QDialogButtonBox();
 	this->parent = parent;
-	this->button_box->addButton("&Close", QDialogButtonBox::ActionRole);
+
+	this->button_box->addButton("&Save and Close", QDialogButtonBox::AcceptRole);
+	this->button_box->addButton("&Cancel", QDialogButtonBox::RejectRole);
+	connect(this->button_box, &QDialogButtonBox::accepted, this, &TrackListDialog::accept_cb);
+	connect(this->button_box, &QDialogButtonBox::rejected, this, &QDialog::reject);
+
 	this->vbox = new QVBoxLayout;
 }
 
@@ -807,4 +744,23 @@ TrackListDialog::TrackListDialog(QString const & title, QWidget * parent) : QDia
 TrackListDialog::~TrackListDialog()
 {
 	delete this->tracks_and_layers;
+}
+
+
+
+
+void TrackListDialog::accept_cb(void) /* Slot. */
+{
+	/* FIXME: check and make sure the track still exists before doing anything to it. */
+#ifdef K
+
+	/* Here we save in track objects changes made in the dialog. */
+
+	trk->set_comment(this->w_comment->text().toUtf8().data());
+
+	this->trw->update_treeview(this->trk);
+	this->trw->emit_changed();
+#endif
+
+	this->accept();
 }
