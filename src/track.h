@@ -46,6 +46,7 @@
 #include "globals.h"
 #include "slav_qt.h"
 #include "tree_view.h"
+#include "layer.h"
 
 
 
@@ -149,7 +150,7 @@ namespace SlavGPS {
 	  they are shown.
 	*/
 
-	class Track : public TreeItem {
+	class Track : public Sublayer {
 	public:
 
 		Track();

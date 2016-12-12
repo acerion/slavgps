@@ -1645,7 +1645,8 @@ void LayerTRW::realize_tracks(std::unordered_map<sg_uid_t, Track *> & tracks, La
 			timestamp = tpt->timestamp;
 		}
 
-		TreeIndex * new_index = a_tree_view->add_sublayer(i->first, sublayer_type, parent_layer, a_parent_index, trk->name, icon, true, timestamp);
+		trk->set_uid(i->first);
+		TreeIndex * new_index = a_tree_view->add_sublayer(trk, sublayer_type, parent_layer, a_parent_index, trk->name, icon, true, timestamp);
 
 		delete icon;
 
@@ -1673,7 +1674,8 @@ void LayerTRW::realize_waypoints(std::unordered_map<sg_uid_t, Waypoint *> & wayp
 			timestamp = i->second->timestamp;
 		}
 
-		TreeIndex * new_index = a_tree_view->add_sublayer(i->first, sublayer_type, parent_layer, a_parent_index, i->second->name, NULL /* i->second->symbol */, true, timestamp);
+		i->second->set_uid(i->first);
+		TreeIndex * new_index = a_tree_view->add_sublayer(i->second, sublayer_type, parent_layer, a_parent_index, i->second->name, NULL /* i->second->symbol */, true, timestamp);
 
 		this->waypoints_iters.insert({{ i->first, new_index }});
 
@@ -1689,7 +1691,8 @@ void LayerTRW::realize_waypoints(std::unordered_map<sg_uid_t, Waypoint *> & wayp
 void LayerTRW::add_tracks_node(void)
 {
 	/* TODO: assert that this layer is realized. */
-	this->tracks_node = *this->tree_view->add_sublayer(SG_UID_NONE, SublayerType::TRACKS, this, this->index, _("Tracks"), NULL, false, 0);
+	/* TODO: who will delete first argument to this method? */
+	this->tracks_node = *this->tree_view->add_sublayer(new Sublayer(SublayerType::TRACKS), SublayerType::TRACKS, this, this->index, _("Tracks"), NULL, false, 0);
 }
 
 
@@ -1698,7 +1701,8 @@ void LayerTRW::add_tracks_node(void)
 void LayerTRW::add_waypoints_node(void)
 {
 	/* TODO: assert that this layer is realized. */
-	this->waypoints_node = *this->tree_view->add_sublayer(SG_UID_NONE, SublayerType::WAYPOINTS, this, this->index, _("Waypoints"), NULL, false, 0);
+	/* TODO: who will delete first argument to this method? */
+	this->waypoints_node = *this->tree_view->add_sublayer(new Sublayer(SublayerType::WAYPOINTS), SublayerType::WAYPOINTS, this, this->index, _("Waypoints"), NULL, false, 0);
 }
 
 
@@ -1707,7 +1711,8 @@ void LayerTRW::add_waypoints_node(void)
 void LayerTRW::add_routes_node(void)
 {
 	/* TODO: assert that this layer is realized. */
-	this->routes_node = *this->tree_view->add_sublayer(SG_UID_NONE, SublayerType::ROUTES, this, this->index, _("Routes"), NULL, false, 0);
+	/* TODO: who will delete first argument to this method? */
+	this->routes_node = *this->tree_view->add_sublayer(new Sublayer(SublayerType::ROUTES), SublayerType::ROUTES, this, this->index, _("Routes"), NULL, false, 0);
 }
 
 
@@ -1984,6 +1989,8 @@ QString LayerTRW::sublayer_tooltip(SublayerType sublayer_type, sg_uid_t sublayer
 	case SublayerType::ROUTE:
 	case SublayerType::TRACK:
 		{
+			assert (sublayer_uid != SG_UID_INITIAL);
+
 			Track * trk = NULL;
 			if (sublayer_type == SublayerType::TRACK) {
 				trk = this->tracks.at(sublayer_uid);
@@ -2035,6 +2042,8 @@ QString LayerTRW::sublayer_tooltip(SublayerType sublayer_type, sg_uid_t sublayer
 		break;
 	case SublayerType::WAYPOINT:
 		{
+			assert (sublayer_uid != SG_UID_INITIAL);
+
 			Waypoint * wp = this->waypoints.at(sublayer_uid);
 			/* It's OK to return NULL. */
 			if (wp) {
@@ -3175,7 +3184,8 @@ void LayerTRW::add_waypoint(Waypoint * wp, char const * name)
 		}
 
 		/* Visibility column always needed for waypoints. */
-		TreeIndex * index = this->tree_view->add_sublayer(global_wp_uid, SublayerType::WAYPOINT, this, this->waypoints_node, name, NULL /* wp->symbol */, true, timestamp);
+		wp->set_uid(global_wp_uid);
+		TreeIndex * index = this->tree_view->add_sublayer(wp, SublayerType::WAYPOINT, this, this->waypoints_node, name, NULL /* wp->symbol */, true, timestamp);
 
 		/* Actual setting of visibility dependent on the waypoint. */
 		this->tree_view->set_visibility(*index, wp->visible);
@@ -3216,7 +3226,8 @@ void LayerTRW::add_track(Track * trk, char const * name)
 		}
 
 		/* Visibility column always needed for tracks. */
-		TreeIndex * index = this->tree_view->add_sublayer(global_tr_uuid, SublayerType::TRACK, this, this->tracks_node, name, NULL, true, timestamp);
+		trk->set_uid(global_tr_uuid);
+		TreeIndex * index = this->tree_view->add_sublayer(trk, SublayerType::TRACK, this, this->tracks_node, name, NULL, true, timestamp);
 
 		/* Actual setting of visibility dependent on the track. */
 		this->tree_view->set_visibility(*index, trk->visible);
@@ -3252,7 +3263,8 @@ void LayerTRW::add_route(Track * trk, char const * name)
 		}
 
 		/* Visibility column always needed for routes. */
-		TreeIndex * index = this->tree_view->add_sublayer(global_rt_uuid, SublayerType::ROUTE, this, this->routes_node, name, NULL, true, 0); /* Routes don't have times. */
+		trk->set_uid(global_rt_uuid);
+		TreeIndex * index = this->tree_view->add_sublayer(trk, SublayerType::ROUTE, this, this->routes_node, name, NULL, true, 0); /* Routes don't have times. */
 
 		/* Actual setting of visibility dependent on the route. */
 		this->tree_view->set_visibility(*index, trk->visible);

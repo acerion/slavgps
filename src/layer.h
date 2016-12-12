@@ -131,14 +131,17 @@ namespace SlavGPS {
 
 
 	class Sublayer : public TreeItem {
-
+		Q_OBJECT
 	public:
-		SublayerType type;
+		Sublayer() {}
+		Sublayer(SublayerType t) { type = t; }
+		~Sublayer() {};
 
 		sg_uid_t get_uid(void);
 		void set_uid(sg_uid_t u);
 
 	//protected:
+		SublayerType type;
 		sg_uid_t uid = SG_UID_INITIAL;
 	};
 

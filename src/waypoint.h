@@ -34,6 +34,7 @@
 #include "coord.h"
 #include "globals.h"
 #include "tree_view.h"
+#include "layer.h"
 
 //#include <gdk-pixbuf/gdk-pixdata.h>
 
@@ -45,8 +46,7 @@ namespace SlavGPS {
 
 
 
-	class Waypoint : public TreeItem {
-
+	class Waypoint : public Sublayer {
 	public:
 		Waypoint();
 		Waypoint(const Waypoint& other);

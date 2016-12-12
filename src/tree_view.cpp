@@ -191,7 +191,7 @@ Layer * TreeView::get_layer(TreeIndex const & index)
 		qDebug() << "II: Tree View: querying Top Layer for item" << index.row() << index.column();
 		parent = this->model->invisibleRootItem();
 	}
-	QStandardItem * ch = parent->child(index.row(), (int) LayersTreeColumn::ITEM);
+	QStandardItem * ch = parent->child(index.row(), (int) LayersTreeColumn::TREE_ITEM);
 
 	QVariant variant = ch->data(RoleLayerData);
 	// http://www.qtforum.org/article/34069/store-user-data-void-with-qstandarditem-in-qstandarditemmodel.html
@@ -226,11 +226,11 @@ sg_uid_t TreeView::get_sublayer_uid(TreeIndex const & index)
 		qDebug() << "II: Tree View: querying Top Layer for item" << index.row() << index.column();
 		parent = this->model->invisibleRootItem();
 	}
-	QStandardItem * ch = parent->child(index.row(), (int) LayersTreeColumn::ITEM);
+	QStandardItem * ch = parent->child(index.row(), (int) LayersTreeColumn::TREE_ITEM);
 
 	QVariant variant = ch->data(RoleLayerData);
 	// http://www.qtforum.org/article/34069/store-user-data-void-with-qstandarditem-in-qstandarditemmodel.html
-	return (sg_uid_t) variant.toULongLong();
+	return variant.value<Sublayer *>()->get_uid();
 }
 
 
@@ -334,9 +334,7 @@ void TreeView::select_cb(void) /* Slot. */
 	window->selected_layer(layer);
 
 	/* Apply settings now we have the all details. */
-	if (layer->layer_selected(sublayer_type,
-				  sublayer_uid,
-				  tree_item_type)) {
+	if (layer->layer_selected(sublayer_type, sublayer_uid, tree_item_type)) {
 
 		/* Redraw required. */
 		window->get_layers_panel()->emit_update_cb();
@@ -579,7 +577,7 @@ void TreeView::unselect(TreeIndex const & index)
 
 
 
-TreeIndex * TreeView::add_sublayer(sg_uid_t sublayer_uid, SublayerType sublayer_type, Layer * parent_layer, TreeIndex const & parent_index, char const * name, QIcon * icon, bool editable, time_t timestamp)
+TreeIndex * TreeView::add_sublayer(Sublayer * sublayer, SublayerType sublayer_type, Layer * parent_layer, TreeIndex const & parent_index, char const * name, QIcon * icon, bool editable, time_t timestamp)
 {
 	// http://www.qtforum.org/article/34069/store-user-data-void-with-qstandarditem-in-qstandarditemmodel.html
 
@@ -588,7 +586,7 @@ TreeIndex * TreeView::add_sublayer(sg_uid_t sublayer_uid, SublayerType sublayer_
 	QStandardItem * first_item = NULL;
 	QVariant variant;
 
-	QString tooltip = parent_layer->sublayer_tooltip(sublayer_type, sublayer_uid);
+	QString tooltip = parent_layer->sublayer_tooltip(sublayer_type, sublayer ? sublayer->uid : SG_UID_INITIAL);
 
 
 	/* LayersTreeColumn::NAME */
@@ -602,8 +600,6 @@ TreeIndex * TreeView::add_sublayer(sg_uid_t sublayer_uid, SublayerType sublayer_
 	item->setToolTip(tooltip);
 	item->setCheckable(true);
 	item->setCheckState(parent_layer->visible ? Qt::Checked : Qt::Unchecked);
-	variant = QVariant((qulonglong) sublayer_uid);
-	item->setData(variant, RoleLayerData); /* I'm assigning sublayer_uid to "visible" so that I don't have to look up ::ITEM column to find the su. */
 	items << item;
 
 	/* LayersTreeColumn::ICON */
@@ -625,21 +621,15 @@ TreeIndex * TreeView::add_sublayer(sg_uid_t sublayer_uid, SublayerType sublayer_
 	item->setData(variant, RoleLayerData);
 	items << item;
 
-	/* LayersTreeColumn::ITEM */
+	/* LayersTreeColumn::TREE_ITEM */
 	item = new QStandardItem();
-	variant = QVariant::fromValue((qulonglong) sublayer_uid);
+	variant = QVariant::fromValue(sublayer);
 	item->setData(variant, RoleLayerData);
 	items << item;
 
 	/* LayersTreeColumn::DATA */
 	item = new QStandardItem();
 	variant = QVariant::fromValue((int) sublayer_type);
-	item->setData(variant, RoleLayerData);
-	items << item;
-
-	/* LayersTreeColumn::UID */
-	item = new QStandardItem();
-	variant = QVariant::fromValue((qulonglong) sublayer_uid);
 	item->setData(variant, RoleLayerData);
 	items << item;
 
@@ -928,7 +918,7 @@ TreeIndex const & TreeView::add_layer(Layer * layer, Layer * parent_layer, TreeI
 	item->setData(variant, RoleLayerData);
 	items << item;
 
-	/* LayersTreeColumn::ITEM */
+	/* LayersTreeColumn::TREE_ITEM */
 	item = new QStandardItem();
 	variant = QVariant::fromValue(layer);
 	item->setData(variant, RoleLayerData);
@@ -936,12 +926,6 @@ TreeIndex const & TreeView::add_layer(Layer * layer, Layer * parent_layer, TreeI
 
 	/* LayersTreeColumn::DATA */
 	item = new QStandardItem();
-	variant = QVariant::fromValue(data);
-	item->setData(variant, RoleLayerData);
-	items << item;
-
-	/* LayersTreeColumn::UID */
-	item = new QStandardItem((qulonglong) SG_UID_NONE);
 	variant = QVariant::fromValue(data);
 	item->setData(variant, RoleLayerData);
 	items << item;
@@ -1030,13 +1014,10 @@ TreeView::TreeView(QWidget * parent) : QTreeView(parent)
 	this->model->setHorizontalHeaderItem((int) LayersTreeColumn::PARENT_LAYER, header_item);
 
 	header_item = new QStandardItem("Item");
-	this->model->setHorizontalHeaderItem((int) LayersTreeColumn::ITEM, header_item);
+	this->model->setHorizontalHeaderItem((int) LayersTreeColumn::TREE_ITEM, header_item);
 
 	header_item = new QStandardItem("Data");
 	this->model->setHorizontalHeaderItem((int) LayersTreeColumn::DATA, header_item);
-
-	header_item = new QStandardItem("UID");
-	this->model->setHorizontalHeaderItem((int) LayersTreeColumn::UID, header_item);
 
 	header_item = new QStandardItem("Editable");
 	this->model->setHorizontalHeaderItem((int) LayersTreeColumn::EDITABLE, header_item);
@@ -1055,9 +1036,8 @@ TreeView::TreeView(QWidget * parent) : QTreeView(parent)
 	this->header()->setSectionResizeMode((int) LayersTreeColumn::VISIBLE, QHeaderView::ResizeToContents); /* This column holds only a checkbox, so let's limit its width to column label. */
 	this->header()->setSectionHidden((int) LayersTreeColumn::TREE_ITEM_TYPE, true);
 	this->header()->setSectionHidden((int) LayersTreeColumn::PARENT_LAYER, true);
-	this->header()->setSectionHidden((int) LayersTreeColumn::ITEM, true);
+	this->header()->setSectionHidden((int) LayersTreeColumn::TREE_ITEM, true);
 	this->header()->setSectionHidden((int) LayersTreeColumn::DATA, true);
-	this->header()->setSectionHidden((int) LayersTreeColumn::UID, true);
 	this->header()->setSectionHidden((int) LayersTreeColumn::EDITABLE, true);
 	this->header()->setSectionHidden((int) LayersTreeColumn::TIMESTAMP, true);
 

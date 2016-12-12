@@ -56,19 +56,18 @@ namespace SlavGPS {
 
 
 	enum class LayersTreeColumn {
-		NAME           =  0, /* From layer->name. */
-		VISIBLE        =  1, /* From layer->visible. */
-		ICON           =  2, /* Provided separately. */
+		NAME           = 0, /* From layer->name. */
+		VISIBLE        = 1, /* From layer->visible. */
+		ICON           = 2, /* Provided separately. */
 
 		/* Invisible. */
-		TREE_ITEM_TYPE =  3, /* Implicit, based on function adding an item. */
-		PARENT_LAYER   =  4, /* Function's argument. */
-		ITEM           =  5, /* Function's argument. */
-		DATA           =  6, /* Function's argument. */
-		UID            =  7, /* */
-		EDITABLE       =  8, /* */
-		TIMESTAMP      =  9, /* Date timestamp stored in tree model to enable sorting on this value. */
-		NUM_COLUMNS    = 10
+		TREE_ITEM_TYPE = 3, /* Implicit, based on function adding an item. */
+		PARENT_LAYER   = 4, /* Function's argument. */
+		TREE_ITEM      = 5, /* Function's argument. Sublcasses of class TreeItem. */
+		DATA           = 6, /* Function's argument. */
+		EDITABLE       = 7, /* */
+		TIMESTAMP      = 8, /* Date timestamp stored in tree model to enable sorting on this value. */
+		NUM_COLUMNS    = 9
 	};
 
 
@@ -78,6 +77,7 @@ namespace SlavGPS {
 
 
 	class Layer;
+	class Sublayer;
 
 
 
@@ -92,7 +92,7 @@ namespace SlavGPS {
 
 		TreeIndex const & add_layer(Layer * layer, Layer * parent_layer, TreeIndex const & parent_index, bool above, int data, time_t timestamp);
 		TreeIndex const & insert_layer(Layer * layer, Layer * parent_layer, TreeIndex const & parent_index, bool above, int data, time_t timestamp, TreeIndex const & sibling_index);
-		TreeIndex * add_sublayer(sg_uid_t sublayer_uid, SublayerType sublayer_type, Layer * parent_layer, TreeIndex const & parent_index, char const * name, QIcon * icon, bool editable, time_t timestamp);
+		TreeIndex * add_sublayer(Sublayer * sublayer, SublayerType sublayer_type, Layer * parent_layer, TreeIndex const & parent_index, char const * name, QIcon * icon, bool editable, time_t timestamp);
 
 		TreeItemType get_item_type(TreeIndex const & index);
 
