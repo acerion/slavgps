@@ -142,7 +142,7 @@ static Layer * aggregate_layer_unmarshall(uint8_t *data, int len, Viewport * vie
 
 
 
-void LayerAggregate::insert_layer(Layer * layer, TreeIndex * replace_index)
+void LayerAggregate::insert_layer(Layer * layer, TreeIndex const & replace_index)
 {
 	/* By default layers are inserted above the selected layer. */
 	bool put_above = true;
@@ -159,7 +159,7 @@ void LayerAggregate::insert_layer(Layer * layer, TreeIndex * replace_index)
 	}
 
 	if (this->realized) {
-		TreeIndex * new_index = this->tree_view->insert_layer(layer, this, this->index, put_above, (int) layer->type, layer->get_timestamp(), replace_index);
+		TreeIndex const & new_index = this->tree_view->insert_layer(layer, this, this->index, put_above, (int) layer->type, layer->get_timestamp(), replace_index);
 		if (!layer->visible) {
 			this->tree_view->set_visibility(new_index, false);
 		}
@@ -171,8 +171,8 @@ void LayerAggregate::insert_layer(Layer * layer, TreeIndex * replace_index)
 		}
 	}
 
-	if (replace_index) {
-		Layer * existing_layer = this->tree_view->get_layer(*replace_index);
+	if (replace_index.isValid()) {
+		Layer * existing_layer = this->tree_view->get_layer(replace_index);
 
 		auto theone = this->children->end();
 		for (auto i = this->children->begin(); i != this->children->end(); i++) {
@@ -225,7 +225,7 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 
 
 	if (this->realized) {
-		TreeIndex * new_index = this->tree_view->add_layer(layer, this, this->index, false, 0, layer->get_timestamp());
+		TreeIndex const & new_index = this->tree_view->add_layer(layer, this, this->index, false, 0, layer->get_timestamp());
 		if (!layer->visible) {
 			this->tree_view->set_visibility(new_index, false);
 		}
@@ -698,10 +698,12 @@ void LayerAggregate::clear()
 
 
 
-/* Delete a layer specified by \p iter. */
-bool LayerAggregate::delete_layer(TreeIndex * index)
+/* Delete a layer specified by \p index. */
+bool LayerAggregate::delete_layer(TreeIndex const & index)
 {
-	Layer * layer = this->tree_view->get_layer(*index);
+	assert(index.isValid());
+
+	Layer * layer = this->tree_view->get_layer(index);
 	bool was_visible = layer->visible;
 
 	this->tree_view->erase(index);
@@ -847,7 +849,7 @@ std::list<Layer *> * LayerAggregate::get_all_layers_of_type(std::list<Layer *> *
 
 
 
-void LayerAggregate::realize(TreeView * tree_view_, TreeIndex * layer_index)
+void LayerAggregate::realize(TreeView * tree_view_, TreeIndex const & layer_index)
 {
 	this->tree_view = tree_view_;
 	this->index = layer_index;
@@ -859,7 +861,7 @@ void LayerAggregate::realize(TreeView * tree_view_, TreeIndex * layer_index)
 
 	for (auto child = this->children->begin(); child != this->children->end(); child++) {
 		Layer * layer = *child;
-		TreeIndex * new_index = this->tree_view->add_layer(layer, this, this->index, false, 0, layer->get_timestamp());
+		TreeIndex const & new_index = this->tree_view->add_layer(layer, this, this->index, false, 0, layer->get_timestamp());
 		if (!layer->visible) {
 			this->tree_view->set_visibility(new_index, false);
 		}

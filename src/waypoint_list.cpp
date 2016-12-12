@@ -141,7 +141,7 @@ void WaypointListDialog::waypoint_select(LayerTRW * layer)
 		TreeIndex * index = trw->get_waypoints_iters().at(uid);
 
 		if (index && index->isValid()) {
-			trw->tree_view->select_and_expose(index);
+			trw->tree_view->select_and_expose(*index);
 		}
 	}
 }

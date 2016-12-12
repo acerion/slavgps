@@ -1407,7 +1407,7 @@ static LayerToolFuncStatus selecttool_click(Layer * layer, QMouseEvent * event, 
 					if (type == TreeItemType::SUBLAYER
 					    || tree_view->get_layer(*index)->type == LayerType::TRW) {
 
-						tree_view->unselect(index);
+						tree_view->unselect(*index);
 						if (tool->window->clear_highlight()) {
 							tool->window->draw_update();
 						}

@@ -995,7 +995,7 @@ bool Layer::sublayer_add_menu_items(QMenu & menu)
 
 
 
-char const * Layer::sublayer_rename_request(const char * newname, LayersPanel * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeIndex * parent_index)
+char const * Layer::sublayer_rename_request(const char * newname, LayersPanel * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeIndex const & parent_index)
 {
 	return NULL;
 }
@@ -1012,7 +1012,7 @@ bool Layer::sublayer_toggle_visible(SublayerType sublayer_type, sg_uid_t sublaye
 
 
 
-void Layer::realize(TreeView * tree_view_, TreeIndex * layer_index)
+void Layer::realize(TreeView * tree_view_, TreeIndex const & layer_index)
 {
 	this->tree_view = tree_view_;
 	this->index = layer_index;

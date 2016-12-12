@@ -81,8 +81,8 @@ namespace SlavGPS {
 
 
 		/* This should be somehow private. */
-		void item_toggled(TreeIndex * index);
-		void item_edited(TreeIndex * index, char const * new_text);
+		void item_toggled(TreeIndex const & index);
+		void item_edited(TreeIndex const & index, char const * new_text);
 		bool key_press(GdkEventKey * event);
 		void move_item(bool up);
 		bool button_press_cb(QMouseEvent * event);
@@ -92,7 +92,7 @@ namespace SlavGPS {
 		QMenu * create_context_menu(bool full);
 
 		LayerAggregate * toplayer = NULL;
-		TreeIndex * toplayer_item = NULL;
+		TreeIndex toplayer_item;
 		TreeView * tree_view = NULL;
 		Window * window = NULL; /* Reference. */
 		Viewport * viewport = NULL; /* Reference. */

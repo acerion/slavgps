@@ -90,9 +90,9 @@ namespace SlavGPS {
 
 		~TreeView();
 
-		TreeIndex * add_layer(Layer * layer, Layer * parent_layer, TreeIndex * parent_index, bool above, int data, time_t timestamp);
-		TreeIndex * insert_layer(Layer * layer, Layer * parent_layer, TreeIndex * parent_index, bool above, int data, time_t timestamp, TreeIndex * sibling_inced);
-		TreeIndex * add_sublayer(sg_uid_t sublayer_uid, SublayerType sublayer_type, Layer * parent_layer, TreeIndex * parent_index, char const * name, QIcon * icon, bool editable, time_t timestamp);
+		TreeIndex const & add_layer(Layer * layer, Layer * parent_layer, TreeIndex const & parent_index, bool above, int data, time_t timestamp);
+		TreeIndex const & insert_layer(Layer * layer, Layer * parent_layer, TreeIndex const & parent_index, bool above, int data, time_t timestamp, TreeIndex const & sibling_index);
+		TreeIndex * add_sublayer(sg_uid_t sublayer_uid, SublayerType sublayer_type, Layer * parent_layer, TreeIndex const & parent_index, char const * name, QIcon * icon, bool editable, time_t timestamp);
 
 		TreeItemType get_item_type(TreeIndex const & index);
 
@@ -102,33 +102,32 @@ namespace SlavGPS {
 		SublayerType get_sublayer_type(TreeIndex const & index);
 		sg_uid_t     get_sublayer_uid(TreeIndex const & index);
 
-		QString get_name(TreeIndex * index);
+		QString get_name(TreeIndex const & index);
 
 		TreeIndex * get_selected_item();
 		TreeIndex * get_index_at_pos(int x, int y);
 		TreeIndex * get_index_from_path_str(char const * path_str);
-		TreeIndex * get_parent_index(TreeIndex * index);
 
 
-		void set_icon(TreeIndex * index, QIcon const * icon);
-		void set_name(TreeIndex * index, QString const & name);
-		void set_visibility(TreeIndex * index, bool visible);
-		void toggle_visibility(TreeIndex * index);
-		void set_timestamp(TreeIndex * index, time_t timestamp);
+		void set_icon(TreeIndex const & index, QIcon const * icon);
+		void set_name(TreeIndex const &  index, QString const & name);
+		void set_visibility(TreeIndex const &  index, bool visible);
+		void toggle_visibility(TreeIndex const & index);
+		void set_timestamp(TreeIndex const & index, time_t timestamp);
 
 
-		void select(TreeIndex * index);
-		void select_and_expose(TreeIndex * index);
-		void unselect(TreeIndex * index);
-		void erase(TreeIndex * index);
-		bool move(TreeIndex * index, bool up);
-		bool is_visible(TreeIndex * index);
-		bool is_visible_in_tree(TreeIndex * index);
+		void select(TreeIndex const & index);
+		void select_and_expose(TreeIndex  const & index);
+		void unselect(TreeIndex const & index);
+		void erase(TreeIndex const & index);
+		bool move(TreeIndex const & index, bool up);
+		bool is_visible(TreeIndex const & index);
+		bool is_visible_in_tree(TreeIndex const & index);
 		bool get_editing();
-		void expand(TreeIndex * index);
-		void sort_children(TreeIndex * parent_index, vik_layer_sort_order_t order);
+		void expand(TreeIndex const & index);
+		void sort_children(TreeIndex const & parent_index, vik_layer_sort_order_t order);
 
-		TreeIndex * go_up_to_layer(TreeIndex * index);
+		TreeIndex const go_up_to_layer(TreeIndex const & index);
 
 		bool editing = false;
 		bool was_a_toggle = false;

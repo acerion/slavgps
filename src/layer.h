@@ -197,14 +197,14 @@ namespace SlavGPS {
 
 		virtual void add_menu_items(QMenu & menu);
 		virtual bool sublayer_add_menu_items(QMenu & menu);
-		virtual char const * sublayer_rename_request(const char * newname, LayersPanel * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeIndex * parent_index);
+		virtual char const * sublayer_rename_request(const char * newname, LayersPanel * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeIndex const & parent_index);
 		virtual bool sublayer_toggle_visible(SublayerType sublayer_type, sg_uid_t sublayer_uid);
 
 		virtual bool properties_dialog(Viewport * viewport);
 
 		/* Normally only needed for layers with sublayers. This is called when they
 		   are added to the treeview so they can add sublayers to the treeview. */
-		virtual void realize(TreeView * tree_view, TreeIndex * layer_index);
+		virtual void realize(TreeView * tree_view, TreeIndex const & layer_index);
 
 		/* bool denotes if for file I/O, as opposed to display/cut/copy etc... operations. */
 		virtual ParameterValue get_param_value(param_id_t id, bool is_file_operation) const;
@@ -254,7 +254,7 @@ namespace SlavGPS {
 		bool realized = false;
 		Viewport * viewport = NULL;  /* Simply a reference. */
 		TreeView * tree_view = NULL; /* Simply a reference. */
-		TreeIndex * index = NULL;
+		TreeIndex index;
 
 		/* For explicit "polymorphism" (function type switching). */
 		LayerType type;

@@ -65,13 +65,13 @@ namespace SlavGPS {
 		void change_coord_mode(VikCoordMode mode);
 		void drag_drop_request(Layer * src, GtkTreeIter * src_item_iter, GtkTreePath * dest_path);
 		void add_menu_items(QMenu & menu);
-		void realize(TreeView * tree_view, TreeIndex * layer_index);
+		void realize(TreeView * tree_view, TreeIndex const & layer_index);
 
 
 		void add_layer(Layer * layer, bool allow_reordering);
-		void insert_layer(Layer * layer, TreeIndex * replace_index);
+		void insert_layer(Layer * layer, TreeIndex const & replace_index);
 		void move_layer(GtkTreeIter * child_iter, bool up);
-		bool delete_layer(TreeIndex * index);
+		bool delete_layer(TreeIndex const & index);
 		void clear();
 
 

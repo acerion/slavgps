@@ -116,7 +116,7 @@ void TrackListDialog::track_select(LayerTRW * trw, Track * trk, sg_uid_t trk_uid
 	}
 
 	if (index) {
-		trw->tree_view->select_and_expose(index);
+		trw->tree_view->select_and_expose(*index);
 	}
 }
 

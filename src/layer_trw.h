@@ -167,10 +167,10 @@ namespace SlavGPS {
 		void add_menu_items(QMenu & menu);
 		bool sublayer_add_menu_items(QMenu & menu);
 
-		char const * sublayer_rename_request(const char * newname, LayersPanel * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeIndex * parent_index);
+		char const * sublayer_rename_request(const char * newname, LayersPanel * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeIndex const & parent_index);
 		bool sublayer_toggle_visible(SublayerType sublayer_type, sg_uid_t sublayer_uid);
 
-		void realize(TreeView * tree_view, TreeIndex * layer_index);
+		void realize(TreeView * tree_view, TreeIndex const & layer_index);
 		bool set_param_value(uint16_t id, ParameterValue param_value, Viewport * viewport, bool is_file_operation);
 		ParameterValue get_param_value(param_id_t id, bool is_file_operation) const;
 
@@ -213,8 +213,8 @@ namespace SlavGPS {
 		void draw_highlight_items(std::unordered_map<sg_uid_t, Track *> * tracks, std::unordered_map<sg_uid_t, Waypoint *> * waypoints, Viewport * viewport);
 
 
-		void realize_tracks(std::unordered_map<sg_uid_t, Track *> & tracks, Layer * parent_layer, TreeIndex * a_parent_index, TreeView * a_tree_view, SublayerType sublayer_type);
-		void realize_waypoints(std::unordered_map<sg_uid_t, Waypoint *> & data, Layer * parent_layer, TreeIndex * a_parent_index, TreeView * a_tree_view, SublayerType sublayer_type);
+		void realize_tracks(std::unordered_map<sg_uid_t, Track *> & tracks, Layer * parent_layer, TreeIndex const & a_parent_index, TreeView * a_tree_view, SublayerType sublayer_type);
+		void realize_waypoints(std::unordered_map<sg_uid_t, Waypoint *> & data, Layer * parent_layer, TreeIndex const & a_parent_index, TreeView * a_tree_view, SublayerType sublayer_type);
 
 
 		static void find_maxmin_in_track(const Track * trk, struct LatLon maxmin[2]);
@@ -385,17 +385,17 @@ namespace SlavGPS {
 
 		std::unordered_map<sg_uid_t, Track *> tracks;
 		std::unordered_map<sg_uid_t, TreeIndex *> tracks_iters;
-		TreeIndex * tracks_node = NULL; /* Sub-node, under which all layer's tracks are shown. */
+		TreeIndex tracks_node; /* Sub-node, under which all layer's tracks are shown. */
 		bool tracks_visible;
 
 		std::unordered_map<sg_uid_t, Track *> routes;
 		std::unordered_map<sg_uid_t, TreeIndex *> routes_iters;
-		TreeIndex * routes_node = NULL; /* Sub-node, under which all layer's routes are shown. */
+		TreeIndex routes_node; /* Sub-node, under which all layer's routes are shown. */
 		bool routes_visible;
 
 		std::unordered_map<sg_uid_t, Waypoint *> waypoints;
 		std::unordered_map<sg_uid_t, TreeIndex *> waypoints_iters;
-		TreeIndex * waypoints_node = NULL; /* Sub-node, under which all layer's waypoints are shown. */
+		TreeIndex waypoints_node; /* Sub-node, under which all layer's waypoints are shown. */
 		bool waypoints_visible;
 
 

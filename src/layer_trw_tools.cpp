@@ -296,7 +296,7 @@ bool LayerTRW::select_click(QMouseEvent * event, Viewport * viewport, LayerTool 
 		if (wp_params.closest_wp) {
 
 			/* Select. */
-			this->tree_view->select_and_expose(this->waypoints_iters.at(wp_params.closest_wp_uid));
+			this->tree_view->select_and_expose(*this->waypoints_iters.at(wp_params.closest_wp_uid));
 
 			/* Too easy to move it so must be holding shift to start immediately moving it
 			   or otherwise be previously selected but not have an image (otherwise clicking within image bounds (again) moves it). */
@@ -346,7 +346,7 @@ bool LayerTRW::select_click(QMouseEvent * event, Viewport * viewport, LayerTool 
 		if (tp_params.closest_tp) {
 
 			/* Always select + highlight the track. */
-			this->tree_view->select_and_expose(this->tracks_iters.at(tp_params.closest_track_uid));
+			this->tree_view->select_and_expose(*this->tracks_iters.at(tp_params.closest_track_uid));
 
 			tool->ed->is_waypoint = false;
 
@@ -385,7 +385,7 @@ bool LayerTRW::select_click(QMouseEvent * event, Viewport * viewport, LayerTool 
 		if (tp_params.closest_tp)  {
 
 			/* Always select + highlight the track. */
-			this->tree_view->select_and_expose(this->routes_iters.at(tp_params.closest_track_uid));
+			this->tree_view->select_and_expose(*this->routes_iters.at(tp_params.closest_track_uid));
 
 			tool->ed->is_waypoint = false;
 
@@ -666,7 +666,7 @@ static bool tool_edit_waypoint_click_cb(Layer * layer, QMouseEvent * event, Laye
 			trw->waypoint_rightclick = false;
 		}
 
-		trw->tree_view->select_and_expose(trw->waypoints_iters.at(params.closest_wp_uid));
+		trw->tree_view->select_and_expose(*trw->waypoints_iters.at(params.closest_wp_uid));
 
 		trw->current_wp = params.closest_wp;
 		trw->current_wp_uid = params.closest_wp_uid;
@@ -1473,7 +1473,7 @@ static bool tool_edit_trackpoint_click_cb(Layer * layer, QMouseEvent * event, La
 	}
 
 	if (params.closest_tp) {
-		trw->tree_view->select_and_expose(trw->tracks_iters.at(params.closest_track_uid));
+		trw->tree_view->select_and_expose(*trw->tracks_iters.at(params.closest_track_uid));
 
 		trw->selected_tp.iter = params.closest_tp_iter;
 		trw->selected_tp.valid = true;
@@ -1496,7 +1496,7 @@ static bool tool_edit_trackpoint_click_cb(Layer * layer, QMouseEvent * event, La
 	}
 
 	if (params.closest_tp) {
-		trw->tree_view->select_and_expose(trw->routes_iters.at(params.closest_track_uid));
+		trw->tree_view->select_and_expose(*trw->routes_iters.at(params.closest_track_uid));
 
 		trw->selected_tp.iter = params.closest_tp_iter;
 		trw->selected_tp.iter = params.closest_tp_iter;

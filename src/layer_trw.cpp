@@ -617,10 +617,10 @@ bool LayerTRW::find_by_date(char const * date_str, VikCoord * position, Viewport
 			struct LatLon maxmin[2] = { {0,0}, {0,0} };
 			LayerTRW::find_maxmin_in_track(df.trk, maxmin);
 			this->zoom_to_show_latlons(viewport, maxmin);
-			this->tree_view->select_and_expose(tracks_iters.at(df.trk_uid));
+			this->tree_view->select_and_expose(*tracks_iters.at(df.trk_uid));
 		} else if (df.wp) {
 			viewport->set_center_coord(&df.wp->coord, true);
-			this->tree_view->select_and_expose(waypoints_iters.at(df.wp_uid));
+			this->tree_view->select_and_expose(*waypoints_iters.at(df.wp_uid));
 		}
 		this->emit_changed();
 	}
@@ -1627,7 +1627,7 @@ QIcon * get_wp_sym_small(char *symbol)
 
 
 
-void LayerTRW::realize_tracks(std::unordered_map<sg_uid_t, Track *> & tracks, Layer * parent_layer, TreeIndex * a_parent_index, TreeView * a_tree_view, SublayerType sublayer_type)
+void LayerTRW::realize_tracks(std::unordered_map<sg_uid_t, Track *> & tracks, Layer * parent_layer, TreeIndex const & a_parent_index, TreeView * a_tree_view, SublayerType sublayer_type)
 {
 	for (auto i = tracks.begin(); i != tracks.end(); i++) {
 		Track * trk = i->second;
@@ -1657,7 +1657,7 @@ void LayerTRW::realize_tracks(std::unordered_map<sg_uid_t, Track *> & tracks, La
 		}
 
 		if (!trk->visible) {
-			a_tree_view->set_visibility(new_index, false);
+			a_tree_view->set_visibility(*new_index, false);
 		}
 	}
 }
@@ -1665,7 +1665,7 @@ void LayerTRW::realize_tracks(std::unordered_map<sg_uid_t, Track *> & tracks, La
 
 
 
-void LayerTRW::realize_waypoints(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, Layer * parent_layer, TreeIndex * a_parent_index, TreeView * a_tree_view, SublayerType sublayer_type)
+void LayerTRW::realize_waypoints(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, Layer * parent_layer, TreeIndex const & a_parent_index, TreeView * a_tree_view, SublayerType sublayer_type)
 {
 	for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
 		time_t timestamp = 0;
@@ -1678,7 +1678,7 @@ void LayerTRW::realize_waypoints(std::unordered_map<sg_uid_t, Waypoint *> & wayp
 		this->waypoints_iters.insert({{ i->first, new_index }});
 
 		if (!i->second->visible) {
-			a_tree_view->set_visibility(new_index, false);
+			a_tree_view->set_visibility(*new_index, false);
 		}
 	}
 }
@@ -1689,7 +1689,7 @@ void LayerTRW::realize_waypoints(std::unordered_map<sg_uid_t, Waypoint *> & wayp
 void LayerTRW::add_tracks_node(void)
 {
 	/* TODO: assert that this layer is realized. */
-	this->tracks_node = this->tree_view->add_sublayer(SG_UID_NONE, SublayerType::TRACKS, this, this->index, _("Tracks"), NULL, false, 0);
+	this->tracks_node = *this->tree_view->add_sublayer(SG_UID_NONE, SublayerType::TRACKS, this, this->index, _("Tracks"), NULL, false, 0);
 }
 
 
@@ -1698,7 +1698,7 @@ void LayerTRW::add_tracks_node(void)
 void LayerTRW::add_waypoints_node(void)
 {
 	/* TODO: assert that this layer is realized. */
-	this->waypoints_node = this->tree_view->add_sublayer(SG_UID_NONE, SublayerType::WAYPOINTS, this, this->index, _("Waypoints"), NULL, false, 0);
+	this->waypoints_node = *this->tree_view->add_sublayer(SG_UID_NONE, SublayerType::WAYPOINTS, this, this->index, _("Waypoints"), NULL, false, 0);
 }
 
 
@@ -1707,13 +1707,13 @@ void LayerTRW::add_waypoints_node(void)
 void LayerTRW::add_routes_node(void)
 {
 	/* TODO: assert that this layer is realized. */
-	this->routes_node = this->tree_view->add_sublayer(SG_UID_NONE, SublayerType::ROUTES, this, this->index, _("Routes"), NULL, false, 0);
+	this->routes_node = *this->tree_view->add_sublayer(SG_UID_NONE, SublayerType::ROUTES, this, this->index, _("Routes"), NULL, false, 0);
 }
 
 
 
 
-void LayerTRW::realize(TreeView * tree_view_, TreeIndex * layer_index)
+void LayerTRW::realize(TreeView * tree_view_, TreeIndex const & layer_index)
 {
 	this->tree_view = tree_view_;
 	this->index = layer_index;
@@ -2584,7 +2584,7 @@ void LayerTRW::find_waypoint_dialog_cb(void)
 			sg_uid_t wp_uid = LayerTRWc::find_uid_of_waypoint(this->waypoints, wp);
 			if (wp_uid) {
 				TreeIndex * index = this->waypoints_iters.at(wp_uid);
-				this->tree_view->select_and_expose(index);
+				this->tree_view->select_and_expose(*index);
 			}
 
 			break;
@@ -3178,7 +3178,7 @@ void LayerTRW::add_waypoint(Waypoint * wp, char const * name)
 		TreeIndex * index = this->tree_view->add_sublayer(global_wp_uid, SublayerType::WAYPOINT, this, this->waypoints_node, name, NULL /* wp->symbol */, true, timestamp);
 
 		/* Actual setting of visibility dependent on the waypoint. */
-		this->tree_view->set_visibility(index, wp->visible);
+		this->tree_view->set_visibility(*index, wp->visible);
 
 		waypoints_iters.insert({{ global_wp_uid, index }});
 
@@ -3219,7 +3219,7 @@ void LayerTRW::add_track(Track * trk, char const * name)
 		TreeIndex * index = this->tree_view->add_sublayer(global_tr_uuid, SublayerType::TRACK, this, this->tracks_node, name, NULL, true, timestamp);
 
 		/* Actual setting of visibility dependent on the track. */
-		this->tree_view->set_visibility(index, trk->visible);
+		this->tree_view->set_visibility(*index, trk->visible);
 
 		tracks_iters.insert({{ global_tr_uuid, index }});
 
@@ -3255,7 +3255,7 @@ void LayerTRW::add_route(Track * trk, char const * name)
 		TreeIndex * index = this->tree_view->add_sublayer(global_rt_uuid, SublayerType::ROUTE, this, this->routes_node, name, NULL, true, 0); /* Routes don't have times. */
 
 		/* Actual setting of visibility dependent on the route. */
-		this->tree_view->set_visibility(index, trk->visible);
+		this->tree_view->set_visibility(*index, trk->visible);
 
 		routes_iters.insert({{ global_rt_uuid, index }});
 
@@ -3522,7 +3522,7 @@ bool LayerTRW::delete_track(Track * trk)
 		TreeIndex * it = tracks_iters.at(uid);
 		if (it) {
 			qDebug() << "II: Layer TRW: erasing track" << trk->name << "from tree view";
-			this->tree_view->erase(it);
+			this->tree_view->erase(*it);
 			tracks_iters.erase(uid);
 			tracks.erase(uid); /* kamilTODO: should this line be inside of "if (it)"? */
 
@@ -3569,7 +3569,7 @@ bool LayerTRW::delete_route(Track * trk)
 		TreeIndex * it = routes_iters.at(uid);
 
 		if (it) {
-			this->tree_view->erase(it);
+			this->tree_view->erase(*it);
 			routes_iters.erase(uid);
 			routes.erase(uid); /* kamilTODO: should this line be inside of "if (it)"? */
 
@@ -3608,7 +3608,7 @@ bool LayerTRW::delete_waypoint(Waypoint * wp)
 		TreeIndex * it = waypoints_iters.at(uid);
 
 		if (it) {
-			this->tree_view->erase(it);
+			this->tree_view->erase(*it);
 			waypoints_iters.erase(uid);
 
 			this->highest_wp_number_remove_wp(wp->name);
@@ -3838,7 +3838,7 @@ void LayerTRW::waypoint_rename(Waypoint * wp, char const * new_name)
 	if (uid) {
 		TreeIndex * index = this->waypoints_iters.at(uid);
 		if (index && index->isValid()) {
-			this->tree_view->set_name(index, new_name);
+			this->tree_view->set_name(*index, new_name);
 			this->tree_view->sort_children(this->waypoints_node, this->wp_sort_order);
 		} else if (!index || !index->isValid()) {
 			qDebug() << "EE: TRW Layer: trying to rename waypoint with invalid index";
@@ -3862,7 +3862,7 @@ void LayerTRW::waypoint_reset_icon(Waypoint * wp)
 	if (uid) {
 		TreeIndex * index = this->waypoints_iters.at(uid);
 		if (index && index->isValid()) {
-			this->tree_view->set_icon(index, get_wp_sym_small(wp->symbol));
+			this->tree_view->set_icon(*index, get_wp_sym_small(wp->symbol));
 		} else if (!index || !index->isValid()) {
 			qDebug() << "EE: TRW Layer: trying to reset icon of waypoint with invalid index";
 		} else {
@@ -3972,7 +3972,7 @@ void LayerTRW::update_treeview(Track * trk)
 			QPixmap pixmap(SMALL_ICON_SIZE, SMALL_ICON_SIZE);
 			pixmap.fill(trk->color);
 			QIcon icon(pixmap);
-			this->tree_view->set_icon(index, &icon);
+			this->tree_view->set_icon(*index, &icon);
 		}
 	}
 }
@@ -5596,7 +5596,7 @@ void LayerTRW::uniquify_tracks(LayersPanel * panel, std::unordered_map<sg_uid_t,
 			}
 
 			if (index && index->isValid()) {
-				this->tree_view->set_name(index, newname);
+				this->tree_view->set_name(*index, newname);
 				if (ontrack) {
 					this->tree_view->sort_children(this->tracks_node, this->track_sort_order);
 				} else {
@@ -5620,7 +5620,7 @@ void LayerTRW::uniquify_tracks(LayersPanel * panel, std::unordered_map<sg_uid_t,
 
 void LayerTRW::sort_order_specified(SublayerType sublayer_type, vik_layer_sort_order_t order)
 {
-	TreeIndex * index = NULL;
+	TreeIndex index;
 
 	switch (sublayer_type) {
 	case SublayerType::TRACKS:
@@ -6162,7 +6162,7 @@ void LayerTRW::waypoint_webpage_cb(void)
 
 
 
-char const * LayerTRW::sublayer_rename_request(const char * newname, LayersPanel * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeIndex * index)
+char const * LayerTRW::sublayer_rename_request(const char * newname, LayersPanel * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeIndex const & sublayer_index)
 {
 	if (sublayer_type == SublayerType::WAYPOINT) {
 		Waypoint * wp = this->waypoints.at(sublayer_uid);
@@ -6186,7 +6186,7 @@ char const * LayerTRW::sublayer_rename_request(const char * newname, LayersPanel
 		/* Update WP name and refresh the treeview. */
 		wp->set_name(newname);
 
-		this->tree_view->set_name(index, newname);
+		this->tree_view->set_name(sublayer_index, newname);
 		this->tree_view->sort_children(this->waypoints_node, this->wp_sort_order);
 
 		panel->emit_update_cb();
@@ -6224,7 +6224,7 @@ char const * LayerTRW::sublayer_rename_request(const char * newname, LayersPanel
 		/* Update Track Profile dialog of the track. TODO: we need to update Track Property dialog as well. */
 		track_profile_dialog_update(trk);
 
-		this->tree_view->set_name(index, newname);
+		this->tree_view->set_name(sublayer_index, newname);
 		this->tree_view->sort_children(this->tracks_node, this->track_sort_order);
 
 		panel->emit_update_cb();
@@ -6262,7 +6262,7 @@ char const * LayerTRW::sublayer_rename_request(const char * newname, LayersPanel
 		/* Update Track Profile dialog of the track. TODO: we need to update Track Property dialog as well. */
 		track_profile_dialog_update(trk);
 
-		this->tree_view->set_name(index, newname);
+		this->tree_view->set_name(sublayer_index, newname);
 		this->tree_view->sort_children(this->tracks_node, this->track_sort_order);
 
 		panel->emit_update_cb();

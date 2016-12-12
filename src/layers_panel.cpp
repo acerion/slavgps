@@ -56,7 +56,7 @@ typedef struct {
 
 
 
-static void layers_item_edited_cb(LayersPanel * panel, TreeIndex * index, char const * new_text);
+static void layers_item_edited_cb(LayersPanel * panel, TreeIndex const & index, char const * new_text);
 static bool layers_key_press_cb(LayersPanel * panel, GdkEventKey * event);
 static void layers_move_item_up_cb(LayersPanel * panel);
 static void layers_move_item_down_cb(LayersPanel * panel);
@@ -138,7 +138,8 @@ LayersPanel::LayersPanel(Window * parent) : QWidget((QWidget *) parent)
 
 	this->toplayer = new LayerAggregate(this->window->get_viewport());
 	this->toplayer->rename(_("Top Layer"));
-	this->toplayer_item = this->tree_view->add_layer(this->toplayer, NULL, NULL, false, 0, 0);
+	TreeIndex invalid_parent_index; /* Top layer doesn't have any parent index. */
+	this->toplayer_item = this->tree_view->add_layer(this->toplayer, NULL, invalid_parent_index, false, 0, 0);
 	this->toplayer->realize(this->tree_view, this->toplayer_item);
 
 
@@ -234,23 +235,23 @@ void LayersPanel::emit_update_cb()
 
 
 /* Why do we have this function? Isn't TreeView::data_changed_cb() enough? */
-void LayersPanel::item_toggled(TreeIndex * index)
+void LayersPanel::item_toggled(TreeIndex const & index)
 {
 	/* Get type and data. */
-	TreeItemType type = this->tree_view->get_item_type(*index);
+	TreeItemType type = this->tree_view->get_item_type(index);
 
 	bool visible;
 	switch (type) {
 	case TreeItemType::LAYER: {
-		Layer * layer = this->tree_view->get_layer(*index);
+		Layer * layer = this->tree_view->get_layer(index);
 		visible = (layer->visible ^= 1);
 		layer->emit_changed_although_invisible(); /* Set trigger for half-drawn. */
 		break;
 		}
 	case TreeItemType::SUBLAYER: {
-		sg_uid_t sublayer_uid = this->tree_view->get_sublayer_uid(*index);
-		Layer * parent = this->tree_view->get_parent_layer(*index);
-		visible = parent->sublayer_toggle_visible(this->tree_view->get_sublayer_type(*index), sublayer_uid);
+		sg_uid_t sublayer_uid = this->tree_view->get_sublayer_uid(index);
+		Layer * parent = this->tree_view->get_parent_layer(index);
+		visible = parent->sublayer_toggle_visible(this->tree_view->get_sublayer_type(index), sublayer_uid);
 		parent->emit_changed_although_invisible();
 		break;
 	}
@@ -264,7 +265,7 @@ void LayersPanel::item_toggled(TreeIndex * index)
 
 
 
-static void layers_item_edited_cb(LayersPanel * panel, TreeIndex * index, char const * new_text)
+static void layers_item_edited_cb(LayersPanel * panel, TreeIndex const & index, char const * new_text)
 {
 	panel->item_edited(index, new_text);
 }
@@ -273,7 +274,7 @@ static void layers_item_edited_cb(LayersPanel * panel, TreeIndex * index, char c
 
 
 /* Why do we have this function? Isn't TreeView::data_changed_cb() enough? */
-void LayersPanel::item_edited(TreeIndex * index, char const * new_text)
+void LayersPanel::item_edited(TreeIndex const & index, char const * new_text)
 {
 	if (!new_text) {
 		return;
@@ -285,7 +286,7 @@ void LayersPanel::item_edited(TreeIndex * index, char const * new_text)
 	}
 #ifdef K
 
-	if (this->tree_view->get_item_type(*index) == TreeItemType::LAYER) {
+	if (this->tree_view->get_item_type(index) == TreeItemType::LAYER) {
 
 		/* Get index and layer. */
 		Layer * layer = this->tree_view->get_layer(index);
@@ -466,7 +467,7 @@ void LayersPanel::add_layer(Layer * layer)
 		   place for given layer to be added - a first aggregate
 		   layer that we meet going up in hierarchy. */
 
-		TreeIndex * replace_index = NULL;
+		TreeIndex replace_index;
 		Layer * current = NULL;
 
 		if (this->tree_view->get_item_type(*selected_index) == TreeItemType::SUBLAYER) {
@@ -482,14 +483,14 @@ void LayersPanel::add_layer(Layer * layer)
 		/* Go further up until you find first aggregate layer. */
 		while (current->type != LayerType::AGGREGATE) {
 			current = this->tree_view->get_parent_layer(*selected_index);
-			selected_index = current->index;
+			*selected_index = current->index;
 			assert (current->realized);
 		}
 
 
 		LayerAggregate * aggregate = (LayerAggregate *) current;
 #ifndef SLAVGPS_QT
-		if (replace_index) {
+		if (replace_index.isValid()) {
 			aggregate->insert_layer(layer, replace_index);
 		} else {
 #endif
@@ -513,7 +514,7 @@ void LayersPanel::move_item(bool up)
 		return;
 	}
 
-	this->tree_view->select(selected_index); /* Cancel any layer-name editing going on... */
+	this->tree_view->select(*selected_index); /* Cancel any layer-name editing going on... */
 	if (this->tree_view->get_item_type(*selected_index) == TreeItemType::LAYER) {
 		LayerAggregate * parent = (LayerAggregate *) this->tree_view->get_parent_layer(*selected_index);
 
@@ -690,17 +691,26 @@ Layer * LayersPanel::get_selected_layer()
 		return NULL;
 	}
 
-	TreeItemType type = this->tree_view->get_item_type(*index);
-	TreeIndex * parent = NULL;
+#if 1
+	TreeIndex const layer_index = this->tree_view->go_up_to_layer(*index);
+	if (layer_index.isValid()) {
+		return this->tree_view->get_layer(layer_index);
+	} else {
+		return NULL;
+	}
+#else
+	TreeIndex layer_index = *index;
+	TreeItemType type = this->tree_view->get_item_type(layer_index);
 	while (type != TreeItemType::LAYER) {
-		if (NULL == (parent = this->tree_view->get_parent_index(index))) {
+		TreeIndex parent = layer_index.parent();
+		if (!parent.isValid()) {
 			return NULL;
 		}
-		index = parent;
-		type = this->tree_view->get_item_type(*index);
+		type = this->tree_view->get_item_type(parent);
+		layer_index = parent;
 	}
-
-	return this->tree_view->get_layer(*index);
+	return this->tree_view->get_layer(layer_index);
+#endif
 }
 
 
