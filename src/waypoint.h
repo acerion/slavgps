@@ -33,6 +33,7 @@
 
 #include "coord.h"
 #include "globals.h"
+#include "tree_view.h"
 
 //#include <gdk-pixbuf/gdk-pixdata.h>
 
@@ -44,7 +45,7 @@ namespace SlavGPS {
 
 
 
-	class Waypoint {
+	class Waypoint : public TreeItem {
 
 	public:
 		Waypoint();

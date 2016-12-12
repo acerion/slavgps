@@ -147,7 +147,32 @@ namespace SlavGPS {
 
 
 
+	class TreeItem : public QObject {
+		Q_OBJECT
+	public:
+		TreeItem() {};
+		~TreeItem() {};
+
+		TreeIndex const & get_index(void);
+		void set_index(TreeIndex & i);
+
+		char debug_string[100] = { 0 };
+
+	//protected:
+		TreeItemType tree_item_type;
+		TreeIndex index;
+		TreeView * tree_view = NULL; /* Reference. */
+	};
+
+
+
+
 } /* namespace SlavGPS */
+
+
+
+
+Q_DECLARE_METATYPE(SlavGPS::TreeItem*);
 
 
 

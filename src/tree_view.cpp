@@ -1142,3 +1142,19 @@ void TreeView::data_changed_cb(const QModelIndex & top_left, const QModelIndex &
 		qDebug() << "EE: Tree View: edited item in column" << index->column();
 	}
 }
+
+
+
+
+TreeIndex const & TreeItem::get_index(void)
+{
+	return this->index;
+}
+
+
+
+
+void TreeItem::set_index(TreeIndex & i)
+{
+	this->index = i;
+}

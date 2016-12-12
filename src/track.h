@@ -45,6 +45,7 @@
 #include "bbox.h"
 #include "globals.h"
 #include "slav_qt.h"
+#include "tree_view.h"
 
 
 
@@ -148,7 +149,7 @@ namespace SlavGPS {
 	  they are shown.
 	*/
 
-	class Track {
+	class Track : public TreeItem {
 	public:
 
 		Track();

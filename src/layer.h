@@ -130,7 +130,22 @@ namespace SlavGPS {
 
 
 
-	class Layer : public QObject {
+	class Sublayer : public TreeItem {
+
+	public:
+		SublayerType type;
+
+		sg_uid_t get_uid(void);
+		void set_uid(sg_uid_t u);
+
+	//protected:
+		sg_uid_t uid = SG_UID_INITIAL;
+	};
+
+
+
+
+	class Layer : public TreeItem {
 		Q_OBJECT
 	public:
 
@@ -253,13 +268,9 @@ namespace SlavGPS {
 		bool visible = true;
 		bool realized = false;
 		Viewport * viewport = NULL;  /* Simply a reference. */
-		TreeView * tree_view = NULL; /* Simply a reference. */
-		TreeIndex index;
 
 		/* For explicit "polymorphism" (function type switching). */
 		LayerType type;
-
-		char debug_string[100] = { 0 };
 
 		trw_menu_sublayer_t * menu_data = NULL;
 
