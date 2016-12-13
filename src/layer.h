@@ -134,7 +134,7 @@ namespace SlavGPS {
 		Q_OBJECT
 	public:
 		Sublayer() {}
-		Sublayer(SublayerType t) { type = t; }
+		Sublayer(SublayerType t) { type = t; tree_item_type = TreeItemType::SUBLAYER; }
 		~Sublayer() {};
 
 		sg_uid_t get_uid(void);

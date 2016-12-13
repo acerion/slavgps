@@ -811,6 +811,8 @@ Layer::Layer()
 
 	strcpy(this->debug_string, "LayerType::NUM_TYPES");
 
+	this->tree_item_type = TreeItemType::LAYER; /* TODO: re-think initializing parent classes of Layer and Sublayer. */
+
 	this->menu_data = new trw_menu_sublayer_t;
 }
 
