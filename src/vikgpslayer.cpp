@@ -792,10 +792,10 @@ void LayerGPS::realize(TreeView * tree_view_, GtkTreeIter *layer_iter)
 
 	for (int ix = 0; ix < NUM_TRW; ix++) {
 		LayerTRW * trw = this->trw_children[ix];
-		// void add_layer(GtkTreeIter *parent_iter, GtkTreeIter *iter, const char *name, Layer * parent_layer, bool above, Layer * layer, int data, LayerType layer_type, time_t timestamp);
+		// void add_layer(GtkTreeIter *parent_iter, GtkTreeIter *iter, const char *name, Layer * parent_layer, bool above, Layer * layer, LayerType layer_type, time_t timestamp);
 		this->tree_view->add_layer(layer_iter, &iter,
 					   _(trw_names[ix]), this, true,
-					   trw, (int) trw->type, trw->type, trw->get_timestamp());
+					   trw, trw->type, trw->get_timestamp());
 		if (!trw->visible) {
 			this->tree_view->set_visibility(&iter, false);
 		}

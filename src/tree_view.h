@@ -56,18 +56,16 @@ namespace SlavGPS {
 
 
 	enum class LayersTreeColumn {
-		NAME           = 0, /* From layer->name. */
-		VISIBLE        = 1, /* From layer->visible. */
-		ICON           = 2, /* Provided separately. */
+		NAME           = 0, /* From item's name. Sortable column. */
+		VISIBLE        = 1, /* From item's (or item parent's) visibility. */
+		ICON           = 2,
 
-		/* Invisible. */
+		/* These columns are not visible in tree view. */
 		TREE_ITEM_TYPE = 3, /* Implicit, based on function adding an item. */
-		PARENT_LAYER   = 4, /* Function's argument. */
-		TREE_ITEM      = 5, /* Function's argument. Sublcasses of class TreeItem. */
-		DATA           = 6, /* Function's argument. */
-		EDITABLE       = 7, /* */
-		TIMESTAMP      = 8, /* Date timestamp stored in tree model to enable sorting on this value. */
-		NUM_COLUMNS    = 9
+		PARENT_LAYER   = 4, /* Parent layer of tree item. */
+		TREE_ITEM      = 5, /* Tree item to be stored in the tree. Layer, Sublayers Node, or Sublayer. */
+		EDITABLE       = 6,
+		TIMESTAMP      = 7, /* Item's timestamp. Sortable column. */
 	};
 
 
@@ -90,8 +88,8 @@ namespace SlavGPS {
 
 		~TreeView();
 
-		TreeIndex const & add_layer(Layer * layer, Layer * parent_layer, TreeIndex const & parent_index, bool above, int data, time_t timestamp);
-		TreeIndex const & insert_layer(Layer * layer, Layer * parent_layer, TreeIndex const & parent_index, bool above, int data, time_t timestamp, TreeIndex const & sibling_index);
+		TreeIndex const & add_layer(Layer * layer, Layer * parent_layer, TreeIndex const & parent_index, bool above, time_t timestamp);
+		TreeIndex const & insert_layer(Layer * layer, Layer * parent_layer, TreeIndex const & parent_index, bool above, time_t timestamp, TreeIndex const & sibling_index);
 		TreeIndex const & add_sublayer(Sublayer * sublayer, Layer * parent_layer, TreeIndex const & parent_index, char const * name, QIcon * icon, bool editable, time_t timestamp);
 
 		TreeItemType get_item_type(TreeIndex const & index);

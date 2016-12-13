@@ -139,7 +139,7 @@ LayersPanel::LayersPanel(Window * parent) : QWidget((QWidget *) parent)
 	this->toplayer = new LayerAggregate(this->window->get_viewport());
 	this->toplayer->rename(_("Top Layer"));
 	TreeIndex invalid_parent_index; /* Top layer doesn't have any parent index. */
-	this->toplayer_item = this->tree_view->add_layer(this->toplayer, NULL, invalid_parent_index, false, 0, 0);
+	this->toplayer_item = this->tree_view->add_layer(this->toplayer, NULL, invalid_parent_index, false, 0);
 	this->toplayer->realize(this->tree_view, this->toplayer_item);
 
 

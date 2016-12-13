@@ -209,10 +209,10 @@ SublayerType TreeView::get_sublayer_type(TreeIndex const & index)
 		qDebug() << "II: Tree View: querying Top Layer for item" << index.row() << index.column();
 		parent = this->model->invisibleRootItem();
 	}
-	QStandardItem * ch = parent->child(index.row(), (int) LayersTreeColumn::DATA);
+	QStandardItem * ch = parent->child(index.row(), (int) LayersTreeColumn::TREE_ITEM);
 
 	QVariant variant = ch->data(RoleLayerData);
-	return (SublayerType) variant.toInt();
+	return variant.value<Sublayer *>()->type;
 }
 
 
@@ -577,6 +577,10 @@ void TreeView::unselect(TreeIndex const & index)
 
 
 
+/*
+  TODO: improve handling of 'editable' argument.
+  Non-editable items have e.g limited number of fields in context menu.
+*/
 TreeIndex const & TreeView::add_sublayer(Sublayer * sublayer, Layer * parent_layer, TreeIndex const & parent_index, char const * name, QIcon * icon, bool editable, time_t timestamp)
 {
 	// http://www.qtforum.org/article/34069/store-user-data-void-with-qstandarditem-in-qstandarditemmodel.html
@@ -592,6 +596,7 @@ TreeIndex const & TreeView::add_sublayer(Sublayer * sublayer, Layer * parent_lay
 	/* LayersTreeColumn::NAME */
 	item = new QStandardItem(QString(name));
 	item->setToolTip(tooltip);
+	item->setEditable(editable);
 	first_item = item;
 	items << item;
 
@@ -627,12 +632,6 @@ TreeIndex const & TreeView::add_sublayer(Sublayer * sublayer, Layer * parent_lay
 	item->setData(variant, RoleLayerData);
 	items << item;
 
-	/* LayersTreeColumn::DATA */
-	item = new QStandardItem();
-	variant = QVariant::fromValue((int) sublayer->type);
-	item->setData(variant, RoleLayerData);
-	items << item;
-
 	/* LayersTreeColumn::EDITABLE */
 	item = new QStandardItem();
 	variant = QVariant::fromValue(editable);
@@ -646,8 +645,6 @@ TreeIndex const & TreeView::add_sublayer(Sublayer * sublayer, Layer * parent_lay
 	timestamp = 0;
 	item = new QStandardItem((qlonglong) timestamp);
 #endif
-	//variant = QVariant::fromValue(data);
-	//item->setData(variant, RoleLayerData);
 	items << item;
 
 
@@ -873,7 +870,7 @@ static int vik_treeview_drag_data_delete(GtkTreeDragSource *drag_source, GtkTree
 
 
 
-TreeIndex const & TreeView::add_layer(Layer * layer, Layer * parent_layer, TreeIndex const & parent_index, bool above, int data, time_t timestamp)
+TreeIndex const & TreeView::add_layer(Layer * layer, Layer * parent_layer, TreeIndex const & parent_index, bool above, time_t timestamp)
 {
 	// http://www.qtforum.org/article/34069/store-user-data-void-with-qstandarditem-in-qstandarditemmodel.html
 
@@ -926,16 +923,8 @@ TreeIndex const & TreeView::add_layer(Layer * layer, Layer * parent_layer, TreeI
 	item->setData(variant, RoleLayerData);
 	items << item;
 
-	/* LayersTreeColumn::DATA */
-	item = new QStandardItem();
-	variant = QVariant::fromValue(data);
-	item->setData(variant, RoleLayerData);
-	items << item;
-
 	/* LayersTreeColumn::EDITABLE */
 	item = new QStandardItem(parent_layer == NULL ? false : true);
-	variant = QVariant::fromValue(data);
-	item->setData(variant, RoleLayerData);
 	items << item;
 
 	/* LayersTreeColumn::TIMESTAMP */
@@ -945,8 +934,6 @@ TreeIndex const & TreeView::add_layer(Layer * layer, Layer * parent_layer, TreeI
 	timestamp = 0;
 	item = new QStandardItem((qlonglong) timestamp);
 #endif
-	variant = QVariant::fromValue(data);
-	item->setData(variant, RoleLayerData);
 	items << item;
 
 #ifdef K
@@ -972,7 +959,7 @@ TreeIndex const & TreeView::add_layer(Layer * layer, Layer * parent_layer, TreeI
 
 
 
-TreeIndex const & TreeView::insert_layer(Layer * layer, Layer * parent_layer, TreeIndex const & parent_index, bool above, int data, time_t timestamp, TreeIndex const & sibling_index)
+TreeIndex const & TreeView::insert_layer(Layer * layer, Layer * parent_layer, TreeIndex const & parent_index, bool above, time_t timestamp, TreeIndex const & sibling_index)
 {
 	/* kamilTODO: handle "sibling" */
 #ifdef K
@@ -985,7 +972,7 @@ TreeIndex const & TreeView::insert_layer(Layer * layer, Layer * parent_layer, Tr
 	} else
 #endif
 		{
-		return this->add_layer(layer, parent_layer, parent_index, above, data, timestamp);
+		return this->add_layer(layer, parent_layer, parent_index, above, timestamp);
 	}
 }
 
@@ -1018,9 +1005,6 @@ TreeView::TreeView(QWidget * parent) : QTreeView(parent)
 	header_item = new QStandardItem("Item");
 	this->model->setHorizontalHeaderItem((int) LayersTreeColumn::TREE_ITEM, header_item);
 
-	header_item = new QStandardItem("Data");
-	this->model->setHorizontalHeaderItem((int) LayersTreeColumn::DATA, header_item);
-
 	header_item = new QStandardItem("Editable");
 	this->model->setHorizontalHeaderItem((int) LayersTreeColumn::EDITABLE, header_item);
 
@@ -1039,7 +1023,6 @@ TreeView::TreeView(QWidget * parent) : QTreeView(parent)
 	this->header()->setSectionHidden((int) LayersTreeColumn::TREE_ITEM_TYPE, true);
 	this->header()->setSectionHidden((int) LayersTreeColumn::PARENT_LAYER, true);
 	this->header()->setSectionHidden((int) LayersTreeColumn::TREE_ITEM, true);
-	this->header()->setSectionHidden((int) LayersTreeColumn::DATA, true);
 	this->header()->setSectionHidden((int) LayersTreeColumn::EDITABLE, true);
 	this->header()->setSectionHidden((int) LayersTreeColumn::TIMESTAMP, true);
 

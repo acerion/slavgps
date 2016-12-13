@@ -159,7 +159,7 @@ void LayerAggregate::insert_layer(Layer * layer, TreeIndex const & replace_index
 	}
 
 	if (this->realized) {
-		TreeIndex const & new_index = this->tree_view->insert_layer(layer, this, this->index, put_above, (int) layer->type, layer->get_timestamp(), replace_index);
+		TreeIndex const & new_index = this->tree_view->insert_layer(layer, this, this->index, put_above, layer->get_timestamp(), replace_index);
 		if (!layer->visible) {
 			this->tree_view->set_visibility(new_index, false);
 		}
@@ -225,7 +225,7 @@ void LayerAggregate::add_layer(Layer * layer, bool allow_reordering)
 
 
 	if (this->realized) {
-		TreeIndex const & new_index = this->tree_view->add_layer(layer, this, this->index, false, 0, layer->get_timestamp());
+		TreeIndex const & new_index = this->tree_view->add_layer(layer, this, this->index, false, layer->get_timestamp());
 		if (!layer->visible) {
 			this->tree_view->set_visibility(new_index, false);
 		}
@@ -861,7 +861,7 @@ void LayerAggregate::realize(TreeView * tree_view_, TreeIndex const & layer_inde
 
 	for (auto child = this->children->begin(); child != this->children->end(); child++) {
 		Layer * layer = *child;
-		TreeIndex const & new_index = this->tree_view->add_layer(layer, this, this->index, false, 0, layer->get_timestamp());
+		TreeIndex const & new_index = this->tree_view->add_layer(layer, this, this->index, false, layer->get_timestamp());
 		if (!layer->visible) {
 			this->tree_view->set_visibility(new_index, false);
 		}
