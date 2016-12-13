@@ -1389,6 +1389,10 @@ static unsigned int strcase_hash(gconstpointer v)
 
 LayerTRW::~LayerTRW()
 {
+	delete this->tracks_node;
+	delete this->routes_node;
+	delete this->waypoints_node;
+
 	/* kamilTODO: call destructors of objects in these maps. */
 	this->waypoints.clear();
 	this->waypoints_iters.clear();
@@ -1627,7 +1631,7 @@ QIcon * get_wp_sym_small(char *symbol)
 
 
 
-void LayerTRW::realize_tracks(std::unordered_map<sg_uid_t, Track *> & tracks, Layer * parent_layer, TreeIndex const & a_parent_index, TreeView * a_tree_view, SublayerType sublayer_type)
+void LayerTRW::realize_tracks(std::unordered_map<sg_uid_t, Track *> & tracks, Layer * parent_layer, TreeIndex const & a_parent_index, TreeView * a_tree_view)
 {
 	for (auto i = tracks.begin(); i != tracks.end(); i++) {
 		Track * trk = i->second;
@@ -1646,19 +1650,19 @@ void LayerTRW::realize_tracks(std::unordered_map<sg_uid_t, Track *> & tracks, La
 		}
 
 		trk->set_uid(i->first);
-		TreeIndex * new_index = a_tree_view->add_sublayer(trk, sublayer_type, parent_layer, a_parent_index, trk->name, icon, true, timestamp);
+		a_tree_view->add_sublayer(trk, parent_layer, a_parent_index, trk->name, icon, true, timestamp);
 
 		delete icon;
 
 
 		if (trk->is_route) {
-			this->routes_iters.insert({{ i->first, new_index }});
+			this->routes_iters.insert({{ i->first, &trk->index }});
 		} else {
-			this->tracks_iters.insert({{ i->first, new_index }});
+			this->tracks_iters.insert({{ i->first, &trk->index }});
 		}
 
 		if (!trk->visible) {
-			a_tree_view->set_visibility(*new_index, false);
+			a_tree_view->set_visibility(trk->index, false);
 		}
 	}
 }
@@ -1666,7 +1670,7 @@ void LayerTRW::realize_tracks(std::unordered_map<sg_uid_t, Track *> & tracks, La
 
 
 
-void LayerTRW::realize_waypoints(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, Layer * parent_layer, TreeIndex const & a_parent_index, TreeView * a_tree_view, SublayerType sublayer_type)
+void LayerTRW::realize_waypoints(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, Layer * parent_layer, TreeIndex const & a_parent_index, TreeView * a_tree_view)
 {
 	for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
 		time_t timestamp = 0;
@@ -1675,12 +1679,12 @@ void LayerTRW::realize_waypoints(std::unordered_map<sg_uid_t, Waypoint *> & wayp
 		}
 
 		i->second->set_uid(i->first);
-		TreeIndex * new_index = a_tree_view->add_sublayer(i->second, sublayer_type, parent_layer, a_parent_index, i->second->name, NULL /* i->second->symbol */, true, timestamp);
+		a_tree_view->add_sublayer(i->second, parent_layer, a_parent_index, i->second->name, NULL /* i->second->symbol */, true, timestamp);
 
-		this->waypoints_iters.insert({{ i->first, new_index }});
+		this->waypoints_iters.insert({{ i->first, &i->second->index }});
 
 		if (!i->second->visible) {
-			a_tree_view->set_visibility(*new_index, false);
+			a_tree_view->set_visibility(i->second->index, false);
 		}
 	}
 }
@@ -1690,9 +1694,9 @@ void LayerTRW::realize_waypoints(std::unordered_map<sg_uid_t, Waypoint *> & wayp
 
 void LayerTRW::add_tracks_node(void)
 {
+	this->tracks_node = new Sublayer(SublayerType::TRACKS);
 	/* TODO: assert that this layer is realized. */
-	/* TODO: who will delete first argument to this method? */
-	this->tracks_node = *this->tree_view->add_sublayer(new Sublayer(SublayerType::TRACKS), SublayerType::TRACKS, this, this->index, _("Tracks"), NULL, false, 0);
+	this->tree_view->add_sublayer(this->tracks_node, this, this->index, _("Tracks"), NULL, false, 0);
 }
 
 
@@ -1701,8 +1705,8 @@ void LayerTRW::add_tracks_node(void)
 void LayerTRW::add_waypoints_node(void)
 {
 	/* TODO: assert that this layer is realized. */
-	/* TODO: who will delete first argument to this method? */
-	this->waypoints_node = *this->tree_view->add_sublayer(new Sublayer(SublayerType::WAYPOINTS), SublayerType::WAYPOINTS, this, this->index, _("Waypoints"), NULL, false, 0);
+	this->waypoints_node = new Sublayer(SublayerType::WAYPOINTS);
+	this->tree_view->add_sublayer(this->waypoints_node, this, this->index, _("Waypoints"), NULL, false, 0);
 }
 
 
@@ -1711,8 +1715,8 @@ void LayerTRW::add_waypoints_node(void)
 void LayerTRW::add_routes_node(void)
 {
 	/* TODO: assert that this layer is realized. */
-	/* TODO: who will delete first argument to this method? */
-	this->routes_node = *this->tree_view->add_sublayer(new Sublayer(SublayerType::ROUTES), SublayerType::ROUTES, this, this->index, _("Routes"), NULL, false, 0);
+	this->routes_node = new Sublayer(SublayerType::ROUTES);
+	this->tree_view->add_sublayer(this->routes_node, this, this->index, _("Routes"), NULL, false, 0);
 }
 
 
@@ -1727,22 +1731,22 @@ void LayerTRW::realize(TreeView * tree_view_, TreeIndex const & layer_index)
 	if (this->tracks.size() > 0) {
 		this->add_tracks_node();
 		/* Notice that parent layer is "this", but index of direct parent node is index of "tracks" node. */
-		this->realize_tracks(this->tracks, this, this->tracks_node, tree_view_, SublayerType::TRACK);
-		this->tree_view->set_visibility(this->tracks_node, this->tracks_visible);
+		this->realize_tracks(this->tracks, this, this->tracks_node->get_index(), tree_view_);
+		this->tree_view->set_visibility(this->tracks_node->get_index(), this->tracks_visible);
 	}
 
 	if (this->routes.size() > 0) {
 		this->add_routes_node();
 		/* Notice that parent layer is "this", but index of direct parent node is index of "routes" node. */
-		this->realize_tracks(this->routes, this, this->routes_node, tree_view_, SublayerType::ROUTE);
-		this->tree_view->set_visibility(this->routes_node, this->routes_visible);
+		this->realize_tracks(this->routes, this, this->routes_node->get_index(), tree_view_);
+		this->tree_view->set_visibility(this->routes_node->get_index(), this->routes_visible);
 	}
 
 	if (this->waypoints.size() > 0) {
 		this->add_waypoints_node();
 		/* Notice that parent layer is "this", but index of direct parent node is index of "waypoints" node. */
-		this->realize_waypoints(this->waypoints, this, this->waypoints_node, tree_view_, SublayerType::WAYPOINT);
-		this->tree_view->set_visibility(this->waypoints_node, this->waypoints_visible);
+		this->realize_waypoints(this->waypoints, this, this->waypoints_node->get_index(), tree_view_);
+		this->tree_view->set_visibility(this->waypoints_node->get_index(), this->waypoints_visible);
 	}
 
 	this->verify_thumbnails();
@@ -3185,15 +3189,15 @@ void LayerTRW::add_waypoint(Waypoint * wp, char const * name)
 
 		/* Visibility column always needed for waypoints. */
 		wp->set_uid(global_wp_uid);
-		TreeIndex * index = this->tree_view->add_sublayer(wp, SublayerType::WAYPOINT, this, this->waypoints_node, name, NULL /* wp->symbol */, true, timestamp);
+		this->tree_view->add_sublayer(wp, this, this->waypoints_node->get_index(), name, NULL /* wp->symbol */, true, timestamp);
 
 		/* Actual setting of visibility dependent on the waypoint. */
-		this->tree_view->set_visibility(*index, wp->visible);
+		this->tree_view->set_visibility(wp->index, wp->visible);
 
-		waypoints_iters.insert({{ global_wp_uid, index }});
+		waypoints_iters.insert({{ global_wp_uid, &wp->index }});
 
 		/* Sort now as post_read is not called on a realized waypoint. */
-		this->tree_view->sort_children(this->waypoints_node, this->wp_sort_order);
+		this->tree_view->sort_children(this->waypoints_node->get_index(), this->wp_sort_order);
 	}
 
 	this->highest_wp_number_add_wp(name);
@@ -3227,15 +3231,15 @@ void LayerTRW::add_track(Track * trk, char const * name)
 
 		/* Visibility column always needed for tracks. */
 		trk->set_uid(global_tr_uuid);
-		TreeIndex * index = this->tree_view->add_sublayer(trk, SublayerType::TRACK, this, this->tracks_node, name, NULL, true, timestamp);
+		this->tree_view->add_sublayer(trk, this, this->tracks_node->get_index(), name, NULL, true, timestamp);
 
 		/* Actual setting of visibility dependent on the track. */
-		this->tree_view->set_visibility(*index, trk->visible);
+		this->tree_view->set_visibility(trk->index, trk->visible);
 
-		tracks_iters.insert({{ global_tr_uuid, index }});
+		tracks_iters.insert({{ global_tr_uuid, &trk->index }});
 
 		/* Sort now as post_read is not called on a realized track. */
-		this->tree_view->sort_children(this->tracks_node, this->track_sort_order);
+		this->tree_view->sort_children(this->tracks_node->get_index(), this->track_sort_order);
 	}
 
 	tracks.insert({{ global_tr_uuid, trk }});
@@ -3264,15 +3268,15 @@ void LayerTRW::add_route(Track * trk, char const * name)
 
 		/* Visibility column always needed for routes. */
 		trk->set_uid(global_rt_uuid);
-		TreeIndex * index = this->tree_view->add_sublayer(trk, SublayerType::ROUTE, this, this->routes_node, name, NULL, true, 0); /* Routes don't have times. */
+		this->tree_view->add_sublayer(trk, this, this->routes_node->get_index(), name, NULL, true, 0); /* Routes don't have times. */
 
 		/* Actual setting of visibility dependent on the route. */
-		this->tree_view->set_visibility(*index, trk->visible);
+		this->tree_view->set_visibility(trk->index, trk->visible);
 
-		routes_iters.insert({{ global_rt_uuid, index }});
+		routes_iters.insert({{ global_rt_uuid, &trk->index }});
 
 		/* Sort now as post_read is not called on a realized route. */
-		this->tree_view->sort_children(this->routes_node, this->track_sort_order);
+		this->tree_view->sort_children(this->routes_node->get_index(), this->track_sort_order);
 	}
 
 	routes.insert({{ global_rt_uuid, trk }});
@@ -3540,7 +3544,7 @@ bool LayerTRW::delete_track(Track * trk)
 
 			/* If last sublayer, then remove sublayer container. */
 			if (tracks.size() == 0) {
-				this->tree_view->erase(this->tracks_node);
+				this->tree_view->erase(this->tracks_node->get_index());
 			}
 		}
 		/* In case it was selected (no item delete signal ATM). */
@@ -3587,7 +3591,7 @@ bool LayerTRW::delete_route(Track * trk)
 
 			/* If last sublayer, then remove sublayer container. */
 			if (routes.size() == 0) {
-				this->tree_view->erase(this->routes_node);
+				this->tree_view->erase(this->routes_node->get_index());
 			}
 		}
 		/* In case it was selected (no item delete signal ATM). */
@@ -3630,7 +3634,7 @@ bool LayerTRW::delete_waypoint(Waypoint * wp)
 
 			/* If last sublayer, then remove sublayer container. */
 			if (waypoints.size() == 0) {
-				this->tree_view->erase(this->waypoints_node);
+				this->tree_view->erase(this->waypoints_node->get_index());
 			}
 		}
 		/* In case it was selected (no item delete signal ATM). */
@@ -3699,7 +3703,7 @@ void LayerTRW::delete_all_routes()
 	this->routes_iters.clear(); /* kamilTODO: call destructors of route iters. */
 	this->routes.clear(); /* kamilTODO: call destructors of routes. */
 
-	this->tree_view->erase(this->routes_node);
+	this->tree_view->erase(this->routes_node->get_index());
 
 	this->emit_changed();
 }
@@ -3719,7 +3723,7 @@ void LayerTRW::delete_all_tracks()
 	this->tracks_iters.clear();
 	this->tracks.clear(); /* kamilTODO: call destructors of tracks. */
 
-	this->tree_view->erase(this->tracks_node);
+	this->tree_view->erase(this->tracks_node->get_index());
 
 	this->emit_changed();
 }
@@ -3739,7 +3743,7 @@ void LayerTRW::delete_all_waypoints()
 	this->waypoints_iters.clear();
 	this->waypoints.clear(); /* kamilTODO: does this really call destructors of Waypoints? */
 
-	this->tree_view->erase(this->waypoints_node);
+	this->tree_view->erase(this->waypoints_node->get_index());
 
 	this->emit_changed();
 }
@@ -3851,7 +3855,7 @@ void LayerTRW::waypoint_rename(Waypoint * wp, char const * new_name)
 		TreeIndex * index = this->waypoints_iters.at(uid);
 		if (index && index->isValid()) {
 			this->tree_view->set_name(*index, new_name);
-			this->tree_view->sort_children(this->waypoints_node, this->wp_sort_order);
+			this->tree_view->sort_children(this->waypoints_node->get_index(), this->wp_sort_order);
 		} else if (!index || !index->isValid()) {
 			qDebug() << "EE: TRW Layer: trying to rename waypoint with invalid index";
 		} else {
@@ -5610,9 +5614,9 @@ void LayerTRW::uniquify_tracks(LayersPanel * panel, std::unordered_map<sg_uid_t,
 			if (index && index->isValid()) {
 				this->tree_view->set_name(*index, newname);
 				if (ontrack) {
-					this->tree_view->sort_children(this->tracks_node, this->track_sort_order);
+					this->tree_view->sort_children(this->tracks_node->get_index(), this->track_sort_order);
 				} else {
-					this->tree_view->sort_children(this->routes_node, this->track_sort_order);
+					this->tree_view->sort_children(this->routes_node->get_index(), this->track_sort_order);
 				}
 			}
 		}
@@ -5636,15 +5640,15 @@ void LayerTRW::sort_order_specified(SublayerType sublayer_type, vik_layer_sort_o
 
 	switch (sublayer_type) {
 	case SublayerType::TRACKS:
-		index = this->tracks_node;
+		index = this->tracks_node->get_index();
 		this->track_sort_order = order;
 		break;
 	case SublayerType::ROUTES:
-		index = this->routes_node;
+		index = this->routes_node->get_index();
 		this->track_sort_order = order;
 		break;
 	default: // SublayerType::WAYPOINTS:
-		index = this->waypoints_node;
+		index = this->waypoints_node->get_index();
 		this->wp_sort_order = order;
 		break;
 	}
@@ -6199,7 +6203,7 @@ char const * LayerTRW::sublayer_rename_request(const char * newname, LayersPanel
 		wp->set_name(newname);
 
 		this->tree_view->set_name(sublayer_index, newname);
-		this->tree_view->sort_children(this->waypoints_node, this->wp_sort_order);
+		this->tree_view->sort_children(this->waypoints_node->get_index(), this->wp_sort_order);
 
 		panel->emit_update_cb();
 
@@ -6237,7 +6241,7 @@ char const * LayerTRW::sublayer_rename_request(const char * newname, LayersPanel
 		track_profile_dialog_update(trk);
 
 		this->tree_view->set_name(sublayer_index, newname);
-		this->tree_view->sort_children(this->tracks_node, this->track_sort_order);
+		this->tree_view->sort_children(this->tracks_node->get_index(), this->track_sort_order);
 
 		panel->emit_update_cb();
 
@@ -6275,7 +6279,7 @@ char const * LayerTRW::sublayer_rename_request(const char * newname, LayersPanel
 		track_profile_dialog_update(trk);
 
 		this->tree_view->set_name(sublayer_index, newname);
-		this->tree_view->sort_children(this->tracks_node, this->track_sort_order);
+		this->tree_view->sort_children(this->tracks_node->get_index(), this->track_sort_order);
 
 		panel->emit_update_cb();
 
@@ -6850,15 +6854,15 @@ void LayerTRW::sort_all()
 
 	/* Obviously need 2 to tango - sorting with only 1 (or less) is a lonely activity! */
 	if (this->tracks.size() > 1) {
-		this->tree_view->sort_children(this->tracks_node, this->track_sort_order);
+		this->tree_view->sort_children(this->tracks_node->get_index(), this->track_sort_order);
 	}
 
 	if (this->routes.size() > 1) {
-		this->tree_view->sort_children(this->routes_node, this->track_sort_order);
+		this->tree_view->sort_children(this->routes_node->get_index(), this->track_sort_order);
 	}
 
 	if (this->waypoints.size() > 1) {
-		this->tree_view->sort_children(this->waypoints_node, this->wp_sort_order);
+		this->tree_view->sort_children(this->waypoints_node->get_index(), this->wp_sort_order);
 	}
 }
 

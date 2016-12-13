@@ -213,8 +213,8 @@ namespace SlavGPS {
 		void draw_highlight_items(std::unordered_map<sg_uid_t, Track *> * tracks, std::unordered_map<sg_uid_t, Waypoint *> * waypoints, Viewport * viewport);
 
 
-		void realize_tracks(std::unordered_map<sg_uid_t, Track *> & tracks, Layer * parent_layer, TreeIndex const & a_parent_index, TreeView * a_tree_view, SublayerType sublayer_type);
-		void realize_waypoints(std::unordered_map<sg_uid_t, Waypoint *> & data, Layer * parent_layer, TreeIndex const & a_parent_index, TreeView * a_tree_view, SublayerType sublayer_type);
+		void realize_tracks(std::unordered_map<sg_uid_t, Track *> & tracks, Layer * parent_layer, TreeIndex const & a_parent_index, TreeView * a_tree_view);
+		void realize_waypoints(std::unordered_map<sg_uid_t, Waypoint *> & data, Layer * parent_layer, TreeIndex const & a_parent_index, TreeView * a_tree_view);
 
 
 		static void find_maxmin_in_track(const Track * trk, struct LatLon maxmin[2]);
@@ -385,17 +385,17 @@ namespace SlavGPS {
 
 		std::unordered_map<sg_uid_t, Track *> tracks;
 		std::unordered_map<sg_uid_t, TreeIndex *> tracks_iters;
-		TreeIndex tracks_node; /* Sub-node, under which all layer's tracks are shown. */
+		Sublayer * tracks_node = NULL; /* Sub-node, under which all layer's tracks are shown. */
 		bool tracks_visible;
 
 		std::unordered_map<sg_uid_t, Track *> routes;
 		std::unordered_map<sg_uid_t, TreeIndex *> routes_iters;
-		TreeIndex routes_node; /* Sub-node, under which all layer's routes are shown. */
+		Sublayer * routes_node = NULL; /* Sub-node, under which all layer's routes are shown. */
 		bool routes_visible;
 
 		std::unordered_map<sg_uid_t, Waypoint *> waypoints;
 		std::unordered_map<sg_uid_t, TreeIndex *> waypoints_iters;
-		TreeIndex waypoints_node; /* Sub-node, under which all layer's waypoints are shown. */
+		Sublayer * waypoints_node = NULL; /* Sub-node, under which all layer's waypoints are shown. */
 		bool waypoints_visible;
 
 

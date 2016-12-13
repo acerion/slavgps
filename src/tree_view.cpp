@@ -577,7 +577,7 @@ void TreeView::unselect(TreeIndex const & index)
 
 
 
-TreeIndex * TreeView::add_sublayer(Sublayer * sublayer, SublayerType sublayer_type, Layer * parent_layer, TreeIndex const & parent_index, char const * name, QIcon * icon, bool editable, time_t timestamp)
+TreeIndex const & TreeView::add_sublayer(Sublayer * sublayer, Layer * parent_layer, TreeIndex const & parent_index, char const * name, QIcon * icon, bool editable, time_t timestamp)
 {
 	// http://www.qtforum.org/article/34069/store-user-data-void-with-qstandarditem-in-qstandarditemmodel.html
 
@@ -586,7 +586,7 @@ TreeIndex * TreeView::add_sublayer(Sublayer * sublayer, SublayerType sublayer_ty
 	QStandardItem * first_item = NULL;
 	QVariant variant;
 
-	QString tooltip = parent_layer->sublayer_tooltip(sublayer_type, sublayer ? sublayer->uid : SG_UID_INITIAL);
+	QString tooltip = parent_layer->sublayer_tooltip(sublayer->type, sublayer ? sublayer->uid : SG_UID_INITIAL);
 
 
 	/* LayersTreeColumn::NAME */
@@ -629,7 +629,7 @@ TreeIndex * TreeView::add_sublayer(Sublayer * sublayer, SublayerType sublayer_ty
 
 	/* LayersTreeColumn::DATA */
 	item = new QStandardItem();
-	variant = QVariant::fromValue((int) sublayer_type);
+	variant = QVariant::fromValue((int) sublayer->type);
 	item->setData(variant, RoleLayerData);
 	items << item;
 
@@ -660,7 +660,9 @@ TreeIndex * TreeView::add_sublayer(Sublayer * sublayer, SublayerType sublayer_ty
 	}
 	//connect(this->model, SIGNAL(itemChanged(QStandardItem*)), layer, SLOT(visibility_toggled_cb(QStandardItem *)));
 
-	return new QPersistentModelIndex(first_item->index());
+	sublayer->index = QPersistentModelIndex(first_item->index());
+
+	return sublayer->index;
 }
 
 
