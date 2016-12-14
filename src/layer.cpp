@@ -563,9 +563,9 @@ Layer::~Layer()
 
 
 
-bool Layer::layer_selected(SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeItemType type)
+bool Layer::layer_selected(TreeItemType type, Sublayer * sublayer)
 {
-	bool result = this->selected(sublayer_type, sublayer_uid, type);
+	bool result = this->selected(type, sublayer);
 	if (result) {
 		return result;
 	} else {
@@ -867,7 +867,7 @@ QString Layer::tooltip()
 
 
 
-QString Layer::sublayer_tooltip(SublayerType sublayer_type, sg_uid_t sublayer_uid)
+QString Layer::sublayer_tooltip(Sublayer * sublayer)
 {
 	return QString("Layer::sublayer_tooltip");
 }
@@ -875,7 +875,7 @@ QString Layer::sublayer_tooltip(SublayerType sublayer_type, sg_uid_t sublayer_ui
 
 
 
-bool Layer::selected(SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeItemType type)
+bool Layer::selected(TreeItemType type, Sublayer * sublayer)
 {
 	return false;
 }
@@ -908,7 +908,7 @@ uint16_t Layer::get_menu_selection()
 
 
 
-void Layer::cut_sublayer(SublayerType sublayer_type, sg_uid_t sublayer_uid)
+void Layer::cut_sublayer(Sublayer * sublayer)
 {
 	return;
 }
@@ -916,7 +916,7 @@ void Layer::cut_sublayer(SublayerType sublayer_type, sg_uid_t sublayer_uid)
 
 
 
-void Layer::copy_sublayer(SublayerType sublayer_type, sg_uid_t sublayer_uid, uint8_t ** item, unsigned int * len)
+void Layer::copy_sublayer(Sublayer * sublayer, uint8_t ** item, unsigned int * len)
 {
 	return;
 }
@@ -924,7 +924,7 @@ void Layer::copy_sublayer(SublayerType sublayer_type, sg_uid_t sublayer_uid, uin
 
 
 
-bool Layer::paste_sublayer(SublayerType sublayer_type, uint8_t * item, size_t len)
+bool Layer::paste_sublayer(Sublayer * sublayer, uint8_t * item, size_t len)
 {
 	return false;
 }
@@ -932,7 +932,7 @@ bool Layer::paste_sublayer(SublayerType sublayer_type, uint8_t * item, size_t le
 
 
 
-void Layer::delete_sublayer(SublayerType sublayer_type, sg_uid_t sublayer_uid)
+void Layer::delete_sublayer(Sublayer * sublayer)
 {
 	return;
 }
@@ -997,7 +997,7 @@ bool Layer::sublayer_add_menu_items(QMenu & menu)
 
 
 
-char const * Layer::sublayer_rename_request(const char * newname, LayersPanel * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeIndex const & parent_index)
+char const * Layer::sublayer_rename_request(Sublayer * sublayer, const char * newname, LayersPanel * panel)
 {
 	return NULL;
 }
@@ -1005,7 +1005,7 @@ char const * Layer::sublayer_rename_request(const char * newname, LayersPanel * 
 
 
 
-bool Layer::sublayer_toggle_visible(SublayerType sublayer_type, sg_uid_t sublayer_uid)
+bool Layer::sublayer_toggle_visible(Sublayer * sublayer)
 {
 	/* If unknown, will always be visible. */
 	return true;

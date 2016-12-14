@@ -219,41 +219,6 @@ Sublayer * TreeView::get_sublayer(TreeIndex const & index)
 
 
 
-SublayerType TreeView::get_sublayer_type(TreeIndex const & index)
-{
-	QStandardItem * parent = this->model->itemFromIndex(index.parent());
-	if (!parent) {
-		/* "index" points at the "Top Layer" layer. */
-		qDebug() << "II: Tree View: querying Top Layer for item" << index.row() << index.column();
-		parent = this->model->invisibleRootItem();
-	}
-	QStandardItem * ch = parent->child(index.row(), (int) LayersTreeColumn::TREE_ITEM);
-
-	QVariant variant = ch->data(RoleLayerData);
-	return variant.value<Sublayer *>()->type;
-}
-
-
-
-
-sg_uid_t TreeView::get_sublayer_uid(TreeIndex const & index)
-{
-	QStandardItem * parent = this->model->itemFromIndex(index.parent());
-	if (!parent) {
-		/* "index" points at the "Top Layer" layer. */
-		qDebug() << "II: Tree View: querying Top Layer for item" << index.row() << index.column();
-		parent = this->model->invisibleRootItem();
-	}
-	QStandardItem * ch = parent->child(index.row(), (int) LayersTreeColumn::TREE_ITEM);
-
-	QVariant variant = ch->data(RoleLayerData);
-	// http://www.qtforum.org/article/34069/store-user-data-void-with-qstandarditem-in-qstandarditemmodel.html
-	return variant.value<Sublayer *>()->get_uid();
-}
-
-
-
-
 void TreeView::set_timestamp(TreeIndex const & index, time_t timestamp)
 {
 	QStandardItem * parent = this->model->itemFromIndex(index.parent());
@@ -342,17 +307,15 @@ void TreeView::select_cb(void) /* Slot. */
 	Window * window = layer->get_window();
 	TreeItemType tree_item_type = this->get_item_type(index);
 
-	SublayerType sublayer_type = SublayerType::NONE;
-	sg_uid_t sublayer_uid = SG_UID_NONE;
+	Sublayer * sublayer = NULL;
 	if (tree_item_type == TreeItemType::SUBLAYER && layer->type == LayerType::TRW) {
-		sublayer_type = this->get_sublayer_type(index);
-		sublayer_uid = this->get_sublayer_uid(index);
+		sublayer = this->get_sublayer(index);
 	}
 
 	window->selected_layer(layer);
 
 	/* Apply settings now we have the all details. */
-	if (layer->layer_selected(sublayer_type, sublayer_uid, tree_item_type)) {
+	if (layer->layer_selected(tree_item_type, sublayer)) {
 
 		/* Redraw required. */
 		window->get_layers_panel()->emit_update_cb();
@@ -617,7 +580,7 @@ TreeIndex const & TreeView::add_sublayer(Sublayer * sublayer, Layer * parent_lay
 	QStandardItem * first_item = NULL;
 	QVariant variant;
 
-	QString tooltip = parent_layer->sublayer_tooltip(sublayer->type, sublayer ? sublayer->uid : SG_UID_INITIAL);
+	QString tooltip = parent_layer->sublayer_tooltip(sublayer);
 
 
 	/* LayersTreeColumn::NAME */

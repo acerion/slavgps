@@ -180,10 +180,10 @@ namespace SlavGPS {
 
 		virtual void draw(Viewport * viewport);
 		virtual QString tooltip();
-		virtual QString sublayer_tooltip(SublayerType sublayer_type, sg_uid_t sublayer_uid);
+		virtual QString sublayer_tooltip(Sublayer * sublayer);
 
-		virtual bool selected(SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeItemType type);
-		bool layer_selected(SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeItemType type);
+		virtual bool selected(TreeItemType type, Sublayer * sublayer);
+		bool layer_selected(TreeItemType type, Sublayer * sublayer);
 
 		virtual bool show_selected_viewport_menu(QMouseEvent * event, Viewport * viewport);
 
@@ -195,10 +195,10 @@ namespace SlavGPS {
 		virtual void set_menu_selection(uint16_t selection);
 		virtual uint16_t get_menu_selection();
 
-		virtual void cut_sublayer(SublayerType sublayer_type, sg_uid_t sublayer_uid);
-		virtual void copy_sublayer(SublayerType sublayer_type, sg_uid_t sublayer_uid, uint8_t ** item, unsigned int * len);
-		virtual bool paste_sublayer(SublayerType sublayer_type, uint8_t * item, size_t len);
-		virtual void delete_sublayer(SublayerType sublayer_type, sg_uid_t sublayer_uid);
+		virtual void cut_sublayer(Sublayer * sublayer);
+		virtual void copy_sublayer(Sublayer * sublayer, uint8_t ** item, unsigned int * len);
+		virtual bool paste_sublayer(Sublayer * sublayer, uint8_t * item, size_t len);
+		virtual void delete_sublayer(Sublayer * sublayer);
 
 		virtual void change_coord_mode(VikCoordMode dest_mode);
 
@@ -215,8 +215,8 @@ namespace SlavGPS {
 
 		virtual void add_menu_items(QMenu & menu);
 		virtual bool sublayer_add_menu_items(QMenu & menu);
-		virtual char const * sublayer_rename_request(const char * newname, LayersPanel * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeIndex const & parent_index);
-		virtual bool sublayer_toggle_visible(SublayerType sublayer_type, sg_uid_t sublayer_uid);
+		virtual char const * sublayer_rename_request(Sublayer * sublayer, const char * newname, LayersPanel * panel);
+		virtual bool sublayer_toggle_visible(Sublayer * sublayer);
 
 		virtual bool properties_dialog(Viewport * viewport);
 
@@ -424,12 +424,11 @@ namespace SlavGPS {
 
 	class trw_menu_sublayer_t {
 	public:
-		LayersPanel * layers_panel = NULL;
-		SublayerType sublayer_type = SublayerType::NONE;
-		sg_uid_t sublayer_uid = SG_UID_INITIAL;
-		bool confirm = false;
+		Sublayer * sublayer = NULL;
 		Viewport * viewport = NULL;
-		TreeIndex * index = NULL;
+		LayersPanel * layers_panel = NULL;
+
+		bool confirm = false;
 		void * misc = NULL;
 	};
 

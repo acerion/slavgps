@@ -135,9 +135,9 @@ namespace SlavGPS {
 		void draw(Viewport * viewport);
 		void post_read(Viewport * viewport, bool from_file);
 		QString tooltip();
-		QString sublayer_tooltip(SublayerType sublayer_type, sg_uid_t sublayer_uid);
+		QString sublayer_tooltip(Sublayer * sublayer);
 
-		bool selected(SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeItemType type);
+		bool selected(TreeItemType type, Sublayer * sublayer);
 
 		bool show_selected_viewport_menu(QMouseEvent * event, Viewport * viewport);
 
@@ -150,10 +150,10 @@ namespace SlavGPS {
 
 		void marshall(uint8_t ** data, int * len);
 
-		void cut_sublayer(SublayerType sublayer_type, sg_uid_t sublayer_uid);
-		void copy_sublayer(SublayerType sublayer_type, sg_uid_t sublayer_uid, uint8_t ** item, unsigned int * len);
-		bool paste_sublayer(SublayerType sublayer_type, uint8_t * item, size_t len);
-		void delete_sublayer(SublayerType sublayer_type, sg_uid_t sublayer_uid);
+		void cut_sublayer(Sublayer * sublayer);
+		void copy_sublayer(Sublayer * sublayer, uint8_t ** item, unsigned int * len);
+		bool paste_sublayer(Sublayer * sublayer, uint8_t * item, size_t len);
+		void delete_sublayer(Sublayer * sublayer);
 
 		void change_coord_mode(VikCoordMode dest_mode);
 
@@ -167,8 +167,8 @@ namespace SlavGPS {
 		void add_menu_items(QMenu & menu);
 		bool sublayer_add_menu_items(QMenu & menu);
 
-		char const * sublayer_rename_request(const char * newname, LayersPanel * panel, SublayerType sublayer_type, sg_uid_t sublayer_uid, TreeIndex const & parent_index);
-		bool sublayer_toggle_visible(SublayerType sublayer_type, sg_uid_t sublayer_uid);
+		char const * sublayer_rename_request(Sublayer * sublayer, const char * newname, LayersPanel * panel);
+		bool sublayer_toggle_visible(Sublayer * sublayer);
 
 		void realize(TreeView * tree_view, TreeIndex const & layer_index);
 		bool set_param_value(uint16_t id, ParameterValue param_value, Viewport * viewport, bool is_file_operation);
@@ -254,7 +254,7 @@ namespace SlavGPS {
 
 
 
-		void move_item(LayerTRW * vtl_dest, void * id, SublayerType sublayer_type);
+		void move_item(LayerTRW * vtl_dest, sg_uid_t sublayer_uid, SublayerType sublayer_type);
 
 
 
@@ -370,7 +370,7 @@ namespace SlavGPS {
 		void new_track_pens(void);
 		void cancel_current_tp(bool destroy);
 		void tpwin_response(int response);
-		Track * get_track_helper(SublayerType sublayer_type, sg_uid_t sublayer_uid);
+		Track * get_track_helper(Sublayer * sublayer);
 		void update_statusbar();
 		void tool_extended_route_finder_undo();
 		bool tool_new_track_or_route_click(QMouseEvent * event, Viewport * viewport);

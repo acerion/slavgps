@@ -249,9 +249,8 @@ void LayersPanel::item_toggled(TreeIndex const & index)
 		break;
 		}
 	case TreeItemType::SUBLAYER: {
-		sg_uid_t sublayer_uid = this->tree_view->get_sublayer_uid(index);
 		Layer * parent = this->tree_view->get_parent_layer(index);
-		visible = parent->sublayer_toggle_visible(this->tree_view->get_sublayer_type(index), sublayer_uid);
+		visible = parent->sublayer_toggle_visible(this->tree_view->get_sublayer(index));
 		parent->emit_changed_although_invisible();
 		break;
 	}
@@ -297,7 +296,7 @@ void LayersPanel::item_edited(TreeIndex const & index, char const * new_text)
 		}
 	} else {
 		Layer * parent = this->tree_view->get_parent_layer(index);
-		const char *name = parent->sublayer_rename_request(new_text, this, this->tree_view->get_sublayer_type(index), this->tree_view->get_sublayer_uid(index), index);
+		const char *name = parent->sublayer_rename_request(this->tree_view->get_sublayer(index), new_text, this);
 		if (name) {
 			this->tree_view->set_name(index, name);
 		}
@@ -599,8 +598,7 @@ void LayersPanel::cut_selected_cb(void) /* Slot. */
 		}
 	} else if (type == TreeItemType::SUBLAYER) {
 		Layer * selected = this->get_selected_layer();
-		SublayerType sublayer_type = this->tree_view->get_sublayer_type(index);
-		selected->cut_sublayer(sublayer_type, selected->tree_view->get_sublayer_uid(index));
+		selected->cut_sublayer(this->tree_view->get_sublayer(index));
 	}
 }
 
@@ -678,8 +676,7 @@ void LayersPanel::delete_selected_cb(void) /* Slot. */
 		}
 	} else if (type == TreeItemType::SUBLAYER) {
 		Layer * selected = this->get_selected_layer();
-		SublayerType sublayer_type = this->tree_view->get_sublayer_type(index);
-		selected->delete_sublayer(sublayer_type, selected->tree_view->get_sublayer_uid(index));
+		selected->delete_sublayer(this->tree_view->get_sublayer(index));
 	}
 }
 
@@ -902,9 +899,7 @@ void LayersPanel::contextMenuEvent(QContextMenuEvent * event)
 			qDebug() << "II: Layers Panel: context menu event: layer type is" << (layer ? layer->debug_string : "NULL");
 
 			memset(layer->menu_data, 0, sizeof (trw_menu_sublayer_t));
-			layer->menu_data->sublayer_type = this->tree_view->get_sublayer_type(index);
-			layer->menu_data->sublayer_uid = this->tree_view->get_sublayer_uid(index);
-			layer->menu_data->index = &index;
+			layer->menu_data->sublayer = this->tree_view->get_sublayer(index);
 			layer->menu_data->viewport = this->get_viewport();
 			layer->menu_data->layers_panel = this;
 			layer->menu_data->confirm = true; /* Confirm delete request. */

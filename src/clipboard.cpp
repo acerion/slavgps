@@ -138,7 +138,7 @@ static void clip_receive_viking(GtkClipboard * c, GtkSelectionData * sd, void * 
 	} else if (vc->type == VIK_CLIPBOARD_DATA_SUBLAYER) {
 		Layer * selected = panel->get_selected_layer();
 		if (selected && selected->type == vc->layer_type) {
-			selected->paste_sublayer(vc->sublayer_type, vc->data, vc->len);
+			selected->paste_sublayer(vc->sublayer, vc->data, vc->len);
 		} else {
 			dialog_error(QString("The clipboard contains sublayer data for %1 layers. "
 					     "You must select a layer of this type to paste the clipboard data.").arg(Layer::get_interface(vc->layer_type)->name), panel->get_window());
@@ -441,9 +441,7 @@ void SlavGPS::a_clipboard_copy_selected(LayersPanel * panel)
 	} else {
 		if (selected->tree_view->get_item_type(&iter) == TreeItemType::SUBLAYER) {
 			type = VIK_CLIPBOARD_DATA_SUBLAYER;
-			SublayerType sublayer_type = selected->tree_view->get_sublayer_type(&iter);
-
-			selected->copy_sublayer(sublayer_type, selected->tree_view->get_sublayer_uid(&iter), &data, &len);
+			selected->copy_sublayer(selected->tree_view->get_sublayer(&iter), &data, &len);
 			/* This name is used in setting the text representation of the item on the clipboard. */
 			name = selected->tree_view->get_name(&iter);
 		} else {
