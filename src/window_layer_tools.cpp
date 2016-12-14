@@ -1400,14 +1400,14 @@ static LayerToolFuncStatus selecttool_click(Layer * layer, QMouseEvent * event, 
 				GtkTreeIter iter;
 				TreeView * tree_view = tool->window->layers_panel->get_treeview();
 
-				TreeIndex * index = tree_view->get_selected_item();
-				if (index) {
+				TreeIndex const & index = tree_view->get_selected_item();
+				if (index.isValid()) {
 					/* Only clear if selected thing is a TrackWaypoint layer or a sublayer. */
-					TreeItemType type = tree_view->get_item_type(*index);
+					TreeItemType type = tree_view->get_item_type(index);
 					if (type == TreeItemType::SUBLAYER
-					    || tree_view->get_layer(*index)->type == LayerType::TRW) {
+					    || tree_view->get_layer(index)->type == LayerType::TRW) {
 
-						tree_view->unselect(*index);
+						tree_view->unselect(index);
 						if (tool->window->clear_highlight()) {
 							tool->window->draw_update();
 						}

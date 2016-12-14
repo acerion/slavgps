@@ -96,13 +96,14 @@ namespace SlavGPS {
 
 		Layer * get_parent_layer(TreeIndex const & index);
 		Layer * get_layer(TreeIndex const & index);
+		Sublayer * get_sublayer(TreeIndex const & index);
 
 		SublayerType get_sublayer_type(TreeIndex const & index);
 		sg_uid_t     get_sublayer_uid(TreeIndex const & index);
 
 		QString get_name(TreeIndex const & index);
 
-		TreeIndex * get_selected_item();
+		TreeIndex const & get_selected_item();
 		TreeIndex * get_index_at_pos(int x, int y);
 		TreeIndex * get_index_from_path_str(char const * path_str);
 

@@ -201,6 +201,24 @@ Layer * TreeView::get_layer(TreeIndex const & index)
 
 
 
+Sublayer * TreeView::get_sublayer(TreeIndex const & index)
+{
+	QStandardItem * parent = this->model->itemFromIndex(index.parent());
+	if (!parent) {
+		/* "index" points at the "Top Layer" layer. */
+		qDebug() << "II: Tree View: querying Top Layer for item" << index.row() << index.column();
+		parent = this->model->invisibleRootItem();
+	}
+	QStandardItem * ch = parent->child(index.row(), (int) LayersTreeColumn::TREE_ITEM);
+
+	QVariant variant = ch->data(RoleLayerData);
+	// http://www.qtforum.org/article/34069/store-user-data-void-with-qstandarditem-in-qstandarditemmodel.html
+	return variant.value<Sublayer *>();
+}
+
+
+
+
 SublayerType TreeView::get_sublayer_type(TreeIndex const & index)
 {
 	QStandardItem * parent = this->model->itemFromIndex(index.parent());
@@ -310,25 +328,25 @@ void TreeView::add_columns()
 
 void TreeView::select_cb(void) /* Slot. */
 {
-	TreeIndex * index = this->get_selected_item();
-	if (!index) {
+	TreeIndex const & index = this->get_selected_item();
+	if (!index.isValid()) {
 		return;
 	}
 
-	TreeIndex const layer_index = this->go_up_to_layer(*index);
+	TreeIndex const layer_index = this->go_up_to_layer(index);
 	if (!layer_index.isValid()) {
 		return;
 	}
 
 	Layer * layer = this->get_layer(layer_index);
 	Window * window = layer->get_window();
-	TreeItemType tree_item_type = this->get_item_type(*index);
+	TreeItemType tree_item_type = this->get_item_type(index);
 
 	SublayerType sublayer_type = SublayerType::NONE;
 	sg_uid_t sublayer_uid = SG_UID_NONE;
 	if (tree_item_type == TreeItemType::SUBLAYER && layer->type == LayerType::TRW) {
-		sublayer_type = this->get_sublayer_type(*index);
-		sublayer_uid = this->get_sublayer_uid(*index);
+		sublayer_type = this->get_sublayer_type(index);
+		sublayer_uid = this->get_sublayer_uid(index);
 	}
 
 	window->selected_layer(layer);
@@ -440,16 +458,25 @@ void TreeView::select_and_expose(TreeIndex const & index)
 
 
 
-TreeIndex * TreeView::get_selected_item(void)
+TreeIndex const & TreeView::get_selected_item(void)
 {
-	QModelIndex const index = this->currentIndex();
-	if (!index.isValid()) {
-		return NULL;
+	static TreeIndex invalid;
+	TreeIndex selected = QPersistentModelIndex(this->currentIndex());
+	if (!selected.isValid()) {
+		return invalid;
 	}
 
-	qDebug() << "II: Tree View: get_selected_item gets item with column" << index.column();
-
-	return new QPersistentModelIndex(index);
+	TreeItemType tree_item_type = this->get_item_type(selected);
+	if (tree_item_type == TreeItemType::LAYER) {
+		qDebug() << "II: Tree View: get selected item: layer";
+		return this->get_layer(selected)->index;
+	} else if (tree_item_type == TreeItemType::SUBLAYER) {
+		qDebug() << "II: Tree View: get selected item: sublayer";
+		return this->get_sublayer(selected)->index;
+	} else {
+		qDebug() << "EE: Tree View: get selected item: unknown tree item type" << (int) tree_item_type;
+		return invalid;
+	}
 }
 
 

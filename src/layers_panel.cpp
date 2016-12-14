@@ -454,7 +454,7 @@ void LayersPanel::add_layer(Layer * layer)
 	layer->change_coord_mode(this->viewport->get_coord_mode());
 	qDebug() << "II: Layers Panel: add layer: attempting to add layer" << layer->debug_string;
 
-	TreeIndex * selected_index = this->tree_view->get_selected_item();
+	TreeIndex const & selected_index = this->tree_view->get_selected_item();
 	if (true) { /* kamilFIXME: "if (!selected_index) { */
 		/* No particular layer is selected in panel, so the
 		   layer to be added goes directly under top level
@@ -470,11 +470,11 @@ void LayersPanel::add_layer(Layer * layer)
 		TreeIndex replace_index;
 		Layer * current = NULL;
 
-		if (this->tree_view->get_item_type(*selected_index) == TreeItemType::SUBLAYER) {
-			current = this->tree_view->get_parent_layer(*selected_index);
+		if (this->tree_view->get_item_type(selected_index) == TreeItemType::SUBLAYER) {
+			current = this->tree_view->get_parent_layer(selected_index);
 			qDebug() << "II: Layers Panel: add layer: capturing parent layer" << current->debug_string << "as current layer";
 		} else {
-			current = this->tree_view->get_layer(*selected_index);
+			current = this->tree_view->get_layer(selected_index);
 			qDebug() << "II: Layers Panel: add layer: capturing selected layer" << current->debug_string << "as current layer";
 		}
 		assert (current->realized);
@@ -482,8 +482,8 @@ void LayersPanel::add_layer(Layer * layer)
 
 		/* Go further up until you find first aggregate layer. */
 		while (current->type != LayerType::AGGREGATE) {
-			current = this->tree_view->get_parent_layer(*selected_index);
-			*selected_index = current->index;
+			Layer * tmp_layer = this->tree_view->get_parent_layer(current->index);
+			current = tmp_layer;
 			assert (current->realized);
 		}
 
@@ -508,15 +508,15 @@ void LayersPanel::add_layer(Layer * layer)
 
 void LayersPanel::move_item(bool up)
 {
-	TreeIndex * selected_index = this->tree_view->get_selected_item();
+	TreeIndex const & selected_index = this->tree_view->get_selected_item();
 	/* TODO: deactivate the buttons and stuff. */
-	if (!selected_index) {
+	if (!selected_index.isValid()) {
 		return;
 	}
 
-	this->tree_view->select(*selected_index); /* Cancel any layer-name editing going on... */
-	if (this->tree_view->get_item_type(*selected_index) == TreeItemType::LAYER) {
-		LayerAggregate * parent = (LayerAggregate *) this->tree_view->get_parent_layer(*selected_index);
+	this->tree_view->select(selected_index); /* Cancel any layer-name editing going on... */
+	if (this->tree_view->get_item_type(selected_index) == TreeItemType::LAYER) {
+		LayerAggregate * parent = (LayerAggregate *) this->tree_view->get_parent_layer(selected_index);
 
 		if (parent) { /* Not toplevel. */
 #ifndef SLAVGPS_QT
@@ -534,12 +534,12 @@ bool LayersPanel::properties_cb(void) /* Slot. */
 {
 	assert (this->viewport);
 
-	TreeIndex * index = this->tree_view->get_selected_item();
-	if (this->tree_view->get_item_type(*index) == TreeItemType::LAYER) {
-		if (this->tree_view->get_layer(*index)->type == LayerType::AGGREGATE) {
+	TreeIndex const & index = this->tree_view->get_selected_item();
+	if (this->tree_view->get_item_type(index) == TreeItemType::LAYER) {
+		if (this->tree_view->get_layer(index)->type == LayerType::AGGREGATE) {
 			dialog_info("Aggregate Layer has no settable properties.", this->get_window());
 		} else {
-			Layer * layer = this->tree_view->get_layer(*index);
+			Layer * layer = this->tree_view->get_layer(index);
 			if (layer->properties_dialog(this->viewport)) {
 				layer->emit_changed();
 			}
@@ -566,16 +566,16 @@ void LayersPanel::draw_all()
 
 void LayersPanel::cut_selected_cb(void) /* Slot. */
 {
-        TreeIndex * index = this->tree_view->get_selected_item();
-	if (!index) {
+        TreeIndex const & index = this->tree_view->get_selected_item();
+	if (!index.isValid()) {
 		/* Nothing to do. */
 		return;
 	}
 
-	TreeItemType type = this->tree_view->get_item_type(*index);
+	TreeItemType type = this->tree_view->get_item_type(index);
 
 	if (type == TreeItemType::LAYER) {
-		LayerAggregate * parent = (LayerAggregate *) this->tree_view->get_parent_layer(*index);
+		LayerAggregate * parent = (LayerAggregate *) this->tree_view->get_parent_layer(index);
 
 		if (parent) {
 #ifndef SLAVGPS_QT
@@ -599,8 +599,8 @@ void LayersPanel::cut_selected_cb(void) /* Slot. */
 		}
 	} else if (type == TreeItemType::SUBLAYER) {
 		Layer * selected = this->get_selected_layer();
-		SublayerType sublayer_type = this->tree_view->get_sublayer_type(*index);
-		selected->cut_sublayer(sublayer_type, selected->tree_view->get_sublayer_uid(*index));
+		SublayerType sublayer_type = this->tree_view->get_sublayer_type(index);
+		selected->cut_sublayer(sublayer_type, selected->tree_view->get_sublayer_uid(index));
 	}
 }
 
@@ -609,7 +609,8 @@ void LayersPanel::cut_selected_cb(void) /* Slot. */
 
 void LayersPanel::copy_selected_cb(void) /* Slot. */
 {
-	if (!this->tree_view->get_selected_item()) {
+	TreeIndex const & selected_index = this->tree_view->get_selected_item();
+	if (!selected_index.isValid()) {
 		/* Nothing to do. */
 		return;
 	}
@@ -624,7 +625,8 @@ void LayersPanel::copy_selected_cb(void) /* Slot. */
 
 bool LayersPanel::paste_selected_cb(void) /* Slot. */
 {
-	if (!this->tree_view->get_selected_item()) {
+	TreeIndex const & selected_index = this->tree_view->get_selected_item();
+	if (!selected_index.isValid()) {
 		/* Nothing to do. */
 		return false;
 	}
@@ -638,15 +640,15 @@ bool LayersPanel::paste_selected_cb(void) /* Slot. */
 
 void LayersPanel::delete_selected_cb(void) /* Slot. */
 {
-	TreeIndex * index = this->tree_view->get_selected_item();
-	if (!index) {
+	TreeIndex const & index = this->tree_view->get_selected_item();
+	if (!index.isValid()) {
 		/* Nothing to do. */
 		return;
 	}
 
-	TreeItemType type = this->tree_view->get_item_type(*index);
+	TreeItemType type = this->tree_view->get_item_type(index);
 	if (type == TreeItemType::LAYER) {
-		Layer * layer = this->tree_view->get_layer(*index);
+		Layer * layer = this->tree_view->get_layer(index);
 
 
 		/* Get confirmation from the user. */
@@ -654,7 +656,7 @@ void LayersPanel::delete_selected_cb(void) /* Slot. */
 			return;
 		}
 
-		LayerAggregate * parent = (LayerAggregate *) this->tree_view->get_parent_layer(*index);
+		LayerAggregate * parent = (LayerAggregate *) this->tree_view->get_parent_layer(index);
 		if (parent) {
 #ifndef SLAVGPS_QT
 			/* Reset trigger if trigger deleted. */
@@ -676,8 +678,8 @@ void LayersPanel::delete_selected_cb(void) /* Slot. */
 		}
 	} else if (type == TreeItemType::SUBLAYER) {
 		Layer * selected = this->get_selected_layer();
-		SublayerType sublayer_type = this->tree_view->get_sublayer_type(*index);
-		selected->delete_sublayer(sublayer_type, selected->tree_view->get_sublayer_uid(*index));
+		SublayerType sublayer_type = this->tree_view->get_sublayer_type(index);
+		selected->delete_sublayer(sublayer_type, selected->tree_view->get_sublayer_uid(index));
 	}
 }
 
@@ -686,20 +688,20 @@ void LayersPanel::delete_selected_cb(void) /* Slot. */
 
 Layer * LayersPanel::get_selected_layer()
 {
-	TreeIndex * index = this->tree_view->get_selected_item();
-	if (!index) {
+	TreeIndex const & index = this->tree_view->get_selected_item();
+	if (!index.isValid()) {
 		return NULL;
 	}
 
 #if 1
-	TreeIndex const layer_index = this->tree_view->go_up_to_layer(*index);
+	TreeIndex const layer_index = this->tree_view->go_up_to_layer(index);
 	if (layer_index.isValid()) {
 		return this->tree_view->get_layer(layer_index);
 	} else {
 		return NULL;
 	}
 #else
-	TreeIndex layer_index = *index;
+	TreeIndex layer_index = index;
 	TreeItemType type = this->tree_view->get_item_type(layer_index);
 	while (type != TreeItemType::LAYER) {
 		TreeIndex parent = layer_index.parent();
