@@ -596,35 +596,34 @@ void TRWMetadata::set_timestamp(char const * new_timestamp)
 
 
 /**
- * Find an item by date.
+ * Find a track by date.
  */
-bool LayerTRW::find_by_date(char const * date_str, VikCoord * position, Viewport * viewport, bool do_tracks, bool select)
+bool LayerTRW::find_track_by_date(char const * date_str, VikCoord * position, Viewport * viewport, bool select)
 {
-	date_finder_type df;
-	df.found = false;
-	df.date_str = date_str;
-	df.trk = NULL;
-	df.wp = NULL;
-	/* Only tracks ATM. */
-	if (do_tracks) {
-		LayerTRWc::find_track_by_date(tracks, &df);
-	} else {
-		LayerTRWc::find_waypoint_by_date(waypoints, &df);
-	}
-
-	if (select && df.found) {
-		if (do_tracks && df.trk) {
-			struct LatLon maxmin[2] = { {0,0}, {0,0} };
-			LayerTRW::find_maxmin_in_track(df.trk, maxmin);
-			this->zoom_to_show_latlons(viewport, maxmin);
-			this->tree_view->select_and_expose(this->tracks.at(df.trk_uid)->index);
-		} else if (df.wp) {
-			viewport->set_center_coord(&df.wp->coord, true);
-			this->tree_view->select_and_expose(this->waypoints.at(df.wp_uid)->index);
-		}
+	Track * trk = LayerTRWc::find_track_by_date(this->tracks, date_str);
+	if (trk && select) {
+		struct LatLon maxmin[2] = { {0,0}, {0,0} };
+		LayerTRW::find_maxmin_in_track(trk, maxmin);
+		this->zoom_to_show_latlons(viewport, maxmin);
+		this->tree_view->select_and_expose(trk->index);
 		this->emit_changed();
 	}
-	return df.found;
+	return (bool) trk;
+}
+
+
+/**
+ * Find a waypoint by date.
+ */
+bool LayerTRW::find_waypoint_by_date(char const * date_str, VikCoord * position, Viewport * viewport, bool select)
+{
+	Waypoint * wp = LayerTRWc::find_waypoint_by_date(this->waypoints, date_str);
+	if (wp && select) {
+		viewport->set_center_coord(&wp->coord, true);
+		this->tree_view->select_and_expose(wp->index);
+		this->emit_changed();
+	}
+	return (bool) wp;
 }
 
 

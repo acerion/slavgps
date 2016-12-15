@@ -195,7 +195,8 @@ namespace SlavGPS {
 		bool is_empty();
 
 
-		bool find_by_date(char const * date_str, VikCoord * position, Viewport * viewport, bool do_tracks, bool select);
+		bool find_track_by_date(char const * date, VikCoord * position, Viewport * viewport, bool select);
+		bool find_waypoint_by_date(char const * date, VikCoord * position, Viewport * viewport, bool select);
 
 		Track * get_track(const char * name);
 		Track * get_route(const char * name);

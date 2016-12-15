@@ -60,7 +60,7 @@ using namespace SlavGPS;
 
 
 
-bool LayerTRWc::find_track_by_date(std::unordered_map<sg_uid_t, Track *> & tracks, date_finder_type * df)
+Track * LayerTRWc::find_track_by_date(std::unordered_map<sg_uid_t, Track *> & tracks, char const * date)
 {
 	char date_buf[20];
 	Track * trk = NULL;
@@ -75,38 +75,36 @@ bool LayerTRWc::find_track_by_date(std::unordered_map<sg_uid_t, Track *> & track
 
 			strftime(date_buf, sizeof(date_buf), "%Y-%m-%d", gmtime(&(*trk->trackpointsB->begin())->timestamp));
 
-			if (!g_strcmp0(df->date_str, date_buf)) {
-				df->found = true;
-				df->trk = trk;
-				df->trk_uid = i->first;
-				break;
+			if (!g_strcmp0(date, date_buf)) {
+				return trk;
 			}
 		}
 	}
-	return df->found;
+	return NULL;
 }
 
 
 
 
-bool LayerTRWc::find_waypoint_by_date(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, date_finder_type * df)
+Waypoint * LayerTRWc::find_waypoint_by_date(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, char const * date)
 {
-	for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
-		char date_buf[20];
-		date_buf[0] = '\0';
-		/* Might be an easier way to compare dates rather than converting the strings all the time... */
-		if (i->second->has_timestamp) {
-			strftime(date_buf, sizeof(date_buf), "%Y-%m-%d", gmtime(&(i->second->timestamp)));
+	char date_buf[20];
+	Waypoint * wp = NULL;
 
-			if (!g_strcmp0(df->date_str, date_buf)) {
-				df->found = true;
-				df->wp = i->second;
-				df->wp_uid = i->first;
-				break;
+	for (auto i = waypoints.begin(); i != waypoints.end(); i++) {
+		date_buf[0] = '\0';
+		wp = i->second;
+
+		/* Might be an easier way to compare dates rather than converting the strings all the time... */
+		if (wp->has_timestamp) {
+			strftime(date_buf, sizeof(date_buf), "%Y-%m-%d", gmtime(&(wp->timestamp)));
+
+			if (!g_strcmp0(date, date_buf)) {
+				return wp;
 			}
 		}
 	}
-    return df->found;
+	return NULL;
 }
 
 

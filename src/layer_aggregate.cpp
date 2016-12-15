@@ -491,7 +491,7 @@ void LayerAggregate::search_date_cb(void) /* Slot. */
 	/* Search tracks first. */
 	for (auto iter = layers->begin(); iter != layers->end(); iter++) {
 		/* Make it auto select the item if found. */
-		found = ((LayerTRW *) (*iter))->find_by_date(date_str, &position, viewport, true, true);
+		found = ((LayerTRW *) (*iter))->find_track_by_date(date_str, &position, viewport, true);
 		if (found) {
 			break;
 		}
@@ -505,7 +505,7 @@ void LayerAggregate::search_date_cb(void) /* Slot. */
 
 		for (auto iter = layers->begin(); iter != layers->end(); iter++) {
 			/* Make it auto select the item if found. */
-			found = ((LayerTRW *) (*iter))->find_by_date(date_str, &position, viewport, false, true);
+			found = ((LayerTRW *) (*iter))->find_waypoint_by_date(date_str, &position, viewport, true);
 			if (found) {
 				break;
 			}

@@ -50,18 +50,6 @@ namespace SlavGPS {
 
 
 	typedef struct {
-		bool found;
-		const char *date_str;
-		const Track * trk;
-		const Waypoint * wp;
-		sg_uid_t trk_uid;
-		sg_uid_t wp_uid;
-	} date_finder_type;
-
-
-
-
-	typedef struct {
 		GList ** result;
 		Track * exclude;
 		bool with_timestamps;
@@ -99,8 +87,8 @@ namespace SlavGPS {
 	public:
 		static Track * find_track_by_name(std::unordered_map<sg_uid_t, Track *> & input, char const * name);
 		static Waypoint * find_waypoint_by_name(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, const char * name);
-		static bool find_track_by_date(std::unordered_map<sg_uid_t, Track *> & tracks, date_finder_type * df);
-		static bool find_waypoint_by_date(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, date_finder_type * df);
+		static Track * find_track_by_date(std::unordered_map<sg_uid_t, Track *> & tracks, char const * date_str);
+		static Waypoint * find_waypoint_by_date(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, char const * date_str);
 
 		static void find_maxmin_in_tracks(std::unordered_map<sg_uid_t, Track *> & tracks, struct LatLon maxmin[2]);
 		static void single_waypoint_jump(std::unordered_map<sg_uid_t, Waypoint *> & waypoints, Viewport * viewport);
